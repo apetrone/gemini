@@ -8,7 +8,7 @@ class gemini(Builder):
 		builder.root = "build"
 
 		if builder.platform is MACOSX:
-			self.builder_type = Builder.Bundle
+			self.builder_type = Builder.Binary
 		else:
 			self.builder_type = Builder.Binary
 

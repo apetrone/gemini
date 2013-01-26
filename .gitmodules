@@ -4,3 +4,6 @@
 [submodule "dependencies/murmur3"]
 	path = dependencies/murmur3
 	url = git://github.com/PeterScott/murmur3.git
+[submodule "dependencies/jsmn"]
+	path = dependencies/jsmn
+	url = git://github.com/noct/jsmn.git
