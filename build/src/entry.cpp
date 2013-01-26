@@ -26,6 +26,41 @@
 
 int main( int argc, char ** argv )
 {
-	std::cout << "Hello, World!" << std::endl;
+	char error_buffer[1024] = {0};
+	char input[] = "{\n\"name\": \"adam\"\n}";
+	yajl_val node;
+	
+	node = yajl_tree_parse( (const char*)input, error_buffer, 1024 );
+	if ( !node )
+	{
+		fprintf( stderr, "parse_error: " );
+		if (strlen(error_buffer))
+		{
+			fprintf( stderr, " %s", error_buffer );
+		}
+		else
+		{
+			fprintf( stderr, "Unknown error!" );
+		}
+		fprintf( stderr, "\n" );
+		return 1;
+	}
+	
+	
+	const char * path[] = {"name", 0};
+
+	yajl_val value = yajl_tree_get( node, path, yajl_t_string );
+	if ( value )
+	{
+		printf( "%s\n", YAJL_GET_STRING(value) );
+	}
+	else
+	{
+
+		printf( "yep, you're crazy.\n" );
+	}
+	
+	yajl_tree_free( node );
+	
 	return 0;
 }

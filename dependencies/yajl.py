@@ -15,7 +15,8 @@ class yajl(Builder):
 		
 		#driver.makefile = "%s.make" % (self.build_name)
 
-
+	def postbuild(self, driver, args):
+		# execute install_name_tool -id output_name path_to_output_name
 
 	def generate(self, builder):
 		generator_name = None
