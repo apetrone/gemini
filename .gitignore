@@ -1,0 +1,52 @@
+# Code::Blocks
+*.workspace
+*.cbp
+*.depend
+*.layout
+
+# Unix
+*.[oa]
+*.make
+
+# Windows
+*.exe
+*.obj
+*.pdb
+*.ilk
+*.vcproj
+*.sln.cache
+*.sln
+*.user
+*.idb
+*.dll
+*.lib
+*.ncb
+*.suo
+*.manifest*
+*.dep
+msbuild.*
+
+*.log
+*.mode1v3
+*.pbxuser
+*.xcodeproj
+*.xcworkspace
+*/xcuserdata/
+deps.lua # generated per platform
+.DS_Store
+enthumbs.db
+Icon?
+Thumbs.db
+*.cmake
+*CMakeFiles*
+*.pbxproj
+*.pyc
+*.ipa
+*.dSYM*
+DerivedData
+
+# project-specific
+build/obj/
+build/latest*
+buildinfo.c
+*.cache
