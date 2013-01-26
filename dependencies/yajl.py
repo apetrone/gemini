@@ -15,8 +15,11 @@ class yajl(Builder):
 		
 		#driver.makefile = "%s.make" % (self.build_name)
 
-	def postbuild(self, driver, args):
-		# execute install_name_tool -id output_name path_to_output_name
+	def postbuild(self, builder, driver, args,):
+		if args["platform"] is MACOSX:
+			# make the id relative (strip the full path from it)
+			install_name_tool = InstallNameTool( command="id", name=builder.output_name, input=builder.destination_output )
+			install_name_tool.run()
 
 	def generate(self, builder):
 		generator_name = None
