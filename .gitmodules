@@ -1,0 +1,6 @@
+[submodule "dependencies/yajl"]
+	path = dependencies/yajl
+	url = git://github.com/lloyd/yajl.git
+[submodule "dependencies/murmur3"]
+	path = dependencies/murmur3
+	url = git://github.com/PeterScott/murmur3.git
