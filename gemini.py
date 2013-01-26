@@ -7,15 +7,15 @@ class gemini(Builder):
 		builder.libs = []
 		builder.root = "build"
 
+		if builder.platform is MACOSX:
+			self.builder_type = Builder.Bundle
+		else:
+			self.builder_type = Builder.Binary
+
 	def config(self, builder, driver, project, args):
 		bindir = "latest/bin/%s/%s" % (args['build_architecture'], args['configuration'])
-		builder_type = Builder.Binary
 
-		# create a bundle in osx
-		#if builder.platform is MACOSX:
-		#	builder_type = Builder.Bundle
-
-		builder.setOutput( path=bindir, name=self.build_name, type=builder_type )
+		builder.setOutput( path=bindir, name=self.build_name, type=self.builder_type )
 
 		driver.config = (args['configuration'].lower() + Premake4.archmap[ args['platform'] ][ args['build_architecture'] ])
 		driver.makefile = "%s.make" % (self.build_name)

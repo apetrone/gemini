@@ -19,8 +19,8 @@ common()
 project ( build_name )
 	objdir "obj"
 	uuid( "883b1310-0ec3-11e1-be50-0800200c9a66" )	
-	--kind "WindowedApp"
-	kind "ConsoleApp"
+	kind "WindowedApp"
+	--kind "ConsoleApp"
 	language ("C++")
 
 	files
@@ -65,14 +65,12 @@ project ( build_name )
 		files { common_file_list[ "linux" ] }
 
 	configuration { "macosx" }
-
 		defines { "__MACH__" }
 		files
 		{ 
 			common_file_list[ "macosx" ],
-			"src/*.m",
+			"src/*.m*",
 			"src/osx/*.m*",
-			"resources/osx/Info.plist"
 		}
 
 		linkoptions
@@ -80,4 +78,8 @@ project ( build_name )
 			"-framework Cocoa",
 			"-framework OpenGL",
 			"-framework AudioToolbox"
+		}
+
+		xcodebuildsettings {
+			"INFOPLIST_FILE = resources/osx/Info.plist"
 		}

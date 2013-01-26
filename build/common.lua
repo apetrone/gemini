@@ -15,7 +15,7 @@ end
 common_file_list =
 {
 	-- We don't want all subfolders; each platform is defined for additional files below
-	
+
 	"src/*.c*",
 	"src/*.h*",
 
@@ -86,11 +86,9 @@ common_defines=
 	debug=
 	{
 		"DEBUG",
-		--"JSON_IS_AMALGAMATION"
 	},
 	release=
 	{
-		--"JSON_IS_AMALGAMATION"
 	}
 }
 
@@ -102,15 +100,8 @@ function setup_platforms( solution )
 
 	platform_table = solution.platforms
 	config_table = solution.configurations
-	--for i,v in ipairs( dependency_libdirs ) do print(i,v) end
-	--for k,v in pairs( dependency_libdirs["x64"]["debug"]) do print(k,v) end
-
-	print( "premake step: setup_platforms")
-
 	for _,platform in ipairs( platform_table ) do
-		print( "-> platform: " .. platform )
 		for _,config in ipairs( config_table ) do
-			print( "-->config: " .. config )
 			-- make sure these are placed in the appropriate config/platform combo
 			configuration { platform, config }
 				local trplat = translate_platform( platform )
