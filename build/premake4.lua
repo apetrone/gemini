@@ -80,6 +80,10 @@ project ( build_name )
 			"-framework AudioToolbox"
 		}
 
-		xcodebuildsettings {
-			"INFOPLIST_FILE = resources/osx/Info.plist"
-		}
+		if xcodebuildsettings ~= nil then
+			xcodebuildsettings {
+				"INFOPLIST_FILE = resources/osx/Info.plist"
+			}
+		else
+			print( "Your version of premake does NOT support xcodebuildsettings!" )
+		end
