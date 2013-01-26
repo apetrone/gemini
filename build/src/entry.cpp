@@ -21,6 +21,9 @@
 // -------------------------------------------------------------
 #include <iostream>
 
+#include <string.h>
+#include <yajl/yajl_tree.h>
+
 int main( int argc, char ** argv )
 {
 	std::cout << "Hello, World!" << std::endl;

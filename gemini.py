@@ -25,8 +25,8 @@ class gemini(Builder):
 		d = {}
 		d['libpath'] = "lib/{architecture}/{configuration}"
 		d['depends_file'] = 'build/deps.lua'
-		d['depends_path'] = 'build/dependencies'
-		d['depends'] = []
+		d['depends_path'] = 'dependencies'
+		d['depends'] = [ "yajl.py" ]
 		return d
 
 	def generate(self, builder):
