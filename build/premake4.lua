@@ -93,8 +93,9 @@ project ( build_name )
 					"-framework OpenGLES",
 					"-framework AudioToolbox",
 					"-framework Foundation",
-					"-framework CoreFoundation",
-					"-framework QuartzCore"
+					--"-framework CoreFoundation",
+					--"-framework QuartzCore",
+					--"-framework CoreGraphics"
 				}
 				xcodebuildsettings {
 					'INFOPLIST_FILE = "resources/ios/Info.plist"',

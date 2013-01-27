@@ -1,3 +1,3 @@
-[submodule "dependencies/murmur3"]
-	path = dependencies/murmur3
+[submodule "build/dependencies/murmur3"]
+	path = build/dependencies/murmur3
 	url = git://github.com/PeterScott/murmur3.git
