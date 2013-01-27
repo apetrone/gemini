@@ -4,6 +4,12 @@ newoption {
 	description = "Comma separated list of platforms to build for"
 }
 
+newoption {
+	trigger = "ios",
+	value = nil,
+	description = "Enables iOS target (requires Xcode4)"
+}
+
 local platform_strings = "Native"
 if _OPTIONS["platform_list"] ~= nil then
 	platform_strings = string.explode( _OPTIONS["platform_list"], "," )
@@ -19,8 +25,8 @@ common()
 project ( build_name )
 	objdir "obj"
 	uuid( "883b1310-0ec3-11e1-be50-0800200c9a66" )	
-	--kind "WindowedApp"
-	kind "ConsoleApp"
+	kind "WindowedApp"
+	--kind "ConsoleApp"
 	language ("C++")
 
 	files
@@ -70,20 +76,49 @@ project ( build_name )
 		{ 
 			common_file_list[ "macosx" ],
 			"src/*.m*",
-			"src/osx/*.m*",
+			"src/osx/*.m*"
 		}
 
-		linkoptions
-		{
-			"-framework Cocoa",
-			"-framework OpenGL",
-			"-framework AudioToolbox"
-		}
+
 
 		if xcodebuildsettings ~= nil then
-			xcodebuildsettings {
-				"INFOPLIST_FILE = resources/osx/Info.plist"
-			}
+
+			if _OPTIONS["ios"] ~= nil then
+				-- ios needs an application bundle
+				kind "WindowedApp"
+
+				linkoptions
+				{
+					"-framework UIKit",
+					"-framework OpenGLES",
+					"-framework AudioToolbox",
+					"-framework Foundation",
+					"-framework CoreFoundation",
+					"-framework QuartzCore"
+				}
+				xcodebuildsettings {
+					'INFOPLIST_FILE = "resources/ios/Info.plist"',
+					'CODE_SIGN_IDENTITY = "iPhone Developer"',
+					'SDKROOT = iphoneos',
+					'ARCHS = "$(ARCHS_STANDARD_32_BIT)"',
+					'TARGETED_DEVICE_FAMILY = "1,2"',
+					'VALID_ARCHS = "armv7 armv7s"',
+					'SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"',
+					'STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = dynamic',
+				}
+
+				defines { "ARM_NEON_GCC_COMPATIBILITY" }
+			else
+				linkoptions
+				{
+					"-framework Cocoa",
+					"-framework OpenGL",
+					"-framework AudioToolbox"
+				}
+				xcodebuildsettings {
+					"INFOPLIST_FILE = resources/osx/Info.plist"
+				}
+			end
 		else
 			print( "Your version of premake does NOT support xcodebuildsettings!" )
 		end

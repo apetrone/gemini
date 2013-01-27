@@ -8,7 +8,7 @@ class gemini(Builder):
 		builder.root = "build"
 
 		if builder.platform is MACOSX:
-			self.builder_type = Builder.Binary
+			self.builder_type = Builder.Bundle
 		else:
 			self.builder_type = Builder.Binary
 
@@ -26,7 +26,7 @@ class gemini(Builder):
 		d['libpath'] = "lib/{architecture}/{configuration}"
 		d['depends_file'] = 'build/deps.lua'
 		d['depends_path'] = 'dependencies'
-		d['depends'] = [ "yajl.py" ]
+		d['depends'] = [ ]
 		return d
 
 	def generate(self, builder):
@@ -36,6 +36,7 @@ class gemini(Builder):
 			arch_list.append( 'Native' )
 
 		premake = Premake4( action=builder.premake_action, file="premake4.lua", platform_list=",".join( arch_list ) )
+		#premake.ios = True
 		premake.run()
 
 	def prebuild(self, driver, args):
