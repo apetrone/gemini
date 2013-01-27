@@ -20,8 +20,9 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <iostream>
+#include "kernel.hpp"
 
 int main( int argc, char ** argv )
 {
-	return 0;
+	return kernel::main( argc, argv, "HelloWorld" );
 }

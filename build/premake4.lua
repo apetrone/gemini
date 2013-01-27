@@ -34,8 +34,15 @@ project ( build_name )
 		common_file_list,
 		--"src/samples/**.c*",
 		--"src/buildinfo.c",
-		--"src/kernels/**.c*"
+		"src/kernels/**.c*"
 	}
+
+	-- building for desktop
+	if _OPTIONS["ios"] == nil then
+		files {
+			"src/desktop/entry.cpp"
+		}
+	end
 
 	includedirs 
 	{ 
@@ -75,8 +82,7 @@ project ( build_name )
 		files
 		{ 
 			common_file_list[ "macosx" ],
-			"src/*.m*",
-			"src/osx/*.m*"
+			"src/*.m*"
 		}
 
 
@@ -118,6 +124,11 @@ project ( build_name )
 				}
 				xcodebuildsettings {
 					"INFOPLIST_FILE = resources/osx/Info.plist"
+				}
+
+				files {
+					"src/osx/*.m*",
+					"src/osx/*.h*"
 				}
 			end
 		else
