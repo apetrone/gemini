@@ -16,6 +16,7 @@
 	#include <sys/stat.h>
 	#include <stdio.h> // for snprintf
 	#include <stdlib.h> // for abort
+	#include <unistd.h> // for readlink, getpid
 
 #elif __APPLE__
 	#include <stdio.h>
@@ -26,7 +27,7 @@
 	#include <unistd.h>	// for fork
 #endif
 
-#include <string> // for strrchr
+#include <string.h> // for strrchr
 
 namespace platform
 {

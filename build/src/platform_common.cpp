@@ -1,5 +1,5 @@
 #include "platform.hpp"
-#include <string> // for strlen, memset
+#include <string.h> // for strlen, memset
 namespace platform
 {
 	namespace path

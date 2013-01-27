@@ -44,9 +44,11 @@ Thumbs.db
 *.ipa
 *.dSYM*
 DerivedData
+**Makefile
 
 # project-specific
 build/obj/
 build/latest*
 buildinfo.c
 *.cache
+**deps.lua
