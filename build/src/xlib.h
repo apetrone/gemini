@@ -20,13 +20,35 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
+#if 0
+USAGE:
+	xlib_t lib;
+	xlib_open( &lib,  "/path/to/library.so" );
+	void * symbol = xlib_find_symbol( &lib, "open_something" );
+	xlib_close( &lib );
 
-#include "platform.hpp"
+#endif
 
-namespace platform
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct
 {
-	core::Error osx_startup();
-	void osx_shutdown();
-	
-	core::Error osx_programDirectory( char * path, size_t size );
-}; // namespace platform
+	void * handle;
+} xlib_t;
+
+// load a dynamic library at library_path
+// returns 1 on success
+int xlib_open( xlib_t * lib, const char * library_path );
+
+// close a library handle
+void xlib_close( xlib_t * lib );
+
+// load a symbol from the library, returns 0 on failure
+void * xlib_find_symbol( xlib_t * lib, const char * procname );
+
+
+#ifdef __cplusplus
+}; // extern "C"
+#endif

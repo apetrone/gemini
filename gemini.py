@@ -34,7 +34,7 @@ class gemini(Builder):
 		d['libpath'] = "lib/{architecture}/{configuration}"
 		d['depends_file'] = 'build/deps.lua'
 		d['depends_path'] = 'build/dependencies'
-		d['depends'] = [ ]
+		d['depends'] = [ "xwl/xwl.py" ]
 		return d
 
 	def generate(self, *args, **kwargs):

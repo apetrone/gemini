@@ -21,12 +21,31 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "platform.hpp"
+#include <string.h>
+#include <stdarg.h>
 
-namespace platform
+#ifdef __cplusplus
+extern "C"
 {
-	core::Error osx_startup();
-	void osx_shutdown();
+#endif
+
+// returns a printf-style formatted string
+char * xstr_format( const char * format, ... );
+
+
+// C standard functions
+int xstr_sprintf( char * destination, size_t destination_max_size, const char * format, ... );
+int xstr_vsnprintf( char * destination, size_t destination_max_size, const char * format, va_list arg );
+char * xstr_ncpy( char * destination, const char * source, size_t source_bytes );
+size_t xstr_len( const char * str );
+char * xstr_cat( char * destination, const char * source );
+char * xstr_ncat( char * destination, const char * source, size_t destination_size );
+int xstr_nicmp( const char * s1, const char * s2, size_t count );
+char * xstr_str( const char * s1, const char * s2 );
 	
-	core::Error osx_programDirectory( char * path, size_t size );
-}; // namespace platform
+// return just the filename portion of a path
+const char * xstr_filefrompath( const char * path );
+
+#ifdef __cplusplus
+}
+#endif

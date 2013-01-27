@@ -19,14 +19,58 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#if 0
+USAGE:
+
+	xtime_t t;
+	xtime_startup( &t );
+	double msec_time = xtime_msec( &t );
+
+#endif
+
 #pragma once
 
-#include "platform.hpp"
+#if LINUX || __APPLE__
+	#include <sys/time.h>
+	#include <time.h>
+#elif _WIN32
+    #include <windows.h>
+#endif
 
-namespace platform
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+typedef struct
 {
-	core::Error osx_startup();
-	void osx_shutdown();
-	
-	core::Error osx_programDirectory( char * path, size_t size );
-}; // namespace platform
+#if LINUX || __APPLE__
+	struct timeval initialtime;
+#elif _WIN32
+	LARGE_INTEGER frequency;
+	LARGE_INTEGER last;
+#endif
+
+} xtime_t;
+
+typedef struct
+{
+	unsigned short year;
+	unsigned short month; // 1-12
+	unsigned short dayOfWeek; // 0-6, starting from Sunday
+	unsigned short day;
+	unsigned short hour; // 24-hour format
+	unsigned short minute;
+	unsigned short second;
+	unsigned short milliseconds;
+} xdatetime_t;
+
+void xtime_startup( xtime_t * t );
+double xtime_msec( xtime_t * t );
+
+void xtime_now( xdatetime_t * dt );
+long xtime_epoch( void );
+
+#ifdef __cplusplus
+}; // extern "C"
+#endif

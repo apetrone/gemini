@@ -21,12 +21,58 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "platform.hpp"
+#include <string.h> // for size_t
 
-namespace platform
+#ifdef __cplusplus
+extern "C"
 {
-	core::Error osx_startup();
-	void osx_shutdown();
+#endif
+
+
+typedef struct
+{
+	void * opaque;
+} xfile_t;
+
+enum
+{
+	XF_READ,
+	XF_WRITE
+};
+
+enum
+{
+	XF_SEEK_BEGIN,
+	XF_SEEK_RELATIVE,
+	XF_SEEK_END
+};
+
+// opens a file
+xfile_t xfile_open( const char * path, unsigned short filemode );
+
+// returns number of bytes read into ptr
+size_t xfile_read( xfile_t handle, void * ptr, size_t size, size_t count );
+
+// set position of stream
+int xfile_seek( xfile_t handle, long int offset, int origin );
+
+// return the current position of the stream
+long int xfile_tell( xfile_t handle );
+
+// close a file handle
+void xfile_close( xfile_t handle );
+
+// returns 1 if handle is open or uninitialized
+int xfile_isopen( xfile_t handle );
+
 	
-	core::Error osx_programDirectory( char * path, size_t size );
-}; // namespace platform
+long int xfile_length( xfile_t handle );
+	
+// write an array of count elements, each one with size of size bytes from ptr
+// total amount written is size*count
+// returns total number of elements successfully written (if number != count, error)	
+size_t xfile_write( xfile_t handle, const void * ptr, size_t size, size_t count );
+	
+#ifdef __cplusplus
+}; // extern "C"
+#endif
