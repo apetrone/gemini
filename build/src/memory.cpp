@@ -22,7 +22,13 @@
 #include "memory.hpp"
 #include <string.h> // for memset
 
-#include <memory> // for malloc, free
+#if __APPLE__
+	#include <memory> // for malloc, free (on OSX)
+#elif LINUX
+	#include <stdlib.h>
+#elif _WIN32
+	#include <memory> // we'll see if this compiles...
+#endif
 
 #include <assert.h>
 
