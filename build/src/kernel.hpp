@@ -89,8 +89,7 @@ namespace kernel
 	class IKernel
 	{
 	public:
-		IKernel() {}
-		virtual ~IKernel(){}
+		virtual ~IKernel() {}
 
 		virtual bool is_active() const = 0;
 		virtual void set_active( bool isactive ) = 0;
