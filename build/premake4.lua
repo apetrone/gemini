@@ -18,7 +18,7 @@ end
 local build_name = "gemini"
 
 if _OPTIONS["ios"] ~= nil then
-	build_name = "gemini-ios"
+	build_name = "geminiios"
 end
 
 solution ( build_name )
@@ -101,7 +101,8 @@ project ( build_name )
 				files
 				{
 					"src/ios/*.m*",
-					"src/ios/*.h*"
+					"src/ios/*.h*",
+					"src/osx/osx_platform.*"
 				}
 
 				linkoptions
@@ -119,12 +120,11 @@ project ( build_name )
 				{
 					'INFOPLIST_FILE = "resources/ios/Info.plist"',
 					'CODE_SIGN_IDENTITY = "iPhone Developer"',
-					'SDKROOT = iphoneos',
-					'ARCHS = "$(ARCHS_STANDARD_32_BIT)"',
+					'SDKROOT = "iphoneos"',
+					'ARCHS = "armv7 armv7s"',
 					'TARGETED_DEVICE_FAMILY = "1,2"',
 					'VALID_ARCHS = "armv7 armv7s"',
-					'SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"',
-					'STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = dynamic',
+					'SUPPORTED_PLATFORMS = "iphonesimulator iphoneos"',
 				}
 
 			else

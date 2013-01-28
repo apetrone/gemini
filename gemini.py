@@ -9,7 +9,7 @@ class gemini(Builder):
 			self.resource_path = "resources/osx/icon.icns"
 		elif target_platform == IPHONEOS:
 			self.resource_path = "resources/ios/*"
-			self.build_name = 'gemini-ios'
+			self.build_name = 'geminiios'
 
 		project = Project( name=self.build_name )
 		builder.addProject( project )

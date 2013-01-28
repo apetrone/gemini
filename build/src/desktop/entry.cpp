@@ -24,5 +24,5 @@
 
 int main( int argc, char ** argv )
 {
-	return kernel::main( argc, argv, "Memory" );
+	return kernel::main( argc, argv, "Test_Window" );
 }

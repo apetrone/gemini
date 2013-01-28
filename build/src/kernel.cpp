@@ -25,6 +25,8 @@
 #include <string>
 #include <map>
 
+#include "xtime.h"
+
 namespace kernel
 {
 	typedef std::map< std::string, Creator> KernelCreatorByString;
@@ -32,13 +34,14 @@ namespace kernel
 	IKernel * _active_instance = 0;
 	Params _kernel_params;
 
-	
 	namespace _internal
 	{
 		struct State
 		{
-			
+			xtime_t timer;
 		};
+		
+		State _kernel_state;
 		
 		static void registerKernelCreatorByName( const char * kernel_name, Creator creator )
 		{
@@ -74,7 +77,7 @@ namespace kernel
 		Creator creator = 0;
 
 		// initialize kernel's timer
-//		xtime_startup( &_kernelState._clock );
+		xtime_startup( &_internal::_kernel_state.timer );
 		
 		// startup duties; lower-level system init
 		core::Error core_error = core::startup();
@@ -108,7 +111,7 @@ namespace kernel
 			core::shutdown();
 			return kernel::NoInstance;
 		}
-				
+
 		return kernel::NoError;
 	}
 	
@@ -130,11 +133,12 @@ namespace kernel
 
 	void tick()
 	{
-//		sys::pre_frame();
+		core::beginFrame();
 		_active_instance->tick( _kernel_params );
-//		sys::post_frame();
+		core::endFrame();
 	}
 
+#if !MOBILE_PLATFORM
 	Error main( int argc, char ** argv, const char * kernel_name )
 	{
 		Error error = startup( argc, argv, kernel_name );
@@ -148,7 +152,7 @@ namespace kernel
 			int config_result = _active_instance->config( _kernel_params );
 			if ( config_result == kernel::Success )
 			{
-//				sys::create_window( _kernel_params.window_width, _kernel_params.window_height, _kernel_params.window_title );
+				core::createWindow( _kernel_params.window_width, _kernel_params.window_height, _kernel_params.window_title );
 			}
 			else if ( config_result == kernel::Failure )
 			{
@@ -182,5 +186,6 @@ namespace kernel
 		
 		return error;
 	} // main
+#endif
 
 }; // namespace kernel

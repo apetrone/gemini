@@ -120,6 +120,13 @@ namespace kernel
 	#define IMPLEMENT_KERNEL( className ) \
 		kernel::Registrar kr_##className( #className, className::create )
 	
+	// main loop for a desktop app; this manages the main loop itself.
+	// it's enough in a desktop application to simply hand off control to this function.
 	Error main( int argc, char ** argv, const char * kernel_name );
+	
+	Error startup( int argc, char ** argv, const char * kernel_name );
+	void shutdown();
+	void tick();
+	
 	IKernel * instance();
 }; // namespace kernel

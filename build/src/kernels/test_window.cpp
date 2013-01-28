@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2012- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -21,50 +21,30 @@
 // -------------------------------------------------------------
 #include "kernel.hpp"
 #include <stdio.h>
+//#include <log.h>
+//#include <filesystem.hpp>
 
-#include "memory.hpp"
-
-struct Test
-{
-	size_t def;
-	
-	Test()
-	{
-		printf( "Test()\n" );
-	}
-	
-	~Test()
-	{
-		printf( "~Test()\n" );
-	}
-};
-
-class Test_Memory : public kernel::IKernel
+class Test_Window : public kernel::IKernel
 {
 public:
-	DECLARE_KERNEL( Test_Memory );
+	DECLARE_KERNEL( Test_Window );
 
 	virtual int config( kernel::Params & params )
 	{
-		return kernel::NoWindow;
+		params.window_width = 800;
+		params.window_height = 600;
+		params.window_title = "Test_Window";
+		return kernel::Success;
 	}
 
 	virtual int startup( kernel::Params & params )
 	{
-		printf( "Memory Test: \n" );
-		Test * a = ALLOC(Test);
-		
-		// added z-modifer to satisfy Xcode, C99 addition, we'll see who doesn't support it :)
-		printf( "totalAllocations: %zu, totalBytes: %zu\n", memory::allocator().totalAllocations(), memory::allocator().totalBytes() );
-		printf( "activeAllocations: %zu, activeBytes: %zu\n", memory::allocator().activeAllocations(), memory::allocator().activeBytes() );
-		
-		DEALLOC(Test, a);
-		printf( "activeAllocations: %zu, activeBytes: %zu\n", memory::allocator().activeAllocations(), memory::allocator().activeBytes() );
-		return kernel::NoWindow;
+		return kernel::Success;
 	}
 
 	virtual void tick( kernel::Params & params )
 	{
+	
 	}
 
 	virtual void shutdown()
@@ -72,4 +52,4 @@ public:
 	}
 };
 
-IMPLEMENT_KERNEL( Test_Memory );
+IMPLEMENT_KERNEL( Test_Window );

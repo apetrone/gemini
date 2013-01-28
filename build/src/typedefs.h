@@ -122,4 +122,6 @@ typedef double float64;
 // for some reason this isn't working any other way...
 #if __APPLE__ && (TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR)
 	#define MOBILE_PLATFORM 1
+#else
+	#define MOBILE_PLATFORM 0
 #endif
