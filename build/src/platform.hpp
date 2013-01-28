@@ -52,7 +52,7 @@ namespace platform
 	// on Linux and Windows platforms, it returns the folder where the binary exists
 	// on MacOS X when run as a command line tool, it returns the folder where the binary exists (similar to Linux and Windows)
 	// on MacOS X / iPhoneOS (for Bundles), it returns the root bundle path (.app)
-	core::Error programDirectory( char * path, size_t size );
+	core::Error program_directory( char * path, size_t size );
 
 	namespace path
 	{
@@ -60,9 +60,9 @@ namespace platform
 		void normalize( char * path, size_t size );
 		
 		// make a directory at path
-		core::Error makeDirectory( const char * path );
+		core::Error make_directory( const char * path );
 		
 		// make all non-existent directories along a normalized_path
-		void makeDirectories( const char * normalized_path );
+		void make_directories( const char * normalized_path );
 	}; // namespace path
 }; // namespace platform

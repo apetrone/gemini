@@ -29,10 +29,10 @@
 
 namespace kernel
 {
-	typedef std::map< std::string, Creator> KernelCreatorByString;
-	KernelCreatorByString _kernel_creator_map;
-	IKernel * _active_instance = 0;
-	Params _kernel_params;
+	typedef std::map< std::string, ApplicationCreator> ApplicationCreatorByString;
+	ApplicationCreatorByString _application_creator_map;
+	IKernel * _kernel = 0;
+	IApplication * _active_application = 0;
 
 	namespace _internal
 	{
@@ -43,39 +43,70 @@ namespace kernel
 		
 		State _kernel_state;
 		
-		static void registerKernelCreatorByName( const char * kernel_name, Creator creator )
+		static void register_application_by_name( const char * kernel_name, ApplicationCreator ApplicationCreator )
 		{
-			_kernel_creator_map.insert( KernelCreatorByString::value_type( kernel_name, creator) );
-		} // registerKernelCreatorByName
+			_application_creator_map.insert( ApplicationCreatorByString::value_type( kernel_name, ApplicationCreator) );
+		} // registerKernelApplicationCreatorByName
 		
-		static Creator findKernelCreatorByName( const char * kernel_name )
+		static ApplicationCreator find_application_by_name( const char * kernel_name )
 		{
 			std::string kname = kernel_name;
-			KernelCreatorByString::iterator it = _kernel_creator_map.find( kname );
-			if ( it != _kernel_creator_map.end() )
+			ApplicationCreatorByString::iterator it = _application_creator_map.find( kname );
+			if ( it != _application_creator_map.end() )
 			{
 				return (*it).second;
 			}
 			
 			return 0;
-		} // findKernelCreatorByName
+		} // findKernelApplicationCreatorByName
 	};
 	
-	Registrar::Registrar( const char * kernel_name, Creator creator )
+	Registrar::Registrar( const char * kernel_name, ApplicationCreator ApplicationCreator )
 	{
-		_internal::registerKernelCreatorByName( kernel_name, creator );
+		_internal::register_application_by_name( kernel_name, ApplicationCreator );
 	}
 	
 	IKernel * instance()
 	{
-		return _active_instance;
+		return _kernel;
+	}
+	
+	core::Error load_application( const char * application_name )
+	{
+		core::Error error(0);
+		
+		// search for the named kernel instance (passed on the command line or overriden above)
+		ApplicationCreator creator = _internal::find_application_by_name( application_name );
+		if ( creator )
+		{
+			// create an instance of the kernel
+			_active_application = creator();
+			if ( !_active_application )
+			{
+				fprintf( stdout, "Unable to create an instance of application: \"%s\", aborting!\n", application_name );
+				error = core::Error( core::Error::Failure, "Cannot " );
+			}
+		}
+		else
+		{
+			fprintf( stdout, "Application named \"%s\" not found, aborting!\n", application_name );
+			error = core::Error( core::Error::Failure, "Application not found by name" );
+		}
+		
+		return error;
 	}
 	
 	
-	Error startup( int argc, char ** argv, const char * kernel_name )
+	Error startup( int argc, char ** argv, IKernel * kernel_instance, const char * application_name )
 	{
-		Creator creator = 0;
-
+		// set instance
+		_kernel = kernel_instance;
+		if ( !_kernel )
+		{
+			fprintf( stderr, "No valid kernel instance found\n" );
+			return kernel::NoInstance;
+		}
+		
 		// initialize kernel's timer
 		xtime_startup( &_internal::_kernel_state.timer );
 		
@@ -83,33 +114,16 @@ namespace kernel
 		core::Error core_error = core::startup();
 		if ( core_error.failed() )
 		{
-			fprintf( stderr, "FATAL ERROR: %s\n", core_error.message );
+			fprintf( stderr, "Fatal error: %s\n", core_error.message );
+			core::shutdown();
 			return kernel::CoreFailed;
 		}
 		
-		// if there is no kernel_name provided, report an error
-		if ( !kernel_name )
+		// load application
+		core_error = load_application( application_name );
+		if ( core_error.failed() )
 		{
-			fprintf( stdout, "You must specify a kernel on the command line.\n\n" );
-			return kernel::NoKernel;
-		}
-		
-		// search for the named kernel instance (passed on the command line or overriden above)
-		creator = _internal::findKernelCreatorByName( kernel_name );
-		if ( !creator )
-		{
-			fprintf( stdout, "Unable to load kernel: \"%s\", aborting!\n", kernel_name );
-			core::shutdown();
-			return kernel::NotFound;
-		}
-		
-		// create an instance of the kernel
-		_active_instance = creator();
-		if ( !_active_instance )
-		{
-			fprintf( stdout, "No kernel instance. Aborting!\n" );
-			core::shutdown();
-			return kernel::NoInstance;
+			fprintf( stderr, "Fatal error loading application '%s' -> %s, aborting.\n", application_name, core_error.message );
 		}
 
 		return kernel::NoError;
@@ -118,13 +132,13 @@ namespace kernel
 	void shutdown()
 	{
 		// shutdown, cleanup
-		if ( _active_instance )
+		if ( _kernel )
 		{
-			_active_instance->shutdown();
+//			_kernel->shutdown();
 		
 			// delete kernel instance
-			delete _active_instance;
-			_active_instance = 0;
+//			delete _kernel;
+			_kernel = 0;
 		}
 		
 		// system cleanup
@@ -133,48 +147,66 @@ namespace kernel
 
 	void tick()
 	{
-		core::beginFrame();
-		_active_instance->tick( _kernel_params );
-		core::endFrame();
+		_kernel->pre_tick();
+		
+		_active_application->tick( _kernel->parameters() );
+		
+		_kernel->post_tick();
+//		_kernel->tick( _kernel_params );
 	}
 
 #if !MOBILE_PLATFORM
-	Error main( int argc, char ** argv, const char * kernel_name )
+	Error main( int argc, char ** argv, IKernel * kernel_instance, const char * kernel_name )
 	{
-		Error error = startup( argc, argv, kernel_name );
+		// attempt kernel startup, mostly initializing core systems
+		Error error = startup( argc, argv, kernel_instance, kernel_name );
 		if ( error != kernel::NoError )
 		{
 			fprintf( stderr, "Kernel startup failed with kernel code: %i\n", error );
+			return kernel::StartupFailed;
 		}
 		else
 		{
-			// set window attribs
-			int config_result = _active_instance->config( _kernel_params );
+			
+			
+			// application config
+			int config_result = _active_application->config( _kernel->parameters() );
 			if ( config_result == kernel::Success )
 			{
-				core::createWindow( _kernel_params.window_width, _kernel_params.window_height, _kernel_params.window_title );
+				// call this event on the kernel
+				kernel::Error kernel_error = _kernel->post_application_config();
+				
+				// check for kernel error on post_application_config
+				if ( kernel_error != kernel::NoError )
+				{
+					fprintf( stderr, "Fatal error in kernel post_application_config: %i\n", kernel_error );
+					return kernel::PostConfig;
+				}
 			}
 			else if ( config_result == kernel::Failure )
 			{
-				fprintf( stdout, "Config failed. aborting.\n" );
+				fprintf( stderr, "Application config failed. aborting.\n" );
 				return kernel::ConfigFailed;
 			}
 			
-			// kernel instance failed startup
-			int startup_result = _active_instance->startup( _kernel_params );
+			// application instance failed startup
+			int startup_result = _active_application->startup( _kernel->parameters() );
 			if ( startup_result == kernel::Failure )
 			{
-				fprintf( stdout, "kernel startup failed!\n" );
+				fprintf( stderr, "Application startup failed!\n" );
 				return kernel::StartupFailed;
 			}
 			
+			// start kernel disabled.
+			_kernel->set_active( false );
+			
 			// startup succeeded; enter main loop
-			if ( startup_result == kernel::Success )
+			if ( startup_result == kernel::Success )	
 			{
-				_kernel_params.is_active = true;
+				_kernel->set_active( true );
 				
 				// main loop, kernels can modify is_active.
-				while( _kernel_params.is_active )
+				while( _kernel->is_active() )
 				{
 					tick();
 				}

@@ -22,10 +22,10 @@
 #include "kernel.hpp"
 #include <stdio.h>
 
-class HelloWorld : public kernel::IKernel
+class HelloWorld : public kernel::IApplication
 {
 public:
-	DECLARE_KERNEL( HelloWorld );
+	DECLARE_APPLICATION( HelloWorld );
 
 	virtual int config( kernel::Params & params )
 	{
@@ -41,10 +41,6 @@ public:
 	virtual void tick( kernel::Params & params )
 	{
 	}
-
-	virtual void shutdown()
-	{
-	}
 };
 
-IMPLEMENT_KERNEL( HelloWorld );
+IMPLEMENT_APPLICATION( HelloWorld );

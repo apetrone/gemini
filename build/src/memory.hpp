@@ -34,10 +34,10 @@ namespace memory
 		virtual void * allocate( size_t bytes ) = 0;
 		virtual void deallocate( void * memory ) = 0;
 		
-		virtual size_t activeBytes() const = 0;
-		virtual size_t activeAllocations() const = 0;
-		virtual size_t totalAllocations() const = 0;
-		virtual size_t totalBytes() const = 0;
+		virtual size_t active_bytes() const = 0;
+		virtual size_t active_allocations() const = 0;
+		virtual size_t total_allocations() const = 0;
+		virtual size_t total_bytes() const = 0;
 	}; // IAllocator
 	
 	// initialize memory handling

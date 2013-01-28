@@ -82,7 +82,7 @@ namespace platform
 #endif
 	}
 	
-	core::Error programDirectory( char * path, size_t size )
+	core::Error program_directory( char * path, size_t size )
 	{
 		core::Error error(0);
 		int result = 0;
@@ -135,7 +135,7 @@ namespace platform
 		}
 		
 #if __APPLE__
-		error = osx_programDirectory( path, size );
+		error = osx_program_directory( path, size );
 #endif
 		return error;
 	}
@@ -143,7 +143,7 @@ namespace platform
 	
 	namespace path
 	{		
-		core::Error makeDirectory( const char * path )
+		core::Error make_directory( const char * path )
 		{
 			core::Error error(0);
 			int result = 0;

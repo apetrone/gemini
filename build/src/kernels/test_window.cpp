@@ -24,16 +24,16 @@
 //#include <log.h>
 //#include <filesystem.hpp>
 
-class Test_Window : public kernel::IKernel
+class TestWindow : public kernel::IApplication
 {
 public:
-	DECLARE_KERNEL( Test_Window );
+	DECLARE_APPLICATION( TestWindow );
 
 	virtual int config( kernel::Params & params )
 	{
 		params.window_width = 800;
 		params.window_height = 600;
-		params.window_title = "Test_Window";
+		params.window_title = "TestWindow";
 		return kernel::Success;
 	}
 
@@ -52,4 +52,4 @@ public:
 	}
 };
 
-IMPLEMENT_KERNEL( Test_Window );
+IMPLEMENT_APPLICATION( TestWindow );

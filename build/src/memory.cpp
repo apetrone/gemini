@@ -33,12 +33,12 @@ namespace memory
 	
 	class SimpleAllocator : public virtual IAllocator
 	{
-		size_t bytes_allocated;
-		size_t active_allocations;
-		size_t total_allocations;
-		size_t total_bytes;
+		size_t num_active_bytes;
+		size_t num_active_allocations;
+		size_t num_total_allocations;
+		size_t num_total_bytes;
 	public:
-		SimpleAllocator() : bytes_allocated(0), active_allocations(0), total_allocations(0), total_bytes(0) {}
+		SimpleAllocator() : num_active_bytes(0), num_active_allocations(0), num_total_allocations(0), num_total_bytes(0) {}
 		
 		virtual void * allocate( size_t bytes )
 		{
@@ -46,10 +46,10 @@ namespace memory
 			if ( block )
 			{
 				// increment totals
-				bytes_allocated += bytes+MemoryHeaderSize;
-				++total_allocations;
-				total_bytes += bytes+MemoryHeaderSize;
-				++active_allocations;
+				num_active_bytes += bytes+MemoryHeaderSize;
+				++num_total_allocations;
+				num_total_bytes += bytes+MemoryHeaderSize;
+				++num_active_allocations;
 				
 				// set the leading bytes of the block to the allocation size
 				size_t * memory_size = (size_t*)block;
@@ -77,17 +77,17 @@ namespace memory
 				size_t * memory_size = (size_t*)block;
 
 				// subtract allocations and sizes
-				bytes_allocated -= (*memory_size + MemoryHeaderSize);
-				--active_allocations;
+				num_active_bytes -= (*memory_size + MemoryHeaderSize);
+				--num_active_allocations;
 				
 				free( block );
 			}
 		} // deallocate
 		
-		virtual size_t activeBytes() const { return bytes_allocated; }
-		virtual size_t activeAllocations() const { return active_allocations; }
-		virtual size_t totalAllocations() const { return total_allocations; }
-		virtual size_t totalBytes() const { return total_bytes; }
+		virtual size_t active_bytes() const { return num_active_bytes; }
+		virtual size_t active_allocations() const { return num_active_allocations; }
+		virtual size_t total_allocations() const { return num_total_allocations; }
+		virtual size_t total_bytes() const { return num_total_bytes; }
 	}; // SimpleAllocator
 	
 	
@@ -101,7 +101,7 @@ namespace memory
 	void shutdown()
 	{
 		// if you hit this, there may be a memory leak with the allocator
-		assert( _allocator->activeAllocations() == 0 && _allocator->activeBytes() == 0 );
+		assert( _allocator->active_allocations() == 0 && _allocator->active_bytes() == 0 );
 		_allocator = 0;
 	} // shutdown
 	

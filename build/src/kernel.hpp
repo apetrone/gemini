@@ -23,16 +23,15 @@
 
 namespace kernel
 {
-	// kernel error codes, returned by kernel::main()
+	// kernel error codes
 	enum Error
 	{
 		NoError = 0,
-		NotFound = -1,
-		NoKernel = -2,
+		CoreFailed = -1,
+		PostConfig = -2,
 		NoInstance = -3,
 		ConfigFailed = -4,
-		StartupFailed = -5,
-		CoreFailed = -6
+		StartupFailed = -5
 	};
 
 	// Kernel flags for device details
@@ -84,47 +83,57 @@ namespace kernel
 		bool is_active;
 	};
 	
+	
+
+	class IApplication;
 	class IKernel
 	{
 	public:
 		IKernel() {}
 		virtual ~IKernel(){}
 
-		bool isActive() const;
-		void setInactive();
-		Params & parameters();
+		virtual bool is_active() const = 0;
+		virtual void set_active( bool isactive ) = 0;
+		virtual kernel::Params & parameters() = 0;
+		
+		// these tick functions wrap the application's tick call
+		virtual void pre_tick() = 0;
+		virtual void post_tick() = 0;
+		
+		// called after the IApplication's config() call returns successfully
+		virtual kernel::Error post_application_config() = 0;
+	};
+
+	class IApplication
+	{
+	public:
+		virtual ~IApplication() {}
 		
 		virtual int config( kernel::Params & params ) = 0; // return kSuccess, kFailure, or kNoWindow
 		virtual int startup( kernel::Params & params ) = 0; // return kSuccess, kFailure, or kNoWindow
 		virtual void tick( kernel::Params & params ) = 0; // called every frame
-//		virtual void step( kernel::Params & params ) = 0; // called every step interval milliseconds
-//		virtual void event( kernel::Params & event ) = 0;
-		
-		virtual void shutdown() = 0;
-		virtual const char * classname() = 0;
 	};
-
-
-	typedef IKernel * (*Creator)();
+	
+	typedef IApplication * (*ApplicationCreator)();
 	struct Registrar
 	{
-		Registrar( const char * name, Creator fn );
+		Registrar( const char * name, ApplicationCreator fn );
 	};
 	
 	//
 	// kernel registration / search
-	#define DECLARE_KERNEL( className ) \
-		public: static IKernel * create() { return new className; }\
+	#define DECLARE_APPLICATION( className ) \
+		public: static IApplication * create() { return new className; }\
 		public: virtual const char * classname() { return #className; }
 
-	#define IMPLEMENT_KERNEL( className ) \
+	#define IMPLEMENT_APPLICATION( className ) \
 		kernel::Registrar kr_##className( #className, className::create )
 	
 	// main loop for a desktop app; this manages the main loop itself.
 	// it's enough in a desktop application to simply hand off control to this function.
-	Error main( int argc, char ** argv, const char * kernel_name );
+	Error main( int argc, char ** argv, IKernel * kernel_instance, const char * application_name );
 	
-	Error startup( int argc, char ** argv, const char * kernel_name );
+	Error startup( int argc, char ** argv, const char * application_name );
 	void shutdown();
 	void tick();
 	

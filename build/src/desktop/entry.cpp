@@ -20,9 +20,11 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <iostream>
-#include "kernel.hpp"
+
+#include "kernel_desktop.hpp"
 
 int main( int argc, char ** argv )
 {
-	return kernel::main( argc, argv, "Test_Window" );
+	DesktopKernel desktop_kernel;
+	return kernel::main( argc, argv, &desktop_kernel, "TestWindow" );
 }

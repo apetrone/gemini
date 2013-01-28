@@ -40,9 +40,10 @@ namespace platform
 	void osx_shutdown()
 	{
 		[pool release];
+		pool = 0;
 	}
 	
-	core::Error osx_programDirectory( char * path, size_t size )
+	core::Error osx_program_directory( char * path, size_t size )
 	{
 		core::Error error(0);
 		NSString * bundle_path = [[NSBundle mainBundle] bundlePath];

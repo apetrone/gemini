@@ -28,5 +28,5 @@ namespace platform
 	core::Error osx_startup();
 	void osx_shutdown();
 	
-	core::Error osx_programDirectory( char * path, size_t size );
+	core::Error osx_program_directory( char * path, size_t size );
 }; // namespace platform

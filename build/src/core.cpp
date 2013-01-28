@@ -23,10 +23,6 @@
 #include "platform.hpp"
 #include "memory.hpp"
 
-#if !MOBILE_PLATFORM
-	#include <xwl/xwl.h>
-#endif
-
 namespace core
 {
 	Error::Error( int error_status, const char * error_message ) :
@@ -54,43 +50,5 @@ namespace core
 		
 		memory::shutdown();
 	} // shutdown
-	
-	void beginFrame()
-	{
-#if !MOBILE_PLATFORM
-		xwl_event_t e;
-		memset( &e, 0, sizeof(xwl_event_t) );
-		xwl_pollevent( &e );
-#endif
-	} // beginFrame
-	
-	void endFrame()
-	{
-#if !MOBILE_PLATFORM
-		xwl_finish();
-#endif
-	} // endFrame
-	
-#if !MOBILE_PLATFORM
-	core::Error createWindow( int width, int height, const char * title )
-	{
-		core::Error error(0);
-		xwl_windowparams_t windowparams;
-		windowparams.width = width;
-		windowparams.height = height;
-		windowparams.flags = XWL_OPENGL;
-		unsigned int attribs[] = { XWL_GL_PROFILE, XWL_GLPROFILE_CORE3_2, 0 };
-		
-		xwl_window_t * window = xwl_create_window( &windowparams, title, attribs );
-		if ( !window )
-		{
-			error = core::Error( core::Error::Failure, "Window creation failed" );
-			return error;
-		}
-		
-//		xwl_set_callback( event_callback_xwl );
-		
-		return error;
-	} // createWindow
-#endif
+
 }; // namespace core

@@ -39,10 +39,10 @@ struct Test
 	}
 };
 
-class Test_Memory : public kernel::IKernel
+class TestMemory : public kernel::IApplication
 {
 public:
-	DECLARE_KERNEL( Test_Memory );
+	DECLARE_APPLICATION( TestMemory );
 
 	virtual int config( kernel::Params & params )
 	{
@@ -55,11 +55,11 @@ public:
 		Test * a = ALLOC(Test);
 		
 		// added z-modifer to satisfy Xcode, C99 addition, we'll see who doesn't support it :)
-		printf( "totalAllocations: %zu, totalBytes: %zu\n", memory::allocator().totalAllocations(), memory::allocator().totalBytes() );
-		printf( "activeAllocations: %zu, activeBytes: %zu\n", memory::allocator().activeAllocations(), memory::allocator().activeBytes() );
+		printf( "totalAllocations: %zu, totalBytes: %zu\n", memory::allocator().total_allocations(), memory::allocator().total_bytes() );
+		printf( "activeAllocations: %zu, activeBytes: %zu\n", memory::allocator().active_allocations(), memory::allocator().active_bytes() );
 		
 		DEALLOC(Test, a);
-		printf( "activeAllocations: %zu, activeBytes: %zu\n", memory::allocator().activeAllocations(), memory::allocator().activeBytes() );
+		printf( "activeAllocations: %zu, activeBytes: %zu\n", memory::allocator().active_allocations(), memory::allocator().active_bytes() );
 		return kernel::NoWindow;
 	}
 
@@ -72,4 +72,4 @@ public:
 	}
 };
 
-IMPLEMENT_KERNEL( Test_Memory );
+IMPLEMENT_APPLICATION( TestMemory );

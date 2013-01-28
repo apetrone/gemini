@@ -43,11 +43,5 @@ namespace core
 	
 	Error startup();
 	void shutdown();
-	
-	void beginFrame();
-	void endFrame();
-	
-#if !MOBILE_PLATFORM
-	core::Error createWindow( int width, int height, const char * title );
-#endif
+
 }; // namespace core
