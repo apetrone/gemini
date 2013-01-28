@@ -26,17 +26,11 @@
 
 namespace memory
 {
-	// initialize memory handling
-	void startup();
-	
-	// shutdown services and optionally perform any metrics, leak detection, etc
-	void shutdown();
-	
 	class IAllocator
 	{
 	public:
 		virtual ~IAllocator() {}
-
+		
 		virtual void * allocate( size_t bytes ) = 0;
 		virtual void deallocate( void * memory ) = 0;
 		
@@ -46,10 +40,16 @@ namespace memory
 		virtual size_t totalBytes() const = 0;
 	}; // IAllocator
 	
+	// initialize memory handling
+	void startup();
 	
+	// shutdown services and optionally perform any metrics, leak detection, etc
+	void shutdown();
+	
+	// instance of the active allocator
 	IAllocator & allocator();
 
-	
+	// helper macros for alloc and dealloc on classes and structures
 	#define ALLOC(Type, ...)	new (memory::allocator().allocate(sizeof(Type))) Type(__VA_ARGS__)
 	#define DEALLOC(Type, pointer) { pointer->~Type(); memory::allocator().deallocate(pointer); }
 	

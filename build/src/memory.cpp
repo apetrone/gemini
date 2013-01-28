@@ -101,7 +101,7 @@ namespace memory
 	void shutdown()
 	{
 		// if you hit this, there may be a memory leak with the allocator
-		assert( _allocator->totalAllocations() == 0 && _allocator->totalBytes() == 0 );
+		assert( _allocator->activeAllocations() == 0 && _allocator->activeBytes() == 0 );
 		_allocator = 0;
 	} // shutdown
 	

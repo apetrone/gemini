@@ -19,10 +19,56 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <iostream>
 #include "kernel.hpp"
+#include <stdio.h>
 
-int main( int argc, char ** argv )
+#include "memory.hpp"
+
+struct Test
 {
-	return kernel::main( argc, argv, "Memory" );
-}
+	size_t def;
+	
+	Test()
+	{
+		printf( "Test()\n" );
+	}
+	
+	~Test()
+	{
+		printf( "~Test()\n" );
+	}
+};
+
+class Memory : public kernel::IKernel
+{
+public:
+	DECLARE_KERNEL( Memory );
+
+	virtual int config( kernel::Params & params )
+	{
+		return kernel::NoWindow;
+	}
+
+	virtual int startup( kernel::Params & params )
+	{
+		printf( "Memory Test: \n" );
+		Test * a = ALLOC(Test);
+		
+		printf( "totalAllocations: %i, totalBytes: %i\n", memory::allocator().totalAllocations(), memory::allocator().totalBytes() );
+		printf( "activeAllocations: %i, activeBytes: %i\n", memory::allocator().activeAllocations(), memory::allocator().activeBytes() );
+		
+		DEALLOC(Test, a);
+		printf( "activeAllocations: %i, activeBytes: %i\n", memory::allocator().activeAllocations(), memory::allocator().activeBytes() );
+		return kernel::NoWindow;
+	}
+
+	virtual void tick( kernel::Params & params )
+	{
+	}
+
+	virtual void shutdown()
+	{
+	}
+};
+
+IMPLEMENT_KERNEL( Memory );
