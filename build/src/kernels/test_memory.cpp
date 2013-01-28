@@ -54,11 +54,12 @@ public:
 		printf( "Memory Test: \n" );
 		Test * a = ALLOC(Test);
 		
-		printf( "totalAllocations: %i, totalBytes: %i\n", memory::allocator().totalAllocations(), memory::allocator().totalBytes() );
-		printf( "activeAllocations: %i, activeBytes: %i\n", memory::allocator().activeAllocations(), memory::allocator().activeBytes() );
+		// added z-modifer to satisfy Xcode, C99 addition, we'll see who doesn't support it :)
+		printf( "totalAllocations: %zu, totalBytes: %zu\n", memory::allocator().totalAllocations(), memory::allocator().totalBytes() );
+		printf( "activeAllocations: %zu, activeBytes: %zu\n", memory::allocator().activeAllocations(), memory::allocator().activeBytes() );
 		
 		DEALLOC(Test, a);
-		printf( "activeAllocations: %i, activeBytes: %i\n", memory::allocator().activeAllocations(), memory::allocator().activeBytes() );
+		printf( "activeAllocations: %zu, activeBytes: %zu\n", memory::allocator().activeAllocations(), memory::allocator().activeBytes() );
 		return kernel::NoWindow;
 	}
 
