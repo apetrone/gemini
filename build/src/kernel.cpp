@@ -99,6 +99,8 @@ namespace kernel
 	
 	Error startup( int argc, char ** argv, IKernel * kernel_instance, const char * application_name )
 	{
+
+		
 		// set instance
 		_kernel = kernel_instance;
 		if ( !_kernel )
@@ -106,6 +108,16 @@ namespace kernel
 			fprintf( stderr, "No valid kernel instance found\n" );
 			return kernel::NoInstance;
 		}
+		
+		// setup parameters
+		kernel::Params & params = kernel_instance->parameters();
+		params.argc = argc;
+		params.argv = argv;
+		params.error_message = 0;
+		params.device_flags = 0;
+		params.window_width = 0;
+		params.window_height = 0;
+		params.has_window = 0;
 		
 		// initialize kernel's timer
 		xtime_startup( &_internal::_kernel_state.timer );
@@ -124,20 +136,48 @@ namespace kernel
 		if ( core_error.failed() )
 		{
 			fprintf( stderr, "Fatal error loading application '%s' -> %s, aborting.\n", application_name, core_error.message );
+			return kernel::ApplicationFailure;
 		}
+		
+		// application config
+		int config_result = _active_application->config( kernel::instance()->parameters() );
+		if ( config_result == kernel::Success )
+		{
+			// call this event on the kernel
+			kernel::Error kernel_error = kernel::instance()->post_application_config();
+			
+			// check for kernel error on post_application_config
+			if ( kernel_error != kernel::NoError )
+			{
+				fprintf( stderr, "Fatal error in kernel post_application_config: %i\n", kernel_error );
+				return kernel::PostConfig;
+			}
+		}
+		else if ( config_result == kernel::Failure )
+		{
+			fprintf( stderr, "Application config failed. aborting.\n" );
+			return kernel::ConfigFailed;
+		}
+		
+		// application instance failed startup
+		int startup_result = _active_application->startup( kernel::instance()->parameters() );
+		if ( startup_result == kernel::Failure )
+		{
+			fprintf( stderr, "Application startup failed!\n" );
+			return kernel::StartupFailed;
+		}
+		
+		// set has window param (kind of hacky right now)
+		params.has_window = (startup_result != kernel::NoWindow);
 
 		return kernel::NoError;
-	}
+	} // startup
 	
 	void shutdown()
 	{
 		// shutdown, cleanup
 		if ( _kernel )
 		{
-//			_kernel->shutdown();
-		
-			// delete kernel instance
-//			delete _kernel;
 			_kernel = 0;
 		}
 		
@@ -148,76 +188,8 @@ namespace kernel
 	void tick()
 	{
 		_kernel->pre_tick();
-		
 		_active_application->tick( _kernel->parameters() );
-		
 		_kernel->post_tick();
-//		_kernel->tick( _kernel_params );
 	}
-
-#if !MOBILE_PLATFORM
-	Error main( int argc, char ** argv, IKernel * kernel_instance, const char * kernel_name )
-	{
-		// attempt kernel startup, mostly initializing core systems
-		Error error = startup( argc, argv, kernel_instance, kernel_name );
-		if ( error != kernel::NoError )
-		{
-			fprintf( stderr, "Kernel startup failed with kernel code: %i\n", error );
-			return kernel::StartupFailed;
-		}
-		else
-		{
-			
-			
-			// application config
-			int config_result = _active_application->config( _kernel->parameters() );
-			if ( config_result == kernel::Success )
-			{
-				// call this event on the kernel
-				kernel::Error kernel_error = _kernel->post_application_config();
-				
-				// check for kernel error on post_application_config
-				if ( kernel_error != kernel::NoError )
-				{
-					fprintf( stderr, "Fatal error in kernel post_application_config: %i\n", kernel_error );
-					return kernel::PostConfig;
-				}
-			}
-			else if ( config_result == kernel::Failure )
-			{
-				fprintf( stderr, "Application config failed. aborting.\n" );
-				return kernel::ConfigFailed;
-			}
-			
-			// application instance failed startup
-			int startup_result = _active_application->startup( _kernel->parameters() );
-			if ( startup_result == kernel::Failure )
-			{
-				fprintf( stderr, "Application startup failed!\n" );
-				return kernel::StartupFailed;
-			}
-			
-			// start kernel disabled.
-			_kernel->set_active( false );
-			
-			// startup succeeded; enter main loop
-			if ( startup_result == kernel::Success )	
-			{
-				_kernel->set_active( true );
-				
-				// main loop, kernels can modify is_active.
-				while( _kernel->is_active() )
-				{
-					tick();
-				}
-			}
-		}
-
-		// cleanup kernel memory
-		shutdown();
-		
-		return error;
-	} // main
-#endif
 
 }; // namespace kernel

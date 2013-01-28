@@ -24,6 +24,45 @@
 #include <string.h>
 #include <stdio.h>
 
+
+namespace kernel
+{
+	Error main( int argc, char ** argv, IKernel * kernel_instance, const char * kernel_name )
+	{
+		// attempt kernel startup, mostly initializing core systems
+		Error error = startup( argc, argv, kernel_instance, kernel_name );
+		if ( error != kernel::NoError )
+		{
+			fprintf( stderr, "Kernel startup failed with kernel code: %i\n", error );
+			return kernel::StartupFailed;
+		}
+		else
+		{
+			// start kernel disabled.
+			kernel::instance()->set_active( false );
+			
+			// startup succeeded; enter main loop if we have a window
+			if ( kernel::instance()->parameters().has_window )
+			{
+				kernel::instance()->set_active( true );
+				
+				// main loop, kernels can modify is_active.
+				while( kernel::instance()->is_active() )
+				{
+					tick();
+				}
+			}
+		}
+		
+		// cleanup kernel memory
+		shutdown();
+		
+		return error;
+	} // main
+}; // namespace kernel
+
+
+
 void event_callback_xwl( xwl_event_t * e )
 {
 	if ( e->type == XWLE_KEYRELEASED || e->type == XWLE_KEYPRESSED )

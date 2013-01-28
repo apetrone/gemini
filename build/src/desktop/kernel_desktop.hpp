@@ -22,7 +22,6 @@
 #pragma once
 #include "kernel.hpp"
 
-
 class DesktopKernel : public virtual kernel::IKernel
 {
 	bool active;
@@ -35,4 +34,3 @@ public:
 	virtual void post_tick();
 	virtual kernel::Error post_application_config();
 };
-

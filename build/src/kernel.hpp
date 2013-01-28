@@ -31,7 +31,8 @@ namespace kernel
 		PostConfig = -2,
 		NoInstance = -3,
 		ConfigFailed = -4,
-		StartupFailed = -5
+		StartupFailed = -5,
+		ApplicationFailure = -6,
 	};
 
 	// Kernel flags for device details
@@ -80,7 +81,7 @@ namespace kernel
 		unsigned short prev_width;
 		unsigned short prev_height;
 		unsigned char event_type;
-		bool is_active;
+		bool has_window;
 	};
 	
 	
@@ -132,7 +133,7 @@ namespace kernel
 	// it's enough in a desktop application to simply hand off control to this function.
 	Error main( int argc, char ** argv, IKernel * kernel_instance, const char * application_name );
 	
-	Error startup( int argc, char ** argv, const char * application_name );
+	Error startup( int argc, char ** argv, IKernel * kernel_instance, const char * application_name );
 	void shutdown();
 	void tick();
 	
