@@ -4,6 +4,13 @@ class gemini(Builder):
 		target_platform = kwargs.get( "target_platform", None )
 
 		self.build_name = 'gemini'
+
+		if target_platform == MACOSX:
+			self.resource_path = "resources/osx/icon.icns"
+		elif target_platform == IPHONEOS:
+			self.resource_path = "resources/ios/*"
+			self.build_name = 'gemini-ios'
+
 		project = Project( name=self.build_name )
 		builder.addProject( project )
 		builder.includes = []
@@ -13,11 +20,6 @@ class gemini(Builder):
 		self.builder_type = DefaultDict( Builder.Binary )
 		self.builder_type[ MACOSX ] = Builder.Bundle
 		self.builder_type[ IPHONEOS ] = Builder.Bundle
-
-		if target_platform == MACOSX:
-			self.resource_path = "resources/osx/icon.icns"
-		elif target_platform == IPHONEOS:
-			self.resource_path = "resources/ios/*"
 
 	def config(self, *args, **kwargs):
 		driver = kwargs.get( "driver", None )
@@ -35,12 +37,21 @@ class gemini(Builder):
 		driver.makefile = "%s.make" % (self.build_name)
 
 	@staticmethod
-	def depends():
+	def depends( *args, **kwargs ):
+		target_platform = kwargs.get( "target_platform", None )
 		d = {}
 		d['libpath'] = "lib/{architecture}/{configuration}"
 		d['depends_file'] = 'build/deps.lua'
 		d['depends_path'] = 'build/dependencies'
-		d['depends'] = [ "xwl/xwl.py" ]
+
+		common_dependencies = []
+		mobile_dependencies = common_dependencies
+		desktop_dependencies = list( set(common_dependencies) | set(["xwl/xwl.py"]) )
+
+		if target_platform == IPHONEOS:
+			d['depends'] = mobile_dependencies
+		else:
+			d['depends'] = desktop_dependencies
 		return d
 
 	def generate(self, *args, **kwargs):

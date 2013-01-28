@@ -16,6 +16,11 @@ if _OPTIONS["platform_list"] ~= nil then
 end
 
 local build_name = "gemini"
+
+if _OPTIONS["ios"] ~= nil then
+	build_name = "gemini-ios"
+end
+
 solution ( build_name )
 	configurations { "debug", "release" }
 	platforms { platform_strings  }
