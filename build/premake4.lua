@@ -45,7 +45,7 @@ project ( build_name )
 	-- building for desktop
 	if _OPTIONS["ios"] == nil then
 		files {
-			"src/desktop/entry.cpp"
+			"src/desktop/*.c*"
 		}
 	end
 
