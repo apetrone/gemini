@@ -74,7 +74,7 @@ project ( build_name )
 
 	configuration { "linux" }
 		defines { "LINUX=1" }
-		links { "X11", "GL" }
+		links { "X11", "GL", "pthread", "dl" }
 		files { common_file_list[ "linux" ] }
 
 	configuration { "macosx" }
