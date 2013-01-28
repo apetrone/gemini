@@ -24,5 +24,5 @@
 
 int main( int argc, char ** argv )
 {
-	return kernel::main( argc, argv, "HelloWorld" );
+	return kernel::main( argc, argv, "Experimental" );
 }

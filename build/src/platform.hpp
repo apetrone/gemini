@@ -39,8 +39,7 @@
 #endif
 
 
-#include <stdio.h> // for size_t on .. (OSX?)
-
+#include <stdio.h> // for size_t
 #include "core.hpp" // for core::Error
 
 

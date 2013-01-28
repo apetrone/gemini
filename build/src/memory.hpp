@@ -19,35 +19,38 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "core.hpp"
-#include "platform.hpp"
-#include "memory.hpp"
+#pragma once
 
-namespace core
+#include <string.h> // for size_t
+#include <memory> // for placement new
+
+namespace memory
 {
-	Error::Error( int error_status, const char * error_message ) :
-		status(error_status), message(error_message)
-	{
-	}
+	// initialize memory handling
+	void startup();
 	
-	Error startup()
-	{
-		memory::startup();
-		
-		core::Error error = platform::startup();
-		if ( error.failed() )
-		{
-			fprintf( stderr, "platform startup failed! %s\n", error.message );
-			return error;
-		}
-		
-		return error;
-	} // startup
+	// shutdown services and optionally perform any metrics, leak detection, etc
+	void shutdown();
 	
-	void shutdown()
+	class IAllocator
 	{
-		platform::shutdown();
+	public:
+		virtual ~IAllocator() {}
+
+		virtual void * allocate( size_t bytes ) = 0;
+		virtual void deallocate( void * memory ) = 0;
 		
-		memory::shutdown();
-	} // shutdown
-}; // namespace core
+		virtual size_t activeBytes() const = 0;
+		virtual size_t activeAllocations() const = 0;
+		virtual size_t totalAllocations() const = 0;
+		virtual size_t totalBytes() const = 0;
+	}; // IAllocator
+	
+	
+	IAllocator & allocator();
+
+	
+	#define ALLOC(Type, ...)	new (memory::allocator().allocate(sizeof(Type))) Type(__VA_ARGS__)
+	#define DEALLOC(Type, pointer) { pointer->~Type(); memory::allocator().deallocate(pointer); }
+	
+}; // namespace memory

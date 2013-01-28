@@ -83,6 +83,6 @@ class gemini(Builder):
 				destination_resource_path = os.path.abspath( os.path.join( appBundle, "Resources" ) )
 
 			self.resource_path = os.path.abspath( os.path.join( currentWorkingDirectory(), self.resource_path ) )
-			logging.info( "Now to copy build resources... (%s -> %s)" % (self.resource_path, destination_resource_path ) )
+			#logging.info( "Now to copy build resources... (%s -> %s)" % (self.resource_path, destination_resource_path ) )
 			gcp = GlobCopy( src=self.resource_path, dst=destination_resource_path )
 			gcp.run()
