@@ -93,17 +93,25 @@ project ( build_name )
 				-- ios needs an application bundle
 				kind "WindowedApp"
 
+				files
+				{
+					"src/ios/*.m*",
+					"src/ios/*.h*"
+				}
+
 				linkoptions
 				{
 					"-framework UIKit",
+					"-framework OpenAL",
 					"-framework OpenGLES",
 					"-framework AudioToolbox",
+					"-framework AVFoundation",
 					"-framework Foundation",
-					--"-framework CoreFoundation",
-					--"-framework QuartzCore",
-					--"-framework CoreGraphics"
+					"-framework CoreGraphics",
+					"-framework GLKit"
 				}
-				xcodebuildsettings {
+				xcodebuildsettings
+				{
 					'INFOPLIST_FILE = "resources/ios/Info.plist"',
 					'CODE_SIGN_IDENTITY = "iPhone Developer"',
 					'SDKROOT = iphoneos',
@@ -114,7 +122,6 @@ project ( build_name )
 					'STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = dynamic',
 				}
 
-				defines { "ARM_NEON_GCC_COMPATIBILITY" }
 			else
 				linkoptions
 				{
@@ -122,11 +129,13 @@ project ( build_name )
 					"-framework OpenGL",
 					"-framework AudioToolbox"
 				}
-				xcodebuildsettings {
+				xcodebuildsettings
+				{
 					"INFOPLIST_FILE = resources/osx/Info.plist"
 				}
 
-				files {
+				files
+				{
 					"src/osx/*.m*",
 					"src/osx/*.h*"
 				}
