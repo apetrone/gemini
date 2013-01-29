@@ -27,12 +27,18 @@ struct xwl_windowparams_s;
 
 class DesktopKernel : public virtual kernel::IKernel
 {
+	struct DesktopParams : public kernel::Params
+	{
+		int argc;
+		char ** argv;
+	};
+	
 	bool active;
-	kernel::Params params;
+	DesktopParams params;
 	
 	int target_renderer;
 public:
-	DesktopKernel();
+	DesktopKernel( int argc, char ** argv );
 	
 	virtual bool is_active() const { return active; }
 	virtual void set_active( bool isactive ) { active = isactive; }
@@ -45,3 +51,10 @@ public:
 private:
 	struct xwl_window_s *create_window( struct xwl_windowparams_s * windowparams, const char * title, unsigned int * attribs );
 };
+
+namespace kernel
+{
+	// main loop for a desktop app; this manages the main loop itself.
+	// it's enough in a desktop application to simply hand off control to this function.
+	Error main( IKernel * kernel_instance, const char * application_name );
+}; // namespace kernel

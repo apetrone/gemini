@@ -26,10 +26,10 @@
 
 namespace kernel
 {
-	Error main( int argc, char ** argv, IKernel * kernel_instance, const char * kernel_name )
+	Error main( IKernel * kernel_instance, const char * kernel_name )
 	{
 		// attempt kernel startup, mostly initializing core systems
-		Error error = startup( argc, argv, kernel_instance, kernel_name );
+		Error error = startup( kernel_instance, kernel_name );
 		if ( error != kernel::NoError )
 		{
 			fprintf( stderr, "Kernel startup failed with kernel code: %i\n", error );
@@ -92,9 +92,10 @@ void event_callback_xwl( xwl_event_t * e )
 	}
 } // event_callback_xwl
 
-DesktopKernel::DesktopKernel() : target_renderer(0)
+DesktopKernel::DesktopKernel( int argc, char ** argv ) : target_renderer(0)
 {
-	
+	params.argc = argc;
+	params.argv = argv;
 }
 
 void DesktopKernel::pre_tick()
@@ -102,12 +103,12 @@ void DesktopKernel::pre_tick()
 	xwl_event_t e;
 	memset( &e, 0, sizeof(xwl_event_t) );
 	xwl_pollevent( &e );
-}
+} // pre_tick
 
 void DesktopKernel::post_tick()
 {
 	xwl_finish();
-}
+} // post_tick
 
 kernel::Error DesktopKernel::post_application_config()
 {
@@ -129,7 +130,7 @@ kernel::Error DesktopKernel::post_application_config()
 	xwl_set_callback( event_callback_xwl );
 	
 	return kernel::NoError;
-}
+} // post_application_config
 
 struct xwl_window_s *DesktopKernel::create_window( struct xwl_windowparams_s * windowparams, const char * title, unsigned int * attribs )
 {
@@ -151,4 +152,4 @@ struct xwl_window_s *DesktopKernel::create_window( struct xwl_windowparams_s * w
 	}
 	
 	return window;
-}
+} // create_window

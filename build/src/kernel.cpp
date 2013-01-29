@@ -97,10 +97,8 @@ namespace kernel
 	}
 	
 	
-	Error startup( int argc, char ** argv, IKernel * kernel_instance, const char * application_name )
+	Error startup( IKernel * kernel_instance, const char * application_name )
 	{
-
-		
 		// set instance
 		_kernel = kernel_instance;
 		if ( !_kernel )
@@ -111,8 +109,6 @@ namespace kernel
 		
 		// setup parameters
 		kernel::Params & params = kernel_instance->parameters();
-		params.argc = argc;
-		params.argv = argv;
 		params.error_message = 0;
 		params.device_flags = 0;
 		params.window_width = 0;

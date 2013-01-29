@@ -24,6 +24,6 @@
 
 int main( int argc, char ** argv )
 {
-	DesktopKernel desktop_kernel;
-	return kernel::main( argc, argv, &desktop_kernel, "TestWindow" );
+	DesktopKernel desktop_kernel( argc, argv );
+	return kernel::main( &desktop_kernel, "TestWindow" );
 }

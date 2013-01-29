@@ -62,9 +62,7 @@ namespace kernel
 			LostFocusEvent,
 			ResizeEvent,
 		};
-		
-		int argc;
-		char ** argv;
+
 		const char * error_message;
 		const char * window_title;
 		
@@ -129,11 +127,7 @@ namespace kernel
 	#define IMPLEMENT_APPLICATION( className ) \
 		kernel::Registrar kr_##className( #className, className::create )
 	
-	// main loop for a desktop app; this manages the main loop itself.
-	// it's enough in a desktop application to simply hand off control to this function.
-	Error main( int argc, char ** argv, IKernel * kernel_instance, const char * application_name );
-	
-	Error startup( int argc, char ** argv, IKernel * kernel_instance, const char * application_name );
+	Error startup( IKernel * kernel_instance, const char * application_name );
 	void shutdown();
 	void tick();
 	
