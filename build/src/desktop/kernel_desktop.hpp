@@ -22,15 +22,26 @@
 #pragma once
 #include "kernel.hpp"
 
+struct xwl_window_s;
+struct xwl_windowparams_s;
+
 class DesktopKernel : public virtual kernel::IKernel
 {
 	bool active;
 	kernel::Params params;
+	
+	int target_renderer;
 public:
+	DesktopKernel();
+	
 	virtual bool is_active() const { return active; }
 	virtual void set_active( bool isactive ) { active = isactive; }
 	virtual kernel::Params & parameters() { return params; }
 	virtual void pre_tick();
 	virtual void post_tick();
 	virtual kernel::Error post_application_config();
+	
+	
+private:
+	struct xwl_window_s *create_window( struct xwl_windowparams_s * windowparams, const char * title, unsigned int * attribs );
 };

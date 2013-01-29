@@ -24,7 +24,6 @@
 #include <string.h>
 #include <stdio.h>
 
-
 namespace kernel
 {
 	Error main( int argc, char ** argv, IKernel * kernel_instance, const char * kernel_name )
@@ -91,6 +90,11 @@ void event_callback_xwl( xwl_event_t * e )
 //		kernel::instance()->parameters().window_width = e->width;
 //		kernel::instance()->parameters().window_height = e->height;
 	}
+} // event_callback_xwl
+
+DesktopKernel::DesktopKernel() : target_renderer(0)
+{
+	
 }
 
 void DesktopKernel::pre_tick()
@@ -111,11 +115,13 @@ kernel::Error DesktopKernel::post_application_config()
 	windowparams.width = parameters().window_width;
 	windowparams.height = parameters().window_height;
 	windowparams.flags = XWL_OPENGL;
+	
+	// pick the core 3.2 profile if we can
 	unsigned int attribs[] = { XWL_GL_PROFILE, XWL_GLPROFILE_CORE3_2, 0 };
 	
-	xwl_window_t * window = xwl_create_window( &windowparams, parameters().window_title, attribs );
+	xwl_window_t * window = this->create_window( &windowparams, parameters().window_title, attribs );
 	if ( !window )
-	{
+	{		
 		fprintf( stderr, "Window creation failed" );
 		return kernel::PostConfig;
 	}
@@ -123,4 +129,26 @@ kernel::Error DesktopKernel::post_application_config()
 	xwl_set_callback( event_callback_xwl );
 	
 	return kernel::NoError;
+}
+
+struct xwl_window_s *DesktopKernel::create_window( struct xwl_windowparams_s * windowparams, const char * title, unsigned int * attribs )
+{
+	xwl_window_t * window = 0;
+	window = xwl_create_window( windowparams, title, attribs );
+	if ( !window )
+	{
+		// try to scale back to the legacy profile
+		attribs[1] = XWL_GLPROFILE_LEGACY;
+		
+		window = xwl_create_window( windowparams, title, attribs );
+		if ( !window )
+		{
+			return 0;
+		}
+		
+		// TODO: this was successful, set the target_renderer to some constant
+		target_renderer = 1;
+	}
+	
+	return window;
 }
