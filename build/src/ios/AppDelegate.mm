@@ -112,7 +112,7 @@ extern "C"
 	// get the current status bar notification and send that to the kernel on startup
 	UIInterfaceOrientation startup_orientation = [[UIApplication sharedApplication] statusBarOrientation];
 //	kernel_ios_startup( cb, [[self.viewController view] bounds].size.width, [[self.viewController view] bounds].size.height, startup_orientation );	
-	if ( kernel::startup( mobile_kernel, "HelloWorld" ) != kernel::NoError )
+	if ( kernel::startup( mobile_kernel, "TestMobile" ) != kernel::NoError )
 	{
 		NSLog( @"kernel startup failed!" );
 	}

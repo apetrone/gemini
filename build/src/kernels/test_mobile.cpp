@@ -22,20 +22,39 @@
 #include "kernel.hpp"
 #include <stdio.h>
 
-class HelloWorld : public kernel::IApplication
+class TestMobile : public kernel::IApplication,
+	kernel::IEventListener<kernel::TouchEvent>
+
 {
 public:
-	DECLARE_APPLICATION( HelloWorld );
+	DECLARE_APPLICATION( TestMobile );
 
+	virtual void event( kernel::TouchEvent & event )
+	{
+		if ( event.subtype == kernel::TouchBegin )
+		{
+			fprintf( stdout, "Touch Event Began at %i, %i\n", event.x, event.y );
+		}
+		else if ( event.subtype == kernel::TouchMoved )
+		{
+			fprintf( stdout, "Touch Event Moved at %i, %i\n", event.x, event.y );
+		}
+		else if ( event.subtype == kernel::TouchEnd )
+		{
+			fprintf( stdout, "Touch Event Ended at %i, %i\n", event.x, event.y );
+		}
+	}
+	
 	virtual int config( kernel::Params & params )
-	{		
-		return kernel::NoWindow;
+	{
+		kernel::subscribe_event<kernel::TouchEvent>( this );
+		
+		return kernel::Success;
 	}
 
 	virtual int startup( kernel::Params & params )
 	{
-		printf( "Hello World!\n" );
-		return kernel::NoWindow;
+		return kernel::Success;
 	}
 
 	virtual void tick( kernel::Params & params )
@@ -43,4 +62,4 @@ public:
 	}
 };
 
-IMPLEMENT_APPLICATION( HelloWorld );
+IMPLEMENT_APPLICATION( TestMobile );
