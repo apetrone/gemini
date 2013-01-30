@@ -70,9 +70,9 @@ public:
 		params.window_height = 600;
 		params.window_title = "TestWindow";
 		
-		kernel::subscribe_event<KeyboardEvent>( this );
-		kernel::subscribe_event<MouseEvent>( this );
-		kernel::subscribe_event<SystemEvent>( this );
+		kernel::event_subscribe<KeyboardEvent>( this );
+		kernel::event_subscribe<MouseEvent>( this );
+		kernel::event_subscribe<SystemEvent>( this );
 		
 		return kernel::Success;
 	}

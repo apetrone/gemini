@@ -136,15 +136,15 @@ namespace kernel
 	
 	// this accepts subscription requests from an IApplication class for events
 	template <class Type>
-	void subscribe_event( kernel::IEventListener<Type> * listener )
+	void event_subscribe( kernel::IEventListener<Type> * listener )
 	{
 		EventType event_type = Type::event_type;
 		assign_listener_for_eventtype( event_type, listener );
-	} // subscribe_event
+	} // event_subscribe
 	
 	// this is used by the kernel to dispatch events to the IApplication's event listeners
 	template <class Type>
-	void dispatch_event( Type & event )
+	void event_dispatch( Type & event )
 	{
 		EventType event_type = Type::event_type;
 		IEventListener<Type> * event_listener = (IEventListener<Type>*)find_listener_for_eventtype(event_type);
@@ -152,7 +152,8 @@ namespace kernel
 		{
 			event_listener->event( event );
 		}
-	} // dispatch_event
+	} // event_dispatch
+	
 
 	
 	IKernel * instance();

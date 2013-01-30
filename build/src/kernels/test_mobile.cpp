@@ -47,7 +47,7 @@ public:
 	
 	virtual int config( kernel::Params & params )
 	{
-		kernel::subscribe_event<kernel::TouchEvent>( this );
+		kernel::event_subscribe<kernel::TouchEvent>( this );
 		
 		return kernel::Success;
 	}

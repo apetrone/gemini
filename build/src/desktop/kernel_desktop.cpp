@@ -75,7 +75,7 @@ void event_callback_xwl( xwl_event_t * e )
 		ev.is_down = (e->type == XWLE_KEYPRESSED);
 		ev.key = e->key;
 		ev.unicode = e->unicode;
-		kernel::dispatch_event( ev );
+		kernel::event_dispatch( ev );
 	}
 	else if ( e->type == XWLE_MOUSEMOVE )
 	{
@@ -83,7 +83,7 @@ void event_callback_xwl( xwl_event_t * e )
 		ev.subtype = kernel::MouseMoved;
 		ev.mx = e->mx;
 		ev.my = e->my;
-		kernel::dispatch_event( ev );
+		kernel::event_dispatch( ev );
 	}
 	else if ( e->type == XWLE_MOUSEBUTTON_PRESSED || e->type == XWLE_MOUSEBUTTON_RELEASED )
 	{
@@ -93,7 +93,7 @@ void event_callback_xwl( xwl_event_t * e )
 		ev.is_down = (e->type == XWLE_MOUSEBUTTON_PRESSED);
 		ev.mx = e->mx;
 		ev.my = e->my;
-		kernel::dispatch_event( ev );
+		kernel::event_dispatch( ev );
 	}
 	else if ( e->type == XWLE_MOUSEWHEEL )
 	{
@@ -102,7 +102,7 @@ void event_callback_xwl( xwl_event_t * e )
 		ev.mx = e->mx;
 		ev.my = e->my;
 		ev.wheel_direction = e->wheelDelta;
-		kernel::dispatch_event( ev );
+		kernel::event_dispatch( ev );
 	}
 	else if ( e->type == XWLE_SIZE )
 	{
@@ -110,7 +110,7 @@ void event_callback_xwl( xwl_event_t * e )
 		ev.subtype = kernel::WindowResized;
 		ev.window_width = e->width;
 		ev.window_height = e->height;
-		kernel::dispatch_event( ev );
+		kernel::event_dispatch( ev );
 	}
 	else if ( e->type == XWLE_GAINFOCUS || e->type == XWLE_LOSTFOCUS )
 	{
@@ -118,7 +118,7 @@ void event_callback_xwl( xwl_event_t * e )
 		ev.subtype = (e->type == XWLE_GAINFOCUS) ? kernel::WindowGainFocus : kernel::WindowLostFocus;
 		ev.window_width = e->width;
 		ev.window_height = e->height;
-		kernel::dispatch_event( ev );
+		kernel::event_dispatch( ev );
 	}
 } // event_callback_xwl
 
