@@ -80,7 +80,7 @@ namespace core
 			
 			char logdir[MAX_PATH_SIZE];
 			memset( logdir, 0, MAX_PATH_SIZE );
-			xstr_ncpy(logdir, fs::content_directory(), -1 );
+			xstr_ncpy( logdir, fs::content_directory(), -1 );
 			xstr_cat( logdir, "/"GEMINI_LOG_PATH"/" );
 			platform::path::normalize( logdir, MAX_PATH_SIZE );
 			
@@ -106,21 +106,20 @@ namespace core
 			if ( log_open( &_system_log ) < total_log_handlers )
 			{
 				fprintf( stderr, "Could not open one or more log handlers\n" );
-				error = core::Error( core::Error::Failure, "Could not open one or more log handlers" );
-				return error;
+				error = core::Error( core::Error::Warning, "Could not open one or more log handlers" );
 			}
 			
 			LogV( "Logging system initialized.\n" );
 			
 			return error;
-		}
+		} // open_log_handlers
 		
 		
 		void close_log_handlers()
 		{
 			log_close( &_system_log );
-		}
-	};
+		} // close_log_handlers
+	}; // namespace _internal
 	
 	
 	
@@ -157,12 +156,13 @@ namespace core
 		
 		// set the content directory
 		_internal::set_content_directory_from_root( fullpath );
+
 		
-		
+		// open logs
 		error = _internal::open_log_handlers();
 		if ( error.failed() )
 		{
-			fprintf( stderr, "failed to open logging handlers!\n" );
+			fprintf( stderr, "failed to open logging handlers: %s\n", error.message );
 			return error;
 		}
 		
@@ -177,48 +177,5 @@ namespace core
 		
 		memory::shutdown();
 	} // shutdown
-	
-	
-	// log handler function definitions
-	namespace _internal
-	{
-		void file_logger_message( log_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type )
-		{
-			fprintf( (FILE*)handler->userdata, "[%i %s %s %i] %s", type, xstr_filefrompath(filename), function, line, message );
-			//fprintf( (FILE*)handler->userdata, "\t%s", message );
-			fflush( (FILE*)handler->userdata );
-		}
-		
-		int file_logger_open( log_handler_t * handler )
-		{
-			const char * logname = (const char*)handler->userdata;
-			handler->userdata = fopen( logname, "wb" );
-			return handler->userdata != 0;
-		}
-		
-		void file_logger_close( log_handler_t * handler )
-		{
-			if ( handler->userdata )
-			{
-				fclose( (FILE*)handler->userdata );
-			}
-		}
-		
-		
-		void stdout_message( log_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type )
-		{
-			fprintf( stdout, "[%i] - %s, %s, %i | %s", type, xstr_filefrompath(filename), function, line, message );
-			//fflush( stdout );
-		}
-		
-		int stdout_open( log_handler_t * handler )
-		{
-			return 1;
-		}
-		
-		void stdout_close( log_handler_t * handler )
-		{
-		}
-	}; // namespace _internal
 
 }; // namespace core
