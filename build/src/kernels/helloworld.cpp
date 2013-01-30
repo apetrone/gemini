@@ -22,13 +22,23 @@
 #include "kernel.hpp"
 #include <stdio.h>
 
-class HelloWorld : public kernel::IApplication
+class HelloWorld : public kernel::IApplication,
+	kernel::IEventListener<kernel::TouchEvent>
+
 {
 public:
 	DECLARE_APPLICATION( HelloWorld );
 
+	virtual void event( kernel::TouchEvent & event )
+	{
+		fprintf( stdout, "Touch Event Happening!\n" );
+	}
+	
 	virtual int config( kernel::Params & params )
 	{
+		
+		kernel::subscribe_event<kernel::TouchEvent>( this );
+		
 		return kernel::NoWindow;
 	}
 

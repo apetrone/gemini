@@ -26,6 +26,7 @@
 #include <map>
 
 #include "xtime.h"
+#include "memory.hpp"
 
 namespace kernel
 {
@@ -190,6 +191,10 @@ namespace kernel
 		{
 			_kernel = 0;
 		}
+		
+		// cleanup
+		DEALLOC(IApplication, _active_application);
+		_active_application = 0;
 		
 		// system cleanup
 		core::shutdown();

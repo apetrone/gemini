@@ -36,7 +36,7 @@ public:
 	
 	virtual void event( KeyboardEvent & event )
 	{
-		fprintf( stdout, "keyboard event hit!\n" );
+		fprintf( stdout, "keyboard event received!\n" );
 	}
 	
 	virtual void event( MouseEvent & event )
@@ -52,7 +52,7 @@ public:
 		
 		kernel::subscribe_event<KeyboardEvent>( this );
 		kernel::subscribe_event<MouseEvent>( this );
-				
+
 		return kernel::Success;
 	}
 

@@ -106,7 +106,7 @@ namespace memory
 	
 	void shutdown()
 	{
-		// if you hit this, there may be a memory leak with the allocator
+		// if you hit this, there may be a memory leak!
 		assert( _allocator->active_allocations() == 0 && _allocator->active_bytes() == 0 );
 		_allocator = 0;
 	} // shutdown

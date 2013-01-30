@@ -8,5 +8,10 @@
 #import <GLKit/GLKit.h>
 
 @interface ViewController : GLKViewController
+{
+	void * kernel;
+}
+
+-(void) setKernel:(void*) kernel_instance;
 
 @end

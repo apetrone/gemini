@@ -76,6 +76,13 @@ namespace kernel
 	}; // MouseEvent
 
 	
+	struct TouchEvent : public Event<Touch>
+	{
+		int id;
+		int x;
+		int y;
+	}; // TouchEvent
+	
 	//
 	// event support classes
 	//

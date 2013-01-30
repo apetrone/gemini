@@ -119,6 +119,9 @@ extern "C"
 	else
 	{
 		mobile_kernel->setInterfaceOrientation( startup_orientation );
+		
+		[self.viewController setKernel: mobile_kernel];
+		
 	}
 		
 	//UIInterfaceOrientation initialOrientation = [self.viewController interfaceOrientation];		

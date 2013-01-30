@@ -22,6 +22,7 @@
 #pragma once
 
 #include "kernel_events.hpp"
+#include "memory.hpp"
 
 namespace kernel
 {
@@ -123,9 +124,9 @@ namespace kernel
 	//
 	// kernel registration / search
 	#define DECLARE_APPLICATION( className ) \
-		public: static IApplication * create() { return new className; }\
+		public: static IApplication * create() { return ALLOC(className); }\
 		public: virtual const char * classname() { return #className; }
-
+	
 	#define IMPLEMENT_APPLICATION( className ) \
 		kernel::Registrar kr_##className( #className, className::create )
 	
@@ -149,6 +150,7 @@ namespace kernel
 		assign_listener_for_eventtype( event_type, listener );
 	} // subscribe_event
 	
+	// this is used by the kernel to dispatch events to the IApplication's event listeners
 	template <class Type>
 	void dispatch_event( Type & event )
 	{
@@ -159,10 +161,7 @@ namespace kernel
 			event_listener->event( event );
 		}
 	} // dispatch_event
-	
-	
 
-	
 	
 	IKernel * instance();
 }; // namespace kernel
