@@ -26,7 +26,8 @@ using namespace kernel;
 
 class TestWindow : public kernel::IApplication,
 	public IEventListener<KeyboardEvent>,
-	public IEventListener<MouseEvent>
+	public IEventListener<MouseEvent>,
+	public IEventListener<SystemEvent>
 {
 public:
 	DECLARE_APPLICATION( TestWindow );
@@ -41,6 +42,27 @@ public:
 	{
 		fprintf( stdout, "mouse event received!\n" );
 	}
+
+	virtual void event( SystemEvent & event )
+	{
+		switch( event.subtype )
+		{
+			case kernel::WindowGainFocus:
+				fprintf( stdout, "window gained focus\n" );
+				break;
+				
+			case kernel::WindowLostFocus:
+				fprintf( stdout, "window lost focus\n" );
+				break;
+				
+			case kernel::WindowResized:
+				fprintf( stdout, "resize event: %i x %i\n", event.window_width, event.window_height );
+				break;
+				
+			default: break;
+		}
+
+	}
 	
 	virtual int config( kernel::Params & params )
 	{
@@ -50,6 +72,7 @@ public:
 		
 		kernel::subscribe_event<KeyboardEvent>( this );
 		kernel::subscribe_event<MouseEvent>( this );
+		kernel::subscribe_event<SystemEvent>( this );
 		
 		return kernel::Success;
 	}

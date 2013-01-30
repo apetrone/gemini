@@ -106,8 +106,19 @@ void event_callback_xwl( xwl_event_t * e )
 	}
 	else if ( e->type == XWLE_SIZE )
 	{
-//		kernel::instance()->parameters().window_width = e->width;
-//		kernel::instance()->parameters().window_height = e->height;
+		kernel::SystemEvent ev;
+		ev.subtype = kernel::WindowResized;
+		ev.window_width = e->width;
+		ev.window_height = e->height;
+		kernel::dispatch_event( ev );
+	}
+	else if ( e->type == XWLE_GAINFOCUS || e->type == XWLE_LOSTFOCUS )
+	{
+		kernel::SystemEvent ev;
+		ev.subtype = (e->type == XWLE_GAINFOCUS) ? kernel::WindowGainFocus : kernel::WindowLostFocus;
+		ev.window_width = e->width;
+		ev.window_height = e->height;
+		kernel::dispatch_event( ev );
 	}
 } // event_callback_xwl
 

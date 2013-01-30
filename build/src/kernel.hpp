@@ -58,14 +58,6 @@ namespace kernel
 	// parameters passed to callbacks
 	struct Params
 	{
-		enum
-		{
-			Invalid = 0,
-			GainFocusEvent,
-			LostFocusEvent,
-			ResizeEvent,
-		};
-
 		const char * error_message;
 		const char * window_title;
 		

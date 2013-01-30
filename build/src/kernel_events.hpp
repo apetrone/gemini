@@ -55,6 +55,7 @@ namespace kernel
 	{
 		WindowLostFocus,
 		WindowGainFocus,
+		WindowResized,
 		
 		KeyboardButton,
 		MouseButton,
@@ -77,6 +78,14 @@ namespace kernel
 		static const EventType event_type = type;
 		EventSubType subtype;
 	}; // Event
+	
+	struct SystemEvent : public Event<System>
+	{
+		short window_width;
+		short window_height;
+		short render_width;
+		short render_height;
+	}; // SystemEvent
 	
 	struct KeyboardEvent : public Event<Keyboard>
 	{
