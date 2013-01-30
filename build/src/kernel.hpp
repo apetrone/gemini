@@ -36,7 +36,7 @@ namespace kernel
 		ConfigFailed = -4,
 		StartupFailed = -5,
 		ApplicationFailure = -6,
-	};
+	}; // Error
 
 	// Kernel flags for device details
 	enum
@@ -75,7 +75,7 @@ namespace kernel
 		unsigned short prev_height;
 		unsigned char event_type;
 		bool has_window;
-	};
+	}; // Params
 	
 	
 

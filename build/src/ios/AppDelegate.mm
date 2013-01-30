@@ -11,6 +11,7 @@
 //#import <ios_kernel.hpp>
 //#include <log.h>
 #include "kernel_ios.h"
+#include "memory.hpp"
 
 
 
@@ -106,7 +107,9 @@ extern "C"
 	[[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didRotate:) name:UIDeviceOrientationDidChangeNotification object: nil];
 
-	iOSKernel * mobile_kernel = new iOSKernel();
+	memory::startup();
+	
+	iOSKernel * mobile_kernel = ALLOC(iOSKernel);
 	self->kernel = mobile_kernel;
 	
 	// get the current status bar notification and send that to the kernel on startup
@@ -196,9 +199,11 @@ extern "C"
 		mobile_kernel->will_terminate();
 	}
 	
-	delete (iOSKernel*)self->kernel;
+	iOSKernel * kernel_pointer = (iOSKernel*)self->kernel;
+	DEALLOC(iOSKernel, kernel_pointer);
 	self->kernel = 0;
 	
+	memory::shutdown();
 }
 
 @end

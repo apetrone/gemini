@@ -65,7 +65,7 @@ namespace kernel
 		TouchBegin,
 		TouchMoved,
 		TouchEnd,
-	};
+	}; // EventSubType
 	
 	//
 	// These are all events used by the kernel. Any new events that a kernel should

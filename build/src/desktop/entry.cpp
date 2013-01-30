@@ -21,9 +21,15 @@
 // -------------------------------------------------------------
 #include <iostream>
 #include "kernel_desktop.hpp"
+#include "memory.hpp"
 
 int main( int argc, char ** argv )
 {
+	memory::startup();
+	
 	DesktopKernel desktop_kernel( argc, argv );
-	return kernel::main( &desktop_kernel, "TestWindow" );
+	int return_code = kernel::main( &desktop_kernel, "TestWindow" );
+	
+	memory::shutdown();
+	return return_code;
 }

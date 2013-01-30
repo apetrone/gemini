@@ -132,8 +132,6 @@ namespace core
 	
 	Error startup()
 	{
-		memory::startup();
-		
 		core::Error error = platform::startup();
 		if ( error.failed() )
 		{
@@ -174,8 +172,6 @@ namespace core
 		_internal::close_log_handlers();
 		
 		platform::shutdown();
-		
-		memory::shutdown();
 	} // shutdown
 
 }; // namespace core
