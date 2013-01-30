@@ -24,16 +24,35 @@
 //#include <log.h>
 //#include <filesystem.hpp>
 
-class TestWindow : public kernel::IApplication
+using namespace kernel;
+
+class TestWindow : public kernel::IApplication,
+	public IEventListener<KeyboardEvent>,
+	public IEventListener<MouseEvent>
 {
 public:
 	DECLARE_APPLICATION( TestWindow );
 
+	
+	virtual void event( KeyboardEvent & event )
+	{
+		fprintf( stdout, "keyboard event hit!\n" );
+	}
+	
+	virtual void event( MouseEvent & event )
+	{
+		fprintf( stdout, "mouse event received!\n" );
+	}
+	
 	virtual int config( kernel::Params & params )
 	{
 		params.window_width = 800;
 		params.window_height = 600;
 		params.window_title = "TestWindow";
+		
+		kernel::subscribe_event<KeyboardEvent>( this );
+		kernel::subscribe_event<MouseEvent>( this );
+				
 		return kernel::Success;
 	}
 

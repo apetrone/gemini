@@ -36,6 +36,20 @@ namespace kernel
 
 	namespace _internal
 	{
+		struct EventHooks
+		{
+			void * events[ kernel::EventTypeCount ];
+			EventHooks();
+		};
+		
+		EventHooks::EventHooks()
+		{
+			memset( events, 0, sizeof(void*) * kernel::EventTypeCount );
+		}
+		
+		EventHooks _event_hooks;
+		
+		
 		struct State
 		{
 			xtime_t timer;
@@ -187,5 +201,17 @@ namespace kernel
 		_active_application->tick( _kernel->parameters() );
 		_kernel->post_tick();
 	}
+	
+	
+	void assign_listener_for_eventtype( kernel::EventType event_type, void * listener )
+	{
+		_internal::_event_hooks.events[ event_type ] = listener;
+	} // assign_listener_for_eventtype
+	
+	void * find_listener_for_eventtype( kernel::EventType event_type )
+	{
+		return _internal::_event_hooks.events[ event_type ];
+	} // find_listener_for_eventtype
+
 
 }; // namespace kernel

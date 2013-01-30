@@ -21,6 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "kernel_events.hpp"
+
 namespace kernel
 {
 	// kernel error codes
@@ -130,6 +132,37 @@ namespace kernel
 	Error startup( IKernel * kernel_instance, const char * application_name );
 	void shutdown();
 	void tick();
+	
+	
+	
+	
+	
+	
+	void assign_listener_for_eventtype( kernel::EventType type, void * listener );
+	void * find_listener_for_eventtype( kernel::EventType type );
+	
+	// this accepts subscription requests from an IApplication class for events
+	template <class Type>
+	void subscribe_event( kernel::IEventListener<Type> * listener )
+	{
+		EventType event_type = Type::event_type;
+		assign_listener_for_eventtype( event_type, listener );
+	} // subscribe_event
+	
+	template <class Type>
+	void dispatch_event( Type & event )
+	{
+		EventType event_type = Type::event_type;
+		IEventListener<Type> * event_listener = (IEventListener<Type>*)find_listener_for_eventtype(event_type);
+		if ( event_listener )
+		{
+			event_listener->event( event );
+		}
+	} // dispatch_event
+	
+	
+
+	
 	
 	IKernel * instance();
 }; // namespace kernel

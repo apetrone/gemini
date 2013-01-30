@@ -70,20 +70,39 @@ void event_callback_xwl( xwl_event_t * e )
 		{
 			kernel::instance()->set_active( false );
 		}
-		//printf( "\t-> key: %i (%s)\n", e->key, xwl_key_to_string(e->key) );
-//		key_event_( e->key, e->unicode, (e->type == XWLE_KEYPRESSED) );
+		//printf( "\t-> key: %i (%s)\n", e->key, xwl_key_to_string(e->key) );		
+		kernel::KeyboardEvent ev;
+		ev.is_down = (e->type == XWLE_KEYPRESSED);
+		ev.key = e->key;
+		ev.unicode = e->unicode;
+		kernel::dispatch_event( ev );
 	}
 	else if ( e->type == XWLE_MOUSEMOVE )
 	{
-//		mouse_move_( e->mx, e->my );
+		kernel::MouseEvent ev;
+		ev.subtype = kernel::MouseMoved;
+		ev.mx = e->mx;
+		ev.my = e->my;
+		kernel::dispatch_event( ev );
 	}
 	else if ( e->type == XWLE_MOUSEBUTTON_PRESSED || e->type == XWLE_MOUSEBUTTON_RELEASED )
 	{
-//		mouse_event_( e->button, (e->type == XWLE_MOUSEBUTTON_PRESSED) );
+		kernel::MouseEvent ev;
+		ev.subtype = kernel::MouseButton;
+		ev.button = e->button;
+		ev.is_down = (e->type == XWLE_MOUSEBUTTON_PRESSED);
+		ev.mx = e->mx;
+		ev.my = e->my;
+		kernel::dispatch_event( ev );
 	}
 	else if ( e->type == XWLE_MOUSEWHEEL )
 	{
-//		mouse_event_( input::MOUSE_WHEEL, e->wheelDelta );
+		kernel::MouseEvent ev;
+		ev.subtype = kernel::MouseWheelMoved;
+		ev.mx = e->mx;
+		ev.my = e->my;
+		ev.wheel_direction = e->wheelDelta;
+		kernel::dispatch_event( ev );
 	}
 	else if ( e->type == XWLE_SIZE )
 	{
