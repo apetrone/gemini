@@ -38,7 +38,6 @@
 	#define PATH_SEPARATOR_STRING "/"
 #endif
 
-
 #include <stdio.h> // for size_t
 #include "core.hpp" // for core::Error
 

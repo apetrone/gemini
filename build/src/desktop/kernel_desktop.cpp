@@ -142,7 +142,7 @@ kernel::Error DesktopKernel::post_application_config()
 	xwl_window_t * window = this->create_window( &windowparams, parameters().window_title, attribs );
 	if ( !window )
 	{		
-		fprintf( stderr, "Window creation failed" );
+		fprintf( stderr, "Window creation failed\n" );
 		return kernel::PostConfig;
 	}
 	

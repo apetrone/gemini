@@ -22,13 +22,44 @@
 #include "core.hpp"
 #include "platform.hpp"
 #include "memory.hpp"
+#include "stackstring.hpp"
+#include "filesystem.hpp"
 
 namespace core
 {
+	namespace _internal
+	{
+		void set_content_directory_from_root( StackString<MAX_PATH_SIZE> & root )
+		{
+#if !TARGET_OS_IPHONE
+			fs::truncate_string_at_path( &root[0], "/bin" );
+#endif
+			fs::content_directory( &root[0], root.max_size() );
+		}
+		
+		
+		core::Error open_log_handlers()
+		{
+			core::Error error( 0 );
+			
+			return error;
+		}
+		
+		
+		void close_log_handlers()
+		{
+			
+		}
+	};
+	
+	
+	
 	Error::Error( int error_status, const char * error_message ) :
 		status(error_status), message(error_message)
 	{
 	}
+	
+	
 	
 	Error startup()
 	{
@@ -41,14 +72,43 @@ namespace core
 			return error;
 		}
 		
+		//
+		// setup our file system...
+		StackString< MAX_PATH_SIZE > fullpath;
+		error = platform::program_directory( &fullpath[0], fullpath.max_size() );
+		if ( error.failed() )
+		{
+			fprintf( stderr, "failed to get the program directory!\n" );
+			return error;
+		}
+
+		// set the startup directory: where the binary lives
+		fs::root_directory( &fullpath[0], fullpath.max_size() );
+		
+		// set the content directory
+		_internal::set_content_directory_from_root( fullpath );
+		
+		
+		error = _internal::open_log_handlers();
+		if ( error.failed() )
+		{
+			fprintf( stderr, "failed to open logging handlers!\n" );
+			return error;
+		}
+		
 		return error;
 	} // startup
 	
 	void shutdown()
 	{
+		_internal::close_log_handlers();
+		
 		platform::shutdown();
 		
 		memory::shutdown();
 	} // shutdown
+	
+	
+
 
 }; // namespace core

@@ -22,7 +22,8 @@
 #include "kernel.hpp"
 #include <stdio.h>
 //#include <log.h>
-//#include <filesystem.hpp>
+#include <filesystem.hpp>
+
 
 using namespace kernel;
 
@@ -52,7 +53,7 @@ public:
 		
 		kernel::subscribe_event<KeyboardEvent>( this );
 		kernel::subscribe_event<MouseEvent>( this );
-
+		
 		return kernel::Success;
 	}
 
