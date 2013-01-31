@@ -34,6 +34,7 @@ namespace kernel
 		if ( error != kernel::NoError )
 		{
 			fprintf( stderr, "Kernel startup failed with kernel code: %i\n", error );
+			shutdown();
 			return kernel::StartupFailed;
 		}
 		else
@@ -127,7 +128,6 @@ void DesktopKernel::startup()
 
 void DesktopKernel::register_services()
 {
-	
 } // register_services
 
 void DesktopKernel::pre_tick()
