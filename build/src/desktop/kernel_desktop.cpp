@@ -37,20 +37,11 @@ namespace kernel
 			return kernel::StartupFailed;
 		}
 		else
-		{
-			// start kernel disabled.
-			kernel::instance()->set_active( false );
-			
-			// startup succeeded; enter main loop if we have a window
-			if ( kernel::instance()->parameters().has_window )
+		{			
+			// startup succeeded; enter main loop
+			while( kernel::instance()->is_active() )
 			{
-				kernel::instance()->set_active( true );
-				
-				// main loop, kernels can modify is_active.
-				while( kernel::instance()->is_active() )
-				{
-					tick();
-				}
+				tick();
 			}
 		}
 		
@@ -129,10 +120,15 @@ DesktopKernel::DesktopKernel( int argc, char ** argv ) : target_renderer(0)
 	params.argv = argv;
 }
 
+void DesktopKernel::startup()
+{
+	xwl_startup();
+} // startup
+
 void DesktopKernel::register_services()
 {
 	
-}
+} // register_services
 
 void DesktopKernel::pre_tick()
 {
@@ -146,27 +142,38 @@ void DesktopKernel::post_tick()
 	xwl_finish();
 } // post_tick
 
-kernel::Error DesktopKernel::post_application_config()
+void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 {
-	xwl_windowparams_t windowparams;
-	windowparams.width = parameters().window_width;
-	windowparams.height = parameters().window_height;
-	windowparams.flags = XWL_OPENGL;
+	set_active( (result != kernel::NoWindow) );
 	
-	// pick the core 3.2 profile if we can
-	unsigned int attribs[] = { XWL_GL_PROFILE, XWL_GLPROFILE_CORE3_2, 0 };
-	
-	xwl_window_t * window = this->create_window( &windowparams, parameters().window_title, attribs );
-	if ( !window )
-	{		
-		fprintf( stderr, "Window creation failed\n" );
-		return kernel::PostConfigFailed;
+	if ( is_active() )
+	{
+		xwl_windowparams_t windowparams;
+		windowparams.width = parameters().window_width;
+		windowparams.height = parameters().window_height;
+		windowparams.flags = XWL_OPENGL;
+		
+		// pick the core 3.2 profile if we can
+		unsigned int attribs[] = { XWL_GL_PROFILE, XWL_GLPROFILE_CORE3_2, 0 };
+		
+		xwl_window_t * window = this->create_window( &windowparams, parameters().window_title, attribs );
+		if ( !window )
+		{		
+			fprintf( stderr, "Window creation failed\n" );
+		}
+		
+		xwl_set_callback( event_callback_xwl );
 	}
-	
-	xwl_set_callback( event_callback_xwl );
-	
-	return kernel::NoError;
 } // post_application_config
+
+void DesktopKernel::post_application_startup( kernel::ApplicationResult result )
+{
+} // post_application_startup
+
+void DesktopKernel::shutdown()
+{
+	xwl_shutdown();
+} // shutdown
 
 struct xwl_window_s *DesktopKernel::create_window( struct xwl_windowparams_s * windowparams, const char * title, unsigned int * attribs )
 {

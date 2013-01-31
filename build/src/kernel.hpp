@@ -48,7 +48,7 @@ namespace kernel
 	};
 
 	// status codes for config and startup return values
-	enum
+	enum ApplicationResult
 	{
 		Failure = 0,
 		Success = 1,
@@ -74,7 +74,6 @@ namespace kernel
 		unsigned short prev_width;
 		unsigned short prev_height;
 		unsigned char event_type;
-		bool has_window;
 	}; // Params
 	
 	
@@ -89,6 +88,9 @@ namespace kernel
 		virtual void set_active( bool isactive ) = 0;
 		virtual kernel::Params & parameters() = 0;
 
+		// called first thing during setup; useful for initializing libraries
+		virtual void startup() = 0;
+		
 		// this is called during startup to register systems specific to this kernel
 		// it can be used to load or specify platform specific services
 		virtual void register_services() = 0;
@@ -98,10 +100,11 @@ namespace kernel
 		virtual void post_tick() = 0;
 		
 		// called after the IApplication's config() call returns successfully
-		virtual kernel::Error post_application_config() = 0;
+		virtual void post_application_config( ApplicationResult result ) = 0;
+		virtual void post_application_startup( ApplicationResult result ) = 0;
 		
-		
-
+		// called right before control returns to the main entry point
+		virtual void shutdown() = 0;
 	};
 
 	class IApplication
@@ -109,8 +112,8 @@ namespace kernel
 	public:
 		virtual ~IApplication() {}
 		
-		virtual int config( kernel::Params & params ) = 0; // return kSuccess, kFailure, or kNoWindow
-		virtual int startup( kernel::Params & params ) = 0; // return kSuccess, kFailure, or kNoWindow
+		virtual ApplicationResult config( kernel::Params & params ) = 0;
+		virtual ApplicationResult startup( kernel::Params & params ) = 0;
 		virtual void tick( kernel::Params & params ) = 0; // called every frame
 	};
 	

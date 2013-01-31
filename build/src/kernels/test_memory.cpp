@@ -44,12 +44,12 @@ class TestMemory : public kernel::IApplication
 public:
 	DECLARE_APPLICATION( TestMemory );
 
-	virtual int config( kernel::Params & params )
+	virtual kernel::ApplicationResult config( kernel::Params & params )
 	{
 		return kernel::NoWindow;
 	}
 
-	virtual int startup( kernel::Params & params )
+	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 		printf( "Memory Test: \n" );
 		Test * a = ALLOC(Test);

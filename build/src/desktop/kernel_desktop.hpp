@@ -31,6 +31,8 @@ class DesktopKernel : public virtual kernel::IKernel
 	{
 		int argc;
 		char ** argv;
+		
+		bool has_window;
 	};
 	
 	bool active;
@@ -43,11 +45,14 @@ public:
 	virtual bool is_active() const { return active; }
 	virtual void set_active( bool isactive ) { active = isactive; }
 	virtual kernel::Params & parameters() { return params; }
+	
+	virtual void startup();
 	virtual void register_services();
 	virtual void pre_tick();
 	virtual void post_tick();
-	virtual kernel::Error post_application_config();
-	
+	virtual void post_application_config( kernel::ApplicationResult result );
+	virtual void post_application_startup( kernel::ApplicationResult result );
+	virtual void shutdown();
 	
 private:
 	struct xwl_window_s *create_window( struct xwl_windowparams_s * windowparams, const char * title, unsigned int * attribs );

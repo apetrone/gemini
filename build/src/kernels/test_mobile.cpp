@@ -45,14 +45,14 @@ public:
 		}
 	}
 	
-	virtual int config( kernel::Params & params )
+	virtual kernel::ApplicationResult config( kernel::Params & params )
 	{
 		kernel::event_subscribe<kernel::TouchEvent>( this );
 		
 		return kernel::Success;
 	}
 
-	virtual int startup( kernel::Params & params )
+	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 		return kernel::Success;
 	}

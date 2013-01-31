@@ -25,25 +25,37 @@
 
 #import <Foundation/Foundation.h>
 
+void iOSKernel::startup()
+{
+	
+} // startup
+
 void iOSKernel::register_services()
 {
 	
-}
+} // register_services
 
 void iOSKernel::pre_tick()
 {
 	NSLog( @"pre_tick" );
-}
+} // pre_tick
 
 void iOSKernel::post_tick()
 {
 	NSLog( @"post_tick" );
-}
+} // post_tick
 
-kernel::Error iOSKernel::post_application_config()
+void iOSKernel::post_application_config( kernel::ApplicationResult result )
 {
-	return kernel::NoError;
-}
+} // post_application_config
+
+void iOSKernel::post_application_startup( kernel::ApplicationResult result )
+{
+} // post_application_startup
+
+void iOSKernel::shutdown()
+{
+} // shutdown
 
 void iOSKernel::setInterfaceOrientation( UIInterfaceOrientation orientation )
 {

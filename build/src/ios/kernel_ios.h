@@ -34,10 +34,14 @@ public:
 	virtual bool is_active() const { return active; }
 	virtual void set_active( bool isactive ) { active = isactive; }
 	virtual kernel::Params & parameters() { return params; }
+	
+	virtual void startup();
 	virtual void register_services();
 	virtual void pre_tick();
 	virtual void post_tick();
-	virtual kernel::Error post_application_config();
+	virtual void post_application_config( kernel::ApplicationResult result );
+	virtual void post_application_startup( kernel::ApplicationResult result );
+	virtual void shutdown();
 	
 	// iOS specific calls
 	void setInterfaceOrientation( UIInterfaceOrientation orientation );

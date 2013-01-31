@@ -64,7 +64,7 @@ public:
 
 	}
 	
-	virtual int config( kernel::Params & params )
+	virtual kernel::ApplicationResult config( kernel::Params & params )
 	{
 		params.window_width = 800;
 		params.window_height = 600;
@@ -77,7 +77,7 @@ public:
 		return kernel::Success;
 	}
 
-	virtual int startup( kernel::Params & params )
+	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 		return kernel::Success;
 	}

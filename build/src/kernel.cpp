@@ -128,10 +128,15 @@ namespace kernel
 		params.device_flags = 0;
 		params.window_width = 0;
 		params.window_height = 0;
-		params.has_window = 0;
+
+		// the kernel is ACTIVE here; callbacks after config/start may modify this
+		_kernel->set_active( true );
 		
 		// initialize kernel's timer
 		xtime_startup( &_internal::_kernel_state.timer );
+		
+		// perform any startup duties here before we init the core
+		_kernel->startup();
 		
 		// startup duties; lower-level system init
 		core::Error core_error = core::startup();
@@ -154,54 +159,47 @@ namespace kernel
 		}
 		
 		// application config
-		int config_result = _active_application->config( kernel::instance()->parameters() );
-		if ( config_result == kernel::Success )
-		{
-			// call this event on the kernel
-			kernel::Error kernel_error = kernel::instance()->post_application_config();
-			
-			// check for kernel error on post_application_config
-			if ( kernel_error != kernel::NoError )
-			{
-				fprintf( stderr, "Fatal error in kernel post_application_config: %i\n", kernel_error );
-				return kernel::PostConfigFailed;
-			}
-		}
-		else if ( config_result == kernel::Failure )
+		ApplicationResult config_result = _active_application->config( kernel::instance()->parameters() );
+		
+		// evaluate config result
+		kernel::instance()->post_application_config( config_result );
+	
+		if ( config_result == kernel::Failure )
 		{
 			fprintf( stderr, "Application config failed. aborting.\n" );
 			return kernel::ConfigFailed;
 		}
 		
 		// application instance failed startup
-		int startup_result = _active_application->startup( kernel::instance()->parameters() );
+		ApplicationResult startup_result = _active_application->startup( kernel::instance()->parameters() );
+		
+		// evaluate startup result
+		_kernel->post_application_startup( startup_result );
+		
 		if ( startup_result == kernel::Failure )
 		{
 			fprintf( stderr, "Application startup failed!\n" );
 			return kernel::StartupFailed;
 		}
 		
-		// set has window param (kind of hacky right now)
-		params.has_window = (startup_result != kernel::NoWindow);
-//		_kernel->post_application_startup( startup_result );
-		
 		return kernel::NoError;
 	} // startup
 	
 	void shutdown()
 	{
+		// system cleanup
+		core::shutdown();
+		
 		// shutdown, cleanup
 		if ( _kernel )
 		{
+			_kernel->shutdown();
 			_kernel = 0;
 		}
 		
 		// cleanup
 		DEALLOC(IApplication, _active_application);
 		_active_application = 0;
-		
-		// system cleanup
-		core::shutdown();
 	}
 
 	void tick()
