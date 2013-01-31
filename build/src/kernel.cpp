@@ -164,7 +164,7 @@ namespace kernel
 			if ( kernel_error != kernel::NoError )
 			{
 				fprintf( stderr, "Fatal error in kernel post_application_config: %i\n", kernel_error );
-				return kernel::PostConfig;
+				return kernel::PostConfigFailed;
 			}
 		}
 		else if ( config_result == kernel::Failure )
@@ -183,7 +183,8 @@ namespace kernel
 		
 		// set has window param (kind of hacky right now)
 		params.has_window = (startup_result != kernel::NoWindow);
-
+//		_kernel->post_application_startup( startup_result );
+		
 		return kernel::NoError;
 	} // startup
 	

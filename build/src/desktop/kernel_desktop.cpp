@@ -160,7 +160,7 @@ kernel::Error DesktopKernel::post_application_config()
 	if ( !window )
 	{		
 		fprintf( stderr, "Window creation failed\n" );
-		return kernel::PostConfig;
+		return kernel::PostConfigFailed;
 	}
 	
 	xwl_set_callback( event_callback_xwl );

@@ -31,7 +31,7 @@ namespace kernel
 	{
 		NoError = 0,
 		CoreFailed = -1,
-		PostConfig = -2,
+		PostConfigFailed = -2,
 		NoInstance = -3,
 		ConfigFailed = -4,
 		StartupFailed = -5,

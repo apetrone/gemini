@@ -106,6 +106,8 @@ namespace memory
 	
 	void shutdown()
 	{
+		fprintf( stdout, "[memory-status] total_allocations = %zu, total_bytes = %zu\n", _allocator->total_allocations(), _allocator->total_bytes() );
+		
 		// if you hit this, there may be a memory leak!
 		assert( _allocator->active_allocations() == 0 && _allocator->active_bytes() == 0 );
 		_allocator = 0;
