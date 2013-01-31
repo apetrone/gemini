@@ -24,6 +24,7 @@
 #include <string.h>
 #include <stdio.h>
 
+
 namespace kernel
 {
 	Error main( IKernel * kernel_instance, const char * kernel_name )
@@ -126,6 +127,11 @@ DesktopKernel::DesktopKernel( int argc, char ** argv ) : target_renderer(0)
 {
 	params.argc = argc;
 	params.argv = argv;
+}
+
+void DesktopKernel::register_services()
+{
+	
 }
 
 void DesktopKernel::pre_tick()

@@ -43,6 +43,7 @@ public:
 	virtual bool is_active() const { return active; }
 	virtual void set_active( bool isactive ) { active = isactive; }
 	virtual kernel::Params & parameters() { return params; }
+	virtual void register_services();
 	virtual void pre_tick();
 	virtual void post_tick();
 	virtual kernel::Error post_application_config();

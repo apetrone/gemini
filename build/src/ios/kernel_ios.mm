@@ -25,6 +25,11 @@
 
 #import <Foundation/Foundation.h>
 
+void iOSKernel::register_services()
+{
+	
+}
+
 void iOSKernel::pre_tick()
 {
 	NSLog( @"pre_tick" );

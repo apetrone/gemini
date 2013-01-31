@@ -88,6 +88,10 @@ namespace kernel
 		virtual bool is_active() const = 0;
 		virtual void set_active( bool isactive ) = 0;
 		virtual kernel::Params & parameters() = 0;
+
+		// this is called during startup to register systems specific to this kernel
+		// it can be used to load or specify platform specific services
+		virtual void register_services() = 0;
 		
 		// these tick functions wrap the application's tick call
 		virtual void pre_tick() = 0;
@@ -95,6 +99,9 @@ namespace kernel
 		
 		// called after the IApplication's config() call returns successfully
 		virtual kernel::Error post_application_config() = 0;
+		
+		
+
 	};
 
 	class IApplication

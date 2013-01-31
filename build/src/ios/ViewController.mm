@@ -37,7 +37,7 @@
 		ev.id = i;		
 		ev.x = (int)pt.x;
 		ev.y = (int)pt.y;
-		kernel::dispatch_event( ev );
+		kernel::event_dispatch( ev );
 	}
 
 	//NSLog( @"Point: %g, %g", pt.x, pt.y );
@@ -56,7 +56,7 @@
 		ev.id = i;
 		ev.x = (int)pt.x;
 		ev.y = (int)pt.y;
-		kernel::dispatch_event( ev );
+		kernel::event_dispatch( ev );
 	}
 }
 
@@ -72,7 +72,7 @@
 		ev.id = i;		
 		ev.x = (int)pt.x;
 		ev.y = (int)pt.y;
-		kernel::dispatch_event( ev );
+		kernel::event_dispatch( ev );
 	}
 }
 

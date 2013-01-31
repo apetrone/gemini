@@ -142,6 +142,9 @@ namespace kernel
 			return kernel::CoreFailed;
 		}
 		
+		// ask the kernel to register services
+		_kernel->register_services();
+		
 		// load application
 		core_error = load_application( application_name );
 		if ( core_error.failed() )
