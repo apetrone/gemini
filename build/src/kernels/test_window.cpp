@@ -35,12 +35,48 @@ public:
 	
 	virtual void event( KeyboardEvent & event )
 	{
-		fprintf( stdout, "keyboard event received!\n" );
+        if ( event.is_down )
+        {
+            fprintf( stdout, "key %i pressed\n", event.key );
+        }
+        else
+        {
+            fprintf( stdout, "key %i released\n", event.key );
+        }
 	}
-	
+
 	virtual void event( MouseEvent & event )
 	{
-		fprintf( stdout, "mouse event received!\n" );
+        switch( event.subtype )
+        {
+            case kernel::MouseMoved:
+                break;
+            case kernel::MouseButton:
+                if ( event.is_down )
+                {
+                    fprintf( stdout, "mouse button %i is pressed\n", event.button );
+                }
+                else
+                {
+                    fprintf( stdout, "mouse button %i is released\n", event.button );
+                }
+                break;
+                
+            case kernel::MouseWheelMoved:
+                if ( event.wheel_direction > 0 )
+                {
+                    fprintf( stdout, "mouse wheel toward screen\n" );
+                }
+                else
+                {
+                    fprintf( stdout, "mouse wheel away from screen\n" );
+                }
+                break;
+            default:
+                fprintf( stdout, "mouse event received!\n" );
+                break;
+        }
+
 	}
 
 	virtual void event( SystemEvent & event )

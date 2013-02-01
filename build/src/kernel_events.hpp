@@ -56,8 +56,7 @@ namespace kernel
 		WindowLostFocus,
 		WindowGainFocus,
 		WindowResized,
-		
-		KeyboardButton,
+
 		MouseButton,
 		MouseMoved,
 		MouseWheelMoved,
@@ -101,7 +100,7 @@ namespace kernel
 		int mx;
 		int my;
 		
-		// -1 is movement towards the user; 1 is movement away from the user
+		// < 0 is movement towards the user; > 0 is movement away toward the screen
 		short wheel_direction;
 	}; // MouseEvent
 
