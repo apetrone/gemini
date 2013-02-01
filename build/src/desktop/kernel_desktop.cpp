@@ -24,32 +24,25 @@
 #include <string.h>
 #include <stdio.h>
 
+
 namespace kernel
 {
-	Error main( int argc, char ** argv, IKernel * kernel_instance, const char * kernel_name )
+	Error main( IKernel * kernel_instance, const char * kernel_name )
 	{
 		// attempt kernel startup, mostly initializing core systems
-		Error error = startup( argc, argv, kernel_instance, kernel_name );
+		Error error = startup( kernel_instance, kernel_name );
 		if ( error != kernel::NoError )
 		{
 			fprintf( stderr, "Kernel startup failed with kernel code: %i\n", error );
+			shutdown();
 			return kernel::StartupFailed;
 		}
 		else
-		{
-			// start kernel disabled.
-			kernel::instance()->set_active( false );
-			
-			// startup succeeded; enter main loop if we have a window
-			if ( kernel::instance()->parameters().has_window )
+		{			
+			// startup succeeded; enter main loop
+			while( kernel::instance()->is_active() )
 			{
-				kernel::instance()->set_active( true );
-				
-				// main loop, kernels can modify is_active.
-				while( kernel::instance()->is_active() )
-				{
-					tick();
-				}
+				tick();
 			}
 		}
 		
@@ -70,66 +63,117 @@ void event_callback_xwl( xwl_event_t * e )
 		{
 			kernel::instance()->set_active( false );
 		}
-		//printf( "\t-> key: %i (%s)\n", e->key, xwl_key_to_string(e->key) );
-//		key_event_( e->key, e->unicode, (e->type == XWLE_KEYPRESSED) );
+		//printf( "\t-> key: %i (%s)\n", e->key, xwl_key_to_string(e->key) );		
+		kernel::KeyboardEvent ev;
+		ev.is_down = (e->type == XWLE_KEYPRESSED);
+		ev.key = e->key;
+		ev.unicode = e->unicode;
+		kernel::event_dispatch( ev );
 	}
 	else if ( e->type == XWLE_MOUSEMOVE )
 	{
-//		mouse_move_( e->mx, e->my );
+		kernel::MouseEvent ev;
+		ev.subtype = kernel::MouseMoved;
+		ev.mx = e->mx;
+		ev.my = e->my;
+		kernel::event_dispatch( ev );
 	}
 	else if ( e->type == XWLE_MOUSEBUTTON_PRESSED || e->type == XWLE_MOUSEBUTTON_RELEASED )
 	{
-//		mouse_event_( e->button, (e->type == XWLE_MOUSEBUTTON_PRESSED) );
+		kernel::MouseEvent ev;
+		ev.subtype = kernel::MouseButton;
+		ev.button = e->button;
+		ev.is_down = (e->type == XWLE_MOUSEBUTTON_PRESSED);
+		ev.mx = e->mx;
+		ev.my = e->my;
+		kernel::event_dispatch( ev );
 	}
 	else if ( e->type == XWLE_MOUSEWHEEL )
 	{
-//		mouse_event_( input::MOUSE_WHEEL, e->wheelDelta );
+		kernel::MouseEvent ev;
+		ev.subtype = kernel::MouseWheelMoved;
+		ev.mx = e->mx;
+		ev.my = e->my;
+		ev.wheel_direction = e->wheelDelta;
+		kernel::event_dispatch( ev );
 	}
 	else if ( e->type == XWLE_SIZE )
 	{
-//		kernel::instance()->parameters().window_width = e->width;
-//		kernel::instance()->parameters().window_height = e->height;
+		kernel::SystemEvent ev;
+		ev.subtype = kernel::WindowResized;
+		ev.window_width = e->width;
+		ev.window_height = e->height;
+		kernel::event_dispatch( ev );
+	}
+	else if ( e->type == XWLE_GAINFOCUS || e->type == XWLE_LOSTFOCUS )
+	{
+		kernel::SystemEvent ev;
+		ev.subtype = (e->type == XWLE_GAINFOCUS) ? kernel::WindowGainFocus : kernel::WindowLostFocus;
+		ev.window_width = e->width;
+		ev.window_height = e->height;
+		kernel::event_dispatch( ev );
 	}
 } // event_callback_xwl
 
-DesktopKernel::DesktopKernel() : target_renderer(0)
+DesktopKernel::DesktopKernel( int argc, char ** argv ) : target_renderer(0)
 {
-	
+	params.argc = argc;
+	params.argv = argv;
 }
+
+void DesktopKernel::startup()
+{
+	xwl_startup();
+} // startup
+
+void DesktopKernel::register_services()
+{
+} // register_services
 
 void DesktopKernel::pre_tick()
 {
 	xwl_event_t e;
 	memset( &e, 0, sizeof(xwl_event_t) );
 	xwl_pollevent( &e );
-}
+} // pre_tick
 
 void DesktopKernel::post_tick()
 {
 	xwl_finish();
-}
+} // post_tick
 
-kernel::Error DesktopKernel::post_application_config()
+void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 {
-	xwl_windowparams_t windowparams;
-	windowparams.width = parameters().window_width;
-	windowparams.height = parameters().window_height;
-	windowparams.flags = XWL_OPENGL;
+	set_active( (result != kernel::NoWindow) );
 	
-	// pick the core 3.2 profile if we can
-	unsigned int attribs[] = { XWL_GL_PROFILE, XWL_GLPROFILE_CORE3_2, 0 };
-	
-	xwl_window_t * window = this->create_window( &windowparams, parameters().window_title, attribs );
-	if ( !window )
-	{		
-		fprintf( stderr, "Window creation failed" );
-		return kernel::PostConfig;
+	if ( is_active() )
+	{
+		xwl_windowparams_t windowparams;
+		windowparams.width = parameters().window_width;
+		windowparams.height = parameters().window_height;
+		windowparams.flags = XWL_OPENGL;
+		
+		// pick the core 3.2 profile if we can
+		unsigned int attribs[] = { XWL_GL_PROFILE, XWL_GLPROFILE_CORE3_2, 0 };
+		
+		xwl_window_t * window = this->create_window( &windowparams, parameters().window_title, attribs );
+		if ( !window )
+		{		
+			fprintf( stderr, "Window creation failed\n" );
+		}
+		
+		xwl_set_callback( event_callback_xwl );
 	}
-	
-	xwl_set_callback( event_callback_xwl );
-	
-	return kernel::NoError;
-}
+} // post_application_config
+
+void DesktopKernel::post_application_startup( kernel::ApplicationResult result )
+{
+} // post_application_startup
+
+void DesktopKernel::shutdown()
+{
+	xwl_shutdown();
+} // shutdown
 
 struct xwl_window_s *DesktopKernel::create_window( struct xwl_windowparams_s * windowparams, const char * title, unsigned int * attribs )
 {
@@ -151,4 +195,4 @@ struct xwl_window_s *DesktopKernel::create_window( struct xwl_windowparams_s * w
 	}
 	
 	return window;
-}
+} // create_window

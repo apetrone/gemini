@@ -21,23 +21,63 @@
 // -------------------------------------------------------------
 #include "kernel.hpp"
 #include <stdio.h>
-//#include <log.h>
-//#include <filesystem.hpp>
 
-class TestWindow : public kernel::IApplication
+using namespace kernel;
+
+class TestWindow : public kernel::IApplication,
+	public IEventListener<KeyboardEvent>,
+	public IEventListener<MouseEvent>,
+	public IEventListener<SystemEvent>
 {
 public:
 	DECLARE_APPLICATION( TestWindow );
 
-	virtual int config( kernel::Params & params )
+	
+	virtual void event( KeyboardEvent & event )
+	{
+		fprintf( stdout, "keyboard event received!\n" );
+	}
+	
+	virtual void event( MouseEvent & event )
+	{
+		fprintf( stdout, "mouse event received!\n" );
+	}
+
+	virtual void event( SystemEvent & event )
+	{
+		switch( event.subtype )
+		{
+			case kernel::WindowGainFocus:
+				fprintf( stdout, "window gained focus\n" );
+				break;
+				
+			case kernel::WindowLostFocus:
+				fprintf( stdout, "window lost focus\n" );
+				break;
+				
+			case kernel::WindowResized:
+				fprintf( stdout, "resize event: %i x %i\n", event.window_width, event.window_height );
+				break;
+				
+			default: break;
+		}
+
+	}
+	
+	virtual kernel::ApplicationResult config( kernel::Params & params )
 	{
 		params.window_width = 800;
 		params.window_height = 600;
 		params.window_title = "TestWindow";
+		
+		kernel::event_subscribe<KeyboardEvent>( this );
+		kernel::event_subscribe<MouseEvent>( this );
+		kernel::event_subscribe<SystemEvent>( this );
+		
 		return kernel::Success;
 	}
 
-	virtual int startup( kernel::Params & params )
+	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 		return kernel::Success;
 	}

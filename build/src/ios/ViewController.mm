@@ -7,7 +7,7 @@
 #import "ViewController.h"
 //#import <ios_kernel.hpp>
 //using namespace aengine;
-
+#import "kernel.hpp"
 
 @interface ViewController () {
 }
@@ -15,6 +15,11 @@
 @end
 
 @implementation ViewController
+
+-(void) setKernel:(void*) kernel_instance
+{
+	self->kernel = kernel_instance;
+}
 
 @synthesize context = _context;
 
@@ -26,8 +31,13 @@
 	for( int i = 0; i < [touches count]; ++i )
 	{
 		UITouch * t = [[touches allObjects] objectAtIndex: i];
-		CGPoint pt = [t locationInView: [self view]];		
-//		kernel_touch_start( i, (int)pt.x, (int)pt.y );		
+		CGPoint pt = [t locationInView: [self view]];
+		kernel::TouchEvent ev;
+		ev.subtype = kernel::TouchBegin;
+		ev.id = i;		
+		ev.x = (int)pt.x;
+		ev.y = (int)pt.y;
+		kernel::event_dispatch( ev );
 	}
 
 	//NSLog( @"Point: %g, %g", pt.x, pt.y );
@@ -41,7 +51,12 @@
 	{
 		UITouch * t = [[touches allObjects] objectAtIndex: i];
 		CGPoint pt = [t locationInView: [self view]];		
-//		kernel_touch_drag( i, (int)pt.x, (int)pt.y );		
+		kernel::TouchEvent ev;
+		ev.subtype = kernel::TouchMoved;
+		ev.id = i;
+		ev.x = (int)pt.x;
+		ev.y = (int)pt.y;
+		kernel::event_dispatch( ev );
 	}
 }
 
@@ -52,7 +67,12 @@
 	{
 		UITouch * t = [[touches allObjects] objectAtIndex: i];
 		CGPoint pt = [t locationInView: [self view]];		
-//		kernel_touch_end( i, (int)pt.x, (int)pt.y );
+		kernel::TouchEvent ev;
+		ev.subtype = kernel::TouchEnd;
+		ev.id = i;		
+		ev.x = (int)pt.x;
+		ev.y = (int)pt.y;
+		kernel::event_dispatch( ev );
 	}
 }
 

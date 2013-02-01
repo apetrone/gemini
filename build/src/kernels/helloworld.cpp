@@ -27,12 +27,12 @@ class HelloWorld : public kernel::IApplication
 public:
 	DECLARE_APPLICATION( HelloWorld );
 
-	virtual int config( kernel::Params & params )
-	{
+	virtual kernel::ApplicationResult config( kernel::Params & params )
+	{		
 		return kernel::NoWindow;
 	}
 
-	virtual int startup( kernel::Params & params )
+	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 		printf( "Hello World!\n" );
 		return kernel::NoWindow;

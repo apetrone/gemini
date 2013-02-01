@@ -21,6 +21,9 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "kernel_events.hpp"
+#include "memory.hpp"
+
 namespace kernel
 {
 	// kernel error codes
@@ -28,12 +31,12 @@ namespace kernel
 	{
 		NoError = 0,
 		CoreFailed = -1,
-		PostConfig = -2,
+		PostConfigFailed = -2,
 		NoInstance = -3,
 		ConfigFailed = -4,
 		StartupFailed = -5,
 		ApplicationFailure = -6,
-	};
+	}; // Error
 
 	// Kernel flags for device details
 	enum
@@ -45,7 +48,7 @@ namespace kernel
 	};
 
 	// status codes for config and startup return values
-	enum
+	enum ApplicationResult
 	{
 		Failure = 0,
 		Success = 1,
@@ -55,16 +58,6 @@ namespace kernel
 	// parameters passed to callbacks
 	struct Params
 	{
-		enum
-		{
-			Invalid = 0,
-			GainFocusEvent,
-			LostFocusEvent,
-			ResizeEvent,
-		};
-		
-		int argc;
-		char ** argv;
 		const char * error_message;
 		const char * window_title;
 		
@@ -81,8 +74,7 @@ namespace kernel
 		unsigned short prev_width;
 		unsigned short prev_height;
 		unsigned char event_type;
-		bool has_window;
-	};
+	}; // Params
 	
 	
 
@@ -95,13 +87,24 @@ namespace kernel
 		virtual bool is_active() const = 0;
 		virtual void set_active( bool isactive ) = 0;
 		virtual kernel::Params & parameters() = 0;
+
+		// called first thing during setup; useful for initializing libraries
+		virtual void startup() = 0;
+		
+		// this is called during startup to register systems specific to this kernel
+		// it can be used to load or specify platform specific services
+		virtual void register_services() = 0;
 		
 		// these tick functions wrap the application's tick call
 		virtual void pre_tick() = 0;
 		virtual void post_tick() = 0;
 		
 		// called after the IApplication's config() call returns successfully
-		virtual kernel::Error post_application_config() = 0;
+		virtual void post_application_config( ApplicationResult result ) = 0;
+		virtual void post_application_startup( ApplicationResult result ) = 0;
+		
+		// called right before control returns to the main entry point
+		virtual void shutdown() = 0;
 	};
 
 	class IApplication
@@ -109,8 +112,8 @@ namespace kernel
 	public:
 		virtual ~IApplication() {}
 		
-		virtual int config( kernel::Params & params ) = 0; // return kSuccess, kFailure, or kNoWindow
-		virtual int startup( kernel::Params & params ) = 0; // return kSuccess, kFailure, or kNoWindow
+		virtual ApplicationResult config( kernel::Params & params ) = 0;
+		virtual ApplicationResult startup( kernel::Params & params ) = 0;
 		virtual void tick( kernel::Params & params ) = 0; // called every frame
 	};
 	
@@ -123,19 +126,45 @@ namespace kernel
 	//
 	// kernel registration / search
 	#define DECLARE_APPLICATION( className ) \
-		public: static IApplication * create() { return new className; }\
+		public: static IApplication * create() { return ALLOC(className); }\
 		public: virtual const char * classname() { return #className; }
-
+	
 	#define IMPLEMENT_APPLICATION( className ) \
 		kernel::Registrar kr_##className( #className, className::create )
 	
-	// main loop for a desktop app; this manages the main loop itself.
-	// it's enough in a desktop application to simply hand off control to this function.
-	Error main( int argc, char ** argv, IKernel * kernel_instance, const char * application_name );
-	
-	Error startup( int argc, char ** argv, IKernel * kernel_instance, const char * application_name );
+	Error startup( IKernel * kernel_instance, const char * application_name );
 	void shutdown();
 	void tick();
+	
+	
+	
+	
+	
+	
+	void assign_listener_for_eventtype( kernel::EventType type, void * listener );
+	void * find_listener_for_eventtype( kernel::EventType type );
+	
+	// this accepts subscription requests from an IApplication class for events
+	template <class Type>
+	void event_subscribe( kernel::IEventListener<Type> * listener )
+	{
+		EventType event_type = Type::event_type;
+		assign_listener_for_eventtype( event_type, listener );
+	} // event_subscribe
+	
+	// this is used by the kernel to dispatch events to the IApplication's event listeners
+	template <class Type>
+	void event_dispatch( Type & event )
+	{
+		EventType event_type = Type::event_type;
+		IEventListener<Type> * event_listener = (IEventListener<Type>*)find_listener_for_eventtype(event_type);
+		if ( event_listener )
+		{
+			event_listener->event( event );
+		}
+	} // event_dispatch
+	
+
 	
 	IKernel * instance();
 }; // namespace kernel

@@ -26,6 +26,7 @@
 #include <map>
 
 #include "xtime.h"
+#include "memory.hpp"
 
 namespace kernel
 {
@@ -36,6 +37,20 @@ namespace kernel
 
 	namespace _internal
 	{
+		struct EventHooks
+		{
+			void * events[ kernel::EventTypeCount ];
+			EventHooks();
+		};
+		
+		EventHooks::EventHooks()
+		{
+			memset( events, 0, sizeof(void*) * kernel::EventTypeCount );
+		}
+		
+		EventHooks _event_hooks;
+		
+		
 		struct State
 		{
 			xtime_t timer;
@@ -97,10 +112,8 @@ namespace kernel
 	}
 	
 	
-	Error startup( int argc, char ** argv, IKernel * kernel_instance, const char * application_name )
+	Error startup( IKernel * kernel_instance, const char * application_name )
 	{
-
-		
 		// set instance
 		_kernel = kernel_instance;
 		if ( !_kernel )
@@ -111,16 +124,19 @@ namespace kernel
 		
 		// setup parameters
 		kernel::Params & params = kernel_instance->parameters();
-		params.argc = argc;
-		params.argv = argv;
 		params.error_message = 0;
 		params.device_flags = 0;
 		params.window_width = 0;
 		params.window_height = 0;
-		params.has_window = 0;
+
+		// the kernel is ACTIVE here; callbacks after config/start may modify this
+		_kernel->set_active( true );
 		
 		// initialize kernel's timer
 		xtime_startup( &_internal::_kernel_state.timer );
+		
+		// perform any startup duties here before we init the core
+		_kernel->startup();
 		
 		// startup duties; lower-level system init
 		core::Error core_error = core::startup();
@@ -131,6 +147,9 @@ namespace kernel
 			return kernel::CoreFailed;
 		}
 		
+		// ask the kernel to register services
+		_kernel->register_services();
+		
 		// load application
 		core_error = load_application( application_name );
 		if ( core_error.failed() )
@@ -140,49 +159,47 @@ namespace kernel
 		}
 		
 		// application config
-		int config_result = _active_application->config( kernel::instance()->parameters() );
-		if ( config_result == kernel::Success )
-		{
-			// call this event on the kernel
-			kernel::Error kernel_error = kernel::instance()->post_application_config();
-			
-			// check for kernel error on post_application_config
-			if ( kernel_error != kernel::NoError )
-			{
-				fprintf( stderr, "Fatal error in kernel post_application_config: %i\n", kernel_error );
-				return kernel::PostConfig;
-			}
-		}
-		else if ( config_result == kernel::Failure )
+		ApplicationResult config_result = _active_application->config( kernel::instance()->parameters() );
+		
+		// evaluate config result
+		kernel::instance()->post_application_config( config_result );
+	
+		if ( config_result == kernel::Failure )
 		{
 			fprintf( stderr, "Application config failed. aborting.\n" );
 			return kernel::ConfigFailed;
 		}
 		
 		// application instance failed startup
-		int startup_result = _active_application->startup( kernel::instance()->parameters() );
+		ApplicationResult startup_result = _active_application->startup( kernel::instance()->parameters() );
+		
+		// evaluate startup result
+		_kernel->post_application_startup( startup_result );
+		
 		if ( startup_result == kernel::Failure )
 		{
 			fprintf( stderr, "Application startup failed!\n" );
 			return kernel::StartupFailed;
 		}
 		
-		// set has window param (kind of hacky right now)
-		params.has_window = (startup_result != kernel::NoWindow);
-
 		return kernel::NoError;
 	} // startup
 	
 	void shutdown()
 	{
+		// system cleanup
+		core::shutdown();
+		
 		// shutdown, cleanup
 		if ( _kernel )
 		{
+			_kernel->shutdown();
 			_kernel = 0;
 		}
 		
-		// system cleanup
-		core::shutdown();
+		// cleanup
+		DEALLOC(IApplication, _active_application);
+		_active_application = 0;
 	}
 
 	void tick()
@@ -191,5 +208,17 @@ namespace kernel
 		_active_application->tick( _kernel->parameters() );
 		_kernel->post_tick();
 	}
+	
+	
+	void assign_listener_for_eventtype( kernel::EventType event_type, void * listener )
+	{
+		_internal::_event_hooks.events[ event_type ] = listener;
+	} // assign_listener_for_eventtype
+	
+	void * find_listener_for_eventtype( kernel::EventType event_type )
+	{
+		return _internal::_event_hooks.events[ event_type ];
+	} // find_listener_for_eventtype
+
 
 }; // namespace kernel

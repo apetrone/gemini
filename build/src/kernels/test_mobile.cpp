@@ -19,48 +19,47 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
 #include "kernel.hpp"
+#include <stdio.h>
 
-struct xwl_window_s;
-struct xwl_windowparams_s;
+class TestMobile : public kernel::IApplication,
+	kernel::IEventListener<kernel::TouchEvent>
 
-class DesktopKernel : public virtual kernel::IKernel
 {
-	struct DesktopParams : public kernel::Params
-	{
-		int argc;
-		char ** argv;
-		
-		bool has_window;
-	};
-	
-	bool active;
-	DesktopParams params;
-	
-	int target_renderer;
 public:
-	DesktopKernel( int argc, char ** argv );
+	DECLARE_APPLICATION( TestMobile );
+
+	virtual void event( kernel::TouchEvent & event )
+	{
+		if ( event.subtype == kernel::TouchBegin )
+		{
+			fprintf( stdout, "Touch Event Began at %i, %i\n", event.x, event.y );
+		}
+		else if ( event.subtype == kernel::TouchMoved )
+		{
+			fprintf( stdout, "Touch Event Moved at %i, %i\n", event.x, event.y );
+		}
+		else if ( event.subtype == kernel::TouchEnd )
+		{
+			fprintf( stdout, "Touch Event Ended at %i, %i\n", event.x, event.y );
+		}
+	}
 	
-	virtual bool is_active() const { return active; }
-	virtual void set_active( bool isactive ) { active = isactive; }
-	virtual kernel::Params & parameters() { return params; }
-	
-	virtual void startup();
-	virtual void register_services();
-	virtual void pre_tick();
-	virtual void post_tick();
-	virtual void post_application_config( kernel::ApplicationResult result );
-	virtual void post_application_startup( kernel::ApplicationResult result );
-	virtual void shutdown();
-	
-private:
-	struct xwl_window_s *create_window( struct xwl_windowparams_s * windowparams, const char * title, unsigned int * attribs );
+	virtual kernel::ApplicationResult config( kernel::Params & params )
+	{
+		kernel::event_subscribe<kernel::TouchEvent>( this );
+		
+		return kernel::Success;
+	}
+
+	virtual kernel::ApplicationResult startup( kernel::Params & params )
+	{
+		return kernel::Success;
+	}
+
+	virtual void tick( kernel::Params & params )
+	{
+	}
 };
 
-namespace kernel
-{
-	// main loop for a desktop app; this manages the main loop itself.
-	// it's enough in a desktop application to simply hand off control to this function.
-	Error main( IKernel * kernel_instance, const char * application_name );
-}; // namespace kernel
+IMPLEMENT_APPLICATION( TestMobile );

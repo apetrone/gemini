@@ -11,6 +11,7 @@
 //#import <ios_kernel.hpp>
 //#include <log.h>
 #include "kernel_ios.h"
+#include "memory.hpp"
 
 
 
@@ -106,19 +107,24 @@ extern "C"
 	[[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didRotate:) name:UIDeviceOrientationDidChangeNotification object: nil];
 
-	iOSKernel * mobile_kernel = new iOSKernel();
+	memory::startup();
+	
+	iOSKernel * mobile_kernel = ALLOC(iOSKernel);
 	self->kernel = mobile_kernel;
 	
 	// get the current status bar notification and send that to the kernel on startup
 	UIInterfaceOrientation startup_orientation = [[UIApplication sharedApplication] statusBarOrientation];
 //	kernel_ios_startup( cb, [[self.viewController view] bounds].size.width, [[self.viewController view] bounds].size.height, startup_orientation );	
-	if ( kernel::startup( 0, 0, mobile_kernel, "HelloWorld" ) != kernel::NoError )
+	if ( kernel::startup( mobile_kernel, "TestMobile" ) != kernel::NoError )
 	{
 		NSLog( @"kernel startup failed!" );
 	}
 	else
 	{
 		mobile_kernel->setInterfaceOrientation( startup_orientation );
+		
+		[self.viewController setKernel: mobile_kernel];
+		
 	}
 		
 	//UIInterfaceOrientation initialOrientation = [self.viewController interfaceOrientation];		
@@ -193,9 +199,11 @@ extern "C"
 		mobile_kernel->will_terminate();
 	}
 	
-	delete (iOSKernel*)self->kernel;
+	iOSKernel * kernel_pointer = (iOSKernel*)self->kernel;
+	DEALLOC(iOSKernel, kernel_pointer);
 	self->kernel = 0;
 	
+	memory::shutdown();
 }
 
 @end

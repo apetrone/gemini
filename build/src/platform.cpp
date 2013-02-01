@@ -50,10 +50,6 @@
 
 #include <string.h> // for strrchr
 
-#if (__APPLE__ && !TARGET_OS_IPHONE) || _WIN32 || LINUX
-	#include <xwl/xwl.h>
-#endif
-
 namespace platform
 {
 	core::Error startup()
@@ -63,20 +59,13 @@ namespace platform
 #if __APPLE__
 		error = osx_startup();
 #endif
-		
-#if (__APPLE__ && !TARGET_OS_IPHONE) || _WIN32 || LINUX
-		xwl_startup();
-#endif
+
 		
 		return error;
 	}
 	
 	void shutdown()
-	{
-#if (__APPLE__ && !TARGET_OS_IPHONE) || _WIN32 || LINUX
-		xwl_shutdown();
-#endif
-		
+	{		
 #if __APPLE__
 		osx_shutdown();
 #endif
