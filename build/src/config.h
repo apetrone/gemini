@@ -76,17 +76,26 @@
 	#define NOTAPE
 
 	#define PLATFORM_NAME "windows"
-	
+	#define PLATFORM_WINDOWS 1
 #elif LINUX
-	#define PLATFORM_NAME "linux"
+	#if RASPBERRYPI
+		#define PLATFORM_NAME "linux"
+		#define PLATFORM_LINUX 1
+	#else
+		#define PLATFORM_NAME "raspberrypi"
+		#define PLATFORM_LINUX 1
+		#define PLATFORM_RASPBERRYPI 1
+	#endif
 #elif __APPLE__
 	#include <TargetConditionals.h>
 
 	#if TARGET_IOS_IPHONE || TARGET_IPHONE_SIMULATOR
 		#define PLATFORM_NAME "ios"
-		#define MOBILE_PLATFORM 1
+		#define PLATFORM_IS_MOBILE 1
+		#define PLATFORM_IOS 1
 	#else
 		#define PLATFORM_NAME "macosx"
+		#define PLATFORM_MACOSX 1
 	#endif
 #endif
 

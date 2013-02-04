@@ -110,7 +110,7 @@ namespace fs
 		}
 	} // truncate_string_at_path
 	
-#if !MOBILE_PLATFORM
+#if !PLATFORM_IS_MOBILE
 
 	bool file_exists( const char * path, bool path_is_relative )
 	{

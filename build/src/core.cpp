@@ -71,7 +71,7 @@ namespace core
 			
 			log_set_default_log( &_system_log );
 			
-#if !MOBILE_PLATFORM
+#if !PLATFORM_IS_MOBILE
 			xdatetime_t dt;
 			xtime_now( &dt );
 			char datetime_string[ GEMINI_DATETIME_STRING_MAX ];
