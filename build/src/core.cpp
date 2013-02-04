@@ -109,7 +109,7 @@ namespace core
 				error = core::Error( core::Error::Warning, "Could not open one or more log handlers" );
 			}
 			
-			LogV( "Logging system initialized.\n" );
+			LOGV( "Logging system initialized.\n" );
 			
 			return error;
 		} // open_log_handlers

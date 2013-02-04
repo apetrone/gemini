@@ -35,9 +35,9 @@
 //#define LogMsg( fmt, ... ) (void(0))
 #endif
 
-#define LogV( fmt, ... ) log_default( XLOG_VERBOSE, xstr_format( fmt, ##__VA_ARGS__ ), __FUNCTION__, __FILE__, __LINE__ )
-#define LogW( fmt, ... ) log_default( XLOG_WARNING, xstr_format( fmt, ##__VA_ARGS__ ), __FUNCTION__, __FILE__, __LINE__ )
-#define LogE( fmt, ... ) log_default( XLOG_ERROR, xstr_format( fmt, ##__VA_ARGS__ ), __FUNCTION__, __FILE__, __LINE__ )
+#define LOGV( fmt, ... ) log_default( XLOG_VERBOSE, xstr_format( fmt, ##__VA_ARGS__ ), __FUNCTION__, __FILE__, __LINE__ )
+#define LOGW( fmt, ... ) log_default( XLOG_WARNING, xstr_format( fmt, ##__VA_ARGS__ ), __FUNCTION__, __FILE__, __LINE__ )
+#define LOGE( fmt, ... ) log_default( XLOG_ERROR, xstr_format( fmt, ##__VA_ARGS__ ), __FUNCTION__, __FILE__, __LINE__ )
 
 
 
