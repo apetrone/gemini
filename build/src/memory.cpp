@@ -26,6 +26,7 @@
 	#include <memory> // for malloc, free (on OSX)
 #elif LINUX
 	#include <stdlib.h>
+	#include <stdio.h> // for fprintf
 #elif _WIN32
 	#include <memory> // we'll see if this compiles...
 #endif
