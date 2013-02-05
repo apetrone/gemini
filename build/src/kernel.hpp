@@ -36,6 +36,7 @@ namespace kernel
 		ConfigFailed = -4,
 		StartupFailed = -5,
 		ApplicationFailure = -6,
+		RendererFailed = -7,
 	}; // Error
 
 	// Kernel flags for device details
@@ -63,6 +64,7 @@ namespace kernel
 		
 		// kDevice constants above describe the current system
 		unsigned char device_flags;
+		
 	
 		// dimensions of the actual window in pixels
 		unsigned short window_width;

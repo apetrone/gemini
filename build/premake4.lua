@@ -21,6 +21,10 @@ if _OPTIONS["ios"] ~= nil then
 	build_name = "geminiios"
 end
 
+if _OPTIONS["rpi"] ~= nil then
+	print( "Building for the Raspberry Pi" )
+end
+
 solution ( build_name )
 	configurations { "debug", "release" }
 	platforms { platform_strings  }
@@ -90,7 +94,12 @@ project ( build_name )
 			"src/*.m*"
 		}
 
-
+		if _OPTIONS["ios"] == nil then
+			files
+			{
+				"src/gldrivers/opengl_core32.*"
+			}
+		end
 
 		if xcodebuildsettings ~= nil then
 
@@ -102,7 +111,8 @@ project ( build_name )
 				{
 					"src/ios/*.m*",
 					"src/ios/*.h*",
-					"src/osx/osx_platform.*"
+					"src/osx/osx_platform.*",
+					"src/gldrivers/opengl_glesv2.*"
 				}
 
 				linkoptions

@@ -34,6 +34,16 @@ class AnimationController
 	// ...
 };
 ```
+
+- Interface classes are an exception, these should begin with a capital 'I' to establish these are abstract.
+
+```c
+class IRenderDriver
+{
+	// ...
+};
+```
+
 - curly braces are explicitly used with all control statements for consistency:
 
 ```c

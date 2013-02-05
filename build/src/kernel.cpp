@@ -25,8 +25,11 @@
 #include <string>
 #include <map>
 
+#include "log.h"
 #include "xtime.h"
 #include "memory.hpp"
+#include "renderer.hpp"
+
 
 namespace kernel
 {
@@ -170,6 +173,14 @@ namespace kernel
 			return kernel::ConfigFailed;
 		}
 		
+		// try to setup the renderer
+		int render_result =	renderer::startup( renderer::Default );
+		if ( render_result == 0 && config_result != kernel::NoWindow )
+		{
+			LOGE( "renderer initialization failed!\n" );
+			return kernel::RendererFailed;
+		}
+		
 		// application instance failed startup
 		ApplicationResult startup_result = _active_application->startup( kernel::instance()->parameters() );
 		
@@ -188,6 +199,7 @@ namespace kernel
 	void shutdown()
 	{
 		// system cleanup
+		renderer::shutdown();
 		core::shutdown();
 		
 		// shutdown, cleanup
