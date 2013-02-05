@@ -132,6 +132,7 @@ void DesktopKernel::register_services()
 
 void DesktopKernel::pre_tick()
 {
+	
 	xwl_event_t e;
 	memset( &e, 0, sizeof(xwl_event_t) );
 	xwl_pollevent( &e );
@@ -162,6 +163,7 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 			fprintf( stderr, "Window creation failed\n" );
 		}
 		
+		xwl_activate( window );
 		xwl_set_callback( event_callback_xwl );
 	}
 } // post_application_config

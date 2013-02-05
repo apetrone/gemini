@@ -33,4 +33,7 @@ public:
 	
 	virtual const char * description() { return "OpenGL Core 3.2"; }
 	
+	virtual void run_command( renderer::DriverCommand command, MemoryStream & stream );
+	virtual void post_command( renderer::DriverCommand command, MemoryStream & stream );
+	
 }; // GLCore32

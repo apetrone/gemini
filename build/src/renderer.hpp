@@ -22,37 +22,72 @@
 #pragma once
 
 #include "memory.hpp"
+#include "memorystream.hpp"
+
 
 #define DECLARE_FACTORY_CLASS( class_name, abstract_class )\
 	public:\
 		static abstract_class * creator() { return ALLOC(class_name); }
 
+
 namespace renderer
 {
-	enum DriverType
+	enum Driver
 	{
 		Default, // pick one.
 		OpenGL,
 		GLESv2,
 		GLESv3
-	}; // DriverType
+	}; // Driver
+	
+	
+	enum DriverCommand
+	{
+		DC_SHADER,
+		DC_UNIFORMMATRIX4,
+		DC_UNIFORM1i,
+		DC_UNIFORM3f,
+		DC_UNIFORM4f,
+		DC_UNIFORM_SAMPLER_2D,
+		DC_UNIFORM_SAMPLER_CUBE,
+		
+		DC_CLEAR,
+		DC_CLEARCOLOR,
+		DC_CLEARDEPTH,
+		DC_VIEWPORT,
+		
+		DC_DRAWCALL,
+		DC_SCISSOR,
+		
+		DC_MAX
+	}; // DriverCommand
 	
 	// returns 0 on failure, 1 on success
-	int startup( DriverType driver );
+	int startup( Driver driver );
 	void shutdown();
 	
-	
+	//
+	// IRenderDriver
+	// The render driver acts as a command processor. The implementation details are up to the driver
+	// which make this a nice abstraction layer.
 	class IRenderDriver
 	{
 	public:
 		virtual ~IRenderDriver() {}
 		virtual const char * description() = 0;
 		
-	}; // IRenderDriver
-	
-
+		// these commands are called with the command and current memory stream
+		virtual void run_command( DriverCommand command, MemoryStream & stream ) = 0;
+		virtual void post_command( DriverCommand command, MemoryStream & stream ) = 0;
 		
+		
+		
+		
+	}; // IRenderDriver
 	typedef IRenderDriver * (*RenderDriverCreator)();
+	
+	
+	IRenderDriver * driver();
 
 	
 }; // namespace renderer

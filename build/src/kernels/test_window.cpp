@@ -21,6 +21,7 @@
 // -------------------------------------------------------------
 #include "kernel.hpp"
 #include <stdio.h>
+#include "renderer.hpp"
 
 using namespace kernel;
 
@@ -120,7 +121,35 @@ public:
 
 	virtual void tick( kernel::Params & params )
 	{
-	
+		renderer::IRenderDriver * driver = renderer::driver();
+		MemoryStream ms;
+		char buffer[128] = {0};
+		ms.init( buffer, 128 );
+		
+		// viewport
+		ms.rewind();
+		ms.write( 0 );
+		ms.write( 0 );
+		ms.write( params.window_width );
+		ms.write( params.window_width );
+		ms.rewind();
+		driver->run_command( renderer::DC_VIEWPORT, ms );
+		
+		
+		// set clear color
+		ms.rewind();
+		ms.write( 0.5f );
+		ms.write( 0.0f );
+		ms.write( 0.75f );
+		ms.write( 1.0f );
+		ms.rewind();
+		driver->run_command( renderer::DC_CLEARCOLOR, ms );
+		
+		// color_buffer_bit
+		ms.rewind();
+		ms.write( 0x00004000 );
+		ms.rewind();
+		driver->run_command( renderer::DC_CLEAR, ms );
 	}
 
 	virtual void shutdown()
