@@ -62,7 +62,9 @@ namespace renderer
 	int startup( Driver driver_type )
 	{
 		// run-time selection of the renderer has to happen here based on hints by the kernel
+#if !PLATFORM_IS_MOBILE
 		_internal::register_driver( OpenGL, GLCore32::creator );
+#endif
 		
 		// choose the correct driver at run time; based on some hints?
 		RenderDriverCreator creator = _internal::find_driver( driver_type );

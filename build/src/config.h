@@ -89,7 +89,7 @@
 #elif __APPLE__
 	#include <TargetConditionals.h>
 
-	#if TARGET_IOS_IPHONE || TARGET_IPHONE_SIMULATOR
+	#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
 		#define PLATFORM_NAME "ios"
 		#define PLATFORM_IS_MOBILE 1
 		#define PLATFORM_IOS 1
