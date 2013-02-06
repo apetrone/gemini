@@ -23,34 +23,9 @@
 #include "log.h"
 #include "gldrivers/opengl_core32.hpp"
 #include "gemgl.h"
+#include "opengl_common.hpp"
 
 using namespace renderer;
-
-#if _WIN32
-	#include <limits.h>
-	#include <windows.h>
-	#include <gl/gl.h>
-	#include <glext.h>
-	#include <wglext.h>
-	#pragma comment( lib, "opengl32.lib" )
-#elif LINUX
-	#include <stdint.h>
-	#include <GL/gl.h>
-	#include <GL/glx.h>
-	//#include <glxext.h>
-#elif __APPLE__
-	#include <stdint.h>
-	#include <TargetConditionals.h>
-
-	#if TARGET_OS_IPHONE
-		#include <OpenGLES/ES2/gl.h>
-		#include <OpenGLES/ES2/glext.h>
-	#elif TARGET_OS_MAC
-		#include <OpenGL/gl3.h>
-		#include <OpenGL/gl3ext.h>
-
-	#endif
-#endif
 
 GLCore32::GLCore32()
 {
