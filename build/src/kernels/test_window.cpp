@@ -135,7 +135,6 @@ public:
 		ms.rewind();
 		driver->run_command( renderer::DC_VIEWPORT, ms );
 		
-		
 		// set clear color
 		ms.rewind();
 		ms.write( 0.5f );

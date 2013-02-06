@@ -91,7 +91,8 @@ project ( build_name )
 		files
 		{ 
 			common_file_list[ "macosx" ],
-			"src/*.m*"
+			"src/*.m*",
+			"src/osx/osx_gemgl.*",			
 		}
 
 		if _OPTIONS["ios"] == nil then
@@ -152,7 +153,7 @@ project ( build_name )
 				files
 				{
 					"src/osx/*.m*",
-					"src/osx/*.h*"
+					"src/osx/*.h*",
 				}
 			end
 		else

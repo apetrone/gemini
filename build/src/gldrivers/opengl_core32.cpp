@@ -22,6 +22,7 @@
 #include "typedefs.h"
 #include "log.h"
 #include "gldrivers/opengl_core32.hpp"
+#include "gemgl.h"
 
 using namespace renderer;
 
@@ -54,11 +55,13 @@ using namespace renderer;
 GLCore32::GLCore32()
 {
 	LOGV( "GLCore32 instanced.\n" );
+	gemgl_startup( &gl, GEMGL_CORE_32 );
 }
 
 GLCore32::~GLCore32()
 {
-	LOGV( "GLCore32 shutting down.\n" );	
+	LOGV( "GLCore32 shutting down.\n" );
+	gemgl_shutdown( &gl );
 }
 
 void GLCore32::run_command( renderer::DriverCommand command, MemoryStream & stream )
@@ -72,7 +75,7 @@ void GLCore32::run_command( renderer::DriverCommand command, MemoryStream & stre
 			stream.read(&g);
 			stream.read(&b);
 			stream.read(&a);
-			glClearColor( r, g, b, a );
+			gl.ClearColor( r, g, b, a );
 			break;
 		}
 
@@ -80,7 +83,7 @@ void GLCore32::run_command( renderer::DriverCommand command, MemoryStream & stre
 		{
 			unsigned int bits;
 			stream.read(&bits);
-			glClear( bits );
+			gl.Clear( bits );
 			break;
 		}
 		
@@ -91,7 +94,7 @@ void GLCore32::run_command( renderer::DriverCommand command, MemoryStream & stre
 			stream.read(&y);
 			stream.read(&width);
 			stream.read(&height);
-			glViewport( x, y, width, height );
+			gl.Viewport( x, y, width, height );
 			break;
 		}
 		
