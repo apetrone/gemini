@@ -49,7 +49,8 @@ project ( build_name )
 	-- building for desktop
 	if _OPTIONS["ios"] == nil then
 		files {
-			"src/desktop/*.c*"
+			"src/desktop/*.c*",
+			"src/gldrivers/opengl_core32.*"
 		}
 	end
 
@@ -93,13 +94,6 @@ project ( build_name )
 			common_file_list[ "macosx" ],
 			"src/*.m*"
 		}
-
-		if _OPTIONS["ios"] == nil then
-			files
-			{
-				"src/gldrivers/opengl_core32.*"
-			}
-		end
 
 		if xcodebuildsettings ~= nil then
 

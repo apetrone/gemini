@@ -36,7 +36,7 @@ using namespace renderer;
 	#include <stdint.h>
 	#include <GL/gl.h>
 	#include <GL/glx.h>
-	#include <glxext.h>
+	//#include <glxext.h>
 #elif __APPLE__
 	#include <stdint.h>
 	#include <TargetConditionals.h>
