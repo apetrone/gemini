@@ -113,7 +113,8 @@ project ( build_name )
 					"src/ios/*.m*",
 					"src/ios/*.h*",
 					"src/osx/osx_platform.*",
-					"src/gldrivers/opengl_glesv2.*"
+					"src/gldrivers/opengl_glesv2.*",
+					"src/osx/osx_gemgl.*",
 				}
 
 				linkoptions
