@@ -29,7 +29,7 @@
 
 #if RASPBERRYPI || (PLATFORM_IOS && PLATFORM_IS_MOBILE)
 	// force use of OpenGL ES v2
-//	#include <gldrivers/glesv2.hpp>
+	#include <gldrivers/opengl_glesv2.hpp>
 #else
 	// use OpenGL
 //	#include <gldrivers/opengl_legacy21.hpp>
@@ -62,7 +62,10 @@ namespace renderer
 	int startup( Driver driver_type )
 	{
 		// run-time selection of the renderer has to happen here based on hints by the kernel
-#if !PLATFORM_IS_MOBILE
+		// for now, we just hard-code these
+#if PLATFORM_IS_MOBILE
+		_internal::register_driver( GLESv2, GLESv2::creator );
+#else
 		_internal::register_driver( OpenGL, GLCore32::creator );
 #endif
 		

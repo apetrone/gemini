@@ -19,58 +19,21 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "kernel_ios.h"
-#include <string.h>
-#include <stdio.h>
+#pragma once
+#include "renderer.hpp"
 
-#import <Foundation/Foundation.h>
 
-void iOSKernel::startup()
+class GLESv2 : public renderer::IRenderDriver
 {
+	DECLARE_FACTORY_CLASS( GLESv2, renderer::IRenderDriver );
+
+public:
+	GLESv2();
+	~GLESv2();
 	
-} // startup
-
-void iOSKernel::register_services()
-{
+	virtual const char * description() { return "OpenGL ES 2.0"; }
 	
-} // register_services
-
-void iOSKernel::pre_tick()
-{
-} // pre_tick
-
-void iOSKernel::post_tick()
-{
-} // post_tick
-
-void iOSKernel::post_application_config( kernel::ApplicationResult result )
-{
-} // post_application_config
-
-void iOSKernel::post_application_startup( kernel::ApplicationResult result )
-{
-} // post_application_startup
-
-void iOSKernel::shutdown()
-{
-} // shutdown
-
-void iOSKernel::setInterfaceOrientation( UIInterfaceOrientation orientation )
-{
-}
-
-void iOSKernel::will_resign_active()
-{
-	NSLog( @"will_resign_active" );
-}
-
-void iOSKernel::did_become_active()
-{
-	NSLog( @"did_become_active" );
-}
-
-void iOSKernel::will_terminate()
-{
-	NSLog( @"will_terminate" );
-}
-
+	virtual void run_command( renderer::DriverCommand command, MemoryStream & stream );
+	virtual void post_command( renderer::DriverCommand command, MemoryStream & stream );
+	
+}; // GLESv2

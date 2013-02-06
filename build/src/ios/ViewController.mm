@@ -140,13 +140,11 @@
 - (void)update
 {
 	//NSLog( @"ViewController.m - update" );
-	glClearColor( 1.0f, 0.0f, 1.0f, 1.0f );
-	glClear( GL_COLOR_BUFFER_BIT );
 }
 
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
-//	kernel_tick();
+	kernel::tick();
 }
 
 

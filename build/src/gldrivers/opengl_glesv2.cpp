@@ -19,58 +19,65 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "kernel_ios.h"
-#include <string.h>
-#include <stdio.h>
+#include "typedefs.h"
+#include "log.h"
+#include "gldrivers/opengl_glesv2.hpp"
+#include "gemgl.h"
+#include "opengl_common.hpp"
 
-#import <Foundation/Foundation.h>
+using namespace renderer;
 
-void iOSKernel::startup()
+GLESv2::GLESv2()
+{
+	LOGV( "GLESv2 instanced.\n" );
+	gemgl_startup( &gl, GEMGL_CORE_32 );
+}
+
+GLESv2::~GLESv2()
+{
+	LOGV( "GLESv2 shutting down.\n" );
+	gemgl_shutdown( &gl );
+}
+
+void GLESv2::run_command( renderer::DriverCommand command, MemoryStream & stream )
+{
+	switch( command )
+	{
+		case DC_CLEARCOLOR:
+		{
+			float r, g, b, a;
+			stream.read(&r);
+			stream.read(&g);
+			stream.read(&b);
+			stream.read(&a);
+			gl.ClearColor( r, g, b, a );
+			break;
+		}
+
+		case DC_CLEAR:
+		{
+			unsigned int bits;
+			stream.read(&bits);
+			gl.Clear( bits );
+			break;
+		}
+		
+		case DC_VIEWPORT:
+		{
+			int x, y, width, height;
+			stream.read(&x);
+			stream.read(&y);
+			stream.read(&width);
+			stream.read(&height);
+			gl.Viewport( x, y, width, height );
+			break;
+		}
+		
+		default: break;
+	}
+}
+
+void GLESv2::post_command( renderer::DriverCommand command, MemoryStream & stream )
 {
 	
-} // startup
-
-void iOSKernel::register_services()
-{
-	
-} // register_services
-
-void iOSKernel::pre_tick()
-{
-} // pre_tick
-
-void iOSKernel::post_tick()
-{
-} // post_tick
-
-void iOSKernel::post_application_config( kernel::ApplicationResult result )
-{
-} // post_application_config
-
-void iOSKernel::post_application_startup( kernel::ApplicationResult result )
-{
-} // post_application_startup
-
-void iOSKernel::shutdown()
-{
-} // shutdown
-
-void iOSKernel::setInterfaceOrientation( UIInterfaceOrientation orientation )
-{
 }
-
-void iOSKernel::will_resign_active()
-{
-	NSLog( @"will_resign_active" );
-}
-
-void iOSKernel::did_become_active()
-{
-	NSLog( @"did_become_active" );
-}
-
-void iOSKernel::will_terminate()
-{
-	NSLog( @"will_terminate" );
-}
-

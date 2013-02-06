@@ -19,58 +19,33 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "kernel_ios.h"
-#include <string.h>
-#include <stdio.h>
+#pragma once
 
-#import <Foundation/Foundation.h>
 
-void iOSKernel::startup()
-{
-	
-} // startup
+#if _WIN32
+	#include <limits.h>
+	#include <windows.h>
+	#include <gl/gl.h>
+	#include <glext.h>
+	#include <wglext.h>
+	#pragma comment( lib, "opengl32.lib" )
+#elif LINUX
+	#include <stdint.h>
+	#include <GL/gl.h>
+	#include <GL/glx.h>
+	//#include <glxext.h>
+#elif __APPLE__
+	#include <stdint.h>
+	#include <TargetConditionals.h>
 
-void iOSKernel::register_services()
-{
-	
-} // register_services
-
-void iOSKernel::pre_tick()
-{
-} // pre_tick
-
-void iOSKernel::post_tick()
-{
-} // post_tick
-
-void iOSKernel::post_application_config( kernel::ApplicationResult result )
-{
-} // post_application_config
-
-void iOSKernel::post_application_startup( kernel::ApplicationResult result )
-{
-} // post_application_startup
-
-void iOSKernel::shutdown()
-{
-} // shutdown
-
-void iOSKernel::setInterfaceOrientation( UIInterfaceOrientation orientation )
-{
-}
-
-void iOSKernel::will_resign_active()
-{
-	NSLog( @"will_resign_active" );
-}
-
-void iOSKernel::did_become_active()
-{
-	NSLog( @"did_become_active" );
-}
-
-void iOSKernel::will_terminate()
-{
-	NSLog( @"will_terminate" );
-}
-
+	#if TARGET_OS_IPHONE
+		#include <OpenGLES/ES2/gl.h>
+		#include <OpenGLES/ES2/glext.h>
+	#elif TARGET_OS_MAC
+		#include <OpenGL/gl3.h>
+		#include <OpenGL/gl3ext.h>
+		// legacy GL
+//		#include <OpenGL/gl.h>
+//		#include <OpenGL/glext.h>
+	#endif
+#endif
