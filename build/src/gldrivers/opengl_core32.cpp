@@ -45,19 +45,16 @@ void GLCore32::run_command( renderer::DriverCommand command, MemoryStream & stre
 	{
 		case DC_CLEARCOLOR:
 		{
-			float r, g, b, a;
-			stream.read(&r);
-			stream.read(&g);
-			stream.read(&b);
-			stream.read(&a);
-			gl.ClearColor( r, g, b, a );
+			float color[4];
+			stream.read( color, 4*sizeof(float) );
+			gl.ClearColor( color[0], color[1], color[2], color[3] );
 			break;
 		}
 
 		case DC_CLEAR:
 		{
 			unsigned int bits;
-			stream.read(&bits);
+			stream.read(bits);
 			gl.Clear( bits );
 			break;
 		}
@@ -65,10 +62,10 @@ void GLCore32::run_command( renderer::DriverCommand command, MemoryStream & stre
 		case DC_VIEWPORT:
 		{
 			int x, y, width, height;
-			stream.read(&x);
-			stream.read(&y);
-			stream.read(&width);
-			stream.read(&height);
+			stream.read(x);
+			stream.read(y);
+			stream.read(width);
+			stream.read(height);
 			gl.Viewport( x, y, width, height );
 			break;
 		}

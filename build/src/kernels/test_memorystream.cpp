@@ -54,7 +54,7 @@ public:
 		s.rewind();
 		s.write( valueA );
 		s.rewind();
-		s.read( &valueB );
+		s.read( valueB );
 		LOGV( "valueB: %i\n", valueB );
 		
 		s.rewind();
@@ -63,7 +63,7 @@ public:
 		float v = 0;
 		s.write( z );
 		s.rewind();
-		s.read( &v );
+		s.read( v );
 		LOGV( "v: %g\n", v );
 
 		s.rewind();
@@ -73,7 +73,7 @@ public:
 		int *p = 0;
 		s.write( x );
 		s.rewind();
-		s.read( &p );
+		s.read( p );
 		LOGV( "x = '%p', p = '%p'\n", x, p );
 		
 		return kernel::NoWindow;

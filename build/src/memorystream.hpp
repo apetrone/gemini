@@ -60,9 +60,9 @@ public:
 	
 	
 	template <class Type>
-	int read( Type * destination )
+	int read( Type & destination )
 	{
-		return this->read( destination, sizeof(Type) );
+		return this->read( &destination, sizeof(Type) );
 	} // read, Type
 	
 	
