@@ -29,19 +29,18 @@
 	public:\
 		static abstract_class * creator() { return ALLOC(class_name); }
 
-
 namespace renderer
 {
-	enum Driver
+	enum DriverType
 	{
 		Default, // pick one.
 		OpenGL,
 		GLESv2,
 		GLESv3
-	}; // Driver
+	}; // DriverType
 	
 	
-	enum DriverCommand
+	enum DriverCommandType
 	{
 		DC_SHADER,
 		DC_UNIFORMMATRIX4,
@@ -60,11 +59,12 @@ namespace renderer
 		DC_SCISSOR,
 		
 		DC_MAX
-	}; // DriverCommand
+	}; // DriverCommandType
 	
 	// returns 0 on failure, 1 on success
-	int startup( Driver driver );
+	int startup( DriverType driver );
 	void shutdown();
+
 	
 	//
 	// IRenderDriver
@@ -77,8 +77,8 @@ namespace renderer
 		virtual const char * description() = 0;
 		
 		// these commands are called with the command and current memory stream
-		virtual void run_command( DriverCommand command, MemoryStream & stream ) = 0;
-		virtual void post_command( DriverCommand command, MemoryStream & stream ) = 0;
+		virtual void run_command( DriverCommandType command, MemoryStream & stream ) = 0;
+		virtual void post_command( DriverCommandType command, MemoryStream & stream ) = 0;
 		
 		
 		

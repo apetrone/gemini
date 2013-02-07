@@ -39,17 +39,17 @@ GLESv2::~GLESv2()
 	gemgl_shutdown( &gl );
 }
 
-void GLESv2::run_command( renderer::DriverCommand command, MemoryStream & stream )
+void GLESv2::run_command( renderer::DriverCommandType command, MemoryStream & stream )
 {
 	switch( command )
 	{
 		case DC_CLEARCOLOR:
 		{
 			float r, g, b, a;
-			stream.read(&r);
-			stream.read(&g);
-			stream.read(&b);
-			stream.read(&a);
+			stream.read(r);
+			stream.read(g);
+			stream.read(b);
+			stream.read(a);
 			gl.ClearColor( r, g, b, a );
 			break;
 		}
@@ -57,7 +57,7 @@ void GLESv2::run_command( renderer::DriverCommand command, MemoryStream & stream
 		case DC_CLEAR:
 		{
 			unsigned int bits;
-			stream.read(&bits);
+			stream.read(bits);
 			gl.Clear( bits );
 			break;
 		}
@@ -65,10 +65,10 @@ void GLESv2::run_command( renderer::DriverCommand command, MemoryStream & stream
 		case DC_VIEWPORT:
 		{
 			int x, y, width, height;
-			stream.read(&x);
-			stream.read(&y);
-			stream.read(&width);
-			stream.read(&height);
+			stream.read(x);
+			stream.read(y);
+			stream.read(width);
+			stream.read(height);
 			gl.Viewport( x, y, width, height );
 			break;
 		}
@@ -77,7 +77,7 @@ void GLESv2::run_command( renderer::DriverCommand command, MemoryStream & stream
 	}
 }
 
-void GLESv2::post_command( renderer::DriverCommand command, MemoryStream & stream )
+void GLESv2::post_command( renderer::DriverCommandType command, MemoryStream & stream )
 {
 	
 }

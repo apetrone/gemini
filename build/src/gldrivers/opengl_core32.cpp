@@ -39,7 +39,7 @@ GLCore32::~GLCore32()
 	gemgl_shutdown( &gl );
 }
 
-void GLCore32::run_command( renderer::DriverCommand command, MemoryStream & stream )
+void GLCore32::run_command( renderer::DriverCommandType command, MemoryStream & stream )
 {
 	switch( command )
 	{
@@ -74,7 +74,7 @@ void GLCore32::run_command( renderer::DriverCommand command, MemoryStream & stre
 	}
 }
 
-void GLCore32::post_command( renderer::DriverCommand command, MemoryStream & stream )
+void GLCore32::post_command( renderer::DriverCommandType command, MemoryStream & stream )
 {
 	
 }

@@ -42,14 +42,14 @@ namespace renderer
 	{
 		RenderDriverCreator _creator_list = 0;
 		
-		void register_driver( Driver type, RenderDriverCreator creator )
+		void register_driver( DriverType type, RenderDriverCreator creator )
 		{
 			// I'm going to ignore most of the parameters to this function for now.
 			// however, once the need arises to use more than one driver, I'll code this up.
 			_creator_list = creator;
 		} // register_driver
 			
-		RenderDriverCreator find_driver( Driver type )
+		RenderDriverCreator find_driver( DriverType type )
 		{
 			return _creator_list;
 		} // find_driver
@@ -59,7 +59,7 @@ namespace renderer
 	
 	IRenderDriver * driver() { return _render_driver; }
 	
-	int startup( Driver driver_type )
+	int startup( DriverType driver_type )
 	{
 		// run-time selection of the renderer has to happen here based on hints by the kernel
 		// for now, we just hard-code these
@@ -80,7 +80,6 @@ namespace renderer
 				return 1;
 			}
 		}
-
 
 		return 0;
 	} // startup

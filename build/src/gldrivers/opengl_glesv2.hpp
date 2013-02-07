@@ -33,7 +33,7 @@ public:
 	
 	virtual const char * description() { return "OpenGL ES 2.0"; }
 	
-	virtual void run_command( renderer::DriverCommand command, MemoryStream & stream );
-	virtual void post_command( renderer::DriverCommand command, MemoryStream & stream );
+	virtual void run_command( renderer::DriverCommandType command, MemoryStream & stream );
+	virtual void post_command( renderer::DriverCommandType command, MemoryStream & stream );
 	
 }; // GLESv2
