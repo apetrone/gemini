@@ -16,44 +16,44 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this source.  If not, see <http://www.gnu.org/licenses/>.
 // -------------------------------------------------------------
-#import "gemgl.h"
+#import "gemgl.hpp"
 #import <CoreFoundation/CoreFoundation.h>
 
-CFBundleRef _gl_bundle;
+CFBundleRef gemgl_bundle = 0;
 	
 int gemgl_osx_startup( void )
 {
-	_gl_bundle = 0;
+	gemgl_bundle = 0;
 	
 	// get bundle ref
 #if TARGET_OS_IPHONE
-	_gl_bundle = CFBundleGetBundleWithIdentifier( CFSTR( "com.apple.opengles" ) );
+	gemgl_bundle = CFBundleGetBundleWithIdentifier( CFSTR( "com.apple.opengles" ) );
 #else
-	_gl_bundle = CFBundleGetBundleWithIdentifier( CFSTR( "com.apple.opengl" ) );
+	gemgl_bundle = CFBundleGetBundleWithIdentifier( CFSTR( "com.apple.opengl" ) );
 #endif
-	if ( !_gl_bundle )
+	if ( !gemgl_bundle )
 	{
 		printf( "FATAL ERROR: Unable to get OpenGL bundle ref.\n" );
 		return 0;
 	}
 	
 	return 1;
-} // osx_gemgl_startup
+} // gemgl_osx_startup
 	
 void gemgl_osx_shutdown( void )
 {
-	if ( _gl_bundle )
+	if ( gemgl_bundle )
 	{
-		CFRelease( _gl_bundle );
-		_gl_bundle = 0;
+		CFRelease( gemgl_bundle );
+		gemgl_bundle = 0;
 	}
-} // osx_gemgl_shutdown
+} // gemgl_osx_shutdown
 	
 void * gemgl_native_findsymbol( const char * name )
 {
 	CFStringRef symbol_name = CFStringCreateWithCString( kCFAllocatorDefault, name, kCFStringEncodingASCII );
-	void * symbol = CFBundleGetFunctionPointerForName( _gl_bundle, symbol_name );
+	void * symbol = CFBundleGetFunctionPointerForName( gemgl_bundle, symbol_name );
 	CFRelease( symbol_name );
 	return symbol;
-} // native_gl_findsymbol
+} // gemgl_native_findsymbol
 

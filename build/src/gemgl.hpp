@@ -35,6 +35,9 @@
 	#define GEMGLAPI *
 #endif
 
+
+#include "renderer.hpp"
+
 // print information regarding whether or not we correctly link opengl functions
 #define GEMGL_DEBUG_SYMBOLS 0
 
@@ -42,7 +45,7 @@
 	#define GEMGL_ENABLE_ES 1
 #endif
 
-#define GEMGL_LINK( name, fn, type )	name = (type) gemgl_findsymbol( &gl, fn );
+#define GEMGL_LINK( name, fn, type )	name = (type) gemgl_findsymbol( gl, fn );
 
 // ---------------------------------------
 
@@ -55,10 +58,6 @@ enum gemgl_renderer_type
 	GEMGL_ES_20,	
 };
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 	// ---------------------------------------
 	typedef void (GEMGLAPI GEMGLFNVIEWPORT) ( GLint x, GLint y, GLsizei width, GLsizei height );
@@ -92,6 +91,8 @@ extern "C"
 #else
 	typedef void (GEMGLAPI GEMGLFNDEPTHRANGE) ( GLclampd n, GLclampd f );
 #endif
+
+	typedef const GLubyte * (GEMGLAPI GEMGLFNGETSTRING) ( GLenum param );
 
 	// ---------------------------------------
 	typedef GLuint (GEMGLAPI GEMGLFNCREATEPROGRAM) ( void );
@@ -527,7 +528,7 @@ extern "C"
 		
 		
 #endif
-
+		GEMGLFNGETSTRING GetString;
         GEMGL_CHECKERROR CheckError;
 		
 		// requested renderer type
@@ -538,20 +539,24 @@ extern "C"
 #endif
 	} gemgl_interface_t;
 
+	struct gemgl_config
+	{
+		renderer::DriverType type;
+		
+		short major_version;
+		short minor_version;
+	}; // gemgl_config
+
 	extern gemgl_interface_t gl;
 
 	// init GL interface
-	int gemgl_startup( gemgl_interface_t * gl_interface, int renderer_type );
-	void gemgl_shutdown( gemgl_interface_t * gl_interface );
-	void * gemgl_findsymbol( gemgl_interface_t * gl_interface, const char * symbol_name );
+	int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config );
+	void gemgl_shutdown( gemgl_interface_t & gl_interface );
+	void * gemgl_findsymbol( gemgl_interface_t & gl_interface, const char * symbol_name );
 	const char * gemgl_uniform_to_string( GLenum type );
 
 #if __APPLE__
 	int gemgl_osx_startup( void );
 	void gemgl_osx_shutdown( void );
 	void * gemgl_native_findsymbol( const char * name );
-#endif
-
-#ifdef __cplusplus
-}
 #endif
