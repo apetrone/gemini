@@ -24,7 +24,7 @@
 #include <string.h>
 #include <stdio.h>
 
-
+static xwl_window_t * _window = 0;
 namespace kernel
 {
 	Error main( IKernel * kernel_instance, const char * kernel_name )
@@ -123,7 +123,7 @@ DesktopKernel::DesktopKernel( int argc, char ** argv ) : target_renderer(0)
 
 void DesktopKernel::startup()
 {
-	xwl_startup();
+	xwl_startup( XWL_WINDOW_PROVIDER_DEFAULT, XWL_API_PROVIDER_DEFAULT, XWL_INPUT_PROVIDER_DEFAULT );
 } // startup
 
 void DesktopKernel::register_services()
@@ -132,15 +132,12 @@ void DesktopKernel::register_services()
 
 void DesktopKernel::pre_tick()
 {
-	
-	xwl_event_t e;
-	memset( &e, 0, sizeof(xwl_event_t) );
-	xwl_pollevent( &e );
+	xwl_dispatch_events();
 } // pre_tick
 
 void DesktopKernel::post_tick()
 {
-	xwl_finish();
+	xwl_swap_buffers( _window );
 } // post_tick
 
 void DesktopKernel::post_application_config( kernel::ApplicationResult result )
@@ -149,21 +146,24 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 	
 	if ( is_active() )
 	{
-		xwl_windowparams_t windowparams;
-		windowparams.width = parameters().window_width;
-		windowparams.height = parameters().window_height;
-		windowparams.flags = XWL_OPENGL;
+		unsigned int attribs[] = {
+			XWL_API, XWL_API_OPENGL,
+			XWL_API_MAJOR_VERSION, 3,
+			XWL_API_MINOR_VERSION, 2,
+			XWL_WINDOW_WIDTH, parameters().window_width,
+			XWL_WINDOW_HEIGHT, parameters().window_height,
+			XWL_DEPTH_SIZE, 24,
+			XWL_STENCIL_SIZE, 8,
+//			XWL_USE_FULLSCREEN, 1,
+			XWL_NONE,
+		};
 		
-		// pick the core 3.2 profile if we can
-		unsigned int attribs[] = { XWL_GL_PROFILE, XWL_GLPROFILE_CORE3_2, 0 };
-		
-		xwl_window_t * window = this->create_window( &windowparams, parameters().window_title, attribs );
-		if ( !window )
-		{		
+		_window = xwl_create_window( parameters().window_title, attribs );
+		if ( !_window )
+		{
 			fprintf( stderr, "Window creation failed\n" );
 		}
-		
-		xwl_activate( window );
+	
 		xwl_set_callback( event_callback_xwl );
 	}
 } // post_application_config
@@ -172,29 +172,9 @@ void DesktopKernel::post_application_startup( kernel::ApplicationResult result )
 {
 } // post_application_startup
 
+
 void DesktopKernel::shutdown()
 {
 	xwl_shutdown();
+	_window = 0;
 } // shutdown
-
-struct xwl_window_s *DesktopKernel::create_window( struct xwl_windowparams_s * windowparams, const char * title, unsigned int * attribs )
-{
-	xwl_window_t * window = 0;
-	window = xwl_create_window( windowparams, title, attribs );
-	if ( !window )
-	{
-		// try to scale back to the legacy profile
-		attribs[1] = XWL_GLPROFILE_LEGACY;
-		
-		window = xwl_create_window( windowparams, title, attribs );
-		if ( !window )
-		{
-			return 0;
-		}
-		
-		// TODO: this was successful, set the target_renderer to some constant
-		target_renderer = 1;
-	}
-	
-	return window;
-} // create_window
