@@ -76,7 +76,7 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 
 	LOGV( "Loading OpenGL driver \"%s\"\n", libName );
 
-	if ( !xlib_open( &gl_interface->library, libName ) )
+	if ( !xlib_open( &gl_interface.library, libName ) )
 	{
 		LOGV( "Could not load OpenGL library: \"%s\"\n", libName );
 		return 0;
@@ -433,7 +433,7 @@ void * gemgl_findsymbol( gemgl_interface_t & gl_interface, const char * name )
 void gemgl_shutdown( gemgl_interface_t & gl_interface  )
 {
 #if _WIN32 || LINUX
-	xlib_close( &gl_interface->library );
+	xlib_close( &gl_interface.library );
 #elif __APPLE__
 	gemgl_osx_shutdown();
 #endif
