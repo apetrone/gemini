@@ -22,7 +22,7 @@
 #include "typedefs.h"
 #include "log.h"
 #include "gldrivers/opengl_core32.hpp"
-#include "gemgl.h"
+#include "gemgl.hpp"
 #include "opengl_common.hpp"
 
 using namespace renderer;
@@ -30,13 +30,18 @@ using namespace renderer;
 GLCore32::GLCore32()
 {
 	LOGV( "GLCore32 instanced.\n" );
-	gemgl_startup( &gl, GEMGL_CORE_32 );
+	gemgl_config config;
+	config.type = renderer::OpenGL;
+	config.major_version = 3;
+	config.minor_version = 2;
+	
+	gemgl_startup( gl, config );
 }
 
 GLCore32::~GLCore32()
 {
 	LOGV( "GLCore32 shutting down.\n" );
-	gemgl_shutdown( &gl );
+	gemgl_shutdown( gl );
 }
 
 void GLCore32::run_command( renderer::DriverCommandType command, MemoryStream & stream )

@@ -22,7 +22,7 @@
 #include "typedefs.h"
 #include "log.h"
 #include "gldrivers/opengl_glesv2.hpp"
-#include "gemgl.h"
+#include "gemgl.hpp"
 #include "opengl_common.hpp"
 
 using namespace renderer;
@@ -30,13 +30,17 @@ using namespace renderer;
 GLESv2::GLESv2()
 {
 	LOGV( "GLESv2 instanced.\n" );
-	gemgl_startup( &gl, GEMGL_CORE_32 );
+	gemgl_config config;
+	config.type = renderer::GLESv2;
+	config.major_version = 2;
+	config.minor_version = 0;
+	gemgl_startup( gl, config );
 }
 
 GLESv2::~GLESv2()
 {
 	LOGV( "GLESv2 shutting down.\n" );
-	gemgl_shutdown( &gl );
+	gemgl_shutdown( gl );
 }
 
 void GLESv2::run_command( renderer::DriverCommandType command, MemoryStream & stream )
