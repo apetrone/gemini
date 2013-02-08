@@ -118,6 +118,10 @@ public:
 	{
 		return kernel::Success;
 	}
+	
+	virtual void step( kernel::Params & params )
+	{
+	}
 
 	virtual void tick( kernel::Params & params )
 	{

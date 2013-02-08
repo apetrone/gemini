@@ -152,8 +152,8 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 			XWL_API_MINOR_VERSION, 2,
 			XWL_WINDOW_WIDTH, parameters().window_width,
 			XWL_WINDOW_HEIGHT, parameters().window_height,
-			XWL_DEPTH_SIZE, 24,
-			XWL_STENCIL_SIZE, 8,
+//			XWL_DEPTH_SIZE, 24,
+//			XWL_STENCIL_SIZE, 8,
 //			XWL_USE_FULLSCREEN, 1,
 			XWL_NONE,
 		};

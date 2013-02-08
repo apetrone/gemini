@@ -65,6 +65,8 @@ namespace kernel
 		// kDevice constants above describe the current system
 		unsigned char device_flags;
 		
+		float step_interval_seconds;
+		float step_alpha;
 	
 		// dimensions of the actual window in pixels
 		unsigned short window_width;
@@ -116,6 +118,7 @@ namespace kernel
 		
 		virtual ApplicationResult config( kernel::Params & params ) = 0;
 		virtual ApplicationResult startup( kernel::Params & params ) = 0;
+		virtual void step( kernel::Params & params ) = 0;
 		virtual void tick( kernel::Params & params ) = 0; // called every frame
 	};
 	
@@ -136,8 +139,9 @@ namespace kernel
 	
 	Error startup( IKernel * kernel_instance, const char * application_name );
 	void shutdown();
+	void update();
 	void tick();
-	
+
 	
 	
 	

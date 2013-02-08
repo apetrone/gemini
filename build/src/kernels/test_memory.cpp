@@ -63,6 +63,10 @@ public:
 		return kernel::NoWindow;
 	}
 
+	virtual void step( kernel::Params & params )
+	{
+	}
+
 	virtual void tick( kernel::Params & params )
 	{
 	}
