@@ -317,6 +317,7 @@ namespace kernel
 	void tick()
 	{
 		update();
+		audio::update();
 		_kernel->pre_tick();
 		_active_application->tick( _kernel->parameters() );
 		_kernel->post_tick();

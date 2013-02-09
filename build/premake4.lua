@@ -46,13 +46,19 @@ project ( build_name )
 		"src/kernels/**.c*",
 		"src/core/*.*",
 		"src/core/audio/*",
+		"src/contrib/*"
 	}
 
 	-- building for desktop
 	if _OPTIONS["ios"] == nil then
 		files {
 			"src/core/desktop/*.c*",
-			"src/core/gldrivers/opengl_core32.*"
+			"src/core/gldrivers/opengl_core32.*",
+			"src/core/audio/openal_extaudio.*",
+		}
+	else
+		files {
+			"src/core/audio/openal_vorbis.*"
 		}
 	end
 
@@ -61,7 +67,8 @@ project ( build_name )
 		common_include_dirs,
 		"src",
 		"src/core/",
-		"src/core/audio"
+		"src/core/audio",
+		"src/contrib",
 	}
 
 	prebuildcommands

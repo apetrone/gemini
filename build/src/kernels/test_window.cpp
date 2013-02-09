@@ -24,6 +24,9 @@
 #include "renderer.hpp"
 #include "log.h"
 
+#include "audio.hpp"
+
+
 using namespace kernel;
 
 
@@ -35,6 +38,8 @@ class TestWindow : public kernel::IApplication,
 public:
 	DECLARE_APPLICATION( TestWindow );
 
+	
+	audio::SoundHandle sound;
 	
 	virtual void event( KeyboardEvent & event )
 	{
@@ -113,7 +118,12 @@ public:
 	}
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
-	{	
+	{
+		sound = audio::create_sound( "sounds/handy" );
+		audio::play( sound );
+		
+		
+		
 		return kernel::Success;
 	}
 	

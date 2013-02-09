@@ -34,7 +34,7 @@
 	#include <OpenAL/alc.h>
 #endif
 
-
+using namespace audio;
 
 class OpenAL : public audio::IAudioDriver
 {
@@ -43,15 +43,19 @@ class OpenAL : public audio::IAudioDriver
 	ALCcontext * context;
 	
 	int check_alc_error();
-	int check_al_error();
+	int check_al_error( const char * context );
 	const char * source_state_to_string( int source_state );
 	
+	void buffer_source( AudioSource * source );
+	void stream_source( AudioSource * source, int bufferid );
 public:
 	OpenAL();
 	~OpenAL();
 	
-	virtual void update();
 	virtual void event( audio::EventType event );
-	virtual void stop_all_sounds();
-	virtual void resume();
+	virtual void prepare_source( AudioSource * source );
+	virtual void play_source( AudioSource * source );
+	virtual void update_source( AudioSource * source );
+	virtual void stop_source( AudioSource * source );
+	virtual void clean_source( AudioSource * source );
 }; // OpenAL
