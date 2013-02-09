@@ -30,6 +30,9 @@
 #include "memory.hpp"
 #include "renderer.hpp"
 
+#if LINUX
+	#include <stdlib.h> // for qsort
+#endif
 
 namespace kernel
 {
