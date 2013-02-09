@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 #include "renderer.hpp"
-
+#include "factory.hpp"
 
 class GLESv2 : public renderer::IRenderDriver
 {
