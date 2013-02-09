@@ -45,7 +45,7 @@ project ( build_name )
 		--"src/buildinfo.c",
 		"src/kernels/**.c*",
 		"src/core/*.*",
-		"src/core/audio/*.*",
+		"src/core/audio/*",
 	}
 
 	-- building for desktop
@@ -60,7 +60,8 @@ project ( build_name )
 	{ 
 		common_include_dirs,
 		"src",
-		"src/core"
+		"src/core/",
+		"src/core/audio"
 	}
 
 	prebuildcommands
@@ -93,7 +94,7 @@ project ( build_name )
 
 	configuration { "linux" }
 		defines { "LINUX=1" }
-		links { "X11", "GL", "pthread", "dl", "OpenAL" }
+		links { "X11", "GL", "pthread", "dl", "openal" }
 		files { common_file_list[ "linux" ] }
 
 		-- set rpath to be the same directory as the binary
