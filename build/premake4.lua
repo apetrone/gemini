@@ -87,6 +87,12 @@ project ( build_name )
 		links { "X11", "GL", "pthread", "dl" }
 		files { common_file_list[ "linux" ] }
 
+		-- set rpath to be the same directory as the binary
+		linkoptions
+		{
+			"-Wl,-rpath,."
+		}
+
 	configuration { "macosx" }
 		defines { "__MACH__" }
 		files
