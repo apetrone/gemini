@@ -44,7 +44,8 @@ project ( build_name )
 		--"src/samples/**.c*",
 		--"src/buildinfo.c",
 		"src/kernels/**.c*",
-		"src/core/*.*"
+		"src/core/*.*",
+		"src/core/audio/*.*",
 	}
 
 	-- building for desktop
