@@ -43,21 +43,23 @@ project ( build_name )
 		common_file_list,
 		--"src/samples/**.c*",
 		--"src/buildinfo.c",
-		"src/kernels/**.c*"
+		"src/kernels/**.c*",
+		"src/core/*.c*"
 	}
 
 	-- building for desktop
 	if _OPTIONS["ios"] == nil then
 		files {
-			"src/desktop/*.c*",
-			"src/gldrivers/opengl_core32.*"
+			"src/core/desktop/*.c*",
+			"src/core/gldrivers/opengl_core32.*"
 		}
 	end
 
 	includedirs 
 	{ 
 		common_include_dirs,
-		"src"
+		"src",
+		"src/core"
 	}
 
 	prebuildcommands
@@ -98,8 +100,7 @@ project ( build_name )
 		files
 		{ 
 			common_file_list[ "macosx" ],
-			"src/*.m*",
-			"src/osx/osx_gemgl.*",			
+			"src/core/osx/osx_gemgl.*",			
 		}
 
 		if xcodebuildsettings ~= nil then
@@ -110,11 +111,11 @@ project ( build_name )
 
 				files
 				{
-					"src/ios/*.m*",
-					"src/ios/*.h*",
-					"src/osx/osx_platform.*",
-					"src/gldrivers/opengl_glesv2.*",
-					"src/osx/osx_gemgl.*",
+					"src/core/ios/*.m*",
+					"src/core/ios/*.h*",
+					"src/core/osx/osx_platform.*",
+					"src/core/gldrivers/opengl_glesv2.*",
+					"src/core/osx/osx_gemgl.*",
 				}
 
 				linkoptions
@@ -153,8 +154,8 @@ project ( build_name )
 
 				files
 				{
-					"src/osx/*.m*",
-					"src/osx/*.h*",
+					"src/core/osx/*.m*",
+					"src/core/osx/*.h*",
 				}
 			end
 		else
