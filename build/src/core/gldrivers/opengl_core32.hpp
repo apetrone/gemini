@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 #include "renderer.hpp"
-
+#include "factory.hpp"
 
 class GLCore32 : public renderer::IRenderDriver
 {

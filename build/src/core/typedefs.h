@@ -116,7 +116,6 @@ typedef double float64;
 	typedef int16 wchar;
 #endif
 
-
 #include <config.h>
 
 // for some reason this isn't working any other way...

@@ -28,7 +28,7 @@ int main( int argc, char ** argv )
 	memory::startup();
 	
 	DesktopKernel desktop_kernel( argc, argv );
-	int return_code = kernel::main( &desktop_kernel, "TestUniversal" );
+	int return_code = kernel::main( &desktop_kernel, "TestWindow" );
 	
 	memory::shutdown();
 	return return_code;

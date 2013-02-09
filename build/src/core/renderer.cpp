@@ -22,7 +22,7 @@
 #include "typedefs.h"
 #include "log.h"
 #include "renderer.hpp"
-
+#include "factory.hpp"
 
 
 // compile-time selection of these classes starts here.
@@ -38,47 +38,39 @@
 
 namespace renderer
 {
-	namespace _internal
-	{
-		RenderDriverCreator _creator_list = 0;
-		
-		void register_driver( DriverType type, RenderDriverCreator creator )
-		{
-			// I'm going to ignore most of the parameters to this function for now.
-			// however, once the need arises to use more than one driver, I'll code this up.
-			_creator_list = creator;
-		} // register_driver
-			
-		RenderDriverCreator find_driver( DriverType type )
-		{
-			return _creator_list;
-		} // find_driver
-	}; // _internal
-
 	IRenderDriver * _render_driver = 0;
 	
 	IRenderDriver * driver() { return _render_driver; }
 	
 	int startup( DriverType driver_type )
 	{
+		typedef Factory<IRenderDriver, 4> RendererFactory;
+		RendererFactory factory;
+
 		// run-time selection of the renderer has to happen here based on hints by the kernel
 		// for now, we just hard-code these
 #if PLATFORM_IS_MOBILE
-		_internal::register_driver( GLESv2, GLESv2::creator );
+		factory.register_class( GLESv2::creator, "OpenGL ES 2.0", GLESv2 );
+		driver_type = GLESv2;
 #else
-		_internal::register_driver( OpenGL, GLCore32::creator );
+		factory.register_class( &GLCore32::creator, "OpenGL3.2", OpenGL );
+		driver_type = OpenGL;
 #endif
 		
 		// choose the correct driver at run time; based on some hints?
-		RenderDriverCreator creator = _internal::find_driver( driver_type );
-		if ( creator )
+		RendererFactory::Record * record = factory.find_class( 0, driver_type );
+		if ( record )
 		{
-			_render_driver = creator();
+			_render_driver = record->creator();
 			if ( _render_driver )
 			{
 				LOGV( "Initialized renderer: '%s'\n", _render_driver->description() );
 				return 1;
 			}
+		}
+		else
+		{
+			LOGE( "Unable to find a renderer matching driver type: %i\n", driver_type );
 		}
 
 		return 0;

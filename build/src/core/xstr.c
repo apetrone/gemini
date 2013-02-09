@@ -119,8 +119,17 @@ int xstr_nicmp( const char * s1, const char * s2, size_t count )
 	// use zero to mean: pick the smallest string
 	if ( count == 0 )
 	{
-		s1_len = xstr_len(s1);
-		s2_len = xstr_len(s2);
+		s1_len = 0;
+		if ( s1 != 0 )
+		{
+			s1_len = xstr_len(s1);
+		}
+		
+		s2_len = 0;
+		if ( s2 != 0 )
+		{
+			s2_len = xstr_len(s2);
+		}
 		
 		if ( s1_len < s2_len )
 			return -1;

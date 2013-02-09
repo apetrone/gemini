@@ -22,8 +22,10 @@
 #include "kernel.hpp"
 #include <stdio.h>
 #include "renderer.hpp"
+#include "log.h"
 
 using namespace kernel;
+
 
 class TestWindow : public kernel::IApplication,
 	public IEventListener<KeyboardEvent>,
@@ -111,7 +113,7 @@ public:
 	}
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
-	{
+	{	
 		return kernel::Success;
 	}
 	

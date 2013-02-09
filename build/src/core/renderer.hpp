@@ -21,13 +21,11 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "typedefs.h"
 #include "memory.hpp"
 #include "memorystream.hpp"
 
 
-#define DECLARE_FACTORY_CLASS( class_name, abstract_class )\
-	public:\
-		static abstract_class * creator() { return ALLOC(class_name); }
 
 namespace renderer
 {
@@ -79,10 +77,7 @@ namespace renderer
 		// these commands are called with the command and current memory stream
 		virtual void run_command( DriverCommandType command, MemoryStream & stream ) = 0;
 		virtual void post_command( DriverCommandType command, MemoryStream & stream ) = 0;
-		
-		
-		
-		
+
 	}; // IRenderDriver
 	typedef IRenderDriver * (*RenderDriverCreator)();
 	
