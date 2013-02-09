@@ -27,7 +27,17 @@
 
 void iOSKernel::startup()
 {
+	// get the current status bar notification and send that to the kernel on startup
+//	UIInterfaceOrientation startup_orientation = [[UIApplication sharedApplication] statusBarOrientation];
 	
+	// start generating orientation notifications
+	[[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+	
+	
+	UIScreen * mainscreen = [UIScreen mainScreen];
+	UIScreenMode * screenmode = [mainscreen currentMode];
+	CGSize size = [screenmode size];
+	NSLog( @"device resolution: %g x %g", size.width, size.height );
 } // startup
 
 void iOSKernel::register_services()
@@ -55,22 +65,40 @@ void iOSKernel::shutdown()
 {
 } // shutdown
 
-void iOSKernel::setInterfaceOrientation( UIInterfaceOrientation orientation )
+void iOSKernel::set_view_size( int width, int height )
 {
-}
+	
+} // set_view_size
+
+void iOSKernel::set_interface_orientation( UIInterfaceOrientation orientation )
+{
+} // set_interface_orientation
+
+BOOL iOSKernel::should_change_orientation( UIInterfaceOrientation orientation )
+{
+	return YES;
+} // should_change_orientation
 
 void iOSKernel::will_resign_active()
 {
 	NSLog( @"will_resign_active" );
+	[[UIDevice currentDevice] endGeneratingDeviceOrientationNotifications];
 }
 
 void iOSKernel::did_become_active()
 {
 	NSLog( @"did_become_active" );
+	[[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];	
 }
 
 void iOSKernel::will_terminate()
 {
 	NSLog( @"will_terminate" );
+}
+
+void iOSKernel::did_receive_memory_warning()
+{
+    // Release any cached data, images, etc. that aren't in use.
+	NSLog( @"did_receive_memory_warning" );
 }
 

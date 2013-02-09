@@ -44,8 +44,12 @@ public:
 	virtual void shutdown();
 	
 	// iOS specific calls
-	void setInterfaceOrientation( UIInterfaceOrientation orientation );
+	void set_view_size( int width, int height );
+	void set_interface_orientation( UIInterfaceOrientation orientation );
+	BOOL should_change_orientation( UIInterfaceOrientation orientation );
+		
 	void will_resign_active();
 	void did_become_active();
 	void will_terminate();
+	void did_receive_memory_warning();
 };

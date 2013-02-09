@@ -93,38 +93,26 @@ extern "C"
 #endif
 	
 	NSLog( @"AppDelegate.m - didFinishLaunchingWithOptions" );
-	
-//	KernelCallbacks cb;
-//	
-//	DECLARE_KERNEL( Audio, cb );	
-//	DECLARE_KERNEL( OpenGL, cb );
-//	DECLARE_KERNEL( GUI, cb );
-//	DECLARE_KERNEL( Test, cb );
-//
-//	KERNEL( Audio, cb );
 
-	// start generating orientation notifications
-	[[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didRotate:) name:UIDeviceOrientationDidChangeNotification object: nil];
-
+	// startup memory subsystem
 	memory::startup();
 	
+	// allocate and assign the kernel to an ivar
 	iOSKernel * mobile_kernel = ALLOC(iOSKernel);
 	self->kernel = mobile_kernel;
-	
-	// get the current status bar notification and send that to the kernel on startup
-	UIInterfaceOrientation startup_orientation = [[UIApplication sharedApplication] statusBarOrientation];
-//	kernel_ios_startup( cb, [[self.viewController view] bounds].size.width, [[self.viewController view] bounds].size.height, startup_orientation );	
+		
+	// startup the kernel instance
 	if ( kernel::startup( mobile_kernel, "TestUniversal" ) != kernel::NoError )
 	{
 		NSLog( @"kernel startup failed!" );
 	}
 	else
 	{
-		mobile_kernel->setInterfaceOrientation( startup_orientation );
-		
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didRotate:) name:UIDeviceOrientationDidChangeNotification object: nil];
+			
+		// set our view size
+		mobile_kernel->set_view_size( [[self.viewController view] bounds].size.width, [[self.viewController view] bounds].size.height );
 		[self.viewController setKernel: mobile_kernel];
-		
 	}
 		
 	//UIInterfaceOrientation initialOrientation = [self.viewController interfaceOrientation];		
@@ -147,8 +135,6 @@ extern "C"
 	{
 		mobile_kernel->will_resign_active();
 	}
-//	kernel_resign_active();
-	[[UIDevice currentDevice] endGeneratingDeviceOrientationNotifications];
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application
@@ -181,7 +167,6 @@ extern "C"
 	{
 		mobile_kernel->did_become_active();
 	}
-	[[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application

@@ -5,7 +5,7 @@
 //  Created by Adam Petrone on 1/26/12.
 
 #import "ViewController.h"
-//#import <ios_kernel.hpp>
+#import "kernel_ios.h"
 //using namespace aengine;
 #import "kernel.hpp"
 
@@ -100,14 +100,26 @@
 	// allow multiple touches; "By default, a view ignores all but the first touch during a multitouch sequence."
 	view.multipleTouchEnabled = YES;
 	
+	
+//	view.exclusiveTouch = YES;
+	
     [EAGLContext setCurrentContext:self.context];
 	
 	// ios6
 	// this is set on a per-view basis.
 
 //	[self setWantsBestResolutionOpenGLSurface: YES];
+
+//	CGRect viewBounds = [view bounds];
+//	NSLog( @"view dims: %g x %g", viewBounds.size.width, viewBounds.size.height );
+
 //	NSRect pixelBounds = [[self view] convertRectToBacking:[ [self view ]bounds] ];
-}
+//	iOSKernel * mobile_kernel = (iOSKernel*)self->kernel;
+//	if ( mobile_kernel )
+//	{
+//		mobile_kernel->set_backing_size( )
+//	}
+} // viewDidLoad
 
 - (void)viewDidUnload
 {	
@@ -120,21 +132,28 @@
         [EAGLContext setCurrentContext:nil];
     }
 	self.context = nil;
-}
+} // viewDidUnload
 
 - (void)didReceiveMemoryWarning
 {
-//	NSLog( @"ViewController.m - didReceiveMemoryWarning" );
-//	kernel_ios_memoryWarning();
+	iOSKernel * mobile_kernel = (iOSKernel*)self->kernel;
+	if ( mobile_kernel )
+	{
+		return mobile_kernel->did_receive_memory_warning();
+	}
     [super didReceiveMemoryWarning];
-    // Release any cached data, images, etc. that aren't in use.
-}
+} // didReceiveMemoryWarning
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-//	return kernel_ios_shouldChangeOrientation( interfaceOrientation );
+	iOSKernel * mobile_kernel = (iOSKernel*)self->kernel;
+	if ( mobile_kernel )
+	{
+		return mobile_kernel->should_change_orientation( interfaceOrientation );
+	}
+	
 	return YES;
-}
+} // shouldAutorotateToInterfaceOrientation
 
 
 - (void)update
