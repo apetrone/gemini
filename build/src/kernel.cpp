@@ -145,7 +145,7 @@ namespace kernel
 		};
 		
 		State _kernel_state;
-	};
+	}; // namespace _internal
 	
 	Registrar::Registrar( const char * kernel_name, ApplicationCreator ApplicationCreator )
 	{
@@ -155,7 +155,7 @@ namespace kernel
 	IKernel * instance()
 	{
 		return _kernel;
-	}
+	} // instance
 	
 	core::Error load_application( const char * application_name )
 	{
@@ -180,7 +180,7 @@ namespace kernel
 		}
 		
 		return error;
-	}
+	} // load_application
 	
 	
 	Error startup( IKernel * kernel_instance, const char * application_name )
@@ -292,11 +292,8 @@ namespace kernel
 		float now_msec = xtime_msec(&_internal::_kernel_state.timer);
 		float raw_delta_msec = now_msec - _internal::_kernel_state.last_time;
 		_internal::_kernel_state.last_time = now_msec;
-		
+
 		_internal::_kernel_state.tsa.tick( raw_delta_msec );
-		
-		// poll input?
-		// update audio
 		
 		_internal::_kernel_state.accumulator += (_internal::_kernel_state.tsa.filtered_value * .001);
 		while( _internal::_kernel_state.accumulator > _kernel->parameters().step_interval_seconds )
