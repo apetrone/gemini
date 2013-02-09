@@ -29,6 +29,7 @@
 #include "xtime.h"
 #include "memory.hpp"
 #include "renderer.hpp"
+#include "audio.hpp"
 
 #if LINUX
 	#include <stdlib.h> // for qsort
@@ -254,6 +255,9 @@ namespace kernel
 			return kernel::RendererFailed;
 		}
 		
+		// try to setup audio
+		audio::startup();
+		
 		// application instance failed startup
 		ApplicationResult startup_result = _active_application->startup( kernel::instance()->parameters() );
 		
@@ -272,6 +276,7 @@ namespace kernel
 	void shutdown()
 	{
 		// system cleanup
+		audio::shutdown();
 		renderer::shutdown();
 		core::shutdown();
 		

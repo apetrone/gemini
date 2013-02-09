@@ -79,6 +79,12 @@ project ( build_name )
 			"resources/windows/resource.h"
 		}
 
+		links
+		{
+			"OpenGL32",
+			"OpenAL"
+		}
+
 		includedirs
 		{
 			"resources/windows/"
@@ -87,7 +93,7 @@ project ( build_name )
 
 	configuration { "linux" }
 		defines { "LINUX=1" }
-		links { "X11", "GL", "pthread", "dl" }
+		links { "X11", "GL", "pthread", "dl", "OpenAL" }
 		files { common_file_list[ "linux" ] }
 
 		-- set rpath to be the same directory as the binary
@@ -146,7 +152,8 @@ project ( build_name )
 				{
 					"-framework Cocoa",
 					"-framework OpenGL",
-					"-framework AudioToolbox"
+					"-framework AudioToolbox",
+					"-framework OpenAL"
 				}
 				xcodebuildsettings
 				{

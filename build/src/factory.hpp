@@ -22,6 +22,7 @@
 #pragma once
 
 #include "xstr.h"
+#include "memory.hpp"
 
 #define DECLARE_FACTORY_CLASS( class_name, abstract_class )\
 	public:\
