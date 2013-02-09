@@ -21,8 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "kernel_events.hpp"
 #include "memory.hpp"
+#include "kernel_events.hpp"
 
 namespace kernel
 {
@@ -141,22 +141,10 @@ namespace kernel
 	void shutdown();
 	void update();
 	void tick();
+	
 
-	
-	
-	
-	
-	
-	void assign_listener_for_eventtype( kernel::EventType type, void * listener );
-	void * find_listener_for_eventtype( kernel::EventType type );
-	
-	// this accepts subscription requests from an IApplication class for events
-	template <class Type>
-	void event_subscribe( kernel::IEventListener<Type> * listener )
-	{
-		EventType event_type = Type::event_type;
-		assign_listener_for_eventtype( event_type, listener );
-	} // event_subscribe
+	IKernel * instance();
+
 	
 	// this is used by the kernel to dispatch events to the IApplication's event listeners
 	template <class Type>
@@ -169,8 +157,4 @@ namespace kernel
 			event_listener->event( event );
 		}
 	} // event_dispatch
-	
-
-	
-	IKernel * instance();
 }; // namespace kernel

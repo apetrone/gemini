@@ -112,6 +112,10 @@ namespace kernel
 		int y;
 	}; // TouchEvent
 	
+	
+	void assign_listener_for_eventtype( kernel::EventType type, void * listener );
+	void * find_listener_for_eventtype( kernel::EventType type );
+	
 	//
 	// event support classes
 	//
@@ -120,6 +124,12 @@ namespace kernel
 	class IEventListener
 	{
 	public:
+		IEventListener()
+		{
+			EventType event_type = Type::event_type;
+			kernel::assign_listener_for_eventtype( event_type, this );
+		}
+		
 		virtual ~IEventListener() {}
 		
 		// called to handle an event of Type

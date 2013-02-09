@@ -47,8 +47,6 @@ public:
 	
 	virtual kernel::ApplicationResult config( kernel::Params & params )
 	{
-		kernel::event_subscribe<kernel::TouchEvent>( this );
-		
 		return kernel::Success;
 	}
 
