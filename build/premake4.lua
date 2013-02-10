@@ -51,13 +51,30 @@ project ( build_name )
 
 	-- building for desktop
 	if _OPTIONS["ios"] == nil then
-		files {
+		files
+		{
 			"src/core/desktop/*.c*",
 			"src/core/gldrivers/opengl_core32.*",
 			"src/core/audio/openal_extaudio.*",
 		}
+
+		includedirs
+		{
+			"src/core/audio/"
+		}
+		prebuildcommands
+		{
+			"python ../tools/blacksmith/blacksmith.py -c ../assets/desktop.conf -y"
+		}
+
 	else
-		files {
+		prebuildcommands
+		{
+			"python ../tools/blacksmith/blacksmith.py -c ../assets/ios.conf -y"
+		}
+
+		files
+		{
 			"src/core/audio/openal_vorbis.*"
 		}
 	end
@@ -153,6 +170,8 @@ project ( build_name )
 					'TARGETED_DEVICE_FAMILY = "1,2"',
 					'VALID_ARCHS = "armv7 armv7s"',
 					'SUPPORTED_PLATFORMS = "iphonesimulator iphoneos"',
+					'VALIDATE_PRODUCT = NO',
+					'CODE_SIGN_ENTITLEMENTS = "resources/ios/Entitlements.plist"',
 				}
 
 			else

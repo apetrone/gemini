@@ -37,7 +37,7 @@ namespace core
 		void set_content_directory_from_root( StackString<MAX_PATH_SIZE> & root )
 		{
 #if !TARGET_OS_IPHONE
-			fs::truncate_string_at_path( &root[0], "/bin" );
+			fs::truncate_string_at_path( &root[0], "bin" );
 #endif
 			fs::content_directory( &root[0], root.max_size() );
 		}
@@ -163,6 +163,9 @@ namespace core
 			fprintf( stderr, "failed to open logging handlers: %s\n", error.message );
 			return error;
 		}
+		
+		
+		LOGV( "setting root to '%s', content: '%s'\n", fs::root_directory(), fs::content_directory() );
 		
 		return error;
 	} // startup

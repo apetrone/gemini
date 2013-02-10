@@ -26,6 +26,16 @@
 #include <stdio.h> // for printf
 #include <sys/stat.h> // for fs::FileExists
 #include "xfile.h"
+#include "log.h"
+
+
+#if PLATFORM_IS_MOBILE
+
+namespace fs
+{
+	void * mobile_audio_file_to_buffer( const char * filename, int & buffer_length );
+}; // namespace fs
+#endif
 
 namespace fs
 {
@@ -91,7 +101,7 @@ namespace fs
 		char buf[MAX_PATH_SIZE] = {0};
 		len = xstr_len( path );
 		last = path + len-1;
-		for( int i = 0; i < 3; ++i )
+		for( int i = 0; path[i]; ++i )
 		{
 			char * p = strrchr( path, PATH_SEPARATOR );
 			if ( p )
@@ -204,6 +214,14 @@ namespace fs
 		return buffer;
 	} // file_to_buffer
 
+	void * audiofile_to_buffer( const char * filename, int & buffer_length )
+	{
+#if PLATFORM_IS_MOBILE
+		return mobile_audio_file_to_buffer( filename, buffer_length );
+#else
+		return file_to_buffer( filename, 0, &buffer_length );
+#endif
+	} // audiofile_to_buffer
 
 	int read_file_stats( const char * fullpath, FileStats & stats )
 	{

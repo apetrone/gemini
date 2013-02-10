@@ -25,14 +25,14 @@
 #include "memory.hpp"
 #include "stackstring.hpp"
 #include "filesystem.hpp"
+#include "assets.hpp"
 
 #if !PLATFORM_IS_MOBILE
-#include "openal_vorbis_decoder.hpp"
-typedef stb_vorbis_decoder AudioDecoderType;
+	#include "openal_vorbis_decoder.hpp"
+	typedef stb_vorbis_decoder AudioDecoderType;
 #else
-
-//		#include <audio_extaudio_decoder.hpp>
-//		typedef aengine::extaudio_decoder audio_decoder_t;
+	#include "audio_extaudio_decoder.hpp"
+	typedef ExtAudioDecoder AudioDecoderType;
 #endif
 
 namespace audio
@@ -165,40 +165,20 @@ namespace audio
 				return 0;
 			}
 			
-			// we're now using the sound
-			sound->is_used = true;
-//			sound->refcount = 0;
-			sound->filename = filename;
-			sound->is_stream = is_stream;
-			
 			StackString<MAX_PATH_SIZE> path = filename;
-			const char * extension = "notset";
-			
-#if AENGINE_MOBILE
-			if ( (kernel_device_flags() & KernelFlags_iPad) || (kernel_device_flags() & KernelFlags_iPhone) )
-			{
-				extension = "caf";
-			}
-#else
-			extension = "ogg";
-#endif
-			
-			path.append( "." );
-			path.append( extension );
-			
-			
-#if !AENGINE_MOBILE
-			// try to load the data from a resource
-//			sound->data = (unsigned char*)aengine::fs::LoadFileToBuffer( path(), 0, &sound->dataSize );
-			sound->data = (unsigned char*)fs::file_to_buffer(path(), 0, &sound->dataSize);
-#else
-			sound->data = (unsigned char*)loadSoundFile( path(), sound->dataSize );
-#endif
+			assets::construct_absolute_path_from_relative_path( assets::SoundAsset, path );
+			sound->data = (unsigned char*)fs::audiofile_to_buffer( path(), sound->dataSize );
 			if ( !sound->data )
 			{
 				LOGE( "audio::create_new_sound - could not open file %s\n", path() );
 				return 0;
 			}
+			
+			// we're now using the sound
+			sound->is_used = true;
+//			sound->refcount = 0;
+			sound->filename = filename;
+			sound->is_stream = is_stream;
 			
 			LOGV( "audio::create_new_sound -> [data=%p,dataSize=%i,filename='%s']\n", sound->data, sound->dataSize, sound->filename );
 			
@@ -359,7 +339,7 @@ namespace audio
 		
 		// locate the sound via handle
 		_internal::Sound * sound = _internal::find_sound( handle );
-		if ( !sound )
+		if ( !sound || !sound->is_used )
 		{
 			LOGE( "ERROR - Invalid sound handle\n" );
 			return 0;

@@ -33,11 +33,26 @@ void iOSKernel::startup()
 	// start generating orientation notifications
 	[[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
 	
-	
+
 	UIScreen * mainscreen = [UIScreen mainScreen];
 	UIScreenMode * screenmode = [mainscreen currentMode];
 	CGSize size = [screenmode size];
 	NSLog( @"device resolution: %g x %g", size.width, size.height );
+	
+	// setup device flags
+	if ( [mainscreen scale] > 1.0 )
+	{
+		parameters().device_flags |= (kernel::DeviceSupportsRetinaDisplay);
+	}
+	
+	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
+	{
+		parameters().device_flags |= kernel::DeviceiPhone;
+	}
+	else
+	{
+		parameters().device_flags |= kernel::DeviceiPad;
+	}
 } // startup
 
 void iOSKernel::register_services()

@@ -23,6 +23,7 @@
 #include <xwl/xwl.h>
 #include <string.h>
 #include <stdio.h>
+#include "input.hpp"
 
 static xwl_window_t * _window = 0;
 namespace kernel
@@ -63,6 +64,9 @@ void event_callback_xwl( xwl_event_t * e )
 		{
 			kernel::instance()->set_active( false );
 		}
+		
+		input::state()->keyboard().inject_key_event( e->key, (e->type == XWLE_KEYPRESSED), e->unicode );
+		
 		//printf( "\t-> key: %i (%s)\n", e->key, xwl_key_to_string(e->key) );		
 		kernel::KeyboardEvent ev;
 		ev.is_down = (e->type == XWLE_KEYPRESSED);
@@ -72,6 +76,8 @@ void event_callback_xwl( xwl_event_t * e )
 	}
 	else if ( e->type == XWLE_MOUSEMOVE )
 	{
+		input::state()->mouse().inject_mouse_move( e->mx, e->my );
+		
 		kernel::MouseEvent ev;
 		ev.subtype = kernel::MouseMoved;
 		ev.mx = e->mx;
@@ -80,6 +86,8 @@ void event_callback_xwl( xwl_event_t * e )
 	}
 	else if ( e->type == XWLE_MOUSEBUTTON_PRESSED || e->type == XWLE_MOUSEBUTTON_RELEASED )
 	{
+		input::state()->mouse().inject_mouse_button( e->button, (e->type == XWLE_MOUSEBUTTON_PRESSED) );
+		
 		kernel::MouseEvent ev;
 		ev.subtype = kernel::MouseButton;
 		ev.button = e->button;
@@ -90,6 +98,8 @@ void event_callback_xwl( xwl_event_t * e )
 	}
 	else if ( e->type == XWLE_MOUSEWHEEL )
 	{
+		input::state()->mouse().inject_mouse_wheel( e->wheelDelta );
+		
 		kernel::MouseEvent ev;
 		ev.subtype = kernel::MouseWheelMoved;
 		ev.mx = e->mx;

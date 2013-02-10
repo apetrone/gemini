@@ -22,6 +22,9 @@
 #include "kernel.hpp"
 #include <stdio.h>
 #include "renderer.hpp"
+#include "audio.hpp"
+#include "input.hpp"
+#include "log.h"
 
 using namespace kernel;
 
@@ -31,6 +34,10 @@ class TestUniversal : public kernel::IApplication,
 	public IEventListener<SystemEvent>,
 	public IEventListener<TouchEvent>
 {
+
+
+	audio::SoundHandle sound;
+	audio::SoundSource source;
 public:
 	DECLARE_APPLICATION( TestUniversal );
 	
@@ -55,6 +62,11 @@ public:
         if ( event.is_down )
         {
             fprintf( stdout, "key %i pressed\n", event.key );
+			 
+			if ( event.key == input::KEY_Q )
+			{
+//				audio::stop( source );
+			}
         }
         else
         {
@@ -127,15 +139,18 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
+		sound = audio::create_sound( "sounds/powerup" );
+		source = audio::play( sound );
 		return kernel::Success;
 	}
 	
 	virtual void step( kernel::Params & params )
 	{
+
 	}
 
 	virtual void tick( kernel::Params & params )
-	{
+	{	
 		renderer::IRenderDriver * driver = renderer::driver();
 		MemoryStream ms;
 		char buffer[128] = {0};
