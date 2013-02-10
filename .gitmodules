@@ -4,3 +4,6 @@
 [submodule "build/dependencies/xwl"]
 	path = build/dependencies/xwl
 	url = git://github.com/apetrone/xwl.git
+[submodule "tools/blacksmith"]
+	path = tools/blacksmith
+	url = git://github.com/apetrone/blacksmith.git
