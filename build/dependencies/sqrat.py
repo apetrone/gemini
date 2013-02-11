@@ -15,7 +15,7 @@ class sqratBuilder(Builder):
 		project = kwargs.get( "project", None )
 		params = kwargs.get( "args", None )
 
-		builder.includes = ['.']
+		builder.includes = ['include']
 
 	def generate(self, *args, **kwargs):
 		pass

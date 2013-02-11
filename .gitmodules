@@ -10,3 +10,6 @@
 [submodule "build/dependencies/squirrel3"]
 	path = build/dependencies/squirrel3
 	url = git://github.com/apetrone/squirrel3.git
+[submodule "build/dependencies/sqrat"]
+	path = build/dependencies/sqrat
+	url = git://github.com/Amorph/sqrat.git
