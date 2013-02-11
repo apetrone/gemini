@@ -38,10 +38,11 @@ class squirrel3Builder(Builder):
 		builder.libs = ['squirrel', 'sqstdlib']
 		builder.setOutput( path=libdir, name=project.name, type=Builder.StaticLibrary )
 
-		#driver.config = (params['configuration'].lower() + Premake4.archmap[ params['platform'] ][ params['build_architecture'] ])
-		driver.makefile = project.name + '.make'
-		params['valid_archs'] = "armv7" #params['build_architecture']
-		params['sdkroot'] = 'iphoneos'
+		if target_platform is LINUX:
+			driver.config = (params['configuration'].lower() + Premake4.archmap[ params['platform'] ][ params['build_architecture'] ])
+			driver.makefile = project.name + '.make'
+		#params['valid_archs'] = "armv7" #params['build_architecture']
+		#params['sdkroot'] = 'iphoneos'
 
 	def generate(self, *args, **kwargs):
 		builder = kwargs.get( "builder", None )
