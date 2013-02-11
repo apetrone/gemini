@@ -162,10 +162,11 @@ namespace fs
 	} // directory_exists
 #endif
 	
-	char * file_to_buffer( const char * filename, char * buffer, int * bufferLength, bool path_is_relative )
+	char * file_to_buffer( const char * filename, char * buffer, int * buffer_length, bool path_is_relative )
 	{
-		if ( !bufferLength )
+		if ( !buffer_length )
 		{
+			LOGE( "ERROR: file_to_buffer called with INVALID value!\n" );
 			return 0;
 		}		
 		
@@ -189,20 +190,20 @@ namespace fs
 			fileSize = xfile_tell( f );
 			xfile_seek( f, 0, XF_SEEK_BEGIN );
 			
-			if ( buffer && *bufferLength > 0 )
+			if ( buffer && *buffer_length > 0 )
 			{
-				if ( fileSize > *bufferLength )
+				if ( fileSize > *buffer_length )
 				{
-					printf( "Request to read file size larger than buffer! (%ld > %d)\n", fileSize, *bufferLength );
-					fileSize = *bufferLength;
+					printf( "Request to read file size larger than buffer! (%ld > %d)\n", fileSize, *buffer_length );
+					fileSize = *buffer_length;
 				}
 			}
 			
-			*bufferLength = fileSize;
+			*buffer_length = fileSize;
 			if ( !buffer )
 			{
-				buffer = new char[ (*bufferLength)+1 ];
-				memset( buffer, 0, (*bufferLength)+1 );
+				buffer = new char[ (*buffer_length)+1 ];
+				memset( buffer, 0, (*buffer_length)+1 );
 			}
 			
 			xfile_read( f, buffer, 1, fileSize );
