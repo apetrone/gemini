@@ -7,3 +7,6 @@
 [submodule "tools/blacksmith"]
 	path = tools/blacksmith
 	url = git://github.com/apetrone/blacksmith.git
+[submodule "build/dependencies/squirrel3"]
+	path = build/dependencies/squirrel3
+	url = git://github.com/apetrone/squirrel3.git

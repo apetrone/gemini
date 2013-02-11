@@ -44,7 +44,7 @@ class gemini(Builder):
 		d['depends_file'] = 'build/deps.lua'
 		d['depends_path'] = 'build/dependencies'
 
-		common_dependencies = []
+		common_dependencies = [ "squirrel3.py" ]
 		mobile_dependencies = common_dependencies
 		desktop_dependencies = list( set(common_dependencies) | set(["xwl/xwl.py"]) )
 
