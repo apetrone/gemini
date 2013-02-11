@@ -5,7 +5,7 @@ class squirrel3Builder(Builder):
 		target_platform = kwargs.get( "target_platform", host_platform )
 
 		builder.root = "squirrel3"
-		
+
 		squirrel = Project( name="squirrel" )
 		# is this still needed?
 		if host_platform is WINDOWS:
@@ -38,13 +38,29 @@ class squirrel3Builder(Builder):
 		builder.libs = ['squirrel', 'sqstdlib']
 		builder.setOutput( path=libdir, name=project.name, type=Builder.StaticLibrary )
 
-		driver.config = (params['configuration'].lower() + Premake4.archmap[ params['platform'] ][ params['build_architecture'] ])
+		#driver.config = (params['configuration'].lower() + Premake4.archmap[ params['platform'] ][ params['build_architecture'] ])
 		driver.makefile = project.name + '.make'
+		params['valid_archs'] = "armv7" #params['build_architecture']
+		params['sdkroot'] = 'iphoneos'
 
 	def generate(self, *args, **kwargs):
 		builder = kwargs.get( "builder", None )
-		premake = Premake4( action=builder.premake_action )
-		premake.run()
+		target_platform = kwargs.get( "target_platform", None )
+		#premake = Premake4( action=builder.premake_action )
+		#premake.run()
+		
+		gen = "None"
+		if target_platform is WINDOWS:
+			gen = "vs2010"
+		elif target_platform is LINUX:
+			gen = "Unix Makefiles"
+		elif target_platform is MACOSX:
+			gen = "Xcode"
+		elif target_platform is IPHONEOS:
+			gen = "Xcode"
+
+		cmake = CMake( generator = gen )
+		cmake.run()
 
 	def postclean(self, *args, **kwargs):
 		params = kwargs.get( "args", None )

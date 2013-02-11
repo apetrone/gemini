@@ -33,8 +33,9 @@ class gemini(Builder):
 
 		builder.setOutput( path=bindir, name=self.build_name, type=self.builder_type[ target_platform ] )
 
-		driver.config = (params['configuration'].lower() + Premake4.archmap[ params['platform'] ][ params['build_architecture'] ])
-		driver.makefile = "%s.make" % (self.build_name)
+		if host_platform is LINUX:
+			driver.config = (params['configuration'].lower() + Premake4.archmap[ params['platform'] ][ params['build_architecture'] ])
+			driver.makefile = "%s.make" % (self.build_name)
 
 	@staticmethod
 	def depends( *args, **kwargs ):
@@ -60,9 +61,16 @@ class gemini(Builder):
 		target_platform = kwargs.get( "target_platform", host_platform )
 
 		arch_list = builder.arch_list[:]
+		if 'armv7' in arch_list:
+			arch_list.remove( 'armv7' )
+
 		if 'native' in arch_list:
 			arch_list.remove( 'native' )
+
+
+		if 'Native' not in arch_list:
 			arch_list.append( 'Native' )
+
 
 		premake = Premake4( action=builder.premake_action, file="premake4.lua", platform_list=",".join( arch_list ) )
 		if target_platform == IPHONEOS:

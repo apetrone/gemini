@@ -26,6 +26,8 @@
 #include "input.hpp"
 #include "log.h"
 
+#include <squirrel.h>
+
 using namespace kernel;
 
 class TestUniversal : public kernel::IApplication,
@@ -134,19 +136,21 @@ public:
 		params.window_width = 800;
 		params.window_height = 600;
 		params.window_title = "TestUniversal";
+		HSQUIRRELVM vm = sq_open(1024);
+		
+		sq_close( vm );
 		return kernel::Success;
 	}
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
-		sound = audio::create_sound( "sounds/powerup" );
-		source = audio::play( sound );
+//		sound = audio::create_sound( "sounds/powerup" );
+//		source = audio::play( sound );
 		return kernel::Success;
 	}
 	
 	virtual void step( kernel::Params & params )
 	{
-
 	}
 
 	virtual void tick( kernel::Params & params )
