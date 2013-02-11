@@ -47,9 +47,9 @@ class squirrel3Builder(Builder):
 	def generate(self, *args, **kwargs):
 		builder = kwargs.get( "builder", None )
 		target_platform = kwargs.get( "target_platform", None )
-		#premake = Premake4( action=builder.premake_action )
-		#premake.run()
-		
+		premake = Premake4( action=builder.premake_action )
+		premake.run()
+		"""
 		gen = "None"
 		if target_platform is WINDOWS:
 			gen = "vs2010"
@@ -62,7 +62,7 @@ class squirrel3Builder(Builder):
 
 		cmake = CMake( generator = gen )
 		cmake.run()
-
+		"""
 	def postclean(self, *args, **kwargs):
 		params = kwargs.get( "args", None )
 		d = Delete(path=os.path.join(params['libpath'], os.path.pardir), directory=True)
