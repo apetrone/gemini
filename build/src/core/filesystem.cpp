@@ -27,6 +27,7 @@
 #include <sys/stat.h> // for fs::FileExists
 #include "xfile.h"
 #include "log.h"
+#include "memory.hpp"
 
 
 #if PLATFORM_IS_MOBILE
@@ -202,7 +203,7 @@ namespace fs
 			*buffer_length = fileSize;
 			if ( !buffer )
 			{
-				buffer = new char[ (*buffer_length)+1 ];
+				buffer = (char*)memory::allocator().allocate( (*buffer_length)+1 );
 				memset( buffer, 0, (*buffer_length)+1 );
 			}
 			

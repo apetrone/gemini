@@ -119,7 +119,7 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
-		sound = audio::create_sound( "sounds/handy" );
+		sound = audio::create_sound( "sounds/powerup" );
 		audio::play( sound );
 		
 		

@@ -148,7 +148,7 @@ namespace audio
 				sound = &_sounds[ i ];
 				if ( sound->is_used )
 				{
-					delete [] sound->data;
+					memory::allocator().deallocate( sound->data );
 					sound->data = 0;
 					sound->dataSize = 0;
 				}
