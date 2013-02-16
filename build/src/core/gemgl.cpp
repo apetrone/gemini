@@ -9,37 +9,12 @@ gemgl_interface_t gl;
 
 typedef const GLubyte * (*gemgl_GLGETSTRINGPROC)( GLenum param );
 
-static void gemgl_parse_version( int & major, int & minor, int renderer_type )
-{
-	gemgl_GLGETSTRINGPROC gl_get_string = (gemgl_GLGETSTRINGPROC)gemgl_findsymbol( gl, "glGetString" );
-	if ( gl_get_string )
-	{
-		const GLubyte * version = gl_get_string( GL_VERSION );
-#if GEMGL_ENABLE_ES
-		// sscanf isn't working in iOS 5 Simulator. Well, there are multiple ways to skin a cat...
-		if( !strstr( (const char*)version, "OpenGL ES 2.0" ) )
-		{
-			LOGE( "Error parsing OpenGL version" );
-			return;
-		}
-		major = 2;
-		minor = 0;
-#else
-		if ( sscanf( (const char*)version, "%d.%d", &major, &minor ) < 2 )
-		{
-			LOGE( "Error parsing OpenGL version" );
-			return;
-		}
-#endif
-	}
-} // gemgl_parse_version
-
-static void gemgl_check_error( const char * msg )
+void gemgl_check_error( const char * msg )
 {
 	GLenum e = glGetError();
 	if ( e != GL_NO_ERROR )
 	{
-		const char * errorMessage = "OpenGLRenderer::CheckError";
+		const char * errorMessage = "gemgl_check_error";
 
 		switch ( e )
 		{
@@ -59,6 +34,44 @@ static void gemgl_check_error( const char * msg )
 		}
 	}
 } // gemgl_check_error
+
+void gemgl_parse_version( int & major, int & minor, int renderer_type )
+{
+	gemgl_GLGETSTRINGPROC gl_get_string = (gemgl_GLGETSTRINGPROC)gemgl_findsymbol( gl, "glGetString" );
+	if ( gl_get_string )
+	{
+		const GLubyte * version = gl_get_string( GL_VERSION );
+		if ( !version )
+		{
+			LOGE( "glGetString( GL_VERSION ) returned NULL!\n" );
+			gemgl_check_error( "gemgl_parse_version" );
+			return;
+		}
+
+#if GEMGL_ENABLE_ES
+		// sscanf isn't working in iOS 5 Simulator. Well, there are multiple ways to skin a cat...
+		if( !strstr( (const char*)version, "OpenGL ES 2.0" ) )
+		{
+			LOGE( "Error parsing OpenGL version" );
+			return;
+		}
+		major = 2;
+		minor = 0;
+#else
+		if ( sscanf( (const char*)version, "%d.%d", &major, &minor ) < 2 )
+		{
+			LOGE( "Error parsing OpenGL version" );
+			return;
+		}
+#endif
+	}
+	else
+	{
+		LOGE( "Unable to retrieve glGetString pointer!\n" );
+	}
+} // gemgl_parse_version
+
+
 
 int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 {

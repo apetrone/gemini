@@ -39,7 +39,7 @@
 namespace kernel
 {
 	typedef std::map< std::string, ApplicationCreator> ApplicationCreatorByString;
-	ApplicationCreatorByString _application_creator_map;
+	
 	IKernel * _kernel = 0;
 	IApplication * _active_application = 0;
 
@@ -59,18 +59,22 @@ namespace kernel
 		EventHooks _event_hooks;
 		
 		
-
+		ApplicationCreatorByString & creator_map()
+		{
+			static ApplicationCreatorByString _application_creator_map;
+			return _application_creator_map;
+		}
 		
 		static void register_application_by_name( const char * kernel_name, ApplicationCreator ApplicationCreator )
 		{
-			_application_creator_map.insert( ApplicationCreatorByString::value_type( kernel_name, ApplicationCreator) );
+			creator_map().insert( ApplicationCreatorByString::value_type( kernel_name, ApplicationCreator) );
 		} // registerKernelApplicationCreatorByName
 		
 		static ApplicationCreator find_application_by_name( const char * kernel_name )
 		{
 			std::string kname = kernel_name;
-			ApplicationCreatorByString::iterator it = _application_creator_map.find( kname );
-			if ( it != _application_creator_map.end() )
+			ApplicationCreatorByString::iterator it = creator_map().find( kname );
+			if ( it != creator_map().end() )
 			{
 				return (*it).second;
 			}
