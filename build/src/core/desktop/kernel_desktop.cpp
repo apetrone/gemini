@@ -24,6 +24,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "input.hpp"
+#include "log.h"
 
 static xwl_window_t * _window = 0;
 namespace kernel
@@ -186,8 +187,13 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 
 		if ( render_width > window_width && render_height > window_height )
 		{
-			fprintf( stdout, "Retina display detected. Render Resolution is (%i x %i)\n", render_width, render_height );
+			LOGV( "Retina display detected. Render Resolution is (%i x %i)\n", render_width, render_height );
 			this->parameters().device_flags |= kernel::DeviceSupportsRetinaDisplay;
+		}
+		else
+		{
+			LOGV( "window resolution %i x %i\n", window_width, window_height );
+			LOGV( "render resolution %i x %i\n", render_width, render_height );	
 		}
 	}
 } // post_application_config
