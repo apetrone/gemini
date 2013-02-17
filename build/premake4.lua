@@ -45,7 +45,7 @@ project ( build_name )
 		--"src/buildinfo.c",
 		"src/kernels/**.c*",
 		"src/core/*.*",
-		"src/core/audio/*",
+		"src/core/audio/openal.*",
 		"src/contrib/*",
 
 		"src/game/**.*",
@@ -57,7 +57,7 @@ project ( build_name )
 		{
 			"src/core/desktop/*.c*",
 			"src/core/gldrivers/opengl_core32.*",
-			"src/core/audio/openal_extaudio.*",
+			"src/core/audio/openal_vorbis_decoder.*",
 		}
 
 		includedirs
@@ -77,7 +77,7 @@ project ( build_name )
 
 		files
 		{
-			"src/core/audio/openal_vorbis.*"
+			"src/core/audio/audio_extaudio_decoder.*"
 		}
 	end
 
