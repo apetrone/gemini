@@ -186,6 +186,7 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 
 		if ( render_width > window_width && render_height > window_height )
 		{
+			fprintf( stdout, "Retina display detected. Render Resolution is (%i x %i)\n", render_width, render_height );
 			this->parameters().device_flags |= kernel::DeviceSupportsRetinaDisplay;
 		}
 	}
