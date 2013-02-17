@@ -124,3 +124,5 @@ typedef double float64;
 #else
 	#define PLATFORM_IS_MOBILE 0
 #endif
+
+#include <assert.h>

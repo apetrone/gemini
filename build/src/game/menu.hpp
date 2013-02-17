@@ -19,81 +19,46 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "typedefs.h"
-#include "memorystream.hpp"
-#include <string.h> // for memcpy
+#pragma once
+#include "memory.hpp"
+#include <vector>
 
+struct MenuItem;
+typedef std::vector<MenuItem*, GeminiAllocator<MenuItem*> > MenuItemVector;
 
-MemoryStream::MemoryStream()
+struct MenuItem
 {
-	this->init( 0, 0 );
-} // MemoryStream
-
-void MemoryStream::init( char * buffer, long buffer_size )
-{
-	data = buffer;
-	data_size = buffer_size;
-	offset = 0;
-} // init
-
-void MemoryStream::rewind()
-{
-	offset = 0;
-} // rewind
-
-
-int MemoryStream::read( void * destination, int num_bytes )
-{
-	if ( !data )
-	{
-		return 0;
-	}
+	MenuItemVector children;
+	const char * name;
+	MenuItem * parent;
 	
-	// check for read violation
-	assert( (offset + num_bytes) < data_size );
-	
-	// copy memory and advance the pointer
-	memcpy( destination, &data[offset], num_bytes );
-	offset += num_bytes;
-	
-	return num_bytes;
-} // read
+	MenuItem();
+	~MenuItem();
+	MenuItem * child_at_index( unsigned int index );
+	void purge();
+	MenuItem * add_child( const char * name );
+}; // MenuItem
 
+typedef void (*foreach_menu_callback)( MenuItem * item );
 
-int MemoryStream::write( const void * src, int num_bytes )
+class MenuNavigator
 {
-	if ( !data )
-	{
-		return 0;
-	}
+	MenuItem root;
+	MenuItem * current;
 	
-	// check for write violation
-	assert( (offset + num_bytes) < data_size );
+public:
+	MenuNavigator();
+	~MenuNavigator();
+
+	MenuItem * root_menu();
+	MenuItem * current_menu();
+	void clear_items();
 	
-	// copy memory and advance pointer
-	memcpy( &data[offset], src, num_bytes );
-	offset += num_bytes;
+	// navigate back to parent
+	void navigate_back();
+	void navigate_to_child( unsigned int index );
 	
-	return num_bytes;
-} // write
-
-
-void MemoryStream::seek( long requested_offset, bool is_absolute )
-{
-	if ( data )
-	{
-		if ( is_absolute )
-		{
-			offset = requested_offset;
-		}
-		else
-		{
-			offset += requested_offset;
-		}
-	}
-} // seek
-
-long MemoryStream::offset_pointer() const
-{
-	return offset;
-} // offset_pointer
+	// child iteration
+	unsigned int child_count();
+	MenuItem * child_at_index( unsigned int i );
+};

@@ -19,7 +19,9 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#include "typedefs.h"
 #include "memory.hpp"
+#include "memory_stl_allocator.hpp"
 #include <string.h> // for memset
 
 #if __APPLE__
@@ -31,7 +33,6 @@
 	#include <memory> // we'll see if this compiles...
 #endif
 
-#include <assert.h>
 
 namespace memory
 {

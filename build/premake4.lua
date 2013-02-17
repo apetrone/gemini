@@ -46,7 +46,9 @@ project ( build_name )
 		"src/kernels/**.c*",
 		"src/core/*.*",
 		"src/core/audio/*",
-		"src/contrib/*"
+		"src/contrib/*",
+
+		"src/game/**.*",
 	}
 
 	-- building for desktop

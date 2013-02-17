@@ -19,14 +19,71 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#include "typedefs.h"
 #include "kernel.hpp"
 #include <stdio.h>
 #include "renderer.hpp"
 #include "audio.hpp"
 #include "input.hpp"
 #include "log.h"
+//#include <squirrel.h>
 
-#include <squirrel.h>
+#include "memory.hpp"
+
+#include "game/menu.hpp"
+
+void foreach_child( MenuItem * root, foreach_menu_callback callback )
+{
+	MenuItemVector::iterator it, end;
+	it = root->children.begin();
+	end = root->children.end();
+	
+	for( ; it != end; ++it )
+	{
+		MenuItem * option = (*it);
+		callback( option );
+	}
+}
+
+MenuNavigator _menu;
+
+void setup_menu()
+{
+	MenuItem * root = _menu.root_menu();
+	root->name = "Game";
+
+	MenuItem * newgame = root->add_child( "New Game" );
+		newgame->add_child( "Easy" );
+		newgame->add_child( "Medium" );
+		newgame->add_child( "Hard" );
+		
+	root->add_child( "Load Game" );
+	root->add_child( "Options" );
+	root->add_child( "Quit" );
+}
+
+void print_option( MenuItem * child )
+{
+	LOGV( "[ %s ]\n", child->name );
+}
+
+
+void print_options( MenuItem * root )
+{
+	LOGV( "[ %s ]\n", root->name );
+	LOGV( "options:\n" );
+	
+	MenuItemVector::iterator it, end;
+	it = root->children.begin();
+	end = root->children.end();
+	
+	for( ; it != end; ++it )
+	{
+		MenuItem * option = (*it);
+		LOGV( "-> %s\n", option->name );
+	}
+}
+
 
 using namespace kernel;
 
@@ -136,9 +193,8 @@ public:
 		params.window_width = 800;
 		params.window_height = 600;
 		params.window_title = "TestUniversal";
-		HSQUIRRELVM vm = sq_open(1024);
-		
-		sq_close( vm );
+//		HSQUIRRELVM vm = sq_open(1024);
+//		sq_close( vm );
 		return kernel::Success;
 	}
 
@@ -146,6 +202,19 @@ public:
 	{
 //		sound = audio::create_sound( "sounds/powerup" );
 //		source = audio::play( sound );
+
+		setup_menu();
+
+		foreach_child( _menu.current_menu(), print_option );
+		_menu.navigate_to_child( 0 );
+		foreach_child( _menu.current_menu(), print_option );
+		
+		
+		_menu.navigate_back();
+		foreach_child( _menu.current_menu(), print_option );
+				
+		_menu.clear_items();
+		
 		return kernel::Success;
 	}
 	

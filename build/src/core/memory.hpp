@@ -54,3 +54,7 @@ namespace memory
 	#define DEALLOC(Type, pointer) { pointer->~Type(); memory::allocator().deallocate(pointer); }
 	
 }; // namespace memory
+
+#include "memory_stl_allocator.hpp"
+
+#define GeminiAllocator memory::DebugAllocator
