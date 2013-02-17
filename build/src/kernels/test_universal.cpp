@@ -32,6 +32,9 @@
 
 #include "game/menu.hpp"
 
+
+#include "assets.hpp"
+
 void foreach_child( MenuItem * root, foreach_menu_callback callback )
 {
 	MenuItemVector::iterator it, end;
@@ -214,6 +217,17 @@ public:
 		foreach_child( _menu.current_menu(), print_option );
 				
 		_menu.clear_items();
+		
+		
+		assets::Texture * tex = assets::load_texture( "test" );
+		if ( tex )
+		{
+			LOGV( "loaded texture successfully!\n" );
+		}
+		else
+		{
+			LOGW( "Could not load texture.\n" );
+		}
 		
 		return kernel::Success;
 	}

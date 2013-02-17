@@ -21,11 +21,27 @@
 // -------------------------------------------------------------
 
 #include "assets.hpp"
+#include "assetlibrary.hpp"
 #include "kernel.hpp"
 
 
 namespace assets
 {
+
+	AssetLoadStatus texture_load_callback( const char * path, Texture * texture, unsigned int flags )
+	{
+		return assets::Failure;
+	}
+	
+	AssetLibrary< Texture, TextureAsset> texture_lib( texture_load_callback );
+	
+
+
+
+
+
+
+
 
 	void construct_absolute_path_from_relative_path( AssetType type, StackString<MAX_PATH_SIZE> & path )
 	{
@@ -53,4 +69,17 @@ namespace assets
 		path.append( extension );
 		
 	} // absolute_path_from
+	
+	
+	Texture * load_texture( const char * path, unsigned int flags, bool ignore_cache )
+	{
+		Texture * texture = texture_lib.load_from_path( path, flags, ignore_cache );
+		if ( texture )
+		{
+			return texture;
+		}
+		
+		return 0;
+	} // load_texture
+	
 }; // namespace assets

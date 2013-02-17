@@ -40,4 +40,40 @@ namespace assets
 	// Given a relative path to an asset, convert it to an absolute path and tack on file extension
 	// "sounds/handy" -> "<content_directory>/sounds/handy.<platform_extension>"
 	void construct_absolute_path_from_relative_path( AssetType type, StackString< MAX_PATH_SIZE > & path );
+	
+	
+	// called to initialize default textures and other required resources.
+	void startup();
+	
+	void shutdown();
+	
+	typedef unsigned int AssetID;
+	
+	struct Asset
+	{
+		assets::AssetID _asset_id;
+		virtual ~Asset() {}
+		virtual void release() = 0;
+	}; // Asset
+	
+	
+	
+	// TODO: These may be better moved off into their own files and included here...
+	struct Texture : public virtual Asset
+	{
+		char * path;
+		unsigned int texture_id;
+		unsigned int width;
+		unsigned int height;
+		unsigned int flags;
+		
+		virtual void release();
+	};
+	
+	// load a texture from disk or cache. if reload_from_disk is false, cache is preferred
+	Texture * load_texture( const char * path, unsigned int flags = 0, bool ignore_cache = false );
+//	Texture * load_cubemap( const char * basename, unsigned int flags = 0, bool ignore_cache = false );
+	
+	
+	
 }; // namespace assets
