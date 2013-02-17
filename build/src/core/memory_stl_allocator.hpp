@@ -22,6 +22,7 @@
 #pragma once
 
 #include "memory.hpp"
+#include <limits> // for std::numeric_limits
 
 namespace memory
 {
