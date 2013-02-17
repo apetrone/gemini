@@ -230,7 +230,7 @@ enum gemgl_renderer_type
 	typedef void (GEMGLAPI GEMGLFNGETRENDERBUFFERPARAMETERIV) ( GLenum target, GLenum pname, GLint * params );
 	
 
-    typedef void (*GEMGL_CHECKERROR)( const char * );
+    typedef GLenum (*GEMGL_CHECKERROR)( const char * );
 
 	typedef struct
 	{

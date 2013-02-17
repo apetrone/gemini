@@ -134,6 +134,8 @@ DesktopKernel::DesktopKernel( int argc, char ** argv ) : target_renderer(0)
 void DesktopKernel::startup()
 {
 	xwl_startup( XWL_WINDOW_PROVIDER_DEFAULT, XWL_API_PROVIDER_DEFAULT, XWL_INPUT_PROVIDER_DEFAULT );
+	
+	this->parameters().device_flags |= kernel::DeviceDesktop;
 } // startup
 
 void DesktopKernel::register_services()
@@ -175,6 +177,17 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 		}
 	
 		xwl_set_callback( event_callback_xwl );
+		
+		int window_width, window_height;
+		int render_width, render_height;
+
+		xwl_get_window_size(_window, &window_width, &window_height );		
+		xwl_get_window_render_size( _window, &render_width, &render_height );
+
+		if ( render_width > window_width && render_height > window_height )
+		{
+			this->parameters().device_flags |= kernel::DeviceSupportsRetinaDisplay;
+		}
 	}
 } // post_application_config
 

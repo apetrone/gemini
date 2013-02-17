@@ -20,7 +20,6 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "memory.hpp"
 #include "memory_stl_allocator.hpp"
 #include <string.h> // for memset
 
@@ -98,8 +97,6 @@ namespace memory
 		virtual size_t total_bytes() const { return num_total_bytes; }
 	}; // SimpleAllocator
 	
-	
-		
 	void startup()
 	{
 		static SimpleAllocator simple_allocator;
@@ -109,6 +106,7 @@ namespace memory
 	void shutdown()
 	{
 		fprintf( stdout, "[memory-status] total_allocations = %zu, total_bytes = %zu\n", _allocator->total_allocations(), _allocator->total_bytes() );
+		fprintf( stdout, "[memory-status] active_allocations = %zu, active_bytes = %zu\n", _allocator->active_allocations(), _allocator->active_bytes() );
 		
 		// if you hit this, there may be a memory leak!
 		assert( _allocator->active_allocations() == 0 && _allocator->active_bytes() == 0 );

@@ -55,6 +55,8 @@ namespace kernel
 		Success = 1,
 		NoWindow = -1
 	};
+	
+	typedef unsigned char KernelDeviceFlags;
 
 	// parameters passed to callbacks
 	struct Params
@@ -63,7 +65,7 @@ namespace kernel
 		const char * window_title;
 		
 		// kDevice constants above describe the current system
-		unsigned char device_flags;
+		KernelDeviceFlags device_flags;
 		
 		float step_interval_seconds;
 		float step_alpha;

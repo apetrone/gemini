@@ -36,4 +36,10 @@ public:
 	virtual void run_command( renderer::DriverCommandType command, MemoryStream & stream );
 	virtual void post_command( renderer::DriverCommandType command, MemoryStream & stream );
 	
+	virtual bool upload_texture_2d( renderer::TextureParameters & parameters );
+	
+	virtual bool generate_texture( renderer::TextureParameters & parameters );
+	virtual bool destroy_texture( renderer::TextureParameters & parameters );
+	virtual bool is_texture( renderer::TextureParameters & parameters );
+	
 }; // GLCore32

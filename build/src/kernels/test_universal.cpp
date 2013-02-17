@@ -28,7 +28,8 @@
 #include "log.h"
 //#include <squirrel.h>
 
-#include "memory.hpp"
+
+#include "hashtable.hpp"
 
 #include "game/menu.hpp"
 
@@ -219,16 +220,43 @@ public:
 		_menu.clear_items();
 		
 		
-		assets::Texture * tex = assets::load_texture( "test" );
+		assets::Texture * tex = assets::load_texture( "textures/logo" );
 		if ( tex )
 		{
-			LOGV( "loaded texture successfully!\n" );
+			LOGV( "loaded texture successfully: %i!\n", tex->texture_id );
 		}
 		else
 		{
 			LOGW( "Could not load texture.\n" );
 		}
 		
+		
+		
+#if 0
+		HashTable<int> t;
+		
+		t.set( "hello", 3 );
+		t.set( "poopy", 32 );
+		t.set( "mario", 16 );
+		t.set( "daft", 8 );
+		t.set( "punk", 88 );
+		t.set( "luigi", 13 );
+		t.set( "something/heregoes/nothing", 11 );
+		t.set( "ipad", 122 );
+		
+		t.set( "something/heregoes/nothing2", 131 );
+		
+		if ( t.contains("hello") )
+		{
+			LOGV( "t contains 'hello'!\n" );
+			LOGV( "'hello' value is: %i\n", t.get("hello") );
+		}
+		else
+		{
+			LOGV( "t does not contain 'hello'\n" );
+		}
+#endif
+
 		return kernel::Success;
 	}
 	

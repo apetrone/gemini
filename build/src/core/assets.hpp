@@ -37,21 +37,28 @@ namespace assets
 		SoundAsset,
 	}; // AssetType
 	
-	// Given a relative path to an asset, convert it to an absolute path and tack on file extension
-	// "sounds/handy" -> "<content_directory>/sounds/handy.<platform_extension>"
-	void construct_absolute_path_from_relative_path( AssetType type, StackString< MAX_PATH_SIZE > & path );
-	
 	
 	// called to initialize default textures and other required resources.
 	void startup();
 	
+	// purge all assets
+	void purge();
+	
+	// purge all assets and reclaim unused memory
 	void shutdown();
+	
+	// Given a relative path to an asset, convert it to an absolute path and tack on file extension
+	// "sounds/handy" -> "<content_directory>/sounds/handy.<platform_extension>"
+	void append_asset_extension( AssetType type, StackString< MAX_PATH_SIZE > & path );
+	
+	
+
 	
 	typedef unsigned int AssetID;
 	
 	struct Asset
 	{
-		assets::AssetID _asset_id;
+		assets::AssetID asset_id;
 		virtual ~Asset() {}
 		virtual void release() = 0;
 	}; // Asset

@@ -19,9 +19,9 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#include "typedefs.h"
 #include "core.hpp"
 #include "platform.hpp"
-#include "memory.hpp"
 #include "stackstring.hpp"
 #include "filesystem.hpp"
 #include "log.h"

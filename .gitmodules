@@ -13,3 +13,6 @@
 [submodule "build/dependencies/sqrat"]
 	path = build/dependencies/sqrat
 	url = git://github.com/Amorph/sqrat.git
+[submodule "build/dependencies/soil"]
+	path = build/dependencies/soil
+	url = git://github.com/smibarber/libSOIL.git

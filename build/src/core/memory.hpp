@@ -51,7 +51,11 @@ namespace memory
 
 	// helper macros for alloc and dealloc on classes and structures
 	#define ALLOC(Type, ...)	new (memory::allocator().allocate(sizeof(Type))) Type(__VA_ARGS__)
-	#define DEALLOC(Type, pointer) { pointer->~Type(); memory::allocator().deallocate(pointer); }
+	#define DEALLOC(Type, pointer) { pointer->~Type(); memory::allocator().deallocate(pointer); pointer = 0; }
+	
+	// at the moment: this only works if the Type has a default constructor
+	#define ARRAY_ALLOC(Type, num_elements)	new (memory::allocator().allocate(sizeof(Type)*num_elements)) Type[ num_elements ]
+	#define ARRAY_DEALLOC(Type, pointer, num_elements) if ( pointer ) { for( size_t i = 0; i < num_elements; ++i ) { (&pointer[i])->~Type(); } memory::allocator().deallocate(pointer); pointer = 0;  }
 	
 }; // namespace memory
 

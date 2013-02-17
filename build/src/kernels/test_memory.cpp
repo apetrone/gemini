@@ -21,8 +21,7 @@
 // -------------------------------------------------------------
 #include "kernel.hpp"
 #include <stdio.h>
-
-#include "memory.hpp"
+#include "typedefs.h"
 
 struct Test
 {

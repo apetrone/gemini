@@ -9,7 +9,7 @@ gemgl_interface_t gl;
 
 typedef const GLubyte * (*gemgl_GLGETSTRINGPROC)( GLenum param );
 
-void gemgl_check_error( const char * msg )
+GLenum gemgl_check_error( const char * msg )
 {
 	GLenum e = glGetError();
 	if ( e != GL_NO_ERROR )
@@ -33,6 +33,8 @@ void gemgl_check_error( const char * msg )
 			LOGV( "%s: %i\n", errorMessage, e );
 		}
 	}
+	
+	return e;
 } // gemgl_check_error
 
 void gemgl_parse_version( int & major, int & minor, int renderer_type )

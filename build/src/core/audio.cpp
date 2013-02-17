@@ -19,10 +19,10 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#include "typedefs.h"
 #include "audio.hpp"
 #include "openal.hpp"
 #include "log.h"
-#include "memory.hpp"
 #include "stackstring.hpp"
 #include "filesystem.hpp"
 #include "assets.hpp"
@@ -166,7 +166,7 @@ namespace audio
 			}
 			
 			StackString<MAX_PATH_SIZE> path = filename;
-			assets::construct_absolute_path_from_relative_path( assets::SoundAsset, path );
+			assets::append_asset_extension( assets::SoundAsset, path );
 			sound->data = (unsigned char*)fs::audiofile_to_buffer( path(), sound->dataSize );
 			if ( !sound->data )
 			{

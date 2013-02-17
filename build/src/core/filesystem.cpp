@@ -27,7 +27,6 @@
 #include <sys/stat.h> // for fs::FileExists
 #include "xfile.h"
 #include "log.h"
-#include "memory.hpp"
 
 
 #if PLATFORM_IS_MOBILE

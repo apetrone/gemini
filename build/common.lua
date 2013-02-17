@@ -19,6 +19,8 @@ common_file_list =
 	"src/*.c*",
 	"src/*.h*",
 
+	"dependencies/murmur3/murmur3.c",
+
 	--[[
 	"src/thirdparty/*.c",
 	"src/thirdparty/*.h*",
@@ -51,10 +53,13 @@ common_file_list =
 common_include_dirs=
 {
 	"src",
+
+	"dependencies/murmur3/",
+
 	--[[
 	--"src/prototypes",
 	"src/thirdparty",
-	--"dependencies/murmur3",
+	
 	--"dependencies/jsoncpp",
 	--"dependencies/miniz/",
 	"resources",

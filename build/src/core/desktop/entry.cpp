@@ -20,8 +20,9 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <iostream>
+#include "typedefs.h"
 #include "kernel_desktop.hpp"
-#include "memory.hpp"
+
 
 int main( int argc, char ** argv )
 {

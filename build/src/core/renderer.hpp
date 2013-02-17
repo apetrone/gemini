@@ -24,7 +24,7 @@
 #include "typedefs.h"
 #include "memory.hpp"
 #include "memorystream.hpp"
-
+#include "image.hpp"
 
 
 namespace renderer
@@ -64,6 +64,30 @@ namespace renderer
 	void shutdown();
 
 	
+	
+	
+	
+	
+	
+	
+	
+	
+	struct TextureParameters
+	{
+		unsigned int image_flags;
+		unsigned int channels;
+		unsigned int width;
+		unsigned int height;
+		unsigned char * pixels;
+		unsigned int texture_id;
+	}; // TextureParameters
+	
+	
+	
+	
+	
+	
+	
 	//
 	// IRenderDriver
 	// The render driver acts as a command processor. The implementation details are up to the driver
@@ -78,6 +102,12 @@ namespace renderer
 		virtual void run_command( DriverCommandType command, MemoryStream & stream ) = 0;
 		virtual void post_command( DriverCommandType command, MemoryStream & stream ) = 0;
 
+		virtual bool upload_texture_2d( TextureParameters & parameters ) = 0;
+		
+		virtual bool generate_texture( renderer::TextureParameters & parameters ) = 0;
+		virtual bool destroy_texture( renderer::TextureParameters & parameters ) = 0;
+		virtual bool is_texture( renderer::TextureParameters & parameters ) = 0;
+		
 	}; // IRenderDriver
 	typedef IRenderDriver * (*RenderDriverCreator)();
 	

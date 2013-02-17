@@ -19,6 +19,7 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#include "typedefs.h"
 #include "core.hpp"
 #include "kernel.hpp"
 #include "platform.hpp"
@@ -27,10 +28,10 @@
 
 #include "log.h"
 #include "xtime.h"
-#include "memory.hpp"
 #include "renderer.hpp"
 #include "audio.hpp"
 #include "input.hpp"
+#include "assets.hpp"
 
 #if LINUX
 	#include <stdlib.h> // for qsort
@@ -263,6 +264,7 @@ namespace kernel
 		// try to setup audio
 		audio::startup();
 		input::startup();
+		assets::startup();
 		
 		// application instance failed startup
 		ApplicationResult startup_result = _active_application->startup( kernel::instance()->parameters() );
@@ -282,6 +284,7 @@ namespace kernel
 	void shutdown()
 	{
 		// system cleanup
+		assets::shutdown();
 		input::shutdown();
 		audio::shutdown();
 		renderer::shutdown();
@@ -300,6 +303,7 @@ namespace kernel
 			DEALLOC(IApplication, _active_application);
 			_active_application = 0;
 		}
+		
 	} // shutdown
 
 	void update()

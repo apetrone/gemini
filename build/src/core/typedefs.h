@@ -126,3 +126,4 @@ typedef double float64;
 #endif
 
 #include <assert.h>
+#include "memory.hpp"
