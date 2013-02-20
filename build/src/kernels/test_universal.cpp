@@ -265,7 +265,8 @@ public:
 	}
 
 	virtual void tick( kernel::Params & params )
-	{	
+	{
+#if 1
 		renderer::IRenderDriver * driver = renderer::driver();
 		MemoryStream ms;
 		char buffer[128] = {0};
@@ -294,6 +295,7 @@ public:
 		ms.write( 0x00004000 );
 		ms.rewind();
 		driver->run_command( renderer::DC_CLEAR, ms );
+#endif
 	}
 
 	virtual void shutdown()

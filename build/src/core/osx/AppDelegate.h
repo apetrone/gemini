@@ -19,17 +19,10 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <iostream>
-#include "typedefs.h"
-#include "kernel_desktop.hpp"
- 
-int main( int argc, char ** argv )
-{
-	memory::startup();
-	
-	DesktopKernel desktop_kernel( argc, argv );
-	kernel::Error error = kernel::main( &desktop_kernel, "TestUniversal" );
-	
-	memory::shutdown();
-	return error;
-}
+#import <Cocoa/Cocoa.h>
+
+@interface AppDelegate : NSObject <NSApplicationDelegate>
+
+@property (assign) IBOutlet NSWindow *window;
+
+@end

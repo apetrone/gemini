@@ -19,17 +19,17 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <iostream>
 #include "typedefs.h"
-#include "kernel_desktop.hpp"
+#include <Cocoa/Cocoa.h>
+#include <CoreFoundation/CoreFoundation.h>
  
 int main( int argc, char ** argv )
 {
 	memory::startup();
+	int return_code = 0;
 	
-	DesktopKernel desktop_kernel( argc, argv );
-	kernel::Error error = kernel::main( &desktop_kernel, "TestUniversal" );
-	
+	return_code = NSApplicationMain(argc, (const char**)argv);
+
 	memory::shutdown();
-	return error;
+	return return_code;
 }

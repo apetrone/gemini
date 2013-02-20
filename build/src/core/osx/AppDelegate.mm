@@ -19,17 +19,53 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <iostream>
-#include "typedefs.h"
-#include "kernel_desktop.hpp"
- 
-int main( int argc, char ** argv )
+#import "AppDelegate.h"
+
+#import "core/desktop/kernel_desktop.hpp"
+#import <xwl/xwl.h>
+
+DesktopKernel _desktop_kernel( 0, 0 );
+
+@implementation AppDelegate
+
+-(void)run_kernel
 {
-	memory::startup();
-	
-	DesktopKernel desktop_kernel( argc, argv );
-	kernel::Error error = kernel::main( &desktop_kernel, "TestUniversal" );
-	
-	memory::shutdown();
-	return error;
+	while( kernel::instance()->is_active() )
+	{
+		kernel::tick();
+	}
+
+	[[NSApplication sharedApplication] terminate:nil];
 }
+
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
+{
+	NSLog( @"applicationDidFinishLaunching" );
+}
+
+-(void)applicationDidBecomeActive:(NSNotification *)notification
+{
+	NSLog( @"applicationDidBecomeActive" );	
+	
+	kernel::startup( &_desktop_kernel, "TestUniversal" );
+
+// http://fredandrandall.com/blog/2011/09/08/how-to-make-your-app-open-in-full-screen-on-lion/
+//	[window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
+//	[window toggleFullScreen:nil];
+
+	[self performSelectorOnMainThread:@selector(run_kernel) withObject:self waitUntilDone:NO];
+}
+
+-(void)applicationDidChangeScreenParameters:(NSNotification *)notification
+{
+	// detect GPU switching
+	NSLog( @"applicationdidChangeScreenParameters");
+}
+
+-(void)applicationWillTerminate:(NSNotification *)notification
+{
+	NSLog( @"applicationWillTerminate" );
+	kernel::shutdown();
+}
+
+@end

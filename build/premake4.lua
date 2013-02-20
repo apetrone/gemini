@@ -55,7 +55,7 @@ project ( build_name )
 	if _OPTIONS["ios"] == nil then
 		files
 		{
-			"src/core/desktop/*.c*",
+			"src/core/desktop/kernel_desktop.cpp",
 			"src/core/gldrivers/opengl_core32.*",
 			"src/core/audio/openal_vorbis_decoder.*",
 		}
@@ -98,12 +98,15 @@ project ( build_name )
 	setup_platforms( solution() )
 
 	configuration { "windows" }
+		
+
 		defines { "WIN32" }
 		files
 		{
 			common_file_list[ "windows" ],
 			"resources/windows/resources.rc",
-			"resources/windows/resource.h"
+			"resources/windows/resource.h",
+			"src/core/desktop/entry.cpp",
 		}
 
 		links
@@ -121,7 +124,11 @@ project ( build_name )
 	configuration { "linux" }
 		defines { "LINUX=1" }
 		links { "X11", "GL", "pthread", "dl", "openal" }
-		files { common_file_list[ "linux" ] }
+		files
+		{
+			common_file_list[ "linux" ],
+			"src/core/desktop/entry.cpp",
+		}
 
 		-- set rpath to be the same directory as the binary
 		linkoptions
@@ -148,6 +155,7 @@ project ( build_name )
 					"src/core/ios/*.m*",
 					"src/core/ios/*.h*",
 					"src/core/osx/osx_platform.*",
+					"src/core/osx/osx_entry.mm",
 					"src/core/gldrivers/opengl_glesv2.*",
 					"src/core/osx/osx_gemgl.*",
 				}

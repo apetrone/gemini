@@ -2,34 +2,40 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleGetInfoString</key>
-	<string>gemini</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.01</string>
 	<key>CFBundleIdentifier</key>
 	<string>net.arcfusion.${PRODUCT_NAME:rfc1034identifier}</string>
 	<key>CFBundleExecutable</key>
-	<string></string>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
-	<key>LSMinimumSystemVersion</key>
-	<string>${MACOSX_DEPLOYMENT_TARGET}</string>
-	<key>CFBundleName</key>
-	<string>gemini</string>
-	<key>CFBundleIconFile</key>
-	<string>icon.icns</string>
-	<key>CFBundleShortVersionString</key>
-	<string>0.01</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
+	<string>${EXECUTABLE_FILE}</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
+	<key>CFBundleIconFile</key>
+	<string>icon.icns</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>NSMainNibFile</key>
+	<string>MainMenu</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>${MACOSX_DEPLOYMENT_TARGET}</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2013 Adam Petrone. All rights reserved.</string>
+	<key>CFBundleName</key>
+	<string>${PRODUCT_NAME}</string>
 	<key>IFMajorVersion</key>
 	<integer>0</integer>
 	<key>IFMinorVersion</key>
 	<integer>1</integer>
 	<key>BreakpadProduct</key>
-	<string>gemini</string>
+	<string>${PRODUCT_NAME}</string>
 	<key>BreakpadProductDisplay</key>
-	<string>gemini</string>
+	<string>${PRODUCT_NAME}</string>
 	<key>BreakpadVersion</key>
 	<string>1</string>
 	<key>BreakpadVendor</key>
