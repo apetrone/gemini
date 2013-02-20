@@ -103,10 +103,10 @@ project ( build_name )
 		defines { "WIN32" }
 		files
 		{
-			common_file_list[ "windows" ],
 			"resources/windows/resources.rc",
 			"resources/windows/resource.h",
 			"src/core/desktop/entry.cpp",
+			common_file_list[ "windows" ],			
 		}
 
 		links
@@ -126,8 +126,8 @@ project ( build_name )
 		links { "X11", "GL", "pthread", "dl", "openal" }
 		files
 		{
-			common_file_list[ "linux" ],
 			"src/core/desktop/entry.cpp",
+			common_file_list[ "linux" ],
 		}
 
 		-- set rpath to be the same directory as the binary
