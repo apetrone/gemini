@@ -6,7 +6,7 @@ class gemini(Builder):
 		self.build_name = 'gemini'
 
 		if target_platform == MACOSX:
-			self.resource_path = "resources/osx/icon.icns"
+			self.resource_path = "resources/osx/*"
 		elif target_platform == IPHONEOS:
 			self.resource_path = "resources/ios/*"
 			self.build_name = 'geminiios'
