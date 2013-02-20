@@ -99,9 +99,15 @@ class gemini(Builder):
 				destination_resource_path = os.path.abspath( appBundle ) + os.path.sep
 			elif target_platform == MACOSX:
 				appBundle = os.path.join( builder.destination_output, os.path.pardir, os.path.pardir )
-				destination_resource_path = os.path.abspath( os.path.join( appBundle, "Resources" ) )
+				destination_resource_path = os.path.abspath( os.path.join( appBundle, "Resources" ) )	
 
 			self.resource_path = os.path.abspath( os.path.join( currentWorkingDirectory(), self.resource_path ) )
 			#logging.info( "Now to copy build resources... (%s -> %s)" % (self.resource_path, destination_resource_path ) )
 			gcp = GlobCopy( src=self.resource_path, dst=destination_resource_path )
 			gcp.run()
+
+			if target_platform == MACOSX:
+				source_xib = os.path.abspath( os.path.join(destination_resource_path, "en.lproj", "MainMenu.xib") )
+				output_nib = os.path.abspath( os.path.join(destination_resource_path, "en.lproj", "MainMenu.nib") )
+				ibtool = IBTool( input=source_xib, output=output_nib )
+				ibtool.run()
