@@ -183,7 +183,6 @@ project ( build_name )
 					'VALIDATE_PRODUCT = NO',
 					'CODE_SIGN_ENTITLEMENTS = "resources/ios/Entitlements.plist"',
 				}
-
 			else
 				linkoptions
 				{
