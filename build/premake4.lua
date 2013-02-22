@@ -45,9 +45,9 @@ project ( build_name )
 		--"src/buildinfo.c",
 		"src/kernels/**.c*",
 		"src/core/*.*",
+		"src/core/gldrivers/opengl_common.cpp",
 		"src/core/audio/openal.*",
 		"src/contrib/*",
-
 		"src/game/**.*",
 	}
 
