@@ -74,7 +74,7 @@ namespace renderer
 		return total_vertices * vertex_stride;
 	}
 
-	VertexStream::VertexType * VertexStream::request( IndexType num_vertices, int dont_advance_pointer )
+	renderer::VertexType * VertexStream::request( IndexType num_vertices, int dont_advance_pointer )
 	{
 		if ( _debug_flags > 0 )
 		{
@@ -172,26 +172,8 @@ namespace renderer
 			last_index = total_indices-1;
 		}
 		
-//		renderer::driver()->vertexbuffer_bufferdata( vertexStride * this->lastVertex, this->vertices, sizeof(IndexType) * this->lastIndex, this->indices );
-#if 0
-		gl.BindVertexArray( vao );
-
-		gl.BindBuffer( GL_ARRAY_BUFFER, vbo[0] );
-		gl.CheckError( "BindBuffer GL_ARRAY_BUFFER" );
-		gl.BufferData( GL_ARRAY_BUFFER, vertexStride * this->lastVertex, this->vertices, buffer_type );
-
-		if ( vbo[1] != 0 )
-		{
-			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, vbo[1] );
-			gl.CheckError( "BindBuffer GL_ELEMENT_ARRAY_BUFFER" );
-			gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * this->lastIndex, this->indices, buffer_type );
-		}
-
-		gl.BindVertexArray( 0 );
-		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
-		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-#endif
-	}
+		renderer::driver()->vertexbuffer_bufferdata( this->vertexbuffer, vertex_stride, this->last_vertex, this->vertices, this->last_index, this->indices );
+	} // update
 
 	void VertexStream::draw_elements()
 	{
@@ -202,7 +184,7 @@ namespace renderer
 		gl.CheckError( "DrawElements" );
 		gl.BindVertexArray( 0 );
 #endif
-	}
+	} // draw_elements
 
 	void VertexStream::draw()
 	{
@@ -213,7 +195,7 @@ namespace renderer
 		gl.CheckError( "DrawArrays" );
 		gl.BindVertexArray( 0 );
 #endif
-	}
+	} // draw
 
 	// VertexTypeDescriptor
 	

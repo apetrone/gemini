@@ -34,6 +34,8 @@ struct GL32VertexBuffer : public VertexBuffer
 {
 	GLuint vao;
 	GLuint vbo[2];
+	GLenum gl_buffer_type;
+	GLenum gl_draw_type;
 };
 
 
@@ -230,7 +232,7 @@ void GLCore32::render_font( int x, int y, renderer::Font & font, const char * ut
 
 renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices )
 {
-	GLenum gl_buffer_type = vertexbuffer_buffertype_to_gl_buffertype( buffer_type );
+
 	
 	GL32VertexBuffer * stream = ALLOC(GL32VertexBuffer);
 	assert( stream != 0 );
@@ -239,7 +241,9 @@ renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescript
 	stream->vao = 0;
 	stream->vbo[0] = 0;
 	stream->vbo[1] = 0;
-	
+	stream->gl_draw_type = vertexbuffer_drawtype_to_gl_drawtype( draw_type );
+	stream->gl_buffer_type = vertexbuffer_buffertype_to_gl_buffertype( buffer_type );
+		
 	gl.GenVertexArrays( 1, &stream->vao );
 	gl.BindVertexArray( stream->vao );
 	
@@ -247,7 +251,7 @@ renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescript
 	gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
 	gl.CheckError( "BindBuffer" );
 	
-	gl.BufferData( GL_ARRAY_BUFFER, vertex_size * max_vertices, 0, gl_buffer_type );
+	gl.BufferData( GL_ARRAY_BUFFER, vertex_size * max_vertices, 0, stream->gl_buffer_type );
 	gl.CheckError( "BufferData" );
 
 	if ( max_indices > 0 )
@@ -256,7 +260,7 @@ renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescript
 		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, stream->vbo[1] );
 		gl.CheckError( "BindBuffer" );
 		
-		gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * max_indices, 0, gl_buffer_type );
+		gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * max_indices, 0, stream->gl_buffer_type );
 		gl.CheckError( "BufferData" );
 	}
 
@@ -340,3 +344,26 @@ void GLCore32::vertexbuffer_destroy( renderer::VertexBuffer * vertexbuffer )
 	
 	DEALLOC(GL32VertexBuffer, stream);
 } // vertexbuffer_destroy
+
+void GLCore32::vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
+{
+	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
+	assert( stream != 0 );
+	
+	gl.BindVertexArray( stream->vao );
+	
+	gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
+	gl.CheckError( "BindBuffer GL_ARRAY_BUFFER" );
+	gl.BufferData( GL_ARRAY_BUFFER, vertex_stride * vertex_count, vertices, stream->gl_buffer_type );
+	
+	if ( stream->vbo[1] != 0 )
+	{
+		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, stream->vbo[1] );
+		gl.CheckError( "BindBuffer GL_ELEMENT_ARRAY_BUFFER" );
+		gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * index_count, indices, stream->gl_buffer_type );
+	}
+	
+	gl.BindVertexArray( 0 );
+	gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+	gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+}

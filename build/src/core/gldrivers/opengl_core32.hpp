@@ -47,4 +47,5 @@ public:
 //	vertexbuffer_create( desc, renderer::STATIC_DRAW, vertexStride * max_vertices, sizeof(IndexType) * max_indices )
 	virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices );
 	virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream );
+	virtual void vertexbuffer_bufferdata( renderer::VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, renderer::VertexType * vertices, unsigned int index_count, renderer::IndexType * indices );
 }; // GLCore32

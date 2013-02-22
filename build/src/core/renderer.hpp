@@ -70,6 +70,8 @@ namespace renderer
 #else
 	typedef unsigned int IndexType;
 #endif
+
+	typedef unsigned char VertexType;
 	
 #define MAX_DESCRIPTORS 8
 	typedef unsigned short VertexDescriptorType;
@@ -200,6 +202,7 @@ namespace renderer
 		
 		virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices ) = 0;
 		virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream ) = 0;
+		virtual void vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices ) = 0;
 //		virtual void vertexbuffer_activate( renderer::VertexBuffer & parameters ) = 0;
 //		virtual void vertexbuffer_update( renderer::VertexBuffer & parameters ) = 0;
 //		virtual void vertexbuffer_draw_indices( unsigned int * indices, size_t num_indices ) = 0;

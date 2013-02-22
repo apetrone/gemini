@@ -27,8 +27,6 @@ namespace renderer
 {
 	struct VertexStream
 	{
-		typedef unsigned char VertexType;
-
 		unsigned int _debug_flags;
 
 		IndexType total_vertices;
