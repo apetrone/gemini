@@ -19,7 +19,8 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <vertexbuffer.hpp>
+#include "typedefs.h"
+#include "vertexstream.hpp"
 #include "renderer.hpp"
 
 #include <string.h> // for memset
@@ -28,7 +29,7 @@
 
 namespace renderer
 {
-	void VertexBuffer::alloc( unsigned int bytes_per_vertex, IndexType max_vertices, IndexType max_indices )
+	void VertexStream::alloc( unsigned int bytes_per_vertex, IndexType max_vertices, IndexType max_indices )
 	{
 		totalVertices = max_vertices;
 		vertexStride = bytes_per_vertex;
@@ -46,14 +47,14 @@ namespace renderer
 		}
 	}
 
-	void VertexBuffer::reset()
+	void VertexStream::reset()
 	{
 		lastVertex = 0;
 		lastIndex = 0;
 		highestIndex = 0;
 	}
 
-	void VertexBuffer::dealloc()
+	void VertexStream::dealloc()
 	{
 		if ( vertices )
 		{
@@ -68,16 +69,16 @@ namespace renderer
 		}
 	}
 
-	unsigned int VertexBuffer::bytes_used()
+	unsigned int VertexStream::bytes_used()
 	{
 		return totalVertices * vertexStride;
 	}
 
-	VertexBuffer::VertexType * VertexBuffer::request( IndexType num_vertices, int dont_advance_pointer )
+	VertexStream::VertexType * VertexStream::request( IndexType num_vertices, int dont_advance_pointer )
 	{
 		if ( _debug_flags > 0 )
 		{
-			LOGE( "Requesting (%i) vertices from VertexBuffer; must call create() first!\n", num_vertices );
+			LOGE( "Requesting (%i) vertices from VertexStream; must call create() first!\n", num_vertices );
 		}
 
 		VertexType * vptr;
@@ -101,7 +102,7 @@ namespace renderer
 		return vptr;
 	}
 
-	void VertexBuffer::append_indices( IndexType * inIndices, IndexType num_indices )
+	void VertexStream::append_indices( IndexType * inIndices, IndexType num_indices )
 	{
 		IndexType numStartingIndices;
 		IndexType j;
@@ -131,142 +132,35 @@ namespace renderer
 		highestIndex++;
 	} // appendIndices
 
-	void VertexBuffer::create( unsigned int vertexStride, IndexType max_vertices, IndexType max_indices, int drawtype, int buffertype )
-	{
-		unsigned int attribID = 0;
-		unsigned int attribSize = 0;
-		unsigned int num_elements = 0;
-		unsigned int normalized = 0;
-		unsigned int offset = 0;
-#if 0
-		GLenum attrib_type;
-#endif
-		VertexDescriptor descriptor;
-		
+	void VertexStream::create( unsigned int vertex_stride, IndexType max_vertices, IndexType max_indices, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type )
+	{	
 		if ( desc.attribs == 0 )
 		{
-			LOGE( "VertexBuffer description NOT SET!\n" );
+			LOGE( "VertexStream description NOT SET!\n" );
 		}
 
-		if ( buffertype == 0 )
-		{
-#if 0
-			buffertype = GL_STATIC_DRAW;
-#endif
-		}
-		
 		//printf( "template_vertex_size = %i bytes <-> vertexStride = %i bytes\n", sizeof(VertexType), vertexStride );
 
 		alloc( vertexStride, max_vertices, max_indices );
-		type = drawtype;
-		buffer_type = buffertype;
-
-		vbo[0] = 0;
-		vbo[1] = 0;
 		
-//		this->geometry_stream = renderer::driver()->geometrystream_create( desc, renderer::STATIC_DRAW, vertexStride * max_vertices, sizeof(IndexType) * max_indices );
+		this->vertexbuffer = renderer::driver()->vertexbuffer_create(
+			this->desc,
+			draw_type,
+			buffer_type,
+			vertex_stride,
+			max_vertices,
+			max_indices );
 
-#if 0
-		gl.GenVertexArrays( 1, &vao );
-		gl.BindVertexArray( vao );
-
-		gl.GenBuffers( 1, vbo );
-		gl.BindBuffer( GL_ARRAY_BUFFER, vbo[0] );
-		gl.CheckError( "BindBuffer" );
-
-		gl.BufferData( GL_ARRAY_BUFFER, vertexStride * max_vertices, 0, buffer_type );
-		gl.CheckError( "BufferData" );
-#endif
-		if ( max_indices > 0 )
-		{
-#if 0
-			gl.GenBuffers( 1, &vbo[1] );
-			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, vbo[1] );
-			gl.CheckError( "BindBuffer" );
-
-			gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * max_indices, 0, buffer_type );
-			gl.CheckError( "BufferData" );
-#endif
-		
-		}
-
-		desc.reset();
-#if 0
-		attrib_type = GL_INVALID_ENUM;
-
-		for( unsigned int i = 0; i < desc.attribs; ++i )
-		{
-			descriptor = desc.description[i];
-			if ( descriptor == VD_FLOAT2 )
-			{
-				attrib_type = GL_FLOAT;
-				normalized = GL_FALSE;
-			}
-			else if ( descriptor == VD_FLOAT3 )
-			{
-				attrib_type = GL_FLOAT;
-				normalized = GL_FALSE;
-			}
-			else if ( descriptor == VD_UNSIGNED_INT )
-			{
-				attrib_type = GL_UNSIGNED_INT;
-				normalized = GL_FALSE;
-			}
-			else if ( descriptor == VD_UNSIGNED_BYTE3 )
-			{
-				attrib_type = GL_UNSIGNED_BYTE;
-				normalized = GL_TRUE;
-			}
-			else if ( descriptor == VD_UNSIGNED_BYTE4 )
-			{
-				attrib_type = GL_UNSIGNED_BYTE;
-				normalized = GL_TRUE;
-			}
-
-			num_elements = VertexTypeDescriptor::elements[ descriptor ];
-			attribSize = VertexTypeDescriptor::size[ descriptor ];
-			gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertexStride, (void*)offset );
-			gl.CheckError( "VertexAttribPointer" );
-
-			gl.EnableVertexAttribArray( attribID );
-			gl.CheckError( "EnableVertexAttribArray" );
-
-			
-			offset += attribSize;
-			++attribID;
-		}
-
-		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
-		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-		gl.BindVertexArray( 0 );
-#endif
-		
 		_debug_flags = 0;
 	}
 
-	void VertexBuffer::destroy()
+	void VertexStream::destroy()
 	{
 		this->dealloc();
-//		renderer::driver()->geometrystream_destroy( this->geometry_stream );
-#if 0
-		if ( vao != 0 )
-		{
-			gl.DeleteVertexArrays( 1, &vao );
-		}
-		
-		if ( vbo[0] != 0 )
-		{
-			gl.DeleteBuffers( 1, vbo );
-		}
-
-		if ( vbo[1] != 0 )
-		{
-			gl.DeleteBuffers( 1, &vbo[1] );
-		}
-#endif
+		renderer::driver()->vertexbuffer_destroy( this->vertexbuffer );
 	}
 
-	void VertexBuffer::update()
+	void VertexStream::update()
 	{
 		if ( lastVertex >= totalVertices )
 		{
@@ -278,7 +172,7 @@ namespace renderer
 			lastIndex = totalIndices-1;
 		}
 		
-//		renderer::driver()->geometrystream_bufferdata( vertexStride * this->lastVertex, this->vertices, sizeof(IndexType) * this->lastIndex, this->indices );
+//		renderer::driver()->vertexbuffer_bufferdata( vertexStride * this->lastVertex, this->vertices, sizeof(IndexType) * this->lastIndex, this->indices );
 #if 0
 		gl.BindVertexArray( vao );
 
@@ -299,7 +193,7 @@ namespace renderer
 #endif
 	}
 
-	void VertexBuffer::draw_elements()
+	void VertexStream::draw_elements()
 	{
 #if 0
 		gl.BindVertexArray( vao );
@@ -310,7 +204,7 @@ namespace renderer
 #endif
 	}
 
-	void VertexBuffer::draw()
+	void VertexStream::draw()
 	{
 #if 0
 		gl.BindVertexArray( vao );

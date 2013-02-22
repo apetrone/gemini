@@ -44,7 +44,7 @@ public:
 	
 	// font
 	virtual void render_font( int x, int y, renderer::Font & font, const char * utf8_string, const Color & color );
-//	geometrystream_create( desc, renderer::STATIC_DRAW, vertexStride * max_vertices, sizeof(IndexType) * max_indices )
-	virtual renderer::GeometryStream * geometrystream_create( renderer::VertexDescriptor & descriptor, renderer::GeometryStreamDrawType draw_type, renderer::GeometryStreamBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices );
-	virtual void geometrystream_destroy( renderer::GeometryStream * stream );
+//	vertexbuffer_create( desc, renderer::STATIC_DRAW, vertexStride * max_vertices, sizeof(IndexType) * max_indices )
+	virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices );
+	virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream );
 }; // GLCore32

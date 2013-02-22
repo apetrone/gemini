@@ -86,23 +86,23 @@ namespace renderer
 	}; // Vertex Descriptor
 	
 
-	enum GeometryStreamDrawType
+	enum VertexBufferDrawType
 	{
 		DRAW_TRIANGLES,
 		DRAW_LINES,
 		DRAW_POINTS,
 		
 		DRAW_LIMIT,
-	}; // GeometryStreamDrawType
+	}; // VertexBufferDrawType
 	
-	enum GeometryStreamBufferType
+	enum VertexBufferBufferType
 	{
 		BUFFER_STATIC,
 		BUFFER_DYNAMIC,
 		BUFFER_STREAM,
 		
 		BUFFER_LIMIT,
-	}; // GeometryStreamBufferType
+	}; // VertexBufferBufferType
 	
 	
 	struct VertexDescriptor
@@ -152,12 +152,17 @@ namespace renderer
 		int object;
 	}; // ShaderParameters
 	
-	struct GeometryStream
+	struct VertexBuffer
 	{
 		int num_vertices;
 		int num_indices;
-	}; // GeometryStream
-		
+	}; // VertexBuffer
+};
+
+#include "vertexstream.hpp"
+
+namespace renderer
+{
 	//
 	// IRenderDriver
 	// The render driver acts as a command processor. The implementation details are up to the driver
@@ -193,12 +198,12 @@ namespace renderer
 		virtual void shader_deactivate( renderer::ShaderParameters & parameters ) = 0;
 		*/
 		
-		virtual renderer::GeometryStream * geometrystream_create( renderer::VertexDescriptor & descriptor, GeometryStreamDrawType draw_type, GeometryStreamBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices ) = 0;
-		virtual void geometrystream_destroy( renderer::GeometryStream * stream ) = 0;
-//		virtual void geometrystream_activate( renderer::GeometryStream & parameters ) = 0;
-//		virtual void geometrystream_update( renderer::GeometryStream & parameters ) = 0;
-//		virtual void geometrystream_draw_indices( unsigned int * indices, size_t num_indices ) = 0;
-//		virtual void geometrystream_deactivate( renderer::GeometryStream & parameters ) = 0;
+		virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices ) = 0;
+		virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream ) = 0;
+//		virtual void vertexbuffer_activate( renderer::VertexBuffer & parameters ) = 0;
+//		virtual void vertexbuffer_update( renderer::VertexBuffer & parameters ) = 0;
+//		virtual void vertexbuffer_draw_indices( unsigned int * indices, size_t num_indices ) = 0;
+//		virtual void vertexbuffer_deactivate( renderer::VertexBuffer & parameters ) = 0;
 		
 	}; // IRenderDriver
 	typedef IRenderDriver * (*RenderDriverCreator)();

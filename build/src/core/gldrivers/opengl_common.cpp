@@ -23,8 +23,7 @@
 #include "renderer.hpp"
 #include "opengl_common.hpp"
 
-
-GLenum GeometryStreamDrawType_OpenGLDrawType( renderer::GeometryStreamDrawType type )
+GLenum vertexbuffer_drawtype_to_gl_drawtype( renderer::VertexBufferDrawType type )
 {
 	GLenum types[] = {
 		GL_TRIANGLES,
@@ -35,9 +34,9 @@ GLenum GeometryStreamDrawType_OpenGLDrawType( renderer::GeometryStreamDrawType t
 	assert( type < renderer::DRAW_LIMIT );
 	
 	return types[ type ];
-} // GeometryStreamDrawType_OpenGLDrawType
+} // VertexBufferDrawType_OpenGLDrawType
 
-GLenum GeometryStreamBufferType_OpenGLBufferType( renderer::GeometryStreamBufferType type )
+GLenum vertexbuffer_buffertype_to_gl_buffertype( renderer::VertexBufferBufferType type )
 {
 	GLenum types[] = {
 		GL_STATIC_DRAW,
@@ -48,4 +47,4 @@ GLenum GeometryStreamBufferType_OpenGLBufferType( renderer::GeometryStreamBuffer
 	assert( type < renderer::BUFFER_LIMIT );
 	
 	return types[ type ];
-} // GeometryStreamBufferType_OpenGLBufferType
+} // VertexBufferBufferType_OpenGLBufferType

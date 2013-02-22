@@ -52,5 +52,5 @@
 #endif
 
 
-GLenum GeometryStreamDrawType_OpenGLDrawType( renderer::GeometryStreamDrawType type );
-GLenum GeometryStreamBufferType_OpenGLBufferType( renderer::GeometryStreamBufferType type );
+GLenum vertexbuffer_drawtype_to_gl_drawtype( renderer::VertexBufferDrawType type );
+GLenum vertexbuffer_buffertype_to_gl_buffertype( renderer::VertexBufferBufferType type );

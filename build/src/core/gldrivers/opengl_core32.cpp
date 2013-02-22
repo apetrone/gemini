@@ -30,7 +30,7 @@
 using namespace renderer;
 
 
-struct GL32GeometryStream : public GeometryStream
+struct GL32VertexBuffer : public VertexBuffer
 {
 	GLuint vao;
 	GLuint vbo[2];
@@ -228,11 +228,11 @@ void GLCore32::render_font( int x, int y, renderer::Font & font, const char * ut
 	*/
 } // render_font
 
-renderer::GeometryStream * GLCore32::geometrystream_create( renderer::VertexDescriptor & descriptor, GeometryStreamDrawType draw_type, GeometryStreamBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices )
+renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices )
 {
-	GLenum gl_buffer_type = GeometryStreamBufferType_OpenGLBufferType( buffer_type );
+	GLenum gl_buffer_type = vertexbuffer_buffertype_to_gl_buffertype( buffer_type );
 	
-	GL32GeometryStream * stream = ALLOC(GL32GeometryStream);
+	GL32VertexBuffer * stream = ALLOC(GL32VertexBuffer);
 	assert( stream != 0 );
 	
 	// initial values for stream
@@ -316,11 +316,11 @@ renderer::GeometryStream * GLCore32::geometrystream_create( renderer::VertexDesc
 	gl.BindVertexArray( 0 );
 		
 	return stream;
-} // geometrystream_create
+} // vertexbuffer_create
 
-void GLCore32::geometrystream_destroy( renderer::GeometryStream * geometrystream )
+void GLCore32::vertexbuffer_destroy( renderer::VertexBuffer * vertexbuffer )
 {
-	GL32GeometryStream * stream = (GL32GeometryStream*)geometrystream;
+	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	
 	if ( stream->vao != 0 )
 	{
@@ -338,5 +338,5 @@ void GLCore32::geometrystream_destroy( renderer::GeometryStream * geometrystream
 	}
 	
 	
-	DEALLOC(GL32GeometryStream, stream);
-} // geometrystream_destroy
+	DEALLOC(GL32VertexBuffer, stream);
+} // vertexbuffer_destroy

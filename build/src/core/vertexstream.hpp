@@ -25,9 +25,7 @@
 
 namespace renderer
 {
-
-	
-	struct VertexBuffer
+	struct VertexStream
 	{
 		typedef unsigned char VertexType;
 
@@ -41,6 +39,8 @@ namespace renderer
 		VertexType * vertices;
 		IndexType * indices;
 		unsigned int vertexStride;
+		
+		VertexBuffer * vertexbuffer;
 		
 		// these are used for rendering
 		unsigned int vao;
@@ -56,15 +56,11 @@ namespace renderer
 		VertexType * request( IndexType num_vertices, int dont_advance_pointer = 0 );
 		void append_indices( IndexType * inIndices, IndexType num_indices );
 		
-		// --- rendering usage specific
-		// drawtype refers to: GL_TRIANGLES, GL_LINES, etc
-		// buffertype refers to: GL_STATIC_DRAW, GL_DYNAMIC_DRAW
-		void create( unsigned int vertexStride, IndexType max_vertices, IndexType max_indices, int drawtype, int buffertype = 0 );
+		void create( unsigned int vertex_stride, IndexType max_vertices, IndexType max_indices, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type = renderer::BUFFER_STATIC );
 		void destroy();
 		void update();
 		void draw_elements();
 		void draw();
-	}; // VertexBuffer
-	
-	
+	}; // VertexStream
+
 }; // namespace renderer
