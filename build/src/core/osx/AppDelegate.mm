@@ -66,6 +66,7 @@ DesktopKernel _desktop_kernel( 0, 0 );
 {
 	NSLog( @"applicationWillTerminate" );
 	kernel::shutdown();
+	memory::shutdown();
 }
 
 @end

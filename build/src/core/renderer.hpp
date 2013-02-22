@@ -65,7 +65,61 @@ namespace renderer
 
 	
 	
+#if PLATFORM_IS_MOBILE // assuming OpenGL ES 2.0
+	typedef unsigned short IndexType;
+#else
+	typedef unsigned int IndexType;
+#endif
 	
+#define MAX_DESCRIPTORS 8
+	typedef unsigned short VertexDescriptorType;
+	
+	enum
+	{
+		VD_FLOAT2 = 0,
+		VD_FLOAT3,
+		VD_FLOAT4,
+		VD_UNSIGNED_BYTE3,
+		VD_UNSIGNED_BYTE4,
+		VD_UNSIGNED_INT,
+		VD_TOTAL
+	}; // Vertex Descriptor
+	
+
+	enum GeometryStreamDrawType
+	{
+		DRAW_TRIANGLES,
+		DRAW_LINES,
+		DRAW_POINTS,
+		
+		DRAW_LIMIT,
+	}; // GeometryStreamDrawType
+	
+	enum GeometryStreamBufferType
+	{
+		BUFFER_STATIC,
+		BUFFER_DYNAMIC,
+		BUFFER_STREAM,
+		
+		BUFFER_LIMIT,
+	}; // GeometryStreamBufferType
+	
+	
+	struct VertexDescriptor
+	{
+		unsigned char id;
+		unsigned char attribs;
+		VertexDescriptorType description[ MAX_DESCRIPTORS ];
+		
+		static unsigned int size[ VD_TOTAL ];
+		static unsigned int elements[ VD_TOTAL ];
+		
+		VertexDescriptor();
+		void add( VertexDescriptorType desc );
+		
+		VertexDescriptorType get( int i );
+		void reset();
+	}; // VertexDescriptor
 	
 	
 	
@@ -83,11 +137,27 @@ namespace renderer
 	}; // TextureParameters
 	
 	
+	class Font
+	{
+	}; // Font
 	
+	struct BlendParameters
+	{
+		unsigned int source;
+		unsigned int destination;
+	}; // BlendParameters
 	
+	struct ShaderParameters
+	{
+		int object;
+	}; // ShaderParameters
 	
-	
-	
+	struct GeometryStream
+	{
+		int num_vertices;
+		int num_indices;
+	}; // GeometryStream
+		
 	//
 	// IRenderDriver
 	// The render driver acts as a command processor. The implementation details are up to the driver
@@ -102,11 +172,33 @@ namespace renderer
 		virtual void run_command( DriverCommandType command, MemoryStream & stream ) = 0;
 		virtual void post_command( DriverCommandType command, MemoryStream & stream ) = 0;
 
+		// texture
 		virtual bool upload_texture_2d( TextureParameters & parameters ) = 0;
-		
 		virtual bool generate_texture( renderer::TextureParameters & parameters ) = 0;
 		virtual bool destroy_texture( renderer::TextureParameters & parameters ) = 0;
 		virtual bool is_texture( renderer::TextureParameters & parameters ) = 0;
+		
+		// font
+		virtual void render_font( int x, int y, renderer::Font & font, const char * utf8_string, const Color & color ) = 0;
+		
+		
+		/*
+		virtual void texture_activate( renderer::TextureParameters & parameters ) = 0;
+		virtual void texture_deactivate( renderer::TextureParameters & parameters ) = 0;
+		
+		virtual void blending_activate( renderer::BlendParameters & parameters ) = 0;
+		virtual void blending_deactivate( renderer::BlendParameters & parameters ) = 0;
+		
+		virtual void shader_activate( renderer::ShaderParameters & parameters ) = 0;
+		virtual void shader_deactivate( renderer::ShaderParameters & parameters ) = 0;
+		*/
+		
+		virtual renderer::GeometryStream * geometrystream_create( renderer::VertexDescriptor & descriptor, GeometryStreamDrawType draw_type, GeometryStreamBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices ) = 0;
+		virtual void geometrystream_destroy( renderer::GeometryStream * stream ) = 0;
+//		virtual void geometrystream_activate( renderer::GeometryStream & parameters ) = 0;
+//		virtual void geometrystream_update( renderer::GeometryStream & parameters ) = 0;
+//		virtual void geometrystream_draw_indices( unsigned int * indices, size_t num_indices ) = 0;
+//		virtual void geometrystream_deactivate( renderer::GeometryStream & parameters ) = 0;
 		
 	}; // IRenderDriver
 	typedef IRenderDriver * (*RenderDriverCreator)();

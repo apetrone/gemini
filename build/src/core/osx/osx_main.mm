@@ -25,11 +25,8 @@
  
 int main( int argc, char ** argv )
 {
+	// this is called here to initialize before we even enter Cocoa.
+	// the shutdown is called in the appdelegate: applicationWillTerminate
 	memory::startup();
-	int return_code = 0;
-	
-	return_code = NSApplicationMain(argc, (const char**)argv);
-
-	memory::shutdown();
-	return return_code;
+	return NSApplicationMain(argc, (const char**)argv);
 }

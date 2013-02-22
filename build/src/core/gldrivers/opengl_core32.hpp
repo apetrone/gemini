@@ -36,10 +36,15 @@ public:
 	virtual void run_command( renderer::DriverCommandType command, MemoryStream & stream );
 	virtual void post_command( renderer::DriverCommandType command, MemoryStream & stream );
 	
+	// texture
 	virtual bool upload_texture_2d( renderer::TextureParameters & parameters );
-	
 	virtual bool generate_texture( renderer::TextureParameters & parameters );
 	virtual bool destroy_texture( renderer::TextureParameters & parameters );
 	virtual bool is_texture( renderer::TextureParameters & parameters );
 	
+	// font
+	virtual void render_font( int x, int y, renderer::Font & font, const char * utf8_string, const Color & color );
+//	geometrystream_create( desc, renderer::STATIC_DRAW, vertexStride * max_vertices, sizeof(IndexType) * max_indices )
+	virtual renderer::GeometryStream * geometrystream_create( renderer::VertexDescriptor & descriptor, renderer::GeometryStreamDrawType draw_type, renderer::GeometryStreamBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices );
+	virtual void geometrystream_destroy( renderer::GeometryStream * stream );
 }; // GLCore32

@@ -19,38 +19,33 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
-
+#include "typedefs.h"
 #include "renderer.hpp"
-
-#if _WIN32
-	#include <limits.h>
-	#include <windows.h>
-	#include <gl/gl.h>
-	#include <glext.h>
-	#include <wglext.h>
-	#pragma comment( lib, "opengl32.lib" )
-#elif LINUX
-	#include <stdint.h>
-	#include <GL/gl.h>
-	#include <GL/glx.h>
-	//#include <glxext.h>
-#elif __APPLE__
-	#include <stdint.h>
-	#include <TargetConditionals.h>
-
-	#if TARGET_OS_IPHONE
-		#include <OpenGLES/ES2/gl.h>
-		#include <OpenGLES/ES2/glext.h>
-	#elif TARGET_OS_MAC
-		#include <OpenGL/gl3.h>
-		#include <OpenGL/gl3ext.h>
-		// legacy GL
-//		#include <OpenGL/gl.h>
-//		#include <OpenGL/glext.h>
-	#endif
-#endif
+#include "opengl_common.hpp"
 
 
-GLenum GeometryStreamDrawType_OpenGLDrawType( renderer::GeometryStreamDrawType type );
-GLenum GeometryStreamBufferType_OpenGLBufferType( renderer::GeometryStreamBufferType type );
+GLenum GeometryStreamDrawType_OpenGLDrawType( renderer::GeometryStreamDrawType type )
+{
+	GLenum types[] = {
+		GL_TRIANGLES,
+		GL_LINES,
+		GL_POINTS
+	};
+	
+	assert( type < renderer::DRAW_LIMIT );
+	
+	return types[ type ];
+} // GeometryStreamDrawType_OpenGLDrawType
+
+GLenum GeometryStreamBufferType_OpenGLBufferType( renderer::GeometryStreamBufferType type )
+{
+	GLenum types[] = {
+		GL_STATIC_DRAW,
+		GL_DYNAMIC_DRAW,
+		GL_STREAM_DRAW
+	};
+	
+	assert( type < renderer::BUFFER_LIMIT );
+	
+	return types[ type ];
+} // GeometryStreamBufferType_OpenGLBufferType

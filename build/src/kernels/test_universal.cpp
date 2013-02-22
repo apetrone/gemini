@@ -28,7 +28,7 @@
 #include "log.h"
 //#include <squirrel.h>
 
-
+#include "vertexbuffer.hpp"
 #include "hashtable.hpp"
 
 #include "game/menu.hpp"
@@ -231,7 +231,25 @@ public:
 		}
 		
 		
+		renderer::VertexBuffer buffer;
+		buffer.desc.add( renderer::VD_FLOAT3 );
+		buffer.desc.add( renderer::VD_UNSIGNED_BYTE4 );
 		
+		struct FontVertexType
+		{
+			float x, y, z;
+			Color color;
+		};
+		
+		renderer::GeometryStream * stream = renderer::driver()->geometrystream_create( buffer.desc, renderer::DRAW_TRIANGLES, renderer::BUFFER_STATIC, sizeof(FontVertexType), 1024, 1024 );
+		
+		LOGV( "stream: %p\n", stream );
+		
+		
+		renderer::driver()->geometrystream_destroy( stream );
+		
+		
+
 #if 0
 		HashTable<int> t;
 		
