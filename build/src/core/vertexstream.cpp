@@ -31,27 +31,27 @@ namespace renderer
 {
 	void VertexStream::alloc( unsigned int bytes_per_vertex, IndexType max_vertices, IndexType max_indices )
 	{
-		totalVertices = max_vertices;
-		vertexStride = bytes_per_vertex;
-		totalIndices = 0;
-		vertices = new VertexType[ (vertexStride*totalVertices) ];
-		lastVertex = 0;
-		lastIndex = 0;
-		highestIndex = 0;
+		total_vertices = max_vertices;
+		vertex_stride = bytes_per_vertex;
+		total_indices = 0;
+		vertices = new VertexType[ (vertex_stride*total_vertices) ];
+		last_vertex = 0;
+		last_index = 0;
+		highest_index = 0;
 		indices = 0;
 
 		if ( max_indices > 0 )
 		{
 			indices = new IndexType[ max_indices ];
-			totalIndices = max_indices;
+			total_indices = max_indices;
 		}
 	}
 
 	void VertexStream::reset()
 	{
-		lastVertex = 0;
-		lastIndex = 0;
-		highestIndex = 0;
+		last_vertex = 0;
+		last_index = 0;
+		highest_index = 0;
 	}
 
 	void VertexStream::dealloc()
@@ -71,7 +71,7 @@ namespace renderer
 
 	unsigned int VertexStream::bytes_used()
 	{
-		return totalVertices * vertexStride;
+		return total_vertices * vertex_stride;
 	}
 
 	VertexStream::VertexType * VertexStream::request( IndexType num_vertices, int dont_advance_pointer )
@@ -83,21 +83,21 @@ namespace renderer
 
 		VertexType * vptr;
 
-		if ( num_vertices > totalVertices )
+		if ( num_vertices > total_vertices )
 		{
 			//fprintf( stdout, "Cannot have more vertices!\n" );
 			// this is not possible with the total
 			return 0;
 		}
 
-		if ( lastVertex + num_vertices > totalVertices )
+		if ( last_vertex + num_vertices > total_vertices )
 			// we cannot accomodate that request
 			return 0;
 
-		vptr = &vertices[ (vertexStride * lastVertex) ];
+		vptr = &vertices[ (vertex_stride * last_vertex) ];
 
 		if ( !dont_advance_pointer )
-			lastVertex += num_vertices;
+			last_vertex += num_vertices;
 
 		return vptr;
 	}
@@ -107,29 +107,29 @@ namespace renderer
 		IndexType numStartingIndices;
 		IndexType j;
 
-		if ( (highestIndex + num_indices) > totalIndices )
+		if ( (highest_index + num_indices) > total_indices )
 		{
 			reset();
 			return;
 		}
 
-		numStartingIndices = highestIndex;
+		numStartingIndices = highest_index;
 
 		// copy index data
-		for( j = 0; j < num_indices; ++j, ++lastIndex )
+		for( j = 0; j < num_indices; ++j, ++last_index )
 		{
-			if ( numStartingIndices + inIndices[j] > highestIndex )
-				highestIndex = (numStartingIndices + inIndices[j]);
+			if ( numStartingIndices + inIndices[j] > highest_index )
+				highest_index = (numStartingIndices + inIndices[j]);
 
-			if ( lastIndex >= totalIndices )
+			if ( last_index >= total_indices )
 			{
 				break;
 			}
 			
-			indices[ lastIndex ] = (numStartingIndices + inIndices[ j ]);
+			indices[ last_index ] = (numStartingIndices + inIndices[ j ]);
 		}
 
-		highestIndex++;
+		highest_index++;
 	} // appendIndices
 
 	void VertexStream::create( unsigned int vertex_stride, IndexType max_vertices, IndexType max_indices, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type )
@@ -141,7 +141,7 @@ namespace renderer
 
 		//printf( "template_vertex_size = %i bytes <-> vertexStride = %i bytes\n", sizeof(VertexType), vertexStride );
 
-		alloc( vertexStride, max_vertices, max_indices );
+		alloc( vertex_stride, max_vertices, max_indices );
 		
 		this->vertexbuffer = renderer::driver()->vertexbuffer_create(
 			this->desc,
@@ -162,14 +162,14 @@ namespace renderer
 
 	void VertexStream::update()
 	{
-		if ( lastVertex >= totalVertices )
+		if ( last_vertex >= total_vertices )
 		{
-			lastVertex = totalVertices-1;
+			last_vertex = total_vertices-1;
 		}
 		
-		if ( lastIndex >= totalIndices )
+		if ( last_index >= total_indices )
 		{
-			lastIndex = totalIndices-1;
+			last_index = total_indices-1;
 		}
 		
 //		renderer::driver()->vertexbuffer_bufferdata( vertexStride * this->lastVertex, this->vertices, sizeof(IndexType) * this->lastIndex, this->indices );

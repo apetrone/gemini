@@ -31,22 +31,17 @@ namespace renderer
 
 		unsigned int _debug_flags;
 
-		IndexType totalVertices;
-		IndexType totalIndices;
-		IndexType lastVertex;
-		IndexType lastIndex;
-		IndexType highestIndex;
+		IndexType total_vertices;
+		IndexType total_indices;
+		IndexType last_vertex;
+		IndexType last_index;
+		IndexType highest_index;
 		VertexType * vertices;
 		IndexType * indices;
-		unsigned int vertexStride;
+		unsigned int vertex_stride;
 		
 		VertexBuffer * vertexbuffer;
-		
-		// these are used for rendering
-		unsigned int vao;
-		unsigned int vbo[2];
-		int type;
-		int buffer_type;
+
 		VertexDescriptor desc;
 		
 		void alloc( unsigned int bytes_per_vertex, IndexType max_vertices, IndexType max_indices = 0 );
