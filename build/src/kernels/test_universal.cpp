@@ -27,13 +27,78 @@
 #include "input.hpp"
 #include "log.h"
 //#include <squirrel.h>
-
+#include "filesystem.hpp"
 #include "hashtable.hpp"
 
 #include "game/menu.hpp"
 
 
 #include "assets.hpp"
+
+
+// strip the version line from shader source
+void strip_shader_version( char * buffer, StackString<32> & version );
+
+
+void strip_shader_version( char * buffer, StackString<32> & version )
+{
+	// remove preceding "#version" shader
+	char * pos = xstr_str( buffer, "#version" );
+	if ( pos )
+	{
+		char * end = pos;
+		while( *end != '\n' )
+			++end;
+		
+		version._length = (end-pos);
+		memcpy( &version[0], &buffer[(pos-buffer)], version._length );
+		memset( &buffer[(pos-buffer)], ' ', (end-pos) );
+	}
+} // strip_shader_version
+
+
+
+
+renderer::ShaderObject create_shader_from_file( const char * shader_path, renderer::ShaderObjectType type, const char * preprocessor_defines )
+{
+	renderer::ShaderObject shader_object;
+	char * buffer;
+	int length = 0;
+	buffer = fs::file_to_buffer( shader_path, 0, &length );
+	if ( buffer )
+	{
+		StackString<32> version;
+		strip_shader_version( buffer, version );
+		if ( version._length == 0 )
+		{
+			LOGW( "Unable to extract version from shader! Forcing to #version 150.\n" );
+			version = "#version 150";
+		}
+				
+		// specify version string first, followed by any defines, then the actual shader source
+		if ( preprocessor_defines == 0 )
+		{
+			preprocessor_defines = "";
+		}
+		
+		shader_object = renderer::driver()->shaderobject_create( type );
+		
+		renderer::driver()->shaderobject_compile( shader_object, buffer, preprocessor_defines, version() );
+	
+		memory::allocator().deallocate(buffer);
+	}
+	else
+	{
+		LOGE( "Unable to open shader '%s'\n", shader_path );
+	}
+	
+	return shader_object;
+}
+
+
+
+
+
 
 void foreach_child( MenuItem * root, foreach_menu_callback callback )
 {
@@ -270,6 +335,15 @@ public:
 			LOGV( "t does not contain 'hello'\n" );
 		}
 #endif
+
+
+
+		renderer::ShaderObject vertex_shader = create_shader_from_file( "shaders/fontshader.vert", renderer::SHADER_VERTEX, 0 );
+		renderer::ShaderObject fragment_shader = create_shader_from_file( "shaders/fontshader.frag", renderer::SHADER_FRAGMENT, 0 );
+
+		renderer::driver()->shaderobject_destroy( vertex_shader );
+		renderer::driver()->shaderobject_destroy( fragment_shader );
+
 
 		return kernel::Success;
 	}

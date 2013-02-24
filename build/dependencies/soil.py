@@ -37,7 +37,7 @@ class soilBuilder(Builder):
 		builder = kwargs.get( "builder", None )
 
 		cp = Copy( src="../soil.lua", dst="soil.lua" )
-		cp.run()		
+		cp.run()
 		premake = Premake4( action=builder.premake_action, file="soil.lua" )
 		premake.run()
 

@@ -81,6 +81,7 @@ namespace assets
 	Texture * load_texture( const char * path, unsigned int flags = 0, bool ignore_cache = false );
 //	Texture * load_cubemap( const char * basename, unsigned int flags = 0, bool ignore_cache = false );
 	
-	
-	
 }; // namespace assets
+
+
+#include "shaderasset.hpp"

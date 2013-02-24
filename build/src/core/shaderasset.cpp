@@ -19,47 +19,13 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
+#include "typedefs.h"
+#include "assets.hpp"
 
-#include "renderer.hpp"
 
-#if _WIN32
-	#include <limits.h>
-	#include <windows.h>
-	#include <gl/gl.h>
-	#include <glext.h>
-	#include <wglext.h>
-	#pragma comment( lib, "opengl32.lib" )
-#elif LINUX
-	#include <stdint.h>
-	#include <GL/gl.h>
-	#include <GL/glx.h>
-	//#include <glxext.h>
-#elif __APPLE__
-	#include <stdint.h>
-	#include <TargetConditionals.h>
-
-	#if TARGET_OS_IPHONE
-		#include <OpenGLES/ES2/gl.h>
-		#include <OpenGLES/ES2/glext.h>
-	#elif TARGET_OS_MAC
-		#include <OpenGL/gl3.h>
-		#include <OpenGL/gl3ext.h>
-		// legacy GL
-//		#include <OpenGL/gl.h>
-//		#include <OpenGL/glext.h>
-	#endif
-#endif
-
-#include "gemgl.hpp" // for GLObject
-#include "stackstring.hpp"
-
-GLenum vertexbuffer_drawtype_to_gl_drawtype( renderer::VertexBufferDrawType type );
-GLenum vertexbuffer_buffertype_to_gl_buffertype( renderer::VertexBufferBufferType type );
-GLenum shaderobject_type_to_gl_shaderobjecttype( renderer::ShaderObjectType type );
-
-// the callee is responsible for deallocating the memory returned from this function
-char * query_shader_info_log( GLObject handle );
-
-// the callee is responsible for deallocating the memory returned from this function
-char * query_program_info_log( GLObject handle );
+namespace assets
+{
+	void Shader::release()
+	{
+	} // release
+}; // namespace assets

@@ -106,6 +106,41 @@ namespace renderer
 		BUFFER_LIMIT,
 	}; // VertexBufferBufferType
 	
+	enum VertexBufferErrorType
+	{
+		VERTEX_BUFFER_ERROR_NONE = 0,
+		
+	}; // VertexBufferErrorType
+
+
+
+	enum ShaderObjectType
+	{
+		SHADER_VERTEX,
+		SHADER_FRAGMENT,
+		SHADER_GEOMETRY,
+		
+		SHADER_LIMIT
+	}; // ShaderObjectType
+	
+	struct ShaderObject
+	{
+		unsigned int shader_id;
+		short flags; // 0 on success, else error!
+	}; // ShaderObject
+	
+	struct ShaderProgram
+	{
+		unsigned int object;
+	}; // ShaderProgram
+
+
+	
+	enum ShaderErrorType
+	{
+		SHADER_ERROR_NONE = 0,
+		SHADER_ERROR_COMPILE_FAILED,
+	}; // ShaderErrorType
 	
 	struct VertexDescriptor
 	{
@@ -151,7 +186,16 @@ namespace renderer
 	
 	struct ShaderParameters
 	{
-		int object;
+		unsigned int total_uniforms;
+		unsigned int total_attributes;
+		unsigned int id;
+		
+		unsigned int capabilities;
+		
+		const char * frag_data_location;
+		
+		std::pair<char*, int> * uniforms;
+		std::pair<char*, int> * attributes;
 	}; // ShaderParameters
 	
 	struct VertexBuffer
@@ -159,6 +203,8 @@ namespace renderer
 		int num_vertices;
 		int num_indices;
 	}; // VertexBuffer
+	
+	
 };
 
 #include "vertexstream.hpp"
@@ -207,6 +253,21 @@ namespace renderer
 //		virtual void vertexbuffer_update( renderer::VertexBuffer & parameters ) = 0;
 //		virtual void vertexbuffer_draw_indices( unsigned int * indices, size_t num_indices ) = 0;
 //		virtual void vertexbuffer_deactivate( renderer::VertexBuffer & parameters ) = 0;
+		
+		
+		
+		virtual renderer::ShaderObject shaderobject_create( renderer::ShaderObjectType shader_type ) = 0;
+		virtual bool shaderobject_compile( renderer::ShaderObject shader_object, const char * shader_source, const char * preprocessor_defines, const char * version ) = 0;
+		virtual void shaderobject_destroy( renderer::ShaderObject shader_object ) = 0;
+		
+		virtual renderer::ShaderProgram shaderprogram_create( renderer::ShaderParameters & parameters ) = 0;
+		virtual void shaderprogram_destroy( renderer::ShaderProgram program ) = 0;
+		virtual void shaderprogram_attach( renderer::ShaderProgram shader_program, renderer::ShaderObject shader_object ) = 0;
+		virtual void shaderprogram_bind_attributes( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters ) = 0;
+		virtual void shaderprogram_bind_uniforms( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters ) = 0;
+		virtual void shaderprogram_link_and_validate( renderer::ShaderProgram shader_program ) = 0;
+		virtual void shaderprogram_activate( renderer::ShaderProgram shader_program ) = 0;
+		virtual void shaderprogram_deactivate( renderer::ShaderProgram shader_program ) = 0;
 		
 	}; // IRenderDriver
 	typedef IRenderDriver * (*RenderDriverCreator)();

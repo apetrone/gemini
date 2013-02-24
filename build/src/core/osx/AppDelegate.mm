@@ -24,6 +24,7 @@
 #import "core/desktop/kernel_desktop.hpp"
 #import <xwl/xwl.h>
 
+static bool has_started = false;
 DesktopKernel _desktop_kernel( 0, 0 );
 
 @implementation AppDelegate
@@ -47,13 +48,17 @@ DesktopKernel _desktop_kernel( 0, 0 );
 {
 	NSLog( @"applicationDidBecomeActive" );	
 	
-	kernel::startup( &_desktop_kernel, "TestUniversal" );
+	if ( !has_started )
+	{
+		has_started = true;
+		kernel::startup( &_desktop_kernel, "TestUniversal" );
 
 // http://fredandrandall.com/blog/2011/09/08/how-to-make-your-app-open-in-full-screen-on-lion/
 //	[window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
 //	[window toggleFullScreen:nil];
 
-	[self performSelectorOnMainThread:@selector(run_kernel) withObject:self waitUntilDone:NO];
+		[self performSelectorOnMainThread:@selector(run_kernel) withObject:self waitUntilDone:NO];
+	}
 }
 
 -(void)applicationDidChangeScreenParameters:(NSNotification *)notification

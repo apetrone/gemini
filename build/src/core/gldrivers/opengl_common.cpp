@@ -34,7 +34,7 @@ GLenum vertexbuffer_drawtype_to_gl_drawtype( renderer::VertexBufferDrawType type
 	assert( type < renderer::DRAW_LIMIT );
 	
 	return types[ type ];
-} // VertexBufferDrawType_OpenGLDrawType
+} // vertexbuffer_drawtype_to_gl_drawtype
 
 GLenum vertexbuffer_buffertype_to_gl_buffertype( renderer::VertexBufferBufferType type )
 {
@@ -47,4 +47,66 @@ GLenum vertexbuffer_buffertype_to_gl_buffertype( renderer::VertexBufferBufferTyp
 	assert( type < renderer::BUFFER_LIMIT );
 	
 	return types[ type ];
-} // VertexBufferBufferType_OpenGLBufferType
+} // vertexbuffer_buffertype_to_gl_buffertype
+
+
+GLenum shaderobject_type_to_gl_shaderobjecttype( renderer::ShaderObjectType type )
+{
+	GLenum types[] = {
+		GL_VERTEX_SHADER,
+		GL_FRAGMENT_SHADER,
+		GL_GEOMETRY_SHADER,
+	};
+	
+	assert( type < renderer::SHADER_LIMIT );
+	
+	return types[ type ];
+}
+
+char * query_shader_info_log( GLObject handle )
+{
+	int log_length = 0;
+	char * logbuffer = 0;
+	gl.GetShaderiv( handle, GL_INFO_LOG_LENGTH, &log_length );
+	if ( log_length > 0 )
+	{
+		logbuffer = (char*)memory::allocator().allocate(log_length+1);
+		memset( logbuffer, 0, log_length );
+		
+		gl.GetShaderInfoLog( handle, log_length, &log_length, logbuffer );
+		if ( log_length > 0 )
+		{
+			return logbuffer;
+		}
+		else
+		{
+			memory::allocator().deallocate(logbuffer);
+		}
+	}
+	
+	return 0;
+} // query_shader_info_log
+
+char * query_program_info_log( GLObject handle )
+{
+	int log_length = 0;
+	char * logbuffer = 0;
+	gl.GetProgramiv( handle, GL_INFO_LOG_LENGTH, &log_length );
+	if ( log_length > 0 )
+	{
+		logbuffer = (char*)memory::allocator().allocate(log_length+1);
+		memset( logbuffer, 0, log_length );
+		
+		gl.GetProgramInfoLog( handle, log_length, &log_length, logbuffer );
+		if ( log_length > 0 )
+		{
+			return logbuffer;
+		}
+		else
+		{
+			memory::allocator().deallocate(logbuffer);
+		}
+	}
+	
+	return 0;
+} // query_program_info_log

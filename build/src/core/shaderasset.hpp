@@ -21,45 +21,47 @@
 // -------------------------------------------------------------
 #pragma once
 
+
+#include "typedefs.h"
 #include "renderer.hpp"
+#include <string>
 
-#if _WIN32
-	#include <limits.h>
-	#include <windows.h>
-	#include <gl/gl.h>
-	#include <glext.h>
-	#include <wglext.h>
-	#pragma comment( lib, "opengl32.lib" )
-#elif LINUX
-	#include <stdint.h>
-	#include <GL/gl.h>
-	#include <GL/glx.h>
-	//#include <glxext.h>
-#elif __APPLE__
-	#include <stdint.h>
-	#include <TargetConditionals.h>
-
-	#if TARGET_OS_IPHONE
-		#include <OpenGLES/ES2/gl.h>
-		#include <OpenGLES/ES2/glext.h>
-	#elif TARGET_OS_MAC
-		#include <OpenGL/gl3.h>
-		#include <OpenGL/gl3ext.h>
-		// legacy GL
-//		#include <OpenGL/gl.h>
-//		#include <OpenGL/glext.h>
-	#endif
+namespace assets
+{
+#if 0
+	struct KeyValuePair
+	{
+		std::string key;
+		unsigned int key_hash;
+		int value;
+	}; // UKeyValuePair
 #endif
 
-#include "gemgl.hpp" // for GLObject
-#include "stackstring.hpp"
-
-GLenum vertexbuffer_drawtype_to_gl_drawtype( renderer::VertexBufferDrawType type );
-GLenum vertexbuffer_buffertype_to_gl_buffertype( renderer::VertexBufferBufferType type );
-GLenum shaderobject_type_to_gl_shaderobjecttype( renderer::ShaderObjectType type );
-
-// the callee is responsible for deallocating the memory returned from this function
-char * query_shader_info_log( GLObject handle );
-
-// the callee is responsible for deallocating the memory returned from this function
-char * query_program_info_log( GLObject handle );
+	struct KeyHashPair
+	{
+		StackString<32> key;
+		int value;
+	};
+	
+	struct Shader : public virtual Asset, public virtual renderer::ShaderParameters
+	{	
+		unsigned int capabilities;
+			
+		Shader();
+		~Shader();
+		
+		int get_uniform_location( const char * name );
+		virtual void release();
+		
+		void create_program();
+		void destroy_program();
+		void attach_shader( /*GLObject shader*/ );
+		void bind_attributes();
+		bool link_and_validate();
+		void bind_uniforms();
+	};
+	
+	
+	
+	
+}; // namespace assets

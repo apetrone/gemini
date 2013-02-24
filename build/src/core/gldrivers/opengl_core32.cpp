@@ -367,3 +367,135 @@ void GLCore32::vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned in
 	gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 	gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 }
+
+
+
+
+///////////////////////////////
+// Shaders
+// ---------------------------------------
+
+#define SHADER_DEBUG( fmt, ... ) (void(0))
+//		#define SHADER_DEBUG LOGV
+
+renderer::ShaderObject GLCore32::shaderobject_create( renderer::ShaderObjectType shader_type )
+{
+	GLenum type = shaderobject_type_to_gl_shaderobjecttype( shader_type );
+	ShaderObject object;
+	
+	object.flags = 0;
+	object.shader_id = gl.CreateShader( type );
+	gl.CheckError( "CreateShader" );
+
+	return object;
+}
+
+bool GLCore32::shaderobject_compile( renderer::ShaderObject shader_object, const char * shader_source, const char * preprocessor_defines, const char * version )
+{
+	const int MAX_SHADER_SOURCES = 3;
+	const char * shaderSource[ MAX_SHADER_SOURCES ] = { version, preprocessor_defines, shader_source };
+	
+	// provide the sources
+	gl.ShaderSource( shader_object.shader_id, MAX_SHADER_SOURCES, (GLchar**)shaderSource, 0 );
+	gl.CheckError( "ShaderSource" );
+	
+	gl.CompileShader( shader_object.shader_id );
+
+	char * logbuffer = query_shader_info_log( shader_object.shader_id );
+	if ( logbuffer )
+	{
+		LOGW( "Shader Info Log:\n" );
+		LOGW( "%s\n", logbuffer );
+		memory::allocator().deallocate(logbuffer);
+	}
+	
+	return true;
+}
+
+void GLCore32::shaderobject_destroy( renderer::ShaderObject shader_object )
+{
+	gl.DeleteShader( shader_object.shader_id );
+	gl.CheckError( "DeleteShader" );
+}
+
+renderer::ShaderProgram GLCore32::shaderprogram_create( renderer::ShaderParameters & parameters )
+{
+	ShaderProgram program;
+	program.object = 0;
+	program.object = gl.CreateProgram();
+	gl.CheckError( "CreateProgram" );
+	
+	return program;
+}
+
+void GLCore32::shaderprogram_destroy( renderer::ShaderProgram program )
+{
+	if ( program.object != 0 )
+	{
+		gl.DeleteProgram( program.object );
+		gl.CheckError( "DeleteProgram" );
+	}
+}
+
+void GLCore32::shaderprogram_attach( renderer::ShaderProgram shader_program, renderer::ShaderObject shader_object )
+{
+	gl.AttachShader( shader_program.object, shader_object.shader_id );
+	gl.CheckError( "AttachShader" );
+}
+
+void GLCore32::shaderprogram_bind_attributes( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters )
+{
+	for( int i = 0; i < parameters.total_attributes; ++i )
+	{
+		std::pair<char*, int> * keyvalue = &parameters.attributes[i];
+		SHADER_DEBUG( "BindAttribLocation -> %s to %i\n", keyvalue->first, keyvalue->second );
+		gl.BindAttribLocation( shader_program.object, keyvalue->second, keyvalue->first );
+		gl.CheckError( xstr_format( "BindAttribLocation: %s", keyvalue->first ));
+	}
+}
+
+void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters )
+{
+	// fetch uniforms from the shader
+	for( int uniform_id = 0; uniform_id < parameters.total_uniforms; ++uniform_id )
+	{
+		std::pair<char*, int> * keyvalue = &parameters.uniforms[ uniform_id ];
+		
+		keyvalue->second = gl.GetUniformLocation( shader_program.object, keyvalue->first );
+		SHADER_DEBUG( "GetUniformLocation: \"%s\" -> %i\n", keyvalue->first, keyvalue->second );
+		gl.CheckError( "GetUniformLocation" );
+		
+		if ( keyvalue->second == -1 )
+		{
+			LOGE( "GetUniformLocation FAILED for \"%s\"\n", keyvalue->first );
+		}
+	}
+}
+
+void GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_program )
+{
+	gl.LinkProgram( shader_program.object );
+	int validate_status;
+	gl.GetProgramiv( shader_program.object, GL_VALIDATE_STATUS, &validate_status );
+	
+	char * logbuffer = query_program_info_log( shader_program.object );
+	if ( logbuffer )
+	{
+		LOGW( "Program Info Log:\n" );
+		LOGW( "%s\n", logbuffer );
+		memory::allocator().deallocate(logbuffer);
+	}
+}
+
+void GLCore32::shaderprogram_activate( renderer::ShaderProgram shader_program )
+{
+	gl.UseProgram( shader_program.object );
+	gl.CheckError( "UseProgram" );
+}
+
+void GLCore32::shaderprogram_deactivate( renderer::ShaderProgram shader_program )
+{
+	gl.UseProgram( 0 );
+}
+
+
