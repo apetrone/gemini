@@ -167,6 +167,7 @@ class TestUniversal : public kernel::IApplication,
 	audio::SoundSource source;
 	renderer::VertexBuffer * vertex_buffer;
 	renderer::ShaderProgram shader_program;
+	renderer::VertexStream vb;
 public:
 	DECLARE_APPLICATION( TestUniversal );
 	
@@ -272,7 +273,7 @@ public:
 	{
 //		sound = audio::create_sound( "sounds/powerup" );
 //		source = audio::play( sound );
-
+#if 0
 		setup_menu();
 
 		foreach_child( _menu.current_menu(), print_option );
@@ -284,7 +285,7 @@ public:
 		foreach_child( _menu.current_menu(), print_option );
 				
 		_menu.clear_items();
-		
+#endif
 #if 0
 		assets::Texture * tex = assets::load_texture( "textures/logo" );
 		if ( tex )
@@ -299,19 +300,50 @@ public:
 		
 		
 		
-#if 0
-		renderer::VertexStream buffer;
-		buffer.desc.add( renderer::VD_FLOAT3 );
-		buffer.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+#if 1
+
+		vb.desc.add( renderer::VD_FLOAT3 );
+		vb.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+		vb.desc.add( renderer::VD_FLOAT2 );
 		
 		struct FontVertexType
 		{
 			float x, y, z;
 			Color color;
+			float u, v;
 		};
 		
-		buffer.create(sizeof(FontVertexType), 1024, 1024, renderer::DRAW_TRIANGLES );
-		buffer.destroy();
+		vb.create(sizeof(FontVertexType), 1024, 1024, renderer::DRAW_TRIANGLES );
+
+		FontVertexType * v = (FontVertexType*)vb.request( 3 );
+		if ( v )
+		{
+			FontVertexType * vert = &v[0];
+			vert->x = -10;
+			vert->y = 0;
+			vert->z = 0;
+			vert->color.set( 255, 0, 0 );
+			vert->u = 0;
+			vert->v = 0;
+			
+			vert = &v[1];
+			vert->x = 10;
+			vert->y = 0;
+			vert->z = 0;
+			vert->color.set( 0, 255, 0 );
+			vert->u = 0;
+			vert->v = 0;
+			
+			vert = &v[2];
+			vert->x = 0;
+			vert->y = 10;
+			vert->z = 0;
+			vert->color.set( 0, 0, 255 );
+			vert->u = 0;
+			vert->v = 0;
+		}
+
+		vb.update();
 #endif
 
 
@@ -410,12 +442,16 @@ public:
 		
 		
 		driver->shaderprogram_activate( shader_program );
+		
+		vb.draw_elements();
 #endif
 	}
 
-	virtual void shutdown()
+	virtual void shutdown( kernel::Params & params )
 	{
 		renderer::driver()->shaderprogram_destroy( shader_program );
+		
+		vb.destroy();
 	}
 };
 

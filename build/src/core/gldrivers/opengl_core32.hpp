@@ -49,7 +49,7 @@ public:
 	virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream );
 	virtual void vertexbuffer_bufferdata( renderer::VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, renderer::VertexType * vertices, unsigned int index_count, renderer::IndexType * indices );
 	
-	
+	virtual void vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, unsigned int num_indices );
 	
 	
 	

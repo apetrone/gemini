@@ -283,25 +283,28 @@ namespace kernel
 	
 	void shutdown()
 	{
+		// cleanup
+		if ( _active_application )
+		{
+			_active_application->shutdown( _kernel->parameters() );
+			DESTROY(IApplication, _active_application);
+			_active_application = 0;
+		}
+	
 		// system cleanup
 		assets::shutdown();
 		input::shutdown();
 		audio::shutdown();
 		renderer::shutdown();
 		core::shutdown();
+	
+
 		
 		// shutdown, cleanup
 		if ( _kernel )
 		{
 			_kernel->shutdown();
 			_kernel = 0;
-		}
-		
-		// cleanup
-		if ( _active_application )
-		{
-			DESTROY(IApplication, _active_application);
-			_active_application = 0;
 		}
 		
 	} // shutdown

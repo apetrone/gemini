@@ -122,6 +122,7 @@ namespace kernel
 		virtual ApplicationResult startup( kernel::Params & params ) = 0;
 		virtual void step( kernel::Params & params ) = 0;
 		virtual void tick( kernel::Params & params ) = 0; // called every frame
+		virtual void shutdown( kernel::Params & params ) = 0;
 	};
 	
 	typedef IApplication * (*ApplicationCreator)();

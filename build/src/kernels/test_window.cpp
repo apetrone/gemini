@@ -163,7 +163,7 @@ public:
 		driver->run_command( renderer::DC_CLEAR, ms );
 	}
 
-	virtual void shutdown()
+	virtual void shutdown( kernel::Params & params )
 	{
 	}
 };

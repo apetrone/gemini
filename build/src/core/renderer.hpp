@@ -274,7 +274,7 @@ namespace renderer
 		virtual void vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices ) = 0;
 //		virtual void vertexbuffer_activate( renderer::VertexBuffer & parameters ) = 0;
 //		virtual void vertexbuffer_update( renderer::VertexBuffer & parameters ) = 0;
-//		virtual void vertexbuffer_draw_indices( unsigned int * indices, size_t num_indices ) = 0;
+		virtual void vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, unsigned int num_indices ) = 0;
 //		virtual void vertexbuffer_deactivate( renderer::VertexBuffer & parameters ) = 0;
 		
 		

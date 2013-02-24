@@ -52,7 +52,7 @@ namespace renderer
 		last_vertex = 0;
 		last_index = 0;
 		highest_index = 0;
-	}
+	} // reset
 
 	void VertexStream::dealloc()
 	{
@@ -67,12 +67,12 @@ namespace renderer
 			delete [] indices;
 			indices = 0;
 		}
-	}
+	} // dealloc
 
 	unsigned int VertexStream::bytes_used()
 	{
 		return total_vertices * vertex_stride;
-	}
+	} // bytes_used
 
 	renderer::VertexType * VertexStream::request( IndexType num_vertices, int dont_advance_pointer )
 	{
@@ -85,22 +85,25 @@ namespace renderer
 
 		if ( num_vertices > total_vertices )
 		{
-			//fprintf( stdout, "Cannot have more vertices!\n" );
-			// this is not possible with the total
+			// this is not possible with the total: cannot force more vertices
 			return 0;
 		}
 
 		if ( last_vertex + num_vertices > total_vertices )
+		{
 			// we cannot accomodate that request
 			return 0;
+		}
 
 		vptr = &vertices[ (vertex_stride * last_vertex) ];
 
 		if ( !dont_advance_pointer )
+		{
 			last_vertex += num_vertices;
+		}
 
 		return vptr;
-	}
+	} // request
 
 	void VertexStream::append_indices( IndexType * inIndices, IndexType num_indices )
 	{
@@ -119,7 +122,9 @@ namespace renderer
 		for( j = 0; j < num_indices; ++j, ++last_index )
 		{
 			if ( numStartingIndices + inIndices[j] > highest_index )
+			{
 				highest_index = (numStartingIndices + inIndices[j]);
+			}
 
 			if ( last_index >= total_indices )
 			{
@@ -130,7 +135,7 @@ namespace renderer
 		}
 
 		highest_index++;
-	} // appendIndices
+	} // append_indices
 
 	void VertexStream::create( unsigned int vertex_stride, IndexType max_vertices, IndexType max_indices, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type )
 	{	
@@ -152,13 +157,14 @@ namespace renderer
 			max_indices );
 
 		_debug_flags = 0;
-	}
+	} // create
 
 	void VertexStream::destroy()
 	{
 		this->dealloc();
 		renderer::driver()->vertexbuffer_destroy( this->vertexbuffer );
-	}
+		this->vertexbuffer = 0;
+	} // destroy
 
 	void VertexStream::update()
 	{
@@ -177,13 +183,7 @@ namespace renderer
 
 	void VertexStream::draw_elements()
 	{
-#if 0
-		gl.BindVertexArray( vao );
-		gl.CheckError( "BindVertexArray" );
-		gl.DrawElements( type, this->lastIndex, GL_UNSIGNED_INT, 0 );
-		gl.CheckError( "DrawElements" );
-		gl.BindVertexArray( 0 );
-#endif
+		renderer::driver()->vertexbuffer_draw_indices( this->vertexbuffer, this->last_index );
 	} // draw_elements
 
 	void VertexStream::draw()

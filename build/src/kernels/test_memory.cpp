@@ -70,7 +70,7 @@ public:
 	{
 	}
 
-	virtual void shutdown()
+	virtual void shutdown( kernel::Params & params )
 	{
 	}
 };

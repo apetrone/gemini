@@ -45,6 +45,10 @@ public:
 	virtual void tick( kernel::Params & params )
 	{
 	}
+	
+	virtual void shutdown( kernel::Params & params )
+	{
+	}
 };
 
 IMPLEMENT_APPLICATION( HelloWorld );

@@ -49,9 +49,12 @@ namespace memory
 		
 		virtual void * allocate( size_t bytes )
 		{
+			size_t total_size = bytes+MemoryHeaderSize;
 			char * block = (char*)malloc( bytes+MemoryHeaderSize );
 			if ( block )
 			{
+//				fprintf( stdout, "+ %i bytes\n", (unsigned long)total_size );
+			
 				// increment totals
 				num_active_bytes += bytes+MemoryHeaderSize;
 				++num_total_allocations;

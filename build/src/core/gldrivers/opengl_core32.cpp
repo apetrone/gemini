@@ -369,7 +369,16 @@ void GLCore32::vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned in
 }
 
 
-
+void GLCore32::vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, unsigned int num_indices )
+{
+	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
+	assert( stream != 0 );
+	gl.BindVertexArray( stream->vao );
+	gl.CheckError( "BindVertexArray" );
+	gl.DrawElements( stream->gl_draw_type, num_indices, GL_UNSIGNED_INT, 0 );
+	gl.CheckError( "DrawElements" );
+	gl.BindVertexArray( 0 );
+}
 
 ///////////////////////////////
 // Shaders
