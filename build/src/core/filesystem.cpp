@@ -202,7 +202,7 @@ namespace fs
 			*buffer_length = fileSize;
 			if ( !buffer )
 			{
-				buffer = (char*)memory::allocator().allocate( (*buffer_length)+1 );
+				buffer = (char*)ALLOC( (*buffer_length)+1 );
 				memset( buffer, 0, (*buffer_length)+1 );
 			}
 			

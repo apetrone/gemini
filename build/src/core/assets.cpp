@@ -93,7 +93,7 @@ namespace assets
 
 	void startup()
 	{
-		texture_lib = ALLOC(TextureAssetLibrary, texture_load_callback);
+		texture_lib = CREATE(TextureAssetLibrary, texture_load_callback);
 
 		_default_texture = texture_lib->allocate_asset();
 		_default_texture->texture_id = image::load_default_texture();
@@ -109,7 +109,7 @@ namespace assets
 	void shutdown()
 	{
 		purge();
-		DEALLOC(TextureAssetLibrary, texture_lib);
+		DESTROY(TextureAssetLibrary, texture_lib);
 	} // shutdown
 
 	void append_asset_extension( AssetType type, StackString<MAX_PATH_SIZE> & path )

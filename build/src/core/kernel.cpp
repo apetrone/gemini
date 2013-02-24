@@ -300,7 +300,7 @@ namespace kernel
 		// cleanup
 		if ( _active_application )
 		{
-			DEALLOC(IApplication, _active_application);
+			DESTROY(IApplication, _active_application);
 			_active_application = 0;
 		}
 		

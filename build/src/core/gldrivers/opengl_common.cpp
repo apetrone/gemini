@@ -70,7 +70,7 @@ char * query_shader_info_log( GLObject handle )
 	gl.GetShaderiv( handle, GL_INFO_LOG_LENGTH, &log_length );
 	if ( log_length > 0 )
 	{
-		logbuffer = (char*)memory::allocator().allocate(log_length+1);
+		logbuffer = (char*)ALLOC( log_length+1 );
 		memset( logbuffer, 0, log_length );
 		
 		gl.GetShaderInfoLog( handle, log_length, &log_length, logbuffer );
@@ -80,7 +80,7 @@ char * query_shader_info_log( GLObject handle )
 		}
 		else
 		{
-			memory::allocator().deallocate(logbuffer);
+			DEALLOC(logbuffer);
 		}
 	}
 	
@@ -94,7 +94,7 @@ char * query_program_info_log( GLObject handle )
 	gl.GetProgramiv( handle, GL_INFO_LOG_LENGTH, &log_length );
 	if ( log_length > 0 )
 	{
-		logbuffer = (char*)memory::allocator().allocate(log_length+1);
+		logbuffer = (char*)ALLOC( log_length+1 );
 		memset( logbuffer, 0, log_length );
 		
 		gl.GetProgramInfoLog( handle, log_length, &log_length, logbuffer );
@@ -104,7 +104,7 @@ char * query_program_info_log( GLObject handle )
 		}
 		else
 		{
-			memory::allocator().deallocate(logbuffer);
+			DEALLOC(logbuffer);
 		}
 	}
 	

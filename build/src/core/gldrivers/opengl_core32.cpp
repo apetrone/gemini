@@ -234,7 +234,7 @@ renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescript
 {
 
 	
-	GL32VertexBuffer * stream = ALLOC(GL32VertexBuffer);
+	GL32VertexBuffer * stream = CREATE(GL32VertexBuffer);
 	assert( stream != 0 );
 	
 	// initial values for stream
@@ -342,7 +342,7 @@ void GLCore32::vertexbuffer_destroy( renderer::VertexBuffer * vertexbuffer )
 	}
 	
 	
-	DEALLOC(GL32VertexBuffer, stream);
+	DESTROY(GL32VertexBuffer, stream);
 } // vertexbuffer_destroy
 
 void GLCore32::vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
@@ -375,8 +375,8 @@ void GLCore32::vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned in
 // Shaders
 // ---------------------------------------
 
-#define SHADER_DEBUG( fmt, ... ) (void(0))
-//		#define SHADER_DEBUG LOGV
+//#define SHADER_DEBUG( fmt, ... ) (void(0))
+#define SHADER_DEBUG LOGV
 
 renderer::ShaderObject GLCore32::shaderobject_create( renderer::ShaderObjectType shader_type )
 {
@@ -406,7 +406,7 @@ bool GLCore32::shaderobject_compile( renderer::ShaderObject shader_object, const
 	{
 		LOGW( "Shader Info Log:\n" );
 		LOGW( "%s\n", logbuffer );
-		memory::allocator().deallocate(logbuffer);
+		DEALLOC(logbuffer);
 	}
 	
 	return true;
@@ -456,6 +456,9 @@ void GLCore32::shaderprogram_bind_attributes( renderer::ShaderProgram shader_pro
 
 void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters )
 {
+	// ensure this is the active shader before binding uniforms
+	this->shaderprogram_activate( shader_program );
+
 	// fetch uniforms from the shader
 	for( int uniform_id = 0; uniform_id < parameters.total_uniforms; ++uniform_id )
 	{
@@ -483,7 +486,7 @@ void GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_p
 	{
 		LOGW( "Program Info Log:\n" );
 		LOGW( "%s\n", logbuffer );
-		memory::allocator().deallocate(logbuffer);
+		DEALLOC(logbuffer);
 	}
 }
 

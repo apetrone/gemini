@@ -54,7 +54,7 @@ extern "C" {
 // stb_vorbis* handles and decode from them independently in multiple thrads.
 
 
-///////////   MEMORY ALLOCATION
+///////////   MEMORY CREATEATION
 
 // normally stb_vorbis uses malloc() to allocate memory at startup,
 // and alloca() to allocate temporary memory during a frame on the

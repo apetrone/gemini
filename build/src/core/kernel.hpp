@@ -133,7 +133,7 @@ namespace kernel
 	//
 	// kernel registration / search
 	#define DECLARE_APPLICATION( className ) \
-		public: static IApplication * create() { return ALLOC(className); }\
+		public: static IApplication * create() { return CREATE(className); }\
 		public: virtual const char * classname() { return #className; }
 	
 	#define IMPLEMENT_APPLICATION( className ) \

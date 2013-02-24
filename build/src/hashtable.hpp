@@ -65,10 +65,7 @@ private:
 		{
 			if ( key )
 			{
-				memory::IAllocator * allocator = &memory::allocator();
-	//			memory::allocator().deallocate(key);
-				printf( "deallocating %p, '%s'\n", key, key );
-				allocator->deallocate(key);
+				DEALLOC(key);
 				Bucket * bucket = next;
 				Bucket * last = bucket;
 				
@@ -77,7 +74,7 @@ private:
 					last = bucket;
 					bucket = bucket->next;
 					
-					DEALLOC(Bucket, last);
+					DESTROY(Bucket, last);
 				}
 			}
 			next = 0;
@@ -88,7 +85,7 @@ private:
 		{
 			assert( key == 0 );
 			size_t name_length = xstr_len(name);
-			this->key = (char*)memory::allocator().allocate(name_length+1);
+			this->key = (char*)ALLOC( name_length+1 );
 			assert( this->key != 0 );
 			this->key[name_length] = 0;
 			xstr_ncpy(this->key, name, name_length);
@@ -133,7 +130,7 @@ public:
 		// must be a power of two
 		assert( (MaxTableSize & (MaxTableSize-1)) == 0 );
 		table_size = MaxTableSize;
-		bucket_table = ARRAY_ALLOC(Bucket, table_size);
+		bucket_table = CREATE_ARRAY(Bucket, table_size);
 		memset( bucket_table, 0, sizeof(Bucket)*table_size );
 	}
 	
@@ -169,7 +166,7 @@ public:
 		}
 		
 		// we have to create a new bucket and insert that into a linked list
-		Bucket * block = ALLOC(Bucket);
+		Bucket * block = CREATE(Bucket);
 		assert( block != 0 );
 		
 		LOGDEBUG("creating a new bucket for '%s'\n", key);
@@ -193,7 +190,7 @@ public:
 
 	void purge()
 	{
-		ARRAY_DEALLOC(Bucket, bucket_table, table_size);	
+		DESTROY_ARRAY(Bucket, bucket_table, table_size);	
 	} // purge
 
 }; // HashTable

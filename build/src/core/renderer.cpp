@@ -23,7 +23,7 @@
 #include "log.h"
 #include "renderer.hpp"
 #include "factory.hpp"
-
+#include "xstr.h"
 
 // compile-time selection of these classes starts here.
 
@@ -80,8 +80,89 @@ namespace renderer
 	{
 		if ( _render_driver )
 		{
-			DEALLOC(IRenderDriver, _render_driver);
+			DESTROY(IRenderDriver, _render_driver);
 		}
 	} // shutdown
 	
+}; // namespace renderer
+
+
+namespace renderer
+{
+	ShaderKeyValuePair::ShaderKeyValuePair()
+	{
+		this->first = 0;
+		this->second = 0;
+	}
+	
+	ShaderKeyValuePair::~ShaderKeyValuePair()
+	{
+		if ( this->first )
+		{
+			DEALLOC( this->first );
+		}
+	}
+	
+	void ShaderKeyValuePair::set_key(const char *key)
+	{
+		size_t length = xstr_len(key);
+		this->first = (char*)ALLOC( length + 1 );
+		memset( this->first, 0, length+1 );
+		xstr_ncpy( this->first, key, length );
+	}
+
+	ShaderParameters::ShaderParameters()
+	{
+		this->total_attributes = 0;
+		this->total_uniforms = 0;
+		this->uniforms = 0;
+		this->attributes = 0;
+		this->frag_data_location = 0;
+	}
+	
+	ShaderParameters::~ShaderParameters()
+	{
+		if ( this->uniforms )
+		{
+			DESTROY_ARRAY(ShaderKeyValuePair, this->uniforms, this->total_uniforms);
+		}
+		
+		if ( this->attributes )
+		{
+			DESTROY_ARRAY(ShaderKeyValuePair, this->attributes, this->total_attributes);
+		}
+		
+		if ( this->frag_data_location )
+		{
+			DEALLOC(frag_data_location);
+		}
+	}
+	
+	void ShaderParameters::alloc_attributes( unsigned int attributes_count )
+	{
+		this->total_attributes = attributes_count;
+		this->attributes = CREATE_ARRAY( ShaderKeyValuePair, attributes_count );
+		for( unsigned int i = 0; i < attributes_count; ++i )
+		{
+			this->attributes[i].first = 0;
+		}
+	}
+	
+	void ShaderParameters::alloc_uniforms( unsigned int uniform_count )
+	{
+		this->total_uniforms = uniform_count;
+		this->uniforms = CREATE_ARRAY( ShaderKeyValuePair, uniform_count );
+		for( unsigned int i = 0; i < uniform_count; ++i )
+		{
+			this->uniforms[i].first = 0;
+		}
+	}
+	
+	void ShaderParameters::set_frag_data_location( const char * location )
+	{
+		size_t len = xstr_len(location);
+		this->frag_data_location = (char*)ALLOC( len+1 );
+		memset( frag_data_location, 0, len );
+		xstr_ncpy( this->frag_data_location, location, len );
+	}
 }; // namespace renderer

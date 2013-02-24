@@ -64,7 +64,7 @@ namespace audio
 			{
 				_sources[i].flags = 0;
 				_sources[i].has_buffers = 0;
-				_sources[i]._decoder = ALLOC(AudioDecoderType);
+				_sources[i]._decoder = CREATE(AudioDecoderType);
 			}
 		}
 		
@@ -138,7 +138,7 @@ namespace audio
 					_audio_driver->clean_source( source );
 				}
 				
-				DEALLOC(IAudioDecoder, source->_decoder);
+				DESTROY(IAudioDecoder, source->_decoder);
 				source->_decoder = 0;
 			}
 			
@@ -148,7 +148,7 @@ namespace audio
 				sound = &_sounds[ i ];
 				if ( sound->is_used )
 				{
-					memory::allocator().deallocate( sound->data );
+					DEALLOC(sound->data);
 					sound->data = 0;
 					sound->dataSize = 0;
 				}
@@ -225,7 +225,7 @@ namespace audio
 		
 		if ( _audio_driver )
 		{
-			DEALLOC( IAudioDriver, _audio_driver );
+			DESTROY( IAudioDriver, _audio_driver );
 			_audio_driver = 0;
 		}
 	} // shutdown

@@ -85,7 +85,7 @@ renderer::ShaderObject create_shader_from_file( const char * shader_path, render
 		
 		renderer::driver()->shaderobject_compile( shader_object, buffer, preprocessor_defines, version() );
 	
-		memory::allocator().deallocate(buffer);
+		DEALLOC(buffer);
 	}
 	else
 	{
@@ -165,6 +165,8 @@ class TestUniversal : public kernel::IApplication,
 
 	audio::SoundHandle sound;
 	audio::SoundSource source;
+	renderer::VertexBuffer * vertex_buffer;
+	renderer::ShaderProgram shader_program;
 public:
 	DECLARE_APPLICATION( TestUniversal );
 	
@@ -283,7 +285,7 @@ public:
 				
 		_menu.clear_items();
 		
-		
+#if 0
 		assets::Texture * tex = assets::load_texture( "textures/logo" );
 		if ( tex )
 		{
@@ -293,8 +295,11 @@ public:
 		{
 			LOGW( "Could not load texture.\n" );
 		}
+#endif
 		
 		
+		
+#if 0
 		renderer::VertexStream buffer;
 		buffer.desc.add( renderer::VD_FLOAT3 );
 		buffer.desc.add( renderer::VD_UNSIGNED_BYTE4 );
@@ -305,12 +310,11 @@ public:
 			Color color;
 		};
 		
-		
 		buffer.create(sizeof(FontVertexType), 1024, 1024, renderer::DRAW_TRIANGLES );
-
-
 		buffer.destroy();
-		
+#endif
+
+
 #if 0
 		HashTable<int> t;
 		
@@ -341,9 +345,29 @@ public:
 		renderer::ShaderObject vertex_shader = create_shader_from_file( "shaders/fontshader.vert", renderer::SHADER_VERTEX, 0 );
 		renderer::ShaderObject fragment_shader = create_shader_from_file( "shaders/fontshader.frag", renderer::SHADER_FRAGMENT, 0 );
 
+		renderer::ShaderParameters parms;
+		this->shader_program = renderer::driver()->shaderprogram_create( parms );
+		renderer::driver()->shaderprogram_attach( shader_program, vertex_shader );
+		renderer::driver()->shaderprogram_attach( shader_program, fragment_shader );
+
+		parms.set_frag_data_location( "out_Color" );
+		parms.alloc_uniforms( 2 );
+		parms.uniforms[0].set_key( "projectionMatrix" );
+		parms.uniforms[1].set_key( "modelviewMatrix" );
+		
+		parms.alloc_attributes( 3 );
+		parms.attributes[0].set_key( "in_Position" ); parms.attributes[0].second = 0;
+		parms.attributes[1].set_key( "in_Color" ); parms.attributes[1].second = 1;
+		parms.attributes[2].set_key( "in_tex" ); parms.attributes[2].second = 2;
+		
+
+		renderer::driver()->shaderprogram_bind_attributes( shader_program, parms );
+		renderer::driver()->shaderprogram_link_and_validate( shader_program );
+		
+		renderer::driver()->shaderprogram_bind_uniforms( shader_program, parms );
+
 		renderer::driver()->shaderobject_destroy( vertex_shader );
 		renderer::driver()->shaderobject_destroy( fragment_shader );
-
 
 		return kernel::Success;
 	}
@@ -383,11 +407,15 @@ public:
 		ms.write( 0x00004000 );
 		ms.rewind();
 		driver->run_command( renderer::DC_CLEAR, ms );
+		
+		
+		driver->shaderprogram_activate( shader_program );
 #endif
 	}
 
 	virtual void shutdown()
 	{
+		renderer::driver()->shaderprogram_destroy( shader_program );
 	}
 };
 

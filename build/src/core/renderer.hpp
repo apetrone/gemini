@@ -184,6 +184,20 @@ namespace renderer
 		unsigned int destination;
 	}; // BlendParameters
 	
+	
+	
+	class ShaderKeyValuePair : public std::pair<char*, int>
+	{
+	public:
+	
+		ShaderKeyValuePair();
+		~ShaderKeyValuePair();
+	
+		void set_key( const char * key );
+		
+	};
+	
+//	typedef std::pair<char*, int> ShaderKeyValuePair;
 	struct ShaderParameters
 	{
 		unsigned int total_uniforms;
@@ -192,10 +206,19 @@ namespace renderer
 		
 		unsigned int capabilities;
 		
-		const char * frag_data_location;
 		
-		std::pair<char*, int> * uniforms;
-		std::pair<char*, int> * attributes;
+		char * frag_data_location;
+		
+		ShaderKeyValuePair * uniforms;
+		ShaderKeyValuePair * attributes;
+		
+		ShaderParameters();
+		~ShaderParameters();
+		
+		void alloc_attributes( unsigned int attributes_count );
+		void alloc_uniforms( unsigned int uniform_count );
+		void set_frag_data_location( const char * location );
+
 	}; // ShaderParameters
 	
 	struct VertexBuffer

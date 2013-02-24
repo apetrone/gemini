@@ -49,13 +49,18 @@ namespace memory
 	// instance of the active allocator
 	IAllocator & allocator();
 
-	// helper macros for alloc and dealloc on classes and structures
-	#define ALLOC(Type, ...)	new (memory::allocator().allocate(sizeof(Type))) Type(__VA_ARGS__)
-	#define DEALLOC(Type, pointer) { pointer->~Type(); memory::allocator().deallocate(pointer); pointer = 0; }
+	// raw memory alloc/dealloc
+	#define ALLOC(byte_count)	memory::allocator().allocate(byte_count)
+	#define DEALLOC(pointer) { memory::allocator().deallocate(pointer); pointer = 0; }
+	
+	// helper macros for alloc and dealloc on classes and structures	
+	#define CREATE(Type, ...)	new (memory::allocator().allocate(sizeof(Type))) Type(__VA_ARGS__)
+	#define DESTROY(Type, pointer) { pointer->~Type(); memory::allocator().deallocate(pointer); pointer = 0; }
 	
 	// at the moment: this only works if the Type has a default constructor
-	#define ARRAY_ALLOC(Type, num_elements)	new (memory::allocator().allocate(sizeof(Type)*num_elements)) Type[ num_elements ]
-	#define ARRAY_DEALLOC(Type, pointer, num_elements) if ( pointer ) { for( size_t i = 0; i < num_elements; ++i ) { (&pointer[i])->~Type(); } memory::allocator().deallocate(pointer); pointer = 0;  }
+	#define CREATE_ARRAY(Type, num_elements, ...)		new (memory::allocator().allocate(sizeof(Type)*num_elements)) Type[ num_elements ]
+	#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { for( size_t i = 0; i < num_elements; ++i ) { (&pointer[i])->~Type(); } memory::allocator().deallocate(pointer); pointer = 0;  }
+
 	
 }; // namespace memory
 

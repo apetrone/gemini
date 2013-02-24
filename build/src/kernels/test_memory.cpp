@@ -51,13 +51,13 @@ public:
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 		printf( "Memory Test: \n" );
-		Test * a = ALLOC(Test);
+		Test * a = CREATE(Test);
 		
 		// added z-modifer to satisfy Xcode, C99 addition, we'll see who doesn't support it :)
 		printf( "totalAllocations: %zu, totalBytes: %zu\n", memory::allocator().total_allocations(), memory::allocator().total_bytes() );
 		printf( "activeAllocations: %zu, activeBytes: %zu\n", memory::allocator().active_allocations(), memory::allocator().active_bytes() );
 		
-		DEALLOC(Test, a);
+		DESTROY(Test, a);
 		printf( "activeAllocations: %zu, activeBytes: %zu\n", memory::allocator().active_allocations(), memory::allocator().active_bytes() );
 		return kernel::NoWindow;
 	}

@@ -50,14 +50,14 @@ void MenuItem::purge()
 	for( ; it != end; ++it )
 	{
 		MenuItem * option = (*it);
-		DEALLOC(MenuItem, option);
+		DESTROY(MenuItem, option);
 	}
 	children.clear();
 } // purge
 
 MenuItem * MenuItem::add_child( const char * name )
 {
-	MenuItem * option = ALLOC(MenuItem);
+	MenuItem * option = CREATE(MenuItem);
 	option->name = name;
 	option->parent = this;
 	

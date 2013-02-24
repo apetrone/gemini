@@ -65,8 +65,8 @@ namespace assets
 	
 		AssetType asset_type() const { return type; }
 		
-		AssetClass * allocate_asset() { return ALLOC(AssetClass); }
-		void deallocate_asset( AssetClass * asset ) { DEALLOC(AssetClass, asset); }
+		AssetClass * allocate_asset() { return CREATE(AssetClass); }
+		void deallocate_asset( AssetClass * asset ) { DESTROY(AssetClass, asset); }
 		
 		void foreach_asset( AssetIterator iterator, void * userdata )
 		{
