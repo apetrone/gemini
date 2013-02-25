@@ -166,6 +166,8 @@ class TestUniversal : public kernel::IApplication,
 	audio::SoundSource source;
 	renderer::ShaderProgram shader_program;
 	renderer::VertexStream vb;
+	assets::Texture * tex;
+	
 public:
 	DECLARE_APPLICATION( TestUniversal );
 	
@@ -284,8 +286,8 @@ public:
 				
 		_menu.clear_items();
 #endif
-#if 0
-		assets::Texture * tex = assets::load_texture( "textures/logo" );
+#if 1
+		tex = assets::load_texture( "textures/default" );
 		if ( tex )
 		{
 			LOGV( "loaded texture successfully: %i!\n", tex->texture_id );
@@ -295,7 +297,7 @@ public:
 			LOGW( "Could not load texture.\n" );
 		}
 #endif
-		
+
 		
 		
 		
@@ -309,15 +311,16 @@ public:
 		renderer::driver()->shaderprogram_attach( shader_program, vertex_shader );
 		renderer::driver()->shaderprogram_attach( shader_program, fragment_shader );
 		
-		parms.set_frag_data_location( "out_Color" );
-		parms.alloc_uniforms( 2 );
-		parms.uniforms[0].set_key( "projectionMatrix" );
-		parms.uniforms[1].set_key( "modelviewMatrix" );
+		parms.set_frag_data_location( "out_color" );
+		parms.alloc_uniforms( 3 );
+		parms.uniforms[0].set_key( "projection_matrix" );
+		parms.uniforms[1].set_key( "modelview_matrix" );
+		parms.uniforms[2].set_key( "diffusemap" );
 
-		parms.alloc_attributes( 2 );
-		parms.attributes[0].set_key( "in_Position" ); parms.attributes[0].second = 0;
-		parms.attributes[1].set_key( "in_Color" ); parms.attributes[1].second = 1;
-//		parms.attributes[2].set_key( "in_tex" ); parms.attributes[2].second = 2;
+		parms.alloc_attributes( 3 );
+		parms.attributes[0].set_key( "in_cosition" ); parms.attributes[0].second = 0;
+		parms.attributes[1].set_key( "in_color" ); parms.attributes[1].second = 1;
+		parms.attributes[2].set_key( "in_uv" ); parms.attributes[2].second = 2;
 		
 		
 		renderer::driver()->shaderprogram_bind_attributes( shader_program, parms );
@@ -333,47 +336,56 @@ public:
 		vb.reset();
 		vb.desc.add( renderer::VD_FLOAT3 );
 		vb.desc.add( renderer::VD_UNSIGNED_BYTE4 );
-//		vb.desc.add( renderer::VD_FLOAT2 );
+		vb.desc.add( renderer::VD_FLOAT2 );
 		
 		struct FontVertexType
 		{
 			float x, y, z;
 			Color color;
-//			float u, v;
+			float u, v;
 		};
 		
 		vb.create(sizeof(FontVertexType), 512, 512, renderer::DRAW_TRIANGLES );
 
-		FontVertexType * v = (FontVertexType*)vb.request( 3 );
+		FontVertexType * v = (FontVertexType*)vb.request( 4 );
 		if ( v )
 		{
 			FontVertexType * vert = &v[0];
-			vert->x = 100;
-			vert->y = 200;
-			vert->z = 0;
-			vert->color.set( 255, 0, 0 );
-//			vert->u = 0;
-//			vert->v = 0;
-			
-			vert = &v[1];
 			vert->x = 200;
 			vert->y = 200;
 			vert->z = 0;
-			vert->color.set( 0, 255, 0 );
-//			vert->u = 0;
-//			vert->v = 0;
+			vert->color.set( 255, 255, 255 );
+			vert->u = 0;
+			vert->v = 0;
+			
+			vert = &v[1];
+			vert->x = 200;
+			vert->y = 400;
+			vert->z = 0;
+			vert->color.set( 255, 255, 255 );
+			vert->u = 0;
+			vert->v = 1;
 			
 			vert = &v[2];
-			vert->x = 150;
-			vert->y = 100;
+			vert->x = 400;
+			vert->y = 400;
 			vert->z = 0;
-			vert->color.set( 0, 0, 255 );
-//			vert->u = 0;
-//			vert->v = 0;
+			vert->color.set( 255, 255, 255 );
+			vert->u = 1;
+			vert->v = 1;
+
+			vert = &v[3];
+			vert->x = 400;
+			vert->y = 200;
+			vert->z = 0;
+			vert->color.set( 255, 255, 255 );
+			vert->u = 1;
+			vert->v = 0;
+
 		}
 		
-		renderer::IndexType indices[] = { 0, 1, 2 };
-		vb.append_indices( indices, 3 );
+		renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+		vb.append_indices( indices, 6 );
 
 		vb.update();
 #endif
@@ -458,23 +470,25 @@ public:
 		// set up uniforms
 		ms.rewind();
 		ms.write( &modelview );
-		ms.write( 4 );
-		ms.write( &projection );
 		ms.write( 0 );
+		
+		ms.write( &projection );
+		ms.write( 4 );
+		
+		ms.write( 0 );
+		ms.write( tex->texture_id );
+		ms.write( 8 );
 		
 		ms.rewind();
 		driver->run_command( renderer::DC_UNIFORMMATRIX4, ms );
 		driver->run_command( renderer::DC_UNIFORMMATRIX4, ms );
-		
-
+		driver->run_command( renderer::DC_UNIFORM_SAMPLER_2D, ms );
 		
 		
 		
 		
 		
 		vb.draw_elements();
-//		vb.draw();
-
 		driver->shaderprogram_deactivate( shader_program );
 #endif
 	}

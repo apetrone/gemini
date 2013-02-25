@@ -49,6 +49,40 @@ void process_uniform_matrix4( MemoryStream & stream )
 }
 
 
+void process_sampler_2d( MemoryStream & stream )
+{
+	//	LogMsg( "R_UNIFORM_SAMPLER_2D\n" );
+//	int texture_unit = bitstream_readint( stream );
+//	int texture_id = bitstream_readint( stream );
+//	int uniform_location = bitstream_readint( stream );
+	
+	
+	int texture_unit;
+	int texture_id;
+	int uniform_location;
+	
+	stream.read( texture_unit );
+	stream.read( texture_id );
+	stream.read( uniform_location );
+	
+	//	LogMsg( "texture_unit: %i, texture_id: %i, location: %i\n", texture_unit, texture_id, uniform_location );
+	
+//	if ( last_texture[ texture_unit ] != texture_id )
+	{
+		gl.ActiveTexture( GL_TEXTURE0+texture_unit );
+		gl.CheckError( "ActiveTexture" );
+		
+		gl.BindTexture( GL_TEXTURE_2D, texture_id );
+		gl.CheckError( "BindTexture: GL_TEXTURE_2D" );
+		
+		gl.Uniform1i( uniform_location, texture_unit );
+		gl.CheckError( "uniform1i" );
+		
+//		++texture_switches;
+//		last_texture[ texture_unit ] = texture_id;
+	}
+}
+
 
 #define FAIL_IF_GLERROR( error ) if ( error != GL_NO_ERROR ) { return false; }
 using namespace renderer;
@@ -153,6 +187,11 @@ void GLCore32::run_command( renderer::DriverCommandType command, MemoryStream & 
 			break;
 		}
 		
+		case DC_UNIFORM_SAMPLER_2D:
+		{
+			process_sampler_2d( stream );
+			break;
+		}
 		default: break;
 	}
 }

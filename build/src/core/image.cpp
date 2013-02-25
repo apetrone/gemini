@@ -161,7 +161,7 @@ namespace image
 				}
 				
 				// may need to actually flip the image vertically here
-				flip_image_vertically( width, height, components, pixels );
+//				flip_image_vertically( width, height, components, pixels );
 				
 				// upload texture to video card
 				driver_upload_image2d( texID, flags, width, height, components, pixels );
