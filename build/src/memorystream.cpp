@@ -73,7 +73,7 @@ int MemoryStream::write( const void * src, int num_bytes )
 	// copy memory and advance pointer
 	memcpy( &data[offset], src, num_bytes );
 	offset += num_bytes;
-	
+
 	return num_bytes;
 } // write
 

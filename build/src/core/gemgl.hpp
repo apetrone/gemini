@@ -108,6 +108,8 @@ enum gemgl_renderer_type
 	typedef void (GEMGLAPI GEMGLFNGETSHADERIV) (GLObject shader, GLenum pname, GLint *params );
 	typedef void (GEMGLAPI GEMGLFNGETSHADERINFOLOG) ( GLObject shader, GLsizei bufSize, GLsizei* length, GLchar* infoLog );
 	typedef void (GEMGLAPI GEMGLFNGETPROGRAMINFOLOG) (GLObject program, GLsizei bufSize, GLsizei * length, GLchar* infoLog );
+
+	typedef GLboolean (GEMGLAPI GEMGLFNISPROGRAM) ( GLObject program );
 	typedef void (GEMGLAPI GEMGLFNGETPROGRAMIV) (GLObject program, GLenum pname, GLint *params );
 	typedef void (GEMGLAPI GEMGLFNVALIDATEPROGRAM) ( GLObject program );
 	typedef void (GEMGLAPI GEMGLFNRELEASESHADERCOMPILER) ( void );
@@ -353,7 +355,7 @@ enum gemgl_renderer_type
 		//GEMGLFNGETSHADERSOURCE GetShaderSource;
 		
 		// program queries
-		//GEMGLFNISPROGRAM IsProgram;
+		GEMGLFNISPROGRAM IsProgram;
 		GEMGLFNGETPROGRAMIV GetProgramiv;
 		GEMGLFNGETPROGRAMINFOLOG GetProgramInfoLog;
 
@@ -421,6 +423,7 @@ enum gemgl_renderer_type
 		// shader execution
 		GEMGLFNVALIDATEPROGRAM ValidateProgram;
 		
+		GEMGLFNISPROGRAM IsProgram;
 		GEMGLFNGETPROGRAMIV GetProgramiv;
 		GEMGLFNGETATTACHEDSHADERS GetAttachedShaders;
 
@@ -530,9 +533,7 @@ enum gemgl_renderer_type
 #endif
 		GEMGLFNGETSTRING GetString;
         GEMGL_CHECKERROR CheckError;
-		
-		// requested renderer type
-		int type;
+
 
 #if _WIN32 || LINUX
 		xlib_t library;

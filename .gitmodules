@@ -16,3 +16,6 @@
 [submodule "build/dependencies/soil"]
 	path = build/dependencies/soil
 	url = git://github.com/smibarber/libSOIL.git
+[submodule "build/dependencies/glm"]
+	path = build/dependencies/glm
+	url = git://github.com/Groovounet/glm.git

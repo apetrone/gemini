@@ -26,6 +26,30 @@
 #include "opengl_common.hpp"
 #include "image.hpp"
 
+#include "mathlib.h"
+#include "memorystream.hpp"
+
+
+
+
+void process_uniform_matrix4( MemoryStream & stream )
+{
+	//	LogMsg( "R_UNIFORMMATRIX4\n" );
+//	Matrix4 * matrix = (glm::mat4*)bitstream_readpointer( stream );
+//	int uniform_location = bitstream_readint( stream );
+	//	LogMsg( "uniform_location: %i\n", uniform_location );
+	
+	int uniform_location;
+	glm::mat4 * matrix = 0;
+	stream.read( matrix );
+	stream.read( uniform_location );
+	
+	gl.UniformMatrix4fv( uniform_location, 1, GL_FALSE, glm::value_ptr(*matrix) );
+	gl.CheckError( "uniform matrix 4" );
+}
+
+
+
 #define FAIL_IF_GLERROR( error ) if ( error != GL_NO_ERROR ) { return false; }
 using namespace renderer;
 
@@ -104,18 +128,28 @@ void GLCore32::run_command( renderer::DriverCommandType command, MemoryStream & 
 		{
 			unsigned int bits;
 			stream.read(bits);
-			gl.Clear( bits );
+			gl.Clear( bits | GL_DEPTH_BUFFER_BIT );
 			break;
 		}
 		
 		case DC_VIEWPORT:
 		{
 			int x, y, width, height;
-			stream.read(x);
-			stream.read(y);
-			stream.read(width);
-			stream.read(height);
+//			stream.read(x);
+//			stream.read(y);
+//			stream.read(width);
+//			stream.read(height);
+			stream.read( &x, 4 );
+			stream.read( &y, 4 );
+			stream.read( &width, 4 );
+			stream.read( &height, 4 );									
 			gl.Viewport( x, y, width, height );
+			break;
+		}
+		
+		case DC_UNIFORMMATRIX4:
+		{
+			process_uniform_matrix4( stream );
 			break;
 		}
 		
@@ -232,8 +266,6 @@ void GLCore32::render_font( int x, int y, renderer::Font & font, const char * ut
 
 renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices )
 {
-
-	
 	GL32VertexBuffer * stream = CREATE(GL32VertexBuffer);
 	assert( stream != 0 );
 	
@@ -245,7 +277,10 @@ renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescript
 	stream->gl_buffer_type = vertexbuffer_buffertype_to_gl_buffertype( buffer_type );
 		
 	gl.GenVertexArrays( 1, &stream->vao );
+	gl.CheckError( "GenVertexArrays" );
+	
 	gl.BindVertexArray( stream->vao );
+	gl.CheckError( "BindVertexArray" );
 	
 	gl.GenBuffers( 1, stream->vbo );
 	gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
@@ -380,6 +415,19 @@ void GLCore32::vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer,
 	gl.BindVertexArray( 0 );
 }
 
+void GLCore32::vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned int num_vertices )
+{
+	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
+	assert( stream != 0 );
+	
+	gl.BindVertexArray( stream->vao );
+	gl.CheckError( "BindVertexArray" );
+	
+	gl.DrawArrays( stream->gl_draw_type, 0, num_vertices );
+	gl.CheckError( "DrawArrays" );
+	gl.BindVertexArray( 0 );
+}
+
 ///////////////////////////////
 // Shaders
 // ---------------------------------------
@@ -402,6 +450,7 @@ renderer::ShaderObject GLCore32::shaderobject_create( renderer::ShaderObjectType
 bool GLCore32::shaderobject_compile( renderer::ShaderObject shader_object, const char * shader_source, const char * preprocessor_defines, const char * version )
 {
 	const int MAX_SHADER_SOURCES = 3;
+	GLint is_compiled = 0;
 	const char * shaderSource[ MAX_SHADER_SOURCES ] = { version, preprocessor_defines, shader_source };
 	
 	// provide the sources
@@ -409,15 +458,20 @@ bool GLCore32::shaderobject_compile( renderer::ShaderObject shader_object, const
 	gl.CheckError( "ShaderSource" );
 	
 	gl.CompileShader( shader_object.shader_id );
-
-	char * logbuffer = query_shader_info_log( shader_object.shader_id );
-	if ( logbuffer )
+	gl.CheckError( "CompileShader" );
+	gl.GetShaderiv( shader_object.shader_id, GL_COMPILE_STATUS, &is_compiled );
+	if ( !is_compiled )
 	{
-		LOGW( "Shader Info Log:\n" );
-		LOGW( "%s\n", logbuffer );
-		DEALLOC(logbuffer);
+		LOGE( "Error compiling shader!\n" );
+		char * logbuffer = query_shader_info_log( shader_object.shader_id );
+		if ( logbuffer )
+		{
+			LOGW( "Shader Info Log:\n" );
+			LOGW( "%s\n", logbuffer );
+			DEALLOC(logbuffer);
+		}
 	}
-	
+
 	return true;
 }
 
@@ -430,9 +484,17 @@ void GLCore32::shaderobject_destroy( renderer::ShaderObject shader_object )
 renderer::ShaderProgram GLCore32::shaderprogram_create( renderer::ShaderParameters & parameters )
 {
 	ShaderProgram program;
-	program.object = 0;
 	program.object = gl.CreateProgram();
 	gl.CheckError( "CreateProgram" );
+	
+	if ( !gl.IsProgram( program.object ) )
+	{
+		LOGE("generated object is NOT a program!\n" );
+	}
+	else
+	{
+		LOGV( "created program: %i\n", program.object );
+	}
 	
 	return program;
 }
@@ -454,9 +516,12 @@ void GLCore32::shaderprogram_attach( renderer::ShaderProgram shader_program, ren
 
 void GLCore32::shaderprogram_bind_attributes( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters )
 {
+	gl.BindFragDataLocation( shader_program.object, 0, parameters.frag_data_location);
+	gl.CheckError( "BindFragDataLocation" );
+
 	for( int i = 0; i < parameters.total_attributes; ++i )
 	{
-		std::pair<char*, int> * keyvalue = &parameters.attributes[i];
+		ShaderKeyValuePair * keyvalue = &parameters.attributes[i];
 		SHADER_DEBUG( "BindAttribLocation -> %s to %i\n", keyvalue->first, keyvalue->second );
 		gl.BindAttribLocation( shader_program.object, keyvalue->second, keyvalue->first );
 		gl.CheckError( xstr_format( "BindAttribLocation: %s", keyvalue->first ));
@@ -471,7 +536,7 @@ void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_progr
 	// fetch uniforms from the shader
 	for( int uniform_id = 0; uniform_id < parameters.total_uniforms; ++uniform_id )
 	{
-		std::pair<char*, int> * keyvalue = &parameters.uniforms[ uniform_id ];
+		ShaderKeyValuePair * keyvalue = &parameters.uniforms[ uniform_id ];
 		
 		keyvalue->second = gl.GetUniformLocation( shader_program.object, keyvalue->first );
 		SHADER_DEBUG( "GetUniformLocation: \"%s\" -> %i\n", keyvalue->first, keyvalue->second );
@@ -487,16 +552,45 @@ void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_progr
 void GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_program )
 {
 	gl.LinkProgram( shader_program.object );
+	gl.CheckError( "LinkProgram" );
+	
+	GLint link_status;
+	gl.GetProgramiv( shader_program.object, GL_LINK_STATUS, &link_status );
+	gl.CheckError( "GetProgramiv" );
+	
+	if ( !link_status )
+	{
+		LOGE( "Error linking program!\n" );
+		char * logbuffer = query_program_info_log( shader_program.object );
+		if ( logbuffer )
+		{
+			LOGW( "Program Info Log:\n" );
+			LOGW( "%s\n", logbuffer );
+			DEALLOC(logbuffer);
+		}
+		
+		assert( link_status == 1 );
+	}
+	
+#if 0
+	gl.ValidateProgram( shader_program.object );
 	int validate_status;
 	gl.GetProgramiv( shader_program.object, GL_VALIDATE_STATUS, &validate_status );
-	
-	char * logbuffer = query_program_info_log( shader_program.object );
-	if ( logbuffer )
+	if ( !validate_status )
 	{
-		LOGW( "Program Info Log:\n" );
-		LOGW( "%s\n", logbuffer );
-		DEALLOC(logbuffer);
+		LOGE( "Program validation failed; last operation unsuccessful.\n" );
+		char * logbuffer = query_program_info_log( shader_program.object );
+		if ( logbuffer )
+		{
+			LOGW( "Program Info Log:\n" );
+			LOGW( "%s\n", logbuffer );
+			DEALLOC(logbuffer);
+		}
+		
+		assert( validate_status == 1 );
 	}
+#endif
+
 }
 
 void GLCore32::shaderprogram_activate( renderer::ShaderProgram shader_program )

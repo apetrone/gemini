@@ -275,6 +275,7 @@ namespace renderer
 //		virtual void vertexbuffer_activate( renderer::VertexBuffer & parameters ) = 0;
 //		virtual void vertexbuffer_update( renderer::VertexBuffer & parameters ) = 0;
 		virtual void vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, unsigned int num_indices ) = 0;
+		virtual void vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned int num_vertices ) = 0;
 //		virtual void vertexbuffer_deactivate( renderer::VertexBuffer & parameters ) = 0;
 		
 		

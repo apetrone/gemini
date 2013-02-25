@@ -138,7 +138,9 @@ namespace renderer
 	} // append_indices
 
 	void VertexStream::create( unsigned int vertex_stride, IndexType max_vertices, IndexType max_indices, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type )
-	{	
+	{
+		reset();
+		
 		if ( desc.attribs == 0 )
 		{
 			LOGE( "VertexStream description NOT SET!\n" );
@@ -188,13 +190,7 @@ namespace renderer
 
 	void VertexStream::draw()
 	{
-#if 0
-		gl.BindVertexArray( vao );
-
-		gl.DrawArrays( type, 0, this->lastVertex );
-		gl.CheckError( "DrawArrays" );
-		gl.BindVertexArray( 0 );
-#endif
+		renderer::driver()->vertexbuffer_draw( this->vertexbuffer, this->last_vertex );
 	} // draw
 
 	// VertexTypeDescriptor

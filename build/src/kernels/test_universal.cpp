@@ -32,9 +32,8 @@
 
 #include "game/menu.hpp"
 
-
+#include "mathlib.h"
 #include "assets.hpp"
-
 
 // strip the version line from shader source
 void strip_shader_version( char * buffer, StackString<32> & version );
@@ -165,7 +164,6 @@ class TestUniversal : public kernel::IApplication,
 
 	audio::SoundHandle sound;
 	audio::SoundSource source;
-	renderer::VertexBuffer * vertex_buffer;
 	renderer::ShaderProgram shader_program;
 	renderer::VertexStream vb;
 public:
@@ -300,48 +298,82 @@ public:
 		
 		
 		
-#if 1
+		
+		
+		renderer::ShaderParameters parms;
+		this->shader_program = renderer::driver()->shaderprogram_create( parms );
+		
+		renderer::ShaderObject vertex_shader = create_shader_from_file( "shaders/fontshader.vert", renderer::SHADER_VERTEX, 0 );
+		renderer::ShaderObject fragment_shader = create_shader_from_file( "shaders/fontshader.frag", renderer::SHADER_FRAGMENT, 0 );
+		
+		renderer::driver()->shaderprogram_attach( shader_program, vertex_shader );
+		renderer::driver()->shaderprogram_attach( shader_program, fragment_shader );
+		
+		parms.set_frag_data_location( "out_Color" );
+		parms.alloc_uniforms( 2 );
+		parms.uniforms[0].set_key( "projectionMatrix" );
+		parms.uniforms[1].set_key( "modelviewMatrix" );
 
+		parms.alloc_attributes( 2 );
+		parms.attributes[0].set_key( "in_Position" ); parms.attributes[0].second = 0;
+		parms.attributes[1].set_key( "in_Color" ); parms.attributes[1].second = 1;
+//		parms.attributes[2].set_key( "in_tex" ); parms.attributes[2].second = 2;
+		
+		
+		renderer::driver()->shaderprogram_bind_attributes( shader_program, parms );
+		renderer::driver()->shaderprogram_link_and_validate( shader_program );
+		
+		renderer::driver()->shaderprogram_activate( shader_program );
+		renderer::driver()->shaderprogram_bind_uniforms( shader_program, parms );
+		
+		renderer::driver()->shaderobject_destroy( vertex_shader );
+		renderer::driver()->shaderobject_destroy( fragment_shader );
+		
+#if 1
+		vb.reset();
 		vb.desc.add( renderer::VD_FLOAT3 );
 		vb.desc.add( renderer::VD_UNSIGNED_BYTE4 );
-		vb.desc.add( renderer::VD_FLOAT2 );
+//		vb.desc.add( renderer::VD_FLOAT2 );
 		
 		struct FontVertexType
 		{
 			float x, y, z;
 			Color color;
-			float u, v;
+//			float u, v;
 		};
 		
-		vb.create(sizeof(FontVertexType), 1024, 1024, renderer::DRAW_TRIANGLES );
+		vb.create(sizeof(FontVertexType), 512, 512, renderer::DRAW_TRIANGLES );
 
 		FontVertexType * v = (FontVertexType*)vb.request( 3 );
 		if ( v )
 		{
 			FontVertexType * vert = &v[0];
-			vert->x = -10;
-			vert->y = 0;
+			vert->x = 100;
+			vert->y = 200;
 			vert->z = 0;
 			vert->color.set( 255, 0, 0 );
-			vert->u = 0;
-			vert->v = 0;
+//			vert->u = 0;
+//			vert->v = 0;
 			
 			vert = &v[1];
-			vert->x = 10;
-			vert->y = 0;
+			vert->x = 200;
+			vert->y = 200;
 			vert->z = 0;
 			vert->color.set( 0, 255, 0 );
-			vert->u = 0;
-			vert->v = 0;
+//			vert->u = 0;
+//			vert->v = 0;
 			
 			vert = &v[2];
-			vert->x = 0;
-			vert->y = 10;
+			vert->x = 150;
+			vert->y = 100;
 			vert->z = 0;
 			vert->color.set( 0, 0, 255 );
-			vert->u = 0;
-			vert->v = 0;
+//			vert->u = 0;
+//			vert->v = 0;
 		}
+		
+		renderer::IndexType indices[] = { 0, 1, 2 };
+		vb.append_indices( indices, 3 );
 
 		vb.update();
 #endif
@@ -374,32 +406,6 @@ public:
 
 
 
-		renderer::ShaderObject vertex_shader = create_shader_from_file( "shaders/fontshader.vert", renderer::SHADER_VERTEX, 0 );
-		renderer::ShaderObject fragment_shader = create_shader_from_file( "shaders/fontshader.frag", renderer::SHADER_FRAGMENT, 0 );
-
-		renderer::ShaderParameters parms;
-		this->shader_program = renderer::driver()->shaderprogram_create( parms );
-		renderer::driver()->shaderprogram_attach( shader_program, vertex_shader );
-		renderer::driver()->shaderprogram_attach( shader_program, fragment_shader );
-
-		parms.set_frag_data_location( "out_Color" );
-		parms.alloc_uniforms( 2 );
-		parms.uniforms[0].set_key( "projectionMatrix" );
-		parms.uniforms[1].set_key( "modelviewMatrix" );
-		
-		parms.alloc_attributes( 3 );
-		parms.attributes[0].set_key( "in_Position" ); parms.attributes[0].second = 0;
-		parms.attributes[1].set_key( "in_Color" ); parms.attributes[1].second = 1;
-		parms.attributes[2].set_key( "in_tex" ); parms.attributes[2].second = 2;
-		
-
-		renderer::driver()->shaderprogram_bind_attributes( shader_program, parms );
-		renderer::driver()->shaderprogram_link_and_validate( shader_program );
-		
-		renderer::driver()->shaderprogram_bind_uniforms( shader_program, parms );
-
-		renderer::driver()->shaderobject_destroy( vertex_shader );
-		renderer::driver()->shaderobject_destroy( fragment_shader );
 
 		return kernel::Success;
 	}
@@ -413,37 +419,63 @@ public:
 #if 1
 		renderer::IRenderDriver * driver = renderer::driver();
 		MemoryStream ms;
-		char buffer[128] = {0};
-		ms.init( buffer, 128 );
+		char buffer[512] = {0};
+		ms.init( buffer, 512 );
 		
-		// viewport
-		ms.rewind();
-		ms.write( 0 );
-		ms.write( 0 );
-		ms.write( params.window_width );
-		ms.write( params.window_width );
-		ms.rewind();
-		driver->run_command( renderer::DC_VIEWPORT, ms );
-		
+
+
 		// set clear color
 		ms.rewind();
-		ms.write( 0.5f );
-		ms.write( 0.0f );
-		ms.write( 0.75f );
+		ms.write( 0.25f );
+		ms.write( 0.25f );
+		ms.write( 0.25f );
 		ms.write( 1.0f );
 		ms.rewind();
 		driver->run_command( renderer::DC_CLEARCOLOR, ms );
-		
+	
 		// color_buffer_bit
 		ms.rewind();
 		ms.write( 0x00004000 );
 		ms.rewind();
 		driver->run_command( renderer::DC_CLEAR, ms );
+					
+		// viewport
+		ms.rewind();
+		ms.write( 0 );
+		ms.write( 0 );
+		ms.write( (int)params.window_width );
+		ms.write( (int)params.window_height );
+		ms.rewind();
+		driver->run_command( renderer::DC_VIEWPORT, ms );
+			
+		glm::mat4 modelview;
+		glm::mat4 projection = glm::ortho( 0.0f, (float)params.window_width, (float)params.window_height, 0.0f, -0.5f, 255.0f );
 		
 		
+		// activate the shader
 		driver->shaderprogram_activate( shader_program );
 		
+		// set up uniforms
+		ms.rewind();
+		ms.write( &modelview );
+		ms.write( 4 );
+		ms.write( &projection );
+		ms.write( 0 );
+		
+		ms.rewind();
+		driver->run_command( renderer::DC_UNIFORMMATRIX4, ms );
+		driver->run_command( renderer::DC_UNIFORMMATRIX4, ms );
+		
+
+		
+		
+		
+		
+		
 		vb.draw_elements();
+//		vb.draw();
+
+		driver->shaderprogram_deactivate( shader_program );
 #endif
 	}
 
