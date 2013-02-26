@@ -182,8 +182,13 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 		int window_width, window_height;
 		int render_width, render_height;
 
-		xwl_get_window_size(_window, &window_width, &window_height );		
+		xwl_get_window_size(_window, &window_width, &window_height );
+		parameters().window_width = window_width;
+		parameters().window_height = window_height;
+		
 		xwl_get_window_render_size( _window, &render_width, &render_height );
+		parameters().render_width = render_width;
+		parameters().render_height = render_height;
 
 		if ( render_width > window_width && render_height > window_height )
 		{
