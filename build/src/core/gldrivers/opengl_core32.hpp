@@ -23,9 +23,19 @@
 #include "renderer.hpp"
 #include "factory.hpp"
 
+#include "gemgl.hpp"
+#include "opengl_common.hpp"
+
 class GLCore32 : public renderer::IRenderDriver
 {
 	DECLARE_FACTORY_CLASS( GLCore32, renderer::IRenderDriver );
+
+
+	GLObject last_shader;
+	
+	// metrics
+//	unsigned int shader_changes;
+//	unsigned int texture_changes;
 
 public:
 	GLCore32();

@@ -463,12 +463,12 @@ public:
 		glm::mat4 modelview;
 		glm::mat4 projection = glm::ortho( 0.0f, (float)params.window_width, (float)params.window_height, 0.0f, -0.5f, 255.0f );
 		
+		ms.rewind();
 		
 		// activate the shader
-		driver->shaderprogram_activate( shader_program );
+		ms.write( shader_program.object );
 		
 		// set up uniforms
-		ms.rewind();
 		ms.write( &modelview );
 		ms.write( 0 );
 		
@@ -480,6 +480,7 @@ public:
 		ms.write( 8 );
 		
 		ms.rewind();
+		driver->run_command( renderer::DC_SHADER, ms );
 		driver->run_command( renderer::DC_UNIFORMMATRIX4, ms );
 		driver->run_command( renderer::DC_UNIFORMMATRIX4, ms );
 		driver->run_command( renderer::DC_UNIFORM_SAMPLER_2D, ms );

@@ -22,66 +22,12 @@
 #include "typedefs.h"
 #include "log.h"
 #include "gldrivers/opengl_core32.hpp"
-#include "gemgl.hpp"
-#include "opengl_common.hpp"
+
 #include "image.hpp"
 
 #include "mathlib.h"
 #include "memorystream.hpp"
 
-
-
-
-void process_uniform_matrix4( MemoryStream & stream )
-{
-	//	LogMsg( "R_UNIFORMMATRIX4\n" );
-//	Matrix4 * matrix = (glm::mat4*)bitstream_readpointer( stream );
-//	int uniform_location = bitstream_readint( stream );
-	//	LogMsg( "uniform_location: %i\n", uniform_location );
-	
-	int uniform_location;
-	glm::mat4 * matrix = 0;
-	stream.read( matrix );
-	stream.read( uniform_location );
-	
-	gl.UniformMatrix4fv( uniform_location, 1, GL_FALSE, glm::value_ptr(*matrix) );
-	gl.CheckError( "uniform matrix 4" );
-}
-
-
-void process_sampler_2d( MemoryStream & stream )
-{
-	//	LogMsg( "R_UNIFORM_SAMPLER_2D\n" );
-//	int texture_unit = bitstream_readint( stream );
-//	int texture_id = bitstream_readint( stream );
-//	int uniform_location = bitstream_readint( stream );
-	
-	
-	int texture_unit;
-	int texture_id;
-	int uniform_location;
-	
-	stream.read( texture_unit );
-	stream.read( texture_id );
-	stream.read( uniform_location );
-	
-	//	LogMsg( "texture_unit: %i, texture_id: %i, location: %i\n", texture_unit, texture_id, uniform_location );
-	
-//	if ( last_texture[ texture_unit ] != texture_id )
-	{
-		gl.ActiveTexture( GL_TEXTURE0+texture_unit );
-		gl.CheckError( "ActiveTexture" );
-		
-		gl.BindTexture( GL_TEXTURE_2D, texture_id );
-		gl.CheckError( "BindTexture: GL_TEXTURE_2D" );
-		
-		gl.Uniform1i( uniform_location, texture_unit );
-		gl.CheckError( "uniform1i" );
-		
-//		++texture_switches;
-//		last_texture[ texture_unit ] = texture_id;
-	}
-}
 
 
 #define FAIL_IF_GLERROR( error ) if ( error != GL_NO_ERROR ) { return false; }
@@ -138,6 +84,7 @@ GLCore32::GLCore32()
 	config.minor_version = 2;
 	
 	gemgl_startup( gl, config );
+	last_shader = 0;
 }
 
 GLCore32::~GLCore32()
@@ -146,54 +93,153 @@ GLCore32::~GLCore32()
 	gemgl_shutdown( gl );
 }
 
+
+
+void c_shader( MemoryStream & stream, GLCore32 & renderer )
+{
+	ShaderProgram shader_program;
+	stream.read( shader_program.object );
+	
+	renderer.shaderprogram_activate( shader_program );
+}
+
+void c_uniform_matrix4( MemoryStream & stream, GLCore32 & renderer )
+{
+	//	LogMsg( "R_UNIFORMMATRIX4\n" );
+	//	Matrix4 * matrix = (glm::mat4*)bitstream_readpointer( stream );
+	//	int uniform_location = bitstream_readint( stream );
+	//	LogMsg( "uniform_location: %i\n", uniform_location );
+	
+	int uniform_location;
+	glm::mat4 * matrix = 0;
+	stream.read( matrix );
+	stream.read( uniform_location );
+	
+	gl.UniformMatrix4fv( uniform_location, 1, GL_FALSE, glm::value_ptr(*matrix) );
+	gl.CheckError( "uniform matrix 4" );
+}
+
+void c_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
+{
+	//	LogMsg( "R_UNIFORM_SAMPLER_2D\n" );
+	//	int texture_unit = bitstream_readint( stream );
+	//	int texture_id = bitstream_readint( stream );
+	//	int uniform_location = bitstream_readint( stream );
+	
+	
+	int texture_unit;
+	int texture_id;
+	int uniform_location;
+	
+	stream.read( texture_unit );
+	stream.read( texture_id );
+	stream.read( uniform_location );
+	
+	//	LogMsg( "texture_unit: %i, texture_id: %i, location: %i\n", texture_unit, texture_id, uniform_location );
+	
+	//	if ( last_texture[ texture_unit ] != texture_id )
+	{
+		gl.ActiveTexture( GL_TEXTURE0+texture_unit );
+		gl.CheckError( "ActiveTexture" );
+		
+		gl.BindTexture( GL_TEXTURE_2D, texture_id );
+		gl.CheckError( "BindTexture: GL_TEXTURE_2D" );
+		
+		gl.Uniform1i( uniform_location, texture_unit );
+		gl.CheckError( "uniform1i" );
+		
+		//		++texture_switches;
+		//		last_texture[ texture_unit ] = texture_id;
+	}
+}
+
+void c_clear( MemoryStream & stream, GLCore32 & renderer )
+{
+	unsigned int bits;
+	stream.read(bits);
+	gl.Clear( bits | GL_DEPTH_BUFFER_BIT );
+}
+
+void c_clearcolor( MemoryStream & stream, GLCore32 & renderer )
+{
+	float color[4];
+	stream.read( color, 4*sizeof(float) );
+	gl.ClearColor( color[0], color[1], color[2], color[3] );
+}
+
+void c_cleardepth( MemoryStream & stream, GLCore32 & renderer )
+{
+	float value;
+	stream.read( value );
+	glClearDepth( value );
+}
+
+void c_viewport( MemoryStream & stream, GLCore32 & renderer )
+{
+	int x, y, width, height;
+	//			stream.read(x);
+	//			stream.read(y);
+	//			stream.read(width);
+	//			stream.read(height);
+	stream.read( &x, 4 );
+	stream.read( &y, 4 );
+	stream.read( &width, 4 );
+	stream.read( &height, 4 );
+	gl.Viewport( x, y, width, height );
+}
+
+void c_noop( MemoryStream & stream, GLCore32 & renderer )
+{
+}
+
+typedef void (*render_command_function)( MemoryStream & stream, GLCore32 & renderer );
+
+
+#if 0
+enum DriverCommandType
+{
+	DC_SHADER,
+	DC_UNIFORMMATRIX4,
+	DC_UNIFORM1i,
+	DC_UNIFORM3f,
+	DC_UNIFORM4f,
+	DC_UNIFORM_SAMPLER_2D,
+	DC_UNIFORM_SAMPLER_CUBE,
+	
+	DC_CLEAR,
+	DC_CLEARCOLOR,
+	DC_CLEARDEPTH,
+	DC_VIEWPORT,
+	
+	DC_DRAWCALL,
+	DC_SCISSOR,
+	
+	DC_MAX
+}; // DriverCommandType
+#endif
+
+render_command_function commands[] = {
+	c_shader,
+	c_uniform_matrix4,
+	c_noop,
+	c_noop,
+	c_noop,
+	c_uniform_sampler2d,
+	c_noop,
+
+	c_clear,
+	c_clearcolor,
+	c_cleardepth,
+	c_viewport,
+	
+	c_noop,
+	c_noop,
+};
+
+
 void GLCore32::run_command( renderer::DriverCommandType command, MemoryStream & stream )
 {
-	switch( command )
-	{
-		case DC_CLEARCOLOR:
-		{
-			float color[4];
-			stream.read( color, 4*sizeof(float) );
-			gl.ClearColor( color[0], color[1], color[2], color[3] );
-			break;
-		}
-
-		case DC_CLEAR:
-		{
-			unsigned int bits;
-			stream.read(bits);
-			gl.Clear( bits | GL_DEPTH_BUFFER_BIT );
-			break;
-		}
-		
-		case DC_VIEWPORT:
-		{
-			int x, y, width, height;
-//			stream.read(x);
-//			stream.read(y);
-//			stream.read(width);
-//			stream.read(height);
-			stream.read( &x, 4 );
-			stream.read( &y, 4 );
-			stream.read( &width, 4 );
-			stream.read( &height, 4 );									
-			gl.Viewport( x, y, width, height );
-			break;
-		}
-		
-		case DC_UNIFORMMATRIX4:
-		{
-			process_uniform_matrix4( stream );
-			break;
-		}
-		
-		case DC_UNIFORM_SAMPLER_2D:
-		{
-			process_sampler_2d( stream );
-			break;
-		}
-		default: break;
-	}
+	commands[ command ]( stream, *this );
 }
 
 void GLCore32::post_command( renderer::DriverCommandType command, MemoryStream & stream )
@@ -634,12 +680,18 @@ void GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_p
 
 void GLCore32::shaderprogram_activate( renderer::ShaderProgram shader_program )
 {
-	gl.UseProgram( shader_program.object );
-	gl.CheckError( "UseProgram" );
+//	if ( shader_program.object != last_shader )
+	{
+		gl.UseProgram( shader_program.object );
+		gl.CheckError( "UseProgram" );
+//		last_shader = shader_program.object;
+//		++shader_changes;
+	}
 }
 
 void GLCore32::shaderprogram_deactivate( renderer::ShaderProgram shader_program )
 {
+//	last_shader = 0;
 	gl.UseProgram( 0 );
 }
 

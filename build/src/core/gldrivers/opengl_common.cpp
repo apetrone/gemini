@@ -55,7 +55,9 @@ GLenum shaderobject_type_to_gl_shaderobjecttype( renderer::ShaderObjectType type
 	GLenum types[] = {
 		GL_VERTEX_SHADER,
 		GL_FRAGMENT_SHADER,
-		GL_GEOMETRY_SHADER,
+		
+		// not available in GLESv2
+//		GL_GEOMETRY_SHADER,
 	};
 	
 	assert( type < renderer::SHADER_LIMIT );
