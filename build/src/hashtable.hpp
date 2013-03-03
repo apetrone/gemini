@@ -38,11 +38,9 @@ USAGE:
 #include "xstr.h" // for string operations
 #include "util.hpp"
 #include <vector>
+#include "log.h"
 
 #define HASHTABLE_SEED 42
-
-//#define LOGDEBUG LOGV
-#define LOGDEBUG
 
 template <class Type, unsigned int MaxTableSize=256>
 class HashTable
@@ -104,7 +102,7 @@ private:
 	HashTable::Bucket * find_bucket( const char * key )
 	{
 		unsigned int hash = hash_for_key(key);
-		LOGDEBUG( "looking for '%s'; hash is %i\n", key, hash );
+		LOGV( "looking for '%s'; hash is %i\n", key, hash );
 		Bucket * bucket = &bucket_table[ hash ];
 		if ( bucket->key )
 		{
@@ -147,19 +145,19 @@ public:
 	void set( const char * key, const Type & value )
 	{
 		unsigned int hash = hash_for_key(key);
-		LOGDEBUG( "hash for '%s' is %i\n", key, hash );
+		LOGV( "hash for '%s' is %i\n", key, hash );
 		Bucket * first = &bucket_table[ hash ];
 		Bucket * bucket = find_bucket( key );
 		if ( bucket )
 		{
-			LOGDEBUG("bucket already exists. returning\n" );
+			LOGV("bucket already exists. returning\n" );
 			return;
 		}
 		
 		// the first bucket is unused; set the key
 		if ( !first->key )
 		{
-			LOGDEBUG( "setting first bucket to '%s' -> %i\n", key, value );
+			LOGV( "setting first bucket to '%s' -> %i\n", key, value );
 			first->set_key(key);
 			first->data = value;
 			return;
@@ -169,7 +167,7 @@ public:
 		Bucket * block = CREATE(Bucket);
 		assert( block != 0 );
 		
-		LOGDEBUG("creating a new bucket for '%s'\n", key);
+		LOGV("creating a new bucket for '%s'\n", key);
 		block->set_key(key);
 		block->data = value;
 		
