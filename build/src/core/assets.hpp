@@ -24,6 +24,10 @@
 #include "platform.hpp"
 #include "stackstring.hpp"
 
+#include "mathlib.h" // for glm
+#include "color.hpp"
+#include "renderer.hpp"
+
 namespace assets
 {
 	// Asset utils
@@ -51,9 +55,6 @@ namespace assets
 	// "sounds/handy" -> "<content_directory>/sounds/handy.<platform_extension>"
 	void append_asset_extension( AssetType type, StackString< MAX_PATH_SIZE > & path );
 	
-	
-
-	
 	typedef unsigned int AssetID;
 	
 	struct Asset
@@ -63,9 +64,12 @@ namespace assets
 		virtual void release() = 0;
 	}; // Asset
 	
-	
-	
-	// TODO: These may be better moved off into their own files and included here...
+}; // namespace assets
+
+namespace assets
+{
+	// -------------------------------------------------------------
+	// Texture
 	struct Texture : public virtual Asset
 	{
 		char * path;
@@ -77,18 +81,99 @@ namespace assets
 		virtual void release();
 	};
 	
+	
 	// load a texture from disk or cache. if reload_from_disk is false, cache is preferred
 	Texture * load_texture( const char * path, unsigned int flags = 0, bool ignore_cache = false );
-//	Texture * load_cubemap( const char * basename, unsigned int flags = 0, bool ignore_cache = false );
-
-
-
-
-
-
-
+	//	Texture * load_cubemap( const char * basename, unsigned int flags = 0, bool ignore_cache = false );
 	
+	// -------------------------------------------------------------
+	// Shader
+	struct KeyHashPair
+	{
+		StackString<32> key;
+		int value;
+	};
+	
+	struct Shader : public virtual Asset, public virtual renderer::ShaderParameters
+	{
+		unsigned int capabilities;
+		
+		Shader();
+		~Shader();
+		
+		int get_uniform_location( const char * name );
+		virtual void release();
+		
+		void create_program();
+		void destroy_program();
+		void attach_shader( /*GLObject shader*/ );
+		void bind_attributes();
+		bool link_and_validate();
+		void bind_uniforms();
+	};
+
+	// -------------------------------------------------------------
+	// Mesh
+	struct UV
+	{
+		float u, v;
+	};
+	
+	struct Geometry
+	{
+		enum
+		{
+			DRAW_LINES = 0,
+			DRAW_TRIANGLES = 1,
+			DRAW_PARTICLES = 2,
+		};
+		
+		unsigned int vertex_count;
+		unsigned int index_count;
+		unsigned short draw_type;
+		
+		glm::vec3 * vertices;
+		glm::vec3 * normals;
+		Color * colors;
+		UV * uvs;
+		renderer::IndexType * indices;
+		
+		StackString<128> name;
+		
+		unsigned int material_id;
+		
+		Geometry();
+		void alloc_vertices( unsigned int num_vertices );
+		void alloc_indices( unsigned int num_indices );
+		
+//		RenderData * render_data;
+	}; // Geometry
+	
+	
+	struct Mesh : public virtual Asset
+	{
+		unsigned short total_geometry;
+		Geometry * geometry;
+		Geometry * geometry_vn;
+		glm::mat4 world_matrix;
+		StackString<MAX_PATH_SIZE> path;
+		
+		Mesh();
+		void alloc( unsigned int num_geometry );
+		void init();
+		void purge();
+		virtual void release();
+	}; // Mesh
+	
+	
+	typedef void (*MeshIterator)( Mesh * mesh, void * userdata );
+	unsigned int get_total_meshes();
+	
+	void for_each_mesh( MeshIterator fn, void * userdata = 0 );
+	
+	Mesh * load_mesh( const char * filename, unsigned int flags = 0, bool ignore_cache = false );
+	Mesh * mesh_by_name( const char * filename );
+	
+	// inserts a mesh from an object and associate it with a filename
+	void insert_mesh( const char * filename, Mesh * ptr );
 }; // namespace assets
-
-
-#include "shaderasset.hpp"

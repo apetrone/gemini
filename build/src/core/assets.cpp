@@ -26,25 +26,18 @@
 #include "image.hpp"
 #include "log.h"
 
-// these may have to be moved
 namespace assets
 {
 	// -------------------------------------------------------------
 	// Textures
+	
+	Texture * _default_texture = 0;
+	
 	void Texture::release()
 	{
 		image::driver_release_image( this->texture_id );
 	} // release
-}; // namespace assets
-
-
-
-
-
-namespace assets
-{
-	Texture * _default_texture = 0;
-
+	
 	AssetLoadStatus texture_load_callback( const char * path, Texture * texture, unsigned int flags )
 	{
 		unsigned int texture_id;
@@ -71,7 +64,7 @@ namespace assets
 				names[i] = fullpath[i]();
 			}
 			
-//			load_result = renderlib::LoadCubemap( names, texture_id, flags, &width, &height );
+			//			load_result = renderlib::LoadCubemap( names, texture_id, flags, &width, &height );
 			assert( 0 );
 		}
 		
@@ -83,17 +76,57 @@ namespace assets
 			texture->height = width;
 			return assets::AssetLoad_Success;
 		}
-
+		
 		return assets::AssetLoad_Failure;
+	} // texture_load_callback
+	
+	// -------------------------------------------------------------
+	// Shader
+	void Shader::release()
+	{
+	} // release
+	
+	// -------------------------------------------------------------
+	// Mesh
+	void Mesh::release() {}
+	
+	assets::Mesh * load_mesh( const char * filename, unsigned int flags, bool ignore_cache )
+	{
+		return 0;
 	}
+	
+	AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, unsigned int flags )
+	{
+		//		return aengine::JsonLoadWithCallback( path, mesh_LoadFromJson, mesh );
+		return assets::AssetLoad_Failure;
+	} // mesh_load_callback
+	
+}; // namespace assets
+
+
+
+
+namespace assets
+{
+	
+
+
+	
+	
+
 	
 	typedef AssetLibrary< Texture, TextureAsset> TextureAssetLibrary;
 	
+	typedef AssetLibrary< Mesh, MeshAsset> MeshAssetLibrary;
+	
 	TextureAssetLibrary * texture_lib;
-
+	
+	MeshAssetLibrary * mesh_lib;
+	
 	void startup()
 	{
 		texture_lib = CREATE(TextureAssetLibrary, texture_load_callback);
+		mesh_lib = CREATE(MeshAssetLibrary, mesh_load_callback);
 
 		_default_texture = texture_lib->allocate_asset();
 		_default_texture->texture_id = image::load_default_texture();
@@ -110,6 +143,7 @@ namespace assets
 	{
 		purge();
 		DESTROY(TextureAssetLibrary, texture_lib);
+		DESTROY(MeshAssetLibrary, mesh_lib);
 	} // shutdown
 
 	void append_asset_extension( AssetType type, StackString<MAX_PATH_SIZE> & path )
