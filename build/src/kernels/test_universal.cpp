@@ -507,6 +507,7 @@ public:
 		
 		ms.write( renderer::BLEND_SRC_ALPHA );
 		ms.write( renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+
 		
 		ms.rewind();
 		driver->run_command( renderer::DC_SHADER, ms );
@@ -523,13 +524,8 @@ public:
 		}
 
 		vb.update();
-		
-		
-		
-		
-		
 		vb.draw_elements();
-//		vb.reset();
+
 		driver->shaderprogram_deactivate( shader_program );
 #endif
 	}
