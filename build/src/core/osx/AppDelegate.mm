@@ -44,6 +44,11 @@ DesktopKernel _desktop_kernel( 0, 0 );
 	NSLog( @"applicationDidFinishLaunching" );
 }
 
+-(void)applicationWillResignActive:(NSNotification *)notification
+{
+	NSLog( @"applicationWillResignActive" );
+}
+
 -(void)applicationDidBecomeActive:(NSNotification *)notification
 {
 	NSLog( @"applicationDidBecomeActive" );	
