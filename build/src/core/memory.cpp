@@ -49,7 +49,7 @@ namespace memory
 		
 		virtual void * allocate( size_t bytes )
 		{
-			size_t total_size = bytes+MemoryHeaderSize;
+//			size_t total_size = bytes+MemoryHeaderSize;
 			char * block = (char*)malloc( bytes+MemoryHeaderSize );
 			if ( block )
 			{
