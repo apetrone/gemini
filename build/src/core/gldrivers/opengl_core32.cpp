@@ -74,6 +74,44 @@ GLenum image_to_internal_format( unsigned int image_flags )
 } // image_to_internal_format
 
 
+GLenum driver_state_to_gl_state( DriverState state )
+{
+	switch( state )
+	{
+		case STATE_BLEND: return GL_BLEND;
+		default: return GL_FALSE;
+	}
+}
+
+GLenum convert_blendstate( RenderBlendType state )
+{
+	GLenum glblend[] = {
+		GL_ZERO,
+		GL_ONE,
+		GL_SRC_COLOR,
+		GL_ONE_MINUS_SRC_COLOR,
+		GL_DST_COLOR,
+		GL_ONE_MINUS_DST_COLOR,
+		GL_SRC_ALPHA,
+		GL_ONE_MINUS_SRC_ALPHA,
+		GL_ONE_MINUS_DST_ALPHA,
+		GL_CONSTANT_COLOR,
+		GL_ONE_MINUS_CONSTANT_COLOR,
+		GL_CONSTANT_ALPHA,
+		GL_ONE_MINUS_CONSTANT_ALPHA,
+		GL_SRC_ALPHA_SATURATE,
+		
+#if 0 // OpenGL 4.x +
+		GL_SRC1_COLOR,
+		GL_ONE_MINUS_SRC1_COLOR,
+		GL_SRC1_ALPHA,
+		GL_ONE_MINUS_SRC1_ALPHA
+#endif
+	};
+	
+	return glblend[ state ];
+} // convert_blendstate
+
 
 GLCore32::GLCore32()
 {
@@ -104,12 +142,7 @@ void c_shader( MemoryStream & stream, GLCore32 & renderer )
 }
 
 void c_uniform_matrix4( MemoryStream & stream, GLCore32 & renderer )
-{
-	//	LogMsg( "R_UNIFORMMATRIX4\n" );
-	//	Matrix4 * matrix = (glm::mat4*)bitstream_readpointer( stream );
-	//	int uniform_location = bitstream_readint( stream );
-	//	LogMsg( "uniform_location: %i\n", uniform_location );
-	
+{	
 	int uniform_location;
 	glm::mat4 * matrix = 0;
 	stream.read( matrix );
@@ -188,6 +221,45 @@ void c_viewport( MemoryStream & stream, GLCore32 & renderer )
 	gl.Viewport( x, y, width, height );
 }
 
+
+void c_state( MemoryStream & stream, GLCore32 & renderer )
+{
+	// state change
+	DriverState driver_state;
+	
+	GLenum state;
+	int enable = 0;
+	
+	stream.read( driver_state );
+	stream.read( enable );
+	
+	// convert driver state to GL state
+	state = driver_state_to_gl_state( driver_state );
+	
+	if ( enable )
+	{
+		gl.Enable( state );
+	}
+	else
+	{
+		gl.Disable( state );
+	}
+}
+
+void c_blendfunc( MemoryStream & stream, GLCore32 & renderer )
+{
+	RenderBlendType render_blendstate_source, render_blendstate_destination;
+		
+	stream.read( render_blendstate_source );
+	stream.read( render_blendstate_destination );
+
+	GLenum source = convert_blendstate( render_blendstate_source );
+	GLenum destination = convert_blendstate( render_blendstate_destination );
+	
+	gl.BlendFunc( source, destination );
+}
+
+
 void c_noop( MemoryStream & stream, GLCore32 & renderer )
 {
 }
@@ -195,45 +267,24 @@ void c_noop( MemoryStream & stream, GLCore32 & renderer )
 typedef void (*render_command_function)( MemoryStream & stream, GLCore32 & renderer );
 
 
-#if 0
-enum DriverCommandType
-{
-	DC_SHADER,
-	DC_UNIFORMMATRIX4,
-	DC_UNIFORM1i,
-	DC_UNIFORM3f,
-	DC_UNIFORM4f,
-	DC_UNIFORM_SAMPLER_2D,
-	DC_UNIFORM_SAMPLER_CUBE,
-	
-	DC_CLEAR,
-	DC_CLEARCOLOR,
-	DC_CLEARDEPTH,
-	DC_VIEWPORT,
-	
-	DC_DRAWCALL,
-	DC_SCISSOR,
-	
-	DC_MAX
-}; // DriverCommandType
-#endif
-
 render_command_function commands[] = {
-	c_shader,
-	c_uniform_matrix4,
-	c_noop,
-	c_noop,
-	c_noop,
-	c_uniform_sampler2d,
-	c_noop,
+	c_shader, // shader
+	c_uniform_matrix4, // uniform_matrix4
+	c_noop, // uniform1i
+	c_noop, // uniform3f
+	c_noop, // uniform4f
+	c_uniform_sampler2d, // uniform_sampler_2d
+	c_noop, // uniform_sampler_cube
 
-	c_clear,
-	c_clearcolor,
-	c_cleardepth,
-	c_viewport,
+	c_clear, // clear
+	c_clearcolor, // clearcolor
+	c_cleardepth, // cleardepth
+	c_viewport, // viewport
 	
-	c_noop,
-	c_noop,
+	c_noop, // drawcall
+	c_noop, // scissor
+	c_state, // state
+	c_blendfunc, // blendfunc
 };
 
 

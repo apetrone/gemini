@@ -55,9 +55,42 @@ namespace renderer
 		
 		DC_DRAWCALL,
 		DC_SCISSOR,
+		DC_STATE,
+		DC_BLENDFUNC,
 		
 		DC_MAX
 	}; // DriverCommandType
+	
+	
+	enum DriverState
+	{
+		STATE_BLEND,
+	}; // DriverState
+	
+	
+	enum RenderBlendType
+	{
+		BLEND_ZERO,
+		BLEND_ONE,
+		BLEND_SRC_COLOR,
+		BLEND_ONE_MINUS_SRC_COLOR,
+		BLEND_DST_COLOR,
+		BLEND_ONE_MINUS_DST_COLOR,
+		BLEND_SRC_ALPHA,
+		BLEND_ONE_MINUS_SRC_ALPHA,
+		BLEND_ONE_MINUS_DST_ALPHA,
+		BLEND_CONSTANT_COLOR,
+		BLEND_ONE_MINUS_CONSTANT_COLOR,
+		BLEND_CONSTANT_ALPHA,
+		BLEND_ONE_MINUS_CONSTANT_ALPHA,
+		BLEND_SRC_ALPHA_SATURATE,
+		BLEND_SRC1_COLOR,
+		BLEND_ONE_MINUS_SRC1_COLOR,
+		BLEND_SRC1_ALPHA,
+		BLEND_ONE_MINUS_SRC1_ALPHA		
+	}; // RenderBlendType
+	
+	
 	
 	// returns 0 on failure, 1 on success
 	int startup( DriverType driver );

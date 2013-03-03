@@ -35,6 +35,8 @@
 #include "mathlib.h"
 #include "assets.hpp"
 
+const float TEST_SIZE = 200.0f;
+
 // strip the version line from shader source
 void strip_shader_version( char * buffer, StackString<32> & version );
 
@@ -154,19 +156,29 @@ void print_options( MenuItem * root )
 
 using namespace kernel;
 
+
+
 class TestUniversal : public kernel::IApplication,
 	public IEventListener<KeyboardEvent>,
 	public IEventListener<MouseEvent>,
 	public IEventListener<SystemEvent>,
 	public IEventListener<TouchEvent>
 {
-
+	struct FontVertexType
+	{
+		float x, y, z;
+		Color color;
+		float u, v;
+	};
 
 	audio::SoundHandle sound;
 	audio::SoundSource source;
 	renderer::ShaderProgram shader_program;
 	renderer::VertexStream vb;
 	assets::Texture * tex;
+	
+	float alpha;
+	int alpha_delta;
 	
 public:
 	DECLARE_APPLICATION( TestUniversal );
@@ -299,8 +311,8 @@ public:
 #endif
 
 		
-		
-		
+		alpha = 0;
+		alpha_delta = 1;
 		
 		renderer::ShaderParameters parms;
 		this->shader_program = renderer::driver()->shaderprogram_create( parms );
@@ -338,12 +350,7 @@ public:
 		vb.desc.add( renderer::VD_UNSIGNED_BYTE4 );
 		vb.desc.add( renderer::VD_FLOAT2 );
 		
-		struct FontVertexType
-		{
-			float x, y, z;
-			Color color;
-			float u, v;
-		};
+
 		
 		vb.create(sizeof(FontVertexType), 512, 512, renderer::DRAW_TRIANGLES );
 
@@ -351,32 +358,32 @@ public:
 		if ( v )
 		{
 			FontVertexType * vert = &v[0];
-			vert->x = 200;
-			vert->y = 200;
+			vert->x = 0;
+			vert->y = 0;
 			vert->z = 0;
 			vert->color.set( 255, 255, 255 );
 			vert->u = 0;
 			vert->v = 0;
 			
 			vert = &v[1];
-			vert->x = 200;
-			vert->y = 400;
+			vert->x = 0;
+			vert->y = TEST_SIZE;
 			vert->z = 0;
 			vert->color.set( 255, 255, 255 );
 			vert->u = 0;
 			vert->v = 1;
 			
 			vert = &v[2];
-			vert->x = 400;
-			vert->y = 400;
+			vert->x = TEST_SIZE;
+			vert->y = TEST_SIZE;
 			vert->z = 0;
 			vert->color.set( 255, 255, 255 );
 			vert->u = 1;
 			vert->v = 1;
 
 			vert = &v[3];
-			vert->x = 400;
-			vert->y = 200;
+			vert->x = TEST_SIZE;
+			vert->y = 0;
 			vert->z = 0;
 			vert->color.set( 255, 255, 255 );
 			vert->u = 1;
@@ -424,6 +431,20 @@ public:
 	
 	virtual void step( kernel::Params & params )
 	{
+		alpha += ((float)alpha_delta) * 0.025f;
+		
+		if ( alpha >= 1.0 || alpha <= 0 )
+		{
+			if ( alpha >= 1.0 )
+			{
+				alpha = 1.0f;
+			}
+			else
+			{
+				alpha = 0;
+			}
+			alpha_delta = -alpha_delta;
+		}
 	}
 
 	virtual void tick( kernel::Params & params )
@@ -461,6 +482,7 @@ public:
 		driver->run_command( renderer::DC_VIEWPORT, ms );
 			
 		glm::mat4 modelview;
+		modelview = glm::translate( modelview, glm::vec3( (params.window_width/2.0f)-(TEST_SIZE/2.0f), (params.window_height/2.0f)-(TEST_SIZE/2.0f), 0 ) );
 		glm::mat4 projection = glm::ortho( 0.0f, (float)params.window_width, (float)params.window_height, 0.0f, -0.5f, 255.0f );
 		
 		ms.rewind();
@@ -479,17 +501,35 @@ public:
 		ms.write( tex->texture_id );
 		ms.write( 8 );
 		
+		
+		ms.write( renderer::STATE_BLEND );
+		ms.write( 1 );
+		
+		ms.write( renderer::BLEND_SRC_ALPHA );
+		ms.write( renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+		
 		ms.rewind();
 		driver->run_command( renderer::DC_SHADER, ms );
 		driver->run_command( renderer::DC_UNIFORMMATRIX4, ms );
 		driver->run_command( renderer::DC_UNIFORMMATRIX4, ms );
 		driver->run_command( renderer::DC_UNIFORM_SAMPLER_2D, ms );
+		driver->run_command( renderer::DC_STATE, ms );
+		driver->run_command( renderer::DC_BLENDFUNC, ms );
+
+		for( int i = 0; i < 4; ++i )
+		{
+			FontVertexType * vert = (FontVertexType*)vb[i];
+			vert->color.a = alpha * 255.0;
+		}
+
+		vb.update();
 		
 		
 		
 		
 		
 		vb.draw_elements();
+//		vb.reset();
 		driver->shaderprogram_deactivate( shader_program );
 #endif
 	}

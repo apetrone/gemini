@@ -104,6 +104,21 @@ namespace renderer
 
 		return vptr;
 	} // request
+	
+	VertexType * VertexStream::operator[](int index)
+	{
+		VertexType * vptr = 0;
+		
+		// requested a vertex that hasn't been accessed
+		if ( index > last_vertex )
+		{
+			return 0;
+		}
+		
+		vptr = &vertices[ (vertex_stride * index) ];
+		
+		return vptr;
+	} // operator []
 
 	void VertexStream::append_indices( IndexType * inIndices, IndexType num_indices )
 	{
