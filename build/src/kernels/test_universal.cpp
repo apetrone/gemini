@@ -402,6 +402,14 @@ public:
 		}
 #endif
 
+
+		// test material loading
+		assets::Material * material = assets::load_material( "materials/barrel" );
+		if ( material )
+		{
+			LOGV( "loaded material '%s'\n", material->name() );
+		}
+
 		return kernel::Success;
 	}
 

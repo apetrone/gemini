@@ -208,9 +208,9 @@ namespace assets
 		}
 	}; // Material
 	
-	Material * materialById( unsigned int id );
+	Material * material_by_id( unsigned int id );
 	unsigned int materialIdByName( const char * name );
-	Material * loadMaterial( const char * path, unsigned int flags = 0, bool ignore_cache = false );
+	Material * load_material( const char * path, unsigned int flags = 0, bool ignore_cache = false );
 	Material * defaultMaterial();
 	void insertMaterial( const char * name, assets::Material * material );
 	unsigned int findParameterMask( StackString<64> & name );

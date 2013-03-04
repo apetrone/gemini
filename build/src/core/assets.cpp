@@ -624,7 +624,7 @@ namespace assets
 		return default_material;
 	}
 	
-	Material * materialById( unsigned int id )
+	Material * material_by_id( unsigned int id )
 	{
 		return mat_lib->find_with_id( id );
 	}
@@ -651,7 +651,7 @@ namespace assets
 		return true;
 	}
 	
-	int material_LoadFromJson( const Json::Value & root, void * data )
+	util::ConfigLoadStatus material_load_from_json( const Json::Value & root, void * data )
 	{
 		Material * material = (Material*)data;
 		Json::Value name = root["name"];
@@ -684,23 +684,7 @@ namespace assets
 				material->flags |= Material::CUBEMAP;
 			}
 		}
-		
-		StackString< MAX_PATH_SIZE > path = "conf/";
-		if ( !shader.empty() )
-		{
-			path.append( shader.asString().c_str() );
-		}
-		else
-		{
-//			path.append( ASSETS_DEFAULT_MATERIAL_SHADER_NAME );
-		}
-		
-//		material->shader = loadShader( path() );
-		if ( !material->shader )
-		{
-			LOGW( "Couldn't find shader \"%s\" for material!\n", shader.asString().c_str() );
-		}
-		
+				
 		if ( !texture.empty() )
 		{
 			assets::Texture * texpointer;
@@ -752,7 +736,7 @@ namespace assets
 			else
 			{
 				LOGE( "Couldn't find parameter field: \"type\"\n" );
-				return 0;
+				return util::ConfigLoad_Failure;
 			}
 			
 			
@@ -790,7 +774,7 @@ namespace assets
 				}
 				else
 				{
-					return 0;
+					return util::ConfigLoad_Failure;
 				}
 			}
 			else if ( parameter->type == MP_SAMPLER_2D )
@@ -822,7 +806,7 @@ namespace assets
 				}
 				else
 				{
-					return 0;
+					return util::ConfigLoad_Failure;
 				}
 			}
 			else if ( parameter->type == MP_SAMPLER_CUBE )
@@ -855,7 +839,7 @@ namespace assets
 				}
 				else
 				{
-					return 0;
+					return util::ConfigLoad_Failure;
 				}
 			}
 			else if ( parameter->type == MP_VEC4 )
@@ -884,16 +868,35 @@ namespace assets
 			else
 			{
 				LOGE( "Couldn't find parameter field: \"value\"\n" );
-				return 0;
+				return util::ConfigLoad_Failure;
 			}
-		}
+		} // read all shader parameters
+		
+		
 		
 		calculateRequirements( material );
+
+#if 0
+		StackString< MAX_PATH_SIZE > path = "conf/";
+		if ( !shader.empty() )
+		{
+			path.append( shader.asString().c_str() );
+		}
+		else
+		{
+//			path.append( ASSETS_DEFAULT_MATERIAL_SHADER_NAME );
+		}
 		
-		return 1;
+//		material->shader = loadShader( path() );
+		if ( !material->shader )
+		{
+			LOGW( "Couldn't find shader \"%s\" for material!\n", shader.asString().c_str() );
+		}
+#endif
+		return util::ConfigLoad_Success;
 	}
 	
-	Material * loadMaterial( const char * filename, unsigned int flags, bool ignore_cache )
+	Material * load_material( const char * filename, unsigned int flags, bool ignore_cache )
 	{
 		Material * material = mat_lib->load_from_path( filename, flags, ignore_cache );
 		if ( material )
@@ -903,11 +906,15 @@ namespace assets
 		return default_material;
 	}
 	
-	int materialLoadCallback( const char * path, Material * material, unsigned int flags )
+	AssetLoadStatus material_load_callback( const char * path, Material * material, unsigned int flags )
 	{
-//		return JsonLoadWithCallback( path, material_LoadFromJson, material );
-		return 0;
-	}
+		if (util::json_load_with_callback( path, material_load_from_json, material, true ) == util::ConfigLoad_Success )
+		{
+			return AssetLoad_Success;
+		}
+
+		return AssetLoad_Failure;
+	} // material_load_callback
 	
 	unsigned int materialTypeToParameterType( const char * name )
 	{
@@ -1305,7 +1312,7 @@ namespace assets
 		// allocate asset libraries
 		texture_lib = CREATE(TextureAssetLibrary, texture_load_callback);
 		mesh_lib = CREATE(MeshAssetLibrary, mesh_load_callback);
-		
+		mat_lib = CREATE(MaterialAssetLibrary, material_load_callback );
 		// setup default texture
 		_default_texture = texture_lib->allocate_asset();
 		_default_texture->texture_id = image::load_default_texture();
@@ -1333,6 +1340,7 @@ namespace assets
 	
 		texture_lib->release_and_purge();
 		mesh_lib->release_and_purge();
+		mat_lib->release_and_purge();
 	} // purge
 	
 	void shutdown()
@@ -1340,6 +1348,7 @@ namespace assets
 		purge();
 		DESTROY(TextureAssetLibrary, texture_lib);
 		DESTROY(MeshAssetLibrary, mesh_lib);
+		DESTROY(MaterialAssetLibrary, mat_lib);
 	} // shutdown
 
 	void append_asset_extension( AssetType type, StackString<MAX_PATH_SIZE> & path )
@@ -1388,6 +1397,13 @@ namespace assets
 				
 				break;
 			} // TextureAsset
+			
+			
+			case MaterialAsset:
+			{
+				extension = "material";
+				break;
+			}
 			default: LOGW( "AssetType %i is NOT supported!\n" ); break;
 		}
 		
