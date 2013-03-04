@@ -20,6 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "util.hpp"
+#include "xstr.h"
 
 extern "C"
 {
@@ -36,5 +37,23 @@ namespace util
 		
 		return hash;
 	} // hash_32bit
+
+
+	
+	void strip_shader_version( char * buffer, StackString<32> & version )
+	{
+		// remove preceding "#version" shader
+		char * pos = xstr_str( buffer, "#version" );
+		if ( pos )
+		{
+			char * end = pos;
+			while( *end != '\n' )
+				++end;
+			
+			version._length = (end-pos);
+			memcpy( &version[0], &buffer[(pos-buffer)], version._length );
+			memset( &buffer[(pos-buffer)], ' ', (end-pos) );
+		}
+	} // strip_shader_version
 	
 }; // mamespace util

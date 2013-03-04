@@ -27,9 +27,6 @@
 #include <list>
 #include "log.h"
 
-#define LOGDEBUG LOGV
-//#define LOGDEBUG
-
 namespace assets
 {
 	enum AssetLoadStatus
@@ -67,10 +64,11 @@ namespace assets
 		
 		AssetClass * allocate_asset() { return CREATE(AssetClass); }
 		void deallocate_asset( AssetClass * asset ) { DESTROY(AssetClass, asset); }
+		unsigned int total_asset_count() const { return total_assets; }
 		
 		void foreach_asset( AssetIterator iterator, void * userdata )
 		{
-			Asset * asset = 0;
+			AssetClass * asset = 0;
 			typename AssetList::iterator it = asset_list.begin();
 			typename AssetList::iterator end = asset_list.end();
 			
@@ -82,7 +80,6 @@ namespace assets
 		} // foreach_asset
 	
 		// providing stubs for these functions
-	
 		AssetLoadStatus load_with_callback( const char * path, AssetClass * asset, unsigned int flags )
 		{
 			if ( !load_callback )
@@ -113,7 +110,7 @@ namespace assets
 				if ( !ignore_cache )
 				{
 					// case 1
-					LOGDEBUG( "asset (%s) already loaded. returning from cache\n", path );
+					LOGV( "asset (%s) already loaded. returning from cache\n", path );
 					return asset;
 				}
 			}
@@ -144,7 +141,7 @@ namespace assets
 				{
 					deallocate_asset( asset );
 				}
-				LOGDEBUG( "asset (%s) loading failed!\n", path );
+				LOGV( "asset (%s) loading failed!\n", path );
 			}
 			
 			return 0;
@@ -161,7 +158,7 @@ namespace assets
 		
 		AssetClass * find_with_path( const char * path )
 		{
-			Asset * asset = 0;
+			AssetClass * asset = 0;
 			if ( asset_by_name.contains( path ) )
 			{
 				asset = asset_by_name.get( path );
@@ -173,7 +170,7 @@ namespace assets
 		
 		AssetClass * find_with_id( assets::AssetID id )
 		{
-			Asset * asset = 0;
+			AssetClass * asset = 0;
 			typename AssetList::iterator it = asset_list.begin();
 			typename AssetList::iterator end = asset_list.end();
 			
@@ -181,7 +178,9 @@ namespace assets
 			{
 				asset = (*it);
 				if ( asset->asset_id == id )
+				{
 					return asset;
+				}
 			}
 			
 			return 0;

@@ -94,7 +94,7 @@ namespace assets
 		int value;
 	};
 	
-	struct Shader : public virtual Asset, public virtual renderer::ShaderParameters
+	struct Shader : public virtual Asset, public virtual renderer::ShaderParameters, public virtual renderer::ShaderProgram
 	{
 		unsigned int capabilities;
 		
@@ -110,7 +110,113 @@ namespace assets
 		void bind_attributes();
 		bool link_and_validate();
 		void bind_uniforms();
+	}; // Shader
+	
+	struct ShaderPermutationGroup
+	{
+		StackString<64> name;
+		
+		unsigned int num_defines;
+		unsigned int num_attributes;
+		unsigned int num_uniforms;
+		
+		StackString<64> * defines;
+		StackString<64> * attributes;
+		StackString<64> * uniforms;
+		
+		unsigned int mask_value;
+		
+		~ShaderPermutationGroup();
+	}; // ShaderPermutationGroup
+	
+	
+	struct ShaderPermutations
+	{
+		ShaderPermutationGroup base;
+		
+		unsigned int num_permutations;
+		ShaderPermutationGroup ** options;
+		
+		unsigned int num_attributes;
+		ShaderPermutationGroup * attributes;
+		
+		unsigned int num_uniforms;
+		ShaderPermutationGroup * uniforms;
+
+		ShaderPermutations();
+		~ShaderPermutations();
+	}; // ShaderPermutations
+	
+	ShaderPermutations & shader_permutations();
+	void compile_shader_permutations();
+	
+	// -------------------------------------------------------------
+	// Material
+	
+	// must also make a change in: MaterialParameterTypeToRenderState
+	enum MaterialParameterType
+	{
+		MP_INT = 0,
+		MP_SAMPLER_2D,
+		MP_SAMPLER_CUBE,
+		MP_VEC4
 	};
+	
+	struct Material : public virtual Asset
+	{
+		struct Parameter
+		{
+			StackString<64> name;
+			StackString<64> value;
+			unsigned int type; // MaterialParameterType
+			int intValue;
+			glm::vec4 vecValue;
+			unsigned int texture_unit;
+		};
+		
+		enum
+		{
+			BLENDING = 1,
+			SHADOWMAP = 2,
+			CUBEMAP = 4,
+		};
+		
+		StackString<128> name;
+		Shader * shader;
+		unsigned int texture_id;
+		unsigned int flags;
+		
+		// this will be used to lookup the correct shader permutation for this material
+		unsigned int requirements;
+		
+		Parameter * parameters;
+		unsigned int num_parameters;
+		
+		virtual void release()
+		{
+			
+		}
+		
+		unsigned int Id()
+		{
+			return asset_id;
+		}
+		
+		unsigned int totalParameters()
+		{
+			return 0;
+		}
+	}; // Material
+	
+	Material * materialById( unsigned int id );
+	unsigned int materialIdByName( const char * name );
+	Material * loadMaterial( const char * path, unsigned int flags = 0, bool ignore_cache = false );
+	Material * defaultMaterial();
+	void insertMaterial( const char * name, assets::Material * material );
+	unsigned int findParameterMask( StackString<64> & name );
+	unsigned int textureUnitForMap( StackString<64> & name );
+	void calculateRequirements( Material * material );
+	unsigned int materialTypeToParameterType( const char * name );
 
 	// -------------------------------------------------------------
 	// Mesh

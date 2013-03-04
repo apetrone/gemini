@@ -21,11 +21,14 @@ common_file_list =
 
 	"dependencies/murmur3/murmur3.c",
 
+	-- include this almagamated version of jsoncpp until we replace it.
+	"dependencies/jsoncpp/jsoncpp.cpp",
+
 	--[[
 	"src/thirdparty/*.c",
 	"src/thirdparty/*.h*",
 	--"dependencies/murmur3/murmur3.c",
-	--"dependencies/jsoncpp/jsoncpp.cpp",
+	
 	"dependencies/simplefilewatcher/source/FileWatcher.cpp",
 
 	windows=
@@ -54,13 +57,16 @@ common_include_dirs=
 {
 	"src",
 
-	"dependencies/murmur3/",
+	"dependencies/murmur3",
+	
+
+	"dependencies/jsoncpp",
 
 	--[[
 	--"src/prototypes",
 	"src/thirdparty",
 	
-	--"dependencies/jsoncpp",
+
 	--"dependencies/miniz/",
 	"resources",
 	"dependencies/glm",
@@ -90,10 +96,12 @@ common_defines=
 {
 	debug=
 	{
+		"JSON_IS_AMALGAMATION",
 		"DEBUG",
 	},
 	release=
 	{
+		"JSON_IS_AMALGAMATION"	
 	}
 }
 

@@ -227,7 +227,6 @@ namespace renderer
 		~ShaderKeyValuePair();
 	
 		void set_key( const char * key );
-		
 	};
 	
 //	typedef std::pair<char*, int> ShaderKeyValuePair;

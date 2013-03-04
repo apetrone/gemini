@@ -705,7 +705,7 @@ void GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_p
 			DEALLOC(logbuffer);
 		}
 		
-		assert( link_status == 1 );
+//		assert( link_status == 1 );
 	}
 	
 #if 0

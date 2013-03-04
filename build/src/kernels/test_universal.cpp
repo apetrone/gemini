@@ -35,30 +35,10 @@
 #include "mathlib.h"
 #include "assets.hpp"
 
+
+#include "configloader.hpp"
+
 const float TEST_SIZE = 200.0f;
-
-// strip the version line from shader source
-void strip_shader_version( char * buffer, StackString<32> & version );
-
-
-void strip_shader_version( char * buffer, StackString<32> & version )
-{
-	// remove preceding "#version" shader
-	char * pos = xstr_str( buffer, "#version" );
-	if ( pos )
-	{
-		char * end = pos;
-		while( *end != '\n' )
-			++end;
-		
-		version._length = (end-pos);
-		memcpy( &version[0], &buffer[(pos-buffer)], version._length );
-		memset( &buffer[(pos-buffer)], ' ', (end-pos) );
-	}
-} // strip_shader_version
-
-
-
 
 renderer::ShaderObject create_shader_from_file( const char * shader_path, renderer::ShaderObjectType type, const char * preprocessor_defines )
 {
@@ -69,7 +49,7 @@ renderer::ShaderObject create_shader_from_file( const char * shader_path, render
 	if ( buffer )
 	{
 		StackString<32> version;
-		strip_shader_version( buffer, version );
+		util::strip_shader_version( buffer, version );
 		if ( version._length == 0 )
 		{
 			LOGW( "Unable to extract version from shader! Forcing to #version 150.\n" );
@@ -155,7 +135,6 @@ void print_options( MenuItem * root )
 
 
 using namespace kernel;
-
 
 
 class TestUniversal : public kernel::IApplication,
@@ -423,11 +402,9 @@ public:
 		}
 #endif
 
-
-
-
 		return kernel::Success;
 	}
+
 	
 	virtual void step( kernel::Params & params )
 	{
