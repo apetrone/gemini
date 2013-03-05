@@ -172,7 +172,7 @@ namespace assets
 			int intValue;
 			glm::vec4 vecValue;
 			unsigned int texture_unit;
-		};
+		}; // Parameter
 		
 		enum
 		{
@@ -192,10 +192,7 @@ namespace assets
 		Parameter * parameters;
 		unsigned int num_parameters;
 		
-		virtual void release()
-		{
-			
-		}
+		virtual void release();
 		
 		unsigned int Id()
 		{
@@ -204,14 +201,14 @@ namespace assets
 		
 		unsigned int totalParameters()
 		{
-			return 0;
+			return num_parameters;
 		}
 	}; // Material
 	
 	Material * material_by_id( unsigned int id );
 	unsigned int materialIdByName( const char * name );
 	Material * load_material( const char * path, unsigned int flags = 0, bool ignore_cache = false );
-	Material * defaultMaterial();
+	Material * default_material();
 	void insertMaterial( const char * name, assets::Material * material );
 	unsigned int findParameterMask( StackString<64> & name );
 	unsigned int textureUnitForMap( StackString<64> & name );

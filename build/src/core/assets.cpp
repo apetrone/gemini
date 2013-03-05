@@ -618,10 +618,18 @@ namespace assets
 	
 	typedef AssetLibrary< Material, MaterialAsset> MaterialAssetLibrary;
 	MaterialAssetLibrary * mat_lib;
-	Material * default_material = 0;
-	Material * defaultMaterial()
+	Material * _default_material = 0;
+	Material * default_material()
 	{
-		return default_material;
+		return _default_material;
+	}
+	
+	void Material::release()
+	{
+		if ( num_parameters )
+		{
+			DESTROY_ARRAY(Parameter, parameters, num_parameters);
+		}
 	}
 	
 	Material * material_by_id( unsigned int id )
@@ -663,8 +671,8 @@ namespace assets
 		material->flags = 0;
 		material->num_parameters = 0;
 		material->parameters = 0;
-		//			material->requirements = 0;
-		//			int required_params = PF_TYPE | PF_VALUE;
+//		material->requirements = 0;
+//		int required_params = PF_TYPE | PF_VALUE;
 		
 		if ( !name.empty() )
 		{
@@ -712,7 +720,7 @@ namespace assets
 		Json::ValueIterator piter_end = param_list.end();
 		
 		material->num_parameters = param_list.size();
-		material->parameters = new Material::Parameter[ material->num_parameters ];
+		material->parameters = CREATE_ARRAY( Material::Parameter, material->num_parameters );
 		Material::Parameter * parameter;
 		unsigned int param_id = 0;
 		for( ; piter != piter_end; ++piter, ++param_id )
@@ -903,8 +911,8 @@ namespace assets
 		{
 			return material;
 		}
-		return default_material;
-	}
+		return default_material();
+	} // load_material
 	
 	AssetLoadStatus material_load_callback( const char * path, Material * material, unsigned int flags )
 	{
@@ -919,31 +927,29 @@ namespace assets
 	unsigned int materialTypeToParameterType( const char * name )
 	{
 		if ( xstr_nicmp( name, "int", 0 ) == 0 )
+		{
 			return MP_INT;
+		}
 		else if ( xstr_nicmp( name, "samplerCube", 0 ) == 0 )
+		{
 			return MP_SAMPLER_CUBE;
+		}
 		else if ( xstr_nicmp( name, "sampler", 0 ) == 0 )
+		{
 			return MP_SAMPLER_2D;
+		}
 		else if ( xstr_nicmp( name, "vec4", 0 ) == 0 )
+		{
 			return MP_VEC4;
+		}
 		
 		LOGW( "Couldn't find material parameter with name: %s\n", name );
 		return 0;
-	}
+	} // materialTypeToParameterType
 	
 	
 	unsigned int findParameterMask( StackString<64> & name )
 	{
-#if 0
-		for( unsigned int option_id = 0; option_id < permutations.num_options; ++option_id )
-		{
-			ShaderPermutationGroup * option = &permutations.options[ option_id ];
-			if ( xstr_nicmp( name(), option->name(), 64 ) == 0 )
-			{
-				return 1 << option->mask_value;
-			}
-		}
-#else
 		for( unsigned int option_id = 0; option_id < shader_permutations().num_permutations; ++option_id )
 		{
 			ShaderPermutationGroup * option = shader_permutations().options[ option_id ];
@@ -954,13 +960,11 @@ namespace assets
 				return 1 << option->mask_value;
 			}
 		}
-#endif
 		return 0;
-	}
+	} // findParameterMask
 	
 	unsigned int textureUnitForMap( StackString<64> & name )
 	{
-		
 		if ( xstr_nicmp( name(), "diffusemap", 0 ) == 0 )
 		{
 			return 0;
@@ -979,7 +983,7 @@ namespace assets
 		}
 		
 		return 0;
-	}
+	} // textureUnitForMap
 	
 	void calculateRequirements( Material * material )
 	{
@@ -1002,12 +1006,17 @@ namespace assets
 	typedef AssetLibrary< Mesh, MeshAsset> MeshAssetLibrary;
 	MeshAssetLibrary * mesh_lib;
 
-#if 0
-	int mesh_LoadFromJson( const Json::Value & root, void * data )
+	util::ConfigLoadStatus mesh_load_from_json( const Json::Value & root, void * data )
 	{
 		Mesh * mesh = (Mesh*)data;
 		//	LOGV( "Loading mesh %s\n", mesh->name() );
 		
+		assets::Material * default_mat = assets::load_material( "materials/default" );
+		if ( !default_mat )
+		{
+			LOGE( "Could not load the default material!\n" );
+			return util::ConfigLoad_Failure;
+		}
 		
 		Json::Value materials = root["materials"];
 		LOGV( "Total Materials: %i\n", materials.size() );
@@ -1022,15 +1031,15 @@ namespace assets
 			std::string material_name = material["name"].asString();
 			
 			StackString<MAX_PATH_SIZE> material_path;
-			xstr_sprintf( &material_path[0], material_path.maxSize(), "materials/%s", material_name.c_str() );
-			amat = assets::loadMaterial( material_path() );
+			xstr_sprintf( &material_path[0], material_path.max_size(), "materials/%s", material_name.c_str() );
+			amat = assets::load_material( material_path() );
 			if ( amat )
 			{
 				material_ids[ current_material ] = amat->Id();
 			}
 			else
 			{
-				amat = assets::defaultMaterial();
+				amat = assets::default_material();
 				material_ids[ current_material ] = amat->Id();
 			}
 			LOGV( "assigned material '%s' to (%i)\n", material_name.c_str(), material_ids[ current_material ] );
@@ -1040,21 +1049,19 @@ namespace assets
 		
 		Json::Value geometry_list = root["geometry"];
 		LOGV( "Total Geometry: %i\n", geometry_list.size() );
-		mesh->_total_geometry = geometry_list.size();
-		mesh->_geometry = new Geometry[ mesh->_total_geometry ];
+		mesh->total_geometry = geometry_list.size();
+		mesh->geometry = new Geometry[ mesh->total_geometry ];
 		
 		Geometry * geometry;
 		Geometry * vertex_normals = 0;
-		mesh->_geometry_vn = new Geometry[ mesh->_total_geometry ];
+		mesh->geometry_vn = new Geometry[ mesh->total_geometry ];
 		int gid = 0;
 		int vnid = 0;
-		
-		assets::Material * flatcolor = assets::loadMaterial( "materials/flatcolor" );
 		
 		Json::ValueIterator git = geometry_list.begin();
 		for( ; git != geometry_list.end(); ++git )
 		{
-			geometry = &mesh->_geometry[ gid++ ];
+			geometry = &mesh->geometry[ gid++ ];
 			geometry->draw_type = Geometry::DRAW_TRIANGLES;
 			
 			Json::Value geometry_node = *git;
@@ -1114,7 +1121,7 @@ namespace assets
 			}
 			else
 			{
-				Material * default_material = assets::defaultMaterial();
+				Material * default_material = assets::default_material();
 				geometry->material_id = default_material->Id();
 			}
 			
@@ -1139,11 +1146,15 @@ namespace assets
 			// setup debug normals now
 			if ( geometry->normals )
 			{
-				vertex_normals = &mesh->_geometry_vn[ vnid++ ];
+				vertex_normals = &mesh->geometry_vn[ vnid++ ];
 				vertex_normals->draw_type = Geometry::DRAW_LINES;
-				vertex_normals->material_id = flatcolor->Id();
+				if ( default_mat )
+				{
+					vertex_normals->material_id = default_mat->Id();
+				}
+				
 				const float normal_scale = 0.25f;
-				aengine::Color vertex_normal_color(255, 0, 255);
+				Color vertex_normal_color(255, 0, 255);
 				vertex_normals->vertex_count = geometry->vertex_count * 2;
 				vertex_normals->index_count = vertex_normals->vertex_count;
 				vertex_normals->vertices = new glm::vec3[ vertex_normals->vertex_count ];
@@ -1170,9 +1181,8 @@ namespace assets
 		
 		delete [] material_ids;
 		
-		return 1;
+		return util::ConfigLoad_Success;
 	} // mesh_load_from_json
-#endif
 	
 	
 	Geometry::Geometry()
@@ -1298,8 +1308,12 @@ namespace assets
 	
 	AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, unsigned int flags )
 	{
-		//		return aengine::JsonLoadWithCallback( path, mesh_LoadFromJson, mesh );
-		return assets::AssetLoad_Failure;
+		if ( util::json_load_with_callback(path, mesh_load_from_json, mesh, true ) == util::ConfigLoad_Success )
+		{
+			return AssetLoad_Success;
+		}
+		
+		return AssetLoad_Failure;
 	} // mesh_load_callback
 	
 }; // namespace assets
@@ -1313,15 +1327,30 @@ namespace assets
 		texture_lib = CREATE(TextureAssetLibrary, texture_load_callback);
 		mesh_lib = CREATE(MeshAssetLibrary, mesh_load_callback);
 		mat_lib = CREATE(MaterialAssetLibrary, material_load_callback );
+		
 		// setup default texture
 		_default_texture = texture_lib->allocate_asset();
 		_default_texture->texture_id = image::load_default_texture();
 		texture_lib->take_ownership("textures/default", _default_texture);
 		LOGV( "Loaded default texture; id = %i\n", _default_texture->texture_id );
-		
+			
 		// load shader permutations
 		_shader_permutations = CREATE( ShaderPermutations );
 		compile_shader_permutations();
+		
+		// setup default material
+		_default_material = mat_lib->allocate_asset();
+		_default_material->texture_id = _default_texture->texture_id;
+		_default_material->name = "default";
+		_default_material->num_parameters = 1;
+		Material::Parameter * parameter = _default_material->parameters = CREATE(Material::Parameter);
+		parameter->name = "diffusemap";
+		parameter->type = MP_SAMPLER_2D;
+		parameter->texture_unit = textureUnitForMap( parameter->name );
+		parameter->intValue = _default_texture->texture_id;
+		calculateRequirements( _default_material );
+		mat_lib->take_ownership( "materials/default", _default_material );
+		
 	} // startup
 	
 	void purge()
@@ -1403,7 +1432,14 @@ namespace assets
 			{
 				extension = "material";
 				break;
-			}
+			} // MaterialAsset
+			
+			case MeshAsset:
+			{
+				extension = "model";
+				break;
+			} // MeshAsset
+			
 			default: LOGW( "AssetType %i is NOT supported!\n" ); break;
 		}
 		
