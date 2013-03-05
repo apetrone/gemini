@@ -608,6 +608,24 @@ namespace assets
 		LOGV( "loaded %i permutations in %gms\n", total_shaders, xtime_msec( &t ) - start );
 	} // compile_shader_permutations
 
+
+	Shader * find_compatible_shader( unsigned int attributes )
+	{
+		Shader * shader = 0;
+		for( int i = total_shaders-1; i >= 0; --i )
+		{
+			shader = &_shader_programs[ i ];
+			LOGV( "[%i] attributes: %i sha: %i\n", shader->id, attributes, shader->capabilities );
+			if ( (attributes & shader->capabilities) == shader->capabilities )
+			{
+				return shader;
+			}
+		}
+		
+		LOGE( "Unable to find compatible shader!\n" );
+		return 0;
+	}
+
 	// -------------------------------------------------------------
 	// Material
 	

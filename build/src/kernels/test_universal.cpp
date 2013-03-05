@@ -38,6 +38,177 @@
 
 #include "configloader.hpp"
 
+
+
+
+
+const unsigned int MAX_RENDERER_STREAM_BYTES = 32768;
+const unsigned int MAX_RENDERER_STREAM_COMMANDS = 32768;
+unsigned int num_commands = 0;
+struct RenderState
+{
+	int type;
+	long offset; // offset into parameters
+}; // RenderState
+
+struct RenderStream
+{
+	char buffer[ MAX_RENDERER_STREAM_BYTES ];
+	RenderState commands[ MAX_RENDERER_STREAM_COMMANDS ];
+	unsigned int num_commands;
+	MemoryStream stream;
+	
+	
+	RenderStream()
+	{
+		num_commands = 0;
+		stream.init( buffer, MAX_RENDERER_STREAM_BYTES );
+	}
+	
+	void rewind()
+	{
+		stream.rewind();
+	}
+	
+	void clear()
+	{
+		num_commands = 0;
+	}
+	
+	
+	RenderState * new_render_state()
+	{
+		if ( num_commands >= (MAX_RENDERER_STREAM_COMMANDS) )
+		{
+			LOGW( "Too many renderstates! make this dynamically resizable!\n" );
+			return 0;
+		}
+		
+		RenderState * rs;
+		rs = &commands[ num_commands++ ];
+		return rs;
+	}
+	
+	void run_commands()
+	{
+		stream.rewind();
+		RenderState * renderstate;
+		renderer::IRenderDriver * driver = renderer::driver();
+
+		for( int state_id = 0; state_id < num_commands; state_id++ )
+		{
+			renderstate = &commands[ state_id ];
+			
+			// setup the stream and run the command
+			stream.seek( renderstate->offset, 1 );
+			driver->run_command( (renderer::DriverCommandType)renderstate->type, stream );
+		}
+		
+#if 0
+		// unwind (cleanup)
+		for( int state_id = 0; state_id < num_commands; state_id++ )
+		{
+			renderstate = &commands[ state_id ];
+			
+			// setup the stream and run the command
+			stream.seek( renderstate->offset, 1 );
+			driver->post_command( (renderer::DriverCommandType)renderstate->type, stream );
+		}
+#endif
+	} // run_commands
+	
+	void add_command( int type )
+	{
+		RenderState * state = new_render_state();
+		state->type = type;
+		state->offset = stream.offset_pointer();
+	}
+	
+	void add_clearcolor( float r, float g, float b, float a )
+	{
+		add_command( renderer::DC_CLEARCOLOR );
+		stream.write( r );
+		stream.write( g );
+		stream.write( b );
+		stream.write( a );
+	}
+	
+	void add_clear( unsigned int bitflags )
+	{
+		add_command( renderer::DC_CLEAR );
+		stream.write( bitflags );
+	}
+	
+	void add_viewport( int x, int y, int width, int height )
+	{
+		add_command( renderer::DC_VIEWPORT );
+		stream.write( x );
+		stream.write( y );
+		stream.write( width );
+		stream.write( height );
+	}
+	
+	void add_sampler2d( int texture_unit, int texture_id, int uniform_location )
+	{
+		add_command( renderer::DC_UNIFORM_SAMPLER_2D );
+		stream.write( texture_unit );
+		stream.write( texture_id );
+		stream.write( uniform_location );
+	}
+	
+	void add_state( renderer::DriverState state, int enable )
+	{
+		add_command( renderer::DC_STATE );
+		stream.write( state );
+		stream.write( enable );
+	}
+	
+	void add_blendfunc( renderer::RenderBlendType source, renderer::RenderBlendType destination )
+	{
+		add_command( renderer::DC_BLENDFUNC );
+		stream.write( source );
+		stream.write( destination );
+	}
+	
+	void add_shader( renderer::ShaderProgram * shader )
+	{
+		add_command( renderer::DC_SHADER );
+		stream.write( shader->object );
+	}	
+	
+	void add_uniform3f( unsigned int location, const glm::vec3 * data )
+	{
+		add_command( renderer::DC_UNIFORM3f );
+		stream.write( data );
+		stream.write( location );
+	}
+	
+	void add_uniform_matrix4( unsigned int location, const glm::mat4 * data )
+	{
+		add_command( renderer::DC_UNIFORMMATRIX4 );
+		stream.write( data );
+		stream.write( location );
+	}	
+	
+	void add_draw_call( int type, int vao, int draw_type, int num_elements, int element_type, int first )
+	{
+		add_command( renderer::DC_DRAWCALL );
+#if 0
+		bitstream_writeint( &stream, type );
+		bitstream_writeint( &stream, vao );
+		bitstream_writeint( &stream, draw_type );
+		bitstream_writeint( &stream, num_elements );
+		bitstream_writeint( &stream, element_type );
+		bitstream_writeint( &stream, first );
+#endif
+	}
+}; // RenderStream
+
+
+
+
+
+
 const float TEST_SIZE = 200.0f;
 
 renderer::ShaderObject create_shader_from_file( const char * shader_path, renderer::ShaderObjectType type, const char * preprocessor_defines )
@@ -158,6 +329,42 @@ class TestUniversal : public kernel::IApplication,
 	
 	float alpha;
 	int alpha_delta;
+	
+	
+	struct GeneralParameters
+	{
+		glm::vec4 * modelview_matrix;
+		glm::vec4 * projection_project;
+		glm::vec4 * object_matrix;
+		
+		unsigned int draw_call; // ?
+	};
+	
+	void stream_geometry( MemoryStream & stream, assets::Geometry * geo, GeneralParameters & params )
+	{
+		assert( geo != 0 );
+		assets::Material * material = assets::material_by_id( geo->material_id );
+		assets::Shader * shader = 0;
+		
+		unsigned int attribute_flags = 0;
+		
+		shader = assets::find_compatible_shader( attribute_flags + material->requirements );
+		
+		if ( !shader )
+		{
+			return;
+		}
+		
+		
+//		renderer::IRenderDriver * driver = renderer::driver();
+//		driver->shaderprogram_activate( *shader );
+		
+		
+	}
+	
+	
+	
+	RenderStream rs;
 	
 public:
 	DECLARE_APPLICATION( TestUniversal );
@@ -445,7 +652,7 @@ public:
 
 	virtual void tick( kernel::Params & params )
 	{
-#if 1
+#if 0
 		renderer::IRenderDriver * driver = renderer::driver();
 		MemoryStream ms;
 		char buffer[512] = {0};
@@ -523,7 +730,44 @@ public:
 		vb.draw_elements();
 
 		driver->shaderprogram_deactivate( shader_program );
+		
+#else // renderstream
+		rs.add_clearcolor( 0.25, 0.25, 0.25, 1.0f );
+		rs.add_clear( 0x00004000 );
+		rs.add_viewport( 0, 0, (int)params.window_width, (int)params.window_height );
+		
+		glm::mat4 modelview;
+		modelview = glm::translate( modelview, glm::vec3( (params.window_width/2.0f)-(TEST_SIZE/2.0f), (params.window_height/2.0f)-(TEST_SIZE/2.0f), 0 ) );
+		glm::mat4 projection = glm::ortho( 0.0f, (float)params.window_width, (float)params.window_height, 0.0f, -0.5f, 255.0f );
+		
+		rs.add_shader( &shader_program );
+		
+		rs.add_uniform_matrix4( 0, &modelview );
+		rs.add_uniform_matrix4( 4, &projection );
+		rs.add_sampler2d( 0, tex->texture_id, 8 );
+		
+		rs.add_state( renderer::STATE_BLEND, 1 );
+		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+		
+		rs.run_commands();
+		
+		// update geometry (this still needs to be added in the command queue)
+		for( int i = 0; i < 4; ++i )
+		{
+			FontVertexType * vert = (FontVertexType*)vb[i];
+			vert->color.a = alpha * 255.0;
+		}
+		vb.update();
+		vb.draw_elements();
+		
+		renderer::driver()->shaderprogram_deactivate( shader_program );
+		
+		rs.rewind();
 #endif
+
+
+
+
 	}
 
 	virtual void shutdown( kernel::Params & params )

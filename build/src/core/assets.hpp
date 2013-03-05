@@ -149,6 +149,7 @@ namespace assets
 	
 	ShaderPermutations & shader_permutations();
 	void compile_shader_permutations();
+	Shader * find_compatible_shader( unsigned int attributes );
 	
 	// -------------------------------------------------------------
 	// Material
