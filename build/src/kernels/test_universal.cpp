@@ -68,13 +68,8 @@ struct RenderStream
 	void rewind()
 	{
 		stream.rewind();
-	}
-	
-	void clear()
-	{
 		num_commands = 0;
 	}
-	
 	
 	RenderState * new_render_state()
 	{
