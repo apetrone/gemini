@@ -53,7 +53,8 @@ namespace core
 		
 		void stdout_message( log_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type )
 		{
-			fprintf( stdout, "[%i] - %s, %s, %i | %s", type, xstr_filefrompath(filename), function, line, message );
+			const char *message_types[] = { 0, "VERBOSE", "WARNING", " ERROR " };
+			fprintf( stdout, "[%s] %s, %s, %i | %s", message_types[ type ], xstr_filefrompath(filename), function, line, message );
 			//fflush( stdout );
 		}
 		
