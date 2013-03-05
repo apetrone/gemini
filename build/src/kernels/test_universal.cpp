@@ -410,7 +410,6 @@ public:
 			LOGV( "loaded material '%s'\n", material->name() );
 		}
 
-#if 0
 		// test mesh loading
 		assets::Mesh * mesh = assets::load_mesh( "models/plasma3" );
 		if ( mesh )
@@ -421,7 +420,6 @@ public:
 		{
 			LOGW( "unable to load mesh.\n" );
 		}
-#endif
 
 		return kernel::Success;
 	}

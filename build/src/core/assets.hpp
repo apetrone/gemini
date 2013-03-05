@@ -246,6 +246,7 @@ namespace assets
 		unsigned int material_id;
 		
 		Geometry();
+		~Geometry();
 		void alloc_vertices( unsigned int num_vertices );
 		void alloc_indices( unsigned int num_indices );
 		

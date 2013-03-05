@@ -123,22 +123,19 @@ namespace assets
 	{
 		if ( num_defines )
 		{
-			delete [] defines;
-			defines = 0;
+			DESTROY_ARRAY( StackString<64>, defines, num_defines );
 			num_defines = 0;
 		}
 		
 		if ( num_attributes )
 		{
-			delete [] attributes;
-			attributes = 0;
+			DESTROY_ARRAY( StackString<64>, attributes, num_attributes );
 			num_attributes = 0;
 		}
 		
 		if ( num_uniforms )
 		{
-			delete [] uniforms;
-			uniforms = 0;
+			DESTROY_ARRAY( StackString<64>, uniforms, num_uniforms );
 			num_uniforms = 0;
 		}
 	}
@@ -163,10 +160,8 @@ namespace assets
 				DEALLOC(options);
 			}
 			
-			delete [] attributes;
-			delete [] uniforms;
-//			DESTROY_ARRAY(ShaderPermutationGroup, attributes, num_attributes );
-//			DESTROY_ARRAY(ShaderPermutationGroup, uniforms, num_uniforms );
+			DESTROY_ARRAY(ShaderPermutationGroup, attributes, num_attributes );
+			DESTROY_ARRAY(ShaderPermutationGroup, uniforms, num_uniforms );
 		}
 	}
 	
@@ -194,7 +189,7 @@ namespace assets
 		option->num_defines = define_list.size();
 		if ( !define_list.isNull() )
 		{
-			option->defines = new StackString<64>[ option->num_defines ];
+			option->defines = CREATE_ARRAY( StackString<64>, option->num_defines );
 			
 			Json::ValueIterator it = define_list.begin();
 			Json::ValueIterator end = define_list.end();
@@ -229,7 +224,7 @@ namespace assets
 		option->num_attributes = attribute_list.size();
 		if ( !attribute_list.isNull() )
 		{
-			option->attributes = new StackString<64>[ option->num_attributes ];
+			option->attributes = CREATE_ARRAY( StackString<64>, option->num_attributes );
 			
 			Json::ValueIterator it = attribute_list.begin();
 			Json::ValueIterator end = attribute_list.end();
@@ -252,7 +247,7 @@ namespace assets
 		option->num_uniforms = uniform_list.size();
 		if ( !uniform_list.isNull() )
 		{
-			option->uniforms = new StackString<64>[ option->num_uniforms ];
+			option->uniforms = CREATE_ARRAY( StackString<64>, option->num_uniforms );
 			
 			Json::ValueIterator it = uniform_list.begin();
 			Json::ValueIterator end = uniform_list.end();
@@ -279,7 +274,7 @@ namespace assets
 		option->num_defines = define_list.size();
 		if ( !define_list.isNull() )
 		{
-			option->defines = new StackString<64>[ option->num_defines ];
+			option->defines = CREATE_ARRAY( StackString<64>, option->num_defines );
 			
 			Json::ValueIterator it = define_list.begin();
 			Json::ValueIterator end = define_list.end();
@@ -315,7 +310,7 @@ namespace assets
 		option->num_attributes = attribute_list.size();
 		if ( !attribute_list.isNull() )
 		{
-			option->attributes = new StackString<64>[ option->num_attributes ];
+			option->attributes = CREATE_ARRAY( StackString<64>, option->num_attributes );
 			
 			Json::ValueIterator it = attribute_list.begin();
 			Json::ValueIterator end = attribute_list.end();
@@ -339,7 +334,7 @@ namespace assets
 		option->num_uniforms = uniform_list.size();
 		if ( !uniform_list.isNull() )
 		{
-			option->uniforms = new StackString<64>[ option->num_uniforms ];
+			option->uniforms = CREATE_ARRAY( StackString<64>, option->num_uniforms );
 			
 			Json::ValueIterator it = uniform_list.begin();
 			Json::ValueIterator end = uniform_list.end();
@@ -395,7 +390,7 @@ namespace assets
 			Json::ValueIterator item_iter = attributes.begin();
 			Json::ValueIterator item_end = attributes.end();
 			permutations->num_attributes = attributes.size();
-			permutations->attributes = new ShaderPermutationGroup[ permutations->num_attributes ];
+			permutations->attributes = CREATE_ARRAY( ShaderPermutationGroup, permutations->num_attributes );
 			unsigned int option_id = 0;
 			for( ; item_iter != item_end; ++item_iter, ++option_id )
 			{
@@ -412,7 +407,7 @@ namespace assets
 			Json::ValueIterator item_iter = uniforms.begin();
 			Json::ValueIterator item_end = uniforms.end();
 			permutations->num_uniforms = uniforms.size();
-			permutations->uniforms = new ShaderPermutationGroup[ permutations->num_uniforms ];
+			permutations->uniforms = CREATE_ARRAY( ShaderPermutationGroup, permutations->num_uniforms );
 			unsigned int option_id = 0;
 			for( ; item_iter != item_end; ++item_iter, ++option_id )
 			{
@@ -720,166 +715,168 @@ namespace assets
 		Json::ValueIterator piter_end = param_list.end();
 		
 		material->num_parameters = param_list.size();
-		material->parameters = CREATE_ARRAY( Material::Parameter, material->num_parameters );
-		Material::Parameter * parameter;
-		unsigned int param_id = 0;
-		for( ; piter != piter_end; ++piter, ++param_id )
+		if ( material->num_parameters )
 		{
-			parameter = &material->parameters[ param_id ];
-			int param_flags = 0;
-			Json::Value plist = (*piter);
-			parameter->name = piter.key().asString().c_str();
-			LOGV( "parameter-> %s\n", parameter->name() );
-			
-			Json::Value type = plist.get( "type", "" );
-			if ( !type.isNull() )
+			material->parameters = CREATE_ARRAY( Material::Parameter, material->num_parameters );
+			Material::Parameter * parameter;
+			unsigned int param_id = 0;
+			for( ; piter != piter_end; ++piter, ++param_id )
 			{
-				param_flags |= PF_TYPE;
-				std::string typestr = type.asString();
-				LOGV( "type: %s\n", typestr.c_str() );
+				parameter = &material->parameters[ param_id ];
+				int param_flags = 0;
+				Json::Value plist = (*piter);
+				parameter->name = piter.key().asString().c_str();
+				LOGV( "parameter-> %s\n", parameter->name() );
 				
-				// convert string to param type
-				parameter->type = materialTypeToParameterType( typestr.c_str() );
-			}
-			else
-			{
-				LOGE( "Couldn't find parameter field: \"type\"\n" );
-				return util::ConfigLoad_Failure;
-			}
-			
-			
-			
-			if ( parameter->type == MP_INT )
-			{
-				Json::Value value = plist.get( "value", "" );
-				if ( !value.isNull() )
+				Json::Value type = plist.get( "type", "" );
+				if ( !type.isNull() )
+				{
+					param_flags |= PF_TYPE;
+					std::string typestr = type.asString();
+					LOGV( "type: %s\n", typestr.c_str() );
+					
+					// convert string to param type
+					parameter->type = materialTypeToParameterType( typestr.c_str() );
+				}
+				else
+				{
+					LOGE( "Couldn't find parameter field: \"type\"\n" );
+					return util::ConfigLoad_Failure;
+				}
+				
+				
+				
+				if ( parameter->type == MP_INT )
+				{
+					Json::Value value = plist.get( "value", "" );
+					if ( !value.isNull() )
+					{
+						param_flags |= PF_VALUE;
+						parameter->intValue = atoi( value.asString().c_str() );
+						LOGV( "param value: %i\n", parameter->intValue );
+					}
+				}
+				else if ( parameter->type == MP_SAMPLER_2D )
 				{
 					param_flags |= PF_VALUE;
-					parameter->intValue = atoi( value.asString().c_str() );
-					LOGV( "param value: %i\n", parameter->intValue );
-				}
-			}
-			else if ( parameter->type == MP_SAMPLER_2D )
-			{
-				param_flags |= PF_VALUE;
-				Json::Value texture_param = plist.get( "texture", Json::nullValue );
-				
-				if ( texture_param.isNull() )
-				{
-					LOGW( "texture param missing for \"sampler\" type\n" );
-					param_flags &= ~PF_VALUE;
-				}
-				
-				
-				if ( param_flags & PF_VALUE )
-				{
-					assets::Texture * tex = assets::load_texture( texture_param.asString().c_str() );
-					parameter->intValue = tex->texture_id;
-					LOGV( "param value: %i\n", parameter->intValue );
+					Json::Value texture_param = plist.get( "texture", Json::nullValue );
 					
-					parameter->texture_unit = textureUnitForMap( parameter->name );
-					LOGV( "texture unit: %i\n", parameter->texture_unit );
-				}
-				else
-				{
-					return util::ConfigLoad_Failure;
-				}
-			}
-			else if ( parameter->type == MP_SAMPLER_2D )
-			{
-				param_flags |= PF_VALUE;
-				Json::Value texture_unit = plist.get( "texture_unit", Json::nullValue );
-				Json::Value texture_param = plist.get( "texture", Json::nullValue );
-				
-				
-				if ( texture_param.isNull() )
-				{
-					LOGW( "texture param missing for \"sampler\" type\n" );
-					param_flags &= ~PF_VALUE;
-				}
-				
-				if ( texture_unit.isNull() )
-				{
-					LOGW( "texture_unit missing for \"sampler\" type\n" );
-				}
-				
-				if ( param_flags & PF_VALUE )
-				{
-					assets::Texture * tex = assets::load_texture( texture_param.asString().c_str() );
-					parameter->intValue = tex->texture_id;
-					LOGV( "param value: %i\n", parameter->intValue );
-					
-					parameter->texture_unit = textureUnitForMap( parameter->name );
-					LOGV( "texture unit: %i\n", parameter->texture_unit );
-				}
-				else
-				{
-					return util::ConfigLoad_Failure;
-				}
-			}
-			else if ( parameter->type == MP_SAMPLER_CUBE )
-			{
-				param_flags |= PF_VALUE;
-				Json::Value texture_unit = plist.get( "texture_unit", Json::nullValue );
-				Json::Value texture_param = plist.get( "texture", Json::nullValue );
-				
-				
-				if ( texture_param.isNull() )
-				{
-					LOGW( "texture param missing for \"samplerCube\" type\n" );
-					param_flags &= ~PF_VALUE;
-				}
-				
-				if ( texture_unit.isNull() )
-				{
-					LOGW( "texture_unit missing for \"samplerCube\" type\n" );
-				}
-				
-				if ( param_flags & PF_VALUE )
-				{
-					texture_flags = image::F_RGBA | image::F_CLAMP;
-					assets::Texture * tex = 0; //assets::loadCubemap( texture_param.asString().c_str(), texture_flags );
-					parameter->intValue = tex->texture_id;
-					LOGV( "param value: %i\n", parameter->intValue );
-					
-					parameter->texture_unit = textureUnitForMap( parameter->name );
-					LOGV( "texture unit: %i\n", parameter->texture_unit );
-				}
-				else
-				{
-					return util::ConfigLoad_Failure;
-				}
-			}
-			else if ( parameter->type == MP_VEC4 )
-			{
-				param_flags |= PF_VALUE;
-				Json::Value value = plist.get( "value", Json::nullValue );
-				if ( value.isNull() )
-				{
-					param_flags &= ~PF_VALUE;
-					LOGW( "Unable to find value for \"vec4\" type\n" );
-				}
-				else
-				{
-					int results = sscanf( value.asString().c_str(), "%g,%g,%g,%g", &parameter->vecValue[0], &parameter->vecValue[1], &parameter->vecValue[2], &parameter->vecValue[3] );
-					if ( results < 4 )
+					if ( texture_param.isNull() )
 					{
-						LOGW( "Unable to parse \"vec4\" type\n" );
+						LOGW( "texture param missing for \"sampler\" type\n" );
 						param_flags &= ~PF_VALUE;
+					}
+					
+					
+					if ( param_flags & PF_VALUE )
+					{
+						assets::Texture * tex = assets::load_texture( texture_param.asString().c_str() );
+						parameter->intValue = tex->texture_id;
+						LOGV( "param value: %i\n", parameter->intValue );
+						
+						parameter->texture_unit = textureUnitForMap( parameter->name );
+						LOGV( "texture unit: %i\n", parameter->texture_unit );
 					}
 					else
 					{
-						LOGV( "parsed vec4: %g, %g, %g, %g\n", parameter->vecValue[0], parameter->vecValue[1], parameter->vecValue[2], parameter->vecValue[3] );
+						return util::ConfigLoad_Failure;
 					}
 				}
-			}
-			else
-			{
-				LOGE( "Couldn't find parameter field: \"value\"\n" );
-				return util::ConfigLoad_Failure;
-			}
-		} // read all shader parameters
-		
+				else if ( parameter->type == MP_SAMPLER_2D )
+				{
+					param_flags |= PF_VALUE;
+					Json::Value texture_unit = plist.get( "texture_unit", Json::nullValue );
+					Json::Value texture_param = plist.get( "texture", Json::nullValue );
+					
+					
+					if ( texture_param.isNull() )
+					{
+						LOGW( "texture param missing for \"sampler\" type\n" );
+						param_flags &= ~PF_VALUE;
+					}
+					
+					if ( texture_unit.isNull() )
+					{
+						LOGW( "texture_unit missing for \"sampler\" type\n" );
+					}
+					
+					if ( param_flags & PF_VALUE )
+					{
+						assets::Texture * tex = assets::load_texture( texture_param.asString().c_str() );
+						parameter->intValue = tex->texture_id;
+						LOGV( "param value: %i\n", parameter->intValue );
+						
+						parameter->texture_unit = textureUnitForMap( parameter->name );
+						LOGV( "texture unit: %i\n", parameter->texture_unit );
+					}
+					else
+					{
+						return util::ConfigLoad_Failure;
+					}
+				}
+				else if ( parameter->type == MP_SAMPLER_CUBE )
+				{
+					param_flags |= PF_VALUE;
+					Json::Value texture_unit = plist.get( "texture_unit", Json::nullValue );
+					Json::Value texture_param = plist.get( "texture", Json::nullValue );
+					
+					
+					if ( texture_param.isNull() )
+					{
+						LOGW( "texture param missing for \"samplerCube\" type\n" );
+						param_flags &= ~PF_VALUE;
+					}
+					
+					if ( texture_unit.isNull() )
+					{
+						LOGW( "texture_unit missing for \"samplerCube\" type\n" );
+					}
+					
+					if ( param_flags & PF_VALUE )
+					{
+						texture_flags = image::F_RGBA | image::F_CLAMP;
+						assets::Texture * tex = 0; //assets::loadCubemap( texture_param.asString().c_str(), texture_flags );
+						parameter->intValue = tex->texture_id;
+						LOGV( "param value: %i\n", parameter->intValue );
+						
+						parameter->texture_unit = textureUnitForMap( parameter->name );
+						LOGV( "texture unit: %i\n", parameter->texture_unit );
+					}
+					else
+					{
+						return util::ConfigLoad_Failure;
+					}
+				}
+				else if ( parameter->type == MP_VEC4 )
+				{
+					param_flags |= PF_VALUE;
+					Json::Value value = plist.get( "value", Json::nullValue );
+					if ( value.isNull() )
+					{
+						param_flags &= ~PF_VALUE;
+						LOGW( "Unable to find value for \"vec4\" type\n" );
+					}
+					else
+					{
+						int results = sscanf( value.asString().c_str(), "%g,%g,%g,%g", &parameter->vecValue[0], &parameter->vecValue[1], &parameter->vecValue[2], &parameter->vecValue[3] );
+						if ( results < 4 )
+						{
+							LOGW( "Unable to parse \"vec4\" type\n" );
+							param_flags &= ~PF_VALUE;
+						}
+						else
+						{
+							LOGV( "parsed vec4: %g, %g, %g, %g\n", parameter->vecValue[0], parameter->vecValue[1], parameter->vecValue[2], parameter->vecValue[3] );
+						}
+					}
+				}
+				else
+				{
+					LOGE( "Couldn't find parameter field: \"value\"\n" );
+					return util::ConfigLoad_Failure;
+				}
+			} // read all shader parameters
+		} //  num_parameters
 		
 		
 		calculateRequirements( material );
@@ -1022,10 +1019,11 @@ namespace assets
 		LOGV( "Total Materials: %i\n", materials.size() );
 		
 		Json::ValueIterator mit = materials.begin();
-		unsigned int * material_ids = new unsigned int[ materials.size() ];
+
+		unsigned int * material_ids = (unsigned int*)ALLOC( sizeof(unsigned int) * materials.size() );
 		unsigned int current_material = 0;
 		assets::Material * amat = 0;
-		for( ; mit != materials.end(); ++mit )
+		for( ; mit != materials.end(); ++mit ) // MEMORY LEAKS HERE
 		{
 			Json::Value material = (*mit);
 			std::string material_name = material["name"].asString();
@@ -1046,18 +1044,15 @@ namespace assets
 			++current_material;
 		}
 		
-		
 		Json::Value geometry_list = root["geometry"];
 		LOGV( "Total Geometry: %i\n", geometry_list.size() );
 		mesh->total_geometry = geometry_list.size();
-		mesh->geometry = new Geometry[ mesh->total_geometry ];
+		mesh->geometry = CREATE_ARRAY( Geometry, mesh->total_geometry );
+		mesh->geometry_vn = CREATE_ARRAY( Geometry, mesh->total_geometry );
 		
 		Geometry * geometry;
-		Geometry * vertex_normals = 0;
-		mesh->geometry_vn = new Geometry[ mesh->total_geometry ];
 		int gid = 0;
 		int vnid = 0;
-		
 		Json::ValueIterator git = geometry_list.begin();
 		for( ; git != geometry_list.end(); ++git )
 		{
@@ -1075,21 +1070,25 @@ namespace assets
 			LOGV( "# indices: %i\n", indices.size() );
 			LOGV( "# triangles: %i\n", indices.size()/3 );
 			geometry->index_count = indices.size();
-			geometry->indices = new IndexType[ geometry->index_count ];
+			geometry->indices = (IndexType*)ALLOC( sizeof(IndexType) * geometry->index_count );
 			for( int i = 0; i < geometry->index_count; ++i )
+			{
 				geometry->indices[i] = indices[i].asInt();
+			}
 			
 			geometry->vertex_count = positions.size() / 3;
-			geometry->vertices = new Vector3[ geometry->vertex_count ];
-			geometry->normals = new Vector3[ geometry->vertex_count ];
-			geometry->uvs = new UV[ geometry->vertex_count ];
-			
-			for( int v = 0; v < geometry->vertex_count; ++v )
-				geometry->vertices[v] = Vector3(positions[v*3].asFloat(), positions[v*3+1].asFloat(), positions[v*3+2].asFloat() );
+			geometry->vertices = CREATE_ARRAY( glm::vec3, geometry->vertex_count );
+			geometry->normals = CREATE_ARRAY( glm::vec3, geometry->vertex_count );
+			geometry->uvs = CREATE_ARRAY( UV, geometry->vertex_count );
 			
 			for( int v = 0; v < geometry->vertex_count; ++v )
 			{
-				geometry->normals[v] = Vector3(normals[v*3].asFloat(), normals[v*3+1].asFloat(), normals[v*3+2].asFloat() );
+				geometry->vertices[v] = glm::vec3(positions[v*3].asFloat(), positions[v*3+1].asFloat(), positions[v*3+2].asFloat() );
+			}
+			
+			for( int v = 0; v < geometry->vertex_count; ++v )
+			{
+				geometry->normals[v] = glm::vec3(normals[v*3].asFloat(), normals[v*3+1].asFloat(), normals[v*3+2].asFloat() );
 			}
 			
 			if ( uvs.size() > 0 )
@@ -1141,12 +1140,14 @@ namespace assets
 			}
 #endif
 			
-			
+#if 1		// THERE ARE LEAKS IN HERE
 			//
 			// setup debug normals now
+			
 			if ( geometry->normals )
 			{
-				vertex_normals = &mesh->geometry_vn[ vnid++ ];
+				
+				Geometry * vertex_normals = &mesh->geometry_vn[ vnid++ ];
 				vertex_normals->draw_type = Geometry::DRAW_LINES;
 				if ( default_mat )
 				{
@@ -1157,9 +1158,9 @@ namespace assets
 				Color vertex_normal_color(255, 0, 255);
 				vertex_normals->vertex_count = geometry->vertex_count * 2;
 				vertex_normals->index_count = vertex_normals->vertex_count;
-				vertex_normals->vertices = new glm::vec3[ vertex_normals->vertex_count ];
-				vertex_normals->indices = new IndexType[ vertex_normals->index_count ];
-				vertex_normals->colors = new Color[ vertex_normals->vertex_count ];
+				vertex_normals->vertices = CREATE_ARRAY(glm::vec3, vertex_normals->vertex_count );
+				vertex_normals->indices = CREATE_ARRAY(IndexType, vertex_normals->index_count );
+				vertex_normals->colors = CREATE_ARRAY(Color, vertex_normals->vertex_count );
 				vertex_normals->normals = 0;
 				vertex_normals->uvs = 0;
 				
@@ -1177,9 +1178,10 @@ namespace assets
 					vertex_normals->colors[ vid+1 ] = vertex_normal_color;
 				}
 			}
+#endif			
 		}
 		
-		delete [] material_ids;
+		DEALLOC( material_ids );
 		
 		return util::ConfigLoad_Success;
 	} // mesh_load_from_json
@@ -1200,73 +1202,80 @@ namespace assets
 //		render_data = 0;
 	}
 	
+	Geometry::~Geometry()
+	{
+		using namespace glm;
+		if ( vertices )
+		{
+			DESTROY_ARRAY( vec3, vertices, vertex_count );
+			vertices = 0;
+		}
+		
+		if ( normals )
+		{
+			DESTROY_ARRAY( vec3, normals, vertex_count );
+			normals = 0;
+		}
+		
+		if ( colors )
+		{
+			DESTROY_ARRAY( Color, colors, vertex_count );
+			colors = 0;
+		}
+		
+		if ( uvs )
+		{
+			DESTROY_ARRAY( UV, uvs, vertex_count );
+			uvs = 0;
+		}
+		
+		if ( indices )
+		{
+			DEALLOC( indices );
+			indices = 0;
+		}
+	}
+	
 	void Geometry::alloc_vertices( unsigned int num_vertices )
 	{
 		vertex_count = num_vertices;
-		vertices = new Vector3[ num_vertices ];
-	}
+		vertices = CREATE_ARRAY( glm::vec3, num_vertices );
+	} // alloc_vertices
 	
 	void Geometry::alloc_indices( unsigned int num_indices )
 	{
 		index_count = num_indices;
-		indices = new renderer::IndexType[ num_indices ];
-	}
+		indices = CREATE_ARRAY( renderer::IndexType, num_indices );
+	} // alloc_indices
+	
 	
 	Mesh::Mesh()
 	{
 		init();
-	}
+	} // Mesh
 	
 	void Mesh::init()
 	{
 		total_geometry = 0;
 		geometry = 0;
+		geometry_vn = 0;
 	} // init
 	
 	void Mesh::alloc( unsigned int num_geometry )
 	{
 		total_geometry = num_geometry;
-		geometry = new Geometry[ num_geometry ];
+//		geometry = CREATE_ARRAY( Geometry,  num_geometry );
 	} // alloc
 	
 	void Mesh::purge()
-	{
-		for( unsigned short gid = 0; gid < total_geometry; ++gid )
-		{
-			Geometry * g = &geometry[ gid ];
-			if ( g->vertices )
-			{
-				delete [] g->vertices;
-				g->vertices = 0;
-			}
-			
-			if ( g->normals )
-			{
-				delete [] g->normals;
-				g->normals = 0;
-			}
-			
-			if ( g->colors )
-			{
-				delete [] g->colors;
-				g->colors = 0;
-			}
-			
-			if ( g->uvs )
-			{
-				delete [] g->uvs;
-				g->uvs = 0;
-			}
-			
-			if ( g->indices )
-			{
-				delete [] g->indices;
-				g->indices = 0;
-			}
-		}
-		
-		delete [] geometry;
+	{		
+		DESTROY_ARRAY( Geometry, geometry, total_geometry );
 		geometry = 0;
+		
+		DESTROY_ARRAY( Geometry, geometry_vn, total_geometry );
+		geometry_vn = 0;
+		
+		init();
 	} // purge
 	
 	unsigned int get_total_meshes()
@@ -1304,7 +1313,10 @@ namespace assets
 		return mesh_lib->find_with_path( filename );
 	} // mesh_by_name
 		
-	void Mesh::release() {}
+	void Mesh::release()
+	{
+		purge();
+	} // release
 	
 	AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, unsigned int flags )
 	{

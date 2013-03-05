@@ -49,13 +49,6 @@ typedef float real;
 //typedef double real;
 
 
-typedef glm::vec3 Vector3;
-typedef glm::vec4 Vector4;
-typedef glm::quat Quaternion;
-typedef glm::mat3 Matrix3;
-typedef glm::mat4 Matrix4;
-
-
 const real PI = 3.14159265358979323846;
 const real D2R_PI180 = (PI/180.0);
 const real R2D_180PI = (180.0/PI);
