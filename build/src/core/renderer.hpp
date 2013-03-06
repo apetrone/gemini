@@ -26,7 +26,6 @@
 #include "memorystream.hpp"
 #include "image.hpp"
 
-
 namespace renderer
 {
 	enum DriverType
@@ -124,6 +123,7 @@ namespace renderer
 	enum VertexBufferDrawType
 	{
 		DRAW_TRIANGLES,
+		DRAW_INDEXED_TRIANGLES,
 		DRAW_LINES,
 		DRAW_POINTS,
 		
@@ -266,6 +266,8 @@ namespace renderer
 
 namespace renderer
 {
+	struct VertexStream;
+	
 	//
 	// IRenderDriver
 	// The render driver acts as a command processor. The implementation details are up to the driver
@@ -279,7 +281,9 @@ namespace renderer
 		// these commands are called with the command and current memory stream
 		virtual void run_command( DriverCommandType command, MemoryStream & stream ) = 0;
 		virtual void post_command( DriverCommandType command, MemoryStream & stream ) = 0;
-
+		
+		virtual void setup_drawcall( renderer::VertexStream * vertex_stream, MemoryStream & stream ) = 0;
+		
 		// texture
 		virtual bool upload_texture_2d( TextureParameters & parameters ) = 0;
 		virtual bool generate_texture( renderer::TextureParameters & parameters ) = 0;
@@ -324,7 +328,6 @@ namespace renderer
 		virtual void shaderprogram_link_and_validate( renderer::ShaderProgram shader_program ) = 0;
 		virtual void shaderprogram_activate( renderer::ShaderProgram shader_program ) = 0;
 		virtual void shaderprogram_deactivate( renderer::ShaderProgram shader_program ) = 0;
-		
 	}; // IRenderDriver
 	typedef IRenderDriver * (*RenderDriverCreator)();
 	

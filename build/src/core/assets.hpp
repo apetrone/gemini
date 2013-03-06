@@ -234,7 +234,7 @@ namespace assets
 		
 		unsigned int vertex_count;
 		unsigned int index_count;
-		unsigned short draw_type;
+		renderer::VertexBufferDrawType draw_type;
 		
 		glm::vec3 * vertices;
 		glm::vec3 * normals;

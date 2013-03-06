@@ -1075,7 +1075,7 @@ namespace assets
 		for( ; git != geometry_list.end(); ++git )
 		{
 			geometry = &mesh->geometry[ gid++ ];
-			geometry->draw_type = Geometry::DRAW_TRIANGLES;
+			geometry->draw_type = renderer::DRAW_INDEXED_TRIANGLES;
 			
 			Json::Value geometry_node = *git;
 			Json::Value positions = geometry_node["positions"];
@@ -1166,7 +1166,7 @@ namespace assets
 			{
 				
 				Geometry * vertex_normals = &mesh->geometry_vn[ vnid++ ];
-				vertex_normals->draw_type = Geometry::DRAW_LINES;
+				vertex_normals->draw_type = renderer::DRAW_LINES;
 				if ( default_mat )
 				{
 					vertex_normals->material_id = default_mat->Id();
@@ -1216,7 +1216,7 @@ namespace assets
 		
 		vertex_count = 0;
 		index_count = 0;
-		draw_type = 0;
+		draw_type = renderer::DRAW_TRIANGLES;
 //		render_data = 0;
 	}
 	

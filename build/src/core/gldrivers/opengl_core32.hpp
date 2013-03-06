@@ -45,7 +45,8 @@ public:
 	
 	virtual void run_command( renderer::DriverCommandType command, MemoryStream & stream );
 	virtual void post_command( renderer::DriverCommandType command, MemoryStream & stream );
-	
+	virtual void setup_drawcall( renderer::VertexStream * vertex_stream, MemoryStream & stream );
+			
 	// texture
 	virtual bool upload_texture_2d( renderer::TextureParameters & parameters );
 	virtual bool generate_texture( renderer::TextureParameters & parameters );

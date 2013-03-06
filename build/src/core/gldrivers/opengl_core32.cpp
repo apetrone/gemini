@@ -28,7 +28,11 @@
 #include "mathlib.h"
 #include "memorystream.hpp"
 
-
+enum GL32DrawCallType
+{
+	DCT_ELEMENTS,
+	DCT_ARRAYS
+}; // GL32DrawCallType
 
 #define FAIL_IF_GLERROR( error ) if ( error != GL_NO_ERROR ) { return false; }
 using namespace renderer;
@@ -141,6 +145,14 @@ void c_shader( MemoryStream & stream, GLCore32 & renderer )
 	renderer.shaderprogram_activate( shader_program );
 }
 
+void p_shader( MemoryStream & stream, GLCore32 & renderer )
+{
+	ShaderProgram shader_program;
+	stream.read( shader_program.object );
+	
+	renderer.shaderprogram_deactivate( shader_program );
+}
+
 void c_uniform_matrix4( MemoryStream & stream, GLCore32 & renderer )
 {	
 	int uniform_location;
@@ -154,12 +166,6 @@ void c_uniform_matrix4( MemoryStream & stream, GLCore32 & renderer )
 
 void c_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 {
-	//	LogMsg( "R_UNIFORM_SAMPLER_2D\n" );
-	//	int texture_unit = bitstream_readint( stream );
-	//	int texture_id = bitstream_readint( stream );
-	//	int uniform_location = bitstream_readint( stream );
-	
-	
 	int texture_unit;
 	int texture_id;
 	int uniform_location;
@@ -167,9 +173,7 @@ void c_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 	stream.read( texture_unit );
 	stream.read( texture_id );
 	stream.read( uniform_location );
-	
-	//	LogMsg( "texture_unit: %i, texture_id: %i, location: %i\n", texture_unit, texture_id, uniform_location );
-	
+
 	//	if ( last_texture[ texture_unit ] != texture_id )
 	{
 		gl.ActiveTexture( GL_TEXTURE0+texture_unit );
@@ -181,9 +185,26 @@ void c_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 		gl.Uniform1i( uniform_location, texture_unit );
 		gl.CheckError( "uniform1i" );
 		
-		//		++texture_switches;
-		//		last_texture[ texture_unit ] = texture_id;
+//		++texture_switches;
+//		last_texture[ texture_unit ] = texture_id;
 	}
+}
+
+void p_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
+{
+	int texture_unit;
+	int texture_id;
+	int uniform_location;
+	
+	stream.read( texture_unit );
+	stream.read( texture_id );
+	stream.read( uniform_location );
+	
+	gl.ActiveTexture( GL_TEXTURE0+texture_unit );
+	gl.CheckError( "ActiveTexture" );
+	
+	gl.BindTexture( GL_TEXTURE_2D, 0 );
+	gl.CheckError( "BindTexture: GL_TEXTURE_2D" );
 }
 
 void c_clear( MemoryStream & stream, GLCore32 & renderer )
@@ -221,6 +242,18 @@ void c_viewport( MemoryStream & stream, GLCore32 & renderer )
 	gl.Viewport( x, y, width, height );
 }
 
+void c_drawcall( MemoryStream & stream, GLCore32 & renderer )
+{
+	GL32VertexBuffer * vertex_buffer = 0;
+	GLenum draw_type;
+	unsigned int num_indices;
+	stream.read( vertex_buffer );
+	stream.read( draw_type );
+	stream.read( num_indices );
+	
+	assert( vertex_buffer != 0 );
+	renderer.vertexbuffer_draw_indices( vertex_buffer, num_indices );
+}
 
 void c_state( MemoryStream & stream, GLCore32 & renderer )
 {
@@ -237,6 +270,30 @@ void c_state( MemoryStream & stream, GLCore32 & renderer )
 	state = driver_state_to_gl_state( driver_state );
 	
 	if ( enable )
+	{
+		gl.Enable( state );
+	}
+	else
+	{
+		gl.Disable( state );
+	}
+}
+
+void p_state( MemoryStream & stream, GLCore32 & renderer )
+{
+	// state change
+	DriverState driver_state;
+	
+	GLenum state;
+	int enable = 0;
+	
+	stream.read( driver_state );
+	stream.read( enable );
+	
+	// convert driver state to GL state
+	state = driver_state_to_gl_state( driver_state );
+	
+	if ( !enable )
 	{
 		gl.Enable( state );
 	}
@@ -266,38 +323,71 @@ void c_noop( MemoryStream & stream, GLCore32 & renderer )
 
 typedef void (*render_command_function)( MemoryStream & stream, GLCore32 & renderer );
 
-
 render_command_function commands[] = {
 	c_shader, // shader
+	p_shader,
+	
 	c_uniform_matrix4, // uniform_matrix4
+	c_noop,
+	
 	c_noop, // uniform1i
+	c_noop,
+	
 	c_noop, // uniform3f
+	c_noop,
+	
 	c_noop, // uniform4f
+	c_noop,
+	
 	c_uniform_sampler2d, // uniform_sampler_2d
+	p_uniform_sampler2d,
+	
 	c_noop, // uniform_sampler_cube
+	c_noop,
 
 	c_clear, // clear
+	c_noop,
+		
 	c_clearcolor, // clearcolor
+	c_noop,
+		
 	c_cleardepth, // cleardepth
-	c_viewport, // viewport
+	c_noop,
 	
-	c_noop, // drawcall
+	c_viewport, // viewport
+	c_noop,	
+	
+	c_drawcall, // drawcall
+	c_noop,
+		
 	c_noop, // scissor
+	c_noop,
+		
 	c_state, // state
+	p_state,
+	
 	c_blendfunc, // blendfunc
+	c_noop,
 };
 
 
 void GLCore32::run_command( renderer::DriverCommandType command, MemoryStream & stream )
 {
-	commands[ command ]( stream, *this );
+	commands[ (command*2) ]( stream, *this );
 }
 
 void GLCore32::post_command( renderer::DriverCommandType command, MemoryStream & stream )
 {
-	
+	commands[ (command*2)+1 ]( stream, *this );
 }
 
+void GLCore32::setup_drawcall( renderer::VertexStream * vertex_stream, MemoryStream & stream )
+{
+	GL32VertexBuffer * vb = (GL32VertexBuffer*)vertex_stream->vertexbuffer;
+	stream.write( vb );
+	stream.write( vb->gl_draw_type );
+	stream.write( vertex_stream->last_index ); // or vertices
+} // setup_drawcall
 
 bool GLCore32::upload_texture_2d( renderer::TextureParameters & parameters )
 {

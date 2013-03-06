@@ -26,7 +26,8 @@
 GLenum vertexbuffer_drawtype_to_gl_drawtype( renderer::VertexBufferDrawType type )
 {
 	GLenum types[] = {
-		GL_TRIANGLES,
+		GL_TRIANGLES, // draw_triangles
+		GL_TRIANGLES, // draw_indexed_triangles
 		GL_LINES,
 		GL_POINTS
 	};

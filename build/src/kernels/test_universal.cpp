@@ -99,17 +99,16 @@ struct RenderStream
 			driver->run_command( (renderer::DriverCommandType)renderstate->type, stream );
 		}
 		
-#if 0
-		// unwind (cleanup)
 		for( int state_id = 0; state_id < num_commands; state_id++ )
 		{
 			renderstate = &commands[ state_id ];
 			
-			// setup the stream and run the command
+			// run the post (cleanup) command
 			stream.seek( renderstate->offset, 1 );
 			driver->post_command( (renderer::DriverCommandType)renderstate->type, stream );
 		}
-#endif
+
+
 	} // run_commands
 	
 	void add_command( int type )
@@ -185,17 +184,10 @@ struct RenderStream
 		stream.write( location );
 	}	
 	
-	void add_draw_call( int type, int vao, int draw_type, int num_elements, int element_type, int first )
+	void add_draw_call( renderer::VertexStream * vertex_stream )
 	{
 		add_command( renderer::DC_DRAWCALL );
-#if 0
-		bitstream_writeint( &stream, type );
-		bitstream_writeint( &stream, vao );
-		bitstream_writeint( &stream, draw_type );
-		bitstream_writeint( &stream, num_elements );
-		bitstream_writeint( &stream, element_type );
-		bitstream_writeint( &stream, first );
-#endif
+		renderer::driver()->setup_drawcall( vertex_stream, this->stream );
 	}
 }; // RenderStream
 
@@ -533,7 +525,7 @@ public:
 		
 
 		
-		vb.create(sizeof(FontVertexType), 512, 512, renderer::DRAW_TRIANGLES );
+		vb.create(sizeof(FontVertexType), 512, 512, renderer::DRAW_INDEXED_TRIANGLES );
 
 		FontVertexType * v = (FontVertexType*)vb.request( 4 );
 		if ( v )
@@ -643,90 +635,21 @@ public:
 			}
 			alpha_delta = -alpha_delta;
 		}
-	}
-
-	virtual void tick( kernel::Params & params )
-	{
-#if 0
-		renderer::IRenderDriver * driver = renderer::driver();
-		MemoryStream ms;
-		char buffer[512] = {0};
-		ms.init( buffer, 512 );
 		
-
-
-		// set clear color
-		ms.rewind();
-		ms.write( 0.25f );
-		ms.write( 0.25f );
-		ms.write( 0.25f );
-		ms.write( 1.0f );
-		ms.rewind();
-		driver->run_command( renderer::DC_CLEARCOLOR, ms );
-	
-		// color_buffer_bit
-		ms.rewind();
-		ms.write( 0x00004000 );
-		ms.rewind();
-		driver->run_command( renderer::DC_CLEAR, ms );
-					
-		// viewport
-		ms.rewind();
-		ms.write( 0 );
-		ms.write( 0 );
-		ms.write( (int)params.window_width );
-		ms.write( (int)params.window_height );
-		ms.rewind();
-		driver->run_command( renderer::DC_VIEWPORT, ms );
-			
-		glm::mat4 modelview;
-		modelview = glm::translate( modelview, glm::vec3( (params.window_width/2.0f)-(TEST_SIZE/2.0f), (params.window_height/2.0f)-(TEST_SIZE/2.0f), 0 ) );
-		glm::mat4 projection = glm::ortho( 0.0f, (float)params.window_width, (float)params.window_height, 0.0f, -0.5f, 255.0f );
-		
-		ms.rewind();
-		
-		// activate the shader
-		ms.write( shader_program.object );
-		
-		// set up uniforms
-		ms.write( &modelview );
-		ms.write( 0 );
-		
-		ms.write( &projection );
-		ms.write( 4 );
-		
-		ms.write( 0 );
-		ms.write( tex->texture_id );
-		ms.write( 8 );
-		
-		
-		ms.write( renderer::STATE_BLEND );
-		ms.write( 1 );
-		
-		ms.write( renderer::BLEND_SRC_ALPHA );
-		ms.write( renderer::BLEND_ONE_MINUS_SRC_ALPHA );
-
-		
-		ms.rewind();
-		driver->run_command( renderer::DC_SHADER, ms );
-		driver->run_command( renderer::DC_UNIFORMMATRIX4, ms );
-		driver->run_command( renderer::DC_UNIFORMMATRIX4, ms );
-		driver->run_command( renderer::DC_UNIFORM_SAMPLER_2D, ms );
-		driver->run_command( renderer::DC_STATE, ms );
-		driver->run_command( renderer::DC_BLENDFUNC, ms );
-
+#if 1
+		// update geometry (this still needs to be added in the command queue)
 		for( int i = 0; i < 4; ++i )
 		{
 			FontVertexType * vert = (FontVertexType*)vb[i];
 			vert->color.a = alpha * 255.0;
 		}
-
 		vb.update();
-		vb.draw_elements();
+#endif
+	}
 
-		driver->shaderprogram_deactivate( shader_program );
-		
-#else // renderstream
+	virtual void tick( kernel::Params & params )
+	{
+		rs.rewind();
 		rs.add_clearcolor( 0.25, 0.25, 0.25, 1.0f );
 		rs.add_clear( 0x00004000 );
 		rs.add_viewport( 0, 0, (int)params.window_width, (int)params.window_height );
@@ -743,26 +666,10 @@ public:
 		
 		rs.add_state( renderer::STATE_BLEND, 1 );
 		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+	
+		rs.add_draw_call( &vb );
 		
 		rs.run_commands();
-		
-		// update geometry (this still needs to be added in the command queue)
-		for( int i = 0; i < 4; ++i )
-		{
-			FontVertexType * vert = (FontVertexType*)vb[i];
-			vert->color.a = alpha * 255.0;
-		}
-		vb.update();
-		vb.draw_elements();
-		
-		renderer::driver()->shaderprogram_deactivate( shader_program );
-		
-		rs.rewind();
-#endif
-
-
-
-
 	}
 
 	virtual void shutdown( kernel::Params & params )
