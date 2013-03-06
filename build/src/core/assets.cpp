@@ -1270,7 +1270,6 @@ namespace assets
 	
 	void Geometry::render_setup()
 	{
-#if 0
 		// if we already setup this geometry; skip
 		if ( attributes > 0 )
 		{
@@ -1297,7 +1296,7 @@ namespace assets
 			attributes |= (1 << GV_UV0);
 			vertexstream.desc.add( VD_FLOAT2 );
 		}
-#endif
+		
 //		vertexstream.create( this->vertex_count, this->index_count, renderer::BUFFER_STATIC );
 //		this->vertexbuffer = renderer::driver()->vertexbuffer_create( descriptor, this->draw_type, renderer::BUFFER_STATIC, descriptor.calculate_vertex_stride(), this->vertex_count, this->index_count );
 	}

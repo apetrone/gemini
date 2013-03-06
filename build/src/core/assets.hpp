@@ -262,7 +262,7 @@ namespace assets
 		void alloc_indices( unsigned int num_indices );
 		
 //		RenderData * render_data;
-//		renderer::VertexStream vertexstream;
+		renderer::VertexStream vertexstream;
 
 		// set this geometry up for rendering
 		void render_setup();

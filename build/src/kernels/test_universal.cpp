@@ -648,7 +648,7 @@ public:
 
 		if ( mesh )
 		{
-//			mesh->prepare_geometry();
+			mesh->prepare_geometry();
 		}
 	}
 
