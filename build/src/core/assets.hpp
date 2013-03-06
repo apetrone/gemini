@@ -218,15 +218,6 @@ namespace assets
 
 	// -------------------------------------------------------------
 	// Mesh
-	enum GeometryVertexAttribute
-	{
-		GV_NORMAL = 0,
-		GV_COLOR,
-		GV_UV0,
-		
-		GV_MAX
-	}; // GeometryVertexAttribute
-	
 	
 	struct Geometry : public renderer::Geometry
 	{		

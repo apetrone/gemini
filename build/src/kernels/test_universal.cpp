@@ -184,10 +184,10 @@ struct RenderStream
 		stream.write( location );
 	}	
 	
-	void add_draw_call( renderer::VertexStream * vertex_stream )
+	void add_draw_call( renderer::VertexBuffer * vertexbuffer )
 	{
 		add_command( renderer::DC_DRAWCALL );
-		renderer::driver()->setup_drawcall( vertex_stream, this->stream );
+		renderer::driver()->setup_drawcall( vertexbuffer, this->stream );
 	}
 }; // RenderStream
 
@@ -353,6 +353,7 @@ class TestUniversal : public kernel::IApplication,
 	
 	
 	RenderStream rs;
+	assets::Geometry geo;
 	
 public:
 	DECLARE_APPLICATION( TestUniversal );
@@ -568,8 +569,33 @@ public:
 
 		vb.update();
 #endif
+		geo.vertex_count = 4;
+		geo.index_count = 6;
+		geo.vertices = CREATE_ARRAY( glm::vec3, 4 );
+		geo.indices = CREATE_ARRAY( renderer::IndexType, 6 );
+		geo.colors = CREATE_ARRAY( Color, 4 );
+		geo.uvs = CREATE_ARRAY( renderer::UV, 4 );
+		
+		for( size_t i = 0; i < geo.vertex_count; i++)
+		{
+			FontVertexType * vert = (FontVertexType*)vb[i];
+			glm::vec3 & pos = geo.vertices[ i ];
+			pos.x = vert->x;
+			pos.y = vert->y;
+			pos.z = vert->z;
+			
+			Color & color = geo.colors[ i ];
+			color = vert->color;
+			
+			renderer::UV & uv = geo.uvs[ i ];
+			uv.u = vert->u;
+			uv.v = vert->v;
+		}
+		memcpy( geo.indices, indices, sizeof(renderer::IndexType) * geo.index_count );
 
 
+		geo.render_setup();
+		
 #if 0
 		HashTable<int> t;
 		
@@ -608,11 +634,14 @@ public:
 		if ( mesh )
 		{
 			LOGV( "loaded mesh '%s'\n", mesh->path() );
+			mesh->prepare_geometry();
 		}
 		else
 		{
 			LOGW( "unable to load mesh.\n" );
 		}
+		
+
 
 		return kernel::Success;
 	}
@@ -687,8 +716,11 @@ public:
 			}
 		}
 	
-		rs.add_draw_call( &vb );
+//		rs.add_draw_call( vb.vertexbuffer );
+//		assets::Geometry * g = &mesh->geometry[ 2 ];
+//		rs.add_draw_call( g->vertexbuffer );
 
+		rs.add_draw_call( geo.vertexbuffer );
 		
 		rs.run_commands();
 	}

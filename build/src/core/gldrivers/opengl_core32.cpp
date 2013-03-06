@@ -40,20 +40,15 @@ using namespace renderer;
 
 enum GL32VAOType
 {
-	VAO_POSITIONS_ONLY,
-	VAO_ALL,
+//	VAO_POSITIONS_ONLY,
+	VAO_INTERLEAVED,
 	
-	VAO_LIMIT
+	VAO_LIMIT = 1
 };
 
 enum GL32VBOType
 {
-	VBO_POSITION,
-	VBO_COLORS,
-	VBO_NORMALS,
-	VBO_UV0,
-	
-	VBO_LIMIT
+	VBO_LIMIT = 2
 };
 
 struct GL32VertexBuffer : public VertexBuffer
@@ -62,6 +57,119 @@ struct GL32VertexBuffer : public VertexBuffer
 	GLuint vbo[ VBO_LIMIT ];
 	GLenum gl_buffer_type;
 	GLenum gl_draw_type;
+	unsigned int vertex_stride;
+	
+	void allocate( renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type )
+	{
+		vao[ VAO_INTERLEAVED ] = 0;
+		memset( vbo, 0, sizeof(GLuint) );
+		gl_draw_type = vertexbuffer_drawtype_to_gl_drawtype( draw_type );
+		gl_buffer_type = vertexbuffer_buffertype_to_gl_buffertype( buffer_type );
+	}
+	
+	
+	void static_setup( renderer::VertexDescriptor & descriptor, unsigned int vertex_stride, unsigned int max_vertices, unsigned int max_indices )
+	{
+		this->vertex_stride = vertex_stride;
+		
+		gl.GenVertexArrays( VAO_LIMIT, this->vao );
+		gl.CheckError( "GenVertexArrays" );
+		
+		gl.BindVertexArray( this->vao[ VAO_INTERLEAVED ] );
+		gl.CheckError( "BindVertexArray" );
+		
+		gl.GenBuffers( VBO_LIMIT, this->vbo );
+		gl.BindBuffer( GL_ARRAY_BUFFER, this->vbo[0] );
+		gl.CheckError( "BindBuffer" );
+		
+		gl.BufferData( GL_ARRAY_BUFFER, vertex_stride * max_vertices, 0, this->gl_buffer_type );
+		gl.CheckError( "BufferData" );
+		
+		if ( max_indices > 0 )
+		{
+			gl.GenBuffers( 1, &this->vbo[1] );
+			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
+			gl.CheckError( "BindBuffer" );
+			
+			gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * max_indices, 0, this->gl_buffer_type );
+			gl.CheckError( "BufferData" );
+		}
+		
+		// reset the descriptor and iterate over the items to setup the vertex attributes
+		descriptor.reset();
+		GLenum attrib_type = GL_INVALID_ENUM;
+		VertexDescriptorType desc_type;
+		unsigned int attribID = 0;
+		unsigned int attribSize = 0;
+		unsigned int num_elements = 0;
+		unsigned int normalized = 0;
+		unsigned int offset = 0;
+		
+		for( unsigned int i = 0; i < descriptor.attribs; ++i )
+		{
+			desc_type = descriptor.description[i];
+			if ( desc_type == VD_FLOAT2 )
+			{
+				attrib_type = GL_FLOAT;
+				normalized = GL_FALSE;
+			}
+			else if ( desc_type == VD_FLOAT3 )
+			{
+				attrib_type = GL_FLOAT;
+				normalized = GL_FALSE;
+			}
+			else if ( desc_type == VD_UNSIGNED_INT )
+			{
+				attrib_type = GL_UNSIGNED_INT;
+				normalized = GL_FALSE;
+			}
+			else if ( desc_type == VD_UNSIGNED_BYTE3 )
+			{
+				attrib_type = GL_UNSIGNED_BYTE;
+				normalized = GL_TRUE;
+			}
+			else if ( desc_type == VD_UNSIGNED_BYTE4 )
+			{
+				attrib_type = GL_UNSIGNED_BYTE;
+				normalized = GL_TRUE;
+			}
+			
+			num_elements = VertexDescriptor::elements[ desc_type ];
+			attribSize = VertexDescriptor::size[ desc_type ];
+			gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_stride, (void*)offset );
+			gl.CheckError( "VertexAttribPointer" );
+			
+			gl.EnableVertexAttribArray( attribID );
+			gl.CheckError( "EnableVertexAttribArray" );
+			
+			offset += attribSize;
+			++attribID;
+		}
+		
+		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+		gl.BindVertexArray( 0 );
+
+	}
+	
+	void upload_interleaved_data( const GLvoid * data, unsigned int vertex_count )
+	{
+		gl.BindBuffer( GL_ARRAY_BUFFER, this->vbo[0] );
+		gl.CheckError( "BindBuffer GL_ARRAY_BUFFER" );
+		gl.BufferData( GL_ARRAY_BUFFER, vertex_stride * vertex_count, data, this->gl_buffer_type );
+		this->vertex_count = vertex_count;
+	}
+	
+	void upload_index_array( IndexType * indices, unsigned int index_count )
+	{
+		if ( this->vbo[1] != 0 )
+		{
+			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
+			gl.CheckError( "BindBuffer GL_ELEMENT_ARRAY_BUFFER" );
+			gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * index_count, indices, this->gl_buffer_type );
+			this->index_count = index_count;
+		}
+	}
 };
 
 
@@ -399,12 +507,12 @@ void GLCore32::post_command( renderer::DriverCommandType command, MemoryStream &
 	commands[ (command*2)+1 ]( stream, *this );
 }
 
-void GLCore32::setup_drawcall( renderer::VertexStream * vertex_stream, MemoryStream & stream )
+void GLCore32::setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStream & stream )
 {
-	GL32VertexBuffer * vb = (GL32VertexBuffer*)vertex_stream->vertexbuffer;
+	GL32VertexBuffer * vb = (GL32VertexBuffer*)vertexbuffer;
 	stream.write( vb );
 	stream.write( vb->gl_draw_type );
-	stream.write( vertex_stream->last_index ); // or vertices
+	stream.write( vb->index_count ); // or vertices
 } // setup_drawcall
 
 bool GLCore32::upload_texture_2d( renderer::TextureParameters & parameters )
@@ -508,95 +616,20 @@ void GLCore32::render_font( int x, int y, renderer::Font & font, const char * ut
 	*/
 } // render_font
 
+
+
+
 renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices )
 {
 	GL32VertexBuffer * stream = CREATE(GL32VertexBuffer);
 	assert( stream != 0 );
 	
 	// initial values for stream
-	stream->vao[ VAO_POSITIONS_ONLY ] = 0;
-	memset( stream->vbo, 0, sizeof(GLuint) );
-	stream->gl_draw_type = vertexbuffer_drawtype_to_gl_drawtype( draw_type );
-	stream->gl_buffer_type = vertexbuffer_buffertype_to_gl_buffertype( buffer_type );
-		
-	gl.GenVertexArrays( VAO_LIMIT, stream->vao );
-	gl.CheckError( "GenVertexArrays" );
+	stream->allocate( draw_type, buffer_type );		
 	
-	gl.BindVertexArray( stream->vao[ VAO_POSITIONS_ONLY ] );
-	gl.CheckError( "BindVertexArray" );
-	
-	gl.GenBuffers( VBO_LIMIT, stream->vbo );
-	gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
-	gl.CheckError( "BindBuffer" );
-	
-	gl.BufferData( GL_ARRAY_BUFFER, vertex_size * max_vertices, 0, stream->gl_buffer_type );
-	gl.CheckError( "BufferData" );
-
-	if ( max_indices > 0 )
-	{
-		gl.GenBuffers( 1, &stream->vbo[1] );
-		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, stream->vbo[1] );
-		gl.CheckError( "BindBuffer" );
-		
-		gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * max_indices, 0, stream->gl_buffer_type );
-		gl.CheckError( "BufferData" );
-	}
-
-	// reset the descriptor and iterate over the items to setup the vertex attributes
-	descriptor.reset();
-	GLenum attrib_type = GL_INVALID_ENUM;
-	VertexDescriptorType desc_type;
-	unsigned int attribID = 0;
-	unsigned int attribSize = 0;
-	unsigned int num_elements = 0;
-	unsigned int normalized = 0;
-	unsigned int offset = 0;
-	
-	for( unsigned int i = 0; i < descriptor.attribs; ++i )
-	{
-		desc_type = descriptor.description[i];
-		if ( desc_type == VD_FLOAT2 )
-		{
-			attrib_type = GL_FLOAT;
-			normalized = GL_FALSE;
-		}
-		else if ( desc_type == VD_FLOAT3 )
-		{
-			attrib_type = GL_FLOAT;
-			normalized = GL_FALSE;
-		}
-		else if ( desc_type == VD_UNSIGNED_INT )
-		{
-			attrib_type = GL_UNSIGNED_INT;
-			normalized = GL_FALSE;
-		}
-		else if ( desc_type == VD_UNSIGNED_BYTE3 )
-		{
-			attrib_type = GL_UNSIGNED_BYTE;
-			normalized = GL_TRUE;
-		}
-		else if ( desc_type == VD_UNSIGNED_BYTE4 )
-		{
-			attrib_type = GL_UNSIGNED_BYTE;
-			normalized = GL_TRUE;
-		}
-		
-		num_elements = VertexDescriptor::elements[ desc_type ];
-		attribSize = VertexDescriptor::size[ desc_type ];
-		gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_size, (void*)offset );
-		gl.CheckError( "VertexAttribPointer" );
-		
-		gl.EnableVertexAttribArray( attribID );
-		gl.CheckError( "EnableVertexAttribArray" );
-				
-		offset += attribSize;
-		++attribID;
-	}
-
-	gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
-	gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-	gl.BindVertexArray( 0 );
-		
+	// setup static interleaved arrays
+	stream->static_setup( descriptor, vertex_size, max_vertices, max_indices );
+			
 	return stream;
 } // vertexbuffer_create
 
@@ -604,7 +637,7 @@ void GLCore32::vertexbuffer_destroy( renderer::VertexBuffer * vertexbuffer )
 {
 	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	
-	gl.DeleteVertexArrays( VAO_ALL, stream->vao );
+	gl.DeleteVertexArrays( VAO_INTERLEAVED, stream->vao );
 		
 	if ( stream->vbo[0] != 0 )
 	{
@@ -625,22 +658,18 @@ void GLCore32::vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned in
 	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	assert( stream != 0 );
 	
-	gl.BindVertexArray( stream->vao[ VAO_POSITIONS_ONLY ] );
+	gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
+	gl.CheckError( "BindVertexArray" );
 	
-	gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
-	gl.CheckError( "BindBuffer GL_ARRAY_BUFFER" );
-	gl.BufferData( GL_ARRAY_BUFFER, vertex_stride * vertex_count, vertices, stream->gl_buffer_type );
+	// upload interleaved array
+	stream->upload_interleaved_data( vertices, vertex_count );
 	
-	if ( stream->vbo[1] != 0 )
-	{
-		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, stream->vbo[1] );
-		gl.CheckError( "BindBuffer GL_ELEMENT_ARRAY_BUFFER" );
-		gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * index_count, indices, stream->gl_buffer_type );
-	}
+	// upload index array
+	stream->upload_index_array( indices, index_count );
 	
 	gl.BindVertexArray( 0 );
-	gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 	gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+	gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 }
 
 
@@ -648,7 +677,7 @@ void GLCore32::vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer,
 {
 	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	assert( stream != 0 );
-	gl.BindVertexArray( stream->vao[ VAO_POSITIONS_ONLY ] );
+	gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
 	gl.CheckError( "BindVertexArray" );
 	gl.DrawElements( stream->gl_draw_type, num_indices, GL_UNSIGNED_INT, 0 );
 	gl.CheckError( "DrawElements" );
@@ -660,7 +689,7 @@ void GLCore32::vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigne
 	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	assert( stream != 0 );
 	
-	gl.BindVertexArray( stream->vao[ VAO_POSITIONS_ONLY ] );
+	gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
 	gl.CheckError( "BindVertexArray" );
 	
 	gl.DrawArrays( stream->gl_draw_type, 0, num_vertices );
@@ -672,7 +701,7 @@ renderer::VertexBuffer * GLCore32::vertexbuffer_from_geometry( renderer::VertexD
 {
 	GL32VertexBuffer * stream = CREATE(GL32VertexBuffer);
 	assert( stream != 0 );
-	
+		
 	renderer::VertexBufferBufferType buffer_type = renderer::BUFFER_STATIC;
 	if ( geometry->is_animated )
 	{
@@ -682,91 +711,56 @@ renderer::VertexBuffer * GLCore32::vertexbuffer_from_geometry( renderer::VertexD
 	unsigned int max_vertices = geometry->vertex_count;
 	unsigned int max_indices = geometry->index_count;
 	
-	// initial values for stream
-	stream->vao[ VAO_POSITIONS_ONLY ] = 0;
-	stream->gl_draw_type = vertexbuffer_drawtype_to_gl_drawtype( geometry->draw_type );
-	stream->gl_buffer_type = vertexbuffer_buffertype_to_gl_buffertype( buffer_type );
-	
-	gl.GenVertexArrays( VAO_LIMIT, stream->vao );
-	gl.CheckError( "GenVertexArrays" );
-	
-	gl.BindVertexArray( stream->vao[ VAO_POSITIONS_ONLY ] );
-	gl.CheckError( "BindVertexArray" );
-	
-	gl.GenBuffers( 1, stream->vbo );
-	gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
-	gl.CheckError( "BindBuffer" );
-	
-	// allocate positions
-	gl.BufferData( GL_ARRAY_BUFFER, vertex_stride * max_vertices, 0, stream->gl_buffer_type );
-	gl.CheckError( "BufferData" );
-	
-	if ( (geometry->draw_type == renderer::DRAW_INDEXED_TRIANGLES) && max_indices > 0 )
-	{
-		gl.GenBuffers( 1, &stream->vbo[1] );
-		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, stream->vbo[1] );
-		gl.CheckError( "BindBuffer" );
-		
-		gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * max_indices, 0, stream->gl_buffer_type );
-		gl.CheckError( "BufferData" );
-	}
-	
-	// reset the descriptor and iterate over the items to setup the vertex attributes
-	descriptor.reset();
-	GLenum attrib_type = GL_INVALID_ENUM;
-	VertexDescriptorType desc_type;
-	unsigned int attribID = 0;
-	unsigned int attribSize = 0;
-	unsigned int num_elements = 0;
-	unsigned int normalized = 0;
-	unsigned int offset = 0;
-	
-	for( unsigned int i = 0; i < descriptor.attribs; ++i )
-	{
-		desc_type = descriptor.description[i];
-		if ( desc_type == VD_FLOAT2 )
-		{
-			attrib_type = GL_FLOAT;
-			normalized = GL_FALSE;
-		}
-		else if ( desc_type == VD_FLOAT3 )
-		{
-			attrib_type = GL_FLOAT;
-			normalized = GL_FALSE;
-		}
-		else if ( desc_type == VD_UNSIGNED_INT )
-		{
-			attrib_type = GL_UNSIGNED_INT;
-			normalized = GL_FALSE;
-		}
-		else if ( desc_type == VD_UNSIGNED_BYTE3 )
-		{
-			attrib_type = GL_UNSIGNED_BYTE;
-			normalized = GL_TRUE;
-		}
-		else if ( desc_type == VD_UNSIGNED_BYTE4 )
-		{
-			attrib_type = GL_UNSIGNED_BYTE;
-			normalized = GL_TRUE;
-		}
-		
-		num_elements = VertexDescriptor::elements[ desc_type ];
-		attribSize = VertexDescriptor::size[ desc_type ];
-		gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_stride, (void*)offset );
-		gl.CheckError( "VertexAttribPointer" );
-		
-		gl.EnableVertexAttribArray( attribID );
-		gl.CheckError( "EnableVertexAttribArray" );
-		
-		offset += attribSize;
-		++attribID;
-	}
-	
-	gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
-	gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-	gl.BindVertexArray( 0 );
+	stream->allocate( geometry->draw_type, buffer_type );	
+	stream->static_setup( descriptor, vertex_stride, max_vertices, max_indices );
 	
 	return stream;
+}
+
+void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer::Geometry * geometry )
+{
+	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
+	assert( stream != 0 );
+	
+	gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
+	gl.CheckError( "BindVertexArray" );
+	
+	unsigned int data_size = geometry->vertex_count * stream->vertex_stride;
+	char * vertex_data = (char*)ALLOC( data_size );
+	MemoryStream ms;
+	ms.init( vertex_data, data_size );
+	for( size_t vertex_id = 0; vertex_id < geometry->vertex_count; ++vertex_id )
+	{
+		ms.write( &geometry->vertices[ vertex_id ], sizeof(float)*3 );
+		
+		if ( geometry->attributes & (1 << renderer::GV_COLOR) )
+		{
+			ms.write( &geometry->colors[ vertex_id ], sizeof(Color) );
+		}
+		
+		if ( geometry->attributes & (1 << renderer::GV_NORMAL) )
+		{
+			ms.write( &geometry->normals[ vertex_id ], sizeof(float)*3 );
+		}
+		
+		if ( geometry->attributes & (1 << renderer::GV_UV0) )
+		{
+			ms.write( &geometry->uvs[ vertex_id ], sizeof(renderer::UV) );
+		}
+	}
+	
+	stream->upload_interleaved_data( vertex_data, geometry->vertex_count );
+	
+	DEALLOC( vertex_data );
+	
+	if ( geometry->index_count > 0 )
+	{
+		stream->upload_index_array( geometry->indices, geometry->index_count );
+	}
+	
+	gl.BindVertexArray( 0 );
+	gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+	gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 }
 
 ///////////////////////////////

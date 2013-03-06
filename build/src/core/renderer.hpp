@@ -255,14 +255,23 @@ namespace renderer
 	
 	struct VertexBuffer
 	{
-		int num_vertices;
-		int num_indices;
+		int vertex_count;
+		int index_count;
 	}; // VertexBuffer
 	
 	struct UV
 	{
 		float u, v;
 	};
+	
+	enum GeometryVertexAttribute
+	{
+		GV_NORMAL = 0,
+		GV_COLOR,
+		GV_UV0,
+		
+		GV_MAX
+	}; // GeometryVertexAttribute
 	
 	struct Geometry
 	{
@@ -301,7 +310,7 @@ namespace renderer
 		virtual void run_command( DriverCommandType command, MemoryStream & stream ) = 0;
 		virtual void post_command( DriverCommandType command, MemoryStream & stream ) = 0;
 		
-		virtual void setup_drawcall( renderer::VertexStream * vertex_stream, MemoryStream & stream ) = 0;
+		virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStream & stream ) = 0;
 		
 		// texture
 		virtual bool upload_texture_2d( TextureParameters & parameters ) = 0;
@@ -330,6 +339,7 @@ namespace renderer
 		
 		
 		virtual renderer::VertexBuffer * vertexbuffer_from_geometry( renderer::VertexDescriptor & descriptor, renderer::Geometry * geometry ) = 0;
+		virtual void vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer::Geometry * geometry ) = 0;
 		
 //		virtual void vertexbuffer_activate( renderer::VertexBuffer & parameters ) = 0;
 //		virtual void vertexbuffer_update( renderer::VertexBuffer & parameters ) = 0;

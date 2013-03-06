@@ -50,7 +50,7 @@ int MemoryStream::read( void * destination, int num_bytes )
 	}
 	
 	// check for read violation
-	assert( (offset + num_bytes) < data_size );
+	assert( (offset + num_bytes) <= data_size );
 	
 	// copy memory and advance the pointer
 	memcpy( destination, &data[offset], num_bytes );
@@ -68,7 +68,7 @@ int MemoryStream::write( const void * src, int num_bytes )
 	}
 	
 	// check for write violation
-	assert( (offset + num_bytes) < data_size );
+	assert( (offset + num_bytes) <= data_size );
 	
 	// copy memory and advance pointer
 	memcpy( &data[offset], src, num_bytes );

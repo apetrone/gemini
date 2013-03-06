@@ -1220,7 +1220,8 @@ namespace assets
 //		render_data = 0;
 
 		attributes = 0;
-		is_animated = 0;		
+		is_animated = 0;
+		vertexbuffer = 0;
 	}
 	
 	Geometry::~Geometry()
@@ -1254,6 +1255,11 @@ namespace assets
 		{
 			DEALLOC( indices );
 			indices = 0;
+		}
+		
+		if ( this->vertexbuffer )
+		{
+			renderer::driver()->vertexbuffer_destroy( this->vertexbuffer );
 		}
 	}
 	
@@ -1301,8 +1307,12 @@ namespace assets
 			descriptor.add( VD_FLOAT2 );
 		}
 		
-//		this->vertexbuffer = renderer::driver()->vertexbuffer_from_geometry( descriptor, this );
+		this->vertexbuffer = renderer::driver()->vertexbuffer_from_geometry( descriptor, this );
 		
+		if ( !this->is_animated )
+		{
+			renderer::driver()->vertexbuffer_upload_geometry( this->vertexbuffer, this );
+		}
 //		vertexstream.create( this->vertex_count, this->index_count, renderer::BUFFER_STATIC );
 //		this->vertexbuffer = renderer::driver()->vertexbuffer_create( descriptor, this->draw_type, renderer::BUFFER_STATIC, descriptor.calculate_vertex_stride(), this->vertex_count, this->index_count );
 	}

@@ -45,7 +45,7 @@ public:
 	
 	virtual void run_command( renderer::DriverCommandType command, MemoryStream & stream );
 	virtual void post_command( renderer::DriverCommandType command, MemoryStream & stream );
-	virtual void setup_drawcall( renderer::VertexStream * vertex_stream, MemoryStream & stream );
+	virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStream & stream );
 			
 	// texture
 	virtual bool upload_texture_2d( renderer::TextureParameters & parameters );
@@ -65,6 +65,7 @@ public:
 	virtual void vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned int num_vertices );
 	
 	virtual renderer::VertexBuffer * vertexbuffer_from_geometry( renderer::VertexDescriptor & descriptor, renderer::Geometry * geometry );
+	virtual void vertexbuffer_upload_geometry( renderer::VertexBuffer * vertexbuffer, renderer::Geometry * geometry );
 	
 	// shaders
 	
