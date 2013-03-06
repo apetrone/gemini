@@ -1220,6 +1220,7 @@ namespace assets
 //		render_data = 0;
 
 		attributes = 0;
+		is_animated = 0;		
 	}
 	
 	Geometry::~Geometry()
@@ -1256,6 +1257,7 @@ namespace assets
 		}
 	}
 	
+#if 0
 	void Geometry::alloc_vertices( unsigned int num_vertices )
 	{
 		vertex_count = num_vertices;
@@ -1267,9 +1269,11 @@ namespace assets
 		index_count = num_indices;
 		indices = CREATE_ARRAY( renderer::IndexType, num_indices );
 	} // alloc_indices
-	
+#endif
+
 	void Geometry::render_setup()
 	{
+		VertexDescriptor descriptor;
 		// if we already setup this geometry; skip
 		if ( attributes > 0 )
 		{
@@ -1277,25 +1281,27 @@ namespace assets
 		}
 		
 		// always has at least a position
-		vertexstream.desc.add( VD_FLOAT3 );
+		descriptor.add( VD_FLOAT3 );
 		
 		if ( normals )
 		{
 			attributes |= (1 << GV_NORMAL);
-			vertexstream.desc.add( VD_FLOAT3 );
+			descriptor.add( VD_FLOAT3 );
 		}
 		
 		if ( colors )
 		{
 			attributes |= (1 << GV_COLOR);
-			vertexstream.desc.add( VD_UNSIGNED_BYTE4 );
+			descriptor.add( VD_UNSIGNED_BYTE4 );
 		}
 		
 		if ( uvs )
 		{
 			attributes |= (1 << GV_UV0);
-			vertexstream.desc.add( VD_FLOAT2 );
+			descriptor.add( VD_FLOAT2 );
 		}
+		
+//		this->vertexbuffer = renderer::driver()->vertexbuffer_from_geometry( descriptor, this );
 		
 //		vertexstream.create( this->vertex_count, this->index_count, renderer::BUFFER_STATIC );
 //		this->vertexbuffer = renderer::driver()->vertexbuffer_create( descriptor, this->draw_type, renderer::BUFFER_STATIC, descriptor.calculate_vertex_stride(), this->vertex_count, this->index_count );

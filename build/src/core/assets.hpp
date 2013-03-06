@@ -225,49 +225,20 @@ namespace assets
 		GV_UV0,
 		
 		GV_MAX
-	};
+	}; // GeometryVertexAttribute
 	
-	struct UV
-	{
-		float u, v;
-	};
 	
-	struct Geometry
-	{
-		enum
-		{
-			DRAW_LINES = 0,
-			DRAW_TRIANGLES = 1,
-			DRAW_PARTICLES = 2,
-		};
-		
-		unsigned int vertex_count;
-		unsigned int index_count;
-		renderer::VertexBufferDrawType draw_type;
-		
-		glm::vec3 * vertices;
-		glm::vec3 * normals;
-		Color * colors;
-		UV * uvs;
-		renderer::IndexType * indices;
-		
+	struct Geometry : public renderer::Geometry
+	{		
 		StackString<128> name;
-		
 		unsigned int material_id;
-		unsigned short attributes;
-		
+				
 		Geometry();
 		~Geometry();
-		void alloc_vertices( unsigned int num_vertices );
-		void alloc_indices( unsigned int num_indices );
-		
-//		RenderData * render_data;
-		renderer::VertexStream vertexstream;
 
 		// set this geometry up for rendering
 		void render_setup();
 		
-
 	}; // Geometry
 	
 	

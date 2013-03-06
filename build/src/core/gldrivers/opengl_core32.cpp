@@ -38,10 +38,28 @@ enum GL32DrawCallType
 using namespace renderer;
 
 
+enum GL32VAOType
+{
+	VAO_POSITIONS_ONLY,
+	VAO_ALL,
+	
+	VAO_LIMIT
+};
+
+enum GL32VBOType
+{
+	VBO_POSITION,
+	VBO_COLORS,
+	VBO_NORMALS,
+	VBO_UV0,
+	
+	VBO_LIMIT
+};
+
 struct GL32VertexBuffer : public VertexBuffer
 {
-	GLuint vao;
-	GLuint vbo[2];
+	GLuint vao[ VAO_LIMIT ];
+	GLuint vbo[ VBO_LIMIT ];
 	GLenum gl_buffer_type;
 	GLenum gl_draw_type;
 };
@@ -496,19 +514,18 @@ renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescript
 	assert( stream != 0 );
 	
 	// initial values for stream
-	stream->vao = 0;
-	stream->vbo[0] = 0;
-	stream->vbo[1] = 0;
+	stream->vao[ VAO_POSITIONS_ONLY ] = 0;
+	memset( stream->vbo, 0, sizeof(GLuint) );
 	stream->gl_draw_type = vertexbuffer_drawtype_to_gl_drawtype( draw_type );
 	stream->gl_buffer_type = vertexbuffer_buffertype_to_gl_buffertype( buffer_type );
 		
-	gl.GenVertexArrays( 1, &stream->vao );
+	gl.GenVertexArrays( VAO_LIMIT, stream->vao );
 	gl.CheckError( "GenVertexArrays" );
 	
-	gl.BindVertexArray( stream->vao );
+	gl.BindVertexArray( stream->vao[ VAO_POSITIONS_ONLY ] );
 	gl.CheckError( "BindVertexArray" );
 	
-	gl.GenBuffers( 1, stream->vbo );
+	gl.GenBuffers( VBO_LIMIT, stream->vbo );
 	gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
 	gl.CheckError( "BindBuffer" );
 	
@@ -587,11 +604,8 @@ void GLCore32::vertexbuffer_destroy( renderer::VertexBuffer * vertexbuffer )
 {
 	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	
-	if ( stream->vao != 0 )
-	{
-		gl.DeleteVertexArrays( 1, &stream->vao );
-	}
-	
+	gl.DeleteVertexArrays( VAO_ALL, stream->vao );
+		
 	if ( stream->vbo[0] != 0 )
 	{
 		gl.DeleteBuffers( 1, stream->vbo );
@@ -611,7 +625,7 @@ void GLCore32::vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned in
 	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	assert( stream != 0 );
 	
-	gl.BindVertexArray( stream->vao );
+	gl.BindVertexArray( stream->vao[ VAO_POSITIONS_ONLY ] );
 	
 	gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
 	gl.CheckError( "BindBuffer GL_ARRAY_BUFFER" );
@@ -634,7 +648,7 @@ void GLCore32::vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer,
 {
 	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	assert( stream != 0 );
-	gl.BindVertexArray( stream->vao );
+	gl.BindVertexArray( stream->vao[ VAO_POSITIONS_ONLY ] );
 	gl.CheckError( "BindVertexArray" );
 	gl.DrawElements( stream->gl_draw_type, num_indices, GL_UNSIGNED_INT, 0 );
 	gl.CheckError( "DrawElements" );
@@ -646,12 +660,113 @@ void GLCore32::vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigne
 	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	assert( stream != 0 );
 	
-	gl.BindVertexArray( stream->vao );
+	gl.BindVertexArray( stream->vao[ VAO_POSITIONS_ONLY ] );
 	gl.CheckError( "BindVertexArray" );
 	
 	gl.DrawArrays( stream->gl_draw_type, 0, num_vertices );
 	gl.CheckError( "DrawArrays" );
 	gl.BindVertexArray( 0 );
+}
+
+renderer::VertexBuffer * GLCore32::vertexbuffer_from_geometry( renderer::VertexDescriptor & descriptor, renderer::Geometry * geometry )
+{
+	GL32VertexBuffer * stream = CREATE(GL32VertexBuffer);
+	assert( stream != 0 );
+	
+	renderer::VertexBufferBufferType buffer_type = renderer::BUFFER_STATIC;
+	if ( geometry->is_animated )
+	{
+		buffer_type = renderer::BUFFER_STREAM;
+	}
+	unsigned int vertex_stride = descriptor.calculate_vertex_stride();
+	unsigned int max_vertices = geometry->vertex_count;
+	unsigned int max_indices = geometry->index_count;
+	
+	// initial values for stream
+	stream->vao[ VAO_POSITIONS_ONLY ] = 0;
+	stream->gl_draw_type = vertexbuffer_drawtype_to_gl_drawtype( geometry->draw_type );
+	stream->gl_buffer_type = vertexbuffer_buffertype_to_gl_buffertype( buffer_type );
+	
+	gl.GenVertexArrays( VAO_LIMIT, stream->vao );
+	gl.CheckError( "GenVertexArrays" );
+	
+	gl.BindVertexArray( stream->vao[ VAO_POSITIONS_ONLY ] );
+	gl.CheckError( "BindVertexArray" );
+	
+	gl.GenBuffers( 1, stream->vbo );
+	gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
+	gl.CheckError( "BindBuffer" );
+	
+	// allocate positions
+	gl.BufferData( GL_ARRAY_BUFFER, vertex_stride * max_vertices, 0, stream->gl_buffer_type );
+	gl.CheckError( "BufferData" );
+	
+	if ( (geometry->draw_type == renderer::DRAW_INDEXED_TRIANGLES) && max_indices > 0 )
+	{
+		gl.GenBuffers( 1, &stream->vbo[1] );
+		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, stream->vbo[1] );
+		gl.CheckError( "BindBuffer" );
+		
+		gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * max_indices, 0, stream->gl_buffer_type );
+		gl.CheckError( "BufferData" );
+	}
+	
+	// reset the descriptor and iterate over the items to setup the vertex attributes
+	descriptor.reset();
+	GLenum attrib_type = GL_INVALID_ENUM;
+	VertexDescriptorType desc_type;
+	unsigned int attribID = 0;
+	unsigned int attribSize = 0;
+	unsigned int num_elements = 0;
+	unsigned int normalized = 0;
+	unsigned int offset = 0;
+	
+	for( unsigned int i = 0; i < descriptor.attribs; ++i )
+	{
+		desc_type = descriptor.description[i];
+		if ( desc_type == VD_FLOAT2 )
+		{
+			attrib_type = GL_FLOAT;
+			normalized = GL_FALSE;
+		}
+		else if ( desc_type == VD_FLOAT3 )
+		{
+			attrib_type = GL_FLOAT;
+			normalized = GL_FALSE;
+		}
+		else if ( desc_type == VD_UNSIGNED_INT )
+		{
+			attrib_type = GL_UNSIGNED_INT;
+			normalized = GL_FALSE;
+		}
+		else if ( desc_type == VD_UNSIGNED_BYTE3 )
+		{
+			attrib_type = GL_UNSIGNED_BYTE;
+			normalized = GL_TRUE;
+		}
+		else if ( desc_type == VD_UNSIGNED_BYTE4 )
+		{
+			attrib_type = GL_UNSIGNED_BYTE;
+			normalized = GL_TRUE;
+		}
+		
+		num_elements = VertexDescriptor::elements[ desc_type ];
+		attribSize = VertexDescriptor::size[ desc_type ];
+		gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_stride, (void*)offset );
+		gl.CheckError( "VertexAttribPointer" );
+		
+		gl.EnableVertexAttribArray( attribID );
+		gl.CheckError( "EnableVertexAttribArray" );
+		
+		offset += attribSize;
+		++attribID;
+	}
+	
+	gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+	gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+	gl.BindVertexArray( 0 );
+	
+	return stream;
 }
 
 ///////////////////////////////
