@@ -89,6 +89,96 @@ namespace renderer
 
 namespace renderer
 {
+	
+	// VertexTypeDescriptor
+	unsigned int VertexDescriptor::size[ VD_TOTAL ] =
+	{
+		sizeof(float) * 2,
+		sizeof(float) * 3,
+		sizeof(float) * 4,
+		sizeof(unsigned char) * 3,
+		sizeof(unsigned char) * 4,
+		sizeof(unsigned int)
+	};
+	
+	unsigned int VertexDescriptor::elements[ VD_TOTAL ] =
+	{
+		2,
+		3,
+		4,
+		3,
+		4,
+		1
+	};
+	
+	VertexDescriptor::VertexDescriptor()
+	{
+		id = 0;
+		memset( description, 0, sizeof(VertexDescriptorType) * MAX_DESCRIPTORS );
+	}
+	
+	void VertexDescriptor::add( VertexDescriptorType desc )
+	{
+		description[ id ] = desc;
+		++id;
+		
+		if ( id >= MAX_DESCRIPTORS-1 )
+		{
+			printf( "Reached MAX_DESCRIPTORS. Resetting\n" );
+			id = 0;
+		}
+		
+		attribs = id;
+	} // add
+	
+	VertexDescriptorType VertexDescriptor::get( int i )
+	{
+		return description[ i ];
+	} // get
+	
+	void VertexDescriptor::reset()
+	{
+		attribs = id;
+		id = 0;
+	} // reset
+	
+	unsigned int VertexDescriptor::calculate_vertex_stride()
+	{
+		unsigned int size = 0;
+		unsigned int attribSize = 0;
+		unsigned int descriptor;
+		
+		for( unsigned int i = 0; i < attribs; ++i )
+		{
+			descriptor = description[i];
+			if ( descriptor == VD_FLOAT2 )
+			{
+				attribSize = (sizeof(float)*2);
+			}
+			else if ( descriptor == VD_FLOAT3 )
+			{
+				attribSize = (sizeof(float)*3);
+			}
+			else if ( descriptor == VD_UNSIGNED_INT )
+			{
+				attribSize = sizeof(unsigned int);
+			}
+			else if ( descriptor == VD_UNSIGNED_BYTE3 )
+			{
+				attribSize = sizeof(unsigned char) * 3;
+			}
+			else if ( descriptor == VD_UNSIGNED_BYTE4 )
+			{
+				attribSize = sizeof(unsigned char) * 4;
+			}
+			
+			size += attribSize;
+		}
+		
+		return size;
+	} // calculate_vertex_stride
+
+
 	ShaderKeyValuePair::ShaderKeyValuePair()
 	{
 		this->first = 0;
@@ -109,7 +199,7 @@ namespace renderer
 		this->first = (char*)ALLOC( length + 1 );
 		memset( this->first, 0, length+1 );
 		xstr_ncpy( this->first, key, length );
-	}
+	} // set_key
 
 	ShaderParameters::ShaderParameters()
 	{
@@ -146,7 +236,7 @@ namespace renderer
 		{
 			this->attributes[i].first = 0;
 		}
-	}
+	} // alloc_attributes
 	
 	void ShaderParameters::alloc_uniforms( unsigned int uniform_count )
 	{
@@ -156,7 +246,7 @@ namespace renderer
 		{
 			this->uniforms[i].first = 0;
 		}
-	}
+	} // alloc_uniforms
 	
 	void ShaderParameters::set_frag_data_location( const char * location )
 	{
@@ -164,5 +254,5 @@ namespace renderer
 		this->frag_data_location = (char*)ALLOC( len+1 );
 		memset( frag_data_location, 0, len );
 		xstr_ncpy( this->frag_data_location, location, len );
-	}
+	} // set_frag_data_location
 }; // namespace renderer

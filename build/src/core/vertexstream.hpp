@@ -25,6 +25,9 @@
 
 namespace renderer
 {
+	// By default, this provides an array of Vertex data interleaved.
+	// In order to use this data with separate data arrays,
+	// 
 	struct VertexStream
 	{
 		unsigned int _debug_flags;
@@ -42,7 +45,7 @@ namespace renderer
 
 		VertexDescriptor desc;
 		
-		void alloc( unsigned int bytes_per_vertex, IndexType max_vertices, IndexType max_indices = 0 );
+		void alloc( IndexType max_vertices, IndexType max_indices = 0 );
 		void reset();
 		void dealloc();
 		unsigned int bytes_used();
@@ -50,11 +53,14 @@ namespace renderer
 		VertexType * operator[](int index);
 		void append_indices( IndexType * inIndices, IndexType num_indices );
 		
-		void create( unsigned int vertex_stride, IndexType max_vertices, IndexType max_indices, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type = renderer::BUFFER_STATIC );
+		void create( IndexType max_vertices, IndexType max_indices, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type = renderer::BUFFER_STATIC );
 		void destroy();
 		void update();
 		void draw_elements();
 		void draw();
+		
+		
+//		void 
 	}; // VertexStream
 
 }; // namespace renderer

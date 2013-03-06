@@ -29,10 +29,9 @@
 
 namespace renderer
 {
-	void VertexStream::alloc( unsigned int bytes_per_vertex, IndexType max_vertices, IndexType max_indices )
+	void VertexStream::alloc( IndexType max_vertices, IndexType max_indices )
 	{
 		total_vertices = max_vertices;
-		vertex_stride = bytes_per_vertex;
 		total_indices = 0;
 		vertices = new VertexType[ (vertex_stride*total_vertices) ];
 		last_vertex = 0;
@@ -152,8 +151,9 @@ namespace renderer
 		highest_index++;
 	} // append_indices
 
-	void VertexStream::create( unsigned int vertex_stride, IndexType max_vertices, IndexType max_indices, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type )
+	void VertexStream::create( IndexType max_vertices, IndexType max_indices, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type )
 	{
+		vertex_stride = desc.calculate_vertex_stride();
 		reset();
 		
 		if ( desc.attribs == 0 )
@@ -163,7 +163,7 @@ namespace renderer
 
 		//printf( "template_vertex_size = %i bytes <-> vertexStride = %i bytes\n", sizeof(VertexType), vertexStride );
 
-		alloc( vertex_stride, max_vertices, max_indices );
+		alloc( max_vertices, max_indices );
 		
 		this->vertexbuffer = renderer::driver()->vertexbuffer_create(
 			this->desc,
@@ -195,7 +195,7 @@ namespace renderer
 			last_index = total_indices-1;
 		}
 		
-		renderer::driver()->vertexbuffer_bufferdata( this->vertexbuffer, vertex_stride, this->last_vertex, this->vertices, this->last_index, this->indices );
+		renderer::driver()->vertexbuffer_bufferdata( this->vertexbuffer, this->vertex_stride, this->last_vertex, this->vertices, this->last_index, this->indices );
 	} // update
 
 	void VertexStream::draw_elements()
@@ -207,58 +207,4 @@ namespace renderer
 	{
 		renderer::driver()->vertexbuffer_draw( this->vertexbuffer, this->last_vertex );
 	} // draw
-
-	// VertexTypeDescriptor
-	
-	
-	unsigned int VertexDescriptor::size[ VD_TOTAL ] =
-	{
-		sizeof(float) * 2,
-		sizeof(float) * 3,
-		sizeof(float) * 4,
-		sizeof(unsigned char) * 3,
-		sizeof(unsigned char) * 4,
-		sizeof(unsigned int)
-	};
-	
-	unsigned int VertexDescriptor::elements[ VD_TOTAL ] =
-	{
-		2,
-		3,
-		4,
-		3,
-		4,
-		1
-	};
-	
-	VertexDescriptor::VertexDescriptor()
-	{
-		id = 0;
-		memset( description, 0, sizeof(VertexDescriptorType) * MAX_DESCRIPTORS );
-	}
-
-	void VertexDescriptor::add( VertexDescriptorType desc )
-	{
-		description[ id ] = desc;
-		++id;
-
-		if ( id >= MAX_DESCRIPTORS-1 )
-		{
-			printf( "Reached MAX_DESCRIPTORS. Resetting\n" );
-			id = 0;
-		}
-
-		attribs = id;
-	}
-
-	VertexDescriptorType VertexDescriptor::get( int i )
-	{
-		return description[ i ];
-	}
-
-	void VertexDescriptor::reset()
-	{
-		attribs = id;
-		id = 0;
-	}
 }; // namespace renderer

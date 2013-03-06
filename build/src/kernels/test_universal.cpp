@@ -98,7 +98,7 @@ struct RenderStream
 			stream.seek( renderstate->offset, 1 );
 			driver->run_command( (renderer::DriverCommandType)renderstate->type, stream );
 		}
-		
+#if 0
 		for( int state_id = 0; state_id < num_commands; state_id++ )
 		{
 			renderstate = &commands[ state_id ];
@@ -107,7 +107,7 @@ struct RenderStream
 			stream.seek( renderstate->offset, 1 );
 			driver->post_command( (renderer::DriverCommandType)renderstate->type, stream );
 		}
-
+#endif
 
 	} // run_commands
 	
@@ -313,6 +313,7 @@ class TestUniversal : public kernel::IApplication,
 	renderer::ShaderProgram shader_program;
 	renderer::VertexStream vb;
 	assets::Texture * tex;
+	assets::Mesh * mesh;
 	
 	float alpha;
 	int alpha_delta;
@@ -523,9 +524,7 @@ public:
 		vb.desc.add( renderer::VD_UNSIGNED_BYTE4 );
 		vb.desc.add( renderer::VD_FLOAT2 );
 		
-
-		
-		vb.create(sizeof(FontVertexType), 512, 512, renderer::DRAW_INDEXED_TRIANGLES );
+		vb.create(512, 512, renderer::DRAW_INDEXED_TRIANGLES );
 
 		FontVertexType * v = (FontVertexType*)vb.request( 4 );
 		if ( v )
@@ -605,7 +604,7 @@ public:
 		}
 
 		// test mesh loading
-		assets::Mesh * mesh = assets::load_mesh( "models/plasma3" );
+		mesh = assets::load_mesh( "models/plasma3" );
 		if ( mesh )
 		{
 			LOGV( "loaded mesh '%s'\n", mesh->path() );
@@ -645,6 +644,12 @@ public:
 		}
 		vb.update();
 #endif
+
+
+		if ( mesh )
+		{
+//			mesh->prepare_geometry();
+		}
 	}
 
 	virtual void tick( kernel::Params & params )
@@ -663,11 +668,27 @@ public:
 		rs.add_uniform_matrix4( 0, &modelview );
 		rs.add_uniform_matrix4( 4, &projection );
 		rs.add_sampler2d( 0, tex->texture_id, 8 );
-		
+
 		rs.add_state( renderer::STATE_BLEND, 1 );
 		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 	
+		if ( 0 )
+		{
+			for( unsigned int geo_id = 0; geo_id < mesh->total_geometry; ++geo_id )
+			{
+				assets::Geometry * g = &mesh->geometry[ geo_id ];
+				assets::Material * material = assets::material_by_id( g->material_id );
+				assets::Shader * shader = assets::find_compatible_shader( material->requirements );
+				
+				if ( !shader )
+				{
+					return;
+				}
+			}
+		}
+	
 		rs.add_draw_call( &vb );
+
 		
 		rs.run_commands();
 	}
