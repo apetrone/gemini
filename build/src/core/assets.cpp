@@ -615,7 +615,7 @@ namespace assets
 		for( int i = total_shaders-1; i >= 0; --i )
 		{
 			shader = &_shader_programs[ i ];
-			LOGV( "[%i] attributes: %i sha: %i\n", shader->id, attributes, shader->capabilities );
+//			LOGV( "[%i] attributes: %i sha: %i\n", shader->id, attributes, shader->capabilities );
 			if ( (attributes & shader->capabilities) == shader->capabilities )
 			{
 				return shader;
@@ -1218,6 +1218,8 @@ namespace assets
 		index_count = 0;
 		draw_type = renderer::DRAW_TRIANGLES;
 //		render_data = 0;
+
+		attributes = 0;
 	}
 	
 	Geometry::~Geometry()
@@ -1266,6 +1268,39 @@ namespace assets
 		indices = CREATE_ARRAY( renderer::IndexType, num_indices );
 	} // alloc_indices
 	
+	void Geometry::render_setup()
+	{
+#if 0
+		// if we already setup this geometry; skip
+		if ( attributes > 0 )
+		{
+			return;
+		}
+		
+		// always has at least a position
+		vertexstream.desc.add( VD_FLOAT3 );
+		
+		if ( normals )
+		{
+			attributes |= (1 << GV_NORMAL);
+			vertexstream.desc.add( VD_FLOAT3 );
+		}
+		
+		if ( colors )
+		{
+			attributes |= (1 << GV_COLOR);
+			vertexstream.desc.add( VD_UNSIGNED_BYTE4 );
+		}
+		
+		if ( uvs )
+		{
+			attributes |= (1 << GV_UV0);
+			vertexstream.desc.add( VD_FLOAT2 );
+		}
+#endif
+//		vertexstream.create( this->vertex_count, this->index_count, renderer::BUFFER_STATIC );
+//		this->vertexbuffer = renderer::driver()->vertexbuffer_create( descriptor, this->draw_type, renderer::BUFFER_STATIC, descriptor.calculate_vertex_stride(), this->vertex_count, this->index_count );
+	}
 	
 	Mesh::Mesh()
 	{
@@ -1295,6 +1330,20 @@ namespace assets
 		
 		init();
 	} // purge
+	
+	void Mesh::release()
+	{
+		purge();
+	} // release
+	
+	void Mesh::prepare_geometry()
+	{
+		for( unsigned int geo_id = 0; geo_id < total_geometry; ++geo_id )
+		{
+			assets::Geometry * g = &geometry[ geo_id ];
+			g->render_setup();
+		}
+	} // prepare_geometry
 	
 	unsigned int get_total_meshes()
 	{
@@ -1331,10 +1380,7 @@ namespace assets
 		return mesh_lib->find_with_path( filename );
 	} // mesh_by_name
 		
-	void Mesh::release()
-	{
-		purge();
-	} // release
+
 	
 	AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, unsigned int flags )
 	{

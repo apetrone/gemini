@@ -218,6 +218,15 @@ namespace assets
 
 	// -------------------------------------------------------------
 	// Mesh
+	enum GeometryVertexAttribute
+	{
+		GV_NORMAL = 0,
+		GV_COLOR,
+		GV_UV0,
+		
+		GV_MAX
+	};
+	
 	struct UV
 	{
 		float u, v;
@@ -245,6 +254,7 @@ namespace assets
 		StackString<128> name;
 		
 		unsigned int material_id;
+		unsigned short attributes;
 		
 		Geometry();
 		~Geometry();
@@ -252,6 +262,12 @@ namespace assets
 		void alloc_indices( unsigned int num_indices );
 		
 //		RenderData * render_data;
+//		renderer::VertexStream vertexstream;
+
+		// set this geometry up for rendering
+		void render_setup();
+		
+
 	}; // Geometry
 	
 	
@@ -264,10 +280,16 @@ namespace assets
 		StackString<MAX_PATH_SIZE> path;
 		
 		Mesh();
-		void alloc( unsigned int num_geometry );
 		void init();
+		void alloc( unsigned int num_geometry );
 		void purge();
 		virtual void release();
+		
+		// prepare all geometry
+		void prepare_geometry();
+		
+		// upload all geometry
+//		void upload_geometry();
 	}; // Mesh
 	
 	
