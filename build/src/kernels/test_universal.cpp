@@ -760,13 +760,13 @@ public:
 		
 
 
-//		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
+		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
 
 //		rs.add_state( renderer::STATE_BLEND, 1 );
 //		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 	
 
-		if ( 1 )
+		if ( 1 && mesh )
 		{
 			for( unsigned int geo_id = 0; geo_id < mesh->total_geometry; ++geo_id )
 			{
