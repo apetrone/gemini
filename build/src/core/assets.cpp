@@ -116,6 +116,22 @@ namespace assets
 		
 	}
 	
+	
+	int Shader::get_uniform_location( const char * name )
+	{
+		for( int i = 0; i < total_uniforms; ++i )
+		{
+			if ( xstr_nicmp( uniforms[i].first, name, xstr_len(uniforms[i].first) ) == 0 )
+			{
+				//LogMsg( "uniform: %s, at %i\n", name, uniforms[i].value );
+				return uniforms[i].second;
+			}
+		}
+		
+		LOGW( "No uniform named %s (%i)\n", name, id );
+		return -1;
+	} // get_uniform_location
+	
 	void Shader::release() {}
 	
 	
@@ -476,8 +492,12 @@ namespace assets
 		int fs_len;
 		char * fs_source = fs::file_to_buffer( "shaders/uber.frag", 0, &fs_len );
 		util::strip_shader_version( fs_source, shader_version );
-		
-
+		if ( shader_version._length == 0 )
+		{
+			LOGW( "Unable to extract version from shader! Forcing to #version 150.\n" );
+			shader_version = "#version 150";
+		}
+		shader_version.append( "\n" );
 		
 		assets::Shader * shader;
 		total_shaders = total_permutations;
@@ -762,8 +782,6 @@ namespace assets
 					return util::ConfigLoad_Failure;
 				}
 				
-				
-				
 				if ( parameter->type == MP_INT )
 				{
 					Json::Value value = plist.get( "value", "" );
@@ -897,7 +915,7 @@ namespace assets
 		} //  num_parameters
 		
 		
-		calculateRequirements( material );
+		calculate_requirements( material );
 
 #if 0
 		StackString< MAX_PATH_SIZE > path = "conf/";
@@ -962,6 +980,18 @@ namespace assets
 		return 0;
 	} // materialTypeToParameterType
 	
+	int material_parameter_type_to_render_state( unsigned int type )
+	{
+		int params[] =
+		{
+			DC_UNIFORM1i,
+			DC_UNIFORM_SAMPLER_2D,
+			DC_UNIFORM_SAMPLER_CUBE,
+			DC_UNIFORM4f
+		};
+		
+		return params[ type ];
+	} // material_parameter_type_to_render_state
 	
 	unsigned int findParameterMask( StackString<64> & name )
 	{
@@ -1000,7 +1030,7 @@ namespace assets
 		return 0;
 	} // textureUnitForMap
 	
-	void calculateRequirements( Material * material )
+	void calculate_requirements( Material * material )
 	{
 		// calculate material requirements
 		material->requirements = 0;
@@ -1439,7 +1469,7 @@ namespace assets
 		parameter->type = MP_SAMPLER_2D;
 		parameter->texture_unit = textureUnitForMap( parameter->name );
 		parameter->intValue = _default_texture->texture_id;
-		calculateRequirements( _default_material );
+		calculate_requirements( _default_material );
 		mat_lib->take_ownership( "materials/default", _default_material );
 		
 	} // startup

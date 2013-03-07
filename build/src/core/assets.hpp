@@ -95,9 +95,7 @@ namespace assets
 	};
 	
 	struct Shader : public virtual Asset, public virtual renderer::ShaderParameters, public virtual renderer::ShaderProgram
-	{
-		unsigned int capabilities;
-		
+	{		
 		Shader();
 		~Shader();
 		
@@ -213,9 +211,10 @@ namespace assets
 	void insertMaterial( const char * name, assets::Material * material );
 	unsigned int findParameterMask( StackString<64> & name );
 	unsigned int textureUnitForMap( StackString<64> & name );
-	void calculateRequirements( Material * material );
+	void calculate_requirements( Material * material );
 	unsigned int materialTypeToParameterType( const char * name );
-
+	int material_parameter_type_to_render_state( unsigned int type );
+	
 	// -------------------------------------------------------------
 	// Mesh
 	

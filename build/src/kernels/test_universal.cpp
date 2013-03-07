@@ -40,7 +40,7 @@
 #include "camera.hpp"
 
 
-
+glm::mat4 objectMatrix;
 
 const unsigned int MAX_RENDERER_STREAM_BYTES = 32768;
 const unsigned int MAX_RENDERER_STREAM_COMMANDS = 32768;
@@ -142,12 +142,19 @@ struct RenderStream
 		stream.write( height );
 	}
 	
-	void add_sampler2d( int texture_unit, int texture_id, int uniform_location )
+	void add_uniform1i( int uniform_location, int value )
+	{
+		add_command( renderer::DC_UNIFORM1i );
+		stream.write( uniform_location );
+		stream.write( value );
+	}
+	
+	void add_sampler2d( int uniform_location, int texture_unit, int texture_id )
 	{
 		add_command( renderer::DC_UNIFORM_SAMPLER_2D );
+		stream.write( uniform_location );
 		stream.write( texture_unit );
 		stream.write( texture_id );
-		stream.write( uniform_location );
 	}
 	
 	void add_state( renderer::DriverState state, int enable )
@@ -170,14 +177,14 @@ struct RenderStream
 		stream.write( shader->object );
 	}	
 	
-	void add_uniform3f( unsigned int location, const glm::vec3 * data )
+	void add_uniform3f( int location, const glm::vec4 * data )
 	{
 		add_command( renderer::DC_UNIFORM3f );
 		stream.write( data );
 		stream.write( location );
 	}
 	
-	void add_uniform_matrix4( unsigned int location, const glm::mat4 * data )
+	void add_uniform_matrix4( int location, const glm::mat4 * data )
 	{
 		add_command( renderer::DC_UNIFORMMATRIX4 );
 		stream.write( data );
@@ -186,6 +193,7 @@ struct RenderStream
 	
 	void add_draw_call( renderer::VertexBuffer * vertexbuffer )
 	{
+		assert( vertexbuffer != 0 );
 		add_command( renderer::DC_DRAWCALL );
 		renderer::driver()->setup_drawcall( vertexbuffer, this->stream );
 	}
@@ -213,6 +221,7 @@ renderer::ShaderObject create_shader_from_file( const char * shader_path, render
 			LOGW( "Unable to extract version from shader! Forcing to #version 150.\n" );
 			version = "#version 150";
 		}
+		version.append( "\n" );
 				
 		// specify version string first, followed by any defines, then the actual shader source
 		if ( preprocessor_defines == 0 )
@@ -326,27 +335,60 @@ class TestUniversal : public kernel::IApplication,
 		glm::vec4 * object_matrix;
 	};
 	
-	void stream_geometry( MemoryStream & stream, assets::Geometry * geo, GeneralParameters & params )
+	void stream_geometry( RenderStream & rs, assets::Geometry * geo )
 	{
 		assert( geo != 0 );
 		assets::Material * material = assets::material_by_id( geo->material_id );
-		assets::Shader * shader = 0;
-		
-		unsigned int attribute_flags = 0;
-		
-		shader = assets::find_compatible_shader( attribute_flags + material->requirements );
-		
+		assert( material != 0 );
+//		LOGV( "material: %i\n", material->Id() );
+		assets::Shader * shader = assets::find_compatible_shader( geo->attributes + material->requirements );
+		assert( shader != 0 );
+
 		if ( !shader )
 		{
+			LOGE( "Unable to find shader!\n" );
 			return;
 		}
 		
+//		LOGV( "binding shader: %i\n", shader->id );
+		rs.add_shader( shader );
 		
-//		renderer::IRenderDriver * driver = renderer::driver();
-//		driver->shaderprogram_activate( *shader );
+		rs.add_uniform_matrix4( shader->get_uniform_location("modelviewMatrix"), &camera.matCam );
+		rs.add_uniform_matrix4( shader->get_uniform_location("projectionMatrix"), &camera.matProj );
 		
+
+		rs.add_uniform_matrix4( shader->get_uniform_location("objectMatrix"), &objectMatrix );
+				
+		// setup shader parameters
+		assets::Material::Parameter * parameter;
+		for( int p = 0; p < material->num_parameters; ++p )
+		{
+			parameter = &material->parameters[ p ];
+			int renderstate = assets::material_parameter_type_to_render_state( parameter->type );
+			int uniform_location = shader->get_uniform_location( parameter->name() );
+
+			// this needs to be converted to a table of function pointers...
+			if ( renderstate == renderer::DC_UNIFORM1i )
+			{
+				rs.add_uniform1i( uniform_location, parameter->intValue );
+			}
+			else if ( renderstate == renderer::DC_UNIFORM3f || renderstate == renderer::DC_UNIFORM4f )
+			{
+				rs.add_uniform3f( uniform_location, &parameter->vecValue );
+			}
+			else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_2D )
+			{
+				rs.add_sampler2d( uniform_location, parameter->texture_unit, parameter->intValue );
+			}
+			else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_CUBE )
+			{
+				// ...
+			}
+
+		}
 		
-	}
+		rs.add_draw_call( geo->vertexbuffer );
+	} // stream_geometry
 	
 	
 	
@@ -578,6 +620,8 @@ public:
 
 		vb.update();
 #endif
+
+#if 1
 		geo.vertex_count = 4;
 		geo.index_count = 6;
 		geo.vertices = CREATE_ARRAY( glm::vec3, 4 );
@@ -604,7 +648,8 @@ public:
 
 
 		geo.render_setup();
-		
+#endif
+
 #if 0
 		HashTable<int> t;
 		
@@ -641,7 +686,7 @@ public:
 #endif
 
 		// test mesh loading
-		mesh = assets::load_mesh( "models/plane" );
+		mesh = assets::load_mesh( "models/plasma3" );
 		if ( mesh )
 		{
 			LOGV( "loaded mesh '%s'\n", mesh->path() );
@@ -701,11 +746,6 @@ public:
 		vb.update();
 #endif
 
-
-		if ( mesh )
-		{
-			mesh->prepare_geometry();
-		}
 	}
 
 	virtual void tick( kernel::Params & params )
@@ -715,42 +755,37 @@ public:
 		rs.add_clear( 0x00004000 | 0x00000100 );
 		rs.add_viewport( 0, 0, (int)params.window_width, (int)params.window_height );
 		
-//		glm::mat4 modelview;
-//		modelview = glm::translate( modelview, glm::vec3( (params.window_width/2.0f)-(TEST_SIZE/2.0f), (params.window_height/2.0f)-(TEST_SIZE/2.0f), 0 ) );
-//		glm::mat4 projection = glm::ortho( 0.0f, (float)params.window_width, (float)params.window_height, 0.0f, -0.5f, 255.0f );
-		
-		
-		rs.add_shader( &shader_program );
-		
-		rs.add_uniform_matrix4( 0, &camera.matCam );
-		rs.add_uniform_matrix4( 4, &camera.matProj );
-		rs.add_sampler2d( 0, tex->texture_id, 8 );
 
-		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
+		
+		
 
-		rs.add_state( renderer::STATE_BLEND, 1 );
-		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+
+//		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
+
+//		rs.add_state( renderer::STATE_BLEND, 1 );
+//		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 	
+
 		if ( 1 )
 		{
 			for( unsigned int geo_id = 0; geo_id < mesh->total_geometry; ++geo_id )
 			{
+				
 				assets::Geometry * g = &mesh->geometry[ geo_id ];
-				assets::Material * material = assets::material_by_id( g->material_id );
-				assets::Shader * shader = assets::find_compatible_shader( material->requirements );
-				
-				rs.add_draw_call( g->vertexbuffer );
-				
-				if ( !shader )
-				{
-					return;
-				}
+				stream_geometry( rs, g );
 			}
 		}
 		else
 		{
-	
-//		rs.add_draw_call( vb.vertexbuffer );
+			rs.add_shader( &shader_program );
+			glm::mat4 modelview;
+			modelview = glm::translate( modelview, glm::vec3( (params.window_width/2.0f)-(TEST_SIZE/2.0f), (params.window_height/2.0f)-(TEST_SIZE/2.0f), 0 ) );
+			glm::mat4 projection = glm::ortho( 0.0f, (float)params.window_width, (float)params.window_height, 0.0f, -0.5f, 255.0f );
+			rs.add_uniform_matrix4( 0, &camera.matCam );
+			rs.add_uniform_matrix4( 4, &camera.matProj );
+			rs.add_sampler2d( 8, 0, tex->texture_id );
+//			rs.add_draw_call( vb.vertexbuffer );
+//			stream_geometry( rs, &geo );
 			rs.add_draw_call( geo.vertexbuffer );
 		}
 		

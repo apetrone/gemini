@@ -291,15 +291,27 @@ void c_uniform_matrix4( MemoryStream & stream, GLCore32 & renderer )
 	gl.CheckError( "uniform matrix 4" );
 }
 
+void c_uniform1i( MemoryStream & stream, GLCore32 & renderer )
+{
+	int uniform_location;
+	int value;
+	stream.read( uniform_location );
+	stream.read( value );
+
+	gl.Uniform1i( uniform_location, value );
+	gl.CheckError( "uniform1i" );
+}
+
 void c_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 {
+	int uniform_location;
 	int texture_unit;
 	int texture_id;
-	int uniform_location;
 	
+	stream.read( uniform_location );
 	stream.read( texture_unit );
 	stream.read( texture_id );
-	stream.read( uniform_location );
+	
 
 	//	if ( last_texture[ texture_unit ] != texture_id )
 	{
@@ -319,13 +331,13 @@ void c_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 
 void p_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 {
+	int uniform_location;
 	int texture_unit;
 	int texture_id;
-	int uniform_location;
-	
+		
+	stream.read( uniform_location );
 	stream.read( texture_unit );
 	stream.read( texture_id );
-	stream.read( uniform_location );
 	
 	gl.ActiveTexture( GL_TEXTURE0+texture_unit );
 	gl.CheckError( "ActiveTexture" );
@@ -457,7 +469,7 @@ render_command_function commands[] = {
 	c_uniform_matrix4, // uniform_matrix4
 	c_noop,
 	
-	c_noop, // uniform1i
+	c_uniform1i, // uniform1i
 	c_noop,
 	
 	c_noop, // uniform3f
