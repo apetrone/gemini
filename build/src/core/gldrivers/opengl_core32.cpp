@@ -206,11 +206,12 @@ GLenum image_to_internal_format( unsigned int image_flags )
 
 GLenum driver_state_to_gl_state( DriverState state )
 {
-	switch( state )
-	{
-		case STATE_BLEND: return GL_BLEND;
-		default: return GL_FALSE;
-	}
+	GLenum state_list[] = {
+		GL_BLEND,
+		GL_DEPTH_TEST,
+	};
+
+	return state_list[ state ];
 }
 
 GLenum convert_blendstate( RenderBlendType state )
@@ -337,7 +338,7 @@ void c_clear( MemoryStream & stream, GLCore32 & renderer )
 {
 	unsigned int bits;
 	stream.read(bits);
-	gl.Clear( bits | GL_DEPTH_BUFFER_BIT );
+	gl.Clear( bits );
 }
 
 void c_clearcolor( MemoryStream & stream, GLCore32 & renderer )

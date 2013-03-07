@@ -37,7 +37,7 @@
 
 
 #include "configloader.hpp"
-
+#include "camera.hpp"
 
 
 
@@ -196,7 +196,7 @@ struct RenderStream
 
 
 
-const float TEST_SIZE = 200.0f;
+const float TEST_SIZE = 10.0f;
 
 renderer::ShaderObject create_shader_from_file( const char * shader_path, renderer::ShaderObjectType type, const char * preprocessor_defines )
 {
@@ -317,15 +317,13 @@ class TestUniversal : public kernel::IApplication,
 	
 	float alpha;
 	int alpha_delta;
-	
+	Camera camera;
 	
 	struct GeneralParameters
 	{
 		glm::vec4 * modelview_matrix;
 		glm::vec4 * projection_project;
 		glm::vec4 * object_matrix;
-		
-		unsigned int draw_call; // ?
 	};
 	
 	void stream_geometry( MemoryStream & stream, assets::Geometry * geo, GeneralParameters & params )
@@ -396,7 +394,16 @@ public:
         switch( event.subtype )
         {
             case kernel::MouseMoved:
+			{
+				if ( input::state()->mouse().is_down( input::MOUSE_LEFT ) )
+				{
+					int lastx, lasty;
+					input::state()->mouse().last_mouse_position( lastx, lasty );
+					
+					camera.move_view( event.mx-lastx, event.my-lasty );
+				}
                 break;
+			}
             case kernel::MouseButton:
                 if ( event.is_down )
                 {
@@ -485,6 +492,8 @@ public:
 		}
 #endif
 
+		camera.perspective( 60, params.window_width, params.window_height, 0.1f, 512.0f );
+		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
 		
 		alpha = 0;
 		alpha_delta = 1;
@@ -623,14 +632,16 @@ public:
 
 
 		// test material loading
+#if 0
 		assets::Material * material = assets::load_material( "materials/barrel" );
 		if ( material )
 		{
 			LOGV( "loaded material '%s'\n", material->name() );
 		}
+#endif
 
 		// test mesh loading
-		mesh = assets::load_mesh( "models/plasma3" );
+		mesh = assets::load_mesh( "models/plane" );
 		if ( mesh )
 		{
 			LOGV( "loaded mesh '%s'\n", mesh->path() );
@@ -640,8 +651,6 @@ public:
 		{
 			LOGW( "unable to load mesh.\n" );
 		}
-		
-
 
 		return kernel::Success;
 	}
@@ -649,6 +658,24 @@ public:
 	
 	virtual void step( kernel::Params & params )
 	{
+		if ( input::state()->keyboard().is_down( input::KEY_W ) )
+		{
+			camera.move_forward( params.step_interval_seconds );
+		}
+		else if ( input::state()->keyboard().is_down( input::KEY_S ) )
+		{
+			camera.move_backward( params.step_interval_seconds );
+		}
+		
+		if ( input::state()->keyboard().is_down( input::KEY_A ) )
+		{
+			camera.move_left( params.step_interval_seconds );
+		}
+		else if ( input::state()->keyboard().is_down( input::KEY_D ) )
+		{
+			camera.move_right( params.step_interval_seconds );
+		}
+	
 		alpha += ((float)alpha_delta) * 0.025f;
 		
 		if ( alpha >= 1.0 || alpha <= 0 )
@@ -685,23 +712,26 @@ public:
 	{
 		rs.rewind();
 		rs.add_clearcolor( 0.25, 0.25, 0.25, 1.0f );
-		rs.add_clear( 0x00004000 );
+		rs.add_clear( 0x00004000 | 0x00000100 );
 		rs.add_viewport( 0, 0, (int)params.window_width, (int)params.window_height );
 		
-		glm::mat4 modelview;
-		modelview = glm::translate( modelview, glm::vec3( (params.window_width/2.0f)-(TEST_SIZE/2.0f), (params.window_height/2.0f)-(TEST_SIZE/2.0f), 0 ) );
-		glm::mat4 projection = glm::ortho( 0.0f, (float)params.window_width, (float)params.window_height, 0.0f, -0.5f, 255.0f );
+//		glm::mat4 modelview;
+//		modelview = glm::translate( modelview, glm::vec3( (params.window_width/2.0f)-(TEST_SIZE/2.0f), (params.window_height/2.0f)-(TEST_SIZE/2.0f), 0 ) );
+//		glm::mat4 projection = glm::ortho( 0.0f, (float)params.window_width, (float)params.window_height, 0.0f, -0.5f, 255.0f );
+		
 		
 		rs.add_shader( &shader_program );
 		
-		rs.add_uniform_matrix4( 0, &modelview );
-		rs.add_uniform_matrix4( 4, &projection );
+		rs.add_uniform_matrix4( 0, &camera.matCam );
+		rs.add_uniform_matrix4( 4, &camera.matProj );
 		rs.add_sampler2d( 0, tex->texture_id, 8 );
+
+		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
 
 		rs.add_state( renderer::STATE_BLEND, 1 );
 		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 	
-		if ( 0 )
+		if ( 1 )
 		{
 			for( unsigned int geo_id = 0; geo_id < mesh->total_geometry; ++geo_id )
 			{
@@ -709,18 +739,20 @@ public:
 				assets::Material * material = assets::material_by_id( g->material_id );
 				assets::Shader * shader = assets::find_compatible_shader( material->requirements );
 				
+				rs.add_draw_call( g->vertexbuffer );
+				
 				if ( !shader )
 				{
 					return;
 				}
 			}
 		}
+		else
+		{
 	
 //		rs.add_draw_call( vb.vertexbuffer );
-//		assets::Geometry * g = &mesh->geometry[ 2 ];
-//		rs.add_draw_call( g->vertexbuffer );
-
-		rs.add_draw_call( geo.vertexbuffer );
+			rs.add_draw_call( geo.vertexbuffer );
+		}
 		
 		rs.run_commands();
 	}

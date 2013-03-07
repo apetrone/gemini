@@ -65,6 +65,7 @@ namespace renderer
 	enum DriverState
 	{
 		STATE_BLEND,
+		STATE_DEPTH_TEST,
 	}; // DriverState
 	
 	
