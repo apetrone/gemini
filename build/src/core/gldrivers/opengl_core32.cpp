@@ -302,6 +302,17 @@ void c_uniform1i( MemoryStream & stream, GLCore32 & renderer )
 	gl.CheckError( "uniform1i" );
 }
 
+void c_uniform3f( MemoryStream & stream, GLCore32 & renderer )
+{
+	int uniform_location;
+	float * value;
+	stream.read( uniform_location );
+	stream.read( value );
+	
+	gl.Uniform3fv( uniform_location, 1, value );
+	gl.CheckError( "uniform3f" );
+}
+
 void c_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 {
 	int uniform_location;
@@ -472,7 +483,7 @@ render_command_function commands[] = {
 	c_uniform1i, // uniform1i
 	c_noop,
 	
-	c_noop, // uniform3f
+	c_uniform3f, // uniform3f
 	c_noop,
 	
 	c_noop, // uniform4f

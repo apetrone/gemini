@@ -41,6 +41,7 @@
 
 
 glm::mat4 objectMatrix;
+glm::vec3 light_position = glm::vec3( 0, 2, 0 );
 
 const unsigned int MAX_RENDERER_STREAM_BYTES = 32768;
 const unsigned int MAX_RENDERER_STREAM_COMMANDS = 32768;
@@ -177,11 +178,11 @@ struct RenderStream
 		stream.write( shader->object );
 	}	
 	
-	void add_uniform3f( int location, const glm::vec4 * data )
+	void add_uniform3f( int location, const glm::vec3 * data )
 	{
 		add_command( renderer::DC_UNIFORM3f );
-		stream.write( data );
 		stream.write( location );
+		stream.write( data );
 	}
 	
 	void add_uniform_matrix4( int location, const glm::mat4 * data )
@@ -330,18 +331,21 @@ class TestUniversal : public kernel::IApplication,
 	
 	struct GeneralParameters
 	{
-		glm::vec4 * modelview_matrix;
-		glm::vec4 * projection_project;
-		glm::vec4 * object_matrix;
+		glm::mat4 * modelview_matrix;
+		glm::mat4 * projection_project;
+		glm::mat4 * object_matrix;
+		
+		unsigned int global_params;
+		glm::vec3 * camera_position;
 	};
 	
-	void stream_geometry( RenderStream & rs, assets::Geometry * geo )
+	void stream_geometry( RenderStream & rs, assets::Geometry * geo, GeneralParameters & gp )
 	{
 		assert( geo != 0 );
 		assets::Material * material = assets::material_by_id( geo->material_id );
 		assert( material != 0 );
 //		LOGV( "material: %i\n", material->Id() );
-		assets::Shader * shader = assets::find_compatible_shader( geo->attributes + material->requirements );
+		assets::Shader * shader = assets::find_compatible_shader( geo->attributes + material->requirements + (1 << gp.global_params) );
 		assert( shader != 0 );
 
 		if ( !shader )
@@ -353,11 +357,15 @@ class TestUniversal : public kernel::IApplication,
 //		LOGV( "binding shader: %i\n", shader->id );
 		rs.add_shader( shader );
 		
-		rs.add_uniform_matrix4( shader->get_uniform_location("modelviewMatrix"), &camera.matCam );
-		rs.add_uniform_matrix4( shader->get_uniform_location("projectionMatrix"), &camera.matProj );
+		if ( gp.global_params > 0 )
+		{
+			rs.add_uniform3f( shader->get_uniform_location("lightPosition"), &light_position );
+			rs.add_uniform3f( shader->get_uniform_location("cameraPosition"), gp.camera_position );
+		}
 		
-
-		rs.add_uniform_matrix4( shader->get_uniform_location("objectMatrix"), &objectMatrix );
+		rs.add_uniform_matrix4( shader->get_uniform_location("modelviewMatrix"), gp.modelview_matrix );
+		rs.add_uniform_matrix4( shader->get_uniform_location("projectionMatrix"), gp.projection_project );
+		rs.add_uniform_matrix4( shader->get_uniform_location("objectMatrix"), gp.object_matrix );
 				
 		// setup shader parameters
 		assets::Material::Parameter * parameter;
@@ -374,7 +382,7 @@ class TestUniversal : public kernel::IApplication,
 			}
 			else if ( renderstate == renderer::DC_UNIFORM3f || renderstate == renderer::DC_UNIFORM4f )
 			{
-				rs.add_uniform3f( uniform_location, &parameter->vecValue );
+				rs.add_uniform3f( uniform_location, (glm::vec3*)&parameter->vecValue );
 			}
 			else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_2D )
 			{
@@ -686,7 +694,7 @@ public:
 #endif
 
 		// test mesh loading
-		mesh = assets::load_mesh( "models/plasma3" );
+		mesh = assets::load_mesh( "models/bunny" );
 		if ( mesh )
 		{
 			LOGV( "loaded mesh '%s'\n", mesh->path() );
@@ -734,7 +742,10 @@ public:
 				alpha = 0;
 			}
 			alpha_delta = -alpha_delta;
+			
 		}
+		
+		light_position.y = 2 + sinf( alpha ) * 8;
 		
 #if 1
 		// update geometry (this still needs to be added in the command queue)
@@ -765,14 +776,19 @@ public:
 //		rs.add_state( renderer::STATE_BLEND, 1 );
 //		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 	
-
+		GeneralParameters gp;
+		gp.global_params = 3;
+		gp.camera_position = &camera.pos;
+		gp.modelview_matrix = &camera.matCam;
+		gp.projection_project = &camera.matProj;
+		gp.object_matrix = &objectMatrix;
 		if ( 1 && mesh )
 		{
 			for( unsigned int geo_id = 0; geo_id < mesh->total_geometry; ++geo_id )
 			{
 				
 				assets::Geometry * g = &mesh->geometry[ geo_id ];
-				stream_geometry( rs, g );
+				stream_geometry( rs, g, gp );
 			}
 		}
 		else
