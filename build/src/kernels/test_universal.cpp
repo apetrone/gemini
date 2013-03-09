@@ -530,6 +530,9 @@ public:
 				
 		_menu.clear_items();
 #endif
+
+
+
 #if 1
 		tex = assets::load_texture( "textures/default" );
 		if ( tex )
@@ -683,9 +686,8 @@ public:
 		}
 #endif
 
-
-		// test material loading
 #if 0
+		// test material loading
 		assets::Material * material = assets::load_material( "materials/barrel" );
 		if ( material )
 		{
@@ -694,7 +696,7 @@ public:
 #endif
 
 		// test mesh loading
-		mesh = assets::load_mesh( "models/bunny" );
+		mesh = assets::load_mesh( "models/plasma3" );
 		if ( mesh )
 		{
 			LOGV( "loaded mesh '%s'\n", mesh->path() );

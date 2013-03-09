@@ -663,7 +663,28 @@ namespace assets
 		{
 			DESTROY_ARRAY(Parameter, parameters, num_parameters);
 		}
-	}
+	} // release
+	
+	unsigned int Material::Id() const
+	{
+		return asset_id;
+	} // Id
+			
+	void Material::calculate_requirements()
+	{
+		// calculate material requirements
+		this->requirements = 0;
+		
+		for( int id = 0; id < this->num_parameters; ++id )
+		{
+			Material::Parameter * param = &this->parameters[ id ];
+			unsigned int mask = findParameterMask( param->name );
+			LOGV( "param \"%s\" -> %i\n", param->name(), mask );
+			this->requirements |= mask;
+		}
+		
+		LOGV( "Material requirements: %i\n", this->requirements );
+	} // calculate_requirements
 	
 	Material * material_by_id( unsigned int id )
 	{
@@ -915,7 +936,7 @@ namespace assets
 		} //  num_parameters
 		
 		
-		calculate_requirements( material );
+		material->calculate_requirements();
 
 #if 0
 		StackString< MAX_PATH_SIZE > path = "conf/";
@@ -1030,21 +1051,6 @@ namespace assets
 		return 0;
 	} // textureUnitForMap
 	
-	void calculate_requirements( Material * material )
-	{
-		// calculate material requirements
-		material->requirements = 0;
-		
-		for( int id = 0; id < material->num_parameters; ++id )
-		{
-			Material::Parameter * param = &material->parameters[ id ];
-			unsigned int mask = findParameterMask( param->name );
-			LOGV( "param \"%s\" -> %i\n", param->name(), mask );
-			material->requirements |= mask;
-		}
-		
-		LOGV( "Material requirements: %i\n", material->requirements );
-	}
 	
 	// -------------------------------------------------------------
 	// Mesh
@@ -1469,7 +1475,7 @@ namespace assets
 		parameter->type = MP_SAMPLER_2D;
 		parameter->texture_unit = textureUnitForMap( parameter->name );
 		parameter->intValue = _default_texture->texture_id;
-		calculate_requirements( _default_material );
+		_default_material->calculate_requirements();
 		mat_lib->take_ownership( "materials/default", _default_material );
 		
 	} // startup

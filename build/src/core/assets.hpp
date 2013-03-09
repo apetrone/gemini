@@ -182,26 +182,17 @@ namespace assets
 		
 		StackString<128> name;
 		Shader * shader;
+		Parameter * parameters;
 		unsigned int texture_id;
 		unsigned int flags;
-		
-		// this will be used to lookup the correct shader permutation for this material
-		unsigned int requirements;
-		
-		Parameter * parameters;
 		unsigned int num_parameters;
-		
+		unsigned int requirements; // used to lookup the correct shader permutation for this material
 		virtual void release();
+		unsigned int Id() const;
 		
-		unsigned int Id()
-		{
-			return asset_id;
-		}
-		
-		unsigned int totalParameters()
-		{
-			return num_parameters;
-		}
+		// this will generate a value based on the parameters applied
+		// to this material such that the correct shader can be found and used when rendering
+		void calculate_requirements();
 	}; // Material
 	
 	Material * material_by_id( unsigned int id );
@@ -211,7 +202,7 @@ namespace assets
 	void insertMaterial( const char * name, assets::Material * material );
 	unsigned int findParameterMask( StackString<64> & name );
 	unsigned int textureUnitForMap( StackString<64> & name );
-	void calculate_requirements( Material * material );
+	
 	unsigned int materialTypeToParameterType( const char * name );
 	int material_parameter_type_to_render_state( unsigned int type );
 	
