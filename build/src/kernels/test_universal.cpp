@@ -747,7 +747,8 @@ public:
 			
 		}
 		
-		light_position.y = 2 + sinf( alpha ) * 8;
+		light_position.x = cosf( alpha ) * 4;
+		light_position.z = sinf( alpha ) * 4;
 		
 #if 1
 		// update geometry (this still needs to be added in the command queue)
