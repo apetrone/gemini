@@ -114,7 +114,25 @@ void TileList::create_tiles( TileSet * set, unsigned int tile_width, unsigned in
 {
 	unsigned int num_columns = (set->imagewidth / tile_width);
 	unsigned int num_rows = (set->imageheight / tile_height);
-	unsigned int tile_id = 0;
+
+	unsigned int total_tiles = num_columns * num_rows;
+	for (unsigned int tile_id = 0; tile_id < total_tiles; ++tile_id )
+	{
+		int x = tile_id % num_columns;
+		int y = tile_id / num_rows;
+
+		x *= tile_width;
+		y *= tile_height;
+		y = set->imageheight - y;
+		
+		Tile * tile = &tiles[ set->firstgid + tile_id ];
+		tile->id = set->firstgid + tile_id;
+		tile->tileset_id = set->id;
+		
+		set->calc_rect_uvs( tile->quad_uvs, x, y, tile_width, tile_height, set->imagewidth, set->imageheight );
+	}
+	
+#if 0
 	for( unsigned int y = 0; y < num_rows; ++y )
 	{
 		for( unsigned int x = 0; x < num_columns; ++x, ++tile_id )
@@ -126,6 +144,7 @@ void TileList::create_tiles( TileSet * set, unsigned int tile_width, unsigned in
 			set->calc_rect_uvs( tile->quad_uvs, x*tile_width, y*tile_height, tile_width, tile_height, set->imagewidth, set->imageheight );
 		}
 	}
+#endif
 } // create_tiles
 
 struct TiledMapLayer
@@ -840,31 +859,39 @@ public:
 		int x = 0 * tiled_map.tile_width;
 		int y = 0 * tiled_map.tile_height;
 		
-		unsigned char tile_gid = tiled_map.layers[0].layer_data[ y * tiled_map.width + x ];
+		unsigned char tile_gid = tiled_map.layers[1].layer_data[ y * tiled_map.width + x ];
 		Tile * tile = &tiled_map.tilelist.tiles[ tile_gid ];
 		if ( tile )
 		{
 			FontVertexType * v = (FontVertexType*)vb[0];
-			v[0].x = x;
-			v[0].y = y;
+//			v[0].x = x;
+//			v[0].y = y;
+//			
+//			v[1].x = x;
+//			v[1].y = y+tiled_map.tile_height;
+//			
+//			v[2].x = x+tiled_map.tile_width;
+//			v[2].y = y+tiled_map.tile_height;
+//			
+//			v[3].x = x+tiled_map.tile_width;
+//			v[3].y = y;
 			
-			v[1].x = x;
-			v[1].y = y+tiled_map.tile_height;
-			
-			v[2].x = x+tiled_map.tile_width;
-			v[2].y = y+tiled_map.tile_height;
-			
-			v[3].x = x+tiled_map.tile_width;
-			v[3].y = y;
-			
-			v[0].u = tile->quad_uvs[0];
-			v[0].v = tile->quad_uvs[1];
-			v[1].u = tile->quad_uvs[2];
-			v[1].v = tile->quad_uvs[3];
-			v[2].u = tile->quad_uvs[4];
-			v[2].v = tile->quad_uvs[5];
-			v[3].u = tile->quad_uvs[6];
-			v[3].v = tile->quad_uvs[7];
+			v[0].u = 0;
+			v[0].v = 0;
+			v[1].u = 0;
+			v[1].v = .25;
+			v[2].u = 0.25;
+			v[2].v = .25;
+			v[3].u = 0.25;
+			v[3].v = 0;
+//			v[0].u = tile->quad_uvs[0];
+//			v[0].v = tile->quad_uvs[1];
+//			v[1].u = tile->quad_uvs[2];
+//			v[1].v = tile->quad_uvs[3];
+//			v[2].u = tile->quad_uvs[4];
+//			v[2].v = tile->quad_uvs[5];
+//			v[3].u = tile->quad_uvs[6];
+//			v[3].v = tile->quad_uvs[7];
 		}
 
 		vb.update();
@@ -909,7 +936,7 @@ public:
 //			rs.add_uniform_matrix4( 0, &camera.matCam );
 //			rs.add_uniform_matrix4( 4, &camera.matProj );
 			
-			assets::Material::Parameter * diffuse = mat->parameter_by_name( "diffusemap" );
+			assets::Material::Parameter * diffuse = mat2->parameter_by_name( "diffusemap" );
 			if ( diffuse )
 			{
 				rs.add_sampler2d( 8, 0, diffuse->intValue );
