@@ -38,174 +38,20 @@
 
 #include "configloader.hpp"
 #include "camera.hpp"
-
+#include "renderstream.hpp"
 
 glm::mat4 objectMatrix;
 glm::vec3 light_position = glm::vec3( 0, 2, 0 );
 
-const unsigned int MAX_RENDERER_STREAM_BYTES = 32768;
-const unsigned int MAX_RENDERER_STREAM_COMMANDS = 32768;
-unsigned int num_commands = 0;
-struct RenderState
-{
-	int type;
-	long offset; // offset into parameters
-}; // RenderState
-
-struct RenderStream
-{
-	char buffer[ MAX_RENDERER_STREAM_BYTES ];
-	RenderState commands[ MAX_RENDERER_STREAM_COMMANDS ];
-	unsigned int num_commands;
-	MemoryStream stream;
-	
-	
-	RenderStream()
-	{
-		num_commands = 0;
-		stream.init( buffer, MAX_RENDERER_STREAM_BYTES );
-	}
-	
-	void rewind()
-	{
-		stream.rewind();
-		num_commands = 0;
-	}
-	
-	RenderState * new_render_state()
-	{
-		if ( num_commands >= (MAX_RENDERER_STREAM_COMMANDS) )
-		{
-			LOGW( "Too many renderstates! make this dynamically resizable!\n" );
-			return 0;
-		}
-		
-		RenderState * rs;
-		rs = &commands[ num_commands++ ];
-		return rs;
-	}
-	
-	void run_commands()
-	{
-		stream.rewind();
-		RenderState * renderstate;
-		renderer::IRenderDriver * driver = renderer::driver();
-
-		for( int state_id = 0; state_id < num_commands; state_id++ )
-		{
-			renderstate = &commands[ state_id ];
-			
-			// setup the stream and run the command
-			stream.seek( renderstate->offset, 1 );
-			driver->run_command( (renderer::DriverCommandType)renderstate->type, stream );
-		}
-#if 0
-		for( int state_id = 0; state_id < num_commands; state_id++ )
-		{
-			renderstate = &commands[ state_id ];
-			
-			// run the post (cleanup) command
-			stream.seek( renderstate->offset, 1 );
-			driver->post_command( (renderer::DriverCommandType)renderstate->type, stream );
-		}
-#endif
-
-	} // run_commands
-	
-	void add_command( int type )
-	{
-		RenderState * state = new_render_state();
-		state->type = type;
-		state->offset = stream.offset_pointer();
-	}
-	
-	void add_clearcolor( float r, float g, float b, float a )
-	{
-		add_command( renderer::DC_CLEARCOLOR );
-		stream.write( r );
-		stream.write( g );
-		stream.write( b );
-		stream.write( a );
-	}
-	
-	void add_clear( unsigned int bitflags )
-	{
-		add_command( renderer::DC_CLEAR );
-		stream.write( bitflags );
-	}
-	
-	void add_viewport( int x, int y, int width, int height )
-	{
-		add_command( renderer::DC_VIEWPORT );
-		stream.write( x );
-		stream.write( y );
-		stream.write( width );
-		stream.write( height );
-	}
-	
-	void add_uniform1i( int uniform_location, int value )
-	{
-		add_command( renderer::DC_UNIFORM1i );
-		stream.write( uniform_location );
-		stream.write( value );
-	}
-	
-	void add_sampler2d( int uniform_location, int texture_unit, int texture_id )
-	{
-		add_command( renderer::DC_UNIFORM_SAMPLER_2D );
-		stream.write( uniform_location );
-		stream.write( texture_unit );
-		stream.write( texture_id );
-	}
-	
-	void add_state( renderer::DriverState state, int enable )
-	{
-		add_command( renderer::DC_STATE );
-		stream.write( state );
-		stream.write( enable );
-	}
-	
-	void add_blendfunc( renderer::RenderBlendType source, renderer::RenderBlendType destination )
-	{
-		add_command( renderer::DC_BLENDFUNC );
-		stream.write( source );
-		stream.write( destination );
-	}
-	
-	void add_shader( renderer::ShaderProgram * shader )
-	{
-		add_command( renderer::DC_SHADER );
-		stream.write( shader->object );
-	}	
-	
-	void add_uniform3f( int location, const glm::vec3 * data )
-	{
-		add_command( renderer::DC_UNIFORM3f );
-		stream.write( location );
-		stream.write( data );
-	}
-	
-	void add_uniform_matrix4( int location, const glm::mat4 * data )
-	{
-		add_command( renderer::DC_UNIFORMMATRIX4 );
-		stream.write( data );
-		stream.write( location );
-	}	
-	
-	void add_draw_call( renderer::VertexBuffer * vertexbuffer )
-	{
-		assert( vertexbuffer != 0 );
-		add_command( renderer::DC_DRAWCALL );
-		renderer::driver()->setup_drawcall( vertexbuffer, this->stream );
-	}
-}; // RenderStream
 
 
 
 
 
 
-const float TEST_SIZE = 10.0f;
+
+
+const float TEST_SIZE = 256;
 
 renderer::ShaderObject create_shader_from_file( const char * shader_path, renderer::ShaderObjectType type, const char * preprocessor_defines )
 {
@@ -324,6 +170,7 @@ class TestUniversal : public kernel::IApplication,
 	renderer::VertexStream vb;
 	assets::Texture * tex;
 	assets::Mesh * mesh;
+	assets::Material * mat, *mat2;
 	
 	float alpha;
 	int alpha_delta;
@@ -544,6 +391,9 @@ public:
 			LOGW( "Could not load texture.\n" );
 		}
 #endif
+
+		mat = assets::load_material( "materials/rogue" );
+		mat2 = assets::load_material( "materials/gametiles" );
 
 		camera.perspective( 60, params.window_width, params.window_height, 0.1f, 512.0f );
 		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
@@ -768,16 +618,8 @@ public:
 		rs.add_clearcolor( 0.25, 0.25, 0.25, 1.0f );
 		rs.add_clear( 0x00004000 | 0x00000100 );
 		rs.add_viewport( 0, 0, (int)params.window_width, (int)params.window_height );
-		
-
-		
-		
-
 
 		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
-
-//		rs.add_state( renderer::STATE_BLEND, 1 );
-//		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 	
 		GeneralParameters gp;
 		gp.global_params = 3;
@@ -785,27 +627,37 @@ public:
 		gp.modelview_matrix = &camera.matCam;
 		gp.projection_project = &camera.matProj;
 		gp.object_matrix = &objectMatrix;
-		if ( 1 && mesh )
+		if ( 0 && mesh )
 		{
 			for( unsigned int geo_id = 0; geo_id < mesh->total_geometry; ++geo_id )
 			{
-				
 				assets::Geometry * g = &mesh->geometry[ geo_id ];
 				stream_geometry( rs, g, gp );
 			}
 		}
 		else
 		{
+			rs.add_state( renderer::STATE_BLEND, 1 );
+			rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+		
 			rs.add_shader( &shader_program );
 			glm::mat4 modelview;
 			modelview = glm::translate( modelview, glm::vec3( (params.window_width/2.0f)-(TEST_SIZE/2.0f), (params.window_height/2.0f)-(TEST_SIZE/2.0f), 0 ) );
 			glm::mat4 projection = glm::ortho( 0.0f, (float)params.window_width, (float)params.window_height, 0.0f, -0.5f, 255.0f );
-			rs.add_uniform_matrix4( 0, &camera.matCam );
-			rs.add_uniform_matrix4( 4, &camera.matProj );
-			rs.add_sampler2d( 8, 0, tex->texture_id );
-//			rs.add_draw_call( vb.vertexbuffer );
-//			stream_geometry( rs, &geo );
-			rs.add_draw_call( geo.vertexbuffer );
+			
+			rs.add_uniform_matrix4( 0, &modelview );
+			rs.add_uniform_matrix4( 4, &projection );
+			
+			assets::Material::Parameter * diffuse = mat2->parameter_by_name( "diffusemap" );
+			if ( diffuse )
+			{
+				rs.add_sampler2d( 8, 0, diffuse->intValue );
+			}
+			else
+			{
+				rs.add_sampler2d( 8, 0, tex->texture_id );
+			}
+			rs.add_draw_call( vb.vertexbuffer );
 		}
 		
 		rs.run_commands();

@@ -686,6 +686,23 @@ namespace assets
 		LOGV( "Material requirements: %i\n", this->requirements );
 	} // calculate_requirements
 	
+	Material::Parameter * Material::parameter_by_name( const char * name )
+	{
+		Material::Parameter * parameter = 0;
+		
+		// this should have a hash table... oh well
+		for( int i = 0; i < this->num_parameters; ++i )
+		{
+			if ( xstr_nicmp( this->parameters[i].name(), name, xstr_len(name) ) == 0 )
+			{
+				parameter = &this->parameters[i];
+				break;
+			}
+		}
+		
+		return parameter;
+	}
+	
 	Material * material_by_id( unsigned int id )
 	{
 		return mat_lib->find_with_id( id );
@@ -746,7 +763,8 @@ namespace assets
 				material->flags |= Material::CUBEMAP;
 			}
 		}
-				
+			
+#if 0
 		if ( !texture.empty() )
 		{
 			assets::Texture * texpointer;
@@ -765,7 +783,7 @@ namespace assets
 				material->texture_id = texpointer->texture_id;
 			}
 		}
-		
+#endif
 		
 		// parse and load shader params
 		Json::Value param_list = root["params"];
@@ -1467,7 +1485,6 @@ namespace assets
 		
 		// setup default material
 		_default_material = mat_lib->allocate_asset();
-		_default_material->texture_id = _default_texture->texture_id;
 		_default_material->name = "default";
 		_default_material->num_parameters = 1;
 		Material::Parameter * parameter = _default_material->parameters = CREATE(Material::Parameter);

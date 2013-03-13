@@ -183,7 +183,7 @@ namespace assets
 		StackString<128> name;
 		Shader * shader;
 		Parameter * parameters;
-		unsigned int texture_id;
+//		unsigned int texture_id;
 		unsigned int flags;
 		unsigned int num_parameters;
 		unsigned int requirements; // used to lookup the correct shader permutation for this material
@@ -193,6 +193,8 @@ namespace assets
 		// this will generate a value based on the parameters applied
 		// to this material such that the correct shader can be found and used when rendering
 		void calculate_requirements();
+		
+		Parameter * parameter_by_name( const char * name );
 	}; // Material
 	
 	Material * material_by_id( unsigned int id );
