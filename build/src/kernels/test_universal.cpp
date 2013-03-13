@@ -73,19 +73,19 @@ void TileSet::calc_rect_uvs( float * uvs, unsigned int x, unsigned int y, unsign
 	// This should define UVs with the origin in the lower left corner (OpenGL)
 	// upper left
 	uvs[0] = x / (float)sheet_width;
-	uvs[1] = (sheet_height - y) / (float)sheet_height;
+	uvs[1] = y / (float)sheet_height;
 	
 	// lower left
 	uvs[2] = x / (float)sheet_width;
-	uvs[3] = (sheet_height-(y+sprite_height)) / (float)sheet_height;
+	uvs[3] = (y+sprite_height) / (float)sheet_height;
 	
 	// lower right
 	uvs[4] = (x+sprite_width) / (float)sheet_width;
-	uvs[5] = (sheet_height-(y+sprite_height)) / (float)sheet_height;
+	uvs[5] = (y+sprite_height) / (float)sheet_height;
 	
 	// upper right
 	uvs[6] = (x+sprite_width) / (float)sheet_width;
-	uvs[7] = (sheet_height - y) / (float)sheet_height;
+	uvs[7] = y / (float)sheet_height;
 } // calc_rect_uvs
 
 struct TileList
@@ -115,36 +115,18 @@ void TileList::create_tiles( TileSet * set, unsigned int tile_width, unsigned in
 	unsigned int num_columns = (set->imagewidth / tile_width);
 	unsigned int num_rows = (set->imageheight / tile_height);
 
-	unsigned int total_tiles = num_columns * num_rows;
-	for (unsigned int tile_id = 0; tile_id < total_tiles; ++tile_id )
-	{
-		int x = tile_id % num_columns;
-		int y = tile_id / num_rows;
-
-		x *= tile_width;
-		y *= tile_height;
-		y = set->imageheight - y;
-		
-		Tile * tile = &tiles[ set->firstgid + tile_id ];
-		tile->id = set->firstgid + tile_id;
-		tile->tileset_id = set->id;
-		
-		set->calc_rect_uvs( tile->quad_uvs, x, y, tile_width, tile_height, set->imagewidth, set->imageheight );
-	}
-	
-#if 0
+	unsigned int tile_id = 0;
 	for( unsigned int y = 0; y < num_rows; ++y )
 	{
 		for( unsigned int x = 0; x < num_columns; ++x, ++tile_id )
 		{
-			Tile * tile = &tiles[ set->firstgid + tile_id ];
-			tile->id = set->firstgid + tile_id;
+			Tile * tile = &tiles[ (set->firstgid + tile_id)-1 ];
+			tile->id = (set->firstgid + tile_id)-1;
 			tile->tileset_id = set->id;
 	
-			set->calc_rect_uvs( tile->quad_uvs, x*tile_width, y*tile_height, tile_width, tile_height, set->imagewidth, set->imageheight );
+			set->calc_rect_uvs( tile->quad_uvs, (x*tile_width), (y*tile_height), tile_width, tile_height, set->imagewidth, set->imageheight );
 		}
 	}
-#endif
 } // create_tiles
 
 struct TiledMapLayer
@@ -295,6 +277,7 @@ util::ConfigLoadStatus tiled_map_loader( const Json::Value & root, void * data )
 	}
 	
 	// now that all tile sets are loaded; let's create our tile list with all possible tiles
+	map->tilelist.tile_count += 1;
 	LOGV( "total # of tiles needed in list: %i\n", map->tilelist.tile_count );
 	map->tilelist.tiles = CREATE_ARRAY( Tile, map->tilelist.tile_count );
 	for( unsigned int i = 0; i < map->tileset_count; ++i )
@@ -311,7 +294,7 @@ util::ConfigLoadStatus tiled_map_loader( const Json::Value & root, void * data )
 	
 	// load tile layers
 	Json::ValueIterator layer_iterator = layers.begin();
-	for( int layer_id = 0; layer_id < map->layer_count; ++layer_id, ++layer_iterator )
+	for( int layer_id = 0; layer_id < map->layer_count && layer_iterator != layers.end(); ++layer_id, ++layer_iterator )
 	{
 		TiledMapLayer * tmlayer = &map->layers[ layer_id ];
 		Json::Value key = layer_iterator.key();
@@ -622,7 +605,7 @@ public:
 #endif
 
 
-		util::json_load_with_callback( "maps/rogue.json", tiled_map_loader, &tiled_map, true );
+		util::json_load_with_callback( "maps/test.json", tiled_map_loader, &tiled_map, true );
 
 
 
@@ -677,14 +660,14 @@ public:
 		renderer::driver()->shaderobject_destroy( vertex_shader );
 		renderer::driver()->shaderobject_destroy( fragment_shader );
 		
-#if 1
+
 		vb.reset();
 		vb.desc.add( renderer::VD_FLOAT3 );
 		vb.desc.add( renderer::VD_UNSIGNED_BYTE4 );
 		vb.desc.add( renderer::VD_FLOAT2 );
 		
-		vb.create(512, 512, renderer::DRAW_INDEXED_TRIANGLES );
-
+		vb.create(4096, 4096, renderer::DRAW_INDEXED_TRIANGLES );
+#if 0
 		FontVertexType * v = (FontVertexType*)vb.request( 4 );
 		if ( v )
 		{
@@ -728,7 +711,7 @@ public:
 		vb.update();
 #endif
 
-#if 1
+#if 0
 		geo.vertex_count = 4;
 		geo.index_count = 6;
 		geo.vertices = CREATE_ARRAY( glm::vec3, 4 );
@@ -856,50 +839,66 @@ public:
 		vb.update();
 #endif
 
-		int x = 0 * tiled_map.tile_width;
-		int y = 0 * tiled_map.tile_height;
+//		int x = 2;
+//		int y = 3;
+	
 		
-		unsigned char tile_gid = tiled_map.layers[1].layer_data[ y * tiled_map.width + x ];
-		Tile * tile = &tiled_map.tilelist.tiles[ tile_gid ];
-		if ( tile )
-		{
-			FontVertexType * v = (FontVertexType*)vb[0];
-//			v[0].x = x;
-//			v[0].y = y;
-//			
-//			v[1].x = x;
-//			v[1].y = y+tiled_map.tile_height;
-//			
-//			v[2].x = x+tiled_map.tile_width;
-//			v[2].y = y+tiled_map.tile_height;
-//			
-//			v[3].x = x+tiled_map.tile_width;
-//			v[3].y = y;
-			
-			v[0].u = 0;
-			v[0].v = 0;
-			v[1].u = 0;
-			v[1].v = .25;
-			v[2].u = 0.25;
-			v[2].v = .25;
-			v[3].u = 0.25;
-			v[3].v = 0;
-//			v[0].u = tile->quad_uvs[0];
-//			v[0].v = tile->quad_uvs[1];
-//			v[1].u = tile->quad_uvs[2];
-//			v[1].v = tile->quad_uvs[3];
-//			v[2].u = tile->quad_uvs[4];
-//			v[2].v = tile->quad_uvs[5];
-//			v[3].u = tile->quad_uvs[6];
-//			v[3].v = tile->quad_uvs[7];
-		}
-
-		vb.update();
-
 	}
 
 	virtual void tick( kernel::Params & params )
 	{
+	
+		
+		for( int h = 0; h < tiled_map.height; ++h )
+		{
+			for( int w = 0; w < tiled_map.width; ++w )
+			{
+				unsigned char tile_gid = tiled_map.layers[0].layer_data[ h * tiled_map.width + w ];
+				if ( tile_gid > 0 )
+				{
+					Tile * tile = &tiled_map.tilelist.tiles[ tile_gid-1 ];
+					if ( tile )
+					{
+						//						FontVertexType * v = (FontVertexType*)vb[0];
+						FontVertexType * v = (FontVertexType*)vb.request(4);
+						int x = w * tiled_map.tile_width;
+						int y = h * tiled_map.tile_height;
+						v[0].x = x;
+						v[0].y = y;
+						v[0].color = Color(255,255,255);
+						
+						v[1].x = x;
+						v[1].y = y+tiled_map.tile_height;
+						v[1].color = Color(255,255,255);
+						
+						v[2].x = x+tiled_map.tile_width;
+						v[2].y = y+tiled_map.tile_height;
+						v[2].color = Color(255,255,255);
+						
+						v[3].x = x+tiled_map.tile_width;
+						v[3].y = y;
+						v[3].color = Color(255,255,255);
+						
+						v[0].u = tile->quad_uvs[0];
+						v[0].v = tile->quad_uvs[1];
+						v[1].u = tile->quad_uvs[2];
+						v[1].v = tile->quad_uvs[3];
+						v[2].u = tile->quad_uvs[4];
+						v[2].v = tile->quad_uvs[5];
+						v[3].u = tile->quad_uvs[6];
+						v[3].v = tile->quad_uvs[7];
+						
+						renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+						vb.append_indices( indices, 6 );
+					}
+				}
+			}
+		}
+		
+		vb.update();
+	
+	
+	
 		rs.rewind();
 		rs.add_clearcolor( 0.25, 0.25, 0.25, 1.0f );
 		rs.add_clear( 0x00004000 | 0x00000100 );
@@ -928,7 +927,8 @@ public:
 		
 			rs.add_shader( &shader_program );
 			glm::mat4 modelview;
-			modelview = glm::translate( modelview, glm::vec3( (params.window_width/2.0f)-(TEST_SIZE/2.0f), (params.window_height/2.0f)-(TEST_SIZE/2.0f), 0 ) );
+//			modelview = glm::translate( modelview, glm::vec3( (params.window_width/2.0f)-(TEST_SIZE/2.0f), (params.window_height/2.0f)-(TEST_SIZE/2.0f), 0 ) );
+
 			glm::mat4 projection = glm::ortho( 0.0f, (float)params.window_width, (float)params.window_height, 0.0f, -0.5f, 255.0f );
 			
 			rs.add_uniform_matrix4( 0, &modelview );
@@ -949,6 +949,7 @@ public:
 		}
 		
 		rs.run_commands();
+		vb.reset();
 	}
 
 	virtual void shutdown( kernel::Params & params )
