@@ -165,3 +165,33 @@ void RenderStream::add_draw_call( renderer::VertexBuffer * vertexbuffer )
 	add_command( renderer::DC_DRAWCALL );
 	renderer::driver()->setup_drawcall( vertexbuffer, this->stream );
 }
+
+void RenderStream::add_material( assets::Material * material, assets::Shader * shader )
+{
+	// setup shader parameters
+	assets::Material::Parameter * parameter;
+	for( int p = 0; p < material->num_parameters; ++p )
+	{
+		parameter = &material->parameters[ p ];
+		int renderstate = assets::material_parameter_type_to_render_state( parameter->type );
+		int uniform_location = shader->get_uniform_location( parameter->name() );
+		
+		// this needs to be converted to a table of function pointers...
+		if ( renderstate == renderer::DC_UNIFORM1i )
+		{
+			add_uniform1i( uniform_location, parameter->intValue );
+		}
+		else if ( renderstate == renderer::DC_UNIFORM3f || renderstate == renderer::DC_UNIFORM4f )
+		{
+			add_uniform3f( uniform_location, (glm::vec3*)&parameter->vecValue );
+		}
+		else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_2D )
+		{
+			add_sampler2d( uniform_location, parameter->texture_unit, parameter->intValue );
+		}
+		else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_CUBE )
+		{
+			// ...
+		}
+	}
+}

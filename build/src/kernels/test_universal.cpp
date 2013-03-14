@@ -63,14 +63,12 @@ struct TileSet
 	
 	assets::Material * material;
 	
-	// the parameters define a rect with the origin in the upper left.
-	void calc_rect_uvs( float * uvs, unsigned int x, unsigned int y, unsigned int sprite_width, unsigned int sprite_height, unsigned int sheet_width, unsigned int sheet_height );
+	void calc_tile_uvs( float * uvs, unsigned int x, unsigned int y, unsigned int sprite_width, unsigned int sprite_height, unsigned int sheet_width, unsigned int sheet_height );
 }; // TileSet
 
-// the parameters define a rect with the origin in the upper left.
-void TileSet::calc_rect_uvs( float * uvs, unsigned int x, unsigned int y, unsigned int sprite_width, unsigned int sprite_height, unsigned int sheet_width, unsigned int sheet_height )
+void TileSet::calc_tile_uvs( float * uvs, unsigned int x, unsigned int y, unsigned int sprite_width, unsigned int sprite_height, unsigned int sheet_width, unsigned int sheet_height )
 {
-	// This should define UVs with the origin in the lower left corner (OpenGL)
+	// This assumes an Orthographic projection set with the origin in the upper left
 	// upper left
 	uvs[0] = x / (float)sheet_width;
 	uvs[1] = y / (float)sheet_height;
@@ -86,7 +84,7 @@ void TileSet::calc_rect_uvs( float * uvs, unsigned int x, unsigned int y, unsign
 	// upper right
 	uvs[6] = (x+sprite_width) / (float)sheet_width;
 	uvs[7] = y / (float)sheet_height;
-} // calc_rect_uvs
+} // calc_tile_uvs
 
 struct TileList
 {
@@ -124,7 +122,7 @@ void TileList::create_tiles( TileSet * set, unsigned int tile_width, unsigned in
 			tile->id = (set->firstgid + tile_id)-1;
 			tile->tileset_id = set->id;
 	
-			set->calc_rect_uvs( tile->quad_uvs, (x*tile_width), (y*tile_height), tile_width, tile_height, set->imagewidth, set->imageheight );
+			set->calc_tile_uvs( tile->quad_uvs, (x*tile_width), (y*tile_height), tile_width, tile_height, set->imagewidth, set->imageheight );
 		}
 	}
 } // create_tiles
@@ -227,6 +225,7 @@ util::ConfigLoadStatus tiled_map_loader( const Json::Value & root, void * data )
 	
 	map->width = root["width"].asUInt();
 	map->height = root["height"].asUInt();
+	LOGV( "map dimensions: %i x %i\n", map->width, map->height );
 	
 	map->tile_width = root["tilewidth"].asUInt();
 	map->tile_height = root["tileheight"].asUInt();
@@ -437,33 +436,7 @@ class TestUniversal : public kernel::IApplication,
 		rs.add_uniform_matrix4( shader->get_uniform_location("projectionMatrix"), gp.projection_project );
 		rs.add_uniform_matrix4( shader->get_uniform_location("objectMatrix"), gp.object_matrix );
 				
-		// setup shader parameters
-		assets::Material::Parameter * parameter;
-		for( int p = 0; p < material->num_parameters; ++p )
-		{
-			parameter = &material->parameters[ p ];
-			int renderstate = assets::material_parameter_type_to_render_state( parameter->type );
-			int uniform_location = shader->get_uniform_location( parameter->name() );
-
-			// this needs to be converted to a table of function pointers...
-			if ( renderstate == renderer::DC_UNIFORM1i )
-			{
-				rs.add_uniform1i( uniform_location, parameter->intValue );
-			}
-			else if ( renderstate == renderer::DC_UNIFORM3f || renderstate == renderer::DC_UNIFORM4f )
-			{
-				rs.add_uniform3f( uniform_location, (glm::vec3*)&parameter->vecValue );
-			}
-			else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_2D )
-			{
-				rs.add_sampler2d( uniform_location, parameter->texture_unit, parameter->intValue );
-			}
-			else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_CUBE )
-			{
-				// ...
-			}
-
-		}
+		rs.add_material( material, shader );
 		
 		rs.add_draw_call( geo->vertexbuffer );
 	} // stream_geometry
@@ -847,58 +820,6 @@ public:
 
 	virtual void tick( kernel::Params & params )
 	{
-	
-		
-		for( int h = 0; h < tiled_map.height; ++h )
-		{
-			for( int w = 0; w < tiled_map.width; ++w )
-			{
-				unsigned char tile_gid = tiled_map.layers[0].layer_data[ h * tiled_map.width + w ];
-				if ( tile_gid > 0 )
-				{
-					Tile * tile = &tiled_map.tilelist.tiles[ tile_gid-1 ];
-					if ( tile )
-					{
-						//						FontVertexType * v = (FontVertexType*)vb[0];
-						FontVertexType * v = (FontVertexType*)vb.request(4);
-						int x = w * tiled_map.tile_width;
-						int y = h * tiled_map.tile_height;
-						v[0].x = x;
-						v[0].y = y;
-						v[0].color = Color(255,255,255);
-						
-						v[1].x = x;
-						v[1].y = y+tiled_map.tile_height;
-						v[1].color = Color(255,255,255);
-						
-						v[2].x = x+tiled_map.tile_width;
-						v[2].y = y+tiled_map.tile_height;
-						v[2].color = Color(255,255,255);
-						
-						v[3].x = x+tiled_map.tile_width;
-						v[3].y = y;
-						v[3].color = Color(255,255,255);
-						
-						v[0].u = tile->quad_uvs[0];
-						v[0].v = tile->quad_uvs[1];
-						v[1].u = tile->quad_uvs[2];
-						v[1].v = tile->quad_uvs[3];
-						v[2].u = tile->quad_uvs[4];
-						v[2].v = tile->quad_uvs[5];
-						v[3].u = tile->quad_uvs[6];
-						v[3].v = tile->quad_uvs[7];
-						
-						renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
-						vb.append_indices( indices, 6 );
-					}
-				}
-			}
-		}
-		
-		vb.update();
-	
-	
-	
 		rs.rewind();
 		rs.add_clearcolor( 0.25, 0.25, 0.25, 1.0f );
 		rs.add_clear( 0x00004000 | 0x00000100 );
@@ -936,20 +857,106 @@ public:
 //			rs.add_uniform_matrix4( 0, &camera.matCam );
 //			rs.add_uniform_matrix4( 4, &camera.matProj );
 			
-			assets::Material::Parameter * diffuse = mat2->parameter_by_name( "diffusemap" );
-			if ( diffuse )
+			
+			
+			
+			
+			
+			
+			// could potentially have a vertexbuffer per tileset
+			// this would allow us to batch tiles that share the same tileset (texture)
+			TileSet * lastset = 0;
+			
+			for( int h = 0; h < tiled_map.height; ++h )
 			{
-				rs.add_sampler2d( 8, 0, diffuse->intValue );
-			}
-			else
+				for( int w = 0; w < tiled_map.width; ++w )
+				{
+					unsigned char tile_gid = tiled_map.layers[0].layer_data[ h * tiled_map.width + w ];
+					if ( tile_gid > 0 )
+					{
+						Tile * tile = &tiled_map.tilelist.tiles[ tile_gid-1 ];
+						if ( tile )
+						{
+							LOGV( "tileset_id: %i\n", tile->tileset_id );
+							TileSet * set = &tiled_map.tilesets[ tile->tileset_id ];
+							FontVertexType * v = (FontVertexType*)vb.request(4);
+							if ( !v || (set != lastset && lastset != 0) )
+							{
+								long offset = rs.stream.offset_pointer();
+								vb.update();
+								assets::Shader * shader = assets::find_compatible_shader( 37 + lastset->material->requirements );
+								rs.add_material( lastset->material, shader );
+								rs.add_draw_call( vb.vertexbuffer );
+								
+								rs.run_commands();
+								LOGV( "draw tileset: %i, count: %i\n", lastset->id, vb.last_index );
+								
+								vb.reset();
+								rs.stream.seek( offset, true );
+							}
+							
+							lastset = set;
+							//						FontVertexType * v = (FontVertexType*)vb[0];
+							
+							int x = w * tiled_map.tile_width;
+							int y = h * tiled_map.tile_height;
+							v[0].x = x;
+							v[0].y = y;
+							v[0].color = Color(255,255,255);
+							
+							v[1].x = x;
+							v[1].y = y+tiled_map.tile_height;
+							v[1].color = Color(255,255,255);
+							
+							v[2].x = x+tiled_map.tile_width;
+							v[2].y = y+tiled_map.tile_height;
+							v[2].color = Color(255,255,255);
+							
+							v[3].x = x+tiled_map.tile_width;
+							v[3].y = y;
+							v[3].color = Color(255,255,255);
+							
+							v[0].u = tile->quad_uvs[0];
+							v[0].v = tile->quad_uvs[1];
+							v[1].u = tile->quad_uvs[2];
+							v[1].v = tile->quad_uvs[3];
+							v[2].u = tile->quad_uvs[4];
+							v[2].v = tile->quad_uvs[5];
+							v[3].u = tile->quad_uvs[6];
+							v[3].v = tile->quad_uvs[7];
+							
+							renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+							vb.append_indices( indices, 6 );
+						}
+					}
+				}
+			}		
+			
+			if ( vb.last_index > 0 && lastset )
 			{
-				rs.add_sampler2d( 8, 0, tex->texture_id );
+				LOGV( "draw tileset: %i, count: %i\n", lastset->id, vb.last_index );
+				vb.update();
+				assets::Shader * shader = assets::find_compatible_shader( 37 + lastset->material->requirements );
+				rs.add_material( lastset->material, shader );
+				rs.add_draw_call( vb.vertexbuffer );
+				
+				rs.run_commands();
+				vb.reset();
 			}
-			rs.add_draw_call( vb.vertexbuffer );
+//			assets::Material::Parameter * diffuse = mat2->parameter_by_name( "diffusemap" );
+//			if ( diffuse )
+//			{
+//				rs.add_sampler2d( 8, 0, diffuse->intValue );
+//			}
+//			else
+//			{
+//				rs.add_sampler2d( 8, 0, tex->texture_id );
+//			}
+//			rs.add_draw_call( vb.vertexbuffer );
 		}
 		
-		rs.run_commands();
-		vb.reset();
+//		rs.run_commands();
+//		vb.reset();
 	}
 
 	virtual void shutdown( kernel::Params & params )

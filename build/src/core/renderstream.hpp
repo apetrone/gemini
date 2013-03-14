@@ -23,6 +23,7 @@
 #include "typedefs.h"
 #include "renderer.hpp"
 #include "memorystream.hpp"
+#include "assets.hpp"
 
 const unsigned int MAX_RENDERER_STREAM_BYTES = 32768;
 const unsigned int MAX_RENDERER_STREAM_COMMANDS = 32768;
@@ -57,5 +58,5 @@ struct RenderStream
 	void add_uniform3f( int location, const glm::vec3 * data );	
 	void add_uniform_matrix4( int location, const glm::mat4 * data );	
 	void add_draw_call( renderer::VertexBuffer * vertexbuffer );
-	
+	void add_material( assets::Material * material, assets::Shader * shader );
 }; // RenderStream
