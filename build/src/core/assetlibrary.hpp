@@ -110,7 +110,7 @@ namespace assets
 				if ( !ignore_cache )
 				{
 					// case 1
-					LOGV( "asset (%s) already loaded. returning from cache\n", path );
+//					LOGV( "asset (%s) already loaded. returning from cache\n", path );
 					return asset;
 				}
 			}

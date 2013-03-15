@@ -166,7 +166,7 @@ namespace image
 				// upload texture to video card
 				driver_upload_image2d( texID, flags, width, height, components, pixels );
 				
-				LOGV( "Loaded texture \"%s\"; Texture ID: %i, (%i x %i @ %ibpp)\n", filename, texID, width, height, components );
+//				LOGV( "Loaded texture \"%s\"; Texture ID: %i, (%i x %i @ %ibpp)\n", filename, texID, width, height, components );
 				
 				free_image( pixels );
 			}

@@ -595,11 +595,11 @@ namespace assets
 		{
 			Material::Parameter * param = &this->parameters[ id ];
 			unsigned int mask = find_parameter_mask( param->name );
-			LOGV( "param \"%s\" -> %i\n", param->name(), mask );
+//			LOGV( "param \"%s\" -> %i\n", param->name(), mask );
 			this->requirements |= mask;
 		}
 		
-		LOGV( "Material requirements: %i\n", this->requirements );
+//		LOGV( "Material requirements: %i\n", this->requirements );
 	} // calculate_requirements
 	
 	Material::Parameter * Material::parameter_by_name( const char * name )
@@ -679,31 +679,10 @@ namespace assets
 				material->flags |= Material::CUBEMAP;
 			}
 		}
-			
-#if 0
-		if ( !texture.empty() )
-		{
-			assets::Texture * texpointer;
-			
-			if ( material->flags & Material::CUBEMAP )
-			{
-//				texpointer = assets::loadCubemap( texture.asString().c_str(), texture_flags );
-			}
-			else
-			{
-				texpointer = load_texture( texture.asString().c_str(), texture_flags );
-			}
-			
-			if ( texpointer )
-			{
-				material->texture_id = texpointer->texture_id;
-			}
-		}
-#endif
 		
 		// parse and load shader params
 		Json::Value param_list = root["params"];
-		LOGV( "Total Parameters: %i\n", param_list.size() );
+//		LOGV( "Total Parameters: %i\n", param_list.size() );
 		Json::ValueIterator piter = param_list.begin();
 		Json::ValueIterator piter_end = param_list.end();
 		
@@ -719,14 +698,14 @@ namespace assets
 				int param_flags = 0;
 				Json::Value plist = (*piter);
 				parameter->name = piter.key().asString().c_str();
-				LOGV( "parameter-> %s\n", parameter->name() );
+//				LOGV( "parameter-> %s\n", parameter->name() );
 				
 				Json::Value type = plist.get( "type", "" );
 				if ( !type.isNull() )
 				{
 					param_flags |= PF_TYPE;
 					std::string typestr = type.asString();
-					LOGV( "type: %s\n", typestr.c_str() );
+//					LOGV( "type: %s\n", typestr.c_str() );
 					
 					// convert string to param type
 					parameter->type = materialTypeToParameterType( typestr.c_str() );
@@ -744,9 +723,10 @@ namespace assets
 					{
 						param_flags |= PF_VALUE;
 						parameter->intValue = atoi( value.asString().c_str() );
-						LOGV( "param value: %i\n", parameter->intValue );
+//						LOGV( "param value: %i\n", parameter->intValue );
 					}
 				}
+#if 0
 				else if ( parameter->type == MP_SAMPLER_2D )
 				{
 					param_flags |= PF_VALUE;
@@ -773,6 +753,7 @@ namespace assets
 						return util::ConfigLoad_Failure;
 					}
 				}
+#endif
 				else if ( parameter->type == MP_SAMPLER_2D )
 				{
 					param_flags |= PF_VALUE;
@@ -786,19 +767,19 @@ namespace assets
 						param_flags &= ~PF_VALUE;
 					}
 					
-					if ( texture_unit.isNull() )
-					{
-						LOGW( "texture_unit missing for \"sampler\" type\n" );
-					}
+//					if ( texture_unit.isNull() )
+//					{
+//						LOGW( "texture_unit missing for \"sampler\" type\n" );
+//					}
 					
 					if ( param_flags & PF_VALUE )
 					{
 						assets::Texture * tex = assets::load_texture( texture_param.asString().c_str() );
 						parameter->intValue = tex->texture_id;
-						LOGV( "param value: %i\n", parameter->intValue );
+//						LOGV( "param value: %i\n", parameter->intValue );
 						
 						parameter->texture_unit = texture_unit_for_map( parameter->name );
-						LOGV( "texture unit: %i\n", parameter->texture_unit );
+//						LOGV( "texture unit: %i\n", parameter->texture_unit );
 					}
 					else
 					{
@@ -820,7 +801,7 @@ namespace assets
 					
 					if ( texture_unit.isNull() )
 					{
-						LOGW( "texture_unit missing for \"samplerCube\" type\n" );
+//						LOGW( "texture_unit missing for \"samplerCube\" type\n" );
 					}
 					
 					if ( param_flags & PF_VALUE )
@@ -828,10 +809,10 @@ namespace assets
 						texture_flags = image::F_RGBA | image::F_CLAMP;
 						assets::Texture * tex = 0; //assets::loadCubemap( texture_param.asString().c_str(), texture_flags );
 						parameter->intValue = tex->texture_id;
-						LOGV( "param value: %i\n", parameter->intValue );
+//						LOGV( "param value: %i\n", parameter->intValue );
 						
 						parameter->texture_unit = texture_unit_for_map( parameter->name );
-						LOGV( "texture unit: %i\n", parameter->texture_unit );
+//						LOGV( "texture unit: %i\n", parameter->texture_unit );
 					}
 					else
 					{
@@ -857,7 +838,7 @@ namespace assets
 						}
 						else
 						{
-							LOGV( "parsed vec4: %g, %g, %g, %g\n", parameter->vecValue[0], parameter->vecValue[1], parameter->vecValue[2], parameter->vecValue[3] );
+//							LOGV( "parsed vec4: %g, %g, %g, %g\n", parameter->vecValue[0], parameter->vecValue[1], parameter->vecValue[2], parameter->vecValue[3] );
 						}
 					}
 				}
@@ -1002,7 +983,7 @@ namespace assets
 		}
 		
 		Json::Value materials = root["materials"];
-		LOGV( "Total Materials: %i\n", materials.size() );
+//		LOGV( "Total Materials: %i\n", materials.size() );
 		
 		Json::ValueIterator mit = materials.begin();
 
@@ -1026,12 +1007,12 @@ namespace assets
 				amat = assets::default_material();
 				material_ids[ current_material ] = amat->Id();
 			}
-			LOGV( "assigned material '%s' to (%i)\n", material_name.c_str(), material_ids[ current_material ] );
+//			LOGV( "assigned material '%s' to (%i)\n", material_name.c_str(), material_ids[ current_material ] );
 			++current_material;
 		}
 		
 		Json::Value geometry_list = root["geometry"];
-		LOGV( "Total Geometry: %i\n", geometry_list.size() );
+//		LOGV( "Total Geometry: %i\n", geometry_list.size() );
 		mesh->total_geometry = geometry_list.size();
 		mesh->geometry = CREATE_ARRAY( Geometry, mesh->total_geometry );
 		mesh->geometry_vn = CREATE_ARRAY( Geometry, mesh->total_geometry );
@@ -1051,10 +1032,10 @@ namespace assets
 			Json::Value normals = geometry_node["normals"];
 			Json::Value uvs = geometry_node["uvs"];
 			int material_id = geometry_node["material_id"].asInt();
-			LOGV( "geometry: %i, material_id: %i\n", gid-1, material_id );
-			LOGV( "# vertices: %i\n", positions.size()/3 );
-			LOGV( "# indices: %i\n", indices.size() );
-			LOGV( "# triangles: %i\n", indices.size()/3 );
+//			LOGV( "geometry: %i, material_id: %i\n", gid-1, material_id );
+//			LOGV( "# vertices: %i\n", positions.size()/3 );
+//			LOGV( "# indices: %i\n", indices.size() );
+//			LOGV( "# triangles: %i\n", indices.size()/3 );
 			geometry->index_count = indices.size();
 			geometry->indices = (IndexType*)ALLOC( sizeof(IndexType) * geometry->index_count );
 			for( int i = 0; i < geometry->index_count; ++i )
@@ -1102,7 +1083,7 @@ namespace assets
 			if ( material_id != -1 && current_material > 0 /*&& material_id < current_material*/ )
 			{
 				geometry->material_id = material_ids[ material_id ];
-				LOGV( "using material %i %i\n", material_id, geometry->material_id );
+//				LOGV( "using material %i %i\n", material_id, geometry->material_id );
 			}
 			else
 			{
