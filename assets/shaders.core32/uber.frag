@@ -43,11 +43,11 @@ void main()
 	vec4 color = vec4( 0.0, 1.0, 1.0, 1.0 );
 	vec4 specularColor = vec4(1.0);
 	vec4 specularContribution = vec4(0.0, 0.0, 0.0, 0.0);
+	float specularLevel = 0.45;
 
 #if defined(D_LIGHT_POSITION)
 	vec3 L = normalize(lightDirection);
 	float specularPower = 100.0;
-	float specularLevel = 0.45;
 #else
 	vec3 L = vec3(0,1,0);
 #endif

@@ -117,13 +117,18 @@ namespace assets
 		unsigned int num_defines;
 		unsigned int num_attributes;
 		unsigned int num_uniforms;
+		unsigned int num_requires;
+		unsigned int num_conflicts;
 		
 		StackString<64> * defines;
 		StackString<64> * attributes;
 		StackString<64> * uniforms;
+		StackString<64> * requires;
+		StackString<64> * conflicts;
 		
 		unsigned int mask_value;
 		
+		ShaderPermutationGroup();
 		~ShaderPermutationGroup();
 	}; // ShaderPermutationGroup
 	
@@ -141,10 +146,15 @@ namespace assets
 		unsigned int num_uniforms;
 		ShaderPermutationGroup * uniforms;
 
+		StackString<64> frag_location;
+		
+		// total number of parameters across permutations
+		// each one has a unique ID which is the mask value for that parameter
+		unsigned short num_parameters;
+
+
 		ShaderPermutations();
 		~ShaderPermutations();
-		
-		StackString<64> frag_location;
 	}; // ShaderPermutations
 	
 	ShaderPermutations & shader_permutations();
@@ -204,8 +214,8 @@ namespace assets
 	Material * load_material( const char * path, unsigned int flags = 0, bool ignore_cache = false );
 	Material * default_material();
 	void insertMaterial( const char * name, assets::Material * material );
-	unsigned int findParameterMask( StackString<64> & name );
-	unsigned int textureUnitForMap( StackString<64> & name );
+	unsigned int find_parameter_mask( StackString<64> & name );
+	unsigned int texture_unit_for_map( StackString<64> & name );
 	
 	unsigned int materialTypeToParameterType( const char * name );
 	int material_parameter_type_to_render_state( unsigned int type );

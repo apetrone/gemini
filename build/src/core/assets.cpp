@@ -134,6 +134,14 @@ namespace assets
 	
 	void Shader::release() {}
 	
+	ShaderPermutationGroup::ShaderPermutationGroup()
+	{
+		num_defines = 0;
+		num_attributes = 0;
+		num_uniforms = 0;
+		num_requires = 0;
+		num_conflicts = 0;
+	}
 	
 	ShaderPermutationGroup::~ShaderPermutationGroup()
 	{
@@ -154,6 +162,18 @@ namespace assets
 			DESTROY_ARRAY( StackString<64>, uniforms, num_uniforms );
 			num_uniforms = 0;
 		}
+		
+		if ( num_requires )
+		{
+			DESTROY_ARRAY( StackString<64>, requires, num_requires );
+			num_requires = 0;
+		}
+		
+		if ( num_conflicts )
+		{
+			DESTROY_ARRAY( StackString<64>, conflicts, num_conflicts );
+			num_conflicts = 0;
+		}
 	}
 	
 	
@@ -165,6 +185,7 @@ namespace assets
 		uniforms = 0;
 		num_uniforms = 0;
 		num_permutations = 0;
+		num_parameters = 0;
 	}
 	
 	ShaderPermutations::~ShaderPermutations()
@@ -208,7 +229,7 @@ namespace assets
 		}
 	} // read_string_array
 
-	void read_permutation_group( Json::Value & root, ShaderPermutationGroup * option )
+	void read_permutation_group( Json::Value & root, ShaderPermutationGroup * option, bool read_as_parameter )
 	{
 		Json::Value define_list = root.get( "defines", Json::nullValue );
 		option->defines = 0;
@@ -217,12 +238,11 @@ namespace assets
 		{
 			read_string_array( &option->defines, option->num_defines, define_list );
 		}
-		
-		Json::Value mask_value = root.get( "mask_value", Json::nullValue );
-		if ( !mask_value.isNull() )
+
+		if ( read_as_parameter )
 		{
-			option->mask_value = mask_value.asInt();
-			LOGV( "mask_value: %i\n", option->mask_value );
+			// read as another shader parameter and increment parameter index
+			option->mask_value = shader_permutations().num_parameters++;
 		}
 		
 		Json::Value attribute_list = root.get( "attributes", Json::nullValue );
@@ -240,6 +260,18 @@ namespace assets
 		{
 			read_string_array( &option->uniforms, option->num_uniforms, uniform_list );
 		}
+		
+		Json::Value require_list = root.get( "requires", Json::nullValue );
+		if ( !require_list.isNull() )
+		{
+			read_string_array( &option->requires, option->num_requires, require_list );
+		}
+		
+		Json::Value conflicts_list = root.get( "conflicts", Json::nullValue );
+		if ( !conflicts_list.isNull() )
+		{
+			read_string_array( &option->conflicts, option->num_conflicts, conflicts_list );
+		}
 	} // read_permutation_group
 	
 	void read_permutation_section( Json::Value & root, ShaderPermutationGroup ** section, unsigned int & num_items )
@@ -253,7 +285,7 @@ namespace assets
 		{
 			ShaderPermutationGroup * option = &(*section)[ item_id ];
 			option->name = item_iter.key().asString().c_str();
-			read_permutation_group( (*item_iter), option );
+			read_permutation_group( (*item_iter), option, true );
 		}
 	} // read_permutation_section
 	
@@ -264,7 +296,7 @@ namespace assets
 		Json::Value base = root.get( "base", Json::nullValue );
 		if ( !base.isNull() )
 		{
-			read_permutation_group( base, &permutations->base );
+			read_permutation_group( base, &permutations->base, false );
 		}
 
 		Json::Value attributes = root.get( "attributes", Json::nullValue );
@@ -356,7 +388,7 @@ namespace assets
 			renderer::ShaderProgram shaderobject = driver->shaderprogram_create( params );
 			_shader_programs[ shader_id ].object = shaderobject.object;
 		}
-		
+				
 		for( int i = 0; i < total_permutations; ++i )
 		{
 			StackString<1024> preprocessor_defines;
@@ -366,6 +398,8 @@ namespace assets
 			shader = &_shader_programs[i];
 			shader->capabilities = 0;
 			shader->id = i;
+			
+			bool use_permutation = true;
 
 			// add the base attributes and uniforms
 			for( int a = 0; a < permutations.base.num_attributes; ++a )
@@ -379,6 +413,10 @@ namespace assets
 			}
 			
 //			LOGV( "----> permutation: %i\n", i );
+			
+			unsigned int requirements = 0;
+			unsigned int conflicts = 0;
+			
 			// build preprocessor defines, attributes, and uniforms
 			for( int p = 0; p < permutations.num_permutations; ++p )
 			{
@@ -403,13 +441,45 @@ namespace assets
 						uniform_list.push_back( &option->uniforms[a] );
 					}
 					
-//					LOGV( "option: %s\n", option->name() );
+					// build requirement list
+					for( unsigned int i = 0; i < option->num_requires; ++i )
+					{
+						requirements |= find_parameter_mask( option->requires[ i ] );
+					}
+
+					// build conflict list
+					for( unsigned int i = 0; i < option->num_conflicts; ++i )
+					{
+						conflicts |= find_parameter_mask( option->conflicts[ i ] );
+					}
+
 					shader->capabilities |= (1 << option->mask_value);
 				}
 			}
 			
+			
+			
+			if ( (requirements & shader->capabilities) < requirements )
+			{
+//				LOGV( "This shader will not compile properly. Missing one or more requirements!\n" );
+				use_permutation = false;
+			}
+			else if ( (shader->capabilities & conflicts) > 0 )
+			{
+//				LOGV( "This shader will not compile properly. There are conflicting parameters\n" );
+				use_permutation = false;
+			}
+			
+			
+			if ( !use_permutation )
+			{
+				continue;
+			}
+			
 //			LOGV( "%i -> %s\n", shader->id, preprocessor_defines() );
+			
 
+			
 			// load the shaders and pass the defines
 
 			driver->shaderobject_compile(vertex_shader[i], vs_source, preprocessor_defines(), shader_version() );
@@ -524,7 +594,7 @@ namespace assets
 		for( int id = 0; id < this->num_parameters; ++id )
 		{
 			Material::Parameter * param = &this->parameters[ id ];
-			unsigned int mask = findParameterMask( param->name );
+			unsigned int mask = find_parameter_mask( param->name );
 			LOGV( "param \"%s\" -> %i\n", param->name(), mask );
 			this->requirements |= mask;
 		}
@@ -695,7 +765,7 @@ namespace assets
 						parameter->intValue = tex->texture_id;
 						LOGV( "param value: %i\n", parameter->intValue );
 						
-						parameter->texture_unit = textureUnitForMap( parameter->name );
+						parameter->texture_unit = texture_unit_for_map( parameter->name );
 						LOGV( "texture unit: %i\n", parameter->texture_unit );
 					}
 					else
@@ -727,7 +797,7 @@ namespace assets
 						parameter->intValue = tex->texture_id;
 						LOGV( "param value: %i\n", parameter->intValue );
 						
-						parameter->texture_unit = textureUnitForMap( parameter->name );
+						parameter->texture_unit = texture_unit_for_map( parameter->name );
 						LOGV( "texture unit: %i\n", parameter->texture_unit );
 					}
 					else
@@ -760,7 +830,7 @@ namespace assets
 						parameter->intValue = tex->texture_id;
 						LOGV( "param value: %i\n", parameter->intValue );
 						
-						parameter->texture_unit = textureUnitForMap( parameter->name );
+						parameter->texture_unit = texture_unit_for_map( parameter->name );
 						LOGV( "texture unit: %i\n", parameter->texture_unit );
 					}
 					else
@@ -878,22 +948,20 @@ namespace assets
 		return params[ type ];
 	} // material_parameter_type_to_render_state
 	
-	unsigned int findParameterMask( StackString<64> & name )
+	unsigned int find_parameter_mask( StackString<64> & name )
 	{
 		for( unsigned int option_id = 0; option_id < shader_permutations().num_permutations; ++option_id )
 		{
 			ShaderPermutationGroup * option = shader_permutations().options[ option_id ];
-			LOGV( "comparing \"%s\" to \"%s\"\n", option->name(), name() );
 			if ( xstr_nicmp( name(), option->name(), 64 ) == 0 )
 			{
-				LOGV( "found option \"%s\" value: %i\n", option->name(), option->mask_value );
-				return 1 << option->mask_value;
+				return (1 << option->mask_value);
 			}
 		}
 		return 0;
-	} // findParameterMask
+	} // find_parameter_mask
 	
-	unsigned int textureUnitForMap( StackString<64> & name )
+	unsigned int texture_unit_for_map( StackString<64> & name )
 	{
 		if ( xstr_nicmp( name(), "diffusemap", 0 ) == 0 )
 		{
@@ -913,7 +981,7 @@ namespace assets
 		}
 		
 		return 0;
-	} // textureUnitForMap
+	} // texture_unit_for_map
 	
 	
 	// -------------------------------------------------------------
@@ -1117,7 +1185,6 @@ namespace assets
 		vertex_count = 0;
 		index_count = 0;
 		draw_type = renderer::DRAW_TRIANGLES;
-//		render_data = 0;
 
 		attributes = 0;
 		is_animated = 0;
@@ -1336,7 +1403,7 @@ namespace assets
 		Material::Parameter * parameter = _default_material->parameters = CREATE(Material::Parameter);
 		parameter->name = "diffusemap";
 		parameter->type = MP_SAMPLER_2D;
-		parameter->texture_unit = textureUnitForMap( parameter->name );
+		parameter->texture_unit = texture_unit_for_map( parameter->name );
 		parameter->intValue = _default_texture->texture_id;
 		_default_material->calculate_requirements();
 		mat_lib->take_ownership( "materials/default", _default_material );
