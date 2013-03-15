@@ -181,11 +181,7 @@ namespace assets
 		}
 	}
 	
-	
-	
-	
-	
-	
+
 	
 	assets::Shader * _shader_programs = 0;
 	ShaderPermutations * _shader_permutations = 0;
@@ -196,33 +192,31 @@ namespace assets
 		assert( _shader_permutations != 0 );
 		return *_shader_permutations;
 	} // shader_permutations
-
-	void readAttributesAndUniforms( ShaderPermutationGroup * option, Json::Value & root )
+	
+	void read_string_array( StackString<64> ** array, unsigned int & num_items, Json::Value & root )
 	{
-#if 1
+		num_items = root.size();
+		*array = CREATE_ARRAY( StackString<64>, num_items );
+		Json::ValueIterator it = root.begin();
+		Json::ValueIterator end = root.end();
+		
+		unsigned int id = 0;
+		for( ; it != end; ++it, ++id )
+		{
+			Json::Value value = (*it);
+			(*array)[ id ] = value.asString().c_str();
+		}
+	} // read_string_array
+
+	void read_permutation_group( Json::Value & root, ShaderPermutationGroup * option )
+	{
 		Json::Value define_list = root.get( "defines", Json::nullValue );
 		option->defines = 0;
 		option->num_defines = define_list.size();
 		if ( !define_list.isNull() )
 		{
-			option->defines = CREATE_ARRAY( StackString<64>, option->num_defines );
-			
-			Json::ValueIterator it = define_list.begin();
-			Json::ValueIterator end = define_list.end();
-			
-			unsigned int id = 0;
-			for( ; it != end; ++it, ++id )
-			{
-				Json::Value value = (*it);
-				option->defines[ id ] = value.asString().c_str();
-				LOGV( "define: %s\n", option->defines[id]() );
-			}
+			read_string_array( &option->defines, option->num_defines, define_list );
 		}
-		else
-		{
-			LOGV( "No defines list.\n" );
-		}
-#endif
 		
 		Json::Value mask_value = root.get( "mask_value", Json::nullValue );
 		if ( !mask_value.isNull() )
@@ -230,214 +224,66 @@ namespace assets
 			option->mask_value = mask_value.asInt();
 			LOGV( "mask_value: %i\n", option->mask_value );
 		}
-		else
-		{
-			LOGW( "missing mask value for permutation %s\n", option->name() );
-		}
 		
 		Json::Value attribute_list = root.get( "attributes", Json::nullValue );
 		option->attributes = 0;
 		option->num_attributes = attribute_list.size();
 		if ( !attribute_list.isNull() )
 		{
-			option->attributes = CREATE_ARRAY( StackString<64>, option->num_attributes );
-			
-			Json::ValueIterator it = attribute_list.begin();
-			Json::ValueIterator end = attribute_list.end();
-			
-			unsigned int attrib_id = 0;
-			for( ; it != end; ++it, ++attrib_id )
-			{
-				Json::Value value = (*it);
-				option->attributes[ attrib_id ] = value.asString().c_str();
-			}
+			read_string_array( &option->attributes, option->num_attributes, attribute_list );
 		}
-		else
-		{
-			LOGV( "No attributes list.\n" );
-		}
-		
-		
+
 		Json::Value uniform_list = root.get( "uniforms", Json::nullValue );
 		option->uniforms = 0;
 		option->num_uniforms = uniform_list.size();
 		if ( !uniform_list.isNull() )
 		{
-			option->uniforms = CREATE_ARRAY( StackString<64>, option->num_uniforms );
-			
-			Json::ValueIterator it = uniform_list.begin();
-			Json::ValueIterator end = uniform_list.end();
-			
-			unsigned int uniform_id = 0;
-			for( ; it != end; ++it, ++uniform_id )
-			{
-				Json::Value value = (*it);
-				option->uniforms[ uniform_id ] = value.asString().c_str();
-			}
+			read_string_array( &option->uniforms, option->num_uniforms, uniform_list );
 		}
-		else
-		{
-			LOGV( "No uniforms list.\n" );
-		}
-	} // readAttributesAndUniforms
-
-
-	void readAttributesAndUniforms2( ShaderPermutationGroup * option, Json::Value & root )
+	} // read_permutation_group
+	
+	void read_permutation_section( Json::Value & root, ShaderPermutationGroup ** section, unsigned int & num_items )
 	{
-#if 1
-		Json::Value define_list = root.get( "defines", Json::nullValue );
-		option->defines = 0;
-		option->num_defines = define_list.size();
-		if ( !define_list.isNull() )
+		Json::ValueIterator item_iter = root.begin();
+		Json::ValueIterator item_end = root.end();
+		num_items = root.size();
+		*section = CREATE_ARRAY( ShaderPermutationGroup, num_items );
+		unsigned int item_id = 0;
+		for( ; item_iter != item_end; ++item_iter, ++item_id )
 		{
-			option->defines = CREATE_ARRAY( StackString<64>, option->num_defines );
-			
-			Json::ValueIterator it = define_list.begin();
-			Json::ValueIterator end = define_list.end();
-			
-			unsigned int id = 0;
-			for( ; it != end; ++it, ++id )
-			{
-				Json::Value value = (*it);
-				option->defines[ id ] = value.asString().c_str();
-				LOGV( "define: %s\n", option->defines[id]() );
-			}
+			ShaderPermutationGroup * option = &(*section)[ item_id ];
+			option->name = item_iter.key().asString().c_str();
+			read_permutation_group( (*item_iter), option );
 		}
-		else
-		{
-			LOGV( "No defines list.\n" );
-		}
-#endif
-		
-		
-		Json::Value mask_value = root.get( "mask_value", Json::nullValue );
-		if ( !mask_value.isNull() )
-		{
-			option->mask_value = mask_value.asInt();
-			LOGV( "mask_value: %i\n", option->mask_value );
-		}
-		else
-		{
-			LOGW( "missing mask value for permutation %s\n", option->name() );
-		}
-		
-		Json::Value attribute_list = root.get( "attributes", Json::nullValue );
-		option->attributes = 0;
-		option->num_attributes = attribute_list.size();
-		if ( !attribute_list.isNull() )
-		{
-			option->attributes = CREATE_ARRAY( StackString<64>, option->num_attributes );
-			
-			Json::ValueIterator it = attribute_list.begin();
-			Json::ValueIterator end = attribute_list.end();
-			
-			unsigned int attrib_id = 0;
-			for( ; it != end; ++it, ++attrib_id )
-			{
-				Json::Value value = (*it);
-				option->attributes[ attrib_id ] = value.asString().c_str();
-				LOGV( "attributes: %s\n", value.asString().c_str() );
-			}
-		}
-		else
-		{
-			LOGV( "No attributes list.\n" );
-		}
-		
-		
-		Json::Value uniform_list = root.get( "uniforms", Json::nullValue );
-		option->uniforms = 0;
-		option->num_uniforms = uniform_list.size();
-		if ( !uniform_list.isNull() )
-		{
-			option->uniforms = CREATE_ARRAY( StackString<64>, option->num_uniforms );
-			
-			Json::ValueIterator it = uniform_list.begin();
-			Json::ValueIterator end = uniform_list.end();
-			
-			unsigned int uniform_id = 0;
-			for( ; it != end; ++it, ++uniform_id )
-			{
-				Json::Value value = (*it);
-				option->uniforms[ uniform_id ] = value.asString().c_str();
-				LOGV( "uniforms: %s\n", value.asString().c_str() );
-			}
-		}
-		else
-		{
-			LOGV( "No uniforms list.\n" );
-		}
-	} // readAttributesAndUniforms2
+	} // read_permutation_section
 	
 	util::ConfigLoadStatus load_shader_permutations( const Json::Value & root, void * data )
 	{
 		ShaderPermutations * permutations = (ShaderPermutations*)data;
 		
 		Json::Value base = root.get( "base", Json::nullValue );
-		
 		if ( !base.isNull() )
 		{
-//			Json::ValueIterator item_iter = base.begin();
-//			Json::ValueIterator item_end = base.end();
-			readAttributesAndUniforms( &permutations->base, base );
+			read_permutation_group( base, &permutations->base );
 		}
-		
-#if 0
-		// look at permutations
-		Json::Value permutation_root = root.get("permutations", Json::nullValue );
-		LOGV( "num: %i\n", permutation_root.size() );
-		permutations->num_options = permutation_root.size();
-		permutations->options = new ShaderPermutationGroup[ permutations->num_options ];
-		Json::ValueIterator item_iter = permutation_root.begin();
-		Json::ValueIterator item_end = permutation_root.end();
-		unsigned int option_id = 0;
-		for( ; item_iter != item_end; ++item_iter, ++option_id )
-		{
-			ShaderPermutationGroup * option = &permutations->options[ option_id ];
-			LOGV( "loading %s...\n", item_iter.key().asString().c_str() );
-			option->name = item_iter.key().asString().c_str();
-			readAttributesAndUniforms( option, (*item_iter) );
-		}
-#endif
-		
+
 		Json::Value attributes = root.get( "attributes", Json::nullValue );
 		if ( !attributes.isNull() )
 		{
-			Json::ValueIterator item_iter = attributes.begin();
-			Json::ValueIterator item_end = attributes.end();
-			permutations->num_attributes = attributes.size();
-			permutations->attributes = CREATE_ARRAY( ShaderPermutationGroup, permutations->num_attributes );
-			unsigned int option_id = 0;
-			for( ; item_iter != item_end; ++item_iter, ++option_id )
-			{
-				ShaderPermutationGroup * option = &permutations->attributes[ option_id ];
-				LOGV( "loading %s...\n", item_iter.key().asString().c_str() );
-				option->name = item_iter.key().asString().c_str();
-				readAttributesAndUniforms2( option, (*item_iter) );
-			}
+			read_permutation_section( attributes, &permutations->attributes, permutations->num_attributes );
 		}
 		
 		Json::Value uniforms = root.get( "uniforms", Json::nullValue );
 		if ( !uniforms.isNull() )
 		{
-			Json::ValueIterator item_iter = uniforms.begin();
-			Json::ValueIterator item_end = uniforms.end();
-			permutations->num_uniforms = uniforms.size();
-			permutations->uniforms = CREATE_ARRAY( ShaderPermutationGroup, permutations->num_uniforms );
-			unsigned int option_id = 0;
-			for( ; item_iter != item_end; ++item_iter, ++option_id )
-			{
-				ShaderPermutationGroup * option = &permutations->uniforms[ option_id ];
-				LOGV( "loading %s...\n", item_iter.key().asString().c_str() );
-				option->name = item_iter.key().asString().c_str();
-				readAttributesAndUniforms2( option, (*item_iter) );
-			}
+			read_permutation_section( uniforms, &permutations->uniforms, permutations->num_uniforms );
 		}
+		
+		Json::Value frag_data_location = root.get( "frag_data_location", Json::nullValue );
+		permutations->frag_location = frag_data_location.asString().c_str();
 		
 		return util::ConfigLoad_Success;
 	} // load_shader_permutations
-
-
 
 	void compile_shader_permutations()
 	{
@@ -452,10 +298,10 @@ namespace assets
 		}
 		
 		permutations.num_permutations = permutations.num_attributes+permutations.num_uniforms;
-		LOGV( "loaded %i options\n", permutations.num_permutations );
+//		LOGV( "loaded %i options\n", permutations.num_permutations );
 		
 		unsigned int total_permutations = (1 << permutations.num_permutations);
-		LOGV( "total permutations: %i\n", total_permutations );
+//		LOGV( "total permutations: %i\n", total_permutations );
 		
 		renderer::IRenderDriver * driver = renderer::driver();
 		size_t total_shader_bytes = total_permutations * sizeof(renderer::ShaderObject*);
@@ -473,13 +319,13 @@ namespace assets
 		for( int i = 0; i < permutations.num_attributes; ++i, ++pid )
 		{
 			permutations.options[pid] = &permutations.attributes[i];
-			LOGV( "option: \"%s\", mask_value: %i\n", permutations.options[pid]->name(), permutations.options[pid]->mask_value );
+//			LOGV( "option: \"%s\", mask_value: %i\n", permutations.options[pid]->name(), permutations.options[pid]->mask_value );
 		}
 		
 		for( int i = 0; i < permutations.num_uniforms; ++i, ++pid )
 		{
 			permutations.options[pid] = &permutations.uniforms[i];
-			LOGV( "option: \"%s\", mask_value: %i\n", permutations.options[pid]->name(), permutations.options[pid]->mask_value );
+//			LOGV( "option: \"%s\", mask_value: %i\n", permutations.options[pid]->name(), permutations.options[pid]->mask_value );
 		}
 
 
@@ -532,7 +378,7 @@ namespace assets
 				uniform_list.push_back( &permutations.base.uniforms[a] );
 			}
 			
-			LOGV( "----> permutation: %i\n", i );
+//			LOGV( "----> permutation: %i\n", i );
 			// build preprocessor defines, attributes, and uniforms
 			for( int p = 0; p < permutations.num_permutations; ++p )
 			{
@@ -541,7 +387,7 @@ namespace assets
 					ShaderPermutationGroup * option = permutations.options[p];
 					for( int id = 0; id < option->num_defines; ++id )
 					{
-						LOGV( "option: %s\n", option->defines[id]() );
+//						LOGV( "option: %s\n", option->defines[id]() );
 						preprocessor_defines.append( "#define " );
 						preprocessor_defines.append( option->defines[id]() );
 						preprocessor_defines.append( " 1\n" );
@@ -557,12 +403,12 @@ namespace assets
 						uniform_list.push_back( &option->uniforms[a] );
 					}
 					
-					LOGV( "option: %s\n", option->name() );
+//					LOGV( "option: %s\n", option->name() );
 					shader->capabilities |= (1 << option->mask_value);
 				}
 			}
 			
-			LOGV( "%i -> %s\n", shader->id, preprocessor_defines() );
+//			LOGV( "%i -> %s\n", shader->id, preprocessor_defines() );
 
 			// load the shaders and pass the defines
 
@@ -593,7 +439,7 @@ namespace assets
 				kp->second = -1;
 			}
 
-			shader->set_frag_data_location( "out_Color" );
+			shader->set_frag_data_location( shader_permutations().frag_location() );
 
 			// attach compiled code to program
 			driver->shaderprogram_attach( *shader, vertex_shader[i] );
@@ -669,7 +515,7 @@ namespace assets
 	{
 		return asset_id;
 	} // Id
-			
+
 	void Material::calculate_requirements()
 	{
 		// calculate material requirements

@@ -813,8 +813,6 @@ public:
 								rs.add_draw_call( vb.vertexbuffer );
 								
 								rs.run_commands();
-//								LOGV( "shader: %i, draw tileset: %i, count: %i\n", shader->id, lastset->id, vb.last_index );
-								
 								vb.reset();
 								rs.stream.seek( offset, true );
 							}

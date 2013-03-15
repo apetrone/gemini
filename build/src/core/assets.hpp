@@ -143,6 +143,8 @@ namespace assets
 
 		ShaderPermutations();
 		~ShaderPermutations();
+		
+		StackString<64> frag_location;
 	}; // ShaderPermutations
 	
 	ShaderPermutations & shader_permutations();
