@@ -40,6 +40,9 @@
 #include "camera.hpp"
 #include "renderstream.hpp"
 
+
+#include "keyvalues.hpp"
+
 glm::mat4 objectMatrix;
 glm::vec3 light_position = glm::vec3( 0, 2, 0 );
 
@@ -542,6 +545,8 @@ public:
 
 		util::json_load_with_callback( "maps/test.json", tiled_map_loader, &tiled_map, true );
 
+		KeyValues kv;
+		kv.set( "name", 3 );
 
 
 #if 1
