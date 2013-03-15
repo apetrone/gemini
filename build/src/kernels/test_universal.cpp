@@ -327,43 +327,6 @@ util::ConfigLoadStatus tiled_map_loader( const Json::Value & root, void * data )
 
 const float TEST_SIZE = 256;
 
-renderer::ShaderObject create_shader_from_file( const char * shader_path, renderer::ShaderObjectType type, const char * preprocessor_defines )
-{
-	renderer::ShaderObject shader_object;
-	char * buffer;
-	int length = 0;
-	buffer = fs::file_to_buffer( shader_path, 0, &length );
-	if ( buffer )
-	{
-		StackString<32> version;
-		util::strip_shader_version( buffer, version );
-		if ( version._length == 0 )
-		{
-			LOGW( "Unable to extract version from shader! Forcing to #version 150.\n" );
-			version = "#version 150";
-		}
-		version.append( "\n" );
-				
-		// specify version string first, followed by any defines, then the actual shader source
-		if ( preprocessor_defines == 0 )
-		{
-			preprocessor_defines = "";
-		}
-		
-		shader_object = renderer::driver()->shaderobject_create( type );
-		
-		renderer::driver()->shaderobject_compile( shader_object, buffer, preprocessor_defines, version() );
-	
-		DEALLOC(buffer);
-	}
-	else
-	{
-		LOGE( "Unable to open shader '%s'\n", shader_path );
-	}
-	
-	return shader_object;
-}
-
 
 
 
@@ -388,7 +351,6 @@ class TestUniversal : public kernel::IApplication,
 
 	audio::SoundHandle sound;
 	audio::SoundSource source;
-	renderer::ShaderProgram shader_program;
 	renderer::VertexStream vb;
 	assets::Texture * tex;
 	assets::Mesh * mesh;
@@ -597,43 +559,13 @@ public:
 		mat = assets::load_material( "materials/rogue" );
 		mat2 = assets::load_material( "materials/gametiles" );
 
-		camera.perspective( 60, params.window_width, params.window_height, 0.1f, 512.0f );
+//		camera.perspective( 60, params.window_width, params.window_height, 0.1f, 512.0f );
+		camera.ortho( 0.0f, (float)params.window_width, (float)params.window_height, 0.0f, -0.5f, 255.0f );
 		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
 		
 		alpha = 0;
 		alpha_delta = 1;
-		
-		renderer::ShaderParameters parms;
-		this->shader_program = renderer::driver()->shaderprogram_create( parms );
-		
-		renderer::ShaderObject vertex_shader = create_shader_from_file( "shaders/fontshader.vert", renderer::SHADER_VERTEX, 0 );
-		renderer::ShaderObject fragment_shader = create_shader_from_file( "shaders/fontshader.frag", renderer::SHADER_FRAGMENT, 0 );
-		
-		renderer::driver()->shaderprogram_attach( shader_program, vertex_shader );
-		renderer::driver()->shaderprogram_attach( shader_program, fragment_shader );
-		
-		parms.set_frag_data_location( "out_color" );
-		parms.alloc_uniforms( 3 );
-		parms.uniforms[0].set_key( "projection_matrix" );
-		parms.uniforms[1].set_key( "modelview_matrix" );
-		parms.uniforms[2].set_key( "diffusemap" );
-
-		parms.alloc_attributes( 3 );
-		parms.attributes[0].set_key( "in_cosition" ); parms.attributes[0].second = 0;
-		parms.attributes[1].set_key( "in_color" ); parms.attributes[1].second = 1;
-		parms.attributes[2].set_key( "in_uv" ); parms.attributes[2].second = 2;
-		
-		
-		renderer::driver()->shaderprogram_bind_attributes( shader_program, parms );
-		renderer::driver()->shaderprogram_link_and_validate( shader_program );
-		
-		renderer::driver()->shaderprogram_activate( shader_program );
-		renderer::driver()->shaderprogram_bind_uniforms( shader_program, parms );
-		
-		renderer::driver()->shaderobject_destroy( vertex_shader );
-		renderer::driver()->shaderobject_destroy( fragment_shader );
-		
-
+	
 		vb.reset();
 		vb.desc.add( renderer::VD_FLOAT3 );
 		vb.desc.add( renderer::VD_UNSIGNED_BYTE4 );
@@ -821,11 +753,14 @@ public:
 	virtual void tick( kernel::Params & params )
 	{
 		rs.rewind();
+		// setup global rendering state
 		rs.add_clearcolor( 0.25, 0.25, 0.25, 1.0f );
 		rs.add_clear( 0x00004000 | 0x00000100 );
 		rs.add_viewport( 0, 0, (int)params.window_width, (int)params.window_height );
 
 		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
+		rs.run_commands();
+		rs.rewind();
 	
 		GeneralParameters gp;
 		gp.global_params = 3;
@@ -845,28 +780,11 @@ public:
 		{
 			rs.add_state( renderer::STATE_BLEND, 1 );
 			rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
-		
-			rs.add_shader( &shader_program );
-			glm::mat4 modelview;
-//			modelview = glm::translate( modelview, glm::vec3( (params.window_width/2.0f)-(TEST_SIZE/2.0f), (params.window_height/2.0f)-(TEST_SIZE/2.0f), 0 ) );
-
-			glm::mat4 projection = glm::ortho( 0.0f, (float)params.window_width, (float)params.window_height, 0.0f, -0.5f, 255.0f );
-			
-			rs.add_uniform_matrix4( 0, &modelview );
-			rs.add_uniform_matrix4( 4, &projection );
-//			rs.add_uniform_matrix4( 0, &camera.matCam );
-//			rs.add_uniform_matrix4( 4, &camera.matProj );
-			
-			
-			
-			
-			
-			
 			
 			// could potentially have a vertexbuffer per tileset
 			// this would allow us to batch tiles that share the same tileset (texture)
 			TileSet * lastset = 0;
-			
+			unsigned int attribs = (1 << renderer::GV_UV0) | (1 << renderer::GV_COLOR) | (1 << renderer::GV_COLOR);
 			for( int h = 0; h < tiled_map.height; ++h )
 			{
 				for( int w = 0; w < tiled_map.width; ++w )
@@ -877,24 +795,30 @@ public:
 						Tile * tile = &tiled_map.tilelist.tiles[ tile_gid-1 ];
 						if ( tile )
 						{
-							LOGV( "tileset_id: %i\n", tile->tileset_id );
 							TileSet * set = &tiled_map.tilesets[ tile->tileset_id ];
 							FontVertexType * v = (FontVertexType*)vb.request(4);
+#if 1
 							if ( !v || (set != lastset && lastset != 0) )
 							{
 								long offset = rs.stream.offset_pointer();
 								vb.update();
-								assets::Shader * shader = assets::find_compatible_shader( 37 + lastset->material->requirements );
+								assets::Shader * shader = assets::find_compatible_shader( attribs + lastset->material->requirements );
+								rs.add_shader( shader );
+
+								rs.add_uniform_matrix4( shader->get_uniform_location("modelviewMatrix"), &camera.matCam );
+								rs.add_uniform_matrix4( shader->get_uniform_location("projectionMatrix"), &camera.matProj );
+								rs.add_uniform_matrix4( shader->get_uniform_location("objectMatrix"), &objectMatrix );
+								
 								rs.add_material( lastset->material, shader );
 								rs.add_draw_call( vb.vertexbuffer );
 								
 								rs.run_commands();
-								LOGV( "draw tileset: %i, count: %i\n", lastset->id, vb.last_index );
+//								LOGV( "shader: %i, draw tileset: %i, count: %i\n", shader->id, lastset->id, vb.last_index );
 								
 								vb.reset();
 								rs.stream.seek( offset, true );
 							}
-							
+#endif
 							lastset = set;
 							//						FontVertexType * v = (FontVertexType*)vb[0];
 							
@@ -934,15 +858,23 @@ public:
 			
 			if ( vb.last_index > 0 && lastset )
 			{
-				LOGV( "draw tileset: %i, count: %i\n", lastset->id, vb.last_index );
+				
 				vb.update();
-				assets::Shader * shader = assets::find_compatible_shader( 37 + lastset->material->requirements );
-				rs.add_material( lastset->material, shader );
+				assets::Shader * shader = assets::find_compatible_shader( attribs + lastset->material->requirements );
+//				LOGV( "shader: %i, draw tileset: %i, count: %i\n", shader->id, lastset->id, vb.last_index );
+				
+				rs.add_shader( shader );
+				rs.add_uniform_matrix4( shader->get_uniform_location("modelviewMatrix"), &camera.matCam );
+				rs.add_uniform_matrix4( shader->get_uniform_location("projectionMatrix"), &camera.matProj );
+				rs.add_uniform_matrix4( shader->get_uniform_location("objectMatrix"), &objectMatrix );
+
+				rs.add_material( lastset->material, shader );				
 				rs.add_draw_call( vb.vertexbuffer );
 				
 				rs.run_commands();
 				vb.reset();
 			}
+			
 //			assets::Material::Parameter * diffuse = mat2->parameter_by_name( "diffusemap" );
 //			if ( diffuse )
 //			{
@@ -961,7 +893,7 @@ public:
 
 	virtual void shutdown( kernel::Params & params )
 	{
-		renderer::driver()->shaderprogram_destroy( shader_program );
+//		renderer::driver()->shaderprogram_destroy( shader_program );
 		
 		vb.destroy();
 	}

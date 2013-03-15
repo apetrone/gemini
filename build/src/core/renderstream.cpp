@@ -54,10 +54,9 @@ RenderState * RenderStream::new_render_state()
 
 void RenderStream::run_commands()
 {
-	stream.rewind();
 	RenderState * renderstate;
 	renderer::IRenderDriver * driver = renderer::driver();
-	
+
 	for( int state_id = 0; state_id < num_commands; state_id++ )
 	{
 		renderstate = &commands[ state_id ];
@@ -168,6 +167,9 @@ void RenderStream::add_draw_call( renderer::VertexBuffer * vertexbuffer )
 
 void RenderStream::add_material( assets::Material * material, assets::Shader * shader )
 {
+	assert( material != 0 );
+	assert( shader != 0 );
+
 	// setup shader parameters
 	assets::Material::Parameter * parameter;
 	for( int p = 0; p < material->num_parameters; ++p )
