@@ -34,8 +34,6 @@ namespace platform
 	core::Error osx_startup()
 	{
 		pool = [[NSAutoreleasePool alloc] init];
-		NSScreen * screen = [NSScreen mainScreen];
-		NSLog( @"osx: backingScaleFactor: %g", [screen backingScaleFactor] );
 		return core::Error(0);
 	}
 	
