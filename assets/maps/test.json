@@ -1,0 +1,54 @@
+{ "height":4,
+ "layers":[
+        {
+         "data":[4, 4, 3, 4, 4, 2, 2, 4, 4, 2, 2, 5, 18, 19, 20, 17],
+         "height":4,
+         "name":"Tile Layer 1",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":4,
+         "x":0,
+         "y":0
+        }],
+ "orientation":"orthogonal",
+ "properties":
+    {
+
+    },
+ "tileheight":32,
+ "tilesets":[
+        {
+         "firstgid":1,
+         "image":"..\/..\/..\/1gam-2013\/assets\/maps\/gametiles.png",
+         "imageheight":128,
+         "imagewidth":128,
+         "margin":0,
+         "name":"gametiles",
+         "properties":
+            {
+
+            },
+         "spacing":0,
+         "tileheight":32,
+         "tilewidth":32
+        }, 
+        {
+         "firstgid":17,
+         "image":"..\/textures.desktop\/rogue.png",
+         "imageheight":128,
+         "imagewidth":128,
+         "margin":0,
+         "name":"rogue",
+         "properties":
+            {
+
+            },
+         "spacing":0,
+         "tileheight":32,
+         "tilewidth":32
+        }],
+ "tilewidth":32,
+ "version":1,
+ "width":4
+}

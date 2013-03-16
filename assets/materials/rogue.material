@@ -1,0 +1,12 @@
+{
+	"name" : "rogue",
+
+	"params":
+	{
+		"diffusemap" :
+		{
+			"type" : "sampler",
+			"texture" : "textures/rogue"
+		}
+	}
+}
