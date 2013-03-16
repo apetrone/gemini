@@ -155,7 +155,6 @@ project ( build_name )
 					"src/core/ios/*.m*",
 					"src/core/ios/*.h*",
 					"src/core/osx/osx_platform.*",
-					"src/core/osx/osx_entry.mm",
 					"src/core/gldrivers/opengl_glesv2.*",
 					"src/core/osx/osx_gemgl.*",
 				}

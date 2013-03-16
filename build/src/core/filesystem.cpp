@@ -120,8 +120,6 @@ namespace fs
 		}
 	} // truncate_string_at_path
 	
-#if !PLATFORM_IS_MOBILE
-
 	bool file_exists( const char * path, bool path_is_relative )
 	{
 		struct stat stFileInfo;
@@ -160,7 +158,6 @@ namespace fs
 		result = stat( fullpath, &stFileInfo );
 		return (result == 0) && ((stFileInfo.st_mode & S_IFMT) == S_IFDIR);
 	} // directory_exists
-#endif
 	
 	char * file_to_buffer( const char * filename, char * buffer, int * buffer_length, bool path_is_relative )
 	{
@@ -168,7 +165,13 @@ namespace fs
 		{
 			LOGE( "ERROR: file_to_buffer called with INVALID value!\n" );
 			return 0;
-		}		
+		}
+		
+		if ( !fs::file_exists(filename, true) )
+		{
+			LOGE( "File does not exist! \"%s\"\n", filename );
+			return 0;
+		}
 		
 		char fullpath[ MAX_PATH_SIZE ] = {0};
 		if ( path_is_relative )
@@ -180,9 +183,8 @@ namespace fs
 			xstr_ncpy( fullpath, filename, -1 );
 			platform::path::normalize( fullpath, MAX_PATH_SIZE );
 		}
-		
+				
 		long int fileSize;
-		
 		xfile_t f = xfile_open( fullpath, XF_READ );
 		if ( xfile_isopen( f ) )
 		{

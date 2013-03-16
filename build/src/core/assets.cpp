@@ -372,8 +372,12 @@ namespace assets
 		util::strip_shader_version( fs_source, shader_version );
 		if ( shader_version._length == 0 )
 		{
-			LOGW( "Unable to extract version from shader! Forcing to #version 150.\n" );
+#if PLATFORM_IS_MOBILE
+			shader_version = "#version 100";
+#else
 			shader_version = "#version 150";
+#endif
+			LOGW( "Unable to extract version from shader! Forcing to %s.\n", shader_version() );
 		}
 		shader_version.append( "\n" );
 		
@@ -412,7 +416,7 @@ namespace assets
 				uniform_list.push_back( &permutations.base.uniforms[a] );
 			}
 			
-//			LOGV( "----> permutation: %i\n", i );
+			LOGV( "----> permutation: %i\n", i );
 			
 			unsigned int requirements = 0;
 			unsigned int conflicts = 0;

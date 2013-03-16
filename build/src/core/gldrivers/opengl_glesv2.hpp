@@ -35,5 +35,41 @@ public:
 	
 	virtual void run_command( renderer::DriverCommandType command, MemoryStream & stream );
 	virtual void post_command( renderer::DriverCommandType command, MemoryStream & stream );
+	virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStream & stream );
+	
+	// texture
+	virtual bool upload_texture_2d( renderer::TextureParameters & parameters );
+	virtual bool generate_texture( renderer::TextureParameters & parameters );
+	virtual bool destroy_texture( renderer::TextureParameters & parameters );
+	virtual bool is_texture( renderer::TextureParameters & parameters );
+	
+	// font
+	virtual void render_font( int x, int y, renderer::Font & font, const char * utf8_string, const Color & color );
+	
+	// vertexbuffer
+	virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices );
+	virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream );
+	virtual void vertexbuffer_bufferdata( renderer::VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, renderer::VertexType * vertices, unsigned int index_count, renderer::IndexType * indices );
+	
+	virtual void vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, unsigned int num_indices );
+	virtual void vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned int num_vertices );
+	
+	virtual renderer::VertexBuffer * vertexbuffer_from_geometry( renderer::VertexDescriptor & descriptor, renderer::Geometry * geometry );
+	virtual void vertexbuffer_upload_geometry( renderer::VertexBuffer * vertexbuffer, renderer::Geometry * geometry );
+	
+	// shaders
+	
+	virtual renderer::ShaderObject shaderobject_create( renderer::ShaderObjectType shader_type );
+	virtual bool shaderobject_compile( renderer::ShaderObject shader_object, const char * shader_source, const char * preprocessor_defines, const char * version );
+	virtual void shaderobject_destroy( renderer::ShaderObject shader_object );
+	
+	virtual renderer::ShaderProgram shaderprogram_create( renderer::ShaderParameters & parameters );
+	virtual void shaderprogram_destroy( renderer::ShaderProgram program );
+	virtual void shaderprogram_attach( renderer::ShaderProgram shader_program, renderer::ShaderObject shader_object );
+	virtual void shaderprogram_bind_attributes( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters );
+	virtual void shaderprogram_bind_uniforms( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters );
+	virtual void shaderprogram_link_and_validate( renderer::ShaderProgram shader_program );
+	virtual void shaderprogram_activate( renderer::ShaderProgram shader_program );
+	virtual void shaderprogram_deactivate( renderer::ShaderProgram shader_program );
 	
 }; // GLESv2

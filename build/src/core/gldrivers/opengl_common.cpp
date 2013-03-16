@@ -113,3 +113,75 @@ char * query_program_info_log( GLObject handle )
 	
 	return 0;
 } // query_program_info_log
+
+
+
+// utility functions
+GLenum image_to_source_format( int num_channels )
+{
+	if ( num_channels == 3 )
+	{
+		return GL_RGB;
+	}
+	else if ( num_channels == 4 )
+	{
+		return GL_RGBA;
+	}
+	
+	return GL_RGBA;
+} // image_to_source_format
+
+GLenum image_to_internal_format( unsigned int image_flags )
+{
+	//GLenum internalFormat = GL_SRGB8;
+	if ( image_flags & image::F_RGBA )
+	{
+		return GL_RGBA;
+	}
+	else if ( image_flags & image::F_ALPHA )
+	{
+		return GL_ALPHA;
+	}
+	
+	return GL_RGBA;
+} // image_to_internal_format
+
+
+GLenum driver_state_to_gl_state( renderer::DriverState state )
+{
+	GLenum state_list[] = {
+		GL_BLEND,
+		GL_DEPTH_TEST,
+	};
+	
+	return state_list[ state ];
+}
+
+GLenum convert_blendstate( renderer::RenderBlendType state )
+{
+	GLenum glblend[] = {
+		GL_ZERO,
+		GL_ONE,
+		GL_SRC_COLOR,
+		GL_ONE_MINUS_SRC_COLOR,
+		GL_DST_COLOR,
+		GL_ONE_MINUS_DST_COLOR,
+		GL_SRC_ALPHA,
+		GL_ONE_MINUS_SRC_ALPHA,
+		GL_ONE_MINUS_DST_ALPHA,
+		GL_CONSTANT_COLOR,
+		GL_ONE_MINUS_CONSTANT_COLOR,
+		GL_CONSTANT_ALPHA,
+		GL_ONE_MINUS_CONSTANT_ALPHA,
+		GL_SRC_ALPHA_SATURATE,
+		
+#if 0 // OpenGL 4.x +
+		GL_SRC1_COLOR,
+		GL_ONE_MINUS_SRC1_COLOR,
+		GL_SRC1_ALPHA,
+		GL_ONE_MINUS_SRC1_ALPHA
+#endif
+	};
+	
+	return glblend[ state ];
+} // convert_blendstate

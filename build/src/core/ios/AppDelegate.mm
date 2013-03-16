@@ -98,7 +98,7 @@ extern "C"
 	memory::startup();
 	
 	// allocate and assign the kernel to an ivar
-	iOSKernel * mobile_kernel = ALLOC(iOSKernel);
+	iOSKernel * mobile_kernel = CREATE(iOSKernel);
 	self->kernel = mobile_kernel;
 		
 	// startup the kernel instance
@@ -185,7 +185,7 @@ extern "C"
 	}
 	
 	iOSKernel * kernel_pointer = (iOSKernel*)self->kernel;
-	DEALLOC(iOSKernel, kernel_pointer);
+	DESTROY( iOSKernel, kernel_pointer );
 	self->kernel = 0;
 	
 	memory::shutdown();

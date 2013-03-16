@@ -51,6 +51,8 @@
 	#endif
 #endif
 
+#define FAIL_IF_GLERROR( error ) if ( error != GL_NO_ERROR ) { return false; }
+
 #include "gemgl.hpp" // for GLObject
 #include "stackstring.hpp"
 
@@ -63,3 +65,8 @@ char * query_shader_info_log( GLObject handle );
 
 // the callee is responsible for deallocating the memory returned from this function
 char * query_program_info_log( GLObject handle );
+
+GLenum image_to_source_format( int num_channels );
+GLenum image_to_internal_format( unsigned int image_flags );
+GLenum driver_state_to_gl_state( renderer::DriverState state );
+GLenum convert_blendstate( renderer::RenderBlendType state );
