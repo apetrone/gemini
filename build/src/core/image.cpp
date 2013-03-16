@@ -22,10 +22,12 @@
 #include "typedefs.h"
 #include "log.h"
 #include "image.hpp"
-#include <SOIL.h>
 #include "filesystem.hpp"
 #include "renderer.hpp"
 
+#define STBI_HEADER_FILE_ONLY 1
+#define STBI_NO_STDIO 1
+#include "stb_image.c"
 
 namespace image
 {
@@ -189,15 +191,19 @@ namespace image
 	
 	
 	
-	unsigned char * load_image_from_memory( unsigned char * data, unsigned int dataSize, unsigned int * width, unsigned int * height, unsigned int * channels )
+	unsigned char * load_image_from_memory( unsigned char * data, unsigned int data_size, unsigned int * width, unsigned int * height, unsigned int * channels )
 	{
 		unsigned char * pixels = 0;
 		int w, h, c;
 		
-		pixels = SOIL_load_image_from_memory( data, dataSize, &w, &h, &c, SOIL_LOAD_AUTO );
+//		pixels = SOIL_load_image_from_memory( data, data_size, &w, &h, &c, SOIL_LOAD_AUTO );
+
+		
+		pixels = stbi_load_from_memory( data, data_size, &w, &h, &c, 0 );
 		*width = w;
 		*height = h;
 		*channels = c;
+		
 		
 		return pixels;
 	} // load_image_from_memory

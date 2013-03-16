@@ -16,6 +16,5 @@ def dependency_path():
 
 def common_dependencies():
 	return [
-	"soil.py", 
 	"glm.py"
 	]
