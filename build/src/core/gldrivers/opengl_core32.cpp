@@ -761,6 +761,13 @@ renderer::ShaderObject GLCore32::shaderobject_create( renderer::ShaderObjectType
 	object.flags = 0;
 	object.shader_id = gl.CreateShader( type );
 	gl.CheckError( "CreateShader" );
+	
+	bool is_shader = gl.IsShader( object.shader_id );
+	gl.CheckError( "IsShader: shaderobject_create" );
+	if ( !is_shader )
+	{
+		LOGW( "object is NOT a shader\n" );
+	}
 
 	return object;
 }
@@ -798,6 +805,14 @@ bool GLCore32::shaderobject_compile( renderer::ShaderObject shader_object, const
 
 void GLCore32::shaderobject_destroy( renderer::ShaderObject shader_object )
 {
+	bool is_shader = gl.IsShader( shader_object.shader_id );
+	gl.CheckError( "IsShader: shaderobject_destroy" );
+	if ( !is_shader )
+	{
+		LOGW( "object is NOT a shader\n" );
+	}
+	
+
 	gl.DeleteShader( shader_object.shader_id );
 	gl.CheckError( "DeleteShader" );
 
@@ -881,8 +896,9 @@ void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_progr
 	}
 }
 
-void GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters )
+bool GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters )
 {
+	bool status = true;
 	gl.BindFragDataLocation(shader_program.object, 0, parameters.frag_data_location);
 	gl.CheckError( "BindFragDataLocation" );
 
@@ -895,6 +911,7 @@ void GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_p
 	
 	if ( !link_status )
 	{
+		status = false;
 		LOGE( "Error linking program!\n" );
 		char * logbuffer = query_program_info_log( shader_program.object );
 		if ( logbuffer )
@@ -902,10 +919,21 @@ void GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_p
 			LOGW( "Program Info Log:\n" );
 			LOGW( "%s\n", logbuffer );
 			DEALLOC(logbuffer);
+
 		}
 		
 //		assert( link_status == 1 );
 	}
+	
+#if 0
+	GLsizei objects = 128;
+	GLuint shader_names[ 128 ] = {0};
+	gl.GetAttachedShaders( shader_program.object, 128, &objects, shader_names );
+	for( size_t i = 0; i < objects; ++i )
+	{
+		LOGV( "attached: %i\n", shader_names[i] );
+	}
+#endif
 	
 #if 0
 	gl.ValidateProgram( shader_program.object );
@@ -915,6 +943,7 @@ void GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_p
 
 	if ( !validate_status )
 	{
+		status = false;
 		LOGE( "Program validation failed; last operation unsuccessful.\n" );
 		char * logbuffer = query_program_info_log( shader_program.object );
 		if ( logbuffer )
@@ -928,6 +957,7 @@ void GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_p
 	}
 #endif
 
+	return status;
 }
 
 void GLCore32::shaderprogram_activate( renderer::ShaderProgram shader_program )

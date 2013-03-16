@@ -215,7 +215,7 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	
 	// SHADER QUERIES
 	// shader queries
-	//GEMGL_LINK( gl.IsShader, "glIsShader", GEMGLFNISSHADER );
+	GEMGL_LINK( gl.IsShader, "glIsShader", GEMGLFNISSHADER );
 	GEMGL_LINK( gl.GetShaderiv, "glGetShaderiv", GEMGLFNGETSHADERIV );
 	GEMGL_LINK( gl.GetAttachedShaders, "glGetAttachedShaders", GEMGLFNGETATTACHEDSHADERS );
 	GEMGL_LINK( gl.GetShaderInfoLog, "glGetShaderInfoLog", GEMGLFNGETSHADERINFOLOG );
@@ -293,6 +293,7 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	GEMGL_LINK( gl.CompileShader, "glCompileShader", GEMGLFNCOMPILESHADER );
 	GEMGL_LINK( gl.AttachShader, "glAttachShader", GEMGLFNATTACHSHADER );
 	GEMGL_LINK( gl.DetachShader, "glDetachShader", GEMGLFNDETACHSHADER );
+	GEMGL_LINK( gl.IsShader, "glIsShader", GEMGLFNISSHADER );
 	GEMGL_LINK( gl.GetShaderiv, "glGetShaderiv", GEMGLFNGETSHADERIV );
 	GEMGL_LINK( gl.GetShaderInfoLog, "glGetShaderInfoLog", GEMGLFNGETSHADERINFOLOG );
 	GEMGL_LINK( gl.GetProgramInfoLog, "glGetProgramInfoLog", GEMGLFNGETPROGRAMINFOLOG );

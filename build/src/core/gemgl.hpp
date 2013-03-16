@@ -105,6 +105,7 @@ enum gemgl_renderer_type
 	typedef void (GEMGLAPI GEMGLFNUSEPROGRAM) ( GLObject program );
 	typedef void (GEMGLAPI GEMGLFNCOMPILESHADER) ( GLObject shaderObj );
     typedef void (GEMGLAPI GEMGLFNATTACHSHADER) ( GLObject program, GLuint shader );
+	typedef GLboolean (GEMGLAPI GEMGLFNISSHADER) (GLObject shader );
 	typedef void (GEMGLAPI GEMGLFNGETSHADERIV) (GLObject shader, GLenum pname, GLint *params );
 	typedef void (GEMGLAPI GEMGLFNGETSHADERINFOLOG) ( GLObject shader, GLsizei bufSize, GLsizei* length, GLchar* infoLog );
 	typedef void (GEMGLAPI GEMGLFNGETPROGRAMINFOLOG) (GLObject program, GLsizei bufSize, GLsizei * length, GLchar* infoLog );
@@ -348,7 +349,7 @@ enum gemgl_renderer_type
 		GEMGLFNVALIDATEPROGRAM ValidateProgram;
 		
 		// shader queries
-		//GEMGLFNISSHADER IsShader;
+		GEMGLFNISSHADER IsShader;
 		GEMGLFNGETSHADERIV GetShaderiv;
 		GEMGLFNGETATTACHEDSHADERS GetAttachedShaders;
 		GEMGLFNGETSHADERINFOLOG GetShaderInfoLog;
@@ -417,6 +418,7 @@ enum gemgl_renderer_type
         GEMGLFNCOMPILESHADER CompileShader;
         GEMGLFNATTACHSHADER AttachShader;
 		GEMGLFNDETACHSHADER DetachShader;
+		GEMGLFNISSHADER IsShader;
 		GEMGLFNGETSHADERIV GetShaderiv;
         GEMGLFNGETSHADERINFOLOG GetShaderInfoLog;
 		GEMGLFNGETPROGRAMINFOLOG GetProgramInfoLog;

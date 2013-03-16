@@ -483,8 +483,21 @@ namespace assets
 			fragment_shader[ i ] = driver->shaderobject_create( renderer::SHADER_FRAGMENT );
 
 			// load the shaders and pass the defines
-			driver->shaderobject_compile(vertex_shader[i], vs_source, preprocessor_defines(), shader_version() );
-			driver->shaderobject_compile(fragment_shader[i], fs_source, preprocessor_defines(), shader_version() );
+			if ( !driver->shaderobject_compile(vertex_shader[i], vs_source, preprocessor_defines(), shader_version() ) )
+			{
+				LOGW( "vertex_shader failed to compile!\n" );
+				driver->shaderobject_destroy( vertex_shader[ i ] );
+				driver->shaderobject_destroy( fragment_shader[ i ] );
+				continue;
+			}
+			
+			if ( !driver->shaderobject_compile(fragment_shader[i], fs_source, preprocessor_defines(), shader_version() ) )
+			{
+				LOGW( "fragment_shader failed to compile!\n" );
+				driver->shaderobject_destroy( vertex_shader[ i ] );
+				driver->shaderobject_destroy( fragment_shader[ i ] );
+				continue;
+			}
 
 			// tally these up
 			unsigned int total_attributes = attribute_list.size();
@@ -524,22 +537,25 @@ namespace assets
 			driver->shaderprogram_bind_attributes( *shader, *shader );
 
 			// Link and validate the program; spit out any log info
-			driver->shaderprogram_link_and_validate( *shader, *shader );
+			if ( driver->shaderprogram_link_and_validate( *shader, *shader ) )
+			{
+				driver->shaderprogram_activate( *shader );
 
-			driver->shaderprogram_activate( *shader );
-
-			// loop through all uniforms and cache their locations
-			driver->shaderprogram_bind_uniforms( *shader, *shader );
-
-
-			
-			driver->shaderprogram_deactivate( *shader );
+				// loop through all uniforms and cache their locations
+				driver->shaderprogram_bind_uniforms( *shader, *shader );
+				
+				driver->shaderprogram_deactivate( *shader );
+			}
+			else
+			{
+				LOGW( "shader program link and validate FAILED\n" );
+			}
 
 			attribute_list.clear();
 			uniform_list.clear();
 			
-			driver->shaderobject_detach( *shader, vertex_shader[i] );
-			driver->shaderobject_detach( *shader, fragment_shader[i] );
+			driver->shaderprogram_detach( *shader, vertex_shader[i] );
+			driver->shaderprogram_detach( *shader, fragment_shader[i] );
 
 			// clean up
 			driver->shaderobject_destroy( vertex_shader[ i ] );
