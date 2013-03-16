@@ -339,11 +339,6 @@ namespace assets
 		size_t total_shader_bytes = total_permutations * sizeof(renderer::ShaderObject*);
 		renderer::ShaderObject * vertex_shader = (renderer::ShaderObject*)ALLOC(total_shader_bytes);
 		renderer::ShaderObject * fragment_shader = (renderer::ShaderObject*)ALLOC(total_shader_bytes);
-		for( size_t shader = 0; shader < total_permutations; ++shader )
-		{
-			vertex_shader[ shader ] = driver->shaderobject_create( renderer::SHADER_VERTEX );
-			fragment_shader[ shader ] = driver->shaderobject_create( renderer::SHADER_FRAGMENT );
-		} // total_permutations
 		
 
 		permutations.options = (ShaderPermutationGroup**)ALLOC( permutations.num_permutations * sizeof(ShaderPermutationGroup*) );
@@ -429,7 +424,7 @@ namespace assets
 					ShaderPermutationGroup * option = permutations.options[p];
 					for( int id = 0; id < option->num_defines; ++id )
 					{
-//						LOGV( "option: %s\n", option->defines[id]() );
+						LOGV( "option: %s\n", option->defines[id]() );
 						preprocessor_defines.append( "#define " );
 						preprocessor_defines.append( option->defines[id]() );
 						preprocessor_defines.append( " 1\n" );
@@ -480,12 +475,14 @@ namespace assets
 				continue;
 			}
 			
-//			LOGV( "%i -> %s\n", shader->id, preprocessor_defines() );
 			
 
+			LOGV( "%i -> %s\n", shader->id, preprocessor_defines() );
 			
+			vertex_shader[ i ] = driver->shaderobject_create( renderer::SHADER_VERTEX );
+			fragment_shader[ i ] = driver->shaderobject_create( renderer::SHADER_FRAGMENT );
+
 			// load the shaders and pass the defines
-
 			driver->shaderobject_compile(vertex_shader[i], vs_source, preprocessor_defines(), shader_version() );
 			driver->shaderobject_compile(fragment_shader[i], fs_source, preprocessor_defines(), shader_version() );
 
@@ -513,7 +510,11 @@ namespace assets
 				kp->second = -1;
 			}
 
+			
 			shader->set_frag_data_location( shader_permutations().frag_location() );
+			
+
+			
 
 			// attach compiled code to program
 			driver->shaderprogram_attach( *shader, vertex_shader[i] );
@@ -523,19 +524,26 @@ namespace assets
 			driver->shaderprogram_bind_attributes( *shader, *shader );
 
 			// Link and validate the program; spit out any log info
-			driver->shaderprogram_link_and_validate( *shader );
+			driver->shaderprogram_link_and_validate( *shader, *shader );
+
+			driver->shaderprogram_activate( *shader );
 
 			// loop through all uniforms and cache their locations
 			driver->shaderprogram_bind_uniforms( *shader, *shader );
 
-			// clean up
-			driver->shaderobject_destroy( vertex_shader[ i ] );
-			driver->shaderobject_destroy( fragment_shader[ i ] );
+
+			
+			driver->shaderprogram_deactivate( *shader );
 
 			attribute_list.clear();
 			uniform_list.clear();
 			
-			driver->shaderprogram_deactivate( *shader );
+			driver->shaderobject_detach( *shader, vertex_shader[i] );
+			driver->shaderobject_detach( *shader, fragment_shader[i] );
+
+			// clean up
+			driver->shaderobject_destroy( vertex_shader[ i ] );
+			driver->shaderobject_destroy( fragment_shader[ i ] );			
 		}
 
 		// cleanup resources
@@ -994,7 +1002,7 @@ namespace assets
 		unsigned int * material_ids = (unsigned int*)ALLOC( sizeof(unsigned int) * materials.size() );
 		unsigned int current_material = 0;
 		assets::Material * amat = 0;
-		for( ; mit != materials.end(); ++mit ) // MEMORY LEAKS HERE
+		for( ; mit != materials.end(); ++mit )
 		{
 			Json::Value material = (*mit);
 			std::string material_name = material["name"].asString();
@@ -1111,10 +1119,8 @@ namespace assets
 			}
 #endif
 			
-#if 1		// THERE ARE LEAKS IN HERE
 			//
 			// setup debug normals now
-			
 			if ( geometry->normals )
 			{
 				
@@ -1149,7 +1155,6 @@ namespace assets
 					vertex_normals->colors[ vid+1 ] = vertex_normal_color;
 				}
 			}
-#endif			
 		}
 		
 		DEALLOC( material_ids );

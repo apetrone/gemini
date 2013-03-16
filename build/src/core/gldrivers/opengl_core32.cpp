@@ -149,7 +149,6 @@ struct GL32VertexBuffer : public VertexBuffer
 		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 		gl.BindVertexArray( 0 );
-
 	}
 	
 	void upload_interleaved_data( const GLvoid * data, unsigned int vertex_count )
@@ -292,6 +291,7 @@ void c_clear( MemoryStream & stream, GLCore32 & renderer )
 	unsigned int bits;
 	stream.read(bits);
 	gl.Clear( bits );
+	gl.CheckError( "Clear" );
 }
 
 void c_clearcolor( MemoryStream & stream, GLCore32 & renderer )
@@ -299,6 +299,7 @@ void c_clearcolor( MemoryStream & stream, GLCore32 & renderer )
 	float color[4];
 	stream.read( color, 4*sizeof(float) );
 	gl.ClearColor( color[0], color[1], color[2], color[3] );
+	gl.CheckError( "ClearColor" );
 }
 
 void c_cleardepth( MemoryStream & stream, GLCore32 & renderer )
@@ -306,6 +307,7 @@ void c_cleardepth( MemoryStream & stream, GLCore32 & renderer )
 	float value;
 	stream.read( value );
 	glClearDepth( value );
+	gl.CheckError( "glClearDepth" );
 }
 
 void c_viewport( MemoryStream & stream, GLCore32 & renderer )
@@ -320,6 +322,7 @@ void c_viewport( MemoryStream & stream, GLCore32 & renderer )
 	stream.read( &width, 4 );
 	stream.read( &height, 4 );
 	gl.Viewport( x, y, width, height );
+	gl.CheckError( "glViewport" );
 }
 
 void c_drawcall( MemoryStream & stream, GLCore32 & renderer )
@@ -352,10 +355,12 @@ void c_state( MemoryStream & stream, GLCore32 & renderer )
 	if ( enable )
 	{
 		gl.Enable( state );
+		gl.CheckError( "Enable" );
 	}
 	else
 	{
 		gl.Disable( state );
+		gl.CheckError( "Disable" );
 	}
 }
 
@@ -376,10 +381,12 @@ void p_state( MemoryStream & stream, GLCore32 & renderer )
 	if ( !enable )
 	{
 		gl.Enable( state );
+		gl.CheckError( "Enable" );
 	}
 	else
 	{
 		gl.Disable( state );
+		gl.CheckError( "Disable" );
 	}
 }
 
@@ -394,6 +401,7 @@ void c_blendfunc( MemoryStream & stream, GLCore32 & renderer )
 	GLenum destination = convert_blendstate( render_blendstate_destination );
 	
 	gl.BlendFunc( source, destination );
+	gl.CheckError( "BlendFunc" );
 }
 
 
@@ -549,7 +557,10 @@ bool GLCore32::destroy_texture( renderer::TextureParameters & parameters )
 
 bool GLCore32::is_texture( renderer::TextureParameters & parameters )
 {
-	return gl.IsTexture( parameters.texture_id );
+	bool is_texture = gl.IsTexture( parameters.texture_id );
+	gl.CheckError( "IsTexture" );
+
+	return is_texture;
 } // is_texture
 
 void GLCore32::render_font( int x, int y, renderer::Font & font, const char * utf8_string, const Color & color )
@@ -592,15 +603,18 @@ void GLCore32::vertexbuffer_destroy( renderer::VertexBuffer * vertexbuffer )
 	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	
 	gl.DeleteVertexArrays( VAO_INTERLEAVED, stream->vao );
+	gl.CheckError( "DeleteVertexArrays" );
 		
 	if ( stream->vbo[0] != 0 )
 	{
 		gl.DeleteBuffers( 1, stream->vbo );
+		gl.CheckError( "DeleteBuffers" );
 	}
 	
 	if ( stream->vbo[1] != 0 )
 	{
 		gl.DeleteBuffers( 1, &stream->vbo[1] );
+		gl.CheckError( "DeleteBuffers" );
 	}
 	
 	
@@ -622,8 +636,13 @@ void GLCore32::vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned in
 	stream->upload_index_array( indices, index_count );
 	
 	gl.BindVertexArray( 0 );
+	gl.CheckError( "BindVertexArray" );
+
 	gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+	gl.CheckError( "BindBuffer GL_ELEMENT_ARRAY_BUFFER" );
+
 	gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+	gl.CheckError( "BindBuffer GL_ARRAY_BUFFER" );
 }
 
 
@@ -633,9 +652,12 @@ void GLCore32::vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer,
 	assert( stream != 0 );
 	gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
 	gl.CheckError( "BindVertexArray" );
+
 	gl.DrawElements( stream->gl_draw_type, num_indices, GL_UNSIGNED_INT, 0 );
 	gl.CheckError( "DrawElements" );
+
 	gl.BindVertexArray( 0 );
+	gl.CheckError( "BindVertexArray" );
 }
 
 void GLCore32::vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned int num_vertices )
@@ -648,7 +670,9 @@ void GLCore32::vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigne
 	
 	gl.DrawArrays( stream->gl_draw_type, 0, num_vertices );
 	gl.CheckError( "DrawArrays" );
+
 	gl.BindVertexArray( 0 );
+	gl.CheckError( "BindVertexArray" );
 }
 
 renderer::VertexBuffer * GLCore32::vertexbuffer_from_geometry( renderer::VertexDescriptor & descriptor, renderer::Geometry * geometry )
@@ -713,8 +737,13 @@ void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, render
 	}
 	
 	gl.BindVertexArray( 0 );
+	gl.CheckError( "BindVertexArray" );
+
 	gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+	gl.CheckError( "BindBuffer" );
+
 	gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+	gl.CheckError( "BindBuffer" );
 }
 
 ///////////////////////////////
@@ -748,7 +777,10 @@ bool GLCore32::shaderobject_compile( renderer::ShaderObject shader_object, const
 	
 	gl.CompileShader( shader_object.shader_id );
 	gl.CheckError( "CompileShader" );
+
 	gl.GetShaderiv( shader_object.shader_id, GL_COMPILE_STATUS, &is_compiled );
+	gl.CheckError( "GetShaderiv" );
+
 	if ( !is_compiled )
 	{
 		LOGE( "Error compiling shader!\n" );
@@ -768,6 +800,15 @@ void GLCore32::shaderobject_destroy( renderer::ShaderObject shader_object )
 {
 	gl.DeleteShader( shader_object.shader_id );
 	gl.CheckError( "DeleteShader" );
+
+	GLint delete_status = 0;
+	gl.GetShaderiv( shader_object.shader_id, GL_DELETE_STATUS, &delete_status );
+	gl.CheckError( "GetShaderiv shaderobject_destroy" );
+
+	if ( !delete_status )
+	{
+		LOGW( "Shader not marked for delete status.\n" );
+	}
 }
 
 renderer::ShaderProgram GLCore32::shaderprogram_create( renderer::ShaderParameters & parameters )
@@ -799,10 +840,16 @@ void GLCore32::shaderprogram_attach( renderer::ShaderProgram shader_program, ren
 	gl.CheckError( "AttachShader" );
 }
 
+void GLCore32::shaderprogram_detach( renderer::ShaderProgram shader_program, renderer::ShaderObject shader_object )
+{
+	gl.DetachShader( shader_program.object, shader_object.shader_id );
+	gl.CheckError( "DetachShader" );
+}
+
 void GLCore32::shaderprogram_bind_attributes( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters )
 {
-	gl.BindFragDataLocation( shader_program.object, 0, parameters.frag_data_location);
-	gl.CheckError( "BindFragDataLocation" );
+	// gl.BindFragDataLocation(shader_program.object, 0, parameters.frag_data_location);
+	// gl.CheckError( "BindFragDataLocation" );
 
 	for( int i = 0; i < parameters.total_attributes; ++i )
 	{
@@ -816,7 +863,7 @@ void GLCore32::shaderprogram_bind_attributes( renderer::ShaderProgram shader_pro
 void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters )
 {
 	// ensure this is the active shader before binding uniforms
-	this->shaderprogram_activate( shader_program );
+	//this->shaderprogram_activate( shader_program );
 
 	// fetch uniforms from the shader
 	for( int uniform_id = 0; uniform_id < parameters.total_uniforms; ++uniform_id )
@@ -834,8 +881,11 @@ void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_progr
 	}
 }
 
-void GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_program )
+void GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters )
 {
+	gl.BindFragDataLocation(shader_program.object, 0, parameters.frag_data_location);
+	gl.CheckError( "BindFragDataLocation" );
+
 	gl.LinkProgram( shader_program.object );
 	gl.CheckError( "LinkProgram" );
 	
@@ -861,6 +911,8 @@ void GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_p
 	gl.ValidateProgram( shader_program.object );
 	int validate_status;
 	gl.GetProgramiv( shader_program.object, GL_VALIDATE_STATUS, &validate_status );
+	gl.CheckError( "GetProgramiv" );
+
 	if ( !validate_status )
 	{
 		LOGE( "Program validation failed; last operation unsuccessful.\n" );
@@ -880,19 +932,21 @@ void GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_p
 
 void GLCore32::shaderprogram_activate( renderer::ShaderProgram shader_program )
 {
-//	if ( shader_program.object != last_shader )
+	bool is_program = gl.IsProgram( shader_program.object );
+	gl.CheckError( "IsProgram shaderprogram_activate" );
+	if ( !is_program )
 	{
-		gl.UseProgram( shader_program.object );
-		gl.CheckError( "UseProgram" );
-//		last_shader = shader_program.object;
-//		++shader_changes;
+		LOGW( "program: %i is NOT an OpenGL program\n", shader_program.object );
 	}
+
+	gl.UseProgram( shader_program.object );
+	gl.CheckError( "UseProgram shaderprogram_activate" );
 }
 
 void GLCore32::shaderprogram_deactivate( renderer::ShaderProgram shader_program )
 {
-//	last_shader = 0;
 	gl.UseProgram( 0 );
+	gl.CheckError( "UseProgram shaderprogram_deactivate" );
 }
 
 
