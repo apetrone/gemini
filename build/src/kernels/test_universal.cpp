@@ -362,6 +362,8 @@ class TestUniversal : public kernel::IApplication,
 	float alpha;
 	int alpha_delta;
 	Camera camera;
+
+	assets::Shader default_shader;
 	
 	struct GeneralParameters
 	{
@@ -543,6 +545,18 @@ public:
 #endif
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 		util::json_load_with_callback( "maps/test.json", tiled_map_loader, &tiled_map, true );
 
 		KeyValues kv;
@@ -620,6 +634,8 @@ public:
 
 		vb.update();
 #endif
+
+		assets::load_test_shader(&this->default_shader);
 
 #if 0
 		geo.vertex_count = 4;
@@ -807,12 +823,12 @@ public:
 							{
 								long offset = rs.stream.offset_pointer();
 								vb.update();
-								assets::Shader * shader = assets::find_compatible_shader( attribs + lastset->material->requirements );
+								assets::Shader * shader = &this->default_shader;//assets::find_compatible_shader( attribs + lastset->material->requirements );
 								rs.add_shader( shader );
 
-								rs.add_uniform_matrix4( shader->get_uniform_location("modelviewMatrix"), &camera.matCam );
-								rs.add_uniform_matrix4( shader->get_uniform_location("projectionMatrix"), &camera.matProj );
-								rs.add_uniform_matrix4( shader->get_uniform_location("objectMatrix"), &objectMatrix );
+								rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
+								rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
+//								rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &objectMatrix );
 								
 								rs.add_material( lastset->material, shader );
 								rs.add_draw_call( vb.vertexbuffer );
@@ -863,13 +879,13 @@ public:
 			{
 				
 				vb.update();
-				assets::Shader * shader = assets::find_compatible_shader( attribs + lastset->material->requirements );
+				assets::Shader * shader = &this->default_shader;//assets::find_compatible_shader( attribs + lastset->material->requirements );
 //				LOGV( "shader: %i, draw tileset: %i, count: %i\n", shader->id, lastset->id, vb.last_index );
 				
 				rs.add_shader( shader );
-				rs.add_uniform_matrix4( shader->get_uniform_location("modelviewMatrix"), &camera.matCam );
-				rs.add_uniform_matrix4( shader->get_uniform_location("projectionMatrix"), &camera.matProj );
-				rs.add_uniform_matrix4( shader->get_uniform_location("objectMatrix"), &objectMatrix );
+				rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
+				rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
+//				rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &objectMatrix );
 
 				rs.add_material( lastset->material, shader );				
 				rs.add_draw_call( vb.vertexbuffer );
@@ -896,7 +912,7 @@ public:
 
 	virtual void shutdown( kernel::Params & params )
 	{
-//		renderer::driver()->shaderprogram_destroy( shader_program );
+		renderer::driver()->shaderprogram_destroy( this->default_shader );
 		
 		vb.destroy();
 	}

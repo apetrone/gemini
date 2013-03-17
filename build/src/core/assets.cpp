@@ -387,7 +387,7 @@ namespace assets
 			renderer::ShaderProgram shaderobject = driver->shaderprogram_create( params );
 			_shader_programs[ shader_id ].object = shaderobject.object;
 		}
-				
+		
 		for( int i = 0; i < total_permutations; ++i )
 		{
 			StackString<1024> preprocessor_defines;
@@ -588,7 +588,81 @@ namespace assets
 		
 		LOGE( "Unable to find compatible shader!\n" );
 		return 0;
+	} // find_compatible_shader
+
+
+	renderer::ShaderObject create_shader_from_file( const char * shader_path, renderer::ShaderObjectType type, const char * preprocessor_defines )
+	{
+		renderer::ShaderObject shader_object;
+		char * buffer;
+		int length = 0;
+		buffer = fs::file_to_buffer( shader_path, 0, &length );
+		if ( buffer )
+		{
+			StackString<32> version;
+			util::strip_shader_version( buffer, version );
+			if ( version._length == 0 )
+			{
+				LOGW( "Unable to extract version from shader! Forcing to #version 150.\n" );
+				version = "#version 150";
+			}
+			version.append( "\n" );
+			
+			// specify version string first, followed by any defines, then the actual shader source
+			if ( preprocessor_defines == 0 )
+			{
+				preprocessor_defines = "";
+			}
+			
+			shader_object = renderer::driver()->shaderobject_create( type );
+			
+			renderer::driver()->shaderobject_compile( shader_object, buffer, preprocessor_defines, version() );
+			
+			DEALLOC(buffer);
+		}
+		else
+		{
+			LOGE( "Unable to open shader '%s'\n", shader_path );
+		}
+		
+		return shader_object;
 	}
+
+	void load_test_shader( Shader * shader )
+	{
+		renderer::ShaderParameters params;
+
+		renderer::ShaderProgram program = renderer::driver()->shaderprogram_create( params );
+		shader->object = program.object;
+	
+		renderer::ShaderObject vertex_shader = create_shader_from_file( "shaders/fontshader.vert", renderer::SHADER_VERTEX, 0 );
+		renderer::ShaderObject fragment_shader = create_shader_from_file( "shaders/fontshader.frag", renderer::SHADER_FRAGMENT, 0 );
+		
+		renderer::driver()->shaderprogram_attach( *shader, vertex_shader );
+		renderer::driver()->shaderprogram_attach( *shader, fragment_shader );
+		
+		
+		shader->set_frag_data_location( "out_color" );
+		shader->alloc_uniforms( 3 );
+		shader->uniforms[0].set_key( "projection_matrix" );
+		shader->uniforms[1].set_key( "modelview_matrix" );
+		shader->uniforms[2].set_key( "diffusemap" );
+		
+		shader->alloc_attributes( 3 );
+		shader->attributes[0].set_key( "in_cosition" ); shader->attributes[0].second = 0;
+		shader->attributes[1].set_key( "in_color" ); shader->attributes[1].second = 1;
+		shader->attributes[2].set_key( "in_uv" ); shader->attributes[2].second = 2;
+		
+		
+		renderer::driver()->shaderprogram_bind_attributes( *shader, *shader );
+		renderer::driver()->shaderprogram_link_and_validate( *shader, *shader );
+		
+		renderer::driver()->shaderprogram_bind_uniforms( *shader, *shader );
+		
+		renderer::driver()->shaderobject_destroy( vertex_shader );
+		renderer::driver()->shaderobject_destroy( fragment_shader );
+		
+	} // load_test_shader
 
 	// -------------------------------------------------------------
 	// Material
@@ -1400,7 +1474,7 @@ namespace assets
 			
 		// load shader permutations
 		_shader_permutations = CREATE( ShaderPermutations );
-		compile_shader_permutations();
+//		compile_shader_permutations();
 		
 		// setup default material
 		_default_material = mat_lib->allocate_asset();

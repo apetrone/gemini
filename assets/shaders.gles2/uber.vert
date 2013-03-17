@@ -1,6 +1,6 @@
-uniform mat4 modelviewMatrix;
-uniform mat4 projectionMatrix;
-uniform mat4 objectMatrix;
+uniform mat4 modelview_matrix;
+uniform mat4 projection_matrix;
+uniform mat4 object_matrix;
 
 
 attribute vec3 in_Position;
@@ -39,20 +39,20 @@ void main()
 
 #if defined(D_LIGHT_POSITION)
 	vec3 eye_light = lightPosition;
-	vec3 eye_vertex = vec3(objectMatrix * vec4(in_Position, 1.0));
+	vec3 eye_vertex = vec3(object_matrix * vec4(in_Position, 1.0));
 	lightDirection = (eye_light - eye_vertex);
 	ps_View = cameraPosition - eye_vertex;
 #endif
 
 #if defined(D_VERTEX_NORMALS)
-	ps_Normal = normalize( mat3(objectMatrix) * in_Normal );
+	ps_Normal = normalize( mat3(object_matrix) * in_Normal );
 #endif
 
 #if defined(D_VERTEX_UV0) && defined(D_DIFFUSE_MAP) || defined(D_SPECULAR_MAP)
 	ps_uv0 = in_UV0;
 #endif
 
-	gl_Position = (projectionMatrix * modelviewMatrix * objectMatrix * vec4(in_Position, 1.0));
+	gl_Position = (projection_matrix * modelview_matrix * object_matrix * vec4(in_Position, 1.0));
 
 #if defined(D_CUBEMAP)
 	ps_CubeVertex = normalize(in_Position);
