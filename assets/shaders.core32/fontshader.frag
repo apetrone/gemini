@@ -1,4 +1,5 @@
 #version 150 core
+
 precision highp float;
 
 in vec4 ex_color;

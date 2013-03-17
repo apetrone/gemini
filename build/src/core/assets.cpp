@@ -654,7 +654,7 @@ namespace assets
 		shader->uniforms[2].set_key( "diffusemap" );
 		
 		shader->alloc_attributes( 3 );
-		shader->attributes[0].set_key( "in_cosition" ); shader->attributes[0].second = 0;
+		shader->attributes[0].set_key( "in_position" ); shader->attributes[0].second = 0;
 		shader->attributes[1].set_key( "in_color" ); shader->attributes[1].second = 1;
 		shader->attributes[2].set_key( "in_uv" ); shader->attributes[2].second = 2;
 		
