@@ -39,6 +39,9 @@ void iOSKernel::startup()
 	CGSize size = [screenmode size];
 	NSLog( @"device resolution: %g x %g", size.width, size.height );
 	
+	parameters().render_width = size.width;
+	parameters().render_height = size.height;
+	
 	// setup device flags
 	if ( [mainscreen scale] > 1.0 )
 	{
