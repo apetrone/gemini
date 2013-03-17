@@ -603,8 +603,13 @@ namespace assets
 			util::strip_shader_version( buffer, version );
 			if ( version._length == 0 )
 			{
-				LOGW( "Unable to extract version from shader! Forcing to #version 150.\n" );
+#if PLATFORM_IS_MOBILE
+				version = "#version 100";
+#else
 				version = "#version 150";
+#endif
+				LOGW( "Unable to extract version from shader! Forcing to '%s'.\n", version() );
+				
 			}
 			version.append( "\n" );
 			

@@ -800,6 +800,12 @@ void GLESv2::shaderprogram_attach( renderer::ShaderProgram shader_program, rende
 	gl.CheckError( "AttachShader" );
 }
 
+void GLESv2::shaderprogram_detach( renderer::ShaderProgram shader_program, renderer::ShaderObject shader_object )
+{
+	gl.DetachShader( shader_program.object, shader_object.shader_id );
+	gl.CheckError( "DetachShader" );
+}
+
 void GLESv2::shaderprogram_bind_attributes( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters )
 {
 #if 0
@@ -837,8 +843,10 @@ void GLESv2::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_program
 	}
 }
 
-void GLESv2::shaderprogram_link_and_validate( renderer::ShaderProgram shader_program )
+bool GLESv2::shaderprogram_link_and_validate( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters )
 {
+	bool status = true;
+	
 	gl.LinkProgram( shader_program.object );
 	gl.CheckError( "LinkProgram" );
 	
@@ -848,6 +856,7 @@ void GLESv2::shaderprogram_link_and_validate( renderer::ShaderProgram shader_pro
 	
 	if ( !link_status )
 	{
+		status = false;
 		LOGE( "Error linking program!\n" );
 		char * logbuffer = query_program_info_log( shader_program.object );
 		if ( logbuffer )
@@ -866,6 +875,7 @@ void GLESv2::shaderprogram_link_and_validate( renderer::ShaderProgram shader_pro
 	gl.GetProgramiv( shader_program.object, GL_VALIDATE_STATUS, &validate_status );
 	if ( !validate_status )
 	{
+		status = false;
 		LOGE( "Program validation failed; last operation unsuccessful.\n" );
 		char * logbuffer = query_program_info_log( shader_program.object );
 		if ( logbuffer )
@@ -879,6 +889,8 @@ void GLESv2::shaderprogram_link_and_validate( renderer::ShaderProgram shader_pro
 	}
 #endif
 	
+	
+	return status;
 }
 
 void GLESv2::shaderprogram_activate( renderer::ShaderProgram shader_program )
