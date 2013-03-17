@@ -579,7 +579,7 @@ public:
 		mat2 = assets::load_material( "materials/gametiles" );
 
 //		camera.perspective( 60, params.window_width, params.window_height, 0.1f, 512.0f );
-		camera.ortho( 0.0f, (float)params.window_width, (float)params.window_height, 0.0f, -0.5f, 255.0f );
+		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.5f, 255.0f );
 		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
 		
 		alpha = 0;
@@ -777,7 +777,7 @@ public:
 		// setup global rendering state
 		rs.add_clearcolor( 0.25, 0.25, 0.25, 1.0f );
 		rs.add_clear( 0x00004000 | 0x00000100 );
-		rs.add_viewport( 0, 0, (int)params.window_width, (int)params.window_height );
+		rs.add_viewport( 0, 0, (int)params.render_width, (int)params.render_height );
 
 		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
 		rs.run_commands();
