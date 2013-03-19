@@ -774,6 +774,7 @@ renderer::ShaderObject GLCore32::shaderobject_create( renderer::ShaderObjectType
 
 bool GLCore32::shaderobject_compile( renderer::ShaderObject shader_object, const char * shader_source, const char * preprocessor_defines, const char * version )
 {
+	bool status = true;
 	const int MAX_SHADER_SOURCES = 3;
 	GLint is_compiled = 0;
 	const char * shaderSource[ MAX_SHADER_SOURCES ] = { version, preprocessor_defines, shader_source };
@@ -798,24 +799,27 @@ bool GLCore32::shaderobject_compile( renderer::ShaderObject shader_object, const
 			LOGW( "%s\n", logbuffer );
 			DEALLOC(logbuffer);
 		}
+		status = false;
 	}
 
-	return true;
+	return status;
 }
 
 void GLCore32::shaderobject_destroy( renderer::ShaderObject shader_object )
 {
+#if 0
 	bool is_shader = gl.IsShader( shader_object.shader_id );
 	gl.CheckError( "IsShader: shaderobject_destroy" );
 	if ( !is_shader )
 	{
 		LOGW( "object is NOT a shader\n" );
 	}
-	
+#endif
 
 	gl.DeleteShader( shader_object.shader_id );
 	gl.CheckError( "DeleteShader" );
 
+#if 0 // only flagged for delete when not needed by driver; (program is deleted)
 	GLint delete_status = 0;
 	gl.GetShaderiv( shader_object.shader_id, GL_DELETE_STATUS, &delete_status );
 	gl.CheckError( "GetShaderiv shaderobject_destroy" );
@@ -824,6 +828,7 @@ void GLCore32::shaderobject_destroy( renderer::ShaderObject shader_object )
 	{
 		LOGW( "Shader not marked for delete status.\n" );
 	}
+#endif
 }
 
 renderer::ShaderProgram GLCore32::shaderprogram_create( renderer::ShaderParameters & parameters )

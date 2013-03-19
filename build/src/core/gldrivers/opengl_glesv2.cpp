@@ -739,6 +739,7 @@ renderer::ShaderObject GLESv2::shaderobject_create( renderer::ShaderObjectType s
 
 bool GLESv2::shaderobject_compile( renderer::ShaderObject shader_object, const char * shader_source, const char * preprocessor_defines, const char * version )
 {
+	bool status = true;
 	const int MAX_SHADER_SOURCES = 3;
 	GLint is_compiled = 0;
 	const char * shaderSource[ MAX_SHADER_SOURCES ] = { version, preprocessor_defines, shader_source };
@@ -760,9 +761,10 @@ bool GLESv2::shaderobject_compile( renderer::ShaderObject shader_object, const c
 			LOGW( "%s\n", logbuffer );
 			DEALLOC(logbuffer);
 		}
+		status = false;
 	}
 	
-	return true;
+	return status;
 }
 
 void GLESv2::shaderobject_destroy( renderer::ShaderObject shader_object )

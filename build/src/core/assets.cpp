@@ -336,6 +336,11 @@ namespace assets
 //		LOGV( "total permutations: %i\n", total_permutations );
 		
 		renderer::IRenderDriver * driver = renderer::driver();
+		
+		renderer::ShaderProgram shader_program;
+		shader_program.object = 0;
+		driver->shaderprogram_deactivate( shader_program );
+		
 		size_t total_shader_bytes = total_permutations * sizeof(renderer::ShaderObject*);
 		renderer::ShaderObject * vertex_shader = (renderer::ShaderObject*)ALLOC(total_shader_bytes);
 		renderer::ShaderObject * fragment_shader = (renderer::ShaderObject*)ALLOC(total_shader_bytes);
@@ -460,24 +465,24 @@ namespace assets
 			
 			if ( (requirements & shader->capabilities) < requirements )
 			{
-//				LOGV( "This shader will not compile properly. Missing one or more requirements!\n" );
+				LOGV( "This shader will not compile properly. Missing one or more requirements!\n" );
 				use_permutation = false;
 			}
 			else if ( (shader->capabilities & conflicts) > 0 )
 			{
-//				LOGV( "This shader will not compile properly. There are conflicting parameters\n" );
+				LOGV( "This shader will not compile properly. There are conflicting parameters\n" );
 				use_permutation = false;
 			}
-			
-			
+						
 			if ( !use_permutation )
 			{
+				LOGV( "Skipping permutation: %i\n", shader->id );
 				continue;
 			}
 			
 			
 
-			LOGV( "%i -> %s\n", shader->id, preprocessor_defines() );
+//			LOGV( "%i -> %s\n", shader->id, preprocessor_defines() );
 			
 			vertex_shader[ i ] = driver->shaderobject_create( renderer::SHADER_VERTEX );
 			fragment_shader[ i ] = driver->shaderobject_create( renderer::SHADER_FRAGMENT );
@@ -523,11 +528,7 @@ namespace assets
 				kp->second = -1;
 			}
 
-			
 			shader->set_frag_data_location( shader_permutations().frag_location() );
-			
-
-			
 
 			// attach compiled code to program
 			driver->shaderprogram_attach( *shader, vertex_shader[i] );
@@ -559,7 +560,7 @@ namespace assets
 
 			// clean up
 			driver->shaderobject_destroy( vertex_shader[ i ] );
-			driver->shaderobject_destroy( fragment_shader[ i ] );			
+			driver->shaderobject_destroy( fragment_shader[ i ] );
 		}
 
 		// cleanup resources
@@ -568,6 +569,9 @@ namespace assets
 		
 		DEALLOC(vertex_shader);
 		DEALLOC(fragment_shader);
+		
+		shader_program.object = 0;
+		driver->shaderprogram_deactivate( shader_program );
 		
 		LOGV( "loaded %i permutations in %gms\n", total_shaders, xtime_msec( &t ) - start );
 	} // compile_shader_permutations
