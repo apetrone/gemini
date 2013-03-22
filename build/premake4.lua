@@ -7,7 +7,19 @@ newoption {
 newoption {
 	trigger = "ios",
 	value = nil,
-	description = "Enables iOS target (requires Xcode4)"
+	description = "Enables iOS target (requires Xcode4; experimental)"
+}
+
+newoption {
+	trigger = "rpi",
+	value = nil,
+	description = "Compile for Raspberry Pi"
+}
+
+newoption {
+	trigger = "indextype",
+	value = "uint",
+	description = "Set the rendering index type. (Available types are: uint, ushort)"
 }
 
 local platform_strings = "Native"
@@ -24,6 +36,16 @@ end
 if _OPTIONS["rpi"] ~= nil then
 	print( "Building for the Raspberry Pi" )
 end
+
+local IndexTypeDefine = "GEMINI_INDEX_TYPE"
+local INDEX_TYPE = nil
+
+if _OPTIONS["indextype"] == nil or _OPTIONS["indextype"] == "uint" then
+	INDEX_TYPE = IndexTypeDefine .. "=1"
+elseif _OPTIONS["indextype"] == "ushort" then
+	INDEX_TYPE = IndexTypeDefine .. "=2"
+end
+
 
 solution ( build_name )
 	configurations { "debug", "release" }
@@ -100,7 +122,7 @@ project ( build_name )
 	configuration { "windows" }
 		
 
-		defines { "WIN32" }
+		defines { "WIN32", INDEX_TYPE }
 		files
 		{
 			"resources/windows/resources.rc",
@@ -122,7 +144,7 @@ project ( build_name )
 
 
 	configuration { "linux" }
-		defines { "LINUX=1" }
+		defines { "LINUX=1", INDEX_TYPE }
 		links { "X11", "GL", "pthread", "dl", "openal" }
 		files
 		{
@@ -149,6 +171,8 @@ project ( build_name )
 			if _OPTIONS["ios"] ~= nil then
 				-- ios needs an application bundle
 				kind "WindowedApp"
+
+				defines { INDEX_TYPE }
 
 				files
 				{
@@ -183,6 +207,8 @@ project ( build_name )
 					'CODE_SIGN_ENTITLEMENTS = "resources/ios/Entitlements.plist"',
 				}
 			else
+				defines { INDEX_TYPE }
+				
 				linkoptions
 				{
 					"-framework Cocoa",

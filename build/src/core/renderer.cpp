@@ -113,7 +113,7 @@ namespace renderer
 	
 	VertexDescriptor::VertexDescriptor()
 	{
-		id = 0;
+		reset();
 		memset( description, 0, sizeof(VertexDescriptorType) * MAX_DESCRIPTORS );
 	}
 	

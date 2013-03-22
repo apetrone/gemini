@@ -123,13 +123,13 @@ namespace renderer
 	{
 		IndexType numStartingIndices;
 		IndexType j;
-
+#if 0
 		if ( (highest_index + num_indices) > total_indices )
 		{
 			reset();
 			return;
 		}
-
+#endif
 		numStartingIndices = highest_index;
 
 		// copy index data
@@ -139,17 +139,24 @@ namespace renderer
 			{
 				highest_index = (numStartingIndices + inIndices[j]);
 			}
-
+#if 0
 			if ( last_index >= total_indices )
 			{
 				break;
 			}
-			
+#endif
 			indices[ last_index ] = (numStartingIndices + inIndices[ j ]);
 		}
 
 		highest_index++;
 	} // append_indices
+	
+	
+	// determine if this vertexstream has room
+	bool VertexStream::has_room( unsigned int num_vertices, unsigned int num_indices ) const
+	{
+		return (num_vertices + last_vertex <= total_vertices) && (num_indices + last_index <= total_indices);
+	} // has_room
 
 	void VertexStream::create( IndexType max_vertices, IndexType max_indices, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type )
 	{

@@ -52,6 +52,7 @@ namespace renderer
 		VertexType * request( IndexType num_vertices, int dont_advance_pointer = 0 );
 		VertexType * operator[](int index);
 		void append_indices( IndexType * inIndices, IndexType num_indices );
+		bool has_room( unsigned int num_vertices, unsigned int num_indices ) const;
 		
 		void create( IndexType max_vertices, IndexType max_indices, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type = renderer::BUFFER_STATIC );
 		void destroy();
