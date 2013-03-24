@@ -176,7 +176,7 @@ void RenderStream::add_material( assets::Material * material, assets::Shader * s
 	{
 		parameter = &material->parameters[ p ];
 		int renderstate = assets::material_parameter_type_to_render_state( parameter->type );
-		int uniform_location = shader->get_uniform_location( parameter->name() );
+		int uniform_location = shader->get_uniform_location( parameter->name.c_str() );
 		
 		// this needs to be converted to a table of function pointers...
 		if ( renderstate == renderer::DC_UNIFORM1i )

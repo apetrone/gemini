@@ -147,31 +147,31 @@ namespace assets
 	{
 		if ( num_defines )
 		{
-			DESTROY_ARRAY( StackString<PermutationTokenLength>, defines, num_defines );
+			DESTROY_ARRAY( ShaderString, defines, num_defines );
 			num_defines = 0;
 		}
 		
 		if ( num_attributes )
 		{
-			DESTROY_ARRAY( StackString<PermutationTokenLength>, attributes, num_attributes );
+			DESTROY_ARRAY( ShaderString, attributes, num_attributes );
 			num_attributes = 0;
 		}
 		
 		if ( num_uniforms )
 		{
-			DESTROY_ARRAY( StackString<PermutationTokenLength>, uniforms, num_uniforms );
+			DESTROY_ARRAY( ShaderString, uniforms, num_uniforms );
 			num_uniforms = 0;
 		}
 		
 		if ( num_requires )
 		{
-			DESTROY_ARRAY( StackString<PermutationTokenLength>, requires, num_requires );
+			DESTROY_ARRAY( ShaderString, requires, num_requires );
 			num_requires = 0;
 		}
 		
 		if ( num_conflicts )
 		{
-			DESTROY_ARRAY( StackString<PermutationTokenLength>, conflicts, num_conflicts );
+			DESTROY_ARRAY( ShaderString, conflicts, num_conflicts );
 			num_conflicts = 0;
 		}
 	}
@@ -214,10 +214,10 @@ namespace assets
 		return *_shader_permutations;
 	} // shader_permutations
 	
-	void read_string_array( StackString<PermutationTokenLength> ** array, unsigned int & num_items, Json::Value & root )
+	void read_string_array( ShaderString ** array, unsigned int & num_items, Json::Value & root )
 	{
 		num_items = root.size();
-		*array = CREATE_ARRAY( StackString<PermutationTokenLength>, num_items );
+		*array = CREATE_ARRAY( ShaderString, num_items );
 		Json::ValueIterator it = root.begin();
 		Json::ValueIterator end = root.end();
 		
@@ -229,12 +229,12 @@ namespace assets
 		}
 	} // read_string_array
 
-	void print_string_array( const char * name, StackString<PermutationTokenLength> * array, unsigned int num_items )
+	void print_string_array( const char * name, ShaderString * array, unsigned int num_items )
 	{
 		LOGV( "\"%s\" items:\n", name );
 		for( unsigned int i = 0; i < num_items; ++i )
 		{
-			LOGV( "\t%s\n", array[i]() );
+			LOGV( "\t%s\n", array[i].c_str() );
 		}
 	}
 
@@ -359,7 +359,6 @@ namespace assets
 		renderer::ShaderObject * vertex_shader = (renderer::ShaderObject*)ALLOC(total_shader_bytes);
 		renderer::ShaderObject * fragment_shader = (renderer::ShaderObject*)ALLOC(total_shader_bytes);
 		
-
 		permutations.options = (ShaderPermutationGroup**)ALLOC( permutations.num_permutations * sizeof(ShaderPermutationGroup*) );
 		int pid = 0;
 		for( int i = 0; i < permutations.num_attributes; ++i, ++pid )
@@ -410,8 +409,8 @@ namespace assets
 		for( int i = 0; i < total_permutations; ++i )
 		{
 			StackString<1024> preprocessor_defines;
-			std::vector< StackString<PermutationTokenLength> * > attribute_list;
-			std::vector< StackString<PermutationTokenLength> * > uniform_list;
+			std::vector< ShaderString * > attribute_list;
+			std::vector< ShaderString * > uniform_list;
 			
 			shader = &_shader_programs[i];
 			shader->capabilities = 0;
@@ -443,9 +442,9 @@ namespace assets
 					ShaderPermutationGroup * option = permutations.options[p];
 					for( int id = 0; id < option->num_defines; ++id )
 					{
-						LOGV( "option: %s\n", option->defines[id]() );
+						LOGV( "option: %s\n", option->defines[id].c_str() );
 						preprocessor_defines.append( "#define " );
-						preprocessor_defines.append( option->defines[id]() );
+						preprocessor_defines.append( option->defines[id].c_str() );
 						preprocessor_defines.append( " 1\n" );
 					}
 					
@@ -531,7 +530,7 @@ namespace assets
 			for( int attrib_id = 0; attrib_id < total_attributes; ++attrib_id )
 			{
 				ShaderKeyValuePair * kp = &shader->attributes[ attrib_id ];
-				kp->set_key( (*attribute_list[ attrib_id ])() );
+				kp->set_key( (*attribute_list[ attrib_id ]).c_str() );
 				kp->second = attrib_id;
 			}
 			
@@ -541,7 +540,7 @@ namespace assets
 			for( int uniform_id = 0; uniform_id < total_uniforms; ++uniform_id )
 			{
 				ShaderKeyValuePair * kp = &shader->uniforms[ uniform_id ];
-				kp->set_key( (*uniform_list[ uniform_id ])() );
+				kp->set_key( (*uniform_list[ uniform_id ]).c_str() );
 				kp->second = -1;
 			}
 
@@ -737,7 +736,7 @@ namespace assets
 		// this should have a hash table... oh well
 		for( int i = 0; i < this->num_parameters; ++i )
 		{
-			if ( xstr_nicmp( this->parameters[i].name(), name, xstr_len(name) ) == 0 )
+			if ( xstr_nicmp( this->parameters[i].name.c_str(), name, xstr_len(name) ) == 0 )
 			{
 				parameter = &this->parameters[i];
 				break;
@@ -1057,12 +1056,12 @@ namespace assets
 		return params[ type ];
 	} // material_parameter_type_to_render_state
 	
-	unsigned int find_parameter_mask( StackString<PermutationTokenLength> & name )
+	unsigned int find_parameter_mask( ShaderString & name )
 	{
 		for( unsigned int option_id = 0; option_id < shader_permutations().num_permutations; ++option_id )
 		{
 			ShaderPermutationGroup * option = shader_permutations().options[ option_id ];
-			if ( xstr_nicmp( (const char*)name(), option->name(), 64 ) == 0 )
+			if ( xstr_nicmp( (const char*)name.c_str(), option->name.c_str(), 64 ) == 0 )
 			{
 				return (1 << option->mask_value);
 			}
@@ -1070,21 +1069,21 @@ namespace assets
 		return 0;
 	} // find_parameter_mask
 	
-	unsigned int texture_unit_for_map( StackString<PermutationTokenLength> & name )
+	unsigned int texture_unit_for_map( ShaderString & name )
 	{
-		if ( xstr_nicmp( name(), "diffusemap", 0 ) == 0 )
+		if ( xstr_nicmp( name.c_str(), "diffusemap", 0 ) == 0 )
 		{
 			return 0;
 		}
-		else if ( xstr_nicmp( name(), "normalmap", 0 ) == 0 )
+		else if ( xstr_nicmp( name.c_str(), "normalmap", 0 ) == 0 )
 		{
 			return 1;
 		}
-		else if ( xstr_nicmp( name(), "specularmap", 0 ) == 0 )
+		else if ( xstr_nicmp( name.c_str(), "specularmap", 0 ) == 0 )
 		{
 			return 2;
 		}
-		else if ( xstr_nicmp( name(), "cubemap", 0 ) == 0 )
+		else if ( xstr_nicmp( name.c_str(), "cubemap", 0 ) == 0 )
 		{
 			return 0;
 		}
