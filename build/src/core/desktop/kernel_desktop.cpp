@@ -135,7 +135,7 @@ DesktopKernel::DesktopKernel( int argc, char ** argv ) : target_renderer(0)
 void DesktopKernel::startup()
 {
 	xwl_startup( XWL_WINDOW_PROVIDER_DEFAULT, XWL_API_PROVIDER_DEFAULT, XWL_INPUT_PROVIDER_DEFAULT );
-	
+
 	this->parameters().device_flags |= kernel::DeviceDesktop;
 } // startup
 
@@ -160,9 +160,16 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 	if ( is_active() )
 	{
 		unsigned int attribs[] = {
+
 			XWL_API, XWL_API_OPENGL,
 			XWL_API_MAJOR_VERSION, 3,
 			XWL_API_MINOR_VERSION, 2,
+
+			// force GLESv2 while testing
+			// XWL_API, XWL_API_GLES2,
+			// XWL_API_MAJOR_VERSION, 2,
+			// XWL_API_MINOR_VERSION, 0,
+
 			XWL_WINDOW_WIDTH, parameters().window_width,
 			XWL_WINDOW_HEIGHT, parameters().window_height,
 //			XWL_DEPTH_SIZE, 24,

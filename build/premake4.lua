@@ -22,11 +22,23 @@ newoption {
 	description = "Set the rendering index type. (Available types are: uint, ushort)"
 }
 
+newoption {
+	trigger = "with_glesv2",
+	value = nil,
+	description = "Compile with OpenGL ES 2.0"
+}
+
+
 local platform_strings = "Native"
 local build_name = "gemini"
 local RASPBERRYPI = false
 local IndexTypeDefine = "PLATFORM_INDEX_TYPE"
 local INDEX_TYPE = nil
+local WITH_GLESV2 = false
+
+if _OPTIONS["with_glesv2"] ~= nil then
+	WITH_GLESV2 = true
+end
 
 if _OPTIONS["platform_list"] ~= nil then
 	platform_strings = string.explode( _OPTIONS["platform_list"], "," )
@@ -35,6 +47,7 @@ end
 -- update build name for ios
 if _OPTIONS["ios"] ~= nil then
 	build_name = "geminiios"
+	WITH_GLESV2 = true
 end
 
 -- set the index type define
@@ -47,7 +60,7 @@ end
 -- building for RaspberryPi
 if _OPTIONS["rpi"] ~= nil then
 	RASPBERRYPI = true
-
+	WITH_GLESV2 = true
 	-- override index type to use ushort
 	INDEX_TYPE = IndexTypeDefine .. "=2"
 	print( "Building for the Raspberry Pi" )
@@ -87,7 +100,7 @@ project ( build_name )
 			"src/core/audio/openal_vorbis_decoder.*",
 		}
 
-		if not RASPBERRYPI then
+		if not WITH_GLESV2 then
 			files
 			{
 				"src/core/gldrivers/opengl_core32.*"
@@ -168,6 +181,9 @@ project ( build_name )
 
 		if RASPBERRYPI then
 			defines { "PLATFORM_IS_RASPBERRYPI=1" }
+		end
+
+		if WITH_GLESV2 then
 			files
 			{
 				"src/core/gldrivers/opengl_glesv2.*",
@@ -176,7 +192,7 @@ project ( build_name )
 			links
 			{
 				"GL"
-			}
+			}			
 		end
 
 		links { "X11", "pthread", "dl", "openal" }

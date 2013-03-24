@@ -246,7 +246,7 @@ namespace assets
 		if ( !define_list.isNull() )
 		{
 			read_string_array( &option->defines, option->num_defines, define_list );
-			print_string_array( "defines", option->defines, option->num_defines );
+			//print_string_array( "defines", option->defines, option->num_defines );
 		}
 
 		if ( read_as_parameter )
@@ -261,7 +261,7 @@ namespace assets
 		if ( !attribute_list.isNull() )
 		{
 			read_string_array( &option->attributes, option->num_attributes, attribute_list );
-			print_string_array( "attributes", option->attributes, option->num_attributes );
+			//print_string_array( "attributes", option->attributes, option->num_attributes );
 		}
 
 		Json::Value uniform_list = root.get( "uniforms", Json::nullValue );
@@ -270,21 +270,21 @@ namespace assets
 		if ( !uniform_list.isNull() )
 		{
 			read_string_array( &option->uniforms, option->num_uniforms, uniform_list );
-			print_string_array( "uniforms", option->uniforms, option->num_uniforms );
+			//print_string_array( "uniforms", option->uniforms, option->num_uniforms );
 		}
 		
 		Json::Value require_list = root.get( "requires", Json::nullValue );
 		if ( !require_list.isNull() )
 		{
 			read_string_array( &option->requires, option->num_requires, require_list );
-			print_string_array( "requires", option->requires, option->num_requires );
+			//print_string_array( "requires", option->requires, option->num_requires );
 		}
 		
 		Json::Value conflicts_list = root.get( "conflicts", Json::nullValue );
 		if ( !conflicts_list.isNull() )
 		{
 			read_string_array( &option->conflicts, option->num_conflicts, conflicts_list );
-			print_string_array( "conflicts", option->conflicts, option->num_conflicts );
+			//print_string_array( "conflicts", option->conflicts, option->num_conflicts );
 		}
 	} // read_permutation_group
 	
