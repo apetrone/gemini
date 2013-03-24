@@ -23,29 +23,35 @@ newoption {
 }
 
 local platform_strings = "Native"
+local build_name = "gemini"
+local RASPBERRYPI = false
+local IndexTypeDefine = "PLATFORM_INDEX_TYPE"
+local INDEX_TYPE = nil
+
 if _OPTIONS["platform_list"] ~= nil then
 	platform_strings = string.explode( _OPTIONS["platform_list"], "," )
 end
 
-local build_name = "gemini"
-
+-- update build name for ios
 if _OPTIONS["ios"] ~= nil then
 	build_name = "geminiios"
 end
 
-if _OPTIONS["rpi"] ~= nil then
-	print( "Building for the Raspberry Pi" )
-end
-
-local IndexTypeDefine = "GEMINI_INDEX_TYPE"
-local INDEX_TYPE = nil
-
+-- set the index type define
 if _OPTIONS["indextype"] == nil or _OPTIONS["indextype"] == "uint" then
 	INDEX_TYPE = IndexTypeDefine .. "=1"
 elseif _OPTIONS["indextype"] == "ushort" then
 	INDEX_TYPE = IndexTypeDefine .. "=2"
 end
 
+-- building for RaspberryPi
+if _OPTIONS["rpi"] ~= nil then
+	RASPBERRYPI = true
+
+	-- override index type to use ushort
+	INDEX_TYPE = IndexTypeDefine .. "=2"
+	print( "Building for the Raspberry Pi" )
+end
 
 solution ( build_name )
 	configurations { "debug", "release" }
@@ -78,20 +84,34 @@ project ( build_name )
 		files
 		{
 			"src/core/desktop/kernel_desktop.cpp",
-			"src/core/gldrivers/opengl_core32.*",
 			"src/core/audio/openal_vorbis_decoder.*",
 		}
+
+		if not RASPBERRYPI then
+			files
+			{
+				"src/core/gldrivers/opengl_core32.*"
+			}
+		end
 
 		includedirs
 		{
 			"src/core/audio/"
 		}
-		prebuildcommands
-		{
-			"python ../tools/blacksmith/blacksmith.py -c ../assets/desktop.conf -y"
-		}
 
+		if not RASPBERRYPI then
+			prebuildcommands
+			{
+				"python ../tools/blacksmith/blacksmith.py -c ../assets/desktop.conf -y"
+			}
+		else
+			prebuildcommands
+			{
+				"python ../tools/blacksmith/blacksmith.py -c ../assets/raspberrypi.conf -y"
+			}
+		end
 	else
+
 		prebuildcommands
 		{
 			"python ../tools/blacksmith/blacksmith.py -c ../assets/ios.conf -y"
@@ -145,7 +165,22 @@ project ( build_name )
 
 	configuration { "linux" }
 		defines { "LINUX=1", INDEX_TYPE }
-		links { "X11", "GL", "pthread", "dl", "openal" }
+
+		if RASPBERRYPI then
+			defines { "PLATFORM_IS_RASPBERRYPI=1" }
+			files
+			{
+				"src/core/gldrivers/opengl_glesv2.*",
+			}
+		else
+			links
+			{
+				"GL"
+			}
+		end
+
+		links { "X11", "pthread", "dl", "openal" }
+
 		files
 		{
 			"src/core/desktop/entry.cpp",
@@ -207,6 +242,7 @@ project ( build_name )
 					'CODE_SIGN_ENTITLEMENTS = "resources/ios/Entitlements.plist"',
 				}
 			else
+
 				defines { INDEX_TYPE }
 				
 				linkoptions

@@ -1,3 +1,5 @@
+#version 100
+
 precision highp float;
 
 #if defined(D_VERTEX_COLORS) && !defined(D_DIFFUSE_COLOR) && !defined(D_DIFFUSE_MAP)

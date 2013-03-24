@@ -25,15 +25,20 @@
 #include "factory.hpp"
 #include "xstr.h"
 
+
+
 // compile-time selection of these classes starts here.
 
-#if RASPBERRYPI || (PLATFORM_IOS && PLATFORM_IS_MOBILE)
+#if PLATFORM_IS_RASPBERRYPI || (PLATFORM_IOS && PLATFORM_IS_MOBILE)
 	// force use of OpenGL ES v2
 	#include <gldrivers/opengl_glesv2.hpp>
+	#define RENDERER_TYPE 1
+
 #else
 	// use OpenGL
 //	#include <gldrivers/opengl_legacy21.hpp>
 	#include <gldrivers/opengl_core32.hpp>
+	#define RENDERER_TYPE 0
 #endif
 
 namespace renderer
@@ -49,7 +54,7 @@ namespace renderer
 
 		// run-time selection of the renderer has to happen here based on hints by the kernel
 		// for now, we just hard-code these
-#if PLATFORM_IS_MOBILE
+#if RENDERER_TYPE == 1
 		factory.register_class( GLESv2::creator, "OpenGL ES 2.0", GLESv2 );
 		driver_type = GLESv2;
 #else

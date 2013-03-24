@@ -54,7 +54,7 @@ void gemgl_parse_version( int & major, int & minor, int renderer_type )
 		// sscanf isn't working in iOS 5 Simulator. Well, there are multiple ways to skin a cat...
 		if( !strstr( (const char*)version, "OpenGL ES 2.0" ) )
 		{
-			LOGE( "Error parsing OpenGL version" );
+			LOGE( "Error parsing OpenGL version\n" );
 			return;
 		}
 		major = 2;
@@ -62,7 +62,7 @@ void gemgl_parse_version( int & major, int & minor, int renderer_type )
 #else
 		if ( sscanf( (const char*)version, "%d.%d", &major, &minor ) < 2 )
 		{
-			LOGE( "Error parsing OpenGL version" );
+			LOGE( "Error parsing OpenGL version\n" );
 			return;
 		}
 #endif
@@ -85,15 +85,17 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	const char * libName = "";
 #if _WIN32
 	libName = "OpenGL32.dll";
+#elif defined(PLATFORM_IS_RASPBERRYPI)
+	libName = "libGLESv2.so";
 #elif LINUX
 	libName = "libGL.so";
 #endif
 
-	LOGV( "Loading OpenGL driver \"%s\"\n", libName );
+	LOGV( "Loading gl driver \"%s\"...\n", libName );
 
 	if ( !xlib_open( &gl_interface.library, libName ) )
 	{
-		LOGV( "Could not load OpenGL library: \"%s\"\n", libName );
+		LOGV( "Could not load gl driver: \"%s\"\n", libName );
 		return 0;
 	}
 #elif __APPLE__
@@ -406,10 +408,10 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	// link internal functions
 	gl.CheckError = gemgl_check_error;
 	
-	LOGV( "GL_VENDOR: %s\n", glGetString(GL_VENDOR));
-	LOGV( "GL_RENDERER: %s\n", glGetString( GL_RENDERER ));
-	LOGV( "GL_VERSION: %s\n", glGetString( GL_VERSION ));
-	LOGV( "GL_SHADING_LANGUAGE_VERSION: %s\n", glGetString( GL_SHADING_LANGUAGE_VERSION));
+	LOGV( "GL_VENDOR: %s\n", gl.GetString(GL_VENDOR));
+	LOGV( "GL_RENDERER: %s\n", gl.GetString( GL_RENDERER ));
+	LOGV( "GL_VERSION: %s\n", gl.GetString( GL_VERSION ));
+	LOGV( "GL_SHADING_LANGUAGE_VERSION: %s\n", gl.GetString( GL_SHADING_LANGUAGE_VERSION));
 
 	return 1;
 } // gl_startup
@@ -421,6 +423,8 @@ void * gemgl_findsymbol( gemgl_interface_t & gl_interface, const char * name )
 	// check OS specific GL function first, then check the linked library
 #if _WIN32
 	ptr = wglGetProcAddress( name );
+#elif PLATFORM_IS_RASPBERRYPI
+	// fall through
 #elif LINUX
 	ptr = (void*)glXGetProcAddress( (const GLubyte*)name );
 #elif __APPLE__

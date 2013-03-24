@@ -88,9 +88,10 @@ namespace assets
 	
 	// -------------------------------------------------------------
 	// Shader
+	const int PermutationTokenLength = 32;
 	struct KeyHashPair
 	{
-		StackString<32> key;
+		StackString<PermutationTokenLength> key;
 		int value;
 	};
 	
@@ -110,9 +111,10 @@ namespace assets
 		void bind_uniforms();
 	}; // Shader
 	
+	
 	struct ShaderPermutationGroup
 	{
-		StackString<64> name;
+		StackString<PermutationTokenLength> name;
 		
 		unsigned int num_defines;
 		unsigned int num_attributes;
@@ -120,11 +122,11 @@ namespace assets
 		unsigned int num_requires;
 		unsigned int num_conflicts;
 		
-		StackString<64> * defines;
-		StackString<64> * attributes;
-		StackString<64> * uniforms;
-		StackString<64> * requires;
-		StackString<64> * conflicts;
+		StackString<PermutationTokenLength> * defines;
+		StackString<PermutationTokenLength> * attributes;
+		StackString<PermutationTokenLength> * uniforms;
+		StackString<PermutationTokenLength> * requires;
+		StackString<PermutationTokenLength> * conflicts;
 		
 		unsigned int mask_value;
 		
@@ -177,8 +179,8 @@ namespace assets
 	{
 		struct Parameter
 		{
-			StackString<64> name;
-			StackString<64> value;
+			StackString<PermutationTokenLength> name;
+			StackString<PermutationTokenLength> value;
 			unsigned int type; // MaterialParameterType
 			int intValue;
 			glm::vec4 vecValue;
@@ -192,7 +194,7 @@ namespace assets
 			CUBEMAP = 4,
 		};
 		
-		StackString<128> name;
+		StackString<PermutationTokenLength> name;
 		Shader * shader;
 		Parameter * parameters;
 //		unsigned int texture_id;
@@ -214,8 +216,8 @@ namespace assets
 	Material * load_material( const char * path, unsigned int flags = 0, bool ignore_cache = false );
 	Material * default_material();
 	void insertMaterial( const char * name, assets::Material * material );
-	unsigned int find_parameter_mask( StackString<64> & name );
-	unsigned int texture_unit_for_map( StackString<64> & name );
+	unsigned int find_parameter_mask( StackString<PermutationTokenLength> & name );
+	unsigned int texture_unit_for_map( StackString<PermutationTokenLength> & name );
 	
 	unsigned int materialTypeToParameterType( const char * name );
 	int material_parameter_type_to_render_state( unsigned int type );

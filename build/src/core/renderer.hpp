@@ -99,9 +99,9 @@ namespace renderer
 
 	
 	
-#if PLATFORM_IS_MOBILE // assuming OpenGL ES 2.0
+#if PLATFORM_INDEX_TYPE == 2 // assuming OpenGL ES 2.0 (embedded or mobile platform)
 	typedef unsigned short IndexType;
-#else
+#elif PLATFORM_INDEX_TYPE == 1 || !defined(PLATFORM_INDEX_TYPE) // assume desktop environment
 	typedef unsigned int IndexType;
 #endif
 

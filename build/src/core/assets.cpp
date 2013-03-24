@@ -147,31 +147,31 @@ namespace assets
 	{
 		if ( num_defines )
 		{
-			DESTROY_ARRAY( StackString<64>, defines, num_defines );
+			DESTROY_ARRAY( StackString<PermutationTokenLength>, defines, num_defines );
 			num_defines = 0;
 		}
 		
 		if ( num_attributes )
 		{
-			DESTROY_ARRAY( StackString<64>, attributes, num_attributes );
+			DESTROY_ARRAY( StackString<PermutationTokenLength>, attributes, num_attributes );
 			num_attributes = 0;
 		}
 		
 		if ( num_uniforms )
 		{
-			DESTROY_ARRAY( StackString<64>, uniforms, num_uniforms );
+			DESTROY_ARRAY( StackString<PermutationTokenLength>, uniforms, num_uniforms );
 			num_uniforms = 0;
 		}
 		
 		if ( num_requires )
 		{
-			DESTROY_ARRAY( StackString<64>, requires, num_requires );
+			DESTROY_ARRAY( StackString<PermutationTokenLength>, requires, num_requires );
 			num_requires = 0;
 		}
 		
 		if ( num_conflicts )
 		{
-			DESTROY_ARRAY( StackString<64>, conflicts, num_conflicts );
+			DESTROY_ARRAY( StackString<PermutationTokenLength>, conflicts, num_conflicts );
 			num_conflicts = 0;
 		}
 	}
@@ -214,10 +214,10 @@ namespace assets
 		return *_shader_permutations;
 	} // shader_permutations
 	
-	void read_string_array( StackString<64> ** array, unsigned int & num_items, Json::Value & root )
+	void read_string_array( StackString<PermutationTokenLength> ** array, unsigned int & num_items, Json::Value & root )
 	{
 		num_items = root.size();
-		*array = CREATE_ARRAY( StackString<64>, num_items );
+		*array = CREATE_ARRAY( StackString<PermutationTokenLength>, num_items );
 		Json::ValueIterator it = root.begin();
 		Json::ValueIterator end = root.end();
 		
@@ -229,6 +229,15 @@ namespace assets
 		}
 	} // read_string_array
 
+	void print_string_array( const char * name, StackString<PermutationTokenLength> * array, unsigned int num_items )
+	{
+		LOGV( "\"%s\" items:\n", name );
+		for( unsigned int i = 0; i < num_items; ++i )
+		{
+			LOGV( "\t%s\n", array[i]() );
+		}
+	}
+
 	void read_permutation_group( Json::Value & root, ShaderPermutationGroup * option, bool read_as_parameter )
 	{
 		Json::Value define_list = root.get( "defines", Json::nullValue );
@@ -237,6 +246,7 @@ namespace assets
 		if ( !define_list.isNull() )
 		{
 			read_string_array( &option->defines, option->num_defines, define_list );
+			print_string_array( "defines", option->defines, option->num_defines );
 		}
 
 		if ( read_as_parameter )
@@ -251,6 +261,7 @@ namespace assets
 		if ( !attribute_list.isNull() )
 		{
 			read_string_array( &option->attributes, option->num_attributes, attribute_list );
+			print_string_array( "attributes", option->attributes, option->num_attributes );
 		}
 
 		Json::Value uniform_list = root.get( "uniforms", Json::nullValue );
@@ -259,18 +270,21 @@ namespace assets
 		if ( !uniform_list.isNull() )
 		{
 			read_string_array( &option->uniforms, option->num_uniforms, uniform_list );
+			print_string_array( "uniforms", option->uniforms, option->num_uniforms );
 		}
 		
 		Json::Value require_list = root.get( "requires", Json::nullValue );
 		if ( !require_list.isNull() )
 		{
 			read_string_array( &option->requires, option->num_requires, require_list );
+			print_string_array( "requires", option->requires, option->num_requires );
 		}
 		
 		Json::Value conflicts_list = root.get( "conflicts", Json::nullValue );
 		if ( !conflicts_list.isNull() )
 		{
 			read_string_array( &option->conflicts, option->num_conflicts, conflicts_list );
+			print_string_array( "conflicts", option->conflicts, option->num_conflicts );
 		}
 	} // read_permutation_group
 	
@@ -372,7 +386,7 @@ namespace assets
 		util::strip_shader_version( fs_source, shader_version );
 		if ( shader_version._length == 0 )
 		{
-#if PLATFORM_IS_MOBILE
+#if defined(PLATFORM_IS_MOBILE) || defined(PLATFORM_IS_RASPBERRYPI)
 			shader_version = "#version 100";
 #else
 			shader_version = "#version 150";
@@ -396,8 +410,8 @@ namespace assets
 		for( int i = 0; i < total_permutations; ++i )
 		{
 			StackString<1024> preprocessor_defines;
-			std::vector< StackString<64> * > attribute_list;
-			std::vector< StackString<64> * > uniform_list;
+			std::vector< StackString<PermutationTokenLength> * > attribute_list;
+			std::vector< StackString<PermutationTokenLength> * > uniform_list;
 			
 			shader = &_shader_programs[i];
 			shader->capabilities = 0;
@@ -416,7 +430,7 @@ namespace assets
 				uniform_list.push_back( &permutations.base.uniforms[a] );
 			}
 			
-//			LOGV( "----> permutation: %i\n", i );
+			LOGV( "----> permutation: %i\n", i );
 			
 			unsigned int requirements = 0;
 			unsigned int conflicts = 0;
@@ -429,7 +443,7 @@ namespace assets
 					ShaderPermutationGroup * option = permutations.options[p];
 					for( int id = 0; id < option->num_defines; ++id )
 					{
-//						LOGV( "option: %s\n", option->defines[id]() );
+						LOGV( "option: %s\n", option->defines[id]() );
 						preprocessor_defines.append( "#define " );
 						preprocessor_defines.append( option->defines[id]() );
 						preprocessor_defines.append( " 1\n" );
@@ -445,9 +459,11 @@ namespace assets
 						uniform_list.push_back( &option->uniforms[a] );
 					}
 					
+					#if 0
 					// build requirement list
 					for( unsigned int i = 0; i < option->num_requires; ++i )
 					{
+						LOGV( "requirement: %s\n", option->requires[i]() );
 						requirements |= find_parameter_mask( option->requires[ i ] );
 					}
 
@@ -456,6 +472,7 @@ namespace assets
 					{
 						conflicts |= find_parameter_mask( option->conflicts[ i ] );
 					}
+					#endif
 
 					shader->capabilities |= (1 << option->mask_value);
 				}
@@ -607,7 +624,7 @@ namespace assets
 			util::strip_shader_version( buffer, version );
 			if ( version._length == 0 )
 			{
-#if PLATFORM_IS_MOBILE
+#if defined(PLATFORM_IS_MOBILE) || defined(PLATFORM_IS_RASPBERRYPI)
 				version = "#version 100";
 #else
 				version = "#version 150";
@@ -1040,12 +1057,12 @@ namespace assets
 		return params[ type ];
 	} // material_parameter_type_to_render_state
 	
-	unsigned int find_parameter_mask( StackString<64> & name )
+	unsigned int find_parameter_mask( StackString<PermutationTokenLength> & name )
 	{
 		for( unsigned int option_id = 0; option_id < shader_permutations().num_permutations; ++option_id )
 		{
 			ShaderPermutationGroup * option = shader_permutations().options[ option_id ];
-			if ( xstr_nicmp( name(), option->name(), 64 ) == 0 )
+			if ( xstr_nicmp( (const char*)name(), option->name(), 64 ) == 0 )
 			{
 				return (1 << option->mask_value);
 			}
@@ -1053,7 +1070,7 @@ namespace assets
 		return 0;
 	} // find_parameter_mask
 	
-	unsigned int texture_unit_for_map( StackString<64> & name )
+	unsigned int texture_unit_for_map( StackString<PermutationTokenLength> & name )
 	{
 		if ( xstr_nicmp( name(), "diffusemap", 0 ) == 0 )
 		{
