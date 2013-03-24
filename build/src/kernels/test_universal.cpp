@@ -527,6 +527,8 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
+		LOGV( "Window dimensions: %i x %i, Render Viewport: %i x %i\n", params.window_width, params.window_height, params.render_width, params.render_height );
+	
 //		sound = audio::create_sound( "sounds/powerup" );
 //		source = audio::play( sound );
 #if 0
@@ -547,16 +549,7 @@ public:
 
 
 
-
-
-
-
-
-
-
-
-
-		util::json_load_with_callback( "maps/test2.json", tiled_map_loader, &tiled_map, true );
+		util::json_load_with_callback( "maps/test.json", tiled_map_loader, &tiled_map, true );
 
 //		KeyValues kv;
 //		kv.set( "name", 3 );
@@ -807,98 +800,101 @@ public:
 			// could potentially have a vertexbuffer per tileset
 			// this would allow us to batch tiles that share the same tileset (texture)
 			TileSet * lastset = 0;
-//			unsigned int attribs = (1 << renderer::GV_UV0) | (1 << renderer::GV_COLOR) | (1 << renderer::GV_COLOR);
-			for( int h = 0; h < tiled_map.height; ++h )
+			unsigned int attribs = (1 << renderer::GV_UV0) | (1 << renderer::GV_COLOR) | (1 << renderer::GV_COLOR);
+			for( unsigned int layer_num = 0; layer_num < 1/*tiled_map.layer_count*/; ++layer_num )
 			{
-				for( int w = 0; w < tiled_map.width; ++w )
+				for( int h = 0; h < tiled_map.height; ++h )
 				{
-					unsigned char tile_gid = tiled_map.layers[0].layer_data[ h * tiled_map.width + w ];
-					if ( tile_gid > 0 )
+					for( int w = 0; w < tiled_map.width; ++w )
 					{
-						Tile * tile = &tiled_map.tilelist.tiles[ tile_gid-1 ];
-						if ( tile )
+						unsigned char tile_gid = tiled_map.layers[ layer_num ].layer_data[ h * tiled_map.width + w ];
+						if ( tile_gid > 0 )
 						{
-							TileSet * set = &tiled_map.tilesets[ tile->tileset_id ];						
-
-							if ( (!vb.has_room(4, 6) || (set != lastset)) && lastset != 0 )
+							Tile * tile = &tiled_map.tilelist.tiles[ tile_gid-1 ];
+							if ( tile )
 							{
-								long offset = rs.stream.offset_pointer();
-								vb.update();
-								assets::Shader * shader = &this->default_shader;//assets::find_compatible_shader( attribs + lastset->material->requirements );
-								rs.add_shader( shader );
-								
-								rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
-								rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
-//								rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &objectMatrix );
+								TileSet * set = &tiled_map.tilesets[ tile->tileset_id ];						
 
-								
-								rs.add_material( lastset->material, shader );
-								rs.add_draw_call( vb.vertexbuffer );
-								
-								rs.run_commands();
-								vb.reset();
-								rs.stream.seek( offset, true );
+								if ( (!vb.has_room(4, 6) || (set != lastset)) && lastset != 0 )
+								{
+									long offset = rs.stream.offset_pointer();
+									vb.update();
+									assets::Shader * shader = assets::find_compatible_shader( attribs + lastset->material->requirements );
+									rs.add_shader( shader );
+									
+									rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
+									rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
+									rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &objectMatrix );
 
-							}
-							
-							FontVertexType * v = (FontVertexType*)vb.request(4);
-							if ( v )
-							{
-								lastset = set;
-								//						FontVertexType * v = (FontVertexType*)vb[0];
+									
+									rs.add_material( lastset->material, shader );
+									rs.add_draw_call( vb.vertexbuffer );
+									
+									rs.run_commands();
+									vb.reset();
+									rs.stream.seek( offset, true );
+
+								}
 								
-								int x = w * tiled_map.tile_width;
-								int y = h * tiled_map.tile_height;
-								v[0].x = x;
-								v[0].y = y;
-								v[0].z = 0;
-								v[0].color = Color(255,255,255);
-								
-								v[1].x = x;
-								v[1].y = y+tiled_map.tile_height;
-								v[1].z = 0;
-								v[1].color = Color(255,255,255);
-								
-								v[2].x = x+tiled_map.tile_width;
-								v[2].y = y+tiled_map.tile_height;
-								v[2].z = 0;
-								v[2].color = Color(255,255,255);
-								
-								v[3].x = x+tiled_map.tile_width;
-								v[3].y = y;
-								v[3].z = 0;
-								v[3].color = Color(255,255,255);
-								
-								v[0].u = tile->quad_uvs[0];
-								v[0].v = tile->quad_uvs[1];
-								v[1].u = tile->quad_uvs[2];
-								v[1].v = tile->quad_uvs[3];
-								v[2].u = tile->quad_uvs[4];
-								v[2].v = tile->quad_uvs[5];
-								v[3].u = tile->quad_uvs[6];
-								v[3].v = tile->quad_uvs[7];
-								
-//								LOGV( "[%g %g, %g %g, %g %g, %g %g\n", v[0].x, v[0].y, v[1].x, v[1].y, v[2].x, v[2].y, v[3].x, v[3].y );
-								
-								renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
-								vb.append_indices( indices, 6 );
-							}
-						}
-					}
-				}
-			}		
+								FontVertexType * v = (FontVertexType*)vb.request(4);
+								if ( v )
+								{
+									lastset = set;
+									//						FontVertexType * v = (FontVertexType*)vb[0];
+									
+									int x = w * tiled_map.tile_width;
+									int y = h * tiled_map.tile_height;
+									v[0].x = x;
+									v[0].y = y;
+									v[0].z = 0;
+									v[0].color = Color(255,255,255);
+									
+									v[1].x = x;
+									v[1].y = y+tiled_map.tile_height;
+									v[1].z = 0;
+									v[1].color = Color(255,255,255);
+									
+									v[2].x = x+tiled_map.tile_width;
+									v[2].y = y+tiled_map.tile_height;
+									v[2].z = 0;
+									v[2].color = Color(255,255,255);
+									
+									v[3].x = x+tiled_map.tile_width;
+									v[3].y = y;
+									v[3].z = 0;
+									v[3].color = Color(255,255,255);
+									
+									v[0].u = tile->quad_uvs[0];
+									v[0].v = tile->quad_uvs[1];
+									v[1].u = tile->quad_uvs[2];
+									v[1].v = tile->quad_uvs[3];
+									v[2].u = tile->quad_uvs[4];
+									v[2].v = tile->quad_uvs[5];
+									v[3].u = tile->quad_uvs[6];
+									v[3].v = tile->quad_uvs[7];
+									
+	//								LOGV( "[%g %g, %g %g, %g %g, %g %g\n", v[0].x, v[0].y, v[1].x, v[1].y, v[2].x, v[2].y, v[3].x, v[3].y );
+									
+									renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+									vb.append_indices( indices, 6 );
+								}
+							} // tile
+						} // tile gid > 0
+					} // for width
+				} // for height
+			} // for each layer
 #if 1
 			if ( vb.last_index > 0 && lastset )
 			{
 	
 				vb.update();
-				assets::Shader * shader = &this->default_shader;//assets::find_compatible_shader( attribs + lastset->material->requirements );
+				assets::Shader * shader = assets::find_compatible_shader( attribs + lastset->material->requirements );
 //				LOGV( "shader: %i, draw tileset: %i, count: %i\n", shader->id, lastset->id, vb.last_index );
 				
 				rs.add_shader( shader );
 				rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
 				rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
-//				rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &objectMatrix );
+				rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &objectMatrix );
 
 				rs.add_material( lastset->material, shader );				
 				rs.add_draw_call( vb.vertexbuffer );

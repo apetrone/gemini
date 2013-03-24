@@ -416,7 +416,7 @@ namespace assets
 				uniform_list.push_back( &permutations.base.uniforms[a] );
 			}
 			
-			LOGV( "----> permutation: %i\n", i );
+//			LOGV( "----> permutation: %i\n", i );
 			
 			unsigned int requirements = 0;
 			unsigned int conflicts = 0;
@@ -429,7 +429,7 @@ namespace assets
 					ShaderPermutationGroup * option = permutations.options[p];
 					for( int id = 0; id < option->num_defines; ++id )
 					{
-						LOGV( "option: %s\n", option->defines[id]() );
+//						LOGV( "option: %s\n", option->defines[id]() );
 						preprocessor_defines.append( "#define " );
 						preprocessor_defines.append( option->defines[id]() );
 						preprocessor_defines.append( " 1\n" );
@@ -465,18 +465,18 @@ namespace assets
 			
 			if ( (requirements & shader->capabilities) < requirements )
 			{
-				LOGV( "This shader will not compile properly. Missing one or more requirements!\n" );
+//				LOGV( "This shader will not compile properly. Missing one or more requirements!\n" );
 				use_permutation = false;
 			}
 			else if ( (shader->capabilities & conflicts) > 0 )
 			{
-				LOGV( "This shader will not compile properly. There are conflicting parameters\n" );
+//				LOGV( "This shader will not compile properly. There are conflicting parameters\n" );
 				use_permutation = false;
 			}
 						
 			if ( !use_permutation )
 			{
-				LOGV( "Skipping permutation: %i\n", shader->id );
+//				LOGV( "Skipping permutation: %i\n", shader->id );
 				continue;
 			}
 			

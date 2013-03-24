@@ -29,6 +29,10 @@ class iOSKernel : public kernel::IKernel
 public:
 	bool active;
 	kernel::Params params;
+	int rotate_mask;
+	
+	UIInterfaceOrientation last_orientation;
+	
 public:
 	virtual ~iOSKernel() {}
 	virtual bool is_active() const { return active; }
@@ -47,9 +51,16 @@ public:
 	void set_view_size( int width, int height );
 	void set_interface_orientation( UIInterfaceOrientation orientation );
 	BOOL should_change_orientation( UIInterfaceOrientation orientation );
-		
+	void device_orientation_changed( UIInterfaceOrientation orientation );
+	void rotate_window_coordinates();
+	
 	void will_resign_active();
 	void did_become_active();
 	void will_terminate();
 	void did_receive_memory_warning();
 };
+
+
+// utility functions
+const char * UIInterfaceOrientationToString( UIInterfaceOrientation orientation );
+const char * UIDeviceOrientationToString( UIDeviceOrientation orientation );

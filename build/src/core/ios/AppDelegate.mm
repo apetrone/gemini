@@ -55,18 +55,20 @@ extern "C"
 @synthesize window = _window;
 @synthesize viewController = _viewController;
 
-
-
--(void)didRotate:(NSNotification*)notification
+-(void)device_orientation_changed:(NSNotification*)notification
 {
-	//NSLog( @"didRotate" );
-//	kernel_ios_didRotate( (int)[self.viewController interfaceOrientation] );
+	NSLog( @"device_orientation_changed" );
+	iOSKernel * mobile_kernel = (iOSKernel*)self->kernel;
+	assert( mobile_kernel != 0 );
+	if ( mobile_kernel )
+	{
+		mobile_kernel->device_orientation_changed( [self.viewController interfaceOrientation] );
+	}
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-	[[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
 	
     // Override point for customization after application launch.
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
@@ -108,7 +110,7 @@ extern "C"
 	}
 	else
 	{
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didRotate:) name:UIDeviceOrientationDidChangeNotification object: nil];
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(device_orientation_changed:) name:UIDeviceOrientationDidChangeNotification object: nil];
 			
 		// set our view size
 		mobile_kernel->set_view_size( [[self.viewController view] bounds].size.width, [[self.viewController view] bounds].size.height );
