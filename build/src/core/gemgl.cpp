@@ -381,7 +381,7 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	GEMGL_LINK( gl.DeleteFramebuffers, "glDeleteFramebuffers", GEMGLFNDELETEFRAMEBUFFERS );
 	GEMGL_LINK( gl.GenFramebuffers, "glGenFramebuffers", GEMGLFNGENFRAMEBUFFERS );
 	GEMGL_LINK( gl.BindRenderbuffer, "glBindRenderbuffer", GEMGLFNBINDRENDERBUFFER );
-	GEMGL_LINK( gl.DeleteRenderBuffers, "glDeleteRenderBuffers", GEMGLFNDELETERENDERBUFFERS );
+	GEMGL_LINK( gl.DeleteRenderbuffers, "glDeleteRenderbuffers", GEMGLFNDELETERENDERBUFFERS );
 	GEMGL_LINK( gl.GenRenderbuffers, "glGenRenderbuffers", GEMGLFNGENRENDERBUFFERS );
 	GEMGL_LINK( gl.RenderbufferStorageMultisample, "glRenderbufferStorageMultisample", GEMGLFNRENDERBUFFERSTORAGEMULTISAMPLE );
 	GEMGL_LINK( gl.RenderbufferStorage, "glRenderbufferStorage", GEMGLFNRENDERBUFFERSTORAGE );

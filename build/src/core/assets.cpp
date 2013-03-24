@@ -1502,7 +1502,7 @@ namespace assets
 			
 		// load shader permutations
 		_shader_permutations = CREATE( ShaderPermutations );
-		//compile_shader_permutations();
+		compile_shader_permutations();
 		
 		// setup default material
 		_default_material = mat_lib->allocate_asset();
