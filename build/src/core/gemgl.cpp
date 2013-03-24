@@ -239,10 +239,12 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	GEMGL_LINK( gl.BlendColor, "glBlendColor", GEMGLFNBLENDCOLOR );
 	
 	// vertex array objects
+#if PLATFORM_IS_MOBILE // Android and iOS should have support for these.
 	GEMGL_LINK( gl.GenVertexArrays, "glGenVertexArraysOES", GEMGLFNGENVERTEXARRAYS );		
 	GEMGL_LINK( gl.BindVertexArray, "glBindVertexArrayOES", GEMGLFNBINDVERTEXARRAY );
 	GEMGL_LINK( gl.DeleteVertexArrays, "glDeleteVertexArraysOES", GEMGLFNDELETEVERTEXARRAYS );
 	GEMGL_LINK( gl.IsVertexArray, "glIsVertexArrayOES", GEMGLFNISVERTEXARRAY );
+#endif
 
 	// BUFFER OBJECTS
 	GEMGL_LINK( gl.GenBuffers, "glGenBuffers", GEMGLFNGENBUFFERS );

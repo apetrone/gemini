@@ -364,13 +364,13 @@ namespace assets
 		for( int i = 0; i < permutations.num_attributes; ++i, ++pid )
 		{
 			permutations.options[pid] = &permutations.attributes[i];
-//			LOGV( "option: \"%s\", mask_value: %i\n", permutations.options[pid]->name(), permutations.options[pid]->mask_value );
+			LOGV( "option: \"%s\", mask_value: %i\n", permutations.options[pid]->name.c_str(), permutations.options[pid]->mask_value );
 		}
 		
 		for( int i = 0; i < permutations.num_uniforms; ++i, ++pid )
 		{
 			permutations.options[pid] = &permutations.uniforms[i];
-//			LOGV( "option: \"%s\", mask_value: %i\n", permutations.options[pid]->name(), permutations.options[pid]->mask_value );
+			LOGV( "option: \"%s\", mask_value: %i\n", permutations.options[pid]->name.c_str(), permutations.options[pid]->mask_value );
 		}
 
 
@@ -408,7 +408,8 @@ namespace assets
 		
 		for( int i = 0; i < total_permutations; ++i )
 		{
-			StackString<1024> preprocessor_defines;
+			// StackString<1024> preprocessor_defines;
+			std::string preprocessor_defines;
 			std::vector< ShaderString * > attribute_list;
 			std::vector< ShaderString * > uniform_list;
 			
@@ -443,9 +444,12 @@ namespace assets
 					for( int id = 0; id < option->num_defines; ++id )
 					{
 						LOGV( "option: %s\n", option->defines[id].c_str() );
-						preprocessor_defines.append( "#define " );
-						preprocessor_defines.append( option->defines[id].c_str() );
-						preprocessor_defines.append( " 1\n" );
+						// preprocessor_defines.append( "#define " );
+						// preprocessor_defines.append( option->defines[id].c_str() );
+						// preprocessor_defines.append( " 1\n" );
+						preprocessor_defines += "#define ";
+						preprocessor_defines += option->defines[id].c_str();
+						preprocessor_defines += " 1\n";
 					}
 					
 					for( int a = 0; a < option->num_attributes; ++a )
@@ -458,11 +462,11 @@ namespace assets
 						uniform_list.push_back( &option->uniforms[a] );
 					}
 					
-					#if 0
 					// build requirement list
+					LOGV( "# requires: %i\n", option->num_requires );
 					for( unsigned int i = 0; i < option->num_requires; ++i )
 					{
-						LOGV( "requirement: %s\n", option->requires[i]() );
+						LOGV( "require: %i\n", i );
 						requirements |= find_parameter_mask( option->requires[ i ] );
 					}
 
@@ -471,7 +475,6 @@ namespace assets
 					{
 						conflicts |= find_parameter_mask( option->conflicts[ i ] );
 					}
-					#endif
 
 					shader->capabilities |= (1 << option->mask_value);
 				}
@@ -504,7 +507,7 @@ namespace assets
 			fragment_shader[ i ] = driver->shaderobject_create( renderer::SHADER_FRAGMENT );
 
 			// load the shaders and pass the defines
-			if ( !driver->shaderobject_compile(vertex_shader[i], vs_source, preprocessor_defines(), shader_version() ) )
+			if ( !driver->shaderobject_compile(vertex_shader[i], vs_source, preprocessor_defines.c_str(), shader_version() ) )
 			{
 				LOGW( "vertex_shader failed to compile!\n" );
 				driver->shaderobject_destroy( vertex_shader[ i ] );
@@ -512,7 +515,7 @@ namespace assets
 				continue;
 			}
 			
-			if ( !driver->shaderobject_compile(fragment_shader[i], fs_source, preprocessor_defines(), shader_version() ) )
+			if ( !driver->shaderobject_compile(fragment_shader[i], fs_source, preprocessor_defines.c_str(), shader_version() ) )
 			{
 				LOGW( "fragment_shader failed to compile!\n" );
 				driver->shaderobject_destroy( vertex_shader[ i ] );
@@ -1499,7 +1502,7 @@ namespace assets
 			
 		// load shader permutations
 		_shader_permutations = CREATE( ShaderPermutations );
-		compile_shader_permutations();
+		//compile_shader_permutations();
 		
 		// setup default material
 		_default_material = mat_lib->allocate_asset();
