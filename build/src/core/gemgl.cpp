@@ -449,7 +449,7 @@ void * gemgl_findsymbol( gemgl_interface_t & gl_interface, const char * name )
 	}
 	else
 	{
-		LOGV( "Linked function %s -> %lx\n", name, (long unsigned int)ptr );
+//		LOGV( "Linked function %s -> %lx\n", name, (long unsigned int)ptr );
 	}
 #endif
 	return ptr;

@@ -25,6 +25,7 @@
 #include "gemgl.hpp"
 #include "opengl_common.hpp"
 #include "memorystream.hpp"
+#include "assets.hpp"
 
 using namespace renderer;
 
@@ -684,21 +685,31 @@ void GLESv2::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer
 	char * vertex_data = (char*)ALLOC( data_size );
 	MemoryStream ms;
 	ms.init( vertex_data, data_size );
+	assets::ShaderString parameter = "normals";
+	unsigned int normals_mask = assets::find_parameter_mask( parameter );
+	
+	parameter = "colors";
+	unsigned int colors_mask = assets::find_parameter_mask( parameter );
+	
+	parameter = "uv0";
+	unsigned int uv0_mask = assets::find_parameter_mask( parameter );
+	
+	
 	for( size_t vertex_id = 0; vertex_id < geometry->vertex_count; ++vertex_id )
 	{
 		ms.write( &geometry->vertices[ vertex_id ], sizeof(float)*3 );
 		
-		if ( geometry->attributes & (1 << renderer::GV_COLOR) )
+		if ( geometry->attributes & colors_mask )
 		{
 			ms.write( &geometry->colors[ vertex_id ], sizeof(Color) );
 		}
 		
-		if ( geometry->attributes & (1 << renderer::GV_NORMAL) )
+		if ( geometry->attributes & normals_mask )
 		{
 			ms.write( &geometry->normals[ vertex_id ], sizeof(float)*3 );
 		}
 		
-		if ( geometry->attributes & (1 << renderer::GV_UV0) )
+		if ( geometry->attributes & uv0_mask )
 		{
 			ms.write( &geometry->uvs[ vertex_id ], sizeof(renderer::UV) );
 		}

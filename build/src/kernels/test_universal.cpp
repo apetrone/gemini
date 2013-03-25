@@ -380,7 +380,7 @@ class TestUniversal : public kernel::IApplication,
 		assets::Material * material = assets::material_by_id( geo->material_id );
 		assert( material != 0 );
 //		LOGV( "material: %i\n", material->Id() );
-		assets::Shader * shader = assets::find_compatible_shader( geo->attributes + material->requirements + (1 << gp.global_params) );
+		assets::Shader * shader = assets::find_compatible_shader( geo->attributes + material->requirements + gp.global_params );
 		assert( shader != 0 );
 
 		if ( !shader )
@@ -398,9 +398,9 @@ class TestUniversal : public kernel::IApplication,
 			rs.add_uniform3f( shader->get_uniform_location("cameraPosition"), gp.camera_position );
 		}
 		
-		rs.add_uniform_matrix4( shader->get_uniform_location("modelviewMatrix"), gp.modelview_matrix );
-		rs.add_uniform_matrix4( shader->get_uniform_location("projectionMatrix"), gp.projection_project );
-		rs.add_uniform_matrix4( shader->get_uniform_location("objectMatrix"), gp.object_matrix );
+		rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), gp.modelview_matrix );
+		rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), gp.projection_project );
+		rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), gp.object_matrix );
 				
 		rs.add_material( material, shader );
 		
@@ -415,6 +415,8 @@ class TestUniversal : public kernel::IApplication,
 	
 	TiledMap tiled_map;
 	
+	int tdx;
+	int tdy;
 public:
 	DECLARE_APPLICATION( TestUniversal );
 	
@@ -423,10 +425,13 @@ public:
 		if ( event.subtype == kernel::TouchBegin )
 		{
 			fprintf( stdout, "Touch Event Began at %i, %i\n", event.x, event.y );
+			tdx = event.x;
+			tdy = event.y;
 		}
 		else if ( event.subtype == kernel::TouchMoved )
 		{
 			fprintf( stdout, "Touch Event Moved at %i, %i\n", event.x, event.y );
+			this->camera.move_view( event.x-tdx, event.y-tdy );
 		}
 		else if ( event.subtype == kernel::TouchEnd )
 		{
@@ -528,7 +533,7 @@ public:
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 		LOGV( "Window dimensions: %i x %i, Render Viewport: %i x %i\n", params.window_width, params.window_height, params.render_width, params.render_height );
-	
+		LOGV( "IndexType is %i bytes.\n", sizeof(renderer::IndexType) );
 //		sound = audio::create_sound( "sounds/powerup" );
 //		source = audio::play( sound );
 #if 0
@@ -570,10 +575,10 @@ public:
 		mat = assets::load_material( "materials/rogue" );
 		mat2 = assets::load_material( "materials/gametiles" );
 
-//		camera.perspective( 60, params.window_width, params.window_height, 0.1f, 512.0f );
-		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.5f, 255.0f );
+		camera.perspective( 60, params.render_width, params.render_height, 0.1f, 512.0f );
+//		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.5f, 255.0f );
 		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
-		camera.move_speed = 100;
+//		camera.move_speed = 100;
 		
 		alpha = 0;
 		alpha_delta = 1;
@@ -693,7 +698,7 @@ public:
 		}
 #endif
 
-#if 0
+#if 1
 		// test mesh loading
 		mesh = assets::load_mesh( "models/plasma3" );
 		if ( mesh )
@@ -773,24 +778,27 @@ public:
 		rs.add_clear( 0x00004000 | 0x00000100 );
 		rs.add_viewport( 0, 0, (int)params.render_width, (int)params.render_height );
 
-		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
+//		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
 		rs.run_commands();
 		rs.rewind();
 
 
 		GeneralParameters gp;
-		gp.global_params = 3;
+		assets::ShaderString lightposition = "lightposition";
+		gp.global_params = assets::find_parameter_mask( lightposition );
 		gp.camera_position = &camera.pos;
 		gp.modelview_matrix = &camera.matCam;
 		gp.projection_project = &camera.matProj;
 		gp.object_matrix = &objectMatrix;
-		if ( 0 && mesh )
+		if ( 1 && mesh )
 		{
 			for( unsigned int geo_id = 0; geo_id < mesh->total_geometry; ++geo_id )
 			{
 				assets::Geometry * g = &mesh->geometry[ geo_id ];
 				stream_geometry( rs, g, gp );
 			}
+			
+			rs.run_commands();
 		}
 		else
 		{
@@ -800,7 +808,8 @@ public:
 			// could potentially have a vertexbuffer per tileset
 			// this would allow us to batch tiles that share the same tileset (texture)
 			TileSet * lastset = 0;
-			unsigned int attribs = (1 << renderer::GV_UV0) | (1 << renderer::GV_COLOR) | (1 << renderer::GV_COLOR);
+//			unsigned int attribs = (1 << renderer::GV_UV0) | (1 << renderer::GV_COLOR) | (1 << renderer::GV_COLOR);
+			unsigned int attribs = 0;
 			for( unsigned int layer_num = 0; layer_num < 1/*tiled_map.layer_count*/; ++layer_num )
 			{
 				for( int h = 0; h < tiled_map.height; ++h )

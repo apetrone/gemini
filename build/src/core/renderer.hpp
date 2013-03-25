@@ -102,6 +102,9 @@ namespace renderer
 #if PLATFORM_INDEX_TYPE == 2 // assuming OpenGL ES 2.0 (embedded or mobile platform)
 	typedef unsigned short IndexType;
 #elif PLATFORM_INDEX_TYPE == 1 || !defined(PLATFORM_INDEX_TYPE) // assume desktop environment
+	#if PLATFORM_IS_MOBILE
+		#error IndexType cannot be unsigned int on mobile!
+	#endif
 	typedef unsigned int IndexType;
 #endif
 
@@ -264,15 +267,6 @@ namespace renderer
 	{
 		float u, v;
 	};
-	
-	enum GeometryVertexAttribute
-	{
-		GV_NORMAL = 0,
-		GV_COLOR,
-		GV_UV0,
-		
-		GV_MAX
-	}; // GeometryVertexAttribute
 	
 	struct Geometry
 	{

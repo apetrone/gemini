@@ -119,11 +119,13 @@ namespace assets
 	
 	int Shader::get_uniform_location( const char * name )
 	{
+//		LOGV( "# uniforms: %i\n", total_uniforms );
 		for( int i = 0; i < total_uniforms; ++i )
 		{
+			
 			if ( xstr_nicmp( uniforms[i].first, name, xstr_len(uniforms[i].first) ) == 0 )
 			{
-				//LogMsg( "uniform: %s, at %i\n", name, uniforms[i].value );
+//				LOGV( "uniform: %s, at %i\n", name, uniforms[i].second );
 				return uniforms[i].second;
 			}
 		}
@@ -463,10 +465,8 @@ namespace assets
 					}
 					
 					// build requirement list
-					LOGV( "# requires: %i\n", option->num_requires );
 					for( unsigned int i = 0; i < option->num_requires; ++i )
 					{
-						LOGV( "require: %i\n", i );
 						requirements |= find_parameter_mask( option->requires[ i ] );
 					}
 
@@ -495,13 +495,13 @@ namespace assets
 						
 			if ( !use_permutation )
 			{
-//				LOGV( "Skipping permutation: %i\n", shader->id );
+				LOGV( "Skipping permutation: %i\n", shader->id );
 				continue;
 			}
 			
 			
 
-//			LOGV( "%i -> %s\n", shader->id, preprocessor_defines() );
+			LOGV( "%i -> %s\n", shader->id, preprocessor_defines.c_str() );
 			
 			vertex_shader[ i ] = driver->shaderobject_create( renderer::SHADER_VERTEX );
 			fragment_shader[ i ] = driver->shaderobject_create( renderer::SHADER_FRAGMENT );
@@ -1066,6 +1066,7 @@ namespace assets
 			ShaderPermutationGroup * option = shader_permutations().options[ option_id ];
 			if ( xstr_nicmp( (const char*)name.c_str(), option->name.c_str(), 64 ) == 0 )
 			{
+//				LOGV( "mask for %s is %i\n", name.c_str(), option->mask_value );
 				return (1 << option->mask_value);
 			}
 		}
@@ -1366,19 +1367,22 @@ namespace assets
 		
 		if ( normals )
 		{
-			attributes |= (1 << GV_NORMAL);
+			ShaderString normals = "normals";
+			attributes |= find_parameter_mask( normals );
 			descriptor.add( VD_FLOAT3 );
 		}
 		
 		if ( colors )
 		{
-			attributes |= (1 << GV_COLOR);
+			ShaderString colors = "colors";
+			attributes |= find_parameter_mask( colors );
 			descriptor.add( VD_UNSIGNED_BYTE4 );
 		}
 		
 		if ( uvs )
 		{
-			attributes |= (1 << GV_UV0);
+			ShaderString uv0 = "uv0";
+			attributes |= find_parameter_mask( uv0 );
 			descriptor.add( VD_FLOAT2 );
 		}
 		

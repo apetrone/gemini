@@ -76,8 +76,10 @@ void iOSKernel::post_application_config( kernel::ApplicationResult result )
 	CGSize size = [screenmode size];
 	NSLog( @"device resolution: %g x %g", size.width, size.height );
 	
-	parameters().window_width = size.width;
-	parameters().window_height = size.height;
+	CGRect bounds = [mainscreen bounds];
+	
+	parameters().window_width = bounds.size.width;
+	parameters().window_height = bounds.size.height;
 	parameters().render_width = size.width;
 	parameters().render_height = size.height;
 	
