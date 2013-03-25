@@ -161,14 +161,16 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 	{
 		unsigned int attribs[] = {
 
+#if defined( PLATFORM_USE_GLES2 )
+			XWL_API, XWL_API_GLES2,
+			XWL_API_MAJOR_VERSION, 2,
+			XWL_API_MINOR_VERSION, 0,
+#else
 			XWL_API, XWL_API_OPENGL,
 			XWL_API_MAJOR_VERSION, 3,
 			XWL_API_MINOR_VERSION, 2,
+#endif
 
-			// force GLESv2 while testing
-			// XWL_API, XWL_API_GLES2,
-			// XWL_API_MAJOR_VERSION, 2,
-			// XWL_API_MINOR_VERSION, 0,
 
 			XWL_WINDOW_WIDTH, parameters().window_width,
 			XWL_WINDOW_HEIGHT, parameters().window_height,

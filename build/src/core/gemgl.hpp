@@ -41,7 +41,7 @@
 // print information regarding whether or not we correctly link opengl functions
 #define GEMGL_DEBUG_SYMBOLS 1
 
-#if __APPLE__ && (TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE) || PLATFORM_IS_RASPBERRYPI
+#if (__APPLE__ && (TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE)) || PLATFORM_IS_RASPBERRYPI || PLATFORM_USE_GLES2
 	#define GEMGL_ENABLE_ES 1
 #endif
 

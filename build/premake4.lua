@@ -179,6 +179,7 @@ project ( build_name )
 	configuration { "linux" }
 		defines { "LINUX=1", INDEX_TYPE }
 
+
 		if RASPBERRYPI then
 			defines { "PLATFORM_IS_RASPBERRYPI=1" }
 		end
@@ -188,6 +189,8 @@ project ( build_name )
 			{
 				"src/core/gldrivers/opengl_glesv2.*",
 			}
+
+			defines { "PLATFORM_USE_GLES2=1" }
 		else
 			links
 			{

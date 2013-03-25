@@ -42,6 +42,7 @@ void gemgl_parse_version( int & major, int & minor, int renderer_type )
 	gemgl_GLGETSTRINGPROC gl_get_string = (gemgl_GLGETSTRINGPROC)gemgl_findsymbol( gl, "glGetString" );
 	if ( gl_get_string )
 	{
+		LOGV( "glGetString is %p\n", gl_get_string );
 		const GLubyte * version = gl_get_string( GL_VERSION );
 		if ( !version )
 		{
@@ -83,9 +84,10 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	
 #if _WIN32 || LINUX
 	const char * libName = "";
+
 #if _WIN32
 	libName = "OpenGL32.dll";
-#elif defined(PLATFORM_IS_RASPBERRYPI)
+#elif defined(PLATFORM_IS_RASPBERRYPI) || defined(PLATFORM_USE_GLES2)
 	libName = "libGLESv2.so";
 #elif LINUX
 	libName = "libGL.so";
