@@ -44,7 +44,7 @@ namespace assets
 		typedef AssetLoadStatus (*AssetLoadCallback)( const char * path, AssetClass * asset, unsigned int flags );
 		typedef void (*AssetIterator)( AssetClass * asset, void * userdata );
 		typedef HashTable<AssetClass*> AssetHashTable;
-		typedef std::list<AssetClass*> AssetList;
+		typedef std::list<AssetClass*, GeminiAllocator<AssetClass*> > AssetList;
 		
 		unsigned int total_assets;
 		AssetLoadCallback load_callback;

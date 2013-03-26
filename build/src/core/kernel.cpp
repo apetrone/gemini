@@ -39,6 +39,7 @@
 
 namespace kernel
 {
+	// This is NOT hooked up to the memory allocator because this is accessed before the memory allocator is initialized.
 	typedef std::map< std::string, ApplicationCreator> ApplicationCreatorByString;
 	
 	IKernel * _kernel = 0;

@@ -412,8 +412,8 @@ namespace assets
 		{
 			// StackString<1024> preprocessor_defines;
 			std::string preprocessor_defines;
-			std::vector< ShaderString * > attribute_list;
-			std::vector< ShaderString * > uniform_list;
+			std::vector< ShaderString *, GeminiAllocator<ShaderString*> > attribute_list;
+			std::vector< ShaderString *, GeminiAllocator<ShaderString*> > uniform_list;
 			
 			shader = &_shader_programs[i];
 			shader->capabilities = 0;
