@@ -356,11 +356,7 @@ namespace assets
 		renderer::ShaderProgram shader_program;
 		shader_program.object = 0;
 		driver->shaderprogram_deactivate( shader_program );
-		
-		size_t total_shader_bytes = total_permutations * sizeof(renderer::ShaderObject*);
-		renderer::ShaderObject * vertex_shader = (renderer::ShaderObject*)ALLOC(total_shader_bytes);
-		renderer::ShaderObject * fragment_shader = (renderer::ShaderObject*)ALLOC(total_shader_bytes);
-		
+				
 		permutations.options = (ShaderPermutationGroup**)ALLOC( permutations.num_permutations * sizeof(ShaderPermutationGroup*) );
 		int pid = 0;
 		for( int i = 0; i < permutations.num_attributes; ++i, ++pid )
@@ -502,24 +498,23 @@ namespace assets
 			
 
 			LOGV( "%i -> %s\n", shader->id, preprocessor_defines.c_str() );
-			
-			vertex_shader[ i ] = driver->shaderobject_create( renderer::SHADER_VERTEX );
-			fragment_shader[ i ] = driver->shaderobject_create( renderer::SHADER_FRAGMENT );
+			renderer::ShaderObject vertex_shader = driver->shaderobject_create( renderer::SHADER_VERTEX );
+			renderer::ShaderObject fragment_shader = driver->shaderobject_create( renderer::SHADER_FRAGMENT );
 
 			// load the shaders and pass the defines
-			if ( !driver->shaderobject_compile(vertex_shader[i], vs_source, preprocessor_defines.c_str(), shader_version() ) )
+			if ( !driver->shaderobject_compile(vertex_shader, vs_source, preprocessor_defines.c_str(), shader_version() ) )
 			{
 				LOGW( "vertex_shader failed to compile!\n" );
-				driver->shaderobject_destroy( vertex_shader[ i ] );
-				driver->shaderobject_destroy( fragment_shader[ i ] );
+				driver->shaderobject_destroy( vertex_shader );
+				driver->shaderobject_destroy( fragment_shader );
 				continue;
 			}
 			
-			if ( !driver->shaderobject_compile(fragment_shader[i], fs_source, preprocessor_defines.c_str(), shader_version() ) )
+			if ( !driver->shaderobject_compile(fragment_shader, fs_source, preprocessor_defines.c_str(), shader_version() ) )
 			{
 				LOGW( "fragment_shader failed to compile!\n" );
-				driver->shaderobject_destroy( vertex_shader[ i ] );
-				driver->shaderobject_destroy( fragment_shader[ i ] );
+				driver->shaderobject_destroy( vertex_shader );
+				driver->shaderobject_destroy( fragment_shader );
 				continue;
 			}
 
@@ -550,8 +545,8 @@ namespace assets
 			shader->set_frag_data_location( shader_permutations().frag_location() );
 
 			// attach compiled code to program
-			driver->shaderprogram_attach( *shader, vertex_shader[i] );
-			driver->shaderprogram_attach( *shader, fragment_shader[i] );
+			driver->shaderprogram_attach( *shader, vertex_shader );
+			driver->shaderprogram_attach( *shader, fragment_shader );
 
 			// attributes must be bound before linking the program
 			driver->shaderprogram_bind_attributes( *shader, *shader );
@@ -570,24 +565,21 @@ namespace assets
 			{
 				LOGW( "shader program link and validate FAILED\n" );
 			}
-
-			attribute_list.clear();
-			uniform_list.clear();
 			
-			driver->shaderprogram_detach( *shader, vertex_shader[i] );
-			driver->shaderprogram_detach( *shader, fragment_shader[i] );
+			driver->shaderprogram_detach( *shader, vertex_shader );
+			driver->shaderprogram_detach( *shader, fragment_shader );
 
 			// clean up
-			driver->shaderobject_destroy( vertex_shader[ i ] );
-			driver->shaderobject_destroy( fragment_shader[ i ] );
+			driver->shaderobject_destroy( vertex_shader );
+			driver->shaderobject_destroy( fragment_shader );
+
+			attribute_list.clear();
+			uniform_list.clear();			
 		}
 
 		// cleanup resources
 		DEALLOC(vs_source);
 		DEALLOC(fs_source);
-		
-		DEALLOC(vertex_shader);
-		DEALLOC(fragment_shader);
 		
 		shader_program.object = 0;
 		driver->shaderprogram_deactivate( shader_program );
