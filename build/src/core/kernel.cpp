@@ -254,17 +254,21 @@ namespace kernel
 		}
 		
 		// try to setup the renderer
-		int render_result =	renderer::startup( renderer::Default );
-		if ( render_result == 0 && config_result != kernel::NoWindow )
+		if ( config_result != kernel::NoWindow )
 		{
-			LOGE( "renderer initialization failed!\n" );
-			return kernel::RendererFailed;
+			int render_result =	renderer::startup( renderer::Default );
+			if ( render_result == 0 )
+			{
+				LOGE( "renderer initialization failed!\n" );
+				return kernel::RendererFailed;
+			}
+
+			assets::startup();
 		}
 		
 		// try to setup audio
 		audio::startup();
 		input::startup();
-		assets::startup();
 		
 		// application instance failed startup
 		ApplicationResult startup_result = _active_application->startup( kernel::instance()->parameters() );

@@ -55,7 +55,7 @@ namespace memory
 	
 	// helper macros for alloc and dealloc on classes and structures	
 	#define CREATE(Type, ...)	new (memory::allocator().allocate(sizeof(Type))) Type(__VA_ARGS__)
-	#define DESTROY(Type, pointer) { pointer->~Type(); memory::allocator().deallocate(pointer); pointer = 0; }
+	#define DESTROY(Type, pointer) { if (pointer) { pointer->~Type(); memory::allocator().deallocate(pointer); pointer = 0; } }
 	
 	// at the moment: this only works if the Type has a default constructor
 	#define CREATE_ARRAY(Type, num_elements, ...)		new (memory::allocator().allocate(sizeof(Type)*num_elements)) Type[ num_elements ]

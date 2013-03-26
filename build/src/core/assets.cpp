@@ -1535,10 +1535,21 @@ namespace assets
 		_shader_programs = 0;
 		DESTROY( ShaderPermutations, _shader_permutations );
 		
-	
-		texture_lib->release_and_purge();
-		mesh_lib->release_and_purge();
-		mat_lib->release_and_purge();
+		if ( texture_lib )
+		{
+			texture_lib->release_and_purge();
+		}
+		
+		if ( mesh_lib )
+		{
+			mesh_lib->release_and_purge();
+		}
+		
+		if ( mat_lib )
+		{
+			mat_lib->release_and_purge();
+		}
+
 	} // purge
 	
 	void shutdown()

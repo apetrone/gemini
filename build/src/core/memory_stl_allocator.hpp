@@ -78,15 +78,17 @@ namespace memory
 		{	// assign from a related DebugAllocator (do nothing)
 			return (*this);
 		}
-		
+				
 		void deallocate(pointer _Ptr, size_type)
 		{	// deallocate object at _Ptr, ignore size
-			::operator delete(_Ptr);
+			DESTROY(_Ty, _Ptr);
+//			::operator delete(_Ptr);
 		}
 		
 		pointer allocate(size_type _Count)
 		{	// allocate array of _Count elements
-			return (pointer)::operator new( _Count * sizeof(_Ty) );
+			return CREATE_ARRAY(_Ty, _Count );
+//			return (pointer)::operator new( _Count * sizeof(_Ty) );
 		}
 		/*
 		 pointer allocate(size_type _Count, const void * = 0)

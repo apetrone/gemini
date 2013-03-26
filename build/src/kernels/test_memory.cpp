@@ -22,6 +22,7 @@
 #include "kernel.hpp"
 #include <stdio.h>
 #include "typedefs.h"
+#include "memory.hpp"
 
 struct Test
 {
@@ -38,6 +39,13 @@ struct Test
 	}
 };
 
+#include <vector>
+
+
+#include <map>
+
+
+
 class TestMemory : public kernel::IApplication
 {
 public:
@@ -52,6 +60,20 @@ public:
 	{
 		printf( "Memory Test: \n" );
 		Test * a = CREATE(Test);
+		
+		std::vector<int, GeminiAllocator<int> > int_vector;
+		int_vector.push_back( 30 );
+		int_vector.push_back( 16 );
+		int_vector.push_back( 31 );
+		
+		typedef std::map<int, int, std::less<int>, GeminiAllocator<int> > MyMap;
+		MyMap int_map;
+		
+		int_map.insert( MyMap::value_type( 30, 17 ) );
+		int_map.insert( MyMap::value_type( 16, 100) );
+		int_map.insert( MyMap::value_type( 300, 2 ) );
+
+		
 		
 		// added z-modifer to satisfy Xcode, C99 addition, we'll see who doesn't support it :)
 		printf( "totalAllocations: %zu, totalBytes: %zu\n", memory::allocator().total_allocations(), memory::allocator().total_bytes() );
