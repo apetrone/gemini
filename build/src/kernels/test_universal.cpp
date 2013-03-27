@@ -424,18 +424,20 @@ public:
 	{
 		if ( event.subtype == kernel::TouchBegin )
 		{
-			fprintf( stdout, "Touch Event Began at %i, %i\n", event.x, event.y );
+//			fprintf( stdout, "Touch Event Began at %i, %i\n", event.x, event.y );
 			tdx = event.x;
 			tdy = event.y;
 		}
 		else if ( event.subtype == kernel::TouchMoved )
 		{
-			fprintf( stdout, "Touch Event Moved at %i, %i\n", event.x, event.y );
-			this->camera.move_view( event.x-tdx, event.y-tdy );
+//			fprintf( stdout, "Touch Event Moved at %i, %i\n", event.x, event.y );
+			this->camera.move_view( (event.x - tdx), (event.y - tdy) );
+			tdx = event.x;
+			tdy = event.y;
 		}
 		else if ( event.subtype == kernel::TouchEnd )
 		{
-			fprintf( stdout, "Touch Event Ended at %i, %i\n", event.x, event.y );
+//			fprintf( stdout, "Touch Event Ended at %i, %i\n", event.x, event.y );
 		}
 	}
 	
