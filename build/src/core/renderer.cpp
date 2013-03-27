@@ -183,6 +183,24 @@ namespace renderer
 		return size;
 	} // calculate_vertex_stride
 
+	const VertexDescriptor & VertexDescriptor::operator= ( const VertexDescriptor & other )
+	{
+		this->attribs = other.attribs;
+		this->id = other.id;
+		
+		for( unsigned int i = 0; i < VD_TOTAL; ++i )
+		{
+			this->size[i] = other.size[i];
+			this->elements[i] = other.elements[i];
+		}
+		
+		for( unsigned int id = 0; id < MAX_DESCRIPTORS; ++id )
+		{
+			this->description[id] = other.description[id];
+		}
+	
+		return *this;
+	} // operator=
 
 	ShaderKeyValuePair::ShaderKeyValuePair()
 	{

@@ -195,6 +195,8 @@ namespace renderer
 		VertexDescriptorType get( int i );
 		void reset();
 		unsigned int calculate_vertex_stride();
+		
+		const VertexDescriptor & operator= ( const VertexDescriptor & other );
 	}; // VertexDescriptor
 	
 	

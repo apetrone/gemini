@@ -88,6 +88,7 @@ struct GLES2VertexBuffer : public VertexBuffer
 	GLenum gl_buffer_type;
 	GLenum gl_draw_type;
 	unsigned int vertex_stride;
+	renderer::VertexDescriptor vertex_descriptor;
 	
 	GLES2VertexBuffer()
 	{
@@ -105,38 +106,10 @@ struct GLES2VertexBuffer : public VertexBuffer
 	}
 	
 	
-	void static_setup( renderer::VertexDescriptor & descriptor, unsigned int vertex_stride, unsigned int max_vertices, unsigned int max_indices )
+	void setup_vertex_attributes()
 	{
-		this->vertex_stride = vertex_stride;
-		
-		if ( _gles2->has_oes_vertex_array_object )
-		{
-			gl.GenVertexArrays( VAO_LIMIT, this->vao );
-			gl.CheckError( "GenVertexArrays" );
-			
-			gl.BindVertexArray( this->vao[ VAO_INTERLEAVED ] );
-			gl.CheckError( "BindVertexArray" );
-		}
-		
-		gl.GenBuffers( VBO_LIMIT, this->vbo );
-		gl.BindBuffer( GL_ARRAY_BUFFER, this->vbo[0] );
-		gl.CheckError( "BindBuffer" );
-		
-		gl.BufferData( GL_ARRAY_BUFFER, vertex_stride * max_vertices, 0, this->gl_buffer_type );
-		gl.CheckError( "BufferData" );
-		
-		if ( max_indices > 0 )
-		{
-			gl.GenBuffers( 1, &this->vbo[1] );
-			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
-			gl.CheckError( "BindBuffer" );
-			
-			gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * max_indices, 0, this->gl_buffer_type );
-			gl.CheckError( "BufferData" );
-		}
-		
 		// reset the descriptor and iterate over the items to setup the vertex attributes
-		descriptor.reset();
+		vertex_descriptor.reset();
 		GLenum attrib_type = GL_INVALID_ENUM;
 		VertexDescriptorType desc_type;
 		unsigned int attribID = 0;
@@ -145,9 +118,9 @@ struct GLES2VertexBuffer : public VertexBuffer
 		unsigned int normalized = 0;
 		unsigned int offset = 0;
 		
-		for( unsigned int i = 0; i < descriptor.attribs; ++i )
+		for( unsigned int i = 0; i < vertex_descriptor.attribs; ++i )
 		{
-			desc_type = descriptor.description[i];
+			desc_type = vertex_descriptor.description[i];
 			if ( desc_type == VD_FLOAT2 )
 			{
 				attrib_type = GL_FLOAT;
@@ -185,14 +158,47 @@ struct GLES2VertexBuffer : public VertexBuffer
 			offset += attribSize;
 			++attribID;
 		}
-		
-		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
-		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+	}
+	
+	void static_setup( renderer::VertexDescriptor & descriptor, unsigned int vertex_stride, unsigned int max_vertices, unsigned int max_indices )
+	{
+		this->vertex_descriptor = descriptor;
+		this->vertex_stride = vertex_stride;
 		
 		if ( _gles2->has_oes_vertex_array_object )
 		{
+			gl.GenVertexArrays( VAO_LIMIT, this->vao );
+			gl.CheckError( "GenVertexArrays" );
+			
+			gl.BindVertexArray( this->vao[ VAO_INTERLEAVED ] );
+			gl.CheckError( "BindVertexArray" );
+		}
+		
+		gl.GenBuffers( VBO_LIMIT, this->vbo );
+		gl.BindBuffer( GL_ARRAY_BUFFER, this->vbo[0] );
+		gl.CheckError( "BindBuffer" );
+		
+		gl.BufferData( GL_ARRAY_BUFFER, vertex_stride * max_vertices, 0, this->gl_buffer_type );
+		gl.CheckError( "BufferData" );
+		
+		if ( max_indices > 0 )
+		{
+			gl.GenBuffers( 1, &this->vbo[1] );
+			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
+			gl.CheckError( "BindBuffer" );
+			
+			gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * max_indices, 0, this->gl_buffer_type );
+			gl.CheckError( "BufferData" );
+		}
+		
+		if ( _gles2->has_oes_vertex_array_object )
+		{
+			this->setup_vertex_attributes();
 			gl.BindVertexArray( 0 );
 		}
+		
+		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 	}
 	
 	void upload_interleaved_data( const GLvoid * data, unsigned int vertex_count )
@@ -674,6 +680,8 @@ void GLESv2::vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, u
 	else
 	{
 		gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
+		stream->setup_vertex_attributes();
+		
 		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, stream->vbo[1] );
 	}
 	
