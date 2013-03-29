@@ -428,7 +428,7 @@ namespace assets
 				uniform_list.push_back( &permutations.base.uniforms[a] );
 			}
 			
-			LOGV( "----> permutation: %i\n", i );
+			//LOGV( "----> permutation: %i\n", i );
 			
 			unsigned int requirements = 0;
 			unsigned int conflicts = 0;
@@ -441,7 +441,7 @@ namespace assets
 					ShaderPermutationGroup * option = permutations.options[p];
 					for( int id = 0; id < option->num_defines; ++id )
 					{
-						LOGV( "option: %s\n", option->defines[id].c_str() );
+						//LOGV( "option: %s\n", option->defines[id].c_str() );
 						// preprocessor_defines.append( "#define " );
 						// preprocessor_defines.append( option->defines[id].c_str() );
 						// preprocessor_defines.append( " 1\n" );
@@ -491,13 +491,13 @@ namespace assets
 						
 			if ( !use_permutation )
 			{
-				LOGV( "Skipping permutation: %i\n", shader->id );
+				//LOGV( "Skipping permutation: %i\n", shader->id );
 				continue;
 			}
 			
 			
 
-			LOGV( "%i -> %s\n", shader->id, preprocessor_defines.c_str() );
+			//LOGV( "%i -> %s\n", shader->id, preprocessor_defines.c_str() );
 			renderer::ShaderObject vertex_shader = driver->shaderobject_create( renderer::SHADER_VERTEX );
 			renderer::ShaderObject fragment_shader = driver->shaderobject_create( renderer::SHADER_FRAGMENT );
 
