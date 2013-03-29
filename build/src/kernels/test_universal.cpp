@@ -590,7 +590,7 @@ public:
 		vb.desc.add( renderer::VD_UNSIGNED_BYTE4 );
 		vb.desc.add( renderer::VD_FLOAT2 );
 		
-		vb.create(90, 135, renderer::DRAW_INDEXED_TRIANGLES );
+		vb.create(64, 128, renderer::DRAW_INDEXED_TRIANGLES );
 #if 0
 		FontVertexType * v = (FontVertexType*)vb.request( 4 );
 		if ( v )
@@ -635,7 +635,7 @@ public:
 		vb.update();
 #endif
 
-		assets::load_test_shader(&this->default_shader);
+//		assets::load_test_shader(&this->default_shader);
 
 #if 0
 		geo.vertex_count = 4;
@@ -780,7 +780,7 @@ public:
 		rs.add_clear( 0x00004000 | 0x00000100 );
 		rs.add_viewport( 0, 0, (int)params.render_width, (int)params.render_height );
 
-//		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
+		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
 		rs.run_commands();
 		rs.rewind();
 

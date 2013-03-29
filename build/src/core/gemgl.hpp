@@ -557,6 +557,7 @@ enum gemgl_renderer_type
 	void gemgl_shutdown( gemgl_interface_t & gl_interface );
 	void * gemgl_findsymbol( gemgl_interface_t & gl_interface, const char * symbol_name );
 	const char * gemgl_uniform_to_string( GLenum type );
+	bool gemgl_find_extension( const char * extension );
 
 #if __APPLE__
 	int gemgl_osx_startup( void );

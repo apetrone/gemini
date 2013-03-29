@@ -89,7 +89,6 @@ struct GL32VertexBuffer : public VertexBuffer
 		
 		if ( max_indices > 0 )
 		{
-			gl.GenBuffers( 1, &this->vbo[1] );
 			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
 			gl.CheckError( "BindBuffer" );
 			

@@ -42,13 +42,7 @@ GLESv2::GLESv2()
 	
 	_gles2 = this;
 	
-	has_oes_vertex_array_object = false;
-	
-#if PLATFORM_IS_MOBILE
-	has_oes_vertex_array_object = false;
-#endif
-
-
+	has_oes_vertex_array_object = gemgl_find_extension( "_vertex_array_object" );
 }
 
 GLESv2::~GLESv2()
@@ -105,7 +99,6 @@ struct GLES2VertexBuffer : public VertexBuffer
 		gl_buffer_type = vertexbuffer_buffertype_to_gl_buffertype( buffer_type );
 	}
 	
-	
 	void setup_vertex_attributes()
 	{
 		// reset the descriptor and iterate over the items to setup the vertex attributes
@@ -149,11 +142,13 @@ struct GLES2VertexBuffer : public VertexBuffer
 			
 			num_elements = VertexDescriptor::elements[ desc_type ];
 			attribSize = VertexDescriptor::size[ desc_type ];
-			gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_stride, (void*)offset );
-			gl.CheckError( "VertexAttribPointer" );
 			
 			gl.EnableVertexAttribArray( attribID );
 			gl.CheckError( "EnableVertexAttribArray" );
+			
+			gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_stride, (void*)offset );
+			gl.CheckError( "VertexAttribPointer" );
+			
 			
 			offset += attribSize;
 			++attribID;
@@ -175,6 +170,7 @@ struct GLES2VertexBuffer : public VertexBuffer
 		}
 		
 		gl.GenBuffers( VBO_LIMIT, this->vbo );
+		
 		gl.BindBuffer( GL_ARRAY_BUFFER, this->vbo[0] );
 		gl.CheckError( "BindBuffer" );
 		
@@ -183,7 +179,6 @@ struct GLES2VertexBuffer : public VertexBuffer
 		
 		if ( max_indices > 0 )
 		{
-			gl.GenBuffers( 1, &this->vbo[1] );
 			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
 			gl.CheckError( "BindBuffer" );
 			
@@ -206,6 +201,7 @@ struct GLES2VertexBuffer : public VertexBuffer
 		gl.BindBuffer( GL_ARRAY_BUFFER, this->vbo[0] );
 		gl.CheckError( "BindBuffer GL_ARRAY_BUFFER" );
 		gl.BufferData( GL_ARRAY_BUFFER, vertex_stride * vertex_count, data, this->gl_buffer_type );
+		gl.CheckError( "BufferData - interleaved" );
 		this->vertex_count = vertex_count;
 	}
 	
@@ -216,6 +212,7 @@ struct GLES2VertexBuffer : public VertexBuffer
 			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
 			gl.CheckError( "BindBuffer GL_ELEMENT_ARRAY_BUFFER" );
 			gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * index_count, indices, this->gl_buffer_type );
+			gl.CheckError( "BufferData - upload_index_array" );
 			this->index_count = index_count;
 		}
 	}
@@ -624,18 +621,12 @@ void GLESv2::vertexbuffer_destroy( renderer::VertexBuffer * vertexbuffer )
 {
 	GLES2VertexBuffer * stream = (GLES2VertexBuffer*)vertexbuffer;
 	
-	gl.DeleteVertexArrays( VAO_INTERLEAVED, stream->vao );
-	
-	if ( stream->vbo[0] != 0 )
+	if ( has_oes_vertex_array_object )
 	{
-		gl.DeleteBuffers( 1, stream->vbo );
+		gl.DeleteVertexArrays( VAO_INTERLEAVED, stream->vao );
 	}
 	
-	if ( stream->vbo[1] != 0 )
-	{
-		gl.DeleteBuffers( 1, &stream->vbo[1] );
-	}
-	
+	gl.DeleteBuffers( VBO_LIMIT, stream->vbo );
 	
 	DESTROY(GLES2VertexBuffer, stream);
 } // vertexbuffer_destroy
@@ -762,11 +753,10 @@ void GLESv2::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer
 	
 	parameter = "uv0";
 	unsigned int uv0_mask = assets::find_parameter_mask( parameter );
-	
-	
+
 	for( size_t vertex_id = 0; vertex_id < geometry->vertex_count; ++vertex_id )
 	{
-		ms.write( &geometry->vertices[ vertex_id ], sizeof(float)*3 );
+		ms.write( &geometry->vertices[ vertex_id ], sizeof(glm::vec3) );
 		
 		if ( geometry->attributes & colors_mask )
 		{
@@ -775,7 +765,7 @@ void GLESv2::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer
 		
 		if ( geometry->attributes & normals_mask )
 		{
-			ms.write( &geometry->normals[ vertex_id ], sizeof(float)*3 );
+			ms.write( &geometry->normals[ vertex_id ], sizeof(glm::vec3) );
 		}
 		
 		if ( geometry->attributes & uv0_mask )
@@ -785,7 +775,6 @@ void GLESv2::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer
 	}
 	
 	stream->upload_interleaved_data( vertex_data, geometry->vertex_count );
-	
 	DEALLOC( vertex_data );
 	
 	if ( geometry->index_count > 0 )

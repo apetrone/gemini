@@ -497,3 +497,12 @@ const char * gemgl_uniform_to_string( GLenum type )
 	return "Unknown type!";
 } // gemgl_uniform_to_string
 
+
+bool gemgl_find_extension( const char * extension )
+{
+	bool found_extension = false;
+	const GLubyte * extension_string = gl.GetString( GL_EXTENSIONS );
+	found_extension = (xstr_str( (const char*)extension_string, extension ) != 0);
+	
+	return found_extension;
+} // gemgl_find_extension
