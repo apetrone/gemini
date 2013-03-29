@@ -363,6 +363,7 @@ class TestUniversal : public kernel::IApplication,
 	Camera camera;
 
 	assets::Shader default_shader;
+	unsigned int test_attribs;
 	
 	struct GeneralParameters
 	{
@@ -553,8 +554,13 @@ public:
 #endif
 
 
-
-
+		assets::ShaderString name("uv0");
+		test_attribs = 0;
+		test_attribs |= assets::find_parameter_mask( name );
+		
+		name = "colors";
+		test_attribs |= assets::find_parameter_mask( name );
+		
 
 		util::json_load_with_callback( "maps/test.json", tiled_map_loader, &tiled_map, true );
 
@@ -578,7 +584,7 @@ public:
 		mat2 = assets::load_material( "materials/gametiles" );
 
 		camera.perspective( 60, params.render_width, params.render_height, 0.1f, 512.0f );
-//		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.5f, 255.0f );
+		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.5f, 255.0f );
 		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
 //		camera.move_speed = 100;
 		
@@ -590,7 +596,7 @@ public:
 		vb.desc.add( renderer::VD_UNSIGNED_BYTE4 );
 		vb.desc.add( renderer::VD_FLOAT2 );
 		
-		vb.create(64, 128, renderer::DRAW_INDEXED_TRIANGLES );
+		vb.create(256, 1024, renderer::DRAW_INDEXED_TRIANGLES );
 #if 0
 		FontVertexType * v = (FontVertexType*)vb.request( 4 );
 		if ( v )
@@ -636,69 +642,6 @@ public:
 #endif
 
 //		assets::load_test_shader(&this->default_shader);
-
-#if 0
-		geo.vertex_count = 4;
-		geo.index_count = 6;
-		geo.vertices = CREATE_ARRAY( glm::vec3, 4 );
-		geo.indices = CREATE_ARRAY( renderer::IndexType, 6 );
-		geo.colors = CREATE_ARRAY( Color, 4 );
-		geo.uvs = CREATE_ARRAY( renderer::UV, 4 );
-		
-		for( size_t i = 0; i < geo.vertex_count; i++)
-		{
-			FontVertexType * vert = (FontVertexType*)vb[i];
-			glm::vec3 & pos = geo.vertices[ i ];
-			pos.x = vert->x;
-			pos.y = vert->y;
-			pos.z = vert->z;
-			
-			Color & color = geo.colors[ i ];
-			color = vert->color;
-			
-			renderer::UV & uv = geo.uvs[ i ];
-			uv.u = vert->u;
-			uv.v = vert->v;
-		}
-		memcpy( geo.indices, indices, sizeof(renderer::IndexType) * geo.index_count );
-
-
-		geo.render_setup();
-#endif
-
-#if 0
-		HashTable<int> t;
-		
-		t.set( "hello", 3 );
-		t.set( "poopy", 32 );
-		t.set( "mario", 16 );
-		t.set( "daft", 8 );
-		t.set( "punk", 88 );
-		t.set( "luigi", 13 );
-		t.set( "something/heregoes/nothing", 11 );
-		t.set( "ipad", 122 );
-		
-		t.set( "something/heregoes/nothing2", 131 );
-		
-		if ( t.contains("hello") )
-		{
-			LOGV( "t contains 'hello'!\n" );
-			LOGV( "'hello' value is: %i\n", t.get("hello") );
-		}
-		else
-		{
-			LOGV( "t does not contain 'hello'\n" );
-		}
-#endif
-
-#if 0
-		// test material loading
-		assets::Material * material = assets::load_material( "materials/barrel" );
-		if ( material )
-		{
-			LOGV( "loaded material '%s'\n", material->name() );
-		}
-#endif
 
 #if 1
 		// test mesh loading
@@ -754,29 +697,15 @@ public:
 		}
 		
 		light_position.x = cosf( alpha ) * 4;
-		light_position.z = sinf( alpha ) * 4;
-		
-#if 0
-		// update geometry (this still needs to be added in the command queue)
-		for( int i = 0; i < 4; ++i )
-		{
-			FontVertexType * vert = (FontVertexType*)vb[i];
-			vert->color.a = alpha * 255.0;
-		}
-		vb.update();
-#endif
-
-//		int x = 2;
-//		int y = 3;
-	
-		
+		light_position.z = sinf( alpha ) * 4;		
 	}
 
 	virtual void tick( kernel::Params & params )
 	{
 		rs.rewind();
+		
 		// setup global rendering state
-		rs.add_clearcolor( 0.25, 0.25, 0.25, 1.0f );
+		rs.add_clearcolor( 0.15, 0.10, 0.25, 1.0f );
 		rs.add_clear( 0x00004000 | 0x00000100 );
 		rs.add_viewport( 0, 0, (int)params.render_width, (int)params.render_height );
 
@@ -792,7 +721,7 @@ public:
 		gp.modelview_matrix = &camera.matCam;
 		gp.projection_project = &camera.matProj;
 		gp.object_matrix = &objectMatrix;
-		if ( 1 && mesh )
+		if ( 0 && mesh )
 		{
 			for( unsigned int geo_id = 0; geo_id < mesh->total_geometry; ++geo_id )
 			{
@@ -810,8 +739,7 @@ public:
 			// could potentially have a vertexbuffer per tileset
 			// this would allow us to batch tiles that share the same tileset (texture)
 			TileSet * lastset = 0;
-//			unsigned int attribs = (1 << renderer::GV_UV0) | (1 << renderer::GV_COLOR) | (1 << renderer::GV_COLOR);
-			unsigned int attribs = 0;
+
 			for( unsigned int layer_num = 0; layer_num < 1/*tiled_map.layer_count*/; ++layer_num )
 			{
 				for( int h = 0; h < tiled_map.height; ++h )
@@ -830,7 +758,7 @@ public:
 								{
 									long offset = rs.stream.offset_pointer();
 									vb.update();
-									assets::Shader * shader = assets::find_compatible_shader( attribs + lastset->material->requirements );
+									assets::Shader * shader = assets::find_compatible_shader( test_attribs + lastset->material->requirements );
 									rs.add_shader( shader );
 									
 									rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
@@ -899,7 +827,7 @@ public:
 			{
 	
 				vb.update();
-				assets::Shader * shader = assets::find_compatible_shader( attribs + lastset->material->requirements );
+				assets::Shader * shader = assets::find_compatible_shader( test_attribs + lastset->material->requirements );
 //				LOGV( "shader: %i, draw tileset: %i, count: %i\n", shader->id, lastset->id, vb.last_index );
 				
 				rs.add_shader( shader );
