@@ -42,7 +42,7 @@ GLESv2::GLESv2()
 	
 	_gles2 = this;
 	
-	has_oes_vertex_array_object = gemgl_find_extension( "_vertex_array_object" );
+	has_oes_vertex_array_object = false; //gemgl_find_extension( "_vertex_array_object" );
 }
 
 GLESv2::~GLESv2()

@@ -584,8 +584,8 @@ public:
 		mat2 = assets::load_material( "materials/gametiles" );
 
 		camera.perspective( 60, params.render_width, params.render_height, 0.1f, 512.0f );
-		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.5f, 255.0f );
-		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
+//		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.5f, 255.0f );
+		camera.set_absolute_position( glm::vec3( 0, 1, 105 ) );
 //		camera.move_speed = 100;
 		
 		alpha = 0;
@@ -597,59 +597,55 @@ public:
 		vb.desc.add( renderer::VD_FLOAT2 );
 		
 		vb.create(256, 1024, renderer::DRAW_INDEXED_TRIANGLES );
-#if 0
-		FontVertexType * v = (FontVertexType*)vb.request( 4 );
-		if ( v )
-		{
-			FontVertexType * vert = &v[0];
-			vert->x = 0;
-			vert->y = 0;
-			vert->z = 0;
-			vert->color.set( 255, 255, 255 );
-			vert->u = 0;
-			vert->v = 0;
-			
-			vert = &v[1];
-			vert->x = 0;
-			vert->y = TEST_SIZE;
-			vert->z = 0;
-			vert->color.set( 255, 255, 255 );
-			vert->u = 0;
-			vert->v = 1;
-			
-			vert = &v[2];
-			vert->x = TEST_SIZE;
-			vert->y = TEST_SIZE;
-			vert->z = 0;
-			vert->color.set( 255, 255, 255 );
-			vert->u = 1;
-			vert->v = 1;
-
-			vert = &v[3];
-			vert->x = TEST_SIZE;
-			vert->y = 0;
-			vert->z = 0;
-			vert->color.set( 255, 255, 255 );
-			vert->u = 1;
-			vert->v = 0;
-
-		}
-		
-		renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
-		vb.append_indices( indices, 6 );
-
-		vb.update();
-#endif
-
-//		assets::load_test_shader(&this->default_shader);
 
 #if 1
+		geo.vertex_count = 4;
+		geo.index_count = 6;
+		geo.vertices = CREATE_ARRAY( glm::vec3, 4 );
+		geo.indices = CREATE_ARRAY( renderer::IndexType, 6 );
+		geo.colors = CREATE_ARRAY( Color, 4 );
+		geo.uvs = CREATE_ARRAY( renderer::UV, 4 );
+		
+		geo.draw_type = renderer::DRAW_INDEXED_TRIANGLES;
+		geo.material_id = assets::load_material("materials/checker2")->Id();
+		
+		glm::vec3 * vertices = geo.vertices;
+		Color * colors = geo.colors;
+		renderer::UV * uvs = geo.uvs;
+		vertices[0] = glm::vec3(0,0,0);
+		colors[0].set( 255, 255, 255 );
+		uvs[0].u = 0;
+		uvs[0].v = 0;
+	
+		vertices[1] = glm::vec3(0, TEST_SIZE, 0);
+		colors[1].set( 255, 255, 255 );
+		uvs[1].u = 0;
+		uvs[1].v = 1;
+		
+		vertices[2] = glm::vec3(TEST_SIZE, TEST_SIZE, 0);
+		colors[2].set( 255, 255, 255 );
+		uvs[2].u = 1;
+		uvs[2].v = 1;
+
+		vertices[3] = glm::vec3(TEST_SIZE, 0, 0);
+		colors[3].set( 255, 255, 255 );
+		uvs[3].u = 1;
+		uvs[3].v = 0;
+		
+		renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+		memcpy( geo.indices, indices, sizeof(renderer::IndexType) * geo.index_count );
+		
+		
+		geo.render_setup();
+#endif
+//		assets::load_test_shader(&this->default_shader);
+
+#if 0
 		// test mesh loading
 		mesh = assets::load_mesh( "models/plasma3" );
 		if ( mesh )
 		{
-			LOGV( "loaded mesh '%s'\n", mesh->path() );
-			mesh->prepare_geometry();
+//			mesh->prepare_geometry();
 		}
 		else
 		{
@@ -716,18 +712,26 @@ public:
 
 		GeneralParameters gp;
 		assets::ShaderString lightposition = "lightposition";
-		gp.global_params = assets::find_parameter_mask( lightposition );
+		gp.global_params = 0; //assets::find_parameter_mask( lightposition );
 		gp.camera_position = &camera.pos;
 		gp.modelview_matrix = &camera.matCam;
 		gp.projection_project = &camera.matProj;
 		gp.object_matrix = &objectMatrix;
-		if ( 0 && mesh )
+		if ( 1 )
 		{
-			for( unsigned int geo_id = 0; geo_id < mesh->total_geometry; ++geo_id )
+#if 0
+			if ( mesh )
 			{
-				assets::Geometry * g = &mesh->geometry[ geo_id ];
-				stream_geometry( rs, g, gp );
+				for( unsigned int geo_id = 0; geo_id < mesh->total_geometry; ++geo_id )
+				{
+					assets::Geometry * g = &mesh->geometry[ geo_id ];
+					stream_geometry( rs, g, gp );
+				}
 			}
+#else
+			stream_geometry( rs, &geo, gp );
+#endif
+	
 			
 			rs.run_commands();
 		}

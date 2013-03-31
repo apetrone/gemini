@@ -428,7 +428,7 @@ namespace assets
 				uniform_list.push_back( &permutations.base.uniforms[a] );
 			}
 			
-			//LOGV( "----> permutation: %i\n", i );
+			LOGV( "----> permutation: %i\n", i );
 			
 			unsigned int requirements = 0;
 			unsigned int conflicts = 0;
@@ -491,7 +491,7 @@ namespace assets
 						
 			if ( !use_permutation )
 			{
-				//LOGV( "Skipping permutation: %i\n", shader->id );
+				LOGV( "Skipping permutation: %i\n", shader->id );
 				continue;
 			}
 			
@@ -1110,7 +1110,7 @@ namespace assets
 		
 		Json::ValueIterator mit = materials.begin();
 
-		unsigned int * material_ids = (unsigned int*)ALLOC( sizeof(unsigned int) * materials.size() );
+		unsigned int * material_ids = CREATE_ARRAY( unsigned int, materials.size() );
 		unsigned int current_material = 0;
 		assets::Material * amat = 0;
 		for( ; mit != materials.end(); ++mit )
@@ -1120,6 +1120,7 @@ namespace assets
 			
 			StackString<MAX_PATH_SIZE> material_path;
 			xstr_sprintf( &material_path[0], material_path.max_size(), "materials/%s", material_name.c_str() );
+			amat = 0;
 			amat = assets::load_material( material_path() );
 			if ( amat )
 			{
@@ -1160,7 +1161,7 @@ namespace assets
 //			LOGV( "# indices: %i\n", indices.size() );
 //			LOGV( "# triangles: %i\n", indices.size()/3 );
 			geometry->index_count = indices.size();
-			geometry->indices = (IndexType*)ALLOC( sizeof(IndexType) * geometry->index_count );
+			geometry->indices = CREATE_ARRAY(IndexType, geometry->index_count);
 			for( int i = 0; i < geometry->index_count; ++i )
 			{
 				geometry->indices[i] = indices[i].asInt();
@@ -1232,6 +1233,7 @@ namespace assets
 			
 			//
 			// setup debug normals now
+#if 0
 			if ( geometry->normals )
 			{
 				
@@ -1266,6 +1268,7 @@ namespace assets
 					vertex_normals->colors[ vid+1 ] = vertex_normal_color;
 				}
 			}
+#endif
 		}
 		
 		DEALLOC( material_ids );
