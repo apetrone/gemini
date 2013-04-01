@@ -428,7 +428,7 @@ namespace assets
 				uniform_list.push_back( &permutations.base.uniforms[a] );
 			}
 			
-			LOGV( "----> permutation: %i\n", i );
+			//LOGV( "----> permutation: %i\n", i );
 			
 			unsigned int requirements = 0;
 			unsigned int conflicts = 0;
@@ -491,7 +491,7 @@ namespace assets
 						
 			if ( !use_permutation )
 			{
-				LOGV( "Skipping permutation: %i\n", shader->id );
+				//LOGV( "Skipping permutation: %i\n", shader->id );
 				continue;
 			}
 			
