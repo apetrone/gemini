@@ -154,20 +154,25 @@ struct GL32VertexBuffer : public VertexBuffer
 	
 	void upload_interleaved_data( const GLvoid * data, unsigned int vertex_count )
 	{
+		this->vertex_count = vertex_count;
+		
 		gl.BindBuffer( GL_ARRAY_BUFFER, this->vbo[0] );
 		gl.CheckError( "BindBuffer GL_ARRAY_BUFFER" );
+		
 		gl.BufferData( GL_ARRAY_BUFFER, vertex_stride * vertex_count, data, this->gl_buffer_type );
-		this->vertex_count = vertex_count;
+		gl.CheckError( "BufferData GL_ARRAY_BUFFER" );
 	}
 	
 	void upload_index_array( IndexType * indices, unsigned int index_count )
 	{
 		if ( this->vbo[1] != 0 )
 		{
+			this->index_count = index_count;
 			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
 			gl.CheckError( "BindBuffer GL_ELEMENT_ARRAY_BUFFER" );
+			
 			gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * index_count, indices, this->gl_buffer_type );
-			this->index_count = index_count;
+			gl.CheckError( "BufferData - GL_ELEMENT_ARRAY_BUFFER" );
 		}
 	}
 };
@@ -595,7 +600,7 @@ renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescript
 	
 	// setup static interleaved arrays
 	stream->static_setup( descriptor, vertex_size, max_vertices, max_indices );
-			
+
 	return stream;
 } // vertexbuffer_create
 
@@ -692,7 +697,7 @@ renderer::VertexBuffer * GLCore32::vertexbuffer_from_geometry( renderer::VertexD
 	
 	stream->allocate( geometry->draw_type, buffer_type );	
 	stream->static_setup( descriptor, vertex_stride, max_vertices, max_indices );
-	
+
 	return stream;
 }
 
@@ -721,7 +726,7 @@ void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, render
 	
 	for( size_t vertex_id = 0; vertex_id < geometry->vertex_count; ++vertex_id )
 	{
-		ms.write( &geometry->vertices[ vertex_id ], sizeof(float)*3 );
+		ms.write( &geometry->vertices[ vertex_id ], sizeof(glm::vec3) );
 		
 		if ( geometry->attributes & colors_mask )
 		{
@@ -730,7 +735,7 @@ void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, render
 		
 		if ( geometry->attributes & normals_mask )
 		{
-			ms.write( &geometry->normals[ vertex_id ], sizeof(float)*3 );
+			ms.write( &geometry->normals[ vertex_id ], sizeof(glm::vec3) );
 		}
 		
 		if ( geometry->attributes & uv0_mask )

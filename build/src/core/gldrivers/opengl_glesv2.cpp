@@ -42,7 +42,7 @@ GLESv2::GLESv2()
 	
 	_gles2 = this;
 	
-	has_oes_vertex_array_object = false; //gemgl_find_extension( "_vertex_array_object" );
+	has_oes_vertex_array_object = gemgl_find_extension( "_vertex_array_object" );
 }
 
 GLESv2::~GLESv2()
@@ -149,10 +149,11 @@ struct GLES2VertexBuffer : public VertexBuffer
 			gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_stride, (void*)offset );
 			gl.CheckError( "VertexAttribPointer" );
 			
-			
 			offset += attribSize;
 			++attribID;
 		}
+		
+		vertex_descriptor.reset();
 	}
 	
 	void static_setup( renderer::VertexDescriptor & descriptor, unsigned int vertex_stride, unsigned int max_vertices, unsigned int max_indices )
@@ -177,6 +178,11 @@ struct GLES2VertexBuffer : public VertexBuffer
 		gl.BufferData( GL_ARRAY_BUFFER, vertex_stride * max_vertices, 0, this->gl_buffer_type );
 		gl.CheckError( "BufferData" );
 		
+		if ( !_gles2->has_oes_vertex_array_object )
+		{
+			gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+		}
+		
 		if ( max_indices > 0 )
 		{
 			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
@@ -184,36 +190,44 @@ struct GLES2VertexBuffer : public VertexBuffer
 			
 			gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * max_indices, 0, this->gl_buffer_type );
 			gl.CheckError( "BufferData" );
+			
+			if ( !_gles2->has_oes_vertex_array_object )
+			{
+				gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+			}
 		}
 		
 		if ( _gles2->has_oes_vertex_array_object )
 		{
 			this->setup_vertex_attributes();
 			gl.BindVertexArray( 0 );
+			
+			gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+			
 		}
-		
-		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
-		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 	}
 	
 	void upload_interleaved_data( const GLvoid * data, unsigned int vertex_count )
 	{
+		this->vertex_count = vertex_count;
+		
 		gl.BindBuffer( GL_ARRAY_BUFFER, this->vbo[0] );
 		gl.CheckError( "BindBuffer GL_ARRAY_BUFFER" );
-		gl.BufferData( GL_ARRAY_BUFFER, vertex_stride * vertex_count, data, this->gl_buffer_type );
+		
+		gl.BufferData( GL_ARRAY_BUFFER, this->vertex_stride * this->vertex_count, data, this->gl_buffer_type );
 		gl.CheckError( "BufferData - interleaved" );
-		this->vertex_count = vertex_count;
 	}
 	
 	void upload_index_array( IndexType * indices, unsigned int index_count )
 	{
 		if ( this->vbo[1] != 0 )
 		{
+			this->index_count = index_count;
 			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
 			gl.CheckError( "BindBuffer GL_ELEMENT_ARRAY_BUFFER" );
-			gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * index_count, indices, this->gl_buffer_type );
+			
+			gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * this->index_count, indices, this->gl_buffer_type );
 			gl.CheckError( "BufferData - upload_index_array" );
-			this->index_count = index_count;
 		}
 	}
 };
@@ -614,6 +628,7 @@ renderer::VertexBuffer * GLESv2::vertexbuffer_create( renderer::VertexDescriptor
 	// setup static interleaved arrays
 	stream->static_setup( descriptor, vertex_size, max_vertices, max_indices );
 	
+	
 	return stream;
 } // vertexbuffer_create
 
@@ -644,17 +659,25 @@ void GLESv2::vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned int 
 	
 	// upload interleaved array
 	stream->upload_interleaved_data( vertices, vertex_count );
+	if ( !has_oes_vertex_array_object )
+	{
+		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+	}
 	
 	// upload index array
 	stream->upload_index_array( indices, index_count );
+	if ( !has_oes_vertex_array_object )
+	{
+		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+	}
 	
 	if ( has_oes_vertex_array_object )
 	{
 		gl.BindVertexArray( 0 );
+		
+		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 	}
-
-	gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-	gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 }
 
 
@@ -670,10 +693,11 @@ void GLESv2::vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, u
 	}
 	else
 	{
-		gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
-		stream->setup_vertex_attributes();
 		
+		gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
+stream->setup_vertex_attributes();
 		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, stream->vbo[1] );
+
 	}
 	
 	gl.DrawElements( stream->gl_draw_type, num_indices, GL_UNSIGNED_SHORT, 0 );
@@ -776,10 +800,20 @@ void GLESv2::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer
 	
 	stream->upload_interleaved_data( vertex_data, geometry->vertex_count );
 	DEALLOC( vertex_data );
+		
+	if ( !has_oes_vertex_array_object )
+	{
+		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+	}
+
 	
 	if ( geometry->index_count > 0 )
 	{
 		stream->upload_index_array( geometry->indices, geometry->index_count );
+		if ( !has_oes_vertex_array_object )
+		{
+			gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+		}
 	}
 	
 	if ( has_oes_vertex_array_object )
@@ -787,8 +821,8 @@ void GLESv2::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer
 		gl.BindVertexArray( 0 );
 	}
 	
-	gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-	gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+//	gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+//	gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 }
 
 ///////////////////////////////

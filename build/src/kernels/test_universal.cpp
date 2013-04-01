@@ -42,6 +42,8 @@
 
 #include "keyvalues.hpp"
 
+#define TEST_2D 0
+
 glm::mat4 objectMatrix;
 glm::vec3 light_position = glm::vec3( 0, 2, 0 );
 
@@ -583,9 +585,13 @@ public:
 		mat = assets::load_material( "materials/rogue" );
 		mat2 = assets::load_material( "materials/gametiles" );
 
+#if TEST_2D
+		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.5f, 255.0f );
+#else
 		camera.perspective( 60, params.render_width, params.render_height, 0.1f, 512.0f );
-//		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.5f, 255.0f );
-		camera.set_absolute_position( glm::vec3( 0, 1, 105 ) );
+#endif
+
+		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
 //		camera.move_speed = 100;
 		
 		alpha = 0;
@@ -640,12 +646,12 @@ public:
 #endif
 //		assets::load_test_shader(&this->default_shader);
 
-#if 0
+#if 1
 		// test mesh loading
 		mesh = assets::load_mesh( "models/plasma3" );
 		if ( mesh )
 		{
-//			mesh->prepare_geometry();
+			mesh->prepare_geometry();
 		}
 		else
 		{
@@ -710,6 +716,9 @@ public:
 		rs.rewind();
 
 
+		
+
+
 		GeneralParameters gp;
 		assets::ShaderString lightposition = "lightposition";
 		gp.global_params = 0; //assets::find_parameter_mask( lightposition );
@@ -717,150 +726,149 @@ public:
 		gp.modelview_matrix = &camera.matCam;
 		gp.projection_project = &camera.matProj;
 		gp.object_matrix = &objectMatrix;
-		if ( 1 )
+#if TEST_2D
+		//			rs.add_state( renderer::STATE_BLEND, 1 );
+		//			rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+		
+		// could potentially have a vertexbuffer per tileset
+		// this would allow us to batch tiles that share the same tileset (texture)
+		TileSet * lastset = 0;
+		
+		for( unsigned int layer_num = 0; layer_num < 1/*tiled_map.layer_count*/; ++layer_num )
 		{
-#if 0
-			if ( mesh )
+			for( int h = 0; h < tiled_map.height; ++h )
 			{
-				for( unsigned int geo_id = 0; geo_id < mesh->total_geometry; ++geo_id )
+				for( int w = 0; w < tiled_map.width; ++w )
 				{
-					assets::Geometry * g = &mesh->geometry[ geo_id ];
-					stream_geometry( rs, g, gp );
-				}
-			}
-#else
-			stream_geometry( rs, &geo, gp );
-#endif
-	
+					unsigned char tile_gid = tiled_map.layers[ layer_num ].layer_data[ h * tiled_map.width + w ];
+					if ( tile_gid > 0 )
+					{
+						Tile * tile = &tiled_map.tilelist.tiles[ tile_gid-1 ];
+						if ( tile )
+						{
+							TileSet * set = &tiled_map.tilesets[ tile->tileset_id ];
+							
+							if ( (!vb.has_room(4, 6) || (set != lastset)) && lastset != 0 )
+							{
+								long offset = rs.stream.offset_pointer();
+								vb.update();
+								assets::Shader * shader = assets::find_compatible_shader( test_attribs + lastset->material->requirements );
+								rs.add_shader( shader );
+								
+								rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
+								rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
+								rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &objectMatrix );
+								
+								
+								rs.add_material( lastset->material, shader );
+								rs.add_draw_call( vb.vertexbuffer );
+								
+								rs.run_commands();
+								vb.reset();
+								rs.stream.seek( offset, true );
+								
+							}
+							
+							FontVertexType * v = (FontVertexType*)vb.request(4);
+							if ( v )
+							{
+								lastset = set;
+								//						FontVertexType * v = (FontVertexType*)vb[0];
+								
+								int x = w * tiled_map.tile_width;
+								int y = h * tiled_map.tile_height;
+								v[0].x = x;
+								v[0].y = y;
+								v[0].z = 0;
+								v[0].color = Color(255,255,255);
+								
+								v[1].x = x;
+								v[1].y = y+tiled_map.tile_height;
+								v[1].z = 0;
+								v[1].color = Color(255,255,255);
+								
+								v[2].x = x+tiled_map.tile_width;
+								v[2].y = y+tiled_map.tile_height;
+								v[2].z = 0;
+								v[2].color = Color(255,255,255);
+								
+								v[3].x = x+tiled_map.tile_width;
+								v[3].y = y;
+								v[3].z = 0;
+								v[3].color = Color(255,255,255);
+								
+								v[0].u = tile->quad_uvs[0];
+								v[0].v = tile->quad_uvs[1];
+								v[1].u = tile->quad_uvs[2];
+								v[1].v = tile->quad_uvs[3];
+								v[2].u = tile->quad_uvs[4];
+								v[2].v = tile->quad_uvs[5];
+								v[3].u = tile->quad_uvs[6];
+								v[3].v = tile->quad_uvs[7];
+								
+								//								LOGV( "[%g %g, %g %g, %g %g, %g %g\n", v[0].x, v[0].y, v[1].x, v[1].y, v[2].x, v[2].y, v[3].x, v[3].y );
+								
+								renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+								vb.append_indices( indices, 6 );
+							}
+						} // tile
+					} // tile gid > 0
+				} // for width
+			} // for height
+		} // for each layer
+
+		if ( vb.last_index > 0 && lastset )
+		{
+			
+			vb.update();
+			assets::Shader * shader = assets::find_compatible_shader( test_attribs + lastset->material->requirements );
+			//				LOGV( "shader: %i, draw tileset: %i, count: %i\n", shader->id, lastset->id, vb.last_index );
+			
+			rs.add_shader( shader );
+			rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
+			rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
+			rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &objectMatrix );
+			
+			rs.add_material( lastset->material, shader );
+			rs.add_draw_call( vb.vertexbuffer );
 			
 			rs.run_commands();
-		}
-		else
-		{
-//			rs.add_state( renderer::STATE_BLEND, 1 );
-//			rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
-			
-			// could potentially have a vertexbuffer per tileset
-			// this would allow us to batch tiles that share the same tileset (texture)
-			TileSet * lastset = 0;
-
-			for( unsigned int layer_num = 0; layer_num < 1/*tiled_map.layer_count*/; ++layer_num )
-			{
-				for( int h = 0; h < tiled_map.height; ++h )
-				{
-					for( int w = 0; w < tiled_map.width; ++w )
-					{
-						unsigned char tile_gid = tiled_map.layers[ layer_num ].layer_data[ h * tiled_map.width + w ];
-						if ( tile_gid > 0 )
-						{
-							Tile * tile = &tiled_map.tilelist.tiles[ tile_gid-1 ];
-							if ( tile )
-							{
-								TileSet * set = &tiled_map.tilesets[ tile->tileset_id ];						
-
-								if ( (!vb.has_room(4, 6) || (set != lastset)) && lastset != 0 )
-								{
-									long offset = rs.stream.offset_pointer();
-									vb.update();
-									assets::Shader * shader = assets::find_compatible_shader( test_attribs + lastset->material->requirements );
-									rs.add_shader( shader );
-									
-									rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
-									rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
-									rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &objectMatrix );
-
-									
-									rs.add_material( lastset->material, shader );
-									rs.add_draw_call( vb.vertexbuffer );
-									
-									rs.run_commands();
-									vb.reset();
-									rs.stream.seek( offset, true );
-
-								}
-								
-								FontVertexType * v = (FontVertexType*)vb.request(4);
-								if ( v )
-								{
-									lastset = set;
-									//						FontVertexType * v = (FontVertexType*)vb[0];
-									
-									int x = w * tiled_map.tile_width;
-									int y = h * tiled_map.tile_height;
-									v[0].x = x;
-									v[0].y = y;
-									v[0].z = 0;
-									v[0].color = Color(255,255,255);
-									
-									v[1].x = x;
-									v[1].y = y+tiled_map.tile_height;
-									v[1].z = 0;
-									v[1].color = Color(255,255,255);
-									
-									v[2].x = x+tiled_map.tile_width;
-									v[2].y = y+tiled_map.tile_height;
-									v[2].z = 0;
-									v[2].color = Color(255,255,255);
-									
-									v[3].x = x+tiled_map.tile_width;
-									v[3].y = y;
-									v[3].z = 0;
-									v[3].color = Color(255,255,255);
-									
-									v[0].u = tile->quad_uvs[0];
-									v[0].v = tile->quad_uvs[1];
-									v[1].u = tile->quad_uvs[2];
-									v[1].v = tile->quad_uvs[3];
-									v[2].u = tile->quad_uvs[4];
-									v[2].v = tile->quad_uvs[5];
-									v[3].u = tile->quad_uvs[6];
-									v[3].v = tile->quad_uvs[7];
-									
-	//								LOGV( "[%g %g, %g %g, %g %g, %g %g\n", v[0].x, v[0].y, v[1].x, v[1].y, v[2].x, v[2].y, v[3].x, v[3].y );
-									
-									renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
-									vb.append_indices( indices, 6 );
-								}
-							} // tile
-						} // tile gid > 0
-					} // for width
-				} // for height
-			} // for each layer
-#if 1
-			if ( vb.last_index > 0 && lastset )
-			{
-	
-				vb.update();
-				assets::Shader * shader = assets::find_compatible_shader( test_attribs + lastset->material->requirements );
-//				LOGV( "shader: %i, draw tileset: %i, count: %i\n", shader->id, lastset->id, vb.last_index );
-				
-				rs.add_shader( shader );
-				rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
-				rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
-				rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &objectMatrix );
-
-				rs.add_material( lastset->material, shader );				
-				rs.add_draw_call( vb.vertexbuffer );
-				
-				rs.run_commands();
-				vb.reset();
-			}
-#endif
 			vb.reset();
-//			assets::Material::Parameter * diffuse = mat2->parameter_by_name( "diffusemap" );
-//			if ( diffuse )
-//			{
-//				rs.add_sampler2d( 8, 0, diffuse->intValue );
-//			}
-//			else
-//			{
-//				rs.add_sampler2d( 8, 0, tex->texture_id );
-//			}
-//			rs.add_draw_call( vb.vertexbuffer );
 		}
+
+		vb.reset();
+		//			assets::Material::Parameter * diffuse = mat2->parameter_by_name( "diffusemap" );
+		//			if ( diffuse )
+		//			{
+		//				rs.add_sampler2d( 8, 0, diffuse->intValue );
+		//			}
+		//			else
+		//			{
+		//				rs.add_sampler2d( 8, 0, tex->texture_id );
+		//			}
+		//			rs.add_draw_call( vb.vertexbuffer );
+
+	
+	//		rs.run_commands();
+	//		vb.reset();
 		
-//		rs.run_commands();
-//		vb.reset();
+#else
+		// rotate the model
+		objectMatrix = glm::rotate( objectMatrix, 0.5f, glm::vec3( 0, 1, 0) );
+		
+		if ( mesh )
+		{
+			for( unsigned int geo_id = 0; geo_id < mesh->total_geometry; ++geo_id )
+			{
+				assets::Geometry * g = &mesh->geometry[ geo_id ];
+				stream_geometry( rs, g, gp );
+			}
+		}
+
+		//stream_geometry( rs, &geo, gp );
+
+#endif
+		rs.run_commands();
 	}
 
 	virtual void shutdown( kernel::Params & params )

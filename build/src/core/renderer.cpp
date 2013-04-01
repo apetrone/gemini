@@ -143,7 +143,10 @@ namespace renderer
 	
 	void VertexDescriptor::reset()
 	{
-		attribs = id;
+		if ( id > 0 )
+		{
+			attribs = id;
+		}
 		id = 0;
 	} // reset
 	
