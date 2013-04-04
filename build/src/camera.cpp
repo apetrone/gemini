@@ -214,12 +214,19 @@ void Camera::set_absolute_position( const glm::vec3 & position )
 
 void Camera::perspective( real fovy, int32 width, int32 height, real nearz, real farz )
 {
+	this->fovy = fovy;
+	this->aspect_ratio = (float)(width/(float)height);
+	this->near_clip = nearz;
+	this->far_clip = farz;
 	matProj = glm::perspective(fovy, (width/(float)height), nearz, farz );
 	is_ortho = false;
 }
 
 void Camera::ortho( real left, real right, real bottom, real top, real nearz, real farz )
 {
+	this->near_clip = nearz;
+	this->far_clip = farz;
+	this->aspect_ratio = 1.0f;
 	matProj = glm::ortho( left, right, bottom, top, nearz, farz );
 	is_ortho = true;
 }

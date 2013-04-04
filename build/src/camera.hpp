@@ -102,6 +102,11 @@ struct Camera
 	real sensitivity;
 	bool invert_y_axis;
 	bool is_ortho;
+	float aspect_ratio;
+	float fovy;
+	
+	float near_clip;
+	float far_clip;
 	
 	Camera();
 	
@@ -120,7 +125,7 @@ struct Camera
 	void move_along_vector( const glm::vec3 & v, real dt );
 	
 	// internal functions
-	void update_view();
+	virtual void update_view();
 	
 	// projection type functions
 	void perspective( real fovy, int32 width, int32 height, real nearz, real farz );

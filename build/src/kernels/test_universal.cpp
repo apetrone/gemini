@@ -42,6 +42,9 @@
 
 #include "keyvalues.hpp"
 
+
+#include "font.hpp"
+
 #define TEST_2D 0
 
 glm::mat4 objectMatrix;
@@ -541,6 +544,17 @@ public:
 		LOGV( "IndexType is %i bytes.\n", sizeof(renderer::IndexType) );
 //		sound = audio::create_sound( "sounds/powerup" );
 //		source = audio::play( sound );
+
+
+		font::startup();
+		
+		int buffer_length = 0;
+		char * buffer = fs::file_to_buffer( "fonts/Minecraftia.ttf", 0, &buffer_length );
+		
+		
+		font::load_font_from_memory( buffer, buffer_length, 12, 0, 72, 72 );
+	
+		DEALLOC( buffer );
 #if 0
 		setup_menu();
 
@@ -726,6 +740,10 @@ public:
 		gp.modelview_matrix = &camera.matCam;
 		gp.projection_project = &camera.matProj;
 		gp.object_matrix = &objectMatrix;
+		
+		
+		
+		
 #if TEST_2D
 		//			rs.add_state( renderer::STATE_BLEND, 1 );
 		//			rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
