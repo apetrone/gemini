@@ -26,6 +26,7 @@
 //#include "memorystream.hpp"
 #include "font.hpp"
 #include "renderer.hpp"
+#include "renderstream.hpp"
 #include <stdlib.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION 1
@@ -45,7 +46,7 @@ namespace font
 	
 	struct FontVertex
 	{
-		float x, y;
+		float x, y, z;
 		unsigned char r,g,b,a;
 		float u, v;
 	};
@@ -308,6 +309,7 @@ namespace font
 		unsigned int textureBPP;
 		unsigned char * texturePixels;
 		
+		unsigned int font_size;
 		unsigned int font_height;
 		unsigned int line_height;
 		
@@ -328,6 +330,8 @@ namespace font
 		unsigned int _font_id = 0;
 		const unsigned int MAX_FONT_HANDLES = 8;
 		SimpleFontHandle _font_handles[ MAX_FONT_HANDLES ];
+		
+		renderer::VertexStream _vertexstream;
 		
 		SimpleFontHandle * request_handle()
 		{
@@ -353,15 +357,46 @@ namespace font
 		{
 			memset( &internal::_font_handles[i], 0, sizeof(SimpleFontHandle) );
 		}
+		
+		// fetch the correct shader for rendering
+		// ...
+		
+		// initialize the vertex stream
+		internal::_vertexstream.desc.add( renderer::VD_FLOAT3 );
+		internal::_vertexstream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+		internal::_vertexstream.desc.add( renderer::VD_FLOAT2 );
+		
+		internal::_vertexstream.create( FONT_MAX_VERTICES, FONT_MAX_INDICES, renderer::DRAW_INDEXED_TRIANGLES, renderer::BUFFER_STREAM );
+		
 	} // startup
 
 	void shutdown()
 	{
+		// cleanup used memory here
+		internal::_vertexstream.destroy();
 	} // shutdown
+	
+
 	
 	void draw_string( font::Handle fontid, int x, int y, const char * utf8, const Color & color )
 	{
+		RenderStream rs;
+
+		// setup global rendering state
+		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
+		rs.add_state( renderer::STATE_BLEND, 1 );
+		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+		rs.run_commands();
 		
+		
+		// draw characters
+		// ...
+		
+		
+		// restore state
+		rs.rewind();
+		rs.add_state( renderer::STATE_BLEND, 0 );
+		rs.run_commands();
 	} // draw_string
 	
 	unsigned int measure_height( font::Handle fontid )
@@ -393,6 +428,7 @@ namespace font
 		
 		delta = (ascent-descent);
 		
+		fh->font_size = point_size;
 		fh->line_height = (delta + linegap) / (float)delta;
 		fh->font_height = fh->line_height * point_size;
 		

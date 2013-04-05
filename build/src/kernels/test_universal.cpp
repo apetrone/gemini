@@ -362,6 +362,7 @@ class TestUniversal : public kernel::IApplication,
 	assets::Texture * tex;
 	assets::Mesh * mesh;
 	assets::Material * mat, *mat2;
+	font::Handle test_font;
 	
 	float alpha;
 	int alpha_delta;
@@ -551,10 +552,11 @@ public:
 		int buffer_length = 0;
 		char * buffer = fs::file_to_buffer( "fonts/Minecraftia.ttf", 0, &buffer_length );
 		
-		
-		font::load_font_from_memory( buffer, buffer_length, 12, 0, 72, 72 );
-	
+		test_font = font::load_font_from_memory( buffer, buffer_length, 16, 0, 72, 72 );
+
 		DEALLOC( buffer );
+
+
 #if 0
 		setup_menu();
 
@@ -887,10 +889,15 @@ public:
 
 #endif
 		rs.run_commands();
+
+				
+		font::draw_string( test_font, 50, 50, "Test", Color(255,0,0) );
 	}
 
 	virtual void shutdown( kernel::Params & params )
 	{
+		font::shutdown();
+		
 		renderer::driver()->shaderprogram_destroy( this->default_shader );
 		
 		vb.destroy();
