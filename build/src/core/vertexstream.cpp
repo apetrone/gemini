@@ -214,4 +214,16 @@ namespace renderer
 	{
 		renderer::driver()->vertexbuffer_draw( this->vertexbuffer, this->last_vertex );
 	} // draw
+	
+	void VertexStream::fill_data( VertexType * vertex_source, unsigned int vertex_count, IndexType * index_source, unsigned int index_count )
+	{
+		memcpy( this->vertices, vertex_source, sizeof(this->vertex_stride) * vertex_count );
+		this->last_vertex = vertex_count;
+				
+		if ( index_count > 0 )
+		{
+			memcpy( this->indices, index_source, sizeof(IndexType)*index_count );
+			this->last_index = index_count;
+		}
+	} // fill-data
 }; // namespace renderer

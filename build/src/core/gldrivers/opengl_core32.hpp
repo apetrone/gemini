@@ -52,6 +52,7 @@ public:
 	virtual bool generate_texture( renderer::TextureParameters & parameters );
 	virtual bool destroy_texture( renderer::TextureParameters & parameters );
 	virtual bool is_texture( renderer::TextureParameters & parameters );
+	virtual bool texture_update( renderer::TextureParameters & parameters );
 	
 	// font
 	virtual void render_font( int x, int y, renderer::Font & font, const char * utf8_string, const Color & color );

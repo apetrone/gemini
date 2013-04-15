@@ -59,9 +59,8 @@ namespace renderer
 		void update();
 		void draw_elements();
 		void draw();
+		void fill_data( VertexType * vertex_source, unsigned int vertex_count, IndexType * index_source, unsigned int index_count );
 		
-		
-//		void 
 	}; // VertexStream
 
 }; // namespace renderer

@@ -27,6 +27,40 @@
 #include "memorystream.hpp"
 #include "assets.hpp"
 
+// utility functions
+GLenum image_to_source_format( int num_channels )
+{
+	if ( num_channels == 3 )
+	{
+		return GL_RGB;
+	}
+	else if ( num_channels == 4 )
+	{
+		return GL_RGBA;
+	}
+	else if ( num_channels == 1 )
+	{
+		return GL_ALPHA;
+	}
+	
+	return GL_RGBA;
+} // image_to_source_format
+
+GLenum image_to_internal_format( unsigned int image_flags )
+{
+	//GLenum internalFormat = GL_SRGB8;
+	if ( image_flags & image::F_RGBA )
+	{
+		return GL_RGBA;
+	}
+	else if ( image_flags & image::F_ALPHA )
+	{
+		return GL_ALPHA;
+	}
+	
+	return GL_RGBA;
+} // image_to_internal_format
+
 using namespace renderer;
 
 ::GLESv2 * _gles2 = 0;

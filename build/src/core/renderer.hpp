@@ -164,7 +164,6 @@ namespace renderer
 	struct ShaderObject
 	{
 		unsigned int shader_id;
-		short flags; // 0 on success, else error!
 	}; // ShaderObject
 	
 	struct ShaderProgram
@@ -210,6 +209,9 @@ namespace renderer
 		unsigned int height;
 		unsigned char * pixels;
 		unsigned int texture_id;
+		
+		unsigned int x, y;
+		unsigned char alignment;
 	}; // TextureParameters
 	
 	
@@ -314,6 +316,7 @@ namespace renderer
 		virtual bool generate_texture( renderer::TextureParameters & parameters ) = 0;
 		virtual bool destroy_texture( renderer::TextureParameters & parameters ) = 0;
 		virtual bool is_texture( renderer::TextureParameters & parameters ) = 0;
+		virtual bool texture_update( renderer::TextureParameters & parameters ) = 0;
 		
 		// font
 		virtual void render_font( int x, int y, renderer::Font & font, const char * utf8_string, const Color & color ) = 0;

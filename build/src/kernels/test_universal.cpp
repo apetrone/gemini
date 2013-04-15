@@ -337,9 +337,6 @@ const float TEST_SIZE = 256;
 
 
 
-
-
-
 using namespace kernel;
 
 
@@ -363,6 +360,7 @@ class TestUniversal : public kernel::IApplication,
 	assets::Mesh * mesh;
 	assets::Material * mat, *mat2;
 	font::Handle test_font;
+	char * font_buffer;
 	
 	float alpha;
 	int alpha_delta;
@@ -550,11 +548,9 @@ public:
 		font::startup();
 		
 		int buffer_length = 0;
-		char * buffer = fs::file_to_buffer( "fonts/Minecraftia.ttf", 0, &buffer_length );
+		font_buffer = fs::file_to_buffer( "fonts/HermeneusOne-Regular.ttf", 0, &buffer_length );
 		
-		test_font = font::load_font_from_memory( buffer, buffer_length, 16, 0, 72, 72 );
-
-		DEALLOC( buffer );
+		test_font = font::load_font_from_memory( font_buffer, buffer_length, 16, 0, 72, 72 );
 
 
 #if 0
@@ -890,12 +886,12 @@ public:
 #endif
 		rs.run_commands();
 
-				
-		font::draw_string( test_font, 50, 50, "Test", Color(255,0,0) );
+		font::draw_string( test_font, 50, 50, "Now is the time for all good men to come to the aid of the party", Color(255,0,0) );
 	}
 
 	virtual void shutdown( kernel::Params & params )
 	{
+		DEALLOC( font_buffer );
 		font::shutdown();
 		
 		renderer::driver()->shaderprogram_destroy( this->default_shader );

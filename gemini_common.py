@@ -16,5 +16,6 @@ def dependency_path():
 
 def common_dependencies():
 	return [
-	"glm.py"
+	"glm.py",
+	"fontstash.py"
 	]

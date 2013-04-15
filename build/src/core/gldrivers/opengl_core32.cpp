@@ -30,6 +30,41 @@
 
 #include "assets.hpp"
 
+
+// utility functions
+GLenum image_to_source_format( int num_channels )
+{
+	if ( num_channels == 3 )
+	{
+		return GL_RGB;
+	}
+	else if ( num_channels == 4 )
+	{
+		return GL_RGBA;
+	}
+	else if ( num_channels == 1 )
+	{
+		return GL_RED;
+	}
+	
+	return GL_RGBA;
+} // image_to_source_format
+
+GLenum image_to_internal_format( unsigned int image_flags )
+{
+	//GLenum internalFormat = GL_SRGB8;
+	if ( image_flags & image::F_RGBA )
+	{
+		return GL_RGBA;
+	}
+	else if ( image_flags & image::F_ALPHA )
+	{
+		return GL_RED;
+	}
+	
+	return GL_RGBA;
+} // image_to_internal_format
+
 enum GL32DrawCallType
 {
 	DCT_ELEMENTS,
@@ -336,12 +371,21 @@ void c_drawcall( MemoryStream & stream, GLCore32 & renderer )
 	GL32VertexBuffer * vertex_buffer = 0;
 	GLenum draw_type;
 	unsigned int num_indices;
+	unsigned int num_vertices;
 	stream.read( vertex_buffer );
 	stream.read( draw_type );
+	stream.read( num_vertices );
 	stream.read( num_indices );
 	
 	assert( vertex_buffer != 0 );
-	renderer.vertexbuffer_draw_indices( vertex_buffer, num_indices );
+	if ( num_indices > 0 )
+	{
+		renderer.vertexbuffer_draw_indices( vertex_buffer, num_indices );
+	}
+	else
+	{
+		renderer.vertexbuffer_draw( vertex_buffer, num_vertices );
+	}
 }
 
 void c_state( MemoryStream & stream, GLCore32 & renderer )
@@ -480,6 +524,7 @@ void GLCore32::setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStre
 	GL32VertexBuffer * vb = (GL32VertexBuffer*)vertexbuffer;
 	stream.write( vb );
 	stream.write( vb->gl_draw_type );
+	stream.write( vb->vertex_count );
 	stream.write( vb->index_count ); // or vertices
 } // setup_drawcall
 
@@ -568,6 +613,37 @@ bool GLCore32::is_texture( renderer::TextureParameters & parameters )
 
 	return is_texture;
 } // is_texture
+
+bool GLCore32::texture_update( renderer::TextureParameters & parameters )
+{
+	GLenum internal_format = image_to_internal_format( parameters.image_flags );
+	GLenum error = GL_NO_ERROR;
+	
+	if ( parameters.alignment != 4 )
+	{
+		gl.PixelStorei( GL_UNPACK_ALIGNMENT, parameters.alignment );
+		error = gl.CheckError( "GL_UNPACK_ALIGNMENT" );
+		FAIL_IF_GLERROR(error);
+	}
+	
+	gl.BindTexture( GL_TEXTURE_2D, parameters.texture_id );
+
+	gl.TexSubImage2D( GL_TEXTURE_2D, 0, parameters.x, parameters.y, parameters.width, parameters.height, internal_format, GL_UNSIGNED_BYTE, parameters.pixels );
+	error = gl.CheckError( "TexSubImage2D" );
+	FAIL_IF_GLERROR(error);
+	
+	// restore default alignment
+	if ( parameters.alignment != 4 )
+	 {
+		gl.PixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+		error = gl.CheckError( "GL_UNPACK_ALIGNMENT" );
+		FAIL_IF_GLERROR(error);
+	 }
+	
+	gl.BindTexture( GL_TEXTURE_2D, 0 );
+	
+	return true;
+} // texture_update
 
 void GLCore32::render_font( int x, int y, renderer::Font & font, const char * utf8_string, const Color & color )
 {
@@ -775,7 +851,6 @@ renderer::ShaderObject GLCore32::shaderobject_create( renderer::ShaderObjectType
 	GLenum type = shaderobject_type_to_gl_shaderobjecttype( shader_type );
 	ShaderObject object;
 	
-	object.flags = 0;
 	object.shader_id = gl.CreateShader( type );
 	gl.CheckError( "CreateShader" );
 	

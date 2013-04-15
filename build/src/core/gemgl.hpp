@@ -85,7 +85,9 @@ enum gemgl_renderer_type
 	typedef void (GEMGLAPI GEMGLFNGENTEXTURES) ( GLsizei n, GLuint* textures );
 	typedef GLboolean (GEMGLAPI GEMGLFNISTEXTURE) ( GLuint texture );
 	typedef void (GEMGLAPI GEMGLFNACTIVETEXTURE) ( GLenum texture );
-	
+
+	typedef void (GEMGLAPI GEMGLFNTEXSUBIMAGE2D)( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* data );
+
 #if GEMGL_ENABLE_ES
 	typedef void (GEMGLAPI GEMGLFNDEPTHRANGEF) ( GLclampf n, GLclampf f );
 #else
@@ -267,7 +269,7 @@ enum gemgl_renderer_type
 		GEMGLFNACTIVETEXTURE ActiveTexture;
 		GEMGLFNTEXIMAGE2D TexImage2D;
 		//CopyTexImage2D
-		//TexSubImage2D
+		GEMGLFNTEXSUBIMAGE2D TexSubImage2D;
 		//CopyTexSubImage2D
 		//CompressedTexImage2D
 		//CompressedTexSubImage2D
@@ -400,6 +402,8 @@ enum gemgl_renderer_type
 		GEMGLFNTEXPARAMETERIV TexParameteriv;
 		GEMGLFNTEXIMAGE1D TexImage1D;
 		GEMGLFNTEXIMAGE2D TexImage2D;
+		
+		GEMGLFNTEXSUBIMAGE2D TexSubImage2D;
 		GEMGLFNBINDTEXTURE BindTexture;
 		GEMGLFNDELETETEXTURES DeleteTextures;
 		GEMGLFNGENTEXTURES GenTextures;

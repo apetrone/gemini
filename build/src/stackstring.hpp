@@ -45,6 +45,7 @@ struct StackString
 		//printf( "data: %s\n", data );
 		if ( data )
 		{
+			clear();
 			_length = xstr_len(data);
 			xstr_ncpy( _data, data, _length );
 		}

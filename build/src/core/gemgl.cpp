@@ -144,6 +144,7 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	GEMGL_LINK( gl.TexParameteri, "glTexParameteri", GEMGLFNTEXPARAMETERI );
 	GEMGL_LINK( gl.TexParameteriv, "glTexParameteriv", GEMGLFNTEXPARAMETERIV );
 	GEMGL_LINK( gl.ActiveTexture, "glActiveTexture", GEMGLFNACTIVETEXTURE );
+	GEMGL_LINK( gl.TexSubImage2D, "glTexSubImage2D", GEMGLFNTEXSUBIMAGE2D );
 	GEMGL_LINK( gl.GenerateMipmap, "glGenerateMipmap", GEMGLFNGENERATEMIPMAP );		
 	GEMGL_LINK( gl.TexImage2D, "glTexImage2D", GEMGLFNTEXIMAGE2D );
 	GEMGL_LINK( gl.BindTexture, "glBindTexture", GEMGLFNBINDTEXTURE );
@@ -287,6 +288,7 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	GEMGL_LINK( gl.GenTextures, "glGenTextures", GEMGLFNGENTEXTURES );
 	GEMGL_LINK( gl.IsTexture, "glIsTexture", GEMGLFNISTEXTURE );
 	GEMGL_LINK( gl.ActiveTexture, "glActiveTexture", GEMGLFNACTIVETEXTURE );
+	GEMGL_LINK( gl.TexSubImage2D, "glTexSubImage2D", GEMGLFNTEXSUBIMAGE2D );
 
 	// shaders
 	GEMGL_LINK( gl.CreateProgram, "glCreateProgram", GEMGLFNCREATEPROGRAM );

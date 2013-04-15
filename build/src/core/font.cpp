@@ -29,351 +29,221 @@
 #include "renderstream.hpp"
 #include <stdlib.h>
 
-#define STB_TRUETYPE_IMPLEMENTATION 1
-#define STBTT_malloc(x,u)  malloc(x)
-#define STBTT_free(x,u)    free(x)
-#include "stb_truetype.h"
+
+#include "fontstash.h"
+
+
 
 namespace font
 {
-	const unsigned int FONT_TEXTURE_WIDTH = 512;
-	const unsigned int FONT_TEXTURE_HEIGHT = 512;
-	const unsigned int FONT_CHARINFO_SIZE = 95;
 	const unsigned int FONT_MAX_VERTICES = 8192;
 	const unsigned int FONT_MAX_INDICES = 6172;
-	const unsigned int FONT_CHAR_START = 32;
-
 	
-	struct FontVertex
-	{
-		float x, y, z;
-		unsigned char r,g,b,a;
-		float u, v;
-	};
-
-	struct ImageInfo
-	{
-		int width;
-		int height;
-		int pitch;
-		int topOffset;
-	};
-	
-
-	struct CharacterInfo
-	{
-		unsigned int glyph_index; // this character's glyph index
-		short advance_x; // add advanceX and advanceY after drawing
-		short advance_y;
-		short left; // add left before drawing
-		short top; // subtract top to offset origin at top, left
-		short width;
-		short height;
-		short h_bearing_x;
-		short h_bearing_y;
-		short v_bearing_x;
-		short v_bearing_y;
-		float uv[4]; // uv rect
-	}; // CharacterInfo
-
-	// this class assumes an origin in the upper left hand corner and assumes bottom > top, right > left
-	template <class _Type>
-	struct rect
-	{
-		_Type left, top, right, bottom;
-
-		rect() : left( _Type(0) ), top( _Type(0) ), right( _Type(0) ), bottom( _Type(0) ) {}
-		rect( _Type _left, _Type _top, _Type _right, _Type _bottom ) :
-		left(_left), top(_top), right(_right), bottom(_bottom) {}
-
-		_Type getWidth() const
-		{
-			return ( right - left );
-		}
-
-		_Type getHeight() const
-		{
-			return ( bottom - top );
-		}
-
-		rect<_Type> operator- ( const rect<_Type> & other ) const
-		{
-			return rect<_Type> (left-other.left, top-other.top, right-other.top, bottom-other.bottom );
-		}
-
-		rect<_Type> operator- ( const rect<_Type> & other )
-		{
-			return rect<_Type> (left-other.left, top-other.top, right-other.top, bottom-other.bottom );
-		}
-
-		rect<_Type> operator+ ( const rect<_Type> & other ) const
-		{
-			return rect<_Type> (left+other.left, top+other.top, right+other.top, bottom+other.bottom );
-		}
-
-		bool FitsInside( const rect<_Type> & other ) const
-		{
-			if ( getWidth() <= other.getWidth() && getHeight() <= other.getHeight() )
-				return true;
-
-			return false;
-		}
-
-
-		void set( _Type _left = 0, _Type _top = 0, _Type _right = 0, _Type _bottom = 0 )
-		{
-			left = _left;
-			top = _top;
-			right = _right;
-			bottom = _bottom;
-		}
-	};
-
-	typedef rect<float> rectf;
-	typedef rect<int> recti;
-
-    struct AlignmentNode
-    {
-        AlignmentNode * child[2];
-
-        int x, y;
-        int width, height;
-        int id;
-
-        AlignmentNode()
-        {
-            //printf( "RNode(): %x\n", this );
-            child[0] = child[1] = 0;
-            id = -1;
-
-            x = y = width = height = 0;
-        }
-
-        ~AlignmentNode()
-        {
-            //printf( "~RNode(): %x\n", this );
-        }
-
-        inline bool CanFitRect( const recti & r )
-        {
-            if ( r.getWidth() < width && r.getHeight() < height )
-                return true;
-            else
-                return false;
-        }
-
-        inline bool IsLeaf() const
-        {
-            return (child[0] == 0 && child[1] == 0);
-        }
-    };
-
-    struct PixelBGRA
-    {
-        unsigned char blue, green, red, alpha;
-    };
-
-	struct AlignmentGrid
-	{
-		~AlignmentGrid()
-		{
-			PurgeNode( root.child[0] );
-			PurgeNode( root.child[1] );
-		}
-
-		AlignmentNode root;
-		AlignmentNode * Insert( AlignmentNode * node, recti & r )
-		{
-			// create a new child node
-			if ( !node->IsLeaf() )
-			{
-				AlignmentNode * newNode = Insert( node->child[0], r );
-				if ( newNode != 0 )
-				{
-					return newNode;
-				}
-
-				newNode = Insert( node->child[1], r );
-
-				if ( newNode != 0 )
-				{
-					return newNode;
-				}
-
-				return 0;
-			}
-
-			// if r does NOT fit inside the node, return 0
-			if ( r.getWidth() > node->width || r.getHeight() > node->height )
-			{
-				return 0;
-			}
-
-			// split and create children
-			int w = node->width - r.getWidth();
-			int h = node->height - r.getHeight();
-
-			node->child[0] = new AlignmentNode();
-			node->child[1] = new AlignmentNode();
-
-			if ( w <= h ) // split horizontally
-			{
-				node->child[0]->x = node->x + r.getWidth();
-				node->child[0]->y = node->y;
-				node->child[0]->width = w;
-				node->child[0]->height = r.getHeight();
-
-				node->child[1]->x = node->x;
-				node->child[1]->y = node->y + r.getHeight();
-				node->child[1]->width = node->width;
-				node->child[1]->height = h;
-			}
-			else // split vertically
-			{
-				node->child[0]->x = node->x;
-				node->child[0]->y = node->y + r.getHeight();
-				node->child[0]->width = r.getWidth();
-				node->child[0]->height = h;
-
-				node->child[1]->x = node->x + r.getWidth();
-				node->child[1]->y = node->y;
-				node->child[1]->width = w;
-				node->child[1]->height = node->height;
-			}
-
-            node->width = r.getWidth();
-            node->height = r.getHeight();
-            return node;
-		} // Insert
-
-
-		void CopyImage( int startX, int startY, ImageInfo & dstInfo, unsigned char * dst, const unsigned char * src, ImageInfo & srcInfo, bool noaa = false )
-		{
-			int y;
-			int x;
-			int destX = startX;
-			int destY = dstInfo.height - startY - srcInfo.height;
-			int idx;
-			PixelBGRA * rgb = 0;
-
-			// rendered up-side down if bmp_top > 0
-			for( y = srcInfo.height-1; y >= 0; y-- )
-			{
-				rgb = (PixelBGRA*) &dst[ destY * dstInfo.pitch ];
-				destX = startX;
-				for( x = 0; x < srcInfo.width; ++x )
-				{
-					idx = (x + (y * srcInfo.pitch));
-
-					if ( !noaa )
-					{
-						// RGBA
-						rgb[ destX ].red = rgb[ destX ].green = rgb[ destX ].blue = rgb[ destX ].alpha = src[ idx ];
-					}
-					else
-					{
-						// mono
-						unsigned char v = src[ (y * srcInfo.pitch + (x>>3) ) ] & (256 >> ((x&7)+1));
-						rgb[ destX ].red = rgb[ destX ].green = rgb[ destX ].blue = rgb[ destX ].alpha = (v ? 255 : 0);
-					}
-					++destX;
-				}
-
-				++destY;
-			}
-		}
-
-		void PurgeNode( AlignmentNode * root )
-		{
-			if ( !root )
-				return;
-
-			if ( root->child[0] )
-				PurgeNode( root->child[0] );
-
-			if ( root->child[1] )
-				PurgeNode( root->child[1] );
-
-			delete root;
-		}
-	}; // AlignmentGrid
-
-
 	struct SimpleFontHandle
 	{
 		bool noaa;
 
-		unsigned int textureID;
-		unsigned int textureWidth;
-		unsigned int textureHeight;
-		unsigned int textureBPP;
-		unsigned char * texturePixels;
-		
-		unsigned int font_size;
-		unsigned int font_height;
-		unsigned int line_height;
-		
-		stbtt_fontinfo font_info;
-		
-		renderer::VertexStream * vertex_stream;
-
-		AlignmentGrid grid;
-		CharacterInfo char_info[ FONT_CHARINFO_SIZE ];
-
-		void purge()
-		{
-		}
 	}; // SimpleFontHandle
 
 	namespace internal
-	{
-		unsigned int _font_id = 0;
-		const unsigned int MAX_FONT_HANDLES = 8;
-		SimpleFontHandle _font_handles[ MAX_FONT_HANDLES ];
-		
+	{	
 		renderer::VertexStream _vertexstream;
 		
-		SimpleFontHandle * request_handle()
-		{
-			SimpleFontHandle * handle;
-			
-			assert( _font_id < MAX_FONT_HANDLES );
-//			for( int i = 0; i < internal::MAX_FONT_HANDLES; ++i )
-			{
-				handle = &_font_handles[ _font_id++ ];
-				if ( handle->font_info.numGlyphs == 0 )
-				{
-					return handle;
-				}
-			}
-			
-			return 0;
-		}
+		
+		struct sth_stash * _stash;
+		
+		assets::Shader * _shader;
 	}; // namespace internal
+	
+	
+	
+	
+	
+	
+	unsigned int f_generate_texture( int width, int height, void * pixels )
+	{
+#if 0
+		glGenTextures(1, &texture->id);
+		
+		glBindTexture(GL_TEXTURE_2D, texture->id);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, stash->tw,stash->th, 0, GL_ALPHA, GL_UNSIGNED_BYTE, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#endif
+		renderer::IRenderDriver * driver = renderer::driver();
+		renderer::TextureParameters params;
+		
+		params.image_flags = image::F_ALPHA;
+		params.channels = 1;
+		params.width = width;
+		params.height = height;
+		params.pixels = (unsigned char*)pixels;
+		
+		driver->generate_texture( params );
+		driver->upload_texture_2d( params );
+		return params.texture_id;
+	}
+	
+	void f_delete_texture( unsigned int texture_id )
+	{
+		renderer::IRenderDriver * driver = renderer::driver();
+		renderer::TextureParameters params;
+		params.texture_id = texture_id;
+		driver->destroy_texture( params );
+#if 0
+		glDeleteTextures(1, &curtex->id);
+#endif
+	}
+	
+	void f_update_texture(unsigned int texture_id, int origin_x, int origin_y, int width, int height, void * pixels)
+	{
+#if 0
+		glBindTexture(GL_TEXTURE_2D, texture_id);
+		glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, origin_x,origin_y, width, height, GL_ALPHA,GL_UNSIGNED_BYTE, pixels);
+#endif
+		renderer::IRenderDriver * driver = renderer::driver();
+		renderer::TextureParameters params;
+		
+		params.x = origin_x;
+		params.y = origin_y;
+		params.width = width;
+		params.height = height;
+		params.alignment = 1;
+		params.image_flags = image::F_ALPHA;
+		params.pixels = (unsigned char*)pixels;
+		params.texture_id = texture_id;
+		
+		driver->texture_update( params );
+	}
+	
+	void f_draw_with_texture(unsigned int texture_id, float * data, int uv_offset, int stride, int vertex_count)
+	{
+#if 0
+		glBindTexture(GL_TEXTURE_2D, texture->id);
+		glEnable(GL_TEXTURE_2D);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glVertexPointer(2, GL_FLOAT, VERT_STRIDE, texture->verts);
+		glTexCoordPointer(2, GL_FLOAT, VERT_STRIDE, texture->verts+2);
+		glDrawArrays(GL_TRIANGLES, 0, texture->nverts);
+		glDisable(GL_TEXTURE_2D);
+		glDisableClientState(GL_VERTEX_ARRAY);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#endif
+		
+		renderer::TextureParameters params;
+		params.texture_id = texture_id;
+		
+//		renderer::IRenderDriver * driver = renderer::driver();
+		
+		renderer::VertexStream & vs = internal::_vertexstream;
+		
+		if ( !vs.has_room( 128, 0 ) )
+		{
+			LOGE( "Unable to draw font: vertexstream has no room!\n" );
+		}
+		else
+		{
+			internal::_vertexstream.fill_data( (renderer::VertexType*)data, vertex_count, 0, 0 );
+			internal::_vertexstream.update();
+			
+			assets::Shader * shader = internal::_shader;
+			
+			glm::mat4 modelview_matrix;
+			glm::mat4 projection_matrix;
+			projection_matrix = glm::ortho(0.f, 800.f, 0.f, 600.f, -1.0f, 1.0f );
+			
+			RenderStream rs;
+			
+			// activate shader
+			rs.add_shader( internal::_shader );
+			
+			// setup uniforms
+			rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview_matrix );
+			rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection_matrix );
+			
+			rs.add_sampler2d( shader->get_uniform_location("diffusemap"), 0, texture_id );
+			
+			// add draw call for vertexbuffer
+			rs.add_draw_call( internal::_vertexstream.vertexbuffer );
+			
+			// run all commands
+			rs.run_commands();
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	void startup()
-	{
-		for( int i = 0; i < internal::MAX_FONT_HANDLES; ++i )
-		{
-			memset( &internal::_font_handles[i], 0, sizeof(SimpleFontHandle) );
-		}
-		
-		// fetch the correct shader for rendering
-		// ...
-		
+	{		
 		// initialize the vertex stream
-		internal::_vertexstream.desc.add( renderer::VD_FLOAT3 );
-		internal::_vertexstream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
 		internal::_vertexstream.desc.add( renderer::VD_FLOAT2 );
+		internal::_vertexstream.desc.add( renderer::VD_FLOAT2 );
+//		internal::_vertexstream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+
 		
 		internal::_vertexstream.create( FONT_MAX_VERTICES, FONT_MAX_INDICES, renderer::DRAW_INDEXED_TRIANGLES, renderer::BUFFER_STREAM );
 		
+		
+		sth_render_callbacks cb;
+		cb.generate_texture = f_generate_texture;
+		cb.update_texture = f_update_texture;
+		cb.delete_texture = f_delete_texture;
+		
+		
+		cb.draw_with_texture = f_draw_with_texture;
+		
+		
+		// this must be called before any sth_create commands
+		sth_set_render_callbacks( &cb );
+		
+		internal::_stash = sth_create( 512, 512 );
+
+
+		internal::_shader = CREATE( assets::Shader );
+
+		assets::Shader * shader = internal::_shader;
+		shader->set_frag_data_location( "out_color" );
+		shader->alloc_uniforms( 3 );
+		shader->uniforms[0].set_key( "projection_matrix" );
+		shader->uniforms[1].set_key( "modelview_matrix" );
+		shader->uniforms[2].set_key( "diffusemap" );
+		
+		shader->alloc_attributes( 2 );
+		shader->attributes[0].set_key( "in_position" ); shader->attributes[0].second = 0;
+//		shader->attributes[1].set_key( "in_color" ); shader->attributes[1].second = 1;
+		shader->attributes[1].set_key( "in_uv" ); shader->attributes[1].second = 1;
+		
+		assets::load_shader( "shaders/fontshader", internal::_shader );
+				
 	} // startup
 
 	void shutdown()
 	{
+		assets::destroy_shader( internal::_shader );
+		
+		DESTROY( Shader, internal::_shader );
+	
 		// cleanup used memory here
 		internal::_vertexstream.destroy();
+		
+		// delete internal font stash
+		sth_delete( internal::_stash );
 	} // shutdown
 	
 
@@ -391,7 +261,12 @@ namespace font
 		
 		// draw characters
 		// ...
-		
+		sth_begin_draw( internal::_stash );
+
+		float width = 0;
+		sth_draw_text( internal::_stash, fontid, 16.0f, x, y, utf8, &width );
+
+		sth_end_draw( internal::_stash );
 		
 		// restore state
 		rs.rewind();
@@ -411,31 +286,14 @@ namespace font
 	
 	font::Handle load_font_from_memory( const void * data, unsigned int data_size, unsigned int point_size, bool antialiased, unsigned int hres, unsigned int vres )
 	{
-		SimpleFontHandle * fh = internal::request_handle();
-		
-		if ( !fh )
+		int result = sth_add_font_from_memory( internal::_stash, (unsigned char*)data );
+		if ( result == 0 )
 		{
-			return font::Handle(0);
+			LOGE( "Unable to load font from memory!\n" );
+			
 		}
-		
-		if ( !stbtt_InitFont( &fh->font_info, (const unsigned char*)data, 0 ) )
-		{
-			return font::Handle(0);
-		}
-		
-		int ascent, descent, linegap, delta;
-		stbtt_GetFontVMetrics( &fh->font_info, &ascent, &descent, &linegap );
-		
-		delta = (ascent-descent);
-		
-		fh->font_size = point_size;
-		fh->line_height = (delta + linegap) / (float)delta;
-		fh->font_height = fh->line_height * point_size;
-		
-		
-		LOGV( "font height is: %i\n", fh->font_height );
-		
-		return font::Handle(0);
+				
+		return font::Handle(result);
 	} // load_font_from_memory
 
 }; // namespace font

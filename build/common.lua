@@ -24,6 +24,8 @@ common_file_list =
 	-- include this almagamated version of jsoncpp until we replace it.
 	"dependencies/jsoncpp/jsoncpp.cpp",
 
+	"dependencies/Font-Stash/fontstash.c",
+	"dependencies/Font-Stash/stb_truetype.c",
 	--[[
 	"src/thirdparty/*.c",
 	"src/thirdparty/*.h*",

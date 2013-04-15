@@ -115,38 +115,6 @@ char * query_program_info_log( GLObject handle )
 } // query_program_info_log
 
 
-
-// utility functions
-GLenum image_to_source_format( int num_channels )
-{
-	if ( num_channels == 3 )
-	{
-		return GL_RGB;
-	}
-	else if ( num_channels == 4 )
-	{
-		return GL_RGBA;
-	}
-	
-	return GL_RGBA;
-} // image_to_source_format
-
-GLenum image_to_internal_format( unsigned int image_flags )
-{
-	//GLenum internalFormat = GL_SRGB8;
-	if ( image_flags & image::F_RGBA )
-	{
-		return GL_RGBA;
-	}
-	else if ( image_flags & image::F_ALPHA )
-	{
-		return GL_ALPHA;
-	}
-	
-	return GL_RGBA;
-} // image_to_internal_format
-
-
 GLenum driver_state_to_gl_state( renderer::DriverState state )
 {
 	GLenum state_list[] = {

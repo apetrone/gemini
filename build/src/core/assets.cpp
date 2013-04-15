@@ -647,6 +647,40 @@ namespace assets
 		
 		return shader_object;
 	}
+	
+	void load_shader( const char * shader_path, Shader * shader )
+	{
+		StackString<MAX_PATH_SIZE> filename = shader_path;
+		renderer::ShaderParameters params;
+		
+		renderer::ShaderProgram program = renderer::driver()->shaderprogram_create( params );
+		shader->object = program.object;
+		
+		filename.append( ".vert" );
+		renderer::ShaderObject vertex_shader = create_shader_from_file( filename(), renderer::SHADER_VERTEX, 0 );
+		
+		filename = shader_path;
+		filename.append( ".frag" );
+		renderer::ShaderObject fragment_shader = create_shader_from_file( filename(), renderer::SHADER_FRAGMENT, 0 );
+		
+		renderer::driver()->shaderprogram_attach( *shader, vertex_shader );
+		renderer::driver()->shaderprogram_attach( *shader, fragment_shader );
+	
+		renderer::driver()->shaderprogram_bind_attributes( *shader, *shader );
+		renderer::driver()->shaderprogram_link_and_validate( *shader, *shader );
+		
+		renderer::driver()->shaderprogram_bind_uniforms( *shader, *shader );
+		
+		renderer::driver()->shaderobject_destroy( vertex_shader );
+		renderer::driver()->shaderobject_destroy( fragment_shader );
+	} // load_shader
+	
+	void destroy_shader( Shader * shader )
+	{
+		renderer::ShaderProgram program;
+		program.object = shader->object;
+		renderer::driver()->shaderprogram_destroy( program );
+	} // destroy_shader
 
 	void load_test_shader( Shader * shader )
 	{
