@@ -548,9 +548,15 @@ public:
 		font::startup();
 		
 		int buffer_length = 0;
-		font_buffer = fs::file_to_buffer( "fonts/HermeneusOne-Regular.ttf", 0, &buffer_length );
-		
-		test_font = font::load_font_from_memory( font_buffer, buffer_length, 16, 0, 72, 72 );
+		font_buffer = fs::file_to_buffer( "fonts/Minecraftia.ttf", 0, &buffer_length );
+		if ( font_buffer )
+		{
+			test_font = font::load_font_from_memory( font_buffer, buffer_length, 16, 0, 72, 72 );
+		}
+		else
+		{
+			LOGE( "Unable to load font\n" );
+		}
 
 
 #if 0

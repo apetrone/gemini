@@ -116,8 +116,8 @@ namespace font
 		
 		driver->texture_update( params );
 	}
-	
-	void f_draw_with_texture(unsigned int texture_id, float * data, int uv_offset, int stride, int vertex_count)
+
+	void f_draw_with_texture(unsigned int texture_id, void * data, int uv_offset, int color_offset, int stride, int vertex_count)
 	{
 #if 0
 		glBindTexture(GL_TEXTURE_2D, texture->id);
@@ -177,27 +177,15 @@ namespace font
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 	void startup()
 	{		
 		// initialize the vertex stream
 		internal::_vertexstream.desc.add( renderer::VD_FLOAT2 );
 		internal::_vertexstream.desc.add( renderer::VD_FLOAT2 );
-//		internal::_vertexstream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+		internal::_vertexstream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
 
 		
-		internal::_vertexstream.create( FONT_MAX_VERTICES, FONT_MAX_INDICES, renderer::DRAW_INDEXED_TRIANGLES, renderer::BUFFER_STREAM );
+		internal::_vertexstream.create( FONT_MAX_VERTICES, FONT_MAX_INDICES, renderer::DRAW_TRIANGLES, renderer::BUFFER_STREAM );
 		
 		
 		sth_render_callbacks cb;
@@ -224,10 +212,10 @@ namespace font
 		shader->uniforms[1].set_key( "modelview_matrix" );
 		shader->uniforms[2].set_key( "diffusemap" );
 		
-		shader->alloc_attributes( 2 );
+		shader->alloc_attributes( 3 );
 		shader->attributes[0].set_key( "in_position" ); shader->attributes[0].second = 0;
-//		shader->attributes[1].set_key( "in_color" ); shader->attributes[1].second = 1;
-		shader->attributes[1].set_key( "in_uv" ); shader->attributes[1].second = 1;
+		shader->attributes[1].set_key( "in_color" ); shader->attributes[1].second = 1;
+		shader->attributes[2].set_key( "in_uv" ); shader->attributes[2].second = 2;
 		
 		assets::load_shader( "shaders/fontshader", internal::_shader );
 				
@@ -264,7 +252,8 @@ namespace font
 		sth_begin_draw( internal::_stash );
 
 		float width = 0;
-		sth_draw_text( internal::_stash, fontid, 16.0f, x, y, utf8, &width );
+		sth_draw_text( internal::_stash, fontid, 16.0f, x, y, STH_RGBA(255,0,0,255), utf8, &width );
+
 
 		sth_end_draw( internal::_stash );
 		
