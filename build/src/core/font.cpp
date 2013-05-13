@@ -214,8 +214,8 @@ namespace font
 		
 		shader->alloc_attributes( 3 );
 		shader->attributes[0].set_key( "in_position" ); shader->attributes[0].second = 0;
-		shader->attributes[1].set_key( "in_color" ); shader->attributes[1].second = 1;
-		shader->attributes[2].set_key( "in_uv" ); shader->attributes[2].second = 2;
+		shader->attributes[1].set_key( "in_uv" ); shader->attributes[1].second = 1;
+		shader->attributes[2].set_key( "in_color" ); shader->attributes[2].second = 2;
 		
 		assets::load_shader( "shaders/fontshader", internal::_shader );
 				

@@ -217,7 +217,7 @@ namespace renderer
 	
 	void VertexStream::fill_data( VertexType * vertex_source, unsigned int vertex_count, IndexType * index_source, unsigned int index_count )
 	{
-		memcpy( this->vertices, vertex_source, sizeof(this->vertex_stride) * vertex_count );
+		memcpy( this->vertices, vertex_source, this->vertex_stride * vertex_count );
 		this->last_vertex = vertex_count;
 				
 		if ( index_count > 0 )
