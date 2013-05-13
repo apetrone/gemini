@@ -733,7 +733,6 @@ void GLCore32::vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned in
 
 void GLCore32::vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, unsigned int num_indices )
 {
-	LOGV( "draw indices\n" );
 	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	assert( stream != 0 );
 	gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
