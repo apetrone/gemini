@@ -215,7 +215,7 @@ namespace font
 		sth_begin_draw( internal::_stash );
 
 		float width = 0;
-		sth_draw_text( internal::_stash, fontid, 12.0f, x, y, STH_RGBA(255,0,0,255), utf8, &width );
+		sth_draw_text( internal::_stash, fontid, 24.0f, x, y, STH_RGBA(255,0,0,255), utf8, &width );
 
 
 		sth_end_draw( internal::_stash );
