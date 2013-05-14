@@ -216,7 +216,7 @@ namespace font
 
 		float width = 0;
 		unsigned int vcolor = STH_RGBA(color.r, color.g, color.b, color.a);
-		sth_draw_text( internal::_stash, fontid, 24.0, x, y, vcolor, utf8, &width );
+		sth_draw_text( internal::_stash, fontid, 16, x, y, vcolor, utf8, &width );
 
 
 		sth_end_draw( internal::_stash );

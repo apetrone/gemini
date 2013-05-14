@@ -548,10 +548,10 @@ public:
 		font::startup();
 		
 		int buffer_length = 0;
-		font_buffer = fs::file_to_buffer( "fonts/Minecraftia.ttf", 0, &buffer_length );
+		font_buffer = fs::file_to_buffer( "fonts/nokiafc22.ttf", 0, &buffer_length );
 		if ( font_buffer )
 		{
-			test_font = font::load_font_from_memory( font_buffer, buffer_length, 16, 0, 72, 72 );
+			test_font = font::load_font_from_memory( font_buffer, buffer_length, 12, 0, 72, 72 );
 		}
 		else
 		{
@@ -893,6 +893,8 @@ public:
 		rs.run_commands();
 
 		font::draw_string( test_font, 50, 50, "Now is the time for all good men to come to the aid of the party", Color(255,0,0,255) );
+		font::draw_string( test_font, 50, 75, "Ја могу да једем стакло", Color(255, 255, 255, 255) );
+		font::draw_string( test_font, 50, 100, "私はガラスを食べられます。それは私を傷つけません。", Color(0, 128, 255, 255) );
 	}
 
 	virtual void shutdown( kernel::Params & params )
