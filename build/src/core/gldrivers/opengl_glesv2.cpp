@@ -630,26 +630,36 @@ bool GLESv2::is_texture( renderer::TextureParameters & parameters )
 	return gl.IsTexture( parameters.texture_id );
 } // is_texture
 
-void GLESv2::render_font( int x, int y, renderer::Font & font, const char * utf8_string, const Color & color )
+bool GLESv2::texture_update( renderer::TextureParameters & parameters )
 {
-	/*
-	 1. update buffers
-	 2. glViewport
-	 3. enable blending: GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
-	 4. activate font shader
-	 5. set relevant uniforms (modelview, projection, etc)
-	 6. activate font texture
-	 7. bind font texture
-	 8. draw elements of buffer
-	 9. disable blending
-	 10. deactivate shader
-	 11. unbind texture
-	 12. reset buffer
-	 */
-} // render_font
-
-
-
+	GLenum internal_format = image_to_internal_format( parameters.image_flags );
+	GLenum error = GL_NO_ERROR;
+	
+	if ( parameters.alignment != 4 )
+	{
+		gl.PixelStorei( GL_UNPACK_ALIGNMENT, parameters.alignment );
+		error = gl.CheckError( "GL_UNPACK_ALIGNMENT" );
+		FAIL_IF_GLERROR(error);
+	}
+	
+	gl.BindTexture( GL_TEXTURE_2D, parameters.texture_id );
+	
+	gl.TexSubImage2D( GL_TEXTURE_2D, 0, parameters.x, parameters.y, parameters.width, parameters.height, internal_format, GL_UNSIGNED_BYTE, parameters.pixels );
+	error = gl.CheckError( "TexSubImage2D" );
+	FAIL_IF_GLERROR(error);
+	
+	// restore default alignment
+	if ( parameters.alignment != 4 )
+	{
+		gl.PixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+		error = gl.CheckError( "GL_UNPACK_ALIGNMENT" );
+		FAIL_IF_GLERROR(error);
+	}
+	
+	gl.BindTexture( GL_TEXTURE_2D, 0 );
+	
+	return true;
+} // texture_update
 
 renderer::VertexBuffer * GLESv2::vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices )
 {
@@ -661,7 +671,6 @@ renderer::VertexBuffer * GLESv2::vertexbuffer_create( renderer::VertexDescriptor
 	
 	// setup static interleaved arrays
 	stream->static_setup( descriptor, vertex_size, max_vertices, max_indices );
-	
 	
 	return stream;
 } // vertexbuffer_create
@@ -870,8 +879,7 @@ renderer::ShaderObject GLESv2::shaderobject_create( renderer::ShaderObjectType s
 {
 	GLenum type = shaderobject_type_to_gl_shaderobjecttype( shader_type );
 	ShaderObject object;
-	
-	object.flags = 0;
+
 	object.shader_id = gl.CreateShader( type );
 	gl.CheckError( "CreateShader" );
 	

@@ -645,27 +645,6 @@ bool GLCore32::texture_update( renderer::TextureParameters & parameters )
 	return true;
 } // texture_update
 
-void GLCore32::render_font( int x, int y, renderer::Font & font, const char * utf8_string, const Color & color )
-{
-	/*
-	1. update buffers
-	2. glViewport
-	3. enable blending: GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
-	4. activate font shader
-	5. set relevant uniforms (modelview, projection, etc)
-	6. activate font texture
-	7. bind font texture
-	8. draw elements of buffer
-	9. disable blending
-	10. deactivate shader
-	11. unbind texture
-	12. reset buffer
-	*/
-} // render_font
-
-
-
-
 renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices )
 {
 	GL32VertexBuffer * stream = CREATE(GL32VertexBuffer);

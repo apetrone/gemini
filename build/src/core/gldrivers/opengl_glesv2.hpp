@@ -44,10 +44,8 @@ public:
 	virtual bool generate_texture( renderer::TextureParameters & parameters );
 	virtual bool destroy_texture( renderer::TextureParameters & parameters );
 	virtual bool is_texture( renderer::TextureParameters & parameters );
-	
-	// font
-	virtual void render_font( int x, int y, renderer::Font & font, const char * utf8_string, const Color & color );
-	
+	virtual bool texture_update( renderer::TextureParameters & parameters );
+
 	// vertexbuffer
 	virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices );
 	virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream );

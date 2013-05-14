@@ -28,7 +28,7 @@
 #include "renderer.hpp"
 #include "renderstream.hpp"
 #include <stdlib.h>
-
+#include "kernel.hpp"
 
 #include "fontstash.h"
 
@@ -48,28 +48,14 @@ namespace font
 	namespace internal
 	{	
 		renderer::VertexStream _vertexstream;
-		
-		
 		struct sth_stash * _stash;
-		
 		assets::Shader * _shader;
 	}; // namespace internal
 	
-	
-	
-	
-	
+
 	
 	unsigned int f_generate_texture( int width, int height, void * pixels )
 	{
-#if 0
-		glGenTextures(1, &texture->id);
-		
-		glBindTexture(GL_TEXTURE_2D, texture->id);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, stash->tw,stash->th, 0, GL_ALPHA, GL_UNSIGNED_BYTE, 0);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-#endif
 		renderer::IRenderDriver * driver = renderer::driver();
 		renderer::TextureParameters params;
 		
@@ -90,18 +76,10 @@ namespace font
 		renderer::TextureParameters params;
 		params.texture_id = texture_id;
 		driver->destroy_texture( params );
-#if 0
-		glDeleteTextures(1, &curtex->id);
-#endif
 	}
 	
 	void f_update_texture(unsigned int texture_id, int origin_x, int origin_y, int width, int height, void * pixels)
 	{
-#if 0
-		glBindTexture(GL_TEXTURE_2D, texture_id);
-		glPixelStorei(GL_UNPACK_ALIGNMENT,1);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, origin_x,origin_y, width, height, GL_ALPHA,GL_UNSIGNED_BYTE, pixels);
-#endif
 		renderer::IRenderDriver * driver = renderer::driver();
 		renderer::TextureParameters params;
 		
@@ -114,29 +92,17 @@ namespace font
 		params.pixels = (unsigned char*)pixels;
 		params.texture_id = texture_id;
 		
-		driver->texture_update( params );
+		if ( !driver->texture_update( params ) )
+		{
+			LOGW( "driver texture_update is failing!\n" );
+		}
 	}
 
 	void f_draw_with_texture(unsigned int texture_id, void * data, int uv_offset, int color_offset, int stride, int vertex_count)
 	{
-#if 0
-		glBindTexture(GL_TEXTURE_2D, texture->id);
-		glEnable(GL_TEXTURE_2D);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glVertexPointer(2, GL_FLOAT, VERT_STRIDE, texture->verts);
-		glTexCoordPointer(2, GL_FLOAT, VERT_STRIDE, texture->verts+2);
-		glDrawArrays(GL_TRIANGLES, 0, texture->nverts);
-		glDisable(GL_TEXTURE_2D);
-		glDisableClientState(GL_VERTEX_ARRAY);
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-#endif
-		
 		renderer::TextureParameters params;
 		params.texture_id = texture_id;
-		
-//		renderer::IRenderDriver * driver = renderer::driver();
-		
+
 		renderer::VertexStream & vs = internal::_vertexstream;
 		
 		if ( !vs.has_room( 128, 0 ) )
@@ -144,7 +110,7 @@ namespace font
 			LOGE( "Unable to draw font: vertexstream has no room!\n" );
 		}
 		else
-		{
+		{		
 			internal::_vertexstream.fill_data( (renderer::VertexType*)data, vertex_count, 0, 0 );
 			internal::_vertexstream.update();
 			
@@ -152,7 +118,7 @@ namespace font
 			
 			glm::mat4 modelview_matrix;
 			glm::mat4 projection_matrix;
-			projection_matrix = glm::ortho(0.f, 800.f, 0.f, 600.f, -1.0f, 1.0f );
+			projection_matrix = glm::ortho(0.f, (float)kernel::instance()->parameters().render_width, 0.f, (float)kernel::instance()->parameters().render_height, -1.0f, 1.0f );
 			
 			RenderStream rs;
 			
@@ -172,9 +138,6 @@ namespace font
 			rs.run_commands();
 		}
 	}
-
-
-
 
 
 	void startup()
@@ -252,7 +215,7 @@ namespace font
 		sth_begin_draw( internal::_stash );
 
 		float width = 0;
-		sth_draw_text( internal::_stash, fontid, 16.0f, x, y, STH_RGBA(255,0,0,255), utf8, &width );
+		sth_draw_text( internal::_stash, fontid, 12.0f, x, y, STH_RGBA(255,0,0,255), utf8, &width );
 
 
 		sth_end_draw( internal::_stash );

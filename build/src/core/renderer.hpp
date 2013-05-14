@@ -316,22 +316,7 @@ namespace renderer
 		virtual bool generate_texture( renderer::TextureParameters & parameters ) = 0;
 		virtual bool destroy_texture( renderer::TextureParameters & parameters ) = 0;
 		virtual bool is_texture( renderer::TextureParameters & parameters ) = 0;
-		virtual bool texture_update( renderer::TextureParameters & parameters ) = 0;
-		
-		// font
-		virtual void render_font( int x, int y, renderer::Font & font, const char * utf8_string, const Color & color ) = 0;
-		
-		
-		/*
-		virtual void texture_activate( renderer::TextureParameters & parameters ) = 0;
-		virtual void texture_deactivate( renderer::TextureParameters & parameters ) = 0;
-		
-		virtual void blending_activate( renderer::BlendParameters & parameters ) = 0;
-		virtual void blending_deactivate( renderer::BlendParameters & parameters ) = 0;
-		
-		virtual void shader_activate( renderer::ShaderParameters & parameters ) = 0;
-		virtual void shader_deactivate( renderer::ShaderParameters & parameters ) = 0;
-		*/
+		virtual bool texture_update( renderer::TextureParameters & parameters ) = 0;	
 		
 		virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices ) = 0;
 		virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream ) = 0;
