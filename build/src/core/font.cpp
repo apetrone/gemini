@@ -38,11 +38,12 @@ namespace font
 {
 	const unsigned int FONT_MAX_VERTICES = 8192;
 	const unsigned int FONT_MAX_INDICES = 6172;
+	const unsigned int FONT_MAX = 4;
 	
 	struct SimpleFontHandle
 	{
-		bool noaa;
-
+//		bool noaa;
+		unsigned short font_size;
 	}; // SimpleFontHandle
 
 	namespace internal
@@ -50,6 +51,33 @@ namespace font
 		renderer::VertexStream _vertexstream;
 		struct sth_stash * _stash;
 		assets::Shader * _shader;
+		
+		SimpleFontHandle _fonts[ FONT_MAX ];
+		
+		
+		
+		SimpleFontHandle * handle_by_id( font::Handle id )
+		{
+			if ( id >= (FONT_MAX-1) )
+			{
+				return 0;
+			}
+			
+			return &internal::_fonts[id];
+		} // handle_by_id
+		
+		SimpleFontHandle * find_unused_handle()
+		{
+			for( unsigned int i = 0; i < FONT_MAX; ++i )
+			{
+				if (_fonts[i].font_size == 0)
+				{
+					return &_fonts[i];
+				}
+			}
+			
+			return 0;
+		} // find_unused_handle
 	}; // namespace internal
 	
 
@@ -141,7 +169,14 @@ namespace font
 
 
 	void startup()
-	{		
+	{
+		SimpleFontHandle * handle;
+		for( unsigned int i = 0; i < FONT_MAX; ++i )
+		{
+			handle = &internal::_fonts[i];
+			handle->font_size = 0;
+		}
+	
 		// initialize the vertex stream
 		internal::_vertexstream.desc.add( renderer::VD_FLOAT2 );
 		internal::_vertexstream.desc.add( renderer::VD_FLOAT2 );
@@ -201,6 +236,12 @@ namespace font
 	
 	void draw_string( font::Handle fontid, int x, int y, const char * utf8, const Color & color )
 	{
+		SimpleFontHandle * handle = internal::handle_by_id( fontid );
+		if ( !handle )
+		{
+			return;
+		}
+	
 		RenderStream rs;
 
 		// setup global rendering state
@@ -216,7 +257,7 @@ namespace font
 
 		float width = 0;
 		unsigned int vcolor = STH_RGBA(color.r, color.g, color.b, color.a);
-		sth_draw_text( internal::_stash, fontid, 16, x, y, vcolor, utf8, &width );
+		sth_draw_text( internal::_stash, fontid, handle->font_size, x, y, vcolor, utf8, &width );
 
 
 		sth_end_draw( internal::_stash );
@@ -238,14 +279,16 @@ namespace font
 		return 0;
 	} // measure_width
 	
-	font::Handle load_font_from_memory( const void * data, unsigned int data_size, unsigned int point_size, bool antialiased, unsigned int hres, unsigned int vres )
+	font::Handle load_font_from_memory( const void * data, unsigned int data_size, unsigned short point_size, bool antialiased, unsigned int hres, unsigned int vres )
 	{
 		int result = sth_add_font_from_memory( internal::_stash, (unsigned char*)data );
 		if ( result == 0 )
 		{
 			LOGE( "Unable to load font from memory!\n" );
-			
 		}
+		
+		SimpleFontHandle * handle = internal::handle_by_id( result );
+		handle->font_size = (unsigned short)point_size;
 				
 		return font::Handle(result);
 	} // load_font_from_memory

@@ -541,8 +541,8 @@ public:
 	{
 		LOGV( "Window dimensions: %i x %i, Render Viewport: %i x %i\n", params.window_width, params.window_height, params.render_width, params.render_height );
 		LOGV( "IndexType is %i bytes.\n", sizeof(renderer::IndexType) );
-//		sound = audio::create_sound( "sounds/powerup" );
-//		source = audio::play( sound );
+		sound = audio::create_sound( "sounds/powerup" );
+		source = audio::play( sound );
 
 
 		font::startup();
@@ -551,7 +551,7 @@ public:
 		font_buffer = fs::file_to_buffer( "fonts/nokiafc22.ttf", 0, &buffer_length );
 		if ( font_buffer )
 		{
-			test_font = font::load_font_from_memory( font_buffer, buffer_length, 12, 0, 72, 72 );
+			test_font = font::load_font_from_memory( font_buffer, buffer_length, 16, 0, 72, 72 );
 		}
 		else
 		{
