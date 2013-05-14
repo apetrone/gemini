@@ -65,12 +65,6 @@ GLenum image_to_internal_format( unsigned int image_flags )
 	return GL_RGBA;
 } // image_to_internal_format
 
-enum GL32DrawCallType
-{
-	DCT_ELEMENTS,
-	DCT_ARRAYS
-}; // GL32DrawCallType
-
 #define FAIL_IF_GLERROR( error ) if ( error != GL_NO_ERROR ) { return false; }
 using namespace renderer;
 

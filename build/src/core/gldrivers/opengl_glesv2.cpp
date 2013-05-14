@@ -86,13 +86,6 @@ GLESv2::~GLESv2()
 }
 
 
-enum DrawCallType
-{
-	DCT_ELEMENTS,
-	DCT_ARRAYS
-}; // DrawCallType
-
-
 using namespace renderer;
 
 
@@ -386,10 +379,6 @@ void c_cleardepth( MemoryStream & stream, renderer::IRenderDriver & renderer )
 void c_viewport( MemoryStream & stream, renderer::IRenderDriver & renderer )
 {
 	int x, y, width, height;
-	//			stream.read(x);
-	//			stream.read(y);
-	//			stream.read(width);
-	//			stream.read(height);
 	stream.read( &x, 4 );
 	stream.read( &y, 4 );
 	stream.read( &width, 4 );
@@ -402,12 +391,21 @@ void c_drawcall( MemoryStream & stream, renderer::IRenderDriver & renderer )
 	GLES2VertexBuffer * vertex_buffer = 0;
 	GLenum draw_type;
 	unsigned int num_indices;
+	unsigned int num_vertices;	
 	stream.read( vertex_buffer );
 	stream.read( draw_type );
+	stream.read( num_vertices );	
 	stream.read( num_indices );
 	
 	assert( vertex_buffer != 0 );
-	renderer.vertexbuffer_draw_indices( vertex_buffer, num_indices );
+	if ( num_indices > 0 )
+	{
+		renderer.vertexbuffer_draw_indices( vertex_buffer, num_indices );
+	}
+	else
+	{
+		renderer.vertexbuffer_draw( vertex_buffer, num_vertices );
+	}
 }
 
 void c_state( MemoryStream & stream, renderer::IRenderDriver & renderer )
@@ -541,6 +539,7 @@ void GLESv2::setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStream
 	GLES2VertexBuffer * vb = (GLES2VertexBuffer*)vertexbuffer;
 	stream.write( vb );
 	stream.write( vb->gl_draw_type );
+	stream.write( vb->vertex_count );
 	stream.write( vb->index_count ); // or vertices
 } // setup_drawcall
 
@@ -742,7 +741,7 @@ void GLESv2::vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, u
 	{
 		
 		gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
-stream->setup_vertex_attributes();
+		stream->setup_vertex_attributes();
 		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, stream->vbo[1] );
 
 	}

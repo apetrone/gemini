@@ -892,7 +892,7 @@ public:
 #endif
 		rs.run_commands();
 
-		font::draw_string( test_font, 50, 50, "Now is the time for all good men to come to the aid of the party", Color(255,0,0) );
+		font::draw_string( test_font, 50, 50, "Now is the time for all good men to come to the aid of the party", Color(255,0,0,255) );
 	}
 
 	virtual void shutdown( kernel::Params & params )

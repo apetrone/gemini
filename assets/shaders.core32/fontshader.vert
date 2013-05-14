@@ -1,5 +1,7 @@
 #version 150 core
 
+precision highp float;
+
 uniform mat4 projection_matrix;
 uniform mat4 modelview_matrix;
 

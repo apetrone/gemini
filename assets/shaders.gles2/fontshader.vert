@@ -1,5 +1,7 @@
 #version 100
 
+precision lowp float;
+
 uniform mat4 projection_matrix;
 uniform mat4 modelview_matrix;
 

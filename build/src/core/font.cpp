@@ -215,14 +215,16 @@ namespace font
 		sth_begin_draw( internal::_stash );
 
 		float width = 0;
-		sth_draw_text( internal::_stash, fontid, 24.0f, x, y, STH_RGBA(255,0,0,255), utf8, &width );
+		unsigned int vcolor = STH_RGBA(color.r, color.g, color.b, color.a);
+		sth_draw_text( internal::_stash, fontid, 24.0, x, y, vcolor, utf8, &width );
 
 
 		sth_end_draw( internal::_stash );
 		
 		// restore state
-		rs.rewind();
 		rs.add_state( renderer::STATE_BLEND, 0 );
+		rs.rewind();
+		
 		rs.run_commands();
 	} // draw_string
 	
