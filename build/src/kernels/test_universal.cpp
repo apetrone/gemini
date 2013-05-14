@@ -541,9 +541,8 @@ public:
 	{
 		LOGV( "Window dimensions: %i x %i, Render Viewport: %i x %i\n", params.window_width, params.window_height, params.render_width, params.render_height );
 		LOGV( "IndexType is %i bytes.\n", sizeof(renderer::IndexType) );
-		sound = audio::create_sound( "sounds/powerup" );
-		source = audio::play( sound );
-
+//		sound = audio::create_sound( "sounds/powerup" );
+//		source = audio::play( sound );
 
 		font::startup();
 		

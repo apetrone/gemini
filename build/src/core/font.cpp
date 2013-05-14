@@ -289,6 +289,10 @@ namespace font
 		
 		SimpleFontHandle * handle = internal::handle_by_id( result );
 		handle->font_size = (unsigned short)point_size;
+		if (kernel::instance()->parameters().device_flags & kernel::DeviceSupportsRetinaDisplay)
+		{
+			handle->font_size = handle->font_size * 2;
+		}
 				
 		return font::Handle(result);
 	} // load_font_from_memory
