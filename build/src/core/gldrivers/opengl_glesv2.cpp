@@ -643,6 +643,8 @@ bool GLESv2::texture_update( renderer::TextureParameters & parameters )
 	}
 	
 	gl.BindTexture( GL_TEXTURE_2D, parameters.texture_id );
+	error = gl.CheckError( "BindTexture" );
+	FAIL_IF_GLERROR(error);
 	
 	gl.TexSubImage2D( GL_TEXTURE_2D, 0, parameters.x, parameters.y, parameters.width, parameters.height, internal_format, GL_UNSIGNED_BYTE, parameters.pixels );
 	error = gl.CheckError( "TexSubImage2D" );
@@ -657,6 +659,8 @@ bool GLESv2::texture_update( renderer::TextureParameters & parameters )
 	}
 	
 	gl.BindTexture( GL_TEXTURE_2D, 0 );
+	error = gl.CheckError( "BindTexture 0" );
+	FAIL_IF_GLERROR(error);
 	
 	return true;
 } // texture_update
