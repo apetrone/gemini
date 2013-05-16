@@ -45,7 +45,7 @@
 
 #include "font.hpp"
 
-#define TEST_2D 0
+#define TEST_2D 1
 
 glm::mat4 objectMatrix;
 glm::vec3 light_position = glm::vec3( 0, 2, 0 );

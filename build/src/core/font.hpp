@@ -32,6 +32,7 @@ namespace font
 	void shutdown();
 	
 	// draw a string
+	// this accepts x and y coordinates with the origin in the upper left of the screen
 	void draw_string( font::Handle fontid, int x, int y, const char * utf8, const Color & color );
 	
 	// query the height of the font in pixels

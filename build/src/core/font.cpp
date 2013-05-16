@@ -236,6 +236,9 @@ namespace font
 	
 	void draw_string( font::Handle fontid, int x, int y, const char * utf8, const Color & color )
 	{
+//		int r_width = kernel::instance()->parameters().render_width;
+		int r_height = kernel::instance()->parameters().render_height;
+	
 		SimpleFontHandle * handle = internal::handle_by_id( fontid );
 		if ( !handle )
 		{
@@ -257,7 +260,7 @@ namespace font
 
 		float width = 0;
 		unsigned int vcolor = STH_RGBA(color.r, color.g, color.b, color.a);
-		sth_draw_text( internal::_stash, fontid, handle->font_size, x, y, vcolor, utf8, &width );
+		sth_draw_text( internal::_stash, fontid, handle->font_size, x, r_height-y, vcolor, utf8, &width );
 
 
 		sth_end_draw( internal::_stash );
