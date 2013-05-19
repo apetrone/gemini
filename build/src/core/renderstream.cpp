@@ -138,7 +138,7 @@ void RenderStream::add_blendfunc( renderer::RenderBlendType source, renderer::Re
 	stream.write( destination );
 }
 
-void RenderStream::RenderStream::add_shader( renderer::ShaderProgram * shader )
+void RenderStream::add_shader( renderer::ShaderProgram * shader )
 {
 	add_command( renderer::DC_SHADER );
 	stream.write( shader->object );

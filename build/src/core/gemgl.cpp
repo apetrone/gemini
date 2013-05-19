@@ -7,7 +7,7 @@
 
 gemgl_interface_t gl;
 
-typedef const GLubyte * (*gemgl_GLGETSTRINGPROC)( GLenum param );
+typedef const GLubyte * (GEMGLAPI gemgl_GLGETSTRINGPROC)( GLenum param );
 
 GLenum gemgl_check_error( const char * msg )
 {

@@ -1,10 +1,6 @@
 BUILD_NAME = "gemini"
 BUILD_ROOT = "build"
 
-def postbuild_common():
-	logging.info( "Hello" )
-
-
 def construct_binpath(params):
 	return "latest/bin/%s/%s" % (params['build_architecture'], params['configuration'])
 
@@ -14,8 +10,10 @@ def dependency_libpath():
 def dependency_path():
 	return "build/dependencies"
 
-def common_dependencies():
-	return [
-	"glm.py",
-	"fontstash.py"
-	]
+def common_dependencies( target_platform ):
+	deps = ["glm.py", "fontstash.py"]
+
+	if target_platform == 'windows':
+		deps.append( "openal.py" )
+
+	return deps

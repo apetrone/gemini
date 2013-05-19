@@ -79,7 +79,7 @@ namespace platform
 		
 #if _WIN32
 		result = GetModuleFileNameA( GetModuleHandleA(0), path, size);
-		if ( result != 0 )
+		if ( result == 0 )
 		{
 			error.status = core::Error::Failure;
 			error.message = "GetModuleFileNameA failed!";
