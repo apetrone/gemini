@@ -346,7 +346,7 @@ class TestUniversal : public kernel::IApplication,
 	public IEventListener<SystemEvent>,
 	public IEventListener<TouchEvent>
 {
-	struct FontVertexType
+	struct SpriteVertexType
 	{
 		float x, y, z;
 		Color color;
@@ -790,11 +790,11 @@ public:
 								
 							}
 							
-							FontVertexType * v = (FontVertexType*)vb.request(4);
+							SpriteVertexType * v = (SpriteVertexType*)vb.request(4);
 							if ( v )
 							{
 								lastset = set;
-								//						FontVertexType * v = (FontVertexType*)vb[0];
+								//						SpriteVertexType * v = (SpriteVertexType*)vb[0];
 								
 								int x = w * tiled_map.tile_width;
 								int y = h * tiled_map.tile_height;
@@ -885,8 +885,6 @@ public:
 				stream_geometry( rs, g, gp );
 			}
 		}
-
-		//stream_geometry( rs, &geo, gp );
 
 #endif
 		rs.run_commands();
