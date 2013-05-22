@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2012- Adam Petrone
+// Copyright (C) 2013- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -19,35 +19,29 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-package net.arcfusion.gemini;
+#pragma once
 
-import net.arcfusion.gemini.gemini_gl2_view;
+#include "kernel.hpp"
 
-import android.app.Activity;
-import android.os.Bundle;
-import net.arcfusion.gemini.Lynx;
+class AndroidKernel : public kernel::IKernel
+{
+public:
+	bool active;
+	kernel::Params params;
 
-public class gemini_activity extends Activity {	
-	gemini_gl2_view content_view;
-	
-    @Override protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        content_view = new gemini_gl2_view(getApplication());
-        setContentView(content_view);
-    }
+public:
+	virtual ~AndroidKernel() {}
+	virtual bool is_active() const { return active; }
+	virtual void set_active( bool isactive ) { active = isactive; }
+	virtual kernel::Params & parameters() { return params; }
 
-    @Override protected void onPause() {
-        super.onPause();
-        content_view.onPause();
-    }
+	virtual void startup();
+	virtual void register_services();
+	virtual void pre_tick();
+	virtual void post_tick();
+	virtual void post_application_config( kernel::ApplicationResult result );
+	virtual void post_application_startup( kernel::ApplicationResult result );
+	virtual void shutdown();
 
-    @Override protected void onResume() {
-        super.onResume();
-        content_view.onResume();
-    }
-    
-    @Override protected void onDestroy() {
-    	Lynx.gemini_shutdown();
-    	super.onDestroy();
-    }
-}
+	void set_view_size( int width, int height );
+}; // AndroidKernel

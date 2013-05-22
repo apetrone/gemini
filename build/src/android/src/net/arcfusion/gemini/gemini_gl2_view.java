@@ -315,6 +315,7 @@ class gemini_gl2_view extends GLSurfaceView {
     private static class gemini_renderer implements GLSurfaceView.Renderer {
         public void onDrawFrame(GL10 gl) {
             //GL2JNILib.step();
+        	Lynx.gemini_tick();
         }
 
         public void onSurfaceChanged(GL10 gl, int width, int height) {
@@ -322,7 +323,7 @@ class gemini_gl2_view extends GLSurfaceView {
         }
 
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-            // Do nothing.
+        	Lynx.gemini_startup();
         }
     }
 }

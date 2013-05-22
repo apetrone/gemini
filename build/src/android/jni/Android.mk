@@ -14,6 +14,7 @@ LOCAL_C_INCLUDES := ../../ \
 
 LOCAL_CFLAGS += -DPLATFORM_USE_GLES2=1 -DPLATFORM_INDEX_TYPE=2
 LOCAL_SRC_FILES := 	net_arcfusion_gemini.cpp \
+					kernel_android.cpp \
 					$(SRC_DIR)camera.cpp \
 					$(SRC_DIR)configloader.cpp \
 					$(SRC_DIR)mathlib.cpp \
