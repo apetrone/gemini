@@ -23,7 +23,7 @@
 
 #define PARANOID 1
 
-#if LINUX || __APPLE__
+#if LINUX || __APPLE__ || __ANDROID__
 	#include <signal.h> // for pthread_kill
 #endif
 

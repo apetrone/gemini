@@ -119,7 +119,7 @@ typedef double float64;
 #include <config.h>
 
 // for some reason this isn't working any other way...
-#if __APPLE__ && (TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR)
+#if (__APPLE__ && (TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR)) || __ANDROID__
 	#define PLATFORM_IS_MOBILE 1
 #else
 	#define PLATFORM_IS_MOBILE 0

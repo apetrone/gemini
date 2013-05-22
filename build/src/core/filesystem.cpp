@@ -228,7 +228,7 @@ namespace fs
 
 	int read_file_stats( const char * fullpath, FileStats & stats )
 	{
-#if LINUX
+#if LINUX || __ANDROID__
 		struct stat file_stats;
 		stat( fullpath, &file_stats );
 

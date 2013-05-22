@@ -82,7 +82,7 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	int minor = 0;
 	
 	
-#if _WIN32 || LINUX
+#if _WIN32 || LINUX || __ANDROID__
 	const char * libName = "";
 
 #if _WIN32

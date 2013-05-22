@@ -30,9 +30,11 @@
 #if !PLATFORM_IS_MOBILE
 	#include "openal_vorbis_decoder.hpp"
 	typedef stb_vorbis_decoder AudioDecoderType;
-#else
+#elif __APPLE__ && PLATFORM_IS_MOBILE
 	#include "audio_extaudio_decoder.hpp"
 	typedef ExtAudioDecoder AudioDecoderType;
+#else
+	#error Unknown platform!
 #endif
 
 namespace audio
