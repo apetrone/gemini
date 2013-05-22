@@ -488,7 +488,7 @@ const char * gemgl_uniform_to_string( GLenum type )
 		case GL_SAMPLER_2D			: return "GL_SAMPLER_2D"; break;
 		case GL_SAMPLER_CUBE		: return "GL_SAMPLER_CUBE"; break;
 			
-#if !TARGET_OS_IPHONE
+#if !TARGET_OS_IPHONE && !defined(__ANDROID__)
 		case GL_SAMPLER_1D			: return "GL_SAMPLER_1D"; break;					
 		case GL_SAMPLER_3D			: return "GL_SAMPLER_3D"; break;					
 		case GL_SAMPLER_1D_SHADOW	: return "GL_SAMPLER_1D_SHADOW"; break;

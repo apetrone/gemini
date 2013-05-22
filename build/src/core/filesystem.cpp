@@ -219,7 +219,7 @@ namespace fs
 
 	void * audiofile_to_buffer( const char * filename, int & buffer_length )
 	{
-#if PLATFORM_IS_MOBILE
+#if __APPLE__ && PLATFORM_IS_MOBILE
 		return mobile_audio_file_to_buffer( filename, buffer_length );
 #else
 		return file_to_buffer( filename, 0, &buffer_length );
@@ -232,7 +232,11 @@ namespace fs
 		struct stat file_stats;
 		stat( fullpath, &file_stats );
 
-		printf( "time: %i\n", file_stats.st_mtim.tv_sec );
+	#if LINUX
+			printf( "time: %i\n", file_stats.st_mtim.tv_sec );
+	#else
+			printf( "time: %i\n", file_stats.st_mtime );
+	#endif
 #endif
 
 		return 0;

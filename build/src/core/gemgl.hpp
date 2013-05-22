@@ -1,6 +1,6 @@
 #pragma once
 
-#if _WIN32 || LINUX
+#if _WIN32 || LINUX || __ANDROID__
 	#include "xlib.h"
 #endif
 
@@ -33,6 +33,12 @@
 	#endif
 
 	#define GEMGLAPI *
+#elif __ANDROID__
+	#include <GLES2/gl2.h>
+	#include <GLES2/gl2ext.h>
+	#define GEMGLAPI *
+#else
+	#error Unknown platform!
 #endif
 
 
@@ -541,7 +547,7 @@ enum gemgl_renderer_type
         GEMGL_CHECKERROR CheckError;
 
 
-#if _WIN32 || LINUX
+#if _WIN32 || LINUX || __ANDROID__
 		xlib_t library;
 #endif
 	} gemgl_interface_t;

@@ -138,7 +138,7 @@ int xstr_nicmp( const char * s1, const char * s2, size_t count )
 
 		count = s1_len;
 	}
-#if LINUX || __APPLE__
+#if LINUX || __APPLE__ || __ANDROID__
     return strncasecmp( s1, s2, count );
 #else
     return strnicmp( s1, s2, count );
