@@ -23,6 +23,10 @@
 #include "xstr.h" // for xstr_filefrompath
 #include <stdio.h> // for FILE, file functions
 
+#if __ANDROID__
+	#include <android/log.h>
+#endif
+
 namespace core
 {
 	// log handler function definitions
@@ -66,5 +70,23 @@ namespace core
 		void stdout_close( log_handler_t * handler )
 		{
 		}
+		
+#if __ANDROID__
+		void log_android_message( log_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type )
+		{
+			// this must match with the android_LogPriority enum in <android/log.h>
+			android_LogPriority message_types[] = { ANDROID_LOG_UNKNOWN, ANDROID_LOG_VERBOSE, ANDROID_LOG_WARN, ANDROID_LOG_ERROR };
+			__android_log_print( message_types[ type ], "gemini", message );
+		}
+		
+		int log_android_open( log_handler_t * handler )
+		{
+			return 1;
+		}
+		
+		void log_android_close( log_handler_t * handler )
+		{
+		}
+#endif
 	}; // namespace _internal
 }; // namespace core
