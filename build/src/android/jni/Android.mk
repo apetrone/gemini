@@ -1,8 +1,10 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
-LOCAL_SRC_FILES := net_arcfusion_gemini.cpp
+
 export SRC_DIR=../../
 export DEPS_DIR=../../../dependencies/
+
+
 LOCAL_C_INCLUDES := ../../ \
 					../../core/ \
 					../../core/audio \
@@ -11,7 +13,8 @@ LOCAL_C_INCLUDES := ../../ \
 					../../contrib
 
 LOCAL_CFLAGS += -DPLATFORM_USE_GLES2=1 -DPLATFORM_INDEX_TYPE=2
-LOCAL_SRC_FILES := 	$(SRC_DIR)camera.cpp \
+LOCAL_SRC_FILES := 	net_arcfusion_gemini.cpp \
+					$(SRC_DIR)camera.cpp \
 					$(SRC_DIR)configloader.cpp \
 					$(SRC_DIR)mathlib.cpp \
 					$(SRC_DIR)contrib/stb_image.c \
@@ -70,7 +73,7 @@ LOCAL_SRC_FILES += $(DEPS_DIR)murmur3/murmur3.c
 
 
 
-LOCAL_MODULE := net_arcfusion_gemini_lynx
+LOCAL_MODULE = net_arcfusion_gemini_lynx
 LOCAL_LDLIBS += -llog -landroid -lGLESv2 -lOpenSLES
 include $(BUILD_SHARED_LIBRARY)
 
