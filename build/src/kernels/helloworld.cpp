@@ -21,6 +21,7 @@
 // -------------------------------------------------------------
 #include "kernel.hpp"
 #include <stdio.h>
+#include "log.h"
 
 class HelloWorld : public kernel::IApplication
 {
@@ -34,7 +35,7 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
-		printf( "Hello World!\n" );
+		LOGV( "Hello World!\n" );
 		return kernel::NoWindow;
 	}
 
