@@ -43,7 +43,7 @@ void AndroidKernel::post_tick()
 
 void AndroidKernel::post_application_config( kernel::ApplicationResult result )
 {
-
+	this->parameters().device_flags |= kernel::DeviceAndroid;
 }
 
 void AndroidKernel::post_application_startup( kernel::ApplicationResult result )
@@ -54,4 +54,10 @@ void AndroidKernel::post_application_startup( kernel::ApplicationResult result )
 void AndroidKernel::shutdown()
 {
 
+}
+
+void AndroidKernel::on_surface_changed(int width, int height)
+{
+	this->parameters().window_width = this->parameters().render_width = width;
+	this->parameters().window_height = this->parameters().render_height = height;
 }

@@ -40,7 +40,7 @@ void xthread_start( xthread_t * t, xthread_entry entry, void * data )
 	t->handle = CreateThread( 0, 0, entry, data, 0, 0 );
 	//t->handle = (HANDLE)_beginxthreadex( 0, 0, entry, data, 0, &t->id );
 	t->state = XTHREAD_STATE_ACTIVE;
-#elif LINUX || __APPLE__
+#elif LINUX || __APPLE__ || __ANDROID__
 	{
 		int err;
 
@@ -76,9 +76,14 @@ void xthread_stop( xthread_t * t )
 	CloseHandle( (HANDLE)t->handle );
 	t->handle = 0;
 	t->state = XTHREAD_STATE_STOPPED;
-#elif LINUX || __APPLE__
+#elif LINUX || __APPLE__ || __ANDROID__
+#if !__ANDROID__
 	pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, 0 );
 	pthread_cancel( (pthread_t)&t->handle );
+#else
+	// This is not implemented on Android. Conditions should be set such that the thread can exit normally. 
+#endif
+	
 	t->state = XTHREAD_STATE_STOPPED;
 #endif
 } // xthread_stop
@@ -105,7 +110,7 @@ unsigned int xthread_status( xthread_t * t )
 		}
 	}
 
-#elif LINUX || __APPLE__
+#elif LINUX || __APPLE__ || __ANDROID__
 	if ( pthread_kill( t->handle, 0 ) == 0 )
 	{
 		// xthread is still active
@@ -133,7 +138,7 @@ int xthread_selfid()
 {
 #if _WIN32
 	return GetCurrentThreadId();
-#elif LINUX || __APPLE__
+#elif LINUX || __APPLE__ || __ANDROID__
 	return pthread_self();
 #endif
 } // xthread_selfid
@@ -175,7 +180,7 @@ int xthread_join( xthread_t * t, int timeout_milliseconds )
 	{
 		return 0;
 	}
-#elif LINUX || __APPLE__
+#elif LINUX || __APPLE__ || __ANDROID__
 	ret = pthread_join( t->handle, 0 );
 
 	if ( ret == 0 )
@@ -195,7 +200,7 @@ void xthread_sleep( int milliseconds )
 {
 #if _WIN32
 	Sleep( milliseconds );
-#elif LINUX || __APPLE__
+#elif LINUX || __APPLE__ || __ANDROID__
 	// convert milliseconds to microseconds
 	usleep( milliseconds * 1000 );
 #endif
@@ -219,7 +224,7 @@ void xmutex_create( xmutex_t * m )
 
 #if _WIN32
 	InitializeCriticalSection( &m->cs );
-#elif LINUX || __APPLE__
+#elif LINUX || __APPLE__ || __ANDROID__
 	pthread_mutexattr_init( &m->attribs );
 	pthread_mutex_init( &m->handle, &m->attribs );
 #endif
@@ -229,7 +234,7 @@ void xmutex_destroy( xmutex_t * m )
 {
 #if _WIN32
 	DeleteCriticalSection( &m->cs );
-#elif LINUX || __APPLE__
+#elif LINUX || __APPLE__ || __ANDROID__
 	pthread_mutex_destroy( &m->handle );
 	pthread_mutexattr_destroy( &m->attribs );
 #endif
@@ -247,7 +252,7 @@ void xmutex_lock( xmutex_t * m )
 	{
 		EnterCriticalSection( &m->cs );
 	}
-#elif LINUX || __APPLE__
+#elif LINUX || __APPLE__ || __ANDROID__
 	pthread_mutex_lock( &m->handle );
 #endif
 } // xmutex_lock
@@ -261,7 +266,7 @@ void xmutex_unlock( xmutex_t * m )
 
 #if _WIN32
 	LeaveCriticalSection( &m->cs );
-#elif LINUX || __APPLE__
+#elif LINUX || __APPLE__ || __ANDROID__
 	pthread_mutex_unlock( &m->handle );
 #endif
 } // xmutex_unlock

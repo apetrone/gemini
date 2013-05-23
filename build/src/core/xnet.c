@@ -389,7 +389,7 @@ void xnet_shutdown( void )
 
 const char * xnet_errno_string( void )
 {
-#if LINUX
+#if LINUX || __ANDROID__
     switch( errno )
     {
         case EACCES: return "EACCES";

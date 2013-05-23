@@ -36,7 +36,7 @@ void xtime_startup( xtime_t * t )
 	}
 #endif
 
-#if LINUX || __APPLE__
+#if LINUX || __APPLE__ || __ANDROID__
 	gettimeofday(&t->initialtime, 0);
 #elif _WIN32
 
@@ -59,7 +59,7 @@ double xtime_msec( xtime_t * t )
 	}
 #endif
 
-#if LINUX || __APPLE__
+#if LINUX || __APPLE__ || __ANDROID__
     struct timeval now;
     gettimeofday(&now, 0);
     return ((now.tv_sec-t->initialtime.tv_sec)*1000.0f + (now.tv_usec-t->initialtime.tv_usec)/1000.0f);
@@ -88,7 +88,7 @@ void xtime_now( xdatetime_t * dt )
 	dt->second = st.wSecond;
 	dt->year = st.wYear;
 
-#elif LINUX || __APPLE__
+#elif LINUX || __APPLE__ || __ANDROID__
 	// this code from cplusplus.com
 	struct tm * timeinfo;
 	time_t rawtime;

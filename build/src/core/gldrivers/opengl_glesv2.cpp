@@ -77,6 +77,10 @@ GLESv2::GLESv2()
 	_gles2 = this;
 	
 	has_oes_vertex_array_object = gemgl_find_extension( "_vertex_array_object" );
+	if ( has_oes_vertex_array_object )
+	{
+		LOGV( "vertex_array_object extension is present!\n" );
+	}
 }
 
 GLESv2::~GLESv2()

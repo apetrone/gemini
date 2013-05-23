@@ -1,3 +1,24 @@
+// -------------------------------------------------------------
+// Copyright (C) 2013- Adam Petrone
+
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+// -------------------------------------------------------------
 #include <android/log.h>
 #include <jni.h>
 #include "memory.hpp"
@@ -65,10 +86,10 @@ namespace lynx
 	{
 		NATIVE_LOG( "gemini_shutdown called\n" );
 
-		_kernel->shutdown();
-		DESTROY(AndroidKernel, _kernel);
+//		_kernel->shutdown();
+//		DESTROY(AndroidKernel, _kernel);
 
-		memory::shutdown();
+//		memory::shutdown();
 	} // gemini_shutdown
 
 	void gemini_tick(JNIEnv * env, jclass the_class)
@@ -76,6 +97,11 @@ namespace lynx
 		kernel::tick();
 	} // gemini_tick
 
+	void gemini_surface_changed(JNIEnv * env, jclass the_class, jint width, jint height)
+	{
+		NATIVE_LOG( "surface changed to %i x %i\n", width, height );
+		_kernel->on_surface_changed(width, height);
+	} // gemini_surface_changed
 }; // namespace lynx
 
 
@@ -83,7 +109,8 @@ static JNINativeMethod method_table[] = {
 		{"test", "()V", (void*)lynx::test},
 		{"gemini_startup", "(Landroid/content/res/AssetManager;)V", (void*)lynx::gemini_startup},
 		{"gemini_shutdown", "()V", (void*)lynx::gemini_shutdown},
-		{"gemini_tick", "()V", (void*)lynx::gemini_tick}
+		{"gemini_tick", "()V", (void*)lynx::gemini_tick},
+		{"gemini_surface_changed", "(II)V", (void*)lynx::gemini_surface_changed}
 };
 
 jint JNI_OnLoad( JavaVM * vm, void * reserved)

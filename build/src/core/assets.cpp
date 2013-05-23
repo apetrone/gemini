@@ -1598,13 +1598,12 @@ namespace assets
 		{
 			case SoundAsset:
 			{
-#if PLATFORM_IS_MOBILE
+#if __APPLE__ && PLATFORM_IS_MOBILE
 				if ( (device_flags & kernel::DeviceiPad) || (device_flags & kernel::DeviceiPhone) )
 				{
 					extension = "caf";
 				}
 #else
-				;
 				extension = "ogg";
 #endif
 				break;
@@ -1612,7 +1611,7 @@ namespace assets
 			
 			case TextureAsset:
 			{
-				if ( device_flags & kernel::DeviceDesktop )
+				if ( device_flags & kernel::DeviceDesktop || (device_flags & kernel::DeviceAndroid) )
 				{
 					// ...
 					extension = "png";

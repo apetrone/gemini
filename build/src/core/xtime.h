@@ -30,7 +30,7 @@ USAGE:
 
 #pragma once
 
-#if LINUX || __APPLE__
+#if LINUX || __APPLE__ || __ANDROID__
 	#include <sys/time.h>
 	#include <time.h>
 #elif _WIN32
@@ -44,7 +44,7 @@ extern "C" {
 
 typedef struct
 {
-#if LINUX || __APPLE__
+#if LINUX || __APPLE__ || __ANDROID__
 	struct timeval initialtime;
 #elif _WIN32
 	LARGE_INTEGER frequency;

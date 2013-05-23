@@ -43,5 +43,5 @@ public:
 	virtual void post_application_startup( kernel::ApplicationResult result );
 	virtual void shutdown();
 
-	void set_view_size( int width, int height );
+	void on_surface_changed( int width, int height );
 }; // AndroidKernel

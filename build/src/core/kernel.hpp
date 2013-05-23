@@ -45,7 +45,8 @@ namespace kernel
 		DeviceDesktop 					= (1 << 0), // 'device' is a desktop computer
 		DeviceiPhone 					= (1 << 1), // set if this is an iPhone
 		DeviceiPad 						= (1 << 2), // set if this is an iPad
-		DeviceSupportsRetinaDisplay 	= (1 << 3), // set if this device supports retina
+		DeviceSupportsRetinaDisplay 	= (1 << 3), // set if this device supports retina,
+		DeviceAndroid					= (1 << 4), // Android-based device
 	};
 
 	// status codes for config and startup return values
