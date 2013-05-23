@@ -37,6 +37,21 @@ namespace fs
 }; // namespace fs
 #endif
 
+
+
+#if __ANDROID__
+	#include <android/asset_manager.h>
+	namespace fs
+	{
+		static AAssetManager * _asset_manager = 0;
+		void set_asset_manager( AAssetManager * asset_manager )
+		{
+			_asset_manager = asset_manager;
+		}
+	};
+#endif
+
+
 namespace fs
 {
 	static char _root_directory[ MAX_PATH_SIZE ];
@@ -122,10 +137,22 @@ namespace fs
 	
 	bool file_exists( const char * path, bool path_is_relative )
 	{
-		struct stat stFileInfo;
-		int result = 0;
 		char fullpath[ MAX_PATH_SIZE ] = {0};
+		int result = 0;
 		
+#if __ANDROID__
+		// assume a relative path is always passed
+		AAsset * asset = 0;
+		asset = AAssetManager_open( _asset_manager, path, AASSET_MODE_BUFFER );
+		if ( asset )
+		{
+			AAsset_close(asset);
+			return 1;
+		}
+		
+		return 0;
+#else
+		struct stat stFileInfo;
 		if ( path_is_relative )
 		{
 			fs::absolute_path_from_relative( fullpath, path );
@@ -135,9 +162,9 @@ namespace fs
 			xstr_ncpy( fullpath, path, -1 );
 			platform::path::normalize( fullpath, MAX_PATH_SIZE );
 		}
-		
 		result = stat( fullpath, &stFileInfo );
 		return (result == 0) && ((stFileInfo.st_mode & S_IFMT) == S_IFREG);
+#endif
 	} // file_exists
 	
 	bool directory_exists( const char * path, bool path_is_relative )
@@ -173,6 +200,15 @@ namespace fs
 			return 0;
 		}
 		
+#if __ANDROID__
+		AAsset * asset = AAssetManager_open( _asset_manager, filename, AASSET_MODE_BUFFER );
+		if ( asset )
+		{
+			*buffer_length = AAsset_getLength(asset);
+			buffer = (char*)AAsset_getBuffer(asset);
+			AAsset_close(asset);
+		}
+#else
 		char fullpath[ MAX_PATH_SIZE ] = {0};
 		if ( path_is_relative )
 		{
@@ -183,7 +219,7 @@ namespace fs
 			xstr_ncpy( fullpath, filename, -1 );
 			platform::path::normalize( fullpath, MAX_PATH_SIZE );
 		}
-				
+		
 		long int fileSize;
 		xfile_t f = xfile_open( fullpath, XF_READ );
 		if ( xfile_isopen( f ) )
@@ -213,7 +249,7 @@ namespace fs
 			
 			xfile_close( f );
 		}
-		
+#endif
 		return buffer;
 	} // file_to_buffer
 

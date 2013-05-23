@@ -435,9 +435,13 @@ void * gemgl_findsymbol( gemgl_interface_t & gl_interface, const char * name )
 	ptr = (void*)glXGetProcAddress( (const GLubyte*)name );
 #elif __APPLE__
 	ptr = gemgl_native_findsymbol( name );
+#elif __ANDROID__
+	// fall through
+#else
+	#error Unknown platform!
 #endif
 
-#if _WIN32 || LINUX
+#if _WIN32 || LINUX || __ANDROID__
 	if ( !ptr )
 	{
 		ptr = xlib_find_symbol( &gl_interface.library, name );
@@ -459,7 +463,7 @@ void * gemgl_findsymbol( gemgl_interface_t & gl_interface, const char * name )
 
 void gemgl_shutdown( gemgl_interface_t & gl_interface  )
 {
-#if _WIN32 || LINUX
+#if _WIN32 || LINUX || __ANDROID__
 	xlib_close( &gl_interface.library );
 #elif __APPLE__
 	gemgl_osx_shutdown();

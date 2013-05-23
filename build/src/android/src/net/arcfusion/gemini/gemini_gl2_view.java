@@ -21,6 +21,7 @@
 // -------------------------------------------------------------
 package net.arcfusion.gemini;
 
+import android.content.res.AssetManager;
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
@@ -50,9 +51,13 @@ import android.util.Log;
  *   that matches it exactly (with regards to red/green/blue/alpha channels
  *   bit depths). Failure to do so would result in an EGL_BAD_MATCH error.
  */
+
+
+
 class gemini_gl2_view extends GLSurfaceView {
     private static String TAG = "gemini_gl2_view";
     private static final boolean DEBUG = false;
+
 
     public gemini_gl2_view(Context context) {
         super(context);
@@ -312,7 +317,7 @@ class gemini_gl2_view extends GLSurfaceView {
         private int[] mValue = new int[1];
     }
 
-    private static class gemini_renderer implements GLSurfaceView.Renderer {
+    private static class gemini_renderer implements GLSurfaceView.Renderer {    	
         public void onDrawFrame(GL10 gl) {
             //GL2JNILib.step();
         	Lynx.gemini_tick();
@@ -323,7 +328,7 @@ class gemini_gl2_view extends GLSurfaceView {
         }
 
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        	Lynx.gemini_startup();
+        	Lynx.gemini_startup( Lynx.asset_manager );
         }
     }
 }

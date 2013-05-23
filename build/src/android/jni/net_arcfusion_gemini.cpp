@@ -1,8 +1,10 @@
 #include <android/log.h>
 #include <jni.h>
 #include "memory.hpp"
-
+#include <android/asset_manager.h>
+#include <android/asset_manager_jni.h>
 #include "kernel_android.hpp"
+#include "filesystem.hpp"
 
 const char JNI_CLASS_PATH[] = "net/arcfusion/gemini/Lynx";
 
@@ -18,17 +20,44 @@ namespace lynx
 	} // test
 
 
-	void gemini_startup(JNIEnv * env, jclass the_class)
+	void gemini_startup(JNIEnv * env, jclass the_class, jobject jasset_manager)
 	{
 		NATIVE_LOG( "gemini_startup called\n" );
 
 		memory::startup();
 
 		_kernel = CREATE(AndroidKernel);
-		if ( kernel::startup( _kernel, "HelloWorld" ) != kernel::NoError )
+
+		// acquire the asset manager pointer
+		AAssetManager * asset_manager = AAssetManager_fromJava(env, jasset_manager);
+
+		fs::set_asset_manager(asset_manager);
+
+		if ( kernel::startup( _kernel, "TestUniversal" ) != kernel::NoError )
 		{
 			NATIVE_LOG( "kernel startup failed!" );
 		}
+
+#if 0 // testing the asset manager / paths
+		const char * filename = 0;
+		AAssetDir* assetdir = AAssetManager_openDir(asset_manager, "");
+
+		do
+		{
+			filename = AAssetDir_getNextFileName(assetdir);
+			NATIVE_LOG( "-> %s\n", filename );
+		} while( filename );
+
+
+		if ( fs::file_exists("file.txt") )
+		{
+			NATIVE_LOG( "file.txt EXISTS\n" );
+		}
+		else
+		{
+			NATIVE_LOG( "file.txt DOES NOT EXIST!\n" );
+		}
+#endif
 	} // gemini_startup
 
 
@@ -52,7 +81,7 @@ namespace lynx
 
 static JNINativeMethod method_table[] = {
 		{"test", "()V", (void*)lynx::test},
-		{"gemini_startup", "()V", (void*)lynx::gemini_startup},
+		{"gemini_startup", "(Landroid/content/res/AssetManager;)V", (void*)lynx::gemini_startup},
 		{"gemini_shutdown", "()V", (void*)lynx::gemini_shutdown},
 		{"gemini_tick", "()V", (void*)lynx::gemini_tick}
 };

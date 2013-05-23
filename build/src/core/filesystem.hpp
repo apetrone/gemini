@@ -21,6 +21,11 @@
 // -------------------------------------------------------------
 #pragma once
 
+
+#if __ANDROID__
+	struct AAssetManager;
+#endif
+
 namespace fs
 {
 	struct FileStats
@@ -59,6 +64,8 @@ namespace fs
 	bool directory_exists( const char * path, bool path_is_relative=true );
 #endif
 
-	
+#if __ANDROID__
+	void set_asset_manager( AAssetManager * asset_manager );
+#endif
 	
 }; // namespace fs

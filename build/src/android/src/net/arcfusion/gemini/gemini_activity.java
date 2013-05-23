@@ -25,13 +25,18 @@ import net.arcfusion.gemini.gemini_gl2_view;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import net.arcfusion.gemini.Lynx;
 
-public class gemini_activity extends Activity {	
+public class gemini_activity extends Activity {
+	public static final String TAG = "gemini_activity";
 	gemini_gl2_view content_view;
 	
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        Lynx.asset_manager = getAssets();
+        Log.d(TAG, "asset manager: " + Lynx.asset_manager);
         content_view = new gemini_gl2_view(getApplication());
         setContentView(content_view);
     }
