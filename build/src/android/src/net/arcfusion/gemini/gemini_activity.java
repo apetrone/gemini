@@ -21,12 +21,8 @@
 // -------------------------------------------------------------
 package net.arcfusion.gemini;
 
-import net.arcfusion.gemini.gemini_gl2_view;
-
 import android.app.Activity;
 import android.os.Bundle;
-import android.util.Log;
-import net.arcfusion.gemini.Lynx;
 
 public class gemini_activity extends Activity {
 	public static final String TAG = "gemini_activity";
@@ -36,7 +32,6 @@ public class gemini_activity extends Activity {
         super.onCreate(savedInstanceState);
         
         Lynx.asset_manager = getAssets();
-        Log.d(TAG, "asset manager: " + Lynx.asset_manager);
         content_view = new gemini_gl2_view(getApplication());
         setContentView(content_view);
     }
@@ -52,6 +47,7 @@ public class gemini_activity extends Activity {
     }
     
     @Override protected void onDestroy() {
+    	// called when removed from active task list
     	Lynx.gemini_shutdown();
     	super.onDestroy();
     }

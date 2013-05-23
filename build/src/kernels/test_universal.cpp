@@ -843,7 +843,7 @@ public:
 			
 			vb.update();
 			assets::Shader * shader = assets::find_compatible_shader( test_attribs + lastset->material->requirements );
-			//				LOGV( "shader: %i, draw tileset: %i, count: %i\n", shader->id, lastset->id, vb.last_index );
+//			LOGV( "shader: %i, draw tileset: %i, count: %i\n", shader->id, lastset->id, vb.last_index );
 			
 			rs.add_shader( shader );
 			rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
