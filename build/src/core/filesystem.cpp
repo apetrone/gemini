@@ -188,6 +188,8 @@ namespace fs
 	
 	char * file_to_buffer( const char * filename, char * buffer, int * buffer_length, bool path_is_relative )
 	{
+		long int file_size;
+		
 		if ( !buffer_length )
 		{
 			LOGE( "ERROR: file_to_buffer called with INVALID value!\n" );
@@ -201,13 +203,36 @@ namespace fs
 		}
 		
 #if __ANDROID__
+
+
+
+
 		AAsset * asset = AAssetManager_open( _asset_manager, filename, AASSET_MODE_BUFFER );
 		if ( asset )
 		{
-			*buffer_length = AAsset_getLength(asset);
-			buffer = (char*)AAsset_getBuffer(asset);
+			file_size = AAsset_getLength(asset);
+			
+			if ( buffer && *buffer_length > 0 )
+			{
+				if ( file_size > *buffer_length )
+				{
+					printf( "Request to read file size larger than buffer! (%ld > %d)\n", file_size, *buffer_length );
+					file_size = *buffer_length;
+				}
+			}
+			
+			*buffer_length = file_size;
+			if ( !buffer )
+			{
+				buffer = (char*)ALLOC( (*buffer_length)+1 );
+				memset( buffer, 0, (*buffer_length)+1 );
+			}
+			
+			AAsset_read( asset, buffer, file_size );
+			buffer[ file_size ] = 0;
 			AAsset_close(asset);
 		}
+
 #else
 		char fullpath[ MAX_PATH_SIZE ] = {0};
 		if ( path_is_relative )
@@ -219,33 +244,32 @@ namespace fs
 			xstr_ncpy( fullpath, filename, -1 );
 			platform::path::normalize( fullpath, MAX_PATH_SIZE );
 		}
-		
-		long int fileSize;
+
 		xfile_t f = xfile_open( fullpath, XF_READ );
 		if ( xfile_isopen( f ) )
 		{
 			xfile_seek( f, 0, XF_SEEK_END );
-			fileSize = xfile_tell( f );
+			file_size = xfile_tell( f );
 			xfile_seek( f, 0, XF_SEEK_BEGIN );
 			
 			if ( buffer && *buffer_length > 0 )
 			{
-				if ( fileSize > *buffer_length )
+				if ( file_size > *buffer_length )
 				{
-					printf( "Request to read file size larger than buffer! (%ld > %d)\n", fileSize, *buffer_length );
-					fileSize = *buffer_length;
+					printf( "Request to read file size larger than buffer! (%ld > %d)\n", file_size, *buffer_length );
+					file_size = *buffer_length;
 				}
 			}
 			
-			*buffer_length = fileSize;
+			*buffer_length = file_size;
 			if ( !buffer )
 			{
 				buffer = (char*)ALLOC( (*buffer_length)+1 );
 				memset( buffer, 0, (*buffer_length)+1 );
 			}
 			
-			xfile_read( f, buffer, 1, fileSize );
-			buffer[ fileSize ] = 0;
+			xfile_read( f, buffer, 1, file_size );
+			buffer[ file_size ] = 0;
 			
 			xfile_close( f );
 		}

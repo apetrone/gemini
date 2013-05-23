@@ -8,3 +8,5 @@ APP_STL := gnustl_static
 # stlport_static -> Use STLport built as a static library.
 # stlport_shared -> Use STLport built as a shared library.
 # gnustl_static -> Use GNU libstdc++ as a static library.
+
+APP_OPTIM := debug
