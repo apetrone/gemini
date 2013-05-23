@@ -100,7 +100,10 @@ namespace lynx
 	void gemini_surface_changed(JNIEnv * env, jclass the_class, jint width, jint height)
 	{
 		NATIVE_LOG( "surface changed to %i x %i\n", width, height );
-		_kernel->on_surface_changed(width, height);
+		if ( _kernel )
+		{
+			_kernel->on_surface_changed(width, height);
+		}
 	} // gemini_surface_changed
 }; // namespace lynx
 
