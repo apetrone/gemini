@@ -151,6 +151,13 @@ void RenderStream::add_uniform3f( int location, const glm::vec3 * data )
 	stream.write( data );
 }
 
+void RenderStream::add_uniform4f( int location, const glm::vec4 * data )
+{
+	add_command( renderer::DC_UNIFORM4f );
+	stream.write( location );
+	stream.write( data );
+}
+
 void RenderStream::add_uniform_matrix4( int location, const glm::mat4 * data )
 {
 	add_command( renderer::DC_UNIFORMMATRIX4 );
@@ -183,9 +190,14 @@ void RenderStream::add_material( assets::Material * material, assets::Shader * s
 		{
 			add_uniform1i( uniform_location, parameter->intValue );
 		}
-		else if ( renderstate == renderer::DC_UNIFORM3f || renderstate == renderer::DC_UNIFORM4f )
+		else if ( renderstate == renderer::DC_UNIFORM3f )
 		{
+			assert(renderstate == renderer::DC_UNIFORM3f);
 			add_uniform3f( uniform_location, (glm::vec3*)&parameter->vecValue );
+		}
+		else if ( renderstate == renderer::DC_UNIFORM4f )
+		{
+			add_uniform4f( uniform_location, (glm::vec4*)&parameter->vecValue );
 		}
 		else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_2D )
 		{
@@ -195,5 +207,6 @@ void RenderStream::add_material( assets::Material * material, assets::Shader * s
 		{
 			// ...
 		}
+
 	}
 }

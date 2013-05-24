@@ -315,6 +315,17 @@ void c_uniform3f( MemoryStream & stream, renderer::IRenderDriver & renderer )
 	gl.CheckError( "uniform3f" );
 }
 
+void c_uniform4f( MemoryStream & stream, renderer::IRenderDriver & renderer )
+{
+	int uniform_location;
+	float * value;
+	stream.read( uniform_location );
+	stream.read( value );
+	
+	gl.Uniform4fv( uniform_location, 1, value );
+	gl.CheckError( "uniform4f" );
+}
+
 void c_uniform_sampler2d( MemoryStream & stream, renderer::IRenderDriver & renderer )
 {
 	int uniform_location;
@@ -493,7 +504,7 @@ render_command_function commands[] = {
 	c_uniform3f, // uniform3f
 	c_noop,
 	
-	c_noop, // uniform4f
+	c_uniform4f, // uniform4f
 	c_noop,
 	
 	c_uniform_sampler2d, // uniform_sampler_2d

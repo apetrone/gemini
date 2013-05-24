@@ -139,7 +139,7 @@ public:
 		geo.uvs = CREATE_ARRAY( renderer::UV, 4 );
 		
 		geo.draw_type = renderer::DRAW_INDEXED_TRIANGLES;
-		geo.material_id = assets::load_material("materials/gametiles")->Id();
+		geo.material_id = assets::load_material("materials/red")->Id();
 		
 		glm::vec3 * vertices = geo.vertices;
 		Color * colors = geo.colors;

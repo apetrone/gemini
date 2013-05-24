@@ -55,7 +55,8 @@ struct RenderStream
 	void add_state( renderer::DriverState state, int enable );
 	void add_blendfunc( renderer::RenderBlendType source, renderer::RenderBlendType destination );
 	void add_shader( renderer::ShaderProgram * shader );	
-	void add_uniform3f( int location, const glm::vec3 * data );	
+	void add_uniform3f( int location, const glm::vec3 * data );
+	void add_uniform4f( int location, const glm::vec4 * data );
 	void add_uniform_matrix4( int location, const glm::mat4 * data );	
 	void add_draw_call( renderer::VertexBuffer * vertexbuffer );
 	void add_material( assets::Material * material, assets::Shader * shader );

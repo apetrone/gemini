@@ -226,8 +226,6 @@ GLCore32::~GLCore32()
 	gemgl_shutdown( gl );
 }
 
-
-
 void c_shader( MemoryStream & stream, GLCore32 & renderer )
 {
 	ShaderProgram shader_program;
@@ -275,6 +273,17 @@ void c_uniform3f( MemoryStream & stream, GLCore32 & renderer )
 	
 	gl.Uniform3fv( uniform_location, 1, value );
 	gl.CheckError( "uniform3f" );
+}
+
+void c_uniform4f( MemoryStream & stream, GLCore32 & renderer )
+{
+	int uniform_location;
+	float * value;
+	stream.read( uniform_location );
+	stream.read( value );
+	
+	gl.Uniform4fv( uniform_location, 1, value );
+	gl.CheckError( "uniform4f" );
 }
 
 void c_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
@@ -468,7 +477,7 @@ render_command_function commands[] = {
 	c_uniform3f, // uniform3f
 	c_noop,
 	
-	c_noop, // uniform4f
+	c_uniform4f, // uniform4f
 	c_noop,
 	
 	c_uniform_sampler2d, // uniform_sampler_2d
