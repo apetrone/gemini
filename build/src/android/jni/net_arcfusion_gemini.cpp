@@ -54,7 +54,7 @@ namespace lynx
 
 		fs::set_asset_manager(asset_manager);
 
-		if ( kernel::startup( _kernel, "TestUniversal" ) != kernel::NoError )
+		if ( kernel::startup( _kernel, "TestMobile" ) != kernel::NoError )
 		{
 			NATIVE_LOG( "kernel startup failed!" );
 		}

@@ -379,7 +379,7 @@ class TestUniversal : public kernel::IApplication,
 		glm::vec3 * camera_position;
 	};
 	
-	void stream_geometry( RenderStream & rs, assets::Geometry * geo, GeneralParameters & gp )
+	static void stream_geometry( RenderStream & rs, assets::Geometry * geo, GeneralParameters & gp )
 	{
 		assert( geo != 0 );
 		assets::Material * material = assets::material_by_id( geo->material_id );
@@ -728,7 +728,7 @@ public:
 		rs.add_clear( 0x00004000 | 0x00000100 );
 		rs.add_viewport( 0, 0, (int)params.render_width, (int)params.render_height );
 
-		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
+//		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
 		rs.run_commands();
 		rs.rewind();
 
@@ -887,11 +887,11 @@ public:
 		}
 
 #endif
-		rs.run_commands();
+//		rs.run_commands();
 
-		font::draw_string( test_font, 50, 50, "Now is the time for all good men to come to the aid of the party", Color(255,0,0,255) );
-		font::draw_string( test_font, 50, 75, "Ја могу да једем стакло", Color(255, 255, 255, 255) );
-		font::draw_string( test_font, 50, 100, "私はガラスを食べられます。それは私を傷つけません。", Color(0, 128, 255, 255) );
+//		font::draw_string( test_font, 50, 50, "Now is the time for all good men to come to the aid of the party", Color(255,0,0,255) );
+//		font::draw_string( test_font, 50, 75, "Ја могу да једем стакло", Color(255, 255, 255, 255) );
+//		font::draw_string( test_font, 50, 100, "私はガラスを食べられます。それは私を傷つけません。", Color(0, 128, 255, 255) );
 	}
 
 	virtual void shutdown( kernel::Params & params )

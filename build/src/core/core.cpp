@@ -64,19 +64,26 @@ namespace core
 			core::Error error( 0 );
 			
 			int total_log_handlers = 0;
+						
+			// setup system log
+			log_init( &_system_log );
 			
+			log_set_default_log( &_system_log );
+			
+#ifndef __ANDROID__
 			log_handler_t stdout_logger;
 			memset( &stdout_logger, 0, sizeof(log_handler_t) );
 			stdout_logger.message = stdout_message;
 			stdout_logger.open = stdout_open;
 			stdout_logger.close = stdout_close;
 			
-			// setup system log
-			log_init( &_system_log );
-			
-			log_set_default_log( &_system_log );
+			++total_log_handlers;
+			log_add_handler( &_system_log, &stdout_logger );
+#endif
 			
 #if !PLATFORM_IS_MOBILE
+
+			
 			xdatetime_t dt;
 			xtime_now( &dt );
 			char datetime_string[ GEMINI_DATETIME_STRING_MAX ];
@@ -116,10 +123,7 @@ namespace core
 			log_add_handler( &_system_log, &android_log );
 			++total_log_handlers;
 #endif
-			
-			++total_log_handlers;
-			log_add_handler( &_system_log, &stdout_logger );
-			
+						
 			if ( log_open( &_system_log ) < total_log_handlers )
 			{
 				fprintf( stderr, "Could not open one or more log handlers\n" );

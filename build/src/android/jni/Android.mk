@@ -47,6 +47,7 @@ LOCAL_SRC_FILES := 	net_arcfusion_gemini.cpp \
 					$(SRC_DIR)core/xtime.c \
 					$(SRC_DIR)kernels/helloworld.cpp \
 					$(SRC_DIR)kernels/test_universal.cpp \
+					$(SRC_DIR)kernels/test_mobile.cpp \
 					$(SRC_DIR)keyvalues.cpp \
 					$(SRC_DIR)memorystream.cpp \
 					$(SRC_DIR)util.cpp

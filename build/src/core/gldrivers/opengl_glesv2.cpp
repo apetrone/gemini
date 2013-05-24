@@ -545,6 +545,7 @@ void GLESv2::setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStream
 	stream.write( vb->gl_draw_type );
 	stream.write( vb->vertex_count );
 	stream.write( vb->index_count ); // or vertices
+//	LOGV( "draw_type: %i | vertices: %i | indices: %i\n", vb->gl_draw_type, vb->vertex_count, vb->index_count );
 } // setup_drawcall
 
 bool GLESv2::upload_texture_2d( renderer::TextureParameters & parameters )

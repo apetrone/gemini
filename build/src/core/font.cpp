@@ -138,7 +138,7 @@ namespace font
 			LOGE( "Unable to draw font: vertexstream has no room!\n" );
 		}
 		else
-		{		
+		{
 			internal::_vertexstream.fill_data( (renderer::VertexType*)data, vertex_count, 0, 0 );
 			internal::_vertexstream.update();
 			
