@@ -97,7 +97,7 @@ class gemini_gl2_view extends GLSurfaceView {
         }
 
         // android docs claim this is necessary with GL ES 2.0; let's verify that?
-        setEGLContextClientVersion(2);
+//        setEGLContextClientVersion(2);
         
         /* Setup the context factory for 2.0 rendering.
          * See ContextFactory class definition below
@@ -333,17 +333,26 @@ class gemini_gl2_view extends GLSurfaceView {
         private int[] mValue = new int[1];
     }
 
-    private static class gemini_renderer implements GLSurfaceView.Renderer {    	
-        public void onDrawFrame(GL10 gl) {
+    private static class gemini_renderer implements GLSurfaceView.Renderer
+    {   
+    	private boolean already_initialized = false;
+        public void onDrawFrame(GL10 gl)
+        {
         	Lynx.gemini_tick();
-        }
+        } // onDrawFrame
 
-        public void onSurfaceChanged(GL10 gl, int width, int height) {
+        public void onSurfaceChanged(GL10 gl, int width, int height)
+        {
         	Lynx.gemini_surface_changed(width, height);
-        }
+        } // onSurfaceChanged
 
-        public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        	Lynx.gemini_startup( Lynx.asset_manager );
-        }
+        public void onSurfaceCreated(GL10 gl, EGLConfig config)
+        {
+        	if (!already_initialized)
+        	{
+        		already_initialized = true;
+        		Lynx.gemini_startup( Lynx.asset_manager );
+        	}
+        } // onSurfaceCreated
     }
 }
