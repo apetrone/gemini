@@ -362,13 +362,13 @@ namespace assets
 		for( int i = 0; i < permutations.num_attributes; ++i, ++pid )
 		{
 			permutations.options[pid] = &permutations.attributes[i];
-			LOGV( "option: \"%s\", mask_value: %i\n", permutations.options[pid]->name.c_str(), permutations.options[pid]->mask_value );
+//			LOGV( "option: \"%s\", mask_value: %i\n", permutations.options[pid]->name.c_str(), permutations.options[pid]->mask_value );
 		}
 		
 		for( int i = 0; i < permutations.num_uniforms; ++i, ++pid )
 		{
 			permutations.options[pid] = &permutations.uniforms[i];
-			LOGV( "option: \"%s\", mask_value: %i\n", permutations.options[pid]->name.c_str(), permutations.options[pid]->mask_value );
+//			LOGV( "option: \"%s\", mask_value: %i\n", permutations.options[pid]->name.c_str(), permutations.options[pid]->mask_value );
 		}
 
 
