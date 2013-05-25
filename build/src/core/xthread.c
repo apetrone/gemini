@@ -147,9 +147,16 @@ int xthread_selfid()
 int xthread_join( xthread_t * t, int timeout_milliseconds )
 {
 	int ret;
-	
-	if ( t && (t->state != XTHREAD_STATE_ACTIVE) )
+
+	if ( !t )
+	{
 		return 0;
+	}
+
+	if ( t->state != XTHREAD_STATE_ACTIVE )
+	{
+		return 0;
+	}
 
 #if _WIN32
 

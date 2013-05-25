@@ -562,7 +562,9 @@ void GLESv2::setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStream
 bool GLESv2::upload_texture_2d( renderer::TextureParameters & parameters )
 {
 	GLenum source_format = image_to_source_format( parameters.channels );
-	GLenum internal_format = image_to_internal_format( parameters.image_flags );
+	
+	// According to the documentation, "internalformat must match format. No conversion between formats is supported during texture image processing."
+	GLenum internal_format = source_format;
 	GLenum error = GL_NO_ERROR;
 	
 	// bind the texture so it is active
@@ -606,10 +608,7 @@ bool GLESv2::upload_texture_2d( renderer::TextureParameters & parameters )
 	gl.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	error = gl.CheckError( "upload_texture_2d - GL_TEXTURE_MAG_FILTER" );
 	FAIL_IF_GLERROR(error);
-	
-	// According to the documentation, "internalformat must match format. No conversion between formats is supported during texture image processing."
-	internal_format = source_format;
-	
+		
 	gl.TexImage2D( GL_TEXTURE_2D, 0, internal_format, parameters.width, parameters.height, 0, source_format, GL_UNSIGNED_BYTE, parameters.pixels );
 	error = gl.CheckError( "upload_texture_2d - glTexImage2D" );
 	FAIL_IF_GLERROR(error);

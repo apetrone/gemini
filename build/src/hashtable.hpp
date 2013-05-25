@@ -65,7 +65,7 @@ private:
 			{
 				DEALLOC(key);
 				Bucket * bucket = next;
-				Bucket * last = bucket;
+				Bucket * last = 0;
 				
 				while( bucket )
 				{

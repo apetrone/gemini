@@ -413,11 +413,15 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 
 	// link internal functions
 	gl.CheckError = gemgl_check_error;
-	
-	LOGV( "GL_VENDOR: %s\n", gl.GetString(GL_VENDOR));
-	LOGV( "GL_RENDERER: %s\n", gl.GetString( GL_RENDERER ));
-	LOGV( "GL_VERSION: %s\n", gl.GetString( GL_VERSION ));
-	LOGV( "GL_SHADING_LANGUAGE_VERSION: %s\n", gl.GetString( GL_SHADING_LANGUAGE_VERSION));
+
+	assert( gl.GetString != 0 );
+	if ( gl.GetString )
+	{
+		LOGV( "GL_VENDOR: %s\n", gl.GetString(GL_VENDOR));
+		LOGV( "GL_RENDERER: %s\n", gl.GetString( GL_RENDERER ));
+		LOGV( "GL_VERSION: %s\n", gl.GetString( GL_VERSION ));
+		LOGV( "GL_SHADING_LANGUAGE_VERSION: %s\n", gl.GetString( GL_SHADING_LANGUAGE_VERSION));
+	}
 
 	return 1;
 } // gl_startup

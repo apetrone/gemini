@@ -243,7 +243,11 @@ namespace kernel
 		}
 		
 		// application config
-		ApplicationResult config_result = _active_application->config( kernel::instance()->parameters() );
+		ApplicationResult config_result = Failure;
+		if ( _active_application )
+		{
+			config_result = _active_application->config( kernel::instance()->parameters() );
+		}
 		
 		// evaluate config result
 		kernel::instance()->post_application_config( config_result );

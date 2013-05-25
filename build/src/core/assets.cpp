@@ -810,7 +810,6 @@ namespace assets
 		Json::Value type = root["type"];
 		Json::Value shader = root["shader"];
 		
-		unsigned int texture_flags = image::F_RGBA;
 		material->flags = 0;
 		material->num_parameters = 0;
 		material->parameters = 0;
@@ -826,12 +825,10 @@ namespace assets
 		{
 			if ( type.asString() == "alpha" )
 			{
-				texture_flags |= image::F_ALPHA;
 				material->flags |= Material::BLENDING;
 			}
 			else if ( type.asString() == "cubemap" )
 			{
-				texture_flags = image::F_RGBA | image::F_CLAMP;
 				material->flags |= Material::CUBEMAP;
 			}
 		}
@@ -877,7 +874,7 @@ namespace assets
 					Json::Value value = plist.get( "value", "" );
 					if ( !value.isNull() )
 					{
-						param_flags |= PF_VALUE;
+//						param_flags |= PF_VALUE;
 						parameter->intValue = atoi( value.asString().c_str() );
 //						LOGV( "param value: %i\n", parameter->intValue );
 					}
@@ -962,12 +959,12 @@ namespace assets
 					
 					if ( param_flags & PF_VALUE )
 					{
-						texture_flags = image::F_RGBA | image::F_CLAMP;
-						assets::Texture * tex = 0; //assets::loadCubemap( texture_param.asString().c_str(), texture_flags );
-						parameter->intValue = tex->texture_id;
+						LOGW( "cubemap not implemented!\n" );
+//						assets::Texture * tex = 0; //assets::loadCubemap( texture_param.asString().c_str(), texture_flags );
+//						parameter->intValue = tex->texture_id;
 //						LOGV( "param value: %i\n", parameter->intValue );
 						
-						parameter->texture_unit = texture_unit_for_map( parameter->name );
+//						parameter->texture_unit = texture_unit_for_map( parameter->name );
 //						LOGV( "texture unit: %i\n", parameter->texture_unit );
 					}
 					else
@@ -977,11 +974,11 @@ namespace assets
 				}
 				else if ( parameter->type == MP_VEC4 )
 				{
-					param_flags |= PF_VALUE;
+//					param_flags |= PF_VALUE;
 					Json::Value value = plist.get( "value", Json::nullValue );
 					if ( value.isNull() )
 					{
-						param_flags &= ~PF_VALUE;
+//						param_flags &= ~PF_VALUE;
 						LOGW( "Unable to find value for \"vec4\" type\n" );
 					}
 					else
@@ -990,7 +987,7 @@ namespace assets
 						if ( results < 4 )
 						{
 							LOGW( "Unable to parse \"vec4\" type\n" );
-							param_flags &= ~PF_VALUE;
+//							param_flags &= ~PF_VALUE;
 						}
 						else
 						{
@@ -1177,7 +1174,7 @@ namespace assets
 		
 		Geometry * geometry;
 		int gid = 0;
-		int vnid = 0;
+//		int vnid = 0;
 		Json::ValueIterator git = geometry_list.begin();
 		for( ; git != geometry_list.end(); ++git )
 		{

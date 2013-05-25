@@ -38,7 +38,7 @@ namespace image
 		int width_mask = (width >> 1) - 1;
 		int height_mask = (height >> 1) - 1;
 		
-		const Color * color = &color1;
+		const Color * color = 0;
 	
 		assert( pixels != 0 );
 

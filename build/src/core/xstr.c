@@ -113,7 +113,23 @@ const char * xstr_filefrompath( const char * path )
 int xstr_nicmp( const char * s1, const char * s2, size_t count )
 {
 	size_t s1_len;
-	size_t s2_len;	
+	size_t s2_len;
+	
+	if ( !s1 || !s2 )
+	{
+		if ( s1 )
+		{
+			return 1;
+		}
+		else if ( s2 )
+		{
+			return -1;
+		}
+		else
+		{
+			return 0;
+		}
+	}
 	
 	// size_t is implemented as 'unsigned int' on some platforms (Windows...)
 	// use zero to mean: pick the smallest string
