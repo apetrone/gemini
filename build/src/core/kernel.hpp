@@ -141,7 +141,7 @@ namespace kernel
 	#define IMPLEMENT_APPLICATION( className ) \
 		kernel::Registrar kr_##className( #className, className::create )
 	
-	Error startup( IKernel * kernel_instance, const char * application_name );
+	Error startup( IKernel * kernel_instance );
 	void shutdown();
 	void update();
 	void tick();

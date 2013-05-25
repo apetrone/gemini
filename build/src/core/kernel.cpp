@@ -32,6 +32,7 @@
 #include "audio.hpp"
 #include "input.hpp"
 #include "assets.hpp"
+#include "configloader.hpp"
 
 #if LINUX
 	#include <stdlib.h> // for qsort
@@ -152,6 +153,46 @@ namespace kernel
 			TimeStepFilter tsa;
 		};
 		
+		
+		struct BootConfig
+		{
+			StackString<64> kernel_name;
+		};
+		
+		
+		util::ConfigLoadStatus boot_conf_loader( const Json::Value & root, void * data )
+		{
+			BootConfig * cfg = (BootConfig*)data;
+			if ( !cfg )
+			{
+				return util::ConfigLoad_Failure;
+			}
+			
+			LOGV( "loading boot.conf...\n" );
+			
+			cfg->kernel_name = root["kernel_name"].asString().c_str();
+		
+		
+			return util::ConfigLoad_Success;
+		}
+		
+		bool load_boot_config( BootConfig & boot_config )
+		{
+			bool success = util::json_load_with_callback( "conf/boot.conf", boot_conf_loader, &boot_config, true );
+			if ( !success )
+			{
+				LOGV( "Unable to locate boot.conf.\n" );
+				// load sane defaults
+				boot_config.kernel_name = "HelloWorld";
+			}
+			
+			return success;
+		} // load_boot_config
+		
+		
+
+
+		
 		State _kernel_state;
 	}; // namespace _internal
 	
@@ -191,7 +232,7 @@ namespace kernel
 	} // load_application
 	
 	
-	Error startup( IKernel * kernel_instance, const char * application_name )
+	Error startup( IKernel * kernel_instance )
 	{
 		// set instance
 		_kernel = kernel_instance;
@@ -234,11 +275,15 @@ namespace kernel
 		// ask the kernel to register services
 		_kernel->register_services();
 		
+		// load boot config
+		_internal::BootConfig boot_config;
+		_internal::load_boot_config( boot_config );
+		
 		// load application
-		core_error = load_application( application_name );
+		core_error = load_application( boot_config.kernel_name() );
 		if ( core_error.failed() )
 		{
-			fprintf( stderr, "Fatal error loading application '%s' -> %s, aborting.\n", application_name, core_error.message );
+			fprintf( stderr, "Fatal error loading application '%s' -> %s, aborting.\n", boot_config.kernel_name(), core_error.message );
 			return kernel::ApplicationFailure;
 		}
 		

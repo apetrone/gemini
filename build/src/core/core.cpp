@@ -149,7 +149,7 @@ namespace core
 	{
 	}
 	
-	
+
 	
 	Error startup()
 	{
@@ -184,7 +184,6 @@ namespace core
 			fprintf( stderr, "failed to open logging handlers: %s\n", error.message );
 			return error;
 		}
-		
 		
 		LOGV( "setting root to '%s', content: '%s'\n", fs::root_directory(), fs::content_directory() );
 		

@@ -32,7 +32,7 @@ namespace kernel
 	Error main( IKernel * kernel_instance, const char * kernel_name )
 	{
 		// attempt kernel startup, mostly initializing core systems
-		Error error = startup( kernel_instance, kernel_name );
+		Error error = startup( kernel_instance );
 		if ( error != kernel::NoError )
 		{
 			fprintf( stderr, "Kernel startup failed with kernel code: %i\n", error );
