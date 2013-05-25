@@ -29,9 +29,9 @@
 #include "camera.hpp"
 
 #define FONT_TEST 1
-#define MODEL_TEST 0
+#define MODEL_TEST 1
 
-#define DRAW_INDEXED 0 // enable this (1) to draw using indices; disable (0) to use draw_arrays
+#define DRAW_INDEXED 1 // enable this (1) to draw using indices; disable (0) to use draw_arrays
 
 struct GeneralParameters
 {
@@ -148,7 +148,7 @@ public:
 		geo.draw_type = renderer::DRAW_TRIANGLES;
 #endif
 
-		const char * material_name = "materials/gametiles";
+		const char * material_name = "materials/default";
 		geo.material_id = assets::load_material(material_name)->Id();
 		LOGV( "material_name = '%s', geo.material_id = %i\n", material_name, geo.material_id );
 		
@@ -161,17 +161,17 @@ public:
 		uvs[0].v = 0;
 		
 		vertices[1] = glm::vec3(0, TEST_SIZE, 0);
-		colors[1].set( 255, 255, 255 );
+		colors[1].set( 0, 0, 255, 64 );
 		uvs[1].u = 0;
 		uvs[1].v = 1;
 		
 		vertices[2] = glm::vec3(TEST_SIZE, TEST_SIZE, 0);
-		colors[2].set( 255, 255, 255 );
+		colors[2].set( 0, 255, 0, 127 );
 		uvs[2].u = 1;
 		uvs[2].v = 1;
 		
 		vertices[3] = glm::vec3(TEST_SIZE, 0, 0);
-		colors[3].set( 255, 255, 255 );
+		colors[3].set( 255, 0, 0 );
 		uvs[3].u = 1;
 		uvs[3].v = 0;
 		
@@ -198,12 +198,14 @@ public:
 		
 		// setup global rendering state
 		rs.add_clearcolor( 0.15, 0.10, 0.25, 1.0f );
-		rs.add_clear( 0x00004000 ); //  | 0x00000100
+		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
 		rs.add_viewport( 0, 0, (int)params.render_width, (int)params.render_height );
 		
-		//rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
+//		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
+		rs.add_state( renderer::STATE_BLEND, 1 );
+		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+		rs.run_commands();
 		
-
 #if MODEL_TEST
 		Camera camera;
 		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
@@ -216,7 +218,8 @@ public:
 		gp.modelview_matrix = &camera.matCam;
 		gp.projection_project = &camera.matProj;
 		gp.object_matrix = &objectMatrix;
-		
+
+		rs.rewind();		
 		stream_geometry(rs, &geo, gp);
 #endif
 
@@ -224,7 +227,7 @@ public:
 
 
 #if FONT_TEST
-		font::draw_string( test_font, 50, 50, "Now is the time for all good men to come to the aid of the party", Color(255,0,0,255) );
+		font::draw_string( test_font, 50, 50, "Now is the time for all good men to come to the aid of the party", Color(64,255,192,255) );
 #endif
 	}
 	

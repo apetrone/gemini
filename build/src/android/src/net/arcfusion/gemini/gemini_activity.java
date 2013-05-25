@@ -32,7 +32,7 @@ public class gemini_activity extends Activity {
         super.onCreate(savedInstanceState);
         
         Lynx.asset_manager = getAssets();
-        content_view = new gemini_gl2_view(getApplication());
+        content_view = new gemini_gl2_view(getApplication(), true, 24, 0);
         setContentView(content_view);
     }
 

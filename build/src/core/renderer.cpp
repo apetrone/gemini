@@ -245,13 +245,11 @@ namespace renderer
 	{
 		if ( this->uniforms )
 		{
-			LOGV( "D uniforms: %p\n", this->uniforms );
 			DESTROY_ARRAY(ShaderKeyValuePair, this->uniforms, this->total_uniforms);
 		}
 		
 		if ( this->attributes )
 		{
-			LOGV( "D attributes: %p\n", this->attributes );
 			DESTROY_ARRAY(ShaderKeyValuePair, this->attributes, this->total_attributes);
 		}
 		
@@ -266,7 +264,6 @@ namespace renderer
 		this->total_attributes = attributes_count;
 		assert( this->attributes == 0 );
 		this->attributes = CREATE_ARRAY( ShaderKeyValuePair, attributes_count );
-		LOGV( "A shader->attributes: %p\n", this->attributes );
 		for( unsigned int i = 0; i < attributes_count; ++i )
 		{
 			this->attributes[i].first = 0;
@@ -278,7 +275,6 @@ namespace renderer
 		this->total_uniforms = uniform_count;
 		assert( this->uniforms == 0 );
 		this->uniforms = CREATE_ARRAY( ShaderKeyValuePair, uniform_count );
-		LOGV( "A shader->uniforms: %p\n", this->uniforms );
 		for( unsigned int i = 0; i < uniform_count; ++i )
 		{
 			this->uniforms[i].first = 0;

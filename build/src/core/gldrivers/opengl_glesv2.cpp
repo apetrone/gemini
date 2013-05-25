@@ -336,6 +336,7 @@ void c_uniform_sampler2d( MemoryStream & stream, renderer::IRenderDriver & rende
 	stream.read( texture_unit );
 	stream.read( texture_id );
 	
+//	LOGV( "sampler2d: texture_unit: %i, texture_id: %i, uniform: %i\n", texture_unit, texture_id, uniform_location );
 	
 	//	if ( last_texture[ texture_unit ] != texture_id )
 	{

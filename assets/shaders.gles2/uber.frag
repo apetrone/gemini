@@ -2,7 +2,7 @@
 
 precision highp float;
 
-#if defined(D_VERTEX_COLORS) && !defined(D_DIFFUSE_COLOR) && !defined(D_DIFFUSE_MAP)
+#if defined(D_VERTEX_COLORS) && !defined(D_DIFFUSE_COLOR) //&& !defined(D_DIFFUSE_MAP)
 	varying vec4 ps_Color;
 #endif
 
@@ -39,7 +39,7 @@ precision highp float;
 
 void main()
 {
-	vec4 color = vec4( 0.0, 1.0, 1.0, 1.0 );
+	vec4 color = vec4( 1.0, 1.0, 1.0, 1.0 );
 	vec4 specularColor = vec4(1.0);
 	vec4 specularContribution = vec4(0.0, 0.0, 0.0, 0.0);
 	float specularLevel = 0.45;
@@ -98,8 +98,8 @@ void main()
 #endif
 
 
-#if defined(D_VERTEX_COLORS) && !defined(D_DIFFUSE_COLOR) && !defined(D_DIFFUSE_MAP)
-	color = ps_Color;
+#if defined(D_VERTEX_COLORS) && !defined(D_DIFFUSE_COLOR) //&& !defined(D_DIFFUSE_MAP)
+	color *= ps_Color;
 #endif
 
 #if defined(D_VERTEX_NORMALS) && defined(D_LIGHT_POSITION) && !defined(D_CUBEMAP)

@@ -59,7 +59,6 @@ namespace lynx
 			NATIVE_LOG( "kernel startup failed!" );
 		}
 
-
 #if 0 // testing the asset manager / paths
 		const char * filename = 0;
 		AAssetDir* assetdir = AAssetManager_openDir(asset_manager, "");

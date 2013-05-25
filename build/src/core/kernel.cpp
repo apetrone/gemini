@@ -209,6 +209,7 @@ namespace kernel
 	core::Error load_application( const char * application_name )
 	{
 		core::Error error(0);
+		LOGV( "Loading kernel '%s'\n", application_name );
 		
 		// search for the named kernel instance (passed on the command line or overriden above)
 		ApplicationCreator creator = _internal::find_application_by_name( application_name );

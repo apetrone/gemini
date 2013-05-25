@@ -84,6 +84,7 @@ namespace font
 	
 	unsigned int f_generate_texture( int width, int height, void * pixels )
 	{
+		
 		renderer::IRenderDriver * driver = renderer::driver();
 		renderer::TextureParameters params;
 		
@@ -93,8 +94,17 @@ namespace font
 		params.height = height;
 		params.pixels = (unsigned char*)pixels;
 		
-		driver->generate_texture( params );
-		driver->upload_texture_2d( params );
+		if ( !driver->generate_texture( params ) )
+		{
+			LOGE( "[font] generate texture failed!\n" );
+		}
+		
+		if ( !driver->upload_texture_2d( params ) )
+		{
+			LOGE( "[font] upload of 2d texture failed!\n" );
+		}
+		
+		LOGV( "[font] generate texture %i x %i -> %i\n", width, height, params.texture_id );
 		return params.texture_id;
 	}
 	
@@ -132,7 +142,7 @@ namespace font
 		params.texture_id = texture_id;
 
 		renderer::VertexStream & vs = internal::_vertexstream;
-		
+
 		if ( !vs.has_room( 128, 0 ) )
 		{
 			LOGE( "Unable to draw font: vertexstream has no room!\n" );
@@ -144,7 +154,7 @@ namespace font
 			
 			assets::Shader * shader = internal::_shader;
 			
-			glm::mat4 modelview_matrix;
+			glm::mat4 modelview_matrix = glm::mat4(1.0f);
 			glm::mat4 projection_matrix;
 			projection_matrix = glm::ortho(0.f, (float)kernel::instance()->parameters().render_width, 0.f, (float)kernel::instance()->parameters().render_height, -1.0f, 1.0f );
 			
@@ -190,17 +200,12 @@ namespace font
 		cb.generate_texture = f_generate_texture;
 		cb.update_texture = f_update_texture;
 		cb.delete_texture = f_delete_texture;
-		
-		
 		cb.draw_with_texture = f_draw_with_texture;
-		
 		
 		// this must be called before any sth_create commands
 		sth_set_render_callbacks( &cb );
 		
 		internal::_stash = sth_create( 512, 512 );
-
-
 		internal::_shader = CREATE( assets::Shader );
 
 		assets::Shader * shader = internal::_shader;
@@ -248,28 +253,23 @@ namespace font
 		RenderStream rs;
 
 		// setup global rendering state
-//		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
-//		rs.add_state( renderer::STATE_BLEND, 1 );
-//		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
+		rs.add_state( renderer::STATE_BLEND, 1 );
+		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 		rs.run_commands();
-		
-		
-		// draw characters
-		// ...
+				
+		// draw
 		sth_begin_draw( internal::_stash );
-
 		float width = 0;
 		unsigned int vcolor = STH_RGBA(color.r, color.g, color.b, color.a);
 		sth_draw_text( internal::_stash, fontid, handle->font_size, x, r_height-y, vcolor, utf8, &width );
-
-
 		sth_end_draw( internal::_stash );
 		
 		// restore state
-//		rs.rewind();
-//		rs.add_state( renderer::STATE_BLEND, 0 );
-//		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
-//		rs.run_commands();
+		rs.rewind();
+		rs.add_state( renderer::STATE_BLEND, 0 );
+		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
+		rs.run_commands();
 	} // draw_string
 	
 	unsigned int measure_height( font::Handle fontid )

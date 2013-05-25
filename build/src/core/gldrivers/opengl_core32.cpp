@@ -388,7 +388,6 @@ void c_drawcall( MemoryStream & stream, GLCore32 & renderer )
 	stream.read( num_indices );
 	
 	assert( vertex_buffer != 0 );
-//	assert( draw_type == DRAW_INDEXED_TRIANGLES && num_indices == 0 );
 	if ( num_indices > 0 )
 	{
 		renderer.vertexbuffer_draw_indices( vertex_buffer, num_indices );

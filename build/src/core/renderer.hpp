@@ -68,6 +68,11 @@ namespace renderer
 		STATE_DEPTH_TEST,
 	}; // DriverState
 	
+	enum RenderClearFlags
+	{
+		CLEAR_COLOR_BUFFER = 0x00004000,
+		CLEAR_DEPTH_BUFFER = 0x00000100
+	};
 	
 	enum RenderBlendType
 	{
@@ -215,16 +220,11 @@ namespace renderer
 	}; // TextureParameters
 	
 	
-	class Font
-	{
-	}; // Font
-	
 	struct BlendParameters
 	{
 		unsigned int source;
 		unsigned int destination;
 	}; // BlendParameters
-	
 	
 	
 	struct ShaderKeyValuePair
@@ -236,8 +236,7 @@ namespace renderer
 		char * first;
 		int second;
 	};
-	
-//	typedef std::pair<char*, int> ShaderKeyValuePair;
+
 	struct ShaderParameters
 	{
 		unsigned int total_uniforms;

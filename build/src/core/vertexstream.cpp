@@ -33,7 +33,7 @@ namespace renderer
 	{
 		total_vertices = max_vertices;
 		total_indices = 0;
-		vertices = new VertexType[ (vertex_stride*total_vertices) ];
+		vertices = (VertexType*)ALLOC(vertex_stride*total_vertices);
 		last_vertex = 0;
 		last_index = 0;
 		highest_index = 0;
@@ -41,7 +41,7 @@ namespace renderer
 
 		if ( max_indices > 0 )
 		{
-			indices = new IndexType[ max_indices ];
+			indices = (IndexType*)ALLOC( sizeof(IndexType) * max_indices );
 			total_indices = max_indices;
 		}
 	}
@@ -57,13 +57,13 @@ namespace renderer
 	{
 		if ( vertices )
 		{
-			delete [] vertices;
+			DEALLOC(vertices);
 			vertices = 0;
 		}
 
 		if ( indices )
 		{
-			delete [] indices;
+			DEALLOC(indices);
 			indices = 0;
 		}
 	} // dealloc

@@ -610,7 +610,7 @@ public:
 
 		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.5f, 255.0f );
 
-		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
+//		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
 //		camera.move_speed = 100;
 		
 		alpha = 0;

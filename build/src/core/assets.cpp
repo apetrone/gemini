@@ -526,8 +526,7 @@ namespace assets
 			//shader->attributes = CREATE_ARRAY( renderer::ShaderKeyValuePair, total_attributes );
 			//shader->total_attributes = total_attributes;
 			shader->alloc_attributes( total_attributes );
-			LOGV( "A shader->attributes: %p\n", shader->attributes );
-			
+//			LOGV( "A shader->attributes: %p\n", shader->attributes );
 			for( int attrib_id = 0; attrib_id < total_attributes; ++attrib_id )
 			{
 				ShaderKeyValuePair * kp = &shader->attributes[ attrib_id ];
@@ -537,10 +536,9 @@ namespace assets
 			
 			// setup uniforms
 			//shader->uniforms = CREATE_ARRAY( renderer::ShaderKeyValuePair, total_uniforms );
-			
 			//shader->total_uniforms = total_uniforms;
 			shader->alloc_uniforms( total_uniforms );
-			LOGV( "A shader->uniforms: %p\n", shader->uniforms );
+//			LOGV( "A shader->uniforms: %p\n", shader->uniforms );
 			for( int uniform_id = 0; uniform_id < total_uniforms; ++uniform_id )
 			{
 				ShaderKeyValuePair * kp = &shader->uniforms[ uniform_id ];
@@ -1538,7 +1536,7 @@ namespace assets
 			
 		// load shader permutations
 		_shader_permutations = CREATE( ShaderPermutations );
-//		compile_shader_permutations();
+		compile_shader_permutations();
 		
 		// setup default material
 		_default_material = mat_lib->allocate_asset();
