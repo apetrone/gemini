@@ -45,7 +45,7 @@
 
 #include "font.hpp"
 
-#define TEST_2D 1
+#define TEST_2D 0
 
 glm::mat4 objectMatrix;
 glm::vec3 light_position = glm::vec3( 0, 2, 0 );
@@ -384,29 +384,29 @@ class TestUniversal : public kernel::IApplication,
 		assert( geo != 0 );
 		assets::Material * material = assets::material_by_id( geo->material_id );
 		assert( material != 0 );
-//		LOGV( "material: %i\n", material->Id() );
+		//		LOGV( "material: %i\n", material->Id() );
 		assets::Shader * shader = assets::find_compatible_shader( geo->attributes + material->requirements + gp.global_params );
 		assert( shader != 0 );
-
+		
 		if ( !shader )
 		{
 			LOGE( "Unable to find shader!\n" );
 			return;
 		}
 		
-//		LOGV( "binding shader: %i\n", shader->id );
+		//		LOGV( "binding shader: %i\n", shader->id );
 		rs.add_shader( shader );
 		
 		if ( gp.global_params > 0 )
 		{
-			rs.add_uniform3f( shader->get_uniform_location("lightPosition"), &light_position );
-			rs.add_uniform3f( shader->get_uniform_location("cameraPosition"), gp.camera_position );
+			//		rs.add_uniform3f( shader->get_uniform_location("lightPosition"), &light_position );
+			//		rs.add_uniform3f( shader->get_uniform_location("cameraPosition"), gp.camera_position );
 		}
 		
 		rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), gp.modelview_matrix );
 		rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), gp.projection_project );
 		rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), gp.object_matrix );
-				
+		
 		rs.add_material( material, shader );
 		
 		rs.add_draw_call( geo->vertexbuffer );
@@ -599,14 +599,16 @@ public:
 		}
 #endif
 
-		mat = assets::load_material( "materials/rogue" );
-		mat2 = assets::load_material( "materials/gametiles" );
+//		mat = assets::load_material( "materials/rogue" );
+//		mat2 = assets::load_material( "materials/gametiles" );
 
 #if TEST_2D
-		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.5f, 255.0f );
+//		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.5f, 255.0f );
 #else
-		camera.perspective( 60, params.render_width, params.render_height, 0.1f, 512.0f );
+//		camera.perspective( 60, params.render_width, params.render_height, 0.1f, 512.0f );
 #endif
+
+		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.5f, 255.0f );
 
 		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
 //		camera.move_speed = 100;
@@ -630,7 +632,7 @@ public:
 		geo.uvs = CREATE_ARRAY( renderer::UV, 4 );
 		
 		geo.draw_type = renderer::DRAW_INDEXED_TRIANGLES;
-		geo.material_id = assets::load_material("materials/checker2")->Id();
+		geo.material_id = assets::load_material("materials/default")->Id();
 		
 		glm::vec3 * vertices = geo.vertices;
 		Color * colors = geo.colors;
@@ -663,7 +665,8 @@ public:
 #endif
 //		assets::load_test_shader(&this->default_shader);
 
-#if 1
+		mesh = 0;
+#if 0
 		// test mesh loading
 		mesh = assets::load_mesh( "models/plasma3" );
 		if ( mesh )
@@ -744,7 +747,7 @@ public:
 		gp.projection_project = &camera.matProj;
 		gp.object_matrix = &objectMatrix;
 		
-		
+		stream_geometry( rs, &geo, gp );
 		
 		
 #if TEST_2D
@@ -840,7 +843,6 @@ public:
 
 		if ( vb.last_index > 0 && lastset )
 		{
-			
 			vb.update();
 			assets::Shader * shader = assets::find_compatible_shader( test_attribs + lastset->material->requirements );
 //			LOGV( "shader: %i, draw tileset: %i, count: %i\n", shader->id, lastset->id, vb.last_index );
@@ -854,28 +856,13 @@ public:
 			rs.add_draw_call( vb.vertexbuffer );
 			
 			rs.run_commands();
-			vb.reset();
 		}
 
 		vb.reset();
-		//			assets::Material::Parameter * diffuse = mat2->parameter_by_name( "diffusemap" );
-		//			if ( diffuse )
-		//			{
-		//				rs.add_sampler2d( 8, 0, diffuse->intValue );
-		//			}
-		//			else
-		//			{
-		//				rs.add_sampler2d( 8, 0, tex->texture_id );
-		//			}
-		//			rs.add_draw_call( vb.vertexbuffer );
-
-	
-	//		rs.run_commands();
-	//		vb.reset();
 		
 #else
 		// rotate the model
-		objectMatrix = glm::rotate( objectMatrix, 0.5f, glm::vec3( 0, 1, 0) );
+//		objectMatrix = glm::rotate( objectMatrix, 0.5f, glm::vec3( 0, 1, 0) );
 		
 		if ( mesh )
 		{
@@ -887,9 +874,9 @@ public:
 		}
 
 #endif
-//		rs.run_commands();
+		rs.run_commands();
 
-		font::draw_string( test_font, 50, 50, "Now is the time for all good men to come to the aid of the party", Color(255,0,0,255) );
+//		font::draw_string( test_font, 50, 50, "Now is the time for all good men to come to the aid of the party", Color(255,0,0,255) );
 //		font::draw_string( test_font, 50, 75, "Ја могу да једем стакло", Color(255, 255, 255, 255) );
 //		font::draw_string( test_font, 50, 100, "私はガラスを食べられます。それは私を傷つけません。", Color(0, 128, 255, 255) );
 	}

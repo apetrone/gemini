@@ -417,10 +417,20 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	assert( gl.GetString != 0 );
 	if ( gl.GetString )
 	{
-		LOGV( "GL_VENDOR: %s\n", gl.GetString(GL_VENDOR));
-		LOGV( "GL_RENDERER: %s\n", gl.GetString( GL_RENDERER ));
-		LOGV( "GL_VERSION: %s\n", gl.GetString( GL_VERSION ));
-		LOGV( "GL_SHADING_LANGUAGE_VERSION: %s\n", gl.GetString( GL_SHADING_LANGUAGE_VERSION));
+		LOGV( "GL_VENDOR: %s\n", gl.GetString(GL_VENDOR) );
+		gl.CheckError( "glGetString" );
+		
+		LOGV( "GL_RENDERER: %s\n", gl.GetString(GL_RENDERER) );
+		gl.CheckError( "glGetString" );
+		
+		LOGV( "GL_VERSION: %s\n", gl.GetString(GL_VERSION) );
+		gl.CheckError( "glGetString" );
+		
+		LOGV( "GL_SHADING_LANGUAGE_VERSION: %s\n", gl.GetString(GL_SHADING_LANGUAGE_VERSION) );
+		gl.CheckError( "glGetString" );
+		
+		LOGV( "GL_EXTENSIONS: %s\n", gl.GetString(GL_EXTENSIONS) );
+		gl.CheckError( "glGetString" );
 	}
 
 	return 1;

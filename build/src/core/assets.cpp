@@ -1528,11 +1528,11 @@ namespace assets
 		_default_texture = texture_lib->allocate_asset();
 		_default_texture->texture_id = image::load_default_texture();
 		texture_lib->take_ownership("textures/default", _default_texture);
-		LOGV( "Loaded default texture; id = %i\n", _default_texture->texture_id );
+		LOGV( "Loaded default texture; id = %i, asset_id = %i\n", _default_texture->texture_id, _default_texture->asset_id );
 			
 		// load shader permutations
 		_shader_permutations = CREATE( ShaderPermutations );
-		compile_shader_permutations();
+//		compile_shader_permutations();
 		
 		// setup default material
 		_default_material = mat_lib->allocate_asset();
@@ -1545,6 +1545,7 @@ namespace assets
 		parameter->intValue = _default_texture->texture_id;
 		_default_material->calculate_requirements();
 		mat_lib->take_ownership( "materials/default", _default_material );
+		LOGV( "Loaded default materials; asset_id = %i\n", _default_material->asset_id );
 		
 	} // startup
 	

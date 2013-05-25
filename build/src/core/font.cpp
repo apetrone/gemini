@@ -248,9 +248,9 @@ namespace font
 		RenderStream rs;
 
 		// setup global rendering state
-		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
-		rs.add_state( renderer::STATE_BLEND, 1 );
-		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+//		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
+//		rs.add_state( renderer::STATE_BLEND, 1 );
+//		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 		rs.run_commands();
 		
 		
@@ -266,10 +266,10 @@ namespace font
 		sth_end_draw( internal::_stash );
 		
 		// restore state
-		rs.add_state( renderer::STATE_BLEND, 0 );
-		rs.rewind();
-		
-		rs.run_commands();
+//		rs.rewind();
+//		rs.add_state( renderer::STATE_BLEND, 0 );
+//		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
+//		rs.run_commands();
 	} // draw_string
 	
 	unsigned int measure_height( font::Handle fontid )

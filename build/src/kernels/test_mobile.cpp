@@ -28,8 +28,8 @@
 #include "assets.hpp"
 #include "camera.hpp"
 
-#define FONT_TEST 0
-#define MODEL_TEST 1
+#define FONT_TEST 1
+#define MODEL_TEST 0
 
 #define DRAW_INDEXED 0 // enable this (1) to draw using indices; disable (0) to use draw_arrays
 
@@ -148,7 +148,9 @@ public:
 		geo.draw_type = renderer::DRAW_TRIANGLES;
 #endif
 
-		geo.material_id = assets::load_material("materials/red")->Id();
+		const char * material_name = "materials/gametiles";
+		geo.material_id = assets::load_material(material_name)->Id();
+		LOGV( "material_name = '%s', geo.material_id = %i\n", material_name, geo.material_id );
 		
 		glm::vec3 * vertices = geo.vertices;
 		Color * colors = geo.colors;
@@ -196,10 +198,10 @@ public:
 		
 		// setup global rendering state
 		rs.add_clearcolor( 0.15, 0.10, 0.25, 1.0f );
-		rs.add_clear( 0x00004000 | 0x00000100 );
+		rs.add_clear( 0x00004000 ); //  | 0x00000100
 		rs.add_viewport( 0, 0, (int)params.render_width, (int)params.render_height );
 		
-		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
+		//rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
 		
 
 #if MODEL_TEST

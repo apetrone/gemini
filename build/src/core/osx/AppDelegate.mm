@@ -56,7 +56,7 @@ DesktopKernel _desktop_kernel( 0, 0 );
 	if ( !has_started )
 	{
 		has_started = true;
-		kernel::startup( &_desktop_kernel, "TestUniversal" );
+		kernel::startup( &_desktop_kernel, "TestMobile" );
 
 // http://fredandrandall.com/blog/2011/09/08/how-to-make-your-app-open-in-full-screen-on-lion/
 //	[window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
