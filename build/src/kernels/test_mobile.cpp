@@ -31,7 +31,7 @@
 #define FONT_TEST 0
 #define MODEL_TEST 1
 
-#define DRAW_INDEXED 1 // enable this (1) to draw using indices; disable (0) to use draw_arrays
+#define DRAW_INDEXED 0 // enable this (1) to draw using indices; disable (0) to use draw_arrays
 
 struct GeneralParameters
 {

@@ -754,11 +754,9 @@ void GLESv2::vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, u
 	}
 	else
 	{
-		
 		gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
 		stream->setup_vertex_attributes();
 		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, stream->vbo[1] );
-
 	}
 	
 	gl.DrawElements( stream->gl_draw_type, num_indices, GL_UNSIGNED_SHORT, 0 );
@@ -785,6 +783,13 @@ void GLESv2::vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned 
 		gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
 		gl.CheckError( "BindVertexArray" );
 	}
+	else
+	{
+		gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
+		gl.CheckError( "BindBuffer: GL_ARRAY_BUFFER (vertexbuffer_draw)" );
+		
+		stream->setup_vertex_attributes();
+	}
 	
 	gl.DrawArrays( stream->gl_draw_type, 0, num_vertices );
 	gl.CheckError( "DrawArrays" );
@@ -792,6 +797,11 @@ void GLESv2::vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned 
 	if ( has_oes_vertex_array_object )
 	{
 		gl.BindVertexArray( 0 );
+	}
+	else
+	{
+		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+		gl.CheckError( "BindBuffer: GL_ARRAY_BUFFER 0 (vertexbuffer_draw)" );
 	}
 }
 
@@ -862,19 +872,17 @@ void GLESv2::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer
 	stream->upload_interleaved_data( vertex_data, geometry->vertex_count );
 	DEALLOC( vertex_data );
 		
-	if ( !has_oes_vertex_array_object )
-	{
-		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
-	}
+
 
 	
 	if ( geometry->index_count > 0 )
 	{
 		stream->upload_index_array( geometry->indices, geometry->index_count );
-		if ( !has_oes_vertex_array_object )
-		{
-			gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
-		}
+	}
+	
+	if ( !has_oes_vertex_array_object )
+	{
+		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 	}
 	
 	if ( has_oes_vertex_array_object )

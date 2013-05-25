@@ -104,7 +104,7 @@ extern "C"
 	self->kernel = mobile_kernel;
 		
 	// startup the kernel instance
-	if ( kernel::startup( mobile_kernel, "TestMobile" ) != kernel::NoError )
+	if ( kernel::startup( mobile_kernel, "TestUniversal" ) != kernel::NoError )
 	{
 		NSLog( @"kernel startup failed!" );
 	}
