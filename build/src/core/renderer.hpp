@@ -227,14 +227,14 @@ namespace renderer
 	
 	
 	
-	class ShaderKeyValuePair : public std::pair<char*, int>
+	struct ShaderKeyValuePair
 	{
-	public:
-	
 		ShaderKeyValuePair();
-		~ShaderKeyValuePair();
+		virtual ~ShaderKeyValuePair();
 	
 		void set_key( const char * key );
+		char * first;
+		int second;
 	};
 	
 //	typedef std::pair<char*, int> ShaderKeyValuePair;
@@ -253,7 +253,7 @@ namespace renderer
 		ShaderKeyValuePair * attributes;
 		
 		ShaderParameters();
-		~ShaderParameters();
+		virtual ~ShaderParameters();
 		
 		void alloc_attributes( unsigned int attributes_count );
 		void alloc_uniforms( unsigned int uniform_count );

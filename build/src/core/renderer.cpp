@@ -221,6 +221,11 @@ namespace renderer
 	
 	void ShaderKeyValuePair::set_key(const char *key)
 	{
+		if (this->first != 0)
+		{
+			DEALLOC(this->first);
+		}
+
 		size_t length = xstr_len(key);
 		this->first = (char*)ALLOC( length + 1 );
 		memset( this->first, 0, length+1 );
@@ -240,11 +245,13 @@ namespace renderer
 	{
 		if ( this->uniforms )
 		{
+			LOGV( "D uniforms: %p\n", this->uniforms );
 			DESTROY_ARRAY(ShaderKeyValuePair, this->uniforms, this->total_uniforms);
 		}
 		
 		if ( this->attributes )
 		{
+			LOGV( "D attributes: %p\n", this->attributes );
 			DESTROY_ARRAY(ShaderKeyValuePair, this->attributes, this->total_attributes);
 		}
 		
@@ -257,7 +264,9 @@ namespace renderer
 	void ShaderParameters::alloc_attributes( unsigned int attributes_count )
 	{
 		this->total_attributes = attributes_count;
+		assert( this->attributes == 0 );
 		this->attributes = CREATE_ARRAY( ShaderKeyValuePair, attributes_count );
+		LOGV( "A shader->attributes: %p\n", this->attributes );
 		for( unsigned int i = 0; i < attributes_count; ++i )
 		{
 			this->attributes[i].first = 0;
@@ -267,7 +276,9 @@ namespace renderer
 	void ShaderParameters::alloc_uniforms( unsigned int uniform_count )
 	{
 		this->total_uniforms = uniform_count;
+		assert( this->uniforms == 0 );
 		this->uniforms = CREATE_ARRAY( ShaderKeyValuePair, uniform_count );
+		LOGV( "A shader->uniforms: %p\n", this->uniforms );
 		for( unsigned int i = 0; i < uniform_count; ++i )
 		{
 			this->uniforms[i].first = 0;
