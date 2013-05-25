@@ -265,6 +265,12 @@ namespace renderer
 	{
 		int vertex_count;
 		int index_count;
+		
+		VertexBuffer()
+		{
+			vertex_count = 0;
+			index_count = 0;
+		}
 	}; // VertexBuffer
 	
 	struct UV

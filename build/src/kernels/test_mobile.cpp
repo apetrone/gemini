@@ -31,6 +31,8 @@
 #define FONT_TEST 0
 #define MODEL_TEST 1
 
+#define DRAW_INDEXED 0 // enable this (1) to draw using indices; disable (0) to use draw_arrays
+
 struct GeneralParameters
 {
 	glm::mat4 * modelview_matrix;
@@ -132,13 +134,20 @@ public:
 #if MODEL_TEST
 		const int TEST_SIZE = 200;
 		geo.vertex_count = 4;
-		geo.index_count = 6;
 		geo.vertices = CREATE_ARRAY( glm::vec3, 4 );
-		geo.indices = CREATE_ARRAY( renderer::IndexType, 6 );
 		geo.colors = CREATE_ARRAY( Color, 4 );
 		geo.uvs = CREATE_ARRAY( renderer::UV, 4 );
 		
+#if DRAW_INDEXED
+		geo.index_count = 6;
+		geo.indices = CREATE_ARRAY( renderer::IndexType, 6 );
 		geo.draw_type = renderer::DRAW_INDEXED_TRIANGLES;
+#else
+		geo.index_count = 0;
+		geo.indices = 0;
+		geo.draw_type = renderer::DRAW_TRIANGLES;
+#endif
+
 		geo.material_id = assets::load_material("materials/red")->Id();
 		
 		glm::vec3 * vertices = geo.vertices;
@@ -164,8 +173,11 @@ public:
 		uvs[3].u = 1;
 		uvs[3].v = 0;
 		
+		
+#if DRAW_INDEXED
 		renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
 		memcpy( geo.indices, indices, sizeof(renderer::IndexType) * geo.index_count );
+#endif
 		
 		
 		geo.render_setup();

@@ -90,6 +90,13 @@ struct GL32VertexBuffer : public VertexBuffer
 	GLenum gl_draw_type;
 	unsigned int vertex_stride;
 	
+	GL32VertexBuffer()
+	{
+		vertex_stride = 0;
+		gl_draw_type = 0;
+		gl_buffer_type = 0;
+	}
+	
 	void allocate( renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type )
 	{
 		vao[ VAO_INTERLEAVED ] = 0;
