@@ -81,6 +81,13 @@ GLESv2::GLESv2()
 	{
 		LOGV( "vertex_array_object extension is present!\n" );
 	}
+	
+	int unpack_alignment = 0, pack_alignment = 0;
+	gl.GetIntegerv( GL_UNPACK_ALIGNMENT, &unpack_alignment );
+	gl.GetIntegerv( GL_PACK_ALIGNMENT, &pack_alignment );
+	
+	LOGV( "GL_UNPACK_ALIGNMENT: %i\n", unpack_alignment );
+	LOGV( "GL_PACK_ALIGNMENT: %i\n", pack_alignment );
 }
 
 GLESv2::~GLESv2()
@@ -609,10 +616,25 @@ bool GLESv2::upload_texture_2d( renderer::TextureParameters & parameters )
 	gl.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	error = gl.CheckError( "upload_texture_2d - GL_TEXTURE_MAG_FILTER" );
 	FAIL_IF_GLERROR(error);
-		
+	
+	if ( parameters.alignment != 4 )
+	{
+		gl.PixelStorei( GL_UNPACK_ALIGNMENT, parameters.alignment );
+		error = gl.CheckError( "GL_UNPACK_ALIGNMENT" );
+		FAIL_IF_GLERROR(error);
+	}
+	
 	gl.TexImage2D( GL_TEXTURE_2D, 0, internal_format, parameters.width, parameters.height, 0, source_format, GL_UNSIGNED_BYTE, parameters.pixels );
 	error = gl.CheckError( "upload_texture_2d - glTexImage2D" );
 	FAIL_IF_GLERROR(error);
+	
+	// restore default alignment
+	if ( parameters.alignment != 4 )
+	{
+		gl.PixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+		error = gl.CheckError( "GL_UNPACK_ALIGNMENT" );
+		FAIL_IF_GLERROR(error);
+	}
 	
 	gl.GenerateMipmap( GL_TEXTURE_2D );
 	error = gl.CheckError( "upload_texture_2d - GenerateMipmap" );

@@ -27,11 +27,18 @@
 #include "renderstream.hpp"
 #include "assets.hpp"
 #include "camera.hpp"
+#include "vertexstream.hpp"
+#include "mathlib.h"
+
 
 #define FONT_TEST 1
-#define MODEL_TEST 1
+#define MODEL_TEST 0
+#define MODEL_TEST2 0
 
-#define DRAW_INDEXED 1 // enable this (1) to draw using indices; disable (0) to use draw_arrays
+#define DRAW_INDEXED 0 // enable this (1) to draw using indices; disable (0) to use draw_arrays
+
+const int TEST_SIZE = 200;
+
 
 struct GeneralParameters
 {
@@ -41,6 +48,9 @@ struct GeneralParameters
 	
 	unsigned int global_params;
 	glm::vec3 * camera_position;
+	
+	
+	
 };
 
 static void stream_geometry( RenderStream & rs, assets::Geometry * geo, GeneralParameters & gp )
@@ -76,6 +86,14 @@ static void stream_geometry( RenderStream & rs, assets::Geometry * geo, GeneralP
 	rs.add_draw_call( geo->vertexbuffer );
 } // stream_geometry
 
+
+struct TestVertex
+{
+	glm::vec3 pos;
+	renderer::UV uv;
+	Color color;
+};
+
 class TestMobile : public kernel::IApplication,
 	kernel::IEventListener<kernel::TouchEvent>
 
@@ -87,6 +105,10 @@ public:
 	RenderStream rs;
 	char * font_buffer;
 	assets::Geometry geo;
+	renderer::VertexStream vs;
+	assets::Shader shader;
+	glm::mat4 objectMatrix;
+	GeneralParameters gp;
 	
 	virtual void event( kernel::TouchEvent & event )
 	{
@@ -131,8 +153,8 @@ public:
 #endif
 
 
+
 #if MODEL_TEST
-		const int TEST_SIZE = 200;
 		geo.vertex_count = 4;
 		geo.vertices = CREATE_ARRAY( glm::vec3, 4 );
 		geo.colors = CREATE_ARRAY( Color, 4 );
@@ -180,9 +202,32 @@ public:
 		renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
 		memcpy( geo.indices, indices, sizeof(renderer::IndexType) * geo.index_count );
 #endif
-		
-		
 		geo.render_setup();
+#endif
+
+
+#if MODEL_TEST2
+		
+		vs.desc.add(renderer::VD_FLOAT2);
+		vs.desc.add(renderer::VD_FLOAT2);
+		vs.desc.add(renderer::VD_UNSIGNED_BYTE4);
+		vs.create( 32, 0, renderer::DRAW_TRIANGLES, renderer::BUFFER_STREAM );
+
+
+		shader.set_frag_data_location( "out_color" );
+		shader.alloc_uniforms( 3 );
+		shader.uniforms[0].set_key( "projection_matrix" );
+		shader.uniforms[1].set_key( "modelview_matrix" );
+		shader.uniforms[2].set_key( "diffusemap" );
+		
+		shader.alloc_attributes( 3 );
+		shader.attributes[0].set_key( "in_position" ); shader.attributes[0].second = 0;
+		shader.attributes[1].set_key( "in_uv" ); shader.attributes[1].second = 1;
+		shader.attributes[2].set_key( "in_color" ); shader.attributes[2].second = 2;
+		
+		assets::load_shader( "shaders/fontshader", &shader );
+
+
 #endif
 	
 		return kernel::Success;
@@ -191,44 +236,99 @@ public:
 	virtual void step( kernel::Params & params )
 	{
 	}
+	
+	
+	void model_test( Camera & camera, kernel::Params & params )
+	{
+#if MODEL_TEST	
+		
+		gp.global_params = 0;
+		gp.camera_position = &camera.pos;
+		gp.modelview_matrix = &camera.matCam;
+		gp.projection_project = &camera.matProj;
+		gp.object_matrix = &objectMatrix;
+		
+		stream_geometry(rs, &geo, gp);
+#endif
+	}
+	
+	void model_test2( Camera & camera, kernel::Params & params )
+	{
+#if MODEL_TEST2
+		TestVertex * vertices = (TestVertex*)vs.request(4);
+		vertices[0].pos = glm::vec3(0,0,0);
+		vertices[0].color.set( 255, 255, 255 );
+		vertices[0].uv.u = 0;
+		vertices[0].uv.v = 0;
+		
+		vertices[1].pos = glm::vec3(0, TEST_SIZE, 0);
+		vertices[1].color.set( 0, 0, 255 );
+		vertices[1].uv.u = 0;
+		vertices[1].uv.v = 1;
+		
+		vertices[2].pos = glm::vec3(TEST_SIZE, TEST_SIZE, 0);
+		vertices[2].color.set( 0, 255, 0 );
+		vertices[2].uv.u = 1;
+		vertices[2].uv.v = 1;
+		
+		vertices[3].pos = glm::vec3(TEST_SIZE, 0, 0);
+		vertices[3].color.set( 255, 0, 0 );
+		vertices[3].uv.u = 1;
+		vertices[3].uv.v = 0;
+		
+		
+		vs.update();
+				
+		// activate shader
+		rs.add_shader( &shader );
+		
+		// setup uniforms
+		rs.add_uniform_matrix4( shader.get_uniform_location("modelview_matrix"), &camera.matCam );
+		rs.add_uniform_matrix4( shader.get_uniform_location("projection_matrix"), &camera.matProj );
+		
+		assets::Texture * tex = assets::load_texture("textures/default");
+		rs.add_sampler2d( shader.get_uniform_location("diffusemap"), 0, tex->texture_id );
+		
+		// add draw call for vertexbuffer
+		rs.add_draw_call( vs.vertexbuffer );
+#endif
+	}
+	
+	void font_test( Camera & camera, kernel::Params & params )
+	{
+#if FONT_TEST
+		font::draw_string( test_font, 50, 50, "Now is the time for all good men to come to the aid of the party", Color(64,255,192,255) );
+#endif
+	}
 
 	virtual void tick( kernel::Params & params )
 	{
+		LOGV( "--------begin frame--------\n" );
 		rs.rewind();
 		
 		// setup global rendering state
 		rs.add_clearcolor( 0.15, 0.10, 0.25, 1.0f );
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
 		rs.add_viewport( 0, 0, (int)params.render_width, (int)params.render_height );
+			
 		
-//		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
-		rs.add_state( renderer::STATE_BLEND, 1 );
-		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
-		rs.run_commands();
-		
-#if MODEL_TEST
 		Camera camera;
-		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
+//		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
 		//camera.perspective( 60, params.render_width, params.render_height, 0.1f, 512.0f );
 		camera.ortho(0, (int)params.render_width, (int)params.render_height, 0, -1.0f, 1024.0f);
-		glm::mat4 objectMatrix;
-		GeneralParameters gp;
-		gp.global_params = 0;
-		gp.camera_position = &camera.pos;
-		gp.modelview_matrix = &camera.matCam;
-		gp.projection_project = &camera.matProj;
-		gp.object_matrix = &objectMatrix;
 
-		rs.rewind();		
-		stream_geometry(rs, &geo, gp);
-#endif
 
+		model_test( camera, params );
+		model_test2( camera, params );
+		
+		// run all commands
 		rs.run_commands();
+		
+		font_test( camera, params );
 
-
-#if FONT_TEST
-		font::draw_string( test_font, 50, 50, "Now is the time for all good men to come to the aid of the party", Color(64,255,192,255) );
-#endif
+		vs.reset();
+		
+		LOGV( "--------end frame--------\n" );
 	}
 	
 	virtual void shutdown( kernel::Params & params )
@@ -236,6 +336,12 @@ public:
 #if FONT_TEST
 		DEALLOC(font_buffer);
 		font::shutdown();
+#endif
+
+
+#if MODEL_TEST2
+		assets::destroy_shader(&shader);
+		vs.destroy();
 #endif
 	}
 };
