@@ -31,9 +31,9 @@
 #include "mathlib.h"
 
 
-#define FONT_TEST 1
+#define FONT_TEST 0
 #define MODEL_TEST 0
-#define MODEL_TEST2 0
+#define MODEL_TEST2 1
 
 #define DRAW_INDEXED 0 // enable this (1) to draw using indices; disable (0) to use draw_arrays
 
@@ -89,7 +89,7 @@ static void stream_geometry( RenderStream & rs, assets::Geometry * geo, GeneralP
 
 struct TestVertex
 {
-	glm::vec3 pos;
+	glm::vec2 pos;
 	renderer::UV uv;
 	Color color;
 };
@@ -256,22 +256,22 @@ public:
 	{
 #if MODEL_TEST2
 		TestVertex * vertices = (TestVertex*)vs.request(4);
-		vertices[0].pos = glm::vec3(0,0,0);
+		vertices[0].pos = glm::vec2(0,0);
 		vertices[0].color.set( 255, 255, 255 );
 		vertices[0].uv.u = 0;
 		vertices[0].uv.v = 0;
 		
-		vertices[1].pos = glm::vec3(0, TEST_SIZE, 0);
+		vertices[1].pos = glm::vec2(0, TEST_SIZE);
 		vertices[1].color.set( 0, 0, 255 );
 		vertices[1].uv.u = 0;
 		vertices[1].uv.v = 1;
 		
-		vertices[2].pos = glm::vec3(TEST_SIZE, TEST_SIZE, 0);
+		vertices[2].pos = glm::vec2(TEST_SIZE, TEST_SIZE);
 		vertices[2].color.set( 0, 255, 0 );
 		vertices[2].uv.u = 1;
 		vertices[2].uv.v = 1;
 		
-		vertices[3].pos = glm::vec3(TEST_SIZE, 0, 0);
+		vertices[3].pos = glm::vec2(TEST_SIZE, 0);
 		vertices[3].color.set( 255, 0, 0 );
 		vertices[3].uv.u = 1;
 		vertices[3].uv.v = 0;
@@ -303,7 +303,7 @@ public:
 
 	virtual void tick( kernel::Params & params )
 	{
-		LOGV( "--------begin frame--------\n" );
+//		LOGV( "--------begin frame--------\n" );
 		rs.rewind();
 		
 		// setup global rendering state
@@ -328,7 +328,7 @@ public:
 
 		vs.reset();
 		
-		LOGV( "--------end frame--------\n" );
+//		LOGV( "--------end frame--------\n" );
 	}
 	
 	virtual void shutdown( kernel::Params & params )
