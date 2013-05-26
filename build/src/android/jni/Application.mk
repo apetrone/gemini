@@ -1,5 +1,5 @@
 # x86
-#APP_ABI := armeabi-v7a
+APP_ABI := armeabi-v7a
 APP_PLATFORM := android-9
 
 # To select the static STLport implementation provided with this NDK. Value APP_STL values are the following:
