@@ -102,6 +102,11 @@ enum gemgl_renderer_type
 
 	typedef const GLubyte * (GEMGLAPI GEMGLFNGETSTRING) ( GLenum param );
 
+	// state queries
+	typedef void (GEMGLAPI GEMGLFNGETBOOLEANV)( GLenum value, GLboolean * data );
+	typedef void (GEMGLAPI GEMGLFNGETINTEGERV)( GLenum value, GLint * data );
+	typedef void (GEMGLAPI GEMGLFNGETFLOATV)( GLenum value, GLfloat * data );
+
 	// ---------------------------------------
 	typedef GLuint (GEMGLAPI GEMGLFNCREATEPROGRAM) ( void );
 	typedef GLuint (GEMGLAPI GEMGLFNCREATESHADER) ( GLenum type );
@@ -546,6 +551,9 @@ enum gemgl_renderer_type
 		GEMGLFNGETSTRING GetString;
         GEMGL_CHECKERROR CheckError;
 
+		GEMGLFNGETBOOLEANV GetBooleanv;
+		GEMGLFNGETINTEGERV GetIntegerv;
+		GEMGLFNGETFLOATV GetFloatv;
 
 #if _WIN32 || LINUX || __ANDROID__
 		xlib_t library;

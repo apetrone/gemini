@@ -411,6 +411,11 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 
 	GEMGL_LINK( gl.GetString, "glGetString", GEMGLFNGETSTRING );
 
+	// state queries
+	GEMGL_LINK( gl.GetBooleanv, "glGetBooleanv", GEMGLFNGETBOOLEANV );
+	GEMGL_LINK( gl.GetIntegerv, "glGetIntegerv", GEMGLFNGETINTEGERV );
+	GEMGL_LINK( gl.GetFloatv, "glGetFloatv", GEMGLFNGETFLOATV );
+
 	// link internal functions
 	gl.CheckError = gemgl_check_error;
 
