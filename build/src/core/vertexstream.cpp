@@ -70,7 +70,7 @@ namespace renderer
 
 	unsigned int VertexStream::bytes_used()
 	{
-		return total_vertices * vertex_stride;
+		return (total_vertices * vertex_stride) + (total_indices * sizeof(IndexType));
 	} // bytes_used
 
 	renderer::VertexType * VertexStream::request( IndexType num_vertices, int dont_advance_pointer )
@@ -155,7 +155,17 @@ namespace renderer
 	// determine if this vertexstream has room
 	bool VertexStream::has_room( unsigned int num_vertices, unsigned int num_indices ) const
 	{
-		return (num_vertices + last_vertex <= total_vertices) && (num_indices + last_index <= total_indices);
+		if ( num_vertices + last_vertex >= total_vertices )
+		{
+			return false;
+		}
+
+		if ( (total_indices > 0) && (num_indices + last_index >= total_indices) )
+		{
+			return false;
+		}
+		
+		return true;
 	} // has_room
 
 	void VertexStream::create( IndexType max_vertices, IndexType max_indices, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type )
@@ -197,7 +207,7 @@ namespace renderer
 			last_vertex = total_vertices-1;
 		}
 		
-		if ( last_index >= total_indices )
+		if ( (total_indices > 0) && (last_index >= total_indices) )
 		{
 			last_index = total_indices-1;
 		}
