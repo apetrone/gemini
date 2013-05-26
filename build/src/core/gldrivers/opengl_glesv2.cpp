@@ -180,12 +180,12 @@ struct GLES2VertexBuffer : public VertexBuffer
 			
 			num_elements = VertexDescriptor::elements[ desc_type ];
 			attribSize = VertexDescriptor::size[ desc_type ];
+						
+			gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_stride, (void*)offset );
+			gl.CheckError( "VertexAttribPointer" );
 			
 			gl.EnableVertexAttribArray( attribID );
 			gl.CheckError( "EnableVertexAttribArray" );
-			
-			gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_stride, (void*)offset );
-			gl.CheckError( "VertexAttribPointer" );
 			
 			offset += attribSize;
 			++attribID;

@@ -33,7 +33,13 @@
 
 #define FONT_TEST 0
 #define MODEL_TEST 0
-#define MODEL_TEST2 1
+#define MODEL_TEST2 0
+#define MODEL_TEST3 1
+
+
+#if MODEL_TEST3
+	#include "gemgl.hpp"
+#endif
 
 #define DRAW_INDEXED 0 // enable this (1) to draw using indices; disable (0) to use draw_arrays
 
@@ -94,6 +100,44 @@ struct TestVertex
 	Color color;
 };
 
+
+struct ModelTest3
+{
+	unsigned int vao;
+	unsigned int vbo;
+	TestVertex data[4];
+	unsigned int stride;
+	
+	
+	void setup_attribs()
+	{
+		unsigned int attribID = 0;
+		unsigned int offset = 0;
+		gl.VertexAttribPointer( attribID, 2, GL_FLOAT, GL_FALSE, stride, (void*)offset );
+		gl.CheckError( "VertexAttribPointer" );
+		
+		gl.EnableVertexAttribArray( attribID );
+		gl.CheckError( "EnableVertexAttribArray" );
+		offset += sizeof(GLfloat) * 2;
+		attribID++;
+		
+		gl.VertexAttribPointer( attribID, 2, GL_FLOAT, GL_FALSE, stride, (void*)offset );
+		gl.CheckError( "VertexAttribPointer" );
+		
+		gl.EnableVertexAttribArray( attribID );
+		gl.CheckError( "EnableVertexAttribArray" );
+		offset += sizeof(GLfloat) * 2;
+		attribID++;
+		
+		
+		gl.VertexAttribPointer( attribID, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (void*)offset );
+		gl.CheckError( "VertexAttribPointer" );
+		
+		gl.EnableVertexAttribArray( attribID );
+		gl.CheckError( "EnableVertexAttribArray" );
+	}
+};
+
 class TestMobile : public kernel::IApplication,
 	kernel::IEventListener<kernel::TouchEvent>
 
@@ -110,6 +154,11 @@ public:
 	glm::mat4 objectMatrix;
 	GeneralParameters gp;
 	
+
+#if MODEL_TEST3
+	ModelTest3 mt3;
+#endif
+
 	virtual void event( kernel::TouchEvent & event )
 	{
 		if ( event.subtype == kernel::TouchBegin )
@@ -132,6 +181,29 @@ public:
 		params.window_height = 600;
 		params.window_title = "TestMobile";
 		return kernel::Success;
+	}
+	
+	void setup_vertex_data( TestVertex * vertices )
+	{
+		vertices[0].pos = glm::vec2(0,0);
+		vertices[0].color.set( 255, 255, 255 );
+		vertices[0].uv.u = 0;
+		vertices[0].uv.v = 0;
+		
+		vertices[1].pos = glm::vec2(0, TEST_SIZE);
+		vertices[1].color.set( 0, 0, 255 );
+		vertices[1].uv.u = 0;
+		vertices[1].uv.v = 1;
+		
+		vertices[2].pos = glm::vec2(TEST_SIZE, TEST_SIZE);
+		vertices[2].color.set( 0, 255, 0 );
+		vertices[2].uv.u = 1;
+		vertices[2].uv.v = 1;
+		
+		vertices[3].pos = glm::vec2(TEST_SIZE, 0);
+		vertices[3].color.set( 255, 0, 0 );
+		vertices[3].uv.u = 1;
+		vertices[3].uv.v = 0;
 	}
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
@@ -212,8 +284,8 @@ public:
 		vs.desc.add(renderer::VD_FLOAT2);
 		vs.desc.add(renderer::VD_UNSIGNED_BYTE4);
 		vs.create( 32, 0, renderer::DRAW_TRIANGLES, renderer::BUFFER_STREAM );
-
-
+#endif
+	
 		shader.set_frag_data_location( "out_color" );
 		shader.alloc_uniforms( 3 );
 		shader.uniforms[0].set_key( "projection_matrix" );
@@ -226,8 +298,37 @@ public:
 		shader.attributes[2].set_key( "in_color" ); shader.attributes[2].second = 2;
 		
 		assets::load_shader( "shaders/fontshader", &shader );
+		
+		
+#if MODEL_TEST3
+		setup_vertex_data( mt3.data );
+		mt3.stride = sizeof(TestVertex);
+		gl.GenVertexArrays( 1, &mt3.vao );
+		gl.CheckError( "GenVertexArrays" );
+		
+		gl.GenBuffers( 1, &mt3.vbo );
+		gl.CheckError( "GenBuffers" );
+		
+		gl.BindVertexArray( mt3.vao );
+		gl.CheckError( "BindVertexArray" );
+		
+		gl.BindBuffer( GL_ARRAY_BUFFER, mt3.vbo );
+		gl.CheckError( "BindBuffer" );
+		
+		gl.BufferData( GL_ARRAY_BUFFER, mt3.stride * 3, mt3.data, GL_STREAM_DRAW );
+		gl.CheckError( "BufferData" );
+		
 
-
+		mt3.setup_attribs();
+		
+		
+		
+		gl.BindVertexArray( 0 );
+		gl.CheckError( "BindVertexArray 0" );
+		
+		
+		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+		gl.CheckError( "BindBuffer 0" );
 #endif
 	
 		return kernel::Success;
@@ -256,25 +357,7 @@ public:
 	{
 #if MODEL_TEST2
 		TestVertex * vertices = (TestVertex*)vs.request(4);
-		vertices[0].pos = glm::vec2(0,0);
-		vertices[0].color.set( 255, 255, 255 );
-		vertices[0].uv.u = 0;
-		vertices[0].uv.v = 0;
-		
-		vertices[1].pos = glm::vec2(0, TEST_SIZE);
-		vertices[1].color.set( 0, 0, 255 );
-		vertices[1].uv.u = 0;
-		vertices[1].uv.v = 1;
-		
-		vertices[2].pos = glm::vec2(TEST_SIZE, TEST_SIZE);
-		vertices[2].color.set( 0, 255, 0 );
-		vertices[2].uv.u = 1;
-		vertices[2].uv.v = 1;
-		
-		vertices[3].pos = glm::vec2(TEST_SIZE, 0);
-		vertices[3].color.set( 255, 0, 0 );
-		vertices[3].uv.u = 1;
-		vertices[3].uv.v = 0;
+		 setup_vertex_data( vertices );
 		
 		
 		vs.update();
@@ -292,7 +375,34 @@ public:
 		// add draw call for vertexbuffer
 		rs.add_draw_call( vs.vertexbuffer );
 #endif
-	}
+	} // model_test2
+	
+	void model_test3( Camera & camera, kernel::Params & params )
+	{
+#if MODEL_TEST3
+		assets::Texture * tex = assets::load_texture("textures/default");
+//		rs.add_sampler2d( shader.get_uniform_location("diffusemap"), 0, tex->texture_id );
+		
+		gl.UseProgram( shader.object );
+		gl.CheckError( "UseProgram" );
+		
+		gl.UniformMatrix4fv( shader.get_uniform_location("modelview_matrix"), 1, GL_FALSE, glm::value_ptr(camera.matCam) );
+		gl.UniformMatrix4fv( shader.get_uniform_location("projection_matrix"), 1, GL_FALSE, glm::value_ptr(camera.matProj) );
+				
+		gl.ActiveTexture( GL_TEXTURE0 );
+		gl.BindTexture( GL_TEXTURE_2D, tex->texture_id );
+		gl.Uniform1i( shader.get_uniform_location("diffusemap"), 0 );
+				
+		gl.BindVertexArray( mt3.vao );
+		gl.DrawArrays( GL_TRIANGLES, 0, 3 );
+		gl.BindVertexArray( 0 );
+		
+		gl.UseProgram( 0 );
+		gl.CheckError( "UseProgram 0" );
+		
+		gl.BindTexture( GL_TEXTURE_2D, 0 );
+#endif
+	} // model_test3
 	
 	void font_test( Camera & camera, kernel::Params & params )
 	{
@@ -323,6 +433,10 @@ public:
 		
 		// run all commands
 		rs.run_commands();
+		
+		model_test3( camera, params );
+		
+
 		
 		font_test( camera, params );
 
