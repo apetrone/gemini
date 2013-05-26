@@ -37,7 +37,6 @@
 namespace font
 {
 	const unsigned int FONT_MAX_VERTICES = 8192;
-	const unsigned int FONT_MAX_INDICES = 6172;
 	const unsigned int FONT_MAX = 4;
 	
 	struct SimpleFontHandle
@@ -93,6 +92,7 @@ namespace font
 		params.width = width;
 		params.height = height;
 		params.pixels = (unsigned char*)pixels;
+		params.alignment = 1;
 		
 		if ( !driver->generate_texture( params ) )
 		{
@@ -193,7 +193,7 @@ namespace font
 		internal::_vertexstream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
 
 		
-		internal::_vertexstream.create( FONT_MAX_VERTICES, FONT_MAX_INDICES, renderer::DRAW_TRIANGLES, renderer::BUFFER_STREAM );
+		internal::_vertexstream.create( FONT_MAX_VERTICES, 0, renderer::DRAW_TRIANGLES, renderer::BUFFER_STREAM );
 		
 		
 		sth_render_callbacks cb;
@@ -205,7 +205,7 @@ namespace font
 		// this must be called before any sth_create commands
 		sth_set_render_callbacks( &cb );
 		
-		internal::_stash = sth_create( 512, 512 );
+		internal::_stash = sth_create( 256, 256 );
 		internal::_shader = CREATE( assets::Shader );
 
 		assets::Shader * shader = internal::_shader;
