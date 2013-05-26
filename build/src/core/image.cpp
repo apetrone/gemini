@@ -262,6 +262,7 @@ namespace image
 		params.height = height;
 		params.channels = channels;
 		params.pixels = pixels;
+		params.alignment = 4;
 		
 		// we want to support re-using an existing image if possible; so let's see if the renderer is already aware this is a texture.
 		if ( !driver->is_texture(params) )
