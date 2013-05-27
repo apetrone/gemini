@@ -80,7 +80,6 @@ GLESv2::GLESv2()
 	if ( has_oes_vertex_array_object )
 	{
 		LOGV( "vertex_array_object extension is present!\n" );
-		has_oes_vertex_array_object = false;
 	}
 	
 #if 0
