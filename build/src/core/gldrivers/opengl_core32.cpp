@@ -1050,6 +1050,22 @@ bool GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_p
 //		assert( link_status == 1 );
 	}
 	
+	// use GetAttribLocation to fetch the actual location after linking.
+	// this won't work with the current render system because setting up attributes
+	// doesn't use a shader.
+#if 0
+	else
+	{
+		for( unsigned int i = 0; i < parameters.total_attributes; ++i )
+		{
+			GLint attrib_location = gl.GetAttribLocation( shader_program.object, parameters.attributes[i].first );
+			
+			LOGV( "attrib: %s -> %i\n", parameters.attributes[i].first, attrib_location );
+			parameters.attributes[i].second = attrib_location;
+		}
+	}
+#endif
+
 #if 0
 	GLsizei objects = 128;
 	GLuint shader_names[ 128 ] = {0};

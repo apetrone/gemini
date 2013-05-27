@@ -82,12 +82,14 @@ GLESv2::GLESv2()
 		LOGV( "vertex_array_object extension is present!\n" );
 	}
 	
+#if 0
 	int unpack_alignment = 0, pack_alignment = 0;
 	gl.GetIntegerv( GL_UNPACK_ALIGNMENT, &unpack_alignment );
 	gl.GetIntegerv( GL_PACK_ALIGNMENT, &pack_alignment );
 	
 	LOGV( "GL_UNPACK_ALIGNMENT: %i\n", unpack_alignment );
 	LOGV( "GL_PACK_ALIGNMENT: %i\n", pack_alignment );
+#endif
 }
 
 GLESv2::~GLESv2()
@@ -1068,7 +1070,22 @@ bool GLESv2::shaderprogram_link_and_validate( renderer::ShaderProgram shader_pro
 		
 		//		assert( link_status == 1 );
 	}
-	
+	// use GetAttribLocation to fetch the actual location after linking.
+	// this won't work with the current render system because setting up attributes
+	// doesn't use a shader.
+#if 0
+	else
+	{
+		for( unsigned int i = 0; i < parameters.total_attributes; ++i )
+		{
+			GLint attrib_location = gl.GetAttribLocation( shader_program.object, parameters.attributes[i].first );
+			
+			LOGV( "attrib: %s -> %i\n", parameters.attributes[i].first, attrib_location );
+			parameters.attributes[i].second = attrib_location;
+		}
+	}
+#endif
+
 #if 0
 	gl.ValidateProgram( shader_program.object );
 	int validate_status;

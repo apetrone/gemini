@@ -654,6 +654,7 @@ namespace assets
 	
 	void load_shader( const char * shader_path, Shader * shader )
 	{
+		LOGV( "loading shader '%s'\n", shader_path );
 		StackString<MAX_PATH_SIZE> filename = shader_path;
 		renderer::ShaderParameters params;
 		
@@ -710,7 +711,7 @@ namespace assets
 		shader->attributes[0].set_key( "in_position" ); shader->attributes[0].second = 0;
 		shader->attributes[1].set_key( "in_color" ); shader->attributes[1].second = 1;
 		shader->attributes[2].set_key( "in_uv" ); shader->attributes[2].second = 2;
-		
+
 		
 		renderer::driver()->shaderprogram_bind_attributes( *shader, *shader );
 		renderer::driver()->shaderprogram_link_and_validate( *shader, *shader );

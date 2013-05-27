@@ -414,7 +414,7 @@ public:
 	void model_test3( Camera & camera, kernel::Params & params )
 	{
 #if MODEL_TEST3
-		assets::Texture * tex = assets::load_texture("textures/default");
+		
 //		rs.add_sampler2d( shader.get_uniform_location("diffusemap"), 0, tex->texture_id );
 		
 		gl.UseProgram( shader.object );
@@ -427,6 +427,7 @@ public:
 		gl.CheckError( "UniformMatrix4 - projection" );
 		
 #if !SIMPLE_SHADER
+		assets::Texture * tex = assets::load_texture("textures/default");
 		gl.ActiveTexture( GL_TEXTURE0 );
 		gl.CheckError( "ActiveTexture" );
 		
@@ -476,7 +477,7 @@ public:
 		Camera camera;
 //		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
 		//camera.perspective( 60, params.render_width, params.render_height, 0.1f, 512.0f );
-		camera.ortho(0, (int)params.render_width, (int)params.render_height, 0, -1.0f, 1024.0f);
+		camera.ortho(0, (int)params.render_width, (int)params.render_height, 0, -128.0f, 128.0f);
 
 
 		model_test( camera, params );

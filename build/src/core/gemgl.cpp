@@ -313,6 +313,7 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	
 	// attrib
 	GEMGL_LINK( gl.GetActiveAttrib, "glGetActiveAttrib", GEMGLFNGETACTIVEATTRIB );
+	GEMGL_LINK( gl.GetAttribLocation, "glGetAttribLocation", GEMGLFNGETATTRIBLOCATION );
 	GEMGL_LINK( gl.BindAttribLocation, "glBindAttribLocation", GEMGLFNBINDATTRIBLOCATION );
 	GEMGL_LINK( gl.BindFragDataLocation, "glBindFragDataLocation", GEMGLFNBINDFRAGDATALOCATION );
 	

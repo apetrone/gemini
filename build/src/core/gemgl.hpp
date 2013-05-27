@@ -133,7 +133,7 @@ enum gemgl_renderer_type
 
 	// attributes
 	typedef void (GEMGLAPI GEMGLFNGETACTIVEATTRIB) ( GLObject program, GLuint index, GLsizei bufSize, GLsizei * length, GLint * size, GLenum * type, GLchar * name );
-	typedef void (GEMGLAPI GEMGLFNGETATTRIBLOCATION) ( GLObject program, const GLchar * name );
+	typedef GLint (GEMGLAPI GEMGLFNGETATTRIBLOCATION) ( GLObject program, const GLchar * name );
 	typedef void (GEMGLAPI GEMGLFNBINDATTRIBLOCATION) ( GLObject program, GLuint index, const GLchar* name );
 	
 	// uniforms
@@ -444,6 +444,7 @@ enum gemgl_renderer_type
 		GEMGLFNGETPROGRAMIV GetProgramiv;
 		GEMGLFNGETATTACHEDSHADERS GetAttachedShaders;
 
+		GEMGLFNGETATTRIBLOCATION GetAttribLocation;
 		GEMGLFNBINDATTRIBLOCATION BindAttribLocation;
 		GEMGLFNBINDFRAGDATALOCATION BindFragDataLocation;
 
