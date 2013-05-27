@@ -30,17 +30,14 @@
 #include "vertexstream.hpp"
 #include "mathlib.h"
 
+#include "gemgl.hpp"
 
 #define FONT_TEST 0
-#define MODEL_TEST 0
+#define MODEL_TEST 1
 #define MODEL_TEST2 0
-#define MODEL_TEST3 1
+#define MODEL_TEST3 0
 
 #define SIMPLE_SHADER 1
-
-#if MODEL_TEST3
-	#include "gemgl.hpp"
-#endif
 
 #define DRAW_INDEXED 0 // enable this (1) to draw using indices; disable (0) to use draw_arrays
 
