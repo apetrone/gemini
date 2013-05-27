@@ -36,6 +36,7 @@
 #define MODEL_TEST2 0
 #define MODEL_TEST3 1
 
+#define SIMPLE_SHADER 1
 
 #if MODEL_TEST3
 	#include "gemgl.hpp"
@@ -96,7 +97,9 @@ static void stream_geometry( RenderStream & rs, assets::Geometry * geo, GeneralP
 struct TestVertex
 {
 	glm::vec2 pos;
+#if !SIMPLE_SHADER
 	renderer::UV uv;
+#endif
 	Color color;
 };
 
@@ -121,6 +124,7 @@ struct ModelTest3
 		offset += sizeof(GLfloat) * 2;
 		attribID++;
 		
+#if !SIMPLE_SHADER
 		gl.VertexAttribPointer( attribID, 2, GL_FLOAT, GL_FALSE, stride, (void*)offset );
 		gl.CheckError( "VertexAttribPointer" );
 		
@@ -128,7 +132,7 @@ struct ModelTest3
 		gl.CheckError( "EnableVertexAttribArray" );
 		offset += sizeof(GLfloat) * 2;
 		attribID++;
-		
+#endif
 		
 		gl.VertexAttribPointer( attribID, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (void*)offset );
 		gl.CheckError( "VertexAttribPointer" );
@@ -187,23 +191,31 @@ public:
 	{
 		vertices[0].pos = glm::vec2(0,0);
 		vertices[0].color.set( 255, 255, 255 );
+#if !SIMPLE_SHADER
 		vertices[0].uv.u = 0;
 		vertices[0].uv.v = 0;
+#endif
 		
 		vertices[1].pos = glm::vec2(0, TEST_SIZE);
 		vertices[1].color.set( 0, 0, 255 );
+#if !SIMPLE_SHADER
 		vertices[1].uv.u = 0;
 		vertices[1].uv.v = 1;
+#endif
 		
 		vertices[2].pos = glm::vec2(TEST_SIZE, TEST_SIZE);
 		vertices[2].color.set( 0, 255, 0 );
+#if !SIMPLE_SHADER
 		vertices[2].uv.u = 1;
 		vertices[2].uv.v = 1;
+#endif
 		
 		vertices[3].pos = glm::vec2(TEST_SIZE, 0);
 		vertices[3].color.set( 255, 0, 0 );
+#if !SIMPLE_SHADER
 		vertices[3].uv.u = 1;
 		vertices[3].uv.v = 0;
+#endif
 	}
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
@@ -287,17 +299,39 @@ public:
 #endif
 	
 		shader.set_frag_data_location( "out_color" );
+#if !SIMPLE_SHADER
 		shader.alloc_uniforms( 3 );
+#else
+		shader.alloc_uniforms( 2 );
+#endif
+
 		shader.uniforms[0].set_key( "projection_matrix" );
 		shader.uniforms[1].set_key( "modelview_matrix" );
+#if !SIMPLE_SHADER
 		shader.uniforms[2].set_key( "diffusemap" );
+#endif
 		
+#if !SIMPLE_SHADER
 		shader.alloc_attributes( 3 );
+#else
+		shader.alloc_attributes( 2 );
+#endif
+
 		shader.attributes[0].set_key( "in_position" ); shader.attributes[0].second = 0;
+#if !SIMPLE_SHADER
 		shader.attributes[1].set_key( "in_uv" ); shader.attributes[1].second = 1;
 		shader.attributes[2].set_key( "in_color" ); shader.attributes[2].second = 2;
+#else
+		shader.attributes[1].set_key( "in_color" ); shader.attributes[1].second = 1;
+#endif
 		
+		
+		
+#if !SIMPLE_SHADER
 		assets::load_shader( "shaders/fontshader", &shader );
+#else
+		assets::load_shader( "shaders/simple", &shader );
+#endif
 		
 		
 #if MODEL_TEST3
@@ -387,20 +421,37 @@ public:
 		gl.CheckError( "UseProgram" );
 		
 		gl.UniformMatrix4fv( shader.get_uniform_location("modelview_matrix"), 1, GL_FALSE, glm::value_ptr(camera.matCam) );
-		gl.UniformMatrix4fv( shader.get_uniform_location("projection_matrix"), 1, GL_FALSE, glm::value_ptr(camera.matProj) );
-				
-		gl.ActiveTexture( GL_TEXTURE0 );
-		gl.BindTexture( GL_TEXTURE_2D, tex->texture_id );
-		gl.Uniform1i( shader.get_uniform_location("diffusemap"), 0 );
-				
-		gl.BindVertexArray( mt3.vao );
-		gl.DrawArrays( GL_TRIANGLES, 0, 3 );
-		gl.BindVertexArray( 0 );
+		gl.CheckError( "UniformMatrix4 - modelview" );
 		
+		gl.UniformMatrix4fv( shader.get_uniform_location("projection_matrix"), 1, GL_FALSE, glm::value_ptr(camera.matProj) );
+		gl.CheckError( "UniformMatrix4 - projection" );
+		
+#if !SIMPLE_SHADER
+		gl.ActiveTexture( GL_TEXTURE0 );
+		gl.CheckError( "ActiveTexture" );
+		
+		gl.BindTexture( GL_TEXTURE_2D, tex->texture_id );
+		gl.CheckError( "BindTexture" );
+		
+		gl.Uniform1i( shader.get_uniform_location("diffusemap"), 0 );
+		gl.CheckError( "Uniform1" );
+#endif
+		gl.BindVertexArray( mt3.vao );
+		gl.CheckError( "BindVertexArray" );
+		
+		gl.DrawArrays( GL_TRIANGLES, 0, 3 );
+		gl.CheckError( "DrawArrays" );
+		
+		gl.BindVertexArray( 0 );
+		gl.CheckError( "BindVertexArray" );
+				
 		gl.UseProgram( 0 );
 		gl.CheckError( "UseProgram 0" );
-		
+#if !SIMPLE_SHADER
 		gl.BindTexture( GL_TEXTURE_2D, 0 );
+		gl.CheckError( "BindTexture 0" );
+#endif
+
 #endif
 	} // model_test3
 	
