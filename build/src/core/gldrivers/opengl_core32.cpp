@@ -30,9 +30,6 @@
 
 #include "assets.hpp"
 
-
-#define LV() LOGV( "%s\n", __FUNCTION__ )
-
 // utility functions
 GLenum image_to_source_format( int num_channels )
 {
@@ -110,7 +107,6 @@ struct GL32VertexBuffer : public VertexBuffer
 	
 	void static_setup( renderer::VertexDescriptor & descriptor, unsigned int vertex_stride, unsigned int max_vertices, unsigned int max_indices )
 	{
-		LV();
 		this->vertex_stride = vertex_stride;
 		
 		gl.GenVertexArrays( VAO_LIMIT, this->vao );
@@ -196,7 +192,6 @@ struct GL32VertexBuffer : public VertexBuffer
 	
 	void upload_interleaved_data( const GLvoid * data, unsigned int vertex_count )
 	{
-		LOGV( "upload_interleaved_data( data=%p, vertex_count=%i )\n", data, vertex_count );
 		this->vertex_count = vertex_count;
 		
 		gl.BindBuffer( GL_ARRAY_BUFFER, this->vbo[0] );
@@ -210,7 +205,6 @@ struct GL32VertexBuffer : public VertexBuffer
 	{
 		if ( this->vbo[1] != 0 )
 		{
-			LOGV( "upload_index_array( indices=%p, index_count=%i )\n", indices, index_count );
 			this->index_count = index_count;
 			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
 			gl.CheckError( "BindBuffer GL_ELEMENT_ARRAY_BUFFER" );
@@ -243,11 +237,9 @@ GLCore32::~GLCore32()
 
 void c_shader( MemoryStream & stream, GLCore32 & renderer )
 {
-
 	ShaderProgram shader_program;
 	stream.read( shader_program.object );
-	
-	LOGV( "c_shader (program=%i)\n", shader_program.object );
+
 	renderer.shaderprogram_activate( shader_program );
 }
 
@@ -266,7 +258,6 @@ void c_uniform_matrix4( MemoryStream & stream, GLCore32 & renderer )
 	stream.read( matrix );
 	stream.read( uniform_location );
 	
-	LOGV( "c_uniform_matrix4( uniform_location=%i, ptr=%p )\n", uniform_location, matrix );
 	gl.UniformMatrix4fv( uniform_location, 1, GL_FALSE, glm::value_ptr(*matrix) );
 	gl.CheckError( "uniform matrix 4" );
 }
@@ -278,7 +269,6 @@ void c_uniform1i( MemoryStream & stream, GLCore32 & renderer )
 	stream.read( uniform_location );
 	stream.read( value );
 
-	LOGV( "c_uniform1i( uniform_location=%i, value=%i )\n", uniform_location, value );
 	gl.Uniform1i( uniform_location, value );
 	gl.CheckError( "uniform1i" );
 }
@@ -289,8 +279,7 @@ void c_uniform3f( MemoryStream & stream, GLCore32 & renderer )
 	float * value;
 	stream.read( uniform_location );
 	stream.read( value );
-	
-	LOGV( "c_uniform3f( uniform_location=%i, value=%i )\n", uniform_location, value );
+
 	gl.Uniform3fv( uniform_location, 1, value );
 	gl.CheckError( "uniform3f" );
 }
@@ -301,8 +290,7 @@ void c_uniform4f( MemoryStream & stream, GLCore32 & renderer )
 	float * value;
 	stream.read( uniform_location );
 	stream.read( value );
-	
-	LOGV( "c_uniform4f( uniform_location=%i, value=%i )\n", uniform_location, value );
+
 	gl.Uniform4fv( uniform_location, 1, value );
 	gl.CheckError( "uniform4f" );
 }
@@ -316,8 +304,7 @@ void c_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 	stream.read( uniform_location );
 	stream.read( texture_unit );
 	stream.read( texture_id );
-	
-	LOGV( "c_uniform_sampler2d( uniform_location=%i, texture_unit=%i, texture_id=%i )\n", uniform_location, texture_unit, texture_id );
+
 	//	if ( last_texture[ texture_unit ] != texture_id )
 	{
 		gl.ActiveTexture( GL_TEXTURE0+texture_unit );
@@ -353,7 +340,6 @@ void p_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 
 void c_clear( MemoryStream & stream, GLCore32 & renderer )
 {
-	LV();
 	unsigned int bits;
 	stream.read(bits);
 	gl.Clear( bits );
@@ -362,7 +348,6 @@ void c_clear( MemoryStream & stream, GLCore32 & renderer )
 
 void c_clearcolor( MemoryStream & stream, GLCore32 & renderer )
 {
-	LV();
 	float color[4];
 	stream.read( color, 4*sizeof(float) );
 	gl.ClearColor( color[0], color[1], color[2], color[3] );
@@ -371,7 +356,6 @@ void c_clearcolor( MemoryStream & stream, GLCore32 & renderer )
 
 void c_cleardepth( MemoryStream & stream, GLCore32 & renderer )
 {
-	LV();
 	float value;
 	stream.read( value );
 	glClearDepth( value );
@@ -380,7 +364,6 @@ void c_cleardepth( MemoryStream & stream, GLCore32 & renderer )
 
 void c_viewport( MemoryStream & stream, GLCore32 & renderer )
 {
-	LV();
 	int x, y, width, height;
 	//			stream.read(x);
 	//			stream.read(y);
@@ -405,8 +388,6 @@ void c_drawcall( MemoryStream & stream, GLCore32 & renderer )
 	stream.read( num_vertices );
 	stream.read( num_indices );
 	
-	LOGV( "c_drawcall( draw_type=%i, num_vertices=%i, num_indices=%i )\n", draw_type, num_vertices, num_indices );
-	
 	assert( vertex_buffer != 0 );
 	if ( num_indices > 0 )
 	{
@@ -420,7 +401,6 @@ void c_drawcall( MemoryStream & stream, GLCore32 & renderer )
 
 void c_state( MemoryStream & stream, GLCore32 & renderer )
 {
-	LV();
 	// state change
 	DriverState driver_state;
 	
@@ -447,7 +427,6 @@ void c_state( MemoryStream & stream, GLCore32 & renderer )
 
 void p_state( MemoryStream & stream, GLCore32 & renderer )
 {
-	LV();
 	// state change
 	DriverState driver_state;
 	
@@ -474,7 +453,6 @@ void p_state( MemoryStream & stream, GLCore32 & renderer )
 
 void c_blendfunc( MemoryStream & stream, GLCore32 & renderer )
 {
-	LV();
 	RenderBlendType render_blendstate_source, render_blendstate_destination;
 		
 	stream.read( render_blendstate_source );
@@ -554,7 +532,6 @@ void GLCore32::post_command( renderer::DriverCommandType command, MemoryStream &
 
 void GLCore32::setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStream & stream )
 {
-	LV();
 	GL32VertexBuffer * vb = (GL32VertexBuffer*)vertexbuffer;
 	stream.write( vb );
 	stream.write( vb->gl_draw_type );
@@ -564,7 +541,6 @@ void GLCore32::setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStre
 
 bool GLCore32::upload_texture_2d( renderer::TextureParameters & parameters )
 {
-	LV();
 	GLenum source_format = image_to_source_format( parameters.channels );
 	GLenum internal_format = image_to_internal_format( parameters.image_flags );
 	GLenum error = GL_NO_ERROR;
@@ -629,7 +605,6 @@ bool GLCore32::upload_texture_2d( renderer::TextureParameters & parameters )
 
 bool GLCore32::generate_texture( renderer::TextureParameters & parameters )
 {
-	LV();
 	gl.GenTextures( 1, &parameters.texture_id );
 	GLenum error = gl.CheckError( "generate_texture" );
 	return (error == GL_NO_ERROR);
@@ -637,7 +612,6 @@ bool GLCore32::generate_texture( renderer::TextureParameters & parameters )
 
 bool GLCore32::destroy_texture( renderer::TextureParameters & parameters )
 {
-	LV();
 	gl.DeleteTextures( 1, &parameters.texture_id );
 	GLenum error = gl.CheckError( "destroy_texture" );
 	return (error == GL_NO_ERROR);
@@ -645,7 +619,6 @@ bool GLCore32::destroy_texture( renderer::TextureParameters & parameters )
 
 bool GLCore32::is_texture( renderer::TextureParameters & parameters )
 {
-	LV();
 	bool is_texture = gl.IsTexture( parameters.texture_id );
 	gl.CheckError( "IsTexture" );
 
@@ -654,7 +627,6 @@ bool GLCore32::is_texture( renderer::TextureParameters & parameters )
 
 bool GLCore32::texture_update( renderer::TextureParameters & parameters )
 {
-	LV();
 	GLenum internal_format = image_to_internal_format( parameters.image_flags );
 	GLenum error = GL_NO_ERROR;
 	
@@ -686,7 +658,6 @@ bool GLCore32::texture_update( renderer::TextureParameters & parameters )
 
 renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices )
 {
-	LV();
 	GL32VertexBuffer * stream = CREATE(GL32VertexBuffer);
 	assert( stream != 0 );
 	
@@ -701,7 +672,6 @@ renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescript
 
 void GLCore32::vertexbuffer_destroy( renderer::VertexBuffer * vertexbuffer )
 {
-	LV();
 	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	
 	gl.DeleteVertexArrays( VAO_INTERLEAVED, stream->vao );
@@ -725,7 +695,6 @@ void GLCore32::vertexbuffer_destroy( renderer::VertexBuffer * vertexbuffer )
 
 void GLCore32::vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
 {
-	LV();
 	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	assert( stream != 0 );
 	
@@ -754,7 +723,6 @@ void GLCore32::vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned in
 
 void GLCore32::vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, unsigned int num_indices )
 {
-	LV();
 	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	assert( stream != 0 );
 	gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
@@ -774,8 +742,7 @@ void GLCore32::vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigne
 	
 	gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
 	gl.CheckError( "BindVertexArray" );
-	
-	LOGV( "vertexbuffer_draw( vao=%i, drawtype=%i, num_vertices=%i )\n", stream->vao[VAO_INTERLEAVED], stream->gl_draw_type, num_vertices );
+
 	gl.DrawArrays( stream->gl_draw_type, 0, num_vertices );
 	gl.CheckError( "DrawArrays" );
 
@@ -785,7 +752,6 @@ void GLCore32::vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigne
 
 renderer::VertexBuffer * GLCore32::vertexbuffer_from_geometry( renderer::VertexDescriptor & descriptor, renderer::Geometry * geometry )
 {
-	LV();
 	GL32VertexBuffer * stream = CREATE(GL32VertexBuffer);
 	assert( stream != 0 );
 		
@@ -806,7 +772,6 @@ renderer::VertexBuffer * GLCore32::vertexbuffer_from_geometry( renderer::VertexD
 
 void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer::Geometry * geometry )
 {
-	LV();
 	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	assert( stream != 0 );
 	
