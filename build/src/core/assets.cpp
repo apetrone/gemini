@@ -658,6 +658,10 @@ namespace assets
 		StackString<MAX_PATH_SIZE> filename = shader_path;
 		renderer::ShaderParameters params;
 		
+		renderer::ShaderProgram shader_program;
+		shader_program.object = 0;
+		renderer::driver()->shaderprogram_deactivate( shader_program );
+		
 		renderer::ShaderProgram program = renderer::driver()->shaderprogram_create( params );
 		shader->object = program.object;
 		
@@ -672,9 +676,15 @@ namespace assets
 		renderer::driver()->shaderprogram_attach( *shader, fragment_shader );
 	
 		renderer::driver()->shaderprogram_bind_attributes( *shader, *shader );
-		renderer::driver()->shaderprogram_link_and_validate( *shader, *shader );
+		if ( renderer::driver()->shaderprogram_link_and_validate( *shader, *shader ) )
+		{
+			renderer::driver()->shaderprogram_activate( *shader );
+			renderer::driver()->shaderprogram_bind_uniforms( *shader, *shader );
+			renderer::driver()->shaderprogram_deactivate( *shader );
+		}
 		
-		renderer::driver()->shaderprogram_bind_uniforms( *shader, *shader );
+		renderer::driver()->shaderprogram_detach( *shader, vertex_shader );
+		renderer::driver()->shaderprogram_detach( *shader, fragment_shader );
 		
 		renderer::driver()->shaderobject_destroy( vertex_shader );
 		renderer::driver()->shaderobject_destroy( fragment_shader );

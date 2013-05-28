@@ -33,9 +33,9 @@
 #include "gemgl.hpp"
 
 #define FONT_TEST 0
-#define MODEL_TEST 1
+#define MODEL_TEST 0
 #define MODEL_TEST2 0
-#define MODEL_TEST3 0
+#define MODEL_TEST3 1
 
 #define SIMPLE_SHADER 1
 
@@ -107,8 +107,7 @@ struct ModelTest3
 	unsigned int vbo;
 	TestVertex data[4];
 	unsigned int stride;
-	
-	
+		
 	void setup_attribs()
 	{
 		unsigned int attribID = 0;
@@ -283,6 +282,9 @@ public:
 		renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
 		memcpy( geo.indices, indices, sizeof(renderer::IndexType) * geo.index_count );
 #endif
+
+
+
 		geo.render_setup();
 #endif
 
@@ -332,8 +334,13 @@ public:
 		
 		
 #if MODEL_TEST3
+
+		renderer::VertexDescriptor vd;
+		vd.add(renderer::VD_FLOAT2);
+		vd.add(renderer::VD_UNSIGNED_BYTE4);
+
 		setup_vertex_data( mt3.data );
-		mt3.stride = sizeof(TestVertex);
+		mt3.stride = vd.calculate_vertex_stride();
 		gl.GenVertexArrays( 1, &mt3.vao );
 		gl.CheckError( "GenVertexArrays" );
 		
