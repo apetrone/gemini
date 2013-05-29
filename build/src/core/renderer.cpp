@@ -285,7 +285,7 @@ namespace renderer
 	{
 		size_t len = xstr_len(location);
 		this->frag_data_location = (char*)ALLOC( len+1 );
-		memset( frag_data_location, 0, len );
+		memset( this->frag_data_location, 0, len+1 );
 		xstr_ncpy( this->frag_data_location, location, len );
 	} // set_frag_data_location
 }; // namespace renderer
