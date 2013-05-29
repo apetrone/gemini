@@ -141,7 +141,7 @@ struct GL32VertexBuffer : public VertexBuffer
 		unsigned int attribSize = 0;
 		unsigned int num_elements = 0;
 		unsigned int normalized = 0;
-		unsigned int offset = 0;
+		size_t offset = 0;
 		
 		for( unsigned int i = 0; i < descriptor.attribs; ++i )
 		{

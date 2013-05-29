@@ -111,7 +111,7 @@ struct ModelTest3
 	void setup_attribs()
 	{
 		unsigned int attribID = 0;
-		unsigned int offset = 0;
+		size_t offset = 0;
 		gl.VertexAttribPointer( attribID, 2, GL_FLOAT, GL_FALSE, stride, (void*)offset );
 		gl.CheckError( "VertexAttribPointer" );
 		
@@ -180,7 +180,7 @@ public:
 		params.window_width = 800;
 		params.window_height = 600;
 		params.window_title = "TestMobile";
-		return kernel::Success;
+		return kernel::Application_Success;
 	}
 	
 	void setup_vertex_data( TestVertex * vertices )
@@ -369,7 +369,7 @@ public:
 		gl.CheckError( "BindBuffer 0" );
 #endif
 	
-		return kernel::Success;
+		return kernel::Application_Success;
 	}
 	
 	virtual void step( kernel::Params & params )

@@ -114,7 +114,7 @@ public:
 		params.window_height = 600;
 		params.window_title = "TestWindow";
 		
-		return kernel::Success;
+		return kernel::Application_Success;
 	}
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
@@ -124,7 +124,7 @@ public:
 		
 		
 		
-		return kernel::Success;
+		return kernel::Application_Success;
 	}
 	
 	virtual void step( kernel::Params & params )

@@ -534,7 +534,7 @@ public:
 		params.window_title = "TestUniversal";
 //		HSQUIRRELVM vm = sq_open(1024);
 //		sq_close( vm );
-		return kernel::Success;
+		return kernel::Application_Success;
 	}
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
@@ -678,7 +678,7 @@ public:
 			LOGW( "unable to load mesh.\n" );
 		}
 #endif
-		return kernel::Success;
+		return kernel::Application_Success;
 	}
 
 	

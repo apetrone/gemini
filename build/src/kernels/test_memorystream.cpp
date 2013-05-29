@@ -31,7 +31,7 @@ public:
 
 	virtual kernel::ApplicationResult config( kernel::Params & params )
 	{
-		return kernel::NoWindow;
+		return kernel::Application_NoWindow;
 	}
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
@@ -76,7 +76,7 @@ public:
 		s.read( p );
 		LOGV( "x = '%p', p = '%p'\n", x, p );
 		
-		return kernel::NoWindow;
+		return kernel::Application_NoWindow;
 	}
 
 	virtual void step( kernel::Params & params )

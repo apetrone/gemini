@@ -155,7 +155,7 @@ void DesktopKernel::post_tick()
 
 void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 {
-	set_active( (result != kernel::NoWindow) );
+	set_active( (result != kernel::Application_NoWindow) );
 	
 	if ( is_active() )
 	{

@@ -30,13 +30,13 @@ public:
 
 	virtual kernel::ApplicationResult config( kernel::Params & params )
 	{		
-		return kernel::NoWindow;
+		return kernel::Application_NoWindow;
 	}
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 		LOGV( "Hello World!\n" );
-		return kernel::NoWindow;
+		return kernel::Application_NoWindow;
 	}
 
 	virtual void step( kernel::Params & params )

@@ -52,9 +52,9 @@ namespace kernel
 	// status codes for config and startup return values
 	enum ApplicationResult
 	{
-		Failure = 0,
-		Success = 1,
-		NoWindow = -1
+		Application_Failure = 0,
+		Application_Success = 1,
+		Application_NoWindow = -1
 	};
 	
 	typedef unsigned char KernelDeviceFlags;

@@ -289,7 +289,7 @@ namespace kernel
 		}
 		
 		// application config
-		ApplicationResult config_result = Failure;
+		ApplicationResult config_result = Application_Failure;
 		if ( _active_application )
 		{
 			config_result = _active_application->config( kernel::instance()->parameters() );
@@ -298,14 +298,14 @@ namespace kernel
 		// evaluate config result
 		kernel::instance()->post_application_config( config_result );
 	
-		if ( config_result == kernel::Failure )
+		if ( config_result == kernel::Application_Failure )
 		{
 			fprintf( stderr, "Application config failed. aborting.\n" );
 			return kernel::ConfigFailed;
 		}
 		
 		// try to setup the renderer
-		if ( config_result != kernel::NoWindow )
+		if ( config_result != kernel::Application_NoWindow )
 		{
 			int render_result =	renderer::startup( renderer::Default );
 			if ( render_result == 0 )
@@ -327,7 +327,7 @@ namespace kernel
 		// evaluate startup result
 		_kernel->post_application_startup( startup_result );
 		
-		if ( startup_result == kernel::Failure )
+		if ( startup_result == kernel::Application_Failure )
 		{
 			fprintf( stderr, "Application startup failed!\n" );
 			return kernel::StartupFailed;
