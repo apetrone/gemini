@@ -53,6 +53,12 @@ namespace core
 		int stdout_open( log_handler_t * handler );
 		void stdout_close( log_handler_t * handler );
 		
+#if _WIN32
+		void vs_message( log_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );		
+		int vs_open( log_handler_t * handler );
+		void vs_close( log_handler_t * handler );
+#endif
+
 #if __ANDROID__
 		void log_android_message( log_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );		
 		int log_android_open( log_handler_t * handler );		
@@ -70,6 +76,18 @@ namespace core
 			
 			log_set_default_log( &_system_log );
 			
+#if _WIN32
+			log_handler_t msvc_logger;
+			memset( &msvc_logger, 0, sizeof(log_handler_t) );
+			msvc_logger.close = vs_close;
+			msvc_logger.open = vs_open;
+			msvc_logger.message = vs_message;
+			msvc_logger.userdata = 0;
+
+			++total_log_handlers;
+			log_add_handler( &_system_log, &msvc_logger );
+#endif
+
 #ifndef __ANDROID__
 			log_handler_t stdout_logger;
 			memset( &stdout_logger, 0, sizeof(log_handler_t) );

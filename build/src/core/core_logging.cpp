@@ -70,6 +70,26 @@ namespace core
 		void stdout_close( log_handler_t * handler )
 		{
 		}
+
+#if _WIN32
+		void vs_message( log_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type )
+		{
+	//		const char *message_types[] = { 0, "VERBOSE", "WARNING", " ERROR " };
+//			fprintf( stdout, "[%s] %s, %s, %i | %s", message_types[ type ], xstr_filefrompath(filename), function, line, message );
+
+
+			OutputDebugStringA( message );
+		}
+		
+		int vs_open( log_handler_t * handler )
+		{
+			return 1;
+		}
+		
+		void vs_close( log_handler_t * handler )
+		{
+		}	
+#endif
 		
 #if __ANDROID__
 		void log_android_message( log_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type )

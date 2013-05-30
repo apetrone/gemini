@@ -27,7 +27,7 @@ class soilBuilder(Builder):
 			items.append( params['configuration'] )
 			libdir = '/'.join( items )
 
-		builder.setOutput( path=libdir, name=project.name, type=Builder.StaticLibrary )
+		builder.addOutput( path=libdir, name=project.name, type=Builder.StaticLibrary )
 		driver.config = (params['configuration'].lower() + Premake4.archmap[ params['platform'] ][ params['build_architecture'] ])
 
 	def generate(self, *args, **kwargs):

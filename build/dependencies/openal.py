@@ -31,4 +31,4 @@ class openALBuilder(Builder):
 			}
 			libdir = "libs/%s" % libmap[ params['build_architecture'] ]
 
-			builder.setOutput( path=libdir, name=builder.libs[0], type=Builder.StaticLibrary )
+			builder.addOutput( path=libdir, name=builder.libs[0], type=Builder.StaticLibrary )
