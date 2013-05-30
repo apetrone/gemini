@@ -85,10 +85,11 @@ namespace fs
 			content_directory = fs::content_directory();
 		}
 		
-		xstr_ncpy( fullpath, content_directory, MAX_PATH_SIZE );
+		size_t path_size = xstr_len(content_directory);
+		xstr_ncpy( fullpath, content_directory, path_size );
 		xstr_cat( fullpath, PATH_SEPARATOR_STRING );
 		xstr_cat( fullpath, relativepath );
-		platform::path::normalize( fullpath, MAX_PATH_SIZE );
+		platform::path::normalize( fullpath, path_size );
 	} // absolute_path_from_relative
 
 	void relative_path_from_absolute( char * relative_path, const char * absolute_path, const char * content_directory )
