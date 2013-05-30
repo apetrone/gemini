@@ -35,7 +35,14 @@
 
 namespace memory
 {
-	const size_t MemoryHeaderSize = sizeof(size_t);
+	struct MemoryHeader
+	{
+		size_t alloc_size;
+		size_t alloc_num;
+		const char * file;
+		int line;
+	};
+	const size_t MemoryHeaderSize = sizeof(MemoryHeader);
 	IAllocator * _allocator = 0;
 	
 	class SimpleAllocator : public virtual IAllocator
@@ -47,10 +54,11 @@ namespace memory
 	public:
 		SimpleAllocator() : num_active_bytes(0), num_active_allocations(0), num_total_allocations(0), num_total_bytes(0) {}
 		
-		virtual void * allocate( size_t bytes )
+		virtual void * allocate( size_t bytes, const char * file, int line )
 		{
 //			size_t total_size = bytes+MemoryHeaderSize;
 			char * block = (char*)malloc( bytes+MemoryHeaderSize );
+			assert(block != 0);
 			if ( block )
 			{
 //				fprintf( stdout, "+ %i bytes\n", (unsigned long)total_size );
@@ -62,8 +70,11 @@ namespace memory
 				++num_active_allocations;
 				
 				// set the leading bytes of the block to the allocation size
-				size_t * memory_size = (size_t*)block;
-				*memory_size = bytes;
+				MemoryHeader * mheader = (MemoryHeader*)block;
+				mheader->alloc_size = bytes;
+				mheader->alloc_num = num_total_allocations-1;
+				mheader->file = file;
+				mheader->line = line;
 				
 				// advance the block pointer
 				block += MemoryHeaderSize;
@@ -84,10 +95,10 @@ namespace memory
 			{
 				// get a header to the block pointer
 				char * block = ((char*)memory) - MemoryHeaderSize;
-				size_t * memory_size = (size_t*)block;
+				MemoryHeader * mheader = (MemoryHeader*)block;
 
 				// subtract allocations and sizes
-				num_active_bytes -= (*memory_size + MemoryHeaderSize);
+				num_active_bytes -= (mheader->alloc_size + MemoryHeaderSize);
 				--num_active_allocations;
 				
 				free( block );

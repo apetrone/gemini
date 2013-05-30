@@ -24,6 +24,9 @@
 #include <string.h> // for size_t
 #include <memory> // for placement new
 
+// set this to 0 to enable normal new/delete and malloc/free to narrow down problems
+#define USE_DEBUG_ALLOCATOR 1
+
 namespace memory
 {
 	class IAllocator
@@ -31,7 +34,7 @@ namespace memory
 	public:
 		virtual ~IAllocator() {}
 		
-		virtual void * allocate( size_t bytes ) = 0;
+		virtual void * allocate( size_t bytes, const char * file, int line ) = 0;
 		virtual void deallocate( void * memory ) = 0;
 		
 		virtual size_t active_bytes() const = 0;
@@ -49,19 +52,28 @@ namespace memory
 	// instance of the active allocator
 	IAllocator & allocator();
 
+#if USE_DEBUG_ALLOCATOR
 	// raw memory alloc/dealloc
-	#define ALLOC(byte_count)	memory::allocator().allocate(byte_count)
+	#define ALLOC(byte_count)	memory::allocator().allocate(byte_count, __FILE__, __LINE__)
 	#define DEALLOC(pointer) { memory::allocator().deallocate(pointer); pointer = 0; }
 	
 	// helper macros for alloc and dealloc on classes and structures	
-	#define CREATE(Type, ...)	new (memory::allocator().allocate(sizeof(Type))) Type(__VA_ARGS__)
+	#define CREATE(Type, ...)	new (memory::allocator().allocate(sizeof(Type), __FILE__, __LINE__)) Type(__VA_ARGS__)
 	#define DESTROY(Type, pointer) { if (pointer) { pointer->~Type(); memory::allocator().deallocate(pointer); pointer = 0; } }
 	
 	// at the moment: this only works if the Type has a default constructor
-	#define CREATE_ARRAY(Type, num_elements, ...)		new (memory::allocator().allocate(sizeof(Type)*num_elements)) Type[ num_elements ]
+	#define CREATE_ARRAY(Type, num_elements, ...)		new (memory::allocator().allocate(sizeof(Type)*num_elements, __FILE__, __LINE__)) Type[ num_elements ]
 	#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { for( size_t i = 0; i < num_elements; ++i ) { (&pointer[i])->~Type(); } memory::allocator().deallocate(pointer); pointer = 0;  }
+#else
+	#define ALLOC(byte_count)	malloc(byte_count)
+	#define DEALLOC(pointer) { free(pointer); pointer = 0; }
 
-	
+	#define CREATE(Type, ...)	new Type(__VA_ARGS__)
+	#define DESTROY(Type, pointer) { delete pointer; pointer = 0; }
+
+	#define CREATE_ARRAY(Type, num_elements, ...)		new Type[ num_elements ]
+	#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { delete [] pointer; pointer = 0;  }
+#endif
 }; // namespace memory
 
 #include "memory_stl_allocator.hpp"
