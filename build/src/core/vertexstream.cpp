@@ -29,6 +29,17 @@
 
 namespace renderer
 {
+	VertexStream::VertexStream()
+	{
+		total_vertices = 0;
+		total_indices = 0;
+		vertices = 0;
+		last_vertex = 0;
+		last_index = 0;
+		highest_index = 0;
+		indices = 0;
+	}
+
 	void VertexStream::alloc( IndexType max_vertices, IndexType max_indices )
 	{
 		total_vertices = max_vertices;
@@ -196,8 +207,12 @@ namespace renderer
 	void VertexStream::destroy()
 	{
 		this->dealloc();
-		renderer::driver()->vertexbuffer_destroy( this->vertexbuffer );
-		this->vertexbuffer = 0;
+		if ( renderer::driver() && this->vertexbuffer )
+		{
+			renderer::driver()->vertexbuffer_destroy( this->vertexbuffer );
+			this->vertexbuffer = 0;
+		}
+		
 	} // destroy
 
 	void VertexStream::update()
