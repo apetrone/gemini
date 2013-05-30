@@ -424,6 +424,11 @@ class TestUniversal : public kernel::IApplication,
 	int tdy;
 public:
 	DECLARE_APPLICATION( TestUniversal );
+
+	TestUniversal()
+	{
+		font_buffer = 0;
+	}
 	
 	virtual void event( kernel::TouchEvent & event )
 	{
@@ -886,7 +891,10 @@ public:
 		DEALLOC( font_buffer );
 		font::shutdown();
 		
-		renderer::driver()->shaderprogram_destroy( this->default_shader );
+		if ( renderer::driver() )
+		{
+			renderer::driver()->shaderprogram_destroy( this->default_shader );
+		}
 		
 		vb.destroy();
 	}
