@@ -78,4 +78,8 @@ namespace memory
 
 #include "memory_stl_allocator.hpp"
 
-#define GeminiAllocator memory::DebugAllocator
+#if USE_DEBUG_ALLOCATOR
+	#define GeminiAllocator memory::DebugAllocator
+#else
+	#define GeminiAllocator std::allocator
+#endif
