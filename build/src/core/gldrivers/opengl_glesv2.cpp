@@ -126,15 +126,13 @@ struct GLES2VertexBuffer : public VertexBuffer
 	
 	GLES2VertexBuffer()
 	{
-		vbo[0] = 0;
-		vbo[1] = 0;
+		memset( vao, 0, VAO_LIMIT*sizeof(GLuint) );
+		memset( vbo, 0, VBO_LIMIT*sizeof(GLuint) );
 		vertex_stride = 0;
 	}
 	
 	void allocate( renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type )
 	{
-		vao[ VAO_INTERLEAVED ] = 0;
-		memset( vbo, 0, sizeof(GLuint) );
 		gl_draw_type = vertexbuffer_drawtype_to_gl_drawtype( draw_type );
 		gl_buffer_type = vertexbuffer_buffertype_to_gl_buffertype( buffer_type );
 	}
@@ -149,7 +147,7 @@ struct GLES2VertexBuffer : public VertexBuffer
 		unsigned int attribSize = 0;
 		unsigned int num_elements = 0;
 		unsigned int normalized = 0;
-		unsigned int offset = 0;
+		size_t offset = 0;
 		
 		for( unsigned int i = 0; i < vertex_descriptor.attribs; ++i )
 		{
@@ -198,6 +196,7 @@ struct GLES2VertexBuffer : public VertexBuffer
 	
 	void static_setup( renderer::VertexDescriptor & descriptor, unsigned int vertex_stride, unsigned int max_vertices, unsigned int max_indices )
 	{
+#if 0
 		this->vertex_descriptor = descriptor;
 		this->vertex_stride = vertex_stride;
 		
@@ -211,12 +210,9 @@ struct GLES2VertexBuffer : public VertexBuffer
 		}
 		
 		gl.GenBuffers( VBO_LIMIT, this->vbo );
-		
-		gl.BindBuffer( GL_ARRAY_BUFFER, this->vbo[0] );
-		gl.CheckError( "BindBuffer" );
-		
-		gl.BufferData( GL_ARRAY_BUFFER, vertex_stride * max_vertices, 0, this->gl_buffer_type );
-		gl.CheckError( "BufferData" );
+		gl.CheckError( "GenBuffers" );
+				
+		upload_interleaved_data(0, max_vertices);
 		
 		if ( !_gles2->has_oes_vertex_array_object )
 		{
@@ -225,11 +221,7 @@ struct GLES2VertexBuffer : public VertexBuffer
 		
 		if ( max_indices > 0 )
 		{
-			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
-			gl.CheckError( "BindBuffer" );
-			
-			gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * max_indices, 0, this->gl_buffer_type );
-			gl.CheckError( "BufferData" );
+			upload_index_array( 0, max_indices );
 			
 			if ( !_gles2->has_oes_vertex_array_object )
 			{
@@ -243,8 +235,47 @@ struct GLES2VertexBuffer : public VertexBuffer
 			gl.BindVertexArray( 0 );
 			
 			gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
-			
+			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 		}
+#else
+		this->vertex_descriptor = descriptor;
+		this->vertex_stride = vertex_stride;
+		
+		if ( _gles2->has_oes_vertex_array_object )
+		{
+			gl.GenVertexArrays( VAO_LIMIT, this->vao );
+			gl.CheckError( "GenVertexArrays" );
+			
+			gl.BindVertexArray( this->vao[ VAO_INTERLEAVED ] );
+			gl.CheckError( "BindVertexArray" );
+		}
+		
+		gl.GenBuffers( VBO_LIMIT, this->vbo );
+		gl.CheckError( "GenBuffers" );
+		
+		// upload interleaved array
+		upload_interleaved_data( 0, max_vertices );
+		if ( !_gles2->has_oes_vertex_array_object )
+		{
+			gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+		}
+		
+		// upload index array
+		upload_index_array( 0, max_indices );
+		if ( !_gles2->has_oes_vertex_array_object )
+		{
+			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+		}
+		
+		if ( _gles2->has_oes_vertex_array_object )
+		{
+			this->setup_vertex_attributes();
+			gl.BindVertexArray( 0 );
+			
+			gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+		}
+#endif
 	}
 	
 	void upload_interleaved_data( const GLvoid * data, unsigned int vertex_count )
@@ -260,7 +291,7 @@ struct GLES2VertexBuffer : public VertexBuffer
 	
 	void upload_index_array( IndexType * indices, unsigned int index_count )
 	{
-		if ( this->vbo[1] != 0 )
+		if ( index_count != 0 )
 		{
 			this->index_count = index_count;
 			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
@@ -951,6 +982,7 @@ bool GLESv2::shaderobject_compile( renderer::ShaderObject shader_object, const c
 	gl.CompileShader( shader_object.shader_id );
 	gl.CheckError( "CompileShader" );
 	gl.GetShaderiv( shader_object.shader_id, GL_COMPILE_STATUS, &is_compiled );
+	gl.CheckError( "GetShaderiv" );
 	if ( !is_compiled )
 	{
 		LOGE( "Error compiling shader!\n" );
@@ -963,6 +995,7 @@ bool GLESv2::shaderobject_compile( renderer::ShaderObject shader_object, const c
 		}
 		status = false;
 	}
+
 	
 	return status;
 }
@@ -981,6 +1014,7 @@ renderer::ShaderProgram GLESv2::shaderprogram_create( renderer::ShaderParameters
 	
 	if ( !gl.IsProgram( program.object ) )
 	{
+		gl.CheckError( "IsProgram" );
 		LOGE("generated object is NOT a program!\n" );
 	}
 	
@@ -1079,9 +1113,12 @@ bool GLESv2::shaderprogram_link_and_validate( renderer::ShaderProgram shader_pro
 		for( unsigned int i = 0; i < parameters.total_attributes; ++i )
 		{
 			GLint attrib_location = gl.GetAttribLocation( shader_program.object, parameters.attributes[i].first );
-			
-			LOGV( "attrib: %s -> %i\n", parameters.attributes[i].first, attrib_location );
-			parameters.attributes[i].second = attrib_location;
+			if ( attrib_location != -1 )
+			{
+				LOGV( "attrib: %s -> %i\n", parameters.attributes[i].first, attrib_location );
+				assert( attrib_location == parameters.attributes[i].second );
+				parameters.attributes[i].second = attrib_location;
+			}
 		}
 	}
 #endif

@@ -640,7 +640,10 @@ namespace assets
 			
 			shader_object = renderer::driver()->shaderobject_create( type );
 			
-			renderer::driver()->shaderobject_compile( shader_object, buffer, preprocessor_defines, version() );
+			if ( !renderer::driver()->shaderobject_compile( shader_object, buffer, preprocessor_defines, version()) )
+			{
+				LOGE( "Error compiling shader %s\n", shader_path );
+			}
 			
 			DEALLOC(buffer);
 		}

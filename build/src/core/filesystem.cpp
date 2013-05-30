@@ -229,7 +229,6 @@ namespace fs
 			}
 			
 			AAsset_read( asset, buffer, file_size );
-			buffer[ file_size ] = 0;
 			AAsset_close(asset);
 		}
 
@@ -268,9 +267,7 @@ namespace fs
 				memset( buffer, 0, (*buffer_length)+1 );
 			}
 			
-			xfile_read( f, buffer, 1, file_size );
-			buffer[ file_size ] = 0;
-			
+			xfile_read( f, buffer, 1, file_size );			
 			xfile_close( f );
 		}
 #endif
