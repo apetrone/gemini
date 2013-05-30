@@ -86,7 +86,7 @@ namespace fs
 		AudioFileGetProperty( fileID, kAudioFilePropertyAudioDataByteCount, &propertySize, &fileSize );
 		
 		buffer_length = fileSize;
-		ptr = (unsigned char*)memory::allocator().allocate( fileSize );
+		ptr = (unsigned char*)ALLOC( fileSize );
 		
 		AudioFileReadBytes(fileID, false, 0, &fileSize, ptr );
 		AudioFileClose( fileID );
