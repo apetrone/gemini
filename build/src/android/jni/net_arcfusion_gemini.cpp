@@ -35,16 +35,8 @@ namespace lynx
 {
 	AndroidKernel * _kernel = 0;
 
-	void test(JNIEnv * env, jclass the_class)
-	{
-		NATIVE_LOG( "test called!\n" );
-	} // test
-
-
 	void gemini_startup(JNIEnv * env, jclass the_class, jobject jasset_manager)
 	{
-		NATIVE_LOG( "gemini_startup called\n" );
-
 		memory::startup();
 
 		_kernel = CREATE(AndroidKernel);
@@ -58,27 +50,6 @@ namespace lynx
 		{
 			NATIVE_LOG( "kernel startup failed!" );
 		}
-
-#if 0 // testing the asset manager / paths
-		const char * filename = 0;
-		AAssetDir* assetdir = AAssetManager_openDir(asset_manager, "");
-
-		do
-		{
-			filename = AAssetDir_getNextFileName(assetdir);
-			NATIVE_LOG( "-> %s\n", filename );
-		} while( filename );
-
-
-		if ( fs::file_exists("file.txt") )
-		{
-			NATIVE_LOG( "file.txt EXISTS\n" );
-		}
-		else
-		{
-			NATIVE_LOG( "file.txt DOES NOT EXIST!\n" );
-		}
-#endif
 	} // gemini_startup
 
 
@@ -109,7 +80,6 @@ namespace lynx
 
 
 static JNINativeMethod method_table[] = {
-		{"test", "()V", (void*)lynx::test},
 		{"gemini_startup", "(Landroid/content/res/AssetManager;)V", (void*)lynx::gemini_startup},
 		{"gemini_shutdown", "()V", (void*)lynx::gemini_shutdown},
 		{"gemini_tick", "()V", (void*)lynx::gemini_tick},

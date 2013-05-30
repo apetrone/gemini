@@ -27,12 +27,8 @@ public class Lynx
 {
 	//
 	// Native declarations
-	public native static void test();
-	
 	public native static void gemini_startup( AssetManager assetManager );
-	public native static void gemini_shutdown();
-	
-	
+	public native static void gemini_shutdown();	
 	public native static void gemini_tick();
 	public native static void gemini_surface_changed(int width, int height);
 	
