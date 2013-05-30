@@ -226,15 +226,22 @@ namespace font
 
 	void shutdown()
 	{
-		assets::destroy_shader( internal::_shader );
+		if ( internal::_shader )
+		{
+			assets::destroy_shader( internal::_shader );
 		
-		DESTROY( Shader, internal::_shader );
+			DESTROY( Shader, internal::_shader );
+		}
 	
 		// cleanup used memory here
 		internal::_vertexstream.destroy();
 		
-		// delete internal font stash
-		sth_delete( internal::_stash );
+		if ( internal::_stash )
+		{
+
+			// delete internal font stash
+			sth_delete( internal::_stash );
+		}
 	} // shutdown
 	
 
