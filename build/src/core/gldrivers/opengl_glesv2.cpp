@@ -765,6 +765,7 @@ void GLESv2::vertexbuffer_destroy( renderer::VertexBuffer * vertexbuffer )
 
 void GLESv2::vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
 {
+#if 0
 	GLES2VertexBuffer * stream = (GLES2VertexBuffer*)vertexbuffer;
 	assert( stream != 0 );
 	
@@ -795,6 +796,11 @@ void GLESv2::vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned int 
 		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 	}
+#else
+	GLES2VertexBuffer * stream = (GLES2VertexBuffer*)vertexbuffer;
+
+	stream->static_setup( stream->vertex_descriptor, stream->vertex_stride, stream->vertex_count, stream->index_count );
+#endif
 }
 
 
@@ -946,8 +952,8 @@ void GLESv2::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer
 		gl.BindVertexArray( 0 );
 	}
 	
-//	gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-//	gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+	gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+	gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 }
 
 ///////////////////////////////

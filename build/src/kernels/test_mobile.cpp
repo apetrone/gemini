@@ -35,7 +35,7 @@
 #define FONT_TEST 0
 #define MODEL_TEST 1
 #define MODEL_TEST2 0
-#define MODEL_TEST3 0
+#define MODEL_TEST3 1
 
 #define SIMPLE_SHADER 1
 
@@ -187,28 +187,29 @@ public:
 	
 	void setup_vertex_data( TestVertex * vertices )
 	{
-		vertices[0].pos = glm::vec2(0,0);
+		const int TEST3_OFFSET = 200;
+		vertices[0].pos = glm::vec2(TEST3_OFFSET,0);
 		vertices[0].color.set( 255, 255, 255 );
 #if !SIMPLE_SHADER
 		vertices[0].uv.u = 0;
 		vertices[0].uv.v = 0;
 #endif
 		
-		vertices[1].pos = glm::vec2(0, TEST_SIZE);
+		vertices[1].pos = glm::vec2(TEST3_OFFSET, TEST_SIZE);
 		vertices[1].color.set( 0, 0, 255 );
 #if !SIMPLE_SHADER
 		vertices[1].uv.u = 0;
 		vertices[1].uv.v = 1;
 #endif
 		
-		vertices[2].pos = glm::vec2(TEST_SIZE, TEST_SIZE);
+		vertices[2].pos = glm::vec2(TEST3_OFFSET+TEST_SIZE, TEST_SIZE);
 		vertices[2].color.set( 0, 255, 0 );
 #if !SIMPLE_SHADER
 		vertices[2].uv.u = 1;
 		vertices[2].uv.v = 1;
 #endif
 		
-		vertices[3].pos = glm::vec2(TEST_SIZE, 0);
+		vertices[3].pos = glm::vec2(TEST3_OFFSET+TEST_SIZE, 0);
 		vertices[3].color.set( 255, 0, 0 );
 #if !SIMPLE_SHADER
 		vertices[3].uv.u = 1;
