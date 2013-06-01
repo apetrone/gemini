@@ -373,7 +373,8 @@ namespace kernel
 		_internal::_kernel_state.last_time = now_msec;
 
 		_internal::_kernel_state.tsa.tick( raw_delta_msec );
-		
+		_kernel->parameters().framedelta_filtered = _internal::_kernel_state.tsa.filtered_value;
+		_kernel->parameters().framedelta_raw = _internal::_kernel_state.last_time;
 		_internal::_kernel_state.accumulator += (_internal::_kernel_state.tsa.filtered_value * .001);
 		while( _internal::_kernel_state.accumulator > _kernel->parameters().step_interval_seconds )
 		{
