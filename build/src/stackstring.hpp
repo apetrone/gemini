@@ -125,13 +125,22 @@ struct StackString
 		for( int i = 0; i < _length; ++i )
 		{
 			if ( _data[i] == '\\' || _data[i] == '/' )
+			{
 				_data[i] = prefer;
+			}
 		}
 	}
 	
 	void append( const Type * s )
 	{
-		xstr_cat( _data, s );
+		if (_length + xstr_len(s) < size)
+		{
+			xstr_cat( _data, s );
+		}
+		else
+		{
+			assert( 0 );
+		}
 	}
 	
 	const Type *operator ()()
@@ -162,7 +171,9 @@ struct StackString
 		for( int i = pos; i < size; ++i )
 		{
 			if( *src == '\0' )
+			{
 				break;
+			}
 			
 			if( i < (pos+count) )
 			{

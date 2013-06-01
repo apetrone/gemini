@@ -210,9 +210,10 @@ namespace image
 	
 	void free_image( unsigned char * pixels )
 	{
-		// this was not allocated by our allocator (was done through SOIL)
+		// this was not allocated by our allocator (was done through stb_image)
 		// so must not ask our deallocator to delete it.
-		delete [] pixels;
+		stbi_image_free( pixels );
+		//delete [] pixels;
 	} // free_image
 
 

@@ -173,7 +173,9 @@ char * xstr_ncat( char * destination, const char * source, size_t destination_si
 
 	// we cannot possibly fit this string in the destination array
 	if ( dst_len + src_len >= destination_size )
+	{
 		return 0;
+	}
 	
     return strcat( destination, source );
 }
