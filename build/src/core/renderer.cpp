@@ -247,11 +247,13 @@ namespace renderer
 		if ( this->uniforms )
 		{
 			DESTROY_ARRAY(ShaderKeyValuePair, this->uniforms, this->total_uniforms);
+			this->total_uniforms = 0;
 		}
 		
 		if ( this->attributes )
 		{
 			DESTROY_ARRAY(ShaderKeyValuePair, this->attributes, this->total_attributes);
+			this->total_attributes = 0;
 		}
 		
 		if ( this->frag_data_location )

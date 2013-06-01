@@ -663,6 +663,11 @@ namespace assets
 		
 		renderer::ShaderProgram shader_program;
 		shader_program.object = 0;
+		if (!renderer::driver())
+		{
+			LOGW( "Renderer is not initialized!\n" );
+			return;
+		}
 		renderer::driver()->shaderprogram_deactivate( shader_program );
 		
 		renderer::ShaderProgram program = renderer::driver()->shaderprogram_create( params );

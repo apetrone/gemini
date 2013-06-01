@@ -343,7 +343,6 @@ namespace kernel
 		{
 			_active_application->shutdown( _kernel->parameters() );
 			DESTROY(IApplication, _active_application);
-			_active_application = 0;
 		}
 	
 		// system cleanup

@@ -56,6 +56,10 @@ void RenderStream::run_commands()
 {
 	RenderState * renderstate;
 	renderer::IRenderDriver * driver = renderer::driver();
+	if ( !driver )
+	{
+		return;
+	}
 
 	for( int state_id = 0; state_id < num_commands; state_id++ )
 	{

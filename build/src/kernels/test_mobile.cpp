@@ -35,7 +35,7 @@
 #define FONT_TEST 0
 #define MODEL_TEST 1
 #define MODEL_TEST2 0
-#define MODEL_TEST3 1
+#define MODEL_TEST3 0
 
 #define SIMPLE_SHADER 1
 

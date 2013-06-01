@@ -168,6 +168,7 @@ namespace assets
 	void compile_shader_permutations();
 	Shader * find_compatible_shader( unsigned int attributes );
 	
+
 //	renderer::ShaderObject create_shader_from_file( const char * shader_path, renderer::ShaderObjectType type, const char * preprocessor_defines );
 	void load_shader( const char * shader_path, Shader * shader );
 	void destroy_shader( Shader * shader );
