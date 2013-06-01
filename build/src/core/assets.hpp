@@ -248,7 +248,6 @@ namespace assets
 		
 	}; // Geometry
 	
-	
 	struct Mesh : public virtual Asset
 	{
 		unsigned short total_geometry;

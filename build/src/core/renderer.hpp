@@ -292,6 +292,16 @@ namespace renderer
 		renderer::IndexType * indices;
 		renderer::VertexBuffer * vertexbuffer;
 	}; // Geometry
+	
+	struct GeneralParameters
+	{
+		glm::mat4 * modelview_matrix;
+		glm::mat4 * projection_project;
+		glm::mat4 * object_matrix;
+		
+		unsigned int global_params;
+		glm::vec3 * camera_position;
+	};
 };
 
 #include "vertexstream.hpp"

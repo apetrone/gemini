@@ -45,6 +45,8 @@
 
 #include "font.hpp"
 
+#include "render_utilities.hpp"
+
 #define TEST_2D 1
 
 glm::mat4 objectMatrix;
@@ -378,40 +380,6 @@ class TestUniversal : public kernel::IApplication,
 		unsigned int global_params;
 		glm::vec3 * camera_position;
 	};
-	
-	static void stream_geometry( RenderStream & rs, assets::Geometry * geo, GeneralParameters & gp )
-	{
-		assert( geo != 0 );
-		assets::Material * material = assets::material_by_id( geo->material_id );
-		assert( material != 0 );
-		//		LOGV( "material: %i\n", material->Id() );
-		assets::Shader * shader = assets::find_compatible_shader( geo->attributes + material->requirements + gp.global_params );
-		assert( shader != 0 );
-		
-		if ( !shader )
-		{
-			LOGE( "Unable to find shader!\n" );
-			return;
-		}
-		
-		//		LOGV( "binding shader: %i\n", shader->id );
-		rs.add_shader( shader );
-		
-		if ( gp.global_params > 0 )
-		{
-			//		rs.add_uniform3f( shader->get_uniform_location("lightPosition"), &light_position );
-			//		rs.add_uniform3f( shader->get_uniform_location("cameraPosition"), gp.camera_position );
-		}
-		
-		rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), gp.modelview_matrix );
-		rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), gp.projection_project );
-		rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), gp.object_matrix );
-		
-		rs.add_material( material, shader );
-		
-		rs.add_draw_call( geo->vertexbuffer );
-	} // stream_geometry
-	
 	
 	
 	RenderStream rs;
@@ -874,7 +842,7 @@ public:
 			for( unsigned int geo_id = 0; geo_id < mesh->total_geometry; ++geo_id )
 			{
 				assets::Geometry * g = &mesh->geometry[ geo_id ];
-				stream_geometry( rs, g, gp );
+				render_utilities::stream_geometry( rs, g, gp );
 			}
 		}
 

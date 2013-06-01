@@ -30,6 +30,8 @@
 #include "vertexstream.hpp"
 #include "mathlib.h"
 
+#include "render_utilities.hpp"
+
 #include "gemgl.hpp"
 
 #define FONT_TEST 1
@@ -43,51 +45,6 @@
 const int TEST_SIZE = 200;
 
 
-struct GeneralParameters
-{
-	glm::mat4 * modelview_matrix;
-	glm::mat4 * projection_project;
-	glm::mat4 * object_matrix;
-	
-	unsigned int global_params;
-	glm::vec3 * camera_position;
-	
-	
-	
-};
-
-static void stream_geometry( RenderStream & rs, assets::Geometry * geo, GeneralParameters & gp )
-{
-	assert( geo != 0 );
-	assets::Material * material = assets::material_by_id( geo->material_id );
-	assert( material != 0 );
-	//		LOGV( "material: %i\n", material->Id() );
-	assets::Shader * shader = assets::find_compatible_shader( geo->attributes + material->requirements + gp.global_params );
-	assert( shader != 0 );
-	
-	if ( !shader )
-	{
-		LOGE( "Unable to find shader!\n" );
-		return;
-	}
-	
-	//		LOGV( "binding shader: %i\n", shader->id );
-	rs.add_shader( shader );
-	
-	if ( gp.global_params > 0 )
-	{
-//		rs.add_uniform3f( shader->get_uniform_location("lightPosition"), &light_position );
-//		rs.add_uniform3f( shader->get_uniform_location("cameraPosition"), gp.camera_position );
-	}
-	
-	rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), gp.modelview_matrix );
-	rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), gp.projection_project );
-	rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), gp.object_matrix );
-	
-	rs.add_material( material, shader );
-	
-	rs.add_draw_call( geo->vertexbuffer );
-} // stream_geometry
 
 
 struct TestVertex
@@ -153,7 +110,7 @@ public:
 	renderer::VertexStream vs;
 	assets::Shader shader;
 	glm::mat4 objectMatrix;
-	GeneralParameters gp;
+	renderer::GeneralParameters gp;
 	
 
 	virtual void event( kernel::TouchEvent & event )
@@ -348,7 +305,7 @@ public:
 		gp.projection_project = &camera.matProj;
 		gp.object_matrix = &objectMatrix;
 		
-		stream_geometry(rs, &geo, gp);
+		render_utilities::stream_geometry(rs, &geo, gp);
 #endif
 	}
 	
