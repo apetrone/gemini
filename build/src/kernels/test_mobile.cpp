@@ -57,45 +57,6 @@ struct TestVertex
 };
 
 
-struct ModelTest3
-{
-	unsigned int vao;
-	unsigned int vbo;
-	unsigned int ebo;
-	TestVertex data[4];
-	renderer::IndexType indices[3];
-	unsigned int stride;
-		
-	void setup_attribs()
-	{
-		unsigned int attribID = 0;
-		size_t offset = 0;
-		gl.VertexAttribPointer( attribID, 2, GL_FLOAT, GL_FALSE, stride, (void*)offset );
-		gl.CheckError( "VertexAttribPointer" );
-		
-		gl.EnableVertexAttribArray( attribID );
-		gl.CheckError( "EnableVertexAttribArray" );
-		offset += sizeof(GLfloat) * 2;
-		attribID++;
-		
-#if !SIMPLE_SHADER
-		gl.VertexAttribPointer( attribID, 2, GL_FLOAT, GL_FALSE, stride, (void*)offset );
-		gl.CheckError( "VertexAttribPointer" );
-		
-		gl.EnableVertexAttribArray( attribID );
-		gl.CheckError( "EnableVertexAttribArray" );
-		offset += sizeof(GLfloat) * 2;
-		attribID++;
-#endif
-		
-		gl.VertexAttribPointer( attribID, 4, GL_UNSIGNED_BYTE, GL_TRUE, stride, (void*)offset );
-		gl.CheckError( "VertexAttribPointer" );
-		
-		gl.EnableVertexAttribArray( attribID );
-		gl.CheckError( "EnableVertexAttribArray" );
-	}
-};
-
 class TestMobile : public kernel::IApplication,
 	kernel::IEventListener<kernel::TouchEvent>
 
@@ -172,8 +133,6 @@ public:
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 #if FONT_TEST
-		font::startup();
-		
 		int buffer_length = 0;
 		font_buffer = fs::file_to_buffer( "fonts/nokiafc22.ttf", 0, &buffer_length );
 		if ( font_buffer )
@@ -375,7 +334,6 @@ public:
 	{
 #if FONT_TEST
 		DEALLOC(font_buffer);
-		font::shutdown();
 #endif
 
 

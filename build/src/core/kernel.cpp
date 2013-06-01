@@ -33,6 +33,7 @@
 #include "input.hpp"
 #include "assets.hpp"
 #include "configloader.hpp"
+#include "font.hpp"
 
 #if LINUX
 	#include <stdlib.h> // for qsort
@@ -315,6 +316,7 @@ namespace kernel
 			}
 
 			assets::startup();
+			font::startup();
 		}
 		
 		// try to setup audio
@@ -347,6 +349,7 @@ namespace kernel
 	
 		// system cleanup
 		assets::shutdown();
+		font::shutdown();
 		input::shutdown();
 		audio::shutdown();
 		renderer::shutdown();
