@@ -32,12 +32,11 @@
 
 #include "gemgl.hpp"
 
-#define FONT_TEST 0
+#define FONT_TEST 1
 #define MODEL_TEST 1
-#define MODEL_TEST2 0
-#define MODEL_TEST3 0
+#define MODEL_TEST2 1
 
-#define SIMPLE_SHADER 1
+#define SIMPLE_SHADER 0
 
 #define DRAW_INDEXED 0 // enable this (1) to draw using indices; disable (0) to use draw_arrays
 
@@ -156,10 +155,6 @@ public:
 	glm::mat4 objectMatrix;
 	GeneralParameters gp;
 	
-
-#if MODEL_TEST3
-	ModelTest3 mt3;
-#endif
 
 	virtual void event( kernel::TouchEvent & event )
 	{
@@ -334,58 +329,7 @@ public:
 #else
 		assets::load_shader( "shaders/simple", &shader );
 #endif
-		
-		
-#if MODEL_TEST3
-
-		renderer::VertexDescriptor vd;
-		vd.add(renderer::VD_FLOAT2);
-		vd.add(renderer::VD_UNSIGNED_BYTE4);
-
-		setup_vertex_data( mt3.data );
-		
-		// setup indices
-		mt3.indices[0] = 0;
-		mt3.indices[1] = 1;
-		mt3.indices[2] = 2;
-		
-		mt3.stride = vd.calculate_vertex_stride();
-//		gl.GenVertexArrays( 1, &mt3.vao );
-//		gl.CheckError( "GenVertexArrays" );
-		
-		gl.GenBuffers( 1, &mt3.vbo );
-		gl.CheckError( "GenBuffers" );
-		
-		gl.GenBuffers( 1, &mt3.ebo );
-		gl.CheckError( "GenBuffers ebo" );
-		
-//		gl.BindVertexArray( mt3.vao );
-//		gl.CheckError( "BindVertexArray" );
-		
-		gl.BindBuffer( GL_ARRAY_BUFFER, mt3.vbo );
-		gl.CheckError( "BindBuffer" );
-		
-		gl.BufferData( GL_ARRAY_BUFFER, mt3.stride * 3, mt3.data, GL_STREAM_DRAW );
-		gl.CheckError( "BufferData" );
-		
-		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
-		
-		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, mt3.ebo );
-		gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(renderer::IndexType) * 3, mt3.indices, GL_STREAM_DRAW );
-		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-
-//		mt3.setup_attribs();
-		
-		
-		
-//		gl.BindVertexArray( 0 );
-//		gl.CheckError( "BindVertexArray 0" );
-		
-		
-		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
-		gl.CheckError( "BindBuffer 0" );
-#endif
-	
+			
 		return kernel::Application_Success;
 	}
 	
@@ -431,61 +375,7 @@ public:
 		rs.add_draw_call( vs.vertexbuffer );
 #endif
 	} // model_test2
-	
-	void model_test3( Camera & camera, kernel::Params & params )
-	{
-#if MODEL_TEST3
 		
-//		rs.add_sampler2d( shader.get_uniform_location("diffusemap"), 0, tex->texture_id );
-		
-		gl.UseProgram( shader.object );
-		gl.CheckError( "UseProgram" );
-		
-		gl.UniformMatrix4fv( shader.get_uniform_location("modelview_matrix"), 1, GL_FALSE, glm::value_ptr(camera.matCam) );
-		gl.CheckError( "UniformMatrix4 - modelview" );
-		
-		gl.UniformMatrix4fv( shader.get_uniform_location("projection_matrix"), 1, GL_FALSE, glm::value_ptr(camera.matProj) );
-		gl.CheckError( "UniformMatrix4 - projection" );
-		
-#if !SIMPLE_SHADER
-		assets::Texture * tex = assets::load_texture("textures/default");
-		gl.ActiveTexture( GL_TEXTURE0 );
-		gl.CheckError( "ActiveTexture" );
-		
-		gl.BindTexture( GL_TEXTURE_2D, tex->texture_id );
-		gl.CheckError( "BindTexture" );
-		
-		gl.Uniform1i( shader.get_uniform_location("diffusemap"), 0 );
-		gl.CheckError( "Uniform1" );
-#endif
-//		gl.BindVertexArray( mt3.vao );
-//		gl.CheckError( "BindVertexArray" );
-
-		gl.BindBuffer( GL_ARRAY_BUFFER, mt3.vbo );
-		mt3.setup_attribs();
-		
-		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, mt3.ebo );
-		gl.DrawElements( GL_TRIANGLES, 3, GL_UNSIGNED_SHORT, 0 );
-		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-		
-//		gl.DrawArrays( GL_TRIANGLES, 0, 3 );
-//		gl.CheckError( "DrawArrays" );
-		
-//		gl.BindVertexArray( 0 );
-//		gl.CheckError( "BindVertexArray" );
-
-		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
-				
-		gl.UseProgram( 0 );
-		gl.CheckError( "UseProgram 0" );
-#if !SIMPLE_SHADER
-		gl.BindTexture( GL_TEXTURE_2D, 0 );
-		gl.CheckError( "BindTexture 0" );
-#endif
-
-#endif
-	} // model_test3
-	
 	void font_test( Camera & camera, kernel::Params & params )
 	{
 #if FONT_TEST
@@ -515,9 +405,6 @@ public:
 		
 		// run all commands
 		rs.run_commands();
-		
-		model_test3( camera, params );
-		
 
 		
 		font_test( camera, params );
