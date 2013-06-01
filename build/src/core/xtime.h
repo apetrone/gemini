@@ -34,6 +34,8 @@ USAGE:
 	#include <sys/time.h>
 	#include <time.h>
 #elif _WIN32
+	#include <time.h>
+	#define WIN32_LEAN_AND_MEAN 1
     #include <windows.h>
 #endif
 
