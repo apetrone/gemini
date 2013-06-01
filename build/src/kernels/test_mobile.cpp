@@ -66,7 +66,6 @@ public:
 
 	font::Handle test_font;
 	RenderStream rs;
-	char * font_buffer;
 	assets::Geometry geo;
 	renderer::VertexStream vs;
 	assets::Shader shader;
@@ -132,18 +131,8 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
-#if FONT_TEST
-		int buffer_length = 0;
-		font_buffer = fs::file_to_buffer( "fonts/nokiafc22.ttf", 0, &buffer_length );
-		if ( font_buffer )
-		{
-			test_font = font::load_font_from_memory( font_buffer, buffer_length, 16, 0, 72, 72 );
-			LOGV( "font loaded: %i bytes\n", buffer_length );
-		}
-		else
-		{
-			LOGE( "Unable to load font\n" );
-		}
+#if FONT_TEST		
+		test_font = font::load_font_from_file( "fonts/nokiafc22.ttf", 16, 72, 72 );
 #endif
 
 
@@ -332,11 +321,6 @@ public:
 	
 	virtual void shutdown( kernel::Params & params )
 	{
-#if FONT_TEST
-		DEALLOC(font_buffer);
-#endif
-
-
 #if MODEL_TEST2
 		assets::destroy_shader(&shader);
 		vs.destroy();

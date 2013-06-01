@@ -42,4 +42,6 @@ namespace font
 	unsigned int measure_width( font::Handle fontid, const char * str );
 	
 	font::Handle load_font_from_memory( const void * data, unsigned int data_size, unsigned short point_size, bool antialiased, unsigned int hdpi, unsigned int vdpi );
+	
+	font::Handle load_font_from_file( const char * path, unsigned short point_size, unsigned int hdpi, unsigned int vdpi );
 }; // namespace font

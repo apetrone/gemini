@@ -43,7 +43,17 @@ namespace font
 	{
 //		bool noaa;
 		unsigned short font_size;
+		char * font_data;
+		
+		SimpleFontHandle();
 	}; // SimpleFontHandle
+
+	SimpleFontHandle::SimpleFontHandle()
+	{
+		SimpleFontHandle * handle;
+		handle->font_size = 0;
+		handle->font_data = 0;
+	} // SimpleFontHandle constructor
 
 	namespace internal
 	{	
@@ -179,14 +189,7 @@ namespace font
 
 
 	void startup()
-	{
-		SimpleFontHandle * handle;
-		for( unsigned int i = 0; i < FONT_MAX; ++i )
-		{
-			handle = &internal::_fonts[i];
-			handle->font_size = 0;
-		}
-	
+	{	
 		// initialize the vertex stream
 		internal::_vertexstream.desc.add( renderer::VD_FLOAT2 );
 		internal::_vertexstream.desc.add( renderer::VD_FLOAT2 );
@@ -226,6 +229,17 @@ namespace font
 
 	void shutdown()
 	{
+		// loop through all fonts and delete any data that may have been allocated
+		SimpleFontHandle * handle;
+		for( unsigned int i = 0; i < FONT_MAX; ++i )
+		{
+			handle = &internal::_fonts[i];
+			if ( handle->font_data )
+			{
+				DEALLOC( handle->font_data );
+			}
+		}
+	
 		if ( internal::_shader )
 		{
 			assets::destroy_shader( internal::_shader );
@@ -295,6 +309,7 @@ namespace font
 		if ( result == 0 )
 		{
 			LOGE( "Unable to load font from memory!\n" );
+			return 0;
 		}
 		
 		SimpleFontHandle * handle = internal::handle_by_id( result );
@@ -307,4 +322,23 @@ namespace font
 		return font::Handle(result);
 	} // load_font_from_memory
 
+	font::Handle load_font_from_file( const char * path, unsigned short point_size, unsigned int hdpi, unsigned int vdpi )
+	{
+		font::Handle handle = 0;
+		int font_data_size = 0;
+		char * font_data = 0;
+		font_data = fs::file_to_buffer( path, 0, &font_data_size );
+		
+		if ( font_data )
+		{
+			handle = load_font_from_memory( font_data, font_data_size, point_size, false, hdpi, vdpi );
+			SimpleFontHandle * fpointer = internal::handle_by_id( handle );
+			if ( fpointer )
+			{
+				fpointer->font_data = font_data;
+			}
+		}
+		
+		return handle;
+	} // load_font_from_file
 }; // namespace font

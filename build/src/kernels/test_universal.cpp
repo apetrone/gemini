@@ -28,23 +28,12 @@
 #include "log.h"
 //#include <squirrel.h>
 #include "filesystem.hpp"
-#include "hashtable.hpp"
-
 #include "game/menu.hpp"
-
 #include "mathlib.h"
 #include "assets.hpp"
-
-
-#include "configloader.hpp"
 #include "camera.hpp"
 #include "renderstream.hpp"
-
-#include "keyvalues.hpp"
-
-
 #include "font.hpp"
-
 #include "render_utilities.hpp"
 #include "tiledloader.hpp"
 
@@ -81,7 +70,6 @@ class TestUniversal : public kernel::IApplication,
 	assets::Mesh * mesh;
 	assets::Material * mat, *mat2;
 	font::Handle test_font;
-	char * font_buffer;
 	
 	float alpha;
 	int alpha_delta;
@@ -103,7 +91,7 @@ public:
 
 	TestUniversal()
 	{
-		font_buffer = 0;
+	
 	}
 	
 	virtual void event( kernel::TouchEvent & event )
@@ -225,18 +213,8 @@ public:
 //		sound = audio::create_sound( "sounds/powerup" );
 //		source = audio::play( sound );
 		
-		int buffer_length = 0;
-		font_buffer = fs::file_to_buffer( "fonts/nokiafc22.ttf", 0, &buffer_length );
-		if ( font_buffer )
-		{
-			test_font = font::load_font_from_memory( font_buffer, buffer_length, 16, 0, 72, 72 );
-		}
-		else
-		{
-			LOGE( "Unable to load font\n" );
-		}
 
-
+		test_font = font::load_font_from_file( "fonts/nokiafc22.ttf", 16, 72, 72 );
 #if 0
 		setup_menu();
 
@@ -562,8 +540,6 @@ public:
 
 	virtual void shutdown( kernel::Params & params )
 	{
-		DEALLOC( font_buffer );
-		
 		if ( renderer::driver() )
 		{
 			renderer::driver()->shaderprogram_destroy( this->default_shader );
