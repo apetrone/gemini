@@ -45,7 +45,7 @@
 
 #include "font.hpp"
 
-#define TEST_2D 0
+#define TEST_2D 1
 
 glm::mat4 objectMatrix;
 glm::vec3 light_position = glm::vec3( 0, 2, 0 );
@@ -752,7 +752,7 @@ public:
 		gp.projection_project = &camera.matProj;
 		gp.object_matrix = &objectMatrix;
 		
-		stream_geometry( rs, &geo, gp );
+//		stream_geometry( rs, &geo, gp );
 		
 		
 #if TEST_2D
@@ -881,7 +881,7 @@ public:
 #endif
 		rs.run_commands();
 
-//		font::draw_string( test_font, 50, 50, "Now is the time for all good men to come to the aid of the party", Color(255,0,0,255) );
+		font::draw_string( test_font, 50, 50, "Now is the time for all good men to come to the aid of the party", Color(255,0,0,255) );
 //		font::draw_string( test_font, 50, 75, "Ја могу да једем стакло", Color(255, 255, 255, 255) );
 //		font::draw_string( test_font, 50, 100, "私はガラスを食べられます。それは私を傷つけません。", Color(0, 128, 255, 255) );
 	}
