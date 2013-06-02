@@ -166,7 +166,10 @@ namespace font
 			
 			glm::mat4 modelview_matrix = glm::mat4(1.0f);
 			glm::mat4 projection_matrix;
-			projection_matrix = glm::ortho(0.f, (float)kernel::instance()->parameters().render_width, 0.f, (float)kernel::instance()->parameters().render_height, -1.0f, 1.0f );
+			
+			double w = (double)kernel::instance()->parameters().render_width;
+			double h = (double)kernel::instance()->parameters().render_height;
+			projection_matrix = glm::ortho(0.0, w, 0.0, h, -1.0, 1.0 );
 			
 			RenderStream rs;
 			

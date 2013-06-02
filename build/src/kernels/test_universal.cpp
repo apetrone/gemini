@@ -438,7 +438,9 @@ public:
 //		camera.perspective( 60, params.render_width, params.render_height, 0.1f, 512.0f );
 #endif
 
-		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.5f, 255.0f );
+		double w = (double)params.render_width;
+		double h = (double)params.render_height;
+		camera.ortho( 0.0, w, h, 0.0, -1.0, 1.0 );
 
 //		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
 //		camera.move_speed = 100;
@@ -564,9 +566,6 @@ public:
 //		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
 		rs.run_commands();
 		rs.rewind();
-
-
-		
 
 
 		renderer::GeneralParameters gp;
