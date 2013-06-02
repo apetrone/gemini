@@ -293,14 +293,28 @@ namespace font
 		rs.run_commands();
 	} // draw_string
 	
-	unsigned int measure_height( font::Handle fontid )
+	
+	void dimensions_for_text( font::Handle fontid, const char * utf8, float & minx, float & miny, float & maxx, float & maxy )
 	{
-		return 0;
+		SimpleFontHandle * font = internal::handle_by_id( fontid );
+		if ( font )
+		{
+			sth_dim_text(internal::_stash, fontid, font->font_size, utf8, &minx, &miny, &maxx, &maxy);
+		}
+	} // dimensions_for_text
+	
+	unsigned int measure_height( font::Handle fontid, const char * utf8 )
+	{
+		float minx = 0, miny = 0, maxx = 0, maxy = 0;
+		dimensions_for_text( fontid, utf8, minx, miny, maxx, maxy );
+		return maxy-miny;
 	} // measure_height
 	
-	unsigned int measure_width( font::Handle fontid, const char * str )
+	unsigned int measure_width( font::Handle fontid, const char * utf8 )
 	{
-		return 0;
+		float minx = 0, miny = 0, maxx = 0, maxy = 0;
+		dimensions_for_text( fontid, utf8, minx, miny, maxx, maxy );
+		return maxx-minx;
 	} // measure_width
 	
 	font::Handle load_font_from_memory( const void * data, unsigned int data_size, unsigned short point_size, bool antialiased, unsigned int hres, unsigned int vres )

@@ -69,15 +69,9 @@ size_t ScreenController::count_screens() const
 	return total_screens;
 } // count_screens
 
-IScreen * ScreenController::push_screen( const char * name )
+IScreen * ScreenController::push_screen( const char * name, kernel::IApplication * app )
 {
-	IScreen * current_screen = 0;
-	
-	// if the stack isn't empty, get the first item
-	if ( !this->screen_stack.empty() )
-	{
-		current_screen = this->screen_stack.top();
-	}
+	IScreen * current_screen = this->active_screen();
 	
 	// if the new screen wasn't found; report a warning
 	IScreen * screen = this->find_screen( name );
@@ -92,21 +86,27 @@ IScreen * ScreenController::push_screen( const char * name )
 	{
 		if ( current_screen )
 		{
-			current_screen->on_hide();
+			current_screen->on_hide( app );
 		}
 		this->screen_stack.push( screen );
-		screen->on_show();
+		screen->on_show( app );
 	}
 	
 	return screen;
 } // push_screen
 
-void ScreenController::pop_screen()
+void ScreenController::pop_screen( kernel::IApplication * app )
 {
 	this->screen_stack.pop();
 } // pop_screen
 
 IScreen * ScreenController::active_screen()
 {
-	return this->screen_stack.top();
+	// if the stack isn't empty, get the first item
+	if ( !this->screen_stack.empty() )
+	{
+		return this->screen_stack.top();
+	}
+	
+	return 0;
 } // active_screen

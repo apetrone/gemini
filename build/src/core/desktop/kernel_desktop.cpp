@@ -61,10 +61,12 @@ void event_callback_xwl( xwl_event_t * e )
 {
 	if ( e->type == XWLE_KEYRELEASED || e->type == XWLE_KEYPRESSED )
 	{
+#if 0
 		if ( e->type == XWLE_KEYRELEASED && e->key == XWLK_ESCAPE )
 		{
 			kernel::instance()->set_active( false );
 		}
+#endif
 		
 		input::state()->keyboard().inject_key_event( e->key, (e->type == XWLE_KEYPRESSED), e->unicode );
 		

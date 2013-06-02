@@ -25,14 +25,20 @@
 #include <vector>
 #include <stack>
 
+#include "kernel.hpp"
+
 struct IScreen
 {
 	virtual ~IScreen() {}
-	virtual void on_show() = 0;
-	virtual void on_hide() = 0;
-	virtual void on_draw() = 0;
-	virtual void on_update() = 0;
+	virtual void on_show( kernel::IApplication * app ) = 0;
+	virtual void on_hide( kernel::IApplication * app ) = 0;
+	virtual void on_draw( kernel::IApplication * app ) = 0;
+	virtual void on_update( kernel::IApplication * app ) = 0;
 	virtual const char * name() const = 0;
+		
+	virtual void on_event( kernel::KeyboardEvent & event, kernel::IApplication * app ) = 0;
+	virtual void on_event( kernel::MouseEvent & event, kernel::IApplication * app ) = 0;
+	virtual void on_event( kernel::TouchEvent & event, kernel::IApplication * app ) = 0;
 }; // IScreen
 
 
@@ -51,10 +57,10 @@ struct ScreenController
 	size_t count_screens() const;
 	
 	// set the new active screen with name;
-	IScreen * push_screen( const char * name );
+	IScreen * push_screen( const char * name, kernel::IApplication * app );
 	
 	// pop the screen on top of the stack
-	void pop_screen();
+	void pop_screen( kernel::IApplication * app );
 	
 	IScreen * active_screen();
 }; // ScreenController

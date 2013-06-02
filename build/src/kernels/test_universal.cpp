@@ -48,48 +48,130 @@ const float TEST_SIZE = 256;
 
 
 
-
+ScreenController * screen_controller = 0;
 
 
 struct LogoScreen : public virtual IScreen
 {
-	virtual void on_show()
+	font::Handle font;
+	LogoScreen()
+	{
+		font = font::load_font_from_file( "fonts/nokiafc22.ttf", 16, 72, 72 );
+	}
+
+	virtual void on_show( kernel::IApplication * app )
 	{
 		LOGV( "LogoScreen on show\n" );
 	}
-	virtual void on_hide()
+	
+	virtual void on_hide( kernel::IApplication * app )
 	{
 		LOGV( "LogoScreen on hide\n" );
 	}
-	virtual void on_draw() {}
-	virtual void on_update() {}
+	
+	virtual void on_draw( kernel::IApplication * app )
+	{
+		const char text[] = "LogoScreen";
+		int center = (kernel::instance()->parameters().render_width / 2);
+		int font_width = font::measure_width( font, text );
+		
+		font::draw_string( font, center-(font_width/2), 40, text, Color(255,255,255) );
+	}
+	
+	virtual void on_update( kernel::IApplication * app ) {}
 	virtual const char * name() const
 	{
 		return "LogoScreen";
 	}
+	
+	virtual void on_event( kernel::KeyboardEvent & event, kernel::IApplication * app )
+	{
+		if (event.is_down)
+		{
+			if (event.key == input::KEY_ESCAPE)
+			{
+				screen_controller->pop_screen( app );
+			}
+		}
+	}
+	
+	virtual void on_event( kernel::MouseEvent & event, kernel::IApplication * app ) {}
+	virtual void on_event( kernel::TouchEvent & event, kernel::IApplication * app ) {}
 }; // LogoScreen
 
 
 struct HelpScreen : public virtual IScreen
 {
-	virtual void on_show()
+	virtual void on_show( kernel::IApplication * app )
 	{
 		LOGV( "HelpScreen on show\n" );
 	}
-	virtual void on_hide()
+	virtual void on_hide( kernel::IApplication * app )
 	{
 		LOGV( "HelpScreen on hide\n" );
 	}
 	
-	virtual void on_draw() {}
-	virtual void on_update() {}
+	virtual void on_draw( kernel::IApplication * app ) {}
+	virtual void on_update( kernel::IApplication * app ) {}
 	virtual const char * name() const
 	{
 		return "HelpScreen";
 	}
+	
+	virtual void on_event( kernel::KeyboardEvent & event, kernel::IApplication * app ) {}
+	virtual void on_event( kernel::MouseEvent & event, kernel::IApplication * app ) {}
+	virtual void on_event( kernel::TouchEvent & event, kernel::IApplication * app ) {}
 }; // HelpScreen
 
+struct GameScreen : public virtual IScreen
+{
+	font::Handle font;
+	
+	GameScreen()
+	{
+		// need to replace font loading with this ...
+//		assets::load_font( "fonts/nokiafc22.ttf", 16 );
+		font = font::load_font_from_file( "fonts/nokiafc22.ttf", 16, 72, 72 );
+	}
 
+	virtual void on_show( kernel::IApplication * app )
+	{
+		LOGV( "GameScreen on show\n" );
+	}
+	virtual void on_hide( kernel::IApplication * app )
+	{
+		LOGV( "GameScreen on hide\n" );
+	}
+	
+	virtual void on_draw( kernel::IApplication * app )
+	{
+		const char text[] = "---- Game ----";
+		int center = (kernel::instance()->parameters().render_width / 2);
+		int font_width = font::measure_width( font, text );
+		
+		font::draw_string( font, center-(font_width/2), 40, text, Color(0,255,0) );
+	}
+	
+	
+	virtual void on_update( kernel::IApplication * app ) {}
+	virtual const char * name() const
+	{
+		return "GameScreen";
+	}
+	
+	virtual void on_event( kernel::KeyboardEvent & event, kernel::IApplication * app )
+	{
+		if (event.is_down)
+		{
+			if (event.key == input::KEY_ESCAPE)
+			{
+				kernel::instance()->set_active(false);
+			}
+		}
+	}
+	virtual void on_event( kernel::MouseEvent & event, kernel::IApplication * app ) {}
+	virtual void on_event( kernel::TouchEvent & event, kernel::IApplication * app ) {}
+}; // GameScreen
 
 
 
@@ -117,7 +199,7 @@ class TestUniversal : public kernel::IApplication,
 	assets::Texture * tex;
 	assets::Mesh * mesh;
 	assets::Material * mat, *mat2;
-	font::Handle test_font;
+	
 	
 	float alpha;
 	int alpha_delta;
@@ -132,6 +214,8 @@ class TestUniversal : public kernel::IApplication,
 	
 	TiledMap tiled_map;
 	
+	
+	
 	int tdx;
 	int tdy;
 public:
@@ -139,11 +223,23 @@ public:
 
 	TestUniversal()
 	{
+		screen_controller = CREATE(ScreenController);
+	}
 	
+	
+	~TestUniversal()
+	{
+		DESTROY(ScreenController, screen_controller);
 	}
 	
 	virtual void event( kernel::TouchEvent & event )
 	{
+		IScreen * screen = screen_controller->active_screen();
+		if ( screen )
+		{
+			screen->on_event( event, this );
+		}
+#if 0
 		if ( event.subtype == kernel::TouchBegin )
 		{
 //			fprintf( stdout, "Touch Event Began at %i, %i\n", event.x, event.y );
@@ -161,10 +257,18 @@ public:
 		{
 //			fprintf( stdout, "Touch Event Ended at %i, %i\n", event.x, event.y );
 		}
+#endif
 	}
 	
 	virtual void event( KeyboardEvent & event )
 	{
+		IScreen * screen = screen_controller->active_screen();
+		if ( screen )
+		{
+			screen->on_event( event, this );
+		}
+		
+#if 0
         if ( event.is_down )
         {
             fprintf( stdout, "key %i pressed\n", event.key );
@@ -178,10 +282,17 @@ public:
         {
             fprintf( stdout, "key %i released\n", event.key );
         }
+#endif
 	}
 
 	virtual void event( MouseEvent & event )
 	{
+		IScreen * screen = screen_controller->active_screen();
+		if ( screen )
+		{
+			screen->on_event( event, this );
+		}
+#if 0
         switch( event.subtype )
         {
             case kernel::MouseMoved:
@@ -220,6 +331,7 @@ public:
                 fprintf( stdout, "mouse event received!\n" );
                 break;
         }
+#endif
 
 	}
 
@@ -263,18 +375,19 @@ public:
 		
 		LogoScreen * logo = CREATE(LogoScreen);
 		HelpScreen * help = CREATE(HelpScreen);
-		
-		ScreenController scn;
-		scn.add_screen( logo );
-		scn.add_screen( help );
-		
-		
-		scn.push_screen("LogoScreen");
-		
-		
+		GameScreen * game = CREATE(GameScreen);
 
+		// make the controller aware of these screens
+		screen_controller->add_screen( logo );
+		screen_controller->add_screen( help );
+		screen_controller->add_screen( game );
 
-		test_font = font::load_font_from_file( "fonts/nokiafc22.ttf", 16, 72, 72 );
+		// setup the stack
+		screen_controller->push_screen( "GameScreen", this );
+		screen_controller->push_screen( "LogoScreen", this );
+	
+
+		
 #if 0
 		setup_menu();
 
@@ -592,8 +705,14 @@ public:
 
 #endif
 		rs.run_commands();
+		
+		
+		if ( screen_controller->active_screen() )
+		{
+			screen_controller->active_screen()->on_draw( this );
+		}
 
-		font::draw_string( test_font, 50, 50, xstr_format("deltatime: %gms", params.framedelta_filtered), Color(255,128,0,255) );
+//		font::draw_string( test_font, 50, 50, xstr_format("deltatime: %gms", params.framedelta_filtered), Color(255,128,0,255) );
 //		font::draw_string( test_font, 50, 75, "Ја могу да једем стакло", Color(255, 255, 255, 255) );
 //		font::draw_string( test_font, 50, 100, "私はガラスを食べられます。それは私を傷つけません。", Color(0, 128, 255, 255) );
 	}
