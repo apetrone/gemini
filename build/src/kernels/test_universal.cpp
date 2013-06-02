@@ -36,6 +36,7 @@
 #include "font.hpp"
 #include "render_utilities.hpp"
 #include "tiledloader.hpp"
+#include "screencontrol.hpp"
 
 #define TEST_2D 1
 
@@ -47,7 +48,54 @@ const float TEST_SIZE = 256;
 
 
 
+
+
+
+struct LogoScreen : public virtual IScreen
+{
+	virtual void on_show()
+	{
+		LOGV( "LogoScreen on show\n" );
+	}
+	virtual void on_hide()
+	{
+		LOGV( "LogoScreen on hide\n" );
+	}
+	virtual void on_draw() {}
+	virtual void on_update() {}
+	virtual const char * name() const
+	{
+		return "LogoScreen";
+	}
+}; // LogoScreen
+
+
+struct HelpScreen : public virtual IScreen
+{
+	virtual void on_show()
+	{
+		LOGV( "HelpScreen on show\n" );
+	}
+	virtual void on_hide()
+	{
+		LOGV( "HelpScreen on hide\n" );
+	}
+	
+	virtual void on_draw() {}
+	virtual void on_update() {}
+	virtual const char * name() const
+	{
+		return "HelpScreen";
+	}
+}; // HelpScreen
+
+
+
+
+
 using namespace kernel;
+
+
 
 
 class TestUniversal : public kernel::IApplication,
@@ -213,6 +261,18 @@ public:
 //		sound = audio::create_sound( "sounds/powerup" );
 //		source = audio::play( sound );
 		
+		LogoScreen * logo = CREATE(LogoScreen);
+		HelpScreen * help = CREATE(HelpScreen);
+		
+		ScreenController scn;
+		scn.add_screen( logo );
+		scn.add_screen( help );
+		
+		
+		scn.push_screen("LogoScreen");
+		
+		
+
 
 		test_font = font::load_font_from_file( "fonts/nokiafc22.ttf", 16, 72, 72 );
 #if 0
@@ -533,7 +593,7 @@ public:
 #endif
 		rs.run_commands();
 
-		font::draw_string( test_font, 50, 50, xstr_format("deltatime: %gms", params.framedelta_filtered), Color(255,0,0,255) );
+		font::draw_string( test_font, 50, 50, xstr_format("deltatime: %gms", params.framedelta_filtered), Color(255,128,0,255) );
 //		font::draw_string( test_font, 50, 75, "Ја могу да једем стакло", Color(255, 255, 255, 255) );
 //		font::draw_string( test_font, 50, 100, "私はガラスを食べられます。それは私を傷つけません。", Color(0, 128, 255, 255) );
 	}

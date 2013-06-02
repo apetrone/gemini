@@ -10,7 +10,8 @@ LOCAL_C_INCLUDES := ../../ \
 					../../core/audio \
 					../../core/desktop \
 					../../core/gldrivers \
-					../../contrib
+					../../contrib \
+					../../game
 
 LOCAL_CFLAGS += -DPLATFORM_USE_GLES2=1 -DPLATFORM_INDEX_TYPE=2
 LOCAL_SRC_FILES := 	net_arcfusion_gemini.cpp \
@@ -50,8 +51,11 @@ LOCAL_SRC_FILES := 	net_arcfusion_gemini.cpp \
 					$(SRC_DIR)kernels/test_mobile.cpp \
 					$(SRC_DIR)keyvalues.cpp \
 					$(SRC_DIR)memorystream.cpp \
-					$(SRC_DIR)util.cpp
-
+					$(SRC_DIR)util.cpp \
+					$(SRC_DIR)render_utilities.cpp \
+					$(SRC_DIR)game/menu.cpp \
+					$(SRC_DIR)game/tiledloader.cpp \
+					$(SRC_DIR)game/screencontrol.cpp
 
 # Add dependencies
 
