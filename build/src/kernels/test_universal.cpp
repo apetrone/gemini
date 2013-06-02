@@ -75,7 +75,7 @@ struct LogoScreen : public virtual IScreen
 		int center = (kernel::instance()->parameters().render_width / 2);
 		int font_width = font::measure_width( font, text );
 		
-		font::draw_string( font, center-(font_width/2), 40, text, Color(255,255,255) );
+		font::draw_string( font, center-(font_width/2), 150, text, Color(255,255,255) );
 	}
 	
 	virtual void on_update( kernel::IApplication * app ) {}
@@ -438,10 +438,6 @@ public:
 //		camera.perspective( 60, params.render_width, params.render_height, 0.1f, 512.0f );
 #endif
 
-		double w = (double)params.render_width;
-		double h = (double)params.render_height;
-		camera.ortho( 0.0, w, h, 0.0, -1.0, 1.0 );
-
 //		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
 //		camera.move_speed = 100;
 		
@@ -556,6 +552,11 @@ public:
 
 	virtual void tick( kernel::Params & params )
 	{
+		// previously had floating point errors on android when this was only set during startup
+		real w = (real)params.render_width;
+		real h = (real)params.render_height;
+		camera.ortho( 0.0f, w, h, 0.0f, -1.0f, 1.0f );
+	
 		rs.rewind();
 		
 		// setup global rendering state
