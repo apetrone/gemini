@@ -38,7 +38,8 @@
 #include "tiledloader.hpp"
 #include "screencontrol.hpp"
 
-#define TEST_2D 1
+#define TEST_2D 0
+#define TEST_FONT 1
 
 glm::mat4 objectMatrix;
 glm::vec3 light_position = glm::vec3( 0, 2, 0 );
@@ -74,8 +75,9 @@ struct LogoScreen : public virtual IScreen
 		const char text[] = "LogoScreen";
 		int center = (kernel::instance()->parameters().render_width / 2);
 		int font_width = font::measure_width( font, text );
-		
+#if TEST_FONT
 		font::draw_string( font, center-(font_width/2), 150, text, Color(255,255,255) );
+#endif
 	}
 	
 	virtual void on_update( kernel::IApplication * app ) {}
@@ -148,8 +150,9 @@ struct GameScreen : public virtual IScreen
 		const char text[] = "---- Game ----";
 		int center = (kernel::instance()->parameters().render_width / 2);
 		int font_width = font::measure_width( font, text );
-		
+#if TEST_FONT
 		font::draw_string( font, center-(font_width/2), 40, text, Color(0,255,0) );
+#endif
 	}
 	
 	
@@ -612,8 +615,7 @@ public:
 								rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
 								rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
 								rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &objectMatrix );
-								
-								
+
 								rs.add_material( lastset->material, shader );
 								rs.add_draw_call( vb.vertexbuffer );
 								

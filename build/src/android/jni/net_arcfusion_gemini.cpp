@@ -46,6 +46,7 @@ namespace lynx
 
 		fs::set_asset_manager(asset_manager);
 
+		NATIVE_LOG( "starting up kernel...\n" );
 		if ( kernel::startup( _kernel ) != kernel::NoError )
 		{
 			NATIVE_LOG( "kernel startup failed!" );
@@ -70,7 +71,7 @@ namespace lynx
 
 	void gemini_surface_changed(JNIEnv * env, jclass the_class, jint width, jint height)
 	{
-		NATIVE_LOG( "surface changed to %i x %i\n", width, height );
+		NATIVE_LOG( "kernel %p surface changed to %i x %i\n", _kernel, width, height );
 		if ( _kernel )
 		{
 			_kernel->on_surface_changed(width, height);

@@ -29,7 +29,7 @@
 
 // enable this to allow retaining data pointers in order to call
 // VertexAttribArrayPointer() with actual data instead of using a VBO.
-#if __ANDROID__
+#if 0
 	#define ENABLE_NON_VBO_SUPPORT 1
 #else
 	#define ENABLE_NON_VBO_SUPPORT 0
@@ -85,17 +85,15 @@ GLESv2::GLESv2()
 	_gles2 = this;
 	
 	has_vbo_support = true;
+	has_oes_vertex_array_object = has_vbo_support && gemgl_find_extension( "_vertex_array_object" );
 	
 	// disable VBO/VAO support on Android builds, since drivers are really buggy.
 #if ENABLE_NON_VBO_SUPPORT
 	has_vbo_support = false;
+	has_oes_vertex_array_object = false;
 #endif
 	
-	has_oes_vertex_array_object = has_vbo_support && gemgl_find_extension( "_vertex_array_object" );
-	if ( has_oes_vertex_array_object )
-	{
-		LOGV( "vertex_array_object extension is present!\n" );
-	}
+
 	
 	LOGV( "VertexBuffer support? %s\n", has_vbo_support ? "Yes" : "No" );
 	
@@ -212,6 +210,7 @@ struct GLES2VertexBuffer : public VertexBuffer
 			gl.CheckError( "EnableVertexAttribArray" );
 			
 #if ENABLE_NON_VBO_SUPPORT
+//			assert( this->vertex_data == 0 );
 			gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_stride, this->vertex_data+offset );
 			gl.CheckError( "VertexAttribPointer" );
 #else
@@ -453,7 +452,7 @@ void c_drawcall( MemoryStream & stream, renderer::IRenderDriver & renderer )
 	stream.read( draw_type );
 	stream.read( num_vertices );	
 	stream.read( num_indices );
-
+	
 	assert( vertex_buffer != 0 );
 	if ( num_indices > 0 )
 	{
@@ -609,6 +608,8 @@ bool GLESv2::upload_texture_2d( renderer::TextureParameters & parameters )
 	GLenum internal_format = source_format;
 	GLenum error = GL_NO_ERROR;
 	
+//	LOGV( "uploading texture to %i\n", parameters.texture_id );
+	
 	// bind the texture so it is active
 	gl.BindTexture( GL_TEXTURE_2D, parameters.texture_id );
 	error = gl.CheckError( "upload_texture_2d - BindTexture" );
@@ -684,8 +685,10 @@ bool GLESv2::upload_texture_2d( renderer::TextureParameters & parameters )
 
 bool GLESv2::generate_texture( renderer::TextureParameters & parameters )
 {
+
 	gl.GenTextures( 1, &parameters.texture_id );
 	GLenum error = gl.CheckError( "generate_texture" );
+//	LOGV( "generate texture: %i\n", parameters.texture_id );	
 	return (error == GL_NO_ERROR);
 } // generate_texture
 

@@ -14,8 +14,7 @@ LOCAL_C_INCLUDES := ../../ \
 					../../game
 
 LOCAL_CFLAGS += -DPLATFORM_USE_GLES2=1 -DPLATFORM_INDEX_TYPE=2
-LOCAL_SRC_FILES := 	net_arcfusion_gemini.cpp \
-					kernel_android.cpp \
+LOCAL_SRC_FILES := 	kernel_android.cpp \
 					$(SRC_DIR)camera.cpp \
 					$(SRC_DIR)configloader.cpp \
 					$(SRC_DIR)mathlib.cpp \
@@ -80,7 +79,18 @@ LOCAL_SRC_FILES += $(DEPS_DIR)murmur3/murmur3.c
 
 
 
-LOCAL_MODULE = net_arcfusion_gemini_lynx
-LOCAL_LDLIBS += -llog -landroid -lGLESv2 -lOpenSLES
+
+#LOCAL_MODULE = net_arcfusion_gemini_lynx
+#LOCAL_SRC_FILES += net_arcfusion_gemini.cpp
+
+# if building as a native activity
+LOCAL_STATIC_LIBRARIES := android_native_app_glue
+LOCAL_SRC_FILES += native_main.cpp
+
+LOCAL_MODULE = native-activity
+LOCAL_LDLIBS += -llog -landroid -lGLESv2 -lOpenSLES -lEGL
 include $(BUILD_SHARED_LIBRARY)
+
+# if building as a native activity
+$(call import-module,android/native_app_glue)
 
