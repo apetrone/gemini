@@ -719,7 +719,7 @@ void GLESv2::vertexbuffer_destroy( renderer::VertexBuffer * vertexbuffer )
 	DESTROY(GLES2VertexBuffer, stream);
 } // vertexbuffer_destroy
 
-void GLESv2::vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
+void GLESv2::vertexbuffer_upload_data( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
 {
 	GLES2VertexBuffer * stream = (GLES2VertexBuffer*)vertexbuffer;
 	stream->static_setup( vertex_count, vertices, index_count, indices );
