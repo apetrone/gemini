@@ -51,9 +51,9 @@ namespace assets
 	
 	AssetLoadStatus texture_load_callback( const char * path, Texture * texture, unsigned int flags )
 	{
-		unsigned int texture_id;
-		unsigned int width;
-		unsigned int height;
+		unsigned int texture_id = 0;
+		unsigned int width = 0;
+		unsigned int height = 0;
 		
 		bool load_result = 0;
 		
