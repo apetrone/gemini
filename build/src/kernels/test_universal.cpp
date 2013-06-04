@@ -41,7 +41,7 @@
 #define TEST_2D 1
 
 glm::mat4 objectMatrix;
-glm::vec3 light_position = glm::vec3( 0, 2, 0 );
+
 
 const float TEST_SIZE = 256;
 
@@ -96,7 +96,10 @@ struct LogoScreen : public virtual IScreen
 	}
 	
 	virtual void on_event( kernel::MouseEvent & event, kernel::IApplication * app ) {}
-	virtual void on_event( kernel::TouchEvent & event, kernel::IApplication * app ) {}
+	virtual void on_event( kernel::TouchEvent & event, kernel::IApplication * app )
+	{
+		
+	}
 }; // LogoScreen
 
 
@@ -174,11 +177,7 @@ struct GameScreen : public virtual IScreen
 }; // GameScreen
 
 
-
 using namespace kernel;
-
-
-
 
 class TestUniversal : public kernel::IApplication,
 	public IEventListener<KeyboardEvent>,
@@ -193,27 +192,14 @@ class TestUniversal : public kernel::IApplication,
 		float u, v;
 	};
 
-	audio::SoundHandle sound;
-	audio::SoundSource source;
 	renderer::VertexStream vb;
-	assets::Texture * tex;
-	assets::Mesh * mesh;
-	assets::Material * mat, *mat2;
-	
-	
-	float alpha;
-	int alpha_delta;
 	Camera camera;
 
 	assets::Shader default_shader;
 	unsigned int test_attribs;
-	
+
 	RenderStream rs;
-	assets::Geometry geo;
-	
-	
 	TiledMap tiled_map;
-	
 	
 	
 	int tdx;
@@ -387,21 +373,6 @@ public:
 		screen_controller->push_screen( "LogoScreen", this );
 	
 
-		
-#if 0
-		setup_menu();
-
-		foreach_child( _menu.current_menu(), print_option );
-		_menu.navigate_to_child( 0 );
-		foreach_child( _menu.current_menu(), print_option );
-		
-		
-		_menu.navigate_back();
-		foreach_child( _menu.current_menu(), print_option );
-				
-		_menu.clear_items();
-#endif
-
 
 		assets::ShaderString name("uv0");
 		test_attribs = 0;
@@ -432,19 +403,10 @@ public:
 //		mat = assets::load_material( "materials/rogue" );
 //		mat2 = assets::load_material( "materials/gametiles" );
 
-#if TEST_2D
-//		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.5f, 255.0f );
-#else
-//		camera.perspective( 60, params.render_width, params.render_height, 0.1f, 512.0f );
-#endif
-
-		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.5f, 255.0f );
-
 //		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
 //		camera.move_speed = 100;
 		
-		alpha = 0;
-		alpha_delta = 1;
+
 	
 		vb.reset();
 		vb.desc.add( renderer::VD_FLOAT3 );
@@ -453,61 +415,8 @@ public:
 		
 		vb.create(256, 1024, renderer::DRAW_INDEXED_TRIANGLES );
 
-#if 1
-		geo.vertex_count = 4;
-		geo.index_count = 6;
-		geo.vertices = CREATE_ARRAY( glm::vec3, 4 );
-		geo.indices = CREATE_ARRAY( renderer::IndexType, 6 );
-		geo.colors = CREATE_ARRAY( Color, 4 );
-		geo.uvs = CREATE_ARRAY( renderer::UV, 4 );
-		
-		geo.draw_type = renderer::DRAW_INDEXED_TRIANGLES;
-		geo.material_id = assets::load_material("materials/default")->Id();
-		
-		glm::vec3 * vertices = geo.vertices;
-		Color * colors = geo.colors;
-		renderer::UV * uvs = geo.uvs;
-		vertices[0] = glm::vec3(0,0,0);
-		colors[0].set( 255, 255, 255 );
-		uvs[0].u = 0;
-		uvs[0].v = 0;
-	
-		vertices[1] = glm::vec3(0, TEST_SIZE, 0);
-		colors[1].set( 255, 255, 255 );
-		uvs[1].u = 0;
-		uvs[1].v = 1;
-		
-		vertices[2] = glm::vec3(TEST_SIZE, TEST_SIZE, 0);
-		colors[2].set( 255, 255, 255 );
-		uvs[2].u = 1;
-		uvs[2].v = 1;
+		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -1.0f, 1.0f );
 
-		vertices[3] = glm::vec3(TEST_SIZE, 0, 0);
-		colors[3].set( 255, 255, 255 );
-		uvs[3].u = 1;
-		uvs[3].v = 0;
-		
-		renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
-		memcpy( geo.indices, indices, sizeof(renderer::IndexType) * geo.index_count );
-		
-		
-		geo.render_setup();
-#endif
-//		assets::load_test_shader(&this->default_shader);
-
-		mesh = 0;
-#if 0
-		// test mesh loading
-		mesh = assets::load_mesh( "models/plasma3" );
-		if ( mesh )
-		{
-			mesh->prepare_geometry();
-		}
-		else
-		{
-			LOGW( "unable to load mesh.\n" );
-		}
-#endif
 		return kernel::Application_Success;
 	}
 
@@ -531,25 +440,6 @@ public:
 		{
 			camera.move_right( params.step_interval_seconds );
 		}
-	
-		alpha += ((float)alpha_delta) * 0.025f;
-		
-		if ( alpha >= 1.0 || alpha <= 0 )
-		{
-			if ( alpha >= 1.0 )
-			{
-				alpha = 1.0f;
-			}
-			else
-			{
-				alpha = 0;
-			}
-			alpha_delta = -alpha_delta;
-			
-		}
-		
-		light_position.x = cosf( alpha ) * 4;
-		light_position.z = sinf( alpha ) * 4;		
 	}
 
 	virtual void tick( kernel::Params & params )
@@ -566,21 +456,9 @@ public:
 		rs.rewind();
 
 
-		
-
-
-		renderer::GeneralParameters gp;
-		assets::ShaderString lightposition = "lightposition";
-		gp.global_params = 0; //assets::find_parameter_mask( lightposition );
-		gp.camera_position = &camera.pos;
-		gp.modelview_matrix = &camera.matCam;
-		gp.projection_project = &camera.matProj;
-		gp.object_matrix = &objectMatrix;
-		
+			
 //		stream_geometry( rs, &geo, gp );
 		
-		
-#if TEST_2D
 		//			rs.add_state( renderer::STATE_BLEND, 1 );
 		//			rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 		
@@ -689,21 +567,8 @@ public:
 		}
 
 		vb.reset();
-		
-#else
-		// rotate the model
-//		objectMatrix = glm::rotate( objectMatrix, 0.5f, glm::vec3( 0, 1, 0) );
-		
-		if ( mesh )
-		{
-			for( unsigned int geo_id = 0; geo_id < mesh->total_geometry; ++geo_id )
-			{
-				assets::Geometry * g = &mesh->geometry[ geo_id ];
-				render_utilities::stream_geometry( rs, g, gp );
-			}
-		}
 
-#endif
+
 		rs.run_commands();
 		
 		
@@ -733,7 +598,145 @@ IMPLEMENT_APPLICATION( TestUniversal );
 
 
 // experimental
+
+
+
+// mesh rendering
 #if 0
+Camera camera;
+glm::vec3 light_position = glm::vec3( 0, 2, 0 );
+//assets::Geometry geo;
+assets::Mesh * mesh;
+
+void startup()
+{
+	alpha = 0;
+	alpha_delta = 1;
+
+	// test mesh loading
+	mesh = assets::load_mesh( "models/plasma3" );
+	if ( mesh )
+	{
+		mesh->prepare_geometry();
+	}
+	else
+	{
+		LOGW( "unable to load mesh.\n" );
+	}
+	
+#if 0
+	geo.vertex_count = 4;
+	geo.index_count = 6;
+	geo.vertices = CREATE_ARRAY( glm::vec3, 4 );
+	geo.indices = CREATE_ARRAY( renderer::IndexType, 6 );
+	geo.colors = CREATE_ARRAY( Color, 4 );
+	geo.uvs = CREATE_ARRAY( renderer::UV, 4 );
+	
+	geo.draw_type = renderer::DRAW_INDEXED_TRIANGLES;
+	geo.material_id = assets::load_material("materials/default")->Id();
+	
+	glm::vec3 * vertices = geo.vertices;
+	Color * colors = geo.colors;
+	renderer::UV * uvs = geo.uvs;
+	vertices[0] = glm::vec3(0,0,0);
+	colors[0].set( 255, 255, 255 );
+	uvs[0].u = 0;
+	uvs[0].v = 0;
+	
+	vertices[1] = glm::vec3(0, TEST_SIZE, 0);
+	colors[1].set( 255, 255, 255 );
+	uvs[1].u = 0;
+	uvs[1].v = 1;
+	
+	vertices[2] = glm::vec3(TEST_SIZE, TEST_SIZE, 0);
+	colors[2].set( 255, 255, 255 );
+	uvs[2].u = 1;
+	uvs[2].v = 1;
+	
+	vertices[3] = glm::vec3(TEST_SIZE, 0, 0);
+	colors[3].set( 255, 255, 255 );
+	uvs[3].u = 1;
+	uvs[3].v = 0;
+	
+	renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+	memcpy( geo.indices, indices, sizeof(renderer::IndexType) * geo.index_count );
+	
+	
+	geo.render_setup();
+#endif
+	
+}
+
+void step()
+{
+	alpha += ((float)alpha_delta) * 0.025f;
+	
+	if ( alpha >= 1.0 || alpha <= 0 )
+	{
+		if ( alpha >= 1.0 )
+		{
+			alpha = 1.0f;
+		}
+		else
+		{
+			alpha = 0;
+		}
+		alpha_delta = -alpha_delta;
+		
+	}
+	
+	light_position.x = cosf( alpha ) * 4;
+	light_position.z = sinf( alpha ) * 4;
+}
+
+
+void tick()
+{
+	renderer::GeneralParameters gp;
+	assets::ShaderString lightposition = "lightposition";
+	gp.global_params = 0; //assets::find_parameter_mask( lightposition );
+	gp.camera_position = &camera.pos;
+	gp.modelview_matrix = &camera.matCam;
+	gp.projection_project = &camera.matProj;
+	gp.object_matrix = &objectMatrix;
+	
+	// rotate the model
+	//		objectMatrix = glm::rotate( objectMatrix, 0.5f, glm::vec3( 0, 1, 0) );
+	camera.perspective( 60, params.render_width, params.render_height, 0.1f, 512.0f );
+	
+	if ( mesh )
+	{
+		for( unsigned int geo_id = 0; geo_id < mesh->total_geometry; ++geo_id )
+		{
+			assets::Geometry * g = &mesh->geometry[ geo_id ];
+			render_utilities::stream_geometry( rs, g, gp );
+		}
+	}
+}
+#endif
+
+
+
+
+// menu stuff
+#if 0
+
+
+
+#if 0
+setup_menu();
+
+foreach_child( _menu.current_menu(), print_option );
+_menu.navigate_to_child( 0 );
+foreach_child( _menu.current_menu(), print_option );
+
+
+_menu.navigate_back();
+foreach_child( _menu.current_menu(), print_option );
+
+_menu.clear_items();
+#endif
+
 
 
 void foreach_child( MenuItem * root, foreach_menu_callback callback )
