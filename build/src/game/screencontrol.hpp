@@ -34,6 +34,7 @@ struct IScreen
 	virtual void on_hide( kernel::IApplication * app ) = 0;
 	virtual void on_draw( kernel::IApplication * app ) = 0;
 	virtual void on_update( kernel::IApplication * app ) = 0;
+	virtual void on_step( kernel::IApplication * app ) = 0;
 	virtual const char * name() const = 0;
 		
 	virtual void on_event( kernel::KeyboardEvent & event, kernel::IApplication * app ) = 0;

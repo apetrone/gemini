@@ -27,7 +27,7 @@
 #include <stdio.h> // for printf
 #include "log.h"
 	
-RenderStream::RenderStream()
+RenderStream::RenderStream( unsigned int max_bytes, unsigned int max_commands )
 {
 	num_commands = 0;
 	stream.init( buffer, MAX_RENDERER_STREAM_BYTES );

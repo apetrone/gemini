@@ -41,7 +41,7 @@ struct RenderStream
 	unsigned int num_commands;
 	MemoryStream stream;
 	
-	RenderStream();
+	RenderStream( unsigned int max_bytes = MAX_RENDERER_STREAM_BYTES, unsigned int max_commands = MAX_RENDERER_STREAM_COMMANDS );
 	
 	void rewind();
 	RenderState * new_render_state();
