@@ -39,7 +39,7 @@ class gemini(Builder):
 		d['depends_file'] = 'build/deps.lua'
 		d['depends_path'] = dependency_path()
 
-		desktop_dependencies = list( set(common_dependencies()) | set(["xwl/xwl_raspberrypi.py"]) )
+		desktop_dependencies = list( set(common_dependencies( target_platform )) | set(["xwl/xwl_raspberrypi.py"]) )
 
 		print( desktop_dependencies )
 		d['depends'] = desktop_dependencies
