@@ -45,7 +45,95 @@ glm::mat4 objectMatrix;
 
 const float TEST_SIZE = 256;
 
+void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width, int height, const Color & color, float * texcoords );
 
+void world_to_screen( float & wx, float & wy, float & sx, float & sy )
+{
+	sx = wx;
+	sy = wy;
+} // world_to_screen
+
+struct RenderContext
+{
+	RenderStream & rs;
+	renderer::VertexStream & vb;
+	
+	RenderContext( RenderStream & inrs, renderer::VertexStream & invb ) : rs(inrs), vb(invb) {}
+}; // RenderContext
+
+class IGraphicObject
+{
+public:
+	virtual ~IGraphicObject() {}
+	virtual void render( RenderContext & context ) = 0;
+}; // IGraphicObject
+
+class ICollisionObject
+{
+public:
+	virtual ~ICollisionObject() {}
+	virtual bool collides_with( ICollisionObject * other ) const = 0;
+	virtual void world_position( float & x, float & y ) = 0;
+}; // ICollisionObject
+
+class Sprite : public virtual IGraphicObject, public virtual ICollisionObject
+{
+public:
+	unsigned int material_id;
+	renderer::UV texcoords[4];
+	Color color;
+	
+	float world_x;
+	float world_y;
+	
+	float last_world_x;
+	float last_world_y;
+	
+	float r_x;
+	float r_y;
+
+	
+	Sprite()
+	{
+		world_x = world_y = 0;
+		material_id = 0;
+		color = Color( 255, 255, 255, 255 );
+		memset( texcoords, 0, 4 * sizeof(renderer::UV) );
+		
+		sprite::calc_tile_uvs( (float*)texcoords, 0, 0, 32, 32, 256, 256 );
+	}
+	
+	// IGraphicObject
+	virtual void render( RenderContext & context )
+	{
+		float sx, sy;
+		world_to_screen( r_x, r_y, sx, sy );
+		add_sprite_to_stream( context.vb, sx, sy, 32, 32, color, (float*)texcoords );
+	} // render
+	
+	
+	// ICollisionObject
+	virtual bool collides_with( ICollisionObject * other ) const
+	{
+		return false;
+	} // collides_with
+	
+	virtual void world_position( float & x, float & y )
+	{
+		
+	} // world_position
+}; // Sprite
+
+
+
+struct Entity
+{
+	IGraphicObject * graphic_object;
+	ICollisionObject * collision_object;
+	
+	Entity() : graphic_object(0), collision_object(0) {}
+	
+}; // Entity
 
 
 ScreenController * screen_controller = 0;
@@ -147,6 +235,71 @@ struct SpriteVertexType
 	float u, v;
 };
 
+void render_vertexstream( Camera & camera, renderer::VertexStream & vb, RenderStream & rs, unsigned int attributes, assets::Material * material )
+{
+	long offset = rs.stream.offset_pointer();
+	
+	assert( material != 0 );
+	
+	vb.update();
+	assets::Shader * shader = assets::find_compatible_shader( attributes + material->requirements );
+	rs.add_shader( shader );
+	
+	rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
+	rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
+	rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &objectMatrix );
+	
+	rs.add_material( material, shader );
+	rs.add_draw_call( vb.vertexbuffer );
+	
+	rs.run_commands();
+	vb.reset();
+	rs.stream.seek( offset, true );
+} // render_vertexstream
+
+void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width, int height, const Color & color, float * texcoords )
+{
+	SpriteVertexType * v = (SpriteVertexType*)vb.request(4);
+	if ( v )
+	{
+		v[0].x = x;
+		v[0].y = y;
+		v[0].z = 0;
+		v[0].color = Color(255,255,255);
+		
+		v[1].x = x;
+		v[1].y = y+height;
+		v[1].z = 0;
+		v[1].color = Color(255,255,255);
+		
+		v[2].x = x+width;
+		v[2].y = y+height;
+		v[2].z = 0;
+		v[2].color = Color(255,255,255);
+		
+		v[3].x = x+width;
+		v[3].y = y;
+		v[3].z = 0;
+		v[3].color = Color(255,255,255);
+		
+		v[0].u = texcoords[0];
+		v[0].v = texcoords[1];
+		v[1].u = texcoords[2];
+		v[1].v = texcoords[3];
+		v[2].u = texcoords[4];
+		v[2].v = texcoords[5];
+		v[3].u = texcoords[6];
+		v[3].v = texcoords[7];
+		
+		
+		
+//		LOGV( "[%g %g, %g %g, %g %g, %g %g\n", v[0].x, v[0].y, v[1].x, v[1].y, v[2].x, v[2].y, v[3].x, v[3].y );
+		
+		renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+		vb.append_indices( indices, 6 );
+	}
+}
+
 void render_tiled_map( TiledMap & tiled_map, RenderStream & rs, renderer::VertexStream & vb, unsigned int test_attribs, Camera & camera )
 {
 	// could potentially have a vertexbuffer per tileset
@@ -169,67 +322,16 @@ void render_tiled_map( TiledMap & tiled_map, RenderStream & rs, renderer::Vertex
 						
 						if ( (!vb.has_room(4, 6) || (set != lastset)) && lastset != 0 )
 						{
-							long offset = rs.stream.offset_pointer();
-							vb.update();
-							assets::Shader * shader = assets::find_compatible_shader( test_attribs + lastset->material->requirements );
-							rs.add_shader( shader );
-							
-							rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
-							rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
-							rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &objectMatrix );
-							
-							
-							rs.add_material( lastset->material, shader );
-							rs.add_draw_call( vb.vertexbuffer );
-							
-							rs.run_commands();
-							vb.reset();
-							rs.stream.seek( offset, true );
-							
+							render_vertexstream( camera, vb, rs, test_attribs, lastset->material );							
 						}
 						
-						SpriteVertexType * v = (SpriteVertexType*)vb.request(4);
-						if ( v )
-						{
-							lastset = set;
-//							SpriteVertexType * v = (SpriteVertexType*)vb[0];
-							
-							int x = w * tiled_map.tile_width;
-							int y = h * tiled_map.tile_height;
-							v[0].x = x;
-							v[0].y = y;
-							v[0].z = 0;
-							v[0].color = Color(255,255,255);
-							
-							v[1].x = x;
-							v[1].y = y+tiled_map.tile_height;
-							v[1].z = 0;
-							v[1].color = Color(255,255,255);
-							
-							v[2].x = x+tiled_map.tile_width;
-							v[2].y = y+tiled_map.tile_height;
-							v[2].z = 0;
-							v[2].color = Color(255,255,255);
-							
-							v[3].x = x+tiled_map.tile_width;
-							v[3].y = y;
-							v[3].z = 0;
-							v[3].color = Color(255,255,255);
-							
-							v[0].u = tile->quad_uvs[0];
-							v[0].v = tile->quad_uvs[1];
-							v[1].u = tile->quad_uvs[2];
-							v[1].v = tile->quad_uvs[3];
-							v[2].u = tile->quad_uvs[4];
-							v[2].v = tile->quad_uvs[5];
-							v[3].u = tile->quad_uvs[6];
-							v[3].v = tile->quad_uvs[7];
-							
-//							LOGV( "[%g %g, %g %g, %g %g, %g %g\n", v[0].x, v[0].y, v[1].x, v[1].y, v[2].x, v[2].y, v[3].x, v[3].y );
-							
-							renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
-							vb.append_indices( indices, 6 );
-						}
+						lastset = set;
+						int width = tiled_map.tile_width;
+						int height = tiled_map.tile_height;
+						int x = w * tiled_map.tile_width;
+						int y = h * tiled_map.tile_height;
+						
+						add_sprite_to_stream( vb, x, y, width, height, Color(255,255,255), tile->quad_uvs );
 					} // tile
 				} // tile gid > 0
 			} // for width
@@ -238,23 +340,13 @@ void render_tiled_map( TiledMap & tiled_map, RenderStream & rs, renderer::Vertex
 	
 	if ( vb.last_index > 0 && lastset )
 	{
-		vb.update();
-		assets::Shader * shader = assets::find_compatible_shader( test_attribs + lastset->material->requirements );
-//		LOGV( "shader: %i, draw tileset: %i, count: %i\n", shader->id, lastset->id, vb.last_index );
-		
-		rs.add_shader( shader );
-		rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
-		rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
-		rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &objectMatrix );
-		
-		rs.add_material( lastset->material, shader );
-		rs.add_draw_call( vb.vertexbuffer );
-		
-		rs.run_commands();
+		render_vertexstream( camera, vb, rs, test_attribs, lastset->material );
 	}
 	
 	vb.reset();
 }
+
+
 
 
 
@@ -267,6 +359,9 @@ struct GameScreen : public virtual IScreen
 	unsigned int test_attribs;
 	TiledMap tiled_map;
 	RenderStream rs;
+	assets::Material * player_mat;
+	
+	Sprite player;
 	
 	GameScreen()
 	{
@@ -288,6 +383,9 @@ struct GameScreen : public virtual IScreen
 		vb.desc.add( renderer::VD_UNSIGNED_BYTE4 );
 		vb.desc.add( renderer::VD_FLOAT2 );
 		vb.create(256, 1024, renderer::DRAW_INDEXED_TRIANGLES );
+		
+		
+		player_mat = assets::load_material("materials/player");
 	}
 	
 	~GameScreen()
@@ -314,16 +412,68 @@ struct GameScreen : public virtual IScreen
 		kernel::Params & params = kernel::instance()->parameters();
 		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -1.0f, 1.0f );
 		
+//		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+//		rs.add_state( renderer::STATE_BLEND, 1 );
+		
 		rs.rewind();
-		render_tiled_map( tiled_map, rs, vb, test_attribs, camera );
-	
+		
+		
+		
+#if 0
+		// 1 - draw the tile map
+		
+		//render_tiled_map( tiled_map, rs, vb, test_attribs, camera );
+#endif
+
+#if 0 // 2 draw the sprite
+		renderer::UV uvs[4];
+		
+		sprite::calc_tile_uvs( (float*)uvs, 64, 0, 32, 32, 256, 256 );
+//		uvs[0].u = 0;
+//		uvs[0].v = 0;
+//		uvs[1].u = 0;
+//		uvs[1].v = 1;
+//		uvs[2].u = 1;
+//		uvs[2].v = 1;
+//		uvs[3].u = 1;
+//		uvs[3].v = 0;
+		
+		add_sprite_to_stream( vb, 0, 0, 32, 32, Color(255,255,255), (float*)uvs );
+
+		
+		if ( player_mat )
+		{
+			render_vertexstream( camera, vb, rs, test_attribs, player_mat );
+		}
+		else
+		{
+			LOGW( "error loading player_mat material!\n" );
+		}
+#endif
+
+		// 3 - draw sprite with class?
+		
+		// interpolate between two states and get the render position for this sprite
+		player.r_x = lerp( player.last_world_x, player.world_x, kernel::instance()->parameters().step_alpha );
+		player.r_y = lerp( player.last_world_y, player.world_y, kernel::instance()->parameters().step_alpha );
+		
+		RenderContext context( rs, vb );
+		player.render( context );
+		
+		if ( player_mat )
+		{
+			render_vertexstream( camera, vb, rs, test_attribs, player_mat );
+		}
+
 		rs.run_commands();
 	
-		const char text[] = "---- Game ----";
-		int center = (kernel::instance()->parameters().render_width / 2);
-		int font_width = font::measure_width( font, text );
-		
-		font::draw_string( font, center-(font_width/2), 40, text, Color(0,255,0) );
+//		const char text[] = "---- Game ----";
+//		int center = (kernel::instance()->parameters().render_width / 2);
+//		int font_width = font::measure_width( font, text );
+//		
+//		font::draw_string( font, center-(font_width/2), 40, text, Color(0,255,0) );
+
+		font::draw_string( font, 15, 15, xstr_format("framedelta: %g\n", kernel::instance()->parameters().framedelta_raw), Color(0,255,255));
 	}
 	
 	
@@ -332,8 +482,14 @@ struct GameScreen : public virtual IScreen
 		
 	}
 	
+	float lerp( float a, float b, float t )
+	{
+		return a + (t * (b-a));
+	}
+	
 	virtual void on_step( kernel::IApplication * app )
 	{
+#if 0 // don't move the camera in this instance
 		kernel::Params & params = kernel::instance()->parameters();
 		if ( input::state()->keyboard().is_down( input::KEY_W ) )
 		{
@@ -351,6 +507,30 @@ struct GameScreen : public virtual IScreen
 		else if ( input::state()->keyboard().is_down( input::KEY_D ) )
 		{
 			camera.move_right( params.step_interval_seconds );
+		}
+#endif
+
+		// instead, move the sprite (we do need some interpolation here otherwise the stuttering is visible)
+		player.last_world_x = player.world_x;
+		player.last_world_y = player.world_y;
+		
+		const float move_multi = 150.0f;
+		if ( input::state()->keyboard().is_down( input::KEY_W ) )
+		{
+			player.world_y -= kernel::instance()->parameters().step_interval_seconds * move_multi;
+		}
+		else if ( input::state()->keyboard().is_down( input::KEY_S ) )
+		{
+			player.world_y += kernel::instance()->parameters().step_interval_seconds * move_multi;
+		}
+		
+		if ( input::state()->keyboard().is_down( input::KEY_A ) )
+		{
+			player.world_x -= kernel::instance()->parameters().step_interval_seconds * move_multi;
+		}
+		else if ( input::state()->keyboard().is_down( input::KEY_D ) )
+		{
+			player.world_x += kernel::instance()->parameters().step_interval_seconds * move_multi;
 		}
 	}
 	

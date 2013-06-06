@@ -373,8 +373,10 @@ namespace kernel
 		_internal::_kernel_state.last_time = now_msec;
 
 		_internal::_kernel_state.tsa.tick( raw_delta_msec );
+		
 		_kernel->parameters().framedelta_filtered = _internal::_kernel_state.tsa.filtered_value;
-		_kernel->parameters().framedelta_raw = _internal::_kernel_state.last_time;
+		_kernel->parameters().framedelta_raw = raw_delta_msec;
+		
 		_internal::_kernel_state.accumulator += (_internal::_kernel_state.tsa.filtered_value * .001);
 		while( _internal::_kernel_state.accumulator > _kernel->parameters().step_interval_seconds )
 		{
@@ -391,9 +393,10 @@ namespace kernel
 
 	void tick()
 	{
-		input::update();
-		update();
 		audio::update();
+//		input::update();
+
+		update();
 		_kernel->pre_tick();
 		_active_application->tick( _kernel->parameters() );
 		_kernel->post_tick();

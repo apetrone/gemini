@@ -130,30 +130,7 @@ util::ConfigLoadStatus tiled_map_loader( const Json::Value & root, void * data )
 
 
 //
-// TileSet
-void TileSet::calc_tile_uvs( float * uvs, unsigned int x, unsigned int y, unsigned int sprite_width, unsigned int sprite_height, unsigned int sheet_width, unsigned int sheet_height )
-{
-	// This assumes an Orthographic projection set with the origin in the upper left
-	// upper left
-	uvs[0] = x / (float)sheet_width;
-	uvs[1] = y / (float)sheet_height;
-	
-	// lower left
-	uvs[2] = x / (float)sheet_width;
-	uvs[3] = (y+sprite_height) / (float)sheet_height;
-	
-	// lower right
-	uvs[4] = (x+sprite_width) / (float)sheet_width;
-	uvs[5] = (y+sprite_height) / (float)sheet_height;
-	
-	// upper right
-	uvs[6] = (x+sprite_width) / (float)sheet_width;
-	uvs[7] = y / (float)sheet_height;
-} // calc_tile_uvs
-
-//
 // TileList
-
 TileList::TileList()
 {
 	tiles = 0;
@@ -179,7 +156,7 @@ void TileList::create_tiles( TileSet * set, unsigned int tile_width, unsigned in
 			tile->id = (set->firstgid + tile_id)-1;
 			tile->tileset_id = set->id;
 			
-			set->calc_tile_uvs( tile->quad_uvs, (x*tile_width), (y*tile_height), tile_width, tile_height, set->imagewidth, set->imageheight );
+			sprite::calc_tile_uvs( tile->quad_uvs, (x*tile_width), (y*tile_height), tile_width, tile_height, set->imagewidth, set->imageheight );
 		}
 	}
 } // create_tiles
@@ -246,3 +223,32 @@ unsigned int TiledMap::count_tiles_in_set( TileSet * set ) const
 	
 	return (set->imagewidth / this->tile_width) * (set->imageheight / this->tile_height);
 } // count_tiles_in_set
+
+
+
+
+
+//
+// misc sprite tools
+namespace sprite
+{
+	void calc_tile_uvs( float * uvs, unsigned int x, unsigned int y, unsigned int sprite_width, unsigned int sprite_height, unsigned int sheet_width, unsigned int sheet_height )
+	{
+		// This assumes an Orthographic projection set with the origin in the upper left
+		// upper left
+		uvs[0] = x / (float)sheet_width;
+		uvs[1] = y / (float)sheet_height;
+		
+		// lower left
+		uvs[2] = x / (float)sheet_width;
+		uvs[3] = (y+sprite_height) / (float)sheet_height;
+		
+		// lower right
+		uvs[4] = (x+sprite_width) / (float)sheet_width;
+		uvs[5] = (y+sprite_height) / (float)sheet_height;
+		
+		// upper right
+		uvs[6] = (x+sprite_width) / (float)sheet_width;
+		uvs[7] = y / (float)sheet_height;
+	} // calc_tile_uvs
+}; // sprite
