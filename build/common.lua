@@ -58,6 +58,7 @@ common_file_list =
 common_include_dirs=
 {
 	"src",
+	"src/game",
 
 	"dependencies/murmur3",
 	
