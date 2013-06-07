@@ -785,8 +785,8 @@ public:
 	
 	virtual kernel::ApplicationResult config( kernel::Params & params )
 	{
-		params.window_width = 800;
-		params.window_height = 600;
+		params.window_width = 720;
+		params.window_height = 480;
 		params.window_title = "TestUniversal";
 //		HSQUIRRELVM vm = sq_open(1024);
 //		sq_close( vm );

@@ -345,12 +345,17 @@ namespace font
 		
 		if ( font_data )
 		{
+			LOGV( "font data size: %i bytes\n", font_data_size );
 			handle = load_font_from_memory( font_data, font_data_size, point_size, false, hdpi, vdpi );
 			SimpleFontHandle * fpointer = internal::handle_by_id( handle );
 			if ( fpointer )
 			{
 				fpointer->font_data = font_data;
 			}
+		}
+		else
+		{
+			LOGE( "Unable to load font from file: '%s'\n", path );
 		}
 		
 		return handle;

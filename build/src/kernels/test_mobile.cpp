@@ -32,11 +32,12 @@
 
 #include "render_utilities.hpp"
 
+#include "input.hpp"
 #include "gemgl.hpp"
 
 #define FONT_TEST 1
-#define MODEL_TEST 1
-#define MODEL_TEST2 1
+#define MODEL_TEST 0
+#define MODEL_TEST2 0
 
 #define SIMPLE_SHADER 0
 
@@ -58,7 +59,8 @@ struct TestVertex
 
 
 class TestMobile : public kernel::IApplication,
-	kernel::IEventListener<kernel::TouchEvent>
+	kernel::IEventListener<kernel::TouchEvent>,
+	kernel::IEventListener<kernel::KeyboardEvent>
 
 {
 public:
@@ -86,6 +88,17 @@ public:
 		else if ( event.subtype == kernel::TouchEnd )
 		{
 			fprintf( stdout, "Touch Event Ended at %i, %i\n", event.x, event.y );
+		}
+	}
+	
+	virtual void event( kernel::KeyboardEvent & event )
+	{
+		if (event.is_down)
+		{
+			if (event.key == input::KEY_ESCAPE)
+			{
+				kernel::instance()->set_active(false);
+			}
 		}
 	}
 	
@@ -132,7 +145,9 @@ public:
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 #if FONT_TEST		
-		test_font = font::load_font_from_file( "fonts/nokiafc22.ttf", 16, 72, 72 );
+		LOGV( "loading fonts/nokiafc22.ttf...\n" );
+		test_font = font::load_font_from_file( "fonts/nokiafc22.ttf", 16 );
+		LOGV( "test_font = %i\n", test_font );
 #endif
 
 

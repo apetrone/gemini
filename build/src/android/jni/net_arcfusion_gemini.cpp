@@ -29,7 +29,7 @@
 
 const char JNI_CLASS_PATH[] = "net/arcfusion/gemini/Lynx";
 
-#define NATIVE_LOG( fmt, ...) __android_log_print(ANDROID_LOG_DEBUG, "lynx", fmt, ##__VA_ARGS__)
+#define NATIVE_LOG( fmt, ...) __android_log_print(ANDROID_LOG_DEBUG, "gemini", fmt, ##__VA_ARGS__)
 
 namespace lynx
 {
