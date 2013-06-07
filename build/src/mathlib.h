@@ -103,3 +103,66 @@ int Intersect_Line_Segment( const aengine::vec3 & p1, const aengine::vec3 & p2, 
 aengine::real Segment_Slope( const aengine::Segment & segment );
 int Segment_Intersection( const aengine::Segment & line1, const aengine::Segment & line2, aengine::vec3 & pt );
 #endif
+
+namespace gemini
+{
+	// this class assumes an origin in the upper left hand corner and assumes bottom > top, right > left
+	template <class _Type>
+	struct Rect
+	{
+		_Type left, top, right, bottom;
+		
+		Rect() : left( _Type(0) ),
+				top( _Type(0) ),
+				right( _Type(0) ),
+				bottom( _Type(0) )
+		{
+		}
+		
+		Rect( _Type _left, _Type _top, _Type _right, _Type _bottom ) :
+				left(_left),
+				top(_top),
+				right(_right),
+				bottom(_bottom)
+		{
+		}
+		
+		_Type width() const
+		{
+			return ( right - left );
+		}
+		
+		_Type height() const
+		{
+			return ( bottom - top );
+		}
+		
+		Rect<_Type> operator- ( const Rect<_Type> & other ) const
+		{
+			return Rect<_Type> (left-other.left, top-other.top, right-other.top, bottom-other.bottom );
+		}
+		
+		Rect<_Type> operator- ( const Rect<_Type> & other )
+		{
+			return Rect<_Type> (left-other.left, top-other.top, right-other.top, bottom-other.bottom );
+		}
+		
+		Rect<_Type> operator+ ( const Rect<_Type> & other ) const
+		{
+			return Rect<_Type> (left+other.left, top+other.top, right+other.top, bottom+other.bottom );
+		}
+		
+		bool fits_inside( const Rect<_Type> & other ) const
+		{
+			if ( width() <= other.width() && height() <= other.height() )
+				return true;
+			
+			return false;
+		}
+		
+	}; // Rect
+
+	typedef Rect<float> Rectf;
+	typedef Rect<int> Recti;
+}; // namespace gemini
+

@@ -144,7 +144,7 @@ struct LogoScreen : public virtual IScreen
 	font::Handle font;
 	LogoScreen()
 	{
-		font = font::load_font_from_file( "fonts/nokiafc22.ttf", 16, 72, 72 );
+		font = font::load_font_from_file( "fonts/nokiafc22.ttf", 8 );
 	}
 
 	virtual void on_show( kernel::IApplication * app )
@@ -355,10 +355,8 @@ struct RenameThisData
 	renderer::UV uvs[4];
 };
 
-const int CLIPRECT_X = 0;
-const int CLIPRECT_Y = 50;
-const int CLIPRECT_WIDTH = 864;
-const int CLIPRECT_HEIGHT = 550;
+
+
 
 struct GameScreen : public virtual IScreen
 {
@@ -378,7 +376,10 @@ struct GameScreen : public virtual IScreen
 	unsigned int background_material_id;
 	unsigned short background_num_tiles;
 	unsigned short background_tile_size;
+	unsigned short background_num_rows;
 	RenameThisData * layerdata;
+	
+	gemini::Recti cliprect;
 	
 	GameScreen()
 	{
@@ -411,14 +412,22 @@ struct GameScreen : public virtual IScreen
 			background_material_id = background_material->Id();
 		}
 		
+		
+		cliprect.left = 0;
+		cliprect.top = 0;
+		cliprect.right = kernel::instance()->parameters().render_width;		
+		cliprect.bottom = kernel::instance()->parameters().render_height;
+
+		LOGV( "determining number of tiles needed for viewport: %i x %i\n", kernel::instance()->parameters().render_width, kernel::instance()->parameters().render_height );
 		background_tile_size = 64;
-		background_num_tiles = ceil( CLIPRECT_WIDTH / (float)background_tile_size );
-		LOGV( "num tiles for bg: %i\n", background_num_tiles );
+		background_num_tiles = ceil( cliprect.width() / (float)background_tile_size ) + 1;
+		background_num_rows = ceil( cliprect.height() / (float)background_tile_size ) + 1;
+		LOGV( "num columns for bg: %i, num rows for bg: %i\n", background_num_tiles, background_num_rows );
 		
 		layerdata = CREATE_ARRAY(RenameThisData, background_num_tiles);
 		memset(layerdata, 0, sizeof(RenameThisData) * background_num_tiles);
 		
-		unsigned int x = CLIPRECT_X;
+		unsigned int x = cliprect.left;
 		for( unsigned int i = 0; i < background_num_tiles; ++i )
 		{
 			sprite::calc_tile_uvs( (float*)layerdata[i].uvs, 0, 0, 64, 64, 64, 64 );
@@ -450,7 +459,7 @@ struct GameScreen : public virtual IScreen
 		{
 			l = &layer[ i ];
 			add_sprite_to_stream( vb, l->world_x, l->world_y, 64, 64, Color(255,255,255), (float*)l->uvs );
-			if ( l->world_x + background_tile_size < CLIPRECT_X )
+			if ( l->world_x + background_tile_size < cliprect.left )
 			{
 				l->world_x = l->world_x + background_tile_size * background_num_tiles - 1;
 			}
@@ -543,7 +552,7 @@ struct GameScreen : public virtual IScreen
 
 
 
-		font::draw_string( font, 15, 15, xstr_format("framedelta: %g\n", kernel::instance()->parameters().framedelta_raw), Color(0,255,255));
+		font::draw_string( font, 15, 55, xstr_format("dt: %g\n", kernel::instance()->parameters().framedelta_raw), Color(0,255,255));
 	}
 	
 	

@@ -38,6 +38,7 @@ namespace lynx
 	void gemini_startup(JNIEnv * env, jclass the_class, jobject jasset_manager)
 	{
 		memory::startup();
+		NATIVE_LOG( "gemini_startup called\n" );
 
 		_kernel = CREATE(AndroidKernel);
 
@@ -45,11 +46,6 @@ namespace lynx
 		AAssetManager * asset_manager = AAssetManager_fromJava(env, jasset_manager);
 
 		fs::set_asset_manager(asset_manager);
-
-		if ( kernel::startup( _kernel ) != kernel::NoError )
-		{
-			NATIVE_LOG( "kernel startup failed!" );
-		}
 	} // gemini_startup
 
 
@@ -73,7 +69,21 @@ namespace lynx
 		NATIVE_LOG( "surface changed to %i x %i\n", width, height );
 		if ( _kernel )
 		{
+			// if render_width is 0, on_surface_changed has not been called before
+			bool needs_startup = (_kernel->parameters().render_width == 0);
+
+			// set the new surface dimensions
 			_kernel->on_surface_changed(width, height);
+
+			// if we haven't run startup; do so now that the viewport is ready and gl context is active
+			if ( needs_startup )
+			{
+				NATIVE_LOG( "performing kernel startup...\n" );
+				if ( kernel::startup( _kernel ) != kernel::NoError )
+				{
+					NATIVE_LOG( "kernel startup failed!" );
+				}
+			}
 		}
 	} // gemini_surface_changed
 }; // namespace lynx

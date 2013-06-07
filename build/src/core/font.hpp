@@ -41,7 +41,7 @@ namespace font
 	// measure the width of the string in a given font in pixels
 	unsigned int measure_width( font::Handle fontid, const char * utf8 );
 	
-	font::Handle load_font_from_memory( const void * data, unsigned int data_size, unsigned short point_size, bool antialiased, unsigned int hdpi, unsigned int vdpi );
+	font::Handle load_font_from_memory( const void * data, unsigned int data_size, unsigned short point_size, bool antialiased, unsigned int hdpi = 0, unsigned int vdpi = 0 );
 	
-	font::Handle load_font_from_file( const char * path, unsigned short point_size, unsigned int hdpi, unsigned int vdpi );
+	font::Handle load_font_from_file( const char * path, unsigned short point_size, unsigned int hdpi = 0, unsigned int vdpi = 0 );
 }; // namespace font
