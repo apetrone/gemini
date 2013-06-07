@@ -35,9 +35,9 @@
 #include "input.hpp"
 #include "gemgl.hpp"
 
-#define FONT_TEST 1
+#define FONT_TEST 0
 #define MODEL_TEST 0
-#define MODEL_TEST2 0
+#define MODEL_TEST2 1
 
 #define SIMPLE_SHADER 0
 
@@ -276,7 +276,7 @@ public:
 	{
 #if MODEL_TEST2
 		TestVertex * vertices = (TestVertex*)vs.request(4);
-		 setup_vertex_data( vertices );
+		setup_vertex_data( vertices );
 		
 		
 		vs.update();
@@ -309,7 +309,7 @@ public:
 		rs.rewind();
 		
 		// setup global rendering state
-		rs.add_clearcolor( 0.15, 0.10, 0.25, 1.0f );
+		rs.add_clearcolor( 0.15, 0.50, 0.25, 1.0f );
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
 		rs.add_viewport( 0, 0, (int)params.render_width, (int)params.render_height );
 			
@@ -317,8 +317,18 @@ public:
 		Camera camera;
 //		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
 		//camera.perspective( 60, params.render_width, params.render_height, 0.1f, 512.0f );
-		camera.ortho(0, (int)params.render_width, (int)params.render_height, 0, -128.0f, 128.0f);
+		camera.ortho(0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -1.0f, 1.0f);
+//		camera.matProj = glm::ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -1.0f, 1.0f );
 
+#if 0
+		const glm::mat4 & projection_matrix = camera.matProj;
+		LOGV( "proj: %g %g %g %g\n%g %g %g %g\n%g %g %g %g\n%g %g %g %g\n",
+			 projection_matrix[0][0], projection_matrix[0][1], projection_matrix[0][2], projection_matrix[0][3],
+			 projection_matrix[1][0], projection_matrix[1][1], projection_matrix[1][2], projection_matrix[1][3],
+			 projection_matrix[2][0], projection_matrix[2][1], projection_matrix[2][2], projection_matrix[2][3],
+			 projection_matrix[3][0], projection_matrix[3][1], projection_matrix[3][2], projection_matrix[3][3]
+			 );
+#endif
 
 		model_test( camera, params );
 		model_test2( camera, params );

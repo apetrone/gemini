@@ -27,6 +27,14 @@
 #include "memorystream.hpp"
 #include "assets.hpp"
 
+// enable this to allow retaining data pointers in order to call
+// VertexAttribArrayPointer() with actual data instead of using a VBO.
+#if __ANDROID__
+	#define ENABLE_NON_VBO_SUPPORT 1
+#else
+	#define ENABLE_NON_VBO_SUPPORT 0
+#endif
+
 // utility functions
 GLenum image_to_source_format( int num_channels )
 {
@@ -76,11 +84,18 @@ GLESv2::GLESv2()
 	
 	_gles2 = this;
 	
-	has_oes_vertex_array_object = gemgl_find_extension( "_vertex_array_object" );
-	if ( has_oes_vertex_array_object )
-	{
-		LOGV( "vertex_array_object extension is present!\n" );
-	}
+	has_vbo_support = true;
+	has_oes_vertex_array_object = has_vbo_support && gemgl_find_extension( "_vertex_array_object" );
+	
+	// disable VBO/VAO support on Android builds, since drivers are really buggy.
+#if ENABLE_NON_VBO_SUPPORT
+	has_vbo_support = false;
+	has_oes_vertex_array_object = false;
+#endif
+	
+
+	
+	LOGV( "VertexBuffer support? %s\n", has_vbo_support ? "Yes" : "No" );
 	
 #if 0
 	int unpack_alignment = 0, pack_alignment = 0;
@@ -124,11 +139,21 @@ struct GLES2VertexBuffer : public VertexBuffer
 	unsigned short vertex_stride;
 	renderer::VertexDescriptor vertex_descriptor;
 	
+#if ENABLE_NON_VBO_SUPPORT
+	GLbyte * vertex_data;
+	IndexType * index_data;
+#endif
+	
 	GLES2VertexBuffer()
 	{
 		memset( vao, 0, VAO_LIMIT*sizeof(GLuint) );
 		memset( vbo, 0, VBO_LIMIT*sizeof(GLuint) );
 		vertex_stride = 0;
+		
+#if ENABLE_NON_VBO_SUPPORT
+		vertex_data = 0;
+		index_data = 0;
+#endif
 	}
 	
 	void allocate( renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type )
@@ -184,8 +209,14 @@ struct GLES2VertexBuffer : public VertexBuffer
 			gl.EnableVertexAttribArray( attribID );
 			gl.CheckError( "EnableVertexAttribArray" );
 			
+#if ENABLE_NON_VBO_SUPPORT
+//			assert( this->vertex_data == 0 );
+			gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_stride, this->vertex_data+offset );
+			gl.CheckError( "VertexAttribPointer" );
+#else
 			gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_stride, (void*)offset );
 			gl.CheckError( "VertexAttribPointer" );
+#endif
 			
 			offset += attrib_size;
 			++attribID;
@@ -196,6 +227,11 @@ struct GLES2VertexBuffer : public VertexBuffer
 	
 	void static_setup( unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
 	{
+#if ENABLE_NON_VBO_SUPPORT
+		this->vertex_data = (GLbyte*)vertices;
+		this->index_data = indices;
+#endif
+		
 		if ( _gles2->has_oes_vertex_array_object )
 		{
 			gl.GenVertexArrays( VAO_LIMIT, this->vao );
@@ -205,19 +241,32 @@ struct GLES2VertexBuffer : public VertexBuffer
 			gl.CheckError( "BindVertexArray" );
 		}
 		
-		gl.GenBuffers( VBO_LIMIT, this->vbo );
-		gl.CheckError( "GenBuffers" );
+		if ( _gles2->has_vbo_support )
+		{
+			gl.GenBuffers( VBO_LIMIT, this->vbo );
+			gl.CheckError( "GenBuffers" );
+		}
 		
-		// upload interleaved array
-		upload_interleaved_data( vertices, vertex_count );
-		if ( !_gles2->has_oes_vertex_array_object )
+		this->vertex_count = vertex_count;
+		if ( _gles2->has_vbo_support )
+		{
+			// upload interleaved array
+			upload_interleaved_data( vertices, vertex_count );
+		}
+		
+		if ( !_gles2->has_oes_vertex_array_object && _gles2->has_vbo_support )
 		{
 			gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 		}
 		
-		// upload index array
-		upload_index_array( indices, index_count );
-		if ( !_gles2->has_oes_vertex_array_object )
+		this->index_count = index_count;
+		if ( _gles2->has_vbo_support )
+		{
+			// upload index array
+			upload_index_array( indices, index_count );
+		}
+		
+		if ( !_gles2->has_oes_vertex_array_object && _gles2->has_vbo_support )
 		{
 			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 		}
@@ -234,8 +283,6 @@ struct GLES2VertexBuffer : public VertexBuffer
 	
 	void upload_interleaved_data( const GLvoid * data, unsigned int vertex_count )
 	{
-		this->vertex_count = vertex_count;
-		
 		gl.BindBuffer( GL_ARRAY_BUFFER, this->vbo[0] );
 		gl.CheckError( "BindBuffer GL_ARRAY_BUFFER" );
 		
@@ -245,9 +292,8 @@ struct GLES2VertexBuffer : public VertexBuffer
 	
 	void upload_index_array( IndexType * indices, unsigned int index_count )
 	{
-		if ( index_count != 0 )
+		if ( this->index_count != 0 )
 		{
-			this->index_count = index_count;
 			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
 			gl.CheckError( "BindBuffer GL_ELEMENT_ARRAY_BUFFER" );
 			
@@ -562,6 +608,8 @@ bool GLESv2::upload_texture_2d( renderer::TextureParameters & parameters )
 	GLenum internal_format = source_format;
 	GLenum error = GL_NO_ERROR;
 	
+//	LOGV( "uploading texture to %i\n", parameters.texture_id );
+	
 	// bind the texture so it is active
 	gl.BindTexture( GL_TEXTURE_2D, parameters.texture_id );
 	error = gl.CheckError( "upload_texture_2d - BindTexture" );
@@ -637,8 +685,10 @@ bool GLESv2::upload_texture_2d( renderer::TextureParameters & parameters )
 
 bool GLESv2::generate_texture( renderer::TextureParameters & parameters )
 {
+
 	gl.GenTextures( 1, &parameters.texture_id );
 	GLenum error = gl.CheckError( "generate_texture" );
+//	LOGV( "generate texture: %i\n", parameters.texture_id );	
 	return (error == GL_NO_ERROR);
 } // generate_texture
 
@@ -738,19 +788,32 @@ void GLESv2::vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, u
 	}
 	else
 	{
-		gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
+		if ( has_vbo_support )
+		{
+			gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
+		}
+		
 		stream->setup_vertex_attributes();
-		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, stream->vbo[1] );
+		
+		if ( has_vbo_support )
+		{
+			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, stream->vbo[1] );
+		}
 	}
 	
+#if ENABLE_NON_VBO_SUPPORT
+	gl.DrawElements( stream->gl_draw_type, num_indices, GL_UNSIGNED_SHORT, stream->index_data );
+	gl.CheckError( "DrawElements" );
+#else
 	gl.DrawElements( stream->gl_draw_type, num_indices, GL_UNSIGNED_SHORT, 0 );
 	gl.CheckError( "DrawElements" );
+#endif
 	
 	if ( has_oes_vertex_array_object )
 	{
 		gl.BindVertexArray( 0 );
 	}
-	else
+	else if ( has_vbo_support )
 	{
 		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
@@ -767,11 +830,14 @@ void GLESv2::vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned 
 		gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
 		gl.CheckError( "BindVertexArray" );
 	}
-	else
+	else if ( has_vbo_support )
 	{
 		gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
 		gl.CheckError( "BindBuffer: GL_ARRAY_BUFFER (vertexbuffer_draw)" );
-		
+	}
+	
+	if ( !has_oes_vertex_array_object )
+	{
 		stream->setup_vertex_attributes();
 	}
 	
@@ -782,7 +848,7 @@ void GLESv2::vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned 
 	{
 		gl.BindVertexArray( 0 );
 	}
-	else
+	else if ( has_vbo_support )
 	{
 		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 		gl.CheckError( "BindBuffer: GL_ARRAY_BUFFER 0 (vertexbuffer_draw)" );
@@ -811,7 +877,11 @@ renderer::VertexBuffer * GLESv2::vertexbuffer_from_geometry( renderer::VertexDes
 void GLESv2::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer::Geometry * geometry )
 {
 	GLES2VertexBuffer * stream = (GLES2VertexBuffer*)vertexbuffer;
-	assert( stream != 0 );
+	if ( !stream )
+	{
+		LOGE( "Invalid vertex stream!\n ");
+		return;
+	}
 	
 	if ( has_oes_vertex_array_object )
 	{
@@ -852,18 +922,26 @@ void GLESv2::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer
 		}
 	}
 	
-	stream->upload_interleaved_data( vertex_data, geometry->vertex_count );
+	stream->vertex_count = geometry->vertex_count;
+	stream->index_count = geometry->index_count;
+	
+	if ( has_vbo_support )
+	{
+		stream->upload_interleaved_data( vertex_data, geometry->vertex_count );
+	}
+	
 	DEALLOC( vertex_data );
 		
 
 
 	
-	if ( geometry->index_count > 0 )
+	if ( has_vbo_support && (geometry->index_count > 0) )
 	{
+		
 		stream->upload_index_array( geometry->indices, geometry->index_count );
 	}
 	
-	if ( !has_oes_vertex_array_object )
+	if ( !has_oes_vertex_array_object && has_vbo_support )
 	{
 		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 	}
@@ -873,8 +951,11 @@ void GLESv2::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer
 		gl.BindVertexArray( 0 );
 	}
 	
-	gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-	gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+	if ( has_vbo_support )
+	{
+		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+	}
 }
 
 ///////////////////////////////

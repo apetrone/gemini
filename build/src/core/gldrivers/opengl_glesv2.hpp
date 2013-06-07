@@ -31,7 +31,11 @@ public:
 	GLESv2();
 	~GLESv2();
 	
+	// should use VAOs?
 	bool has_oes_vertex_array_object;
+	
+	// should use VBOs?
+	bool has_vbo_support;
 	
 	virtual const char * description() { return "OpenGL ES 2.0"; }
 	

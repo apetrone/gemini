@@ -72,6 +72,12 @@ util::ConfigLoadStatus tiled_map_loader( const Json::Value & root, void * data )
 		LOGV( "material path: %s\n", material_path() );
 		tileset->material = assets::load_material( material_path() );
 		
+		if ( tileset->material->parameter_by_name("diffusemap") )
+		{
+			LOGV( "material '%s' -> texture_id = %i\n", tileset->material->name.c_str(), tileset->material->parameter_by_name("diffusemap")->intValue );
+		}
+			
+		
 		tileset->imagewidth = value["imagewidth"].asInt();
 		tileset->imageheight = value["imageheight"].asInt();
 		LOGV( "tileset dimensions: %i %i\n", tileset->imagewidth, tileset->imageheight );

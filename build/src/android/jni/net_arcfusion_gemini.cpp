@@ -66,7 +66,7 @@ namespace lynx
 
 	void gemini_surface_changed(JNIEnv * env, jclass the_class, jint width, jint height)
 	{
-		NATIVE_LOG( "surface changed to %i x %i\n", width, height );
+		NATIVE_LOG( "kernel %p surface changed to %i x %i\n", _kernel, width, height );
 		if ( _kernel )
 		{
 			// if render_width is 0, on_surface_changed has not been called before

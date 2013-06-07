@@ -38,7 +38,8 @@
 #include "tiledloader.hpp"
 #include "screencontrol.hpp"
 
-#define TEST_2D 1
+#define TEST_2D 0
+#define TEST_FONT 1
 
 glm::mat4 objectMatrix;
 
@@ -162,8 +163,9 @@ struct LogoScreen : public virtual IScreen
 		const char text[] = "LogoScreen";
 		int center = (kernel::instance()->parameters().render_width / 2);
 		int font_width = font::measure_width( font, text );
-		
-		font::draw_string( font, center-(font_width/2), 40, text, Color(255,255,255) );
+#if TEST_FONT
+		font::draw_string( font, center-(font_width/2), 150, text, Color(255,255,255) );
+#endif
 	}
 	
 	virtual void on_update( kernel::IApplication * app ) {}
@@ -482,6 +484,8 @@ struct GameScreen : public virtual IScreen
 	virtual void on_draw( kernel::IApplication * app )
 	{
 		kernel::Params & params = kernel::instance()->parameters();
+		
+		// previously had floating point errors on android when this was only set during startup
 		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -1.0f, 1.0f );
 		
 //		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
@@ -812,6 +816,7 @@ public:
 		// setup the stack
 		screen_controller->push_screen( "GameScreen", this );
 //		screen_controller->push_screen( "LogoScreen", this );
+
 	
 
 		return kernel::Application_Success;
