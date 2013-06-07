@@ -25,8 +25,8 @@
 #include "memorystream.hpp"
 #include "assets.hpp"
 
-const unsigned int MAX_RENDERER_STREAM_BYTES = 32768;
-const unsigned int MAX_RENDERER_STREAM_COMMANDS = 32768;
+const unsigned int MAX_RENDERER_STREAM_BYTES = 4096;
+const unsigned int MAX_RENDERER_STREAM_COMMANDS = 2048;
 
 struct RenderState
 {

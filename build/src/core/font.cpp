@@ -36,7 +36,7 @@
 
 namespace font
 {
-	const unsigned int FONT_MAX_VERTICES = 8192;
+	const unsigned int FONT_MAX_VERTICES = 1024;
 	const unsigned int FONT_MAX = 4;
 	
 	struct SimpleFontHandle
@@ -153,9 +153,9 @@ namespace font
 
 		renderer::VertexStream & vs = internal::_vertexstream;
 
-		if ( !vs.has_room( 128, 0 ) )
+		if ( !vs.has_room( vertex_count, 0 ) )
 		{
-			LOGE( "Unable to draw font: vertexstream has no room!\n" );
+			LOGE( "Unable to draw font: vertexstream has no room! (%i)\n", vs.total_vertices );
 		}
 		else
 		{
@@ -195,6 +195,8 @@ namespace font
 			
 			// run all commands
 			rs.run_commands();
+			
+			vs.reset();
 		}
 	}
 

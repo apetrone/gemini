@@ -242,6 +242,10 @@ namespace renderer
 	
 	void VertexStream::fill_data( VertexType * vertex_source, unsigned int vertex_count, IndexType * index_source, unsigned int index_count )
 	{
+		// if you hit this assert, more vertices were copied to the buffer than
+		// it holds and memory is corrupt now. nicely done.
+		assert( vertex_count + this->last_vertex < total_vertices );
+		
 		memcpy( this->vertices, vertex_source, this->vertex_stride * vertex_count );
 		this->last_vertex = vertex_count;
 				
