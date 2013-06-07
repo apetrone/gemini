@@ -348,7 +348,17 @@ void render_tiled_map( TiledMap & tiled_map, RenderStream & rs, renderer::Vertex
 
 
 
+struct RenameThisData
+{
+	int world_x;
+	int world_y;
+	renderer::UV uvs[4];
+};
 
+const int CLIPRECT_X = 0;
+const int CLIPRECT_Y = 50;
+const int CLIPRECT_WIDTH = 864;
+const int CLIPRECT_HEIGHT = 550;
 
 struct GameScreen : public virtual IScreen
 {
@@ -362,6 +372,13 @@ struct GameScreen : public virtual IScreen
 	assets::Material * player_mat;
 	
 	Sprite player;
+	
+	
+	// scrolling layer
+	unsigned int background_material_id;
+	unsigned short background_num_tiles;
+	unsigned short background_tile_size;
+	RenameThisData * layerdata;
 	
 	GameScreen()
 	{
@@ -386,6 +403,28 @@ struct GameScreen : public virtual IScreen
 		
 		
 		player_mat = assets::load_material("materials/player");
+		
+		
+		assets::Material * background_material = assets::load_material("materials/background");
+		if ( background_material )
+		{
+			background_material_id = background_material->Id();
+		}
+		
+		background_tile_size = 64;
+		background_num_tiles = ceil( CLIPRECT_WIDTH / (float)background_tile_size );
+		LOGV( "num tiles for bg: %i\n", background_num_tiles );
+		
+		layerdata = CREATE_ARRAY(RenameThisData, background_num_tiles);
+		memset(layerdata, 0, sizeof(RenameThisData) * background_num_tiles);
+		
+		unsigned int x = CLIPRECT_X;
+		for( unsigned int i = 0; i < background_num_tiles; ++i )
+		{
+			sprite::calc_tile_uvs( (float*)layerdata[i].uvs, 0, 0, 64, 64, 64, 64 );
+			layerdata[i].world_x = x;
+			x += background_tile_size;
+		}
 	}
 	
 	~GameScreen()
@@ -396,7 +435,31 @@ struct GameScreen : public virtual IScreen
 		}
 		
 		vb.destroy();
+		
+		if ( layerdata )
+		{
+			DESTROY_ARRAY(RenameThisData, layerdata, background_num_tiles);
+		}
 	}
+	
+	void render_layer( RenameThisData * layer )
+	{
+		RenameThisData * l = 0;
+
+		for( unsigned short i = 0; i < background_num_tiles; ++i )
+		{
+			l = &layer[ i ];
+			add_sprite_to_stream( vb, l->world_x, l->world_y, 64, 64, Color(255,255,255), (float*)l->uvs );
+			if ( l->world_x + background_tile_size < CLIPRECT_X )
+			{
+				l->world_x = l->world_x + background_tile_size * background_num_tiles - 1;
+			}
+			else
+			{
+				l->world_x = l->world_x - 1;
+			}
+		}
+	} // render_layer
 
 	virtual void on_show( kernel::IApplication * app )
 	{
@@ -451,13 +514,18 @@ struct GameScreen : public virtual IScreen
 		}
 #endif
 
+		RenderContext context( rs, vb );
+		
+		// 3a - draw background
+		render_layer( layerdata );
+		render_vertexstream( camera, vb, rs, test_attribs, assets::load_material("materials/background") );
+
 		// 3 - draw sprite with class?
 		
 		// interpolate between two states and get the render position for this sprite
 		player.r_x = lerp( player.last_world_x, player.world_x, kernel::instance()->parameters().step_alpha );
 		player.r_y = lerp( player.last_world_y, player.world_y, kernel::instance()->parameters().step_alpha );
 		
-		RenderContext context( rs, vb );
 		player.render( context );
 		
 		if ( player_mat )
@@ -472,6 +540,8 @@ struct GameScreen : public virtual IScreen
 //		int font_width = font::measure_width( font, text );
 //		
 //		font::draw_string( font, center-(font_width/2), 40, text, Color(0,255,0) );
+
+
 
 		font::draw_string( font, 15, 15, xstr_format("framedelta: %g\n", kernel::instance()->parameters().framedelta_raw), Color(0,255,255));
 	}
@@ -756,9 +826,9 @@ public:
 		rs.add_clear( 0x00004000 | 0x00000100 );
 		rs.add_viewport( 0, 0, (int)params.render_width, (int)params.render_height );
 
-//		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
+		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
 		rs.run_commands();
-		rs.rewind();	
+		rs.rewind();
 		
 		if ( screen_controller->active_screen() )
 		{
