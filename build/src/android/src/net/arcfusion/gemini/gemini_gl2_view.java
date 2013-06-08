@@ -335,7 +335,6 @@ class gemini_gl2_view extends GLSurfaceView {
 
     private static class gemini_renderer implements GLSurfaceView.Renderer
     {   
-    	private boolean already_initialized = false;
         public void onDrawFrame(GL10 gl)
         {
         	Lynx.gemini_tick();
@@ -348,11 +347,7 @@ class gemini_gl2_view extends GLSurfaceView {
 
         public void onSurfaceCreated(GL10 gl, EGLConfig config)
         {
-        	if (!already_initialized)
-        	{
-        		already_initialized = true;
-        		Lynx.gemini_startup( Lynx.asset_manager );
-        	}
+        	Lynx.gemini_startup( Lynx.asset_manager );
         } // onSurfaceCreated
     }
 }
