@@ -339,6 +339,8 @@ namespace assets
 		xtime_startup( &t );
 		float start = xtime_msec( &t );
 		
+		_shader_permutations = CREATE( ShaderPermutations );
+		
 		ShaderPermutations & permutations = shader_permutations();
 		if ( !util::json_load_with_callback("conf/shader_permutations.conf", load_shader_permutations, &shader_permutations(), true ) )
 		{
@@ -1540,22 +1542,13 @@ namespace assets
 
 namespace assets
 {
-	void startup()
+	void load_default_texture_and_material()
 	{
-		// allocate asset libraries
-		texture_lib = CREATE(TextureAssetLibrary, texture_load_callback);
-		mesh_lib = CREATE(MeshAssetLibrary, mesh_load_callback);
-		mat_lib = CREATE(MaterialAssetLibrary, material_load_callback );
-		
 		// setup default texture
 		_default_texture = texture_lib->allocate_asset();
 		_default_texture->texture_id = image::load_default_texture();
 		texture_lib->take_ownership("textures/default", _default_texture);
 		LOGV( "Loaded default texture; id = %i, asset_id = %i\n", _default_texture->texture_id, _default_texture->asset_id );
-			
-		// load shader permutations
-		_shader_permutations = CREATE( ShaderPermutations );
-		compile_shader_permutations();
 		
 		// setup default material
 		_default_material = mat_lib->allocate_asset();
@@ -1570,6 +1563,20 @@ namespace assets
 		mat_lib->take_ownership( "materials/default", _default_material );
 		LOGV( "Loaded default materials; asset_id = %i\n", _default_material->asset_id );
 		
+	} // load_default_texture_and_material
+
+
+	void startup()
+	{
+		// allocate asset libraries
+		texture_lib = CREATE(TextureAssetLibrary, texture_load_callback);
+		mesh_lib = CREATE(MeshAssetLibrary, mesh_load_callback);
+		mat_lib = CREATE(MaterialAssetLibrary, material_load_callback );
+
+		// load shader permutations
+		compile_shader_permutations();
+
+		load_default_texture_and_material();
 	} // startup
 	
 	void purge()
@@ -1582,7 +1589,6 @@ namespace assets
 		}
 	
 		DESTROY_ARRAY( Shader, _shader_programs, total_shaders );
-		_shader_programs = 0;
 		DESTROY( ShaderPermutations, _shader_permutations );
 		
 		if ( texture_lib )
@@ -1599,7 +1605,7 @@ namespace assets
 		{
 			mat_lib->release_and_purge();
 		}
-
+		
 	} // purge
 	
 	void shutdown()
@@ -1608,6 +1614,9 @@ namespace assets
 		DESTROY(TextureAssetLibrary, texture_lib);
 		DESTROY(MeshAssetLibrary, mesh_lib);
 		DESTROY(MaterialAssetLibrary, mat_lib);
+		
+		_default_material = 0;
+		_default_texture = 0;
 	} // shutdown
 
 	void append_asset_extension( AssetType type, StackString<MAX_PATH_SIZE> & path )
