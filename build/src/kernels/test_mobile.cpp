@@ -35,9 +35,9 @@
 #include "input.hpp"
 #include "gemgl.hpp"
 
-#define FONT_TEST 0
+#define FONT_TEST 1
 #define MODEL_TEST 0
-#define MODEL_TEST2 1
+#define MODEL_TEST2 0
 
 #define SIMPLE_SHADER 0
 
@@ -50,11 +50,12 @@ const int TEST_SIZE = 200;
 
 struct TestVertex
 {
-	glm::vec2 pos;
+	glm::vec3 pos;
 #if !SIMPLE_SHADER
 	renderer::UV uv;
+	Color color;	
 #endif
-	Color color;
+
 };
 
 
@@ -113,33 +114,37 @@ public:
 	void setup_vertex_data( TestVertex * vertices )
 	{
 		const int TEST3_OFFSET = 200;
-		vertices[0].pos = glm::vec2(TEST3_OFFSET,0);
-		vertices[0].color.set( 255, 255, 255 );
+		vertices[0].pos = glm::vec3(TEST3_OFFSET,0, 0);
+
 #if !SIMPLE_SHADER
+		vertices[0].color.set( 255, 255, 255 );
 		vertices[0].uv.u = 0;
 		vertices[0].uv.v = 0;
 #endif
 		
-		vertices[1].pos = glm::vec2(TEST3_OFFSET, TEST_SIZE);
-		vertices[1].color.set( 0, 0, 255 );
+		vertices[1].pos = glm::vec3(TEST3_OFFSET, TEST_SIZE, 0);
+
 #if !SIMPLE_SHADER
+		vertices[1].color.set( 0, 0, 255 );
 		vertices[1].uv.u = 0;
 		vertices[1].uv.v = 1;
 #endif
 		
-		vertices[2].pos = glm::vec2(TEST3_OFFSET+TEST_SIZE, TEST_SIZE);
-		vertices[2].color.set( 0, 255, 0 );
+		vertices[2].pos = glm::vec3(TEST3_OFFSET+TEST_SIZE, TEST_SIZE, 0);
+
 #if !SIMPLE_SHADER
+		vertices[2].color.set( 0, 255, 0 );
 		vertices[2].uv.u = 1;
 		vertices[2].uv.v = 1;
 #endif
 		
-		vertices[3].pos = glm::vec2(TEST3_OFFSET+TEST_SIZE, 0);
-		vertices[3].color.set( 255, 0, 0 );
-#if !SIMPLE_SHADER
-		vertices[3].uv.u = 1;
-		vertices[3].uv.v = 0;
-#endif
+//		vertices[3].pos = glm::vec3(TEST3_OFFSET+TEST_SIZE, 0, 0);
+//
+//#if !SIMPLE_SHADER
+//		vertices[3].color.set( 255, 0, 0 );
+//		vertices[3].uv.u = 1;
+//		vertices[3].uv.v = 0;
+//#endif
 	}
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
@@ -190,10 +195,10 @@ public:
 		uvs[2].u = 1;
 		uvs[2].v = 1;
 		
-		vertices[3] = glm::vec3(TEST_SIZE, 0, 0);
-		colors[3].set( 255, 0, 0 );
-		uvs[3].u = 1;
-		uvs[3].v = 0;
+//		vertices[3] = glm::vec3(TEST_SIZE, 0, 0);
+//		colors[3].set( 255, 0, 0 );
+//		uvs[3].u = 1;
+//		uvs[3].v = 0;
 		
 		
 #if DRAW_INDEXED
@@ -209,9 +214,12 @@ public:
 
 #if MODEL_TEST2
 		
-		vs.desc.add(renderer::VD_FLOAT2);
+		vs.desc.add(renderer::VD_FLOAT3);
+#if !SIMPLE_SHADER
 		vs.desc.add(renderer::VD_FLOAT2);
 		vs.desc.add(renderer::VD_UNSIGNED_BYTE4);
+#endif
+		
 		vs.create( 32, 0, renderer::DRAW_TRIANGLES, renderer::BUFFER_STREAM );
 #endif
 	
@@ -231,15 +239,13 @@ public:
 #if !SIMPLE_SHADER
 		shader.alloc_attributes( 3 );
 #else
-		shader.alloc_attributes( 2 );
+		shader.alloc_attributes( 1 );
 #endif
 
 		shader.attributes[0].set_key( "in_position" ); shader.attributes[0].second = 0;
 #if !SIMPLE_SHADER
 		shader.attributes[1].set_key( "in_uv" ); shader.attributes[1].second = 1;
 		shader.attributes[2].set_key( "in_color" ); shader.attributes[2].second = 2;
-#else
-		shader.attributes[1].set_key( "in_color" ); shader.attributes[1].second = 1;
 #endif
 		
 		
@@ -275,7 +281,7 @@ public:
 	void model_test2( Camera & camera, kernel::Params & params )
 	{
 #if MODEL_TEST2
-		TestVertex * vertices = (TestVertex*)vs.request(4);
+		TestVertex * vertices = (TestVertex*)vs.request(3);
 		setup_vertex_data( vertices );
 		
 		
@@ -287,19 +293,23 @@ public:
 		// setup uniforms
 		rs.add_uniform_matrix4( shader.get_uniform_location("modelview_matrix"), &camera.matCam );
 		rs.add_uniform_matrix4( shader.get_uniform_location("projection_matrix"), &camera.matProj );
-		
+				
+#if !SIMPLE_SHADER
 		assets::Texture * tex = assets::load_texture("textures/default");
 		rs.add_sampler2d( shader.get_uniform_location("diffusemap"), 0, tex->texture_id );
+#endif
 		
 		// add draw call for vertexbuffer
 		rs.add_draw_call( vs.vertexbuffer );
 #endif
+
+		vs.reset();
 	} // model_test2
 		
 	void font_test( Camera & camera, kernel::Params & params )
 	{
 #if FONT_TEST
-		font::draw_string( test_font, 50, 50, "Now is the time for all good men to come to the aid of the party", Color(64,255,192,255) );
+		font::draw_string( test_font, 50, 300, "Now is the time for all good men to come to the aid of the party", Color(64,255,192,255) );
 #endif
 	}
 
@@ -309,10 +319,12 @@ public:
 		rs.rewind();
 		
 		// setup global rendering state
-		rs.add_clearcolor( 0.15, 0.50, 0.25, 1.0f );
+		rs.add_clearcolor( 0.0, 0.0, 0.0, 1.0f );
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
 		rs.add_viewport( 0, 0, (int)params.render_width, (int)params.render_height );
-			
+		
+		
+		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
 		
 		Camera camera;
 //		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
