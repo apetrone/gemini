@@ -79,18 +79,23 @@ LOCAL_SRC_FILES += $(DEPS_DIR)murmur3/murmur3.c
 
 
 
+# if building as JNI lib
+LOCAL_MODULE = net_arcfusion_gemini_lynx
+LOCAL_SRC_FILES += net_arcfusion_gemini.cpp
 
-#LOCAL_MODULE = net_arcfusion_gemini_lynx
-#LOCAL_SRC_FILES += net_arcfusion_gemini.cpp
+
+
+LOCAL_LDLIBS += -llog -landroid -lGLESv2 -lOpenSLES
 
 # if building as a native activity
-LOCAL_STATIC_LIBRARIES := android_native_app_glue
-LOCAL_SRC_FILES += native_main.cpp
+#LOCAL_STATIC_LIBRARIES := android_native_app_glue
+#LOCAL_SRC_FILES += native_main.cpp
+#LOCAL_LDLIBS += -lEGL
+#LOCAL_MODULE := native-activity
 
-LOCAL_MODULE = native-activity
-LOCAL_LDLIBS += -llog -landroid -lGLESv2 -lOpenSLES -lEGL
+# build the shared library
 include $(BUILD_SHARED_LIBRARY)
 
-# if building as a native activity
-$(call import-module,android/native_app_glue)
+
+#$(call import-module,android/native_app_glue)
 
