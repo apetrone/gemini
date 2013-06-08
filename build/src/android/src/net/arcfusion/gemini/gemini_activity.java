@@ -22,7 +22,11 @@
 package net.arcfusion.gemini;
 
 import android.app.Activity;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
+import android.util.Log;
 
 public class gemini_activity extends Activity {
 	public static final String TAG = "gemini_activity";
@@ -30,19 +34,25 @@ public class gemini_activity extends Activity {
 	
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         
         Lynx.asset_manager = getAssets();
         content_view = new gemini_gl2_view(getApplication(), true, 24, 0);
         setContentView(content_view);
+        
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        Log.v(TAG, "Display density DPI: " + metrics.densityDpi );
     }
 
     @Override protected void onPause() {
         super.onPause();
+        Log.v(TAG, "onPause");
         content_view.onPause();
     }
 
     @Override protected void onResume() {
         super.onResume();
+        Log.v(TAG, "onResume");
         content_view.onResume();
     }
     
@@ -51,4 +61,10 @@ public class gemini_activity extends Activity {
     	Lynx.gemini_shutdown();
     	super.onDestroy();
     }
+    
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        //here you can handle orientation change
+    }    
 }
