@@ -348,14 +348,12 @@ namespace kernel
 		}
 	
 		// system cleanup
-		assets::shutdown();
 		font::shutdown();
+		assets::shutdown();
 		input::shutdown();
 		audio::shutdown();
 		renderer::shutdown();
 		core::shutdown();
-	
-
 		
 		// shutdown, cleanup
 		if ( _kernel )
