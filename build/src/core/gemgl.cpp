@@ -21,6 +21,7 @@ GLenum gemgl_check_error( const char * msg )
 			case GL_INVALID_ENUM: errorMessage = "GL_INVALID_ENUM"; break;
 			case GL_INVALID_OPERATION: errorMessage = "GL_INVALID_OPERATION"; break;
 			case GL_INVALID_VALUE: errorMessage = "GL_INVALID_VALUE"; break;
+			case GL_OUT_OF_MEMORY: errorMessage = "GL_OUT_OF_MEMORY"; break;
 			default: break;
 		}
 
