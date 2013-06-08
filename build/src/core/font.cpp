@@ -50,9 +50,8 @@ namespace font
 
 	SimpleFontHandle::SimpleFontHandle()
 	{
-		SimpleFontHandle * handle;
-		handle->font_size = 0;
-		handle->font_data = 0;
+		font_size = 0;
+		font_data = 0;
 	} // SimpleFontHandle constructor
 
 	namespace internal
@@ -237,7 +236,6 @@ namespace font
 		shader->attributes[2].set_key( "in_color" ); shader->attributes[2].second = 2;
 		
 		assets::load_shader( "shaders/fontshader", internal::_shader );
-				
 	} // startup
 
 	void shutdown()
