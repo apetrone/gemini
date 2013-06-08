@@ -1109,13 +1109,16 @@ namespace assets
 	
 	unsigned int find_parameter_mask( ShaderString & name )
 	{
-		for( unsigned int option_id = 0; option_id < shader_permutations().num_permutations; ++option_id )
+		if ( _shader_permutations != 0 )
 		{
-			ShaderPermutationGroup * option = shader_permutations().options[ option_id ];
-			if ( xstr_nicmp( (const char*)name.c_str(), option->name.c_str(), 64 ) == 0 )
+			for( unsigned int option_id = 0; option_id < shader_permutations().num_permutations; ++option_id )
 			{
-//				LOGV( "mask for %s is %i\n", name.c_str(), option->mask_value );
-				return (1 << option->mask_value);
+				ShaderPermutationGroup * option = shader_permutations().options[ option_id ];
+				if ( xstr_nicmp( (const char*)name.c_str(), option->name.c_str(), 64 ) == 0 )
+				{
+	//				LOGV( "mask for %s is %i\n", name.c_str(), option->mask_value );
+					return (1 << option->mask_value);
+				}
 			}
 		}
 		return 0;
