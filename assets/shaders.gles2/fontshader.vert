@@ -2,10 +2,10 @@
 
 precision lowp float;
 
-uniform mat4 projection_matrix;
 uniform mat4 modelview_matrix;
+uniform mat4 projection_matrix;
 
-attribute vec2 in_position;
+attribute vec4 in_position;
 attribute vec2 in_uv;
 attribute vec4 in_color;
 
@@ -17,5 +17,5 @@ void main()
 	ex_color = in_color;
 	out_uv = in_uv;
 	
-	gl_Position = (projection_matrix * modelview_matrix * vec4(in_position, 0.0, 1.0));
+	gl_Position = (projection_matrix * modelview_matrix * in_position);
 }
