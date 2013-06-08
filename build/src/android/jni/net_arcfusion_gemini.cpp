@@ -37,15 +37,23 @@ namespace lynx
 
 	void gemini_startup(JNIEnv * env, jclass the_class, jobject jasset_manager)
 	{
-		memory::startup();
-		NATIVE_LOG( "gemini_startup called\n" );
+		// this should not exist during startup
+		if ( _kernel == 0 )
+		{
+			memory::startup();
+			NATIVE_LOG( "gemini_startup called\n" );
 
-		_kernel = CREATE(AndroidKernel);
+			_kernel = CREATE(AndroidKernel);
 
-		// acquire the asset manager pointer
-		AAssetManager * asset_manager = AAssetManager_fromJava(env, jasset_manager);
+			// acquire the asset manager pointer
+			AAssetManager * asset_manager = AAssetManager_fromJava(env, jasset_manager);
 
-		fs::set_asset_manager(asset_manager);
+			fs::set_asset_manager(asset_manager);
+		}
+		else
+		{
+			NATIVE_LOG( "kernel instance already active - not creating another...\n" );
+		}
 	} // gemini_startup
 
 
@@ -53,10 +61,13 @@ namespace lynx
 	{
 		NATIVE_LOG( "gemini_shutdown called\n" );
 
-//		_kernel->shutdown();
-//		DESTROY(AndroidKernel, _kernel);
+		// shutdown the kernel
+		kernel::shutdown();
 
-//		memory::shutdown();
+		// destroy our instance
+		DESTROY(AndroidKernel, _kernel);
+
+		memory::shutdown();
 	} // gemini_shutdown
 
 	void gemini_tick(JNIEnv * env, jclass the_class)
@@ -69,14 +80,11 @@ namespace lynx
 		NATIVE_LOG( "kernel %p surface changed to %i x %i\n", _kernel, width, height );
 		if ( _kernel )
 		{
-			// if render_width is 0, on_surface_changed has not been called before
-			bool needs_startup = (_kernel->parameters().render_width == 0);
-
 			// set the new surface dimensions
 			_kernel->on_surface_changed(width, height);
 
 			// if we haven't run startup; do so now that the viewport is ready and gl context is active
-			if ( needs_startup )
+			if ( !_kernel->is_initialized() )
 			{
 				NATIVE_LOG( "performing kernel startup...\n" );
 				if ( kernel::startup( _kernel ) != kernel::NoError )
