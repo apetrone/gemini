@@ -28,12 +28,18 @@
 #include "assets.hpp"
 
 // enable this to allow retaining data pointers in order to call
-// VertexAttribArrayPointer() with actual data instead of using a VBO.
+// VertexAttribPointer() with actual data instead of using a VBO.
+// This works around Galaxy Nexus driver issues:
+//		- glBufferData returning out of memory
+//			(could be GLESv2 driver, but not reproduceable on other devices yet)
 #if __ANDROID__
 	#define ENABLE_NON_VBO_SUPPORT 1
 #else
 	#define ENABLE_NON_VBO_SUPPORT 0
 #endif
+
+using namespace renderer;
+::GLESv2 * _gles2 = 0;
 
 // utility functions
 GLenum image_to_source_format( int num_channels )
@@ -69,10 +75,6 @@ GLenum image_to_internal_format( unsigned int image_flags )
 	return GL_RGBA;
 } // image_to_internal_format
 
-using namespace renderer;
-
-::GLESv2 * _gles2 = 0;
-
 GLESv2::GLESv2()
 {
 	LOGV( "GLESv2 instanced.\n" );
@@ -95,7 +97,11 @@ GLESv2::GLESv2()
 	
 
 	
-	LOGV( "VertexBuffer support? %s\n", has_vbo_support ? "Yes" : "No" );
+	LOGV( "Use VertexBuffer support? %s\n", has_vbo_support ? "Yes" : "No" );
+	if ( has_vbo_support )
+	{
+		LOGV( "Use Vertex Array Objects? %s\n", has_oes_vertex_array_object ? "Yes" : "No" );
+	}
 	
 #if 0
 	int unpack_alignment = 0, pack_alignment = 0;
@@ -211,6 +217,7 @@ struct GLES2VertexBuffer : public VertexBuffer
 			
 #if ENABLE_NON_VBO_SUPPORT
 //			assert( this->vertex_data == 0 );
+//			LOGV( "VertexAttribPointer %i - %i, stride: %i, offset: %i\n", attribID, num_elements, vertex_stride, offset );
 			gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_stride, this->vertex_data+offset );
 			gl.CheckError( "VertexAttribPointer" );
 #else
@@ -228,6 +235,7 @@ struct GLES2VertexBuffer : public VertexBuffer
 	void static_setup( unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
 	{
 #if ENABLE_NON_VBO_SUPPORT
+//		LOGV( "static_setup, vertex_data = %p, vertex_count = %i\n", vertices, vertex_count );
 		this->vertex_data = (GLbyte*)vertices;
 		this->index_data = indices;
 #endif
@@ -1124,8 +1132,8 @@ bool GLESv2::shaderprogram_link_and_validate( renderer::ShaderProgram shader_pro
 			if ( attrib_location != -1 )
 			{
 				LOGV( "attrib: %s -> %i\n", parameters.attributes[i].first, attrib_location );
-				assert( attrib_location == parameters.attributes[i].second );
-				parameters.attributes[i].second = attrib_location;
+//				assert( attrib_location == parameters.attributes[i].second );
+//				parameters.attributes[i].second = attrib_location;
 			}
 		}
 	}
