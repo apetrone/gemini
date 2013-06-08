@@ -207,7 +207,7 @@ static void engine_term_display(struct engine* engine) {
         }
         eglTerminate(engine->display);
     }
-    engine->animating = 1;
+    engine->animating = 0;
     engine->display = EGL_NO_DISPLAY;
     engine->context = EGL_NO_CONTEXT;
     engine->surface = EGL_NO_SURFACE;
@@ -278,7 +278,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
                         engine->accelerometerSensor);
             }
             // Also stop animating.
-            engine->animating = 1;
+            engine->animating = 0;
             engine_draw_frame(engine);
             break;
     }
@@ -314,8 +314,9 @@ void android_main(struct android_app* state) {
     }
 
     // loop waiting for stuff to do.
+    bool android_main_run = true;
 
-    while (1) {
+    while ( android_main_run ) {
         // Read all pending events.
         int ident;
         int events;
@@ -324,8 +325,7 @@ void android_main(struct android_app* state) {
         // If not animating, we will block forever waiting for events.
         // If animating, we loop until all events are read, then continue
         // to draw the next frame of animation.
-        while ((ident=ALooper_pollAll(engine.animating ? 0 : -1, NULL, &events,
-                (void**)&source)) >= 0) {
+        while ((ident=ALooper_pollAll(0, NULL, &events, (void**)&source)) >= 0) {
 
             // Process this event.
             if (source != NULL) {
@@ -347,21 +347,14 @@ void android_main(struct android_app* state) {
 
             // Check if we are exiting.
             if (state->destroyRequested != 0) {
-                engine_term_display(&engine);
-                return;
+            	LOGI( "destroy requested\n" );
+                android_main_run = false;
+                break;
             }
         }
 
-        if (engine.animating) {
-            // Done with events; draw next animation frame.
-            engine.state.angle += .01f;
-            if (engine.state.angle > 1) {
-                engine.state.angle = 0;
-            }
-
-            // Drawing is throttled to the screen update rate, so there
-            // is no need to do timing here.
-            engine_draw_frame(&engine);
-        }
+        engine_draw_frame(&engine);
     }
+
+    engine_term_display(&engine);
 }
