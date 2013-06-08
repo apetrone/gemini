@@ -249,6 +249,9 @@ namespace font
 			{
 				DEALLOC( handle->font_data );
 			}
+			
+			handle->font_data = 0;
+			handle->font_size = 0;
 		}
 	
 		if ( internal::_shader )
@@ -263,10 +266,12 @@ namespace font
 		
 		if ( internal::_stash )
 		{
-
 			// delete internal font stash
 			sth_delete( internal::_stash );
+			internal::_stash = 0;
 		}
+		
+		sth_reset_internal_data();
 	} // shutdown
 	
 
@@ -330,6 +335,8 @@ namespace font
 	
 	font::Handle load_font_from_memory( const void * data, unsigned int data_size, unsigned short point_size, bool antialiased, unsigned int hres, unsigned int vres )
 	{
+		assert( internal::_stash != 0 );
+		
 		int result = sth_add_font_from_memory( internal::_stash, (unsigned char*)data );
 		if ( result == 0 )
 		{
