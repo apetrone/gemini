@@ -23,7 +23,7 @@
 
 void AndroidKernel::startup()
 {
-
+	is_kernel_initialized = true;
 }
 
 void AndroidKernel::register_services()

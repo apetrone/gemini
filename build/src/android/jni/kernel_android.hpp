@@ -28,6 +28,7 @@ class AndroidKernel : public kernel::IKernel
 public:
 	bool active;
 	kernel::Params params;
+	bool is_kernel_initialized;
 
 public:
 	virtual ~AndroidKernel() {}
@@ -44,4 +45,5 @@ public:
 	virtual void shutdown();
 
 	void on_surface_changed( int width, int height );
+	bool is_initialized() const { return is_kernel_initialized; }
 }; // AndroidKernel
