@@ -397,13 +397,7 @@ struct GameScreen : public virtual IScreen
 		test_attribs |= assets::find_parameter_mask( name );
 		
 		util::json_load_with_callback( "maps/test.json", tiled_map_loader, &tiled_map, true );
-		
-		vb.reset();
-		vb.desc.add( renderer::VD_FLOAT3 );
-		vb.desc.add( renderer::VD_UNSIGNED_BYTE4 );
-		vb.desc.add( renderer::VD_FLOAT2 );
-		vb.create(512, 1024, renderer::DRAW_INDEXED_TRIANGLES );
-		
+				
 		player_mat = assets::load_material("materials/player");
 		
 		assets::Material * background_material = assets::load_material("materials/background");
@@ -450,6 +444,17 @@ struct GameScreen : public virtual IScreen
 			column += background_num_columns;
 			y += background_tile_size;
 		}
+		
+		// setup the vertex stream: make sure we have enough vertices & indices
+		// to accomodate the full background layer
+		unsigned int max_vertices = (6 * background_num_columns * background_num_rows);
+		unsigned int max_indices = (6 * background_num_columns * background_num_rows);
+		vb.reset();
+		vb.desc.add( renderer::VD_FLOAT3 );
+		vb.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+		vb.desc.add( renderer::VD_FLOAT2 );
+		vb.create( max_vertices, max_indices, renderer::DRAW_INDEXED_TRIANGLES );
+		LOGV( "allocating room for %i max vertices\n", max_vertices );
 	}
 	
 	~GameScreen()
