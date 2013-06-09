@@ -261,9 +261,10 @@ void render_vertexstream( Camera & camera, renderer::VertexStream & vb, RenderSt
 
 void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width, int height, const Color & color, float * texcoords )
 {
-	SpriteVertexType * v = (SpriteVertexType*)vb.request(4);
-	if ( v )
+	if ( vb.has_room(4, 6) )
 	{
+		SpriteVertexType * v = (SpriteVertexType*)vb.request(4);
+
 		v[0].x = x;
 		v[0].y = y;
 		v[0].z = 0;
@@ -376,11 +377,10 @@ struct GameScreen : public virtual IScreen
 	
 	// scrolling layer
 	unsigned int background_material_id;
-	unsigned short background_num_tiles;
+	unsigned short background_num_columns;
 	unsigned short background_tile_size;
 	unsigned short background_num_rows;
-	RenameThisData * layerdata;
-	
+	RenameThisData * background_layers;
 	gemini::Recti cliprect;
 	
 	GameScreen()
@@ -402,11 +402,9 @@ struct GameScreen : public virtual IScreen
 		vb.desc.add( renderer::VD_FLOAT3 );
 		vb.desc.add( renderer::VD_UNSIGNED_BYTE4 );
 		vb.desc.add( renderer::VD_FLOAT2 );
-		vb.create(256, 1024, renderer::DRAW_INDEXED_TRIANGLES );
-		
+		vb.create(512, 1024, renderer::DRAW_INDEXED_TRIANGLES );
 		
 		player_mat = assets::load_material("materials/player");
-		
 		
 		assets::Material * background_material = assets::load_material("materials/background");
 		if ( background_material )
@@ -414,27 +412,43 @@ struct GameScreen : public virtual IScreen
 			background_material_id = background_material->Id();
 		}
 		
-		
 		cliprect.left = 0;
 		cliprect.top = 0;
 		cliprect.right = kernel::instance()->parameters().render_width;		
 		cliprect.bottom = kernel::instance()->parameters().render_height;
 
+
+//		cliprect.left = 50;
+//		cliprect.top = 50;
+//		cliprect.right = 425;
+//		cliprect.bottom = 425;
+
 		LOGV( "determining number of tiles needed for viewport: %i x %i\n", kernel::instance()->parameters().render_width, kernel::instance()->parameters().render_height );
 		background_tile_size = 64;
-		background_num_tiles = ceil( cliprect.width() / (float)background_tile_size ) + 1;
+		background_num_columns = ceil( cliprect.width() / (float)background_tile_size ) + 1;
 		background_num_rows = ceil( cliprect.height() / (float)background_tile_size ) + 1;
-		LOGV( "num columns for bg: %i, num rows for bg: %i\n", background_num_tiles, background_num_rows );
+		LOGV( "num columns for bg: %i, num rows for bg: %i\n", background_num_columns, background_num_rows );
 		
-		layerdata = CREATE_ARRAY(RenameThisData, background_num_tiles);
-		memset(layerdata, 0, sizeof(RenameThisData) * background_num_tiles);
+		unsigned int total_background_sprites = background_num_rows * background_num_columns;
 		
-		unsigned int x = cliprect.left;
-		for( unsigned int i = 0; i < background_num_tiles; ++i )
+		background_layers = CREATE_ARRAY(RenameThisData, total_background_sprites);
+		memset(background_layers, 0, sizeof(RenameThisData) * total_background_sprites);
+		
+		RenameThisData * column = background_layers;
+		unsigned int y = cliprect.top;
+		for( unsigned int r = 0; r < background_num_rows; ++r )
 		{
-			sprite::calc_tile_uvs( (float*)layerdata[i].uvs, 0, 0, 64, 64, 64, 64 );
-			layerdata[i].world_x = x;
-			x += background_tile_size;
+			unsigned int x = cliprect.left;
+			for( unsigned int i = 0; i < background_num_columns; ++i )
+			{
+				sprite::calc_tile_uvs( (float*)column[i].uvs, 0, 0, 64, 64, 64, 64 );
+				column[i].world_x = x;
+				column[i].world_y = y;
+				x += background_tile_size;
+			}
+			
+			column += background_num_columns;
+			y += background_tile_size;
 		}
 	}
 	
@@ -446,10 +460,10 @@ struct GameScreen : public virtual IScreen
 		}
 		
 		vb.destroy();
-		
-		if ( layerdata )
+				
+		if ( background_layers )
 		{
-			DESTROY_ARRAY(RenameThisData, layerdata, background_num_tiles);
+			DESTROY_ARRAY(RenameThisData, background_layers, background_num_columns);
 		}
 	}
 	
@@ -457,13 +471,13 @@ struct GameScreen : public virtual IScreen
 	{
 		RenameThisData * l = 0;
 
-		for( unsigned short i = 0; i < background_num_tiles; ++i )
+		for( unsigned short i = 0; i < background_num_columns; ++i )
 		{
 			l = &layer[ i ];
 			add_sprite_to_stream( vb, l->world_x, l->world_y, 64, 64, Color(255,255,255), (float*)l->uvs );
 			if ( l->world_x + background_tile_size < cliprect.left )
 			{
-				l->world_x = l->world_x + background_tile_size * background_num_tiles - 1;
+				l->world_x = l->world_x + background_tile_size * background_num_columns - 1;
 			}
 			else
 			{
@@ -530,7 +544,12 @@ struct GameScreen : public virtual IScreen
 		RenderContext context( rs, vb );
 		
 		// 3a - draw background
-		render_layer( layerdata );
+		unsigned int num_rows = background_num_rows;
+		for( unsigned int i = 0; i < num_rows; ++i )
+		{
+			render_layer( &background_layers[i * background_num_columns] );
+		}
+		
 		render_vertexstream( camera, vb, rs, test_attribs, assets::load_material("materials/background") );
 
 		// 3 - draw sprite with class?
@@ -547,7 +566,7 @@ struct GameScreen : public virtual IScreen
 		}
 
 		rs.run_commands();
-	
+		vb.reset();
 //		const char text[] = "---- Game ----";
 //		int center = (kernel::instance()->parameters().render_width / 2);
 //		int font_width = font::measure_width( font, text );
