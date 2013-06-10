@@ -63,11 +63,11 @@ namespace input
 		{
 			if ( state & 1 ) // button down this update
 			{
-				//					LOGV( "button %i is down\n", i );
+//				LOGV( "button %i is down\n", i );
 			}
 			else if ( state & 4 ) // button released this update
 			{
-				//					LOGV( "button %i is released\n", i );
+//				LOGV( "button %i is released\n", i );
 				state &= ~1;
 			}
 		}

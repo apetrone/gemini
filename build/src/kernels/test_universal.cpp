@@ -126,6 +126,12 @@ public:
 	{
 		
 	} // world_position
+	
+	void snap_to_world_position( float x, float y )
+	{
+		this->r_x = this->world_x = this->last_world_x = x;
+		this->r_y = this->world_y = this->last_world_y = y;
+	} // snap_to_world_position
 }; // Sprite
 
 
@@ -136,8 +142,12 @@ struct Entity
 	ICollisionObject * collision_object;
 	
 	Entity() : graphic_object(0), collision_object(0) {}
-	
 }; // Entity
+
+struct MovementCommand
+{
+	bool up, down, left, right;
+}; // MovementCommand
 
 
 ScreenController * screen_controller = 0;
@@ -362,7 +372,49 @@ struct RenameThisData
 };
 
 
+void constrain_to_screen( Sprite & sprite )
+{
+	if ( sprite.world_x < 0 )
+	{
+		sprite.world_x = 0;
+	}
+	else if ( (sprite.world_x+sprite.width) > kernel::instance()->parameters().render_width )
+	{
+		sprite.world_x = kernel::instance()->parameters().render_width - sprite.width;
+	}
+	
+	if ( sprite.world_y < 0 )
+	{
+		sprite.world_y = 0;
+	}
+	else if ( (sprite.world_y+sprite.height) > kernel::instance()->parameters().render_height )
+	{
+		sprite.world_y = kernel::instance()->parameters().render_height - sprite.height;
+	}
+}
 
+void move_sprite_with_command( Sprite & sprite, MovementCommand & command )
+{
+	const float move_multi = 200;
+		
+	if ( input::state()->keyboard().is_down( input::KEY_W ) )
+	{
+		sprite.world_y -= kernel::instance()->parameters().step_interval_seconds * move_multi;
+	}
+	else if ( input::state()->keyboard().is_down( input::KEY_S ) )
+	{
+		sprite.world_y += kernel::instance()->parameters().step_interval_seconds * move_multi;
+	}
+	
+	if ( input::state()->keyboard().is_down( input::KEY_A ) )
+	{
+		sprite.world_x -= kernel::instance()->parameters().step_interval_seconds * move_multi;
+	}
+	else if ( input::state()->keyboard().is_down( input::KEY_D ) )
+	{
+		sprite.world_x += kernel::instance()->parameters().step_interval_seconds * move_multi;
+	}
+}
 
 struct GameScreen : public virtual IScreen
 {
@@ -463,8 +515,7 @@ struct GameScreen : public virtual IScreen
 		player.width = 32;
 		player.height = 32;
 
-		player.world_x = 50;
-		player.world_y = (kernel::instance()->parameters().render_height / 2) - (player.height/2);
+		player.snap_to_world_position(50, (kernel::instance()->parameters().render_height / 2) - (player.height/2) );
 	}
 	
 	~GameScreen()
@@ -632,25 +683,19 @@ struct GameScreen : public virtual IScreen
 		// instead, move the sprite (we do need some interpolation here otherwise the stuttering is visible)
 		player.last_world_x = player.world_x;
 		player.last_world_y = player.world_y;
+				
+		//
+		MovementCommand command;
+		command.up = input::state()->keyboard().is_down( input::KEY_W );
+		command.down = input::state()->keyboard().is_down( input::KEY_S );
+		command.left = input::state()->keyboard().is_down( input::KEY_A );
+		command.right = input::state()->keyboard().is_down( input::KEY_D );
 		
-		const float move_multi = 150.0f;
-		if ( input::state()->keyboard().is_down( input::KEY_W ) )
-		{
-			player.world_y -= kernel::instance()->parameters().step_interval_seconds * move_multi;
-		}
-		else if ( input::state()->keyboard().is_down( input::KEY_S ) )
-		{
-			player.world_y += kernel::instance()->parameters().step_interval_seconds * move_multi;
-		}
+		// move player
+		move_sprite_with_command( player, command );
 		
-		if ( input::state()->keyboard().is_down( input::KEY_A ) )
-		{
-			player.world_x -= kernel::instance()->parameters().step_interval_seconds * move_multi;
-		}
-		else if ( input::state()->keyboard().is_down( input::KEY_D ) )
-		{
-			player.world_x += kernel::instance()->parameters().step_interval_seconds * move_multi;
-		}
+		// constrain the player within the bounds of the window
+		constrain_to_screen( player );
 	}
 	
 	virtual const char * name() const

@@ -392,7 +392,7 @@ namespace kernel
 	void tick()
 	{
 		audio::update();
-//		input::update();
+		input::update();
 
 		update();
 		_kernel->pre_tick();
