@@ -108,33 +108,7 @@ namespace image
 	
 		driver_upload_image2d( texture_id, 0, ERROR_TEXTURE_WIDTH, ERROR_TEXTURE_HEIGHT, 3, pixels );
 		return texture_id;
-		
-#if 0
-
-		
-		GenerateCheckerTexture( pixels, ERROR_TEXTURE_WIDTH, ERROR_TEXTURE_HEIGHT, RGB( 128, 128, 128 ), RGB( 96, 96, 96));
-		
-		gl.GenTextures( 1, &texture_id );
-		gl.BindTexture( GL_TEXTURE_2D, texture_id );
-		gl.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-		gl.CheckError( "GL_TEXTURE_MIN_FILTER" );
-		gl.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-		gl.CheckError( "GL_TEXTURE_MAG_FILTER" );
-		gl.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-		gl.CheckError( "GL_TEXTURE_WRAP_S" );
-		gl.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-		gl.CheckError( "GL_TEXTURE_WRAP_T" );
-		
-		gl.TexImage2D( GL_TEXTURE_2D, 0, GL_RGB, ERROR_TEXTURE_WIDTH, ERROR_TEXTURE_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels );
-		gl.CheckError( "TexImage2D" );
-		
-		gl.BindTexture( GL_TEXTURE_2D, 0 );
-		
-		return texture_id;
-#endif
-		return 0;
 	} // load_default_texture
-	
 	
 	
 	bool load_image_from_file( const char * filename, unsigned int & texID, unsigned int flags, unsigned int * out_width, unsigned int * out_height )
@@ -195,15 +169,11 @@ namespace image
 	{
 		unsigned char * pixels = 0;
 		int w, h, c;
-		
-//		pixels = SOIL_load_image_from_memory( data, data_size, &w, &h, &c, SOIL_LOAD_AUTO );
 
-		
 		pixels = stbi_load_from_memory( data, data_size, &w, &h, &c, 0 );
 		*width = w;
 		*height = h;
-		*channels = c;
-		
+		*channels = c;	
 		
 		return pixels;
 	} // load_image_from_memory
@@ -213,16 +183,7 @@ namespace image
 		// this was not allocated by our allocator (was done through stb_image)
 		// so must not ask our deallocator to delete it.
 		stbi_image_free( pixels );
-		//delete [] pixels;
 	} // free_image
-
-
-
-
-
-
-
-
 
 
 
