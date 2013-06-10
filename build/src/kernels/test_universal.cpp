@@ -92,6 +92,9 @@ public:
 	
 	float r_x;
 	float r_y;
+	
+	short width;
+	short height;
 
 	
 	Sprite()
@@ -455,6 +458,14 @@ struct GameScreen : public virtual IScreen
 		vb.desc.add( renderer::VD_FLOAT2 );
 		vb.create( max_vertices, max_indices, renderer::DRAW_INDEXED_TRIANGLES );
 		LOGV( "allocating room for %i max vertices\n", max_vertices );
+		
+
+		player.width = 32;
+		player.height = 32;
+
+		player.world_x = 50;
+		player.world_y = (kernel::instance()->parameters().render_height / 2) - (player.height/2);
+		
 	}
 	
 	~GameScreen()
@@ -840,8 +851,6 @@ public:
 		// setup the stack
 		screen_controller->push_screen( "GameScreen", this );
 //		screen_controller->push_screen( "LogoScreen", this );
-
-	
 
 		return kernel::Application_Success;
 	}
