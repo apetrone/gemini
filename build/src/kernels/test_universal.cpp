@@ -465,7 +465,6 @@ struct GameScreen : public virtual IScreen
 
 		player.world_x = 50;
 		player.world_y = (kernel::instance()->parameters().render_height / 2) - (player.height/2);
-		
 	}
 	
 	~GameScreen()
@@ -518,10 +517,12 @@ struct GameScreen : public virtual IScreen
 		// previously had floating point errors on android when this was only set during startup
 		camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -1.0f, 1.0f );
 		
-//		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
-//		rs.add_state( renderer::STATE_BLEND, 1 );
-		
 		rs.rewind();
+		
+		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+		rs.add_state( renderer::STATE_BLEND, 1 );
+		
+
 		
 		
 		
