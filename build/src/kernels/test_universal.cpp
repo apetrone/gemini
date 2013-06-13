@@ -146,7 +146,7 @@ struct Entity
 
 struct MovementCommand
 {
-	bool up, down, left, right;
+	float up, down, left, right;
 }; // MovementCommand
 
 
@@ -395,25 +395,12 @@ void constrain_to_screen( Sprite & sprite )
 
 void move_sprite_with_command( Sprite & sprite, MovementCommand & command )
 {
-	const float move_multi = 200;
-		
-	if ( input::state()->keyboard().is_down( input::KEY_W ) )
-	{
-		sprite.world_y -= kernel::instance()->parameters().step_interval_seconds * move_multi;
-	}
-	else if ( input::state()->keyboard().is_down( input::KEY_S ) )
-	{
-		sprite.world_y += kernel::instance()->parameters().step_interval_seconds * move_multi;
-	}
+	const float MOVE_SPEED = 200;
 	
-	if ( input::state()->keyboard().is_down( input::KEY_A ) )
-	{
-		sprite.world_x -= kernel::instance()->parameters().step_interval_seconds * move_multi;
-	}
-	else if ( input::state()->keyboard().is_down( input::KEY_D ) )
-	{
-		sprite.world_x += kernel::instance()->parameters().step_interval_seconds * move_multi;
-	}
+	sprite.world_y -= command.up * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
+	sprite.world_y += command.down * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
+	sprite.world_x -= command.left * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
+	sprite.world_x += command.right * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
 }
 
 struct GameScreen : public virtual IScreen
