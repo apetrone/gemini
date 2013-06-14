@@ -227,7 +227,10 @@ namespace renderer
 			last_index = total_indices-1;
 		}
 		
-		renderer::driver()->vertexbuffer_upload_data( this->vertexbuffer, this->vertex_stride, this->last_vertex, this->vertices, this->last_index, this->indices );
+		if ( last_vertex > 0 )
+		{
+			renderer::driver()->vertexbuffer_upload_data( this->vertexbuffer, this->vertex_stride, this->last_vertex, this->vertices, this->last_index, this->indices );
+		}
 	} // update
 
 	void VertexStream::draw_elements()
