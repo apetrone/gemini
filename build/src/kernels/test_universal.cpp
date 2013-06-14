@@ -43,7 +43,7 @@
 
 glm::mat4 objectMatrix;
 
-
+const float BULLET_SPEED = 500;
 const float TEST_SIZE = 256;
 
 void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width, int height, const Color & color, float * texcoords );
@@ -75,6 +75,8 @@ public:
 	virtual ~ICollisionObject() {}
 	virtual bool collides_with( ICollisionObject * other ) const = 0;
 	virtual void world_position( float & x, float & y ) = 0;
+	virtual void step( float dt_sec ) = 0;
+	virtual void set_velocity( float x, float y ) = 0;
 }; // ICollisionObject
 
 class Sprite : public virtual IGraphicObject, public virtual ICollisionObject
@@ -95,6 +97,10 @@ public:
 	
 	short width;
 	short height;
+	
+	
+	float velocity_x;
+	float velocity_y;
 
 	
 	Sprite()
@@ -105,6 +111,8 @@ public:
 		memset( texcoords, 0, 4 * sizeof(renderer::UV) );
 		
 		sprite::calc_tile_uvs( (float*)texcoords, 0, 0, 32, 32, 256, 256 );
+		
+		velocity_x = velocity_y = 0;
 	}
 	
 	// IGraphicObject
@@ -126,6 +134,21 @@ public:
 	{
 		
 	} // world_position
+	
+	virtual void step( float dt_sec )
+	{
+		this->last_world_x = this->world_x;
+		this->last_world_y = this->world_y;
+		this->world_x += dt_sec * velocity_x;
+		this->world_y += dt_sec * velocity_y;
+		
+	} // step
+	
+	virtual void set_velocity( float x, float y )
+	{
+		velocity_x = x;
+		velocity_y = y;
+	} // set_velocity
 	
 	void snap_to_world_position( float x, float y )
 	{
@@ -403,6 +426,9 @@ void move_sprite_with_command( Sprite & sprite, MovementCommand & command )
 	sprite.world_x += command.right * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
 }
 
+
+const int MAX_ENTITIES = 32;
+
 struct GameScreen : public virtual IScreen
 {
 	font::Handle font;
@@ -412,10 +438,17 @@ struct GameScreen : public virtual IScreen
 	unsigned int test_attribs;
 	TiledMap tiled_map;
 	RenderStream rs;
-	assets::Material * player_mat;
+	assets::Material * player_mat, * item_mat;
 	
 	Sprite player;
 	
+	Sprite entities[ MAX_ENTITIES ];
+	bool active_entities[ MAX_ENTITIES ];
+	
+	audio::SoundHandle player_fire;
+	audio::SoundSource player_source;
+	short fire_delay;
+	short next_fire;
 	
 	// scrolling layer
 	unsigned int background_material_id;
@@ -441,6 +474,7 @@ struct GameScreen : public virtual IScreen
 		util::json_load_with_callback( "maps/test.json", tiled_map_loader, &tiled_map, true );
 				
 		player_mat = assets::load_material("materials/player");
+		item_mat = assets::load_material("materials/items");
 		
 		assets::Material * background_material = assets::load_material("materials/background");
 		if ( background_material )
@@ -498,11 +532,24 @@ struct GameScreen : public virtual IScreen
 		vb.create( max_vertices, max_indices, renderer::DRAW_INDEXED_TRIANGLES );
 		LOGV( "allocating room for %i max vertices\n", max_vertices );
 		
-
+		// setup the player sprite (should eventually be loaded in)
 		player.width = 32;
 		player.height = 32;
 
+		// set initial position
 		player.snap_to_world_position(50, (kernel::instance()->parameters().render_height / 2) - (player.height/2) );
+		
+		
+		// load sounds
+		fire_delay = 200;
+		next_fire = 0;
+		player_fire = audio::create_sound("sounds/blaster1");
+		
+		// setup entities
+		for( int i = 0; i < MAX_ENTITIES; ++i )
+		{
+			active_entities[i] = false;
+		}
 	}
 	
 	~GameScreen()
@@ -598,7 +645,7 @@ struct GameScreen : public virtual IScreen
 
 		RenderContext context( rs, vb );
 		
-		// 3a - draw background
+		// 3 - draw background
 		unsigned int num_rows = background_num_rows;
 		for( unsigned int i = 0; i < num_rows; ++i )
 		{
@@ -606,9 +653,37 @@ struct GameScreen : public virtual IScreen
 		}
 		
 		render_vertexstream( camera, vb, rs, test_attribs, assets::load_material("materials/background") );
-
-		// 3 - draw sprite with class?
+		vb.reset();
 		
+		// 4 - draw other entities (enemies/powerups)
+		Sprite * ent = 0;
+		for( int i = 0; i < MAX_ENTITIES; ++i )
+		{
+			ent = &entities[i];
+			if ( active_entities[i] )
+			{
+				ent->r_x = lerp( ent->last_world_x, ent->world_x, kernel::instance()->parameters().step_alpha );
+				ent->r_y = lerp( ent->last_world_y, ent->world_y, kernel::instance()->parameters().step_alpha );
+				if ( (ent->r_x + ent->width > kernel::instance()->parameters().render_width) || (ent->r_x < 0) )
+				{
+					active_entities[i] = false;
+					ent = 0;
+				}
+				
+				if ( active_entities[i] && ent )
+				{
+					ent->render( context );
+				}
+			}
+		}
+
+		if ( vb.last_vertex > 0 )
+		{
+			render_vertexstream( camera, vb, rs, test_attribs, item_mat );
+			vb.reset();
+		}
+		
+		// 5 - draw sprite with class?
 		// interpolate between two states and get the render position for this sprite
 		player.r_x = lerp( player.last_world_x, player.world_x, kernel::instance()->parameters().step_alpha );
 		player.r_y = lerp( player.last_world_y, player.world_y, kernel::instance()->parameters().step_alpha );
@@ -633,10 +708,44 @@ struct GameScreen : public virtual IScreen
 		font::draw_string( font, 15, 55, xstr_format("dt: %g\n", kernel::instance()->parameters().framedelta_raw), Color(0,255,255));
 	}
 	
+	void create_bullet_effect( float x, float y )
+	{
+		Sprite * ent = 0;
+		
+		for( int i = 0; i < MAX_ENTITIES; ++i )
+		{
+			if ( !active_entities[i] )
+			{
+				ent = &entities[i];
+				active_entities[i] = 1;
+				break;
+			}
+		}
+		
+		if ( ent )
+		{
+			ent->snap_to_world_position( x, y );
+			ent->set_velocity( BULLET_SPEED, 0 );
+		}
+		else
+		{
+			LOGV( "reached max entities\n" );
+		}
+	} // create_bullet_effect
 	
 	virtual void on_update( kernel::IApplication * app )
 	{
+		next_fire -= kernel::instance()->parameters().framedelta_filtered;
 		
+		if ( input::state()->mouse().is_down( input::MOUSE_LEFT ) )
+		{
+			if (next_fire <= 0)
+			{
+				next_fire = fire_delay;
+				player_source = audio::play( player_fire );
+				create_bullet_effect( player.world_x, player.world_y );
+			}
+		}
 	}
 	
 	float lerp( float a, float b, float t )
@@ -670,6 +779,15 @@ struct GameScreen : public virtual IScreen
 		// instead, move the sprite (we do need some interpolation here otherwise the stuttering is visible)
 		player.last_world_x = player.world_x;
 		player.last_world_y = player.world_y;
+		
+		for( int i = 0; i < MAX_ENTITIES; ++i )
+		{
+			Sprite * ent = &entities[i];
+			if ( active_entities[i] )
+			{
+				ent->step( kernel::instance()->parameters().step_interval_seconds );
+			}
+		}
 				
 		//
 		MovementCommand command;
@@ -899,6 +1017,11 @@ public:
 
 	virtual void tick( kernel::Params & params )
 	{
+		if ( screen_controller->active_screen() )
+		{
+			screen_controller->active_screen()->on_update( this );
+		}
+	
 		rs.rewind();
 		
 		// setup global rendering state

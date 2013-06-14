@@ -1,0 +1,12 @@
+{
+	"name" : "items",
+
+	"params":
+	{
+		"diffusemap" :
+		{
+			"type" : "sampler",
+			"texture" : "textures/items"
+		}
+	}
+}
