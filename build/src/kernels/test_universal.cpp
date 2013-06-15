@@ -115,6 +115,11 @@ public:
 		velocity_x = velocity_y = 0;
 	}
 	
+	void select_sprite( int x, int y )
+	{
+		sprite::calc_tile_uvs( (float*)texcoords, x, y, 32, 32, 256, 256 );
+	} // select_sprite
+	
 	// IGraphicObject
 	virtual void render( RenderContext & context )
 	{
@@ -438,7 +443,7 @@ struct GameScreen : public virtual IScreen
 	unsigned int test_attribs;
 	TiledMap tiled_map;
 	RenderStream rs;
-	assets::Material * player_mat, * item_mat;
+	assets::Material * player_mat;
 	
 	Sprite player;
 	
@@ -474,7 +479,6 @@ struct GameScreen : public virtual IScreen
 		util::json_load_with_callback( "maps/test.json", tiled_map_loader, &tiled_map, true );
 				
 		player_mat = assets::load_material("materials/player");
-		item_mat = assets::load_material("materials/items");
 		
 		assets::Material * background_material = assets::load_material("materials/background");
 		if ( background_material )
@@ -664,7 +668,7 @@ struct GameScreen : public virtual IScreen
 			{
 				ent->r_x = lerp( ent->last_world_x, ent->world_x, kernel::instance()->parameters().step_alpha );
 				ent->r_y = lerp( ent->last_world_y, ent->world_y, kernel::instance()->parameters().step_alpha );
-				if ( (ent->r_x + ent->width > kernel::instance()->parameters().render_width) || (ent->r_x < 0) )
+				if ( ((ent->r_x + ent->width) > kernel::instance()->parameters().render_width) || ((ent->r_x+ent->width) < 0) )
 				{
 					active_entities[i] = false;
 					ent = 0;
@@ -677,11 +681,11 @@ struct GameScreen : public virtual IScreen
 			}
 		}
 
-		if ( vb.last_vertex > 0 )
-		{
-			render_vertexstream( camera, vb, rs, test_attribs, item_mat );
-			vb.reset();
-		}
+//		if ( vb.last_vertex > 0 )
+//		{
+//			render_vertexstream( camera, vb, rs, test_attribs, item_mat );
+//			vb.reset();
+//		}
 		
 		// 5 - draw sprite with class?
 		// interpolate between two states and get the render position for this sprite
@@ -708,7 +712,7 @@ struct GameScreen : public virtual IScreen
 		font::draw_string( font, 15, 55, xstr_format("dt: %g\n", kernel::instance()->parameters().framedelta_raw), Color(0,255,255));
 	}
 	
-	void create_bullet_effect( float x, float y )
+	Sprite * get_unused_entity()
 	{
 		Sprite * ent = 0;
 		
@@ -722,16 +726,38 @@ struct GameScreen : public virtual IScreen
 			}
 		}
 		
+		if ( !ent )
+		{
+			LOGV( "reached max entities\n" );
+		}
+		
+		return ent;
+	} // get_unused_entity
+	
+	void create_bullet_effect( float x, float y )
+	{
+		Sprite * ent = get_unused_entity();
 		if ( ent )
 		{
 			ent->snap_to_world_position( x, y );
 			ent->set_velocity( BULLET_SPEED, 0 );
-		}
-		else
-		{
-			LOGV( "reached max entities\n" );
+			ent->select_sprite(0, 32);
 		}
 	} // create_bullet_effect
+	
+	
+	void add_enemy( float x, float y )
+	{
+		Sprite * ent = get_unused_entity();
+		if ( ent )
+		{
+			ent->snap_to_world_position( x, y );
+			ent->set_velocity( -100, 0 );
+			ent->select_sprite(64, 0);
+			ent->width = 32;
+			ent->height = 32;
+		}
+	} // add_enemy
 	
 	virtual void on_update( kernel::IApplication * app )
 	{
@@ -745,6 +771,10 @@ struct GameScreen : public virtual IScreen
 				player_source = audio::play( player_fire );
 				create_bullet_effect( player.world_x, player.world_y );
 			}
+		}
+		else if ( input::state()->mouse().is_down( input::MOUSE_RIGHT ) )
+		{
+			add_enemy( 500, 125 );
 		}
 	}
 	
