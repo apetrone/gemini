@@ -67,6 +67,7 @@ class IGraphicObject
 public:
 	virtual ~IGraphicObject() {}
 	virtual void render( RenderContext & context ) = 0;
+	virtual void get_scale( float & x, float & y ) = 0;
 }; // IGraphicObject
 
 class ICollisionObject
@@ -102,6 +103,8 @@ public:
 	float velocity_x;
 	float velocity_y;
 
+	float scale_x;
+	float scale_y;
 	
 	Sprite()
 	{
@@ -113,6 +116,7 @@ public:
 		sprite::calc_tile_uvs( (float*)texcoords, 0, 0, 32, 32, 256, 256 );
 		
 		velocity_x = velocity_y = 0;
+		scale_x = scale_y = 1.0f;
 	}
 	
 	void select_sprite( int x, int y )
@@ -125,9 +129,18 @@ public:
 	{
 		float sx, sy;
 		world_to_screen( r_x, r_y, sx, sy );
-		add_sprite_to_stream( context.vb, sx, sy, 32, 32, color, (float*)texcoords );
+		
+		float scx, scy;
+		get_scale( scx, scy );
+		
+		add_sprite_to_stream( context.vb, sx, sy, scx*32, scy*32, color, (float*)texcoords );
 	} // render
 	
+	virtual void get_scale( float & x, float & y )
+	{
+		x = scale_x;
+		y = scale_y;
+	} // get_scale
 	
 	// ICollisionObject
 	virtual bool collides_with( ICollisionObject * other ) const
@@ -406,18 +419,18 @@ void constrain_to_screen( Sprite & sprite )
 	{
 		sprite.world_x = 0;
 	}
-	else if ( (sprite.world_x+sprite.width) > kernel::instance()->parameters().render_width )
+	else if ( (sprite.world_x+(sprite.width*sprite.scale_x)) > kernel::instance()->parameters().render_width )
 	{
-		sprite.world_x = kernel::instance()->parameters().render_width - sprite.width;
+		sprite.world_x = kernel::instance()->parameters().render_width - (sprite.width*sprite.scale_x);
 	}
 	
 	if ( sprite.world_y < 0 )
 	{
 		sprite.world_y = 0;
 	}
-	else if ( (sprite.world_y+sprite.height) > kernel::instance()->parameters().render_height )
+	else if ( (sprite.world_y+(sprite.height*sprite.scale_y)) > kernel::instance()->parameters().render_height )
 	{
-		sprite.world_y = kernel::instance()->parameters().render_height - sprite.height;
+		sprite.world_y = kernel::instance()->parameters().render_height - (sprite.height*sprite.scale_y);
 	}
 }
 
@@ -668,7 +681,11 @@ struct GameScreen : public virtual IScreen
 			{
 				ent->r_x = lerp( ent->last_world_x, ent->world_x, kernel::instance()->parameters().step_alpha );
 				ent->r_y = lerp( ent->last_world_y, ent->world_y, kernel::instance()->parameters().step_alpha );
-				if ( ((ent->r_x + ent->width) > kernel::instance()->parameters().render_width) || ((ent->r_x+ent->width) < 0) )
+				
+				int left_side = ((ent->r_x + (ent->width * ent->scale_x)) > kernel::instance()->parameters().render_width) && (ent->velocity_x > 0);
+				int right_side = ((ent->r_x + (ent->width * ent->scale_x)) < 0) && (ent->velocity_x < 0);
+				
+				if ( left_side || right_side )
 				{
 					active_entities[i] = false;
 					ent = 0;
@@ -680,13 +697,7 @@ struct GameScreen : public virtual IScreen
 				}
 			}
 		}
-
-//		if ( vb.last_vertex > 0 )
-//		{
-//			render_vertexstream( camera, vb, rs, test_attribs, item_mat );
-//			vb.reset();
-//		}
-		
+	
 		// 5 - draw sprite with class?
 		// interpolate between two states and get the render position for this sprite
 		player.r_x = lerp( player.last_world_x, player.world_x, kernel::instance()->parameters().step_alpha );
