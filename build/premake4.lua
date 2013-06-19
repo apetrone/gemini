@@ -198,7 +198,12 @@ project ( build_name )
 			}			
 		end
 
-		links { "X11", "pthread", "dl", "openal" }
+		links { "pthread", "dl", "openal" }
+		if not RASPBERRYPI then
+			-- need X11 on Linux, non RaspberryPi builds.
+			links { "X11" }
+		end
+
 
 		files
 		{
