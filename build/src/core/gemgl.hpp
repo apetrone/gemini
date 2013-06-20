@@ -14,9 +14,15 @@
 	#define GEMGLAPI WINAPI*
 #elif LINUX
 	#include <stdint.h>
-	#include <GL/gl.h>
-	#include <GL/glx.h>
-//	#include <glxext.h>
+
+	#if PLATFORM_USE_GLES2
+		#include <GLES2/gl2.h>
+	#else
+		#include <GL/gl.h>
+		#include <GL/glx.h>
+		// #include <glxext.h>
+	#endif
+
 	#define GEMGLAPI *
 #elif __APPLE__
 	#include <stdint.h>
@@ -43,6 +49,20 @@
 
 
 #include "renderer.hpp"
+
+
+#if !defined(GL_SAMPLER_1D)
+	#define GL_SAMPLER_1D	0x8B5D
+#endif
+
+#if !defined(GL_SAMPLER_3D)
+	#define GL_SAMPLER_3D	0x8B5F
+#endif
+
+#if !defined (GL_SAMPLER_1D_SHADOW)
+	#define GL_SAMPLER_1D_SHADOW	0x8B61
+	#define GL_SAMPLER_2D_SHADOW	0x8B62
+#endif
 
 // print information regarding whether or not we correctly link opengl functions
 #define GEMGL_DEBUG_SYMBOLS 1

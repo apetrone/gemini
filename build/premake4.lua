@@ -118,6 +118,11 @@ project ( build_name )
 				"python ../tools/blacksmith/blacksmith.py -c ../assets/desktop.conf -y"
 			}
 		else
+			includedirs
+			{
+				"/opt/vc/include"
+			}
+
 			prebuildcommands
 			{
 				"python ../tools/blacksmith/blacksmith.py -c ../assets/raspberrypi.conf -y"
