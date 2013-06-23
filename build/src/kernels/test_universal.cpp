@@ -482,9 +482,12 @@ struct GameScreen : public virtual IScreen
 	gemini::Recti cliprect;
 
 	EventBasedMap event_based_map;
+	unsigned int current_event;
+	float current_gametime;
 	
 	GameScreen()
 	{
+	
 		// need to replace font loading with this ...
 //		assets::load_font( "fonts/nokiafc22.ttf", 16 );
 		font = font::load_font_from_file( "fonts/nokiafc22.ttf", 16, 72, 72 );
@@ -500,6 +503,8 @@ struct GameScreen : public virtual IScreen
 
 		// load map events
 		util::json_load_with_callback( "maps/space.json", map_event_loader, &event_based_map, true );
+		current_event = 0;
+		current_gametime = 0;
 				
 		player_mat = assets::load_material("materials/player");
 		
@@ -796,6 +801,23 @@ struct GameScreen : public virtual IScreen
 		else if ( input::state()->mouse().is_down( input::MOUSE_RIGHT ) )
 		{
 			add_enemy( 500, 125 );
+		}
+		
+		
+		
+		current_gametime += (kernel::instance()->parameters().framedelta_filtered*.001);
+		
+		while ( current_event < event_based_map.total_events )
+		{
+			MapEvent * ev = &event_based_map.events[ current_event ];
+			if ( current_gametime >= ev->time_value )
+			{
+				LOGV( "run event: %s, at %g seconds\n", ev->name(), current_gametime );
+				++current_event;
+				continue;
+			}
+
+			break;
 		}
 	}
 	
