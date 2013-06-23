@@ -37,6 +37,7 @@
 #include "render_utilities.hpp"
 #include "tiledloader.hpp"
 #include "screencontrol.hpp"
+#include "map_event.hpp"
 
 #define TEST_2D 0
 #define TEST_FONT 1
@@ -53,6 +54,10 @@ void world_to_screen( float & wx, float & wy, float & sx, float & sy )
 	sx = wx;
 	sy = wy;
 } // world_to_screen
+
+
+
+
 
 struct RenderContext
 {
@@ -475,6 +480,8 @@ struct GameScreen : public virtual IScreen
 	unsigned short background_num_rows;
 	RenameThisData * background_layers;
 	gemini::Recti cliprect;
+
+	EventBasedMap event_based_map;
 	
 	GameScreen()
 	{
@@ -490,6 +497,9 @@ struct GameScreen : public virtual IScreen
 		test_attribs |= assets::find_parameter_mask( name );
 		
 		util::json_load_with_callback( "maps/test.json", tiled_map_loader, &tiled_map, true );
+
+		// load map events
+		util::json_load_with_callback( "maps/space.json", map_event_loader, &event_based_map, true );
 				
 		player_mat = assets::load_material("materials/player");
 		

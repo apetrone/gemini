@@ -1,0 +1,22 @@
+{
+	"events":
+	[
+		{
+			"time" : 3.0,
+			"event" : "light",
+			"pos" : 0.25
+		},
+
+		{
+			"time" : 5.0,
+			"event" : "light",
+			"pos" : 0.5
+		},
+
+		{
+			"time" : 7.0,
+			"event" : "light",
+			"pos" : 0.75
+		}		
+	]
+}
