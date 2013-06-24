@@ -774,6 +774,8 @@ struct GameScreen : public virtual IScreen
 	
 	void add_enemy( float x, float y )
 	{
+		x *= kernel::instance()->parameters().render_width;
+		y *= kernel::instance()->parameters().render_height;
 		Sprite * ent = get_unused_entity();
 		if ( ent )
 		{
@@ -800,7 +802,7 @@ struct GameScreen : public virtual IScreen
 		}
 		else if ( input::state()->mouse().is_down( input::MOUSE_RIGHT ) )
 		{
-			add_enemy( 500, 125 );
+			add_enemy( 0.6, 0.2 );
 		}
 		
 		
@@ -813,6 +815,7 @@ struct GameScreen : public virtual IScreen
 			if ( current_gametime >= ev->time_value )
 			{
 				LOGV( "run event: %s, at %g seconds\n", ev->name(), current_gametime );
+				add_enemy( 1.0, ev->pos );
 				++current_event;
 				continue;
 			}

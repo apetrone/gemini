@@ -17,6 +17,24 @@
 			"time" : 7.0,
 			"event" : "light",
 			"pos" : 0.75
-		}		
+		},
+
+		{
+			"time" : 7.0,
+			"event" : "light",
+			"pos" : 0.25
+		},
+
+		{
+			"time" : 9.0,
+			"event" : "light",
+			"pos" : 0.1
+		},
+
+		{
+			"time" : 9.0,
+			"event" : "light",
+			"pos" : 0.85
+		}
 	]
 }
