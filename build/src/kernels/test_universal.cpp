@@ -961,6 +961,8 @@ struct GameScreen : public virtual IScreen
 							{
 								ent->set_velocity(0, 0);						
 								entities[j].set_velocity(0, 0);
+								active_entities[i] = false;
+								active_entities[j] = false;
 							}
 						}
 					}
