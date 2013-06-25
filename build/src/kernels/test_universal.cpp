@@ -75,6 +75,43 @@ public:
 	virtual void get_scale( float & x, float & y ) = 0;
 }; // IGraphicObject
 
+
+struct AABB2
+{
+	float left;
+	float right;
+	float top;
+	float bottom;
+	
+	bool overlaps( const AABB2 & other ) const;
+}; // AABB2
+
+
+bool AABB2::overlaps( const AABB2 & other ) const
+{
+	if ( this->left > other.right )
+	{
+		return false;
+	}
+	else if ( this->right < other.left )
+	{
+		return false;
+	}
+
+	if ( this->bottom < other.top )
+	{
+		return false;
+	}
+	else if ( this->top > other.bottom )
+	{
+		return false;
+	}
+	
+	
+	return true;
+}
+
+
 class ICollisionObject
 {
 public:
@@ -83,7 +120,11 @@ public:
 	virtual void world_position( float & x, float & y ) = 0;
 	virtual void step( float dt_sec ) = 0;
 	virtual void set_velocity( float x, float y ) = 0;
+	virtual void get_aabb( AABB2 & aabb ) const = 0;
 }; // ICollisionObject
+
+
+
 
 class Sprite : public virtual IGraphicObject, public virtual ICollisionObject
 {
@@ -150,7 +191,13 @@ public:
 	// ICollisionObject
 	virtual bool collides_with( ICollisionObject * other ) const
 	{
-		return false;
+		AABB2 mine;
+		AABB2 yours;
+		
+		this->get_aabb( mine );
+		other->get_aabb( yours );
+
+		return mine.overlaps( yours );
 	} // collides_with
 	
 	virtual void world_position( float & x, float & y )
@@ -172,7 +219,20 @@ public:
 		velocity_x = x;
 		velocity_y = y;
 	} // set_velocity
-	
+
+
+	void get_aabb( AABB2 & aabb ) const
+	{
+		float hw = (this->width/2.0f);
+		float hh = (this->height/2.0f);
+		aabb.left = this->world_x - hw;
+		aabb.right = this->world_x + hw;
+		aabb.top = this->world_y - hh;
+		aabb.bottom = this->world_y + hh;
+	} // get_aabb
+
+
+
 	void snap_to_world_position( float x, float y )
 	{
 		this->r_x = this->world_x = this->last_world_x = x;
@@ -417,6 +477,34 @@ struct RenameThisData
 	renderer::UV uvs[4];
 };
 
+
+bool is_within_screen( ICollisionObject * object )
+{
+	float x, y;
+	
+	object->world_position( x, y );
+	
+	if ( x < 0 )
+	{
+		return false;
+	}
+	else if ( x > kernel::instance()->parameters().render_width )
+	{
+		return false;
+	}
+
+	if ( y < 0 )
+	{
+		return false;
+	}
+	else if ( y > kernel::instance()->parameters().render_height )
+	{
+		return false;
+	}
+
+
+	return true;
+}
 
 void constrain_to_screen( Sprite & sprite )
 {
@@ -858,12 +946,30 @@ struct GameScreen : public virtual IScreen
 		
 		for( int i = 0; i < MAX_ENTITIES; ++i )
 		{
-			Sprite * ent = &entities[i];
+			ICollisionObject * ent = &entities[i];
 			if ( active_entities[i] )
 			{
 				ent->step( kernel::instance()->parameters().step_interval_seconds );
+				
+				if ( is_within_screen(ent) )
+				{
+					for( int j = 0; j < MAX_ENTITIES; ++j )
+					{
+						if ( i != j && active_entities[j] && is_within_screen(&entities[j]) )
+						{
+							if ( ent->collides_with(&entities[j]) )
+							{
+								ent->set_velocity(0, 0);						
+								entities[j].set_velocity(0, 0);
+							}
+						}
+					}
+				}
 			}
 		}
+		
+		
+
 				
 		//
 		MovementCommand command;
