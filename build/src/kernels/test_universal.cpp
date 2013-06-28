@@ -121,6 +121,7 @@ public:
 	virtual void step( float dt_sec ) = 0;
 	virtual void set_velocity( float x, float y ) = 0;
 	virtual void get_aabb( AABB2 & aabb ) const = 0;
+	virtual unsigned short get_collision_mask() const = 0;
 }; // ICollisionObject
 
 
@@ -152,6 +153,8 @@ public:
 	float scale_x;
 	float scale_y;
 	
+	unsigned short collision_mask;
+	
 	Sprite()
 	{
 		world_x = world_y = 0;
@@ -163,6 +166,8 @@ public:
 		
 		velocity_x = velocity_y = 0;
 		scale_x = scale_y = 1.0f;
+		
+		collision_mask = 0;
 	}
 	
 	void select_sprite( int x, int y )
@@ -193,6 +198,10 @@ public:
 	{
 		AABB2 mine;
 		AABB2 yours;
+		
+		// check collision masks
+		if ( (this->get_collision_mask() & other->get_collision_mask()) == 0 )
+			return false;
 		
 		this->get_aabb( mine );
 		other->get_aabb( yours );
@@ -231,7 +240,10 @@ public:
 		aabb.bottom = this->world_y + hh;
 	} // get_aabb
 
-
+	unsigned short get_collision_mask() const
+	{
+		return collision_mask;
+	} // get_collision_mask
 
 	void snap_to_world_position( float x, float y )
 	{
@@ -538,7 +550,7 @@ void move_sprite_with_command( Sprite & sprite, MovementCommand & command )
 }
 
 
-const int MAX_ENTITIES = 32;
+const int MAX_ENTITIES = 1024;
 
 struct GameScreen : public virtual IScreen
 {
@@ -551,12 +563,12 @@ struct GameScreen : public virtual IScreen
 	RenderStream rs;
 	assets::Material * player_mat;
 	
-	Sprite player;
+	Sprite * player;
 	
 	Sprite entities[ MAX_ENTITIES ];
 	bool active_entities[ MAX_ENTITIES ];
 	
-	audio::SoundHandle player_fire;
+	audio::SoundHandle player_fire, enemy_explode;
 	audio::SoundSource player_source;
 	short fire_delay;
 	short next_fire;
@@ -652,12 +664,23 @@ struct GameScreen : public virtual IScreen
 		vb.create( max_vertices, max_indices, renderer::DRAW_INDEXED_TRIANGLES );
 		LOGV( "allocating room for %i max vertices\n", max_vertices );
 		
+		
+		// setup entities
+		for( int i = 0; i < MAX_ENTITIES; ++i )
+		{
+			active_entities[i] = false;
+		}
+		
 		// setup the player sprite (should eventually be loaded in)
-		player.width = 32;
-		player.height = 32;
+		player = &entities[0];
+		active_entities[0] = true;
+		player->collision_mask = 1;
+		
+		player->width = 32;
+		player->height = 32;
 
 		// set initial position
-		player.snap_to_world_position(50, (kernel::instance()->parameters().render_height / 2) - (player.height/2) );
+		player->snap_to_world_position(50, (kernel::instance()->parameters().render_height / 2) - (player->height/2) );
 		
 		
 		// load sounds
@@ -665,11 +688,9 @@ struct GameScreen : public virtual IScreen
 		next_fire = 0;
 		player_fire = audio::create_sound("sounds/blaster1");
 		
-		// setup entities
-		for( int i = 0; i < MAX_ENTITIES; ++i )
-		{
-			active_entities[i] = false;
-		}
+		enemy_explode = audio::create_sound( "sounds/enemy_explode1");
+		
+
 	}
 	
 	~GameScreen()
@@ -803,10 +824,10 @@ struct GameScreen : public virtual IScreen
 	
 		// 5 - draw sprite with class?
 		// interpolate between two states and get the render position for this sprite
-		player.r_x = lerp( player.last_world_x, player.world_x, kernel::instance()->parameters().step_alpha );
-		player.r_y = lerp( player.last_world_y, player.world_y, kernel::instance()->parameters().step_alpha );
+		player->r_x = lerp( player->last_world_x, player->world_x, kernel::instance()->parameters().step_alpha );
+		player->r_y = lerp( player->last_world_y, player->world_y, kernel::instance()->parameters().step_alpha );
 		
-		player.render( context );
+		player->render( context );
 		
 		if ( player_mat )
 		{
@@ -848,7 +869,7 @@ struct GameScreen : public virtual IScreen
 		return ent;
 	} // get_unused_entity
 	
-	void create_bullet_effect( float x, float y )
+	bool create_bullet_effect( float x, float y )
 	{
 		Sprite * ent = get_unused_entity();
 		if ( ent )
@@ -856,7 +877,11 @@ struct GameScreen : public virtual IScreen
 			ent->snap_to_world_position( x, y );
 			ent->set_velocity( BULLET_SPEED, 0 );
 			ent->select_sprite(0, 32);
+			ent->collision_mask = 2;
+			return true;
 		}
+		
+		return false;
 	} // create_bullet_effect
 	
 	
@@ -872,6 +897,7 @@ struct GameScreen : public virtual IScreen
 			ent->select_sprite(64, 0);
 			ent->width = 32;
 			ent->height = 32;
+			ent->collision_mask = 7;
 		}
 	} // add_enemy
 	
@@ -883,9 +909,11 @@ struct GameScreen : public virtual IScreen
 		{
 			if (next_fire <= 0)
 			{
-				next_fire = fire_delay;
-				player_source = audio::play( player_fire );
-				create_bullet_effect( player.world_x, player.world_y );
+				if ( create_bullet_effect( player->world_x, player->world_y ) )
+				{
+					next_fire = fire_delay;
+					player_source = audio::play( player_fire );
+				}
 			}
 		}
 		else if ( input::state()->mouse().is_down( input::MOUSE_RIGHT ) )
@@ -894,9 +922,9 @@ struct GameScreen : public virtual IScreen
 		}
 		
 		
-		
 		current_gametime += (kernel::instance()->parameters().framedelta_filtered*.001);
 		
+#if 0
 		while ( current_event < event_based_map.total_events )
 		{
 			MapEvent * ev = &event_based_map.events[ current_event ];
@@ -910,6 +938,7 @@ struct GameScreen : public virtual IScreen
 
 			break;
 		}
+#endif
 	}
 	
 	float lerp( float a, float b, float t )
@@ -941,8 +970,8 @@ struct GameScreen : public virtual IScreen
 #endif
 
 		// instead, move the sprite (we do need some interpolation here otherwise the stuttering is visible)
-		player.last_world_x = player.world_x;
-		player.last_world_y = player.world_y;
+		player->last_world_x = player->world_x;
+		player->last_world_y = player->world_y;
 		
 		for( int i = 0; i < MAX_ENTITIES; ++i )
 		{
@@ -963,6 +992,8 @@ struct GameScreen : public virtual IScreen
 								entities[j].set_velocity(0, 0);
 								active_entities[i] = false;
 								active_entities[j] = false;
+								
+								audio::play( enemy_explode );
 							}
 						}
 					}
@@ -981,10 +1012,10 @@ struct GameScreen : public virtual IScreen
 		command.right = input::state()->keyboard().is_down( input::KEY_D );
 		
 		// move player
-		move_sprite_with_command( player, command );
+		move_sprite_with_command( *player, command );
 		
 		// constrain the player within the bounds of the window
-		constrain_to_screen( player );
+		constrain_to_screen( *player );
 	}
 	
 	virtual const char * name() const
