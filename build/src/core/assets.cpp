@@ -341,7 +341,7 @@ namespace assets
 		
 		_shader_permutations = CREATE(ShaderPermutations);
 		
-#if PROJECT_MOBILE
+#if PLATFORM_IS_MOBILE
 		const char permutations_config[] = "conf/mobile_permutations.conf";
 #else
 		const char permutations_config[] = "conf/shader_permutations.conf";

@@ -57,7 +57,7 @@ util::ConfigLoadStatus map_event_loader( const Json::Value & root, void * data )
 	Json::ValueIterator event_iterator = events.begin();
 	for( int event_id = 0; event_id < map->total_events; ++event_id, ++event_iterator )
 	{
-		LOGV( "reading event_id: %i\n", event_id );
+		//LOGV( "reading event_id: %i\n", event_id );
 		Json::Value key = event_iterator.key();
 		Json::Value value = (*event_iterator);
 
@@ -65,15 +65,15 @@ util::ConfigLoadStatus map_event_loader( const Json::Value & root, void * data )
 
 		Json::Value time_value = value["time"];
 		mapevent->time_value = time_value.asFloat();
-		LOGV( "event time: %g\n", mapevent->time_value );
+		//LOGV( "event time: %g\n", mapevent->time_value );
 
 		Json::Value event_name = value["event"];
 		mapevent->name = event_name.asString().c_str();
-		LOGV( "name: %s\n", mapevent->name() );
+		//LOGV( "name: %s\n", mapevent->name() );
 
 		Json::Value position = value["pos"];
 		mapevent->pos = position.asFloat();
-		LOGV( "pos: %g\n", mapevent->pos );
+		//LOGV( "pos: %g\n", mapevent->pos );
 
 
 		//value.asFloat()

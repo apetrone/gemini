@@ -161,9 +161,7 @@ public:
 		material_id = 0;
 		color = Color( 255, 255, 255, 255 );
 		memset( texcoords, 0, 4 * sizeof(renderer::UV) );
-		
-		sprite::calc_tile_uvs( (float*)texcoords, 0, 0, 32, 32, 256, 256 );
-		
+
 		velocity_x = velocity_y = 0;
 		scale_x = scale_y = 1.0f;
 		
@@ -682,6 +680,7 @@ struct GameScreen : public virtual IScreen
 		// set initial position
 		player->snap_to_world_position(50, (kernel::instance()->parameters().render_height / 2) - (player->height/2) );
 		
+		player->select_sprite(32, 32);
 		
 		// load sounds
 		fire_delay = 200;
