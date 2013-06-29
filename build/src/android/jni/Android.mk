@@ -54,7 +54,8 @@ LOCAL_SRC_FILES := 	kernel_android.cpp \
 					$(SRC_DIR)render_utilities.cpp \
 					$(SRC_DIR)game/menu.cpp \
 					$(SRC_DIR)game/tiledloader.cpp \
-					$(SRC_DIR)game/screencontrol.cpp
+					$(SRC_DIR)game/screencontrol.cpp \
+					$(SRC_DIR)game/map_event.cpp
 
 # Add dependencies
 

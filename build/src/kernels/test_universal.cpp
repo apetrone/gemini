@@ -924,7 +924,6 @@ struct GameScreen : public virtual IScreen
 		
 		current_gametime += (kernel::instance()->parameters().framedelta_filtered*.001);
 		
-#if 0
 		while ( current_event < event_based_map.total_events )
 		{
 			MapEvent * ev = &event_based_map.events[ current_event ];
@@ -938,7 +937,6 @@ struct GameScreen : public virtual IScreen
 
 			break;
 		}
-#endif
 	}
 	
 	float lerp( float a, float b, float t )

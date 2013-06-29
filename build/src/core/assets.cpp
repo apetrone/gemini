@@ -339,10 +339,16 @@ namespace assets
 		xtime_startup( &t );
 		float start = xtime_msec( &t );
 		
-		_shader_permutations = CREATE( ShaderPermutations );
+		_shader_permutations = CREATE(ShaderPermutations);
+		
+#if PROJECT_MOBILE
+		const char permutations_config[] = "conf/mobile_permutations.conf";
+#else
+		const char permutations_config[] = "conf/shader_permutations.conf";
+#endif
 		
 		ShaderPermutations & permutations = shader_permutations();
-		if ( !util::json_load_with_callback("conf/shader_permutations.conf", load_shader_permutations, &shader_permutations(), true ) )
+		if ( !util::json_load_with_callback(permutations_config, load_shader_permutations, &shader_permutations(), true))
 		{
 			LOGE( "Unable to load shader permutations config\n" );
 		}
