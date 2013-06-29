@@ -928,7 +928,7 @@ struct GameScreen : public virtual IScreen
 			MapEvent * ev = &event_based_map.events[ current_event ];
 			if ( current_gametime >= ev->time_value )
 			{
-				LOGV( "run event: %s, at %g seconds\n", ev->name(), current_gametime );
+//				LOGV( "run event: %s, at %g seconds\n", ev->name(), current_gametime );
 				add_enemy( 1.0, ev->pos );
 				++current_event;
 				continue;
