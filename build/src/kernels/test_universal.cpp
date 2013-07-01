@@ -155,6 +155,10 @@ public:
 	
 	unsigned short collision_mask;
 	
+	
+	short hotspot_x;
+	short hotspot_y;
+	
 	Sprite()
 	{
 		world_x = world_y = 0;
@@ -165,12 +169,18 @@ public:
 		velocity_x = velocity_y = 0;
 		scale_x = scale_y = 1.0f;
 		
+		width = 32;
+		height = 32;
+		
+		hotspot_x = 0;
+		hotspot_y = 0;
+		
 		collision_mask = 0;
 	}
 	
-	void select_sprite( int x, int y )
+	void select_sprite( int x, int y, int frame_width, int frame_height, int image_width, int image_height )
 	{
-		sprite::calc_tile_uvs( (float*)texcoords, x, y, 32, 32, 256, 256 );
+		sprite::calc_tile_uvs( (float*)texcoords, x, y, frame_width, frame_height, image_width, image_height );
 	} // select_sprite
 	
 	// IGraphicObject
@@ -182,7 +192,7 @@ public:
 		float scx, scy;
 		get_scale( scx, scy );
 		
-		add_sprite_to_stream( context.vb, sx, sy, scx*32, scy*32, color, (float*)texcoords );
+		add_sprite_to_stream( context.vb, sx, sy, scx*this->width, scy*this->height, color, (float*)texcoords );
 	} // render
 	
 	virtual void get_scale( float & x, float & y )
@@ -673,14 +683,16 @@ struct GameScreen : public virtual IScreen
 		player = &entities[0];
 		active_entities[0] = true;
 		player->collision_mask = 1;
-		
-		player->width = 32;
-		player->height = 32;
+
+		player->width = 64;
+		player->height = 64;
+		player->hotspot_x = 48;
+		player->hotspot_y = 24;
 
 		// set initial position
 		player->snap_to_world_position(50, (kernel::instance()->parameters().render_height / 2) - (player->height/2) );
 		
-		player->select_sprite(32, 32);
+		player->select_sprite(0, 64, 128, 128, 256, 256);
 		
 		// load sounds
 		fire_delay = 200;
@@ -875,7 +887,7 @@ struct GameScreen : public virtual IScreen
 		{
 			ent->snap_to_world_position( x, y );
 			ent->set_velocity( BULLET_SPEED, 0 );
-			ent->select_sprite(0, 32);
+			ent->select_sprite(0, 32, 32, 32, 256, 256);
 			ent->collision_mask = 2;
 			return true;
 		}
@@ -893,7 +905,7 @@ struct GameScreen : public virtual IScreen
 		{
 			ent->snap_to_world_position( x, y );
 			ent->set_velocity( -100, 0 );
-			ent->select_sprite(64, 0);
+			ent->select_sprite(64, 0, 32, 32, 256, 256);
 			ent->width = 32;
 			ent->height = 32;
 			ent->collision_mask = 7;
@@ -908,7 +920,7 @@ struct GameScreen : public virtual IScreen
 		{
 			if (next_fire <= 0)
 			{
-				if ( create_bullet_effect( player->world_x, player->world_y ) )
+				if ( create_bullet_effect( player->r_x+player->hotspot_x, player->r_y+player->hotspot_y ) )
 				{
 					next_fire = fire_delay;
 					player_source = audio::play( player_fire );
@@ -922,7 +934,7 @@ struct GameScreen : public virtual IScreen
 		
 		
 		current_gametime += (kernel::instance()->parameters().framedelta_filtered*.001);
-		
+#if 1
 		while ( current_event < event_based_map.total_events )
 		{
 			MapEvent * ev = &event_based_map.events[ current_event ];
@@ -936,6 +948,7 @@ struct GameScreen : public virtual IScreen
 
 			break;
 		}
+#endif		
 	}
 	
 	float lerp( float a, float b, float t )
