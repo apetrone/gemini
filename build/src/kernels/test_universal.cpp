@@ -38,9 +38,11 @@
 #include "tiledloader.hpp"
 #include "screencontrol.hpp"
 #include "map_event.hpp"
+#include "keyframechannel.hpp"
+#include "debugdraw.hpp"
 
 #define TEST_2D 0
-#define TEST_FONT 1
+#define TEST_FONT 0
 
 glm::mat4 objectMatrix;
 
@@ -54,8 +56,6 @@ void world_to_screen( float & wx, float & wy, float & sx, float & sy )
 	sx = wx;
 	sy = wy;
 } // world_to_screen
-
-
 
 
 
@@ -122,6 +122,7 @@ public:
 	virtual void set_velocity( float x, float y ) = 0;
 	virtual void get_aabb( AABB2 & aabb ) const = 0;
 	virtual unsigned short get_collision_mask() const = 0;
+	virtual void get_rotation( float & radians ) const = 0;
 }; // ICollisionObject
 
 
@@ -159,6 +160,8 @@ public:
 	short hotspot_x;
 	short hotspot_y;
 	
+	float rotation;
+	
 	Sprite()
 	{
 		world_x = world_y = 0;
@@ -176,6 +179,7 @@ public:
 		hotspot_y = 0;
 		
 		collision_mask = 0;
+		rotation = 0;
 	}
 	
 	void select_sprite( int x, int y, int frame_width, int frame_height, int image_width, int image_height )
@@ -252,6 +256,11 @@ public:
 	{
 		return collision_mask;
 	} // get_collision_mask
+	
+	void get_rotation( float & radians ) const
+	{
+		radians = rotation;
+	} // get_rotation
 
 	void snap_to_world_position( float x, float y )
 	{
@@ -854,8 +863,8 @@ struct GameScreen : public virtual IScreen
 //		font::draw_string( font, center-(font_width/2), 40, text, Color(0,255,0) );
 
 
-
-		font::draw_string( font, 15, 55, xstr_format("dt: %g\n", kernel::instance()->parameters().framedelta_raw), Color(0,255,255));
+		debugdraw::text( 15, 55, "hello", Color(255,255,128) );
+//		font::draw_string( font, 15, 55, xstr_format("dt: %g\n", kernel::instance()->parameters().framedelta_raw), Color(0,255,255));
 	}
 	
 	Sprite * get_unused_entity()
@@ -1228,6 +1237,8 @@ public:
 		screen_controller->push_screen( "GameScreen", this );
 //		screen_controller->push_screen( "LogoScreen", this );
 
+		debugdraw::startup( 1024 );
+
 		return kernel::Application_Success;
 	}
 
@@ -1247,6 +1258,7 @@ public:
 			screen_controller->active_screen()->on_update( this );
 		}
 	
+		debugdraw::update( params.framedelta_filtered );
 		rs.rewind();
 		
 		// setup global rendering state
@@ -1270,6 +1282,7 @@ public:
 
 	virtual void shutdown( kernel::Params & params )
 	{
+		debugdraw::shutdown();
 	}
 };
 

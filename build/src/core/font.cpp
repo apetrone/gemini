@@ -37,7 +37,7 @@
 namespace font
 {
 	const unsigned int FONT_MAX_VERTICES = 1024;
-	const unsigned int FONT_MAX = 4;
+	const unsigned int FONT_MAX = 8;
 	
 	struct SimpleFontHandle
 	{
@@ -345,10 +345,15 @@ namespace font
 		}
 		
 		SimpleFontHandle * handle = internal::handle_by_id( result );
-		handle->font_size = (unsigned short)point_size;
-		if (kernel::instance()->parameters().device_flags & kernel::DeviceSupportsRetinaDisplay)
+		assert( handle != 0 );
+		
+		if ( handle )
 		{
-			handle->font_size = handle->font_size * 2;
+			handle->font_size = (unsigned short)point_size;
+			if (kernel::instance()->parameters().device_flags & kernel::DeviceSupportsRetinaDisplay)
+			{
+				handle->font_size = handle->font_size * 2;
+			}
 		}
 				
 		return font::Handle(result);
