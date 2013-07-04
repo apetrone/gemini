@@ -228,7 +228,8 @@ public:
 	
 	virtual void world_position( float & x, float & y )
 	{
-		
+		x = this->world_x;
+		y = this->world_y;
 	} // world_position
 	
 	virtual void step( float dt_sec )
@@ -237,7 +238,6 @@ public:
 		this->last_world_y = this->world_y;
 		this->world_x += dt_sec * velocity_x;
 		this->world_y += dt_sec * velocity_y;
-		
 	} // step
 	
 	virtual void set_velocity( float x, float y )
@@ -519,7 +519,7 @@ struct RenameThisData
 
 bool is_within_screen( ICollisionObject * object )
 {
-	float x, y;
+	float x = 0, y = 0;
 	
 	object->world_position( x, y );
 	
@@ -547,23 +547,28 @@ bool is_within_screen( ICollisionObject * object )
 
 void constrain_to_screen( Sprite & sprite )
 {
-	if ( sprite.world_x < 0 )
+	float wx, wy;
+	sprite.world_position( wx, wy );
+
+	if ( wx < 0 )
 	{
-		sprite.world_x = 0;
+		wx = 0;
 	}
-	else if ( (sprite.world_x+(sprite.width*sprite.scale_x)) > kernel::instance()->parameters().render_width )
+	else if ( (wx+(sprite.width*sprite.scale_x)) > kernel::instance()->parameters().render_width )
 	{
-		sprite.world_x = kernel::instance()->parameters().render_width - (sprite.width*sprite.scale_x);
+		wx = kernel::instance()->parameters().render_width - (sprite.width*sprite.scale_x);
 	}
 	
-	if ( sprite.world_y < 0 )
+	if ( wy < 0 )
 	{
-		sprite.world_y = 0;
+		wy = 0;
 	}
-	else if ( (sprite.world_y+(sprite.height*sprite.scale_y)) > kernel::instance()->parameters().render_height )
+	else if ( (wy+(sprite.height*sprite.scale_y)) > kernel::instance()->parameters().render_height )
 	{
-		sprite.world_y = kernel::instance()->parameters().render_height - (sprite.height*sprite.scale_y);
+		wy = kernel::instance()->parameters().render_height - (sprite.height*sprite.scale_y);
 	}
+	
+	sprite.snap_to_world_position( wx, wy );
 }
 
 void move_sprite_with_command( Sprite & sprite, MovementCommand & command )
@@ -837,10 +842,7 @@ struct GameScreen : public virtual IScreen
 				ent->r_x = lerp( ent->last_world_x, ent->world_x, kernel::instance()->parameters().step_alpha );
 				ent->r_y = lerp( ent->last_world_y, ent->world_y, kernel::instance()->parameters().step_alpha );
 				
-				int left_side = ((ent->r_x + (ent->width * ent->scale_x)) > kernel::instance()->parameters().render_width) && (ent->velocity_x > 0);
-				int right_side = ((ent->r_x + (ent->width * ent->scale_x)) < 0) && (ent->velocity_x < 0);
-				
-				if ( left_side || right_side )
+				if ( !is_within_screen(ent) )
 				{
 					active_entities[i] = false;
 					ent = 0;
@@ -964,7 +966,7 @@ struct GameScreen : public virtual IScreen
 		
 		
 		current_gametime += (kernel::instance()->parameters().framedelta_filtered*.001);
-#if 1
+#if 0
 		while ( current_event < event_based_map.total_events )
 		{
 			MapEvent * ev = &event_based_map.events[ current_event ];
