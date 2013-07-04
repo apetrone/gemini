@@ -197,6 +197,8 @@ public:
 		get_scale( scx, scy );
 		
 		add_sprite_to_stream( context.vb, sx, sy, scx*this->width, scy*this->height, color, (float*)texcoords );
+		
+		debugdraw::point( glm::vec3(r_x, r_y, 0), Color(255,0,0), scx*(this->width/2.0), 0 );
 	} // render
 	
 	virtual void get_scale( float & x, float & y )
@@ -413,24 +415,28 @@ void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width,
 	if ( vb.has_room(4, 6) )
 	{
 		SpriteVertexType * v = (SpriteVertexType*)vb.request(4);
+		float hw = width/2.0f;
+		float hh = height/2.0f;
 
-		v[0].x = x;
-		v[0].y = y;
+		// x and y are assumed to be the center of the sprite
+		// upper left corner; moving clockwise
+		v[0].x = x - hw;
+		v[0].y = y - hh;
 		v[0].z = 0;
 		v[0].color = Color(255,255,255);
 		
-		v[1].x = x;
-		v[1].y = y+height;
+		v[1].x = x - hw;
+		v[1].y = y + hh;
 		v[1].z = 0;
 		v[1].color = Color(255,255,255);
 		
-		v[2].x = x+width;
-		v[2].y = y+height;
+		v[2].x = x + hw;
+		v[2].y = y + hh;
 		v[2].z = 0;
 		v[2].color = Color(255,255,255);
 		
-		v[3].x = x+width;
-		v[3].y = y;
+		v[3].x = x + hw;
+		v[3].y = y - hh;
 		v[3].z = 0;
 		v[3].color = Color(255,255,255);
 		
@@ -696,8 +702,8 @@ struct GameScreen : public virtual IScreen
 
 		player->width = 64;
 		player->height = 64;
-		player->hotspot_x = 48;
-		player->hotspot_y = 24;
+		player->hotspot_x = 0;
+		player->hotspot_y = 8;
 
 		// set initial position
 		player->snap_to_world_position(50, (kernel::instance()->parameters().render_height / 2) - (player->height/2) );
@@ -868,7 +874,7 @@ struct GameScreen : public virtual IScreen
 		
 
 //		debugdraw::line( glm::vec3(0, 0, 0), glm::vec3(player->r_x, player->r_y, 0), Color(255, 128, 0));
-//		debugdraw::point( glm::vec3(player->r_x, player->r_y, 0), Color(255,0,0), 32 );
+		
 
 		glm::mat4 modelview;
 		glm::mat4 proj = glm::ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.1f, 128.0f );
