@@ -43,6 +43,9 @@ struct RenderStream
 	
 	RenderStream( unsigned int max_bytes = MAX_RENDERER_STREAM_BYTES, unsigned int max_commands = MAX_RENDERER_STREAM_COMMANDS );
 	
+	void save_offset( long & offset );
+	void load_offset( long offset );
+	
 	void rewind();
 	RenderState * new_render_state();
 	void run_commands();

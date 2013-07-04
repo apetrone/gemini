@@ -30,12 +30,16 @@ namespace debugdraw
 	const char DEBUG_FONT_FILE[] = "fonts/nokiafc22.ttf";
 	const short DEBUG_FONT_SIZE = 12;
 	
+	const int MAX_CIRCLE_SIDES = 12;
+	const int TOTAL_CIRCLE_VERTICES = 2 * MAX_CIRCLE_SIDES;
 	enum
 	{
 		TYPE_BOX=1,
 		TYPE_LINE,
 		TYPE_AXES,
 		TYPE_SPHERE,
+		
+		TYPE_COUNT
 	};
 	
 	struct DebugPrimitive

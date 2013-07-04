@@ -804,7 +804,29 @@ namespace assets
 		}
 		
 		return parameter;
-	}
+	} // parameter_by_name
+	
+	void Material::allocate_parameters( unsigned int max_parameters )
+	{
+		if ( this->parameters )
+		{
+			DESTROY_ARRAY(Parameter, parameters, this->num_parameters);
+		}
+		
+		this->num_parameters = max_parameters;
+		this->parameters = CREATE_ARRAY(Parameter, max_parameters);
+	} // allocate_parameters
+	
+	void Material::set_parameter_name( unsigned int id, const char * name )
+	{
+		this->parameters[id].name = name;
+	} // set_parameter_name
+	
+	void Material::set_parameter_vec4( unsigned int id, const glm::vec4 & vec )
+	{
+		this->parameters[id].vecValue = vec;
+		this->parameters[id].type = MP_VEC4;
+	} // set_parameter_vec4
 	
 	Material * material_by_id( unsigned int id )
 	{
@@ -1115,6 +1137,10 @@ namespace assets
 	
 	unsigned int find_parameter_mask( ShaderString & name )
 	{
+		// TODO: need to validate the name here against the
+		// parameter names in permutations config file.
+	
+	
 		if ( _shader_permutations != 0 )
 		{
 			for( unsigned int option_id = 0; option_id < shader_permutations().num_permutations; ++option_id )

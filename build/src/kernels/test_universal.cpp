@@ -387,7 +387,8 @@ struct SpriteVertexType
 
 void render_vertexstream( Camera & camera, renderer::VertexStream & vb, RenderStream & rs, unsigned int attributes, assets::Material * material )
 {
-	long offset = rs.stream.offset_pointer();
+	long offset;
+	rs.save_offset( offset );
 	
 	assert( material != 0 );
 	
@@ -404,7 +405,7 @@ void render_vertexstream( Camera & camera, renderer::VertexStream & vb, RenderSt
 	
 	rs.run_commands();
 	vb.reset();
-	rs.stream.seek( offset, true );
+	rs.load_offset( offset );
 } // render_vertexstream
 
 void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width, int height, const Color & color, float * texcoords )
@@ -859,11 +860,19 @@ struct GameScreen : public virtual IScreen
 //		const char text[] = "---- Game ----";
 //		int center = (kernel::instance()->parameters().render_width / 2);
 //		int font_width = font::measure_width( font, text );
-//		
+//
 //		font::draw_string( font, center-(font_width/2), 40, text, Color(0,255,0) );
 
 
-		debugdraw::text( 15, 55, "hello", Color(255,255,128) );
+//		debugdraw::text( 15, 55, "hello", Color(255,255,128) );
+		
+
+//		debugdraw::line( glm::vec3(0, 0, 0), glm::vec3(player->r_x, player->r_y, 0), Color(255, 128, 0));
+//		debugdraw::point( glm::vec3(player->r_x, player->r_y, 0), Color(255,0,0), 32 );
+
+		glm::mat4 modelview;
+		glm::mat4 proj = glm::ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.1f, 128.0f );
+		debugdraw::render( modelview, proj, params.render_width, params.render_height );
 //		font::draw_string( font, 15, 55, xstr_format("dt: %g\n", kernel::instance()->parameters().framedelta_raw), Color(0,255,255));
 	}
 	

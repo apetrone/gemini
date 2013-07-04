@@ -33,6 +33,16 @@ RenderStream::RenderStream( unsigned int max_bytes, unsigned int max_commands )
 	stream.init( buffer, MAX_RENDERER_STREAM_BYTES );
 }
 
+void RenderStream::save_offset( long & offset )
+{
+	offset = stream.offset_pointer();
+} // save_offset
+
+void RenderStream::load_offset( long offset )
+{
+	stream.seek( offset, true );
+} // load_offset
+
 void RenderStream::rewind()
 {
 	stream.rewind();

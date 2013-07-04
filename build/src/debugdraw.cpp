@@ -25,6 +25,8 @@
 #include "vertexstream.hpp"
 #include "assets.hpp"
 #include "font.hpp"
+#include "renderstream.hpp"
+#include "log.h"
 
 namespace debugdraw
 {
@@ -36,7 +38,7 @@ namespace debugdraw
 		unsigned int max_primitives = 0;
 		DebugPrimitive * primitive_list = 0;
 		font::Handle debug_font = 0;
-		
+
 		DebugPrimitive * request_primitive()
 		{
 			return &primitive_list[ next_primitive++ % max_primitives ];
@@ -109,11 +111,13 @@ namespace debugdraw
 		_internal::current_time = 0;
 		_internal::max_primitives = max_primitives;
 		_internal::primitive_list = CREATE_ARRAY(DebugPrimitive, max_primitives);
-		
+			
 		// cache the shader we'll use
 		
 		// setup the vertex stream
-		_internal::vertex_stream.create( sizeof(DebugDrawVertex), 4 * max_primitives, renderer::DRAW_LINES, renderer::BUFFER_DYNAMIC );
+		_internal::vertex_stream.desc.add( renderer::VD_FLOAT3 );
+		_internal::vertex_stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+		_internal::vertex_stream.create( 4 * max_primitives, 0, renderer::DRAW_LINES, renderer::BUFFER_DYNAMIC );
 		
 		
 		// load the debug font we'll use
@@ -128,8 +132,6 @@ namespace debugdraw
 		_internal::next_primitive = 0;
 
 		_internal::vertex_stream.destroy();
-		
-		// delete shader?
 	} // shutdown
 	
 	void update(float delta_msec)
@@ -140,7 +142,8 @@ namespace debugdraw
 		// run an update for each primitive
 		for( unsigned int i = 0; i < _internal::max_primitives; ++i )
 		{
-			// if timeleft has expired, reset it and disable the primitive by setting an invalid type
+			// if timeleft has expired, reset it and disable the primitive by
+			// setting an invalid type
 			if ( _internal::primitive_list[i].timeleft <= 0 )
 			{
 				_internal::primitive_list[i].timeleft = 0;
@@ -156,9 +159,206 @@ namespace debugdraw
 	} // void update
 	
 	
-	void render(const glm::mat4 & modelview, const glm::mat4 & projection, int viewport_width, int viewport_height)
+	void flush_streams( RenderStream & rs, renderer::VertexStream * vs )
 	{
+		long offset;
+		rs.save_offset( offset );
+		vs->update();
+		rs.add_draw_call( vs->vertexbuffer );
+		rs.run_commands();
+		rs.load_offset( offset );
+		vs->reset();
+	} // flush_streams
+	
+	
+	typedef void (*buffer_primitive_fn)( RenderStream & rs, DebugPrimitive * primitive, renderer::VertexStream * vs );
 		
+	void buffer_box( RenderStream & rs, DebugPrimitive * primitive, renderer::VertexStream * vs )
+	{
+		if ( !vs->has_room(24, 0) )
+		{
+			flush_streams( rs, vs );
+		}
+	
+		glm::vec3 mins = primitive->start;
+		glm::vec3 maxs = primitive->end;
+		
+		DebugDrawVertex * vertices = (DebugDrawVertex*)vs->request(24);
+		for( int i = 0; i < 24; ++i )
+		{
+			vertices[i].color = primitive->color;
+		}
+		
+		// -Z face
+		vertices[0].position = mins;
+		vertices[1].position = glm::vec3( maxs[0], mins[1], mins[2] );
+		vertices[2].position = glm::vec3( maxs[0], mins[1], mins[2] );
+		vertices[3].position = glm::vec3( maxs[0], maxs[1], mins[2] );
+		vertices[4].position = glm::vec3( maxs[0], maxs[1], mins[2] );
+		vertices[5].position = glm::vec3( mins[0], maxs[1], mins[2] );
+		vertices[6].position = glm::vec3( mins[0], maxs[1], mins[2] );
+		vertices[7].position = mins;
+		
+		// +Z face
+		vertices[8].position = glm::vec3( mins[0], mins[1], maxs[2] );
+		vertices[9].position = glm::vec3( maxs[0], mins[1], maxs[2] );
+		vertices[10].position = glm::vec3( maxs[0], mins[1], maxs[2] );
+		vertices[11].position = glm::vec3( maxs[0], maxs[1], maxs[2] );
+		vertices[12].position = glm::vec3( maxs[0], maxs[1], maxs[2] );
+		vertices[13].position = glm::vec3( mins[0], maxs[1], maxs[2] );
+		vertices[14].position = glm::vec3( mins[0], maxs[1], maxs[2] );
+		vertices[15].position = glm::vec3( mins[0], mins[1], maxs[2] );
+		
+		// lower left
+		vertices[16].position = mins;
+		vertices[17].position = glm::vec3( mins[0], mins[1], maxs[2] );
+		
+		// lower right
+		vertices[18].position = glm::vec3( maxs[0], mins[1], mins[2] );
+		vertices[19].position = glm::vec3( maxs[0], mins[1], maxs[2] );
+		
+		// upper right
+		vertices[20].position = glm::vec3( maxs[0], maxs[1], mins[2] );
+		vertices[21].position = glm::vec3( maxs[0], maxs[1], maxs[2] );
+		
+		// upper left
+		vertices[22].position = glm::vec3( mins[0], maxs[1], mins[2] );
+		vertices[23].position = glm::vec3( mins[0], maxs[1], maxs[2] );
+	} // buffer_box
+	
+	void buffer_line( RenderStream & rs, DebugPrimitive * primitive, renderer::VertexStream * vs )
+	{
+		if ( !vs->has_room(2, 0) )
+		{
+			flush_streams( rs, vs );
+		}
+		
+		DebugDrawVertex * vertices = (DebugDrawVertex*)vs->request(2);
+		vertices[0].color = primitive->color;
+		vertices[0].position = primitive->start;
+		vertices[1].color = primitive->color;
+		vertices[1].position = primitive->end;
+	} // buffer_line
+	
+	void buffer_axes( RenderStream & rs, DebugPrimitive * primitive, renderer::VertexStream * vs )
+	{
+		if ( !vs->has_room(6, 0) )
+		{
+			flush_streams( rs, vs );
+		}
+		
+		DebugDrawVertex * vertices = (DebugDrawVertex*)vs->request(6);
+		vertices[0].position = primitive->start;
+		vertices[1].position = primitive->start;
+		vertices[1].position[0] = vertices[1].position[0] + primitive->radius;
+		vertices[0].color = vertices[1].color = Color( 255, 0, 0 );
+		
+		vertices[2].position = primitive->start;
+		vertices[3].position = primitive->start;
+		vertices[3].position[1] = vertices[3].position[1] + primitive->radius;
+		vertices[2].color = vertices[3].color = Color( 0, 255, 0 );
+		
+		vertices[4].position = primitive->start;
+		vertices[5].position = primitive->start;
+		vertices[5].position[2] = vertices[5].position[2] + primitive->radius;
+		vertices[4].color = vertices[5].color = Color( 0, 0, 255 );
+	} // buffer_axes
+	
+	void buffer_sphere( RenderStream & rs, DebugPrimitive * primitive, renderer::VertexStream * vs )
+	{
+		if ( !vs->has_room(TOTAL_CIRCLE_VERTICES*3, 0) )
+		{
+			flush_streams( rs, vs );
+		}
+
+		DebugDrawVertex * vertices = (DebugDrawVertex*)vs->request( TOTAL_CIRCLE_VERTICES*3 );
+		glm::vec3 vlist[ TOTAL_CIRCLE_VERTICES ];
+		
+		// XY plane
+		_internal::generate_circle( primitive->start, vlist, MAX_CIRCLE_SIDES, primitive->radius, 0 );
+		for( int i = 0; i < TOTAL_CIRCLE_VERTICES; ++i )
+		{
+			vertices[0].position = vlist[ i ];
+			vertices[0].color = primitive->color;
+			++vertices;
+		}
+		
+		// XZ plane
+		_internal::generate_circle( primitive->start, vlist, MAX_CIRCLE_SIDES, primitive->radius, 1 );
+		for( int i = 0; i < TOTAL_CIRCLE_VERTICES; ++i )
+		{
+			vertices[0].position = vlist[ i ];
+			vertices[0].color = primitive->color;
+			++vertices;
+		}
+		
+		// YZ plane
+		_internal::generate_circle( primitive->start, vlist, MAX_CIRCLE_SIDES, primitive->radius, 2 );
+		for( int i = 0; i < TOTAL_CIRCLE_VERTICES; ++i )
+		{
+			vertices[0].position = vlist[ i ];
+			vertices[0].color = primitive->color;
+			++vertices;
+		}
+	} // buffer_sphere
+	
+	void render(const glm::mat4 & modelview, const glm::mat4 & projection,
+		int viewport_width, int viewport_height)
+	{
+		unsigned int attribs = 0;
+		assets::ShaderString name;
+		name = "colors";
+		attribs |= assets::find_parameter_mask( name );
+		
+		assets::Shader * shader = assets::find_compatible_shader( attribs );
+		if ( !shader )
+		{
+			LOGE("debugdraw shader not found!\n" );
+			return;
+		}
+
+		glm::mat4 object;
+		RenderStream rs;
+		rs.add_viewport( 0, 0, viewport_width, viewport_height );
+		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
+		
+		rs.add_shader( shader );
+		rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview );
+		rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection );
+		rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object );
+		rs.run_commands();
+		rs.rewind();
+		
+		DebugPrimitive * primitive = 0;
+		
+		renderer::VertexStream * vs = &_internal::vertex_stream;
+		
+		vs->reset();
+		
+		buffer_primitive_fn buffer_primitive_table[] =
+		{
+			0,
+			buffer_box,
+			buffer_line,
+			buffer_axes,
+			buffer_sphere
+		};
+		
+		for( unsigned int i = 0; i < _internal::max_primitives; ++i )
+		{
+			primitive = &_internal::primitive_list[i];
+			if ( primitive->type != 0 )
+			{
+				buffer_primitive_table[ primitive->type ]( rs, primitive, vs );
+			}
+		}
+		
+		vs->update();
+		rs.add_draw_call( vs->vertexbuffer );
+		
+		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
+		rs.run_commands();
+
 	} // render
 	
 	void axes( const glm::mat4 & transform, float axis_length, float duration )

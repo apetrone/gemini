@@ -219,6 +219,10 @@ namespace assets
 		void calculate_requirements();
 		
 		Parameter * parameter_by_name( const char * name );
+		
+		void allocate_parameters( unsigned int max_parameters );
+		void set_parameter_name( unsigned int id, const char * name );
+		void set_parameter_vec4( unsigned int id, const glm::vec4 & vec );
 	}; // Material
 	
 	Material * material_by_id( unsigned int id );
