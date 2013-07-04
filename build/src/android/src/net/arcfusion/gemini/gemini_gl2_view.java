@@ -47,6 +47,7 @@ import javax.microedition.khronos.opengles.GL10;
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
+import android.util.DisplayMetrics;
 import android.util.Log;
 
 /**
@@ -343,6 +344,7 @@ class gemini_gl2_view extends GLSurfaceView {
         public void onSurfaceChanged(GL10 gl, int width, int height)
         {
         	Lynx.gemini_surface_changed(width, height);
+        	Lynx.surface_changed( width, height );
         } // onSurfaceChanged
 
         public void onSurfaceCreated(GL10 gl, EGLConfig config)

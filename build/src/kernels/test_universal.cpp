@@ -147,6 +147,8 @@ public:
 	short width;
 	short height;
 	
+	short collision_size;
+	
 	
 	float velocity_x;
 	float velocity_y;
@@ -180,6 +182,7 @@ public:
 		
 		collision_mask = 0;
 		rotation = 0;
+		collision_size = 0;
 	}
 	
 	void select_sprite( int x, int y, int frame_width, int frame_height, int image_width, int image_height )
@@ -198,7 +201,7 @@ public:
 		
 		add_sprite_to_stream( context.vb, sx, sy, scx*this->width, scy*this->height, color, (float*)texcoords );
 		
-		debugdraw::point( glm::vec3(r_x, r_y, 0), Color(255,0,0), scx*(this->width/2.0), 0 );
+		debugdraw::point( glm::vec3(r_x, r_y, 0), Color(255,0,0), scx*(this->collision_size/2.0), 0 );
 	} // render
 	
 	virtual void get_scale( float & x, float & y )
@@ -246,8 +249,8 @@ public:
 
 	void get_aabb( AABB2 & aabb ) const
 	{
-		float hw = (this->width/2.0f);
-		float hh = (this->height/2.0f);
+		float hw = (this->collision_size/2.0f);
+		float hh = (this->collision_size/2.0f);
 		aabb.left = this->world_x - hw;
 		aabb.right = this->world_x + hw;
 		aabb.top = this->world_y - hh;
@@ -704,6 +707,7 @@ struct GameScreen : public virtual IScreen
 		player->height = 64;
 		player->hotspot_x = 0;
 		player->hotspot_y = 8;
+		player->collision_size = 32;
 
 		// set initial position
 		player->snap_to_world_position(50, (kernel::instance()->parameters().render_height / 2) - (player->height/2) );
@@ -913,6 +917,7 @@ struct GameScreen : public virtual IScreen
 			ent->set_velocity( BULLET_SPEED, 0 );
 			ent->select_sprite(0, 32, 32, 32, 256, 256);
 			ent->collision_mask = 2;
+			ent->collision_size = 32;
 			return true;
 		}
 		
@@ -933,6 +938,7 @@ struct GameScreen : public virtual IScreen
 			ent->width = 32;
 			ent->height = 32;
 			ent->collision_mask = 7;
+			ent->collision_size = 32;
 		}
 	} // add_enemy
 	

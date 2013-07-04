@@ -58,6 +58,16 @@ void AndroidKernel::shutdown()
 
 void AndroidKernel::on_surface_changed(int width, int height)
 {
-	this->parameters().window_width = this->parameters().render_width = width;
+	this->parameters().window_width = this->parameters().render_width = (width + status_bar_height);
 	this->parameters().window_height = this->parameters().render_height = height;
+}
+
+void AndroidKernel::set_status_bar_height( int height )
+{
+	this->status_bar_height = height;
+}
+
+void AndroidKernel::set_display_density( float density )
+{
+	this->display_density = density;
 }

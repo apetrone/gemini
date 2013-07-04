@@ -94,6 +94,24 @@ namespace lynx
 			}
 		}
 	} // gemini_surface_changed
+
+	void gemini_set_display_density( JNIEnv * env, jclass the_class, jfloat density )
+	{
+		if ( _kernel )
+		{
+			_kernel->set_display_density( density );
+		}
+	} // gemini_set_display_density
+
+
+	void gemini_set_status_bar_height( JNIEnv * env, jclass the_class, jint height )
+	{
+		if ( _kernel )
+		{
+			_kernel->set_status_bar_height( height );
+		}
+	} // gemini_set_status_bar_height
+
 }; // namespace lynx
 
 
@@ -101,7 +119,9 @@ static JNINativeMethod method_table[] = {
 		{"gemini_startup", "(Landroid/content/res/AssetManager;)V", (void*)lynx::gemini_startup},
 		{"gemini_shutdown", "()V", (void*)lynx::gemini_shutdown},
 		{"gemini_tick", "()V", (void*)lynx::gemini_tick},
-		{"gemini_surface_changed", "(II)V", (void*)lynx::gemini_surface_changed}
+		{"gemini_surface_changed", "(II)V", (void*)lynx::gemini_surface_changed},
+		{"gemini_set_display_density", "(F)V", (void*)lynx::gemini_set_display_density},
+		{"gemini_set_status_bar_height", "(I)V", (void*)lynx::gemini_set_status_bar_height},
 };
 
 jint JNI_OnLoad( JavaVM * vm, void * reserved)

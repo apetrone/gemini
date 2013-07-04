@@ -29,6 +29,8 @@ public:
 	bool active;
 	kernel::Params params;
 	bool is_kernel_initialized;
+	int status_bar_height;
+	float display_density;
 
 public:
 	virtual ~AndroidKernel() {}
@@ -46,4 +48,6 @@ public:
 
 	void on_surface_changed( int width, int height );
 	bool is_initialized() const { return is_kernel_initialized; }
+	void set_status_bar_height( int height );
+	void set_display_density( float density );
 }; // AndroidKernel
