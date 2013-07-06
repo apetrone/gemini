@@ -756,8 +756,8 @@ struct GameScreen : public virtual IScreen
 		player_fire = audio::create_sound("sounds/blaster1");
 		
 		enemy_explode = audio::create_sound( "sounds/enemy_explode1");
-		
 
+		this->default_shader.object = 0;
 	}
 	
 	~GameScreen()

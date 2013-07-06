@@ -22,4 +22,13 @@ For the RaspberryPi:
 
 For iOS
 
-	pegasus -t iphoneos.py -b debug,release -c build -p 
+	pegasus -t iphoneos.py -b debug,release -c build -p
+
+
+
+
+
+### Installation Notes
+
+* Linux
+	* Install sox: sudo apt-get install sox
