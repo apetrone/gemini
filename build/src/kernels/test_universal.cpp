@@ -67,6 +67,13 @@ struct RenderContext
 	RenderContext( RenderStream & inrs, renderer::VertexStream & invb ) : rs(inrs), vb(invb) {}
 }; // RenderContext
 
+
+class IComponent
+{
+public:
+	virtual ~IComponent() {}
+};
+
 class IGraphicObject
 {
 public:
@@ -291,6 +298,22 @@ struct MovementCommand
 
 
 ScreenController * screen_controller = 0;
+
+
+void virtual_screen_to_pixels( float & tx, float & ty )
+{
+	const int VIRTUAL_WIDTH = 800;
+	const int VIRTUAL_HEIGHT = 600;
+	
+	kernel::Params & params = kernel::instance()->parameters();
+	
+	
+	float mx = (params.render_width / (float)VIRTUAL_WIDTH);
+	float my = (params.render_height / (float)VIRTUAL_HEIGHT);
+	
+	tx = mx * (VIRTUAL_WIDTH * tx);
+	ty = my * (VIRTUAL_HEIGHT * ty);
+}
 
 
 struct LogoScreen : public virtual IScreen
@@ -549,23 +572,29 @@ void constrain_to_screen( Sprite & sprite )
 {
 	float wx, wy;
 	sprite.world_position( wx, wy );
+	
+	float hw = sprite.width/2.0f;
+	float hh = sprite.height/2.0f;
+	
+	float scaled_half_width = (hw * sprite.scale_x);
+	float scaled_half_height = (hh * sprite.scale_y);
 
-	if ( wx < 0 )
+	if ( wx < scaled_half_width )
 	{
-		wx = 0;
+		wx = scaled_half_width;
 	}
-	else if ( (wx+(sprite.width*sprite.scale_x)) > kernel::instance()->parameters().render_width )
+	else if ( (wx+scaled_half_width) > kernel::instance()->parameters().render_width )
 	{
-		wx = kernel::instance()->parameters().render_width - (sprite.width*sprite.scale_x);
+		wx = kernel::instance()->parameters().render_width - scaled_half_width;
 	}
 	
-	if ( wy < 0 )
+	if ( wy < scaled_half_height )
 	{
-		wy = 0;
+		wy = scaled_half_height;
 	}
-	else if ( (wy+(sprite.height*sprite.scale_y)) > kernel::instance()->parameters().render_height )
+	else if ( (wy+scaled_half_height) > kernel::instance()->parameters().render_height )
 	{
-		wy = kernel::instance()->parameters().render_height - (sprite.height*sprite.scale_y);
+		wy = kernel::instance()->parameters().render_height - scaled_half_height;
 	}
 	
 	sprite.snap_to_world_position( wx, wy );
@@ -713,6 +742,8 @@ struct GameScreen : public virtual IScreen
 		player->hotspot_x = 0;
 		player->hotspot_y = 8;
 		player->collision_size = 32;
+		player->scale_x = 1.0f;
+		player->scale_y = 1.0f;
 
 		// set initial position
 		player->snap_to_world_position(50, (kernel::instance()->parameters().render_height / 2) - (player->height/2) );
@@ -848,18 +879,14 @@ struct GameScreen : public virtual IScreen
 					ent = 0;
 				}
 				
-				if ( active_entities[i] && ent )
+				if ( active_entities[i] && ent && ent != player )
 				{
 					ent->render( context );
 				}
 			}
 		}
 	
-		// 5 - draw sprite with class?
-		// interpolate between two states and get the render position for this sprite
-		player->r_x = lerp( player->last_world_x, player->world_x, kernel::instance()->parameters().step_alpha );
-		player->r_y = lerp( player->last_world_y, player->world_y, kernel::instance()->parameters().step_alpha );
-		
+		// 5 - draw player after other entities
 		player->render( context );
 		
 		if ( player_mat )
@@ -885,7 +912,19 @@ struct GameScreen : public virtual IScreen
 		glm::mat4 modelview;
 		glm::mat4 proj = glm::ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.1f, 128.0f );
 		debugdraw::render( modelview, proj, params.render_width, params.render_height );
-//		font::draw_string( font, 15, 55, xstr_format("dt: %g\n", kernel::instance()->parameters().framedelta_raw), Color(0,255,255));
+		
+		
+		float tx = .02, ty = 0.05;
+		
+		virtual_screen_to_pixels( tx, ty );
+		
+		font::draw_string( font, tx, ty, xstr_format("Energy:\n", kernel::instance()->parameters().framedelta_raw), Color(0,255,255));
+		
+		
+		tx = 0.8;
+		ty = 0.05;
+		virtual_screen_to_pixels( tx, ty );
+		font::draw_string( font, tx, ty, xstr_format("Score:\n", kernel::instance()->parameters().framedelta_raw), Color(0,255,255));
 	}
 	
 	Sprite * get_unused_entity()
@@ -919,7 +958,7 @@ struct GameScreen : public virtual IScreen
 			ent->set_velocity( BULLET_SPEED, 0 );
 			ent->select_sprite(0, 32, 32, 32, 256, 256);
 			ent->collision_mask = 2;
-			ent->collision_size = 32;
+			ent->collision_size = 16;
 			return true;
 		}
 		
@@ -955,7 +994,7 @@ struct GameScreen : public virtual IScreen
 				if ( create_bullet_effect( player->r_x+player->hotspot_x, player->r_y+player->hotspot_y ) )
 				{
 					next_fire = fire_delay;
-					player_source = audio::play( player_fire );
+//					player_source = audio::play( player_fire );
 				}
 			}
 		}
@@ -1011,10 +1050,6 @@ struct GameScreen : public virtual IScreen
 		}
 #endif
 
-		// instead, move the sprite (we do need some interpolation here otherwise the stuttering is visible)
-		player->last_world_x = player->world_x;
-		player->last_world_y = player->world_y;
-		
 		for( int i = 0; i < MAX_ENTITIES; ++i )
 		{
 			ICollisionObject * ent = &entities[i];
