@@ -40,6 +40,7 @@
 #include "map_event.hpp"
 #include "keyframechannel.hpp"
 #include "debugdraw.hpp"
+#include "util.hpp"
 
 #define TEST_2D 0
 #define TEST_FONT 0
@@ -993,7 +994,10 @@ struct GameScreen : public virtual IScreen
 		if ( ent )
 		{
 			ent->snap_to_world_position( x, y );
-			ent->set_velocity( -100, 0 );
+//			float velocity = util::random_range( 80, 150 );
+			float velocity = -100.0f;
+			ent->set_velocity( -velocity, 0 );
+
 			if ( id == 0 )
 			{
 				ent->select_sprite(64, 0, 32, 32, 256, 256);

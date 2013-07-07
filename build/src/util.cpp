@@ -56,4 +56,8 @@ namespace util
 		}
 	} // strip_shader_version
 	
+//	float random_range( float min, float max )
+//	{
+//		return (float)rand() / RAND_MAX * (max - min) + min;
+//	} // random_range
 }; // mamespace util

@@ -30,4 +30,7 @@ namespace util
 	
 	// strip the version line from shader source
 	void strip_shader_version( char * buffer, StackString<32> & version );
+	
+	// return a float within the range: min, max, inclusive
+//	float random_range( float min, float max );
 }; // namespace util
