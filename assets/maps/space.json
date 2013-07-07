@@ -2,132 +2,132 @@
 	"events":
 	[
 		{
-			"time" : 3.0,
-			"event" : "light",
+			"time" : 1.0,
+			"event" : 1,
 			"pos" : 0.25
 		},
 
 		{
-			"time" : 5.0,
-			"event" : "light",
+			"time" : 1.0,
+			"event" : 0,
 			"pos" : 0.5
 		},
 
 		{
 			"time" : 7.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.75
 		},
 		{
 			"time" : 7.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.25
 		},
 
 		{
 			"time" : 9.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.1
 		},
 		{
 			"time" : 9.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.85
 		},
 
 		{
 			"time" : 10.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.2
 		},
 		{
 			"time" : 10.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.5
 		},
 		{
 			"time" : 10.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.8
 		},
 
 		{
 			"time" : 11.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.2
 		},
 		{
 			"time" : 11.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.5
 		},
 		{
 			"time" : 11.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.8
 		},
 
 		{
 			"time" : 12.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.25
 		},
 		{
 			"time" : 12.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.55
 		},
 		{
 			"time" : 12.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.85
 		},
 
 		{
 			"time" : 15.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.25
 		},
 		{
 			"time" : 15.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.55
 		},
 		{
 			"time" : 15.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.85
 		},
 
 		{
 			"time" : 16.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.15
 		},
 		{
 			"time" : 16.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.45
 		},
 		{
 			"time" : 16.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.65
 		},
 
 		{
 			"time" : 18.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.25
 		},
 		{
 			"time" : 18.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.35
 		},
 		{
 			"time" : 18.0,
-			"event" : "light",
+			"event" : 0,
 			"pos" : 0.45
 		}			
 	]

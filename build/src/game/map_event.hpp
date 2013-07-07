@@ -28,7 +28,7 @@
 struct MapEvent
 {
 	float time_value;
-	StackString<64> name;
+	unsigned int id;
 	float pos;
 }; // MapEvent
 

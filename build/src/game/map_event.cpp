@@ -22,7 +22,7 @@
 #include "typedefs.h"
 #include "log.h"
 #include "map_event.hpp"
-
+#include "hashtable.hpp"
 
 EventBasedMap::EventBasedMap()
 {
@@ -48,8 +48,6 @@ util::ConfigLoadStatus map_event_loader( const Json::Value & root, void * data )
 		return util::ConfigLoad_Failure;
 	}
 
-
-
 	Json::Value events = root["events"];
 	map->total_events = events.size();
 	map->events = CREATE_ARRAY(MapEvent, map->total_events);
@@ -67,9 +65,11 @@ util::ConfigLoadStatus map_event_loader( const Json::Value & root, void * data )
 		mapevent->time_value = time_value.asFloat();
 		//LOGV( "event time: %g\n", mapevent->time_value );
 
-		Json::Value event_name = value["event"];
-		mapevent->name = event_name.asString().c_str();
-		//LOGV( "name: %s\n", mapevent->name() );
+//		Json::Value event_name = value["event"];
+//		mapevent->name = event_name.asString().c_str();
+//		LOGV( "name: %s\n", mapevent->name() );
+		Json::Value event_id_value = value["event"];
+		mapevent->id = event_id_value.asUInt();
 
 		Json::Value position = value["pos"];
 		mapevent->pos = position.asFloat();

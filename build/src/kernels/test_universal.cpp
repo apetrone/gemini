@@ -80,6 +80,7 @@ public:
 	virtual ~IGraphicObject() {}
 	virtual void render( RenderContext & context ) = 0;
 	virtual void get_scale( float & x, float & y ) = 0;
+	virtual Color get_color() = 0;
 }; // IGraphicObject
 
 
@@ -171,6 +172,11 @@ public:
 	
 	float rotation;
 	
+	void reset_components()
+	{
+		this->color = Color(255, 255, 255);
+	}
+	
 	Sprite()
 	{
 		world_x = world_y = 0;
@@ -206,7 +212,7 @@ public:
 		float scx, scy;
 		get_scale( scx, scy );
 		
-		add_sprite_to_stream( context.vb, sx, sy, scx*this->width, scy*this->height, color, (float*)texcoords );
+		add_sprite_to_stream( context.vb, sx, sy, scx*this->width, scy*this->height, this->get_color(), (float*)texcoords );
 		
 		debugdraw::point( glm::vec3(r_x, r_y, 0), Color(255,0,0), scx*(this->collision_size/2.0), 0 );
 	} // render
@@ -216,6 +222,11 @@ public:
 		x = scale_x;
 		y = scale_y;
 	} // get_scale
+	
+	virtual Color get_color()
+	{
+		return color;
+	} // get_color
 	
 	// ICollisionObject
 	virtual bool collides_with( ICollisionObject * other ) const
@@ -449,22 +460,22 @@ void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width,
 		v[0].x = x - hw;
 		v[0].y = y - hh;
 		v[0].z = 0;
-		v[0].color = Color(255,255,255);
+		v[0].color = color;
 		
 		v[1].x = x - hw;
 		v[1].y = y + hh;
 		v[1].z = 0;
-		v[1].color = Color(255,255,255);
+		v[1].color = color;
 		
 		v[2].x = x + hw;
 		v[2].y = y + hh;
 		v[2].z = 0;
-		v[2].color = Color(255,255,255);
+		v[2].color = color;
 		
 		v[3].x = x + hw;
 		v[3].y = y - hh;
 		v[3].z = 0;
-		v[3].color = Color(255,255,255);
+		v[3].color = color;
 		
 		v[0].u = texcoords[0];
 		v[0].v = texcoords[1];
@@ -646,9 +657,13 @@ struct GameScreen : public virtual IScreen
 	unsigned int current_event;
 	float current_gametime;
 	
+	unsigned int score;
+	unsigned int energy;
+	
 	GameScreen()
 	{
-	
+		energy = 0;
+		score = 0;
 		// need to replace font loading with this ...
 //		assets::load_font( "fonts/nokiafc22.ttf", 16 );
 		font = font::load_font_from_file( "fonts/nokiafc22.ttf", 16, 72, 72 );
@@ -918,13 +933,13 @@ struct GameScreen : public virtual IScreen
 		
 		virtual_screen_to_pixels( tx, ty );
 		
-		font::draw_string( font, tx, ty, xstr_format("Energy:\n", kernel::instance()->parameters().framedelta_raw), Color(0,255,255));
+		font::draw_string( font, tx, ty, xstr_format("Energy: %i", this->energy), Color(255,255,255));
 		
 		
 		tx = 0.8;
 		ty = 0.05;
 		virtual_screen_to_pixels( tx, ty );
-		font::draw_string( font, tx, ty, xstr_format("Score:\n", kernel::instance()->parameters().framedelta_raw), Color(0,255,255));
+		font::draw_string( font, tx, ty, xstr_format("Score: %04i", this->score), Color(255,255,255));
 	}
 	
 	Sprite * get_unused_entity()
@@ -944,6 +959,10 @@ struct GameScreen : public virtual IScreen
 		if ( !ent )
 		{
 			LOGV( "reached max entities\n" );
+		}
+		else
+		{
+			ent->reset_components();
 		}
 		
 		return ent;
@@ -966,7 +985,7 @@ struct GameScreen : public virtual IScreen
 	} // create_bullet_effect
 	
 	
-	void add_enemy( float x, float y )
+	void add_enemy( float x, float y, unsigned int id )
 	{
 		x *= kernel::instance()->parameters().render_width;
 		y *= kernel::instance()->parameters().render_height;
@@ -975,9 +994,19 @@ struct GameScreen : public virtual IScreen
 		{
 			ent->snap_to_world_position( x, y );
 			ent->set_velocity( -100, 0 );
-			ent->select_sprite(64, 0, 32, 32, 256, 256);
-			ent->width = 32;
-			ent->height = 32;
+			if ( id == 0 )
+			{
+				ent->select_sprite(64, 0, 32, 32, 256, 256);
+				ent->width = 32;
+				ent->height = 32;
+			}
+			else if ( id == 1 )
+			{
+				ent->select_sprite(32, 0, 32, 32, 256, 256);
+				ent->width = 32;
+				ent->height = 32;
+				ent->color = Color(255, 0, 0);
+			}
 			ent->collision_mask = 7;
 			ent->collision_size = 32;
 		}
@@ -998,21 +1027,17 @@ struct GameScreen : public virtual IScreen
 				}
 			}
 		}
-		else if ( input::state()->mouse().is_down( input::MOUSE_RIGHT ) )
-		{
-			add_enemy( 0.6, 0.2 );
-		}
 		
 		
 		current_gametime += (kernel::instance()->parameters().framedelta_filtered*.001);
-#if 0
+#if 1
 		while ( current_event < event_based_map.total_events )
 		{
 			MapEvent * ev = &event_based_map.events[ current_event ];
 			if ( current_gametime >= ev->time_value )
 			{
 //				LOGV( "run event: %s, at %g seconds\n", ev->name(), current_gametime );
-				add_enemy( 1.0, ev->pos );
+				add_enemy( 1.0, ev->pos, ev->id );
 				++current_event;
 				continue;
 			}
@@ -1069,6 +1094,9 @@ struct GameScreen : public virtual IScreen
 								entities[j].set_velocity(0, 0);
 								active_entities[i] = false;
 								active_entities[j] = false;
+								
+								
+								score += 1;
 								
 								audio::play( enemy_explode );
 							}
