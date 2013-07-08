@@ -158,7 +158,6 @@ public:
 	
 	short collision_size;
 	
-	
 	float velocity_x;
 	float velocity_y;
 
@@ -166,7 +165,6 @@ public:
 	float scale_y;
 	
 	unsigned short collision_mask;
-	
 	
 	short hotspot_x;
 	short hotspot_y;
@@ -176,7 +174,9 @@ public:
 	void reset_components()
 	{
 		this->color = Color(255, 255, 255);
-	}
+		this->scale_x = 1.0f;
+		this->scale_y = 1.0f;
+	} // reset_components
 	
 	Sprite()
 	{
@@ -197,7 +197,7 @@ public:
 		collision_mask = 0;
 		rotation = 0;
 		collision_size = 0;
-	}
+	} // Sprite
 	
 	void select_sprite( int x, int y, int frame_width, int frame_height, int image_width, int image_height )
 	{
@@ -994,8 +994,7 @@ struct GameScreen : public virtual IScreen
 		if ( ent )
 		{
 			ent->snap_to_world_position( x, y );
-//			float velocity = util::random_range( 80, 150 );
-			float velocity = -100.0f;
+			float velocity = 100.0f;
 			ent->set_velocity( -velocity, 0 );
 
 			if ( id == 0 )
