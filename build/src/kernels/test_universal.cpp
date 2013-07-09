@@ -49,6 +49,13 @@ glm::mat4 objectMatrix;
 
 const float BULLET_SPEED = 500;
 const float TEST_SIZE = 256;
+const int STARTING_ENERGY = 10;
+
+enum {
+	GAME_PLAY = 1,
+	GAME_WIN,
+	GAME_FAIL
+};
 
 void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width, int height, const Color & color, float * texcoords );
 
@@ -628,6 +635,7 @@ const int MAX_ENTITIES = 1024;
 struct GameScreen : public virtual IScreen
 {
 	font::Handle font;
+	font::Handle round_title;
 	Camera camera;
 	renderer::VertexStream vb;
 	assets::Shader default_shader;
@@ -660,14 +668,17 @@ struct GameScreen : public virtual IScreen
 	
 	unsigned int score;
 	unsigned int energy;
+	unsigned char game_state;
 	
 	GameScreen()
 	{
-		energy = 0;
+		energy = STARTING_ENERGY;
 		score = 0;
+		game_state = GAME_PLAY;
 		// need to replace font loading with this ...
 //		assets::load_font( "fonts/nokiafc22.ttf", 16 );
 		font = font::load_font_from_file( "fonts/nokiafc22.ttf", 16, 72, 72 );
+		round_title = font::load_font_from_file( "fonts/nokiafc22.ttf", 32 );
 		
 		assets::ShaderString name("uv0");
 		test_attribs = 0;
@@ -941,6 +952,15 @@ struct GameScreen : public virtual IScreen
 		ty = 0.05;
 		virtual_screen_to_pixels( tx, ty );
 		font::draw_string( font, tx, ty, xstr_format("Score: %04i", this->score), Color(255,255,255));
+		
+		if ( game_state == GAME_FAIL )
+		{
+			float tx, ty;
+			tx = 0.35;
+			ty = 0.1;
+			virtual_screen_to_pixels(tx, ty);
+			font::draw_string( round_title, tx, ty, "Game Fail", Color(255,0,0) );
+		}
 	}
 	
 	Sprite * get_unused_entity()
@@ -1017,37 +1037,40 @@ struct GameScreen : public virtual IScreen
 	
 	virtual void on_update( kernel::IApplication * app )
 	{
-		next_fire -= kernel::instance()->parameters().framedelta_filtered;
-		
-		if ( input::state()->mouse().is_down( input::MOUSE_LEFT ) )
+		if ( game_state == GAME_PLAY )
 		{
-			if (next_fire <= 0)
+			next_fire -= kernel::instance()->parameters().framedelta_filtered;
+			
+			if ( input::state()->mouse().is_down( input::MOUSE_LEFT ) )
 			{
-				if ( create_bullet_effect( player->r_x+player->hotspot_x, player->r_y+player->hotspot_y ) )
+				if (next_fire <= 0)
 				{
-					next_fire = fire_delay;
-//					player_source = audio::play( player_fire );
+					if ( create_bullet_effect( player->r_x+player->hotspot_x, player->r_y+player->hotspot_y ) )
+					{
+						next_fire = fire_delay;
+	//					player_source = audio::play( player_fire );
+					}
 				}
 			}
-		}
-		
-		
-		current_gametime += (kernel::instance()->parameters().framedelta_filtered*.001);
-#if 1
-		while ( current_event < event_based_map.total_events )
-		{
-			MapEvent * ev = &event_based_map.events[ current_event ];
-			if ( current_gametime >= ev->time_value )
+			
+			
+			current_gametime += (kernel::instance()->parameters().framedelta_filtered*.001);
+	#if 1
+			while ( current_event < event_based_map.total_events )
 			{
-//				LOGV( "run event: %s, at %g seconds\n", ev->name(), current_gametime );
-				add_enemy( 1.0, ev->pos, ev->id );
-				++current_event;
-				continue;
-			}
+				MapEvent * ev = &event_based_map.events[ current_event ];
+				if ( current_gametime >= ev->time_value )
+				{
+	//				LOGV( "run event: %s, at %g seconds\n", ev->name(), current_gametime );
+					add_enemy( 1.0, ev->pos, ev->id );
+					++current_event;
+					continue;
+				}
 
-			break;
+				break;
+			}
+	#endif
 		}
-#endif		
 	}
 	
 	float lerp( float a, float b, float t )
@@ -1077,53 +1100,72 @@ struct GameScreen : public virtual IScreen
 			camera.move_right( params.step_interval_seconds );
 		}
 #endif
-
-		for( int i = 0; i < MAX_ENTITIES; ++i )
+		if ( game_state == GAME_PLAY )
 		{
-			ICollisionObject * ent = &entities[i];
-			if ( active_entities[i] )
+			for( int i = 0; i < MAX_ENTITIES; ++i )
 			{
-				ent->step( kernel::instance()->parameters().step_interval_seconds );
-				
-				if ( is_within_screen(ent) )
+				ICollisionObject * ent = &entities[i];
+				if ( active_entities[i] )
 				{
-					for( int j = 0; j < MAX_ENTITIES; ++j )
+					ent->step( kernel::instance()->parameters().step_interval_seconds );
+					if ( is_within_screen(ent) )
 					{
-						if ( i != j && active_entities[j] && is_within_screen(&entities[j]) )
+						for( int j = 0; j < MAX_ENTITIES; ++j )
 						{
-							if ( ent->collides_with(&entities[j]) )
+							if ( i != j && active_entities[j] && is_within_screen(&entities[j]) )
 							{
-								ent->set_velocity(0, 0);						
-								entities[j].set_velocity(0, 0);
-								active_entities[i] = false;
-								active_entities[j] = false;
-								
-								
-								score += 1;
-								
-								audio::play( enemy_explode );
+								if ( ent->collides_with(&entities[j]) )
+								{
+									if ( player == ent || player == &entities[j] )
+									{
+										energy -= 1;
+										if ( energy <= 0 )
+										{
+											energy = 0;
+											game_state = GAME_FAIL;
+										}
+										
+										if ( player == ent )
+										{
+											active_entities[j] = false;
+										}
+										else
+										{
+											active_entities[i] = false;
+										}
+									}
+									else
+									{
+										ent->set_velocity(0, 0);
+										entities[j].set_velocity(0, 0);
+										active_entities[i] = false;
+										active_entities[j] = false;
+										score += 1;
+										audio::play( enemy_explode );
+									}
+								}
 							}
 						}
 					}
 				}
 			}
-		}
-		
-		
+			
+			
 
-				
-		//
-		MovementCommand command;
-		command.up = input::state()->keyboard().is_down( input::KEY_W );
-		command.down = input::state()->keyboard().is_down( input::KEY_S );
-		command.left = input::state()->keyboard().is_down( input::KEY_A );
-		command.right = input::state()->keyboard().is_down( input::KEY_D );
-		
-		// move player
-		move_sprite_with_command( *player, command );
-		
-		// constrain the player within the bounds of the window
-		constrain_to_screen( *player );
+					
+			//
+			MovementCommand command;
+			command.up = input::state()->keyboard().is_down( input::KEY_W );
+			command.down = input::state()->keyboard().is_down( input::KEY_S );
+			command.left = input::state()->keyboard().is_down( input::KEY_A );
+			command.right = input::state()->keyboard().is_down( input::KEY_D );
+			
+			// move player
+			move_sprite_with_command( *player, command );
+			
+			// constrain the player within the bounds of the window
+			constrain_to_screen( *player );
+		}
 	}
 	
 	virtual const char * name() const
