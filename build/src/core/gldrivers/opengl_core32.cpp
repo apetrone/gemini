@@ -30,7 +30,6 @@
 
 #include "assets.hpp"
 
-
 // utility functions
 GLenum image_to_source_format( int num_channels )
 {
@@ -65,12 +64,6 @@ GLenum image_to_internal_format( unsigned int image_flags )
 	return GL_RGBA;
 } // image_to_internal_format
 
-enum GL32DrawCallType
-{
-	DCT_ELEMENTS,
-	DCT_ARRAYS
-}; // GL32DrawCallType
-
 #define FAIL_IF_GLERROR( error ) if ( error != GL_NO_ERROR ) { return false; }
 using namespace renderer;
 
@@ -96,6 +89,13 @@ struct GL32VertexBuffer : public VertexBuffer
 	GLenum gl_draw_type;
 	unsigned int vertex_stride;
 	
+	GL32VertexBuffer()
+	{
+		vertex_stride = 0;
+		gl_draw_type = 0;
+		gl_buffer_type = 0;
+	}
+	
 	void allocate( renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type )
 	{
 		vao[ VAO_INTERLEAVED ] = 0;
@@ -112,10 +112,12 @@ struct GL32VertexBuffer : public VertexBuffer
 		gl.GenVertexArrays( VAO_LIMIT, this->vao );
 		gl.CheckError( "GenVertexArrays" );
 		
+		gl.GenBuffers( VBO_LIMIT, this->vbo );
+		gl.CheckError( "GenBuffers" );
+		
 		gl.BindVertexArray( this->vao[ VAO_INTERLEAVED ] );
 		gl.CheckError( "BindVertexArray" );
-		
-		gl.GenBuffers( VBO_LIMIT, this->vbo );
+				
 		gl.BindBuffer( GL_ARRAY_BUFFER, this->vbo[0] );
 		gl.CheckError( "BindBuffer" );
 		
@@ -139,7 +141,7 @@ struct GL32VertexBuffer : public VertexBuffer
 		unsigned int attribSize = 0;
 		unsigned int num_elements = 0;
 		unsigned int normalized = 0;
-		unsigned int offset = 0;
+		size_t offset = 0;
 		
 		for( unsigned int i = 0; i < descriptor.attribs; ++i )
 		{
@@ -182,9 +184,10 @@ struct GL32VertexBuffer : public VertexBuffer
 			++attribID;
 		}
 		
+		gl.BindVertexArray( 0 );
 		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-		gl.BindVertexArray( 0 );
+		
 	}
 	
 	void upload_interleaved_data( const GLvoid * data, unsigned int vertex_count )
@@ -232,13 +235,11 @@ GLCore32::~GLCore32()
 	gemgl_shutdown( gl );
 }
 
-
-
 void c_shader( MemoryStream & stream, GLCore32 & renderer )
 {
 	ShaderProgram shader_program;
 	stream.read( shader_program.object );
-	
+
 	renderer.shaderprogram_activate( shader_program );
 }
 
@@ -251,7 +252,7 @@ void p_shader( MemoryStream & stream, GLCore32 & renderer )
 }
 
 void c_uniform_matrix4( MemoryStream & stream, GLCore32 & renderer )
-{	
+{
 	int uniform_location;
 	glm::mat4 * matrix = 0;
 	stream.read( matrix );
@@ -278,9 +279,20 @@ void c_uniform3f( MemoryStream & stream, GLCore32 & renderer )
 	float * value;
 	stream.read( uniform_location );
 	stream.read( value );
-	
+
 	gl.Uniform3fv( uniform_location, 1, value );
 	gl.CheckError( "uniform3f" );
+}
+
+void c_uniform4f( MemoryStream & stream, GLCore32 & renderer )
+{
+	int uniform_location;
+	float * value;
+	stream.read( uniform_location );
+	stream.read( value );
+
+	gl.Uniform4fv( uniform_location, 1, value );
+	gl.CheckError( "uniform4f" );
 }
 
 void c_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
@@ -292,7 +304,6 @@ void c_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 	stream.read( uniform_location );
 	stream.read( texture_unit );
 	stream.read( texture_id );
-	
 
 	//	if ( last_texture[ texture_unit ] != texture_id )
 	{
@@ -474,7 +485,7 @@ render_command_function commands[] = {
 	c_uniform3f, // uniform3f
 	c_noop,
 	
-	c_noop, // uniform4f
+	c_uniform4f, // uniform4f
 	c_noop,
 	
 	c_uniform_sampler2d, // uniform_sampler_2d
@@ -645,27 +656,6 @@ bool GLCore32::texture_update( renderer::TextureParameters & parameters )
 	return true;
 } // texture_update
 
-void GLCore32::render_font( int x, int y, renderer::Font & font, const char * utf8_string, const Color & color )
-{
-	/*
-	1. update buffers
-	2. glViewport
-	3. enable blending: GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
-	4. activate font shader
-	5. set relevant uniforms (modelview, projection, etc)
-	6. activate font texture
-	7. bind font texture
-	8. draw elements of buffer
-	9. disable blending
-	10. deactivate shader
-	11. unbind texture
-	12. reset buffer
-	*/
-} // render_font
-
-
-
-
 renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices )
 {
 	GL32VertexBuffer * stream = CREATE(GL32VertexBuffer);
@@ -703,7 +693,7 @@ void GLCore32::vertexbuffer_destroy( renderer::VertexBuffer * vertexbuffer )
 	DESTROY(GL32VertexBuffer, stream);
 } // vertexbuffer_destroy
 
-void GLCore32::vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
+void GLCore32::vertexbuffer_upload_data( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
 {
 	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	assert( stream != 0 );
@@ -752,7 +742,7 @@ void GLCore32::vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigne
 	
 	gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
 	gl.CheckError( "BindVertexArray" );
-	
+
 	gl.DrawArrays( stream->gl_draw_type, 0, num_vertices );
 	gl.CheckError( "DrawArrays" );
 
@@ -1025,6 +1015,22 @@ bool GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_p
 //		assert( link_status == 1 );
 	}
 	
+	// use GetAttribLocation to fetch the actual location after linking.
+	// this won't work with the current render system because setting up attributes
+	// doesn't use a shader.
+#if 0
+	else
+	{
+		for( unsigned int i = 0; i < parameters.total_attributes; ++i )
+		{
+			GLint attrib_location = gl.GetAttribLocation( shader_program.object, parameters.attributes[i].first );
+			
+			LOGV( "attrib: %s -> %i\n", parameters.attributes[i].first, attrib_location );
+			parameters.attributes[i].second = attrib_location;
+		}
+	}
+#endif
+
 #if 0
 	GLsizei objects = 128;
 	GLuint shader_names[ 128 ] = {0};

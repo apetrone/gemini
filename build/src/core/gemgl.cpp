@@ -7,7 +7,7 @@
 
 gemgl_interface_t gl;
 
-typedef const GLubyte * (*gemgl_GLGETSTRINGPROC)( GLenum param );
+typedef const GLubyte * (GEMGLAPI gemgl_GLGETSTRINGPROC)( GLenum param );
 
 GLenum gemgl_check_error( const char * msg )
 {
@@ -21,6 +21,7 @@ GLenum gemgl_check_error( const char * msg )
 			case GL_INVALID_ENUM: errorMessage = "GL_INVALID_ENUM"; break;
 			case GL_INVALID_OPERATION: errorMessage = "GL_INVALID_OPERATION"; break;
 			case GL_INVALID_VALUE: errorMessage = "GL_INVALID_VALUE"; break;
+			case GL_OUT_OF_MEMORY: errorMessage = "GL_OUT_OF_MEMORY"; break;
 			default: break;
 		}
 
@@ -82,7 +83,7 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	int minor = 0;
 	
 	
-#if _WIN32 || LINUX
+#if _WIN32 || LINUX || __ANDROID__
 	const char * libName = "";
 
 #if _WIN32
@@ -313,6 +314,7 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	
 	// attrib
 	GEMGL_LINK( gl.GetActiveAttrib, "glGetActiveAttrib", GEMGLFNGETACTIVEATTRIB );
+	GEMGL_LINK( gl.GetAttribLocation, "glGetAttribLocation", GEMGLFNGETATTRIBLOCATION );
 	GEMGL_LINK( gl.BindAttribLocation, "glBindAttribLocation", GEMGLFNBINDATTRIBLOCATION );
 	GEMGL_LINK( gl.BindFragDataLocation, "glBindFragDataLocation", GEMGLFNBINDFRAGDATALOCATION );
 	
@@ -411,13 +413,32 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 
 	GEMGL_LINK( gl.GetString, "glGetString", GEMGLFNGETSTRING );
 
+	// state queries
+	GEMGL_LINK( gl.GetBooleanv, "glGetBooleanv", GEMGLFNGETBOOLEANV );
+	GEMGL_LINK( gl.GetIntegerv, "glGetIntegerv", GEMGLFNGETINTEGERV );
+	GEMGL_LINK( gl.GetFloatv, "glGetFloatv", GEMGLFNGETFLOATV );
+
 	// link internal functions
 	gl.CheckError = gemgl_check_error;
-	
-	LOGV( "GL_VENDOR: %s\n", gl.GetString(GL_VENDOR));
-	LOGV( "GL_RENDERER: %s\n", gl.GetString( GL_RENDERER ));
-	LOGV( "GL_VERSION: %s\n", gl.GetString( GL_VERSION ));
-	LOGV( "GL_SHADING_LANGUAGE_VERSION: %s\n", gl.GetString( GL_SHADING_LANGUAGE_VERSION));
+
+	assert( gl.GetString != 0 );
+	if ( gl.GetString )
+	{
+		LOGV( "GL_VENDOR: %s\n", gl.GetString(GL_VENDOR) );
+		gl.CheckError( "glGetString" );
+		
+		LOGV( "GL_RENDERER: %s\n", gl.GetString(GL_RENDERER) );
+		gl.CheckError( "glGetString" );
+		
+		LOGV( "GL_VERSION: %s\n", gl.GetString(GL_VERSION) );
+		gl.CheckError( "glGetString" );
+		
+		LOGV( "GL_SHADING_LANGUAGE_VERSION: %s\n", gl.GetString(GL_SHADING_LANGUAGE_VERSION) );
+		gl.CheckError( "glGetString" );
+		
+		LOGV( "GL_EXTENSIONS: %s\n", gl.GetString(GL_EXTENSIONS) );
+		gl.CheckError( "glGetString" );
+	}
 
 	return 1;
 } // gl_startup
@@ -435,9 +456,13 @@ void * gemgl_findsymbol( gemgl_interface_t & gl_interface, const char * name )
 	ptr = (void*)glXGetProcAddress( (const GLubyte*)name );
 #elif __APPLE__
 	ptr = gemgl_native_findsymbol( name );
+#elif __ANDROID__
+	// fall through
+#else
+	#error Unknown platform!
 #endif
 
-#if _WIN32 || LINUX
+#if _WIN32 || LINUX || __ANDROID__
 	if ( !ptr )
 	{
 		ptr = xlib_find_symbol( &gl_interface.library, name );
@@ -459,7 +484,7 @@ void * gemgl_findsymbol( gemgl_interface_t & gl_interface, const char * name )
 
 void gemgl_shutdown( gemgl_interface_t & gl_interface  )
 {
-#if _WIN32 || LINUX
+#if _WIN32 || LINUX || __ANDROID__
 	xlib_close( &gl_interface.library );
 #elif __APPLE__
 	gemgl_osx_shutdown();
@@ -488,7 +513,7 @@ const char * gemgl_uniform_to_string( GLenum type )
 		case GL_SAMPLER_2D			: return "GL_SAMPLER_2D"; break;
 		case GL_SAMPLER_CUBE		: return "GL_SAMPLER_CUBE"; break;
 			
-#if !TARGET_OS_IPHONE
+#if !TARGET_OS_IPHONE && !defined(__ANDROID__)
 		case GL_SAMPLER_1D			: return "GL_SAMPLER_1D"; break;					
 		case GL_SAMPLER_3D			: return "GL_SAMPLER_3D"; break;					
 		case GL_SAMPLER_1D_SHADOW	: return "GL_SAMPLER_1D_SHADOW"; break;

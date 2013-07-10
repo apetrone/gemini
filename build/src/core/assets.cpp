@@ -51,9 +51,9 @@ namespace assets
 	
 	AssetLoadStatus texture_load_callback( const char * path, Texture * texture, unsigned int flags )
 	{
-		unsigned int texture_id;
-		unsigned int width;
-		unsigned int height;
+		unsigned int texture_id = 0;
+		unsigned int width = 0;
+		unsigned int height = 0;
 		
 		bool load_result = 0;
 		
@@ -103,6 +103,11 @@ namespace assets
 		
 		return _default_texture;
 	} // load_texture
+	
+	Texture * texture_by_id( unsigned int id )
+	{
+		return texture_lib->find_with_id( id );
+	} // texture_by_id
 	
 	// -------------------------------------------------------------
 	// Shader
@@ -339,8 +344,16 @@ namespace assets
 		xtime_startup( &t );
 		float start = xtime_msec( &t );
 		
+		_shader_permutations = CREATE(ShaderPermutations);
+		
+#if PLATFORM_IS_MOBILE
+		const char permutations_config[] = "conf/mobile_permutations.conf";
+#else
+		const char permutations_config[] = "conf/shader_permutations.conf";
+#endif
+		
 		ShaderPermutations & permutations = shader_permutations();
-		if ( !util::json_load_with_callback("conf/shader_permutations.conf", load_shader_permutations, &shader_permutations(), true ) )
+		if ( !util::json_load_with_callback(permutations_config, load_shader_permutations, &shader_permutations(), true))
 		{
 			LOGE( "Unable to load shader permutations config\n" );
 		}
@@ -362,13 +375,13 @@ namespace assets
 		for( int i = 0; i < permutations.num_attributes; ++i, ++pid )
 		{
 			permutations.options[pid] = &permutations.attributes[i];
-			LOGV( "option: \"%s\", mask_value: %i\n", permutations.options[pid]->name.c_str(), permutations.options[pid]->mask_value );
+//			LOGV( "option: \"%s\", mask_value: %i\n", permutations.options[pid]->name.c_str(), permutations.options[pid]->mask_value );
 		}
 		
 		for( int i = 0; i < permutations.num_uniforms; ++i, ++pid )
 		{
 			permutations.options[pid] = &permutations.uniforms[i];
-			LOGV( "option: \"%s\", mask_value: %i\n", permutations.options[pid]->name.c_str(), permutations.options[pid]->mask_value );
+//			LOGV( "option: \"%s\", mask_value: %i\n", permutations.options[pid]->name.c_str(), permutations.options[pid]->mask_value );
 		}
 
 
@@ -523,8 +536,10 @@ namespace assets
 			unsigned int total_uniforms = uniform_list.size();
 			
 			// copy attributes
-			shader->attributes = CREATE_ARRAY( renderer::ShaderKeyValuePair, total_attributes );
-			shader->total_attributes = total_attributes;
+			//shader->attributes = CREATE_ARRAY( renderer::ShaderKeyValuePair, total_attributes );
+			//shader->total_attributes = total_attributes;
+			shader->alloc_attributes( total_attributes );
+//			LOGV( "A shader->attributes: %p\n", shader->attributes );
 			for( int attrib_id = 0; attrib_id < total_attributes; ++attrib_id )
 			{
 				ShaderKeyValuePair * kp = &shader->attributes[ attrib_id ];
@@ -533,8 +548,10 @@ namespace assets
 			}
 			
 			// setup uniforms
-			shader->uniforms = CREATE_ARRAY( renderer::ShaderKeyValuePair, total_uniforms );
-			shader->total_uniforms = total_uniforms;
+			//shader->uniforms = CREATE_ARRAY( renderer::ShaderKeyValuePair, total_uniforms );
+			//shader->total_uniforms = total_uniforms;
+			shader->alloc_uniforms( total_uniforms );
+//			LOGV( "A shader->uniforms: %p\n", shader->uniforms );
 			for( int uniform_id = 0; uniform_id < total_uniforms; ++uniform_id )
 			{
 				ShaderKeyValuePair * kp = &shader->uniforms[ uniform_id ];
@@ -636,7 +653,10 @@ namespace assets
 			
 			shader_object = renderer::driver()->shaderobject_create( type );
 			
-			renderer::driver()->shaderobject_compile( shader_object, buffer, preprocessor_defines, version() );
+			if ( !renderer::driver()->shaderobject_compile( shader_object, buffer, preprocessor_defines, version()) )
+			{
+				LOGE( "Error compiling shader %s\n", shader_path );
+			}
 			
 			DEALLOC(buffer);
 		}
@@ -650,8 +670,18 @@ namespace assets
 	
 	void load_shader( const char * shader_path, Shader * shader )
 	{
+		LOGV( "loading shader '%s'\n", shader_path );
 		StackString<MAX_PATH_SIZE> filename = shader_path;
 		renderer::ShaderParameters params;
+		
+		renderer::ShaderProgram shader_program;
+		shader_program.object = 0;
+		if (!renderer::driver())
+		{
+			LOGW( "Renderer is not initialized!\n" );
+			return;
+		}
+		renderer::driver()->shaderprogram_deactivate( shader_program );
 		
 		renderer::ShaderProgram program = renderer::driver()->shaderprogram_create( params );
 		shader->object = program.object;
@@ -667,9 +697,15 @@ namespace assets
 		renderer::driver()->shaderprogram_attach( *shader, fragment_shader );
 	
 		renderer::driver()->shaderprogram_bind_attributes( *shader, *shader );
-		renderer::driver()->shaderprogram_link_and_validate( *shader, *shader );
+		if ( renderer::driver()->shaderprogram_link_and_validate( *shader, *shader ) )
+		{
+			renderer::driver()->shaderprogram_activate( *shader );
+			renderer::driver()->shaderprogram_bind_uniforms( *shader, *shader );
+			renderer::driver()->shaderprogram_deactivate( *shader );
+		}
 		
-		renderer::driver()->shaderprogram_bind_uniforms( *shader, *shader );
+		renderer::driver()->shaderprogram_detach( *shader, vertex_shader );
+		renderer::driver()->shaderprogram_detach( *shader, fragment_shader );
 		
 		renderer::driver()->shaderobject_destroy( vertex_shader );
 		renderer::driver()->shaderobject_destroy( fragment_shader );
@@ -706,7 +742,7 @@ namespace assets
 		shader->attributes[0].set_key( "in_position" ); shader->attributes[0].second = 0;
 		shader->attributes[1].set_key( "in_color" ); shader->attributes[1].second = 1;
 		shader->attributes[2].set_key( "in_uv" ); shader->attributes[2].second = 2;
-		
+
 		
 		renderer::driver()->shaderprogram_bind_attributes( *shader, *shader );
 		renderer::driver()->shaderprogram_link_and_validate( *shader, *shader );
@@ -736,11 +772,6 @@ namespace assets
 			DESTROY_ARRAY(Parameter, parameters, num_parameters);
 		}
 	} // release
-	
-	unsigned int Material::Id() const
-	{
-		return asset_id;
-	} // Id
 
 	void Material::calculate_requirements()
 	{
@@ -773,7 +804,29 @@ namespace assets
 		}
 		
 		return parameter;
-	}
+	} // parameter_by_name
+	
+	void Material::allocate_parameters( unsigned int max_parameters )
+	{
+		if ( this->parameters )
+		{
+			DESTROY_ARRAY(Parameter, parameters, this->num_parameters);
+		}
+		
+		this->num_parameters = max_parameters;
+		this->parameters = CREATE_ARRAY(Parameter, max_parameters);
+	} // allocate_parameters
+	
+	void Material::set_parameter_name( unsigned int id, const char * name )
+	{
+		this->parameters[id].name = name;
+	} // set_parameter_name
+	
+	void Material::set_parameter_vec4( unsigned int id, const glm::vec4 & vec )
+	{
+		this->parameters[id].vecValue = vec;
+		this->parameters[id].type = MP_VEC4;
+	} // set_parameter_vec4
 	
 	Material * material_by_id( unsigned int id )
 	{
@@ -810,7 +863,6 @@ namespace assets
 		Json::Value type = root["type"];
 		Json::Value shader = root["shader"];
 		
-		unsigned int texture_flags = image::F_RGBA;
 		material->flags = 0;
 		material->num_parameters = 0;
 		material->parameters = 0;
@@ -826,12 +878,10 @@ namespace assets
 		{
 			if ( type.asString() == "alpha" )
 			{
-				texture_flags |= image::F_ALPHA;
 				material->flags |= Material::BLENDING;
 			}
 			else if ( type.asString() == "cubemap" )
 			{
-				texture_flags = image::F_RGBA | image::F_CLAMP;
 				material->flags |= Material::CUBEMAP;
 			}
 		}
@@ -877,7 +927,7 @@ namespace assets
 					Json::Value value = plist.get( "value", "" );
 					if ( !value.isNull() )
 					{
-						param_flags |= PF_VALUE;
+//						param_flags |= PF_VALUE;
 						parameter->intValue = atoi( value.asString().c_str() );
 //						LOGV( "param value: %i\n", parameter->intValue );
 					}
@@ -898,7 +948,7 @@ namespace assets
 					if ( param_flags & PF_VALUE )
 					{
 						assets::Texture * tex = assets::load_texture( texture_param.asString().c_str() );
-						parameter->intValue = tex->texture_id;
+						parameter->intValue = tex->Id();
 						LOGV( "param value: %i\n", parameter->intValue );
 						
 						parameter->texture_unit = texture_unit_for_map( parameter->name );
@@ -931,7 +981,7 @@ namespace assets
 					if ( param_flags & PF_VALUE )
 					{
 						assets::Texture * tex = assets::load_texture( texture_param.asString().c_str() );
-						parameter->intValue = tex->texture_id;
+						parameter->intValue = tex->Id();
 //						LOGV( "param value: %i\n", parameter->intValue );
 						
 						parameter->texture_unit = texture_unit_for_map( parameter->name );
@@ -962,12 +1012,12 @@ namespace assets
 					
 					if ( param_flags & PF_VALUE )
 					{
-						texture_flags = image::F_RGBA | image::F_CLAMP;
-						assets::Texture * tex = 0; //assets::loadCubemap( texture_param.asString().c_str(), texture_flags );
-						parameter->intValue = tex->texture_id;
+						LOGW( "cubemap not implemented!\n" );
+//						assets::Texture * tex = 0; //assets::loadCubemap( texture_param.asString().c_str(), texture_flags );
+//						parameter->intValue = tex->Id();
 //						LOGV( "param value: %i\n", parameter->intValue );
 						
-						parameter->texture_unit = texture_unit_for_map( parameter->name );
+//						parameter->texture_unit = texture_unit_for_map( parameter->name );
 //						LOGV( "texture unit: %i\n", parameter->texture_unit );
 					}
 					else
@@ -977,11 +1027,11 @@ namespace assets
 				}
 				else if ( parameter->type == MP_VEC4 )
 				{
-					param_flags |= PF_VALUE;
+//					param_flags |= PF_VALUE;
 					Json::Value value = plist.get( "value", Json::nullValue );
 					if ( value.isNull() )
 					{
-						param_flags &= ~PF_VALUE;
+//						param_flags &= ~PF_VALUE;
 						LOGW( "Unable to find value for \"vec4\" type\n" );
 					}
 					else
@@ -990,7 +1040,7 @@ namespace assets
 						if ( results < 4 )
 						{
 							LOGW( "Unable to parse \"vec4\" type\n" );
-							param_flags &= ~PF_VALUE;
+//							param_flags &= ~PF_VALUE;
 						}
 						else
 						{
@@ -1087,13 +1137,20 @@ namespace assets
 	
 	unsigned int find_parameter_mask( ShaderString & name )
 	{
-		for( unsigned int option_id = 0; option_id < shader_permutations().num_permutations; ++option_id )
+		// TODO: need to validate the name here against the
+		// parameter names in permutations config file.
+	
+	
+		if ( _shader_permutations != 0 )
 		{
-			ShaderPermutationGroup * option = shader_permutations().options[ option_id ];
-			if ( xstr_nicmp( (const char*)name.c_str(), option->name.c_str(), 64 ) == 0 )
+			for( unsigned int option_id = 0; option_id < shader_permutations().num_permutations; ++option_id )
 			{
-//				LOGV( "mask for %s is %i\n", name.c_str(), option->mask_value );
-				return (1 << option->mask_value);
+				ShaderPermutationGroup * option = shader_permutations().options[ option_id ];
+				if ( xstr_nicmp( (const char*)name.c_str(), option->name.c_str(), 64 ) == 0 )
+				{
+	//				LOGV( "mask for %s is %i\n", name.c_str(), option->mask_value );
+					return (1 << option->mask_value);
+				}
 			}
 		}
 		return 0;
@@ -1177,7 +1234,7 @@ namespace assets
 		
 		Geometry * geometry;
 		int gid = 0;
-		int vnid = 0;
+//		int vnid = 0;
 		Json::ValueIterator git = geometry_list.begin();
 		for( ; git != geometry_list.end(); ++git )
 		{
@@ -1520,22 +1577,13 @@ namespace assets
 
 namespace assets
 {
-	void startup()
+	void load_default_texture_and_material()
 	{
-		// allocate asset libraries
-		texture_lib = CREATE(TextureAssetLibrary, texture_load_callback);
-		mesh_lib = CREATE(MeshAssetLibrary, mesh_load_callback);
-		mat_lib = CREATE(MaterialAssetLibrary, material_load_callback );
-		
 		// setup default texture
 		_default_texture = texture_lib->allocate_asset();
 		_default_texture->texture_id = image::load_default_texture();
 		texture_lib->take_ownership("textures/default", _default_texture);
-		LOGV( "Loaded default texture; id = %i\n", _default_texture->texture_id );
-			
-		// load shader permutations
-		_shader_permutations = CREATE( ShaderPermutations );
-		compile_shader_permutations();
+		LOGV( "Loaded default texture; id = %i, asset_id = %i\n", _default_texture->texture_id, _default_texture->asset_id );
 		
 		// setup default material
 		_default_material = mat_lib->allocate_asset();
@@ -1545,10 +1593,25 @@ namespace assets
 		parameter->name = "diffusemap";
 		parameter->type = MP_SAMPLER_2D;
 		parameter->texture_unit = texture_unit_for_map( parameter->name );
-		parameter->intValue = _default_texture->texture_id;
+		parameter->intValue = _default_texture->Id();
 		_default_material->calculate_requirements();
 		mat_lib->take_ownership( "materials/default", _default_material );
+		LOGV( "Loaded default materials; asset_id = %i\n", _default_material->asset_id );
 		
+	} // load_default_texture_and_material
+
+
+	void startup()
+	{
+		// allocate asset libraries
+		texture_lib = CREATE(TextureAssetLibrary, texture_load_callback);
+		mesh_lib = CREATE(MeshAssetLibrary, mesh_load_callback);
+		mat_lib = CREATE(MaterialAssetLibrary, material_load_callback );
+
+		// load shader permutations
+		compile_shader_permutations();
+
+		load_default_texture_and_material();
 	} // startup
 	
 	void purge()
@@ -1561,7 +1624,6 @@ namespace assets
 		}
 	
 		DESTROY_ARRAY( Shader, _shader_programs, total_shaders );
-		_shader_programs = 0;
 		DESTROY( ShaderPermutations, _shader_permutations );
 		
 		if ( texture_lib )
@@ -1578,7 +1640,7 @@ namespace assets
 		{
 			mat_lib->release_and_purge();
 		}
-
+		
 	} // purge
 	
 	void shutdown()
@@ -1587,6 +1649,9 @@ namespace assets
 		DESTROY(TextureAssetLibrary, texture_lib);
 		DESTROY(MeshAssetLibrary, mesh_lib);
 		DESTROY(MaterialAssetLibrary, mat_lib);
+		
+		_default_material = 0;
+		_default_texture = 0;
 	} // shutdown
 
 	void append_asset_extension( AssetType type, StackString<MAX_PATH_SIZE> & path )
@@ -1598,13 +1663,12 @@ namespace assets
 		{
 			case SoundAsset:
 			{
-#if PLATFORM_IS_MOBILE
+#if __APPLE__ && PLATFORM_IS_MOBILE
 				if ( (device_flags & kernel::DeviceiPad) || (device_flags & kernel::DeviceiPhone) )
 				{
 					extension = "caf";
 				}
 #else
-				;
 				extension = "ogg";
 #endif
 				break;
@@ -1612,7 +1676,7 @@ namespace assets
 			
 			case TextureAsset:
 			{
-				if ( device_flags & kernel::DeviceDesktop )
+				if ( device_flags & kernel::DeviceDesktop || (device_flags & kernel::DeviceAndroid) )
 				{
 					// ...
 					extension = "png";

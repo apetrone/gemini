@@ -21,18 +21,60 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include "audio.hpp"
-#include "openal.hpp"
 #include "log.h"
 #include "stackstring.hpp"
 #include "filesystem.hpp"
 #include "assets.hpp"
+#include "factory.hpp"
 
 #if !PLATFORM_IS_MOBILE
+	#include "openal.hpp"
 	#include "openal_vorbis_decoder.hpp"
 	typedef stb_vorbis_decoder AudioDecoderType;
-#else
+	#define DRIVER_NAME "OpenAL"
+	#define DRIVER_CREATOR OpenAL::creator
+
+#elif __APPLE__ && PLATFORM_IS_MOBILE
 	#include "audio_extaudio_decoder.hpp"
+	#include "openal.hpp"
 	typedef ExtAudioDecoder AudioDecoderType;
+	#define DRIVER_NAME "OpenAL"
+	#define DRIVER_CREATOR OpenAL::creator
+#elif __ANDROID__
+	#define DRIVER_NAME "OpenSLES"
+
+	using namespace audio;
+	class OpenSLES : public audio::IAudioDriver
+	{
+		DECLARE_FACTORY_CLASS( OpenSLES, audio::IAudioDriver );
+	public:
+		OpenSLES() {};
+		~OpenSLES() {};
+		
+		virtual void event( audio::EventType event ) {};
+		virtual void prepare_source( AudioSource * source ) {};
+		virtual void play_source( AudioSource * source ) {};
+		virtual void update_source( AudioSource * source ) {};
+		virtual void stop_source( AudioSource * source ) {};
+		virtual void clean_source( AudioSource * source ) {};
+	}; // OpenSLES
+
+
+	#define DRIVER_CREATOR OpenSLES::creator
+	class AndroidDecoderNoop : public IAudioDecoder
+	{
+	public:
+		virtual void reset() {}
+		virtual int decode( void * data, int data_length ) { return 0; }
+		virtual int open( unsigned char * data, int data_length ) { return 0; }
+		virtual void close() {}
+		virtual int channels() { return 0; }
+		virtual int frequency() { return 0; }
+		virtual void rewind() {}
+	};
+	typedef AndroidDecoderNoop AudioDecoderType;
+#else
+	#error Unknown platform!
 #endif
 
 namespace audio
@@ -193,9 +235,10 @@ namespace audio
 		typedef Factory<IAudioDriver, 4> AudioDriverFactory;
 		AudioDriverFactory factory;
 		
-		factory.register_class( OpenAL::creator, "OpenAL" );
+		
+		factory.register_class( DRIVER_CREATOR, DRIVER_NAME );
 
-		AudioDriverFactory::Record * record = factory.find_class( "OpenAL" );
+		AudioDriverFactory::Record * record = factory.find_class( DRIVER_NAME );
 		if ( record )
 		{
 			_audio_driver = record->creator();

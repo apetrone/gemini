@@ -97,6 +97,12 @@
 		#define PLATFORM_NAME "macosx"
 		#define PLATFORM_MACOSX 1
 	#endif
+#elif __ANDROID__
+	#define PLATFORM_NAME "Android"
+	#define PLATFORM_ANDROID 1
+	#define PLATFORM_IS_MOBILE 1
+#else
+	#error Unknown platform!
 #endif
 
 // disable some warnings

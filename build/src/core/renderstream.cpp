@@ -27,11 +27,21 @@
 #include <stdio.h> // for printf
 #include "log.h"
 	
-RenderStream::RenderStream()
+RenderStream::RenderStream( unsigned int max_bytes, unsigned int max_commands )
 {
 	num_commands = 0;
 	stream.init( buffer, MAX_RENDERER_STREAM_BYTES );
 }
+
+void RenderStream::save_offset( long & offset )
+{
+	offset = stream.offset_pointer();
+} // save_offset
+
+void RenderStream::load_offset( long offset )
+{
+	stream.seek( offset, true );
+} // load_offset
 
 void RenderStream::rewind()
 {
@@ -56,6 +66,10 @@ void RenderStream::run_commands()
 {
 	RenderState * renderstate;
 	renderer::IRenderDriver * driver = renderer::driver();
+	if ( !driver )
+	{
+		return;
+	}
 
 	for( int state_id = 0; state_id < num_commands; state_id++ )
 	{
@@ -138,7 +152,7 @@ void RenderStream::add_blendfunc( renderer::RenderBlendType source, renderer::Re
 	stream.write( destination );
 }
 
-void RenderStream::RenderStream::add_shader( renderer::ShaderProgram * shader )
+void RenderStream::add_shader( renderer::ShaderProgram * shader )
 {
 	add_command( renderer::DC_SHADER );
 	stream.write( shader->object );
@@ -147,6 +161,13 @@ void RenderStream::RenderStream::add_shader( renderer::ShaderProgram * shader )
 void RenderStream::add_uniform3f( int location, const glm::vec3 * data )
 {
 	add_command( renderer::DC_UNIFORM3f );
+	stream.write( location );
+	stream.write( data );
+}
+
+void RenderStream::add_uniform4f( int location, const glm::vec4 * data )
+{
+	add_command( renderer::DC_UNIFORM4f );
 	stream.write( location );
 	stream.write( data );
 }
@@ -183,17 +204,27 @@ void RenderStream::add_material( assets::Material * material, assets::Shader * s
 		{
 			add_uniform1i( uniform_location, parameter->intValue );
 		}
-		else if ( renderstate == renderer::DC_UNIFORM3f || renderstate == renderer::DC_UNIFORM4f )
+		else if ( renderstate == renderer::DC_UNIFORM3f )
 		{
+			assert(renderstate == renderer::DC_UNIFORM3f);
 			add_uniform3f( uniform_location, (glm::vec3*)&parameter->vecValue );
+		}
+		else if ( renderstate == renderer::DC_UNIFORM4f )
+		{
+			add_uniform4f( uniform_location, (glm::vec4*)&parameter->vecValue );
 		}
 		else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_2D )
 		{
-			add_sampler2d( uniform_location, parameter->texture_unit, parameter->intValue );
+			assets::Texture * texture = assets::texture_by_id( parameter->intValue );
+			if ( texture )
+			{
+				add_sampler2d( uniform_location, parameter->texture_unit, texture->texture_id );
+			}
 		}
 		else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_CUBE )
 		{
 			// ...
 		}
+
 	}
 }

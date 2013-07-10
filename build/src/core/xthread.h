@@ -39,7 +39,7 @@ USAGE:
 #if _WIN32
 	#include <windows.h>
 	#include <process.h> // for _beginxthreadex
-#elif LINUX || __APPLE__
+#elif LINUX || __APPLE__ || __ANDROID__
 	#include <pthread.h>
 	#include <unistd.h>
 	#include <sys/types.h>
@@ -50,7 +50,7 @@ USAGE:
 #if _WIN32
 	typedef unsigned int (__stdcall *xthread_entry)( void * );
 	#define XTHREAD_ENTRY unsigned int __stdcall
-#elif LINUX || __APPLE__
+#elif LINUX || __APPLE__ || __ANDROID__
 	typedef void * (*xthread_entry)( void * );
 	#define XTHREAD_ENTRY void *
 #endif
@@ -71,7 +71,7 @@ typedef struct xthread_s
 #if _WIN32
 	unsigned int id;
 	HANDLE handle;
-#elif LINUX || __APPLE__
+#elif LINUX || __APPLE__ || __ANDROID__
 	pthread_t handle;
 	pthread_attr_t attribs;
 #endif
@@ -110,7 +110,7 @@ typedef struct xmutex_s
 {
 #if _WIN32
 	CRITICAL_SECTION cs;
-#elif LINUX || __APPLE__
+#elif LINUX || __APPLE__ || __ANDROID__
 	pthread_mutex_t handle;
 	pthread_mutexattr_t attribs;
 #endif

@@ -10,7 +10,7 @@ class yajl(Builder):
 
 	def config(self, builder, driver, project, args):
 		outdir = "lib/%s/%s" % (args['architecture'], args['configuration'])
-		builder.setOutput( path=outdir, name="yajl", type=Builder.DynamicLibrary )
+		builder.addOutput( path=outdir, name="yajl", type=Builder.DynamicLibrary )
 
 		
 		#driver.makefile = "%s.make" % (self.build_name)

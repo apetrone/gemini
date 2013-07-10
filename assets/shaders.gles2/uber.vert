@@ -14,7 +14,7 @@ attribute vec3 in_Position;
 	varying vec3 ps_Normal;
 #endif
 
-#if defined(D_VERTEX_COLORS) && !defined(D_DIFFUSE_COLOR) && !defined(D_DIFFUSE_MAP)
+#if defined(D_VERTEX_COLORS) && !defined(D_DIFFUSE_COLOR) //&& !defined(D_DIFFUSE_MAP)
 	attribute vec4 in_Color;
 	varying vec4 ps_Color;
 #endif
@@ -37,7 +37,7 @@ attribute vec3 in_Position;
 
 void main()
 {
-#if defined(D_VERTEX_COLORS) && !defined(D_DIFFUSE_COLOR) && !defined(D_DIFFUSE_MAP)
+#if defined(D_VERTEX_COLORS) && !defined(D_DIFFUSE_COLOR) //&& !defined(D_DIFFUSE_MAP)
 	ps_Color = in_Color;
 #endif
 

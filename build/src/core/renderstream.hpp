@@ -25,8 +25,8 @@
 #include "memorystream.hpp"
 #include "assets.hpp"
 
-const unsigned int MAX_RENDERER_STREAM_BYTES = 32768;
-const unsigned int MAX_RENDERER_STREAM_COMMANDS = 32768;
+const unsigned int MAX_RENDERER_STREAM_BYTES = 4096;
+const unsigned int MAX_RENDERER_STREAM_COMMANDS = 2048;
 
 struct RenderState
 {
@@ -41,7 +41,10 @@ struct RenderStream
 	unsigned int num_commands;
 	MemoryStream stream;
 	
-	RenderStream();
+	RenderStream( unsigned int max_bytes = MAX_RENDERER_STREAM_BYTES, unsigned int max_commands = MAX_RENDERER_STREAM_COMMANDS );
+	
+	void save_offset( long & offset );
+	void load_offset( long offset );
 	
 	void rewind();
 	RenderState * new_render_state();
@@ -55,7 +58,8 @@ struct RenderStream
 	void add_state( renderer::DriverState state, int enable );
 	void add_blendfunc( renderer::RenderBlendType source, renderer::RenderBlendType destination );
 	void add_shader( renderer::ShaderProgram * shader );	
-	void add_uniform3f( int location, const glm::vec3 * data );	
+	void add_uniform3f( int location, const glm::vec3 * data );
+	void add_uniform4f( int location, const glm::vec4 * data );
 	void add_uniform_matrix4( int location, const glm::mat4 * data );	
 	void add_draw_call( renderer::VertexBuffer * vertexbuffer );
 	void add_material( assets::Material * material, assets::Shader * shader );

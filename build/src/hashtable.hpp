@@ -65,7 +65,7 @@ private:
 			{
 				DEALLOC(key);
 				Bucket * bucket = next;
-				Bucket * last = bucket;
+				Bucket * last = 0;
 				
 				while( bucket )
 				{
@@ -99,7 +99,7 @@ private:
 		return util::hash_32bit( key, xstr_len(key), HASHTABLE_SEED) & (table_size-1);
 	} // hash_for_key
 	
-	HashTable::Bucket * find_bucket( const char * key )
+	typename HashTable::Bucket * find_bucket( const char * key )
 	{
 		unsigned int hash = hash_for_key(key);
 //		LOGV( "looking for '%s'; hash is %i\n", key, hash );

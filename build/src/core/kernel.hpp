@@ -45,15 +45,16 @@ namespace kernel
 		DeviceDesktop 					= (1 << 0), // 'device' is a desktop computer
 		DeviceiPhone 					= (1 << 1), // set if this is an iPhone
 		DeviceiPad 						= (1 << 2), // set if this is an iPad
-		DeviceSupportsRetinaDisplay 	= (1 << 3), // set if this device supports retina
+		DeviceSupportsRetinaDisplay 	= (1 << 3), // set if this device supports retina,
+		DeviceAndroid					= (1 << 4), // Android-based device
 	};
 
 	// status codes for config and startup return values
 	enum ApplicationResult
 	{
-		Failure = 0,
-		Success = 1,
-		NoWindow = -1
+		Application_Failure = 0,
+		Application_Success = 1,
+		Application_NoWindow = -1
 	};
 	
 	typedef unsigned char KernelDeviceFlags;
@@ -69,7 +70,9 @@ namespace kernel
 		
 		float step_interval_seconds;
 		float step_alpha;
-	
+		float framedelta_filtered;
+		float framedelta_raw;
+		
 		// dimensions of the actual window in pixels
 		unsigned short window_width;
 		unsigned short window_height;
@@ -140,7 +143,7 @@ namespace kernel
 	#define IMPLEMENT_APPLICATION( className ) \
 		kernel::Registrar kr_##className( #className, className::create )
 	
-	Error startup( IKernel * kernel_instance, const char * application_name );
+	Error startup( IKernel * kernel_instance );
 	void shutdown();
 	void update();
 	void tick();

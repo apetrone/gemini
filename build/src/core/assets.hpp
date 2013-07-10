@@ -64,6 +64,11 @@ namespace assets
 		assets::AssetID asset_id;
 		virtual ~Asset() {}
 		virtual void release() = 0;
+		
+		inline unsigned int Id() const
+		{
+			return asset_id;
+		} // Id
 	}; // Asset
 	
 }; // namespace assets
@@ -86,6 +91,7 @@ namespace assets
 	
 	// load a texture from disk or cache. if reload_from_disk is false, cache is preferred
 	Texture * load_texture( const char * path, unsigned int flags = 0, bool ignore_cache = false );
+	Texture * texture_by_id( unsigned int id );
 	//	Texture * load_cubemap( const char * basename, unsigned int flags = 0, bool ignore_cache = false );
 	
 	// -------------------------------------------------------------
@@ -168,6 +174,7 @@ namespace assets
 	void compile_shader_permutations();
 	Shader * find_compatible_shader( unsigned int attributes );
 	
+
 //	renderer::ShaderObject create_shader_from_file( const char * shader_path, renderer::ShaderObjectType type, const char * preprocessor_defines );
 	void load_shader( const char * shader_path, Shader * shader );
 	void destroy_shader( Shader * shader );
@@ -211,13 +218,16 @@ namespace assets
 		unsigned int num_parameters;
 		unsigned int requirements; // used to lookup the correct shader permutation for this material
 		virtual void release();
-		unsigned int Id() const;
 		
 		// this will generate a value based on the parameters applied
 		// to this material such that the correct shader can be found and used when rendering
 		void calculate_requirements();
 		
 		Parameter * parameter_by_name( const char * name );
+		
+		void allocate_parameters( unsigned int max_parameters );
+		void set_parameter_name( unsigned int id, const char * name );
+		void set_parameter_vec4( unsigned int id, const glm::vec4 & vec );
 	}; // Material
 	
 	Material * material_by_id( unsigned int id );
@@ -246,7 +256,6 @@ namespace assets
 		void render_setup();
 		
 	}; // Geometry
-	
 	
 	struct Mesh : public virtual Asset
 	{

@@ -3,9 +3,9 @@ class font_stash(Builder):
 		builder = kwargs.get( "builder", None )
 		target_platform = kwargs.get( "target_platform", None )
 
-		p = Project( name="Font-Stash" )
+		p = Project( name="font-stash" )
 		builder.addProject( p )
-		builder.root = "Font-Stash"
+		builder.root = "font-stash"
 		builder.includes = ['.']
 		builder.libs = []
 

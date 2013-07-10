@@ -45,6 +45,7 @@ namespace renderer
 
 		VertexDescriptor desc;
 		
+		VertexStream();
 		void alloc( IndexType max_vertices, IndexType max_indices = 0 );
 		void reset();
 		void dealloc();

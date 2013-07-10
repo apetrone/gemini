@@ -29,11 +29,22 @@
 
 namespace renderer
 {
+	VertexStream::VertexStream()
+	{
+		total_vertices = 0;
+		total_indices = 0;
+		vertices = 0;
+		last_vertex = 0;
+		last_index = 0;
+		highest_index = 0;
+		indices = 0;
+	}
+
 	void VertexStream::alloc( IndexType max_vertices, IndexType max_indices )
 	{
 		total_vertices = max_vertices;
 		total_indices = 0;
-		vertices = new VertexType[ (vertex_stride*total_vertices) ];
+		vertices = (VertexType*)ALLOC(vertex_stride*total_vertices);
 		last_vertex = 0;
 		last_index = 0;
 		highest_index = 0;
@@ -41,7 +52,7 @@ namespace renderer
 
 		if ( max_indices > 0 )
 		{
-			indices = new IndexType[ max_indices ];
+			indices = (IndexType*)ALLOC( sizeof(IndexType) * max_indices );
 			total_indices = max_indices;
 		}
 	}
@@ -57,20 +68,20 @@ namespace renderer
 	{
 		if ( vertices )
 		{
-			delete [] vertices;
+			DEALLOC(vertices);
 			vertices = 0;
 		}
 
 		if ( indices )
 		{
-			delete [] indices;
+			DEALLOC(indices);
 			indices = 0;
 		}
 	} // dealloc
 
 	unsigned int VertexStream::bytes_used()
 	{
-		return total_vertices * vertex_stride;
+		return (total_vertices * vertex_stride) + (total_indices * sizeof(IndexType));
 	} // bytes_used
 
 	renderer::VertexType * VertexStream::request( IndexType num_vertices, int dont_advance_pointer )
@@ -155,7 +166,17 @@ namespace renderer
 	// determine if this vertexstream has room
 	bool VertexStream::has_room( unsigned int num_vertices, unsigned int num_indices ) const
 	{
-		return (num_vertices + last_vertex <= total_vertices) && (num_indices + last_index <= total_indices);
+		if ( num_vertices + last_vertex >= total_vertices )
+		{
+			return false;
+		}
+
+		if ( (total_indices > 0) && (num_indices + last_index >= total_indices) )
+		{
+			return false;
+		}
+		
+		return true;
 	} // has_room
 
 	void VertexStream::create( IndexType max_vertices, IndexType max_indices, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type )
@@ -186,8 +207,12 @@ namespace renderer
 	void VertexStream::destroy()
 	{
 		this->dealloc();
-		renderer::driver()->vertexbuffer_destroy( this->vertexbuffer );
-		this->vertexbuffer = 0;
+		if ( renderer::driver() && this->vertexbuffer )
+		{
+			renderer::driver()->vertexbuffer_destroy( this->vertexbuffer );
+			this->vertexbuffer = 0;
+		}
+		
 	} // destroy
 
 	void VertexStream::update()
@@ -197,12 +222,15 @@ namespace renderer
 			last_vertex = total_vertices-1;
 		}
 		
-		if ( last_index >= total_indices )
+		if ( (total_indices > 0) && (last_index >= total_indices) )
 		{
 			last_index = total_indices-1;
 		}
 		
-		renderer::driver()->vertexbuffer_bufferdata( this->vertexbuffer, this->vertex_stride, this->last_vertex, this->vertices, this->last_index, this->indices );
+		if ( last_vertex > 0 )
+		{
+			renderer::driver()->vertexbuffer_upload_data( this->vertexbuffer, this->vertex_stride, this->last_vertex, this->vertices, this->last_index, this->indices );
+		}
 	} // update
 
 	void VertexStream::draw_elements()
@@ -217,6 +245,10 @@ namespace renderer
 	
 	void VertexStream::fill_data( VertexType * vertex_source, unsigned int vertex_count, IndexType * index_source, unsigned int index_count )
 	{
+		// if you hit this assert, more vertices were copied to the buffer than
+		// it holds and memory is corrupt now. nicely done.
+		assert( vertex_count + this->last_vertex < total_vertices );
+		
 		memcpy( this->vertices, vertex_source, this->vertex_stride * vertex_count );
 		this->last_vertex = vertex_count;
 				

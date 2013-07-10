@@ -23,11 +23,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if LINUX
-#include <errno.h>
+#if LINUX || __ANDROID__
+	#include <errno.h>
 #endif
 
-#if LINUX || __APPLE__
+#if LINUX || __APPLE__ || __ANDROID__
 #define strnicmp strncasecmp
 #define stricmp strcasecmp
 #endif
@@ -389,7 +389,7 @@ void xnet_shutdown( void )
 
 const char * xnet_errno_string( void )
 {
-#if LINUX
+#if LINUX || __ANDROID__
     switch( errno )
     {
         case EACCES: return "EACCES";

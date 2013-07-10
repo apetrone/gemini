@@ -118,6 +118,11 @@ project ( build_name )
 				"python ../tools/blacksmith/blacksmith.py -c ../assets/desktop.conf -y"
 			}
 		else
+			includedirs
+			{
+				"/opt/vc/include"
+			}
+
 			prebuildcommands
 			{
 				"python ../tools/blacksmith/blacksmith.py -c ../assets/raspberrypi.conf -y"
@@ -158,21 +163,21 @@ project ( build_name )
 		defines { "WIN32", INDEX_TYPE }
 		files
 		{
-			"resources/windows/resources.rc",
-			"resources/windows/resource.h",
+			"resources/win32/resources.rc",
+			"resources/win32/resource.h",
 			"src/core/desktop/entry.cpp",
 			common_file_list[ "windows" ],			
 		}
 
 		links
 		{
-			"OpenGL32",
-			"OpenAL"
+			"OpenGL32"
 		}
 
 		includedirs
 		{
-			"resources/windows/"
+			"resources/windows/",
+			"src/core/win32" -- for glext.h, wglext.h
 		}
 
 
@@ -198,7 +203,12 @@ project ( build_name )
 			}			
 		end
 
-		links { "X11", "pthread", "dl", "openal" }
+		links { "pthread", "dl", "openal" }
+		if not RASPBERRYPI then
+			-- need X11 on Linux, non RaspberryPi builds.
+			links { "X11" }
+		end
+
 
 		files
 		{

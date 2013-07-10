@@ -31,7 +31,7 @@ extern "C"
 {
 #endif
 
-#if (_WIN32 || LINUX || __APPLE__)
+#if (_WIN32 || LINUX || __APPLE__ || __ANDROID__)
 
 	#include <stdio.h>
 	
@@ -100,6 +100,8 @@ extern "C"
 	{
 		return fwrite( ptr, size, count, (FILE*)handle.opaque );
 	}
+#else
+	#error Unknown platform!
 #endif
 
 

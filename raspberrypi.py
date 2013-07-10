@@ -25,7 +25,7 @@ class gemini(Builder):
 		project = kwargs.get( "project", None )
 		params = kwargs.get( "args", None )
 
-		builder.setOutput( path=construct_binpath( params ), name=self.build_name, type=self.builder_type[ target_platform ] )
+		builder.addOutput( path=construct_binpath( params ), name=self.build_name, type=self.builder_type[ target_platform ] )
 
 		if host_platform is LINUX:
 			driver.config = (params['configuration'].lower() + Premake4.archmap[ params['platform'] ][ params['build_architecture'] ])
@@ -39,7 +39,7 @@ class gemini(Builder):
 		d['depends_file'] = 'build/deps.lua'
 		d['depends_path'] = dependency_path()
 
-		desktop_dependencies = list( set(common_dependencies()) | set(["xwl/xwl_raspberrypi.py"]) )
+		desktop_dependencies = list( set(common_dependencies( target_platform )) | set(["xwl/xwl_raspberrypi.py"]) )
 
 		print( desktop_dependencies )
 		d['depends'] = desktop_dependencies

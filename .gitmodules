@@ -1,6 +1,6 @@
 [submodule "build/dependencies/murmur3"]
 	path = build/dependencies/murmur3
-	url = git://github.com/PeterScott/murmur3.git
+	url = git://github.com/apetrone/murmur3.git
 [submodule "build/dependencies/xwl"]
 	path = build/dependencies/xwl
 	url = git://github.com/apetrone/xwl.git

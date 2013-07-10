@@ -1,0 +1,12 @@
+{
+	"name" : "player",
+
+	"params":
+	{
+		"diffusemap" :
+		{
+			"type" : "sampler",
+			"texture" : "textures/ships"
+		}
+	}
+}

@@ -32,7 +32,7 @@ namespace kernel
 	Error main( IKernel * kernel_instance, const char * kernel_name )
 	{
 		// attempt kernel startup, mostly initializing core systems
-		Error error = startup( kernel_instance, kernel_name );
+		Error error = startup( kernel_instance );
 		if ( error != kernel::NoError )
 		{
 			fprintf( stderr, "Kernel startup failed with kernel code: %i\n", error );
@@ -61,10 +61,12 @@ void event_callback_xwl( xwl_event_t * e )
 {
 	if ( e->type == XWLE_KEYRELEASED || e->type == XWLE_KEYPRESSED )
 	{
+#if 0
 		if ( e->type == XWLE_KEYRELEASED && e->key == XWLK_ESCAPE )
 		{
 			kernel::instance()->set_active( false );
 		}
+#endif
 		
 		input::state()->keyboard().inject_key_event( e->key, (e->type == XWLE_KEYPRESSED), e->unicode );
 		
@@ -155,7 +157,7 @@ void DesktopKernel::post_tick()
 
 void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 {
-	set_active( (result != kernel::NoWindow) );
+	set_active( (result != kernel::Application_NoWindow) );
 	
 	if ( is_active() )
 	{

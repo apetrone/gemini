@@ -32,6 +32,8 @@
 #include "audio.hpp"
 #include "input.hpp"
 #include "assets.hpp"
+#include "configloader.hpp"
+#include "font.hpp"
 
 #if LINUX
 	#include <stdlib.h> // for qsort
@@ -152,6 +154,46 @@ namespace kernel
 			TimeStepFilter tsa;
 		};
 		
+		
+		struct BootConfig
+		{
+			StackString<64> kernel_name;
+		};
+		
+		
+		util::ConfigLoadStatus boot_conf_loader( const Json::Value & root, void * data )
+		{
+			BootConfig * cfg = (BootConfig*)data;
+			if ( !cfg )
+			{
+				return util::ConfigLoad_Failure;
+			}
+			
+			LOGV( "loading boot.conf...\n" );
+			
+			cfg->kernel_name = root["kernel_name"].asString().c_str();
+		
+		
+			return util::ConfigLoad_Success;
+		}
+		
+		bool load_boot_config( BootConfig & boot_config )
+		{
+			bool success = util::json_load_with_callback( "conf/boot.conf", boot_conf_loader, &boot_config, true );
+			if ( !success )
+			{
+				LOGV( "Unable to locate boot.conf.\n" );
+				// load sane defaults
+				boot_config.kernel_name = "HelloWorld";
+			}
+			
+			return success;
+		} // load_boot_config
+		
+		
+
+
+		
 		State _kernel_state;
 	}; // namespace _internal
 	
@@ -168,6 +210,7 @@ namespace kernel
 	core::Error load_application( const char * application_name )
 	{
 		core::Error error(0);
+		LOGV( "Loading kernel '%s'\n", application_name );
 		
 		// search for the named kernel instance (passed on the command line or overriden above)
 		ApplicationCreator creator = _internal::find_application_by_name( application_name );
@@ -191,7 +234,7 @@ namespace kernel
 	} // load_application
 	
 	
-	Error startup( IKernel * kernel_instance, const char * application_name )
+	Error startup( IKernel * kernel_instance )
 	{
 		// set instance
 		_kernel = kernel_instance;
@@ -234,28 +277,36 @@ namespace kernel
 		// ask the kernel to register services
 		_kernel->register_services();
 		
+		// load boot config
+		_internal::BootConfig boot_config;
+		_internal::load_boot_config( boot_config );
+		
 		// load application
-		core_error = load_application( application_name );
+		core_error = load_application( boot_config.kernel_name() );
 		if ( core_error.failed() )
 		{
-			fprintf( stderr, "Fatal error loading application '%s' -> %s, aborting.\n", application_name, core_error.message );
+			fprintf( stderr, "Fatal error loading application '%s' -> %s, aborting.\n", boot_config.kernel_name(), core_error.message );
 			return kernel::ApplicationFailure;
 		}
 		
 		// application config
-		ApplicationResult config_result = _active_application->config( kernel::instance()->parameters() );
+		ApplicationResult config_result = Application_Failure;
+		if ( _active_application )
+		{
+			config_result = _active_application->config( kernel::instance()->parameters() );
+		}
 		
 		// evaluate config result
 		kernel::instance()->post_application_config( config_result );
 	
-		if ( config_result == kernel::Failure )
+		if ( config_result == kernel::Application_Failure )
 		{
 			fprintf( stderr, "Application config failed. aborting.\n" );
 			return kernel::ConfigFailed;
 		}
 		
 		// try to setup the renderer
-		if ( config_result != kernel::NoWindow )
+		if ( config_result != kernel::Application_NoWindow )
 		{
 			int render_result =	renderer::startup( renderer::Default );
 			if ( render_result == 0 )
@@ -265,6 +316,7 @@ namespace kernel
 			}
 
 			assets::startup();
+			font::startup();
 		}
 		
 		// try to setup audio
@@ -277,7 +329,7 @@ namespace kernel
 		// evaluate startup result
 		_kernel->post_application_startup( startup_result );
 		
-		if ( startup_result == kernel::Failure )
+		if ( startup_result == kernel::Application_Failure )
 		{
 			fprintf( stderr, "Application startup failed!\n" );
 			return kernel::StartupFailed;
@@ -293,17 +345,15 @@ namespace kernel
 		{
 			_active_application->shutdown( _kernel->parameters() );
 			DESTROY(IApplication, _active_application);
-			_active_application = 0;
 		}
 	
 		// system cleanup
+		font::shutdown();
 		assets::shutdown();
 		input::shutdown();
 		audio::shutdown();
 		renderer::shutdown();
 		core::shutdown();
-	
-
 		
 		// shutdown, cleanup
 		if ( _kernel )
@@ -322,6 +372,9 @@ namespace kernel
 
 		_internal::_kernel_state.tsa.tick( raw_delta_msec );
 		
+		_kernel->parameters().framedelta_filtered = _internal::_kernel_state.tsa.filtered_value;
+		_kernel->parameters().framedelta_raw = raw_delta_msec;
+		
 		_internal::_kernel_state.accumulator += (_internal::_kernel_state.tsa.filtered_value * .001);
 		while( _internal::_kernel_state.accumulator > _kernel->parameters().step_interval_seconds )
 		{
@@ -338,9 +391,10 @@ namespace kernel
 
 	void tick()
 	{
-		input::update();
-		update();
 		audio::update();
+		input::update();
+
+		update();
 		_kernel->pre_tick();
 		_active_application->tick( _kernel->parameters() );
 		_kernel->post_tick();

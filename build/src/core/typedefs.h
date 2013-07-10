@@ -117,13 +117,5 @@ typedef double float64;
 #endif
 
 #include <config.h>
-
-// for some reason this isn't working any other way...
-#if __APPLE__ && (TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR)
-	#define PLATFORM_IS_MOBILE 1
-#else
-	#define PLATFORM_IS_MOBILE 0
-#endif
-
 #include <assert.h>
 #include "memory.hpp"

@@ -32,13 +32,16 @@ namespace font
 	void shutdown();
 	
 	// draw a string
+	// this accepts x and y coordinates with the origin in the upper left of the screen
 	void draw_string( font::Handle fontid, int x, int y, const char * utf8, const Color & color );
 	
 	// query the height of the font in pixels
-	unsigned int measure_height( font::Handle fontid );
+	unsigned int measure_height( font::Handle fontid, const char * utf8 );
 	
 	// measure the width of the string in a given font in pixels
-	unsigned int measure_width( font::Handle fontid, const char * str );
+	unsigned int measure_width( font::Handle fontid, const char * utf8 );
 	
-	font::Handle load_font_from_memory( const void * data, unsigned int data_size, unsigned int point_size, bool antialiased, unsigned int hdpi, unsigned int vdpi );
+	font::Handle load_font_from_memory( const void * data, unsigned int data_size, unsigned short point_size, bool antialiased, unsigned int hdpi = 0, unsigned int vdpi = 0 );
+	
+	font::Handle load_font_from_file( const char * path, unsigned short point_size, unsigned int hdpi = 0, unsigned int vdpi = 0 );
 }; // namespace font

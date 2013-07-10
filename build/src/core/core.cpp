@@ -53,25 +53,55 @@ namespace core
 		int stdout_open( log_handler_t * handler );
 		void stdout_close( log_handler_t * handler );
 		
+#if _WIN32
+		void vs_message( log_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );		
+		int vs_open( log_handler_t * handler );
+		void vs_close( log_handler_t * handler );
+#endif
+
+#if __ANDROID__
+		void log_android_message( log_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );		
+		int log_android_open( log_handler_t * handler );		
+		void log_android_close( log_handler_t * handler );
+#endif
 		
 		core::Error open_log_handlers()
 		{
 			core::Error error( 0 );
 			
 			int total_log_handlers = 0;
+						
+			// setup system log
+			log_init( &_system_log );
 			
+			log_set_default_log( &_system_log );
+			
+#if _WIN32
+			log_handler_t msvc_logger;
+			memset( &msvc_logger, 0, sizeof(log_handler_t) );
+			msvc_logger.close = vs_close;
+			msvc_logger.open = vs_open;
+			msvc_logger.message = vs_message;
+			msvc_logger.userdata = 0;
+
+			++total_log_handlers;
+			log_add_handler( &_system_log, &msvc_logger );
+#endif
+
+#ifndef __ANDROID__
 			log_handler_t stdout_logger;
 			memset( &stdout_logger, 0, sizeof(log_handler_t) );
 			stdout_logger.message = stdout_message;
 			stdout_logger.open = stdout_open;
 			stdout_logger.close = stdout_close;
 			
-			// setup system log
-			log_init( &_system_log );
-			
-			log_set_default_log( &_system_log );
+			++total_log_handlers;
+			log_add_handler( &_system_log, &stdout_logger );
+#endif
 			
 #if !PLATFORM_IS_MOBILE
+
+			
 			xdatetime_t dt;
 			xtime_now( &dt );
 			char datetime_string[ GEMINI_DATETIME_STRING_MAX ];
@@ -99,10 +129,19 @@ namespace core
 			
 			++total_log_handlers;
 #endif
+
+
+#if __ANDROID__
+			log_handler_t android_log;
+			android_log.message = log_android_message;
+			android_log.open = log_android_open;
+			android_log.close = log_android_close;
+			android_log.userdata = 0;
 			
+			log_add_handler( &_system_log, &android_log );
 			++total_log_handlers;
-			log_add_handler( &_system_log, &stdout_logger );
-			
+#endif
+						
 			if ( log_open( &_system_log ) < total_log_handlers )
 			{
 				fprintf( stderr, "Could not open one or more log handlers\n" );
@@ -128,7 +167,7 @@ namespace core
 	{
 	}
 	
-	
+
 	
 	Error startup()
 	{
@@ -163,7 +202,6 @@ namespace core
 			fprintf( stderr, "failed to open logging handlers: %s\n", error.message );
 			return error;
 		}
-		
 		
 		LOGV( "setting root to '%s', content: '%s'\n", fs::root_directory(), fs::content_directory() );
 		

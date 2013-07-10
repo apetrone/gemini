@@ -20,7 +20,7 @@ in vec3 in_Position;
 	out vec3 ps_Normal;
 #endif
 
-#if defined(D_VERTEX_COLORS) && !defined(D_DIFFUSE_COLOR) && !defined(D_DIFFUSE_MAP)
+#if defined(D_VERTEX_COLORS) && !defined(D_DIFFUSE_COLOR) //&& !defined(D_DIFFUSE_MAP)
 	in vec4 in_Color;
 	out vec4 ps_Color;
 #endif
@@ -44,7 +44,7 @@ in vec3 in_Position;
 
 void main()
 {
-#if defined(D_VERTEX_COLORS) && !defined(D_DIFFUSE_COLOR) && !defined(D_DIFFUSE_MAP)
+#if defined(D_VERTEX_COLORS) && !defined(D_DIFFUSE_COLOR) //&& !defined(D_DIFFUSE_MAP)
 	ps_Color = in_Color;
 #endif
 

@@ -32,17 +32,18 @@ namespace util
 		
 		Json::Value root;
 		Json::Reader reader;
+		ConfigLoadStatus status;
 		is_success = reader.parse( buffer, buffer+bufferLength, root );
 		if ( is_success )
 		{
-			is_success = callback( root, context );
+			status = callback( root, context );
 		}
 		else
 		{
 			LOGV( "json parsing failed: %s\n", reader.getFormattedErrorMessages().c_str() );
 		}
 		
-		return is_success;
+		return is_success && (status == ConfigLoad_Success);
 	} // parse_json_string_with_callback
 
 

@@ -36,7 +36,7 @@ class squirrel3Builder(Builder):
 
 		builder.includes = ['include', 'sqrat']
 		builder.libs = ['squirrel', 'sqstdlib']
-		builder.setOutput( path=libdir, name=project.name, type=Builder.StaticLibrary )
+		builder.addOutput( path=libdir, name=project.name, type=Builder.StaticLibrary )
 
 		if target_platform is LINUX:
 			driver.config = (params['configuration'].lower() + Premake4.archmap[ params['platform'] ][ params['build_architecture'] ])

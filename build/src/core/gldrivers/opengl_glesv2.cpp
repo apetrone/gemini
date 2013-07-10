@@ -27,6 +27,20 @@
 #include "memorystream.hpp"
 #include "assets.hpp"
 
+// enable this to allow retaining data pointers in order to call
+// VertexAttribPointer() with actual data instead of using a VBO.
+// This works around Galaxy Nexus driver issues:
+//		- glBufferData returning out of memory
+//			(could be GLESv2 driver, but not reproduceable on other devices yet)
+#if __ANDROID__
+	#define ENABLE_NON_VBO_SUPPORT 1
+#else
+	#define ENABLE_NON_VBO_SUPPORT 0
+#endif
+
+using namespace renderer;
+::GLESv2 * _gles2 = 0;
+
 // utility functions
 GLenum image_to_source_format( int num_channels )
 {
@@ -61,10 +75,6 @@ GLenum image_to_internal_format( unsigned int image_flags )
 	return GL_RGBA;
 } // image_to_internal_format
 
-using namespace renderer;
-
-::GLESv2 * _gles2 = 0;
-
 GLESv2::GLESv2()
 {
 	LOGV( "GLESv2 instanced.\n" );
@@ -76,7 +86,31 @@ GLESv2::GLESv2()
 	
 	_gles2 = this;
 	
-	has_oes_vertex_array_object = gemgl_find_extension( "_vertex_array_object" );
+	has_vbo_support = true;
+	has_oes_vertex_array_object = has_vbo_support && gemgl_find_extension( "_vertex_array_object" );
+	
+	// disable VBO/VAO support on Android builds, since drivers are really buggy.
+#if ENABLE_NON_VBO_SUPPORT
+	has_vbo_support = false;
+	has_oes_vertex_array_object = false;
+#endif
+	
+
+	
+	LOGV( "Use VertexBuffer support? %s\n", has_vbo_support ? "Yes" : "No" );
+	if ( has_vbo_support )
+	{
+		LOGV( "Use Vertex Array Objects? %s\n", has_oes_vertex_array_object ? "Yes" : "No" );
+	}
+	
+#if 0
+	int unpack_alignment = 0, pack_alignment = 0;
+	gl.GetIntegerv( GL_UNPACK_ALIGNMENT, &unpack_alignment );
+	gl.GetIntegerv( GL_PACK_ALIGNMENT, &pack_alignment );
+	
+	LOGV( "GL_UNPACK_ALIGNMENT: %i\n", unpack_alignment );
+	LOGV( "GL_PACK_ALIGNMENT: %i\n", pack_alignment );
+#endif
 }
 
 GLESv2::~GLESv2()
@@ -84,13 +118,6 @@ GLESv2::~GLESv2()
 	LOGV( "GLESv2 shutting down.\n" );
 	gemgl_shutdown( gl );
 }
-
-
-enum DrawCallType
-{
-	DCT_ELEMENTS,
-	DCT_ARRAYS
-}; // DrawCallType
 
 
 using namespace renderer;
@@ -115,20 +142,28 @@ struct GLES2VertexBuffer : public VertexBuffer
 	GLuint vbo[ VBO_LIMIT ];
 	GLenum gl_buffer_type;
 	GLenum gl_draw_type;
-	unsigned int vertex_stride;
+	unsigned short vertex_stride;
 	renderer::VertexDescriptor vertex_descriptor;
+	
+#if ENABLE_NON_VBO_SUPPORT
+	GLbyte * vertex_data;
+	IndexType * index_data;
+#endif
 	
 	GLES2VertexBuffer()
 	{
-		vbo[0] = 0;
-		vbo[1] = 0;
+		memset( vao, 0, VAO_LIMIT*sizeof(GLuint) );
+		memset( vbo, 0, VBO_LIMIT*sizeof(GLuint) );
 		vertex_stride = 0;
+		
+#if ENABLE_NON_VBO_SUPPORT
+		vertex_data = 0;
+		index_data = 0;
+#endif
 	}
 	
 	void allocate( renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type )
 	{
-		vao[ VAO_INTERLEAVED ] = 0;
-		memset( vbo, 0, sizeof(GLuint) );
 		gl_draw_type = vertexbuffer_drawtype_to_gl_drawtype( draw_type );
 		gl_buffer_type = vertexbuffer_buffertype_to_gl_buffertype( buffer_type );
 	}
@@ -140,10 +175,10 @@ struct GLES2VertexBuffer : public VertexBuffer
 		GLenum attrib_type = GL_INVALID_ENUM;
 		VertexDescriptorType desc_type;
 		unsigned int attribID = 0;
-		unsigned int attribSize = 0;
 		unsigned int num_elements = 0;
 		unsigned int normalized = 0;
-		unsigned int offset = 0;
+		unsigned short attrib_size = 0;		
+		size_t offset = 0;
 		
 		for( unsigned int i = 0; i < vertex_descriptor.attribs; ++i )
 		{
@@ -175,25 +210,35 @@ struct GLES2VertexBuffer : public VertexBuffer
 			}
 			
 			num_elements = VertexDescriptor::elements[ desc_type ];
-			attribSize = VertexDescriptor::size[ desc_type ];
+			attrib_size = VertexDescriptor::size[ desc_type ];
 			
 			gl.EnableVertexAttribArray( attribID );
 			gl.CheckError( "EnableVertexAttribArray" );
 			
+#if ENABLE_NON_VBO_SUPPORT
+//			assert( this->vertex_data == 0 );
+//			LOGV( "VertexAttribPointer %i - %i, stride: %i, offset: %i\n", attribID, num_elements, vertex_stride, offset );
+			gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_stride, this->vertex_data+offset );
+			gl.CheckError( "VertexAttribPointer" );
+#else
 			gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_stride, (void*)offset );
 			gl.CheckError( "VertexAttribPointer" );
+#endif
 			
-			offset += attribSize;
+			offset += attrib_size;
 			++attribID;
 		}
 		
 		vertex_descriptor.reset();
 	}
 	
-	void static_setup( renderer::VertexDescriptor & descriptor, unsigned int vertex_stride, unsigned int max_vertices, unsigned int max_indices )
+	void static_setup( unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
 	{
-		this->vertex_descriptor = descriptor;
-		this->vertex_stride = vertex_stride;
+#if ENABLE_NON_VBO_SUPPORT
+//		LOGV( "static_setup, vertex_data = %p, vertex_count = %i\n", vertices, vertex_count );
+		this->vertex_data = (GLbyte*)vertices;
+		this->index_data = indices;
+#endif
 		
 		if ( _gles2->has_oes_vertex_array_object )
 		{
@@ -204,31 +249,34 @@ struct GLES2VertexBuffer : public VertexBuffer
 			gl.CheckError( "BindVertexArray" );
 		}
 		
-		gl.GenBuffers( VBO_LIMIT, this->vbo );
+		if ( _gles2->has_vbo_support )
+		{
+			gl.GenBuffers( VBO_LIMIT, this->vbo );
+			gl.CheckError( "GenBuffers" );
+		}
 		
-		gl.BindBuffer( GL_ARRAY_BUFFER, this->vbo[0] );
-		gl.CheckError( "BindBuffer" );
+		this->vertex_count = vertex_count;
+		if ( _gles2->has_vbo_support )
+		{
+			// upload interleaved array
+			upload_interleaved_data( vertices, vertex_count );
+		}
 		
-		gl.BufferData( GL_ARRAY_BUFFER, vertex_stride * max_vertices, 0, this->gl_buffer_type );
-		gl.CheckError( "BufferData" );
-		
-		if ( !_gles2->has_oes_vertex_array_object )
+		if ( !_gles2->has_oes_vertex_array_object && _gles2->has_vbo_support )
 		{
 			gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 		}
 		
-		if ( max_indices > 0 )
+		this->index_count = index_count;
+		if ( _gles2->has_vbo_support )
 		{
-			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
-			gl.CheckError( "BindBuffer" );
-			
-			gl.BufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(IndexType) * max_indices, 0, this->gl_buffer_type );
-			gl.CheckError( "BufferData" );
-			
-			if ( !_gles2->has_oes_vertex_array_object )
-			{
-				gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-			}
+			// upload index array
+			upload_index_array( indices, index_count );
+		}
+		
+		if ( !_gles2->has_oes_vertex_array_object && _gles2->has_vbo_support )
+		{
+			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 		}
 		
 		if ( _gles2->has_oes_vertex_array_object )
@@ -237,14 +285,12 @@ struct GLES2VertexBuffer : public VertexBuffer
 			gl.BindVertexArray( 0 );
 			
 			gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
-			
+			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 		}
 	}
 	
 	void upload_interleaved_data( const GLvoid * data, unsigned int vertex_count )
 	{
-		this->vertex_count = vertex_count;
-		
 		gl.BindBuffer( GL_ARRAY_BUFFER, this->vbo[0] );
 		gl.CheckError( "BindBuffer GL_ARRAY_BUFFER" );
 		
@@ -254,9 +300,8 @@ struct GLES2VertexBuffer : public VertexBuffer
 	
 	void upload_index_array( IndexType * indices, unsigned int index_count )
 	{
-		if ( this->vbo[1] != 0 )
+		if ( this->index_count != 0 )
 		{
-			this->index_count = index_count;
 			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, this->vbo[1] );
 			gl.CheckError( "BindBuffer GL_ELEMENT_ARRAY_BUFFER" );
 			
@@ -318,6 +363,17 @@ void c_uniform3f( MemoryStream & stream, renderer::IRenderDriver & renderer )
 	gl.CheckError( "uniform3f" );
 }
 
+void c_uniform4f( MemoryStream & stream, renderer::IRenderDriver & renderer )
+{
+	int uniform_location;
+	float * value;
+	stream.read( uniform_location );
+	stream.read( value );
+	
+	gl.Uniform4fv( uniform_location, 1, value );
+	gl.CheckError( "uniform4f" );
+}
+
 void c_uniform_sampler2d( MemoryStream & stream, renderer::IRenderDriver & renderer )
 {
 	int uniform_location;
@@ -328,6 +384,7 @@ void c_uniform_sampler2d( MemoryStream & stream, renderer::IRenderDriver & rende
 	stream.read( texture_unit );
 	stream.read( texture_id );
 	
+//	LOGV( "sampler2d: texture_unit: %i, texture_id: %i, uniform: %i\n", texture_unit, texture_id, uniform_location );
 	
 	//	if ( last_texture[ texture_unit ] != texture_id )
 	{
@@ -386,10 +443,6 @@ void c_cleardepth( MemoryStream & stream, renderer::IRenderDriver & renderer )
 void c_viewport( MemoryStream & stream, renderer::IRenderDriver & renderer )
 {
 	int x, y, width, height;
-	//			stream.read(x);
-	//			stream.read(y);
-	//			stream.read(width);
-	//			stream.read(height);
 	stream.read( &x, 4 );
 	stream.read( &y, 4 );
 	stream.read( &width, 4 );
@@ -402,12 +455,21 @@ void c_drawcall( MemoryStream & stream, renderer::IRenderDriver & renderer )
 	GLES2VertexBuffer * vertex_buffer = 0;
 	GLenum draw_type;
 	unsigned int num_indices;
+	unsigned int num_vertices;	
 	stream.read( vertex_buffer );
 	stream.read( draw_type );
+	stream.read( num_vertices );	
 	stream.read( num_indices );
 	
 	assert( vertex_buffer != 0 );
-	renderer.vertexbuffer_draw_indices( vertex_buffer, num_indices );
+	if ( num_indices > 0 )
+	{
+		renderer.vertexbuffer_draw_indices( vertex_buffer, num_indices );
+	}
+	else
+	{
+		renderer.vertexbuffer_draw( vertex_buffer, num_vertices );
+	}
 }
 
 void c_state( MemoryStream & stream, renderer::IRenderDriver & renderer )
@@ -491,7 +553,7 @@ render_command_function commands[] = {
 	c_uniform3f, // uniform3f
 	c_noop,
 	
-	c_noop, // uniform4f
+	c_uniform4f, // uniform4f
 	c_noop,
 	
 	c_uniform_sampler2d, // uniform_sampler_2d
@@ -541,14 +603,20 @@ void GLESv2::setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStream
 	GLES2VertexBuffer * vb = (GLES2VertexBuffer*)vertexbuffer;
 	stream.write( vb );
 	stream.write( vb->gl_draw_type );
+	stream.write( vb->vertex_count );
 	stream.write( vb->index_count ); // or vertices
+//	LOGV( "draw_type: %i | vertices: %i | indices: %i\n", vb->gl_draw_type, vb->vertex_count, vb->index_count );
 } // setup_drawcall
 
 bool GLESv2::upload_texture_2d( renderer::TextureParameters & parameters )
 {
 	GLenum source_format = image_to_source_format( parameters.channels );
-	GLenum internal_format = image_to_internal_format( parameters.image_flags );
+	
+	// According to the documentation, "internalformat must match format. No conversion between formats is supported during texture image processing."
+	GLenum internal_format = source_format;
 	GLenum error = GL_NO_ERROR;
+	
+//	LOGV( "uploading texture to %i\n", parameters.texture_id );
 	
 	// bind the texture so it is active
 	gl.BindTexture( GL_TEXTURE_2D, parameters.texture_id );
@@ -592,12 +660,24 @@ bool GLESv2::upload_texture_2d( renderer::TextureParameters & parameters )
 	error = gl.CheckError( "upload_texture_2d - GL_TEXTURE_MAG_FILTER" );
 	FAIL_IF_GLERROR(error);
 	
-	// According to the documentation, "internalformat must match format. No conversion between formats is supported during texture image processing."
-	internal_format = source_format;
+	if ( parameters.alignment != 4 )
+	{
+		gl.PixelStorei( GL_UNPACK_ALIGNMENT, parameters.alignment );
+		error = gl.CheckError( "GL_UNPACK_ALIGNMENT" );
+		FAIL_IF_GLERROR(error);
+	}
 	
 	gl.TexImage2D( GL_TEXTURE_2D, 0, internal_format, parameters.width, parameters.height, 0, source_format, GL_UNSIGNED_BYTE, parameters.pixels );
 	error = gl.CheckError( "upload_texture_2d - glTexImage2D" );
 	FAIL_IF_GLERROR(error);
+	
+	// restore default alignment
+	if ( parameters.alignment != 4 )
+	{
+		gl.PixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+		error = gl.CheckError( "GL_UNPACK_ALIGNMENT" );
+		FAIL_IF_GLERROR(error);
+	}
 	
 	gl.GenerateMipmap( GL_TEXTURE_2D );
 	error = gl.CheckError( "upload_texture_2d - GenerateMipmap" );
@@ -613,8 +693,10 @@ bool GLESv2::upload_texture_2d( renderer::TextureParameters & parameters )
 
 bool GLESv2::generate_texture( renderer::TextureParameters & parameters )
 {
+
 	gl.GenTextures( 1, &parameters.texture_id );
 	GLenum error = gl.CheckError( "generate_texture" );
+//	LOGV( "generate texture: %i\n", parameters.texture_id );	
 	return (error == GL_NO_ERROR);
 } // generate_texture
 
@@ -630,26 +712,40 @@ bool GLESv2::is_texture( renderer::TextureParameters & parameters )
 	return gl.IsTexture( parameters.texture_id );
 } // is_texture
 
-void GLESv2::render_font( int x, int y, renderer::Font & font, const char * utf8_string, const Color & color )
+bool GLESv2::texture_update( renderer::TextureParameters & parameters )
 {
-	/*
-	 1. update buffers
-	 2. glViewport
-	 3. enable blending: GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
-	 4. activate font shader
-	 5. set relevant uniforms (modelview, projection, etc)
-	 6. activate font texture
-	 7. bind font texture
-	 8. draw elements of buffer
-	 9. disable blending
-	 10. deactivate shader
-	 11. unbind texture
-	 12. reset buffer
-	 */
-} // render_font
-
-
-
+	GLenum internal_format = image_to_internal_format( parameters.image_flags );
+	GLenum error = GL_NO_ERROR;
+	
+	if ( parameters.alignment != 4 )
+	{
+		gl.PixelStorei( GL_UNPACK_ALIGNMENT, parameters.alignment );
+		error = gl.CheckError( "GL_UNPACK_ALIGNMENT" );
+		FAIL_IF_GLERROR(error);
+	}
+	
+	gl.BindTexture( GL_TEXTURE_2D, parameters.texture_id );
+	error = gl.CheckError( "BindTexture" );
+	FAIL_IF_GLERROR(error);
+	
+	gl.TexSubImage2D( GL_TEXTURE_2D, 0, parameters.x, parameters.y, parameters.width, parameters.height, internal_format, GL_UNSIGNED_BYTE, parameters.pixels );
+	error = gl.CheckError( "TexSubImage2D" );
+	FAIL_IF_GLERROR(error);
+	
+	// restore default alignment
+	if ( parameters.alignment != 4 )
+	{
+		gl.PixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+		error = gl.CheckError( "GL_UNPACK_ALIGNMENT" );
+		FAIL_IF_GLERROR(error);
+	}
+	
+	gl.BindTexture( GL_TEXTURE_2D, 0 );
+	error = gl.CheckError( "BindTexture 0" );
+	FAIL_IF_GLERROR(error);
+	
+	return true;
+} // texture_update
 
 renderer::VertexBuffer * GLESv2::vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices )
 {
@@ -660,8 +756,9 @@ renderer::VertexBuffer * GLESv2::vertexbuffer_create( renderer::VertexDescriptor
 	stream->allocate( draw_type, buffer_type );
 	
 	// setup static interleaved arrays
-	stream->static_setup( descriptor, vertex_size, max_vertices, max_indices );
-	
+	stream->vertex_descriptor = descriptor;
+	stream->vertex_stride = descriptor.calculate_vertex_stride();
+	stream->static_setup( max_vertices, 0, max_indices, 0 );
 	
 	return stream;
 } // vertexbuffer_create
@@ -680,38 +777,10 @@ void GLESv2::vertexbuffer_destroy( renderer::VertexBuffer * vertexbuffer )
 	DESTROY(GLES2VertexBuffer, stream);
 } // vertexbuffer_destroy
 
-void GLESv2::vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
+void GLESv2::vertexbuffer_upload_data( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
 {
 	GLES2VertexBuffer * stream = (GLES2VertexBuffer*)vertexbuffer;
-	assert( stream != 0 );
-	
-	if ( has_oes_vertex_array_object )
-	{
-		gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
-		gl.CheckError( "BindVertexArray" );
-	}
-	
-	// upload interleaved array
-	stream->upload_interleaved_data( vertices, vertex_count );
-	if ( !has_oes_vertex_array_object )
-	{
-		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
-	}
-	
-	// upload index array
-	stream->upload_index_array( indices, index_count );
-	if ( !has_oes_vertex_array_object )
-	{
-		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-	}
-	
-	if ( has_oes_vertex_array_object )
-	{
-		gl.BindVertexArray( 0 );
-		
-		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
-		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-	}
+	stream->static_setup( vertex_count, vertices, index_count, indices );
 }
 
 
@@ -727,21 +796,32 @@ void GLESv2::vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, u
 	}
 	else
 	{
+		if ( has_vbo_support )
+		{
+			gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
+		}
 		
-		gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
-stream->setup_vertex_attributes();
-		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, stream->vbo[1] );
-
+		stream->setup_vertex_attributes();
+		
+		if ( has_vbo_support )
+		{
+			gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, stream->vbo[1] );
+		}
 	}
 	
+#if ENABLE_NON_VBO_SUPPORT
+	gl.DrawElements( stream->gl_draw_type, num_indices, GL_UNSIGNED_SHORT, stream->index_data );
+	gl.CheckError( "DrawElements" );
+#else
 	gl.DrawElements( stream->gl_draw_type, num_indices, GL_UNSIGNED_SHORT, 0 );
 	gl.CheckError( "DrawElements" );
+#endif
 	
 	if ( has_oes_vertex_array_object )
 	{
 		gl.BindVertexArray( 0 );
 	}
-	else
+	else if ( has_vbo_support )
 	{
 		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
@@ -758,6 +838,16 @@ void GLESv2::vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned 
 		gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
 		gl.CheckError( "BindVertexArray" );
 	}
+	else if ( has_vbo_support )
+	{
+		gl.BindBuffer( GL_ARRAY_BUFFER, stream->vbo[0] );
+		gl.CheckError( "BindBuffer: GL_ARRAY_BUFFER (vertexbuffer_draw)" );
+	}
+	
+	if ( !has_oes_vertex_array_object )
+	{
+		stream->setup_vertex_attributes();
+	}
 	
 	gl.DrawArrays( stream->gl_draw_type, 0, num_vertices );
 	gl.CheckError( "DrawArrays" );
@@ -765,6 +855,11 @@ void GLESv2::vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned 
 	if ( has_oes_vertex_array_object )
 	{
 		gl.BindVertexArray( 0 );
+	}
+	else if ( has_vbo_support )
+	{
+		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+		gl.CheckError( "BindBuffer: GL_ARRAY_BUFFER 0 (vertexbuffer_draw)" );
 	}
 }
 
@@ -778,12 +873,11 @@ renderer::VertexBuffer * GLESv2::vertexbuffer_from_geometry( renderer::VertexDes
 	{
 		buffer_type = renderer::BUFFER_STREAM;
 	}
-	unsigned int vertex_stride = descriptor.calculate_vertex_stride();
-	unsigned int max_vertices = geometry->vertex_count;
-	unsigned int max_indices = geometry->index_count;
 	
 	stream->allocate( geometry->draw_type, buffer_type );
-	stream->static_setup( descriptor, vertex_stride, max_vertices, max_indices );
+	stream->vertex_descriptor = descriptor;
+	stream->vertex_stride = descriptor.calculate_vertex_stride();
+	stream->static_setup( geometry->vertex_count, 0, geometry->index_count, 0 );
 	
 	return stream;
 }
@@ -791,7 +885,11 @@ renderer::VertexBuffer * GLESv2::vertexbuffer_from_geometry( renderer::VertexDes
 void GLESv2::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer::Geometry * geometry )
 {
 	GLES2VertexBuffer * stream = (GLES2VertexBuffer*)vertexbuffer;
-	assert( stream != 0 );
+	if ( !stream )
+	{
+		LOGE( "Invalid vertex stream!\n ");
+		return;
+	}
 	
 	if ( has_oes_vertex_array_object )
 	{
@@ -832,22 +930,28 @@ void GLESv2::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer
 		}
 	}
 	
-	stream->upload_interleaved_data( vertex_data, geometry->vertex_count );
+	stream->vertex_count = geometry->vertex_count;
+	stream->index_count = geometry->index_count;
+	
+	if ( has_vbo_support )
+	{
+		stream->upload_interleaved_data( vertex_data, geometry->vertex_count );
+	}
+	
 	DEALLOC( vertex_data );
 		
-	if ( !has_oes_vertex_array_object )
-	{
-		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
-	}
+
 
 	
-	if ( geometry->index_count > 0 )
+	if ( has_vbo_support && (geometry->index_count > 0) )
 	{
+		
 		stream->upload_index_array( geometry->indices, geometry->index_count );
-		if ( !has_oes_vertex_array_object )
-		{
-			gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
-		}
+	}
+	
+	if ( !has_oes_vertex_array_object && has_vbo_support )
+	{
+		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 	}
 	
 	if ( has_oes_vertex_array_object )
@@ -855,8 +959,11 @@ void GLESv2::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer
 		gl.BindVertexArray( 0 );
 	}
 	
-//	gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-//	gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+	if ( has_vbo_support )
+	{
+		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
+	}
 }
 
 ///////////////////////////////
@@ -870,8 +977,7 @@ renderer::ShaderObject GLESv2::shaderobject_create( renderer::ShaderObjectType s
 {
 	GLenum type = shaderobject_type_to_gl_shaderobjecttype( shader_type );
 	ShaderObject object;
-	
-	object.flags = 0;
+
 	object.shader_id = gl.CreateShader( type );
 	gl.CheckError( "CreateShader" );
 	
@@ -892,6 +998,7 @@ bool GLESv2::shaderobject_compile( renderer::ShaderObject shader_object, const c
 	gl.CompileShader( shader_object.shader_id );
 	gl.CheckError( "CompileShader" );
 	gl.GetShaderiv( shader_object.shader_id, GL_COMPILE_STATUS, &is_compiled );
+	gl.CheckError( "GetShaderiv" );
 	if ( !is_compiled )
 	{
 		LOGE( "Error compiling shader!\n" );
@@ -904,6 +1011,7 @@ bool GLESv2::shaderobject_compile( renderer::ShaderObject shader_object, const c
 		}
 		status = false;
 	}
+
 	
 	return status;
 }
@@ -922,6 +1030,7 @@ renderer::ShaderProgram GLESv2::shaderprogram_create( renderer::ShaderParameters
 	
 	if ( !gl.IsProgram( program.object ) )
 	{
+		gl.CheckError( "IsProgram" );
 		LOGE("generated object is NOT a program!\n" );
 	}
 	
@@ -1011,7 +1120,25 @@ bool GLESv2::shaderprogram_link_and_validate( renderer::ShaderProgram shader_pro
 		
 		//		assert( link_status == 1 );
 	}
-	
+	// use GetAttribLocation to fetch the actual location after linking.
+	// this won't work with the current render system because setting up attributes
+	// doesn't use a shader.
+#if 0
+	else
+	{
+		for( unsigned int i = 0; i < parameters.total_attributes; ++i )
+		{
+			GLint attrib_location = gl.GetAttribLocation( shader_program.object, parameters.attributes[i].first );
+			if ( attrib_location != -1 )
+			{
+				LOGV( "attrib: %s -> %i\n", parameters.attributes[i].first, attrib_location );
+//				assert( attrib_location == parameters.attributes[i].second );
+//				parameters.attributes[i].second = attrib_location;
+			}
+		}
+	}
+#endif
+
 #if 0
 	gl.ValidateProgram( shader_program.object );
 	int validate_status;

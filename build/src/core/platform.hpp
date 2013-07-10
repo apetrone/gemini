@@ -31,11 +31,13 @@
 	#define MAX_PATH_SIZE MAX_PATH
 	#define PATH_SEPARATOR '\\'
 	#define PATH_SEPARATOR_STRING "\\"
-	#elif LINUX || TARGET_OS_MAC
-#include <limits.h>
+#elif LINUX || TARGET_OS_MAC || __ANDROID__
+	#include <limits.h>
 	#define MAX_PATH_SIZE PATH_MAX
 	#define PATH_SEPARATOR '/'
 	#define PATH_SEPARATOR_STRING "/"
+#else
+	#error Unknown platform!
 #endif
 
 #include <stdio.h> // for size_t

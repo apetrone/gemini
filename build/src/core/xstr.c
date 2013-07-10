@@ -113,7 +113,23 @@ const char * xstr_filefrompath( const char * path )
 int xstr_nicmp( const char * s1, const char * s2, size_t count )
 {
 	size_t s1_len;
-	size_t s2_len;	
+	size_t s2_len;
+	
+	if ( !s1 || !s2 )
+	{
+		if ( s1 )
+		{
+			return 1;
+		}
+		else if ( s2 )
+		{
+			return -1;
+		}
+		else
+		{
+			return 0;
+		}
+	}
 	
 	// size_t is implemented as 'unsigned int' on some platforms (Windows...)
 	// use zero to mean: pick the smallest string
@@ -138,7 +154,7 @@ int xstr_nicmp( const char * s1, const char * s2, size_t count )
 
 		count = s1_len;
 	}
-#if LINUX || __APPLE__
+#if LINUX || __APPLE__ || __ANDROID__
     return strncasecmp( s1, s2, count );
 #else
     return strnicmp( s1, s2, count );
@@ -157,7 +173,9 @@ char * xstr_ncat( char * destination, const char * source, size_t destination_si
 
 	// we cannot possibly fit this string in the destination array
 	if ( dst_len + src_len >= destination_size )
+	{
 		return 0;
+	}
 	
     return strcat( destination, source );
 }

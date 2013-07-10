@@ -36,7 +36,7 @@
 
 NSString * getBundleStringForLocalPath( const char * filename )
 {
-	NSString * nsfilename = [[NSString alloc] initWithCString:filename encoding:NSUTF8StringEncoding];
+	NSString * nsfilename = [NSString stringWithCString:filename encoding:NSUTF8StringEncoding];
 	NSString * path = [[NSBundle mainBundle] pathForResource: [nsfilename stringByDeletingPathExtension] ofType: [nsfilename pathExtension]];
 	return path;
 }
@@ -83,16 +83,16 @@ namespace fs
 		
 		UInt32 fileSize = 0;
 		UInt32 propertySize = sizeof(UInt64);
-		result = AudioFileGetProperty( fileID, kAudioFilePropertyAudioDataByteCount, &propertySize, &fileSize );
+		AudioFileGetProperty( fileID, kAudioFilePropertyAudioDataByteCount, &propertySize, &fileSize );
 		
 		buffer_length = fileSize;
-		ptr = (unsigned char*)memory::allocator().allocate( fileSize );
+		ptr = (unsigned char*)ALLOC( fileSize );
 		
 		AudioFileReadBytes(fileID, false, 0, &fileSize, ptr );
 		AudioFileClose( fileID );
 		
 		// finished with this
-		//CFRelease( fileURL );
+//		CFRelease( fileURL );
 		
 		return ptr;
 	}

@@ -11,10 +11,16 @@
 
 @interface ViewController () {
 }
-@property (strong, nonatomic) EAGLContext *context;
+@property (assign, nonatomic) EAGLContext *context;
 @end
 
 @implementation ViewController
+
+-(void)dealloc
+{
+	self.context = nil;
+	[super dealloc];
+}
 
 -(void) setKernel:(void*) kernel_instance
 {
@@ -87,10 +93,6 @@
 	
 	// shared context
 	//self.context2 = [[EAGLContext alloc] initWIthAPI:kEAGLRenderingAPIOpenGLES2 sharegroup: [self.context sharegroup]];
-
-    if (!self.context) {
-        NSLog(@"Failed to create ES context");
-    }
     
     GLKView *view = (GLKView *)self.view;
 
@@ -107,7 +109,6 @@
 	
 	// ios6
 	// this is set on a per-view basis.
-
 //	[self setWantsBestResolutionOpenGLSurface: YES];
 
 //	CGRect viewBounds = [view bounds];

@@ -108,6 +108,12 @@ namespace kernel
 	struct TouchEvent : public Event<Touch>
 	{
 		int id;
+		
+		// coordinates where the touch event began
+		int start_x;
+		int start_y;
+		
+		// current x/y for this touch
 		int x;
 		int y;
 	}; // TouchEvent

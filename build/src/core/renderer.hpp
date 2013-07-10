@@ -68,6 +68,11 @@ namespace renderer
 		STATE_DEPTH_TEST,
 	}; // DriverState
 	
+	enum RenderClearFlags
+	{
+		CLEAR_COLOR_BUFFER = 0x00004000,
+		CLEAR_DEPTH_BUFFER = 0x00000100
+	};
 	
 	enum RenderBlendType
 	{
@@ -215,10 +220,6 @@ namespace renderer
 	}; // TextureParameters
 	
 	
-	class Font
-	{
-	}; // Font
-	
 	struct BlendParameters
 	{
 		unsigned int source;
@@ -226,18 +227,16 @@ namespace renderer
 	}; // BlendParameters
 	
 	
-	
-	class ShaderKeyValuePair : public std::pair<char*, int>
+	struct ShaderKeyValuePair
 	{
-	public:
-	
 		ShaderKeyValuePair();
-		~ShaderKeyValuePair();
+		virtual ~ShaderKeyValuePair();
 	
 		void set_key( const char * key );
+		char * first;
+		int second;
 	};
-	
-//	typedef std::pair<char*, int> ShaderKeyValuePair;
+
 	struct ShaderParameters
 	{
 		unsigned int total_uniforms;
@@ -253,7 +252,7 @@ namespace renderer
 		ShaderKeyValuePair * attributes;
 		
 		ShaderParameters();
-		~ShaderParameters();
+		virtual ~ShaderParameters();
 		
 		void alloc_attributes( unsigned int attributes_count );
 		void alloc_uniforms( unsigned int uniform_count );
@@ -265,6 +264,12 @@ namespace renderer
 	{
 		int vertex_count;
 		int index_count;
+		
+		VertexBuffer()
+		{
+			vertex_count = 0;
+			index_count = 0;
+		}
 	}; // VertexBuffer
 	
 	struct UV
@@ -287,6 +292,16 @@ namespace renderer
 		renderer::IndexType * indices;
 		renderer::VertexBuffer * vertexbuffer;
 	}; // Geometry
+	
+	struct GeneralParameters
+	{
+		glm::mat4 * modelview_matrix;
+		glm::mat4 * projection_project;
+		glm::mat4 * object_matrix;
+		
+		unsigned int global_params;
+		glm::vec3 * camera_position;
+	};
 };
 
 #include "vertexstream.hpp"
@@ -316,26 +331,11 @@ namespace renderer
 		virtual bool generate_texture( renderer::TextureParameters & parameters ) = 0;
 		virtual bool destroy_texture( renderer::TextureParameters & parameters ) = 0;
 		virtual bool is_texture( renderer::TextureParameters & parameters ) = 0;
-		virtual bool texture_update( renderer::TextureParameters & parameters ) = 0;
-		
-		// font
-		virtual void render_font( int x, int y, renderer::Font & font, const char * utf8_string, const Color & color ) = 0;
-		
-		
-		/*
-		virtual void texture_activate( renderer::TextureParameters & parameters ) = 0;
-		virtual void texture_deactivate( renderer::TextureParameters & parameters ) = 0;
-		
-		virtual void blending_activate( renderer::BlendParameters & parameters ) = 0;
-		virtual void blending_deactivate( renderer::BlendParameters & parameters ) = 0;
-		
-		virtual void shader_activate( renderer::ShaderParameters & parameters ) = 0;
-		virtual void shader_deactivate( renderer::ShaderParameters & parameters ) = 0;
-		*/
+		virtual bool texture_update( renderer::TextureParameters & parameters ) = 0;	
 		
 		virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices ) = 0;
 		virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream ) = 0;
-		virtual void vertexbuffer_bufferdata( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices ) = 0;
+		virtual void vertexbuffer_upload_data( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices ) = 0;
 		
 		
 		virtual renderer::VertexBuffer * vertexbuffer_from_geometry( renderer::VertexDescriptor & descriptor, renderer::Geometry * geometry ) = 0;

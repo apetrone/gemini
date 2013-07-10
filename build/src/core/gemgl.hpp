@@ -1,6 +1,6 @@
 #pragma once
 
-#if _WIN32 || LINUX
+#if _WIN32 || LINUX || __ANDROID__
 	#include "xlib.h"
 #endif
 
@@ -9,14 +9,20 @@
 	#include <windows.h>
 	#include <gl/gl.h>
 	#include <glext.h>
-	#include <wglext.h>
+	//#include <wglext.h>
 	#pragma comment( lib, "opengl32.lib" )
 	#define GEMGLAPI WINAPI*
 #elif LINUX
 	#include <stdint.h>
-	#include <GL/gl.h>
-	#include <GL/glx.h>
-//	#include <glxext.h>
+
+	#if PLATFORM_USE_GLES2
+		#include <GLES2/gl2.h>
+	#else
+		#include <GL/gl.h>
+		#include <GL/glx.h>
+		// #include <glxext.h>
+	#endif
+
 	#define GEMGLAPI *
 #elif __APPLE__
 	#include <stdint.h>
@@ -33,10 +39,30 @@
 	#endif
 
 	#define GEMGLAPI *
+#elif __ANDROID__
+	#include <GLES2/gl2.h>
+	#include <GLES2/gl2ext.h>
+	#define GEMGLAPI *
+#else
+	#error Unknown platform!
 #endif
 
 
 #include "renderer.hpp"
+
+
+#if !defined(GL_SAMPLER_1D)
+	#define GL_SAMPLER_1D	0x8B5D
+#endif
+
+#if !defined(GL_SAMPLER_3D)
+	#define GL_SAMPLER_3D	0x8B5F
+#endif
+
+#if !defined (GL_SAMPLER_1D_SHADOW)
+	#define GL_SAMPLER_1D_SHADOW	0x8B61
+	#define GL_SAMPLER_2D_SHADOW	0x8B62
+#endif
 
 // print information regarding whether or not we correctly link opengl functions
 #define GEMGL_DEBUG_SYMBOLS 1
@@ -96,6 +122,11 @@ enum gemgl_renderer_type
 
 	typedef const GLubyte * (GEMGLAPI GEMGLFNGETSTRING) ( GLenum param );
 
+	// state queries
+	typedef void (GEMGLAPI GEMGLFNGETBOOLEANV)( GLenum value, GLboolean * data );
+	typedef void (GEMGLAPI GEMGLFNGETINTEGERV)( GLenum value, GLint * data );
+	typedef void (GEMGLAPI GEMGLFNGETFLOATV)( GLenum value, GLfloat * data );
+
 	// ---------------------------------------
 	typedef GLuint (GEMGLAPI GEMGLFNCREATEPROGRAM) ( void );
 	typedef GLuint (GEMGLAPI GEMGLFNCREATESHADER) ( GLenum type );
@@ -122,7 +153,7 @@ enum gemgl_renderer_type
 
 	// attributes
 	typedef void (GEMGLAPI GEMGLFNGETACTIVEATTRIB) ( GLObject program, GLuint index, GLsizei bufSize, GLsizei * length, GLint * size, GLenum * type, GLchar * name );
-	typedef void (GEMGLAPI GEMGLFNGETATTRIBLOCATION) ( GLObject program, const GLchar * name );
+	typedef GLint (GEMGLAPI GEMGLFNGETATTRIBLOCATION) ( GLObject program, const GLchar * name );
 	typedef void (GEMGLAPI GEMGLFNBINDATTRIBLOCATION) ( GLObject program, GLuint index, const GLchar* name );
 	
 	// uniforms
@@ -433,6 +464,7 @@ enum gemgl_renderer_type
 		GEMGLFNGETPROGRAMIV GetProgramiv;
 		GEMGLFNGETATTACHEDSHADERS GetAttachedShaders;
 
+		GEMGLFNGETATTRIBLOCATION GetAttribLocation;
 		GEMGLFNBINDATTRIBLOCATION BindAttribLocation;
 		GEMGLFNBINDFRAGDATALOCATION BindFragDataLocation;
 
@@ -540,8 +572,11 @@ enum gemgl_renderer_type
 		GEMGLFNGETSTRING GetString;
         GEMGL_CHECKERROR CheckError;
 
+		GEMGLFNGETBOOLEANV GetBooleanv;
+		GEMGLFNGETINTEGERV GetIntegerv;
+		GEMGLFNGETFLOATV GetFloatv;
 
-#if _WIN32 || LINUX
+#if _WIN32 || LINUX || __ANDROID__
 		xlib_t library;
 #endif
 	} gemgl_interface_t;

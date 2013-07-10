@@ -44,7 +44,7 @@ USAGE:
 	#include <windows.h>
 	#include <Ws2tcpip.h>
 	#pragma comment( lib, "ws2_32.lib" )
-#else
+#else // posix
 	#include <errno.h>
 	#include <sys/socket.h>
 	#include <netinet/in.h>
