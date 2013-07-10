@@ -406,6 +406,15 @@ Sprite::AnimationSequence::~AnimationSequence()
 	purge_frames();
 }
 
+void frame_to_pixels( unsigned short frame, assets::Texture * texture, unsigned int sprite_width, unsigned int sprite_height, unsigned int & x, unsigned int & y )
+{
+	unsigned short cols = (texture->width / sprite_width);
+	unsigned short rows = (texture->height / sprite_height);
+	
+	x = (frame % cols) * sprite_width;
+	y = (frame / rows) * sprite_height;
+} // frame_to_pixels
+
 void Sprite::AnimationSequence::create_frames(unsigned int material_id, unsigned int num_frames, unsigned int sprite_width, unsigned int sprite_height)
 {
 	// ...
@@ -439,16 +448,14 @@ void Sprite::AnimationSequence::create_frames(unsigned int material_id, unsigned
 	total_frames = num_frames;	
 	this->frames = CREATE_ARRAY(SpriteFrame, total_frames);
 
+
 	unsigned int x = 0;
 	unsigned int y = 0;
-	
-
-	
-	if ( texture )
 	for( unsigned int frame = 0; frame < total_frames; ++frame )
 	{
 		SpriteFrame * sf = &frames[ frame ];
-		sprite::calc_tile_uvs( (float*)sf->texcoords, x, y, sprite_width, sprite_height, 0, 0 );
+		frame_to_pixels( frame+frame_start, texture, sprite_width, sprite_height, x, y );
+		sprite::calc_tile_uvs( (float*)sf->texcoords, x, y, sprite_width, sprite_height, texture->width, texture->height );
 	}
 
 } // load_frames
@@ -533,7 +540,7 @@ util::ConfigLoadStatus load_sprite_from_file( const Json::Value & root, void * d
 	sprite->width = width_pixels.asUInt();
 	sprite->height = height_pixels.asUInt();
 	
-	
+	// load collision size
 	Json::Value collision_width = root["collision_size"];
 	if ( collision_width.isNull() )
 	{
@@ -543,6 +550,20 @@ util::ConfigLoadStatus load_sprite_from_file( const Json::Value & root, void * d
 	sprite->collision_size = collision_width.asUInt();
 	
 	
+	// load sprite scale
+	Json::Value scale_x = root["scale_x"];
+	Json::Value scale_y = root["scale_y"];
+	if ( !scale_x.isNull() )
+	{
+		sprite->scale_x = scale_x.asFloat();
+	}
+	
+	if ( !scale_y.isNull() )
+	{
+		sprite->scale_y = scale_y.asFloat();
+	}
+	
+	// check for and load all animations
 	Json::Value animation_list = root["animations"];
 	if ( animation_list.isNull() )
 	{
@@ -1260,7 +1281,6 @@ struct GameScreen : public virtual IScreen
 //			ent->select_sprite(0, 32, 32, 32, 256, 256);
 			ent->load_sprite("sprites/bullet.conf");
 			ent->collision_mask = 2;
-			ent->collision_size = 16;
 			return true;
 		}
 		
