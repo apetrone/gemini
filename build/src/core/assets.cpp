@@ -104,6 +104,11 @@ namespace assets
 		return _default_texture;
 	} // load_texture
 	
+	Texture * texture_by_id( unsigned int id )
+	{
+		return texture_lib->find_with_id( id );
+	} // texture_by_id
+	
 	// -------------------------------------------------------------
 	// Shader
 	Shader::Shader()

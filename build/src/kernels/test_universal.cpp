@@ -43,7 +43,7 @@
 #include "util.hpp"
 
 #define TEST_2D 0
-#define TEST_FONT 0
+#define TEST_FONT 1
 
 glm::mat4 objectMatrix;
 
@@ -142,13 +142,43 @@ public:
 }; // ICollisionObject
 
 
-
+util::ConfigLoadStatus load_sprite_from_file( const Json::Value & root, void * data );
 
 class Sprite : public virtual IGraphicObject, public virtual ICollisionObject
 {
 public:
+	struct SpriteFrame
+	{
+		renderer::UV texcoords[4];
+	};
+	
+	struct AnimationSequence
+	{
+		std::string name;
+		unsigned short frame_start;
+		unsigned short total_frames;
+		SpriteFrame * frames;
+		
+		
+		AnimationSequence();
+		~AnimationSequence();
+		
+		void create_frames( unsigned int material_id, unsigned int num_frames, unsigned int sprite_width, unsigned int sprite_height );
+		void purge_frames();
+		float * uvs_for_frame( unsigned short frame_id );
+	}; // AnimationSequence
+
+	AnimationSequence * animations;		// animation frames
+	unsigned short current_animation;	// currently active animation
+	unsigned short current_frame;		// current frame of the animation
+	unsigned short total_animations;	// total animations
+	float animation_time;				// current time of the animation
+	float frame_delay;					// delay in msec between each frame
+
+	// legacy
+	SpriteFrame frame;
+	
 	unsigned int material_id;
-	renderer::UV texcoords[4];
 	Color color;
 	
 	float world_x;
@@ -160,10 +190,10 @@ public:
 	float r_x;
 	float r_y;
 	
-	short width;
-	short height;
+	unsigned short width;
+	unsigned short height;
 	
-	short collision_size;
+	unsigned short collision_size;
 	
 	float velocity_x;
 	float velocity_y;
@@ -187,10 +217,16 @@ public:
 	
 	Sprite()
 	{
+		animations = 0;
+		current_frame = 0;
+		current_animation = 0;
+		animation_time = 0;
+		total_animations = 0;
+		
 		world_x = world_y = 0;
 		material_id = 0;
 		color = Color( 255, 255, 255, 255 );
-		memset( texcoords, 0, 4 * sizeof(renderer::UV) );
+		memset( frame.texcoords, 0, 4 * sizeof(renderer::UV) );
 
 		velocity_x = velocity_y = 0;
 		scale_x = scale_y = 1.0f;
@@ -206,10 +242,60 @@ public:
 		collision_size = 0;
 	} // Sprite
 	
+	~Sprite()
+	{
+		purge_animations();
+	} // ~Sprite
+	
+	void load_sprite( const char * path )
+	{
+		util::json_load_with_callback( path, load_sprite_from_file, this, true );
+	} // load_sprite
+	
 	void select_sprite( int x, int y, int frame_width, int frame_height, int image_width, int image_height )
 	{
-		sprite::calc_tile_uvs( (float*)texcoords, x, y, frame_width, frame_height, image_width, image_height );
+//		sprite::calc_tile_uvs( (float*)frame.texcoords, x, y, frame_width, frame_height, image_width, image_height );
 	} // select_sprite
+	
+	void create_animations( unsigned short num_animations )
+	{
+		if ( animations && total_animations > 0 )
+		{
+			purge_animations();
+		}
+		
+		animations = CREATE_ARRAY(AnimationSequence, num_animations );
+		total_animations = num_animations;
+	} // create_animations
+	
+	void purge_animations()
+	{
+		DESTROY_ARRAY( AnimationSequence, animations, total_animations );
+	} // purge_animations
+	
+	void play_animation( const std::string & name )
+	{
+		current_frame = 0;
+		animation_time = 0;
+		
+		for( unsigned short i = 0; i < total_animations; ++i )
+		{
+			AnimationSequence * anim = &animations[i];
+			if ( name == anim->name )
+			{
+				current_animation = i;
+				break;
+			}
+		}
+	} // play_animation
+	
+	AnimationSequence * get_animation_by_index( unsigned short animation_index )
+	{
+		if ( animation_index >= 0 && animation_index < this->total_animations )
+			return &animations[ animation_index ];
+		
+		return 0;
+	} // get_animation_by_index
 	
 	// IGraphicObject
 	virtual void render( RenderContext & context )
@@ -220,7 +306,14 @@ public:
 		float scx, scy;
 		get_scale( scx, scy );
 		
-		add_sprite_to_stream( context.vb, sx, sy, scx*this->width, scy*this->height, this->get_color(), (float*)texcoords );
+		
+		AnimationSequence * current_sequence = get_animation_by_index( current_animation );
+		if ( current_sequence )
+		{
+			add_sprite_to_stream( context.vb, sx, sy, scx*this->width, scy*this->height, this->get_color(), current_sequence->uvs_for_frame( current_frame ) );
+		}
+		
+		
 		
 		debugdraw::point( glm::vec3(r_x, r_y, 0), Color(255,0,0), scx*(this->collision_size/2.0), 0 );
 	} // render
@@ -301,6 +394,79 @@ public:
 }; // Sprite
 
 
+Sprite::AnimationSequence::AnimationSequence()
+{
+	this->frame_start = 0;
+	this->frames = 0;
+	this->total_frames = 0;
+}
+
+Sprite::AnimationSequence::~AnimationSequence()
+{
+	purge_frames();
+}
+
+void Sprite::AnimationSequence::create_frames(unsigned int material_id, unsigned int num_frames, unsigned int sprite_width, unsigned int sprite_height)
+{
+	// ...
+
+	assets::Material * material = assets::material_by_id(material_id);
+	if ( !material )
+	{
+		LOGE( "Unable to locate material with id: %i. Cannot load frames!\n", material_id );
+		return;
+	}
+	
+	assets::Material::Parameter * parameter = material->parameter_by_name("diffusemap");
+	if ( !parameter )
+	{
+		LOGE( "Unable to find parameter by name: diffusemap\n" );
+		return;
+	}
+	
+	assets::Texture * texture = assets::texture_by_id( parameter->intValue );
+	if ( !texture )
+	{
+		LOGE( "Unable to find texture for id: %i\n", parameter->intValue );
+		return;
+	}
+	
+	if ( this->frames && total_frames > 0 )
+	{
+		purge_frames();
+	}
+
+	total_frames = num_frames;	
+	this->frames = CREATE_ARRAY(SpriteFrame, total_frames);
+
+	unsigned int x = 0;
+	unsigned int y = 0;
+	
+
+	
+	if ( texture )
+	for( unsigned int frame = 0; frame < total_frames; ++frame )
+	{
+		SpriteFrame * sf = &frames[ frame ];
+		sprite::calc_tile_uvs( (float*)sf->texcoords, x, y, sprite_width, sprite_height, 0, 0 );
+	}
+
+} // load_frames
+
+void Sprite::AnimationSequence::purge_frames()
+{
+	DESTROY_ARRAY(SpriteFrame, frames, total_frames);
+	total_frames = 0;
+} // purge_frames
+
+float * Sprite::AnimationSequence::uvs_for_frame(unsigned short frame_id)
+{
+	if ( frame_id >= 0 && frame_id < total_frames )
+		return (float*)&frames[ frame_id ].texcoords;
+	
+	return 0;
+} // uvs_for_frame
+
 
 struct Entity
 {
@@ -335,12 +501,104 @@ void virtual_screen_to_pixels( float & tx, float & ty )
 }
 
 
+util::ConfigLoadStatus load_sprite_from_file( const Json::Value & root, void * data )
+{
+	Sprite * sprite = (Sprite*)data;
+	if (!sprite)
+	{
+		return util::ConfigLoad_Failure;
+	}
+	
+	// check material path; load material and cache the id in the sprite
+	Json::Value material_path = root["material"];
+	if ( material_path.isNull() )
+	{
+		LOGE( "material is required\n" );
+		return util::ConfigLoad_Failure;
+	}
+	assets::Material * material = assets::load_material( material_path.asString().c_str() );
+	if ( material )
+	{
+		sprite->material_id = material->Id();
+	}
+	
+	// check width and height; set these in the sprite
+	Json::Value width_pixels = root["width"];
+	Json::Value height_pixels = root["height"];
+	if ( width_pixels.isNull() || height_pixels.isNull() )
+	{
+		LOGE( "width and height are required\n" );
+		return util::ConfigLoad_Failure;
+	}
+	sprite->width = width_pixels.asUInt();
+	sprite->height = height_pixels.asUInt();
+	
+	
+	Json::Value collision_width = root["collision_size"];
+	if ( collision_width.isNull() )
+	{
+		LOGE( "collision_size is required\n" );
+		return util::ConfigLoad_Failure;
+	}
+	sprite->collision_size = collision_width.asUInt();
+	
+	
+	Json::Value animation_list = root["animations"];
+	if ( animation_list.isNull() )
+	{
+		LOGE( "TODO: handle no animations with a static frame...\n" );
+		return util::ConfigLoad_Failure;
+	}
+	
+	sprite->create_animations( animation_list.size() );
+	unsigned short animation_index = 0;
+	
+	Json::ValueIterator iter = animation_list.begin();
+	for( ; iter != animation_list.end(); ++iter )
+	{
+		Json::Value animation = (*iter);
+		Json::Value animation_name = animation["name"];
+		Json::Value frame_start = animation["frame_start"];
+		Json::Value num_frames = animation["num_frames"];
+		if ( animation_name.isNull() )
+		{
+			LOGE( "'name' is required for animation!\n" );
+			continue;
+		}
+		
+		if ( frame_start.isNull() )
+		{
+			LOGE( "'frame_start' is required for animation!\n" );
+			continue;
+		}
+		
+		if ( num_frames.isNull() )
+		{
+			LOGE( "'num_frames' is required for animation!\n" );
+		}
+		
+		Sprite::AnimationSequence * sequence = sprite->get_animation_by_index( animation_index++ );
+		sequence->name = animation_name.asString();
+		sequence->frame_start = frame_start.asInt();
+		sequence->total_frames = num_frames.asInt();
+		
+		// this can be deferred when I merge sprite sheets
+		sequence->create_frames( sprite->material_id, sequence->total_frames, sprite->width, sprite->height );
+//		LOGV( "animation name: %s\n", animation_name.asString().c_str() );
+//		LOGV( "start: %i, num_frames: %i\n", start.asInt(), num_frames.asInt() );
+	}
+	
+	
+	return util::ConfigLoad_Success;
+} // load_sprite_from_file
+
+
 struct LogoScreen : public virtual IScreen
 {
 	font::Handle font;
 	LogoScreen()
 	{
-		font = font::load_font_from_file( "fonts/nokiafc22.ttf", 8 );
+		font = font::load_font_from_file( "fonts/nokiafc22.ttf", 64 );
 	}
 
 	virtual void on_show( kernel::IApplication * app )
@@ -503,6 +761,7 @@ void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width,
 	}
 }
 
+#if 0
 void render_tiled_map( TiledMap & tiled_map, RenderStream & rs, renderer::VertexStream & vb, unsigned int test_attribs, Camera & camera )
 {
 	// could potentially have a vertexbuffer per tileset
@@ -548,6 +807,7 @@ void render_tiled_map( TiledMap & tiled_map, RenderStream & rs, renderer::Vertex
 	
 	vb.reset();
 }
+#endif
 
 
 
@@ -640,7 +900,7 @@ struct GameScreen : public virtual IScreen
 	renderer::VertexStream vb;
 	assets::Shader default_shader;
 	unsigned int test_attribs;
-	TiledMap tiled_map;
+//	TiledMap tiled_map;
 	RenderStream rs;
 	assets::Material * player_mat;
 	
@@ -687,7 +947,7 @@ struct GameScreen : public virtual IScreen
 		name = "colors";
 		test_attribs |= assets::find_parameter_mask( name );
 		
-		util::json_load_with_callback( "maps/test.json", tiled_map_loader, &tiled_map, true );
+//		util::json_load_with_callback( "maps/test.json", tiled_map_loader, &tiled_map, true );
 
 		// load map events
 		util::json_load_with_callback( "maps/space.json", map_event_loader, &event_based_map, true );
@@ -775,7 +1035,8 @@ struct GameScreen : public virtual IScreen
 		// set initial position
 		player->snap_to_world_position(50, (kernel::instance()->parameters().render_height / 2) - (player->height/2) );
 		
-		player->select_sprite(0, 64, 128, 128, 256, 256);
+		player->load_sprite("sprites/player.conf");
+//		player->select_sprite(0, 64, 128, 128, 256, 256);
 		
 		// load sounds
 		fire_delay = 200;
@@ -996,7 +1257,8 @@ struct GameScreen : public virtual IScreen
 		{
 			ent->snap_to_world_position( x, y );
 			ent->set_velocity( BULLET_SPEED, 0 );
-			ent->select_sprite(0, 32, 32, 32, 256, 256);
+//			ent->select_sprite(0, 32, 32, 32, 256, 256);
+			ent->load_sprite("sprites/bullet.conf");
 			ent->collision_mask = 2;
 			ent->collision_size = 16;
 			return true;
@@ -1017,15 +1279,16 @@ struct GameScreen : public virtual IScreen
 			float velocity = 100.0f;
 			ent->set_velocity( -velocity, 0 );
 
+			ent->load_sprite( "sprites/enemy.conf" );
 			if ( id == 0 )
 			{
-				ent->select_sprite(64, 0, 32, 32, 256, 256);
+//				ent->select_sprite(64, 0, 32, 32, 256, 256);
 				ent->width = 32;
 				ent->height = 32;
 			}
 			else if ( id == 1 )
 			{
-				ent->select_sprite(32, 0, 32, 32, 256, 256);
+//				ent->select_sprite(32, 0, 32, 32, 256, 256);
 				ent->width = 32;
 				ent->height = 32;
 				ent->color = Color(255, 0, 0);
