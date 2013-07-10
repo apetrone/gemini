@@ -64,6 +64,11 @@ namespace assets
 		assets::AssetID asset_id;
 		virtual ~Asset() {}
 		virtual void release() = 0;
+		
+		inline unsigned int Id() const
+		{
+			return asset_id;
+		} // Id
 	}; // Asset
 	
 }; // namespace assets
@@ -86,6 +91,7 @@ namespace assets
 	
 	// load a texture from disk or cache. if reload_from_disk is false, cache is preferred
 	Texture * load_texture( const char * path, unsigned int flags = 0, bool ignore_cache = false );
+	Texture * texture_by_id( unsigned int id );
 	//	Texture * load_cubemap( const char * basename, unsigned int flags = 0, bool ignore_cache = false );
 	
 	// -------------------------------------------------------------
@@ -212,7 +218,6 @@ namespace assets
 		unsigned int num_parameters;
 		unsigned int requirements; // used to lookup the correct shader permutation for this material
 		virtual void release();
-		unsigned int Id() const;
 		
 		// this will generate a value based on the parameters applied
 		// to this material such that the correct shader can be found and used when rendering

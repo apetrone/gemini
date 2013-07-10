@@ -104,6 +104,11 @@ namespace assets
 		return _default_texture;
 	} // load_texture
 	
+	Texture * texture_by_id( unsigned int id )
+	{
+		return texture_lib->find_with_id( id );
+	} // texture_by_id
+	
 	// -------------------------------------------------------------
 	// Shader
 	Shader::Shader()
@@ -767,11 +772,6 @@ namespace assets
 			DESTROY_ARRAY(Parameter, parameters, num_parameters);
 		}
 	} // release
-	
-	unsigned int Material::Id() const
-	{
-		return asset_id;
-	} // Id
 
 	void Material::calculate_requirements()
 	{
@@ -948,7 +948,7 @@ namespace assets
 					if ( param_flags & PF_VALUE )
 					{
 						assets::Texture * tex = assets::load_texture( texture_param.asString().c_str() );
-						parameter->intValue = tex->texture_id;
+						parameter->intValue = tex->Id();
 						LOGV( "param value: %i\n", parameter->intValue );
 						
 						parameter->texture_unit = texture_unit_for_map( parameter->name );
@@ -981,7 +981,7 @@ namespace assets
 					if ( param_flags & PF_VALUE )
 					{
 						assets::Texture * tex = assets::load_texture( texture_param.asString().c_str() );
-						parameter->intValue = tex->texture_id;
+						parameter->intValue = tex->Id();
 //						LOGV( "param value: %i\n", parameter->intValue );
 						
 						parameter->texture_unit = texture_unit_for_map( parameter->name );
@@ -1014,7 +1014,7 @@ namespace assets
 					{
 						LOGW( "cubemap not implemented!\n" );
 //						assets::Texture * tex = 0; //assets::loadCubemap( texture_param.asString().c_str(), texture_flags );
-//						parameter->intValue = tex->texture_id;
+//						parameter->intValue = tex->Id();
 //						LOGV( "param value: %i\n", parameter->intValue );
 						
 //						parameter->texture_unit = texture_unit_for_map( parameter->name );
@@ -1593,7 +1593,7 @@ namespace assets
 		parameter->name = "diffusemap";
 		parameter->type = MP_SAMPLER_2D;
 		parameter->texture_unit = texture_unit_for_map( parameter->name );
-		parameter->intValue = _default_texture->texture_id;
+		parameter->intValue = _default_texture->Id();
 		_default_material->calculate_requirements();
 		mat_lib->take_ownership( "materials/default", _default_material );
 		LOGV( "Loaded default materials; asset_id = %i\n", _default_material->asset_id );
