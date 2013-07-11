@@ -89,6 +89,7 @@ public:
 	virtual void render( RenderContext & context ) = 0;
 	virtual void get_scale( float & x, float & y ) = 0;
 	virtual Color get_color() = 0;
+	virtual void update( float dt_sec ) = 0;
 }; // IGraphicObject
 
 
@@ -166,6 +167,7 @@ public:
 		void create_frames( unsigned int material_id, unsigned int num_frames, unsigned int sprite_width, unsigned int sprite_height );
 		void purge_frames();
 		float * uvs_for_frame( unsigned short frame_id );
+		bool is_valid_frame(unsigned short frame_id);
 	}; // AnimationSequence
 
 	AnimationSequence * animations;		// animation frames
@@ -240,6 +242,8 @@ public:
 		collision_mask = 0;
 		rotation = 0;
 		collision_size = 0;
+		
+		frame_delay = 1.0f; // second
 	} // Sprite
 	
 	~Sprite()
@@ -251,12 +255,7 @@ public:
 	{
 		util::json_load_with_callback( path, load_sprite_from_file, this, true );
 	} // load_sprite
-	
-	void select_sprite( int x, int y, int frame_width, int frame_height, int image_width, int image_height )
-	{
-//		sprite::calc_tile_uvs( (float*)frame.texcoords, x, y, frame_width, frame_height, image_width, image_height );
-	} // select_sprite
-	
+		
 	void create_animations( unsigned short num_animations )
 	{
 		if ( animations && total_animations > 0 )
@@ -284,9 +283,11 @@ public:
 			if ( name == anim->name )
 			{
 				current_animation = i;
-				break;
+				return;
 			}
 		}
+		
+		LOGV( "unable to find animation: %s\n", name.c_str() );
 	} // play_animation
 	
 	AnimationSequence * get_animation_by_index( unsigned short animation_index )
@@ -308,7 +309,7 @@ public:
 		
 		
 		AnimationSequence * current_sequence = get_animation_by_index( current_animation );
-		if ( current_sequence )
+		if ( current_sequence && current_sequence->is_valid_frame(current_frame) )
 		{
 			add_sprite_to_stream( context.vb, sx, sy, scx*this->width, scy*this->height, this->get_color(), current_sequence->uvs_for_frame( current_frame ) );
 		}
@@ -358,6 +359,28 @@ public:
 		this->world_x += dt_sec * velocity_x;
 		this->world_y += dt_sec * velocity_y;
 	} // step
+	
+	
+	virtual void update( float dt_sec )
+	{
+		this->animation_time -= dt_sec;
+		
+		if ( this->animation_time <= 0 )
+		{
+			++current_frame;
+			this->animation_time = this->frame_delay;
+			
+			AnimationSequence * sequence = this->get_animation_by_index(current_animation);
+			if ( sequence )
+			{
+				if ( current_frame >= sequence->total_frames )
+				{
+					// TODO: callback when this sequence finished?
+					current_frame = 0;
+				}
+			}
+		}
+	} // update
 	
 	virtual void set_velocity( float x, float y )
 	{
@@ -468,11 +491,18 @@ void Sprite::AnimationSequence::purge_frames()
 
 float * Sprite::AnimationSequence::uvs_for_frame(unsigned short frame_id)
 {
-	if ( frame_id >= 0 && frame_id < total_frames )
+	if (is_valid_frame(frame_id))
+	{
 		return (float*)&frames[ frame_id ].texcoords;
+	}
 	
 	return 0;
 } // uvs_for_frame
+
+bool Sprite::AnimationSequence::is_valid_frame(unsigned short frame_id)
+{
+	return (frame_id >= 0 && frame_id < total_frames);
+} // is_valid_frame
 
 
 struct Entity
@@ -549,6 +579,12 @@ util::ConfigLoadStatus load_sprite_from_file( const Json::Value & root, void * d
 	}
 	sprite->collision_size = collision_width.asUInt();
 	
+	// frame delay
+	Json::Value frame_delay = root["frame_delay"];
+	if ( !frame_delay.isNull() )
+	{
+		sprite->frame_delay = frame_delay.asFloat();
+	}
 	
 	// load sprite scale
 	Json::Value scale_x = root["scale_x"];
@@ -1057,8 +1093,7 @@ struct GameScreen : public virtual IScreen
 		player->snap_to_world_position(50, (kernel::instance()->parameters().render_height / 2) - (player->height/2) );
 		
 		player->load_sprite("sprites/player.conf");
-//		player->select_sprite(0, 64, 128, 128, 256, 256);
-		
+
 		// load sounds
 		fire_delay = 200;
 		next_fire = 0;
@@ -1190,6 +1225,7 @@ struct GameScreen : public virtual IScreen
 				
 				if ( active_entities[i] && ent && ent != player )
 				{
+					ent->update( params.framedelta_filtered * .001f );
 					ent->render( context );
 				}
 			}
@@ -1278,9 +1314,9 @@ struct GameScreen : public virtual IScreen
 		{
 			ent->snap_to_world_position( x, y );
 			ent->set_velocity( BULLET_SPEED, 0 );
-//			ent->select_sprite(0, 32, 32, 32, 256, 256);
 			ent->load_sprite("sprites/bullet.conf");
 			ent->collision_mask = 2;
+			ent->play_animation("idle");
 			return true;
 		}
 		
@@ -1300,17 +1336,8 @@ struct GameScreen : public virtual IScreen
 			ent->set_velocity( -velocity, 0 );
 
 			ent->load_sprite( "sprites/enemy.conf" );
-			if ( id == 0 )
+			if ( id == 1 )
 			{
-//				ent->select_sprite(64, 0, 32, 32, 256, 256);
-				ent->width = 32;
-				ent->height = 32;
-			}
-			else if ( id == 1 )
-			{
-//				ent->select_sprite(32, 0, 32, 32, 256, 256);
-				ent->width = 32;
-				ent->height = 32;
 				ent->color = Color(255, 0, 0);
 			}
 			ent->collision_mask = 7;
@@ -1335,7 +1362,14 @@ struct GameScreen : public virtual IScreen
 					}
 				}
 			}
-			
+#if 0
+			else if ( input::state()->mouse().is_down( input::MOUSE_RIGHT ) )
+			{
+				int x, y;
+				input::state()->mouse().mouse_position(x, y);
+				create_bullet_effect( x, y );
+			}
+#endif
 			
 			current_gametime += (kernel::instance()->parameters().framedelta_filtered*.001);
 	#if 1
