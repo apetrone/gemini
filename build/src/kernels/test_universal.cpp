@@ -154,8 +154,8 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 	renderer::VertexStream stream;
 	
 	stream.desc.add( renderer::VD_FLOAT3 );
-	stream.desc.add( renderer::VD_FLOAT2 );
 	stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+	stream.desc.add( renderer::VD_FLOAT2 );
 	
 	stream.create(1024, 1024, renderer::DRAW_INDEXED_TRIANGLES);
 	ParticleEmitter * emitter = 0;
@@ -227,6 +227,11 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 
 	
 	glm::mat4 object_matrix;
+	
+	stream.update();
+	
+	rs.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
+	rs.add_state(renderer::STATE_BLEND, 1);
 	rs.add_shader( shader );
 	
 	rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview_matrix );
@@ -237,6 +242,8 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 	
 	rs.add_draw_call( stream.vertexbuffer );
 	
+	
+	rs.add_state(renderer::STATE_BLEND, 0);
 	rs.run_commands();
 	
 	stream.destroy();
@@ -1225,20 +1232,17 @@ struct GameScreen : public virtual IScreen
 			e->spawn_delay = 32;
 			e->life_min = 500;
 			e->life_max = 1000;
-			e->velocity_min = glm::vec3( -0.5f, 0.5f, 0.0f );
-			e->velocity_max = glm::vec3( 0.5f, 2.0f, 0.5f );
+			e->velocity_min = glm::vec3( -150.0f, -25.0f, 0.0f );
+			e->velocity_max = glm::vec3( -100.0f, 25.0f, 0.0f );
 			
 			Color colors[] = { Color(255, 255, 255) };
 			e->color_channel.create(1, colors, 1/3.0f);
 			
-			float alphas[] = {1.0f};
-			e->alpha_channel.create(1, alphas, 1/4.0f);
+			float alphas[] = {1.0f, 0.0f};
+			e->alpha_channel.create(2, alphas, 1/4.0f);
 			
 			float sizes[] = {4.75f, 10.0f};
 			e->size_channel.create(2, sizes, 1/30.0f);
-			
-			
-			
 		}
 	}
 	
@@ -1418,6 +1422,12 @@ struct GameScreen : public virtual IScreen
 			font::draw_string( round_title, tx, ty, "Game Fail", Color(255,0,0) );
 		}
 		
+
+		ParticleEmitter * e = &psys.emitter_list[0];
+		
+		float x, y;
+		player->world_position(x, y);
+		e->world_position = glm::vec3( x, y, 0 );
 
 		// render particles last
 		render_particles( psys, renderer::driver(), camera.matCam, camera.matProj );

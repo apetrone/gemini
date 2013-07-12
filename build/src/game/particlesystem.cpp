@@ -105,9 +105,9 @@ void ParticleEmitter::update(float delta_msec)
 		{
 			float lifet = 1.0 - (p->life_remaining / p->life_total);
 			p->position += (p->velocity * sec);
-			p->color = color_channel.get_value( lifet );
-			//p->color = aengine::Color( 255, 255, 255, 255 );
-			p->color.a = alpha_channel.get_value( lifet );
+//			p->color = color_channel.get_value( lifet );
+			p->color = Color( 255, 255, 255, 64 );
+			p->color.a = 255.0*alpha_channel.get_value( lifet );
 			//			graph->RecordFloat( p->color.a, 0 );
 			p->size = size_channel.get_value( lifet );
 			++num_particles_alive;
