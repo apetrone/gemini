@@ -234,6 +234,8 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 	rs.add_state(renderer::STATE_BLEND, 1);
 	rs.add_shader( shader );
 	
+	rs.add_state(renderer::STATE_DEPTH_TEST, 0);
+	
 	rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview_matrix );
 	rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection_matrix );
 	rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
@@ -244,6 +246,7 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 	
 	
 	rs.add_state(renderer::STATE_BLEND, 0);
+	rs.add_state(renderer::STATE_DEPTH_TEST, 1);
 	rs.run_commands();
 	
 	stream.destroy();
@@ -1231,7 +1234,7 @@ struct GameScreen : public virtual IScreen
 			e->spawn_rate = 15;
 			e->spawn_delay = 32;
 			e->life_min = 500;
-			e->life_max = 1000;
+			e->life_max = 2000;
 			e->velocity_min = glm::vec3( -150.0f, -25.0f, 0.0f );
 			e->velocity_max = glm::vec3( -100.0f, 25.0f, 0.0f );
 			
@@ -1241,8 +1244,8 @@ struct GameScreen : public virtual IScreen
 			float alphas[] = {1.0f, 0.0f};
 			e->alpha_channel.create(2, alphas, 1/4.0f);
 			
-			float sizes[] = {4.75f, 10.0f};
-			e->size_channel.create(2, sizes, 1/30.0f);
+			float sizes[] = {4.75f, 15.0f};
+			e->size_channel.create(2, sizes, 1/4.0f);
 		}
 	}
 	
@@ -1427,7 +1430,7 @@ struct GameScreen : public virtual IScreen
 		
 		float x, y;
 		player->world_position(x, y);
-		e->world_position = glm::vec3( x, y, 0 );
+		e->world_position = glm::vec3( x-28, y+8, 0 );
 
 		// render particles last
 		render_particles( psys, renderer::driver(), camera.matCam, camera.matProj );
