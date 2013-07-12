@@ -77,7 +77,7 @@ struct KeyframeChannel
 	{
 		if ( samples )
 		{
-			delete [] samples;
+			DESTROY_ARRAY(Type, samples, total_samples);
 			samples = 0;
 		}
 		
@@ -86,8 +86,9 @@ struct KeyframeChannel
 	
 	void create( unsigned int max_samples, const Type * values, float framedelay, Type pre_infinity_value = Type(), Type post_infinity_value = Type() )
 	{
-		samples = new Type[ total_samples ];
-		total_samples = total_samples;
+		total_samples = max_samples;
+		samples = CREATE_ARRAY(Type, total_samples);
+		
 		
 		set_keys( values, total_samples );
 		

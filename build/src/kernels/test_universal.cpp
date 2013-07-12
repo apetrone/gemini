@@ -41,7 +41,7 @@
 #include "keyframechannel.hpp"
 #include "debugdraw.hpp"
 #include "util.hpp"
-
+#include "particlesystem.hpp"
 #define TEST_2D 0
 #define TEST_FONT 1
 
@@ -142,6 +142,106 @@ public:
 	virtual void get_rotation( float & radians ) const = 0;
 }; // ICollisionObject
 
+struct SpriteVertexType
+{
+	float x, y, z;
+	Color color;
+	float u, v;
+};
+
+void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, glm::mat4 & modelview_matrix, glm::mat4 & projection_matrix )
+{
+	renderer::VertexStream stream;
+	
+	stream.desc.add( renderer::VD_FLOAT3 );
+	stream.desc.add( renderer::VD_FLOAT2 );
+	stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+	
+	stream.create(1024, 1024, renderer::DRAW_INDEXED_TRIANGLES);
+	ParticleEmitter * emitter = 0;
+	
+	unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
+	glm::mat3 billboard = glm::transpose( glm::mat3(modelview_matrix) );
+	
+	for( unsigned int i = 0; i < ps.num_active_emitters; ++i )
+	{
+		emitter = &ps.emitter_list[i];
+		for( unsigned int p = 0; p < emitter->max_particles; ++p )
+		{
+			Particle * particle = &emitter->particle_list[ p ];
+			if ( particle->life_remaining > 0 )
+			{
+				//
+				if ( !stream.has_room(4, 6) )
+				{
+					LOGE( "particle stream is full - flush!\n" );
+				}
+
+				SpriteVertexType * v = (SpriteVertexType*)stream.request(4);
+				glm::vec3 offset( particle->size, particle->size, 0 );
+				glm::vec3 temp;
+				
+				temp = (billboard * -offset) + particle->position;
+				v[0].x = temp.x;
+				v[0].y = temp.y;
+				v[0].z = temp.z;
+				
+				temp = (billboard * glm::vec3(offset[0], -offset[1], -offset[2])) + particle->position;
+				v[1].x = temp.x;
+				v[1].y = temp.y;
+				v[1].z = temp.z;
+
+				temp = (billboard * offset) + particle->position;
+				v[2].x = temp.x;
+				v[2].y = temp.y;
+				v[2].z = temp.z;
+				
+				temp = (billboard * glm::vec3(-offset[0], offset[1], -offset[2])) + particle->position;
+				v[3].x = temp.x;
+				v[3].y = temp.y;
+				v[3].z = temp.z;
+				
+				v[0].color = v[1].color = v[2].color = v[3].color = particle->color;
+				
+				v[0].u = 0; v[0].v = 0;
+				v[1].u = 1; v[1].v = 0;
+				v[2].u = 1; v[2].v = 1;
+				v[3].u = 0; v[3].v = 1;
+				
+//				debugdraw::point(particle->position, Color(255,255,255), particle->size);
+				stream.append_indices( indices, 6 );
+			}
+		}
+	}
+	
+	RenderStream rs;
+	
+	assets::ShaderString name("uv0");
+	unsigned int test_attribs = assets::find_parameter_mask( name );
+	
+	name = "colors";
+	test_attribs |= assets::find_parameter_mask(name);
+
+	assets::Material * material = assets::material_by_id(ps.emitter_list[0].material_id);
+	assets::Shader * shader = assets::find_compatible_shader( material->requirements + test_attribs );
+
+	
+	glm::mat4 object_matrix;
+	rs.add_shader( shader );
+	
+	rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview_matrix );
+	rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection_matrix );
+	rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
+	
+	rs.add_material( material, shader );
+	
+	rs.add_draw_call( stream.vertexbuffer );
+	
+	rs.run_commands();
+	
+	stream.destroy();
+} // render_particles
+
 
 util::ConfigLoadStatus load_sprite_from_file( const Json::Value & root, void * data );
 
@@ -159,7 +259,6 @@ public:
 		unsigned short frame_start;
 		unsigned short total_frames;
 		SpriteFrame * frames;
-		
 		
 		AnimationSequence();
 		~AnimationSequence();
@@ -740,12 +839,7 @@ struct HelpScreen : public virtual IScreen
 	virtual void on_event( kernel::TouchEvent & event, kernel::IApplication * app ) {}
 }; // HelpScreen
 
-struct SpriteVertexType
-{
-	float x, y, z;
-	Color color;
-	float u, v;
-};
+
 
 void render_vertexstream( Camera & camera, renderer::VertexStream & vb, RenderStream & rs, unsigned int attributes, assets::Material * material )
 {
@@ -987,6 +1081,11 @@ struct GameScreen : public virtual IScreen
 	unsigned int energy;
 	unsigned char game_state;
 	
+	
+	ParticleSystem psys;
+	
+	
+	
 	GameScreen()
 	{
 		energy = STARTING_ENERGY;
@@ -1102,6 +1201,45 @@ struct GameScreen : public virtual IScreen
 		enemy_explode = audio::create_sound( "sounds/enemy_explode1");
 
 		this->default_shader.object = 0;
+		
+		
+		{
+			psys.num_active_emitters = 1;
+			psys.emitter_list = CREATE_ARRAY(ParticleEmitter, 1);
+			ParticleEmitter * e = &psys.emitter_list[0];
+			
+			float x, y;
+			player->world_position(x, y);
+			e->world_position = glm::vec3( x, y, 0 );
+			
+			assets::Material * particle_material = assets::load_material("materials/particles2");
+			if ( particle_material )
+			{
+				e->material_id = particle_material->Id();
+			}
+			
+			
+			e->init(128);
+			e->next_spawn = 0;
+			e->spawn_rate = 15;
+			e->spawn_delay = 32;
+			e->life_min = 500;
+			e->life_max = 1000;
+			e->velocity_min = glm::vec3( -0.5f, 0.5f, 0.0f );
+			e->velocity_max = glm::vec3( 0.5f, 2.0f, 0.5f );
+			
+			Color colors[] = { Color(255, 255, 255) };
+			e->color_channel.create(1, colors, 1/3.0f);
+			
+			float alphas[] = {1.0f};
+			e->alpha_channel.create(1, alphas, 1/4.0f);
+			
+			float sizes[] = {4.75f, 10.0f};
+			e->size_channel.create(2, sizes, 1/30.0f);
+			
+			
+			
+		}
 	}
 	
 	~GameScreen()
@@ -1279,7 +1417,11 @@ struct GameScreen : public virtual IScreen
 			virtual_screen_to_pixels(tx, ty);
 			font::draw_string( round_title, tx, ty, "Game Fail", Color(255,0,0) );
 		}
-	}
+		
+
+		// render particles last
+		render_particles( psys, renderer::driver(), camera.matCam, camera.matProj );
+	} // 
 	
 	Sprite * get_unused_entity()
 	{
@@ -1482,6 +1624,9 @@ struct GameScreen : public virtual IScreen
 			
 			// constrain the player within the bounds of the window
 			constrain_to_screen( *player );
+			
+			// update particles
+			psys.update( kernel::instance()->parameters().step_interval_seconds * 1000.0f );
 		}
 	}
 	
