@@ -59,6 +59,8 @@ namespace kernel
 
 void event_callback_xwl( xwl_event_t * e )
 {
+	LOGV( "event_callback_xwl - event->type = %i\n", e->type );
+
 	if ( e->type == XWLE_KEYRELEASED || e->type == XWLE_KEYPRESSED )
 	{
 #if 0

@@ -22,6 +22,7 @@
 #pragma once
 
 #include <typedefs.h>
+#include "render_utilities.hpp"
 
 #ifdef RGB
 #undef RGB
@@ -75,3 +76,16 @@ struct Color
 		a = _a;
 	}
 }; // Color
+
+
+template <>
+struct Interpolator<Color>
+{
+	Color operator()( const Color & start, const Color & end, float t )
+	{
+		return Color( lerp( start.r, end.r, t ),
+					 lerp( start.g, end.g, t ),
+					 lerp( start.b, end.b, t ),
+					 lerp( start.a, end.a, t ) );
+	}
+};

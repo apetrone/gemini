@@ -51,6 +51,8 @@ const float BULLET_SPEED = 500;
 const float TEST_SIZE = 256;
 const int STARTING_ENERGY = 10;
 
+using namespace render_utilities;
+
 enum {
 	GAME_PLAY = 1,
 	GAME_WIN,
@@ -63,6 +65,11 @@ void world_to_screen( float & wx, float & wy, float & sx, float & sy )
 {
 	sx = wx;
 	sy = wy;
+} // world_to_screen
+
+void world_to_screen( glm::vec2 & world_position, glm::vec2 & screen )
+{
+	screen = world_position;
 } // world_to_screen
 
 
@@ -292,14 +299,15 @@ public:
 	unsigned int material_id;
 	Color color;
 	
-	float world_x;
-	float world_y;
+//	float world_x;
+//	float world_y;
+	PhysicsState<glm::vec2> position;
 	
-	float last_world_x;
-	float last_world_y;
+//	float last_world_x;
+//	float last_world_y;
 	
-	float r_x;
-	float r_y;
+//	float r_x;
+//	float r_y;
 	
 	unsigned short width;
 	unsigned short height;
@@ -319,6 +327,11 @@ public:
 	
 	float rotation;
 	
+	
+//	typedef std::vector<IComponent*> ComponentVector;
+//	ComponentVector components;
+	
+	
 	void reset_components()
 	{
 		this->color = Color(255, 255, 255);
@@ -334,7 +347,8 @@ public:
 		animation_time = 0;
 		total_animations = 0;
 		
-		world_x = world_y = 0;
+//		world_x = world_y = 0;
+		position.snap( glm::vec2(0,0) );
 		material_id = 0;
 		color = Color( 255, 255, 255, 255 );
 		memset( frame.texcoords, 0, 4 * sizeof(renderer::UV) );
@@ -410,8 +424,8 @@ public:
 	// IGraphicObject
 	virtual void render( RenderContext & context )
 	{
-		float sx, sy;
-		world_to_screen( r_x, r_y, sx, sy );
+		glm::vec2 screen;
+		world_to_screen( position.render, screen );
 		
 		float scx, scy;
 		get_scale( scx, scy );
@@ -420,12 +434,12 @@ public:
 		AnimationSequence * current_sequence = get_animation_by_index( current_animation );
 		if ( current_sequence && current_sequence->is_valid_frame(current_frame) )
 		{
-			add_sprite_to_stream( context.vb, sx, sy, scx*this->width, scy*this->height, this->get_color(), current_sequence->uvs_for_frame( current_frame ) );
+			add_sprite_to_stream( context.vb, screen.x, screen.y, scx*this->width, scy*this->height, this->get_color(), current_sequence->uvs_for_frame( current_frame ) );
 		}
 		
 		
 		
-		debugdraw::point( glm::vec3(r_x, r_y, 0), Color(255,0,0), scx*(this->collision_size/2.0), 0 );
+		debugdraw::point( glm::vec3(position.render, 0), Color(255,0,0), scx*(this->collision_size/2.0), 0 );
 	} // render
 	
 	virtual void get_scale( float & x, float & y )
@@ -457,16 +471,22 @@ public:
 	
 	virtual void world_position( float & x, float & y )
 	{
-		x = this->world_x;
-		y = this->world_y;
+//		x = this->world_x;
+//		y = this->world_y;
+		x = position.current.x;
+		y = position.current.y;
 	} // world_position
 	
 	virtual void step( float dt_sec )
 	{
-		this->last_world_x = this->world_x;
-		this->last_world_y = this->world_y;
-		this->world_x += dt_sec * velocity_x;
-		this->world_y += dt_sec * velocity_y;
+		position.step( dt_sec );
+//		this->last_world_x = this->world_x;
+//		this->last_world_y = this->world_y;
+//		this->world_x += dt_sec * velocity_x;
+//		this->world_y += dt_sec * velocity_y;
+
+		position.current.x += dt_sec * velocity_x;
+		position.current.y += dt_sec * velocity_y;
 	} // step
 	
 	
@@ -500,12 +520,14 @@ public:
 
 	void get_aabb( AABB2 & aabb ) const
 	{
+		glm::vec2 pos = position.current;
+		
 		float hw = (this->collision_size/2.0f);
 		float hh = (this->collision_size/2.0f);
-		aabb.left = this->world_x - hw;
-		aabb.right = this->world_x + hw;
-		aabb.top = this->world_y - hh;
-		aabb.bottom = this->world_y + hh;
+		aabb.left = pos.x - hw;
+		aabb.right = pos.x + hw;
+		aabb.top = pos.y - hh;
+		aabb.bottom = pos.y + hh;
 	} // get_aabb
 
 	unsigned short get_collision_mask() const
@@ -520,8 +542,9 @@ public:
 
 	void snap_to_world_position( float x, float y )
 	{
-		this->r_x = this->world_x = this->last_world_x = x;
-		this->r_y = this->world_y = this->last_world_y = y;
+//		this->r_x = this->world_x = this->last_world_x = x;
+//		this->r_y = this->world_y = this->last_world_y = y;
+		position.snap( glm::vec2(x, y) );
 	} // snap_to_world_position
 }; // Sprite
 
@@ -1044,10 +1067,12 @@ void move_sprite_with_command( Sprite & sprite, MovementCommand & command )
 {
 	const float MOVE_SPEED = 200;
 	
-	sprite.world_y -= command.up * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
-	sprite.world_y += command.down * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
-	sprite.world_x -= command.left * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
-	sprite.world_x += command.right * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
+	glm::vec2 & current = sprite.position.current;
+	
+	current.y -= command.up * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
+	current.y += command.down * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
+	current.x -= command.left * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
+	current.x += command.right * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
 }
 
 
@@ -1359,8 +1384,9 @@ struct GameScreen : public virtual IScreen
 			ent = &entities[i];
 			if ( active_entities[i] )
 			{
-				ent->r_x = lerp( ent->last_world_x, ent->world_x, kernel::instance()->parameters().step_alpha );
-				ent->r_y = lerp( ent->last_world_y, ent->world_y, kernel::instance()->parameters().step_alpha );
+//				ent->r_x = lerp( ent->last_world_x, ent->world_x, kernel::instance()->parameters().step_alpha );
+//				ent->r_y = lerp( ent->last_world_y, ent->world_y, kernel::instance()->parameters().step_alpha );
+				ent->position.interpolate( kernel::instance()->parameters().step_alpha );
 				
 				if ( !is_within_screen(ent) )
 				{
@@ -1510,10 +1536,11 @@ struct GameScreen : public virtual IScreen
 			{
 				if (next_fire <= 0)
 				{
-					if ( create_bullet_effect( player->r_x+player->hotspot_x, player->r_y+player->hotspot_y ) )
+					glm::vec2 & rpos = player->position.render;
+					if ( create_bullet_effect( rpos.x+player->hotspot_x, rpos.y+player->hotspot_y ) )
 					{
 						next_fire = fire_delay;
-	//					player_source = audio::play( player_fire );
+						player_source = audio::play( player_fire );
 					}
 				}
 			}

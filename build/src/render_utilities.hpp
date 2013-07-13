@@ -21,6 +21,34 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "mathlib.h"
+
+// -------------------------------------------------------------
+inline float lerp( float a, float b, float t )
+{
+	return (a + (b-a)*t);
+}
+
+
+inline glm::vec2 lerp( const glm::vec2 & a, const glm::vec2 & b, float t )
+{
+	return glm::mix( a, b, t );
+}
+
+// -------------------------------------------------------------
+template <class Type>
+struct Interpolator
+{
+	Type operator()( const Type & start, const Type & end, float t )
+	{
+		// return the linearly interpolated value
+		return lerp( start, end, t );
+	}
+};
+
+
+
+
 
 
 namespace renderer
@@ -38,4 +66,36 @@ struct RenderStream;
 namespace render_utilities
 {
 	void stream_geometry( RenderStream & rs, assets::Geometry * geo, renderer::GeneralParameters & gp );
+	
+	
+	template <class Type>
+	struct PhysicsState
+	{
+		Type last;
+		Type current;
+		Type render;
+		
+		void snap( const Type & value )
+		{
+			render = current = last = value;
+		}
+		
+		void step( float delta_sec )
+		{
+			last = current;
+		}
+		
+		void interpolate( float t )
+		{
+			Interpolator<Type> interpolator;
+			render = interpolator( last, current, t );
+		}
+	}; // PhysicsState
 }; // namespace render_utilities
+
+
+
+
+
+
+

@@ -21,43 +21,16 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "render_utilities.hpp"
 #include <color.hpp>
 
-// -------------------------------------------------------------
-inline float lerp( float a, float b, float t )
-{
-	return (a + (b-a)*t);
-}
 
-// -------------------------------------------------------------
-
-template <class Type>
-struct KeyframeInterpolator
-{
-	Type operator()( const Type & start, const Type & end, float t )
-	{
-		// return the linearly interpolated value
-		return lerp( start, end, t );
-	}
-};
-
-template <>
-struct KeyframeInterpolator<Color>
-{
-	Color operator()( const Color & start, const Color & end, float t )
-	{
-		return Color( lerp( start.r, end.r, t ),
-							  lerp( start.g, end.g, t ),
-							  lerp( start.b, end.b, t ),
-							  lerp( start.a, end.a, t ) );
-	}
-};
 
 // -------------------------------------------------------------
 
 
 
-template <class Type, class Interpolator=KeyframeInterpolator<Type> >
+template <class Type, class Interpolator=Interpolator<Type> >
 struct KeyframeChannel
 {
 	unsigned int total_samples;
