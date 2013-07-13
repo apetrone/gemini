@@ -173,12 +173,14 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 	for( unsigned int i = 0; i < ps.num_active_emitters; ++i )
 	{
 		emitter = &ps.emitter_list[i];
+		emitter->world_position.interpolate( kernel::instance()->parameters().step_alpha );
 		for( unsigned int p = 0; p < emitter->max_particles; ++p )
 		{
 			Particle * particle = &emitter->particle_list[ p ];
 			if ( particle->life_remaining > 0 )
 			{
 				//
+				particle->position.interpolate( kernel::instance()->parameters().step_alpha );
 				if ( !stream.has_room(4, 6) )
 				{
 					LOGE( "particle stream is full - flush!\n" );
@@ -188,22 +190,22 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 				glm::vec3 offset( particle->size, particle->size, 0 );
 				glm::vec3 temp;
 				
-				temp = (billboard * -offset) + particle->position;
+				temp = (billboard * -offset) + particle->position.render;
 				v[0].x = temp.x;
 				v[0].y = temp.y;
 				v[0].z = temp.z;
 				
-				temp = (billboard * glm::vec3(offset[0], -offset[1], -offset[2])) + particle->position;
+				temp = (billboard * glm::vec3(offset[0], -offset[1], -offset[2])) + particle->position.render;
 				v[1].x = temp.x;
 				v[1].y = temp.y;
 				v[1].z = temp.z;
 
-				temp = (billboard * offset) + particle->position;
+				temp = (billboard * offset) + particle->position.render;
 				v[2].x = temp.x;
 				v[2].y = temp.y;
 				v[2].z = temp.z;
 				
-				temp = (billboard * glm::vec3(-offset[0], offset[1], -offset[2])) + particle->position;
+				temp = (billboard * glm::vec3(-offset[0], offset[1], -offset[2])) + particle->position.render;
 				v[3].x = temp.x;
 				v[3].y = temp.y;
 				v[3].z = temp.z;
@@ -215,7 +217,7 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 				v[2].u = 1; v[2].v = 1;
 				v[3].u = 0; v[3].v = 1;
 				
-//				debugdraw::point(particle->position, Color(255,255,255), particle->size);
+//				debugdraw::point(particle->position.render, Color(255,255,255), particle->size, 0.0f);
 				stream.append_indices( indices, 6 );
 			}
 		}
@@ -1245,7 +1247,7 @@ struct GameScreen : public virtual IScreen
 			
 			float x, y;
 			player->world_position(x, y);
-			e->world_position = glm::vec3( x, y, 0 );
+			e->world_position.snap( glm::vec3( x, y, 0 ) );
 			
 			assets::Material * particle_material = assets::load_material("materials/particles2");
 			if ( particle_material )
@@ -1259,18 +1261,18 @@ struct GameScreen : public virtual IScreen
 			e->spawn_rate = 15;
 			e->spawn_delay = 32;
 			e->life_min = 500;
-			e->life_max = 2000;
-			e->velocity_min = glm::vec3( -150.0f, -25.0f, 0.0f );
-			e->velocity_max = glm::vec3( -100.0f, 25.0f, 0.0f );
+			e->life_max = 1000;
+			e->velocity_min = glm::vec3( -250.0f, -25.0f, 0.0f );
+			e->velocity_max = glm::vec3( -200.0f, 25.0f, 0.0f );
 			
 			Color colors[] = { Color(255, 255, 255) };
 			e->color_channel.create(1, colors, 1/3.0f);
 			
 			float alphas[] = {1.0f, 0.0f};
-			e->alpha_channel.create(2, alphas, 1/4.0f);
+			e->alpha_channel.create(2, alphas, 1/1.0f);
 			
-			float sizes[] = {4.75f, 15.0f};
-			e->size_channel.create(2, sizes, 1/4.0f);
+			float sizes[] = {4.75f, 25.0f};
+			e->size_channel.create(2, sizes, 1/1.0f);
 		}
 	}
 	
@@ -1409,6 +1411,16 @@ struct GameScreen : public virtual IScreen
 		{
 			render_vertexstream( camera, vb, rs, test_attribs, player_mat );
 		}
+		
+		
+		
+		ParticleEmitter * e = &psys.emitter_list[0];
+
+		glm::vec2 & rpos = player->position.render;
+		glm::vec3 emitter_pos = glm::vec3( rpos.x-28, rpos.y+8, 0 );
+		//		e->world_position.current = emitter_pos;
+		e->world_position.snap( emitter_pos );
+			
 
 		rs.run_commands();
 		vb.reset();
@@ -1423,6 +1435,8 @@ struct GameScreen : public virtual IScreen
 		
 
 //		debugdraw::line( glm::vec3(0, 0, 0), glm::vec3(player->r_x, player->r_y, 0), Color(255, 128, 0));
+		
+		render_particles( psys, renderer::driver(), camera.matCam, camera.matProj );
 		
 
 		glm::mat4 modelview;
@@ -1452,14 +1466,7 @@ struct GameScreen : public virtual IScreen
 		}
 		
 
-		ParticleEmitter * e = &psys.emitter_list[0];
-		
-		float x, y;
-		player->world_position(x, y);
-		e->world_position = glm::vec3( x-28, y+8, 0 );
 
-		// render particles last
-		render_particles( psys, renderer::driver(), camera.matCam, camera.matProj );
 	} // 
 	
 	Sprite * get_unused_entity()
@@ -1666,7 +1673,7 @@ struct GameScreen : public virtual IScreen
 			constrain_to_screen( *player );
 			
 			// update particles
-			psys.update( kernel::instance()->parameters().step_interval_seconds * 1000.0f );
+			psys.step( kernel::instance()->parameters().step_interval_seconds * 1000.0f );
 		}
 	}
 	

@@ -25,7 +25,7 @@
 #include "color.hpp"
 #include "mathlib.h"
 #include "keyframechannel.hpp"
-
+#include "render_utilities.hpp"
 
 
 // -------------------------------------------------------------
@@ -34,8 +34,12 @@
 struct Particle
 {
 	Color color;
-	glm::vec3 position;
+	render_utilities::PhysicsState<glm::vec3> position;
+//	glm::vec3 position;
 	glm::vec3 velocity;
+	
+
+	
 	float life_remaining;
 	float life_total;
 	float size;
@@ -58,7 +62,9 @@ struct ParticleEmitter
 		BOX
 	};
 	
-	glm::vec3 world_position;
+//	glm::vec3 world_position;
+	render_utilities::PhysicsState<glm::vec3> world_position;
+	
 	unsigned int max_particles;
 	unsigned int num_particles_alive;
 	unsigned int material_id;
@@ -89,7 +95,7 @@ struct ParticleEmitter
 	ParticleEmitter();
 	~ParticleEmitter();
 	void init( unsigned int max_particles );
-	void update( float delta_msec );
+	void step( float delta_msec );
 	void purge();
 }; // ParticleEmitter
 
@@ -105,5 +111,5 @@ struct ParticleSystem
 	ParticleSystem();
 	~ParticleSystem();
 	void purge();
-	void update( float delta_msec );
+	void step( float delta_msec );
 }; // ParticleSystem

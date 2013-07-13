@@ -59,7 +59,7 @@ namespace kernel
 
 void event_callback_xwl( xwl_event_t * e )
 {
-	LOGV( "event_callback_xwl - event->type = %i\n", e->type );
+//	LOGV( "event_callback_xwl - event->type = %i\n", e->type );
 
 	if ( e->type == XWLE_KEYRELEASED || e->type == XWLE_KEYPRESSED )
 	{
@@ -91,6 +91,7 @@ void event_callback_xwl( xwl_event_t * e )
 	}
 	else if ( e->type == XWLE_MOUSEBUTTON_PRESSED || e->type == XWLE_MOUSEBUTTON_RELEASED )
 	{
+		LOGV("event_callback_xwl, mouse event (pressed/released)\n");
 		input::state()->mouse().inject_mouse_button( e->button, (e->type == XWLE_MOUSEBUTTON_PRESSED) );
 		
 		kernel::MouseEvent ev;

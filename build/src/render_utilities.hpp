@@ -23,17 +23,12 @@
 
 #include "mathlib.h"
 
-// -------------------------------------------------------------
-inline float lerp( float a, float b, float t )
-{
-	return (a + (b-a)*t);
-}
-
-
-inline glm::vec2 lerp( const glm::vec2 & a, const glm::vec2 & b, float t )
+template <class Type>
+Type lerp( const Type & a, const Type & b, float t )
 {
 	return glm::mix( a, b, t );
 }
+
 
 // -------------------------------------------------------------
 template <class Type>

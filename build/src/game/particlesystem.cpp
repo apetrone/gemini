@@ -71,21 +71,26 @@ void ParticleEmitter::init(unsigned int total_particles)
 		p->life_remaining = 0;
 		p->color = Color( 0, 0, 0, 255 );
 		p->velocity = glm::vec3( 0, 0, 0 );
-		p->position = world_position;
+//		p->position = world_position;
+		p->position.snap( world_position.current );
 		p->size = 1.0f;
 		p->material_id = material_id;
 	}
 } // init
 
 
-void ParticleEmitter::update(float delta_msec)
+void ParticleEmitter::step(float delta_msec)
 {
 	unsigned int pid = 0;
 	Particle * p = 0;
 	
+
+	
 	num_particles_alive = 0;
 	float sec = (delta_msec * 0.001);
-	
+
+	world_position.step(sec);
+
 	this->next_spawn -= delta_msec;
 	int particles_to_spawn = 0;
 	if ( this->next_spawn <= 0 )
@@ -104,7 +109,8 @@ void ParticleEmitter::update(float delta_msec)
 		if ( p->life_remaining > 0.1 )
 		{
 			float lifet = 1.0 - (p->life_remaining / p->life_total);
-			p->position += (p->velocity * sec);
+			p->position.step(sec);
+			p->position.current += (p->velocity * sec);
 //			p->color = color_channel.get_value( lifet );
 			p->color = Color( 255, 255, 255, 64 );
 			p->color.a = 255.0*alpha_channel.get_value( lifet );
@@ -116,7 +122,7 @@ void ParticleEmitter::update(float delta_msec)
 		{
 			p->life_total = p->life_remaining = util::random_range( life_min, life_max );
 			p->velocity = glm::vec3( util::random_range(velocity_min[0], velocity_max[0]), util::random_range(velocity_min[1], velocity_max[1]), util::random_range(velocity_min[2], velocity_max[2]) );
-			p->position = world_position;
+			p->position.snap( world_position.render );
 			p->color = color_channel.get_value(0);
 			//p->color = Color( 255, 255, 255 );
 			p->color.a = alpha_channel.get_value(0);
@@ -125,7 +131,7 @@ void ParticleEmitter::update(float delta_msec)
 			++num_particles_alive;
 		}
 	}
-} // update
+} // step
 
 void ParticleEmitter::purge()
 {
@@ -133,6 +139,7 @@ void ParticleEmitter::purge()
 } // purge
 
 
+#include "kernel.hpp"
 
 // -------------------------------------------------------------
 // ParticleSystem
@@ -156,12 +163,12 @@ void ParticleSystem::purge()
 	emitter_list = 0;
 } // purge
 
-void ParticleSystem::update( float delta_msec )
+void ParticleSystem::step( float delta_msec )
 {
 	current_time += delta_msec;
 	for( int emitter_id = 0; emitter_id < num_active_emitters; ++emitter_id )
 	{
 		ParticleEmitter * emitter = &emitter_list[emitter_id];
-		emitter->update( delta_msec );
+		emitter->step( delta_msec );
 	}
-} // update
+} // step
