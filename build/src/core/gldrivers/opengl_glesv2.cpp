@@ -474,6 +474,9 @@ void c_drawcall( MemoryStream & stream, renderer::IRenderDriver & renderer )
 
 void c_state( MemoryStream & stream, renderer::IRenderDriver & renderer )
 {
+	// TODO: This should be updated to match GLCore32 renderer:
+	// use state functions for specific state.
+	
 	// state change
 	DriverState driver_state;
 	

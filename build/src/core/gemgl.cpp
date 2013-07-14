@@ -138,6 +138,7 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	GEMGL_LINK( gl.Disable, "glDisable", GEMGLFNDISABLE );
 	GEMGL_LINK( gl.PolygonOffset, "glPolygonOffset", GEMGLFNPOLYGONOFFSET );
 	GEMGL_LINK( gl.PixelStorei, "glPixelStorei", GEMGLFNPIXELSTOREI );
+	GEMGL_LINK( gl.DepthMask, "glDepthMask", GEMGLFNDEPTHMASK );
 	
 	// textures
 	GEMGL_LINK( gl.TexParameterf, "glTexParameterf", GEMGLFNTEXPARAMETERF );
@@ -275,6 +276,7 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	GEMGL_LINK( gl.Enable, "glEnable", GEMGLFNENABLE );
 	GEMGL_LINK( gl.Disable, "glDisable", GEMGLFNDISABLE );
 	GEMGL_LINK( gl.PixelStorei, "glPixelStorei", GEMGLFNPIXELSTOREI );
+	GEMGL_LINK( gl.DepthMask, "glDepthMask", GEMGLFNDEPTHMASK );
 
 	// textures
 	GEMGL_LINK( gl.TexParameterf, "glTexParameterf", GEMGLFNTEXPARAMETERF );

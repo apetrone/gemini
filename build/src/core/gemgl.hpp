@@ -99,6 +99,7 @@ enum gemgl_renderer_type
 	typedef void (GEMGLAPI GEMGLFNDISABLE) ( GLenum pname );
 	typedef void (GEMGLAPI GEMGLFNPOLYGONOFFSET) ( GLfloat factor, GLfloat units );
 	typedef void (GEMGLAPI GEMGLFNPIXELSTOREI) ( GLenum pname, GLint param );
+	typedef void (GEMGLAPI GEMGLFNDEPTHMASK)( GLboolean flag );
 
 	typedef void (GEMGLAPI GEMGLFNTEXPARAMETERF) ( GLenum target, GLenum pname, GLfloat param );
 	typedef void (GEMGLAPI GEMGLFNTEXPARAMETERFV) ( GLenum target, GLenum pname, const GLfloat* params );
@@ -284,6 +285,7 @@ enum gemgl_renderer_type
 		GEMGLFNDISABLE Disable;
 		GEMGLFNPOLYGONOFFSET PolygonOffset;
 		GEMGLFNPIXELSTOREI PixelStorei;
+		GEMGLFNDEPTHMASK DepthMask;
 		
 		// ReadPixels
 
@@ -425,6 +427,7 @@ enum gemgl_renderer_type
 		GEMGLFNENABLE Enable;
 		GEMGLFNDISABLE Disable;
 		GEMGLFNPIXELSTOREI PixelStorei;
+		GEMGLFNDEPTHMASK DepthMask;
 		
 		// textures
 		GEMGLFNTEXPARAMETERF TexParameterf;

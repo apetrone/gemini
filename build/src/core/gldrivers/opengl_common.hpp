@@ -40,3 +40,9 @@ char * query_program_info_log( GLObject handle );
 
 GLenum driver_state_to_gl_state( renderer::DriverState state );
 GLenum convert_blendstate( renderer::RenderBlendType state );
+
+
+
+typedef void (*gemgl_state_function)(renderer::DriverState, MemoryStream &, renderer::IRenderDriver *);
+
+gemgl_state_function operator_for_state( renderer::DriverState state );

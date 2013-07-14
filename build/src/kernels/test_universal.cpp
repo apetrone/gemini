@@ -243,7 +243,8 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 	rs.add_state(renderer::STATE_BLEND, 1);
 	rs.add_shader( shader );
 	
-	rs.add_state(renderer::STATE_DEPTH_TEST, 0);
+	rs.add_state(renderer::STATE_DEPTH_TEST, 1);
+	rs.add_state(renderer::STATE_DEPTH_WRITE, 0);
 	
 	rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview_matrix );
 	rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection_matrix );
@@ -255,7 +256,7 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 	
 	
 	rs.add_state(renderer::STATE_BLEND, 0);
-	rs.add_state(renderer::STATE_DEPTH_TEST, 1);
+	rs.add_state(renderer::STATE_DEPTH_WRITE, 1);
 	rs.run_commands();
 	
 	stream.destroy();

@@ -66,6 +66,7 @@ namespace renderer
 	{
 		STATE_BLEND,
 		STATE_DEPTH_TEST,
+		STATE_DEPTH_WRITE,
 	}; // DriverState
 	
 	enum RenderClearFlags

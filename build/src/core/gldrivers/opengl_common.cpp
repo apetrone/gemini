@@ -153,3 +153,54 @@ GLenum convert_blendstate( renderer::RenderBlendType state )
 	
 	return glblend[ state ];
 } // convert_blendstate
+
+
+
+void state_op_enabledisable( renderer::DriverState state, MemoryStream & stream, renderer::IRenderDriver * driver )
+{
+	GLenum gl_state;
+	int enable = 0;
+	
+	stream.read( enable );
+	
+	// convert driver state to GL state
+	gl_state = driver_state_to_gl_state(state);
+
+	if ( enable )
+	{
+		gl.Enable( gl_state );
+		gl.CheckError( "Enable" );
+	}
+	else
+	{
+		gl.Disable( gl_state );
+		gl.CheckError( "Disable" );
+	}
+} // state_op_enabledisable
+
+void state_op_depthmask( renderer::DriverState state, MemoryStream & stream, renderer::IRenderDriver * driver )
+{
+	int enable = 0;
+	GLboolean flag;
+	
+	stream.read( enable );
+	flag = enable ? GL_TRUE : GL_FALSE;
+	
+	// set depth buffer enabled for writing flag
+	gl.DepthMask( flag );
+} // state_op_depthmask
+
+
+
+
+gemgl_state_function operator_for_state( renderer::DriverState state )
+{
+	// map driver state to operator function
+	gemgl_state_function operator_map[] = {
+		state_op_enabledisable,
+		state_op_enabledisable,
+		state_op_depthmask,
+	};
+	
+	return operator_map[ state ];
+} // operator_for_state
