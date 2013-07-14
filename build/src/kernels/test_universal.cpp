@@ -1260,9 +1260,9 @@ struct GameScreen : public virtual IScreen
 			e->init(128);
 			e->next_spawn = 0;
 			e->spawn_rate = 15;
-			e->spawn_delay = 32;
-			e->life_min = 500;
-			e->life_max = 1000;
+			e->spawn_delay_seconds = 32;
+			e->life_min = 500.0f;
+			e->life_max = 1000.0f;
 			e->velocity_min = glm::vec3( -250.0f, -25.0f, 0.0f );
 			e->velocity_max = glm::vec3( -200.0f, 25.0f, 0.0f );
 			
@@ -1674,7 +1674,7 @@ struct GameScreen : public virtual IScreen
 			constrain_to_screen( *player );
 			
 			// update particles
-			psys.step( kernel::instance()->parameters().step_interval_seconds * 1000.0f );
+			psys.step( kernel::instance()->parameters().step_interval_seconds );
 		}
 	}
 	

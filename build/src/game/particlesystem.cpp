@@ -79,23 +79,20 @@ void ParticleEmitter::init(unsigned int total_particles)
 } // init
 
 
-void ParticleEmitter::step(float delta_msec)
+void ParticleEmitter::step(float delta_seconds)
 {
 	unsigned int pid = 0;
 	Particle * p = 0;
-	
-
-	
 	num_particles_alive = 0;
-	float sec = (delta_msec * 0.001);
+	float delta_msec = (delta_seconds * 1000.0f);
 
-	world_position.step(sec);
+	world_position.step(delta_seconds);
 
 	this->next_spawn -= delta_msec;
 	int particles_to_spawn = 0;
 	if ( this->next_spawn <= 0 )
 	{
-		this->next_spawn = this->spawn_delay;
+		this->next_spawn = this->spawn_delay_seconds;
 		particles_to_spawn = this->spawn_rate;
 		if ( particles_to_spawn > max_particles-num_particles_alive )
 			particles_to_spawn = (max_particles-num_particles_alive);
@@ -109,8 +106,8 @@ void ParticleEmitter::step(float delta_msec)
 		if ( p->life_remaining > 0.1 )
 		{
 			float lifet = 1.0 - (p->life_remaining / p->life_total);
-			p->position.step(sec);
-			p->position.current += (p->velocity * sec);
+			p->position.step(delta_seconds);
+			p->position.current += (p->velocity * delta_seconds);
 //			p->color = color_channel.get_value( lifet );
 			p->color = Color( 255, 255, 255, 64 );
 			p->color.a = 255.0*alpha_channel.get_value( lifet );
@@ -149,7 +146,6 @@ ParticleSystem::ParticleSystem()
 {
 	emitter_list = 0;
 	num_active_emitters = 0;
-	current_time = 0;
 } // ParticleSystem
 
 ParticleSystem::~ParticleSystem()
@@ -163,12 +159,11 @@ void ParticleSystem::purge()
 	emitter_list = 0;
 } // purge
 
-void ParticleSystem::step( float delta_msec )
+void ParticleSystem::step( float delta_seconds )
 {
-	current_time += delta_msec;
 	for( int emitter_id = 0; emitter_id < num_active_emitters; ++emitter_id )
 	{
 		ParticleEmitter * emitter = &emitter_list[emitter_id];
-		emitter->step( delta_msec );
+		emitter->step( delta_seconds );
 	}
 } // step

@@ -89,13 +89,13 @@ struct ParticleEmitter
 	KeyframeChannel<float> size_channel;
 	
 	float next_spawn;
-	float spawn_delay;
+	float spawn_delay_seconds;
 	int spawn_rate;
 	
 	ParticleEmitter();
 	~ParticleEmitter();
 	void init( unsigned int max_particles );
-	void step( float delta_msec );
+	void step( float delta_seconds );
 	void purge();
 }; // ParticleEmitter
 
@@ -105,11 +105,10 @@ struct ParticleEmitter
 struct ParticleSystem
 {
 	unsigned int num_active_emitters;
-	float current_time;
 	ParticleEmitter * emitter_list;
 	
 	ParticleSystem();
 	~ParticleSystem();
 	void purge();
-	void step( float delta_msec );
+	void step( float delta_seconds );
 }; // ParticleSystem
