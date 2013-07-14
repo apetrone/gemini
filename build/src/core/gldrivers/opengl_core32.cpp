@@ -415,25 +415,10 @@ void p_state( MemoryStream & stream, GLCore32 & renderer )
 	// state change
 	DriverState driver_state;
 	
-	GLenum state;
-	int enable = 0;
-	
 	stream.read( driver_state );
-	stream.read( enable );
+	gemgl_state_function op = operator_for_state(driver_state);
 	
-	// convert driver state to GL state
-	state = driver_state_to_gl_state( driver_state );
-	
-	if ( !enable )
-	{
-		gl.Enable( state );
-		gl.CheckError( "Enable" );
-	}
-	else
-	{
-		gl.Disable( state );
-		gl.CheckError( "Disable" );
-	}
+	op( driver_state, stream, &renderer );
 }
 
 void c_blendfunc( MemoryStream & stream, GLCore32 & renderer )
