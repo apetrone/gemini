@@ -105,16 +105,22 @@ struct ParticleEmitter
 	void purge();
 }; // ParticleEmitter
 
+typedef std::vector<ParticleEmitter*> ParticleEmitterVector;
+
 // -------------------------------------------------------------
 // ParticleSystem
 // -------------------------------------------------------------
 struct ParticleSystem
 {
-	unsigned int num_active_emitters;
-	ParticleEmitter * emitter_list;
+//	unsigned int num_active_emitters;
+//	ParticleEmitter * emitter_list;
+	ParticleEmitterVector emitters;
 	
 	ParticleSystem();
 	~ParticleSystem();
 	void purge();
 	void step( float delta_seconds );
+	
+	ParticleEmitter * add_emitter();
+	void remove_emitter( ParticleEmitter * emitter );
 }; // ParticleSystem

@@ -133,8 +133,6 @@ void ParticleEmitter::purge()
 
 ParticleSystem::ParticleSystem()
 {
-	emitter_list = 0;
-	num_active_emitters = 0;
 } // ParticleSystem
 
 ParticleSystem::~ParticleSystem()
@@ -144,15 +142,46 @@ ParticleSystem::~ParticleSystem()
 
 void ParticleSystem::purge()
 {
-	DESTROY_ARRAY(ParticleEmitter, emitter_list, num_active_emitters);
-	emitter_list = 0;
+	ParticleEmitterVector::iterator iter = emitters.begin();
+	
+	for( ; iter != emitters.end(); ++iter )
+	{
+		ParticleEmitter * emitter = (*iter);
+		DESTROY(ParticleEmitter, emitter);
+	}
+	
+	emitters.clear();
 } // purge
 
 void ParticleSystem::step( float delta_seconds )
 {
-	for( int emitter_id = 0; emitter_id < num_active_emitters; ++emitter_id )
+	ParticleEmitterVector::iterator iter = emitters.begin();
+	
+	for( ; iter != emitters.end(); ++iter )
 	{
-		ParticleEmitter * emitter = &emitter_list[emitter_id];
+		ParticleEmitter * emitter = (*iter);
 		emitter->step( delta_seconds );
 	}
 } // step
+
+ParticleEmitter * ParticleSystem::add_emitter()
+{
+	ParticleEmitter * emitter = CREATE(ParticleEmitter);
+	this->emitters.push_back(emitter);
+	return emitter;
+} // add_emitter
+
+void ParticleSystem::remove_emitter( ParticleEmitter * emitter )
+{
+	ParticleEmitterVector::iterator iter = emitters.begin();
+	
+	for( ; iter != emitters.end(); ++iter )
+	{
+		if ( emitter == (*iter) )
+		{
+			DESTROY(ParticleEmitter, emitter);
+			emitters.erase(iter);
+			break;
+		}
+	}
+} // remove_emitter

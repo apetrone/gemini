@@ -170,9 +170,12 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 	unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
 	glm::mat3 billboard = glm::transpose( glm::mat3(modelview_matrix) );
 	
-	for( unsigned int i = 0; i < ps.num_active_emitters; ++i )
+	ParticleEmitterVector::iterator iter = ps.emitters.begin();
+	ParticleEmitterVector::iterator end = ps.emitters.end();
+	
+	for( ; iter != end; ++iter )
 	{
-		emitter = &ps.emitter_list[i];
+		emitter = (*iter);
 		emitter->world_position.interpolate( kernel::instance()->parameters().step_alpha );
 		for( unsigned int p = 0; p < emitter->max_particles; ++p )
 		{
@@ -231,9 +234,15 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 	name = "colors";
 	test_attribs |= assets::find_parameter_mask(name);
 
-	assets::Material * material = assets::material_by_id(ps.emitter_list[0].material_id);
-	assets::Shader * shader = assets::find_compatible_shader( material->requirements + test_attribs );
-
+	assets::Material * material = 0;
+	assets::Shader * shader = 0;
+	emitter = ps.emitters[0];
+	
+	if ( emitter )
+	{
+		material = assets::material_by_id(emitter->material_id);
+		shader = assets::find_compatible_shader( material->requirements + test_attribs );
+	}
 	
 	glm::mat4 object_matrix;
 	
@@ -1240,11 +1249,8 @@ struct GameScreen : public virtual IScreen
 
 		this->default_shader.object = 0;
 		
-		
 		{
-			psys.num_active_emitters = 1;
-			psys.emitter_list = CREATE_ARRAY(ParticleEmitter, 1);
-			ParticleEmitter * e = &psys.emitter_list[0];
+			ParticleEmitter * e = psys.add_emitter();
 			
 			float x, y;
 			player->world_position(x, y);
@@ -1413,7 +1419,7 @@ struct GameScreen : public virtual IScreen
 		
 		
 		
-		ParticleEmitter * e = &psys.emitter_list[0];
+		ParticleEmitter * e = psys.emitters[0];
 
 		glm::vec2 & rpos = player->position.render;
 		glm::vec3 emitter_pos = glm::vec3( rpos.x-28, rpos.y+8, 0 );
