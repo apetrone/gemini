@@ -82,64 +82,85 @@ struct RenderContext
 	RenderContext( RenderStream & inrs, renderer::VertexStream & invb ) : rs(inrs), vb(invb) {}
 }; // RenderContext
 
+enum ComponentType
+{
+	GraphicComponent,
+	PhysicsComponent,
+	
+	MaxComponentTypes
+};
 
 class IComponent
 {
 public:
+	IComponent(ComponentType component_type);
 	virtual ~IComponent() {}
+	virtual ComponentType component_type() const = 0;
 };
+typedef std::vector<IComponent*> ComponentVector;
 
-class IGraphicObject
+
+
+namespace ComponentManager
+{
+	ComponentVector components[ MaxComponentTypes ];
+		
+	void purge()
+	{
+		ComponentVector::iterator start, end;
+		for( unsigned int type = 0; type < MaxComponentTypes; ++type )
+		{
+			start = components[type].begin();
+			end = components[type].end();
+			for( ; start != end; ++start )
+			{
+				DESTROY(IComponent, (*start));
+			}
+		}
+	}
+	
+	void register_component( IComponent * component, ComponentType type )
+	{
+		components[ type ].push_back(component);
+	}
+	
+	
+	void update( float delta_sec )
+	{
+		
+	}
+}; // ComponentManager
+
+
+
+
+IComponent::IComponent(ComponentType component_type)
+{
+	// register this with the component manager
+	ComponentManager::register_component(this, component_type);
+}
+
+
+class IGraphicObject : public virtual IComponent
 {
 public:
-	virtual ~IGraphicObject() {}
+	IGraphicObject() : IComponent(GraphicComponent) {}
+	virtual ComponentType component_type() const { return GraphicComponent; }
+	
 	virtual void render( RenderContext & context ) = 0;
 	virtual void get_scale( float & x, float & y ) = 0;
 	virtual Color get_color() = 0;
 	virtual void update( float dt_sec ) = 0;
+	
 }; // IGraphicObject
 
 
-struct AABB2
-{
-	float left;
-	float right;
-	float top;
-	float bottom;
-	
-	bool overlaps( const AABB2 & other ) const;
-}; // AABB2
-
-
-bool AABB2::overlaps( const AABB2 & other ) const
-{
-	if ( this->left > other.right )
-	{
-		return false;
-	}
-	else if ( this->right < other.left )
-	{
-		return false;
-	}
-
-	if ( this->bottom < other.top )
-	{
-		return false;
-	}
-	else if ( this->top > other.bottom )
-	{
-		return false;
-	}
-	
-	
-	return true;
-}
-
-
-class ICollisionObject
+class ICollisionObject : public virtual IComponent
 {
 public:
-	virtual ~ICollisionObject() {}
+	ICollisionObject() : IComponent(PhysicsComponent) {}
+	virtual ComponentType component_type() const { return PhysicsComponent; }
+
 	virtual bool collides_with( ICollisionObject * other ) const = 0;
 	virtual void world_position( float & x, float & y ) = 0;
 	virtual void step( float dt_sec ) = 0;
@@ -148,6 +169,57 @@ public:
 	virtual unsigned short get_collision_mask() const = 0;
 	virtual void get_rotation( float & radians ) const = 0;
 }; // ICollisionObject
+
+
+
+
+
+
+
+
+class SpriteComponent : public virtual IGraphicObject
+{
+public:
+
+	Color color;
+	glm::vec2 scale;
+
+	SpriteComponent() : IComponent(GraphicComponent) {}
+	virtual void render( RenderContext & context );
+	virtual void get_scale( float & x, float & y );
+	virtual Color get_color();
+	virtual void update( float delta_sec );
+}; // SpriteComponent
+
+
+void SpriteComponent::render(RenderContext &context)
+{
+	
+} // render
+
+void SpriteComponent::get_scale(float &x, float &y)
+{
+	x = scale.x;
+	y = scale.y;
+} // get_scale
+
+Color SpriteComponent::get_color()
+{
+	return color;
+} // get_color
+
+void SpriteComponent::update( float delta_sec )
+{
+	
+} // update
+
+
+
+
+
+
+
+
 
 struct SpriteVertexType
 {
@@ -274,7 +346,7 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 
 util::ConfigLoadStatus load_sprite_from_file( const Json::Value & root, void * data );
 
-class Sprite : public virtual IGraphicObject, public virtual ICollisionObject
+class Sprite : public virtual ICollisionObject// : public virtual IGraphicObject, public virtual ICollisionObject
 {
 public:
 	struct SpriteFrame
@@ -310,17 +382,9 @@ public:
 	
 	unsigned int material_id;
 	Color color;
-	
-//	float world_x;
-//	float world_y;
+
 	PhysicsState<glm::vec2> position;
-	
-//	float last_world_x;
-//	float last_world_y;
-	
-//	float r_x;
-//	float r_y;
-	
+
 	unsigned short width;
 	unsigned short height;
 	
@@ -340,9 +404,6 @@ public:
 	float rotation;
 	
 	
-//	typedef std::vector<IComponent*> ComponentVector;
-//	ComponentVector components;
-	
 	
 	void reset_components()
 	{
@@ -351,7 +412,7 @@ public:
 		this->scale_y = 1.0f;
 	} // reset_components
 	
-	Sprite()
+	Sprite() : IComponent(PhysicsComponent)
 	{
 		animations = 0;
 		current_frame = 0;
@@ -649,13 +710,10 @@ bool Sprite::AnimationSequence::is_valid_frame(unsigned short frame_id)
 } // is_valid_frame
 
 
-struct Entity
-{
-	IGraphicObject * graphic_object;
-	ICollisionObject * collision_object;
-	
-	Entity() : graphic_object(0), collision_object(0) {}
-}; // Entity
+
+
+
+
 
 struct MovementCommand
 {
@@ -1088,7 +1146,99 @@ void move_sprite_with_command( Sprite & sprite, MovementCommand & command )
 }
 
 
+
+struct Entity
+{
+	ComponentVector components;
+	
+	Entity() { reset(); }
+	
+	
+	void add_component( IComponent * component )
+	{
+		components.push_back(component);
+	} // add_component
+	
+	void reset()
+	{
+		
+	} // reset
+	
+#if 0
+	void update( float delta_seconds )
+	{
+		ComponentVector::iterator start,end;
+		start = components.begin();
+		end = components.end();
+		
+		for( ; start != end; ++start )
+		{
+			IComponent * component = (*start);
+			
+		}
+	} // update
+	
+	void render( RenderContext & context )
+	{
+		ComponentVector::iterator start,end;
+		start = components.begin();
+		end = components.end();
+		
+		for( ; start != end; ++start )
+		{
+			IComponent * component = (*start);
+		}
+	} // render
+#endif
+}; // Entity
+
+
 const int MAX_ENTITIES = 1024;
+
+struct EntityManager
+{
+	static const int MaxEntities = 1024;
+	
+	Entity entities[ MaxEntities ];
+	bool active_list[ MaxEntities ];
+	
+	
+	EntityManager();
+	
+	Entity * find_unused_entity();
+}; // EntityManager
+
+
+EntityManager::EntityManager()
+{
+	memset(active_list, 0, MaxEntities);
+}
+
+Entity * EntityManager::find_unused_entity()
+{
+	Entity * entity = 0;
+	for( int i = 0; i < MaxEntities; ++i )
+	{
+		if ( !active_list[i] )
+		{
+			entity = &entities[i];
+			active_list[i] = 1;
+			break;
+		}
+	}
+	
+	if ( !entity )
+	{
+		LOGW( "Reached MaxEntities (%i)\n", MaxEntities );
+	}
+	else
+	{
+		entity->reset();
+	}
+	
+	return entity;
+} // find_unused_entity
+
 
 struct GameScreen : public virtual IScreen
 {
@@ -1103,6 +1253,7 @@ struct GameScreen : public virtual IScreen
 	assets::Material * player_mat;
 	
 	Sprite * player;
+	Entity * test;
 	
 	Sprite entities[ MAX_ENTITIES ];
 	bool active_entities[ MAX_ENTITIES ];
@@ -1131,7 +1282,7 @@ struct GameScreen : public virtual IScreen
 	
 	ParticleSystem psys;
 	
-	
+	EntityManager em;
 	
 	GameScreen()
 	{
@@ -1216,6 +1367,14 @@ struct GameScreen : public virtual IScreen
 		LOGV( "allocating room for %i max vertices\n", max_vertices );
 		
 		
+		
+		test = em.find_unused_entity();
+		if ( test )
+		{
+			SpriteComponent * s = CREATE(SpriteComponent);
+			test->add_component(s);
+		}
+		
 		// setup entities
 		for( int i = 0; i < MAX_ENTITIES; ++i )
 		{
@@ -1294,6 +1453,8 @@ struct GameScreen : public virtual IScreen
 		{
 			DESTROY_ARRAY(RenameThisData, background_layers, background_num_columns);
 		}
+		
+		ComponentManager::purge();
 	}
 	
 	void render_layer( RenameThisData * layer )
@@ -1423,9 +1584,8 @@ struct GameScreen : public virtual IScreen
 
 		glm::vec2 & rpos = player->position.render;
 		glm::vec3 emitter_pos = glm::vec3( rpos.x-28, rpos.y+8, 0 );
-		//		e->world_position.current = emitter_pos;
 		e->world_position.snap( emitter_pos );
-			
+
 
 		rs.run_commands();
 		vb.reset();

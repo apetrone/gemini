@@ -33,6 +33,29 @@
 // math functions
 //
 
+bool AABB2::overlaps( const AABB2 & other ) const
+{
+	if ( this->left > other.right )
+	{
+		return false;
+	}
+	else if ( this->right < other.left )
+	{
+		return false;
+	}
+	
+	if ( this->bottom < other.top )
+	{
+		return false;
+	}
+	else if ( this->top > other.bottom )
+	{
+		return false;
+	}
+	
+	
+	return true;
+} // overlaps
 
 #if 0
 
