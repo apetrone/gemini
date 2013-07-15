@@ -35,19 +35,30 @@ struct Particle
 {
 	Color color;
 	render_utilities::PhysicsState<glm::vec3> position;
-//	glm::vec3 position;
 	glm::vec3 velocity;
-	
-
 	
 	float life_remaining;
 	float life_total;
 	float size;
-	unsigned int material_id;
-	
+
 	Particle();
 //	~Particle()=default;
 }; // Particle
+
+
+
+template <class Type>
+struct RangedValue
+{
+	Type min;
+	Type max;
+	
+	void set_range( const Type & minimum, const Type & maximum )
+	{
+		this->min = minimum;
+		this->max = maximum;
+	}
+}; // RangedValue
 
 // -------------------------------------------------------------
 // ParticleEmitter
@@ -61,8 +72,7 @@ struct ParticleEmitter
 		CONE,
 		BOX
 	};
-	
-//	glm::vec3 world_position;
+
 	render_utilities::PhysicsState<glm::vec3> world_position;
 	
 	unsigned int max_particles;
@@ -70,19 +80,15 @@ struct ParticleEmitter
 	unsigned int material_id;
 	Particle * particle_list;
 	
-	unsigned int life_min;
-	unsigned int life_max;
-	glm::vec3 velocity_min;
-	glm::vec3 velocity_max;
+	RangedValue<unsigned int> life;
+	RangedValue<glm::vec3> velocity;
+	RangedValue<float> size;
 	
 	// can this emitter emit particles?
 	//	bool _canEmit;
 	
 	// can this emitter update its particles?
 	//	bool _canUpdate;
-	
-	float size_min;
-	float size_max;
 	
 	KeyframeChannel<Color> color_channel;
 	KeyframeChannel<float> alpha_channel;

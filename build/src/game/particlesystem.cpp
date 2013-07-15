@@ -33,7 +33,6 @@ Particle::Particle()
 	life_remaining = 0;
 	life_total = 0;
 	size = 1.0f;
-	material_id = 0;
 } // Particle
 
 
@@ -47,11 +46,8 @@ ParticleEmitter::ParticleEmitter()
 	material_id = 0;
 	particle_list = 0;
 	
-	life_min = 0;
-	life_max = 1;
-	
-	size_min = 0;
-	size_max = 1;
+	life.set_range(0, 1);
+	size.set_range(0, 1);
 } // ParticleEmitter
 
 ParticleEmitter::~ParticleEmitter()
@@ -71,10 +67,8 @@ void ParticleEmitter::init(unsigned int total_particles)
 		p->life_remaining = 0;
 		p->color = Color( 0, 0, 0, 255 );
 		p->velocity = glm::vec3( 0, 0, 0 );
-//		p->position = world_position;
 		p->position.snap( world_position.current );
 		p->size = 1.0f;
-		p->material_id = material_id;
 	}
 } // init
 
@@ -108,20 +102,17 @@ void ParticleEmitter::step(float delta_seconds)
 			float lifet = 1.0 - (p->life_remaining / p->life_total);
 			p->position.step(delta_seconds);
 			p->position.current += (p->velocity * delta_seconds);
-//			p->color = color_channel.get_value( lifet );
 			p->color = Color( 255, 255, 255, 64 );
 			p->color.a = 255.0*alpha_channel.get_value( lifet );
-			//			graph->RecordFloat( p->color.a, 0 );
 			p->size = size_channel.get_value( lifet );
 			++num_particles_alive;
 		}
 		else if ( particles_to_spawn > 0 )
 		{
-			p->life_total = p->life_remaining = util::random_range( life_min, life_max );
-			p->velocity = glm::vec3( util::random_range(velocity_min[0], velocity_max[0]), util::random_range(velocity_min[1], velocity_max[1]), util::random_range(velocity_min[2], velocity_max[2]) );
+			p->life_total = p->life_remaining = util::random_range( life.min, life.max );
+			p->velocity = glm::vec3( util::random_range(velocity.min[0], velocity.max[0]), util::random_range(velocity.min[1], velocity.max[1]), util::random_range(velocity.min[2], velocity.max[2]) );
 			p->position.snap( world_position.render );
 			p->color = color_channel.get_value(0);
-			//p->color = Color( 255, 255, 255 );
 			p->color.a = alpha_channel.get_value(0);
 			p->size = size_channel.get_value(0);
 			--particles_to_spawn;
@@ -135,8 +126,6 @@ void ParticleEmitter::purge()
 	DESTROY_ARRAY( Particle, particle_list, max_particles );
 } // purge
 
-
-#include "kernel.hpp"
 
 // -------------------------------------------------------------
 // ParticleSystem

@@ -1261,10 +1261,8 @@ struct GameScreen : public virtual IScreen
 			e->next_spawn = 0;
 			e->spawn_rate = 15;
 			e->spawn_delay_seconds = 32;
-			e->life_min = 500.0f;
-			e->life_max = 1000.0f;
-			e->velocity_min = glm::vec3( -250.0f, -25.0f, 0.0f );
-			e->velocity_max = glm::vec3( -200.0f, 25.0f, 0.0f );
+			e->life.set_range(500.0f, 1000.0f);
+			e->velocity.set_range(glm::vec3( -250.0f, -25.0f, 0.0f ), glm::vec3( -200.0f, 25.0f, 0.0f ));
 			
 			Color colors[] = { Color(255, 255, 255) };
 			e->color_channel.create(1, colors, 1/3.0f);
