@@ -61,4 +61,29 @@ namespace render_utilities
 		
 		rs.add_draw_call( geo->vertexbuffer );
 	} // stream_geometry
+	
+	//
+	// misc sprite tools
+	namespace sprite
+	{
+		void calc_tile_uvs( float * uvs, unsigned int x, unsigned int y, unsigned int sprite_width, unsigned int sprite_height, unsigned int sheet_width, unsigned int sheet_height )
+		{
+			// This assumes an Orthographic projection set with the origin in the upper left
+			// upper left
+			uvs[0] = x / (float)sheet_width;
+			uvs[1] = y / (float)sheet_height;
+			
+			// lower left
+			uvs[2] = x / (float)sheet_width;
+			uvs[3] = (y+sprite_height) / (float)sheet_height;
+			
+			// lower right
+			uvs[4] = (x+sprite_width) / (float)sheet_width;
+			uvs[5] = (y+sprite_height) / (float)sheet_height;
+			
+			// upper right
+			uvs[6] = (x+sprite_width) / (float)sheet_width;
+			uvs[7] = y / (float)sheet_height;
+		} // calc_tile_uvs
+	}; // sprite
 }; // mamespace render_utilities

@@ -96,9 +96,3 @@ struct TiledMap
 	TileSet * tileset_for_gid( unsigned int gid );
 	unsigned int count_tiles_in_set( TileSet * set ) const;
 }; // TiledMap
-
-
-namespace sprite
-{
-	void calc_tile_uvs( float * uvs, unsigned int x, unsigned int y, unsigned int sprite_width, unsigned int sprite_height, unsigned int sheet_width, unsigned int sheet_height );
-}; // namespace sprite

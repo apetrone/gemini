@@ -62,6 +62,13 @@ namespace render_utilities
 {
 	void stream_geometry( RenderStream & rs, assets::Geometry * geo, renderer::GeneralParameters & gp );
 	
+	//
+	// misc sprite tools
+	namespace sprite
+	{
+		void calc_tile_uvs( float * uvs, unsigned int x, unsigned int y, unsigned int sprite_width, unsigned int sprite_height, unsigned int sheet_width, unsigned int sheet_height );
+	}; // sprite
+	
 	
 	template <class Type>
 	struct PhysicsState
