@@ -22,18 +22,23 @@
 #include "typedefs.h"
 #include "log.h"
 #include "componentmanager.hpp"
-#include <vector>
-
-IComponent::IComponent(ComponentType component_type)
-{
-	// register this with the component manager
-	ComponentManager::register_component(this, component_type);
-}
 
 namespace ComponentManager
 {
-	typedef std::vector<IComponent*> ComponentVector;
 	ComponentVector components[ MaxComponentTypes ];
+	
+	IComponent * create_from_type( ComponentType type )
+	{
+		return 0;
+	} // create_from_type
+	
+	IComponent * create_component( ComponentType type )
+	{
+		IComponent * component = create_from_type( type );
+		components[ type ].push_back( component );
+		
+		return component;
+	} // create_component
 	
 	void purge()
 	{
@@ -48,15 +53,17 @@ namespace ComponentManager
 			}
 		}
 	}
-	
-	void register_component( IComponent * component, ComponentType type )
-	{
-		components[ type ].push_back(component);
-	}
-	
+
 	
 	void update( float delta_sec )
 	{
 		
 	}
+	
+	ComponentVector & component_list( ComponentType type )
+	{
+		assert(type >= 0 && type < MaxComponentTypes);
+		return components[type];
+	} // component_list
+	
 }; // ComponentManager

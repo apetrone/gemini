@@ -40,22 +40,24 @@ struct RenderContext
 
 class IGraphicObject : public virtual IComponent
 {
+protected:
+	unsigned short layer;
+
 public:
-	IGraphicObject() : IComponent(GraphicComponent) {}
 	virtual ComponentType component_type() const { return GraphicComponent; }
+	
+	unsigned short layer_id() const { return layer; }
 	
 	virtual void render( RenderContext & context ) = 0;
 	virtual void get_scale( float & x, float & y ) = 0;
 	virtual Color get_color() = 0;
 	virtual void update( float dt_sec ) = 0;
-	
 }; // IGraphicObject
 
 
 class ICollisionObject : public virtual IComponent
 {
 public:
-	ICollisionObject() : IComponent(PhysicsComponent) {}
 	virtual ComponentType component_type() const { return PhysicsComponent; }
 	
 	virtual bool collides_with( ICollisionObject * other ) const = 0;
@@ -68,47 +70,218 @@ public:
 }; // ICollisionObject
 
 
-
-
-
-
-
-
-class SpriteComponent : public virtual IGraphicObject
+class IMovementObject : public virtual IComponent
 {
 public:
+	virtual ComponentType component_type() const { return MovementComponent; }
+	PhysicsState<glm::vec2> position;
+	glm::vec2 velocity;
+}; // IMovementObject
+
+
+
+
+
+class Sprite : public virtual IGraphicObject
+{
+public:
+	struct Frame
+	{
+		renderer::UV texcoords[4];
+	}; // Frame
+	
+	struct Clip
+	{
+		std::string name;
+		unsigned short frame_start;
+		unsigned short total_frames;
+		Frame * frames;
+		
+		Clip();
+		~Clip();
+		
+		void create_frames( unsigned int material_id, unsigned int num_frames, unsigned int sprite_width, unsigned int sprite_height );
+		void purge_frames();
+		float * uvs_for_frame( unsigned short frame_id );
+		bool is_valid_frame(unsigned short frame_id);
+	}; // Clip
+	
+	Clip * animations;					// animation frames
+	unsigned short current_animation;	// currently active animation
+	unsigned short current_frame;		// current frame of the animation
+	unsigned short total_animations;	// total animations
+	float animation_time;				// current time of the animation
+	float frame_delay;					// delay in msec between each frame
+	
+	
+	
+	
 	
 	Color color;
 	glm::vec2 scale;
 	
-	SpriteComponent() : IComponent(GraphicComponent) {}
+	unsigned short width;
+	unsigned short height;
+	
+	short hotspot_x;
+	short hotspot_y;
+	
+	float rotation;
+	
+	Sprite()
+	{
+		this->layer = 0;
+		this->hotspot_x = 0;
+		this->hotspot_y = 0;
+		this->rotation = 0;
+	}
+	
 	virtual void render( RenderContext & context );
 	virtual void get_scale( float & x, float & y );
 	virtual Color get_color();
 	virtual void update( float delta_sec );
-}; // SpriteComponent
+	
+	Clip * get_clip_by_index( unsigned short index );
+}; // Sprite
 
 
-void SpriteComponent::render(RenderContext &context)
+void Sprite::render(RenderContext &context)
 {
 	
 } // render
 
-void SpriteComponent::get_scale(float &x, float &y)
+void Sprite::get_scale(float &x, float &y)
 {
 	x = scale.x;
 	y = scale.y;
 } // get_scale
 
-Color SpriteComponent::get_color()
+Color Sprite::get_color()
 {
 	return color;
 } // get_color
 
-void SpriteComponent::update( float delta_sec )
+void Sprite::update( float delta_sec )
 {
+	this->animation_time -= delta_sec;
 	
+	if ( this->animation_time <= 0 )
+	{
+		++current_frame;
+		this->animation_time = this->frame_delay;
+		
+		Clip * sequence = this->get_clip_by_index(current_animation);
+		if ( sequence )
+		{
+			if ( current_frame >= sequence->total_frames )
+			{
+				// TODO: callback when this sequence finished?
+				current_frame = 0;
+			}
+		}
+	}
 } // update
+
+
+Sprite::Clip * Sprite::get_clip_by_index( unsigned short index )
+{
+	if ( index >= 0 && index < this->total_animations )
+		return &animations[ index ];
+	
+	return 0;
+} // get_clip_by_index
+
+
+
+
+Sprite::Clip::Clip()
+{
+	this->frame_start = 0;
+	this->frames = 0;
+	this->total_frames = 0;
+}
+
+Sprite::Clip::~Clip()
+{
+	purge_frames();
+}
+
+void frame_to_pixels( unsigned short frame, assets::Texture * texture, unsigned int sprite_width, unsigned int sprite_height, unsigned int & x, unsigned int & y )
+{
+	unsigned short cols = (texture->width / sprite_width);
+	unsigned short rows = (texture->height / sprite_height);
+	
+	x = (frame % cols) * sprite_width;
+	y = (frame / rows) * sprite_height;
+} // frame_to_pixels
+
+void Sprite::Clip::create_frames(unsigned int material_id, unsigned int num_frames, unsigned int sprite_width, unsigned int sprite_height)
+{
+	// ...
+	
+	assets::Material * material = assets::material_by_id(material_id);
+	if ( !material )
+	{
+		LOGE( "Unable to locate material with id: %i. Cannot load frames!\n", material_id );
+		return;
+	}
+	
+	assets::Material::Parameter * parameter = material->parameter_by_name("diffusemap");
+	if ( !parameter )
+	{
+		LOGE( "Unable to find parameter by name: diffusemap\n" );
+		return;
+	}
+	
+	assets::Texture * texture = assets::texture_by_id( parameter->intValue );
+	if ( !texture )
+	{
+		LOGE( "Unable to find texture for id: %i\n", parameter->intValue );
+		return;
+	}
+	
+	if ( this->frames && total_frames > 0 )
+	{
+		purge_frames();
+	}
+	
+	total_frames = num_frames;
+	this->frames = CREATE_ARRAY(Frame, total_frames);
+	
+	
+	unsigned int x = 0;
+	unsigned int y = 0;
+	for( unsigned int frame = 0; frame < total_frames; ++frame )
+	{
+		Frame * sf = &frames[ frame ];
+		frame_to_pixels( frame+frame_start, texture, sprite_width, sprite_height, x, y );
+		sprite::calc_tile_uvs( (float*)sf->texcoords, x, y, sprite_width, sprite_height, texture->width, texture->height );
+	}
+	
+} // load_frames
+
+void Sprite::Clip::purge_frames()
+{
+	DESTROY_ARRAY(Frame, frames, total_frames);
+	total_frames = 0;
+} // purge_frames
+
+float * Sprite::Clip::uvs_for_frame(unsigned short frame_id)
+{
+	if (is_valid_frame(frame_id))
+	{
+		return (float*)&frames[ frame_id ].texcoords;
+	}
+	
+	return 0;
+} // uvs_for_frame
+
+bool Sprite::Clip::is_valid_frame(unsigned short frame_id)
+{
+	return (frame_id >= 0 && frame_id < total_frames);
+} // is_valid_frame
+
+
 
 
 
@@ -250,7 +423,7 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 				v[2].u = 1; v[2].v = 1;
 				v[3].u = 0; v[3].v = 1;
 				
-				//				debugdraw::point(particle->position.render, Color(255,255,255), particle->size, 0.0f);
+//				debugdraw::point(particle->position.render, Color(255,255,255), particle->size, 0.0f);
 				stream.append_indices( indices, 6 );
 			}
 		}
@@ -379,6 +552,15 @@ void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width,
 
 GameScreen::GameScreen()
 {
+	IComponent * test = 0;
+	
+	
+	test = ComponentManager::create_component( MovementComponent );
+	if ( !test )
+	{
+		LOGE( "Unable to create component\n" );
+	}
+
 	energy = STARTING_ENERGY;
 	score = 0;
 	game_state = GAME_PLAY;
@@ -546,6 +728,22 @@ void GameScreen::on_draw( kernel::IApplication * app )
 	
 	// LAYER 1
 	// draw all graphics objects
+	IGraphicObject * go = 0;
+	ComponentManager::ComponentVector::iterator iter;
+	ComponentManager::ComponentVector & graphic_objects = ComponentManager::component_list(GraphicComponent);
+	iter = graphic_objects.begin();
+	for( ; iter != graphic_objects.end(); ++iter )
+	{
+		go = dynamic_cast<IGraphicObject*>(*iter);
+		if ( go )
+		{
+			LOGV( "update graphic object!\n" );
+			if ( go->layer_id() == 1 )
+			{
+				LOGV( "found layer id 1 graphic object\n" );
+			}
+		}
+	}
 	
 	
 	// LAYER 2
@@ -713,7 +911,8 @@ void GameScreen::on_update( kernel::IApplication * app )
 
 void GameScreen::on_step( kernel::IApplication * app )
 {
-	
+	// update particles
+	psys.step( kernel::instance()->parameters().step_interval_seconds );
 } // on_step
 
 

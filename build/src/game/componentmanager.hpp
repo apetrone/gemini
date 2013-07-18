@@ -21,16 +21,17 @@
 // -------------------------------------------------------------
 #pragma once
 #include "memory.hpp"
-
+#include <vector>
 
 
 enum ComponentType
 {
-	GraphicComponent,			// meshes / sprites
+	MovementComponent,			// basic movement component
+	GraphicComponent,			// meshes / sprites?
 //	SpriteComponent,			// sprite component
 	ParticleSystemComponent,	// particles
 	EffectsComponent,			// full-screen effects
-	PhysicsComponent,
+	PhysicsComponent,			// physics-based component
 	
 	MaxComponentTypes
 };
@@ -38,19 +39,19 @@ enum ComponentType
 class IComponent
 {
 public:
-	IComponent(ComponentType component_type);
 	virtual ~IComponent() {}
 	virtual ComponentType component_type() const = 0;
-};
-
-
+}; // IComponent
 
 
 namespace ComponentManager
 {
+	typedef std::vector<IComponent*> ComponentVector;
+	
+	IComponent * create_component( ComponentType component );
 	void purge();
-	void register_component( IComponent * component, ComponentType type );
 	void update( float delta_sec );
+	ComponentVector & component_list( ComponentType type );
 }; // ComponentManager
 
 

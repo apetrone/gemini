@@ -69,21 +69,6 @@ void world_to_screen( glm::vec2 & world_position, glm::vec2 & screen )
 
 util::ConfigLoadStatus load_sprite_from_file( const Json::Value & root, void * data );
 
-void frame_to_pixels( unsigned short frame, assets::Texture * texture, unsigned int sprite_width, unsigned int sprite_height, unsigned int & x, unsigned int & y )
-{
-	unsigned short cols = (texture->width / sprite_width);
-	unsigned short rows = (texture->height / sprite_height);
-	
-	x = (frame % cols) * sprite_width;
-	y = (frame / rows) * sprite_height;
-} // frame_to_pixels
-
-
-
-
-
-
-
 struct MovementCommand
 {
 	float up, down, left, right;
