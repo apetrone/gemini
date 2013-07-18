@@ -21,6 +21,7 @@
 // -------------------------------------------------------------
 #include "util.hpp"
 #include "xstr.h"
+#include <stdlib.h>
 
 extern "C"
 {

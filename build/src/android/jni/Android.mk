@@ -56,7 +56,13 @@ LOCAL_SRC_FILES := 	kernel_android.cpp \
 					$(SRC_DIR)game/menu.cpp \
 					$(SRC_DIR)game/tiledloader.cpp \
 					$(SRC_DIR)game/screencontrol.cpp \
-					$(SRC_DIR)game/map_event.cpp
+					$(SRC_DIR)game/map_event.cpp \
+					$(SRC_DIR)game/engine.cpp \
+					$(SRC_DIR)game/gamescreen.cpp \
+					$(SRC_DIR)game/helpscreen.cpp \
+					$(SRC_DIR)game/logoscreen.cpp \
+					$(SRC_DIR)game/componentmanager.cpp \
+					$(SRC_DIR)game/particlesystem.cpp
 
 # Add dependencies
 

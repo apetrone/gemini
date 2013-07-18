@@ -24,6 +24,8 @@
 #include "gamescreen.hpp"
 #include "render_utilities.hpp"
 #include "componentmanager.hpp"
+#include "debugdraw.hpp"
+
 
 using namespace render_utilities;
 
@@ -178,6 +180,127 @@ void virtual_screen_to_pixels( float & tx, float & ty )
 
 
 
+void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, glm::mat4 & modelview_matrix, glm::mat4 & projection_matrix )
+{
+	if ( ps.emitters.empty() )
+	{
+		// bail out if there are no emitters to render
+		return;
+	}
+	
+	renderer::VertexStream stream;
+	
+	stream.desc.add( renderer::VD_FLOAT3 );
+	stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+	stream.desc.add( renderer::VD_FLOAT2 );
+	
+	stream.create(1024, 1024, renderer::DRAW_INDEXED_TRIANGLES);
+	ParticleEmitter * emitter = 0;
+	
+	renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+	glm::mat3 billboard = glm::transpose( glm::mat3(modelview_matrix) );
+	
+	ParticleEmitterVector::iterator iter = ps.emitters.begin();
+	ParticleEmitterVector::iterator end = ps.emitters.end();
+	
+	for( ; iter != end; ++iter )
+	{
+		emitter = (*iter);
+		emitter->world_position.interpolate( kernel::instance()->parameters().step_alpha );
+		for( unsigned int p = 0; p < emitter->max_particles; ++p )
+		{
+			Particle * particle = &emitter->particle_list[ p ];
+			if ( particle->life_remaining > 0 )
+			{
+				//
+				particle->position.interpolate( kernel::instance()->parameters().step_alpha );
+				if ( !stream.has_room(4, 6) )
+				{
+					LOGE( "particle stream is full - flush!\n" );
+				}
+				
+				SpriteVertexType * v = (SpriteVertexType*)stream.request(4);
+				glm::vec3 offset( particle->size, particle->size, 0 );
+				glm::vec3 temp;
+				
+				temp = (billboard * -offset) + particle->position.render;
+				v[0].x = temp.x;
+				v[0].y = temp.y;
+				v[0].z = temp.z;
+				
+				temp = (billboard * glm::vec3(offset[0], -offset[1], -offset[2])) + particle->position.render;
+				v[1].x = temp.x;
+				v[1].y = temp.y;
+				v[1].z = temp.z;
+				
+				temp = (billboard * offset) + particle->position.render;
+				v[2].x = temp.x;
+				v[2].y = temp.y;
+				v[2].z = temp.z;
+				
+				temp = (billboard * glm::vec3(-offset[0], offset[1], -offset[2])) + particle->position.render;
+				v[3].x = temp.x;
+				v[3].y = temp.y;
+				v[3].z = temp.z;
+				
+				v[0].color = v[1].color = v[2].color = v[3].color = particle->color;
+				
+				v[0].u = 0; v[0].v = 0;
+				v[1].u = 1; v[1].v = 0;
+				v[2].u = 1; v[2].v = 1;
+				v[3].u = 0; v[3].v = 1;
+				
+				//				debugdraw::point(particle->position.render, Color(255,255,255), particle->size, 0.0f);
+				stream.append_indices( indices, 6 );
+			}
+		}
+	}
+	
+	RenderStream rs;
+	
+	assets::ShaderString name("uv0");
+	unsigned int test_attribs = assets::find_parameter_mask( name );
+	
+	name = "colors";
+	test_attribs |= assets::find_parameter_mask(name);
+	
+	assets::Material * material = 0;
+	assets::Shader * shader = 0;			
+	emitter = ps.emitters[0];
+	
+	if ( emitter )
+	{
+		material = assets::material_by_id(emitter->material_id);
+		shader = assets::find_compatible_shader( material->requirements + test_attribs );
+	}
+
+	
+	glm::mat4 object_matrix;
+	
+	stream.update();
+	
+	rs.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
+	rs.add_state(renderer::STATE_BLEND, 1);
+	rs.add_shader( shader );
+	
+	rs.add_state(renderer::STATE_DEPTH_TEST, 1);
+	rs.add_state(renderer::STATE_DEPTH_WRITE, 0);
+	
+	rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview_matrix );
+	rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection_matrix );
+	rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
+	
+	rs.add_material( material, shader );
+	
+	rs.add_draw_call( stream.vertexbuffer );
+	
+	
+	rs.add_state(renderer::STATE_BLEND, 0);
+	rs.add_state(renderer::STATE_DEPTH_WRITE, 1);
+	rs.run_commands();
+	
+	stream.destroy();
+} // render_particles
 
 
 void render_vertexstream( Camera & camera, renderer::VertexStream & vb, RenderStream & rs, unsigned int attributes, assets::Material * material )
@@ -385,7 +508,6 @@ void GameScreen::render_layer( RenameThisData * layer )
 	}
 } // render_layer
 
-
 void GameScreen::on_show( kernel::IApplication * app )
 {
 	LOGV( "GameScreen on show\n" );
@@ -425,20 +547,28 @@ void GameScreen::on_draw( kernel::IApplication * app )
 	// LAYER 1
 	// draw all graphics objects
 	
+	
 	// LAYER 2
 	// draw player related items
 	
+	
 	// LAYER 3
 	// draw all effects objects
+	render_particles( psys, renderer::driver(), camera.matCam, camera.matProj );
 	
-	// LAYER4
+//	ParticleEmitter * e = psys.emitters[0];
+//	glm::vec2 & rpos = player->position.render;
+//	glm::vec3 emitter_pos = glm::vec3( rpos.x-28, rpos.y+8, 0 );
+//	e->world_position.snap( emitter_pos );
+//	rs.run_commands();
+//	vb.reset();
+	
+	
+	// LAYER 4
 	// draw hud
 	float tx = .02, ty = 0.05;
-	
 	virtual_screen_to_pixels( tx, ty );
-	
 	font::draw_string( font, tx, ty, xstr_format("Energy: %i", this->energy), Color(255,255,255));
-	
 	
 	tx = 0.8;
 	ty = 0.05;
@@ -453,6 +583,14 @@ void GameScreen::on_draw( kernel::IApplication * app )
 		virtual_screen_to_pixels(tx, ty);
 		font::draw_string( round_title, tx, ty, "Game Fail", Color(255,0,0) );
 	}
+	
+	// LAYER N
+	// debug primitives
+	glm::mat4 modelview;
+	glm::mat4 proj = glm::ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.1f, 128.0f );
+	debugdraw::render( modelview, proj, params.render_width, params.render_height );
+	
+	
 	
 #if 0
 	RenderContext context( rs, vb );
