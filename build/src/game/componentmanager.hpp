@@ -22,16 +22,18 @@
 #pragma once
 #include "memory.hpp"
 #include <vector>
-
+#include "factory.hpp"
 
 enum ComponentType
 {
-	MovementComponent,			// basic movement component
-	GraphicComponent,			// meshes / sprites?
-//	SpriteComponent,			// sprite component
-	ParticleSystemComponent,	// particles
-	EffectsComponent,			// full-screen effects
+	PositionComponent,			// position
+	VelocityComponent,			// velocity
+	MoveableComponent,			// moveable
 	PhysicsComponent,			// physics-based component
+	RenderComponent,			// meshes / sprites?
+	ParticleSystemComponent,	// particles
+//	EffectsComponent,			// full-screen effects
+
 	
 	MaxComponentTypes
 };
@@ -41,16 +43,23 @@ class IComponent
 public:
 	virtual ~IComponent() {}
 	virtual ComponentType component_type() const = 0;
+	
+	virtual void step( float dt_seconds ) = 0;
+	virtual void tick( float step_alpha ) = 0;
 }; // IComponent
 
 
 namespace ComponentManager
 {
 	typedef std::vector<IComponent*> ComponentVector;
+	typedef Factory<IComponent, MaxComponentTypes> ComponentFactory;
+
 	
-	IComponent * create_component( ComponentType component );
+	void register_component( const char * component_name, ComponentFactory::TypeCreator );
+	IComponent * create_component( const char * component_name );
 	void purge();
-	void update( float delta_sec );
+	void step( float delta_seconds );
+	void tick( float step_alpha );
 	ComponentVector & component_list( ComponentType type );
 }; // ComponentManager
 

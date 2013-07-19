@@ -22,20 +22,42 @@
 #include "typedefs.h"
 #include "log.h"
 #include "componentmanager.hpp"
+#include "kernel.hpp"
+
+
+
 
 namespace ComponentManager
 {
+	ComponentFactory component_factory;
 	ComponentVector components[ MaxComponentTypes ];
 	
-	IComponent * create_from_type( ComponentType type )
+	void register_component( const char * component_name, ComponentFactory::TypeCreator creator )
 	{
-		return 0;
-	} // create_from_type
+		LOGV("registering: %s\n", component_name);
+		component_factory.register_class(creator, component_name);
+	}
 	
-	IComponent * create_component( ComponentType type )
+	IComponent * create_component( const char * component_name )
 	{
-		IComponent * component = create_from_type( type );
-		components[ type ].push_back( component );
+		ComponentFactory::Record * record = component_factory.find_class( component_name );
+		if ( !record )
+		{
+			LOGW( "No component found with name '%s'\n", component_name );
+			return 0;
+		}
+		
+		IComponent * component = record->creator();
+		if ( component )
+		{
+			components[ component->component_type() ].push_back( component );
+
+		}
+		else
+		{
+			LOGW( "Unable to create component from record!\n" );
+		}
+
 		
 		return component;
 	} // create_component
@@ -54,11 +76,35 @@ namespace ComponentManager
 		}
 	}
 
-	
-	void update( float delta_sec )
+
+
+	void step( float delta_seconds )
 	{
-		
-	}
+		ComponentVector::iterator start, end;
+		for( unsigned int type = 0; type < MaxComponentTypes; ++type )
+		{
+			start = components[type].begin();
+			end = components[type].end();
+			for( ; start != end; ++start )
+			{
+				(*start)->step(delta_seconds);
+			}
+		}
+	} // step
+	
+	void tick( float step_alpha )
+	{
+		ComponentVector::iterator start, end;
+		for( unsigned int type = 0; type < MaxComponentTypes; ++type )
+		{
+			start = components[type].begin();
+			end = components[type].end();
+			for( ; start != end; ++start )
+			{
+				(*start)->tick(kernel::instance()->parameters().step_alpha);
+			}
+		}
+	} // tick
 	
 	ComponentVector & component_list( ComponentType type )
 	{

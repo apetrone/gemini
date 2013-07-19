@@ -26,6 +26,7 @@
 #include "componentmanager.hpp"
 #include "debugdraw.hpp"
 
+#include "factory.hpp"
 
 using namespace render_utilities;
 
@@ -43,15 +44,16 @@ class IGraphicObject : public virtual IComponent
 protected:
 	unsigned short layer;
 
+	
+	
 public:
-	virtual ComponentType component_type() const { return GraphicComponent; }
+	virtual ComponentType component_type() const { return RenderComponent; }
 	
 	unsigned short layer_id() const { return layer; }
 	
 	virtual void render( RenderContext & context ) = 0;
 	virtual void get_scale( float & x, float & y ) = 0;
 	virtual Color get_color() = 0;
-	virtual void update( float dt_sec ) = 0;
 }; // IGraphicObject
 
 
@@ -69,14 +71,31 @@ public:
 	virtual void get_rotation( float & radians ) const = 0;
 }; // ICollisionObject
 
-
-class IMovementObject : public virtual IComponent
+class PositionObject : public virtual IComponent
 {
+	DECLARE_FACTORY_CLASS(PositionObject, IComponent);
 public:
-	virtual ComponentType component_type() const { return MovementComponent; }
+	virtual ComponentType component_type() const { return PositionComponent; }
+	
 	PhysicsState<glm::vec2> position;
+	
+	virtual void step( float dt_sec ) {}
+	virtual void tick( float step_alpha ) {}
+}; // PositionObject
+
+
+
+class VelocityObject : public virtual IComponent
+{
+	DECLARE_FACTORY_CLASS(VelocityObject, IComponent);
+public:
+	virtual ComponentType component_type() const { return VelocityComponent; }
+	
 	glm::vec2 velocity;
-}; // IMovementObject
+	
+	virtual void step( float dt_sec ) {}
+	virtual void tick( float step_alpha ) {}
+}; // VelocityObject
 
 
 
@@ -552,13 +571,23 @@ void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width,
 
 GameScreen::GameScreen()
 {
+	ComponentManager::register_component( "PositionComponent", PositionObject::creator );
+	ComponentManager::register_component( "VelocityComponent", VelocityObject::creator );
+
+
 	IComponent * test = 0;
 	
 	
-	test = ComponentManager::create_component( MovementComponent );
+	test = ComponentManager::create_component( "PositionComponent" );
 	if ( !test )
 	{
 		LOGE( "Unable to create component\n" );
+	}
+	
+	PositionObject * pos = dynamic_cast<PositionObject*>(test);
+	if ( pos )
+	{
+		LOGV( "current position: %g, %g\n", pos->position.current.x, pos->position.current.y );
 	}
 
 	energy = STARTING_ENERGY;
@@ -730,7 +759,7 @@ void GameScreen::on_draw( kernel::IApplication * app )
 	// draw all graphics objects
 	IGraphicObject * go = 0;
 	ComponentManager::ComponentVector::iterator iter;
-	ComponentManager::ComponentVector & graphic_objects = ComponentManager::component_list(GraphicComponent);
+	ComponentManager::ComponentVector & graphic_objects = ComponentManager::component_list(RenderComponent);
 	iter = graphic_objects.begin();
 	for( ; iter != graphic_objects.end(); ++iter )
 	{
@@ -907,12 +936,16 @@ void GameScreen::on_update( kernel::IApplication * app )
 		
 		current_gametime += (kernel::instance()->parameters().framedelta_filtered*.001);
 	}
+	
+	ComponentManager::tick( kernel::instance()->parameters().step_alpha );
 }
 
 void GameScreen::on_step( kernel::IApplication * app )
 {
 	// update particles
 	psys.step( kernel::instance()->parameters().step_interval_seconds );
+	
+	ComponentManager::step( kernel::instance()->parameters().step_interval_seconds );
 } // on_step
 
 
