@@ -26,18 +26,90 @@
 #include "componentmanager.hpp"
 #include "debugdraw.hpp"
 
-#include "factory.hpp"
+#include "components.hpp"
 
+// -------------------------------------------------------------
+#include <vector>
+
+
+typedef int EntityID;
+struct EntityManager
+{
+	typedef std::vector<EntityID> EntityList;
+	EntityID base_entity_id;
+	EntityList active, inactive;
+
+	EntityManager();
+	EntityID create();
+	void remove( EntityID eid );
+	
+	void _print_lists();
+}; // EntityManager
+
+
+EntityManager::EntityManager() : base_entity_id(0) {}
+
+EntityID EntityManager::create()
+{
+	EntityID id = -1;
+	
+	if ( inactive.empty() )
+	{
+		id = base_entity_id++;
+		active.push_back(id);
+	}
+	else
+	{
+		id = inactive.back();
+		inactive.pop_back();
+		active.push_back(id);
+	}
+	
+	return id;
+} // create
+
+void EntityManager::remove( EntityID eid )
+{
+	// find eid in active; remove it.
+	// insert it in the inactive list
+	auto it = active.begin();
+	for( ; it != active.end(); ++it )
+	{
+		if ( (*it) == eid )
+		{
+			active.erase(it);
+			inactive.push_back(eid);
+			break;
+		}
+	}
+} // remove
+
+
+void EntityManager::_print_lists()
+{
+	unsigned int index = 0;
+	
+	LOGV( "active list:\n" );
+	auto it = active.begin();
+	for( ; it != active.end(); ++it )
+	{
+		LOGV("%i) %i\n", index, (*it) );
+	}
+	
+	index = 0;
+	LOGV( "inactive list:\n" );
+	it = inactive.begin();
+	for( ; it != inactive.end(); ++it )
+	{
+		LOGV("%i) %i\n", index, (*it) );
+	}
+} // _print_lists
+
+// -------------------------------------------------------------
 using namespace render_utilities;
 
 
-struct RenderContext
-{
-	RenderStream & rs;
-	renderer::VertexStream & vb;
-	
-	RenderContext( RenderStream & inrs, renderer::VertexStream & invb ) : rs(inrs), vb(invb) {}
-}; // RenderContext
+
 
 class IGraphicObject : public virtual IComponent
 {
@@ -71,31 +143,6 @@ public:
 	virtual void get_rotation( float & radians ) const = 0;
 }; // ICollisionObject
 
-class PositionObject : public virtual IComponent
-{
-	DECLARE_FACTORY_CLASS(PositionObject, IComponent);
-public:
-	virtual ComponentType component_type() const { return PositionComponent; }
-	
-	PhysicsState<glm::vec2> position;
-	
-	virtual void step( float dt_sec ) {}
-	virtual void tick( float step_alpha ) {}
-}; // PositionObject
-
-
-
-class VelocityObject : public virtual IComponent
-{
-	DECLARE_FACTORY_CLASS(VelocityObject, IComponent);
-public:
-	virtual ComponentType component_type() const { return VelocityComponent; }
-	
-	glm::vec2 velocity;
-	
-	virtual void step( float dt_sec ) {}
-	virtual void tick( float step_alpha ) {}
-}; // VelocityObject
 
 
 
@@ -571,24 +618,35 @@ void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width,
 
 GameScreen::GameScreen()
 {
-	ComponentManager::register_component( "PositionComponent", PositionObject::creator );
-	ComponentManager::register_component( "VelocityComponent", VelocityObject::creator );
-
+	ComponentManager::register_component( "Movement", Movement::creator );
+	
 
 	IComponent * test = 0;
 	
-	
-	test = ComponentManager::create_component( "PositionComponent" );
+	test = ComponentManager::create_type( MovementComponent );
 	if ( !test )
 	{
 		LOGE( "Unable to create component\n" );
 	}
 	
-	PositionObject * pos = dynamic_cast<PositionObject*>(test);
+	Movement * pos = dynamic_cast<Movement*>(test);
 	if ( pos )
 	{
-		LOGV( "current position: %g, %g\n", pos->position.current.x, pos->position.current.y );
+		LOGV( "current position: (%p) (%p) %g, %g\n", test, pos, pos->position.current.x, pos->position.current.y );
 	}
+	
+//	EntityManager em;
+//	EntityID a,b,c,d;
+//	a = em.create();
+//	b = em.create();
+//	c = em.create();
+//	d = -1;
+//	em.remove(b);
+//	d = em.create();
+//	LOGV( "a: %i, b: %i, c: %i, d: %i\n", a, b, c, d );
+	
+	
+	
 
 	energy = STARTING_ENERGY;
 	score = 0;

@@ -24,11 +24,64 @@
 #include "componentmanager.hpp"
 #include "kernel.hpp"
 
-
-
+#include <vector>
+#include "components.hpp"
 
 namespace ComponentManager
 {
+	template <class Type>
+	class ComponentContainer
+	{
+	public:
+		typedef std::vector<Type*> TypeVector;
+		TypeVector objects;
+		
+		~ComponentContainer()
+		{
+			purge();
+		} // ~ComponentContainer
+		
+		void purge()
+		{
+			typename TypeVector::iterator it = objects.begin();
+			for( ; it != objects.end(); ++it )
+			{
+				DESTROY(Type, (*it));
+			}
+			objects.clear();
+		} // purge
+		
+		Type * create()
+		{
+			Type * object = CREATE(Type);
+			objects.push_back(object);
+			return object;
+		} // create
+		
+		void destroy( Type * object )
+		{
+			if ( !object )
+			{
+				LOGV( "ComponentContainer could not destroy object! nullptr\n" );
+				return;
+			}
+			
+			typename TypeVector::iterator it = objects.begin();
+			for( ; it != objects.end(); ++it )
+			{
+				if ( (*it) == object )
+				{
+					objects.erase(it);
+					DESTROY(Type, (*it));
+					break;
+				}
+			}
+		} // destroy
+	}; // ComponentContainer
+
+	ComponentContainer<Movement> movement;
+	
+
 	ComponentFactory component_factory;
 	ComponentVector components[ MaxComponentTypes ];
 	
@@ -62,48 +115,74 @@ namespace ComponentManager
 		return component;
 	} // create_component
 	
+	IComponent * create_type( ComponentType type )
+	{
+		IComponent * component = 0;
+		
+		
+		if ( type == MovementComponent )
+		{
+			component = movement.create();
+		}
+	
+		return component;
+	} // create_type
+	
+	
+	void destroy_type( IComponent * component )
+	{
+		ComponentType type = component->component_type();
+		if ( type == MovementComponent )
+		{
+			movement.destroy( dynamic_cast<Movement*>(component) );
+		}
+	} // destroy_type
+	
 	void purge()
 	{
-		ComponentVector::iterator start, end;
-		for( unsigned int type = 0; type < MaxComponentTypes; ++type )
-		{
-			start = components[type].begin();
-			end = components[type].end();
-			for( ; start != end; ++start )
-			{
-				DESTROY(IComponent, (*start));
-			}
-		}
+		movement.purge();
+		
+//		ComponentVector::iterator start, end;
+//		for( unsigned int type = 0; type < MaxComponentTypes; ++type )
+//		{
+//			start = components[type].begin();
+//			end = components[type].end();
+//			for( ; start != end; ++start )
+//			{
+//				DESTROY(IComponent, (*start));
+//			}
+//			components[type].clear();
+//		}
 	}
 
 
 
 	void step( float delta_seconds )
 	{
-		ComponentVector::iterator start, end;
-		for( unsigned int type = 0; type < MaxComponentTypes; ++type )
-		{
-			start = components[type].begin();
-			end = components[type].end();
-			for( ; start != end; ++start )
-			{
-				(*start)->step(delta_seconds);
-			}
-		}
+//		ComponentVector::iterator start, end;
+//		for( unsigned int type = 0; type < MaxComponentTypes; ++type )
+//		{
+//			start = components[type].begin();
+//			end = components[type].end();
+//			for( ; start != end; ++start )
+//			{
+//				(*start)->step(delta_seconds);
+//			}
+//		}
 	} // step
 	
 	void tick( float step_alpha )
 	{
-		ComponentVector::iterator start, end;
-		for( unsigned int type = 0; type < MaxComponentTypes; ++type )
-		{
-			start = components[type].begin();
-			end = components[type].end();
-			for( ; start != end; ++start )
-			{
-				(*start)->tick(kernel::instance()->parameters().step_alpha);
-			}
-		}
+//		ComponentVector::iterator start, end;
+//		for( unsigned int type = 0; type < MaxComponentTypes; ++type )
+//		{
+//			start = components[type].begin();
+//			end = components[type].end();
+//			for( ; start != end; ++start )
+//			{
+//				(*start)->tick(kernel::instance()->parameters().step_alpha);
+//			}
+//		}
 	} // tick
 	
 	ComponentVector & component_list( ComponentType type )
@@ -113,3 +192,20 @@ namespace ComponentManager
 	} // component_list
 	
 }; // ComponentManager
+
+
+
+void Movement::step( float delta_seconds )
+{
+	
+} // step
+
+void Movement::tick( float step_alpha )
+{
+	
+} // tick
+
+void Renderable::render( RenderContext & rc )
+{
+	
+} // render

@@ -23,47 +23,43 @@
 #include "memory.hpp"
 #include <vector>
 #include "factory.hpp"
+#include "componentmanager.hpp"
+#include "render_utilities.hpp"
+#include "renderer.hpp"
+#include "vertexstream.hpp"
 
-enum ComponentType
+class Movement : public virtual IComponent
 {
-	MovementComponent,			// movement (position+velocity)
-	PhysicsComponent,			// physics-based component
-	RenderComponent,			// meshes / sprites?
-	ParticleEmitterComponent,	// particles
-
-	
-	MaxComponentTypes
-};
-
-class IComponent
-{
+	DECLARE_FACTORY_CLASS(Movement, IComponent);
 public:
-	unsigned int reference_id;
-
-
-	virtual ~IComponent() {}
-	virtual ComponentType component_type() const = 0;
+	virtual ComponentType component_type() const { return MovementComponent; }
 	
-	unsigned int ref_id() const { return reference_id; }
+	render_utilities::PhysicsState<glm::vec2> position;
+	glm::vec2 velocity;
+	
+	virtual void step( float dt_sec );
+	virtual void tick( float step_alpha );
+}; // Movement
 
-}; // IComponent
 
 
-namespace ComponentManager
+
+
+
+
+struct RenderContext
 {
-	typedef std::vector<IComponent*> ComponentVector;
-	typedef Factory<IComponent, MaxComponentTypes> ComponentFactory;
-
+	RenderStream & rs;
+	renderer::VertexStream & vb;
 	
-	void register_component( const char * component_name, ComponentFactory::TypeCreator );
-	IComponent * create_component( const char * component_name );
-	IComponent * create_type( ComponentType type );
-	void destroy_type( IComponent * component );
-	void purge();
-	void step( float delta_seconds );
-	void tick( float step_alpha );
-	ComponentVector & component_list( ComponentType type );
-}; // ComponentManager
+	RenderContext( RenderStream & inrs, renderer::VertexStream & invb ) : rs(inrs), vb(invb) {}
+}; // RenderContext
 
+class Renderable : public virtual IComponent
+{
+	DECLARE_FACTORY_CLASS(Renderable, IComponent);
+public:
+	virtual ComponentType component_type() const { return RenderComponent; }
 
-
+	virtual void render( RenderContext & rc );
+}; // Renderable
