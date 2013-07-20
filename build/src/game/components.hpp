@@ -22,7 +22,6 @@
 #pragma once
 #include "memory.hpp"
 #include <vector>
-#include "factory.hpp"
 #include "componentmanager.hpp"
 #include "render_utilities.hpp"
 #include "renderer.hpp"
@@ -30,7 +29,6 @@
 
 class Movement : public virtual IComponent
 {
-	DECLARE_FACTORY_CLASS(Movement, IComponent);
 public:
 	virtual ComponentType component_type() const { return MovementComponent; }
 	
@@ -41,25 +39,69 @@ public:
 	virtual void tick( float step_alpha );
 }; // Movement
 
-
-
-
-
-
-
-struct RenderContext
-{
-	RenderStream & rs;
-	renderer::VertexStream & vb;
-	
-	RenderContext( RenderStream & inrs, renderer::VertexStream & invb ) : rs(inrs), vb(invb) {}
-}; // RenderContext
-
+#if 0
 class Renderable : public virtual IComponent
 {
-	DECLARE_FACTORY_CLASS(Renderable, IComponent);
 public:
 	virtual ComponentType component_type() const { return RenderComponent; }
 
-	virtual void render( RenderContext & rc );
+	virtual void render( renderer::IRenderDriver * driver ) = 0;
 }; // Renderable
+#endif
+
+#include <string>
+class Sprite : public virtual IComponent
+{
+public:
+
+	virtual ComponentType component_type() const { return SpriteComponent; }
+
+	struct Frame
+	{
+		renderer::UV texcoords[4];
+	}; // Frame
+	
+	struct Clip
+	{
+		std::string name;
+		unsigned short frame_start;
+		unsigned short total_frames;
+		Frame * frames;
+		
+		Clip();
+		~Clip();
+		
+		void create_frames( unsigned int material_id, unsigned int num_frames, unsigned int sprite_width, unsigned int sprite_height );
+		void purge_frames();
+		float * uvs_for_frame( unsigned short frame_id );
+		bool is_valid_frame(unsigned short frame_id);
+	}; // Clip
+	
+	Clip * animations;					// animation frames
+	unsigned short current_animation;	// currently active animation
+	unsigned short current_frame;		// current frame of the animation
+	unsigned short total_animations;	// total animations
+	float animation_time;				// current time of the animation
+	float frame_delay;					// delay in msec between each frame
+	
+	
+	unsigned short layer;
+	
+	
+	Color color;
+	glm::vec2 scale;
+	
+	unsigned short width;
+	unsigned short height;
+	
+	short hotspot_x;
+	short hotspot_y;
+	
+	float rotation;
+	
+	Sprite();
+	virtual void render( renderer::IRenderDriver * driver );
+	virtual void step( float delta_seconds );
+	virtual void tick( float step_alpha );
+	Clip * get_clip_by_index( unsigned short index );
+}; // Sprite

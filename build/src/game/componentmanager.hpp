@@ -28,9 +28,9 @@ enum ComponentType
 {
 	MovementComponent,			// movement (position+velocity)
 	PhysicsComponent,			// physics-based component
-	RenderComponent,			// meshes / sprites?
-	ParticleEmitterComponent,	// particles
-
+//	RenderComponent,			// meshes?
+//	ParticleEmitterComponent,	// particles
+	SpriteComponent,			// sprite component
 	
 	MaxComponentTypes
 };
@@ -54,15 +54,21 @@ namespace ComponentManager
 	typedef std::vector<IComponent*> ComponentVector;
 	typedef Factory<IComponent, MaxComponentTypes> ComponentFactory;
 
+	typedef void (*ComponentCallback)( IComponent *, void * data );
 	
-	void register_component( const char * component_name, ComponentFactory::TypeCreator );
-	IComponent * create_component( const char * component_name );
+//	void register_component( const char * component_name, ComponentFactory::TypeCreator );
+//	IComponent * create_component( const char * component_name );
 	IComponent * create_type( ComponentType type );
 	void destroy_type( IComponent * component );
 	void purge();
 	void step( float delta_seconds );
 	void tick( float step_alpha );
-	ComponentVector & component_list( ComponentType type );
+//	ComponentVector & component_list( ComponentType type );
+	
+	
+
+	void for_each_component(ComponentType type, ComponentCallback callback, void * data);
+	IComponent * component_matching_id( unsigned int id, ComponentType type );
 }; // ComponentManager
 
 

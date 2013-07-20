@@ -77,135 +77,167 @@ namespace ComponentManager
 				}
 			}
 		} // destroy
+		
+		void for_each(ComponentCallback callback, void * data)
+		{
+			typename TypeVector::iterator it = objects.begin();
+			for( ; it != objects.end(); ++it )
+			{
+				callback( (*it), data );
+			}
+		} // for_each
+		
+		Type * find_id(unsigned int id)
+		{
+			Type * object = 0;
+			
+			typename TypeVector::iterator it = objects.begin();
+			for( ; it != objects.end(); ++it )
+			{
+				if ((*it)->reference_id == id)
+				{
+					object = (*it);
+					break;
+				}
+			}
+
+			return object;
+		} // find_id
 	}; // ComponentContainer
 
-	ComponentContainer<Movement> movement;
+	typedef ComponentContainer<Movement> MovementContainer;
+	MovementContainer movement;
 	
-
-	ComponentFactory component_factory;
-	ComponentVector components[ MaxComponentTypes ];
+	typedef ComponentContainer<Sprite> SpriteContainer;
+	SpriteContainer sprite;
 	
-	void register_component( const char * component_name, ComponentFactory::TypeCreator creator )
-	{
-		LOGV("registering: %s\n", component_name);
-		component_factory.register_class(creator, component_name);
-	}
-	
-	IComponent * create_component( const char * component_name )
-	{
-		ComponentFactory::Record * record = component_factory.find_class( component_name );
-		if ( !record )
-		{
-			LOGW( "No component found with name '%s'\n", component_name );
-			return 0;
-		}
-		
-		IComponent * component = record->creator();
-		if ( component )
-		{
-			components[ component->component_type() ].push_back( component );
-
-		}
-		else
-		{
-			LOGW( "Unable to create component from record!\n" );
-		}
-
-		
-		return component;
-	} // create_component
-	
+	// 1: Add Container creation
 	IComponent * create_type( ComponentType type )
 	{
 		IComponent * component = 0;
 		
-		
-		if ( type == MovementComponent )
+		switch( type )
 		{
-			component = movement.create();
+			case MovementComponent:
+				component = movement.create();
+				break;
+			case SpriteComponent:
+				component = sprite.create();
+				break;
+				
+			default:
+				break;
 		}
+
 	
 		return component;
 	} // create_type
 	
-	
+	// 2: Add Container destroy
 	void destroy_type( IComponent * component )
 	{
 		ComponentType type = component->component_type();
-		if ( type == MovementComponent )
+		switch( type )
 		{
-			movement.destroy( dynamic_cast<Movement*>(component) );
+			case MovementComponent:
+				movement.destroy(dynamic_cast<Movement*>(component));
+				break;
+			case SpriteComponent:
+				sprite.destroy(dynamic_cast<Sprite*>(component));
+				break;
+				
+			default:
+				break;
 		}
 	} // destroy_type
 	
+	// 3. Add purge
 	void purge()
 	{
 		movement.purge();
-		
-//		ComponentVector::iterator start, end;
-//		for( unsigned int type = 0; type < MaxComponentTypes; ++type )
-//		{
-//			start = components[type].begin();
-//			end = components[type].end();
-//			for( ; start != end; ++start )
-//			{
-//				DESTROY(IComponent, (*start));
-//			}
-//			components[type].clear();
-//		}
-	}
+		sprite.purge();
+	} // purge
 
-
-
+	// 4. (optionally) Add step
 	void step( float delta_seconds )
 	{
-//		ComponentVector::iterator start, end;
-//		for( unsigned int type = 0; type < MaxComponentTypes; ++type )
-//		{
-//			start = components[type].begin();
-//			end = components[type].end();
-//			for( ; start != end; ++start )
-//			{
-//				(*start)->step(delta_seconds);
-//			}
-//		}
+		MovementContainer::TypeVector::iterator movement_it = movement.objects.begin();
+		for( ; movement_it != movement.objects.end(); ++movement_it )
+		{
+			(*movement_it)->step(delta_seconds);
+		}
+		
+		SpriteContainer::TypeVector::iterator sprite_it = sprite.objects.begin();
+		for( ; sprite_it != sprite.objects.end(); ++sprite_it )
+		{
+			(*sprite_it)->step(delta_seconds);
+		}
 	} // step
 	
+	// 5. (optionally) Add tick
 	void tick( float step_alpha )
 	{
-//		ComponentVector::iterator start, end;
-//		for( unsigned int type = 0; type < MaxComponentTypes; ++type )
-//		{
-//			start = components[type].begin();
-//			end = components[type].end();
-//			for( ; start != end; ++start )
-//			{
-//				(*start)->tick(kernel::instance()->parameters().step_alpha);
-//			}
-//		}
+		MovementContainer::TypeVector::iterator movement_it = movement.objects.begin();
+		for( ; movement_it != movement.objects.end(); ++movement_it )
+		{
+			(*movement_it)->tick(step_alpha);
+		}
+		
+		SpriteContainer::TypeVector::iterator sprite_it = sprite.objects.begin();
+		for( ; sprite_it != sprite.objects.end(); ++sprite_it )
+		{
+			(*sprite_it)->tick(step_alpha);
+			(*sprite_it)->render( renderer::driver() );
+		}
 	} // tick
-	
-	ComponentVector & component_list( ComponentType type )
+
+	// 6. Add for_each support
+	void for_each_component(ComponentType type, ComponentCallback callback, void * data)
 	{
-		assert(type >= 0 && type < MaxComponentTypes);
-		return components[type];
-	} // component_list
+		switch( type )
+		{
+			case MovementComponent:
+				movement.for_each(callback, data);
+				break;
+			case SpriteComponent:
+				sprite.for_each(callback, data);
+				break;
+				
+			default:
+				break;
+		}
+	} // for_each_component
 	
+	// 7. Add find support
+	IComponent * component_matching_id( unsigned int id, ComponentType type )
+	{
+		IComponent * component = 0;
+		switch( type )
+		{
+			case MovementComponent:
+				component = movement.find_id(id);
+				break;
+			case SpriteComponent:
+				component = sprite.find_id(id);
+				break;
+			default:
+				break;
+		}
+		
+		return component;
+	} // component_matching_id
 }; // ComponentManager
 
 
 
 void Movement::step( float delta_seconds )
 {
-	
+	this->position.step(delta_seconds);
+	this->position.current.x += (delta_seconds * this->velocity.x);
+	this->position.current.y += (delta_seconds * this->velocity.y);
 } // step
 
 void Movement::tick( float step_alpha )
 {
-	
+	this->position.interpolate(step_alpha);
 } // tick
-
-void Renderable::render( RenderContext & rc )
-{
-	
-} // render

@@ -111,24 +111,6 @@ using namespace render_utilities;
 
 
 
-class IGraphicObject : public virtual IComponent
-{
-protected:
-	unsigned short layer;
-
-	
-	
-public:
-	virtual ComponentType component_type() const { return RenderComponent; }
-	
-	unsigned short layer_id() const { return layer; }
-	
-	virtual void render( RenderContext & context ) = 0;
-	virtual void get_scale( float & x, float & y ) = 0;
-	virtual Color get_color() = 0;
-}; // IGraphicObject
-
-
 class ICollisionObject : public virtual IComponent
 {
 public:
@@ -147,89 +129,27 @@ public:
 
 
 
-
-class Sprite : public virtual IGraphicObject
+Sprite::Sprite()
 {
-public:
-	struct Frame
+	this->layer = 0;
+	this->hotspot_x = 0;
+	this->hotspot_y = 0;
+	this->rotation = 0;
+} // Sprite
+
+void Sprite::render( renderer::IRenderDriver * driver )
+{
+	Movement * movement = dynamic_cast<Movement*>(ComponentManager::component_matching_id( this->reference_id, MovementComponent ));
+	if ( movement )
 	{
-		renderer::UV texcoords[4];
-	}; // Frame
-	
-	struct Clip
-	{
-		std::string name;
-		unsigned short frame_start;
-		unsigned short total_frames;
-		Frame * frames;
-		
-		Clip();
-		~Clip();
-		
-		void create_frames( unsigned int material_id, unsigned int num_frames, unsigned int sprite_width, unsigned int sprite_height );
-		void purge_frames();
-		float * uvs_for_frame( unsigned short frame_id );
-		bool is_valid_frame(unsigned short frame_id);
-	}; // Clip
-	
-	Clip * animations;					// animation frames
-	unsigned short current_animation;	// currently active animation
-	unsigned short current_frame;		// current frame of the animation
-	unsigned short total_animations;	// total animations
-	float animation_time;				// current time of the animation
-	float frame_delay;					// delay in msec between each frame
-	
-	
-	
-	
-	
-	Color color;
-	glm::vec2 scale;
-	
-	unsigned short width;
-	unsigned short height;
-	
-	short hotspot_x;
-	short hotspot_y;
-	
-	float rotation;
-	
-	Sprite()
-	{
-		this->layer = 0;
-		this->hotspot_x = 0;
-		this->hotspot_y = 0;
-		this->rotation = 0;
+		glm::vec2 & pos = movement->position.render;
+		debugdraw::point( glm::vec3(pos, 0.0f), Color(255,255,255) );		
 	}
-	
-	virtual void render( RenderContext & context );
-	virtual void get_scale( float & x, float & y );
-	virtual Color get_color();
-	virtual void update( float delta_sec );
-	
-	Clip * get_clip_by_index( unsigned short index );
-}; // Sprite
-
-
-void Sprite::render(RenderContext &context)
-{
-	
 } // render
 
-void Sprite::get_scale(float &x, float &y)
+void Sprite::step( float delta_seconds )
 {
-	x = scale.x;
-	y = scale.y;
-} // get_scale
-
-Color Sprite::get_color()
-{
-	return color;
-} // get_color
-
-void Sprite::update( float delta_sec )
-{
-	this->animation_time -= delta_sec;
+	this->animation_time -= delta_seconds;
 	
 	if ( this->animation_time <= 0 )
 	{
@@ -246,8 +166,19 @@ void Sprite::update( float delta_sec )
 			}
 		}
 	}
-} // update
+} // step
 
+void Sprite::tick( float step_alpha )
+{
+	
+} // tick
+
+#if 0
+void Sprite::update( float delta_sec )
+{
+
+} // update
+#endif
 
 Sprite::Clip * Sprite::get_clip_by_index( unsigned short index )
 {
@@ -618,9 +549,6 @@ void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width,
 
 GameScreen::GameScreen()
 {
-	ComponentManager::register_component( "Movement", Movement::creator );
-	
-
 	IComponent * test = 0;
 	
 	test = ComponentManager::create_type( MovementComponent );
@@ -633,7 +561,16 @@ GameScreen::GameScreen()
 	if ( pos )
 	{
 		LOGV( "current position: (%p) (%p) %g, %g\n", test, pos, pos->position.current.x, pos->position.current.y );
+		pos->velocity = glm::vec2( 50.0f, 0.0f );
+		pos->position.snap( glm::vec2( 50.0f, 50.0f) );
+		pos->reference_id = 0;
 	}
+	
+	
+	
+	Sprite * spr = dynamic_cast<Sprite*>(ComponentManager::create_type(SpriteComponent));
+	spr->reference_id = 0;
+	
 	
 //	EntityManager em;
 //	EntityID a,b,c,d;
@@ -787,6 +724,17 @@ void GameScreen::on_hide( kernel::IApplication * app )
 	LOGV( "GameScreen on hide\n" );
 } // on_hide
 
+
+void draw_movement(IComponent * component, void * data)
+{
+	Movement * mc = dynamic_cast<Movement*>(component);
+	if ( mc )
+	{
+		glm::vec2 & pos = mc->position.render;
+		debugdraw::point( glm::vec3(pos, 0.0f), Color(255,255,255) );
+	}
+}
+
 void GameScreen::on_draw( kernel::IApplication * app )
 {
 	kernel::Params & params = kernel::instance()->parameters();
@@ -798,9 +746,6 @@ void GameScreen::on_draw( kernel::IApplication * app )
 	
 	rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 	rs.add_state( renderer::STATE_BLEND, 1 );
-	
-	// setup render context
-	RenderContext context( rs, vb );
 	
 	// LAYER 0
 	// draw background
@@ -815,6 +760,7 @@ void GameScreen::on_draw( kernel::IApplication * app )
 	
 	// LAYER 1
 	// draw all graphics objects
+#if 0
 	IGraphicObject * go = 0;
 	ComponentManager::ComponentVector::iterator iter;
 	ComponentManager::ComponentVector & graphic_objects = ComponentManager::component_list(RenderComponent);
@@ -831,6 +777,10 @@ void GameScreen::on_draw( kernel::IApplication * app )
 			}
 		}
 	}
+#endif
+	
+	
+//	ComponentManager::for_each_component(MovementComponent, draw_movement, 0);
 	
 	
 	// LAYER 2
