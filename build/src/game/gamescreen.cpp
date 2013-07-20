@@ -28,6 +28,9 @@
 
 #include "components.hpp"
 
+
+RenderControl render_control;
+
 // -------------------------------------------------------------
 #include <vector>
 
@@ -134,7 +137,7 @@ Sprite::Sprite()
 	this->sprite_config = 0;
 } // Sprite
 
-void Sprite::render( renderer::IRenderDriver * driver )
+void Sprite::render( RenderControl & rc )
 {
 	glm::vec2 screen;
 	
@@ -701,7 +704,7 @@ void GameScreen::on_draw( kernel::IApplication * app )
 	rs.add_state( renderer::STATE_BLEND, 1 );
 	
 	
-	ComponentManager::draw();
+	ComponentManager::draw( render_control );
 	
 #if 0
 	// LAYER 0

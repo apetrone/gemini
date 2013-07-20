@@ -186,17 +186,17 @@ namespace ComponentManager
 		SpriteContainer::TypeVector::iterator sprite_it = sprite.objects.begin();
 		for( ; sprite_it != sprite.objects.end(); ++sprite_it )
 		{
-			(*sprite_it)->render( renderer::driver() );
+			(*sprite_it)->tick(step_alpha);
 		}
 	} // tick
 	
 	// 6. Draw
-	void draw()
+	void draw( RenderControl & render_control )
 	{	
 		SpriteContainer::TypeVector::iterator sprite_it = sprite.objects.begin();
 		for( ; sprite_it != sprite.objects.end(); ++sprite_it )
 		{
-			(*sprite_it)->render( renderer::driver() );
+			(*sprite_it)->render( render_control );
 		}
 	} // draw
 

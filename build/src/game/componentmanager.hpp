@@ -49,6 +49,13 @@ public:
 }; // IComponent
 
 
+
+struct RenderControl
+{
+		
+};
+
+
 namespace ComponentManager
 {
 	typedef std::vector<IComponent*> ComponentVector;
@@ -63,7 +70,7 @@ namespace ComponentManager
 	void purge();
 	void step( float delta_seconds );
 	void tick( float step_alpha );
-	void draw();
+	void draw( RenderControl & render_control );
 //	ComponentVector & component_list( ComponentType type );
 	
 	

@@ -104,7 +104,7 @@ public:
 	float rotation;
 	
 	Sprite();
-	virtual void render( renderer::IRenderDriver * driver );
+	virtual void render( RenderControl & render_control );
 	virtual void step( float delta_seconds );
 	virtual void tick( float step_alpha );
 	
