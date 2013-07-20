@@ -476,7 +476,6 @@ void virtual_screen_to_pixels( float & tx, float & ty )
 	
 	kernel::Params & params = kernel::instance()->parameters();
 	
-	
 	float mx = (params.render_width / (float)VIRTUAL_WIDTH);
 	float my = (params.render_height / (float)VIRTUAL_HEIGHT);
 	

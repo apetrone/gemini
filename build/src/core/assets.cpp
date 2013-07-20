@@ -914,7 +914,7 @@ namespace assets
 //					LOGV( "type: %s\n", typestr.c_str() );
 					
 					// convert string to param type
-					parameter->type = materialTypeToParameterType( typestr.c_str() );
+					parameter->type = material_type_to_parameter_type( typestr.c_str() );
 				}
 				else
 				{
@@ -1099,7 +1099,7 @@ namespace assets
 		return AssetLoad_Failure;
 	} // material_load_callback
 	
-	unsigned int materialTypeToParameterType( const char * name )
+	unsigned int material_type_to_parameter_type( const char * name )
 	{
 		if ( xstr_nicmp( name, "int", 0 ) == 0 )
 		{
@@ -1120,7 +1120,7 @@ namespace assets
 		
 		LOGW( "Couldn't find material parameter with name: %s\n", name );
 		return 0;
-	} // materialTypeToParameterType
+	} // material_type_to_parameter_type
 	
 	int material_parameter_type_to_render_state( unsigned int type )
 	{
@@ -1547,13 +1547,13 @@ namespace assets
 	} // for_each_mesh
 	
 	
-	void insert_mesh( const char * filename, Mesh * ptr )
-	{
-		if ( !mesh_lib->find_with_path( filename ) )
-		{
-			mesh_lib->take_ownership( filename, ptr );
-		}
-	} // insert_mesh
+//	void insert_mesh( const char * filename, Mesh * ptr )
+//	{
+//		if ( !mesh_lib->find_with_path( filename ) )
+//		{
+//			mesh_lib->take_ownership( filename, ptr );
+//		}
+//	} // insert_mesh
 	
 	Mesh * mesh_by_name( const char * filename )
 	{

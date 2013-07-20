@@ -231,14 +231,15 @@ namespace assets
 	}; // Material
 	
 	Material * material_by_id( unsigned int id );
-	unsigned int materialIdByName( const char * name );
 	Material * load_material( const char * path, unsigned int flags = 0, bool ignore_cache = false );
+	
+	
 	Material * default_material();
-	void insertMaterial( const char * name, assets::Material * material );
+
 	unsigned int find_parameter_mask( ShaderString & name );
 	unsigned int texture_unit_for_map( ShaderString & name );
 	
-	unsigned int materialTypeToParameterType( const char * name );
+	unsigned int material_type_to_parameter_type( const char * name );
 	int material_parameter_type_to_render_state( unsigned int type );
 	
 	// -------------------------------------------------------------
@@ -288,5 +289,5 @@ namespace assets
 	Mesh * mesh_by_name( const char * filename );
 	
 	// inserts a mesh from an object and associate it with a filename
-	void insert_mesh( const char * filename, Mesh * ptr );
+//	void insert_mesh( const char * filename, Mesh * ptr );
 }; // namespace assets
