@@ -111,7 +111,7 @@ namespace core
 			char logdir[MAX_PATH_SIZE];
 			memset( logdir, 0, MAX_PATH_SIZE );
 			xstr_ncpy( logdir, fs::content_directory(), -1 );
-			xstr_cat( logdir, "/"GEMINI_LOG_PATH"/" );
+			xstr_cat( logdir, "/" GEMINI_LOG_PATH "/" );
 			platform::path::normalize( logdir, MAX_PATH_SIZE );
 			
 			// make sure target folder is created
