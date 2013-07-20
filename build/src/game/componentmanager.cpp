@@ -186,12 +186,21 @@ namespace ComponentManager
 		SpriteContainer::TypeVector::iterator sprite_it = sprite.objects.begin();
 		for( ; sprite_it != sprite.objects.end(); ++sprite_it )
 		{
-			(*sprite_it)->tick(step_alpha);
 			(*sprite_it)->render( renderer::driver() );
 		}
 	} // tick
+	
+	// 6. Draw
+	void draw()
+	{	
+		SpriteContainer::TypeVector::iterator sprite_it = sprite.objects.begin();
+		for( ; sprite_it != sprite.objects.end(); ++sprite_it )
+		{
+			(*sprite_it)->render( renderer::driver() );
+		}
+	} // draw
 
-	// 6. Add for_each support
+	// 7. Add for_each support
 	void for_each_component(ComponentType type, ComponentCallback callback, void * data)
 	{
 		switch( type )
@@ -208,7 +217,7 @@ namespace ComponentManager
 		}
 	} // for_each_component
 	
-	// 7. Add find support
+	// 8. Add find support
 	IComponent * component_matching_id( unsigned int id, ComponentType type )
 	{
 		IComponent * component = 0;

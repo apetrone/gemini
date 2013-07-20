@@ -23,12 +23,128 @@
 #include "assets.hpp"
 #include "assets/asset_spriteconfig.hpp"
 #include "configloader.hpp"
+#include "render_utilities.hpp"
 
 namespace assets
 {
+	SpriteClip::SpriteClip()
+	{
+		this->frame_start = 0;
+		this->frames = 0;
+		this->total_frames = 0;
+	}
+	
+	SpriteClip::~SpriteClip()
+	{
+		purge_frames();
+	}
+	
+	void frame_to_pixels( unsigned short frame, assets::Texture * texture, unsigned int sprite_width, unsigned int sprite_height, unsigned int & x, unsigned int & y )
+	{
+		unsigned short cols = (texture->width / sprite_width);
+		unsigned short rows = (texture->height / sprite_height);
+		
+		x = (frame % cols) * sprite_width;
+		y = (frame / rows) * sprite_height;
+	} // frame_to_pixels
+	
+	void SpriteClip::create_frames(unsigned int material_id, unsigned int num_frames, unsigned int sprite_width, unsigned int sprite_height)
+	{
+		// ...
+		
+		assets::Material * material = assets::materials()->find_with_id(material_id);
+		if ( !material )
+		{
+			LOGE( "Unable to locate material with id: %i. Cannot load frames!\n", material_id );
+			return;
+		}
+		
+		assets::Material::Parameter * parameter = material->parameter_by_name("diffusemap");
+		if ( !parameter )
+		{
+			LOGE( "Unable to find parameter by name: diffusemap\n" );
+			return;
+		}
+		
+		assets::Texture * texture = assets::textures()->find_with_id(parameter->intValue);
+		if ( !texture )
+		{
+			LOGE( "Unable to find texture for id: %i\n", parameter->intValue );
+			return;
+		}
+		
+		if ( this->frames && total_frames > 0 )
+		{
+			purge_frames();
+		}
+		
+		total_frames = num_frames;
+		this->frames = CREATE_ARRAY(SpriteFrame, total_frames);
+		
+		
+		unsigned int x = 0;
+		unsigned int y = 0;
+		for( unsigned int frame = 0; frame < total_frames; ++frame )
+		{
+			SpriteFrame * sf = &frames[ frame ];
+			frame_to_pixels( frame+frame_start, texture, sprite_width, sprite_height, x, y );
+			render_utilities::sprite::calc_tile_uvs( (float*)sf->texcoords, x, y, sprite_width, sprite_height, texture->width, texture->height );
+		}
+		
+	} // load_frames
+	
+	void SpriteClip::purge_frames()
+	{
+		DESTROY_ARRAY(SpriteFrame, frames, total_frames);
+		total_frames = 0;
+	} // purge_frames
+	
+	float * SpriteClip::uvs_for_frame(unsigned short frame_id)
+	{
+		if (is_valid_frame(frame_id))
+		{
+			return (float*)&frames[ frame_id ].texcoords;
+		}
+		
+		return 0;
+	} // uvs_for_frame
+	
+	bool SpriteClip::is_valid_frame(unsigned short frame_id)
+	{
+		return (frame_id >= 0 && frame_id < total_frames);
+	} // is_valid_frame
+	
+	
+	
+
+	SpriteClip * SpriteConfig::get_clip_by_index( unsigned short index )
+	{
+		if ( index >= 0 && index < this->total_animations )
+			return &animations[ index ];
+		
+		return 0;
+	} // get_clip_by_index
+	
+	
+	void SpriteConfig::create_animations( unsigned short num_animations )
+	{
+		if ( animations && total_animations > 0 )
+		{
+			purge_animations();
+		}
+		
+		animations = CREATE_ARRAY(SpriteClip, num_animations);
+		total_animations = num_animations;
+	} // create_animations
+	
+	void SpriteConfig::purge_animations()
+	{
+		DESTROY_ARRAY(SpriteClip, animations, total_animations);
+	} // purge_animations
+
 	void SpriteConfig::release()
 	{
-		
+		purge_animations();
 	} // release
 	
 	
@@ -96,7 +212,7 @@ namespace assets
 		
 		
 		
-#if 0
+
 		// check for and load all animations
 		Json::Value animation_list = root["animations"];
 		if ( animation_list.isNull() )
@@ -132,19 +248,17 @@ namespace assets
 				LOGE( "'num_frames' is required for animation!\n" );
 			}
 			
-			Sprite::AnimationSequence * sequence = sprite->get_animation_by_index( animation_index++ );
-			sequence->name = animation_name.asString();
-			sequence->frame_start = frame_start.asInt();
-			sequence->total_frames = num_frames.asInt();
+			SpriteClip * clip = sprite->get_clip_by_index( animation_index++ );
+			clip->name = animation_name.asString();
+			clip->frame_start = frame_start.asInt();
+			clip->total_frames = num_frames.asInt();
 			
 			// this can be deferred when I merge sprite sheets
-			sequence->create_frames( sprite->material_id, sequence->total_frames, sprite->width, sprite->height );
+			clip->create_frames( sprite->material_id, clip->total_frames, sprite->width, sprite->height );
 			//		LOGV( "animation name: %s\n", animation_name.asString().c_str() );
 			//		LOGV( "start: %i, num_frames: %i\n", start.asInt(), num_frames.asInt() );
 		}
-		
-#endif
-	
+
 		return util::ConfigLoad_Success;
 	} // load_sprite_from_file
 

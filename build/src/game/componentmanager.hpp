@@ -63,6 +63,7 @@ namespace ComponentManager
 	void purge();
 	void step( float delta_seconds );
 	void tick( float step_alpha );
+	void draw();
 //	ComponentVector & component_list( ComponentType type );
 	
 	

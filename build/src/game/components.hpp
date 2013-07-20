@@ -50,39 +50,44 @@ public:
 #endif
 
 #include <string>
+#include "assets.hpp"
+
 class Sprite : public virtual IComponent
 {
 public:
 
 	virtual ComponentType component_type() const { return SpriteComponent; }
-
-	struct Frame
-	{
-		renderer::UV texcoords[4];
-	}; // Frame
+//
+//	struct Frame
+//	{
+//		renderer::UV texcoords[4];
+//	}; // Frame
+//	
+//	struct Clip
+//	{
+//		std::string name;
+//		unsigned short frame_start;
+//		unsigned short total_frames;
+//		Frame * frames;
+//		
+//		Clip();
+//		~Clip();
+//		
+//		void create_frames( unsigned int material_id, unsigned int num_frames, unsigned int sprite_width, unsigned int sprite_height );
+//		void purge_frames();
+//		float * uvs_for_frame( unsigned short frame_id );
+//		bool is_valid_frame(unsigned short frame_id);
+//	}; // Clip
 	
-	struct Clip
-	{
-		std::string name;
-		unsigned short frame_start;
-		unsigned short total_frames;
-		Frame * frames;
-		
-		Clip();
-		~Clip();
-		
-		void create_frames( unsigned int material_id, unsigned int num_frames, unsigned int sprite_width, unsigned int sprite_height );
-		void purge_frames();
-		float * uvs_for_frame( unsigned short frame_id );
-		bool is_valid_frame(unsigned short frame_id);
-	}; // Clip
-	
-	Clip * animations;					// animation frames
+//	Clip * animations;					// animation frames
 	unsigned short current_animation;	// currently active animation
 	unsigned short current_frame;		// current frame of the animation
-	unsigned short total_animations;	// total animations
+//	unsigned short total_animations;	// total animations
 	float animation_time;				// current time of the animation
-	float frame_delay;					// delay in msec between each frame
+//	float frame_delay;					// delay in msec between each frame
+
+
+	assets::SpriteConfig * sprite_config;
 	
 	unsigned int material_id;
 	unsigned short width;
@@ -102,9 +107,11 @@ public:
 	virtual void render( renderer::IRenderDriver * driver );
 	virtual void step( float delta_seconds );
 	virtual void tick( float step_alpha );
-	Clip * get_clip_by_index( unsigned short index );
 	
-	void create_animations( unsigned short num_animations );
-	void purge_animations();
+//	
+//	Clip * get_clip_by_index( unsigned short index );
+//	
+//	void create_animations( unsigned short num_animations );
+//	void purge_animations();
 	void play_animation( const std::string & name );
 }; // Sprite

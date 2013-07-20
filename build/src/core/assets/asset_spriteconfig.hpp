@@ -23,11 +23,31 @@
 
 #include "assets.hpp"
 #include "stackstring.hpp"
+#include "renderer.hpp"
 
 namespace assets
 {
-	// -------------------------------------------------------------
-	// Texture
+	struct SpriteFrame
+	{
+		renderer::UV texcoords[4];
+	}; // SpriteFrame
+	
+	struct SpriteClip
+	{
+		std::string name;
+		unsigned short frame_start;
+		unsigned short total_frames;
+		SpriteFrame * frames;
+		
+		SpriteClip();
+		~SpriteClip();
+		
+		void create_frames( unsigned int material_id, unsigned int num_frames, unsigned int sprite_width, unsigned int sprite_height );
+		void purge_frames();
+		float * uvs_for_frame( unsigned short frame_id );
+		bool is_valid_frame(unsigned short frame_id);
+	}; // SpriteClip
+	
 	struct SpriteConfig : public virtual Asset
 	{
 		unsigned int material_id;
@@ -38,9 +58,16 @@ namespace assets
 		unsigned short collision_size;
 		float frame_delay;
 		glm::vec2 scale;
+		
+		SpriteClip * animations;
+		unsigned short total_animations;
 	
+		
+		SpriteClip * get_clip_by_index( unsigned short index );
+		void create_animations( unsigned short num_animations );
+		void purge_animations();
 		virtual void release();
-	};
+	}; // SpriteConfig
 		
 
 	AssetLoadStatus spriteconfig_load_callback( const char * path, SpriteConfig * sprite_config, unsigned int flags );

@@ -109,7 +109,7 @@ void EntityManager::_print_lists()
 using namespace render_utilities;
 
 
-
+void add_sprite_to_layer( unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords );
 
 class ICollisionObject : public virtual IComponent
 {
@@ -125,140 +125,50 @@ public:
 	virtual void get_rotation( float & radians ) const = 0;
 }; // ICollisionObject
 
-util::ConfigLoadStatus load_sprite_from_file( const Json::Value & root, void * data );
-
-util::ConfigLoadStatus load_sprite_from_file( const Json::Value & root, void * data )
-{
-	Sprite * sprite = (Sprite*)data;
-	if (!sprite)
-	{
-		return util::ConfigLoad_Failure;
-	}
-	
-	// check material path; load material and cache the id in the sprite
-	Json::Value material_path = root["material"];
-	if ( material_path.isNull() )
-	{
-		LOGE( "material is required\n" );
-		return util::ConfigLoad_Failure;
-	}
-	assets::Material * material = assets::materials()->load_from_path( material_path.asString().c_str() );
-	if ( material )
-	{
-		sprite->material_id = material->Id();
-	}
-	
-	// check width and height; set these in the sprite
-	Json::Value width_pixels = root["width"];
-	Json::Value height_pixels = root["height"];
-	if ( width_pixels.isNull() || height_pixels.isNull() )
-	{
-		LOGE( "width and height are required\n" );
-		return util::ConfigLoad_Failure;
-	}
-	sprite->width = width_pixels.asUInt();
-	sprite->height = height_pixels.asUInt();
-	
-	// load collision size
-	Json::Value collision_width = root["collision_size"];
-	if ( collision_width.isNull() )
-	{
-		LOGE( "collision_size is required\n" );
-		return util::ConfigLoad_Failure;
-	}
-//	sprite->collision_size = collision_width.asUInt();
-	
-	// frame delay
-	Json::Value frame_delay = root["frame_delay"];
-	if ( !frame_delay.isNull() )
-	{
-		sprite->frame_delay = frame_delay.asFloat();
-	}
-	
-	// load sprite scale
-	Json::Value scale_x = root["scale_x"];
-	Json::Value scale_y = root["scale_y"];
-	if ( !scale_x.isNull() )
-	{
-		sprite->scale.x = scale_x.asFloat();
-	}
-	
-	if ( !scale_y.isNull() )
-	{
-		sprite->scale.y = scale_y.asFloat();
-	}
-	
-	// check for and load all animations
-	Json::Value animation_list = root["animations"];
-	if ( animation_list.isNull() )
-	{
-		LOGE( "TODO: handle no animations with a static frame...\n" );
-		return util::ConfigLoad_Failure;
-	}
-	
-	sprite->create_animations( animation_list.size() );
-	unsigned short animation_index = 0;
-	
-	Json::ValueIterator iter = animation_list.begin();
-	for( ; iter != animation_list.end(); ++iter )
-	{
-		Json::Value animation = (*iter);
-		Json::Value animation_name = animation["name"];
-		Json::Value frame_start = animation["frame_start"];
-		Json::Value num_frames = animation["num_frames"];
-		if ( animation_name.isNull() )
-		{
-			LOGE( "'name' is required for animation!\n" );
-			continue;
-		}
-		
-		if ( frame_start.isNull() )
-		{
-			LOGE( "'frame_start' is required for animation!\n" );
-			continue;
-		}
-		
-		if ( num_frames.isNull() )
-		{
-			LOGE( "'num_frames' is required for animation!\n" );
-		}
-		
-		Sprite::Clip * clip = sprite->get_clip_by_index( animation_index++ );
-		clip->name = animation_name.asString();
-		clip->frame_start = frame_start.asInt();
-		clip->total_frames = num_frames.asInt();
-		
-		// this can be deferred when I merge sprite sheets
-		clip->create_frames( sprite->material_id, clip->total_frames, sprite->width, sprite->height );
-		//		LOGV( "animation name: %s\n", animation_name.asString().c_str() );
-		//		LOGV( "start: %i, num_frames: %i\n", start.asInt(), num_frames.asInt() );
-	}
-	
-	
-	return util::ConfigLoad_Success;
-} // load_sprite_from_file
-
-
 Sprite::Sprite()
 {
 	this->layer = 0;
 	this->hotspot_x = 0;
 	this->hotspot_y = 0;
 	this->rotation = 0;
-	
-	this->animations = 0;
-	this->current_animation = 0;
-	this->total_animations = 0;
+	this->sprite_config = 0;
 } // Sprite
 
 void Sprite::render( renderer::IRenderDriver * driver )
 {
+	glm::vec2 screen;
+	
 	Movement * movement = dynamic_cast<Movement*>(ComponentManager::component_matching_id( this->reference_id, MovementComponent ));
 	if ( movement )
 	{
-		glm::vec2 & pos = movement->position.render;
-		debugdraw::point( glm::vec3(pos, 0.0f), Color(255,255,255) );		
+		screen = movement->position.render;
+		debugdraw::point( glm::vec3(screen, 0.0f), Color(255,255,255) );		
 	}
+	
+	if ( this->sprite_config )
+	{
+		assets::SpriteClip * clip = this->sprite_config->get_clip_by_index( current_animation );
+		if (clip && clip->is_valid_frame(current_frame))
+		{
+			add_sprite_to_layer(0, screen.x, screen.y, scale.x*width, scale.y*height, color, clip->uvs_for_frame(current_frame));
+		}
+	}
+	
+#if 0
+	glm::vec2 screen;
+	world_to_screen( position.render, screen );
+	
+	float scx, scy;
+	get_scale( scx, scy );
+	
+	
+	AnimationSequence * current_sequence = get_animation_by_index( current_animation );
+	if ( current_sequence && current_sequence->is_valid_frame(current_frame) )
+	{
+		add_sprite_to_stream( context.vb, screen.x, screen.y, scx*this->width, scy*this->height, this->get_color(), current_sequence->uvs_for_frame( current_frame ) );
+	}
+#endif
+
 } // render
 
 void Sprite::step( float delta_seconds )
@@ -268,15 +178,18 @@ void Sprite::step( float delta_seconds )
 	if ( this->animation_time <= 0 )
 	{
 		++current_frame;
-		this->animation_time = this->frame_delay;
-		
-		Clip * clip = this->get_clip_by_index(current_animation);
-		if ( clip )
+		if ( this->sprite_config )
 		{
-			if ( current_frame >= clip->total_frames )
+			this->animation_time = sprite_config->frame_delay;
+			
+			assets::SpriteClip * clip = sprite_config->get_clip_by_index(current_animation);
+			if ( clip )
 			{
-				// TODO: callback when this sequence finished?
-				current_frame = 0;
+				if ( current_frame >= clip->total_frames )
+				{
+					// TODO: callback when this sequence finished?
+					current_frame = 0;
+				}
 			}
 		}
 	}
@@ -288,139 +201,26 @@ void Sprite::tick( float step_alpha )
 } // tick
 
 
-Sprite::Clip * Sprite::get_clip_by_index( unsigned short index )
-{
-	if ( index >= 0 && index < this->total_animations )
-		return &animations[ index ];
-	
-	return 0;
-} // get_clip_by_index
-
-
-void Sprite::create_animations( unsigned short num_animations )
-{
-	if ( animations && total_animations > 0 )
-	{
-		purge_animations();
-	}
-	
-	animations = CREATE_ARRAY(Clip, num_animations );
-	total_animations = num_animations;
-} // create_animations
-
-void Sprite::purge_animations()
-{
-	DESTROY_ARRAY( Clip, animations, total_animations );
-} // purge_animations
-
 void Sprite::play_animation( const std::string & name )
 {
 	current_frame = 0;
 	animation_time = 0;
 	
-	for( unsigned short i = 0; i < total_animations; ++i )
+	if ( sprite_config )
 	{
-		Clip * anim = &animations[i];
-		if ( name == anim->name )
+		for( unsigned short i = 0; i < sprite_config->total_animations; ++i )
 		{
-			current_animation = i;
-			return;
+			assets::SpriteClip * anim = this->sprite_config->get_clip_by_index(i);
+			if ( name == anim->name )
+			{
+				current_animation = i;
+				return;
+			}
 		}
 	}
 	
 	LOGV( "unable to find animation: %s\n", name.c_str() );
 } // play_animation
-
-Sprite::Clip::Clip()
-{
-	this->frame_start = 0;
-	this->frames = 0;
-	this->total_frames = 0;
-}
-
-Sprite::Clip::~Clip()
-{
-	purge_frames();
-}
-
-void frame_to_pixels( unsigned short frame, assets::Texture * texture, unsigned int sprite_width, unsigned int sprite_height, unsigned int & x, unsigned int & y )
-{
-	unsigned short cols = (texture->width / sprite_width);
-	unsigned short rows = (texture->height / sprite_height);
-	
-	x = (frame % cols) * sprite_width;
-	y = (frame / rows) * sprite_height;
-} // frame_to_pixels
-
-void Sprite::Clip::create_frames(unsigned int material_id, unsigned int num_frames, unsigned int sprite_width, unsigned int sprite_height)
-{
-	// ...
-	
-	assets::Material * material = assets::materials()->find_with_id(material_id);
-	if ( !material )
-	{
-		LOGE( "Unable to locate material with id: %i. Cannot load frames!\n", material_id );
-		return;
-	}
-	
-	assets::Material::Parameter * parameter = material->parameter_by_name("diffusemap");
-	if ( !parameter )
-	{
-		LOGE( "Unable to find parameter by name: diffusemap\n" );
-		return;
-	}
-	
-	assets::Texture * texture = assets::textures()->find_with_id(parameter->intValue);
-	if ( !texture )
-	{
-		LOGE( "Unable to find texture for id: %i\n", parameter->intValue );
-		return;
-	}
-	
-	if ( this->frames && total_frames > 0 )
-	{
-		purge_frames();
-	}
-	
-	total_frames = num_frames;
-	this->frames = CREATE_ARRAY(Frame, total_frames);
-	
-	
-	unsigned int x = 0;
-	unsigned int y = 0;
-	for( unsigned int frame = 0; frame < total_frames; ++frame )
-	{
-		Frame * sf = &frames[ frame ];
-		frame_to_pixels( frame+frame_start, texture, sprite_width, sprite_height, x, y );
-		sprite::calc_tile_uvs( (float*)sf->texcoords, x, y, sprite_width, sprite_height, texture->width, texture->height );
-	}
-	
-} // load_frames
-
-void Sprite::Clip::purge_frames()
-{
-	DESTROY_ARRAY(Frame, frames, total_frames);
-	total_frames = 0;
-} // purge_frames
-
-float * Sprite::Clip::uvs_for_frame(unsigned short frame_id)
-{
-	if (is_valid_frame(frame_id))
-	{
-		return (float*)&frames[ frame_id ].texcoords;
-	}
-	
-	return 0;
-} // uvs_for_frame
-
-bool Sprite::Clip::is_valid_frame(unsigned short frame_id)
-{
-	return (frame_id >= 0 && frame_id < total_frames);
-} // is_valid_frame
-
-
-
-
 
 
 class AABB2Collision : public virtual ICollisionObject
@@ -637,6 +437,10 @@ void render_vertexstream( Camera & camera, renderer::VertexStream & vb, RenderSt
 	rs.load_offset( offset );
 } // render_vertexstream
 
+
+
+
+
 void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width, int height, const Color & color, float * texcoords )
 {
 	if ( vb.has_room(4, 6) )
@@ -685,6 +489,11 @@ void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width,
 	}
 }
 
+void add_sprite_to_layer( unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords )
+{
+	
+}
+
 
 GameScreen::GameScreen()
 {
@@ -710,6 +519,11 @@ GameScreen::GameScreen()
 	Sprite * spr = dynamic_cast<Sprite*>(ComponentManager::create_type(SpriteComponent));
 	spr->reference_id = 0;
 
+
+	assets::SpriteConfig * cfg = 0;
+	cfg = assets::sprites()->load_from_path("sprites/player");
+	spr->sprite_config = cfg;
+	
 	
 //	EntityManager em;
 //	EntityID a,b,c,d;
@@ -886,6 +700,10 @@ void GameScreen::on_draw( kernel::IApplication * app )
 	rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 	rs.add_state( renderer::STATE_BLEND, 1 );
 	
+	
+	ComponentManager::draw();
+	
+#if 0
 	// LAYER 0
 	// draw background
 	unsigned int num_rows = background_num_rows;
@@ -895,6 +713,8 @@ void GameScreen::on_draw( kernel::IApplication * app )
 	}
 	render_vertexstream( camera, vb, rs, test_attribs, assets::materials()->load_from_path("materials/background") );
 	vb.reset();
+#endif
+	
 	
 	
 	// LAYER 1
