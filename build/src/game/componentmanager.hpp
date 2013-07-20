@@ -23,6 +23,7 @@
 #include "memory.hpp"
 #include <vector>
 #include "factory.hpp"
+#include "renderstream.hpp"
 
 enum ComponentType
 {
@@ -49,10 +50,26 @@ public:
 }; // IComponent
 
 
+struct Color;
+namespace renderer
+{
+	struct VertexStream;
+}
+
+
+struct Camera;
+
+namespace assets
+{
+	class Material;
+};
 
 struct RenderControl
 {
-		
+	RenderStream rs;
+	renderer::VertexStream * stream;
+	void add_sprite_to_layer( unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords );
+	void render_stream( Camera & camera, unsigned int attributes, assets::Material * material );
 };
 
 

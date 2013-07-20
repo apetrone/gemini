@@ -27,6 +27,98 @@
 #include <vector>
 #include "components.hpp"
 
+
+
+#include "camera.hpp"
+
+struct SpriteVertexType
+{
+	float x, y, z;
+	Color color;
+	float u, v;
+};
+
+void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width, int height, const Color & color, float * texcoords )
+{
+	if ( vb.has_room(4, 6) )
+	{
+		SpriteVertexType * v = (SpriteVertexType*)vb.request(4);
+		float hw = width/2.0f;
+		float hh = height/2.0f;
+		
+		// x and y are assumed to be the center of the sprite
+		// upper left corner; moving clockwise
+		v[0].x = x - hw;
+		v[0].y = y - hh;
+		v[0].z = 0;
+		v[0].color = color;
+		
+		v[1].x = x - hw;
+		v[1].y = y + hh;
+		v[1].z = 0;
+		v[1].color = color;
+		
+		v[2].x = x + hw;
+		v[2].y = y + hh;
+		v[2].z = 0;
+		v[2].color = color;
+		
+		v[3].x = x + hw;
+		v[3].y = y - hh;
+		v[3].z = 0;
+		v[3].color = color;
+		
+		v[0].u = texcoords[0];
+		v[0].v = texcoords[1];
+		v[1].u = texcoords[2];
+		v[1].v = texcoords[3];
+		v[2].u = texcoords[4];
+		v[2].v = texcoords[5];
+		v[3].u = texcoords[6];
+		v[3].v = texcoords[7];
+		
+		
+		
+		//		LOGV( "[%g %g, %g %g, %g %g, %g %g\n", v[0].x, v[0].y, v[1].x, v[1].y, v[2].x, v[2].y, v[3].x, v[3].y );
+		
+		renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+		vb.append_indices( indices, 6 );
+	}
+}
+
+void RenderControl::add_sprite_to_layer( unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords )
+{
+	if ( stream )
+	{
+		add_sprite_to_stream(*stream, x, y, width, height, color, texcoords);
+	}
+}
+
+void RenderControl::render_stream( Camera & camera, unsigned int attributes, assets::Material * material )
+{
+	long offset;
+	rs.save_offset( offset );
+	
+	assert( material != 0 );
+	
+	stream->update();
+	assets::Shader * shader = assets::find_compatible_shader( attributes + material->requirements );
+	rs.add_shader( shader );
+	
+	glm::mat4 object_matrix;
+	
+	rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
+	rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
+	rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
+	
+	rs.add_material( material, shader );
+	rs.add_draw_call( stream->vertexbuffer );
+	
+	rs.run_commands();
+	stream->reset();
+	rs.load_offset( offset );
+} // render_stream
+
 namespace ComponentManager
 {
 	template <class Type>

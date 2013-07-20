@@ -114,4 +114,7 @@ public:
 //	void create_animations( unsigned short num_animations );
 //	void purge_animations();
 	void play_animation( const std::string & name );
+	
+	
+	void load_from_spriteconfig( assets::SpriteConfig * config );
 }; // Sprite

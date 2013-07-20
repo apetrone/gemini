@@ -51,12 +51,7 @@ enum {
 	GAME_FAIL
 };
 
-struct SpriteVertexType
-{
-	float x, y, z;
-	Color color;
-	float u, v;
-};
+
 
 struct GameScreen : public virtual IScreen
 {
@@ -66,8 +61,7 @@ struct GameScreen : public virtual IScreen
 	renderer::VertexStream vb;
 	assets::Shader default_shader;
 	unsigned int test_attribs;
-	
-	RenderStream rs;
+
 	assets::Material * player_mat;
 	
 	audio::SoundHandle player_fire, enemy_explode;

@@ -135,25 +135,33 @@ Sprite::Sprite()
 	this->hotspot_y = 0;
 	this->rotation = 0;
 	this->sprite_config = 0;
+	this->scale = glm::vec2(1.0f, 1.0f);
+	this->current_frame = 0;
+	this->current_animation = 0;
 } // Sprite
 
 void Sprite::render( RenderControl & rc )
 {
 	glm::vec2 screen;
 	
-	Movement * movement = dynamic_cast<Movement*>(ComponentManager::component_matching_id( this->reference_id, MovementComponent ));
-	if ( movement )
-	{
-		screen = movement->position.render;
-		debugdraw::point( glm::vec3(screen, 0.0f), Color(255,255,255) );		
-	}
-	
 	if ( this->sprite_config )
 	{
+		Movement * movement = dynamic_cast<Movement*>(ComponentManager::component_matching_id( this->reference_id, MovementComponent ));
+		if ( movement )
+		{
+			screen = movement->position.render;
+			debugdraw::point( glm::vec3(screen, 0.0f), Color(255,255,255), this->scale.x*(this->sprite_config->collision_size/2.0f), 0.0f );
+		}
+	
+
 		assets::SpriteClip * clip = this->sprite_config->get_clip_by_index( current_animation );
 		if (clip && clip->is_valid_frame(current_frame))
 		{
-			add_sprite_to_layer(0, screen.x, screen.y, scale.x*width, scale.y*height, color, clip->uvs_for_frame(current_frame));
+			rc.add_sprite_to_layer(0, screen.x, screen.y, scale.x*width, scale.y*height, color, clip->uvs_for_frame(current_frame));
+		}
+		else
+		{
+			LOGV( "clip is invalid or frame is invalid: %i\n", current_frame);
 		}
 	}
 	
@@ -225,6 +233,19 @@ void Sprite::play_animation( const std::string & name )
 	LOGV( "unable to find animation: %s\n", name.c_str() );
 } // play_animation
 
+void Sprite::load_from_spriteconfig( assets::SpriteConfig *config )
+{
+	if ( !config )
+	{
+		return;
+	}
+	
+	this->sprite_config = config;
+	this->width = config->width;
+	this->height = config->height;
+	this->scale = config->scale;
+	this->material_id = config->material_id;
+} // load_from_spriteconfig
 
 class AABB2Collision : public virtual ICollisionObject
 {
@@ -299,7 +320,7 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 		// bail out if there are no emitters to render
 		return;
 	}
-	
+#if 0
 	renderer::VertexStream stream;
 	
 	stream.desc.add( renderer::VD_FLOAT3 );
@@ -367,9 +388,7 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 			}
 		}
 	}
-	
-	RenderStream rs;
-	
+
 	assets::ShaderString name("uv0");
 	unsigned int test_attribs = assets::find_parameter_mask( name );
 	
@@ -412,90 +431,8 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 	rs.run_commands();
 	
 	stream.destroy();
+#endif
 } // render_particles
-
-
-void render_vertexstream( Camera & camera, renderer::VertexStream & vb, RenderStream & rs, unsigned int attributes, assets::Material * material )
-{
-	long offset;
-	rs.save_offset( offset );
-	
-	assert( material != 0 );
-	
-	vb.update();
-	assets::Shader * shader = assets::find_compatible_shader( attributes + material->requirements );
-	rs.add_shader( shader );
-	
-	glm::mat4 object_matrix;
-	
-	rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
-	rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
-	rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
-	
-	rs.add_material( material, shader );
-	rs.add_draw_call( vb.vertexbuffer );
-	
-	rs.run_commands();
-	vb.reset();
-	rs.load_offset( offset );
-} // render_vertexstream
-
-
-
-
-
-void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width, int height, const Color & color, float * texcoords )
-{
-	if ( vb.has_room(4, 6) )
-	{
-		SpriteVertexType * v = (SpriteVertexType*)vb.request(4);
-		float hw = width/2.0f;
-		float hh = height/2.0f;
-		
-		// x and y are assumed to be the center of the sprite
-		// upper left corner; moving clockwise
-		v[0].x = x - hw;
-		v[0].y = y - hh;
-		v[0].z = 0;
-		v[0].color = color;
-		
-		v[1].x = x - hw;
-		v[1].y = y + hh;
-		v[1].z = 0;
-		v[1].color = color;
-		
-		v[2].x = x + hw;
-		v[2].y = y + hh;
-		v[2].z = 0;
-		v[2].color = color;
-		
-		v[3].x = x + hw;
-		v[3].y = y - hh;
-		v[3].z = 0;
-		v[3].color = color;
-		
-		v[0].u = texcoords[0];
-		v[0].v = texcoords[1];
-		v[1].u = texcoords[2];
-		v[1].v = texcoords[3];
-		v[2].u = texcoords[4];
-		v[2].v = texcoords[5];
-		v[3].u = texcoords[6];
-		v[3].v = texcoords[7];
-		
-		
-		
-		//		LOGV( "[%g %g, %g %g, %g %g, %g %g\n", v[0].x, v[0].y, v[1].x, v[1].y, v[2].x, v[2].y, v[3].x, v[3].y );
-		
-		renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
-		vb.append_indices( indices, 6 );
-	}
-}
-
-void add_sprite_to_layer( unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords )
-{
-	
-}
 
 
 GameScreen::GameScreen()
@@ -525,7 +462,7 @@ GameScreen::GameScreen()
 
 	assets::SpriteConfig * cfg = 0;
 	cfg = assets::sprites()->load_from_path("sprites/player");
-	spr->sprite_config = cfg;
+	spr->load_from_spriteconfig(cfg);
 	
 	
 //	EntityManager em;
@@ -622,6 +559,8 @@ GameScreen::GameScreen()
 	LOGV( "allocating room for %i max vertices\n", max_vertices );
 	
 	
+	render_control.stream = &vb;
+	
 	// load sounds
 	fire_delay = 200;
 	next_fire = 0;
@@ -653,6 +592,7 @@ GameScreen::~GameScreen()
 
 void GameScreen::render_layer( RenameThisData * layer )
 {
+#if 0
 	RenameThisData * l = 0;
 	
 	for( unsigned short i = 0; i < background_num_columns; ++i )
@@ -668,6 +608,7 @@ void GameScreen::render_layer( RenameThisData * layer )
 			l->world_x = l->world_x - 1;
 		}
 	}
+#endif
 } // render_layer
 
 void GameScreen::on_show( kernel::IApplication * app )
@@ -681,15 +622,15 @@ void GameScreen::on_hide( kernel::IApplication * app )
 } // on_hide
 
 
-void draw_movement(IComponent * component, void * data)
-{
-	Movement * mc = dynamic_cast<Movement*>(component);
-	if ( mc )
-	{
-		glm::vec2 & pos = mc->position.render;
-		debugdraw::point( glm::vec3(pos, 0.0f), Color(255,255,255) );
-	}
-}
+//void draw_movement(IComponent * component, void * data)
+//{
+//	Movement * mc = dynamic_cast<Movement*>(component);
+//	if ( mc )
+//	{
+//		glm::vec2 & pos = mc->position.render;
+//		debugdraw::point( glm::vec3(pos, 0.0f), Color(255,255,255) );
+//	}
+//}
 
 void GameScreen::on_draw( kernel::IApplication * app )
 {
@@ -698,14 +639,15 @@ void GameScreen::on_draw( kernel::IApplication * app )
 	// previously had floating point errors on android when this was only set during startup
 	camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -1.0f, 1.0f );
 	
-	rs.rewind();
-	
-	rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
-	rs.add_state( renderer::STATE_BLEND, 1 );
+	render_control.rs.rewind();
+	render_control.rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+	render_control.rs.add_state( renderer::STATE_BLEND, 1 );
 	
 	
 	ComponentManager::draw( render_control );
 	
+	render_control.render_stream(camera, test_attribs, player_mat);
+
 #if 0
 	// LAYER 0
 	// draw background
