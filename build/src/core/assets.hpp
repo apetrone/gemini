@@ -26,7 +26,6 @@
 
 #include "mathlib.h" // for glm
 #include "color.hpp"
-#include "renderer.hpp"
 
 #include <string>
 
@@ -35,12 +34,7 @@ namespace assets
 	// Asset utils
 	enum AssetType
 	{
-		AssetUnknown = 0,
-		TextureAsset,
-		MaterialAsset,
-		MeshAsset,
-		ShaderAsset,
-		SoundAsset,
+		SoundAsset
 	}; // AssetType
 	
 	
@@ -53,8 +47,7 @@ namespace assets
 	// purge all assets and reclaim unused memory
 	void shutdown();
 	
-	// Given a relative path to an asset, convert it to an absolute path and tack on file extension
-	// "sounds/handy" -> "<content_directory>/sounds/handy.<platform_extension>"
+	// Given a relative path to an asset, tack on a platform-specific file extension
 	void append_asset_extension( AssetType type, StackString< MAX_PATH_SIZE > & path );
 	
 	typedef unsigned int AssetID;
@@ -77,10 +70,21 @@ namespace assets
 		AssetLoad_Failure = 1
 	};
 	
-	
 	// other shared types
 	typedef std::string ShaderString;
 }; // namespace assets
+
+#define IMPLEMENT_ASSET_LIBRARY_ACCESSOR( type, name )\
+	type * _##name = 0;\
+	type * name()\
+	{\
+		return _##name;\
+	}
+	
+#define DECLARE_ASSET_LIBRARY_ACCESSOR( type, name )\
+	typedef AssetLibrary<type> type##AssetLibrary;\
+	type##AssetLibrary * name();
+
 
 #include "assetlibrary.hpp"
 
@@ -91,6 +95,5 @@ namespace assets
 
 namespace assets
 {
-	
-	
+	unsigned int find_parameter_mask( ShaderString & name );
 }; // namespace assets

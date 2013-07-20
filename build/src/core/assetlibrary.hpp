@@ -30,7 +30,7 @@
 namespace assets
 {
 
-	template <class AssetClass, AssetType type>
+	template <class AssetClass>
 	class AssetLibrary
 	{
 		typedef AssetLoadStatus (*AssetLoadCallback)( const char * path, AssetClass * asset, unsigned int flags );
@@ -60,8 +60,6 @@ namespace assets
 			default_asset = 0;
 		} // AssetLibrary
 	
-		AssetType asset_type() const { return type; }
-		
 		AssetClass * allocate_asset() { return CREATE(AssetClass); }
 		void deallocate_asset( AssetClass * asset ) { DESTROY(AssetClass, asset); }
 		unsigned int total_asset_count() const { return total_assets; }
@@ -94,6 +92,14 @@ namespace assets
 		{
 			construct_extension_callback(extension);
 		} // construct_extension
+		
+		void append_extension( StackString<MAX_PATH_SIZE> & path )
+		{
+			StackString<MAX_PATH_SIZE> extension;
+			this->construct_extension(extension);
+			path.append(".");
+			path.append( extension() );
+		}
 
 		AssetClass * load_from_path( const char * path, unsigned int flags = 0, bool ignore_cache = false )
 		{
@@ -120,10 +126,8 @@ namespace assets
 			}
 			
 			// append the proper extension for this platform
-			StackString<MAX_PATH_SIZE> extension;
-			this->construct_extension(extension);
-			fullpath.append(".");
-			fullpath.append( extension() );
+			this->append_extension(fullpath);
+
 			
 			if ( !asset )
 			{

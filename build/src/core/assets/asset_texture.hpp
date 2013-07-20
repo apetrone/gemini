@@ -38,18 +38,11 @@ namespace assets
 		
 		virtual void release();
 	};
-	
-	
-	// load a texture from disk or cache. if reload_from_disk is false, cache is preferred
-//	Texture * load_texture( const char * path, unsigned int flags = 0, bool ignore_cache = false );
-//	Texture * texture_by_id( unsigned int id );
-	//	Texture * load_cubemap( const char * basename, unsigned int flags = 0, bool ignore_cache = false );
+		
+//	Texture * load_cubemap( const char * basename, unsigned int flags = 0, bool ignore_cache = false );
 	
 	AssetLoadStatus texture_load_callback( const char * path, Texture * texture, unsigned int flags );
 	void texture_construct_extension( StackString<MAX_PATH_SIZE> & extension );
-	
-	// -------------------------------------------------------------
-	// Textures
-	typedef AssetLibrary< Texture, TextureAsset> TextureAssetLibrary;
-	TextureAssetLibrary * textures();
+
+	DECLARE_ASSET_LIBRARY_ACCESSOR(Texture, textures);
 }; // namespace assets

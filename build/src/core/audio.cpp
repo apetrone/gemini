@@ -208,7 +208,10 @@ namespace audio
 			}
 			
 			StackString<MAX_PATH_SIZE> path = filename;
+			StackString<MAX_PATH_SIZE> extension;
 			assets::append_asset_extension( assets::SoundAsset, path );
+//			assets::sounds()->append_extension( path );
+			
 			sound->data = (unsigned char*)fs::audiofile_to_buffer( path(), sound->dataSize );
 			if ( !sound->data )
 			{

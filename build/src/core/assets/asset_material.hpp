@@ -28,8 +28,7 @@
 namespace assets
 {
 	
-	// -------------------------------------------------------------
-	// Material
+
 	
 	// must also make a change in: MaterialParameterTypeToRenderState
 	enum MaterialParameterType
@@ -79,22 +78,14 @@ namespace assets
 		void set_parameter_vec4( unsigned int id, const glm::vec4 & vec );
 	}; // Material
 	
-	Material * material_by_id( unsigned int id );
-	Material * load_material( const char * path, unsigned int flags = 0, bool ignore_cache = false );
-
-	
-	unsigned int find_parameter_mask( ShaderString & name );
 	unsigned int texture_unit_for_map( ShaderString & name );
 	
 	unsigned int material_type_to_parameter_type( const char * name );
 	int material_parameter_type_to_render_state( unsigned int type );
-	
-	
+		
 	
 	AssetLoadStatus material_load_callback( const char * path, Material * material, unsigned int flags );
 	void material_construct_extension( StackString<MAX_PATH_SIZE> & extension );
-	
-	
-	typedef AssetLibrary< Material, MaterialAsset> MaterialAssetLibrary;
-	MaterialAssetLibrary * materials();
+
+	DECLARE_ASSET_LIBRARY_ACCESSOR(Material, materials);
 }; // namespace assets

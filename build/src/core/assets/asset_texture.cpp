@@ -54,7 +54,7 @@ namespace assets
 		}
 		else // load cubemap
 		{
-			StackString< MAX_PATH_SIZE > fullpath[6], extension;
+			StackString< MAX_PATH_SIZE > fullpath[6];
 			const char ext[][4] = { "_rt", "_lt", "_up", "_dn", "_ft", "_bk" };
 			const char * names[6];
 			for( int i = 0; i < 6; ++i )
@@ -62,8 +62,7 @@ namespace assets
 				fullpath[i] = path;
 				fullpath[i].remove_extension();
 				fullpath[i].append( ext[i] );
-				assets::textures()->construct_extension( extension );
-				fullpath[i].append(extension());
+				assets::textures()->append_extension( fullpath[i] );
 				names[i] = fullpath[i]();
 			}
 			

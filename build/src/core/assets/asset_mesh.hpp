@@ -23,6 +23,7 @@
 
 #include "assets.hpp"
 #include "stackstring.hpp"
+#include "renderer.hpp"
 
 namespace assets
 {
@@ -63,21 +64,8 @@ namespace assets
 		//		void upload_geometry();
 	}; // Mesh
 	
-	
-//	typedef void (*MeshIterator)( Mesh * mesh, void * userdata );
-//	unsigned int get_total_meshes();
-	
-//	void for_each_mesh( MeshIterator fn, void * userdata = 0 );
-	
-//	Mesh * load_mesh( const char * filename, unsigned int flags = 0, bool ignore_cache = false );
-//	Mesh * mesh_by_name( const char * filename );
-
-	typedef AssetLibrary< Mesh, MeshAsset> MeshAssetLibrary;
-	MeshAssetLibrary * meshes();
-
 	AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, unsigned int flags );
 	void mesh_construct_extension( StackString<MAX_PATH_SIZE> & extension );
 	
-	// inserts a mesh from an object and associate it with a filename
-	//	void insert_mesh( const char * filename, Mesh * ptr );
+	DECLARE_ASSET_LIBRARY_ACCESSOR(Mesh, meshes);
 }; // namespace assets

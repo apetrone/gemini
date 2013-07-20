@@ -326,15 +326,7 @@ namespace assets
 		return util::ConfigLoad_Success;
 	}
 	
-	AssetLoadStatus material_load_callback( const char * path, Material * material, unsigned int flags )
-	{
-		if (util::json_load_with_callback( path, material_load_from_json, material, true ) == util::ConfigLoad_Success )
-		{
-			return AssetLoad_Success;
-		}
-		
-		return AssetLoad_Failure;
-	} // material_load_callback
+
 	
 	unsigned int material_type_to_parameter_type( const char * name )
 	{
@@ -396,6 +388,15 @@ namespace assets
 		return 0;
 	} // texture_unit_for_map
 	
+	AssetLoadStatus material_load_callback( const char * path, Material * material, unsigned int flags )
+	{
+		if (util::json_load_with_callback( path, material_load_from_json, material, true ) == util::ConfigLoad_Success )
+		{
+			return AssetLoad_Success;
+		}
+		
+		return AssetLoad_Failure;
+	} // material_load_callback
 	
 	void material_construct_extension( StackString<MAX_PATH_SIZE> & extension )
 	{

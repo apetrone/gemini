@@ -30,8 +30,6 @@ namespace assets
 {
 	// -------------------------------------------------------------
 	// Mesh
-	typedef AssetLibrary< Mesh, MeshAsset> MeshAssetLibrary;
-	MeshAssetLibrary * mesh_lib;
 	
 	util::ConfigLoadStatus mesh_load_from_json( const Json::Value & root, void * data )
 	{
