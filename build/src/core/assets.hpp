@@ -71,29 +71,20 @@ namespace assets
 		} // Id
 	}; // Asset
 	
+	enum AssetLoadStatus
+	{
+		AssetLoad_Success = 0,
+		AssetLoad_Failure = 1
+	};
+	
 }; // namespace assets
+
+#include "assetlibrary.hpp"
+
+#include "assets/asset_texture.hpp"
 
 namespace assets
 {
-	// -------------------------------------------------------------
-	// Texture
-	struct Texture : public virtual Asset
-	{
-		char * path;
-		unsigned int texture_id;
-		unsigned int width;
-		unsigned int height;
-		unsigned int flags;
-		
-		virtual void release();
-	};
-	
-	
-	// load a texture from disk or cache. if reload_from_disk is false, cache is preferred
-	Texture * load_texture( const char * path, unsigned int flags = 0, bool ignore_cache = false );
-	Texture * texture_by_id( unsigned int id );
-	//	Texture * load_cubemap( const char * basename, unsigned int flags = 0, bool ignore_cache = false );
-	
 	// -------------------------------------------------------------
 	// Shader
 	const int PermutationTokenLength = 32;

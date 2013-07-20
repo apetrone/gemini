@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include "assets.hpp"
-#include "assetlibrary.hpp"
+
 #include "kernel.hpp"
 #include "image.hpp"
 #include "log.h"
@@ -38,76 +38,6 @@ using namespace renderer;
 
 namespace assets
 {
-	// -------------------------------------------------------------
-	// Textures
-	typedef AssetLibrary< Texture, TextureAsset> TextureAssetLibrary;
-	TextureAssetLibrary * texture_lib;
-	Texture * _default_texture = 0;
-	
-	void Texture::release()
-	{
-		image::driver_release_image( this->texture_id );
-	} // release
-	
-	AssetLoadStatus texture_load_callback( const char * path, Texture * texture, unsigned int flags )
-	{
-		unsigned int texture_id = 0;
-		unsigned int width = 0;
-		unsigned int height = 0;
-		
-		bool load_result = 0;
-		
-		if ( !(flags & image::F_CUBEMAP) ) // load 2d texture
-		{
-			load_result = image::load_image_from_file( path, texture_id, flags, &width, &height );
-		}
-		else // load cubemap
-		{
-			StackString< MAX_PATH_SIZE > fullpath[6];
-			const char ext[][4] = { "_rt", "_lt", "_up", "_dn", "_ft", "_bk" };
-			const char * names[6];
-			for( int i = 0; i < 6; ++i )
-			{
-				fullpath[i] = path;
-				fullpath[i].remove_extension();
-				fullpath[i].append( ext[i] );
-				assets::append_asset_extension( TextureAsset, fullpath[i] );
-				names[i] = fullpath[i]();
-			}
-			
-//			load_result = renderlib::LoadCubemap( names, texture_id, flags, &width, &height );
-			assert( 0 );
-		}
-		
-		if ( load_result )
-		{
-			texture->flags = flags;
-			texture->texture_id = texture_id;
-			texture->width = width;
-			texture->height = width;
-			return assets::AssetLoad_Success;
-		}
-		
-		return assets::AssetLoad_Failure;
-	} // texture_load_callback
-	
-	
-	Texture * load_texture( const char * path, unsigned int flags, bool ignore_cache )
-	{
-		assert( texture_lib != 0 );
-		Texture * texture = texture_lib->load_from_path( path, flags, ignore_cache );
-		if ( texture )
-		{
-			return texture;
-		}
-		
-		return _default_texture;
-	} // load_texture
-	
-	Texture * texture_by_id( unsigned int id )
-	{
-		return texture_lib->find_with_id( id );
-	} // texture_by_id
 	
 	// -------------------------------------------------------------
 	// Shader
@@ -980,7 +910,7 @@ namespace assets
 					
 					if ( param_flags & PF_VALUE )
 					{
-						assets::Texture * tex = assets::load_texture( texture_param.asString().c_str() );
+						assets::Texture * tex = assets::textures()->load_from_path( texture_param.asString().c_str() );
 						parameter->intValue = tex->Id();
 //						LOGV( "param value: %i\n", parameter->intValue );
 						
@@ -1577,12 +1507,20 @@ namespace assets
 
 namespace assets
 {
+	Texture * _default_texture = 0;
+	TextureAssetLibrary * _textures = 0;
+	
+	TextureAssetLibrary * textures()
+	{
+		return _textures;
+	}
+	
 	void load_default_texture_and_material()
 	{
 		// setup default texture
-		_default_texture = texture_lib->allocate_asset();
+		_default_texture = textures()->allocate_asset();
 		_default_texture->texture_id = image::load_default_texture();
-		texture_lib->take_ownership("textures/default", _default_texture);
+		textures()->take_ownership("textures/default", _default_texture);
 		LOGV( "Loaded default texture; id = %i, asset_id = %i\n", _default_texture->texture_id, _default_texture->asset_id );
 		
 		// setup default material
@@ -1604,7 +1542,7 @@ namespace assets
 	void startup()
 	{
 		// allocate asset libraries
-		texture_lib = CREATE(TextureAssetLibrary, texture_load_callback);
+		_textures = CREATE(TextureAssetLibrary, texture_load_callback);
 		mesh_lib = CREATE(MeshAssetLibrary, mesh_load_callback);
 		mat_lib = CREATE(MaterialAssetLibrary, material_load_callback );
 
@@ -1626,9 +1564,9 @@ namespace assets
 		DESTROY_ARRAY( Shader, _shader_programs, total_shaders );
 		DESTROY( ShaderPermutations, _shader_permutations );
 		
-		if ( texture_lib )
+		if ( _textures )
 		{
-			texture_lib->release_and_purge();
+			_textures->release_and_purge();
 		}
 		
 		if ( mesh_lib )
@@ -1646,7 +1584,7 @@ namespace assets
 	void shutdown()
 	{
 		purge();
-		DESTROY(TextureAssetLibrary, texture_lib);
+		DESTROY(TextureAssetLibrary, _textures);
 		DESTROY(MeshAssetLibrary, mesh_lib);
 		DESTROY(MaterialAssetLibrary, mat_lib);
 		

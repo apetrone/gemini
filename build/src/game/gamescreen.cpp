@@ -266,10 +266,10 @@ void Sprite::step( float delta_seconds )
 		++current_frame;
 		this->animation_time = this->frame_delay;
 		
-		Clip * sequence = this->get_clip_by_index(current_animation);
-		if ( sequence )
+		Clip * clip = this->get_clip_by_index(current_animation);
+		if ( clip )
 		{
-			if ( current_frame >= sequence->total_frames )
+			if ( current_frame >= clip->total_frames )
 			{
 				// TODO: callback when this sequence finished?
 				current_frame = 0;
@@ -366,7 +366,7 @@ void Sprite::Clip::create_frames(unsigned int material_id, unsigned int num_fram
 		return;
 	}
 	
-	assets::Texture * texture = assets::texture_by_id( parameter->intValue );
+	assets::Texture * texture = assets::textures()->find_with_id(parameter->intValue);
 	if ( !texture )
 	{
 		LOGE( "Unable to find texture for id: %i\n", parameter->intValue );

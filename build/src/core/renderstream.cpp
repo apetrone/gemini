@@ -215,7 +215,7 @@ void RenderStream::add_material( assets::Material * material, assets::Shader * s
 		}
 		else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_2D )
 		{
-			assets::Texture * texture = assets::texture_by_id( parameter->intValue );
+			assets::Texture * texture = assets::textures()->find_with_id(parameter->intValue);
 			if ( texture )
 			{
 				add_sampler2d( uniform_location, parameter->texture_unit, texture->texture_id );

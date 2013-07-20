@@ -29,15 +29,7 @@
 
 namespace assets
 {
-	enum AssetLoadStatus
-	{
-		AssetLoad_Success = 0,
-		AssetLoad_Failure = 1
-	};
-	
-	// a function that knows how to load in an asset
 
-	
 	template <class AssetClass, AssetType type>
 	class AssetLibrary
 	{
