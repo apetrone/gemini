@@ -283,7 +283,9 @@ project ( build_name )
 				}
 				xcodebuildsettings
 				{
-					"INFOPLIST_FILE = resources/osx/Info.plist"
+					"INFOPLIST_FILE = resources/osx/Info.plist",
+					"CLANG_CXX_LANGUAGE_STANDARD = c++0x",
+					"CLANG_CXX_LIBRARY = libc++"
 				}
 
 				files
