@@ -44,6 +44,8 @@ namespace assets
 		AssetConstructExtension construct_extension_callback;
 		AssetHashTable asset_by_name;
 		AssetList asset_list;
+		AssetClass * default_asset;
+		
 	public:
 		
 		AssetLibrary( AssetLoadCallback callback, AssetConstructExtension extension_callback )
@@ -55,6 +57,7 @@ namespace assets
 			assert( construct_extension_callback != 0 );
 			
 			total_assets = 0;
+			default_asset = 0;
 		} // AssetLibrary
 	
 		AssetType asset_type() const { return type; }
@@ -148,7 +151,7 @@ namespace assets
 				LOGV( "asset (%s) loading failed!\n", path );
 			}
 			
-			return 0;
+			return default_asset;
 		} // load_from_path
 		
 		
@@ -210,6 +213,16 @@ namespace assets
 			total_assets = 0;
 			asset_by_name.purge();
 		} // release_and_purge
+		
+		void set_default( AssetClass * asset )
+		{
+			default_asset = asset;
+		} // set_default
+		
+		AssetClass * get_default() const
+		{
+			return default_asset;
+		} // get_default
 	}; // AssetLibrary
 
 }; // namespace assets

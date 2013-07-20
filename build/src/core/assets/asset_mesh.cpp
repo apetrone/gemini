@@ -68,7 +68,7 @@ namespace assets
 			}
 			else
 			{
-				amat = assets::default_material();
+				amat = assets::materials()->get_default();
 				material_ids[ current_material ] = amat->Id();
 			}
 			//			LOGV( "assigned material '%s' to (%i)\n", material_name.c_str(), material_ids[ current_material ] );
@@ -151,7 +151,7 @@ namespace assets
 			}
 			else
 			{
-				Material * default_material = assets::default_material();
+				Material * default_material = assets::materials()->get_default();
 				geometry->material_id = default_material->Id();
 			}
 			

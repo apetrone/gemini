@@ -31,14 +31,6 @@ namespace assets
 	// -------------------------------------------------------------
 	// Material
 	
-	
-	
-	
-	Material * default_material()
-	{
-		return 0; //_default_material;
-	}
-	
 	void Material::release()
 	{
 		if ( num_parameters )
@@ -102,32 +94,13 @@ namespace assets
 		this->parameters[id].type = MP_VEC4;
 	} // set_parameter_vec4
 	
-//	Material * material_by_id( unsigned int id )
-//	{
-//		return mat_lib->find_with_id( id );
-//	}
-	
-	unsigned int materialIdByName( const char * name )
-	{
-		return 0;
-		//		return mat_lib->getIdForName( name );
-	}
-	
-//	void insertMaterial( const char * name, assets::Material * material )
-//	{
-//		mat_lib->take_ownership( name, material );
-//	}
 	
 	enum ParamFlags
 	{
 		PF_TYPE = 1,
 		PF_VALUE
 	};
-	
-	bool checkParamForErrors( int src, int expected )
-	{
-		return true;
-	}
+
 	
 	util::ConfigLoadStatus material_load_from_json( const Json::Value & root, void * data )
 	{
@@ -352,16 +325,6 @@ namespace assets
 #endif
 		return util::ConfigLoad_Success;
 	}
-	
-//	Material * load_material( const char * filename, unsigned int flags, bool ignore_cache )
-//	{
-//		Material * material = mat_lib->load_from_path( filename, flags, ignore_cache );
-//		if ( material )
-//		{
-//			return material;
-//		}
-//		return default_material();
-//	} // load_material
 	
 	AssetLoadStatus material_load_callback( const char * path, Material * material, unsigned int flags )
 	{

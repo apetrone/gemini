@@ -81,9 +81,7 @@ namespace assets
 	
 	Material * material_by_id( unsigned int id );
 	Material * load_material( const char * path, unsigned int flags = 0, bool ignore_cache = false );
-	
-	
-	Material * default_material();
+
 	
 	unsigned int find_parameter_mask( ShaderString & name );
 	unsigned int texture_unit_for_map( ShaderString & name );

@@ -109,21 +109,5 @@ namespace assets
 			extension.append( "@2x" );
 		}
 	} // texture_construct_extension
-	
-//	Texture * load_texture( const char * path, unsigned int flags, bool ignore_cache )
-//	{
-//		assert( texture_lib != 0 );
-//		Texture * texture = texture_lib->load_from_path( path, flags, ignore_cache );
-//		if ( texture )
-//		{
-//			return texture;
-//		}
-//		
-//		return _default_texture;
-//	} // load_texture
-	
-//	Texture * texture_by_id( unsigned int id )
-//	{
-//		return texture_lib->find_with_id( id );
-//	} // texture_by_id
+
 }; // namespace assets

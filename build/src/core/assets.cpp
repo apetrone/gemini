@@ -725,8 +725,7 @@ namespace assets
 	{
 		return _textures;
 	}
-	
-	Texture * _default_texture = 0;
+
 	
 	MeshAssetLibrary * _meshes = 0;
 	MeshAssetLibrary * meshes()
@@ -741,28 +740,30 @@ namespace assets
 		return _materials;
 	}
 	
-	Material * _default_material = 0;
+	
 	
 	void load_default_texture_and_material()
 	{
 		// setup default texture
-		_default_texture = textures()->allocate_asset();
-		_default_texture->texture_id = image::load_default_texture();
-		textures()->take_ownership("textures/default", _default_texture);
-		LOGV( "Loaded default texture; id = %i, asset_id = %i\n", _default_texture->texture_id, _default_texture->asset_id );
+		Texture * default_texture = textures()->allocate_asset();
+		default_texture->texture_id = image::load_default_texture();
+		textures()->take_ownership("textures/default", default_texture);
+		textures()->set_default(default_texture);
+		LOGV( "Loaded default texture; id = %i, asset_id = %i\n", default_texture->texture_id, default_texture->asset_id );
 		
 		// setup default material
-		_default_material = materials()->allocate_asset();
-		_default_material->name = "default";
-		_default_material->num_parameters = 1;
-		Material::Parameter * parameter = _default_material->parameters = CREATE(Material::Parameter);
+		Material * default_material = materials()->allocate_asset();
+		default_material->name = "default";
+		default_material->num_parameters = 1;
+		Material::Parameter * parameter = default_material->parameters = CREATE(Material::Parameter);
 		parameter->name = "diffusemap";
 		parameter->type = MP_SAMPLER_2D;
 		parameter->texture_unit = texture_unit_for_map( parameter->name );
-		parameter->intValue = _default_texture->Id();
-		_default_material->calculate_requirements();
-		materials()->take_ownership( "materials/default", _default_material );
-		LOGV( "Loaded default materials; asset_id = %i\n", _default_material->asset_id );
+		parameter->intValue = default_texture->Id();
+		default_material->calculate_requirements();
+		materials()->take_ownership( "materials/default", default_material );
+		materials()->set_default(default_material);
+		LOGV( "Loaded default materials; asset_id = %i\n", default_material->asset_id );
 		
 	} // load_default_texture_and_material
 
@@ -815,9 +816,7 @@ namespace assets
 		DESTROY(TextureAssetLibrary, _textures);
 		DESTROY(MeshAssetLibrary, _meshes);
 		DESTROY(MaterialAssetLibrary, _materials);
-		
-		_default_material = 0;
-		_default_texture = 0;
+
 	} // shutdown
 
 	void append_asset_extension( AssetType type, StackString<MAX_PATH_SIZE> & path )
