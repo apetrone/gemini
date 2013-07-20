@@ -709,7 +709,7 @@ GameScreen::GameScreen()
 	
 	Sprite * spr = dynamic_cast<Sprite*>(ComponentManager::create_type(SpriteComponent));
 	spr->reference_id = 0;
-	
+
 	
 //	EntityManager em;
 //	EntityID a,b,c,d;
