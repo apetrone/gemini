@@ -84,19 +84,18 @@ public:
 	float animation_time;				// current time of the animation
 	float frame_delay;					// delay in msec between each frame
 	
-	
-	unsigned short layer;
-	
-	
-	Color color;
-	glm::vec2 scale;
-	
+	unsigned int material_id;
 	unsigned short width;
 	unsigned short height;
-	
 	short hotspot_x;
 	short hotspot_y;
 	
+	unsigned short layer;
+
+	
+	Color color;
+	glm::vec2 scale;
+
 	float rotation;
 	
 	Sprite();
@@ -104,4 +103,8 @@ public:
 	virtual void step( float delta_seconds );
 	virtual void tick( float step_alpha );
 	Clip * get_clip_by_index( unsigned short index );
+	
+	void create_animations( unsigned short num_animations );
+	void purge_animations();
+	void play_animation( const std::string & name );
 }; // Sprite

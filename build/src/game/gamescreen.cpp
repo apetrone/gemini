@@ -125,8 +125,118 @@ public:
 	virtual void get_rotation( float & radians ) const = 0;
 }; // ICollisionObject
 
+util::ConfigLoadStatus load_sprite_from_file( const Json::Value & root, void * data );
 
-
+util::ConfigLoadStatus load_sprite_from_file( const Json::Value & root, void * data )
+{
+	Sprite * sprite = (Sprite*)data;
+	if (!sprite)
+	{
+		return util::ConfigLoad_Failure;
+	}
+	
+	// check material path; load material and cache the id in the sprite
+	Json::Value material_path = root["material"];
+	if ( material_path.isNull() )
+	{
+		LOGE( "material is required\n" );
+		return util::ConfigLoad_Failure;
+	}
+	assets::Material * material = assets::load_material( material_path.asString().c_str() );
+	if ( material )
+	{
+		sprite->material_id = material->Id();
+	}
+	
+	// check width and height; set these in the sprite
+	Json::Value width_pixels = root["width"];
+	Json::Value height_pixels = root["height"];
+	if ( width_pixels.isNull() || height_pixels.isNull() )
+	{
+		LOGE( "width and height are required\n" );
+		return util::ConfigLoad_Failure;
+	}
+	sprite->width = width_pixels.asUInt();
+	sprite->height = height_pixels.asUInt();
+	
+	// load collision size
+	Json::Value collision_width = root["collision_size"];
+	if ( collision_width.isNull() )
+	{
+		LOGE( "collision_size is required\n" );
+		return util::ConfigLoad_Failure;
+	}
+//	sprite->collision_size = collision_width.asUInt();
+	
+	// frame delay
+	Json::Value frame_delay = root["frame_delay"];
+	if ( !frame_delay.isNull() )
+	{
+		sprite->frame_delay = frame_delay.asFloat();
+	}
+	
+	// load sprite scale
+	Json::Value scale_x = root["scale_x"];
+	Json::Value scale_y = root["scale_y"];
+	if ( !scale_x.isNull() )
+	{
+		sprite->scale.x = scale_x.asFloat();
+	}
+	
+	if ( !scale_y.isNull() )
+	{
+		sprite->scale.y = scale_y.asFloat();
+	}
+	
+	// check for and load all animations
+	Json::Value animation_list = root["animations"];
+	if ( animation_list.isNull() )
+	{
+		LOGE( "TODO: handle no animations with a static frame...\n" );
+		return util::ConfigLoad_Failure;
+	}
+	
+	sprite->create_animations( animation_list.size() );
+	unsigned short animation_index = 0;
+	
+	Json::ValueIterator iter = animation_list.begin();
+	for( ; iter != animation_list.end(); ++iter )
+	{
+		Json::Value animation = (*iter);
+		Json::Value animation_name = animation["name"];
+		Json::Value frame_start = animation["frame_start"];
+		Json::Value num_frames = animation["num_frames"];
+		if ( animation_name.isNull() )
+		{
+			LOGE( "'name' is required for animation!\n" );
+			continue;
+		}
+		
+		if ( frame_start.isNull() )
+		{
+			LOGE( "'frame_start' is required for animation!\n" );
+			continue;
+		}
+		
+		if ( num_frames.isNull() )
+		{
+			LOGE( "'num_frames' is required for animation!\n" );
+		}
+		
+		Sprite::Clip * clip = sprite->get_clip_by_index( animation_index++ );
+		clip->name = animation_name.asString();
+		clip->frame_start = frame_start.asInt();
+		clip->total_frames = num_frames.asInt();
+		
+		// this can be deferred when I merge sprite sheets
+		clip->create_frames( sprite->material_id, clip->total_frames, sprite->width, sprite->height );
+		//		LOGV( "animation name: %s\n", animation_name.asString().c_str() );
+		//		LOGV( "start: %i, num_frames: %i\n", start.asInt(), num_frames.asInt() );
+	}
+	
+	
+	return util::ConfigLoad_Success;
+} // load_sprite_from_file
 
 
 Sprite::Sprite()
@@ -173,12 +283,6 @@ void Sprite::tick( float step_alpha )
 	
 } // tick
 
-#if 0
-void Sprite::update( float delta_sec )
-{
-
-} // update
-#endif
 
 Sprite::Clip * Sprite::get_clip_by_index( unsigned short index )
 {
@@ -189,7 +293,39 @@ Sprite::Clip * Sprite::get_clip_by_index( unsigned short index )
 } // get_clip_by_index
 
 
+void Sprite::create_animations( unsigned short num_animations )
+{
+	if ( animations && total_animations > 0 )
+	{
+		purge_animations();
+	}
+	
+	animations = CREATE_ARRAY(Clip, num_animations );
+	total_animations = num_animations;
+} // create_animations
 
+void Sprite::purge_animations()
+{
+	DESTROY_ARRAY( Clip, animations, total_animations );
+} // purge_animations
+
+void Sprite::play_animation( const std::string & name )
+{
+	current_frame = 0;
+	animation_time = 0;
+	
+	for( unsigned short i = 0; i < total_animations; ++i )
+	{
+		Clip * anim = &animations[i];
+		if ( name == anim->name )
+		{
+			current_animation = i;
+			return;
+		}
+	}
+	
+	LOGV( "unable to find animation: %s\n", name.c_str() );
+} // play_animation
 
 Sprite::Clip::Clip()
 {
