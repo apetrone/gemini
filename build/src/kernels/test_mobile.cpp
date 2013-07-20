@@ -174,7 +174,7 @@ public:
 #endif
 
 		const char * material_name = "materials/default";
-		geo.material_id = assets::load_material(material_name)->Id();
+		geo.material_id = assets::materials()->load_from_path(material_name)->Id();
 		LOGV( "material_name = '%s', geo.material_id = %i\n", material_name, geo.material_id );
 		
 		glm::vec3 * vertices = geo.vertices;

@@ -31,6 +31,8 @@
 #include "assets.hpp"
 #include "assets/asset_texture.hpp"
 
+#include "kernel.hpp" // for device_flags
+
 namespace assets
 {
 	void Texture::release()
@@ -52,7 +54,7 @@ namespace assets
 		}
 		else // load cubemap
 		{
-			StackString< MAX_PATH_SIZE > fullpath[6];
+			StackString< MAX_PATH_SIZE > fullpath[6], extension;
 			const char ext[][4] = { "_rt", "_lt", "_up", "_dn", "_ft", "_bk" };
 			const char * names[6];
 			for( int i = 0; i < 6; ++i )
@@ -60,7 +62,8 @@ namespace assets
 				fullpath[i] = path;
 				fullpath[i].remove_extension();
 				fullpath[i].append( ext[i] );
-				assets::append_asset_extension( TextureAsset, fullpath[i] );
+				assets::textures()->construct_extension( extension );
+				fullpath[i].append(extension());
 				names[i] = fullpath[i]();
 			}
 			
@@ -80,6 +83,32 @@ namespace assets
 		return assets::AssetLoad_Failure;
 	} // texture_load_callback
 	
+	
+	void texture_construct_extension( StackString<MAX_PATH_SIZE> & extension )
+	{
+		kernel::KernelDeviceFlags device_flags = kernel::instance()->parameters().device_flags;
+
+		if ( device_flags & kernel::DeviceDesktop || (device_flags & kernel::DeviceAndroid) )
+		{
+			// ...
+			extension = "png";
+		}
+		else if ( device_flags & kernel::DeviceiPhone )
+		{
+			extension = "png";
+			extension.append( "-iphone" );
+		}
+		else if ( device_flags & kernel::DeviceiPad )
+		{
+			extension = "png";
+			extension.append( "-ipad" );
+		}
+		
+		if ( device_flags & kernel::DeviceSupportsRetinaDisplay )
+		{
+			extension.append( "@2x" );
+		}
+	} // texture_construct_extension
 	
 //	Texture * load_texture( const char * path, unsigned int flags, bool ignore_cache )
 //	{

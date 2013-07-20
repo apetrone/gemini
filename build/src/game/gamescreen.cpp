@@ -142,7 +142,7 @@ util::ConfigLoadStatus load_sprite_from_file( const Json::Value & root, void * d
 		LOGE( "material is required\n" );
 		return util::ConfigLoad_Failure;
 	}
-	assets::Material * material = assets::load_material( material_path.asString().c_str() );
+	assets::Material * material = assets::materials()->load_from_path( material_path.asString().c_str() );
 	if ( material )
 	{
 		sprite->material_id = material->Id();
@@ -245,6 +245,10 @@ Sprite::Sprite()
 	this->hotspot_x = 0;
 	this->hotspot_y = 0;
 	this->rotation = 0;
+	
+	this->animations = 0;
+	this->current_animation = 0;
+	this->total_animations = 0;
 } // Sprite
 
 void Sprite::render( renderer::IRenderDriver * driver )
@@ -352,7 +356,7 @@ void Sprite::Clip::create_frames(unsigned int material_id, unsigned int num_fram
 {
 	// ...
 	
-	assets::Material * material = assets::material_by_id(material_id);
+	assets::Material * material = assets::materials()->find_with_id(material_id);
 	if ( !material )
 	{
 		LOGE( "Unable to locate material with id: %i. Cannot load frames!\n", material_id );
@@ -575,7 +579,7 @@ void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, gl
 	
 	if ( emitter )
 	{
-		material = assets::material_by_id(emitter->material_id);
+		material = assets::materials()->find_with_id(emitter->material_id);
 		shader = assets::find_compatible_shader( material->requirements + test_attribs );
 	}
 
@@ -742,9 +746,9 @@ GameScreen::GameScreen()
 	current_event = 0;
 	current_gametime = 0;
 	
-	player_mat = assets::load_material("materials/player");
+	player_mat = assets::materials()->load_from_path("materials/player");
 	
-	assets::Material * background_material = assets::load_material("materials/background");
+	assets::Material * background_material = assets::materials()->load_from_path("materials/background");
 	if ( background_material )
 	{
 		background_material_id = background_material->Id();
@@ -889,7 +893,7 @@ void GameScreen::on_draw( kernel::IApplication * app )
 	{
 		render_layer( &background_layers[i * background_num_columns] );
 	}
-	render_vertexstream( camera, vb, rs, test_attribs, assets::load_material("materials/background") );
+	render_vertexstream( camera, vb, rs, test_attribs, assets::materials()->load_from_path("materials/background") );
 	vb.reset();
 	
 	
@@ -972,7 +976,7 @@ void GameScreen::on_draw( kernel::IApplication * app )
 		render_layer( &background_layers[i * background_num_columns] );
 	}
 	
-	render_vertexstream( camera, vb, rs, test_attribs, assets::load_material("materials/background") );
+	render_vertexstream( camera, vb, rs, test_attribs, assets::materials()->load_from_path("materials/background") );
 	vb.reset();
 	
 	// 4 - draw other entities (enemies/powerups)

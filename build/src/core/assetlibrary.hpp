@@ -34,21 +34,26 @@ namespace assets
 	class AssetLibrary
 	{
 		typedef AssetLoadStatus (*AssetLoadCallback)( const char * path, AssetClass * asset, unsigned int flags );
+		typedef void (*AssetConstructExtension)( StackString<MAX_PATH_SIZE> & path );
 		typedef void (*AssetIterator)( AssetClass * asset, void * userdata );
 		typedef HashTable<AssetClass*> AssetHashTable;
 		typedef std::list<AssetClass*, GeminiAllocator<AssetClass*> > AssetList;
 		
 		unsigned int total_assets;
 		AssetLoadCallback load_callback;
+		AssetConstructExtension construct_extension_callback;
 		AssetHashTable asset_by_name;
 		AssetList asset_list;
 	public:
-
 		
-		AssetLibrary( AssetLoadCallback callback )
+		AssetLibrary( AssetLoadCallback callback, AssetConstructExtension extension_callback )
 		{
 			load_callback = callback;
 			assert( load_callback != 0 );
+			
+			construct_extension_callback = extension_callback;
+			assert( construct_extension_callback != 0 );
+			
 			total_assets = 0;
 		} // AssetLibrary
 	
@@ -58,7 +63,7 @@ namespace assets
 		void deallocate_asset( AssetClass * asset ) { DESTROY(AssetClass, asset); }
 		unsigned int total_asset_count() const { return total_assets; }
 		
-		void foreach_asset( AssetIterator iterator, void * userdata )
+		void for_each( AssetIterator iterator, void * userdata )
 		{
 			AssetClass * asset = 0;
 			typename AssetList::iterator it = asset_list.begin();
@@ -69,7 +74,7 @@ namespace assets
 				asset = (*it);
 				iterator( asset, userdata );
 			}
-		} // foreach_asset
+		} // for_each
 	
 		// providing stubs for these functions
 		AssetLoadStatus load_with_callback( const char * path, AssetClass * asset, unsigned int flags )
@@ -82,6 +87,10 @@ namespace assets
 			return load_callback( path, asset, flags );
 		} // load_with_callback
 		
+		void construct_extension( StackString<MAX_PATH_SIZE> & extension )
+		{
+			construct_extension_callback(extension);
+		} // construct_extension
 
 		AssetClass * load_from_path( const char * path, unsigned int flags = 0, bool ignore_cache = false )
 		{
@@ -108,7 +117,10 @@ namespace assets
 			}
 			
 			// append the proper extension for this platform
-			assets::append_asset_extension( asset_type(), fullpath );
+			StackString<MAX_PATH_SIZE> extension;
+			this->construct_extension(extension);
+			fullpath.append(".");
+			fullpath.append( extension() );
 			
 			if ( !asset )
 			{
@@ -143,9 +155,12 @@ namespace assets
 		// take ownership of this asset; should be managed by this class from here on
 		void take_ownership( const char * path, AssetClass * asset )
 		{
-			asset->asset_id = total_assets++;
-			asset_list.push_back( asset );
-			asset_by_name.set( path, asset );
+			if ( !this->find_with_path(path) )
+			{
+				asset->asset_id = total_assets++;
+				asset_list.push_back( asset );
+				asset_by_name.set( path, asset );
+			}
 		} // take_ownership
 		
 		AssetClass * find_with_path( const char * path )

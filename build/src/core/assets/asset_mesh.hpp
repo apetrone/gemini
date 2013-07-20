@@ -27,29 +27,57 @@
 namespace assets
 {
 	// -------------------------------------------------------------
-	// Texture
-	struct Texture : public virtual Asset
+	// Mesh
+	
+	struct Geometry : public renderer::Geometry
 	{
-		char * path;
-		unsigned int texture_id;
-		unsigned int width;
-		unsigned int height;
-		unsigned int flags;
+		StackString<128> name;
+		unsigned int material_id;
 		
+		Geometry();
+		~Geometry();
+		
+		// set this geometry up for rendering
+		void render_setup();
+		
+	}; // Geometry
+	
+	struct Mesh : public virtual Asset
+	{
+		unsigned short total_geometry;
+		Geometry * geometry;
+		Geometry * geometry_vn;
+		glm::mat4 world_matrix;
+		StackString<MAX_PATH_SIZE> path;
+		
+		Mesh();
+		void init();
+		void alloc( unsigned int num_geometry );
+		void purge();
 		virtual void release();
-	};
+		
+		// prepare all geometry
+		void prepare_geometry();
+		
+		// upload all geometry
+		//		void upload_geometry();
+	}; // Mesh
 	
 	
-	// load a texture from disk or cache. if reload_from_disk is false, cache is preferred
-//	Texture * load_texture( const char * path, unsigned int flags = 0, bool ignore_cache = false );
-//	Texture * texture_by_id( unsigned int id );
-	//	Texture * load_cubemap( const char * basename, unsigned int flags = 0, bool ignore_cache = false );
+//	typedef void (*MeshIterator)( Mesh * mesh, void * userdata );
+//	unsigned int get_total_meshes();
 	
-	AssetLoadStatus texture_load_callback( const char * path, Texture * texture, unsigned int flags );
-	void texture_construct_extension( StackString<MAX_PATH_SIZE> & extension );
+//	void for_each_mesh( MeshIterator fn, void * userdata = 0 );
 	
-	// -------------------------------------------------------------
-	// Textures
-	typedef AssetLibrary< Texture, TextureAsset> TextureAssetLibrary;
-	TextureAssetLibrary * textures();
+//	Mesh * load_mesh( const char * filename, unsigned int flags = 0, bool ignore_cache = false );
+//	Mesh * mesh_by_name( const char * filename );
+
+	typedef AssetLibrary< Mesh, MeshAsset> MeshAssetLibrary;
+	MeshAssetLibrary * meshes();
+
+	AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, unsigned int flags );
+	void mesh_construct_extension( StackString<MAX_PATH_SIZE> & extension );
+	
+	// inserts a mesh from an object and associate it with a filename
+	//	void insert_mesh( const char * filename, Mesh * ptr );
 }; // namespace assets

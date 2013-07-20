@@ -73,7 +73,7 @@ util::ConfigLoadStatus tiled_map_loader( const Json::Value & root, void * data )
 		material_path.append( image_path.basename() );
 		
 		LOGV( "material path: %s\n", material_path() );
-		tileset->material = assets::load_material( material_path() );
+		tileset->material = assets::materials()->load_from_path( material_path() );
 		
 		if ( tileset->material->parameter_by_name("diffusemap") )
 		{

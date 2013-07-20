@@ -32,7 +32,7 @@ namespace render_utilities
 	void stream_geometry( RenderStream & rs, assets::Geometry * geo, renderer::GeneralParameters & gp )
 	{
 		assert( geo != 0 );
-		assets::Material * material = assets::material_by_id( geo->material_id );
+		assets::Material * material = assets::materials()->find_with_id( geo->material_id );
 		assert( material != 0 );
 		//		LOGV( "material: %i\n", material->Id() );
 		assets::Shader * shader = assets::find_compatible_shader( geo->attributes + material->requirements + gp.global_params );
