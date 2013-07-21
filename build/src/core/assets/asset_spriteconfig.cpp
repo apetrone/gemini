@@ -150,12 +150,19 @@ namespace assets
 	
 	util::ConfigLoadStatus load_sprite_from_file( const Json::Value & root, void * data )
 	{
-
 		SpriteConfig * sprite = (SpriteConfig*)data;
 		if (!sprite)
 		{
 			return util::ConfigLoad_Failure;
 		}
+
+		// setup some sane defaults...
+		sprite->scale = glm::vec2(1.0f, 1.0f);
+		sprite->frame_delay = 0.2f;
+		sprite->collision_size = 32;
+		sprite->width = 32;
+		sprite->height = 32;
+
 
 		// check material path; load material and cache the id in the sprite
 		Json::Value material_path = root["material"];
@@ -204,7 +211,7 @@ namespace assets
 		{
 			sprite->scale.x = scale_x.asFloat();
 		}
-		
+
 		if ( !scale_y.isNull() )
 		{
 			sprite->scale.y = scale_y.asFloat();

@@ -152,11 +152,17 @@ void Sprite::render( RenderControl & rc )
 			screen = movement->position.render;
 			debugdraw::point( glm::vec3(screen, 0.0f), Color(255,255,255), this->scale.x*(this->sprite_config->collision_size/2.0f), 0.0f );
 		}
+		else
+		{
+			LOGV( "no movement component found!\n" );
+		}
 	
 
 		assets::SpriteClip * clip = this->sprite_config->get_clip_by_index( current_animation );
 		if (clip && clip->is_valid_frame(current_frame))
 		{
+//			screen.x = floor(screen.x);
+//			screen.y = floor(screen.y);
 			rc.add_sprite_to_layer(0, screen.x, screen.y, scale.x*width, scale.y*height, color, clip->uvs_for_frame(current_frame));
 		}
 		else
@@ -164,22 +170,10 @@ void Sprite::render( RenderControl & rc )
 			LOGV( "clip is invalid or frame is invalid: %i\n", current_frame);
 		}
 	}
-	
-#if 0
-	glm::vec2 screen;
-	world_to_screen( position.render, screen );
-	
-	float scx, scy;
-	get_scale( scx, scy );
-	
-	
-	AnimationSequence * current_sequence = get_animation_by_index( current_animation );
-	if ( current_sequence && current_sequence->is_valid_frame(current_frame) )
+	else
 	{
-		add_sprite_to_stream( context.vb, screen.x, screen.y, scx*this->width, scy*this->height, this->get_color(), current_sequence->uvs_for_frame( current_frame ) );
+		LOGV( "no sprite config!\n" );
 	}
-#endif
-
 } // render
 
 void Sprite::step( float delta_seconds )
@@ -445,7 +439,10 @@ GameScreen::GameScreen()
 		LOGE( "Unable to create component\n" );
 	}
 	
-	Movement * pos = dynamic_cast<Movement*>(test);
+	Movement * pos = 0;
+	
+	
+	pos = dynamic_cast<Movement*>(test);
 	if ( pos )
 	{
 		LOGV( "current position: (%p) (%p) %g, %g\n", test, pos, pos->position.current.x, pos->position.current.y );
@@ -455,14 +452,28 @@ GameScreen::GameScreen()
 	}
 	
 	
+	assets::SpriteConfig * cfg = assets::sprites()->load_from_path("sprites/player");
 	
-	Sprite * spr = dynamic_cast<Sprite*>(ComponentManager::create_type(SpriteComponent));
-	spr->reference_id = 0;
-
-
-	assets::SpriteConfig * cfg = 0;
-	cfg = assets::sprites()->load_from_path("sprites/player");
+	Sprite * spr = 0;
+	
+	spr = dynamic_cast<Sprite*>(ComponentManager::create_type(SpriteComponent));
+	spr->reference_id = 0;	
 	spr->load_from_spriteconfig(cfg);
+
+
+
+
+	
+	
+	assets::SpriteConfig * enemy = assets::sprites()->load_from_path("sprites/enemy");
+	spr = dynamic_cast<Sprite*>(ComponentManager::create_type(SpriteComponent));
+	spr->reference_id = 1;
+	spr->load_from_spriteconfig(enemy);
+	
+	pos = dynamic_cast<Movement*>(ComponentManager::create_type(MovementComponent));
+	pos->position.snap(glm::vec2(100,230));
+	pos->velocity = glm::vec2(0, 0);
+	pos->reference_id = 1;
 	
 	
 //	EntityManager em;
