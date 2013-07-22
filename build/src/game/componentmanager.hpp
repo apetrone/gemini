@@ -24,15 +24,15 @@
 #include <vector>
 #include "factory.hpp"
 #include "renderstream.hpp"
+#include "camera.hpp"
 
 enum ComponentType
 {
 	MovementComponent,			// movement (position+velocity)
-	PhysicsComponent,			// physics-based component
-//	RenderComponent,			// meshes?
-//	ParticleEmitterComponent,	// particles
 	SpriteComponent,			// sprite component
-	
+	ParticleEmitterComponent,	// particles
+	PhysicsComponent,			// physics-based component
+
 	MaxComponentTypes
 };
 
@@ -57,19 +57,25 @@ namespace renderer
 }
 
 
-struct Camera;
-
 namespace assets
 {
 	class Material;
 };
 
+class ParticleEmitter;
 struct RenderControl
 {
+	Camera camera;
 	RenderStream rs;
 	renderer::VertexStream * stream;
+	unsigned int attribs;
+	
+	glm::mat4 modelview;
+	glm::mat4 projection;
+	
 	void add_sprite_to_layer( unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords );
-	void render_stream( Camera & camera, unsigned int attributes, assets::Material * material );
+	void render_stream( assets::Material * material );
+	void render_emitter( ParticleEmitter * emitter );
 };
 
 

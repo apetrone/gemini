@@ -55,38 +55,12 @@ public:
 class Sprite : public virtual IComponent
 {
 public:
-
-	virtual ComponentType component_type() const { return SpriteComponent; }
-//
-//	struct Frame
-//	{
-//		renderer::UV texcoords[4];
-//	}; // Frame
-//	
-//	struct Clip
-//	{
-//		std::string name;
-//		unsigned short frame_start;
-//		unsigned short total_frames;
-//		Frame * frames;
-//		
-//		Clip();
-//		~Clip();
-//		
-//		void create_frames( unsigned int material_id, unsigned int num_frames, unsigned int sprite_width, unsigned int sprite_height );
-//		void purge_frames();
-//		float * uvs_for_frame( unsigned short frame_id );
-//		bool is_valid_frame(unsigned short frame_id);
-//	}; // Clip
-	
-//	Clip * animations;					// animation frames
+	// these compose the 'animation state'
 	unsigned short current_animation;	// currently active animation
 	unsigned short current_frame;		// current frame of the animation
-//	unsigned short total_animations;	// total animations
 	float animation_time;				// current time of the animation
-//	float frame_delay;					// delay in msec between each frame
 
-
+	// this is the 'stateless' part of the animation that we reference
 	assets::SpriteConfig * sprite_config;
 	
 	unsigned int material_id;
@@ -96,7 +70,6 @@ public:
 	short hotspot_y;
 	
 	unsigned short layer;
-
 	
 	Color color;
 	glm::vec2 scale;
@@ -104,17 +77,26 @@ public:
 	float rotation;
 	
 	Sprite();
+	virtual ComponentType component_type() const { return SpriteComponent; }
 	virtual void render( RenderControl & render_control );
 	virtual void step( float delta_seconds );
 	virtual void tick( float step_alpha );
-	
-//	
-//	Clip * get_clip_by_index( unsigned short index );
-//	
-//	void create_animations( unsigned short num_animations );
-//	void purge_animations();
+
 	void play_animation( const std::string & name );
-	
-	
 	void load_from_spriteconfig( assets::SpriteConfig * config );
 }; // Sprite
+
+class ParticleEmitter;
+class Emitter : public virtual IComponent
+{
+public:
+	ParticleEmitter * emitter;
+	
+	Emitter();
+	~Emitter();
+	virtual ComponentType component_type() const { return ParticleEmitterComponent; }
+	
+	virtual void render( RenderControl & render_control );
+	virtual void step( float delta_seconds );
+	virtual void tick( float step_alpha );
+}; // Emitter

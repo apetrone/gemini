@@ -163,7 +163,14 @@ void Sprite::render( RenderControl & rc )
 		{
 //			screen.x = floor(screen.x);
 //			screen.y = floor(screen.y);
+			render_control.rs.rewind();
+			render_control.rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+			render_control.rs.add_state( renderer::STATE_BLEND, 1 );
 			rc.add_sprite_to_layer(0, screen.x, screen.y, scale.x*width, scale.y*height, color, clip->uvs_for_frame(current_frame));
+			render_control.rs.add_state( renderer::STATE_BLEND, 0 );
+//			render_control.rs.run_commands();
+			assets::Material * material = assets::materials()->find_with_id( this->material_id );
+			render_control.render_stream( material );
 		}
 		else
 		{
@@ -241,6 +248,38 @@ void Sprite::load_from_spriteconfig( assets::SpriteConfig *config )
 	this->material_id = config->material_id;
 } // load_from_spriteconfig
 
+
+ParticleSystem psys;
+
+Emitter::Emitter()
+{
+	this->emitter = psys.add_emitter();
+}
+
+Emitter::~Emitter()
+{
+	psys.remove_emitter(this->emitter);
+}
+
+void Emitter::render( RenderControl & render_control )
+{
+	// render emitter at this layer
+	render_control.render_emitter( this->emitter );
+} // render
+
+void Emitter::step( float delta_seconds )
+{
+	if ( this->emitter )
+	{
+		this->emitter->step(delta_seconds);
+	}
+} // step
+
+void Emitter::tick( float step_alpha )
+{
+} // tick
+
+
 class AABB2Collision : public virtual ICollisionObject
 {
 public:
@@ -305,130 +344,6 @@ void virtual_screen_to_pixels( float & tx, float & ty )
 	ty = my * (VIRTUAL_HEIGHT * ty);
 }
 
-
-
-void render_particles( ParticleSystem & ps, renderer::IRenderDriver * driver, glm::mat4 & modelview_matrix, glm::mat4 & projection_matrix )
-{
-	if ( ps.emitters.empty() )
-	{
-		// bail out if there are no emitters to render
-		return;
-	}
-#if 0
-	renderer::VertexStream stream;
-	
-	stream.desc.add( renderer::VD_FLOAT3 );
-	stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
-	stream.desc.add( renderer::VD_FLOAT2 );
-	
-	stream.create(1024, 1024, renderer::DRAW_INDEXED_TRIANGLES);
-	ParticleEmitter * emitter = 0;
-	
-	renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
-	glm::mat3 billboard = glm::transpose( glm::mat3(modelview_matrix) );
-	
-	ParticleEmitterVector::iterator iter = ps.emitters.begin();
-	ParticleEmitterVector::iterator end = ps.emitters.end();
-	
-	for( ; iter != end; ++iter )
-	{
-		emitter = (*iter);
-		emitter->world_position.interpolate( kernel::instance()->parameters().step_alpha );
-		for( unsigned int p = 0; p < emitter->max_particles; ++p )
-		{
-			Particle * particle = &emitter->particle_list[ p ];
-			if ( particle->life_remaining > 0 )
-			{
-				//
-				particle->position.interpolate( kernel::instance()->parameters().step_alpha );
-				if ( !stream.has_room(4, 6) )
-				{
-					LOGE( "particle stream is full - flush!\n" );
-				}
-				
-				SpriteVertexType * v = (SpriteVertexType*)stream.request(4);
-				glm::vec3 offset( particle->size, particle->size, 0 );
-				glm::vec3 temp;
-				
-				temp = (billboard * -offset) + particle->position.render;
-				v[0].x = temp.x;
-				v[0].y = temp.y;
-				v[0].z = temp.z;
-				
-				temp = (billboard * glm::vec3(offset[0], -offset[1], -offset[2])) + particle->position.render;
-				v[1].x = temp.x;
-				v[1].y = temp.y;
-				v[1].z = temp.z;
-				
-				temp = (billboard * offset) + particle->position.render;
-				v[2].x = temp.x;
-				v[2].y = temp.y;
-				v[2].z = temp.z;
-				
-				temp = (billboard * glm::vec3(-offset[0], offset[1], -offset[2])) + particle->position.render;
-				v[3].x = temp.x;
-				v[3].y = temp.y;
-				v[3].z = temp.z;
-				
-				v[0].color = v[1].color = v[2].color = v[3].color = particle->color;
-				
-				v[0].u = 0; v[0].v = 0;
-				v[1].u = 1; v[1].v = 0;
-				v[2].u = 1; v[2].v = 1;
-				v[3].u = 0; v[3].v = 1;
-				
-//				debugdraw::point(particle->position.render, Color(255,255,255), particle->size, 0.0f);
-				stream.append_indices( indices, 6 );
-			}
-		}
-	}
-
-	assets::ShaderString name("uv0");
-	unsigned int test_attribs = assets::find_parameter_mask( name );
-	
-	name = "colors";
-	test_attribs |= assets::find_parameter_mask(name);
-	
-	assets::Material * material = 0;
-	assets::Shader * shader = 0;			
-	emitter = ps.emitters[0];
-	
-	if ( emitter )
-	{
-		material = assets::materials()->find_with_id(emitter->material_id);
-		shader = assets::find_compatible_shader( material->requirements + test_attribs );
-	}
-
-	
-	glm::mat4 object_matrix;
-	
-	stream.update();
-	
-	rs.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
-	rs.add_state(renderer::STATE_BLEND, 1);
-	rs.add_shader( shader );
-	
-	rs.add_state(renderer::STATE_DEPTH_TEST, 1);
-	rs.add_state(renderer::STATE_DEPTH_WRITE, 0);
-	
-	rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview_matrix );
-	rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection_matrix );
-	rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
-	
-	rs.add_material( material, shader );
-	
-	rs.add_draw_call( stream.vertexbuffer );
-	
-	
-	rs.add_state(renderer::STATE_BLEND, 0);
-	rs.add_state(renderer::STATE_DEPTH_WRITE, 1);
-	rs.run_commands();
-	
-	stream.destroy();
-#endif
-} // render_particles
-
-
 GameScreen::GameScreen()
 {
 	IComponent * test = 0;
@@ -475,6 +390,40 @@ GameScreen::GameScreen()
 	pos->velocity = glm::vec2(0, 0);
 	pos->reference_id = 1;
 	
+	// draw particles
+#if 0
+	Emitter * emitter = 0;
+	ParticleEmitter * e = 0;
+	emitter = dynamic_cast<Emitter*>(ComponentManager::create_type(ParticleEmitterComponent));
+	emitter->reference_id = 1;
+	
+	e = emitter->emitter;
+	e->world_position.snap( glm::vec3( 50, 50, 0 ) );
+	
+	assets::Material * particle_material = assets::materials()->load_from_path("materials/particles2");
+	if ( particle_material )
+	{
+		e->material_id = particle_material->Id();
+	}
+	
+	
+	e->init(128);
+	e->next_spawn = 0;
+	e->spawn_rate = 15;
+	e->spawn_delay_seconds = 32;
+	e->life.set_range(500.0f, 1000.0f);
+	e->velocity.set_range(glm::vec3( -250.0f, -25.0f, 0.0f ), glm::vec3( -200.0f, 25.0f, 0.0f ));
+	
+	Color colors[] = { Color(255, 255, 255) };
+	e->color_channel.create(1, colors, 1/3.0f);
+	
+	float alphas[] = {1.0f, 0.0f};
+	e->alpha_channel.create(2, alphas, 1/1.0f);
+	
+	float sizes[] = {4.75f, 25.0f};
+	e->size_channel.create(2, sizes, 1/1.0f);
+#endif
+	
 	
 //	EntityManager em;
 //	EntityID a,b,c,d;
@@ -503,6 +452,9 @@ GameScreen::GameScreen()
 	
 	name = "colors";
 	test_attribs |= assets::find_parameter_mask( name );
+	
+	render_control.stream = &vb;
+	render_control.attribs = test_attribs;
 	
 	//		util::json_load_with_callback( "maps/test.json", tiled_map_loader, &tiled_map, true );
 	
@@ -570,7 +522,7 @@ GameScreen::GameScreen()
 	LOGV( "allocating room for %i max vertices\n", max_vertices );
 	
 	
-	render_control.stream = &vb;
+
 	
 	// load sounds
 	fire_delay = 200;
@@ -648,16 +600,16 @@ void GameScreen::on_draw( kernel::IApplication * app )
 	kernel::Params & params = kernel::instance()->parameters();
 	
 	// previously had floating point errors on android when this was only set during startup
-	camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -1.0f, 1.0f );
+	render_control.camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -1.0f, 1.0f );
 	
 	render_control.rs.rewind();
+	
 	render_control.rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 	render_control.rs.add_state( renderer::STATE_BLEND, 1 );
 	
-	
 	ComponentManager::draw( render_control );
 	
-	render_control.render_stream(camera, test_attribs, player_mat);
+	render_control.render_stream(player_mat);
 
 #if 0
 	// LAYER 0
@@ -704,7 +656,7 @@ void GameScreen::on_draw( kernel::IApplication * app )
 	
 	// LAYER 3
 	// draw all effects objects
-	render_particles( psys, renderer::driver(), camera.matCam, camera.matProj );
+//	render_particles( psys, renderer::driver(), render_control.camera.matCam, camera.matProj );
 	
 //	ParticleEmitter * e = psys.emitters[0];
 //	glm::vec2 & rpos = player->position.render;
@@ -736,9 +688,8 @@ void GameScreen::on_draw( kernel::IApplication * app )
 	
 	// LAYER N
 	// debug primitives
-	glm::mat4 modelview;
-	glm::mat4 proj = glm::ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.1f, 128.0f );
-	debugdraw::render( modelview, proj, params.render_width, params.render_height );
+	render_control.projection = glm::ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -0.1f, 128.0f );
+	debugdraw::render( render_control.modelview, render_control.projection, params.render_width, params.render_height );
 	
 	
 	

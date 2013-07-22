@@ -57,7 +57,6 @@ struct GameScreen : public virtual IScreen
 {
 	font::Handle font;
 	font::Handle round_title;
-	Camera camera;
 	renderer::VertexStream vb;
 	assets::Shader default_shader;
 	unsigned int test_attribs;

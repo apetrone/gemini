@@ -31,6 +31,8 @@
 
 #include "camera.hpp"
 
+#include "particlesystem.hpp"
+
 struct SpriteVertexType
 {
 	float x, y, z;
@@ -91,18 +93,20 @@ void RenderControl::add_sprite_to_layer( unsigned short layer, int x, int y, int
 	if ( stream )
 	{
 		add_sprite_to_stream(*stream, x, y, width, height, color, texcoords);
+		stream->update();
 	}
 }
 
-void RenderControl::render_stream( Camera & camera, unsigned int attributes, assets::Material * material )
+void RenderControl::render_stream( assets::Material * material )
 {
-	long offset;
-	rs.save_offset( offset );
+//	long offset;
+//	rs.save_offset( offset );
 	
 	assert( material != 0 );
+
+	assets::Shader * shader = assets::find_compatible_shader( attribs + material->requirements );
 	
-	stream->update();
-	assets::Shader * shader = assets::find_compatible_shader( attributes + material->requirements );
+	assert( shader !=0 );
 	rs.add_shader( shader );
 	
 	glm::mat4 object_matrix;
@@ -116,8 +120,116 @@ void RenderControl::render_stream( Camera & camera, unsigned int attributes, ass
 	
 	rs.run_commands();
 	stream->reset();
-	rs.load_offset( offset );
+//	rs.load_offset( offset );
 } // render_stream
+
+
+void RenderControl::render_emitter( ParticleEmitter * emitter )
+{
+	if ( !emitter )
+	{
+		return;
+	}
+
+	renderer::VertexStream stream;
+	
+	stream.desc.add( renderer::VD_FLOAT3 );
+	stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+	stream.desc.add( renderer::VD_FLOAT2 );
+	
+	stream.create(1024, 1024, renderer::DRAW_INDEXED_TRIANGLES);
+
+	
+	renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+	glm::mat3 billboard = glm::transpose( glm::mat3(modelview) );
+	
+	emitter->world_position.interpolate( kernel::instance()->parameters().step_alpha );
+	for( unsigned int p = 0; p < emitter->max_particles; ++p )
+	{
+		Particle * particle = &emitter->particle_list[ p ];
+		if ( particle->life_remaining > 0 )
+		{
+			//
+			particle->position.interpolate( kernel::instance()->parameters().step_alpha );
+			if ( !stream.has_room(4, 6) )
+			{
+				LOGE( "particle stream is full - flush!\n" );
+			}
+			
+			SpriteVertexType * v = (SpriteVertexType*)stream.request(4);
+			glm::vec3 offset( particle->size, particle->size, 0 );
+			glm::vec3 temp;
+			
+			temp = (billboard * -offset) + particle->position.render;
+			v[0].x = temp.x;
+			v[0].y = temp.y;
+			v[0].z = temp.z;
+			
+			temp = (billboard * glm::vec3(offset[0], -offset[1], -offset[2])) + particle->position.render;
+			v[1].x = temp.x;
+			v[1].y = temp.y;
+			v[1].z = temp.z;
+			
+			temp = (billboard * offset) + particle->position.render;
+			v[2].x = temp.x;
+			v[2].y = temp.y;
+			v[2].z = temp.z;
+			
+			temp = (billboard * glm::vec3(-offset[0], offset[1], -offset[2])) + particle->position.render;
+			v[3].x = temp.x;
+			v[3].y = temp.y;
+			v[3].z = temp.z;
+			
+			v[0].color = v[1].color = v[2].color = v[3].color = particle->color;
+			
+			v[0].u = 0; v[0].v = 0;
+			v[1].u = 1; v[1].v = 0;
+			v[2].u = 1; v[2].v = 1;
+			v[3].u = 0; v[3].v = 1;
+			
+//			debugdraw::point(particle->position.render, Color(255,255,255), particle->size, 0.0f);
+			stream.append_indices( indices, 6 );
+		}
+	}
+	
+	assets::ShaderString name("uv0");
+	unsigned int test_attribs = assets::find_parameter_mask( name );
+	
+	name = "colors";
+	test_attribs |= assets::find_parameter_mask(name);
+	
+	assets::Material * material = 0;
+	assets::Shader * shader = 0;
+	
+	material = assets::materials()->find_with_id(emitter->material_id);
+	shader = assets::find_compatible_shader( material->requirements + test_attribs );
+	
+	glm::mat4 object_matrix;
+	
+	stream.update();
+	
+	rs.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
+	rs.add_state(renderer::STATE_BLEND, 1);
+	rs.add_shader( shader );
+	
+	rs.add_state(renderer::STATE_DEPTH_TEST, 1);
+	rs.add_state(renderer::STATE_DEPTH_WRITE, 0);
+	
+	rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview );
+	rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection );
+	rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
+	
+	rs.add_material( material, shader );
+	
+	rs.add_draw_call( stream.vertexbuffer );
+	
+	
+	rs.add_state(renderer::STATE_BLEND, 0);
+	rs.add_state(renderer::STATE_DEPTH_WRITE, 1);
+	rs.run_commands();
+	
+	stream.destroy();
+} // render_emitter
 
 namespace ComponentManager
 {
@@ -197,11 +309,16 @@ namespace ComponentManager
 		} // find_id
 	}; // ComponentContainer
 
+	// 0: Add typedefs, static vars
+
 	typedef ComponentContainer<Movement> MovementContainer;
 	MovementContainer movement;
 	
 	typedef ComponentContainer<Sprite> SpriteContainer;
 	SpriteContainer sprite;
+
+	typedef ComponentContainer<Emitter> EmitterContainer;
+	EmitterContainer emitters;
 	
 	// 1: Add Container creation
 	IComponent * create_type( ComponentType type )
@@ -215,6 +332,9 @@ namespace ComponentManager
 				break;
 			case SpriteComponent:
 				component = sprite.create();
+				break;
+			case ParticleEmitterComponent:
+				component = emitters.create();
 				break;
 				
 			default:
@@ -237,6 +357,9 @@ namespace ComponentManager
 			case SpriteComponent:
 				sprite.destroy(dynamic_cast<Sprite*>(component));
 				break;
+			case ParticleEmitterComponent:
+				emitters.destroy(dynamic_cast<Emitter*>(component));
+				break;
 				
 			default:
 				break;
@@ -248,6 +371,7 @@ namespace ComponentManager
 	{
 		movement.purge();
 		sprite.purge();
+		emitters.purge();
 	} // purge
 
 	// 4. (optionally) Add step
@@ -263,6 +387,12 @@ namespace ComponentManager
 		for( ; sprite_it != sprite.objects.end(); ++sprite_it )
 		{
 			(*sprite_it)->step(delta_seconds);
+		}
+		
+		EmitterContainer::TypeVector::iterator emitter_it = emitters.objects.begin();
+		for( ; emitter_it != emitters.objects.end(); ++emitter_it )
+		{
+			(*emitter_it)->step(delta_seconds);
 		}
 	} // step
 	
@@ -280,6 +410,12 @@ namespace ComponentManager
 		{
 			(*sprite_it)->tick(step_alpha);
 		}
+		
+//		EmitterContainer::TypeVector::iterator emitter_it = emitters.objects.begin();
+//		for( ; emitter_it != emitters.objects.end(); ++emitter_it )
+//		{
+//			(*emitter_it)->step(delta_seconds);
+//		}
 	} // tick
 	
 	// 6. Draw
@@ -289,6 +425,12 @@ namespace ComponentManager
 		for( ; sprite_it != sprite.objects.end(); ++sprite_it )
 		{
 			(*sprite_it)->render( render_control );
+		}
+		
+		EmitterContainer::TypeVector::iterator emitter_it = emitters.objects.begin();
+		for( ; emitter_it != emitters.objects.end(); ++emitter_it )
+		{
+			(*emitter_it)->render( render_control );
 		}
 	} // draw
 
@@ -302,6 +444,9 @@ namespace ComponentManager
 				break;
 			case SpriteComponent:
 				sprite.for_each(callback, data);
+				break;
+			case ParticleEmitterComponent:
+				emitters.for_each(callback, data);
 				break;
 				
 			default:
@@ -321,6 +466,10 @@ namespace ComponentManager
 			case SpriteComponent:
 				component = sprite.find_id(id);
 				break;
+			case ParticleEmitterComponent:
+				component = emitters.find_id(id);
+				break;
+				
 			default:
 				break;
 		}
