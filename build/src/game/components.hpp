@@ -52,6 +52,7 @@ public:
 #include <string>
 #include "assets.hpp"
 
+
 class Sprite : public virtual IComponent
 {
 public:
@@ -73,6 +74,7 @@ public:
 	
 	Color color;
 	glm::vec2 scale;
+
 
 	float rotation;
 	

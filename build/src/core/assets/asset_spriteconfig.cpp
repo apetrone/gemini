@@ -218,6 +218,37 @@ namespace assets
 		}
 		
 		
+		// load attachments
+		Json::Value attachments_list = root["attachments"];
+		if ( !attachments_list.isNull() )
+		{
+			unsigned int attachment_id = 0;
+			Json::ValueIterator iter = attachments_list.begin();
+			for( ; iter != attachments_list.end(); ++iter )
+			{
+				if ( attachment_id < SPRITE_MAX_ATTACHMENTS )
+				{
+					Json::Value attachment_object = (*iter);
+					Json::Value attach_x = attachment_object["x"];
+					Json::Value attach_y = attachment_object["y"];
+					
+					glm::vec3 attachment;
+					
+					if ( !attach_x.isNull() )
+					{
+						attachment.x = attach_x.asFloat();
+					}
+					if ( !attach_y.isNull() )
+					{
+						attachment.y = attach_y.asFloat();
+					}
+					
+					sprite->attachments[ attachment_id ] = attachment;
+					
+					++attachment_id;
+				}
+			}
+		}
 		
 
 		// check for and load all animations

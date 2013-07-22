@@ -209,7 +209,22 @@ void Sprite::step( float delta_seconds )
 
 void Sprite::tick( float step_alpha )
 {
+	Emitter * emitter = 0;
+	emitter = dynamic_cast<Emitter*>(ComponentManager::component_matching_id(this->reference_id, ParticleEmitterComponent));
 	
+	Movement * movement = dynamic_cast<Movement*>(ComponentManager::component_matching_id(this->reference_id, MovementComponent));
+	
+	if ( emitter && movement && this->sprite_config )
+	{
+		glm::vec3 attachment = this->sprite_config->attachments[0];
+		
+		ParticleEmitter * e = emitter->emitter;
+		if ( e )
+		{
+			glm::vec3 sprite_position = glm::vec3(movement->position.render, 0);
+			e->world_position.snap( sprite_position+attachment );
+		}
+	}
 } // tick
 
 
@@ -375,9 +390,6 @@ GameScreen::GameScreen()
 	spr->reference_id = 0;	
 	spr->load_from_spriteconfig(cfg);
 
-
-
-
 	
 	
 	assets::SpriteConfig * enemy = assets::sprites()->load_from_path("sprites/enemy");
@@ -395,7 +407,7 @@ GameScreen::GameScreen()
 	Emitter * emitter = 0;
 	ParticleEmitter * e = 0;
 	emitter = dynamic_cast<Emitter*>(ComponentManager::create_type(ParticleEmitterComponent));
-	emitter->reference_id = 1;
+	emitter->reference_id = 0;
 	
 	e = emitter->emitter;
 	e->world_position.snap( glm::vec3( 350, 50, 0 ) );
@@ -420,7 +432,7 @@ GameScreen::GameScreen()
 	float alphas[] = {1.0f, 0.0f};
 	e->alpha_channel.create(2, alphas, 1/1.0f);
 	
-	float sizes[] = {4.75f, 25.0f};
+	float sizes[] = {1.75f, 5.0f};
 	e->size_channel.create(2, sizes, 1/1.0f);
 #endif
 	

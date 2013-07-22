@@ -48,6 +48,9 @@ namespace assets
 		bool is_valid_frame(unsigned short frame_id);
 	}; // SpriteClip
 	
+	
+	const int SPRITE_MAX_ATTACHMENTS = 2;
+	
 	struct SpriteConfig : public virtual Asset
 	{
 		unsigned int material_id;
@@ -58,7 +61,8 @@ namespace assets
 		unsigned short collision_size;
 		float frame_delay;
 		glm::vec2 scale;
-		
+		glm::vec3 attachments[2];
+			
 		SpriteClip * animations;
 		unsigned short total_animations;
 	
