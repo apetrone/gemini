@@ -167,7 +167,7 @@ void Sprite::render( RenderControl & rc )
 			render_control.rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 			render_control.rs.add_state( renderer::STATE_BLEND, 1 );
 			rc.add_sprite_to_layer(0, screen.x, screen.y, scale.x*width, scale.y*height, color, clip->uvs_for_frame(current_frame));
-			render_control.rs.add_state( renderer::STATE_BLEND, 0 );
+//			render_control.rs.add_state( renderer::STATE_BLEND, 0 );
 //			render_control.rs.run_commands();
 			assets::Material * material = assets::materials()->find_with_id( this->material_id );
 			render_control.render_stream( material );
@@ -391,14 +391,14 @@ GameScreen::GameScreen()
 	pos->reference_id = 1;
 	
 	// draw particles
-#if 0
+#if 1
 	Emitter * emitter = 0;
 	ParticleEmitter * e = 0;
 	emitter = dynamic_cast<Emitter*>(ComponentManager::create_type(ParticleEmitterComponent));
 	emitter->reference_id = 1;
 	
 	e = emitter->emitter;
-	e->world_position.snap( glm::vec3( 50, 50, 0 ) );
+	e->world_position.snap( glm::vec3( 350, 50, 0 ) );
 	
 	assets::Material * particle_material = assets::materials()->load_from_path("materials/particles2");
 	if ( particle_material )
@@ -602,14 +602,14 @@ void GameScreen::on_draw( kernel::IApplication * app )
 	// previously had floating point errors on android when this was only set during startup
 	render_control.camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -1.0f, 1.0f );
 	
-	render_control.rs.rewind();
+//	render_control.rs.rewind();
 	
-	render_control.rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
-	render_control.rs.add_state( renderer::STATE_BLEND, 1 );
+//	render_control.rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+//	render_control.rs.add_state( renderer::STATE_BLEND, 1 );
 	
 	ComponentManager::draw( render_control );
 	
-	render_control.render_stream(player_mat);
+//	render_control.render_stream(player_mat);
 
 #if 0
 	// LAYER 0

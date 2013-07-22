@@ -105,7 +105,7 @@ void RenderControl::render_stream( assets::Material * material )
 	assert( material != 0 );
 
 	assets::Shader * shader = assets::find_compatible_shader( attribs + material->requirements );
-	
+
 	assert( shader !=0 );
 	rs.add_shader( shader );
 	
