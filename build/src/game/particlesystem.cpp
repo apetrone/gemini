@@ -130,7 +130,10 @@ void ParticleEmitter::step(float delta_seconds)
 
 void ParticleEmitter::purge()
 {
-	DESTROY_ARRAY(Particle, particle_list, this->emitter_config->max_particles);
+	if (this->emitter_config && this->particle_list)
+	{
+		DESTROY_ARRAY(Particle, particle_list, this->emitter_config->max_particles);
+	}
 } // purge
 
 
@@ -138,8 +141,9 @@ void ParticleEmitter::load_from_emitter_config(assets::EmitterConfig* emitter_co
 {
 	if (emitter_config)
 	{
-		this->emitter_config = emitter_config;
 		purge();
+		
+		this->emitter_config = emitter_config;
 		
 		init();
 	}

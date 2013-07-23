@@ -50,8 +50,8 @@ namespace assets
 		virtual void release();
 	}; // EmitterConfig
 
-	AssetLoadStatus emitterconfig_load_callback( const char * path, SpriteConfig * sprite_config, unsigned int flags );
+	AssetLoadStatus emitterconfig_load_callback( const char * path, EmitterConfig * config, unsigned int flags );
 	void emitterconfig_construct_extension( StackString<MAX_PATH_SIZE> & extension );
 
-	DECLARE_ASSET_LIBRARY_ACCESSOR(EmitterConfig, emitterconfig);
+	DECLARE_ASSET_LIBRARY_ACCESSOR(EmitterConfig, emitters);
 }; // namespace assets

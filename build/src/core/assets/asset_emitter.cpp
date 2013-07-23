@@ -40,6 +40,32 @@ namespace assets
 	} // release
 	
 	
+	void color_value( Json::Value & value, Color & out )
+	{
+		std::string temp = value.asString();
+		
+		// try RGBA
+		if (sscanf(temp.c_str(), "%c, %c, %c, %c", &out.r, &out.g, &out.b, &out.a) < 4)
+		{
+			// try just RGB
+			sscanf(temp.c_str(), "%c, %c, %c", &out.r, &out.g, &out.b);
+		}
+	}
+	
+	void float_value( Json::Value & value, float & out )
+	{
+		out = value.asFloat();
+	}
+	
+	template <class Type>
+	void read_channel_frames( Type * data, Json::Value & frames, void (*func_ptr)(Json::Value & value, Type & out) )
+	{
+		for(unsigned int index = 0; index < frames.size(); ++index)
+		{
+			func_ptr(frames[index], data[index]);
+		}
+	}
+	
 	util::ConfigLoadStatus load_emitter_from_file( const Json::Value & root, void * data )
 	{
 		EmitterConfig * cfg = (EmitterConfig*)data;
@@ -48,16 +74,89 @@ namespace assets
 			return util::ConfigLoad_Failure;
 		}
 		
+		Json::Value max_particles = root["max_particles"];
+		Json::Value spawn_rate = root["spawn_rate"];
+		Json::Value spawn_delay_seconds = root["spawn_delay_seconds"];
+		Json::Value life_min = root["life_min"];
+		Json::Value life_max = root["life_max"];
+		Json::Value velocity_min = root["velocity_min"];
+		Json::Value velocity_max = root["velocity_max"];
+		glm::vec3 vmin, vmax;
+				
+		Json::Value material = root["material"];
+		
+		if (max_particles.isNull() || spawn_rate.isNull() ||
+			spawn_delay_seconds.isNull() || life_min.isNull() ||
+			life_max.isNull() || velocity_min.isNull() ||
+			velocity_max.isNull() || material.isNull() )
+		{
+			LOGE("Missing one or more required parameters from emitter configuration. Aborting.\n");
+			return util::ConfigLoad_Failure;
+		}
 		
 		
+		cfg->max_particles = max_particles.asInt();
+		cfg->spawn_rate = spawn_rate.asInt();
+		cfg->spawn_delay_seconds = spawn_delay_seconds.asFloat();
+		cfg->life.set_range(life_min.asFloat(), life_max.asFloat());
+		
+		// parse and set velocity
+		{
+			std::string temp = velocity_min.asString();
+			sscanf(temp.c_str(), "%f,%f,%f", &vmin.x, &vmin.y, &vmin.z);
+			
+			temp = velocity_max.asString();
+			sscanf(temp.c_str(), "%f,%f,%f", &vmax.x, &vmax.y, &vmax.z);
+			cfg->velocity.set_range(vmin, vmax);
+		}
+		
+		assets::Material* emitter_material = assets::materials()->load_from_path(material.asString().c_str());
+		if ( emitter_material )
+		{
+			cfg->material_id = emitter_material->Id();
+		}
+		
+		// load channel data
+		Json::Value channels = root["channels"];
+		
+		Json::ValueIterator citer = channels.begin();
+		for( ; citer != channels.end(); ++citer )
+		{
+			Json::Value object = (*citer);
+			LOGV("object: %s\n", citer.key().asString().c_str());
+			Json::Value frame_delay_seconds = object["frame_delay_seconds"];
+			Json::Value frames = object["frames"];
+			LOGV("total items: %i\n", frames.size());
+			if (citer.key().asString() == "color")
+			{
+				Color * colors = CREATE_ARRAY(Color, frames.size());
+				read_channel_frames(colors, frames, color_value);
+				cfg->color_channel.create(frames.size(), colors, frame_delay_seconds.asFloat());
+				DESTROY_ARRAY(Color, colors, frames.size());
+			}
+			else if(citer.key().asString() == "alpha")
+			{
+				float * data = (float*)ALLOC(sizeof(float)*frames.size());
+				read_channel_frames(data, frames, float_value);
+				cfg->alpha_channel.create(frames.size(), data, frame_delay_seconds.asFloat());
+				DEALLOC(data);
+			}
+			else if(citer.key().asString() == "size")
+			{
+				float * data = (float*)ALLOC(sizeof(float)*frames.size());
+				read_channel_frames(data, frames, float_value);
+				cfg->size_channel.create(frames.size(), data, frame_delay_seconds.asFloat());
+				DEALLOC(data);
+			}
+		}
 		
 
 		return util::ConfigLoad_Success;
 	} // load_emitter_from_file
 
-	AssetLoadStatus emitterconfig_load_callback( const char * path, EmitterConfig * sprite_config, unsigned int flags )
+	AssetLoadStatus emitterconfig_load_callback( const char * path, EmitterConfig * config, unsigned int flags )
 	{
-		if ( util::json_load_with_callback(path, load_emitter_from_file, sprite_config, true ) == util::ConfigLoad_Success )
+		if ( util::json_load_with_callback(path, load_emitter_from_file, config, true ) == util::ConfigLoad_Success )
 		{
 			return AssetLoad_Success;
 		}

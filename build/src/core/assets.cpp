@@ -482,6 +482,7 @@ namespace assets
 	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MeshAssetLibrary, meshes);
 	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MaterialAssetLibrary, materials);
 	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(SpriteConfigAssetLibrary, sprites);
+	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(EmitterConfigAssetLibrary, emitters);
 	
 	void load_default_texture_and_material()
 	{
@@ -516,7 +517,8 @@ namespace assets
 		_meshes = CREATE(MeshAssetLibrary, mesh_load_callback, mesh_construct_extension);
 		_materials = CREATE(MaterialAssetLibrary, material_load_callback, material_construct_extension);
 		_sprites = CREATE(SpriteConfigAssetLibrary, spriteconfig_load_callback, spriteconfig_construct_extension);
-
+		_emitters = CREATE(EmitterConfigAssetLibrary, emitterconfig_load_callback, emitterconfig_construct_extension);
+		
 		// load shader permutations
 		compile_shader_permutations();
 
@@ -554,6 +556,10 @@ namespace assets
 			_sprites->release_and_purge();
 		}
 		
+		if ( _emitters )
+		{
+			_emitters->release_and_purge();
+		}
 	} // purge
 	
 	void shutdown()
@@ -563,6 +569,7 @@ namespace assets
 		DESTROY(MeshAssetLibrary, _meshes);
 		DESTROY(MaterialAssetLibrary, _materials);
 		DESTROY(SpriteConfigAssetLibrary, _sprites);
+		DESTROY(EmitterConfigAssetLibrary, _emitters);
 	} // shutdown
 
 	void append_asset_extension( AssetType type, StackString<MAX_PATH_SIZE> & path )

@@ -403,7 +403,10 @@ GameScreen::GameScreen()
 	pos->reference_id = 1;
 	
 	// draw particles
-#if 0
+	
+	assets::EmitterConfig * ecfg = assets::emitters()->load_from_path("sprites/exhaust");
+	
+#if 1
 	Emitter * emitter = 0;
 	ParticleEmitter * e = 0;
 	emitter = dynamic_cast<Emitter*>(ComponentManager::create_type(ParticleEmitterComponent));
@@ -411,7 +414,9 @@ GameScreen::GameScreen()
 	
 	e = emitter->emitter;
 	e->world_position.snap( glm::vec3( 350, 50, 0 ) );
+	e->load_from_emitter_config(ecfg);
 	
+#if 0
 	assets::Material * particle_material = assets::materials()->load_from_path("materials/particles2");
 	if ( particle_material )
 	{
@@ -433,6 +438,7 @@ GameScreen::GameScreen()
 	
 	float sizes[] = {4.75f, 25.0f};
 	e->size_channel.create(2, sizes, 1/1.0f);
+#endif
 #endif
 	
 	

@@ -93,6 +93,7 @@ namespace assets
 #include "assets/asset_material.hpp"
 #include "assets/asset_mesh.hpp"
 #include "assets/asset_spriteconfig.hpp"
+#include "assets/asset_emitter.hpp"
 
 namespace assets
 {
