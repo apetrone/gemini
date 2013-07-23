@@ -376,8 +376,8 @@ GameScreen::GameScreen()
 	if ( pos )
 	{
 		LOGV( "current position: (%p) (%p) %g, %g\n", test, pos, pos->position.current.x, pos->position.current.y );
-		pos->velocity = glm::vec2( 50.0f, 0.0f );
-		pos->position.snap( glm::vec2( 50.0f, 50.0f) );
+		pos->velocity = glm::vec2( 0.0f, 0.0f );
+		pos->position.snap( glm::vec2( 370.0f, 270.0f) );
 		pos->reference_id = 0;
 	}
 	
