@@ -44,6 +44,7 @@ ParticleEmitter::ParticleEmitter()
 	emitter_config = 0;
 	num_particles_alive = 0;
 	particle_list = 0;
+	next_spawn = 0;
 } // ParticleEmitter
 
 ParticleEmitter::~ParticleEmitter()
@@ -84,7 +85,7 @@ void ParticleEmitter::step(float delta_seconds)
 
 	this->next_spawn -= delta_msec;
 	int particles_to_spawn = 0;
-	if (this->next_spawn <= FLT_EPSILON)
+	if (this->next_spawn <= 0)
 	{
 		this->next_spawn = this->emitter_config->spawn_delay_seconds;
 		particles_to_spawn = this->emitter_config->spawn_rate;
