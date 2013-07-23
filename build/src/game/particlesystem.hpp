@@ -26,7 +26,8 @@
 #include "mathlib.h"
 #include "keyframechannel.hpp"
 #include "render_utilities.hpp"
-
+#include "util.hpp"
+#include "assets/asset_emitter.hpp"
 
 // -------------------------------------------------------------
 // Particle
@@ -47,18 +48,7 @@ struct Particle
 
 
 
-template <class Type>
-struct RangedValue
-{
-	Type min;
-	Type max;
-	
-	void set_range( const Type & minimum, const Type & maximum )
-	{
-		this->min = minimum;
-		this->max = maximum;
-	}
-}; // RangedValue
+
 
 // -------------------------------------------------------------
 // ParticleEmitter
@@ -73,36 +63,22 @@ struct ParticleEmitter
 		BOX
 	};
 
+	assets::EmitterConfig * emitter_config;
+	
+
+	
+	
 	render_utilities::PhysicsState<glm::vec3> world_position;
-	
-	unsigned int max_particles;
 	unsigned int num_particles_alive;
-	unsigned int material_id;
 	Particle * particle_list;
-	
-	RangedValue<unsigned int> life;
-	RangedValue<glm::vec3> velocity;
-	RangedValue<float> size;
-	
-	// can this emitter emit particles?
-	//	bool _canEmit;
-	
-	// can this emitter update its particles?
-	//	bool _canUpdate;
-	
-	KeyframeChannel<Color> color_channel;
-	KeyframeChannel<float> alpha_channel;
-	KeyframeChannel<float> size_channel;
-	
 	float next_spawn;
-	float spawn_delay_seconds;
-	int spawn_rate;
-	
+
 	ParticleEmitter();
 	~ParticleEmitter();
-	void init( unsigned int max_particles );
+	void init();
 	void step( float delta_seconds );
 	void purge();
+	void load_from_emitter_config( assets::EmitterConfig * emitter_config );
 }; // ParticleEmitter
 
 typedef std::vector<ParticleEmitter*> ParticleEmitterVector;

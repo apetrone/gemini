@@ -126,7 +126,7 @@ void RenderControl::render_stream( assets::Material * material )
 
 void RenderControl::render_emitter( ParticleEmitter * emitter )
 {
-	if ( !emitter )
+	if ( !emitter || (emitter && !emitter->emitter_config) )
 	{
 		return;
 	}
@@ -144,7 +144,7 @@ void RenderControl::render_emitter( ParticleEmitter * emitter )
 	glm::mat3 billboard = glm::transpose( glm::mat3(modelview) );
 	
 	emitter->world_position.interpolate( kernel::instance()->parameters().step_alpha );
-	for( unsigned int p = 0; p < emitter->max_particles; ++p )
+	for( unsigned int p = 0; p < emitter->emitter_config->max_particles; ++p )
 	{
 		Particle * particle = &emitter->particle_list[ p ];
 		if ( particle->life_remaining > 0 )
@@ -201,7 +201,7 @@ void RenderControl::render_emitter( ParticleEmitter * emitter )
 	assets::Material * material = 0;
 	assets::Shader * shader = 0;
 	
-	material = assets::materials()->find_with_id(emitter->material_id);
+	material = assets::materials()->find_with_id(emitter->emitter_config->material_id);
 	shader = assets::find_compatible_shader( material->requirements + test_attribs );
 	
 	glm::mat4 object_matrix;

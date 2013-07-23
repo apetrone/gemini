@@ -29,7 +29,7 @@
 // -------------------------------------------------------------
 Particle::Particle()
 {
-	color.set( 255, 255, 255, 255 );
+	color.set(255, 255, 255, 255);
 	life_remaining = 0;
 	life_total = 0;
 	size = 1.0f;
@@ -41,13 +41,9 @@ Particle::Particle()
 // -------------------------------------------------------------
 ParticleEmitter::ParticleEmitter()
 {
-	max_particles = 0;
+	emitter_config = 0;
 	num_particles_alive = 0;
-	material_id = 0;
 	particle_list = 0;
-	
-	life.set_range(0, 1);
-	size.set_range(0, 1);
 } // ParticleEmitter
 
 ParticleEmitter::~ParticleEmitter()
@@ -55,19 +51,18 @@ ParticleEmitter::~ParticleEmitter()
 	purge();
 } // ~ParticleEmitter
 
-void ParticleEmitter::init(unsigned int total_particles)
+void ParticleEmitter::init()
 {
-	max_particles = total_particles;
-	particle_list = CREATE_ARRAY(Particle, max_particles);
+	particle_list = CREATE_ARRAY(Particle, this->emitter_config->max_particles);
 	
 	Particle * p = 0;
-	for( int i = 0; i < max_particles; ++i )
+	for(int i = 0; i < this->emitter_config->max_particles; ++i)
 	{
 		p = &particle_list[i];
 		p->life_remaining = 0;
-		p->color = Color( 0, 0, 0, 255 );
-		p->velocity = glm::vec3( 0, 0, 0 );
-		p->position.snap( world_position.current );
+		p->color = Color(0, 0, 0, 255);
+		p->velocity = glm::vec3(0, 0, 0);
+		p->position.snap(world_position.current);
 		p->size = 1.0f;
 	}
 } // init
@@ -79,42 +74,54 @@ void ParticleEmitter::step(float delta_seconds)
 	Particle * p = 0;
 	num_particles_alive = 0;
 	float delta_msec = (delta_seconds * 1000.0f);
-
+	
+	if (!emitter_config)
+	{
+		return;
+	}
+	
 	world_position.step(delta_seconds);
 
 	this->next_spawn -= delta_msec;
 	int particles_to_spawn = 0;
-	if ( this->next_spawn <= 0 )
+	if (this->next_spawn <= 0)
 	{
-		this->next_spawn = this->spawn_delay_seconds;
-		particles_to_spawn = this->spawn_rate;
-		if ( particles_to_spawn > max_particles-num_particles_alive )
-			particles_to_spawn = (max_particles-num_particles_alive);
+		this->next_spawn = this->emitter_config->spawn_delay_seconds;
+		particles_to_spawn = this->emitter_config->spawn_rate;
+		if (particles_to_spawn > this->emitter_config->max_particles-num_particles_alive)
+		{
+			particles_to_spawn = (this->emitter_config->max_particles-num_particles_alive);
+		}
 	}
 	
 	
-	for( pid = 0; pid < max_particles; ++pid )
+	for(pid = 0; pid < this->emitter_config->max_particles; ++pid)
 	{
 		p = &particle_list[pid];
 		p->life_remaining -= delta_msec;
-		if ( p->life_remaining > 0.1 )
+		if (p->life_remaining > 0.1)
 		{
 			float lifet = 1.0 - (p->life_remaining / p->life_total);
 			p->position.step(delta_seconds);
 			p->position.current += (p->velocity * delta_seconds);
 			p->color = Color( 255, 255, 255, 64 );
-			p->color.a = 255.0*alpha_channel.get_value( lifet );
-			p->size = size_channel.get_value( lifet );
+			
+			p->color.a = 255.0 * this->emitter_config->alpha_channel.get_value(lifet);
+			p->size = this->emitter_config->size_channel.get_value(lifet);
 			++num_particles_alive;
 		}
-		else if ( particles_to_spawn > 0 )
+		else if (particles_to_spawn > 0)
 		{
-			p->life_total = p->life_remaining = util::random_range( life.min, life.max );
-			p->velocity = glm::vec3( util::random_range(velocity.min[0], velocity.max[0]), util::random_range(velocity.min[1], velocity.max[1]), util::random_range(velocity.min[2], velocity.max[2]) );
-			p->position.snap( world_position.render );
-			p->color = color_channel.get_value(0);
-			p->color.a = alpha_channel.get_value(0);
-			p->size = size_channel.get_value(0);
+			p->life_total = p->life_remaining = util::random_range(this->emitter_config->life.min, this->emitter_config->life.max);
+			p->velocity = glm::vec3(util::random_range(
+				this->emitter_config->velocity.min[0], this->emitter_config->velocity.max[0]),
+				util::random_range(this->emitter_config->velocity.min[1], this->emitter_config->velocity.max[1]),
+				util::random_range(this->emitter_config->velocity.min[2], this->emitter_config->velocity.max[2]));
+				
+			p->position.snap(world_position.render);
+			p->color = this->emitter_config->color_channel.get_value(0);
+			p->color.a = this->emitter_config->alpha_channel.get_value(0);
+			p->size = this->emitter_config->size_channel.get_value(0);
 			--particles_to_spawn;
 			++num_particles_alive;
 		}
@@ -123,8 +130,20 @@ void ParticleEmitter::step(float delta_seconds)
 
 void ParticleEmitter::purge()
 {
-	DESTROY_ARRAY( Particle, particle_list, max_particles );
+	DESTROY_ARRAY(Particle, particle_list, this->emitter_config->max_particles);
 } // purge
+
+
+void ParticleEmitter::load_from_emitter_config(assets::EmitterConfig* emitter_config)
+{
+	if (emitter_config)
+	{
+		this->emitter_config = emitter_config;
+		purge();
+		
+		init();
+	}
+} // load_from_emitter_config
 
 
 // -------------------------------------------------------------
@@ -143,41 +162,39 @@ ParticleSystem::~ParticleSystem()
 void ParticleSystem::purge()
 {
 	ParticleEmitterVector::iterator iter = emitters.begin();
-	
-	for( ; iter != emitters.end(); ++iter )
+	for( ; iter != emitters.end(); ++iter)
 	{
-		ParticleEmitter * emitter = (*iter);
+		ParticleEmitter* emitter = (*iter);
 		DESTROY(ParticleEmitter, emitter);
 	}
 	
 	emitters.clear();
 } // purge
 
-void ParticleSystem::step( float delta_seconds )
+void ParticleSystem::step(float delta_seconds)
 {
 	ParticleEmitterVector::iterator iter = emitters.begin();
-	
-	for( ; iter != emitters.end(); ++iter )
+	for( ; iter != emitters.end(); ++iter)
 	{
-		ParticleEmitter * emitter = (*iter);
+		ParticleEmitter* emitter = (*iter);
 		emitter->step( delta_seconds );
 	}
 } // step
 
-ParticleEmitter * ParticleSystem::add_emitter()
+ParticleEmitter* ParticleSystem::add_emitter()
 {
-	ParticleEmitter * emitter = CREATE(ParticleEmitter);
+	ParticleEmitter* emitter = CREATE(ParticleEmitter);
 	this->emitters.push_back(emitter);
 	return emitter;
 } // add_emitter
 
-void ParticleSystem::remove_emitter( ParticleEmitter * emitter )
+void ParticleSystem::remove_emitter(ParticleEmitter* emitter)
 {
 	ParticleEmitterVector::iterator iter = emitters.begin();
 	
-	for( ; iter != emitters.end(); ++iter )
+	for( ; iter != emitters.end(); ++iter)
 	{
-		if ( emitter == (*iter) )
+		if (emitter == (*iter))
 		{
 			DESTROY(ParticleEmitter, emitter);
 			emitters.erase(iter);

@@ -19,32 +19,56 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
-
 #include "stackstring.hpp"
+#include "assets.hpp"
+#include "assets/asset_emitter.hpp"
+#include "configloader.hpp"
+#include "render_utilities.hpp"
 
-template <class Type>
-struct RangedValue
+namespace assets
 {
-	Type min;
-	Type max;
-	
-	void set_range( const Type & minimum, const Type & maximum )
+	EmitterConfig::EmitterConfig()
 	{
-		this->min = minimum;
-		this->max = maximum;
+		max_particles = 0;
+		material_id = 0;
+		life.set_range(0, 1);
+		size.set_range(0, 1);
 	}
-}; // RangedValue
 
+	void EmitterConfig::release()
+	{
+	} // release
+	
+	
+	util::ConfigLoadStatus load_emitter_from_file( const Json::Value & root, void * data )
+	{
+		EmitterConfig * cfg = (EmitterConfig*)data;
+		if (!cfg)
+		{
+			return util::ConfigLoad_Failure;
+		}
+		
+		
+		
+		
 
-namespace util
-{
-	unsigned int hash_32bit( const void * data, int data_size, unsigned int seed );
+		return util::ConfigLoad_Success;
+	} // load_emitter_from_file
+
+	AssetLoadStatus emitterconfig_load_callback( const char * path, EmitterConfig * sprite_config, unsigned int flags )
+	{
+		if ( util::json_load_with_callback(path, load_emitter_from_file, sprite_config, true ) == util::ConfigLoad_Success )
+		{
+			return AssetLoad_Success;
+		}
+		
+		return AssetLoad_Failure;
+	} // texture_load_callback
 	
 	
-	// strip the version line from shader source
-	void strip_shader_version( char * buffer, StackString<32> & version );
-	
-	// return a float within the range: min, max, inclusive
-	float random_range( float min, float max );
-}; // namespace util
+	void emitterconfig_construct_extension( StackString<MAX_PATH_SIZE> & extension )
+	{
+		extension = "conf";
+	} // texture_construct_extension
+
+}; // namespace assets

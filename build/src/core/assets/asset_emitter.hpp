@@ -21,30 +21,37 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "assets.hpp"
 #include "stackstring.hpp"
+#include "renderer.hpp"
 
-template <class Type>
-struct RangedValue
+#include "keyframechannel.hpp"
+#include "util.hpp"
+
+namespace assets
 {
-	Type min;
-	Type max;
-	
-	void set_range( const Type & minimum, const Type & maximum )
+	struct EmitterConfig : public virtual Asset
 	{
-		this->min = minimum;
-		this->max = maximum;
-	}
-}; // RangedValue
+		unsigned short max_particles;
+		unsigned short spawn_rate;
+	
+		unsigned int material_id;
+		float spawn_delay_seconds;
 
+		RangedValue<unsigned int> life;
+		RangedValue<glm::vec3> velocity;
+		RangedValue<float> size;
 
-namespace util
-{
-	unsigned int hash_32bit( const void * data, int data_size, unsigned int seed );
-	
-	
-	// strip the version line from shader source
-	void strip_shader_version( char * buffer, StackString<32> & version );
-	
-	// return a float within the range: min, max, inclusive
-	float random_range( float min, float max );
-}; // namespace util
+		KeyframeChannel<Color> color_channel;
+		KeyframeChannel<float> alpha_channel;
+		KeyframeChannel<float> size_channel;
+
+		EmitterConfig();
+		virtual void release();
+	}; // EmitterConfig
+
+	AssetLoadStatus emitterconfig_load_callback( const char * path, SpriteConfig * sprite_config, unsigned int flags );
+	void emitterconfig_construct_extension( StackString<MAX_PATH_SIZE> & extension );
+
+	DECLARE_ASSET_LIBRARY_ACCESSOR(EmitterConfig, emitterconfig);
+}; // namespace assets

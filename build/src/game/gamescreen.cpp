@@ -403,7 +403,7 @@ GameScreen::GameScreen()
 	pos->reference_id = 1;
 	
 	// draw particles
-#if 1
+#if 0
 	Emitter * emitter = 0;
 	ParticleEmitter * e = 0;
 	emitter = dynamic_cast<Emitter*>(ComponentManager::create_type(ParticleEmitterComponent));
@@ -418,7 +418,6 @@ GameScreen::GameScreen()
 		e->material_id = particle_material->Id();
 	}
 	
-	
 	e->init(128);
 	e->next_spawn = 0;
 	e->spawn_rate = 15;
@@ -432,7 +431,7 @@ GameScreen::GameScreen()
 	float alphas[] = {1.0f, 0.0f};
 	e->alpha_channel.create(2, alphas, 1/1.0f);
 	
-	float sizes[] = {1.75f, 5.0f};
+	float sizes[] = {4.75f, 25.0f};
 	e->size_channel.create(2, sizes, 1/1.0f);
 #endif
 	
@@ -468,7 +467,7 @@ GameScreen::GameScreen()
 	render_control.stream = &vb;
 	render_control.attribs = test_attribs;
 	
-	//		util::json_load_with_callback( "maps/test.json", tiled_map_loader, &tiled_map, true );
+//	util::json_load_with_callback( "maps/test.json", tiled_map_loader, &tiled_map, true );
 	
 	// load map events
 	util::json_load_with_callback( "maps/space.json", map_event_loader, &event_based_map, true );
