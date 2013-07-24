@@ -91,9 +91,20 @@ struct GL32VertexBuffer : public VertexBuffer
 	
 	GL32VertexBuffer()
 	{
-		vertex_stride = 0;
+		for( unsigned int i = 0; i < VAO_LIMIT; ++i )
+		{
+			vao[i] = 0;
+		}
+		
+		for( unsigned int i = 0; i < VBO_LIMIT; ++i )
+		{
+			vbo[i] = 0;
+		}
+		
 		gl_draw_type = 0;
 		gl_buffer_type = 0;
+		
+		vertex_stride = 0;
 	}
 	
 	void allocate( renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type )

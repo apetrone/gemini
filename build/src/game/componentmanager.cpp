@@ -131,32 +131,70 @@ void RenderControl::render_emitter( ParticleEmitter * emitter )
 		return;
 	}
 
-	renderer::VertexStream stream;
+//	renderer::VertexStream stream;
 	
-	stream.desc.add( renderer::VD_FLOAT3 );
-	stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
-	stream.desc.add( renderer::VD_FLOAT2 );
-	
-	stream.create(1024, 1024, renderer::DRAW_INDEXED_TRIANGLES);
+//	stream.desc.add( renderer::VD_FLOAT3 );
+//	stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+//	stream.desc.add( renderer::VD_FLOAT2 );
+//	
+//	stream.create(1024, 1024, renderer::DRAW_INDEXED_TRIANGLES);
 
 	
 	renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
 	glm::mat3 billboard = glm::transpose( glm::mat3(modelview) );
 	
 	emitter->world_position.interpolate( kernel::instance()->parameters().step_alpha );
+	
+	
+	
+	assets::ShaderString name("uv0");
+	unsigned int test_attribs = assets::find_parameter_mask( name );
+	
+	name = "colors";
+	test_attribs |= assets::find_parameter_mask(name);
+	
+	assets::Material * material = 0;
+	assets::Shader * shader = 0;
+	
+	material = assets::materials()->find_with_id(emitter->emitter_config->material_id);
+	shader = assets::find_compatible_shader( material->requirements + test_attribs );
+	
+	glm::mat4 object_matrix;
+	
+	
+	
+	
+	rs.rewind();
+	rs.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
+	rs.add_state(renderer::STATE_BLEND, 1);
+	rs.add_shader( shader );
+	
+	rs.add_state(renderer::STATE_DEPTH_TEST, 1);
+	rs.add_state(renderer::STATE_DEPTH_WRITE, 0);
+	
+	rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview );
+	rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection );
+	rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
+	
+	rs.add_material( material, shader );
+	
 	for( unsigned int p = 0; p < emitter->emitter_config->max_particles; ++p )
 	{
 		Particle * particle = &emitter->particle_list[ p ];
 		if ( particle->life_remaining > 0 )
 		{
-			//
 			particle->position.interpolate( kernel::instance()->parameters().step_alpha );
-			if ( !stream.has_room(4, 6) )
+			if ( !stream->has_room(4, 6) )
 			{
-				LOGE( "particle stream is full - flush!\n" );
+				// stream is full; need to flush stream here!
+				stream->update();
+				rs.add_draw_call( stream->vertexbuffer );
+				rs.run_commands();
+				rs.rewind();
+				stream->reset();
 			}
 			
-			SpriteVertexType * v = (SpriteVertexType*)stream.request(4);
+			SpriteVertexType * v = (SpriteVertexType*)stream->request(4);
 			glm::vec3 offset( particle->size, particle->size, 0 );
 			glm::vec3 temp;
 			
@@ -188,47 +226,21 @@ void RenderControl::render_emitter( ParticleEmitter * emitter )
 			v[3].u = 0; v[3].v = 1;
 			
 //			debugdraw::point(particle->position.render, Color(255,255,255), particle->size, 0.0f);
-			stream.append_indices( indices, 6 );
+			stream->append_indices( indices, 6 );
 		}
 	}
 	
-	assets::ShaderString name("uv0");
-	unsigned int test_attribs = assets::find_parameter_mask( name );
-	
-	name = "colors";
-	test_attribs |= assets::find_parameter_mask(name);
-	
-	assets::Material * material = 0;
-	assets::Shader * shader = 0;
-	
-	material = assets::materials()->find_with_id(emitter->emitter_config->material_id);
-	shader = assets::find_compatible_shader( material->requirements + test_attribs );
-	
-	glm::mat4 object_matrix;
-	
-	stream.update();
-	
-	rs.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
-	rs.add_state(renderer::STATE_BLEND, 1);
-	rs.add_shader( shader );
-	
-	rs.add_state(renderer::STATE_DEPTH_TEST, 1);
-	rs.add_state(renderer::STATE_DEPTH_WRITE, 0);
-	
-	rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview );
-	rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection );
-	rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
-	
-	rs.add_material( material, shader );
-	
-	rs.add_draw_call( stream.vertexbuffer );
-	
-	
+	if (stream->last_vertex > 0)
+	{
+		stream->update();
+		rs.add_draw_call( stream->vertexbuffer );
+	}
+		
 	rs.add_state(renderer::STATE_BLEND, 0);
 	rs.add_state(renderer::STATE_DEPTH_WRITE, 1);
 	rs.run_commands();
 	
-	stream.destroy();
+//	stream.destroy();
 } // render_emitter
 
 namespace ComponentManager

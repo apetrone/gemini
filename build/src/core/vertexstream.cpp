@@ -38,7 +38,12 @@ namespace renderer
 		last_index = 0;
 		highest_index = 0;
 		indices = 0;
-	}
+	} // VertexStream
+	
+	VertexStream::~VertexStream()
+	{
+		destroy();
+	} // ~VertexStream
 
 	void VertexStream::alloc( IndexType max_vertices, IndexType max_indices )
 	{
@@ -55,7 +60,7 @@ namespace renderer
 			indices = (IndexType*)ALLOC( sizeof(IndexType) * max_indices );
 			total_indices = max_indices;
 		}
-	}
+	} // alloc
 
 	void VertexStream::reset()
 	{
