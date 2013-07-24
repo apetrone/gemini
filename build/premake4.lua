@@ -185,6 +185,9 @@ project ( build_name )
 	configuration { "linux" }
 		defines { "LINUX=1", INDEX_TYPE }
 
+		-- GCC 4.3+ supports "-std=c++0x"
+		-- GCC 4.7+ supports "-std=c++11"
+		-- buildoptions { "-std=c++0x" }
 
 		if RASPBERRYPI then
 			defines { "PLATFORM_IS_RASPBERRYPI=1" }

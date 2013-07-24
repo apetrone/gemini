@@ -75,7 +75,7 @@ void EntityManager::remove( EntityID eid )
 {
 	// find eid in active; remove it.
 	// insert it in the inactive list
-	auto it = active.begin();
+	EntityList::iterator it = active.begin();
 	for( ; it != active.end(); ++it )
 	{
 		if ( (*it) == eid )
@@ -93,7 +93,7 @@ void EntityManager::_print_lists()
 	unsigned int index = 0;
 	
 	LOGV( "active list:\n" );
-	auto it = active.begin();
+	EntityList::iterator it = active.begin();
 	for( ; it != active.end(); ++it )
 	{
 		LOGV("%i) %i\n", index, (*it) );
