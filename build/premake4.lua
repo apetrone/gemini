@@ -88,6 +88,7 @@ project ( build_name )
 		"src/core/*.*",
 		"src/core/gldrivers/opengl_common.*",
 		"src/core/audio/openal.*",
+		"src/core/assets/*.*",
 		"src/contrib/*",
 		"src/game/**.*",
 	}
