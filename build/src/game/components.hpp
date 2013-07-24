@@ -39,6 +39,18 @@ public:
 	virtual void tick( float step_alpha );
 }; // Movement
 
+class InputMovement : public virtual IComponent
+{
+public:
+	virtual ComponentType component_type() const { return InputMovementComponent; }
+	
+	render_utilities::PhysicsState<glm::vec2> position;
+	glm::vec2 velocity;
+	
+	virtual void step( float dt_sec );
+	virtual void tick( float step_alpha );
+}; // InputMovement
+
 #if 0
 class Renderable : public virtual IComponent
 {

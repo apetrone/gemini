@@ -128,6 +128,50 @@ public:
 	virtual void get_rotation( float & radians ) const = 0;
 }; // ICollisionObject
 
+void Movement::step( float delta_seconds )
+{
+	this->position.step(delta_seconds);
+	this->position.current.x += (delta_seconds * this->velocity.x);
+	this->position.current.y += (delta_seconds * this->velocity.y);
+} // step
+
+void Movement::tick( float step_alpha )
+{
+	this->position.interpolate(step_alpha);
+} // tick
+
+
+#if 0
+void move_sprite_with_command( Sprite & sprite, MovementCommand & command )
+{
+	const float MOVE_SPEED = 200;
+	
+	glm::vec2 & current = sprite.position.current;
+	
+	current.y -= command.up * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
+	current.y += command.down * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
+	current.x -= command.left * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
+	current.x += command.right * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
+}
+#endif
+
+void InputMovement::step( float delta_seconds )
+{
+	const float MOVE_SPEED = 3.5;
+	glm::vec2 & pos = this->position.current;
+	pos.y -= input::state()->keyboard().is_down( input::KEY_W ) * MOVE_SPEED;
+	pos.y += input::state()->keyboard().is_down( input::KEY_S ) * MOVE_SPEED;
+	pos.x -= input::state()->keyboard().is_down( input::KEY_A ) * MOVE_SPEED;
+	pos.x += input::state()->keyboard().is_down( input::KEY_D ) * MOVE_SPEED;
+	
+	this->position.snap(pos);
+} // step
+
+void InputMovement::tick( float step_alpha )
+{
+	this->position.interpolate(step_alpha);
+} // tick
+
 Sprite::Sprite()
 {
 	this->layer = 0;
@@ -150,13 +194,16 @@ void Sprite::render( RenderControl & rc )
 		if ( movement )
 		{
 			screen = movement->position.render;
-			debugdraw::point( glm::vec3(screen, 0.0f), Color(255,255,255), this->scale.x*(this->sprite_config->collision_size/2.0f), 0.0f );
 		}
-		else
+		
+		InputMovement * im = dynamic_cast<InputMovement*>(ComponentManager::component_matching_id( this->reference_id, InputMovementComponent ));
+		if ( im )
 		{
-			LOGV( "no movement component found!\n" );
+			screen = im->position.render;
 		}
+
 	
+		debugdraw::point( glm::vec3(screen, 0.0f), Color(255,255,255), this->scale.x*(this->sprite_config->collision_size/2.0f), 0.0f );
 
 		assets::SpriteClip * clip = this->sprite_config->get_clip_by_index( current_animation );
 		if (clip && clip->is_valid_frame(current_frame))
@@ -209,19 +256,31 @@ void Sprite::step( float delta_seconds )
 
 void Sprite::tick( float step_alpha )
 {
-	Emitter * emitter = 0;
+	glm::vec2 snap_pos;
+	Emitter* emitter = 0;
+	
 	emitter = dynamic_cast<Emitter*>(ComponentManager::component_matching_id(this->reference_id, ParticleEmitterComponent));
 	
-	Movement * movement = dynamic_cast<Movement*>(ComponentManager::component_matching_id(this->reference_id, MovementComponent));
+	Movement* movement = dynamic_cast<Movement*>(ComponentManager::component_matching_id(this->reference_id, MovementComponent));
+	if ( movement )
+	{
+		snap_pos = movement->position.render;
+	}
 	
-	if ( emitter && movement && this->sprite_config )
+	InputMovement* im = dynamic_cast<InputMovement*>(ComponentManager::component_matching_id(this->reference_id, InputMovementComponent));
+	if ( im )
+	{
+		snap_pos = im->position.render;
+	}
+	
+	if ( emitter && this->sprite_config )
 	{
 		glm::vec3 attachment = this->sprite_config->attachments[0];
 		
 		ParticleEmitter * e = emitter->emitter;
 		if ( e )
 		{
-			glm::vec3 sprite_position = glm::vec3(movement->position.render, 0);
+			glm::vec3 sprite_position = glm::vec3(snap_pos, 0);
 			e->world_position.snap( sprite_position+attachment );
 		}
 	}
@@ -265,6 +324,8 @@ void Sprite::load_from_spriteconfig( assets::SpriteConfig *config )
 
 
 ParticleSystem psys;
+
+
 
 Emitter::Emitter()
 {
@@ -361,24 +422,25 @@ void virtual_screen_to_pixels( float & tx, float & ty )
 
 GameScreen::GameScreen()
 {
-	IComponent * test = 0;
+	IComponent* test = 0;
+	Movement* pos = 0;
 	
-	test = ComponentManager::create_type( MovementComponent );
+	test = ComponentManager::create_type( InputMovementComponent );
 	if ( !test )
 	{
 		LOGE( "Unable to create component\n" );
 	}
 	
-	Movement * pos = 0;
+	InputMovement* im = 0;
 	
 	
-	pos = dynamic_cast<Movement*>(test);
-	if ( pos )
+	im = dynamic_cast<InputMovement*>(test);
+	if ( im )
 	{
-		LOGV( "current position: (%p) (%p) %g, %g\n", test, pos, pos->position.current.x, pos->position.current.y );
-		pos->velocity = glm::vec2( 0.0f, 0.0f );
-		pos->position.snap( glm::vec2( 370.0f, 270.0f) );
-		pos->reference_id = 0;
+		LOGV( "current position: (%p) (%p) %g, %g\n", test, im, im->position.current.x, im->position.current.y );
+		im->velocity = glm::vec2( 0.0f, 0.0f );
+		im->position.snap( glm::vec2( 370.0f, 270.0f) );
+		im->reference_id = 0;
 	}
 	
 	
@@ -397,6 +459,7 @@ GameScreen::GameScreen()
 	spr->reference_id = 1;
 	spr->load_from_spriteconfig(enemy);
 	
+
 	pos = dynamic_cast<Movement*>(ComponentManager::create_type(MovementComponent));
 	pos->position.snap(glm::vec2(100,230));
 	pos->velocity = glm::vec2(0, 0);

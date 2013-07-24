@@ -29,6 +29,7 @@
 enum ComponentType
 {
 	MovementComponent,			// movement (position+velocity)
+	InputMovementComponent,
 	SpriteComponent,			// sprite component
 	ParticleEmitterComponent,	// particles
 	PhysicsComponent,			// physics-based component

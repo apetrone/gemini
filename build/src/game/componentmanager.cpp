@@ -325,12 +325,16 @@ namespace ComponentManager
 
 	typedef ComponentContainer<Movement> MovementContainer;
 	MovementContainer movement;
+
+	typedef ComponentContainer<InputMovement> InputMovementContainer;
+	InputMovementContainer inputmoves;
 	
 	typedef ComponentContainer<Sprite> SpriteContainer;
 	SpriteContainer sprite;
 
 	typedef ComponentContainer<Emitter> EmitterContainer;
 	EmitterContainer emitters;
+	
 	
 	// 1: Add Container creation
 	IComponent * create_type( ComponentType type )
@@ -341,6 +345,9 @@ namespace ComponentManager
 		{
 			case MovementComponent:
 				component = movement.create();
+				break;
+			case InputMovementComponent:
+				component = inputmoves.create();
 				break;
 			case SpriteComponent:
 				component = sprite.create();
@@ -366,6 +373,9 @@ namespace ComponentManager
 			case MovementComponent:
 				movement.destroy(dynamic_cast<Movement*>(component));
 				break;
+			case InputMovementComponent:
+				inputmoves.destroy(dynamic_cast<InputMovement*>(component));
+				break;
 			case SpriteComponent:
 				sprite.destroy(dynamic_cast<Sprite*>(component));
 				break;
@@ -382,6 +392,7 @@ namespace ComponentManager
 	void purge()
 	{
 		movement.purge();
+		inputmoves.purge();
 		sprite.purge();
 		emitters.purge();
 	} // purge
@@ -393,6 +404,12 @@ namespace ComponentManager
 		for( ; movement_it != movement.objects.end(); ++movement_it )
 		{
 			(*movement_it)->step(delta_seconds);
+		}
+		
+		InputMovementContainer::TypeVector::iterator imove_it = inputmoves.objects.begin();
+		for( ; imove_it != inputmoves.objects.end(); ++imove_it )
+		{
+			(*imove_it)->step(delta_seconds);
 		}
 		
 		SpriteContainer::TypeVector::iterator sprite_it = sprite.objects.begin();
@@ -415,6 +432,12 @@ namespace ComponentManager
 		for( ; movement_it != movement.objects.end(); ++movement_it )
 		{
 			(*movement_it)->tick(step_alpha);
+		}
+		
+		InputMovementContainer::TypeVector::iterator imove_it = inputmoves.objects.begin();
+		for( ; imove_it != inputmoves.objects.end(); ++imove_it )
+		{
+			(*imove_it)->tick(step_alpha);
 		}
 		
 		SpriteContainer::TypeVector::iterator sprite_it = sprite.objects.begin();
@@ -454,6 +477,9 @@ namespace ComponentManager
 			case MovementComponent:
 				movement.for_each(callback, data);
 				break;
+			case InputMovementComponent:
+				inputmoves.for_each(callback, data);
+				break;
 			case SpriteComponent:
 				sprite.for_each(callback, data);
 				break;
@@ -475,6 +501,9 @@ namespace ComponentManager
 			case MovementComponent:
 				component = movement.find_id(id);
 				break;
+			case InputMovementComponent:
+				component = inputmoves.find_id(id);
+				break;
 			case SpriteComponent:
 				component = sprite.find_id(id);
 				break;
@@ -489,17 +518,3 @@ namespace ComponentManager
 		return component;
 	} // component_matching_id
 }; // ComponentManager
-
-
-
-void Movement::step( float delta_seconds )
-{
-	this->position.step(delta_seconds);
-	this->position.current.x += (delta_seconds * this->velocity.x);
-	this->position.current.y += (delta_seconds * this->velocity.y);
-} // step
-
-void Movement::tick( float step_alpha )
-{
-	this->position.interpolate(step_alpha);
-} // tick
