@@ -149,7 +149,7 @@ namespace kernel
 		struct State
 		{
 			xtime_t timer;
-			float accumulator;
+			double accumulator;
 			float last_time;
 			TimeStepFilter tsa;
 		};
@@ -376,10 +376,10 @@ namespace kernel
 		_kernel->parameters().framedelta_raw = raw_delta_msec;
 		
 		_internal::_kernel_state.accumulator += (_internal::_kernel_state.tsa.filtered_value * .001);
-		while( _internal::_kernel_state.accumulator > _kernel->parameters().step_interval_seconds )
+//		while( _internal::_kernel_state.accumulator >= _kernel->parameters().step_interval_seconds )
 		{
 			_internal::_kernel_state.accumulator -= _kernel->parameters().step_interval_seconds;
-			_kernel->parameters().step_alpha = _internal::_kernel_state.accumulator / _kernel->parameters().step_interval_seconds;
+			_kernel->parameters().step_alpha = 0.0f; // _internal::_kernel_state.accumulator / _kernel->parameters().step_interval_seconds;
 			if ( _kernel->parameters().step_alpha >= 1.0f )
 			{
 				_kernel->parameters().step_alpha -= 1.0f;

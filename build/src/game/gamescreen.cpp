@@ -164,11 +164,17 @@ void InputMovement::step( float delta_seconds )
 	pos.x -= input::state()->keyboard().is_down( input::KEY_A ) * MOVE_SPEED;
 	pos.x += input::state()->keyboard().is_down( input::KEY_D ) * MOVE_SPEED;
 	
-	this->position.snap(pos);
+//	LOGV( "filtered: %g, delta: %g\n",  kernel::instance()->parameters().framedelta_raw, delta_seconds );
+	
+//	this->position.snap(pos);
+	this->position.current = pos;
+	
+	this->position.step( delta_seconds );	
 } // step
 
 void InputMovement::tick( float step_alpha )
 {
+//	LOGV( "step_alpha: %g\n", step_alpha );
 	this->position.interpolate(step_alpha);
 } // tick
 
@@ -281,7 +287,7 @@ void Sprite::tick( float step_alpha )
 		if ( e )
 		{
 			glm::vec3 sprite_position = glm::vec3(snap_pos, 0);
-			e->world_position.snap( sprite_position+attachment );
+//			e->world_position.snap( sprite_position+attachment );
 		}
 	}
 } // tick
@@ -422,27 +428,23 @@ void virtual_screen_to_pixels( float & tx, float & ty )
 
 GameScreen::GameScreen()
 {
-	IComponent* test = 0;
 	Movement* pos = 0;
-	
-	test = ComponentManager::create_type( InputMovementComponent );
-	if ( !test )
-	{
-		LOGE( "Unable to create component\n" );
-	}
-	
+		
+#if 1
 	InputMovement* im = 0;
-	
-	
-	im = dynamic_cast<InputMovement*>(test);
+	im = dynamic_cast<InputMovement*>(ComponentManager::create_type( InputMovementComponent ));
 	if ( im )
 	{
-		LOGV( "current position: (%p) (%p) %g, %g\n", test, im, im->position.current.x, im->position.current.y );
-		im->velocity = glm::vec2( 0.0f, 0.0f );
+		im->velocity = glm::vec2( 2.0f, 0.0f );
 		im->position.snap( glm::vec2( 370.0f, 270.0f) );
 		im->reference_id = 0;
 	}
-	
+#else
+	pos = dynamic_cast<Movement*>(ComponentManager::create_type( MovementComponent ));
+	pos->velocity = glm::vec2( 150.0f, 0.0f );
+	pos->position.snap(glm::vec2( -50.0f, 270.0f ));
+	pos->reference_id = 0;
+#endif
 	
 	assets::SpriteConfig * cfg = assets::sprites()->load_from_path("sprites/player");
 	
