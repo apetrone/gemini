@@ -31,6 +31,7 @@ struct MenuItem
 	MenuItemVector children;
 	const char * name;
 	MenuItem * parent;
+	void * userdata;
 	
 	MenuItem();
 	~MenuItem();

@@ -25,30 +25,37 @@
 #include "menuscreen.hpp"
 #include "engine.hpp"
 #include "input.hpp"
+#include "stackstring.hpp"
+
+const int MENU_PLAY = 1;
+const int MENU_QUIT = 2;
+
+const int VERTICAL_START = 220;
+const int VERTICAL_SPACING = 48;
 
 MenuScreen::MenuScreen()
 {
-	font = font::load_font_from_file( "fonts/nokiafc22.ttf", 64 );
+	font = font::load_font_from_file( "fonts/nokiafc22.ttf", 24 );
 	
 	MenuItem * root = menunav.root_menu();
-	MenuItem * item = 0;
+	MenuItem * item;
+	item = root->add_child("Play");
+	item->userdata = (void*)&MENU_PLAY;
 	
-	
-	root->add_child("Play");
 	root->add_child("Options");
-	root->add_child("Quit");
+
+	item = root->add_child("Quit");
+	item->userdata = (void*)&MENU_QUIT;
 	
 	current_menu = 0;
 }
 
 void MenuScreen::on_show( kernel::IApplication * app )
 {
-	LOGV( "MenuScreen on show\n" );
 }
 
 void MenuScreen::on_hide( kernel::IApplication * app )
 {
-	LOGV( "MenuScreen on hide\n" );
 }
 
 void MenuScreen::on_draw( kernel::IApplication * app )
@@ -56,25 +63,31 @@ void MenuScreen::on_draw( kernel::IApplication * app )
 	MenuItem * current = menunav.current_menu();
 	if ( current )
 	{
-		int height = 220;
+		int height = VERTICAL_START;
 		for( unsigned int i = 0; i < menunav.child_count(); ++i )
 		{
 			MenuItem * child = menunav.child_at_index(i);
 			if ( child )
 			{
-				const char * text = child->name;
-				
+				StackString<128> text;
 				Color menu_color = Color(255,255,255);
 				
 				if ( current_menu == i )
 				{
 					menu_color = Color(255,0,0);
+					text = ">";
+					text.append(child->name);
+					text.append("<");
+				}
+				else
+				{
+					text = child->name;
 				}
 
 				int center = (kernel::instance()->parameters().render_width / 2);
-				int font_width = font::measure_width( font, text );
-				font::draw_string( font, center-(font_width/2), height, text, menu_color );
-				height += 96;
+				int font_width = font::measure_width( font, text() );
+				font::draw_string( font, center-(font_width/2), height, text(), menu_color );
+				height += VERTICAL_SPACING;
 
 			}
 		}
@@ -99,14 +112,41 @@ void MenuScreen::skip_screen( kernel::IApplication * app )
 // any event that happens during the logo screen triggers a skip to the next screen
 void MenuScreen::on_event( kernel::KeyboardEvent & event, kernel::IApplication * app )
 {
+	// I only care about the down events
+	if ( !event.is_down )
+	{
+		return;
+	}
+	
 	bool is_up = (event.key == input::KEY_UP);
 	bool is_down = (event.key == input::KEY_DOWN);
-	bool is_arrow = is_up || is_down || (event.key == input::KEY_LEFT) || (event.key == input::KEY_RIGHT);
-	if ( event.is_down && !is_arrow )
+	bool is_arrow = is_up || is_down;
+	bool should_advance = (event.key == input::KEY_RETURN || event.key == input::KEY_SPACE);
+		
+	if ( (!is_arrow) && (event.key == input::KEY_ESCAPE) )
 	{
-		skip_screen( app );
+//		skip_screen( app );
+		kernel::instance()->set_active(false);
 	}
-	else if ( event.is_down )
+	else if ( should_advance )
+	{
+		// advance the screen to the selected menu
+//		menunav.navigate_to_child(current_menu);
+		MenuItem * item = menunav.child_at_index(current_menu);
+		if ( item )
+		{
+			int * id = static_cast<int*>(item->userdata);
+			if (id && *id == MENU_PLAY)
+			{
+				this->skip_screen(app);
+			}
+			else if (id && *id == MENU_QUIT)
+			{
+				kernel::instance()->set_active(false);
+			}
+		}
+	}
+	else
 	{
 		unsigned int total_children = menunav.child_count();
 		if ( is_up )

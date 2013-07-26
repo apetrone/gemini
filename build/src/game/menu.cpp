@@ -29,6 +29,7 @@ MenuItem::MenuItem()
 {
 	parent = 0;
 	name = "empty";
+	userdata = 0;
 }
 
 MenuItem::~MenuItem()
