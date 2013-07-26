@@ -287,7 +287,7 @@ void Sprite::tick( float step_alpha )
 		if ( e )
 		{
 			glm::vec3 sprite_position = glm::vec3(snap_pos, 0);
-//			e->world_position.snap( sprite_position+attachment );
+			e->world_position.snap( sprite_position+attachment );
 		}
 	}
 } // tick

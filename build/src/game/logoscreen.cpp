@@ -66,7 +66,10 @@ void LogoScreen::skip_screen( kernel::IApplication * app )
 // any event that happens during the logo screen triggers a skip to the next screen
 void LogoScreen::on_event( kernel::KeyboardEvent & event, kernel::IApplication * app )
 {
-	skip_screen( app );
+	if ( event.is_down )
+	{
+		skip_screen( app );
+	}
 }
 
 void LogoScreen::on_event( kernel::MouseEvent & event, kernel::IApplication * app )
