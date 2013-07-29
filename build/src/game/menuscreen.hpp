@@ -23,6 +23,7 @@
 #include "memory.hpp"
 #include "screencontrol.hpp"
 #include "menu.hpp"
+#include "assets.hpp"
 
 struct MenuScreen : public virtual IScreen
 {
@@ -30,6 +31,10 @@ struct MenuScreen : public virtual IScreen
 	MenuNavigator menunav;
 	int current_menu;
 	MenuScreen();
+	
+	assets::Texture * protagonist;
+	assets::Texture * antagonist;
+	renderer::VertexStream vs;
 	
 	virtual void on_show( kernel::IApplication * app );
 	virtual void on_hide( kernel::IApplication * app );

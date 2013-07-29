@@ -114,3 +114,25 @@ public:
 	virtual void step( float delta_seconds );
 	virtual void tick( float step_alpha );
 }; // Emitter
+
+
+class AABB2Collision : public virtual IComponent
+{
+public:
+
+//	render_utilities::PhysicsState<glm::vec2> position;
+//	glm::vec2 velocity;
+	glm::vec2 box;
+
+	AABB2Collision();
+	~AABB2Collision();
+	virtual ComponentType component_type() const { return PhysicsComponent; }
+
+	virtual bool collides_with( AABB2Collision * other ) const;
+	virtual void world_position( float & x, float & y );
+	virtual void step( float dt_sec );
+	virtual void set_velocity( float x, float y );
+	virtual void get_aabb( AABB2 & aabb ) const;
+	virtual unsigned short get_collision_mask() const;
+	virtual void get_rotation( float & radians ) const;
+}; // AABB2Collision

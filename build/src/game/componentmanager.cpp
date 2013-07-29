@@ -336,6 +336,10 @@ namespace ComponentManager
 	EmitterContainer emitters;
 	
 	
+	typedef ComponentContainer<AABB2Collision> PhysicsContainer;
+	PhysicsContainer physics;
+	
+	
 	// 1: Add Container creation
 	IComponent * create_type( ComponentType type )
 	{
@@ -354,6 +358,9 @@ namespace ComponentManager
 				break;
 			case ParticleEmitterComponent:
 				component = emitters.create();
+				break;
+			case PhysicsComponent:
+				component = physics.create();
 				break;
 				
 			default:
@@ -382,7 +389,9 @@ namespace ComponentManager
 			case ParticleEmitterComponent:
 				emitters.destroy(dynamic_cast<Emitter*>(component));
 				break;
-				
+			case PhysicsComponent:
+				physics.destroy(dynamic_cast<AABB2Collision*>(component));
+				break;
 			default:
 				break;
 		}
@@ -395,6 +404,7 @@ namespace ComponentManager
 		inputmoves.purge();
 		sprite.purge();
 		emitters.purge();
+		physics.purge();
 	} // purge
 
 	// 4. (optionally) Add step
@@ -423,6 +433,12 @@ namespace ComponentManager
 		{
 			(*emitter_it)->step(delta_seconds);
 		}
+		
+		PhysicsContainer::TypeVector::iterator physics_it = physics.objects.begin();
+		for( ; physics_it != physics.objects.end(); ++physics_it )
+		{
+			(*physics_it)->step(delta_seconds);
+		}
 	} // step
 	
 	// 5. (optionally) Add tick
@@ -445,6 +461,13 @@ namespace ComponentManager
 		{
 			(*sprite_it)->tick(step_alpha);
 		}
+		
+		
+//		PhysicsContainer::TypeVector::iterator physics_it = physics.objects.begin();
+//		for( ; physics_it != physics.objects.end(); ++physics_it )
+//		{
+//			(*physics_it)->tick(step_alpha);
+//		}
 		
 //		EmitterContainer::TypeVector::iterator emitter_it = emitters.objects.begin();
 //		for( ; emitter_it != emitters.objects.end(); ++emitter_it )
@@ -486,6 +509,9 @@ namespace ComponentManager
 			case ParticleEmitterComponent:
 				emitters.for_each(callback, data);
 				break;
+			case PhysicsComponent:
+				physics.for_each(callback, data);
+				break;
 				
 			default:
 				break;
@@ -510,6 +536,10 @@ namespace ComponentManager
 			case ParticleEmitterComponent:
 				component = emitters.find_id(id);
 				break;
+			case PhysicsComponent:
+				component = physics.find_id(id);
+				break;
+			
 				
 			default:
 				break;

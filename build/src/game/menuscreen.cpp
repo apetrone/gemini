@@ -48,6 +48,16 @@ MenuScreen::MenuScreen()
 	item->userdata = (void*)&MENU_QUIT;
 	
 	current_menu = 0;
+	
+	protagonist = assets::textures()->load_from_path("textures/protagonist");
+	antagonist = assets::textures()->load_from_path("textures/antagonist");
+	
+	
+	vs.reset();
+	vs.desc.add( renderer::VD_FLOAT3 );
+	vs.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+	vs.desc.add( renderer::VD_FLOAT2 );
+	vs.create( 4, 6, renderer::DRAW_INDEXED_TRIANGLES );
 }
 
 void MenuScreen::on_show( kernel::IApplication * app )
@@ -60,6 +70,9 @@ void MenuScreen::on_hide( kernel::IApplication * app )
 
 void MenuScreen::on_draw( kernel::IApplication * app )
 {
+
+	
+
 	MenuItem * current = menunav.current_menu();
 	if ( current )
 	{
@@ -174,7 +187,8 @@ void MenuScreen::on_event( kernel::MouseEvent & event, kernel::IApplication * ap
 	// except mouse moved events.
 	if ( event.subtype != kernel::MouseMoved )
 	{
-		skip_screen( app );
+		LOGV( "Determine if mouse clicked on item\n" );
+		//skip_screen( app );
 	}
 }
 

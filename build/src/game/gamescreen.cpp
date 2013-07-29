@@ -114,19 +114,6 @@ using namespace render_utilities;
 
 void add_sprite_to_layer( unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords );
 
-class ICollisionObject : public virtual IComponent
-{
-public:
-	virtual ComponentType component_type() const { return PhysicsComponent; }
-	
-	virtual bool collides_with( ICollisionObject * other ) const = 0;
-	virtual void world_position( float & x, float & y ) = 0;
-	virtual void step( float dt_sec ) = 0;
-	virtual void set_velocity( float x, float y ) = 0;
-	virtual void get_aabb( AABB2 & aabb ) const = 0;
-	virtual unsigned short get_collision_mask() const = 0;
-	virtual void get_rotation( float & radians ) const = 0;
-}; // ICollisionObject
 
 void Movement::step( float delta_seconds )
 {
@@ -169,7 +156,7 @@ void InputMovement::step( float delta_seconds )
 //	this->position.snap(pos);
 	this->position.current = pos;
 	
-	this->position.step( delta_seconds );	
+	this->position.step( delta_seconds );
 } // step
 
 void InputMovement::tick( float step_alpha )
@@ -362,20 +349,18 @@ void Emitter::tick( float step_alpha )
 } // tick
 
 
-class AABB2Collision : public virtual ICollisionObject
+AABB2Collision::AABB2Collision()
 {
-public:
-	virtual bool collides_with( ICollisionObject * other ) const;
-	virtual void world_position( float & x, float & y );
-	virtual void step( float dt_sec );
-	virtual void set_velocity( float x, float y );
-	virtual void get_aabb( AABB2 & aabb ) const;
-	virtual unsigned short get_collision_mask() const;
-	virtual void get_rotation( float & radians ) const;
-};
+	
+}
+
+AABB2Collision::~AABB2Collision()
+{
+	
+}
 
 
-bool AABB2Collision::collides_with( ICollisionObject * other ) const
+bool AABB2Collision::collides_with( AABB2Collision * other ) const
 {
 	return false;
 }
@@ -467,7 +452,26 @@ GameScreen::GameScreen()
 	pos->velocity = glm::vec2(0, 0);
 	pos->reference_id = 1;
 	
-	// draw particles
+	
+	
+	// add collider component
+	AABB2Collision * collision = dynamic_cast<AABB2Collision*>(ComponentManager::create_type(PhysicsComponent));
+	if ( collision )
+	{
+		collision->reference_id = 0;
+		collision->box = glm::vec2( 32.0f, 32.0f );
+	}
+	
+	
+	collision = dynamic_cast<AABB2Collision*>(ComponentManager::create_type(PhysicsComponent));
+	if ( collision )
+	{
+		collision->reference_id = 1;
+		collision->box = glm::vec2( 32.0f, 32.0f );
+	}
+	
+	
+	// add particle component
 	
 	assets::EmitterConfig * ecfg = assets::emitters()->load_from_path("sprites/exhaust");
 	

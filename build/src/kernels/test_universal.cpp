@@ -256,7 +256,7 @@ public:
 
 		// setup the stack
 		engine::engine()->screen_controller()->push_screen( "GameScreen", this );
-		engine::engine()->screen_controller()->push_screen( "MenuScreen", this );
+//		engine::engine()->screen_controller()->push_screen( "MenuScreen", this );
 //		engine::engine()->screen_controller()->push_screen( "LogoScreen", this );
 		
 
