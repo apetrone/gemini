@@ -123,6 +123,7 @@ public:
 //	render_utilities::PhysicsState<glm::vec2> position;
 //	glm::vec2 velocity;
 	glm::vec2 box;
+	unsigned short collision_mask;
 
 	AABB2Collision();
 	~AABB2Collision();

@@ -351,7 +351,7 @@ void Emitter::tick( float step_alpha )
 
 AABB2Collision::AABB2Collision()
 {
-	
+	collision_mask = 0;
 }
 
 AABB2Collision::~AABB2Collision()
@@ -370,9 +370,40 @@ void AABB2Collision::world_position( float & x, float & y )
 	
 }
 
+struct AABB2CollisionCheck
+{
+	AABB2Collision * object;
+	AABB2 bounds;
+};
+
+void check_collision(IComponent* component, void* data)
+{
+	AABB2CollisionCheck * check = (AABB2CollisionCheck*)data;
+	AABB2Collision * other = dynamic_cast<AABB2Collision*>(component);
+	
+	if ( check && other && check->object != other )
+	{
+		if ( (check->object->get_collision_mask() & other->get_collision_mask()) == 0 )
+			return;
+
+		AABB2 other_bounds;
+		other->get_aabb(other_bounds);
+		if (check->bounds.overlaps(other_bounds))
+		{
+			LOGV("collision with this thing happened\n");
+		}
+	}
+	
+}
+
 void AABB2Collision::step( float dt_sec )
 {
+
 	
+	AABB2CollisionCheck data;
+	this->get_aabb(data.bounds);
+	data.object = this;
+	ComponentManager::for_each_component(PhysicsComponent, check_collision, &data);
 }
 
 void AABB2Collision::set_velocity( float x, float y )
@@ -382,12 +413,35 @@ void AABB2Collision::set_velocity( float x, float y )
 
 void AABB2Collision::get_aabb( AABB2 & aabb ) const
 {
+	glm::vec2 pos;
 	
+	Movement * movement = dynamic_cast<Movement*>(ComponentManager::component_matching_id( this->reference_id, MovementComponent ));
+	if ( movement )
+	{
+		pos = movement->position.render;
+	}
+	else
+	{
+		InputMovement * im = dynamic_cast<InputMovement*>(ComponentManager::component_matching_id( this->reference_id, InputMovementComponent ));
+		if ( im )
+		{
+			pos = im->position.render;
+		}
+	}
+	
+
+	
+	float hw = (this->box.x/2.0f);
+	float hh = (this->box.y/2.0f);
+	aabb.left = pos.x - hw;
+	aabb.right = pos.x + hw;
+	aabb.top = pos.y - hh;
+	aabb.bottom = pos.y + hh;
 }
 
 unsigned short AABB2Collision::get_collision_mask() const
 {
-	return 0;
+	return this->collision_mask;
 }
 
 void AABB2Collision::get_rotation( float & radians ) const
@@ -460,6 +514,7 @@ GameScreen::GameScreen()
 	{
 		collision->reference_id = 0;
 		collision->box = glm::vec2( 32.0f, 32.0f );
+		collision->collision_mask = 1;
 	}
 	
 	
@@ -468,6 +523,7 @@ GameScreen::GameScreen()
 	{
 		collision->reference_id = 1;
 		collision->box = glm::vec2( 32.0f, 32.0f );
+		collision->collision_mask = 1;	
 	}
 	
 	
