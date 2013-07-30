@@ -393,13 +393,10 @@ void check_collision(IComponent* component, void* data)
 			LOGV("collision with this thing happened\n");
 		}
 	}
-	
 }
 
 void AABB2Collision::step( float dt_sec )
 {
-
-	
 	AABB2CollisionCheck data;
 	this->get_aabb(data.bounds);
 	data.object = this;
@@ -525,13 +522,11 @@ GameScreen::GameScreen()
 		collision->box = glm::vec2( 32.0f, 32.0f );
 		collision->collision_mask = 1;	
 	}
-	
-	
+		
+#if 0
 	// add particle component
-	
 	assets::EmitterConfig * ecfg = assets::emitters()->load_from_path("sprites/exhaust");
 	
-#if 1
 	Emitter * emitter = 0;
 	ParticleEmitter * e = 0;
 	emitter = dynamic_cast<Emitter*>(ComponentManager::create_type(ParticleEmitterComponent));
