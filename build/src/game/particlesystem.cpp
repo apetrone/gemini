@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "log.h"
+#include <slim/xlog.h>
 #include "particlesystem.hpp"
 #include "util.hpp"
 

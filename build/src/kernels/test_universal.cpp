@@ -25,7 +25,7 @@
 #include "renderer.hpp"
 #include "audio.hpp"
 #include "input.hpp"
-#include "log.h"
+#include <slim/xlog.h>
 //#include <squirrel.h>
 #include "filesystem.hpp"
 #include "game/menu.hpp"

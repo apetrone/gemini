@@ -23,7 +23,7 @@
 #include "typedefs.h"
 #include "keyvalues.hpp"
 
-#include "log.h"
+#include <slim/xlog.h>
 #include "xstr.h"
 
 KeyValues::KeyValues()

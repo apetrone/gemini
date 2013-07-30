@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include "kernel.hpp"
 #include <stdio.h>
-#include "log.h"
+#include <slim/xlog.h>
 #include "font.hpp"
 #include "filesystem.hpp"
 #include "renderstream.hpp"

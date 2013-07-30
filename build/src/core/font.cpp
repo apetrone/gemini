@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include "xstr.h"
-#include "log.h"
+#include <slim/xlog.h>
 #include "filesystem.hpp"
 //#include "memorystream.hpp"
 #include "font.hpp"

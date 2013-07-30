@@ -19,3 +19,6 @@
 [submodule "build/dependencies/font-stash"]
 	path = build/dependencies/font-stash
 	url = git://github.com/apetrone/font-stash.git
+[submodule "build/dependencies/slim"]
+	path = build/dependencies/slim
+	url = git://github.com/apetrone/slim.git

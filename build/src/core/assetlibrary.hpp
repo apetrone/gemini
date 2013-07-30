@@ -25,7 +25,7 @@
 #include "assets.hpp"
 #include "hashtable.hpp"
 #include <list>
-#include "log.h"
+#include <slim/xlog.h>
 
 namespace assets
 {

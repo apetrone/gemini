@@ -26,7 +26,7 @@
 #include <string>
 #include <map>
 
-#include "log.h"
+#include <slim/xlog.h>
 #include "xtime.h"
 #include "renderer.hpp"
 #include "audio.hpp"

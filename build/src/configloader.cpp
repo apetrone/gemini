@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include "configloader.hpp"
 #include "filesystem.hpp"
-#include "log.h"
+#include <slim/xlog.h>
 #include "memory.hpp"
 
 namespace util

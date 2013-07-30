@@ -22,7 +22,7 @@
 #include "kernel.hpp"
 #include <stdio.h>
 #include "memorystream.hpp"
-#include "log.h"
+#include <slim/xlog.h>
 
 class TestMemoryStream : public kernel::IApplication
 {

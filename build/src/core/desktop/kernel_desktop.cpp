@@ -24,7 +24,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "input.hpp"
-#include "log.h"
+#include <slim/xlog.h>
 
 static xwl_window_t * _window = 0;
 namespace kernel

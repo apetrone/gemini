@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include "audio.hpp"
 #include "openal.hpp"
-#include "log.h"
+#include <slim/xlog.h>
 #include "openal_vorbis_decoder.hpp"
 
 

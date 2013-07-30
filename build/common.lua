@@ -12,6 +12,8 @@ function translate_platform( platform )
 	return platform
 end
 
+DEPENDENCIES_FOLDER = "dependencies"
+
 common_file_list =
 {
 	-- We don't want all subfolders; each platform is defined for additional files below
@@ -19,13 +21,17 @@ common_file_list =
 	"src/*.c*",
 	"src/*.h*",
 
-	"dependencies/murmur3/murmur3.c",
+	DEPENDENCIES_FOLDER .. "/murmur3/murmur3.c",
 
 	-- include this almagamated version of jsoncpp until we replace it.
-	"dependencies/jsoncpp/jsoncpp.cpp",
+	DEPENDENCIES_FOLDER .. "/jsoncpp/jsoncpp.cpp",
 
-	"dependencies/font-stash/fontstash.c",
-	"dependencies/font-stash/stb_truetype.c",
+	DEPENDENCIES_FOLDER .. "/font-stash/fontstash.c",
+	DEPENDENCIES_FOLDER .. "/font-stash/stb_truetype.c",
+
+
+	DEPENDENCIES_FOLDER .. "/slim/slim/*.c",
+	DEPENDENCIES_FOLDER .. "/slim/slim/*.h",
 	--[[
 	"src/thirdparty/*.c",
 	"src/thirdparty/*.h*",
@@ -60,11 +66,11 @@ common_include_dirs=
 	"src",
 	"src/game",
 
-	"dependencies/murmur3",
+	DEPENDENCIES_FOLDER .. "/murmur3",
 	
 
-	"dependencies/jsoncpp",
-
+	DEPENDENCIES_FOLDER .. "/jsoncpp",
+	DEPENDENCIES_FOLDER .. "/slim/",
 	--[[
 	--"src/prototypes",
 	"src/thirdparty",

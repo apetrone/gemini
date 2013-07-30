@@ -24,7 +24,7 @@
 #include "platform.hpp"
 #include "stackstring.hpp"
 #include "filesystem.hpp"
-#include "log.h"
+#include <slim/xlog.h>
 #include "xtime.h"
 
 namespace core
@@ -43,15 +43,15 @@ namespace core
 		}
 		
 		
-		static log_t _system_log;
+		static xlog_t _system_log;
 		// log handler function declarations
-		void file_logger_message( log_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );
-		int file_logger_open( log_handler_t * handler );
-		void file_logger_close( log_handler_t * handler );
+		void file_logger_message( xlog_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );
+		int file_logger_open( xlog_handler_t * handler );
+		void file_logger_close( xlog_handler_t * handler );
 		
-		void stdout_message( log_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );
-		int stdout_open( log_handler_t * handler );
-		void stdout_close( log_handler_t * handler );
+		void stdout_message( xlog_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );
+		int stdout_open( xlog_handler_t * handler );
+		void stdout_close( xlog_handler_t * handler );
 		
 #if _WIN32
 		void vs_message( log_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );		
@@ -72,9 +72,9 @@ namespace core
 			int total_log_handlers = 0;
 						
 			// setup system log
-			log_init( &_system_log );
+			xlog_init( &_system_log );
 			
-			log_set_default_log( &_system_log );
+			xlog_set_default_log( &_system_log );
 			
 #if _WIN32
 			log_handler_t msvc_logger;
@@ -89,14 +89,14 @@ namespace core
 #endif
 
 #ifndef __ANDROID__
-			log_handler_t stdout_logger;
-			memset( &stdout_logger, 0, sizeof(log_handler_t) );
+			xlog_handler_t stdout_logger;
+			memset( &stdout_logger, 0, sizeof(xlog_handler_t) );
 			stdout_logger.message = stdout_message;
 			stdout_logger.open = stdout_open;
 			stdout_logger.close = stdout_close;
 			
 			++total_log_handlers;
-			log_add_handler( &_system_log, &stdout_logger );
+			xlog_add_handler( &_system_log, &stdout_logger );
 #endif
 			
 #if !PLATFORM_IS_MOBILE
@@ -119,13 +119,13 @@ namespace core
 			
 			xstr_cat( logdir, datetime_string );
 			
-			log_handler_t filelogger;
+			xlog_handler_t filelogger;
 			filelogger.message = file_logger_message;
 			filelogger.open = file_logger_open;
 			filelogger.close = file_logger_close;
 			filelogger.userdata = logdir;
 			
-			log_add_handler( &_system_log, &filelogger );
+			xlog_add_handler( &_system_log, &filelogger );
 			
 			++total_log_handlers;
 #endif
@@ -142,7 +142,7 @@ namespace core
 			++total_log_handlers;
 #endif
 						
-			if ( log_open( &_system_log ) < total_log_handlers )
+			if ( xlog_open( &_system_log ) < total_log_handlers )
 			{
 				fprintf( stderr, "Could not open one or more log handlers\n" );
 				error = core::Error( core::Error::Warning, "Could not open one or more log handlers" );
@@ -156,7 +156,7 @@ namespace core
 		
 		void close_log_handlers()
 		{
-			log_close( &_system_log );
+			xlog_close( &_system_log );
 		} // close_log_handlers
 	}; // namespace _internal
 	

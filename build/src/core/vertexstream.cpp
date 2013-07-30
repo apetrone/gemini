@@ -25,7 +25,7 @@
 
 #include <string.h> // for memset
 #include <stdio.h> // for printf
-#include "log.h"
+#include <slim/xlog.h>
 
 namespace renderer
 {

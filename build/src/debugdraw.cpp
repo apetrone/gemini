@@ -26,7 +26,7 @@
 #include "assets.hpp"
 #include "font.hpp"
 #include "renderstream.hpp"
-#include "log.h"
+#include <slim/xlog.h>
 
 namespace debugdraw
 {

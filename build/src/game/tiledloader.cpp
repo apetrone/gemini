@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "log.h"
+#include <slim/xlog.h>
 #include "tiledloader.hpp"
 #include "render_utilities.hpp" // for sprite::calc_tile_uvs
 

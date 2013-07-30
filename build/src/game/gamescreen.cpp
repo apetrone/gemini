@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "log.h"
+#include <slim/xlog.h>
 #include "gamescreen.hpp"
 #include "render_utilities.hpp"
 #include "componentmanager.hpp"

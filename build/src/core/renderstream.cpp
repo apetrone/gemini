@@ -25,7 +25,7 @@
 
 #include <string.h> // for memset
 #include <stdio.h> // for printf
-#include "log.h"
+#include <slim/xlog.h>
 	
 RenderStream::RenderStream( unsigned int max_bytes, unsigned int max_commands )
 {

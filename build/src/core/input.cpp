@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include "input.hpp"
-#include "log.h"
+#include <slim/xlog.h>
 
 namespace input
 {

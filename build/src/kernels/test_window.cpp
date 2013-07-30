@@ -22,7 +22,7 @@
 #include "kernel.hpp"
 #include <stdio.h>
 #include "renderer.hpp"
-#include "log.h"
+#include <slim/xlog.h>
 
 #include "audio.hpp"
 

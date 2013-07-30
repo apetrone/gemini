@@ -24,7 +24,7 @@
 
 #include "kernel.hpp"
 #include "image.hpp"
-#include "log.h"
+#include <slim/xlog.h>
 
 #include "xstr.h"
 #include "xtime.h"

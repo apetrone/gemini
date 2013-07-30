@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include "menu.hpp"
-#include "log.h"
+#include <slim/xlog.h>
 
 //
 // MenuItem

@@ -38,7 +38,7 @@ USAGE:
 #include "xstr.h" // for string operations
 #include "util.hpp"
 #include <vector>
-#include "log.h"
+#include <slim/xlog.h>
 
 #define HASHTABLE_SEED 42
 

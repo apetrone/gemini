@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "log.h"
+#include <slim/xlog.h>
 #include "map_event.hpp"
 #include "hashtable.hpp"
 

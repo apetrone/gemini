@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "log.h"
+#include <slim/xlog.h>
 #include "helpscreen.hpp"
 
 void HelpScreen::on_show( kernel::IApplication * app )

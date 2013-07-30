@@ -26,7 +26,7 @@
 #include <stdio.h> // for printf
 #include <sys/stat.h> // for fs::FileExists
 #include "xfile.h"
-#include "log.h"
+#include <slim/xlog.h>
 
 
 #if PLATFORM_IS_MOBILE

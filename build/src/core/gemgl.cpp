@@ -2,8 +2,8 @@
 //#include "platform.h"
 #include <stdio.h> // for sscanf
 #include <string.h> // for strstr
-#include <xstr.h>
-#include <log.h>
+#include <slim/xstr.h>
+#include <slim/xlog.h>
 
 gemgl_interface_t gl;
 

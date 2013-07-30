@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include "audio.hpp"
-#include "log.h"
+#include <slim/xlog.h>
 #include "stackstring.hpp"
 #include "filesystem.hpp"
 #include "assets.hpp"

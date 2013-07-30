@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "render_utilities.hpp"
-#include "log.h"
+#include <slim/xlog.h>
 
 
 #include "assets.hpp"
