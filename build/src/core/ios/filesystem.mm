@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include "filesystem.hpp"
-#include "xstr.h"
+#include <slim/xstr.h>
 #include "platform.hpp"
 #include <stdio.h> // for printf
 #include <sys/stat.h> // for fs::FileExists

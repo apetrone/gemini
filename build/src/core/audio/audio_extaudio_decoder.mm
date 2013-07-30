@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include "audio_extaudio_decoder.hpp"
 #include "log.h"
-#include "xstr.h"
+#include <slim/xstr.h>
 
 using namespace audio;
 

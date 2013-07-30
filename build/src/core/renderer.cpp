@@ -23,7 +23,7 @@
 #include <slim/xlog.h>
 #include "renderer.hpp"
 #include "factory.hpp"
-#include "xstr.h"
+#include <slim/xstr.h>
 
 
 

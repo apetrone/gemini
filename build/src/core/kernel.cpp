@@ -27,7 +27,7 @@
 #include <map>
 
 #include <slim/xlog.h>
-#include "xtime.h"
+#include <slim/xtime.h>
 #include "renderer.hpp"
 #include "audio.hpp"
 #include "input.hpp"

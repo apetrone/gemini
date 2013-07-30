@@ -35,7 +35,7 @@ USAGE:
 #endif
 
 #include "memory.hpp"
-#include "xstr.h" // for string operations
+#include <slim/xstr.h> // for string operations
 #include "util.hpp"
 #include <vector>
 #include <slim/xlog.h>
