@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "xstr.h"
+#include <slim/xstr.h>
 #include <slim/xlog.h>
 #include "filesystem.hpp"
 //#include "memorystream.hpp"

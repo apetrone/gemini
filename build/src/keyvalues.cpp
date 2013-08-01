@@ -24,7 +24,7 @@
 #include "keyvalues.hpp"
 
 #include <slim/xlog.h>
-#include "xstr.h"
+#include <slim/xstr.h>
 
 KeyValues::KeyValues()
 {

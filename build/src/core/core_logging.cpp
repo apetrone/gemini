@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <slim/xlog.h>
-#include "xstr.h" // for xstr_filefrompath
+#include <slim/xstr.h> // for xstr_filefrompath
 #include <stdio.h> // for FILE, file functions
 
 #if __ANDROID__

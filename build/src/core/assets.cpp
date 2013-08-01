@@ -26,8 +26,8 @@
 #include "image.hpp"
 #include <slim/xlog.h>
 
-#include "xstr.h"
-#include "xtime.h"
+#include <slim/xstr.h>
+#include <slim/xtime.h>
 #include "memory.hpp"
 
 #include "filesystem.hpp"

@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "util.hpp"
-#include "xstr.h"
+#include <slim/xstr.h>
 #include <stdlib.h>
 
 extern "C"
