@@ -33,6 +33,8 @@ const int MENU_QUIT = 2;
 const int VERTICAL_START = 220;
 const int VERTICAL_SPACING = 48;
 
+void virtual_screen_to_pixels( float & tx, float & ty );
+
 MenuScreen::MenuScreen()
 {
 	menu_font = font::load_font_from_file("fonts/nokiafc22.ttf", 24);
@@ -91,18 +93,30 @@ void MenuScreen::on_draw( kernel::IApplication * app )
 	rc.rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 	rc.rs.add_state( renderer::STATE_BLEND, 1 );
 
+	float vx, vy;
+
 	// fill the entire image
 	render_utilities::sprite::calc_tile_uvs( (float*)uvs, 0, 0, 1, 1, 2, 1 );
-	rc.add_sprite_to_layer(0, 150, 280, 256, 256, Color(255,255,255), (float*)uvs);
+	vx = 0.2f;
+	vy = 0.58f;
+	virtual_screen_to_pixels(vx, vy);
+	rc.add_sprite_to_layer(0, vx, vy, 256, 256, Color(255,255,255), (float*)uvs);
 
 	render_utilities::sprite::calc_tile_uvs( (float*)uvs, 1, 0, 1, 1, 2, 1 );
-	rc.add_sprite_to_layer(0, 570, 190, 256, 256, Color(255,255,255), (float*)uvs);
+	vx = 0.79f;
+	vy = 0.395f;
+	virtual_screen_to_pixels(vx, vy);
+	rc.add_sprite_to_layer(0, vx, vy, 256, 256, Color(255,255,255), (float*)uvs);
 	
 	rc.render_stream( this->mainmenu );
 
 
 	// draw title
-	font::draw_string(title_font, 60, 80, "Tomato Treachery", Color(255,0,255));
+	
+	vx = 0.083f;
+	vy = 0.16f;
+	virtual_screen_to_pixels(vx, vy);
+	font::draw_string(title_font, vx, vy, "Tomato Treachery", Color(255,0,255));
 
 #if 1
 	MenuItem * current = menunav.current_menu();
