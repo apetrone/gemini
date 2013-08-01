@@ -25,6 +25,8 @@
 #include "menu.hpp"
 #include "assets.hpp"
 
+#include "componentmanager.hpp" // for RenderControl
+
 struct MenuScreen : public virtual IScreen
 {
 	font::Handle font;
@@ -32,9 +34,11 @@ struct MenuScreen : public virtual IScreen
 	int current_menu;
 	MenuScreen();
 	
-	assets::Texture * protagonist;
-	assets::Texture * antagonist;
+	assets::Material * protagonist;
+	assets::Material * antagonist;
 	renderer::VertexStream vs;
+	
+	RenderControl rc;
 	
 	virtual void on_show( kernel::IApplication * app );
 	virtual void on_hide( kernel::IApplication * app );

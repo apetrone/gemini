@@ -49,15 +49,18 @@ MenuScreen::MenuScreen()
 	
 	current_menu = 0;
 	
-	protagonist = assets::textures()->load_from_path("textures/protagonist");
-	antagonist = assets::textures()->load_from_path("textures/antagonist");
+	protagonist = assets::materials()->load_from_path("materials/protagonist");
+	antagonist = assets::materials()->load_from_path("materials/antagonist");
 	
 	
 	vs.reset();
 	vs.desc.add( renderer::VD_FLOAT3 );
 	vs.desc.add( renderer::VD_UNSIGNED_BYTE4 );
 	vs.desc.add( renderer::VD_FLOAT2 );
-	vs.create( 4, 6, renderer::DRAW_INDEXED_TRIANGLES );
+	vs.create( 8, 12, renderer::DRAW_INDEXED_TRIANGLES );
+	
+	rc.stream = &vs;
+	rc.attribs = 5;
 }
 
 void MenuScreen::on_show( kernel::IApplication * app )
@@ -70,9 +73,32 @@ void MenuScreen::on_hide( kernel::IApplication * app )
 
 void MenuScreen::on_draw( kernel::IApplication * app )
 {
-
+	renderer::UV uvs[4];
+	uvs[0].u = 0;
+	uvs[0].v = 0;
+	uvs[1].u = 1;
+	uvs[1].v = 0;
+	uvs[2].u = 1;
+	uvs[2].v = 1;
+	uvs[3].u = 0;
+	uvs[3].v = 1;
 	
+	rc.rs.rewind();
+	
+	kernel::Params & params = kernel::instance()->parameters();
+	rc.camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -1.0f, 1.0f );
+	
+//	rc.rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+//	rc.rs.add_state( renderer::STATE_BLEND, 1 );
 
+	// fill the entire image
+	render_utilities::sprite::calc_tile_uvs( (float*)uvs, 0, 0, 1, 1, 1, 1 );
+
+	rc.add_sprite_to_layer(0, 150, 240, 256, 256, Color(255,255,255), (float*)uvs);
+	
+	rc.render_stream( this->protagonist );
+
+#if 1
 	MenuItem * current = menunav.current_menu();
 	if ( current )
 	{
@@ -105,6 +131,7 @@ void MenuScreen::on_draw( kernel::IApplication * app )
 			}
 		}
 	}
+#endif
 }
 
 void MenuScreen::on_update( kernel::IApplication * app ) {}
