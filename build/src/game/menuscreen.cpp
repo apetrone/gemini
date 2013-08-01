@@ -35,7 +35,8 @@ const int VERTICAL_SPACING = 48;
 
 MenuScreen::MenuScreen()
 {
-	font = font::load_font_from_file( "fonts/nokiafc22.ttf", 24 );
+	menu_font = font::load_font_from_file("fonts/nokiafc22.ttf", 24);
+	title_font = font::load_font_from_file("fonts/nokiafc22.ttf", 48);
 	
 	MenuItem * root = menunav.root_menu();
 	MenuItem * item;
@@ -49,15 +50,14 @@ MenuScreen::MenuScreen()
 	
 	current_menu = 0;
 	
-	protagonist = assets::materials()->load_from_path("materials/protagonist");
-	antagonist = assets::materials()->load_from_path("materials/antagonist");
+	mainmenu = assets::materials()->load_from_path("materials/mainmenu");
 	
 	
 	vs.reset();
 	vs.desc.add( renderer::VD_FLOAT3 );
 	vs.desc.add( renderer::VD_UNSIGNED_BYTE4 );
 	vs.desc.add( renderer::VD_FLOAT2 );
-	vs.create( 8, 12, renderer::DRAW_INDEXED_TRIANGLES );
+	vs.create( 16, 24, renderer::DRAW_INDEXED_TRIANGLES );
 	
 	rc.stream = &vs;
 	rc.attribs = 5;
@@ -88,15 +88,21 @@ void MenuScreen::on_draw( kernel::IApplication * app )
 	kernel::Params & params = kernel::instance()->parameters();
 	rc.camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -1.0f, 1.0f );
 	
-//	rc.rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
-//	rc.rs.add_state( renderer::STATE_BLEND, 1 );
+	rc.rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+	rc.rs.add_state( renderer::STATE_BLEND, 1 );
 
 	// fill the entire image
-	render_utilities::sprite::calc_tile_uvs( (float*)uvs, 0, 0, 1, 1, 1, 1 );
+	render_utilities::sprite::calc_tile_uvs( (float*)uvs, 0, 0, 1, 1, 2, 1 );
+	rc.add_sprite_to_layer(0, 150, 280, 256, 256, Color(255,255,255), (float*)uvs);
 
-	rc.add_sprite_to_layer(0, 150, 240, 256, 256, Color(255,255,255), (float*)uvs);
+	render_utilities::sprite::calc_tile_uvs( (float*)uvs, 1, 0, 1, 1, 2, 1 );
+	rc.add_sprite_to_layer(0, 570, 190, 256, 256, Color(255,255,255), (float*)uvs);
 	
-	rc.render_stream( this->protagonist );
+	rc.render_stream( this->mainmenu );
+
+
+	// draw title
+	font::draw_string(title_font, 60, 80, "Tomato Treachery", Color(255,0,255));
 
 #if 1
 	MenuItem * current = menunav.current_menu();
@@ -124,8 +130,8 @@ void MenuScreen::on_draw( kernel::IApplication * app )
 				}
 
 				int center = (kernel::instance()->parameters().render_width / 2);
-				int font_width = font::measure_width( font, text() );
-				font::draw_string( font, center-(font_width/2), height, text(), menu_color );
+				int font_width = font::measure_width( menu_font, text() );
+				font::draw_string( menu_font, center-(font_width/2), height, text(), menu_color );
 				height += VERTICAL_SPACING;
 
 			}

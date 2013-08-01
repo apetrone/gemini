@@ -1,0 +1,12 @@
+{
+	"name" : "mainmenu",
+
+	"params":
+	{
+		"diffusemap" :
+		{
+			"type" : "sampler",
+			"texture" : "textures/mainmenu"
+		}
+	}
+}

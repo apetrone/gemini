@@ -171,12 +171,12 @@ namespace renderer
 	// determine if this vertexstream has room
 	bool VertexStream::has_room( unsigned int num_vertices, unsigned int num_indices ) const
 	{
-		if ( num_vertices + last_vertex >= total_vertices )
+		if ( (num_vertices + last_vertex) >= total_vertices )
 		{
 			return false;
 		}
 
-		if ( (total_indices > 0) && (num_indices + last_index >= total_indices) )
+		if ( (total_indices > 0) && ((num_indices + last_index) >= total_indices) )
 		{
 			return false;
 		}

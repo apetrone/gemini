@@ -29,13 +29,12 @@
 
 struct MenuScreen : public virtual IScreen
 {
-	font::Handle font;
+	font::Handle menu_font, title_font;
 	MenuNavigator menunav;
 	int current_menu;
 	MenuScreen();
 	
-	assets::Material * protagonist;
-	assets::Material * antagonist;
+	assets::Material * mainmenu;
 	renderer::VertexStream vs;
 	
 	RenderControl rc;
