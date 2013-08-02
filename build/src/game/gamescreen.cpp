@@ -447,12 +447,11 @@ void AABB2Collision::get_rotation( float & radians ) const
 }
 
 
+const int VIRTUAL_WIDTH = 800;
+const int VIRTUAL_HEIGHT = 600;
 
 void virtual_screen_to_pixels( float & tx, float & ty )
 {
-	const int VIRTUAL_WIDTH = 800;
-	const int VIRTUAL_HEIGHT = 600;
-	
 	kernel::Params & params = kernel::instance()->parameters();
 	
 	float mx = (params.render_width / (float)VIRTUAL_WIDTH);
@@ -460,6 +459,14 @@ void virtual_screen_to_pixels( float & tx, float & ty )
 	
 	tx = mx * (VIRTUAL_WIDTH * tx);
 	ty = my * (VIRTUAL_HEIGHT * ty);
+}
+
+void pixels_to_virtual_screen(float & px, float & py)
+{
+	kernel::Params & params = kernel::instance()->parameters();
+	
+	px = (px / params.render_width);
+	py = (py / params.render_height);
 }
 
 GameScreen::GameScreen()

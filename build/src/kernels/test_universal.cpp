@@ -41,6 +41,7 @@
 #include "logoscreen.hpp"
 #include "gamescreen.hpp"
 #include "menuscreen.hpp"
+#include "win_loss_screen.hpp"
 
 #include "keyframechannel.hpp"
 #include "debugdraw.hpp"
@@ -247,17 +248,26 @@ public:
 //		HelpScreen * help = CREATE(HelpScreen);
 		GameScreen * game = CREATE(GameScreen);
 		MenuScreen * menu = CREATE(MenuScreen);
+		WinLossScreen * win = CREATE(WinLossScreen);
+		win->setup_win_screen();
+		
+		WinLossScreen * loss = CREATE(WinLossScreen);
+		loss->setup_loss_screen();
 
 		// make the controller aware of these screens
 		engine::engine()->screen_controller()->add_screen( logo );
 //		engine::engine()->screen_controller()->add_screen( help );
 		engine::engine()->screen_controller()->add_screen( game );
 		engine::engine()->screen_controller()->add_screen( menu );
+		engine::engine()->screen_controller()->add_screen( win );
+		engine::engine()->screen_controller()->add_screen( loss );
 
 		// setup the stack
 		engine::engine()->screen_controller()->push_screen( "GameScreen", this );
 		engine::engine()->screen_controller()->push_screen( "MenuScreen", this );
 //		engine::engine()->screen_controller()->push_screen( "LogoScreen", this );
+		engine::engine()->screen_controller()->push_screen( "WinScreen", this );
+//		engine::engine()->screen_controller()->push_screen( "LossScreen", this );
 		
 
 		debugdraw::startup( 1024 );

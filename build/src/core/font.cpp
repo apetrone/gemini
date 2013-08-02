@@ -37,7 +37,7 @@
 namespace font
 {
 	const unsigned int FONT_MAX_VERTICES = 1024;
-	const unsigned int FONT_MAX = 8;
+	const unsigned int FONT_MAX = 16;
 	
 	struct SimpleFontHandle
 	{
