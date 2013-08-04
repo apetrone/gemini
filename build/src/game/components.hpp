@@ -131,9 +131,7 @@ public:
 	virtual ComponentType component_type() const { return PhysicsComponent; }
 
 	virtual bool collides_with( AABB2Collision * other ) const;
-	virtual void world_position( float & x, float & y );
 	virtual void step( float dt_sec );
-	virtual void set_velocity( float x, float y );
 	virtual void get_aabb( AABB2 & aabb ) const;
 	virtual unsigned short get_collision_mask() const;
 	virtual void get_rotation( float & radians ) const;

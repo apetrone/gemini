@@ -128,21 +128,6 @@ void Movement::tick( float step_alpha )
 	this->position.interpolate(step_alpha);
 } // tick
 
-
-#if 0
-void move_sprite_with_command( Sprite & sprite, MovementCommand & command )
-{
-	const float MOVE_SPEED = 200;
-	
-	glm::vec2 & current = sprite.position.current;
-	
-	current.y -= command.up * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
-	current.y += command.down * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
-	current.x -= command.left * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
-	current.x += command.right * kernel::instance()->parameters().step_interval_seconds * MOVE_SPEED;
-}
-#endif
-
 void InputMovement::step( float delta_seconds )
 {
 	const float MOVE_SPEED = 3.5;
@@ -424,11 +409,6 @@ bool AABB2Collision::collides_with( AABB2Collision * other ) const
 	return false;
 }
 
-void AABB2Collision::world_position( float & x, float & y )
-{
-	
-}
-
 struct AABB2CollisionCheck
 {
 	AABB2Collision * object;
@@ -462,10 +442,6 @@ void AABB2Collision::step( float dt_sec )
 	ComponentManager::for_each_component(PhysicsComponent, check_collision, &data);
 }
 
-void AABB2Collision::set_velocity( float x, float y )
-{
-	
-}
 
 void AABB2Collision::get_aabb( AABB2 & aabb ) const
 {
@@ -551,12 +527,9 @@ GameScreen::GameScreen()
 	assets::SpriteConfig * cfg = assets::sprites()->load_from_path("sprites/player");
 	
 	Sprite * spr = 0;
-	
 	spr = dynamic_cast<Sprite*>(ComponentManager::create_type(SpriteComponent));
 	spr->reference_id = 0;	
 	spr->load_from_spriteconfig(cfg);
-
-	
 	
 	assets::SpriteConfig * enemy = assets::sprites()->load_from_path("sprites/enemy");
 	spr = dynamic_cast<Sprite*>(ComponentManager::create_type(SpriteComponent));
