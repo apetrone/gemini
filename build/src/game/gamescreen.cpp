@@ -112,6 +112,7 @@ void EntityManager::_print_lists()
 using namespace render_utilities;
 
 
+
 void add_sprite_to_layer( unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords );
 
 
@@ -277,6 +278,8 @@ void Sprite::tick( float step_alpha )
 			e->world_position.snap( sprite_position+attachment );
 		}
 	}
+	
+	constrain_to_screen();
 } // tick
 
 
@@ -315,6 +318,62 @@ void Sprite::load_from_spriteconfig( assets::SpriteConfig *config )
 	this->material_id = config->material_id;
 } // load_from_spriteconfig
 
+
+void Sprite::constrain_to_screen()
+{
+	float wx, wy;
+	float hw = this->width / 2.0f;
+	float hh = this->height / 2.0f;
+
+	Movement * movement = dynamic_cast<Movement*>(ComponentManager::component_matching_id(this->reference_id, MovementComponent));
+	if (movement)
+	{
+		wx = movement->position.render.x;
+		wy = movement->position.render.y;
+	}
+	else
+	{
+		InputMovement * imovement = dynamic_cast<InputMovement*>(ComponentManager::component_matching_id(this->reference_id, InputMovementComponent));
+		wx = imovement->position.render.x;
+		wy = imovement->position.render.y;
+	}
+	
+	float scaled_half_width = (hw * this->scale.x);
+	float scaled_half_height = (hh * this->scale.y);
+	
+	if ( wx < scaled_half_width )
+	{
+		wx = scaled_half_width;
+	}
+	else if ( (wx+scaled_half_width) > kernel::instance()->parameters().render_width )
+	{
+		wx = kernel::instance()->parameters().render_width - scaled_half_width;
+	}
+	
+	if ( wy < scaled_half_height )
+	{
+		wy = scaled_half_height;
+	}
+	else if ( (wy+scaled_half_height) > kernel::instance()->parameters().render_height )
+	{
+		wy = kernel::instance()->parameters().render_height - scaled_half_height;
+	}
+	
+
+	
+	if (movement)
+	{
+		movement->position.snap(glm::vec2(wx, wy));
+	}
+	else
+	{
+		InputMovement * imovement = dynamic_cast<InputMovement*>(ComponentManager::component_matching_id(this->reference_id, InputMovementComponent));
+		if (imovement)
+		{
+			imovement->position.snap(glm::vec2(wx, wy));
+		}
+	}
+}
 
 ParticleSystem psys;
 

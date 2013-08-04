@@ -98,6 +98,7 @@ public:
 
 	void play_animation( const std::string & name );
 	void load_from_spriteconfig( assets::SpriteConfig * config );
+	void constrain_to_screen();
 }; // Sprite
 
 class ParticleEmitter;
