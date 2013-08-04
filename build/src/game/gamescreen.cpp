@@ -30,6 +30,10 @@
 
 
 RenderControl render_control;
+// game stuff
+unsigned int score;
+unsigned int energy;
+unsigned char game_state;
 
 // -------------------------------------------------------------
 #include <vector>
@@ -393,9 +397,35 @@ void Emitter::tick( float step_alpha )
 } // tick
 
 
+
+void enemy_collision_handler(AABB2Collision* self, AABB2Collision* other)
+{
+	if (other->reference_id == 0)
+	{
+		// player hit this enemy
+		LOGV("decrease energy\n");
+		energy--;
+	}
+	else
+	{
+		 // increase score
+		LOGV("increase score\n");
+		score++;
+	}
+	
+	self->set_flags(C_DISABLE);
+	// entity message (all components): C_DISABLE
+}
+
+void player_collision_handler(AABB2Collision* self, AABB2Collision* other)
+{
+
+}
+
 AABB2Collision::AABB2Collision()
 {
 	collision_mask = 0;
+	collision_handler = 0;
 }
 
 AABB2Collision::~AABB2Collision()
@@ -429,7 +459,14 @@ void check_collision(IComponent* component, void* data)
 		other->get_aabb(other_bounds);
 		if (check->bounds.overlaps(other_bounds))
 		{
-			LOGV("collision with this thing happened\n");
+			if (check->object->collision_handler)
+			{
+				check->object->collision_handler(check->object, other);
+				if (other->collision_handler)
+				{
+					other->collision_handler(other, check->object);
+				}
+			}
 		}
 	}
 }
@@ -559,7 +596,8 @@ GameScreen::GameScreen()
 	{
 		collision->reference_id = 1;
 		collision->box = glm::vec2( 32.0f, 32.0f );
-		collision->collision_mask = 1;	
+		collision->collision_mask = 1;
+		collision->collision_handler = enemy_collision_handler;
 	}
 		
 #if 0
@@ -846,12 +884,12 @@ void GameScreen::on_draw( kernel::IApplication * app )
 	// draw hud
 	float tx = .02, ty = 0.05;
 	virtual_screen_to_pixels( tx, ty );
-	font::draw_string( font, tx, ty, xstr_format("Energy: %i", this->energy), Color(255,255,255));
+	font::draw_string( font, tx, ty, xstr_format("Energy: %i", energy), Color(255,255,255));
 	
 	tx = 0.8;
 	ty = 0.05;
 	virtual_screen_to_pixels( tx, ty );
-	font::draw_string( font, tx, ty, xstr_format("Score: %04i", this->score), Color(255,255,255));
+	font::draw_string( font, tx, ty, xstr_format("Score: %04i", score), Color(255,255,255));
 	
 	if ( game_state == GAME_FAIL )
 	{

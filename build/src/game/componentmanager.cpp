@@ -463,11 +463,20 @@ namespace ComponentManager
 		}
 		
 		
-//		PhysicsContainer::TypeVector::iterator physics_it = physics.objects.begin();
-//		for( ; physics_it != physics.objects.end(); ++physics_it )
-//		{
-//			(*physics_it)->tick(step_alpha);
-//		}
+		PhysicsContainer::TypeVector::iterator physics_it = physics.objects.begin();
+		for( ; physics_it != physics.objects.end(); )
+		{
+			if ((*physics_it)->component_flags & C_DISABLE)
+			{
+				AABB2Collision * component = (*physics_it);
+				physics_it = physics.objects.erase(physics_it);
+				DESTROY(AABB2Collision, component);
+			}
+			else
+			{
+				++physics_it;
+			}
+		}
 		
 //		EmitterContainer::TypeVector::iterator emitter_it = emitters.objects.begin();
 //		for( ; emitter_it != emitters.objects.end(); ++emitter_it )

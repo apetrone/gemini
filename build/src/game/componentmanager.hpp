@@ -37,16 +37,26 @@ enum ComponentType
 	MaxComponentTypes
 };
 
+enum ComponentFlags
+{
+	C_INVALID = 0,
+	C_DISABLE = 1,
+};
+
 class IComponent
 {
 public:
 	unsigned int reference_id;
+	unsigned short component_flags;
 
-
+	IComponent() : component_flags(0) {}
 	virtual ~IComponent() {}
 	virtual ComponentType component_type() const = 0;
 	
 	unsigned int ref_id() const { return reference_id; }
+	
+	
+	void set_flags(unsigned short flags) { component_flags = flags; }
 
 }; // IComponent
 

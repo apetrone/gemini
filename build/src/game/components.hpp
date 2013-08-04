@@ -117,6 +117,8 @@ public:
 }; // Emitter
 
 
+typedef void (*on_collision)(class AABB2Collision* self, class AABB2Collision* other);
+
 class AABB2Collision : public virtual IComponent
 {
 public:
@@ -125,6 +127,7 @@ public:
 //	glm::vec2 velocity;
 	glm::vec2 box;
 	unsigned short collision_mask;
+	on_collision collision_handler;
 
 	AABB2Collision();
 	~AABB2Collision();
@@ -136,3 +139,10 @@ public:
 	virtual unsigned short get_collision_mask() const;
 	virtual void get_rotation( float & radians ) const;
 }; // AABB2Collision
+
+
+class BreakOnHit : public AABB2Collision
+{
+public:
+	virtual bool collides_with( AABB2Collision* other ) const;
+};

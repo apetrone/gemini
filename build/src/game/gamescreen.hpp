@@ -80,10 +80,7 @@ struct GameScreen : public virtual IScreen
 	unsigned int current_event;
 	float current_gametime;
 	
-	// game stuff
-	unsigned int score;
-	unsigned int energy;
-	unsigned char game_state;
+
 	
 	ParticleSystem psys;
 	
