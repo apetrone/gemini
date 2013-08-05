@@ -28,7 +28,7 @@ namespace assets
 {
 	// -------------------------------------------------------------
 	// Texture
-	struct Texture : public virtual Asset
+	struct Texture : public Asset
 	{
 		char * path;
 		unsigned int texture_id;

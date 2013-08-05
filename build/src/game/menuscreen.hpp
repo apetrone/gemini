@@ -27,7 +27,7 @@
 
 #include "componentmanager.hpp" // for RenderControl
 
-struct MenuScreen : public virtual IScreen
+struct MenuScreen : public IScreen
 {
 	font::Handle menu_font, title_font;
 	MenuNavigator menunav;

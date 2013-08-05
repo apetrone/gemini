@@ -43,7 +43,7 @@ namespace assets
 		
 	}; // Geometry
 	
-	struct Mesh : public virtual Asset
+	struct Mesh : public Asset
 	{
 		unsigned short total_geometry;
 		Geometry * geometry;

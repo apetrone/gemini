@@ -23,7 +23,6 @@
 #include "openal.hpp"
 #include <slim/xlog.h>
 
-
 OpenAL::OpenAL()
 {
 	device = alcOpenDevice( 0 );

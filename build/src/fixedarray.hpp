@@ -21,6 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "memory.hpp"
+
 template <class Type>
 class FixedArray
 {
@@ -58,7 +60,7 @@ public:
 				element = elements[index];
 				if ( element )
 				{
-					delete element;
+					DESTROY(Type, element);
 				}
 			}
 			
@@ -70,7 +72,7 @@ public:
 	{
 		if ( elements )
 		{
-			delete [] elements;
+			DEALLOC(elements);
 			elements = 0;
 			element_count = 0;
 		}
@@ -82,7 +84,7 @@ public:
 		element_count = total_elements;
 		
 		// allocate space for the pointers
-		elements = new Type*[ element_count ];
+		elements = (Type**)ALLOC( sizeof(Type*) * element_count );
 		memset(elements, 0, sizeof(Type*) * element_count);
 	} // allocate
 	

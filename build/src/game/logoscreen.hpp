@@ -23,7 +23,7 @@
 #include "memory.hpp"
 #include "screencontrol.hpp"
 
-struct LogoScreen : public virtual IScreen
+struct LogoScreen : public IScreen
 {
 	font::Handle font;
 	

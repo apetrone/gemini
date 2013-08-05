@@ -25,7 +25,7 @@
 
 namespace engine
 {
-	class Engine : public virtual IEngineInterface
+	class Engine : public IEngineInterface
 	{
 		ScreenController * s_control;
 	public:

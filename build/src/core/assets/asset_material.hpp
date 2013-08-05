@@ -39,7 +39,7 @@ namespace assets
 		MP_VEC4
 	};
 	
-	struct Material : public virtual Asset
+	struct Material : public Asset
 	{
 		struct Parameter
 		{

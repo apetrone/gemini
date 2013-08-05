@@ -37,7 +37,7 @@ namespace assets
 		int value;
 	};
 	
-	struct Shader : public virtual Asset, public virtual renderer::ShaderParameters, public virtual renderer::ShaderProgram
+	struct Shader : public Asset, public renderer::ShaderParameters, public renderer::ShaderProgram
 	{
 		int get_uniform_location( const char * name );
 		virtual void release();

@@ -30,7 +30,7 @@
 
 namespace assets
 {
-	struct EmitterConfig : public virtual Asset
+	struct EmitterConfig : public Asset
 	{
 		unsigned short max_particles;
 		unsigned short spawn_rate;

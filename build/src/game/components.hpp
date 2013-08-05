@@ -27,7 +27,7 @@
 #include "renderer.hpp"
 #include "vertexstream.hpp"
 
-class Movement : public virtual IComponent
+class Movement : public IComponent
 {
 public:
 	virtual ComponentType component_type() const { return MovementComponent; }
@@ -39,7 +39,7 @@ public:
 	virtual void tick( float step_alpha );
 }; // Movement
 
-class InputMovement : public virtual IComponent
+class InputMovement : public IComponent
 {
 public:
 	virtual ComponentType component_type() const { return InputMovementComponent; }
@@ -52,7 +52,7 @@ public:
 }; // InputMovement
 
 #if 0
-class Renderable : public virtual IComponent
+class Renderable : public IComponent
 {
 public:
 	virtual ComponentType component_type() const { return RenderComponent; }
@@ -65,7 +65,7 @@ public:
 #include "assets.hpp"
 
 
-class Sprite : public virtual IComponent
+class Sprite : public IComponent
 {
 public:
 	// these compose the 'animation state'
@@ -102,7 +102,7 @@ public:
 }; // Sprite
 
 class ParticleEmitter;
-class Emitter : public virtual IComponent
+class Emitter : public IComponent
 {
 public:
 	ParticleEmitter * emitter;
@@ -119,7 +119,7 @@ public:
 
 typedef void (*on_collision)(class AABB2Collision* self, class AABB2Collision* other);
 
-class AABB2Collision : public virtual IComponent
+class AABB2Collision : public IComponent
 {
 public:
 

@@ -53,7 +53,7 @@ enum {
 
 
 
-struct GameScreen : public virtual IScreen
+struct GameScreen : public IScreen
 {
 	font::Handle font;
 	font::Handle round_title;

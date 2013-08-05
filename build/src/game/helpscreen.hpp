@@ -25,7 +25,7 @@
 #include "font.hpp"
 
 
-struct HelpScreen : public virtual IScreen
+struct HelpScreen : public IScreen
 {
 	virtual void on_show( kernel::IApplication * app );
 	virtual void on_hide( kernel::IApplication * app );

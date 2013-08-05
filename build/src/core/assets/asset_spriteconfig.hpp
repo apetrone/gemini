@@ -51,7 +51,7 @@ namespace assets
 	
 	const int SPRITE_MAX_ATTACHMENTS = 2;
 	
-	struct SpriteConfig : public virtual Asset
+	struct SpriteConfig : public Asset
 	{
 		unsigned int material_id;
 		unsigned short width;
