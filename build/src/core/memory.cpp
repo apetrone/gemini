@@ -21,20 +21,11 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include "memory_stl_allocator.hpp"
-#include <string.h> // for memset
-
-#if __APPLE__
-	#include <memory> // for malloc, free (on OSX)
-#elif LINUX || __ANDROID__
-	#include <stdlib.h>
-	#include <stdio.h> // for fprintf
-#elif _WIN32
-	#include <memory> // we'll see if this compiles...
-#endif
-
+#include <stdio.h> // for stdout
 
 namespace memory
 {
+#pragma pack(push, 4)
 	struct MemoryHeader
 	{
 		size_t alloc_size;
@@ -42,11 +33,18 @@ namespace memory
 		const char * file;
 		int line;
 	};
+#pragma pack(pop)
+
 	const size_t MemoryHeaderSize = sizeof(MemoryHeader);
 	IAllocator * _allocator = 0;
 	
-	class SimpleAllocator : public virtual IAllocator
+	class SimpleAllocator : public IAllocator
 	{
+		/*
+			What follows are the following known limitations / drawbacks to this allocator:
+				- Multiple inheritance is not supported. Using public virtual will cause
+					an implicit conversion which is offset and therefore breaks the internal tracking of the allocator.
+		*/
 		size_t num_active_bytes;
 		size_t num_active_allocations;
 		size_t num_total_allocations;
@@ -57,11 +55,12 @@ namespace memory
 		virtual void * allocate( size_t bytes, const char * file, int line )
 		{
 //			size_t total_size = bytes+MemoryHeaderSize;
+
 			char * block = (char*)malloc( bytes+MemoryHeaderSize );
 			assert(block != 0);
 			if ( block )
 			{
-//				fprintf( stdout, "+ %i bytes\n", (unsigned long)total_size );
+//				fprintf( stdout, "+ %zu (%zu) bytes\n", total_size, bytes );
 			
 				// increment totals
 				num_active_bytes += bytes+MemoryHeaderSize;
@@ -75,13 +74,15 @@ namespace memory
 				mheader->alloc_num = num_total_allocations-1;
 				mheader->file = file;
 				mheader->line = line;
-				
+
 				// advance the block pointer
 				block += MemoryHeaderSize;
+//				fprintf(stdout, "memory_header = %p, block = %p\n", mheader, block);
 			}
 			else
 			{
 				// oh noes, out of memory error!
+				assert( 0 );
 			}
 						
 			return block;
@@ -104,7 +105,7 @@ namespace memory
 				free( block );
 			}
 		} // deallocate
-		
+			
 		virtual size_t active_bytes() const { return num_active_bytes; }
 		virtual size_t active_allocations() const { return num_active_allocations; }
 		virtual size_t total_allocations() const { return num_total_allocations; }
@@ -127,10 +128,8 @@ namespace memory
 		_allocator = 0;
 	} // shutdown
 	
-	
 	IAllocator & allocator()
 	{
 		return *_allocator;
-	}
-	
+	} // allocator
 }; // namespace memory
