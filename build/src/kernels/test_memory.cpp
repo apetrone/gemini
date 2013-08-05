@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include "typedefs.h"
 #include "memory.hpp"
+#include "fixedarray.hpp"
 
 struct Test
 {
@@ -45,6 +46,38 @@ struct Test
 #include <map>
 
 
+#include <slim/xlog.h>
+
+struct BaseObject
+{
+	int type;
+	
+	BaseObject() : type(0)
+	{
+		LOGV("BaseObject\n");
+	}
+
+	virtual ~BaseObject()
+	{
+		LOGV("~BaseObject\n");
+	}
+};
+
+
+struct DerivedObject : public BaseObject
+{
+	int test;
+	
+	DerivedObject() : test(0)
+	{
+		LOGV("DerivedObject\n");
+	}
+	
+	~DerivedObject()
+	{
+		LOGV("~DerivedObject\n");
+	}
+};
 
 class TestMemory : public kernel::IApplication
 {
@@ -73,8 +106,17 @@ public:
 		int_map.insert( MyMap::value_type( 16, 100) );
 		int_map.insert( MyMap::value_type( 300, 2 ) );
 
-		
-		
+		// Test FixedArray - which should cause derived destructors
+		// to be called as well as the BaseObject's destructors.
+		FixedArray<BaseObject> objects;
+		objects.allocate(3);
+		for( size_t i = 0; i < 3; ++i )
+		{
+			objects[i] = CREATE(DerivedObject);
+			objects[i]->type = i+4;
+		}
+		objects.purge();
+
 		// added z-modifer to satisfy Xcode, C99 addition, we'll see who doesn't support it :)
 		printf( "totalAllocations: %zu, totalBytes: %zu\n", memory::allocator().total_allocations(), memory::allocator().total_bytes() );
 		printf( "activeAllocations: %zu, activeBytes: %zu\n", memory::allocator().active_allocations(), memory::allocator().active_bytes() );
