@@ -26,6 +26,16 @@
 #include "renderstream.hpp"
 #include "camera.hpp"
 
+enum ComponentTypes
+{
+	CMovement,
+	CGraphics,
+	CPhysics,
+	CParticleEmitter,
+	
+	CMaxComponents
+};
+
 enum ComponentType
 {
 	MovementComponent,			// movement (position+velocity)

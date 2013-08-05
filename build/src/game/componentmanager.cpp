@@ -332,6 +332,17 @@ namespace ComponentManager
 		return _component_creator_map;
 	} // creator_map
 
+	
+	
+	
+	unsigned int component_type_to_index( ComponentTypes type )
+	{
+		return (unsigned int)type;
+	} // component_type_to_index
+	
+	
+
+
 	// 0: Add typedefs, static vars
 
 	typedef ComponentContainer<Movement> MovementContainer;
@@ -573,8 +584,11 @@ namespace ComponentManager
 	{
 		creator_map().insert(ComponentCreatorByString::value_type("Movement", Movement::creator));
 		creator_map().insert(ComponentCreatorByString::value_type("InputMovement", InputMovement::creator));
+		
 		creator_map().insert(ComponentCreatorByString::value_type("Sprite", Sprite::creator));
+		
 		creator_map().insert(ComponentCreatorByString::value_type("Emitter", Emitter::creator));
+		
 		creator_map().insert(ComponentCreatorByString::value_type("Collision", AABB2Collision::creator));
 	} // register_components
 }; // ComponentManager
