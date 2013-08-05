@@ -30,6 +30,7 @@
 class Movement : public IComponent
 {
 public:
+	DECLARE_FACTORY_CLASS(Movement, IComponent);
 	virtual ComponentType component_type() const { return MovementComponent; }
 	
 	render_utilities::PhysicsState<glm::vec2> position;
@@ -42,6 +43,7 @@ public:
 class InputMovement : public IComponent
 {
 public:
+	DECLARE_FACTORY_CLASS(InputMovement, IComponent);
 	virtual ComponentType component_type() const { return InputMovementComponent; }
 	
 	render_utilities::PhysicsState<glm::vec2> position;
@@ -68,6 +70,8 @@ public:
 class Sprite : public IComponent
 {
 public:
+	DECLARE_FACTORY_CLASS(Sprite, IComponent);
+	
 	// these compose the 'animation state'
 	unsigned short current_animation;	// currently active animation
 	unsigned short current_frame;		// current frame of the animation
@@ -105,6 +109,8 @@ class ParticleEmitter;
 class Emitter : public IComponent
 {
 public:
+	DECLARE_FACTORY_CLASS(Emitter, IComponent);
+	
 	ParticleEmitter * emitter;
 	
 	Emitter();
@@ -122,7 +128,8 @@ typedef void (*on_collision)(class AABB2Collision* self, class AABB2Collision* o
 class AABB2Collision : public IComponent
 {
 public:
-
+	DECLARE_FACTORY_CLASS(AABB2Collision, IComponent);
+	
 //	render_utilities::PhysicsState<glm::vec2> position;
 //	glm::vec2 velocity;
 	glm::vec2 box;

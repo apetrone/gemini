@@ -111,6 +111,10 @@ namespace ComponentManager
 
 	void for_each_component(ComponentType type, ComponentCallback callback, void * data);
 	IComponent * component_matching_id( unsigned int id, ComponentType type );
+	
+	
+	
+	void register_components();
 }; // ComponentManager
 
 

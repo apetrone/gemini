@@ -33,6 +33,8 @@
 
 #include "particlesystem.hpp"
 
+#include <map>
+
 struct SpriteVertexType
 {
 	float x, y, z;
@@ -321,6 +323,15 @@ namespace ComponentManager
 		} // find_id
 	}; // ComponentContainer
 
+
+	typedef IComponent* (*ComponentCreatorFunction)();
+	typedef std::map< std::string, ComponentCreatorFunction > ComponentCreatorByString;
+	ComponentCreatorByString & creator_map()
+	{
+		static ComponentCreatorByString _component_creator_map;
+		return _component_creator_map;
+	} // creator_map
+
 	// 0: Add typedefs, static vars
 
 	typedef ComponentContainer<Movement> MovementContainer;
@@ -556,4 +567,14 @@ namespace ComponentManager
 		
 		return component;
 	} // component_matching_id
+	
+	
+	void register_components()
+	{
+		creator_map().insert(ComponentCreatorByString::value_type("Movement", Movement::creator));
+		creator_map().insert(ComponentCreatorByString::value_type("InputMovement", InputMovement::creator));
+		creator_map().insert(ComponentCreatorByString::value_type("Sprite", Sprite::creator));
+		creator_map().insert(ComponentCreatorByString::value_type("Emitter", Emitter::creator));
+		creator_map().insert(ComponentCreatorByString::value_type("Collision", AABB2Collision::creator));
+	} // register_components
 }; // ComponentManager

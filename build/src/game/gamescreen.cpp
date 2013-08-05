@@ -544,7 +544,9 @@ void pixels_to_virtual_screen(float & px, float & py)
 GameScreen::GameScreen()
 {
 	Movement* pos = 0;
-		
+	
+	ComponentManager::register_components();
+	
 #if 1
 	InputMovement* im = 0;
 	im = dynamic_cast<InputMovement*>(ComponentManager::create_type( InputMovementComponent ));
