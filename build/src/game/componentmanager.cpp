@@ -248,11 +248,35 @@ void RenderControl::render_emitter( ParticleEmitter * emitter )
 namespace ComponentManager
 {
 	template <class Type>
+	class GenericStepPolicy
+	{
+	public:
+		void step( Type *object )
+		{
+			
+		}
+	};
+	
+	template <class Type>
+	class GenericTickPolicy
+	{
+	public:
+		void tick( Type *object )
+		{
+			
+		}
+	};
+
+
+	template <class Type, class StepPolicy=GenericStepPolicy<Type>, class TickPolicy=GenericTickPolicy<Type>>
 	class ComponentContainer
 	{
 	public:
 		typedef std::vector<Type*> TypeVector;
 		TypeVector objects;
+		
+		StepPolicy stepper;
+		TickPolicy ticker;
 		
 		~ComponentContainer()
 		{
@@ -321,6 +345,24 @@ namespace ComponentManager
 
 			return object;
 		} // find_id
+		
+		void step()
+		{
+			typename TypeVector::iterator it = objects.begin();
+			for( ; it != objects.end(); ++it )
+			{
+				stepper.step((*it));
+			}
+		} // step
+		
+		void tick()
+		{
+			typename TypeVector::iterator it = objects.begin();
+			for( ; it != objects.end(); ++it )
+			{
+				ticker.tick((*it));
+			}
+		} // tick
 	}; // ComponentContainer
 
 
