@@ -86,20 +86,21 @@ namespace assets
 	void texture_construct_extension( StackString<MAX_PATH_SIZE> & extension )
 	{
 		kernel::KernelDeviceFlags device_flags = kernel::instance()->parameters().device_flags;
-
+		const char * ext = 0;
+		
 		if ( device_flags & kernel::DeviceDesktop || (device_flags & kernel::DeviceAndroid) )
 		{
 			// ...
-			extension = "png";
+			ext = "png";
 		}
 		else if ( device_flags & kernel::DeviceiPhone )
 		{
-			extension = "png";
+			ext = "png";
 			extension.append( "-iphone" );
 		}
 		else if ( device_flags & kernel::DeviceiPad )
 		{
-			extension = "png";
+			ext = "png";
 			extension.append( "-ipad" );
 		}
 		
@@ -107,6 +108,9 @@ namespace assets
 		{
 			extension.append( "@2x" );
 		}
+
+		extension.append(".");
+		extension.append(ext);
 	} // texture_construct_extension
 
 }; // namespace assets

@@ -400,6 +400,6 @@ namespace assets
 	
 	void material_construct_extension( StackString<MAX_PATH_SIZE> & extension )
 	{
-		extension = "material";
+		extension = ".material";
 	} // material_construct_extension
 }; // namespace assets

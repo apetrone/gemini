@@ -97,7 +97,6 @@ namespace assets
 		{
 			StackString<MAX_PATH_SIZE> extension;
 			this->construct_extension(extension);
-			path.append(".");
 			path.append( extension() );
 		}
 

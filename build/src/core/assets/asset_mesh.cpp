@@ -216,7 +216,7 @@ namespace assets
 	
 	void mesh_construct_extension( StackString<MAX_PATH_SIZE> & extension )
 	{
-		extension = "model";
+		extension = ".model";
 	} // mesh_construct_extension
 	
 	Geometry::Geometry()
