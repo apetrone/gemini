@@ -113,7 +113,7 @@ namespace ComponentManager
 	void destroy_type( IComponent * component );
 	void purge();
 	void step( float delta_seconds );
-	void tick( float step_alpha );
+	void tick( float delta_seconds, float step_alpha );
 	void draw( RenderControl & render_control );
 //	ComponentVector & component_list( ComponentType type );
 	

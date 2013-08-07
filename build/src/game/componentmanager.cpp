@@ -266,10 +266,20 @@ namespace ComponentManager
 			
 		}
 	};
+	
+	
+	
+	class GenericComponentContainer
+	{
+	public:
+		
+		virtual void step() = 0;
+		virtual void tick() = 0;
+	};
 
 
 	template <class Type, class StepPolicy=GenericStepPolicy<Type>, class TickPolicy=GenericTickPolicy<Type>>
-	class ComponentContainer
+	class ComponentContainer : public GenericComponentContainer
 	{
 	public:
 		typedef std::vector<Type*> TypeVector;
@@ -346,7 +356,7 @@ namespace ComponentManager
 			return object;
 		} // find_id
 		
-		void step()
+		virtual void step()
 		{
 			typename TypeVector::iterator it = objects.begin();
 			for( ; it != objects.end(); ++it )
@@ -355,7 +365,7 @@ namespace ComponentManager
 			}
 		} // step
 		
-		void tick()
+		virtual void tick()
 		{
 			typename TypeVector::iterator it = objects.begin();
 			for( ; it != objects.end(); ++it )
@@ -373,20 +383,15 @@ namespace ComponentManager
 		static ComponentCreatorByString _component_creator_map;
 		return _component_creator_map;
 	} // creator_map
-
-	
-	
 	
 	unsigned int component_type_to_index( ComponentTypes type )
 	{
 		return (unsigned int)type;
 	} // component_type_to_index
 	
-	
 
 
 	// 0: Add typedefs, static vars
-
 	typedef ComponentContainer<Movement> MovementContainer;
 	MovementContainer movement;
 
@@ -398,7 +403,6 @@ namespace ComponentManager
 
 	typedef ComponentContainer<Emitter> EmitterContainer;
 	EmitterContainer emitters;
-	
 	
 	typedef ComponentContainer<AABB2Collision> PhysicsContainer;
 	PhysicsContainer physics;
@@ -506,7 +510,7 @@ namespace ComponentManager
 	} // step
 	
 	// 5. (optionally) Add tick
-	void tick( float step_alpha )
+	void tick( float delta_seconds, float step_alpha )
 	{
 		MovementContainer::TypeVector::iterator movement_it = movement.objects.begin();
 		for( ; movement_it != movement.objects.end(); ++movement_it )

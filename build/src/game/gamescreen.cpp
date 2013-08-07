@@ -1027,7 +1027,7 @@ void GameScreen::on_update( kernel::IApplication * app )
 		current_gametime += (kernel::instance()->parameters().framedelta_filtered*.001);
 	}
 	
-	ComponentManager::tick( kernel::instance()->parameters().step_alpha );
+	ComponentManager::tick( kernel::instance()->parameters().framedelta_filtered, kernel::instance()->parameters().step_alpha );
 }
 
 void GameScreen::on_step( kernel::IApplication * app )
