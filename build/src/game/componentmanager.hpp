@@ -70,6 +70,21 @@ public:
 
 }; // IComponent
 
+typedef void (*ComponentCallback)( IComponent *, void * data );
+
+class GenericComponentContainer
+{
+public:
+	virtual ~GenericComponentContainer() {}
+	
+	virtual IComponent * create() = 0;
+	virtual void destroy( IComponent * component ) = 0;
+	virtual void for_each( ComponentCallback callback, void * data ) = 0;
+	virtual IComponent * find_id( unsigned int reference_id ) = 0;
+	virtual void step( float delta_seconds ) = 0;
+	virtual void tick( float delta_seconds, float step_alpha ) = 0;
+	virtual void purge() = 0;
+};
 
 struct Color;
 namespace renderer
@@ -105,7 +120,7 @@ namespace ComponentManager
 	typedef std::vector<IComponent*> ComponentVector;
 	typedef Factory<IComponent, MaxComponentTypes> ComponentFactory;
 
-	typedef void (*ComponentCallback)( IComponent *, void * data );
+	
 	
 //	void register_component( const char * component_name, ComponentFactory::TypeCreator );
 //	IComponent * create_component( const char * component_name );

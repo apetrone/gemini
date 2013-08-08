@@ -22,6 +22,7 @@
 #include "typedefs.h"
 #include <slim/xlog.h>
 #include "componentmanager.hpp"
+#include "componentlibrary.hpp"
 #include "kernel.hpp"
 
 #include <vector>
@@ -264,95 +265,8 @@ namespace ComponentManager
 			object->tick( delta_seconds, step_alpha );
 		}
 	};
+
 	
-	
-	
-	class GenericComponentContainer
-	{
-	public:
-		virtual ~GenericComponentContainer() {}
-		
-		virtual IComponent * create() = 0;
-		virtual void destroy( IComponent * component ) = 0;
-		virtual void for_each( ComponentCallback callback, void * data ) = 0;
-		virtual IComponent * find_id( unsigned int reference_id ) = 0;
-		virtual void step( float delta_seconds ) = 0;
-		virtual void tick( float delta_seconds, float step_alpha ) = 0;
-		virtual void purge() = 0;
-	};
-	
-	
-	class ComponentLibrary
-	{
-	public:
-		typedef std::vector<GenericComponentContainer*> GenericContainerVector;
-		GenericContainerVector containers;
-		
-		ComponentLibrary()
-		{
-			containers.resize( MaxComponentTypes );
-		}
-		
-		void register_container( GenericComponentContainer * container, ComponentType type )
-		{
-			containers[ type ] = container;
-		}
-		
-		IComponent * find_id( ComponentType type, unsigned int reference_id );
-		void step( float delta_seconds );
-		void tick( float delta_seconds, float step_alpha );
-		void purge();
-		GenericComponentContainer * container_from_type( ComponentType type );
-	};
-	
-	IComponent * ComponentLibrary::find_id( ComponentType type, unsigned int reference_id )
-	{
-		IComponent * component = 0;
-		GenericComponentContainer * gcc = container_from_type( type );
-		if ( gcc )
-		{
-			component = gcc->find_id(reference_id);
-		}
-		
-		return component;
-	}
-	
-	void ComponentLibrary::step( float delta_seconds )
-	{
-		GenericContainerVector::iterator it = containers.begin();
-		for( ; it != containers.end(); ++it )
-		{
-			(*it)->step( delta_seconds );
-		}
-	} // step
-	
-	void ComponentLibrary::tick( float delta_seconds, float step_alpha )
-	{
-		GenericContainerVector::iterator it = containers.begin();
-		for( ; it != containers.end(); ++it )
-		{
-			(*it)->tick( delta_seconds, step_alpha );
-		}
-	} // tick
-	
-	void ComponentLibrary::purge()
-	{
-		GenericContainerVector::iterator it = containers.begin();
-		for( ; it != containers.end(); ++it )
-		{
-			(*it)->purge();
-		}
-	} // purge
-	
-	GenericComponentContainer * ComponentLibrary::container_from_type( ComponentType type )
-	{
-		GenericComponentContainer * gcc = 0;
-		
-		assert( type >= 0 && type < containers.size() );
-		gcc = containers[ type ];
-		
-		return gcc;
-	} // container_from_type
 	
 	ComponentLibrary & get_master()
 	{
