@@ -248,9 +248,8 @@ void RenderControl::render_emitter( ParticleEmitter * emitter )
 namespace ComponentManager
 {
 	template <class Type>
-	class GenericStepPolicy
+	struct GenericStepPolicy
 	{
-	public:
 		void step( Type * object, float delta_seconds )
 		{
 			object->step( delta_seconds );
@@ -258,9 +257,8 @@ namespace ComponentManager
 	};
 	
 	template <class Type>
-	class GenericTickPolicy
+	struct GenericTickPolicy
 	{
-	public:
 		void tick( Type * object, float delta_seconds, float step_alpha )
 		{
 			object->tick( delta_seconds, step_alpha );
@@ -272,19 +270,25 @@ namespace ComponentManager
 	class GenericComponentContainer
 	{
 	public:
+		virtual ~GenericComponentContainer() {}
 		
+		virtual IComponent * create() = 0;
+		virtual void destroy( IComponent * component ) = 0;
+		virtual void for_each( ComponentCallback callback, void * data ) = 0;
+		virtual IComponent * find_id( unsigned int reference_id ) = 0;
 		virtual void step( float delta_seconds ) = 0;
 		virtual void tick( float delta_seconds, float step_alpha ) = 0;
+		virtual void purge() = 0;
 	};
 	
 	
-	class ComponentContainerThing
+	class ComponentLibrary
 	{
 	public:
 		typedef std::vector<GenericComponentContainer*> GenericContainerVector;
 		GenericContainerVector containers;
 		
-		ComponentContainerThing()
+		ComponentLibrary()
 		{
 			containers.resize( MaxComponentTypes );
 		}
@@ -292,14 +296,28 @@ namespace ComponentManager
 		void register_container( GenericComponentContainer * container, ComponentType type )
 		{
 			containers[ type ] = container;
-//			containers.push_back(container);
 		}
 		
+		IComponent * find_id( ComponentType type, unsigned int reference_id );
 		void step( float delta_seconds );
 		void tick( float delta_seconds, float step_alpha );
+		void purge();
+		GenericComponentContainer * container_from_type( ComponentType type );
 	};
 	
-	void ComponentContainerThing::step( float delta_seconds )
+	IComponent * ComponentLibrary::find_id( ComponentType type, unsigned int reference_id )
+	{
+		IComponent * component = 0;
+		GenericComponentContainer * gcc = container_from_type( type );
+		if ( gcc )
+		{
+			component = gcc->find_id(reference_id);
+		}
+		
+		return component;
+	}
+	
+	void ComponentLibrary::step( float delta_seconds )
 	{
 		GenericContainerVector::iterator it = containers.begin();
 		for( ; it != containers.end(); ++it )
@@ -308,7 +326,7 @@ namespace ComponentManager
 		}
 	} // step
 	
-	void ComponentContainerThing::tick( float delta_seconds, float step_alpha )
+	void ComponentLibrary::tick( float delta_seconds, float step_alpha )
 	{
 		GenericContainerVector::iterator it = containers.begin();
 		for( ; it != containers.end(); ++it )
@@ -317,10 +335,28 @@ namespace ComponentManager
 		}
 	} // tick
 	
-	
-	ComponentContainerThing & get_master()
+	void ComponentLibrary::purge()
 	{
-		static ComponentContainerThing s_component_master;
+		GenericContainerVector::iterator it = containers.begin();
+		for( ; it != containers.end(); ++it )
+		{
+			(*it)->purge();
+		}
+	} // purge
+	
+	GenericComponentContainer * ComponentLibrary::container_from_type( ComponentType type )
+	{
+		GenericComponentContainer * gcc = 0;
+		
+		assert( type >= 0 && type < containers.size() );
+		gcc = containers[ type ];
+		
+		return gcc;
+	} // container_from_type
+	
+	ComponentLibrary & get_master()
+	{
+		static ComponentLibrary s_component_master;
 		return s_component_master;
 	}
 
@@ -346,7 +382,7 @@ namespace ComponentManager
 			purge();
 		} // ~ComponentContainer
 		
-		void purge()
+		virtual void purge()
 		{
 			typename TypeVector::iterator it = objects.begin();
 			for( ; it != objects.end(); ++it )
@@ -356,14 +392,14 @@ namespace ComponentManager
 			objects.clear();
 		} // purge
 		
-		Type * create()
+		virtual IComponent * create()
 		{
 			Type * object = CREATE(Type);
 			objects.push_back(object);
 			return object;
 		} // create
 		
-		void destroy( Type * object )
+		virtual void destroy( IComponent * object )
 		{
 			if ( !object )
 			{
@@ -383,7 +419,7 @@ namespace ComponentManager
 			}
 		} // destroy
 		
-		void for_each(ComponentCallback callback, void * data)
+		virtual void for_each( ComponentCallback callback, void * data )
 		{
 			typename TypeVector::iterator it = objects.begin();
 			for( ; it != objects.end(); ++it )
@@ -392,7 +428,7 @@ namespace ComponentManager
 			}
 		} // for_each
 		
-		Type * find_id(unsigned int id)
+		virtual IComponent * find_id(unsigned int id)
 		{
 			Type * object = 0;
 			
@@ -478,29 +514,11 @@ namespace ComponentManager
 	IComponent * create_type( ComponentType type )
 	{
 		IComponent * component = 0;
-		
-		switch( type )
+		GenericComponentContainer * gcc = get_master().container_from_type( type );
+		if ( gcc )
 		{
-			case MovementComponent:
-				component = movement.create();
-				break;
-			case InputMovementComponent:
-				component = inputmoves.create();
-				break;
-			case SpriteComponent:
-				component = sprite.create();
-				break;
-			case ParticleEmitterComponent:
-				component = emitters.create();
-				break;
-			case PhysicsComponent:
-				component = physics.create();
-				break;
-				
-			default:
-				break;
+			component = gcc->create();
 		}
-
 	
 		return component;
 	} // create_type
@@ -509,25 +527,10 @@ namespace ComponentManager
 	void destroy_type( IComponent * component )
 	{
 		ComponentType type = component->component_type();
-		switch( type )
+		GenericComponentContainer * gcc = get_master().container_from_type( type );
+		if ( gcc )
 		{
-			case MovementComponent:
-				movement.destroy(dynamic_cast<Movement*>(component));
-				break;
-			case InputMovementComponent:
-				inputmoves.destroy(dynamic_cast<InputMovement*>(component));
-				break;
-			case SpriteComponent:
-				sprite.destroy(dynamic_cast<Sprite*>(component));
-				break;
-			case ParticleEmitterComponent:
-				emitters.destroy(dynamic_cast<Emitter*>(component));
-				break;
-			case PhysicsComponent:
-				physics.destroy(dynamic_cast<AABB2Collision*>(component));
-				break;
-			default:
-				break;
+			gcc->destroy( component );
 		}
 	} // destroy_type
 	
@@ -572,26 +575,10 @@ namespace ComponentManager
 	// 7. Add for_each support
 	void for_each_component(ComponentType type, ComponentCallback callback, void * data)
 	{
-		switch( type )
+		GenericComponentContainer * gcc = get_master().container_from_type(type);
+		if ( gcc )
 		{
-			case MovementComponent:
-				movement.for_each(callback, data);
-				break;
-			case InputMovementComponent:
-				inputmoves.for_each(callback, data);
-				break;
-			case SpriteComponent:
-				sprite.for_each(callback, data);
-				break;
-			case ParticleEmitterComponent:
-				emitters.for_each(callback, data);
-				break;
-			case PhysicsComponent:
-				physics.for_each(callback, data);
-				break;
-				
-			default:
-				break;
+			return gcc->for_each( callback, data );
 		}
 	} // for_each_component
 	
@@ -616,8 +603,6 @@ namespace ComponentManager
 			case PhysicsComponent:
 				component = physics.find_id(id);
 				break;
-			
-				
 			default:
 				break;
 		}
