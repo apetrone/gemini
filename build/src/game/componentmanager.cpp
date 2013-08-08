@@ -451,11 +451,7 @@ namespace ComponentManager
 	// 3. Add purge
 	void purge()
 	{
-		movement.purge();
-		inputmoves.purge();
-		sprite.purge();
-		emitters.purge();
-		physics.purge();
+		get_master().purge();
 	} // purge
 
 	// 4. (optionally) Add step
@@ -500,27 +496,11 @@ namespace ComponentManager
 	IComponent * component_matching_id( unsigned int id, ComponentType type )
 	{
 		IComponent * component = 0;
-		switch( type )
+		GenericComponentContainer * gcc = get_master().container_from_type(type);
+		if ( gcc )
 		{
-			case MovementComponent:
-				component = movement.find_id(id);
-				break;
-			case InputMovementComponent:
-				component = inputmoves.find_id(id);
-				break;
-			case SpriteComponent:
-				component = sprite.find_id(id);
-				break;
-			case ParticleEmitterComponent:
-				component = emitters.find_id(id);
-				break;
-			case PhysicsComponent:
-				component = physics.find_id(id);
-				break;
-			default:
-				break;
+			component = gcc->find_id(id);
 		}
-		
 		return component;
 	} // component_matching_id
 	
