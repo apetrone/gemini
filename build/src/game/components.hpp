@@ -37,7 +37,7 @@ public:
 	glm::vec2 velocity;
 	
 	virtual void step( float dt_sec );
-	virtual void tick( float step_alpha );
+	virtual void tick( float delta_seconds, float step_alpha );
 }; // Movement
 
 class InputMovement : public IComponent
@@ -50,7 +50,7 @@ public:
 	glm::vec2 velocity;
 	
 	virtual void step( float dt_sec );
-	virtual void tick( float step_alpha );
+	virtual void tick( float delta_seconds, float step_alpha );
 }; // InputMovement
 
 #if 0
@@ -98,7 +98,7 @@ public:
 	virtual ComponentType component_type() const { return SpriteComponent; }
 	virtual void render( RenderControl & render_control );
 	virtual void step( float delta_seconds );
-	virtual void tick( float step_alpha );
+	virtual void tick( float delta_seconds, float step_alpha );
 
 	void play_animation( const std::string & name );
 	void load_from_spriteconfig( assets::SpriteConfig * config );
@@ -119,7 +119,7 @@ public:
 	
 	virtual void render( RenderControl & render_control );
 	virtual void step( float delta_seconds );
-	virtual void tick( float step_alpha );
+	virtual void tick( float delta_seconds, float step_alpha );
 }; // Emitter
 
 
@@ -142,6 +142,7 @@ public:
 
 	virtual bool collides_with( AABB2Collision * other ) const;
 	virtual void step( float dt_sec );
+	virtual void tick( float delta_seconds, float step_alpha );
 	virtual void get_aabb( AABB2 & aabb ) const;
 	virtual unsigned short get_collision_mask() const;
 	virtual void get_rotation( float & radians ) const;

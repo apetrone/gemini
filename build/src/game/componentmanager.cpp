@@ -251,9 +251,9 @@ namespace ComponentManager
 	class GenericStepPolicy
 	{
 	public:
-		void step( Type *object )
+		void step( Type * object, float delta_seconds )
 		{
-			
+			object->step( delta_seconds );
 		}
 	};
 	
@@ -261,9 +261,9 @@ namespace ComponentManager
 	class GenericTickPolicy
 	{
 	public:
-		void tick( Type *object )
+		void tick( Type * object, float delta_seconds, float step_alpha )
 		{
-			
+			object->tick( delta_seconds, step_alpha );
 		}
 	};
 	
@@ -273,12 +273,58 @@ namespace ComponentManager
 	{
 	public:
 		
-		virtual void step() = 0;
-		virtual void tick() = 0;
+		virtual void step( float delta_seconds ) = 0;
+		virtual void tick( float delta_seconds, float step_alpha ) = 0;
 	};
+	
+	
+	class ComponentContainerThing
+	{
+	public:
+		typedef std::vector<GenericComponentContainer*> GenericContainerVector;
+		GenericContainerVector containers;
+		
+		ComponentContainerThing()
+		{
+			containers.resize( MaxComponentTypes );
+		}
+		
+		void register_container( GenericComponentContainer * container, ComponentType type )
+		{
+			containers[ type ] = container;
+//			containers.push_back(container);
+		}
+		
+		void step( float delta_seconds );
+		void tick( float delta_seconds, float step_alpha );
+	};
+	
+	void ComponentContainerThing::step( float delta_seconds )
+	{
+		GenericContainerVector::iterator it = containers.begin();
+		for( ; it != containers.end(); ++it )
+		{
+			(*it)->step( delta_seconds );
+		}
+	} // step
+	
+	void ComponentContainerThing::tick( float delta_seconds, float step_alpha )
+	{
+		GenericContainerVector::iterator it = containers.begin();
+		for( ; it != containers.end(); ++it )
+		{
+			(*it)->tick( delta_seconds, step_alpha );
+		}
+	} // tick
+	
+	
+	ComponentContainerThing & get_master()
+	{
+		static ComponentContainerThing s_component_master;
+		return s_component_master;
+	}
 
-
-	template <class Type, class StepPolicy=GenericStepPolicy<Type>, class TickPolicy=GenericTickPolicy<Type>>
+	template <class Type, ComponentType type=MovementComponent, class StepPolicy=GenericStepPolicy<Type>, class TickPolicy=GenericTickPolicy<Type>>
 	class ComponentContainer : public GenericComponentContainer
 	{
 	public:
@@ -287,6 +333,13 @@ namespace ComponentManager
 		
 		StepPolicy stepper;
 		TickPolicy ticker;
+		
+		ComponentType get_component_type() const { return type; }
+		
+		ComponentContainer()
+		{
+			get_master().register_container(this, get_component_type());
+		}
 		
 		~ComponentContainer()
 		{
@@ -356,21 +409,34 @@ namespace ComponentManager
 			return object;
 		} // find_id
 		
-		virtual void step()
+		virtual void step( float delta_seconds )
 		{
 			typename TypeVector::iterator it = objects.begin();
 			for( ; it != objects.end(); ++it )
 			{
-				stepper.step((*it));
+				stepper.step( (*it), delta_seconds );
 			}
 		} // step
 		
-		virtual void tick()
+		virtual void tick( float delta_seconds, float step_alpha )
 		{
 			typename TypeVector::iterator it = objects.begin();
-			for( ; it != objects.end(); ++it )
+
+			Type * object;
+			for( ; it != objects.end(); )
 			{
-				ticker.tick((*it));
+				ticker.tick((*it), delta_seconds, step_alpha );
+				
+				object = (*it);
+				if ( object->component_flags & C_DISABLE )
+				{
+					it = objects.erase(it);
+					DESTROY(Type, object);
+				}
+				else
+				{
+					++it;
+				}
 			}
 		} // tick
 	}; // ComponentContainer
@@ -392,19 +458,19 @@ namespace ComponentManager
 
 
 	// 0: Add typedefs, static vars
-	typedef ComponentContainer<Movement> MovementContainer;
+	typedef ComponentContainer<Movement, MovementComponent> MovementContainer;
 	MovementContainer movement;
 
-	typedef ComponentContainer<InputMovement> InputMovementContainer;
+	typedef ComponentContainer<InputMovement, InputMovementComponent> InputMovementContainer;
 	InputMovementContainer inputmoves;
 	
-	typedef ComponentContainer<Sprite> SpriteContainer;
+	typedef ComponentContainer<Sprite, SpriteComponent> SpriteContainer;
 	SpriteContainer sprite;
 
-	typedef ComponentContainer<Emitter> EmitterContainer;
+	typedef ComponentContainer<Emitter, ParticleEmitterComponent> EmitterContainer;
 	EmitterContainer emitters;
 	
-	typedef ComponentContainer<AABB2Collision> PhysicsContainer;
+	typedef ComponentContainer<AABB2Collision, PhysicsComponent> PhysicsContainer;
 	PhysicsContainer physics;
 	
 	
@@ -478,79 +544,13 @@ namespace ComponentManager
 	// 4. (optionally) Add step
 	void step( float delta_seconds )
 	{
-		MovementContainer::TypeVector::iterator movement_it = movement.objects.begin();
-		for( ; movement_it != movement.objects.end(); ++movement_it )
-		{
-			(*movement_it)->step(delta_seconds);
-		}
-		
-		InputMovementContainer::TypeVector::iterator imove_it = inputmoves.objects.begin();
-		for( ; imove_it != inputmoves.objects.end(); ++imove_it )
-		{
-			(*imove_it)->step(delta_seconds);
-		}
-		
-		SpriteContainer::TypeVector::iterator sprite_it = sprite.objects.begin();
-		for( ; sprite_it != sprite.objects.end(); ++sprite_it )
-		{
-			(*sprite_it)->step(delta_seconds);
-		}
-		
-		EmitterContainer::TypeVector::iterator emitter_it = emitters.objects.begin();
-		for( ; emitter_it != emitters.objects.end(); ++emitter_it )
-		{
-			(*emitter_it)->step(delta_seconds);
-		}
-		
-		PhysicsContainer::TypeVector::iterator physics_it = physics.objects.begin();
-		for( ; physics_it != physics.objects.end(); ++physics_it )
-		{
-			(*physics_it)->step(delta_seconds);
-		}
+		get_master().step( delta_seconds );
 	} // step
 	
 	// 5. (optionally) Add tick
 	void tick( float delta_seconds, float step_alpha )
 	{
-		MovementContainer::TypeVector::iterator movement_it = movement.objects.begin();
-		for( ; movement_it != movement.objects.end(); ++movement_it )
-		{
-			(*movement_it)->tick(step_alpha);
-		}
-		
-		InputMovementContainer::TypeVector::iterator imove_it = inputmoves.objects.begin();
-		for( ; imove_it != inputmoves.objects.end(); ++imove_it )
-		{
-			(*imove_it)->tick(step_alpha);
-		}
-		
-		SpriteContainer::TypeVector::iterator sprite_it = sprite.objects.begin();
-		for( ; sprite_it != sprite.objects.end(); ++sprite_it )
-		{
-			(*sprite_it)->tick(step_alpha);
-		}
-		
-		
-		PhysicsContainer::TypeVector::iterator physics_it = physics.objects.begin();
-		for( ; physics_it != physics.objects.end(); )
-		{
-			if ((*physics_it)->component_flags & C_DISABLE)
-			{
-				AABB2Collision * component = (*physics_it);
-				physics_it = physics.objects.erase(physics_it);
-				DESTROY(AABB2Collision, component);
-			}
-			else
-			{
-				++physics_it;
-			}
-		}
-		
-//		EmitterContainer::TypeVector::iterator emitter_it = emitters.objects.begin();
-//		for( ; emitter_it != emitters.objects.end(); ++emitter_it )
-//		{
-//			(*emitter_it)->step(delta_seconds);
-//		}
+		get_master().tick( delta_seconds, step_alpha );
 	} // tick
 	
 	// 6. Draw

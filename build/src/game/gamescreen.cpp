@@ -127,7 +127,7 @@ void Movement::step( float delta_seconds )
 	this->position.current.y += (delta_seconds * this->velocity.y);
 } // step
 
-void Movement::tick( float step_alpha )
+void Movement::tick( float delta_seconds, float step_alpha )
 {
 	this->position.interpolate(step_alpha);
 } // tick
@@ -149,7 +149,7 @@ void InputMovement::step( float delta_seconds )
 	this->position.step( delta_seconds );
 } // step
 
-void InputMovement::tick( float step_alpha )
+void InputMovement::tick( float delta_seconds, float step_alpha )
 {
 //	LOGV( "step_alpha: %g\n", step_alpha );
 	this->position.interpolate(step_alpha);
@@ -237,7 +237,7 @@ void Sprite::step( float delta_seconds )
 	}
 } // step
 
-void Sprite::tick( float step_alpha )
+void Sprite::tick( float delta_seconds, float step_alpha )
 {
 	glm::vec2 snap_pos;
 	Emitter* emitter = 0;
@@ -392,7 +392,7 @@ void Emitter::step( float delta_seconds )
 	}
 } // step
 
-void Emitter::tick( float step_alpha )
+void Emitter::tick( float delta_seconds, float step_alpha )
 {
 } // tick
 
@@ -477,8 +477,12 @@ void AABB2Collision::step( float dt_sec )
 	this->get_aabb(data.bounds);
 	data.object = this;
 	ComponentManager::for_each_component(PhysicsComponent, check_collision, &data);
-}
+} // step
 
+void AABB2Collision::tick( float delta_seconds, float step_alpha )
+{
+	
+} // tick
 
 void AABB2Collision::get_aabb( AABB2 & aabb ) const
 {
