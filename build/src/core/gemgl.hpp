@@ -1,7 +1,7 @@
 #pragma once
 
 #if _WIN32 || LINUX || __ANDROID__
-	#include "xlib.h"
+	#include <slim/xlib.h>
 #endif
 
 #if _WIN32

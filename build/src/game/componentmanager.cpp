@@ -274,7 +274,7 @@ namespace ComponentManager
 		return s_component_master;
 	}
 
-	template <class Type, ComponentType type=MovementComponent, class StepPolicy=GenericStepPolicy<Type>, class TickPolicy=GenericTickPolicy<Type>>
+	template <class Type, ComponentType type=MovementComponent, class StepPolicy=GenericStepPolicy<Type>, class TickPolicy=GenericTickPolicy<Type> >
 	class ComponentContainer : public GenericComponentContainer
 	{
 	public:

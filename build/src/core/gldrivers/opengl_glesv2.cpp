@@ -20,12 +20,13 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "log.h"
+#include <slim/xlog.h>
 #include "gldrivers/opengl_glesv2.hpp"
 #include "gemgl.hpp"
 #include "opengl_common.hpp"
 #include "memorystream.hpp"
 #include "assets.hpp"
+#include <new>
 
 // enable this to allow retaining data pointers in order to call
 // VertexAttribPointer() with actual data instead of using a VBO.

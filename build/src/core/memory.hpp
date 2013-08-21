@@ -29,6 +29,7 @@
 #elif LINUX || __ANDROID__
 	#include <stdlib.h>
 	#include <stdio.h> // for fprintf
+	#include <new> // for placement new
 #elif _WIN32
 	#include <memory> // we'll see if this compiles...
 #endif

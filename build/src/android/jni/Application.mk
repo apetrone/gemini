@@ -11,3 +11,6 @@ APP_STL := gnustl_static
 
 # set to debug or release
 APP_OPTIM := debug
+
+# -fno-rtti is set by default on Android; let's enable RTTI here.
+APP_CPPFLAGS := -frtti

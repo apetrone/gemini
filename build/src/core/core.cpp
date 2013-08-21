@@ -54,15 +54,15 @@ namespace core
 		void stdout_close( xlog_handler_t * handler );
 		
 #if _WIN32
-		void vs_message( log_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );		
-		int vs_open( log_handler_t * handler );
-		void vs_close( log_handler_t * handler );
+		void vs_message( xlog_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );
+		int vs_open( xlog_handler_t * handler );
+		void vs_close( xlog_handler_t * handler );
 #endif
 
 #if __ANDROID__
-		void log_android_message( log_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );		
-		int log_android_open( log_handler_t * handler );		
-		void log_android_close( log_handler_t * handler );
+		void log_android_message( xlog_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );
+		int log_android_open( xlog_handler_t * handler );
+		void log_android_close( xlog_handler_t * handler );
 #endif
 		
 		core::Error open_log_handlers()
@@ -132,13 +132,13 @@ namespace core
 
 
 #if __ANDROID__
-			log_handler_t android_log;
+			xlog_handler_t android_log;
 			android_log.message = log_android_message;
 			android_log.open = log_android_open;
 			android_log.close = log_android_close;
 			android_log.userdata = 0;
 			
-			log_add_handler( &_system_log, &android_log );
+			xlog_add_handler( &_system_log, &android_log );
 			++total_log_handlers;
 #endif
 						
