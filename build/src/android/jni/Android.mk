@@ -28,6 +28,7 @@ LOCAL_SRC_FILES := 	kernel_android.cpp \
 					$(SRC_DIR)core/assets/asset_spriteconfig.cpp \
 					$(SRC_DIR)core/assets/asset_texture.cpp	\
 					$(SRC_DIR)core/audio.cpp \
+					$(SRC_DIR)core/audio/opensles.cpp \
 					$(SRC_DIR)core/core_logging.cpp \
 					$(SRC_DIR)core/core.cpp \
 					$(SRC_DIR)core/filesystem.cpp \

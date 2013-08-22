@@ -41,24 +41,14 @@
 	#define DRIVER_NAME "OpenAL"
 	#define DRIVER_CREATOR OpenAL::creator
 #elif __ANDROID__
+
+	#include "opensles.hpp"
 	#define DRIVER_NAME "OpenSLES"
 
-	using namespace audio;
-	class OpenSLES : public audio::IAudioDriver
-	{
-		DECLARE_FACTORY_CLASS( OpenSLES, audio::IAudioDriver );
-	public:
-		OpenSLES() {};
-		~OpenSLES() {};
-		
-		virtual void event( audio::EventType event ) {};
-		virtual void prepare_source( AudioSource * source ) {};
-		virtual void play_source( AudioSource * source ) {};
-		virtual void update_source( AudioSource * source ) {};
-		virtual void stop_source( AudioSource * source ) {};
-		virtual void clean_source( AudioSource * source ) {};
-	}; // OpenSLES
 
+
+
+	using namespace audio;
 
 	#define DRIVER_CREATOR OpenSLES::creator
 	class AndroidDecoderNoop : public IAudioDecoder
