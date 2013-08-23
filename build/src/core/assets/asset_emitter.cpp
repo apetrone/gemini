@@ -168,6 +168,6 @@ namespace assets
 	void emitterconfig_construct_extension( StackString<MAX_PATH_SIZE> & extension )
 	{
 		extension = ".conf";
-	} // texture_construct_extension
+	} // emitterconfig_construct_extension
 
 }; // namespace assets
