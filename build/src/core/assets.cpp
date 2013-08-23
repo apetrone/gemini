@@ -478,11 +478,13 @@ namespace assets
 
 namespace assets
 {
+	// 1. Implement asset library
 	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(TextureAssetLibrary, textures);
 	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MeshAssetLibrary, meshes);
 	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MaterialAssetLibrary, materials);
 	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(SpriteConfigAssetLibrary, sprites);
 	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(EmitterConfigAssetLibrary, emitters);
+	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(FontAssetAssetLibrary, fonts);
 	
 	void load_default_texture_and_material()
 	{
@@ -512,12 +514,13 @@ namespace assets
 
 	void startup()
 	{
-		// allocate asset libraries
+		// 2. allocate asset libraries
 		_textures = CREATE(TextureAssetLibrary, texture_load_callback, texture_construct_extension);
 		_meshes = CREATE(MeshAssetLibrary, mesh_load_callback, mesh_construct_extension);
 		_materials = CREATE(MaterialAssetLibrary, material_load_callback, material_construct_extension);
 		_sprites = CREATE(SpriteConfigAssetLibrary, spriteconfig_load_callback, spriteconfig_construct_extension);
 		_emitters = CREATE(EmitterConfigAssetLibrary, emitterconfig_load_callback, emitterconfig_construct_extension);
+		_fonts = CREATE(FontAssetAssetLibrary, font_load_callback, font_construct_extension);
 		
 		// load shader permutations
 		compile_shader_permutations();
@@ -536,6 +539,7 @@ namespace assets
 		DESTROY_ARRAY( Shader, _shader_programs, total_shaders );
 		DESTROY( ShaderPermutations, _shader_permutations );
 		
+		// 3. Purge asset library
 		if ( _textures )
 		{
 			_textures->release_and_purge();
@@ -560,16 +564,23 @@ namespace assets
 		{
 			_emitters->release_and_purge();
 		}
+		
+		if ( _fonts )
+		{
+			_fonts->release_and_purge();
+		}
 	} // purge
 	
 	void shutdown()
 	{
 		purge();
+		// 4. Delete asset library
 		DESTROY(TextureAssetLibrary, _textures);
 		DESTROY(MeshAssetLibrary, _meshes);
 		DESTROY(MaterialAssetLibrary, _materials);
 		DESTROY(SpriteConfigAssetLibrary, _sprites);
 		DESTROY(EmitterConfigAssetLibrary, _emitters);
+		DESTROY(FontAssetAssetLibrary, _fonts);
 	} // shutdown
 
 	void append_asset_extension( AssetType type, StackString<MAX_PATH_SIZE> & path )
