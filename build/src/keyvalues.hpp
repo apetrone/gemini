@@ -23,32 +23,71 @@
 
 
 #include "color.hpp"
+enum DataType
+{
+	DATA_INVALID = 0,
+	DATA_INT,
+	DATA_FLOAT,
+	DATA_BOOL,
+	DATA_STRING,
+	DATA_POINTER,
+	DATA_COLOR,
+};
 
+
+
+
+
+class PolicyBase
+{
+public:
+	virtual ~PolicyBase() {}
+	virtual DataType type() = 0;
+	virtual void destroy( const void * data ) = 0;
+	virtual void create( const void * data ) = 0;
+	virtual void update( const void * type ) = 0;
+	virtual void get( void * target ) = 0;
+
+};
+
+typedef PolicyBase * (*policy_creator)();
+
+template <class Type>
+struct keyvalues_typemap
+{
+	static DataType get_type()
+	{
+		return DATA_INVALID;
+	}
+};
+
+#define DECLARE_POLICY_TYPE( type, data_type )\
+	template <>\
+	struct keyvalues_typemap<type>\
+	{\
+		static DataType get_type()\
+		{\
+			return data_type;\
+		}\
+	}
+
+#define IMPLEMENT_POLICY( classname )\
+	PolicyBase * classname##_create()\
+	{\
+		return CREATE(classname);\
+	}
+
+#define MAKE_POLICY( classname )\
+	classname##_create
+
+
+
+DECLARE_POLICY_TYPE(int, DATA_INT);
 
 
 struct KeyValues
 {
-	enum DataType
-	{
-		DATA_INVALID = 0,
-		DATA_INT,
-		DATA_FLOAT,
-		DATA_BOOL,
-		DATA_STRING,
-		DATA_POINTER,
-		DATA_COLOR,
-	};
-
-
 	char * name;
-
-	union
-	{
-		int int_value;
-		float float_value;
-		void * pointer_value;
-		unsigned char bytes[4];
-	};
 	
 	KeyValues * next;
 	KeyValues * prev;
@@ -58,12 +97,33 @@ struct KeyValues
 	KeyValues();
 	~KeyValues();
 	
+	PolicyBase * policy;
 	
-
-
-	template <class Type>
-	void set( const char * key, const Type & value );
+	static policy_creator policy_for_type( DataType type );
 
 	template <class Type>
-	Type & get( const char * key, Type & default_value );
+	void set( const char * key, const Type & value )
+	{
+		DataType target_type = keyvalues_typemap<Type>::get_type();
+		if ( this->policy && this->policy->type() != target_type )
+		{
+			DESTROY(PolicyBase, this->policy);
+		}
+		
+		policy = KeyValues::policy_for_type(target_type)();
+		policy->create( &value );
+	}
+
+	template <class Type>
+	Type get( const char * key, const Type & default_value )
+	{
+		DataType target_type = keyvalues_typemap<Type>::get_type();
+		int value = default_value;
+		if ( this->policy && this->policy->type() == target_type )
+		{
+			policy->get( &value );
+		}
+		
+		return value;
+	}
 }; // KeyValues

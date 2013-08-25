@@ -266,6 +266,8 @@ public:
 		engine::engine()->screen_controller()->push_screen( "GameScreen", this );
 //		engine::engine()->screen_controller()->push_screen( "MenuScreen", this );
 //		engine::engine()->screen_controller()->push_screen( "LogoScreen", this );
+		
+		// tests
 //		engine::engine()->screen_controller()->push_screen( "WinScreen", this );
 //		engine::engine()->screen_controller()->push_screen( "LossScreen", this );
 		

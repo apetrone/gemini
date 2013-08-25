@@ -19,73 +19,45 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#include "kernel.hpp"
+#include <stdio.h>
+#include <slim/xlog.h>
 
-#include "typedefs.h"
+
 #include "keyvalues.hpp"
 
-#include <slim/xlog.h>
-#include <slim/xstr.h>
-
-
-class IntPolicy : public PolicyBase
+class TestClasses : public kernel::IApplication
 {
-	int value;
-	
 public:
-	virtual DataType type() { return DATA_INT; }
+	DECLARE_APPLICATION( TestClasses );
 
-	virtual void destroy( const void * data )
+	virtual kernel::ApplicationResult config( kernel::Params & params )
+	{		
+		return kernel::Application_NoWindow;
+	}
+
+	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
+		KeyValues k;
+		k.set( "size", 30 );
 		
+		int v = k.get( "size", 0 );
+		LOGV( "v = %i\n", v );
+				
+		return kernel::Application_NoWindow;
+	}
+
+	virtual void step( kernel::Params & params )
+	{
+	}
+
+	virtual void tick( kernel::Params & params )
+	{
 	}
 	
-	virtual void create( const void * data )
+	virtual void shutdown( kernel::Params & params )
 	{
-		update( data );
-	}
-	
-	virtual void update( const void * type )
-	{
-		value = *((int*)type);
-	}
-	
-	virtual void get( void * target )
-	{
-		int * p = (int*)target;
-		*p = value;
 	}
 };
-IMPLEMENT_POLICY(IntPolicy);
 
-
-
-policy_creator KeyValues::policy_for_type( DataType type )
-{
-	LOGV( "policy type: %i\n", type );
-
-	policy_creator policy_table[] =
-	{
-		0,
-		MAKE_POLICY(IntPolicy)
-	};
-	
-	return policy_table[ type ];
-}
-
-KeyValues::KeyValues()
-{
-	this->policy = 0;
-}
-
-KeyValues::~KeyValues()
-{
-	if ( this->policy )
-	{
-		DESTROY(PolicyBase, this->policy);
-		this->policy = 0;
-	}
-}
-
-
-
-
+IMPLEMENT_APPLICATION( TestClasses );
