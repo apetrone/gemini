@@ -40,17 +40,17 @@ namespace assets
 		image::driver_release_image( this->texture_id );
 	} // release
 	
-	AssetLoadStatus texture_load_callback( const char * path, Texture * texture, unsigned int flags )
+	AssetLoadStatus texture_load_callback( const char * path, Texture * texture, const TextureParameters & parameters )
 	{
 		unsigned int texture_id = 0;
 		unsigned int width = 0;
 		unsigned int height = 0;
 		
 		bool load_result = 0;
-		
-		if ( !(flags & image::F_CUBEMAP) ) // load 2d texture
+		unsigned int flags = 0;
+		if ( !(parameters.flags & image::F_CUBEMAP) ) // load 2d texture
 		{
-			load_result = image::load_image_from_file( path, texture_id, flags, &width, &height );
+			load_result = image::load_image_from_file( path, texture_id, parameters.flags, &width, &height );
 		}
 		else // load cubemap
 		{

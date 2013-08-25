@@ -413,7 +413,7 @@ namespace assets
 	//
 	
 	
-	AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, unsigned int flags )
+	AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, const AssetParameters & parameters )
 	{
 		if ( util::json_load_with_callback(path, mesh_load_from_json, mesh, true ) == util::ConfigLoad_Success )
 		{

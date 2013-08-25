@@ -34,9 +34,19 @@ namespace assets
 		FontAsset();
 		virtual void release();
 	}; // FontAsset
+	
+	struct FontParameters : public AssetParameters
+	{
+		uint16_t point_size;
+		
+		FontParameters()
+		{
+			point_size = 0;
+		} // FontParameters
+	}; // FontParameters
 
-	AssetLoadStatus font_load_callback( const char * path, FontAsset * config, unsigned int flags );
+	AssetLoadStatus font_load_callback( const char * path, FontAsset * config, const FontParameters & parameters );
 	void font_construct_extension( StackString<MAX_PATH_SIZE> & extension );
 
-	DECLARE_ASSET_LIBRARY_ACCESSOR(FontAsset, fonts);
+	DECLARE_ASSET_LIBRARY_ACCESSOR(FontAsset, FontParameters, fonts);
 }; // namespace assets

@@ -388,7 +388,7 @@ namespace assets
 		return 0;
 	} // texture_unit_for_map
 	
-	AssetLoadStatus material_load_callback( const char * path, Material * material, unsigned int flags )
+	AssetLoadStatus material_load_callback( const char * path, Material * material, const AssetParameters & parameters )
 	{
 		if (util::json_load_with_callback( path, material_load_from_json, material, true ) == util::ConfigLoad_Success )
 		{

@@ -29,11 +29,13 @@
 
 namespace assets
 {
+	
 
-	template <class AssetClass>
+
+	template <class AssetClass, class AssetParameterClass = AssetParameters>
 	class AssetLibrary
 	{
-		typedef AssetLoadStatus (*AssetLoadCallback)( const char * path, AssetClass * asset, unsigned int flags );
+		typedef AssetLoadStatus (*AssetLoadCallback)( const char * path, AssetClass * asset, const AssetParameterClass & parameters );
 		typedef void (*AssetConstructExtension)( StackString<MAX_PATH_SIZE> & path );
 		typedef void (*AssetIterator)( AssetClass * asset, void * userdata );
 		typedef HashTable<AssetClass*> AssetHashTable;
@@ -78,14 +80,14 @@ namespace assets
 		} // for_each
 	
 		// providing stubs for these functions
-		AssetLoadStatus load_with_callback( const char * path, AssetClass * asset, unsigned int flags )
+		AssetLoadStatus load_with_callback( const char * path, AssetClass * asset, const AssetParameterClass & parameters )
 		{
 			if ( !load_callback )
 			{
 				return AssetLoad_Failure;
 			}
 		
-			return load_callback( path, asset, flags );
+			return load_callback( path, asset, parameters );
 		} // load_with_callback
 		
 		void construct_extension( StackString<MAX_PATH_SIZE> & extension )
@@ -100,7 +102,7 @@ namespace assets
 			path.append( extension() );
 		}
 
-		AssetClass * load_from_path( const char * path, unsigned int flags = 0, bool ignore_cache = false )
+		AssetClass * load_from_path( const char * path, const AssetParameterClass & parameters = AssetParameterClass(), bool ignore_cache = false )
 		{
 			// This should handle the following cases:
 			// 1) Asset is loaded, obey cache and return loaded asset
@@ -136,7 +138,7 @@ namespace assets
 			}
 			
 			// case 2 && 3
-			load_result = load_with_callback( fullpath(), asset, flags );
+			load_result = load_with_callback( fullpath(), asset, parameters );
 			if ( load_result != AssetLoad_Failure )
 			{
 				if ( asset_is_new )

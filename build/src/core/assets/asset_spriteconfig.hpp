@@ -74,8 +74,8 @@ namespace assets
 	}; // SpriteConfig
 		
 
-	AssetLoadStatus spriteconfig_load_callback( const char * path, SpriteConfig * sprite_config, unsigned int flags );
+	AssetLoadStatus spriteconfig_load_callback( const char * path, SpriteConfig * sprite_config, const AssetParameters & parameters );
 	void spriteconfig_construct_extension( StackString<MAX_PATH_SIZE> & extension );
 
-	DECLARE_ASSET_LIBRARY_ACCESSOR(SpriteConfig, sprites);
+	DECLARE_ASSET_LIBRARY_ACCESSOR(SpriteConfig, AssetParameters, sprites);
 }; // namespace assets

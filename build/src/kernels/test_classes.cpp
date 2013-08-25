@@ -43,6 +43,18 @@ public:
 		
 		int v = k.get( "size", 0 );
 		LOGV( "v = %i\n", v );
+		
+		
+		k.set( "test", 2.32f );
+		
+		float z = k.get( "test", 0.0f );
+		LOGV( "f = %g\n", z );
+
+		glm::vec3 t;
+		k.set( "vec", glm::vec3(1.3f, 2.2f, 3.1f) );
+		
+		t = k.get("vec", glm::vec3() );
+		LOGV( "vec3: %g %g %g\n", t.x, t.y, t.z );
 				
 		return kernel::Application_NoWindow;
 	}

@@ -23,15 +23,19 @@
 
 
 #include "color.hpp"
+
+
 enum DataType
 {
 	DATA_INVALID = 0,
 	DATA_INT,
 	DATA_FLOAT,
-	DATA_BOOL,
 	DATA_STRING,
+	DATA_VECTOR3,
+	
 	DATA_POINTER,
-	DATA_COLOR,
+
+	DATA_MAX
 };
 
 
@@ -43,7 +47,7 @@ class PolicyBase
 public:
 	virtual ~PolicyBase() {}
 	virtual DataType type() = 0;
-	virtual void destroy( const void * data ) = 0;
+	virtual void destroy() = 0;
 	virtual void create( const void * data ) = 0;
 	virtual void update( const void * type ) = 0;
 	virtual void get( void * target ) = 0;
@@ -71,19 +75,21 @@ struct keyvalues_typemap
 		}\
 	}
 
-#define IMPLEMENT_POLICY( classname )\
-	PolicyBase * classname##_create()\
+#define IMPLEMENT_POLICY( classname, name )\
+	PolicyBase * name##_create()\
 	{\
 		return CREATE(classname);\
 	}
 
-#define MAKE_POLICY( classname )\
-	classname##_create
+#define MAKE_POLICY( name )\
+	name##_create
 
 
 
 DECLARE_POLICY_TYPE(int, DATA_INT);
-
+DECLARE_POLICY_TYPE(float, DATA_FLOAT);
+DECLARE_POLICY_TYPE(const char *, DATA_STRING);
+DECLARE_POLICY_TYPE(glm::vec3, DATA_VECTOR3);
 
 struct KeyValues
 {
@@ -118,7 +124,7 @@ struct KeyValues
 	Type get( const char * key, const Type & default_value )
 	{
 		DataType target_type = keyvalues_typemap<Type>::get_type();
-		int value = default_value;
+		Type value = default_value;
 		if ( this->policy && this->policy->type() == target_type )
 		{
 			policy->get( &value );

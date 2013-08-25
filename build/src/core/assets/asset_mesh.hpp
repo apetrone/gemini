@@ -64,8 +64,8 @@ namespace assets
 		//		void upload_geometry();
 	}; // Mesh
 	
-	AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, unsigned int flags );
+	AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, const AssetParameters & parameters );
 	void mesh_construct_extension( StackString<MAX_PATH_SIZE> & extension );
 	
-	DECLARE_ASSET_LIBRARY_ACCESSOR(Mesh, meshes);
+	DECLARE_ASSET_LIBRARY_ACCESSOR(Mesh, AssetParameters, meshes);
 }; // namespace assets

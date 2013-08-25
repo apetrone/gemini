@@ -36,7 +36,7 @@ namespace assets
 	{
 	} // release
 
-	AssetLoadStatus font_load_callback( const char * path, FontAsset * config, unsigned int flags )
+	AssetLoadStatus font_load_callback( const char * path, FontAsset * config, const FontParameters & parameters )
 	{
 //		if ( util::json_load_with_callback( path, 0, config, true ) == util::ConfigLoad_Success )
 //		{
@@ -44,7 +44,7 @@ namespace assets
 //		}
 		
 		return AssetLoad_Failure;
-	} // texture_load_callback
+	} // font_load_callback
 	
 	
 	void font_construct_extension( StackString<MAX_PATH_SIZE> & extension )

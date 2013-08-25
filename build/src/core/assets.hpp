@@ -64,6 +64,12 @@ namespace assets
 		} // Id
 	}; // Asset
 	
+	
+	struct AssetParameters
+	{
+		
+	}; // AssetParameters
+	
 	enum AssetLoadStatus
 	{
 		AssetLoad_Success = 0,
@@ -81,8 +87,8 @@ namespace assets
 		return _##name;\
 	}
 	
-#define DECLARE_ASSET_LIBRARY_ACCESSOR( type, name )\
-	typedef AssetLibrary<type> type##AssetLibrary;\
+#define DECLARE_ASSET_LIBRARY_ACCESSOR( type, parameter_class, name )\
+	typedef AssetLibrary<type, parameter_class> type##AssetLibrary;\
 	type##AssetLibrary * name();
 
 

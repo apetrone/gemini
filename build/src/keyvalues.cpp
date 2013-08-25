@@ -26,15 +26,17 @@
 #include <slim/xlog.h>
 #include <slim/xstr.h>
 
+#include "mathlib.h"
 
-class IntPolicy : public PolicyBase
+template <class Type>
+class PODPolicy : public PolicyBase
 {
-	int value;
+	Type value;
 	
 public:
-	virtual DataType type() { return DATA_INT; }
-
-	virtual void destroy( const void * data )
+	virtual DataType type() { return keyvalues_typemap<Type>::get_type(); }
+	
+	virtual void destroy()
 	{
 		
 	}
@@ -46,27 +48,74 @@ public:
 	
 	virtual void update( const void * type )
 	{
-		value = *((int*)type);
+		value = *((Type*)type);
 	}
 	
 	virtual void get( void * target )
 	{
-		int * p = (int*)target;
+		Type * p = (Type*)target;
 		*p = value;
 	}
 };
-IMPLEMENT_POLICY(IntPolicy);
+
+
+IMPLEMENT_POLICY(PODPolicy<int>, IntPolicy);
+IMPLEMENT_POLICY(PODPolicy<float>, FloatPolicy);
+
+
+
+
+
+class Vec3Policy : public PolicyBase
+{
+	glm::vec3 * vector;
+	
+public:
+	virtual DataType type() { return keyvalues_typemap<glm::vec3>::get_type(); }
+	
+	virtual void destroy()
+	{
+		using glm::vec3;
+		DESTROY( vec3, vector );
+	}
+	
+	virtual void create( const void * data )
+	{
+		vector = CREATE(glm::vec3);
+		
+		update( data );
+	}
+	
+	virtual void update( const void * type )
+	{
+		*vector = *((glm::vec3*)type);	
+	}
+	
+	virtual void get( void * target )
+	{
+		glm::vec3 * p = (glm::vec3*)target;
+		*p = *vector;
+	}
+};
+IMPLEMENT_POLICY(Vec3Policy, Vec3Policy);
 
 
 
 policy_creator KeyValues::policy_for_type( DataType type )
 {
 	LOGV( "policy type: %i\n", type );
+	
+	assert( type >= 0 && type < DATA_MAX );
 
-	policy_creator policy_table[] =
+	policy_creator policy_table[DATA_MAX] =
 	{
 		0,
-		MAKE_POLICY(IntPolicy)
+		MAKE_POLICY(IntPolicy),
+		MAKE_POLICY(FloatPolicy),
+		0,
+		MAKE_POLICY(Vec3Policy),
+		0,
+		
 	};
 	
 	return policy_table[ type ];
@@ -81,6 +130,8 @@ KeyValues::~KeyValues()
 {
 	if ( this->policy )
 	{
+		this->policy->destroy();
+		
 		DESTROY(PolicyBase, this->policy);
 		this->policy = 0;
 	}

@@ -38,11 +38,18 @@ namespace assets
 		
 		virtual void release();
 	};
+	
+	
+	struct TextureParameters : public AssetParameters
+	{
+		uint32_t flags;
+		TextureParameters() : flags(0) {}
+	};
 		
 //	Texture * load_cubemap( const char * basename, unsigned int flags = 0, bool ignore_cache = false );
 	
-	AssetLoadStatus texture_load_callback( const char * path, Texture * texture, unsigned int flags );
+	AssetLoadStatus texture_load_callback( const char * path, Texture * texture, const TextureParameters & parameters );
 	void texture_construct_extension( StackString<MAX_PATH_SIZE> & extension );
 
-	DECLARE_ASSET_LIBRARY_ACCESSOR(Texture, textures);
+	DECLARE_ASSET_LIBRARY_ACCESSOR(Texture, TextureParameters, textures);
 }; // namespace assets

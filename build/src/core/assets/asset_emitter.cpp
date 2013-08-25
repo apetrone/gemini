@@ -154,7 +154,7 @@ namespace assets
 		return util::ConfigLoad_Success;
 	} // load_emitter_from_file
 
-	AssetLoadStatus emitterconfig_load_callback( const char * path, EmitterConfig * config, unsigned int flags )
+	AssetLoadStatus emitterconfig_load_callback( const char * path, EmitterConfig * config, const AssetParameters & parameters )
 	{
 		if ( util::json_load_with_callback(path, load_emitter_from_file, config, true ) == util::ConfigLoad_Success )
 		{
@@ -162,7 +162,7 @@ namespace assets
 		}
 		
 		return AssetLoad_Failure;
-	} // texture_load_callback
+	} // emitterconfig_load_callback
 	
 	
 	void emitterconfig_construct_extension( StackString<MAX_PATH_SIZE> & extension )

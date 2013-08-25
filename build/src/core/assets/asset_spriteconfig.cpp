@@ -300,7 +300,7 @@ namespace assets
 		return util::ConfigLoad_Success;
 	} // load_sprite_from_file
 
-	AssetLoadStatus spriteconfig_load_callback( const char * path, SpriteConfig * sprite_config, unsigned int flags )
+	AssetLoadStatus spriteconfig_load_callback( const char * path, SpriteConfig * sprite_config, const AssetParameters & parameters )
 	{
 		if ( util::json_load_with_callback(path, load_sprite_from_file, sprite_config, true ) == util::ConfigLoad_Success )
 		{
@@ -308,7 +308,7 @@ namespace assets
 		}
 		
 		return AssetLoad_Failure;
-	} // texture_load_callback
+	} // spriteconfig_load_callback
 	
 	
 	void spriteconfig_construct_extension( StackString<MAX_PATH_SIZE> & extension )

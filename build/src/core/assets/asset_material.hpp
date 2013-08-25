@@ -84,8 +84,8 @@ namespace assets
 	int material_parameter_type_to_render_state( unsigned int type );
 		
 	
-	AssetLoadStatus material_load_callback( const char * path, Material * material, unsigned int flags );
+	AssetLoadStatus material_load_callback( const char * path, Material * material, const AssetParameters & parameters );
 	void material_construct_extension( StackString<MAX_PATH_SIZE> & extension );
 
-	DECLARE_ASSET_LIBRARY_ACCESSOR(Material, materials);
+	DECLARE_ASSET_LIBRARY_ACCESSOR(Material, AssetParameters, materials);
 }; // namespace assets
