@@ -372,8 +372,8 @@ namespace kernel
 
 		_internal::_kernel_state.tsa.tick( raw_delta_msec );
 		
-		_kernel->parameters().framedelta_filtered = _internal::_kernel_state.tsa.filtered_value;
-		_kernel->parameters().framedelta_raw = raw_delta_msec;
+		_kernel->parameters().framedelta_filtered_msec = _internal::_kernel_state.tsa.filtered_value;
+		_kernel->parameters().framedelta_raw_msec = raw_delta_msec;
 		
 		_internal::_kernel_state.accumulator += (_internal::_kernel_state.tsa.filtered_value * .001);
 //		while( _internal::_kernel_state.accumulator >= _kernel->parameters().step_interval_seconds )

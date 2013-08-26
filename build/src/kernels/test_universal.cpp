@@ -293,7 +293,7 @@ public:
 			engine::engine()->screen_controller()->active_screen()->on_update( this );
 		}
 	
-		debugdraw::update( params.framedelta_filtered );
+		debugdraw::update( params.framedelta_filtered_msec );
 		rs.rewind();
 		
 		// setup global rendering state
@@ -310,7 +310,7 @@ public:
 			engine::engine()->screen_controller()->active_screen()->on_draw( this );
 		}
 
-//		font::draw_string( test_font, 50, 50, xstr_format("deltatime: %gms", params.framedelta_filtered), Color(255,128,0,255) );
+//		font::draw_string( test_font, 50, 50, xstr_format("deltatime: %gms", params.framedelta_filtered_msec), Color(255,128,0,255) );
 //		font::draw_string( test_font, 50, 75, "Ја могу да једем стакло", Color(255, 255, 255, 255) );
 //		font::draw_string( test_font, 50, 100, "私はガラスを食べられます。それは私を傷つけません。", Color(0, 128, 255, 255) );
 	}

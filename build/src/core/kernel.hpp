@@ -70,8 +70,8 @@ namespace kernel
 		
 		float step_interval_seconds;
 		float step_alpha;
-		float framedelta_filtered;
-		float framedelta_raw;
+		float framedelta_filtered_msec;
+		float framedelta_raw_msec;
 		
 		// dimensions of the actual window in pixels
 		unsigned short window_width;

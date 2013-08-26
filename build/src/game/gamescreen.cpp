@@ -944,7 +944,7 @@ void GameScreen::on_draw( kernel::IApplication * app )
 			
 			if ( active_entities[i] && ent && ent != player )
 			{
-				ent->update( params.framedelta_filtered * .001f );
+				ent->update( params.framedelta_filtered_msec * .001f );
 				ent->render( context );
 			}
 		}
@@ -1016,7 +1016,7 @@ void GameScreen::on_update( kernel::IApplication * app )
 {
 	if ( game_state == GAME_PLAY )
 	{
-		next_fire -= kernel::instance()->parameters().framedelta_filtered;
+		next_fire -= kernel::instance()->parameters().framedelta_filtered_msec;
 		
 		if ( input::state()->mouse().is_down( input::MOUSE_LEFT ) )
 		{
@@ -1027,10 +1027,10 @@ void GameScreen::on_update( kernel::IApplication * app )
 			}
 		}
 		
-		current_gametime += (kernel::instance()->parameters().framedelta_filtered*.001);
+		current_gametime += (kernel::instance()->parameters().framedelta_filtered_msec*.001);
 	}
 	
-	ComponentManager::tick( kernel::instance()->parameters().framedelta_filtered, kernel::instance()->parameters().step_alpha );
+	ComponentManager::tick( kernel::instance()->parameters().framedelta_filtered_msec, kernel::instance()->parameters().step_alpha );
 }
 
 void GameScreen::on_step( kernel::IApplication * app )
