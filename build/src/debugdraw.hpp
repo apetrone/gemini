@@ -27,8 +27,7 @@
 namespace debugdraw
 {
 	const float MIN_DURATION_MSEC = 0.1;
-	const char DEBUG_FONT_FILE[] = "fonts/nokiafc22.ttf";
-	const short DEBUG_FONT_SIZE = 12;
+	const char DEBUG_FONT_FILE[] = "fonts/debug";
 	
 	const int MAX_CIRCLE_SIDES = 12;
 	const int TOTAL_CIRCLE_VERTICES = 2 * MAX_CIRCLE_SIDES;

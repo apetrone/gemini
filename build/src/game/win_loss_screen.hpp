@@ -23,12 +23,13 @@
 #include "memory.hpp"
 #include "screencontrol.hpp"
 #include "menu.hpp"
-
+#include "assets.hpp"
 #include "componentmanager.hpp" // for RenderControl
 
 struct WinLossScreen : public IScreen
 {
-	font::Handle menu_font, title_font;
+	assets::Font * menu_font;
+	assets::Font * title_font;
 	MenuNavigator menunav;
 	int current_menu;
 	WinLossScreen();

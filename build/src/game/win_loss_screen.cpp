@@ -39,8 +39,8 @@ void pixels_to_virtual_screen(float & px, float & py);
 
 WinLossScreen::WinLossScreen()
 {
-	menu_font = font::load_font_from_file("fonts/nokiafc22.ttf", 24);
-	title_font = font::load_font_from_file("fonts/nokiafc22.ttf", 48);
+	menu_font = assets::fonts()->load_from_path( "fonts/default24" );
+	title_font = assets::fonts()->load_from_path( "fonts/default48" );
 	
 	MenuItem * root = menunav.root_menu();
 	MenuItem * item;

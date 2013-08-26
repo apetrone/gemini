@@ -25,7 +25,7 @@
 
 struct LogoScreen : public IScreen
 {
-	font::Handle font;
+	assets::Font * font;
 	
 	LogoScreen();
 	

@@ -55,8 +55,8 @@ enum {
 
 struct GameScreen : public IScreen
 {
-	font::Handle font;
-	font::Handle round_title;
+	assets::Font * font;
+	assets::Font * round_title;
 	renderer::VertexStream vb;
 	assets::Shader default_shader;
 	unsigned int test_attribs;

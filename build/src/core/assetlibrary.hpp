@@ -143,7 +143,8 @@ namespace assets
 			{
 				if ( asset_is_new )
 				{
-					take_ownership( path, asset );
+					StackString<MAX_PATH_SIZE> store_path = path;
+					take_ownership( store_path(), asset );
 				}
 				return asset;
 			}

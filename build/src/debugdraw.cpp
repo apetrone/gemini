@@ -37,7 +37,7 @@ namespace debugdraw
 		unsigned int next_primitive = 0;
 		unsigned int max_primitives = 0;
 		DebugPrimitive * primitive_list = 0;
-		font::Handle debug_font = 0;
+		assets::Font * debug_font = 0;
 
 		DebugPrimitive * request_primitive()
 		{
@@ -121,7 +121,7 @@ namespace debugdraw
 		
 		
 		// load the debug font we'll use
-		_internal::debug_font = font::load_font_from_file(DEBUG_FONT_FILE, DEBUG_FONT_SIZE);
+		_internal::debug_font = assets::fonts()->load_from_path( DEBUG_FONT_FILE );
 	} // startup
 	
 	void shutdown()

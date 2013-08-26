@@ -661,10 +661,9 @@ GameScreen::GameScreen()
 	energy = STARTING_ENERGY;
 	score = 0;
 	game_state = GAME_PLAY;
-	// need to replace font loading with this ...
-	//		assets::load_font( "fonts/nokiafc22.ttf", 16 );
-	font = font::load_font_from_file( "fonts/nokiafc22.ttf", 16, 72, 72 );
-	round_title = font::load_font_from_file( "fonts/nokiafc22.ttf", 32 );
+
+	font = assets::fonts()->load_from_path( "fonts/default16" );
+	round_title = assets::fonts()->load_from_path( "fonts/default32" );
 	
 	assets::ShaderString name("uv0");
 	test_attribs = 0;

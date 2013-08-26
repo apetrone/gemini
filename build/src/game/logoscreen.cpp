@@ -27,7 +27,7 @@
 
 LogoScreen::LogoScreen()
 {
-	font = font::load_font_from_file( "fonts/nokiafc22.ttf", 64 );
+	font = assets::fonts()->load_from_path( "fonts/default64" );
 }
 
 void LogoScreen::on_show( kernel::IApplication * app )

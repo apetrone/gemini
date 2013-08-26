@@ -484,7 +484,7 @@ namespace assets
 	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MaterialAssetLibrary, materials);
 	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(SpriteConfigAssetLibrary, sprites);
 	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(EmitterConfigAssetLibrary, emitters);
-	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(FontAssetAssetLibrary, fonts);
+	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(FontAssetLibrary, fonts);
 	
 	void load_default_texture_and_material()
 	{
@@ -520,7 +520,7 @@ namespace assets
 		_materials = CREATE(MaterialAssetLibrary, material_load_callback, material_construct_extension);
 		_sprites = CREATE(SpriteConfigAssetLibrary, spriteconfig_load_callback, spriteconfig_construct_extension);
 		_emitters = CREATE(EmitterConfigAssetLibrary, emitterconfig_load_callback, emitterconfig_construct_extension);
-		_fonts = CREATE(FontAssetAssetLibrary, font_load_callback, font_construct_extension);
+		_fonts = CREATE(FontAssetLibrary, font_load_callback, font_construct_extension);
 		
 		// load shader permutations
 		compile_shader_permutations();
@@ -580,7 +580,7 @@ namespace assets
 		DESTROY(MaterialAssetLibrary, _materials);
 		DESTROY(SpriteConfigAssetLibrary, _sprites);
 		DESTROY(EmitterConfigAssetLibrary, _emitters);
-		DESTROY(FontAssetAssetLibrary, _fonts);
+		DESTROY(FontAssetLibrary, _fonts);
 	} // shutdown
 
 	void append_asset_extension( AssetType type, StackString<MAX_PATH_SIZE> & path )

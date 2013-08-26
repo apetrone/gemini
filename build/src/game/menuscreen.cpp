@@ -37,8 +37,8 @@ void virtual_screen_to_pixels( float & tx, float & ty );
 
 MenuScreen::MenuScreen()
 {
-	menu_font = font::load_font_from_file("fonts/nokiafc22.ttf", 24);
-	title_font = font::load_font_from_file("fonts/nokiafc22.ttf", 48);
+	menu_font = assets::fonts()->load_from_path( "fonts/default24" );
+	title_font = assets::fonts()->load_from_path("fonts/default64" );
 	
 	MenuItem * root = menunav.root_menu();
 	MenuItem * item;

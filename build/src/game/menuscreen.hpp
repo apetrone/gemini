@@ -29,7 +29,8 @@
 
 struct MenuScreen : public IScreen
 {
-	font::Handle menu_font, title_font;
+	assets::Font * menu_font;
+	assets::Font * title_font;
 	MenuNavigator menunav;
 	int current_menu;
 	MenuScreen();

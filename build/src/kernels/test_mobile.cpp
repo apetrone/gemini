@@ -67,7 +67,7 @@ class TestMobile : public kernel::IApplication,
 public:
 	DECLARE_APPLICATION( TestMobile );
 
-	font::Handle test_font;
+	assets::Font * test_font;
 	RenderStream rs;
 	assets::Geometry geo;
 	renderer::VertexStream vs;
@@ -151,7 +151,7 @@ public:
 	{
 #if FONT_TEST		
 		LOGV( "loading fonts/nokiafc22.ttf...\n" );
-		test_font = font::load_font_from_file( "fonts/nokiafc22.ttf", 16 );
+		test_font = assets::fonts()->load_from_path( "fonts/default16" );
 		LOGV( "test_font = %i\n", test_font );
 #endif
 

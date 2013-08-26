@@ -26,14 +26,16 @@
 
 namespace assets
 {
-	struct FontAsset : public Asset
+	typedef int FontHandle;
+	struct Font : public Asset
 	{
 		unsigned short font_size;
+		FontHandle font_id;
 		char * font_data;
 		
-		FontAsset();
+		Font();
 		virtual void release();
-	}; // FontAsset
+	}; // Font
 	
 	struct FontParameters : public AssetParameters
 	{
@@ -45,8 +47,8 @@ namespace assets
 		} // FontParameters
 	}; // FontParameters
 
-	AssetLoadStatus font_load_callback( const char * path, FontAsset * config, const FontParameters & parameters );
+	AssetLoadStatus font_load_callback( const char * path, Font * config, const FontParameters & parameters );
 	void font_construct_extension( StackString<MAX_PATH_SIZE> & extension );
 
-	DECLARE_ASSET_LIBRARY_ACCESSOR(FontAsset, FontParameters, fonts);
+	DECLARE_ASSET_LIBRARY_ACCESSOR(Font, FontParameters, fonts);
 }; // namespace assets

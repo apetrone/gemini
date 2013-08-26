@@ -25,23 +25,61 @@
 #include "configloader.hpp"
 #include "render_utilities.hpp"
 
+#include "font.hpp"
+#include "kernel.hpp"
+
 namespace assets
 {
-	FontAsset::FontAsset()
+	Font::Font()
 	{
-
+		font_data = 0;
+		font_size = 0;
 	}
 
-	void FontAsset::release()
+	void Font::release()
 	{
+		if ( font_data != 0 )
+		{
+			DEALLOC( this->font_data );
+			this->font_size = 0;
+		}
 	} // release
-
-	AssetLoadStatus font_load_callback( const char * path, FontAsset * config, const FontParameters & parameters )
+	
+	
+	
+	util::ConfigLoadStatus load_font_from_file( const Json::Value & root, void * data )
 	{
-//		if ( util::json_load_with_callback( path, 0, config, true ) == util::ConfigLoad_Success )
-//		{
-//			return AssetLoad_Success;
-//		}
+		Font * font = (Font*)data;
+		if (!font)
+		{
+			return util::ConfigLoad_Failure;
+		}
+		
+		Json::Value point_size = root["point_size"];
+		Json::Value font_file = root["file"];
+		
+		font->font_size = point_size.asInt();
+		font->font_data = font::load_font_from_file( font_file.asString().c_str(), font->font_size, font->font_id );
+		
+		if (kernel::instance()->parameters().device_flags & kernel::DeviceSupportsRetinaDisplay)
+		{
+			font->font_size = font->font_size * 2;
+		}
+		
+		if ( font->font_id != 0 )
+		{
+			return util::ConfigLoad_Success;
+		}
+
+		return util::ConfigLoad_Failure;
+	} // load_font_from_file
+
+	AssetLoadStatus font_load_callback( const char * path, Font * font, const FontParameters & parameters )
+	{
+		if ( util::json_load_with_callback(path, load_font_from_file, font, true ) == util::ConfigLoad_Success )
+		{		
+			return AssetLoad_Success;
+		}
 		
 		return AssetLoad_Failure;
 	} // font_load_callback
@@ -49,7 +87,7 @@ namespace assets
 	
 	void font_construct_extension( StackString<MAX_PATH_SIZE> & extension )
 	{
-		extension = ".ttf";
+		extension = ".conf";
 	} // font_construct_extension
 
 }; // namespace assets
