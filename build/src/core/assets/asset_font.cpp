@@ -74,7 +74,7 @@ namespace assets
 		return util::ConfigLoad_Failure;
 	} // load_font_from_file
 
-	AssetLoadStatus font_load_callback( const char * path, Font * font, const FontParameters & parameters )
+	AssetLoadStatus font_load_callback( const char * path, Font * font, const AssetParameters & parameters )
 	{
 		if ( util::json_load_with_callback(path, load_font_from_file, font, true ) == util::ConfigLoad_Success )
 		{		
