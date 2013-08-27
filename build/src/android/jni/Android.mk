@@ -22,6 +22,7 @@ LOCAL_SRC_FILES := 	kernel_android.cpp \
 					$(SRC_DIR)contrib/stb_vorbis.c \
 					$(SRC_DIR)core/assets.cpp \
 					$(SRC_DIR)core/assets/asset_emitter.cpp \
+					$(SRC_DIR)core/assets/asset_font.cpp \
 					$(SRC_DIR)core/assets/asset_material.cpp \
 					$(SRC_DIR)core/assets/asset_mesh.cpp \
 					$(SRC_DIR)core/assets/asset_shader.cpp \
