@@ -23,7 +23,7 @@
 
 #include "typedefs.h"
 #include "color.hpp"
-#include "asset_font.hpp"
+#include "assets/asset_font.hpp"
 
 namespace font
 {

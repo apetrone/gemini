@@ -42,7 +42,7 @@ namespace assets
 	
 	struct TextureParameters : public AssetParameters
 	{
-		uint32_t flags;
+		unsigned int flags;
 		TextureParameters() : flags(0) {}
 	};
 		
