@@ -22,3 +22,6 @@
 [submodule "build/dependencies/slim"]
 	path = build/dependencies/slim
 	url = git://github.com/apetrone/slim.git
+[submodule "tools/pegasus"]
+	path = tools/pegasus
+	url = git://github.com/apetrone/pegasus.git
