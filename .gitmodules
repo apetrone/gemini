@@ -25,3 +25,6 @@
 [submodule "tools/pegasus"]
 	path = tools/pegasus
 	url = git://github.com/apetrone/pegasus.git
+[submodule "build/dependencies/assimp"]
+	path = build/dependencies/assimp
+	url = https://github.com/assimp/assimp.git
