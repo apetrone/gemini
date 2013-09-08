@@ -65,7 +65,7 @@ class assimpBuilder(Builder):
 		# build without boost
 		defines = "-DASSIMP_ENABLE_BOOST_WORKAROUND=ON"
 		if target_platform is LINUX:
-			defines += "-DCMAKE_INSTALL_RPATH=. -DCMAKE_BUILD_WITH_INSTALL_RPATH=True -DIMPORTED_SONAME=libassimp.so"
+			defines += "-DCMAKE_INSTALL_RPATH=. -DCMAKE_BUILD_WITH_INSTALL_RPATH=True"
 		cmake = CMake( generator = gen, defines = defines )
 		cmake.run()
 
