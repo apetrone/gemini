@@ -6,7 +6,7 @@ class assimpBuilder(Builder):
 
 		builder.root = "assimp"
 
-		assimp = Project( name="assimp" )
+		assimp = Project( name="Assimp" )
 		builder.addProject( assimp )
 
 
