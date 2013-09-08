@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>${EXECUTABLE_FILE}</string>
 	<key>NSPrincipalClass</key>
-	<string>NSApplication</string>
+	<string>osx_application</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleIconFile</key>
