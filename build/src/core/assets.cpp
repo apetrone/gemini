@@ -214,11 +214,11 @@ namespace assets
 
 		StackString<32> shader_version;
 		
-		int vs_len;
+		size_t vs_len;
 		char * vs_source = fs::file_to_buffer( "shaders/uber.vert", 0, &vs_len );
 		util::strip_shader_version( vs_source, shader_version );
 		
-		int fs_len;
+		size_t fs_len;
 		char * fs_source = fs::file_to_buffer( "shaders/uber.frag", 0, &fs_len );
 		util::strip_shader_version( fs_source, shader_version );
 		if ( shader_version._length == 0 )

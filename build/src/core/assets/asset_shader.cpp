@@ -123,7 +123,7 @@ namespace assets
 	{
 		renderer::ShaderObject shader_object;
 		char * buffer;
-		int length = 0;
+		size_t length = 0;
 		buffer = fs::file_to_buffer( shader_path, 0, &length );
 		if ( buffer )
 		{

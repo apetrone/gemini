@@ -113,7 +113,7 @@ namespace image
 	
 	bool load_image_from_file( const char * filename, unsigned int & texID, unsigned int flags, unsigned int * out_width, unsigned int * out_height )
 	{
-		int buffer_size = 0;
+		size_t buffer_size = 0;
 		char * filedata;
 		unsigned int width = 0;
 		unsigned int height = 0;

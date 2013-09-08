@@ -45,11 +45,11 @@ namespace fs
 	// bufferLength will contain the size of the buffer
 	// if buffer is null, a new buffer is allocated and must be freed after use
 	// if buffer is not null, bufferLength should contain the size of the buffer which will not be exceeded.        
-	char * file_to_buffer( const char * filename, char * buffer, int * buffer_length, bool path_is_relative=true );
+	char * file_to_buffer( const char * filename, char * buffer, size_t * buffer_length, bool path_is_relative=true );
 	
 	// read an audio file to memory
 	// this provides an abstraction between platforms; but likely needs to belong elsewhere?
-	void * audiofile_to_buffer( const char * filename, int & buffer_length );
+	void * audiofile_to_buffer( const char * filename, size_t & buffer_length );
 	
 	// accepts path as a string with len: MAX_PATH_SIZE (as defined in platform.h)        
 	void absolute_path_from_relative( char * fullpath, const char * relativepath, const char * content_directory = 0 );

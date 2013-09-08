@@ -104,7 +104,7 @@ namespace audio
 		typedef struct
 		{
 			unsigned char * data;
-			int dataSize;
+			size_t data_size;
 			short index;
 			bool is_used;
 			bool is_stream;
@@ -146,7 +146,7 @@ namespace audio
 				_sounds[i].is_used = 0;
 				_sounds[i].is_stream = 0;
 				_sounds[i].data = 0;
-				_sounds[i].dataSize = 0;
+				_sounds[i].data_size = 0;
 				_sounds[i].filename = 0;
 				_sounds[i].index = i;
 //				_sounds[i].refcount = 0;
@@ -182,7 +182,7 @@ namespace audio
 				{
 					DEALLOC(sound->data);
 					sound->data = 0;
-					sound->dataSize = 0;
+					sound->data_size = 0;
 				}
 			}
 		} // shutdown sounds
@@ -202,7 +202,7 @@ namespace audio
 			assets::append_asset_extension( assets::SoundAsset, path );
 //			assets::sounds()->append_extension( path );
 			
-			sound->data = (unsigned char*)fs::audiofile_to_buffer( path(), sound->dataSize );
+			sound->data = (unsigned char*)fs::audiofile_to_buffer( path(), sound->data_size );
 			if ( !sound->data )
 			{
 				LOGE( "audio::create_new_sound - could not open file %s\n", path() );
@@ -215,7 +215,7 @@ namespace audio
 			sound->filename = filename;
 			sound->is_stream = is_stream;
 			
-			LOGV( "audio::create_new_sound -> [data=%p,dataSize=%i,filename='%s']\n", sound->data, sound->dataSize, sound->filename );
+			LOGV( "audio::create_new_sound -> [data=%p,dataSize=%i,filename='%s']\n", sound->data, sound->data_size, sound->filename );
 			
 			return sound->index;
 		} // init_sound
@@ -389,7 +389,7 @@ namespace audio
 			return source_id;
 		}
 		
-		if ( source->_decoder->open( (unsigned char*)sound->data, sound->dataSize ) )
+		if ( source->_decoder->open( (unsigned char*)sound->data, sound->data_size ) )
 		{
 			source->num_repeats = num_repeats;
 			source_id = source->index;

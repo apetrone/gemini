@@ -26,14 +26,14 @@
 
 namespace util
 {
-	bool parse_json_string_with_callback( const char * buffer, unsigned int bufferLength, JsonLoaderCallback callback, void * context )
+	bool parse_json_string_with_callback( const char * buffer, size_t buffer_length, JsonLoaderCallback callback, void * context )
 	{
 		bool is_success = false;
 		
 		Json::Value root;
 		Json::Reader reader;
 		ConfigLoadStatus status;
-		is_success = reader.parse( buffer, buffer+bufferLength, root );
+		is_success = reader.parse( buffer, buffer+buffer_length, root );
 		if ( is_success )
 		{
 			status = callback( root, context );
@@ -49,7 +49,7 @@ namespace util
 
 	bool json_load_with_callback( const char * filename, JsonLoaderCallback callback, void * context, bool path_is_relative )
 	{
-		int bufferSize = 0;
+		size_t buffer_size = 0;
 		char * buffer;
 		bool is_success;
 		
@@ -61,10 +61,10 @@ namespace util
 		}
 
 		// load the file into a memory buffer
-		buffer = fs::file_to_buffer( filename, 0, &bufferSize, path_is_relative );
+		buffer = fs::file_to_buffer( filename, 0, &buffer_size, path_is_relative );
 		if ( buffer )
 		{
-			is_success = parse_json_string_with_callback( buffer, bufferSize, callback, context );
+			is_success = parse_json_string_with_callback( buffer, buffer_size, callback, context );
 			DEALLOC(buffer);
 		}
 		else

@@ -22,6 +22,7 @@
 #include "kernel.hpp"
 #include <stdio.h>
 #include <slim/xlog.h>
+#include "filesystem.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -43,7 +44,26 @@ public:
 		
 		Assimp::Importer importer;
 		
-		
+		size_t model_buffer_size = 0;
+		char * model_buffer = fs::file_to_buffer("models/basic_animation.dae", 0, &model_buffer_size);
+		if ( model_buffer )
+		{
+			unsigned int flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace;
+			const aiScene * scene = importer.ReadFileFromMemory(model_buffer, model_buffer_size, flags);
+			if (scene)
+			{
+				if ( scene->HasMeshes() )
+				{
+					fprintf(stdout, "Scene contains %i mesh(es)\n", scene->mNumMeshes);
+					
+//					output_scene.load_scene(scene);
+				}
+				
+				importer.FreeScene();
+			}
+			
+			DEALLOC(model_buffer);
+		}
 		return kernel::Application_NoWindow;
 	}
 

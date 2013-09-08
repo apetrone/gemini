@@ -290,7 +290,7 @@ namespace font
 
 	char * load_font_from_file( const char * path, unsigned short point_size, assets::FontHandle & handle )
 	{
-		int font_data_size = 0;
+		size_t font_data_size = 0;
 		char * font_data = 0;
 		font_data = fs::file_to_buffer( path, 0, &font_data_size );
 		

@@ -187,9 +187,9 @@ namespace fs
 		return (result == 0) && ((stFileInfo.st_mode & S_IFMT) == S_IFDIR);
 	} // directory_exists
 	
-	char * file_to_buffer( const char * filename, char * buffer, int * buffer_length, bool path_is_relative )
+	char * file_to_buffer( const char * filename, char * buffer, size_t * buffer_length, bool path_is_relative )
 	{
-		long int file_size;
+		size_t file_size;
 		
 		if ( !buffer_length )
 		{
@@ -256,7 +256,7 @@ namespace fs
 			{
 				if ( file_size > *buffer_length )
 				{
-					printf( "Request to read file size larger than buffer! (%ld > %d)\n", file_size, *buffer_length );
+					printf( "Request to read file size larger than buffer! (%ld > %zu)\n", file_size, *buffer_length );
 					file_size = *buffer_length;
 				}
 			}
@@ -275,7 +275,7 @@ namespace fs
 		return buffer;
 	} // file_to_buffer
 
-	void * audiofile_to_buffer( const char * filename, int & buffer_length )
+	void * audiofile_to_buffer( const char * filename, size_t & buffer_length )
 	{
 #if __APPLE__ && PLATFORM_IS_MOBILE
 		return mobile_audio_file_to_buffer( filename, buffer_length );
