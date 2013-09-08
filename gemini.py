@@ -90,3 +90,13 @@ class gemini(Builder):
 				output_nib = os.path.abspath( os.path.join(destination_resource_path, "en.lproj", "MainMenu.nib") )
 				ibtool = IBTool( input=source_xib, output=output_nib )
 				ibtool.run()
+
+		elif target_platform == LINUX:
+			target_symlink = os.path.join(params["output_path"], "libassimp.so.3")
+
+			# delete the symlink first
+			d = Delete(path=target_symlink)
+			d.run()
+
+			ln = LNTool(source='libassimp.so', target=target_symlink)
+			ln.run()
