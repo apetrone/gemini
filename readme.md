@@ -32,3 +32,10 @@ For iOS
 
 * Linux
 	* Install sox: sudo apt-get install sox
+
+
+
+### Principles / Goals
+* git
+	* Everything needed to "build" the game, will be in git.
+	* Art assets and other content will be in another system (though there are some strays in this project at the moment.)
