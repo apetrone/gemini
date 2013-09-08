@@ -31,7 +31,7 @@ class assimpBuilder(Builder):
 		builder.includes = ['include']
 
 		output_type = Builder.DynamicLibrary
-		output_name = project.name
+		output_name = project.name.lower()
 
 		if target_platform is LINUX:
 			builder.libs = ['assimp']
