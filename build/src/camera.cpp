@@ -214,6 +214,9 @@ void Camera::set_absolute_position( const glm::vec3 & position )
 
 void Camera::perspective( real fovy, int32 width, int32 height, real nearz, real farz )
 {
+	// This MUST be greater than 0, otherwise the view will be inverted or something.
+	// Basically, you won't see anything.
+	assert( nearz > 0.0f );
 	this->fovy = fovy;
 	this->aspect_ratio = (float)(width/(float)height);
 	this->near_clip = nearz;

@@ -45,7 +45,7 @@ public:
 		Assimp::Importer importer;
 		
 		size_t model_buffer_size = 0;
-		char * model_buffer = fs::file_to_buffer("models/basic_animation.dae", 0, &model_buffer_size);
+		char * model_buffer = fs::file_to_buffer("models/room2.dae", 0, &model_buffer_size);
 		if ( model_buffer )
 		{
 			unsigned int flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace;
