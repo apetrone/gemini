@@ -96,6 +96,9 @@ struct Scene
 		rs.add_clearcolor(0.15f, 0.15f, 0.15f, 1.0f);
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
 	
+		
+//		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+//		glDisable( GL_POLYGON_OFFSET_LINE );
 		for( SceneNodeVector::iterator it = nodes.begin(); it != nodes.end(); ++it )
 		{
 			SceneNode * node = (*it);
@@ -106,6 +109,26 @@ struct Scene
 		
 		
 		rs.run_commands();
+		
+#if 0
+		glEnable( GL_POLYGON_OFFSET_LINE );
+		glPolygonOffset( -1, -1 );
+		glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+		rs.rewind();
+		for( SceneNodeVector::iterator it = nodes.begin(); it != nodes.end(); ++it )
+		{
+			SceneNode * node = (*it);
+			assert( node->mesh != 0 );
+			
+			render_utilities::stream_geometry( rs, &node->mesh->geometry[0], gp );
+		}
+		
+		rs.run_commands();
+#endif
+		
+
+		
+
 	} // render
 }; // Scene
 
@@ -171,11 +194,7 @@ public:
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 		mesh = assets::meshes()->load_from_path("models/room2");
-		
-		mesh->geometry[0].material_id = assets::materials()->get_default()->Id();
-		
-		mesh->geometry[0].render_setup();
-		
+		mesh->prepare_geometry();
 		
 		SceneNode * s0 = scene.add_node();
 		s0->mesh = mesh;
@@ -218,6 +237,7 @@ public:
 	{
 		
 		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
+
 		scene.render( camera );
 		
 		debugdraw::text( 25, 50, "Testing", Color(255, 255, 255) );
