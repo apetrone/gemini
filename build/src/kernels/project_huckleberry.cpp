@@ -84,13 +84,12 @@ struct Scene
 	{
 		rs.rewind();
 		renderer::GeneralParameters gp;
-		
-		glm::mat4 object_matrix;
+
 		gp.global_params = 0;
 		gp.camera_position = &camera.pos;
 		gp.modelview_matrix = &camera.matCam;
 		gp.projection_project = &camera.matProj;
-		gp.object_matrix = &object_matrix;
+
 		
 		rs.add_viewport(0, 0, 800, 600);
 		rs.add_clearcolor(0.15f, 0.15f, 0.15f, 1.0f);
@@ -104,7 +103,12 @@ struct Scene
 			SceneNode * node = (*it);
 			assert( node->mesh != 0 );
 			
-			render_utilities::stream_geometry( rs, &node->mesh->geometry[0], gp );
+			gp.object_matrix = &node->transform;
+			
+			for( unsigned short i = 0; i < node->mesh->total_geometry; ++i )
+			{
+				render_utilities::stream_geometry( rs, &node->mesh->geometry[i], gp );
+			}
 		}
 		
 		
@@ -144,7 +148,9 @@ public kernel::IEventListener<kernel::SystemEvent>
 public:
 	DECLARE_APPLICATION( ProjectHuckleberry );
 	
-	assets::Mesh * mesh;
+	assets::Mesh * world;
+	assets::Mesh * vehicle;
+	SceneNode * vehicle_node;
 	Scene scene;
 	Camera camera;
 	
@@ -193,16 +199,36 @@ public:
 	
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
-		mesh = assets::meshes()->load_from_path("models/room2");
-		mesh->prepare_geometry();
+		world = assets::meshes()->load_from_path("models/room2");
+		if ( world )
+		{
+			world->prepare_geometry();
+			
+			SceneNode * node = scene.add_node();
+			node->mesh = world;
+			node->transform = glm::mat4(1.0f);
+			
+		}
 		
-		SceneNode * s0 = scene.add_node();
-		s0->mesh = mesh;
-		s0->transform = glm::mat4(1.0f);
+		vehicle = assets::meshes()->load_from_path("models/vehicle");
+		vehicle_node = 0;
+		if ( vehicle )
+		{
+			vehicle->prepare_geometry();
+			
+			SceneNode * node = scene.add_node();
+			node->mesh = vehicle;
+			node->transform = glm::mat4(1.0f);
+			node->transform = glm::translate( node->transform, glm::vec3(0.0f, 0.3432f, 0.0f));
+			vehicle_node = node;
+		}
 		
 		debugdraw::startup(1024);
 		
-		camera.set_absolute_position( glm::vec3(0, 1, 10.0f) );
+		camera.set_absolute_position( glm::vec3(8, 5, 8.0f) );
+		camera.yaw = -45;
+		camera.pitch = 30;
+		camera.update_view();
 
 		return kernel::Application_Success;
 	}
@@ -235,14 +261,16 @@ public:
 	
 	virtual void tick( kernel::Params & params )
 	{
-		
 		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
 
-		scene.render( camera );
-		
-		debugdraw::text( 25, 50, "Testing", Color(255, 255, 255) );
+		float rotate_angle = 0.5f;
+		vehicle_node->transform = glm::rotate( vehicle_node->transform, rotate_angle, glm::vec3(0.0f, 1.0f, 0.0f) );
 
-		debugdraw::axes( glm::mat4(1.0), 25.0f );
+		scene.render( camera );
+	
+		debugdraw::text( 25, 50, xstr_format("camera.position = %g %g %g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255) );
+
+		debugdraw::axes( glm::mat4(1.0), 1.0f );
 		
 		debugdraw::render( camera.matCam, camera.matProj, params.render_width, params.render_height );
 	}
