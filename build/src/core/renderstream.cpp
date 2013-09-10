@@ -114,6 +114,12 @@ void RenderStream::add_clear( unsigned int bitflags )
 	stream.write( bitflags );
 }
 
+void RenderStream::add_cullmode( renderer::CullMode mode )
+{
+	add_command( renderer::DC_CULLMODE );
+	stream.write( mode );
+}
+
 void RenderStream::add_viewport( int x, int y, int width, int height )
 {
 	add_command( renderer::DC_VIEWPORT );

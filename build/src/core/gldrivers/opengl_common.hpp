@@ -41,7 +41,7 @@ char * query_program_info_log( GLObject handle );
 GLenum driver_state_to_gl_state( renderer::DriverState state );
 GLenum convert_blendstate( renderer::RenderBlendType state );
 
-
+GLenum cullmode_to_gl_cullmode( renderer::CullMode mode );
 
 typedef void (*gemgl_state_function)(renderer::DriverState, MemoryStream &, renderer::IRenderDriver *);
 

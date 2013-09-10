@@ -90,17 +90,13 @@ struct Scene
 		gp.camera_position = &camera.pos;
 		gp.modelview_matrix = &camera.matCam;
 		gp.projection_project = &camera.matProj;
-
 		
 		rs.add_viewport(0, 0, 800, 600);
 		rs.add_clearcolor(0.15f, 0.15f, 0.15f, 1.0f);
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
-//		rs.add_state(renderer::STATE_BACKFACE_CULLING, 1 );
-		glCullFace(GL_BACK);
-		glEnable( GL_CULL_FACE );
-		
+		rs.add_state(renderer::STATE_BACKFACE_CULLING, 1 );
+		rs.add_cullmode( renderer::CULLMODE_BACK );
 
-		
 //		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 //		glDisable( GL_POLYGON_OFFSET_LINE );
 		for( SceneNodeVector::iterator it = nodes.begin(); it != nodes.end(); ++it )

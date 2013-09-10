@@ -155,7 +155,15 @@ GLenum convert_blendstate( renderer::RenderBlendType state )
 	return glblend[ state ];
 } // convert_blendstate
 
-
+GLenum cullmode_to_gl_cullmode( renderer::CullMode mode )
+{
+	GLenum cullmode[] = {
+		GL_FRONT,
+		GL_BACK
+	};
+	
+	return cullmode[ mode ];
+} // cullmode_to_gl_cullmode
 
 void state_op_enabledisable( renderer::DriverState state, MemoryStream & stream, renderer::IRenderDriver * driver )
 {

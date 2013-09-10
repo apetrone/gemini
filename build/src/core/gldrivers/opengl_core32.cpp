@@ -373,6 +373,14 @@ void c_cleardepth( MemoryStream & stream, GLCore32 & renderer )
 	gl.CheckError( "glClearDepth" );
 }
 
+void c_cullface( MemoryStream & stream, GLCore32 & renderer )
+{
+	renderer::CullMode cm;
+	stream.read( cm );
+	glCullFace( cullmode_to_gl_cullmode(cm) );
+	gl.CheckError( "glCullFace" );
+}
+
 void c_viewport( MemoryStream & stream, GLCore32 & renderer )
 {
 	int x, y, width, height;
@@ -482,6 +490,9 @@ render_command_function commands[] = {
 	c_noop,
 		
 	c_cleardepth, // cleardepth
+	c_noop,
+	
+	c_cullface, // cullface
 	c_noop,
 	
 	c_viewport, // viewport
