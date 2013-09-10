@@ -83,6 +83,7 @@ struct Scene
 	void render( Camera & camera )
 	{
 		rs.rewind();
+		
 		renderer::GeneralParameters gp;
 
 		gp.global_params = 0;
@@ -94,7 +95,11 @@ struct Scene
 		rs.add_viewport(0, 0, 800, 600);
 		rs.add_clearcolor(0.15f, 0.15f, 0.15f, 1.0f);
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
-	
+//		rs.add_state(renderer::STATE_BACKFACE_CULLING, 1 );
+		glCullFace(GL_BACK);
+		glEnable( GL_CULL_FACE );
+		
+
 		
 //		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 //		glDisable( GL_POLYGON_OFFSET_LINE );
@@ -265,7 +270,7 @@ public:
 
 		float rotate_angle = 0.5f;
 		vehicle_node->transform = glm::rotate( vehicle_node->transform, rotate_angle, glm::vec3(0.0f, 1.0f, 0.0f) );
-
+		
 		scene.render( camera );
 	
 		debugdraw::text( 25, 50, xstr_format("camera.position = %g %g %g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255) );

@@ -118,6 +118,7 @@ char * query_program_info_log( GLObject handle )
 GLenum driver_state_to_gl_state( renderer::DriverState state )
 {
 	GLenum state_list[] = {
+		GL_CULL_FACE,
 		GL_BLEND,
 		GL_DEPTH_TEST,
 	};
@@ -197,6 +198,7 @@ gemgl_state_function operator_for_state( renderer::DriverState state )
 {
 	// map driver state to operator function
 	gemgl_state_function operator_map[] = {
+		state_op_enabledisable,
 		state_op_enabledisable,
 		state_op_enabledisable,
 		state_op_depthmask,
