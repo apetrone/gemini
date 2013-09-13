@@ -156,20 +156,19 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
-		
-		collision_config = CREATE(btDefaultCollisionConfiguration);
-		dispatcher = CREATE(btCollisionDispatcher, collision_config );
+		collision_config = new btDefaultCollisionConfiguration();
+		dispatcher = new btCollisionDispatcher( collision_config );
 		
 		btVector3 worldAabbMin(-1000,-1000,-1000);
 		btVector3 worldAabbMax(1000,1000,1000);
 
-		constraint_solver = CREATE(btSequentialImpulseConstraintSolver);
+		constraint_solver = new btSequentialImpulseConstraintSolver();
 		
 //		broadphase = new btDbvtBroadphase();
-		broadphase = CREATE(btAxisSweep3, worldAabbMin, worldAabbMax);
+		broadphase = new btAxisSweep3(worldAabbMin, worldAabbMax);
 		
 		pair_cache = broadphase->getOverlappingPairCache();
-		dynamics_world = CREATE(btDiscreteDynamicsWorld, dispatcher, (btBroadphaseInterface*)broadphase, constraint_solver, collision_config);
+		dynamics_world = new btDiscreteDynamicsWorld(dispatcher, (btBroadphaseInterface*)broadphase, constraint_solver, collision_config);
 		dynamics_world->setGravity( btVector3( 0, -10, 0 ) );
 		dynamics_world->getDispatchInfo().m_useConvexConservativeDistanceUtil = true;
 		dynamics_world->getDispatchInfo().m_convexConservativeDistanceThreshold = 0.01;
@@ -200,12 +199,10 @@ public:
 			btRigidBody * body = btRigidBody::upcast(obj);
 			if ( body && body->getMotionState() )
 			{
-				btMotionState * ms = body->getMotionState();
-				DESTROY(btMotionState, ms);
+				delete body->getMotionState();
 			}
 			dynamics_world->removeCollisionObject( obj );
-
-			DESTROY(btCollisionObject, obj);
+			delete obj;
 		}
 		
 		//delete collision shapes
@@ -213,24 +210,24 @@ public:
 		{
 			btCollisionShape* shape = collision_shapes[j];
 			collision_shapes[j] = 0;
-			DESTROY(btCollisionShape, shape);
+			delete shape;
 		}
 		
 		//delete dynamics world
-		DESTROY(btDiscreteDynamicsWorld, dynamics_world);
+		delete dynamics_world;
 		
 		//delete solver
-		DESTROY(btSequentialImpulseConstraintSolver, constraint_solver);
+		delete constraint_solver;
 		
 		//delete broadphase
 		//delete mPairCache;
-		DESTROY(btBroadphaseInterface, broadphase);
+		delete broadphase;
 		
 		//delete dispatcher
-		DESTROY(btCollisionDispatcher, dispatcher);
+		delete dispatcher;
 		
 		// delete the collision configuration
-		DESTROY(btDefaultCollisionConfiguration, collision_config);
+		delete collision_config;
 		
 		//next line is optional: it will be cleared by the destructor when the array goes out of scope
 		collision_shapes.clear();
