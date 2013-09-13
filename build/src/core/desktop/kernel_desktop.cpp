@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include "input.hpp"
 #include <slim/xlog.h>
+#include <assert.h>
 
 static xwl_window_t * _window = 0;
 namespace kernel
@@ -160,6 +161,8 @@ void DesktopKernel::post_tick()
 void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 {
 	set_active( (result != kernel::Application_NoWindow) );
+	
+	assert( parameters().window_width != 0 || parameters().window_height != 0 );
 	
 	if ( is_active() )
 	{
