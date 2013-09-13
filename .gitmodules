@@ -28,3 +28,6 @@
 [submodule "build/dependencies/assimp"]
 	path = build/dependencies/assimp
 	url = https://github.com/assimp/assimp.git
+[submodule "build/dependencies/bullet2"]
+	path = build/dependencies/bullet2
+	url = https://github.com/omniavinco/bulletphysics.git

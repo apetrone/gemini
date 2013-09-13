@@ -41,7 +41,7 @@ class gemini(Builder):
 
 		target_platform = kwargs.get( "target_platform", None )
 
-		desktop_dependencies = list( set(common_dependencies(target_platform)) | set(["xwl/xwl.py", "assimp.py"]) )
+		desktop_dependencies = list( set(common_dependencies(target_platform)) | set(["xwl/xwl.py", "assimp.py", "bullet2.py"]) )
 		d['depends'] = desktop_dependencies
 		return d
 
