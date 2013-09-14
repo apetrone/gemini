@@ -29,9 +29,373 @@
 
 #include "mathlib.h"
 
+#include "util.hpp"
+
 namespace script
 {
 	HSQUIRRELVM _sqvm = 0;
+
+
+	// internal bind functions for operators, etc.
+	namespace bind
+	{
+		float random_float()
+		{
+			return ::util::random_range(0.0f, 1.0f);
+		} // random_float
+	
+		SQInteger vec3_add( HSQUIRRELVM v )
+		{
+			if ( sq_gettop(v) == 2 )
+			{
+				Sqrat::Var<const glm::vec3&> self(v, 1);
+				Sqrat::Var<const glm::vec3&> other(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::vec3 result = self.value + other.value;
+					Sqrat::PushVar( v, result );
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				
+				LOGE( "ERROR vec3_add\n" );
+				
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		} // vec3_add
+		
+		SQInteger vec3_subtract( HSQUIRRELVM v )
+		{
+			if ( sq_gettop(v) == 2 )
+			{
+				Sqrat::Var<const glm::vec3&> self(v, 1);
+				Sqrat::Var<const glm::vec3&> other(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::vec3 result = self.value - other.value;
+					Sqrat::PushVar( v, result );
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				
+				LOGE( "ERROR vec3_subtract\n" );
+				
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		} // vec3_subtract
+		
+		SQInteger vec3_multiply( HSQUIRRELVM v )
+		{
+			if ( sq_gettop(v) == 2 )
+			{
+				Sqrat::Var<const glm::vec3&> self(v, 1);
+				Sqrat::Var<const glm::vec3&> other(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::vec3 result = self.value * other.value;
+					Sqrat::PushVar( v, result );
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				
+				Sqrat::Var<float> fother(v,2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::vec3 r = self.value * fother.value;
+					Sqrat::PushVar( v, r );
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				LOGE( "ERROR vec3_multiply\n" );
+				
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		} // vec3_multiply
+		
+		SQInteger vec3_divide( HSQUIRRELVM v )
+		{
+			if ( sq_gettop(v) == 2 )
+			{
+				Sqrat::Var<const glm::vec3&> self(v, 1);
+				Sqrat::Var<const glm::vec3&> other(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::vec3 result = self.value / other.value;
+					Sqrat::PushVar( v, result );
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				
+				Sqrat::Var<float> fother(v,2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::vec3 r = self.value / fother.value;
+					Sqrat::PushVar( v, r );
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				fprintf( stdout, "ERROR vec3_divide\n" );
+				
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		} // vec3_divide
+		
+		
+		SQInteger math_normalize( HSQUIRRELVM v )
+		{
+			if ( sq_gettop(v) == 2 )
+			{
+				// vec3
+				Sqrat::Var<const glm::vec3&> self(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::vec3 result = glm::normalize(self.value);
+					Sqrat::PushVar(v, result);
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				// vec4
+				Sqrat::Var<const glm::vec4&> selfv4(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::vec4 result = glm::normalize(selfv4.value);
+					Sqrat::PushVar(v, result);
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				
+				fprintf( stdout, "ERROR Unexpected item for normalize!\n" );
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		} // math_normalize
+		
+		SQInteger math_inverse( HSQUIRRELVM v )
+		{
+			if ( sq_gettop(v) == 2 )
+			{
+				// mat3
+				Sqrat::Var<const glm::mat3&> self(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::mat3 result = glm::inverse(self.value);
+					Sqrat::PushVar(v, result);
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				// mat4
+				Sqrat::Var<const glm::mat4&> selfv4(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::mat4 result = glm::inverse(selfv4.value);
+					Sqrat::PushVar(v, result);
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				
+				fprintf( stdout, "ERROR Unexpected item for inverse!\n" );
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		} // math_inverse
+		
+		SQInteger math_transpose( HSQUIRRELVM v )
+		{
+			if ( sq_gettop(v) == 2 )
+			{
+				// mat3
+				Sqrat::Var<const glm::mat3&> self(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::mat3 result = glm::transpose(self.value);
+					Sqrat::PushVar(v, result);
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				// mat4
+				Sqrat::Var<const glm::mat4&> selfv4(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::mat4 result = glm::transpose(selfv4.value);
+					Sqrat::PushVar(v, result);
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				
+				fprintf( stdout, "ERROR Unexpected item for transpose!\n" );
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		} // math_transpose
+		
+		SQInteger math_dot( HSQUIRRELVM v )
+		{
+			if ( sq_gettop(v) == 3 )
+			{
+				// vec3
+				Sqrat::Var<const glm::vec3&> self(v, 2);
+				Sqrat::Var<const glm::vec3&> other(v, 3);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					float result = glm::dot(self.value, other.value);
+					Sqrat::PushVar(v, result);
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				fprintf( stdout, "ERROR Unexpected item for glm::dot!\n" );
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		} // math_dot
+		
+		SQInteger math_cross( HSQUIRRELVM v )
+		{
+			if ( sq_gettop(v) == 3 )
+			{
+				// vec3
+				Sqrat::Var<const glm::vec3&> self(v, 2);
+				Sqrat::Var<const glm::vec3&> other(v, 3);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::vec3 result = glm::cross(self.value, other.value);
+					Sqrat::PushVar(v, result);
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				fprintf( stdout, "ERROR Unexpected item for glm::cross!\n" );
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		} // math_cross
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		SQInteger mat3_multiply( HSQUIRRELVM v )
+		{
+			if ( sq_gettop(v) == 2 )
+			{
+				// matrix * matrix
+				Sqrat::Var<const glm::mat3&> self(v, 1);
+				Sqrat::Var<const glm::mat3&> other(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::mat3 result = self.value * other.value;
+					Sqrat::PushVar( v, result );
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				
+				// matrix * vec3
+				Sqrat::Var<const glm::vec3&> v_other(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::vec3 result = self.value * v_other.value;
+					Sqrat::PushVar( v, result );
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				
+				LOGE( "mat3_multiply Invalid operands!\n" );
+				
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		} // mat3_multiply
+		
+		SQInteger mat4_multiply( HSQUIRRELVM v )
+		{
+			if ( sq_gettop(v) == 2 )
+			{
+				// matrix * matrix
+				Sqrat::Var<const glm::mat4&> self(v, 1);
+				Sqrat::Var<const glm::mat4&> other(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::mat4 result = self.value * other.value;
+					Sqrat::PushVar(v, result);
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				
+				// matrix * vec4
+				Sqrat::Var<const glm::vec4&> v_other(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::vec4 result = self.value * v_other.value;
+					Sqrat::PushVar(v, result);
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+
+				LOGE( "Error mat4_multiply. Invalid operands!\n" );
+				
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		} // mat4_multiply
+
+	}; // bind
+
 
 
 	namespace util
@@ -130,7 +494,14 @@ namespace script
 			//
 			// FUNCTIONS
 			root.Func( "include", script_include );
-			
+			root.Func( "max", fmax );
+			root.Func( "min", fmin );
+
+			Sqrat::Table random( vm );
+			random.Func( "random", bind::random_float );
+			random.Func( "range", ::util::random_range );
+			root.Bind( "random", random );
+
 			//
 			// CLASSES
 			Sqrat::Class<glm::vec2> bind_vec2( vm );
@@ -139,7 +510,43 @@ namespace script
 			bind_vec2.Var( "y", &glm::vec2::y );
 			Sqrat::RootTable( vm ).Bind( "vec2", bind_vec2 );
 			
+			Sqrat::Class<glm::vec3> bind_vec3( vm );
+			bind_vec3.Ctor<float, float, float>();
+			bind_vec3.Ctor<glm::vec4>();
+			bind_vec3.SquirrelFunc( "_add", bind::vec3_add );
+			bind_vec3.SquirrelFunc( "_sub", bind::vec3_subtract );
+			bind_vec3.SquirrelFunc( "_mul", bind::vec3_multiply );
+			bind_vec3.SquirrelFunc( "_div", bind::vec3_divide );
+			bind_vec3.Var( "x", &glm::vec3::x );
+			bind_vec3.Var( "y", &glm::vec3::y );
+			bind_vec3.Var( "z", &glm::vec3::z );
+			Sqrat::RootTable( vm ).Bind( "vec3", bind_vec3 );
 			
+			root.SquirrelFunc( "normalize", bind::math_normalize );
+			root.SquirrelFunc( "inverse", bind::math_inverse );
+			root.SquirrelFunc( "transpose", bind::math_transpose );
+			root.SquirrelFunc( "dot", bind::math_dot );
+			root.SquirrelFunc( "cross", bind::math_cross );
+			
+			Sqrat::Class<glm::vec4> bind_vec4( vm );
+			bind_vec4.Ctor<float, float, float, float>();
+			bind_vec4.Ctor<glm::vec3, float>();
+			bind_vec4.Var( "x", &glm::vec4::x );
+			bind_vec4.Var( "y", &glm::vec4::y );
+			bind_vec4.Var( "z", &glm::vec4::z );
+			bind_vec4.Var( "w", &glm::vec4::w );
+			Sqrat::RootTable( vm ).Bind( "vec4", bind_vec4 );
+			
+			Sqrat::Class<glm::mat3> bind_mat3( vm );
+			bind_mat3.Ctor<glm::vec3, glm::vec3, glm::vec3>();
+			bind_mat3.Ctor<glm::mat4>();
+			bind_mat3.SquirrelFunc( "_mul", bind::mat3_multiply );
+			root.Bind( "mat3", bind_mat3 );
+			
+			
+			Sqrat::Class<glm::mat4> bind_mat4( vm );
+			bind_mat4.SquirrelFunc( "_mul", bind::mat4_multiply );
+			root.Bind( "mat4", bind_mat4 );
 		} // initialize_vm
 		
 		void print_script_error( HSQUIRRELVM vm, const char * action )
