@@ -22,6 +22,8 @@ class RotatingModel extends ModelEntity
 
 		// rotate around the Y-axis
 		this.transform = rotate( this.transform, delta_angle, vec3(0, 1, 0) )
+
+		// debug.axes( this.transform, 1.0, 0.0 )
 	}
 }
 

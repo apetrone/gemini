@@ -30,6 +30,7 @@
 #include "mathlib.h"
 
 #include "util.hpp"
+#include "debugdraw.hpp"
 
 namespace script
 {
@@ -646,6 +647,25 @@ namespace script
 			Sqrat::Class<glm::mat4> bind_mat4( vm );
 			bind_mat4.SquirrelFunc( "_mul", bind::mat4_multiply );
 			root.Bind( "mat4", bind_mat4 );
+			
+			
+			Sqrat::Class<Color> color( vm );
+			color.Ctor<unsigned char, unsigned char, unsigned char, unsigned char>();
+			color.Var( "r", &Color::r );
+			color.Var( "g", &Color::g );
+			color.Var( "b", &Color::b );
+			color.Var( "a", &Color::a );
+			root.Bind( "Color", color );
+			
+			
+			Sqrat::Table debug( vm );
+			debug.Func( "axes", debugdraw::axes );
+			debug.Func( "point", debugdraw::point );
+			debug.Func( "line", debugdraw::line );
+			debug.Func( "sphere", debugdraw::sphere );
+			
+			root.Bind( "debug", debug );
+			
 		} // initialize_vm
 		
 		void print_script_error( HSQUIRRELVM vm, const char * action )
