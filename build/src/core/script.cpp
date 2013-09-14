@@ -394,6 +394,101 @@ namespace script
 			}
 		} // mat4_multiply
 
+
+		SQInteger rotate( HSQUIRRELVM v )
+		{
+			if ( sq_gettop(v) == 4 )
+			{
+				Sqrat::Var<const glm::mat4&> mat4_param(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					// operation on mat4
+
+					Sqrat::Var<float> angle(v,3);
+					Sqrat::Var<const glm::vec3&> axis(v,4);
+
+
+					glm::mat4 result = glm::rotate( mat4_param.value, angle.value, axis.value );
+					Sqrat::PushVar(v, result);
+					return 1;
+				}
+				/*
+				Sqrat::Var<const glm::mat4&> other(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::mat4 result = self.value * other.value;
+					Sqrat::PushVar(v, result);
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				
+				// matrix * vec4
+				Sqrat::Var<const glm::vec4&> v_other(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::vec4 result = self.value * v_other.value;
+					Sqrat::PushVar(v, result);
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);*/
+				
+				LOGE( "Error rotate. Invalid operands!\n" );
+				
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		} // rotate
+		
+		
+		SQInteger translate( HSQUIRRELVM v )
+		{
+			if ( sq_gettop(v) == 3 )
+			{
+				Sqrat::Var<const glm::mat4&> mat4_param(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					// operation on mat4
+					Sqrat::Var<const glm::vec3&> vector(v,3);
+					
+					
+					glm::mat4 result = glm::translate( mat4_param.value, vector.value );
+					Sqrat::PushVar(v, result);
+					return 1;
+				}
+				/*
+				 Sqrat::Var<const glm::mat4&> other(v, 2);
+				 if ( !Sqrat::Error::Instance().Occurred(v) )
+				 {
+				 glm::mat4 result = self.value * other.value;
+				 Sqrat::PushVar(v, result);
+				 return 1;
+				 }
+				 Sqrat::Error::Instance().Clear(v);
+				 
+				 
+				 // matrix * vec4
+				 Sqrat::Var<const glm::vec4&> v_other(v, 2);
+				 if ( !Sqrat::Error::Instance().Occurred(v) )
+				 {
+				 glm::vec4 result = self.value * v_other.value;
+				 Sqrat::PushVar(v, result);
+				 return 1;
+				 }
+				 Sqrat::Error::Instance().Clear(v);*/
+				
+				LOGE( "Error translate. Invalid operands!\n" );
+				
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		} // translate
 	}; // bind
 
 
@@ -529,6 +624,8 @@ namespace script
 			root.SquirrelFunc( "transpose", bind::math_transpose );
 			root.SquirrelFunc( "dot", bind::math_dot );
 			root.SquirrelFunc( "cross", bind::math_cross );
+			root.SquirrelFunc( "rotate", bind::rotate );
+			root.SquirrelFunc( "translate", bind::translate );
 			
 			Sqrat::Class<glm::vec4> bind_vec4( vm );
 			bind_vec4.Ctor<float, float, float, float>();

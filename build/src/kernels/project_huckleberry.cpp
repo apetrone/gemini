@@ -35,112 +35,12 @@
 
 #include "script.hpp"
 
-struct SceneNode
+
+enum EntityType
 {
-	assets::Mesh * mesh;
-	glm::mat4 transform;
-	
-	
-	SceneNode()
-	{
-		mesh = 0;
-	}
-}; // SceneNode
-
-
-typedef std::vector<SceneNode*> SceneNodeVector;
-
-struct Scene
-{
-	SceneNodeVector nodes;
-	RenderStream rs;
-	
-	SceneNode * add_node()
-	{
-		SceneNode * node = CREATE(SceneNode);
-		nodes.push_back( node );
-		return node;
-	}
-	
-	Scene()
-	{
-		
-	}
-	
-	~Scene()
-	{
-		purge();
-	}
-	
-	void purge()
-	{
-		for( SceneNodeVector::iterator it = nodes.begin(); it != nodes.end(); ++it )
-		{
-			SceneNode * node = (*it);
-			DESTROY( SceneNode, node );
-		}
-		nodes.clear();
-	} // purge
-	
-	void render( Camera & camera )
-	{
-		rs.rewind();
-		
-		renderer::GeneralParameters gp;
-
-		gp.global_params = 0;
-		gp.camera_position = &camera.pos;
-		gp.modelview_matrix = &camera.matCam;
-		gp.projection_project = &camera.matProj;
-		
-		rs.add_viewport(0, 0, 800, 600);
-		rs.add_clearcolor(0.15f, 0.15f, 0.15f, 1.0f);
-		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
-		rs.add_state(renderer::STATE_BACKFACE_CULLING, 1 );
-		rs.add_cullmode( renderer::CULLMODE_BACK );
-
-//		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-//		glDisable( GL_POLYGON_OFFSET_LINE );
-		for( SceneNodeVector::iterator it = nodes.begin(); it != nodes.end(); ++it )
-		{
-			SceneNode * node = (*it);
-			assert( node->mesh != 0 );
-			
-			gp.object_matrix = &node->transform;
-			
-			for( unsigned short i = 0; i < node->mesh->total_geometry; ++i )
-			{
-				render_utilities::stream_geometry( rs, &node->mesh->geometry[i], gp );
-			}
-		}
-		
-		
-		rs.run_commands();
-		
-#if 0
-		glEnable( GL_POLYGON_OFFSET_LINE );
-		glPolygonOffset( -1, -1 );
-		glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-		rs.rewind();
-		for( SceneNodeVector::iterator it = nodes.begin(); it != nodes.end(); ++it )
-		{
-			SceneNode * node = (*it);
-			assert( node->mesh != 0 );
-			
-			render_utilities::stream_geometry( rs, &node->mesh->geometry[0], gp );
-		}
-		
-		rs.run_commands();
-#endif
-		
-
-		
-
-	} // render
-}; // Scene
-
-
-
+	Logic = 0,
+	Model = 1,
+};
 
 // script stuff
 struct Entity
@@ -155,6 +55,7 @@ struct Entity
 	glm::vec3 position;
 	uint64_t id;
 	std::string name;
+	uint8_t type;
 	
 	Entity();
 	~Entity();
@@ -183,7 +84,7 @@ typedef std::vector<Entity*> EntityVector;
 struct EntityList
 {
 	EntityVector objects;
-	
+
 	void add( Entity * object );
 	void remove( Entity * object );
 	void purge();
@@ -255,6 +156,7 @@ EntityList & entity_list()
 
 Entity::Entity()
 {
+	this->type = Logic;
 	this->id = entity_list().count();
 	entity_list().add( this );
 	LOGV( "Entity() - %p, %zu\n", this, this->id );
@@ -317,6 +219,40 @@ void Entity::native_tick()
 //	LOGV( "Entity::native_tick\n" );
 } // native_tick
 
+
+// model entity
+struct ModelEntity : public Entity
+{
+	assets::Mesh * mesh;
+	glm::mat4 transform;
+	
+	ModelEntity();
+	virtual ~ModelEntity() {}
+	
+	void set_model( const char * path );
+	glm::mat4 get_transform() const { return this->transform; }
+	void set_transform( const glm::mat4 & tr ) { this->transform = tr; }
+}; // ModelEntity
+
+
+ModelEntity::ModelEntity()
+{
+	this->type = Model;
+	this->mesh = 0;
+} // ModelEntity
+
+
+void ModelEntity::set_model( const char * path )
+{
+	this->mesh = assets::meshes()->load_from_path( path );
+	if ( this->mesh )
+	{
+		this->mesh->prepare_geometry();
+	}
+} // set_model
+
+
+
 class ProjectHuckleberry : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -324,13 +260,9 @@ public kernel::IEventListener<kernel::SystemEvent>
 {
 public:
 	DECLARE_APPLICATION( ProjectHuckleberry );
-	
-	assets::Mesh * world;
-	assets::Mesh * vehicle;
-	SceneNode * vehicle_node;
-	Scene scene;
+
 	Camera camera;
-	
+		
 	virtual void event( kernel::KeyboardEvent & event )
 	{
 		if (event.is_down)
@@ -376,6 +308,8 @@ public:
 	
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
+		Sqrat::RootTable root( script::get_vm() );
+		
 		// bind Entity to scripting language
 		Sqrat::Class<Entity> entity( script::get_vm() );
 		entity.Func( "tick", &Entity::native_tick );
@@ -384,37 +318,15 @@ public:
 		entity.Var( "id", &Entity::id );
 		entity.Prop( "name", &Entity::get_name, &Entity::set_name );
 		entity.Prop( "position", &Entity::get_position, &Entity::set_position );
-		Sqrat::RootTable( script::get_vm() ).Bind( "Entity", entity );
+		root.Bind( "Entity", entity );
 	
+		Sqrat::DerivedClass<ModelEntity, Entity> model( script::get_vm() );
+		model.Func( "set_model", &ModelEntity::set_model );
+		model.Prop( "transform", &ModelEntity::get_transform, &ModelEntity::set_transform );
+		root.Bind( "ModelEntity", model );
 	
 		script::execute_file("scripts/project_huckleberry.nut");
 	
-	
-	
-		world = assets::meshes()->load_from_path("models/room2");
-		if ( world )
-		{
-			world->prepare_geometry();
-			
-			SceneNode * node = scene.add_node();
-			node->mesh = world;
-			node->transform = glm::mat4(1.0f);
-			
-		}
-		
-		vehicle = assets::meshes()->load_from_path("models/vehicle");
-		vehicle_node = 0;
-		if ( vehicle )
-		{
-			vehicle->prepare_geometry();
-			
-			SceneNode * node = scene.add_node();
-			node->mesh = vehicle;
-			node->transform = glm::mat4(1.0f);
-			node->transform = glm::translate( node->transform, glm::vec3(0.0f, 0.3432f, 0.0f));
-			vehicle_node = node;
-		}
-		
 		debugdraw::startup(1024);
 		
 		camera.set_absolute_position( glm::vec3(8, 5, 8.0f) );
@@ -451,6 +363,69 @@ public:
 		}
 	}
 	
+	
+	void render_with_camera( Camera & camera )
+	{
+		RenderStream rs;
+		
+		renderer::GeneralParameters gp;
+		
+		gp.global_params = 0;
+		gp.camera_position = &camera.pos;
+		gp.modelview_matrix = &camera.matCam;
+		gp.projection_project = &camera.matProj;
+		
+		rs.add_viewport(0, 0, 800, 600);
+		rs.add_clearcolor(0.15f, 0.15f, 0.15f, 1.0f);
+		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
+		rs.add_state(renderer::STATE_BACKFACE_CULLING, 1 );
+		rs.add_cullmode( renderer::CULLMODE_BACK );
+		
+		//		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+		//		glDisable( GL_POLYGON_OFFSET_LINE );
+		for( EntityVector::iterator it = entity_list().objects.begin(); it != entity_list().objects.end(); ++it )
+		{
+			Entity * entity = (*it);
+			if ( entity->type == Model )
+			{
+				ModelEntity * model = (ModelEntity*)entity;
+				if ( model )
+				{
+					gp.object_matrix = &model->transform;
+					assert( model->mesh != 0 );
+					
+					for( unsigned short i = 0; i < model->mesh->total_geometry; ++i )
+					{
+						render_utilities::stream_geometry( rs, &model->mesh->geometry[i], gp );
+					}
+				}
+			}
+		}
+		
+		
+		rs.run_commands();
+		
+#if 0
+		glEnable( GL_POLYGON_OFFSET_LINE );
+		glPolygonOffset( -1, -1 );
+		glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+		rs.rewind();
+		for( SceneNodeVector::iterator it = nodes.begin(); it != nodes.end(); ++it )
+		{
+			SceneNode * node = (*it);
+			assert( node->mesh != 0 );
+			
+			render_utilities::stream_geometry( rs, &node->mesh->geometry[0], gp );
+		}
+		
+		rs.run_commands();
+#endif
+		
+		
+		
+		
+	} // render_with_camera
+	
 	virtual void tick( kernel::Params & params )
 	{
 		// tick entities
@@ -460,13 +435,10 @@ public:
 		{
 			(*it)->tick();
 		}
-		
+				
 		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
 
-		float rotate_angle = 0.5f;
-		vehicle_node->transform = glm::rotate( vehicle_node->transform, rotate_angle, glm::vec3(0.0f, 1.0f, 0.0f) );
-		
-		scene.render( camera );
+		render_with_camera( camera );
 	
 		debugdraw::text( 25, 50, xstr_format("camera.position = %g %g %g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255) );
 
