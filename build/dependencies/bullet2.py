@@ -12,17 +12,14 @@ class bullet2Builder(Builder):
 
 		builder.root = "bullet2"
 		
+		# incorrect link ordering will cause errors on linux
 		libs = [
-			"BulletCollision",		
-			"BulletDynamics",
+			"BulletDynamics",		
+			"BulletCollision",
 			"BulletSoftBody",
 			"LinearMath"]
 
-		builder.targets = [
-			'BulletCollision',
-			'BulletDynamics',
-			'BulletSoftBody',
-			'LinearMath']
+		builder.targets = []
 
 		i = 0
 		for lib in libs:
@@ -30,9 +27,8 @@ class bullet2Builder(Builder):
 			p.output = libs[ i ]
 			i += 1
 			builder.addProject( p )
+			builder.targets.append( project_names[ target_platform ] )
 
-		if target_platform is LINUX:
-			builder.file_path = "./msvc/gmake"	
 
 	def config(self, *args, **kwargs):
 		driver = kwargs.get( "driver", None )
@@ -45,22 +41,15 @@ class bullet2Builder(Builder):
 		libdir = "lib/%s/%s" % (params['architecture'], params['configuration'])
 
 		if params['platform'] is LINUX:
-			items = ['lib']
-			items.append( params['build_architecture'] )
-			items.append( params['configuration'] )
+			items = ['src']
+			items.append( project.output )
 			libdir = '/'.join( items )
 
 		builder.includes = ['src']
 		builder.libs = [ project.output ]
 
-		print( "%s -> %s" % ( project.name, project.output ) )
+		#print( "%s -> %s" % ( project.name, project.output ) )
 		builder.addOutput( path=libdir, name=project.output, type=Builder.StaticLibrary )
-
-		#if target_platform is LINUX:
-		#	driver.config = (params['configuration'].lower() + Premake4.archmap[ params['platform'] ][ params['build_architecture'] ])
-		#	driver.makefile = project.name + '.make'
-		#params['valid_archs'] = "armv7" #params['build_architecture']
-		#params['sdkroot'] = 'iphoneos'
 
 
 	def generate(self, *args, **kwargs):
@@ -86,18 +75,8 @@ class bullet2Builder(Builder):
 		md = Makedirs(path=params['libpath'])
 		md.run()
 
-		if target_platform is LINUX:
-			self.cd = ChangeDirectory(path=params['file_path'])
-			self.cd.run()
-		params['file'] = "./%s.make" % (params['targets'][ params['project_id'] ])
-
+		params['file'] = "./Makefile"
 		params['config'] = params['configuration'].lower() + params['architecture']
-
-
-	def postbuild(self, *args, **kwargs):
-		params = kwargs.get( "args", None )
-		if params['platform'] is LINUX:
-			self.cd.pop()
 
 	def postclean(self, *args, **kwargs):
 		params = kwargs.get( "args", None )
