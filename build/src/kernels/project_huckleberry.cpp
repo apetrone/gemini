@@ -33,6 +33,8 @@
 #include "renderstream.hpp"
 #include "render_utilities.hpp"
 
+#include "script.hpp"
+
 struct SceneNode
 {
 	assets::Mesh * mesh;
@@ -140,6 +142,180 @@ struct Scene
 
 
 
+// script stuff
+struct Entity
+{
+	HSQOBJECT instance;
+	HSQOBJECT class_object;
+	
+//	HSQOBJECT on_update;
+	HSQOBJECT on_tick;
+//	HSQOBJECT on_draw;
+	
+	glm::vec3 position;
+	uint64_t id;
+	std::string name;
+	
+	Entity();
+	~Entity();
+	
+//	void update( float delta_msec );
+	void tick();
+//	void draw();
+	
+	// bind functions for this object
+	void bind_functions();
+	
+	// get/set functions for script interop
+	inline const glm::vec3 & get_position() const { return position; }
+	inline void set_position( const glm::vec3 & p ) { position = p; }
+	const std::string & get_name() { return this->name; }
+	void set_name( const std::string & object_name ) { this->name = object_name; }
+//	void native_update;
+	void native_tick();
+//	void native_draw();
+}; // Entity
+
+typedef std::vector<Entity*> EntityVector;
+
+
+
+struct EntityList
+{
+	EntityVector objects;
+	
+	void add( Entity * object );
+	void remove( Entity * object );
+	void purge();
+	Entity * find_with_name( const std::string & name );
+	Entity * object_at_index( size_t index );
+	size_t count() const;
+}; // EntityList
+
+void EntityList::add( Entity * object )
+{
+	this->objects.push_back( object );
+} // add
+
+void EntityList::remove( Entity * object )
+{
+	for (EntityVector::iterator it = this->objects.begin(); it != this->objects.end(); ++it )
+	{
+		Entity * obj = (*it);
+		
+		if ( obj == object )
+		{
+			objects.erase( it );
+			break;
+		}
+	}
+} // remove
+
+void EntityList::purge()
+{
+	objects.clear();
+} // purge
+
+Entity * EntityList::find_with_name( const std::string & name )
+{
+	for (EntityVector::iterator it = this->objects.begin(); it != this->objects.end(); ++it )
+	{
+		Entity * obj = (*it);
+		
+		if ( name == obj->name )
+		{
+			return obj;
+		}
+	}
+	
+	return 0;
+} // find_with_name
+
+Entity * EntityList::object_at_index(size_t index)
+{
+	assert(index <= this->count());
+	
+	return objects[ index ];
+} // object_at_index
+
+size_t EntityList::count() const
+{
+	return objects.size();
+} // count
+
+
+EntityList & entity_list()
+{
+	static EntityList _entity_list;
+	return _entity_list;
+} // entity_list
+
+
+
+
+Entity::Entity()
+{
+	this->id = entity_list().count();
+	entity_list().add( this );
+	LOGV( "Entity() - %p, %zu\n", this, this->id );
+	
+	sq_resetobject( &instance );
+	sq_resetobject( &class_object );
+	
+	// Assumes the OT_INSTANCE is at position 1 in the stack
+	SQRESULT res = sq_getstackobj( script::get_vm(), 1, &instance );
+	script::check_result(res, "getstackobj");
+	
+	res = sq_getclass( script::get_vm(), 1 );
+	script::check_result(res, "getclass" );
+	
+	res = sq_getstackobj( script::get_vm(), -1, &class_object );
+	script::check_result(res, "getstackobj");
+	
+	// pop the OT_CLASS
+	sq_poptop( script::get_vm() );
+	
+	this->bind_functions();
+} // Entity
+
+Entity::~Entity()
+{
+	LOGV( "~Entity() - %p, %zu\n", this, this->id );
+	entity_list().remove( this );
+} // ~Entity
+
+void Entity::tick()
+{
+	if ( sq_isnull(this->on_tick) || sq_isnull(this->instance) )
+	{
+		return;
+	}
+
+	SQRESULT res;
+	sq_pushobject( script::get_vm(), this->on_tick );
+	sq_pushobject( script::get_vm(), this->instance );
+	res = sq_call( script::get_vm(), 1, SQFalse, SQTrue );
+	
+	sq_pop( script::get_vm(), 1 );
+	if ( SQ_FAILED(res) )
+	{
+		script::check_result( res, "sq_call" );
+		sq_pop( script::get_vm(), 1 );
+	}
+} // tick
+
+
+void Entity::bind_functions()
+{
+	LOGV( "Entity::bind_functions: %p\n", this );
+	this->on_tick = script::find_member( this->class_object, "tick" );
+} // bind_functions
+
+
+void Entity::native_tick()
+{
+//	LOGV( "Entity::native_tick\n" );
+} // native_tick
 
 class ProjectHuckleberry : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
@@ -200,6 +376,21 @@ public:
 	
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
+		// bind Entity to scripting language
+		Sqrat::Class<Entity> entity( script::get_vm() );
+		entity.Func( "tick", &Entity::native_tick );
+//		entity.Func( "update", &NativeObject::native_update );
+//		entity.Func( "draw", &NativeObject::native_draw );
+		entity.Var( "id", &Entity::id );
+		entity.Prop( "name", &Entity::get_name, &Entity::set_name );
+		entity.Prop( "position", &Entity::get_position, &Entity::set_position );
+		Sqrat::RootTable( script::get_vm() ).Bind( "Entity", entity );
+	
+	
+		script::execute_file("scripts/project_huckleberry.nut");
+	
+	
+	
 		world = assets::meshes()->load_from_path("models/room2");
 		if ( world )
 		{
@@ -262,6 +453,14 @@ public:
 	
 	virtual void tick( kernel::Params & params )
 	{
+		// tick entities
+		EntityVector::iterator it =	entity_list().objects.begin();
+		EntityVector::iterator end = entity_list().objects.end();
+		for( ; it != end; ++it )
+		{
+			(*it)->tick();
+		}
+		
 		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
 
 		float rotate_angle = 0.5f;
