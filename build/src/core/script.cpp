@@ -27,6 +27,8 @@
 
 #define scvprintf vfprintf
 
+#include "mathlib.h"
+
 namespace script
 {
 	HSQUIRRELVM _sqvm = 0;
@@ -122,8 +124,21 @@ namespace script
 			
 			sq_pop( vm, 1 );
 			
-			
+			// bind all functions and classes to make squirrel aware
 			Sqrat::RootTable root( vm );
+			
+			//
+			// FUNCTIONS
+			root.Func( "include", script_include );
+			
+			//
+			// CLASSES
+			Sqrat::Class<glm::vec2> bind_vec2( vm );
+			bind_vec2.Ctor<float, float>();
+			bind_vec2.Var( "x", &glm::vec2::x );
+			bind_vec2.Var( "y", &glm::vec2::y );
+			Sqrat::RootTable( vm ).Bind( "vec2", bind_vec2 );
+			
 			
 		} // initialize_vm
 		
@@ -159,7 +174,11 @@ namespace script
 	
 	void shutdown()
 	{
-		
+		if ( _sqvm )
+		{
+			sq_close( _sqvm );
+			_sqvm = 0;
+		}
 	} // shutdown
 	
 	const char * string_for_type( int sqtype )

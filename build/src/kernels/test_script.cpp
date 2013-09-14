@@ -68,6 +68,8 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
+	
+		script::execute_file("scripts/test.nut");
 		return kernel::Application_NoWindow;
 	}
 
