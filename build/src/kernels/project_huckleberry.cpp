@@ -381,8 +381,8 @@ public:
 		rs.add_state(renderer::STATE_BACKFACE_CULLING, 1 );
 		rs.add_cullmode( renderer::CULLMODE_BACK );
 		
-		//		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-		//		glDisable( GL_POLYGON_OFFSET_LINE );
+//		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+//		glDisable( GL_POLYGON_OFFSET_LINE );
 		for( EntityVector::iterator it = entity_list().objects.begin(); it != entity_list().objects.end(); ++it )
 		{
 			Entity * entity = (*it);
@@ -420,10 +420,7 @@ public:
 		
 		rs.run_commands();
 #endif
-		
-		
-		
-		
+	
 	} // render_with_camera
 	
 	virtual void tick( kernel::Params & params )
@@ -451,6 +448,6 @@ public:
 	{
 		debugdraw::shutdown();
 	}
-};
+}; // ProjectHuckleberry
 
 IMPLEMENT_APPLICATION( ProjectHuckleberry );
