@@ -149,31 +149,12 @@ namespace physics
 
 void DebugPhysicsRenderer::drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color )
 {
-#if 0
-	glLineWidth( 2.0f );
-	glColor3f( color.x(), color.y(), color.z() );
-	glBegin( GL_LINES );
-	glVertex3f( from.x(), from.y(), from.z() );
-	glVertex3f( to.x(), to.y(), to.z() );
-	glEnd();
-	glLineWidth( 1.0f );
-#endif
 	Color c = Color::fromFloatPointer( &color[0], 3 );
 	debugdraw::line( BTVECTOR3_TO_VEC3( from ), BTVECTOR3_TO_VEC3( to ), c );
 }
 
 void DebugPhysicsRenderer::drawLine( const btVector3& from, const btVector3& to, const btVector3& fromColor, const btVector3& color )
 {
-#if 0
-	glLineWidth( 2.0f );
-	glBegin( GL_LINES );
-	glColor3f( fromColor.x(), fromColor.y(), fromColor.z() );
-	glVertex3f( from.x(), from.y(), from.z() );
-	glColor3f( toColor.x(), toColor.y(), toColor.z() );
-	glVertex3f( to.x(), to.y(), to.z() );
-	glEnd();
-	glLineWidth( 1.0f );
-#endif
 	Color c = Color::fromFloatPointer( &color[0], 3 );
 	debugdraw::line( BTVECTOR3_TO_VEC3( from ), BTVECTOR3_TO_VEC3( to ), c );
 }
