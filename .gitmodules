@@ -28,3 +28,6 @@
 [submodule "build/dependencies/bullet2"]
 	path = build/dependencies/bullet2
 	url = https://github.com/omniavinco/bulletphysics.git
+[submodule "build/dependencies/sqrat"]
+	path = build/dependencies/sqrat
+	url = git://git.code.sf.net/p/scrat/code
