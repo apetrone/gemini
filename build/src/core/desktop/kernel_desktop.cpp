@@ -161,11 +161,10 @@ void DesktopKernel::post_tick()
 void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 {
 	set_active( (result != kernel::Application_NoWindow) );
-	
-	assert( parameters().window_width != 0 || parameters().window_height != 0 );
-	
+
 	if ( is_active() )
 	{
+		assert( parameters().window_width != 0 || parameters().window_height != 0 );
 		unsigned int attribs[] = {
 
 #if defined( PLATFORM_USE_GLES2 )

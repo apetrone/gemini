@@ -19,38 +19,70 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
+#include "kernel.hpp"
+#include <stdio.h>
+#include <slim/xlog.h>
+#include "mathlib.h"
+#include "debugdraw.hpp"
+#include "input.hpp"
+#include "script.hpp"
 
-#include <squirrel.h>
-#include <sqstdio.h>
-#include <sqstdaux.h>
-#include <sqstdsystem.h>
-#include <sqstdmath.h>
 
-#include <sqrat.h>
-
-namespace script
+class TestScript : public kernel::IApplication,
+public kernel::IEventListener<kernel::KeyboardEvent>,
+public kernel::IEventListener<kernel::MouseEvent>,
+public kernel::IEventListener<kernel::SystemEvent>
 {
-	const int64_t MINIMUM_STACK_SIZE = 128;
-	void startup( int64_t stack_size = script::MINIMUM_STACK_SIZE );
-	void shutdown();
+
+public:
+	DECLARE_APPLICATION( TestScript );
+
 	
-	const char * string_for_type( int sqtype );
-	void print_stack( HSQUIRRELVM vm );
-	
-	HSQUIRRELVM get_vm();
-	
-	template <class Type>
-	void get_variable( const SQChar * name, Type & value )
+	virtual void event( kernel::KeyboardEvent & event )
 	{
-		Sqrat::Object obj = Sqrat::RootTable( get_vm() ).GetSlot( name );
-		if ( !obj.IsNull() )
+		if (event.is_down)
 		{
-			value = obj.Cast<Type>();
+			if (event.key == input::KEY_ESCAPE)
+			{
+				kernel::instance()->set_active(false);
+			}
 		}
-	} // get_variable
+	}
 	
-	// run a script file; returns true on success, false on failure/exception
-	bool execute_file( const char * filename );
+	virtual void event( kernel::MouseEvent & event )
+	{
+	}
 	
-}; // namespace script
+	virtual void event( kernel::SystemEvent & event )
+	{
+		
+	}
+
+	virtual kernel::ApplicationResult config( kernel::Params & params )
+	{
+//		params.window_title = "test_script";
+//		params.window_width = 800;
+//		params.window_height = 600;
+		return kernel::Application_NoWindow;
+	}
+
+	virtual kernel::ApplicationResult startup( kernel::Params & params )
+	{
+		return kernel::Application_NoWindow;
+	}
+
+	virtual void step( kernel::Params & params )
+	{
+	}
+
+	virtual void tick( kernel::Params & params )
+	{
+	
+	}
+	
+	virtual void shutdown( kernel::Params & params )
+	{
+	}
+};
+
+IMPLEMENT_APPLICATION( TestScript );
