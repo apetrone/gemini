@@ -11,7 +11,13 @@ def dependency_path():
 	return "build/dependencies"
 
 def common_dependencies( target_platform ):
-	deps = ["glm.py", "fontstash.py"]
+	deps = [
+		"glm.py",
+		"fontstash.py",
+		"bullet2.py",
+		"squirrel3.py",
+		"sqrat.py"
+	]
 
 	if target_platform == 'windows':
 		deps.append( "openal.py" )
