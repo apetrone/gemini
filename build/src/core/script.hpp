@@ -53,4 +53,7 @@ namespace script
 	// run a script file; returns true on success, false on failure/exception
 	bool execute_file( const char * filename );
 	
+	bool find_function( const char * name, Sqrat::Function & function );
+	HSQOBJECT find_member( HSQOBJECT class_obj, const char * name );
+	void check_result( SQRESULT result, const char * debug_string );
 }; // namespace script

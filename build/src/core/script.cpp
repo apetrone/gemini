@@ -443,18 +443,20 @@ namespace script
 		
 		static void print_callback(HSQUIRRELVM v,const SQChar *s,...)
 		{
-			va_list vl;
-			va_start(vl, s);
-			scvprintf(stdout, s, vl);
-			va_end(vl);
+//			va_list vl;
+//			va_start(vl, s);
+//			scvprintf(stdout, s, vl);
+//			va_end(vl);
+			LOGV( s );
 		} // print_callback
 		
 		static void error_callback(HSQUIRRELVM v,const SQChar *s,...)
 		{
-			va_list vl;
-			va_start(vl, s);
-			scvprintf(stderr, s, vl);
-			va_end(vl);
+//			va_list vl;
+//			va_start(vl, s);
+//			scvprintf(stderr, s, vl);
+//			va_end(vl);
+			LOGE( s );
 		} // error_callback
 		
 		
@@ -671,7 +673,8 @@ namespace script
 		// fetch the script from our filesystem
 		size_t buffer_length = 0;
 		char * buffer = fs::file_to_buffer( filename, 0, &buffer_length );
-		StackMonitor sm(vm);
+		
+//		StackMonitor sm(vm);
 		
 		// compile the buffer and execute it in squirrel VM
 		if ( SQ_SUCCEEDED( sq_compilebuffer( vm, buffer, buffer_length, "console", 1 )))
@@ -705,4 +708,57 @@ namespace script
 		
 		return false;
 	} // execute_file
+	
+	bool find_function( const char * name, Sqrat::Function & function )
+	{
+		function = Sqrat::RootTable( get_vm() ).GetFunction( name );
+		if ( function.IsNull() )
+		{
+			LOGV( "Unable to find function: \"%s\"\n", name );
+			return false;
+		}
+		
+		return true;
+	} // find_function
+	
+	HSQOBJECT find_member( HSQOBJECT class_obj, const char * name )
+	{
+//		StackMonitor sm( get_vm() );
+		
+		bool success = false;
+		
+		HSQOBJECT obj;
+		sq_resetobject( &obj );
+		
+		Sqrat::Object classobj( class_obj, get_vm() );
+		if ( !classobj.IsNull() )
+		{
+			Sqrat::Function function = classobj.GetSlot( name ).Cast<Sqrat::Function>();
+			if ( !function.IsNull() )
+			{
+				obj = function.GetFunc();
+				success = true;
+			}
+		}
+		
+		if ( !success )
+		{
+			LOGW( "Unable to find '%s'\n", name );
+		}
+		
+		return obj;
+	} // find_member
+	
+	void check_result( SQRESULT result, const char * debug_string )
+	{
+		if ( SQ_FAILED(result) )
+		{
+			sq_getlasterror( get_vm() );
+			const SQChar * sqc;
+			sq_getstring( get_vm(), -1, &sqc );
+			LOGE( "script_error on %s\n", debug_string );
+			LOGE( "script_error: %s\n", sqc );
+		}
+	} // check_result
+	
 }; // namespace script
