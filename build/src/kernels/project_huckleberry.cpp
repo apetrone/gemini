@@ -437,9 +437,9 @@ public:
 
 		render_with_camera( camera );
 	
-		debugdraw::text( 25, 50, xstr_format("camera.position = %g %g %g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255) );
+//		debugdraw::text( 25, 50, xstr_format("camera.position = %g %g %g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255) );
 
-		debugdraw::axes( glm::mat4(1.0), 1.0f );
+//		debugdraw::axes( glm::mat4(1.0), 1.0f );
 		
 		debugdraw::render( camera.matCam, camera.matProj, params.render_width, params.render_height );
 	}

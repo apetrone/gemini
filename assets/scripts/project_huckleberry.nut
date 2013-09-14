@@ -27,6 +27,15 @@ class RotatingModel extends ModelEntity
 	}
 }
 
+
+class PlayerControl extends ModelEntity
+{
+	function tick()
+	{
+		
+	}
+}
+
 ground <- ModelEntity()
 ground.name = "ground"
 ground.set_model( "models/room2")
