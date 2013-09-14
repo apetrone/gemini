@@ -42,6 +42,111 @@ public:
 }; // DebugPhysicsRenderer
 
 
+
+namespace physics
+{
+	btDefaultCollisionConfiguration * collision_config;
+	btCollisionDispatcher * dispatcher;
+	btSequentialImpulseConstraintSolver * constraint_solver;
+	btDiscreteDynamicsWorld * dynamics_world;
+	btOverlappingPairCache * pair_cache;
+	btAlignedObjectArray<btCollisionShape*> collision_shapes;
+	btBroadphaseInterface * broadphase;
+	
+	
+	void * bullet2_custom_alloc( size_t size )
+	{
+		return ALLOC( size );
+	}
+	
+	void bullet2_custom_free( void * memblock )
+	{
+		DEALLOC( memblock );
+	}
+	
+	void startup()
+	{
+		collision_config = new btDefaultCollisionConfiguration();
+		dispatcher = new btCollisionDispatcher( collision_config );
+		
+		btVector3 worldAabbMin(-1000,-1000,-1000);
+		btVector3 worldAabbMax(1000,1000,1000);
+		
+		constraint_solver = new btSequentialImpulseConstraintSolver();
+		
+		//		broadphase = new btDbvtBroadphase();
+		broadphase = new btAxisSweep3(worldAabbMin, worldAabbMax);
+		
+		pair_cache = broadphase->getOverlappingPairCache();
+		dynamics_world = new btDiscreteDynamicsWorld(dispatcher, (btBroadphaseInterface*)broadphase, constraint_solver, collision_config);
+		dynamics_world->setGravity( btVector3( 0, -10, 0 ) );
+		dynamics_world->getDispatchInfo().m_useConvexConservativeDistanceUtil = true;
+		dynamics_world->getDispatchInfo().m_convexConservativeDistanceThreshold = 0.01;
+		dynamics_world->getDispatchInfo().m_allowedCcdPenetration = 0.0;
+		
+		
+		//btAlignedAllocSetCustom( bullet2_custom_alloc, bullet2_custom_free );
+		
+		// instance and set the debug renderer
+		//		dynamics_world->setDebugDrawer(0);
+	}
+	
+	void shutdown()
+	{
+		//
+		// Cleanup
+		//
+		for( int i = dynamics_world->getNumCollisionObjects()-1; i >= 0; --i )
+		{
+			btCollisionObject * obj = dynamics_world->getCollisionObjectArray()[i];
+			btRigidBody * body = btRigidBody::upcast(obj);
+			if ( body && body->getMotionState() )
+			{
+				delete body->getMotionState();
+			}
+			dynamics_world->removeCollisionObject( obj );
+			delete obj;
+		}
+		
+		//delete collision shapes
+		for ( int j = 0; j < collision_shapes.size(); j++ )
+		{
+			btCollisionShape* shape = collision_shapes[j];
+			collision_shapes[j] = 0;
+			delete shape;
+		}
+		
+		//delete dynamics world
+		delete dynamics_world;
+		
+		//delete solver
+		delete constraint_solver;
+		
+		//delete broadphase
+		//delete mPairCache;
+		delete broadphase;
+		
+		//delete dispatcher
+		delete dispatcher;
+		
+		// delete the collision configuration
+		delete collision_config;
+		
+		//next line is optional: it will be cleared by the destructor when the array goes out of scope
+		collision_shapes.clear();
+	} // shutdown
+	
+	
+	void step( float seconds )
+	{
+		assert( dynamics_world != 0 );
+		
+		dynamics_world->stepSimulation( seconds, 1, 1/60.0f );
+	} // step
+};
+
+
+
 void DebugPhysicsRenderer::drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color )
 {
 #if 0
@@ -100,13 +205,7 @@ public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
 public kernel::IEventListener<kernel::SystemEvent>
 {
-	btDefaultCollisionConfiguration * collision_config;
-	btCollisionDispatcher * dispatcher;
-	btSequentialImpulseConstraintSolver * constraint_solver;
-	btDiscreteDynamicsWorld * dynamics_world;
-	btOverlappingPairCache * pair_cache;
-	btAlignedObjectArray<btCollisionShape*> collision_shapes;
-	btBroadphaseInterface * broadphase;
+
 public:
 	DECLARE_APPLICATION( TestBullet2 );
 
@@ -156,81 +255,24 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
-		collision_config = new btDefaultCollisionConfiguration();
-		dispatcher = new btCollisionDispatcher( collision_config );
-		
-		btVector3 worldAabbMin(-1000,-1000,-1000);
-		btVector3 worldAabbMax(1000,1000,1000);
-
-		constraint_solver = new btSequentialImpulseConstraintSolver();
-		
-//		broadphase = new btDbvtBroadphase();
-		broadphase = new btAxisSweep3(worldAabbMin, worldAabbMax);
-		
-		pair_cache = broadphase->getOverlappingPairCache();
-		dynamics_world = new btDiscreteDynamicsWorld(dispatcher, (btBroadphaseInterface*)broadphase, constraint_solver, collision_config);
-		dynamics_world->setGravity( btVector3( 0, -10, 0 ) );
-		dynamics_world->getDispatchInfo().m_useConvexConservativeDistanceUtil = true;
-		dynamics_world->getDispatchInfo().m_convexConservativeDistanceThreshold = 0.01;
-		dynamics_world->getDispatchInfo().m_allowedCcdPenetration = 0.0;
-		
-		// instance and set the debug renderer
-//		dynamics_world->setDebugDrawer(0);
+		physics::startup();
 
 		return kernel::Application_Success;
 	}
 
 	virtual void step( kernel::Params & params )
 	{
+		physics::step( params.step_interval_seconds );
 	}
 
 	virtual void tick( kernel::Params & params )
 	{
+	
 	}
 	
 	virtual void shutdown( kernel::Params & params )
 	{
-		//
-		// Cleanup
-		//
-		for( int i = dynamics_world->getNumCollisionObjects()-1; i >= 0; --i )
-		{
-			btCollisionObject * obj = dynamics_world->getCollisionObjectArray()[i];
-			btRigidBody * body = btRigidBody::upcast(obj);
-			if ( body && body->getMotionState() )
-			{
-				delete body->getMotionState();
-			}
-			dynamics_world->removeCollisionObject( obj );
-			delete obj;
-		}
-		
-		//delete collision shapes
-		for ( int j = 0; j < collision_shapes.size(); j++ )
-		{
-			btCollisionShape* shape = collision_shapes[j];
-			collision_shapes[j] = 0;
-			delete shape;
-		}
-		
-		//delete dynamics world
-		delete dynamics_world;
-		
-		//delete solver
-		delete constraint_solver;
-		
-		//delete broadphase
-		//delete mPairCache;
-		delete broadphase;
-		
-		//delete dispatcher
-		delete dispatcher;
-		
-		// delete the collision configuration
-		delete collision_config;
-		
-		//next line is optional: it will be cleared by the destructor when the array goes out of scope
-		collision_shapes.clear();
+		physics::shutdown();
 	}
 };
 
