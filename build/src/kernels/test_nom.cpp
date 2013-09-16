@@ -24,35 +24,51 @@
 #include "renderer.hpp"
 #include <slim/xlog.h>
 #include "input.hpp"
+#include "renderstream.hpp"
+#include "debugdraw.hpp"
+
 
 using namespace kernel;
 
+#include <nom/nom.hpp>
 
 namespace gui
 {
-	struct Compositor
+	void * default_gui_malloc( size_t bytes )
 	{
-		// step_seconds The fixed timestep in which the last step happened
-		void step( float step_seconds ) {}
-		
-		// delta_seconds The time since the last tick
-		void tick( float delta_seconds ) {}
-		
-		// render this compositor to a texture
-		void render() {}
-	};
-
+		return malloc(bytes);
+	} // default_gui_malloc
 	
+	void default_gui_free( void * p )
+	{
+		free( p );
+	} // default_gui_free
 
 
-	Compositor * create_compositor() { return 0; }
-	void destroy_compositor( Compositor * c ) {}
-	
-	typedef void * (*gui_malloc)( size_t bytes );
-	typedef void (*gui_free)( void * ptr );
+
 	
 	void set_custom_allocator( gui_malloc malloc_fn, gui_free free_fn ) {}
-};
+	
+	gui_malloc _gmalloc = default_gui_malloc;
+	gui_free _gfree = default_gui_free;
+	
+	Compositor * create_compositor( uint16_t width, uint16_t height )
+	{
+		void * p = (Compositor*)_gmalloc(sizeof(Compositor));
+		Compositor * c = new (p) Compositor( width, height );
+		return c;
+	} // create_compositor
+	
+	void destroy_compositor( Compositor * c )
+	{
+		c->~Compositor();
+		_gfree( c );
+	} // destroy_compositor
+	
+
+}; // gui
+
+using namespace gui;
 
 
 class TestNom : public kernel::IApplication,
@@ -79,8 +95,15 @@ public:
         }
         else
         {
+
             fprintf( stdout, "key %i released\n", event.key );
         }
+		
+		if ( compositor )
+		{
+			compositor->key_event( event.key, event.is_down, event.unicode );
+		}
+		
 	}
 
 	virtual void event( MouseEvent & event )
@@ -88,7 +111,13 @@ public:
         switch( event.subtype )
         {
             case kernel::MouseMoved:
+			{
+				if ( compositor )
+				{
+					compositor->cursor_move_absolute( event.mx, event.my );
+				}
                 break;
+			}
             case kernel::MouseButton:
                 if ( event.is_down )
                 {
@@ -98,6 +127,15 @@ public:
                 {
                     fprintf( stdout, "mouse button %i is released\n", event.button );
                 }
+				
+				if ( compositor )
+				{
+					uint32_t button = 0;
+					
+					// convert  input button to nom button
+					
+					compositor->cursor_button( button, event.is_down );
+				}
                 break;
                 
             case kernel::MouseWheelMoved:
@@ -149,7 +187,22 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
-		compositor = gui::create_compositor();
+		compositor = gui::create_compositor( params.render_width, params.render_height );
+//		gui::Properties * props = new gui::Properties( compositor );
+
+//		gui::Properties * props = gui::create( "Properties", compositor );
+
+		gui::Button * b = new gui::Button( compositor );
+		compositor->add_child(b);
+		b->bounds.set( 0, 0, 200, 200 );
+		
+		
+		
+		gui::Button * b2 = new gui::Button( compositor );
+		compositor->add_child(b2);
+		b2->bounds.set( 50, 300, 200, 200 );
+		
+		debugdraw::startup(128);
 		
 		return kernel::Application_Success;
 	}
@@ -158,21 +211,46 @@ public:
 	{
 		if ( compositor )
 		{
-			compositor->step( params.step_interval_seconds );
+			compositor->update( params.step_interval_seconds );
 		}
 	}
 
 	virtual void tick( kernel::Params & params )
 	{
+		RenderStream rs;
+
+		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
+		rs.add_viewport( 0, 0, params.render_width, params.render_height );
+		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
+		rs.run_commands();
+		
 		if ( compositor )
 		{
-			compositor->tick( params.framedelta_filtered_msec );
+//			compositor->render();
+			for( gui::PanelVector::iterator it = compositor->children.begin(); it != compositor->children.end(); ++it )
+			{
+				gui::Panel * panel = (*it);
+				
+				gui::Size size = panel->bounds.size;
+				glm::vec3 start = glm::vec3( panel->bounds.origin.x, panel->bounds.origin.y, 0.0f );
+				glm::vec3 end = start + glm::vec3( size.width, size.height, 0.0f );
+				debugdraw::line( start, end, Color( 255, 0, 255 ) );
+				debugdraw::point( glm::vec3( panel->bounds.origin.x + size.width, panel->bounds.origin.y + size.height, 0.0f ), Color(255, 255, 255) );
+			}
+
 		}
+		
+		glm::mat4 modelview;
+		glm::mat4 projection = glm::ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, 0.0f, 128.0f );
+		
+		debugdraw::render( modelview, projection, params.render_width, params.render_height );
 	}
 
 	virtual void shutdown( kernel::Params & params )
 	{
 		gui::destroy_compositor( compositor );
+		
+		debugdraw::shutdown();
 	}
 };
 

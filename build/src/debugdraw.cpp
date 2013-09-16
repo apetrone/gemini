@@ -41,6 +41,9 @@ namespace debugdraw
 
 		DebugPrimitive * request_primitive()
 		{
+			// If you hit this, debugdraw was not initialized!
+			assert( max_primitives != 0 );
+			
 			return &primitive_list[ next_primitive++ % max_primitives ];
 		} // request_primitive
 		
