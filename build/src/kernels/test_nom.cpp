@@ -32,6 +32,52 @@ using namespace kernel;
 
 #include <nom/nom.hpp>
 
+
+class GLRenderer : public gui::Renderer
+{
+public:
+	gui::Compositor * compositor;
+
+	GLRenderer() {}
+	~GLRenderer() {}
+	
+	virtual void startup( gui::Compositor * compositor )
+	{
+		this->compositor = compositor;
+	}
+	
+	virtual void shutdown( gui::Compositor * compositor )
+	{
+		
+	}
+	
+	virtual void begin_frame( gui::Compositor * Compositor )
+	{
+		
+	}
+	
+	virtual void end_frame()
+	{
+	
+	}
+	
+	
+	virtual void draw_bounds( const gui::Bounds & bounds, gui::ColorInt color )
+	{
+		gui::Size size = bounds.size;
+		glm::vec3 start = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );
+		glm::vec3 end = start + glm::vec3( size.width, size.height, 0.0f );
+//		debugdraw::line( start, end, Color( 255, 0, 255 ) );
+//		debugdraw::point( glm::vec3( bounds.origin.x + size.width, bounds.origin.y + size.height, 0.0f ), Color(255, 255, 255) );
+		
+		gui::ColorRGBA rgba;
+		UNPACK_RGBA( color, rgba );
+				
+		debugdraw::box( start, end, Color(rgba[0], rgba[1], rgba[2], rgba[3]), 0.0f );
+	}
+
+}; // GLRenderer
+
 namespace gui
 {
 	void * default_gui_malloc( size_t bytes )
@@ -79,7 +125,7 @@ class TestNom : public kernel::IApplication,
 public:
 	DECLARE_APPLICATION( TestNom );
 
-	
+	GLRenderer renderer;
 	
 	gui::Compositor * compositor;
 	
@@ -197,15 +243,16 @@ public:
 		b->bounds.set( 0, 0, 200, 200 );
 		
 		
-		
 		gui::Button * b2 = new gui::Button( compositor );
 		compositor->add_child(b2);
 		b2->bounds.set( 50, 300, 200, 200 );
 		
 		debugdraw::startup(128);
+		compositor->set_renderer( &this->renderer );
 		
 		return kernel::Application_Success;
 	}
+	
 	
 	virtual void step( kernel::Params & params )
 	{
@@ -213,6 +260,8 @@ public:
 		{
 			compositor->update( params.step_interval_seconds );
 		}
+		
+		debugdraw::update( params.step_interval_seconds );
 	}
 
 	virtual void tick( kernel::Params & params )
@@ -226,18 +275,7 @@ public:
 		
 		if ( compositor )
 		{
-//			compositor->render();
-			for( gui::PanelVector::iterator it = compositor->children.begin(); it != compositor->children.end(); ++it )
-			{
-				gui::Panel * panel = (*it);
-				
-				gui::Size size = panel->bounds.size;
-				glm::vec3 start = glm::vec3( panel->bounds.origin.x, panel->bounds.origin.y, 0.0f );
-				glm::vec3 end = start + glm::vec3( size.width, size.height, 0.0f );
-				debugdraw::line( start, end, Color( 255, 0, 255 ) );
-				debugdraw::point( glm::vec3( panel->bounds.origin.x + size.width, panel->bounds.origin.y + size.height, 0.0f ), Color(255, 255, 255) );
-			}
-
+			compositor->render();
 		}
 		
 		glm::mat4 modelview;

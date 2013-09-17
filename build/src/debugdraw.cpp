@@ -377,6 +377,32 @@ namespace debugdraw
 		}
 	} // axes
 	
+	void box( const glm::vec3 & mins, const glm::vec3 & maxs, const Color & color, float duration )
+	{
+		DebugPrimitive * p = _internal::request_primitive();
+		if ( p )
+		{
+			p->type = TYPE_BOX;
+			p->start = mins;
+			p->end = maxs;
+			p->color = color;
+			p->timeleft = duration;
+		}
+	} // box
+	
+	void point( const glm::vec3 & pt, const Color & color, float size, float duration )
+	{
+		DebugPrimitive * p = _internal::request_primitive();
+		if ( p )
+		{
+			p->type = TYPE_BOX;
+			p->start = glm::vec3( pt[0] - size, pt[1] - size, pt[2] - size );
+			p->end = glm::vec3( pt[0] + size, pt[1] + size, pt[2] + size );
+			p->color = color;
+			p->timeleft = duration;
+		}
+	} // point
+	
 	void line( const glm::vec3 & start, const glm::vec3 & end, const Color & color, float duration )
 	{
 		DebugPrimitive * p = _internal::request_primitive();
@@ -402,20 +428,7 @@ namespace debugdraw
 			p->timeleft = duration;
 		}
 	} // sphere
-	
-	void point( const glm::vec3 & pt, const Color & color, float size, float duration )
-	{
-		DebugPrimitive * p = _internal::request_primitive();
-		if ( p )
-		{
-			p->type = TYPE_BOX;
-			p->start = glm::vec3( pt[0] - size, pt[1] - size, pt[2] - size );
-			p->end = glm::vec3( pt[0] + size, pt[1] + size, pt[2] + size );
-			p->color = color;
-			p->timeleft = duration;
-		}
-	} // point
-		
+
 	void text( int x, int y, const char * string, const Color & color )
 	{
 		font::draw_string(_internal::debug_font, x, y, string, color);
