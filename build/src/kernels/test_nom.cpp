@@ -33,6 +33,15 @@ using namespace kernel;
 #include <nom/nom.hpp>
 
 
+
+class CustomStyle : public gui::Style
+{
+	virtual void render_panel( gui::Panel * panel, gui::Compositor * compositor, gui::Renderer * renderer )
+	{
+		
+	} // render_panel
+}; // CustomStyle
+
 class GLRenderer : public gui::Renderer
 {
 public:
@@ -74,6 +83,27 @@ public:
 		UNPACK_RGBA( color, rgba );
 				
 		debugdraw::box( start, end, Color(rgba[0], rgba[1], rgba[2], rgba[3]), 0.0f );
+	}
+
+
+	virtual void draw_textured_bounds( const gui::Bounds & bounds, const gui::TextureHandle & handle )
+	{
+		
+	}
+		
+	virtual gui::TextureResult texture_create( const char * path, gui::TextureHandle & handle )
+	{
+		return gui::TextureResult_Failed;
+	}
+	
+	virtual void texture_destroy( const gui::TextureHandle & handle )
+	{
+		
+	}
+
+	virtual gui::TextureResult texture_info( const gui::TextureHandle & handle, uint32_t & width, uint32_t & height, uint8_t & channels )
+	{
+		return gui::TextureResult_Failed;
 	}
 
 }; // GLRenderer
@@ -125,6 +155,7 @@ class TestNom : public kernel::IApplication,
 public:
 	DECLARE_APPLICATION( TestNom );
 
+	CustomStyle style;
 	GLRenderer renderer;
 	
 	gui::Compositor * compositor;
@@ -240,20 +271,19 @@ public:
 
 		gui::Button * b = new gui::Button( compositor );
 		compositor->add_child(b);
-		b->bounds.set( 0, 0, 200, 200 );
-		
+		b->bounds.set( 0, 0, 100, 100 );
 		
 		gui::Button * b2 = new gui::Button( compositor );
 		compositor->add_child(b2);
-		b2->bounds.set( 50, 300, 200, 200 );
+		b2->bounds.set( 50, 200, 100, 100 );
 		
 		debugdraw::startup(128);
+		compositor->set_style( &this->style );
 		compositor->set_renderer( &this->renderer );
 		
 		return kernel::Application_Success;
 	}
-	
-	
+
 	virtual void step( kernel::Params & params )
 	{
 		if ( compositor )
@@ -263,6 +293,7 @@ public:
 		
 		debugdraw::update( params.step_interval_seconds );
 	}
+
 
 	virtual void tick( kernel::Params & params )
 	{
