@@ -27,7 +27,7 @@
 #include "renderstream.hpp"
 #include "debugdraw.hpp"
 
-
+#include "assets/asset_texture.hpp"
 using namespace kernel;
 
 #include <nom/nom.hpp>
@@ -93,7 +93,15 @@ public:
 		
 	virtual gui::TextureResult texture_create( const char * path, gui::TextureHandle & handle )
 	{
-		return gui::TextureResult_Failed;
+		assets::Texture * tex = assets::textures()->load_from_path( path );
+		if ( !tex )
+		{
+			return gui::TextureResult_Failed;
+		}
+	
+		handle = tex->Id();
+	
+		return gui::TextureResult_Success;
 	}
 	
 	virtual void texture_destroy( const gui::TextureHandle & handle )
@@ -103,7 +111,14 @@ public:
 
 	virtual gui::TextureResult texture_info( const gui::TextureHandle & handle, uint32_t & width, uint32_t & height, uint8_t & channels )
 	{
-		return gui::TextureResult_Failed;
+		assets::Texture * tex = assets::textures()->find_with_id( handle );
+		if ( !tex )
+		{
+			return gui::TextureResult_Failed;
+		}
+
+		
+		return gui::TextureResult_Success;
 	}
 
 }; // GLRenderer
