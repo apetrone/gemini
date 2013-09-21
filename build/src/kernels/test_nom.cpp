@@ -107,7 +107,7 @@ public:
 		debugdraw::box( start, end, Color(rgba[0], rgba[1], rgba[2], rgba[3]), 0.0f );
 	}
 
-	void render_buffer( RenderStream & rs, assets::Shader * shader, assets::Material * material )
+	void render_buffer2( RenderStream & rs, assets::Shader * shader, assets::Texture * tex )
 	{
 		vs.update();
 		
@@ -121,7 +121,7 @@ public:
 		rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection );
 		rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
 		
-		rs.add_material( material, shader );
+		rs.add_sampler2d( shader->get_uniform_location("diffusemap"), 0, tex->texture_id );
 		rs.add_draw_call( vs.vertexbuffer );
 		
 		rs.run_commands();
@@ -134,19 +134,13 @@ public:
 		
 		RenderStream rs;
 //		assets::Texture * tex = assets::textures()->find_with_id( handle );
-//		if ( !tex )
-//		{
-//			return;
-//		}
-		
-		assets::Material * mat = assets::materials()->load_from_path( "materials/checker2" );
-		if ( !mat )
+		assets::Texture * tex = assets::textures()->load_from_path( "textures/checker2" );
+		if ( !tex )
 		{
-			LOGV( "material not found\n" );
 			return;
 		}
-		
-		assets::Shader * shader = assets::find_compatible_shader( vertex_attribs + mat->requirements );
+
+		assets::Shader * shader = assets::find_compatible_shader( vertex_attribs + 32 );
 		if ( !shader )
 		{
 			LOGV( "no shader found\n" );
@@ -165,20 +159,18 @@ public:
 			v[3].position = v[0].position + glm::vec3( size.width, 0.0f, 0.0f );
 			
 			// lower left corner is the origin in OpenGL
-			v[0].uv = glm::vec2(0, 1);
-			v[1].uv = glm::vec2(0, 0);
-			v[2].uv = glm::vec2(1, 0);
-			v[3].uv = glm::vec2(1, 1);
+			v[0].uv = glm::vec2(0, 0);
+			v[1].uv = glm::vec2(0, 1);
+			v[2].uv = glm::vec2(1, 1);
+			v[3].uv = glm::vec2(1, 0);
 			
 			v[0].color = v[1].color = v[2].color = v[3].color = Color(255, 255, 255, 255);
 			
 			renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
 			vs.append_indices( indices, 6 );
 		}
-		
 
-
-		this->render_buffer( rs, shader, mat );
+		this->render_buffer2( rs, shader, tex );
 	} // draw_textured_bounds
 		
 	virtual gui::TextureResult texture_create( const char * path, gui::TextureHandle & handle )
