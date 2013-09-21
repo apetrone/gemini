@@ -32,7 +32,7 @@ using namespace kernel;
 
 #include <nom/nom.hpp>
 
-
+#include "mathlib.h"
 
 class CustomStyle : public gui::Style
 {
@@ -44,15 +44,38 @@ class CustomStyle : public gui::Style
 
 class GLRenderer : public gui::Renderer
 {
+	struct VertexType
+	{
+		glm::vec3 position;
+		Color color;
+		glm::vec2 uv;
+	};
+	
 public:
 	gui::Compositor * compositor;
+	renderer::VertexStream vs;
 
 	GLRenderer() {}
 	~GLRenderer() {}
+
+	unsigned int vertex_attribs;
 	
 	virtual void startup( gui::Compositor * compositor )
 	{
+		vertex_attribs = 0;
 		this->compositor = compositor;
+		
+		vs.desc.add( renderer::VD_FLOAT3 );
+		vs.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+		vs.desc.add( renderer::VD_FLOAT2 );
+		
+		vs.create( 64, 64, renderer::DRAW_INDEXED_TRIANGLES );
+		
+		assets::ShaderString name("uv0");
+		vertex_attribs = assets::find_parameter_mask( name );
+		
+		name = "colors";
+		vertex_attribs |= assets::find_parameter_mask( name );
 	}
 	
 	virtual void shutdown( gui::Compositor * compositor )
@@ -67,9 +90,8 @@ public:
 	
 	virtual void end_frame()
 	{
-	
+			
 	}
-	
 	
 	virtual void draw_bounds( const gui::Bounds & bounds, gui::ColorInt color )
 	{
@@ -85,11 +107,79 @@ public:
 		debugdraw::box( start, end, Color(rgba[0], rgba[1], rgba[2], rgba[3]), 0.0f );
 	}
 
+	void render_buffer( RenderStream & rs, assets::Shader * shader, assets::Material * material )
+	{
+		vs.update();
+		
+		glm::mat4 modelview;
+		glm::mat4 projection = glm::ortho( 0.0f, (float)compositor->width, (float)compositor->height, 0.0f, -0.1f, 256.0f );
+		glm::mat4 object_matrix;
+		
+		
+		rs.add_shader( shader );
+		rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview );
+		rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection );
+		rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
+		
+		rs.add_material( material, shader );
+		rs.add_draw_call( vs.vertexbuffer );
+		
+		rs.run_commands();
+		vs.reset();
+	}
 
 	virtual void draw_textured_bounds( const gui::Bounds & bounds, const gui::TextureHandle & handle )
 	{
+		vs.reset();
 		
-	}
+		RenderStream rs;
+//		assets::Texture * tex = assets::textures()->find_with_id( handle );
+//		if ( !tex )
+//		{
+//			return;
+//		}
+		
+		assets::Material * mat = assets::materials()->load_from_path( "materials/checker2" );
+		if ( !mat )
+		{
+			LOGV( "material not found\n" );
+			return;
+		}
+		
+		assets::Shader * shader = assets::find_compatible_shader( vertex_attribs + mat->requirements );
+		if ( !shader )
+		{
+			LOGV( "no shader found\n" );
+			return;
+		}
+	
+		
+		if ( vs.has_room(4, 6) )
+		{
+			VertexType * v = (VertexType*)vs.request(4);
+			
+			gui::Size size = bounds.size;
+			v[0].position = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );
+			v[1].position = v[0].position + glm::vec3( 0.0f, size.height, 0.0f );
+			v[2].position = v[0].position + glm::vec3( size.width, size.height, 0.0f );
+			v[3].position = v[0].position + glm::vec3( size.width, 0.0f, 0.0f );
+			
+			// lower left corner is the origin in OpenGL
+			v[0].uv = glm::vec2(0, 1);
+			v[1].uv = glm::vec2(0, 0);
+			v[2].uv = glm::vec2(1, 0);
+			v[3].uv = glm::vec2(1, 1);
+			
+			v[0].color = v[1].color = v[2].color = v[3].color = Color(255, 255, 255, 255);
+			
+			renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+			vs.append_indices( indices, 6 );
+		}
+		
+
+
+		this->render_buffer( rs, shader, mat );
+	} // draw_textured_bounds
 		
 	virtual gui::TextureResult texture_create( const char * path, gui::TextureHandle & handle )
 	{
@@ -106,7 +196,7 @@ public:
 	
 	virtual void texture_destroy( const gui::TextureHandle & handle )
 	{
-		
+		// nothing really to do in our system
 	}
 
 	virtual gui::TextureResult texture_info( const gui::TextureHandle & handle, uint32_t & width, uint32_t & height, uint8_t & channels )
@@ -116,7 +206,6 @@ public:
 		{
 			return gui::TextureResult_Failed;
 		}
-
 		
 		return gui::TextureResult_Success;
 	}
