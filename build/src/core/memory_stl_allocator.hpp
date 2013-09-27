@@ -88,6 +88,7 @@ namespace memory
 		pointer allocate(size_type _Count)
 		{	// allocate array of _Count elements
 			return CREATE_ARRAY(_Ty, _Count );
+			
 //			return (pointer)::operator new( _Count * sizeof(_Ty) );
 		}
 		/*

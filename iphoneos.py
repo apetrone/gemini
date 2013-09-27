@@ -26,7 +26,7 @@ class gemini_iphoneos(Builder):
 		old_arch = params["build_architecture"]
 		params["build_architecture"] = 'native'
 		logging.info( "binpath: %s" % construct_binpath(params) )
-		builder.setOutput( path=construct_binpath(params), name=self.build_name, type=Builder.Bundle )
+		builder.addOutput( path=construct_binpath(params), name=self.build_name, type=Builder.Bundle )
 		params["build_architecture"] = old_arch
 
 	@staticmethod
@@ -38,7 +38,7 @@ class gemini_iphoneos(Builder):
 		d['depends_path'] = dependency_path()
 
 		mobile_dependencies = []
-		dependency_list = list( set(mobile_dependencies) | set(common_dependencies()) )
+		dependency_list = list( set(mobile_dependencies) | set(common_dependencies(target_platform)) )
 		d['depends'] = dependency_list
 
 		return d
@@ -59,7 +59,7 @@ class gemini_iphoneos(Builder):
 			arch_list.append( 'Native' )
 
 
-		premake = Premake4( action=builder.premake_action, file="premake4.lua", platform_list=",".join( arch_list ) )
+		premake = Premake4( action=builder.premake_action, file="premake4.lua", platform_list=",".join( arch_list ), indextype="ushort" )
 
 		# this will pass the --ios option through to premake
 		premake.ios = True

@@ -769,7 +769,6 @@ namespace script
 			return false;
 		}
 		
-		
 		if ( fs::file_exists( filename ) == false )
 		{
 			LOGW( "File does not exist: %s\n", filename );
