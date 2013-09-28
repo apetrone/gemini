@@ -8,6 +8,7 @@ class bullet2Builder(Builder):
 			LINUX : 'bullet',
 			MACOSX : 'BULLET_PHYSICS',
 			IPHONEOS : 'BULLET_PHYSICS',
+			IPHONESIMULATOR : 'BULLET_PHYSICS',
 			WINDOWS : 'msvc/vs2010/0BulletSolution'
 		}
 

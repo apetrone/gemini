@@ -11,6 +11,12 @@ newoption {
 }
 
 newoption {
+	trigger = "iphonesimulator",
+	value = nil,
+	description = "Enables iphone simulator target"
+}
+
+newoption {
 	trigger = "rpi",
 	value = nil,
 	description = "Compile for Raspberry Pi"
@@ -47,6 +53,11 @@ end
 -- update build name for ios
 if _OPTIONS["ios"] ~= nil then
 	build_name = "geminiios"
+	WITH_GLESV2 = true
+end
+
+if _OPTIONS["iphonesimulator"] ~= nil then
+	build_name = "geminisimulator"
 	WITH_GLESV2 = true
 end
 
