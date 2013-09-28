@@ -156,7 +156,13 @@ project ( build_name )
 		--"python tools/buildinfo.py generate -g -o src/buildinfo.c"
 	}
 
-	setup_platforms( solution() )
+
+	local deps_name = "deps.lua"
+	if _OPTIONS["ios"] ~= nil then
+		deps_name = "deps_iphoneos.lua"
+	end
+
+	setup_platforms( solution(), deps_name )
 
 	configuration { "windows" }
 		

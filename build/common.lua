@@ -116,8 +116,8 @@ common_defines=
 
 
 
-function setup_platforms( solution )
-	deps = loadfile( "deps.lua" )
+function setup_platforms( solution, deps_name )
+	deps = loadfile( deps_name )
 	deps()
 
 	platform_table = solution.platforms
