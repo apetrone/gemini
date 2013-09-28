@@ -85,12 +85,22 @@ public:
 	
 	virtual void begin_frame( gui::Compositor * Compositor )
 	{
+		RenderStream rs;
 		
+		rs.add_state( renderer::STATE_BLEND, 1 );
+		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+		
+		
+		rs.run_commands();
 	}
 	
 	virtual void end_frame()
 	{
-			
+		RenderStream rs;
+		
+		rs.add_state( renderer::STATE_BLEND, 0 );
+		
+		rs.run_commands();
 	}
 	
 	virtual void draw_bounds( const gui::Bounds & bounds, gui::ColorInt color )
@@ -133,8 +143,7 @@ public:
 		vs.reset();
 		
 		RenderStream rs;
-//		assets::Texture * tex = assets::textures()->find_with_id( handle );
-		assets::Texture * tex = assets::textures()->load_from_path( "textures/checker2" );
+		assets::Texture * tex = assets::textures()->find_with_id( handle );
 		if ( !tex )
 		{
 			return;
@@ -361,21 +370,21 @@ public:
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 		compositor = gui::create_compositor( params.render_width, params.render_height );
-//		gui::Properties * props = new gui::Properties( compositor );
-
-//		gui::Properties * props = gui::create( "Properties", compositor );
+		compositor->set_style( &this->style );
+		compositor->set_renderer( &this->renderer );
 
 		gui::Button * b = new gui::Button( compositor );
 		compositor->add_child(b);
-		b->bounds.set( 0, 0, 100, 100 );
+		b->bounds.set( 0, 0, 512, 256 );
+		b->set_background_image( compositor, "textures/mainmenu" );
 		
 		gui::Button * b2 = new gui::Button( compositor );
 		compositor->add_child(b2);
 		b2->bounds.set( 50, 200, 100, 100 );
+		b2->set_background_image( compositor, "textures/checker2" );
 		
 		debugdraw::startup(128);
-		compositor->set_style( &this->style );
-		compositor->set_renderer( &this->renderer );
+
 		
 		return kernel::Application_Success;
 	}
