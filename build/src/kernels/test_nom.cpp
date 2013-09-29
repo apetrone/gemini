@@ -254,6 +254,50 @@ namespace gui
 using namespace gui;
 
 
+struct CustomControl : public gui::Panel
+{
+	gui::Bounds local_bounds;
+	
+	CustomControl( Panel * parent ) : Panel(parent) {}
+	
+	virtual void handle_event( EventArgs & args )
+	{
+		if ( args.type == gui::Event_CursorMove )
+		{
+			LOGV( "cursor: %i %i\n", args.cursor.x, args.cursor.y );
+			LOGV( "delta: %i %i\n", args.delta.x, args.delta.y );
+			LOGV( "local: %i %i\n", args.local.x, args.local.y );
+			
+			local_bounds.size.width = args.local.x;
+			local_bounds.size.height = args.local.y;
+		}
+		LOGV( "handle_event: %i\n", args.type );
+		
+
+		Panel::handle_event( args );
+	}
+	
+	virtual void render( Compositor * compositor, Renderer * renderer )
+	{
+		ColorInt color = PACK_RGBA(255, 0, 255, 255);
+		if ( compositor->get_hot() == this )
+		{
+			color = PACK_RGBA(255,255,255,255);
+		}
+		
+		local_bounds.origin = this->bounds.origin;
+		
+		
+		renderer->draw_bounds( local_bounds, color );
+		
+		if ( this->background != 0 )
+		{
+			renderer->draw_textured_bounds( this->bounds, this->background );
+		}
+	}
+};
+
+
 class TestNom : public kernel::IApplication,
 	public IEventListener<KeyboardEvent>,
 	public IEventListener<MouseEvent>,
@@ -375,12 +419,12 @@ public:
 		compositor->set_style( &this->style );
 		compositor->set_renderer( &this->renderer );
 
-		gui::Button * b = new gui::Button( compositor );
-		compositor->add_child(b);
-		b->bounds.set( 0, 0, 512, 256 );
-		b->set_background_image( compositor, "textures/mainmenu" );
+//		gui::Button * b = new gui::Button( compositor );
+//		compositor->add_child(b);
+//		b->bounds.set( 0, 0, 512, 256 );
+//		b->set_background_image( compositor, "textures/mainmenu" );
 		
-		gui::Button * b2 = new gui::Button( compositor );
+		CustomControl * b2 = new CustomControl( compositor );
 		compositor->add_child(b2);
 		b2->bounds.set( 50, 200, 100, 100 );
 		b2->set_background_image( compositor, "textures/checker2" );
