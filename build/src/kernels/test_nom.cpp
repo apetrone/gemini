@@ -260,6 +260,11 @@ struct CustomControl : public gui::Panel
 	
 	CustomControl( Panel * parent ) : Panel(parent) {}
 	
+	float snap_to( float input, float nearest )
+	{
+		return floor(input / nearest) * nearest;
+	}
+	
 	virtual void handle_event( EventArgs & args )
 	{
 		if ( args.type == gui::Event_CursorMove )
@@ -268,8 +273,8 @@ struct CustomControl : public gui::Panel
 //			LOGV( "delta: %i %i\n", args.delta.x, args.delta.y );
 //			LOGV( "local: %i %i\n", args.local.x, args.local.y );
 //			
-			local_bounds.size.width = floor(args.local.x / 16.0f) * 16.0f;
-			local_bounds.size.height = floor(args.local.y / 16.0f) * 16.0f;
+			local_bounds.size.width = snap_to( args.local.x, 16.0f );
+			local_bounds.size.height = snap_to( args.local.y, 16.0f );
 			
 			LOGV( "size: %g %g\n", local_bounds.size.width, local_bounds.size.height );
 		}
