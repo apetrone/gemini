@@ -264,26 +264,24 @@ struct CustomControl : public gui::Panel
 	{
 		if ( args.type == gui::Event_CursorMove )
 		{
-			LOGV( "cursor: %i %i\n", args.cursor.x, args.cursor.y );
-			LOGV( "delta: %i %i\n", args.delta.x, args.delta.y );
-			LOGV( "local: %i %i\n", args.local.x, args.local.y );
+//			LOGV( "cursor: %i %i\n", args.cursor.x, args.cursor.y );
+//			LOGV( "delta: %i %i\n", args.delta.x, args.delta.y );
+//			LOGV( "local: %i %i\n", args.local.x, args.local.y );
+//			
+			local_bounds.size.width = floor(args.local.x / 16.0f) * 16.0f;
+			local_bounds.size.height = floor(args.local.y / 16.0f) * 16.0f;
 			
-			local_bounds.size.width = args.local.x;
-			local_bounds.size.height = args.local.y;
+			LOGV( "size: %g %g\n", local_bounds.size.width, local_bounds.size.height );
 		}
-		LOGV( "handle_event: %i\n", args.type );
+//		LOGV( "handle_event: %i\n", args.type );
 		
 
-		Panel::handle_event( args );
+		//Panel::handle_event( args );
 	}
 	
 	virtual void render( Compositor * compositor, Renderer * renderer )
 	{
-		ColorInt color = PACK_RGBA(255, 0, 255, 255);
-		if ( compositor->get_hot() == this )
-		{
-			color = PACK_RGBA(255,255,255,255);
-		}
+		ColorInt color = PACK_RGBA(0, 255, 0, 255);
 		
 		local_bounds.origin = this->bounds.origin;
 		
@@ -426,7 +424,7 @@ public:
 		
 		CustomControl * b2 = new CustomControl( compositor );
 		compositor->add_child(b2);
-		b2->bounds.set( 50, 200, 100, 100 );
+		b2->bounds.set( 50, 200, 128, 128 );
 		b2->set_background_image( compositor, "textures/checker2" );
 		
 		debugdraw::startup(128);
