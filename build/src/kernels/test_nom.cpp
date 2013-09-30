@@ -262,7 +262,8 @@ struct CustomControl : public gui::Panel
 	
 	float snap_to( float input, float nearest )
 	{
-		return floor(input / nearest) * nearest;
+		float hnear = (nearest/2.0f);
+		return floor((input + hnear) / nearest) * nearest;
 	}
 	
 	virtual void handle_event( EventArgs & args )
