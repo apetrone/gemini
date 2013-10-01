@@ -326,31 +326,21 @@ using namespace gui;
 
 float snap_to( float input, float nearest, float threshold = 2.0f )
 {
-	return floor(input / (int)nearest) * (int)nearest;
-
-}
-
-float snap_to1( float input, float nearest, float threshold = 2.0f )
-{
-	float hnear = (nearest/threshold);
-	return floor((input + hnear) / nearest) * nearest;
-}
-
-
-float snap_threshold( float input, float nearest )
-{
-	float sn = snap_to(input, nearest);
+	float smin = floor(input / nearest) * nearest;
+	float smax = ceil(input / nearest) * nearest;
+	float dmin = (input - smin);
+	float dmax = (smax - input);
 	
-	if ( fabsf(input-sn) < 2 )
+	if ( dmin <= dmax )
 	{
-		LOGV( "sn: %g\n", sn );
-		return sn;
+		return smin;
 	}
-	
-	LOGV( "input: %g\n", input );
-	return input;
-
+	else
+	{
+		return smax;
+	}
 }
+
 
 struct CustomControl : public gui::Panel
 {
@@ -419,8 +409,8 @@ struct Timeline : public gui::Panel
 		if ( args.type == gui::Event_CursorMove )
 		{
 			// snap to the closest point
-			current_frame = snap_threshold( args.local.x, distance_between_frames + 1.0f );
-			current_frame /= (distance_between_frames + 1.0f);
+			current_frame = snap_to( args.local.x, distance_between_frames );
+			current_frame /= (distance_between_frames);
 		}
 		
 		//Panel::handle_event( args );
@@ -441,16 +431,19 @@ struct Timeline : public gui::Panel
 		cf.set( this->bounds.origin.x + left_margin, this->bounds.origin.y, 1, this->bounds.size.height );
 		for( int f = 0; f < total_frames; ++f )
 		{
-			cf.origin.x += distance_between_frames;
+			
 			
 			if (cf.origin.x + cf.size.width >= (this->bounds.origin.x + this->bounds.size.width))
 				break;
+				
 			renderer->draw_bounds( cf, color );
 			
 			if ( current_frame == f )
 			{
 				renderer->draw_bounds( cf, PACK_RGBA(0, 255, 0, 255) );
 			}
+			
+			cf.origin.x += distance_between_frames;
 		}
 
 
