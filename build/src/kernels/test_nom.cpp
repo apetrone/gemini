@@ -57,8 +57,32 @@ public:
 
 	GLRenderer() {}
 	~GLRenderer() {}
+	
+	assets::Material * solid_color;
+	assets::Material * texture_map;
 
 	unsigned int vertex_attribs;
+	
+	void render_buffer( RenderStream & rs, assets::Shader * shader, assets::Material * material )
+	{
+		vs.update();
+		
+		glm::mat4 modelview;
+		glm::mat4 projection = glm::ortho( 0.0f, (float)compositor->width, (float)compositor->height, 0.0f, -0.1f, 256.0f );
+		glm::mat4 object_matrix;
+		
+		rs.add_shader( shader );
+		rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview );
+		rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection );
+		rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
+		
+		rs.add_material( material, shader );
+		
+		rs.add_draw_call( vs.vertexbuffer );
+		
+		rs.run_commands();
+		vs.reset();
+	}
 	
 	virtual void startup( gui::Compositor * compositor )
 	{
@@ -76,11 +100,36 @@ public:
 		
 		name = "colors";
 		vertex_attribs |= assets::find_parameter_mask( name );
+		
+		
+		// setup materials
+		solid_color = assets::materials()->allocate_asset();
+		if ( solid_color )
+		{
+			solid_color->allocate_parameters(1);
+			assets::Material::Parameter * parameter = &solid_color->parameters[0];
+			parameter->type = assets::MP_VEC4;
+			parameter->name = "diffusecolor";
+			parameter->vecValue = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+			assets::materials()->take_ownership( "gui/solid_color", solid_color );
+			solid_color->calculate_requirements();
+		}
+
+		texture_map = assets::materials()->allocate_asset();
+		if ( texture_map )
+		{
+			texture_map->allocate_parameters(1);
+			assets::Material::Parameter * parameter = &texture_map->parameters[0];
+			parameter->type = assets::MP_SAMPLER_2D;
+			parameter->name = "diffusemap";
+			parameter->intValue = assets::textures()->get_default()->Id();
+			assets::materials()->take_ownership( "gui/texture_map", texture_map );
+			texture_map->calculate_requirements();
+		}
 	}
 	
 	virtual void shutdown( gui::Compositor * compositor )
 	{
-		
 	}
 	
 	virtual void begin_frame( gui::Compositor * Compositor )
@@ -107,43 +156,62 @@ public:
 	
 	virtual void draw_bounds( const gui::Bounds & bounds, gui::ColorInt color )
 	{
-		gui::Size size = bounds.size;
-		glm::vec3 start = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );
-		glm::vec3 end = start + glm::vec3( size.width, size.height, 0.0f );
+//		gui::Size size = bounds.size;
+//		glm::vec3 start = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );
+//		glm::vec3 end = start + glm::vec3( size.width, size.height, 0.0f );
 //		debugdraw::line( start, end, Color( 255, 0, 255 ) );
 //		debugdraw::point( glm::vec3( bounds.origin.x + size.width, bounds.origin.y + size.height, 0.0f ), Color(255, 255, 255) );
 		
 		gui::ColorRGBA rgba;
 		UNPACK_RGBA( color, rgba );
-				
-		debugdraw::box( start, end, Color(rgba[0], rgba[1], rgba[2], rgba[3]), 0.0f );
-	}
-
-	void render_buffer2( RenderStream & rs, assets::Shader * shader, assets::Texture * tex )
-	{
-		vs.update();
 		
-		glm::mat4 modelview;
-		glm::mat4 projection = glm::ortho( 0.0f, (float)compositor->width, (float)compositor->height, 0.0f, -0.1f, 256.0f );
-		glm::mat4 object_matrix;
+		solid_color->parameters[0].vecValue = glm::vec4( (rgba[0] / 255.0f), (rgba[1] / 255.0f), (rgba[2] / 255.0f), (rgba[3] / 255.0f) );
+//		debugdraw::box( start, end, Color(rgba[0], rgba[1], rgba[2], rgba[3]), 0.0f );
 		
-		
-		rs.add_shader( shader );
-		rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview );
-		rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection );
-		rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
-		
-		rs.add_sampler2d( shader->get_uniform_location("diffusemap"), 0, tex->texture_id );
-		rs.add_draw_call( vs.vertexbuffer );
-		
-		rs.run_commands();
 		vs.reset();
+		
+		RenderStream rs;
+		assets::Shader * shader = assets::find_compatible_shader( vertex_attribs + solid_color->requirements );
+		if ( !shader )
+		{
+			LOGV( "no shader found\n" );
+			return;
+		}
+		
+		if ( vs.has_room(4, 6) )
+		{
+			VertexType * v = (VertexType*)vs.request(4);
+			
+			gui::Size size = bounds.size;
+			v[0].position = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );
+			v[1].position = v[0].position + glm::vec3( 0.0f, size.height, 0.0f );
+			v[2].position = v[0].position + glm::vec3( size.width, size.height, 0.0f );
+			v[3].position = v[0].position + glm::vec3( size.width, 0.0f, 0.0f );
+			
+			// lower left corner is the origin in OpenGL
+			v[0].uv = glm::vec2(0, 0);
+			v[1].uv = glm::vec2(0, 1);
+			v[2].uv = glm::vec2(1, 1);
+			v[3].uv = glm::vec2(1, 0);
+
+			//v[0].color = v[1].color = v[2].color = v[3].color = Color(rgba[0], rgba[1], rgba[2], rgba[3]);
+			
+			renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+			vs.append_indices( indices, 6 );
+		}
+		else
+		{
+			LOGV( "buffer be full\n" );
+		}
+		
+		this->render_buffer( rs, shader, solid_color );
 	}
 
+
+	
 	virtual void draw_textured_bounds( const gui::Bounds & bounds, const gui::TextureHandle & handle )
 	{
 		vs.reset();
-		
 		RenderStream rs;
 		assets::Texture * tex = assets::textures()->find_with_id( handle );
 		if ( !tex )
@@ -151,7 +219,10 @@ public:
 			return;
 		}
 
-		assets::Shader * shader = assets::find_compatible_shader( vertex_attribs + 32 );
+		texture_map->parameters[0].intValue = handle;
+		texture_map->parameters[0].texture_unit = 0;
+		
+		assets::Shader * shader = assets::find_compatible_shader( vertex_attribs + texture_map->requirements );
 		if ( !shader )
 		{
 			LOGV( "no shader found\n" );
@@ -181,7 +252,7 @@ public:
 			vs.append_indices( indices, 6 );
 		}
 
-		this->render_buffer2( rs, shader, tex );
+		this->render_buffer( rs, shader, texture_map );
 	} // draw_textured_bounds
 		
 	virtual gui::TextureResult texture_create( const char * path, gui::TextureHandle & handle )
@@ -277,7 +348,7 @@ struct CustomControl : public gui::Panel
 			local_bounds.size.width = snap_to( args.local.x, 16.0f );
 			local_bounds.size.height = snap_to( args.local.y, 16.0f );
 			
-			LOGV( "size: %g %g\n", local_bounds.size.width, local_bounds.size.height );
+//			LOGV( "size: %g %g\n", local_bounds.size.width, local_bounds.size.height );
 		}
 //		LOGV( "handle_event: %i\n", args.type );
 		
@@ -292,15 +363,44 @@ struct CustomControl : public gui::Panel
 		local_bounds.origin = this->bounds.origin;
 		
 		
-		renderer->draw_bounds( local_bounds, color );
-		
+
 		if ( this->background != 0 )
 		{
 			renderer->draw_textured_bounds( this->bounds, this->background );
 		}
+		
+		renderer->draw_bounds( local_bounds, color );
+		
 	}
 };
 
+
+
+struct Timeline : public gui::Panel
+{
+	Timeline( Panel * parent ) : Panel(parent) {}
+	
+	virtual void handle_event( EventArgs & args )
+	{
+		if ( args.type == gui::Event_CursorMove )
+		{
+		}
+		
+		//Panel::handle_event( args );
+	}
+	
+	virtual void render( Compositor * compositor, Renderer * renderer )
+	{
+		ColorInt color = PACK_RGBA(255, 0, 255, 255);
+		
+		renderer->draw_bounds( this->bounds, color );
+
+//		if ( this->background != 0 )
+//		{
+//			renderer->draw_textured_bounds( this->bounds, this->background );
+//		}
+	}
+};
 
 class TestNom : public kernel::IApplication,
 	public IEventListener<KeyboardEvent>,
@@ -432,6 +532,11 @@ public:
 		compositor->add_child(b2);
 		b2->bounds.set( 50, 200, 128, 128 );
 		b2->set_background_image( compositor, "textures/checker2" );
+		
+		
+		Timeline * t = new Timeline( compositor );
+		compositor->add_child( t );
+		t->bounds.set( 50, 350, 600, 128 );
 		
 		debugdraw::startup(128);
 
