@@ -324,6 +324,33 @@ namespace gui
 
 using namespace gui;
 
+float snap_to( float input, float nearest, float threshold = 2.0f )
+{
+	return floor(input / (int)nearest) * (int)nearest;
+
+}
+
+float snap_to1( float input, float nearest, float threshold = 2.0f )
+{
+	float hnear = (nearest/threshold);
+	return floor((input + hnear) / nearest) * nearest;
+}
+
+
+float snap_threshold( float input, float nearest )
+{
+	float sn = snap_to(input, nearest);
+	
+	if ( fabsf(input-sn) < 2 )
+	{
+		LOGV( "sn: %g\n", sn );
+		return sn;
+	}
+	
+	LOGV( "input: %g\n", input );
+	return input;
+
+}
 
 struct CustomControl : public gui::Panel
 {
@@ -331,11 +358,7 @@ struct CustomControl : public gui::Panel
 	
 	CustomControl( Panel * parent ) : Panel(parent) {}
 	
-	float snap_to( float input, float nearest )
-	{
-		float hnear = (nearest/2.0f);
-		return floor((input + hnear) / nearest) * nearest;
-	}
+
 	
 	virtual void handle_event( EventArgs & args )
 	{
@@ -378,12 +401,26 @@ struct CustomControl : public gui::Panel
 
 struct Timeline : public gui::Panel
 {
-	Timeline( Panel * parent ) : Panel(parent) {}
+
+	int left_margin;
+	int distance_between_frames;
+	int current_frame;
+	
+	Timeline( Panel * parent ) : Panel(parent)
+	{
+		left_margin = 0;
+		distance_between_frames = 24;
+		current_frame = 0;
+	}
+
 	
 	virtual void handle_event( EventArgs & args )
 	{
 		if ( args.type == gui::Event_CursorMove )
 		{
+			// snap to the closest point
+			current_frame = snap_threshold( args.local.x, distance_between_frames + 1.0f );
+			current_frame /= (distance_between_frames + 1.0f);
 		}
 		
 		//Panel::handle_event( args );
@@ -391,9 +428,31 @@ struct Timeline : public gui::Panel
 	
 	virtual void render( Compositor * compositor, Renderer * renderer )
 	{
-		ColorInt color = PACK_RGBA(255, 0, 255, 255);
+		ColorInt color = PACK_RGBA(96, 96, 96, 255);
+
+		renderer->draw_bounds( this->bounds, PACK_RGBA(64, 64, 64, 255) );
 		
-		renderer->draw_bounds( this->bounds, color );
+		gui::Bounds bounds = this->bounds;
+		bounds.origin.x += left_margin;
+		//renderer->draw_bounds( bounds, color );
+		
+		int total_frames = this->bounds.size.width / (float)distance_between_frames;
+		gui::Bounds cf;
+		cf.set( this->bounds.origin.x + left_margin, this->bounds.origin.y, 1, this->bounds.size.height );
+		for( int f = 0; f < total_frames; ++f )
+		{
+			cf.origin.x += distance_between_frames;
+			
+			if (cf.origin.x + cf.size.width >= (this->bounds.origin.x + this->bounds.size.width))
+				break;
+			renderer->draw_bounds( cf, color );
+			
+			if ( current_frame == f )
+			{
+				renderer->draw_bounds( cf, PACK_RGBA(0, 255, 0, 255) );
+			}
+		}
+
 
 //		if ( this->background != 0 )
 //		{
