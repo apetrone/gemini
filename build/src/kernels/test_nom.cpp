@@ -33,6 +33,7 @@ using namespace kernel;
 #include <nom/nom.hpp>
 
 #include "mathlib.h"
+#include "font.hpp"
 
 class CustomStyle : public gui::Style
 {
@@ -283,7 +284,40 @@ public:
 		
 		return gui::TextureResult_Success;
 	}
+	
+	
+	virtual gui::FontResult font_create( const char * path, gui::FontHandle & handle )
+	{
+		assets::Font * font = assets::fonts()->load_from_path( path );
+		if ( !font )
+		{
+			return gui::FontResult_Failed;
+		}
+	
+		handle = font->Id();
+	
+		return gui::FontResult_Success;
+	}
 
+	virtual void font_destroy( const gui::FontHandle & handle )
+	{
+		// nothing really to do in our system
+	}
+
+	virtual gui::FontResult font_measure_string( const gui::FontHandle & handle, const char * string, gui::Bounds & bounds )
+	{
+		return gui::FontResult_Success;
+	}
+
+	virtual void font_draw( const gui::FontHandle & handle, const char * string, const gui::Bounds & bounds, gui::ColorInt color )
+	{
+		Color font_color(255, 255, 255, 255);
+		assets::Font * font = assets::fonts()->find_with_id( handle );
+		if ( font )
+		{
+			font::draw_string( font, bounds.origin.x, bounds.origin.y, string, font_color );
+		}
+	}
 }; // GLRenderer
 
 namespace gui
@@ -371,7 +405,7 @@ struct CustomControl : public gui::Panel
 	
 	virtual void render( Compositor * compositor, Renderer * renderer )
 	{
-		ColorInt color = PACK_RGBA(0, 255, 0, 255);
+//		ColorInt color = PACK_RGBA(0, 255, 0, 255);
 		
 		local_bounds.origin = this->bounds.origin;
 		
@@ -382,16 +416,28 @@ struct CustomControl : public gui::Panel
 			renderer->draw_textured_bounds( this->bounds, this->background );
 		}
 		
-		renderer->draw_bounds( local_bounds, color );
+//		renderer->draw_bounds( local_bounds, color );
 		
 	}
 };
 
+template <class ReturnType, class ParameterType>
+class Callback
+{
+public:
+	virtual ReturnType on_callback( ParameterType parameter ) = 0;
+};
 
+
+struct TimelineData
+{
+	int value;
+};
 
 struct Timeline : public gui::Panel
 {
-
+	Callback<void, TimelineData &> * on_scrub;
+	
 	int left_margin;
 	int distance_between_frames;
 	int current_frame;
@@ -399,18 +445,25 @@ struct Timeline : public gui::Panel
 	Timeline( Panel * parent ) : Panel(parent)
 	{
 		left_margin = 0;
-		distance_between_frames = 24;
+		distance_between_frames = 10;
 		current_frame = 0;
 	}
 
 	
 	virtual void handle_event( EventArgs & args )
 	{
-		if ( args.type == gui::Event_CursorMove )
+		if ( args.type == gui::Event_CursorDrag )
 		{
 			// snap to the closest point
 			current_frame = snap_to( args.local.x, distance_between_frames );
 			current_frame /= (distance_between_frames);
+			
+			if ( this->on_scrub )
+			{
+				TimelineData params;
+				params.value = current_frame;
+				this->on_scrub->on_callback( params );
+			}
 		}
 		
 		//Panel::handle_event( args );
@@ -454,10 +507,49 @@ struct Timeline : public gui::Panel
 	}
 };
 
+struct Label : public gui::Panel
+{
+	std::string text;
+	gui::FontHandle font_handle;
+	
+	Label( gui::Panel * parent ) : Panel( parent )
+	{
+		
+	}
+	
+	virtual void render( Compositor * compositor, Renderer * renderer )
+	{
+		
+		renderer->draw_bounds( this->bounds, PACK_RGBA(64, 64, 64, 255) );
+		
+		gui::Bounds bounds = this->bounds;
+		
+		
+		bounds.origin.x += 10;
+		bounds.origin.y += 15;
+		
+		
+		renderer->font_draw( font_handle, this->text.c_str(), bounds, PACK_RGBA(255, 0, 255, 255) );
+	}
+	
+	
+	virtual void set_font( Compositor * compositor, const char * path )
+	{
+		gui::FontResult result = compositor->renderer->font_create( path, font_handle );
+		if ( result != gui::FontResult_Success )
+		{
+			LOGW( "Error loading font %s\n", path );
+		}
+	}
+};
+
 class TestNom : public kernel::IApplication,
 	public IEventListener<KeyboardEvent>,
 	public IEventListener<MouseEvent>,
-	public IEventListener<SystemEvent>
+	public IEventListener<SystemEvent>,
+
+
+	public Callback<void, TimelineData &>
 {
 public:
 	DECLARE_APPLICATION( TestNom );
@@ -466,6 +558,17 @@ public:
 	GLRenderer renderer;
 	
 	gui::Compositor * compositor;
+	
+	Label * label;
+	
+	virtual void on_callback( TimelineData & data )
+	{
+//		LOGV( "on_callback: %i\n", data.value );
+		if ( label )
+		{
+			label->text = xstr_format("Frame: %i", data.value);
+		}
+	}
 	
 	virtual void event( KeyboardEvent & event )
 	{
@@ -582,14 +685,20 @@ public:
 		
 		CustomControl * b2 = new CustomControl( compositor );
 		compositor->add_child(b2);
-		b2->bounds.set( 50, 200, 128, 128 );
-		b2->set_background_image( compositor, "textures/checker2" );
+		b2->bounds.set( 150, 30, 525, 300 );
+		b2->set_background_image( compositor, "textures/loomis_orthofemale" );
 		
 		
 		Timeline * t = new Timeline( compositor );
 		compositor->add_child( t );
-		t->bounds.set( 50, 350, 600, 128 );
+		t->bounds.set( 100, 350, 600, 128 );
+		t->on_scrub = this;
 		
+		label = new Label( compositor );
+		compositor->add_child( label );
+		label->bounds.set( 100, 500, 100, 30 );
+		label->set_font( compositor, "fonts/debug" );
+	
 		debugdraw::startup(128);
 
 		
