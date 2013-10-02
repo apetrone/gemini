@@ -457,7 +457,18 @@ struct Timeline : public gui::Panel
 			// snap to the closest point
 			current_frame = snap_to( args.local.x, distance_between_frames );
 			current_frame /= (distance_between_frames);
+			int total_frames = this->bounds.size.width / (float)distance_between_frames;
 			
+			if ( current_frame < 0 )
+			{
+				current_frame = 0;
+			}
+			else if ( current_frame > total_frames-1 )
+			{
+				current_frame = total_frames-1;
+			}
+			
+				
 			if ( this->on_scrub )
 			{
 				TimelineData params;
@@ -484,11 +495,9 @@ struct Timeline : public gui::Panel
 		cf.set( this->bounds.origin.x + left_margin, this->bounds.origin.y, 1, this->bounds.size.height );
 		for( int f = 0; f < total_frames; ++f )
 		{
-			
-			
 			if (cf.origin.x + cf.size.width >= (this->bounds.origin.x + this->bounds.size.width))
 				break;
-				
+
 			renderer->draw_bounds( cf, color );
 			
 			if ( current_frame == f )
@@ -519,16 +528,12 @@ struct Label : public gui::Panel
 	
 	virtual void render( Compositor * compositor, Renderer * renderer )
 	{
-		
 		renderer->draw_bounds( this->bounds, PACK_RGBA(64, 64, 64, 255) );
-		
 		gui::Bounds bounds = this->bounds;
-		
-		
+
 		bounds.origin.x += 10;
 		bounds.origin.y += 15;
-		
-		
+
 		renderer->font_draw( font_handle, this->text.c_str(), bounds, PACK_RGBA(255, 0, 255, 255) );
 	}
 	
@@ -685,19 +690,20 @@ public:
 		
 		CustomControl * b2 = new CustomControl( compositor );
 		compositor->add_child(b2);
-		b2->bounds.set( 150, 30, 525, 300 );
+		b2->bounds.set( 140, 30, 525, 300 );
 		b2->set_background_image( compositor, "textures/loomis_orthofemale" );
 		
 		
 		Timeline * t = new Timeline( compositor );
 		compositor->add_child( t );
-		t->bounds.set( 100, 350, 600, 128 );
+		t->bounds.set( 100, 350, 600, 64 );
 		t->on_scrub = this;
 		
 		label = new Label( compositor );
 		compositor->add_child( label );
-		label->bounds.set( 100, 500, 100, 30 );
+		label->bounds.set( 100, 430, 100, 30 );
 		label->set_font( compositor, "fonts/debug" );
+		label->text = "Frame: 0";
 	
 		debugdraw::startup(128);
 
