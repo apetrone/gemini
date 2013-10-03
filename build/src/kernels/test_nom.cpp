@@ -427,9 +427,11 @@ struct CustomControl : public gui::Panel
 
 		//Panel::handle_event( args );
 	}
-	
+
 	virtual void render( Compositor * compositor, Renderer * renderer )
 	{
+
+	
 //		ColorInt color = PACK_RGBA(0, 255, 0, 255);
 		
 		local_bounds.origin = this->bounds.origin;
@@ -580,6 +582,7 @@ struct Label : public gui::Panel
 	}
 };
 
+
 class TestNom : public kernel::IApplication,
 	public IEventListener<KeyboardEvent>,
 	public IEventListener<MouseEvent>,
@@ -601,6 +604,8 @@ public:
 	Label * lower_bound;
 	Label * upper_bound;
 	
+	
+	gui::Panel * timeline_control;
 	
 	virtual void on_callback( TimelineData & data )
 	{
@@ -761,6 +766,19 @@ public:
 		upper_bound->bounds.set( 670, 414, 30, 30 );
 		upper_bound->text = "59";
 		upper_bound->set_font( compositor, "fonts/debug" );
+		
+		
+		
+		
+		timeline_control = new gui::Panel( compositor );
+		compositor->add_child( timeline_control );
+		timeline_control->bounds.set( 150, 414, 100, 30 );
+		
+		gui::Button * b = new gui::Button( timeline_control );
+		timeline_control->add_child( b );
+		b->bounds.set( 0, 0, 40, 40 );
+		b->set_background_image( compositor, "textures/checker2" );
+		
 		
 		debugdraw::startup(128);
 
