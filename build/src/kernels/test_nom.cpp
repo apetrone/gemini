@@ -35,6 +35,8 @@ using namespace kernel;
 #include "mathlib.h"
 #include "font.hpp"
 
+#include <vector>
+
 class CustomStyle : public gui::Style
 {
 	virtual void render_panel( gui::Panel * panel, gui::Compositor * compositor, gui::Renderer * renderer )
@@ -376,11 +378,26 @@ float snap_to( float input, float nearest, float threshold = 2.0f )
 }
 
 
+
+
 struct CustomControl : public gui::Panel
 {
 	gui::Bounds local_bounds;
 	
-	CustomControl( Panel * parent ) : Panel(parent) {}
+	int control_point_size;
+	
+	struct ControlPoint
+	{
+		gui::Point origin;
+	};
+	
+	typedef std::vector< ControlPoint > ControlPointVector;
+	ControlPointVector control_points;
+	
+	CustomControl( Panel * parent ) : Panel(parent)
+	{
+		control_point_size = 10;
+	}
 	
 
 	
@@ -397,8 +414,16 @@ struct CustomControl : public gui::Panel
 			
 //			LOGV( "size: %g %g\n", local_bounds.size.width, local_bounds.size.height );
 		}
+		else if ( args.type == gui::Event_CursorButtonPressed )
+		{
+			if ( args.cursor_button == gui::CursorButton::Left )
+			{
+				ControlPoint pt;
+				pt.origin = args.local;
+				control_points.push_back( pt );
+			}
+		}
 //		LOGV( "handle_event: %i\n", args.type );
-		
 
 		//Panel::handle_event( args );
 	}
@@ -408,14 +433,21 @@ struct CustomControl : public gui::Panel
 //		ColorInt color = PACK_RGBA(0, 255, 0, 255);
 		
 		local_bounds.origin = this->bounds.origin;
-		
-		
 
 		if ( this->background != 0 )
 		{
 			renderer->draw_textured_bounds( this->bounds, this->background );
 		}
 		
+		float half_size = control_point_size / 2.0f;
+		ControlPointVector::iterator it = control_points.begin();
+		for( ; it != control_points.end(); ++it )
+		{
+			ControlPoint & pt = (*it);
+			gui::Bounds bounds;
+			bounds.set( this->bounds.origin.x + pt.origin.x - half_size, this->bounds.origin.y + pt.origin.y - half_size, half_size, half_size );
+			renderer->draw_bounds( bounds, PACK_RGBA(255, 0, 0, 255) );
+		}
 //		renderer->draw_bounds( local_bounds, color );
 		
 	}
