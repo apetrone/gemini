@@ -566,6 +566,10 @@ public:
 	
 	Label * label;
 	
+	Label * lower_bound;
+	Label * upper_bound;
+	
+	
 	virtual void on_callback( TimelineData & data )
 	{
 //		LOGV( "on_callback: %i\n", data.value );
@@ -600,6 +604,16 @@ public:
 
 	virtual void event( MouseEvent & event )
 	{
+		gui::CursorButton::Type input_to_gui[] = {
+			gui::CursorButton::Left,
+			gui::CursorButton::Right,
+			gui::CursorButton::Middle,
+			gui::CursorButton::Mouse4,
+			gui::CursorButton::Mouse5
+		};
+		
+		gui::CursorButton::Type button = input_to_gui[ (event.button - input::MOUSE_LEFT) ];
+	
         switch( event.subtype )
         {
             case kernel::MouseMoved:
@@ -611,6 +625,7 @@ public:
                 break;
 			}
             case kernel::MouseButton:
+				
                 if ( event.is_down )
                 {
                     fprintf( stdout, "mouse button %i is pressed\n", event.button );
@@ -622,10 +637,6 @@ public:
 				
 				if ( compositor )
 				{
-					uint32_t button = 0;
-					
-					// convert  input button to nom button
-					
 					compositor->cursor_button( button, event.is_down );
 				}
                 break;
@@ -699,12 +710,26 @@ public:
 		t->bounds.set( 100, 350, 600, 64 );
 		t->on_scrub = this;
 		
+
+		
+		lower_bound = new Label( compositor );
+		compositor->add_child( lower_bound );
+		lower_bound->bounds.set( 100, 414, 30, 30 );
+		lower_bound->text = "0";
+		lower_bound->set_font( compositor, "fonts/debug" );
+		
 		label = new Label( compositor );
 		compositor->add_child( label );
-		label->bounds.set( 100, 430, 100, 30 );
+		label->bounds.set( 336, 414, 100, 30 );
 		label->set_font( compositor, "fonts/debug" );
 		label->text = "Frame: 0";
-	
+		
+		upper_bound = new Label( compositor );
+		compositor->add_child( upper_bound );
+		upper_bound->bounds.set( 670, 414, 30, 30 );
+		upper_bound->text = "59";
+		upper_bound->set_font( compositor, "fonts/debug" );
+		
 		debugdraw::startup(128);
 
 		
