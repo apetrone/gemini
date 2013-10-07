@@ -428,17 +428,17 @@ struct CustomControl : public gui::Panel
 		//Panel::handle_event( args );
 	}
 
-	virtual void render( Compositor * compositor, Renderer * renderer )
+	virtual void render( gui::Bounds & frame, Compositor * compositor, Renderer * renderer )
 	{
 
 	
 //		ColorInt color = PACK_RGBA(0, 255, 0, 255);
 		
-		local_bounds.origin = this->bounds.origin;
+		local_bounds.origin = frame.origin;
 
 		if ( this->background != 0 )
 		{
-			renderer->draw_textured_bounds( this->bounds, this->background );
+			renderer->draw_textured_bounds( frame, this->background );
 		}
 		
 		float half_size = control_point_size / 2.0f;
@@ -447,7 +447,7 @@ struct CustomControl : public gui::Panel
 		{
 			ControlPoint & pt = (*it);
 			gui::Bounds bounds;
-			bounds.set( this->bounds.origin.x + pt.origin.x - half_size, this->bounds.origin.y + pt.origin.y - half_size, half_size, half_size );
+			bounds.set( frame.origin.x + pt.origin.x - half_size, frame.origin.y + pt.origin.y - half_size, half_size, half_size );
 			renderer->draw_bounds( bounds, PACK_RGBA(255, 0, 0, 255) );
 		}
 //		renderer->draw_bounds( local_bounds, color );
@@ -514,22 +514,22 @@ struct Timeline : public gui::Panel
 		//Panel::handle_event( args );
 	}
 	
-	virtual void render( Compositor * compositor, Renderer * renderer )
+	virtual void render( gui::Bounds & frame, Compositor * compositor, Renderer * renderer )
 	{
 		ColorInt color = PACK_RGBA(96, 96, 96, 255);
 
-		renderer->draw_bounds( this->bounds, PACK_RGBA(64, 64, 64, 255) );
+		renderer->draw_bounds( frame, PACK_RGBA(64, 64, 64, 255) );
 		
-		gui::Bounds bounds = this->bounds;
+		gui::Bounds bounds = frame;
 		bounds.origin.x += left_margin;
 		//renderer->draw_bounds( bounds, color );
 		
-		int total_frames = this->bounds.size.width / (float)distance_between_frames;
+		int total_frames = frame.size.width / (float)distance_between_frames;
 		gui::Bounds cf;
-		cf.set( this->bounds.origin.x + left_margin, this->bounds.origin.y, 1, this->bounds.size.height );
+		cf.set( frame.origin.x + left_margin, frame.origin.y, 1, frame.size.height );
 		for( int f = 0; f < total_frames; ++f )
 		{
-			if (cf.origin.x + cf.size.width >= (this->bounds.origin.x + this->bounds.size.width))
+			if (cf.origin.x + cf.size.width >= (frame.origin.x + frame.size.width))
 				break;
 
 			renderer->draw_bounds( cf, color );
@@ -560,10 +560,10 @@ struct Label : public gui::Panel
 		
 	}
 	
-	virtual void render( Compositor * compositor, Renderer * renderer )
+	virtual void render( gui::Bounds & frame, Compositor * compositor, Renderer * renderer )
 	{
-		renderer->draw_bounds( this->bounds, PACK_RGBA(64, 64, 64, 255) );
-		gui::Bounds bounds = this->bounds;
+		renderer->draw_bounds( frame, PACK_RGBA(64, 64, 64, 255) );
+		gui::Bounds bounds = frame;
 
 		bounds.origin.x += 10;
 		bounds.origin.y += 15;
@@ -606,6 +606,7 @@ public:
 	
 	
 	gui::Panel * timeline_control;
+	
 	
 	virtual void on_callback( TimelineData & data )
 	{
@@ -738,48 +739,45 @@ public:
 		
 		CustomControl * b2 = new CustomControl( compositor );
 		compositor->add_child(b2);
-		b2->bounds.set( 140, 30, 525, 300 );
+		b2->set_bounds( 140, 30, 525, 300 );
 		b2->set_background_image( compositor, "textures/loomis_orthofemale" );
 		
 		
 		Timeline * t = new Timeline( compositor );
 		compositor->add_child( t );
-		t->bounds.set( 100, 350, 600, 64 );
+		t->set_bounds( 100, 350, 600, 64 );
 		t->on_scrub = this;
 		
 
 		
 		lower_bound = new Label( compositor );
 		compositor->add_child( lower_bound );
-		lower_bound->bounds.set( 100, 414, 30, 30 );
+		lower_bound->set_bounds( 100, 414, 30, 30 );
 		lower_bound->text = "0";
 		lower_bound->set_font( compositor, "fonts/debug" );
 		
 		label = new Label( compositor );
 		compositor->add_child( label );
-		label->bounds.set( 336, 414, 100, 30 );
+		label->set_bounds( 336, 414, 100, 30 );
 		label->set_font( compositor, "fonts/debug" );
 		label->text = "Frame: 0";
 		
 		upper_bound = new Label( compositor );
 		compositor->add_child( upper_bound );
-		upper_bound->bounds.set( 670, 414, 30, 30 );
+		upper_bound->set_bounds( 670, 414, 30, 30 );
 		upper_bound->text = "59";
 		upper_bound->set_font( compositor, "fonts/debug" );
-		
-		
-		
-		
+	
 		timeline_control = new gui::Panel( compositor );
 		compositor->add_child( timeline_control );
-		timeline_control->bounds.set( 150, 414, 100, 30 );
+		timeline_control->set_bounds( 150, 414, 100, 30 );
+		
 		
 		gui::Button * b = new gui::Button( timeline_control );
 		timeline_control->add_child( b );
-		b->bounds.set( 0, 0, 40, 40 );
+		b->set_bounds( 0, 0, 30, 30 );
 		b->set_background_image( compositor, "textures/checker2" );
-		
-		
+
 		debugdraw::startup(128);
 
 		
@@ -795,6 +793,7 @@ public:
 		
 		debugdraw::update( params.step_interval_seconds );
 	}
+	
 
 
 	virtual void tick( kernel::Params & params )
