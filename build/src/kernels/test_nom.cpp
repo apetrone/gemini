@@ -455,12 +455,7 @@ struct CustomControl : public gui::Panel
 	}
 };
 
-template <class ReturnType, class ParameterType>
-class Callback
-{
-public:
-	virtual ReturnType on_callback( ParameterType parameter ) = 0;
-};
+
 
 
 struct TimelineData
@@ -470,7 +465,7 @@ struct TimelineData
 
 struct Timeline : public gui::Panel
 {
-	Callback<void, TimelineData &> * on_scrub;
+	gui::Callback<void, TimelineData &> * on_scrub;
 	
 	int left_margin;
 	int distance_between_frames;
@@ -507,7 +502,7 @@ struct Timeline : public gui::Panel
 			{
 				TimelineData params;
 				params.value = current_frame;
-				this->on_scrub->on_callback( params );
+				this->on_scrub->execute( params );
 			}
 		}
 		
@@ -589,7 +584,9 @@ class TestNom : public kernel::IApplication,
 	public IEventListener<SystemEvent>,
 
 
-	public Callback<void, TimelineData &>
+	public gui::Callback<void, TimelineData &>,
+	public gui::Callback<void, gui::EventArgs &>
+
 {
 public:
 	DECLARE_APPLICATION( TestNom );
@@ -606,14 +603,23 @@ public:
 	
 	
 	gui::Panel * timeline_control;
+	unsigned int abc;
 	
-	
-	virtual void on_callback( TimelineData & data )
+	virtual void execute( TimelineData & data )
 	{
 //		LOGV( "on_callback: %i\n", data.value );
 		if ( label )
 		{
 			label->text = xstr_format("Frame: %i", data.value);
+		}
+	}
+	
+	virtual void execute( gui::EventArgs & args )
+	{
+		if ( label )
+		{
+			abc++;
+			label->text = xstr_format( "Frame: %i ", abc);
 		}
 	}
 	
@@ -629,7 +635,6 @@ public:
         }
         else
         {
-
             fprintf( stdout, "key %i released\n", event.key );
         }
 		
@@ -637,8 +642,8 @@ public:
 		{
 			compositor->key_event( event.key, event.is_down, event.unicode );
 		}
-		
 	}
+
 
 	virtual void event( MouseEvent & event )
 	{
@@ -768,19 +773,21 @@ public:
 		upper_bound->text = "59";
 		upper_bound->set_font( compositor, "fonts/debug" );
 	
+	
 		timeline_control = new gui::Panel( compositor );
 		compositor->add_child( timeline_control );
 		timeline_control->set_bounds( 150, 414, 100, 30 );
-		
 		
 		gui::Button * b = new gui::Button( timeline_control );
 		timeline_control->add_child( b );
 		b->set_bounds( 0, 0, 30, 30 );
 		b->set_background_image( compositor, "textures/checker2" );
+		b->on_click = this;
 
 		debugdraw::startup(128);
 
-		
+		abc = 0;
+
 		return kernel::Application_Success;
 	}
 
