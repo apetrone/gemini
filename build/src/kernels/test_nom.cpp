@@ -776,7 +776,7 @@ public:
 	
 		timeline_control = new gui::Panel( compositor );
 		compositor->add_child( timeline_control );
-		timeline_control->set_bounds( 150, 414, 100, 30 );
+		timeline_control->set_bounds( 150, 414, 120, 30 );
 		
 		gui::Button * b = new gui::Button( timeline_control );
 		timeline_control->add_child( b );
