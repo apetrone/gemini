@@ -16,7 +16,8 @@ def common_dependencies( target_platform ):
 		"fontstash.py",
 		"bullet2.py",
 		"squirrel3.py",
-		"sqrat.py"
+		"sqrat.py",
+		"nom/nom.py"
 	]
 
 	if target_platform == 'windows':

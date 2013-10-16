@@ -7,6 +7,8 @@ class bullet2Builder(Builder):
 		project_names = {
 			LINUX : 'bullet',
 			MACOSX : 'BULLET_PHYSICS',
+			IPHONEOS : 'BULLET_PHYSICS',
+			IPHONESIMULATOR : 'BULLET_PHYSICS',
 			WINDOWS : 'msvc/vs2010/0BulletSolution'
 		}
 
@@ -25,10 +27,10 @@ class bullet2Builder(Builder):
 		for lib in libs:
 			p = Project( name=project_names[ target_platform ] )
 			p.output = libs[ i ]
-			i += 1
+			
 			builder.addProject( p )
-			builder.targets.append( project_names[ target_platform ] )
-
+			builder.targets.append( libs[ i ] )
+			i += 1
 
 	def config(self, *args, **kwargs):
 		driver = kwargs.get( "driver", None )

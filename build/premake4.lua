@@ -11,6 +11,12 @@ newoption {
 }
 
 newoption {
+	trigger = "iphonesimulator",
+	value = nil,
+	description = "Enables iphone simulator target"
+}
+
+newoption {
 	trigger = "rpi",
 	value = nil,
 	description = "Compile for Raspberry Pi"
@@ -47,6 +53,11 @@ end
 -- update build name for ios
 if _OPTIONS["ios"] ~= nil then
 	build_name = "geminiios"
+	WITH_GLESV2 = true
+end
+
+if _OPTIONS["iphonesimulator"] ~= nil then
+	build_name = "geminisimulator"
 	WITH_GLESV2 = true
 end
 
@@ -156,7 +167,13 @@ project ( build_name )
 		--"python tools/buildinfo.py generate -g -o src/buildinfo.c"
 	}
 
-	setup_platforms( solution() )
+
+	local deps_name = "deps.lua"
+	if _OPTIONS["ios"] ~= nil then
+		deps_name = "deps_iphoneos.lua"
+	end
+
+	setup_platforms( solution(), deps_name )
 
 	configuration { "windows" }
 		
@@ -288,8 +305,8 @@ project ( build_name )
 				xcodebuildsettings
 				{
 					'INFOPLIST_FILE = resources/osx/Info.plist',
-					'CLANG_CXX_LANGUAGE_STANDARD = "c++0x"',
-					'CLANG_CXX_LIBRARY = "libc++"'
+					-- 'CLANG_CXX_LANGUAGE_STANDARD = "c++0x"',
+					-- 'CLANG_CXX_LIBRARY = "libc++"'
 				}
 
 				files

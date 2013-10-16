@@ -7,7 +7,7 @@ class gemini_iphoneos(Builder):
 
 		self.build_name = BUILD_NAME
 		self.resource_path = "resources/ios/*"
-		self.build_name = 'geminiios'
+		self.build_name = 'geminisimulator'
 
 		project = Project( name=self.build_name )
 		builder.addProject( project )
@@ -33,7 +33,7 @@ class gemini_iphoneos(Builder):
 	def depends( *args, **kwargs ):
 		target_platform = kwargs.get( "target_platform", None )
 		d = {}
-		d['libpath'] = "lib/armv7/{configuration}"
+		d['libpath'] = "lib/x86/{configuration}"
 		d['depends_file'] = 'build/deps_iphoneos.lua'
 		d['depends_path'] = dependency_path()
 
@@ -49,8 +49,8 @@ class gemini_iphoneos(Builder):
 		target_platform = kwargs.get( "target_platform", host_platform )
 		arch_list = builder.arch_list[:]
 
-		if 'armv7' in arch_list:
-			arch_list.remove( 'armv7' )
+		if 'x86' in arch_list:
+			arch_list.remove( 'x86' )
 
 		if 'native' in arch_list:
 			arch_list.remove( 'native' )
@@ -63,6 +63,7 @@ class gemini_iphoneos(Builder):
 
 		# this will pass the --ios option through to premake
 		premake.ios = True
+		premake.iphonesimulator = True
 		premake.run()
 
 	def prebuild(self, *args, **kwargs):

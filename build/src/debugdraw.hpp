@@ -63,14 +63,14 @@ namespace debugdraw
 	void startup( unsigned int max_primitives );
 	void shutdown();
 	
+	void update( float deltamsec );
+	void render( const glm::mat4 & modelview, const glm::mat4 & projection, int viewport_width, int viewport_height );
+	
 	void axes( const glm::mat4 & transform, float length, float duration = MIN_DURATION_MSEC );
+	void box( const glm::vec3 & mins, const glm::vec3 & maxs, const Color & color, float duration = MIN_DURATION_MSEC );
 	void point( const glm::vec3 & pt, const Color & color, float size = 2.0, float duration = MIN_DURATION_MSEC );
 	void line( const glm::vec3 & start, const glm::vec3 & end, const Color & color, float duration = MIN_DURATION_MSEC );
 	void sphere( const glm::vec3 & center, const Color & color, float radius = 2.0, float duration = MIN_DURATION_MSEC );
-	
-	void update( float deltamsec );
-	void render( const glm::mat4 & modelview, const glm::mat4 & projection, int viewport_width, int viewport_height );
 	void text( int x, int y, const char * string, const Color & color );
-	
-//	unsigned int debug_font_id();
+
 }; // debugdraw
