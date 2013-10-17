@@ -104,6 +104,11 @@ project ( build_name )
 		"src/game/**.*",
 	}
 
+	excludes
+	{
+		"src/kernels/test_bullet2.cpp"
+	}
+
 	-- building for desktop
 	if _OPTIONS["ios"] == nil then
 		files

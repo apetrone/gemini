@@ -932,8 +932,8 @@ void GameScreen::on_draw( kernel::IApplication * app )
 		ent = &entities[i];
 		if ( active_entities[i] )
 		{
-			//				ent->r_x = lerp( ent->last_world_x, ent->world_x, kernel::instance()->parameters().step_alpha );
-			//				ent->r_y = lerp( ent->last_world_y, ent->world_y, kernel::instance()->parameters().step_alpha );
+//			ent->r_x = lerp( ent->last_world_x, ent->world_x, kernel::instance()->parameters().step_alpha );
+//			ent->r_y = lerp( ent->last_world_y, ent->world_y, kernel::instance()->parameters().step_alpha );
 			ent->position.interpolate( kernel::instance()->parameters().step_alpha );
 			
 			if ( !is_within_screen(ent) )

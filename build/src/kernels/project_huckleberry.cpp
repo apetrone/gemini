@@ -40,6 +40,7 @@ enum EntityType
 {
 	Logic = 0,
 	Model = 1,
+	Sprite = 2
 };
 
 // script stuff
@@ -60,7 +61,7 @@ struct Entity
 	Entity();
 	~Entity();
 	
-//	void update( float delta_msec );
+	void step( float delta_seconds );
 	void tick();
 //	void draw();
 	
@@ -72,7 +73,7 @@ struct Entity
 	inline void set_position( const glm::vec3 & p ) { position = p; }
 	const std::string & get_name() { return this->name; }
 	void set_name( const std::string & object_name ) { this->name = object_name; }
-//	void native_update;
+	void native_step( float delta_seconds );
 	void native_tick();
 //	void native_draw();
 }; // Entity
@@ -186,6 +187,11 @@ Entity::~Entity()
 	entity_list().remove( this );
 } // ~Entity
 
+void Entity::step( float delta_seconds )
+{
+	
+} // step
+
 void Entity::tick()
 {
 	if ( sq_isnull(this->on_tick) || sq_isnull(this->instance) )
@@ -213,6 +219,9 @@ void Entity::bind_functions()
 	this->on_tick = script::find_member( this->class_object, "tick" );
 } // bind_functions
 
+void Entity::native_step( float delta_seconds )
+{
+} // native_step
 
 void Entity::native_tick()
 {
@@ -251,7 +260,85 @@ void ModelEntity::set_model( const char * path )
 	}
 } // set_model
 
+struct SpriteEntity : public Entity
+{
+	// these compose the 'animation state'
+	unsigned short current_animation;	// currently active animation
+	unsigned short current_frame;		// current frame of the animation
+	float animation_time;				// current time of the animation
+	
+	// this is the 'stateless' part of the animation that we reference
+	assets::SpriteConfig * sprite_config;
+	
+	unsigned int material_id;
+	unsigned short width;
+	unsigned short height;
+	short hotspot_x;
+	short hotspot_y;
+	
+	unsigned short layer;
+	
+	Color color;
+	glm::vec2 scale;
+	
+	
+	float rotation;
+	
+	glm::vec2 world_origin;
+	glm::vec2 screen_origin;
+	
+	
+	SpriteEntity();
+	virtual ~SpriteEntity() {}
+	
+	void set_sprite( const char * path );
+	void play_animation( const char * name );
+	glm::vec2 get_world_origin() const { return this->world_origin; }
+	void set_world_origin( const glm::vec2 & origin ) { this->world_origin = origin; }
+	
+	glm::vec2 get_screen_origin() const { return this->screen_origin; }
+	void set_screen_origin( const glm::vec2 & origin ) { this->screen_origin = origin; }
+}; // SpriteEntity
 
+
+SpriteEntity::SpriteEntity()
+{
+	this->type = Sprite;
+	this->sprite_config = 0;
+} // SpriteEntity
+
+void SpriteEntity::set_sprite( const char * path )
+{
+	this->sprite_config = assets::sprites()->load_from_path( path );
+	if ( this->sprite_config )
+	{
+		this->width = this->sprite_config->width;
+		this->height = this->sprite_config->height;
+		this->scale = this->sprite_config->scale;
+		this->material_id = this->sprite_config->material_id;
+	}
+} // set_sprite
+
+void SpriteEntity::play_animation( const char * name )
+{
+	current_frame = 0;
+	animation_time = 0;
+	
+	if ( this->sprite_config )
+	{
+		for( unsigned short i = 0; i < sprite_config->total_animations; ++i )
+		{
+			assets::SpriteClip * anim = this->sprite_config->get_clip_by_index(i);
+			if ( name == anim->name )
+			{
+				current_animation = i;
+				return;
+			}
+		}
+	}
+	
+	LOGV( "unable to find animation: %s\n", name );
+} // play_animation
 
 class ProjectHuckleberry : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
@@ -313,8 +400,8 @@ public:
 		// bind Entity to scripting language
 		Sqrat::Class<Entity> entity( script::get_vm() );
 		entity.Func( "tick", &Entity::native_tick );
-//		entity.Func( "update", &NativeObject::native_update );
-//		entity.Func( "draw", &NativeObject::native_draw );
+		entity.Func( "step", &Entity::native_step );
+//		entity.Func( "draw", &Entity::native_draw );
 		entity.Var( "id", &Entity::id );
 		entity.Prop( "name", &Entity::get_name, &Entity::set_name );
 		entity.Prop( "position", &Entity::get_position, &Entity::set_position );
@@ -324,7 +411,14 @@ public:
 		model.Func( "set_model", &ModelEntity::set_model );
 		model.Prop( "transform", &ModelEntity::get_transform, &ModelEntity::set_transform );
 		root.Bind( "ModelEntity", model );
-	
+		
+		
+		Sqrat::DerivedClass<SpriteEntity, Entity> sprite( script::get_vm() );
+		sprite.Func( "set_sprite", &SpriteEntity::set_sprite );
+		sprite.Prop( "world_origin", &SpriteEntity::get_world_origin, &SpriteEntity::set_world_origin );
+		sprite.Prop( "screen_origin", &SpriteEntity::get_screen_origin, &SpriteEntity::set_screen_origin );
+		root.Bind( "SpriteEntity", sprite );
+		
 		script::execute_file("scripts/project_huckleberry.nut");
 	
 		debugdraw::startup(1024);
@@ -361,8 +455,24 @@ public:
 		{
 			camera.move_right( dt );
 		}
+		
+		// tick entities
+		EntityVector::iterator it =	entity_list().objects.begin();
+		EntityVector::iterator end = entity_list().objects.end();
+		for( ; it != end; ++it )
+		{
+			(*it)->step( params.framedelta_filtered_msec * 0.001 );
+		}
 	}
 	
+	void add_sprite_to_layer( unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords )
+	{
+//		if ( stream )
+//		{
+//			add_sprite_to_stream(*stream, x, y, width, height, color, texcoords);
+//			stream->update();
+//		}
+	}
 	
 	void render_with_camera( Camera & camera )
 	{
@@ -397,6 +507,25 @@ public:
 					for( unsigned short i = 0; i < model->mesh->total_geometry; ++i )
 					{
 						render_utilities::stream_geometry( rs, &model->mesh->geometry[i], gp );
+					}
+				}
+			}
+			else if ( entity->type == Sprite )
+			{
+				glm::vec2 screen;
+				SpriteEntity * sprite = (SpriteEntity*)entity;
+				glm::vec2 & scale = sprite->scale;
+				if ( sprite )
+				{
+					assets::SpriteClip * clip = sprite->sprite_config->get_clip_by_index( sprite->current_animation );
+					if (clip && clip->is_valid_frame( sprite->current_frame ))
+					{
+//						render_control.rs.rewind();
+//						render_control.rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+//						render_control.rs.add_state( renderer::STATE_BLEND, 1 );
+//						rc.add_sprite_to_layer(0, screen.x, screen.y, scale.x*sprite->width, scale.y*sprite->height, sprite->color, clip->uvs_for_frame( sprite->current_frame ));
+//						assets::Material * material = assets::materials()->find_with_id( sprite->material_id );
+//						render_control.render_stream( material );
 					}
 				}
 			}
