@@ -49,7 +49,7 @@ struct Entity
 	HSQOBJECT instance;
 	HSQOBJECT class_object;
 	
-//	HSQOBJECT on_update;
+	HSQOBJECT on_step;
 	HSQOBJECT on_tick;
 //	HSQOBJECT on_draw;
 	
@@ -73,8 +73,8 @@ struct Entity
 	inline void set_position( const glm::vec3 & p ) { position = p; }
 	const std::string & get_name() { return this->name; }
 	void set_name( const std::string & object_name ) { this->name = object_name; }
-	void native_step( float delta_seconds );
-	void native_tick();
+	virtual void native_step( float delta_seconds );
+	virtual void native_tick();
 //	void native_draw();
 }; // Entity
 
@@ -189,7 +189,23 @@ Entity::~Entity()
 
 void Entity::step( float delta_seconds )
 {
+	if ( sq_isnull(this->on_step) || sq_isnull(this->instance) )
+	{
+		return;
+	}
 	
+	SQRESULT res;
+	sq_pushobject( script::get_vm(), this->on_step );
+	sq_pushobject( script::get_vm(), this->instance );
+	sq_pushfloat( script::get_vm(), delta_seconds );
+	res = sq_call( script::get_vm(), 2, SQFalse, SQTrue );
+	
+	sq_pop( script::get_vm(), 1 );
+	if ( SQ_FAILED(res) )
+	{
+		script::check_result( res, "sq_call" );
+		sq_pop( script::get_vm(), 1 );
+	}
 } // step
 
 void Entity::tick()
@@ -217,6 +233,7 @@ void Entity::bind_functions()
 {
 	LOGV( "Entity::bind_functions: %p\n", this );
 	this->on_tick = script::find_member( this->class_object, "tick" );
+	this->on_step = script::find_member( this->class_object, "step" );
 } // bind_functions
 
 void Entity::native_step( float delta_seconds )
@@ -284,17 +301,20 @@ struct SpriteEntity : public Entity
 	
 	float rotation;
 	
-	glm::vec2 world_origin;
+	render_utilities::PhysicsState<glm::vec2> world_position;
 	glm::vec2 screen_origin;
 	
 	
 	SpriteEntity();
 	virtual ~SpriteEntity() {}
 	
+	virtual void native_step( float delta_seconds );
+	virtual void native_tick();
+	
 	void set_sprite( const char * path );
 	void play_animation( const char * name );
-	glm::vec2 get_world_origin() const { return this->world_origin; }
-	void set_world_origin( const glm::vec2 & origin ) { this->world_origin = origin; }
+	glm::vec2 get_world_origin() const { return this->world_position.current; }
+	void set_world_origin( const glm::vec2 & origin ) { this->world_position.snap( origin ); }
 	
 	glm::vec2 get_screen_origin() const { return this->screen_origin; }
 	void set_screen_origin( const glm::vec2 & origin ) { this->screen_origin = origin; }
@@ -304,8 +324,29 @@ struct SpriteEntity : public Entity
 SpriteEntity::SpriteEntity()
 {
 	this->type = Sprite;
+	this->layer = 0;
+	this->hotspot_x = 0;
+	this->hotspot_y = 0;
+	this->rotation = 0;
 	this->sprite_config = 0;
+	this->scale = glm::vec2(1.0f, 1.0f);
+	this->current_frame = 0;
+	this->current_animation = 0;
 } // SpriteEntity
+
+void SpriteEntity::native_step( float delta_seconds )
+{
+	this->world_position.step( delta_seconds );
+	
+//	this->world_position.current += glm::vec2( 5, 1 );
+//	LOGV( "native_step SpriteEntity\n" );
+}
+
+void SpriteEntity::native_tick()
+{
+	this->world_position.interpolate( kernel::instance()->parameters().step_alpha );
+//	LOGV( "native_tick SpriteEntity\n" );
+}
 
 void SpriteEntity::set_sprite( const char * path )
 {
@@ -316,6 +357,10 @@ void SpriteEntity::set_sprite( const char * path )
 		this->height = this->sprite_config->height;
 		this->scale = this->sprite_config->scale;
 		this->material_id = this->sprite_config->material_id;
+	}
+	else
+	{
+		LOGV( "Unable to load %s\n", path );
 	}
 } // set_sprite
 
@@ -349,6 +394,8 @@ public:
 	DECLARE_APPLICATION( ProjectHuckleberry );
 
 	Camera camera;
+	renderer::VertexStream sprite_stream;
+	unsigned int sprite_attribs;
 		
 	virtual void event( kernel::KeyboardEvent & event )
 	{
@@ -423,11 +470,30 @@ public:
 	
 		debugdraw::startup(1024);
 		
-		camera.set_absolute_position( glm::vec3(8, 5, 8.0f) );
-		camera.yaw = -45;
-		camera.pitch = 30;
-		camera.update_view();
-
+		// This is appropriate for drawing 3D models, but not sprites
+//		camera.set_absolute_position( glm::vec3(8, 5, 8.0f) );
+//		camera.yaw = -45;
+//		camera.pitch = 30;
+//		camera.update_view();
+		
+		// allocate sprite_stream
+		assets::ShaderString name("uv0");
+		sprite_attribs = 0;
+		sprite_attribs |= assets::find_parameter_mask( name );
+		
+		name = "colors";
+		sprite_attribs |= assets::find_parameter_mask( name );
+		
+		// setup the vertex stream: make sure we have enough vertices & indices
+		// to accomodate the full background layer
+		unsigned int max_vertices = (6 * 1024);
+		unsigned int max_indices = (6 * 256);
+		sprite_stream.reset();
+		sprite_stream.desc.add( renderer::VD_FLOAT3 );
+		sprite_stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+		sprite_stream.desc.add( renderer::VD_FLOAT2 );
+		sprite_stream.create( max_vertices, max_indices, renderer::DRAW_INDEXED_TRIANGLES );
+		
 		return kernel::Application_Success;
 	}
 	
@@ -467,12 +533,36 @@ public:
 	
 	void add_sprite_to_layer( unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords )
 	{
-//		if ( stream )
-//		{
-//			add_sprite_to_stream(*stream, x, y, width, height, color, texcoords);
-//			stream->update();
-//		}
+		void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width, int height, const Color & color, float * texcoords );
+		add_sprite_to_stream(sprite_stream, x, y, width, height, color, texcoords);
+		sprite_stream.update();
 	}
+	
+	void render_stream( RenderStream & rs, assets::Material * material, renderer::VertexStream & stream, Camera & camera )
+	{
+		//	long offset;
+		//	rs.save_offset( offset );
+		
+		assert( material != 0 );
+		
+		assets::Shader * shader = assets::find_compatible_shader( sprite_attribs + material->requirements );
+		
+		assert( shader !=0 );
+		rs.add_shader( shader );
+		
+		glm::mat4 object_matrix;
+		
+		rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
+		rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
+		rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
+		
+		rs.add_material( material, shader );
+		rs.add_draw_call( stream.vertexbuffer );
+		
+		rs.run_commands();
+		stream.reset();
+		//	rs.load_offset( offset );
+	} // render_stream
 	
 	void render_with_camera( Camera & camera )
 	{
@@ -488,8 +578,8 @@ public:
 		rs.add_viewport(0, 0, 800, 600);
 		rs.add_clearcolor(0.15f, 0.15f, 0.15f, 1.0f);
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
-		rs.add_state(renderer::STATE_BACKFACE_CULLING, 1 );
-		rs.add_cullmode( renderer::CULLMODE_BACK );
+//		rs.add_state(renderer::STATE_BACKFACE_CULLING, 1 );
+//		rs.add_cullmode( renderer::CULLMODE_BACK );
 		
 //		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 //		glDisable( GL_POLYGON_OFFSET_LINE );
@@ -509,30 +599,32 @@ public:
 						render_utilities::stream_geometry( rs, &model->mesh->geometry[i], gp );
 					}
 				}
+				
+				
+				rs.run_commands();
 			}
 			else if ( entity->type == Sprite )
 			{
-				glm::vec2 screen;
 				SpriteEntity * sprite = (SpriteEntity*)entity;
+				glm::vec2 screen = sprite->world_position.render;
 				glm::vec2 & scale = sprite->scale;
 				if ( sprite )
 				{
 					assets::SpriteClip * clip = sprite->sprite_config->get_clip_by_index( sprite->current_animation );
 					if (clip && clip->is_valid_frame( sprite->current_frame ))
 					{
-//						render_control.rs.rewind();
-//						render_control.rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
-//						render_control.rs.add_state( renderer::STATE_BLEND, 1 );
-//						rc.add_sprite_to_layer(0, screen.x, screen.y, scale.x*sprite->width, scale.y*sprite->height, sprite->color, clip->uvs_for_frame( sprite->current_frame ));
-//						assets::Material * material = assets::materials()->find_with_id( sprite->material_id );
-//						render_control.render_stream( material );
+						rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+						rs.add_state( renderer::STATE_BLEND, 1 );
+						this->add_sprite_to_layer(0, screen.x, screen.y, scale.x*sprite->width, scale.y*sprite->height, sprite->color, clip->uvs_for_frame( sprite->current_frame ));
+						assets::Material * material = assets::materials()->find_with_id( sprite->material_id );
+						this->render_stream( rs, material, sprite_stream, camera );
 					}
 				}
 			}
+			
+			rs.rewind();
 		}
-		
-		
-		rs.run_commands();
+
 		
 #if 0
 		glEnable( GL_POLYGON_OFFSET_LINE );
@@ -562,7 +654,8 @@ public:
 			(*it)->tick();
 		}
 				
-		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
+		camera.ortho( 0, params.render_width, params.render_height, 0, -0.1f, 128.0f );
+//		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
 
 		render_with_camera( camera );
 	

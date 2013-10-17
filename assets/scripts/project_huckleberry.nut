@@ -47,3 +47,4 @@ function test()
 
 sprite <- SpriteEntity()
 sprite.set_sprite( "sprites/player" )
+sprite.world_origin = vec2( 100, 100 )
