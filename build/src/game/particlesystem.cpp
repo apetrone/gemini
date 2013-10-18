@@ -55,7 +55,9 @@ ParticleEmitter::~ParticleEmitter()
 void ParticleEmitter::init()
 {
 	particle_list = CREATE_ARRAY(Particle, this->emitter_config->max_particles);
-	
+
+	LOGV( "particle emitter init\n" );
+
 	Particle * p = 0;
 	for(int i = 0; i < this->emitter_config->max_particles; ++i)
 	{
@@ -95,18 +97,17 @@ void ParticleEmitter::step(float delta_seconds)
 		}
 	}
 	
-	
 	for(pid = 0; pid < this->emitter_config->max_particles; ++pid)
 	{
 		p = &particle_list[pid];
 		p->life_remaining -= delta_msec;
+		
 		if (p->life_remaining > 0.1)
 		{
 			float lifet = 1.0 - (p->life_remaining / p->life_total);
 			p->position.step(delta_seconds);
 			p->position.current += (p->velocity * delta_seconds);
-			p->color = Color( 255, 255, 255, 64 );
-			
+			p->color = this->emitter_config->color_channel.get_value(lifet);
 			p->color.a = 255.0 * this->emitter_config->alpha_channel.get_value(lifet);
 			p->size = this->emitter_config->size_channel.get_value(lifet);
 			++num_particles_alive;
@@ -118,10 +119,10 @@ void ParticleEmitter::step(float delta_seconds)
 				this->emitter_config->velocity.min[0], this->emitter_config->velocity.max[0]),
 				util::random_range(this->emitter_config->velocity.min[1], this->emitter_config->velocity.max[1]),
 				util::random_range(this->emitter_config->velocity.min[2], this->emitter_config->velocity.max[2]));
-				
+			
 			p->position.snap(world_position.render);
 			p->color = this->emitter_config->color_channel.get_value(0);
-			p->color.a = this->emitter_config->alpha_channel.get_value(0);
+			p->color.a = 255.0 * this->emitter_config->alpha_channel.get_value(0);
 			p->size = this->emitter_config->size_channel.get_value(0);
 			--particles_to_spawn;
 			++num_particles_alive;

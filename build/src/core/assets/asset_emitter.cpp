@@ -44,12 +44,19 @@ namespace assets
 	{
 		std::string temp = value.asString();
 		
+		uint32_t colors[4] = { 255, 255, 255, 255 };
+		
 		// try RGBA
-		if (sscanf(temp.c_str(), "%c, %c, %c, %c", &out.r, &out.g, &out.b, &out.a) < 4)
+		if (sscanf(temp.c_str(), "%i, %i, %i, %i", &colors[0], &colors[1], &colors[2], &colors[3]) < 4)
 		{
 			// try just RGB
-			sscanf(temp.c_str(), "%c, %c, %c", &out.r, &out.g, &out.b);
+			sscanf(temp.c_str(), "%i, %i, %i", &colors[0], &colors[1], &colors[2] );
 		}
+
+		out.r = colors[0];
+		out.g = colors[1];
+		out.b = colors[2];
+		out.a = colors[3];
 	}
 	
 	void float_value( Json::Value & value, float & out )

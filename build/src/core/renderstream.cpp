@@ -46,6 +46,7 @@ void RenderStream::load_offset( long offset )
 void RenderStream::rewind()
 {
 	stream.rewind();
+//	stream.clear();
 	num_commands = 0;
 }
 

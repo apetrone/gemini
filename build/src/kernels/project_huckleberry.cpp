@@ -32,15 +32,16 @@
 #include "renderer.hpp"
 #include "renderstream.hpp"
 #include "render_utilities.hpp"
-
+#include "particlesystem.hpp"
 #include "script.hpp"
 
 
 enum EntityType
 {
-	Logic = 0,
-	Model = 1,
-	Sprite = 2
+	Logic,
+	Model,
+	Sprite,
+	Emitter,
 };
 
 // script stuff
@@ -385,6 +386,59 @@ void SpriteEntity::play_animation( const char * name )
 	LOGV( "unable to find animation: %s\n", name );
 } // play_animation
 
+
+struct EmitterEntity : public Entity
+{
+	assets::EmitterConfig * emitter_config;
+	ParticleEmitter * emitter;
+	
+	EmitterEntity();
+	virtual ~EmitterEntity();
+	virtual void native_step( float delta_seconds );
+	virtual void native_tick();
+	
+	void set_emitter( const char * path );
+	
+
+};
+
+
+EmitterEntity::EmitterEntity()
+{
+	this->type = Emitter;
+	emitter_config = 0;
+	emitter = 0;
+} // EmitterEntity
+
+EmitterEntity::~EmitterEntity()
+{
+	DESTROY( ParticleEmitter, this->emitter );
+}
+
+void EmitterEntity::native_step( float delta_seconds )
+{
+	if ( this->emitter_config )
+	{
+		glm::vec3 pos = glm::vec3( 300, 300, 0 );
+		this->emitter->world_position.snap( pos );
+		this->emitter->step( delta_seconds );
+	}
+} // native_step
+
+void EmitterEntity::native_tick()
+{
+	
+} // native_tick
+
+void EmitterEntity::set_emitter( const char * path )
+{
+	this->emitter_config = assets::emitters()->load_from_path( path );
+	this->emitter = CREATE(ParticleEmitter);
+	this->emitter->load_from_emitter_config( this->emitter_config );
+} // set_emitter
+
+
+
 class ProjectHuckleberry : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -465,6 +519,10 @@ public:
 		sprite.Prop( "world_origin", &SpriteEntity::get_world_origin, &SpriteEntity::set_world_origin );
 		sprite.Prop( "screen_origin", &SpriteEntity::get_screen_origin, &SpriteEntity::set_screen_origin );
 		root.Bind( "SpriteEntity", sprite );
+		
+		Sqrat::DerivedClass<EmitterEntity, Entity> emitter( script::get_vm() );
+		emitter.Func( "set_emitter", &EmitterEntity::set_emitter );
+		root.Bind( "EmitterEntity", emitter );
 		
 		script::execute_file("scripts/project_huckleberry.nut");
 	
@@ -564,6 +622,132 @@ public:
 		//	rs.load_offset( offset );
 	} // render_stream
 	
+	struct SpriteVertexType
+	{
+		float x, y, z;
+		Color color;
+		float u, v;
+	};
+	
+	void render_emitter( RenderStream & rs, ParticleEmitter * emitter, renderer::VertexStream & stream, Camera & camera )
+	{
+		if ( !emitter || (emitter && !emitter->emitter_config) )
+		{
+			return;
+		}
+		
+		//	renderer::VertexStream stream;
+		
+		//	stream.desc.add( renderer::VD_FLOAT3 );
+		//	stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+		//	stream.desc.add( renderer::VD_FLOAT2 );
+		//
+		//	stream.create(1024, 1024, renderer::DRAW_INDEXED_TRIANGLES);
+		
+		
+		renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+		glm::mat3 billboard = glm::transpose( glm::mat3(camera.matCam) );
+		
+		emitter->world_position.interpolate( kernel::instance()->parameters().step_alpha );
+		
+		
+		
+		assets::ShaderString name("uv0");
+		unsigned int test_attribs = assets::find_parameter_mask( name );
+		
+		name = "colors";
+		test_attribs |= assets::find_parameter_mask(name);
+		
+		assets::Material * material = 0;
+		assets::Shader * shader = 0;
+		
+		material = assets::materials()->find_with_id(emitter->emitter_config->material_id);
+		shader = assets::find_compatible_shader( material->requirements + test_attribs );
+		
+		glm::mat4 object_matrix;
+		
+		
+		
+		
+		rs.rewind();
+		//rs.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
+		//rs.add_state(renderer::STATE_BLEND, 1);
+		rs.add_shader( shader );
+		
+		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
+		rs.add_state(renderer::STATE_DEPTH_WRITE, 0);
+		
+		rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
+		rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
+		rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
+		
+		rs.add_material( material, shader );
+		
+		for( unsigned int p = 0; p < emitter->emitter_config->max_particles; ++p )
+		{
+			Particle * particle = &emitter->particle_list[ p ];
+			if ( particle->life_remaining > 0 )
+			{
+				particle->position.interpolate( kernel::instance()->parameters().step_alpha );
+				if ( !stream.has_room(4, 6) )
+				{
+					// stream is full; need to flush stream here!
+					stream.update();
+					rs.add_draw_call( stream.vertexbuffer );
+					rs.run_commands();
+					rs.rewind();
+					stream.reset();
+				}
+				
+				SpriteVertexType * v = (SpriteVertexType*)stream.request(4);
+				glm::vec3 offset( particle->size, particle->size, 0 );
+				glm::vec3 temp;
+				
+				temp = (billboard * -offset) + particle->position.render;
+				v[0].x = temp.x;
+				v[0].y = temp.y;
+				v[0].z = temp.z;
+				
+				temp = (billboard * glm::vec3(offset[0], -offset[1], -offset[2])) + particle->position.render;
+				v[1].x = temp.x;
+				v[1].y = temp.y;
+				v[1].z = temp.z;
+				
+				temp = (billboard * offset) + particle->position.render;
+				v[2].x = temp.x;
+				v[2].y = temp.y;
+				v[2].z = temp.z;
+				
+				temp = (billboard * glm::vec3(-offset[0], offset[1], -offset[2])) + particle->position.render;
+				v[3].x = temp.x;
+				v[3].y = temp.y;
+				v[3].z = temp.z;
+				
+				v[0].color = v[1].color = v[2].color = v[3].color = particle->color;
+				
+				v[0].u = 0; v[0].v = 0;
+				v[1].u = 1; v[1].v = 0;
+				v[2].u = 1; v[2].v = 1;
+				v[3].u = 0; v[3].v = 1;
+				
+				//			debugdraw::point(particle->position.render, Color(255,255,255), particle->size, 0.0f);
+				stream.append_indices( indices, 6 );
+			}
+		}
+		
+		if (stream.last_vertex > 0)
+		{
+			stream.update();
+			rs.add_draw_call( stream.vertexbuffer );
+		}
+		
+		rs.add_state(renderer::STATE_BLEND, 0);
+		rs.add_state(renderer::STATE_DEPTH_WRITE, 1);
+		rs.run_commands();
+		stream.reset();
+		//	stream.destroy();
+	} // render_emitter
+	
 	void render_with_camera( Camera & camera )
 	{
 		RenderStream rs;
@@ -575,9 +759,14 @@ public:
 		gp.modelview_matrix = &camera.matCam;
 		gp.projection_project = &camera.matProj;
 		
-		rs.add_viewport(0, 0, 800, 600);
-		rs.add_clearcolor(0.15f, 0.15f, 0.15f, 1.0f);
-		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
+		RenderStream crs( 128, 64 );
+		
+		crs.add_viewport(0, 0, 800, 600);
+		crs.add_clearcolor(0.15f, 0.15f, 0.15f, 1.0f);
+		crs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
+		
+		crs.run_commands();
+
 //		rs.add_state(renderer::STATE_BACKFACE_CULLING, 1 );
 //		rs.add_cullmode( renderer::CULLMODE_BACK );
 		
@@ -586,6 +775,7 @@ public:
 		for( EntityVector::iterator it = entity_list().objects.begin(); it != entity_list().objects.end(); ++it )
 		{
 			Entity * entity = (*it);
+#if 0
 			if ( entity->type == Model )
 			{
 				ModelEntity * model = (ModelEntity*)entity;
@@ -599,11 +789,11 @@ public:
 						render_utilities::stream_geometry( rs, &model->mesh->geometry[i], gp );
 					}
 				}
-				
-				
 				rs.run_commands();
 			}
-			else if ( entity->type == Sprite )
+			else
+#endif
+			if ( entity->type == Sprite )
 			{
 				SpriteEntity * sprite = (SpriteEntity*)entity;
 				glm::vec2 screen = sprite->world_position.render;
@@ -618,7 +808,17 @@ public:
 						this->add_sprite_to_layer(0, screen.x, screen.y, scale.x*sprite->width, scale.y*sprite->height, sprite->color, clip->uvs_for_frame( sprite->current_frame ));
 						assets::Material * material = assets::materials()->find_with_id( sprite->material_id );
 						this->render_stream( rs, material, sprite_stream, camera );
+						rs.rewind();
 					}
+				}
+			}
+			else if ( entity->type == Emitter )
+			{
+				EmitterEntity * emitter = (EmitterEntity*)entity;
+				if ( emitter )
+				{
+					render_emitter( rs, emitter->emitter, sprite_stream, camera );
+					
 				}
 			}
 			

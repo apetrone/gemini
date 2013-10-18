@@ -45,6 +45,29 @@ function test()
 // vehicle.transform = translate( vehicle.transform, vec3(0, 0.3432, 0.0) )
 // vehicle.set_model( "models/vehicle" )
 
-sprite <- SpriteEntity()
+
+
+class Player extends SpriteEntity
+{
+	smoke_puff = null
+
+
+	constructor()
+	{
+		base.constructor()
+
+		// smoke_puff = SpriteEntity()
+		// smoke_puff.set_sprite( "sprites/enemy" )
+		// smoke_puff.world_origin = vec2(0, 0)
+
+		//smoke_puff = EmitterEntity()
+		//smoke_puff.set_emitter( "sprites/exhaust" )
+	}
+}
+
+sprite <- Player()
 sprite.set_sprite( "sprites/player" )
 sprite.world_origin = vec2( 100, 100 )
+
+puff <- EmitterEntity()
+puff.set_emitter( "sprites/exhaust" )

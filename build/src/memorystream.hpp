@@ -65,7 +65,8 @@ public:
 		return this->read( &destination, sizeof(Type) );
 	} // read, Type
 	
-	
+	// clear the stream's memory
+	void clear();
 	
 	
 	
