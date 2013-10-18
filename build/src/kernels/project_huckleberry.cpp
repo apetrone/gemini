@@ -670,8 +670,8 @@ public:
 		
 		
 		rs.rewind();
-		//rs.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
-		//rs.add_state(renderer::STATE_BLEND, 1);
+		rs.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
+		rs.add_state(renderer::STATE_BLEND, 1);
 		rs.add_shader( shader );
 		
 		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
