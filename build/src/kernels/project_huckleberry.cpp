@@ -465,11 +465,12 @@ RenderableEntity::RenderableEntity( RenderableEntity * parent )
 	
 	if ( this->parent )
 	{
+//		LOGV( "adding child node\n" );
 		parent->children.push_back( this );
 	}
 	else
 	{
-		LOGV( "adding renderableentity\n" );
+//		LOGV( "adding renderableentity\n" );
 		entity_list<RenderableEntity>().add( this );
 	}
 } // RenderableEntity
@@ -478,16 +479,19 @@ RenderableEntity::~RenderableEntity()
 {
 	if ( this->parent )
 	{
+//		LOGV( "removing child node: %p\n", this );
 		for ( EntityList<RenderableEntity>::EntityVectorType::iterator it = parent->children.begin(); it != parent->children.end(); ++it )
 		{
 			if ( (*it) == this )
 			{
 				parent->children.erase( it );
+				break;
 			}
 		}
 	}
 	else
 	{
+//		LOGV( "removing root renderable node\n" );
 		entity_list<RenderableEntity>().remove( this );
 	}
 } // ~RenderableEntity
