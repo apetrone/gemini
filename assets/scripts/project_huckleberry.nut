@@ -45,6 +45,7 @@ function test()
 // vehicle.transform = translate( vehicle.transform, vec3(0, 0.3432, 0.0) )
 // vehicle.set_model( "models/vehicle" )
 
+local ENEMY_LAYER = 1
 
 
 class Player extends SpriteEntity
@@ -56,18 +57,37 @@ class Player extends SpriteEntity
 	{
 		base.constructor()
 
-		// smoke_puff = SpriteEntity()
-		// smoke_puff.set_sprite( "sprites/enemy" )
-		// smoke_puff.world_origin = vec2(0, 0)
+		smoke_puff = EmitterEntity( this )
+		smoke_puff.set_emitter( "sprites/exhaust" )
 
-		//smoke_puff = EmitterEntity()
-		//smoke_puff.set_emitter( "sprites/exhaust" )
+		this.layer = 0
+	}
+
+	function tick()
+	{
+		base.tick()
+
+		smoke_puff.position = this.world_origin
+	}
+}
+
+class Enemy extends SpriteEntity
+{
+	constructor()
+	{
+		base.constructor()
+		this.layer = ENEMY_LAYER
 	}
 }
 
 sprite <- Player()
 sprite.set_sprite( "sprites/player" )
-sprite.world_origin = vec2( 100, 100 )
+sprite.world_origin = vec2( 150, 100 )
 
-puff <- EmitterEntity()
-puff.set_emitter( "sprites/exhaust" )
+enemy <- Enemy()
+enemy.set_sprite( "sprites/enemy" )
+enemy.world_origin = vec2( 120, 100 )
+
+// puff <- EmitterEntity()
+// puff.set_emitter( "sprites/exhaust" )
+// puff.position = sprite.world_origin

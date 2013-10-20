@@ -35,6 +35,173 @@
 #include "particlesystem.hpp"
 #include "script.hpp"
 
+struct SpriteVertexType
+{
+	float x, y, z;
+	Color color;
+	float u, v;
+};
+
+struct RenderGlobals
+{
+	renderer::VertexStream sprite_stream;
+	RenderStream commands;
+	Camera camera;
+	
+	unsigned int sprite_attribs;
+	
+	void setup()
+	{
+		// allocate sprite_stream
+		assets::ShaderString name("uv0");
+		sprite_attribs = 0;
+		sprite_attribs |= assets::find_parameter_mask( name );
+		
+		name = "colors";
+		sprite_attribs |= assets::find_parameter_mask( name );
+		
+		// setup the vertex stream
+		unsigned int max_vertices = (6 * 1024);
+		unsigned int max_indices = (6 * 256);
+		sprite_stream.reset();
+		sprite_stream.desc.add( renderer::VD_FLOAT3 );
+		sprite_stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+		sprite_stream.desc.add( renderer::VD_FLOAT2 );
+		sprite_stream.create( max_vertices, max_indices, renderer::DRAW_INDEXED_TRIANGLES );
+	} // setup
+	
+	void render_stream( assets::Material * material, renderer::VertexStream & stream, Camera & camera )
+	{
+		assert( material != 0 );
+		
+		assets::Shader * shader = assets::find_compatible_shader( sprite_attribs + material->requirements );
+		
+		assert( shader !=0 );
+		commands.add_shader( shader );
+		
+		glm::mat4 object_matrix;
+		
+		commands.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
+		commands.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
+		commands.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
+		
+		commands.add_material( material, shader );
+		commands.add_draw_call( stream.vertexbuffer );
+		
+		commands.run_commands();
+		stream.reset();
+	} // render_stream
+	
+	
+	void render_emitter( ParticleEmitter * emitter, renderer::VertexStream & stream, Camera & camera )
+	{
+		if ( !emitter || (emitter && !emitter->emitter_config) )
+		{
+			return;
+		}
+		
+		renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+		glm::mat3 billboard = glm::transpose( glm::mat3(camera.matCam) );
+		
+		emitter->world_position.interpolate( kernel::instance()->parameters().step_alpha );
+		
+		assets::ShaderString name("uv0");
+		unsigned int test_attribs = assets::find_parameter_mask( name );
+		
+		name = "colors";
+		test_attribs |= assets::find_parameter_mask(name);
+		
+		assets::Material * material = 0;
+		assets::Shader * shader = 0;
+		
+		material = assets::materials()->find_with_id(emitter->emitter_config->material_id);
+		shader = assets::find_compatible_shader( material->requirements + test_attribs );
+		
+		glm::mat4 object_matrix;
+		
+		
+		
+		
+		commands.rewind();
+//		commands.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
+//		commands.add_state(renderer::STATE_BLEND, 1);
+		commands.add_shader( shader );
+		
+//		commands.add_state(renderer::STATE_DEPTH_TEST, 1);
+//		commands.add_state(renderer::STATE_DEPTH_WRITE, 0);
+		
+		commands.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
+		commands.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
+		commands.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
+		
+		commands.add_material( material, shader );
+		
+		for( unsigned int p = 0; p < emitter->emitter_config->max_particles; ++p )
+		{
+			Particle * particle = &emitter->particle_list[ p ];
+			if ( particle->life_remaining > 0 )
+			{
+				particle->position.interpolate( kernel::instance()->parameters().step_alpha );
+				if ( !stream.has_room(4, 6) )
+				{
+					// stream is full; need to flush stream here!
+					stream.update();
+					commands.add_draw_call( stream.vertexbuffer );
+					commands.run_commands();
+					commands.rewind();
+					stream.reset();
+				}
+				
+				SpriteVertexType * v = (SpriteVertexType*)stream.request(4);
+				glm::vec3 offset( particle->size, particle->size, 0 );
+				glm::vec3 temp;
+				
+				temp = (billboard * -offset) + particle->position.render;
+				v[0].x = temp.x;
+				v[0].y = temp.y;
+				v[0].z = temp.z;
+				
+				temp = (billboard * glm::vec3(offset[0], -offset[1], -offset[2])) + particle->position.render;
+				v[1].x = temp.x;
+				v[1].y = temp.y;
+				v[1].z = temp.z;
+				
+				temp = (billboard * offset) + particle->position.render;
+				v[2].x = temp.x;
+				v[2].y = temp.y;
+				v[2].z = temp.z;
+				
+				temp = (billboard * glm::vec3(-offset[0], offset[1], -offset[2])) + particle->position.render;
+				v[3].x = temp.x;
+				v[3].y = temp.y;
+				v[3].z = temp.z;
+				
+				v[0].color = v[1].color = v[2].color = v[3].color = particle->color;
+				
+				v[0].u = 0; v[0].v = 0;
+				v[1].u = 1; v[1].v = 0;
+				v[2].u = 1; v[2].v = 1;
+				v[3].u = 0; v[3].v = 1;
+				
+//				debugdraw::point(particle->position.render, Color(255,255,255), particle->size, 0.0f);
+				stream.append_indices( indices, 6 );
+			}
+		}
+		
+		if (stream.last_vertex > 0)
+		{
+			stream.update();
+			commands.add_draw_call( stream.vertexbuffer );
+		}
+		
+//		commands.add_state(renderer::STATE_BLEND, 0);
+//		commands.add_state(renderer::STATE_DEPTH_TEST, 0);
+//		commands.add_state(renderer::STATE_DEPTH_WRITE, 1);
+		commands.run_commands();
+		stream.reset();
+	} // render_emitter
+}; // RenderGlobals
+
 
 enum EntityType
 {
@@ -43,6 +210,8 @@ enum EntityType
 	Sprite,
 	Emitter,
 };
+
+typedef std::vector<struct Entity*> EntityVector;
 
 // script stuff
 struct Entity
@@ -54,14 +223,14 @@ struct Entity
 	HSQOBJECT on_tick;
 //	HSQOBJECT on_draw;
 	
-	glm::vec3 position;
+	glm::vec2 position;
 	uint64_t id;
 	std::string name;
 	uint8_t type;
 	
 	Entity();
 	~Entity();
-	
+		
 	void step( float delta_seconds );
 	void tick();
 //	void draw();
@@ -70,8 +239,8 @@ struct Entity
 	void bind_functions();
 	
 	// get/set functions for script interop
-	inline const glm::vec3 & get_position() const { return position; }
-	inline void set_position( const glm::vec3 & p ) { position = p; }
+	inline const glm::vec2 & get_position() const { return position; }
+	inline void set_position( const glm::vec2 & p ) { position = p; }
 	const std::string & get_name() { return this->name; }
 	void set_name( const std::string & object_name ) { this->name = object_name; }
 	virtual void native_step( float delta_seconds );
@@ -79,77 +248,72 @@ struct Entity
 //	void native_draw();
 }; // Entity
 
-typedef std::vector<Entity*> EntityVector;
 
 
 
+template <class Type>
 struct EntityList
 {
-	EntityVector objects;
+	typedef std::vector<Type*> EntityVectorType;
+	EntityVectorType objects;
 
-	void add( Entity * object );
-	void remove( Entity * object );
-	void purge();
-	Entity * find_with_name( const std::string & name );
-	Entity * object_at_index( size_t index );
-	size_t count() const;
+	void add( Type * object )
+	{
+		this->objects.push_back( object );
+	} // add
+	
+	void remove( Type * object )
+	{
+		for (typename EntityVectorType::iterator it = this->objects.begin(); it != this->objects.end(); ++it )
+		{
+			Type * obj = (*it);
+			
+			if ( obj == object )
+			{
+				objects.erase( it );
+				break;
+			}
+		}
+	} // remove
+	
+	void purge()
+	{
+		objects.clear();
+	} // purge
+	
+	Type * find_with_name( const std::string & name )
+	{
+		for (typename EntityVectorType::iterator it = this->objects.begin(); it != this->objects.end(); ++it )
+		{
+			Entity * obj = (*it);
+			
+			if ( name == obj->name )
+			{
+				return obj;
+			}
+		}
+		
+		return 0;
+	} // find_with_name
+	
+	
+	Type * object_at_index( size_t index )
+	{
+		assert(index <= this->count());
+		
+		return objects[ index ];
+	} // object_at_index
+	
+	size_t count() const
+	{
+		return objects.size();
+	} // count
 }; // EntityList
 
-void EntityList::add( Entity * object )
+template <class Type>
+EntityList<Type> & entity_list()
 {
-	this->objects.push_back( object );
-} // add
-
-void EntityList::remove( Entity * object )
-{
-	for (EntityVector::iterator it = this->objects.begin(); it != this->objects.end(); ++it )
-	{
-		Entity * obj = (*it);
-		
-		if ( obj == object )
-		{
-			objects.erase( it );
-			break;
-		}
-	}
-} // remove
-
-void EntityList::purge()
-{
-	objects.clear();
-} // purge
-
-Entity * EntityList::find_with_name( const std::string & name )
-{
-	for (EntityVector::iterator it = this->objects.begin(); it != this->objects.end(); ++it )
-	{
-		Entity * obj = (*it);
-		
-		if ( name == obj->name )
-		{
-			return obj;
-		}
-	}
-	
-	return 0;
-} // find_with_name
-
-Entity * EntityList::object_at_index(size_t index)
-{
-	assert(index <= this->count());
-	
-	return objects[ index ];
-} // object_at_index
-
-size_t EntityList::count() const
-{
-	return objects.size();
-} // count
-
-
-EntityList & entity_list()
-{
-	static EntityList _entity_list;
+	static EntityList<Type> _entity_list;
 	return _entity_list;
 } // entity_list
 
@@ -159,8 +323,8 @@ EntityList & entity_list()
 Entity::Entity()
 {
 	this->type = Logic;
-	this->id = entity_list().count();
-	entity_list().add( this );
+	this->id = entity_list<Entity>().count();
+	entity_list<Entity>().add( this );
 	LOGV( "Entity() - %p, %zu\n", this, this->id );
 	
 	sq_resetobject( &instance );
@@ -185,7 +349,7 @@ Entity::Entity()
 Entity::~Entity()
 {
 	LOGV( "~Entity() - %p, %zu\n", this, this->id );
-	entity_list().remove( this );
+	entity_list<Entity>().remove( this );
 } // ~Entity
 
 void Entity::step( float delta_seconds )
@@ -278,7 +442,68 @@ void ModelEntity::set_model( const char * path )
 	}
 } // set_model
 
-struct SpriteEntity : public Entity
+
+
+struct RenderableEntity : public Entity
+{
+	RenderableEntity * parent;
+	uint8_t layer;
+	
+	EntityList<RenderableEntity>::EntityVectorType children;
+	
+	RenderableEntity( RenderableEntity * parent );
+	virtual ~RenderableEntity();
+	
+	virtual void render( RenderGlobals & rg );
+}; // RenderableEntity
+
+
+RenderableEntity::RenderableEntity( RenderableEntity * parent )
+{
+	this->parent = parent;
+	this->layer = 0;
+	
+	if ( this->parent )
+	{
+		parent->children.push_back( this );
+	}
+	else
+	{
+		LOGV( "adding renderableentity\n" );
+		entity_list<RenderableEntity>().add( this );
+	}
+} // RenderableEntity
+
+RenderableEntity::~RenderableEntity()
+{
+	if ( this->parent )
+	{
+		for ( EntityList<RenderableEntity>::EntityVectorType::iterator it = parent->children.begin(); it != parent->children.end(); ++it )
+		{
+			if ( (*it) == this )
+			{
+				parent->children.erase( it );
+			}
+		}
+	}
+	else
+	{
+		entity_list<RenderableEntity>().remove( this );
+	}
+} // ~RenderableEntity
+
+void RenderableEntity::render( RenderGlobals & rg )
+{
+	EntityList<RenderableEntity>::EntityVectorType::iterator it;
+	
+	for( it = children.begin(); it != children.end(); ++it )
+	{
+		RenderableEntity * re = (*it);
+		re->render( rg );
+	}
+} // render
+
+struct SpriteEntity : public RenderableEntity
 {
 	// these compose the 'animation state'
 	unsigned short current_animation;	// currently active animation
@@ -294,11 +519,11 @@ struct SpriteEntity : public Entity
 	short hotspot_x;
 	short hotspot_y;
 	
-	unsigned short layer;
+	
 	
 	Color color;
 	glm::vec2 scale;
-	
+
 	
 	float rotation;
 	
@@ -306,11 +531,12 @@ struct SpriteEntity : public Entity
 	glm::vec2 screen_origin;
 	
 	
-	SpriteEntity();
-	virtual ~SpriteEntity() {}
+	SpriteEntity( RenderableEntity * parent = 0 );
+	virtual ~SpriteEntity();
 	
 	virtual void native_step( float delta_seconds );
 	virtual void native_tick();
+	virtual void render( RenderGlobals & rg );
 	
 	void set_sprite( const char * path );
 	void play_animation( const char * name );
@@ -319,13 +545,14 @@ struct SpriteEntity : public Entity
 	
 	glm::vec2 get_screen_origin() const { return this->screen_origin; }
 	void set_screen_origin( const glm::vec2 & origin ) { this->screen_origin = origin; }
+	
+	void add_sprite_to_layer( renderer::VertexStream & stream, unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords );
 }; // SpriteEntity
 
 
-SpriteEntity::SpriteEntity()
+SpriteEntity::SpriteEntity( RenderableEntity * parent ) : RenderableEntity( parent )
 {
 	this->type = Sprite;
-	this->layer = 0;
 	this->hotspot_x = 0;
 	this->hotspot_y = 0;
 	this->rotation = 0;
@@ -333,7 +560,14 @@ SpriteEntity::SpriteEntity()
 	this->scale = glm::vec2(1.0f, 1.0f);
 	this->current_frame = 0;
 	this->current_animation = 0;
+		
+	entity_list<SpriteEntity>().add( this );
 } // SpriteEntity
+
+SpriteEntity::~SpriteEntity()
+{
+	entity_list<SpriteEntity>().remove( this );
+} // ~SpriteEntity
 
 void SpriteEntity::native_step( float delta_seconds )
 {
@@ -348,6 +582,23 @@ void SpriteEntity::native_tick()
 	this->world_position.interpolate( kernel::instance()->parameters().step_alpha );
 //	LOGV( "native_tick SpriteEntity\n" );
 }
+
+void SpriteEntity::render( RenderGlobals & rg )
+{
+	glm::vec2 screen = this->world_position.render;
+	glm::vec2 & scale = this->scale;
+
+	assets::SpriteClip * clip = this->sprite_config->get_clip_by_index( this->current_animation );
+	if (clip && clip->is_valid_frame( this->current_frame ))
+	{
+		this->add_sprite_to_layer(rg.sprite_stream, 0, screen.x, screen.y, scale.x*this->width, scale.y*this->height, this->color, clip->uvs_for_frame( this->current_frame ));
+		assets::Material * material = assets::materials()->find_with_id( this->material_id );
+		rg.render_stream( material, rg.sprite_stream, rg.camera );
+		rg.commands.rewind();
+	}
+	
+	RenderableEntity::render( rg );
+} // render
 
 void SpriteEntity::set_sprite( const char * path )
 {
@@ -386,24 +637,29 @@ void SpriteEntity::play_animation( const char * name )
 	LOGV( "unable to find animation: %s\n", name );
 } // play_animation
 
+void SpriteEntity::add_sprite_to_layer( renderer::VertexStream & stream, unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords )
+{
+	void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width, int height, const Color & color, float * texcoords );
+	add_sprite_to_stream(stream, x, y, width, height, color, texcoords);
+	stream.update();
+}
 
-struct EmitterEntity : public Entity
+struct EmitterEntity : public RenderableEntity
 {
 	assets::EmitterConfig * emitter_config;
 	ParticleEmitter * emitter;
 	
-	EmitterEntity();
+	EmitterEntity( RenderableEntity * parent = 0 );
 	virtual ~EmitterEntity();
 	virtual void native_step( float delta_seconds );
 	virtual void native_tick();
+	virtual void render( RenderGlobals & rg );
 	
 	void set_emitter( const char * path );
-	
-
 };
 
 
-EmitterEntity::EmitterEntity()
+EmitterEntity::EmitterEntity( RenderableEntity * parent ) : RenderableEntity( parent )
 {
 	this->type = Emitter;
 	emitter_config = 0;
@@ -419,8 +675,7 @@ void EmitterEntity::native_step( float delta_seconds )
 {
 	if ( this->emitter_config )
 	{
-		glm::vec3 pos = glm::vec3( 300, 300, 0 );
-		this->emitter->world_position.snap( pos );
+		this->emitter->world_position.snap( glm::vec3(this->position, 0.0f) );
 		this->emitter->step( delta_seconds );
 	}
 } // native_step
@@ -429,6 +684,13 @@ void EmitterEntity::native_tick()
 {
 	
 } // native_tick
+
+void EmitterEntity::render( RenderGlobals & rg )
+{
+	rg.render_emitter( this->emitter, rg.sprite_stream, rg.camera );
+	
+	RenderableEntity::render( rg );
+} // render
 
 void EmitterEntity::set_emitter( const char * path )
 {
@@ -447,10 +709,8 @@ public kernel::IEventListener<kernel::SystemEvent>
 public:
 	DECLARE_APPLICATION( ProjectHuckleberry );
 
-	Camera camera;
-	renderer::VertexStream sprite_stream;
-	unsigned int sprite_attribs;
-		
+	RenderGlobals rg;
+	
 	virtual void event( kernel::KeyboardEvent & event )
 	{
 		if (event.is_down)
@@ -473,7 +733,7 @@ public:
 					int lastx, lasty;
 					input::state()->mouse().last_mouse_position( lastx, lasty );
 					
-					camera.move_view( event.mx-lastx, event.my-lasty );
+					rg.camera.move_view( event.mx-lastx, event.my-lasty );
 				}
                 break;
 			}
@@ -513,14 +773,20 @@ public:
 		model.Prop( "transform", &ModelEntity::get_transform, &ModelEntity::set_transform );
 		root.Bind( "ModelEntity", model );
 		
+		Sqrat::DerivedClass<RenderableEntity, Entity> renderable( script::get_vm() );
+		renderable.Ctor<RenderableEntity*>();
+		renderable.Var( "layer", &RenderableEntity::layer );
+		root.Bind( "RenderableEntity", renderable );
 		
-		Sqrat::DerivedClass<SpriteEntity, Entity> sprite( script::get_vm() );
+		Sqrat::DerivedClass<SpriteEntity, RenderableEntity> sprite( script::get_vm() );
+		sprite.Ctor<RenderableEntity*>();
 		sprite.Func( "set_sprite", &SpriteEntity::set_sprite );
 		sprite.Prop( "world_origin", &SpriteEntity::get_world_origin, &SpriteEntity::set_world_origin );
 		sprite.Prop( "screen_origin", &SpriteEntity::get_screen_origin, &SpriteEntity::set_screen_origin );
 		root.Bind( "SpriteEntity", sprite );
 		
 		Sqrat::DerivedClass<EmitterEntity, Entity> emitter( script::get_vm() );
+		emitter.Ctor<RenderableEntity*>();
 		emitter.Func( "set_emitter", &EmitterEntity::set_emitter );
 		root.Bind( "EmitterEntity", emitter );
 		
@@ -534,24 +800,9 @@ public:
 //		camera.pitch = 30;
 //		camera.update_view();
 		
-		// allocate sprite_stream
-		assets::ShaderString name("uv0");
-		sprite_attribs = 0;
-		sprite_attribs |= assets::find_parameter_mask( name );
+		rg.setup();
 		
-		name = "colors";
-		sprite_attribs |= assets::find_parameter_mask( name );
-		
-		// setup the vertex stream: make sure we have enough vertices & indices
-		// to accomodate the full background layer
-		unsigned int max_vertices = (6 * 1024);
-		unsigned int max_indices = (6 * 256);
-		sprite_stream.reset();
-		sprite_stream.desc.add( renderer::VD_FLOAT3 );
-		sprite_stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
-		sprite_stream.desc.add( renderer::VD_FLOAT2 );
-		sprite_stream.create( max_vertices, max_indices, renderer::DRAW_INDEXED_TRIANGLES );
-		
+
 		return kernel::Application_Success;
 	}
 	
@@ -560,211 +811,60 @@ public:
 		float dt = params.framedelta_filtered_msec * .001;
 		debugdraw::update( params.framedelta_filtered_msec );
 		
-		camera.move_speed = 10.0f;
+		rg.camera.move_speed = 10.0f;
 		
 		if ( input::state()->keyboard().is_down(input::KEY_W) )
 		{
-			camera.move_forward( dt );
+			rg.camera.move_forward( dt );
 		}
 		else if ( input::state()->keyboard().is_down(input::KEY_S) )
 		{
-			camera.move_backward( dt );
+			rg.camera.move_backward( dt );
 		}
 		
 		if ( input::state()->keyboard().is_down(input::KEY_A) )
 		{
-			camera.move_left( dt );
+			rg.camera.move_left( dt );
 		}
 		else if ( input::state()->keyboard().is_down(input::KEY_D) )
 		{
-			camera.move_right( dt );
+			rg.camera.move_right( dt );
 		}
 		
 		// tick entities
-		EntityVector::iterator it =	entity_list().objects.begin();
-		EntityVector::iterator end = entity_list().objects.end();
+		EntityVector::iterator it =	entity_list<Entity>().objects.begin();
+		EntityVector::iterator end = entity_list<Entity>().objects.end();
 		for( ; it != end; ++it )
 		{
 			(*it)->step( params.framedelta_filtered_msec * 0.001 );
 		}
 	}
-	
-	void add_sprite_to_layer( unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords )
+
+	struct sort_sprite_layer_descending
 	{
-		void add_sprite_to_stream( renderer::VertexStream & vb, int x, int y, int width, int height, const Color & color, float * texcoords );
-		add_sprite_to_stream(sprite_stream, x, y, width, height, color, texcoords);
-		sprite_stream.update();
-	}
-	
-	void render_stream( RenderStream & rs, assets::Material * material, renderer::VertexStream & stream, Camera & camera )
-	{
-		//	long offset;
-		//	rs.save_offset( offset );
-		
-		assert( material != 0 );
-		
-		assets::Shader * shader = assets::find_compatible_shader( sprite_attribs + material->requirements );
-		
-		assert( shader !=0 );
-		rs.add_shader( shader );
-		
-		glm::mat4 object_matrix;
-		
-		rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
-		rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
-		rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
-		
-		rs.add_material( material, shader );
-		rs.add_draw_call( stream.vertexbuffer );
-		
-		rs.run_commands();
-		stream.reset();
-		//	rs.load_offset( offset );
-	} // render_stream
-	
-	struct SpriteVertexType
-	{
-		float x, y, z;
-		Color color;
-		float u, v;
-	};
-	
-	void render_emitter( RenderStream & rs, ParticleEmitter * emitter, renderer::VertexStream & stream, Camera & camera )
-	{
-		if ( !emitter || (emitter && !emitter->emitter_config) )
+		bool operator() (RenderableEntity * left, RenderableEntity * right)
 		{
-			return;
+			return left->layer > right->layer;
 		}
-		
-		//	renderer::VertexStream stream;
-		
-		//	stream.desc.add( renderer::VD_FLOAT3 );
-		//	stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
-		//	stream.desc.add( renderer::VD_FLOAT2 );
-		//
-		//	stream.create(1024, 1024, renderer::DRAW_INDEXED_TRIANGLES);
-		
-		
-		renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
-		glm::mat3 billboard = glm::transpose( glm::mat3(camera.matCam) );
-		
-		emitter->world_position.interpolate( kernel::instance()->parameters().step_alpha );
-		
-		
-		
-		assets::ShaderString name("uv0");
-		unsigned int test_attribs = assets::find_parameter_mask( name );
-		
-		name = "colors";
-		test_attribs |= assets::find_parameter_mask(name);
-		
-		assets::Material * material = 0;
-		assets::Shader * shader = 0;
-		
-		material = assets::materials()->find_with_id(emitter->emitter_config->material_id);
-		shader = assets::find_compatible_shader( material->requirements + test_attribs );
-		
-		glm::mat4 object_matrix;
-		
-		
-		
-		
-		rs.rewind();
-		rs.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
-		rs.add_state(renderer::STATE_BLEND, 1);
-		rs.add_shader( shader );
-		
-		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
-		rs.add_state(renderer::STATE_DEPTH_WRITE, 0);
-		
-		rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
-		rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
-		rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
-		
-		rs.add_material( material, shader );
-		
-		for( unsigned int p = 0; p < emitter->emitter_config->max_particles; ++p )
-		{
-			Particle * particle = &emitter->particle_list[ p ];
-			if ( particle->life_remaining > 0 )
-			{
-				particle->position.interpolate( kernel::instance()->parameters().step_alpha );
-				if ( !stream.has_room(4, 6) )
-				{
-					// stream is full; need to flush stream here!
-					stream.update();
-					rs.add_draw_call( stream.vertexbuffer );
-					rs.run_commands();
-					rs.rewind();
-					stream.reset();
-				}
-				
-				SpriteVertexType * v = (SpriteVertexType*)stream.request(4);
-				glm::vec3 offset( particle->size, particle->size, 0 );
-				glm::vec3 temp;
-				
-				temp = (billboard * -offset) + particle->position.render;
-				v[0].x = temp.x;
-				v[0].y = temp.y;
-				v[0].z = temp.z;
-				
-				temp = (billboard * glm::vec3(offset[0], -offset[1], -offset[2])) + particle->position.render;
-				v[1].x = temp.x;
-				v[1].y = temp.y;
-				v[1].z = temp.z;
-				
-				temp = (billboard * offset) + particle->position.render;
-				v[2].x = temp.x;
-				v[2].y = temp.y;
-				v[2].z = temp.z;
-				
-				temp = (billboard * glm::vec3(-offset[0], offset[1], -offset[2])) + particle->position.render;
-				v[3].x = temp.x;
-				v[3].y = temp.y;
-				v[3].z = temp.z;
-				
-				v[0].color = v[1].color = v[2].color = v[3].color = particle->color;
-				
-				v[0].u = 0; v[0].v = 0;
-				v[1].u = 1; v[1].v = 0;
-				v[2].u = 1; v[2].v = 1;
-				v[3].u = 0; v[3].v = 1;
-				
-				//			debugdraw::point(particle->position.render, Color(255,255,255), particle->size, 0.0f);
-				stream.append_indices( indices, 6 );
-			}
-		}
-		
-		if (stream.last_vertex > 0)
-		{
-			stream.update();
-			rs.add_draw_call( stream.vertexbuffer );
-		}
-		
-		rs.add_state(renderer::STATE_BLEND, 0);
-		rs.add_state(renderer::STATE_DEPTH_WRITE, 1);
-		rs.run_commands();
-		stream.reset();
-		//	stream.destroy();
-	} // render_emitter
+	}; // sort_sprite_layer_descending
 	
-	void render_with_camera( Camera & camera )
+	void render_with_camera( Camera & camera, uint32_t render_width, uint32_t render_height )
 	{
-		RenderStream rs;
-		
-		renderer::GeneralParameters gp;
-		
-		gp.global_params = 0;
-		gp.camera_position = &camera.pos;
-		gp.modelview_matrix = &camera.matCam;
-		gp.projection_project = &camera.matProj;
+//		renderer::GeneralParameters gp;
+//		gp.global_params = 0;
+//		gp.camera_position = &camera.pos;
+//		gp.modelview_matrix = &camera.matCam;
+//		gp.projection_project = &camera.matProj;
 		
 		RenderStream crs( 128, 64 );
 		
-		crs.add_viewport(0, 0, 800, 600);
+		crs.add_viewport(0, 0, render_width, render_height);
 		crs.add_clearcolor(0.15f, 0.15f, 0.15f, 1.0f);
 		crs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
 		
+		crs.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
+		crs.add_state(renderer::STATE_BLEND, 1);
+		crs.add_state(renderer::STATE_DEPTH_TEST, 0);
 		crs.run_commands();
 
 //		rs.add_state(renderer::STATE_BACKFACE_CULLING, 1 );
@@ -772,10 +872,22 @@ public:
 		
 //		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 //		glDisable( GL_POLYGON_OFFSET_LINE );
-		for( EntityVector::iterator it = entity_list().objects.begin(); it != entity_list().objects.end(); ++it )
+
+		// sort ents by layer.
+		std::sort( entity_list<RenderableEntity>().objects.begin(), entity_list<RenderableEntity>().objects.end(), sort_sprite_layer_descending() );
+
+		for( EntityList<RenderableEntity>::EntityVectorType::iterator it = entity_list<RenderableEntity>().objects.begin();
+			it != entity_list<RenderableEntity>().objects.end(); ++it )
+		{
+			RenderableEntity * re = (*it);
+			re->render( rg );
+		}
+
+#if 0
+		for( EntityVector::iterator it = entity_list<Entity>().objects.begin(); it != entity_list<Entity>().objects.end(); ++it )
 		{
 			Entity * entity = (*it);
-#if 0
+
 			if ( entity->type == Model )
 			{
 				ModelEntity * model = (ModelEntity*)entity;
@@ -791,41 +903,13 @@ public:
 				}
 				rs.run_commands();
 			}
-			else
-#endif
-			if ( entity->type == Sprite )
-			{
-				SpriteEntity * sprite = (SpriteEntity*)entity;
-				glm::vec2 screen = sprite->world_position.render;
-				glm::vec2 & scale = sprite->scale;
-				if ( sprite )
-				{
-					assets::SpriteClip * clip = sprite->sprite_config->get_clip_by_index( sprite->current_animation );
-					if (clip && clip->is_valid_frame( sprite->current_frame ))
-					{
-						rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
-						rs.add_state( renderer::STATE_BLEND, 1 );
-						this->add_sprite_to_layer(0, screen.x, screen.y, scale.x*sprite->width, scale.y*sprite->height, sprite->color, clip->uvs_for_frame( sprite->current_frame ));
-						assets::Material * material = assets::materials()->find_with_id( sprite->material_id );
-						this->render_stream( rs, material, sprite_stream, camera );
-						rs.rewind();
-					}
-				}
-			}
-			else if ( entity->type == Emitter )
-			{
-				EmitterEntity * emitter = (EmitterEntity*)entity;
-				if ( emitter )
-				{
-					render_emitter( rs, emitter->emitter, sprite_stream, camera );
-					
-				}
-			}
-			
-			rs.rewind();
-		}
 
-		
+		}
+#endif
+		crs.rewind();
+		crs.add_state( renderer::STATE_BLEND, 0 );
+		crs.add_state(renderer::STATE_DEPTH_TEST, 1);
+		crs.run_commands();
 #if 0
 		glEnable( GL_POLYGON_OFFSET_LINE );
 		glPolygonOffset( -1, -1 );
@@ -847,23 +931,23 @@ public:
 	virtual void tick( kernel::Params & params )
 	{
 		// tick entities
-		EntityVector::iterator it =	entity_list().objects.begin();
-		EntityVector::iterator end = entity_list().objects.end();
+		EntityVector::iterator it =	entity_list<Entity>().objects.begin();
+		EntityVector::iterator end = entity_list<Entity>().objects.end();
 		for( ; it != end; ++it )
 		{
 			(*it)->tick();
 		}
 				
-		camera.ortho( 0, params.render_width, params.render_height, 0, -0.1f, 128.0f );
+		rg.camera.ortho( 0, params.render_width, params.render_height, 0, -0.1f, 128.0f );
 //		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
 
-		render_with_camera( camera );
+		render_with_camera( rg.camera, params.render_width, params.render_height );
 	
 //		debugdraw::text( 25, 50, xstr_format("camera.position = %g %g %g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255) );
 
 //		debugdraw::axes( glm::mat4(1.0), 1.0f );
 		
-		debugdraw::render( camera.matCam, camera.matProj, params.render_width, params.render_height );
+		debugdraw::render( rg.camera.matCam, rg.camera.matProj, params.render_width, params.render_height );
 	}
 	
 	virtual void shutdown( kernel::Params & params )
