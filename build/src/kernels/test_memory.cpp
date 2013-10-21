@@ -79,6 +79,39 @@ struct DerivedObject : public BaseObject
 	}
 };
 
+struct PooledObject
+{
+	int test_data;
+	
+	void * operator new ( std::size_t count )
+	{
+		void * ptr = ALLOC( count );
+		LOGV( "alloc size: %i bytes -> %p\n", count, ptr );
+		return ptr;
+	}
+	
+	void * operator new ( std::size_t count, void * ptr )
+	{
+		LOGV( "alloc size: %i bytes -> %p\n", count, ptr );
+		return ptr;
+	}
+	
+	void operator delete( void * ptr )
+	{
+		LOGV( "dealloc pointer: %p\n", ptr );
+		DEALLOC( ptr );
+	}
+};
+
+
+struct DerivedPoolObject : public PooledObject
+{
+	float delta;
+	float x, y, z;
+	
+	
+};
+
 class TestMemory : public kernel::IApplication
 {
 public:
@@ -91,6 +124,7 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
+#if 0
 		printf( "Memory Test: \n" );
 		Test * a = CREATE(Test);
 		
@@ -115,14 +149,21 @@ public:
 			objects[i] = CREATE(DerivedObject);
 			objects[i]->type = i+4;
 		}
-		objects.purge();
+		objects.purge();#
 
 		// added z-modifer to satisfy Xcode, C99 addition, we'll see who doesn't support it :)
 		printf( "totalAllocations: %zu, totalBytes: %zu\n", memory::allocator().total_allocations(), memory::allocator().total_bytes() );
 		printf( "activeAllocations: %zu, activeBytes: %zu\n", memory::allocator().active_allocations(), memory::allocator().active_bytes() );
-		
+
 		DESTROY(Test, a);
 		printf( "activeAllocations: %zu, activeBytes: %zu\n", memory::allocator().active_allocations(), memory::allocator().active_bytes() );
+#endif
+		
+		PooledObject * p = new DerivedPoolObject();
+		
+		
+		delete p;
+
 		return kernel::Application_NoWindow;
 	}
 

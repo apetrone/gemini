@@ -45,6 +45,31 @@ namespace script
 			return ::util::random_range(0.0f, 1.0f);
 		} // random_float
 	
+		SQInteger vec2_add( HSQUIRRELVM v )
+		{
+			if ( sq_gettop(v) == 2 )
+			{
+				Sqrat::Var<const glm::vec2&> self(v, 1);
+				Sqrat::Var<const glm::vec2&> other(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::vec2 result = self.value + other.value;
+					Sqrat::PushVar( v, result );
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				
+				LOGE( "ERROR vec2_add\n" );
+				
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		} // vec2_add
+	
 		SQInteger vec3_add( HSQUIRRELVM v )
 		{
 			if ( sq_gettop(v) == 2 )
@@ -606,6 +631,7 @@ namespace script
 			bind_vec2.Ctor<float, float>();
 			bind_vec2.Var( "x", &glm::vec2::x );
 			bind_vec2.Var( "y", &glm::vec2::y );
+			bind_vec2.SquirrelFunc( "_add", bind::vec2_add );
 			Sqrat::RootTable( vm ).Bind( "vec2", bind_vec2 );
 			
 			Sqrat::Class<glm::vec3> bind_vec3( vm );

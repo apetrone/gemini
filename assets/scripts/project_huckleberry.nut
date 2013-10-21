@@ -69,15 +69,17 @@ class Player extends SpriteEntity
 	{
 		base.tick()
 
-		if ( smoke_puff && ticks_to_remove > 0 )
+		if ( smoke_puff && (ticks_to_remove > 0) )
 		{
 			ticks_to_remove--
-			smoke_puff.position = this.world_origin
+			smoke_puff.position = this.world_origin + vec2(32, -5)
 		}
-		
 
-		if ( ticks_to_remove <= 0 )
+
+		if ( ticks_to_remove == 0 )
 		{
+			ticks_to_remove = -1
+			print( "removing smoke puff\n" )
 			smoke_puff = null
 		}
 	}
@@ -96,6 +98,6 @@ sprite <- Player()
 sprite.set_sprite( "sprites/player" )
 sprite.world_origin = vec2( 150, 100 )
 
-enemy <- Enemy()
-enemy.set_sprite( "sprites/enemy" )
-enemy.world_origin = vec2( 120, 100 )
+// enemy <- Enemy()
+// enemy.set_sprite( "sprites/enemy" )
+// enemy.world_origin = vec2( 120, 100 )

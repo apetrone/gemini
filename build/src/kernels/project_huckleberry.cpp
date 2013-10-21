@@ -48,6 +48,7 @@ struct RenderGlobals
 	RenderStream commands;
 	Camera camera;
 	
+	size_t rendered_entities;
 	unsigned int sprite_attribs;
 	
 	void setup()
@@ -227,6 +228,7 @@ struct Entity
 	uint64_t id;
 	std::string name;
 	uint8_t type;
+	uint32_t flags;
 	
 	Entity();
 	~Entity();
@@ -245,6 +247,7 @@ struct Entity
 	void set_name( const std::string & object_name ) { this->name = object_name; }
 	virtual void native_step( float delta_seconds );
 	virtual void native_tick();
+
 //	void native_draw();
 }; // Entity
 
@@ -270,6 +273,7 @@ struct EntityList
 			
 			if ( obj == object )
 			{
+				LOGV( "removing from entity list\n" );
 				objects.erase( it );
 				break;
 			}
@@ -318,17 +322,25 @@ EntityList<Type> & entity_list()
 } // entity_list
 
 
-
+SQInteger release_hook(SQUserPointer ptr, SQInteger size)
+{
+	LOGV( "release hook called\n" );
+	return 0;
+}
 
 Entity::Entity()
 {
+
 	this->type = Logic;
 	this->id = entity_list<Entity>().count();
+		this->flags = 0;
 	entity_list<Entity>().add( this );
 	LOGV( "Entity() - %p, %zu\n", this, this->id );
 	
 	sq_resetobject( &instance );
 	sq_resetobject( &class_object );
+	
+	sq_setreleasehook( script::get_vm(), 1, release_hook );
 	
 	// Assumes the OT_INSTANCE is at position 1 in the stack
 	SQRESULT res = sq_getstackobj( script::get_vm(), 1, &instance );
@@ -503,7 +515,11 @@ void RenderableEntity::render( RenderGlobals & rg )
 	for( it = children.begin(); it != children.end(); ++it )
 	{
 		RenderableEntity * re = (*it);
-		re->render( rg );
+		if ( re->flags == 0 )
+		{
+			re->render( rg );
+			++rg.rendered_entities;
+		}
 	}
 } // render
 
@@ -770,6 +786,7 @@ public:
 		entity.Var( "id", &Entity::id );
 		entity.Prop( "name", &Entity::get_name, &Entity::set_name );
 		entity.Prop( "position", &Entity::get_position, &Entity::set_position );
+
 		root.Bind( "Entity", entity );
 	
 		Sqrat::DerivedClass<ModelEntity, Entity> model( script::get_vm() );
@@ -788,7 +805,7 @@ public:
 		sprite.Prop( "world_origin", &SpriteEntity::get_world_origin, &SpriteEntity::set_world_origin );
 		sprite.Prop( "screen_origin", &SpriteEntity::get_screen_origin, &SpriteEntity::set_screen_origin );
 		root.Bind( "SpriteEntity", sprite );
-		
+
 		Sqrat::DerivedClass<EmitterEntity, Entity> emitter( script::get_vm() );
 		emitter.Ctor<RenderableEntity*>();
 		emitter.Func( "set_emitter", &EmitterEntity::set_emitter );
@@ -880,12 +897,19 @@ public:
 		// sort ents by layer.
 		std::sort( entity_list<RenderableEntity>().objects.begin(), entity_list<RenderableEntity>().objects.end(), sort_sprite_layer_descending() );
 
+		rg.rendered_entities = 0;
 		for( EntityList<RenderableEntity>::EntityVectorType::iterator it = entity_list<RenderableEntity>().objects.begin();
 			it != entity_list<RenderableEntity>().objects.end(); ++it )
 		{
 			RenderableEntity * re = (*it);
-			re->render( rg );
+			if ( re->flags == 0 )
+			{
+				re->render( rg );
+				++rg.rendered_entities;
+			}
 		}
+		
+		LOGV( "rendered_entities: %i\n", rg.rendered_entities );
 
 #if 0
 		for( EntityVector::iterator it = entity_list<Entity>().objects.begin(); it != entity_list<Entity>().objects.end(); ++it )
@@ -941,7 +965,19 @@ public:
 		{
 			(*it)->tick();
 		}
-				
+		
+		// trim entities flagged for removal
+		it =	entity_list<Entity>().objects.begin();
+		for( ; it != end; ++it )
+		{
+			Entity * ent = (*it);
+			if ( ent->flags & 1 )
+			{
+				LOGV( "removing flagged entity: %p\n", ent );
+				it = entity_list<Entity>().objects.erase( it );
+			}
+		}
+		
 		rg.camera.ortho( 0, params.render_width, params.render_height, 0, -0.1f, 128.0f );
 //		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
 
