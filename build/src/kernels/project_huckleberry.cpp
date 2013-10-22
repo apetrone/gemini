@@ -35,6 +35,7 @@
 #include "particlesystem.hpp"
 #include "script.hpp"
 
+
 struct SpriteVertexType
 {
 	float x, y, z;
@@ -212,11 +213,20 @@ enum EntityType
 	Emitter,
 };
 
+
+
+
 typedef std::vector<struct Entity*> EntityVector;
 
 // script stuff
 struct Entity
 {
+	enum Flags
+	{
+		EF_NONE = 0,
+		EF_DELETE_INSTANCE,	// remove this instance
+	};
+	
 	HSQOBJECT instance;
 	HSQOBJECT class_object;
 	
@@ -231,7 +241,7 @@ struct Entity
 	uint32_t flags;
 	
 	Entity();
-	~Entity();
+	virtual ~Entity();
 		
 	void step( float delta_seconds );
 	void tick();
@@ -239,6 +249,7 @@ struct Entity
 	
 	// bind functions for this object
 	void bind_functions();
+	virtual void remove();
 	
 	// get/set functions for script interop
 	inline const glm::vec2 & get_position() const { return position; }
@@ -248,11 +259,234 @@ struct Entity
 	virtual void native_step( float delta_seconds );
 	virtual void native_tick();
 
+	
 //	void native_draw();
 }; // Entity
 
 
 
+using namespace Sqrat;
+template<class C>
+class EntityAllocator {
+	
+    static SQInteger setInstance(HSQUIRRELVM vm, C* instance)
+    {
+        sq_setinstanceup(vm, 1, instance);
+        sq_setreleasehook(vm, 1, &Delete);
+        return 0;
+    }
+	
+    template <class T, bool b>
+    struct NewC
+    {
+        T* p;
+        NewC()
+        {
+			p = new T();
+        }
+    };
+	
+    template <class T>
+    struct NewC<T, false>
+    {
+        T* p;
+        NewC()
+        {
+			p = 0;
+        }
+    };
+	
+public:
+    static SQInteger New(HSQUIRRELVM vm) {
+        C* instance = NewC<C, is_default_constructible<C>::value >().p;
+        setInstance(vm, instance);
+        return 0;
+    }
+	
+    template <int count>
+    static SQInteger iNew(HSQUIRRELVM vm) {
+        return New(vm);
+    }
+	
+	// following New functions are used only if constructors are bound via Ctor() in class
+	
+    template <typename A1>
+    static SQInteger iNew(HSQUIRRELVM vm) {
+        Var<A1> a1(vm, 2);
+        if (Error::Instance().Occurred(vm)) {
+            return sq_throwerror(vm, Error::Instance().Message(vm).c_str());
+        }
+        return setInstance(vm, new C(
+									 a1.value
+									 ));
+    }
+    template <typename A1,typename A2>
+    static SQInteger iNew(HSQUIRRELVM vm) {
+        Var<A1> a1(vm, 2);
+        Var<A2> a2(vm, 3);
+        if (Error::Instance().Occurred(vm)) {
+            return sq_throwerror(vm, Error::Instance().Message(vm).c_str());
+        }
+        return setInstance(vm, new C(
+									 a1.value,
+									 a2.value
+									 ));
+    }
+    template <typename A1,typename A2,typename A3>
+    static SQInteger iNew(HSQUIRRELVM vm) {
+        Var<A1> a1(vm, 2);
+        Var<A2> a2(vm, 3);
+        Var<A3> a3(vm, 4);
+        return setInstance(vm, new C(
+									 a1.value,
+									 a2.value,
+									 a3.value
+									 ));
+    }
+    template <typename A1,typename A2,typename A3,typename A4>
+    static SQInteger iNew(HSQUIRRELVM vm) {
+        Var<A1> a1(vm, 2);
+        Var<A2> a2(vm, 3);
+        Var<A3> a3(vm, 4);
+        Var<A4> a4(vm, 5);
+        if (Error::Instance().Occurred(vm)) {
+            return sq_throwerror(vm, Error::Instance().Message(vm).c_str());
+        }
+        return setInstance(vm, new C(
+									 a1.value,
+									 a2.value,
+									 a3.value,
+									 a4.value
+									 ));
+    }
+    template <typename A1,typename A2,typename A3,typename A4,typename A5>
+    static SQInteger iNew(HSQUIRRELVM vm) {
+        Var<A1> a1(vm, 2);
+        Var<A2> a2(vm, 3);
+        Var<A3> a3(vm, 4);
+        Var<A4> a4(vm, 5);
+        Var<A5> a5(vm, 6);
+        if (Error::Instance().Occurred(vm)) {
+            return sq_throwerror(vm, Error::Instance().Message(vm).c_str());
+        }
+        return setInstance(vm, new C(
+									 a1.value,
+									 a2.value,
+									 a3.value,
+									 a4.value,
+									 a5.value
+									 ));
+    }
+    template <typename A1,typename A2,typename A3,typename A4,typename A5,typename A6>
+    static SQInteger iNew(HSQUIRRELVM vm) {
+        Var<A1> a1(vm, 2);
+        Var<A2> a2(vm, 3);
+        Var<A3> a3(vm, 4);
+        Var<A4> a4(vm, 5);
+        Var<A5> a5(vm, 6);
+        Var<A6> a6(vm, 7);
+        if (Error::Instance().Occurred(vm)) {
+            return sq_throwerror(vm, Error::Instance().Message(vm).c_str());
+        }
+        return setInstance(vm, new C(
+									 a1.value,
+									 a2.value,
+									 a3.value,
+									 a4.value,
+									 a5.value,
+									 a6.value
+									 ));
+    }
+    template <typename A1,typename A2,typename A3,typename A4,typename A5,typename A6,typename A7>
+    static SQInteger iNew(HSQUIRRELVM vm) {
+        Var<A1> a1(vm, 2);
+        Var<A2> a2(vm, 3);
+        Var<A3> a3(vm, 4);
+        Var<A4> a4(vm, 5);
+        Var<A5> a5(vm, 6);
+        Var<A6> a6(vm, 7);
+        Var<A7> a7(vm, 8);
+        if (Error::Instance().Occurred(vm)) {
+            return sq_throwerror(vm, Error::Instance().Message(vm).c_str());
+        }
+        return setInstance(vm, new C(
+									 a1.value,
+									 a2.value,
+									 a3.value,
+									 a4.value,
+									 a5.value,
+									 a6.value,
+									 a7.value
+									 ));
+    }
+    template <typename A1,typename A2,typename A3,typename A4,typename A5,typename A6,typename A7,typename A8>
+    static SQInteger iNew(HSQUIRRELVM vm) {
+        Var<A1> a1(vm, 2);
+        Var<A2> a2(vm, 3);
+        Var<A3> a3(vm, 4);
+        Var<A4> a4(vm, 5);
+        Var<A5> a5(vm, 6);
+        Var<A6> a6(vm, 7);
+        Var<A7> a7(vm, 8);
+        Var<A8> a8(vm, 9);
+        if (Error::Instance().Occurred(vm)) {
+            return sq_throwerror(vm, Error::Instance().Message(vm).c_str());
+        }
+        return setInstance(vm, new C(
+									 a1.value,
+									 a2.value,
+									 a3.value,
+									 a4.value,
+									 a5.value,
+									 a6.value,
+									 a7.value,
+									 a8.value
+									 ));
+    }
+    template <typename A1,typename A2,typename A3,typename A4,typename A5,typename A6,typename A7,typename A8,typename A9>
+    static SQInteger iNew(HSQUIRRELVM vm) {
+        Var<A1> a1(vm, 2);
+        Var<A2> a2(vm, 3);
+        Var<A3> a3(vm, 4);
+        Var<A4> a4(vm, 5);
+        Var<A5> a5(vm, 6);
+        Var<A6> a6(vm, 7);
+        Var<A7> a7(vm, 8);
+        Var<A8> a8(vm, 9);
+        Var<A9> a9(vm, 10);
+        if (Error::Instance().Occurred(vm)) {
+            return sq_throwerror(vm, Error::Instance().Message(vm).c_str());
+        }
+        return setInstance(vm, new C(
+									 a1.value,
+									 a2.value,
+									 a3.value,
+									 a4.value,
+									 a5.value,
+									 a6.value,
+									 a7.value,
+									 a8.value,
+									 a9.value
+									 ));
+    }
+	
+public:
+	
+    static SQInteger Copy(HSQUIRRELVM vm, SQInteger idx, const void* value) {
+        C* instance = new C(*static_cast<const C*>(value));
+        sq_setinstanceup(vm, idx, instance);
+        sq_setreleasehook(vm, idx, &Delete);
+        return 0;
+    }
+	
+    static SQInteger Delete(SQUserPointer ptr, SQInteger size) {
+		Entity * e = reinterpret_cast<Entity*>( ptr );
+		e->flags |= Entity::EF_DELETE_INSTANCE;
+//        C* instance = reinterpret_cast<C*>(ptr);
+//        delete instance;
+        return 0;
+    }
+}; // EntityAllocator
 
 template <class Type>
 struct EntityList
@@ -265,7 +499,7 @@ struct EntityList
 		this->objects.push_back( object );
 	} // add
 	
-	void remove( Type * object )
+	virtual void remove( Type * object )
 	{
 		for (typename EntityVectorType::iterator it = this->objects.begin(); it != this->objects.end(); ++it )
 		{
@@ -333,19 +567,17 @@ Entity::Entity()
 
 	this->type = Logic;
 	this->id = entity_list<Entity>().count();
-		this->flags = 0;
+	this->flags = 0;
 	entity_list<Entity>().add( this );
 	LOGV( "Entity() - %p, %zu\n", this, this->id );
 	
 	sq_resetobject( &instance );
 	sq_resetobject( &class_object );
-	
-	sq_setreleasehook( script::get_vm(), 1, release_hook );
-	
+
 	// Assumes the OT_INSTANCE is at position 1 in the stack
 	SQRESULT res = sq_getstackobj( script::get_vm(), 1, &instance );
 	script::check_result(res, "getstackobj");
-	
+
 	res = sq_getclass( script::get_vm(), 1 );
 	script::check_result(res, "getclass" );
 	
@@ -361,7 +593,7 @@ Entity::Entity()
 Entity::~Entity()
 {
 	LOGV( "~Entity() - %p, %zu\n", this, this->id );
-	entity_list<Entity>().remove( this );
+//	entity_list<Entity>().remove( this );
 } // ~Entity
 
 void Entity::step( float delta_seconds )
@@ -412,6 +644,11 @@ void Entity::bind_functions()
 	this->on_tick = script::find_member( this->class_object, "tick" );
 	this->on_step = script::find_member( this->class_object, "step" );
 } // bind_functions
+
+void Entity::remove()
+{
+	this->flags = 1;
+}
 
 void Entity::native_step( float delta_seconds )
 {
@@ -779,37 +1016,41 @@ public:
 		Sqrat::RootTable root( script::get_vm() );
 		
 		// bind Entity to scripting language
-		Sqrat::Class<Entity> entity( script::get_vm() );
+		Sqrat::Class<Entity, EntityAllocator<Entity> > entity( script::get_vm() );
 		entity.Func( "tick", &Entity::native_tick );
 		entity.Func( "step", &Entity::native_step );
 //		entity.Func( "draw", &Entity::native_draw );
 		entity.Var( "id", &Entity::id );
 		entity.Prop( "name", &Entity::get_name, &Entity::set_name );
 		entity.Prop( "position", &Entity::get_position, &Entity::set_position );
+		entity.Func( "remove", &Entity::remove );
 
 		root.Bind( "Entity", entity );
+
 	
-		Sqrat::DerivedClass<ModelEntity, Entity> model( script::get_vm() );
+		Sqrat::DerivedClass<ModelEntity, Entity, EntityAllocator<ModelEntity> > model( script::get_vm() );
 		model.Func( "set_model", &ModelEntity::set_model );
 		model.Prop( "transform", &ModelEntity::get_transform, &ModelEntity::set_transform );
 		root.Bind( "ModelEntity", model );
 		
-		Sqrat::DerivedClass<RenderableEntity, Entity> renderable( script::get_vm() );
+		Sqrat::DerivedClass<RenderableEntity, Entity, EntityAllocator<RenderableEntity> > renderable( script::get_vm() );
 		renderable.Ctor<RenderableEntity*>();
 		renderable.Var( "layer", &RenderableEntity::layer );
 		root.Bind( "RenderableEntity", renderable );
 		
-		Sqrat::DerivedClass<SpriteEntity, RenderableEntity> sprite( script::get_vm() );
+		Sqrat::DerivedClass<SpriteEntity, RenderableEntity, EntityAllocator<SpriteEntity> > sprite( script::get_vm() );
 		sprite.Ctor<RenderableEntity*>();
 		sprite.Func( "set_sprite", &SpriteEntity::set_sprite );
 		sprite.Prop( "world_origin", &SpriteEntity::get_world_origin, &SpriteEntity::set_world_origin );
 		sprite.Prop( "screen_origin", &SpriteEntity::get_screen_origin, &SpriteEntity::set_screen_origin );
 		root.Bind( "SpriteEntity", sprite );
 
-		Sqrat::DerivedClass<EmitterEntity, Entity> emitter( script::get_vm() );
+		Sqrat::DerivedClass<EmitterEntity, Entity, EntityAllocator<EmitterEntity> > emitter( script::get_vm() );
 		emitter.Ctor<RenderableEntity*>();
 		emitter.Func( "set_emitter", &EmitterEntity::set_emitter );
 		root.Bind( "EmitterEntity", emitter );
+
+		
 		
 		script::execute_file("scripts/project_huckleberry.nut");
 	
@@ -909,7 +1150,7 @@ public:
 			}
 		}
 		
-		LOGV( "rendered_entities: %i\n", rg.rendered_entities );
+		//LOGV( "rendered_entities: %i\n", rg.rendered_entities );
 
 #if 0
 		for( EntityVector::iterator it = entity_list<Entity>().objects.begin(); it != entity_list<Entity>().objects.end(); ++it )
@@ -961,20 +1202,27 @@ public:
 		// tick entities
 		EntityVector::iterator it =	entity_list<Entity>().objects.begin();
 		EntityVector::iterator end = entity_list<Entity>().objects.end();
+		Entity * ent;
 		for( ; it != end; ++it )
 		{
-			(*it)->tick();
+			ent = (*it);
+			if ( !(ent->flags & Entity::EF_DELETE_INSTANCE) )
+			{
+				(*it)->tick();
+			}
 		}
 		
 		// trim entities flagged for removal
-		it =	entity_list<Entity>().objects.begin();
+		it = entity_list<Entity>().objects.begin();
 		for( ; it != end; ++it )
 		{
 			Entity * ent = (*it);
-			if ( ent->flags & 1 )
+			if ( (ent->flags & Entity::EF_DELETE_INSTANCE) )
 			{
 				LOGV( "removing flagged entity: %p\n", ent );
 				it = entity_list<Entity>().objects.erase( it );
+				ent->flags &= ~Entity::EF_DELETE_INSTANCE;
+				delete ent;
 			}
 		}
 		

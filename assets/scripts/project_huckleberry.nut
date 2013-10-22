@@ -45,6 +45,7 @@ function test()
 // vehicle.transform = translate( vehicle.transform, vec3(0, 0.3432, 0.0) )
 // vehicle.set_model( "models/vehicle" )
 
+
 local ENEMY_LAYER = 1
 
 
@@ -69,6 +70,8 @@ class Player extends SpriteEntity
 	{
 		base.tick()
 
+
+
 		if ( smoke_puff && (ticks_to_remove > 0) )
 		{
 			ticks_to_remove--
@@ -82,6 +85,12 @@ class Player extends SpriteEntity
 			print( "removing smoke puff\n" )
 			smoke_puff = null
 		}
+	}
+
+	function step( delta_seconds )
+	{
+		base.step( delta_seconds )
+		this.world_origin = this.world_origin + vec2( 35 * delta_seconds, 0 )
 	}
 }
 
