@@ -130,10 +130,10 @@ namespace assets
 		for( ; citer != channels.end(); ++citer )
 		{
 			Json::Value object = (*citer);
-			LOGV("object: %s\n", citer.key().asString().c_str());
+//			LOGV("object: %s\n", citer.key().asString().c_str());
 			Json::Value frame_delay_seconds = object["frame_delay_seconds"];
 			Json::Value frames = object["frames"];
-			LOGV("total items: %i\n", frames.size());
+//			LOGV("total items: %i\n", frames.size());
 			if (citer.key().asString() == "color")
 			{
 				Color * colors = CREATE_ARRAY(Color, frames.size());

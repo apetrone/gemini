@@ -514,7 +514,7 @@ struct EntityList
 			
 			if ( obj == object )
 			{
-				LOGV( "removing from entity list\n" );
+//				LOGV( "removing from entity list\n" );
 				objects.erase( it );
 				break;
 			}
@@ -569,7 +569,7 @@ Entity::Entity()
 	this->id = entity_list<Entity>().count();
 	this->flags = 0;
 	entity_list<Entity>().add( this );
-	LOGV( "Entity() - %p, %zu\n", this, this->id );
+//	LOGV( "Entity() - %p, %zu\n", this, this->id );
 	
 	sq_resetobject( &instance );
 	sq_resetobject( &class_object );
@@ -592,7 +592,7 @@ Entity::Entity()
 
 Entity::~Entity()
 {
-	LOGV( "~Entity() - %p, %zu\n", this, this->id );
+//	LOGV( "~Entity() - %p, %zu\n", this, this->id );
 //	entity_list<Entity>().remove( this );
 } // ~Entity
 

@@ -71,7 +71,7 @@ class Player extends SpriteEntity
 
 		if ( smoke_puff && (ticks_to_remove > 0) )
 		{
-			ticks_to_remove--
+			// ticks_to_remove--
 		}
 
 		if ( ticks_to_remove == 0 )
