@@ -71,7 +71,7 @@ class Player extends SpriteEntity
 
 		if ( smoke_puff && (ticks_to_remove > 0) )
 		{
-			// ticks_to_remove--
+			ticks_to_remove--
 		}
 
 		if ( ticks_to_remove == 0 )
@@ -94,6 +94,58 @@ class Player extends SpriteEntity
 	}
 }
 
+// states
+enum CowState
+{
+	GRAZING,
+	BEING_ABDUCTED,
+	FALLING,
+	ABDUCTION_COOLDOWN,
+}
+
+class Cow extends SpriteEntity
+{
+	direction 			= 0
+	state 				= CowState.GRAZING
+	next_think			= 0
+
+	constructor()
+	{
+		base.constructor()
+		set_sprite( "sprites/cow" )
+	}
+
+	function step( delta_seconds )
+	{
+
+	}
+
+	function tick()
+	{
+		local vel = this.velocity
+		local pos = this.position
+		if ( state == CowState.GRAZING )
+		{
+			vel.x = direction * 20.0
+			vel.y = 0
+		}
+		else if ( state == CowState.BEING_ABDUCTED )
+		{
+			vel.x = 0
+		}
+		else if ( state == CowState.FALLING )
+		{
+			vel.y += 9.8
+		}
+		else if ( state == CowState.ABDUCTION_COOLDOWN )
+		{
+			state = CowState.GRAZING
+		}
+
+		this.velocity = vel
+	}
+}
+
 class Enemy extends SpriteEntity
 {
 	constructor()
@@ -111,3 +163,29 @@ sprite.set_sprite( "sprites/player" )
 // enemy <- Enemy()
 // enemy.set_sprite( "sprites/enemy" )
 // enemy.world_origin = vec2( 120, 100 )
+
+
+class HuckleberryRules extends GameRules
+{
+	function startup()
+	{
+
+	}
+
+ 	function tick()
+	{
+
+	}
+
+	function step( delta_seconds )
+	{
+
+	}
+
+	function click( id, x, y )
+	{
+		print( "click\n" )
+	}
+}
+
+gamerules <- HuckleberryRules()

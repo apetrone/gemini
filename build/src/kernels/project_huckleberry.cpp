@@ -36,6 +36,111 @@
 #include "script.hpp"
 
 
+#include <Box2D/Box2D.h>
+
+
+namespace physics
+{
+	#define PIXELS_PER_METER 32.0f
+	#define PIXELS_TO_METER( x ) (float)((x)/(float)PIXELS_PER_METER)
+	#define METERS_TO_PIXELS( x ) (float)((x) * PIXELS_PER_METER)
+
+
+	struct PhysicsStep
+	{
+		uint32_t tick_count;
+		
+	};
+	
+	b2World * create_world( const b2Vec2 & gravity );
+	void destroy_world( b2World * world );
+	
+	b2Body * create_body( b2World * world, b2BodyDef * body_def );
+	void destroy_body( b2World * world, b2Body * body );
+	
+	void step( float delta_seconds );
+	
+	void debug_draw( b2World * world );
+	
+	
+	class physics2d_debug_renderer : public b2Draw
+	{
+		/// Draw a closed polygon provided in CCW order.
+		virtual void DrawPolygon(const b2Vec2* vertices, int vertexCount, const b2Color& color);
+		
+		/// Draw a solid closed polygon provided in CCW order.
+		virtual void DrawSolidPolygon(const b2Vec2* vertices, int vertexCount, const b2Color& color);
+		
+		/// Draw a circle.
+		virtual void DrawCircle(const b2Vec2& center, float radius, const b2Color& color);
+		/// Draw a solid circle.
+		virtual void DrawSolidCircle(const b2Vec2& center, float radius, const b2Vec2& axis, const b2Color& color);
+		
+		/// Draw a line segment.
+		virtual void DrawSegment(const b2Vec2& p1, const b2Vec2& p2, const b2Color& color);
+		
+		/// Draw a transform. Choose your own length scale.
+		/// @param xf a transform.
+		virtual void DrawTransform(const b2Transform& xf);
+	};
+};
+
+namespace physics
+{
+	b2World * create_world( const b2Vec2 & gravity )
+	{
+		b2World * world = new b2World( gravity );
+		world->SetAutoClearForces( false );
+		return world;
+	} // create_world
+	
+	void destroy_world( b2World * world )
+	{
+		if ( world )
+		{
+			delete world;
+			world = 0;
+		}
+	} // destroy_world
+	
+	b2Body * create_body( b2World * world, b2BodyDef * body_def )
+	{
+		if ( world )
+		{
+			return world->CreateBody( body_def );
+		}
+
+		return 0;
+	} // create_body
+	
+	void destroy_body( b2World * world, b2Body * body )
+	{
+		if ( world )
+		{
+			world->DestroyBody( body );
+		}
+	} // destroy_body
+	
+	void step( float delta_seconds )
+	{
+		
+	} // step
+	
+	void debug_draw( b2World * world )
+	{
+		if ( world )
+		{
+			world->DrawDebugData();
+		}
+	} // debug_draw
+};
+
+
+
+
+
+
+
 struct SpriteVertexType
 {
 	float x, y, z;
@@ -992,6 +1097,8 @@ public:
 
 	RenderGlobals rg;
 	
+	b2World * world;
+	
 	virtual void event( kernel::KeyboardEvent & event )
 	{
 		if (event.is_down)
@@ -1037,6 +1144,11 @@ public:
 	
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
+		// physics world setup
+		world = physics::create_world( b2Vec2( 0, 0 ) );
+
+	
+	
 		Sqrat::RootTable root( script::get_vm() );
 		
 		// bind Entity to scripting language
@@ -1116,6 +1228,13 @@ public:
 		{
 			rg.camera.move_right( dt );
 		}
+		
+		if ( world )
+		{
+			world->Step( params.step_interval_seconds, 2, 1 );
+			world->ClearForces();
+		}
+		
 		
 		// tick entities
 		EntityVector::iterator it =	entity_list<Entity>().objects.begin();
@@ -1264,12 +1383,16 @@ public:
 //		debugdraw::text( 25, 50, xstr_format("camera.position = %g %g %g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255) );
 
 //		debugdraw::axes( glm::mat4(1.0), 1.0f );
+
+
+		physics::debug_draw( world );
 		
 		debugdraw::render( rg.camera.matCam, rg.camera.matProj, params.render_width, params.render_height );
 	}
 	
 	virtual void shutdown( kernel::Params & params )
 	{
+		physics::destroy_world( world );
 		debugdraw::shutdown();
 	}
 }; // ProjectHuckleberry
