@@ -1299,6 +1299,18 @@ public:
 		root.Bind( "GameRules", gamerules );
 		
 		script::execute_file("scripts/project_huckleberry.nut");
+
+		{
+			Sqrat::Object gamerules = root.GetSlot( "gamerules" );
+			if ( !gamerules.IsNull() )
+			{
+				GameRules * gr = gamerules.Cast<GameRules*>();
+				if ( gr )
+				{
+					gr->startup();
+				}
+			}
+		}
 	
 		debugdraw::startup(1024);
 		
@@ -1352,7 +1364,10 @@ public:
 		if ( !gamerules.IsNull() )
 		{
 			GameRules * gr = gamerules.Cast<GameRules*>();
-			gr->step( delta_seconds );
+			if ( gr )
+			{
+				gr->step( delta_seconds );
+			}
 		}
 		
 		// tick entities
@@ -1484,7 +1499,10 @@ public:
 		if ( !gamerules.IsNull() )
 		{
 			GameRules * gr = gamerules.Cast<GameRules*>();
-			gr->tick();
+			if ( gr )
+			{
+				gr->tick();
+			}
 		}
 	
 		// tick entities

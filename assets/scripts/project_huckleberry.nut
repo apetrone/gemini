@@ -155,9 +155,7 @@ class Enemy extends SpriteEntity
 	}
 }
 
-sprite <- Player()
-sprite.world_origin = vec2( 150, 100 )
-sprite.set_sprite( "sprites/player" )
+
 
 
 // enemy <- Enemy()
@@ -167,9 +165,12 @@ sprite.set_sprite( "sprites/player" )
 
 class HuckleberryRules extends GameRules
 {
+	sprite = null
 	function startup()
 	{
-
+		sprite = Player()
+		sprite.world_origin = vec2( 150, 100 )
+		sprite.set_sprite( "sprites/player" )
 	}
 
  	function tick()
@@ -179,7 +180,7 @@ class HuckleberryRules extends GameRules
 
 	function step( delta_seconds )
 	{
-		print( delta_seconds + "\n" )
+		//print( delta_seconds + "\n" )
 	}
 
 	function click( id, x, y )
