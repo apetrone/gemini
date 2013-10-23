@@ -174,12 +174,12 @@ class HuckleberryRules extends GameRules
 
  	function tick()
 	{
-		print( "HuckleBerry tick\n" )
+		//print( "HuckleBerry tick\n" )
 	}
 
 	function step( delta_seconds )
 	{
-
+		print( delta_seconds + "\n" )
 	}
 
 	function click( id, x, y )

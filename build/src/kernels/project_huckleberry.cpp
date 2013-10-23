@@ -1345,13 +1345,22 @@ public:
 			world->ClearForces();
 		}
 		
+		float delta_seconds = params.framedelta_filtered_msec * 0.001;
+		
+		Sqrat::RootTable root( script::get_vm() );
+		Sqrat::Object gamerules = root.GetSlot( "gamerules" );
+		if ( !gamerules.IsNull() )
+		{
+			GameRules * gr = gamerules.Cast<GameRules*>();
+			gr->step( delta_seconds );
+		}
 		
 		// tick entities
 		EntityVector::iterator it =	entity_list<Entity>().objects.begin();
 		EntityVector::iterator end = entity_list<Entity>().objects.end();
 		for( ; it != end; ++it )
 		{
-			(*it)->step( params.framedelta_filtered_msec * 0.001 );
+			(*it)->step( delta_seconds );
 		}
 	}
 
@@ -1470,6 +1479,14 @@ public:
 	
 	virtual void tick( kernel::Params & params )
 	{
+		Sqrat::RootTable root( script::get_vm() );
+		Sqrat::Object gamerules = root.GetSlot( "gamerules" );
+		if ( !gamerules.IsNull() )
+		{
+			GameRules * gr = gamerules.Cast<GameRules*>();
+			gr->tick();
+		}
+	
 		// tick entities
 		EntityVector::iterator it =	entity_list<Entity>().objects.begin();
 		EntityVector::iterator end = entity_list<Entity>().objects.end();
@@ -1485,13 +1502,7 @@ public:
 		
 		deferred_delete( true );
 		
-		Sqrat::RootTable root( script::get_vm() );
-		Sqrat::Object gamerules = root.GetSlot( "gamerules" );
-		if ( !gamerules.IsNull() )
-		{
-			GameRules * gr = gamerules.Cast<GameRules*>();
-			gr->tick();
-		}
+
 		
 		rg.camera.ortho( 0, params.render_width, params.render_height, 0, -0.1f, 128.0f );
 //		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
