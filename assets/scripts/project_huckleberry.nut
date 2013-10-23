@@ -174,7 +174,7 @@ class HuckleberryRules extends GameRules
 
  	function tick()
 	{
-
+		print( "HuckleBerry tick\n" )
 	}
 
 	function step( delta_seconds )

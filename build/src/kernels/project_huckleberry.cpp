@@ -1086,6 +1086,112 @@ void EmitterEntity::set_emitter( const char * path )
 } // set_emitter
 
 
+struct GameRules
+{
+	HSQOBJECT instance;
+	HSQOBJECT class_object;
+	
+	HSQOBJECT on_startup;
+	HSQOBJECT on_tick;
+	HSQOBJECT on_step;
+	
+	GameRules()
+	{
+		LOGV( "GameRules created.\n" );
+	
+		sq_resetobject( &instance );
+		sq_resetobject( &class_object );
+		
+		// Assumes the OT_INSTANCE is at position 1 in the stack
+		SQRESULT res = sq_getstackobj( script::get_vm(), 1, &instance );
+		script::check_result(res, "getstackobj");
+		
+		res = sq_getclass( script::get_vm(), 1 );
+		script::check_result(res, "getclass" );
+		
+		res = sq_getstackobj( script::get_vm(), -1, &class_object );
+		script::check_result(res, "getstackobj");
+		
+		// pop the OT_CLASS
+		sq_poptop( script::get_vm() );
+		
+		this->bind_functions();
+	}
+	
+	void bind_functions()
+	{
+		this->on_startup = script::find_member( this->class_object, "startup" );
+		this->on_tick = script::find_member( this->class_object, "tick" );
+		this->on_step = script::find_member( this->class_object, "step" );
+	}
+	
+	void native_startup() {}
+	void native_tick() {}
+	void native_step( float delta_seconds ) {}
+	
+	void startup()
+	{
+		if ( sq_isnull(this->on_startup) || sq_isnull(this->instance) )
+		{
+			return;
+		}
+		
+		SQRESULT res;
+		sq_pushobject( script::get_vm(), this->on_startup );
+		sq_pushobject( script::get_vm(), this->instance );
+		res = sq_call( script::get_vm(), 1, SQFalse, SQTrue );
+		
+		sq_pop( script::get_vm(), 1 );
+		if ( SQ_FAILED(res) )
+		{
+			script::check_result( res, "sq_call" );
+			sq_pop( script::get_vm(), 1 );
+		}
+	}
+	
+	void tick()
+	{
+		if ( sq_isnull(this->on_tick) || sq_isnull(this->instance) )
+		{
+			return;
+		}
+		
+		SQRESULT res;
+		sq_pushobject( script::get_vm(), this->on_tick );
+		sq_pushobject( script::get_vm(), this->instance );
+		res = sq_call( script::get_vm(), 1, SQFalse, SQTrue );
+		
+		sq_pop( script::get_vm(), 1 );
+		if ( SQ_FAILED(res) )
+		{
+			script::check_result( res, "sq_call" );
+			sq_pop( script::get_vm(), 1 );
+		}
+	}
+	
+	void step( float delta_seconds )
+	{
+		if ( sq_isnull(this->on_step) || sq_isnull(this->instance) )
+		{
+			return;
+		}
+		
+		SQRESULT res;
+		sq_pushobject( script::get_vm(), this->on_step );
+		sq_pushobject( script::get_vm(), this->instance );
+		sq_pushfloat( script::get_vm(), delta_seconds );
+		res = sq_call( script::get_vm(), 2, SQFalse, SQTrue );
+		
+		sq_pop( script::get_vm(), 1 );
+		if ( SQ_FAILED(res) )
+		{
+			script::check_result( res, "sq_call" );
+			sq_pop( script::get_vm(), 1 );
+		}
+	}
+};
+
+
 
 class ProjectHuckleberry : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
@@ -1186,7 +1292,11 @@ public:
 		emitter.Func( "set_emitter", &EmitterEntity::set_emitter );
 		root.Bind( "EmitterEntity", emitter );
 
-		
+		Sqrat::Class<GameRules> gamerules( script::get_vm() );
+		gamerules.Func( "startup", &GameRules::native_startup );
+		gamerules.Func( "tick", &GameRules::native_tick );
+		gamerules.Func( "step", &GameRules::native_step );
+		root.Bind( "GameRules", gamerules );
 		
 		script::execute_file("scripts/project_huckleberry.nut");
 	
@@ -1374,6 +1484,14 @@ public:
 		}
 		
 		deferred_delete( true );
+		
+		Sqrat::RootTable root( script::get_vm() );
+		Sqrat::Object gamerules = root.GetSlot( "gamerules" );
+		if ( !gamerules.IsNull() )
+		{
+			GameRules * gr = gamerules.Cast<GameRules*>();
+			gr->tick();
+		}
 		
 		rg.camera.ortho( 0, params.render_width, params.render_height, 0, -0.1f, 128.0f );
 //		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
