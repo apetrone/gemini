@@ -56,17 +56,18 @@ void ParticleEmitter::init()
 {
 	particle_list = CREATE_ARRAY(Particle, this->emitter_config->max_particles);
 
-	LOGV( "particle emitter init\n" );
-
+	this->next_spawn = 0;
+	this->num_particles_alive = this->emitter_config->max_particles;
+	
 	Particle * p = 0;
 	for(int i = 0; i < this->emitter_config->max_particles; ++i)
 	{
 		p = &particle_list[i];
-		p->life_remaining = 0;
-		p->color = Color(0, 0, 0, 255);
-		p->velocity = glm::vec3(0, 0, 0);
-		p->position.snap(world_position.current);
-		p->size = 1.0f;
+		generate_particle( p );
+		// force the particles to spawn next step: this is mainly done
+		// to ensure that the world position is set properly before they're
+		// rendered -- as it may not be set to the desired value at this point.
+		p->life_total = p->life_remaining = 0;
 	}
 } // init
 
@@ -75,7 +76,7 @@ void ParticleEmitter::step(float delta_seconds)
 {
 	unsigned int pid = 0;
 	Particle * p = 0;
-	num_particles_alive = 0;
+	
 	float delta_msec = (delta_seconds * 1000.0f);
 	
 	if (!emitter_config)
@@ -91,12 +92,15 @@ void ParticleEmitter::step(float delta_seconds)
 	{
 		this->next_spawn = this->emitter_config->spawn_delay_seconds;
 		particles_to_spawn = this->emitter_config->spawn_rate;
-		if (particles_to_spawn > this->emitter_config->max_particles-num_particles_alive)
+		uint32_t eff = (this->emitter_config->max_particles-num_particles_alive);
+		if (particles_to_spawn > eff )
 		{
 			particles_to_spawn = (this->emitter_config->max_particles-num_particles_alive);
+//			LOGV( "particle_to_spawn: %i\n", particles_to_spawn );
 		}
 	}
 	
+	num_particles_alive = 0;
 	for(pid = 0; pid < this->emitter_config->max_particles; ++pid)
 	{
 		p = &particle_list[pid];
@@ -114,16 +118,7 @@ void ParticleEmitter::step(float delta_seconds)
 		}
 		else if (particles_to_spawn > 0)
 		{
-			p->life_total = p->life_remaining = util::random_range(this->emitter_config->life.min, this->emitter_config->life.max);
-			p->velocity = glm::vec3(util::random_range(
-				this->emitter_config->velocity.min[0], this->emitter_config->velocity.max[0]),
-				util::random_range(this->emitter_config->velocity.min[1], this->emitter_config->velocity.max[1]),
-				util::random_range(this->emitter_config->velocity.min[2], this->emitter_config->velocity.max[2]));
-			
-			p->position.snap(world_position.render);
-			p->color = this->emitter_config->color_channel.get_value(0);
-			p->color.a = 255.0 * this->emitter_config->alpha_channel.get_value(0);
-			p->size = this->emitter_config->size_channel.get_value(0);
+			generate_particle( p );
 			--particles_to_spawn;
 			++num_particles_alive;
 		}
@@ -151,6 +146,20 @@ void ParticleEmitter::load_from_emitter_config(assets::EmitterConfig* emitter_co
 	}
 } // load_from_emitter_config
 
+void ParticleEmitter::generate_particle( Particle * p )
+{
+	p->life_total = p->life_remaining = util::random_range(this->emitter_config->life.min, this->emitter_config->life.max);
+	p->velocity = glm::vec3(util::random_range(
+											   this->emitter_config->velocity.min[0], this->emitter_config->velocity.max[0]),
+							util::random_range(this->emitter_config->velocity.min[1], this->emitter_config->velocity.max[1]),
+							util::random_range(this->emitter_config->velocity.min[2], this->emitter_config->velocity.max[2]));
+	
+	p->position.snap(world_position.render);
+//	LOGV( "p->position: %g, %g %g\n", p->position.render.x, p->position.render.y, p->position.render.z );
+	p->color = this->emitter_config->color_channel.get_value(0);
+	p->color.a = 255.0 * this->emitter_config->alpha_channel.get_value(0);
+	p->size = this->emitter_config->size_channel.get_value(0);
+} // generate_particle
 
 // -------------------------------------------------------------
 // ParticleSystem

@@ -52,9 +52,8 @@ local ENEMY_LAYER = 1
 class Player extends SpriteEntity
 {
 	smoke_puff = null
-
 	ticks_to_remove = 120
-
+	smoke_offset = vec2(32, -5)
 
 	constructor()
 	{
@@ -62,7 +61,7 @@ class Player extends SpriteEntity
 
 		smoke_puff = EmitterEntity( this )
 		smoke_puff.set_emitter( "sprites/exhaust" )
-
+		
 		this.layer = 0
 	}
 
@@ -70,14 +69,10 @@ class Player extends SpriteEntity
 	{
 		base.tick()
 
-
-
 		if ( smoke_puff && (ticks_to_remove > 0) )
 		{
 			ticks_to_remove--
-			smoke_puff.position = this.world_origin + vec2(32, -5)
 		}
-
 
 		if ( ticks_to_remove == 0 )
 		{
@@ -91,6 +86,11 @@ class Player extends SpriteEntity
 	{
 		base.step( delta_seconds )
 		this.world_origin = this.world_origin + vec2( 35 * delta_seconds, 0 )
+
+		if ( smoke_puff )
+		{
+			smoke_puff.position = this.world_origin + smoke_offset
+		}
 	}
 }
 
@@ -104,8 +104,9 @@ class Enemy extends SpriteEntity
 }
 
 sprite <- Player()
-sprite.set_sprite( "sprites/player" )
 sprite.world_origin = vec2( 150, 100 )
+sprite.set_sprite( "sprites/player" )
+
 
 // enemy <- Enemy()
 // enemy.set_sprite( "sprites/enemy" )

@@ -480,10 +480,17 @@ public:
     }
 	
     static SQInteger Delete(SQUserPointer ptr, SQInteger size) {
-		Entity * e = reinterpret_cast<Entity*>( ptr );
+		C * e = reinterpret_cast<C*>( ptr );
 		e->flags |= Entity::EF_DELETE_INSTANCE;
+		
+		// this is quite a hack to get the system working well during a shutdown
+		if ( !kernel::instance()->is_active() )
+		{
 //        C* instance = reinterpret_cast<C*>(ptr);
 //        delete instance;
+			delete e;
+		}
+
         return 0;
     }
 }; // EntityAllocator
@@ -554,13 +561,6 @@ EntityList<Type> & entity_list()
 	static EntityList<Type> _entity_list;
 	return _entity_list;
 } // entity_list
-
-
-SQInteger release_hook(SQUserPointer ptr, SQInteger size)
-{
-	LOGV( "release hook called\n" );
-	return 0;
-}
 
 Entity::Entity()
 {
@@ -703,6 +703,8 @@ struct RenderableEntity : public Entity
 	RenderableEntity( RenderableEntity * parent );
 	virtual ~RenderableEntity();
 	
+//	virtual void native_step( float delta_seconds );
+//	virtual void native_tick();
 	virtual void render( RenderGlobals & rg );
 }; // RenderableEntity
 
@@ -744,6 +746,28 @@ RenderableEntity::~RenderableEntity()
 		entity_list<RenderableEntity>().remove( this );
 	}
 } // ~RenderableEntity
+
+#if 0
+void RenderableEntity::native_step( float delta_seconds )
+{
+	RenderableEntity * ent;
+	for ( EntityList<RenderableEntity>::EntityVectorType::iterator it = children.begin(); it != children.end(); ++it )
+	{
+		ent = (*it);
+		ent->step( delta_seconds );
+	}
+} // native_step
+
+void RenderableEntity::native_tick()
+{
+	RenderableEntity * ent;
+	for ( EntityList<RenderableEntity>::EntityVectorType::iterator it = children.begin(); it != children.end(); ++it )
+	{
+		ent = (*it);
+		ent->tick();
+	}
+} // native_tick
+#endif
 
 void RenderableEntity::render( RenderGlobals & rg )
 {
@@ -1197,6 +1221,24 @@ public:
 	
 	} // render_with_camera
 	
+	void deferred_delete( bool only_deferred )
+	{
+		// trim entities flagged for removal
+		EntityVector::iterator it = entity_list<Entity>().objects.begin();
+		EntityVector::iterator end = entity_list<Entity>().objects.end();
+		for( ; it != end; ++it )
+		{
+			Entity * ent = (*it);
+			if ((only_deferred && (ent->flags & Entity::EF_DELETE_INSTANCE)) || !only_deferred )
+			{
+				LOGV( "removing flagged entity: %p\n", ent );
+				it = entity_list<Entity>().objects.erase( it );
+				ent->flags &= ~Entity::EF_DELETE_INSTANCE;
+				delete ent;
+			}
+		}
+	}
+	
 	virtual void tick( kernel::Params & params )
 	{
 		// tick entities
@@ -1212,19 +1254,7 @@ public:
 			}
 		}
 		
-		// trim entities flagged for removal
-		it = entity_list<Entity>().objects.begin();
-		for( ; it != end; ++it )
-		{
-			Entity * ent = (*it);
-			if ( (ent->flags & Entity::EF_DELETE_INSTANCE) )
-			{
-				LOGV( "removing flagged entity: %p\n", ent );
-				it = entity_list<Entity>().objects.erase( it );
-				ent->flags &= ~Entity::EF_DELETE_INSTANCE;
-				delete ent;
-			}
-		}
+		deferred_delete( true );
 		
 		rg.camera.ortho( 0, params.render_width, params.render_height, 0, -0.1f, 128.0f );
 //		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
