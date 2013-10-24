@@ -337,9 +337,7 @@ struct Entity
 	
 	HSQOBJECT on_step;
 	HSQOBJECT on_tick;
-//	HSQOBJECT on_draw;
 	
-	glm::vec2 position;
 	uint64_t id;
 	std::string name;
 	uint8_t type;
@@ -350,22 +348,16 @@ struct Entity
 		
 	void step( float delta_seconds );
 	void tick();
-//	void draw();
 	
 	// bind functions for this object
 	void bind_functions();
 	virtual void remove();
 	
 	// get/set functions for script interop
-	inline const glm::vec2 & get_position() const { return position; }
-	inline void set_position( const glm::vec2 & p ) { position = p; }
 	const std::string & get_name() { return this->name; }
 	void set_name( const std::string & object_name ) { this->name = object_name; }
 	virtual void native_step( float delta_seconds );
 	virtual void native_tick();
-
-	
-//	void native_draw();
 }; // Entity
 
 
@@ -805,6 +797,18 @@ struct RenderableEntity : public Entity
 	
 	EntityList<RenderableEntity>::EntityVectorType children;
 	
+	
+	render_utilities::PhysicsState<glm::vec2> world_position;
+	glm::vec2 velocity;
+
+	
+	glm::vec2 get_position() const { return this->world_position.current; }
+	void set_position( const glm::vec2 & origin ) { this->world_position.snap( origin ); }
+	
+	glm::vec2 get_velocity() const { return this->velocity; }
+	void set_velocity( const glm::vec2 & velocity ) { this->velocity = velocity; }
+	
+	
 	RenderableEntity( RenderableEntity * parent );
 	virtual ~RenderableEntity();
 	
@@ -912,9 +916,7 @@ struct SpriteEntity : public RenderableEntity
 
 	
 	float rotation;
-	
-	render_utilities::PhysicsState<glm::vec2> world_position;
-	glm::vec2 screen_origin;
+
 	
 	
 	SpriteEntity( RenderableEntity * parent = 0 );
@@ -926,12 +928,7 @@ struct SpriteEntity : public RenderableEntity
 	
 	void set_sprite( const char * path );
 	void play_animation( const char * name );
-	glm::vec2 get_world_origin() const { return this->world_position.current; }
-	void set_world_origin( const glm::vec2 & origin ) { this->world_position.snap( origin ); }
-	
-	glm::vec2 get_screen_origin() const { return this->screen_origin; }
-	void set_screen_origin( const glm::vec2 & origin ) { this->screen_origin = origin; }
-	
+
 	void add_sprite_to_layer( renderer::VertexStream & stream, unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords );
 }; // SpriteEntity
 
@@ -1064,7 +1061,7 @@ void EmitterEntity::native_step( float delta_seconds )
 {
 	if ( this->emitter_config )
 	{
-		this->emitter->world_position.snap( glm::vec3(this->position, 0.0f) );
+		this->emitter->world_position.snap( glm::vec3(this->world_position.render, 0.0f) );
 		this->emitter->step( delta_seconds );
 	}
 } // native_step
@@ -1192,7 +1189,21 @@ struct GameRules
 			sq_pop( script::get_vm(), 1 );
 		}
 	}
-};
+}; // GameRules
+
+
+struct Script_RenderInterface
+{
+	static uint32_t get_render_width()
+	{
+		return kernel::instance()->parameters().render_width;
+	}
+	
+	static uint32_t get_render_height()
+	{
+		return kernel::instance()->parameters().render_height;
+	}
+}; // Script_RenderInterface
 
 
 
@@ -1264,10 +1275,8 @@ public:
 		Sqrat::Class<Entity, EntityAllocator<Entity> > entity( script::get_vm() );
 		entity.Func( "tick", &Entity::native_tick );
 		entity.Func( "step", &Entity::native_step );
-//		entity.Func( "draw", &Entity::native_draw );
 		entity.Var( "id", &Entity::id );
 		entity.Prop( "name", &Entity::get_name, &Entity::set_name );
-		entity.Prop( "position", &Entity::get_position, &Entity::set_position );
 		entity.Func( "remove", &Entity::remove );
 
 		root.Bind( "Entity", entity );
@@ -1281,16 +1290,16 @@ public:
 		Sqrat::DerivedClass<RenderableEntity, Entity, EntityAllocator<RenderableEntity> > renderable( script::get_vm() );
 		renderable.Ctor<RenderableEntity*>();
 		renderable.Var( "layer", &RenderableEntity::layer );
+		renderable.Prop( "position", &RenderableEntity::get_position, &RenderableEntity::set_position );
+		renderable.Prop( "velocity", &RenderableEntity::get_velocity, &RenderableEntity::set_velocity );
 		root.Bind( "RenderableEntity", renderable );
 		
 		Sqrat::DerivedClass<SpriteEntity, RenderableEntity, EntityAllocator<SpriteEntity> > sprite( script::get_vm() );
 		sprite.Ctor<RenderableEntity*>();
 		sprite.Func( "set_sprite", &SpriteEntity::set_sprite );
-		sprite.Prop( "world_origin", &SpriteEntity::get_world_origin, &SpriteEntity::set_world_origin );
-		sprite.Prop( "screen_origin", &SpriteEntity::get_screen_origin, &SpriteEntity::set_screen_origin );
 		root.Bind( "SpriteEntity", sprite );
 
-		Sqrat::DerivedClass<EmitterEntity, Entity, EntityAllocator<EmitterEntity> > emitter( script::get_vm() );
+		Sqrat::DerivedClass<EmitterEntity, RenderableEntity, EntityAllocator<EmitterEntity> > emitter( script::get_vm() );
 		emitter.Ctor<RenderableEntity*>();
 		emitter.Func( "set_emitter", &EmitterEntity::set_emitter );
 		root.Bind( "EmitterEntity", emitter );
@@ -1300,6 +1309,13 @@ public:
 		gamerules.Func( "tick", &GameRules::native_tick );
 		gamerules.Func( "step", &GameRules::native_step );
 		root.Bind( "GameRules", gamerules );
+		
+		
+		Sqrat::Class<Script_RenderInterface> render( script::get_vm() );
+		render.StaticFunc( "width", &Script_RenderInterface::get_render_width );
+		render.StaticFunc( "height", &Script_RenderInterface::get_render_height );
+		root.Bind( "render", render );
+		
 		
 		script::execute_file("scripts/project_huckleberry.nut");
 

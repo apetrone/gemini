@@ -1,19 +1,3 @@
-print( "Hello from squirrel!\n" )
-
-function test()
-{
-	print( "setting up game\n" )
-
-
-	local e = Entity()
-
-	e.name = "Vehicle"
-
-}
-
-// test()
-
-
 // class RotatingModel extends ModelEntity
 // {
 // 	function tick()
@@ -71,7 +55,7 @@ class Player extends SpriteEntity
 
 		if ( smoke_puff && (ticks_to_remove > 0) )
 		{
-			ticks_to_remove--
+			// ticks_to_remove--
 		}
 
 		if ( ticks_to_remove == 0 )
@@ -85,11 +69,11 @@ class Player extends SpriteEntity
 	function step( delta_seconds )
 	{
 		base.step( delta_seconds )
-		this.world_origin = this.world_origin + vec2( 35 * delta_seconds, 0 )
+		//this.position = this.position + vec2( 35 * delta_seconds, 0 )
 
 		if ( smoke_puff )
 		{
-			smoke_puff.position = this.world_origin + smoke_offset
+			smoke_puff.position = this.position + smoke_offset
 		}
 	}
 }
@@ -160,17 +144,21 @@ class Enemy extends SpriteEntity
 
 // enemy <- Enemy()
 // enemy.set_sprite( "sprites/enemy" )
-// enemy.world_origin = vec2( 120, 100 )
+// enemy.position = vec2( 120, 100 )
 
 
 class HuckleberryRules extends GameRules
 {
-	sprite = null
+	player = null
+	// cows = []
 	function startup()
 	{
-		sprite = Player()
-		sprite.world_origin = vec2( 150, 100 )
-		sprite.set_sprite( "sprites/player" )
+		player = Player()
+		player.position = vec2( 150, 100 )
+		player.set_sprite( "sprites/player" )
+
+		// local cow = Cow()
+		// cows.push( cow )
 	}
 
  	function tick()
@@ -189,4 +177,60 @@ class HuckleberryRules extends GameRules
 	}
 }
 
+
+
+
+
+
+
+class Martian extends SpriteEntity
+{
+	SEEKING = 1
+
+
+	start_origin = vec2(100, 50)
+	start_velocity = vec2(80, 0)
+	advance = vec2(0, 60)
+
+	constructor()
+	{
+		base.constructor()
+
+		this.position = start_origin
+		this.velocity = start_velocity
+		set_sprite( "sprites/martian" )
+	}
+}
+
+
+
+
+
+
+class Firebird extends GameRules
+{
+	next_spawn = 0
+	martians = []
+
+	function startup()
+	{
+		// nothing here
+		print( "Width: " + render.width() + "\n" )
+		print( "Height: " + render.height() + "\n" )
+	}
+
+	function step( delta_seconds )
+	{
+		next_spawn -= delta_seconds
+		if ( next_spawn <= 0 )
+		{
+			next_spawn = 1
+			print( "Spawn a new martian\n" )
+			local m = Martian()
+			martians.push( m )
+		}
+	}
+}
+
 gamerules <- HuckleberryRules()
+// gamerules <- Firebird()
