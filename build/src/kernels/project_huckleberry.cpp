@@ -974,13 +974,16 @@ void SpriteEntity::render( RenderGlobals & rg )
 	glm::vec2 screen = this->world_position.render;
 	glm::vec2 & scale = this->scale;
 
-	assets::SpriteClip * clip = this->sprite_config->get_clip_by_index( this->current_animation );
-	if (clip && clip->is_valid_frame( this->current_frame ))
+	if ( this->sprite_config )
 	{
-		this->add_sprite_to_layer(rg.sprite_stream, 0, screen.x, screen.y, scale.x*this->width, scale.y*this->height, this->color, clip->uvs_for_frame( this->current_frame ));
-		assets::Material * material = assets::materials()->find_with_id( this->material_id );
-		rg.render_stream( material, rg.sprite_stream, rg.camera );
-		rg.commands.rewind();
+		assets::SpriteClip * clip = this->sprite_config->get_clip_by_index( this->current_animation );
+		if (clip && clip->is_valid_frame( this->current_frame ))
+		{
+			this->add_sprite_to_layer(rg.sprite_stream, 0, screen.x, screen.y, scale.x*this->width, scale.y*this->height, this->color, clip->uvs_for_frame( this->current_frame ));
+			assets::Material * material = assets::materials()->find_with_id( this->material_id );
+			rg.render_stream( material, rg.sprite_stream, rg.camera );
+			rg.commands.rewind();
+		}
 	}
 	
 	RenderableEntity::render( rg );
