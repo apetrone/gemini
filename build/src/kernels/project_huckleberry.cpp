@@ -926,6 +926,9 @@ struct SpriteEntity : public RenderableEntity
 	virtual void native_tick();
 	virtual void render( RenderGlobals & rg );
 	
+	void set_color( const Color & color ) { this->color = color; }
+	Color get_color() const { return this->color; }
+	
 	void set_sprite( const char * path );
 	void play_animation( const char * name );
 
@@ -1297,6 +1300,7 @@ public:
 		Sqrat::DerivedClass<SpriteEntity, RenderableEntity, EntityAllocator<SpriteEntity> > sprite( script::get_vm() );
 		sprite.Ctor<RenderableEntity*>();
 		sprite.Func( "set_sprite", &SpriteEntity::set_sprite );
+		sprite.Prop( "color", &SpriteEntity::get_color, &SpriteEntity::set_color );
 		root.Bind( "SpriteEntity", sprite );
 
 		Sqrat::DerivedClass<EmitterEntity, RenderableEntity, EntityAllocator<EmitterEntity> > emitter( script::get_vm() );

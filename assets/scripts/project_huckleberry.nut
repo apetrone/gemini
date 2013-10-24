@@ -45,7 +45,7 @@ class Player extends SpriteEntity
 
 		smoke_puff = EmitterEntity( this )
 		smoke_puff.set_emitter( "sprites/exhaust" )
-		
+
 		this.layer = 0
 	}
 
