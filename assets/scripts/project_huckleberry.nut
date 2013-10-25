@@ -78,57 +78,6 @@ class Player extends SpriteEntity
 	}
 }
 
-// states
-enum CowState
-{
-	GRAZING,
-	BEING_ABDUCTED,
-	FALLING,
-	ABDUCTION_COOLDOWN,
-}
-
-class Cow extends SpriteEntity
-{
-	direction 			= 0
-	state 				= CowState.GRAZING
-	next_think			= 0
-
-	constructor()
-	{
-		base.constructor()
-		set_sprite( "sprites/cow" )
-	}
-
-	function step( delta_seconds )
-	{
-
-	}
-
-	function tick()
-	{
-		local vel = this.velocity
-		local pos = this.position
-		if ( state == CowState.GRAZING )
-		{
-			vel.x = direction * 20.0
-			vel.y = 0
-		}
-		else if ( state == CowState.BEING_ABDUCTED )
-		{
-			vel.x = 0
-		}
-		else if ( state == CowState.FALLING )
-		{
-			vel.y += 9.8
-		}
-		else if ( state == CowState.ABDUCTION_COOLDOWN )
-		{
-			state = CowState.GRAZING
-		}
-
-		this.velocity = vel
-	}
-}
 
 class Enemy extends SpriteEntity
 {
@@ -180,21 +129,38 @@ class HuckleberryRules extends GameRules
 
 
 
+enum MartianStates
+{
+	MARTIAN_INVALID,
+	MARTIAN_SEEKING,
+	MARTIAN_FOUND_TARGET,
+	MARTIAN_ABDUCTING,
+	MARTIAN_FINISHED_ABDUCTION,
+	MARTIAN_ESCAPE_WITH_ABDUCTEE
+}
+
+
 
 
 
 class Martian extends SpriteEntity
 {
-	SEEKING = 1
+	target_cow			= null
+	sound_abduction		= null
+	target_delta		= null
 
-
-	start_origin = vec2(100, 50)
-	start_velocity = vec2(80, 0)
-	advance = vec2(0, 60)
+	level				= 0
+	advance 			= vec2(0, 60)
+	direction			= 1
+	side				= 0
 
 	constructor()
 	{
 		base.constructor()
+
+		// -render.width() * 3
+		local start_origin = vec2( 50, 50 )
+		local start_velocity = vec2(120, 0)
 
 		this.position = start_origin
 		this.velocity = start_velocity
@@ -205,6 +171,58 @@ class Martian extends SpriteEntity
 
 
 
+// states
+enum CowState
+{
+	GRAZING,
+	BEING_ABDUCTED,
+	FALLING,
+	ABDUCTION_COOLDOWN,
+}
+
+class Cow extends SpriteEntity
+{
+	direction 			= 0
+	state 				= CowState.GRAZING
+	next_think			= 0
+	bounds				= []
+
+	constructor()
+	{
+		base.constructor()
+		set_sprite( "sprites/cow" )
+	}
+
+	function step( delta_seconds )
+	{
+
+	}
+
+	function tick()
+	{
+		local vel = this.velocity
+		local pos = this.position
+		if ( state == CowState.GRAZING )
+		{
+			vel.x = direction * 20.0
+			vel.y = 0
+		}
+		else if ( state == CowState.BEING_ABDUCTED )
+		{
+			vel.x = 0
+		}
+		else if ( state == CowState.FALLING )
+		{
+			vel.y += 9.8
+		}
+		else if ( state == CowState.ABDUCTION_COOLDOWN )
+		{
+			state = CowState.GRAZING
+		}
+
+		this.velocity = vel
+	}
+}
 
 
 class Firebird extends GameRules
@@ -232,5 +250,5 @@ class Firebird extends GameRules
 	}
 }
 
-gamerules <- HuckleberryRules()
-// gamerules <- Firebird()
+// gamerules <- HuckleberryRules()
+gamerules <- Firebird()
