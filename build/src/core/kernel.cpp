@@ -34,6 +34,7 @@
 #include "assets.hpp"
 #include "configloader.hpp"
 #include "font.hpp"
+#include "script.hpp"
 
 #if LINUX
 	#include <stdlib.h> // for qsort
@@ -305,6 +306,9 @@ namespace kernel
 			return kernel::ConfigFailed;
 		}
 		
+		// setup script subsystem
+		script::startup();
+		
 		// try to setup the renderer
 		if ( config_result != kernel::Application_NoWindow )
 		{
@@ -319,9 +323,10 @@ namespace kernel
 			font::startup();
 		}
 		
-		// try to setup audio
+		// initialize subsystems
 		audio::startup();
 		input::startup();
+		
 		
 		// application instance failed startup
 		ApplicationResult startup_result = _active_application->startup( kernel::instance()->parameters() );
@@ -353,6 +358,7 @@ namespace kernel
 		input::shutdown();
 		audio::shutdown();
 		renderer::shutdown();
+		script::shutdown();
 		core::shutdown();
 		
 		// shutdown, cleanup

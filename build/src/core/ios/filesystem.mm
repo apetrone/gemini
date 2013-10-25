@@ -26,7 +26,7 @@
 #include <stdio.h> // for printf
 #include <sys/stat.h> // for fs::FileExists
 #include "xfile.h"
-#include "log.h"
+#include <slim/xlog.h>
 #include "memory.hpp"
 
 #include <CoreFoundation/CoreFoundation.h>
@@ -65,7 +65,7 @@ namespace fs
 {
 
 	
-	void * mobile_audio_file_to_buffer( const char * filename, int & buffer_length )
+	void * mobile_audio_file_to_buffer( const char * filename, size_t & buffer_length )
 	{
 		unsigned char * ptr;
 		AudioFileID fileID;

@@ -51,6 +51,8 @@ namespace renderer
 		DC_CLEAR,
 		DC_CLEARCOLOR,
 		DC_CLEARDEPTH,
+		DC_CULLMODE,
+		
 		DC_VIEWPORT,
 		
 		DC_DRAWCALL,
@@ -64,6 +66,7 @@ namespace renderer
 	
 	enum DriverState
 	{
+		STATE_BACKFACE_CULLING,
 		STATE_BLEND,
 		STATE_DEPTH_TEST,
 		STATE_DEPTH_WRITE,
@@ -97,7 +100,11 @@ namespace renderer
 		BLEND_ONE_MINUS_SRC1_ALPHA		
 	}; // RenderBlendType
 	
-	
+	enum CullMode
+	{
+		CULLMODE_FRONT,
+		CULLMODE_BACK,
+	}; // CullMode
 	
 	// returns 0 on failure, 1 on success
 	int startup( DriverType driver );

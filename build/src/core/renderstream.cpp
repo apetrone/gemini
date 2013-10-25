@@ -46,6 +46,7 @@ void RenderStream::load_offset( long offset )
 void RenderStream::rewind()
 {
 	stream.rewind();
+//	stream.clear();
 	num_commands = 0;
 }
 
@@ -112,6 +113,12 @@ void RenderStream::add_clear( unsigned int bitflags )
 {
 	add_command( renderer::DC_CLEAR );
 	stream.write( bitflags );
+}
+
+void RenderStream::add_cullmode( renderer::CullMode mode )
+{
+	add_command( renderer::DC_CULLMODE );
+	stream.write( mode );
 }
 
 void RenderStream::add_viewport( int x, int y, int width, int height )

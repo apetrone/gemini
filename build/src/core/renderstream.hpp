@@ -52,6 +52,7 @@ struct RenderStream
 	void add_command( int type );
 	void add_clearcolor( float r, float g, float b, float a );
 	void add_clear( unsigned int bitflags );
+	void add_cullmode( renderer::CullMode mode );
 	void add_viewport( int x, int y, int width, int height );
 	void add_uniform1i( int uniform_location, int value );
 	void add_sampler2d( int uniform_location, int texture_unit, int texture_id );

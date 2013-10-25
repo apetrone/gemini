@@ -118,6 +118,7 @@ char * query_program_info_log( GLObject handle )
 GLenum driver_state_to_gl_state( renderer::DriverState state )
 {
 	GLenum state_list[] = {
+		GL_CULL_FACE,
 		GL_BLEND,
 		GL_DEPTH_TEST,
 	};
@@ -154,7 +155,15 @@ GLenum convert_blendstate( renderer::RenderBlendType state )
 	return glblend[ state ];
 } // convert_blendstate
 
-
+GLenum cullmode_to_gl_cullmode( renderer::CullMode mode )
+{
+	GLenum cullmode[] = {
+		GL_FRONT,
+		GL_BACK
+	};
+	
+	return cullmode[ mode ];
+} // cullmode_to_gl_cullmode
 
 void state_op_enabledisable( renderer::DriverState state, MemoryStream & stream, renderer::IRenderDriver * driver )
 {
@@ -197,6 +206,7 @@ gemgl_state_function operator_for_state( renderer::DriverState state )
 {
 	// map driver state to operator function
 	gemgl_state_function operator_map[] = {
+		state_op_enabledisable,
 		state_op_enabledisable,
 		state_op_enabledisable,
 		state_op_depthmask,

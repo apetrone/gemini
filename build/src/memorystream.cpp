@@ -60,6 +60,11 @@ int MemoryStream::read( void * destination, int num_bytes )
 } // read
 
 
+long MemoryStream::offset_pointer() const
+{
+	return offset;
+} // offset_pointer
+
 int MemoryStream::write( const void * src, int num_bytes )
 {
 	if ( !data )
@@ -93,7 +98,7 @@ void MemoryStream::seek( long requested_offset, bool is_absolute )
 	}
 } // seek
 
-long MemoryStream::offset_pointer() const
+void MemoryStream::clear()
 {
-	return offset;
-} // offset_pointer
+	memset( this->data, 0, this->data_size );
+} // clear

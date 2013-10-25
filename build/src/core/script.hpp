@@ -21,28 +21,39 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "renderer.hpp"
+#include <squirrel.h>
+#include <sqstdio.h>
+#include <sqstdaux.h>
+#include <sqstdsystem.h>
+#include <sqstdmath.h>
 
-#define FAIL_IF_GLERROR( error ) if ( error != GL_NO_ERROR ) { return false; }
+#include <sqrat.h>
 
-#include "gemgl.hpp" // for GLObject
-#include "stackstring.hpp"
-
-GLenum vertexbuffer_drawtype_to_gl_drawtype( renderer::VertexBufferDrawType type );
-GLenum vertexbuffer_buffertype_to_gl_buffertype( renderer::VertexBufferBufferType type );
-GLenum shaderobject_type_to_gl_shaderobjecttype( renderer::ShaderObjectType type );
-
-// the callee is responsible for deallocating the memory returned from this function
-char * query_shader_info_log( GLObject handle );
-
-// the callee is responsible for deallocating the memory returned from this function
-char * query_program_info_log( GLObject handle );
-
-GLenum driver_state_to_gl_state( renderer::DriverState state );
-GLenum convert_blendstate( renderer::RenderBlendType state );
-
-GLenum cullmode_to_gl_cullmode( renderer::CullMode mode );
-
-typedef void (*gemgl_state_function)(renderer::DriverState, MemoryStream &, renderer::IRenderDriver *);
-
-gemgl_state_function operator_for_state( renderer::DriverState state );
+namespace script
+{
+	const int64_t MINIMUM_STACK_SIZE = 128;
+	void startup( int64_t stack_size = script::MINIMUM_STACK_SIZE );
+	void shutdown();
+	
+	const char * string_for_type( int sqtype );
+	void print_stack( HSQUIRRELVM vm );
+	
+	HSQUIRRELVM get_vm();
+	
+	template <class Type>
+	void get_variable( const SQChar * name, Type & value )
+	{
+		Sqrat::Object obj = Sqrat::RootTable( get_vm() ).GetSlot( name );
+		if ( !obj.IsNull() )
+		{
+			value = obj.Cast<Type>();
+		}
+	} // get_variable
+	
+	// run a script file; returns true on success, false on failure/exception
+	bool execute_file( const char * filename );
+	
+	bool find_function( const char * name, Sqrat::Function & function );
+	HSQOBJECT find_member( HSQOBJECT class_obj, const char * name );
+	void check_result( SQRESULT result, const char * debug_string );
+}; // namespace script

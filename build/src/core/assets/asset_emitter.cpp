@@ -44,12 +44,19 @@ namespace assets
 	{
 		std::string temp = value.asString();
 		
+		uint32_t colors[4] = { 255, 255, 255, 255 };
+		
 		// try RGBA
-		if (sscanf(temp.c_str(), "%c, %c, %c, %c", &out.r, &out.g, &out.b, &out.a) < 4)
+		if (sscanf(temp.c_str(), "%i, %i, %i, %i", &colors[0], &colors[1], &colors[2], &colors[3]) < 4)
 		{
 			// try just RGB
-			sscanf(temp.c_str(), "%c, %c, %c", &out.r, &out.g, &out.b);
+			sscanf(temp.c_str(), "%i, %i, %i", &colors[0], &colors[1], &colors[2] );
 		}
+
+		out.r = colors[0];
+		out.g = colors[1];
+		out.b = colors[2];
+		out.a = colors[3];
 	}
 	
 	void float_value( Json::Value & value, float & out )
@@ -123,10 +130,10 @@ namespace assets
 		for( ; citer != channels.end(); ++citer )
 		{
 			Json::Value object = (*citer);
-			LOGV("object: %s\n", citer.key().asString().c_str());
+//			LOGV("object: %s\n", citer.key().asString().c_str());
 			Json::Value frame_delay_seconds = object["frame_delay_seconds"];
 			Json::Value frames = object["frames"];
-			LOGV("total items: %i\n", frames.size());
+//			LOGV("total items: %i\n", frames.size());
 			if (citer.key().asString() == "color")
 			{
 				Color * colors = CREATE_ARRAY(Color, frames.size());

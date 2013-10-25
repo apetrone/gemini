@@ -81,14 +81,16 @@ namespace memory
 				
 		void deallocate(pointer _Ptr, size_type)
 		{	// deallocate object at _Ptr, ignore size
-			DESTROY(_Ty, _Ptr);
+//			DESTROY( _Ty, _Ptr );
+			DEALLOC( _Ptr );
 //			::operator delete(_Ptr);
 		}
 		
-		pointer allocate(size_type _Count)
+		pointer allocate(size_type _Count, const void * hint = 0)
 		{	// allocate array of _Count elements
-			return CREATE_ARRAY(_Ty, _Count );
-//			return (pointer)::operator new( _Count * sizeof(_Ty) );
+//			return CREATE_ARRAY( _Ty, _Count );
+
+			return (pointer)ALLOC( _Count * sizeof(_Ty) );
 		}
 		/*
 		 pointer allocate(size_type _Count, const void * = 0)

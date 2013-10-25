@@ -79,6 +79,7 @@ struct ParticleEmitter
 	void step( float delta_seconds );
 	void purge();
 	void load_from_emitter_config( assets::EmitterConfig * emitter_config );
+	void generate_particle( Particle * particle );
 }; // ParticleEmitter
 
 typedef std::vector<ParticleEmitter*> ParticleEmitterVector;

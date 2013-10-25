@@ -48,7 +48,6 @@ namespace font
 	
 	unsigned int f_generate_texture( int width, int height, void * pixels )
 	{
-		
 		renderer::IRenderDriver * driver = renderer::driver();
 		renderer::TextureParameters params;
 		
@@ -183,6 +182,9 @@ namespace font
 		shader->attributes[2].set_key( "in_color" ); shader->attributes[2].second = 2;
 		
 		assets::load_shader( "shaders/fontshader", internal::_shader );
+		
+		// generate ccw triangles
+		sth_set_ccw_triangles();
 	} // startup
 
 	void shutdown()

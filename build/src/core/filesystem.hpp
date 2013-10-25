@@ -59,8 +59,9 @@ namespace fs
 
 	int read_file_stats( const char * fullpath, FileStats & file_stats );
 	
-#if !PLATFORM_IS_MOBILE
 	bool file_exists( const char * path, bool path_is_relative=true );
+#if !PLATFORM_IS_MOBILE
+
 	bool directory_exists( const char * path, bool path_is_relative=true );
 #endif
 

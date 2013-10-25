@@ -22,7 +22,7 @@
 #include "kernel_ios.h"
 #include <string.h>
 #include <stdio.h>
-#include "log.h"
+#include <slim/xlog.h>
 
 #import <Foundation/Foundation.h>
 #import <TargetConditionals.h>

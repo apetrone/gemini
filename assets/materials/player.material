@@ -6,7 +6,7 @@
 		"diffusemap" :
 		{
 			"type" : "sampler",
-			"texture" : "textures/ships"
+			"texture" : "textures/pixelgirl"
 		}
 	}
 }

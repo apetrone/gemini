@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "audio_extaudio_decoder.hpp"
-#include "log.h"
+#include <slim/xlog.h>
 #include <slim/xstr.h>
 
 using namespace audio;
