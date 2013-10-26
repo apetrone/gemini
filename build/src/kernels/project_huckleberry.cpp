@@ -737,7 +737,7 @@ void Entity::tick()
 
 void Entity::bind_functions()
 {
-	LOGV( "Entity::bind_functions: %p\n", this );
+//	LOGV( "Entity::bind_functions: %p\n", this );
 	this->on_tick = script::find_member( this->class_object, "tick" );
 	this->on_step = script::find_member( this->class_object, "step" );
 } // bind_functions
@@ -803,7 +803,7 @@ struct RenderableEntity : public Entity
 
 	
 	glm::vec2 get_position() const { return this->world_position.current; }
-	void set_position( const glm::vec2 & origin ) { this->world_position.snap( origin ); }
+	void set_position( const glm::vec2 & origin ) { this->world_position.current = origin; }
 	
 	glm::vec2 get_velocity() const { return this->velocity; }
 	void set_velocity( const glm::vec2 & velocity ) { this->velocity = velocity; }
@@ -931,6 +931,8 @@ struct SpriteEntity : public RenderableEntity
 	
 	void set_sprite( const char * path );
 	void play_animation( const char * name );
+	float get_width();
+	float get_height();
 
 	void add_sprite_to_layer( renderer::VertexStream & stream, unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords );
 }; // SpriteEntity
@@ -958,8 +960,6 @@ SpriteEntity::~SpriteEntity()
 void SpriteEntity::native_step( float delta_seconds )
 {
 	this->world_position.step( delta_seconds );
-	
-//	this->world_position.current += glm::vec2( 5, 1 );
 //	LOGV( "native_step SpriteEntity\n" );
 }
 
@@ -1025,6 +1025,24 @@ void SpriteEntity::play_animation( const char * name )
 	
 	LOGV( "unable to find animation: %s\n", name );
 } // play_animation
+
+float SpriteEntity::get_width()
+{
+	if ( !this->sprite_config )
+	{
+		return 0;
+	}
+	return (this->sprite_config->width * this->sprite_config->scale.x);
+} // get_width
+
+float SpriteEntity::get_height()
+{
+	if ( !this->sprite_config )
+	{
+		return 0;
+	}
+	return (this->sprite_config->height * this->sprite_config->scale.y);
+} // get_height
 
 void SpriteEntity::add_sprite_to_layer( renderer::VertexStream & stream, unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords )
 {
@@ -1301,6 +1319,8 @@ public:
 		sprite.Ctor<RenderableEntity*>();
 		sprite.Func( "set_sprite", &SpriteEntity::set_sprite );
 		sprite.Prop( "color", &SpriteEntity::get_color, &SpriteEntity::set_color );
+		sprite.Func( "width", &SpriteEntity::get_width );
+		sprite.Func( "height", &SpriteEntity::get_height );
 		root.Bind( "SpriteEntity", sprite );
 
 		Sqrat::DerivedClass<EmitterEntity, RenderableEntity, EntityAllocator<EmitterEntity> > emitter( script::get_vm() );
@@ -1351,27 +1371,27 @@ public:
 	
 	virtual void step( kernel::Params & params )
 	{
-		float dt = params.framedelta_filtered_msec * .001;
+		float delta_seconds = params.framedelta_filtered_msec * .001;
 		debugdraw::update( params.framedelta_filtered_msec );
 		
 		rg.camera.move_speed = 10.0f;
 		
 		if ( input::state()->keyboard().is_down(input::KEY_W) )
 		{
-			rg.camera.move_forward( dt );
+			rg.camera.move_forward( delta_seconds );
 		}
 		else if ( input::state()->keyboard().is_down(input::KEY_S) )
 		{
-			rg.camera.move_backward( dt );
+			rg.camera.move_backward( delta_seconds );
 		}
 		
 		if ( input::state()->keyboard().is_down(input::KEY_A) )
 		{
-			rg.camera.move_left( dt );
+			rg.camera.move_left( delta_seconds );
 		}
 		else if ( input::state()->keyboard().is_down(input::KEY_D) )
 		{
-			rg.camera.move_right( dt );
+			rg.camera.move_right( delta_seconds );
 		}
 		
 		if ( world )
@@ -1380,8 +1400,6 @@ public:
 			world->ClearForces();
 		}
 		
-		float delta_seconds = params.framedelta_filtered_msec * 0.001;
-		
 		Sqrat::RootTable root( script::get_vm() );
 		Sqrat::Object gamerules = root.GetSlot( "gamerules" );
 		if ( !gamerules.IsNull() )
@@ -1389,7 +1407,7 @@ public:
 			GameRules * gr = gamerules.Cast<GameRules*>();
 			if ( gr )
 			{
-				gr->step( delta_seconds );
+				gr->step( kernel::instance()->parameters().step_interval_seconds );
 			}
 		}
 		
@@ -1398,7 +1416,7 @@ public:
 		EntityVector::iterator end = entity_list<Entity>().objects.end();
 		for( ; it != end; ++it )
 		{
-			(*it)->step( delta_seconds );
+			(*it)->step( kernel::instance()->parameters().step_interval_seconds );
 		}
 	}
 

@@ -75,6 +75,8 @@ struct Color
 		b = _b;
 		a = _a;
 	}
+	
+	void set_color(unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a );
 }; // Color
 
 

@@ -32,6 +32,15 @@
 #include "util.hpp"
 #include "debugdraw.hpp"
 
+void Color::set_color( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a )
+{
+	r = _r;
+	g = _g;
+	b = _b;
+	a = _a;
+	LOGV( "color: %i %i %i %i\n", r, g, b, a );
+}
+
 namespace script
 {
 	HSQUIRRELVM _sqvm = 0;
@@ -69,6 +78,40 @@ namespace script
 				return 0;
 			}
 		} // vec2_add
+	
+		SQInteger vec2_multiply( HSQUIRRELVM v )
+		{
+			if ( sq_gettop(v) == 2 )
+			{
+				Sqrat::Var<const glm::vec2&> self(v, 1);
+				Sqrat::Var<const glm::vec2&> other(v, 2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::vec2 result = self.value * other.value;
+					Sqrat::PushVar( v, result );
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				
+				Sqrat::Var<float> fother(v,2);
+				if ( !Sqrat::Error::Instance().Occurred(v) )
+				{
+					glm::vec2 r = self.value * fother.value;
+					Sqrat::PushVar( v, r );
+					return 1;
+				}
+				Sqrat::Error::Instance().Clear(v);
+				
+				LOGE( "ERROR vec2_multiply\n" );
+				
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		} // vec2_multiply
 	
 		SQInteger vec3_add( HSQUIRRELVM v )
 		{
@@ -598,6 +641,7 @@ namespace script
 			//execute_file(front.c_str());
 		} // script_include
 		
+
 		
 		void initialize_vm( HSQUIRRELVM vm )
 		{
@@ -632,6 +676,7 @@ namespace script
 			bind_vec2.Var( "x", &glm::vec2::x );
 			bind_vec2.Var( "y", &glm::vec2::y );
 			bind_vec2.SquirrelFunc( "_add", bind::vec2_add );
+			bind_vec2.SquirrelFunc( "_mul", bind::vec2_multiply );
 			Sqrat::RootTable( vm ).Bind( "vec2", bind_vec2 );
 			
 			Sqrat::Class<glm::vec3> bind_vec3( vm );
@@ -681,8 +726,8 @@ namespace script
 			color.Var( "g", &Color::g );
 			color.Var( "b", &Color::b );
 			color.Var( "a", &Color::a );
+			color.Func( "set", &Color::set_color );
 			root.Bind( "Color", color );
-			
 			
 			Sqrat::Table debug( vm );
 			debug.Func( "axes", debugdraw::axes );

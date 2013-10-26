@@ -150,21 +150,52 @@ class Martian extends SpriteEntity
 	target_delta		= null
 
 	level				= 0
-	advance 			= vec2(0, 60)
+	advance 			= 60
 	direction			= 1
 	side				= 0
 
+	start_origin 		= vec2( 50, 50 )
 	constructor()
 	{
 		base.constructor()
 
 		// -render.width() * 3
-		local start_origin = vec2( 50, 50 )
-		local start_velocity = vec2(120, 0)
+		
+		local start_velocity = vec2( 120, 0)
 
+		this.color = Color(255, 255, 255, 255)
 		this.position = start_origin
 		this.velocity = start_velocity
 		set_sprite( "sprites/martian" )
+		level = 0
+	}
+
+
+	function step( delta_seconds )
+	{
+		this.position = this.position + (this.velocity * delta_seconds)
+		if ( this.position.x > (render.width() - (this.width()/2.0)) )
+		{
+			this.position = vec2( start_origin.x, this.position.y + this.advance )
+			level++
+		}
+
+		base.step( delta_seconds )
+	}
+
+	function tick()
+	{
+		local barrier_size = (render.width() * 3)
+		local left_barrier = -barrier_size
+		local right_barrier = render.width() + barrier_size
+
+		//if (level == 0)
+		//{
+			this.color.set( 0, 128, 128, 255 )
+		//}
+
+
+		base.tick()
 	}
 }
 
@@ -243,7 +274,7 @@ class Firebird extends GameRules
 		if ( next_spawn <= 0 )
 		{
 			next_spawn = 1
-			print( "Spawn a new martian\n" )
+			//print( "Spawn a new martian\n" )
 			local m = Martian()
 			martians.push( m )
 		}
