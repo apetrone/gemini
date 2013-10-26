@@ -163,13 +163,11 @@ class Martian extends SpriteEntity
 		
 		local start_velocity = vec2( 120, 0)
 
-		this.color = Color(255, 255, 255, 255)
 		this.position = start_origin
 		this.velocity = start_velocity
 		set_sprite( "sprites/martian" )
 		level = 0
 	}
-
 
 	function step( delta_seconds )
 	{
@@ -189,10 +187,14 @@ class Martian extends SpriteEntity
 		local left_barrier = -barrier_size
 		local right_barrier = render.width() + barrier_size
 
-		//if (level == 0)
-		//{
-			this.color.set( 0, 128, 128, 255 )
-		//}
+		if (level == 0)
+		{
+			this.set_color( 255, 128, 128, 255 )
+		}
+		else if (level == 1)
+		{
+			this.set_color( 128, 255, 128, 255 )
+		}
 
 
 		base.tick()

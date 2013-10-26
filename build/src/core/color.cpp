@@ -19,40 +19,49 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
 
 #include <typedefs.h>
-#include "render_utilities.hpp"
-
-#ifdef RGB
-#undef RGB
-#endif
-
-#define RGBToUInt( r, g, b ) (((r&255)<<24) | ((g&255) <<16) | ((b&255)<<8) | 255)
-#define UIntToRGB( i, c ) c[0] = ((i>>24)&255); c[1] = ((i>>16)&255); c[2] = ((i>>8)&255)
+#include "color.hpp"
+#include <slim/xlog.h>
 
 // unsigned char rgba[3];
 // unsigned int mycolor = RGBToUInt( 255, 128, 75 );
 // UIntToRGB( mycolor, rgb );
 
-struct Color
+static inline float ubTof32( unsigned char c )
 {
-	unsigned char r, g, b, a;
-	
-	Color( unsigned char _r = 255, unsigned char _g = 255, unsigned char _b = 255, unsigned char _a = 255 );
-	static Color fromFloatPointer( const float * fl, int num_elements );
-	void set( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a = 255 );
-}; // Color
+	return float(( c / 255.0f ));
+}
+
+static inline unsigned int f32Toub( float f )
+{
+	return (f * 255.0f);
+}
 
 
-template <>
-struct Interpolator<Color>
+Color::Color( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a )
 {
-	Color operator()( const Color & start, const Color & end, float t )
+	set( _r, _g, _b, _a );
+}
+
+Color Color::fromFloatPointer( const float * fl, int num_elements )
+{
+	Color c;
+	if ( num_elements == 4 )
 	{
-		return Color( lerp( start.r, end.r, t ),
-					 lerp( start.g, end.g, t ),
-					 lerp( start.b, end.b, t ),
-					 lerp( start.a, end.a, t ) );
+		c.set( f32Toub(fl[0]), f32Toub(fl[1]), f32Toub(fl[2]), f32Toub(fl[3]) );
 	}
-};
+	else
+	{
+		c.set( f32Toub(fl[0]), f32Toub(fl[1]), f32Toub(fl[2]), 255 );
+	}
+	return c;
+}
+
+void Color::set( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a )
+{
+	r = _r;
+	g = _g;
+	b = _b;
+	a = _a;
+}

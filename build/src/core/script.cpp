@@ -32,15 +32,6 @@
 #include "util.hpp"
 #include "debugdraw.hpp"
 
-void Color::set_color( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a )
-{
-	r = _r;
-	g = _g;
-	b = _b;
-	a = _a;
-	LOGV( "color: %i %i %i %i\n", r, g, b, a );
-}
-
 namespace script
 {
 	HSQUIRRELVM _sqvm = 0;
@@ -726,7 +717,7 @@ namespace script
 			color.Var( "g", &Color::g );
 			color.Var( "b", &Color::b );
 			color.Var( "a", &Color::a );
-			color.Func( "set", &Color::set_color );
+			color.Func( "set", &Color::set );
 			root.Bind( "Color", color );
 			
 			Sqrat::Table debug( vm );

@@ -925,9 +925,11 @@ struct SpriteEntity : public RenderableEntity
 	virtual void native_step( float delta_seconds );
 	virtual void native_tick();
 	virtual void render( RenderGlobals & rg );
+
+	void set_color( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a );
 	
-	void set_color( const Color & color ) { this->color = color; }
-	Color get_color() const { return this->color; }
+//	void set_color( const Color & color ) { this->color = color; }
+//	Color get_color() const { return this->color; }
 	
 	void set_sprite( const char * path );
 	void play_animation( const char * name );
@@ -1004,6 +1006,11 @@ void SpriteEntity::set_sprite( const char * path )
 		LOGV( "Unable to load %s\n", path );
 	}
 } // set_sprite
+
+void SpriteEntity::set_color( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a )
+{
+	this->color.set( _r, _g, _b, _a );
+} // set_color
 
 void SpriteEntity::play_animation( const char * name )
 {
@@ -1318,7 +1325,9 @@ public:
 		Sqrat::DerivedClass<SpriteEntity, RenderableEntity, EntityAllocator<SpriteEntity> > sprite( script::get_vm() );
 		sprite.Ctor<RenderableEntity*>();
 		sprite.Func( "set_sprite", &SpriteEntity::set_sprite );
-		sprite.Prop( "color", &SpriteEntity::get_color, &SpriteEntity::set_color );
+		sprite.Func( "set_color", &SpriteEntity::set_color );
+//		sprite.Var( "color", &SpriteEntity::color );
+//		sprite.Prop( "color", &SpriteEntity::get_color, &SpriteEntity::set_color );
 		sprite.Func( "width", &SpriteEntity::get_width );
 		sprite.Func( "height", &SpriteEntity::get_height );
 		root.Bind( "SpriteEntity", sprite );
