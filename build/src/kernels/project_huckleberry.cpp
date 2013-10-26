@@ -1585,7 +1585,6 @@ public:
 		// trim entities flagged for removal
 		EntityVector::iterator it = entity_list<Entity>().objects.begin();
 		EntityVector::iterator end = entity_list<Entity>().objects.end();
-		size_t ent_count = entity_list<Entity>().count();
 		for( ; it != end; ++it )
 		{
 			Entity * ent = (*it);
@@ -1593,7 +1592,7 @@ public:
 			{
 //				LOGV( "removing flagged entity: %p\n", ent );
 				it = entity_list<Entity>().objects.erase( it );
-				ent->flags &= ~Entity::EF_DELETE_INSTANCE;
+//				ent->flags &= ~Entity::EF_DELETE_INSTANCE;
 				delete ent;
 			}
 		}

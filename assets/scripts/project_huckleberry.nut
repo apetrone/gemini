@@ -127,16 +127,24 @@ class HuckleberryRules extends GameRules
 }
 
 
-
-
-enum MartianStates
+enum CollisionGroup
 {
-	MARTIAN_INVALID,
-	MARTIAN_SEEKING,
-	MARTIAN_FOUND_TARGET,
-	MARTIAN_ABDUCTING,
-	MARTIAN_FINISHED_ABDUCTION,
-	MARTIAN_ESCAPE_WITH_ABDUCTEE
+	NONE,
+	COW,
+	MARTIAN,
+	PLAYER,
+	PROJECTILE,
+	SENSOR
+}
+
+enum MartianState
+{
+	INVALID,
+	SEEKING,
+	FOUND_TARGET,
+	ABDUCTING,
+	FINISHED_ABDUCTION,
+	ESCAPE_WITH_ABDUCTEE
 }
 
 
@@ -163,13 +171,13 @@ class Martian extends SpriteEntity
 		// -render.width() * 3
 		
 		start_origin = vec2( -this.width(), 50 )
-		local start_velocity = vec2( 120, 0)
+		local start_velocity = vec2( 240, 0)
 
 		this.position = start_origin
 		this.velocity = start_velocity
 		set_sprite( "sprites/martian" )
 		level = 0
-		state = MartianStates.MARTIAN_SEEKING
+		state = MartianState.SEEKING
 		this.advance = this.height() * 1.5
 	}
 
@@ -211,7 +219,7 @@ class Martian extends SpriteEntity
 			this.set_color( 255, 215, 0, 255 )
 		}
 
-		if (state == MartianStates.MARTIAN_SEEKING)
+		if (state == MartianState.SEEKING)
 		{
 			if ( position.x > right_barrier || position.x < left_barrier )
 			{
@@ -232,6 +240,41 @@ class Martian extends SpriteEntity
 
 				level++
 			}
+		}
+		else if (state == MartianState.FOUND_TARGET)
+		{
+			// try to align with the target first
+			velocity.x *= 0.98
+			local target_pos = target.position
+			this.target_delta = target_pos - this.position
+			if ( abs(target_delta.x) < 2 )
+			{
+				// aligned with the target, now abduct it!
+				state = MartianState.ABDUCTING
+				target.state = CowState.BEING_ABDUCTED
+				print( "TODO: play abduction ray sound\n" )
+				//abduction_ray_sound = audio.play( abduction_ray, 1 )
+			}
+		}
+		else if (state == MartianState.ABDUCTING)
+		{
+			velocity.x = 0
+			state = MartianState.FINISHED_ABDUCTION
+		}
+		else if (state == MartianState.FINISHED_ABDUCTION)
+		{
+			print( "TODO: stop audio playback\n" )
+			// audio.stop( abduction_ray_sound )
+			// abduction_ray_sound = -1
+			state = MartianState.ESCAPE_WITH_ABDUCTEE
+			velocity.y = -5
+		}
+		else if (state == MartianState.ESCAPE_WITH_ABDUCTEE)
+		{
+			velocity.y -= 0.25
+			velocity.x += 0.3 * direction
+			local target_pos = this.position + target_delta
+			target.position = target_pos
 		}
 
 		this.velocity = velocity
@@ -254,14 +297,18 @@ enum CowState
 class Cow extends SpriteEntity
 {
 	direction 			= 0
-	state 				= CowState.GRAZING
-	next_think			= 0
+	state 				= null
 	bounds				= []
+	side 				= 0
 
 	constructor()
 	{
 		base.constructor()
+		state = CowState.GRAZING
 		set_sprite( "sprites/cow" )
+		// this.collision_group = CollisionGroup.COW
+		// this.collision_mask = CollisionGroup.SENSOR
+
 	}
 
 	function step( delta_seconds )
@@ -285,6 +332,7 @@ class Cow extends SpriteEntity
 		else if ( state == CowState.FALLING )
 		{
 			vel.y += 9.8
+
 		}
 		else if ( state == CowState.ABDUCTION_COOLDOWN )
 		{
@@ -295,11 +343,17 @@ class Cow extends SpriteEntity
 	}
 }
 
+class Projectile extends SpriteEntity
+{
+
+}
+
 
 class Firebird extends GameRules
 {
 	next_spawn = 0
 	martians = []
+	projectiles = []
 
 	function startup()
 	{
@@ -322,12 +376,21 @@ class Firebird extends GameRules
 
 	function tick()
 	{
-		for (local i = 0; i < martians.len(); ++i )
+		for (local i = 0; i < martians.len(); ++i)
 		{
 			local m = martians[i]
 			if (m.level >= 4)
 			{
 				martians.remove(i)
+			}
+		}
+
+		for(local i = 0; i < projectiles.len(); ++i)
+		{
+			local p = projectiles[i]
+			if (p.position.x > render.width() || p.position.x < 0 || p.position.y < 0 || p.position.y > render.height())
+			{
+				print( "remove this projectile\n" )
 			}
 		}
 	}
