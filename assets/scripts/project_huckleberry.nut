@@ -149,43 +149,50 @@ class Martian extends SpriteEntity
 	sound_abduction		= null
 	target_delta		= null
 
+	state 				= 0
 	level				= 0
-	advance 			= 60
+	advance 			= 0
 	direction			= 1
 	side				= 0
 
-	start_origin 		= vec2( 50, 50 )
+	start_origin 		= null
 	constructor()
 	{
 		base.constructor()
 
 		// -render.width() * 3
 		
+		start_origin = vec2( -this.width(), 50 )
 		local start_velocity = vec2( 120, 0)
 
 		this.position = start_origin
 		this.velocity = start_velocity
 		set_sprite( "sprites/martian" )
 		level = 0
+		state = MartianStates.MARTIAN_SEEKING
+		this.advance = this.height() * 1.5
 	}
 
 	function step( delta_seconds )
 	{
 		this.position = this.position + (this.velocity * delta_seconds)
-		if ( this.position.x > (render.width() - (this.width()/2.0)) )
-		{
-			this.position = vec2( start_origin.x, this.position.y + this.advance )
-			level++
-		}
+		// if ( this.position.x > (render.width() - (this.width()/2.0)) )
+		// {
+		// 	this.position = vec2( start_origin.x, this.position.y + this.advance )
+		// 	level++
+		// }
 
 		base.step( delta_seconds )
 	}
 
 	function tick()
 	{
-		local barrier_size = (render.width() * 3)
-		local left_barrier = -barrier_size
-		local right_barrier = render.width() + barrier_size
+		local barrier_size = (render.width() * 2)
+		local right_barrier = render.width()
+		local left_barrier = -this.width()
+		
+		local position = this.position
+		local velocity = this.velocity
 
 		if (level == 0)
 		{
@@ -195,8 +202,39 @@ class Martian extends SpriteEntity
 		{
 			this.set_color( 128, 255, 128, 255 )
 		}
+		else if (level == 2)
+		{
+			this.set_color( 128, 128, 255, 255 )
+		}
+		else if (level == 3)
+		{
+			this.set_color( 255, 215, 0, 255 )
+		}
 
+		if (state == MartianStates.MARTIAN_SEEKING)
+		{
+			if ( position.x > right_barrier || position.x < left_barrier )
+			{
+				velocity.x = -velocity.x
+				direction = -direction
+				position.y += advance
+				if ( position.x > right_barrier && velocity.x > 0 )
+				{
+					position.x = barrier_size
+				}
+				else if ( position.x < left_barrier && velocity.x < 0 )
+				{
+					position.x = left_barrier
+				}
 
+				// update position
+				this.position = position
+
+				level++
+			}
+		}
+
+		this.velocity = velocity
 		base.tick()
 	}
 }
@@ -228,7 +266,7 @@ class Cow extends SpriteEntity
 
 	function step( delta_seconds )
 	{
-
+		base.step( delta_seconds )
 	}
 
 	function tick()
@@ -279,6 +317,18 @@ class Firebird extends GameRules
 			//print( "Spawn a new martian\n" )
 			local m = Martian()
 			martians.push( m )
+		}
+	}
+
+	function tick()
+	{
+		for (local i = 0; i < martians.len(); ++i )
+		{
+			local m = martians[i]
+			if (m.level >= 4)
+			{
+				martians.remove(i)
+			}
 		}
 	}
 }

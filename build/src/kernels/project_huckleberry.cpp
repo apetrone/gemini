@@ -617,11 +617,24 @@ struct EntityList
 			}
 		}
 	} // remove
+
+	void clear()
+	{
+		objects.clear();
+	} // clear
 	
 	void purge()
 	{
-		objects.clear();
+		for (typename EntityVectorType::iterator it = this->objects.begin(); it != this->objects.end(); ++it )
+		{
+			Entity * obj = (*it);
+			delete obj;
+		}
+		
+		clear();
 	} // purge
+	
+
 	
 	Type * find_with_name( const std::string & name )
 	{
@@ -1279,7 +1292,40 @@ public:
 	
 	virtual void event( kernel::SystemEvent & event )
 	{
+		if ( event.subtype == kernel::WindowGainFocus )
+		{
+#if 0
+			sq_pushroottable( script::get_vm() );
+			sq_pushstring( script::get_vm(), "gamerules", -1 );
+			sq_deleteslot( script::get_vm(), -2, false );
+			sq_poptop( script::get_vm() );
+			
 		
+			// purge all entities
+			size_t num_ents = entity_list<Entity>().objects.size();
+			LOGV( "ents still alive: %i\n", num_ents );
+			
+			entity_list<Entity>().purge();
+			entity_list<RenderableEntity>().clear();
+			
+			// execute the script again
+			script::execute_file("scripts/project_huckleberry.nut");
+			
+			// call startup on the new instance of gamerules
+			{
+				Sqrat::RootTable root( script::get_vm() );
+				Sqrat::Object gamerules = root.GetSlot( "gamerules" );
+				if ( !gamerules.IsNull() )
+				{
+					GameRules * gr = gamerules.Cast<GameRules*>();
+					if ( gr )
+					{
+						gr->startup();
+					}
+				}
+			}
+#endif
+		}
 	}
 	
 	virtual kernel::ApplicationResult config( kernel::Params & params )
@@ -1290,13 +1336,8 @@ public:
 		return kernel::Application_Success;
 	}
 	
-	virtual kernel::ApplicationResult startup( kernel::Params & params )
+	void setup_script()
 	{
-		// physics world setup
-		world = physics::create_world( b2Vec2( 0, 0 ) );
-
-	
-	
 		Sqrat::RootTable root( script::get_vm() );
 		
 		// bind Entity to scripting language
@@ -1306,10 +1347,10 @@ public:
 		entity.Var( "id", &Entity::id );
 		entity.Prop( "name", &Entity::get_name, &Entity::set_name );
 		entity.Func( "remove", &Entity::remove );
-
+		
 		root.Bind( "Entity", entity );
-
-	
+		
+		
 		Sqrat::DerivedClass<ModelEntity, Entity, EntityAllocator<ModelEntity> > model( script::get_vm() );
 		model.Func( "set_model", &ModelEntity::set_model );
 		model.Prop( "transform", &ModelEntity::get_transform, &ModelEntity::set_transform );
@@ -1326,17 +1367,17 @@ public:
 		sprite.Ctor<RenderableEntity*>();
 		sprite.Func( "set_sprite", &SpriteEntity::set_sprite );
 		sprite.Func( "set_color", &SpriteEntity::set_color );
-//		sprite.Var( "color", &SpriteEntity::color );
-//		sprite.Prop( "color", &SpriteEntity::get_color, &SpriteEntity::set_color );
+		//		sprite.Var( "color", &SpriteEntity::color );
+		//		sprite.Prop( "color", &SpriteEntity::get_color, &SpriteEntity::set_color );
 		sprite.Func( "width", &SpriteEntity::get_width );
 		sprite.Func( "height", &SpriteEntity::get_height );
 		root.Bind( "SpriteEntity", sprite );
-
+		
 		Sqrat::DerivedClass<EmitterEntity, RenderableEntity, EntityAllocator<EmitterEntity> > emitter( script::get_vm() );
 		emitter.Ctor<RenderableEntity*>();
 		emitter.Func( "set_emitter", &EmitterEntity::set_emitter );
 		root.Bind( "EmitterEntity", emitter );
-
+		
 		Sqrat::Class<GameRules> gamerules( script::get_vm() );
 		gamerules.Func( "startup", &GameRules::native_startup );
 		gamerules.Func( "tick", &GameRules::native_tick );
@@ -1348,10 +1389,10 @@ public:
 		render.StaticFunc( "width", &Script_RenderInterface::get_render_width );
 		render.StaticFunc( "height", &Script_RenderInterface::get_render_height );
 		root.Bind( "render", render );
-		
-		
+	
+	
 		script::execute_file("scripts/project_huckleberry.nut");
-
+		
 		{
 			Sqrat::Object gamerules = root.GetSlot( "gamerules" );
 			if ( !gamerules.IsNull() )
@@ -1363,6 +1404,21 @@ public:
 				}
 			}
 		}
+	}
+	
+	virtual kernel::ApplicationResult startup( kernel::Params & params )
+	{
+		// physics world setup
+		world = physics::create_world( b2Vec2( 0, 0 ) );
+
+	
+	
+		setup_script();
+		
+		
+		
+
+
 	
 		debugdraw::startup(1024);
 		
@@ -1529,12 +1585,13 @@ public:
 		// trim entities flagged for removal
 		EntityVector::iterator it = entity_list<Entity>().objects.begin();
 		EntityVector::iterator end = entity_list<Entity>().objects.end();
+		size_t ent_count = entity_list<Entity>().count();
 		for( ; it != end; ++it )
 		{
 			Entity * ent = (*it);
 			if ((only_deferred && (ent->flags & Entity::EF_DELETE_INSTANCE)) || !only_deferred )
 			{
-				LOGV( "removing flagged entity: %p\n", ent );
+//				LOGV( "removing flagged entity: %p\n", ent );
 				it = entity_list<Entity>().objects.erase( it );
 				ent->flags &= ~Entity::EF_DELETE_INSTANCE;
 				delete ent;

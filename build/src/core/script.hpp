@@ -56,4 +56,5 @@ namespace script
 	bool find_function( const char * name, Sqrat::Function & function );
 	HSQOBJECT find_member( HSQOBJECT class_obj, const char * name );
 	void check_result( SQRESULT result, const char * debug_string );
+	void bind_common();
 }; // namespace script

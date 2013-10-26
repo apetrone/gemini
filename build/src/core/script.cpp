@@ -729,6 +729,7 @@ namespace script
 			root.Bind( "debug", debug );
 			
 		} // initialize_vm
+
 		
 		void print_script_error( HSQUIRRELVM vm, const char * action )
 		{
@@ -939,4 +940,8 @@ namespace script
 		}
 	} // check_result
 	
+	void bind_common()
+	{
+		initialize_vm( script::get_vm() );
+	} // bind_common
 }; // namespace script

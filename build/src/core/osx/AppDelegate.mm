@@ -47,6 +47,12 @@ DesktopKernel _desktop_kernel( 0, 0 );
 -(void)applicationWillResignActive:(NSNotification *)notification
 {
 	NSLog( @"applicationWillResignActive" );
+	if ( has_started )
+	{
+		kernel::Event<kernel::System> event;
+		event.subtype = kernel::WindowLostFocus;
+		kernel::event_dispatch(event);
+	}
 }
 
 -(void)applicationDidBecomeActive:(NSNotification *)notification
@@ -63,6 +69,12 @@ DesktopKernel _desktop_kernel( 0, 0 );
 //	[window toggleFullScreen:nil];
 
 		[self performSelectorOnMainThread:@selector(run_kernel) withObject:self waitUntilDone:NO];
+	}
+	else
+	{
+		kernel::Event<kernel::System> event;
+		event.subtype = kernel::WindowGainFocus;
+		kernel::event_dispatch(event);
 	}
 }
 
