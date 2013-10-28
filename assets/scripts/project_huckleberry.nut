@@ -171,7 +171,7 @@ class Martian extends SpriteEntity
 		// -render.width() * 3
 		
 		start_origin = vec2( -this.width(), 50 )
-		local start_velocity = vec2( 240, 0)
+		local start_velocity = vec2( 120, 0)
 
 		this.position = start_origin
 		this.velocity = start_velocity

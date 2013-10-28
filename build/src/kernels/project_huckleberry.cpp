@@ -37,13 +37,13 @@
 
 
 #include <Box2D/Box2D.h>
-
+const float PIXELS_PER_METER = 32.0f;
+#define PIXELS_TO_METER( x ) (x/PIXELS_PER_METER)
+#define METERS_TO_PIXELS( x ) ((x) * PIXELS_PER_METER)
 
 namespace physics
 {
-	#define PIXELS_PER_METER 32.0f
-	#define PIXELS_TO_METER( x ) (float)((x)/(float)PIXELS_PER_METER)
-	#define METERS_TO_PIXELS( x ) (float)((x) * PIXELS_PER_METER)
+
 
 
 	struct PhysicsStep
@@ -52,6 +52,7 @@ namespace physics
 		
 	};
 	
+	b2World * get_world();
 	b2World * create_world( const b2Vec2 & gravity );
 	void destroy_world( b2World * world );
 	
@@ -85,21 +86,76 @@ namespace physics
 	};
 };
 
+
+static b2Body * create_sprite_body( int width, int height, float x, float y, int flags = 0, int category = 0, int mask = 0 )
+{
+	b2BodyDef body_def;
+	b2Body * body = 0;
+	
+	
+	
+	body_def.position.Set( PIXELS_TO_METER(x), PIXELS_TO_METER(y) );
+	body_def.fixedRotation = false;
+	body_def.allowSleep = true;
+	
+	// TODO: is this static?
+	body_def.type = b2_dynamicBody;
+	
+	body = physics::create_body( physics::get_world(), &body_def );
+	
+	if ( body )
+	{
+		b2FixtureDef fixture;
+		fixture.density = 1.0f;
+		fixture.restitution = 0.1f;
+		
+		// TODO: is this a sensor?
+		fixture.filter.categoryBits = category;
+		fixture.filter.maskBits = mask;
+		
+		b2PolygonShape body_shape;
+		body_shape.SetAsBox( PIXELS_TO_METER(width), PIXELS_TO_METER(height) );
+		fixture.shape = &body_shape;
+		body->CreateFixture( &fixture );
+		
+		// TODO: if needs fixed rotation
+//		body->SetFixedRotation( true );
+
+		
+	}
+	
+	
+
+	
+	return body;
+} // create_sprite_body
+
 namespace physics
 {
+	b2World * _world = 0;
+	
+	b2World * get_world()
+	{
+		return _world;
+	} // get_world
+	
 	b2World * create_world( const b2Vec2 & gravity )
 	{
-		b2World * world = new b2World( gravity );
-		world->SetAutoClearForces( false );
-		return world;
+		if ( !_world )
+		{
+			_world = new b2World( gravity );
+			_world->SetAutoClearForces( false );
+		}
+		
+		return _world;
 	} // create_world
 	
-	void destroy_world( b2World * world )
+	void destroy_world()
 	{
-		if ( world )
+		if ( _world )
 		{
-			delete world;
-			world = 0;
+			delete _world;
+			_world = 0;
 		}
 	} // destroy_world
 	
@@ -342,7 +398,7 @@ struct Entity
 	std::string name;
 	uint8_t type;
 	uint32_t flags;
-	
+		
 	Entity();
 	virtual ~Entity();
 		
@@ -921,16 +977,14 @@ struct SpriteEntity : public RenderableEntity
 	unsigned short height;
 	short hotspot_x;
 	short hotspot_y;
-	
-	
-	
+
 	Color color;
 	glm::vec2 scale;
+	b2Body * physics_body;
+	unsigned int collision_group;
+	unsigned int collision_mask;
 
-	
 	float rotation;
-
-	
 	
 	SpriteEntity( RenderableEntity * parent = 0 );
 	virtual ~SpriteEntity();
@@ -970,6 +1024,11 @@ SpriteEntity::SpriteEntity( RenderableEntity * parent ) : RenderableEntity( pare
 SpriteEntity::~SpriteEntity()
 {
 	entity_list<SpriteEntity>().remove( this );
+	
+	if ( physics_body )
+	{
+		physics::destroy_body( physics::get_world(), this->physics_body );
+	}
 } // ~SpriteEntity
 
 void SpriteEntity::native_step( float delta_seconds )
@@ -1013,6 +1072,9 @@ void SpriteEntity::set_sprite( const char * path )
 		this->height = this->sprite_config->height;
 		this->scale = this->sprite_config->scale;
 		this->material_id = this->sprite_config->material_id;
+		
+		b2BodyDef body_def;
+		this->physics_body = create_sprite_body( this->width, this->height, 0, 0, 0, collision_group, collision_mask );
 	}
 	else
 	{
@@ -1645,7 +1707,7 @@ public:
 	
 	virtual void shutdown( kernel::Params & params )
 	{
-		physics::destroy_world( world );
+		physics::destroy_world();
 		debugdraw::shutdown();
 	}
 }; // ProjectHuckleberry
