@@ -181,8 +181,11 @@ class Martian extends SpriteEntity
 		state = MartianState.SEEKING
 		this.advance = this.height() * 1.5
 
-		// state = MartianState.IDLE
-		// this.position = vec2( 150, 50 )
+		state = MartianState.IDLE
+		if ( state == MartianState.IDLE )
+		{
+			this.position = vec2( 150, 50 )
+		}
 	}
 
 	function step( delta_seconds )

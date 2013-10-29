@@ -1030,6 +1030,19 @@ void RenderableEntity::render( RenderGlobals & rg )
 	}
 } // render
 
+class PhysicsEntityContactListener : public b2ContactListener
+{
+	virtual void BeginContact( b2Contact * contact )
+	{
+		LOGV( "BeginContact\n" );
+	}
+	
+	virtual void EndContact( b2Contact * contact )
+	{
+		LOGV( "EndContact\n" );
+	}
+}; // PhysicsEntityContactListener
+
 struct PhysicsEntity : public RenderableEntity
 {
 	b2Body * physics_body;
@@ -1105,6 +1118,11 @@ struct PhysicsEntity : public RenderableEntity
 		}
 	} // set_velocity
 #endif
+
+	virtual void on_collide( PhysicsEntity * other )
+	{
+		LOGV( "on_collide with %p\n", other );
+	} // on_collide
 }; // PhysicsEntity
 
 
@@ -1475,6 +1493,7 @@ public:
 	RenderGlobals rg;
 	
 	b2World * world;
+	PhysicsEntityContactListener contact_listener;
 	physics::physics2d_debug_renderer debug_renderer;
 	
 	virtual void event( kernel::KeyboardEvent & event )
@@ -1631,7 +1650,7 @@ public:
 	{
 		// physics world setup
 		world = physics::create_world( b2Vec2( 0, 0 ) );
-
+		world->SetContactListener( &contact_listener );
 		world->SetDebugDraw( &debug_renderer );
 		debug_renderer.SetFlags( b2Draw::e_aabbBit | b2Draw::e_centerOfMassBit | b2Draw::e_shapeBit );
 		setup_script();
