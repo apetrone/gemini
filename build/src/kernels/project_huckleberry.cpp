@@ -1030,18 +1030,7 @@ void RenderableEntity::render( RenderGlobals & rg )
 	}
 } // render
 
-class PhysicsEntityContactListener : public b2ContactListener
-{
-	virtual void BeginContact( b2Contact * contact )
-	{
-		LOGV( "BeginContact\n" );
-	}
-	
-	virtual void EndContact( b2Contact * contact )
-	{
-		LOGV( "EndContact\n" );
-	}
-}; // PhysicsEntityContactListener
+
 
 struct PhysicsEntity : public RenderableEntity
 {
@@ -1126,6 +1115,8 @@ struct PhysicsEntity : public RenderableEntity
 }; // PhysicsEntity
 
 
+
+
 PhysicsEntity::PhysicsEntity( RenderableEntity * parent ) : RenderableEntity( parent )
 {
 	this->physics_body = 0;
@@ -1139,6 +1130,26 @@ PhysicsEntity::~PhysicsEntity()
 	}
 } // ~PhysicsEntity
 
+
+class PhysicsEntityContactListener : public b2ContactListener
+{
+	virtual void BeginContact( b2Contact * contact )
+	{
+		LOGV( "BeginContact\n" );
+		PhysicsEntity * a = (PhysicsEntity*)contact->GetFixtureA()->GetBody()->GetUserData();
+		PhysicsEntity * b = (PhysicsEntity*)contact->GetFixtureB()->GetBody()->GetUserData();
+		
+		if ( a && b )
+		{
+			LOGV( "contact between %p and %p\n", a, b );
+		}
+	}
+	
+	virtual void EndContact( b2Contact * contact )
+	{
+		LOGV( "EndContact\n" );
+	}
+}; // PhysicsEntityContactListener
 
 struct SpriteEntity : public PhysicsEntity
 {
@@ -1653,6 +1664,7 @@ public:
 		world->SetContactListener( &contact_listener );
 		world->SetDebugDraw( &debug_renderer );
 		debug_renderer.SetFlags( b2Draw::e_aabbBit | b2Draw::e_centerOfMassBit | b2Draw::e_shapeBit );
+		
 		setup_script();
 		
 		

@@ -186,7 +186,7 @@ void Sprite::render( RenderControl & rc )
 		}
 
 	
-		debugdraw::point( glm::vec3(screen, 0.0f), Color(255,255,255), this->scale.x*(this->sprite_config->collision_size/2.0f), 0.0f );
+		debugdraw::point( glm::vec3(screen, 0.0f), Color(255,255,255), this->scale.x*(this->sprite_config->collision_width/2.0f), 0.0f );
 
 		assets::SpriteClip * clip = this->sprite_config->get_clip_by_index( current_animation );
 		if (clip && clip->is_valid_frame(current_frame))
