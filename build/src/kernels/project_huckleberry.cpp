@@ -107,7 +107,7 @@ namespace physics
 			
 			if ( last )
 			{
-				debugdraw::line( start, end, c );
+				debugdraw::line( start, end, c, 0 );
 			}
 			last = vertex;
 		}
@@ -118,7 +118,7 @@ namespace physics
 		{
 			start = glm::vec3( int(METERS_TO_PIXELS( last->x )), int(METERS_TO_PIXELS( last->y )), 0 );
 			end = glm::vec3( int(METERS_TO_PIXELS( vertex->x )), int(METERS_TO_PIXELS( vertex->y )), 0 );
-			debugdraw::line( start, end, c );
+			debugdraw::line( start, end, c, 0 );
 		}
 	}
 	
@@ -144,7 +144,7 @@ namespace physics
 	void physics2d_debug_renderer::DrawSegment(const b2Vec2& p1, const b2Vec2& p2, const b2Color& color)
 	{
 		Color c( color.r );
-		debugdraw::line( glm::vec3(p1.x, p1.y, 0), glm::vec3(p2.x, p2.y, 0), c );
+		debugdraw::line( glm::vec3(p1.x, p1.y, 0), glm::vec3(p2.x, p2.y, 0), c, 0 );
 	}
 	
 	/// Draw a transform. Choose your own length scale.
@@ -160,8 +160,7 @@ static b2Body * create_sprite_body( int width, int height, float x, float y, int
 {
 	b2BodyDef body_def;
 	b2Body * body = 0;
-	
-	
+
 	
 	body_def.position.Set( PIXELS_TO_METER(x), PIXELS_TO_METER(y) );
 	body_def.fixedRotation = false;
@@ -940,11 +939,11 @@ struct RenderableEntity : public Entity
 	glm::vec2 velocity;
 
 	
-	glm::vec2 get_position() const { return this->world_position.current; }
-	void set_position( const glm::vec2 & origin ) { this->world_position.current = origin; }
+	virtual glm::vec2 get_position() const { return this->world_position.current; }
+	virtual void set_position( const glm::vec2 & origin ) { this->world_position.current = origin; }
 	
-	glm::vec2 get_velocity() const { return this->velocity; }
-	void set_velocity( const glm::vec2 & velocity ) { this->velocity = velocity; }
+	virtual glm::vec2 get_velocity() const { return this->velocity; }
+	virtual void set_velocity( const glm::vec2 & velocity ) { this->velocity = velocity; }
 	
 	
 	RenderableEntity( RenderableEntity * parent );
@@ -1031,7 +1030,99 @@ void RenderableEntity::render( RenderGlobals & rg )
 	}
 } // render
 
-struct SpriteEntity : public RenderableEntity
+struct PhysicsEntity : public RenderableEntity
+{
+	b2Body * physics_body;
+	unsigned int collision_group;
+	unsigned int collision_mask;
+	
+	PhysicsEntity( RenderableEntity * parent = 0 );
+	~PhysicsEntity();
+	
+	virtual glm::vec2 get_position() const
+	{
+		glm::vec2 position;
+		
+		if ( physics_body )
+		{
+			b2Vec2 pos = physics_body->GetPosition();
+			position.x = METERS_TO_PIXELS(pos.x);
+			position.y = METERS_TO_PIXELS(pos.y);
+		}
+		else
+		{
+			position = this->world_position.current;
+		}
+		
+		return position;
+	}
+	
+	virtual void set_position( const glm::vec2 & origin )
+	{
+		if ( physics_body )
+		{
+			b2Vec2 position;
+			//			LOGV( "set position: %g, %g\n", origin.x, origin.y );
+			position.x = PIXELS_TO_METER(origin.x);
+			position.y = PIXELS_TO_METER(origin.y);
+			
+			physics_body->SetTransform( position, 0 );
+			this->world_position.current = glm::vec2( position.x, position.y );
+		}
+		else
+		{
+			this->world_position.current = origin;
+		}
+	}
+	
+#if 0
+	virtual glm::vec2 get_velocity() const
+	{
+		glm::vec2 velocity;
+		if ( physics_body )
+		{
+			b2Vec2 vel = physics_body->GetLinearVelocity();
+			velocity.x = METERS_TO_PIXELS( vel.x );
+			velocity.y = METERS_TO_PIXELS( vel.y );
+			return velocity;
+		}
+		
+		return this->velocity;
+	} // get_velocity
+	
+	virtual void set_velocity( const glm::vec2 & velocity )
+	{
+		if ( physics_body )
+		{
+			b2Vec2 v;
+			v.x = PIXELS_TO_METER( velocity.x );
+			v.y = PIXELS_TO_METER( velocity.y );
+			physics_body->SetLinearVelocity( v );
+		}
+		else
+		{
+			this->velocity = velocity;
+		}
+	} // set_velocity
+#endif
+}; // PhysicsEntity
+
+
+PhysicsEntity::PhysicsEntity( RenderableEntity * parent ) : RenderableEntity( parent )
+{
+	this->physics_body = 0;
+} // PhysicsEntity
+
+PhysicsEntity::~PhysicsEntity()
+{
+	if ( physics_body )
+	{
+		physics::destroy_body( physics::get_world(), this->physics_body );
+	}
+} // ~PhysicsEntity
+
+
+struct SpriteEntity : public PhysicsEntity
 {
 	// these compose the 'animation state'
 	unsigned short current_animation;	// currently active animation
@@ -1049,23 +1140,15 @@ struct SpriteEntity : public RenderableEntity
 
 	Color color;
 	glm::vec2 scale;
-	b2Body * physics_body;
-	unsigned int collision_group;
-	unsigned int collision_mask;
-
-	float rotation;
 	
 	SpriteEntity( RenderableEntity * parent = 0 );
-	virtual ~SpriteEntity();
+	~SpriteEntity();
 	
 	virtual void native_step( float delta_seconds );
 	virtual void native_tick();
 	virtual void render( RenderGlobals & rg );
 
 	void set_color( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a );
-	
-//	void set_color( const Color & color ) { this->color = color; }
-//	Color get_color() const { return this->color; }
 	
 	void set_sprite( const char * path );
 	void play_animation( const char * name );
@@ -1074,77 +1157,26 @@ struct SpriteEntity : public RenderableEntity
 
 	void add_sprite_to_layer( renderer::VertexStream & stream, unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords );
 	
-	glm::vec2 get_position() const
-	{
-		glm::vec2 position;
-		
-		if ( physics_body )
-		{
-			b2Vec2 pos = physics_body->GetPosition();
-			position.x = METERS_TO_PIXELS(pos.x);
-			position.y = METERS_TO_PIXELS(pos.y);
-		}
-		else
-		{
-			position = this->world_position.current;
-		}
-	
-		return position;
-	}
-	
-	void set_position( const glm::vec2 & origin )
-	{
-		if ( physics_body )
-		{
-			b2Vec2 position;
-//			LOGV( "set position: %g, %g\n", origin.x, origin.y );
-			position.x = PIXELS_TO_METER(origin.x);
-			position.y = PIXELS_TO_METER(origin.y);
-			
-			physics_body->SetTransform( position, 0 );
-			this->world_position.current = glm::vec2( position.x, position.y );
-		}
-		else
-		{
-			this->world_position.current = origin;
-		}
-	}
-	
-	glm::vec2 get_velocity() const
-	{
-		return this->velocity;
-	}
-	
-	void set_velocity( const glm::vec2 & velocity )
-	{
-		this->velocity = velocity;
-	}
+
 	
 }; // SpriteEntity
 
 
-SpriteEntity::SpriteEntity( RenderableEntity * parent ) : RenderableEntity( parent )
+SpriteEntity::SpriteEntity( RenderableEntity * parent ) : PhysicsEntity( parent )
 {
 	this->type = Sprite;
 	this->hotspot_x = 0;
 	this->hotspot_y = 0;
-	this->rotation = 0;
 	this->sprite_config = 0;
 	this->scale = glm::vec2(1.0f, 1.0f);
 	this->current_frame = 0;
 	this->current_animation = 0;
-	this->physics_body = 0;
 	entity_list<SpriteEntity>().add( this );
 } // SpriteEntity
 
 SpriteEntity::~SpriteEntity()
 {
 	entity_list<SpriteEntity>().remove( this );
-	
-	if ( physics_body )
-	{
-		physics::destroy_body( physics::get_world(), this->physics_body );
-	}
 } // ~SpriteEntity
 
 void SpriteEntity::native_step( float delta_seconds )
@@ -1548,15 +1580,16 @@ public:
 		renderable.Prop( "velocity", &RenderableEntity::get_velocity, &RenderableEntity::set_velocity );
 		root.Bind( "RenderableEntity", renderable );
 		
+		Sqrat::DerivedClass<PhysicsEntity, RenderableEntity, EntityAllocator<PhysicsEntity> > phys( script::get_vm() );
+		phys.Ctor<RenderableEntity*>();
+		phys.Prop( "position", &PhysicsEntity::get_position, &PhysicsEntity::set_position );
+//		phys.Prop( "velocity", &PhysicsEntity::get_velocity, &PhysicsEntity::set_velocity );
+		root.Bind( "PhysicsEntity", phys );
+		
 		Sqrat::DerivedClass<SpriteEntity, RenderableEntity, EntityAllocator<SpriteEntity> > sprite( script::get_vm() );
 		sprite.Ctor<RenderableEntity*>();
-		sprite.Prop( "position", &SpriteEntity::get_position, &SpriteEntity::set_position );
-		sprite.Prop( "velocity", &SpriteEntity::get_velocity, &SpriteEntity::set_velocity );
-		
 		sprite.Func( "set_sprite", &SpriteEntity::set_sprite );
 		sprite.Func( "set_color", &SpriteEntity::set_color );
-		//		sprite.Var( "color", &SpriteEntity::color );
-		//		sprite.Prop( "color", &SpriteEntity::get_color, &SpriteEntity::set_color );
 		sprite.Func( "width", &SpriteEntity::get_width );
 		sprite.Func( "height", &SpriteEntity::get_height );
 		root.Bind( "SpriteEntity", sprite );
