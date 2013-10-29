@@ -140,6 +140,7 @@ enum CollisionGroup
 enum MartianState
 {
 	INVALID,
+	IDLE,
 	SEEKING,
 	FOUND_TARGET,
 	ABDUCTING,
@@ -172,13 +173,16 @@ class Martian extends SpriteEntity
 		
 		start_origin = vec2( -this.width(), 50 )
 		local start_velocity = vec2( 120, 0)
-
+		set_sprite( "sprites/martian" )
 		this.position = start_origin
 		this.velocity = start_velocity
-		set_sprite( "sprites/martian" )
+		
 		level = 0
 		state = MartianState.SEEKING
 		this.advance = this.height() * 1.5
+
+		// state = MartianState.IDLE
+		// this.position = vec2( 150, 50 )
 	}
 
 	function step( delta_seconds )
@@ -196,7 +200,7 @@ class Martian extends SpriteEntity
 	function tick()
 	{
 		local barrier_size = (render.width() * 2)
-		local right_barrier = render.width()
+		local right_barrier = render.width() + this.width()
 		local left_barrier = -this.width()
 		
 		local position = this.position
@@ -277,6 +281,11 @@ class Martian extends SpriteEntity
 			target.position = target_pos
 		}
 
+		if ( state == MartianState.IDLE )
+		{
+			velocity.x = 0
+			velocity.y = 0
+		}
 		this.velocity = velocity
 		base.tick()
 	}

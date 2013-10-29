@@ -57,8 +57,8 @@ namespace assets
 		unsigned short width;
 		unsigned short height;
 		
-		
-		unsigned short collision_size;
+		unsigned short collision_width;
+		unsigned short collision_height;
 		float frame_delay;
 		glm::vec2 scale;
 		glm::vec3 attachments[2];

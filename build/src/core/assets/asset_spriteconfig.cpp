@@ -159,7 +159,8 @@ namespace assets
 		// setup some sane defaults...
 		sprite->scale = glm::vec2(1.0f, 1.0f);
 		sprite->frame_delay = 0.2f;
-		sprite->collision_size = 32;
+		sprite->collision_width = 32;
+		sprite->collision_height = 32;
 		sprite->width = 32;
 		sprite->height = 32;
 
@@ -189,13 +190,21 @@ namespace assets
 		sprite->height = height_pixels.asUInt();
 		
 		// load collision size
-		Json::Value collision_width = root["collision_size"];
+		Json::Value collision_width = root["collision_width"];
 		if ( collision_width.isNull() )
 		{
-			LOGE( "collision_size is required\n" );
+			LOGE( "collision_width is required\n" );
 			return util::ConfigLoad_Failure;
 		}
-		sprite->collision_size = collision_width.asUInt();
+		sprite->collision_width = collision_width.asUInt();
+		
+		Json::Value collision_height = root["collision_height"];
+		if ( collision_height.isNull() )
+		{
+			LOGE( "collision_height is required\n" );
+			return util::ConfigLoad_Failure;
+		}
+		sprite->collision_height = collision_height.asUInt();
 		
 		// frame delay
 		Json::Value frame_delay = root["frame_delay"];

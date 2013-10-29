@@ -84,6 +84,75 @@ namespace physics
 		/// @param xf a transform.
 		virtual void DrawTransform(const b2Transform& xf);
 	};
+	
+	/// Draw a closed polygon provided in CCW order.
+	void physics2d_debug_renderer::DrawPolygon(const b2Vec2* vertices, int vertexCount, const b2Color& color)
+	{
+		Color c( color.r );
+		const b2Vec2 * last = 0;
+		glm::vec3 start;
+		glm::vec3 end;
+		int v;
+		const b2Vec2 * vertex = 0;
+		for( v = 0; v < vertexCount; ++v )
+		{
+			vertex = &vertices[v];
+			
+			if ( last )
+			{
+				start = glm::vec3( int(METERS_TO_PIXELS( last->x )), int(METERS_TO_PIXELS( last->y )), 0 );
+			}
+			
+			end = glm::vec3( int(METERS_TO_PIXELS( vertex->x )), int(METERS_TO_PIXELS( vertex->y )), 0 );
+			
+			if ( last )
+			{
+				debugdraw::line( start, end, c );
+			}
+			last = vertex;
+		}
+		
+		// use the first vertex to close the loop
+		vertex = &vertices[0];
+		if ( last )
+		{
+			start = glm::vec3( int(METERS_TO_PIXELS( last->x )), int(METERS_TO_PIXELS( last->y )), 0 );
+			end = glm::vec3( int(METERS_TO_PIXELS( vertex->x )), int(METERS_TO_PIXELS( vertex->y )), 0 );
+			debugdraw::line( start, end, c );
+		}
+	}
+	
+	/// Draw a solid closed polygon provided in CCW order.
+	void physics2d_debug_renderer::DrawSolidPolygon(const b2Vec2* vertices, int vertexCount, const b2Color& color)
+	{
+//		LOGV( "DrawSolidPolygon\n" );
+	}
+	
+	/// Draw a circle.
+	void physics2d_debug_renderer::DrawCircle(const b2Vec2& center, float radius, const b2Color& color)
+	{
+		LOGV( "DrawCircle\n" );
+	}
+	
+	/// Draw a solid circle.
+	void physics2d_debug_renderer::DrawSolidCircle(const b2Vec2& center, float radius, const b2Vec2& axis, const b2Color& color)
+	{
+		LOGV( "DrawSolidCircle\n" );
+	}
+	
+	/// Draw a line segment.
+	void physics2d_debug_renderer::DrawSegment(const b2Vec2& p1, const b2Vec2& p2, const b2Color& color)
+	{
+		Color c( color.r );
+		debugdraw::line( glm::vec3(p1.x, p1.y, 0), glm::vec3(p2.x, p2.y, 0), c );
+	}
+	
+	/// Draw a transform. Choose your own length scale.
+	/// @param xf a transform.
+	void physics2d_debug_renderer::DrawTransform(const b2Transform& xf)
+	{
+//		LOGV( "DrawTransform\n" );
+	}
 };
 
 
@@ -1004,6 +1073,53 @@ struct SpriteEntity : public RenderableEntity
 	float get_height();
 
 	void add_sprite_to_layer( renderer::VertexStream & stream, unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords );
+	
+	glm::vec2 get_position() const
+	{
+		glm::vec2 position;
+		
+		if ( physics_body )
+		{
+			b2Vec2 pos = physics_body->GetPosition();
+			position.x = METERS_TO_PIXELS(pos.x);
+			position.y = METERS_TO_PIXELS(pos.y);
+		}
+		else
+		{
+			position = this->world_position.current;
+		}
+	
+		return position;
+	}
+	
+	void set_position( const glm::vec2 & origin )
+	{
+		if ( physics_body )
+		{
+			b2Vec2 position;
+//			LOGV( "set position: %g, %g\n", origin.x, origin.y );
+			position.x = PIXELS_TO_METER(origin.x);
+			position.y = PIXELS_TO_METER(origin.y);
+			
+			physics_body->SetTransform( position, 0 );
+			this->world_position.current = glm::vec2( position.x, position.y );
+		}
+		else
+		{
+			this->world_position.current = origin;
+		}
+	}
+	
+	glm::vec2 get_velocity() const
+	{
+		return this->velocity;
+	}
+	
+	void set_velocity( const glm::vec2 & velocity )
+	{
+		this->velocity = velocity;
+	}
+	
 }; // SpriteEntity
 
 
@@ -1017,7 +1133,7 @@ SpriteEntity::SpriteEntity( RenderableEntity * parent ) : RenderableEntity( pare
 	this->scale = glm::vec2(1.0f, 1.0f);
 	this->current_frame = 0;
 	this->current_animation = 0;
-		
+	this->physics_body = 0;
 	entity_list<SpriteEntity>().add( this );
 } // SpriteEntity
 
@@ -1045,7 +1161,10 @@ void SpriteEntity::native_tick()
 
 void SpriteEntity::render( RenderGlobals & rg )
 {
-	glm::vec2 screen = this->world_position.render;
+	glm::vec2 screen;// = this->world_position.render;
+	screen = this->get_position();
+	screen.x = int( screen.x );
+	screen.y = int( screen.y );
 	glm::vec2 & scale = this->scale;
 
 	if ( this->sprite_config )
@@ -1053,6 +1172,7 @@ void SpriteEntity::render( RenderGlobals & rg )
 		assets::SpriteClip * clip = this->sprite_config->get_clip_by_index( this->current_animation );
 		if (clip && clip->is_valid_frame( this->current_frame ))
 		{
+//			LOGV( "screen: %g, %g\n", screen.x, screen.y );
 			this->add_sprite_to_layer(rg.sprite_stream, 0, screen.x, screen.y, scale.x*this->width, scale.y*this->height, this->color, clip->uvs_for_frame( this->current_frame ));
 			assets::Material * material = assets::materials()->find_with_id( this->material_id );
 			rg.render_stream( material, rg.sprite_stream, rg.camera );
@@ -1074,7 +1194,9 @@ void SpriteEntity::set_sprite( const char * path )
 		this->material_id = this->sprite_config->material_id;
 		
 		b2BodyDef body_def;
-		this->physics_body = create_sprite_body( this->width, this->height, 0, 0, 0, collision_group, collision_mask );
+
+		this->physics_body = create_sprite_body( this->sprite_config->collision_width, this->sprite_config->collision_height, 0, 0, 0, collision_group, collision_mask );
+		this->physics_body->SetUserData( this );
 	}
 	else
 	{
@@ -1321,6 +1443,7 @@ public:
 	RenderGlobals rg;
 	
 	b2World * world;
+	physics::physics2d_debug_renderer debug_renderer;
 	
 	virtual void event( kernel::KeyboardEvent & event )
 	{
@@ -1427,6 +1550,9 @@ public:
 		
 		Sqrat::DerivedClass<SpriteEntity, RenderableEntity, EntityAllocator<SpriteEntity> > sprite( script::get_vm() );
 		sprite.Ctor<RenderableEntity*>();
+		sprite.Prop( "position", &SpriteEntity::get_position, &SpriteEntity::set_position );
+		sprite.Prop( "velocity", &SpriteEntity::get_velocity, &SpriteEntity::set_velocity );
+		
 		sprite.Func( "set_sprite", &SpriteEntity::set_sprite );
 		sprite.Func( "set_color", &SpriteEntity::set_color );
 		//		sprite.Var( "color", &SpriteEntity::color );
@@ -1473,8 +1599,8 @@ public:
 		// physics world setup
 		world = physics::create_world( b2Vec2( 0, 0 ) );
 
-	
-	
+		world->SetDebugDraw( &debug_renderer );
+		debug_renderer.SetFlags( b2Draw::e_aabbBit | b2Draw::e_centerOfMassBit | b2Draw::e_shapeBit );
 		setup_script();
 		
 		
