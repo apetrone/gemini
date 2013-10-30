@@ -310,6 +310,7 @@ project ( build_name )
 				xcodebuildsettings
 				{
 					'INFOPLIST_FILE = resources/osx/Info.plist',
+					'MACOSX_DEPLOYMENT_TARGET = 10.8',
 					-- 'CLANG_CXX_LANGUAGE_STANDARD = "c++0x"',
 					-- 'CLANG_CXX_LIBRARY = "libc++"'
 				}
