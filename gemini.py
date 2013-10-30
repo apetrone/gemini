@@ -1,6 +1,10 @@
 from gemini_common import BUILD_NAME, BUILD_ROOT, common_dependencies, construct_binpath, dependency_libpath, dependency_path
 
 class gemini(Builder):
+	@staticmethod
+	def global_params(*args, **kwargs):
+		return { 'macosx_deployment_target': '10.8' }
+
 	def setup(self, *args, **kwargs):
 		builder = kwargs.get( "builder", None )
 		target_platform = kwargs.get( "target_platform", None )
