@@ -181,7 +181,7 @@ class Martian extends SpriteEntity
 		state = MartianState.SEEKING
 		this.advance = this.height() * 1.5
 
-		state = MartianState.IDLE
+		state = MartianState.SEEKING
 		if ( state == MartianState.IDLE )
 		{
 			this.position = vec2( 150, 50 )
@@ -321,6 +321,7 @@ class Cow extends SpriteEntity
 		// this.collision_group = CollisionGroup.COW
 		// this.collision_mask = CollisionGroup.SENSOR
 
+		this.position = vec2( 100, 100 )
 	}
 
 	function step( delta_seconds )
@@ -366,6 +367,7 @@ class Firebird extends GameRules
 	next_spawn = 0
 	martians = []
 	projectiles = []
+	cows = []
 
 	function startup()
 	{
@@ -379,10 +381,15 @@ class Firebird extends GameRules
 		next_spawn -= delta_seconds
 		if ( next_spawn <= 0 )
 		{
-			next_spawn = 1
+			next_spawn = 10090000000
 			//print( "Spawn a new martian\n" )
 			local m = Martian()
 			martians.push( m )
+
+
+
+			local c = Cow()
+			cows.push( c )
 		}
 	}
 

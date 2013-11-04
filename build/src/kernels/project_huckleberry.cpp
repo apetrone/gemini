@@ -1133,6 +1133,19 @@ PhysicsEntity::~PhysicsEntity()
 
 class PhysicsEntityContactListener : public b2ContactListener
 {
+	virtual void PreSolve(b2Contact* contact, const b2Manifold* oldManifold)
+	{
+		LOGV( "PreSolve\n" );
+		PhysicsEntity * a = (PhysicsEntity*)contact->GetFixtureA()->GetBody()->GetUserData();
+		PhysicsEntity * b = (PhysicsEntity*)contact->GetFixtureB()->GetBody()->GetUserData();
+		
+		if ( a && b )
+		{
+			LOGV( "contact between %p and %p\n", a, b );
+			contact->SetEnabled(false);
+		}
+	}
+
 	virtual void BeginContact( b2Contact * contact )
 	{
 		LOGV( "BeginContact\n" );
@@ -1256,6 +1269,8 @@ void SpriteEntity::set_sprite( const char * path )
 		
 		b2BodyDef body_def;
 
+		collision_group = 2;
+		collision_mask = 2;
 		this->physics_body = create_sprite_body( this->sprite_config->collision_width, this->sprite_config->collision_height, 0, 0, 0, collision_group, collision_mask );
 		this->physics_body->SetUserData( this );
 	}
