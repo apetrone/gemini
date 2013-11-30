@@ -77,15 +77,15 @@ namespace core
 			xlog_set_default_log( &_system_log );
 			
 #if _WIN32
-			log_handler_t msvc_logger;
-			memset( &msvc_logger, 0, sizeof(log_handler_t) );
+			xlog_handler_t msvc_logger;
+			memset( &msvc_logger, 0, sizeof(xlog_handler_t) );
 			msvc_logger.close = vs_close;
 			msvc_logger.open = vs_open;
 			msvc_logger.message = vs_message;
 			msvc_logger.userdata = 0;
 
 			++total_log_handlers;
-			log_add_handler( &_system_log, &msvc_logger );
+			xlog_add_handler( &_system_log, &msvc_logger );
 #endif
 
 #ifndef __ANDROID__
