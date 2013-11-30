@@ -7,7 +7,7 @@ class bullet2Builder(Builder):
 		project_names = {
 			LINUX : 'bullet',
 			MACOSX : 'BULLET_PHYSICS',
-			WINDOWS : 'msvc/vs2010/0BulletSolution'
+			WINDOWS : 'BULLET_PHYSICS'
 		}
 
 		builder.root = "bullet2"
@@ -66,10 +66,11 @@ class bullet2Builder(Builder):
 	def generate(self, *args, **kwargs):
 		builder = kwargs.get( "builder", None )
 		target_platform = kwargs.get( "target_platform", None )
+		params = kwargs.get( "args", None )
 
 		gen = "None"
 		if target_platform is WINDOWS:
-			gen = "vs2010"
+			gen = params["cmake_generator"]
 		elif target_platform is LINUX:
 			gen = "Unix Makefiles"
 		elif target_platform is MACOSX:
