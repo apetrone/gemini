@@ -311,6 +311,7 @@ project ( build_name )
 				{
 					'INFOPLIST_FILE = resources/osx/Info.plist',
 					'MACOSX_DEPLOYMENT_TARGET = 10.8',
+					'SDKROOT = macosx10.8',
 					-- 'CLANG_CXX_LANGUAGE_STANDARD = "c++0x"',
 					-- 'CLANG_CXX_LIBRARY = "libc++"'
 				}

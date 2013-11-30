@@ -2,8 +2,22 @@ from gemini_common import BUILD_NAME, BUILD_ROOT, common_dependencies, construct
 
 class gemini(Builder):
 	@staticmethod
-	def global_params(*args, **kwargs):
-		return { 'macosx_deployment_target': '10.8' }
+	def global_params( *args, **kwargs ):
+		host_platform = kwargs.get( "host_platform", None )
+		params = {}
+
+		if host_platform is MACOSX:
+			params["sdkroot"] = "macosx10.8"
+			params["macosx_deployment_target"] = "10.8"
+			#params["gcc_c_language_standard"] = "gnu99"
+			#params["clang_cxx_language_standard"] = "c++11" # or "gnu++11"
+			#params["clang_cxx_library"] = "libc++"
+		elif host_platform is WINDOWS:
+			params["cmake_generator"] = "Visual Studio 10"
+			params["premake_action"] = "vs2010"
+			logging.info( "platform is windows" )
+
+		return params
 
 	def setup(self, *args, **kwargs):
 		builder = kwargs.get( "builder", None )
@@ -48,20 +62,6 @@ class gemini(Builder):
 		desktop_dependencies = list( set(common_dependencies(target_platform)) | set(["xwl/xwl.py", "assimp.py"]) )
 		d['depends'] = desktop_dependencies
 		return d
-
-	@staticmethod
-	def global_params( *args, **kwargs ):
-		host_platform = kwargs.get( "host_platform", None )
-		params = {}
-
-		if host_platform is MACOSX:
-			pass
-		elif host_platform is WINDOWS:
-			params["cmake_generator"] = "Visual Studio 10"
-			params["premake_action"] = "vs2010"
-			logging.info( "platform is windows" )
-
-		return params
 
 	def generate(self, *args, **kwargs):
 		builder = kwargs.get( "builder", None )
