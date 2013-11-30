@@ -49,6 +49,20 @@ class gemini(Builder):
 		d['depends'] = desktop_dependencies
 		return d
 
+	@staticmethod
+	def global_params( *args, **kwargs ):
+		host_platform = kwargs.get( "host_platform", None )
+		params = {}
+
+		if host_platform is MACOSX:
+			pass
+		elif host_platform is WINDOWS:
+			params["cmake_generator"] = "Visual Studio 10"
+			params["premake_action"] = "vs2010"
+			logging.info( "platform is windows" )
+
+		return params
+
 	def generate(self, *args, **kwargs):
 		builder = kwargs.get( "builder", None )
 		host_platform = kwargs.get( "host_platform", None )

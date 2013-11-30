@@ -9,7 +9,7 @@ class bullet2Builder(Builder):
 			MACOSX : 'BULLET_PHYSICS',
 			IPHONEOS : 'BULLET_PHYSICS',
 			IPHONESIMULATOR : 'BULLET_PHYSICS',
-			WINDOWS : 'msvc/vs2010/0BulletSolution'
+			WINDOWS : 'BULLET_PHYSICS'
 		}
 
 		builder.root = "bullet2"
@@ -42,25 +42,32 @@ class bullet2Builder(Builder):
 
 		libdir = "lib/%s/%s" % (params['architecture'], params['configuration'])
 
+		project_output = project.output
+
 		if params['platform'] is LINUX:
 			items = ['src']
 			items.append( project.output )
 			libdir = '/'.join( items )
+		elif params['platform'] is WINDOWS:
+			project_output = "%s_%s" % (project.output, params['configuration'].title())
+			libdir = "lib/%s" % (params['configuration'])
 
 		builder.includes = ['src']
-		builder.libs = [ project.output ]
+		builder.libs = [ project_output ]
 
 		#print( "%s -> %s" % ( project.name, project.output ) )
-		builder.addOutput( path=libdir, name=project.output, type=Builder.StaticLibrary )
+		builder.addOutput( path=libdir, name=project_output, type=Builder.StaticLibrary )
+
 
 
 	def generate(self, *args, **kwargs):
 		builder = kwargs.get( "builder", None )
 		target_platform = kwargs.get( "target_platform", None )
+		params = kwargs.get( "args", None )
 
 		gen = "None"
 		if target_platform is WINDOWS:
-			gen = "vs2010"
+			gen = params["cmake_generator"]
 		elif target_platform is LINUX:
 			gen = "Unix Makefiles"
 		elif target_platform is MACOSX:
