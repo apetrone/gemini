@@ -33,11 +33,12 @@ class assimpBuilder(Builder):
 		output_type = Builder.DynamicLibrary
 		output_name = project.name.lower()
 
-		if target_platform is LINUX:
-			builder.libs = ['assimp']
-		elif target_platform is MACOSX:
+		builder.libs = ['assimp']
+
+		if target_platform is MACOSX:
 			builder.libs = ['assimpD']
 			output_name += 'D'
+
 			#if params['configuration'] == "debug":
 			#driver.config = (params['configuration'].lower() + Premake4.archmap[ params['platform'] ][ params['build_architecture'] ])
 			#driver.makefile = project.name + '.make'
@@ -49,12 +50,13 @@ class assimpBuilder(Builder):
 	def generate(self, *args, **kwargs):
 		builder = kwargs.get( "builder", None )
 		target_platform = kwargs.get( "target_platform", None )
+		params = kwargs.get( "args", None )
 		#premake = Premake4( action=builder.premake_action )
 		#premake.run()
 
 		gen = "None"
 		if target_platform is WINDOWS:
-			gen = "vs2010"
+			gen = params["cmake_generator"]
 		elif target_platform is LINUX:
 			gen = "Unix Makefiles"
 		elif target_platform is MACOSX:
