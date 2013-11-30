@@ -44,17 +44,21 @@ class bullet2Builder(Builder):
 
 		libdir = "lib/%s/%s" % (params['architecture'], params['configuration'])
 
+		project_output = project.output
+
 		if params['platform'] is LINUX:
 			items = ['lib']
 			items.append( params['build_architecture'] )
 			items.append( params['configuration'] )
 			libdir = '/'.join( items )
+		elif params['platform'] is WINDOWS:
+			project_output = "%s_%s" % (project.output, params['configuration'].title())
+			libdir = "lib/%s" % (params['configuration'])
 
 		builder.includes = ['src']
-		builder.libs = [ project.output ]
+		builder.libs = [ project_output ]
 
-		print( "%s -> %s" % ( project.name, project.output ) )
-		builder.addOutput( path=libdir, name=project.output, type=Builder.StaticLibrary )
+		builder.addOutput( path=libdir, name=project_output, type=Builder.StaticLibrary )
 
 		#if target_platform is LINUX:
 		#	driver.config = (params['configuration'].lower() + Premake4.archmap[ params['platform'] ][ params['build_architecture'] ])
