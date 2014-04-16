@@ -2,55 +2,55 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleShortVersionString</key>
-	<string>0.01</string>
-	<key>CFBundleIdentifier</key>
-	<string>net.arcfusion.${PRODUCT_NAME:rfc1034identifier}</string>
-	<key>CFBundleExecutable</key>
-	<string>${EXECUTABLE_FILE}</string>
-	<key>NSPrincipalClass</key>
-	<string>osx_application</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleIconFile</key>
-	<string>icon.icns</string>
-	<key>CFBundleSignature</key>
-	<string>????</string>
-	<key>NSMainNibFile</key>
-	<string>MainMenu</string>
-	<key>LSMinimumSystemVersion</key>
-	<string>${MACOSX_DEPLOYMENT_TARGET}</string>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2013 Adam Petrone. All rights reserved.</string>
-	<key>CFBundleName</key>
-	<string>${PRODUCT_NAME}</string>
-	<key>IFMajorVersion</key>
-	<integer>0</integer>
-	<key>IFMinorVersion</key>
-	<integer>1</integer>
-	<key>BreakpadProduct</key>
-	<string>${PRODUCT_NAME}</string>
-	<key>BreakpadProductDisplay</key>
-	<string>${PRODUCT_NAME}</string>
-	<key>BreakpadVersion</key>
-	<string>1</string>
-	<key>BreakpadVendor</key>
-	<string>arcfusion</string>
-	<key>BreakpadURL</key>
-	<string>http://localhost:8000/</string>
-	<key>BreakpadRequestComments</key>
-	<string>none</string>
-	<key>BreakpadReportInterval</key>
-	<string>0</string>
+	<key>BreakpadLogFileTailSize</key>
+	<string>40000</string>
 	<key>BreakpadLogFiles</key>
 	<array>
 		<string>/var/log/system.log</string>
 	</array>
-	<key>BreakpadLogFileTailSize</key>
-	<string>40000</string>
+	<key>BreakpadProduct</key>
+	<string>${PRODUCT_NAME}</string>
+	<key>BreakpadProductDisplay</key>
+	<string>${PRODUCT_NAME}</string>
+	<key>BreakpadReportInterval</key>
+	<string>0</string>
+	<key>BreakpadRequestComments</key>
+	<string>none</string>
+	<key>BreakpadURL</key>
+	<string>http://localhost:8000/</string>
+	<key>BreakpadVendor</key>
+	<string>arcfusion</string>
+	<key>BreakpadVersion</key>
+	<string>1</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleExecutable</key>
+	<string>${EXECUTABLE_FILE}</string>
+	<key>CFBundleIconFile</key>
+	<string>icon.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>net.arcfusion.${PRODUCT_NAME:rfc1034identifier}</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>${PRODUCT_NAME}</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.01</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>IFMajorVersion</key>
+	<integer>0</integer>
+	<key>IFMinorVersion</key>
+	<integer>1</integer>
+	<key>LSMinimumSystemVersion</key>
+	<string>${MACOSX_DEPLOYMENT_TARGET}</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2013 Adam Petrone. All rights reserved.</string>
+	<key>NSMainNibFile</key>
+	<string>MainMenu</string>
+	<key>NSPrincipalClass</key>
+	<string>osx_application</string>
 </dict>
 </plist>
