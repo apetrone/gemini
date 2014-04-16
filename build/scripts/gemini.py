@@ -49,6 +49,9 @@ def setup_common_variables(target_platform, product):
 	]
 
 
+def arguments(parser):
+	parser.add_argument("--indextype", dest="index_type", choices=["uint", "ushort"], type=str, default="uint", help="Set the IndexBuffer type; defaults to uint")
+
 def products(arguments, **kwargs):
 	target_platform = kwargs.get("target_platform")
 
