@@ -4,8 +4,9 @@ import logging
 from pegasus.models import Product, ProductType, Dependency
 
 DEPENDENCIES_FOLDER = "dependencies"
+DESKTOP = ["macosx", "linux", "windows"]
 
-def setup_common_variables(target_platform, product):
+def setup_common_variables(arguments, target_platform, product):
 	product.sources = [
 		"src/*.c*",
 		"src/*.h*",
@@ -33,13 +34,27 @@ def setup_common_variables(target_platform, product):
 		os.path.join(DEPENDENCIES_FOLDER, "slim")
 	]
 
+	# TODO: Allow generic *.DS_Store excludes
 	product.excludes = [
+		"src/core/.DS_Store",
+		"src/core/assets/.DS_Store",
+		"src/contrib/.DS_Store",
+		"src/game/.DS_Store",
 		"src/entry.cpp"
 	]
 
 	product.defines = [
 		"JSON_IS_AMALGAMATION"
 	]
+
+	index_type_map = {
+		"uint" : "1",
+		"ushort" : "2"
+	}
+	product.defines += [
+		"PLATFORM_INDEX_TYPE=%s" % index_type_map[arguments.index_type]
+	]
+
 
 	debug = product.layout(configuration="debug")
 	release = product.layout(configuration="release")
@@ -73,12 +88,86 @@ def products(arguments, **kwargs):
 			Dependency(file="xwl.py", products=["xwl"])
 		]
 
-	# general sources
-	setup_common_variables(target_platform, gemini)
+	# common sources
+	setup_common_variables(arguments, target_platform, gemini)
 
-	#
-	# Dependencies in source form
-	#
+	# more sources
+	gemini.sources += [
+		"src/kernels/**.c*",
+		"src/core/*.*",
+		"src/core/gldrivers/opengl_common.*",
+		"src/core/audio/openal.*",
+		"src/core/assets/*.*",
+		"src/contrib/*",
+		"src/game/**.*",
+	]
+
+	gemini.excludes += [
+		"src/kernels/test_bullet2.cpp",
+
+
+		"src/kernels/test_assimp.cpp",
+		"src/kernels/project_huckleberry.cpp",
+		"src/kernels/test_nom.cpp"
+	]
+
+	gemini.includes += [
+		"src",
+		"src/core",
+		"src/core/audio",
+		"src/contrib"
+	]
+
+	if target_platform.get() in DESKTOP:
+		gemini.sources += [
+			"src/core/desktop/kernel_desktop.cpp",
+			"src/core/audio/openal_vorbis_decoder.*",
+			"src/core/gldrivers/opengl_core32.*"
+		]
+
+		gemini.includes += [
+			"src/core/audio"
+		]
+
+		gemini.prebuild_commands = [
+			"python ../../tools/blacksmith/blacksmith.py -c ../../assets/desktop.conf -y"
+		]
+
+
+		macosx = gemini.layout(platform="macosx")
+		macosx.sources = [
+			"src/core/osx/osx_gemgl.*",
+			"src/core/osx/*.m*",
+			"src/core/osx/*.h*"
+		]
+		macosx.links = [
+			"Cocoa.framework",
+			"OpenGL.framework",
+			"AudioToolbox.framework",
+			"OpenAL.framework"
+		]
+
+		macosx.driver.infoplist_file = "../resources/osx/Info.plist"
+		macosx.driver.macosx_deployment_target = "10.8"
+		macosx.driver.sdkroot = "macosx10.9"
+		macosx.resources = [
+			"resources/osx/en.lproj/*.xib",
+			"resources/osx/en.lproj/*.strings"
+		]
+
+	iphoneos = gemini.layout(platform="iphoneos")
+	iphoneos.prebuild_commands += [
+		"python ../../tools/blacksmith/blacksmith.py -c ../../assets/ios.conf -y"
+	]
+
+	iphoneos.sources += [
+		"src/core/audio/audio_extaudio_decoder.*"
+	]
+
+	iphoneos.resources = [
+		"resources/ios/Settings.bundle",
+		"resources/ios/en.lproj/*.*"
+	]
 
 
 	return [gemini]
