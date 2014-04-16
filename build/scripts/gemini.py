@@ -80,7 +80,8 @@ def products(arguments, **kwargs):
 	gemini.dependencies = [
 		Dependency(file="glm.py"),
 		Dependency(file="sqrat.py"),
-		Dependency(file="squirrel3.py")
+		Dependency(file="squirrel3.py", products=["squirrel", "sqstdlib"]),
+		Dependency(file="nom.py")
 	]
 
 	if target_platform.get() in ["macosx", "linux", "windows"]:
@@ -108,7 +109,7 @@ def products(arguments, **kwargs):
 
 		"src/kernels/test_assimp.cpp",
 		"src/kernels/project_huckleberry.cpp",
-		"src/kernels/test_nom.cpp"
+		#"src/kernels/test_nom.cpp"
 	]
 
 	gemini.includes += [
