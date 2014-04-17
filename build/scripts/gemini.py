@@ -81,7 +81,10 @@ def products(arguments, **kwargs):
 		Dependency(file="glm.py"),
 		Dependency(file="sqrat.py"),
 		Dependency(file="squirrel3.py", products=["squirrel", "sqstdlib"]),
-		Dependency(file="nom.py")
+		Dependency(file="nom.py"),
+		Dependency(file="bullet2.py", products=["BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"]),
+		Dependency(file="box2d.py")
+
 	]
 
 	if target_platform.get() in ["macosx", "linux", "windows"]:
@@ -104,12 +107,8 @@ def products(arguments, **kwargs):
 	]
 
 	gemini.excludes += [
-		"src/kernels/test_bullet2.cpp",
-
-
 		"src/kernels/test_assimp.cpp",
-		"src/kernels/project_huckleberry.cpp",
-		#"src/kernels/test_nom.cpp"
+		"src/kernels/project_huckleberry.cpp"
 	]
 
 	gemini.includes += [

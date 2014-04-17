@@ -7,6 +7,9 @@ class BuildSettings(object):
 		self.target_platform = target_platform
 
 	def populate(self, product):
+		product.project_root = "_projects"
+		product.object_root = "${PROJECT_ROOT}/obj"
+
 		#
 		# macosx
 		#
@@ -22,42 +25,27 @@ class BuildSettings(object):
 		mac_release.driver.gcc_optimization_level = "2"
 		mac_release.driver.gcc_generate_debugging_symbols = "NO"
 
-def LinearMath(arguments, **kwargs):
+
+
+def BulletSoftBody(arguments, **kwargs):
 	target_platform = kwargs.get("target_platform", None)
 	settings = kwargs.get("buildsettings", None)
 
-	lm = Product(name="LinearMath", output=ProductType.StaticLibrary)
-	lm.root = "../dependencies/bullet2"
-	lm.includes = [
+	sb = Product(name="BulletSoftBody", output=ProductType.StaticLibrary)
+	sb.root = "../dependencies/bullet2"
+	sb.includes = [
 		"src"
 	]
 
-	lm.sources = [
-		"src/LinearMath/*.cpp",
-		"src/LinearMath/*.h"
+	sb.sources = [
+		"src/BulletSoftBody/*.cpp",
+		"src/BulletSoftBody/*.h"
 	]
 
-	settings.populate(lm)
-	return lm
+	settings.populate(sb)
+	return sb
 
-def BulletCollision(arguments, **kwargs):
-	target_platform = kwargs.get("target_platform", None)
-	settings = kwargs.get("buildsettings", None)
 
-	bc = Product(name="BulletCollision", output=ProductType.StaticLibrary)
-	bc.root = "../dependencies/bullet2"
-	bc.includes = [
-		"src"
-	]
-
-	bc.sources = [
-		"src/BulletCollision/BroadphaseCollision/*.*",
-		"src/BulletCollision/CollisionDispatch/*.*",
-		"src/BulletCollision/CollisionShapes/*.*",
-	]
-
-	settings.populate(bc)
-	return bc
 
 def BulletDynamics(arguments, **kwargs):
 	target_platform = kwargs.get("target_platform", None)
@@ -79,23 +67,45 @@ def BulletDynamics(arguments, **kwargs):
 	settings.populate(bd)
 	return bd
 
-def BulletSoftBody(arguments, **kwargs):
+
+def BulletCollision(arguments, **kwargs):
 	target_platform = kwargs.get("target_platform", None)
 	settings = kwargs.get("buildsettings", None)
 
-	sb = Product(name="BulletSoftBody", output=ProductType.StaticLibrary)
-	sb.root = "../dependencies/bullet2"
-	sb.includes = [
+	bc = Product(name="BulletCollision", output=ProductType.StaticLibrary)
+	bc.root = "../dependencies/bullet2"
+	bc.includes = [
 		"src"
 	]
 
-	sb.sources = [
-		"src/BulletSoftBody/*.cpp",
-		"src/BulletSoftBody/*.h"
+	bc.sources = [
+		"src/BulletCollision/BroadphaseCollision/*.*",
+		"src/BulletCollision/CollisionDispatch/*.*",
+		"src/BulletCollision/CollisionShapes/*.*",
+		"src/BulletCollision/Gimpact/*.*",
+		"src/BulletCollision/NarrowPhaseCollision/*.*"
 	]
 
-	settings.populate(sb)
-	return sb
+	settings.populate(bc)
+	return bc
+
+def LinearMath(arguments, **kwargs):
+	target_platform = kwargs.get("target_platform", None)
+	settings = kwargs.get("buildsettings", None)
+
+	lm = Product(name="LinearMath", output=ProductType.StaticLibrary)
+	lm.root = "../dependencies/bullet2"
+	lm.includes = [
+		"src"
+	]
+
+	lm.sources = [
+		"src/LinearMath/*.cpp",
+		"src/LinearMath/*.h"
+	]
+
+	settings.populate(lm)
+	return lm
 
 
 def BulletMultiThreaded(arguments, **kwargs):
@@ -126,16 +136,19 @@ def products(arguments, **kwargs):
 
 	kwargs["buildsettings"] = settings
 
-	linearmath = LinearMath(arguments, **kwargs)
-	collision = BulletCollision(arguments, **kwargs)
-	collision.dependencies = [linearmath]
+	softbody = BulletSoftBody(arguments, **kwargs)
 
 	dynamics = BulletDynamics(arguments, **kwargs)
-	dynamics.dependencies = [linearmath]
-
-
-	softbody = BulletSoftBody(arguments, **kwargs)
+	
+	collision = BulletCollision(arguments, **kwargs)
+	
+	linearmath = LinearMath(arguments, **kwargs)
 
 	multithreaded = BulletMultiThreaded(arguments, **kwargs)
 
-	return [linearmath, collision, dynamics, softbody, multithreaded]
+
+	collision.dependencies = [linearmath]
+	dynamics.dependencies = [linearmath]
+
+
+	return [softbody, dynamics, collision, linearmath, multithreaded]
