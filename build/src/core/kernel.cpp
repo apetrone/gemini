@@ -287,6 +287,7 @@ namespace kernel
 		if ( core_error.failed() )
 		{
 			fprintf( stderr, "Fatal error loading application '%s' -> %s, aborting.\n", boot_config.kernel_name(), core_error.message );
+			_kernel->set_active(false);
 			return kernel::ApplicationFailure;
 		}
 		
