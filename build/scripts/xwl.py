@@ -3,9 +3,9 @@ from pegasus.models import Product, ProductType
 
 
 def arguments(parser):
-	parser.add_argument("--with-egl", dest="with_egl", help="Compile with EGL support", default=None)
-	parser.add_argument("--with-x11", dest="with_x11", help="Compile with X11 support", default=None)
-	parser.add_argument("--with-rpi", dest="with_rpi", help="Compile with RaspberryPi support", default=None)
+	parser.add_argument("--with-egl", dest="with_egl", action="store_true", help="Compile with EGL support", default=None)
+	parser.add_argument("--with-x11", dest="with_x11", action="store_true", help="Compile with X11 support", default=None)
+	parser.add_argument("--with-rpi", dest="with_rpi", action="store_true", help="Compile with RaspberryPi support", default=None)
 
 def products(arguments, **kwargs):
 	target_platform = kwargs.get("target_platform", None)
@@ -94,7 +94,7 @@ def products(arguments, **kwargs):
 
 		linux.sources += [
 			"src/platforms/x11/**.c",
-			"include/platforms/x11/**.h"
+			"include/xwl/platforms/x11/**.h"
 		]
 
 
@@ -107,12 +107,12 @@ def products(arguments, **kwargs):
 			"src/platforms/egl/**.c",
 			"include/platforms/egl/**.h",
 			"src/platforms/rpi/**.c",
-			"include/platforms/rpi/**.h",	
+			"include/xwl/platforms/rpi/**.h",	
 		]
 
 		linux.includes += [
 			"/opt/vc/include",
-			"includes/platforms/rpi"
+			"include/xwl/platforms/rpi"
 		]
 
 		linux.libdirs += [
