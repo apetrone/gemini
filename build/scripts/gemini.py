@@ -5,6 +5,7 @@ from pegasus.models import Product, ProductType, Dependency
 
 DEPENDENCIES_FOLDER = "dependencies"
 DESKTOP = ["macosx", "linux", "windows"]
+BLACKSMITH_PATH = "../tools/blacksmith/blacksmith.py"
 
 def setup_common_variables(arguments, target_platform, product):
 	product.sources = [
@@ -70,11 +71,10 @@ def arguments(parser):
 def products(arguments, **kwargs):
 	target_platform = kwargs.get("target_platform")
 
-	gemini = Product(name="desktop", output=ProductType.Application)
+	gemini = Product(name="gemini_desktop", output=ProductType.Application)
 	gemini.root = "../"
 	gemini.product_root = "latest/bin/${CONFIGURATION}_${ARCHITECTURE}"
-	gemini.project_root = "_projects"
-	gemini.object_root = "${PROJECT_ROOT}/obj"
+	gemini.object_root = "obj"
 
 
 	gemini.dependencies = [
@@ -130,7 +130,7 @@ def products(arguments, **kwargs):
 		]
 
 		gemini.prebuild_commands = [
-			"python ../../tools/blacksmith/blacksmith.py -c ../../assets/desktop.conf -y"
+			"python %s -c ../assets/desktop.conf -y" % (BLACKSMITH_PATH)
 		]
 
 
@@ -147,7 +147,7 @@ def products(arguments, **kwargs):
 			"OpenAL.framework"
 		]
 
-		macosx.driver.infoplist_file = "../resources/osx/Info.plist"
+		macosx.driver.infoplist_file = "resources/osx/Info.plist"
 		macosx.driver.macosx_deployment_target = "10.8"
 		macosx.driver.sdkroot = "macosx10.9"
 		macosx.resources = [
@@ -157,7 +157,7 @@ def products(arguments, **kwargs):
 
 	iphoneos = gemini.layout(platform="iphoneos")
 	iphoneos.prebuild_commands += [
-		"python ../../tools/blacksmith/blacksmith.py -c ../../assets/ios.conf -y"
+		"python %s -c ../assets/ios.conf -y" % (BLACKSMITH_PATH)
 	]
 
 	iphoneos.sources += [
