@@ -31,3 +31,6 @@
 [submodule "build/dependencies/sqrat"]
 	path = build/dependencies/sqrat
 	url = git://git.code.sf.net/p/scrat/code
+[submodule "build/dependencies/nom"]
+	path = build/dependencies/nom
+	url = git://github.com/apetrone/nom.git
