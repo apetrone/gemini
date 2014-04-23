@@ -1,5 +1,29 @@
-Code Style Guide for Project Gemini
---------
+### Code Style Guidelines
+-
+
+Table of Contents
+
+I. <a href="#overview">Overview</a><br/>
+II. <a href="#source-code-style">Source Code Style</a><br/>
+
+-
+
+
+#### Overview
+* Consistency is a priority for determinism and overall developer sanity.
+
+	The following rules are used in various capacities to communicate the desired result.
+
+	* Loops should use meaningful variable names: i, iter, index, to indicate interation.	
+	The tuples i,j,k or x,y,z may be substituted where multiple variables are needed in nested conditions.
+
+
+
+
+
+#### Source Code Style:
+
+
 
 - variable names (including member variables) are lower-cased with underscores: 
 
