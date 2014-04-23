@@ -67,6 +67,8 @@ def setup_common_variables(arguments, target_platform, product):
 
 
 def arguments(parser):
+	parser.add_argument("--with-glesv2", dest="glesv2", action="store_true", help="Build with GLES V2", default=False)
+	parser.add_argument("--raspberrypi", dest="raspberrypi", action="store_true", help="Build for the RaspberryPi", default=False)
 	parser.add_argument("--indextype", dest="index_type", choices=["uint", "ushort"], type=str, default="uint", help="Set the IndexBuffer type; defaults to uint")
 
 def products(arguments, **kwargs):
@@ -155,6 +157,41 @@ def products(arguments, **kwargs):
 			"resources/osx/en.lproj/*.xib",
 			"resources/osx/en.lproj/*.strings"
 		]
+
+
+		linux = gemini.layout(platform="linux")
+		linux.sources = [
+			"src/core/desktop/entry.cpp"
+		]
+
+		linux.links = [
+			"pthread",
+			"dl",
+			"openal"
+		]
+
+		linux.linkflags = [
+			"-Wl,-rpath,."
+		]
+
+		if not arguments.raspberrypi:
+			linux.defines += [
+				"PLATFORM_IS_RASPBERRYPI=1"
+			]
+
+			linux.links += ["X11"]
+
+		if not arguments.glesv2:
+			linux.links += ["GL"]
+		else:
+			linux.sources += [
+				"src/core/gldrivers/opengl_glesv2.*"
+			]
+
+			linux.defines += [
+				"PLATFORM_USE_GLES2=1"
+			]
+
 
 	iphoneos = gemini.layout(platform="iphoneos")
 	iphoneos.prebuild_commands += [
