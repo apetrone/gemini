@@ -32,6 +32,7 @@ def setup_common_variables(arguments, target_platform, product):
 
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3"),
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),
+		os.path.join(DEPENDENCIES_FOLDER, "font-stash"),
 		os.path.join(DEPENDENCIES_FOLDER, "slim")
 	]
 
