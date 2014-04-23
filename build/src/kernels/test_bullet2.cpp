@@ -25,6 +25,8 @@
 #include "mathlib.h"
 #include "debugdraw.hpp"
 #include "input.hpp"
+#include "renderer.hpp"
+#include "renderstream.hpp"
 
 #include "btBulletDynamicsCommon.h"
 
@@ -248,7 +250,12 @@ public:
 
 	virtual void tick( kernel::Params & params )
 	{
-	
+		RenderStream rs;
+		
+		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
+		rs.add_viewport( 0, 0, params.render_width, params.render_height );
+		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
+		rs.run_commands();
 	}
 	
 	virtual void shutdown( kernel::Params & params )
