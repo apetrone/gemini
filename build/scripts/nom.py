@@ -58,7 +58,7 @@ def products(arguments, **kwargs):
 	#
 	linux = nom.layout(platform="linux")
 	linux.links = [
-		#"X11", # really need this?
+		"X11",
 		"GL"
 	]
 
