@@ -81,20 +81,22 @@
 
 	#define PLATFORM_NAME "windows"
 	#define PLATFORM_WINDOWS 1
-#elif LINUX
+#elif __linux__
 	#if RASPBERRYPI
-		#define PLATFORM_NAME "linux"
-		#define PLATFORM_LINUX 1
-	#else
-		#define PLATFORM_NAME "raspberrypi"
-		#define PLATFORM_LINUX 1
+		// specifically built for RaspberryPi
 		#define PLATFORM_RASPBERRYPI 1
+		#define PLATFORM_NAME "raspberrypi"
+	#else
+		// generic flavor
+		#define PLATFORM_NAME "linux"
 	#endif
+
+	#define PLATFORM_LINUX 1
 #elif __APPLE__
 	#include <TargetConditionals.h>
 
 	#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
-		#define PLATFORM_NAME "ios"
+		#define PLATFORM_NAME "iphoneos"
 		#define PLATFORM_IS_MOBILE 1
 		#define PLATFORM_IOS 1
 	#else
