@@ -27,6 +27,12 @@
 // PLATFORM_FANCY_FUNCTION - an alias to this compiler's pretty function macro
 
 // setup compiler defines
+#if defined( __clang__ )
+	#define PLATFORM_COMPILER "clang"
+	#define PLATFORM_COMPILER_VERSION CONCAT_PERIOD( STRINGIZE(__clang_major__), STRINGIZE(__clang_minor__))
+	#define PLATFORM_FANCY_FUNCTION __PRETTY_FUNCTION__
+#endif
+
 #if defined( __GNUC__ )
 	#define PLATFORM_COMPILER "gcc"
 	#define PLATFORM_COMPILER_VERSION CONCAT_PERIOD( STRINGIZE(__GNUC__), STRINGIZE(__GNUC_MINOR__) )
