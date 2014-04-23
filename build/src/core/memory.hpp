@@ -26,7 +26,7 @@
 #if __APPLE__
 	#include <memory> // for malloc, free (on OSX)
 	#include <stdlib.h>
-#elif LINUX || __ANDROID__
+#elif __linux__ || __ANDROID__
 	#include <stdlib.h>
 	#include <stdio.h> // for fprintf
 	#include <new> // for placement new

@@ -31,7 +31,7 @@ extern "C"
 {
 #endif
 
-#if (_WIN32 || LINUX || __APPLE__ || __ANDROID__)
+#if (_WIN32 || __linux__ || __APPLE__ || __ANDROID__)
 
 	#include <stdio.h>
 	

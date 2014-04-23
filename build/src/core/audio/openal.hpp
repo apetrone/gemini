@@ -26,7 +26,7 @@
 #if _WIN32
 	#include <al.h>
 	#include <alc.h>
-#elif LINUX
+#elif __linux__
 	#include <AL/al.h>
 	#include <AL/alc.h>
 #elif __APPLE__

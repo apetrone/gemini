@@ -286,11 +286,11 @@ namespace fs
 
 	int read_file_stats( const char * fullpath, FileStats & stats )
 	{
-#if LINUX || __ANDROID__
+#if __linux__ || __ANDROID__
 		struct stat file_stats;
 		stat( fullpath, &file_stats );
 
-	#if LINUX
+	#if __linux__
 			printf( "time: %i\n", file_stats.st_mtim.tv_sec );
 	#else
 			printf( "time: %i\n", file_stats.st_mtime );
