@@ -174,23 +174,23 @@ def products(arguments, **kwargs):
 			"-Wl,-rpath,."
 		]
 
-		if not arguments.raspberrypi:
+		if arguments.raspberrypi:
 			linux.defines += [
 				"PLATFORM_IS_RASPBERRYPI=1"
 			]
 
 			linux.links += ["X11"]
 
-		if not arguments.glesv2:
-			linux.links += ["GL"]
-		else:
+		if arguments.glesv2:
 			linux.sources += [
 				"src/core/gldrivers/opengl_glesv2.*"
 			]
 
 			linux.defines += [
 				"PLATFORM_USE_GLES2=1"
-			]
+			]			
+		else:
+			linux.links += ["GL"]
 
 
 	iphoneos = gemini.layout(platform="iphoneos")
