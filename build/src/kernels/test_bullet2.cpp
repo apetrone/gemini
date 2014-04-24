@@ -247,7 +247,7 @@ public:
 		
 		
 		// load in the plane mesh
-		plane_mesh = assets::meshes()->load_from_path("models/room2");
+		plane_mesh = assets::meshes()->load_from_path("models/construct");
 		if (plane_mesh)
 		{
 			plane_mesh->prepare_geometry();
