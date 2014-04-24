@@ -1,0 +1,5 @@
+*.blend filter=fat
+*.png filter=fat
+*.psd filter=fat
+*.tga filter=fat
+
