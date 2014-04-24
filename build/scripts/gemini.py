@@ -176,7 +176,7 @@ def products(arguments, **kwargs):
 
 		if arguments.raspberrypi:
 			linux.defines += [
-				"PLATFORM_IS_RASPBERRYPI=1"
+				"PLATFORM_RASPBERRYPI=1"
 			]
 
 			linux.links += ["X11"]
