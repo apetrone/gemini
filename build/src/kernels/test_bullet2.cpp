@@ -28,6 +28,10 @@
 #include "renderer.hpp"
 #include "renderstream.hpp"
 
+#include "camera.hpp"
+
+#include "assets/asset_mesh.hpp"
+
 #include "btBulletDynamicsCommon.h"
 
 #define BTVECTOR3_TO_VEC3( v ) glm::vec3( v.x(), v.y(), v.z() )
@@ -191,7 +195,8 @@ public kernel::IEventListener<kernel::SystemEvent>
 
 public:
 	DECLARE_APPLICATION( TestBullet2 );
-
+	assets::Mesh * plane_mesh;
+	Camera camera;
 	
 	virtual void event( kernel::KeyboardEvent & event )
 	{
@@ -239,6 +244,14 @@ public:
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 		physics::startup();
+		
+		
+		// load in the plane mesh
+		plane_mesh = assets::meshes()->load_from_path("models/room2");
+		if (plane_mesh)
+		{
+			plane_mesh->prepare_geometry();
+		}
 
 		return kernel::Application_Success;
 	}
@@ -250,11 +263,33 @@ public:
 
 	virtual void tick( kernel::Params & params )
 	{
+		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
+		// This is appropriate for drawing 3D models, but not sprites
+		camera.set_absolute_position( glm::vec3(8, 5, 8.0f) );
+		camera.yaw = -45;
+		camera.pitch = 30;
+		camera.update_view();
+	
 		RenderStream rs;
+		renderer::GeneralParameters gp;
+		
+		gp.camera_position = &camera.pos;
+		gp.modelview_matrix = &camera.matCam;
+		gp.projection_project = &camera.matProj;
+		
+		glm::mat4 ident;
+		gp.object_matrix = &ident;
 		
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
 		rs.add_viewport( 0, 0, params.render_width, params.render_height );
 		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
+	
+		for( unsigned short i = 0; i < plane_mesh->total_geometry; ++i )
+		{
+			render_utilities::stream_geometry( rs, &plane_mesh->geometry[i], gp );
+		}
+
+		
 		rs.run_commands();
 	}
 	
