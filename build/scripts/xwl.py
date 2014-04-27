@@ -105,7 +105,7 @@ def products(arguments, **kwargs):
 
 		linux.sources += [
 			"src/platforms/egl/**.c",
-			"include/platforms/egl/**.h",
+			"include/xwl/platforms/egl/**.h",
 			"src/platforms/rpi/**.c",
 			"include/xwl/platforms/rpi/**.h",	
 		]
@@ -139,11 +139,11 @@ def products(arguments, **kwargs):
 		
 		linux.sources += [
 			"src/platforms/egl/**.c",
-			"include/platforms/egl/**.h"
+			"include/xwl/platforms/egl/**.h"
 		]
 
 		linux.includes += [
-			"includes/platforms/egl"
+			"include/xwl/platforms/egl"
 		]
 
 		linux.links += [
@@ -158,7 +158,7 @@ def products(arguments, **kwargs):
 
 	windows.sources += [
 		"src/platforms/win32/**.c",
-		"include/platforms/win32/**.h"
+		"include/xwl/platforms/win32/**.h"
 	]
 
 	windows.links += [
