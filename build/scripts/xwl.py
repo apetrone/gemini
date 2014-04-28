@@ -78,7 +78,6 @@ def products(arguments, **kwargs):
 	linux_release = xwl.layout(configuration="release", platform="linux")
 	linux_release.cflags = [
 		"-O2",
-		"-fvisibility=hidden",
 		"-fPIC"
 	]
 
