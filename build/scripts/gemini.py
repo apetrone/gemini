@@ -90,11 +90,6 @@ def products(arguments, **kwargs):
 
 	]
 
-	if target_platform.get() in ["macosx", "linux", "windows"]:
-		gemini.dependencies += [
-			Dependency(file="xwl.py", products=["xwl"])
-		]
-
 	# common sources
 	setup_common_variables(arguments, target_platform, gemini)
 
@@ -121,6 +116,8 @@ def products(arguments, **kwargs):
 		"src/contrib"
 	]
 
+	
+
 	if target_platform.get() in DESKTOP:
 		gemini.sources += [
 			"src/core/desktop/kernel_desktop.cpp",
@@ -136,6 +133,14 @@ def products(arguments, **kwargs):
 			"python %s -c ../assets/desktop.conf -y" % (BLACKSMITH_PATH)
 		]
 
+		xwl_params = []
+		if target_platform.get() == "linux":
+			xwl_params.append("--with-x11")
+			#xwl_params.append("--with-egl")
+
+		gemini.dependencies += [
+			Dependency(file="xwl.py", products=["xwl"], arguments=xwl_params)
+		]
 
 		macosx = gemini.layout(platform="macosx")
 		macosx.sources = [
@@ -191,6 +196,13 @@ def products(arguments, **kwargs):
 			]			
 		else:
 			linux.links += ["GL"]
+
+
+
+
+
+
+
 
 
 	iphoneos = gemini.layout(platform="iphoneos")
