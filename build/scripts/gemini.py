@@ -70,6 +70,8 @@ def arguments(parser):
 	parser.add_argument("--with-glesv2", dest="glesv2", action="store_true", help="Build with GLES V2", default=False)
 	parser.add_argument("--raspberrypi", dest="raspberrypi", action="store_true", help="Build for the RaspberryPi", default=False)
 	parser.add_argument("--indextype", dest="index_type", choices=["uint", "ushort"], type=str, default="uint", help="Set the IndexBuffer type; defaults to uint")
+	parser.add_argument("--with-xwl", dest="with_xwl", action="store_true", help="Build with xwl", default=False)
+	parser.add_argument("--with-sdl2", dest="with_sdl2", action="store_true", help="Build with SDL2", default=False)
 
 def products(arguments, **kwargs):
 	target_platform = kwargs.get("target_platform")
@@ -138,9 +140,22 @@ def products(arguments, **kwargs):
 			xwl_params.append("--with-x11")
 			#xwl_params.append("--with-egl")
 
-		gemini.dependencies += [
-			Dependency(file="xwl.py", products=["xwl"], arguments=xwl_params)
-		]
+		if arguments.with_xwl:
+			gemini.dependencies += [
+				Dependency(file="xwl.py", products=["xwl"], arguments=xwl_params)
+			]
+			gemini.defines += [
+				"GEMINI_USE_XWL=1"
+			]
+		elif arguments.with_sdl2:
+			gemini.dependencies += [
+				Dependency(file="sdl2.py")
+			]
+			gemini.defines += [
+				"GEMINI_USE_SDL2=1"
+			]
+		else:
+			raise Exception("You must build with either --with-xwl or --with-sdl2")
 
 		macosx = gemini.layout(platform="macosx")
 		macosx.sources = [

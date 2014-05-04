@@ -206,6 +206,10 @@ public:
 			{
 				kernel::instance()->set_active(false);
 			}
+			else if (event.key == input::KEY_J)
+			{
+				LOGV("check controllers\n");
+			}
 		}
 	}
 	

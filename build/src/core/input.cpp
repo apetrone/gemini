@@ -25,6 +25,8 @@
 
 namespace input
 {
+	unsigned int * _input_mapping_table = 0;
+	
 	InputState _input_state;
 	InputState * state( void )
 	{
