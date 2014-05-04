@@ -220,6 +220,9 @@ void DesktopKernel::post_tick()
 
 void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 {
+	int window_width, window_height;
+	int render_width, render_height;
+	
 	set_active( (result != kernel::Application_NoWindow) );
 
 	if ( is_active() )
@@ -258,27 +261,10 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 	
 		xwl_set_callback( event_callback_xwl );
 		
-		int window_width, window_height;
-		int render_width, render_height;
+
 
 		xwl_get_window_size(_window, &window_width, &window_height );
-		parameters().window_width = window_width;
-		parameters().window_height = window_height;
-		
 		xwl_get_window_render_size( _window, &render_width, &render_height );
-		parameters().render_width = render_width;
-		parameters().render_height = render_height;
-
-		if ( render_width > window_width && render_height > window_height )
-		{
-			LOGV( "Retina display detected. Render Resolution is (%i x %i)\n", render_width, render_height );
-			this->parameters().device_flags |= kernel::DeviceSupportsRetinaDisplay;
-		}
-		else
-		{
-			LOGV( "window resolution %i x %i\n", window_width, window_height );
-			LOGV( "render resolution %i x %i\n", render_width, render_height );	
-		}
 #endif // GEMINI_USE_XWL
 
 
@@ -309,7 +295,27 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 			LOGE("Failed to create SDL GL context: %s\n", SDL_GetError());
 		}
 
+		// fetch the window size
+		SDL_GetWindowSize(_window, &window_width, &window_height);
+		SDL_GL_GetDrawableSize(_window, &render_width, &render_height);
 #endif
+
+
+		parameters().window_width = window_width;
+		parameters().window_height = window_height;
+		parameters().render_width = render_width;
+		parameters().render_height = render_height;
+		
+		if ( render_width > window_width && render_height > window_height )
+		{
+			LOGV( "Retina display detected. Render Resolution is (%i x %i)\n", render_width, render_height );
+			this->parameters().device_flags |= kernel::DeviceSupportsRetinaDisplay;
+		}
+		else
+		{
+			LOGV( "window resolution %i x %i\n", window_width, window_height );
+			LOGV( "render resolution %i x %i\n", render_width, render_height );
+		}
 
 	}
 } // post_application_config
