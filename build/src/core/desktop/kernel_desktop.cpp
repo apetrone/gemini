@@ -19,15 +19,22 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "kernel_desktop.hpp"
-#include <xwl/xwl.h>
 #include <string.h>
 #include <stdio.h>
-#include "input.hpp"
-#include <slim/xlog.h>
 #include <assert.h>
 
-static xwl_window_t * _window = 0;
+#include "kernel_desktop.hpp"
+#include "input.hpp"
+#include <slim/xlog.h>
+
+#if GEMINI_USE_XWL
+	#include <xwl/xwl.h>
+#endif
+
+#if GEMINI_USE_SDL2
+	#include <SDL.h>
+#endif
+
 namespace kernel
 {
 	Error main( IKernel * kernel_instance, const char * kernel_name )
@@ -57,6 +64,8 @@ namespace kernel
 }; // namespace kernel
 
 
+#if GEMINI_USE_XWL
+static xwl_window_t * _window = 0;
 
 void event_callback_xwl( xwl_event_t * e )
 {
@@ -130,6 +139,16 @@ void event_callback_xwl( xwl_event_t * e )
 		kernel::event_dispatch( ev );
 	}
 } // event_callback_xwl
+#endif
+
+
+
+#if GEMINI_USE_SDL2
+	SDL_Window * _window = 0;
+	SDL_GLContext _context = 0;
+#endif
+
+
 
 DesktopKernel::DesktopKernel( int argc, char ** argv ) : target_renderer(0)
 {
@@ -139,7 +158,17 @@ DesktopKernel::DesktopKernel( int argc, char ** argv ) : target_renderer(0)
 
 void DesktopKernel::startup()
 {
+#if GEMINI_USE_XWL
 	xwl_startup( XWL_WINDOW_PROVIDER_DEFAULT, XWL_API_PROVIDER_DEFAULT, XWL_INPUT_PROVIDER_DEFAULT );
+#endif
+
+#if GEMINI_USE_SDL2
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) == -1)
+	{
+		// failure!
+		LOGV("failure to init SDL\n");
+	}
+#endif
 
 	this->parameters().device_flags |= kernel::DeviceDesktop;
 } // startup
@@ -150,12 +179,43 @@ void DesktopKernel::register_services()
 
 void DesktopKernel::pre_tick()
 {
+#if GEMINI_USE_XWL
 	xwl_dispatch_events();
+#endif
+
+#if GEMINI_USE_SDL2
+	SDL_Event event;
+	if (SDL_PollEvent(&event))
+	{
+		// dispatch event!
+		switch(event.type)
+		{
+			case SDL_QUIT:
+				kernel::instance()->set_active(false);
+				break;
+				
+			case SDL_KEYUP:
+			{
+				if (event.key.keysym.sym == SDLK_ESCAPE)
+				{
+					kernel::instance()->set_active(false);
+				}
+				break;
+			}
+		}
+	}
+#endif
 } // pre_tick
 
 void DesktopKernel::post_tick()
 {
+#if GEMINI_USE_XWL
 	xwl_swap_buffers( _window );
+#endif
+
+#if GEMINI_USE_SDL2
+	SDL_GL_SwapWindow(_window);
+#endif
 } // post_tick
 
 void DesktopKernel::post_application_config( kernel::ApplicationResult result )
@@ -165,6 +225,10 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 	if ( is_active() )
 	{
 		assert( parameters().window_width != 0 || parameters().window_height != 0 );
+		
+		
+		
+#if GEMINI_USE_XWL
 		unsigned int attribs[] = {
 
 #if defined( PLATFORM_USE_GLES2 )
@@ -215,6 +279,38 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 			LOGV( "window resolution %i x %i\n", window_width, window_height );
 			LOGV( "render resolution %i x %i\n", render_width, render_height );	
 		}
+#endif // GEMINI_USE_XWL
+
+
+#if GEMINI_USE_SDL2
+
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+		
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+		SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+	
+
+		_window = SDL_CreateWindow(
+			parameters().window_title, 0, 0,
+			parameters().window_width, parameters().window_height,
+			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+			
+		if (!_window)
+		{
+			LOGE("Failed to create SDL window: %s\n", SDL_GetError());
+		}
+
+		_context = SDL_GL_CreateContext(_window);
+		if (!_context)
+		{
+			LOGE("Failed to create SDL GL context: %s\n", SDL_GetError());
+		}
+
+#endif
+
 	}
 } // post_application_config
 
@@ -225,6 +321,14 @@ void DesktopKernel::post_application_startup( kernel::ApplicationResult result )
 
 void DesktopKernel::shutdown()
 {
+#if GEMINI_USE_XWL
 	xwl_shutdown();
 	_window = 0;
+#endif
+
+#if GEMINI_USE_SDL2
+	SDL_GL_DeleteContext(_context);
+	SDL_DestroyWindow(_window);
+	SDL_Quit();
+#endif
 } // shutdown
