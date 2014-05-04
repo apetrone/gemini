@@ -53,8 +53,8 @@ namespace input
 		KEY_Y,
 		KEY_X,
 		KEY_Z,
-		KEY_LSYSTEM,
-		KEY_RSYSTEM,
+
+		// other keys
 		KEY_MENU,
 		KEY_SEMICOLON,
 		KEY_SLASH,
@@ -78,11 +78,33 @@ namespace input
 		KEY_HOME,
 		KEY_INSERT,
 		KEY_DELETE,
-		KEY_ADD,
-		KEY_SUBTRACT,
-		KEY_MULTIPLY,
-		KEY_DIVIDE,
 		KEY_PAUSE,
+		
+		KEY_LSHIFT,
+		KEY_RSHIFT,
+		KEY_LCONTROL,
+		KEY_RCONTROL,
+		KEY_LALT,
+		KEY_RALT,
+		KEY_NUMLOCK,
+		KEY_CAPSLOCK,
+		
+		// windows key / command key
+		KEY_LGUI,
+		
+		// numeric keys
+		KEY_0,
+		KEY_1,
+		KEY_2,
+		KEY_3,
+		KEY_4,
+		KEY_5,
+		KEY_6,
+		KEY_7,
+		KEY_8,
+		KEY_9,
+		
+		// function keys
 		KEY_F1,
 		KEY_F2,
 		KEY_F3,
@@ -98,10 +120,14 @@ namespace input
 		KEY_F13,
 		KEY_F14,
 		KEY_F15,
+		
+		// directional keys
 		KEY_LEFT,
 		KEY_RIGHT,
 		KEY_UP,
 		KEY_DOWN,
+		
+		// numpad keys
 		KEY_NUMPAD0,
 		KEY_NUMPAD1,
 		KEY_NUMPAD2,
@@ -112,25 +138,12 @@ namespace input
 		KEY_NUMPAD7,
 		KEY_NUMPAD8,
 		KEY_NUMPAD9,
-		KEY_0,
-		KEY_1,
-		KEY_2,
-		KEY_3,
-		KEY_4,
-		KEY_5,
-		KEY_6,
-		KEY_7,
-		KEY_8,
-		KEY_9,
-		KEY_LSHIFT,
-		KEY_RSHIFT,
-		KEY_LCONTROL,
-		KEY_RCONTROL,
-		KEY_LALT,
-		KEY_RALT,
-		KEY_NUMLOCK,
-		KEY_CAPSLOCK,
-		
+		KEY_NUMPAD_PLUS,
+		KEY_NUMPAD_MINUS,
+		KEY_NUMPAD_PLUSMINUS,
+		KEY_NUMPAD_MULTIPLY,
+		KEY_NUMPAD_DIVIDE,
+
 		KEY_COUNT,
 		
 		MOUSE_LEFT = 104,
@@ -284,7 +297,7 @@ namespace input
 	void startup( void );
 	void shutdown( void );
 	void update( void );
-	
+
 	void buttonEvent( int button, int isDown );
 	void handleEvent( ButtonState * b, int isDown );
 	

@@ -22,10 +22,13 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <limits.h>
 
 #include "kernel_desktop.hpp"
 #include "input.hpp"
 #include <slim/xlog.h>
+
+using namespace input;
 
 #if GEMINI_USE_XWL
 	#include <xwl/xwl.h>
@@ -146,6 +149,9 @@ void event_callback_xwl( xwl_event_t * e )
 #if GEMINI_USE_SDL2
 	SDL_Window * _window = 0;
 	SDL_GLContext _context = 0;
+	input::Button _key_map[UINT_MAX];
+
+
 #endif
 
 
@@ -187,19 +193,30 @@ void DesktopKernel::pre_tick()
 	SDL_Event event;
 	if (SDL_PollEvent(&event))
 	{
+		input::Button button;
+	
 		// dispatch event!
 		switch(event.type)
 		{
 			case SDL_QUIT:
 				kernel::instance()->set_active(false);
 				break;
-				
+			
 			case SDL_KEYUP:
+			case SDL_KEYDOWN:
 			{
-				if (event.key.keysym.sym == SDLK_ESCAPE)
-				{
-					kernel::instance()->set_active(false);
-				}
+				button = _key_map[event.key.keysym.sym];
+				
+				
+				//printf( "\t-> key: %i (%s)\n", e->key, xwl_key_to_string(e->key) );
+				kernel::KeyboardEvent ev;
+				ev.is_down = (event.type == SDL_KEYDOWN);
+				ev.key = button;
+				//ev.unicode = event.text.;
+				LOGV("TODO: add unicode support from SDL\n");
+				input::state()->keyboard().inject_key_event( button, ev.is_down, /*e->unicode*/0 );
+				
+				kernel::event_dispatch( ev );
 				break;
 			}
 		}
@@ -298,6 +315,112 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 		// fetch the window size
 		SDL_GetWindowSize(_window, &window_width, &window_height);
 		SDL_GL_GetDrawableSize(_window, &render_width, &render_height);
+		
+		
+		// populate and set input key map
+		_key_map[SDLK_a] = KEY_A;
+		_key_map[SDLK_b] = KEY_B;
+		_key_map[SDLK_c] = KEY_C;
+		_key_map[SDLK_d] = KEY_D;
+		_key_map[SDLK_e] = KEY_E;
+		_key_map[SDLK_f] = KEY_F;
+		_key_map[SDLK_g] = KEY_G;
+		_key_map[SDLK_h] = KEY_H;
+		_key_map[SDLK_i] = KEY_I;
+		_key_map[SDLK_j] = KEY_J;
+		_key_map[SDLK_k] = KEY_K;
+		_key_map[SDLK_l] = KEY_L;
+		_key_map[SDLK_m] = KEY_M;
+		_key_map[SDLK_n] = KEY_N;
+		_key_map[SDLK_o] = KEY_O;
+		_key_map[SDLK_p] = KEY_P;
+		_key_map[SDLK_q] = KEY_Q;
+		_key_map[SDLK_r] = KEY_R;
+		_key_map[SDLK_s] = KEY_S;
+		_key_map[SDLK_t] = KEY_T;
+		_key_map[SDLK_u] = KEY_U;
+		_key_map[SDLK_v] = KEY_V;
+		_key_map[SDLK_w] = KEY_W;
+		_key_map[SDLK_y] = KEY_Y;
+		_key_map[SDLK_x] = KEY_X;
+		_key_map[SDLK_z] = KEY_Z;
+		_key_map[SDLK_MENU] = KEY_MENU;
+		_key_map[SDLK_SEMICOLON] = KEY_SEMICOLON;
+		_key_map[SDLK_SLASH] = KEY_SLASH;
+		_key_map[SDLK_BACKSLASH] = KEY_BACKSLASH;
+		_key_map[SDLK_EQUALS] = KEY_EQUALS;
+		_key_map[SDLK_MINUS] = KEY_MINUS;
+		_key_map[SDLK_LEFTBRACKET] = KEY_LBRACKET;
+		_key_map[SDLK_RIGHTBRACKET] = KEY_RBRACKET;
+		_key_map[SDLK_COMMA] = KEY_COMMA;
+		_key_map[SDLK_PERIOD] = KEY_PERIOD;
+		_key_map[SDLK_QUOTE] = KEY_QUOTE;
+		_key_map[SDLK_ESCAPE] = KEY_ESCAPE;
+		_key_map[SDLK_SPACE] = KEY_SPACE;
+		_key_map[SDLK_RETURN] = KEY_RETURN;
+		_key_map[SDLK_BACKSPACE] = KEY_BACKSPACE;
+		_key_map[SDLK_TAB] = KEY_TAB;
+		_key_map[SDLK_PAGEUP] = KEY_PAGEUP;
+		_key_map[SDLK_PAGEDOWN] = KEY_PAGEDN;
+		_key_map[SDLK_END] = KEY_END;
+		_key_map[SDLK_HOME] = KEY_HOME;
+		_key_map[SDLK_INSERT] = KEY_INSERT;
+		_key_map[SDLK_DELETE] = KEY_DELETE;
+		_key_map[SDLK_PAUSE] = KEY_PAUSE;
+		_key_map[SDLK_LSHIFT] = KEY_LSHIFT;
+		_key_map[SDLK_RSHIFT] = KEY_RSHIFT;
+		_key_map[SDLK_LCTRL] = KEY_LCONTROL;
+		_key_map[SDLK_RCTRL] = KEY_RCONTROL;
+		_key_map[SDLK_LALT] = KEY_LALT;
+		_key_map[SDLK_RALT] = KEY_RALT;
+		_key_map[SDLK_NUMLOCKCLEAR] = KEY_NUMLOCK;
+		_key_map[SDLK_CAPSLOCK] = KEY_CAPSLOCK;
+		_key_map[SDLK_LGUI] = KEY_LGUI;
+		_key_map[SDLK_0] = KEY_0;
+		_key_map[SDLK_1] = KEY_1;
+		_key_map[SDLK_2] = KEY_2;
+		_key_map[SDLK_3] = KEY_3;
+		_key_map[SDLK_4] = KEY_4;
+		_key_map[SDLK_5] = KEY_5;
+		_key_map[SDLK_6] = KEY_6;
+		_key_map[SDLK_7] = KEY_7;
+		_key_map[SDLK_8] = KEY_8;
+		_key_map[SDLK_9] = KEY_9;
+		_key_map[SDLK_F1] = KEY_F1;
+		_key_map[SDLK_F2] = KEY_F2;
+		_key_map[SDLK_F3] = KEY_F3;
+		_key_map[SDLK_F4] = KEY_F4;
+		_key_map[SDLK_F5] = KEY_F5;
+		_key_map[SDLK_F6] = KEY_F6;
+		_key_map[SDLK_F7] = KEY_F7;
+		_key_map[SDLK_F8] = KEY_F8;
+		_key_map[SDLK_F9] = KEY_F9;
+		_key_map[SDLK_F10] = KEY_F10;
+		_key_map[SDLK_F11] = KEY_F11;
+		_key_map[SDLK_F12] = KEY_F12;
+		_key_map[SDLK_F13] = KEY_F13;
+		_key_map[SDLK_F14] = KEY_F14;
+		_key_map[SDLK_F15] = KEY_F15;
+		_key_map[SDLK_LEFT] = KEY_LEFT;
+		_key_map[SDLK_RIGHT] = KEY_RIGHT;
+		_key_map[SDLK_UP] = KEY_UP;
+		_key_map[SDLK_DOWN] = KEY_DOWN;
+		_key_map[SDLK_KP_0] = KEY_NUMPAD0;
+		_key_map[SDLK_KP_1] = KEY_NUMPAD1;
+		_key_map[SDLK_KP_2] = KEY_NUMPAD2;
+		_key_map[SDLK_KP_3] = KEY_NUMPAD3;
+		_key_map[SDLK_KP_4] = KEY_NUMPAD4;
+		_key_map[SDLK_KP_5] = KEY_NUMPAD5;
+		_key_map[SDLK_KP_6] = KEY_NUMPAD6;
+		_key_map[SDLK_KP_7] = KEY_NUMPAD7;
+		_key_map[SDLK_KP_8] = KEY_NUMPAD8;
+		_key_map[SDLK_KP_9] = KEY_NUMPAD9;
+		_key_map[SDLK_KP_PLUS] = KEY_NUMPAD_PLUS;
+		_key_map[SDLK_KP_MINUS] = KEY_NUMPAD_MINUS;
+		_key_map[SDLK_KP_PLUSMINUS] = KEY_NUMPAD_PLUSMINUS;
+		_key_map[SDLK_KP_MULTIPLY] = KEY_NUMPAD_MULTIPLY;
+		_key_map[SDLK_KP_DIVIDE] = KEY_NUMPAD_DIVIDE;
+
 #endif
 
 
