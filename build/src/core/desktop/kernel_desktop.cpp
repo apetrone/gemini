@@ -174,6 +174,7 @@ void DesktopKernel::startup()
 		// failure!
 		LOGV("failure to init SDL\n");
 	}
+	
 #endif
 
 	this->parameters().device_flags |= kernel::DeviceDesktop;
@@ -207,6 +208,10 @@ void DesktopKernel::pre_tick()
 			{
 				button = _key_map[event.key.keysym.sym];
 				
+				if (event.key.repeat)
+				{
+					break;
+				}
 				
 				//printf( "\t-> key: %i (%s)\n", e->key, xwl_key_to_string(e->key) );
 				kernel::KeyboardEvent ev;
