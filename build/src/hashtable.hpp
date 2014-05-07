@@ -42,154 +42,234 @@ USAGE:
 
 #define HASHTABLE_SEED 42
 
-template <class Type, unsigned int MaxTableSize=256>
-class HashTable
+typedef unsigned int HashID;
+
+template <class _KeyType, class _ValueType>
+struct HashMapRecord
 {
-private:
-
-	struct Bucket
-	{
-		char * key;
-		Type data;
-		Bucket * next;
-		
-		Bucket()
-		{
-			key = 0;
-			next = 0;
-		}
-		
-		~Bucket()
-		{
-			if ( key )
-			{
-				DEALLOC(key);
-				Bucket * bucket = next;
-				Bucket * last = 0;
-				
-				while( bucket )
-				{
-					last = bucket;
-					bucket = bucket->next;
-					
-					DESTROY(Bucket, last);
-				}
-			}
-			next = 0;
-			key = 0;
-		}
-		
-		void set_key( const char * name )
-		{
-			assert( key == 0 );
-			size_t name_length = xstr_len(name);
-			this->key = (char*)ALLOC( name_length+1 );
-			assert( this->key != 0 );
-			this->key[name_length] = 0;
-			xstr_ncpy(this->key, name, name_length);
-		} // set_key
-	}; // Bucket
-		
-	Type default_value;
-	unsigned int table_size;
-	Bucket * bucket_table;
-
-	unsigned int hash_for_key( const char * key )
-	{
-		return util::hash_32bit( key, xstr_len(key), HASHTABLE_SEED) & (table_size-1);
-	} // hash_for_key
+	_KeyType key;
+	_ValueType value;
+	HashMapRecord* next;
 	
-	typename HashTable::Bucket * find_bucket( const char * key )
+	HashMapRecord()
 	{
-		unsigned int hash = hash_for_key(key);
-//		LOGV( "looking for '%s'; hash is %i\n", key, hash );
-		Bucket * bucket = &bucket_table[ hash ];
-		if ( bucket->key )
+		next = 0;
+		memset(this, 0, sizeof(HashMapRecord<_KeyType, _ValueType>));
+	}
+}; // HashMapRecord
+
+// Generic HashTablePolicy
+template <class _KeyType, class _ValueType>
+struct HashTablePolicy
+{
+	typedef HashMapRecord<_KeyType, _ValueType> RecordType;
+
+	void init_record(HashMapRecord<_KeyType, _ValueType>& record)
+	{
+		record.key = UINT_MAX;
+		record.value = _ValueType(0);
+	}
+
+	HashID compute_hash(const _KeyType& key)
+	{
+		return util::hash_32bit(&key, sizeof(_KeyType), 42);
+	}
+	
+	void assign_key(const _KeyType& key, HashMapRecord<_KeyType, _ValueType>& record)
+	{
+		record.key = key;
+	}
+	
+	void remove_key(HashMapRecord<_KeyType, _ValueType>& record)
+	{
+		// nothing to do
+	}
+	
+	bool key_matches(const _KeyType& key, const HashMapRecord<_KeyType, _ValueType>& record)
+	{
+		return (key == record.key);
+	}
+	
+	void assign_value(const _ValueType& value, HashMapRecord<_KeyType, _ValueType>& record)
+	{
+		record.value = value;
+	}
+	
+	void remove_value(HashMapRecord<_KeyType, _ValueType>& record)
+	{
+		// nothing to do
+	}
+}; // HashTablePolicy
+
+// String -> _ValueType policy
+template <class _ValueType>
+struct HashTablePolicy<char*, _ValueType>
+{
+	typedef HashMapRecord<char*, _ValueType> RecordType;
+
+	void init_record(HashMapRecord<char*, _ValueType>& record)
+	{
+		record.key = 0;
+		record.value = _ValueType(0);
+	}
+	
+	HashID compute_hash(const char* key)
+	{
+		return util::hash_32bit(key, xstr_len(key), HASHTABLE_SEED);
+	}
+	
+	void assign_key(const char* key, HashMapRecord<char*, _ValueType>& record)
+	{
+		size_t key_len = xstr_len(key);
+		record.key = (char*)ALLOC(key_len+1);
+		record.key[key_len] = 0;
+		xstr_ncpy(record.key, key, key_len);
+	}
+	
+	void remove_key(HashMapRecord<char*, _ValueType>& record)
+	{
+		// nothing to do
+		if (record.key)
 		{
-			do
-			{
-				if ( xstr_nicmp(key, bucket->key, xstr_len(bucket->key)) == 0 )
-				{
-					return bucket;
-				}
-				
-				bucket = bucket->next;
-			} while( bucket );
+			DEALLOC(record.key);
+			record.key = 0;
+		}
+	}
+	
+	bool key_matches(const char* key, const HashMapRecord<char*, _ValueType>& record)
+	{
+		if (!key || !record.key)
+		{
+			return false;
 		}
 		
-		return 0;
-	} // find_bucket
+		return (xstr_nicmp(key, record.key, xstr_len(record.key)) == 0);
+	}
+	
+	void assign_value(const _ValueType& value, HashMapRecord<char*, _ValueType>& record)
+	{
+		record.value = value;
+	}
+	
+	void remove_value(HashMapRecord<char*, _ValueType>& record)
+	{
+		// nothing to do
+	}
+}; // HashTablePolicy
+
+
+// Simple implementation of a closed-addressing Chained Hash Table.
+
+template <class _KeyType, class _ValueType, unsigned int MaxTableSize=256>
+class ChainedHashTable
+{
+	typedef HashTablePolicy<_KeyType, _ValueType> PolicyType;
+	typedef typename PolicyType::RecordType Record;
+
+	Record* records;
+	PolicyType policy;
+	unsigned int table_size;
+	
+	unsigned int compute_hash_index(const _KeyType& key)
+	{
+		return policy.compute_hash(key) % table_size;
+	} // compute_hash
+	
+	Record* find_record(const _KeyType& key)
+	{
+		Record* record = 0;
+		unsigned int index = compute_hash_index(key);
+		record = &records[index];
+		
+		do
+		{
+			if (policy.key_matches(key, *record))
+			{
+				return record;
+			}
+		
+			record = record->next;
+		} while(record);
+		
+		return record;
+	} // find_HashMapRecord
 	
 public:
-
-
-	HashTable( unsigned int max_table_size = MaxTableSize )
-	{
-		// must be a power of two
-		assert( (MaxTableSize & (MaxTableSize-1)) == 0 );
-		table_size = MaxTableSize;
-		bucket_table = CREATE_ARRAY(Bucket, table_size);
-		memset( bucket_table, 0, sizeof(Bucket)*table_size );
-	}
 	
-	~HashTable()
+	ChainedHashTable(unsigned int max_table_size = MaxTableSize)
+	{
+		table_size = max_table_size;
+		records = CREATE_ARRAY(Record, table_size);
+	} // ChainedHashTable
+	
+	~ChainedHashTable()
 	{
 		purge();
-	}
-
-	bool contains( const char * key )
+	} // ~ChainedHashTable
+	
+	bool contains(const _KeyType& key)
 	{
-		return (find_bucket( key ) != 0);
+		return (find_record(key) != 0);
 	} // contains
 	
-	void set( const char * key, const Type & value )
+	void set(const _KeyType& key, const _ValueType& value)
 	{
-		unsigned int hash = hash_for_key(key);
-//		LOGV( "hash for '%s' is %i\n", key, hash );
-		Bucket * first = &bucket_table[ hash ];
-		Bucket * bucket = find_bucket( key );
-		if ( bucket )
+		unsigned int index = compute_hash_index(key);
+		Record* first_record = &records[index];
+		Record* location = find_record(key);
+		if (location)
 		{
-//			LOGV("bucket already exists. returning\n" );
-			return;
+			policy.assign_key(key, *first_record);
+			policy.assign_value(value, *first_record);
 		}
-		
-		// the first bucket is unused; set the key
-		if ( !first->key )
+		else
 		{
-//			LOGV( "setting first bucket to '%s' -> %i\n", key, value );
-			first->set_key(key);
-			first->data = value;
-			return;
+			Record* new_record = CREATE(Record);
+			policy.init_record(*new_record);
+			policy.assign_key(key, *new_record);
+			policy.assign_value(value, *new_record);
+
+			new_record->next = first_record->next;
+			first_record->next = new_record;
 		}
-		
-		// we have to create a new bucket and insert that into a linked list
-		Bucket * block = CREATE(Bucket);
-		assert( block != 0 );
-		
-//		LOGV("creating a new bucket for '%s'\n", key);
-		block->set_key(key);
-		block->data = value;
-		
-		block->next = first->next;
-		first->next = block;
 	} // assign
 	
-	const Type & get( const char * key )
+	const _ValueType& get(const _KeyType& key, const _ValueType& default_value)
 	{
-		HashTable::Bucket * bucket = find_bucket( key );
-		if ( bucket )
+		Record* record = find_record(key);
+		if (record)
 		{
-			return bucket->data;
+			return record->value;
 		}
 		
 		return default_value;
 	} // get
-
+	
 	void purge()
 	{
-		DESTROY_ARRAY(Bucket, bucket_table, table_size);	
+		if (records)
+		{
+			for (unsigned int i = 0; i < table_size; ++i)
+			{
+				Record* last = 0;
+				Record* child = records[i].next;
+				
+				while(child)
+				{
+					policy.remove_key(*child);
+					policy.remove_value(*child);
+				
+					last = child;
+					child = child->next;
+					
+					DESTROY(Record, last);
+				}
+				
+				records[i].next = 0;
+			}
+		
+			DESTROY_ARRAY(Record, records, table_size);
+			records = 0;
+		}
 	} // purge
-
-}; // HashTable
-
+}; // ChainedHashTable

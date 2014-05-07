@@ -260,7 +260,7 @@ public:
 		
 	virtual gui::TextureResult texture_create( const char * path, gui::TextureHandle & handle )
 	{
-		assets::Texture * tex = assets::textures()->load_from_path( path );
+		assets::Texture * tex = assets::textures()->load_from_path((char*)path);
 		if ( !tex )
 		{
 			return gui::TextureResult_Failed;
@@ -290,7 +290,7 @@ public:
 	
 	virtual gui::FontResult font_create( const char * path, gui::FontHandle & handle )
 	{
-		assets::Font * font = assets::fonts()->load_from_path( path );
+		assets::Font * font = assets::fonts()->load_from_path((char*)path);
 		if ( !font )
 		{
 			return gui::FontResult_Failed;
