@@ -150,7 +150,7 @@ void event_callback_xwl( xwl_event_t * e )
 	SDL_Window * _window = 0;
 	SDL_GLContext _context = 0;
 	input::Button _key_map[UINT_MAX];
-
+	input::MouseButton _mouse_map[input::MOUSE_COUNT];
 
 #endif
 
@@ -222,6 +222,41 @@ void DesktopKernel::pre_tick()
 				input::state()->keyboard().inject_key_event( button, ev.is_down, /*e->unicode*/0 );
 				
 				kernel::event_dispatch( ev );
+				break;
+			}
+
+			case SDL_MOUSEBUTTONUP:
+			case SDL_MOUSEBUTTONDOWN:
+			{
+				kernel::MouseEvent ev;
+				ev.subtype = kernel::MouseButton;
+				ev.button = _mouse_map[event.button.button];
+				ev.is_down = (event.type == SDL_MOUSEBUTTONDOWN);
+				input::state()->mouse().inject_mouse_button((MouseButton)ev.button, ev.is_down);
+				kernel::event_dispatch(ev);
+				break;
+			}
+			
+			case SDL_MOUSEMOTION:
+			{
+				kernel::MouseEvent ev;
+				ev.subtype = kernel::MouseMoved;
+				ev.dx = event.motion.xrel;
+				ev.dy = event.motion.yrel;
+				ev.mx = event.motion.x;
+				ev.my = event.motion.y;
+				input::state()->mouse().inject_mouse_move(ev.mx, ev.my);
+				kernel::event_dispatch(ev);
+				break;
+			}
+			
+			case SDL_MOUSEWHEEL:
+			{
+				kernel::MouseEvent ev;
+				ev.subtype = kernel::MouseWheelMoved;
+				ev.wheel_direction = event.wheel.y;
+				input::state()->mouse().inject_mouse_wheel(ev.wheel_direction);
+				kernel::event_dispatch(ev);
 				break;
 			}
 		}
@@ -425,6 +460,14 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 		_key_map[SDLK_KP_PLUSMINUS] = KEY_NUMPAD_PLUSMINUS;
 		_key_map[SDLK_KP_MULTIPLY] = KEY_NUMPAD_MULTIPLY;
 		_key_map[SDLK_KP_DIVIDE] = KEY_NUMPAD_DIVIDE;
+		
+		
+		// populate the mouse map
+		_mouse_map[SDL_BUTTON_LEFT] = MOUSE_LEFT;
+		_mouse_map[SDL_BUTTON_RIGHT] = MOUSE_RIGHT;
+		_mouse_map[SDL_BUTTON_MIDDLE] = MOUSE_MIDDLE;
+		_mouse_map[SDL_BUTTON_X1] = MOUSE_MOUSE4;
+		_mouse_map[SDL_BUTTON_X2] = MOUSE_MOUSE5;
 
 #endif
 

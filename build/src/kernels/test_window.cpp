@@ -25,7 +25,7 @@
 #include <slim/xlog.h>
 
 #include "audio.hpp"
-
+#include "input.hpp"
 
 using namespace kernel;
 
@@ -46,6 +46,10 @@ public:
         if ( event.is_down )
         {
             fprintf( stdout, "key %i pressed\n", event.key );
+			if (event.key == input::KEY_ESCAPE)
+			{
+				kernel::instance()->set_active(false);
+			}
         }
         else
         {
@@ -55,18 +59,25 @@ public:
 
 	virtual void event( MouseEvent & event )
 	{
+		const char * button_name;
+		
         switch( event.subtype )
         {
             case kernel::MouseMoved:
-                break;
+				{
+					// Origin: Upper Left
+					fprintf(stdout, "Mouse Movement: %i %i\n", event.mx, event.my);
+					break;
+				}
             case kernel::MouseButton:
+				button_name = input::mouse_button_name((input::MouseButton)event.button);
                 if ( event.is_down )
                 {
-                    fprintf( stdout, "mouse button %i is pressed\n", event.button );
+                    fprintf( stdout, "mouse button %i (%s) is pressed\n", event.button, button_name );
                 }
                 else
                 {
-                    fprintf( stdout, "mouse button %i is released\n", event.button );
+                    fprintf( stdout, "mouse button %i (%s) is released\n", event.button, button_name );
                 }
                 break;
                 

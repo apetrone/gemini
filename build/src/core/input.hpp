@@ -144,9 +144,12 @@ namespace input
 		KEY_NUMPAD_MULTIPLY,
 		KEY_NUMPAD_DIVIDE,
 
-		KEY_COUNT,
-		
-		MOUSE_LEFT = 104,
+		KEY_COUNT
+	}; // enum Button
+	
+	enum MouseButton
+	{
+		MOUSE_LEFT,
 		MOUSE_RIGHT,
 		MOUSE_MIDDLE,
 		MOUSE_MOUSE4,
@@ -154,10 +157,8 @@ namespace input
 		MOUSE_MOUSE6,
 		MOUSE_MOUSE7,
 		
-		MOUSE_WHEEL,
-		
-		MOUSE_COUNT = (MOUSE_WHEEL-KEY_COUNT),
-	}; // enum Button
+		MOUSE_COUNT
+	}; // enum MouseButton
 	
 	// key mods
 	enum
@@ -235,13 +236,13 @@ namespace input
 		virtual void update( float delta_msec );
 		
 		void inject_mouse_move( int absolute_x, int absolute_y );
-		void inject_mouse_button( int button_id, bool is_down );
+		void inject_mouse_button( MouseButton button_id, bool is_down );
 		void inject_mouse_wheel( int direction );
 		
 		//
 		// Accessors
-		bool is_down( input::Button button_id );
-		bool was_released( input::Button button_id );
+		bool is_down( MouseButton button );
+		bool was_released( MouseButton button );
 		
 		// retrieve the mouse position from last update
 		void last_mouse_position( int & x, int & y );
@@ -301,6 +302,6 @@ namespace input
 	void buttonEvent( int button, int isDown );
 	void handleEvent( ButtonState * b, int isDown );
 	
-
+	const char* mouse_button_name( MouseButton button );
 
 }; // namespace input

@@ -197,10 +197,10 @@ namespace input
 		mousey[1] = absolute_y;
 	} // inject_mouse_move
 	
-	void MouseInput::inject_mouse_button( int button_id, bool is_down )
+	void MouseInput::inject_mouse_button( MouseButton button, bool is_down )
 	{
-		assert( button_id >= MOUSE_LEFT && button_id < MOUSE_LEFT+MOUSE_COUNT );
-		buttons[ button_id ].press_release( is_down );
+		assert( button < MOUSE_COUNT && button >= 0 );
+		buttons[ button ].press_release( is_down );
 	} // inject_mouse_button
 	
 	void MouseInput::inject_mouse_wheel( int direction )
@@ -208,17 +208,17 @@ namespace input
 		wheel_direction = direction;
 	} // inject_mouse_wheel
 	
-	bool MouseInput::is_down( input::Button button_id )
+	bool MouseInput::is_down( input::MouseButton button )
 	{
-		assert( button_id >= MOUSE_LEFT && button_id < MOUSE_LEFT+MOUSE_COUNT );
-		return buttons[ button_id ].state & 1;
+		assert( button < MOUSE_COUNT && button >= 0 );
+		return buttons[ button ].state & 1;
 	} // is_down
 	
-	bool MouseInput::was_released( input::Button button_id )
+	bool MouseInput::was_released( input::MouseButton button )
 	{
-		assert( button_id >= MOUSE_LEFT && button_id < MOUSE_LEFT+MOUSE_COUNT );
+		assert( button < MOUSE_COUNT && button >= 0 );
 		// WAS down and NOT down now
-		return (buttons[ button_id ].state & 2) && !(buttons[ button_id ].state & 1 );
+		return (buttons[ button ].state & 2) && !(buttons[ button ].state & 1 );
 	} // was_released
 	
 	void MouseInput::last_mouse_position( int & x, int & y )
@@ -244,4 +244,23 @@ namespace input
 	{
 		
 	} // update
+	
+	
+	
+	const char * mouse_button_name( MouseButton button )
+	{
+		switch(button)
+		{
+			case MOUSE_LEFT: return "MOUSE_LEFT";
+			case MOUSE_RIGHT: return "MOUSE_RIGHT";
+			case MOUSE_MIDDLE: return "MOUSE_MIDDLE";
+			case MOUSE_MOUSE4: return "MOUSE_MOUSE4";
+			case MOUSE_MOUSE5: return "MOUSE_MOUSE5";
+			case MOUSE_MOUSE6: return "MOUSE_MOUSE6";
+			case MOUSE_MOUSE7: return "MOUSE_MOUSE7";
+			default: return "MOUSE_INVALID";
+		}
+	} // mouse_button_name
+	
+	
 }; // namespace input
