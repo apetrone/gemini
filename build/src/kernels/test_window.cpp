@@ -66,7 +66,7 @@ public:
             case kernel::MouseMoved:
 				{
 					// Origin: Upper Left
-					fprintf(stdout, "Mouse Movement: %i %i\n", event.mx, event.my);
+					//fprintf(stdout, "Mouse Movement: %i %i\n", event.mx, event.my);
 					break;
 				}
             case kernel::MouseButton:
