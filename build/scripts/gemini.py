@@ -178,6 +178,13 @@ def products(arguments, **kwargs):
 			"resources/osx/en.lproj/*.strings"
 		]
 
+		mac_debug = gemini.layout(platform="macosx", configuration="debug")
+		mac_debug.driver.gcc_optimization_level="0"
+		mac_debug.driver.debug_information_format="dwarf-with-dsym"
+		
+		mac_release = gemini.layout(platform="macosx", configuration="release")
+
+
 
 		linux = gemini.layout(platform="linux")
 		linux.sources = [
