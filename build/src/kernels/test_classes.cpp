@@ -23,7 +23,6 @@
 #include <stdio.h>
 #include <slim/xlog.h>
 
-#include "hashtable.hpp"
 #include "keyvalues.hpp"
 
 class TestClasses : public kernel::IApplication
@@ -57,48 +56,7 @@ public:
 		t = k.get("vec", glm::vec3() );
 		LOGV( "vec3: %g %g %g\n", t.x, t.y, t.z );
 #endif
-		ChainedHashTable<int, unsigned int> key_map;
 
-		key_map.set(0, 32);
-		key_map.set(1, 64);
-		key_map.set(2, 128);
-		key_map.set(3, 256);
-		
-		key_map.set(1, 256);
-		key_map.set(2, 512);
-		key_map.set(3, 1024);
-
-
-		unsigned int value = key_map.get(0, UINT_MAX);
-		LOGV("value: %i\n", value);
-		
-		value = key_map.get(1, UINT_MAX);
-		LOGV("value: %i\n", value);
-		
-		value = key_map.get(2, UINT_MAX);
-		LOGV("value: %i\n", value);
-		
-		value = key_map.get(3, UINT_MAX);
-		LOGV("value: %i\n", value);
-		
-		
-		ChainedHashTable<char*, unsigned int> string_map;
-		
-		char name[] = "two";
-		char* const ref = "three";
-		
-		string_map.set("one", 1);
-		string_map.set("two", 2);
-		string_map.set("three", 3);
-		
-		value = string_map.get("one", UINT_MAX);
-		LOGV("string_map: %i\n", value);
-
-		value = string_map.get(name, UINT_MAX);
-		LOGV("string_map: %i\n", value);
-		
-		value = string_map.get(ref, UINT_MAX);
-		LOGV("string_map: %i\n", value);
 		
 		return kernel::Application_NoWindow;
 	}
