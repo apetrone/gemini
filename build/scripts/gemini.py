@@ -102,7 +102,7 @@ def arguments(parser):
 	parser.add_argument("--raspberrypi", dest="raspberrypi", action="store_true", help="Build for the RaspberryPi", default=False)
 	parser.add_argument("--indextype", dest="index_type", choices=["uint", "ushort"], type=str, default="uint", help="Set the IndexBuffer type; defaults to uint")
 	parser.add_argument("--with-xwl", dest="with_xwl", action="store_true", help="Build with xwl", default=False)
-	parser.add_argument("--with-sdl2", dest="with_sdl2", action="store_true", help="Build with SDL2", default=False)
+	parser.add_argument("--with-sdl2", dest="with_sdl2", action="store_true", help="Build with SDL2", default=True)
 
 def products(arguments, **kwargs):
 	target_platform = kwargs.get("target_platform")
