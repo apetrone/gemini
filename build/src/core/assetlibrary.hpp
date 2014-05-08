@@ -21,9 +21,11 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <string>
+#include <map>
+
 #include "typedefs.h"
 #include "assets.hpp"
-#include "hashtable.hpp"
 #include <list>
 #include <slim/xlog.h>
 
@@ -38,7 +40,9 @@ namespace assets
 		typedef AssetLoadStatus (*AssetLoadCallback)( const char * path, AssetClass * asset, const AssetParameterClass & parameters );
 		typedef void (*AssetConstructExtension)( StackString<MAX_PATH_SIZE> & path );
 		typedef void (*AssetIterator)( AssetClass * asset, void * userdata );
-		typedef HashTable<AssetClass*> AssetHashTable;
+		
+		typedef std::map<std::string, AssetClass*> AssetHashTable;
+		typedef typename AssetHashTable::iterator AssetHashTableIterator;
 		typedef std::list<AssetClass*, GeminiAllocator<AssetClass*> > AssetList;
 		
 		unsigned int total_assets;
@@ -102,23 +106,24 @@ namespace assets
 			path.append( extension() );
 		}
 
-		AssetClass * load_from_path( const char * path, const AssetParameterClass & parameters = AssetParameterClass(), bool ignore_cache = false )
+		AssetClass * load_from_path(const char* path, const AssetParameterClass & parameters = AssetParameterClass(), bool ignore_cache = false)
 		{
 			// This should handle the following cases:
 			// 1) Asset is loaded, obey cache and return loaded asset
 			// 2) Asset is loaded. User requests a reload of asset by ignoring the cache.
 			// 3) Asset is not loaded yet. Load it.
 			AssetClass * asset = 0;
-			StackString< MAX_PATH_SIZE > fullpath = path;
+			StackString<MAX_PATH_SIZE> fullpath = path;
 			int load_result = 0;
 			int asset_is_new = 0;
 			
 			// is this asset already loaded?
-			if ( asset_by_name.contains( path ) )
+			AssetHashTableIterator iter = asset_by_name.find(path);
+			if (iter != asset_by_name.end())
 			{
-				asset = asset_by_name.get( path );
+				asset = iter->second;
 				
-				if ( !ignore_cache )
+				if (!ignore_cache)
 				{
 					// case 1
 //					LOGV( "asset (%s) already loaded. returning from cache\n", path );
@@ -130,7 +135,7 @@ namespace assets
 			this->append_extension(fullpath);
 
 			
-			if ( !asset )
+			if (!asset)
 			{
 				// case 3
 				asset = allocate_asset();
@@ -138,13 +143,13 @@ namespace assets
 			}
 			
 			// case 2 && 3
-			load_result = load_with_callback( fullpath(), asset, parameters );
-			if ( load_result != AssetLoad_Failure )
+			load_result = load_with_callback(fullpath(), asset, parameters);
+			if (load_result != AssetLoad_Failure)
 			{
-				if ( asset_is_new )
+				if (asset_is_new)
 				{
 					StackString<MAX_PATH_SIZE> store_path = path;
-					take_ownership( store_path(), asset );
+					take_ownership(store_path(), asset);
 				}
 				return asset;
 			}
@@ -162,22 +167,25 @@ namespace assets
 		
 		
 		// take ownership of this asset; should be managed by this class from here on
-		void take_ownership( const char * path, AssetClass * asset )
+		void take_ownership(const char* path, AssetClass * asset)
 		{
-			if ( !this->find_with_path(path) )
+			if (!this->find_with_path(path))
 			{
 				asset->asset_id = total_assets++;
-				asset_list.push_back( asset );
-				asset_by_name.set( path, asset );
+				asset_list.push_back(asset);
+				
+				asset_by_name[path] = asset;
 			}
 		} // take_ownership
 		
-		AssetClass * find_with_path( const char * path )
+		AssetClass* find_with_path(const char* path)
 		{
 			AssetClass * asset = 0;
-			if ( asset_by_name.contains( path ) )
+			
+			AssetHashTableIterator iter = asset_by_name.find(path);
+			if (iter != asset_by_name.end())
 			{
-				asset = asset_by_name.get( path );
+				asset = iter->second;
 				return asset;
 			}
 			
@@ -217,7 +225,8 @@ namespace assets
 			}
 			
 			total_assets = 0;
-			asset_by_name.purge();
+
+			asset_by_name.clear();
 		} // release_and_purge
 		
 		void set_default( AssetClass * asset )

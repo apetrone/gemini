@@ -8,32 +8,15 @@ DESKTOP = ["macosx", "linux", "windows"]
 BLACKSMITH_PATH = "../tools/blacksmith/blacksmith.py"
 
 def setup_common_variables(arguments, target_platform, product):
-	product.sources = [
+	product.sources += [
 		"src/*.c*",
-		"src/*.h*",
-
-		# dependencies
-		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c"),
-
-		# include this almagamated version of jsoncpp until we replace it.
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp"),
-
-		os.path.join(DEPENDENCIES_FOLDER, "font-stash/fontstash.c"),
-		os.path.join(DEPENDENCIES_FOLDER, "font-stash/stb_truetype.c"),
-
-		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.c"),
-		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.h")
+		"src/*.h*"
 	]
 
 
-	product.includes = [
+	product.includes += [
 		"src",
-		"src/game",
-
-		os.path.join(DEPENDENCIES_FOLDER, "murmur3"),
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),
-		os.path.join(DEPENDENCIES_FOLDER, "font-stash"),
-		os.path.join(DEPENDENCIES_FOLDER, "slim")
+		"src/game"
 	]
 
 	# TODO: Allow generic *.DS_Store excludes
@@ -43,10 +26,6 @@ def setup_common_variables(arguments, target_platform, product):
 		"src/contrib/.DS_Store",
 		"src/game/.DS_Store",
 		"src/entry.cpp"
-	]
-
-	product.defines = [
-		"JSON_IS_AMALGAMATION"
 	]
 
 	index_type_map = {
@@ -65,6 +44,58 @@ def setup_common_variables(arguments, target_platform, product):
 		"DEBUG"
 	]
 
+def setup_common_libs(product):
+
+	product.defines += [
+		"JSON_IS_AMALGAMATION"
+	]
+
+	product.sources += [
+		# dependencies
+		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c"),
+
+		# include this almagamated version of jsoncpp until we replace it.
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp"),
+
+		os.path.join(DEPENDENCIES_FOLDER, "font-stash/fontstash.c"),
+		os.path.join(DEPENDENCIES_FOLDER, "font-stash/stb_truetype.c"),
+
+		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.c"),
+		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.h"),
+
+
+		"src/util.cpp",
+		"src/core/memory.cpp"
+	]
+
+	product.includes += [
+		"src",
+		"src/core",
+		"src/core/audio",
+		"src/contrib",
+
+		os.path.join(DEPENDENCIES_FOLDER, "murmur3"),
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),
+		os.path.join(DEPENDENCIES_FOLDER, "font-stash"),
+		os.path.join(DEPENDENCIES_FOLDER, "slim")		
+	]
+
+
+	product.dependencies += [
+		Dependency(file="glm.py")
+	]
+
+def setup_driver(product):
+
+	macosx = product.layout(platform="macosx")
+	macosx.driver.macosx_deployment_target = "10.8"
+	macosx.driver.sdkroot = "macosx10.9"
+
+	mac_debug = product.layout(platform="macosx", configuration="debug")
+	mac_debug.driver.gcc_optimization_level="0"
+	mac_debug.driver.debug_information_format="dwarf-with-dsym"
+	
+	mac_release = product.layout(platform="macosx", configuration="release")
 
 def arguments(parser):
 	parser.add_argument("--with-glesv2", dest="glesv2", action="store_true", help="Build with GLES V2", default=False)
@@ -81,9 +112,9 @@ def products(arguments, **kwargs):
 	gemini.product_root = "latest/bin/${CONFIGURATION}_${ARCHITECTURE}"
 	gemini.object_root = "obj"
 
+	setup_common_libs(gemini)
 
-	gemini.dependencies = [
-		Dependency(file="glm.py"),
+	gemini.dependencies += [
 		Dependency(file="sqrat.py"),
 		Dependency(file="squirrel3.py", products=["squirrel", "sqstdlib"]),
 		Dependency(file="nom.py"),
@@ -94,6 +125,10 @@ def products(arguments, **kwargs):
 
 	# common sources
 	setup_common_variables(arguments, target_platform, gemini)
+
+	setup_driver(gemini)
+
+
 
 	# more sources
 	gemini.sources += [
@@ -111,12 +146,7 @@ def products(arguments, **kwargs):
 		"src/kernels/project_huckleberry.cpp"
 	]
 
-	gemini.includes += [
-		"src",
-		"src/core",
-		"src/core/audio",
-		"src/contrib"
-	]
+
 
 	
 
@@ -154,8 +184,6 @@ def products(arguments, **kwargs):
 			gemini.defines += [
 				"GEMINI_USE_SDL2=1"
 			]
-		else:
-			raise Exception("You must build with either --with-xwl or --with-sdl2")
 
 		macosx = gemini.layout(platform="macosx")
 		macosx.sources = [
@@ -171,18 +199,10 @@ def products(arguments, **kwargs):
 		]
 
 		macosx.driver.infoplist_file = "resources/osx/Info.plist"
-		macosx.driver.macosx_deployment_target = "10.8"
-		macosx.driver.sdkroot = "macosx10.9"
 		macosx.resources = [
 			"resources/osx/en.lproj/*.xib",
 			"resources/osx/en.lproj/*.strings"
 		]
-
-		mac_debug = gemini.layout(platform="macosx", configuration="debug")
-		mac_debug.driver.gcc_optimization_level="0"
-		mac_debug.driver.debug_information_format="dwarf-with-dsym"
-		
-		mac_release = gemini.layout(platform="macosx", configuration="release")
 
 
 
@@ -242,5 +262,18 @@ def products(arguments, **kwargs):
 	]
 
 
-	return [gemini]
+
+	rnd = Product(name="rnd", output=ProductType.Commandline)
+
+	rnd.root = "../"
+	rnd.sources += [
+		"src/rnd/rnd.cpp"
+	]
+
+	#setup_common_variables(arguments, target_platform, rnd)
+	setup_driver(rnd)
+	setup_common_libs(rnd)
+
+
+	return [gemini, rnd]
 
