@@ -211,7 +211,7 @@ namespace input
 		virtual void reset();
 		virtual void update( float delta_msec );
 		
-		void inject_key_event( int key, bool is_down, int unicode );
+		void inject_key_event(int key, bool is_down);
 	
 	
 		// Accessors

@@ -23,9 +23,11 @@
 #include <stdio.h>
 #include <assert.h>
 #include <limits.h>
+#include <map>
 
 #include "kernel_desktop.hpp"
 #include "input.hpp"
+//#include "hashtable.hpp"
 #include <slim/xlog.h>
 
 using namespace input;
@@ -149,7 +151,8 @@ void event_callback_xwl( xwl_event_t * e )
 #if GEMINI_USE_SDL2
 	SDL_Window * _window = 0;
 	SDL_GLContext _context = 0;
-	input::Button _key_map[UINT_MAX];
+	typedef std::map<unsigned int, input::Button> SDLToButtonKeyMap;
+	SDLToButtonKeyMap _key_map;
 	input::MouseButton _mouse_map[input::MOUSE_COUNT];
 
 #endif
@@ -203,6 +206,12 @@ void DesktopKernel::pre_tick()
 				kernel::instance()->set_active(false);
 				break;
 			
+			case SDL_TEXTINPUT:
+			{
+				LOGV("TODO: add unicode support from SDL: %s\n", event.text.text);
+				break;
+			}
+			
 			case SDL_KEYUP:
 			case SDL_KEYDOWN:
 			{
@@ -217,11 +226,8 @@ void DesktopKernel::pre_tick()
 				kernel::KeyboardEvent ev;
 				ev.is_down = (event.type == SDL_KEYDOWN);
 				ev.key = button;
-				//ev.unicode = event.text.;
-				LOGV("TODO: add unicode support from SDL\n");
-				input::state()->keyboard().inject_key_event( button, ev.is_down, /*e->unicode*/0 );
-				
-				kernel::event_dispatch( ev );
+				input::state()->keyboard().inject_key_event(button, ev.is_down);
+				kernel::event_dispatch(ev);
 				break;
 			}
 

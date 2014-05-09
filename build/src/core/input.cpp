@@ -124,7 +124,7 @@ namespace input
 		}
 	} // update
 	
-	void KeyboardInput::inject_key_event( int key, bool is_down, int unicode )
+	void KeyboardInput::inject_key_event(int key, bool is_down)
 	{
 		input::Button button = (input::Button)key;
 		assert( button <= KEY_COUNT );
