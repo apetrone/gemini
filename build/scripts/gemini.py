@@ -85,6 +85,15 @@ def setup_common_libs(product):
 		Dependency(file="glm.py")
 	]
 
+	linux = product.layout(platform="linux")
+	linux.links += [
+		"pthread",
+		"dl",
+	]
+	linux.linkflags += [
+		"-Wl,-rpath,."
+	]	
+
 def setup_driver(product):
 
 	macosx = product.layout(platform="macosx")
@@ -207,18 +216,12 @@ def products(arguments, **kwargs):
 
 
 		linux = gemini.layout(platform="linux")
-		linux.sources = [
+		linux.sources += [
 			"src/core/desktop/entry.cpp"
 		]
 
-		linux.links = [
-			"pthread",
-			"dl",
+		linux.links += [
 			"openal"
-		]
-
-		linux.linkflags = [
-			"-Wl,-rpath,."
 		]
 
 		if arguments.raspberrypi:
