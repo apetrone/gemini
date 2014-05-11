@@ -126,7 +126,7 @@ def check_X11(arguments, product, target_platform, vars):
 			logging.info("have shmat")
 			product.links += ["ipc"]
 
-	if arguments.x11_shared:
+	if arguments.x11_shared and libs["X11"]:
 		if not vars["HAVE_DLOPEN"]:
 			logging.warn("You must have SDL_LoadObject() support for dynamic X11 loading")
 			vars["HAVE_X11_SHARED"] = False
