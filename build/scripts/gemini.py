@@ -96,9 +96,9 @@ def setup_common_libs(product):
 
 def setup_driver(product):
 
-	macosx = product.layout(platform="macosx")
-	macosx.driver.macosx_deployment_target = "10.8"
-	macosx.driver.sdkroot = "macosx10.9"
+	#macosx = product.layout(platform="macosx")
+	#macosx.driver.macosx_deployment_target = "10.8"
+	#macosx.driver.sdkroot = "macosx10.9"
 
 	mac_debug = product.layout(platform="macosx", configuration="debug")
 	mac_debug.driver.gcc_optimization_level="0"
@@ -114,6 +114,31 @@ def arguments(parser):
 	parser.add_argument("--with-sdl2", dest="with_sdl2", action="store_true", help="Build with SDL2", default=True)
 
 def products(arguments, **kwargs):
+	# global params will be inherited by all dependent products
+	global_params = kwargs.get("global_params")
+
+	g_macosx = global_params.layout(platform="macosx")
+
+	# rtti is disabled by default
+	g_macosx.driver.gcc_enable_cpp_rtti = "NO"
+
+	# default to c++0x
+	g_macosx.driver.clang_cxx_language_standard = "c++0x"
+
+	# use libstdc++
+	g_macosx.driver.clang_cxx_library = "libstdc++"
+	g_macosx.driver.macosx_deployment_target = "10.8"
+	g_macosx.driver.sdkroot = "macosx10.9"
+
+
+	g_linux = global_params.layout(platform="linux")
+	g_linux.cflags += [
+		"-fno-rtti"
+	]
+
+
+
+
 	target_platform = kwargs.get("target_platform")
 
 	gemini = Product(name="gemini_desktop", output=ProductType.Application)
