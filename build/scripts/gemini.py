@@ -130,15 +130,6 @@ def products(arguments, **kwargs):
 	g_macosx.driver.macosx_deployment_target = "10.8"
 	g_macosx.driver.sdkroot = "macosx10.9"
 
-
-	g_linux = global_params.layout(platform="linux")
-	g_linux.cflags += [
-		"-fno-rtti"
-	]
-
-
-
-
 	target_platform = kwargs.get("target_platform")
 
 	gemini = Product(name="gemini_desktop", output=ProductType.Application)
