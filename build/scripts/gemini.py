@@ -119,16 +119,16 @@ def products(arguments, **kwargs):
 
 	g_macosx = global_params.layout(platform="macosx")
 
-	# rtti is disabled by default
-	g_macosx.driver.gcc_enable_cpp_rtti = "NO"
-
-	# default to c++0x
+	# use C++11
 	g_macosx.driver.clang_cxx_language_standard = "c++0x"
 
-	# use libstdc++
-	g_macosx.driver.clang_cxx_library = "libstdc++"
+	# use LLVM C++ standard library with C++11 support
+	g_macosx.driver.clang_cxx_library = "libc++"
 	g_macosx.driver.macosx_deployment_target = "10.8"
 	g_macosx.driver.sdkroot = "macosx10.9"
+
+
+
 
 	target_platform = kwargs.get("target_platform")
 
