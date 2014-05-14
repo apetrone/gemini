@@ -151,7 +151,8 @@ void event_callback_xwl( xwl_event_t * e )
 #if GEMINI_USE_SDL2
 	SDL_Window * _window = 0;
 	SDL_GLContext _context = 0;
-	typedef std::map<unsigned int, input::Button> SDLToButtonKeyMap;
+	typedef GeminiAllocator<std::pair<const unsigned int, input::Button> > ButtonKeyMapAllocator;
+	typedef std::map<unsigned int, input::Button, std::less<unsigned int>, ButtonKeyMapAllocator> SDLToButtonKeyMap;
 	SDLToButtonKeyMap _key_map;
 	input::MouseButton _mouse_map[input::MOUSE_COUNT];
 
@@ -513,5 +514,10 @@ void DesktopKernel::shutdown()
 	SDL_GL_DeleteContext(_context);
 	SDL_DestroyWindow(_window);
 	SDL_Quit();
+	
+	_key_map.clear();
 #endif
+
+
+
 } // shutdown
