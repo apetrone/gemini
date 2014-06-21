@@ -22,7 +22,6 @@
 #include "typedefs.h"
 #include <slim/xlog.h>
 #include "map_event.hpp"
-#include "hashtable.hpp"
 
 EventBasedMap::EventBasedMap()
 {

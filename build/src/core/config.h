@@ -27,7 +27,11 @@
 // PLATFORM_FANCY_FUNCTION - an alias to this compiler's pretty function macro
 
 // setup compiler defines
-#if defined( __GNUC__ )
+#if defined( __clang__ )
+	#define PLATFORM_COMPILER "clang"
+	#define PLATFORM_COMPILER_VERSION CONCAT_PERIOD( STRINGIZE(__clang_major__), STRINGIZE(__clang_minor__))
+	#define PLATFORM_FANCY_FUNCTION __PRETTY_FUNCTION__
+#elif defined( __GNUC__ )
 	#define PLATFORM_COMPILER "gcc"
 	#define PLATFORM_COMPILER_VERSION CONCAT_PERIOD( STRINGIZE(__GNUC__), STRINGIZE(__GNUC_MINOR__) )
 	#define PLATFORM_FANCY_FUNCTION __PRETTY_FUNCTION__
@@ -77,20 +81,22 @@
 
 	#define PLATFORM_NAME "windows"
 	#define PLATFORM_WINDOWS 1
-#elif LINUX
+#elif __linux__
 	#if RASPBERRYPI
-		#define PLATFORM_NAME "linux"
-		#define PLATFORM_LINUX 1
-	#else
-		#define PLATFORM_NAME "raspberrypi"
-		#define PLATFORM_LINUX 1
+		// specifically built for RaspberryPi
 		#define PLATFORM_RASPBERRYPI 1
+		#define PLATFORM_NAME "raspberrypi"
+	#else
+		// generic flavor
+		#define PLATFORM_NAME "linux"
 	#endif
+
+	#define PLATFORM_LINUX 1
 #elif __APPLE__
 	#include <TargetConditionals.h>
 
 	#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
-		#define PLATFORM_NAME "ios"
+		#define PLATFORM_NAME "iphoneos"
 		#define PLATFORM_IS_MOBILE 1
 		#define PLATFORM_IOS 1
 	#else

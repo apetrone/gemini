@@ -83,14 +83,14 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	int minor = 0;
 	
 	
-#if _WIN32 || LINUX || __ANDROID__
+#if _WIN32 || __linux__ || __ANDROID__
 	const char * libName = "";
 
 #if _WIN32
 	libName = "OpenGL32.dll";
 #elif defined(PLATFORM_IS_RASPBERRYPI) || defined(PLATFORM_USE_GLES2)
 	libName = "libGLESv2.so";
-#elif LINUX
+#elif __linux__
 	libName = "libGL.so";
 #endif
 
@@ -454,7 +454,7 @@ void * gemgl_findsymbol( gemgl_interface_t & gl_interface, const char * name )
 	ptr = wglGetProcAddress( name );
 #elif PLATFORM_IS_RASPBERRYPI
 	// fall through
-#elif LINUX
+#elif __linux__
 	ptr = (void*)glXGetProcAddress( (const GLubyte*)name );
 #elif __APPLE__
 	ptr = gemgl_native_findsymbol( name );
@@ -464,7 +464,7 @@ void * gemgl_findsymbol( gemgl_interface_t & gl_interface, const char * name )
 	#error Unknown platform!
 #endif
 
-#if _WIN32 || LINUX || __ANDROID__
+#if _WIN32 || __linux__ || __ANDROID__
 	if ( !ptr )
 	{
 		ptr = xlib_find_symbol( &gl_interface.library, name );
@@ -486,7 +486,7 @@ void * gemgl_findsymbol( gemgl_interface_t & gl_interface, const char * name )
 
 void gemgl_shutdown( gemgl_interface_t & gl_interface  )
 {
-#if _WIN32 || LINUX || __ANDROID__
+#if _WIN32 || __linux__ || __ANDROID__
 	xlib_close( &gl_interface.library );
 #elif __APPLE__
 	gemgl_osx_shutdown();

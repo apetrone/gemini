@@ -23,7 +23,6 @@
 #include <stdio.h>
 #include <slim/xlog.h>
 
-
 #include "keyvalues.hpp"
 
 class TestClasses : public kernel::IApplication
@@ -38,6 +37,7 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
+#if 0
 		KeyValues k;
 		k.set( "size", 30 );
 		
@@ -55,7 +55,9 @@ public:
 		
 		t = k.get("vec", glm::vec3() );
 		LOGV( "vec3: %g %g %g\n", t.x, t.y, t.z );
-				
+#endif
+
+		
 		return kernel::Application_NoWindow;
 	}
 

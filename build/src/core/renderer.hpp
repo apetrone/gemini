@@ -309,6 +309,8 @@ namespace renderer
 		
 		unsigned int global_params;
 		glm::vec3 * camera_position;
+		
+		GeneralParameters();
 	};
 };
 

@@ -31,6 +31,12 @@ namespace render_utilities
 {
 	void stream_geometry( RenderStream & rs, assets::Geometry * geo, renderer::GeneralParameters & gp )
 	{
+		// verify general parameters
+		assert( gp.modelview_matrix != 0 );
+		assert( gp.object_matrix != 0 );
+		assert( gp.projection_project != 0 );
+		assert( gp.camera_position != 0 );
+		
 		assert( geo != 0 );
 		assets::Material * material = assets::materials()->find_with_id( geo->material_id );
 		assert( material != 0 );

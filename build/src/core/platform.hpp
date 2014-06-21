@@ -31,7 +31,7 @@
 	#define MAX_PATH_SIZE MAX_PATH
 	#define PATH_SEPARATOR '\\'
 	#define PATH_SEPARATOR_STRING "\\"
-#elif LINUX || TARGET_OS_MAC || __ANDROID__
+#elif __linux__ || TARGET_OS_MAC || __ANDROID__
 	#include <limits.h>
 	#define MAX_PATH_SIZE PATH_MAX
 	#define PATH_SEPARATOR '/'

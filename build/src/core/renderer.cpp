@@ -43,6 +43,11 @@
 
 namespace renderer
 {
+	GeneralParameters::GeneralParameters()
+	{
+		memset(this, 0, sizeof(GeneralParameters));
+	}
+
 	IRenderDriver * _render_driver = 0;
 	
 	IRenderDriver * driver() { return _render_driver; }

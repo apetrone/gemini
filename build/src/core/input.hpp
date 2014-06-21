@@ -53,8 +53,8 @@ namespace input
 		KEY_Y,
 		KEY_X,
 		KEY_Z,
-		KEY_LSYSTEM,
-		KEY_RSYSTEM,
+
+		// other keys
 		KEY_MENU,
 		KEY_SEMICOLON,
 		KEY_SLASH,
@@ -78,11 +78,33 @@ namespace input
 		KEY_HOME,
 		KEY_INSERT,
 		KEY_DELETE,
-		KEY_ADD,
-		KEY_SUBTRACT,
-		KEY_MULTIPLY,
-		KEY_DIVIDE,
 		KEY_PAUSE,
+		
+		KEY_LSHIFT,
+		KEY_RSHIFT,
+		KEY_LCONTROL,
+		KEY_RCONTROL,
+		KEY_LALT,
+		KEY_RALT,
+		KEY_NUMLOCK,
+		KEY_CAPSLOCK,
+		
+		// windows key / command key
+		KEY_LGUI,
+		
+		// numeric keys
+		KEY_0,
+		KEY_1,
+		KEY_2,
+		KEY_3,
+		KEY_4,
+		KEY_5,
+		KEY_6,
+		KEY_7,
+		KEY_8,
+		KEY_9,
+		
+		// function keys
 		KEY_F1,
 		KEY_F2,
 		KEY_F3,
@@ -98,10 +120,14 @@ namespace input
 		KEY_F13,
 		KEY_F14,
 		KEY_F15,
+		
+		// directional keys
 		KEY_LEFT,
 		KEY_RIGHT,
 		KEY_UP,
 		KEY_DOWN,
+		
+		// numpad keys
 		KEY_NUMPAD0,
 		KEY_NUMPAD1,
 		KEY_NUMPAD2,
@@ -112,28 +138,18 @@ namespace input
 		KEY_NUMPAD7,
 		KEY_NUMPAD8,
 		KEY_NUMPAD9,
-		KEY_0,
-		KEY_1,
-		KEY_2,
-		KEY_3,
-		KEY_4,
-		KEY_5,
-		KEY_6,
-		KEY_7,
-		KEY_8,
-		KEY_9,
-		KEY_LSHIFT,
-		KEY_RSHIFT,
-		KEY_LCONTROL,
-		KEY_RCONTROL,
-		KEY_LALT,
-		KEY_RALT,
-		KEY_NUMLOCK,
-		KEY_CAPSLOCK,
-		
-		KEY_COUNT,
-		
-		MOUSE_LEFT = 104,
+		KEY_NUMPAD_PLUS,
+		KEY_NUMPAD_MINUS,
+		KEY_NUMPAD_PLUSMINUS,
+		KEY_NUMPAD_MULTIPLY,
+		KEY_NUMPAD_DIVIDE,
+
+		KEY_COUNT
+	}; // enum Button
+	
+	enum MouseButton
+	{
+		MOUSE_LEFT,
 		MOUSE_RIGHT,
 		MOUSE_MIDDLE,
 		MOUSE_MOUSE4,
@@ -141,10 +157,8 @@ namespace input
 		MOUSE_MOUSE6,
 		MOUSE_MOUSE7,
 		
-		MOUSE_WHEEL,
-		
-		MOUSE_COUNT = (MOUSE_WHEEL-KEY_COUNT),
-	}; // enum Button
+		MOUSE_COUNT
+	}; // enum MouseButton
 	
 	// key mods
 	enum
@@ -197,7 +211,7 @@ namespace input
 		virtual void reset();
 		virtual void update( float delta_msec );
 		
-		void inject_key_event( int key, bool is_down, int unicode );
+		void inject_key_event(int key, bool is_down);
 	
 	
 		// Accessors
@@ -222,13 +236,13 @@ namespace input
 		virtual void update( float delta_msec );
 		
 		void inject_mouse_move( int absolute_x, int absolute_y );
-		void inject_mouse_button( int button_id, bool is_down );
+		void inject_mouse_button( MouseButton button_id, bool is_down );
 		void inject_mouse_wheel( int direction );
 		
 		//
 		// Accessors
-		bool is_down( input::Button button_id );
-		bool was_released( input::Button button_id );
+		bool is_down( MouseButton button );
+		bool was_released( MouseButton button );
 		
 		// retrieve the mouse position from last update
 		void last_mouse_position( int & x, int & y );
@@ -284,10 +298,10 @@ namespace input
 	void startup( void );
 	void shutdown( void );
 	void update( void );
-	
+
 	void buttonEvent( int button, int isDown );
 	void handleEvent( ButtonState * b, int isDown );
 	
-
+	const char* mouse_button_name( MouseButton button );
 
 }; // namespace input

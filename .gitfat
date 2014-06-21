@@ -1,0 +1,4 @@
+[rsync]
+
+remote = cb2:/home/apetrone/gemini_assets
+sshuser = apetrone

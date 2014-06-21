@@ -1,6 +1,6 @@
 #pragma once
 
-#if _WIN32 || LINUX || __ANDROID__
+#if _WIN32 || __linux__ || __ANDROID__
 	#include <slim/xlib.h>
 #endif
 
@@ -12,7 +12,7 @@
 	//#include <wglext.h>
 	#pragma comment( lib, "opengl32.lib" )
 	#define GEMGLAPI WINAPI*
-#elif LINUX
+#elif __linux__
 	#include <stdint.h>
 
 	#if PLATFORM_USE_GLES2
@@ -579,7 +579,7 @@ enum gemgl_renderer_type
 		GEMGLFNGETINTEGERV GetIntegerv;
 		GEMGLFNGETFLOATV GetFloatv;
 
-#if _WIN32 || LINUX || __ANDROID__
+#if _WIN32 || __linux__ || __ANDROID__
 		xlib_t library;
 #endif
 	} gemgl_interface_t;

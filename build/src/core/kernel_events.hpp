@@ -96,9 +96,15 @@ namespace kernel
 	struct MouseEvent : public Event<Mouse>
 	{
 		bool is_down;
-		short button;
+		unsigned int button;
+		
+		// absolute mouse values
 		int mx;
 		int my;
+		
+		// delta mouse values
+		int dx;
+		int dy;
 		
 		// < 0 is movement towards the user; > 0 is movement away toward the screen
 		short wheel_direction;

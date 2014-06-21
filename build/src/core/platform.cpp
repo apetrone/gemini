@@ -30,7 +30,7 @@
 #if _WIN32
 	#include <windows.h>
 	#include <direct.h> // for _mkdir
-#elif LINUX
+#elif __linux__
 	#include <sys/sysinfo.h>
 	//#include <errno.h>
 	#include <sys/types.h>
@@ -85,7 +85,7 @@ namespace platform
 			error.message = "GetModuleFileNameA failed!";
 		}
 		
-#elif LINUX
+#elif __linux__
 		{
 			// http://www.flipcode.com/archives/Path_To_Executable_On_Linux.shtml
 			char linkname[ 64 ] = {0};
@@ -144,7 +144,7 @@ namespace platform
 				// TODO: print out the errno
 				error = core::Error( core::Error::Failure, "_mkdir failed!" );
 			}
-#elif LINUX || __APPLE__
+#elif __linux__ || __APPLE__
 			// http://pubs.opengroup.org/onlinepubs/009695399/functions/mkdir.html
 			result = mkdir( path, (S_IRUSR | S_IWUSR | S_IXUSR ) | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH );
 			if ( result == -1 )

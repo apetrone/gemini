@@ -22,7 +22,6 @@
 #import "AppDelegate.h"
 
 #import "core/desktop/kernel_desktop.hpp"
-#import <xwl/xwl.h>
 
 static bool has_started = false;
 DesktopKernel _desktop_kernel( 0, 0 );
