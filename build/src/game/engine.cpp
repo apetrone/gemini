@@ -27,27 +27,28 @@ namespace engine
 {
 	class Engine : public IEngineInterface
 	{
-		ScreenController * s_control;
+		//ScreenController * s_control;
 	public:
 		
 		Engine()
 		{
 			LOGV( "Engine starting up\n" );
-			s_control = CREATE(ScreenController);
+			//s_control = CREATE(ScreenController);
 		}
 		
 		~Engine()
 		{
 			LOGV( "Engine shutting down\n" );
-			DESTROY(ScreenController, s_control);
+			//DESTROY(ScreenController, s_control);
 		}
 
 
-
+#if 0
 		virtual ScreenController * screen_controller()
 		{
 			return s_control;
 		}
+#endif
 	}; // Engine
 	
 	static Engine * _engine = 0;

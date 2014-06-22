@@ -30,7 +30,7 @@ namespace engine
 	{
 	public:
 		virtual ~IEngineInterface() {}
-		virtual ScreenController * screen_controller() = 0;
+		//virtual ScreenController * screen_controller() = 0;
 	}; // IEngineInterface
 
 	void startup();

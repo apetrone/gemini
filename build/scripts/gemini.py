@@ -25,7 +25,19 @@ def setup_common_variables(arguments, target_platform, product):
 		"src/core/assets/.DS_Store",
 		"src/contrib/.DS_Store",
 		"src/game/.DS_Store",
-		"src/entry.cpp"
+		"src/entry.cpp",
+
+		# excluded, but not yet removed game crap
+		"src/kernels/test_universal.cpp",
+		"src/game/gamescreen.*",
+		"src/game/win_loss_screen.*",
+		"src/game/componentmanager.*",
+		"src/game/componentlibrary.*",
+		"src/game/components.hpp",
+		"src/game/menuscreen.*",
+		"src/game/helpscreen.*",
+		"src/game/logoscreen.*",
+		"src/game/screencontrol.*"
 	]
 
 	index_type_map = {
