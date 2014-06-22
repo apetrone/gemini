@@ -377,7 +377,33 @@ def triangulate_mesh( object ):
 		return object
 		
 
+class export_animation(bpy.types.Operator):
+	bl_idname = "gemini_export.animation"
+	bl_label = "Export gemini .animation"
 
+	UseVertexAnimation = BoolProperty(
+		name="Use Vertex Animation",
+		description="Exports vertex animations",
+		default=True)
+
+	TimelineBegin = IntProperty(
+		name="Animation Begin",
+		description="First frame of animation to export",
+		default=0)
+
+	TimelineEnd = IntProperty(
+		name="Animation End",
+		description="Last frame of animation to export",
+		default=1)
+
+	def execute(self, context):
+		return {'FINISHED'}
+
+	def invoke(self, context, event):
+		#print( 'Invoke' )
+		wm = context.window_manager
+		wm.fileselect_add(self)
+		return {'RUNNING_MODAL'}
 
 class my_export_test(bpy.types.Operator):
 	'''Export Skeleton Mesh / Animation Data file(s)'''
@@ -639,7 +665,8 @@ class my_export_test(bpy.types.Operator):
 		return {'RUNNING_MODAL'}
 
 def menu_func(self, context):
-	self.layout.operator(my_export_test.bl_idname, text="gemini model")
+	self.layout.operator(my_export_test.bl_idname, text="gemini .model")
+	self.layout.operator(export_animation.bl_idname, text="gemini .animation")
 
 def register():   
 	bpy.utils.register_module(__name__)	
