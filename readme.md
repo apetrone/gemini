@@ -35,6 +35,10 @@ For iOS
 
 
 
+* Arch Linux
+	* pacman -S extra/openal
+
+
 ### Principles / Goals
 * git
 	* Everything needed to "build" the game, will be in git.
