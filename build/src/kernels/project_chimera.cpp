@@ -117,6 +117,16 @@ public:
 		physics::create_physics_for_mesh(plane_mesh);
 
 		debugdraw::startup(1024);
+		
+		
+		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
+		// This is appropriate for drawing 3D models, but not sprites
+		//camera.set_absolute_position( glm::vec3(8, 5, 8.0f) );
+		//camera.yaw = -45;
+		//camera.pitch = 30;
+		camera.update_view();
+		
+		character->reset();
 
 		return kernel::Application_Success;
 	}
@@ -125,22 +135,24 @@ public:
 	{
 		physics::step( params.step_interval_seconds );
 		
+		// grab state here?
+		physics::MovementCommand command;
+		command.time = 0;
+		command.left = input::state()->keyboard().is_down(input::KEY_A);
+		command.right = input::state()->keyboard().is_down(input::KEY_D);
+		command.forward = input::state()->keyboard().is_down(input::KEY_W);
+		command.back = input::state()->keyboard().is_down(input::KEY_S);
+		
+		physics::player_move(character, camera, command);
 		
 		physics::copy_ghost_to_camera(character->getGhostObject(), camera);
-		camera.update_view();
+		//camera.update_view();
 		
 		debugdraw::update(params.step_interval_seconds);
 	}
 
 	virtual void tick( kernel::Params & params )
 	{
-		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
-		// This is appropriate for drawing 3D models, but not sprites
-		camera.set_absolute_position( glm::vec3(8, 5, 8.0f) );
-		camera.yaw = -45;
-		camera.pitch = 30;
-		camera.update_view();
-	
 		RenderStream rs;
 		renderer::GeneralParameters gp;
 

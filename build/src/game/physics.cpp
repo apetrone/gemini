@@ -237,6 +237,30 @@ namespace physics
 		cam.pos = glm::vec3(origin.x(), origin.y(), origin.z());
 		cam.update_view();
 	} // copy_ghost_to_camera
+	
+	void player_move(CharacterController* character, Camera& camera, const MovementCommand& command)
+	{
+		glm::vec3 cam_right = camera.side;
+		glm::vec3 cam_dir = camera.view;
+		
+		if (character)
+		{
+			character->setFacingDirections(
+				btVector3(cam_dir.x, cam_dir.y, cam_dir.z),
+				btVector3(cam_right.x, cam_right.y, cam_right.z)
+				);
+			
+			character->setMovementWeight(
+				command.forward,
+				command.back,
+				command.left,
+				command.right
+				);
+				
+			bool movement_is_zero = (command.forward == 0 && command.right == 0 && command.left == 0 && command.back == 0);
+			character->enableDamping(movement_is_zero);
+		}
+	} // player_move
 
 	void create_physics_for_mesh(assets::Mesh* mesh)
 	{
