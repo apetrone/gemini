@@ -27,7 +27,7 @@
 #include "camera.hpp"
 #include "charactercontroller.h"
 
-
+#include "assets/asset_mesh.hpp"
 
 namespace physics
 {
@@ -47,13 +47,14 @@ namespace physics
 
 	typedef btKinematicCharacterController CharacterController;
 
-
 	void startup();
 	void shutdown();
 	void step(float seconds);
 	
 	
 	CharacterController* create_character_controller(const btVector3& spawnLocation, bool addActionToWorld);
-	void CopyGhostToCamera(btPairCachingGhostObject* ghost, Camera& cam);
+	void copy_ghost_to_camera(btPairCachingGhostObject* ghost, Camera& cam);
+	
+	void create_physics_for_mesh(assets::Mesh* mesh);
 	
 }; // namespace physics

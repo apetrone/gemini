@@ -112,6 +112,9 @@ public:
 		{
 			plane_mesh->prepare_geometry();
 		}
+		
+		
+		physics::create_physics_for_mesh(plane_mesh);
 
 		debugdraw::startup(1024);
 
@@ -123,7 +126,7 @@ public:
 		physics::step( params.step_interval_seconds );
 		
 		
-		physics::CopyGhostToCamera(character->getGhostObject(), camera);
+		physics::copy_ghost_to_camera(character->getGhostObject(), camera);
 		camera.update_view();
 		
 		debugdraw::update(params.step_interval_seconds);
@@ -141,8 +144,8 @@ public:
 		RenderStream rs;
 		renderer::GeneralParameters gp;
 
-//		physics::CopyGhostToCamera(character->getGhostObject(), camera);
-//		camera.update_view();
+		physics::copy_ghost_to_camera(character->getGhostObject(), camera);
+		camera.update_view();
 
 		gp.camera_position = &camera.pos;
 		gp.modelview_matrix = &camera.matCam;

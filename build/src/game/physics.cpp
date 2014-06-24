@@ -228,7 +228,7 @@ namespace physics
 		return character;
 	} // create_character_controller
 	
-	void CopyGhostToCamera(btPairCachingGhostObject* ghost, Camera& cam)
+	void copy_ghost_to_camera(btPairCachingGhostObject* ghost, Camera& cam)
 	{
 		btTransform tr = ghost->getWorldTransform();
 		btVector3 origin = tr.getOrigin();
@@ -236,6 +236,48 @@ namespace physics
 		
 		cam.pos = glm::vec3(origin.x(), origin.y(), origin.z());
 		cam.update_view();
-	} // CopyGhostToCamera
+	} // copy_ghost_to_camera
 
+	void create_physics_for_mesh(assets::Mesh* mesh)
+	{
+		bool use_quantized_bvh_tree = true;
+		btBvhTriangleMeshShape * trishape = 0;
+		btTransform xf;
+		btScalar mass(0);
+		btVector3 localInertia(0, 0, 0);
+		
+		if (!mesh)
+		{
+			LOGW("Unable to create physics for null mesh\n");
+			return;
+		}
+		
+		if (!dynamics_world)
+		{
+			LOGE("Unable to add physics for mesh; invalid physics state\n");
+			return;
+		}
+		
+		for( int i = 0; i < mesh->total_geometry; ++i )
+		{
+			assets::Geometry* geo = &mesh->geometry[ i ];
+			
+			// specify verts/indices from our meshdef
+			btTriangleIndexVertexArray * mesh = new btTriangleIndexVertexArray(geo->index_count/3, (int*)&geo->indices[0], sizeof(int)*3, geo->vertex_count, (btScalar*)&geo->vertices[0], sizeof(glm::vec3));
+			
+			// use that to creat ea Bvh triangle mesh shape
+			trishape = new btBvhTriangleMeshShape( mesh, use_quantized_bvh_tree );
+			
+			// setup transform and parameters for static rigid body
+			xf.setIdentity();
+			
+			btDefaultMotionState * myMotionState = new btDefaultMotionState( xf );
+			btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, myMotionState, trishape, localInertia );
+			btRigidBody * body = new btRigidBody( rbInfo );
+			body->setCollisionFlags( body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT );
+			
+			collision_shapes.push_back(trishape);
+			dynamics_world->addRigidBody(body);
+		}
+	} // create_physics_for_mesh
 }; // namespace physics
