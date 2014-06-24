@@ -688,6 +688,9 @@ void GLCore32::vertexbuffer_destroy( renderer::VertexBuffer * vertexbuffer )
 void GLCore32::vertexbuffer_upload_data( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
 {
 	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
+	
+	// If you hit this assert,
+	// the VertexBuffer has NOT been initialized properly!
 	assert( stream != 0 );
 	
 	gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
