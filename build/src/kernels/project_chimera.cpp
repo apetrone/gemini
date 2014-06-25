@@ -70,6 +70,15 @@ public:
 	
 	virtual void event( kernel::MouseEvent & event )
 	{
+		switch(event.subtype)
+		{
+			case kernel::MouseMoved:
+			{
+				camera.move_view(event.dx, event.dy);
+				//camera.update_view();
+				break;
+			}
+		}
 //		switch( event.subtype )
 //		{
 //			case kernel::MouseMoved:
@@ -155,7 +164,7 @@ public:
 	{
 		RenderStream rs;
 		renderer::GeneralParameters gp;
-
+		
 		physics::copy_ghost_to_camera(character->getGhostObject(), camera);
 		camera.update_view();
 
