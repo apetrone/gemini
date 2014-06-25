@@ -196,7 +196,7 @@ void DesktopKernel::pre_tick()
 
 #if GEMINI_USE_SDL2
 	SDL_Event event;
-	if (SDL_PollEvent(&event))
+	while (SDL_PollEvent(&event))
 	{
 		input::Button button;
 	
