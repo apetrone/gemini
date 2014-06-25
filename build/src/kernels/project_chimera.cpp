@@ -103,7 +103,7 @@ public:
 
 	virtual kernel::ApplicationResult config( kernel::Params & params )
 	{
-		params.window_title = "bullet2";
+		params.window_title = "project_chimera";
 		params.window_width = 800;
 		params.window_height = 600;
 		return kernel::Application_Success;
