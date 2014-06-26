@@ -37,7 +37,9 @@ def setup_common_variables(arguments, target_platform, product):
 		"src/game/menuscreen.*",
 		"src/game/helpscreen.*",
 		"src/game/logoscreen.*",
-		"src/game/screencontrol.*"
+		"src/game/screencontrol.*",
+
+		"src/kernels/test_bullet2.cpp"
 	]
 
 	index_type_map = {
@@ -101,6 +103,7 @@ def setup_common_libs(product):
 	linux.links += [
 		"pthread",
 		"dl",
+		"asound"
 	]
 	linux.linkflags += [
 		"-Wl,-rpath,."
