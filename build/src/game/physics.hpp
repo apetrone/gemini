@@ -66,7 +66,7 @@ namespace physics
 	void startup();
 	void shutdown();
 	void step(float seconds);
-	
+	void debug_draw();
 	
 	CharacterController* create_character_controller(const btVector3& spawnLocation, bool addActionToWorld);
 	void copy_ghost_to_camera(btPairCachingGhostObject* ghost, Camera& cam);

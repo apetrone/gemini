@@ -49,13 +49,13 @@ namespace physics
 	void DebugPhysicsRenderer::drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color )
 	{
 		Color c = Color::fromFloatPointer( &color[0], 3 );
-		debugdraw::line( BTVECTOR3_TO_VEC3( from ), BTVECTOR3_TO_VEC3( to ), c );
+		debugdraw::line( BTVECTOR3_TO_VEC3( from ), BTVECTOR3_TO_VEC3( to ), c, 0 );
 	}
 	
 	void DebugPhysicsRenderer::drawLine( const btVector3& from, const btVector3& to, const btVector3& fromColor, const btVector3& color )
 	{
 		Color c = Color::fromFloatPointer( &color[0], 3 );
-		debugdraw::line( BTVECTOR3_TO_VEC3( from ), BTVECTOR3_TO_VEC3( to ), c );
+		debugdraw::line( BTVECTOR3_TO_VEC3( from ), BTVECTOR3_TO_VEC3( to ), c, 0 );
 	}
 	
 	void DebugPhysicsRenderer::drawContactPoint(const btVector3& PointOnB,const btVector3& normalOnB,btScalar distance,int lifeTime,const btVector3& color)
@@ -186,6 +186,14 @@ namespace physics
 		}
 		
 	} // step
+	
+	void debug_draw()
+	{
+		if (dynamics_world)
+		{
+			dynamics_world->debugDrawWorld();
+		}
+	} // debug_draw
 
 	CharacterController* create_character_controller(const btVector3& spawnLocation, bool addActionToWorld)
 	{
@@ -235,7 +243,6 @@ namespace physics
 		origin += btVector3(0, .9, 0);
 		
 		cam.pos = glm::vec3(origin.x(), origin.y(), origin.z());
-		cam.update_view();
 	} // copy_ghost_to_camera
 	
 	void player_move(CharacterController* character, Camera& camera, const MovementCommand& command)
