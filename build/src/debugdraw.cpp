@@ -147,13 +147,13 @@ namespace debugdraw
 		{
 			// if timeleft has expired, reset it and disable the primitive by
 			// setting an invalid type
-			if ( _internal::primitive_list[i].timeleft <= 0 )
+			if ( _internal::primitive_list[i].timeleft < 0 )
 			{
-				_internal::primitive_list[i].timeleft = 0;
+				_internal::primitive_list[i].timeleft = -1;
 				_internal::primitive_list[i].type = 0;
 			}
 			
-			if ( _internal::primitive_list[i].timeleft > 0 )
+			if ( _internal::primitive_list[i].timeleft >= 0 )
 			{
 				// timeleft has a value, subtract deltatime
 				_internal::primitive_list[i].timeleft -= delta_msec;
