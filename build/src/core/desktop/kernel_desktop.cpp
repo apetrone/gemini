@@ -477,8 +477,7 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 		_mouse_map[SDL_BUTTON_X2] = MOUSE_MOUSE5;
 
 #endif
-
-
+		
 		parameters().window_width = window_width;
 		parameters().window_height = window_height;
 		parameters().render_width = render_width;
@@ -494,7 +493,6 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 			LOGV( "window resolution %i x %i\n", window_width, window_height );
 			LOGV( "render resolution %i x %i\n", render_width, render_height );
 		}
-
 	}
 } // post_application_config
 
@@ -521,3 +519,10 @@ void DesktopKernel::shutdown()
 
 
 } // shutdown
+
+
+void DesktopKernel::capture_mouse(bool capture)
+{
+	SDL_bool is_enabled = capture ? SDL_TRUE : SDL_FALSE;
+	SDL_SetRelativeMouseMode(is_enabled);
+}

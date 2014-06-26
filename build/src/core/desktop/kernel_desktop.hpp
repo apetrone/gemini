@@ -54,6 +54,8 @@ public:
 	virtual void post_application_startup( kernel::ApplicationResult result );
 	virtual void shutdown();
 	
+	virtual void capture_mouse(bool capture);
+	
 private:
 	struct xwl_window_s *create_window( struct xwl_windowparams_s * windowparams, const char * title, unsigned int * attribs );
 };

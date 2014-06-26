@@ -114,6 +114,9 @@ namespace kernel
 		
 		// called right before control returns to the main entry point
 		virtual void shutdown() = 0;
+		
+		// TODO: This feels like it doesn't fit here, move it.
+		virtual void capture_mouse( bool capture ) = 0;
 	};
 
 	class IApplication
