@@ -655,7 +655,7 @@ public:
 			gui::CursorButton::Mouse5
 		};
 		
-		gui::CursorButton::Type button = input_to_gui[ (event.button - input::MOUSE_LEFT) ];
+		gui::CursorButton::Type button;
 	
         switch( event.subtype )
         {
@@ -669,6 +669,7 @@ public:
 			}
             case kernel::MouseButton:
 				
+				button = input_to_gui[ event.button ];
                 if ( event.is_down )
                 {
                     fprintf( stdout, "mouse button %i is pressed\n", event.button );
