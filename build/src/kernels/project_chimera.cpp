@@ -53,13 +53,13 @@ public kernel::IEventListener<kernel::SystemEvent>
 public:
 	DECLARE_APPLICATION( ProjectChimera );
 	assets::Mesh * plane_mesh;
+	assets::Mesh * char_mesh;
 	Camera camera;
 	physics::CharacterController* character;
-	assets::Font * font_handle;
-	
-	ProjectChimera() : camera(Camera::TARGET)
+
+	ProjectChimera()
 	{
-	
+		camera.type = Camera::TARGET;
 	}
 	
 	virtual void event( kernel::KeyboardEvent & event )
@@ -131,12 +131,18 @@ public:
 			plane_mesh->prepare_geometry();
 		}
 		
-		
 		physics::create_physics_for_mesh(plane_mesh);
+		
+		
+		
+		char_mesh = assets::meshes()->load_from_path("models/character_box");
+		if (char_mesh)
+		{
+			char_mesh->prepare_geometry();
+		}
 
 		debugdraw::startup(1024);
-		font_handle = assets::fonts()->load_from_path("fonts/default16");
-		
+
 		camera.target_lookatOffset = glm::vec3(0, 0, 5);
 		
 		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
@@ -201,14 +207,23 @@ public:
 		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
 
-
-
+		
 		for( unsigned short i = 0; i < plane_mesh->total_geometry; ++i )
 		{
 			render_utilities::stream_geometry( rs, &plane_mesh->geometry[i], gp );
 		}
 		
+		glm::mat4 char_mat = glm::mat4(1.0);
 		
+		// TODO: this should use the actual player height instead of
+		// hard coding the value.
+		char_mat = glm::translate(camera.pos - glm::vec3(0,1.82,0));
+		gp.object_matrix = &char_mat;
+		
+		for( unsigned short i = 0; i < char_mesh->total_geometry; ++i )
+		{
+			render_utilities::stream_geometry( rs, &char_mesh->geometry[i], gp );
+		}
 
 		//rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 		//rs.add_state( renderer::STATE_BLEND, 1 );

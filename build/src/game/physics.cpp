@@ -27,7 +27,7 @@
 
 #include <btBulletDynamicsCommon.h>
 
-const float PHYSICS_PLAYER_HALF_WIDTH = 0.325f;
+const float PHYSICS_PLAYER_HALF_WIDTH = 0.30f;
 const float PHYSICS_PLAYER_HALF_HEIGHT = 0.91f;
 
 namespace physics
@@ -206,14 +206,15 @@ namespace physics
 		// what the hell does this do?
 		pair_cache->setInternalGhostPairCallback( new btGhostPairCallback() );
 		
-		btConvexShape* playerShape = new btCapsuleShape((PHYSICS_PLAYER_HALF_WIDTH*2), (PHYSICS_PLAYER_HALF_HEIGHT*2));
+		btCapsuleShape* capsule_shape = new btCapsuleShape(PHYSICS_PLAYER_HALF_WIDTH, (PHYSICS_PLAYER_HALF_HEIGHT*2)-(PHYSICS_PLAYER_HALF_WIDTH*2));
 		//btConvexShape * playerShape = new btCylinderShape( btVector3( .6, .90, .6 ) );
+
 		
-		ghost->setCollisionShape( playerShape );
+		ghost->setCollisionShape( capsule_shape );
 		ghost->setCollisionFlags( btCollisionObject::CF_CHARACTER_OBJECT );
 		
 		btScalar stepHeight = btScalar(.36);
-		CharacterController * character = new CharacterController (ghost,playerShape,stepHeight);
+		CharacterController * character = new CharacterController (ghost,capsule_shape,stepHeight);
 		
 		///only collide with static for now (no interaction with dynamic objects)
 		dynamics_world->addCollisionObject(ghost, btBroadphaseProxy::CharacterFilter, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
