@@ -83,6 +83,9 @@ namespace kernel
 		unsigned short prev_width;
 		unsigned short prev_height;
 		unsigned char event_type;
+		
+		// need to take this into account when calculating screen coordinates
+		unsigned short titlebar_height;
 	}; // Params
 	
 	

@@ -215,6 +215,7 @@ namespace font
 	{
 //		int r_width = kernel::instance()->parameters().render_width;
 		int r_height = kernel::instance()->parameters().render_height;
+		int y_offset = kernel::instance()->parameters().titlebar_height;
 		
 		if ( !font )
 		{
@@ -233,7 +234,7 @@ namespace font
 		sth_begin_draw( internal::_stash );
 		float width = 0;
 		unsigned int vcolor = STH_RGBA(color.r, color.g, color.b, color.a);
-		sth_draw_text( internal::_stash, font->font_id, font->font_size, x, r_height-y, vcolor, utf8, &width );
+		sth_draw_text( internal::_stash, font->font_id, font->font_size, x, r_height-y-y_offset, vcolor, utf8, &width );
 		sth_end_draw( internal::_stash );
 		
 		// restore state

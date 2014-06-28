@@ -28,8 +28,25 @@ DesktopKernel _desktop_kernel( 0, 0 );
 
 @implementation AppDelegate
 
+-(CGFloat)calculate_titlebar_height
+{
+	NSWindow *mainWindow = [[NSApplication sharedApplication] mainWindow];
+	
+	NSRect frame = [mainWindow frame];
+	NSRect content_rect = [NSWindow contentRectForFrameRect:frame styleMask:NSTitledWindowMask];
+	
+	return (frame.size.height - content_rect.size.height);
+}
+
 -(void)run_kernel
 {
+	// On Mac, the window created is actually larger than requested
+	// to account for the added height of the title bar.
+	// Unfortunately, the OpenGL drawable surface contains the area
+	// used by the title bar, so we have to use that in our screen-space
+	// calculations.
+	kernel::instance()->parameters().titlebar_height = [self calculate_titlebar_height];
+	
 	while( kernel::instance()->is_active() )
 	{
 		kernel::tick();
@@ -37,6 +54,8 @@ DesktopKernel _desktop_kernel( 0, 0 );
 
 	[[NSApplication sharedApplication] terminate:nil];
 }
+
+
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
