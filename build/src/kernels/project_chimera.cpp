@@ -36,22 +36,31 @@
 
 #include "physics.hpp"
 
+#include "font.hpp"
+#include "assets/asset_font.hpp"
+
 
 using namespace physics;
 
 
 
-class TestBullet2 : public kernel::IApplication,
+class ProjectChimera : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
 public kernel::IEventListener<kernel::SystemEvent>
 {
 
 public:
-	DECLARE_APPLICATION( TestBullet2 );
+	DECLARE_APPLICATION( ProjectChimera );
 	assets::Mesh * plane_mesh;
 	Camera camera;
 	physics::CharacterController* character;
+	assets::Font * font_handle;
+	
+	ProjectChimera() : camera(Camera::TARGET)
+	{
+	
+	}
 	
 	virtual void event( kernel::KeyboardEvent & event )
 	{
@@ -104,8 +113,8 @@ public:
 	virtual kernel::ApplicationResult config( kernel::Params & params )
 	{
 		params.window_title = "project_chimera";
-		params.window_width = 800;
-		params.window_height = 600;
+		params.window_width = 1280;
+		params.window_height = 720;
 		return kernel::Application_Success;
 	}
 
@@ -126,7 +135,9 @@ public:
 		physics::create_physics_for_mesh(plane_mesh);
 
 		debugdraw::startup(1024);
+		font_handle = assets::fonts()->load_from_path("fonts/default16");
 		
+		camera.target_lookatOffset = glm::vec3(0, 0, 5);
 		
 		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
 		// This is appropriate for drawing 3D models, but not sprites
@@ -136,6 +147,9 @@ public:
 		camera.update_view();
 		
 		character->reset();
+		
+		// capture the mouse
+		kernel::instance()->capture_mouse( true );
 
 		return kernel::Application_Success;
 	}
@@ -155,8 +169,19 @@ public:
 		physics::player_move(character, camera, command);
 		
 		physics::copy_ghost_to_camera(character->getGhostObject(), camera);
-		//camera.update_view();
 		
+		//camera.pos += glm::vec3(0, 2.5, 5);
+		camera.update_view();
+
+		physics::debug_draw();
+		
+		
+		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
+		debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", camera.eye_position.x, camera.eye_position.y, camera.eye_position.z), Color(255, 0, 255));
+		debugdraw::text(10, 24, xstr_format("camera.view = %.2g %.2g %.2g", camera.view.x, camera.view.y, camera.view.z), Color(128, 128, 255));
+		debugdraw::text(10, 36, xstr_format("camera.right = %.2g %.2g %.2g", camera.side.x, camera.side.y, camera.side.z), Color(255, 0, 0));
+		
+
 		debugdraw::update(params.step_interval_seconds);
 	}
 
@@ -164,9 +189,6 @@ public:
 	{
 		RenderStream rs;
 		renderer::GeneralParameters gp;
-		
-		physics::copy_ghost_to_camera(character->getGhostObject(), camera);
-		camera.update_view();
 
 		gp.camera_position = &camera.pos;
 		gp.modelview_matrix = &camera.matCam;
@@ -174,27 +196,32 @@ public:
 		
 		glm::mat4 ident;
 		gp.object_matrix = &ident;
-		
-		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
+
 		rs.add_viewport( 0, 0, params.render_width, params.render_height );
 		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
-	
+		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
+
+
+
 		for( unsigned short i = 0; i < plane_mesh->total_geometry; ++i )
 		{
 			render_utilities::stream_geometry( rs, &plane_mesh->geometry[i], gp );
 		}
+		
+		
 
+		//rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+		//rs.add_state( renderer::STATE_BLEND, 1 );
+		//rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
 		
 		rs.run_commands();
 		
-		
 		{
 			glm::mat4 modelview;
-			glm::mat4 projection = glm::ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, 0.0f, 128.0f );
-			
-			debugdraw::render( modelview, projection, params.render_width, params.render_height );
+			debugdraw::render(modelview, camera.matCamProj, params.render_width, params.render_height);
 		}
-		
+
+
 	}
 	
 	virtual void shutdown( kernel::Params & params )
@@ -205,4 +232,4 @@ public:
 	}
 };
 
-IMPLEMENT_APPLICATION( TestBullet2 );
+IMPLEMENT_APPLICATION( ProjectChimera );
