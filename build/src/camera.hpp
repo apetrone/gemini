@@ -84,7 +84,6 @@ struct Camera
 	// camera variables
 	real yaw, pitch;
 	glm::vec3 pos;
-	glm::vec3 target;
 	
 	glm::mat4 matProj;
 	glm::mat4 matCam;
