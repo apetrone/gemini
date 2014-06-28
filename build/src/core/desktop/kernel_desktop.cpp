@@ -85,7 +85,7 @@ void event_callback_xwl( xwl_event_t * e )
 		}
 #endif
 		
-		input::state()->keyboard().inject_key_event( e->key, (e->type == XWLE_KEYPRESSED), e->unicode );
+		input::state()->keyboard().inject_key_event( e->key, (e->type == XWLE_KEYPRESSED) );
 		
 		//printf( "\t-> key: %i (%s)\n", e->key, xwl_key_to_string(e->key) );		
 		kernel::KeyboardEvent ev;
@@ -106,7 +106,7 @@ void event_callback_xwl( xwl_event_t * e )
 	}
 	else if ( e->type == XWLE_MOUSEBUTTON_PRESSED || e->type == XWLE_MOUSEBUTTON_RELEASED )
 	{
-		input::state()->mouse().inject_mouse_button( e->button, (e->type == XWLE_MOUSEBUTTON_PRESSED) );
+		input::state()->mouse().inject_mouse_button( (input::MouseButton)e->button, (e->type == XWLE_MOUSEBUTTON_PRESSED) );
 		
 		kernel::MouseEvent ev;
 		ev.subtype = kernel::MouseButton;
@@ -523,6 +523,12 @@ void DesktopKernel::shutdown()
 
 void DesktopKernel::capture_mouse(bool capture)
 {
+#if GEMINI_USE_SDL2
 	SDL_bool is_enabled = capture ? SDL_TRUE : SDL_FALSE;
 	SDL_SetRelativeMouseMode(is_enabled);
+#elif GEMINI_USE_XWL
+	
+#else
+	#error capture_mouse is not implemented for this configuration!
+#endif
 }
