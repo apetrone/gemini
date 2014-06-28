@@ -27,14 +27,14 @@
 // --------------------------------------------------------
 // Camera
 // --------------------------------------------------------
-Camera::Camera()
+Camera::Camera(CameraType _type)
 {
 	yaw = pitch = 0;
 	move_speed = 5.0;
 	invert_y_axis = true;
 	is_ortho = false;
 	sensitivity = 0.15f;
-	type = 0;
+	type = _type;
 }
 
 
@@ -68,14 +68,8 @@ void Camera::move_view( int32 dx, int32 dy )
 
 void Camera::move_along_vector( const glm::vec3 & v, real dt )
 {
-	if ( type == 0 )
-	{
-		pos = pos + (v * (move_speed*dt));
-	}
-	else if ( type == 1 )
-	{
-		target_lookatOffset = target_lookatOffset + (v*move_speed*dt);
-	}
+	pos = pos + (v * (move_speed*dt));
+	
 	update_view();
 }
 
@@ -164,13 +158,13 @@ void Camera::update_view()
 	glm::vec3 up( 0, 1, 0 );
 	
 	glm::vec3 world_pos = pos;
-	if ( type == 0 )
+	if ( type == FIRST_PERSON )
 	{
 		glm::vec3 target = world_pos + view;
 		matCam = glm::lookAt(world_pos, target, up );
 		eye_position = world_pos;
 	}
-	else if ( type == 1 )
+	else if ( type == TARGET )
 	{
 		glm::mat4 inv_rotation;
 		glm::mat4 inv_translation;
@@ -183,13 +177,17 @@ void Camera::update_view()
 		// setup inverse rotation matrix for 'view' and 'up' vectors
 		inv_rotation = glm::lookAt( glm::vec3(), view, up );
 		
+		
+		glm::vec3 pivot_point = target_lookatOffset;
+		
 		// setup pivot, and inverse pivot matrices
-		pivot = glm::translate( glm::mat4(1.0), target_position );
-		inv_pivot = glm::translate( glm::mat4(1.0), -inv_position );
+		inv_pivot = glm::translate( glm::mat4(1.0), -pivot_point );
+		pivot = glm::translate( glm::mat4(1.0), pivot_point );
+
 		
 		// add an arbitrary viewing offset
 		inv_position = target_position + target_lookatOffset;
-		
+
 		inv_translation = glm::translate( inv_translation, -inv_position );
 		
 		// target camera with position + orientation

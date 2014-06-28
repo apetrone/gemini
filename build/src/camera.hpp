@@ -75,9 +75,16 @@
 
 struct Camera
 {
+	enum CameraType
+	{
+		FIRST_PERSON,
+		TARGET
+	};
+	
 	// camera variables
 	real yaw, pitch;
 	glm::vec3 pos;
+	glm::vec3 target;
 	
 	glm::mat4 matProj;
 	glm::mat4 matCam;
@@ -90,11 +97,7 @@ struct Camera
 	glm::vec3 target_lookatOffset;
 	glm::vec3 eye_position;
 	
-	// camera type:
-	// 0: first-person camera
-	// 1: target-camera
-	int type;
-	
+	CameraType type;
 	
 	//
 	// options
@@ -108,7 +111,7 @@ struct Camera
 	float near_clip;
 	float far_clip;
 	
-	Camera();
+	Camera(CameraType _type = FIRST_PERSON);
 	
 	// sets world position of the camera
 	void set_absolute_position( const glm::vec3 & position );
