@@ -305,6 +305,14 @@ namespace debugdraw
 		}
 	} // buffer_sphere
 	
+	void render_text( RenderStream & rs, DebugPrimitive * primitive, renderer::VertexStream * vs )
+	{
+		// This doesn't place the text into a buffer like the other primitives.
+		// however, it is deferred to make everything render in order.
+	
+		font::draw_string(_internal::debug_font, primitive->start.x, primitive->start.y, primitive->buffer.c_str(), primitive->color);
+	} // render_text
+	
 	void render(const glm::mat4 & modelview, const glm::mat4 & projection,
 		int viewport_width, int viewport_height)
 	{
@@ -324,13 +332,13 @@ namespace debugdraw
 		RenderStream rs;
 		rs.add_viewport( 0, 0, viewport_width, viewport_height );
 		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
-		
+
 		rs.add_shader( shader );
 		rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview );
 		rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection );
 		rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object );
-		rs.run_commands();
-		rs.rewind();
+		//rs.run_commands();
+		//rs.rewind();
 		
 		DebugPrimitive * primitive = 0;
 		
@@ -344,7 +352,8 @@ namespace debugdraw
 			buffer_box,
 			buffer_line,
 			buffer_axes,
-			buffer_sphere
+			buffer_sphere,
+			render_text
 		};
 		
 		for( unsigned int i = 0; i < _internal::max_primitives; ++i )
@@ -429,9 +438,17 @@ namespace debugdraw
 		}
 	} // sphere
 
-	void text( int x, int y, const char * string, const Color & color )
+	void text( int x, int y, const char * string, const Color & color, float duration )
 	{
-		font::draw_string(_internal::debug_font, x, y, string, color);
+		DebugPrimitive * p = _internal::request_primitive();
+		if ( p )
+		{
+			p->type = TYPE_TEXT;
+			p->start = glm::vec3(x, y, 0);
+			p->color = color;
+			p->timeleft = duration;
+			p->buffer = string;
+		}
 	} // text
 	
 //	unsigned int DebugFontID()

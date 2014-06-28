@@ -21,6 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <string>
+
 #include "mathlib.h"
 #include "color.hpp"
 
@@ -37,6 +39,7 @@ namespace debugdraw
 		TYPE_LINE,
 		TYPE_AXES,
 		TYPE_SPHERE,
+		TYPE_TEXT,
 		
 		TYPE_COUNT
 	};
@@ -50,6 +53,9 @@ namespace debugdraw
 		glm::vec3 start;
 		glm::vec3 end;
 		Color color;
+		
+		// for text
+		std::string buffer;
 		
 		DebugPrimitive();
 	}; // DebugPrimitive
@@ -71,6 +77,6 @@ namespace debugdraw
 	void point( const glm::vec3 & pt, const Color & color, float size = 2.0, float duration = MIN_DURATION_MSEC );
 	void line( const glm::vec3 & start, const glm::vec3 & end, const Color & color, float duration = MIN_DURATION_MSEC );
 	void sphere( const glm::vec3 & center, const Color & color, float radius = 2.0, float duration = MIN_DURATION_MSEC );
-	void text( int x, int y, const char * string, const Color & color );
+	void text( int x, int y, const char * string, const Color & color, float duration = 0 );
 
 }; // debugdraw
