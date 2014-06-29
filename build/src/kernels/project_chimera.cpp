@@ -174,7 +174,21 @@ public:
 		
 		physics::player_move(character, camera, command);
 		
+		
+
+
+		// rotate physics body
+		btTransform worldTrans = character->getGhostObject()->getWorldTransform();
+		btQuaternion rotation(btVector3(0,1,0), DegToRad(-camera.yaw));
+		
+		worldTrans.setRotation(rotation);
+		character->getGhostObject()->setWorldTransform(worldTrans);
+		
 		physics::copy_ghost_to_camera(character->getGhostObject(), camera);
+		
+		
+		
+
 		
 		//camera.pos += glm::vec3(0, 2.5, 5);
 		camera.update_view();
@@ -213,13 +227,18 @@ public:
 			render_utilities::stream_geometry( rs, &plane_mesh->geometry[i], gp );
 		}
 		
+
+
+		
 		glm::mat4 char_mat = glm::mat4(1.0);
 		
 		// TODO: this should use the actual player height instead of
 		// hard coding the value.
 		char_mat = glm::translate(camera.pos - glm::vec3(0,1.82,0));
+		char_mat = glm::rotate(char_mat, -camera.yaw, glm::vec3(0,1,0));
 		gp.object_matrix = &char_mat;
 		
+			
 		for( unsigned short i = 0; i < char_mesh->total_geometry; ++i )
 		{
 			render_utilities::stream_geometry( rs, &char_mesh->geometry[i], gp );
