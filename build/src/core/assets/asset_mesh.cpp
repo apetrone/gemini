@@ -125,7 +125,10 @@ namespace assets
 				for( int v = 0; v < geometry->vertex_count; ++v )
 				{
 					geometry->uvs[v].u = uvs[v*2].asFloat();
-					geometry->uvs[v].v = uvs[v*2+1].asFloat();
+					
+					// Invert the UV coordinates on models when we import them.
+					// TODO: should this be done in the exporter?
+					geometry->uvs[v].v = 1.0f - uvs[v*2+1].asFloat();
 				}
 			}
 			else
