@@ -77,7 +77,7 @@ namespace physics
 	
 	int	DebugPhysicsRenderer::getDebugMode() const
 	{
-		return (btIDebugDraw::DBG_DrawWireframe | btIDebugDraw::DBG_DrawAabb);
+		return (btIDebugDraw::DBG_DrawWireframe); // | btIDebugDraw::DBG_DrawAabb;
 	}
 
 

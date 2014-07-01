@@ -20,6 +20,16 @@
 # DEALINGS IN THE SOFTWARE.
 # -------------------------------------------------------------
 
+"""
+	bpy.context.scene.frame_start
+	bpy.context.scene.frame_end
+
+
+	bpy.context.scene.frame_set(i)
+	bpy.context.scene.update()
+"""
+
+
 bl_info = {
 	"name": "gemini Exporter",
 	"author": "Adam Petrone",
@@ -142,6 +152,15 @@ class Material(object):
 	def __lt__(self, other):
 		return self.index < other.index or self.path < other.path
 
+
+class ShapeKey(object):
+	def __init__(self, name):
+		self.name = name
+		self.vertices = []
+
+	def add_vector(self, vector):
+		self.vertices.extend([vector.x, vector.y, vector.z])
+
 class Geometry(object):
 	def __init__(self):
 		self.id = -1
@@ -156,6 +175,8 @@ class Geometry(object):
 
 		self.highest_index = 0
 
+		self.shape_keys = []
+
 	def addVertex(self, vertex):
 		if vertex not in self.verts:
 			self.verts[ vertex ] = self.vert_index
@@ -169,6 +190,14 @@ class Geometry(object):
 		indices = [a,b,c]
 		#print( indices )
 		self.indices.extend( indices )
+
+
+	def add_shape_key(self, name):
+		key = ShapeKey(name=name)
+		self.shape_keys.append(key)
+
+		return key
+
 '''
 	def recalculateHighestIndex(self):
 		print( "-> highestIndex is: %i" % self.highest_index )
@@ -176,6 +205,8 @@ class Geometry(object):
 		self.highest_index += 1
 		print( "<- highestIndex is: %i" % self.highest_index )
 '''
+
+
 class MeshContainer(object):
 	
 	def __init__(self, config):
@@ -259,6 +290,7 @@ class MeshContainer(object):
 			positions = []
 			normals = []
 			uvs = []
+			shape_keys = []
 
 			getval = operator.itemgetter(0)
 			getkey = operator.itemgetter(1)
@@ -269,6 +301,12 @@ class MeshContainer(object):
 				normals.extend( [v.normal.x, v.normal.y, v.normal.z] )
 				uvs.extend( [v.u, v.v] )
 
+			for key in geometry.shape_keys:
+				shape_data = {}
+				shape_data["name"] = key.name
+				shape_data["data"] = key.vertices
+				shape_keys.append(shape_data)
+
 			geometry_data = {
 				'info': { 
 					'num_indices' : len(geometry.indices),
@@ -278,7 +316,8 @@ class MeshContainer(object):
 				'indices': geometry.indices, 
 				'positions': positions, 
 				'normals' : normals, 
-				'uvs' : uvs
+				'uvs' : uvs,
+				'shape_keys': shape_keys
 			}
 			root['geometry'].append( geometry_data )
 			geometry_id += 1
@@ -376,7 +415,7 @@ def triangulate_mesh( object ):
 		bpy.context.scene.triangulated_mesh = False
 		return object
 		
-
+"""
 class export_animation(bpy.types.Operator):
 	bl_idname = "gemini_export.animation"
 	bl_label = "Export gemini .animation"
@@ -404,7 +443,7 @@ class export_animation(bpy.types.Operator):
 		wm = context.window_manager
 		wm.fileselect_add(self)
 		return {'RUNNING_MODAL'}
-
+"""
 class my_export_test(bpy.types.Operator):
 	'''Export Skeleton Mesh / Animation Data file(s)'''
 	bl_idname = "gemini_export.test" # this is important since its how bpy.ops.export.udk_anim_data is constructed
@@ -492,6 +531,8 @@ class my_export_test(bpy.types.Operator):
 				#if obj.type not in {'MESH'}:
 				#	continue
 
+
+				shape_key_data = []
 
 				# from Marmalade plugin; convert Z up to Y up.
 				xrotation = Matrix.Rotation( -math.pi/2, 4, 'X' )
@@ -635,6 +676,18 @@ class my_export_test(bpy.types.Operator):
 					else:
 						print( "Face normal is coplanar!!" )
 					'''
+
+
+				# export shape key data for mesh
+				if obj.data.shape_keys:
+					blocks = obj.data.shape_keys.key_blocks
+					for block in blocks:
+						key = geometry.add_shape_key(block.name)
+
+						for data in block.data:
+							key.add_vector(final_rotation * data.co)
+
+
 				if bpy.context.scene.triangulated_mesh:	
 					bpy.ops.object.mode_set( mode='OBJECT' )
 					#print( "Removing temporary mesh: ", obj.name )
@@ -666,7 +719,7 @@ class my_export_test(bpy.types.Operator):
 
 def menu_func(self, context):
 	self.layout.operator(my_export_test.bl_idname, text="gemini .model")
-	self.layout.operator(export_animation.bl_idname, text="gemini .animation")
+	#self.layout.operator(export_animation.bl_idname, text="gemini .animation")
 
 def register():   
 	bpy.utils.register_module(__name__)	
