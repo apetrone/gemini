@@ -83,14 +83,14 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	int minor = 0;
 	
 	
-#if _WIN32 || __linux__ || __ANDROID__
+#if PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_ANDROID
 	const char * libName = "";
 
-#if _WIN32
+#if PLATFORM_WINDOWS
 	libName = "OpenGL32.dll";
 #elif defined(PLATFORM_IS_RASPBERRYPI) || defined(PLATFORM_USE_GLES2)
 	libName = "libGLESv2.so";
-#elif __linux__
+#elif PLATFORM_LINUX
 	libName = "libGL.so";
 #endif
 
@@ -101,7 +101,7 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 		LOGV( "Could not load gl driver: \"%s\"\n", libName );
 		return 0;
 	}
-#elif __APPLE__
+#elif PLATFORM_APPLE
 	if ( !gemgl_osx_startup() )
 	{
 		LOGV( "OSX startup failed!\n" );
@@ -408,7 +408,7 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	GEMGL_LINK( gl.GetRenderbufferParameteriv, "glGetRenderbufferParameteriv", GEMGLFNGETRENDERBUFFERPARAMETERIV );	
 
 	
-#if _WIN32
+#if PLATFORM_WINDOWS
 	GEMGL_LINK( gl.SwapInterval, "wglSwapIntervalEXT", GEMGLSWAPINTERVAL );
 #endif
 #endif
@@ -450,21 +450,21 @@ void * gemgl_findsymbol( gemgl_interface_t & gl_interface, const char * name )
 	void * ptr = 0;
 
 	// check OS specific GL function first, then check the linked library
-#if _WIN32
+#if PLATFORM_WINDOWS
 	ptr = wglGetProcAddress( name );
 #elif PLATFORM_IS_RASPBERRYPI
 	// fall through
-#elif __linux__
+#elif PLATFORM_LINUX
 	ptr = (void*)glXGetProcAddress( (const GLubyte*)name );
-#elif __APPLE__
+#elif PLATFORM_APPLE
 	ptr = gemgl_native_findsymbol( name );
-#elif __ANDROID__
+#elif PLATFORM_ANDROID
 	// fall through
 #else
 	#error Unknown platform!
 #endif
 
-#if _WIN32 || __linux__ || __ANDROID__
+#if PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_ANDROID
 	if ( !ptr )
 	{
 		ptr = xlib_find_symbol( &gl_interface.library, name );
@@ -486,9 +486,9 @@ void * gemgl_findsymbol( gemgl_interface_t & gl_interface, const char * name )
 
 void gemgl_shutdown( gemgl_interface_t & gl_interface  )
 {
-#if _WIN32 || __linux__ || __ANDROID__
+#if PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_ANDROID
 	xlib_close( &gl_interface.library );
-#elif __APPLE__
+#elif PLATFORM_APPLE
 	gemgl_osx_shutdown();
 #endif
 } // gemgl_shutdown
@@ -515,7 +515,7 @@ const char * gemgl_uniform_to_string( GLenum type )
 		case GL_SAMPLER_2D			: return "GL_SAMPLER_2D"; break;
 		case GL_SAMPLER_CUBE		: return "GL_SAMPLER_CUBE"; break;
 			
-#if !TARGET_OS_IPHONE && !defined(__ANDROID__)
+#if !TARGET_OS_IPHONE && !defined(PLATFORM_ANDROID)
 		case GL_SAMPLER_1D			: return "GL_SAMPLER_1D"; break;					
 		case GL_SAMPLER_3D			: return "GL_SAMPLER_3D"; break;					
 		case GL_SAMPLER_1D_SHADOW	: return "GL_SAMPLER_1D_SHADOW"; break;

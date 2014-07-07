@@ -21,17 +21,19 @@
 // -------------------------------------------------------------
 #pragma once
 
-#if __APPLE__
-#include <TargetConditionals.h>
+#include "config.h"
+
+#if PLATFORM_APPLE
+	#include <TargetConditionals.h>
 #endif
 
-#if _WIN32
+#if PLATFORM_WINDOWS
 	#define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
 	#define MAX_PATH_SIZE MAX_PATH
 	#define PATH_SEPARATOR '\\'
 	#define PATH_SEPARATOR_STRING "\\"
-#elif __linux__ || TARGET_OS_MAC || __ANDROID__
+#elif PLATFORM_LINUX || PLATFORM_APPLE || PLATFORM_ANDROID
 	#include <limits.h>
 	#define MAX_PATH_SIZE PATH_MAX
 	#define PATH_SEPARATOR '/'

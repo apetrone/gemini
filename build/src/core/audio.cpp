@@ -34,13 +34,13 @@
 	#define DRIVER_NAME "OpenAL"
 	#define DRIVER_CREATOR OpenAL::creator
 
-#elif __APPLE__ && PLATFORM_IS_MOBILE
+#elif PLATFORM_APPLE && PLATFORM_IS_MOBILE
 	#include "audio_extaudio_decoder.hpp"
 	#include "openal.hpp"
 	typedef ExtAudioDecoder AudioDecoderType;
 	#define DRIVER_NAME "OpenAL"
 	#define DRIVER_CREATOR OpenAL::creator
-#elif __ANDROID__
+#elif PLATFORM_ANDROID
 
 	#include "opensles.hpp"
 	#define DRIVER_NAME "OpenSLES"

@@ -21,15 +21,16 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "config.h"
 #include "factory.hpp" // for DECLARE_FACTORY_CLASS
 
-#if _WIN32
+#if PLATFORM_WINDOWS
 	#include <al.h>
 	#include <alc.h>
-#elif __linux__
+#elif PLATFORM_LINUX
 	#include <AL/al.h>
 	#include <AL/alc.h>
-#elif __APPLE__
+#elif PLATFORM_APPLE
 	#include <OpenAL/al.h>
 	#include <OpenAL/alc.h>
 #endif

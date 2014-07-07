@@ -22,7 +22,7 @@
 #pragma once
 
 
-#if __ANDROID__
+#if PLATFORM_ANDROID
 	struct AAssetManager;
 #endif
 
@@ -65,7 +65,7 @@ namespace fs
 	bool directory_exists( const char * path, bool path_is_relative=true );
 #endif
 
-#if __ANDROID__
+#if PLATFORM_ANDROID
 	void set_asset_manager( AAssetManager * asset_manager );
 #endif
 	

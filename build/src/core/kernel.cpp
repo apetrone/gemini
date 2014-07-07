@@ -36,7 +36,7 @@
 #include "font.hpp"
 #include "script.hpp"
 
-#if __linux__
+#if PLATFORM_LINUX
 	#include <stdlib.h> // for qsort
 #endif
 

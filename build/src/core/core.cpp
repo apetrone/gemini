@@ -53,13 +53,13 @@ namespace core
 		int stdout_open( xlog_handler_t * handler );
 		void stdout_close( xlog_handler_t * handler );
 		
-#if _WIN32
+#if PLATFORM_WINDOWS
 		void vs_message( xlog_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );
 		int vs_open( xlog_handler_t * handler );
 		void vs_close( xlog_handler_t * handler );
 #endif
 
-#if __ANDROID__
+#if PLATFORM_ANDROID
 		void log_android_message( xlog_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );
 		int log_android_open( xlog_handler_t * handler );
 		void log_android_close( xlog_handler_t * handler );
@@ -76,7 +76,7 @@ namespace core
 			
 			xlog_set_default_log( &_system_log );
 			
-#if _WIN32
+#if PLATFORM_WINDOWS
 			xlog_handler_t msvc_logger;
 			memset( &msvc_logger, 0, sizeof(xlog_handler_t) );
 			msvc_logger.close = vs_close;
@@ -88,7 +88,7 @@ namespace core
 			xlog_add_handler( &_system_log, &msvc_logger );
 #endif
 
-#ifndef __ANDROID__
+#ifndef PLATFORM_ANDROID
 			xlog_handler_t stdout_logger;
 			memset( &stdout_logger, 0, sizeof(xlog_handler_t) );
 			stdout_logger.message = stdout_message;
@@ -131,7 +131,7 @@ namespace core
 #endif
 
 
-#if __ANDROID__
+#if PLATFORM_ANDROID
 			xlog_handler_t android_log;
 			android_log.message = log_android_message;
 			android_log.open = log_android_open;

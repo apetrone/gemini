@@ -23,14 +23,14 @@
 
 #include <string.h> // for size_t
 
-#if __APPLE__
+#if PLATFORM_APPLE
 	#include <memory> // for malloc, free (on OSX)
 	#include <stdlib.h>
-#elif __linux__ || __ANDROID__
+#elif PLATFORM_LINUX || PLATFORM_ANDROID
 	#include <stdlib.h>
 	#include <stdio.h> // for fprintf
 	#include <new> // for placement new
-#elif _WIN32
+#elif PLATFORM_WINDOWS
 	#include <memory> // we'll see if this compiles...
 #endif
 

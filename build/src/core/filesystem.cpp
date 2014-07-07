@@ -39,7 +39,7 @@ namespace fs
 
 
 
-#if __ANDROID__
+#if PLATFORM_ANDROID
 	#include <android/asset_manager.h>
 	namespace fs
 	{
@@ -141,7 +141,7 @@ namespace fs
 		char fullpath[ MAX_PATH_SIZE ] = {0};
 		int result = 0;
 		
-#if __ANDROID__
+#if PLATFORM_ANDROID
 		// assume a relative path is always passed
 		AAsset * asset = 0;
 		asset = AAssetManager_open( _asset_manager, path, AASSET_MODE_BUFFER );
@@ -203,7 +203,7 @@ namespace fs
 			return 0;
 		}
 		
-#if __ANDROID__
+#if PLATFORM_ANDROID
 
 
 
@@ -277,7 +277,7 @@ namespace fs
 
 	void * audiofile_to_buffer( const char * filename, size_t & buffer_length )
 	{
-#if __APPLE__ && PLATFORM_IS_MOBILE
+#if PLATFORM_APPLE && PLATFORM_IS_MOBILE
 		return mobile_audio_file_to_buffer( filename, buffer_length );
 #else
 		return file_to_buffer( filename, 0, &buffer_length );
@@ -286,11 +286,11 @@ namespace fs
 
 	int read_file_stats( const char * fullpath, FileStats & stats )
 	{
-#if __linux__ || __ANDROID__
+#if PLATFORM_LINUX || PLATFORM_ANDROID
 		struct stat file_stats;
 		stat( fullpath, &file_stats );
 
-	#if __linux__
+	#if PLATFORM_LINUX
 			printf( "time: %i\n", file_stats.st_mtim.tv_sec );
 	#else
 			printf( "time: %i\n", file_stats.st_mtime );

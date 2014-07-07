@@ -125,7 +125,7 @@ public:
 		character = physics::create_character_controller(btVector3(0, 5, 0), false);
 		
 		// load in the plane mesh
-		plane_mesh = assets::meshes()->load_from_path("models/construct");
+		plane_mesh = assets::meshes()->load_from_path("models/black_lodge");
 		if (plane_mesh)
 		{
 			plane_mesh->prepare_geometry();
@@ -135,7 +135,7 @@ public:
 		
 		
 		
-		char_mesh = assets::meshes()->load_from_path("models/character_box");
+		char_mesh = assets::meshes()->load_from_path("models/agent_cooper");
 		if (char_mesh)
 		{
 			char_mesh->prepare_geometry();
@@ -193,7 +193,7 @@ public:
 		//camera.pos += glm::vec3(0, 2.5, 5);
 		camera.update_view();
 
-		physics::debug_draw();
+		//physics::debug_draw();
 		
 		
 		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));

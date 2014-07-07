@@ -27,10 +27,10 @@
 	#include "osx/osx_platform.h"
 #endif
 
-#if _WIN32
+#if PLATFORM_WINDOWS
 	#include <windows.h>
 	#include <direct.h> // for _mkdir
-#elif __linux__
+#elif PLATFORM_LINUX
 	#include <sys/sysinfo.h>
 	//#include <errno.h>
 	#include <sys/types.h>
@@ -39,7 +39,7 @@
 	#include <stdlib.h> // for abort
 	#include <unistd.h> // for readlink, getpid
 
-#elif __APPLE__
+#elif PLATFORM_APPLE
 	#include <stdio.h>
 	#include <sys/stat.h>
 	#include <sys/types.h>
@@ -56,7 +56,7 @@ namespace platform
 	{
 		core::Error error(0);
 		
-#if __APPLE__
+#if PLATFORM_APPLE
 		error = osx_startup();
 #endif
 
@@ -66,7 +66,7 @@ namespace platform
 	
 	void shutdown()
 	{		
-#if __APPLE__
+#if PLATFORM_APPLE
 		osx_shutdown();
 #endif
 	}
@@ -77,7 +77,7 @@ namespace platform
 		int result = 0;
 		char * sep;
 		
-#if _WIN32
+#if PLATFORM_WINDOWS
 		result = GetModuleFileNameA( GetModuleHandleA(0), path, size);
 		if ( result == 0 )
 		{
@@ -85,7 +85,7 @@ namespace platform
 			error.message = "GetModuleFileNameA failed!";
 		}
 		
-#elif __linux__
+#elif PLATFORM_LINUX
 		{
 			// http://www.flipcode.com/archives/Path_To_Executable_On_Linux.shtml
 			char linkname[ 64 ] = {0};
@@ -123,7 +123,7 @@ namespace platform
 			}
 		}
 		
-#if __APPLE__
+#if PLATFORM_APPLE
 		error = osx_program_directory( path, size );
 #endif
 		return error;
@@ -137,14 +137,14 @@ namespace platform
 			core::Error error(0);
 			int result = 0;
 			
-#if _WIN32
+#if PLATFORM_WINDOWS
 			result = _mkdir( path );
 			if ( result == -1 )
 			{
 				// TODO: print out the errno
 				error = core::Error( core::Error::Failure, "_mkdir failed!" );
 			}
-#elif __linux__ || __APPLE__
+#elif PLATFORM_LINUX || PLATFORM_APPLE
 			// http://pubs.opengroup.org/onlinepubs/009695399/functions/mkdir.html
 			result = mkdir( path, (S_IRUSR | S_IWUSR | S_IXUSR ) | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH );
 			if ( result == -1 )

@@ -22,7 +22,9 @@
 #include <string.h> // for size_t
 #include <xfile.h>
 
-#if __APPLE__
+#include "config.h"
+
+#if PLATFORM_APPLE
 	#include <TargetConditionals.h>
 #endif
 
@@ -31,7 +33,7 @@ extern "C"
 {
 #endif
 
-#if (_WIN32 || __linux__ || __APPLE__ || __ANDROID__)
+#if (PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_APPLE || PLATFORM_ANDROID)
 
 	#include <stdio.h>
 	

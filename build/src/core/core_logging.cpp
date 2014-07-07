@@ -23,7 +23,7 @@
 #include <slim/xstr.h> // for xstr_filefrompath
 #include <stdio.h> // for FILE, file functions
 
-#if __ANDROID__
+#if PLATFORM_ANDROID
 	#include <android/log.h>
 #endif
 
@@ -71,7 +71,7 @@ namespace core
 		{
 		}
 
-#if _WIN32
+#if PLATFORM_WINDOWS
 		void vs_message( xlog_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type )
 		{
 	//		const char *message_types[] = { 0, "VERBOSE", "WARNING", " ERROR " };
@@ -91,7 +91,7 @@ namespace core
 		}	
 #endif
 		
-#if __ANDROID__
+#if PLATFORM_ANDROID
 		void log_android_message( xlog_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type )
 		{
 			// this must match with the android_LogPriority enum in <android/log.h>

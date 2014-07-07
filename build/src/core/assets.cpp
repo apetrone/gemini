@@ -592,7 +592,7 @@ namespace assets
 		{
 			case SoundAsset:
 			{
-#if __APPLE__ && PLATFORM_IS_MOBILE
+#if PLATFORM_APPLE && PLATFORM_IS_MOBILE
 				if ( (device_flags & kernel::DeviceiPad) || (device_flags & kernel::DeviceiPhone) )
 				{
 					extension = "caf";
