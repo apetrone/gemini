@@ -6,6 +6,7 @@ from pegasus.models import Product, ProductType, Dependency
 DEPENDENCIES_FOLDER = "dependencies"
 DESKTOP = ["macosx", "linux", "windows"]
 BLACKSMITH_PATH = "../tools/blacksmith/blacksmith.py"
+COMMON_PRODUCT_ROOT = "latest/bin/${CONFIGURATION}_${ARCHITECTURE}"
 
 def setup_common_variables(arguments, target_platform, product):
 	product.sources += [
@@ -121,6 +122,21 @@ def setup_driver(product):
 	
 	mac_release = product.layout(platform="macosx", configuration="release")
 
+
+def get_prism_product():
+	prism = Product(name="prism", output=ProductType.Commandline)
+
+	prism.root = "../"
+	prism.sources += [
+		"src/tools/prism/**.cpp"
+	]
+	prism.product_root = COMMON_PRODUCT_ROOT
+
+	setup_driver(prism)
+	setup_common_libs(prism)
+
+	return prism
+
 def arguments(parser):
 	parser.add_argument("--with-glesv2", dest="glesv2", action="store_true", help="Build with GLES V2", default=False)
 	parser.add_argument("--raspberrypi", dest="raspberrypi", action="store_true", help="Build for the RaspberryPi", default=False)
@@ -149,7 +165,7 @@ def products(arguments, **kwargs):
 
 	gemini = Product(name="gemini_desktop", output=ProductType.Application)
 	gemini.root = "../"
-	gemini.product_root = "latest/bin/${CONFIGURATION}_${ARCHITECTURE}"
+	gemini.product_root = COMMON_PRODUCT_ROOT
 	gemini.object_root = "obj"
 
 	setup_common_libs(gemini)
@@ -296,6 +312,9 @@ def products(arguments, **kwargs):
 	]
 
 
+	#
+	#
+	#
 
 	rnd = Product(name="rnd", output=ProductType.Commandline)
 
@@ -303,11 +322,17 @@ def products(arguments, **kwargs):
 	rnd.sources += [
 		"src/rnd/rnd.cpp"
 	]
+	rnd.product_root = COMMON_PRODUCT_ROOT
 
 	#setup_common_variables(arguments, target_platform, rnd)
 	setup_driver(rnd)
 	setup_common_libs(rnd)
 
+	#
+	# other tools?
+	# 
+	# 
+	prism = get_prism_product()
 
-	return [gemini, rnd]
+	return [gemini, rnd, prism]
 
