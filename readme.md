@@ -4,28 +4,21 @@ gemini
 Murmur3 is in the public domain. Murmur3 was created by Austin Appleby, and the C port and general tidying up was done by Peter Scott.
 
 
-Clone the repository
+#### Clone the repository
 
-	git clone git://github.com/apetrone/gemini
+		git clone git://github.com/apetrone/gemini
 
-Grab all sourcecode dependencies to build:
+#### Grab all sourcecode dependencies to build:
 
-	git submodule update --init
+		git submodule update --init
 
-The pegasus tool is used to build gemini for various platforms and configurations.
+#### Generate project files with pegasus
 
-	pegasus -t gemini.py -b debug,release -c build
+		python tools/pegasus/build.py build/scripts/gemini.py generate
 
-For the RaspberryPi:
+#### Build project files with pegasus
 
-	pegasus -t raspberrypi.py -b debug,release -c build -p
-
-For iOS
-
-	pegasus -t iphoneos.py -b debug,release -c build -p
-
-
-
+		python tools/pegasus/build.py build/scripts/gemini.py build
 
 
 ### Installation Notes
