@@ -23,13 +23,16 @@ Murmur3 is in the public domain. Murmur3 was created by Austin Appleby, and the 
 
 ### Installation Notes
 
-* Linux
-	* Install sox: sudo apt-get install sox
+#### Linux
+	
+### Debian/Ubuntu/SteamOS
+
+		sudo apt-get install sox libasound-dev
 
 
+### Arch Linux
 
-* Arch Linux
-	* pacman -S extra/openal
+		pacman -S extra/openal alsa-lib
 
 
 ### Principles / Goals
