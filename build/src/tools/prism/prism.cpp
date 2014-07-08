@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "core/memory.hpp"
-
-#include <core/filesystem.h>
+#include <gemini/core/memory.hpp>
+#include <gemini/core/filesystem.h>
 
 
 

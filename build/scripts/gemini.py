@@ -334,5 +334,5 @@ def products(arguments, **kwargs):
 	# 
 	prism = get_prism_product()
 
-	return [gemini, rnd, prism]
+	return [gemini, rnd] #, prism]
 
