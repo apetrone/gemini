@@ -22,7 +22,7 @@
 #pragma once
 
 #include "typedefs.h"
-#include "memory.h"
+#include "mem.h"
 #include "memorystream.h"
 #include "image.h"
 #include "mathlib.h" // for glm

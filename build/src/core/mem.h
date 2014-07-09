@@ -86,7 +86,7 @@ namespace memory
 #endif
 }; // namespace memory
 
-#include "memory_stl_allocator.h"
+#include "mem_stl_allocator.h"
 
 #if USE_DEBUG_ALLOCATOR
 	#define GeminiAllocator memory::DebugAllocator

@@ -22,7 +22,7 @@
 #include "configloader.h"
 #include "filesystem.h"
 #include <slim/xlog.h>
-#include "memory.h"
+#include "mem.h"
 
 namespace util
 {

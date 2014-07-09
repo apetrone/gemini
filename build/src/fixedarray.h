@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "memory.h"
+#include "mem.h"
 
 template <class Type>
 class FixedArray

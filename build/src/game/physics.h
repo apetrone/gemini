@@ -23,7 +23,7 @@
 
 #include <btBulletDynamicsCommon.h>
 
-#include "memory.h"
+#include "mem.h"
 #include "camera.h"
 #include "charactercontroller.h"
 

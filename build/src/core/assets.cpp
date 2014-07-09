@@ -28,7 +28,7 @@
 
 #include <slim/xstr.h>
 #include <slim/xtime.h>
-#include "memory.h"
+#include "mem.h"
 
 #include "filesystem.h"
 #include "configloader.h" // used to load various file formats

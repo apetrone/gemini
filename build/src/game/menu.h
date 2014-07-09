@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include "memory.h"
+#include "mem.h"
 #include <vector>
 
 struct MenuItem;

@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include <android/log.h>
 #include <jni.h>
-#include "memory.h"
+#include "mem.h"
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
 #include "kernel_android.h"

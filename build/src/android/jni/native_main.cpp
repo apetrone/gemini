@@ -11,7 +11,7 @@
 #include <android/asset_manager_jni.h>
 
 // gemini includes
-#include "memory.h"
+#include "mem.h"
 #include "kernel_android.h"
 #include "filesystem.h"
 

@@ -22,7 +22,7 @@
 #include "kernel.h"
 #include <stdio.h>
 #include "typedefs.h"
-#include "memory.h"
+#include "mem.h"
 #include "fixedarray.h"
 
 struct Test
