@@ -80,7 +80,7 @@ def setup_common_libs(product):
 
 
 		"src/util.cpp",
-		"src/core/memory.cpp"
+		"src/core/mem.cpp"
 	]
 
 	product.includes += [
