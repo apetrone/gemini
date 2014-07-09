@@ -23,8 +23,10 @@
 
 #include <gemini/config.h>
 
-#if PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_ANDROID
+#if PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_ANDROID || PLATFORM_APPLE
 	#include <slim/xlib.h>
+#else
+	#error Unknown platform!
 #endif
 
 #if PLATFORM_WINDOWS
@@ -43,7 +45,6 @@
 	#else
 		#include <GL/gl.h>
 		#include <GL/glx.h>
-		// #include <glxext.h>
 	#endif
 
 	#define GEMGLAPI *
@@ -57,8 +58,6 @@
 	#elif TARGET_OS_MAC
 		#include <OpenGL/gl3.h>
 		#include <OpenGL/gl3ext.h>
-		//#include <OpenGL/OpenGL.h>
-		//#include <OpenGL/gl.h>
 	#endif
 
 	#define GEMGLAPI *
