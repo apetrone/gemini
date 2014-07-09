@@ -34,7 +34,7 @@ def setup_common_variables(arguments, target_platform, product):
 		"src/game/win_loss_screen.*",
 		"src/game/componentmanager.*",
 		"src/game/componentlibrary.*",
-		"src/game/components.hpp",
+		"src/game/components.h",
 		"src/game/menuscreen.*",
 		"src/game/helpscreen.*",
 		"src/game/logoscreen.*",

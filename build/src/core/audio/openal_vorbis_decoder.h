@@ -361,7 +361,7 @@ extern "C" {
 #endif
 
 
-#include <audio.hpp>
+#include "audio.h"
 
 class stb_vorbis_decoder : public IAudioDecoder
 {

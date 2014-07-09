@@ -31,13 +31,13 @@
 
 #if PLATFORM_IS_RASPBERRYPI || (PLATFORM_IOS && PLATFORM_IS_MOBILE) || PLATFORM_USE_GLES2
 	// force use of OpenGL ES v2
-	#include <gldrivers/opengl_glesv2.hpp>
+	#include <gldrivers/opengl_glesv2.h>
 	#define RENDERER_TYPE 1
 
 #else
 	// use OpenGL
-//	#include <gldrivers/opengl_legacy21.hpp>
-	#include <gldrivers/opengl_core32.hpp>
+//	#include <gldrivers/opengl_legacy21.h>
+	#include <gldrivers/opengl_core32.h>
 	#define RENDERER_TYPE 0
 #endif
 
