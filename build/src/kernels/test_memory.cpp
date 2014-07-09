@@ -19,9 +19,14 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "kernel.h"
 #include <stdio.h>
-#include "typedefs.h"
+#include <vector>
+#include <map>
+
+#include <gemini/typedefs.h>
+#include <slim/xlog.h>
+
+#include "kernel.h"
 #include "mem.h"
 #include "fixedarray.h"
 
@@ -39,14 +44,6 @@ struct Test
 		printf( "~Test()\n" );
 	}
 };
-
-#include <vector>
-
-
-#include <map>
-
-
-#include <slim/xlog.h>
 
 struct BaseObject
 {

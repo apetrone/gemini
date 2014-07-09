@@ -19,7 +19,7 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "typedefs.h"
+#include <gemini/typedefs.h>
 #include <slim/xlog.h>
 #include "helpscreen.h"
 

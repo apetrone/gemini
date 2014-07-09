@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "typedefs.h"
+#include <gemini/typedefs.h>
 #include "color.h"
 #include "assets/asset_font.h"
 

@@ -19,13 +19,14 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "typedefs.h"
+#include <gemini/typedefs.h>
+#include <slim/xlog.h>
+#include <slim/xtime.h>
+
 #include "core.h"
 #include "platform.h"
 #include "stackstring.h"
 #include "filesystem.h"
-#include <slim/xlog.h>
-#include <slim/xtime.h>
 
 namespace core
 {

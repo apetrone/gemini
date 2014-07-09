@@ -23,10 +23,10 @@
 
 #include <string>
 #include <map>
-
-#include "typedefs.h"
-#include "assets.h"
 #include <list>
+
+#include <gemini/typedefs.h>
+#include "assets.h"
 #include <slim/xlog.h>
 
 namespace assets

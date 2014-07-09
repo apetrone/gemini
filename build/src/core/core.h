@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "typedefs.h"
+#include <gemini/typedefs.h>
 
 namespace core
 {

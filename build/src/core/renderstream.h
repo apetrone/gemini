@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include "typedefs.h"
+#include <gemini/typedefs.h>
 #include "renderer.h"
 #include "memorystream.h"
 #include "assets.h"

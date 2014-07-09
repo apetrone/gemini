@@ -20,8 +20,8 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 
-#include "typedefs.h"
 #include "keyvalues.h"
+#include <gemini/typedefs.h>
 
 #include <slim/xlog.h>
 #include <slim/xstr.h>

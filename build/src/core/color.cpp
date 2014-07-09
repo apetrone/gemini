@@ -20,9 +20,10 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 
-#include <typedefs.h>
-#include "color.h"
+#include <gemini/typedefs.h>
 #include <slim/xlog.h>
+
+#include "color.h"
 
 // unsigned char rgba[3];
 // unsigned int mycolor = RGBToUInt( 255, 128, 75 );

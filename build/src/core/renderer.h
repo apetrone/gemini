@@ -21,7 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "typedefs.h"
+#include <gemini/typedefs.h>
+
 #include "mem.h"
 #include "memorystream.h"
 #include "image.h"

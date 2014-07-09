@@ -19,9 +19,10 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "typedefs.h"
-#include "memorystream.h"
 #include <string.h> // for memcpy
+#include <gemini/typedefs.h>
+#include "memorystream.h"
+
 
 
 MemoryStream::MemoryStream()

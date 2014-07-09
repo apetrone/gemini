@@ -19,9 +19,11 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "typedefs.h"
-#include "mem_stl_allocator.h"
 #include <stdio.h> // for stdout
+
+#include <gemini/typedefs.h>
+#include "mem_stl_allocator.h"
+
 
 namespace memory
 {
