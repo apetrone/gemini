@@ -21,7 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "config.h"
+#include <gemini/config.h>
+
 #include "factory.h" // for DECLARE_FACTORY_CLASS
 
 #if PLATFORM_WINDOWS

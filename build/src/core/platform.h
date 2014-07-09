@@ -21,7 +21,9 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "config.h"
+#include <stdio.h> // for size_t
+#
+#include <gemini/config.h>
 
 #if PLATFORM_APPLE
 	#include <TargetConditionals.h>
@@ -42,7 +44,6 @@
 	#error Unknown platform!
 #endif
 
-#include <stdio.h> // for size_t
 #include "core.h" // for core::Error
 
 

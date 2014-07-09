@@ -20,9 +20,9 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <string.h> // for size_t
-#include <xfile.h>
 
-#include "config.h"
+#include <xfile.h>
+#include <gemini/config.h>
 
 #if PLATFORM_APPLE
 	#include <TargetConditionals.h>

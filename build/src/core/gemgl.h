@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "config.h"
+#include <gemini/config.h>
 
 #if PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_ANDROID
 	#include <slim/xlib.h>
