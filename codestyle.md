@@ -38,9 +38,10 @@ Please note, this project is in a major transitional period regarding that previ
 
 #### Source Code Style:
 
-- No extraneous whitespace.
+- Please note: Code Style guidelines are currently under development and the code
+is also in a transitional state. It will take a bit of time to transition everything over.
 
-	This is a major change from my last style so it will take a bit of time to transition everything over.
+- No extraneous whitespace.
 
 	In summary, this is the old way:
 	```c
@@ -82,7 +83,7 @@ int my_value = 3;
 - static or global names should be prefixed with an underscore:
 
 ```c
-IKernel * _global_instance = 0;
+Kernel * _global_instance = 0;
 ```
 - function names are lower cased with underscores for spacing:
 
@@ -106,21 +107,13 @@ class AnimationController
 	// ...
 };
 ```
-
-- Interface classes are an exception, these should begin with a capital 'I' to establish these are abstract.
-
-```c
-class IRenderDriver
-{
-	// ...
-};
-```
+No prefixes are added to interface/abstract classes.
 
 - curly braces are explicitly used with all control statements for consistency:
 
 ```c
 int z = 0;
-for( int i = 0; i < 0xFF; ++i )
+for(int i = 0; i < 0xFF; ++i)
 {
 	z += i;
 }
@@ -129,23 +122,25 @@ for( int i = 0; i < 0xFF; ++i )
 - curly braces are placed on separate lines for code legibility:
 
 ```c
-if ( true )
+if (was_terminated || has_ended)
 {
 	// ...
 }
 ```
 
-- local project includes are always in double-quotes. separate libraries are referenced with brackets, along with standard headers.
+- Standard headers are always included first, using brackets. Third-party libraries are included next, using brackets as well. Local project includes are always in double-quotes.
 
 ```c
 #include <string>
-#include "kernel.hpp"
 #include <sdk/types.hpp>
+#include "kernel.hpp"
 ```
 
-- Template type names are prefixed with an underscore _. Unlike the STL, these should be moderately descriptive.
+- Template type names are title cased. 
+Unlike the STL, these should be moderately descriptive.
+
 ```c
-template <class _KeyType, class _ValueType>
+template <class KeyType, class ValueType>
 class HashTable
 {
 	// ...
