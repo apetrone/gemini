@@ -22,12 +22,12 @@
 #include "typedefs.h"
 #include <slim/xstr.h>
 #include <slim/xlog.h>
-#include "filesystem.hpp"
-#include "font.hpp"
-#include "renderer.hpp"
-#include "renderstream.hpp"
+#include "filesystem.h"
+#include "font.h"
+#include "renderer.h"
+#include "renderstream.h"
 #include <stdlib.h>
-#include "kernel.hpp"
+#include "kernel.h"
 
 #include "fontstash.h"
 

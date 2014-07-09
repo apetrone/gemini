@@ -19,10 +19,10 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "audio.hpp"
-#include "openal.hpp"
+#include "audio.h"
+#include "openal.h"
 #include <slim/xlog.h>
-#include "openal_vorbis_decoder.hpp"
+#include "openal_vorbis_decoder.h"
 
 
 void stb_vorbis_decoder::reset()

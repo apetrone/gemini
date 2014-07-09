@@ -21,12 +21,12 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include <slim/xlog.h>
-#include "font.hpp"
-#include "win_loss_screen.hpp"
-#include "engine.hpp"
-#include "input.hpp"
-#include "stackstring.hpp"
-#include "gamescreen.hpp"
+#include "font.h"
+#include "win_loss_screen.h"
+#include "engine.h"
+#include "input.h"
+#include "stackstring.h"
+#include "gamescreen.h"
 
 const int MENU_PLAY_AGAIN = 1;
 const int MENU_QUIT = 2;

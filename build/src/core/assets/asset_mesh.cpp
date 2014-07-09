@@ -19,10 +19,10 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "assets.hpp"
-#include "assets/asset_mesh.hpp"
-#include "configloader.hpp" // for ConfigLoadStatus, Json::
-#include "renderer.hpp"
+#include "assets.h"
+#include "assets/asset_mesh.h"
+#include "configloader.h" // for ConfigLoadStatus, Json::
+#include "renderer.h"
 
 using namespace renderer;
 

@@ -1,4 +1,4 @@
-#include "gemgl.hpp"
+#include "gemgl.h"
 //#include "platform.h"
 #include <stdio.h> // for sscanf
 #include <string.h> // for strstr

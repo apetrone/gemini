@@ -19,13 +19,13 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "render_utilities.hpp"
+#include "render_utilities.h"
 #include <slim/xlog.h>
 
 
-#include "assets.hpp"
-#include "renderer.hpp"
-#include "renderstream.hpp"
+#include "assets.h"
+#include "renderer.h"
+#include "renderstream.h"
 
 namespace render_utilities
 {

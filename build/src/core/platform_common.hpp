@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "platform.hpp"
+#include "platform.h"
 
 namespace platform
 {

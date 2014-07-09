@@ -21,14 +21,14 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include <slim/xlog.h>
-#include "gldrivers/opengl_core32.hpp"
+#include "gldrivers/opengl_core32.h"
 
-#include "image.hpp"
+#include "image.h"
 
 #include "mathlib.h"
-#include "memorystream.hpp"
+#include "memorystream.h"
 
-#include "assets.hpp"
+#include "assets.h"
 
 // utility functions
 GLenum image_to_source_format( int num_channels )

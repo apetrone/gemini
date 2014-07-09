@@ -20,18 +20,18 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 
-#include "platform.hpp"
-#include "stackstring.hpp"
+#include "platform.h"
+#include "stackstring.h"
 
 #include "mathlib.h" // for glm
-#include "color.hpp"
-#include "renderer.hpp"
+#include "color.h"
+#include "renderer.h"
 
 #include <string>
-#include "assets.hpp"
-#include "assets/asset_texture.hpp"
+#include "assets.h"
+#include "assets/asset_texture.h"
 
-#include "kernel.hpp" // for device_flags
+#include "kernel.h" // for device_flags
 
 namespace assets
 {

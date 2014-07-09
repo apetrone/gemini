@@ -19,10 +19,10 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "configloader.hpp"
-#include "filesystem.hpp"
+#include "configloader.h"
+#include "filesystem.h"
 #include <slim/xlog.h>
-#include "memory.hpp"
+#include "memory.h"
 
 namespace util
 {

@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "input.hpp"
+#include "input.h"
 #include <slim/xlog.h>
 
 namespace input

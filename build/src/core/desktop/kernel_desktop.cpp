@@ -25,9 +25,9 @@
 #include <limits.h>
 #include <map>
 
-#include "kernel_desktop.hpp"
-#include "input.hpp"
-//#include "hashtable.hpp"
+#include "kernel_desktop.h"
+#include "input.h"
+//#include "hashtable.h"
 #include <slim/xlog.h>
 
 using namespace input;

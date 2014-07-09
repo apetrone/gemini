@@ -21,9 +21,9 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "assets.hpp"
-#include "stackstring.hpp"
-#include "renderer.hpp"
+#include "assets.h"
+#include "stackstring.h"
+#include "renderer.h"
 
 namespace assets
 {

@@ -19,9 +19,9 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "core.hpp"
-#include "platform.hpp"
-#include "platform_common.hpp"
+#include "core.h"
+#include "platform.h"
+#include "platform_common.h"
 
 #if TARGET_OS_MAC
 	#include "osx/osx_platform.h"

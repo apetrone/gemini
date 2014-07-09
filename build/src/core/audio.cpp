@@ -20,29 +20,29 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "audio.hpp"
+#include "audio.h"
 #include <slim/xlog.h>
-#include "stackstring.hpp"
-#include "filesystem.hpp"
-#include "assets.hpp"
-#include "factory.hpp"
+#include "stackstring.h"
+#include "filesystem.h"
+#include "assets.h"
+#include "factory.h"
 
 #if !PLATFORM_IS_MOBILE
-	#include "openal.hpp"
-	#include "openal_vorbis_decoder.hpp"
+	#include "openal.h"
+	#include "openal_vorbis_decoder.h"
 	typedef stb_vorbis_decoder AudioDecoderType;
 	#define DRIVER_NAME "OpenAL"
 	#define DRIVER_CREATOR OpenAL::creator
 
 #elif PLATFORM_APPLE && PLATFORM_IS_MOBILE
-	#include "audio_extaudio_decoder.hpp"
-	#include "openal.hpp"
+	#include "audio_extaudio_decoder.h"
+	#include "openal.h"
 	typedef ExtAudioDecoder AudioDecoderType;
 	#define DRIVER_NAME "OpenAL"
 	#define DRIVER_CREATOR OpenAL::creator
 #elif PLATFORM_ANDROID
 
-	#include "opensles.hpp"
+	#include "opensles.h"
 	#define DRIVER_NAME "OpenSLES"
 
 

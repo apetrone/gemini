@@ -11,9 +11,9 @@
 #include <android/asset_manager_jni.h>
 
 // gemini includes
-#include "memory.hpp"
-#include "kernel_android.hpp"
-#include "filesystem.hpp"
+#include "memory.h"
+#include "kernel_android.h"
+#include "filesystem.h"
 
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))

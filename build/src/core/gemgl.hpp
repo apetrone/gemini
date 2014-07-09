@@ -71,7 +71,7 @@
 #endif
 
 
-#include "renderer.hpp"
+#include "renderer.h"
 
 
 #if !defined(GL_SAMPLER_1D)

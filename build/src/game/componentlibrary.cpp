@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "componentlibrary.hpp"
+#include "componentlibrary.h"
 
 
 

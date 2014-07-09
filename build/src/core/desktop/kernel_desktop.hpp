@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include "kernel.hpp"
+#include "kernel.h"
 
 struct xwl_window_s;
 struct xwl_windowparams_s;

@@ -19,21 +19,21 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "kernel.hpp"
+#include "kernel.h"
 #include <stdio.h>
-#include "renderer.hpp"
+#include "renderer.h"
 #include <slim/xlog.h>
-#include "input.hpp"
-#include "renderstream.hpp"
-#include "debugdraw.hpp"
+#include "input.h"
+#include "renderstream.h"
+#include "debugdraw.h"
 
-#include "assets/asset_texture.hpp"
+#include "assets/asset_texture.h"
 using namespace kernel;
 
 #include <nom/nom.hpp>
 
 #include "mathlib.h"
-#include "font.hpp"
+#include "font.h"
 
 #include <vector>
 

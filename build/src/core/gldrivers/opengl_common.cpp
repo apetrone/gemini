@@ -20,8 +20,8 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "renderer.hpp"
-#include "opengl_common.hpp"
+#include "renderer.h"
+#include "opengl_common.h"
 
 GLenum vertexbuffer_drawtype_to_gl_drawtype( renderer::VertexBufferDrawType type )
 {

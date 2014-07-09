@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "componentmanager.hpp"
+#include "componentmanager.h"
 #include <vector>
 
 class ComponentLibrary

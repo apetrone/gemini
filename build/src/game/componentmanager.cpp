@@ -21,18 +21,18 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include <slim/xlog.h>
-#include "componentmanager.hpp"
-#include "componentlibrary.hpp"
-#include "kernel.hpp"
+#include "componentmanager.h"
+#include "componentlibrary.h"
+#include "kernel.h"
 
 #include <vector>
-#include "components.hpp"
+#include "components.h"
 
 
 
-#include "camera.hpp"
+#include "camera.h"
 
-#include "particlesystem.hpp"
+#include "particlesystem.h"
 
 #include <map>
 

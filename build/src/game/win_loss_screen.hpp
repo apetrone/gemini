@@ -20,11 +20,11 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include "memory.hpp"
-#include "screencontrol.hpp"
-#include "menu.hpp"
-#include "assets.hpp"
-#include "componentmanager.hpp" // for RenderControl
+#include "memory.h"
+#include "screencontrol.h"
+#include "menu.h"
+#include "assets.h"
+#include "componentmanager.h" // for RenderControl
 
 struct WinLossScreen : public IScreen
 {

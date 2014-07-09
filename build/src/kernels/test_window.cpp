@@ -20,13 +20,13 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "config.h"
-#include "kernel.hpp"
+#include "kernel.h"
 #include <stdio.h>
-#include "renderer.hpp"
+#include "renderer.h"
 #include <slim/xlog.h>
 
-#include "audio.hpp"
-#include "input.hpp"
+#include "audio.h"
+#include "input.h"
 
 using namespace kernel;
 

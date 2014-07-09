@@ -22,8 +22,8 @@
 #pragma once
 
 #include "typedefs.h"
-#include "color.hpp"
-#include "assets/asset_font.hpp"
+#include "color.h"
+#include "assets/asset_font.h"
 
 namespace font
 {

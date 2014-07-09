@@ -19,18 +19,18 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "kernel.hpp"
+#include "kernel.h"
 #include <stdio.h>
 #include <slim/xlog.h>
 #include "mathlib.h"
-#include "debugdraw.hpp"
-#include "input.hpp"
-#include "renderer.hpp"
-#include "renderstream.hpp"
+#include "debugdraw.h"
+#include "input.h"
+#include "renderer.h"
+#include "renderstream.h"
 
-#include "camera.hpp"
+#include "camera.h"
 
-#include "assets/asset_mesh.hpp"
+#include "assets/asset_mesh.h"
 
 #include "btBulletDynamicsCommon.h"
 

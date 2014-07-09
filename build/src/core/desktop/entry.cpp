@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include <iostream>
 #include "typedefs.h"
-#include "kernel_desktop.hpp"
+#include "kernel_desktop.h"
  
 int main( int argc, char ** argv )
 {

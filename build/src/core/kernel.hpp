@@ -21,8 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "memory.hpp"
-#include "kernel_events.hpp"
+#include "memory.h"
+#include "kernel_events.h"
 
 namespace kernel
 {

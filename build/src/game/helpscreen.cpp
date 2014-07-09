@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include <slim/xlog.h>
-#include "helpscreen.hpp"
+#include "helpscreen.h"
 
 void HelpScreen::on_show( kernel::IApplication * app )
 {

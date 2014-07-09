@@ -20,12 +20,12 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 
-#include "renderer.hpp"
-#include "debugdraw.hpp"
-#include "vertexstream.hpp"
-#include "assets.hpp"
-#include "font.hpp"
-#include "renderstream.hpp"
+#include "renderer.h"
+#include "debugdraw.h"
+#include "vertexstream.h"
+#include "assets.h"
+#include "font.h"
+#include "renderstream.h"
 #include <slim/xlog.h>
 
 namespace debugdraw

@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "stackstring.hpp"
+#include "stackstring.h"
 
 template <class Type>
 struct RangedValue

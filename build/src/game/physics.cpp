@@ -21,9 +21,9 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include <slim/xlog.h>
-#include "physics.hpp"
-#include "color.hpp"
-#include "debugdraw.hpp"
+#include "physics.h"
+#include "color.h"
+#include "debugdraw.h"
 
 #include <btBulletDynamicsCommon.h>
 

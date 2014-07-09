@@ -7,7 +7,7 @@
 #import "ViewController.h"
 #import "kernel_ios.h"
 //using namespace aengine;
-#import "kernel.hpp"
+#import "kernel.h"
 
 @interface ViewController () {
 }

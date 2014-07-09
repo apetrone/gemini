@@ -20,9 +20,9 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include "memory.hpp"
-#include "screencontrol.hpp"
-#include "font.hpp"
+#include "memory.h"
+#include "screencontrol.h"
+#include "font.h"
 
 
 struct HelpScreen : public IScreen

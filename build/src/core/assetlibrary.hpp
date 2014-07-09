@@ -25,7 +25,7 @@
 #include <map>
 
 #include "typedefs.h"
-#include "assets.hpp"
+#include "assets.h"
 #include <list>
 #include <slim/xlog.h>
 

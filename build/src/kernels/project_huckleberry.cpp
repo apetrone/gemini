@@ -19,21 +19,21 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "kernel.hpp"
-#include "input.hpp"
+#include "kernel.h"
+#include "input.h"
 #include <stdio.h>
 #include <slim/xlog.h>
-#include "filesystem.hpp"
-#include "assets/asset_mesh.hpp"
-#include "camera.hpp"
-#include "gemgl.hpp"
-#include "debugdraw.hpp"
+#include "filesystem.h"
+#include "assets/asset_mesh.h"
+#include "camera.h"
+#include "gemgl.h"
+#include "debugdraw.h"
 
-#include "renderer.hpp"
-#include "renderstream.hpp"
-#include "render_utilities.hpp"
-#include "particlesystem.hpp"
-#include "script.hpp"
+#include "renderer.h"
+#include "renderstream.h"
+#include "render_utilities.h"
+#include "particlesystem.h"
+#include "script.h"
 
 
 #include <Box2D/Box2D.h>

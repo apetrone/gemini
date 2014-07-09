@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "config.h"
-#include "kernel.hpp"
+#include "kernel.h"
 #include <stdio.h>
 #include <slim/xlog.h>
 

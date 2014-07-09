@@ -146,3 +146,5 @@ class HashTable
 	// ...
 };
 ```
+
+- Header names should not clash with standard headers. 

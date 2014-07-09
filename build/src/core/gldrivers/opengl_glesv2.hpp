@@ -20,8 +20,8 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include "renderer.hpp"
-#include "factory.hpp"
+#include "renderer.h"
+#include "factory.h"
 
 class GLESv2 : public renderer::IRenderDriver
 {

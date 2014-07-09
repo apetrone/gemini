@@ -21,12 +21,12 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "assets.hpp"
-#include "stackstring.hpp"
-#include "renderer.hpp"
+#include "assets.h"
+#include "stackstring.h"
+#include "renderer.h"
 
-#include "keyframechannel.hpp"
-#include "util.hpp"
+#include "keyframechannel.h"
+#include "util.h"
 
 namespace assets
 {

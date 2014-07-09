@@ -20,11 +20,11 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include "memory.hpp"
+#include "memory.h"
 #include <vector>
-#include "factory.hpp"
-#include "renderstream.hpp"
-#include "camera.hpp"
+#include "factory.h"
+#include "renderstream.h"
+#include "camera.h"
 
 enum ComponentTypes
 {

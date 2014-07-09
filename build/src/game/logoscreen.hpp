@@ -20,8 +20,8 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include "memory.hpp"
-#include "screencontrol.hpp"
+#include "memory.h"
+#include "screencontrol.h"
 
 struct LogoScreen : public IScreen
 {

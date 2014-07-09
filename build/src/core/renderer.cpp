@@ -21,8 +21,8 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include <slim/xlog.h>
-#include "renderer.hpp"
-#include "factory.hpp"
+#include "renderer.h"
+#include "factory.h"
 #include <slim/xstr.h>
 
 

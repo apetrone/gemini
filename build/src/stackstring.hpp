@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "platform.hpp"
+#include "platform.h"
 #include <slim/xstr.h> // for xstr_cat
 
 template <unsigned int size, class Type=char>

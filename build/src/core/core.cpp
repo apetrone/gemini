@@ -20,10 +20,10 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "core.hpp"
-#include "platform.hpp"
-#include "stackstring.hpp"
-#include "filesystem.hpp"
+#include "core.h"
+#include "platform.h"
+#include "stackstring.h"
+#include "filesystem.h"
 #include <slim/xlog.h>
 #include <slim/xtime.h>
 

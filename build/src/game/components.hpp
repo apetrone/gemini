@@ -20,12 +20,12 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include "memory.hpp"
+#include "memory.h"
 #include <vector>
-#include "componentmanager.hpp"
-#include "render_utilities.hpp"
-#include "renderer.hpp"
-#include "vertexstream.hpp"
+#include "componentmanager.h"
+#include "render_utilities.h"
+#include "renderer.h"
+#include "vertexstream.h"
 
 class Movement : public IComponent
 {
@@ -64,7 +64,7 @@ public:
 #endif
 
 #include <string>
-#include "assets.hpp"
+#include "assets.h"
 
 
 class Sprite : public IComponent

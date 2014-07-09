@@ -24,7 +24,7 @@
 #include <string>
 
 #include "mathlib.h"
-#include "color.hpp"
+#include "color.h"
 
 namespace debugdraw
 {

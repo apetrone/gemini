@@ -20,8 +20,8 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "script.hpp"
-#include "filesystem.hpp"
+#include "script.h"
+#include "filesystem.h"
 #include <stack>
 #include <slim/xlog.h>
 
@@ -29,8 +29,8 @@
 
 #include "mathlib.h"
 
-#include "util.hpp"
-#include "debugdraw.hpp"
+#include "util.h"
+#include "debugdraw.h"
 
 namespace script
 {

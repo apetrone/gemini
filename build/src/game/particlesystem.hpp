@@ -20,14 +20,14 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include "memory.hpp"
+#include "memory.h"
 #include <vector>
-#include "color.hpp"
+#include "color.h"
 #include "mathlib.h"
-#include "keyframechannel.hpp"
-#include "render_utilities.hpp"
-#include "util.hpp"
-#include "assets/asset_emitter.hpp"
+#include "keyframechannel.h"
+#include "render_utilities.h"
+#include "util.h"
+#include "assets/asset_emitter.h"
 
 // -------------------------------------------------------------
 // Particle

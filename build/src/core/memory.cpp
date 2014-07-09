@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "memory_stl_allocator.hpp"
+#include "memory_stl_allocator.h"
 #include <stdio.h> // for stdout
 
 namespace memory

@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "factory.hpp" // for DECLARE_FACTORY_CLASS
+#include "factory.h" // for DECLARE_FACTORY_CLASS
 
 using namespace audio;
 

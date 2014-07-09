@@ -118,4 +118,4 @@ typedef double float64;
 
 #include <config.h>
 #include <assert.h>
-#include "memory.hpp"
+#include "memory.h"

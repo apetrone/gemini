@@ -21,9 +21,9 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include <slim/xlog.h>
-#include "image.hpp"
-#include "filesystem.hpp"
-#include "renderer.hpp"
+#include "image.h"
+#include "filesystem.h"
+#include "renderer.h"
 
 #define STBI_HEADER_FILE_ONLY 1
 #define STBI_NO_STDIO 1

@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include <slim/xlog.h>
-#include "engine.hpp"
+#include "engine.h"
 
 namespace engine
 {

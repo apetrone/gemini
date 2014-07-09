@@ -21,11 +21,11 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include <slim/xlog.h>
-#include "font.hpp"
-#include "menuscreen.hpp"
-#include "engine.hpp"
-#include "input.hpp"
-#include "stackstring.hpp"
+#include "font.h"
+#include "menuscreen.h"
+#include "engine.h"
+#include "input.h"
+#include "stackstring.h"
 
 const int MENU_PLAY = 1;
 const int MENU_QUIT = 2;

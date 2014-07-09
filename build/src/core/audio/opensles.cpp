@@ -19,8 +19,8 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "audio.hpp"
-#include "opensles.hpp"
+#include "audio.h"
+#include "opensles.h"
 #include <slim/xlog.h>
 
 OpenSLES::OpenSLES() {}

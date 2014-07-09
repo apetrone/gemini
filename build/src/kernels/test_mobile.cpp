@@ -19,21 +19,21 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "kernel.hpp"
+#include "kernel.h"
 #include <stdio.h>
 #include <slim/xlog.h>
-#include "font.hpp"
-#include "filesystem.hpp"
-#include "renderstream.hpp"
-#include "assets.hpp"
-#include "camera.hpp"
-#include "vertexstream.hpp"
+#include "font.h"
+#include "filesystem.h"
+#include "renderstream.h"
+#include "assets.h"
+#include "camera.h"
+#include "vertexstream.h"
 #include "mathlib.h"
 
-#include "render_utilities.hpp"
+#include "render_utilities.h"
 
-#include "input.hpp"
-#include "gemgl.hpp"
+#include "input.h"
+#include "gemgl.h"
 
 #define FONT_TEST 1
 #define MODEL_TEST 0

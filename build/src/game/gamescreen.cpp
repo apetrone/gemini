@@ -21,12 +21,12 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include <slim/xlog.h>
-#include "gamescreen.hpp"
-#include "render_utilities.hpp"
-#include "componentmanager.hpp"
-#include "debugdraw.hpp"
+#include "gamescreen.h"
+#include "render_utilities.h"
+#include "componentmanager.h"
+#include "debugdraw.h"
 
-#include "components.hpp"
+#include "components.h"
 
 
 RenderControl render_control;

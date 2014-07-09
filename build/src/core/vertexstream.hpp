@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 #include "typedefs.h"
-#include "renderer.hpp"
+#include "renderer.h"
 
 namespace renderer
 {

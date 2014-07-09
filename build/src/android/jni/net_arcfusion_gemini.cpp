@@ -21,11 +21,11 @@
 // -------------------------------------------------------------
 #include <android/log.h>
 #include <jni.h>
-#include "memory.hpp"
+#include "memory.h"
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
-#include "kernel_android.hpp"
-#include "filesystem.hpp"
+#include "kernel_android.h"
+#include "filesystem.h"
 
 const char JNI_CLASS_PATH[] = "net/arcfusion/gemini/Lynx";
 

@@ -20,14 +20,14 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "filesystem.hpp"
+#include "filesystem.h"
 #include <slim/xstr.h>
-#include "platform.hpp"
+#include "platform.h"
 #include <stdio.h> // for printf
 #include <sys/stat.h> // for fs::FileExists
 #include "xfile.h"
 #include <slim/xlog.h>
-#include "memory.hpp"
+#include "memory.h"
 
 #include <CoreFoundation/CoreFoundation.h>
 #include <AudioToolbox/AudioToolbox.h>

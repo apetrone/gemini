@@ -43,7 +43,7 @@
 #endif
 
 #include <stdio.h> // for size_t
-#include "core.hpp" // for core::Error
+#include "core.h" // for core::Error
 
 
 namespace platform

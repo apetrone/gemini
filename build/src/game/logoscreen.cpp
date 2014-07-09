@@ -21,9 +21,9 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include <slim/xlog.h>
-#include "font.hpp"
-#include "logoscreen.hpp"
-#include "engine.hpp"
+#include "font.h"
+#include "logoscreen.h"
+#include "engine.h"
 
 LogoScreen::LogoScreen()
 {

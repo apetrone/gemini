@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "memorystream.hpp"
+#include "memorystream.h"
 #include <string.h> // for memcpy
 
 

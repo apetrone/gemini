@@ -21,8 +21,8 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include <slim/xlog.h>
-#include "particlesystem.hpp"
-#include "util.hpp"
+#include "particlesystem.h"
+#include "util.h"
 
 // -------------------------------------------------------------
 // Particle

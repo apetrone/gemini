@@ -19,7 +19,7 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "audio_extaudio_decoder.hpp"
+#include "audio_extaudio_decoder.h"
 #include <slim/xlog.h>
 #include <slim/xstr.h>
 

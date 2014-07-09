@@ -22,9 +22,9 @@
 #pragma once
 
 #include "typedefs.h"
-#include "memory.hpp"
-#include "memorystream.hpp"
-#include "image.hpp"
+#include "memory.h"
+#include "memorystream.h"
+#include "image.h"
 #include "mathlib.h" // for glm
 
 namespace renderer
@@ -314,7 +314,7 @@ namespace renderer
 	};
 };
 
-#include "vertexstream.hpp"
+#include "vertexstream.h"
 
 namespace renderer
 {

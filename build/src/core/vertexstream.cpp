@@ -20,8 +20,8 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "vertexstream.hpp"
-#include "renderer.hpp"
+#include "vertexstream.h"
+#include "renderer.h"
 
 #include <string.h> // for memset
 #include <stdio.h> // for printf

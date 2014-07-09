@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 
 #include <typedefs.h>
-#include "color.hpp"
+#include "color.h"
 #include <slim/xlog.h>
 
 // unsigned char rgba[3];

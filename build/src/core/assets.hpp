@@ -21,11 +21,11 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "platform.hpp"
-#include "stackstring.hpp"
+#include "platform.h"
+#include "stackstring.h"
 
 #include "mathlib.h" // for glm
-#include "color.hpp"
+#include "color.h"
 
 #include <string>
 
@@ -92,15 +92,15 @@ namespace assets
 	type##AssetLibrary * name();
 
 
-#include "assetlibrary.hpp"
+#include "assetlibrary.h"
 
-#include "assets/asset_texture.hpp"
-#include "assets/asset_shader.hpp"
-#include "assets/asset_material.hpp"
-#include "assets/asset_mesh.hpp"
-#include "assets/asset_spriteconfig.hpp"
-#include "assets/asset_emitter.hpp"
-#include "assets/asset_font.hpp"
+#include "assets/asset_texture.h"
+#include "assets/asset_shader.h"
+#include "assets/asset_material.h"
+#include "assets/asset_mesh.h"
+#include "assets/asset_spriteconfig.h"
+#include "assets/asset_emitter.h"
+#include "assets/asset_font.h"
 
 namespace assets
 {

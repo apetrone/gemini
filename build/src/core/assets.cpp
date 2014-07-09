@@ -20,19 +20,19 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "assets.hpp"
+#include "assets.h"
 
-#include "kernel.hpp"
-#include "image.hpp"
+#include "kernel.h"
+#include "image.h"
 #include <slim/xlog.h>
 
 #include <slim/xstr.h>
 #include <slim/xtime.h>
-#include "memory.hpp"
+#include "memory.h"
 
-#include "filesystem.hpp"
-#include "configloader.hpp" // used to load various file formats
-#include "renderer.hpp"
+#include "filesystem.h"
+#include "configloader.h" // used to load various file formats
+#include "renderer.h"
 
 using namespace renderer;
 

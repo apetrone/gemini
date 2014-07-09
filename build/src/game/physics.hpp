@@ -23,11 +23,11 @@
 
 #include <btBulletDynamicsCommon.h>
 
-#include "memory.hpp"
-#include "camera.hpp"
+#include "memory.h"
+#include "camera.h"
 #include "charactercontroller.h"
 
-#include "assets/asset_mesh.hpp"
+#include "assets/asset_mesh.h"
 
 namespace physics
 {

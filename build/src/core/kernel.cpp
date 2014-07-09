@@ -20,21 +20,21 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "core.hpp"
-#include "kernel.hpp"
-#include "platform.hpp"
+#include "core.h"
+#include "kernel.h"
+#include "platform.h"
 #include <string>
 #include <map>
 
 #include <slim/xlog.h>
 #include <slim/xtime.h>
-#include "renderer.hpp"
-#include "audio.hpp"
-#include "input.hpp"
-#include "assets.hpp"
-#include "configloader.hpp"
-#include "font.hpp"
-#include "script.hpp"
+#include "renderer.h"
+#include "audio.h"
+#include "input.h"
+#include "assets.h"
+#include "configloader.h"
+#include "font.h"
+#include "script.h"
 
 #if PLATFORM_LINUX
 	#include <stdlib.h> // for qsort

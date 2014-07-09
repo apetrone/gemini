@@ -19,14 +19,14 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "stackstring.hpp"
-#include "assets.hpp"
-#include "assets/asset_font.hpp"
-#include "configloader.hpp"
-#include "render_utilities.hpp"
+#include "stackstring.h"
+#include "assets.h"
+#include "assets/asset_font.h"
+#include "configloader.h"
+#include "render_utilities.h"
 
-#include "font.hpp"
-#include "kernel.hpp"
+#include "font.h"
+#include "kernel.h"
 
 namespace assets
 {

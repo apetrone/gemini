@@ -20,12 +20,12 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 
-#include "assets.hpp"
-#include "stackstring.hpp"
-#include "renderer.hpp"
-#include "assets/asset_shader.hpp"
-//#include "configloader.hpp"
-#include "filesystem.hpp"
+#include "assets.h"
+#include "stackstring.h"
+#include "renderer.h"
+#include "assets/asset_shader.h"
+//#include "configloader.h"
+#include "filesystem.h"
 
 namespace assets
 {

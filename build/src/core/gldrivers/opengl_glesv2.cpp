@@ -21,11 +21,11 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include <slim/xlog.h>
-#include "gldrivers/opengl_glesv2.hpp"
-#include "gemgl.hpp"
-#include "opengl_common.hpp"
-#include "memorystream.hpp"
-#include "assets.hpp"
+#include "gldrivers/opengl_glesv2.h"
+#include "gemgl.h"
+#include "opengl_common.h"
+#include "memorystream.h"
+#include "assets.h"
 #include <new>
 
 // enable this to allow retaining data pointers in order to call

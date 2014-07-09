@@ -19,7 +19,7 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "kernel_android.hpp"
+#include "kernel_android.h"
 
 void AndroidKernel::startup()
 {

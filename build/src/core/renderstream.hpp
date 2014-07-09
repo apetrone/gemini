@@ -21,9 +21,9 @@
 // -------------------------------------------------------------
 #pragma once
 #include "typedefs.h"
-#include "renderer.hpp"
-#include "memorystream.hpp"
-#include "assets.hpp"
+#include "renderer.h"
+#include "memorystream.h"
+#include "assets.h"
 
 const unsigned int MAX_RENDERER_STREAM_BYTES = 4096;
 const unsigned int MAX_RENDERER_STREAM_COMMANDS = 2048;

@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "kernel.hpp"
+#include "kernel.h"
 
 class AndroidKernel : public kernel::IKernel
 {

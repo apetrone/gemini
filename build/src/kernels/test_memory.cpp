@@ -19,11 +19,11 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "kernel.hpp"
+#include "kernel.h"
 #include <stdio.h>
 #include "typedefs.h"
-#include "memory.hpp"
-#include "fixedarray.hpp"
+#include "memory.h"
+#include "fixedarray.h"
 
 struct Test
 {

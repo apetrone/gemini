@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "menu.hpp"
+#include "menu.h"
 #include <slim/xlog.h>
 
 //

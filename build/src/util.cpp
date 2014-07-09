@@ -19,7 +19,7 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "util.hpp"
+#include "util.h"
 #include <slim/xstr.h>
 #include <stdlib.h>
 

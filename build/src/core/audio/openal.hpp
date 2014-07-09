@@ -22,7 +22,7 @@
 #pragma once
 
 #include "config.h"
-#include "factory.hpp" // for DECLARE_FACTORY_CLASS
+#include "factory.h" // for DECLARE_FACTORY_CLASS
 
 #if PLATFORM_WINDOWS
 	#include <al.h>

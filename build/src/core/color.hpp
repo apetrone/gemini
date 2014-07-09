@@ -22,7 +22,7 @@
 #pragma once
 
 #include <typedefs.h>
-#include "render_utilities.hpp"
+#include "render_utilities.h"
 
 #ifdef RGB
 #undef RGB

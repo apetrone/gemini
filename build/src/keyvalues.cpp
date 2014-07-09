@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 
 #include "typedefs.h"
-#include "keyvalues.hpp"
+#include "keyvalues.h"
 
 #include <slim/xlog.h>
 #include <slim/xstr.h>

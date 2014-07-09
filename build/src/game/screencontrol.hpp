@@ -20,12 +20,12 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include "memory.hpp"
+#include "memory.h"
 
 #include <vector>
 #include <stack>
 
-#include "kernel.hpp"
+#include "kernel.h"
 
 struct IScreen
 {

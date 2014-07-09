@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include "typedefs.h"
 #include <slim/xlog.h>
-#include "screencontrol.hpp"
+#include "screencontrol.h"
 
 ScreenController::ScreenController()
 {

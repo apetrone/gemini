@@ -20,18 +20,18 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include "memory.hpp"
-#include "screencontrol.hpp"
-#include "font.hpp"
-#include "camera.hpp"
-#include "renderstream.hpp"
-#include "assets.hpp"
-#include "audio.hpp"
-#include "particlesystem.hpp"
-//#include "map_event.hpp"
-#include "renderer.hpp"
-//#include "render_utilities.hpp"
-#include "input.hpp"
+#include "memory.h"
+#include "screencontrol.h"
+#include "font.h"
+#include "camera.h"
+#include "renderstream.h"
+#include "assets.h"
+#include "audio.h"
+#include "particlesystem.h"
+//#include "map_event.h"
+#include "renderer.h"
+//#include "render_utilities.h"
+#include "input.h"
 
 struct RenameThisData
 {

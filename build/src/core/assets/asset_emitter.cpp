@@ -20,11 +20,11 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "typedefs.h"
-#include "stackstring.hpp"
-#include "assets.hpp"
-#include "assets/asset_emitter.hpp"
-#include "configloader.hpp"
-#include "render_utilities.hpp"
+#include "stackstring.h"
+#include "assets.h"
+#include "assets/asset_emitter.h"
+#include "configloader.h"
+#include "render_utilities.h"
 
 namespace assets
 {
