@@ -88,6 +88,7 @@ def setup_common_libs(product):
 		"src/core",
 		"src/core/audio",
 		"src/contrib",
+		"src/sdk",
 
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3"),
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),
