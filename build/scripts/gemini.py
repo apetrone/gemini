@@ -123,20 +123,92 @@ def setup_driver(product):
 	
 	mac_release = product.layout(platform="macosx", configuration="release")
 
+def get_tools():
+	#
+	#
+	#
 
-def get_prism_product():
+	# rnd = Product(name="rnd", output=ProductType.Commandline)
+
+	# rnd.root = "../"
+	# rnd.sources += [
+	# 	"src/rnd/rnd.cpp"
+	# ]
+	# rnd.product_root = COMMON_PRODUCT_ROOT
+
+	# setup_driver(rnd)
+	# setup_common_libs(rnd)
+
+	#
+	# other tools?
+	# 
+	# 
 	prism = Product(name="prism", output=ProductType.Commandline)
 
 	prism.root = "../"
 	prism.sources += [
 		"src/tools/prism/**.cpp"
 	]
+	prism.includes += [
+		"src/sdk"
+	]
 	prism.product_root = COMMON_PRODUCT_ROOT
 
 	setup_driver(prism)
 	setup_common_libs(prism)
 
-	return prism
+	return [prism]
+
+
+def get_libgemini():
+	libgemini = Product(name="gemini", output=ProductType.DynamicLibrary)
+	libgemini.root = "../"
+	libgemini.sources += [
+		"src/sdk/**.cpp",
+		"src/sdk/**.h"
+	]
+	libgemini.sources += [
+		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c"),
+
+		# include this almagamated version of jsoncpp until we replace it.
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")
+	]
+
+	libgemini.defines += [
+		"JSON_IS_AMALGAMATION"
+	]
+
+	libgemini.includes += [
+		"src/sdk",
+
+		os.path.join(DEPENDENCIES_FOLDER, "murmur3"),
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp")		
+	]
+
+
+
+
+	macosx = libgemini.layout(platform="macosx")
+	macosx.sources = [
+		"src/sdk/gemini/platform/osx/osx_gemgl.*",
+		"src/sdk/gemini/platform/osx/*.m*",
+		"src/sdk/gemini/platform/osx/*.h*"
+	]
+	macosx.links = [
+		"Cocoa.framework",
+		"OpenGL.framework",
+		"AudioToolbox.framework",
+		"OpenAL.framework"
+	]	
+
+	#libgemini.defines += [
+	#	"GEMINI_USE_SDL2=1"
+	#]
+	libgemini.product_root = "latest/lib/${CONFIGURATION}_${ARCHITECTURE}"
+
+
+
+	return [libgemini]
 
 def arguments(parser):
 	parser.add_argument("--with-glesv2", dest="glesv2", action="store_true", help="Build with GLES V2", default=False)
@@ -313,27 +385,9 @@ def products(arguments, **kwargs):
 	]
 
 
-	#
-	#
-	#
+	tools = get_tools()
 
-	rnd = Product(name="rnd", output=ProductType.Commandline)
+	libgemini = get_libgemini()
 
-	rnd.root = "../"
-	rnd.sources += [
-		"src/rnd/rnd.cpp"
-	]
-	rnd.product_root = COMMON_PRODUCT_ROOT
-
-	#setup_common_variables(arguments, target_platform, rnd)
-	setup_driver(rnd)
-	setup_common_libs(rnd)
-
-	#
-	# other tools?
-	# 
-	# 
-	prism = get_prism_product()
-
-	return [gemini, rnd] #, prism]
+	return [gemini] + tools + libgemini
 

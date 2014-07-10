@@ -116,6 +116,6 @@ typedef double float64;
 	typedef int16 wchar;
 #endif
 
-#include <config.h>
+#include <gemini/config.h>
 #include <assert.h>
-#include "mem.h"
+#include <gemini/mem.h>
