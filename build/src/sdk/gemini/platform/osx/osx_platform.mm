@@ -19,42 +19,47 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "osx_platform.h"
-
 #if TARGET_OS_MAC && !TARGET_OS_IPHONE
 	#import <Cocoa/Cocoa.h>
 #else
 	#import <Foundation/Foundation.h>
 #endif
 
-namespace platform
+#include "osx_platform.h"
+
+namespace gemini
 {
-	NSAutoreleasePool * pool;
-	
-	core::Error osx_startup()
+
+	namespace platform
 	{
-		pool = [[NSAutoreleasePool alloc] init];
-		return core::Error(0);
-	}
-	
-	void osx_shutdown()
-	{
-		[pool release];
-		pool = 0;
-	}
-	
-	core::Error osx_program_directory( char * path, size_t size )
-	{
-		core::Error error(0);
-		NSString * bundle_path = [[NSBundle mainBundle] bundlePath];
-		if (bundle_path)
+		NSAutoreleasePool * pool;
+		
+		core::Error osx_startup()
 		{
-			[bundle_path getCString:path maxLength:size encoding:NSUTF8StringEncoding];
+			pool = [[NSAutoreleasePool alloc] init];
+			return core::Error(0);
 		}
-		else
+		
+		void osx_shutdown()
 		{
-			error = core::Error( core::Error::Failure, "Unable mainBundle reference is invalid!" );
+			[pool release];
+			pool = 0;
 		}
-		return error;
-	}
-}; // namespace platform
+		
+		core::Error osx_program_directory( char * path, size_t size )
+		{
+			core::Error error(0);
+			NSString * bundle_path = [[NSBundle mainBundle] bundlePath];
+			if (bundle_path)
+			{
+				[bundle_path getCString:path maxLength:size encoding:NSUTF8StringEncoding];
+			}
+			else
+			{
+				error = core::Error( core::Error::Failure, "Unable mainBundle reference is invalid!" );
+			}
+			return error;
+		}
+	}; // namespace platform
+
+}; // namespace gemini

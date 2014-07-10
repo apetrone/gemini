@@ -21,12 +21,16 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "platform.h"
+#include <gemini/core.h>
+#include <gemini/platform.h>
 
-namespace platform
+namespace gemini
 {
-	core::Error osx_startup();
-	void osx_shutdown();
-	
-	core::Error osx_program_directory( char * path, size_t size );
-}; // namespace platform
+	namespace platform
+	{
+		core::Error osx_startup();
+		void osx_shutdown();
+		
+		core::Error osx_program_directory( char * path, size_t size );
+	}; // namespace platform
+};

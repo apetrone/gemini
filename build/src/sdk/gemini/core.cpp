@@ -25,96 +25,96 @@
 #include <gemini/core/filesystem.h>
 #include <gemini/core/log.h>
 #include <gemini/core/timer.h>
-// TODO: remove old deps
-//#include <slim/xlog.h>
-//#include <slim/xtime.h>
 
 #include <gemini/platform.h>
+
 #include <gemini/util/stackstring.h>
 
-
-namespace core
+namespace gemini
 {
-	namespace _internal
+	namespace core
 	{
-		#define GEMINI_LOG_PATH "logs"
-		const unsigned int GEMINI_DATETIME_STRING_MAX = 128;
-		
-		void set_content_directory_from_root( StackString<MAX_PATH_SIZE> & root )
+		namespace _internal
 		{
-#if !TARGET_OS_IPHONE
-//			fs::truncate_string_at_path( &root[0], "bin" );
-#endif
-//			fs::content_directory( &root[0], root.max_size() );
-		}
+			#define GEMINI_LOG_PATH "logs"
+			const unsigned int GEMINI_DATETIME_STRING_MAX = 128;
+			
+			void set_content_directory_from_root( StackString<MAX_PATH_SIZE> & root )
+			{
+	#if !TARGET_OS_IPHONE
+	//			fs::truncate_string_at_path( &root[0], "bin" );
+	#endif
+	//			fs::content_directory( &root[0], root.max_size() );
+			}
+					
+			core::Error open_log_handlers()
+			{
+				core::Error error( 0 );
 				
-		core::Error open_log_handlers()
+				return error;
+			} // open_log_handlers
+			
+			
+			void close_log_handlers()
+			{
+			} // close_log_handlers
+		}; // namespace _internal
+		
+		
+		
+		Error::Error( int error_status, const char * error_message ) :
+			status(error_status), message(error_message)
 		{
-			core::Error error( 0 );
+		}
+		
+
+		
+		Error startup()
+		{
+			core::Error error = platform::startup();
+			if ( error.failed() )
+			{
+				fprintf( stderr, "platform startup failed! %s\n", error.message );
+				return error;
+			}
+			
+			//
+			// setup our file system...
+			StackString< MAX_PATH_SIZE > fullpath;
+			error = platform::program_directory( &fullpath[0], fullpath.max_size() );
+			if ( error.failed() )
+			{
+				fprintf( stderr, "failed to get the program directory!\n" );
+				return error;
+			}
+
+			// set the startup directory: where the binary lives
+			//fs::root_directory( &fullpath[0], fullpath.max_size() );
+			
+			// set the content directory
+			_internal::set_content_directory_from_root( fullpath );
+
+			
+			// open logs
+			error = _internal::open_log_handlers();
+			if ( error.failed() )
+			{
+				fprintf( stderr, "failed to open logging handlers: %s\n", error.message );
+				return error;
+			}
+			
+			//LOGV("TODO: set content directory!\n");
+			//LOGV( "setting root to '%s', content: '%s'\n", fs::root_directory(), fs::content_directory() );
 			
 			return error;
-		} // open_log_handlers
+		} // startup
 		
-		
-		void close_log_handlers()
+		void shutdown()
 		{
-		} // close_log_handlers
-	}; // namespace _internal
-	
-	
-	
-	Error::Error( int error_status, const char * error_message ) :
-		status(error_status), message(error_message)
-	{
-	}
-	
+			_internal::close_log_handlers();
+			
+			platform::shutdown();
+		} // shutdown
 
-	
-	Error startup()
-	{
-		core::Error error = platform::startup();
-		if ( error.failed() )
-		{
-			fprintf( stderr, "platform startup failed! %s\n", error.message );
-			return error;
-		}
-		
-		//
-		// setup our file system...
-		StackString< MAX_PATH_SIZE > fullpath;
-		error = platform::program_directory( &fullpath[0], fullpath.max_size() );
-		if ( error.failed() )
-		{
-			fprintf( stderr, "failed to get the program directory!\n" );
-			return error;
-		}
-
-		// set the startup directory: where the binary lives
-		//fs::root_directory( &fullpath[0], fullpath.max_size() );
-		
-		// set the content directory
-		_internal::set_content_directory_from_root( fullpath );
-
-		
-		// open logs
-		error = _internal::open_log_handlers();
-		if ( error.failed() )
-		{
-			fprintf( stderr, "failed to open logging handlers: %s\n", error.message );
-			return error;
-		}
-		
-		//LOGV("TODO: set content directory!\n");
-		//LOGV( "setting root to '%s', content: '%s'\n", fs::root_directory(), fs::content_directory() );
-		
-		return error;
-	} // startup
-	
-	void shutdown()
-	{
-		_internal::close_log_handlers();
-		
-		platform::shutdown();
-	} // shutdown
-
-}; // namespace core
+	}; // namespace core
+}; // namespace gemini

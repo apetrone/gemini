@@ -59,6 +59,27 @@ def setup_common_variables(arguments, target_platform, product):
 		"DEBUG"
 	]
 
+def setup_common_tool(product):
+
+	product.defines += [
+		"JSON_IS_AMALGAMATION"
+	]
+
+	#product.dependencies += [
+	#	Dependency(file="glm.py")
+	#]
+
+	linux = product.layout(platform="linux")
+	linux.links += [
+		"pthread",
+		"dl",
+		#"asound"
+	]
+	linux.linkflags += [
+		"-Wl,-rpath,."
+	]	
+
+
 def setup_common_libs(product):
 
 	product.defines += [
@@ -123,7 +144,7 @@ def setup_driver(product):
 	
 	mac_release = product.layout(platform="macosx", configuration="release")
 
-def get_tools():
+def get_tools(libgemini):
 	#
 	#
 	#
@@ -149,13 +170,15 @@ def get_tools():
 	prism.sources += [
 		"src/tools/prism/**.cpp"
 	]
-	prism.includes += [
-		"src/sdk"
-	]
+
+
 	prism.product_root = COMMON_PRODUCT_ROOT
 
 	setup_driver(prism)
-	setup_common_libs(prism)
+	#setup_common_libs(prism)
+	setup_common_tool(prism)
+
+	prism.dependencies += libgemini
 
 	return [prism]
 
@@ -385,9 +408,8 @@ def products(arguments, **kwargs):
 	]
 
 
-	tools = get_tools()
-
 	libgemini = get_libgemini()
+	tools = get_tools(libgemini)
 
 	return [gemini] + tools + libgemini
 
