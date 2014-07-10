@@ -23,6 +23,8 @@
 
 #include <string.h> // for size_t
 
+#include <gemini/config.h>
+
 #if PLATFORM_APPLE
 	#include <memory> // for malloc, free (on OSX)
 	#include <stdlib.h>
@@ -32,59 +34,64 @@
 	#include <new> // for placement new
 #elif PLATFORM_WINDOWS
 	#include <memory> // we'll see if this compiles...
+#else
+	#error Unknown platform!
 #endif
 
 // set this to 0 to enable normal new/delete and malloc/free to narrow down problems
 #define USE_DEBUG_ALLOCATOR 1
 
-namespace memory
+namespace gemini
 {
-	class IAllocator
+	namespace memory
 	{
-	public:
-		virtual ~IAllocator() {}
-		
-		virtual void * allocate( size_t bytes, const char * file, int line ) = 0;
-		virtual void deallocate( void * memory ) = 0;
+		class IAllocator
+		{
+		public:
+			virtual ~IAllocator() {}
+			
+			virtual void * allocate( size_t bytes, const char * file, int line ) = 0;
+			virtual void deallocate( void * memory ) = 0;
 
-		virtual size_t active_bytes() const = 0;
-		virtual size_t active_allocations() const = 0;
-		virtual size_t total_allocations() const = 0;
-		virtual size_t total_bytes() const = 0;
-	}; // IAllocator
-	
-	// initialize memory handling
-	void startup();
-	
-	// shutdown services and optionally perform any metrics, leak detection, etc
-	void shutdown();
-	
-	// instance of the active allocator
-	IAllocator & allocator();
+			virtual size_t active_bytes() const = 0;
+			virtual size_t active_allocations() const = 0;
+			virtual size_t total_allocations() const = 0;
+			virtual size_t total_bytes() const = 0;
+		}; // IAllocator
+		
+		// initialize memory handling
+		void startup();
+		
+		// shutdown services and optionally perform any metrics, leak detection, etc
+		void shutdown();
+		
+		// instance of the active allocator
+		IAllocator & allocator();
 
 #if USE_DEBUG_ALLOCATOR
-	// raw memory alloc/dealloc
-	#define ALLOC(byte_count)	memory::allocator().allocate(byte_count, __FILE__, __LINE__)
-	#define DEALLOC(pointer) { memory::allocator().deallocate(pointer); pointer = 0; }
-	
-	// helper macros for alloc and dealloc on classes and structures
-	#define CREATE(Type, ...)	new (memory::allocator().allocate(sizeof(Type), __FILE__, __LINE__)) Type(__VA_ARGS__)
-	#define DESTROY(Type, pointer) { if (pointer) { pointer->~Type(); memory::allocator().deallocate(pointer); pointer = 0; } }
-	
-	// at the moment: this only works if the Type has a default constructor
-	#define CREATE_ARRAY(Type, num_elements, ...)		new (memory::allocator().allocate(sizeof(Type)*num_elements, __FILE__, __LINE__)) Type[ num_elements ]
-	#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { for( size_t i = 0; i < num_elements; ++i ) { (&pointer[i])->~Type(); } memory::allocator().deallocate(pointer); pointer = 0;  }
+		// raw memory alloc/dealloc
+		#define ALLOC(byte_count)	memory::allocator().allocate(byte_count, __FILE__, __LINE__)
+		#define DEALLOC(pointer) { memory::allocator().deallocate(pointer); pointer = 0; }
+		
+		// helper macros for alloc and dealloc on classes and structures
+		#define CREATE(Type, ...)	new (memory::allocator().allocate(sizeof(Type), __FILE__, __LINE__)) Type(__VA_ARGS__)
+		#define DESTROY(Type, pointer) { if (pointer) { pointer->~Type(); memory::allocator().deallocate(pointer); pointer = 0; } }
+		
+		// at the moment: this only works if the Type has a default constructor
+		#define CREATE_ARRAY(Type, num_elements, ...)		new (memory::allocator().allocate(sizeof(Type)*num_elements, __FILE__, __LINE__)) Type[ num_elements ]
+		#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { for( size_t i = 0; i < num_elements; ++i ) { (&pointer[i])->~Type(); } memory::allocator().deallocate(pointer); pointer = 0;  }
 #else
-	#define ALLOC(byte_count)	malloc(byte_count)
-	#define DEALLOC(pointer) { free(pointer); pointer = 0; }
+		#define ALLOC(byte_count)	malloc(byte_count)
+		#define DEALLOC(pointer) { free(pointer); pointer = 0; }
 
-	#define CREATE(Type, ...)	new Type(__VA_ARGS__)
-	#define DESTROY(Type, pointer) { delete pointer; pointer = 0; }
+		#define CREATE(Type, ...)	new Type(__VA_ARGS__)
+		#define DESTROY(Type, pointer) { delete pointer; pointer = 0; }
 
-	#define CREATE_ARRAY(Type, num_elements, ...)		new Type[ num_elements ]
-	#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { delete [] pointer; pointer = 0;  }
+		#define CREATE_ARRAY(Type, num_elements, ...)		new Type[ num_elements ]
+		#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { delete [] pointer; pointer = 0;  }
 #endif
-}; // namespace memory
+	}; // namespace memory
+}; // namespace gemini
 
 #include "mem_stl_allocator.h"
 

@@ -14,12 +14,9 @@ void test_function()
 	if (fs)
 	{
 		gemini::core::File* source_file = fs->open("input.blend");
-
 		const char* buffer = source_file->create_buffer_from_file();
 
-
 		source_file->destroy_buffer(buffer);
-
 		fs->close(source_file);
 	}
 }
@@ -27,10 +24,14 @@ void test_function()
 
 int main(int argc, char** argv)
 {
+	gemini::memory::startup();
+	
 	gemini::core::startup();
-//	memory::startup();
+
 	test_function();
-//	memory::shutdown();
+
 	gemini::core::shutdown();
+	
+	gemini::memory::shutdown();
 	return 0;
 }
