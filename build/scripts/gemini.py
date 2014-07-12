@@ -100,8 +100,8 @@ def setup_common_libs(product):
 		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.h"),
 
 
-		"src/util.cpp",
-		"src/core/mem.cpp"
+#		"src/util.cpp",
+#		"src/core/mem.cpp"
 	]
 
 	product.includes += [
