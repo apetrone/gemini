@@ -50,117 +50,111 @@
 
 #include <string.h> // for strrchr
 
-using namespace gemini;
-
-namespace gemini
+namespace platform
 {
-
-	namespace platform
+	core::Error startup()
 	{
-		core::Error startup()
-		{
-			core::Error error(0);
-			
-	#if PLATFORM_APPLE
-			error = osx_startup();
-	#endif
+		core::Error error(0);
+		
+#if PLATFORM_APPLE
+		error = osx_startup();
+#endif
 
+		
+		return error;
+	}
+	
+	void shutdown()
+	{		
+#if PLATFORM_APPLE
+		osx_shutdown();
+#endif
+	}
+	
+	core::Error program_directory( char * path, size_t size )
+	{
+		core::Error error(0);
+		int result = 0;
+		char * sep;
+		
+#if PLATFORM_WINDOWS
+		result = GetModuleFileNameA( GetModuleHandleA(0), path, size);
+		if ( result == 0 )
+		{
+			error.status = core::Error::Failure;
+			error.message = "GetModuleFileNameA failed!";
+		}
+		
+#elif PLATFORM_LINUX
+		{
+			// http://www.flipcode.com/archives/Path_To_Executable_On_Linux.shtml
+			char linkname[ 64 ] = {0};
+			pid_t pid;
 			
-			return error;
+			
+			pid = getpid();
+			
+			if ( snprintf(linkname, sizeof(linkname), "/proc/%i/exe", pid ) < 0 )
+			{
+				abort();
+			}
+			
+			result = readlink( linkname, path, size );
+			
+			if ( result == -1 )
+			{
+				error.status = core::Error::Failure;
+				error.message = "readlink failed";
+			}
+			else
+			{
+				path[result] = 0;
+			}
+		}
+#endif
+		
+		if ( result != 0 )
+		{
+			sep = strrchr( path, PATH_SEPARATOR );
+			
+			if ( sep )
+			{
+				*sep = '\0';
+			}
 		}
 		
-		void shutdown()
-		{		
-	#if PLATFORM_APPLE
-			osx_shutdown();
-	#endif
-		}
-		
-		core::Error program_directory( char * path, size_t size )
+#if PLATFORM_APPLE
+		error = osx_program_directory( path, size );
+#endif
+		return error;
+	}
+	
+	
+	namespace path
+	{		
+		core::Error make_directory( const char * path )
 		{
 			core::Error error(0);
 			int result = 0;
-			char * sep;
 			
-	#if PLATFORM_WINDOWS
-			result = GetModuleFileNameA( GetModuleHandleA(0), path, size);
-			if ( result == 0 )
+#if PLATFORM_WINDOWS
+			result = _mkdir( path );
+			if ( result == -1 )
 			{
-				error.status = core::Error::Failure;
-				error.message = "GetModuleFileNameA failed!";
+				// TODO: print out the errno
+				error = core::Error( core::Error::Failure, "_mkdir failed!" );
 			}
-			
-	#elif PLATFORM_LINUX
+#elif PLATFORM_LINUX || PLATFORM_APPLE
+			// http://pubs.opengroup.org/onlinepubs/009695399/functions/mkdir.html
+			result = mkdir( path, (S_IRUSR | S_IWUSR | S_IXUSR ) | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH );
+			if ( result == -1 )
 			{
-				// http://www.flipcode.com/archives/Path_To_Executable_On_Linux.shtml
-				char linkname[ 64 ] = {0};
-				pid_t pid;
-				
-				
-				pid = getpid();
-				
-				if ( snprintf(linkname, sizeof(linkname), "/proc/%i/exe", pid ) < 0 )
-				{
-					abort();
-				}
-				
-				result = readlink( linkname, path, size );
-				
-				if ( result == -1 )
-				{
-					error.status = core::Error::Failure;
-					error.message = "readlink failed";
-				}
-				else
-				{
-					path[result] = 0;
-				}
+				// TODO: print out the errno
+				error = core::Error( core::Error::Failure, "mkdir failed!" );
 			}
-	#endif
+#endif
 			
-			if ( result != 0 )
-			{
-				sep = strrchr( path, PATH_SEPARATOR );
-				
-				if ( sep )
-				{
-					*sep = '\0';
-				}
-			}
-			
-	#if PLATFORM_APPLE
-			error = osx_program_directory( path, size );
-	#endif
 			return error;
-		}
-		
-		
-		namespace path
-		{		
-			core::Error make_directory( const char * path )
-			{
-				core::Error error(0);
-				int result = 0;
-				
-	#if PLATFORM_WINDOWS
-				result = _mkdir( path );
-				if ( result == -1 )
-				{
-					// TODO: print out the errno
-					error = core::Error( core::Error::Failure, "_mkdir failed!" );
-				}
-	#elif PLATFORM_LINUX || PLATFORM_APPLE
-				// http://pubs.opengroup.org/onlinepubs/009695399/functions/mkdir.html
-				result = mkdir( path, (S_IRUSR | S_IWUSR | S_IXUSR ) | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH );
-				if ( result == -1 )
-				{
-					// TODO: print out the errno
-					error = core::Error( core::Error::Failure, "mkdir failed!" );
-				}
-	#endif
-				
-				return error;
-			} // makeDirectory
-		}; // namespace path
-	}; // namespace platform
-}; // namespace gemini
+		} // makeDirectory
+	}; // namespace path
+}; // namespace platform

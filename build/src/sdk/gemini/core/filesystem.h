@@ -21,27 +21,75 @@
 // -------------------------------------------------------------
 #pragma once
 
-namespace gemini
+#include <gemini/typedefs.h>
+
+namespace core
 {
-	namespace core
+	struct File
 	{
-		struct File
+		const char* create_buffer_from_file() { return 0; }
+		void destroy_buffer(const char* buffer) {}
+	};
+
+	// FileSystem class is used to implement platform-level logic
+
+	class FileSystem
+	{
+	public:
+		virtual ~FileSystem() {}
+	
+		virtual File* open(const char* path) = 0;
+		virtual void close(File* file) = 0;
+		
+		virtual bool file_exists(const char* path) = 0;
+	};
+	
+	namespace filesystem
+	{
+		struct FileStats
 		{
-			const char* create_buffer_from_file() { return 0; }
-			void destroy_buffer(const char* buffer) {}
+			unsigned int last_modified_timestamp;
 		};
 	
-		class FileSystem
-		{
-		public:
-			virtual ~FileSystem() {}
+		FileSystem* instance();
 		
-			virtual File* open(const char* path) = 0;
-			virtual void close(File* file) = 0;
+		void startup();
+		void shutdown();
+		
+		void root_directory(char* path, int size);
+		const char* root_directory();
+		
+		// the content directory is where resources for this application can be found
+		void content_directory(const char* path, int size);
+		const char * content_directory();
+		
+		// Load a file into buffer. The pointer is returned.
+		// bufferLength will contain the size of the buffer
+		// if buffer is null, a new buffer is allocated and must be freed after use
+		// if buffer is not null, bufferLength should contain the size of the buffer which will not be exceeded.
+		char * file_to_buffer(const char* filename, char* buffer, size_t* buffer_length, bool path_is_relative=true);
+		
+		// read an audio file to memory
+		// this provides an abstraction between platforms; but likely needs to belong elsewhere?
+		void * audiofile_to_buffer(const char* filename, size_t& buffer_length);
+		
+		// accepts path as a string with len: MAX_PATH_SIZE (as defined in platform.h)
+		void absolute_path_from_relative(char* fullpath, const char* relativepath, const char* content_directory=0);
+		void relative_path_from_absolute(char* relative_path, const char* absolute_path, const char* content_directory=0);
+		
+		void truncate_string_at_path(char* path, const char* substr);
+		
+		int read_file_stats(const char* fullpath, FileStats& file_stats);
+		
+		bool file_exists(const char* path, bool path_is_relative=true);
+#if !PLATFORM_IS_MOBILE
+		
+		bool directory_exists(const char* path, bool path_is_relative=true);
+#endif
+		
+#if PLATFORM_ANDROID
+		void set_asset_manager(AAssetManager* asset_manager);
+#endif
+	};
 
-		public:
-			static FileSystem* instance() { return 0; }
-		};
-
-	}; // namespace core
-}; // namespace gemini
+}; // namespace core

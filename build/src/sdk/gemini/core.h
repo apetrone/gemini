@@ -23,29 +23,26 @@
 
 #include <gemini/typedefs.h>
 
-namespace gemini
+namespace core
 {
-	namespace core
+	// generic error struct instead of trying to organize various int
+	// values across API calls.
+	struct Error
 	{
-		// generic error struct instead of trying to organize various int
-		// values across API calls.
-		struct Error
+		enum
 		{
-			enum
-			{
-				Failure = 0xBADDAE, // non-recoverable error, bad day :(
-				Warning, // unexpected result, will proceed
-			};
-			
-			int status;
-			const char * message;
-			
-			Error( int error_status, const char * error_message = 0 );
-			bool failed() const { return status == Failure; }
+			Failure = 0xBADDAE, // non-recoverable error, bad day :(
+			Warning, // unexpected result, will proceed
 		};
 		
-		Error startup();
-		void shutdown();
+		int status;
+		const char * message;
+		
+		Error( int error_status, const char * error_message = 0 );
+		bool failed() const { return status == Failure; }
+	};
+	
+	Error startup();
+	void shutdown();
 
-	}; // namespace core
-}; // namespace gemini
+}; // namespace core

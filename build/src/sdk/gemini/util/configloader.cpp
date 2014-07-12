@@ -55,12 +55,11 @@ namespace util
 		char * buffer = 0;
 		bool is_success = false;
 		
-		// check to see if this file exists
-//		if ( !fs::file_exists( filename, path_is_relative ) )
-//		{
-//			LOGW( "Cannot find file: %s\n", filename );
-//			return 0;
-//		}
+		if (core::filesystem::file_exists(filename, path_is_relative))
+		{
+//				LOGW( "Cannot find file: %s\n", filename );
+			return 0;
+		}
 
 		// load the file into a memory buffer
 //		buffer = fs::file_to_buffer( filename, 0, &buffer_size, path_is_relative );

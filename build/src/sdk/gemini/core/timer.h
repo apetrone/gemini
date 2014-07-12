@@ -20,11 +20,3 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-
-namespace gemini
-{
-	namespace core
-	{
-
-	}; // namespace core
-}; // namespace gemini
