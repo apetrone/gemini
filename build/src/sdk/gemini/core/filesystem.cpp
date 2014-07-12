@@ -19,14 +19,19 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <gemini/typedefs.h>
-#include "filesystem.h"
-#include <slim/xstr.h>
-#include "platform.h"
 #include <stdio.h> // for printf
 #include <sys/stat.h> // for fs::FileExists
-//#include <slim/xlog.h>
+
+#include <gemini/typedefs.h>
+#include <gemini/platform.h>
 #include <gemini/core/xfile.h>
+
+#include <slim/xstr.h>
+
+#include "filesystem.h"
+
+//#include <slim/xlog.h>
+
 
 
 namespace core
