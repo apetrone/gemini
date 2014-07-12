@@ -109,7 +109,6 @@ def setup_common_libs(product):
 		"src/core",
 		"src/core/audio",
 		"src/contrib",
-		"src/sdk",
 
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3"),
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),
@@ -178,7 +177,9 @@ def get_tools(libgemini):
 	#setup_common_libs(prism)
 	setup_common_tool(prism)
 
-	prism.dependencies += libgemini
+	prism.dependencies.extend([
+		libgemini
+	])
 
 	return [prism]
 
@@ -231,7 +232,7 @@ def get_libgemini():
 
 
 
-	return [libgemini]
+	return libgemini
 
 def arguments(parser):
 	parser.add_argument("--with-glesv2", dest="glesv2", action="store_true", help="Build with GLES V2", default=False)
@@ -411,5 +412,7 @@ def products(arguments, **kwargs):
 	libgemini = get_libgemini()
 	tools = get_tools(libgemini)
 
-	return [gemini] + tools + libgemini
+	gemini.dependencies.extend([libgemini])
+
+	return [gemini] + tools + [libgemini]
 
