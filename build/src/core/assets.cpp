@@ -23,6 +23,7 @@
 #include <gemini/typedefs.h>
 #include <gemini/mem.h>
 #include <gemini/util/configloader.h>
+#include <gemini/core/filesystem.h>
 
 #include <slim/xlog.h>
 #include <slim/xstr.h>
@@ -31,7 +32,6 @@
 #include "assets.h"
 #include "kernel.h"
 #include "image.h"
-#include "filesystem.h"
 #include "renderer.h"
 
 using namespace renderer;
@@ -215,11 +215,11 @@ namespace assets
 		StackString<32> shader_version;
 		
 		size_t vs_len;
-		char * vs_source = fs::file_to_buffer( "shaders/uber.vert", 0, &vs_len );
+		char * vs_source = core::filesystem::file_to_buffer( "shaders/uber.vert", 0, &vs_len );
 		util::strip_shader_version( vs_source, shader_version );
 		
 		size_t fs_len;
-		char * fs_source = fs::file_to_buffer( "shaders/uber.frag", 0, &fs_len );
+		char * fs_source = core::filesystem::file_to_buffer( "shaders/uber.frag", 0, &fs_len );
 		util::strip_shader_version( fs_source, shader_version );
 		if ( shader_version._length == 0 )
 		{

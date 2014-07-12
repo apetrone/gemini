@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "platform.h"
+#include <gemini/platform.h>
 
 namespace platform
 {

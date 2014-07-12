@@ -106,7 +106,7 @@ DesktopKernel _desktop_kernel( 0, 0 );
 {
 	NSLog( @"applicationWillTerminate" );
 	kernel::shutdown();
-	gemini::memory::shutdown();
+	memory::shutdown();
 }
 
 @end

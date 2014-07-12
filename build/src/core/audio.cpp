@@ -19,15 +19,13 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-
-
 #include <gemini/typedefs.h>
 #include <gemini/util/stackstring.h>
+#include <gemini/core/filesystem.h>
 
 #include <slim/xlog.h>
 
 #include "audio.h"
-#include "filesystem.h"
 #include "assets.h"
 #include "factory.h"
 
@@ -206,7 +204,7 @@ namespace audio
 			assets::append_asset_extension( assets::SoundAsset, path );
 //			assets::sounds()->append_extension( path );
 			
-			sound->data = (unsigned char*)fs::audiofile_to_buffer( path(), sound->data_size );
+			sound->data = (unsigned char*)core::filesystem::audiofile_to_buffer( path(), sound->data_size );
 			if ( !sound->data )
 			{
 				LOGE( "audio::create_new_sound - could not open file %s\n", path() );

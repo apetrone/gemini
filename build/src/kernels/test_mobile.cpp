@@ -19,19 +19,20 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "kernel.h"
 #include <stdio.h>
+
+#include <gemini/core/filesystem.h>
+
 #include <slim/xlog.h>
+
+#include "kernel.h"
 #include "font.h"
-#include "filesystem.h"
 #include "renderstream.h"
 #include "assets.h"
 #include "camera.h"
 #include "vertexstream.h"
 #include "mathlib.h"
-
 #include "render_utilities.h"
-
 #include "input.h"
 #include "gemgl.h"
 

@@ -19,18 +19,18 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <gemini/typedefs.h>
-#include "core.h"
-#include "kernel.h"
-#include "platform.h"
 #include <string>
 #include <map>
 
+#include <gemini/typedefs.h>
+#include <gemini/core.h>
+#include <gemini/platform.h>
 #include <gemini/util/configloader.h>
 
 #include <slim/xlog.h>
 #include <slim/xtime.h>
 
+#include "kernel.h"
 #include "renderer.h"
 #include "audio.h"
 #include "input.h"

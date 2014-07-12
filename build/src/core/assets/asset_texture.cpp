@@ -22,8 +22,8 @@
 #include <string>
 
 #include <gemini/util/stackstring.h>
+#include <gemini/platform.h>
 
-#include "platform.h"
 #include "mathlib.h" // for glm
 #include "color.h"
 #include "renderer.h"

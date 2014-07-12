@@ -20,9 +20,11 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <gemini/typedefs.h>
+#include <gemini/core/filesystem.h>
+
 #include <slim/xlog.h>
+
 #include "image.h"
-#include "filesystem.h"
 #include "renderer.h"
 
 #define STBI_HEADER_FILE_ONLY 1
@@ -119,7 +121,7 @@ namespace image
 		unsigned int height = 0;
 		unsigned int components = 0;
 
-		filedata = fs::file_to_buffer( filename, 0, &buffer_size );
+		filedata = core::filesystem::file_to_buffer( filename, 0, &buffer_size );
 		
 		if ( filedata )
 		{

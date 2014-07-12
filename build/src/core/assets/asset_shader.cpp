@@ -20,11 +20,12 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <gemini/util/stackstring.h>
+#include <gemini/core/filesystem.h>
 
 #include "assets.h"
 #include "renderer.h"
 #include "assets/asset_shader.h"
-#include "filesystem.h"
+
 
 namespace assets
 {
@@ -123,7 +124,7 @@ namespace assets
 		renderer::ShaderObject shader_object;
 		char * buffer;
 		size_t length = 0;
-		buffer = fs::file_to_buffer( shader_path, 0, &length );
+		buffer = core::filesystem::file_to_buffer( shader_path, 0, &length );
 		if ( buffer )
 		{
 			StackString<32> version;

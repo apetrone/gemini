@@ -23,11 +23,11 @@
 
 #include <gemini/typedefs.h>
 #include <gemini/util.h>
+#include <gemini/core/filesystem.h>
 
 #include <slim/xlog.h>
 
 #include "script.h"
-#include "filesystem.h"
 #define scvprintf vfprintf
 #include "mathlib.h"
 #include "debugdraw.h"
@@ -832,7 +832,7 @@ namespace script
 			return false;
 		}
 		
-		if ( fs::file_exists( filename ) == false )
+		if ( core::filesystem::file_exists( filename ) == false )
 		{
 			LOGW( "File does not exist: %s\n", filename );
 			return false;
@@ -851,7 +851,7 @@ namespace script
 		
 		// fetch the script from our filesystem
 		size_t buffer_length = 0;
-		char * buffer = fs::file_to_buffer( filename, 0, &buffer_length );
+		char * buffer = core::filesystem::file_to_buffer( filename, 0, &buffer_length );
 		
 //		StackMonitor sm(vm);
 		

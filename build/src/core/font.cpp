@@ -19,16 +19,18 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#include <stdlib.h>
+
 #include <gemini/typedefs.h>
+#include <gemini/core/filesystem.h>
+
 #include <slim/xstr.h>
 #include <slim/xlog.h>
-#include "filesystem.h"
+
 #include "font.h"
 #include "renderer.h"
 #include "renderstream.h"
-#include <stdlib.h>
 #include "kernel.h"
-
 #include "fontstash.h"
 
 
@@ -295,7 +297,7 @@ namespace font
 	{
 		size_t font_data_size = 0;
 		char * font_data = 0;
-		font_data = fs::file_to_buffer( path, 0, &font_data_size );
+		font_data = core::filesystem::file_to_buffer( path, 0, &font_data_size );
 		
 		if ( font_data )
 		{
