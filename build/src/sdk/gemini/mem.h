@@ -70,16 +70,16 @@ namespace gemini
 
 #if USE_DEBUG_ALLOCATOR
 		// raw memory alloc/dealloc
-		#define ALLOC(byte_count)	memory::allocator().allocate(byte_count, __FILE__, __LINE__)
-		#define DEALLOC(pointer) { memory::allocator().deallocate(pointer); pointer = 0; }
+		#define ALLOC(byte_count)	gemini::memory::allocator().allocate(byte_count, __FILE__, __LINE__)
+		#define DEALLOC(pointer) { gemini::memory::allocator().deallocate(pointer); pointer = 0; }
 		
 		// helper macros for alloc and dealloc on classes and structures
-		#define CREATE(Type, ...)	new (memory::allocator().allocate(sizeof(Type), __FILE__, __LINE__)) Type(__VA_ARGS__)
-		#define DESTROY(Type, pointer) { if (pointer) { pointer->~Type(); memory::allocator().deallocate(pointer); pointer = 0; } }
+		#define CREATE(Type, ...)	new (gemini::memory::allocator().allocate(sizeof(Type), __FILE__, __LINE__)) Type(__VA_ARGS__)
+		#define DESTROY(Type, pointer) { if (pointer) { pointer->~Type(); gemini::memory::allocator().deallocate(pointer); pointer = 0; } }
 		
 		// at the moment: this only works if the Type has a default constructor
-		#define CREATE_ARRAY(Type, num_elements, ...)		new (memory::allocator().allocate(sizeof(Type)*num_elements, __FILE__, __LINE__)) Type[ num_elements ]
-		#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { for( size_t i = 0; i < num_elements; ++i ) { (&pointer[i])->~Type(); } memory::allocator().deallocate(pointer); pointer = 0;  }
+		#define CREATE_ARRAY(Type, num_elements, ...)		new (gemini::memory::allocator().allocate(sizeof(Type)*num_elements, __FILE__, __LINE__)) Type[ num_elements ]
+		#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { for( size_t i = 0; i < num_elements; ++i ) { (&pointer[i])->~Type(); } gemini::memory::allocator().deallocate(pointer); pointer = 0;  }
 #else
 		#define ALLOC(byte_count)	malloc(byte_count)
 		#define DEALLOC(pointer) { free(pointer); pointer = 0; }
@@ -96,7 +96,7 @@ namespace gemini
 #include "mem_stl_allocator.h"
 
 #if USE_DEBUG_ALLOCATOR
-	#define GeminiAllocator memory::DebugAllocator
+	#define GeminiAllocator gemini::memory::DebugAllocator
 #else
 	#define GeminiAllocator std::allocator
 #endif
