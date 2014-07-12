@@ -20,12 +20,13 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <gemini/typedefs.h>
+#include <gemini/util/stackstring.h>
+
 #include <slim/xlog.h>
 #include <slim/xtime.h>
 
 #include "core.h"
 #include "platform.h"
-#include "stackstring.h"
 #include "filesystem.h"
 
 namespace core

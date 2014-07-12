@@ -19,17 +19,17 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <gemini/typedefs.h>
-#include "script.h"
-#include "filesystem.h"
 #include <stack>
+
+#include <gemini/typedefs.h>
+#include <gemini/util.h>
+
 #include <slim/xlog.h>
 
+#include "script.h"
+#include "filesystem.h"
 #define scvprintf vfprintf
-
 #include "mathlib.h"
-
-#include "util.h"
 #include "debugdraw.h"
 
 namespace script

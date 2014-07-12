@@ -22,10 +22,11 @@
 
 
 #include <gemini/typedefs.h>
+#include <gemini/util/stackstring.h>
+
 #include <slim/xlog.h>
 
 #include "audio.h"
-#include "stackstring.h"
 #include "filesystem.h"
 #include "assets.h"
 #include "factory.h"

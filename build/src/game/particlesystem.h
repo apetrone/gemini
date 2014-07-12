@@ -20,13 +20,16 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include "mem.h"
+
 #include <vector>
+
+#include <gemini/mem.h>
+#include <gemini/util.h>
+
 #include "color.h"
 #include "mathlib.h"
 #include "keyframechannel.h"
 #include "render_utilities.h"
-#include "util.h"
 #include "assets/asset_emitter.h"
 
 // -------------------------------------------------------------

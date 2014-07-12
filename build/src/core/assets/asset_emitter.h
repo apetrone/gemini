@@ -21,12 +21,13 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "assets.h"
-#include "stackstring.h"
-#include "renderer.h"
+#include <gemini/util/stackstring.h>
+#include <gemini/util.h>
 
+#include "assets.h"
+#include "renderer.h"
 #include "keyframechannel.h"
-#include "util.h"
+
 
 namespace assets
 {

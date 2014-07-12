@@ -21,8 +21,9 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <gemini/util/stackstring.h>
+
 #include "assets.h"
-#include "stackstring.h"
 #include "assets/asset_shader.h"
 
 namespace assets

@@ -26,13 +26,15 @@
 #include <string>
 #include <map>
 
+#include <gemini/util/configloader.h>
+
 #include <slim/xlog.h>
 #include <slim/xtime.h>
+
 #include "renderer.h"
 #include "audio.h"
 #include "input.h"
 #include "assets.h"
-#include "configloader.h"
 #include "font.h"
 #include "script.h"
 

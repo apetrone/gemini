@@ -21,12 +21,14 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <gemini/util/stackstring.h>
+
 #include "renderer.h"
 
 #define FAIL_IF_GLERROR( error ) if ( error != GL_NO_ERROR ) { return false; }
 
 #include "gemgl.h" // for GLObject
-#include "stackstring.h"
+
 
 GLenum vertexbuffer_drawtype_to_gl_drawtype( renderer::VertexBufferDrawType type );
 GLenum vertexbuffer_buffertype_to_gl_buffertype( renderer::VertexBufferBufferType type );

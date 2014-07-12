@@ -20,10 +20,11 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <gemini/typedefs.h>
-#include "stackstring.h"
+#include <gemini/util/configloader.h>
+#include <gemini/util/stackstring.h>
+
 #include "assets.h"
 #include "assets/asset_emitter.h"
-#include "configloader.h"
 #include "render_utilities.h"
 
 namespace assets

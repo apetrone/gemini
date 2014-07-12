@@ -22,7 +22,7 @@
 #pragma once
 
 #include <slim/xstr.h>
-#include "mem.h"
+#include <gemini/mem.h>
 
 #define DECLARE_FACTORY_CLASS( class_name, abstract_class )\
 	public:\

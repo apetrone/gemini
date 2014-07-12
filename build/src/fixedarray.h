@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "mem.h"
+#include <gemini/mem.h>
 
 template <class Type>
 class FixedArray

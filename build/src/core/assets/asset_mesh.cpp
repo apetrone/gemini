@@ -19,9 +19,10 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#include <gemini/util/configloader.h>
+
 #include "assets.h"
 #include "assets/asset_mesh.h"
-#include "configloader.h" // for ConfigLoadStatus, Json::
 #include "renderer.h"
 
 using namespace renderer;

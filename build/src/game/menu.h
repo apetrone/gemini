@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include "mem.h"
+#include <gemini/mem.h>
 #include <vector>
 
 struct MenuItem;

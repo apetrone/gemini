@@ -67,8 +67,8 @@ struct StackString
 		if ( data )
 		{
 			clear();
-			_length = xstr_len(data);
-			xstr_ncpy( _data, data, _length );
+//			_length = xstr_len(data);
+//			xstr_ncpy( _data, data, _length );
 		}
 	}
 	
@@ -154,6 +154,7 @@ struct StackString
 	
 	void append( const Type * s )
 	{
+#if 0
 		if (_length + xstr_len(s) < size)
 		{
 			xstr_cat( _data, s );
@@ -162,6 +163,8 @@ struct StackString
 		{
 			assert( 0 );
 		}
+#endif
+#warning fix this
 	}
 	
 	const Type *operator ()()

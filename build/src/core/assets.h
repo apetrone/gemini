@@ -21,13 +21,13 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "platform.h"
-#include "stackstring.h"
+#include <string>
 
+#include <gemini/util/stackstring.h>
+
+#include "platform.h"
 #include "mathlib.h" // for glm
 #include "color.h"
-
-#include <string>
 
 namespace assets
 {

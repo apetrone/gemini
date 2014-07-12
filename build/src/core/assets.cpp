@@ -19,19 +19,19 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+
 #include <gemini/typedefs.h>
-#include "assets.h"
+#include <gemini/mem.h>
+#include <gemini/util/configloader.h>
 
-#include "kernel.h"
-#include "image.h"
 #include <slim/xlog.h>
-
 #include <slim/xstr.h>
 #include <slim/xtime.h>
-#include "mem.h"
 
+#include "assets.h"
+#include "kernel.h"
+#include "image.h"
 #include "filesystem.h"
-#include "configloader.h" // used to load various file formats
 #include "renderer.h"
 
 using namespace renderer;

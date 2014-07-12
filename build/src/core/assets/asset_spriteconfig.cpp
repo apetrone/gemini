@@ -19,10 +19,11 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "stackstring.h"
+#include <gemini/util/stackstring.h>
+#include <gemini/util/configloader.h>
+
 #include "assets.h"
 #include "assets/asset_spriteconfig.h"
-#include "configloader.h"
 #include "render_utilities.h"
 
 namespace assets

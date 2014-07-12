@@ -22,8 +22,8 @@
 #pragma once
 
 #include <gemini/typedefs.h>
+#include <gemini/mem.h>
 
-#include "mem.h"
 #include "memorystream.h"
 #include "image.h"
 #include "mathlib.h" // for glm

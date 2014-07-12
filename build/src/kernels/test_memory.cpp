@@ -24,10 +24,10 @@
 #include <map>
 
 #include <gemini/typedefs.h>
+#include <gemini/mem.h>
 #include <slim/xlog.h>
 
 #include "kernel.h"
-#include "mem.h"
 #include "fixedarray.h"
 
 struct Test

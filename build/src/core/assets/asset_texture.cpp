@@ -19,15 +19,14 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#include <string>
+
+#include <gemini/util/stackstring.h>
 
 #include "platform.h"
-#include "stackstring.h"
-
 #include "mathlib.h" // for glm
 #include "color.h"
 #include "renderer.h"
-
-#include <string>
 #include "assets.h"
 #include "assets/asset_texture.h"
 

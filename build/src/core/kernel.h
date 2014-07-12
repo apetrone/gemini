@@ -21,7 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "mem.h"
+#include <gemini/typedefs.h>
+#include <gemini/mem.h>
 #include "kernel_events.h"
 
 namespace kernel
