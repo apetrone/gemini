@@ -40,9 +40,9 @@ namespace core
 		void set_content_directory_from_root( StackString<MAX_PATH_SIZE> & root )
 		{
 #if !TARGET_OS_IPHONE
-//			fs::truncate_string_at_path( &root[0], "bin" );
+			filesystem::truncate_string_at_path( &root[0], "bin" );
 #endif
-//			fs::content_directory( &root[0], root.max_size() );
+			filesystem::content_directory( &root[0], root.max_size() );
 		}
 				
 		core::Error open_log_handlers()
@@ -87,7 +87,7 @@ namespace core
 		}
 
 		// set the startup directory: where the binary lives
-		//fs::root_directory( &fullpath[0], fullpath.max_size() );
+		filesystem::root_directory( &fullpath[0], fullpath.max_size() );
 		
 		// set the content directory
 		_internal::set_content_directory_from_root( fullpath );

@@ -54,25 +54,20 @@ namespace util
 		size_t buffer_size = 0;
 		char * buffer = 0;
 		bool is_success = false;
-		
-		if (core::filesystem::file_exists(filename, path_is_relative))
-		{
-//				LOGW( "Cannot find file: %s\n", filename );
-			return 0;
-		}
 
 		// load the file into a memory buffer
-//		buffer = fs::file_to_buffer( filename, 0, &buffer_size, path_is_relative );
-//		if ( buffer )
-//		{
-//			is_success = parse_json_string_with_callback( buffer, buffer_size, callback, context );
-//			DEALLOC(buffer);
-//		}
-//		else
-//		{
-//			is_success = false;
+		buffer = core::filesystem::file_to_buffer( filename, 0, &buffer_size, path_is_relative );
+		if ( buffer )
+		{
+			is_success = parse_json_string_with_callback( buffer, buffer_size, callback, context );
+			DEALLOC(buffer);
+		}
+		else
+		{
+			is_success = false;
 //			LOGE( "ERROR loading %s\n", filename );
-//		}
+#warning fix this
+		}
 		
 		return is_success;
 	} // json_load_with_callback

@@ -21,12 +21,13 @@
 // -------------------------------------------------------------
 #include <gemini/typedefs.h>
 #include "filesystem.h"
-//#include <slim/xstr.h>
+#include <slim/xstr.h>
 #include "platform.h"
 #include <stdio.h> // for printf
 #include <sys/stat.h> // for fs::FileExists
 //#include "xfile.h"
 //#include <slim/xlog.h>
+#include <gemini/core/xfile.h>
 
 
 namespace core
@@ -63,8 +64,7 @@ namespace core
 		void root_directory( char * path, int size )
 		{
 			memset( _root_directory, 0, MAX_PATH_SIZE );
-	//		xstr_ncpy( _root_directory, path, xstr_len(path) );
-	#warning fix this
+			xstr_ncpy( _root_directory, path, xstr_len(path) );
 		} // root_directory
 		
 		const char * root_directory()
@@ -76,8 +76,7 @@ namespace core
 		void content_directory( const char * path, int size )
 		{
 			memset( _content_directory, 0, MAX_PATH_SIZE );
-	//		xstr_ncpy( _content_directory, path, xstr_len(path) );
-	#warning fix this
+			xstr_ncpy( _content_directory, path, xstr_len(path) );
 		} // content_directory
 
 		const char * content_directory()
@@ -102,12 +101,11 @@ namespace core
 				content_directory = filesystem::content_directory();
 			}
 			
-	#warning fix this
-	//		size_t path_size = xstr_len(content_directory);
-	//		xstr_ncpy( fullpath, content_directory, path_size );
-	//		xstr_cat( fullpath, PATH_SEPARATOR_STRING );
-	//		xstr_cat( fullpath, relativepath );
-	//		platform::path::normalize( fullpath, path_size );
+			size_t path_size = xstr_len(content_directory);
+			xstr_ncpy( fullpath, content_directory, path_size );
+			xstr_cat( fullpath, PATH_SEPARATOR_STRING );
+			xstr_cat( fullpath, relativepath );
+			platform::path::normalize( fullpath, path_size );
 		} // absolute_path_from_relative
 
 		void relative_path_from_absolute( char * relative_path, const char * absolute_path, const char * content_directory )
@@ -118,20 +116,18 @@ namespace core
 			}
 			
 			const char * temp = strstr(absolute_path, content_directory );
-	#warning fix this
-			size_t content_length = 0; //xstr_len(content_directory);
+
+			size_t content_length = xstr_len(content_directory);
 			if ( temp )
 			{
-	//			xstr_ncpy( relative_path, (absolute_path+content_length+1), xstr_len(absolute_path) - content_length);
-	//			platform::path::normalize( relative_path, MAX_PATH_SIZE );
+				xstr_ncpy( relative_path, (absolute_path+content_length+1), xstr_len(absolute_path) - content_length);
+				platform::path::normalize( relative_path, MAX_PATH_SIZE );
 			}
 		} // relative_path_from_absolute
 		
 		
 		void truncate_string_at_path( char * path, const char * substr )
 		{
-	#warning fix this
-	#if 0
 			char * last;
 			size_t len;
 			size_t substr_len = xstr_len( substr );
@@ -155,7 +151,6 @@ namespace core
 					}
 				}
 			}
-	#endif
 		} // truncate_string_at_path
 		
 		bool file_exists( const char * path, bool path_is_relative )
@@ -176,11 +171,9 @@ namespace core
 			return 0;
 	#else
 			struct stat stFileInfo;
-	#warning fix this
-	#if 0
 			if ( path_is_relative )
 			{
-				fs::absolute_path_from_relative( fullpath, path );
+				filesystem::absolute_path_from_relative( fullpath, path );
 			}
 			else
 			{
@@ -190,21 +183,17 @@ namespace core
 			result = stat( fullpath, &stFileInfo );
 			return (result == 0) && ((stFileInfo.st_mode & S_IFMT) == S_IFREG);
 	#endif
-			return false;
-	#endif
 		} // file_exists
 		
 		bool directory_exists( const char * path, bool path_is_relative )
 		{
-		#warning fix this
-	#if 0
 			struct stat stFileInfo;
 			int result = 0;
 			char fullpath[ MAX_PATH_SIZE ] = {0};
 			
 			if ( path_is_relative )
 			{
-				fs::absolute_path_from_relative( fullpath, path );
+				filesystem::absolute_path_from_relative( fullpath, path );
 			}
 			else
 			{
@@ -213,7 +202,6 @@ namespace core
 			}
 			result = stat( fullpath, &stFileInfo );
 			return (result == 0) && ((stFileInfo.st_mode & S_IFMT) == S_IFDIR);
-	#endif
 			return false;
 		} // directory_exists
 		
@@ -234,10 +222,6 @@ namespace core
 			}
 			
 	#if PLATFORM_ANDROID
-
-
-
-
 			AAsset * asset = AAssetManager_open( _asset_manager, filename, AASSET_MODE_BUFFER );
 			if ( asset )
 			{
@@ -264,11 +248,10 @@ namespace core
 			}
 
 	#else
-	#if 0
 			char fullpath[ MAX_PATH_SIZE ] = {0};
 			if ( path_is_relative )
 			{
-				fs::absolute_path_from_relative( fullpath, filename );
+				filesystem::absolute_path_from_relative( fullpath, filename );
 			}
 			else
 			{
@@ -302,7 +285,6 @@ namespace core
 				xfile_read( f, buffer, 1, file_size );			
 				xfile_close( f );
 			}
-	#endif
 	#endif
 			return buffer;
 		} // file_to_buffer

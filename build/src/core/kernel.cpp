@@ -192,11 +192,7 @@ namespace kernel
 			
 			return success;
 		} // load_boot_config
-		
-		
 
-
-		
 		State _kernel_state;
 	}; // namespace _internal
 	
@@ -213,7 +209,7 @@ namespace kernel
 	core::Error load_application( const char * application_name )
 	{
 		core::Error error(0);
-		LOGV( "Loading kernel '%s'\n", application_name );
+		fprintf(stdout, "Loading kernel '%s'\n", application_name);
 		
 		// search for the named kernel instance (passed on the command line or overriden above)
 		ApplicationCreator creator = _internal::find_application_by_name( application_name );
@@ -223,13 +219,13 @@ namespace kernel
 			_active_application = creator();
 			if ( !_active_application )
 			{
-				fprintf( stdout, "Unable to create an instance of application: \"%s\", aborting!\n", application_name );
+				fprintf(stdout, "Unable to create an instance of application: \"%s\", aborting!\n", application_name);
 				error = core::Error( core::Error::Failure, "Cannot " );
 			}
 		}
 		else
 		{
-			fprintf( stdout, "Application named \"%s\" not found, aborting!\n", application_name );
+			fprintf(stdout, "Application named \"%s\" not found, aborting!\n", application_name);
 			error = core::Error( core::Error::Failure, "Application not found by name" );
 		}
 		

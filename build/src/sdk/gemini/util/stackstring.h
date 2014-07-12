@@ -24,6 +24,8 @@
 #include <gemini/platform.h>
 #include <gemini/util/asciistring.h> // for xstr_cat
 
+#include <slim/xstr.h>
+
 template <unsigned int size, class Type=char>
 struct StackString
 {
@@ -55,6 +57,11 @@ struct StackString
 		_length = 0;
 	}
 	
+	bool is_empty() const
+	{
+		return _length == 0;
+	}
+	
 	unsigned int find_length()
 	{
 		_length = xstr_len( _data );
@@ -67,8 +74,8 @@ struct StackString
 		if ( data )
 		{
 			clear();
-//			_length = xstr_len(data);
-//			xstr_ncpy( _data, data, _length );
+			_length = xstr_len(data);
+			xstr_ncpy( _data, data, _length );
 		}
 	}
 	
@@ -154,7 +161,6 @@ struct StackString
 	
 	void append( const Type * s )
 	{
-#if 0
 		if (_length + xstr_len(s) < size)
 		{
 			xstr_cat( _data, s );
@@ -163,8 +169,6 @@ struct StackString
 		{
 			assert( 0 );
 		}
-#endif
-#warning fix this
 	}
 	
 	const Type *operator ()()
