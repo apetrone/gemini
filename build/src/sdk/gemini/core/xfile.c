@@ -21,8 +21,9 @@
 // -------------------------------------------------------------
 #include <string.h> // for size_t
 
-#include <xfile.h>
 #include <gemini/config.h>
+
+#include "xfile.h"
 
 #if PLATFORM_APPLE
 	#include <TargetConditionals.h>
