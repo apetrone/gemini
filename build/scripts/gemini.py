@@ -113,7 +113,7 @@ def setup_common_libs(product):
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3"),
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),
 		os.path.join(DEPENDENCIES_FOLDER, "font-stash"),
-		os.path.join(DEPENDENCIES_FOLDER, "slim")		
+		os.path.join(DEPENDENCIES_FOLDER, "slim")
 	]
 
 
@@ -188,14 +188,17 @@ def get_libgemini():
 	libgemini = Product(name="gemini", output=ProductType.DynamicLibrary)
 	libgemini.root = "../"
 	libgemini.sources += [
-		"src/sdk/**.cpp",
+		"src/sdk/**.c*",
 		"src/sdk/**.h"
 	]
 	libgemini.sources += [
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c"),
 
 		# include this almagamated version of jsoncpp until we replace it.
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp"),
+
+		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.c"),
+		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.h")		
 	]
 
 	libgemini.defines += [
@@ -206,7 +209,8 @@ def get_libgemini():
 		"src/sdk",
 
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3"),
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp")		
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),
+		os.path.join(DEPENDENCIES_FOLDER, "slim")
 	]
 
 

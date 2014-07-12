@@ -25,7 +25,6 @@
 #include "platform.h"
 #include <stdio.h> // for printf
 #include <sys/stat.h> // for fs::FileExists
-//#include "xfile.h"
 //#include <slim/xlog.h>
 #include <gemini/core/xfile.h>
 
@@ -294,9 +293,7 @@ namespace core
 	#if PLATFORM_APPLE && PLATFORM_IS_MOBILE
 			return mobile_audio_file_to_buffer( filename, buffer_length );
 	#else
-	//		return file_to_buffer( filename, 0, &buffer_length );
-	#warning fix this
-			return 0;
+			return file_to_buffer( filename, 0, &buffer_length );
 	#endif
 		} // audiofile_to_buffer
 

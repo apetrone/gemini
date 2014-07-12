@@ -45,7 +45,6 @@ namespace util
 	
 	void strip_shader_version( char * buffer, StackString<32> & version )
 	{
-#if 0
 		// remove preceding "#version" shader
 		char * pos = xstr_str( buffer, "#version" );
 		if ( pos )
@@ -58,7 +57,6 @@ namespace util
 			memcpy( &version[0], &buffer[(pos-buffer)], version._length );
 			memset( &buffer[(pos-buffer)], ' ', (end-pos) );
 		}
-#endif
 	} // strip_shader_version
 	
 	float random_range( float min, float max )
