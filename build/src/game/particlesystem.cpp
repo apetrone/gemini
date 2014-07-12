@@ -20,9 +20,12 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <gemini/typedefs.h>
+#include <gemini/util.h>
+
 #include <slim/xlog.h>
+
 #include "particlesystem.h"
-#include "util.h"
+
 
 // -------------------------------------------------------------
 // Particle
