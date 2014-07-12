@@ -185,7 +185,7 @@ def get_tools(libgemini):
 
 
 def get_libgemini():
-	libgemini = Product(name="gemini", output=ProductType.DynamicLibrary)
+	libgemini = Product(name="gemini", output=ProductType.StaticLibrary)
 	libgemini.root = "../"
 	libgemini.sources += [
 		"src/sdk/**.c*",
