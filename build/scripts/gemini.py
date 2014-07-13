@@ -178,7 +178,8 @@ def get_tools(libgemini):
 	setup_common_tool(prism)
 
 	prism.dependencies.extend([
-		libgemini
+		libgemini,
+		Dependency(file="assimp.py", products="assimp", arguments=["--enable-static"])
 	])
 
 	return [prism]
