@@ -30,7 +30,7 @@
 
 #include "filesystem.h"
 
-//#include <slim/xlog.h>
+#include <slim/xlog.h>
 
 
 
@@ -215,13 +215,13 @@ namespace core
 			
 			if ( !buffer_length )
 			{
-	//			LOGE( "ERROR: file_to_buffer called with INVALID value!\n" );
+				LOGE( "ERROR: file_to_buffer called with INVALID value!\n" );
 				return 0;
 			}
 			
 			if ( !filesystem::file_exists(filename, true) )
 			{
-	//			LOGE( "File does not exist! \"%s\"\n", filename );
+				LOGE( "File does not exist! \"%s\"\n", filename );
 				return 0;
 			}
 			

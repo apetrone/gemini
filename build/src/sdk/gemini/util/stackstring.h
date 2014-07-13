@@ -29,6 +29,10 @@
 template <unsigned int size, class Type=char>
 struct StackString
 {
+private:
+	typedef StackString<size, Type> StackStringType;
+	
+public:
 	Type _data[ size ];
 	unsigned int _length;
 	
@@ -40,15 +44,22 @@ struct StackString
 		}
 	}
 	
-	StackString( const Type * s )
+	StackString(const Type * s)
 	{
 		clear();
-		*this = s;
+		copy_data(s);
 	}
 	
 	unsigned int max_size() const
 	{
 		return size;
+	}
+	
+	void copy_data(const Type* source)
+	{
+		clear();
+		_length = xstr_len(source);
+		xstr_ncpy(_data, source, _length );
 	}
 	
 	void clear()
@@ -73,9 +84,7 @@ struct StackString
 		//printf( "data: %s\n", data );
 		if ( data )
 		{
-			clear();
-			_length = xstr_len(data);
-			xstr_ncpy( _data, data, _length );
+			copy_data(data);
 		}
 	}
 	
@@ -102,31 +111,35 @@ struct StackString
 		return pos;
 	}
 	
-	const Type * basename() const
+	StackStringType basename()
 	{
 		Type * pos = find_last_slash();
 		if ( pos )
 		{
-			return (pos+1);
+			StackStringType out;
+			out = (pos+1);
+			out._length = (pos-_data);
+		
+			return out;
 		}
 
-		return _data;
+		return *this;
 	}
 
-	Type * dirname( StackString<size, Type> & out ) const
+	StackStringType dirname()
 	{
 		Type * pos = find_last_slash();
 
 		if ( pos )
 		{
+			StackStringType out;
 			out = _data;
-			out[ pos-_data ] = PATH_SEPARATOR;
-			out[ pos-_data+1 ] = '\0';
-
-			return pos;
+			out._length = (pos-_data)+1;
+			out[ out._length ] = '\0';
+			return out;
 		}
-
-		return 0;
+		
+		return *this;
 	}
 	
 	const Type * extension() const
@@ -139,13 +152,20 @@ struct StackString
 		return p+1;
 	}
 	
-	void remove_extension()
+	StackStringType remove_extension()
 	{
+		StackStringType out = _data;
+		
 		const Type * p = extension();
 		if ( p > 0 )
 		{
-			_data[(p-_data-1)] = '\0';
+			size_t location = (p-_data-1);
+			
+			out._data[location] = '\0';
+			out._length = xstr_len(out._data);
 		}
+		
+		return out;
 	}
 	
 	void normalize( Type prefer = '/' )
@@ -159,7 +179,7 @@ struct StackString
 		}
 	}
 	
-	void append( const Type * s )
+	StackStringType append( const Type * s )
 	{
 		if (_length + xstr_len(s) < size)
 		{
@@ -169,6 +189,17 @@ struct StackString
 		{
 			assert( 0 );
 		}
+		
+		return *this;
+	}
+	
+	StackStringType append(const StackStringType& in)
+	{
+		StackStringType out;
+		out = _data;
+		out.append(in._data);
+		
+		return out;
 	}
 	
 	const Type *operator ()()
