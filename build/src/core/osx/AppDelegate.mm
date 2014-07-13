@@ -59,12 +59,12 @@ DesktopKernel _desktop_kernel( 0, 0 );
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-	NSLog( @"applicationDidFinishLaunching" );
+//	NSLog( @"applicationDidFinishLaunching" );
 }
 
 -(void)applicationWillResignActive:(NSNotification *)notification
 {
-	NSLog( @"applicationWillResignActive" );
+//	NSLog( @"applicationWillResignActive" );
 	if ( has_started )
 	{
 		kernel::Event<kernel::System> event;
@@ -75,7 +75,7 @@ DesktopKernel _desktop_kernel( 0, 0 );
 
 -(void)applicationDidBecomeActive:(NSNotification *)notification
 {
-	NSLog( @"applicationDidBecomeActive" );	
+//	NSLog( @"applicationDidBecomeActive" );	
 	
 	if ( !has_started )
 	{
@@ -104,7 +104,7 @@ DesktopKernel _desktop_kernel( 0, 0 );
 
 -(void)applicationWillTerminate:(NSNotification *)notification
 {
-	NSLog( @"applicationWillTerminate" );
+//	NSLog( @"applicationWillTerminate" );
 	kernel::shutdown();
 	memory::shutdown();
 }

@@ -208,8 +208,7 @@ namespace core
 			return error;
 		}
 		
-		//LOGV("TODO: set content directory!\n");
-		//LOGV( "setting root to '%s', content: '%s'\n", fs::root_directory(), fs::content_directory() );
+		LOGV( "setting root to '%s', content: '%s'\n", filesystem::root_directory(), filesystem::content_directory() );
 		
 		return error;
 	} // startup
