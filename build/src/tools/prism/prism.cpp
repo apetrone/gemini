@@ -44,10 +44,16 @@ void process_scene(const aiScene* scene)
 	LOGV("model has %i textures\n", scene->mNumTextures);
 	LOGV("model has %i cameras\n", scene->mNumCameras);
 		
-	// loop through all meshes and
+	// loop through all meshes
 	for( size_t m = 0; m < scene->mNumMeshes; ++m )
 	{
 		mesh = scene->mMeshes[m];
+		
+		// any one of these is an error condition otherwise.
+		assert( mesh->HasTextureCoords(0) );
+		assert( mesh->HasNormals() );
+		assert( mesh->HasTangentsAndBitangents() );
+		
 		LOGV("inspecting mesh: %i, \"%s\"\n", m, mesh->mName.C_Str());
 		LOGV("\tvertices: %i\n", mesh->mNumVertices);
 		LOGV("\tfaces: %i\n", mesh->mNumFaces);
@@ -64,6 +70,27 @@ void process_scene(const aiScene* scene)
 		{
 			fprintf(stdout, "Mesh %zu is missing Normals\n", m);
 		}
+		
+		
+		if (mesh->mNumBones > 0)
+		{
+			LOGV("inspecting bones...\n");
+			const aiBone* bone = 0;
+			for (size_t boneid = 0; boneid < mesh->mNumBones; ++boneid)
+			{
+				bone = mesh->mBones[boneid];
+				LOGV("\tbone %i, \"%s\"\n", boneid, bone->mName.C_Str());
+				LOGV("\tweights: %i\n", bone->mNumWeights);
+				
+				aiMatrix4x4 offset = bone->mOffsetMatrix;
+				for (size_t weight = 0; weight < bone->mNumWeights; ++weight)
+				{
+					aiVertexWeight* w = &bone->mWeights[weight];
+					LOGV("\tweight (%i) [vertex: %i -> weight: %2.2f\n", weight, w->mVertexId, w->mWeight);
+				}
+				
+			}
+		}
 	}
 	
 	const aiAnimation* animation = 0;
@@ -73,19 +100,39 @@ void process_scene(const aiScene* scene)
 		LOGV("inspecting animation: %i, \"%s\"\n", index, animation->mName.C_Str());
 		LOGV("\tduration: %g\n", animation->mDuration);
 		LOGV("\tticks_per_second: %g\n", animation->mTicksPerSecond);
-		LOGV("\tbone channels: %i\n", animation->mNumChannels);
-		LOGV("\tmesh channels: %i\n", animation->mNumMeshChannels);
+		LOGV("\tbone channels (skeletal): %i\n", animation->mNumChannels);
+		LOGV("\tmesh channels (vertex): %i\n", animation->mNumMeshChannels);
 
+		// bone/node-based animation
 		const aiNodeAnim* node = 0;
 		for (size_t channel = 0; channel < animation->mNumChannels; ++channel)
 		{
 			node = animation->mChannels[channel];
 			LOGV("\tinspecting bone/node %i \"%s\" ...\n", channel, node->mNodeName.C_Str());
 			LOGV("\t\tPosition Keys: %i\n", node->mNumPositionKeys);
+			for (size_t key = 0; key < node->mNumPositionKeys; ++key)
+			{
+				const aiVectorKey* vkey = &node->mPositionKeys[key];
+				LOGV("\t\t\tT @ %2.2f -> %2.2f %2.2f %2.2f\n", vkey->mTime, vkey->mValue.x, vkey->mValue.y, vkey->mValue.z);
+			}
+			
 			LOGV("\t\tRotation Keys: %i\n", node->mNumRotationKeys);
+			for (size_t key = 0; key < node->mNumRotationKeys; ++key)
+			{
+				const aiQuatKey* qkey = &node->mRotationKeys[key];
+				LOGV("\t\t\tR @ %2.2f -> %2.2f %2.2f %2.2f %2.2f\n", qkey->mTime, qkey->mValue.x, qkey->mValue.y, qkey->mValue.z, qkey->mValue.w);
+			}
+			
 			LOGV("\t\tScaling Keys: %i\n", node->mNumScalingKeys);
+			for (size_t key = 0; key < node->mNumScalingKeys; ++key)
+			{
+				const aiVectorKey* vkey = &node->mScalingKeys[key];
+				LOGV("\t\t\tS @ %2.2f -> %2.2f %2.2f %2.2f\n", vkey->mTime, vkey->mValue.x, vkey->mValue.y, vkey->mValue.z);
+			}
 		}
 		
+		
+		// vertex-based animation
 		const aiMeshAnim* anim = 0;
 		for (size_t channel = 0; channel < animation->mNumMeshChannels; ++channel)
 		{
