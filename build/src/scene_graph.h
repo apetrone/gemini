@@ -23,10 +23,39 @@
 
 #include "mathlib.h"
 
-
 namespace scenegraph
 {
+	typedef std::vector<struct Node*, GeminiAllocator<Node*>> NodeVector;
+	struct Node
+	{
+		// decomposed pieces
+		glm::vec3 translation;
+		glm::quat rotation;
+		glm::vec3 scale;
+		
+		// the local to world transform
+		glm::mat4 local_to_world;
+		
+		// the final world-transform for this model
+		glm::mat4 world_transform;
+		
+		StackString<128> name;
+		
+		NodeVector children;
+		
+		Node();
+		virtual ~Node() {}
+		
+		void add_child(Node* child);
+		void remove_child(Node* child);
+		void update(float delta_seconds);
+	};
 	
+	
+	
+	void create_scene(Node* root);
+	void visit(Node* root, void* visitor);
+	void destroy_scene(Node* root);
 }; // namespace scenegraph
 
 

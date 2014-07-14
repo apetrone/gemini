@@ -19,13 +19,46 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#include <vector>
 
 #include <gemini/typedefs.h>
+#include <gemini/util/stackstring.h>
 #include <slim/xlog.h>
 
 #include "scene_graph.h"
+#include "mathlib.h"
 
 namespace scenegraph
 {
+	void Node::add_child(Node* child)
+	{
+		
+	}
 	
+	void Node::remove_child(Node* child)
+	{
+		
+	}
+	
+	void Node::update(float delta_seconds)
+	{
+		
+	}
+	
+	
+	
+	void create_scene(Node* root)
+	{
+		
+	}
+	
+	void visit(Node* root, void* visitor)
+	{
+		
+	}
+	
+	void destroy_scene(Node* root)
+	{
+		
+	}
 }; // namespace scenegraph
