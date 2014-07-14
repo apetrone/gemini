@@ -25,7 +25,35 @@
 
 namespace animation
 {
-
+	typedef unsigned int BoneIndex;
+	struct VertexWeight
+	{
+		BoneIndex bone_index;
+		float weight;
+		
+		VertexWeight(BoneIndex boneid, float vertex_weight) :
+			bone_index(boneid), weight(vertex_weight)
+		{
+			
+		}
+	}; // VertexWeight
+	
+	struct BlendInfo
+	{
+		unsigned int weight_index;
+		unsigned int weight_count;
+		
+		BlendInfo(unsigned int weightid, unsigned int num_weights) :
+			weight_index(weightid), weight_count(num_weights)
+		{
+			
+		}
+	}; // BlendInfo
+	
+	struct AnimationNode // : public RenderNode ?
+	{
+		virtual void update(float delta_seconds) {}
+	};
 }; // namespace animation
 
 
