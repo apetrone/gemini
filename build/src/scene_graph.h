@@ -24,12 +24,13 @@
 #include <vector>
 
 #include "mathlib.h"
-
+#include "keyframechannel.h"
 
 namespace scenegraph
 {
 	
 	typedef std::vector<struct Node*, GeminiAllocator<Node*>> NodeVector;
+		
 	struct Node
 	{
 		enum NodeFlags
@@ -58,6 +59,7 @@ namespace scenegraph
 		StackString<128> name;
 		
 		NodeVector children;
+		Node* parent;
 		
 	
 		Node();
@@ -65,15 +67,79 @@ namespace scenegraph
 		
 		void add_child(Node* child);
 		void remove_child(Node* child);
-		void update(float delta_seconds);
+		virtual void update(float delta_seconds);
 	};
 	
+	
+	enum RenderNodeType
+	{
+		STATIC_MESH,
+		MORPH_CONTROLLER,
+		SKELETAL_CONTROLLER
+	};
+	
+	struct RenderNodeController
+	{
+		RenderNodeController() {}
+		virtual ~RenderNodeController() {}
+		virtual void update(float delta_seconds) = 0;
+	};
+	
+	typedef unsigned int BoneIndex;
+	struct VertexWeight
+	{
+		BoneIndex bone_index;
+		float weight;
+		
+		VertexWeight(BoneIndex boneid, float vertex_weight) :
+		bone_index(boneid), weight(vertex_weight)
+		{
+			
+		}
+	}; // VertexWeight
+	
+	struct BlendInfo
+	{
+		unsigned int weight_index;
+		unsigned int weight_count;
+		
+		BlendInfo(unsigned int weightid, unsigned int num_weights) :
+		weight_index(weightid), weight_count(num_weights)
+		{
+			
+		}
+	}; // BlendInfo
+	
+	struct SkeletalController : public RenderNodeController
+	{
+		glm::vec4 bindmat;
+		glm::mat4 combined_rotation;
+		glm::mat4 inverse_bind_matrix;
+		
+		StackString<128> root_name;
+		
+		float local_time;
+		int32_t current_frame;
+		int32_t last_frame;
+		
+		KeyframeChannel<glm::vec3> position;
+		
+		SkeletalController();
+		virtual ~SkeletalController();
+		
+		virtual void update(float delta_seconds);
+	};
 	
 	struct RenderNode : public Node
 	{
+		uint16_t render_type;
+		RenderNodeController* controller;
 		
+		RenderNode();
+		~RenderNode();
+		
+		virtual void update(float delta_seconds);
 	};
-	
 	
 	void create_scene(Node* root);
 	void visit(Node* root, void* visitor);

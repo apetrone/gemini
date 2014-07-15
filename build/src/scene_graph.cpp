@@ -47,6 +47,7 @@ namespace scenegraph
 	Node::Node()
 	{
 		flags = 0;
+		parent = 0;
 	}
 	
 	Node::~Node()
@@ -119,5 +120,43 @@ namespace scenegraph
 	void print_tree(Node* root)
 	{
 		print_tree_node(root, 0);
+	}
+	
+	
+	
+	SkeletalController::SkeletalController()
+	{
+		current_frame = 0;
+		last_frame = 0;
+		local_time = 0;
+	}
+	
+	SkeletalController::~SkeletalController()
+	{
+		
+	}
+	
+	void SkeletalController::update(float delta_seconds)
+	{
+		
+	}
+	
+	RenderNode::RenderNode()
+	{
+		controller = 0;
+	}
+	
+	RenderNode::~RenderNode()
+	{
+		
+	}
+	
+	
+	void RenderNode::update(float delta_seconds)
+	{
+		if (controller)
+		{
+			// do something with the controller
+		}
 	}
 }; // namespace scenegraph
