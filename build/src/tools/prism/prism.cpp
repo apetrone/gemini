@@ -35,6 +35,10 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
+const char TOOL_NAME[] = "prism";
+const char TOOL_VERSION[] = "alpha 1.0.0";
+
+
 void test_function()
 {
 	fprintf(stdout, "Hello, World!\n");
@@ -76,6 +80,8 @@ void convert_and_write_model(const aiScene* scene, const char* output_path)
 	Json::Value jinfo(Json::objectValue);
 	Json::Value jtransform(Json::objectValue);
 
+	jinfo["tool"] = TOOL_NAME;
+	jinfo["version"] = TOOL_VERSION;
 	
 	Json::Value jmaterial_array(Json::arrayValue);
 	Json::Value jgeometry_array(Json::arrayValue);
@@ -112,20 +118,24 @@ void convert_and_write_model(const aiScene* scene, const char* output_path)
 				//const aiVector3D & bitangent = mesh->mBitangents[vertex];
 				//const aiVector3D & tangent = mesh->mTangents[vertex];
 				
-				jvertices.append(pos.x);
-				jvertices.append(pos.y);
-				jvertices.append(pos.z);
+				// Need to transform the vectors from Z-Up to Y-Up.
+				aiMatrix3x3 rot;
+				aiMatrix3x3::Rotation((-M_PI_2), aiVector3D(1, 0, 0), rot);
 				
-				jnormals.append(normal.x);
-				jnormals.append(normal.y);
-				jnormals.append(normal.z);
+				const aiVector3D tr_pos = rot * pos;
+				
+				jvertices.append(tr_pos.x);
+				jvertices.append(tr_pos.y);
+				jvertices.append(tr_pos.z);
+				
+				const aiVector3D tr_normal = rot * normal;
+
+				jnormals.append(tr_normal.x);
+				jnormals.append(tr_normal.y);
+				jnormals.append(tr_normal.z);
 				
 				juvs.append(uv.x);
 				juvs.append(uv.y);
-				
-				//v->position = glm::vec3(pos.x, pos.y, pos.z);
-				//v->uv = glm::vec2(uv.x, uv.y);
-				//v->normal = glm::normalize(glm::vec3(normal.x, normal.y, normal.z));
 			}
 
 			aiFace* face;
@@ -174,12 +184,15 @@ void convert_and_write_model(const aiScene* scene, const char* output_path)
 		
 		if (material->GetTextureCount(aiTextureType_AMBIENT) > 0) { LOGV("material has an ambient texture\n"); }
 		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0) { LOGV("material has a diffuse texture\n"); }
-		if (material->GetTextureCount(aiTextureType_SPECULAR) > 0) { LOGV("material has an emissive texture\n"); }
+		if (material->GetTextureCount(aiTextureType_EMISSIVE) > 0) { LOGV("material has an emissive texture\n"); }
+		if (material->GetTextureCount(aiTextureType_SPECULAR) > 0) { LOGV("material has an specular texture\n"); }
 		
 		aiString texture_path;
 		if (AI_SUCCESS == material->GetTexture(aiTextureType_DIFFUSE, 0, &texture_path, 0, 0, 0, 0, 0))
 		{
 			StackString<4096> texpath = texture_path.C_Str();
+
+			// TODO: verify there's a material by this name in the input/output folder?
 
 			// COLLADA does some weird shit with texture names.
 			jgeometry["material_id"] = jmaterial_array.size();
