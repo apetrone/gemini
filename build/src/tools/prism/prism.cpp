@@ -86,6 +86,8 @@ void convert_and_write_model(const aiScene* scene, const char* output_path)
 	Json::Value jmaterial_array(Json::arrayValue);
 	Json::Value jgeometry_array(Json::arrayValue);
 	
+	Json::Value jbones_array(Json::arrayValue);
+	
 	// loop through all meshes
 	for( size_t m = 0; m < scene->mNumMeshes; ++m )
 	{
@@ -164,6 +166,7 @@ void convert_and_write_model(const aiScene* scene, const char* output_path)
 			const aiBone* bone = 0;
 			for (size_t boneid = 0; boneid < mesh->mNumBones; ++boneid)
 			{
+				Json::Value jbone;
 				bone = mesh->mBones[boneid];
 				LOGV("\tbone %i, \"%s\"\n", boneid, bone->mName.C_Str());
 				LOGV("\tweights: %i\n", bone->mNumWeights);
@@ -175,6 +178,9 @@ void convert_and_write_model(const aiScene* scene, const char* output_path)
 					LOGV("\tweight (%i) [vertex: %i -> weight: %2.2f\n", weight, w->mVertexId, w->mWeight);
 				}
 				
+				jbone["name"] = bone->mName.C_Str();
+				
+				jbones_array.append(jbone);
 			}
 		}
 		
@@ -209,6 +215,7 @@ void convert_and_write_model(const aiScene* scene, const char* output_path)
 	root["materials"] = jmaterial_array;
 	root["info"] = jinfo;
 	root["transform"] = jtransform;
+	root["bones"] = jbones_array;
 	
 	const aiAnimation* animation = 0;
 	for (size_t index = 0; index < scene->mNumAnimations; ++index)
