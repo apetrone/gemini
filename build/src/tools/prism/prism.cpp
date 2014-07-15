@@ -53,13 +53,28 @@ void test_function()
 	DEALLOC(buffer);
 }
 
-struct Vertex
+void jsonify_matrix(Json::Value& array, const aiMatrix4x4& matrix)
 {
-	glm::vec3 position;
-	glm::vec2 uv;
-	glm::vec3 normal;
-	glm::vec4 tangent;
-};
+	array.append(matrix.a1);
+	array.append(matrix.a2);
+	array.append(matrix.a3);
+	array.append(matrix.a4);
+	
+	array.append(matrix.b1);
+	array.append(matrix.b2);
+	array.append(matrix.b3);
+	array.append(matrix.b4);
+	
+	array.append(matrix.c1);
+	array.append(matrix.c2);
+	array.append(matrix.c3);
+	array.append(matrix.c4);
+	
+	array.append(matrix.d1);
+	array.append(matrix.d2);
+	array.append(matrix.d3);
+	array.append(matrix.d4);
+}
 
 void convert_and_write_model(const aiScene* scene, const char* output_path)
 {
@@ -171,6 +186,7 @@ void convert_and_write_model(const aiScene* scene, const char* output_path)
 				LOGV("\tbone %i, \"%s\"\n", boneid, bone->mName.C_Str());
 				LOGV("\tweights: %i\n", bone->mNumWeights);
 				
+
 				aiMatrix4x4 offset = bone->mOffsetMatrix;
 				for (size_t weight = 0; weight < bone->mNumWeights; ++weight)
 				{
@@ -179,6 +195,9 @@ void convert_and_write_model(const aiScene* scene, const char* output_path)
 				}
 				
 				jbone["name"] = bone->mName.C_Str();
+				Json::Value offset_matrix(Json::arrayValue);
+				jsonify_matrix(offset_matrix, bone->mOffsetMatrix);
+				jbone["offset_matrix"] = offset_matrix;
 				
 				jbones_array.append(jbone);
 			}
