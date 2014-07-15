@@ -65,9 +65,9 @@ def setup_common_tool(product):
 		"JSON_IS_AMALGAMATION"
 	]
 
-	#product.dependencies += [
-	#	Dependency(file="glm.py")
-	#]
+	product.dependencies += [
+		Dependency(file="glm.py")
+	]
 
 	linux = product.layout(platform="linux")
 	linux.links += [

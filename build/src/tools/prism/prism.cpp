@@ -169,12 +169,26 @@ void convert_and_write_model(const aiScene* scene, const char* output_path)
 		}
 		
 		
+		// TODO: error checking here...
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-		jgeometry["material_id"] = jmaterial_array.size();
 		
-		Json::Value jmaterial;
-		jmaterial["name"] = Json::valueToString(mesh->mMaterialIndex);
-		jmaterial_array.append(jmaterial);
+		if (material->GetTextureCount(aiTextureType_AMBIENT) > 0) { LOGV("material has an ambient texture\n"); }
+		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0) { LOGV("material has a diffuse texture\n"); }
+		if (material->GetTextureCount(aiTextureType_SPECULAR) > 0) { LOGV("material has an emissive texture\n"); }
+		
+		aiString texture_path;
+		if (AI_SUCCESS == material->GetTexture(aiTextureType_DIFFUSE, 0, &texture_path, 0, 0, 0, 0, 0))
+		{
+			StackString<4096> texpath = texture_path.C_Str();
+
+			// COLLADA does some weird shit with texture names.
+			jgeometry["material_id"] = jmaterial_array.size();
+			Json::Value jmaterial;
+			jmaterial["name"] = texpath.basename().remove_extension()();
+			jmaterial_array.append(jmaterial);
+		}
+		
+
 		
 		jgeometry_array.append(jgeometry);
 	}

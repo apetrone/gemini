@@ -152,20 +152,18 @@ public:
 		return p+1;
 	}
 	
-	StackStringType remove_extension()
+	StackStringType& remove_extension()
 	{
-		StackStringType out = _data;
-		
 		const Type * p = extension();
 		if ( p > 0 )
 		{
 			size_t location = (p-_data-1);
 			
-			out._data[location] = '\0';
-			out._length = xstr_len(out._data);
+			_data[location] = '\0';
+			_length = xstr_len(_data);
 		}
 		
-		return out;
+		return *this;
 	}
 	
 	void normalize( Type prefer = '/' )
