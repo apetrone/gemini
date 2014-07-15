@@ -179,11 +179,12 @@ public:
 		}
 	}
 	
-	StackStringType append( const Type * s )
+	StackStringType& append(const Type * s)
 	{
 		if (_length + xstr_len(s) < size)
 		{
-			xstr_cat( _data, s );
+			xstr_cat(_data, s);
+			_length = xstr_len(_data);
 		}
 		else
 		{
@@ -193,13 +194,11 @@ public:
 		return *this;
 	}
 	
-	StackStringType append(const StackStringType& in)
+	StackStringType& append(const StackStringType& in)
 	{
-		StackStringType out;
-		out = _data;
-		out.append(in._data);
+		*this = append(in._data);
 		
-		return out;
+		return *this;
 	}
 	
 	const Type *operator ()()
