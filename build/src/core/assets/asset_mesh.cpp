@@ -20,6 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <gemini/util/configloader.h>
+#include <gemini/core/log.h>
 
 #include "assets.h"
 #include "assets/asset_mesh.h"
@@ -35,7 +36,7 @@ namespace assets
 	util::ConfigLoadStatus mesh_load_from_json( const Json::Value & root, void * data )
 	{
 		Mesh * mesh = (Mesh*)data;
-		//	LOGV( "Loading mesh %s\n", mesh->name() );
+//		LOGV( "Loading mesh %s\n", mesh->name() );
 		
 		assets::Material * default_mat = assets::materials()->load_from_path("materials/default");
 		if ( !default_mat )
@@ -45,7 +46,7 @@ namespace assets
 		}
 		
 		Json::Value materials = root["materials"];
-		//		LOGV( "Total Materials: %i\n", materials.size() );
+		LOGV( "Total Materials: %i\n", materials.size() );
 		
 		Json::ValueIterator mit = materials.begin();
 		
@@ -95,10 +96,10 @@ namespace assets
 			Json::Value normals = geometry_node["normals"];
 			Json::Value uvs = geometry_node["uvs"];
 			int material_id = geometry_node["material_id"].asInt();
-			//			LOGV( "geometry: %i, material_id: %i\n", gid-1, material_id );
-			//			LOGV( "# vertices: %i\n", positions.size()/3 );
-			//			LOGV( "# indices: %i\n", indices.size() );
-			//			LOGV( "# triangles: %i\n", indices.size()/3 );
+//			LOGV( "geometry: %i, material_id: %i\n", gid-1, material_id );
+//			LOGV( "# vertices: %i\n", positions.size()/3 );
+//			LOGV( "# indices: %i\n", indices.size() );
+//			LOGV( "# triangles: %i\n", indices.size()/3 );
 			geometry->index_count = indices.size();
 			geometry->indices = CREATE_ARRAY(IndexType, geometry->index_count);
 			for( int i = 0; i < geometry->index_count; ++i )
