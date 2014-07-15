@@ -126,7 +126,7 @@ public:
 		character = physics::create_character_controller(btVector3(0, 5, 0), false);
 		
 		// load in the plane mesh
-		plane_mesh = assets::meshes()->load_from_path("models/black_lodge");
+		plane_mesh = assets::meshes()->load_from_path("models/plane");
 		if (plane_mesh)
 		{
 			plane_mesh->prepare_geometry();
