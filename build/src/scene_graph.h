@@ -21,13 +21,26 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <vector>
+
 #include "mathlib.h"
+
 
 namespace scenegraph
 {
+	
 	typedef std::vector<struct Node*, GeminiAllocator<Node*>> NodeVector;
 	struct Node
 	{
+		enum NodeFlags
+		{
+			NF_NONE,
+			NF_DIRTY,
+			NF_COUNT
+		};
+		
+		uint32_t flags;
+		
 		// decomposed pieces
 		glm::vec3 translation;
 		glm::quat rotation;
@@ -36,6 +49,9 @@ namespace scenegraph
 		// the local to world transform
 		glm::mat4 local_to_world;
 		
+		// local to pivot point vector
+		glm::vec3 local_to_pivot;
+		
 		// the final world-transform for this model
 		glm::mat4 world_transform;
 		
@@ -43,8 +59,9 @@ namespace scenegraph
 		
 		NodeVector children;
 		
+	
 		Node();
-		virtual ~Node() {}
+		virtual ~Node();
 		
 		void add_child(Node* child);
 		void remove_child(Node* child);
@@ -52,10 +69,16 @@ namespace scenegraph
 	};
 	
 	
+	struct RenderNode : public Node
+	{
+		
+	};
+	
 	
 	void create_scene(Node* root);
 	void visit(Node* root, void* visitor);
 	void destroy_scene(Node* root);
+	void print_tree(Node* root);
 }; // namespace scenegraph
 
 

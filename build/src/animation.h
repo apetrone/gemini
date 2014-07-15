@@ -49,11 +49,6 @@ namespace animation
 			
 		}
 	}; // BlendInfo
-	
-	struct AnimationNode // : public RenderNode ?
-	{
-		virtual void update(float delta_seconds) {}
-	};
 }; // namespace animation
 
 

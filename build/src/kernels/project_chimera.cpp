@@ -38,7 +38,7 @@
 
 #include "font.h"
 #include "assets/asset_font.h"
-
+#include "scene_graph.h"
 
 using namespace physics;
 
@@ -56,7 +56,8 @@ public:
 	assets::Mesh * char_mesh;
 	Camera camera;
 	physics::CharacterController* character;
-
+	scenegraph::Node* root;
+	
 	ProjectChimera()
 	{
 		camera.type = Camera::TARGET;
@@ -145,7 +146,7 @@ public:
 
 		camera.target_lookatOffset = glm::vec3(0, 0, 5);
 		
-		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
+		camera.perspective( 50.0f, params.render_width, params.render_height, 0.1f, 128.0f );
 		// This is appropriate for drawing 3D models, but not sprites
 		//camera.set_absolute_position( glm::vec3(8, 5, 8.0f) );
 		//camera.yaw = -45;
@@ -157,6 +158,22 @@ public:
 		// capture the mouse
 		kernel::instance()->capture_mouse( true );
 
+
+		root = CREATE(scenegraph::Node);
+		root->name = "root";
+		
+		scenegraph::Node* one = CREATE(scenegraph::Node);
+		one->name = "child";
+		
+		
+		root->add_child(one);
+		
+		
+		scenegraph::print_tree(root);
+
+
+
+		
 		return kernel::Application_Success;
 	}
 
@@ -260,6 +277,8 @@ public:
 	
 	virtual void shutdown( kernel::Params & params )
 	{
+		DESTROY(Node, root);
+		
 		physics::shutdown();
 		
 		debugdraw::shutdown();

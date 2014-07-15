@@ -20,29 +20,62 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <vector>
+#include <algorithm>
+#include <string>
 
 #include <gemini/typedefs.h>
+#include <gemini/mem.h>
 #include <gemini/util/stackstring.h>
+
 #include <slim/xlog.h>
 
 #include "scene_graph.h"
 #include "mathlib.h"
 
+// Useful to hand to a std::for_each statement in order to clean up a container.
+template <class _Type>
+struct DestroyPointer
+{
+	void operator()(_Type * p)
+	{
+		DESTROY(_Type, p);
+	}
+}; // DestroyPointer
+
 namespace scenegraph
 {
+	Node::Node()
+	{
+		flags = 0;
+	}
+	
+	Node::~Node()
+	{
+		std::for_each(children.begin(), children.end(), DestroyPointer<Node>());
+		children.clear();
+	}
+	
 	void Node::add_child(Node* child)
 	{
-		
+		children.push_back(child);
 	}
 	
 	void Node::remove_child(Node* child)
 	{
-		
+		// TODO: implement
 	}
 	
 	void Node::update(float delta_seconds)
 	{
+		NodeVector::iterator start, end;
+		start = children.begin();
+		end = children.end();
 		
+		while (start != end)
+		{
+			(*start)->update(delta_seconds);
+			++start;
+		}
 	}
 	
 	
@@ -60,5 +93,31 @@ namespace scenegraph
 	void destroy_scene(Node* root)
 	{
 		
+	}
+	
+	static void print_tree_node(Node* root, uint32_t indent_depth)
+	{
+		std::string indent;
+		for (uint32_t i = 0; i < indent_depth; ++i)
+		{
+			indent += "\t";
+		}
+		
+		LOGV("[Node] Name=\"%s\" (%x), # Children=%i\n", root->name(), root, root->children.size());
+		
+		NodeVector::iterator start, end;
+		start = root->children.begin();
+		end = root->children.end();
+		
+		while(start != end)
+		{
+			print_tree_node((*start), (indent_depth+1));
+			++start;
+		}
+	}
+	
+	void print_tree(Node* root)
+	{
+		print_tree_node(root, 0);
 	}
 }; // namespace scenegraph
