@@ -38,6 +38,20 @@
 const char TOOL_NAME[] = "prism";
 const char TOOL_VERSION[] = "alpha 1.0.0";
 
+struct ToolEnvironment
+{
+	bool convert_zup_to_yup;
+	
+	ToolEnvironment()
+	{
+		convert_zup_to_yup = false;
+	}
+	
+	void print_settings()
+	{
+		LOGV("convert_zup_to_yup: %s\n", convert_zup_to_yup ? "true": "false");
+	}
+};
 
 void test_function()
 {
@@ -76,7 +90,7 @@ void jsonify_matrix(Json::Value& array, const aiMatrix4x4& matrix)
 	array.append(matrix.d4);
 }
 
-void convert_and_write_model(const aiScene* scene, const char* output_path)
+void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const char* output_path)
 {
 	Json::Value root;
 
@@ -137,7 +151,11 @@ void convert_and_write_model(const aiScene* scene, const char* output_path)
 				
 				// Need to transform the vectors from Z-Up to Y-Up.
 				aiMatrix3x3 rot;
-				aiMatrix3x3::Rotation((-M_PI_2), aiVector3D(1, 0, 0), rot);
+				
+				if (env.convert_zup_to_yup)
+				{
+					aiMatrix3x3::Rotation((-M_PI_2), aiVector3D(1, 0, 0), rot);
+				}
 				
 				const aiVector3D tr_pos = rot * pos;
 				
@@ -297,7 +315,7 @@ void convert_and_write_model(const aiScene* scene, const char* output_path)
 	}
 }
 
-void test_load_scene(const char* asset_root, const char* input_file, const char* output_path)
+void test_load_scene(ToolEnvironment& env, const char* asset_root, const char* input_file, const char* output_path)
 {
 	Assimp::Importer importer;
 
@@ -317,7 +335,7 @@ void test_load_scene(const char* asset_root, const char* input_file, const char*
 			fullpath.append("/");
 			fullpath = fullpath.append(input_file).remove_extension().append(".model");
 			LOGV("fullpath = %s\n", fullpath());
-			convert_and_write_model(scene, fullpath());
+			convert_and_write_model(env, scene, fullpath());
 		}
 		
 		importer.FreeScene();
@@ -338,14 +356,19 @@ int main(int argc, char** argv)
 	arg_t* asset_root = arg_add("asset_root", "-a", "--asset-root", 0, 0);
 	arg_t* input_file = arg_add("input_file", "-f", "--input", 0, 0);
 	arg_t* output_root = arg_add("output_root", "-o", "--output-root", 0, 0);
+	arg_t* convert_axis = arg_add("convert_zup_to_yup", "-y", 0, ARG_NO_PARAMS | ARG_NOT_REQUIRED, 0);
 	
 	if (arg_parse(argc, argv) != 0)
 	{
 		return -1;
 	}
 	
+	ToolEnvironment env;
+	env.convert_zup_to_yup = convert_axis->integer;
+	env.print_settings();
+	
 	//	test_function();
-	test_load_scene(asset_root->string, input_file->string, output_root->string);
+	test_load_scene(env, asset_root->string, input_file->string, output_root->string);
 
 	core::shutdown();
 	memory::shutdown();
