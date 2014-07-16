@@ -53,6 +53,17 @@ struct ToolEnvironment
 	}
 };
 
+
+glm::quat to_glm(const aiQuaternion& q)
+{
+	return glm::quat(q.x, q.y, q.z, q.w);
+}
+
+glm::vec3 to_glm(const aiVector3D& v)
+{
+	return glm::vec3(v.x, v.y, v.z);
+}
+
 void test_function()
 {
 	fprintf(stdout, "Hello, World!\n");
@@ -89,6 +100,8 @@ void jsonify_matrix(Json::Value& array, const aiMatrix4x4& matrix)
 	array.append(matrix.d3);
 	array.append(matrix.d4);
 }
+
+
 
 void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const char* output_path)
 {
@@ -275,6 +288,8 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 			{
 				const aiVectorKey* vkey = &node->mPositionKeys[key];
 				LOGV("\t\t\tT @ %2.2f -> %2.2f %2.2f %2.2f\n", vkey->mTime, vkey->mValue.x, vkey->mValue.y, vkey->mValue.z);
+				
+				//glm::vec3 position = to_glm(vkey->mValue);
 			}
 			
 			LOGV("\t\tRotation Keys: %i\n", node->mNumRotationKeys);
@@ -282,6 +297,8 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 			{
 				const aiQuatKey* qkey = &node->mRotationKeys[key];
 				LOGV("\t\t\tR @ %2.2f -> %2.2f %2.2f %2.2f %2.2f\n", qkey->mTime, qkey->mValue.x, qkey->mValue.y, qkey->mValue.z, qkey->mValue.w);
+				
+				//glm::quat rotation = to_glm(qkey->mValue);
 			}
 			
 			LOGV("\t\tScaling Keys: %i\n", node->mNumScalingKeys);
@@ -289,8 +306,11 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 			{
 				const aiVectorKey* vkey = &node->mScalingKeys[key];
 				LOGV("\t\t\tS @ %2.2f -> %2.2f %2.2f %2.2f\n", vkey->mTime, vkey->mValue.x, vkey->mValue.y, vkey->mValue.z);
+				
+				//glm::vec3 scale = to_glm(vkey->mValue);
 			}
 		}
+		
 		
 		
 		// vertex-based animation
@@ -325,7 +345,7 @@ void test_load_scene(ToolEnvironment& env, const char* asset_root, const char* i
 	// Bone matrices may be incorrect with aiProcess_PreTransformVertices set.
 	unsigned int flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace;
 
-	
+	importer.SetPropertyInteger(AI_CONFIG_PP_LBW_MAX_WEIGHTS, 4);
 	const aiScene* scene = importer.ReadFile(input_filename(), flags);
 	if (scene)
 	{
