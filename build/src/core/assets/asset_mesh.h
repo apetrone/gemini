@@ -21,6 +21,10 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <vector>
+
+#include <gemini/mem.h>
+#include <gemini/mem_stl_allocator.h>
 #include <gemini/util/stackstring.h>
 
 #include "assets.h"
@@ -44,16 +48,35 @@ namespace assets
 		
 	}; // Geometry
 	
+	// TEMP struct to test the whole shebang.
+	struct AnimationData
+	{
+		struct BoneTransform
+		{
+			std::vector<glm::mat4, GeminiAllocator<glm::mat4> > keys;
+			
+			uint32_t bone_id;
+		};
+		
+		std::vector<BoneTransform, GeminiAllocator<BoneTransform> > transforms;
+		
+		// duration in seconds
+		float duration_seconds;
+		
+		float frames_per_second;
+	};
+	
+	
 	struct Bone
 	{
+		// name of this bone
 		std::string name;
 		
 		// local to bone space (vertex to bone)
 		glm::mat4 inverse_bind_matrix;
 		
-		
-		// world position of the bone for debugging
-		glm::vec3 world_position;
+		// -1: No parent
+		int32_t parent;
 	};
 	
 	struct Mesh : public Asset
