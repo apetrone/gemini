@@ -58,9 +58,14 @@ namespace assets
 
 struct RenderStream;
 
+namespace assets
+{
+	struct Shader;
+};
+
 namespace render_utilities
 {
-	void stream_geometry( RenderStream & rs, assets::Geometry * geo, renderer::GeneralParameters & gp );
+	void stream_geometry( RenderStream & rs, assets::Geometry * geo, renderer::GeneralParameters & gp, assets::Shader* shader = 0 );
 	
 	//
 	// misc sprite tools

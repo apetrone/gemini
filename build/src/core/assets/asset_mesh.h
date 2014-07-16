@@ -44,6 +44,12 @@ namespace assets
 		
 	}; // Geometry
 	
+	struct Bone
+	{
+		// local to bone space (vertex to bone)
+		glm::mat4 inverse_bind_matrix;
+	};
+	
 	struct Mesh : public Asset
 	{
 		unsigned short total_geometry;
@@ -51,6 +57,9 @@ namespace assets
 		Geometry * geometry_vn;
 		glm::mat4 world_matrix;
 		StackString<MAX_PATH_SIZE> path;
+		
+		unsigned short total_bones;
+		Bone* bones;
 		
 		Mesh();
 		void init();

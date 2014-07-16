@@ -29,7 +29,7 @@
 
 namespace render_utilities
 {
-	void stream_geometry( RenderStream & rs, assets::Geometry * geo, renderer::GeneralParameters & gp )
+	void stream_geometry( RenderStream & rs, assets::Geometry * geo, renderer::GeneralParameters & gp, assets::Shader* shader )
 	{
 		// verify general parameters
 		assert( gp.modelview_matrix != 0 );
@@ -41,7 +41,11 @@ namespace render_utilities
 		assets::Material * material = assets::materials()->find_with_id( geo->material_id );
 		assert( material != 0 );
 		//		LOGV( "material: %i\n", material->Id() );
-		assets::Shader * shader = assets::find_compatible_shader( geo->attributes + material->requirements + gp.global_params );
+		
+		if (!shader)
+		{
+			shader = assets::find_compatible_shader( geo->attributes + material->requirements + gp.global_params );
+		}
 		assert( shader != 0 );
 		
 		if ( !shader )

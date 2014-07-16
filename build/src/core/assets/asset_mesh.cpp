@@ -348,6 +348,9 @@ namespace assets
 		total_geometry = 0;
 		geometry = 0;
 		geometry_vn = 0;
+		
+		total_bones = 0;
+		bones = 0;
 	} // init
 	
 	void Mesh::alloc( unsigned int num_geometry )

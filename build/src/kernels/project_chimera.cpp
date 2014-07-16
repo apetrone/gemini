@@ -38,7 +38,6 @@
 
 #include "font.h"
 #include "assets/asset_font.h"
-#include "scene_graph.h"
 
 using namespace physics;
 
@@ -56,7 +55,7 @@ public:
 	assets::Mesh * char_mesh;
 	Camera camera;
 	physics::CharacterController* character;
-	scenegraph::Node* root;
+	assets::Shader* animation;
 	
 	ProjectChimera()
 	{
@@ -126,7 +125,7 @@ public:
 		character = physics::create_character_controller(btVector3(0, 5, 0), false);
 		
 		// load in the plane mesh
-		plane_mesh = assets::meshes()->load_from_path("models/plane");
+		plane_mesh = assets::meshes()->load_from_path("models/test");
 		if (plane_mesh)
 		{
 			plane_mesh->prepare_geometry();
@@ -157,23 +156,24 @@ public:
 		
 		// capture the mouse
 		kernel::instance()->capture_mouse( true );
+		
+		animation = CREATE(assets::Shader);
+		
+		animation->set_frag_data_location("out_color");
+		animation->alloc_uniforms(4);
+		animation->uniforms[0].set_key("projection_matrix");
+		animation->uniforms[1].set_key("modelview_matrix");
+		animation->uniforms[2].set_key("object_matrix");
+		animation->uniforms[3].set_key("diffusemap");
+		
+		animation->alloc_attributes(3);
+		animation->attributes[0].set_key("in_position"); animation->attributes[0].second = 0;
+		animation->attributes[1].set_key("in_normal"); animation->attributes[1].second = 1;
+		animation->attributes[2].set_key("in_uv"); animation->attributes[2].second = 2;
 
+		
+		assets::load_shader("shaders/animation", animation);
 
-		root = CREATE(scenegraph::Node);
-		root->name = "root";
-		
-		scenegraph::Node* one = CREATE(scenegraph::Node);
-		one->name = "child";
-		
-		
-		root->add_child(one);
-		
-		
-		scenegraph::print_tree(root);
-
-
-
-		
 		return kernel::Application_Success;
 	}
 
@@ -254,11 +254,11 @@ public:
 		char_mat = glm::translate(camera.pos - glm::vec3(0,1.82,0));
 		char_mat = glm::rotate(char_mat, -camera.yaw, glm::vec3(0,1,0));
 		gp.object_matrix = &char_mat;
-		
+
 			
 		for( unsigned short i = 0; i < char_mesh->total_geometry; ++i )
 		{
-			render_utilities::stream_geometry( rs, &char_mesh->geometry[i], gp );
+			render_utilities::stream_geometry( rs, &char_mesh->geometry[i], gp, animation );
 		}
 
 		//rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
@@ -277,7 +277,7 @@ public:
 	
 	virtual void shutdown( kernel::Params & params )
 	{
-		DESTROY(Node, root);
+		DESTROY(Shader, animation);
 		
 		physics::shutdown();
 		
