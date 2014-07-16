@@ -30,6 +30,28 @@ using namespace renderer;
 
 namespace assets
 {
+	static glm::mat4 json_to_mat4(Json::Value& value)
+	{
+		glm::mat4 output;
+		Json::ValueIterator it = value.begin();
+
+		float m[16];
+		size_t i = 0;
+		for( ; it != value.end(); ++it, ++i )
+		{
+			Json::Value item = *it;
+			m[i] = item.asFloat();
+		}
+		
+		
+		return glm::mat4(
+			m[0], m[1], m[2], m[3],
+			m[4], m[5], m[6], m[7],
+			m[8], m[9], m[10], m[11],
+			m[12], m[13], m[14], m[15]
+		);
+	}
+
 	// -------------------------------------------------------------
 	// Mesh
 	
@@ -214,6 +236,27 @@ namespace assets
 #endif
 		}
 		
+
+		// Process Bones
+		Json::Value bone_list = root["bones"];
+		mesh->total_bones = bone_list.size();
+		mesh->bones = CREATE_ARRAY(Bone, mesh->total_bones);
+		
+		Bone* bone = &mesh->bones[0];
+		Json::ValueIterator bone_it = bone_list.begin();
+		for( ; bone_it != bone_list.end(); ++bone_it)
+		{
+			Json::Value bone_node = *bone_it;
+			bone->name = bone_node["name"].asString();
+			
+			Json::Value inverse_bind_pose = bone_node["inverse_bind_pose"];
+			bone->inverse_bind_matrix = json_to_mat4(inverse_bind_pose);
+
+			LOGV("bone: %s\n", bone->name.c_str());
+			
+			bone++;
+		}
+		
 		DEALLOC( material_ids );
 		
 		return util::ConfigLoad_Success;
@@ -366,6 +409,9 @@ namespace assets
 		
 		DESTROY_ARRAY( Geometry, geometry_vn, total_geometry );
 		geometry_vn = 0;
+
+		DESTROY_ARRAY(Bone, bones, total_bones);
+		bones = 0;
 		
 		init();
 	} // purge

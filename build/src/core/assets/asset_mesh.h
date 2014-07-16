@@ -46,8 +46,14 @@ namespace assets
 	
 	struct Bone
 	{
+		std::string name;
+		
 		// local to bone space (vertex to bone)
 		glm::mat4 inverse_bind_matrix;
+		
+		
+		// world position of the bone for debugging
+		glm::vec3 world_position;
 	};
 	
 	struct Mesh : public Asset
