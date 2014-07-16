@@ -78,8 +78,13 @@ void test_function()
 	DEALLOC(buffer);
 }
 
-void jsonify_matrix(Json::Value& array, const aiMatrix4x4& matrix)
+void jsonify_matrix(Json::Value& array, const aiMatrix4x4& source)
 {
+	// The matrix must be transposed before copying to json
+	// because aiMatrix4x4 is ALWAYS row-major.
+	aiMatrix4x4 matrix = source;
+	matrix.Transpose();
+	
 	array.append(matrix.a1);
 	array.append(matrix.a2);
 	array.append(matrix.a3);
@@ -206,6 +211,8 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 		}
 		
 		
+		LOGV("TODO: should normalize bone weights!\n");
+		
 		if (mesh->mNumBones > 0)
 		{
 			LOGV("inspecting bones...\n");
@@ -217,18 +224,30 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 				LOGV("\tbone %i, \"%s\"\n", boneid, bone->mName.C_Str());
 				LOGV("\tweights: %i\n", bone->mNumWeights);
 				
-
+				jbone["name"] = bone->mName.C_Str();
+				
 				aiMatrix4x4 offset = bone->mOffsetMatrix;
+				Json::Value offset_matrix(Json::arrayValue);
+				jsonify_matrix(offset_matrix, bone->mOffsetMatrix);
+				jbone["inverse_bind_pose"] = offset_matrix;
+				
+				
+				Json::Value weights(Json::arrayValue);
 				for (size_t weight = 0; weight < bone->mNumWeights; ++weight)
 				{
 					aiVertexWeight* w = &bone->mWeights[weight];
 					LOGV("\tweight (%i) [vertex: %i -> weight: %2.2f\n", weight, w->mVertexId, w->mWeight);
+					
+					Json::Value jweight;
+					jweight["id"] = Json::valueToString((unsigned int)w->mVertexId);
+					jweight["weight"] = Json::valueToString(w->mWeight);
+					weights.append(jweight);
 				}
 				
-				jbone["name"] = bone->mName.C_Str();
-				Json::Value offset_matrix(Json::arrayValue);
-				jsonify_matrix(offset_matrix, bone->mOffsetMatrix);
-				jbone["offset_matrix"] = offset_matrix;
+				jbone["weights"] = weights;
+
+
+				
 				
 				jbones_array.append(jbone);
 			}
@@ -261,15 +280,20 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 		
 		jgeometry_array.append(jgeometry);
 	}
+	
 	root["geometry"] = jgeometry_array;
 	root["materials"] = jmaterial_array;
 	root["info"] = jinfo;
 	root["transform"] = jtransform;
 	root["bones"] = jbones_array;
 	
+	Json::Value janimations(Json::arrayValue);
+	
 	const aiAnimation* animation = 0;
 	for (size_t index = 0; index < scene->mNumAnimations; ++index)
 	{
+		Json::Value janimation;
+		
 		animation = scene->mAnimations[index];
 		LOGV("inspecting animation: %i, \"%s\"\n", index, animation->mName.C_Str());
 		LOGV("\tduration: %g\n", animation->mDuration);
@@ -277,25 +301,61 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 		LOGV("\tbone channels (skeletal): %i\n", animation->mNumChannels);
 		LOGV("\tmesh channels (vertex): %i\n", animation->mNumMeshChannels);
 
+		janimation["name"] = animation->mName.C_Str();
+		janimation["duration_seconds"] = animation->mDuration;
+		janimation["frames_per_second"] = animation->mTicksPerSecond;
+		
+		
+		Json::Value jnodes;
+		
 		// bone/node-based animation
 		const aiNodeAnim* node = 0;
 		for (size_t channel = 0; channel < animation->mNumChannels; ++channel)
 		{
+			Json::Value jnode;
+			Json::Value jkeys(Json::arrayValue);
+			
 			node = animation->mChannels[channel];
 			LOGV("\tinspecting bone/node %i \"%s\" ...\n", channel, node->mNodeName.C_Str());
-			LOGV("\t\tPosition Keys: %i\n", node->mNumPositionKeys);
+			LOGV("\t\t Total Keys: %i\n", node->mNumPositionKeys);
+			assert((node->mNumPositionKeys == node->mNumRotationKeys) && (node->mNumRotationKeys == node->mNumScalingKeys));
+			
+			jnode["bone_name"] = node->mNodeName.C_Str();
+
 			for (size_t key = 0; key < node->mNumPositionKeys; ++key)
 			{
-				const aiVectorKey* vkey = &node->mPositionKeys[key];
-				LOGV("\t\t\tT @ %2.2f -> %2.2f %2.2f %2.2f\n", vkey->mTime, vkey->mValue.x, vkey->mValue.y, vkey->mValue.z);
+				const aiVectorKey* skey = &node->mScalingKeys[key];
+				const aiQuatKey* rkey = &node->mRotationKeys[key];
+				const aiVectorKey* tkey = &node->mPositionKeys[key];
 				
-				//glm::vec3 position = to_glm(vkey->mValue);
+				aiMatrix4x4 scaling;
+				aiMatrix4x4::Scaling(skey->mValue, scaling);
+				
+				aiMatrix4x4 rotation(rkey->mValue.GetMatrix());
+				
+				aiMatrix4x4 translation;
+				aiMatrix4x4::Translation(tkey->mValue, translation);
+				
+				aiMatrix4x4 transform = scaling * rotation * translation;
+				Json::Value jtransform;
+				jsonify_matrix(jtransform, transform);
+				jkeys.append(jtransform);
+			}
+			
+			
+#if 0
+			
+			{
+				
+				LOGV("\t\t\tT @ %2.2f -> %2.2f %2.2f %2.2f\n", pkey->mTime, pkey->mValue.x, pkey->mValue.y, pkey->mValue.z);
+				
+				//glm::vec3 position = to_glm(pkey->mValue);
 			}
 			
 			LOGV("\t\tRotation Keys: %i\n", node->mNumRotationKeys);
 			for (size_t key = 0; key < node->mNumRotationKeys; ++key)
 			{
-				const aiQuatKey* qkey = &node->mRotationKeys[key];
+				
 				LOGV("\t\t\tR @ %2.2f -> %2.2f %2.2f %2.2f %2.2f\n", qkey->mTime, qkey->mValue.x, qkey->mValue.y, qkey->mValue.z, qkey->mValue.w);
 				
 				//glm::quat rotation = to_glm(qkey->mValue);
@@ -304,25 +364,30 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 			LOGV("\t\tScaling Keys: %i\n", node->mNumScalingKeys);
 			for (size_t key = 0; key < node->mNumScalingKeys; ++key)
 			{
-				const aiVectorKey* vkey = &node->mScalingKeys[key];
+				
 				LOGV("\t\t\tS @ %2.2f -> %2.2f %2.2f %2.2f\n", vkey->mTime, vkey->mValue.x, vkey->mValue.y, vkey->mValue.z);
 				
 				//glm::vec3 scale = to_glm(vkey->mValue);
 			}
+#endif
+			jnode["keys"] = jkeys;
+			jnodes.append(jnode);
 		}
 		
+		janimation["nodes"] = jnodes;
 		
-		
-		// vertex-based animation
-		const aiMeshAnim* anim = 0;
-		for (size_t channel = 0; channel < animation->mNumMeshChannels; ++channel)
-		{
-			anim = animation->mMeshChannels[channel];
-		}
+		janimations.append(janimation);
+//		// vertex-based animation
+//		const aiMeshAnim* anim = 0;
+//		for (size_t channel = 0; channel < animation->mNumMeshChannels; ++channel)
+//		{
+//			anim = animation->mMeshChannels[channel];
+//		}
 	}
 	
 	//fprintf(stdout, "Loaded %zu meshes ready for drawing\n", meshes.size());
 	
+	root["animations"] = janimations;
 	
 	
 	Json::StyledWriter writer;
