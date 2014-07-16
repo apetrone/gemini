@@ -30,6 +30,8 @@
 #include "assets.h"
 #include "renderer.h"
 
+#include "fixedarray.h"
+
 namespace assets
 {
 	// -------------------------------------------------------------
@@ -53,13 +55,12 @@ namespace assets
 	{
 		struct BoneTransform
 		{
-			std::vector<glm::mat4, GeminiAllocator<glm::mat4> > keys;
-			
+			FixedArray<glm::mat4> keys;
 			uint32_t bone_id;
-		};
+		}; // BoneTransform
 		
-		std::vector<BoneTransform, GeminiAllocator<BoneTransform> > transforms;
-		
+		FixedArray<BoneTransform> transforms;
+				
 		// duration in seconds
 		float duration_seconds;
 		
@@ -101,6 +102,9 @@ namespace assets
 		
 		// upload all geometry
 		//		void upload_geometry();
+		
+		// For now, we only have room for a single animation -- so make it worthwhile.
+		AnimationData animation;
 	}; // Mesh
 	
 	AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, const AssetParameters & parameters );

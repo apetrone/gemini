@@ -257,6 +257,46 @@ namespace assets
 			bone++;
 		}
 		
+		
+		
+		// Attempt to load animations?
+		Json::Value animations = root["animations"];
+		Json::ValueIterator animation_it = animations.begin();
+		for( ; animation_it != animations.end(); ++animation_it)
+		{
+			Json::Value janimation = *animation_it;
+			mesh->animation.duration_seconds = janimation["duration_seconds"].asFloat();
+			mesh->animation.frames_per_second = janimation["frames_per_second"].asFloat();
+
+			Json::Value node_list = janimation["nodes"];
+			Json::ValueIterator node_it = node_list.begin();
+			mesh->animation.transforms.allocate(node_list.size());
+			LOGV("loading %i nodes...\n", node_list.size());
+			
+			size_t tr_id = 0;
+			for( ; node_it != node_list.end(); ++node_it, ++tr_id)
+			{
+				AnimationData::BoneTransform* tr = &mesh->animation.transforms[tr_id];
+				Json::Value jnode = *node_it;
+				std::string bone_name = jnode["bone_name"].asString();
+				Json::Value jkeys = jnode["keys"];
+				tr->keys.allocate(jkeys.size());
+				
+				Json::ValueIterator jkey_it = jkeys.begin();
+				size_t key_id = 0;
+				LOGV("loading %i keys...\n", jkeys.size());
+				for( ; jkey_it != jkeys.end(); ++jkey_it, ++key_id)
+				{
+					Json::Value matrix = *jkey_it;
+					tr->keys[key_id] = json_to_mat4(matrix);
+				}
+				
+			}
+		}
+		
+		
+		
+		
 		DEALLOC( material_ids );
 		
 		return util::ConfigLoad_Success;
@@ -381,6 +421,7 @@ namespace assets
 		//		this->vertexbuffer = renderer::driver()->vertexbuffer_create( descriptor, this->draw_type, renderer::BUFFER_STATIC, descriptor.calculate_vertex_stride(), this->vertex_count, this->index_count );
 	}
 	
+
 	Mesh::Mesh()
 	{
 		init();

@@ -99,5 +99,5 @@ public:
 	{
 		assert_valid_index(index);
 		return elements[index];
-	}
+	} // operator[] const
 }; // class FixedArray
