@@ -51,7 +51,7 @@ namespace prism
 {
 	enum NodeType
 	{
-		ROOT,
+		SCENEROOT,
 		TRANSFORM,
 		BONE,
 		MESH

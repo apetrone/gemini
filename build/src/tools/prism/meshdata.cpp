@@ -96,7 +96,7 @@ namespace prism
 	
 	void Node::print()
 	{
-		StackString<64> type_string = "ROOT";
+		StackString<64> type_string = "SCENEROOT";
 		if (type == NodeType::TRANSFORM)
 		{
 			type_string = "TRANSFORM";
@@ -120,8 +120,8 @@ namespace prism
 	{
 		next_bone_id = 0;
 		root = CREATE(Node);
-		root->name = "root";
-		root->type = NodeType::ROOT;
+		root->name = "scene_root";
+		root->type = NodeType::SCENEROOT;
 	}
 
 	MeshData::~MeshData()
