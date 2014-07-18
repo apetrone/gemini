@@ -38,6 +38,8 @@
 
 #include "font.h"
 #include "assets/asset_font.h"
+#include "entity.h"
+#include "script.h"
 
 using namespace physics;
 
@@ -174,6 +176,14 @@ public:
 		
 		assets::load_shader("shaders/animation", animation);
 
+
+		entity_startup();
+		
+		
+		script::execute_file("scripts/project_chimera.nut");
+		
+		entity_post_script_load();
+
 		return kernel::Application_Success;
 	}
 
@@ -204,7 +214,7 @@ public:
 		physics::copy_ghost_to_camera(character->getGhostObject(), camera);
 		
 		
-		
+		entity_step();
 
 		
 		//camera.pos += glm::vec3(0, 2.5, 5);
@@ -219,11 +229,22 @@ public:
 		debugdraw::text(10, 36, xstr_format("camera.right = %.2g %.2g %.2g", camera.side.x, camera.side.y, camera.side.z), Color(255, 0, 0));
 		
 
+		for(size_t boneid = 0; boneid < plane_mesh->total_bones; ++boneid)
+		{
+			debugdraw::axes(plane_mesh->bones[boneid].inverse_bind_matrix, 1.0f);
+//			debugdraw::sphere(plane_mesh->bones[boneid].world_position, Color(255,0,0), 0.25f);
+//			plane_mesh->bones
+		}
+
 		debugdraw::update(params.step_interval_seconds);
 	}
 
 	virtual void tick( kernel::Params & params )
 	{
+		entity_tick();
+	
+	
+	
 		RenderStream rs;
 		renderer::GeneralParameters gp;
 
@@ -277,6 +298,8 @@ public:
 	
 	virtual void shutdown( kernel::Params & params )
 	{
+		entity_shutdown();
+	
 		DESTROY(Shader, animation);
 		
 		physics::shutdown();
