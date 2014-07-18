@@ -68,23 +68,13 @@ struct ToolEnvironment
 
 
 
-void test_function()
-{
-	fprintf(stdout, "Hello, World!\n");
-	
 
-	
-	size_t buffer_length = 0;
-	void* buffer = core::filesystem::file_to_buffer("input.blend", 0, &buffer_length);
-	
-	// do something with buffer
-
-	DEALLOC(buffer);
-}
 
 
 void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const char* output_path)
 {
+	prism::MeshData modeldata;
+	
 	Json::Value root;
 
 	const aiMesh *mesh = 0;
@@ -112,10 +102,13 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 	
 	
 	Json::Value hierarchy;
+
+	
+	MeshData meshdata;
+	
+	
 	// traverse all nodes in the scene
-	traverse_nodes(scene, hierarchy);
-	
-	
+	traverse_nodes(meshdata, scene, hierarchy);
 	
 	// loop through all meshes
 	for( size_t m = 0; m < scene->mNumMeshes; ++m )
@@ -139,6 +132,9 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 		LOGV("\tfaces: %i\n", mesh->mNumFaces);
 		LOGV("\tbones: %i\n", mesh->mNumBones);
 	
+		meshdata.read_bones(mesh, jbones_array);
+		
+		
 		if (mesh->HasNormals() && mesh->HasTextureCoords(0))
 		{
 			for(unsigned int vertex = 0; vertex < mesh->mNumVertices; ++vertex)
@@ -193,47 +189,6 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 		}
 		
 		
-		LOGV("TODO: should normalize bone weights!\n");
-		
-		if (mesh->mNumBones > 0)
-		{
-			LOGV("inspecting bones...\n");
-			const aiBone* bone = 0;
-			for (size_t boneid = 0; boneid < mesh->mNumBones; ++boneid)
-			{
-				Json::Value jbone;
-				bone = mesh->mBones[boneid];
-				LOGV("\tbone %i, \"%s\"\n", boneid, bone->mName.C_Str());
-				LOGV("\tweights: %i\n", bone->mNumWeights);
-				
-				jbone["name"] = bone->mName.C_Str();
-				
-				aiMatrix4x4 offset = bone->mOffsetMatrix;
-				Json::Value offset_matrix(Json::arrayValue);
-				jsonify_matrix(offset_matrix, bone->mOffsetMatrix);
-				jbone["inverse_bind_pose"] = offset_matrix;
-				
-				
-				Json::Value weights(Json::arrayValue);
-				for (size_t weight = 0; weight < bone->mNumWeights; ++weight)
-				{
-					aiVertexWeight* w = &bone->mWeights[weight];
-//					LOGV("\tweight (%i) [vertex: %i -> weight: %2.2f\n", weight, w->mVertexId, w->mWeight);
-					
-					Json::Value jweight;
-					jweight["id"] = Json::valueToString((unsigned int)w->mVertexId);
-					jweight["weight"] = Json::valueToString(w->mWeight);
-					weights.append(jweight);
-				}
-				
-				jbone["weights"] = weights;
-
-
-				
-				
-				jbones_array.append(jbone);
-			}
-		}
 		
 		
 		// TODO: error checking here...
@@ -257,9 +212,7 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 			jmaterial["name"] = texpath.basename().remove_extension()();
 			jmaterial_array.append(jmaterial);
 		}
-		
 
-		
 		jgeometry_array.append(jgeometry);
 	}
 	
@@ -267,6 +220,10 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 	root["materials"] = jmaterial_array;
 	root["info"] = jinfo;
 	root["transform"] = jtransform;
+	
+	
+	
+	LOGV("TODO: should normalize bone weights!\n");
 	root["bones"] = jbones_array;
 	
 	Json::Value janimations(Json::arrayValue);
@@ -373,6 +330,7 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 	
 	root["animations"] = janimations;
 	
+	meshdata.print_nodes();
 	
 	Json::StyledWriter writer;
 	xfile_t out = xfile_open(output_path, XF_WRITE);

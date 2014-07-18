@@ -49,32 +49,66 @@
 
 namespace prism
 {
-
+	enum NodeType
+	{
+		ROOT,
+		TRANSFORM,
+		BONE,
+		MESH
+	};
+	
+	typedef int NodeIndex;
+	typedef std::vector<struct Node*, GeminiAllocator<struct Node*>> NodeVector;
 	struct Node
 	{
-		enum Type
-		{
-				
-		};
-		
+		// for bones
 		aiMatrix4x4 inverse_bind_pose;
+		
+		// node's name
 		std::string name;
+		
+		NodeType type;
+		
+		NodeIndex index;
+		Node* parent;
+		NodeVector children;
+		
+		Node();
+		~Node();
+		
+		void add_child(Node* node);
+		void remove_child(Node* node);
+		Node* find_child_with_name(const std::string& name);
+		void print();
+		
+		inline bool is_bone() const { return type == NodeType::BONE; }
 	};
 
-	typedef std::vector<Node, GeminiAllocator<Node>> NodeVector;
-
+	
+	// TODO: rename to SceneData
 	struct MeshData
 	{
-		NodeVector nodes;
+		Node* root;
 		
+		// bone ids are contiguous; keep track
+		size_t next_bone_id;
+		
+		MeshData();
+		~MeshData();
+				
+
+		Node* create_node(const std::string& name, NodeType type, Node* parent = 0);
 		Node* find_node_with_name(const std::string& name);
+		void print_nodes();
+		
+		// mesh operations
+		void read_bones(const aiMesh* mesh, Json::Value& bones);
 	}; // MeshData
 
 
 	glm::quat to_glm(const aiQuaternion& q);
 	glm::vec3 to_glm(const aiVector3D& v);
 
-	void iterate_nodes(aiNode* node, aiMatrix4x4& accumulated_transform, size_t& total_nodes);
-	void traverse_nodes(const aiScene* scene, Json::Value& hierarchy);
+	void traverse_nodes(MeshData& meshdata, const aiScene* scene, Json::Value& hierarchy);
 	void jsonify_matrix(Json::Value& array, const aiMatrix4x4& source);
 }; // namespace prism
