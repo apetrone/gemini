@@ -30,7 +30,7 @@
 #include "assets.h"
 #include "renderer.h"
 
-#include "fixedarray.h"
+#include <gemini/util/fixedarray.h>
 
 namespace assets
 {

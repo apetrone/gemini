@@ -28,7 +28,7 @@
 #include <slim/xlog.h>
 
 #include "kernel.h"
-#include "fixedarray.h"
+#include <gemini/util/fixedarray.h>
 
 struct Test
 {
