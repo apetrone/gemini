@@ -1,3 +1,25 @@
+// -------------------------------------------------------------
+// Copyright (C) 2014- Adam Petrone
+
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+// -------------------------------------------------------------
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -17,23 +39,14 @@
 #include <gemini/util/stackstring.h>
 #include <gemini/core/xfile.h>
 
+#include <gemini/util/fixedarray.h>
 #include <gemini/util/arg.h>
 
 #include <json/json.h>
 
-// show output at build time regarding glm
-//#define GLM_MESSAGES 1
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/matrix_inverse.hpp>
-#include <glm/gtc/matrix_access.hpp>
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/quaternion.hpp>
-//#include <glm/gtc/noise.hpp>
-//#include <glm/gtc/random.hpp>
-#include <glm/gtx/rotate_vector.hpp>
-#include <glm/gtx/vector_angle.hpp>
+#include "meshdata.h"
+
+using namespace prism;
 
 const char TOOL_NAME[] = "prism";
 const char TOOL_VERSION[] = "alpha 1.0.0";
@@ -54,15 +67,6 @@ struct ToolEnvironment
 };
 
 
-glm::quat to_glm(const aiQuaternion& q)
-{
-	return glm::quat(q.x, q.y, q.z, q.w);
-}
-
-glm::vec3 to_glm(const aiVector3D& v)
-{
-	return glm::vec3(v.x, v.y, v.z);
-}
 
 void test_function()
 {
@@ -77,35 +81,6 @@ void test_function()
 
 	DEALLOC(buffer);
 }
-
-void jsonify_matrix(Json::Value& array, const aiMatrix4x4& source)
-{
-	// The matrix must be transposed before copying to json
-	// because aiMatrix4x4 is ALWAYS row-major.
-	aiMatrix4x4 matrix = source;
-	matrix.Transpose();
-	
-	array.append(matrix.a1);
-	array.append(matrix.a2);
-	array.append(matrix.a3);
-	array.append(matrix.a4);
-	
-	array.append(matrix.b1);
-	array.append(matrix.b2);
-	array.append(matrix.b3);
-	array.append(matrix.b4);
-	
-	array.append(matrix.c1);
-	array.append(matrix.c2);
-	array.append(matrix.c3);
-	array.append(matrix.c4);
-	
-	array.append(matrix.d1);
-	array.append(matrix.d2);
-	array.append(matrix.d3);
-	array.append(matrix.d4);
-}
-
 
 
 void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const char* output_path)
@@ -134,6 +109,13 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 	Json::Value jgeometry_array(Json::arrayValue);
 	
 	Json::Value jbones_array(Json::arrayValue);
+	
+	
+	Json::Value hierarchy;
+	// traverse all nodes in the scene
+	traverse_nodes(scene, hierarchy);
+	
+	
 	
 	// loop through all meshes
 	for( size_t m = 0; m < scene->mNumMeshes; ++m )
@@ -236,7 +218,7 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 				for (size_t weight = 0; weight < bone->mNumWeights; ++weight)
 				{
 					aiVertexWeight* w = &bone->mWeights[weight];
-					LOGV("\tweight (%i) [vertex: %i -> weight: %2.2f\n", weight, w->mVertexId, w->mWeight);
+//					LOGV("\tweight (%i) [vertex: %i -> weight: %2.2f\n", weight, w->mVertexId, w->mWeight);
 					
 					Json::Value jweight;
 					jweight["id"] = Json::valueToString((unsigned int)w->mVertexId);
@@ -288,7 +270,7 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 	root["bones"] = jbones_array;
 	
 	Json::Value janimations(Json::arrayValue);
-	
+
 	const aiAnimation* animation = 0;
 	for (size_t index = 0; index < scene->mNumAnimations; ++index)
 	{
@@ -314,6 +296,8 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 		{
 			Json::Value jnode;
 			Json::Value jkeys(Json::arrayValue);
+			
+
 			
 			node = animation->mChannels[channel];
 			LOGV("\tinspecting bone/node %i \"%s\" ...\n", channel, node->mNodeName.C_Str());
