@@ -57,7 +57,7 @@ namespace prism
 		{
 			node->parent->remove_child(node);
 		}
-		LOGV("add child \"%s\" as parent of \"%s\"\n", node->name.c_str(), name.c_str());
+		//LOGV("add child \"%s\" as parent of \"%s\"\n", node->name.c_str(), name.c_str());
 		node->parent = this;
 		children.push_back(node);
 	}
@@ -211,6 +211,76 @@ namespace prism
 		}
 	}
 
+	void MeshData::read_animation(Animation& animation_data, const aiAnimation* animation, Json::Value& animation_node)
+	{
+
+		LOGV("\tduration: %g\n", animation->mDuration);
+		LOGV("\tticks_per_second: %g\n", animation->mTicksPerSecond);
+		LOGV("\tbone channels (skeletal): %i\n", animation->mNumChannels);
+		LOGV("\tmesh channels (vertex): %i\n", animation->mNumMeshChannels);
+		
+		animation_node["name"] = animation->mName.C_Str();
+		animation_node["duration_seconds"] = animation->mDuration;
+		animation_node["frames_per_second"] = animation->mTicksPerSecond;
+		validate_frames_per_second(animation->mTicksPerSecond);
+		
+		
+		Json::Value node_list;
+		
+		Animation test;
+		
+		
+		// bone/node-based animation
+		const aiNodeAnim* animnode = 0;
+		for (size_t channel = 0; channel < animation->mNumChannels; ++channel)
+		{
+			Json::Value node;
+			animnode = animation->mChannels[channel];
+			
+			LOGV("\tinspecting bone/node %llu \"%s\" ...\n", channel, animnode->mNodeName.C_Str());
+			LOGV("\t\t Total Keys: %i\n", animnode->mNumPositionKeys);
+			assert((animnode->mNumPositionKeys == animnode->mNumRotationKeys) && (animnode->mNumRotationKeys == animnode->mNumScalingKeys));
+			
+			
+			Json::Value jkeys(Json::arrayValue);
+			node["name"] = animnode->mNodeName.C_Str();
+			
+			for (size_t key = 0; key < animnode->mNumPositionKeys; ++key)
+			{
+				const aiVectorKey* skey = &animnode->mScalingKeys[key];
+				const aiQuatKey* rkey = &animnode->mRotationKeys[key];
+				const aiVectorKey* tkey = &animnode->mPositionKeys[key];
+				
+				aiMatrix4x4 scaling;
+				aiMatrix4x4::Scaling(skey->mValue, scaling);
+				
+				aiMatrix4x4 rotation(rkey->mValue.GetMatrix());
+				
+				aiMatrix4x4 translation;
+				aiMatrix4x4::Translation(tkey->mValue, translation);
+				
+				aiMatrix4x4 transform = scaling * rotation * translation;
+				Json::Value jtransform;
+				jsonify_matrix(jtransform, transform);
+				jkeys.append(jtransform);
+			}
+			
+			node["keys"] = jkeys;
+			node_list.append(node);
+		
+			animation_node["nodes"] = node_list;
+		}
+
+//		// vertex-based animation
+//		const aiMeshAnim* anim = 0;
+//		for (size_t channel = 0; channel < animation->mNumMeshChannels; ++channel)
+//		{
+//			anim = animation->mMeshChannels[channel];
+//		}
+		
+		
+	}
+
 	glm::quat to_glm(const aiQuaternion& q)
 	{
 		return glm::quat(q.x, q.y, q.z, q.w);
@@ -253,16 +323,16 @@ namespace prism
 	// this function is almost identical to the one in the assimp documentation
 	void iterate_nodes(MeshData& meshdata, aiNode* node, Node* parent, aiMatrix4x4& accumulated_transform, size_t& total_nodes)
 	{
-		LOGV("[node %i] %s\n", total_nodes, node->mName.C_Str());
+		//LOGV("[node %i] %s\n", total_nodes, node->mName.C_Str());
 		++total_nodes;
 				
 		Node* newnode = meshdata.create_node(node->mName.C_Str(), NodeType::TRANSFORM, parent);
-		LOGV("created node %x, %s\n", newnode, newnode->name.c_str());
+		//LOGV("created node %x, %s\n", newnode, newnode->name.c_str());
 		
 		// if node has meshes, create a new scene object for it
 		if (node->mNumMeshes > 0)
 		{
-			LOGV("\tnode has %i meshes\n", node->mNumMeshes);
+			//LOGV("\tnode has %i meshes\n", node->mNumMeshes);
 			newnode->type = NodeType::MESH;
 		}
 		else
@@ -272,7 +342,7 @@ namespace prism
 		}
 		
 		// traverse all child nodes
-		LOGV("[node] %s has %i children.\n", node->mName.C_Str(), node->mNumChildren);
+		//LOGV("[node] %s has %i children.\n", node->mName.C_Str(), node->mNumChildren);
 		for(size_t child_index = 0; child_index < node->mNumChildren; ++child_index)
 		{
 			iterate_nodes(meshdata, node->mChildren[child_index], newnode, accumulated_transform, total_nodes);
@@ -288,4 +358,19 @@ namespace prism
 		
 		LOGV("scene nodes traversed.\n");
 	}
+	
+	bool validate_frames_per_second(float frames_per_second)
+	{
+		if (frames_per_second < 10)
+		{
+			LOGW("frames per second is below the minimum of: 24\n");
+			return false;
+		}
+		else if (frames_per_second == 24)
+		{
+			return true;
+		}
+		
+		return false;
+	} // move this?
 }; // namespace prism

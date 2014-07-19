@@ -228,102 +228,21 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 	
 	Json::Value janimations(Json::arrayValue);
 
+	Animation animation_data;
+
 	const aiAnimation* animation = 0;
-	for (size_t index = 0; index < scene->mNumAnimations; ++index)
+	for (size_t animation_index = 0; animation_index < scene->mNumAnimations; ++animation_index)
 	{
 		Json::Value janimation;
 		
-		animation = scene->mAnimations[index];
-		LOGV("inspecting animation: %i, \"%s\"\n", index, animation->mName.C_Str());
-		LOGV("\tduration: %g\n", animation->mDuration);
-		LOGV("\tticks_per_second: %g\n", animation->mTicksPerSecond);
-		LOGV("\tbone channels (skeletal): %i\n", animation->mNumChannels);
-		LOGV("\tmesh channels (vertex): %i\n", animation->mNumMeshChannels);
+		animation = scene->mAnimations[animation_index];
 
-		janimation["name"] = animation->mName.C_Str();
-		janimation["duration_seconds"] = animation->mDuration;
-		janimation["frames_per_second"] = animation->mTicksPerSecond;
-		
-		
-		Json::Value jnodes;
-		
-		// bone/node-based animation
-		const aiNodeAnim* node = 0;
-		for (size_t channel = 0; channel < animation->mNumChannels; ++channel)
-		{
-			Json::Value jnode;
-			Json::Value jkeys(Json::arrayValue);
-			
-
-			
-			node = animation->mChannels[channel];
-			LOGV("\tinspecting bone/node %i \"%s\" ...\n", channel, node->mNodeName.C_Str());
-			LOGV("\t\t Total Keys: %i\n", node->mNumPositionKeys);
-			assert((node->mNumPositionKeys == node->mNumRotationKeys) && (node->mNumRotationKeys == node->mNumScalingKeys));
-			
-			jnode["bone_name"] = node->mNodeName.C_Str();
-
-			for (size_t key = 0; key < node->mNumPositionKeys; ++key)
-			{
-				const aiVectorKey* skey = &node->mScalingKeys[key];
-				const aiQuatKey* rkey = &node->mRotationKeys[key];
-				const aiVectorKey* tkey = &node->mPositionKeys[key];
-				
-				aiMatrix4x4 scaling;
-				aiMatrix4x4::Scaling(skey->mValue, scaling);
-				
-				aiMatrix4x4 rotation(rkey->mValue.GetMatrix());
-				
-				aiMatrix4x4 translation;
-				aiMatrix4x4::Translation(tkey->mValue, translation);
-				
-				aiMatrix4x4 transform = scaling * rotation * translation;
-				Json::Value jtransform;
-				jsonify_matrix(jtransform, transform);
-				jkeys.append(jtransform);
-			}
-			
-			
-#if 0
-			
-			{
-				
-				LOGV("\t\t\tT @ %2.2f -> %2.2f %2.2f %2.2f\n", pkey->mTime, pkey->mValue.x, pkey->mValue.y, pkey->mValue.z);
-				
-				//glm::vec3 position = to_glm(pkey->mValue);
-			}
-			
-			LOGV("\t\tRotation Keys: %i\n", node->mNumRotationKeys);
-			for (size_t key = 0; key < node->mNumRotationKeys; ++key)
-			{
-				
-				LOGV("\t\t\tR @ %2.2f -> %2.2f %2.2f %2.2f %2.2f\n", qkey->mTime, qkey->mValue.x, qkey->mValue.y, qkey->mValue.z, qkey->mValue.w);
-				
-				//glm::quat rotation = to_glm(qkey->mValue);
-			}
-			
-			LOGV("\t\tScaling Keys: %i\n", node->mNumScalingKeys);
-			for (size_t key = 0; key < node->mNumScalingKeys; ++key)
-			{
-				
-				LOGV("\t\t\tS @ %2.2f -> %2.2f %2.2f %2.2f\n", vkey->mTime, vkey->mValue.x, vkey->mValue.y, vkey->mValue.z);
-				
-				//glm::vec3 scale = to_glm(vkey->mValue);
-			}
-#endif
-			jnode["keys"] = jkeys;
-			jnodes.append(jnode);
-		}
-		
-		janimation["nodes"] = jnodes;
+		LOGV("inspecting animation: %i, \"%s\"\n", animation_index, animation->mName.C_Str());
+		meshdata.read_animation(animation_data, animation, janimation);
 		
 		janimations.append(janimation);
-//		// vertex-based animation
-//		const aiMeshAnim* anim = 0;
-//		for (size_t channel = 0; channel < animation->mNumMeshChannels; ++channel)
-//		{
-//			anim = animation->mMeshChannels[channel];
-//		}
+		
+
 	}
 	
 	//fprintf(stdout, "Loaded %zu meshes ready for drawing\n", meshes.size());

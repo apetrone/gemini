@@ -25,6 +25,7 @@
 #include <gemini/mem.h>
 #include <gemini/core.h>
 #include <gemini/core/filesystem.h>
+#include <gemini/util/fixedarray.h>
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -84,6 +85,20 @@ namespace prism
 		inline bool is_bone() const { return type == NodeType::BONE; }
 	};
 
+
+	struct Animation
+	{
+		struct NodeData
+		{
+			std::string name;
+			
+			// TODO: can also support translation and scaling
+			// but for now we're just going to support rotation
+			glm::quat rotation;
+		};
+		
+		FixedArray<NodeData> nodes;
+	};
 	
 	// TODO: rename to SceneData
 	struct MeshData
@@ -103,6 +118,8 @@ namespace prism
 		
 		// mesh operations
 		void read_bones(const aiMesh* mesh, Json::Value& bones);
+		
+		void read_animation(Animation& animation_data, const aiAnimation* animation, Json::Value& animation_node);
 	}; // MeshData
 
 
@@ -111,4 +128,6 @@ namespace prism
 
 	void traverse_nodes(MeshData& meshdata, const aiScene* scene, Json::Value& hierarchy);
 	void jsonify_matrix(Json::Value& array, const aiMatrix4x4& source);
+	
+	bool validate_frames_per_second(float frames_per_second);
 }; // namespace prism
