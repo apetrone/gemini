@@ -42,7 +42,7 @@ enum EntityType
 	Emitter,
 };
 
-typedef std::vector<struct Entity*, GeminiAllocator<struct Entity*>> EntityVector;
+typedef std::vector< struct Entity*, GeminiAllocator<struct Entity*> > EntityVector;
 
 // script stuff
 struct Entity
