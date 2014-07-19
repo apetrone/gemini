@@ -55,7 +55,7 @@ namespace assets
 	{
 		struct Frame
 		{
-			FixedArray<FixedArray<glm::mat4>> keys;
+			FixedArray< FixedArray<glm::mat4> > keys;
 		}; // Frame
 		
 		FixedArray<Frame> frames;
