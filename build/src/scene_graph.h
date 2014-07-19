@@ -29,7 +29,7 @@
 namespace scenegraph
 {
 	
-	typedef std::vector<struct Node*, GeminiAllocator<Node*>> NodeVector;
+	typedef std::vector< struct Node*, GeminiAllocator<Node*> > NodeVector;
 		
 	struct Node
 	{

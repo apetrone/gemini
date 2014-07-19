@@ -59,7 +59,7 @@ namespace prism
 	};
 	
 	typedef int NodeIndex;
-	typedef std::vector<struct Node*, GeminiAllocator<struct Node*>> NodeVector;
+	typedef std::vector< struct Node*, GeminiAllocator<struct Node*> > NodeVector;
 	struct Node
 	{
 		// for bones
