@@ -53,13 +53,12 @@ namespace assets
 	// TEMP struct to test the whole shebang.
 	struct AnimationData
 	{
-		struct BoneTransform
+		struct Frame
 		{
-			FixedArray<glm::mat4> keys;
-			uint32_t bone_id;
-		}; // BoneTransform
+			FixedArray<FixedArray<glm::mat4>> keys;
+		}; // Frame
 		
-		FixedArray<BoneTransform> transforms;
+		FixedArray<Frame> frames;
 				
 		// duration in seconds
 		float duration_seconds;

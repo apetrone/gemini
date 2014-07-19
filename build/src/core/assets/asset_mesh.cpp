@@ -270,15 +270,15 @@ namespace assets
 
 			Json::Value node_list = janimation["nodes"];
 			Json::ValueIterator node_it = node_list.begin();
-			mesh->animation.transforms.allocate(node_list.size());
+			mesh->animation.frames.allocate(node_list.size());
 			LOGV("loading %i nodes...\n", node_list.size());
 			
 			size_t tr_id = 0;
 			for( ; node_it != node_list.end(); ++node_it, ++tr_id)
 			{
-				AnimationData::BoneTransform* tr = &mesh->animation.transforms[tr_id];
+				AnimationData::Frame* tr = &mesh->animation.frames[tr_id];
 				Json::Value jnode = *node_it;
-				std::string bone_name = jnode["bone_name"].asString();
+				std::string bone_name = jnode["name"].asString();
 				Json::Value jkeys = jnode["keys"];
 				tr->keys.allocate(jkeys.size());
 				
@@ -288,7 +288,7 @@ namespace assets
 				for( ; jkey_it != jkeys.end(); ++jkey_it, ++key_id)
 				{
 					Json::Value matrix = *jkey_it;
-					tr->keys[key_id] = json_to_mat4(matrix);
+					//tr->keys[key_id] = json_to_mat4(matrix);
 				}
 				
 			}
