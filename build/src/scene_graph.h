@@ -74,6 +74,7 @@ namespace scenegraph
 
 	struct Visitor
 	{
+		virtual ~Visitor() {}
 		virtual int32_t visit(Node* node) = 0;
 	};
 
