@@ -29,23 +29,15 @@
 // -------------------------------------------------------------
 class Channel
 {
+	float local_time_seconds;
+	float& value;
 	FixedArray<float> keys;
 	
 public:
-	Channel();
+	Channel(float& value);
+	~Channel() {}
 	
 	void set_keys(float* data, size_t total_keys);
-};
-
-class ChannelInstance
-{
-	Channel& channel;
-	float local_time_seconds;
-	float& value;
-	
-public:
-	ChannelInstance(float& value, Channel& channel);
-	
 	void update(float delta_seconds);
 };
 

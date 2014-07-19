@@ -40,6 +40,9 @@
 #include "assets/asset_font.h"
 #include "entity.h"
 #include "script.h"
+#include "scene_graph.h"
+
+#include "meshnode.h"
 
 using namespace physics;
 
@@ -48,7 +51,8 @@ using namespace physics;
 class ProjectChimera : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
-public kernel::IEventListener<kernel::SystemEvent>
+public kernel::IEventListener<kernel::SystemEvent>,
+public scenegraph::Visitor
 {
 
 public:
@@ -58,6 +62,12 @@ public:
 	Camera camera;
 	physics::CharacterController* character;
 	assets::Shader* animation;
+	scenegraph::Node* root;
+	
+	
+	// members of the mesh visitor
+	RenderStream* renderstream;
+	renderer::GeneralParameters* generalparams;
 	
 	ProjectChimera()
 	{
@@ -112,6 +122,31 @@ public:
 		
 	}
 
+	virtual int visit(scenegraph::Node* node)
+	{
+		// TODO: add this stuff to a render queue for sorting, etc.
+		if (node->get_type() == scenegraph::MESH)
+		{
+			scenegraph::MeshNode* meshnode = static_cast<scenegraph::MeshNode*>(node);
+			assets::Mesh* mesh = meshnode->mesh;
+
+			// TODO: update world transform?
+			node->world_transform = glm::mat4(1.0);
+			node->world_transform = glm::translate(node->world_transform, node->local_position);
+			
+			// compose a matrix
+			this->generalparams->object_matrix = &node->world_transform;
+
+			for( unsigned short i = 0; i < mesh->total_geometry; ++i )
+			{
+				render_utilities::stream_geometry(*this->renderstream, &mesh->geometry[i], *this->generalparams );
+			}
+		}
+		
+		
+		return 0;
+	}
+
 	virtual kernel::ApplicationResult config( kernel::Params & params )
 	{
 		params.window_title = "project_chimera";
@@ -126,14 +161,19 @@ public:
 		
 		character = physics::create_character_controller(btVector3(0, 5, 0), false);
 		
-		// load in the plane mesh
-		plane_mesh = assets::meshes()->load_from_path("models/test");
-		if (plane_mesh)
-		{
-			plane_mesh->prepare_geometry();
-		}
+		root = CREATE(scenegraph::Node);
+		root->name = "scene_root";
 		
-		physics::create_physics_for_mesh(plane_mesh);
+		scenegraph::MeshNode* mn = CREATE(scenegraph::MeshNode);
+		mn->load_mesh("models/test", true);
+
+		root->add_child(mn);
+		
+		mn = CREATE(scenegraph::MeshNode);
+		mn->load_mesh("models/black_lodge", true);
+		
+		root->add_child(mn);
+		
 		
 		
 		
@@ -142,6 +182,9 @@ public:
 		{
 			char_mesh->prepare_geometry();
 		}
+		
+
+		
 
 		debugdraw::startup(1024);
 
@@ -178,8 +221,7 @@ public:
 
 
 		entity_startup();
-		
-		
+	
 		script::execute_file("scripts/project_chimera.nut");
 		
 		entity_post_script_load();
@@ -228,13 +270,14 @@ public:
 		debugdraw::text(10, 24, xstr_format("camera.view = %.2g %.2g %.2g", camera.view.x, camera.view.y, camera.view.z), Color(128, 128, 255));
 		debugdraw::text(10, 36, xstr_format("camera.right = %.2g %.2g %.2g", camera.side.x, camera.side.y, camera.side.z), Color(255, 0, 0));
 		
-
+#if 0
 		for(size_t boneid = 0; boneid < plane_mesh->total_bones; ++boneid)
 		{
 			debugdraw::axes(plane_mesh->bones[boneid].inverse_bind_matrix, 1.0f);
 //			debugdraw::sphere(plane_mesh->bones[boneid].world_position, Color(255,0,0), 0.25f);
 //			plane_mesh->bones
 		}
+#endif
 
 		debugdraw::update(params.step_interval_seconds);
 	}
@@ -259,13 +302,13 @@ public:
 		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
 
-		
-		for( unsigned short i = 0; i < plane_mesh->total_geometry; ++i )
-		{
-			render_utilities::stream_geometry( rs, &plane_mesh->geometry[i], gp );
-		}
-		
 
+		
+		this->renderstream = &rs;
+		this->generalparams = &gp;
+		
+		// render nodes
+		scenegraph::visit_nodes(root, this);
 
 		
 		glm::mat4 char_mat = glm::mat4(1.0);
@@ -298,6 +341,8 @@ public:
 	
 	virtual void shutdown( kernel::Params & params )
 	{
+		DESTROY(Node, root);
+		
 		entity_shutdown();
 	
 		DESTROY(Shader, animation);

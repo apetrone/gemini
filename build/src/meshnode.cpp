@@ -19,69 +19,38 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
+#include <gemini/typedefs.h>
+#include <slim/xlog.h>
 
-#include <vector>
+#include "scene_graph.h"
+#include "meshnode.h"
 
-#include <gemini/util/stackstring.h>
-
-#include "mathlib.h"
-#include "keyframechannel.h"
-
+#include "physics.h"
 
 namespace scenegraph
 {
-	typedef std::vector< struct Node*, GeminiAllocator<Node*> > NodeVector;
-	
-	enum NodeType
+	MeshNode::MeshNode()
 	{
-		SCENEROOT, 		// the scene root
-		TRANSFORM, 		// generic transform
-		MESH,			// geometry/mesh node
-	};
+		type = MESH;
+		mesh = 0;
+	}
 	
-	struct Node
+	MeshNode::~MeshNode()
 	{
-		// decomposed pieces
-		glm::vec3 local_position;
-		glm::quat local_rotation;
-		glm::vec3 local_scale;
 		
-		// the local to world transform
-		glm::mat4 local_to_world;
-		
-		// local to pivot point vector
-		glm::vec3 local_to_pivot;
-		
-		// the final world-transform for this model
-		glm::mat4 world_transform;
-		
-		StackString<128> name;
-		
-		NodeVector children;
-		Node* parent;
-		
-		NodeType type;
+	}
 	
-		Node();
-		virtual ~Node();
-		
-		void add_child(Node* child);
-		void remove_child(Node* child);
-		virtual void update(float delta_seconds);
-		NodeType get_type() const { return type; }
-	};
-
-	struct Visitor
+	void MeshNode::load_mesh(const char* path, bool build_physics_from_mesh)
 	{
-		virtual int32_t visit(Node* node) = 0;
-	};
-
-	
-	void create_scene(Node* root);
-	void visit_nodes(Node* root, Visitor* visitor);
-	void destroy_scene(Node* root);
-	void print_tree(Node* root);
+		mesh = assets::meshes()->load_from_path(path);
+		if (mesh)
+		{
+			mesh->prepare_geometry();
+		}
+		
+		if (build_physics_from_mesh)
+		{
+			physics::create_physics_for_mesh(mesh);
+		}
+	}
 }; // namespace scenegraph
-
-

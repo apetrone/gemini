@@ -21,67 +21,22 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <vector>
-
-#include <gemini/util/stackstring.h>
-
-#include "mathlib.h"
-#include "keyframechannel.h"
-
+#include "scene_graph.h"
+#include "assets/asset_mesh.h"
 
 namespace scenegraph
 {
-	typedef std::vector< struct Node*, GeminiAllocator<Node*> > NodeVector;
-	
-	enum NodeType
+	struct MeshNode : public Node
 	{
-		SCENEROOT, 		// the scene root
-		TRANSFORM, 		// generic transform
-		MESH,			// geometry/mesh node
+		assets::Mesh* mesh;
+		
+		
+		
+		MeshNode();
+		virtual ~MeshNode();
+		
+		void load_mesh(const char* path, bool build_physics_from_mesh = false);
 	};
-	
-	struct Node
-	{
-		// decomposed pieces
-		glm::vec3 local_position;
-		glm::quat local_rotation;
-		glm::vec3 local_scale;
-		
-		// the local to world transform
-		glm::mat4 local_to_world;
-		
-		// local to pivot point vector
-		glm::vec3 local_to_pivot;
-		
-		// the final world-transform for this model
-		glm::mat4 world_transform;
-		
-		StackString<128> name;
-		
-		NodeVector children;
-		Node* parent;
-		
-		NodeType type;
-	
-		Node();
-		virtual ~Node();
-		
-		void add_child(Node* child);
-		void remove_child(Node* child);
-		virtual void update(float delta_seconds);
-		NodeType get_type() const { return type; }
-	};
-
-	struct Visitor
-	{
-		virtual int32_t visit(Node* node) = 0;
-	};
-
-	
-	void create_scene(Node* root);
-	void visit_nodes(Node* root, Visitor* visitor);
-	void destroy_scene(Node* root);
-	void print_tree(Node* root);
 }; // namespace scenegraph
 
 

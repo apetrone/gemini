@@ -22,7 +22,11 @@
 #include "keyframechannel.h"
 
 
-Channel::Channel()
+
+
+
+Channel::Channel(float& value_in) :
+	value(value_in)
 {
 	
 }
@@ -33,15 +37,10 @@ void Channel::set_keys(float* data, size_t total_keys)
 	memcpy(&keys[0], data, sizeof(float));
 }
 
-ChannelInstance::ChannelInstance(float& value_in, Channel& channel_in) :
-	value(value_in), channel(channel_in)
-{
-	
-}
-
-void ChannelInstance::update(float delta_seconds)
+void Channel::update(float delta_seconds)
 {
 	local_time_seconds += delta_seconds;
 	
 	value = 0.2f;
 }
+
