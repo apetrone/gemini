@@ -24,6 +24,9 @@
 #include <gemini/core/filesystem.h>
 #include <gemini/core/log.h>
 
+
+#include <slim/xlog.h>
+
 #include "configloader.h"
 
 namespace util
@@ -65,8 +68,7 @@ namespace util
 		else
 		{
 			is_success = false;
-//			LOGE( "ERROR loading %s\n", filename );
-#warning fix this
+			LOGE( "ERROR loading %s\n", filename );
 		}
 		
 		return is_success;

@@ -46,7 +46,7 @@ namespace assets
 	{
 		std::string temp = value.asString();
 		
-		uint32 colors[4] = { 255, 255, 255, 255 };
+		uint32_t colors[4] = { 255, 255, 255, 255 };
 		
 		// try RGBA
 		if (sscanf(temp.c_str(), "%i, %i, %i, %i", &colors[0], &colors[1], &colors[2], &colors[3]) < 4)

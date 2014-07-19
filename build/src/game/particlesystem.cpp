@@ -94,7 +94,7 @@ void ParticleEmitter::step(float delta_seconds)
 	{
 		this->next_spawn = this->emitter_config->spawn_delay_seconds;
 		particles_to_spawn = this->emitter_config->spawn_rate;
-		uint32 eff = (this->emitter_config->max_particles-num_particles_alive);
+		uint32_t eff = (this->emitter_config->max_particles-num_particles_alive);
 		if (particles_to_spawn > eff )
 		{
 			particles_to_spawn = (this->emitter_config->max_particles-num_particles_alive);

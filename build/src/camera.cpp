@@ -38,7 +38,7 @@ Camera::Camera(CameraType _type)
 }
 
 
-void Camera::move_view( int32 dx, int32 dy )
+void Camera::move_view( int32_t dx, int32_t dy )
 {
 	yaw += (dx * sensitivity);
 	pitch += (dy * sensitivity);
@@ -210,7 +210,7 @@ void Camera::set_absolute_position( const glm::vec3 & position )
 }
 
 
-void Camera::perspective( real fovy, int32 width, int32 height, real nearz, real farz )
+void Camera::perspective( real fovy, int32_t width, int32_t height, real nearz, real farz )
 {
 	// This MUST be greater than 0, otherwise the view will be inverted or something.
 	// Basically, you won't see anything.

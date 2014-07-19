@@ -70,51 +70,18 @@
 	#define LIBRARY_SDK_CEXPORT
 #endif
 
-#undef uint8
-#undef uint16
-#undef uint32
-#undef uint64
-#undef int8
-#undef int16
-#undef int32
-#undef int64
-#undef float32
-#undef float64
 
-/// unsigned 8-bit int
-typedef unsigned char uint8;
-/// unsigned 16-bit int
-typedef unsigned short uint16;
-/// unsigned 32-bit int
-typedef unsigned int uint32;
-
-/// signed 8-bit int
-typedef signed char int8;
-/// signed 16-bit int
-typedef signed short int16;
-/// signed 32-bit int
-typedef signed int int32;
-
-/// 32-bit float
-typedef float float32;
-/// 64-bit float
-typedef double float64;
+// prefer the C99 types
+#include <stdint.h>
 
 #if _MSC_VER
-	/// signed 64-bit int
-	typedef signed __int64 int64;
-	/// unsigned 64-bit int
-	typedef unsigned __int64 uint64;
 	/// 16-bit char
 	typedef wchar_t wchar;
 #elif __GNUC__
-	/// signed 64-bit int
-	typedef long long int int64;
-	/// unsigned 64-bit int
-	typedef unsigned long long int uint64;
 	/// 16-bit char
-	typedef int16 wchar;
+	typedef int16_t wchar;
 #endif
+
 
 #include <gemini/config.h>
 #include <assert.h>

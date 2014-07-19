@@ -117,7 +117,7 @@ struct Camera
 	void invert_yaxis( bool invert ) { invert_y_axis = invert; }
 	
 	// called when the mouse moves to update the view
-	void move_view( int32 dx, int32 dy );
+	void move_view( int32_t dx, int32_t dy );
 	
 	// position-based movement
 	void move_left( real dt );
@@ -130,6 +130,6 @@ struct Camera
 	virtual void update_view();
 	
 	// projection type functions
-	void perspective( real fovy, int32 width, int32 height, real nearz, real farz );
+	void perspective( real fovy, int32_t width, int32_t height, real nearz, real farz );
 	void ortho( real left, real right, real bottom, real top, real nearz, real farz );	
 }; // Camera
