@@ -315,7 +315,7 @@ public:
 template <class Type>
 struct EntityList
 {
-	typedef std::vector<Type*> EntityVectorType;
+	typedef std::vector< Type*, GeminiAllocator<Type*> > EntityVectorType;
 	EntityVectorType objects;
 	
 	void add( Type * object )
