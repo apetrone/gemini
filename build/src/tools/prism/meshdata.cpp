@@ -34,7 +34,7 @@ namespace prism
 {
 	Node::Node()
 	{
-		type = NodeType::TRANSFORM;
+		type = TRANSFORM;
 		index = -1;
 		parent = 0;
 	}
@@ -97,15 +97,15 @@ namespace prism
 	void Node::print()
 	{
 		StackString<64> type_string = "SCENEROOT";
-		if (type == NodeType::TRANSFORM)
+		if (type == Node::TRANSFORM)
 		{
 			type_string = "TRANSFORM";
 		}
-		else if (type == NodeType::BONE)
+		else if (type == Node::BONE)
 		{
 			type_string = "BONE";
 		}
-		else if (type == NodeType::MESH)
+		else if (type == Node::MESH)
 		{
 			type_string = "MESH";
 		}
@@ -121,7 +121,7 @@ namespace prism
 		next_bone_id = 0;
 		root = CREATE(Node);
 		root->name = "scene_root";
-		root->type = NodeType::SCENEROOT;
+		root->type = Node::SCENEROOT;
 	}
 
 	MeshData::~MeshData()
@@ -129,7 +129,8 @@ namespace prism
 		DESTROY(Node, root);
 	}
 	
-	Node* MeshData::create_node(const std::string &name, NodeType type, Node* parent)
+	Node* MeshData::create_node(const std::string &name, 
+Node::NodeType type, Node* parent)
 	{
 		Node* node = CREATE(Node);
 		node->name = name;
@@ -189,7 +190,7 @@ namespace prism
 				Node* node = find_node_with_name(bone->mName.C_Str());
 				if (node)
 				{
-					node->type = NodeType::BONE;
+					node->type = Node::BONE;
 				}
 				
 				Json::Value weights(Json::arrayValue);
@@ -326,14 +327,15 @@ namespace prism
 		//LOGV("[node %i] %s\n", total_nodes, node->mName.C_Str());
 		++total_nodes;
 				
-		Node* newnode = meshdata.create_node(node->mName.C_Str(), NodeType::TRANSFORM, parent);
+		Node* newnode = 
+meshdata.create_node(node->mName.C_Str(), Node::TRANSFORM, parent);
 		//LOGV("created node %x, %s\n", newnode, newnode->name.c_str());
 		
 		// if node has meshes, create a new scene object for it
 		if (node->mNumMeshes > 0)
 		{
 			//LOGV("\tnode has %i meshes\n", node->mNumMeshes);
-			newnode->type = NodeType::MESH;
+			newnode->type = Node::MESH;
 		}
 		else
 		{

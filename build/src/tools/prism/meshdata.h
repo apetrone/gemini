@@ -50,18 +50,18 @@
 
 namespace prism
 {
-	enum NodeType
-	{
-		SCENEROOT,
-		TRANSFORM,
-		BONE,
-		MESH
-	};
-	
 	typedef int NodeIndex;
 	typedef std::vector< struct Node*, GeminiAllocator<struct Node*> > NodeVector;
 	struct Node
 	{
+		enum NodeType
+		{
+			SCENEROOT,
+			TRANSFORM,
+			BONE,
+			MESH
+		};
+	
 		// for bones
 		aiMatrix4x4 inverse_bind_pose;
 		
@@ -82,7 +82,7 @@ namespace prism
 		Node* find_child_with_name(const std::string& name);
 		void print();
 		
-		inline bool is_bone() const { return type == NodeType::BONE; }
+		inline bool is_bone() const { return type == BONE; }
 	};
 
 
@@ -112,7 +112,8 @@ namespace prism
 		~MeshData();
 				
 
-		Node* create_node(const std::string& name, NodeType type, Node* parent = 0);
+		Node* create_node(const std::string& name, 
+Node::NodeType type, Node* parent = 0);
 		Node* find_node_with_name(const std::string& name);
 		void print_nodes();
 		
