@@ -21,21 +21,19 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <gemini/util/fixedarray.h>
+
 #include "scene_graph.h"
+#include "meshnode.h"
 #include "assets/asset_mesh.h"
 
 namespace scenegraph
 {
-	struct MeshNode : public Node
+	struct SkeletalNode : public MeshNode
 	{
-		assets::Mesh* mesh;
-		
-		
-		
-		MeshNode();
-		virtual ~MeshNode();
-		
-		void load_mesh(const char* path, bool build_physics_from_mesh = false);
+		FixedArray<glm::mat4> transforms;
+
+		virtual void update(float delta_seconds);
 	};
 }; // namespace scenegraph
 

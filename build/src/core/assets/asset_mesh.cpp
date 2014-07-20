@@ -240,21 +240,28 @@ namespace assets
 		// Process Bones
 		Json::Value bone_list = root["bones"];
 		mesh->total_bones = bone_list.size();
-		mesh->bones = CREATE_ARRAY(Bone, mesh->total_bones);
+		LOGV("total bones: %i\n", mesh->total_bones);
 		
-		Bone* bone = &mesh->bones[0];
-		Json::ValueIterator bone_it = bone_list.begin();
-		for( ; bone_it != bone_list.end(); ++bone_it)
+		if (mesh->total_bones > 0)
 		{
-			Json::Value bone_node = *bone_it;
-			bone->name = bone_node["name"].asString();
+			mesh->bones = CREATE_ARRAY(Bone, mesh->total_bones);
 			
-			Json::Value inverse_bind_pose = bone_node["inverse_bind_pose"];
-			bone->inverse_bind_matrix = json_to_mat4(inverse_bind_pose);
+			Bone* bone = &mesh->bones[0];
+			Json::ValueIterator bone_it = bone_list.begin();
+			
 
-			LOGV("bone: %s\n", bone->name.c_str());
-			
-			bone++;
+			for( ; bone_it != bone_list.end(); ++bone_it)
+			{
+				Json::Value bone_node = *bone_it;
+				bone->name = bone_node["name"].asString();
+				
+				Json::Value inverse_bind_pose = bone_node["inverse_bind_pose"];
+				bone->inverse_bind_matrix = json_to_mat4(inverse_bind_pose);
+
+				LOGV("bone: %s\n", bone->name.c_str());
+				
+				bone++;
+			}
 		}
 		
 		
@@ -281,6 +288,19 @@ namespace assets
 				std::string bone_name = jnode["name"].asString();
 				Json::Value jkeys = jnode["keys"];
 				tr->keys.allocate(jkeys.size());
+				
+				if (!jnode["bone_index"].isNull() && !jnode["bone_parent"].isNull())
+				{
+					int32_t bone_index = jnode["bone_index"].asInt();
+					int32_t bone_parent = jnode["bone_parent"].asInt();
+					
+					assert(bone_index >= 0);
+					
+					
+					Bone* bone = &mesh->bones[bone_index];
+					
+					LOGV("match %s to %s\n", bone_name.c_str(), bone->name.c_str());
+				}
 				
 				Json::ValueIterator jkey_it = jkeys.begin();
 				size_t key_id = 0;

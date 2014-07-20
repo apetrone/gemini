@@ -23,34 +23,14 @@
 #include <slim/xlog.h>
 
 #include "scene_graph.h"
-#include "meshnode.h"
+#include "skeletalnode.h"
 
-#include "physics.h"
 
 namespace scenegraph
 {
-	MeshNode::MeshNode()
+
+	void SkeletalNode::update(float delta_seconds)
 	{
-		type = MESH;
-		mesh = 0;
-	}
-	
-	MeshNode::~MeshNode()
-	{
-		
-	}
-	
-	void MeshNode::load_mesh(const char* path, bool build_physics_from_mesh)
-	{
-		mesh = assets::meshes()->load_from_path(path);
-		if (mesh)
-		{
-			mesh->prepare_geometry();
-		}
-		
-		if (build_physics_from_mesh)
-		{
-			physics::create_physics_for_mesh(mesh);
-		}
+
 	}
 }; // namespace scenegraph
