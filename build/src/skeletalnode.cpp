@@ -37,7 +37,7 @@ namespace scenegraph
 		assert(mesh != 0);
 		transforms.allocate(mesh->total_bones);
 
-		for (size_t bone_index = 0; bone_index < mesh->bones.size(); ++bone_index)
+		for (size_t bone_index = 0; bone_index < mesh->total_bones; ++bone_index)
 		{
 			// Iterate over each bone and calculate the global transform
 			// for each bone.
@@ -57,7 +57,7 @@ namespace scenegraph
 			
 
 			glm::mat4& tr = transforms[bone_index];
-			tr = bone->inverse_bind_pose * bone->world_transform;	
+			tr = bone->inverse_bind_matrix * bone->world_transform;
 		}
 		
 	}

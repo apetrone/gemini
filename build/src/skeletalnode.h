@@ -33,6 +33,7 @@ namespace scenegraph
 	{
 		FixedArray<glm::mat4> transforms;
 
+		void setup_skeleton();
 		virtual void update(float delta_seconds);
 	};
 }; // namespace scenegraph
