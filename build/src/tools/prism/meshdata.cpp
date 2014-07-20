@@ -183,7 +183,7 @@ Node::NodeType type, Node* parent)
 				
 				
 				jbone["name"] = bone->mName.C_Str();
-				jbone["index"] = Json::valueToString((unsigned)total_bones);
+				//jbone["bone_index"] = Json::valueToString((unsigned)total_bones);
 				
 				
 				aiMatrix4x4 offset = bone->mOffsetMatrix;
