@@ -69,6 +69,7 @@ namespace prism
 		std::string name;
 		
 		NodeType type;
+		int32_t bone_index;
 		
 		NodeIndex index;
 		Node* parent;

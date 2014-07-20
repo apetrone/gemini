@@ -37,6 +37,7 @@ namespace prism
 		type = TRANSFORM;
 		index = -1;
 		parent = 0;
+		bone_index = -1;
 	}
 	
 	Node::~Node()
@@ -170,6 +171,7 @@ Node::NodeType type, Node* parent)
 		if (mesh->mNumBones > 0)
 		{
 			LOGV("inspecting bones...\n");
+			size_t total_bones = 0;
 			const aiBone* bone = 0;
 			for (size_t boneid = 0; boneid < mesh->mNumBones; ++boneid)
 			{
@@ -181,6 +183,8 @@ Node::NodeType type, Node* parent)
 				
 				
 				jbone["name"] = bone->mName.C_Str();
+				jbone["index"] = Json::valueToString((unsigned)total_bones);
+				
 				
 				aiMatrix4x4 offset = bone->mOffsetMatrix;
 				Json::Value offset_matrix(Json::arrayValue);
@@ -191,7 +195,11 @@ Node::NodeType type, Node* parent)
 				if (node)
 				{
 					node->type = Node::BONE;
+					node->bone_index = total_bones;
 				}
+				
+				
+				total_bones++;
 				
 				Json::Value weights(Json::arrayValue);
 				for (size_t weight = 0; weight < bone->mNumWeights; ++weight)
@@ -244,7 +252,29 @@ Node::NodeType type, Node* parent)
 			
 			
 			Json::Value jkeys(Json::arrayValue);
-			node["name"] = animnode->mNodeName.C_Str();
+			
+			std::string node_name = animnode->mNodeName.C_Str();
+			
+//			node["name"] = animnode->mNodeName.C_Str();
+			node["name"] = node_name;
+			
+			int32_t bone_index = -1;
+			int32_t parent_bone_index = -1;
+			
+			Node* bone_node = find_node_with_name(node_name);
+			if (bone_node)
+			{
+				bone_index = bone_node->bone_index;
+				if (bone_node->parent)
+				{
+					parent_bone_index = bone_node->parent->bone_index;
+				}
+			}
+			
+			node["bone_index"] = bone_index;
+			node["bone_parent"] = parent_bone_index;
+			
+			
 			
 			for (size_t key = 0; key < animnode->mNumPositionKeys; ++key)
 			{
