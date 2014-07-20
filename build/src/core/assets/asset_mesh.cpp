@@ -300,6 +300,14 @@ namespace assets
 					Bone* bone = &mesh->bones[bone_index];
 					
 					LOGV("match %s to %s\n", bone_name.c_str(), bone->name.c_str());
+					if (bone_parent != -1)
+					{
+						Bone* parent = &mesh->bones[bone_parent];
+						assert(parent != 0);
+						
+						bone->parent_index
+= bone_parent;
+					}
 				}
 				
 				Json::ValueIterator jkey_it = jkeys.begin();

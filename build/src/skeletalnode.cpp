@@ -24,13 +24,49 @@
 
 #include "scene_graph.h"
 #include "skeletalnode.h"
-
+#include "core/assets/asset_mesh.h"
 
 namespace scenegraph
 {
 
+	void SkeletalNode::setup_skeleton()
+	{
+		// This creates a local array of bone data
+		// used to store this instance's bone transforms.
+
+		assert(mesh != 0);
+		transforms.allocate(mesh->total_bones);
+
+		for (size_t bone_index = 0; bone_index < mesh->bones.size(); ++bone_index)
+		{
+			// Iterate over each bone and calculate the global transform
+			// for each bone.
+			assets::Bone* bone = &mesh->bones[bone_index];
+
+
+			if (bone->parent_index == -1)
+			{
+				bone->world_transform = bone->local_transform;
+			}
+			else
+			{
+				bone->world_transform = mesh->bones[bone->parent_index].world_transform * bone->local_transform;
+			}
+
+			// apply the inverse bind pose
+			
+
+			glm::mat4& tr = transforms[bone_index];
+			tr = bone->inverse_bind_pose * bone->world_transform;	
+		}
+		
+	}
+
 	void SkeletalNode::update(float delta_seconds)
 	{
+		assert(mesh != 0);
 
+		// iterate over the source animation skeleton
+		// and apply transforms?
 	}
 }; // namespace scenegraph

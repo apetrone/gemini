@@ -74,9 +74,13 @@ namespace assets
 		
 		// local to bone space (vertex to bone)
 		glm::mat4 inverse_bind_matrix;
+
+		glm::mat4 local_transform;
+
+		glm::mat4 world_transform;
 		
 		// -1: No parent
-		int32_t parent;
+		int32_t parent_index;
 	};
 	
 	struct Mesh : public Asset
