@@ -10,7 +10,7 @@ ASSIMP_VERSION = "3.1.1"
 ASSIMP_SOVERSION = 3
 
 def find_external_libs(product, target_platform):
-	logging.info("TODO: search for zlib")
+	logging.info("searching for zlib...")
 
 	zlib = target_platform.find_library("z")
 	if zlib:
