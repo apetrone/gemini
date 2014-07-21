@@ -65,6 +65,8 @@ namespace prism
 		// for bones
 		aiMatrix4x4 inverse_bind_pose;
 		
+		aiMatrix4x4 local_transform;
+		
 		// node's name
 		std::string name;
 		

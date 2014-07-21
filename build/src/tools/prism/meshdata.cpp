@@ -190,14 +190,18 @@ Node::NodeType type, Node* parent)
 				Json::Value offset_matrix(Json::arrayValue);
 				jsonify_matrix(offset_matrix, bone->mOffsetMatrix);
 				jbone["inverse_bind_pose"] = offset_matrix;
-				
+							
+				Json::Value jtransform;
+										
 				Node* node = find_node_with_name(bone->mName.C_Str());
 				if (node)
 				{
 					node->type = Node::BONE;
 					node->bone_index = total_bones;
+					jsonify_matrix(jtransform, node->local_transform);
 				}
 				
+				jbone["transform"] = jtransform;
 				
 				total_bones++;
 				
@@ -273,8 +277,6 @@ Node::NodeType type, Node* parent)
 			
 			node["bone_index"] = bone_index;
 			node["bone_parent"] = parent_bone_index;
-			
-			
 			
 			for (size_t key = 0; key < animnode->mNumPositionKeys; ++key)
 			{
@@ -357,8 +359,7 @@ Node::NodeType type, Node* parent)
 		//LOGV("[node %i] %s\n", total_nodes, node->mName.C_Str());
 		++total_nodes;
 				
-		Node* newnode = 
-meshdata.create_node(node->mName.C_Str(), Node::TRANSFORM, parent);
+		Node* newnode = meshdata.create_node(node->mName.C_Str(), Node::TRANSFORM, parent);
 		//LOGV("created node %x, %s\n", newnode, newnode->name.c_str());
 		
 		// if node has meshes, create a new scene object for it
@@ -370,9 +371,9 @@ meshdata.create_node(node->mName.C_Str(), Node::TRANSFORM, parent);
 		else
 		{
 			// if no meshes, skip the node, but keep its transform
-			node->mTransformation * accumulated_transform;
+			newnode->local_transform = node->mTransformation * accumulated_transform;
 		}
-		
+				
 		// traverse all child nodes
 		//LOGV("[node] %s has %i children.\n", node->mName.C_Str(), node->mNumChildren);
 		for(size_t child_index = 0; child_index < node->mNumChildren; ++child_index)
