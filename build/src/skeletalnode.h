@@ -32,6 +32,9 @@ namespace scenegraph
 	struct SkeletalNode : public MeshNode
 	{
 		FixedArray<glm::mat4> transforms;
+		float current_time_seconds;
+		float next_frame_advance;
+		uint32_t current_frame;
 
 		void setup_skeleton();
 		virtual void update(float delta_seconds);

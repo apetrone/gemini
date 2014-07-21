@@ -34,13 +34,50 @@ Channel::Channel(float& value_in) :
 void Channel::set_keys(float* data, size_t total_keys)
 {
 	keys.allocate(total_keys);
-	memcpy(&keys[0], data, sizeof(float));
+	memcpy(&keys[0], data, sizeof(float)*total_keys);
 }
 
-void Channel::update(float delta_seconds)
+void Channel::update(float alpha)
 {
-	local_time_seconds += delta_seconds;
+	alpha = glm::clamp(alpha, 0.0f, 1.0f);
 	
-	value = 0.2f;
+	float last = keys[current_frame];
+	float next;
+	if ((current_frame+1) >= keys.size())
+	{
+		// TODO: Should use post-infinity here
+		// For now, just use the max.
+		next = keys[current_frame];
+	}
+	else
+	{
+		next = keys[current_frame+1];
+	}
+	
+	float delta = (next-last);
+	
+	// interpolate between frame and frame+1
+	value = glm::mix(last, delta, alpha);
+}
+
+void Channel::set_frame(uint32_t frame)
+{
+	current_frame = frame;
+	clamp_frame();
+}
+
+void Channel::advance()
+{
+	// Advance the playhead to the next frame
+	++current_frame;
+	clamp_frame();
+}
+
+void Channel::clamp_frame()
+{
+	if (current_frame >= keys.size())
+	{
+		current_frame = keys.size()-1;
+	}
 }
 

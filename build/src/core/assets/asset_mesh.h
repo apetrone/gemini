@@ -31,6 +31,7 @@
 #include "renderer.h"
 
 #include <gemini/util/fixedarray.h>
+#include "keyframechannel.h"
 
 namespace assets
 {
@@ -55,7 +56,15 @@ namespace assets
 	{
 		struct Frame
 		{
-			FixedArray< FixedArray<glm::mat4> > keys;
+			glm::quat rotation_value;
+			glm::vec3 position_value;
+			
+//			Channel scale[3];
+			Channel rotation[4];
+			Channel translation[3];
+			
+			Frame();
+			~Frame() {}
 		}; // Frame
 		
 		FixedArray<Frame> frames;
@@ -69,11 +78,20 @@ namespace assets
 	
 	struct Bone
 	{
+		Bone()
+		{
+			parent_index = -1;
+		}
+		~Bone() {}
+		
 		// name of this bone
 		std::string name;
 		
 		// local to bone space (vertex to bone)
 		glm::mat4 inverse_bind_matrix;
+		
+		// from bone space to local space
+		glm::mat4 bind_matrix;
 
 		glm::mat4 local_transform;
 

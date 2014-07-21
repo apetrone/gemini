@@ -32,13 +32,19 @@ class Channel
 	float local_time_seconds;
 	float& value;
 	FixedArray<float> keys;
+	uint32_t current_frame;
 	
 public:
 	Channel(float& value);
 	~Channel() {}
 	
 	void set_keys(float* data, size_t total_keys);
-	void update(float delta_seconds);
+	void update(float alpha);
+	void set_frame(uint32_t frame);
+	void advance();
+	
+private:
+	void clamp_frame();
 };
 
 

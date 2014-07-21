@@ -34,8 +34,8 @@ namespace assets
 	{
 		glm::mat4 output;
 		Json::ValueIterator it = value.begin();
-
-		float m[16];
+		assert(value.size() > 0);
+		float m[16] = {0};
 		size_t i = 0;
 		for( ; it != value.end(); ++it, ++i )
 		{
@@ -257,6 +257,9 @@ namespace assets
 				
 				Json::Value inverse_bind_pose = bone_node["inverse_bind_pose"];
 				bone->inverse_bind_matrix = json_to_mat4(inverse_bind_pose);
+				bone->bind_matrix = glm::inverse(bone->inverse_bind_matrix);
+				Json::Value local_transform = bone_node["transform"];
+				bone->local_transform = json_to_mat4(local_transform);
 
 				LOGV("bone: %s\n", bone->name.c_str());
 				
@@ -279,44 +282,52 @@ namespace assets
 			Json::ValueIterator node_it = node_list.begin();
 			mesh->animation.frames.allocate(node_list.size());
 			LOGV("loading %i nodes...\n", node_list.size());
-			
-			size_t tr_id = 0;
-			for( ; node_it != node_list.end(); ++node_it, ++tr_id)
+
+			for( ; node_it != node_list.end(); ++node_it)
 			{
-				AnimationData::Frame* tr = &mesh->animation.frames[tr_id];
 				Json::Value jnode = *node_it;
 				std::string bone_name = jnode["name"].asString();
-				Json::Value jkeys = jnode["keys"];
-				tr->keys.allocate(jkeys.size());
-				
+
+
 				if (!jnode["bone_index"].isNull() && !jnode["bone_parent"].isNull())
 				{
 					int32_t bone_index = jnode["bone_index"].asInt();
 					int32_t bone_parent = jnode["bone_parent"].asInt();
 					
-					assert(bone_index >= 0);
+					//assert(bone_index >= 0);
 					
-					
-					Bone* bone = &mesh->bones[bone_index];
-					
-					LOGV("match %s to %s\n", bone_name.c_str(), bone->name.c_str());
-					if (bone_parent != -1)
+					if (bone_index >= 0)
 					{
-						Bone* parent = &mesh->bones[bone_parent];
-						assert(parent != 0);
+						Bone* bone = &mesh->bones[bone_index];
 						
-						bone->parent_index
-= bone_parent;
+						LOGV("match %s to %s\n", bone_name.c_str(), bone->name.c_str());
+						if (bone_parent != -1)
+						{
+							Bone* parent = &mesh->bones[bone_parent];
+							assert(parent != 0);
+							
+							bone->parent_index = bone_parent;
+						}
 					}
 				}
 				
+				Json::Value jkeys = jnode["keys"];
+				mesh->animation.frames.allocate(jkeys.size());
+
+				
 				Json::ValueIterator jkey_it = jkeys.begin();
-				size_t key_id = 0;
-				LOGV("loading %i keys...\n", jkeys.size());
-				for( ; jkey_it != jkeys.end(); ++jkey_it, ++key_id)
+				size_t frame_id = 0;
+				LOGV("loading %i frames...\n", jkeys.size());
+				for( ; jkey_it != jkeys.end(); ++jkey_it, ++frame_id)
 				{
 					Json::Value matrix = *jkey_it;
-					//tr->keys[key_id] = json_to_mat4(matrix);
+					AnimationData::Frame* frame = &mesh->animation.frames[frame_id];
+					glm::mat4 mat = json_to_mat4(matrix);
+					frame->rotation_value = glm::toQuat(mat);
+					frame->position_value = glm::vec3(mat[3]);
+					
+//					LOGV("\t\t->%2.2f %2.2f %2.2f %2.2f\n", frame->rotation_value.x, frame->rotation_value.y, frame->rotation_value.z, frame->rotation_value.w);
+					
 				}
 				
 			}
@@ -449,6 +460,13 @@ namespace assets
 		//		this->vertexbuffer = renderer::driver()->vertexbuffer_create( descriptor, this->draw_type, renderer::BUFFER_STATIC, descriptor.calculate_vertex_stride(), this->vertex_count, this->index_count );
 	}
 	
+	
+	AnimationData::Frame::Frame() :
+		rotation{{rotation_value.x}, {rotation_value.y}, {rotation_value.z}, {rotation_value.w}},
+		translation{{position_value.x}, {position_value.y}, {position_value.z}}
+	{
+	
+	}
 
 	Mesh::Mesh()
 	{
