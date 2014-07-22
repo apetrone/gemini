@@ -255,7 +255,7 @@ Node::NodeType type, Node* parent)
 			assert((animnode->mNumPositionKeys == animnode->mNumRotationKeys) && (animnode->mNumRotationKeys == animnode->mNumScalingKeys));
 			
 			
-			Json::Value jkeys(Json::arrayValue);
+			Json::Value jkeys;
 			
 			std::string node_name = animnode->mNodeName.C_Str();
 			
@@ -278,25 +278,24 @@ Node::NodeType type, Node* parent)
 			node["bone_index"] = bone_index;
 			node["bone_parent"] = parent_bone_index;
 			
+			Json::Value scale_keys;
+			Json::Value rotation_keys;
+			Json::Value translation_keys;
+			
 			for (size_t key = 0; key < animnode->mNumPositionKeys; ++key)
 			{
-				const aiVectorKey* skey = &animnode->mScalingKeys[key];
-				const aiQuatKey* rkey = &animnode->mRotationKeys[key];
-				const aiVectorKey* tkey = &animnode->mPositionKeys[key];
-				
-				aiMatrix4x4 scaling;
-				aiMatrix4x4::Scaling(skey->mValue, scaling);
-				
-				aiMatrix4x4 rotation(rkey->mValue.GetMatrix());
-				
-				aiMatrix4x4 translation;
-				aiMatrix4x4::Translation(tkey->mValue, translation);
-				
-				aiMatrix4x4 transform = scaling * rotation * translation;
-				Json::Value jtransform;
-				jsonify_matrix(jtransform, transform);
-				jkeys.append(jtransform);
+				const aiVectorKey& skey = animnode->mScalingKeys[key];
+				const aiQuatKey& rkey = animnode->mRotationKeys[key];
+				const aiVectorKey& tkey = animnode->mPositionKeys[key];
+				// TODO: Sample the keys!
+				jsonify_vectorkey(scale_keys, skey);
+				jsonify_quatkey(rotation_keys, rkey);
+				jsonify_vectorkey(translation_keys, tkey);
 			}
+			
+			jkeys["scale"] = scale_keys;
+			jkeys["rotation"] = rotation_keys;
+			jkeys["translation"] = translation_keys;
 			
 			node["keys"] = jkeys;
 			node_list.append(node);
@@ -322,6 +321,23 @@ Node::NodeType type, Node* parent)
 	glm::vec3 to_glm(const aiVector3D& v)
 	{
 		return glm::vec3(v.x, v.y, v.z);
+	}
+
+	void jsonify_quatkey(Json::Value& array, const aiQuatKey& qkey)
+	{
+		const aiQuaternion& q = qkey.mValue;
+		array.append(q.x);
+		array.append(q.y);
+		array.append(q.z);
+		array.append(q.w);
+	}
+
+	void jsonify_vectorkey(Json::Value& array, const aiVectorKey& vkey)
+	{
+		const aiVector3D& v = vkey.mValue;
+		array.append(v.x);
+		array.append(v.y);
+		array.append(v.z);
 	}
 
 	void jsonify_matrix(Json::Value& array, const aiMatrix4x4& source)

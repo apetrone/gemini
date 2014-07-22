@@ -131,6 +131,8 @@ Node::NodeType type, Node* parent = 0);
 	glm::vec3 to_glm(const aiVector3D& v);
 
 	void traverse_nodes(MeshData& meshdata, const aiScene* scene, Json::Value& hierarchy);
+	void jsonify_quatkey(Json::Value& array, const aiQuatKey& q);
+	void jsonify_vectorkey(Json::Value& array, const aiVectorKey& v);
 	void jsonify_matrix(Json::Value& array, const aiMatrix4x4& source);
 	
 	bool validate_frames_per_second(float frames_per_second);
