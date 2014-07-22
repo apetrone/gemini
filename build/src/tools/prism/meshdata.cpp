@@ -280,22 +280,15 @@ Node::NodeType type, Node* parent)
 			
 			Json::Value scale_keys;
 			Json::Value rotation_keys;
-			Json::Value translation_keys;
-			
-			for (size_t key = 0; key < animnode->mNumPositionKeys; ++key)
-			{
-				const aiVectorKey& skey = animnode->mScalingKeys[key];
-				const aiQuatKey& rkey = animnode->mRotationKeys[key];
-				const aiVectorKey& tkey = animnode->mPositionKeys[key];
-				// TODO: Sample the keys!
-				jsonify_vectorkey(scale_keys, skey);
-				jsonify_quatkey(rotation_keys, rkey);
-				jsonify_vectorkey(translation_keys, tkey);
-			}
+			Json::Value position_keys;
+
+			read_quat_keys(rotation_keys, animnode->mRotationKeys, animnode->mNumRotationKeys);
+			read_vector_keys(scale_keys, animnode->mScalingKeys, animnode->mNumScalingKeys);
+			read_vector_keys(position_keys, animnode->mPositionKeys, animnode->mNumPositionKeys);
 			
 			jkeys["scale"] = scale_keys;
 			jkeys["rotation"] = rotation_keys;
-			jkeys["translation"] = translation_keys;
+			jkeys["translation"] = position_keys;
 			
 			node["keys"] = jkeys;
 			node_list.append(node);
@@ -322,22 +315,24 @@ Node::NodeType type, Node* parent)
 	{
 		return glm::vec3(v.x, v.y, v.z);
 	}
-
-	void jsonify_quatkey(Json::Value& array, const aiQuatKey& qkey)
+	
+	void jsonify_quatkey(Json::Value& times, Json::Value& values, const aiQuatKey& qkey)
 	{
 		const aiQuaternion& q = qkey.mValue;
-		array.append(q.x);
-		array.append(q.y);
-		array.append(q.z);
-		array.append(q.w);
+		times.append(qkey.mTime);
+		values.append(q.x);
+		values.append(q.y);
+		values.append(q.z);
+		values.append(q.w);
 	}
 
-	void jsonify_vectorkey(Json::Value& array, const aiVectorKey& vkey)
+	void jsonify_vectorkey(Json::Value& times, Json::Value& values, const aiVectorKey& vkey)
 	{
 		const aiVector3D& v = vkey.mValue;
-		array.append(v.x);
-		array.append(v.y);
-		array.append(v.z);
+		times.append(vkey.mTime);
+		values.append(v.x);
+		values.append(v.y);
+		values.append(v.z);
 	}
 
 	void jsonify_matrix(Json::Value& array, const aiMatrix4x4& source)
@@ -368,6 +363,33 @@ Node::NodeType type, Node* parent)
 		array.append(matrix.d4);
 	}
 
+	void read_vector_keys(Json::Value& keys, aiVectorKey* vectorkeys, size_t total_keys)
+	{
+		Json::Value times;
+		Json::Value values;
+		
+		for (size_t i = 0; i < total_keys; ++i)
+		{
+			jsonify_vectorkey(times, values, vectorkeys[i]);
+		}
+		
+		keys["time"] = times;
+		keys["value"] = values;
+	}
+	
+	void read_quat_keys(Json::Value& keys, aiQuatKey* quatkeys, size_t total_keys)
+	{
+		Json::Value times;
+		Json::Value values;
+		
+		for (size_t i = 0; i < total_keys; ++i)
+		{
+			jsonify_quatkey(times, values, quatkeys[i]);
+		}
+		
+		keys["time"] = times;
+		keys["value"] = values;
+	}
 
 	// this function is almost identical to the one in the assimp documentation
 	void iterate_nodes(MeshData& meshdata, aiNode* node, Node* parent, aiMatrix4x4& accumulated_transform, size_t& total_nodes)

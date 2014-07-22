@@ -115,8 +115,7 @@ namespace prism
 		~MeshData();
 				
 
-		Node* create_node(const std::string& name, 
-Node::NodeType type, Node* parent = 0);
+		Node* create_node(const std::string& name, Node::NodeType type, Node* parent = 0);
 		Node* find_node_with_name(const std::string& name);
 		void print_nodes();
 		
@@ -131,9 +130,11 @@ Node::NodeType type, Node* parent = 0);
 	glm::vec3 to_glm(const aiVector3D& v);
 
 	void traverse_nodes(MeshData& meshdata, const aiScene* scene, Json::Value& hierarchy);
-	void jsonify_quatkey(Json::Value& array, const aiQuatKey& q);
-	void jsonify_vectorkey(Json::Value& array, const aiVectorKey& v);
+	void jsonify_quatkey(Json::Value& times, Json::Value& values, const aiQuatKey& q);
+	void jsonify_vectorkey(Json::Value& times, Json::Value& values, const aiVectorKey& v);
 	void jsonify_matrix(Json::Value& array, const aiMatrix4x4& source);
+	void read_vector_keys(Json::Value& keys, aiVectorKey* vectorkeys, size_t total_keys);
+	void read_quat_keys(Json::Value& keys, aiQuatKey* quatkeys, size_t total_keys);
 	
 	bool validate_frames_per_second(float frames_per_second);
 }; // namespace prism
