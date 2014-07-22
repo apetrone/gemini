@@ -73,8 +73,8 @@ public:
 		
 		assert(data_source && data_source->keys.size() > 0);
 		
-		float last = data_source->keys[frame];
-		float next;
+		const Type& last = data_source->keys[frame];
+		Type next;
 		if ((frame+1) >= data_source->keys.size())
 		{
 			// TODO: Should use post-infinity here
@@ -86,10 +86,8 @@ public:
 			next = data_source->keys[frame+1];
 		}
 		
-		float delta = (next-last);
-		
 		// interpolate between frame and frame+1
-		value = Channel<Type, Interpolator>::interpolator(last, delta, alpha);
+		value = Channel<Type, Interpolator>::interpolator(last, next, alpha);
 		return value;
 	}
 	

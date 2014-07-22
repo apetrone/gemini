@@ -26,6 +26,7 @@
 #include "scene_graph.h"
 #include "meshnode.h"
 #include "assets/asset_mesh.h"
+#include "keyframechannel.h"
 
 namespace scenegraph
 {
@@ -36,6 +37,22 @@ namespace scenegraph
 		float next_frame_advance;
 		uint32_t current_frame;
 
+
+		glm::vec3 scale;
+		Channel<glm::vec3> scale_channel;
+
+		glm::quat rotation;
+		Channel<glm::quat> rotation_channel;
+		
+		glm::vec3 translation;
+		Channel<glm::vec3> translation_channel;
+		
+
+		
+		
+
+		SkeletalNode();
+		virtual ~SkeletalNode() {}
 		void setup_skeleton();
 		virtual void update(float delta_seconds);
 	};

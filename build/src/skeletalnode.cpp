@@ -30,11 +30,23 @@
 
 namespace scenegraph
 {
+	SkeletalNode::SkeletalNode() :
+		scale_channel(scale),
+		rotation_channel(rotation),
+		translation_channel(translation)
+	{
+	}
 
 	void SkeletalNode::setup_skeleton()
 	{
 		current_time_seconds = 0;
 		current_frame = 0;
+		
+		// set data sources; this could be done better?
+		scale_channel.set_data_source(&mesh->animation.scale);
+		rotation_channel.set_data_source(&mesh->animation.rotation);
+		translation_channel.set_data_source(&mesh->animation.translation);
+
 		
 		// This creates a local array of bone data
 		// used to store this instance's bone transforms.
@@ -67,10 +79,10 @@ namespace scenegraph
 		}
 		else
 		{
-			transforms.allocate(mesh->animation.frames.size());
+//			transforms.allocate(mesh->animation.frames.size());
 			for (size_t id = 0; id < transforms.size(); ++id)
 			{
-				assets::AnimationData::Frame* frame = &mesh->animation.frames[id];
+//				assets::AnimationData::Frame* frame = &mesh->animation.frames[id];
 				
 				// something here?
 			}
@@ -93,39 +105,54 @@ namespace scenegraph
 		// iterate over the source animation skeleton
 		// and apply transforms?
 		next_frame_advance -= delta_seconds;
-		
+				
 		current_time_seconds += delta_seconds;
-		if (next_frame_advance <= 0)
+		if (next_frame_advance <= 0.01)
 		{
 			// advance frame
 			
 			// reset counter
 			float frame_delay_seconds = (1.0f/mesh->animation.frames_per_second);
 			next_frame_advance = frame_delay_seconds;
-			
+
+
+
 			++current_frame;
-			if (current_frame >= mesh->animation.frames.size()-1)
+			if (current_frame >= mesh->animation.total_frames-1)
 			{
 				current_frame = 0;
+				current_time_seconds = 0;
 			}
 
-			assets::AnimationData::Frame* frame = &mesh->animation.frames[current_frame];
-			
-#if 0
-			glm::vec3 scale;
-			glm::quat rotation = frame->rotation_value;
-			glm::vec3 translate = frame->position_value;
-			
-			glm::vec3 pos = glm::vec3(
-				frame->translation[0].get_value(current_frame, 0.0f),
-				frame->translation[1].get_value(current_frame, 0.0f),
-				frame->translation[2].get_value(current_frame, 0.0f)
-			);
-#endif
-				
-//			local_to_world = transforms[current_frame];
-//			local_to_world = glm::translate(glm::mat4(1.0), pos);
+			// SNAP
+//			translation_channel.get_value(current_frame, 0.0f);
+//			local_to_world = glm::translate(glm::mat4(1.0), translation);
 		}
+		
+		// determine the time between keys
+		
+		float baseline = current_frame * (1.0f/mesh->animation.frames_per_second);
+		
+		float t = current_time_seconds - baseline;
+		if (t < -0.01)
+		{
+			t = 0;
+		}
+		else if (t > 1.01)
+		{
+			t = 1;
+		}
+		
+		
+		scale_channel.get_value(current_frame, t);
+		glm::mat4 sc = glm::scale(glm::mat4(1.0), scale);
+		
+		rotation_channel.get_value(current_frame, t);
+		glm::mat4 ro = glm::toMat4(rotation);
+		
+		translation_channel.get_value(current_frame, t);
+		glm::mat4 tr = glm::translate(glm::mat4(1.0), translation);
 
+		local_to_world = /*sc * */ro * tr;
 	}
 }; // namespace scenegraph

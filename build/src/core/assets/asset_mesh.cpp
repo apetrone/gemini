@@ -280,7 +280,7 @@ namespace assets
 
 			Json::Value node_list = janimation["nodes"];
 			Json::ValueIterator node_it = node_list.begin();
-			mesh->animation.frames.allocate(node_list.size());
+//			mesh->animation.frames.allocate(node_list.size());
 			LOGV("loading %i nodes...\n", node_list.size());
 
 			for( ; node_it != node_list.end(); ++node_it)
@@ -312,33 +312,34 @@ namespace assets
 				}
 				
 				Json::Value jkeys = jnode["keys"];
-				mesh->animation.frames.allocate(jkeys.size());
 
-				
 				Json::ValueIterator jkey_it = jkeys.begin();
 				size_t frame_id = 0;
 				LOGV("loading %i frames...\n", jkeys.size());
 				
-				glm::vec3* pos = new glm::vec3[jkeys.size()];
+				mesh->animation.total_frames = jkeys.size();
 				
+				mesh->animation.scale.keys.allocate(mesh->animation.total_frames);
+				mesh->animation.rotation.keys.allocate(mesh->animation.total_frames);
+				mesh->animation.translation.keys.allocate(mesh->animation.total_frames);
+
 				for( ; jkey_it != jkeys.end(); ++jkey_it, ++frame_id)
 				{
 					Json::Value matrix = *jkey_it;
-					AnimationData::Frame* frame = &mesh->animation.frames[frame_id];
 					glm::mat4 mat = json_to_mat4(matrix);
-#if 0
-					frame->rotation_value = glm::toQuat(mat);
-					frame->position_value = glm::vec3(mat[3]);
-//					LOGV("\t\t->%2.2f %2.2f %2.2f %2.2f\n", frame->rotation_value.x, frame->rotation_value.y, frame->rotation_value.z, frame->rotation_value.w);
-					pos[frame_id] = frame->position_value;
-#endif
-				}
-				
 					
-				
+					// I don't think it means what you think it means.
+					glm::vec3& scale = mesh->animation.scale.keys[frame_id];
+					scale = glm::vec3(mat[0][0], mat[1][1], mat[2][2]);
+					LOGV("scale = %g %g %g\n", scale.x, scale.y, scale.z);
+					
+					glm::quat& rotation = mesh->animation.rotation.keys[frame_id];
+					rotation = glm::toQuat(mat);
+					
+					glm::vec3& translate = mesh->animation.translation.keys[frame_id];
+					translate = glm::vec3(mat[3]);
+				}
 
-				delete [] pos;
-				
 			}
 		}
 		
@@ -470,12 +471,12 @@ namespace assets
 	}
 	
 	
-	AnimationData::Frame::Frame()
+	//AnimationData::Frame::Frame()
 //		rotation{{rotation_value.x}, {rotation_value.y}, {rotation_value.z}, {rotation_value.w}},
 //		translation{{position_value.x}, {position_value.y}, {position_value.z}}
-	{
+	//{
 	
-	}
+	//}
 
 	Mesh::Mesh()
 	{

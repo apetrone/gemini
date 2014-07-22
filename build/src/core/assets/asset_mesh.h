@@ -54,28 +54,16 @@ namespace assets
 	// TEMP struct to test the whole shebang.
 	struct AnimationData
 	{
-		struct Frame
-		{
-//			glm::quat rotation_value;
-//			glm::vec3 position_value;
-			
-			KeyframeData<glm::vec3> scale;
-			KeyframeData<glm::quat> rotation;
-			KeyframeData<glm::vec3> translation;
-//			Channel scale[3];
-//			Channel rotation[4];
-//			Channel translation[3];
-			
-			Frame();
-			~Frame() {}
-		}; // Frame
-		
-		FixedArray<Frame> frames;
+		KeyframeData<glm::vec3> scale;
+		KeyframeData<glm::quat> rotation;
+		KeyframeData<glm::vec3> translation;
 				
 		// duration in seconds
 		float duration_seconds;
 		
 		float frames_per_second;
+		
+		uint32_t total_frames;
 	};
 	
 	
