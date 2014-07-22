@@ -312,34 +312,8 @@ namespace assets
 				}
 				
 				Json::Value jkeys = jnode["keys"];
-
-				Json::ValueIterator jkey_it = jkeys.begin();
-				size_t frame_id = 0;
-				LOGV("loading %i frames...\n", jkeys.size());
-				
-				mesh->animation.total_frames = jkeys.size();
-				
-				mesh->animation.scale.keys.allocate(mesh->animation.total_frames);
-				mesh->animation.rotation.keys.allocate(mesh->animation.total_frames);
-				mesh->animation.translation.keys.allocate(mesh->animation.total_frames);
-
-				for( ; jkey_it != jkeys.end(); ++jkey_it, ++frame_id)
-				{
-					Json::Value matrix = *jkey_it;
-					glm::mat4 mat = json_to_mat4(matrix);
-					
-					// I don't think it means what you think it means.
-					glm::vec3& scale = mesh->animation.scale.keys[frame_id];
-					scale = glm::vec3(mat[0][0], mat[1][1], mat[2][2]);
-					LOGV("scale = %g %g %g\n", scale.x, scale.y, scale.z);
-					
-					glm::quat& rotation = mesh->animation.rotation.keys[frame_id];
-					rotation = glm::toQuat(mat);
-					
-					glm::vec3& translate = mesh->animation.translation.keys[frame_id];
-					translate = glm::vec3(mat[3]);
-				}
-
+				//read_keys_array(mesh, jkeys);
+				read_keys_object(mesh, jkeys);
 			}
 		}
 		
@@ -350,6 +324,68 @@ namespace assets
 		
 		return util::ConfigLoad_Success;
 	} // mesh_load_from_json
+	
+	
+	void read_keys_object(assets::Mesh* mesh, Json::Value& jkeys)
+	{
+		const Json::Value& scale = jkeys["scale"];
+		const Json::Value& rotation = jkeys["rotation"];
+		const Json::Value& translation = jkeys["translation"];
+		
+		// read scale keys
+
+		size_t num_scale_keys = scale.size();
+		size_t total_vector_keys = num_scale_keys / 3;
+		mesh->animation.scale.keys.allocate(total_vector_keys);
+
+		Json::ValueIterator scale_it = scale.begin();
+		for(int i = 0; i < num_scale_keys; ++i)
+		{
+			const Json::Value& x = scale[i*3];
+			const Json::Value& y = scale[i*3+1];
+			const Json::Value& z = scale[i*3+2];
+			
+			glm::vec3& s = mesh->animation.scale.keys[i];
+			s.x = x.asFloat();
+			s.y = y.asFloat();
+			s.z = z.asFloat();
+			LOGV("scale = %g %g %g\n", s.x, s.y, s.z);
+		}
+
+	}
+	
+	
+	void read_keys_array(assets::Mesh* mesh, Json::Value& jkeys)
+	{
+		
+		Json::ValueIterator jkey_it = jkeys.begin();
+		size_t frame_id = 0;
+		LOGV("loading %i frames...\n", jkeys.size());
+		
+		mesh->animation.total_frames = jkeys.size();
+		
+		mesh->animation.scale.keys.allocate(mesh->animation.total_frames);
+		mesh->animation.rotation.keys.allocate(mesh->animation.total_frames);
+		mesh->animation.translation.keys.allocate(mesh->animation.total_frames);
+		
+		for( ; jkey_it != jkeys.end(); ++jkey_it, ++frame_id)
+		{
+			Json::Value matrix = *jkey_it;
+			glm::mat4 mat = json_to_mat4(matrix);
+			
+			// I don't think it means what you think it means.
+			glm::vec3& scale = mesh->animation.scale.keys[frame_id];
+			scale = glm::vec3(mat[0][0], mat[1][1], mat[2][2]);
+			LOGV("scale = %g %g %g\n", scale.x, scale.y, scale.z);
+			
+			glm::quat& rotation = mesh->animation.rotation.keys[frame_id];
+			rotation = glm::toQuat(mat);
+			
+			glm::vec3& translate = mesh->animation.translation.keys[frame_id];
+			translate = glm::vec3(mat[3]);
+		}
+	}
+	
 	
 	void mesh_construct_extension( StackString<MAX_PATH_SIZE> & extension )
 	{

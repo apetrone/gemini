@@ -33,6 +33,8 @@
 #include <gemini/util/fixedarray.h>
 #include "keyframechannel.h"
 
+#include <json/json.h>
+
 namespace assets
 {
 	// -------------------------------------------------------------
@@ -118,6 +120,10 @@ namespace assets
 		// For now, we only have room for a single animation -- so make it worthwhile.
 		AnimationData animation;
 	}; // Mesh
+	
+	// EXPERIMENTAL
+	void read_keys_object(assets::Mesh* mesh, Json::Value& jkeys);
+	void read_keys_array(assets::Mesh* mesh, Json::Value& jkeys);
 	
 	AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, const AssetParameters & parameters );
 	void mesh_construct_extension( StackString<MAX_PATH_SIZE> & extension );
