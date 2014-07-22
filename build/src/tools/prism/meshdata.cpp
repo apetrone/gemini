@@ -282,8 +282,8 @@ Node::NodeType type, Node* parent)
 			Json::Value rotation_keys;
 			Json::Value position_keys;
 
-			read_quat_keys(rotation_keys, animnode->mRotationKeys, animnode->mNumRotationKeys);
 			read_vector_keys(scale_keys, animnode->mScalingKeys, animnode->mNumScalingKeys);
+			read_quat_keys(rotation_keys, animnode->mRotationKeys, animnode->mNumRotationKeys);
 			read_vector_keys(position_keys, animnode->mPositionKeys, animnode->mNumPositionKeys);
 			
 			jkeys["scale"] = scale_keys;
