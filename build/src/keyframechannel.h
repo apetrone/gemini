@@ -49,6 +49,7 @@ class Channel
 	Type& value;
 //	FixedArray<Type> keys;
 	KeyframeData<Type>* data_source;
+	static Interpolator interpolator;
 	
 public:
 	Channel(Type& value_in, KeyframeData<Type>* source = 0) :
@@ -88,7 +89,8 @@ public:
 		float delta = (next-last);
 		
 		// interpolate between frame and frame+1
-		return glm::mix(last, delta, alpha);
+		value = Channel<Type, Interpolator>::interpolator(last, delta, alpha);
+		return value;
 	}
 	
 private:
@@ -102,6 +104,9 @@ private:
 		return frame;
 	}
 };
+
+template <class Type, class Interpolator>
+Interpolator Channel<Type, Interpolator>::interpolator;
 
 
 template <class Type, class Interpolator=Interpolator<Type> >
