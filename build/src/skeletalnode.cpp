@@ -71,7 +71,8 @@ namespace scenegraph
 			for (size_t id = 0; id < transforms.size(); ++id)
 			{
 				assets::AnimationData::Frame* frame = &mesh->animation.frames[id];
-				transforms[id] = glm::translate(glm::mat4(1.0), frame->position_value);
+				
+				// something here?
 			}
 		}
 		next_frame_advance = (1.0f/mesh->animation.frames_per_second);
@@ -107,8 +108,23 @@ namespace scenegraph
 			{
 				current_frame = 0;
 			}
+
+			assets::AnimationData::Frame* frame = &mesh->animation.frames[current_frame];
 			
-			local_to_world = transforms[current_frame];
+#if 0
+			glm::vec3 scale;
+			glm::quat rotation = frame->rotation_value;
+			glm::vec3 translate = frame->position_value;
+			
+			glm::vec3 pos = glm::vec3(
+				frame->translation[0].get_value(current_frame, 0.0f),
+				frame->translation[1].get_value(current_frame, 0.0f),
+				frame->translation[2].get_value(current_frame, 0.0f)
+			);
+#endif
+				
+//			local_to_world = transforms[current_frame];
+//			local_to_world = glm::translate(glm::mat4(1.0), pos);
 		}
 
 	}

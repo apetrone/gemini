@@ -24,27 +24,83 @@
 #include "render_utilities.h"
 #include "color.h"
 #include <gemini/util/fixedarray.h>
+#include "render_utilities.h"
 
 
+template <class Type>
+struct KeyframeData
+{
+	FixedArray<Type> keys;
+		
+	void set_keys(Type* data, size_t total_keys)
+	{
+		keys.allocate(total_keys);
+		memcpy(&keys[0], data, sizeof(Type)*total_keys);
+	}
+};
 // -------------------------------------------------------------
+
+
+
+
+template <class Type, class Interpolator=Interpolator<Type> >
 class Channel
 {
-	float local_time_seconds;
-	float& value;
-	FixedArray<float> keys;
-	uint32_t current_frame;
+	Type& value;
+//	FixedArray<Type> keys;
+	KeyframeData<Type>* data_source;
 	
 public:
-	Channel(float& value);
+	Channel(Type& value_in, KeyframeData<Type>* source = 0) :
+		value(value_in), data_source(source)
+	{
+		
+	}
 	~Channel() {}
+
+	void set_data_source(KeyframeData<Type>* datasource)
+	{
+		data_source = datasource;
+		assert(data_source != 0);
+	}
 	
-	void set_keys(float* data, size_t total_keys);
-	void update(float alpha);
-	void set_frame(uint32_t frame);
-	void advance();
+	Type get_value(uint32_t frame, float alpha)
+	{
+		alpha = glm::clamp(alpha, 0.0f, 1.0f);
+		
+		frame = clamp_frame(frame);
+		
+		assert(data_source && data_source->keys.size() > 0);
+		
+		float last = data_source->keys[frame];
+		float next;
+		if ((frame+1) >= data_source->keys.size())
+		{
+			// TODO: Should use post-infinity here
+			// For now, just use the max.
+			next = data_source->keys[frame];
+		}
+		else
+		{
+			next = data_source->keys[frame+1];
+		}
+		
+		float delta = (next-last);
+		
+		// interpolate between frame and frame+1
+		return glm::mix(last, delta, alpha);
+	}
 	
 private:
-	void clamp_frame();
+	uint32_t clamp_frame(uint32_t frame)
+	{
+		assert(data_source != 0);
+		if (frame >= data_source->keys.size())
+		{
+			frame = data_source->keys.size()-1;
+		}
+		return frame;
+	}
 };
 
 

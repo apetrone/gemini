@@ -56,12 +56,15 @@ namespace assets
 	{
 		struct Frame
 		{
-			glm::quat rotation_value;
-			glm::vec3 position_value;
+//			glm::quat rotation_value;
+//			glm::vec3 position_value;
 			
+			KeyframeData<glm::vec3> scale;
+			KeyframeData<glm::quat> rotation;
+			KeyframeData<glm::vec3> translation;
 //			Channel scale[3];
-			Channel rotation[4];
-			Channel translation[3];
+//			Channel rotation[4];
+//			Channel translation[3];
 			
 			Frame();
 			~Frame() {}

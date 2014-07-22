@@ -43,6 +43,23 @@ struct Interpolator
 
 
 
+template <class Type>
+Type slerp( const Type & a, const Type & b, float t )
+{
+	return glm::mix( a, b, t );
+}
+
+
+// -------------------------------------------------------------
+template <>
+struct Interpolator<glm::quat>
+{
+	glm::quat operator()( const glm::quat& start, const glm::quat& end, float t )
+	{
+		// return the linearly interpolated value
+		return slerp(start, end, t);
+	}
+};
 
 
 

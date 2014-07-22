@@ -318,17 +318,26 @@ namespace assets
 				Json::ValueIterator jkey_it = jkeys.begin();
 				size_t frame_id = 0;
 				LOGV("loading %i frames...\n", jkeys.size());
+				
+				glm::vec3* pos = new glm::vec3[jkeys.size()];
+				
 				for( ; jkey_it != jkeys.end(); ++jkey_it, ++frame_id)
 				{
 					Json::Value matrix = *jkey_it;
 					AnimationData::Frame* frame = &mesh->animation.frames[frame_id];
 					glm::mat4 mat = json_to_mat4(matrix);
+#if 0
 					frame->rotation_value = glm::toQuat(mat);
 					frame->position_value = glm::vec3(mat[3]);
-					
 //					LOGV("\t\t->%2.2f %2.2f %2.2f %2.2f\n", frame->rotation_value.x, frame->rotation_value.y, frame->rotation_value.z, frame->rotation_value.w);
-					
+					pos[frame_id] = frame->position_value;
+#endif
 				}
+				
+					
+				
+
+				delete [] pos;
 				
 			}
 		}
@@ -461,9 +470,9 @@ namespace assets
 	}
 	
 	
-	AnimationData::Frame::Frame() :
-		rotation{{rotation_value.x}, {rotation_value.y}, {rotation_value.z}, {rotation_value.w}},
-		translation{{position_value.x}, {position_value.y}, {position_value.z}}
+	AnimationData::Frame::Frame()
+//		rotation{{rotation_value.x}, {rotation_value.y}, {rotation_value.z}, {rotation_value.w}},
+//		translation{{position_value.x}, {position_value.y}, {position_value.z}}
 	{
 	
 	}
