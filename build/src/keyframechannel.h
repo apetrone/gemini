@@ -31,12 +31,7 @@ template <class Type>
 struct KeyframeData
 {
 	FixedArray<Type> keys;
-		
-	void set_keys(Type* data, size_t total_keys)
-	{
-		keys.allocate(total_keys);
-		memcpy(&keys[0], data, sizeof(Type)*total_keys);
-	}
+	FixedArray<float> time; // the time, in seconds, for this keyframe
 };
 // -------------------------------------------------------------
 

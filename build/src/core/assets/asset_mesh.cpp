@@ -326,31 +326,95 @@ namespace assets
 	} // mesh_load_from_json
 	
 	
+	void read_vector_keys(KeyframeData<glm::vec3>& keydata, const Json::Value& root)
+	{
+		const Json::Value& times = root["time"];
+		const Json::Value& values = root["value"];
+	
+		size_t total_times = times.size();
+		assert(total_times > 0);
+			
+		size_t total_values = values.size();
+		assert(total_values > 0);
+				
+		size_t total_vector_keys = total_values / 3;
+		assert(total_vector_keys > 0);
+		
+		// read key times
+		keydata.time.allocate(total_times);
+		for(int i = 0; i < total_times; ++i)
+		{
+			keydata.time[i] = times[i].asFloat();
+		}
+		
+		// read key values
+		keydata.keys.allocate(total_vector_keys);
+		for(int i = 0; i < total_vector_keys; ++i)
+		{
+			const Json::Value& x = values[i*3];
+			const Json::Value& y = values[i*3+1];
+			const Json::Value& z = values[i*3+2];
+			
+			glm::vec3& s = keydata.keys[i];
+			s.x = x.asFloat();
+			s.y = y.asFloat();
+			s.z = z.asFloat();
+			LOGV("v = %g %g %g\n", s.x, s.y, s.z);
+		}
+	}
+	
+	void read_quat_keys(KeyframeData<glm::quat>& keydata, const Json::Value& root)
+	{
+		const Json::Value& times = root["time"];
+		const Json::Value& values = root["value"];
+		
+		size_t total_times = times.size();
+		assert(total_times > 0);
+		
+		size_t total_values = values.size();
+		assert(total_values > 0);
+		
+		size_t total_vector_keys = total_values / 4;
+		assert(total_vector_keys > 0);
+		
+		keydata.keys.allocate(total_vector_keys);
+
+		// read key times
+		keydata.time.allocate(total_times);
+		for(int i = 0; i < total_times; ++i)
+		{
+			keydata.time[i] = times[i].asFloat();
+		}
+
+		// read key values
+		for(int i = 0; i < total_vector_keys; ++i)
+		{
+			const Json::Value& x = values[i*4];
+			const Json::Value& y = values[i*4+1];
+			const Json::Value& z = values[i*4+2];
+			const Json::Value& w = values[i*4+3];
+			
+			glm::quat& s = keydata.keys[i];
+			s.x = x.asFloat();
+			s.y = y.asFloat();
+			s.z = z.asFloat();
+			s.w = w.asFloat();
+			LOGV("q = %g %g %g %g\n", s.x, s.y, s.z, s.w);
+		}
+	}
+	
 	void read_keys_object(assets::Mesh* mesh, Json::Value& jkeys)
 	{
 		const Json::Value& scale = jkeys["scale"];
 		const Json::Value& rotation = jkeys["rotation"];
 		const Json::Value& translation = jkeys["translation"];
-		
+
+
 		// read scale keys
+		read_vector_keys(mesh->animation.scale, scale);
+		read_quat_keys(mesh->animation.rotation, rotation);
+		read_vector_keys(mesh->animation.translation, translation);
 
-		size_t num_scale_keys = scale.size();
-		size_t total_vector_keys = num_scale_keys / 3;
-		mesh->animation.scale.keys.allocate(total_vector_keys);
-
-		Json::ValueIterator scale_it = scale.begin();
-		for(int i = 0; i < num_scale_keys; ++i)
-		{
-			const Json::Value& x = scale[i*3];
-			const Json::Value& y = scale[i*3+1];
-			const Json::Value& z = scale[i*3+2];
-			
-			glm::vec3& s = mesh->animation.scale.keys[i];
-			s.x = x.asFloat();
-			s.y = y.asFloat();
-			s.z = z.asFloat();
-			LOGV("scale = %g %g %g\n", s.x, s.y, s.z);
-		}
 
 	}
 	
