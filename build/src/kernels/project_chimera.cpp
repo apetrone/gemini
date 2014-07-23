@@ -43,6 +43,7 @@
 #include "scene_graph.h"
 
 #include "meshnode.h"
+#include "skeletalnode.h"
 
 using namespace physics;
 
@@ -81,6 +82,10 @@ public:
 			if (event.key == input::KEY_ESCAPE)
 			{
 				kernel::instance()->set_active(false);
+			}
+			else if (event.key == input::KEY_SPACE)
+			{
+				root->update(kernel::instance()->parameters().step_interval_seconds);
 			}
 			else if (event.key == input::KEY_J)
 			{
@@ -132,7 +137,7 @@ public:
 
 			// TODO: update world transform?
 			node->world_transform = glm::mat4(1.0);
-			node->world_transform = glm::translate(node->world_transform, node->local_position);
+			node->world_transform = glm::translate(node->local_to_world, node->local_position);
 			
 			// compose a matrix
 			this->generalparams->object_matrix = &node->world_transform;
@@ -164,19 +169,24 @@ public:
 		root = CREATE(scenegraph::Node);
 		root->name = "scene_root";
 		
-		scenegraph::MeshNode* mn = CREATE(scenegraph::MeshNode);
-		mn->load_mesh("models/test", true);
-
-		root->add_child(mn);
+		scenegraph::MeshNode* mn = 0;
+//		mn = CREATE(scenegraph::MeshNode);
+//		mn->load_mesh("models/house", true);
+//		root->add_child(mn);
 		
 		mn = CREATE(scenegraph::MeshNode);
-		mn->load_mesh("models/black_lodge", true);
-		
+		mn->load_mesh("models/ground", true);
 		root->add_child(mn);
+
 		
+		scenegraph::SkeletalNode* sn = CREATE(scenegraph::SkeletalNode);
+		sn->load_mesh("models/test", true);
+		sn->local_position = glm::vec3(0,1,0);
+		root->add_child(sn);
+
+		sn->setup_skeleton();
 		
-		
-		
+
 		char_mesh = assets::meshes()->load_from_path("models/agent_cooper");
 		if (char_mesh)
 		{
@@ -256,6 +266,8 @@ public:
 		physics::copy_ghost_to_camera(character->getGhostObject(), camera);
 		
 		
+		
+		
 		entity_step();
 
 		
@@ -278,6 +290,8 @@ public:
 //			plane_mesh->bones
 		}
 #endif
+
+		root->update(params.step_interval_seconds);
 
 		debugdraw::update(params.step_interval_seconds);
 	}

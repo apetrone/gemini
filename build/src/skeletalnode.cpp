@@ -39,12 +39,6 @@ namespace scenegraph
 
 	void SkeletalNode::setup_skeleton()
 	{
-		// set data sources; this could be done better?
-		scale_channel.set_data_source(&mesh->animation.scale);
-		rotation_channel.set_data_source(&mesh->animation.rotation);
-		translation_channel.set_data_source(&mesh->animation.translation);
-
-		
 		// This creates a local array of bone data
 		// used to store this instance's bone transforms.
 
@@ -76,12 +70,12 @@ namespace scenegraph
 		}
 		else
 		{
-//			transforms.allocate(mesh->animation.frames.size());
-			for (size_t id = 0; id < transforms.size(); ++id)
+			if (mesh->animation.scale.keys.size() > 0)
 			{
-//				assets::AnimationData::Frame* frame = &mesh->animation.frames[id];
-				
-				// something here?
+				// set data sources; this could be done better?
+				scale_channel.set_data_source(&mesh->animation.scale);
+				rotation_channel.set_data_source(&mesh->animation.rotation);
+				translation_channel.set_data_source(&mesh->animation.translation);
 			}
 		}
 	}

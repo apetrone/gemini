@@ -43,9 +43,9 @@ namespace scenegraph
 	struct Node
 	{
 		// decomposed pieces
-		glm::vec3 local_position;
-		glm::quat local_rotation;
 		glm::vec3 local_scale;
+		glm::quat local_rotation;
+		glm::vec3 local_position;
 		
 		// the local to world transform
 		glm::mat4 local_to_world;
