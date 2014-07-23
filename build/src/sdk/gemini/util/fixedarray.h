@@ -57,6 +57,11 @@ public:
 		return element_count;
 	} // size
 	
+	bool empty() const
+	{
+		return (element_count == 0);
+	}
+	
 	void clear()
 	{
 		if ( elements )

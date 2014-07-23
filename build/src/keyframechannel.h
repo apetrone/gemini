@@ -86,6 +86,11 @@ public:
 		
 		// interpolate between frame and frame+1
 		value = Channel<Type, Interpolator>::interpolator(last, next, alpha);
+		
+		assert(!isnan(value.x));
+		assert(!isnan(value.y));
+		assert(!isnan(value.z));
+		
 		return value;
 	}
 	

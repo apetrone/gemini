@@ -85,7 +85,16 @@ public:
 			}
 			else if (event.key == input::KEY_SPACE)
 			{
-				root->update(kernel::instance()->parameters().step_interval_seconds);
+				//root->update(kernel::instance()->parameters().step_interval_seconds);
+				scenegraph::SkeletalNode* sn = CREATE(scenegraph::SkeletalNode);
+				sn->load_mesh("models/test", true);
+				glm::vec3 pos;
+				pos.x = util::random_range(-5, 5);
+				pos.y = util::random_range(-5, 5);
+				pos.z = util::random_range(-5, 5);
+				sn->local_position = pos;
+				sn->setup_skeleton();
+				root->add_child(sn);
 			}
 			else if (event.key == input::KEY_J)
 			{
@@ -180,12 +189,13 @@ public:
 		root->add_child(mn);
 
 		
-		scenegraph::SkeletalNode* sn = CREATE(scenegraph::SkeletalNode);
+		scenegraph::SkeletalNode* sn = 0;
+		
+		sn = CREATE(scenegraph::SkeletalNode);
 		sn->load_mesh("models/test", true);
 		sn->local_position = glm::vec3(0,2,0);
-		root->add_child(sn);
-
 		sn->setup_skeleton();
+		root->add_child(sn);
 		
 
 		char_mesh = assets::meshes()->load_from_path("models/agent_cooper");
@@ -282,6 +292,7 @@ public:
 		debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", camera.eye_position.x, camera.eye_position.y, camera.eye_position.z), Color(255, 0, 255));
 		debugdraw::text(10, 24, xstr_format("camera.view = %.2g %.2g %.2g", camera.view.x, camera.view.y, camera.view.z), Color(128, 128, 255));
 		debugdraw::text(10, 36, xstr_format("camera.right = %.2g %.2g %.2g", camera.side.x, camera.side.y, camera.side.z), Color(255, 0, 0));
+		debugdraw::text(10, 48, xstr_format("frame_delta = %g", params.framedelta_raw_msec), Color(255, 255, 255));
 		
 #if 0
 		for(size_t boneid = 0; boneid < plane_mesh->total_bones; ++boneid)
@@ -300,8 +311,6 @@ public:
 	virtual void tick( kernel::Params & params )
 	{
 		entity_tick();
-	
-	
 	
 		RenderStream rs;
 		renderer::GeneralParameters gp;
