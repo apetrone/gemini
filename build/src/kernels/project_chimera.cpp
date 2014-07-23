@@ -136,9 +136,10 @@ public:
 			assets::Mesh* mesh = meshnode->mesh;
 
 			// TODO: update world transform?
-			node->world_transform = glm::mat4(1.0);
-			node->world_transform = glm::translate(node->local_to_world, node->local_position);
-			
+			glm::mat4 object_to_local = glm::translate(glm::mat4(1.0), node->local_position);
+
+			node->world_transform = object_to_local * node->local_to_world;
+						
 			// compose a matrix
 			this->generalparams->object_matrix = &node->world_transform;
 
@@ -181,7 +182,7 @@ public:
 		
 		scenegraph::SkeletalNode* sn = CREATE(scenegraph::SkeletalNode);
 		sn->load_mesh("models/test", true);
-		sn->local_position = glm::vec3(0,1,0);
+		sn->local_position = glm::vec3(0,2,0);
 		root->add_child(sn);
 
 		sn->setup_skeleton();
