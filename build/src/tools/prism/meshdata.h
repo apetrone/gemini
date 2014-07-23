@@ -136,5 +136,5 @@ namespace prism
 	void read_vector_keys(Json::Value& keys, aiVectorKey* vectorkeys, size_t total_keys);
 	void read_quat_keys(Json::Value& keys, aiQuatKey* quatkeys, size_t total_keys);
 	
-	bool validate_frames_per_second(float frames_per_second);
+	bool validate_frames_per_second(float& frames_per_second);
 }; // namespace prism

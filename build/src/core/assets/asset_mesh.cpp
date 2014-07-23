@@ -276,7 +276,9 @@ namespace assets
 		{
 			Json::Value janimation = *animation_it;
 			mesh->animation.duration_seconds = janimation["duration_seconds"].asFloat();
-			mesh->animation.frames_per_second = janimation["frames_per_second"].asFloat();
+			float ticks_per_second = janimation["ticks_per_second"].asFloat();
+			mesh->animation.frames_per_second = 30;
+			mesh->animation.frame_delay_seconds = (1.0f/mesh->animation.frames_per_second);
 
 			Json::Value node_list = janimation["nodes"];
 			Json::ValueIterator node_it = node_list.begin();
@@ -316,8 +318,6 @@ namespace assets
 				read_keys_object(mesh, jkeys);
 			}
 		}
-		
-		
 		
 		
 		DEALLOC( material_ids );

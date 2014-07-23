@@ -26,6 +26,7 @@
 #include <gemini/util/fixedarray.h>
 #include "render_utilities.h"
 
+#include <slim/xlog.h>
 
 template <class Type>
 struct KeyframeData
@@ -42,15 +43,17 @@ template <class Type, class Interpolator=Interpolator<Type> >
 class Channel
 {
 	Type& value;
-//	FixedArray<Type> keys;
 	KeyframeData<Type>* data_source;
 	static Interpolator interpolator;
+	uint16_t current_frame;
+	float current_time_seconds;
 	
 public:
 	Channel(Type& value_in, KeyframeData<Type>* source = 0) :
 		value(value_in), data_source(source)
 	{
-		
+		current_frame = 0;
+		current_time_seconds = 0;
 	}
 	~Channel() {}
 
@@ -60,7 +63,7 @@ public:
 		assert(data_source != 0);
 	}
 	
-	Type get_value(uint32_t frame, float alpha)
+	Type update_value(uint32_t frame, float alpha)
 	{
 		alpha = glm::clamp(alpha, 0.0f, 1.0f);
 		
@@ -84,6 +87,40 @@ public:
 		// interpolate between frame and frame+1
 		value = Channel<Type, Interpolator>::interpolator(last, next, alpha);
 		return value;
+	}
+	
+	void update(float delta_seconds)
+	{
+		current_time_seconds += delta_seconds;
+		
+		// determine the next frame; don't let this wrap
+		uint16_t next_frame = clamp_frame((current_frame+1));
+		
+		float last_keyframe_time = data_source->time[current_frame];
+		float next_time = data_source->time[next_frame];
+		assert(next_time != 0.0f);
+
+		// alpha is calculated by dividing the deltas: (a/b)
+		// a. The delta between the current simulation time and the last key frame's time
+		// b. The delta between the next key frame's time and the last key frame's time.
+		float alpha = (current_time_seconds - last_keyframe_time)/(next_time - last_keyframe_time);
+		alpha = glm::clamp(alpha, 0.0f, 1.0f);
+
+		update_value(current_frame, alpha);
+		
+		if (current_time_seconds >= next_time)
+		{
+			// advance the frame
+			++current_frame;
+			
+			// catch out of frame bounds
+			if (current_frame == data_source->keys.size()-1)
+			{
+				current_frame = 0;
+				current_time_seconds -= next_time;
+			}
+		}
+
 	}
 	
 private:

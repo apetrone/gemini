@@ -234,9 +234,9 @@ Node::NodeType type, Node* parent)
 		
 		animation_node["name"] = animation->mName.C_Str();
 		animation_node["duration_seconds"] = animation->mDuration;
-		animation_node["frames_per_second"] = animation->mTicksPerSecond;
-		validate_frames_per_second(animation->mTicksPerSecond);
-		
+		float ticks_per_second = animation->mTicksPerSecond;
+		validate_frames_per_second(ticks_per_second);
+		animation_node["ticks_per_second"] = ticks_per_second;
 		
 		Json::Value node_list;
 		
@@ -430,15 +430,13 @@ Node::NodeType type, Node* parent)
 		LOGV("scene nodes traversed.\n");
 	}
 	
-	bool validate_frames_per_second(float frames_per_second)
+	bool validate_frames_per_second(float& frames_per_second)
 	{
-		if (frames_per_second < 10)
+		if (frames_per_second < 2)
 		{
-			LOGW("frames per second is below the minimum of: 24\n");
-			return false;
-		}
-		else if (frames_per_second == 24)
-		{
+			LOGW("frames per second is below the minimum of: 30\n");
+			LOGW("corrected.\n");
+			frames_per_second = 30;
 			return true;
 		}
 		

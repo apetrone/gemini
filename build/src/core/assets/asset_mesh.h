@@ -60,11 +60,13 @@ namespace assets
 		KeyframeData<glm::quat> rotation;
 		KeyframeData<glm::vec3> translation;
 				
-		// duration in seconds
+		// duration of the full animation, in seconds
 		float duration_seconds;
 		
 		float frames_per_second;
+		float frame_delay_seconds; // 1.0f / frames_per_second
 		
+		// total frames in this animation
 		uint32_t total_frames;
 	};
 	

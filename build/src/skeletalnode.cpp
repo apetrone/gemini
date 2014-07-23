@@ -39,9 +39,6 @@ namespace scenegraph
 
 	void SkeletalNode::setup_skeleton()
 	{
-		current_time_seconds = 0;
-		current_frame = 0;
-		
 		// set data sources; this could be done better?
 		scale_channel.set_data_source(&mesh->animation.scale);
 		rotation_channel.set_data_source(&mesh->animation.rotation);
@@ -87,7 +84,6 @@ namespace scenegraph
 				// something here?
 			}
 		}
-		next_frame_advance = (1.0f/mesh->animation.frames_per_second);
 	}
 
 	void SkeletalNode::update(float delta_seconds)
@@ -102,57 +98,15 @@ namespace scenegraph
 			debugdraw::sphere(glm::vec3(bone->bind_matrix[3]), Color(255,0,0), 0.25f);
 		}
 		
-		// iterate over the source animation skeleton
-		// and apply transforms?
-		next_frame_advance -= delta_seconds;
-				
-		current_time_seconds += delta_seconds;
-		if (next_frame_advance <= 0.01)
-		{
-			// advance frame
-			
-			// reset counter
-			float frame_delay_seconds = (1.0f/mesh->animation.frames_per_second);
-			next_frame_advance = frame_delay_seconds;
+		scale_channel.update(delta_seconds);
+		rotation_channel.update(delta_seconds);
+		translation_channel.update(delta_seconds);
+		
 
-
-
-			++current_frame;
-			if (current_frame >= mesh->animation.total_frames-1)
-			{
-				current_frame = 0;
-				current_time_seconds = 0;
-			}
-
-			// SNAP
-//			translation_channel.get_value(current_frame, 0.0f);
-//			local_to_world = glm::translate(glm::mat4(1.0), translation);
-		}
-		
-		// determine the time between keys
-		
-		float baseline = current_frame * (1.0f/mesh->animation.frames_per_second);
-		
-		float t = current_time_seconds - baseline;
-		if (t < -0.01)
-		{
-			t = 0;
-		}
-		else if (t > 1.01)
-		{
-			t = 1;
-		}
-		
-		
-		scale_channel.get_value(current_frame, t);
 		glm::mat4 sc = glm::scale(glm::mat4(1.0), scale);
-		
-		rotation_channel.get_value(current_frame, t);
 		glm::mat4 ro = glm::toMat4(rotation);
-		
-		translation_channel.get_value(current_frame, t);
 		glm::mat4 tr = glm::translate(glm::mat4(1.0), translation);
-
-		local_to_world = /*sc * */ro * tr;
+		
+		local_to_world = sc * ro * tr;
 	}
 }; // namespace scenegraph
