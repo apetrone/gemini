@@ -106,6 +106,7 @@ namespace renderer
 		sizeof(float) * 2,
 		sizeof(float) * 3,
 		sizeof(float) * 4,
+		sizeof(int) * 4,
 		sizeof(unsigned char) * 3,
 		sizeof(unsigned char) * 4,
 		sizeof(unsigned int)

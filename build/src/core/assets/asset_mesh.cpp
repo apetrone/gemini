@@ -470,6 +470,9 @@ namespace assets
 		attributes = 0;
 		is_animated = 0;
 		vertexbuffer = 0;
+		
+		blend_indices = 0;
+		blend_weights = 0;
 	}
 	
 	Geometry::~Geometry()

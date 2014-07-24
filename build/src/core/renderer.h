@@ -131,6 +131,7 @@ namespace renderer
 	// 1. GL Core3.2 driver (static_setup)
 	// 2. VertexDescriptor::calculate_vertex_stride
 	// 3. VertexDescriptor::elements (look up table for descriptor # of elements)
+	// 4. VertexDescriptor::size
 	enum
 	{
 		VD_FLOAT2 = 0,
