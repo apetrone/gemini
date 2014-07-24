@@ -127,11 +127,16 @@ namespace renderer
 #define MAX_DESCRIPTORS 8
 	typedef unsigned short VertexDescriptorType;
 	
+	// Any changes to this enum must also be handled in:
+	// 1. GL Core3.2 driver (static_setup)
+	// 2. VertexDescriptor::calculate_vertex_stride
+	// 3. VertexDescriptor::elements (look up table for descriptor # of elements)
 	enum
 	{
 		VD_FLOAT2 = 0,
 		VD_FLOAT3,
 		VD_FLOAT4,
+		VD_INT4,
 		VD_UNSIGNED_BYTE3,
 		VD_UNSIGNED_BYTE4,
 		VD_UNSIGNED_INT,
@@ -300,6 +305,9 @@ namespace renderer
 		UV * uvs;
 		renderer::IndexType * indices;
 		renderer::VertexBuffer * vertexbuffer;
+		
+		glm::ivec4* blend_indices;
+		glm::vec4* blend_weights;
 	}; // Geometry
 	
 	struct GeneralParameters
@@ -310,6 +318,10 @@ namespace renderer
 		
 		unsigned int global_params;
 		glm::vec3 * camera_position;
+		
+		
+		glm::mat4* node_transforms;
+		unsigned int total_node_transforms;
 		
 		GeneralParameters();
 	};

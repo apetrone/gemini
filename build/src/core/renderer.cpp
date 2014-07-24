@@ -116,6 +116,7 @@ namespace renderer
 		2,
 		3,
 		4,
+		4,
 		3,
 		4,
 		1
@@ -172,6 +173,14 @@ namespace renderer
 			else if ( descriptor == VD_FLOAT3 )
 			{
 				attribSize = (sizeof(float)*3);
+			}
+			else if ( descriptor == VD_FLOAT4 )
+			{
+				attribSize = (sizeof(float)*4);
+			}
+			else if ( descriptor == VD_INT4 )
+			{
+				attribSize = (sizeof(int)*4);
 			}
 			else if ( descriptor == VD_UNSIGNED_INT )
 			{

@@ -167,6 +167,16 @@ struct GL32VertexBuffer : public VertexBuffer
 				attrib_type = GL_FLOAT;
 				normalized = GL_FALSE;
 			}
+			else if ( desc_type == VD_FLOAT4 )
+			{
+				attrib_type = GL_FLOAT;
+				normalized = GL_FALSE;
+			}
+			else if ( desc_type == VD_INT4 )
+			{
+				attrib_type = GL_INT;
+				normalized = GL_FALSE;
+			}
 			else if ( desc_type == VD_UNSIGNED_INT )
 			{
 				attrib_type = GL_UNSIGNED_INT;

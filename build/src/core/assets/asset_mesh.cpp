@@ -68,7 +68,7 @@ namespace assets
 		}
 		
 		Json::Value materials = root["materials"];
-		LOGV( "Total Materials: %i\n", materials.size() );
+		//LOGV( "Total Materials: %i\n", materials.size() );
 		
 		Json::ValueIterator mit = materials.begin();
 		
@@ -240,7 +240,7 @@ namespace assets
 		// Process Bones
 		Json::Value bone_list = root["bones"];
 		mesh->total_bones = bone_list.size();
-		LOGV("total bones: %i\n", mesh->total_bones);
+//		LOGV("total bones: %i\n", mesh->total_bones);
 		
 		if (mesh->total_bones > 0)
 		{
@@ -359,7 +359,6 @@ namespace assets
 			s.x = x.asFloat();
 			s.y = y.asFloat();
 			s.z = z.asFloat();
-			LOGV("v = %g %g %g\n", s.x, s.y, s.z);
 		}
 	}
 	
@@ -399,7 +398,6 @@ namespace assets
 			s.y = y.asFloat();
 			s.z = z.asFloat();
 			s.w = w.asFloat();
-			LOGV("q = %g %g %g %g\n", s.x, s.y, s.z, s.w);
 		}
 	}
 	
@@ -558,6 +556,13 @@ namespace assets
 			ShaderString uv0 = "uv0";
 			attributes |= find_parameter_mask( uv0 );
 			descriptor.add( VD_FLOAT2 );
+		}
+		
+		if (blend_indices)
+		{
+			ShaderString blend_indices = "blend_indices";
+			attributes |= find_parameter_mask(blend_indices);
+			descriptor.add(VD_INT4);
 		}
 		
 		this->vertexbuffer = renderer::driver()->vertexbuffer_from_geometry( descriptor, this );
