@@ -47,6 +47,7 @@ class Channel
 	static Interpolator interpolator;
 	uint16_t current_frame;
 	float current_time_seconds;
+	float next_advance_timeleft;
 	
 public:
 	Channel(Type& value_in, KeyframeData<Type>* source = 0) :
@@ -54,6 +55,7 @@ public:
 	{
 		current_frame = 0;
 		current_time_seconds = 0;
+		next_advance_timeleft = 0;
 	}
 	~Channel() {}
 
@@ -94,9 +96,10 @@ public:
 		return value;
 	}
 	
-	void update(float delta_seconds)
+	void update_with_time(float delta_seconds)
 	{
 		current_time_seconds += delta_seconds;
+		next_advance_timeleft -= delta_seconds;
 		
 		// determine the next frame; don't let this wrap
 		uint16_t next_frame = clamp_frame((current_frame+1));
@@ -104,13 +107,13 @@ public:
 		float last_keyframe_time = data_source->time[current_frame];
 		float next_time = data_source->time[next_frame];
 		assert(next_time != 0.0f);
-
+		
 		// alpha is calculated by dividing the deltas: (a/b)
 		// a. The delta between the current simulation time and the last key frame's time
 		// b. The delta between the next key frame's time and the last key frame's time.
 		float alpha = (current_time_seconds - last_keyframe_time)/(next_time - last_keyframe_time);
 		alpha = glm::clamp(alpha, 0.0f, 1.0f);
-
+		
 		update_value(current_frame, alpha);
 		
 		if (current_time_seconds >= next_time)
@@ -125,7 +128,41 @@ public:
 				current_time_seconds -= next_time;
 			}
 		}
+	}
+	
+	void update_sampled(float delta_seconds, float frame_delay_seconds)
+	{
+		current_time_seconds += delta_seconds;
+		next_advance_timeleft -= delta_seconds;
+		
+		float start_time = (current_frame * frame_delay_seconds);
+		float t = (current_time_seconds - start_time) / frame_delay_seconds;
+		
+		t = glm::clamp(t, 0.0f, 1.0f);
+		
+		update_value(current_frame, t);
+		
+		if (next_advance_timeleft <= 0.01f)
+		{
+			// advance the frame
+			++current_frame;
 
+			next_advance_timeleft = frame_delay_seconds;
+			
+			// catch out of frame bounds
+			if (current_frame == data_source->keys.size()-1)
+			{
+				current_frame = 0;
+				current_time_seconds = 0;
+			}
+		}
+	}
+	
+	void update(float delta_seconds, float frame_delay_seconds)
+	{
+//		update_with_time(delta_seconds);
+
+		update_sampled(delta_seconds, frame_delay_seconds);
 	}
 	
 private:

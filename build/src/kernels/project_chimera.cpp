@@ -47,7 +47,7 @@
 
 using namespace physics;
 
-
+//#define SCENE_GRAPH_MANUAL 1
 
 class ProjectChimera : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
@@ -85,7 +85,9 @@ public:
 			}
 			else if (event.key == input::KEY_SPACE)
 			{
-				//root->update(kernel::instance()->parameters().step_interval_seconds);
+#ifdef SCENE_GRAPH_MANUAL
+				root->update(kernel::instance()->parameters().step_interval_seconds);
+#else
 				scenegraph::SkeletalNode* sn = CREATE(scenegraph::SkeletalNode);
 				sn->load_mesh("models/test", true);
 				glm::vec3 pos;
@@ -95,6 +97,7 @@ public:
 				sn->local_position = pos;
 				sn->setup_skeleton();
 				root->add_child(sn);
+#endif
 			}
 			else if (event.key == input::KEY_J)
 			{
@@ -303,7 +306,9 @@ public:
 		}
 #endif
 
+#ifndef SCENE_GRAPH_MANUAL
 		root->update(params.step_interval_seconds);
+#endif
 
 		debugdraw::update(params.step_interval_seconds);
 	}
