@@ -92,15 +92,15 @@ namespace scenegraph
 			debugdraw::sphere(glm::vec3(bone->bind_matrix[3]), Color(255,0,0), 0.25f);
 		}
 		
-//		scale_channel.update(delta_seconds, mesh->animation.frame_delay_seconds);
+		scale_channel.update(delta_seconds, mesh->animation.frame_delay_seconds);
 		rotation_channel.update(delta_seconds, mesh->animation.frame_delay_seconds);
-//		translation_channel.update(delta_seconds, mesh->animation.frame_delay_seconds);
+		translation_channel.update(delta_seconds, mesh->animation.frame_delay_seconds);
 		
 
 		glm::mat4 sc = glm::scale(glm::mat4(1.0), scale);
 		glm::mat4 ro = glm::toMat4(rotation);
 		glm::mat4 tr = glm::translate(glm::mat4(1.0), translation);
 		
-		local_to_world = /*sc * */ro/* * tr*/;
+		local_to_world = sc * ro * tr;
 	}
 }; // namespace scenegraph
