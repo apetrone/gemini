@@ -320,7 +320,7 @@ def products(arguments, **kwargs):
 		]
 
 		gemini.prebuild_commands = [
-			"python %s -c ../assets/desktop.conf -y" % (BLACKSMITH_PATH)
+			"python %s -c ../assets/desktop.conf" % (BLACKSMITH_PATH)
 		]
 
 		xwl_params = []
