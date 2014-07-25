@@ -65,6 +65,8 @@ public:
 	assets::Shader* animation;
 	scenegraph::Node* root;
 	
+	size_t total_scene_nodes_visited;
+	
 	
 	// members of the mesh visitor
 	RenderStream* renderstream;
@@ -141,6 +143,8 @@ public:
 
 	virtual int visit(scenegraph::Node* node)
 	{
+		++total_scene_nodes_visited;
+		
 		// TODO: add this stuff to a render queue for sorting, etc.
 		if (node->get_type() == scenegraph::MESH)
 		{
@@ -184,8 +188,9 @@ public:
 		
 		scenegraph::MeshNode* mn = 0;
 //		mn = CREATE(scenegraph::MeshNode);
-//		mn->load_mesh("models/house", true);
+//		mn->load_mesh("models/vehicle2", true);
 //		root->add_child(mn);
+		
 		
 		mn = CREATE(scenegraph::MeshNode);
 		mn->load_mesh("models/ground", true);
@@ -239,7 +244,7 @@ public:
 		animation->attributes[0].set_key("in_position"); animation->attributes[0].second = 0;
 		animation->attributes[1].set_key("in_normal"); animation->attributes[1].second = 1;
 		animation->attributes[2].set_key("in_uv"); animation->attributes[2].second = 2;
-
+//		animation->attributes[3].set_key("in_blendindices"); animation->attributes[3].second = 3;
 		
 		assets::load_shader("shaders/animation", animation);
 
@@ -296,6 +301,7 @@ public:
 		debugdraw::text(10, 24, xstr_format("camera.view = %.2g %.2g %.2g", camera.view.x, camera.view.y, camera.view.z), Color(128, 128, 255));
 		debugdraw::text(10, 36, xstr_format("camera.right = %.2g %.2g %.2g", camera.side.x, camera.side.y, camera.side.z), Color(255, 0, 0));
 		debugdraw::text(10, 48, xstr_format("frame_delta = %g", params.framedelta_raw_msec), Color(255, 255, 255));
+		debugdraw::text(10, 60, xstr_format("scene graph nodes = %i", total_scene_nodes_visited), Color(128, 128, 255));
 		
 #if 0
 		for(size_t boneid = 0; boneid < plane_mesh->total_bones; ++boneid)
@@ -337,6 +343,7 @@ public:
 		this->generalparams = &gp;
 		
 		// render nodes
+		total_scene_nodes_visited = 0;
 		scenegraph::visit_nodes(root, this);
 
 		
