@@ -45,6 +45,8 @@
 #include "meshnode.h"
 #include "skeletalnode.h"
 
+#include "renderer/scenelink.h"
+
 using namespace physics;
 
 //#define SCENE_GRAPH_MANUAL 1
@@ -346,7 +348,9 @@ public:
 		total_scene_nodes_visited = 0;
 		scenegraph::visit_nodes(root, this);
 
+		renderer::scenelink::draw(root);
 		
+
 		glm::mat4 char_mat = glm::mat4(1.0);
 		
 		// TODO: this should use the actual player height instead of
