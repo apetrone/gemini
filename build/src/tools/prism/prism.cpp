@@ -110,6 +110,8 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 	// traverse all nodes in the scene
 	traverse_nodes(meshdata, scene, hierarchy);
 	
+	LOGV("total meshes: %i\n", scene->mNumMeshes);
+	
 	// loop through all meshes
 	for( size_t m = 0; m < scene->mNumMeshes; ++m )
 	{
