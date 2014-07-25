@@ -51,14 +51,22 @@ namespace renderer
 					for(size_t geo = 0; geo < meshnode->mesh->total_geometry; ++geo)
 					{
 						assets::Geometry* geometry = &meshnode->mesh->geometry[geo];
-						
-						// TODO: determine render key for this geometry.
-						RenderKey key = geometry->attributes /*plus some other stuff */;
+						RenderKey key = compute_render_key(geometry);
 						queue.insert(key, geometry);
 					}
 				}
 			}
 			return 0;
+		}
+		
+	private:
+		RenderKey compute_render_key(RenderObject* object)
+		{
+			assets::Shader* shader = assets::find_compatible_shader(object->attributes);
+			
+		
+		
+			return object->attributes;
 		}
 	};
 	

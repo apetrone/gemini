@@ -55,6 +55,15 @@ namespace renderer
 			key(_key), object(_object) {}
 	};
 
+	// Render Data part of scene node, contains renderer specific items
+	// This enables a node instance to be assigned a unique material or shader
+	// without requiring a unique RenderObject.
+	struct SceneRenderData
+	{
+		RenderObject* object;
+		uint16_t material_id;
+		uint16_t shader_id;
+	};
 
 
 	class RenderQueue
