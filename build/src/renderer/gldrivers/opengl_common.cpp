@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <gemini/typedefs.h>
-#include "renderer.h"
+#include "renderer/renderer.h"
 #include "opengl_common.h"
 
 GLenum vertexbuffer_drawtype_to_gl_drawtype( renderer::VertexBufferDrawType type )

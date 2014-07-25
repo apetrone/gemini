@@ -27,14 +27,15 @@
 
 #include "kernel.h"
 #include "font.h"
-#include "renderstream.h"
 #include "assets.h"
 #include "camera.h"
-#include "vertexstream.h"
 #include "mathlib.h"
-#include "render_utilities.h"
 #include "input.h"
-#include "gemgl.h"
+
+#include "renderer/renderstream.h"
+#include "renderer/vertexstream.h"
+#include "renderer/render_utilities.h"
+#include "renderer/gemgl.h"
 
 #define FONT_TEST 1
 #define MODEL_TEST 0

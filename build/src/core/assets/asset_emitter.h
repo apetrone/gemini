@@ -25,7 +25,7 @@
 #include <gemini/util.h>
 
 #include "assets.h"
-#include "renderer.h"
+#include "renderer/renderer.h"
 #include "keyframechannel.h"
 
 

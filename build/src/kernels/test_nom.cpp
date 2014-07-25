@@ -21,10 +21,10 @@
 // -------------------------------------------------------------
 #include "kernel.h"
 #include <stdio.h>
-#include "renderer.h"
+#include "renderer/renderer.h"
 #include <slim/xlog.h>
 #include "input.h"
-#include "renderstream.h"
+#include "renderer/renderstream.h"
 #include "debugdraw.h"
 
 #include "assets/asset_texture.h"

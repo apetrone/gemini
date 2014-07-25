@@ -26,7 +26,7 @@
 
 #include "mathlib.h" // for glm
 #include "color.h"
-#include "renderer.h"
+#include "renderer/renderer.h"
 #include "assets.h"
 #include "assets/asset_texture.h"
 

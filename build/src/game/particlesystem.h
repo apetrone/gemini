@@ -29,7 +29,7 @@
 #include "color.h"
 #include "mathlib.h"
 #include "keyframechannel.h"
-#include "render_utilities.h"
+#include "renderer/render_utilities.h"
 #include "assets/asset_emitter.h"
 
 // -------------------------------------------------------------

@@ -28,8 +28,8 @@
 #include <slim/xlog.h>
 
 #include "font.h"
-#include "renderer.h"
-#include "renderstream.h"
+#include "renderer/renderer.h"
+#include "renderer/renderstream.h"
 #include "kernel.h"
 #include "fontstash.h"
 

@@ -25,8 +25,8 @@
 #include "mathlib.h"
 #include "debugdraw.h"
 #include "input.h"
-#include "renderer.h"
-#include "renderstream.h"
+#include "renderer/renderer.h"
+#include "renderer/renderstream.h"
 
 #include "camera.h"
 

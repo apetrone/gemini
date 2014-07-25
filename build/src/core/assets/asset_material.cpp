@@ -23,7 +23,7 @@
 
 #include "assets.h"
 #include "assets/asset_material.h"
-#include "renderer.h"
+#include "renderer/renderer.h"
 
 using namespace renderer;
 

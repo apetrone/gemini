@@ -24,7 +24,7 @@
 
 #include "assets.h"
 #include "assets/asset_font.h"
-#include "render_utilities.h"
+#include "renderer/render_utilities.h"
 #include "font.h"
 #include "kernel.h"
 

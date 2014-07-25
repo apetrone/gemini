@@ -16,8 +16,10 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this source.  If not, see <http://www.gnu.org/licenses/>.
 // -------------------------------------------------------------
-#import "gemgl.h"
 #import <CoreFoundation/CoreFoundation.h>
+
+#import "renderer/gemgl.h"
+
 
 CFBundleRef gemgl_bundle = 0;
 	

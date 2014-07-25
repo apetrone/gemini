@@ -24,7 +24,7 @@
 
 #include "assets.h"
 #include "assets/asset_mesh.h"
-#include "renderer.h"
+#include "renderer/renderer.h"
 
 using namespace renderer;
 

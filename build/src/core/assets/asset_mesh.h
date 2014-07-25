@@ -28,7 +28,7 @@
 #include <gemini/util/stackstring.h>
 
 #include "assets.h"
-#include "renderer.h"
+#include "renderer/renderer.h"
 
 #include <gemini/util/fixedarray.h>
 #include "keyframechannel.h"

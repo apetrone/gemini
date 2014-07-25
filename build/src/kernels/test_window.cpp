@@ -25,7 +25,7 @@
 #include <slim/xlog.h>
 
 #include "kernel.h"
-#include "renderer.h"
+#include "renderer/renderer.h"
 #include "audio.h"
 #include "input.h"
 

@@ -19,14 +19,17 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#include <slim/xlog.h>
 
-#include "renderer.h"
+#include "renderer/renderer.h"
+#include "renderer/vertexstream.h"
+#include "renderer/renderstream.h"
+
 #include "debugdraw.h"
-#include "vertexstream.h"
 #include "assets.h"
 #include "font.h"
-#include "renderstream.h"
-#include <slim/xlog.h>
+
+
 
 namespace debugdraw
 {

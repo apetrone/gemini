@@ -24,7 +24,7 @@
 
 #include "assets.h"
 #include "assets/asset_spriteconfig.h"
-#include "render_utilities.h"
+#include "renderer/render_utilities.h"
 
 namespace assets
 {

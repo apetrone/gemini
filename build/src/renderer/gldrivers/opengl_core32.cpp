@@ -21,7 +21,8 @@
 // -------------------------------------------------------------
 #include <gemini/typedefs.h>
 #include <slim/xlog.h>
-#include "gldrivers/opengl_core32.h"
+
+#include "renderer/gldrivers/opengl_core32.h"
 
 #include "image.h"
 

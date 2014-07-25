@@ -23,7 +23,7 @@
 #include <gemini/core/filesystem.h>
 
 #include "assets.h"
-#include "renderer.h"
+#include "renderer/renderer.h"
 #include "assets/asset_shader.h"
 
 
