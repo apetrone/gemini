@@ -148,16 +148,20 @@ def get_tools(libgemini):
 	#
 	#
 
-	# rnd = Product(name="rnd", output=ProductType.Commandline)
+	rnd = Product(name="rnd", output=ProductType.Commandline)
 
-	# rnd.root = "../"
-	# rnd.sources += [
-	# 	"src/rnd/rnd.cpp"
-	# ]
-	# rnd.product_root = COMMON_PRODUCT_ROOT
+	rnd.root = "../"
+	rnd.sources += [
+		"src/rnd/rnd.cpp"
+	]
+	rnd.product_root = COMMON_PRODUCT_ROOT
 
-	# setup_driver(rnd)
-	# setup_common_libs(rnd)
+	setup_driver(rnd)
+	setup_common_tool(rnd)
+
+	rnd.dependencies.extend([
+		libgemini
+	])
 
 	#
 	# other tools?
@@ -174,7 +178,6 @@ def get_tools(libgemini):
 	prism.product_root = COMMON_PRODUCT_ROOT
 
 	setup_driver(prism)
-	#setup_common_libs(prism)
 	setup_common_tool(prism)
 
 	prism.dependencies.extend([
@@ -182,7 +185,7 @@ def get_tools(libgemini):
 		Dependency(file="assimp.py", products="assimp", arguments=["--enable-static"])
 	])
 
-	return [prism]
+	return [rnd, prism]
 
 
 def get_libgemini():
@@ -337,7 +340,7 @@ def products(arguments, **kwargs):
 			]
 		elif arguments.with_sdl2:
 			gemini.dependencies += [
-				Dependency(file="sdl2.py")
+				Dependency(file="sdl2.py", arguments=[])
 			]
 			gemini.defines += [
 				"GEMINI_USE_SDL2=1"
