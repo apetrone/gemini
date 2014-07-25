@@ -295,7 +295,8 @@ def products(arguments, **kwargs):
 	gemini.sources += [
 		"src/kernels/**.c*",
 		"src/core/*.*",
-		"src/core/gldrivers/opengl_common.*",
+		"src/renderer/*.*",
+		"src/renderer/gldrivers/opengl_common.*",
 		"src/core/audio/openal.*",
 		"src/core/assets/*.*",
 		"src/contrib/*",
@@ -303,6 +304,7 @@ def products(arguments, **kwargs):
 	]
 
 	gemini.excludes += [
+		"*.DS_Store",
 		"src/kernels/test_assimp.cpp",
 		"src/kernels/project_huckleberry.cpp"
 	]
@@ -315,7 +317,7 @@ def products(arguments, **kwargs):
 		gemini.sources += [
 			"src/core/desktop/kernel_desktop.cpp",
 			"src/core/audio/openal_vorbis_decoder.*",
-			"src/core/gldrivers/opengl_core32.*"
+			"src/renderer/gldrivers/opengl_core32.*"
 		]
 
 		gemini.includes += [
@@ -385,7 +387,7 @@ def products(arguments, **kwargs):
 
 		if arguments.glesv2:
 			linux.sources += [
-				"src/core/gldrivers/opengl_glesv2.*"
+				"src/renderer/gldrivers/opengl_glesv2.*"
 			]
 
 			linux.defines += [
