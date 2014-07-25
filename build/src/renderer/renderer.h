@@ -296,7 +296,6 @@ namespace renderer
 	{
 		unsigned int vertex_count;
 		unsigned int index_count;
-		renderer::VertexBufferDrawType draw_type;
 		unsigned short attributes;
 		bool is_animated;
 				
@@ -306,6 +305,7 @@ namespace renderer
 		UV * uvs;
 		renderer::IndexType * indices;
 		renderer::VertexBuffer * vertexbuffer;
+		renderer::VertexBufferDrawType draw_type;
 		
 		glm::ivec4* blend_indices;
 		glm::vec4* blend_weights;
