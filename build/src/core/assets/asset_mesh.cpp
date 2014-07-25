@@ -468,7 +468,6 @@ namespace assets
 		draw_type = renderer::DRAW_TRIANGLES;
 		
 		attributes = 0;
-		is_animated = 0;
 		vertexbuffer = 0;
 		
 		blend_indices = 0;
@@ -570,7 +569,7 @@ namespace assets
 		
 		this->vertexbuffer = renderer::driver()->vertexbuffer_from_geometry( descriptor, this );
 		
-		if ( !this->is_animated )
+		if ( !this->is_animated() )
 		{
 			renderer::driver()->vertexbuffer_upload_geometry( this->vertexbuffer, this );
 		}

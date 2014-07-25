@@ -25,60 +25,64 @@
 
 #include "rqueue.h"
 
-
-// this is a descending compare function used to traverse render commands
-// where higher keys have priority
-struct DescendingRenderBlockCompare
+namespace renderer
 {
-	bool operator()(const RenderBlock* left, const RenderBlock* right)
-	{
-		if ( left->key < right->key )
-		{
-			return 1;
-		}
-		else if ( left->key > right->key )
-		{
-			return -1;
-		}
-		
-		return 0;
-	}
-};
-
-
-RenderQueue::~RenderQueue()
-{
-	purge();
-}
-
-void RenderQueue::insert(RenderKey key, RenderObject *object)
-{
-	RenderBlock* block = CREATE(RenderBlock, key, object);
-	render_list.push_back(block);
-}
-
-void RenderQueue::sort()
-{
-	std::sort(begin(render_list), end(render_list), DescendingRenderBlockCompare());
-}
-
-void RenderQueue::draw()
-{
-
-}
-
-void RenderQueue::purge()
-{
-	std::for_each(begin(render_list), end(render_list), [](RenderBlock* block)
-				  {
-					  DESTROY(RenderBlock, block);
-				  }
-				  );
 	
-	render_list.clear();
-}
 
-size_t RenderQueue::size() const
-{
-	return render_list.size();
-}
+	// this is a descending compare function used to traverse render commands
+	// where higher keys have priority
+	struct DescendingRenderBlockCompare
+	{
+		bool operator()(const RenderBlock* left, const RenderBlock* right)
+		{
+			if ( left->key < right->key )
+			{
+				return 1;
+			}
+			else if ( left->key > right->key )
+			{
+				return -1;
+			}
+			
+			return 0;
+		}
+	};
+
+
+	RenderQueue::~RenderQueue()
+	{
+		purge();
+	}
+
+	void RenderQueue::insert(RenderKey key, RenderObject *object)
+	{
+		RenderBlock* block = CREATE(RenderBlock, key, object);
+		render_list.push_back(block);
+	}
+
+	void RenderQueue::sort()
+	{
+		std::sort(begin(render_list), end(render_list), DescendingRenderBlockCompare());
+	}
+
+	void RenderQueue::draw()
+	{
+
+	}
+
+	void RenderQueue::purge()
+	{
+		std::for_each(begin(render_list), end(render_list), [](RenderBlock* block)
+					  {
+						  DESTROY(RenderBlock, block);
+					  }
+					  );
+		
+		render_list.clear();
+	}
+
+	size_t RenderQueue::size() const
+	{
+		return render_list.size();
+	}
+}; // namespace renderer

@@ -762,7 +762,7 @@ renderer::VertexBuffer * GLCore32::vertexbuffer_from_geometry( renderer::VertexD
 	assert( stream != 0 );
 		
 	renderer::VertexBufferBufferType buffer_type = renderer::BUFFER_STATIC;
-	if ( geometry->is_animated )
+	if ( geometry->is_animated() )
 	{
 		buffer_type = renderer::BUFFER_STREAM;
 	}

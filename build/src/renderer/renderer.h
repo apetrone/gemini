@@ -294,21 +294,28 @@ namespace renderer
 	
 	struct Geometry
 	{
+		unsigned short attributes;
+			
 		unsigned int vertex_count;
 		unsigned int index_count;
-		unsigned short attributes;
-		bool is_animated;
-				
-		glm::vec3 * vertices;
-		glm::vec3 * normals;
-		Color * colors;
-		UV * uvs;
-		renderer::IndexType * indices;
-		renderer::VertexBuffer * vertexbuffer;
-		renderer::VertexBufferDrawType draw_type;
-		
+			
+		// if vertex_count > 0 and these pointers are not null
+		// they will be vertex_count in length.
+		glm::vec3* vertices;
+		glm::vec3* normals;
+		Color* colors;
+		UV* uvs;
 		glm::ivec4* blend_indices;
 		glm::vec4* blend_weights;
+		
+		renderer::IndexType* indices;
+		renderer::VertexBuffer* vertexbuffer;
+		renderer::VertexBufferDrawType draw_type;
+		
+		// return true if this object is animated
+		// i.e. requires dynamic updates in the renderer
+		bool is_animated() const { return blend_indices != 0; }
+		
 	}; // Geometry
 	
 	struct GeneralParameters

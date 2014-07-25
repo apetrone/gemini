@@ -29,49 +29,49 @@
 
 #include "renderer.h"
 
-
-typedef unsigned int RenderKey;
-
-// This is used for sorting the texture/shader combination
-struct RenderMaterial
+namespace renderer
 {
-	uint16_t texture;
-	uint16_t shader;
-};
+	typedef unsigned int RenderKey;
 
-// Contains necessary data needed in order to submit this to the renderer
-struct RenderObject
-{
-	// ...
-};
+	// This is used for sorting the texture/shader combination
+	struct RenderMaterial
+	{
+		uint16_t texture;
+		uint16_t shader;
+	};
 
-// An item in a queue/list that contains a sorting key and a pointer to a RenderObject
-// A RenderBlock is created for each renderable scene graph node.
-struct RenderBlock
-{
-	RenderKey key;
-	RenderObject* object;
-	
-	RenderBlock(RenderKey _key, RenderObject* _object) :
-		key(_key), object(_object) {}
-};
+	// Contains necessary data needed in order to submit this to the renderer
+	typedef Geometry RenderObject;
 
 
+	// An item in a queue/list that contains a sorting key and a pointer to a RenderObject
+	// A RenderBlock is created for each renderable scene graph node.
+	struct RenderBlock
+	{
+		RenderKey key;
+		RenderObject* object;
+		
+		RenderBlock(RenderKey _key, RenderObject* _object) :
+			key(_key), object(_object) {}
+	};
 
-class RenderQueue
-{
-	typedef std::vector< RenderBlock*, GeminiAllocator<RenderBlock*> > RenderList;
-	
-	RenderList render_list;
-	
-	
-public:
-	RenderQueue() {}
-	~RenderQueue();
-	
-	void insert(RenderKey key, RenderObject* object);
-	void sort();
-	void draw();
-	void purge();
-	size_t size() const;
-};
+
+
+	class RenderQueue
+	{
+		typedef std::vector< RenderBlock*, GeminiAllocator<RenderBlock*> > RenderList;
+		
+		RenderList render_list;
+		
+		
+	public:
+		RenderQueue() {}
+		~RenderQueue();
+		
+		void insert(RenderKey key, RenderObject* object);
+		void sort();
+		void draw();
+		void purge();
+		size_t size() const;
+	};
+}; // namespace renderer
