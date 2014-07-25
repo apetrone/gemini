@@ -209,7 +209,7 @@ void DesktopKernel::pre_tick()
 			
 			case SDL_TEXTINPUT:
 			{
-				LOGV("TODO: add unicode support from SDL: %s\n", event.text.text);
+//				LOGV("TODO: add unicode support from SDL: %s\n", event.text.text);
 				break;
 			}
 			
