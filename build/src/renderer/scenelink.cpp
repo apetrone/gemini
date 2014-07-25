@@ -25,44 +25,67 @@
 
 
 #include "scenelink.h"
+#include "meshnode.h"
 
 namespace renderer
 {
-	namespace scenelink
+	
+	class SceneVisitor : public scenegraph::Visitor
 	{
-		static RenderQueue queue;
-		
-		class SceneVisitor : public scenegraph::Visitor
+		size_t total_nodes;
+		RenderQueue& queue;
+
+	public:
+	
+		SceneVisitor(RenderQueue& _queue): queue(_queue) {}
+	
+		virtual int visit(scenegraph::Node* node)
 		{
-			size_t total_nodes;
-			
-		public:
-			virtual int visit(scenegraph::Node* node)
+			++total_nodes;
+			if (node->type == scenegraph::MESH)
 			{
-				return 0;
+				// this is renderable
+				scenegraph::MeshNode* meshnode = static_cast<scenegraph::MeshNode*>(node);
+				if (meshnode)
+				{
+					for(size_t geo = 0; geo < meshnode->mesh->total_geometry; ++geo)
+					{
+						assets::Geometry* geometry = &meshnode->mesh->geometry[geo];
+						
+						// TODO: determine render key for this geometry.
+						RenderKey key = geometry->attributes /*plus some other stuff */;
+						queue.insert(key, geometry);
+					}
+				}
 			}
-		};
-		
-
-		
-		void add(scenegraph::Node* node)
-		{
-			RenderKey key = 0;
-			RenderObject* object = 0;
-			queue.insert(key, object);
-		}
-		
-
-		void draw(scenegraph::Node* root)
-		{
-			// clear the queue and prepare for another frame
-			queue.purge();
-		
-			// sort the queue
-			queue.sort();
-			
-			// finally, draw from the queue
-			queue.draw();
+			return 0;
 		}
 	};
+	
+	
+	SceneLink::SceneLink()
+	{
+		queue = CREATE(RenderQueue);
+	}
+	SceneLink::~SceneLink()
+	{
+		DESTROY(RenderQueue, queue);
+	}
+
+	void SceneLink::draw(scenegraph::Node* root)
+	{
+		// clear the queue and prepare for another frame
+		queue->clear();
+		
+		// visit all nodes in the scene graph
+		// add renderable nodes to the queue
+		SceneVisitor visitor(*queue);
+		scenegraph::visit_nodes(root, &visitor);
+	
+		// sort the queue
+		queue->sort();
+		
+		// finally, draw from the queue
+		queue->draw();
+	}
 }; // namespace renderer

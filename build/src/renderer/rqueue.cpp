@@ -33,13 +33,13 @@ namespace renderer
 	// where higher keys have priority
 	struct DescendingRenderBlockCompare
 	{
-		bool operator()(const RenderBlock* left, const RenderBlock* right)
+		bool operator()(RenderBlock& left, RenderBlock& right)
 		{
-			if ( left->key < right->key )
+			if ( left.key < right.key )
 			{
 				return 1;
 			}
-			else if ( left->key > right->key )
+			else if ( left.key > right.key )
 			{
 				return -1;
 			}
@@ -49,14 +49,9 @@ namespace renderer
 	};
 
 
-	RenderQueue::~RenderQueue()
-	{
-		purge();
-	}
-
 	void RenderQueue::insert(RenderKey key, RenderObject *object)
 	{
-		RenderBlock* block = CREATE(RenderBlock, key, object);
+		RenderBlock block = RenderBlock(key, object);
 		render_list.push_back(block);
 	}
 
@@ -70,14 +65,8 @@ namespace renderer
 
 	}
 
-	void RenderQueue::purge()
+	void RenderQueue::clear()
 	{
-		std::for_each(begin(render_list), end(render_list), [](RenderBlock* block)
-					  {
-						  DESTROY(RenderBlock, block);
-					  }
-					  );
-		
 		render_list.clear();
 	}
 

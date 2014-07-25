@@ -74,6 +74,8 @@ public:
 	RenderStream* renderstream;
 	renderer::GeneralParameters* generalparams;
 	
+	renderer::SceneLink scenelink;
+	
 	ProjectChimera()
 	{
 		camera.type = Camera::TARGET;
@@ -348,7 +350,7 @@ public:
 		total_scene_nodes_visited = 0;
 		scenegraph::visit_nodes(root, this);
 
-		renderer::scenelink::draw(root);
+		scenelink.draw(root);
 		
 
 		glm::mat4 char_mat = glm::mat4(1.0);

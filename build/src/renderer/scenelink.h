@@ -34,8 +34,14 @@ namespace renderer
 	// a scene graph and the render queue.
 	// In short, it will provide the conversion from scene graph nodes
 	// to RenderBlocks.
-	namespace scenelink
+	class SceneLink
 	{
+		RenderQueue* queue;
+		
+	public:
+		SceneLink();
+		~SceneLink();
+		
 		// render the queue
 		void draw(scenegraph::Node* root);
 	};

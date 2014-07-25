@@ -59,19 +59,19 @@ namespace renderer
 
 	class RenderQueue
 	{
-		typedef std::vector< RenderBlock*, GeminiAllocator<RenderBlock*> > RenderList;
+		typedef std::vector< RenderBlock, GeminiAllocator<RenderBlock> > RenderList;
 		
 		RenderList render_list;
 		
 		
 	public:
 		RenderQueue() {}
-		~RenderQueue();
+		~RenderQueue() {}
 		
 		void insert(RenderKey key, RenderObject* object);
 		void sort();
 		void draw();
-		void purge();
+		void clear();
 		size_t size() const;
 	};
 }; // namespace renderer
