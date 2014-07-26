@@ -449,6 +449,7 @@ namespace assets
 			if ( (attributes & shader->capabilities) == shader->capabilities )
 			{
 //				LOGV( "[%i] attributes: %i shader caps: %i\n", shader->id, attributes, shader->capabilities );
+
 				return shader;
 			}
 		}

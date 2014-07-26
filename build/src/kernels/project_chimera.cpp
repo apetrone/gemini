@@ -203,23 +203,29 @@ public:
 		root = CREATE(scenegraph::Node);
 		root->name = "scene_root";
 		
-		scenegraph::MeshNode* ground = 0;
-		ground = CREATE(scenegraph::MeshNode);
-		ground->load_mesh("models/ground", true);
-		root->add_child(ground);
+//		scenegraph::MeshNode* ground = 0;
+//		ground = CREATE(scenegraph::MeshNode);
+//		ground->load_mesh("models/ground", true);
+//		root->add_child(ground);
 
-		scenegraph::SkeletalNode* sn = 0;
-		
-		sn = CREATE(scenegraph::SkeletalNode);
-		sn->load_mesh("models/test", true);
-		sn->local_position = glm::vec3(0,2,0);
-		sn->setup_skeleton();
-		root->add_child(sn);
+		scenegraph::MeshNode* skydome = 0;
+		skydome = CREATE(scenegraph::MeshNode);
+		skydome->load_mesh("models/skydome");
+		// make it extend slightly below ground level
+		skydome->local_position = glm::vec3(0, -50, 0);
+		root->add_child(skydome);
+
+//		scenegraph::SkeletalNode* sn = 0;
+//		sn = CREATE(scenegraph::SkeletalNode);
+//		sn->load_mesh("models/test", true);
+//		sn->local_position = glm::vec3(0,2,0);
+//		sn->setup_skeleton();
+//		root->add_child(sn);
 		
 
-		player = CREATE(scenegraph::MeshNode);
-		player->load_mesh("models/agent_cooper", false, 0, animation);
-		root->add_child(player);
+//		player = CREATE(scenegraph::MeshNode);
+//		player->load_mesh("models/agent_cooper", false, 0, animation);
+//		root->add_child(player);
 		
 //		scenegraph::MeshNode* test = CREATE(scenegraph::MeshNode);
 //		test->load_mesh("models/teapot");
@@ -238,7 +244,7 @@ public:
 
 		camera.target_lookatOffset = glm::vec3(0, 0, 5);
 		
-		camera.perspective( 50.0f, params.render_width, params.render_height, 0.1f, 128.0f );
+		camera.perspective( 50.0f, params.render_width, params.render_height, 0.1f, 8192.0f );
 		// This is appropriate for drawing 3D models, but not sprites
 		//camera.set_absolute_position( glm::vec3(8, 5, 8.0f) );
 		//camera.yaw = -45;
@@ -342,7 +348,10 @@ public:
 		// hard coding the value.
 		char_mat = glm::translate(camera.pos - glm::vec3(0,1.82,0));
 		char_mat = glm::rotate(char_mat, -camera.yaw, glm::vec3(0,1,0));
-		player->world_transform = char_mat;
+		if (player)
+		{
+			player->world_transform = char_mat;
+		}
 
 		//rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 		//rs.add_state( renderer::STATE_BLEND, 1 );

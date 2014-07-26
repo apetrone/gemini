@@ -117,6 +117,8 @@ namespace assets
 			Json::Value indices = geometry_node["indices"];
 			Json::Value normals = geometry_node["normals"];
 			Json::Value uvs = geometry_node["uvs"];
+			Json::Value colors = geometry_node["colors"];
+			
 			int material_id = geometry_node["material_id"].asInt();
 //			LOGV( "geometry: %i, material_id: %i\n", gid-1, material_id );
 //			LOGV( "# vertices: %i\n", positions.size()/3 );
@@ -132,7 +134,8 @@ namespace assets
 			geometry->vertex_count = positions.size() / 3;
 			geometry->vertices = CREATE_ARRAY( glm::vec3, geometry->vertex_count );
 			geometry->normals = CREATE_ARRAY( glm::vec3, geometry->vertex_count );
-			geometry->uvs = CREATE_ARRAY( UV, geometry->vertex_count );
+			
+
 			
 			for( int v = 0; v < geometry->vertex_count; ++v )
 			{
@@ -144,8 +147,9 @@ namespace assets
 				geometry->normals[v] = glm::vec3(normals[v*3].asFloat(), normals[v*3+1].asFloat(), normals[v*3+2].asFloat() );
 			}
 			
-			if ( uvs.size() > 0 )
+			if (!uvs.isNull() && uvs.size() > 0 )
 			{
+				geometry->uvs = CREATE_ARRAY( UV, geometry->vertex_count );
 				for( int v = 0; v < geometry->vertex_count; ++v )
 				{
 					geometry->uvs[v].u = uvs[v*2].asFloat();
@@ -157,17 +161,25 @@ namespace assets
 			}
 			else
 			{
-				LOGW( "Mesh has no UV coordinates!\n" );
+				LOGW( "Mesh has no UV coordinates.\n" );
 			}
 			
-#if 0
-			geometry->colors = new aengine::Color[ geometry->vertex_count ];
-			for( int v = 0; v < geometry->vertex_count; ++v )
+			if (!colors.isNull() && colors.size() > 0)
 			{
-				geometry->colors[v] = aengine::Color( 255, 255, 255, 255 );
+				geometry->colors = CREATE_ARRAY(Color, geometry->vertex_count);
+				for (int v = 0; v < geometry->vertex_count; ++v)
+				{
+//					Color& color = geometry->colors[v];
+//					int idx = v*4;
+//					color.r = (colors[idx].asFloat() * 255.0f);
+//					color.g = (colors[idx+1].asFloat() * 255.0f);
+//					color.b = (colors[idx+2].asFloat() * 255.0f);
+//					color.a = (colors[idx+3].asFloat() * 255.0f);
+					
+					geometry->colors[v] = Color( 255, 0, 0, 255 );
+				}
 			}
-#endif
-			
+
 			
 			if ( material_id != -1 && current_material > 0 /*&& material_id < current_material*/ )
 			{

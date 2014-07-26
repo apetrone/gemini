@@ -49,6 +49,9 @@ namespace assets
 		void bind_attributes();
 		bool link_and_validate();
 		void bind_uniforms();
+		
+		void show_uniforms();
+		void show_attributes();
 	}; // Shader
 	
 	

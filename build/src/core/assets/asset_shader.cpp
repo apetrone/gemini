@@ -51,6 +51,24 @@ namespace assets
 	
 	void Shader::release() {}
 	
+	void Shader::show_uniforms()
+	{
+		LOGV("uniforms:\n");
+		for (size_t i = 0; i < total_uniforms; ++i)
+		{
+			LOGV("%s -> %i\n", uniforms[i].first, uniforms[i].second);
+		}
+	}
+	
+	void Shader::show_attributes()
+	{
+		LOGV("attributes:\n");
+		for (size_t i = 0; i < total_attributes; ++i)
+		{
+			LOGV("%s -> %i\n", attributes[i].first, attributes[i].second);
+		}
+	}
+	
 	ShaderPermutationGroup::ShaderPermutationGroup()
 	{
 		num_defines = 0;
