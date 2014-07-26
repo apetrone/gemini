@@ -118,15 +118,19 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 		mesh = scene->mMeshes[m];
 		Json::Value jgeometry;
 		
+		// per-vertex attributes
 		Json::Value jvertices(Json::arrayValue);
 		Json::Value jnormals(Json::arrayValue);
 		Json::Value juvs(Json::arrayValue);
+		Json::Value jcolors(Json::arrayValue);
+
 		Json::Value jfaces(Json::arrayValue);
+
 		
 		// any one of these is an error condition otherwise.
-		assert( mesh->HasTextureCoords(0) );
+//		assert( mesh->HasTextureCoords(0) );
 		assert( mesh->HasNormals() );
-		assert( mesh->HasTangentsAndBitangents() );
+//		assert( mesh->HasTangentsAndBitangents() );
 
 		jgeometry["name"] = mesh->mName.C_Str();
 		LOGV("inspecting mesh: %i, \"%s\"\n", m, mesh->mName.C_Str());
@@ -137,13 +141,14 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 		meshdata.read_bones(mesh, jbones_array);
 		
 		
-		if (mesh->HasNormals() && mesh->HasTextureCoords(0))
+		if (mesh->HasNormals())
 		{
 			for(unsigned int vertex = 0; vertex < mesh->mNumVertices; ++vertex)
 			{
 				const aiVector3D & pos = mesh->mVertices[vertex];
 				const aiVector3D & normal = mesh->mNormals[vertex];
-				const aiVector3D & uv = mesh->mTextureCoords[0][vertex];
+
+
 				//const aiVector3D & bitangent = mesh->mBitangents[vertex];
 				//const aiVector3D & tangent = mesh->mTangents[vertex];
 				
@@ -167,8 +172,21 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 				jnormals.append(tr_normal.y);
 				jnormals.append(tr_normal.z);
 				
-				juvs.append(uv.x);
-				juvs.append(uv.y);
+				if (mesh->HasTextureCoords(0))
+				{
+					const aiVector3D & uv = mesh->mTextureCoords[0][vertex];
+					juvs.append(uv.x);
+					juvs.append(uv.y);
+				}
+
+				if (mesh->HasVertexColors(0))
+				{
+					const aiColor4D& color = mesh->mColors[0][vertex];
+					jcolors.append(color.r);
+					jcolors.append(color.g);
+					jcolors.append(color.b);
+					jcolors.append(color.a);
+				}
 			}
 
 			aiFace* face;
@@ -183,6 +201,7 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 			jgeometry["positions"] = jvertices;
 			jgeometry["normals"] = jnormals;
 			jgeometry["uvs"] = juvs;
+			jgeometry["colors"] = jcolors;
 			jgeometry["indices"] = jfaces;
 		}
 		else
