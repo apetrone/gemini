@@ -148,8 +148,15 @@ namespace assets
 	struct Shader;
 };
 
+namespace renderer
+{
+	struct RenderBlock;
+	struct ConstantBuffer;
+};
+
 namespace render_utilities
 {
+	void queue_geometry(RenderStream& rs, const renderer::RenderBlock& block, const renderer::ConstantBuffer& constant_buffer);
 	void stream_geometry( RenderStream & rs, assets::Geometry * geo, renderer::GeneralParameters & gp, assets::Shader* shader = 0 );
 	
 	//

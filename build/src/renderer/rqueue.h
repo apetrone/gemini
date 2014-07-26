@@ -49,37 +49,46 @@ namespace renderer
 	struct RenderBlock
 	{
 		RenderKey key;
+		
 		RenderObject* object;
+		glm::mat4* object_matrix;
+		
+		unsigned int material_id;
+		
+		// TODO: only temporarily hold a shader pointer...
+//		unsigned int shader_id;
+		void* shader;
 		
 		RenderBlock(RenderKey _key, RenderObject* _object) :
-			key(_key), object(_object) {}
+			key(_key), object(_object)
+		{
+			object_matrix = 0;
+			shader = 0;
+		}
 	};
-
-	// Render Data part of scene node, contains renderer specific items
-	// This enables a node instance to be assigned a unique material or shader
-	// without requiring a unique RenderObject.
-	struct SceneRenderData
+	
+	struct ConstantBuffer
 	{
-		RenderObject* object;
-		uint16_t material_id;
-		uint16_t shader_id;
+		const glm::mat4* modelview_matrix;
+		const glm::mat4* projection_matrix;
 	};
-
 
 	class RenderQueue
 	{
-		typedef std::vector< RenderBlock, GeminiAllocator<RenderBlock> > RenderList;
-		
-		RenderList render_list;
+
 		
 		
 	public:
+		typedef std::vector< RenderBlock, GeminiAllocator<RenderBlock> > RenderList;
+		
+		RenderList render_list;
+	
 		RenderQueue() {}
 		~RenderQueue() {}
 		
-		void insert(RenderKey key, RenderObject* object);
+//		void insert(RenderKey key, RenderObject* object);
+		void insert(const RenderBlock& block);
 		void sort();
-		void draw();
 		void clear();
 		size_t size() const;
 	};

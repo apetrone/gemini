@@ -26,6 +26,15 @@
 
 namespace scenegraph
 {
+	struct RenderNode : public Node
+	{
+		uint16_t material_id;
+		uint16_t shader_id;
+		void* shader;
+		
+		assets::Geometry* geometry;
+	};
+
 	struct MeshNode : public Node
 	{
 		assets::Mesh* mesh;
@@ -35,7 +44,7 @@ namespace scenegraph
 		MeshNode();
 		virtual ~MeshNode();
 		
-		void load_mesh(const char* path, bool build_physics_from_mesh = false);
+		void load_mesh(const char* path, bool build_physics_from_mesh = false, assets::Material* material = 0, assets::Shader* shader = 0);
 	};
 }; // namespace scenegraph
 

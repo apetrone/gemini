@@ -49,20 +49,20 @@ namespace renderer
 	};
 
 
-	void RenderQueue::insert(RenderKey key, RenderObject *object)
+//	void RenderQueue::insert(RenderKey key, RenderObject* object)
+//	{
+//		RenderBlock block = RenderBlock(key, object);
+//		render_list.push_back(block);
+//	}
+
+	void RenderQueue::insert(const RenderBlock& block)
 	{
-		RenderBlock block = RenderBlock(key, object);
 		render_list.push_back(block);
 	}
 
 	void RenderQueue::sort()
 	{
 		std::sort(begin(render_list), end(render_list), DescendingRenderBlockCompare());
-	}
-
-	void RenderQueue::draw()
-	{
-
 	}
 
 	void RenderQueue::clear()

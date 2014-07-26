@@ -19,13 +19,14 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <slim/xlog.h>
-
 #include <algorithm>
 
+#include <slim/xlog.h>
 
 #include "scenelink.h"
 #include "meshnode.h"
+
+#include "renderstream.h"
 
 namespace renderer
 {
@@ -48,11 +49,27 @@ namespace renderer
 				scenegraph::MeshNode* meshnode = static_cast<scenegraph::MeshNode*>(node);
 				if (meshnode)
 				{
-					for(size_t geo = 0; geo < meshnode->mesh->total_geometry; ++geo)
+					for (auto child : meshnode->children)
+//					{
+//					for(size_t geo = 0; geo < meshnode->mesh->total_geometry; ++geo)
 					{
-						assets::Geometry* geometry = &meshnode->mesh->geometry[geo];
-						RenderKey key = compute_render_key(geometry);
-						queue.insert(key, geometry);
+//						assets::Geometry* geometry = &meshnode->mesh->geometry[geo];
+
+						scenegraph::RenderNode* rn = static_cast<scenegraph::RenderNode*>(child);
+						
+					
+//						RenderKey key = compute_render_key(geometry);
+//						RenderBlock block(key, geometry);
+
+						RenderKey key = 0;
+						
+						RenderBlock block(key, rn->geometry);
+						block.object_matrix = &meshnode->world_transform;
+						block.material_id = rn->material_id;
+						block.shader = rn->shader;
+//						block.shader_id = rn->shader_id;
+													
+						queue.insert(block);
 					}
 				}
 			}
@@ -62,11 +79,11 @@ namespace renderer
 	private:
 		RenderKey compute_render_key(RenderObject* object)
 		{
-			assets::Shader* shader = assets::find_compatible_shader(object->attributes);
+//			assets::Shader* shader = assets::find_compatible_shader(object->attributes);
 			
 		
-		
-			return object->attributes;
+			return 0;
+//			return object->attributes;
 		}
 	};
 	
@@ -80,7 +97,7 @@ namespace renderer
 		DESTROY(RenderQueue, queue);
 	}
 
-	void SceneLink::draw(scenegraph::Node* root)
+	void SceneLink::draw(scenegraph::Node* root, const glm::mat4& modelview_matrix, const glm::mat4& projection_matrix)
 	{
 		// clear the queue and prepare for another frame
 		queue->clear();
@@ -93,7 +110,18 @@ namespace renderer
 		// sort the queue
 		queue->sort();
 		
+		
+		RenderStream rs;
+		ConstantBuffer cb;
+		cb.modelview_matrix = &modelview_matrix;
+		cb.projection_matrix = &projection_matrix;
+		
 		// finally, draw from the queue
-		queue->draw();
+		for(auto& block : queue->render_list)
+		{
+			render_utilities::queue_geometry(rs, block, cb);
+		}
+		
+		rs.run_commands();
 	}
 }; // namespace renderer

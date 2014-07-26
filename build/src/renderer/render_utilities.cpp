@@ -26,9 +26,33 @@
 #include "assets.h"
 #include "renderer.h"
 #include "renderstream.h"
+#include "rqueue.h"
+
 
 namespace render_utilities
 {
+	void queue_geometry(RenderStream& rs, const renderer::RenderBlock& block, const renderer::ConstantBuffer& cb)
+	{
+		assets::Material* material = assets::materials()->find_with_id(block.material_id);
+		assert(material != 0);
+		
+//		assets::Shader* shader = assets::find_shader_by_id(block.shader_id);
+//		assert(shader != 0);
+
+		assets::Shader* shader = (assets::Shader*)block.shader;
+
+		rs.add_shader(shader);
+
+		rs.add_uniform_matrix4(shader->get_uniform_location("modelview_matrix"), cb.modelview_matrix);
+		rs.add_uniform_matrix4(shader->get_uniform_location("projection_matrix"), cb.projection_matrix);
+		rs.add_uniform_matrix4(shader->get_uniform_location("object_matrix"), block.object_matrix);
+
+		rs.add_material(material, shader);
+		
+		rs.add_draw_call(block.object->vertexbuffer);
+	}
+
+
 	void stream_geometry( RenderStream & rs, assets::Geometry * geo, renderer::GeneralParameters & gp, assets::Shader* shader )
 	{
 		// verify general parameters
@@ -54,7 +78,7 @@ namespace render_utilities
 			return;
 		}
 		
-		//		LOGV( "binding shader: %i\n", shader->id );
+//		LOGV( "binding shader: %i\n", shader->Id() );
 		rs.add_shader( shader );
 		
 		if ( gp.global_params > 0 )

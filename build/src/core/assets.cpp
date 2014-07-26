@@ -254,6 +254,7 @@ namespace assets
 			shader = &_shader_programs[i];
 			shader->capabilities = 0;
 			shader->id = i;
+			shader->asset_id = i;
 			
 			bool use_permutation = true;
 
@@ -431,6 +432,12 @@ namespace assets
 		LOGV( "loaded %i permutations in %gms\n", total_shaders, xtime_msec( &t ) - start );
 	} // compile_shader_permutations
 
+	
+	Shader* find_shader_by_id(unsigned int id)
+	{
+		//	TODO: validate the range of id
+		return &_shader_programs[id];
+	}
 
 	Shader * find_compatible_shader( unsigned int attributes )
 	{
@@ -438,9 +445,10 @@ namespace assets
 		for( int i = total_shaders-1; i >= 0; --i )
 		{
 			shader = &_shader_programs[ i ];
-//			LOGV( "[%i] attributes: %i sha: %i\n", shader->id, attributes, shader->capabilities );
+
 			if ( (attributes & shader->capabilities) == shader->capabilities )
 			{
+//				LOGV( "[%i] attributes: %i shader caps: %i\n", shader->id, attributes, shader->capabilities );
 				return shader;
 			}
 		}

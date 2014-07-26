@@ -43,6 +43,6 @@ namespace renderer
 		~SceneLink();
 		
 		// render the queue
-		void draw(scenegraph::Node* root);
+		void draw(scenegraph::Node* root, const glm::mat4& modelview_matrix, const glm::mat4& projection_matrix);
 	};
 }; // namespace renderer

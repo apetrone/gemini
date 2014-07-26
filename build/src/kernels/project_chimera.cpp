@@ -31,6 +31,7 @@
 #include "camera.h"
 
 #include "assets/asset_mesh.h"
+#include "assets/asset_material.h"
 
 #include "btBulletDynamicsCommon.h"
 
@@ -51,6 +52,8 @@ using namespace physics;
 
 //#define SCENE_GRAPH_MANUAL 1
 
+#define USE_MESH_NODE_RENDERING 0
+
 class ProjectChimera : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -68,7 +71,7 @@ public:
 	scenegraph::Node* root;
 	
 	size_t total_scene_nodes_visited;
-	
+	scenegraph::MeshNode* player;
 	
 	// members of the mesh visitor
 	RenderStream* renderstream;
@@ -79,6 +82,12 @@ public:
 	ProjectChimera()
 	{
 		camera.type = Camera::TARGET;
+		animation = 0;
+		player = 0;
+		renderstream = 0;
+		generalparams = 0;
+		character = 0;
+		root = 0;
 	}
 	
 	virtual void event( kernel::KeyboardEvent & event )
@@ -157,8 +166,11 @@ public:
 
 			// TODO: update world transform?
 			glm::mat4 object_to_local = glm::translate(glm::mat4(1.0), node->local_position);
-
+			
 			node->world_transform = object_to_local * node->local_to_world;
+			
+#if USE_MESH_NODE_RENDERING
+
 						
 			// compose a matrix
 			this->generalparams->object_matrix = &node->world_transform;
@@ -167,6 +179,7 @@ public:
 			{
 				render_utilities::stream_geometry(*this->renderstream, &mesh->geometry[i], *this->generalparams );
 			}
+#endif
 		}
 		
 		
@@ -187,38 +200,57 @@ public:
 		
 		character = physics::create_character_controller(btVector3(0, 5, 0), false);
 		
+		
+		
+		animation = CREATE(assets::Shader);
+		
+		animation->set_frag_data_location("out_color");
+		animation->alloc_uniforms(4);
+		animation->uniforms[0].set_key("projection_matrix");
+		animation->uniforms[1].set_key("modelview_matrix");
+		animation->uniforms[2].set_key("object_matrix");
+		animation->uniforms[3].set_key("diffusemap");
+		
+		animation->alloc_attributes(3);
+		animation->attributes[0].set_key("in_position"); animation->attributes[0].second = 0;
+		animation->attributes[1].set_key("in_normal"); animation->attributes[1].second = 1;
+		animation->attributes[2].set_key("in_uv"); animation->attributes[2].second = 2;
+		//		animation->attributes[3].set_key("in_blendindices"); animation->attributes[3].second = 3;
+		
+		assets::load_shader("shaders/animation", animation);
+		
+		
 		root = CREATE(scenegraph::Node);
 		root->name = "scene_root";
 		
-		scenegraph::MeshNode* mn = 0;
-//		mn = CREATE(scenegraph::MeshNode);
-//		mn->load_mesh("models/vehicle2", true);
-//		root->add_child(mn);
-		
-		
-		mn = CREATE(scenegraph::MeshNode);
-		mn->load_mesh("models/ground", true);
-		root->add_child(mn);
+		scenegraph::MeshNode* ground = 0;
+		ground = CREATE(scenegraph::MeshNode);
+		ground->load_mesh("models/ground", true);
+		root->add_child(ground);
 
-		
-		scenegraph::SkeletalNode* sn = 0;
-		
-		sn = CREATE(scenegraph::SkeletalNode);
-		sn->load_mesh("models/test", true);
-		sn->local_position = glm::vec3(0,2,0);
-		sn->setup_skeleton();
-		root->add_child(sn);
+//		scenegraph::SkeletalNode* sn = 0;
+//		
+//		sn = CREATE(scenegraph::SkeletalNode);
+//		sn->load_mesh("models/test", true);
+//		sn->local_position = glm::vec3(0,2,0);
+//		sn->setup_skeleton();
+//		root->add_child(sn);
 		
 
+		player = CREATE(scenegraph::MeshNode);
+		player->load_mesh("models/agent_cooper", false, 0, animation);
+		root->add_child(player);
+		
+#if 0
 		char_mesh = assets::meshes()->load_from_path("models/agent_cooper");
 		if (char_mesh)
 		{
 			char_mesh->prepare_geometry();
 		}
-		
+#endif
 
 		
-
+		
 		debugdraw::startup(1024);
 
 		camera.target_lookatOffset = glm::vec3(0, 0, 5);
@@ -235,22 +267,6 @@ public:
 		// capture the mouse
 		kernel::instance()->capture_mouse( true );
 		
-		animation = CREATE(assets::Shader);
-		
-		animation->set_frag_data_location("out_color");
-		animation->alloc_uniforms(4);
-		animation->uniforms[0].set_key("projection_matrix");
-		animation->uniforms[1].set_key("modelview_matrix");
-		animation->uniforms[2].set_key("object_matrix");
-		animation->uniforms[3].set_key("diffusemap");
-		
-		animation->alloc_attributes(3);
-		animation->attributes[0].set_key("in_position"); animation->attributes[0].second = 0;
-		animation->attributes[1].set_key("in_normal"); animation->attributes[1].second = 1;
-		animation->attributes[2].set_key("in_uv"); animation->attributes[2].second = 2;
-//		animation->attributes[3].set_key("in_blendindices"); animation->attributes[3].second = 3;
-		
-		assets::load_shader("shaders/animation", animation);
 
 
 		entity_startup();
@@ -265,7 +281,7 @@ public:
 	virtual void step( kernel::Params & params )
 	{
 		physics::step( params.step_interval_seconds );
-		
+
 		// grab state here?
 		physics::MovementCommand command;
 		command.time = 0;
@@ -297,7 +313,7 @@ public:
 		//camera.pos += glm::vec3(0, 2.5, 5);
 		camera.update_view();
 
-		//physics::debug_draw();
+//		physics::debug_draw();
 		
 		
 		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
@@ -350,7 +366,6 @@ public:
 		total_scene_nodes_visited = 0;
 		scenegraph::visit_nodes(root, this);
 
-		scenelink.draw(root);
 		
 
 		glm::mat4 char_mat = glm::mat4(1.0);
@@ -359,19 +374,17 @@ public:
 		// hard coding the value.
 		char_mat = glm::translate(camera.pos - glm::vec3(0,1.82,0));
 		char_mat = glm::rotate(char_mat, -camera.yaw, glm::vec3(0,1,0));
-		gp.object_matrix = &char_mat;
-
-			
-		for( unsigned short i = 0; i < char_mesh->total_geometry; ++i )
-		{
-			render_utilities::stream_geometry( rs, &char_mesh->geometry[i], gp, animation );
-		}
+		player->world_transform = char_mat;
 
 		//rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 		//rs.add_state( renderer::STATE_BLEND, 1 );
 		//rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
 		
 		rs.run_commands();
+		
+		
+		
+		scenelink.draw(root, camera.matCam, camera.matProj);
 		
 		{
 			glm::mat4 modelview;

@@ -40,12 +40,40 @@ namespace scenegraph
 		
 	}
 	
-	void MeshNode::load_mesh(const char* path, bool build_physics_from_mesh)
+	void MeshNode::load_mesh(const char* path, bool build_physics_from_mesh, assets::Material* material, assets::Shader* shader)
 	{
+		// load mesh through the asset system
 		mesh = assets::meshes()->load_from_path(path);
 		if (mesh)
 		{
+			// prepare geometry (this uploads data to the gpu)
 			mesh->prepare_geometry();
+			
+			// using this node as the parent node; we create render nodes as children
+			
+			for (size_t id = 0; id < mesh->total_geometry; ++id)
+			{
+				assets::Geometry* geometry = &mesh->geometry[id];
+				
+				scenegraph::RenderNode* rn = 0;
+				rn = CREATE(scenegraph::RenderNode);
+				rn->geometry = geometry;
+				rn->material_id = geometry->material_id;
+				if (!material)
+				{
+					material = assets::materials()->find_with_id(geometry->material_id);
+				}
+				if (!shader)
+				{
+					shader = assets::find_compatible_shader( (geometry->attributes + material->requirements) );
+				}
+				assert(shader != 0);
+				
+				rn->shader = shader;
+//				rn->shader_id = shader->Id();
+		
+				add_child(rn);
+			}
 		}
 		
 		if (build_physics_from_mesh)
