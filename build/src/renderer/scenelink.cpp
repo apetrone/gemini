@@ -30,14 +30,12 @@
 
 namespace renderer
 {
-	
 	class SceneVisitor : public scenegraph::Visitor
 	{
 		size_t total_nodes;
 		RenderQueue& queue;
 
 	public:
-	
 		SceneVisitor(RenderQueue& _queue): queue(_queue) {}
 	
 		virtual int visit(scenegraph::Node* node)
@@ -45,30 +43,20 @@ namespace renderer
 			++total_nodes;
 			if (node->type == scenegraph::MESH)
 			{
-				// this is renderable
 				scenegraph::MeshNode* meshnode = static_cast<scenegraph::MeshNode*>(node);
 				if (meshnode)
 				{
 					for (auto child : meshnode->children)
-//					{
-//					for(size_t geo = 0; geo < meshnode->mesh->total_geometry; ++geo)
 					{
-//						assets::Geometry* geometry = &meshnode->mesh->geometry[geo];
-
 						scenegraph::RenderNode* rn = static_cast<scenegraph::RenderNode*>(child);
-						
-					
-//						RenderKey key = compute_render_key(geometry);
-//						RenderBlock block(key, geometry);
 
-						RenderKey key = 0;
-						
+						RenderKey key = compute_render_key(rn->geometry);
 						RenderBlock block(key, rn->geometry);
 						block.object_matrix = &meshnode->world_transform;
 						block.material_id = rn->material_id;
 						block.shader = rn->shader;
 //						block.shader_id = rn->shader_id;
-													
+
 						queue.insert(block);
 					}
 				}
@@ -79,11 +67,7 @@ namespace renderer
 	private:
 		RenderKey compute_render_key(RenderObject* object)
 		{
-//			assets::Shader* shader = assets::find_compatible_shader(object->attributes);
-			
-		
-			return 0;
-//			return object->attributes;
+			return object->attributes;
 		}
 	};
 	

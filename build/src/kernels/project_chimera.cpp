@@ -63,8 +63,6 @@ public scenegraph::Visitor
 
 public:
 	DECLARE_APPLICATION( ProjectChimera );
-	assets::Mesh * plane_mesh;
-	assets::Mesh * char_mesh;
 	Camera camera;
 	physics::CharacterController* character;
 	assets::Shader* animation;
@@ -73,10 +71,6 @@ public:
 	size_t total_scene_nodes_visited;
 	scenegraph::MeshNode* player;
 	
-	// members of the mesh visitor
-	RenderStream* renderstream;
-	renderer::GeneralParameters* generalparams;
-	
 	renderer::SceneLink scenelink;
 	
 	ProjectChimera()
@@ -84,8 +78,6 @@ public:
 		camera.type = Camera::TARGET;
 		animation = 0;
 		player = 0;
-		renderstream = 0;
-		generalparams = 0;
 		character = 0;
 		root = 0;
 	}
@@ -168,18 +160,6 @@ public:
 			glm::mat4 object_to_local = glm::translate(glm::mat4(1.0), node->local_position);
 			
 			node->world_transform = object_to_local * node->local_to_world;
-			
-#if USE_MESH_NODE_RENDERING
-
-						
-			// compose a matrix
-			this->generalparams->object_matrix = &node->world_transform;
-
-			for( unsigned short i = 0; i < mesh->total_geometry; ++i )
-			{
-				render_utilities::stream_geometry(*this->renderstream, &mesh->geometry[i], *this->generalparams );
-			}
-#endif
 		}
 		
 		
@@ -228,26 +208,29 @@ public:
 		ground->load_mesh("models/ground", true);
 		root->add_child(ground);
 
-//		scenegraph::SkeletalNode* sn = 0;
-//		
-//		sn = CREATE(scenegraph::SkeletalNode);
-//		sn->load_mesh("models/test", true);
-//		sn->local_position = glm::vec3(0,2,0);
-//		sn->setup_skeleton();
-//		root->add_child(sn);
+		scenegraph::SkeletalNode* sn = 0;
+		
+		sn = CREATE(scenegraph::SkeletalNode);
+		sn->load_mesh("models/test", true);
+		sn->local_position = glm::vec3(0,2,0);
+		sn->setup_skeleton();
+		root->add_child(sn);
 		
 
 		player = CREATE(scenegraph::MeshNode);
 		player->load_mesh("models/agent_cooper", false, 0, animation);
 		root->add_child(player);
 		
-#if 0
-		char_mesh = assets::meshes()->load_from_path("models/agent_cooper");
-		if (char_mesh)
-		{
-			char_mesh->prepare_geometry();
-		}
-#endif
+//		scenegraph::MeshNode* test = CREATE(scenegraph::MeshNode);
+//		test->load_mesh("models/teapot");
+//		test->local_position = glm::vec3(2,0,0);
+//		root->add_child(test);
+
+//		scenegraph::MeshNode* room = CREATE(scenegraph::MeshNode);
+//		room->load_mesh("models/room2");
+//		room->local_position = glm::vec3(0,0.25,-10);
+//		root->add_child(room);
+
 
 		
 		
@@ -344,30 +327,15 @@ public:
 		entity_tick();
 	
 		RenderStream rs;
-		renderer::GeneralParameters gp;
-
-		gp.camera_position = &camera.pos;
-		gp.modelview_matrix = &camera.matCam;
-		gp.projection_project = &camera.matProj;
-		
-		glm::mat4 ident;
-		gp.object_matrix = &ident;
-
 		rs.add_viewport( 0, 0, params.render_width, params.render_height );
 		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
 
-
-		
-		this->renderstream = &rs;
-		this->generalparams = &gp;
-		
 		// render nodes
 		total_scene_nodes_visited = 0;
 		scenegraph::visit_nodes(root, this);
 
 		
-
 		glm::mat4 char_mat = glm::mat4(1.0);
 		
 		// TODO: this should use the actual player height instead of
@@ -382,16 +350,12 @@ public:
 		
 		rs.run_commands();
 		
-		
-		
 		scenelink.draw(root, camera.matCam, camera.matProj);
 		
 		{
 			glm::mat4 modelview;
 			debugdraw::render(modelview, camera.matCamProj, params.render_width, params.render_height);
 		}
-
-
 	}
 	
 	virtual void shutdown( kernel::Params & params )
