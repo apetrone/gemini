@@ -803,16 +803,16 @@ void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, render
 	{
 		ms.write( &geometry->vertices[ vertex_id ], sizeof(glm::vec3) );
 		
-		if ( geometry->attributes & colors_mask )
-		{
-			ms.write( &geometry->colors[ vertex_id ], sizeof(Color) );
-		}
-		
 		if ( geometry->attributes & normals_mask )
 		{
 			ms.write( &geometry->normals[ vertex_id ], sizeof(glm::vec3) );
 		}
 		
+		if ( geometry->attributes & colors_mask )
+		{
+			ms.write( &geometry->colors[ vertex_id ], sizeof(Color) );
+		}
+				
 		if ( geometry->attributes & uv0_mask )
 		{
 			ms.write( &geometry->uvs[ vertex_id ], sizeof(renderer::UV) );
@@ -842,8 +842,8 @@ void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, render
 // Shaders
 // ---------------------------------------
 
-//#define SHADER_DEBUG( fmt, ... ) (void(0))
-#define SHADER_DEBUG LOGV
+#define SHADER_DEBUG( fmt, ... ) (void(0))
+//#define SHADER_DEBUG LOGV
 
 renderer::ShaderObject GLCore32::shaderobject_create( renderer::ShaderObjectType shader_type )
 {
@@ -965,7 +965,7 @@ void GLCore32::shaderprogram_bind_attributes( renderer::ShaderProgram shader_pro
 	for( int i = 0; i < parameters.total_attributes; ++i )
 	{
 		ShaderKeyValuePair * keyvalue = &parameters.attributes[i];
-//		SHADER_DEBUG( "BindAttribLocation -> %s to %i\n", keyvalue->first, keyvalue->second );
+		SHADER_DEBUG( "BindAttribLocation -> %s to %i\n", keyvalue->first, keyvalue->second );
 		gl.BindAttribLocation( shader_program.object, keyvalue->second, keyvalue->first );
 		gl.CheckError( xstr_format( "BindAttribLocation: %s", keyvalue->first ));
 	}
@@ -982,7 +982,7 @@ void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_progr
 		ShaderKeyValuePair * keyvalue = &parameters.uniforms[ uniform_id ];
 		
 		keyvalue->second = gl.GetUniformLocation( shader_program.object, keyvalue->first );
-//		SHADER_DEBUG( "GetUniformLocation: \"%s\" -> %i\n", keyvalue->first, keyvalue->second );
+		SHADER_DEBUG( "GetUniformLocation: \"%s\" -> %i\n", keyvalue->first, keyvalue->second );
 		gl.CheckError( "GetUniformLocation" );
 		
 		if ( keyvalue->second == -1 )
