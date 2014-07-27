@@ -99,8 +99,12 @@ void main()
 #endif
 
 
-#if defined(D_VERTEX_COLORS) && !defined(D_DIFFUSE_COLOR) //&& !defined(D_DIFFUSE_MAP)
-	color *= ps_Color;
+#if defined(D_VERTEX_COLORS) && !defined(D_DIFFUSE_COLOR)
+	#if !defined(D_DIFFUSE_MAP)
+		color = ps_Color;
+	#else
+		color *= ps_Color;
+	#endif
 #endif
 
 #if defined(D_VERTEX_NORMALS) && defined(D_LIGHT_POSITION) && !defined(D_CUBEMAP)
