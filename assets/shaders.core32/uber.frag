@@ -3,12 +3,12 @@
 out vec4 out_Color;
 
 
-#if defined(D_VERTEX_COLORS) && !defined(D_DIFFUSE_COLOR) //&& !defined(D_DIFFUSE_MAP)
-	in vec4 ps_Color;
-#endif
-
 #ifdef D_VERTEX_NORMALS
 	in vec3 ps_Normal;
+#endif
+
+#if defined(D_VERTEX_COLORS) && !defined(D_DIFFUSE_COLOR) //&& !defined(D_DIFFUSE_MAP)
+	in vec4 ps_Color;
 #endif
 
 #if defined(D_LIGHT_POSITION)
