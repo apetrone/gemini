@@ -72,6 +72,7 @@ namespace scenegraph
 				shader->show_uniforms();
 				shader->show_attributes();
 				rn->shader = shader;
+				rn->material = material;
 //				rn->shader_id = shader->Id();
 		
 				add_child(rn);

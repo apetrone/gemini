@@ -30,6 +30,8 @@ namespace scenegraph
 	{
 		uint16_t material_id;
 		uint16_t shader_id;
+		
+		void* material;
 		void* shader;
 		
 		assets::Geometry* geometry;
