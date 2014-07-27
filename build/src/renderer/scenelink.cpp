@@ -54,6 +54,7 @@ namespace renderer
 						RenderBlock block(key, rn->geometry);
 						block.object_matrix = &meshnode->world_transform;
 						block.material_id = rn->material_id;
+						block.material = rn->material;
 						block.shader = rn->shader;
 //						block.shader_id = rn->shader_id;
 

@@ -55,6 +55,8 @@ namespace renderer
 		
 		unsigned int material_id;
 		
+		void* material;
+		
 		// TODO: only temporarily hold a shader pointer...
 //		unsigned int shader_id;
 		void* shader;

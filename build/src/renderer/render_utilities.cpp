@@ -33,7 +33,7 @@ namespace render_utilities
 {
 	void queue_geometry(RenderStream& rs, const renderer::RenderBlock& block, const renderer::ConstantBuffer& cb)
 	{
-		assets::Material* material = assets::materials()->find_with_id(block.material_id);
+		assets::Material* material = block.material ? (assets::Material*)block.material : assets::materials()->find_with_id(block.material_id);
 		assert(material != 0);
 		
 //		assets::Shader* shader = assets::find_shader_by_id(block.shader_id);
