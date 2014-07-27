@@ -270,7 +270,7 @@ namespace assets
 				uniform_list.push_back( &permutations.base.uniforms[a] );
 			}
 			
-			//LOGV( "----> permutation: %i\n", i );
+//			LOGV( "----> permutation: %i\n", i );
 			
 			unsigned int requirements = 0;
 			unsigned int conflicts = 0;
@@ -322,6 +322,7 @@ namespace assets
 			
 			if ( (requirements & shader->capabilities) < requirements )
 			{
+
 //				LOGV( "This shader will not compile properly. Missing one or more requirements!\n" );
 				use_permutation = false;
 			}
@@ -333,6 +334,8 @@ namespace assets
 						
 			if ( !use_permutation )
 			{
+//				shader->show_attributes();
+//				shader->show_uniforms();
 				//LOGV( "Skipping permutation: %i\n", shader->id );
 				continue;
 			}

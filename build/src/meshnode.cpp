@@ -68,9 +68,9 @@ namespace scenegraph
 					shader = assets::find_compatible_shader( (geometry->attributes + material->requirements) );
 				}
 				assert(shader != 0);
-				LOGV("shader: (asset_id = %i), (id = %i)\n", shader->Id(), shader->id);
-				shader->show_uniforms();
-				shader->show_attributes();
+//				LOGV("shader: (asset_id = %i), (id = %i)\n", shader->Id(), shader->id);
+//				shader->show_uniforms();
+//				shader->show_attributes();
 				rn->shader = shader;
 				rn->material = material;
 //				rn->shader_id = shader->Id();
