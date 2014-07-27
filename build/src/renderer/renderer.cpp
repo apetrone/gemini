@@ -167,35 +167,8 @@ namespace renderer
 		for( unsigned int i = 0; i < attribs; ++i )
 		{
 			descriptor = description[i];
-			if ( descriptor == VD_FLOAT2 )
-			{
-				attribSize = (sizeof(float)*2);
-			}
-			else if ( descriptor == VD_FLOAT3 )
-			{
-				attribSize = (sizeof(float)*3);
-			}
-			else if ( descriptor == VD_FLOAT4 )
-			{
-				attribSize = (sizeof(float)*4);
-			}
-			else if ( descriptor == VD_INT4 )
-			{
-				attribSize = (sizeof(int)*4);
-			}
-			else if ( descriptor == VD_UNSIGNED_INT )
-			{
-				attribSize = sizeof(unsigned int);
-			}
-			else if ( descriptor == VD_UNSIGNED_BYTE3 )
-			{
-				attribSize = sizeof(unsigned char) * 3;
-			}
-			else if ( descriptor == VD_UNSIGNED_BYTE4 )
-			{
-				attribSize = sizeof(unsigned char) * 4;
-			}
-			
+			attribSize = VertexDescriptor::size[descriptor];
+						
 			size += attribSize;
 		}
 		
