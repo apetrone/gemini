@@ -204,9 +204,11 @@ namespace renderer
 		unsigned char id;
 		unsigned char attribs;
 		VertexDescriptorType description[ MAX_DESCRIPTORS ];
-		
-		static unsigned int size[ VD_TOTAL ];
-		static unsigned int elements[ VD_TOTAL ];
+
+		static void startup();
+		static void map_type(uint32_t type, uint16_t size, uint16_t elements);
+		static uint16_t size[ VD_TOTAL ];
+		static uint16_t elements[ VD_TOTAL ];
 		
 		VertexDescriptor();
 		void add( VertexDescriptorType desc );

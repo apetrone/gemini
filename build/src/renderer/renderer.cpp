@@ -54,6 +54,10 @@ namespace renderer
 	
 	int startup( DriverType driver_type )
 	{
+		// setup vertex descriptor
+		VertexDescriptor::startup();
+	
+	
 		typedef Factory<IRenderDriver, 4> RendererFactory;
 		RendererFactory factory;
 
@@ -101,27 +105,40 @@ namespace renderer
 {
 	
 	// VertexTypeDescriptor
-	unsigned int VertexDescriptor::size[ VD_TOTAL ] =
-	{
-		sizeof(float) * 2,
-		sizeof(float) * 3,
-		sizeof(float) * 4,
-		sizeof(int) * 4,
-		sizeof(unsigned char) * 3,
-		sizeof(unsigned char) * 4,
-		sizeof(unsigned int)
-	};
+	uint16_t VertexDescriptor::size[ VD_TOTAL ] = {0};
+	uint16_t VertexDescriptor::elements[ VD_TOTAL ] = {0};
 	
-	unsigned int VertexDescriptor::elements[ VD_TOTAL ] =
+	void VertexDescriptor::startup()
 	{
-		2,
-		3,
-		4,
-		4,
-		3,
-		4,
-		1
-	};
+		// clear table
+		memset(VertexDescriptor::size, 0, sizeof(uint16_t)*VD_TOTAL);
+		memset(VertexDescriptor::elements, 0, sizeof(uint16_t)*VD_TOTAL);
+		
+		// populate table with vertex descriptor types
+		map_type(VD_FLOAT2, sizeof(float), 2);
+		map_type(VD_FLOAT3, sizeof(float), 3);
+		map_type(VD_FLOAT4, sizeof(float), 4);
+		
+		map_type(VD_INT4, sizeof(int), 4);
+		
+		map_type(VD_UNSIGNED_BYTE3, sizeof(unsigned char), 3);
+		map_type(VD_UNSIGNED_BYTE4, sizeof(unsigned char), 4);
+		
+		map_type(VD_UNSIGNED_INT, sizeof(unsigned int), 1);
+		
+		// validate table
+		for (size_t i = 0; i < VD_TOTAL; ++i)
+		{
+			assert(VertexDescriptor::size[i] != 0);
+			assert(VertexDescriptor::elements[i] != 0);
+		}
+	}
+	
+	void VertexDescriptor::map_type(uint32_t type, uint16_t size, uint16_t elements)
+	{
+		VertexDescriptor::size[type] = size*elements;
+		VertexDescriptor::elements[type] = elements;
+	}
 	
 	VertexDescriptor::VertexDescriptor()
 	{
