@@ -58,7 +58,7 @@ namespace renderer
 		void* material;
 		
 		// TODO: only temporarily hold a shader pointer...
-//		unsigned int shader_id;
+		unsigned int shader_id;
 		void* shader;
 		
 		RenderBlock(RenderKey _key, RenderObject* _object) :

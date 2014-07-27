@@ -36,10 +36,8 @@ namespace render_utilities
 		assets::Material* material = block.material ? (assets::Material*)block.material : assets::materials()->find_with_id(block.material_id);
 		assert(material != 0);
 		
-//		assets::Shader* shader = assets::find_shader_by_id(block.shader_id);
-//		assert(shader != 0);
-
-		assets::Shader* shader = (assets::Shader*)block.shader;
+		assets::Shader* shader = block.shader ? (assets::Shader*)block.shader : assets::find_shader_by_id(block.shader_id);
+		assert(shader != 0);
 
 		rs.add_shader(shader);
 
