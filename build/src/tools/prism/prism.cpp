@@ -232,6 +232,8 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 			Json::Value jmaterial;
 			jmaterial["name"] = texpath.basename().remove_extension()();
 			jmaterial_array.append(jmaterial);
+			
+			LOGV("diffuse texture: %s\n", jmaterial["name"].asString().c_str());
 		}
 
 		jgeometry_array.append(jgeometry);
