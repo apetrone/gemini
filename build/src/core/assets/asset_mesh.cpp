@@ -169,14 +169,12 @@ namespace assets
 				geometry->colors = CREATE_ARRAY(Color, geometry->vertex_count);
 				for (int v = 0; v < geometry->vertex_count; ++v)
 				{
-//					Color& color = geometry->colors[v];
-//					int idx = v*4;
-//					color.r = (colors[idx].asFloat() * 255.0f);
-//					color.g = (colors[idx+1].asFloat() * 255.0f);
-//					color.b = (colors[idx+2].asFloat() * 255.0f);
-//					color.a = (colors[idx+3].asFloat() * 255.0f);
-					
-					geometry->colors[v] = Color( 255, 0, 0, 255 );
+					Color& color = geometry->colors[v];
+					int idx = v*4;
+					color.r = (colors[idx].asFloat() * 255.0f);
+					color.g = (colors[idx+1].asFloat() * 255.0f);
+					color.b = (colors[idx+2].asFloat() * 255.0f);
+					color.a = (colors[idx+3].asFloat() * 255.0f);
 				}
 			}
 
@@ -583,7 +581,7 @@ namespace assets
 		
 		if ( !this->is_animated() )
 		{
-			renderer::driver()->vertexbuffer_upload_geometry( this->vertexbuffer, this );
+			renderer::driver()->vertexbuffer_upload_geometry( this->vertexbuffer, /*descriptor, */ this );
 		}
 		//		vertexstream.create( this->vertex_count, this->index_count, renderer::BUFFER_STATIC );
 		//		this->vertexbuffer = renderer::driver()->vertexbuffer_create( descriptor, this->draw_type, renderer::BUFFER_STATIC, descriptor.calculate_vertex_stride(), this->vertex_count, this->index_count );

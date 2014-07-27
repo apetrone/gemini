@@ -131,8 +131,9 @@ namespace assets
 		unsigned int item_id = 0;
 		for( ; item_iter != item_end; ++item_iter, ++item_id )
 		{
+			Json::Value item = (*item_iter);
 			ShaderPermutationGroup * option = &(*section)[ item_id ];
-			option->name = item_iter.key().asString().c_str();
+			option->name = item["name"].asString().c_str();
 			read_permutation_group( (*item_iter), option, true );
 		}
 	} // read_permutation_section
@@ -336,9 +337,11 @@ namespace assets
 				continue;
 			}
 			
-			
-
-			//LOGV( "%i -> %s\n", shader->id, preprocessor_defines.c_str() );
+//			debugging defines
+//			if (shader->id == 3)
+//			{
+//				LOGV( "%i -> %s\n", shader->id, preprocessor_defines.c_str() );
+//			}
 			renderer::ShaderObject vertex_shader = driver->shaderobject_create( renderer::SHADER_VERTEX );
 			renderer::ShaderObject fragment_shader = driver->shaderobject_create( renderer::SHADER_FRAGMENT );
 
@@ -480,6 +483,8 @@ namespace assets
 				}
 			}
 		}
+		
+		LOGV("Unable to find parameter mask for %s\n", name.c_str());
 		return 0;
 	} // find_parameter_mask
 }; // namespace assets
