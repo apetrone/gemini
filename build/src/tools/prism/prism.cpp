@@ -124,6 +124,8 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 		Json::Value juvs(Json::arrayValue);
 		Json::Value jcolors(Json::arrayValue);
 
+		Json::Value jblend_weights(Json::arrayValue);
+
 		Json::Value jfaces(Json::arrayValue);
 
 		
@@ -138,8 +140,9 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 		LOGV("\tfaces: %i\n", mesh->mNumFaces);
 		LOGV("\tbones: %i\n", mesh->mNumBones);
 	
-		meshdata.read_bones(mesh, jbones_array);
+		meshdata.read_bones(mesh, jbones_array, jblend_weights);
 		
+		jgeometry["blend_weights"] = jblend_weights;
 		
 		if (mesh->HasNormals())
 		{
@@ -209,7 +212,7 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 			fprintf(stdout, "Mesh %zu is missing Normals\n", m);
 		}
 		
-		
+
 		
 		
 		// TODO: error checking here...

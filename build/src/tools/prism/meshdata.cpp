@@ -166,8 +166,11 @@ Node::NodeType type, Node* parent)
 		}
 	}
 	
-	void MeshData::read_bones(const aiMesh* mesh, Json::Value& bones)
+	void MeshData::read_bones(const aiMesh* mesh, Json::Value& bones, Json::Value& out_blend_weights)
 	{
+		std::vector< std::vector<VertexWeight> > indices;
+		indices.resize(mesh->mNumVertices);
+		
 		if (mesh->mNumBones > 0)
 		{
 			LOGV("inspecting bones...\n");
@@ -209,17 +212,39 @@ Node::NodeType type, Node* parent)
 				for (size_t weight = 0; weight < bone->mNumWeights; ++weight)
 				{
 					aiVertexWeight* w = &bone->mWeights[weight];
-//					LOGV("\tweight (%i) [vertex: %i -> weight: %2.2f\n", weight, w->mVertexId, w->mWeight);
+					//LOGV("\tweight (%i) [vertex: %i -> weight: %2.2f\n", weight, w->mVertexId, w->mWeight);
 					
-					Json::Value jweight;
-					jweight["id"] = Json::valueToString((unsigned int)w->mVertexId);
-					jweight["weight"] = Json::valueToString(w->mWeight);
-					weights.append(jweight);
+					indices[w->mVertexId].push_back(VertexWeight(w->mWeight, boneid));
+				}
+
+				bones.append(jbone);
+			}
+			
+			// blend weights will look like:
+//			"blend_weights": [
+//				// implicit index of 0
+//				{
+//					"indices": [0, 1],
+//					"weights:" [0.0, 1.0]
+//				}
+//			]
+			
+			for (size_t v = 0; v < mesh->mNumVertices; ++v)
+			{
+				Json::Value jweight;
+				Json::Value blend_indices(Json::arrayValue);
+				Json::Value blend_weights(Json::arrayValue);
+				for (size_t i = 0; i < indices[v].size(); ++i)
+				{
+					const VertexWeight& vw = indices[v][i];
+					blend_indices.append(vw.bone_index);
+					blend_weights.append(vw.weight);
 				}
 				
-				jbone["weights"] = weights;
-			
-				bones.append(jbone);
+				jweight["indices"] = blend_indices;
+				jweight["weights"] = blend_weights;
+				
+				out_blend_weights.append(jweight);
 			}
 		}
 	}

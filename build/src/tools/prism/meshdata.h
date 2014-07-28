@@ -120,11 +120,19 @@ namespace prism
 		void print_nodes();
 		
 		// mesh operations
-		void read_bones(const aiMesh* mesh, Json::Value& bones);
+		void read_bones(const aiMesh* mesh, Json::Value& bones, Json::Value& blend_weights);
 		
 		void read_animation(Animation& animation_data, const aiAnimation* animation, Json::Value& animation_node);
 	}; // MeshData
-
+	
+	struct VertexWeight
+	{
+		float weight;
+		int32_t bone_index;
+		
+		VertexWeight(float _weight = 0.0f, int32_t _bone_index = -1) :
+		weight(_weight), bone_index(_bone_index) {}
+	};
 
 	glm::quat to_glm(const aiQuaternion& q);
 	glm::vec3 to_glm(const aiVector3D& v);
