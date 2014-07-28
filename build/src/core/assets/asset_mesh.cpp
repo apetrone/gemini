@@ -118,6 +118,7 @@ namespace assets
 			Json::Value normals = geometry_node["normals"];
 			Json::Value uvs = geometry_node["uvs"];
 			Json::Value colors = geometry_node["colors"];
+			Json::Value blend_weights = geometry_node["blend_weights"];
 			
 			int material_id = geometry_node["material_id"].asInt();
 //			LOGV( "geometry: %i, material_id: %i\n", gid-1, material_id );
@@ -135,7 +136,36 @@ namespace assets
 			geometry->vertices = CREATE_ARRAY( glm::vec3, geometry->vertex_count );
 			geometry->normals = CREATE_ARRAY( glm::vec3, geometry->vertex_count );
 			
+			if (!blend_weights.isNull() && !blend_weights.empty())
+			{
+				geometry->blend_indices = CREATE_ARRAY(glm::ivec4, geometry->vertex_count);
+				geometry->blend_weights = CREATE_ARRAY(glm::vec4, geometry->vertex_count);
+				
+				Json::ValueIterator blend_weight_iter = blend_weights.begin();
+				int v = 0;
+				for( ; blend_weight_iter != blend_weights.end(); ++blend_weight_iter, ++v)
+				{
+					Json::Value blend_weight = *blend_weight_iter;
 
+					Json::Value jbi = blend_weight["indices"];
+					Json::Value jbw = blend_weight["weights"];
+					
+					assert(jbi.size() > 0);
+
+					int bone_indices[4] = {0};
+					float bone_weights[4] = {0};
+					
+					glm::vec4 bw;
+					for (int wid = 0; wid < jbi.size(); ++wid)
+					{
+						bone_indices[wid] = jbi[wid].asInt();
+						bone_weights[wid] = jbw[wid].asFloat();
+					}
+					geometry->blend_indices[v] = glm::ivec4(bone_indices[0], bone_indices[1], bone_indices[2], bone_indices[3]);
+					geometry->blend_weights[v] = glm::vec4(bone_weights[0], bone_weights[1], bone_weights[2], bone_weights[3]);
+				}
+
+			}
 			
 			for( int v = 0; v < geometry->vertex_count; ++v )
 			{
@@ -517,6 +547,12 @@ namespace assets
 			indices = 0;
 		}
 		
+		if (blend_indices || blend_weights)
+		{
+			DESTROY_ARRAY(ivec4, blend_indices, vertex_count);
+			DESTROY_ARRAY(vec4, blend_weights, vertex_count);
+		}
+		
 		if ( this->vertexbuffer )
 		{
 			renderer::driver()->vertexbuffer_destroy( this->vertexbuffer );
@@ -572,9 +608,14 @@ namespace assets
 		
 		if (blend_indices)
 		{
-			ShaderString blend_indices = "blend_indices";
-			attributes |= find_parameter_mask(blend_indices);
+//			ShaderString blend_indices = "blend_indices";
+//			attributes |= find_parameter_mask(blend_indices);
 			descriptor.add(VD_INT4);
+		}
+		
+		if (blend_weights)
+		{
+			descriptor.add(VD_FLOAT4);
 		}
 		
 		this->vertexbuffer = renderer::driver()->vertexbuffer_from_geometry( descriptor, this );
