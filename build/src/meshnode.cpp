@@ -33,6 +33,7 @@ namespace scenegraph
 	{
 		type = MESH;
 		mesh = 0;
+		visible = true;
 	}
 	
 	MeshNode::~MeshNode()
@@ -74,6 +75,8 @@ namespace scenegraph
 				rn->shader = shader;
 				rn->material = material;
 //				rn->shader_id = shader->Id();
+
+
 		
 				add_child(rn);
 			}

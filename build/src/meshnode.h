@@ -30,16 +30,20 @@ namespace scenegraph
 	{
 		uint16_t material_id;
 		uint16_t shader_id;
-		
+
 		void* material;
 		void* shader;
 		
 		assets::Geometry* geometry;
+		
+		
+		glm::mat4 node_transforms[2];
 	};
 
 	struct MeshNode : public Node
 	{
 		assets::Mesh* mesh;
+		bool visible;
 		
 		
 		

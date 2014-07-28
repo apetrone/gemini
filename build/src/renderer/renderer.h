@@ -316,7 +316,7 @@ namespace renderer
 		
 		// return true if this object is animated
 		// i.e. requires dynamic updates in the renderer
-		bool is_animated() const { return blend_indices != 0; }
+		bool is_animated() const { return 0; }
 		
 	}; // Geometry
 	

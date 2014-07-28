@@ -35,6 +35,7 @@ namespace scenegraph
 		rotation_channel(rotation),
 		translation_channel(translation)
 	{
+		scale = glm::vec3(1.0f, 1.0f, 1.0f);
 	}
 
 	void SkeletalNode::setup_skeleton()
@@ -89,7 +90,7 @@ namespace scenegraph
 			assets::Bone* bone = &mesh->bones[boneid];
 			debugdraw::axes(bone->bind_matrix, 1.0f);
 
-			debugdraw::sphere(glm::vec3(bone->bind_matrix[3]), Color(255,0,0), 0.25f);
+			debugdraw::sphere(glm::vec3(bone->bind_matrix[3]), Color(255,128,0), 0.25f);
 		}
 		
 		scale_channel.update(delta_seconds, mesh->animation.frame_delay_seconds);
@@ -102,5 +103,7 @@ namespace scenegraph
 		glm::mat4 tr = glm::translate(glm::mat4(1.0), translation);
 		
 		local_to_world = sc * ro * tr;
+		
+		MeshNode::update(delta_seconds);
 	}
 }; // namespace scenegraph

@@ -62,7 +62,7 @@ namespace scenegraph
 		Node* parent;
 		
 		NodeType type;
-	
+
 		Node();
 		virtual ~Node();
 		

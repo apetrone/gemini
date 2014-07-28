@@ -817,6 +817,16 @@ void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, render
 		{
 			ms.write( &geometry->uvs[ vertex_id ], sizeof(renderer::UV) );
 		}
+		
+		if (geometry->blend_indices)
+		{
+			ms.write(&geometry->blend_indices[vertex_id], sizeof(glm::ivec4));
+		}
+		
+		if (geometry->blend_weights)
+		{
+			ms.write(&geometry->blend_weights[vertex_id], sizeof(glm::vec4));
+		}
 	}
 	
 	stream->upload_interleaved_data( vertex_data, geometry->vertex_count );

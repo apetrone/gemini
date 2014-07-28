@@ -44,7 +44,7 @@ namespace renderer
 			if (node->type == scenegraph::MESH)
 			{
 				scenegraph::MeshNode* meshnode = static_cast<scenegraph::MeshNode*>(node);
-				if (meshnode)
+				if (meshnode && meshnode->visible)
 				{
 					for (auto child : meshnode->children)
 					{
