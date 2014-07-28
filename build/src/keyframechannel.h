@@ -67,9 +67,14 @@ public:
 		assert(data_source != 0);
 	}
 	
-	Type update_value(uint32_t frame, float alpha)
+	void update_value(uint32_t frame, float alpha)
 	{
 		alpha = glm::clamp(alpha, 0.0f, 1.0f);
+		
+		if (!data_source)
+		{
+			return;
+		}
 		
 		frame = clamp_frame(frame);
 		
@@ -94,12 +99,15 @@ public:
 		assert(!isnan(value.x));
 		assert(!isnan(value.y));
 		assert(!isnan(value.z));
-		
-		return value;
 	}
 	
 	void update_with_time(float delta_seconds)
 	{
+		if (data_source)
+		{
+			return;
+		}
+		
 		current_time_seconds += delta_seconds;
 		next_advance_timeleft -= delta_seconds;
 		
@@ -134,6 +142,11 @@ public:
 	
 	void update_sampled(float delta_seconds, float frame_delay_seconds)
 	{
+		if (!data_source)
+		{
+			return;
+		}
+		
 		current_time_seconds += delta_seconds;
 		next_advance_timeleft -= delta_seconds;
 		
