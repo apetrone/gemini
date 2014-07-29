@@ -57,6 +57,10 @@ namespace scenegraph
 		// instead of one.
 		FixedArray<glm::mat4> transforms;
 
+		FixedArray<glm::mat4> final_transforms;
+		
+		FixedArray<glm::mat4> inv_bind_poses;
+		FixedArray<glm::mat4> bind_poses;
 
 		SkeletalNode();
 		virtual ~SkeletalNode() {}

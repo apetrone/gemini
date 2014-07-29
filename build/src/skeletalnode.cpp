@@ -78,8 +78,11 @@ namespace scenegraph
 		if (mesh->total_bones > 0)
 		{
 			LOGV("setup skeleton bones; total %i bone(s)\n", mesh->total_bones);
+			final_transforms.allocate(mesh->total_bones);
 			transforms.allocate(mesh->total_bones);
-
+			inv_bind_poses.allocate(mesh->total_bones);
+			bind_poses.allocate(mesh->total_bones);
+			
 			for (size_t bone_index = 0; bone_index < mesh->total_bones; ++bone_index)
 			{
 				// Iterate over each bone and calculate the global transform
@@ -87,27 +90,26 @@ namespace scenegraph
 				assets::Bone* bone = &mesh->bones[bone_index];
 				AnimatedNode* node = CREATE(AnimatedNode);
 				node->post_processing(mesh);
+				add_child(node);
+				node->name = bone->name.c_str();
 				
 				if (bone->parent_index == -1)
 				{
 					bone->world_transform = bone->local_transform;
-					add_child(node);
 				}
 				else
 				{
 					bone->world_transform = mesh->bones[bone->parent_index].world_transform * bone->local_transform;
-					
-					assert(bone->parent_index <= children.size());
-					AnimatedNode* parent = (AnimatedNode*)children[bone->parent_index];
-					parent->add_child(node);
 				}
 
 				// prepend the inverse bind pose which places this into bone-space
 				glm::mat4& tr = transforms[bone_index];
 				tr = bone->inverse_bind_matrix * bone->world_transform;
 				
-				
-			
+				glm::mat4& inv_bind_pose = inv_bind_poses[bone_index];
+				glm::mat4& bind_pose = bind_poses[bone_index];
+				inv_bind_pose = bone->inverse_bind_matrix;
+				bind_pose = bone->bind_matrix;
 			}
 		}
 	}
@@ -115,7 +117,6 @@ namespace scenegraph
 	void SkeletalNode::update(float delta_seconds)
 	{
 		assert(mesh != 0);
-
 		for(size_t boneid = 0; boneid < mesh->total_bones; ++boneid)
 		{
 			assets::Bone* bone = &mesh->bones[boneid];
@@ -131,6 +132,28 @@ namespace scenegraph
 	
 	void SkeletalNode::update_skeleton()
 	{
+		int childOffset = 1;
 		
+		for (size_t bone_index = 0; bone_index < mesh->total_bones; ++bone_index)
+		{
+			// Iterate over each bone and calculate the global transform
+			// for each bone.
+			assets::Bone* bone = &mesh->bones[bone_index];
+			AnimatedNode* node = (AnimatedNode*)children[childOffset+bone_index];
+			glm::mat4& tr = final_transforms[bone_index];
+			
+			if (bone->parent_index == -1)
+			{
+				tr = bone->local_transform;
+			}
+			else
+			{
+				tr = final_transforms[bone->parent_index] * node->local_to_world;
+			}
+
+			final_transforms[bone_index] = tr * bone->inverse_bind_matrix;
+		}
+
+
 	}
 }; // namespace scenegraph

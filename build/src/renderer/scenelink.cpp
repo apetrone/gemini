@@ -39,7 +39,7 @@ namespace renderer
 	public:
 		SceneVisitor(RenderQueue& _queue): queue(_queue) {}
 
-		void queue_render_node(scenegraph::RenderNode* rn, glm::mat4* world_transform)
+		void queue_render_node(scenegraph::RenderNode* rn, glm::mat4* world_transform, glm::mat4* transforms = 0, uint8_t total_transforms = 0)
 		{
 			assert(rn->get_type() == scenegraph::RENDER);
 			if (rn->get_type() != scenegraph::RENDER)
@@ -54,6 +54,9 @@ namespace renderer
 			block.material = rn->material;
 			block.shader = rn->shader;
 			//						block.shader_id = rn->shader_id;
+			
+			block.node_transforms = transforms;
+			block.total_transforms = total_transforms;
 			
 			queue.insert(block);
 		}
@@ -83,7 +86,7 @@ namespace renderer
 			scenegraph::RenderNode* rn = static_cast<scenegraph::RenderNode*>(node->children[0]);
 			if (rn && rn->get_type() == scenegraph::RENDER)
 			{
-				queue_render_node(rn, &skeleton->world_transform);
+				queue_render_node(rn, &skeleton->world_transform, &skeleton->final_transforms[0], skeleton->final_transforms.size());
 			}
 		}
 		

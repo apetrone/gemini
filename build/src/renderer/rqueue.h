@@ -61,11 +61,16 @@ namespace renderer
 		unsigned int shader_id;
 		void* shader;
 		
+		glm::mat4* node_transforms;
+		uint8_t total_transforms;
+		
 		RenderBlock(RenderKey _key, RenderObject* _object) :
 			key(_key), object(_object)
 		{
 			object_matrix = 0;
 			shader = 0;
+			node_transforms = 0;
+			total_transforms = 0;
 		}
 	};
 	
