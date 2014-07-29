@@ -30,12 +30,43 @@
 
 namespace scenegraph
 {
-	SkeletalNode::SkeletalNode() :
+	AnimatedNode::AnimatedNode() :
 		scale_channel(scale),
 		rotation_channel(rotation),
 		translation_channel(translation)
 	{
 		scale = glm::vec3(1.0f, 1.0f, 1.0f);
+	}
+
+	void AnimatedNode::post_processing(assets::Mesh* mesh)
+	{
+		if (mesh && mesh->animation.scale.keys.size() > 0)
+		{
+			// set data sources; this could be done better?
+			scale_channel.set_data_source(&mesh->animation.scale, mesh->animation.frame_delay_seconds);
+			rotation_channel.set_data_source(&mesh->animation.rotation, mesh->animation.frame_delay_seconds);
+			translation_channel.set_data_source(&mesh->animation.translation, mesh->animation.frame_delay_seconds);
+		}
+	}
+	
+	void AnimatedNode::update(float delta_seconds)
+	{
+		scale_channel.update(delta_seconds);
+		rotation_channel.update(delta_seconds);
+		translation_channel.update(delta_seconds);
+		
+		glm::mat4 sc = glm::scale(glm::mat4(1.0), scale);
+		glm::mat4 ro = glm::toMat4(rotation);
+		glm::mat4 tr = glm::translate(glm::mat4(1.0), translation);
+		
+		local_to_world = sc * ro * tr;
+		
+		Node::update(delta_seconds);
+	}
+	
+	SkeletalNode::SkeletalNode()
+	{
+		type = scenegraph::SKELETON;
 	}
 
 	void SkeletalNode::setup_skeleton()
@@ -46,7 +77,7 @@ namespace scenegraph
 		assert(mesh != 0);
 		if (mesh->total_bones > 0)
 		{
-			LOGV("setup skeleton bones\n");
+			LOGV("setup skeleton bones; total %i bone(s)\n", mesh->total_bones);
 			transforms.allocate(mesh->total_bones);
 
 			for (size_t bone_index = 0; bone_index < mesh->total_bones; ++bone_index)
@@ -54,29 +85,29 @@ namespace scenegraph
 				// Iterate over each bone and calculate the global transform
 				// for each bone.
 				assets::Bone* bone = &mesh->bones[bone_index];
+				AnimatedNode* node = CREATE(AnimatedNode);
+				node->post_processing(mesh);
 				
 				if (bone->parent_index == -1)
 				{
 					bone->world_transform = bone->local_transform;
+					add_child(node);
 				}
 				else
 				{
 					bone->world_transform = mesh->bones[bone->parent_index].world_transform * bone->local_transform;
+					
+					assert(bone->parent_index <= children.size());
+					AnimatedNode* parent = (AnimatedNode*)children[bone->parent_index];
+					parent->add_child(node);
 				}
 
 				// prepend the inverse bind pose which places this into bone-space
 				glm::mat4& tr = transforms[bone_index];
 				tr = bone->inverse_bind_matrix * bone->world_transform;
-			}
-		}
-		else
-		{
-			if (mesh->animation.scale.keys.size() > 0)
-			{
-				// set data sources; this could be done better?
-				scale_channel.set_data_source(&mesh->animation.scale);
-				rotation_channel.set_data_source(&mesh->animation.rotation);
-				translation_channel.set_data_source(&mesh->animation.translation);
+				
+				
+			
 			}
 		}
 	}
@@ -93,17 +124,13 @@ namespace scenegraph
 			debugdraw::sphere(glm::vec3(bone->bind_matrix[3]), Color(255,128,0), 0.25f);
 		}
 		
-		scale_channel.update(delta_seconds, mesh->animation.frame_delay_seconds);
-		rotation_channel.update(delta_seconds, mesh->animation.frame_delay_seconds);
-		translation_channel.update(delta_seconds, mesh->animation.frame_delay_seconds);
-		
-
-		glm::mat4 sc = glm::scale(glm::mat4(1.0), scale);
-		glm::mat4 ro = glm::toMat4(rotation);
-		glm::mat4 tr = glm::translate(glm::mat4(1.0), translation);
-		
-		local_to_world = sc * ro * tr;
-		
 		MeshNode::update(delta_seconds);
+		
+		update_skeleton();
+	}
+	
+	void SkeletalNode::update_skeleton()
+	{
+		
 	}
 }; // namespace scenegraph

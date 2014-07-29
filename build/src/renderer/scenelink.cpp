@@ -25,6 +25,7 @@
 
 #include "scenelink.h"
 #include "meshnode.h"
+#include "skeletalnode.h"
 
 #include "renderstream.h"
 
@@ -37,31 +38,67 @@ namespace renderer
 
 	public:
 		SceneVisitor(RenderQueue& _queue): queue(_queue) {}
-	
+
+		void queue_render_node(scenegraph::RenderNode* rn, glm::mat4* world_transform)
+		{
+			assert(rn->get_type() == scenegraph::RENDER);
+			if (rn->get_type() != scenegraph::RENDER)
+			{
+				return;
+			}
+			
+			RenderKey key = compute_render_key(rn->geometry);
+			RenderBlock block(key, rn->geometry);
+			block.object_matrix = world_transform;
+			block.material_id = rn->material_id;
+			block.material = rn->material;
+			block.shader = rn->shader;
+			//						block.shader_id = rn->shader_id;
+			
+			queue.insert(block);
+		}
+		
+
+		void queue_mesh(scenegraph::Node* node)
+		{
+			scenegraph::MeshNode* meshnode = static_cast<scenegraph::MeshNode*>(node);
+			if (meshnode && meshnode->visible)
+			{
+				for (auto child : meshnode->children)
+				{
+					scenegraph::RenderNode* rn = static_cast<scenegraph::RenderNode*>(child);
+					queue_render_node(rn, &meshnode->world_transform);
+				}
+			}
+		}
+		
+		void queue_skeleton(scenegraph::Node* node)
+		{
+			// TODO: implement!
+			
+			// there will be a render node child: this contains the mesh as normal.
+			// there will be AnimatedNode(s) corresponding to the bones.
+			scenegraph::SkeletalNode* skeleton = static_cast<scenegraph::SkeletalNode*>(node);
+
+			scenegraph::RenderNode* rn = static_cast<scenegraph::RenderNode*>(node->children[0]);
+			if (rn && rn->get_type() == scenegraph::RENDER)
+			{
+				queue_render_node(rn, &skeleton->world_transform);
+			}
+		}
+		
 		virtual int visit(scenegraph::Node* node)
 		{
 			++total_nodes;
 			if (node->type == scenegraph::MESH)
 			{
-				scenegraph::MeshNode* meshnode = static_cast<scenegraph::MeshNode*>(node);
-				if (meshnode && meshnode->visible)
-				{
-					for (auto child : meshnode->children)
-					{
-						scenegraph::RenderNode* rn = static_cast<scenegraph::RenderNode*>(child);
-
-						RenderKey key = compute_render_key(rn->geometry);
-						RenderBlock block(key, rn->geometry);
-						block.object_matrix = &meshnode->world_transform;
-						block.material_id = rn->material_id;
-						block.material = rn->material;
-						block.shader = rn->shader;
-//						block.shader_id = rn->shader_id;
-
-						queue.insert(block);
-					}
-				}
+				queue_mesh(node);
 			}
+			else if (node->type == scenegraph::SKELETON)
+			{
+				queue_skeleton(node);
+			}
+
 			return 0;
 		}
 		

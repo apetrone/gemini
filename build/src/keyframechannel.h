@@ -50,6 +50,7 @@ class Channel
 	uint16_t current_frame;
 	float current_time_seconds;
 	float next_advance_timeleft;
+	float frame_delay_seconds;
 	
 public:
 	Channel(Type& value_in, KeyframeData<Type>* source = 0) :
@@ -58,13 +59,16 @@ public:
 		current_frame = 0;
 		current_time_seconds = 0;
 		next_advance_timeleft = 0;
+		frame_delay_seconds = 0;
 	}
 	~Channel() {}
 
-	void set_data_source(KeyframeData<Type>* datasource)
+	void set_data_source(KeyframeData<Type>* datasource, float frame_delay)
 	{
 		data_source = datasource;
 		assert(data_source != 0);
+		
+		frame_delay_seconds = frame_delay;
 	}
 	
 	void update_value(uint32_t frame, float alpha)
@@ -140,7 +144,7 @@ public:
 		}
 	}
 	
-	void update_sampled(float delta_seconds, float frame_delay_seconds)
+	void update_sampled(float delta_seconds)
 	{
 		if (!data_source)
 		{
@@ -173,11 +177,11 @@ public:
 		}
 	}
 	
-	void update(float delta_seconds, float frame_delay_seconds)
+	void update(float delta_seconds)
 	{
 //		update_with_time(delta_seconds);
 
-		update_sampled(delta_seconds, frame_delay_seconds);
+		update_sampled(delta_seconds);
 	}
 	
 private:

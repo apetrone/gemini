@@ -27,16 +27,15 @@
 #include "meshnode.h"
 #include "assets/asset_mesh.h"
 #include "keyframechannel.h"
+#include "assets/asset_mesh.h"
 
 namespace scenegraph
 {
-	struct SkeletalNode : public MeshNode
+	struct AnimatedNode : public Node
 	{
-		FixedArray<glm::mat4> transforms;
-
 		glm::vec3 scale;
 		Channel<glm::vec3> scale_channel;
-
+		
 		glm::quat rotation;
 		Channel<glm::quat> rotation_channel;
 		
@@ -44,11 +43,26 @@ namespace scenegraph
 		Channel<glm::vec3> translation_channel;
 		
 		
+		AnimatedNode();
+		
+		void post_processing(assets::Mesh* mesh);
+		
+		virtual void update(float delta_seconds);
+	};
+
+	struct SkeletalNode : public MeshNode
+	{
+		// TODO: This should be moved into an animation controller
+		// which can manage multiple animation skeletal transforms
+		// instead of one.
+		FixedArray<glm::mat4> transforms;
+
 
 		SkeletalNode();
 		virtual ~SkeletalNode() {}
 		void setup_skeleton();
 		virtual void update(float delta_seconds);
+		void update_skeleton();
 	};
 }; // namespace scenegraph
 

@@ -47,6 +47,7 @@ namespace scenegraph
 	Node::Node()
 	{
 		parent = 0;
+		type = NODE;
 	}
 	
 	Node::~Node()

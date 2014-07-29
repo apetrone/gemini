@@ -29,6 +29,11 @@
 
 namespace scenegraph
 {
+	RenderNode::RenderNode()
+	{
+		type = RENDER;
+	}
+	
 	MeshNode::MeshNode()
 	{
 		type = MESH;

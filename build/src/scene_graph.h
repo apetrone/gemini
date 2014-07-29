@@ -36,8 +36,10 @@ namespace scenegraph
 	enum NodeType
 	{
 		SCENEROOT, 		// the scene root
-		TRANSFORM, 		// generic transform
+		NODE, 			// generic node
 		MESH,			// geometry/mesh node
+		RENDER,			// is a render node
+		SKELETON		// render a skeleton
 	};
 	
 	struct Node
