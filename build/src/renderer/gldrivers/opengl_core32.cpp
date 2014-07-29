@@ -277,10 +277,12 @@ void c_uniform_matrix4( MemoryStream & stream, GLCore32 & renderer )
 {
 	int uniform_location;
 	glm::mat4 * matrix = 0;
+	uint8_t count = 0;
 	stream.read( matrix );
 	stream.read( uniform_location );
+	stream.read( count );
 	
-	gl.UniformMatrix4fv( uniform_location, 1, GL_FALSE, glm::value_ptr(*matrix) );
+	gl.UniformMatrix4fv( uniform_location, count, GL_FALSE, glm::value_ptr(*matrix) );
 	gl.CheckError( "uniform matrix 4" );
 }
 

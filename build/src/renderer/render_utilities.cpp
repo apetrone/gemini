@@ -45,6 +45,8 @@ namespace render_utilities
 		rs.add_uniform_matrix4(shader->get_uniform_location("projection_matrix"), cb.projection_matrix);
 		rs.add_uniform_matrix4(shader->get_uniform_location("object_matrix"), block.object_matrix);
 
+//		rs.add_uniform_matrix4v(shader->get_uniform_location("node_transforms"), block.node_transforms);
+
 		rs.add_material(material, shader);
 		
 		rs.add_draw_call(block.object->vertexbuffer);

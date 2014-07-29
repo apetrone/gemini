@@ -179,11 +179,12 @@ void RenderStream::add_uniform4f( int location, const glm::vec4 * data )
 	stream.write( data );
 }
 
-void RenderStream::add_uniform_matrix4( int location, const glm::mat4 * data )
+void RenderStream::add_uniform_matrix4( int location, const glm::mat4 * data, uint8_t count )
 {
 	add_command( renderer::DC_UNIFORMMATRIX4 );
 	stream.write( data );
 	stream.write( location );
+	stream.write( count );
 }
 
 void RenderStream::add_draw_call( renderer::VertexBuffer * vertexbuffer )
