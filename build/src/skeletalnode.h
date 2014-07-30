@@ -45,7 +45,7 @@ namespace scenegraph
 		
 		AnimatedNode();
 		
-		void post_processing(assets::Mesh* mesh);
+		void post_processing(assets::Mesh* mesh, int32_t node_index);
 		
 		virtual void update(float delta_seconds);
 	};

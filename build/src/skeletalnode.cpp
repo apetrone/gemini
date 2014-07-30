@@ -38,15 +38,17 @@ namespace scenegraph
 		scale = glm::vec3(1.0f, 1.0f, 1.0f);
 	}
 
-	void AnimatedNode::post_processing(assets::Mesh* mesh)
+	void AnimatedNode::post_processing(assets::Mesh* mesh, int32_t node_index)
 	{
-		if (mesh && mesh->animation.scale.keys.size() > 0)
+		if (!mesh || (mesh->animation.scale.empty() && mesh->animation.rotation.empty() && mesh->animation.translation.empty()))
 		{
-			// set data sources; this could be done better?
-			scale_channel.set_data_source(&mesh->animation.scale, mesh->animation.frame_delay_seconds);
-			rotation_channel.set_data_source(&mesh->animation.rotation, mesh->animation.frame_delay_seconds);
-			translation_channel.set_data_source(&mesh->animation.translation, mesh->animation.frame_delay_seconds);
+			return;
 		}
+
+		// set data sources; this could be done better?
+		scale_channel.set_data_source(&mesh->animation.scale[node_index], mesh->animation.frame_delay_seconds);
+		rotation_channel.set_data_source(&mesh->animation.rotation[node_index], mesh->animation.frame_delay_seconds);
+		translation_channel.set_data_source(&mesh->animation.translation[node_index], mesh->animation.frame_delay_seconds);
 	}
 	
 	void AnimatedNode::update(float delta_seconds)
@@ -87,19 +89,19 @@ namespace scenegraph
 				// for each bone.
 				assets::Bone* bone = &mesh->bones[bone_index];
 				AnimatedNode* node = CREATE(AnimatedNode);
-				node->post_processing(mesh);
+				node->post_processing(mesh, bone_index);
 				add_child(node);
 				node->name = bone->name.c_str();
 				
 				glm::mat4& tr = transforms[bone_index];
-#if 1
+#if 0
 				if (bone->parent_index == -1)
 				{
 					tr = bone->local_transform;
 				}
 				else
 				{
-					tr = mesh->bones[bone->parent_index].world_transform * bone->local_transform;
+					tr = mesh->bones[bone->parent_index].local_transform * bone->local_transform;
 				}
 #endif
 			}
@@ -121,6 +123,24 @@ namespace scenegraph
 		
 		update_skeleton();
 	}
+
+	static void print_mat4(glm::mat4& m)
+	{
+		glm::vec4& a = m[0];
+		glm::vec4& b = m[1];
+		glm::vec4& c = m[2];
+		glm::vec4& d = m[3];
+		LOGV("MAT\n"
+			"[%2.2g, %2.2g, %2.2g, %2.2g]\n"
+			"[%2.2g, %2.2g, %2.2g, %2.2g]\n"
+			"[%2.2g, %2.2g, %2.2g, %2.2g]\n"
+			"[%2.2g, %2.2g, %2.2g, %2.2g]\n\n",
+			 a.x, a.y, a.z, a.w,
+			 b.x, b.y, b.z, b.w,
+			 c.x, c.y, c.z, c.w,
+			 d.x, d.y, d.z, d.w);
+	}
+
 	
 	void SkeletalNode::update_skeleton()
 	{
@@ -132,16 +152,16 @@ namespace scenegraph
 			// for each bone.
 			assets::Bone* bone = &mesh->bones[bone_index];
 			AnimatedNode* node = (AnimatedNode*)children[childOffset+bone_index];
-//			glm::mat4& tr = transforms[bone_index];
-			glm::mat4 tr;
+			glm::mat4& tr = transforms[bone_index];
 
 			if (bone->parent_index == -1)
 			{
-				tr = bone->local_transform;
+				tr = node->local_to_world;
+//				print_mat4(node->local_to_world);
 			}
 			else
 			{
-				tr = transforms[bone->parent_index] * bone->local_transform;
+				tr = transforms[bone->parent_index] * node->local_to_world;
 			}
 
 			final_transforms[bone_index] = tr * bone->inverse_bind_matrix;

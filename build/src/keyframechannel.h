@@ -179,9 +179,9 @@ public:
 	
 	void update(float delta_seconds)
 	{
-		update_with_time(delta_seconds);
+//		update_with_time(delta_seconds);
 
-//		update_sampled(delta_seconds);
+		update_sampled(delta_seconds);
 	}
 	
 private:

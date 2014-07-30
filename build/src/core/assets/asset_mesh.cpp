@@ -313,6 +313,15 @@ namespace assets
 			}
 		}
 		
+		// allocate animation bones
+		AnimationData& anim = mesh->animation;
+		
+		// allocate enough data for all bones
+		anim.scale.allocate(mesh->total_bones);
+		anim.rotation.allocate(mesh->total_bones);
+		anim.translation.allocate(mesh->total_bones);
+		
+		
 		
 		
 		// Attempt to load animations?
@@ -347,6 +356,7 @@ namespace assets
 					if (bone_index >= 0)
 					{
 						Bone* bone = &mesh->bones[bone_index];
+						bone->index = bone_index;
 						
 						LOGV("match %s to %s\n", bone_name.c_str(), bone->name.c_str());
 						if (bone_parent != -1)
@@ -356,12 +366,16 @@ namespace assets
 							
 							bone->parent_index = bone_parent;
 						}
+						
+						
+						Json::Value jkeys = jnode["keys"];
+						//read_keys_array(mesh, jkeys);
+//						read_keys_object(mesh, bone_name, jkeys);
+						read_keys_object(anim, bone, jkeys);
 					}
 				}
 				
-				Json::Value jkeys = jnode["keys"];
-				//read_keys_array(mesh, jkeys);
-				read_keys_object(mesh, jkeys);
+
 			}
 		}
 		
@@ -447,22 +461,23 @@ namespace assets
 		}
 	}
 	
-	void read_keys_object(assets::Mesh* mesh, Json::Value& jkeys)
+	void read_keys_object(AnimationData& anim, Bone* bone, Json::Value& jkeys)
 	{
 		const Json::Value& scale = jkeys["scale"];
 		const Json::Value& rotation = jkeys["rotation"];
 		const Json::Value& translation = jkeys["translation"];
 
+		KeyframeData<glm::vec3>& scale_channel = anim.scale[bone->index];
+		KeyframeData<glm::quat>& rotation_channel = anim.rotation[bone->index];
+		KeyframeData<glm::vec3>& translation_channel = anim.translation[bone->index];
 
-		// read scale keys
-		read_vector_keys(mesh->animation.scale, scale);
-		read_quat_keys(mesh->animation.rotation, rotation);
-		read_vector_keys(mesh->animation.translation, translation);
-
-
+		// read keys
+		read_vector_keys(scale_channel, scale);
+		read_quat_keys(rotation_channel, rotation);
+		read_vector_keys(translation_channel, translation);
 	}
 	
-	
+#if 0
 	void read_keys_array(assets::Mesh* mesh, Json::Value& jkeys)
 	{
 		
@@ -493,6 +508,7 @@ namespace assets
 			translate = glm::vec3(mat[3]);
 		}
 	}
+#endif
 	
 	
 	void mesh_construct_extension( StackString<MAX_PATH_SIZE> & extension )

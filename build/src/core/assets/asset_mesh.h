@@ -54,12 +54,13 @@ namespace assets
 //		FixedArray<glm::vec3> untransformed_vertices;
 	}; // Geometry
 	
+		
 	// TEMP struct to test the whole shebang.
 	struct AnimationData
 	{
-		KeyframeData<glm::vec3> scale;
-		KeyframeData<glm::quat> rotation;
-		KeyframeData<glm::vec3> translation;
+		FixedArray< KeyframeData<glm::vec3> > scale;
+		FixedArray< KeyframeData<glm::quat> > rotation;
+		FixedArray< KeyframeData<glm::vec3> > translation;
 				
 		// duration of the full animation, in seconds
 		float duration_seconds;
@@ -77,6 +78,7 @@ namespace assets
 		Bone()
 		{
 			parent_index = -1;
+			index = -1;
 		}
 		~Bone() {}
 		
@@ -95,6 +97,8 @@ namespace assets
 		
 		// -1: No parent
 		int32_t parent_index;
+		
+		int32_t index;
 	};
 	
 	struct Mesh : public Asset
@@ -125,8 +129,9 @@ namespace assets
 	}; // Mesh
 	
 	// EXPERIMENTAL
+	void read_keys_object(AnimationData& anim, Bone* bone, Json::Value& jkeys);
 	void read_keys_object(assets::Mesh* mesh, Json::Value& jkeys);
-	void read_keys_array(assets::Mesh* mesh, Json::Value& jkeys);
+//	void read_keys_array(assets::Mesh* mesh, Json::Value& jkeys);
 	
 	AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, const AssetParameters & parameters );
 	void mesh_construct_extension( StackString<MAX_PATH_SIZE> & extension );
