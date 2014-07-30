@@ -297,7 +297,7 @@ void test_load_scene(ToolEnvironment& env, const char* asset_root, const char* i
 	// Bone matrices may be incorrect with aiProcess_PreTransformVertices set.
 	unsigned int flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace;
 
-	importer.SetPropertyInteger(AI_CONFIG_PP_LBW_MAX_WEIGHTS, 4);
+	importer.SetPropertyInteger(AI_CONFIG_PP_LBW_MAX_WEIGHTS, prism::MAX_VERTEX_WEIGHTS);
 	const aiScene* scene = importer.ReadFile(input_filename(), flags);
 	if (scene)
 	{

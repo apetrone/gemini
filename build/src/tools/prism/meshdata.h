@@ -50,6 +50,9 @@
 
 namespace prism
 {
+	const int MAX_BONES = 60;
+	const int MAX_VERTEX_WEIGHTS = 4;
+
 	typedef int NodeIndex;
 	typedef std::vector< struct Node*, GeminiAllocator<struct Node*> > NodeVector;
 	struct Node

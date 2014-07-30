@@ -173,6 +173,11 @@ Node::NodeType type, Node* parent)
 		
 		if (mesh->mNumBones > 0)
 		{
+			if (mesh->mNumBones > MAX_BONES)
+			{
+				LOGW("Maximum number of supported bones has been exceeded!\n");
+				assert(0);
+			}
 			LOGV("inspecting bones...\n");
 			size_t total_bones = 0;
 			const aiBone* bone = 0;
@@ -211,6 +216,10 @@ Node::NodeType type, Node* parent)
 				Json::Value weights(Json::arrayValue);
 				for (size_t weight = 0; weight < bone->mNumWeights; ++weight)
 				{
+					if (weight >= MAX_VERTEX_WEIGHTS)
+					{
+						LOGW("Exceeded maximum vertex weight limit of (%i). This may produce undesirable results.\n", MAX_VERTEX_WEIGHTS);
+					}
 					aiVertexWeight* w = &bone->mWeights[weight];
 					//LOGV("\tweight (%i) [vertex: %i -> weight: %2.2f\n", weight, w->mVertexId, w->mWeight);
 					
@@ -275,8 +284,8 @@ Node::NodeType type, Node* parent)
 			Json::Value node;
 			animnode = animation->mChannels[channel];
 			
-			LOGV("\tinspecting bone/node %llu \"%s\" ...\n", channel, animnode->mNodeName.C_Str());
-			LOGV("\t\t Total Keys: %i\n", animnode->mNumPositionKeys);
+//			LOGV("\tinspecting bone/node %llu \"%s\" ...\n", channel, animnode->mNodeName.C_Str());
+//			LOGV("\t\t Total Keys: %i\n", animnode->mNumPositionKeys);
 			assert((animnode->mNumPositionKeys == animnode->mNumRotationKeys) && (animnode->mNumRotationKeys == animnode->mNumScalingKeys));
 			
 			
@@ -419,12 +428,12 @@ Node::NodeType type, Node* parent)
 	// this function is almost identical to the one in the assimp documentation
 	void iterate_nodes(MeshData& meshdata, aiNode* node, Node* parent, aiMatrix4x4& accumulated_transform, size_t& total_nodes)
 	{
-		//LOGV("[node %i] %s\n", total_nodes, node->mName.C_Str());
+		LOGV("[node %i] %s\n", total_nodes, node->mName.C_Str());
 		++total_nodes;
 				
 		Node* newnode = meshdata.create_node(node->mName.C_Str(), Node::TRANSFORM, parent);
-		//LOGV("created node %x, %s\n", newnode, newnode->name.c_str());
-		
+		LOGV("created node %x, %s\n", newnode, newnode->name.c_str());
+
 		// if node has meshes, create a new scene object for it
 		if (node->mNumMeshes > 0)
 		{
@@ -434,7 +443,8 @@ Node::NodeType type, Node* parent)
 		else
 		{
 			// if no meshes, skip the node, but keep its transform
-			newnode->local_transform = node->mTransformation * accumulated_transform;
+			LOGV("adding transform\n");
+			newnode->local_transform = node->mTransformation;
 		}
 				
 		// traverse all child nodes
@@ -451,7 +461,7 @@ Node::NodeType type, Node* parent)
 		aiMatrix4x4 accumulated_transform;
 		size_t total_nodes = 0;
 		iterate_nodes(meshdata, scene->mRootNode, meshdata.root, accumulated_transform, total_nodes);
-		
+
 		LOGV("scene nodes traversed.\n");
 	}
 	
