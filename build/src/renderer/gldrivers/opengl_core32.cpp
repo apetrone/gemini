@@ -147,7 +147,7 @@ struct GL32VertexBuffer : public VertexBuffer
 		
 		// reset the descriptor and iterate over the items to setup the vertex attributes
 		descriptor.reset();
-		GLenum attrib_type = GL_INVALID_ENUM;
+		
 		VertexDescriptorType desc_type;
 		unsigned int attribID = 0;
 		unsigned int attribSize = 0;
@@ -157,6 +157,7 @@ struct GL32VertexBuffer : public VertexBuffer
 		
 		for( unsigned int i = 0; i < descriptor.attribs; ++i )
 		{
+			GLenum attrib_type = GL_INVALID_ENUM;
 			desc_type = descriptor.description[i];
 			if ( desc_type == VD_FLOAT2 )
 			{
@@ -176,12 +177,12 @@ struct GL32VertexBuffer : public VertexBuffer
 			else if ( desc_type == VD_INT4 )
 			{
 				attrib_type = GL_INT;
-				normalized = GL_FALSE;
+				normalized = GL_TRUE;
 			}
 			else if ( desc_type == VD_UNSIGNED_INT )
 			{
 				attrib_type = GL_UNSIGNED_INT;
-				normalized = GL_FALSE;
+				normalized = GL_TRUE;
 			}
 			else if ( desc_type == VD_UNSIGNED_BYTE3 )
 			{
@@ -194,14 +195,17 @@ struct GL32VertexBuffer : public VertexBuffer
 				normalized = GL_TRUE;
 			}
 			
+			assert(attrib_type != GL_INVALID_ENUM);
+			
 			num_elements = VertexDescriptor::elements[ desc_type ];
 			attribSize = VertexDescriptor::size[ desc_type ];
-			gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_stride, (void*)offset );
-			gl.CheckError( "VertexAttribPointer" );
 			
 			gl.EnableVertexAttribArray( attribID );
 			gl.CheckError( "EnableVertexAttribArray" );
 			
+			gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_stride, (void*)offset );
+			gl.CheckError( "VertexAttribPointer" );
+
 			offset += attribSize;
 			++attribID;
 		}
@@ -209,7 +213,6 @@ struct GL32VertexBuffer : public VertexBuffer
 		gl.BindVertexArray( 0 );
 		gl.BindBuffer( GL_ARRAY_BUFFER, 0 );
 		gl.BindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-		
 	}
 	
 	void upload_interleaved_data( const GLvoid * data, unsigned int vertex_count )
@@ -800,6 +803,8 @@ void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, render
 	parameter = "uv0";
 	unsigned int uv0_mask = assets::find_parameter_mask( parameter );
 	
+	parameter = "hardware_skinning";
+	unsigned int skinning_mask = assets::find_parameter_mask( parameter );
 	
 	for( size_t vertex_id = 0; vertex_id < geometry->vertex_count; ++vertex_id )
 	{
@@ -814,20 +819,16 @@ void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, render
 		{
 			ms.write( &geometry->colors[ vertex_id ], sizeof(Color) );
 		}
-				
+
 		if ( geometry->attributes & uv0_mask )
 		{
 			ms.write( &geometry->uvs[ vertex_id ], sizeof(renderer::UV) );
 		}
 		
-		if (geometry->blend_indices)
+		if ( geometry->attributes & skinning_mask )
 		{
-			ms.write(&geometry->blend_indices[vertex_id], sizeof(glm::ivec4));
-		}
-		
-		if (geometry->blend_weights)
-		{
-			ms.write(&geometry->blend_weights[vertex_id], sizeof(glm::vec4));
+			ms.write( &geometry->blend_indices[ vertex_id ], sizeof(glm::vec4) );
+			ms.write( &geometry->blend_weights[ vertex_id ], sizeof(glm::vec4) );
 		}
 	}
 	

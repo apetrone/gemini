@@ -343,7 +343,7 @@ namespace assets
 //			debugging defines
 //			if (shader->id == 3)
 //			{
-//				LOGV( "%i -> %s\n", shader->id, preprocessor_defines.c_str() );
+//				LOGV( "%i (%i) -> %s\n", shader->id, shader->asset_id, preprocessor_defines.c_str() );
 //			}
 			renderer::ShaderObject vertex_shader = driver->shaderobject_create( renderer::SHADER_VERTEX );
 			renderer::ShaderObject fragment_shader = driver->shaderobject_create( renderer::SHADER_FRAGMENT );
@@ -425,7 +425,9 @@ namespace assets
 			driver->shaderobject_destroy( fragment_shader );
 
 			attribute_list.clear();
-			uniform_list.clear();			
+			uniform_list.clear();
+			
+//			shader->show_uniforms();
 		}
 
 		// cleanup resources

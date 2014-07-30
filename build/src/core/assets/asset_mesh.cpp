@@ -135,10 +135,11 @@ namespace assets
 			geometry->vertex_count = positions.size() / 3;
 			geometry->vertices = CREATE_ARRAY( glm::vec3, geometry->vertex_count );
 			geometry->normals = CREATE_ARRAY( glm::vec3, geometry->vertex_count );
+//			geometry->untransformed_vertices.allocate(geometry->vertex_count);
 			
 			if (!blend_weights.isNull() && !blend_weights.empty())
 			{
-				geometry->blend_indices = CREATE_ARRAY(glm::ivec4, geometry->vertex_count);
+				geometry->blend_indices = CREATE_ARRAY(glm::vec4, geometry->vertex_count);
 				geometry->blend_weights = CREATE_ARRAY(glm::vec4, geometry->vertex_count);
 				
 				Json::ValueIterator blend_weight_iter = blend_weights.begin();
@@ -161,8 +162,12 @@ namespace assets
 						bone_indices[wid] = jbi[wid].asInt();
 						bone_weights[wid] = jbw[wid].asFloat();
 					}
-					geometry->blend_indices[v] = glm::ivec4(bone_indices[0], bone_indices[1], bone_indices[2], bone_indices[3]);
+					
+					geometry->blend_indices[v] = glm::vec4(bone_indices[0], bone_indices[1], bone_indices[2], bone_indices[3]);
+//					LOGV("blend_indices: %g %g %g %g\n", geometry->blend_indices[v].x, geometry->blend_indices[v].y, geometry->blend_indices[v].z, geometry->blend_indices[v].w);
+					
 					geometry->blend_weights[v] = glm::vec4(bone_weights[0], bone_weights[1], bone_weights[2], bone_weights[3]);
+//					LOGV("blend_weights: %g %g %g %g\n", geometry->blend_weights[v].x, geometry->blend_weights[v].y, geometry->blend_weights[v].z, geometry->blend_weights[v].w);
 				}
 
 			}
@@ -170,6 +175,7 @@ namespace assets
 			for( int v = 0; v < geometry->vertex_count; ++v )
 			{
 				geometry->vertices[v] = glm::vec3(positions[v*3].asFloat(), positions[v*3+1].asFloat(), positions[v*3+2].asFloat() );
+//				geometry->untransformed_vertices[v] = geometry->vertices[v];
 			}
 			
 			for( int v = 0; v < geometry->vertex_count; ++v )
@@ -549,7 +555,7 @@ namespace assets
 		
 		if (blend_indices || blend_weights)
 		{
-			DESTROY_ARRAY(ivec4, blend_indices, vertex_count);
+			DESTROY_ARRAY(vec4, blend_indices, vertex_count);
 			DESTROY_ARRAY(vec4, blend_weights, vertex_count);
 		}
 		
@@ -576,49 +582,51 @@ namespace assets
 	void Geometry::render_setup()
 	{
 		VertexDescriptor descriptor;
-		// if we already setup this geometry; skip
-		if ( attributes > 0 )
+
+		// setup attributes
+		if ( attributes == 0 )
 		{
-			return;
-		}
-		
-		// always has at least a position
-		descriptor.add( VD_FLOAT3 );
-		
-		if ( normals )
-		{
-			ShaderString normals = "normals";
-			attributes |= find_parameter_mask( normals );
+			// always has at least a position
 			descriptor.add( VD_FLOAT3 );
+			
+			if ( normals )
+			{
+				ShaderString normals = "normals";
+				attributes |= find_parameter_mask( normals );
+				descriptor.add( VD_FLOAT3 );
+			}
+			
+			if ( colors )
+			{
+				ShaderString colors = "colors";
+				attributes |= find_parameter_mask( colors );
+				descriptor.add( VD_UNSIGNED_BYTE4 );
+			}
+			
+			if ( uvs )
+			{
+				ShaderString uv0 = "uv0";
+				attributes |= find_parameter_mask( uv0 );
+				descriptor.add( VD_FLOAT2 );
+			}
+			
+			if (blend_indices && blend_weights)
+			{
+				ShaderString hardware_skinning = "hardware_skinning";
+				attributes |= find_parameter_mask(hardware_skinning);
+				
+				ShaderString node_transforms = "node_transforms";
+				attributes |= find_parameter_mask(node_transforms);
+				
+				descriptor.add(VD_FLOAT4);
+				descriptor.add(VD_FLOAT4);
+			}
 		}
 		
-		if ( colors )
+		if (!this->vertexbuffer)
 		{
-			ShaderString colors = "colors";
-			attributes |= find_parameter_mask( colors );
-			descriptor.add( VD_UNSIGNED_BYTE4 );
+			this->vertexbuffer = renderer::driver()->vertexbuffer_from_geometry( descriptor, this );
 		}
-		
-		if ( uvs )
-		{
-			ShaderString uv0 = "uv0";
-			attributes |= find_parameter_mask( uv0 );
-			descriptor.add( VD_FLOAT2 );
-		}
-		
-		if (blend_indices)
-		{
-//			ShaderString blend_indices = "blend_indices";
-//			attributes |= find_parameter_mask(blend_indices);
-			descriptor.add(VD_INT4);
-		}
-		
-		if (blend_weights)
-		{
-			descriptor.add(VD_FLOAT4);
-		}
-		
-		this->vertexbuffer = renderer::driver()->vertexbuffer_from_geometry( descriptor, this );
 		
 		if ( !this->is_animated() )
 		{

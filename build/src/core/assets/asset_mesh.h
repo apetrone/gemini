@@ -51,6 +51,7 @@ namespace assets
 		// set this geometry up for rendering
 		void render_setup();
 		
+//		FixedArray<glm::vec3> untransformed_vertices;
 	}; // Geometry
 	
 	// TEMP struct to test the whole shebang.

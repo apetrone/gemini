@@ -82,7 +82,9 @@ namespace renderer
 			// there will be a render node child: this contains the mesh as normal.
 			// there will be AnimatedNode(s) corresponding to the bones.
 			scenegraph::SkeletalNode* skeleton = static_cast<scenegraph::SkeletalNode*>(node);
-
+			
+			// If you hit this assert, a non-animated model was loaded via SkeletonNode.
+			assert(!skeleton->final_transforms.empty());
 			scenegraph::RenderNode* rn = static_cast<scenegraph::RenderNode*>(node->children[0]);
 			if (rn && rn->get_type() == scenegraph::RENDER)
 			{

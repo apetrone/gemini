@@ -307,7 +307,7 @@ namespace renderer
 		glm::vec3* normals;
 		Color* colors;
 		UV* uvs;
-		glm::ivec4* blend_indices;
+		glm::vec4* blend_indices;
 		glm::vec4* blend_weights;
 		
 		renderer::IndexType* indices;
