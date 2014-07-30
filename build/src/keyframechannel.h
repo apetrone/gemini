@@ -107,7 +107,7 @@ public:
 	
 	void update_with_time(float delta_seconds)
 	{
-		if (data_source)
+		if (!data_source)
 		{
 			return;
 		}
@@ -179,9 +179,9 @@ public:
 	
 	void update(float delta_seconds)
 	{
-//		update_with_time(delta_seconds);
+		update_with_time(delta_seconds);
 
-		update_sampled(delta_seconds);
+//		update_sampled(delta_seconds);
 	}
 	
 private:
