@@ -289,8 +289,8 @@ namespace assets
 				Json::Value inverse_bind_pose = bone_node["inverse_bind_pose"];
 				bone->inverse_bind_matrix = json_to_mat4(inverse_bind_pose);
 				bone->bind_matrix = glm::inverse(bone->inverse_bind_matrix);
-				Json::Value local_transform = bone_node["transform"];
-				bone->local_transform = json_to_mat4(local_transform);
+//				Json::Value local_transform = bone_node["transform"];
+//				bone->local_transform = json_to_mat4(local_transform);
 
 				LOGV("bone: %s\n", bone->name.c_str());
 				
