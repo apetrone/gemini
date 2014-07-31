@@ -194,10 +194,9 @@ namespace prism
 				//jbone["bone_index"] = Json::valueToString((unsigned)total_bones);
 				
 				aiMatrix4x4 coordinate_transform(env.coordinate_transform);
-				
-				aiMatrix4x4 offset = bone->mOffsetMatrix;
+				aiMatrix4x4 offset = coordinate_transform * bone->mOffsetMatrix;
 				Json::Value offset_matrix(Json::arrayValue);
-				jsonify_matrix(offset_matrix, bone->mOffsetMatrix);
+				jsonify_matrix(offset_matrix, offset);
 				jbone["inverse_bind_pose"] = offset_matrix;
 				
 				
@@ -219,14 +218,14 @@ namespace prism
 				Json::Value weights(Json::arrayValue);
 				for (size_t weight = 0; weight < bone->mNumWeights; ++weight)
 				{
-					if (weight >= MAX_VERTEX_WEIGHTS)
-					{
-						LOGW("Exceeded maximum vertex weight limit of (%i). This may produce undesirable results.\n", MAX_VERTEX_WEIGHTS);
-					}
 					aiVertexWeight* w = &bone->mWeights[weight];
 					//LOGV("\tweight (%i) [vertex: %i -> weight: %2.2f\n", weight, w->mVertexId, w->mWeight);
 					
 					indices[w->mVertexId].push_back(VertexWeight(w->mWeight, boneid));
+					if (indices[w->mVertexId].size() >= MAX_VERTEX_WEIGHTS)
+					{
+						LOGW("Exceeded maximum vertex weight limit of (%i). This may produce undesirable results.\n", MAX_VERTEX_WEIGHTS);
+					}
 				}
 
 				bones.append(jbone);
@@ -357,7 +356,6 @@ namespace prism
 	{
 		aiQuaternion q = qkey.mValue;
 		
-
 		if (env.convert_zup_to_yup)
 		{
 			q = aiQuaternion(aiVector3D(1, 0, 0), -(M_PI_2)) * qkey.mValue;
@@ -372,7 +370,13 @@ namespace prism
 
 	void jsonify_vectorkey(ToolEnvironment& env, Json::Value& times, Json::Value& values, const aiVectorKey& vkey)
 	{
-		const aiVector3D& v = env.coordinate_transform * vkey.mValue;
+		aiVector3D v = vkey.mValue;
+		
+		if (env.convert_zup_to_yup)
+		{
+			v = env.coordinate_transform * vkey.mValue;
+		}
+		
 		times.append(vkey.mTime);
 		values.append(v.x);
 		values.append(v.y);

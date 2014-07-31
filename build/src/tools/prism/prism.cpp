@@ -151,7 +151,7 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 				jvertices.append(tr_pos.y);
 				jvertices.append(tr_pos.z);
 				
-				const aiVector3D tr_normal = env.coordinate_transform * normal;
+				const aiVector3D tr_normal = /*env.coordinate_transform * */normal;
 
 				jnormals.append(tr_normal.x);
 				jnormals.append(tr_normal.y);
