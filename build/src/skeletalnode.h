@@ -56,7 +56,6 @@ namespace scenegraph
 		// which can manage multiple animation skeletal transforms
 		// instead of one.
 		FixedArray<glm::mat4> transforms;
-
 		FixedArray<glm::mat4> final_transforms;
 
 		SkeletalNode();

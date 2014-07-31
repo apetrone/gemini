@@ -79,7 +79,6 @@ namespace scenegraph
 		assert(mesh != 0);
 		if (mesh->total_bones > 0)
 		{
-			LOGV("setup skeleton bones; total %i bone(s)\n", mesh->total_bones);
 			final_transforms.allocate(mesh->total_bones);
 			transforms.allocate(mesh->total_bones);
 
@@ -92,36 +91,17 @@ namespace scenegraph
 				node->post_processing(mesh, bone_index);
 				add_child(node);
 				node->name = bone->name.c_str();
-				
-				glm::mat4& tr = transforms[bone_index];
-#if 0
-				if (bone->parent_index == -1)
-				{
-					tr = bone->local_transform;
-				}
-				else
-				{
-					tr = mesh->bones[bone->parent_index].local_transform * bone->local_transform;
-				}
-#endif
 			}
 		}
 	}
 
 	void SkeletalNode::update(float delta_seconds)
 	{
-		assert(mesh != 0);
-		for(size_t boneid = 0; boneid < mesh->total_bones; ++boneid)
-		{
-			assets::Bone* bone = &mesh->bones[boneid];
-			debugdraw::axes(bone->bind_matrix, 1.0f);
-
-			debugdraw::sphere(glm::vec3(bone->bind_matrix[3]), Color(255,128,0), 0.25f);
-		}
-		
 		MeshNode::update(delta_seconds);
-		
-		update_skeleton();
+		if (this->visible)
+		{
+			update_skeleton();
+		}
 	}
 
 	static void print_mat4(glm::mat4& m)
@@ -145,7 +125,7 @@ namespace scenegraph
 	void SkeletalNode::update_skeleton()
 	{
 		int childOffset = 1;
-		
+		glm::vec3 start, end;
 		for (size_t bone_index = 0; bone_index < mesh->total_bones; ++bone_index)
 		{
 			// Iterate over each bone and calculate the global transform
@@ -157,14 +137,21 @@ namespace scenegraph
 			if (bone->parent_index == -1)
 			{
 				tr = node->local_to_world;
-//				print_mat4(node->local_to_world);
+				start = glm::vec3(glm::column(tr, 3));
 			}
 			else
 			{
 				tr = transforms[bone->parent_index] * node->local_to_world;
+				
+//				glm::mat4 t = transforms[bone->parent_index] * bone->local_transform;
+				end = glm::vec3(glm::column(tr, 3));
 			}
-
+			
 			final_transforms[bone_index] = tr * bone->inverse_bind_matrix;
+
+			debugdraw::axes(tr, 0.5f, 0.0f);
+			debugdraw::line(start, end, Color(255,255,255,255), 0.0f);
+			start = end;
 		}
 	}
 }; // namespace scenegraph
