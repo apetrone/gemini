@@ -69,7 +69,7 @@ public:
 	scenegraph::Node* root;
 	
 	size_t total_scene_nodes_visited;
-	scenegraph::MeshNode* player;
+	scenegraph::SkeletalNode* player;
 	
 	renderer::SceneLink scenelink;
 	
@@ -150,17 +150,11 @@ public:
 	{
 		++total_scene_nodes_visited;
 		
-		// TODO: add this stuff to a render queue for sorting, etc.
-		if (node->get_type() == scenegraph::MESH)
-		{
-			scenegraph::MeshNode* meshnode = static_cast<scenegraph::MeshNode*>(node);
-			assets::Mesh* mesh = meshnode->mesh;
 
-			// TODO: update world transform?
-			glm::mat4 object_to_local = glm::translate(glm::mat4(1.0), node->local_position);
+		// TODO: update world transform?
+		glm::mat4 object_to_local = glm::translate(glm::mat4(1.0), node->local_position);
 			
-			node->world_transform = object_to_local * node->local_to_world;
-		}
+		node->world_transform = object_to_local * node->local_to_world;
 		
 		
 		return 0;
@@ -185,56 +179,70 @@ public:
 		animation = CREATE(assets::Shader);
 		
 		animation->set_frag_data_location("out_color");
-		animation->alloc_uniforms(4);
+		animation->alloc_uniforms(5);
 		animation->uniforms[0].set_key("projection_matrix");
 		animation->uniforms[1].set_key("modelview_matrix");
 		animation->uniforms[2].set_key("object_matrix");
 		animation->uniforms[3].set_key("diffusemap");
+		animation->uniforms[4].set_key("node_transforms");
 		
-		animation->alloc_attributes(3);
+		animation->alloc_attributes(6);
 		animation->attributes[0].set_key("in_position"); animation->attributes[0].second = 0;
 		animation->attributes[1].set_key("in_normal"); animation->attributes[1].second = 1;
-		animation->attributes[2].set_key("in_uv"); animation->attributes[2].second = 2;
-		//		animation->attributes[3].set_key("in_blendindices"); animation->attributes[3].second = 3;
+		animation->attributes[2].set_key("in_color"); animation->attributes[2].second = 2;
+		animation->attributes[3].set_key("in_uv"); animation->attributes[3].second = 3;
+		animation->attributes[4].set_key("in_blendindices"); animation->attributes[4].second = 4;
+		animation->attributes[5].set_key("in_blendweights"); animation->attributes[5].second = 5;
 		
 		assets::load_shader("shaders/animation", animation);
 		
 		
+//		animation->show_attributes();
+		
 		root = CREATE(scenegraph::Node);
 		root->name = "scene_root";
 		
-//		scenegraph::MeshNode* ground = 0;
-//		ground = CREATE(scenegraph::MeshNode);
-//		ground->load_mesh("models/ground", true);
-//		root->add_child(ground);
 
-		scenegraph::MeshNode* skydome = 0;
-		skydome = CREATE(scenegraph::MeshNode);
-		skydome->load_mesh("models/skydome");
-		// make it extend slightly below ground level
-		skydome->local_position = glm::vec3(0, -50, 0);
-		root->add_child(skydome);
 
-//		scenegraph::SkeletalNode* sn = 0;
-//		sn = CREATE(scenegraph::SkeletalNode);
-//		sn->load_mesh("models/test", true);
-//		sn->local_position = glm::vec3(0,2,0);
-//		sn->setup_skeleton();
-//		root->add_child(sn);
+//		scenegraph::MeshNode* skydome = 0;
+//		skydome = CREATE(scenegraph::MeshNode);
+//		assets::Material* colormat = assets::materials()->load_from_path("materials/skydome");
+//		skydome->load_mesh("models/skydome", false, 0);
+//		// make it extend slightly below ground level
+//		skydome->local_position = glm::vec3(0, -50, 0);
+//		root->add_child(skydome);
+
+		scenegraph::SkeletalNode* sn = 0;
+		sn = CREATE(scenegraph::SkeletalNode);
+		sn->load_mesh("models/test2", false);
+		sn->setup_skeleton();
+		sn->local_position = glm::vec3(0, 1, 0);
+		root->add_child(sn);
+
+//		scenegraph::MeshNode* test5 = 0;
+//		test5 = CREATE(scenegraph::MeshNode);
+//		test5->load_mesh("models/delorean", false);
+//		root->add_child(test5);
 		
+		scenegraph::MeshNode* ground = 0;
+		ground = CREATE(scenegraph::MeshNode);
+		ground->load_mesh("models/ground", true);
+		root->add_child(ground);
+//		ground->visible = false;
 
-//		player = CREATE(scenegraph::MeshNode);
-//		player->load_mesh("models/agent_cooper", false, 0, animation);
-//		root->add_child(player);
+		player = CREATE(scenegraph::SkeletalNode);
+		player->load_mesh("models/test2", false);
+		player->setup_skeleton();
+		root->add_child(player);
+		player->visible = false;
 		
 //		scenegraph::MeshNode* test = CREATE(scenegraph::MeshNode);
 //		test->load_mesh("models/teapot");
-//		test->local_position = glm::vec3(2,0,0);
 //		root->add_child(test);
-
+//		
 //		scenegraph::MeshNode* room = CREATE(scenegraph::MeshNode);
-//		room->load_mesh("models/room2");
-//		room->local_position = glm::vec3(0,0.25,-10);
+//		room->load_mesh("models/room2", true);
+//		room->local_position = glm::vec3(0,0,0);
 //		root->add_child(room);
 
 
@@ -291,7 +299,10 @@ public:
 		worldTrans.setRotation(rotation);
 		character->getGhostObject()->setWorldTransform(worldTrans);
 		
-		physics::copy_ghost_to_camera(character->getGhostObject(), camera);
+		if (player)
+		{
+			physics::copy_ghost_to_camera(character->getGhostObject(), camera);
+		}
 		
 		
 		
@@ -304,7 +315,7 @@ public:
 
 //		physics::debug_draw();
 		
-		
+//		debugdraw::axes(glm::mat4(1.0), 2.0f);
 		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
 		debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", camera.eye_position.x, camera.eye_position.y, camera.eye_position.z), Color(255, 0, 255));
 		debugdraw::text(10, 24, xstr_format("camera.view = %.2g %.2g %.2g", camera.view.x, camera.view.y, camera.view.z), Color(128, 128, 255));

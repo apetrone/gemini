@@ -147,10 +147,10 @@ namespace scenegraph
 				end = glm::vec3(glm::column(tr, 3));
 			}
 			
-			final_transforms[bone_index] = tr * bone->inverse_bind_matrix;
+			final_transforms[bone_index] = this->local_to_world * tr * bone->inverse_bind_matrix;
 
-			debugdraw::axes(tr, 0.5f, 0.0f);
-			debugdraw::line(start, end, Color(255,255,255,255), 0.0f);
+//			debugdraw::axes(this->local_to_world * tr, 0.5f, 0.0f);
+//			debugdraw::line(start, end, Color(255,255,255,255), 0.0f);
 			start = end;
 		}
 	}
