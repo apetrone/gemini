@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "mathlib.h"
+#include <gemini/mathlib.h>
 
 template <class Type>
 Type lerp( const Type & a, const Type & b, float t )

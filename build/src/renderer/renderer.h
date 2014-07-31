@@ -26,7 +26,7 @@
 
 #include "memorystream.h"
 #include "image.h"
-#include "mathlib.h" // for glm
+#include <gemini/mathlib.h> // for glm
 
 namespace renderer
 {

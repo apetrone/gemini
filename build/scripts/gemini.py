@@ -219,7 +219,9 @@ def get_libgemini():
 	]
 
 
-
+	libgemini.dependencies += [
+		Dependency(file="glm.py")
+	]
 
 	macosx = libgemini.layout(platform="macosx")
 	macosx.sources = [

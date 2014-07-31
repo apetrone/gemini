@@ -22,7 +22,7 @@
 #include "kernel.h"
 #include <stdio.h>
 #include <slim/xlog.h>
-#include "mathlib.h"
+#include <gemini/mathlib.h>
 #include "debugdraw.h"
 #include "input.h"
 #include "renderer/renderer.h"
@@ -204,13 +204,13 @@ public:
 		
 
 
-//		scenegraph::MeshNode* skydome = 0;
-//		skydome = CREATE(scenegraph::MeshNode);
-//		assets::Material* colormat = assets::materials()->load_from_path("materials/skydome");
-//		skydome->load_mesh("models/skydome", false, 0);
-//		// make it extend slightly below ground level
-//		skydome->local_position = glm::vec3(0, -50, 0);
-//		root->add_child(skydome);
+		scenegraph::MeshNode* skydome = 0;
+		skydome = CREATE(scenegraph::MeshNode);
+		assets::Material* colormat = assets::materials()->load_from_path("materials/skydome");
+		skydome->load_mesh("models/skydome", false, 0);
+		// make it extend slightly below ground level
+		skydome->local_position = glm::vec3(0, -50, 0);
+		root->add_child(skydome);
 
 		scenegraph::SkeletalNode* sn = 0;
 		sn = CREATE(scenegraph::SkeletalNode);

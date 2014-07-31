@@ -26,7 +26,7 @@
 
 #include "image.h"
 
-#include "mathlib.h"
+#include <gemini/mathlib.h>
 #include "memorystream.h"
 
 #include "assets.h"

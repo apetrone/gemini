@@ -26,7 +26,7 @@
 #include <slim/xlog.h>
 #include <slim/xstr.h>
 
-#include "mathlib.h"
+#include <gemini/mathlib.h>
 
 template <class Type>
 class PODPolicy : public PolicyBase

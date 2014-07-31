@@ -26,7 +26,7 @@
 #include <slim/xlog.h>
 
 #include "animation.h"
-#include "mathlib.h"
+#include <gemini/mathlib.h>
 
 namespace animation
 {

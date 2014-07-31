@@ -29,7 +29,7 @@
 #include "font.h"
 #include "assets.h"
 #include "camera.h"
-#include "mathlib.h"
+#include <gemini/mathlib.h>
 #include "input.h"
 
 #include "renderer/renderstream.h"

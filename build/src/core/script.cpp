@@ -29,7 +29,7 @@
 
 #include "script.h"
 #define scvprintf vfprintf
-#include "mathlib.h"
+#include <gemini/mathlib.h>
 #include "debugdraw.h"
 
 namespace script

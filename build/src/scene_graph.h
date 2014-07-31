@@ -25,7 +25,7 @@
 
 #include <gemini/util/stackstring.h>
 
-#include "mathlib.h"
+#include <gemini/mathlib.h>
 #include "keyframechannel.h"
 
 

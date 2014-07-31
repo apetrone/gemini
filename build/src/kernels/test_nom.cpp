@@ -32,7 +32,7 @@ using namespace kernel;
 
 #include <nom/nom.hpp>
 
-#include "mathlib.h"
+#include <gemini/mathlib.h>
 #include "font.h"
 
 #include <vector>

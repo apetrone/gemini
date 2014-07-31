@@ -23,7 +23,7 @@
 
 #include <string>
 
-#include "mathlib.h"
+#include <gemini/mathlib.h>
 #include "color.h"
 
 namespace debugdraw

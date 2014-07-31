@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "mathlib.h"
+#include <gemini/mathlib.h>
 
 namespace animation
 {

@@ -26,7 +26,7 @@
 #include <gemini/util/stackstring.h>
 #include <gemini/platform.h>
 
-#include "mathlib.h" // for glm
+#include <gemini/mathlib.h> // for glm
 #include "color.h"
 
 namespace assets

@@ -23,7 +23,7 @@
 
 
 #include <gemini/typedefs.h>
-#include "mathlib.h"
+#include <gemini/mathlib.h>
 
 
 // REFERENCE LINKS

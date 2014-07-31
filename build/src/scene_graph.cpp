@@ -30,7 +30,7 @@
 #include <slim/xlog.h>
 
 #include "scene_graph.h"
-#include "mathlib.h"
+#include <gemini/mathlib.h>
 
 // Useful to hand to a std::for_each statement in order to clean up a container.
 template <class _Type>

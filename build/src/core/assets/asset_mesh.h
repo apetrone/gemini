@@ -94,7 +94,7 @@ namespace assets
 
 		glm::mat4 local_transform;
 
-		glm::mat4 world_transform;
+//		glm::mat4 world_transform;
 		
 		// -1: No parent
 		int32_t parent_index;

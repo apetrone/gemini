@@ -31,6 +31,8 @@
 #include "meshdata.h"
 #include "prism.h"
 
+#include <gemini/mathlib.h>
+
 namespace prism
 {
 	Node::Node()
@@ -194,7 +196,7 @@ namespace prism
 				//jbone["bone_index"] = Json::valueToString((unsigned)total_bones);
 				
 				aiMatrix4x4 coordinate_transform(env.coordinate_transform);
-				aiMatrix4x4 offset = coordinate_transform * bone->mOffsetMatrix;
+				aiMatrix4x4 offset = bone->mOffsetMatrix * coordinate_transform;
 				Json::Value offset_matrix(Json::arrayValue);
 				jsonify_matrix(offset_matrix, offset);
 				jbone["inverse_bind_pose"] = offset_matrix;
@@ -358,7 +360,7 @@ namespace prism
 		
 		if (env.convert_zup_to_yup)
 		{
-			q = aiQuaternion(aiVector3D(1, 0, 0), -(M_PI_2)) * qkey.mValue;
+			q = aiQuaternion(aiVector3D(1, 0, 0), -1.57079633f) * qkey.mValue;
 		}
 		
 		times.append(qkey.mTime);

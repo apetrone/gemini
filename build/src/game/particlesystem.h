@@ -27,7 +27,7 @@
 #include <gemini/util.h>
 
 #include "color.h"
-#include "mathlib.h"
+#include <gemini/mathlib.h>
 #include "keyframechannel.h"
 #include "renderer/render_utilities.h"
 #include "assets/asset_emitter.h"

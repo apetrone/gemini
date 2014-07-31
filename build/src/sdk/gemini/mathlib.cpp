@@ -19,7 +19,7 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "mathlib.h"
+#include <gemini/mathlib.h>
 
 // Links
 // http://forums.tigsource.com/index.php?topic=14154.0
