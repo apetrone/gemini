@@ -171,7 +171,8 @@ def get_tools(libgemini):
 
 	prism.root = "../"
 	prism.sources += [
-		"src/tools/prism/**.cpp"
+		"src/tools/prism/**.cpp",
+		"src/tools/prism/**.h"
 	]
 
 
