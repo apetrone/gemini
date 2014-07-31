@@ -75,7 +75,7 @@ public:
 	{
 		alpha = glm::clamp(alpha, 0.0f, 1.0f);
 		
-		if (!data_source)
+		if (!data_source || data_source->keys.empty())
 		{
 			return;
 		}

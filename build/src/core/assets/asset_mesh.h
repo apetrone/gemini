@@ -72,6 +72,7 @@ namespace assets
 		uint32_t total_frames;
 	};
 	
+	const int MAX_VERTEX_WEIGHTS = 4;
 	
 	struct Bone
 	{

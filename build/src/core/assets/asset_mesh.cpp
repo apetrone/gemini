@@ -152,13 +152,14 @@ namespace assets
 					Json::Value jbw = blend_weight["weights"];
 					
 					assert(jbi.size() > 0);
-
-					int bone_indices[4] = {0};
-					float bone_weights[4] = {0};
+					int bone_indices[ MAX_VERTEX_WEIGHTS ] = {0};
+					float bone_weights[ MAX_VERTEX_WEIGHTS ] = {0};
 					
 					glm::vec4 bw;
 					for (int wid = 0; wid < jbi.size(); ++wid)
 					{
+						if (wid >= MAX_VERTEX_WEIGHTS)
+							break;
 						bone_indices[wid] = jbi[wid].asInt();
 						bone_weights[wid] = jbw[wid].asFloat();
 					}
@@ -225,23 +226,7 @@ namespace assets
 				Material * default_material = assets::materials()->get_default();
 				geometry->material_id = default_material->Id();
 			}
-			
-#if 0
-			for( int i = 0; i < geometry->index_count; ++i )
-			{
-				int idx = geometry->indices[i];
-				//			LOGV( "%i, (%g %g %g), (%g %g %g), (%g %g)\n",
-				//				   idx,
-				//				   geometry->vertices[ idx ][0], geometry->vertices[ idx ][1], geometry->vertices[ idx ][2],
-				//				   geometry->normals[ idx ][0], geometry->normals[ idx ][1], geometry->normals[ idx ][2],
-				//				   geometry->uvs[ idx ].u, geometry->uvs[ idx ].v );
-				Vector3 v = geometry->vertices[ idx ];
-				Vector3 n = geometry->normals[ idx ];
-				UV uv = geometry->uvs[ idx ];
-				LOGV( "i %i: %i = %g %g %g | %g %g %g | %g %g\n", i, idx, v[0], v[1], v[2], n[0], n[1], n[2], uv.u, uv.v );
-			}
-#endif
-			
+
 			//
 			// setup debug normals now
 #if 0
