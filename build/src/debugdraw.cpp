@@ -253,20 +253,20 @@ namespace debugdraw
 			flush_streams( rs, vs );
 		}
 		
+		glm::vec3 right = glm::vec3(primitive->transform * glm::vec4(primitive->radius, 0.0f, 0.0f, 1.0f));
 		DebugDrawVertex * vertices = (DebugDrawVertex*)vs->request(6);
 		vertices[0].position = primitive->start;
-		vertices[1].position = primitive->start;
-		vertices[1].position[0] = vertices[1].position[0] + primitive->radius;
+		vertices[1].position = right;
 		vertices[0].color = vertices[1].color = Color( 255, 0, 0 );
 		
+		glm::vec3 up = glm::vec3(primitive->transform * glm::vec4(0.0f, primitive->radius, 0.0f, 1.0f));
 		vertices[2].position = primitive->start;
-		vertices[3].position = primitive->start;
-		vertices[3].position[1] = vertices[3].position[1] + primitive->radius;
+		vertices[3].position = up;
 		vertices[2].color = vertices[3].color = Color( 0, 255, 0 );
 		
+		glm::vec3 view = glm::vec3(primitive->transform * glm::vec4(0.0f, 0.0f, primitive->radius, 1.0f));
 		vertices[4].position = primitive->start;
-		vertices[5].position = primitive->start;
-		vertices[5].position[2] = vertices[5].position[2] + primitive->radius;
+		vertices[5].position = view;
 		vertices[4].color = vertices[5].color = Color( 0, 0, 255 );
 	} // buffer_axes
 	
@@ -384,6 +384,7 @@ namespace debugdraw
 			p->type = TYPE_AXES;
 			glm::vec4 col = glm::column( transform, 3 );
 			p->start = glm::vec3( col );
+			p->transform = transform;
 			p->timeleft = duration;
 			p->radius = axis_length;
 		}

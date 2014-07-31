@@ -56,6 +56,7 @@ namespace debugdraw
 		
 		// for text
 		std::string buffer;
+		glm::mat4 transform;
 		
 		DebugPrimitive();
 	}; // DebugPrimitive
