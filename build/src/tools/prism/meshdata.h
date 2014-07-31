@@ -52,6 +52,8 @@ namespace prism
 {
 	const int MAX_BONES = 60;
 	const int MAX_VERTEX_WEIGHTS = 4;
+	
+	struct ToolEnvironment;
 
 	typedef int NodeIndex;
 	typedef std::vector< struct Node*, GeminiAllocator<struct Node*> > NodeVector;
@@ -123,9 +125,9 @@ namespace prism
 		void print_nodes();
 		
 		// mesh operations
-		void read_bones(const aiMesh* mesh, Json::Value& bones, Json::Value& blend_weights);
+		void read_bones(ToolEnvironment& env, const aiMesh* mesh, Json::Value& bones, Json::Value& blend_weights);
 		
-		void read_animation(Animation& animation_data, const aiAnimation* animation, Json::Value& animation_node);
+		void read_animation(ToolEnvironment& env, Animation& animation_data, const aiAnimation* animation, Json::Value& animation_node);
 	}; // MeshData
 	
 	struct VertexWeight
@@ -141,11 +143,12 @@ namespace prism
 	glm::vec3 to_glm(const aiVector3D& v);
 
 	void traverse_nodes(MeshData& meshdata, const aiScene* scene, Json::Value& hierarchy);
-	void jsonify_quatkey(Json::Value& times, Json::Value& values, const aiQuatKey& q);
-	void jsonify_vectorkey(Json::Value& times, Json::Value& values, const aiVectorKey& v);
+	void jsonify_quatkey(ToolEnvironment& env, Json::Value& times, Json::Value& values, const aiQuatKey& q);
+	void jsonify_vectorkey(ToolEnvironment& env, Json::Value& times, Json::Value& values, const aiVectorKey& v);
 	void jsonify_matrix(Json::Value& array, const aiMatrix4x4& source);
-	void read_vector_keys(Json::Value& keys, aiVectorKey* vectorkeys, size_t total_keys);
-	void read_quat_keys(Json::Value& keys, aiQuatKey* quatkeys, size_t total_keys);
+	
+	void read_vector_keys(ToolEnvironment& env, Json::Value& keys, aiVectorKey* vectorkeys, size_t total_keys);
+	void read_quat_keys(ToolEnvironment& env, Json::Value& keys, aiQuatKey* quatkeys, size_t total_keys);
 	
 	bool validate_frames_per_second(float& frames_per_second);
 }; // namespace prism

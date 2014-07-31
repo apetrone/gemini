@@ -45,28 +45,17 @@
 #include <json/json.h>
 
 #include "meshdata.h"
+#include "prism.h"
 
 using namespace prism;
 
-const char TOOL_NAME[] = "prism";
-const char TOOL_VERSION[] = "alpha 1.0.0";
-
-struct ToolEnvironment
+namespace prism
 {
-	bool convert_zup_to_yup;
-	
-	ToolEnvironment()
-	{
-		convert_zup_to_yup = false;
-	}
-	
-	void print_settings()
-	{
-		LOGV("convert_zup_to_yup: %s\n", convert_zup_to_yup ? "true": "false");
-	}
+	const char TOOL_NAME[] = "prism";
+	const char TOOL_VERSION[] = "alpha 1.0.0";
+
+
 };
-
-
 
 
 
@@ -140,7 +129,7 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 		LOGV("\tfaces: %i\n", mesh->mNumFaces);
 		LOGV("\tbones: %i\n", mesh->mNumBones);
 	
-		meshdata.read_bones(mesh, jbones_array, jblend_weights);
+		meshdata.read_bones(env, mesh, jbones_array, jblend_weights);
 		
 		jgeometry["blend_weights"] = jblend_weights;
 		
@@ -156,20 +145,13 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 				//const aiVector3D & tangent = mesh->mTangents[vertex];
 				
 				// Need to transform the vectors from Z-Up to Y-Up.
-				aiMatrix3x3 rot;
-				
-				if (env.convert_zup_to_yup)
-				{
-					aiMatrix3x3::Rotation((-M_PI_2), aiVector3D(1, 0, 0), rot);
-				}
-				
-				const aiVector3D tr_pos = rot * pos;
+				const aiVector3D tr_pos = env.coordinate_transform * pos;
 				
 				jvertices.append(tr_pos.x);
 				jvertices.append(tr_pos.y);
 				jvertices.append(tr_pos.z);
 				
-				const aiVector3D tr_normal = rot * normal;
+				const aiVector3D tr_normal = env.coordinate_transform * normal;
 
 				jnormals.append(tr_normal.x);
 				jnormals.append(tr_normal.y);
@@ -264,7 +246,7 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 		animation = scene->mAnimations[animation_index];
 
 		LOGV("inspecting animation: %i, \"%s\"\n", animation_index, animation->mName.C_Str());
-		meshdata.read_animation(animation_data, animation, janimation);
+		meshdata.read_animation(env, animation_data, animation, janimation);
 		
 		janimations.append(janimation);
 		
@@ -337,6 +319,10 @@ int main(int argc, char** argv)
 	
 	ToolEnvironment env;
 	env.convert_zup_to_yup = convert_axis->integer;
+	if (env.convert_zup_to_yup)
+	{
+		aiMatrix3x3::Rotation((-M_PI_2), aiVector3D(1, 0, 0), env.coordinate_transform);
+	}
 	env.print_settings();
 	
 	//	test_function();

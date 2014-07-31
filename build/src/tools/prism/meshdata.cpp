@@ -29,6 +29,7 @@
 #include <gemini/util/stackstring.h>
 
 #include "meshdata.h"
+#include "prism.h"
 
 namespace prism
 {
@@ -130,8 +131,7 @@ namespace prism
 		DESTROY(Node, root);
 	}
 	
-	Node* MeshData::create_node(const std::string &name, 
-Node::NodeType type, Node* parent)
+	Node* MeshData::create_node(const std::string &name, Node::NodeType type, Node* parent)
 	{
 		Node* node = CREATE(Node);
 		node->name = name;
@@ -166,7 +166,7 @@ Node::NodeType type, Node* parent)
 		}
 	}
 	
-	void MeshData::read_bones(const aiMesh* mesh, Json::Value& bones, Json::Value& out_blend_weights)
+	void MeshData::read_bones(ToolEnvironment& env, const aiMesh* mesh, Json::Value& bones, Json::Value& out_blend_weights)
 	{
 		std::vector< std::vector<VertexWeight> > indices;
 		indices.resize(mesh->mNumVertices);
@@ -193,14 +193,15 @@ Node::NodeType type, Node* parent)
 				jbone["name"] = bone->mName.C_Str();
 				//jbone["bone_index"] = Json::valueToString((unsigned)total_bones);
 				
+				aiMatrix4x4 coordinate_transform(env.coordinate_transform);
 				
 				aiMatrix4x4 offset = bone->mOffsetMatrix;
 				Json::Value offset_matrix(Json::arrayValue);
 				jsonify_matrix(offset_matrix, bone->mOffsetMatrix);
 				jbone["inverse_bind_pose"] = offset_matrix;
-							
+				
+				
 				Json::Value jtransform;
-										
 				Node* node = find_node_with_name(bone->mName.C_Str());
 				if (node)
 				{
@@ -209,8 +210,10 @@ Node::NodeType type, Node* parent)
 					jsonify_matrix(jtransform, node->local_transform);
 				}
 				
+				// node transforms are not used in the case of bones.
+#if 0
 				jbone["transform"] = jtransform;
-				
+#endif
 				total_bones++;
 				
 				Json::Value weights(Json::arrayValue);
@@ -258,7 +261,7 @@ Node::NodeType type, Node* parent)
 		}
 	}
 
-	void MeshData::read_animation(Animation& animation_data, const aiAnimation* animation, Json::Value& animation_node)
+	void MeshData::read_animation(ToolEnvironment& env, Animation& animation_data, const aiAnimation* animation, Json::Value& animation_node)
 	{
 
 		LOGV("\tduration: %g\n", animation->mDuration);
@@ -316,9 +319,9 @@ Node::NodeType type, Node* parent)
 			Json::Value rotation_keys;
 			Json::Value position_keys;
 
-			read_vector_keys(scale_keys, animnode->mScalingKeys, animnode->mNumScalingKeys);
-			read_quat_keys(rotation_keys, animnode->mRotationKeys, animnode->mNumRotationKeys);
-			read_vector_keys(position_keys, animnode->mPositionKeys, animnode->mNumPositionKeys);
+			read_vector_keys(env, scale_keys, animnode->mScalingKeys, animnode->mNumScalingKeys);
+			read_quat_keys(env, rotation_keys, animnode->mRotationKeys, animnode->mNumRotationKeys);
+			read_vector_keys(env, position_keys, animnode->mPositionKeys, animnode->mNumPositionKeys);
 			
 			jkeys["scale"] = scale_keys;
 			jkeys["rotation"] = rotation_keys;
@@ -350,9 +353,16 @@ Node::NodeType type, Node* parent)
 		return glm::vec3(v.x, v.y, v.z);
 	}
 	
-	void jsonify_quatkey(Json::Value& times, Json::Value& values, const aiQuatKey& qkey)
+	void jsonify_quatkey(ToolEnvironment& env, Json::Value& times, Json::Value& values, const aiQuatKey& qkey)
 	{
-		const aiQuaternion& q = qkey.mValue;
+		aiQuaternion q = qkey.mValue;
+		
+
+		if (env.convert_zup_to_yup)
+		{
+			q = aiQuaternion(aiVector3D(1, 0, 0), -(M_PI_2)) * qkey.mValue;
+		}
+		
 		times.append(qkey.mTime);
 		values.append(q.x);
 		values.append(q.y);
@@ -360,9 +370,9 @@ Node::NodeType type, Node* parent)
 		values.append(q.w);
 	}
 
-	void jsonify_vectorkey(Json::Value& times, Json::Value& values, const aiVectorKey& vkey)
+	void jsonify_vectorkey(ToolEnvironment& env, Json::Value& times, Json::Value& values, const aiVectorKey& vkey)
 	{
-		const aiVector3D& v = vkey.mValue;
+		const aiVector3D& v = env.coordinate_transform * vkey.mValue;
 		times.append(vkey.mTime);
 		values.append(v.x);
 		values.append(v.y);
@@ -397,28 +407,28 @@ Node::NodeType type, Node* parent)
 		array.append(matrix.d4);
 	}
 
-	void read_vector_keys(Json::Value& keys, aiVectorKey* vectorkeys, size_t total_keys)
+	void read_vector_keys(ToolEnvironment& env, Json::Value& keys, aiVectorKey* vectorkeys, size_t total_keys)
 	{
 		Json::Value times;
 		Json::Value values;
 		
 		for (size_t i = 0; i < total_keys; ++i)
 		{
-			jsonify_vectorkey(times, values, vectorkeys[i]);
+			jsonify_vectorkey(env, times, values, vectorkeys[i]);
 		}
 		
 		keys["time"] = times;
 		keys["value"] = values;
 	}
 	
-	void read_quat_keys(Json::Value& keys, aiQuatKey* quatkeys, size_t total_keys)
+	void read_quat_keys(ToolEnvironment& env, Json::Value& keys, aiQuatKey* quatkeys, size_t total_keys)
 	{
 		Json::Value times;
 		Json::Value values;
 		
 		for (size_t i = 0; i < total_keys; ++i)
 		{
-			jsonify_quatkey(times, values, quatkeys[i]);
+			jsonify_quatkey(env, times, values, quatkeys[i]);
 		}
 		
 		keys["time"] = times;
