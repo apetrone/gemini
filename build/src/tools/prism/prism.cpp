@@ -23,6 +23,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <map>
+#include <string>
+
 #include <gemini/mem.h>
 #include <gemini/core.h>
 #include <gemini/core/filesystem.h>
@@ -58,11 +61,12 @@ namespace prism
 };
 
 
-
+typedef std::map<std::string, unsigned int, std::less<std::string>, GeminiAllocator<std::string> > MaterialMap;
 
 void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const char* output_path)
 {
 	prism::MeshData modeldata;
+	MaterialMap material_map;
 	
 	Json::Value root;
 
@@ -124,10 +128,10 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 //		assert( mesh->HasTangentsAndBitangents() );
 
 		jgeometry["name"] = mesh->mName.C_Str();
-		LOGV("inspecting mesh: %i, \"%s\"\n", m, mesh->mName.C_Str());
-		LOGV("\tvertices: %i\n", mesh->mNumVertices);
-		LOGV("\tfaces: %i\n", mesh->mNumFaces);
-		LOGV("\tbones: %i\n", mesh->mNumBones);
+//		LOGV("inspecting mesh: %i, \"%s\"\n", m, mesh->mName.C_Str());
+//		LOGV("\tvertices: %i\n", mesh->mNumVertices);
+//		LOGV("\tfaces: %i\n", mesh->mNumFaces);
+//		LOGV("\tbones: %i\n", mesh->mNumBones);
 	
 		meshdata.read_bones(env, mesh, jbones_array, jblend_weights);
 		
@@ -200,10 +204,10 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 		// TODO: error checking here...
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 		
-		if (material->GetTextureCount(aiTextureType_AMBIENT) > 0) { LOGV("material has an ambient texture\n"); }
-		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0) { LOGV("material has a diffuse texture\n"); }
-		if (material->GetTextureCount(aiTextureType_EMISSIVE) > 0) { LOGV("material has an emissive texture\n"); }
-		if (material->GetTextureCount(aiTextureType_SPECULAR) > 0) { LOGV("material has an specular texture\n"); }
+//		if (material->GetTextureCount(aiTextureType_AMBIENT) > 0) { LOGV("material has an ambient texture\n"); }
+//		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0) { LOGV("material has a diffuse texture\n"); }
+//		if (material->GetTextureCount(aiTextureType_EMISSIVE) > 0) { LOGV("material has an emissive texture\n"); }
+//		if (material->GetTextureCount(aiTextureType_SPECULAR) > 0) { LOGV("material has an specular texture\n"); }
 		
 		aiString texture_path;
 		if (AI_SUCCESS == material->GetTexture(aiTextureType_DIFFUSE, 0, &texture_path, 0, 0, 0, 0, 0))
@@ -215,13 +219,34 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 			// COLLADA does some weird shit with texture names.
 			jgeometry["material_id"] = jmaterial_array.size();
 			Json::Value jmaterial;
-			jmaterial["name"] = texpath.basename().remove_extension()();
-			jmaterial_array.append(jmaterial);
+			std::string material_name = texpath.basename().remove_extension()();
 			
-			LOGV("diffuse texture: %s\n", jmaterial["name"].asString().c_str());
+			MaterialMap::iterator it = material_map.find(material_name);
+			if (it != material_map.end())
+			{
+				// already exists in the material map
+				jgeometry["material_id"] = (*it).second;
+			}
+			else
+			{
+				unsigned int next_material_id = (unsigned int)material_map.size();
+				jgeometry["material_id"] = next_material_id;
+				material_map.insert(MaterialMap::value_type(material_name, next_material_id));
+			}
+
+			LOGV("diffuse texture: %s\n", material_name.c_str());
 		}
 
 		jgeometry_array.append(jgeometry);
+	}
+	
+	// compile the material array
+	for( MaterialMap::iterator it = material_map.begin(); it != material_map.end(); ++it)
+	{
+		Json::Value jmaterial;
+		jmaterial["name"] = (*it).first.c_str();
+		jmaterial["material_id"] = Json::valueToString((*it).second);
+		jmaterial_array.append(jmaterial);
 	}
 	
 	root["geometry"] = jgeometry_array;
