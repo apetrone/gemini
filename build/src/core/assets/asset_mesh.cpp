@@ -90,7 +90,7 @@ namespace assets
 			}
 			
 			assert(amat != 0);
-			amat->print_parameters();
+//			amat->print_parameters();
 
 			material_ids[ current_material ] = amat->Id();
 			LOGV( "assigned material '%s' to (%i)\n", material_name.c_str(), material_ids[ current_material ] );
@@ -121,12 +121,30 @@ namespace assets
 			Json::Value colors = geometry_node["colors"];
 			Json::Value blend_weights = geometry_node["blend_weights"];
 			
-			int material_id = geometry_node["material_id"].asInt();
+			int material_id = -1;
+			Json::Value material_id_node = geometry_node["material_id"];
+			if (!material_id_node.isNull())
+			{
+				material_id = material_id_node.asInt();
+			}
 			
 			const std::string& name = geometry_node["name"].asString();
 			geometry->name = name.c_str();
 			
-//			LOGV( "geometry: %i, material_id: %i\n", gid-1, material_id );
+			
+			if ( material_id != -1 && current_material > 0 /*&& material_id < current_material*/ )
+			{
+				geometry->material_id = material_ids[ material_id ];
+				LOGV( "using material %i %i\n", material_id, geometry->material_id );
+			}
+			else
+			{
+				LOGV("using default material!\n");
+				Material * default_material = assets::materials()->get_default();
+				geometry->material_id = default_material->Id();
+			}
+			
+			LOGV( "geometry: %i, material_id: %i, name: %s\n", gid-1, material_id, geometry->name() );
 //			LOGV( "# vertices: %i\n", positions.size()/3 );
 //			LOGV( "# indices: %i\n", indices.size() );
 //			LOGV( "# triangles: %i\n", indices.size()/3 );
@@ -221,17 +239,7 @@ namespace assets
 				}
 			}
 
-			
-			if ( material_id != -1 && current_material > 0 /*&& material_id < current_material*/ )
-			{
-				geometry->material_id = material_ids[ material_id ];
-				LOGV( "using material %i %i\n", material_id, geometry->material_id );
-			}
-			else
-			{
-				Material * default_material = assets::materials()->get_default();
-				geometry->material_id = default_material->Id();
-			}
+
 
 			//
 			// setup debug normals now

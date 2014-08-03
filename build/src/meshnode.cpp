@@ -59,26 +59,30 @@ namespace scenegraph
 			
 			for (size_t id = 0; id < mesh->total_geometry; ++id)
 			{
+
 				assets::Geometry* geometry = &mesh->geometry[id];
+				assets::Material* geometry_material = material;
+				assets::Shader* geometry_shader = shader;
 				
 				scenegraph::RenderNode* rn = 0;
 				rn = CREATE(scenegraph::RenderNode);
 				rn->geometry = geometry;
 				rn->material_id = geometry->material_id;
-				if (!material)
+				if (!geometry_material)
 				{
-					material = assets::materials()->find_with_id(geometry->material_id);
+					geometry_material = assets::materials()->find_with_id(geometry->material_id);
 				}
-				if (!shader)
+				if (!geometry_shader)
 				{
-					shader = assets::find_compatible_shader( (geometry->attributes + material->requirements) );
+					geometry_shader = assets::find_compatible_shader( (geometry->attributes + geometry_material->requirements) );
 				}
-				assert(shader != 0);
+				assert(geometry_shader != 0);
 //				LOGV("shader: (asset_id = %i), (id = %i)\n", shader->Id(), shader->id);
 //				shader->show_uniforms();
 //				shader->show_attributes();
-				rn->shader = shader;
-				rn->material = material;
+				rn->material = geometry_material;
+				rn->shader = geometry_shader;
+
 //				rn->shader_id = shader->Id();
 
 
