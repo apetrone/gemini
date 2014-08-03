@@ -27,7 +27,7 @@ namespace prism
 	{
 		bool convert_zup_to_yup;
 		
-		aiMatrix3x3 coordinate_transform;
+		aiMatrix4x4 coordinate_transform;
 		
 		ToolEnvironment()
 		{

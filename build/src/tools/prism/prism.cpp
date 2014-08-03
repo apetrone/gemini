@@ -23,8 +23,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <map>
-#include <string>
 
 #include <gemini/mem.h>
 #include <gemini/core.h>
@@ -61,8 +59,6 @@ namespace prism
 };
 
 
-typedef std::map<std::string, unsigned int, std::less<std::string>, GeminiAllocator<std::string> > MaterialMap;
-
 void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const char* output_path)
 {
 	prism::MeshData modeldata;
@@ -98,13 +94,13 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 
 	
 	MeshData meshdata;
-	
+	SceneInfo info(env, material_map, scene, jgeometry_array, jbones_array);
 	
 	// traverse all nodes in the scene
-	traverse_nodes(meshdata, scene, hierarchy);
+	traverse_nodes(info, meshdata, scene, hierarchy);
 	
 	LOGV("total meshes: %i\n", scene->mNumMeshes);
-	
+#if 0
 	// loop through all meshes
 	for( size_t m = 0; m < scene->mNumMeshes; ++m )
 	{
@@ -128,13 +124,19 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 //		assert( mesh->HasTangentsAndBitangents() );
 
 		jgeometry["name"] = mesh->mName.C_Str();
-//		LOGV("inspecting mesh: %i, \"%s\"\n", m, mesh->mName.C_Str());
+		LOGV("inspecting mesh: %i, \"%s\"\n", m, mesh->mName.C_Str());
 //		LOGV("\tvertices: %i\n", mesh->mNumVertices);
 //		LOGV("\tfaces: %i\n", mesh->mNumFaces);
 //		LOGV("\tbones: %i\n", mesh->mNumBones);
 	
 		meshdata.read_bones(env, mesh, jbones_array, jblend_weights);
 		
+		
+		Node* scene_node = meshdata.find_node_with_name(mesh->mName.C_Str());
+		if (!scene_node)
+		{
+			LOGE("scene node for mesh \"%s\" could not be found!\n", mesh->mName.C_Str());
+		}
 		jgeometry["blend_weights"] = jblend_weights;
 		
 		if (mesh->HasNormals())
@@ -149,13 +151,13 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 				//const aiVector3D & tangent = mesh->mTangents[vertex];
 				
 				// Need to transform the vectors from Z-Up to Y-Up.
-				const aiVector3D tr_pos = env.coordinate_transform * pos;
+				const aiVector3D tr_pos = scene_node->local_transform * pos;
 				
 				jvertices.append(tr_pos.x);
 				jvertices.append(tr_pos.y);
 				jvertices.append(tr_pos.z);
 				
-				const aiVector3D tr_normal = env.coordinate_transform * normal;
+				const aiVector3D tr_normal = scene_node->local_transform * normal;
 
 				jnormals.append(tr_normal.x);
 				jnormals.append(tr_normal.y);
@@ -259,7 +261,8 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 
 		jgeometry_array.append(jgeometry);
 	}
-	
+#endif
+
 	// compile the material array
 	for( MaterialMap::iterator it = material_map.begin(); it != material_map.end(); ++it)
 	{
@@ -366,7 +369,7 @@ int main(int argc, char** argv)
 	env.convert_zup_to_yup = convert_axis->integer;
 	if (env.convert_zup_to_yup)
 	{
-		aiMatrix3x3::Rotation((-M_PI_2), aiVector3D(1, 0, 0), env.coordinate_transform);
+		aiMatrix4x4::Rotation((-M_PI_2), aiVector3D(1, 0, 0), env.coordinate_transform);
 	}
 	env.print_settings();
 	

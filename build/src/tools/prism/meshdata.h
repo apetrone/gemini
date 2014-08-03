@@ -22,6 +22,10 @@
 
 #pragma once
 
+
+#include <map>
+#include <string>
+
 #include <gemini/mem.h>
 #include <gemini/core.h>
 #include <gemini/core/filesystem.h>
@@ -57,6 +61,10 @@ namespace prism
 
 	typedef int NodeIndex;
 	typedef std::vector< struct Node*, GeminiAllocator<struct Node*> > NodeVector;
+	
+	typedef std::map<std::string, unsigned int, std::less<std::string>, GeminiAllocator<std::string> > MaterialMap;
+	
+	
 	struct Node
 	{
 		enum NodeType
@@ -77,7 +85,7 @@ namespace prism
 		
 		NodeType type;
 		int32_t bone_index;
-		
+
 		NodeIndex index;
 		Node* parent;
 		NodeVector children;
@@ -108,6 +116,34 @@ namespace prism
 		FixedArray<NodeData> nodes;
 	};
 	
+	struct SceneInfo
+	{
+		MaterialMap& material_map;
+		aiMatrix4x4 accumulated_transform;
+		ToolEnvironment& env;
+		const aiScene* scene;
+		Json::Value& geometry_array;
+		Json::Value& bones_array;
+		
+		
+		SceneInfo(
+			ToolEnvironment& toolenv,
+			MaterialMap& mmap,
+			const aiScene* aiscene,
+			Json::Value& geometry,
+			Json::Value& bones
+			) :
+			material_map(mmap),
+			env(toolenv),
+			scene(aiscene),
+			geometry_array(geometry),
+			bones_array(bones)
+		{
+			
+		}
+	};
+	
+	
 	// TODO: rename to SceneData
 	struct MeshData
 	{
@@ -128,6 +164,8 @@ namespace prism
 		void read_bones(ToolEnvironment& env, const aiMesh* mesh, Json::Value& bones, Json::Value& blend_weights);
 		
 		void read_animation(ToolEnvironment& env, Animation& animation_data, const aiAnimation* animation, Json::Value& animation_node);
+		
+		void read_mesh(SceneInfo& info, const aiMesh* mesh, Node* node);
 	}; // MeshData
 	
 	struct VertexWeight
@@ -142,7 +180,7 @@ namespace prism
 	glm::quat to_glm(const aiQuaternion& q);
 	glm::vec3 to_glm(const aiVector3D& v);
 
-	void traverse_nodes(MeshData& meshdata, const aiScene* scene, Json::Value& hierarchy);
+	void traverse_nodes(SceneInfo& info, MeshData& meshdata, const aiScene* scene, Json::Value& hierarchy);
 	void jsonify_quatkey(ToolEnvironment& env, Json::Value& times, Json::Value& values, const aiQuatKey& q);
 	void jsonify_vectorkey(ToolEnvironment& env, Json::Value& times, Json::Value& values, const aiVectorKey& v);
 	void jsonify_matrix(Json::Value& array, const aiMatrix4x4& source);

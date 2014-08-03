@@ -340,10 +340,165 @@ namespace prism
 //		{
 //			anim = animation->mMeshChannels[channel];
 //		}
-		
-		
 	}
+	
+	void MeshData::read_mesh(SceneInfo& info, const aiMesh* mesh, Node* node)
+	{
+		assert(mesh != 0);
+		assert(node != 0);
+		
+		Json::Value jgeometry;
+		
+		// per-vertex attributes
+		Json::Value jvertices(Json::arrayValue);
+		Json::Value jnormals(Json::arrayValue);
+		Json::Value juvs(Json::arrayValue);
+		Json::Value jcolors(Json::arrayValue);
+		Json::Value jblend_weights(Json::arrayValue);
+		
+		
+		Json::Value jfaces(Json::arrayValue);
+		
+		
+		// any one of these is an error condition otherwise.
+		//		assert( mesh->HasTextureCoords(0) );
+		assert( mesh->HasNormals() );
+		//		assert( mesh->HasTangentsAndBitangents() );
+		
+		jgeometry["name"] = mesh->mName.C_Str();
+		LOGV("read mesh: \"%s\"\n", mesh->mName.C_Str());
+//		LOGV("inspecting mesh: %i, \"%s\"\n", m, mesh->mName.C_Str());
+		//		LOGV("\tvertices: %i\n", mesh->mNumVertices);
+		//		LOGV("\tfaces: %i\n", mesh->mNumFaces);
+		//		LOGV("\tbones: %i\n", mesh->mNumBones);
+		
+		read_bones(info.env, mesh, info.bones_array, jblend_weights);
 
+		jgeometry["blend_weights"] = jblend_weights;
+		
+		if (mesh->HasNormals())
+		{
+			for(unsigned int vertex = 0; vertex < mesh->mNumVertices; ++vertex)
+			{
+				const aiVector3D & pos = mesh->mVertices[vertex];
+				const aiVector3D & normal = mesh->mNormals[vertex];
+				
+				
+				//const aiVector3D & bitangent = mesh->mBitangents[vertex];
+				//const aiVector3D & tangent = mesh->mTangents[vertex];
+				
+				const aiVector3D tr_pos = info.env.coordinate_transform * node->local_transform * pos;
+				
+				jvertices.append(tr_pos.x);
+				jvertices.append(tr_pos.y);
+				jvertices.append(tr_pos.z);
+				
+				const aiVector3D tr_normal = info.env.coordinate_transform * node->local_transform * normal;
+				
+				jnormals.append(tr_normal.x);
+				jnormals.append(tr_normal.y);
+				jnormals.append(tr_normal.z);
+				
+				if (mesh->HasTextureCoords(0))
+				{
+					const aiVector3D & uv = mesh->mTextureCoords[0][vertex];
+					juvs.append(uv.x);
+					juvs.append(uv.y);
+				}
+				
+				if (mesh->HasVertexColors(0))
+				{
+					const aiColor4D& color = mesh->mColors[0][vertex];
+					jcolors.append(color.r);
+					jcolors.append(color.g);
+					jcolors.append(color.b);
+					jcolors.append(color.a);
+				}
+			}
+			
+			aiFace* face;
+			for (uint32_t face_index = 0; face_index < mesh->mNumFaces; ++face_index)
+			{
+				face = &mesh->mFaces[face_index];
+				jfaces.append(face->mIndices[0]);
+				jfaces.append(face->mIndices[1]);
+				jfaces.append(face->mIndices[2]);
+			}
+			
+			jgeometry["positions"] = jvertices;
+			jgeometry["normals"] = jnormals;
+			jgeometry["uvs"] = juvs;
+			jgeometry["colors"] = jcolors;
+			jgeometry["indices"] = jfaces;
+		}
+		else
+		{
+//			fprintf(stdout, "Mesh %zu is missing Normals\n", m);
+			LOGW("Mesh \"%s\" is missing normals.\n", mesh->mName.C_Str());
+		}
+		
+		
+		//		LOGV("material index: %u\n", mesh->mMaterialIndex);
+		
+		// TODO: error checking here...
+		aiMaterial* material = info.scene->mMaterials[mesh->mMaterialIndex];
+		
+		//		if (material->GetTextureCount(aiTextureType_AMBIENT) > 0) { LOGV("material has an ambient texture\n"); }
+		//		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0) { LOGV("material has a diffuse texture\n"); }
+		//		if (material->GetTextureCount(aiTextureType_DISPLACEMENT) > 0) { LOGV("material has a displacement texture\n"); }
+		//		if (material->GetTextureCount(aiTextureType_EMISSIVE) > 0) { LOGV("material has an emissive texture\n"); }
+		//		if (material->GetTextureCount(aiTextureType_HEIGHT) > 0) { LOGV("material has a heightmap texture\n"); }
+		//		if (material->GetTextureCount(aiTextureType_LIGHTMAP) > 0) { LOGV("material has a lightmap texture\n"); }
+		//		if (material->GetTextureCount(aiTextureType_NONE) > 0) { LOGV("material has a 'None' texture\n"); }
+		//		if (material->GetTextureCount(aiTextureType_NORMALS) > 0) { LOGV("material has a normals texture\n"); }
+		//		if (material->GetTextureCount(aiTextureType_OPACITY) > 0) { LOGV("material has an opacity texture\n"); }
+		//		if (material->GetTextureCount(aiTextureType_REFLECTION) > 0) { LOGV("material has a reflection texture\n"); }
+		//		if (material->GetTextureCount(aiTextureType_SHININESS) > 0) { LOGV("material has a shininess texture\n"); }
+		//		if (material->GetTextureCount(aiTextureType_SPECULAR) > 0) { LOGV("material has a specular texture\n"); }
+		//		if (material->GetTextureCount(aiTextureType_UNKNOWN) > 0) { LOGV("material has an unknown texture\n"); }
+		
+		//		LOGV("material has %i diffuse texture(s)\n", material->GetTextureCount(aiTextureType_DIFFUSE));
+		
+		aiString material_name;
+		material->Get(AI_MATKEY_NAME, material_name);
+		
+		//		LOGV("mesh = \"%s\", material name: \"%s\", index: %u\n", mesh->mName.C_Str(), material_name.C_Str(), mesh->mMaterialIndex);
+		
+		aiString texture_path;
+		if (AI_SUCCESS == material->GetTexture(aiTextureType_DIFFUSE, 0, &texture_path, 0, 0, 0, 0, 0))
+		{
+			StackString<4096> texpath = texture_path.C_Str();
+			
+			// TODO: verify there's a material by this name in the input/output folder?
+			
+			// COLLADA does some weird shit with texture names.
+//			jgeometry["material_id"] = jmaterial_array.size();
+			Json::Value jmaterial;
+			std::string material_name = texpath.basename().remove_extension()();
+			
+			MaterialMap::iterator it = info.material_map.find(material_name);
+			if (it != info.material_map.end())
+			{
+				// already exists in the material map
+				jgeometry["material_id"] = (*it).second;
+			}
+			else
+			{
+				unsigned int next_material_id = (unsigned int)info.material_map.size();
+				jgeometry["material_id"] = next_material_id;
+				info.material_map.insert(MaterialMap::value_type(material_name, next_material_id));
+			}
+			
+			//			LOGV("diffuse texture: %s\n", material_name.c_str());
+		}
+		else
+		{
+			LOGW("mesh \"%s\" has no material!\n", mesh->mName.C_Str());
+		}
+		
+		info.geometry_array.append(jgeometry);
+	}
+	
 	glm::quat to_glm(const aiQuaternion& q)
 	{
 		return glm::quat(q.x, q.y, q.z, q.w);
@@ -442,40 +597,50 @@ namespace prism
 	}
 
 	// this function is almost identical to the one in the assimp documentation
-	void iterate_nodes(MeshData& meshdata, aiNode* node, Node* parent, aiMatrix4x4& accumulated_transform, size_t& total_nodes)
+	void iterate_nodes(
+		SceneInfo& info,
+		MeshData& meshdata,
+		aiNode* node,
+		Node* parent,
+		aiMatrix4x4& accumulated_transform,
+		size_t& total_nodes
+		)
 	{
 //		LOGV("[node %i] %s\n", total_nodes, node->mName.C_Str());
 		++total_nodes;
 				
 		Node* newnode = meshdata.create_node(node->mName.C_Str(), Node::TRANSFORM, parent);
-//		LOGV("created node %x, %s\n", newnode, newnode->name.c_str());
-
+		LOGV("created node \"%s\"\n", newnode->name.c_str());
+		
+		newnode->local_transform = node->mTransformation * accumulated_transform;
+		
 		// if node has meshes, create a new scene object for it
 		if (node->mNumMeshes > 0)
 		{
-			//LOGV("\tnode has %i meshes\n", node->mNumMeshes);
+			LOGV("\t# submeshes: %i\n", node->mNumMeshes);
+			
 			newnode->type = Node::MESH;
-		}
-		else
-		{
-			// if no meshes, skip the node, but keep its transform
-			newnode->local_transform = node->mTransformation;
+			for (unsigned int mid = 0; mid < node->mNumMeshes; ++mid)
+			{
+				aiMesh* submesh = info.scene->mMeshes[node->mMeshes[mid]];
+				meshdata.read_mesh(info, submesh, newnode);
+			}
 		}
 				
 		// traverse all child nodes
 		//LOGV("[node] %s has %i children.\n", node->mName.C_Str(), node->mNumChildren);
 		for(size_t child_index = 0; child_index < node->mNumChildren; ++child_index)
 		{
-			iterate_nodes(meshdata, node->mChildren[child_index], newnode, accumulated_transform, total_nodes);
+			iterate_nodes(info, meshdata, node->mChildren[child_index], newnode, accumulated_transform, total_nodes);
 		}
 	}
 
-	void traverse_nodes(MeshData& meshdata, const aiScene* scene, Json::Value& hierarchy)
+	void traverse_nodes(SceneInfo& info, MeshData& meshdata, const aiScene* scene, Json::Value& hierarchy)
 	{
 		LOGV("iterating over scene nodes...\n");
 		aiMatrix4x4 accumulated_transform;
 		size_t total_nodes = 0;
-		iterate_nodes(meshdata, scene->mRootNode, meshdata.root, accumulated_transform, total_nodes);
+		iterate_nodes(info, meshdata, scene->mRootNode, meshdata.root, accumulated_transform, total_nodes);
 
 		LOGV("scene nodes traversed.\n");
 	}
