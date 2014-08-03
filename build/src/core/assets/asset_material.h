@@ -64,7 +64,7 @@ namespace assets
 		Parameter * parameters;
 		//		unsigned int texture_id;
 		unsigned int flags;
-		unsigned int num_parameters;
+		unsigned int total_parameters;
 		unsigned int requirements; // used to lookup the correct shader permutation for this material
 		virtual void release();
 		
@@ -77,6 +77,8 @@ namespace assets
 		void allocate_parameters( unsigned int max_parameters );
 		void set_parameter_name( unsigned int id, const char * name );
 		void set_parameter_vec4( unsigned int id, const glm::vec4 & vec );
+		
+		void print_parameters();
 	}; // Material
 	
 	unsigned int texture_unit_for_map( ShaderString & name );

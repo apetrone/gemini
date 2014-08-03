@@ -34,9 +34,9 @@ namespace assets
 	
 	void Material::release()
 	{
-		if ( num_parameters )
+		if ( total_parameters )
 		{
-			DESTROY_ARRAY(Parameter, parameters, num_parameters);
+			DESTROY_ARRAY(Parameter, parameters, total_parameters);
 		}
 	} // release
 	
@@ -45,7 +45,7 @@ namespace assets
 		// calculate material requirements
 		this->requirements = 0;
 		
-		for( int id = 0; id < this->num_parameters; ++id )
+		for( int id = 0; id < this->total_parameters; ++id )
 		{
 			Material::Parameter * param = &this->parameters[ id ];
 			unsigned int mask = find_parameter_mask( param->name );
@@ -61,7 +61,7 @@ namespace assets
 		Material::Parameter * parameter = 0;
 		
 		// this should have a hash table... oh well
-		for( int i = 0; i < this->num_parameters; ++i )
+		for( int i = 0; i < this->total_parameters; ++i )
 		{
 			if ( xstr_nicmp( this->parameters[i].name.c_str(), name, xstr_len(name) ) == 0 )
 			{
@@ -77,10 +77,10 @@ namespace assets
 	{
 		if ( this->parameters )
 		{
-			DESTROY_ARRAY(Parameter, parameters, this->num_parameters);
+			DESTROY_ARRAY(Parameter, parameters, this->total_parameters);
 		}
 		
-		this->num_parameters = max_parameters;
+		this->total_parameters = max_parameters;
 		this->parameters = CREATE_ARRAY(Parameter, max_parameters);
 	} // allocate_parameters
 	
@@ -95,6 +95,15 @@ namespace assets
 		this->parameters[id].type = MP_VEC4;
 	} // set_parameter_vec4
 	
+	void Material::print_parameters()
+	{
+		LOGV("material parameters for %s\n", name.c_str());
+		for (int i = 0; i < this->total_parameters; ++i)
+		{
+			Parameter* p = &parameters[i];
+			LOGV("param %i, %s, %i\n", i, p->name.c_str(), p->intValue);
+		}
+	}
 	
 	enum ParamFlags
 	{
@@ -112,7 +121,7 @@ namespace assets
 		Json::Value shader = root["shader"];
 		
 		material->flags = 0;
-		material->num_parameters = 0;
+		material->total_parameters = 0;
 		material->parameters = 0;
 		//		material->requirements = 0;
 		//		int required_params = PF_TYPE | PF_VALUE;
@@ -140,10 +149,10 @@ namespace assets
 		Json::ValueIterator piter = param_list.begin();
 		Json::ValueIterator piter_end = param_list.end();
 		
-		material->num_parameters = param_list.size();
-		if ( material->num_parameters )
+		material->total_parameters = param_list.size();
+		if ( material->total_parameters )
 		{
-			material->parameters = CREATE_ARRAY( Material::Parameter, material->num_parameters );
+			material->parameters = CREATE_ARRAY( Material::Parameter, material->total_parameters );
 			Material::Parameter * parameter;
 			unsigned int param_id = 0;
 			for( ; piter != piter_end; ++piter, ++param_id )
@@ -302,7 +311,7 @@ namespace assets
 					return util::ConfigLoad_Failure;
 				}
 			} // read all shader parameters
-		} //  num_parameters
+		} //  total_parameters
 		
 		
 		material->calculate_requirements();

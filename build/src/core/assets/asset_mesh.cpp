@@ -84,16 +84,17 @@ namespace assets
 			xstr_sprintf( &material_path[0], material_path.max_size(), "materials/%s", material_name.c_str() );
 			amat = 0;
 			amat = assets::materials()->load_from_path( material_path() );
-			if ( amat )
-			{
-				material_ids[ current_material ] = amat->Id();
-			}
-			else
+			if ( !amat )
 			{
 				amat = assets::materials()->get_default();
-				material_ids[ current_material ] = amat->Id();
 			}
-			//			LOGV( "assigned material '%s' to (%i)\n", material_name.c_str(), material_ids[ current_material ] );
+			
+			assert(amat != 0);
+			amat->print_parameters();
+
+			material_ids[ current_material ] = amat->Id();
+			LOGV( "assigned material '%s' to (%i)\n", material_name.c_str(), material_ids[ current_material ] );
+			
 			++current_material;
 		}
 		
@@ -121,6 +122,10 @@ namespace assets
 			Json::Value blend_weights = geometry_node["blend_weights"];
 			
 			int material_id = geometry_node["material_id"].asInt();
+			
+			const std::string& name = geometry_node["name"].asString();
+			geometry->name = name.c_str();
+			
 //			LOGV( "geometry: %i, material_id: %i\n", gid-1, material_id );
 //			LOGV( "# vertices: %i\n", positions.size()/3 );
 //			LOGV( "# indices: %i\n", indices.size() );
@@ -198,7 +203,8 @@ namespace assets
 			}
 			else
 			{
-				LOGW( "Mesh has no UV coordinates.\n" );
+
+				LOGW( "Mesh \"%s\" has no UV coordinates.\n", geometry->name() );
 			}
 			
 			if (!colors.isNull() && colors.size() > 0)
@@ -219,7 +225,7 @@ namespace assets
 			if ( material_id != -1 && current_material > 0 /*&& material_id < current_material*/ )
 			{
 				geometry->material_id = material_ids[ material_id ];
-				//				LOGV( "using material %i %i\n", material_id, geometry->material_id );
+				LOGV( "using material %i %i\n", material_id, geometry->material_id );
 			}
 			else
 			{
@@ -687,9 +693,13 @@ namespace assets
 	
 	void Mesh::prepare_geometry()
 	{
+		assert(total_geometry != 0);
+		
 		for( unsigned int geo_id = 0; geo_id < total_geometry; ++geo_id )
 		{
 			assets::Geometry * g = &geometry[ geo_id ];
+
+			LOGV("geo: %s, material: %i\n", g->name(), g->material_id);
 			g->render_setup();
 		}
 	} // prepare_geometry
