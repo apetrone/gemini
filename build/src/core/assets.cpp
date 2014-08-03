@@ -517,7 +517,7 @@ namespace assets
 		// setup default material
 		Material * default_material = materials()->allocate_asset();
 		default_material->name = "default";
-		default_material->num_parameters = 1;
+		default_material->total_parameters = 1;
 		Material::Parameter * parameter = default_material->parameters = CREATE(Material::Parameter);
 		parameter->name = "diffusemap";
 		parameter->type = MP_SAMPLER_2D;
