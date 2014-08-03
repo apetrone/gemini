@@ -27,8 +27,8 @@
 
 #include <btBulletDynamicsCommon.h>
 
-const float PHYSICS_PLAYER_HALF_WIDTH = 0.30f;
-const float PHYSICS_PLAYER_HALF_HEIGHT = 0.91f;
+const float PHYSICS_PLAYER_HALF_WIDTH = 0.25f; // .25 == 1.6 ft wide
+const float PHYSICS_PLAYER_HALF_HEIGHT = 0.91f; // .91 == 6 ft tall
 
 namespace physics
 {
