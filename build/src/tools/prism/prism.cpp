@@ -88,187 +88,22 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 	Json::Value jgeometry_array(Json::arrayValue);
 	
 	Json::Value jbones_array(Json::arrayValue);
-	
-	
-	Json::Value hierarchy;
 
 	
 	MeshData meshdata;
 	SceneInfo info(env, material_map, scene, jgeometry_array, jbones_array);
 	
 	// traverse all nodes in the scene
-	traverse_nodes(info, meshdata, scene, hierarchy);
+	traverse_nodes(info, meshdata, scene);
 	
 	LOGV("total meshes: %i\n", scene->mNumMeshes);
-#if 0
-	// loop through all meshes
-	for( size_t m = 0; m < scene->mNumMeshes; ++m )
-	{
-		mesh = scene->mMeshes[m];
-		Json::Value jgeometry;
-		
-		// per-vertex attributes
-		Json::Value jvertices(Json::arrayValue);
-		Json::Value jnormals(Json::arrayValue);
-		Json::Value juvs(Json::arrayValue);
-		Json::Value jcolors(Json::arrayValue);
-
-		Json::Value jblend_weights(Json::arrayValue);
-
-		Json::Value jfaces(Json::arrayValue);
-
-		
-		// any one of these is an error condition otherwise.
-//		assert( mesh->HasTextureCoords(0) );
-		assert( mesh->HasNormals() );
-//		assert( mesh->HasTangentsAndBitangents() );
-
-		jgeometry["name"] = mesh->mName.C_Str();
-		LOGV("inspecting mesh: %i, \"%s\"\n", m, mesh->mName.C_Str());
-//		LOGV("\tvertices: %i\n", mesh->mNumVertices);
-//		LOGV("\tfaces: %i\n", mesh->mNumFaces);
-//		LOGV("\tbones: %i\n", mesh->mNumBones);
-	
-		meshdata.read_bones(env, mesh, jbones_array, jblend_weights);
-		
-		
-		Node* scene_node = meshdata.find_node_with_name(mesh->mName.C_Str());
-		if (!scene_node)
-		{
-			LOGE("scene node for mesh \"%s\" could not be found!\n", mesh->mName.C_Str());
-		}
-		jgeometry["blend_weights"] = jblend_weights;
-		
-		if (mesh->HasNormals())
-		{
-			for(unsigned int vertex = 0; vertex < mesh->mNumVertices; ++vertex)
-			{
-				const aiVector3D & pos = mesh->mVertices[vertex];
-				const aiVector3D & normal = mesh->mNormals[vertex];
-
-
-				//const aiVector3D & bitangent = mesh->mBitangents[vertex];
-				//const aiVector3D & tangent = mesh->mTangents[vertex];
-				
-				// Need to transform the vectors from Z-Up to Y-Up.
-				const aiVector3D tr_pos = scene_node->local_transform * pos;
-				
-				jvertices.append(tr_pos.x);
-				jvertices.append(tr_pos.y);
-				jvertices.append(tr_pos.z);
-				
-				const aiVector3D tr_normal = scene_node->local_transform * normal;
-
-				jnormals.append(tr_normal.x);
-				jnormals.append(tr_normal.y);
-				jnormals.append(tr_normal.z);
-				
-				if (mesh->HasTextureCoords(0))
-				{
-					const aiVector3D & uv = mesh->mTextureCoords[0][vertex];
-					juvs.append(uv.x);
-					juvs.append(uv.y);
-				}
-
-				if (mesh->HasVertexColors(0))
-				{
-					const aiColor4D& color = mesh->mColors[0][vertex];
-					jcolors.append(color.r);
-					jcolors.append(color.g);
-					jcolors.append(color.b);
-					jcolors.append(color.a);
-				}
-			}
-
-			aiFace* face;
-			for (uint32_t face_index = 0; face_index < mesh->mNumFaces; ++face_index)
-			{
-				face = &mesh->mFaces[face_index];
-				jfaces.append(face->mIndices[0]);
-				jfaces.append(face->mIndices[1]);
-				jfaces.append(face->mIndices[2]);
-			}
-
-			jgeometry["positions"] = jvertices;
-			jgeometry["normals"] = jnormals;
-			jgeometry["uvs"] = juvs;
-			jgeometry["colors"] = jcolors;
-			jgeometry["indices"] = jfaces;
-		}
-		else
-		{
-			fprintf(stdout, "Mesh %zu is missing Normals\n", m);
-		}
-		
-
-//		LOGV("material index: %u\n", mesh->mMaterialIndex);
-		
-		// TODO: error checking here...
-		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-		
-//		if (material->GetTextureCount(aiTextureType_AMBIENT) > 0) { LOGV("material has an ambient texture\n"); }
-//		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0) { LOGV("material has a diffuse texture\n"); }
-//		if (material->GetTextureCount(aiTextureType_DISPLACEMENT) > 0) { LOGV("material has a displacement texture\n"); }
-//		if (material->GetTextureCount(aiTextureType_EMISSIVE) > 0) { LOGV("material has an emissive texture\n"); }
-//		if (material->GetTextureCount(aiTextureType_HEIGHT) > 0) { LOGV("material has a heightmap texture\n"); }
-//		if (material->GetTextureCount(aiTextureType_LIGHTMAP) > 0) { LOGV("material has a lightmap texture\n"); }
-//		if (material->GetTextureCount(aiTextureType_NONE) > 0) { LOGV("material has a 'None' texture\n"); }
-//		if (material->GetTextureCount(aiTextureType_NORMALS) > 0) { LOGV("material has a normals texture\n"); }
-//		if (material->GetTextureCount(aiTextureType_OPACITY) > 0) { LOGV("material has an opacity texture\n"); }
-//		if (material->GetTextureCount(aiTextureType_REFLECTION) > 0) { LOGV("material has a reflection texture\n"); }
-//		if (material->GetTextureCount(aiTextureType_SHININESS) > 0) { LOGV("material has a shininess texture\n"); }
-//		if (material->GetTextureCount(aiTextureType_SPECULAR) > 0) { LOGV("material has a specular texture\n"); }
-//		if (material->GetTextureCount(aiTextureType_UNKNOWN) > 0) { LOGV("material has an unknown texture\n"); }
-		
-//		LOGV("material has %i diffuse texture(s)\n", material->GetTextureCount(aiTextureType_DIFFUSE));
-		
-		aiString material_name;
-		material->Get(AI_MATKEY_NAME, material_name);
-		
-//		LOGV("mesh = \"%s\", material name: \"%s\", index: %u\n", mesh->mName.C_Str(), material_name.C_Str(), mesh->mMaterialIndex);
-		
-		aiString texture_path;
-		if (AI_SUCCESS == material->GetTexture(aiTextureType_DIFFUSE, 0, &texture_path, 0, 0, 0, 0, 0))
-		{
-			StackString<4096> texpath = texture_path.C_Str();
-
-			// TODO: verify there's a material by this name in the input/output folder?
-
-			// COLLADA does some weird shit with texture names.
-			jgeometry["material_id"] = jmaterial_array.size();
-			Json::Value jmaterial;
-			std::string material_name = texpath.basename().remove_extension()();
-			
-			MaterialMap::iterator it = material_map.find(material_name);
-			if (it != material_map.end())
-			{
-				// already exists in the material map
-				jgeometry["material_id"] = (*it).second;
-			}
-			else
-			{
-				unsigned int next_material_id = (unsigned int)material_map.size();
-				jgeometry["material_id"] = next_material_id;
-				material_map.insert(MaterialMap::value_type(material_name, next_material_id));
-			}
-
-//			LOGV("diffuse texture: %s\n", material_name.c_str());
-		}
-		else
-		{
-			LOGW("mesh \"%s\" has no material!\n", mesh->mName.C_Str());
-		}
-
-		jgeometry_array.append(jgeometry);
-	}
-#endif
-
 	// compile the material array
 	for( MaterialMap::iterator it = material_map.begin(); it != material_map.end(); ++it)
 	{
 		Json::Value jmaterial;
 		jmaterial["name"] = (*it).first.c_str();
-		jmaterial["material_id"] = Json::valueToString((*it).second);
+		jmaterial["material_id"] = (*it).second;
+		LOGV("[material, name=\"%s\", index=%i\n", (*it).first.c_str(), (*it).second);
 		jmaterial_array.append(jmaterial);
 	}
 	
@@ -285,7 +120,8 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 	Json::Value janimations(Json::arrayValue);
 
 	Animation animation_data;
-
+	
+	// TODO: read animation
 	const aiAnimation* animation = 0;
 	for (size_t animation_index = 0; animation_index < scene->mNumAnimations; ++animation_index)
 	{
@@ -297,8 +133,6 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 		meshdata.read_animation(env, animation_data, animation, janimation);
 		
 		janimations.append(janimation);
-		
-
 	}
 	
 	//fprintf(stdout, "Loaded %zu meshes ready for drawing\n", meshes.size());

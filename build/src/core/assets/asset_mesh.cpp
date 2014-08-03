@@ -73,12 +73,13 @@ namespace assets
 		Json::ValueIterator mit = materials.begin();
 		
 		unsigned int * material_ids = CREATE_ARRAY( unsigned int, materials.size() );
-		unsigned int current_material = 0;
+		unsigned int total_materials_read = 0;
 		assets::Material * amat = 0;
 		for( ; mit != materials.end(); ++mit )
 		{
 			Json::Value material = (*mit);
 			std::string material_name = material["name"].asString();
+			unsigned int material_id = material["material_id"].asUInt();
 			
 			StackString<MAX_PATH_SIZE> material_path;
 			xstr_sprintf( &material_path[0], material_path.max_size(), "materials/%s", material_name.c_str() );
@@ -92,10 +93,10 @@ namespace assets
 			assert(amat != 0);
 //			amat->print_parameters();
 
-			material_ids[ current_material ] = amat->Id();
-			LOGV( "assigned material '%s' to (%i)\n", material_name.c_str(), material_ids[ current_material ] );
+			material_ids[ material_id ] = amat->Id();
+			LOGV( "assigned material '%s' to (%i)\n", material_name.c_str(), material_ids[ material_id ] );
 			
-			++current_material;
+			++total_materials_read;
 		}
 		
 		Json::Value geometry_list = root["geometry"];
@@ -132,7 +133,7 @@ namespace assets
 			geometry->name = name.c_str();
 			
 			
-			if ( material_id != -1 && current_material > 0 /*&& material_id < current_material*/ )
+			if ( material_id != -1 && total_materials_read > 0 /*&& material_id < current_material*/ )
 			{
 				geometry->material_id = material_ids[ material_id ];
 				LOGV( "using material %i %i\n", material_id, geometry->material_id );

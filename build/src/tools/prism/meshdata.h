@@ -180,7 +180,7 @@ namespace prism
 	glm::quat to_glm(const aiQuaternion& q);
 	glm::vec3 to_glm(const aiVector3D& v);
 
-	void traverse_nodes(SceneInfo& info, MeshData& meshdata, const aiScene* scene, Json::Value& hierarchy);
+	void traverse_nodes(SceneInfo& info, MeshData& meshdata, const aiScene* scene);
 	void jsonify_quatkey(ToolEnvironment& env, Json::Value& times, Json::Value& values, const aiQuatKey& q);
 	void jsonify_vectorkey(ToolEnvironment& env, Json::Value& times, Json::Value& values, const aiVectorKey& v);
 	void jsonify_matrix(Json::Value& array, const aiMatrix4x4& source);

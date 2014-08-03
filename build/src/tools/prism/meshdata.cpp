@@ -365,8 +365,10 @@ namespace prism
 		assert( mesh->HasNormals() );
 		//		assert( mesh->HasTangentsAndBitangents() );
 		
-		jgeometry["name"] = mesh->mName.C_Str();
-		LOGV("read mesh: \"%s\"\n", mesh->mName.C_Str());
+//		jgeometry["name"] = mesh->mName.C_Str();
+		jgeometry["name"] = node->name;
+		
+		LOGV("\tread mesh: \"%s\"\n", mesh->mName.C_Str());
 //		LOGV("inspecting mesh: %i, \"%s\"\n", m, mesh->mName.C_Str());
 		//		LOGV("\tvertices: %i\n", mesh->mNumVertices);
 		//		LOGV("\tfaces: %i\n", mesh->mNumFaces);
@@ -434,11 +436,11 @@ namespace prism
 		else
 		{
 //			fprintf(stdout, "Mesh %zu is missing Normals\n", m);
-			LOGW("Mesh \"%s\" is missing normals.\n", mesh->mName.C_Str());
+			LOGW("\t\tMesh \"%s\" is missing normals.\n", mesh->mName.C_Str());
 		}
 		
 		
-		//		LOGV("material index: %u\n", mesh->mMaterialIndex);
+		LOGV("\t\tmaterial index: %u\n", mesh->mMaterialIndex);
 		
 		// TODO: error checking here...
 		aiMaterial* material = info.scene->mMaterials[mesh->mMaterialIndex];
@@ -457,12 +459,12 @@ namespace prism
 		//		if (material->GetTextureCount(aiTextureType_SPECULAR) > 0) { LOGV("material has a specular texture\n"); }
 		//		if (material->GetTextureCount(aiTextureType_UNKNOWN) > 0) { LOGV("material has an unknown texture\n"); }
 		
-		//		LOGV("material has %i diffuse texture(s)\n", material->GetTextureCount(aiTextureType_DIFFUSE));
+		LOGV("\t\tmaterial has %i diffuse texture(s)\n", material->GetTextureCount(aiTextureType_DIFFUSE));
 		
 		aiString material_name;
 		material->Get(AI_MATKEY_NAME, material_name);
 		
-		//		LOGV("mesh = \"%s\", material name: \"%s\", index: %u\n", mesh->mName.C_Str(), material_name.C_Str(), mesh->mMaterialIndex);
+		LOGV("\t\tmesh = \"%s\", material name: \"%s\", index: %u\n", mesh->mName.C_Str(), material_name.C_Str(), mesh->mMaterialIndex);
 		
 		aiString texture_path;
 		if (AI_SUCCESS == material->GetTexture(aiTextureType_DIFFUSE, 0, &texture_path, 0, 0, 0, 0, 0))
@@ -470,22 +472,21 @@ namespace prism
 			StackString<4096> texpath = texture_path.C_Str();
 			
 			// TODO: verify there's a material by this name in the input/output folder?
-			
-			// COLLADA does some weird shit with texture names.
-//			jgeometry["material_id"] = jmaterial_array.size();
-			Json::Value jmaterial;
 			std::string material_name = texpath.basename().remove_extension()();
 			
 			MaterialMap::iterator it = info.material_map.find(material_name);
 			if (it != info.material_map.end())
 			{
 				// already exists in the material map
+				LOGV("\t\t found material at index: %i\n", (*it).second);
 				jgeometry["material_id"] = (*it).second;
 			}
 			else
 			{
+
 				unsigned int next_material_id = (unsigned int)info.material_map.size();
 				jgeometry["material_id"] = next_material_id;
+				LOGV("\t\tset \"%s\" to index %i\n", material_name.c_str(), next_material_id);
 				info.material_map.insert(MaterialMap::value_type(material_name, next_material_id));
 			}
 			
@@ -493,7 +494,7 @@ namespace prism
 		}
 		else
 		{
-			LOGW("mesh \"%s\" has no material!\n", mesh->mName.C_Str());
+			LOGW("\t\tmesh \"%s\" has no material!\n", mesh->mName.C_Str());
 		}
 		
 		info.geometry_array.append(jgeometry);
@@ -635,7 +636,7 @@ namespace prism
 		}
 	}
 
-	void traverse_nodes(SceneInfo& info, MeshData& meshdata, const aiScene* scene, Json::Value& hierarchy)
+	void traverse_nodes(SceneInfo& info, MeshData& meshdata, const aiScene* scene)
 	{
 		LOGV("iterating over scene nodes...\n");
 		aiMatrix4x4 accumulated_transform;
