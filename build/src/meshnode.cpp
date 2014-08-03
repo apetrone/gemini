@@ -85,11 +85,17 @@ namespace scenegraph
 		
 				add_child(rn);
 			}
+			
+			if (build_physics_from_mesh)
+			{
+				physics::create_physics_for_mesh(mesh);
+			}
+		}
+		else
+		{
+			LOGW("Unable to load model: %s\n", path);
 		}
 		
-		if (build_physics_from_mesh)
-		{
-			physics::create_physics_for_mesh(mesh);
-		}
+
 	}
 }; // namespace scenegraph
