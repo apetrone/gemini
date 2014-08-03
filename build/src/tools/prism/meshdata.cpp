@@ -113,7 +113,7 @@ namespace prism
 		{
 			type_string = "MESH";
 		}
-		LOGV("[Node %x, name=\"%s\", type=\"%s\"\n", this, this->name.c_str(), type_string());
+//		LOGV("[Node %x, name=\"%s\", type=\"%s\"\n", this, this->name.c_str(), type_string());
 		for (NodeVector::iterator it = children.begin(); it != children.end(); ++it)
 		{
 			(*it)->print();
@@ -444,11 +444,11 @@ namespace prism
 	// this function is almost identical to the one in the assimp documentation
 	void iterate_nodes(MeshData& meshdata, aiNode* node, Node* parent, aiMatrix4x4& accumulated_transform, size_t& total_nodes)
 	{
-		LOGV("[node %i] %s\n", total_nodes, node->mName.C_Str());
+//		LOGV("[node %i] %s\n", total_nodes, node->mName.C_Str());
 		++total_nodes;
 				
 		Node* newnode = meshdata.create_node(node->mName.C_Str(), Node::TRANSFORM, parent);
-		LOGV("created node %x, %s\n", newnode, newnode->name.c_str());
+//		LOGV("created node %x, %s\n", newnode, newnode->name.c_str());
 
 		// if node has meshes, create a new scene object for it
 		if (node->mNumMeshes > 0)
@@ -459,7 +459,6 @@ namespace prism
 		else
 		{
 			// if no meshes, skip the node, but keep its transform
-			LOGV("adding transform\n");
 			newnode->local_transform = node->mTransformation;
 		}
 				

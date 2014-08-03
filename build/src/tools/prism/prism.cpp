@@ -199,15 +199,31 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 		}
 		
 
-		
+//		LOGV("material index: %u\n", mesh->mMaterialIndex);
 		
 		// TODO: error checking here...
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 		
 //		if (material->GetTextureCount(aiTextureType_AMBIENT) > 0) { LOGV("material has an ambient texture\n"); }
 //		if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0) { LOGV("material has a diffuse texture\n"); }
+//		if (material->GetTextureCount(aiTextureType_DISPLACEMENT) > 0) { LOGV("material has a displacement texture\n"); }
 //		if (material->GetTextureCount(aiTextureType_EMISSIVE) > 0) { LOGV("material has an emissive texture\n"); }
-//		if (material->GetTextureCount(aiTextureType_SPECULAR) > 0) { LOGV("material has an specular texture\n"); }
+//		if (material->GetTextureCount(aiTextureType_HEIGHT) > 0) { LOGV("material has a heightmap texture\n"); }
+//		if (material->GetTextureCount(aiTextureType_LIGHTMAP) > 0) { LOGV("material has a lightmap texture\n"); }
+//		if (material->GetTextureCount(aiTextureType_NONE) > 0) { LOGV("material has a 'None' texture\n"); }
+//		if (material->GetTextureCount(aiTextureType_NORMALS) > 0) { LOGV("material has a normals texture\n"); }
+//		if (material->GetTextureCount(aiTextureType_OPACITY) > 0) { LOGV("material has an opacity texture\n"); }
+//		if (material->GetTextureCount(aiTextureType_REFLECTION) > 0) { LOGV("material has a reflection texture\n"); }
+//		if (material->GetTextureCount(aiTextureType_SHININESS) > 0) { LOGV("material has a shininess texture\n"); }
+//		if (material->GetTextureCount(aiTextureType_SPECULAR) > 0) { LOGV("material has a specular texture\n"); }
+//		if (material->GetTextureCount(aiTextureType_UNKNOWN) > 0) { LOGV("material has an unknown texture\n"); }
+		
+//		LOGV("material has %i diffuse texture(s)\n", material->GetTextureCount(aiTextureType_DIFFUSE));
+		
+		aiString material_name;
+		material->Get(AI_MATKEY_NAME, material_name);
+		
+//		LOGV("mesh = \"%s\", material name: \"%s\", index: %u\n", mesh->mName.C_Str(), material_name.C_Str(), mesh->mMaterialIndex);
 		
 		aiString texture_path;
 		if (AI_SUCCESS == material->GetTexture(aiTextureType_DIFFUSE, 0, &texture_path, 0, 0, 0, 0, 0))
@@ -234,7 +250,11 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 				material_map.insert(MaterialMap::value_type(material_name, next_material_id));
 			}
 
-			LOGV("diffuse texture: %s\n", material_name.c_str());
+//			LOGV("diffuse texture: %s\n", material_name.c_str());
+		}
+		else
+		{
+			LOGW("mesh \"%s\" has no material!\n", mesh->mName.C_Str());
 		}
 
 		jgeometry_array.append(jgeometry);
