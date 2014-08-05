@@ -23,25 +23,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 #include <gemini/mem.h>
 #include <gemini/core.h>
 #include <gemini/core/filesystem.h>
-
+#include <gemini/core/log.h>
+#include <gemini/core/xfile.h>
+#include <gemini/util/stackstring.h>
+#include <gemini/util/fixedarray.h>
+#include <gemini/util/arg.h>
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 
 #include <slim/xlog.h>
-
-#include <gemini/core/log.h>
-
-#include <gemini/util/stackstring.h>
-#include <gemini/core/xfile.h>
-
-#include <gemini/util/fixedarray.h>
-#include <gemini/util/arg.h>
 
 #include <json/json.h>
 

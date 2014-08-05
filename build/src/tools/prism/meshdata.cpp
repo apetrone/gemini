@@ -24,14 +24,13 @@
 
 #include <gemini/mem.h>
 #include <gemini/core/log.h>
-#include <slim/xlog.h>
-
 #include <gemini/util/stackstring.h>
+#include <gemini/mathlib.h>
+
+#include <slim/xlog.h>
 
 #include "meshdata.h"
 #include "prism.h"
-
-#include <gemini/mathlib.h>
 
 namespace prism
 {

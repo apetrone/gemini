@@ -22,7 +22,6 @@
 
 #pragma once
 
-
 #include <map>
 #include <string>
 
@@ -30,6 +29,7 @@
 #include <gemini/core.h>
 #include <gemini/core/filesystem.h>
 #include <gemini/util/fixedarray.h>
+#include <gemini/mathlib.h>
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -37,20 +37,6 @@
 
 #include <json/json.h>
 
-// TODO: replace with mathlib.h at some point?
-// show output at build time regarding glm
-//#define GLM_MESSAGES 1
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/matrix_inverse.hpp>
-#include <glm/gtc/matrix_access.hpp>
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/quaternion.hpp>
-//#include <glm/gtc/noise.hpp>
-//#include <glm/gtc/random.hpp>
-#include <glm/gtx/rotate_vector.hpp>
-#include <glm/gtx/vector_angle.hpp>
 
 namespace prism
 {
