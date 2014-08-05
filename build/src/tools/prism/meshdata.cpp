@@ -123,6 +123,9 @@ namespace prism
 	MeshData::MeshData()
 	{
 		next_bone_id = 0;
+		written_meshes = 0;
+		ignored_meshes = 0;
+		
 		root = CREATE(Node);
 		root->name = "scene_root";
 		root->type = Node::SCENEROOT;
@@ -347,6 +350,12 @@ namespace prism
 		assert(mesh != 0);
 		assert(node != 0);
 		
+		if (!mesh->HasNormals() || !mesh->HasTextureCoords(0))
+		{
+			++ignored_meshes;
+			return;
+		}
+		
 		Json::Value jgeometry;
 		
 		// per-vertex attributes
@@ -361,7 +370,7 @@ namespace prism
 		
 		
 		// any one of these is an error condition otherwise.
-		//		assert( mesh->HasTextureCoords(0) );
+		assert( mesh->HasTextureCoords(0) );
 		assert( mesh->HasNormals() );
 		//		assert( mesh->HasTangentsAndBitangents() );
 		
@@ -377,68 +386,60 @@ namespace prism
 		read_bones(info.env, mesh, info.bones_array, jblend_weights);
 
 		jgeometry["blend_weights"] = jblend_weights;
-		
-		if (mesh->HasNormals())
+
+
+		for(unsigned int vertex = 0; vertex < mesh->mNumVertices; ++vertex)
 		{
-			for(unsigned int vertex = 0; vertex < mesh->mNumVertices; ++vertex)
+			const aiVector3D & pos = mesh->mVertices[vertex];
+			const aiVector3D & normal = mesh->mNormals[vertex];
+			
+			
+			//const aiVector3D & bitangent = mesh->mBitangents[vertex];
+			//const aiVector3D & tangent = mesh->mTangents[vertex];
+			
+			const aiVector3D tr_pos = info.env.coordinate_transform * node->local_transform * pos;
+			
+			jvertices.append(tr_pos.x);
+			jvertices.append(tr_pos.y);
+			jvertices.append(tr_pos.z);
+			
+			const aiVector3D tr_normal = info.env.coordinate_transform * node->local_transform * normal;
+			
+			jnormals.append(tr_normal.x);
+			jnormals.append(tr_normal.y);
+			jnormals.append(tr_normal.z);
+			
+			if (mesh->HasTextureCoords(0))
 			{
-				const aiVector3D & pos = mesh->mVertices[vertex];
-				const aiVector3D & normal = mesh->mNormals[vertex];
-				
-				
-				//const aiVector3D & bitangent = mesh->mBitangents[vertex];
-				//const aiVector3D & tangent = mesh->mTangents[vertex];
-				
-				const aiVector3D tr_pos = info.env.coordinate_transform * node->local_transform * pos;
-				
-				jvertices.append(tr_pos.x);
-				jvertices.append(tr_pos.y);
-				jvertices.append(tr_pos.z);
-				
-				const aiVector3D tr_normal = info.env.coordinate_transform * node->local_transform * normal;
-				
-				jnormals.append(tr_normal.x);
-				jnormals.append(tr_normal.y);
-				jnormals.append(tr_normal.z);
-				
-				if (mesh->HasTextureCoords(0))
-				{
-					const aiVector3D & uv = mesh->mTextureCoords[0][vertex];
-					juvs.append(uv.x);
-					juvs.append(uv.y);
-				}
-				
-				if (mesh->HasVertexColors(0))
-				{
-					const aiColor4D& color = mesh->mColors[0][vertex];
-					jcolors.append(color.r);
-					jcolors.append(color.g);
-					jcolors.append(color.b);
-					jcolors.append(color.a);
-				}
+				const aiVector3D & uv = mesh->mTextureCoords[0][vertex];
+				juvs.append(uv.x);
+				juvs.append(uv.y);
 			}
 			
-			aiFace* face;
-			for (uint32_t face_index = 0; face_index < mesh->mNumFaces; ++face_index)
+			if (mesh->HasVertexColors(0))
 			{
-				face = &mesh->mFaces[face_index];
-				jfaces.append(face->mIndices[0]);
-				jfaces.append(face->mIndices[1]);
-				jfaces.append(face->mIndices[2]);
+				const aiColor4D& color = mesh->mColors[0][vertex];
+				jcolors.append(color.r);
+				jcolors.append(color.g);
+				jcolors.append(color.b);
+				jcolors.append(color.a);
 			}
-			
-			jgeometry["positions"] = jvertices;
-			jgeometry["normals"] = jnormals;
-			jgeometry["uvs"] = juvs;
-			jgeometry["colors"] = jcolors;
-			jgeometry["indices"] = jfaces;
-		}
-		else
-		{
-//			fprintf(stdout, "Mesh %zu is missing Normals\n", m);
-			LOGW("\t\tMesh \"%s\" is missing normals.\n", mesh->mName.C_Str());
 		}
 		
+		aiFace* face;
+		for (uint32_t face_index = 0; face_index < mesh->mNumFaces; ++face_index)
+		{
+			face = &mesh->mFaces[face_index];
+			jfaces.append(face->mIndices[0]);
+			jfaces.append(face->mIndices[1]);
+			jfaces.append(face->mIndices[2]);
+		}
+		
+		jgeometry["positions"] = jvertices;
+		jgeometry["normals"] = jnormals;
+		jgeometry["uvs"] = juvs;
+		jgeometry["colors"] = jcolors;
+		jgeometry["indices"] = jfaces;
 		
 		LOGV("\t\tmaterial index: %u\n", mesh->mMaterialIndex);
 		
@@ -497,6 +498,7 @@ namespace prism
 			LOGW("\t\tmesh \"%s\" has no material!\n", mesh->mName.C_Str());
 		}
 		
+		++written_meshes;
 		info.geometry_array.append(jgeometry);
 	}
 	

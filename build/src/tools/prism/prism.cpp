@@ -96,7 +96,9 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 	// traverse all nodes in the scene
 	traverse_nodes(info, meshdata, scene);
 	
-	LOGV("total meshes: %i\n", scene->mNumMeshes);
+//	LOGV("total meshes: %i\n", scene->mNumMeshes);
+
+	LOGV("meshes written / total (%i / %i)\n", meshdata.written_meshes, meshdata.written_meshes+meshdata.ignored_meshes);
 	// compile the material array
 	for( MaterialMap::iterator it = material_map.begin(); it != material_map.end(); ++it)
 	{

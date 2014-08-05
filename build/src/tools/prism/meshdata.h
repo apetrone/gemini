@@ -152,6 +152,9 @@ namespace prism
 		// bone ids are contiguous; keep track
 		size_t next_bone_id;
 		
+		size_t written_meshes;
+		size_t ignored_meshes;
+		
 		MeshData();
 		~MeshData();
 				
