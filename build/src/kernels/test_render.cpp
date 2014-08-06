@@ -19,28 +19,164 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "kernel.h"
 #include <stdio.h>
+
 #include <slim/xlog.h>
 #include <gemini/mathlib.h>
+
+#include "kernel.h"
 #include "debugdraw.h"
 #include "input.h"
 #include "renderer/renderer.h"
 #include "renderer/renderstream.h"
-
+#include "renderer/scenelink.h"
 #include "camera.h"
-
 #include "assets/asset_mesh.h"
 #include "assets/asset_material.h"
-
 #include "font.h"
 #include "assets/asset_font.h"
-
 #include "scene_graph.h"
-
 #include "meshnode.h"
 
-#include "renderer/scenelink.h"
+
+#include <json/json.h>
+
+
+struct BaseVar
+{
+	BaseVar* next;
+	std::string name;
+
+	virtual void load(Json::Value& value) = 0;
+	virtual std::string value_string() = 0;
+	
+	static void render_values(int x, int y);
+};
+
+BaseVar* tail = 0;
+
+void BaseVar::render_values(int x, int y)
+{
+	BaseVar* current = tail;
+	while (current)
+	{
+		debugdraw::text(x, y, xstr_format("[VAR] %s = %s", current->name.c_str(), current->value_string().c_str()), Color(255, 255, 255, 255));
+	
+		y += 12;
+		current = current->next;
+	}
+}
+
+BaseVar* find_by_name(const std::string& name)
+{
+	BaseVar* current = tail;
+	
+	while( current )
+	{
+		if (name == current->name)
+		{
+			return current;
+		}
+		current = current->next;
+	}
+	
+	return 0;
+}
+
+template <class Type>
+struct JsonLoader
+{
+	static void load(Json::Value& json_value, Type* value);
+};
+
+template <>
+struct JsonLoader<float>
+{
+	static void load(Json::Value& json_value, float* value)
+	{
+		if (json_value.isDouble())
+		{
+			*value = json_value.asFloat();
+		}
+	}
+};
+
+template <>
+struct JsonLoader<int>
+{
+	static void load(Json::Value& json_value, int* value)
+	{
+		if (json_value.isInt())
+		{
+			*value = json_value.asInt();
+		}
+	}
+};
+
+template <class Type>
+struct Var : public BaseVar
+{
+	Type value;
+
+	Var(const char* varname)
+	{
+		name = varname;
+		next = tail;
+		tail = this;
+	}
+
+
+	virtual void load(Json::Value& json_value)
+	{
+		JsonLoader<Type>::load(json_value, &value);
+	}
+	
+	virtual std::string value_string()
+	{
+		std::string val = std::to_string(value);
+		return val;
+	}
+};
+
+
+void put_new_json(const std::string& json_document)
+{
+	Json::Value root;
+	Json::Reader reader;
+	
+	bool success = reader.parse(json_document, root);
+	if (success)
+	{
+		// apply this to variables
+		Json::ValueIterator it = root.begin();
+		
+		size_t total_values_loaded = 0;
+		size_t missing_values = 0;
+		for( ; it != root.end(); ++it)
+		{
+			Json::Value key = it.key();
+			Json::Value value = (*it);
+
+			const std::string& name = key.asString();
+			BaseVar* v = find_by_name(name);
+			if (v)
+			{
+				v->load(value);
+				++total_values_loaded;
+			}
+			else
+			{
+				++missing_values;
+			}
+		}
+		
+		LOGV("loaded (%u/%u) values\n", total_values_loaded, (total_values_loaded+missing_values));
+	}
+}
+
+
+Var<float> meter("meter");
+Var<int> test("value_test");
 
 #ifdef USE_WEBSERVER
 	#include "civetweb.h"
@@ -55,11 +191,16 @@
 			
 			buf.resize(1024);
 			int bytes = mg_read(conn, &buf[0], 1024);
+			assert(bytes < 1024);
+
+			
 //			LOGV("read %i bytes, %s\n", bytes, buf.c_str());
 
+			put_new_json(buf);
+			
 			// On Error, we can return "400 Bad Request",
 			// but we'll have to provide a response body to describe why.
-
+			
 			std::string output = "204 No Content";
 			mg_write(conn, &output[0], output.length());
 
@@ -80,9 +221,6 @@
 	}
 #endif
 
-//#define SCENE_GRAPH_MANUAL 1
-
-#define USE_MESH_NODE_RENDERING 0
 
 class TestRender : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
@@ -249,6 +387,8 @@ public:
 		debugdraw::text(10, 36, xstr_format("camera.right = %.2g %.2g %.2g", camera.side.x, camera.side.y, camera.side.z), Color(255, 0, 0));
 		debugdraw::text(10, 48, xstr_format("frame_delta = %g", params.framedelta_raw_msec), Color(255, 255, 255));
 		debugdraw::text(10, 60, xstr_format("scene graph nodes = %i", total_scene_nodes_visited), Color(128, 128, 255));
+		
+		BaseVar::render_values(10, 72);
 
 
 #ifndef SCENE_GRAPH_MANUAL
