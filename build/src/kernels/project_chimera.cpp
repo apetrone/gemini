@@ -48,6 +48,45 @@
 
 #include "renderer/scenelink.h"
 
+#ifdef USE_WEBSERVER
+	#include "civetweb.h"
+	#include "CivetServer.h"
+
+	class TestHandler : public CivetHandler
+	{
+		virtual bool handlePut(CivetServer* server, struct mg_connection* conn)
+		{
+			const struct mg_request_info* request = mg_get_request_info(conn);
+			std::string buf;
+			
+			buf.resize(1024);
+			int bytes = mg_read(conn, &buf[0], 1024);
+//			LOGV("read %i bytes, %s\n", bytes, buf.c_str());
+
+			// On Error, we can return "400 Bad Request",
+			// but we'll have to provide a response body to describe why.
+
+			std::string output = "204 No Content";
+			mg_write(conn, &output[0], output.length());
+
+			return true;
+		}
+		
+		virtual bool handleDelete(CivetServer* server, struct mg_connection* conn)
+		{
+			return true;
+		}
+	};
+
+	static int log_message(const struct mg_connection *conn, const char *message)
+	{
+		(void) conn;
+		printf("%s\n", message);
+		return 0;
+	}
+#endif
+
+
 using namespace physics;
 
 //#define SCENE_GRAPH_MANUAL 1
@@ -73,13 +112,21 @@ public:
 	
 	renderer::SceneLink scenelink;
 	
+#ifdef USE_WEBSERVER
+	CivetServer* server;
+#endif
+	
 	ProjectChimera()
 	{
-		camera.type = Camera::TARGET;
+//		camera.type = Camera::TARGET;
 		animation = 0;
 		player = 0;
 		character = 0;
 		root = 0;
+		
+#ifdef USE_WEBSERVER
+		server = 0;
+#endif
 	}
 	
 	virtual void event( kernel::KeyboardEvent & event )
@@ -94,16 +141,6 @@ public:
 			{
 #ifdef SCENE_GRAPH_MANUAL
 				root->update(kernel::instance()->parameters().step_interval_seconds);
-#else
-				scenegraph::SkeletalNode* sn = CREATE(scenegraph::SkeletalNode);
-				sn->load_mesh("models/test", true);
-				glm::vec3 pos;
-				pos.x = util::random_range(-5, 5);
-				pos.y = util::random_range(-5, 5);
-				pos.z = util::random_range(-5, 5);
-				sn->local_position = pos;
-				sn->setup_skeleton();
-				root->add_child(sn);
 #endif
 			}
 			else if (event.key == input::KEY_J)
@@ -174,6 +211,20 @@ public:
 		
 		character = physics::create_character_controller(btVector3(0, 5, 0), false);
 		
+#ifdef USE_WEBSERVER
+		struct mg_callbacks cb;
+		memset(&cb, 0, sizeof(mg_callbacks));
+		cb.log_message = log_message;
+		
+		const char* options[] = {
+			"listening_ports", "1983",
+			"request_timeout_ms", "10",
+			0
+		};
+		
+		server = CREATE(CivetServer, options, &cb);
+		server->addHandler("/json", new TestHandler());
+#endif
 		
 		
 		animation = CREATE(assets::Shader);
@@ -212,12 +263,12 @@ public:
 		skydome->local_position = glm::vec3(0, -50, 0);
 		root->add_child(skydome);
 
-		scenegraph::SkeletalNode* sn = 0;
-		sn = CREATE(scenegraph::SkeletalNode);
-		sn->load_mesh("models/test2", false);
-		sn->setup_skeleton();
-		sn->local_position = glm::vec3(0, 1, 0);
-		root->add_child(sn);
+//		scenegraph::SkeletalNode* sn = 0;
+//		sn = CREATE(scenegraph::SkeletalNode);
+//		sn->load_mesh("models/test2", false);
+//		sn->setup_skeleton();
+//		sn->local_position = glm::vec3(0, 1, 0);
+//		root->add_child(sn);
 
 //		scenegraph::MeshNode* test5 = 0;
 //		test5 = CREATE(scenegraph::MeshNode);
@@ -226,7 +277,7 @@ public:
 		
 		scenegraph::MeshNode* ground = 0;
 		ground = CREATE(scenegraph::MeshNode);
-		ground->load_mesh("models/ground", true);
+		ground->load_mesh("models/vapor", true);
 		root->add_child(ground);
 //		ground->visible = false;
 
@@ -250,7 +301,7 @@ public:
 		
 		debugdraw::startup(1024);
 
-		camera.target_lookatOffset = glm::vec3(0, 0, 5);
+		camera.target_lookatOffset = glm::vec3(0, 0, 1);
 		
 		camera.perspective( 50.0f, params.render_width, params.render_height, 0.1f, 8192.0f );
 		// This is appropriate for drawing 3D models, but not sprites
@@ -380,6 +431,10 @@ public:
 	
 	virtual void shutdown( kernel::Params & params )
 	{
+#ifdef USE_WEBSERVER
+		DESTROY(CivetServer, server);
+#endif
+	
 		DESTROY(Node, root);
 		
 		entity_shutdown();

@@ -80,7 +80,7 @@ def setup_common_tool(product):
 	]	
 
 
-def setup_common_libs(product):
+def setup_common_libs(arguments, product):
 
 	product.defines += [
 		"JSON_IS_AMALGAMATION"
@@ -98,7 +98,6 @@ def setup_common_libs(product):
 
 		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.c"),
 		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.h"),
-
 
 #		"src/util.cpp",
 #		"src/core/mem.cpp"
@@ -120,6 +119,21 @@ def setup_common_libs(product):
 	product.dependencies += [
 		Dependency(file="glm.py")
 	]
+
+	if arguments.with_civet:
+		product.defines += [
+			"USE_WEBSERVER=1"
+		]
+
+		product.sources += [
+			os.path.join(DEPENDENCIES_FOLDER, "civetweb/src/CivetServer.cpp"),
+			os.path.join(DEPENDENCIES_FOLDER, "civetweb/src/civetweb.c"),			
+			os.path.join(DEPENDENCIES_FOLDER, "civetweb/include/*.h")
+		]
+
+		product.includes += [
+			os.path.join(DEPENDENCIES_FOLDER, "civetweb/include")
+		]
 
 	linux = product.layout(platform="linux")
 	linux.links += [
@@ -251,6 +265,7 @@ def arguments(parser):
 	parser.add_argument("--indextype", dest="index_type", choices=["uint", "ushort"], type=str, default="uint", help="Set the IndexBuffer type; defaults to uint")
 	parser.add_argument("--with-xwl", dest="with_xwl", action="store_true", help="Build with xwl", default=False)
 	parser.add_argument("--with-sdl2", dest="with_sdl2", action="store_true", help="Build with SDL2", default=True)
+	parser.add_argument("--with-civet", dest="with_civet", action="store_true", help="Build with CivetServer", default=True)
 
 def products(arguments, **kwargs):
 	# global params will be inherited by all dependent products
@@ -276,7 +291,7 @@ def products(arguments, **kwargs):
 	gemini.product_root = COMMON_PRODUCT_ROOT
 	gemini.object_root = "obj"
 
-	setup_common_libs(gemini)
+	setup_common_libs(arguments, gemini)
 
 	gemini.dependencies += [
 		Dependency(file="sqrat.py"),
