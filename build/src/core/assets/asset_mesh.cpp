@@ -72,7 +72,9 @@ namespace assets
 		
 		Json::ValueIterator mit = materials.begin();
 		
-		unsigned int * material_ids = CREATE_ARRAY( unsigned int, materials.size() );
+		FixedArray<unsigned int> material_ids;
+		material_ids.allocate(materials.size());
+		
 		unsigned int total_materials_read = 0;
 		assets::Material * amat = 0;
 		for( ; mit != materials.end(); ++mit )
@@ -102,8 +104,8 @@ namespace assets
 		Json::Value geometry_list = root["geometry"];
 		//		LOGV( "Total Geometry: %i\n", geometry_list.size() );
 		mesh->total_geometry = geometry_list.size();
-		mesh->geometry = CREATE_ARRAY( Geometry, mesh->total_geometry );
-		mesh->geometry_vn = CREATE_ARRAY( Geometry, mesh->total_geometry );
+		mesh->geometry.allocate(mesh->total_geometry);
+		mesh->geometry_vn.allocate(mesh->total_geometry);
 		
 		Geometry * geometry;
 		int gid = 0;
@@ -290,7 +292,7 @@ namespace assets
 		
 		if (mesh->total_bones > 0)
 		{
-			mesh->bones = CREATE_ARRAY(Bone, mesh->total_bones);
+			mesh->bones.allocate(mesh->total_bones);
 			
 			Bone* bone = &mesh->bones[0];
 			Json::ValueIterator bone_it = bone_list.begin();
@@ -378,10 +380,7 @@ namespace assets
 
 			}
 		}
-		
-		
-		DEALLOC( material_ids );
-		
+	
 		return util::ConfigLoad_Success;
 	} // mesh_load_from_json
 	
@@ -662,42 +661,24 @@ namespace assets
 
 	Mesh::Mesh()
 	{
-		init();
+		reset();
 	} // Mesh
 	
-	void Mesh::init()
+	void Mesh::reset()
 	{
 		total_geometry = 0;
-		geometry = 0;
-		geometry_vn = 0;
-		
 		total_bones = 0;
-		bones = 0;
 	} // init
 	
-	void Mesh::alloc( unsigned int num_geometry )
-	{
-		total_geometry = num_geometry;
-		//		geometry = CREATE_ARRAY( Geometry,  num_geometry );
-	} // alloc
-	
-	void Mesh::purge()
-	{
-		DESTROY_ARRAY( Geometry, geometry, total_geometry );
-		geometry = 0;
-		
-		DESTROY_ARRAY( Geometry, geometry_vn, total_geometry );
-		geometry_vn = 0;
-
-		DESTROY_ARRAY(Bone, bones, total_bones);
-		bones = 0;
-		
-		init();
-	} // purge
+//	void Mesh::alloc( unsigned int num_geometry )
+//	{
+//		total_geometry = num_geometry;
+//		//		geometry = CREATE_ARRAY( Geometry,  num_geometry );
+//	} // alloc
 	
 	void Mesh::release()
 	{
-		purge();
+		reset();
 	} // release
 	
 	void Mesh::prepare_geometry()
@@ -707,49 +688,10 @@ namespace assets
 		for( unsigned int geo_id = 0; geo_id < total_geometry; ++geo_id )
 		{
 			assets::Geometry * g = &geometry[ geo_id ];
-
-			LOGV("geo: %s, material: %i\n", g->name(), g->material_id);
 			g->render_setup();
 		}
 	} // prepare_geometry
-	
-	//	unsigned int get_total_meshes()
-	//	{
-	//		return mesh_lib->total_asset_count();
-	//	} // get_total_meshes
-	//
-	//	Mesh * load_mesh( const char * filename, unsigned int flags, bool ignore_cache )
-	//	{
-	//		return mesh_lib->load_from_path( filename, 0, ignore_cache );
-	//	} // load_mesh
-	
-	//	void for_each_mesh( MeshIterator fn, void * userdata )
-	//	{
-	//		if ( !fn )
-	//		{
-	//			LOGE( "Invalid mesh iterator function!\n" );
-	//			return;
-	//		}
-	//
-	//		mesh_lib->for_each( fn, userdata );
-	//	} // for_each_mesh
-	
-	
-	//	void insert_mesh( const char * filename, Mesh * ptr )
-	//	{
-	//		if ( !mesh_lib->find_with_path( filename ) )
-	//		{
-	//			mesh_lib->take_ownership( filename, ptr );
-	//		}
-	//	} // insert_mesh
-	
-	//	Mesh * mesh_by_name( const char * filename )
-	//	{
-	//		return mesh_lib->find_with_path( filename );
-	//	} // mesh_by_name
-	//
-	
-	
+
 	AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, const AssetParameters & parameters )
 	{
 		if ( util::json_load_with_callback(path, mesh_load_from_json, mesh, true ) == util::ConfigLoad_Success )

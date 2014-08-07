@@ -148,3 +148,27 @@ class HashTable
 ```
 
 - Header names should not clash with standard headers. 
+
+
+#### Terminology
+
+One principle of strong API design is consistency and intuition. If your user knows your API, they can begin to infer how to use it. In the past, as code is generally written over years, I've mixed up
+terminology and conventions. Create vs Add vs Make vs New, etc.
+
+Here, we'll create general categories and outline usage which should be changed (for non-compliant code) and serve as a baseline for future additions.
+
+* Conventions and prefixes:
+
+	"total_" - This is used to describe how many items there are. Perhaps this keeps track of bones in a mesh.
+	"total_bones", for example.
+
+##### Memory Allocation
+create - construct a new object (calls constructor)
+destroy - delete an object (calls destructor)
+allocate - allocate memory on the heap
+deallocate - deallocates previously allocated memory
+
+##### Member Functions
+
+	reset - Used to reset instance state; set variables to zero, free memory, etc.
+	init - Used to create instance data

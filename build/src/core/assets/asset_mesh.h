@@ -105,18 +105,18 @@ namespace assets
 	struct Mesh : public Asset
 	{
 		unsigned short total_geometry;
-		Geometry * geometry;
-		Geometry * geometry_vn;
+		FixedArray<Geometry> geometry;
+		FixedArray<Geometry> geometry_vn;
+		FixedArray<Bone> bones;
 		glm::mat4 world_matrix;
 		StackString<MAX_PATH_SIZE> path;
 		
 		unsigned short total_bones;
-		Bone* bones;
 		
 		Mesh();
-		void init();
-		void alloc( unsigned int num_geometry );
-		void purge();
+		void reset();
+		
+//		void alloc( unsigned int num_geometry );
 		virtual void release();
 		
 		// prepare all geometry
