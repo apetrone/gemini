@@ -135,16 +135,16 @@ namespace assets
 			if ( material_id != -1 && total_materials_read > 0 /*&& material_id < current_material*/ )
 			{
 				geometry->material_id = material_ids[ material_id ];
-				LOGV( "using material %i %i\n", material_id, geometry->material_id );
+//				LOGV( "using material %i %i\n", material_id, geometry->material_id );
 			}
 			else
 			{
-				LOGV("using default material!\n");
+//				LOGV("using default material!\n");
 				Material * default_material = assets::materials()->get_default();
 				geometry->material_id = default_material->Id();
 			}
 			
-			LOGV( "geometry: %i, material_id: %i, name: %s\n", gid-1, material_id, geometry->name() );
+//			LOGV( "geometry: %i, material_id: %i, name: %s\n", gid-1, material_id, geometry->name() );
 //			LOGV( "# vertices: %i\n", positions.size()/3 );
 //			LOGV( "# indices: %i\n", indices.size() );
 //			LOGV( "# triangles: %i\n", indices.size()/3 );

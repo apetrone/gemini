@@ -54,7 +54,7 @@ namespace assets
 //		FixedArray<glm::vec3> untransformed_vertices;
 	}; // Geometry
 	
-		
+
 	// TEMP struct to test the whole shebang.
 	struct AnimationData
 	{
