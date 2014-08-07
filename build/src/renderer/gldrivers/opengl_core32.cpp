@@ -31,8 +31,10 @@
 
 #include "assets.h"
 
+
+
 // utility functions
-GLenum image_to_source_format( int num_channels )
+GLenum image_source_format( int num_channels )
 {
 	if ( num_channels == 3 )
 	{
@@ -48,9 +50,9 @@ GLenum image_to_source_format( int num_channels )
 	}
 	
 	return GL_RGBA;
-} // image_to_source_format
+} // image_source_format
 
-GLenum image_to_internal_format( unsigned int image_flags )
+GLenum image_internal_format( unsigned int image_flags )
 {
 	//GLenum internalFormat = GL_SRGB8;
 	if ( image_flags & image::F_RGBA )
@@ -63,7 +65,21 @@ GLenum image_to_internal_format( unsigned int image_flags )
 	}
 	
 	return GL_RGBA;
-} // image_to_internal_format
+} // image_internal_format
+
+GLenum srgb_image_to_internal_format(unsigned int image_flags)
+{
+	if (image_flags & image::F_RGBA)
+	{
+		return GL_SRGB8_ALPHA8;
+	}
+	else if (image_flags & image::F_ALPHA)
+	{
+		return GL_RED;
+	}
+	
+	return GL_SRGB8_ALPHA8;
+}
 
 #define FAIL_IF_GLERROR( error ) if ( error != GL_NO_ERROR ) { return false; }
 using namespace renderer;
@@ -252,6 +268,8 @@ GLCore32::GLCore32()
 	
 	gemgl_startup( gl, config );
 	last_shader = 0;
+	
+	image_to_internal_format = image_internal_format;
 }
 
 GLCore32::~GLCore32()
@@ -528,6 +546,17 @@ render_command_function commands[] = {
 };
 
 
+void GLCore32::init_with_settings(const RenderSettings& settings)
+{
+	enable_gamma_correct = settings.gamma_correct;
+	if (settings.gamma_correct)
+	{
+		gl.Enable( GL_FRAMEBUFFER_SRGB );
+		
+		image_to_internal_format = ::srgb_image_to_internal_format;
+	}
+}
+
 void GLCore32::run_command( renderer::DriverCommandType command, MemoryStream & stream )
 {
 	commands[ (command*2) ]( stream, *this );
@@ -549,7 +578,7 @@ void GLCore32::setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStre
 
 bool GLCore32::upload_texture_2d( renderer::TextureParameters & parameters )
 {
-	GLenum source_format = image_to_source_format( parameters.channels );
+	GLenum source_format = image_source_format( parameters.channels );
 	GLenum internal_format = image_to_internal_format( parameters.image_flags );
 	GLenum error = GL_NO_ERROR;
 	
@@ -563,7 +592,7 @@ bool GLCore32::upload_texture_2d( renderer::TextureParameters & parameters )
 		LOGE( "request to upload_texture_2d failed: not an image!\n" );
 		return false;
 	}
-		
+
 	if ( parameters.image_flags & image::F_CLAMP )
 	{
 		gl.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );

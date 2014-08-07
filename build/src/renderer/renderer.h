@@ -343,6 +343,20 @@ namespace renderer
 {
 	struct VertexStream;
 	
+	
+	struct RenderSettings
+	{
+		// enable gamma correct rendering
+		bool gamma_correct;
+		
+		// try to establish some sane defaults
+		RenderSettings() :
+			gamma_correct(false)
+		{
+		}
+		
+	};
+	
 	//
 	// IRenderDriver
 	// The render driver acts as a command processor. The implementation details are up to the driver
@@ -352,6 +366,9 @@ namespace renderer
 	public:
 		virtual ~IRenderDriver() {}
 		virtual const char * description() = 0;
+		
+		
+		virtual void init_with_settings(const renderer::RenderSettings& settings) = 0;
 		
 		// these commands are called with the command and current memory stream
 		virtual void run_command( DriverCommandType command, MemoryStream & stream ) = 0;

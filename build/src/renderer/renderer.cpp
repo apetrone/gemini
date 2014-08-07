@@ -20,12 +20,12 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <gemini/typedefs.h>
+#include <gemini/util/configloader.h>
+#include <slim/xstr.h>
 #include <slim/xlog.h>
+
 #include "renderer.h"
 #include "factory.h"
-#include <slim/xstr.h>
-
-
 
 // compile-time selection of these classes starts here.
 
@@ -51,6 +51,20 @@ namespace renderer
 	IRenderDriver * _render_driver = 0;
 	
 	IRenderDriver * driver() { return _render_driver; }
+	
+	
+	util::ConfigLoadStatus load_render_config(const Json::Value& root, void* data)
+	{
+		RenderSettings* settings = static_cast<RenderSettings*>(data);
+		
+		// TODO: there should be a better way to do this?
+		if (!root["gamma_correct"].isNull())
+		{
+			settings->gamma_correct = root["gamma_correct"].asBool();
+		}
+	
+		return util::ConfigLoad_Success;
+	}
 	
 	int startup( DriverType driver_type )
 	{
@@ -79,6 +93,13 @@ namespace renderer
 			if ( _render_driver )
 			{
 				LOGV( "Initialized renderer: '%s'\n", _render_driver->description() );
+				
+				RenderSettings settings;
+				util::json_load_with_callback("conf/render.conf", load_render_config, &settings, true);
+				
+				// init render driver settings
+				_render_driver->init_with_settings(settings);
+				
 				return 1;
 			}
 		}

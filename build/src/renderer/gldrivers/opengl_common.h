@@ -29,6 +29,7 @@
 
 #include "renderer/gemgl.h" // for GLObject
 
+typedef GLenum (*get_internal_image_format)(unsigned int);
 
 GLenum vertexbuffer_drawtype_to_gl_drawtype( renderer::VertexBufferDrawType type );
 GLenum vertexbuffer_buffertype_to_gl_buffertype( renderer::VertexBufferBufferType type );

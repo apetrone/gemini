@@ -32,6 +32,8 @@ class GLCore32 : public renderer::IRenderDriver
 
 
 	GLObject last_shader;
+	bool enable_gamma_correct;
+	get_internal_image_format image_to_internal_format;
 	
 	// metrics
 //	unsigned int shader_changes;
@@ -42,6 +44,8 @@ public:
 	~GLCore32();
 	
 	virtual const char * description() { return "OpenGL Core 3.2"; }
+	
+	virtual void init_with_settings(const renderer::RenderSettings& settings);
 	
 	virtual void run_command( renderer::DriverCommandType command, MemoryStream & stream );
 	virtual void post_command( renderer::DriverCommandType command, MemoryStream & stream );
