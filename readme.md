@@ -31,7 +31,7 @@ See license.md for details.
 
 - Linux (Ubuntu, Arch Linux)
 - MacOS X
-- Windows (sigh)
+- Windows
 - iOS
 - Android
 
