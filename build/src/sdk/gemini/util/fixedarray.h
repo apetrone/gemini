@@ -27,7 +27,7 @@ template <class Type>
 class FixedArray
 {
 	Type *elements;
-	size_t element_count;
+	size_t total_elements;
 	
 	FixedArray(const FixedArray<Type>& other) {}
 	FixedArray<Type> & operator=(const FixedArray<Type>& other) {}
@@ -36,7 +36,7 @@ private:
 	void assert_valid_index(size_t index)
 	{
 		assert( elements != 0 );
-		assert( index >= 0 && index < element_count );
+		assert( index >= 0 && index < total_elements );
 	}
 	
 public:
@@ -44,7 +44,7 @@ public:
 	FixedArray()
 	{
 		elements = 0;
-		element_count = 0;
+		total_elements = 0;
 	} // FixedArray
 	
 	~FixedArray()
@@ -54,44 +54,36 @@ public:
 	
 	size_t size() const
 	{
-		return element_count;
+		return total_elements;
 	} // size
 	
 	bool empty() const
 	{
-		return (element_count == 0);
+		return (total_elements == 0);
 	}
 	
 	void clear()
 	{
 		if ( elements )
 		{
-// 			This doesn't work. I suck at memory code.
-			DESTROY_ARRAY(Type, elements, element_count);
-//			Type * element;
-//			for( size_t index = 0; index < element_count; ++index )
-//			{
-//				element = elements[index];
-//				if ( element )
-//				{
-//					DESTROY(Type, element);
-//				}
-//			}
-			
-			DEALLOC(elements);
-			elements = 0;
-			element_count = 0;
+			DESTROY_ARRAY(Type, elements, total_elements);
+			total_elements = 0;
 		}
 	} // clear
 	
-	void allocate(size_t total_elements)
+	void allocate(size_t element_total, bool zero_memory = false)
 	{
 		clear();
-		element_count = total_elements;
+		total_elements = element_total;
 		
 		// allocate space for the pointers
-		elements = (Type*)ALLOC( sizeof(Type) * element_count );
-		memset(elements, 0, sizeof(Type) * element_count);
+		elements = CREATE_ARRAY(Type, total_elements);
+
+		// optionally, zero the new memory
+		if (zero_memory)
+		{
+			memset(elements, 0, sizeof(Type) * total_elements);
+		}
 	} // allocate
 	
 	Type& operator[](size_t index)
