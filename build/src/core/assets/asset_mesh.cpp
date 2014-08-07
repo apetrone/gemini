@@ -43,7 +43,6 @@ namespace assets
 			m[i] = item.asFloat();
 		}
 		
-		
 		return glm::mat4(
 			m[0], m[1], m[2], m[3],
 			m[4], m[5], m[6], m[7],
@@ -102,13 +101,12 @@ namespace assets
 		}
 		
 		Json::Value geometry_list = root["geometry"];
-		//		LOGV( "Total Geometry: %i\n", geometry_list.size() );
+//		LOGV( "Total Geometry: %i\n", geometry_list.size() );
 		mesh->geometry.allocate(geometry_list.size());
-		mesh->geometry_vn.allocate(geometry_list.size());
 		
 		Geometry * geometry;
 		int gid = 0;
-		//		int vnid = 0;
+//		int vnid = 0;
 		Json::ValueIterator git = geometry_list.begin();
 		for( ; git != geometry_list.end(); ++git )
 		{
@@ -246,6 +244,7 @@ namespace assets
 			//
 			// setup debug normals now
 #if 0
+			mesh->geometry_vn.allocate(geometry_list.size());
 			if ( geometry->normals )
 			{
 				
@@ -370,8 +369,6 @@ namespace assets
 						
 						
 						Json::Value jkeys = jnode["keys"];
-						//read_keys_array(mesh, jkeys);
-//						read_keys_object(mesh, bone_name, jkeys);
 						read_keys_object(anim, bone, jkeys);
 					}
 				}
@@ -474,41 +471,7 @@ namespace assets
 		read_quat_keys(rotation_channel, rotation);
 		read_vector_keys(translation_channel, translation);
 	}
-	
-#if 0
-	void read_keys_array(assets::Mesh* mesh, Json::Value& jkeys)
-	{
-		
-		Json::ValueIterator jkey_it = jkeys.begin();
-		size_t frame_id = 0;
-		LOGV("loading %i frames...\n", jkeys.size());
-		
-		mesh->animation.total_frames = jkeys.size();
-		
-		mesh->animation.scale.keys.allocate(mesh->animation.total_frames);
-		mesh->animation.rotation.keys.allocate(mesh->animation.total_frames);
-		mesh->animation.translation.keys.allocate(mesh->animation.total_frames);
-		
-		for( ; jkey_it != jkeys.end(); ++jkey_it, ++frame_id)
-		{
-			Json::Value matrix = *jkey_it;
-			glm::mat4 mat = json_to_mat4(matrix);
-			
-			// I don't think it means what you think it means.
-			glm::vec3& scale = mesh->animation.scale.keys[frame_id];
-			scale = glm::vec3(mat[0][0], mat[1][1], mat[2][2]);
-			LOGV("scale = %g %g %g\n", scale.x, scale.y, scale.z);
-			
-			glm::quat& rotation = mesh->animation.rotation.keys[frame_id];
-			rotation = glm::toQuat(mat);
-			
-			glm::vec3& translate = mesh->animation.translation.keys[frame_id];
-			translate = glm::vec3(mat[3]);
-		}
-	}
-#endif
-	
-	
+
 	void mesh_construct_extension( StackString<MAX_PATH_SIZE> & extension )
 	{
 		extension = ".model";
