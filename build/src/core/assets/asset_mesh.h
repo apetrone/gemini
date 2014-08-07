@@ -104,7 +104,6 @@ namespace assets
 	
 	struct Mesh : public Asset
 	{
-		unsigned short total_geometry;
 		FixedArray<Geometry> geometry;
 		FixedArray<Geometry> geometry_vn;
 		FixedArray<Bone> bones;
@@ -115,15 +114,11 @@ namespace assets
 		
 		Mesh();
 		void reset();
-		
-//		void alloc( unsigned int num_geometry );
+
 		virtual void release();
 		
 		// prepare all geometry
 		void prepare_geometry();
-		
-		// upload all geometry
-		//		void upload_geometry();
 		
 		// For now, we only have room for a single animation -- so make it worthwhile.
 		AnimationData animation;

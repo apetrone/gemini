@@ -57,7 +57,7 @@ namespace scenegraph
 			
 			// using this node as the parent node; we create render nodes as children
 			
-			for (size_t id = 0; id < mesh->total_geometry; ++id)
+			for (size_t id = 0; id < mesh->geometry.size(); ++id)
 			{
 
 				assets::Geometry* geometry = &mesh->geometry[id];

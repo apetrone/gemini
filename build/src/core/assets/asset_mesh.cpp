@@ -103,9 +103,8 @@ namespace assets
 		
 		Json::Value geometry_list = root["geometry"];
 		//		LOGV( "Total Geometry: %i\n", geometry_list.size() );
-		mesh->total_geometry = geometry_list.size();
-		mesh->geometry.allocate(mesh->total_geometry);
-		mesh->geometry_vn.allocate(mesh->total_geometry);
+		mesh->geometry.allocate(geometry_list.size());
+		mesh->geometry_vn.allocate(geometry_list.size());
 		
 		Geometry * geometry;
 		int gid = 0;
@@ -661,14 +660,8 @@ namespace assets
 
 	Mesh::Mesh()
 	{
-		reset();
 	} // Mesh
-	
-	void Mesh::reset()
-	{
-		total_geometry = 0;
-		total_bones = 0;
-	} // init
+
 	
 //	void Mesh::alloc( unsigned int num_geometry )
 //	{
@@ -678,14 +671,13 @@ namespace assets
 	
 	void Mesh::release()
 	{
-		reset();
 	} // release
 	
 	void Mesh::prepare_geometry()
 	{
-		assert(total_geometry != 0);
+		assert(geometry.size() != 0);
 		
-		for( unsigned int geo_id = 0; geo_id < total_geometry; ++geo_id )
+		for( unsigned int geo_id = 0; geo_id < geometry.size(); ++geo_id )
 		{
 			assets::Geometry * g = &geometry[ geo_id ];
 			g->render_setup();

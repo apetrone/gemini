@@ -296,7 +296,7 @@ namespace physics
 			return;
 		}
 		
-		for( int i = 0; i < mesh->total_geometry; ++i )
+		for( int i = 0; i < mesh->geometry.size(); ++i )
 		{
 			assets::Geometry* geo = &mesh->geometry[ i ];
 			
