@@ -27,7 +27,7 @@ and attempt to build the docs in formatted HTML. After this is
 built, open "docs/html/index.html"
 
 ```python
-python bootstrap/bootstrap.py --build-docs
+python tools/bootstrap.py
 ```
 
 See the documentation for more details on ideology, building, and code style.
