@@ -10,6 +10,8 @@ Contents:
    design_philosophy
    codestyle
    building
+   
+   assets
 
 Indices and tables
 ==================
