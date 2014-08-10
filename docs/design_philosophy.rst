@@ -1,5 +1,5 @@
 Software Design Philosophy
-------------------
+---------------------------
 
 Without proper direction, entropy takes over and guides us. Design principles
 and philosophy enforce a structure which can be followed in an effort to
