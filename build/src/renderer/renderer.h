@@ -28,6 +28,8 @@
 #include "image.h"
 #include <gemini/mathlib.h> // for glm
 
+#include <gemini/util/fixedarray.h>
+
 namespace renderer
 {
 	enum DriverType
@@ -303,14 +305,14 @@ namespace renderer
 			
 		// if vertex_count > 0 and these pointers are not null
 		// they will be vertex_count in length.
-		glm::vec3* vertices;
-		glm::vec3* normals;
-		Color* colors;
-		UV* uvs;
-		glm::vec4* blend_indices;
-		glm::vec4* blend_weights;
+		FixedArray<glm::vec3> vertices;
+		FixedArray<glm::vec3> normals;
+		FixedArray<Color> colors;
+		FixedArray< FixedArray<UV> > uvs;
+		FixedArray<glm::vec4> blend_indices;
+		FixedArray<glm::vec4> blend_weights;
+		FixedArray<renderer::IndexType> indices;
 		
-		renderer::IndexType* indices;
 		renderer::VertexBuffer* vertexbuffer;
 		renderer::VertexBufferDrawType draw_type;
 		

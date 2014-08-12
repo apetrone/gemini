@@ -832,6 +832,9 @@ void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, render
 	parameter = "uv0";
 	unsigned int uv0_mask = assets::find_parameter_mask( parameter );
 	
+	parameter = "uv1";
+	unsigned int uv1_mask = assets::find_parameter_mask( parameter );
+	
 	parameter = "hardware_skinning";
 	unsigned int skinning_mask = assets::find_parameter_mask( parameter );
 	
@@ -851,7 +854,12 @@ void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, render
 
 		if ( geometry->attributes & uv0_mask )
 		{
-			ms.write( &geometry->uvs[ vertex_id ], sizeof(renderer::UV) );
+			ms.write( &geometry->uvs[0][ vertex_id ], sizeof(renderer::UV) );
+		}
+
+		if ( geometry->attributes & uv1_mask )
+		{
+			ms.write( &geometry->uvs[1][ vertex_id ], sizeof(renderer::UV) );
 		}
 		
 		if ( geometry->attributes & skinning_mask )
@@ -867,7 +875,7 @@ void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, render
 	
 	if ( geometry->index_count > 0 )
 	{
-		stream->upload_index_array( geometry->indices, geometry->index_count );
+		stream->upload_index_array( &geometry->indices[0], geometry->index_count );
 	}
 	
 	gl.BindVertexArray( 0 );

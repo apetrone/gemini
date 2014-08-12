@@ -20,6 +20,11 @@ out vec4 out_Color;
 	in vec2 ps_uv0;
 #endif
 
+#if defined(D_VERTEX_UV1) && defined(D_LIGHTMAP)
+	in vec2 ps_uv1;
+	uniform sampler2D lightmap;
+#endif
+
 #ifdef D_DIFFUSE_MAP
 	uniform sampler2D diffusemap;
 #endif
@@ -78,6 +83,10 @@ void main()
 	color = texture( diffusemap, ps_uv0 );
 #elif defined(D_CUBEMAP)
 	color = texture( cubemap, ps_CubeVertex );
+#endif
+
+#if defined(D_VERTEX_UV1) && defined(D_LIGHTMAP)
+	color *= texture( lightmap, ps_uv1 );
 #endif
 
 #if defined(D_DIFFUSE_COLOR)

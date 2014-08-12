@@ -213,6 +213,34 @@ Var<int> test("value_test");
 		}
 	};
 
+
+	class ReloadHandler : public CivetHandler
+	{
+		virtual bool handlePut(CivetServer* server, struct mg_connection* conn)
+		{
+			const struct mg_request_info* request = mg_get_request_info(conn);
+			std::string buf;
+			
+			buf.resize(1024);
+			int bytes = mg_read(conn, &buf[0], 1024);
+			assert(bytes < 1024);
+			
+			
+//			LOGV("read %i bytes, %s\n", bytes, buf.c_str());
+			
+			LOGV("reload: %s\n", buf.c_str());
+			//put_new_json(buf);
+			
+			// On Error, we can return "400 Bad Request",
+			// but we'll have to provide a response body to describe why.
+			
+			std::string output = "204 No Content";
+			mg_write(conn, &output[0], output.length());
+			
+			return true;
+		}
+	};
+
 	static int log_message(const struct mg_connection *conn, const char *message)
 	{
 		(void) conn;
@@ -333,36 +361,35 @@ public:
 		
 		server = CREATE(CivetServer, options, &cb);
 		server->addHandler("/json", new TestHandler());
+		server->addHandler("/reload", new ReloadHandler());
 #endif
 		
 
 		root = CREATE(scenegraph::Node);
 		root->name = "scene_root";
 		
-		scenegraph::MeshNode* skydome = 0;
-		skydome = CREATE(scenegraph::MeshNode);
-		assets::Material* colormat = assets::materials()->load_from_path("materials/skydome");
-		skydome->load_mesh("models/skydome", false, 0);
-		// make it extend slightly below ground level
-		skydome->local_position = glm::vec3(0, -50, 0);
-		root->add_child(skydome);
+//		scenegraph::MeshNode* skydome = 0;
+//		skydome = CREATE(scenegraph::MeshNode);
+//		assets::Material* colormat = assets::materials()->load_from_path("materials/skydome");
+//		skydome->load_mesh("models/skydome", false, 0);
+//		// make it extend slightly below ground level
+//		skydome->local_position = glm::vec3(0, -50, 0);
+//		root->add_child(skydome);
 
 		
 		scenegraph::MeshNode* ground = 0;
 		ground = CREATE(scenegraph::MeshNode);
-		ground->load_mesh("models/vapor", false);
+		ground->load_mesh("models/plane", false);
 		root->add_child(ground);
 //		ground->visible = false;
 
-				
 		debugdraw::startup(1024);
 
 		camera.target_lookatOffset = glm::vec3(0, 0, 1);
-		
 		camera.perspective( 50.0f, params.render_width, params.render_height, 0.1f, 8192.0f );
 		
 		// This is appropriate for drawing 3D models, but not sprites
-		camera.set_absolute_position( glm::vec3(8, 5, 8.0f) );
+		camera.set_absolute_position( glm::vec3(1, 1, 1.0f) );
 		camera.yaw = -45;
 		camera.pitch = 30;
 		camera.update_view();

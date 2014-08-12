@@ -34,6 +34,11 @@ in vec4 in_Position;
 	out vec2 ps_uv0;
 #endif
 
+#if defined(D_VERTEX_UV1) && defined(D_LIGHTMAP)
+	in vec2 in_UV1;
+	out vec2 ps_uv1;
+#endif
+
 #if defined(D_LIGHT_POSITION)
 	uniform vec3 lightPosition;
 	out vec3 lightDirection;
@@ -69,6 +74,10 @@ void main()
 
 #if defined(D_VERTEX_UV0) && defined(D_DIFFUSE_MAP) || defined(D_SPECULAR_MAP)
 	ps_uv0 = in_UV0;
+#endif
+
+#if defined(D_VERTEX_UV1) && defined(D_LIGHTMAP)
+	ps_uv1 = in_UV1;
 #endif
 
 #if defined(D_HARDWARE_SKINNING)

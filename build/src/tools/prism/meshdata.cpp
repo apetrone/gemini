@@ -378,13 +378,22 @@ namespace prism
 		
 		LOGV("\tread mesh: \"%s\"\n", mesh->mName.C_Str());
 //		LOGV("inspecting mesh: %i, \"%s\"\n", m, mesh->mName.C_Str());
-		//		LOGV("\tvertices: %i\n", mesh->mNumVertices);
-		//		LOGV("\tfaces: %i\n", mesh->mNumFaces);
-		//		LOGV("\tbones: %i\n", mesh->mNumBones);
+		LOGV("\tvertices: %i\n", mesh->mNumVertices);
+		LOGV("\tfaces: %i\n", mesh->mNumFaces);
+		LOGV("\tbones: %i\n", mesh->mNumBones);
+		LOGV("\tuv channels: %i\n", mesh->GetNumUVChannels());
+		LOGV("\tcolor channels: %i\n", mesh->GetNumColorChannels());
 		
 		read_bones(info.env, mesh, info.bones_array, jblend_weights);
 
 		jgeometry["blend_weights"] = jblend_weights;
+
+		// allocate uvs
+		for(unsigned int i = 0; i < mesh->GetNumUVChannels(); ++i)
+		{
+			Json::Value array(Json::arrayValue);
+			juvs.append(array);
+		}
 
 
 		for(unsigned int vertex = 0; vertex < mesh->mNumVertices; ++vertex)
@@ -408,11 +417,16 @@ namespace prism
 			jnormals.append(tr_normal.y);
 			jnormals.append(tr_normal.z);
 			
-			if (mesh->HasTextureCoords(0))
+			for (unsigned int uv_index = 0; uv_index < mesh->GetNumUVChannels(); ++uv_index)
 			{
-				const aiVector3D & uv = mesh->mTextureCoords[0][vertex];
-				juvs.append(uv.x);
-				juvs.append(uv.y);
+				if (mesh->HasTextureCoords(uv_index))
+				{
+					const aiVector3D & uv = mesh->mTextureCoords[uv_index][vertex];
+					Json::Value& uv_array = juvs[uv_index];
+					
+					uv_array.append(uv.x);
+					uv_array.append(uv.y);
+				}
 			}
 			
 			if (mesh->HasVertexColors(0))

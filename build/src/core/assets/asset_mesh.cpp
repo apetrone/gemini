@@ -149,21 +149,23 @@ namespace assets
 //			LOGV( "# indices: %i\n", indices.size() );
 //			LOGV( "# triangles: %i\n", indices.size()/3 );
 			geometry->index_count = indices.size();
-			geometry->indices = CREATE_ARRAY(IndexType, geometry->index_count);
+			geometry->indices.allocate(geometry->index_count);
 			for( int i = 0; i < geometry->index_count; ++i )
 			{
 				geometry->indices[i] = indices[i].asInt();
 			}
 			
 			geometry->vertex_count = positions.size() / 3;
-			geometry->vertices = CREATE_ARRAY( glm::vec3, geometry->vertex_count );
-			geometry->normals = CREATE_ARRAY( glm::vec3, geometry->vertex_count );
+			geometry->vertices.allocate(geometry->vertex_count);
+			geometry->normals.allocate(geometry->vertex_count);
 //			geometry->untransformed_vertices.allocate(geometry->vertex_count);
+
+		
 			
 			if (!blend_weights.isNull() && !blend_weights.empty())
 			{
-				geometry->blend_indices = CREATE_ARRAY(glm::vec4, geometry->vertex_count);
-				geometry->blend_weights = CREATE_ARRAY(glm::vec4, geometry->vertex_count);
+				geometry->blend_indices.allocate(geometry->vertex_count);
+				geometry->blend_weights.allocate(geometry->vertex_count);
 				
 				Json::ValueIterator blend_weight_iter = blend_weights.begin();
 				int v = 0;
@@ -209,14 +211,19 @@ namespace assets
 			
 			if (!uvs.isNull() && uvs.size() > 0 )
 			{
-				geometry->uvs = CREATE_ARRAY( UV, geometry->vertex_count );
-				for( int v = 0; v < geometry->vertex_count; ++v )
+				geometry->uvs.allocate(uvs.size());
+				for( int i = 0; i < uvs.size(); ++i)
 				{
-					geometry->uvs[v].u = uvs[v*2].asFloat();
+					geometry->uvs[i].allocate(geometry->vertex_count);
 					
-					// Invert the UV coordinates on models when we import them.
-					// TODO: should this be done in the exporter?
-					geometry->uvs[v].v = 1.0f - uvs[v*2+1].asFloat();
+					Json::Value& uv = uvs[i];
+					for( int v = 0; v < geometry->vertex_count; ++v )
+					{
+						geometry->uvs[i][v].u = uv[v*2].asFloat();
+						// Invert the UV coordinates on models when we import them.
+						// TODO: should this be done in the exporter?
+						geometry->uvs[i][v].v = 1.0f - uv[v*2+1].asFloat();
+					}
 				}
 			}
 			else
@@ -227,7 +234,7 @@ namespace assets
 			
 			if (!colors.isNull() && colors.size() > 0)
 			{
-				geometry->colors = CREATE_ARRAY(Color, geometry->vertex_count);
+				geometry->colors.allocate(geometry->vertex_count);
 				for (int v = 0; v < geometry->vertex_count; ++v)
 				{
 					Color& color = geometry->colors[v];
@@ -479,63 +486,17 @@ namespace assets
 	
 	Geometry::Geometry()
 	{
-		vertices = 0;
-		normals = 0;
-		uvs = 0;
-		indices = 0;
 		material_id = 0;
-		colors = 0;
-		
 		vertex_count = 0;
 		index_count = 0;
 		draw_type = renderer::DRAW_TRIANGLES;
 		
 		attributes = 0;
 		vertexbuffer = 0;
-		
-		blend_indices = 0;
-		blend_weights = 0;
 	}
 	
 	Geometry::~Geometry()
 	{
-		using namespace glm;
-		if ( vertices )
-		{
-			DESTROY_ARRAY( vec3, vertices, vertex_count );
-			vertices = 0;
-		}
-		
-		if ( normals )
-		{
-			DESTROY_ARRAY( vec3, normals, vertex_count );
-			normals = 0;
-		}
-		
-		if ( colors )
-		{
-			DESTROY_ARRAY( Color, colors, vertex_count );
-			colors = 0;
-		}
-		
-		if ( uvs )
-		{
-			DESTROY_ARRAY( UV, uvs, vertex_count );
-			uvs = 0;
-		}
-		
-		if ( indices )
-		{
-			DEALLOC( indices );
-			indices = 0;
-		}
-		
-		if (blend_indices || blend_weights)
-		{
-			DESTROY_ARRAY(vec4, blend_indices, vertex_count);
-			DESTROY_ARRAY(vec4, blend_weights, vertex_count);
-		}
-		
 		if ( this->vertexbuffer )
 		{
 			renderer::driver()->vertexbuffer_destroy( this->vertexbuffer );
@@ -566,28 +527,35 @@ namespace assets
 			// always has at least a position
 			descriptor.add( VD_FLOAT3 );
 			
-			if ( normals )
+			if ( !normals.empty() )
 			{
 				ShaderString normals = "normals";
 				attributes |= find_parameter_mask( normals );
 				descriptor.add( VD_FLOAT3 );
 			}
 			
-			if ( colors )
+			if ( !colors.empty() )
 			{
 				ShaderString colors = "colors";
 				attributes |= find_parameter_mask( colors );
 				descriptor.add( VD_UNSIGNED_BYTE4 );
 			}
 			
-			if ( uvs )
+			if ( uvs.size() > 0 )
 			{
 				ShaderString uv0 = "uv0";
 				attributes |= find_parameter_mask( uv0 );
 				descriptor.add( VD_FLOAT2 );
 			}
 			
-			if (blend_indices && blend_weights)
+			if ( uvs.size() > 1 )
+			{
+				ShaderString uv1 = "uv1";
+				attributes |= find_parameter_mask( uv1 );
+				descriptor.add( VD_FLOAT2 );
+			}
+			
+			if (!blend_indices.empty() && !blend_weights.empty())
 			{
 				ShaderString hardware_skinning = "hardware_skinning";
 				attributes |= find_parameter_mask(hardware_skinning);
