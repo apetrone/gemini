@@ -20,17 +20,17 @@ out vec4 out_Color;
 	in vec2 ps_uv0;
 #endif
 
-#if defined(D_VERTEX_UV1) && defined(D_LIGHTMAP)
-	in vec2 ps_uv1;
-	uniform sampler2D lightmap;
-#endif
-
 #ifdef D_DIFFUSE_MAP
 	uniform sampler2D diffusemap;
 #endif
 
 #ifdef D_SPECULAR_MAP
 	uniform sampler2D specularmap;
+#endif
+
+#if defined(D_VERTEX_UV1) && defined(D_LIGHTMAP)
+	in vec2 ps_uv1;
+	uniform sampler2D lightmap;
 #endif
 
 #ifdef D_DIFFUSE_COLOR

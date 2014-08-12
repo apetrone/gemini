@@ -394,6 +394,10 @@ namespace assets
 		{
 			return 0;
 		}
+		else if ( xstr_nicmp( name.c_str(), "lightmap", 0 ) == 0 )
+		{
+			return 3;
+		}
 		
 		return 0;
 	} // texture_unit_for_map
