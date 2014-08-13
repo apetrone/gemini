@@ -143,10 +143,18 @@ public:
 		++total_scene_nodes_visited;
 		
 
-		// TODO: update world transform?
 		glm::mat4 object_to_local = glm::translate(glm::mat4(1.0), node->local_position);
-			
 		node->world_transform = object_to_local * node->local_to_world;
+		
+#if GEMINI_ZUP_TO_YUP_CONVERSION
+		if (node->type == scenegraph::MESH || node->type == scenegraph::SKELETON)
+		{
+			scenegraph::MeshNode* meshnode = static_cast<scenegraph::MeshNode*>(node);
+			node->world_transform = meshnode->mesh->node_transform * node->world_transform;
+		}
+#else
+#error No conversion to Y-up! Missing asset_mesh.h include.
+#endif
 		
 		
 		return 0;
@@ -222,10 +230,10 @@ public:
 //		ground->visible = false;
 
 		player = CREATE(scenegraph::SkeletalNode);
-		player->load_mesh("models/test2", false);
+		player->load_mesh("models/test_yup", false);
 		player->setup_skeleton();
 		root->add_child(player);
-		player->visible = false;
+//		player->visible = false;
 		
 //		scenegraph::MeshNode* test = CREATE(scenegraph::MeshNode);
 //		test->load_mesh("models/teapot");
@@ -304,7 +312,7 @@ public:
 		//camera.pos += glm::vec3(0, 2.5, 5);
 		camera.update_view();
 
-//		physics::debug_draw();
+		physics::debug_draw();
 		
 //		debugdraw::axes(glm::mat4(1.0), 2.0f);
 		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
@@ -352,7 +360,7 @@ public:
 		char_mat = glm::rotate(char_mat, -camera.yaw, glm::vec3(0,1,0));
 		if (player)
 		{
-			player->world_transform = char_mat;
+			//player->world_transform = char_mat;
 		}
 
 		//rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );

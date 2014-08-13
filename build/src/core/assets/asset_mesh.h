@@ -35,6 +35,8 @@
 
 #include <json/json.h>
 
+#define GEMINI_ZUP_TO_YUP_CONVERSION 1
+
 namespace assets
 {
 	// -------------------------------------------------------------
@@ -52,6 +54,7 @@ namespace assets
 		void render_setup();
 		
 //		FixedArray<glm::vec3> untransformed_vertices;
+		FixedArray<glm::vec3> physics_vertices;
 	}; // Geometry
 	
 
@@ -91,10 +94,6 @@ namespace assets
 		
 		// from bone space to local space
 		glm::mat4 bind_matrix;
-
-		glm::mat4 local_transform;
-
-//		glm::mat4 world_transform;
 		
 		// -1: No parent
 		int32_t parent_index;
@@ -122,6 +121,10 @@ namespace assets
 		
 		// For now, we only have room for a single animation -- so make it worthwhile.
 		AnimationData animation;
+		
+#if GEMINI_ZUP_TO_YUP_CONVERSION
+		glm::mat4 node_transform;
+#endif
 	}; // Mesh
 	
 	// EXPERIMENTAL

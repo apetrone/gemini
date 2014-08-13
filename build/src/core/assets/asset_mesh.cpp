@@ -384,6 +384,12 @@ namespace assets
 			}
 		}
 	
+		Json::Value transform = root["transform"];
+		if (!transform.isNull())
+		{
+			mesh->node_transform = json_to_mat4(transform);
+		}
+	
 		return util::ConfigLoad_Success;
 	} // mesh_load_from_json
 	

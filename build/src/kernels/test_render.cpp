@@ -37,7 +37,7 @@
 #include "assets/asset_font.h"
 #include "scene_graph.h"
 #include "meshnode.h"
-
+#include "skeletalnode.h"
 
 #include <json/json.h>
 
@@ -327,13 +327,19 @@ public:
 	virtual int visit(scenegraph::Node* node)
 	{
 		++total_scene_nodes_visited;
-		
 
-		// TODO: update world transform?
 		glm::mat4 object_to_local = glm::translate(glm::mat4(1.0), node->local_position);
-			
 		node->world_transform = object_to_local * node->local_to_world;
-		
+
+#if GEMINI_ZUP_TO_YUP_CONVERSION
+		if (node->type == scenegraph::MESH || node->type == scenegraph::SKELETON)
+		{
+			scenegraph::MeshNode* meshnode = static_cast<scenegraph::MeshNode*>(node);
+			node->world_transform = meshnode->mesh->node_transform * node->world_transform;
+		}
+#else
+	#error No conversion to Y-up! Missing asset_mesh.h include.
+#endif
 		
 		return 0;
 	}
@@ -364,9 +370,9 @@ public:
 		server->addHandler("/reload", new ReloadHandler());
 #endif
 		
-
 		root = CREATE(scenegraph::Node);
 		root->name = "scene_root";
+		
 		
 //		scenegraph::MeshNode* skydome = 0;
 //		skydome = CREATE(scenegraph::MeshNode);
@@ -376,7 +382,13 @@ public:
 //		skydome->local_position = glm::vec3(0, -50, 0);
 //		root->add_child(skydome);
 
-		
+
+		scenegraph::SkeletalNode* sn = CREATE(scenegraph::SkeletalNode);
+		sn->load_mesh("models/test_yup", false);
+		sn->setup_skeleton();
+		//sn->local_position = glm::vec3(0, 1, 0);
+		root->add_child(sn);
+
 		scenegraph::MeshNode* ground = 0;
 		ground = CREATE(scenegraph::MeshNode);
 		ground->load_mesh("models/plane", false);
@@ -421,6 +433,8 @@ public:
 #ifndef SCENE_GRAPH_MANUAL
 		root->update(params.step_interval_seconds);
 #endif
+
+		debugdraw::axes(glm::mat4(1.0), 3.0f);
 
 		debugdraw::update(params.step_interval_seconds);
 	}

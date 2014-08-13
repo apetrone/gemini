@@ -296,12 +296,33 @@ namespace physics
 			return;
 		}
 		
+
+		
 		for( int i = 0; i < mesh->geometry.size(); ++i )
 		{
 			assets::Geometry* geo = &mesh->geometry[ i ];
 			
+#if defined(GEMINI_ZUP_TO_YUP_CONVERSION)
+			// we need to transform from Z-up to Y-up before
+			// generating the physics.
+			geo->physics_vertices.allocate(geo->vertex_count);
+
+			// transform vertices by node transform here
+			for (int v = 0; v < geo->vertex_count; ++v)
+			{
+				geo->physics_vertices[v] = glm::vec3(mesh->node_transform * glm::vec4(geo->vertices[v], 1.0f));
+			}
+			FixedArray<glm::vec3>& vertices = geo->physics_vertices;
+#else
+			FixedArray<glm::vec3>& vertices = geo->vertices;
+#endif
+			
+			
+			
 			// specify verts/indices from our meshdef
-			btTriangleIndexVertexArray * mesh = new btTriangleIndexVertexArray(geo->index_count/3, (int*)&geo->indices[0], sizeof(int)*3, geo->vertex_count, (btScalar*)&geo->vertices[0], sizeof(glm::vec3));
+			// NOTE: This does NOT make a copy of the data. Whatever you pass it
+			// must persist for the life of the shape.
+			btTriangleIndexVertexArray * mesh = new btTriangleIndexVertexArray(geo->index_count/3, (int*)&geo->indices[0], sizeof(int)*3, geo->vertex_count, (btScalar*)&vertices[0], sizeof(glm::vec3));
 			
 			// use that to creat ea Bvh triangle mesh shape
 			trishape = new btBvhTriangleMeshShape( mesh, use_quantized_bvh_tree );

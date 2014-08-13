@@ -42,7 +42,6 @@ namespace scenegraph
 		glm::vec3 translation;
 		Channel<glm::vec3> translation_channel;
 		
-		
 		AnimatedNode();
 		
 		void post_processing(assets::Mesh* mesh, int32_t node_index);

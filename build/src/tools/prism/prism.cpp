@@ -74,7 +74,7 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 	root["info"] = "converted by prism";
 	
 	Json::Value jinfo(Json::objectValue);
-	Json::Value jtransform(Json::objectValue);
+	Json::Value jtransform(Json::arrayValue);
 
 	jinfo["tool"] = TOOL_NAME;
 	jinfo["version"] = TOOL_VERSION;
@@ -103,12 +103,16 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 		LOGV("[material, name=\"%s\", index=%i\n", (*it).first.c_str(), (*it).second);
 		jmaterial_array.append(jmaterial);
 	}
+
+	// convert coordinate transform to json
+	jsonify_matrix(jtransform, env.coordinate_transform);
 	
 	root["geometry"] = jgeometry_array;
 	root["materials"] = jmaterial_array;
 	root["info"] = jinfo;
 	root["transform"] = jtransform;
 	
+
 	
 	
 	LOGV("TODO: should normalize bone weights!\n");

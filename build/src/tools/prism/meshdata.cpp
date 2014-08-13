@@ -197,8 +197,13 @@ namespace prism
 				jbone["name"] = bone->mName.C_Str();
 				//jbone["bone_index"] = Json::valueToString((unsigned)total_bones);
 				
-				aiMatrix4x4 coordinate_transform(env.coordinate_transform);
-				aiMatrix4x4 offset = bone->mOffsetMatrix * coordinate_transform;
+
+				aiMatrix4x4 offset = bone->mOffsetMatrix;
+//				if (env.convert_zup_to_yup)
+//				{
+//					aiMatrix4x4 coordinate_transform(env.coordinate_transform);
+//					offset = offset * coordinate_transform;
+//				}
 				Json::Value offset_matrix(Json::arrayValue);
 				jsonify_matrix(offset_matrix, offset);
 				jbone["inverse_bind_pose"] = offset_matrix;
@@ -405,14 +410,21 @@ namespace prism
 			//const aiVector3D & bitangent = mesh->mBitangents[vertex];
 			//const aiVector3D & tangent = mesh->mTangents[vertex];
 			
-			const aiVector3D tr_pos = info.env.coordinate_transform * node->local_transform * pos;
+			aiVector3D tr_pos = node->local_transform * pos;
+//			if (info.env.convert_zup_to_yup)
+//			{
+//				tr_pos = info.env.coordinate_transform * tr_pos;
+//			}
 			
 			jvertices.append(tr_pos.x);
 			jvertices.append(tr_pos.y);
 			jvertices.append(tr_pos.z);
 			
-			const aiVector3D tr_normal = info.env.coordinate_transform * node->local_transform * normal;
-			
+			aiVector3D tr_normal = node->local_transform * normal;
+//			if (info.env.convert_zup_to_yup)
+//			{
+//				tr_normal = info.env.coordinate_transform * tr_normal;
+//			}
 			jnormals.append(tr_normal.x);
 			jnormals.append(tr_normal.y);
 			jnormals.append(tr_normal.z);
@@ -504,7 +516,7 @@ namespace prism
 				info.material_map.insert(MaterialMap::value_type(material_name, next_material_id));
 			}
 			
-			//			LOGV("diffuse texture: %s\n", material_name.c_str());
+//			LOGV("diffuse texture: %s\n", material_name.c_str());
 		}
 		else
 		{
@@ -529,10 +541,10 @@ namespace prism
 	{
 		aiQuaternion q = qkey.mValue;
 		
-		if (env.convert_zup_to_yup)
-		{
-			q = aiQuaternion(aiVector3D(1, 0, 0), -1.57079633f) * qkey.mValue;
-		}
+//		if (env.convert_zup_to_yup)
+//		{
+//			q = aiQuaternion(aiVector3D(1, 0, 0), -M_PI_2) * qkey.mValue;
+//		}
 		
 		times.append(qkey.mTime);
 		values.append(q.x);
@@ -545,10 +557,10 @@ namespace prism
 	{
 		aiVector3D v = vkey.mValue;
 		
-		if (env.convert_zup_to_yup)
-		{
-			v = env.coordinate_transform * vkey.mValue;
-		}
+//		if (env.convert_zup_to_yup)
+//		{
+//			v = env.coordinate_transform * vkey.mValue;
+//		}
 		
 		times.append(vkey.mTime);
 		values.append(v.x);

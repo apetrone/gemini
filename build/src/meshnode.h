@@ -36,8 +36,6 @@ namespace scenegraph
 		
 		assets::Geometry* geometry;
 		
-		glm::mat4 node_transforms[2];
-		
 		RenderNode();
 	};
 
