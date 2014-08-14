@@ -823,46 +823,46 @@ void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, render
 	MemoryStream ms;
 	ms.init( vertex_data, data_size );
 	
-	assets::ShaderString parameter = "normals";
-	unsigned int normals_mask = assets::find_parameter_mask( parameter );
+//	assets::ShaderString parameter = "normals";
+//	unsigned int normals_mask = assets::find_parameter_mask( parameter );
 	
-	parameter = "colors";
-	unsigned int colors_mask = assets::find_parameter_mask( parameter );
+//	parameter = "colors";
+//	unsigned int colors_mask = assets::find_parameter_mask( parameter );
 	
-	parameter = "uv0";
-	unsigned int uv0_mask = assets::find_parameter_mask( parameter );
+//	parameter = "uv0";
+//	unsigned int uv0_mask = assets::find_parameter_mask( parameter );
 	
-	parameter = "uv1";
-	unsigned int uv1_mask = assets::find_parameter_mask( parameter );
+//	parameter = "uv1";
+//	unsigned int uv1_mask = assets::find_parameter_mask( parameter );
 	
-	parameter = "hardware_skinning";
-	unsigned int skinning_mask = assets::find_parameter_mask( parameter );
+//	parameter = "hardware_skinning";
+//	unsigned int skinning_mask = assets::find_parameter_mask( parameter );
 	
 	for( size_t vertex_id = 0; vertex_id < geometry->vertex_count; ++vertex_id )
 	{
 		ms.write( &geometry->vertices[ vertex_id ], sizeof(glm::vec3) );
 		
-		if ( geometry->attributes & normals_mask )
+		if ( !geometry->normals.empty() )
 		{
 			ms.write( &geometry->normals[ vertex_id ], sizeof(glm::vec3) );
 		}
 		
-		if ( geometry->attributes & colors_mask )
+		if ( !geometry->colors.empty() )
 		{
 			ms.write( &geometry->colors[ vertex_id ], sizeof(Color) );
 		}
 
-		if ( geometry->attributes & uv0_mask )
+		if ( !geometry->uvs[0].empty() )
 		{
 			ms.write( &geometry->uvs[0][ vertex_id ], sizeof(renderer::UV) );
 		}
 
-		if ( geometry->attributes & uv1_mask )
+		if ( geometry->uvs.size() > 1 && !geometry->uvs[1].empty() )
 		{
 			ms.write( &geometry->uvs[1][ vertex_id ], sizeof(renderer::UV) );
 		}
 		
-		if ( geometry->attributes & skinning_mask )
+		if ( !geometry->blend_indices.empty() && !geometry->blend_weights.empty() )
 		{
 			ms.write( &geometry->blend_indices[ vertex_id ], sizeof(glm::vec4) );
 			ms.write( &geometry->blend_weights[ vertex_id ], sizeof(glm::vec4) );

@@ -28,15 +28,9 @@
 
 namespace assets
 {
+	const char SHADER_CONFIG[] = "conf/shaders.conf";
 	// -------------------------------------------------------------
 	// Shader
-	
-	
-	struct KeyHashPair
-	{
-		ShaderString key;
-		int value;
-	};
 	
 	struct Shader : public Asset, public renderer::ShaderParameters, public renderer::ShaderProgram
 	{
@@ -55,61 +49,16 @@ namespace assets
 	}; // Shader
 	
 	
-	struct ShaderPermutationGroup
-	{
-		ShaderString name;
-		
-		unsigned int num_defines;
-		unsigned int num_attributes;
-		unsigned int num_uniforms;
-		unsigned int num_requires;
-		unsigned int num_conflicts;
-		
-		ShaderString * defines;
-		ShaderString * attributes;
-		ShaderString * uniforms;
-		ShaderString * requires;
-		ShaderString * conflicts;
-		
-		unsigned int mask_value;
-		
-		ShaderPermutationGroup();
-		~ShaderPermutationGroup();
-	}; // ShaderPermutationGroup
-	
-	
-	struct ShaderPermutations
-	{
-		ShaderPermutationGroup base;
-		
-		unsigned int num_permutations;
-		ShaderPermutationGroup ** options;
-		
-		unsigned int num_attributes;
-		ShaderPermutationGroup * attributes;
-		
-		unsigned int num_uniforms;
-		ShaderPermutationGroup * uniforms;
-		
-		StackString<64> frag_location;
-		
-		// total number of parameters across permutations
-		// each one has a unique ID which is the mask value for that parameter
-		unsigned short num_parameters;
-		
-		
-		ShaderPermutations();
-		~ShaderPermutations();
-	}; // ShaderPermutations
-	
-	ShaderPermutations & shader_permutations();
-	void compile_shader_permutations();
-	Shader * find_compatible_shader( unsigned int attributes );
-	
-	Shader* find_shader_by_id(unsigned int id);
-	
 	renderer::ShaderObject create_shader_from_file( const char * shader_path, renderer::ShaderObjectType type, const char * preprocessor_defines );
-	void load_shader( const char * shader_path, Shader * shader );
-	void destroy_shader( Shader * shader );
-	void load_test_shader( Shader * shader );
+//	void load_shader( const char * shader_path, Shader * shader );
+//	void destroy_shader( Shader * shader );
+
+	AssetLoadStatus shader_load_callback(const char* path, Shader* shader, const AssetParameters& parameters);
+	void shader_construct_extension(StackString<MAX_PATH_SIZE>& extension);
+	
+	void create_shader_config();
+	void destroy_shader_config();
+	
+	DECLARE_ASSET_LIBRARY_ACCESSOR(Shader, AssetParameters, shaders);
+	
 }; // namespace assets

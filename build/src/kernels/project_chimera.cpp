@@ -65,7 +65,6 @@ public:
 	DECLARE_APPLICATION( ProjectChimera );
 	Camera camera;
 	physics::CharacterController* character;
-	assets::Shader* animation;
 	scenegraph::Node* root;
 	
 	size_t total_scene_nodes_visited;
@@ -77,7 +76,6 @@ public:
 	ProjectChimera()
 	{
 //		camera.type = Camera::TARGET;
-		animation = 0;
 		player = 0;
 		character = 0;
 		root = 0;
@@ -174,30 +172,6 @@ public:
 		
 		character = physics::create_character_controller(btVector3(0, 5, 0), false);
 
-		
-		animation = CREATE(assets::Shader);
-		
-		animation->set_frag_data_location("out_color");
-		animation->alloc_uniforms(5);
-		animation->uniforms[0].set_key("projection_matrix");
-		animation->uniforms[1].set_key("modelview_matrix");
-		animation->uniforms[2].set_key("object_matrix");
-		animation->uniforms[3].set_key("diffusemap");
-		animation->uniforms[4].set_key("node_transforms");
-		
-		animation->alloc_attributes(6);
-		animation->attributes[0].set_key("in_position"); animation->attributes[0].second = 0;
-		animation->attributes[1].set_key("in_normal"); animation->attributes[1].second = 1;
-		animation->attributes[2].set_key("in_color"); animation->attributes[2].second = 2;
-		animation->attributes[3].set_key("in_uv"); animation->attributes[3].second = 3;
-		animation->attributes[4].set_key("in_blendindices"); animation->attributes[4].second = 4;
-		animation->attributes[5].set_key("in_blendweights"); animation->attributes[5].second = 5;
-		
-		assets::load_shader("shaders/animation", animation);
-		
-		
-//		animation->show_attributes();
-		
 		root = CREATE(scenegraph::Node);
 		root->name = "scene_root";
 		
@@ -382,9 +356,7 @@ public:
 		DESTROY(Node, root);
 		
 		entity_shutdown();
-	
-		DESTROY(Shader, animation);
-		
+
 		physics::shutdown();
 		
 		debugdraw::shutdown();

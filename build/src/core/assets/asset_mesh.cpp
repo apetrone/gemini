@@ -536,38 +536,38 @@ namespace assets
 			if ( !normals.empty() )
 			{
 				ShaderString normals = "normals";
-				attributes |= find_parameter_mask( normals );
+//				attributes |= find_parameter_mask( normals );
 				descriptor.add( VD_FLOAT3 );
 			}
 			
 			if ( !colors.empty() )
 			{
 				ShaderString colors = "colors";
-				attributes |= find_parameter_mask( colors );
+//				attributes |= find_parameter_mask( colors );
 				descriptor.add( VD_UNSIGNED_BYTE4 );
 			}
 			
 			if ( uvs.size() > 0 )
 			{
 				ShaderString uv0 = "uv0";
-				attributes |= find_parameter_mask( uv0 );
+//				attributes |= find_parameter_mask( uv0 );
 				descriptor.add( VD_FLOAT2 );
 			}
 			
 			if ( uvs.size() > 1 )
 			{
 				ShaderString uv1 = "uv1";
-				attributes |= find_parameter_mask( uv1 );
+//				attributes |= find_parameter_mask( uv1 );
 				descriptor.add( VD_FLOAT2 );
 			}
 			
 			if (!blend_indices.empty() && !blend_weights.empty())
 			{
 				ShaderString hardware_skinning = "hardware_skinning";
-				attributes |= find_parameter_mask(hardware_skinning);
+//				attributes |= find_parameter_mask(hardware_skinning);
 				
 				ShaderString node_transforms = "node_transforms";
-				attributes |= find_parameter_mask(node_transforms);
+//				attributes |= find_parameter_mask(node_transforms);
 				
 				descriptor.add(VD_FLOAT4);
 				descriptor.add(VD_FLOAT4);

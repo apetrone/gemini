@@ -35,8 +35,8 @@ namespace render_utilities
 	{
 		assets::Material* material = block.material ? (assets::Material*)block.material : assets::materials()->find_with_id(block.material_id);
 		assert(material != 0);
-		
-		assets::Shader* shader = block.shader ? (assets::Shader*)block.shader : assets::find_shader_by_id(block.shader_id);
+
+		assets::Shader* shader = block.shader ? (assets::Shader*)block.shader : assets::shaders()->find_with_id(block.shader_id);
 		assert(shader != 0);
 
 		rs.add_shader(shader);
@@ -54,50 +54,6 @@ namespace render_utilities
 		
 		rs.add_draw_call(block.object->vertexbuffer);
 	}
-
-
-	void stream_geometry( RenderStream & rs, assets::Geometry * geo, renderer::GeneralParameters & gp, assets::Shader* shader )
-	{
-		// verify general parameters
-		assert( gp.modelview_matrix != 0 );
-		assert( gp.object_matrix != 0 );
-		assert( gp.projection_project != 0 );
-		assert( gp.camera_position != 0 );
-		
-		assert( geo != 0 );
-		assets::Material * material = assets::materials()->find_with_id( geo->material_id );
-		assert( material != 0 );
-		//		LOGV( "material: %i\n", material->Id() );
-		
-		if (!shader)
-		{
-			shader = assets::find_compatible_shader( geo->attributes + material->requirements + gp.global_params );
-		}
-		assert( shader != 0 );
-		
-		if ( !shader )
-		{
-			LOGE( "Unable to find shader!\n" );
-			return;
-		}
-		
-//		LOGV( "binding shader: %i\n", shader->Id() );
-		rs.add_shader( shader );
-		
-		if ( gp.global_params > 0 )
-		{
-			//		rs.add_uniform3f( shader->get_uniform_location("lightPosition"), &light_position );
-			//		rs.add_uniform3f( shader->get_uniform_location("cameraPosition"), gp.camera_position );
-		}
-		
-		rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), gp.modelview_matrix );
-		rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), gp.projection_project );
-		rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), gp.object_matrix );
-		
-		rs.add_material( material, shader );
-		
-		rs.add_draw_call( geo->vertexbuffer );
-	} // stream_geometry
 	
 	//
 	// misc sprite tools

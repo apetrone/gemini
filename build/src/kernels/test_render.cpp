@@ -383,15 +383,19 @@ public:
 //		root->add_child(skydome);
 
 
+		assets::Shader* character = assets::shaders()->load_from_path("shaders/character");
+		assets::Shader* world = assets::shaders()->load_from_path("shaders/world");
+
+
 		scenegraph::SkeletalNode* sn = CREATE(scenegraph::SkeletalNode);
-		sn->load_mesh("models/test_yup", false);
+		sn->load_mesh("models/test_yup", false, 0, character);
 		sn->setup_skeleton();
 		//sn->local_position = glm::vec3(0, 1, 0);
 		root->add_child(sn);
 
 		scenegraph::MeshNode* ground = 0;
 		ground = CREATE(scenegraph::MeshNode);
-		ground->load_mesh("models/plane", false);
+		ground->load_mesh("models/plane", false, 0, world);
 		root->add_child(ground);
 //		ground->visible = false;
 

@@ -48,6 +48,8 @@ namespace scenegraph
 	
 	void MeshNode::load_mesh(const char* path, bool build_physics_from_mesh, assets::Material* material, assets::Shader* shader)
 	{
+		assert(shader != 0);
+		
 		// load mesh through the asset system
 		mesh = assets::meshes()->load_from_path(path);
 		if (mesh)
@@ -62,7 +64,6 @@ namespace scenegraph
 
 				assets::Geometry* geometry = &mesh->geometry[id];
 				assets::Material* geometry_material = material;
-				assets::Shader* geometry_shader = shader;
 				
 				scenegraph::RenderNode* rn = 0;
 				rn = CREATE(scenegraph::RenderNode);
@@ -72,16 +73,12 @@ namespace scenegraph
 				{
 					geometry_material = assets::materials()->find_with_id(geometry->material_id);
 				}
-				if (!geometry_shader)
-				{
-					geometry_shader = assets::find_compatible_shader( (geometry->attributes + geometry_material->requirements) );
-				}
-				assert(geometry_shader != 0);
+
 //				LOGV("shader: (asset_id = %i), (id = %i)\n", shader->Id(), shader->id);
 //				shader->show_uniforms();
 //				shader->show_attributes();
 				rn->material = geometry_material;
-				rn->shader = geometry_shader;
+				rn->shader = shader;
 
 //				rn->shader_id = shader->Id();
 

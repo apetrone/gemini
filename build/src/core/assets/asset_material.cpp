@@ -48,9 +48,9 @@ namespace assets
 		for( int id = 0; id < this->total_parameters; ++id )
 		{
 			Material::Parameter * param = &this->parameters[ id ];
-			unsigned int mask = find_parameter_mask( param->name );
+//			unsigned int mask = find_parameter_mask( param->name );
 			//			LOGV( "param \"%s\" -> %i\n", param->name(), mask );
-			this->requirements |= mask;
+//			this->requirements |= mask;
 		}
 		
 		//		LOGV( "Material requirements: %i\n", this->requirements );

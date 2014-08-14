@@ -41,6 +41,7 @@ namespace debugdraw
 		unsigned int max_primitives = 0;
 		DebugPrimitive * primitive_list = 0;
 		assets::Font * debug_font = 0;
+		assets::Shader* debug_shader = 0;
 
 		DebugPrimitive * request_primitive()
 		{
@@ -128,6 +129,11 @@ namespace debugdraw
 		
 		// load the debug font we'll use
 		_internal::debug_font = assets::fonts()->load_from_path( DEBUG_FONT_FILE );
+		assert(_internal::debug_font != 0);
+		
+		// load debug shader
+		_internal::debug_shader = assets::shaders()->load_from_path(DEBUG_SHADER);
+		assert(_internal::debug_shader != 0);
 	} // startup
 	
 	void shutdown()
@@ -322,24 +328,17 @@ namespace debugdraw
 		unsigned int attribs = 0;
 		assets::ShaderString name;
 		name = "colors";
-		attribs |= assets::find_parameter_mask( name );
-		
-		assets::Shader * shader = assets::find_compatible_shader( attribs );
-		if ( !shader )
-		{
-			LOGE("debugdraw shader not found!\n" );
-			return;
-		}
+//		attribs |= assets::find_parameter_mask( name );
 
 		glm::mat4 object;
 		RenderStream rs;
 		rs.add_viewport( 0, 0, viewport_width, viewport_height );
 		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
 
-		rs.add_shader( shader );
-		rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview );
-		rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection );
-		rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object );
+		rs.add_shader( _internal::debug_shader );
+		rs.add_uniform_matrix4( _internal::debug_shader->get_uniform_location("modelview_matrix"), &modelview );
+		rs.add_uniform_matrix4( _internal::debug_shader->get_uniform_location("projection_matrix"), &projection );
+		rs.add_uniform_matrix4( _internal::debug_shader->get_uniform_location("object_matrix"), &object );
 		//rs.run_commands();
 		//rs.rewind();
 		

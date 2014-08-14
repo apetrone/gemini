@@ -21,6 +21,7 @@
 // -------------------------------------------------------------
 #include <gemini/util/stackstring.h>
 #include <gemini/core/filesystem.h>
+#include <gemini/util/configloader.h>
 
 #include "assets.h"
 #include "renderer/renderer.h"
@@ -29,6 +30,11 @@
 
 namespace assets
 {
+	namespace _internal
+	{
+		Json::Value shader_config;
+	};
+	
 	// -------------------------------------------------------------
 	// Shader
 	
@@ -49,7 +55,13 @@ namespace assets
 		return -1;
 	} // get_uniform_location
 	
-	void Shader::release() {}
+	void Shader::release()
+	{
+		renderer::ShaderProgram program;
+		program.object = object;
+
+		renderer::driver()->shaderprogram_destroy( program );
+	}
 	
 	void Shader::show_uniforms()
 	{
@@ -68,75 +80,7 @@ namespace assets
 			LOGV("%s -> %i\n", attributes[i].first, attributes[i].second);
 		}
 	}
-	
-	ShaderPermutationGroup::ShaderPermutationGroup()
-	{
-		num_defines = 0;
-		num_attributes = 0;
-		num_uniforms = 0;
-		num_requires = 0;
-		num_conflicts = 0;
-	}
-	
-	ShaderPermutationGroup::~ShaderPermutationGroup()
-	{
-		if ( num_defines )
-		{
-			DESTROY_ARRAY( ShaderString, defines, num_defines );
-			num_defines = 0;
-		}
 		
-		if ( num_attributes )
-		{
-			DESTROY_ARRAY( ShaderString, attributes, num_attributes );
-			num_attributes = 0;
-		}
-		
-		if ( num_uniforms )
-		{
-			DESTROY_ARRAY( ShaderString, uniforms, num_uniforms );
-			num_uniforms = 0;
-		}
-		
-		if ( num_requires )
-		{
-			DESTROY_ARRAY( ShaderString, requires, num_requires );
-			num_requires = 0;
-		}
-		
-		if ( num_conflicts )
-		{
-			DESTROY_ARRAY( ShaderString, conflicts, num_conflicts );
-			num_conflicts = 0;
-		}
-	}
-	
-	
-	ShaderPermutations::ShaderPermutations()
-	{
-		options = 0;
-		attributes = 0;
-		num_attributes = 0;
-		uniforms = 0;
-		num_uniforms = 0;
-		num_permutations = 0;
-		num_parameters = 0;
-	}
-	
-	ShaderPermutations::~ShaderPermutations()
-	{
-		if ( num_permutations )
-		{
-			if ( options )
-			{
-				DEALLOC(options);
-			}
-			
-			DESTROY_ARRAY(ShaderPermutationGroup, attributes, num_attributes );
-			DESTROY_ARRAY(ShaderPermutationGroup, uniforms, num_uniforms );
-		}
-	} // ~ShaderPermutations
-	
 	renderer::ShaderObject create_shader_from_file( const char * shader_path, renderer::ShaderObjectType type, const char * preprocessor_defines )
 	{
 		renderer::ShaderObject shader_object;
@@ -181,90 +125,262 @@ namespace assets
 		
 		return shader_object;
 	} // create_shader_from_file
+//	
+//	void load_shader( const char * shader_path, Shader * shader )
+//	{
+//		LOGV( "loading shader '%s'\n", shader_path );
+//		StackString<MAX_PATH_SIZE> filename = shader_path;
+//		renderer::ShaderParameters params;
+//		
+//		renderer::ShaderProgram shader_program;
+//		shader_program.object = 0;
+//		if (!renderer::driver())
+//		{
+//			LOGW( "Renderer is not initialized!\n" );
+//			return;
+//		}
+//		renderer::driver()->shaderprogram_deactivate( shader_program );
+//		
+//		renderer::ShaderProgram program = renderer::driver()->shaderprogram_create( params );
+//		shader->object = program.object;
+//		
+//		filename.append( ".vert" );
+//		renderer::ShaderObject vertex_shader = create_shader_from_file( filename(), renderer::SHADER_VERTEX, 0 );
+//		
+//		filename = shader_path;
+//		filename.append( ".frag" );
+//		renderer::ShaderObject fragment_shader = create_shader_from_file( filename(), renderer::SHADER_FRAGMENT, 0 );
+//		
+//		renderer::driver()->shaderprogram_attach( *shader, vertex_shader );
+//		renderer::driver()->shaderprogram_attach( *shader, fragment_shader );
+//		
+//		renderer::driver()->shaderprogram_bind_attributes( *shader, *shader );
+//		if ( renderer::driver()->shaderprogram_link_and_validate( *shader, *shader ) )
+//		{
+//			renderer::driver()->shaderprogram_activate( *shader );
+//			renderer::driver()->shaderprogram_bind_uniforms( *shader, *shader );
+//			renderer::driver()->shaderprogram_deactivate( *shader );
+//		}
+//		
+//		renderer::driver()->shaderprogram_detach( *shader, vertex_shader );
+//		renderer::driver()->shaderprogram_detach( *shader, fragment_shader );
+//		
+//		renderer::driver()->shaderobject_destroy( vertex_shader );
+//		renderer::driver()->shaderobject_destroy( fragment_shader );
+//	} // load_shader
 	
-	void load_shader( const char * shader_path, Shader * shader )
+//	void destroy_shader( Shader * shader )
+//	{
+//		renderer::ShaderProgram program;
+//		program.object = shader->object;
+//		renderer::driver()->shaderprogram_destroy( program );
+//	} // destroy_shader
+	
+//	void load_test_shader( Shader * shader )
+//	{
+//		renderer::ShaderParameters params;
+//		
+//		renderer::ShaderProgram program = renderer::driver()->shaderprogram_create( params );
+//		shader->object = program.object;
+//		
+//		renderer::ShaderObject vertex_shader = create_shader_from_file( "shaders/fontshader.vert", renderer::SHADER_VERTEX, 0 );
+//		renderer::ShaderObject fragment_shader = create_shader_from_file( "shaders/fontshader.frag", renderer::SHADER_FRAGMENT, 0 );
+//		
+//		renderer::driver()->shaderprogram_attach( *shader, vertex_shader );
+//		renderer::driver()->shaderprogram_attach( *shader, fragment_shader );
+//		
+//		
+//		shader->set_frag_data_location( "out_color" );
+//		shader->alloc_uniforms( 3 );
+//		shader->uniforms[0].set_key( "projection_matrix" );
+//		shader->uniforms[1].set_key( "modelview_matrix" );
+//		shader->uniforms[2].set_key( "diffusemap" );
+//		
+//		shader->alloc_attributes( 3 );
+//		shader->attributes[0].set_key( "in_position" ); shader->attributes[0].second = 0;
+//		shader->attributes[1].set_key( "in_color" ); shader->attributes[1].second = 1;
+//		shader->attributes[2].set_key( "in_uv" ); shader->attributes[2].second = 2;
+//		
+//		
+//		renderer::driver()->shaderprogram_bind_attributes( *shader, *shader );
+//		renderer::driver()->shaderprogram_link_and_validate( *shader, *shader );
+//		
+//		renderer::driver()->shaderprogram_bind_uniforms( *shader, *shader );
+//		
+//		renderer::driver()->shaderobject_destroy( vertex_shader );
+//		renderer::driver()->shaderobject_destroy( fragment_shader );
+//		
+//	} // load_test_shader
+
+	typedef std::vector< std::string, GeminiAllocator<std::string> > StringVector;
+	void append_list_items(StringVector& vec, const Json::Value& array)
 	{
-		LOGV( "loading shader '%s'\n", shader_path );
-		StackString<MAX_PATH_SIZE> filename = shader_path;
-		renderer::ShaderParameters params;
+		if (array.isNull())
+		{
+			return;
+		}
 		
-		renderer::ShaderProgram shader_program;
-		shader_program.object = 0;
+		Json::ValueIterator iter = array.begin();
+		for ( ; iter != array.end(); ++iter)
+		{
+			Json::Value& value = *iter;
+			vec.push_back(value.asString());
+		}
+	}
+	
+	void create_shader_attributes_and_uniforms(Shader* shader, StringVector& attributes, StringVector& uniforms)
+	{
+		shader->alloc_attributes(attributes.size());
+		int index = 0;
+		for (auto value : attributes)
+		{
+			shader->attributes[index].set_key(value.c_str());
+			shader->attributes[index].second = index;
+			++index;
+		}
+		
+		shader->alloc_uniforms(uniforms.size());
+		index = 0;
+		for (auto value : uniforms)
+		{
+			shader->uniforms[index].set_key(value.c_str());
+			shader->uniforms[index].second = index;
+			++index;
+		}
+	}
+	
+	bool create_shader_program_from_file(Shader* shader, const char* path)
+	{
 		if (!renderer::driver())
 		{
 			LOGW( "Renderer is not initialized!\n" );
-			return;
+			return false;
 		}
-		renderer::driver()->shaderprogram_deactivate( shader_program );
 		
-		renderer::ShaderProgram program = renderer::driver()->shaderprogram_create( params );
-		shader->object = program.object;
+		renderer::IRenderDriver* driver = renderer::driver();
+		StackString<MAX_PATH_SIZE> filename = path;
 		
-		filename.append( ".vert" );
-		renderer::ShaderObject vertex_shader = create_shader_from_file( filename(), renderer::SHADER_VERTEX, 0 );
-		
-		filename = shader_path;
-		filename.append( ".frag" );
-		renderer::ShaderObject fragment_shader = create_shader_from_file( filename(), renderer::SHADER_FRAGMENT, 0 );
-		
-		renderer::driver()->shaderprogram_attach( *shader, vertex_shader );
-		renderer::driver()->shaderprogram_attach( *shader, fragment_shader );
-		
-		renderer::driver()->shaderprogram_bind_attributes( *shader, *shader );
-		if ( renderer::driver()->shaderprogram_link_and_validate( *shader, *shader ) )
+		// see if the required files exist
+		filename.append(".vert");
+		if (!core::filesystem::file_exists(filename()))
 		{
-			renderer::driver()->shaderprogram_activate( *shader );
-			renderer::driver()->shaderprogram_bind_uniforms( *shader, *shader );
-			renderer::driver()->shaderprogram_deactivate( *shader );
+			LOGV("vertex shader does not exist: %s\n", filename());
+			return false;
 		}
 		
-		renderer::driver()->shaderprogram_detach( *shader, vertex_shader );
-		renderer::driver()->shaderprogram_detach( *shader, fragment_shader );
+		filename = path;
+		filename.append(".frag");
+		if (!core::filesystem::file_exists(filename()))
+		{
+			LOGV("fragment shader does not exist: %s\n", filename());
+			return false;
+		}
 		
-		renderer::driver()->shaderobject_destroy( vertex_shader );
-		renderer::driver()->shaderobject_destroy( fragment_shader );
-	} // load_shader
-	
-	void destroy_shader( Shader * shader )
-	{
-		renderer::ShaderProgram program;
-		program.object = shader->object;
-		renderer::driver()->shaderprogram_destroy( program );
-	} // destroy_shader
-	
-	void load_test_shader( Shader * shader )
-	{
+		renderer::ShaderProgram shader_program;
+		shader_program.object = 0;
+		driver->shaderprogram_deactivate(shader_program);
+
 		renderer::ShaderParameters params;
-		
-		renderer::ShaderProgram program = renderer::driver()->shaderprogram_create( params );
+		renderer::ShaderProgram program = driver->shaderprogram_create(params);
 		shader->object = program.object;
 		
-		renderer::ShaderObject vertex_shader = create_shader_from_file( "shaders/fontshader.vert", renderer::SHADER_VERTEX, 0 );
-		renderer::ShaderObject fragment_shader = create_shader_from_file( "shaders/fontshader.frag", renderer::SHADER_FRAGMENT, 0 );
+		filename = path;
+		filename.append(".vert");
+		renderer::ShaderObject vertex_shader = create_shader_from_file(filename(), renderer::SHADER_VERTEX, 0);
 		
-		renderer::driver()->shaderprogram_attach( *shader, vertex_shader );
-		renderer::driver()->shaderprogram_attach( *shader, fragment_shader );
+		filename = path;
+		filename.append(".frag");
+		renderer::ShaderObject fragment_shader = create_shader_from_file(filename(), renderer::SHADER_FRAGMENT, 0);
 		
+		driver->shaderprogram_attach(*shader, vertex_shader);
+		driver->shaderprogram_attach(*shader, fragment_shader);
 		
-		shader->set_frag_data_location( "out_color" );
-		shader->alloc_uniforms( 3 );
-		shader->uniforms[0].set_key( "projection_matrix" );
-		shader->uniforms[1].set_key( "modelview_matrix" );
-		shader->uniforms[2].set_key( "diffusemap" );
+		driver->shaderprogram_bind_attributes(*shader, *shader);
+		if (driver->shaderprogram_link_and_validate(*shader, *shader))
+		{
+			driver->shaderprogram_activate(*shader);
+			driver->shaderprogram_bind_uniforms(*shader, *shader);
+			driver->shaderprogram_deactivate(*shader);
+		}
 		
-		shader->alloc_attributes( 3 );
-		shader->attributes[0].set_key( "in_position" ); shader->attributes[0].second = 0;
-		shader->attributes[1].set_key( "in_color" ); shader->attributes[1].second = 1;
-		shader->attributes[2].set_key( "in_uv" ); shader->attributes[2].second = 2;
+		driver->shaderprogram_detach(*shader, vertex_shader);
+		driver->shaderprogram_detach(*shader, fragment_shader);
 		
+		driver->shaderobject_destroy(vertex_shader);
+		driver->shaderobject_destroy(fragment_shader);
+	
+		return true;
+	}
+
+	AssetLoadStatus shader_load_callback(const char* path, Shader* shader, const AssetParameters& parameters)
+	{
+		// populate all attribute names
+		const Json::Value& attribute_block = _internal::shader_config["attribute_block"];
+		StringVector attributes;
+		append_list_items(attributes, attribute_block);
+
+		// populate all uniform names
+		const Json::Value& uniform_block = _internal::shader_config["uniform_block"];
+		StringVector uniforms;
+		append_list_items(uniforms, uniform_block);
 		
-		renderer::driver()->shaderprogram_bind_attributes( *shader, *shader );
-		renderer::driver()->shaderprogram_link_and_validate( *shader, *shader );
+		// find the specific shader requested in the shader config
+		StackString<128> shader_path = path;
+		StackString<128> shader_name = shader_path.basename();
+		// We could actually use the dirname here in case someone requests
+		// a shader that doesn't reside in "shaders". Nah, unlikely.
 		
-		renderer::driver()->shaderprogram_bind_uniforms( *shader, *shader );
+		const Json::Value& shader_list = _internal::shader_config["shaders"];
+		LOGV("requested shader is: %s\n", shader_name());
 		
-		renderer::driver()->shaderobject_destroy( vertex_shader );
-		renderer::driver()->shaderobject_destroy( fragment_shader );
+		const Json::Value& shader_block = shader_list[ shader_name() ];
+		if (shader_block.isNull())
+		{
+			LOGV("unable to find the shader block named \"%s\"\n", shader_name());
+			return AssetLoad_Failure;
+		}
 		
-	} // load_test_shader
+		append_list_items(attributes, shader_block["attributes"]);
+		append_list_items(uniforms, shader_block["uniforms"]);
+		
+		shader->set_frag_data_location("out_color");
+		create_shader_attributes_and_uniforms(shader, attributes, uniforms);
+
+		bool success = create_shader_program_from_file(shader, path);
+		if (!success)
+		{
+			return AssetLoad_Failure;
+		}
+
+		return AssetLoad_Success;
+	} // font_load_callback
+	
+	void shader_construct_extension(StackString<MAX_PATH_SIZE>& extension)
+	{
+	} // shader_construct_extension
+	
+	
+	util::ConfigLoadStatus shader_parameter_load_callback(const Json::Value& root, void* context)
+	{
+		Json::Value* shader_parameters = static_cast<Json::Value*>(context);
+		
+		*shader_parameters = root;
+				
+		return util::ConfigLoad_Success;
+	}
+
+	void create_shader_config()
+	{
+		bool status = util::json_load_with_callback(SHADER_CONFIG, shader_parameter_load_callback, &_internal::shader_config, true);
+		if (!status)
+		{
+			LOGW("Error loading shader parameters!\n");
+		}
+	} // create_shader_config
+	
+	void destroy_shader_config()
+	{
+		_internal::shader_config.clear();
+	} // destroy_shader_config
+	
 }; // namespace assets
