@@ -125,92 +125,6 @@ namespace assets
 		
 		return shader_object;
 	} // create_shader_from_file
-//	
-//	void load_shader( const char * shader_path, Shader * shader )
-//	{
-//		LOGV( "loading shader '%s'\n", shader_path );
-//		StackString<MAX_PATH_SIZE> filename = shader_path;
-//		renderer::ShaderParameters params;
-//		
-//		renderer::ShaderProgram shader_program;
-//		shader_program.object = 0;
-//		if (!renderer::driver())
-//		{
-//			LOGW( "Renderer is not initialized!\n" );
-//			return;
-//		}
-//		renderer::driver()->shaderprogram_deactivate( shader_program );
-//		
-//		renderer::ShaderProgram program = renderer::driver()->shaderprogram_create( params );
-//		shader->object = program.object;
-//		
-//		filename.append( ".vert" );
-//		renderer::ShaderObject vertex_shader = create_shader_from_file( filename(), renderer::SHADER_VERTEX, 0 );
-//		
-//		filename = shader_path;
-//		filename.append( ".frag" );
-//		renderer::ShaderObject fragment_shader = create_shader_from_file( filename(), renderer::SHADER_FRAGMENT, 0 );
-//		
-//		renderer::driver()->shaderprogram_attach( *shader, vertex_shader );
-//		renderer::driver()->shaderprogram_attach( *shader, fragment_shader );
-//		
-//		renderer::driver()->shaderprogram_bind_attributes( *shader, *shader );
-//		if ( renderer::driver()->shaderprogram_link_and_validate( *shader, *shader ) )
-//		{
-//			renderer::driver()->shaderprogram_activate( *shader );
-//			renderer::driver()->shaderprogram_bind_uniforms( *shader, *shader );
-//			renderer::driver()->shaderprogram_deactivate( *shader );
-//		}
-//		
-//		renderer::driver()->shaderprogram_detach( *shader, vertex_shader );
-//		renderer::driver()->shaderprogram_detach( *shader, fragment_shader );
-//		
-//		renderer::driver()->shaderobject_destroy( vertex_shader );
-//		renderer::driver()->shaderobject_destroy( fragment_shader );
-//	} // load_shader
-	
-//	void destroy_shader( Shader * shader )
-//	{
-//		renderer::ShaderProgram program;
-//		program.object = shader->object;
-//		renderer::driver()->shaderprogram_destroy( program );
-//	} // destroy_shader
-	
-//	void load_test_shader( Shader * shader )
-//	{
-//		renderer::ShaderParameters params;
-//		
-//		renderer::ShaderProgram program = renderer::driver()->shaderprogram_create( params );
-//		shader->object = program.object;
-//		
-//		renderer::ShaderObject vertex_shader = create_shader_from_file( "shaders/fontshader.vert", renderer::SHADER_VERTEX, 0 );
-//		renderer::ShaderObject fragment_shader = create_shader_from_file( "shaders/fontshader.frag", renderer::SHADER_FRAGMENT, 0 );
-//		
-//		renderer::driver()->shaderprogram_attach( *shader, vertex_shader );
-//		renderer::driver()->shaderprogram_attach( *shader, fragment_shader );
-//		
-//		
-//		shader->set_frag_data_location( "out_color" );
-//		shader->alloc_uniforms( 3 );
-//		shader->uniforms[0].set_key( "projection_matrix" );
-//		shader->uniforms[1].set_key( "modelview_matrix" );
-//		shader->uniforms[2].set_key( "diffusemap" );
-//		
-//		shader->alloc_attributes( 3 );
-//		shader->attributes[0].set_key( "in_position" ); shader->attributes[0].second = 0;
-//		shader->attributes[1].set_key( "in_color" ); shader->attributes[1].second = 1;
-//		shader->attributes[2].set_key( "in_uv" ); shader->attributes[2].second = 2;
-//		
-//		
-//		renderer::driver()->shaderprogram_bind_attributes( *shader, *shader );
-//		renderer::driver()->shaderprogram_link_and_validate( *shader, *shader );
-//		
-//		renderer::driver()->shaderprogram_bind_uniforms( *shader, *shader );
-//		
-//		renderer::driver()->shaderobject_destroy( vertex_shader );
-//		renderer::driver()->shaderobject_destroy( fragment_shader );
-//		
-//	} // load_test_shader
 
 	typedef std::vector< std::string, GeminiAllocator<std::string> > StringVector;
 	void append_list_items(StringVector& vec, const Json::Value& array)
@@ -249,7 +163,7 @@ namespace assets
 		}
 	}
 	
-	bool create_shader_program_from_file(Shader* shader, const char* path)
+	bool create_shader_program_from_file(Shader* shader, const char* path, StringVector& shader_types)
 	{
 		if (!renderer::driver())
 		{
@@ -292,20 +206,29 @@ namespace assets
 		filename.append(".frag");
 		renderer::ShaderObject fragment_shader = create_shader_from_file(filename(), renderer::SHADER_FRAGMENT, 0);
 		
+		// attach compiled code to program
 		driver->shaderprogram_attach(*shader, vertex_shader);
 		driver->shaderprogram_attach(*shader, fragment_shader);
 		
+		// attributes must be bound before linking the program
 		driver->shaderprogram_bind_attributes(*shader, *shader);
+		
+		// Link and validate the program; spit out any log info
 		if (driver->shaderprogram_link_and_validate(*shader, *shader))
 		{
 			driver->shaderprogram_activate(*shader);
+			
+			// loop through all uniforms and cache their locations
 			driver->shaderprogram_bind_uniforms(*shader, *shader);
+			
 			driver->shaderprogram_deactivate(*shader);
 		}
 		
+		// detach shader objects
 		driver->shaderprogram_detach(*shader, vertex_shader);
 		driver->shaderprogram_detach(*shader, fragment_shader);
 		
+		// destroy shader objects
 		driver->shaderobject_destroy(vertex_shader);
 		driver->shaderobject_destroy(fragment_shader);
 	
@@ -331,7 +254,6 @@ namespace assets
 		// a shader that doesn't reside in "shaders". Nah, unlikely.
 		
 		const Json::Value& shader_list = _internal::shader_config["shaders"];
-		LOGV("requested shader is: %s\n", shader_name());
 		
 		const Json::Value& shader_block = shader_list[ shader_name() ];
 		if (shader_block.isNull())
@@ -343,10 +265,17 @@ namespace assets
 		append_list_items(attributes, shader_block["attributes"]);
 		append_list_items(uniforms, shader_block["uniforms"]);
 		
+		
+		// assemble a list of shader types
+		StringVector shader_types;
+		Json::Value shader_type_list = _internal::shader_config["shader_types"];
+		append_list_items(shader_types, shader_type_list);
+		assert(!shader_types.empty());
+		
 		shader->set_frag_data_location("out_color");
 		create_shader_attributes_and_uniforms(shader, attributes, uniforms);
 
-		bool success = create_shader_program_from_file(shader, path);
+		bool success = create_shader_program_from_file(shader, path, shader_types);
 		if (!success)
 		{
 			return AssetLoad_Failure;

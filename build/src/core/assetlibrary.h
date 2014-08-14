@@ -65,6 +65,11 @@ namespace assets
 			total_assets = 0;
 			default_asset = 0;
 		} // AssetLibrary
+		
+		~AssetLibrary()
+		{
+			release_and_purge();
+		}
 	
 		AssetClass * allocate_asset() { return CREATE(AssetClass); }
 		void deallocate_asset( AssetClass * asset ) { DESTROY(AssetClass, asset); }

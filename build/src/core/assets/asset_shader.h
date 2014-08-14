@@ -50,8 +50,6 @@ namespace assets
 	
 	
 	renderer::ShaderObject create_shader_from_file( const char * shader_path, renderer::ShaderObjectType type, const char * preprocessor_defines );
-//	void load_shader( const char * shader_path, Shader * shader );
-//	void destroy_shader( Shader * shader );
 
 	AssetLoadStatus shader_load_callback(const char* path, Shader* shader, const AssetParameters& parameters);
 	void shader_construct_extension(StackString<MAX_PATH_SIZE>& extension);
