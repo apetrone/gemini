@@ -1,5 +1,3 @@
-#version 150 core
-
 precision highp float;
 
 out vec4 out_color;

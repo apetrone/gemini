@@ -1,5 +1,3 @@
-#version 150 core
-
 out vec4 out_color;
 
 in vec4 ps_color;

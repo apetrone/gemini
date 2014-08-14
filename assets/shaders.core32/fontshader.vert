@@ -1,13 +1,11 @@
-#version 150 core
-
 precision highp float;
 
 uniform mat4 modelview_matrix;
 uniform mat4 projection_matrix;
 
-in vec4 in_position;
-in vec2 in_uv0;
-in vec4 in_color;
+layout (location = 0) in vec4 in_position;
+layout (location = 1) in vec2 in_uv0;
+layout (location = 2) in vec4 in_color;
 
 out vec4 ps_color;
 out vec2 ps_uv0;

@@ -436,6 +436,7 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 #endif
 
 	GEMGL_LINK( gl.GetString, "glGetString", GEMGLFNGETSTRING );
+	GEMGL_LINK( gl.GetStringi, "glGetStringi", GEMGLFNGETSTRINGI );
 
 	// state queries
 	GEMGL_LINK( gl.GetBooleanv, "glGetBooleanv", GEMGLFNGETBOOLEANV );
@@ -460,8 +461,22 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 		LOGV( "GL_SHADING_LANGUAGE_VERSION: %s\n", gl.GetString(GL_SHADING_LANGUAGE_VERSION) );
 		gl.CheckError( "glGetString" );
 		
-		LOGV( "GL_EXTENSIONS: %s\n", gl.GetString(GL_EXTENSIONS) );
-		gl.CheckError( "glGetString" );
+		GLint total_extensions = -1;
+		gl.GetIntegerv(GL_NUM_EXTENSIONS, &total_extensions);
+		
+//		LOGV( "GL_EXTENSIONS: %s\n", gl.GetString(GL_EXTENSIONS) );
+//		gl.CheckError( "glGetString" );
+
+
+
+		if (total_extensions)
+		{
+			LOGV("GL_EXTENSIONS: (%i)\n", total_extensions);
+			for (int i = 0; i < total_extensions; ++i)
+			{
+				LOGV("[%i] - %s\n", i, gl.GetStringi(GL_EXTENSIONS, i));
+			}
+		}
 	}
 
 	return 1;

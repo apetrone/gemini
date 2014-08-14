@@ -134,6 +134,7 @@ namespace debugdraw
 		// load debug shader
 		_internal::debug_shader = assets::shaders()->load_from_path(DEBUG_SHADER);
 		assert(_internal::debug_shader != 0);
+//		render_utilities::create_descriptor_from_shader(_internal::vertex_stream.desc, _internal::debug_shader);
 	} // startup
 	
 	void shutdown()

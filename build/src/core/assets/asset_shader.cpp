@@ -81,7 +81,7 @@ namespace assets
 		}
 	}
 		
-	renderer::ShaderObject create_shader_from_file( const char * shader_path, renderer::ShaderObjectType type, const char * preprocessor_defines )
+	renderer::ShaderObject create_shader_from_file( const char * shader_path, renderer::ShaderObjectType type, std::string& preprocessor_defines )
 	{
 		renderer::ShaderObject shader_object;
 		char * buffer;
@@ -98,20 +98,19 @@ namespace assets
 #else
 				version = "#version 150";
 #endif
-				LOGW( "Unable to extract version from shader! Forcing to '%s'.\n", version() );
-				
+				//LOGW( "Unable to extract version from shader! Forcing to '%s'.\n", version() );
 			}
 			version.append( "\n" );
 			
 			// specify version string first, followed by any defines, then the actual shader source
-			if ( preprocessor_defines == 0 )
+			if ( preprocessor_defines.empty() )
 			{
 				preprocessor_defines = "";
 			}
 			
 			shader_object = renderer::driver()->shaderobject_create( type );
 			
-			if ( !renderer::driver()->shaderobject_compile( shader_object, buffer, preprocessor_defines, version()) )
+			if ( !renderer::driver()->shaderobject_compile( shader_object, buffer, preprocessor_defines.c_str(), version()) )
 			{
 				LOGE( "Error compiling shader %s\n", shader_path );
 			}
@@ -125,6 +124,7 @@ namespace assets
 		
 		return shader_object;
 	} // create_shader_from_file
+
 
 	typedef std::vector< std::string, GeminiAllocator<std::string> > StringVector;
 	void append_list_items(StringVector& vec, const Json::Value& array)
@@ -163,7 +163,26 @@ namespace assets
 		}
 	}
 	
-	bool create_shader_program_from_file(Shader* shader, const char* path, StringVector& shader_types)
+	bool verify_stages_exist_on_disk(const char* path, StringVector& stages)
+	{
+		for (auto name : stages)
+		{
+			StackString<MAX_PATH_SIZE> filename = path;
+			filename.append(".");
+			filename.append(name.c_str());
+			
+			// verify the file exists
+			if (!core::filesystem::file_exists(filename()))
+			{
+				LOGE("\"%s\" does not exist!\n", filename());
+				return false;
+			}
+		}
+
+		return true;
+	}
+	
+	bool create_shader_program_from_file(Shader* shader, const char* path, StringVector& stages, std::string& preprocessor)
 	{
 		if (!renderer::driver())
 		{
@@ -174,19 +193,11 @@ namespace assets
 		renderer::IRenderDriver* driver = renderer::driver();
 		StackString<MAX_PATH_SIZE> filename = path;
 		
-		// see if the required files exist
-		filename.append(".vert");
-		if (!core::filesystem::file_exists(filename()))
+		// verify all stages exist
+		bool stages_exist = verify_stages_exist_on_disk(path, stages);
+		if (!stages_exist)
 		{
-			LOGV("vertex shader does not exist: %s\n", filename());
-			return false;
-		}
-		
-		filename = path;
-		filename.append(".frag");
-		if (!core::filesystem::file_exists(filename()))
-		{
-			LOGV("fragment shader does not exist: %s\n", filename());
+			LOGW("One or more stages do not exist for shader %s. Aborting.\n", path);
 			return false;
 		}
 		
@@ -200,11 +211,11 @@ namespace assets
 		
 		filename = path;
 		filename.append(".vert");
-		renderer::ShaderObject vertex_shader = create_shader_from_file(filename(), renderer::SHADER_VERTEX, 0);
+		renderer::ShaderObject vertex_shader = create_shader_from_file(filename(), renderer::SHADER_VERTEX, preprocessor);
 		
 		filename = path;
 		filename.append(".frag");
-		renderer::ShaderObject fragment_shader = create_shader_from_file(filename(), renderer::SHADER_FRAGMENT, 0);
+		renderer::ShaderObject fragment_shader = create_shader_from_file(filename(), renderer::SHADER_FRAGMENT, preprocessor);
 		
 		// attach compiled code to program
 		driver->shaderprogram_attach(*shader, vertex_shader);
@@ -265,21 +276,32 @@ namespace assets
 		append_list_items(attributes, shader_block["attributes"]);
 		append_list_items(uniforms, shader_block["uniforms"]);
 		
-		
-		// assemble a list of shader types
-		StringVector shader_types;
-		Json::Value shader_type_list = _internal::shader_config["shader_types"];
-		append_list_items(shader_types, shader_type_list);
-		assert(!shader_types.empty());
-		
+		StringVector stages;
+		append_list_items(stages, shader_block["stages"]);
+
+
+		StringVector preprocessor;
+		Json::Value preprocessor_block = _internal::shader_config["preprocessor_block"];
+		append_list_items(preprocessor, preprocessor_block);
+
 		shader->set_frag_data_location("out_color");
 		create_shader_attributes_and_uniforms(shader, attributes, uniforms);
 
-		bool success = create_shader_program_from_file(shader, path, shader_types);
+		std::string preprocessor_defines;
+		for (auto item : preprocessor)
+		{
+			preprocessor_defines += item;
+			preprocessor_defines += "\n";
+		}
+		
+		bool success = create_shader_program_from_file(shader, path, stages, preprocessor_defines);
 		if (!success)
 		{
 			return AssetLoad_Failure;
 		}
+		
+		
+//		shader->show_attributes();
 
 		return AssetLoad_Success;
 	} // font_load_callback

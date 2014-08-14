@@ -1,11 +1,9 @@
-#version 150 core
-
 uniform mat4 modelview_matrix;
 uniform mat4 projection_matrix;
 uniform mat4 object_matrix;
 
-in vec4 in_position;
-in vec4 in_color;
+layout (location = 0) in vec4 in_position;
+layout (location = 1) in vec4 in_color;
 
 out vec4 ps_color;
 

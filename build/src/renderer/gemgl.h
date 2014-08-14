@@ -144,6 +144,7 @@ enum gemgl_renderer_type
 #endif
 
 	typedef const GLubyte * (GEMGLAPI GEMGLFNGETSTRING) ( GLenum param );
+	typedef const GLubyte * (GEMGLAPI GEMGLFNGETSTRINGI) ( GLenum name, GLuint index );
 
 	// state queries
 	typedef void (GEMGLAPI GEMGLFNGETBOOLEANV)( GLenum value, GLboolean * data );
@@ -595,6 +596,7 @@ enum gemgl_renderer_type
 		
 #endif
 		GEMGLFNGETSTRING GetString;
+		GEMGLFNGETSTRINGI GetStringi;
         GEMGL_CHECKERROR CheckError;
 
 		GEMGLFNGETBOOLEANV GetBooleanv;
