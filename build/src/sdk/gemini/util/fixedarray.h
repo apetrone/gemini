@@ -48,7 +48,7 @@ public:
 	
 	Type* end()
 	{
-		return &elements[total_elements-1];
+		return &elements[total_elements];
 	}
 	
 	FixedArray()
