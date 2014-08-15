@@ -144,22 +144,28 @@ namespace assets
 	
 	void create_shader_attributes_and_uniforms(Shader* shader, StringVector& attributes, StringVector& uniforms)
 	{
-		shader->alloc_attributes(attributes.size());
-		int index = 0;
-		for (auto value : attributes)
+		if (shader->total_attributes == 0)
 		{
-			shader->attributes[index].set_key(value.c_str());
-			shader->attributes[index].second = index;
-			++index;
+			shader->alloc_attributes(attributes.size());
+			int index = 0;
+			for (auto value : attributes)
+			{
+				shader->attributes[index].set_key(value.c_str());
+				shader->attributes[index].second = index;
+				++index;
+			}
 		}
 		
-		shader->alloc_uniforms(uniforms.size());
-		index = 0;
-		for (auto value : uniforms)
+		if (shader->total_uniforms == 0)
 		{
-			shader->uniforms[index].set_key(value.c_str());
-			shader->uniforms[index].second = index;
-			++index;
+			shader->alloc_uniforms(uniforms.size());
+			int index = 0;
+			for (auto value : uniforms)
+			{
+				shader->uniforms[index].set_key(value.c_str());
+				shader->uniforms[index].second = index;
+				++index;
+			}
 		}
 	}
 	
@@ -229,13 +235,14 @@ namespace assets
 			return false;
 		}
 		
-		renderer::ShaderProgram shader_program;
-		shader_program.object = 0;
-		driver->shaderprogram_deactivate(shader_program);
+		driver->shaderprogram_deactivate(*shader);
 
-		renderer::ShaderParameters params;
-		renderer::ShaderProgram program = driver->shaderprogram_create(params);
-		shader->object = program.object;
+		if (shader->object == 0)
+		{
+			renderer::ShaderParameters params;
+			renderer::ShaderProgram program = driver->shaderprogram_create(params);
+			shader->object = program.object;
+		}
 		
 		// shader_stage_to_extension
 		// shader_stage_to_shaderobject_type
@@ -263,11 +270,17 @@ namespace assets
 			
 			driver->shaderprogram_deactivate(*shader);
 		}
+
+
 		
 		// detach and destroy shader objects
 		for (auto& object : shader_objects)
 		{
 			driver->shaderprogram_detach(*shader, object);
+		}
+		
+		for (auto& object: shader_objects)
+		{
 			driver->shaderobject_destroy(object);
 		}
 	

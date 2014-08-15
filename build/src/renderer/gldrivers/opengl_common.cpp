@@ -59,6 +59,7 @@ GLenum shaderobject_type_to_gl_shaderobjecttype( renderer::ShaderObjectType type
 		
 		// not available in GLESv2
 //		GL_GEOMETRY_SHADER,
+//		GL_COMPUTE_SHADER
 	};
 	
 	assert( type < renderer::SHADER_LIMIT );

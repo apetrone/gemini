@@ -312,10 +312,13 @@ namespace renderer
 	
 	void ShaderParameters::set_frag_data_location( const char * location )
 	{
-		assert( this->frag_data_location == 0 );
-		size_t len = xstr_len(location);
-		this->frag_data_location = (char*)ALLOC( len+1 );
-		memset( this->frag_data_location, 0, len+1 );
-		xstr_ncpy( this->frag_data_location, location, len );
+		// TODO: convert this to std::string
+		if (frag_data_location == 0)
+		{
+			size_t len = xstr_len(location);
+			this->frag_data_location = (char*)ALLOC( len+1 );
+			memset( this->frag_data_location, 0, len+1 );
+			xstr_ncpy( this->frag_data_location, location, len );
+		}
 	} // set_frag_data_location
 }; // namespace renderer
