@@ -224,7 +224,7 @@ namespace assets
 			LOGW( "Renderer is not initialized!\n" );
 			return false;
 		}
-		
+
 		renderer::IRenderDriver* driver = renderer::driver();
 		
 		// verify all stages exist
@@ -234,22 +234,18 @@ namespace assets
 			LOGW("One or more stages do not exist for shader %s. Aborting.\n", path);
 			return false;
 		}
-		
-		driver->shaderprogram_deactivate(*shader);
 
+		// shader program is uninitialized; create a new one
 		if (shader->object == 0)
 		{
 			renderer::ShaderParameters params;
 			renderer::ShaderProgram program = driver->shaderprogram_create(params);
 			shader->object = program.object;
 		}
-		
-		// shader_stage_to_extension
-		// shader_stage_to_shaderobject_type
+
+		// attach shader objects to program
 		FixedArray<renderer::ShaderObject> shader_objects;
 		shader_objects.allocate(stages.size());
-		
-		// attach shader objects to program
 		for (int i = 0; i < shader_objects.size(); ++i)
 		{
 			std::string filename = path + shader_stage_to_extension(stages[i]);
@@ -271,19 +267,13 @@ namespace assets
 			driver->shaderprogram_deactivate(*shader);
 		}
 
-
-		
 		// detach and destroy shader objects
 		for (auto& object : shader_objects)
 		{
 			driver->shaderprogram_detach(*shader, object);
-		}
-		
-		for (auto& object: shader_objects)
-		{
 			driver->shaderobject_destroy(object);
 		}
-	
+
 		return true;
 	}
 
