@@ -129,13 +129,6 @@ struct Interpolator<glm::quat>
 	}
 };
 
-
-
-namespace renderer
-{
-	struct GeneralParameters;
-};
-
 namespace assets
 {
 	struct Geometry;

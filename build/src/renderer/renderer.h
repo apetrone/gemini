@@ -320,22 +320,7 @@ namespace renderer
 		bool is_animated() const { return 0; }
 		
 	}; // Geometry
-	
-	struct GeneralParameters
-	{
-		glm::mat4 * modelview_matrix;
-		glm::mat4 * projection_project;
-		glm::mat4 * object_matrix;
-		
-		unsigned int global_params;
-		glm::vec3 * camera_position;
-		
-		
-		glm::mat4* node_transforms;
-		unsigned int total_node_transforms;
-		
-		GeneralParameters();
-	};
+
 };
 
 #include "vertexstream.h"
