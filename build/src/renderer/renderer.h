@@ -249,7 +249,6 @@ namespace renderer
 	struct ShaderParameters
 	{
 		unsigned int id;
-		
 		unsigned int capabilities;
 		
 		StackString<64> frag_data_location;
@@ -272,6 +271,19 @@ namespace renderer
 			index_count = 0;
 		}
 	}; // VertexBuffer
+	
+	struct Texture
+	{
+		
+	}; // Texture
+
+
+	struct RenderTarget
+	{
+		uint16_t width;
+		uint16_t height;
+	}; // RenderTarget
+
 	
 	struct UV
 	{
@@ -325,6 +337,44 @@ namespace renderer
 		}
 		
 	};
+	
+	
+	// This interface can be derived for each new platform
+	class RenderDevice
+	{
+	public:
+		virtual ~RenderDevice() {}
+		
+		
+		
+		// resource management
+		
+		// commands
+	};
+	
+	
+	
+	
+	
+	
+	
+	// Renderer is a high-level interface for visuals. It doesn't know/care
+	// what the underlying API or devices are.
+	// Internally, it will direct calls to the device.
+	class Renderer
+	{
+	public:
+		virtual ~Renderer() {}
+		
+		
+		
+		virtual void apply_settings(const renderer::RenderSettings& settings) = 0;
+		
+		
+	};
+	
+	
+	
 	
 	//
 	// IRenderDriver
