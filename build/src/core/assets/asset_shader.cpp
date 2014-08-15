@@ -182,6 +182,35 @@ namespace assets
 		return true;
 	}
 	
+	const std::string shader_stage_to_extension(const std::string& extension)
+	{
+		return std::string(".") + extension;
+	}
+	
+	renderer::ShaderObjectType shader_stage_to_shaderobject_type(const std::string& stage)
+	{
+		if (stage == "vert")
+		{
+			return renderer::SHADER_VERTEX;
+		}
+		else if (stage == "frag")
+		{
+			return renderer::SHADER_FRAGMENT;
+		}
+		else if (stage == "geom")
+		{
+			return renderer::SHADER_GEOMETRY;
+		}
+		else if (stage == "comp")
+		{
+			return renderer::SHADER_COMPUTE;
+		}
+		else
+		{
+			LOGE("Unknown shader stage: %s!\n", stage.c_str());
+		}
+	}
+	
 	bool create_shader_program_from_file(Shader* shader, const char* path, StringVector& stages, std::string& preprocessor)
 	{
 		if (!renderer::driver())
@@ -191,7 +220,6 @@ namespace assets
 		}
 		
 		renderer::IRenderDriver* driver = renderer::driver();
-		StackString<MAX_PATH_SIZE> filename = path;
 		
 		// verify all stages exist
 		bool stages_exist = verify_stages_exist_on_disk(path, stages);
@@ -209,18 +237,19 @@ namespace assets
 		renderer::ShaderProgram program = driver->shaderprogram_create(params);
 		shader->object = program.object;
 		
-		filename = path;
-		filename.append(".vert");
-		renderer::ShaderObject vertex_shader = create_shader_from_file(filename(), renderer::SHADER_VERTEX, preprocessor);
+		// shader_stage_to_extension
+		// shader_stage_to_shaderobject_type
+		FixedArray<renderer::ShaderObject> shader_objects;
+		shader_objects.allocate(stages.size());
 		
-		filename = path;
-		filename.append(".frag");
-		renderer::ShaderObject fragment_shader = create_shader_from_file(filename(), renderer::SHADER_FRAGMENT, preprocessor);
-		
-		// attach compiled code to program
-		driver->shaderprogram_attach(*shader, vertex_shader);
-		driver->shaderprogram_attach(*shader, fragment_shader);
-		
+		// attach shader objects to program
+		for (int i = 0; i < shader_objects.size(); ++i)
+		{
+			std::string filename = path + shader_stage_to_extension(stages[i]);
+			shader_objects[i] = create_shader_from_file(filename.c_str(), shader_stage_to_shaderobject_type(stages[i]), preprocessor);
+			driver->shaderprogram_attach(*shader, shader_objects[i]);
+		}
+
 		// attributes must be bound before linking the program
 		driver->shaderprogram_bind_attributes(*shader, *shader);
 		
@@ -235,13 +264,12 @@ namespace assets
 			driver->shaderprogram_deactivate(*shader);
 		}
 		
-		// detach shader objects
-		driver->shaderprogram_detach(*shader, vertex_shader);
-		driver->shaderprogram_detach(*shader, fragment_shader);
-		
-		// destroy shader objects
-		driver->shaderobject_destroy(vertex_shader);
-		driver->shaderobject_destroy(fragment_shader);
+		// detach and destroy shader objects
+		for (auto& object : shader_objects)
+		{
+			driver->shaderprogram_detach(*shader, object);
+			driver->shaderobject_destroy(object);
+		}
 	
 		return true;
 	}

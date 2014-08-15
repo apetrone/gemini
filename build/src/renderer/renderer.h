@@ -172,17 +172,16 @@ namespace renderer
 		
 	}; // VertexBufferErrorType
 
-
-
 	enum ShaderObjectType
 	{
 		SHADER_VERTEX,
 		SHADER_FRAGMENT,
 		SHADER_GEOMETRY,
+		SHADER_COMPUTE,
 		
 		SHADER_LIMIT
 	}; // ShaderObjectType
-	
+		
 	struct ShaderObject
 	{
 		unsigned int shader_id;
