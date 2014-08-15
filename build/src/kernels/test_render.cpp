@@ -41,6 +41,49 @@
 
 #include <json/json.h>
 
+#include <queue>
+#include <atomic>
+#include <mutex>
+
+template <class Type>
+class ThreadSafeQueue
+{
+	std::queue<Type> queue;
+	mutable std::mutex local_mutex;
+	std::condition_variable wait_condition;
+	
+public:
+	ThreadSafeQueue()
+	{
+	}
+
+	void enqueue(Type in)
+	{
+		std::lock_guard<std::mutex> lock(local_mutex);
+		queue.push(in);
+		wait_condition.notify_one();
+	}
+	
+	Type dequeue()
+	{
+		std::unique_lock<std::mutex> lock(local_mutex);
+		while(queue.empty())
+		{
+			wait_condition.wait(lock);
+		}
+		
+		Type value = queue.front();
+		queue.pop();
+		return value;
+	}
+	
+	size_t size()
+	{
+		std::lock_guard<std::mutex> lock(local_mutex);
+		size_t total_size = queue.size();
+		return total_size;
+	}
+};
 
 struct BaseVar
 {
@@ -216,6 +259,13 @@ Var<int> test("value_test");
 
 	class ReloadHandler : public CivetHandler
 	{
+		ThreadSafeQueue<std::string>& queue;
+		
+	public:
+	
+		ReloadHandler(ThreadSafeQueue<std::string>& command_queue) : queue(command_queue)
+		{}
+
 		virtual bool handlePut(CivetServer* server, struct mg_connection* conn)
 		{
 			const struct mg_request_info* request = mg_get_request_info(conn);
@@ -225,18 +275,33 @@ Var<int> test("value_test");
 			int bytes = mg_read(conn, &buf[0], 1024);
 			assert(bytes < 1024);
 			
-			
-//			LOGV("read %i bytes, %s\n", bytes, buf.c_str());
-			
-			LOGV("reload: %s\n", buf.c_str());
-			//put_new_json(buf);
-			
-			// On Error, we can return "400 Bad Request",
-			// but we'll have to provide a response body to describe why.
-			
+			// send a response that we received it.
 			std::string output = "204 No Content";
 			mg_write(conn, &output[0], output.length());
 			
+
+			LOGV("reload: %s\n", buf.c_str());
+			
+			Json::Reader reader;
+			Json::Value root;
+
+			bool success = reader.parse(&buf[0], &buf[0] + buf.size(), root);
+			if (!success)
+			{
+				LOGW("ignored reload request: failed to parse json\n");
+				LOGW("json parsing failed: %s\n", reader.getFormatedErrorMessages().c_str());
+			}
+			else
+			{
+				if (!root["resource"].isNull())
+				{
+					StackString<1024> filename = root["resource"].asString().c_str();
+					StackString<1024> dirname = filename.dirname();
+					LOGV("dir: %s, file: %s\n", dirname(), filename.basename().remove_extension()());
+					queue.enqueue(filename.remove_extension()());
+				}
+			}
+
 			return true;
 		}
 	};
@@ -268,6 +333,9 @@ public:
 #ifdef USE_WEBSERVER
 	CivetServer* server;
 #endif
+
+	
+	ThreadSafeQueue<std::string> reload_queue;
 	
 	TestRender()
 	{
@@ -292,6 +360,8 @@ public:
 #ifdef SCENE_GRAPH_MANUAL
 				root->update(kernel::instance()->parameters().step_interval_seconds);
 #endif
+
+				assets::shaders()->load_from_path("shaders/fontshader", assets::AssetParameters(), true);
 			}
 			else if (event.key == input::KEY_J)
 			{
@@ -367,7 +437,7 @@ public:
 		
 		server = CREATE(CivetServer, options, &cb);
 		server->addHandler("/json", new TestHandler());
-		server->addHandler("/reload", new ReloadHandler());
+		server->addHandler("/reload", new ReloadHandler(reload_queue));
 #endif
 		
 		root = CREATE(scenegraph::Node);
@@ -445,6 +515,20 @@ public:
 
 	virtual void tick( kernel::Params & params )
 	{
+		// process queue
+		size_t queued_items = reload_queue.size();
+		if (queued_items > 0)
+		{
+			for(size_t i = 0; i < queued_items; ++i)
+			{
+				std::string item = reload_queue.dequeue();
+				// for now, assume everything is a shader.
+				LOGV("processing: %s\n", item.c_str());
+				assets::shaders()->load_from_path(item.c_str(), assets::AssetParameters(), true);
+			}
+		}
+	
+	
 		RenderStream rs;
 		rs.add_viewport( 0, 0, params.render_width, params.render_height );
 		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
