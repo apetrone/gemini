@@ -41,6 +41,16 @@ private:
 	
 public:
 	
+	Type* begin()
+	{
+		return &elements[0];
+	}
+	
+	Type* end()
+	{
+		return &elements[total_elements-1];
+	}
+	
 	FixedArray()
 	{
 		elements = 0;
