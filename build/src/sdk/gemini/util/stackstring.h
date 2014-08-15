@@ -114,17 +114,17 @@ public:
 	StackStringType basename()
 	{
 		Type * pos = find_last_slash();
-		if ( pos )
+		if (pos)
 		{
 			StackStringType out;
 			out = (pos+1);
-			out._length = (pos-_data);
-		
 			return out;
 		}
 
 		return *this;
 	}
+	
+
 
 	StackStringType dirname()
 	{
@@ -134,7 +134,7 @@ public:
 		{
 			StackStringType out;
 			out = _data;
-			out._length = (pos-_data)+1;
+			out._length = (pos-_data);
 			out[ out._length ] = '\0';
 			return out;
 		}

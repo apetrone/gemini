@@ -45,7 +45,7 @@ namespace util
 		}
 		else
 		{
-//			LOGV( "json parsing failed: %s\n", reader.getFormattedErrorMessages().c_str() );
+			LOGV( "json parsing failed: %s\n", reader.getFormattedErrorMessages().c_str() );
 		}
 		
 		return is_success && (status == ConfigLoad_Success);
