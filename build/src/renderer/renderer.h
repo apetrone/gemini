@@ -22,13 +22,13 @@
 #pragma once
 
 #include <gemini/typedefs.h>
-#include <gemini/mem.h>
+#include <gemini/util/fixedarray.h>
+#include <gemini/util/stackstring.h>
+#include <gemini/mathlib.h> // for glm
 
 #include "memorystream.h"
 #include "image.h"
-#include <gemini/mathlib.h> // for glm
 
-#include <gemini/util/fixedarray.h>
 
 namespace renderer
 {
@@ -244,38 +244,21 @@ namespace renderer
 		unsigned int destination;
 	}; // BlendParameters
 	
-	
-	struct ShaderKeyValuePair
-	{
-		ShaderKeyValuePair();
-		virtual ~ShaderKeyValuePair();
-	
-		void set_key( const char * key );
-		char * first;
-		int second;
-	};
+	typedef std::pair<std::string, int> ShaderKeyValuePair;
 
 	struct ShaderParameters
 	{
-		unsigned int total_uniforms;
-		unsigned int total_attributes;
 		unsigned int id;
 		
 		unsigned int capabilities;
 		
+		StackString<64> frag_data_location;
 		
-		char * frag_data_location;
-		
-		ShaderKeyValuePair * uniforms;
-		ShaderKeyValuePair * attributes;
-		
+		FixedArray<ShaderKeyValuePair> uniforms;
+		FixedArray<ShaderKeyValuePair> attributes;
+
 		ShaderParameters();
 		virtual ~ShaderParameters();
-		
-		void alloc_attributes( unsigned int attributes_count );
-		void alloc_uniforms( unsigned int uniform_count );
-		void set_frag_data_location( const char * location );
-
 	}; // ShaderParameters
 	
 	struct VertexBuffer

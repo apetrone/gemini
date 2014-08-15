@@ -1012,12 +1012,12 @@ void GLCore32::shaderprogram_bind_attributes( renderer::ShaderProgram shader_pro
 	// gl.BindFragDataLocation(shader_program.object, 0, parameters.frag_data_location);
 	// gl.CheckError( "BindFragDataLocation" );
 
-	for( int i = 0; i < parameters.total_attributes; ++i )
+	for( int i = 0; i < parameters.attributes.size(); ++i )
 	{
 		ShaderKeyValuePair * keyvalue = &parameters.attributes[i];
 		SHADER_DEBUG( "BindAttribLocation -> %s to %i\n", keyvalue->first, keyvalue->second );
-		gl.BindAttribLocation( shader_program.object, keyvalue->second, keyvalue->first );
-		gl.CheckError( xstr_format( "BindAttribLocation: %s", keyvalue->first ));
+		gl.BindAttribLocation( shader_program.object, keyvalue->second, keyvalue->first.c_str() );
+		gl.CheckError( xstr_format( "BindAttribLocation: %s", keyvalue->first.c_str() ));
 	}
 }
 
@@ -1027,17 +1027,17 @@ void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_progr
 	//this->shaderprogram_activate( shader_program );
 
 	// fetch uniforms from the shader
-	for( int uniform_id = 0; uniform_id < parameters.total_uniforms; ++uniform_id )
+	for( int uniform_id = 0; uniform_id < parameters.uniforms.size(); ++uniform_id )
 	{
 		ShaderKeyValuePair * keyvalue = &parameters.uniforms[ uniform_id ];
 		
-		keyvalue->second = gl.GetUniformLocation( shader_program.object, keyvalue->first );
-		SHADER_DEBUG( "GetUniformLocation: \"%s\" -> %i\n", keyvalue->first, keyvalue->second );
+		keyvalue->second = gl.GetUniformLocation( shader_program.object, keyvalue->first.c_str() );
+		SHADER_DEBUG( "GetUniformLocation: \"%s\" -> %i\n", keyvalue->first.c_str(), keyvalue->second );
 		gl.CheckError( "GetUniformLocation" );
 		
 		if ( keyvalue->second == -1 )
 		{
-			LOGE( "GetUniformLocation FAILED for \"%s\"\n", keyvalue->first );
+			LOGE( "GetUniformLocation FAILED for \"%s\"\n", keyvalue->first.c_str() );
 		}
 	}
 }
@@ -1045,7 +1045,7 @@ void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_progr
 bool GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters )
 {
 	bool status = true;
-	gl.BindFragDataLocation(shader_program.object, 0, parameters.frag_data_location);
+	gl.BindFragDataLocation(shader_program.object, 0, parameters.frag_data_location());
 	gl.CheckError( "BindFragDataLocation" );
 
 	gl.LinkProgram( shader_program.object );

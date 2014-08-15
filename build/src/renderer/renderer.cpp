@@ -227,93 +227,14 @@ namespace renderer
 		return *this;
 	} // operator=
 
-	ShaderKeyValuePair::ShaderKeyValuePair()
-	{
-		this->first = 0;
-		this->second = 0;
-	}
-	
-	ShaderKeyValuePair::~ShaderKeyValuePair()
-	{
-		if ( this->first )
-		{
-			DEALLOC( this->first );
-		}
-	}
-	
-	void ShaderKeyValuePair::set_key(const char *key)
-	{
-		if (this->first != 0)
-		{
-			DEALLOC(this->first);
-		}
-
-		size_t length = xstr_len(key);
-		this->first = (char*)ALLOC( length + 1 );
-		memset( this->first, 0, length+1 );
-		xstr_ncpy( this->first, key, length );
-	} // set_key
-
 	ShaderParameters::ShaderParameters()
 	{
-		this->total_attributes = 0;
-		this->total_uniforms = 0;
-		this->uniforms = 0;
-		this->attributes = 0;
-		this->frag_data_location = 0;
+
 	}
 	
 	ShaderParameters::~ShaderParameters()
 	{
-		if ( this->uniforms )
-		{
-			DESTROY_ARRAY(ShaderKeyValuePair, this->uniforms, this->total_uniforms);
-			this->total_uniforms = 0;
-		}
-		
-		if ( this->attributes )
-		{
-			DESTROY_ARRAY(ShaderKeyValuePair, this->attributes, this->total_attributes);
-			this->total_attributes = 0;
-		}
-		
-		if ( this->frag_data_location )
-		{
-			DEALLOC(frag_data_location);
-		}
+
 	}
 	
-	void ShaderParameters::alloc_attributes( unsigned int attributes_count )
-	{
-		this->total_attributes = attributes_count;
-		assert( this->attributes == 0 );
-		this->attributes = CREATE_ARRAY( ShaderKeyValuePair, attributes_count );
-		for( unsigned int i = 0; i < attributes_count; ++i )
-		{
-			this->attributes[i].first = 0;
-		}
-	} // alloc_attributes
-	
-	void ShaderParameters::alloc_uniforms( unsigned int uniform_count )
-	{
-		this->total_uniforms = uniform_count;
-		assert( this->uniforms == 0 );
-		this->uniforms = CREATE_ARRAY( ShaderKeyValuePair, uniform_count );
-		for( unsigned int i = 0; i < uniform_count; ++i )
-		{
-			this->uniforms[i].first = 0;
-		}
-	} // alloc_uniforms
-	
-	void ShaderParameters::set_frag_data_location( const char * location )
-	{
-		// TODO: convert this to std::string
-		if (frag_data_location == 0)
-		{
-			size_t len = xstr_len(location);
-			this->frag_data_location = (char*)ALLOC( len+1 );
-			memset( this->frag_data_location, 0, len+1 );
-			xstr_ncpy( this->frag_data_location, location, len );
-		}
-	} // set_frag_data_location
 }; // namespace renderer

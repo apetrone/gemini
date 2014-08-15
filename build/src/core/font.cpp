@@ -170,21 +170,6 @@ namespace font
 		
 		internal::_stash = sth_create( 256, 256 );
 		internal::_shader = assets::shaders()->load_from_path("shaders/fontshader");
-//		internal::_shader = CREATE( assets::Shader );
-
-//		assets::Shader * shader = internal::_shader;
-//		shader->set_frag_data_location( "out_color" );
-//		shader->alloc_uniforms( 3 );
-//		shader->uniforms[0].set_key( "projection_matrix" );
-//		shader->uniforms[1].set_key( "modelview_matrix" );
-//		shader->uniforms[2].set_key( "diffusemap" );
-//		
-//		shader->alloc_attributes( 3 );
-//		shader->attributes[0].set_key( "in_position" ); shader->attributes[0].second = 0;
-//		shader->attributes[1].set_key( "in_uv" ); shader->attributes[1].second = 1;
-//		shader->attributes[2].set_key( "in_color" ); shader->attributes[2].second = 2;
-//		
-//		assets::load_shader( "shaders/fontshader", internal::_shader );
 		
 		// generate ccw triangles
 		sth_set_ccw_triangles();

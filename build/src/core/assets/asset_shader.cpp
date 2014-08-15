@@ -41,12 +41,11 @@ namespace assets
 	int Shader::get_uniform_location( const char * name )
 	{
 		//		LOGV( "# uniforms: %i\n", total_uniforms );
-		for( int i = 0; i < total_uniforms; ++i )
+		for( int i = 0; i < uniforms.size(); ++i )
 		{
-			
-			if ( xstr_nicmp( uniforms[i].first, name, xstr_len(uniforms[i].first) ) == 0 )
+			if (std::string(name) == uniforms[i].first)
 			{
-				//				LOGV( "uniform: %s, at %i\n", name, uniforms[i].second );
+//				LOGV( "uniform: %s, at %i\n", name, uniforms[i].second );
 				return uniforms[i].second;
 			}
 		}
@@ -66,18 +65,18 @@ namespace assets
 	void Shader::show_uniforms()
 	{
 		LOGV("uniforms:\n");
-		for (size_t i = 0; i < total_uniforms; ++i)
+		for (size_t i = 0; i < uniforms.size(); ++i)
 		{
-			LOGV("%s -> %i\n", uniforms[i].first, uniforms[i].second);
+			LOGV("%s -> %i\n", uniforms[i].first.c_str(), uniforms[i].second);
 		}
 	}
 	
 	void Shader::show_attributes()
 	{
 		LOGV("attributes:\n");
-		for (size_t i = 0; i < total_attributes; ++i)
+		for (size_t i = 0; i < attributes.size(); ++i)
 		{
-			LOGV("%s -> %i\n", attributes[i].first, attributes[i].second);
+			LOGV("%s -> %i\n", attributes[i].first.c_str(), attributes[i].second);
 		}
 	}
 		
@@ -144,25 +143,25 @@ namespace assets
 	
 	void create_shader_attributes_and_uniforms(Shader* shader, StringVector& attributes, StringVector& uniforms)
 	{
-		if (shader->total_attributes == 0)
+		if (shader->attributes.empty())
 		{
-			shader->alloc_attributes(attributes.size());
+			shader->attributes.allocate(attributes.size());
 			int index = 0;
 			for (auto value : attributes)
 			{
-				shader->attributes[index].set_key(value.c_str());
+				shader->attributes[index].first = value;
 				shader->attributes[index].second = index;
 				++index;
 			}
 		}
 		
-		if (shader->total_uniforms == 0)
+		if (shader->uniforms.empty())
 		{
-			shader->alloc_uniforms(uniforms.size());
+			shader->uniforms.allocate(uniforms.size());
 			int index = 0;
 			for (auto value : uniforms)
 			{
-				shader->uniforms[index].set_key(value.c_str());
+				shader->uniforms[index].first = value;
 				shader->uniforms[index].second = index;
 				++index;
 			}
@@ -315,7 +314,7 @@ namespace assets
 		Json::Value preprocessor_block = _internal::shader_config["preprocessor_block"];
 		append_list_items(preprocessor, preprocessor_block);
 
-		shader->set_frag_data_location("out_color");
+		shader->frag_data_location = "out_color";
 		create_shader_attributes_and_uniforms(shader, attributes, uniforms);
 
 		std::string preprocessor_defines;
