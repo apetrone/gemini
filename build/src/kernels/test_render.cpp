@@ -23,6 +23,7 @@
 
 #include <slim/xlog.h>
 #include <gemini/mathlib.h>
+#include <gemini/util/threadsafequeue.h>
 
 #include "kernel.h"
 #include "debugdraw.h"
@@ -40,50 +41,6 @@
 #include "skeletalnode.h"
 
 #include <json/json.h>
-
-#include <queue>
-#include <atomic>
-#include <mutex>
-
-template <class Type>
-class ThreadSafeQueue
-{
-	std::queue<Type> queue;
-	mutable std::mutex local_mutex;
-	std::condition_variable wait_condition;
-	
-public:
-	ThreadSafeQueue()
-	{
-	}
-
-	void enqueue(Type in)
-	{
-		std::lock_guard<std::mutex> lock(local_mutex);
-		queue.push(in);
-		wait_condition.notify_one();
-	}
-	
-	Type dequeue()
-	{
-		std::unique_lock<std::mutex> lock(local_mutex);
-		while(queue.empty())
-		{
-			wait_condition.wait(lock);
-		}
-		
-		Type value = queue.front();
-		queue.pop();
-		return value;
-	}
-	
-	size_t size()
-	{
-		std::lock_guard<std::mutex> lock(local_mutex);
-		size_t total_size = queue.size();
-		return total_size;
-	}
-};
 
 struct BaseVar
 {
