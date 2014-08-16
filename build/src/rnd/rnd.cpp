@@ -3,6 +3,8 @@
 
 #include <functional>
 #include <vector>
+#include <algorithm>
+
 using namespace std;
 
 #include <gemini/mem.h>
