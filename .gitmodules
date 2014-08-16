@@ -24,10 +24,10 @@
 	url = git://github.com/apetrone/pegasus.git
 [submodule "build/dependencies/assimp"]
 	path = build/dependencies/assimp
-	url = https://github.com/assimp/assimp.git
+	url = git://github.com/assimp/assimp.git
 [submodule "build/dependencies/bullet2"]
 	path = build/dependencies/bullet2
-	url = https://github.com/apetrone/bulletphysics.git
+	url = git://github.com/apetrone/bulletphysics.git
 [submodule "build/dependencies/sqrat"]
 	path = build/dependencies/sqrat
 	url = git://git.code.sf.net/p/scrat/code
@@ -36,7 +36,7 @@
 	url = git://github.com/apetrone/nom.git
 [submodule "build/dependencies/SDL2"]
 	path = build/dependencies/SDL2
-	url = https://github.com/spurious/SDL-mirror.git
+	url = git://github.com/spurious/SDL-mirror.git
 [submodule "build/dependencies/civetweb"]
 	path = build/dependencies/civetweb
-	url = https://github.com/bel2125/civetweb.git
+	url = git://github.com/bel2125/civetweb.git
