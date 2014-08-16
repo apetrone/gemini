@@ -353,11 +353,6 @@ namespace renderer
 	};
 	
 	
-	
-	
-	
-	
-	
 	// Renderer is a high-level interface for visuals. It doesn't know/care
 	// what the underlying API or devices are.
 	// Internally, it will direct calls to the device.
@@ -366,16 +361,14 @@ namespace renderer
 	public:
 		virtual ~Renderer() {}
 		
-		
-		
 		virtual void apply_settings(const renderer::RenderSettings& settings) = 0;
 		
-		
+		virtual renderer::Texture* create_texture(renderer::TextureParameters& parameters) = 0;
+		virtual void destroy_texture(renderer::Texture* texture) = 0;
+		virtual void update_texture(renderer::Texture* texture, renderer::TextureParameters& parameters) = 0;
+		virtual void activate_texture(renderer::Texture* texture, uint16_t texture_unit) = 0;
 	};
-	
-	
-	
-	
+
 	//
 	// IRenderDriver
 	// The render driver acts as a command processor. The implementation details are up to the driver

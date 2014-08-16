@@ -58,7 +58,10 @@ public:
 	gui::Compositor * compositor;
 	renderer::VertexStream vs;
 
+	assets::Shader* gui_shader;
+
 	GLRenderer() {}
+	
 	~GLRenderer() {}
 	
 	assets::Material * solid_color;
@@ -77,7 +80,6 @@ public:
 		rs.add_shader( shader );
 		rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview );
 		rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection );
-		rs.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
 		
 		rs.add_material( material, shader );
 		
@@ -93,8 +95,9 @@ public:
 		this->compositor = compositor;
 		
 		vs.desc.add( renderer::VD_FLOAT3 );
-		vs.desc.add( renderer::VD_UNSIGNED_BYTE4 );
 		vs.desc.add( renderer::VD_FLOAT2 );
+		vs.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+
 		
 		vs.create( 64, 64, renderer::DRAW_INDEXED_TRIANGLES );
 		
@@ -129,6 +132,8 @@ public:
 			assets::materials()->take_ownership( "gui/texture_map", texture_map );
 			texture_map->calculate_requirements();
 		}
+		
+		gui_shader = assets::shaders()->load_from_path("shaders/gui");
 	}
 	
 	virtual void shutdown( gui::Compositor * compositor )
@@ -174,13 +179,8 @@ public:
 		vs.reset();
 		
 		RenderStream rs;
-		assets::Shader * shader = assets::find_compatible_shader( vertex_attribs + solid_color->requirements );
-		if ( !shader )
-		{
-			LOGV( "no shader found\n" );
-			return;
-		}
-		
+		assets::Shader * shader = gui_shader;
+				
 		if ( vs.has_room(4, 6) )
 		{
 			VertexType * v = (VertexType*)vs.request(4);
@@ -225,12 +225,7 @@ public:
 		texture_map->parameters[0].intValue = handle;
 		texture_map->parameters[0].texture_unit = 0;
 		
-		assets::Shader * shader = assets::find_compatible_shader( vertex_attribs + texture_map->requirements );
-		if ( !shader )
-		{
-			LOGV( "no shader found\n" );
-			return;
-		}
+		assets::Shader * shader = gui_shader;
 	
 		
 		if ( vs.has_room(4, 6) )
