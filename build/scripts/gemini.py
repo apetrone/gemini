@@ -79,7 +79,7 @@ def setup_common_tool(product):
 	]
 	linux.linkflags += [
 		"-Wl,-rpath,."
-	]	
+	]
 
 
 def setup_common_libs(arguments, product):
@@ -144,7 +144,8 @@ def setup_common_libs(arguments, product):
 		"asound"
 	]
 	linux.linkflags += [
-		"-Wl,-rpath,."
+		"-Wl,-rpath,.",
+		"-Wl,--unresolved-symbols=ignore-in-shared-libs"
 	]	
 
 def setup_driver(product):
