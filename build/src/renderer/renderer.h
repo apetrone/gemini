@@ -424,9 +424,11 @@ namespace renderer
 		virtual void shaderprogram_detach( renderer::ShaderProgram shader_program, renderer::ShaderObject shader_object ) = 0;
 		virtual void shaderprogram_bind_attributes( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters ) = 0;
 		virtual void shaderprogram_bind_uniforms( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters ) = 0;
+		virtual void shaderprogram_bind_uniform_block(renderer::ShaderProgram shader_program, renderer::ShaderParameters& parameters, const char* block_name) = 0;
 		virtual bool shaderprogram_link_and_validate( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters ) = 0;
 		virtual void shaderprogram_activate( renderer::ShaderProgram shader_program ) = 0;
 		virtual void shaderprogram_deactivate( renderer::ShaderProgram shader_program ) = 0;
+
 	}; // IRenderDriver
 	typedef IRenderDriver * (*RenderDriverCreator)();
 	

@@ -24,12 +24,17 @@
 
 #include "gemgl.h"
 
+#include <gemini/typedefs.h>
+
 #include <slim/xstr.h>
 #include <slim/xlog.h>
 
 gemgl_interface_t gl;
 
 typedef const GLubyte * (GEMGLAPI gemgl_GLGETSTRINGPROC)( GLenum param );
+
+#define GEMGL_LOG(...) NULL_MACRO
+//#define GEMGL_LOG(...) LOGV(__VA_ARGS__)
 
 GLenum gemgl_check_error( const char * msg )
 {
@@ -49,11 +54,11 @@ GLenum gemgl_check_error( const char * msg )
 
 		if ( msg != 0 )
 		{
-			LOGV( "%s: (%s) %i\n", errorMessage, msg, e );
+			GEMGL_LOG( "%s: (%s) %i\n", errorMessage, msg, e );
 		}
 		else
 		{
-			LOGV( "%s: %i\n", errorMessage, e );
+			GEMGL_LOG( "%s: %i\n", errorMessage, e );
 		}
 	}
 	

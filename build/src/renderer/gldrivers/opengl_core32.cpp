@@ -1042,6 +1042,44 @@ void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_progr
 	}
 }
 
+void GLCore32::shaderprogram_bind_uniform_block(renderer::ShaderProgram shader_program, renderer::ShaderParameters& parameters, const char* block_name)
+{
+	// find the uniform block
+	GLuint block_index = gl.GetUniformBlockIndex(shader_program.object, block_name);
+	if (block_index == GL_INVALID_INDEX)
+	{
+		LOGV("uniform block \"%s\" could not be found\n", block_name);
+		return;
+	}
+	LOGV("found uniform block: %s\n", block_name);
+	LOGV("block_index = %u\n", block_index);
+	
+	// determine the size of the uniform block
+	GLint block_size = 0;
+	gl.GetActiveUniformBlockiv(shader_program.object, block_index, GL_UNIFORM_BLOCK_DATA_SIZE, &block_size);
+	LOGV("block_size = %i\n", block_size);
+	
+	// Query for the offsets of each uniform
+	const char* names[] = {
+		"constant_buffer.projection_matrix",
+		"constant_buffer.modelview_matrix"
+	};
+	
+	GLuint indices[] = {0, 0};
+	gl.GetUniformIndices(shader_program.object, 2, names, indices);
+	for (auto i : indices)
+	{
+		LOGV("index: %i\n", i);
+	}
+	
+	GLint offset[] = {-1, -1};
+	gl.GetActiveUniformsiv(shader_program.object, 2, indices, GL_UNIFORM_OFFSET, offset);
+	for (auto o: offset)
+	{
+		LOGV("offset: %i\n", o);
+	}
+}
+
 bool GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters )
 {
 	bool status = true;

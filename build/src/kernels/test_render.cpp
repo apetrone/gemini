@@ -287,6 +287,10 @@ public:
 	size_t total_scene_nodes_visited;
 	renderer::SceneLink scenelink;
 	
+	glm::vec3 light_position;
+	float current_time;
+	scenegraph::MeshNode* ground;
+	
 #ifdef USE_WEBSERVER
 	CivetServer* server;
 #endif
@@ -294,11 +298,28 @@ public:
 	
 	ThreadSafeQueue<std::string> reload_queue;
 	
+	void process_reload_queue()
+	{
+		// process queue
+		size_t queued_items = reload_queue.size();
+		if (queued_items > 0)
+		{
+			for(size_t i = 0; i < queued_items; ++i)
+			{
+				std::string item = reload_queue.dequeue();
+				// for now, assume everything is a shader.
+				LOGV("processing: %s\n", item.c_str());
+				assets::shaders()->load_from_path(item.c_str(), assets::AssetParameters(), true);
+			}
+		}
+	}
+	
 	TestRender()
 	{
 //		camera.type = Camera::TARGET;
 		root = 0;
-		
+		current_time = 0;
+		ground = 0;
 #ifdef USE_WEBSERVER
 		server = 0;
 #endif
@@ -317,8 +338,6 @@ public:
 #ifdef SCENE_GRAPH_MANUAL
 				root->update(kernel::instance()->parameters().step_interval_seconds);
 #endif
-
-				assets::shaders()->load_from_path("shaders/fontshader", assets::AssetParameters(), true);
 			}
 			else if (event.key == input::KEY_J)
 			{
@@ -410,19 +429,18 @@ public:
 //		root->add_child(skydome);
 
 
-		assets::Shader* character = assets::shaders()->load_from_path("shaders/character");
+//		assets::Shader* character = assets::shaders()->load_from_path("shaders/character");
 		assets::Shader* world = assets::shaders()->load_from_path("shaders/world");
 
 
-		scenegraph::SkeletalNode* sn = CREATE(scenegraph::SkeletalNode);
-		sn->load_mesh("models/test_yup", false, 0, character);
-		sn->setup_skeleton();
+//		scenegraph::SkeletalNode* sn = CREATE(scenegraph::SkeletalNode);
+//		sn->load_mesh("models/test_yup", false, 0, character);
+//		sn->setup_skeleton();
 		//sn->local_position = glm::vec3(0, 1, 0);
-		root->add_child(sn);
+//		root->add_child(sn);
 
-		scenegraph::MeshNode* ground = 0;
 		ground = CREATE(scenegraph::MeshNode);
-		ground->load_mesh("models/plane", false, 0, world);
+		ground->load_mesh("models/render_test0", false, 0, world);
 		root->add_child(ground);
 //		ground->visible = false;
 
@@ -451,39 +469,33 @@ public:
 		camera.update_view();
 
 
-		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
-		debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", camera.eye_position.x, camera.eye_position.y, camera.eye_position.z), Color(255, 0, 255));
-		debugdraw::text(10, 24, xstr_format("camera.view = %.2g %.2g %.2g", camera.view.x, camera.view.y, camera.view.z), Color(128, 128, 255));
-		debugdraw::text(10, 36, xstr_format("camera.right = %.2g %.2g %.2g", camera.side.x, camera.side.y, camera.side.z), Color(255, 0, 0));
-		debugdraw::text(10, 48, xstr_format("frame_delta = %g", params.framedelta_raw_msec), Color(255, 255, 255));
-		debugdraw::text(10, 60, xstr_format("scene graph nodes = %i", total_scene_nodes_visited), Color(128, 128, 255));
 		
-		BaseVar::render_values(10, 72);
-
+		current_time += params.framedelta_filtered_msec;
 
 #ifndef SCENE_GRAPH_MANUAL
 		root->update(params.step_interval_seconds);
 #endif
 
-		debugdraw::axes(glm::mat4(1.0), 3.0f);
+
 
 		debugdraw::update(params.step_interval_seconds);
 	}
 
 	virtual void tick( kernel::Params & params )
 	{
-		// process queue
-		size_t queued_items = reload_queue.size();
-		if (queued_items > 0)
-		{
-			for(size_t i = 0; i < queued_items; ++i)
-			{
-				std::string item = reload_queue.dequeue();
-				// for now, assume everything is a shader.
-				LOGV("processing: %s\n", item.c_str());
-				assets::shaders()->load_from_path(item.c_str(), assets::AssetParameters(), true);
-			}
-		}
+		process_reload_queue();
+	
+		debugdraw::axes(glm::mat4(1.0), 1.0f);
+		
+		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
+		debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", camera.eye_position.x, camera.eye_position.y, camera.eye_position.z), Color(255, 0, 255));
+		debugdraw::text(10, 24, xstr_format("camera.view = %.2g %.2g %.2g", camera.view.x, camera.view.y, camera.view.z), Color(128, 128, 255));
+		debugdraw::text(10, 36, xstr_format("camera.right = %.2g %.2g %.2g", camera.side.x, camera.side.y, camera.side.z), Color(255, 0, 0));
+		debugdraw::text(10, 48, xstr_format("frame_delta = %g", params.framedelta_raw_msec), Color(255, 255, 255));
+		debugdraw::text(10, 60, xstr_format("scene graph nodes = %i", total_scene_nodes_visited), Color(128, 128, 255));
+
+		BaseVar::render_values(10, 72);
+	
 	
 	
 		RenderStream rs;
@@ -497,7 +509,27 @@ public:
 
 		rs.run_commands();
 		
-		scenelink.draw(root, camera.matCam, camera.matProj);
+		const float dist = 10.0f;
+		float quotient = (current_time * (1.0f/2000.0f));
+		light_position = glm::vec3(dist*cos(quotient), 3.0f, dist*sin(quotient));
+		debugdraw::sphere(light_position, Color(255, 255, 255, 255), 0.5f, 0.0f);
+		
+		renderer::ConstantBuffer cb;
+		cb.modelview_matrix = &camera.matCam;
+		cb.projection_matrix = &camera.matProj;
+		cb.viewer_direction = &camera.view;
+		cb.viewer_position = &camera.eye_position;
+		cb.light_position = &light_position;
+
+		// transform by normal matrix to debug
+		glm::mat3 normal_matrix = glm::transpose(glm::inverse((glm::mat3(camera.matCam * ground->world_transform))));
+		glm::vec3 up = glm::vec3(0.0f, 0.0f, 1.0f);
+		glm::vec3 out = normal_matrix * up;
+		glm::vec3 vert = glm::vec3(10.0f, 0.0f, 10.0f);
+		debugdraw::line(vert, vert+out, Color(0, 0, 255), 0.0f);
+		
+	
+		scenelink.draw(root, cb);
 		
 		{
 			glm::mat4 modelview;

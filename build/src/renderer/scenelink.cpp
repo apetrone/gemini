@@ -124,7 +124,7 @@ namespace renderer
 		DESTROY(RenderQueue, queue);
 	}
 
-	void SceneLink::draw(scenegraph::Node* root, const glm::mat4& modelview_matrix, const glm::mat4& projection_matrix)
+	void SceneLink::draw(scenegraph::Node* root, ConstantBuffer& constant_buffer)
 	{
 		// clear the queue and prepare for another frame
 		queue->clear();
@@ -139,14 +139,11 @@ namespace renderer
 		
 		
 		RenderStream rs;
-		ConstantBuffer cb;
-		cb.modelview_matrix = &modelview_matrix;
-		cb.projection_matrix = &projection_matrix;
 		
 		// finally, draw from the queue
 		for(auto& block : queue->render_list)
 		{
-			render_utilities::queue_geometry(rs, block, cb);
+			render_utilities::queue_geometry(rs, block, constant_buffer);
 		}
 		
 		rs.run_commands();

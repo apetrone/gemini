@@ -27,6 +27,7 @@
 #include "renderer.h"
 #include "rqueue.h"
 #include "scene_graph.h"
+#include "camera.h"
 
 namespace renderer
 {
@@ -43,6 +44,6 @@ namespace renderer
 		~SceneLink();
 		
 		// render the queue
-		void draw(scenegraph::Node* root, const glm::mat4& modelview_matrix, const glm::mat4& projection_matrix);
+		void draw(scenegraph::Node* root, ConstantBuffer& constant_buffer);
 	};
 }; // namespace renderer

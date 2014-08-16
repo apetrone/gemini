@@ -343,7 +343,13 @@ public:
 		
 		rs.run_commands();
 		
-		scenelink.draw(root, camera.matCam, camera.matProj);
+		renderer::ConstantBuffer cb;
+		cb.modelview_matrix = &camera.matCam;
+		cb.projection_matrix = &camera.matProj;
+		cb.viewer_direction = &camera.view;
+		cb.viewer_position = &camera.eye_position;
+		
+		scenelink.draw(root, cb);
 		
 		{
 			glm::mat4 modelview;

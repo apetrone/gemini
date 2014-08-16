@@ -263,6 +263,8 @@ namespace assets
 			// loop through all uniforms and cache their locations
 			driver->shaderprogram_bind_uniforms(*shader, *shader);
 			
+//			driver->shaderprogram_bind_uniform_block(*shader, *shader, "constant_buffer");
+			
 			driver->shaderprogram_deactivate(*shader);
 		}
 

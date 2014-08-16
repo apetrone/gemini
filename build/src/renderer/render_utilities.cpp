@@ -49,6 +49,24 @@ namespace render_utilities
 		{
 			rs.add_uniform_matrix4(shader->get_uniform_location("node_transforms"), block.node_transforms, block.total_transforms);
 		}
+		
+		if (shader->uniforms.size() > 4)
+		{
+			if (cb.viewer_direction)
+			{
+				rs.add_uniform3f(shader->get_uniform_location("viewer_direction"), cb.viewer_direction);
+			}
+			
+			if (cb.viewer_position)
+			{
+				rs.add_uniform3f(shader->get_uniform_location("viewer_position"), cb.viewer_position);
+			}
+			
+			if (cb.light_position)
+			{
+				rs.add_uniform3f(shader->get_uniform_location("light_position"), cb.light_position);
+			}
+		}
 
 		rs.add_material(material, shader);
 		
