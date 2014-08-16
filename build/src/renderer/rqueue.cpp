@@ -33,7 +33,7 @@ namespace renderer
 	// where higher keys have priority
 	struct DescendingRenderBlockCompare
 	{
-		bool operator()(RenderBlock& left, RenderBlock& right)
+		bool operator()(const RenderBlock& left, const RenderBlock& right)
 		{
 			if ( left.key < right.key )
 			{

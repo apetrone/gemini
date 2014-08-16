@@ -298,7 +298,7 @@ namespace physics
 		
 
 		
-		for( int i = 0; i < mesh->geometry.size(); ++i )
+		for( uint32_t i = 0; i < mesh->geometry.size(); ++i )
 		{
 			assets::Geometry* geo = &mesh->geometry[ i ];
 			
@@ -308,7 +308,7 @@ namespace physics
 			geo->physics_vertices.allocate(geo->vertex_count);
 
 			// transform vertices by node transform here
-			for (int v = 0; v < geo->vertex_count; ++v)
+			for (uint32_t v = 0; v < geo->vertex_count; ++v)
 			{
 				geo->physics_vertices[v] = glm::vec3(mesh->node_transform * glm::vec4(geo->vertices[v], 1.0f));
 			}

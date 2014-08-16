@@ -24,6 +24,7 @@
 #include <queue>
 #include <atomic>
 #include <mutex>
+#include <condition_variable>
 
 template <class Type>
 class ThreadSafeQueue

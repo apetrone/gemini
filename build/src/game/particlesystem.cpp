@@ -89,7 +89,7 @@ void ParticleEmitter::step(float delta_seconds)
 	world_position.step(delta_seconds);
 
 	this->next_spawn -= delta_msec;
-	int particles_to_spawn = 0;
+	uint32_t particles_to_spawn = 0;
 	if (this->next_spawn <= 0)
 	{
 		this->next_spawn = this->emitter_config->spawn_delay_seconds;

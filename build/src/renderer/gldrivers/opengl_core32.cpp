@@ -1012,7 +1012,7 @@ void GLCore32::shaderprogram_bind_attributes( renderer::ShaderProgram shader_pro
 	// gl.BindFragDataLocation(shader_program.object, 0, parameters.frag_data_location);
 	// gl.CheckError( "BindFragDataLocation" );
 
-	for( int i = 0; i < parameters.attributes.size(); ++i )
+	for(uint32_t i = 0; i < parameters.attributes.size(); ++i)
 	{
 		ShaderKeyValuePair * keyvalue = &parameters.attributes[i];
 		SHADER_DEBUG( "BindAttribLocation -> %s to %i\n", keyvalue->first, keyvalue->second );
@@ -1027,7 +1027,7 @@ void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_progr
 	//this->shaderprogram_activate( shader_program );
 
 	// fetch uniforms from the shader
-	for( int uniform_id = 0; uniform_id < parameters.uniforms.size(); ++uniform_id )
+	for(uint32_t uniform_id = 0; uniform_id < parameters.uniforms.size(); ++uniform_id)
 	{
 		ShaderKeyValuePair * keyvalue = &parameters.uniforms[ uniform_id ];
 		
