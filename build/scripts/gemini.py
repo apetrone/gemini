@@ -40,7 +40,9 @@ def setup_common_variables(arguments, target_platform, product):
 		"src/game/logoscreen.*",
 		"src/game/screencontrol.*",
 
-		"src/kernels/test_bullet2.cpp"
+		"src/kernels/test_bullet2.cpp",
+		"src/kernels/test_mobile.cpp",
+		"src/kernels/test_nom.cpp"
 	]
 
 	index_type_map = {
