@@ -132,4 +132,4 @@ namespace memory
 	{
 		return true;
 	}
-}; // namespace memory
+} // namespace memory

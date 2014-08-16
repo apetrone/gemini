@@ -28,7 +28,7 @@ namespace core
 	struct File
 	{
 		const char* create_buffer_from_file() { return 0; }
-		void destroy_buffer(const char* buffer) {}
+		void destroy_buffer(const char* buffer) { buffer = 0; }
 	};
 
 	// FileSystem class is used to implement platform-level logic
@@ -90,6 +90,6 @@ namespace core
 #if PLATFORM_ANDROID
 		void set_asset_manager(AAssetManager* asset_manager);
 #endif
-	};
+	}
 
-}; // namespace core
+} // namespace core

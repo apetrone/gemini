@@ -32,7 +32,7 @@ namespace core
 		enum
 		{
 			Failure = 0xBADDAE, // non-recoverable error, bad day :(
-			Warning, // unexpected result, will proceed
+			Warning // unexpected result, will proceed
 		};
 		
 		int status;
@@ -45,4 +45,4 @@ namespace core
 	Error startup();
 	void shutdown();
 
-}; // namespace core
+} // namespace core

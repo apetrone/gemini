@@ -88,7 +88,7 @@ namespace memory
 	#define CREATE_ARRAY(Type, num_elements, ...)		new Type[ num_elements ]
 	#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { delete [] pointer; pointer = 0;  }
 #endif
-}; // namespace memory
+} // namespace memory
 
 #include "mem_stl_allocator.h"
 
