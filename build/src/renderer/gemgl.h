@@ -288,7 +288,11 @@ enum gemgl_renderer_type
 	
 	typedef GLboolean (GEMGLAPI GEMGLFNISRENDERBUFFER) ( GLuint renderbuffer );
 	typedef void (GEMGLAPI GEMGLFNGETRENDERBUFFERPARAMETERIV) ( GLenum target, GLenum pname, GLint * params );
-	
+
+	// ARB_timer_query
+	typedef void (GEMGLAPI GEMGLFNQUERYCOUNTER)(GLuint id, GLenum target);
+	typedef void (GEMGLAPI GEMGLFNGETQUERYOBJECTI64V)(GLuint id, GLenum pname, GLint64* params);
+	typedef void (GEMGLAPI GEMGLFNGETQUERYOBJECTUI64V)(GLuint id, GLenum pname, GLuint64* params);
 
     typedef GLenum (*GEMGL_CHECKERROR)( const char * );
 
@@ -435,7 +439,7 @@ enum gemgl_renderer_type
 
 		
 		
-#else
+#else // Desktop OpenGL
 		//
 		GEMGLFNVIEWPORT Viewport;
 		GEMGLFNDEPTHRANGE DepthRange;
@@ -592,8 +596,13 @@ enum gemgl_renderer_type
 		GEMGLFNISRENDERBUFFER IsRenderbuffer;
 		GEMGLFNGETRENDERBUFFERPARAMETERIV GetRenderbufferParameteriv;	
 		
+		// ARB_timer_query
+		GEMGLFNQUERYCOUNTER QueryCounter;
+		GEMGLFNGETQUERYOBJECTI64V GetQueryObjecti64v;
+		GEMGLFNGETQUERYOBJECTUI64V GetQueryObjectui64v;
 		
-		
+		// ARB_uniform_buffer_object
+
 #endif
 		GEMGLFNGETSTRING GetString;
 		GEMGLFNGETSTRINGI GetStringi;

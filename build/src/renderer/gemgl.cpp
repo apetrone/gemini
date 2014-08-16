@@ -284,7 +284,7 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 
 	
 
-#else
+#else // Desktop OpenGL
 	GEMGL_LINK( gl.Viewport, "glViewport", GEMGLFNVIEWPORT );
 	GEMGL_LINK( gl.DepthRange, "glDepthRange", GEMGLFNDEPTHRANGE );
 	GEMGL_LINK( gl.ClearColor, "glClearColor", GEMGLFNCLEARCOLOR );
@@ -429,6 +429,9 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	GEMGL_LINK( gl.IsRenderbuffer, "glIsRenderbuffer", GEMGLFNISRENDERBUFFER );
 	GEMGL_LINK( gl.GetRenderbufferParameteriv, "glGetRenderbufferParameteriv", GEMGLFNGETRENDERBUFFERPARAMETERIV );	
 
+	GEMGL_LINK( gl.QueryCounter, "glQueryCounter", GEMGLFNQUERYCOUNTER);
+	GEMGL_LINK( gl.GetQueryObjecti64v, "glGetQueryObjecti64v", GEMGLFNGETQUERYOBJECTI64V);
+	GEMGL_LINK( gl.GetQueryObjectui64v, "glGetQueryObjectui64v", GEMGLFNGETQUERYOBJECTUI64V);
 	
 #if PLATFORM_WINDOWS
 	GEMGL_LINK( gl.SwapInterval, "wglSwapIntervalEXT", GEMGLSWAPINTERVAL );
