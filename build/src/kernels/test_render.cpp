@@ -290,6 +290,7 @@ public:
 	glm::vec3 light_position;
 	float current_time;
 	scenegraph::MeshNode* ground;
+	bool advance_time;
 	
 #ifdef USE_WEBSERVER
 	CivetServer* server;
@@ -320,6 +321,8 @@ public:
 		root = 0;
 		current_time = 0;
 		ground = 0;
+		advance_time = 1;
+		
 #ifdef USE_WEBSERVER
 		server = 0;
 #endif
@@ -338,6 +341,7 @@ public:
 #ifdef SCENE_GRAPH_MANUAL
 				root->update(kernel::instance()->parameters().step_interval_seconds);
 #endif
+				advance_time = !advance_time;
 			}
 			else if (event.key == input::KEY_J)
 			{
@@ -469,8 +473,14 @@ public:
 		camera.update_view();
 
 
+		if (advance_time)
+		{
+			current_time += params.framedelta_filtered_msec;
+		}
 		
-		current_time += params.framedelta_filtered_msec;
+		const float dist = 10.0f;
+		float quotient = (current_time * (1.0f/2000.0f));
+		light_position = glm::vec3(dist*cos(quotient), 3.0f, dist*sin(quotient));
 
 #ifndef SCENE_GRAPH_MANUAL
 		root->update(params.step_interval_seconds);
@@ -509,9 +519,6 @@ public:
 
 		rs.run_commands();
 		
-		const float dist = 10.0f;
-		float quotient = (current_time * (1.0f/2000.0f));
-		light_position = glm::vec3(dist*cos(quotient), 3.0f, dist*sin(quotient));
 		debugdraw::sphere(light_position, Color(255, 255, 255, 255), 0.5f, 0.0f);
 		
 		renderer::ConstantBuffer cb;

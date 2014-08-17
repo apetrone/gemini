@@ -20,15 +20,25 @@ out vec2 ps_uv1;
 
 out vec3 vertex_position_world;
 out vec3 light_position_world;
+out vec3 vertex_to_viewer;
+
+// summary of different coordinate spaces in the context of shaders
+// local, or object-space
+// world-space
+// view, or camera-space
+// surface, or tangent-space
+// clip, or normalized-device-space
+// screen-space
 
 void main()
 {
-	mat4 world_transform = object_matrix;
-	mat3 normal_matrix = inverse(transpose(mat3(world_transform)));
-
+	mat3 normal_matrix = inverse(transpose(mat3(object_matrix)));
 	light_position_world = light_position;
+	vertex_position_world = vec3(object_matrix * in_position);
 
-	vertex_position_world = vec3(world_transform * in_position);
+	vertex_to_viewer = viewer_position - vertex_position_world;
+
+
 
 	ps_normal = normal_matrix * in_normal;
 	ps_uv0 = in_uv0;
