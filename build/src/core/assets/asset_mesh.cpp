@@ -103,6 +103,7 @@ namespace assets
 		Json::Value geometry_list = root["geometry"];
 //		LOGV( "Total Geometry: %i\n", geometry_list.size() );
 		mesh->geometry.allocate(geometry_list.size());
+
 		
 		Geometry * geometry;
 		int gid = 0;

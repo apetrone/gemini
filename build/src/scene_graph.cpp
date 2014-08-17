@@ -52,8 +52,7 @@ namespace scenegraph
 	
 	Node::~Node()
 	{
-		std::for_each(children.begin(), children.end(), DestroyPointer<Node>());
-		children.clear();
+		clear();
 	}
 	
 	void Node::add_child(Node* child)
@@ -79,6 +78,11 @@ namespace scenegraph
 		}
 	}
 	
+	void Node::clear()
+	{
+		std::for_each(children.begin(), children.end(), DestroyPointer<Node>());
+		children.clear();
+	}
 	
 	
 	void create_scene(Node* root)

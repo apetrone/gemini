@@ -309,8 +309,34 @@ public:
 			{
 				std::string item = reload_queue.dequeue();
 				// for now, assume everything is a shader.
-				LOGV("processing: %s\n", item.c_str());
-				assets::shaders()->load_from_path(item.c_str(), assets::AssetParameters(), true);
+//				LOGV("processing: %s\n", item.c_str());
+				StackString<512> relative_path = item.c_str();
+				
+				// get the basename to lookup asset library.
+				std::string dirname = relative_path.dirname()();
+				
+				// TODO: replace this with a better mechanism
+				if (dirname == "shaders")
+				{
+					assets::shaders()->load_from_path(item.c_str(), assets::AssetParameters(), true);
+				}
+				else if (dirname == "models")
+				{
+					// clear the scene
+					root->clear();
+					
+					// force mesh reload
+					assets::Mesh* mesh = assets::meshes()->load_from_path(item.c_str(), assets::AssetParameters(), true);
+
+					assets::Shader* world = assets::shaders()->load_from_path("shaders/world");
+					scenegraph::MeshNode* model = CREATE(scenegraph::MeshNode);
+					model->load_mesh(item.c_str(), false, 0, world);
+					root->add_child(model);
+				}
+				else
+				{
+					LOGW("Reload is not supported for assets in \"%s\"\n", dirname.c_str());
+				}
 			}
 		}
 	}
@@ -478,7 +504,7 @@ public:
 			current_time += params.framedelta_filtered_msec;
 		}
 		
-		const float dist = 10.0f;
+		const float dist = 9.0f;
 		float quotient = (current_time * (1.0f/2000.0f));
 		light_position = glm::vec3(dist*cos(quotient), 3.0f, dist*sin(quotient));
 

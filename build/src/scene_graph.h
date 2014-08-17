@@ -71,6 +71,7 @@ namespace scenegraph
 		void add_child(Node* child);
 		void remove_child(Node* child);
 		virtual void update(float delta_seconds);
+		void clear();
 		NodeType get_type() const { return type; }
 	};
 
