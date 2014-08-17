@@ -10,14 +10,25 @@ uniform sampler2D lightmap;
 in vec3 vertex_position_world;
 in vec3 light_position_world;
 in vec3 vertex_to_viewer_worldspace;
-in vec3 vertex_to_viewer_viewspace;
+in vec3 view_direction_worldspace;
 
-float lambert_diffuse(in vec3 L, in vec3 N)
+#define M_PI 3.14159265359
+
+float shlick_fresnel(in float n2, in vec3 H, in vec3 L)
+{
+	float f0 = (1.0-n2) / (1.0+n2);
+	float r0 = f0 * f0;
+	float cos_theta = dot(H, L);
+
+	return max(0.0, r0 + (1.0 - r0) * pow((1.0 - cos_theta), 5.0));
+}
+
+float lambertian_diffuse(in vec3 L, in vec3 N)
 {
 	return max(0.0, dot(N, L));
 }
 
-float oren_nayer(in float roughness, in vec3 L, in vec3 N)
+float oren_nayer_diffuse(in float roughness, in vec3 L, in vec3 N)
 {
 	float ndotl = max(0.0, dot(N,L));
 
@@ -35,12 +46,17 @@ float oren_nayer(in float roughness, in vec3 L, in vec3 N)
 	return ndotl * (A + (B * max(0.0, cos(angle_i - angle_r)) * sin(alpha) * tan(beta) ));
 }
 
+void blinn_phong_lighting()
+{
+
+}
+
 void per_pixel_lighting(in vec3 vertex_to_light_world)
 {
 	vec3 N = normalize(ps_normal);
 	vec3 L = normalize(vertex_to_light_world);
-	// float ndl = lambert_diffuse(L, N);
-	float ndl = oren_nayer(0.0, L, N);
+	// float ndl = lambertian_diffuse(L, N);
+	float ndl = oren_nayer_diffuse(0.0, L, N);
 
 	vec4 albedo = texture(diffusemap, ps_uv0);
 
@@ -52,37 +68,43 @@ void per_pixel_lighting(in vec3 vertex_to_light_world)
 	// calculate specular
 	float spec_power = 500;
 	vec3 R = -reflect(L, N);
-	vec3 view_direction = normalize(vertex_to_viewer_worldspace);
-	float sp = pow(max(dot(R, view_direction), 0.0), spec_power);
+	vec3 VtoV = normalize(vertex_to_viewer_worldspace);
+	float sp = pow(max(dot(R, VtoV), 0.0), spec_power);
+
+
+	vec3 V = normalize(view_direction_worldspace);
+
+	// try to compute the fresnel term
+	vec3 LV = L+V;
+	vec3 H = (LV/length(LV));
+	float fresnel = shlick_fresnel(0.1, H, L);
+	// vec3 specular = fresnel_shlick(vec3(1.0, 1.0, 1.0), eye_position_worldspace, H);
 
 	// lambert diffuse, with attenuation and specular
 	// out_color = att*ndl*albedo + sp*vec4(1.0);
 	
-	
+
 	// out_color = vec4(vertex_to_viewer_worldspace, 1.0);
-	// out_color = vec4(vertex_to_viewer_viewspace, 1.0);
-	out_color = vec4(ndl, ndl, ndl, 1.0);
+	// out_color = vec4(ndl, ndl, ndl, 1.0);
+	// out_color = vec4(sp, sp, sp, 1.0);
 	// out_color = vec4(ndl*N, 1.0);
 	// out_color = vec4(N, 1.0);
+	// out_color = vec4(H, 1.0);	
 	// out_color = vec4(L, 1.0);
+	// 
+	
+	// out_color = vec4(fresnel, fresnel, fresnel, 1.0);
+	out_color = vec4(LV, 1.0);
 	// out_color = albedo * texture(lightmap, ps_uv1);
 }
 
 
 
-float shlick_fresnel( float n2, vec3 H, vec3 L )
-{
-	float f0 = (1.0-n2) / (1.0+n2);
-	float r0 = f0 * f0;
-	float cos_theta = dot(H, L);
 
-	return max(0.0, r0 + (1.0 - r0) * pow((1.0 - cos_theta), 5.0));
-}
 
 void pbs_main()
 {
-	vec3 E = normalize(vertex_to_viewer_viewspace);
-	vec3 H = normalize(E);
+
 }
 
 void main()
@@ -92,5 +114,5 @@ void main()
 
 	per_pixel_lighting(vertex_to_light_world);
 
-	pbs_main();
+	// pbs_main();
 }
