@@ -400,7 +400,10 @@ namespace prism
 			juvs.append(array);
 		}
 
-
+		// Vertices are multiplied by the local transform for the object.
+		// Normals must multiply by the rotation of the model, but not translation.
+		aiMatrix3x3 normal_matrix = aiMatrix3x3(node->local_transform).Transpose().Inverse();
+		
 		for(unsigned int vertex = 0; vertex < mesh->mNumVertices; ++vertex)
 		{
 			const aiVector3D & pos = mesh->mVertices[vertex];
@@ -420,7 +423,7 @@ namespace prism
 			jvertices.append(tr_pos.y);
 			jvertices.append(tr_pos.z);
 			
-			aiVector3D tr_normal = node->local_transform * normal;
+			aiVector3D tr_normal = normal_matrix * normal;
 //			if (info.env.convert_zup_to_yup)
 //			{
 //				tr_normal = info.env.coordinate_transform * tr_normal;

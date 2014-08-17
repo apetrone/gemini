@@ -152,7 +152,7 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 	}
 }
 
-void test_load_scene(ToolEnvironment& env, const char* asset_root, const char* input_file, const char* output_path)
+void process_model(ToolEnvironment& env, const char* asset_root, const char* input_file, const char* output_path)
 {
 	Assimp::Importer importer;
 
@@ -181,7 +181,7 @@ void test_load_scene(ToolEnvironment& env, const char* asset_root, const char* i
 	{
 		LOGE("Unable to open model: %s, (%s)\n", input_filename(), importer.GetErrorString());
 	}
-}
+} // convert_model
 
 
 
@@ -208,8 +208,7 @@ int main(int argc, char** argv)
 	}
 	env.print_settings();
 	
-	//	test_function();
-	test_load_scene(env, asset_root->string, input_file->string, output_root->string);
+	process_model(env, asset_root->string, input_file->string, output_root->string);
 
 	core::shutdown();
 	memory::shutdown();
