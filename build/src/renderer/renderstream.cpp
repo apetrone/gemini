@@ -201,7 +201,7 @@ void RenderStream::add_material( assets::Material * material, assets::Shader * s
 
 	// setup shader parameters
 	assets::Material::Parameter * parameter;
-	for( int p = 0; p < material->total_parameters; ++p )
+	for( int p = 0; p < material->parameters.size(); ++p )
 	{
 		parameter = &material->parameters[ p ];
 		int renderstate = assets::material_parameter_type_to_render_state( parameter->type );

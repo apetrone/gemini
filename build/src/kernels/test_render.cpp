@@ -333,6 +333,10 @@ public:
 					model->load_mesh(item.c_str(), false, 0, world);
 					root->add_child(model);
 				}
+				else if (dirname == "materials")
+				{
+					assets::materials()->load_from_path(item.c_str(), assets::AssetParameters(), true);
+				}
 				else
 				{
 					LOGW("Reload is not supported for assets in \"%s\"\n", dirname.c_str());
@@ -368,6 +372,11 @@ public:
 				root->update(kernel::instance()->parameters().step_interval_seconds);
 #endif
 				advance_time = !advance_time;
+			}
+			else if (event.key == input::KEY_R)
+			{
+				LOGV("reloading assets...\n");
+				assets::materials()->load_from_path("materials/checker", assets::AssetParameters(), true);
 			}
 			else if (event.key == input::KEY_J)
 			{

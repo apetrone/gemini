@@ -34,10 +34,6 @@ namespace assets
 	
 	void Material::release()
 	{
-		if ( total_parameters )
-		{
-			DESTROY_ARRAY(Parameter, parameters, total_parameters);
-		}
 	} // release
 	
 	void Material::calculate_requirements()
@@ -45,45 +41,31 @@ namespace assets
 		// calculate material requirements
 		this->requirements = 0;
 		
-		for( int id = 0; id < this->total_parameters; ++id )
-		{
-			Material::Parameter * param = &this->parameters[ id ];
+//		for( int id = 0; id < this->total_parameters; ++id )
+//		{
+//			Material::Parameter * param = &this->parameters[ id ];
 //			unsigned int mask = find_parameter_mask( param->name );
 			//			LOGV( "param \"%s\" -> %i\n", param->name(), mask );
 //			this->requirements |= mask;
-		}
+//		}
 		
 		//		LOGV( "Material requirements: %i\n", this->requirements );
 	} // calculate_requirements
 	
 	Material::Parameter * Material::parameter_by_name( const char * name )
 	{
-		Material::Parameter * parameter = 0;
-		
-		// this should have a hash table... oh well
-		for( int i = 0; i < this->total_parameters; ++i )
+		for (auto& parameter : parameters)
 		{
-			if ( xstr_nicmp( this->parameters[i].name.c_str(), name, xstr_len(name) ) == 0 )
+			if (parameter.name == std::string(name))
 			{
-				parameter = &this->parameters[i];
-				break;
+				return &parameter;
 			}
 		}
 		
-		return parameter;
+		return 0;
 	} // parameter_by_name
 	
-	void Material::allocate_parameters( unsigned int max_parameters )
-	{
-		if ( this->parameters )
-		{
-			DESTROY_ARRAY(Parameter, parameters, this->total_parameters);
-		}
-		
-		this->total_parameters = max_parameters;
-		this->parameters = CREATE_ARRAY(Parameter, max_parameters);
-	} // allocate_parameters
-	
+
 	void Material::set_parameter_name( unsigned int id, const char * name )
 	{
 		this->parameters[id].name = name;
@@ -95,13 +77,19 @@ namespace assets
 		this->parameters[id].type = MP_VEC4;
 	} // set_parameter_vec4
 	
+	void Material::add_parameter(const Material::Parameter& param)
+	{
+		parameters.push_back(param);
+	}
+	
 	void Material::print_parameters()
 	{
 		LOGV("material parameters for %s\n", name.c_str());
-		for (int i = 0; i < this->total_parameters; ++i)
+		int i = 0;
+		for (auto& parameter : parameters)
 		{
-			Parameter* p = &parameters[i];
-			LOGV("param %i, %s, %i\n", i, p->name.c_str(), p->intValue);
+			LOGV("param %i, %s, %i\n", i, parameter.name.c_str(), parameter.intValue);
+			++i;
 		}
 	}
 	
@@ -121,8 +109,10 @@ namespace assets
 		Json::Value shader = root["shader"];
 		
 		material->flags = 0;
-		material->total_parameters = 0;
-		material->parameters = 0;
+		if (!material->parameters.empty())
+		{
+			material->parameters.clear();
+		}
 		//		material->requirements = 0;
 		//		int required_params = PF_TYPE | PF_VALUE;
 		
@@ -149,10 +139,10 @@ namespace assets
 		Json::ValueIterator piter = param_list.begin();
 		Json::ValueIterator piter_end = param_list.end();
 		
-		material->total_parameters = param_list.size();
-		if ( material->total_parameters )
+
+		if (!param_list.empty())
 		{
-			material->parameters = CREATE_ARRAY( Material::Parameter, material->total_parameters );
+			material->parameters.resize(param_list.size());
 			Material::Parameter * parameter;
 			unsigned int param_id = 0;
 			for( ; piter != piter_end; ++piter, ++param_id )

@@ -21,6 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <vector>
+
 #include <gemini/util/stackstring.h>
 
 #include "assets.h"
@@ -61,10 +63,9 @@ namespace assets
 		
 		ShaderString name;
 		Shader * shader;
-		Parameter * parameters;
-		//		unsigned int texture_id;
+		std::vector< Parameter, GeminiAllocator<Parameter> > parameters;
+
 		unsigned int flags;
-		unsigned int total_parameters;
 		unsigned int requirements; // used to lookup the correct shader permutation for this material
 		virtual void release();
 		
@@ -73,10 +74,11 @@ namespace assets
 		void calculate_requirements();
 		
 		Parameter * parameter_by_name( const char * name );
-		
-		void allocate_parameters( unsigned int max_parameters );
+
 		void set_parameter_name( unsigned int id, const char * name );
 		void set_parameter_vec4( unsigned int id, const glm::vec4 & vec );
+		
+		void add_parameter(const Material::Parameter& param);
 		
 		void print_parameters();
 	}; // Material

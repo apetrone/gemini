@@ -110,13 +110,15 @@ namespace assets
 		// setup default material
 		Material * default_material = materials()->allocate_asset();
 		default_material->name = "default";
-		default_material->total_parameters = 1;
-		Material::Parameter * parameter = default_material->parameters = CREATE(Material::Parameter);
-		parameter->name = "diffusemap";
-		parameter->type = MP_SAMPLER_2D;
-		parameter->texture_unit = texture_unit_for_map( parameter->name );
-		parameter->intValue = default_texture->Id();
-		default_material->calculate_requirements();
+
+		Material::Parameter diffusemap;
+		diffusemap.name = "diffusemap";
+		diffusemap.type = MP_SAMPLER_2D;
+		diffusemap.texture_unit = texture_unit_for_map(diffusemap.name);
+		diffusemap.intValue = default_texture->Id();
+		
+		default_material->add_parameter(diffusemap);
+
 		materials()->take_ownership( "materials/default", default_material );
 		materials()->set_default(default_material);
 		LOGV( "Loaded default materials; asset_id = %i\n", default_material->asset_id );
