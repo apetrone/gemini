@@ -256,6 +256,11 @@ namespace renderer
 		uint8_t alignment;
 		uint8_t unused[1];
 		uint8_t* pixels;
+		
+		TextureParameters()
+		{
+			memset(this, 0, sizeof(TextureParameters));
+		}
 	}; // TextureParameters
 	
 	
@@ -300,12 +305,7 @@ namespace renderer
 
 
 	struct RenderTarget
-	{
-		enum Flags
-		{
-			
-		};
-				
+	{				
 		uint16_t width;
 		uint16_t height;
 	}; // RenderTarget
@@ -452,9 +452,10 @@ namespace renderer
 		virtual void shaderprogram_activate( renderer::ShaderProgram shader_program ) = 0;
 		virtual void shaderprogram_deactivate( renderer::ShaderProgram shader_program ) = 0;
 
-		virtual renderer::RenderTarget render_target_create(uint16_t width, uint16_t height) = 0;
-		virtual void render_target_destroy(renderer::RenderTarget& rt) = 0;
-		virtual void render_target_activate(const renderer::RenderTarget& rt) = 0;
+		virtual renderer::RenderTarget* render_target_create(uint16_t width, uint16_t height) = 0;
+		virtual void render_target_destroy(renderer::RenderTarget* rt) = 0;
+		virtual void render_target_activate(renderer::RenderTarget* rt) = 0;
+		virtual void render_target_deactivate(renderer::RenderTarget* rt) = 0;
 		
 	}; // IRenderDriver
 	typedef IRenderDriver * (*RenderDriverCreator)();

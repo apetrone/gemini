@@ -259,10 +259,13 @@ struct GL32VertexBuffer : public VertexBuffer
 struct GL32RenderTarget : public renderer::RenderTarget
 {
 	GLuint framebuffer;
+	GLuint renderbuffer;
+	renderer::TextureParameters tex_params;
 	
 	GL32RenderTarget()
 	{
-		
+		framebuffer = 0;
+		renderbuffer = 0;
 	}
 };
 
@@ -1188,23 +1191,23 @@ void GLCore32::shaderprogram_deactivate( renderer::ShaderProgram shader_program 
 	gl.CheckError( "UseProgram shaderprogram_deactivate" );
 }
 
-renderer::RenderTarget GLCore32::render_target_create(uint16_t width, uint16_t height)
+renderer::RenderTarget* GLCore32::render_target_create(uint16_t width, uint16_t height)
 {
-	GL32RenderTarget rt;
+	GL32RenderTarget* rt = CREATE(GL32RenderTarget);
 	
-	rt.width = width;
-	rt.height = height;
-	gl.GenFramebuffers(1, &rt.framebuffer);
-	gl.BindFramebuffer(GL_FRAMEBUFFER, rt.framebuffer);
+	rt->width = width;
+	rt->height = height;
+	gl.GenFramebuffers(1, &rt->framebuffer);
+	gl.BindFramebuffer(GL_FRAMEBUFFER, rt->framebuffer);
 	
 //	GLint is_srgb_capable = 0;
 //	gl.GetIntegerv(GL_FRAMEBUFFER_SRGB_CAPABLE_EXT, &is_srgb_capable);
 //	LOGV( "srgb capable?: %s\n", (is_srgb_capable?"Yes":"No"));
 
-	GLboolean is_fb = gl.IsFramebuffer(rt.framebuffer);
+	GLboolean is_fb = gl.IsFramebuffer(rt->framebuffer);
 	LOGV("is framebuffer? %s\n", (is_fb==GL_TRUE) ? "Yes" : "No");
 	
-	renderer::TextureParameters params;
+	renderer::TextureParameters& params = rt->tex_params;
 	params.width = width;
 	params.height = height;
 	params.channels = 4;
@@ -1223,6 +1226,13 @@ renderer::RenderTarget GLCore32::render_target_create(uint16_t width, uint16_t h
 	
 	gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, params.texture_id, 0);
 	
+	
+	// if we need a depth attachment... do that here.
+	gl.GenRenderbuffers(1, &rt->renderbuffer);
+	gl.BindRenderbuffer(GL_RENDERBUFFER, rt->renderbuffer);
+	gl.RenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
+	gl.FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rt->renderbuffer);
+	
 	GLenum status = gl.CheckFramebufferStatus(GL_FRAMEBUFFER);
 	LOGV("fbo complete? %i\n", status==GL_FRAMEBUFFER_COMPLETE);
 	
@@ -1232,20 +1242,28 @@ renderer::RenderTarget GLCore32::render_target_create(uint16_t width, uint16_t h
 	return rt;
 }
 
-void GLCore32::render_target_destroy(renderer::RenderTarget& rendertarget)
+void GLCore32::render_target_destroy(renderer::RenderTarget* rendertarget)
 {
-	GL32RenderTarget* rt = static_cast<GL32RenderTarget*>(&rendertarget);
+	GL32RenderTarget* rt = static_cast<GL32RenderTarget*>(rendertarget);
 	
 	gl.BindFramebuffer(GL_FRAMEBUFFER, 0);
 	gl.BindRenderbuffer(GL_RENDERBUFFER, 0);
-	
-	gl.DeleteFramebuffers(1, &rt->framebuffer);
-	
+
 	// delete render buffers / texture for attachments
+	gl.DeleteTextures(1, &rt->tex_params.texture_id);
+	gl.DeleteFramebuffers(1, &rt->framebuffer);
+	gl.DeleteRenderbuffers(1, &rt->renderbuffer);
+	
+	DESTROY(GL32RenderTarget, rt);
 }
 
-void GLCore32::render_target_activate(const renderer::RenderTarget& rendertarget)
+void GLCore32::render_target_activate(renderer::RenderTarget* rendertarget)
 {
-	const GL32RenderTarget* rt = static_cast<const GL32RenderTarget*>(&rendertarget);
+	GL32RenderTarget* rt = static_cast<GL32RenderTarget*>(rendertarget);
 	gl.BindFramebuffer(GL_FRAMEBUFFER, rt->framebuffer);
+}
+
+void GLCore32::render_target_deactivate(renderer::RenderTarget* rendertarget)
+{
+	gl.BindFramebuffer(GL_FRAMEBUFFER, 0);
 }

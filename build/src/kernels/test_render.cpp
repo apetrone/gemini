@@ -292,7 +292,7 @@ public:
 	scenegraph::MeshNode* ground;
 	bool advance_time;
 	
-	renderer::RenderTarget rt;
+	renderer::RenderTarget* rt;
 	
 #ifdef USE_WEBSERVER
 	CivetServer* server;
@@ -550,9 +550,10 @@ public:
 		total_scene_nodes_visited = 0;
 		scenegraph::visit_nodes(root, this);
 
+		renderer::driver()->render_target_activate(rt);
+		renderer::driver()->render_target_deactivate(rt);
+				
 		rs.run_commands();
-		
-		debugdraw::sphere(light_position, Color(255, 255, 255, 255), 0.5f, 0.0f);
 		
 		renderer::ConstantBuffer cb;
 		cb.modelview_matrix = &camera.matCam;
@@ -563,6 +564,10 @@ public:
 	
 		scenelink.draw(root, cb);
 		
+
+		
+		debugdraw::sphere(light_position, Color(255, 255, 255, 255), 0.5f, 0.0f);
+				
 		{
 			glm::mat4 modelview;
 			debugdraw::render(modelview, camera.matCamProj, params.render_width, params.render_height);

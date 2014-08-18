@@ -86,7 +86,8 @@ public:
 	virtual void shaderprogram_activate( renderer::ShaderProgram shader_program );
 	virtual void shaderprogram_deactivate( renderer::ShaderProgram shader_program );
 	
-	virtual renderer::RenderTarget render_target_create(uint16_t width, uint16_t height);
-	virtual void render_target_destroy(renderer::RenderTarget& rt);
-	virtual void render_target_activate(const renderer::RenderTarget& rt);
+	virtual renderer::RenderTarget* render_target_create(uint16_t width, uint16_t height);
+	virtual void render_target_destroy(renderer::RenderTarget* rt);
+	virtual void render_target_activate(renderer::RenderTarget* rt);
+	virtual void render_target_deactivate(renderer::RenderTarget* rt);
 }; // GLCore32
