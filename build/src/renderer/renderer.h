@@ -225,19 +225,42 @@ namespace renderer
 	}; // VertexDescriptor
 	
 	
-	
+	enum TextureFlags
+	{
+		TEXTURE_WRAP 			= (1 << 0),
+		TEXTURE_CLAMP 			= (1 << 1),
+		TEXTURE_MIP_NEAREST		= (1 << 2),
+		TEXTURE_MIP_LINEAR		= (1 << 3)
+	};
 	
 	struct TextureParameters
 	{
-		unsigned int image_flags;
-		unsigned int channels;
-		unsigned int width;
-		unsigned int height;
-		unsigned char * pixels;
-		unsigned int texture_id;
+		// flags from image::
+		uint32_t image_flags;
 		
-		unsigned int x, y;
-		unsigned char alignment;
+		// flags specific to textures, "images" uploaded to gpu
+		uint32_t texture_flags;
+		
+		// texture dimensions
+		uint32_t width;
+		uint32_t height;
+
+		// reference id for texture (should this be moved?)
+		uint32_t texture_id;
+		
+		// origin (used to replacing a rectangle of data)
+		uint32_t x;
+		uint32_t y;
+		
+		uint8_t channels;
+		uint8_t alignment;
+		uint8_t unused[1];
+		uint8_t* pixels;
+		
+		TextureParameters()
+		{
+			memset(this, 0, sizeof(TextureParameters));
+		}
 	}; // TextureParameters
 	
 	
@@ -282,7 +305,7 @@ namespace renderer
 
 
 	struct RenderTarget
-	{
+	{				
 		uint16_t width;
 		uint16_t height;
 	}; // RenderTarget
@@ -429,6 +452,11 @@ namespace renderer
 		virtual void shaderprogram_activate( renderer::ShaderProgram shader_program ) = 0;
 		virtual void shaderprogram_deactivate( renderer::ShaderProgram shader_program ) = 0;
 
+		virtual renderer::RenderTarget* render_target_create(uint16_t width, uint16_t height) = 0;
+		virtual void render_target_destroy(renderer::RenderTarget* rt) = 0;
+		virtual void render_target_activate(renderer::RenderTarget* rt) = 0;
+		virtual void render_target_deactivate(renderer::RenderTarget* rt) = 0;
+		
 	}; // IRenderDriver
 	typedef IRenderDriver * (*RenderDriverCreator)();
 	

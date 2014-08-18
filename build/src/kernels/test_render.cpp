@@ -292,6 +292,8 @@ public:
 	scenegraph::MeshNode* ground;
 	bool advance_time;
 	
+	renderer::RenderTarget* rt;
+	
 #ifdef USE_WEBSERVER
 	CivetServer* server;
 #endif
@@ -493,6 +495,11 @@ public:
 		camera.yaw = -45;
 		camera.pitch = 30;
 		camera.update_view();
+		
+		
+		
+		rt = renderer::driver()->render_target_create(512, 512);
+		
 
 		return kernel::Application_Success;
 	}
@@ -552,9 +559,10 @@ public:
 		total_scene_nodes_visited = 0;
 		scenegraph::visit_nodes(root, this);
 
+		renderer::driver()->render_target_activate(rt);
+		renderer::driver()->render_target_deactivate(rt);
+				
 		rs.run_commands();
-		
-		debugdraw::sphere(light_position, Color(255, 255, 255, 255), 0.5f, 0.0f);
 		
 		renderer::ConstantBuffer cb;
 		cb.modelview_matrix = &camera.matCam;
@@ -565,6 +573,10 @@ public:
 	
 		scenelink.draw(root, cb);
 		
+
+		
+		debugdraw::sphere(light_position, Color(255, 255, 255, 255), 0.5f, 0.0f);
+				
 		{
 			glm::mat4 modelview;
 			debugdraw::render(modelview, camera.matCamProj, params.render_width, params.render_height);
@@ -577,6 +589,7 @@ public:
 		DESTROY(CivetServer, server);
 #endif
 	
+		renderer::driver()->render_target_destroy(rt);
 		DESTROY(Node, root);
 		debugdraw::shutdown();
 	}
