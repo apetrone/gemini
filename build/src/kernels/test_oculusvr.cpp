@@ -28,7 +28,71 @@
 #include "renderer/renderer.h"
 #include "input.h"
 
+#include "OVR.h"
+
 using namespace kernel;
+
+
+namespace vr
+{
+	struct Device
+	{
+		ovrHmd hmd;
+	};
+
+	void startup()
+	{
+		ovr_Initialize();
+	}
+	
+	int32_t detect_devices()
+	{
+		return ovrHmd_Detect();
+	}
+	
+	Device create_device()
+	{
+		LOGV("creating an instance of a VR device...\n");
+		ovrHmd hmd = ovrHmd_Create(0);
+		
+		if (hmd)
+		{
+			LOGV("VR device found!\n");
+			
+		}
+		else
+		{
+			LOGV("no VR device found. creating a debug version...\n");
+			hmd = ovrHmd_CreateDebug(ovrHmd_DK2);
+		}
+		
+		// reach this and get a prize. couldn't even create a debug version...
+		assert(hmd != 0);
+
+		LOGV("VR device: %s\n", hmd->ProductName);
+		LOGV("VR device manufacturer: %s\n", hmd->Manufacturer);
+
+		
+		Device device;
+		device.hmd = hmd;
+		return device;
+	}
+	
+	void destroy_device(const Device& device)
+	{
+		ovrHmd_Destroy(device.hmd);
+	}
+	
+	void shutdown()
+	{
+		ovr_Shutdown();
+	}
+	
+	
+}
+
+
+
 
 
 class TestOculusVR : public kernel::IApplication,
@@ -62,7 +126,7 @@ public:
 	virtual kernel::ApplicationResult config( kernel::Params & params )
 	{
 		params.window_width = 1280;
-		params.window_height = 360;
+		params.window_height = 720;
 		params.window_title = "TestOuclusVR";
 		
 		return kernel::Application_Success;
@@ -70,6 +134,16 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
+		vr::startup();
+	
+		LOGV("total devices: %i\n", vr::detect_devices());
+		
+		vr::Device dev;
+		
+		dev = vr::create_device();
+		
+		vr::destroy_device(dev);
+	
 		return kernel::Application_Success;
 	}
 	
@@ -111,6 +185,7 @@ public:
 
 	virtual void shutdown( kernel::Params & params )
 	{
+		vr::shutdown();
 	}
 };
 
