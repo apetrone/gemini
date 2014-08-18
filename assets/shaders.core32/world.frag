@@ -23,6 +23,14 @@ float shlick_fresnel(in float n2, in vec3 H, in vec3 L)
 	return max(0.0, r0 + (1.0 - r0) * pow((1.0 - cos_theta), 5.0));
 }
 
+// from GPU Gems 3, Chapter 14 on Skin Rendering
+float fresnel_term(in vec3 H, in vec3 V, float F0)
+{
+	float base = (1 - dot(V, H));
+	float exponent = pow(base, 5.0);
+	return exponent + F0 * (1.0 - exponent);
+}
+
 float lambertian_diffuse(in vec3 L, in vec3 N)
 {
 	return max(0.0, dot(N, L));
@@ -46,17 +54,26 @@ float oren_nayer_diffuse(in float roughness, in vec3 L, in vec3 N)
 	return ndotl * (A + (B * max(0.0, cos(angle_i - angle_r)) * sin(alpha) * tan(beta) ));
 }
 
-void blinn_phong_lighting()
+vec3 specular_blinn_phong(in vec3 N, in vec3 H, in vec3 specular_color)
 {
+	// calculate specular
+	float spec_power = 1000;
 
+	// vec3 R = -reflect(L, N);
+	// float sp = pow(max(dot(R, V), 0.0), spec_power);
+	float sp = pow(clamp(dot(H, N), 0.0, 1.0), spec_power);
+
+	return sp * specular_color;
 }
 
 void per_pixel_lighting(in vec3 vertex_to_light_world)
 {
 	vec3 N = normalize(ps_normal);
 	vec3 L = normalize(vertex_to_light_world);
-	// float ndl = lambertian_diffuse(L, N);
-	float ndl = oren_nayer_diffuse(0.0, L, N);
+	vec3 V = normalize(vertex_to_viewer_worldspace);	
+	vec3 H = normalize(V+L);
+	float ndl = lambertian_diffuse(L, N);
+	// float ndl = oren_nayer_diffuse(0.0, L, N);
 
 	vec4 albedo = texture(diffusemap, ps_uv0);
 
@@ -65,36 +82,35 @@ void per_pixel_lighting(in vec3 vertex_to_light_world)
 	vec3 light_attenuation = vec3(0, 0.1, 0.00001);
 	float att = 1.0 / (light_attenuation.x + light_attenuation.y*distance + light_attenuation.z*distance*distance);
 
-	// calculate specular
-	float spec_power = 500;
-	vec3 R = -reflect(L, N);
-	vec3 VtoV = normalize(vertex_to_viewer_worldspace);
-	float sp = pow(max(dot(R, VtoV), 0.0), spec_power);
 
+	vec3 specular = specular_blinn_phong(N, H, vec3(1, 1, 1));
 
-	vec3 V = normalize(view_direction_worldspace);
+	// vec3 V = normalize(vertex_to_viewer_worldspace);
 
 	// try to compute the fresnel term
-	vec3 LV = L+V;
-	vec3 H = (LV/length(LV));
-	float fresnel = shlick_fresnel(0.1, H, L);
+	// vec3 H = normalize(L+V);
+	// float fresnel = ndl*shlick_fresnel(0.1, H, L);
 	// vec3 specular = fresnel_shlick(vec3(1.0, 1.0, 1.0), eye_position_worldspace, H);
 
+	float fresnel = fresnel_term(H, V, 0.028);
+
 	// lambert diffuse, with attenuation and specular
-	// out_color = att*ndl*albedo + sp*vec4(1.0);
+	out_color = att*ndl*albedo + vec4(specular, 1.0)*fresnel;
 	
 
-	// out_color = vec4(vertex_to_viewer_worldspace, 1.0);
+	// out_color = vec4(V, 1.0);
 	// out_color = vec4(ndl, ndl, ndl, 1.0);
-	// out_color = vec4(sp, sp, sp, 1.0);
+	// out_color = vec4(specular, 1.0);
 	// out_color = vec4(ndl*N, 1.0);
 	// out_color = vec4(N, 1.0);
-	// out_color = vec4(H, 1.0);	
+	// out_color = vec4(H, 1.0);
 	// out_color = vec4(L, 1.0);
-	// 
+	// out_color = vec4(V, 1.0);
 	
 	// out_color = vec4(fresnel, fresnel, fresnel, 1.0);
-	out_color = vec4(LV, 1.0);
+	// out_color = vec4(H, 1.0);
+
+	// out_color = vec4(H, 1.0);
 	// out_color = albedo * texture(lightmap, ps_uv1);
 }
 

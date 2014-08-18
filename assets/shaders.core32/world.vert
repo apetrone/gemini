@@ -18,10 +18,13 @@ out vec3 ps_normal;
 out vec2 ps_uv0;
 out vec2 ps_uv1;
 
+// worldspace vectors
 out vec3 vertex_position_world;
 out vec3 light_position_world;
 out vec3 vertex_to_viewer_worldspace;
 out vec3 view_direction_worldspace;
+
+
 
 // summary of different coordinate spaces in the context of shaders
 // local, or object-space

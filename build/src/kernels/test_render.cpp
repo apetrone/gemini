@@ -553,14 +553,6 @@ public:
 		cb.viewer_direction = &camera.view;
 		cb.viewer_position = &camera.eye_position;
 		cb.light_position = &light_position;
-
-		// transform by normal matrix to debug
-		glm::mat3 normal_matrix = glm::transpose(glm::inverse((glm::mat3(camera.matCam * ground->world_transform))));
-		glm::vec3 up = glm::vec3(0.0f, 0.0f, 1.0f);
-		glm::vec3 out = normal_matrix * up;
-		glm::vec3 vert = glm::vec3(10.0f, 0.0f, 10.0f);
-		debugdraw::line(vert, vert+out, Color(0, 0, 255), 0.0f);
-		
 	
 		scenelink.draw(root, cb);
 		
