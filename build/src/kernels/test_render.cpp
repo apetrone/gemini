@@ -292,6 +292,8 @@ public:
 	scenegraph::MeshNode* ground;
 	bool advance_time;
 	
+	renderer::RenderTarget rt;
+	
 #ifdef USE_WEBSERVER
 	CivetServer* server;
 #endif
@@ -484,6 +486,11 @@ public:
 		camera.yaw = -45;
 		camera.pitch = 30;
 		camera.update_view();
+		
+		
+		
+		rt = renderer::driver()->render_target_create(512, 512);
+		
 
 		return kernel::Application_Success;
 	}
@@ -568,6 +575,7 @@ public:
 		DESTROY(CivetServer, server);
 #endif
 	
+		renderer::driver()->render_target_destroy(rt);
 		DESTROY(Node, root);
 		debugdraw::shutdown();
 	}

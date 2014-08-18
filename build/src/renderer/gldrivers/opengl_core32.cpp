@@ -256,6 +256,15 @@ struct GL32VertexBuffer : public VertexBuffer
 	}
 };
 
+struct GL32RenderTarget : public renderer::RenderTarget
+{
+	GLuint framebuffer;
+	
+	GL32RenderTarget()
+	{
+		
+	}
+};
 
 
 GLCore32::GLCore32()
@@ -1179,4 +1188,64 @@ void GLCore32::shaderprogram_deactivate( renderer::ShaderProgram shader_program 
 	gl.CheckError( "UseProgram shaderprogram_deactivate" );
 }
 
+renderer::RenderTarget GLCore32::render_target_create(uint16_t width, uint16_t height)
+{
+	GL32RenderTarget rt;
+	
+	rt.width = width;
+	rt.height = height;
+	gl.GenFramebuffers(1, &rt.framebuffer);
+	gl.BindFramebuffer(GL_FRAMEBUFFER, rt.framebuffer);
+	
+//	GLint is_srgb_capable = 0;
+//	gl.GetIntegerv(GL_FRAMEBUFFER_SRGB_CAPABLE_EXT, &is_srgb_capable);
+//	LOGV( "srgb capable?: %s\n", (is_srgb_capable?"Yes":"No"));
 
+	GLboolean is_fb = gl.IsFramebuffer(rt.framebuffer);
+	LOGV("is framebuffer? %s\n", (is_fb==GL_TRUE) ? "Yes" : "No");
+	
+	renderer::TextureParameters params;
+	params.width = width;
+	params.height = height;
+	params.channels = 4;
+	params.pixels = 0;
+	params.texture_flags = (renderer::TEXTURE_CLAMP | renderer::TEXTURE_MIP_LINEAR);
+	
+	// try to create a texture
+	generate_texture(params);
+	gl.BindTexture(GL_TEXTURE_2D, params.texture_id);
+	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	gl.TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+	
+	gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, params.texture_id, 0);
+	
+	GLenum status = gl.CheckFramebufferStatus(GL_FRAMEBUFFER);
+	LOGV("fbo complete? %i\n", status==GL_FRAMEBUFFER_COMPLETE);
+	
+	// deactivate
+	gl.BindFramebuffer(GL_FRAMEBUFFER, 0);
+	
+	return rt;
+}
+
+void GLCore32::render_target_destroy(renderer::RenderTarget& rendertarget)
+{
+	GL32RenderTarget* rt = static_cast<GL32RenderTarget*>(&rendertarget);
+	
+	gl.BindFramebuffer(GL_FRAMEBUFFER, 0);
+	gl.BindRenderbuffer(GL_RENDERBUFFER, 0);
+	
+	gl.DeleteFramebuffers(1, &rt->framebuffer);
+	
+	// delete render buffers / texture for attachments
+}
+
+void GLCore32::render_target_activate(const renderer::RenderTarget& rendertarget)
+{
+	const GL32RenderTarget* rt = static_cast<const GL32RenderTarget*>(&rendertarget);
+	gl.BindFramebuffer(GL_FRAMEBUFFER, rt->framebuffer);
+}
