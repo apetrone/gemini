@@ -38,6 +38,17 @@ namespace vr
 	struct Device
 	{
 		ovrHmd hmd;
+		
+		
+		void query_display_resolution(int32_t& width, int32_t& height)
+		{
+			if (hmd)
+			{
+				ovrSizei resolution = hmd->Resolution;
+				width = resolution.w;
+				height = resolution.h;
+			}
+		}
 	};
 
 	void startup()
@@ -48,6 +59,42 @@ namespace vr
 	int32_t detect_devices()
 	{
 		return ovrHmd_Detect();
+	}
+	
+	void setup_rendering(Device& device, uint16_t width, uint16_t height)
+	{
+		ovrSizei size;
+		size.w = width;
+		size.h = height;
+		ovrRenderAPIConfig rc;
+		rc.Header.API = ovrRenderAPI_OpenGL;
+		rc.Header.Multisample = false;
+		rc.Header.RTSize = size;
+		
+		float vfov = tan(90/2);
+		float hfov = tan(100/2);
+		
+		unsigned int distortion_caps = 0;
+		ovrFovPort eye_fov[2];
+		eye_fov[0].UpTan = vfov;
+		eye_fov[0].DownTan = vfov;
+		eye_fov[0].LeftTan = hfov;
+		eye_fov[0].RightTan = hfov;
+		eye_fov[1].UpTan = vfov;
+		eye_fov[1].DownTan = vfov;
+		eye_fov[1].LeftTan = hfov;
+		eye_fov[1].RightTan = hfov;
+		
+		ovrEyeRenderDesc eye_render[2];
+		
+		ovrBool result = ovrHmd_ConfigureRendering(
+			device.hmd,
+			&rc,
+			distortion_caps,
+			eye_fov,
+			eye_render
+		);
+		LOGV("vr: setup rendering %s\n", result ? "Success": "Failed");
 	}
 	
 	Device create_device()
@@ -103,6 +150,7 @@ class TestOculusVR : public kernel::IApplication,
 public:
 	DECLARE_APPLICATION( TestOculusVR );
 
+	vr::Device device;
 	
 	virtual void event( KeyboardEvent & event )
 	{
@@ -125,25 +173,27 @@ public:
 	
 	virtual kernel::ApplicationResult config( kernel::Params & params )
 	{
-		params.window_width = 1280;
-		params.window_height = 720;
-		params.window_title = "TestOuclusVR";
+		// try to setup VR device and resolution here.
+		vr::startup();
+		
+		LOGV("total VR devices: %i\n", vr::detect_devices());
+		device = vr::create_device();
+	
+		int32_t w, h;
+		device.query_display_resolution(w, h);
+		LOGV("creating window with resolution: %i x %i\n", w, h);
+		
+		params.window_width = (uint16_t)w;
+		params.window_height = (uint16_t)h;
+		params.window_title = "TestOculusVR";
 		
 		return kernel::Application_Success;
 	}
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
-		vr::startup();
-	
-		LOGV("total devices: %i\n", vr::detect_devices());
-		
-		vr::Device dev;
-		
-		dev = vr::create_device();
-		
-		vr::destroy_device(dev);
-	
+		vr::setup_rendering(device, params.render_width, params.render_height);
+			
 		return kernel::Application_Success;
 	}
 	
