@@ -56,7 +56,7 @@ namespace assets
 	{
 		for (auto& parameter : parameters)
 		{
-			if (parameter.name == std::string(name))
+			if (parameter.name == ShaderString(name))
 			{
 				return &parameter;
 			}

@@ -77,7 +77,8 @@ namespace assets
 	};
 	
 	// other shared types
-	typedef std::string ShaderString;
+//	typedef std::string ShaderString;
+	typedef std::basic_string<char, std::char_traits<char>, GeminiAllocator<char> > ShaderString;
 }; // namespace assets
 
 #define IMPLEMENT_ASSET_LIBRARY_ACCESSOR( type, name )\
