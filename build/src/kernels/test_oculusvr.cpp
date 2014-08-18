@@ -35,10 +35,18 @@ using namespace kernel;
 
 namespace vr
 {
+	
+	struct EyeDescription
+	{
+		
+	};
+	
 	struct Device
 	{
 		ovrHmd hmd;
-		
+		ovrPosef head_pose[2];
+		ovrTexture textures[2];
+		ovrSizei render_target_size;
 		
 		void query_display_resolution(int32_t& width, int32_t& height)
 		{
@@ -49,7 +57,29 @@ namespace vr
 				height = resolution.h;
 			}
 		}
+		
+		uint32_t get_eye_count()
+		{
+			return ovrEye_Count;
+		}
+		
+		void begin_frame()
+		{
+			ovrHmd_BeginFrame(hmd, 0);
+		}
+		
+		void end_frame()
+		{
+			ovrHmd_EndFrame(hmd, head_pose, textures);
+		}
+		
+		EyeDescription get_eye_description(uint32_t eye_index)
+		{
+			ovrEyeType eye = hmd->EyeRenderOrder[eye_index];
+			head_pose[eye_index] = ovrHmd_GetEyePose(hmd, eye);
+		}
 	};
+
 
 	void startup()
 	{
@@ -61,15 +91,40 @@ namespace vr
 		return ovrHmd_Detect();
 	}
 	
+	void setup_render_targets(Device& device)
+	{
+		ovrSizei tex0 = ovrHmd_GetFovTextureSize(
+			device.hmd,
+			ovrEye_Left,
+			device.hmd->DefaultEyeFov[0],
+			1.0f
+		);
+		
+		ovrSizei tex1 = ovrHmd_GetFovTextureSize(
+			 device.hmd,
+			 ovrEye_Right,
+			 device.hmd->DefaultEyeFov[1],
+			 1.0f
+		 );
+
+		device.render_target_size.w = tex0.w + tex1.w;
+		device.render_target_size.h = glm::max(tex0.h, tex1.h);
+		
+		LOGV("recommended render_target size: %i x %i\n",
+			device.render_target_size.w,
+			device.render_target_size.h
+		 );
+		 
+		 // TODO: create render target here
+		 // cache off correct size of created render target
+	}
+	
 	void setup_rendering(Device& device, uint16_t width, uint16_t height)
 	{
-		ovrSizei size;
-		size.w = width;
-		size.h = height;
 		ovrRenderAPIConfig rc;
 		rc.Header.API = ovrRenderAPI_OpenGL;
 		rc.Header.Multisample = false;
-		rc.Header.RTSize = size;
+		rc.Header.RTSize = device.render_target_size;
 		
 		float vfov = tan(90/2);
 		float hfov = tan(100/2);
@@ -95,6 +150,17 @@ namespace vr
 			eye_render
 		);
 		LOGV("vr: setup rendering %s\n", result ? "Success": "Failed");
+		
+		
+		assert(result != 0);
+		
+		ovrRecti viewport;
+		
+		// now build textures
+		device.textures[0].Header.API = ovrRenderAPI_OpenGL;
+		device.textures[0].Header.TextureSize = device.render_target_size;
+		device.textures[0].Header.RenderViewport = viewport;
+
 	}
 	
 	Device create_device()
@@ -192,8 +258,10 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
+		vr::setup_render_targets(device);
+	
 		vr::setup_rendering(device, params.render_width, params.render_height);
-			
+		
 		return kernel::Application_Success;
 	}
 	
@@ -208,29 +276,44 @@ public:
 		char buffer[128] = {0};
 		ms.init( buffer, 128 );
 		
-		// viewport
-		ms.rewind();
-		ms.write( 0 );
-		ms.write( 0 );
-		ms.write( params.window_width );
-		ms.write( params.window_width );
-		ms.rewind();
-		driver->run_command( renderer::DC_VIEWPORT, ms );
+		device.begin_frame();
 		
-		// set clear color
-		ms.rewind();
-		ms.write( 0.5f );
-		ms.write( 0.0f );
-		ms.write( 0.75f );
-		ms.write( 1.0f );
-		ms.rewind();
-		driver->run_command( renderer::DC_CLEARCOLOR, ms );
+		for (uint32_t eye_index = 0; eye_index < device.get_eye_count(); ++eye_index)
+		{
+			vr::EyeDescription eye = device.get_eye_description(eye_index);
+//			glm::quat orientation = device.get_eye_orientation(eye_index);
+			
+			// viewport
+			ms.rewind();
+			ms.write( 0 );
+			ms.write( 0 );
+			ms.write( params.window_width );
+			ms.write( params.window_width );
+			ms.rewind();
+			driver->run_command( renderer::DC_VIEWPORT, ms );
+			
+			// set clear color
+			ms.rewind();
+			ms.write( 0.5f );
+			ms.write( 0.0f );
+			ms.write( 0.75f );
+			ms.write( 1.0f );
+			ms.rewind();
+			driver->run_command( renderer::DC_CLEARCOLOR, ms );
+			
+			// color_buffer_bit
+			ms.rewind();
+			ms.write( 0x00004000 );
+			ms.rewind();
+			driver->run_command( renderer::DC_CLEAR, ms );
+		}
 		
-		// color_buffer_bit
-		ms.rewind();
-		ms.write( 0x00004000 );
-		ms.rewind();
-		driver->run_command( renderer::DC_CLEAR, ms );
+		// This will crash in end_frame because currently, there are no textures
+		// setup in the renderer. Fix this!
+		assert(0);
+		
+		
+		device.end_frame();
 	}
 
 	virtual void shutdown( kernel::Params & params )
