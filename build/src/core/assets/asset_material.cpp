@@ -304,7 +304,7 @@ namespace assets
 		} //  total_parameters
 		
 		
-		material->calculate_requirements();
+//		material->calculate_requirements();
 		
 #if 0
 		StackString< MAX_PATH_SIZE > path = "conf/";
