@@ -354,6 +354,7 @@ public:
 		current_time = 0;
 		ground = 0;
 		advance_time = 1;
+		rt = 0;
 		
 #ifdef USE_WEBSERVER
 		server = 0;
@@ -460,7 +461,6 @@ public:
 		root = CREATE(scenegraph::Node);
 		root->name = "scene_root";
 		
-		
 //		scenegraph::MeshNode* skydome = 0;
 //		skydome = CREATE(scenegraph::MeshNode);
 //		assets::Material* colormat = assets::materials()->load_from_path("materials/skydome");
@@ -480,8 +480,30 @@ public:
 		//sn->local_position = glm::vec3(0, 1, 0);
 //		root->add_child(sn);
 
+
+
+		
+		
+		rt = renderer::driver()->render_target_create(512, 512);
+		
+		
+		
+		
+		assets::Material* mat = assets::materials()->allocate_asset();
+		assets::Material::Parameter diffusemap;
+		diffusemap.name = "diffusemap";
+		diffusemap.texture_unit = 1;
+		diffusemap.type = assets::MP_SAMPLER_2D;
+		diffusemap.intValue = rt->color_texture_id;
+		mat->add_parameter(diffusemap);
+		assets::materials()->take_ownership("render_target", mat);
+
+
+
+
+
 		ground = CREATE(scenegraph::MeshNode);
-		ground->load_mesh("models/render_test0", false, 0, world);
+		ground->load_mesh("models/render_test0", false, mat, world);
 		root->add_child(ground);
 //		ground->visible = false;
 
@@ -496,10 +518,7 @@ public:
 		camera.pitch = 30;
 		camera.update_view();
 		
-		
-		
-		rt = renderer::driver()->render_target_create(512, 512);
-		
+
 
 		return kernel::Application_Success;
 	}
@@ -560,9 +579,16 @@ public:
 		scenegraph::visit_nodes(root, this);
 
 		renderer::driver()->render_target_activate(rt);
+		{
+			RenderStream s;
+			s.add_viewport( 0, 0, rt->width, rt->height );
+			s.add_clearcolor( 0.0, 0.0, 1.0, 1.0f );
+			s.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
+			s.run_commands();
+		}
 		renderer::driver()->render_target_deactivate(rt);
 				
-		rs.run_commands();
+		
 		
 		renderer::ConstantBuffer cb;
 		cb.modelview_matrix = &camera.matCam;
@@ -571,6 +597,7 @@ public:
 		cb.viewer_position = &camera.eye_position;
 		cb.light_position = &light_position;
 	
+		rs.run_commands();
 		scenelink.draw(root, cb);
 		
 

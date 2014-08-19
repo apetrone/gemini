@@ -292,6 +292,8 @@ GLCore32::~GLCore32()
 
 void c_shader( MemoryStream & stream, GLCore32 & renderer )
 {
+	GL_LOG();
+	
 	ShaderProgram shader_program;
 	stream.read( shader_program.object );
 
@@ -300,6 +302,8 @@ void c_shader( MemoryStream & stream, GLCore32 & renderer )
 
 void p_shader( MemoryStream & stream, GLCore32 & renderer )
 {
+	GL_LOG();
+	
 	ShaderProgram shader_program;
 	stream.read( shader_program.object );
 	
@@ -308,6 +312,8 @@ void p_shader( MemoryStream & stream, GLCore32 & renderer )
 
 void c_uniform_matrix4( MemoryStream & stream, GLCore32 & renderer )
 {
+	GL_LOG();
+	
 	int uniform_location;
 	glm::mat4 * matrix = 0;
 	uint8_t count = 0;
@@ -321,6 +327,8 @@ void c_uniform_matrix4( MemoryStream & stream, GLCore32 & renderer )
 
 void c_uniform1i( MemoryStream & stream, GLCore32 & renderer )
 {
+	GL_LOG();
+	
 	int uniform_location;
 	int value;
 	stream.read( uniform_location );
@@ -332,6 +340,8 @@ void c_uniform1i( MemoryStream & stream, GLCore32 & renderer )
 
 void c_uniform3f( MemoryStream & stream, GLCore32 & renderer )
 {
+	GL_LOG();
+	
 	int uniform_location;
 	float * value;
 	stream.read( uniform_location );
@@ -343,6 +353,8 @@ void c_uniform3f( MemoryStream & stream, GLCore32 & renderer )
 
 void c_uniform4f( MemoryStream & stream, GLCore32 & renderer )
 {
+	GL_LOG();
+	
 	int uniform_location;
 	float * value;
 	stream.read( uniform_location );
@@ -354,6 +366,8 @@ void c_uniform4f( MemoryStream & stream, GLCore32 & renderer )
 
 void c_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 {
+	GL_LOG();
+	
 	int uniform_location;
 	int texture_unit;
 	int texture_id;
@@ -380,6 +394,8 @@ void c_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 
 void p_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 {
+	GL_LOG();
+	
 	int uniform_location;
 	int texture_unit;
 	int texture_id;
@@ -397,6 +413,8 @@ void p_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 
 void c_clear( MemoryStream & stream, GLCore32 & renderer )
 {
+	GL_LOG();
+	
 	unsigned int bits;
 	stream.read(bits);
 	gl.Clear( bits );
@@ -405,6 +423,8 @@ void c_clear( MemoryStream & stream, GLCore32 & renderer )
 
 void c_clearcolor( MemoryStream & stream, GLCore32 & renderer )
 {
+	GL_LOG();
+	
 	float color[4];
 	stream.read( color, 4*sizeof(float) );
 	gl.ClearColor( color[0], color[1], color[2], color[3] );
@@ -413,6 +433,8 @@ void c_clearcolor( MemoryStream & stream, GLCore32 & renderer )
 
 void c_cleardepth( MemoryStream & stream, GLCore32 & renderer )
 {
+	GL_LOG();
+	
 	float value;
 	stream.read( value );
 	glClearDepth( value );
@@ -421,6 +443,8 @@ void c_cleardepth( MemoryStream & stream, GLCore32 & renderer )
 
 void c_cullface( MemoryStream & stream, GLCore32 & renderer )
 {
+	GL_LOG();
+	
 	renderer::CullMode cm;
 	stream.read( cm );
 	glCullFace( cullmode_to_gl_cullmode(cm) );
@@ -438,6 +462,8 @@ void c_viewport( MemoryStream & stream, GLCore32 & renderer )
 	stream.read( &y, 4 );
 	stream.read( &width, 4 );
 	stream.read( &height, 4 );
+//	GL_LOG("Viewport: %i %i %i %i", x, y, width, height);
+	GL_LOG();
 	gl.Viewport( x, y, width, height );
 	gl.CheckError( "glViewport" );
 }
@@ -496,6 +522,7 @@ void c_blendfunc( MemoryStream & stream, GLCore32 & renderer )
 	GLenum source = convert_blendstate( render_blendstate_source );
 	GLenum destination = convert_blendstate( render_blendstate_destination );
 	
+	GL_LOG();
 	gl.BlendFunc( source, destination );
 	gl.CheckError( "BlendFunc" );
 }
@@ -1217,24 +1244,36 @@ renderer::RenderTarget* GLCore32::render_target_create(uint16_t width, uint16_t 
 	// try to create a texture
 	generate_texture(params);
 	gl.BindTexture(GL_TEXTURE_2D, params.texture_id);
-	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	gl.TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-
+	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	gl.GenerateMipmap(GL_TEXTURE_2D);
+	float border[] = {1, 1, 1, 1};
+	glTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border );
 	
+	gl.TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	
+	rt->color_texture_id = params.texture_id;
+	assert(params.texture_id != 0);
+	// attach the texture to the FBO
 	gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, params.texture_id, 0);
 	
 	
+	rt->depth_texture_id = 0;
 	// if we need a depth attachment... do that here.
-	gl.GenRenderbuffers(1, &rt->renderbuffer);
-	gl.BindRenderbuffer(GL_RENDERBUFFER, rt->renderbuffer);
-	gl.RenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
-	gl.FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rt->renderbuffer);
+//	gl.GenRenderbuffers(1, &rt->renderbuffer);
+//	gl.BindRenderbuffer(GL_RENDERBUFFER, rt->renderbuffer);
+//	gl.RenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
+//	gl.FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rt->renderbuffer);
+	
+	
+
 	
 	GLenum status = gl.CheckFramebufferStatus(GL_FRAMEBUFFER);
 	LOGV("fbo complete? %i\n", status==GL_FRAMEBUFFER_COMPLETE);
+	
+
 	
 	// deactivate
 	gl.BindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -1242,8 +1281,10 @@ renderer::RenderTarget* GLCore32::render_target_create(uint16_t width, uint16_t 
 	return rt;
 }
 
+// http://www.lighthouse3d.com/tutorials/opengl-short-tutorials/opengl_framebuffer_objects/
 void GLCore32::render_target_destroy(renderer::RenderTarget* rendertarget)
 {
+	GL_LOG();
 	GL32RenderTarget* rt = static_cast<GL32RenderTarget*>(rendertarget);
 	
 	gl.BindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -1259,11 +1300,16 @@ void GLCore32::render_target_destroy(renderer::RenderTarget* rendertarget)
 
 void GLCore32::render_target_activate(renderer::RenderTarget* rendertarget)
 {
+	GL_LOG();
+	
 	GL32RenderTarget* rt = static_cast<GL32RenderTarget*>(rendertarget);
 	gl.BindFramebuffer(GL_FRAMEBUFFER, rt->framebuffer);
+	GLenum drawbufs [] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, drawbufs);
 }
 
 void GLCore32::render_target_deactivate(renderer::RenderTarget* rendertarget)
 {
+	GL_LOG();
 	gl.BindFramebuffer(GL_FRAMEBUFFER, 0);
 }

@@ -20,6 +20,8 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <gemini/typedefs.h>
+#include <slim/xlog.h>
+
 #include "renderer/renderer.h"
 #include "opengl_common.h"
 
@@ -215,3 +217,28 @@ gemgl_state_function operator_for_state( renderer::DriverState state )
 	
 	return operator_map[ state ];
 } // operator_for_state
+
+std::stack<std::string> GLFunctionLogger::call_stack;
+
+GLFunctionLogger::GLFunctionLogger(const char* fn) : function(fn)
+{
+	GLFunctionLogger::call_stack.push(function);
+	std::string prefix = "";
+	for (int i = 0; i < GLFunctionLogger::call_stack.size(); ++i)
+	{
+		prefix += "\t";
+	}
+	LOGV("-> %s%s\n", prefix.c_str(), function);
+}
+
+GLFunctionLogger::~GLFunctionLogger()
+{
+	const std::string& call = GLFunctionLogger::call_stack.top();
+	GLFunctionLogger::call_stack.pop();
+	std::string prefix = "";
+	for (int i = 0; i < GLFunctionLogger::call_stack.size(); ++i)
+	{
+		prefix += "\t";
+	}
+	LOGV(".. %s%s\n", prefix.c_str(), call.c_str());
+}

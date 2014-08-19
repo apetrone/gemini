@@ -308,6 +308,9 @@ namespace renderer
 	{				
 		uint16_t width;
 		uint16_t height;
+		
+		uint32_t color_texture_id;
+		uint32_t depth_texture_id;
 	}; // RenderTarget
 
 	

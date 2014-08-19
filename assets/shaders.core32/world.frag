@@ -1,4 +1,4 @@
-out vec4 out_color;
+layout (location = 0) out vec4 out_color;
 
 in vec3 ps_normal;
 in vec2 ps_uv0;

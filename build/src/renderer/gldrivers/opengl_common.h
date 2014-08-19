@@ -21,6 +21,9 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <stack>
+#include <string>
+
 #include <gemini/util/stackstring.h>
 
 #include "renderer/renderer.h"
@@ -49,3 +52,14 @@ GLenum cullmode_to_gl_cullmode( renderer::CullMode mode );
 typedef void (*gemgl_state_function)(renderer::DriverState, MemoryStream &, renderer::IRenderDriver *);
 
 gemgl_state_function operator_for_state( renderer::DriverState state );
+
+//#define GL_LOG(...) GLFunctionLogger _gl_log(__FUNCTION__)
+#define GL_LOG(...)
+struct GLFunctionLogger
+{
+	const char* function;
+	static std::stack<std::string> call_stack;
+	
+	GLFunctionLogger(const char* fn);
+	~GLFunctionLogger();
+};
