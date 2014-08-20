@@ -8,6 +8,9 @@ DESKTOP = ["macosx", "linux", "windows"]
 BLACKSMITH_PATH = "../tools/blacksmith/blacksmith.py"
 COMMON_PRODUCT_ROOT = "latest/bin/${CONFIGURATION}_${ARCHITECTURE}"
 
+# dependencies
+libsdl = Dependency(file="sdl2.py", arguments=[])
+
 def setup_common_variables(arguments, target_platform, product):
 	product.sources += [
 		"src/*.c*",
@@ -141,7 +144,7 @@ def setup_common_libs(arguments, product):
 	linux.links += [
 		"pthread",
 		"dl",
-		"asound"
+		"asound" # TODO: need to detect ALSA
 	]
 	linux.linkflags += [
 		"-Wl,-rpath,.",
@@ -177,8 +180,15 @@ def get_tools(libgemini):
 	setup_common_tool(rnd)
 
 	rnd.dependencies.extend([
-		libgemini
+		libgemini,
+		libsdl
 	])
+
+	rnd_macosx = rnd.layout(platform="macosx")
+	rnd_macosx.links += [
+		"Cocoa.framework",
+		"OpenGL.framework"
+	]
 
 	#
 	# other tools?
@@ -285,6 +295,9 @@ def products(arguments, **kwargs):
 	g_macosx.driver.sdkroot = "macosx10.9"
 
 
+	#g_linux = global_params.layout(platform="linux")
+	# use C++11
+	#g_linux.driver.cxxflags = ["-std=c++0x"]
 
 
 	target_platform = kwargs.get("target_platform")
@@ -363,7 +376,7 @@ def products(arguments, **kwargs):
 			]
 		elif arguments.with_sdl2:
 			gemini.dependencies += [
-				Dependency(file="sdl2.py", arguments=[])
+				libsdl
 			]
 			gemini.defines += [
 				"GEMINI_USE_SDL2=1"
