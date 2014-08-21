@@ -733,6 +733,16 @@ bool GLCore32::texture_update( renderer::TextureParameters & parameters )
 	return true;
 } // texture_update
 
+renderer::Texture* GLCore32::texture_create(image::Image& image, renderer::TextureParameters& parameters)
+{
+	return 0;
+}
+
+void GLCore32::texture_destroy(renderer::Texture* texture)
+{
+	
+}
+
 renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices )
 {
 	GL32VertexBuffer * stream = CREATE(GL32VertexBuffer);

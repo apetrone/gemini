@@ -422,7 +422,10 @@ namespace renderer
 		virtual bool generate_texture( renderer::TextureParameters & parameters ) = 0;
 		virtual bool destroy_texture( renderer::TextureParameters & parameters ) = 0;
 		virtual bool is_texture( renderer::TextureParameters & parameters ) = 0;
-		virtual bool texture_update( renderer::TextureParameters & parameters ) = 0;	
+		virtual bool texture_update( renderer::TextureParameters & parameters ) = 0;
+		
+		virtual renderer::Texture* texture_create(image::Image& image, renderer::TextureParameters& parameters) = 0;
+		virtual void texture_destroy(renderer::Texture* texture) = 0;
 		
 		virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices ) = 0;
 		virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream ) = 0;
