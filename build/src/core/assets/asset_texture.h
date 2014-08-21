@@ -23,6 +23,8 @@
 
 #include <gemini/util/stackstring.h>
 
+#include "image.h"
+
 #include "assets.h"
 
 namespace assets
@@ -33,9 +35,7 @@ namespace assets
 	{
 		char * path;
 		unsigned int texture_id;
-		unsigned int width;
-		unsigned int height;
-		unsigned int flags;
+		image::Image image;
 		
 		virtual void release();
 	};

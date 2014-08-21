@@ -20,7 +20,10 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
+
 #include <gemini/typedefs.h>
+#include <gemini/util/fixedarray.h>
+
 #include "color.h"
 
 
@@ -37,6 +40,7 @@ namespace image
 	
 	enum ImageType
 	{
+		IT_UNKNOWN = -1,
 		TEX_2D = 0,
 		TEX_CUBE = 1
 	}; // ImageType
@@ -51,9 +55,37 @@ namespace image
 		F_CUBEMAP = 32,	// load this texture as a cubemap
 	}; // ImageFlags
 	
+	
+	struct Image
+	{
+		ImageType type;
+		uint32_t flags;
+		
+		uint32_t width;
+		uint32_t height;
+		
+		// bytes per pixel
+		uint8_t channels;
+	
+		// can be raw pixel data, or compressed data, etc.
+		FixedArray<uint8_t> pixels;
+		
+		Image()
+		{
+			type = IT_UNKNOWN;
+			flags = 0;
+			
+			width = 0;
+			height = 0;
+			
+			channels = 3;
+		}
+	};
+	
 	const unsigned int ERROR_TEXTURE_WIDTH = 128;
 	const unsigned int ERROR_TEXTURE_HEIGHT = 128;
 
+	void generate_checker_pattern(Image& image, const Color& color1, const Color& color2);
 
 	void generate_checker_image( unsigned char * pixels, int width, int height, const Color & color1, const Color & color2 );
 	void flip_image_vertically( int width, int height, int components, unsigned char * pixels );

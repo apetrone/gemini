@@ -33,6 +33,62 @@
 
 namespace image
 {
+	void generate_checker_pattern(Image& image, const Color & color1, const Color & color2)
+	{
+		// image dimensions must be specified
+		assert((image.width > 0) && (image.height > 0));
+		
+		// only generate 3 channel RGB image for now.
+		assert(image.channels == 3);
+		
+		
+		image.pixels.allocate(image.channels*image.width*image.height);
+		
+		// width/height should be power of two
+		int width_mask = (image.width >> 1) - 1;
+		int height_mask = (image.height >> 1) - 1;
+		
+		const Color * color = 0;
+		uint8_t* pixels = &image.pixels[0];
+		assert( pixels != 0 );
+		
+		for(int y = 0; y < image.height; ++y)
+		{
+			for(int x = 0; x < image.width; ++x)
+			{
+				// less than half
+				if (y <= height_mask)
+				{
+					// less than half
+					if (x <= width_mask)
+					{
+						color = &color1;
+					}
+					else
+					{
+						color = &color2;
+					}
+				}
+				else
+				{
+					// less than half
+					if (x <= width_mask)
+					{
+						color = &color2;
+					}
+					else
+					{
+						color = &color1;
+					}
+				}
+				
+				memcpy(pixels, color, image.channels);
+				
+				pixels += image.channels;
+			}
+		}
+	}
+
 	// given two colors, generate an alternating checker pattern image
 	void generate_checker_image( unsigned char * pixels, int width, int height, const Color & color1, const Color & color2 )
 	{
@@ -103,6 +159,16 @@ namespace image
 
 	unsigned int load_default_texture()
 	{
+		Image checker;
+		checker.width = ERROR_TEXTURE_WIDTH;
+		checker.height = ERROR_TEXTURE_HEIGHT;
+		checker.channels = 3;
+		generate_checker_pattern(checker, Color(255, 0, 0), Color(0, 255, 0));
+		
+		renderer::TextureParameters params;
+		params.alignment = 4;
+//		renderer::Texture texture = renderer::driver()->texture_create(checker, params);
+	
 		unsigned char pixels[ ERROR_TEXTURE_WIDTH * ERROR_TEXTURE_HEIGHT * 3 ];
 		unsigned int texture_id = 0;
 	

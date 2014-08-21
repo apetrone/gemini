@@ -71,10 +71,10 @@ namespace assets
 		
 		if ( load_result )
 		{
-			texture->flags = flags;
 			texture->texture_id = texture_id;
-			texture->width = width;
-			texture->height = width;
+			texture->image.flags = flags;
+			texture->image.width = width;
+			texture->image.height = width;
 			return assets::AssetLoad_Success;
 		}
 		
