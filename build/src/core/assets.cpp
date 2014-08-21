@@ -93,7 +93,6 @@ namespace assets
 	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(TextureAssetLibrary, textures);
 	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MeshAssetLibrary, meshes);
 	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MaterialAssetLibrary, materials);
-	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(SpriteConfigAssetLibrary, sprites);
 	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(EmitterConfigAssetLibrary, emitters);
 	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(FontAssetLibrary, fonts);
 	IMPLEMENT_ASSET_LIBRARY_ACCESSOR(ShaderAssetLibrary, shaders);
@@ -132,7 +131,6 @@ namespace assets
 		_textures = CREATE(TextureAssetLibrary, texture_load_callback, texture_construct_extension);
 		_meshes = CREATE(MeshAssetLibrary, mesh_load_callback, mesh_construct_extension);
 		_materials = CREATE(MaterialAssetLibrary, material_load_callback, material_construct_extension);
-		_sprites = CREATE(SpriteConfigAssetLibrary, spriteconfig_load_callback, spriteconfig_construct_extension);
 		_emitters = CREATE(EmitterConfigAssetLibrary, emitterconfig_load_callback, emitterconfig_construct_extension);
 		_fonts = CREATE(FontAssetLibrary, font_load_callback, font_construct_extension);
 		_shaders = CREATE(ShaderAssetLibrary, shader_load_callback, shader_construct_extension);
@@ -151,7 +149,6 @@ namespace assets
 		DESTROY(TextureAssetLibrary, _textures);
 		DESTROY(MeshAssetLibrary, _meshes);
 		DESTROY(MaterialAssetLibrary, _materials);
-		DESTROY(SpriteConfigAssetLibrary, _sprites);
 		DESTROY(EmitterConfigAssetLibrary, _emitters);
 		DESTROY(FontAssetLibrary, _fonts);
 		DESTROY(ShaderAssetLibrary, _shaders);

@@ -99,7 +99,6 @@ namespace assets
 #include "assets/asset_shader.h"
 #include "assets/asset_material.h"
 #include "assets/asset_mesh.h"
-#include "assets/asset_spriteconfig.h"
 #include "assets/asset_emitter.h"
 #include "assets/asset_font.h"
 
