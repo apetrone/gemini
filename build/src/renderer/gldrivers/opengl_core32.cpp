@@ -695,6 +695,7 @@ bool GLCore32::destroy_texture( renderer::TextureParameters & parameters )
 
 bool GLCore32::is_texture( renderer::TextureParameters & parameters )
 {
+	assert(gl.IsTexture != 0);
 	bool is_texture = gl.IsTexture( parameters.texture_id );
 	gl.CheckError( "IsTexture" );
 
@@ -1226,14 +1227,15 @@ renderer::RenderTarget* GLCore32::render_target_create(uint16_t width, uint16_t 
 	rt->height = height;
 	gl.GenFramebuffers(1, &rt->framebuffer);
 	gl.BindFramebuffer(GL_FRAMEBUFFER, rt->framebuffer);
-	
+	gl.CheckError("BindFramebuffer");
 //	GLint is_srgb_capable = 0;
 //	gl.GetIntegerv(GL_FRAMEBUFFER_SRGB_CAPABLE_EXT, &is_srgb_capable);
 //	LOGV( "srgb capable?: %s\n", (is_srgb_capable?"Yes":"No"));
 
 	GLboolean is_fb = gl.IsFramebuffer(rt->framebuffer);
 	LOGV("is framebuffer? %s\n", (is_fb==GL_TRUE) ? "Yes" : "No");
-	
+	gl.CheckError("IsFramebuffer");
+		
 	renderer::TextureParameters& params = rt->tex_params;
 	params.width = width;
 	params.height = height;
@@ -1248,17 +1250,19 @@ renderer::RenderTarget* GLCore32::render_target_create(uint16_t width, uint16_t 
 	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	gl.GenerateMipmap(GL_TEXTURE_2D);
+//	gl.GenerateMipmap(GL_TEXTURE_2D);
 	float border[] = {1, 1, 1, 1};
 	glTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border );
 	
-	gl.TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	gl.TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	
+	gl.CheckError("Texture setup");
 	
 	rt->color_texture_id = params.texture_id;
 	assert(params.texture_id != 0);
 	// attach the texture to the FBO
 	gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, params.texture_id, 0);
-	
+	gl.CheckError("FramebufferTexture2D");
 	
 	rt->depth_texture_id = 0;
 	// if we need a depth attachment... do that here.
@@ -1268,15 +1272,15 @@ renderer::RenderTarget* GLCore32::render_target_create(uint16_t width, uint16_t 
 //	gl.FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rt->renderbuffer);
 	
 	
-
 	
 	GLenum status = gl.CheckFramebufferStatus(GL_FRAMEBUFFER);
 	LOGV("fbo complete? %i\n", status==GL_FRAMEBUFFER_COMPLETE);
-	
+	gl.CheckError("CheckFramebufferStatus");
 
 	
 	// deactivate
 	gl.BindFramebuffer(GL_FRAMEBUFFER, 0);
+	gl.CheckError("BindFramebuffer 0");
 	
 	return rt;
 }
@@ -1311,5 +1315,6 @@ void GLCore32::render_target_activate(renderer::RenderTarget* rendertarget)
 void GLCore32::render_target_deactivate(renderer::RenderTarget* rendertarget)
 {
 	GL_LOG();
+	gl.CheckError("fb deactivate");
 	gl.BindFramebuffer(GL_FRAMEBUFFER, 0);
 }

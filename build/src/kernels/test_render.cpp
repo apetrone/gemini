@@ -40,6 +40,8 @@
 #include "meshnode.h"
 #include "skeletalnode.h"
 
+#include "gemgl.h"
+
 #include <json/json.h>
 
 struct BaseVar
@@ -492,13 +494,13 @@ public:
 		assets::Material* mat = assets::materials()->allocate_asset();
 		assets::Material::Parameter diffusemap;
 		diffusemap.name = "diffusemap";
-		diffusemap.texture_unit = 1;
+		diffusemap.texture_unit = 0;
 		diffusemap.type = assets::MP_SAMPLER_2D;
-		diffusemap.intValue = rt->color_texture_id;
+		diffusemap.intValue = 0;
 		mat->add_parameter(diffusemap);
 		assets::materials()->take_ownership("render_target", mat);
 
-
+		LOGV("created rtt material; asset: %i\n", mat->asset_id);
 
 
 
@@ -556,39 +558,17 @@ public:
 	{
 		process_reload_queue();
 	
-		debugdraw::axes(glm::mat4(1.0), 1.0f);
-		
-		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
-		debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", camera.eye_position.x, camera.eye_position.y, camera.eye_position.z), Color(255, 0, 255));
-		debugdraw::text(10, 24, xstr_format("camera.view = %.2g %.2g %.2g", camera.view.x, camera.view.y, camera.view.z), Color(128, 128, 255));
-		debugdraw::text(10, 36, xstr_format("camera.right = %.2g %.2g %.2g", camera.side.x, camera.side.y, camera.side.z), Color(255, 0, 0));
-		debugdraw::text(10, 48, xstr_format("frame_delta = %g", params.framedelta_raw_msec), Color(255, 255, 255));
-		debugdraw::text(10, 60, xstr_format("scene graph nodes = %i", total_scene_nodes_visited), Color(128, 128, 255));
-
-		BaseVar::render_values(10, 72);
-	
-	
-	
-		RenderStream rs;
-		rs.add_viewport( 0, 0, params.render_width, params.render_height );
-		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
-		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
-
-		// render nodes
-		total_scene_nodes_visited = 0;
-		scenegraph::visit_nodes(root, this);
 
 		renderer::driver()->render_target_activate(rt);
 		{
 			RenderStream s;
 			s.add_viewport( 0, 0, rt->width, rt->height );
-			s.add_clearcolor( 0.0, 0.0, 1.0, 1.0f );
-			s.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
+			s.add_clearcolor( 1.0, 1.0, 1.0, 1.0f );
+			s.add_clear( renderer::CLEAR_COLOR_BUFFER );
 			s.run_commands();
 		}
 		renderer::driver()->render_target_deactivate(rt);
-				
-		
+
 		
 		renderer::ConstantBuffer cb;
 		cb.modelview_matrix = &camera.matCam;
@@ -597,13 +577,30 @@ public:
 		cb.viewer_position = &camera.eye_position;
 		cb.light_position = &light_position;
 	
+		RenderStream rs;
+		rs.add_viewport( 0, 0, params.render_width, params.render_height );
+		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
+		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
+		
+		// render nodes
+		total_scene_nodes_visited = 0;
+		scenegraph::visit_nodes(root, this);
 		rs.run_commands();
 		scenelink.draw(root, cb);
 		
 
 		
 		debugdraw::sphere(light_position, Color(255, 255, 255, 255), 0.5f, 0.0f);
-				
+		debugdraw::axes(glm::mat4(1.0), 1.0f);
+		
+		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
+		debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", camera.eye_position.x, camera.eye_position.y, camera.eye_position.z), Color(255, 0, 255));
+		debugdraw::text(10, 24, xstr_format("camera.view = %.2g %.2g %.2g", camera.view.x, camera.view.y, camera.view.z), Color(128, 128, 255));
+		debugdraw::text(10, 36, xstr_format("camera.right = %.2g %.2g %.2g", camera.side.x, camera.side.y, camera.side.z), Color(255, 0, 0));
+		debugdraw::text(10, 48, xstr_format("frame_delta = %g", params.framedelta_raw_msec), Color(255, 255, 255));
+		debugdraw::text(10, 60, xstr_format("scene graph nodes = %i", total_scene_nodes_visited), Color(128, 128, 255));
+		
+		BaseVar::render_values(10, 72);
 		{
 			glm::mat4 modelview;
 			debugdraw::render(modelview, camera.matCamProj, params.render_width, params.render_height);
