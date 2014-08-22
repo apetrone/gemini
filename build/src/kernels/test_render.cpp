@@ -495,8 +495,7 @@ public:
 		image::generate_checker_pattern(tex->image, Color(255, 0, 0), Color(0, 255, 0));
 		assets::textures()->take_ownership("render_texture", tex);
 
-		renderer::TextureParameters tex_params;
-		tex->texture = renderer::driver()->texture_create(tex->image, tex_params);
+		tex->texture = renderer::driver()->texture_create(tex->image);
 		rt = renderer::driver()->render_target_create(tex->image.width, tex->image.height);
 		
 		renderer::driver()->render_target_set_attachment(rt, renderer::RenderTarget::COLOR, 0, tex->texture);
@@ -622,7 +621,7 @@ public:
 		BaseVar::render_values(10, 72);
 		{
 			glm::mat4 modelview;
-//			debugdraw::render(modelview, camera.matCamProj, params.render_width, params.render_height);
+			debugdraw::render(modelview, camera.matCamProj, params.render_width, params.render_height);
 		}
 	}
 	

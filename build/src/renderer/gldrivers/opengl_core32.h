@@ -52,15 +52,9 @@ public:
 	virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStream & stream );
 			
 	// texture
-	virtual bool upload_texture_2d( renderer::TextureParameters & parameters );
-	virtual bool generate_texture( renderer::TextureParameters & parameters );
-	virtual bool destroy_texture( renderer::TextureParameters & parameters );
-	virtual bool is_texture( renderer::TextureParameters & parameters );
-	virtual bool texture_update( renderer::TextureParameters & parameters );
-	
-	virtual renderer::Texture* texture_create(image::Image& image, renderer::TextureParameters& parameters);
+	virtual renderer::Texture* texture_create(image::Image& image);
 	virtual void texture_destroy(renderer::Texture* texture);
-	virtual bool texture_update(renderer::Texture* texture, const image::Image& image, renderer::TextureParameters& parameters);
+	virtual void texture_update(renderer::Texture* texture, const image::Image& image, const gemini::Recti& rect);
 			
 	// vertexbuffer
 	virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices );

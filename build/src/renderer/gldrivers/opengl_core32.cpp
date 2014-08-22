@@ -260,11 +260,15 @@ struct GL32Texture : public renderer::Texture
 {
 	unsigned int texture_id;
 	GLenum texture_type;
+	uint8_t unpack_alignment;
 	
 	GL32Texture()
 	{
 		glGenTextures(1, &texture_id);
+		
+		// setup sane defaults
 		texture_type = GL_TEXTURE_2D;
+		unpack_alignment = 4;
 	}
 	
 	~GL32Texture()
@@ -282,17 +286,16 @@ struct GL32Texture : public renderer::Texture
 	{
 		bind(false);
 	}
-	
-	
-	void set_parameters(image::Image& image, renderer::TextureParameters& parameters)
+		
+	void set_parameters(image::Image& image)
 	{
 		GLenum wrap_type = GL_REPEAT;
 		// setup texture wrapping
-		if (parameters.image_flags & image::F_CLAMP)
+		if (image.flags & image::F_CLAMP)
 		{
 			wrap_type = GL_CLAMP_TO_EDGE;
 		}
-		else if (parameters.image_flags & image::F_CLAMP_BORDER)
+		else if (image.flags & image::F_CLAMP_BORDER)
 		{
 			wrap_type = GL_CLAMP_TO_BORDER;
 					
@@ -313,14 +316,18 @@ struct GL32Texture : public renderer::Texture
 		
 		//gl.TexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4 );
 	}
+	
+//	bool is_valid_texture() const
+//	{
+//		return gl.IsTexture(texture_id);
+//	}
 };
 
 struct GL32RenderTarget : public renderer::RenderTarget
 {
 	GLuint framebuffer;
 	GLuint renderbuffer;
-	renderer::TextureParameters tex_params;
-	
+
 	GL32RenderTarget()
 	{
 		renderbuffer = 0;
@@ -469,13 +476,11 @@ void c_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 	
 	int uniform_location;
 	int texture_unit;
-//	int texture_id;
 	renderer::Texture* tex;
 	GL32Texture* texture;
 	
 	stream.read( uniform_location );
 	stream.read( texture_unit );
-//	stream.read( texture_id );
 	stream.read( tex );
 	texture = static_cast<GL32Texture*>(tex);
 	if (!texture)
@@ -722,136 +727,23 @@ void GLCore32::setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStre
 	stream.write( vb->index_count ); // or vertices
 } // setup_drawcall
 
-bool GLCore32::upload_texture_2d( renderer::TextureParameters & parameters )
-{
-	GLenum source_format = image_source_format( parameters.channels );
-	GLenum internal_format = image_to_internal_format( parameters.image_flags );
-	GLenum error = GL_NO_ERROR;
-	
-	// bind the texture so it is active
-	gl.BindTexture( GL_TEXTURE_2D, parameters.texture_id );
-	error = gl.CheckError( "upload_texture_2d - BindTexture" );
-	FAIL_IF_GLERROR(error);
-	
-	if ( !this->is_texture(parameters) )
-	{
-		LOGE( "request to upload_texture_2d failed: not an image!\n" );
-		return false;
-	}
-
-	if ( parameters.image_flags & image::F_CLAMP )
-	{
-		gl.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-		error = gl.CheckError( "upload_texture_2d - TexParameteri GL_TEXTURE_WRAP_S GL_CLAMP_TO_EDGE" );
-		FAIL_IF_GLERROR(error);
-		
-		gl.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-		error = gl.CheckError( "upload_texture_2d - TexParameteri GL_TEXTURE_WRAP_T GL_CLAMP_TO_EDGE" );
-		FAIL_IF_GLERROR(error);
-	}
-	else
-	{
-		gl.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-		error = gl.CheckError( "upload_texture_2d - TexParameteri GL_TEXTURE_WRAP_S GL_REPEAT" );
-		FAIL_IF_GLERROR(error);
-		
-		gl.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-		error = gl.CheckError( "upload_texture_2d - TexParameteri GL_TEXTURE_WRAP_T GL_REPEAT" );
-		FAIL_IF_GLERROR(error);
-	}
-
-	//gl.TexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4 );
-	
-	gl.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-	error = gl.CheckError( "upload_texture_2d - GL_TEXTURE_MIN_FILTER" );
-	FAIL_IF_GLERROR(error);
-	
-	gl.TexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	error = gl.CheckError( "upload_texture_2d - GL_TEXTURE_MAG_FILTER" );
-	FAIL_IF_GLERROR(error);
-
-	gl.TexImage2D( GL_TEXTURE_2D, 0, internal_format, parameters.width, parameters.height, 0, source_format, GL_UNSIGNED_BYTE, parameters.pixels );
-	error = gl.CheckError( "upload_texture_2d - glTexImage2D" );
-	FAIL_IF_GLERROR(error);
-	
-	gl.GenerateMipmap( GL_TEXTURE_2D );
-	error = gl.CheckError( "upload_texture_2d - GenerateMipmap" );
-	FAIL_IF_GLERROR(error);
-
-
-	gl.BindTexture( GL_TEXTURE_2D, 0 );
-	error = gl.CheckError( "upload_texture_2d - (un)BindTexture" );
-	FAIL_IF_GLERROR(error);
-
-	return true;
-} // upload_texture_2d
-
-bool GLCore32::generate_texture( renderer::TextureParameters & parameters )
-{
-	gl.GenTextures( 1, &parameters.texture_id );
-	GLenum error = gl.CheckError( "generate_texture" );
-	return (error == GL_NO_ERROR);
-} // generate_texture
-
-bool GLCore32::destroy_texture( renderer::TextureParameters & parameters )
-{
-	gl.DeleteTextures( 1, &parameters.texture_id );
-	GLenum error = gl.CheckError( "destroy_texture" );
-	return (error == GL_NO_ERROR);
-} // destroy_texture
-
-bool GLCore32::is_texture( renderer::TextureParameters & parameters )
-{
-	assert(gl.IsTexture != 0);
-	bool is_texture = gl.IsTexture( parameters.texture_id );
-	gl.CheckError( "IsTexture" );
-
-	return is_texture;
-} // is_texture
-
-bool GLCore32::texture_update( renderer::TextureParameters & parameters )
-{
-	GLenum internal_format = image_to_internal_format( parameters.image_flags );
-	GLenum error = GL_NO_ERROR;
-	
-	if ( parameters.alignment != 4 )
-	{
-		gl.PixelStorei( GL_UNPACK_ALIGNMENT, parameters.alignment );
-		error = gl.CheckError( "GL_UNPACK_ALIGNMENT" );
-		FAIL_IF_GLERROR(error);
-	}
-	
-	gl.BindTexture( GL_TEXTURE_2D, parameters.texture_id );
-
-	gl.TexSubImage2D( GL_TEXTURE_2D, 0, parameters.x, parameters.y, parameters.width, parameters.height, internal_format, GL_UNSIGNED_BYTE, parameters.pixels );
-	error = gl.CheckError( "TexSubImage2D" );
-	FAIL_IF_GLERROR(error);
-	
-	// restore default alignment
-	if ( parameters.alignment != 4 )
-	 {
-		gl.PixelStorei( GL_UNPACK_ALIGNMENT, 4 );
-		error = gl.CheckError( "GL_UNPACK_ALIGNMENT" );
-		FAIL_IF_GLERROR(error);
-	 }
-	
-	gl.BindTexture( GL_TEXTURE_2D, 0 );
-	
-	return true;
-} // texture_update
-
-renderer::Texture* GLCore32::texture_create(image::Image& image, renderer::TextureParameters& parameters)
+renderer::Texture* GLCore32::texture_create(image::Image& image)
 {
 	GL32Texture* texture = CREATE(GL32Texture);
 
 	GLenum source_format = image_source_format(image.channels);
-	GLenum internal_format = image_to_internal_format(parameters.image_flags);
+	GLenum internal_format = image_to_internal_format(image.flags);
+		
+	if (image.channels == 1 || image.flags & image::F_ALPHA)
+	{
+		texture->unpack_alignment = 1;
+	}
 	
 	// bind the texture
 	texture->bind();
 	
 	// setup parameters
-	texture->set_parameters(image, parameters);
+	texture->set_parameters(image);
 	
 	// upload image and generate mipmaps
 	gl.TexImage2D(texture->texture_type, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, &image.pixels[0]);
@@ -869,11 +761,30 @@ void GLCore32::texture_destroy(renderer::Texture* texture)
 	DESTROY(GL32Texture, gltexture);
 }
 
-bool GLCore32::texture_update(renderer::Texture* texture, const image::Image& image, renderer::TextureParameters& parameters)
+void GLCore32::texture_update(renderer::Texture* texture, const image::Image& image, const gemini::Recti& rect)
 {
-	// upload the texture
+	GL32Texture* gltexture = static_cast<GL32Texture*>(texture);
+	GLenum internal_format = image_to_internal_format(image.flags);
+	
+	// set alignment for this operation
+	if (gltexture->unpack_alignment != 4)
+	{
+		gl.PixelStorei(GL_UNPACK_ALIGNMENT, gltexture->unpack_alignment);
+	}
+	
+	gltexture->bind();
+	
+	gl.TexSubImage2D(gltexture->texture_type, 0, rect.left, rect.top, rect.right, rect.bottom, internal_format, GL_UNSIGNED_BYTE, (GLvoid*)&image.pixels[0]);
 
-	return false;
+	gltexture->unbind();
+		
+	// restore default alignment
+	if (gltexture->unpack_alignment != 4)
+	{
+		gl.PixelStorei(GL_UNPACK_ALIGNMENT, 4);
+	}
+	
+
 }
 
 
@@ -1410,7 +1321,8 @@ void GLCore32::render_target_destroy(renderer::RenderTarget* rendertarget)
 	gl.BindRenderbuffer(GL_RENDERBUFFER, 0);
 
 	// delete render buffers / texture for attachments
-	gl.DeleteTextures(1, &rt->tex_params.texture_id);
+	LOGV("TODO: purge all textures?\n");
+//	gl.DeleteTextures(1, &rt->tex_params.texture_id);
 	gl.DeleteFramebuffers(1, &rt->framebuffer);
 	gl.DeleteRenderbuffers(1, &rt->renderbuffer);
 	

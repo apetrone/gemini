@@ -50,9 +50,9 @@ namespace assets
 		unsigned int texture_id = 0;
 		unsigned int width = 0;
 		unsigned int height = 0;
-		
 		bool load_result = 0;
 		unsigned int flags = 0;
+		
 		if ( !(parameters.flags & image::F_CUBEMAP) ) // load 2d texture
 		{
 			texture->texture = load_texture_from_file(path, parameters.flags, texture->image);
