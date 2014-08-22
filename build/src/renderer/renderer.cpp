@@ -29,14 +29,16 @@
 
 // compile-time selection of these classes starts here.
 
-#if PLATFORM_IS_RASPBERRYPI || (PLATFORM_IOS && PLATFORM_IS_MOBILE) || PLATFORM_USE_GLES2
+#if PLATFORM_USE_GLES2
 	// force use of OpenGL ES v2
 	#include "renderer/gldrivers/opengl_glesv2.h"
 	#define RENDERER_TYPE 1
-
+#elif PLATFORM_USE_GLES3
+	#error Not yet implemented.
+	#include "renderer/gldrivers/opengl_glesv3.h"
+	#define RENDER_TYPE 2
 #else
 	// use OpenGL
-//	#include "renderer/gldrivers/opengl_legacy21.h"
 	#include "renderer/gldrivers/opengl_core32.h"
 	#define RENDERER_TYPE 0
 #endif

@@ -36,7 +36,7 @@
 	#define DRIVER_NAME "OpenAL"
 	#define DRIVER_CREATOR OpenAL::creator
 
-#elif PLATFORM_APPLE && PLATFORM_IS_MOBILE
+#elif PLATFORM_IOS
 	#include "audio_extaudio_decoder.h"
 	#include "openal.h"
 	typedef ExtAudioDecoder AudioDecoderType;
