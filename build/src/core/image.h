@@ -105,11 +105,5 @@ namespace image
 	unsigned char * load_image_from_memory( unsigned char * data, unsigned int dataSize, unsigned int * width, unsigned int * height, unsigned int * channels );
 //	void save_image_to_file( const char * filename, unsigned int width, unsigned int height, unsigned int channels, unsigned char * pixels, int imageType );
 	void free_image( unsigned char * pixels );
-	
-	//
-	// image <-> renderer interface
-	
-	void driver_release_image( unsigned int texture_id );
-	void driver_upload_image2d( unsigned int & texID, unsigned int flags, unsigned int width, unsigned int height, unsigned int channels, unsigned char * pixels );
-	
+		
 }; // namespace image

@@ -164,10 +164,7 @@ namespace image
 		image.channels = 3;
 		generate_checker_pattern(image, Color(0, 0, 0), Color(255, 0, 255));
 		
-		renderer::TextureParameters params;
-		params.alignment = 4;
-		
-		renderer::Texture* texture = renderer::driver()->texture_create(image, params);
+		renderer::Texture* texture = renderer::driver()->texture_create(image);
 
 		return texture;
 
@@ -192,62 +189,5 @@ namespace image
 		// so must not ask our deallocator to delete it.
 		stbi_image_free( pixels );
 	} // free_image
-
-
-
-	// driver interaction
-	
-	
-	void driver_release_image( unsigned int texture_id )
-	{
-		assert(0);
-		renderer::IRenderDriver * driver = renderer::driver();
-		if ( !driver )
-		{
-			LOGE( "upload_texture_2d called with no active render driver!\n" );
-			return;
-		}
-		
-		// populate texture parameter struct
-		renderer::TextureParameters params;
-		params.texture_id = texture_id;
-		
-		driver->destroy_texture( params );
-	} // driver_release_image
-
-
-	void driver_upload_image2d( unsigned int & texture_id, unsigned int flags, unsigned int width, unsigned int height, unsigned int channels, unsigned char * pixels )
-	{
-		assert(0);
-		renderer::IRenderDriver * driver = renderer::driver();
-		if ( !driver )
-		{
-			LOGE( "upload_texture_2d called with no active render driver!\n" );
-			return;
-		}
-		
-		// populate texture parameter struct
-		renderer::TextureParameters params;
-		params.texture_id = texture_id;
-		params.image_flags = flags;
-		params.width = width;
-		params.height = height;
-		params.channels = channels;
-		params.pixels = pixels;
-		params.alignment = 4;
-		
-		// we want to support re-using an existing image if possible; so let's see if the renderer is already aware this is a texture.
-		if ( !driver->is_texture(params) )
-		{
-			// not already a texture; so generate one
-			assert( driver->generate_texture(params) );
-		}
-		
-		// generate 2d texture with render driver
-		assert( driver->upload_texture_2d(params) );
-
-		// retrieve texture id from driver
-		texture_id = params.texture_id;
-	} // driver_upload_image2d
 
 }; // namespace image

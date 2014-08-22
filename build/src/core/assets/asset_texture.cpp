@@ -133,15 +133,12 @@ namespace assets
 			unsigned char * pixels = image::load_image_from_memory((unsigned char*)filedata, buffer_size, &image.width, &image.height, &image.channels );
 			if ( pixels )
 			{
-				// may need to actually flip the image vertically here
-				//				flip_image_vertically( width, height, components, pixels );
-				
-				// upload texture to video card
-//				driver_upload_image2d( texID, flags, width, height, components, pixels );
-				renderer::TextureParameters params;
+//				may need to actually flip the image vertically here
+//				flip_image_vertically( width, height, components, pixels );
+
 				image.pixels.allocate(buffer_size);
 				memcpy(&image.pixels[0], pixels, buffer_size);
-				render_texture = renderer::driver()->texture_create(image, params);
+				render_texture = renderer::driver()->texture_create(image);
 				
 				LOGV( "Loaded texture \"%s\"; (%i x %i @ %ibpp)\n", filename, image.width, image.height, image.channels );
 				
