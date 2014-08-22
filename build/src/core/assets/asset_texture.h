@@ -27,6 +27,8 @@
 
 #include "assets.h"
 
+#include "renderer.h"
+
 namespace assets
 {
 	// -------------------------------------------------------------
@@ -36,7 +38,11 @@ namespace assets
 		char * path;
 		unsigned int texture_id;
 		image::Image image;
+		renderer::Texture* texture;
 		
+		
+		Texture();
+		virtual ~Texture();
 		virtual void release();
 	};
 	
@@ -48,6 +54,7 @@ namespace assets
 	};
 		
 //	Texture * load_cubemap( const char * basename, unsigned int flags = 0, bool ignore_cache = false );
+	renderer::Texture* load_texture_from_file(const char * filename, unsigned int flags, image::Image& image);
 	
 	AssetLoadStatus texture_load_callback( const char * path, Texture * texture, const TextureParameters & parameters );
 	void texture_construct_extension( StackString<MAX_PATH_SIZE> & extension );

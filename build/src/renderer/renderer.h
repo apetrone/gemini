@@ -300,12 +300,28 @@ namespace renderer
 	
 	struct Texture
 	{
+		enum PixelFormat
+		{
+			RGBA8,
+			BGRA8,
+			RGB8,
+			BGR8
+			
+		};
+		
+		PixelFormat format;
 		
 	}; // Texture
 
 
 	struct RenderTarget
-	{				
+	{
+		enum AttachmentType
+		{
+			COLOR,
+			DEPTHSTENCIL
+		};
+		
 		uint16_t width;
 		uint16_t height;
 		
@@ -427,6 +443,9 @@ namespace renderer
 		virtual renderer::Texture* texture_create(image::Image& image, renderer::TextureParameters& parameters) = 0;
 		virtual void texture_destroy(renderer::Texture* texture) = 0;
 		
+		// replace region?
+		virtual bool texture_update(renderer::Texture* texture, const image::Image& image, renderer::TextureParameters& parameters) = 0;
+		
 		virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices ) = 0;
 		virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream ) = 0;
 		virtual void vertexbuffer_upload_data( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices ) = 0;
@@ -462,6 +481,7 @@ namespace renderer
 		virtual void render_target_destroy(renderer::RenderTarget* rt) = 0;
 		virtual void render_target_activate(renderer::RenderTarget* rt) = 0;
 		virtual void render_target_deactivate(renderer::RenderTarget* rt) = 0;
+		virtual void render_target_set_attachment(renderer::RenderTarget* rt, renderer::RenderTarget::AttachmentType type, uint8_t index, renderer::Texture* texture) = 0;
 		
 	}; // IRenderDriver
 	typedef IRenderDriver * (*RenderDriverCreator)();

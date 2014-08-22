@@ -23,21 +23,27 @@
 
 #include <gemini/util/stackstring.h>
 #include <gemini/platform.h>
+#include <gemini/core/filesystem.h>
 
 #include <gemini/mathlib.h> // for glm
 #include "color.h"
 #include "renderer/renderer.h"
 #include "assets.h"
 #include "assets/asset_texture.h"
+#include "image.h"
 
 #include "kernel.h" // for device_flags
 
 namespace assets
 {
+	Texture::Texture() : texture(0) {}
+	Texture::~Texture() {}
+	
 	void Texture::release()
 	{
-		image::driver_release_image( this->texture_id );
+		renderer::driver()->texture_destroy(this->texture);
 	} // release
+
 	
 	AssetLoadStatus texture_load_callback( const char * path, Texture * texture, const TextureParameters & parameters )
 	{
@@ -49,7 +55,8 @@ namespace assets
 		unsigned int flags = 0;
 		if ( !(parameters.flags & image::F_CUBEMAP) ) // load 2d texture
 		{
-			load_result = image::load_image_from_file( path, texture_id, parameters.flags, &width, &height );
+			texture->texture = load_texture_from_file(path, parameters.flags, texture->image);
+			load_result = texture->texture != 0;
 		}
 		else // load cubemap
 		{
@@ -111,5 +118,50 @@ namespace assets
 		extension.append(".");
 		extension.append(ext);
 	} // texture_construct_extension
+
+	renderer::Texture* load_texture_from_file(const char * filename, unsigned int flags, image::Image& image)
+	{
+		size_t buffer_size = 0;
+		char * filedata;
+		
+		renderer::Texture* render_texture = nullptr;
+		
+		filedata = core::filesystem::file_to_buffer( filename, 0, &buffer_size );
+		
+		if ( filedata )
+		{
+			unsigned char * pixels = image::load_image_from_memory((unsigned char*)filedata, buffer_size, &image.width, &image.height, &image.channels );
+			if ( pixels )
+			{
+				// may need to actually flip the image vertically here
+				//				flip_image_vertically( width, height, components, pixels );
+				
+				// upload texture to video card
+//				driver_upload_image2d( texID, flags, width, height, components, pixels );
+				renderer::TextureParameters params;
+				image.pixels.allocate(buffer_size);
+				memcpy(&image.pixels[0], pixels, buffer_size);
+				render_texture = renderer::driver()->texture_create(image, params);
+				
+				LOGV( "Loaded texture \"%s\"; (%i x %i @ %ibpp)\n", filename, image.width, image.height, image.channels );
+				
+				image::free_image( pixels );
+			}
+			else
+			{
+				LOGE( "Unable to load image %s\n", filename );
+			}
+			
+			DEALLOC(filedata);
+			return render_texture;
+		}
+		else
+		{
+			LOGE( "Couldn't load file: %s\n", filename );
+			return nullptr;
+		}
+		
+		return nullptr;
+	} // load_texture_from_file
 
 }; // namespace assets

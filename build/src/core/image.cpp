@@ -157,81 +157,21 @@ namespace image
 	} // flip_image_vertically
 
 
-	unsigned int load_default_texture()
+	renderer::Texture* load_default_texture(Image& image)
 	{
-		Image checker;
-		checker.width = ERROR_TEXTURE_WIDTH;
-		checker.height = ERROR_TEXTURE_HEIGHT;
-		checker.channels = 3;
-		generate_checker_pattern(checker, Color(255, 0, 0), Color(0, 255, 0));
+		image.width = ERROR_TEXTURE_WIDTH;
+		image.height = ERROR_TEXTURE_HEIGHT;
+		image.channels = 3;
+		generate_checker_pattern(image, Color(0, 0, 0), Color(255, 0, 255));
 		
 		renderer::TextureParameters params;
 		params.alignment = 4;
-//		renderer::Texture texture = renderer::driver()->texture_create(checker, params);
-	
-		unsigned char pixels[ ERROR_TEXTURE_WIDTH * ERROR_TEXTURE_HEIGHT * 3 ];
-		unsigned int texture_id = 0;
-	
-		generate_checker_image( pixels, ERROR_TEXTURE_HEIGHT, ERROR_TEXTURE_WIDTH, Color(128, 128, 128), Color(96, 96, 96) );
-	
-		driver_upload_image2d( texture_id, 0, ERROR_TEXTURE_WIDTH, ERROR_TEXTURE_HEIGHT, 3, pixels );
-		return texture_id;
-	} // load_default_texture
-	
-	
-	bool load_image_from_file( const char * filename, unsigned int & texID, unsigned int flags, unsigned int * out_width, unsigned int * out_height )
-	{
-		size_t buffer_size = 0;
-		char * filedata;
-		unsigned int width = 0;
-		unsigned int height = 0;
-		unsigned int components = 0;
+		
+		renderer::Texture* texture = renderer::driver()->texture_create(image, params);
 
-		filedata = core::filesystem::file_to_buffer( filename, 0, &buffer_size );
-		
-		if ( filedata )
-		{
-			unsigned char * pixels = load_image_from_memory((unsigned char*)filedata, buffer_size, &width, &height, &components );
-			if ( pixels )
-			{
-				if ( out_width )
-				{
-					*out_width = width;
-				}
-				
-				if ( out_height )
-				{
-					*out_height = height;
-				}
-				
-				// may need to actually flip the image vertically here
-//				flip_image_vertically( width, height, components, pixels );
-				
-				// upload texture to video card
-				driver_upload_image2d( texID, flags, width, height, components, pixels );
-				
-//				LOGV( "Loaded texture \"%s\"; Texture ID: %i, (%i x %i @ %ibpp)\n", filename, texID, width, height, components );
-				
-				free_image( pixels );
-			}
-			else
-			{
-				LOGE( "Unable to load image %s\n", filename );
-			}
-			
-			DEALLOC(filedata);
-			return true;
-		}
-		else
-		{
-			LOGE( "Couldn't load file: %s\n", filename );
-			return false;
-		}
-		
-		return false;
-	} // load_image_from_file
-	
-	
+		return texture;
+
+	} // load_default_texture
 	
 	unsigned char * load_image_from_memory( unsigned char * data, unsigned int data_size, unsigned int * width, unsigned int * height, unsigned int * channels )
 	{
@@ -260,6 +200,7 @@ namespace image
 	
 	void driver_release_image( unsigned int texture_id )
 	{
+		assert(0);
 		renderer::IRenderDriver * driver = renderer::driver();
 		if ( !driver )
 		{
@@ -277,6 +218,7 @@ namespace image
 
 	void driver_upload_image2d( unsigned int & texture_id, unsigned int flags, unsigned int width, unsigned int height, unsigned int channels, unsigned char * pixels )
 	{
+		assert(0);
 		renderer::IRenderDriver * driver = renderer::driver();
 		if ( !driver )
 		{

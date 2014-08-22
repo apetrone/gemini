@@ -26,7 +26,10 @@
 
 #include "color.h"
 
-
+namespace renderer
+{
+	struct Texture;
+};
 
 namespace image
 {
@@ -50,9 +53,10 @@ namespace image
 		F_RGB = 1,
 		F_RGBA = 2,
 		F_ALPHA = 4,
-		F_WRAP = 8,		// wrap out of bounds UV coords
-		F_CLAMP = 16,	// clamp out of bounds UV coords
-		F_CUBEMAP = 32,	// load this texture as a cubemap
+		F_WRAP = 8,				// wrap out of bounds UV coords
+		F_CLAMP = 16,			// clamp out of bounds UV coords,
+		F_CLAMP_BORDER = 32,
+		F_CUBEMAP = 64,			// load this texture as a cubemap
 	}; // ImageFlags
 	
 	
@@ -65,7 +69,7 @@ namespace image
 		uint32_t height;
 		
 		// bytes per pixel
-		uint8_t channels;
+		uint32_t channels;
 	
 		// can be raw pixel data, or compressed data, etc.
 		FixedArray<uint8_t> pixels;
@@ -89,13 +93,12 @@ namespace image
 
 	void generate_checker_image( unsigned char * pixels, int width, int height, const Color & color1, const Color & color2 );
 	void flip_image_vertically( int width, int height, int components, unsigned char * pixels );
-	unsigned int load_default_texture();
+	renderer::Texture* load_default_texture(Image& image);
 	
 	//
 	// image manipulation functions
 	
-	bool load_image_from_file( const char * filename, unsigned int & texID, unsigned int flags, unsigned int * out_width = 0, unsigned int * out_height = 0 );
-	
+
 //	bool LoadCubemap( const char ** filenames, unsigned int & texID, unsigned int flags, unsigned int * out_width = 0, unsigned int * out_height = 0 );
 //	unsigned char * AllocImageFromFile( const char * filename, unsigned int * width, unsigned int * height, unsigned int * format, bool path_is_relative=true );
 

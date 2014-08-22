@@ -137,12 +137,13 @@ void RenderStream::add_uniform1i( int uniform_location, int value )
 	stream.write( value );
 }
 
-void RenderStream::add_sampler2d( int uniform_location, int texture_unit, int texture_id )
+void RenderStream::add_sampler2d( int uniform_location, int texture_unit, renderer::Texture* texture )
 {
+	assert(texture != 0);
 	add_command( renderer::DC_UNIFORM_SAMPLER_2D );
 	stream.write( uniform_location );
 	stream.write( texture_unit );
-	stream.write( texture_id );
+	stream.write( texture );
 }
 
 void RenderStream::add_state( renderer::DriverState state, int enable )
@@ -226,7 +227,7 @@ void RenderStream::add_material( assets::Material * material, assets::Shader * s
 			assets::Texture * texture = assets::textures()->find_with_id(parameter->intValue);
 			if ( texture )
 			{
-				add_sampler2d( uniform_location, parameter->texture_unit, texture->texture_id );
+				add_sampler2d( uniform_location, parameter->texture_unit, texture->texture );
 			}
 		}
 		else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_CUBE )

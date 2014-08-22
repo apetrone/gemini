@@ -293,7 +293,7 @@ public:
 	float current_time;
 	scenegraph::MeshNode* ground;
 	bool advance_time;
-	
+
 	renderer::RenderTarget* rt;
 	
 #ifdef USE_WEBSERVER
@@ -485,27 +485,22 @@ public:
 
 
 		
-		
-		rt = renderer::driver()->render_target_create(512, 512);
-		
-		
-//		assets::Texture* tex = assets::textures()->allocate_asset();
-//		tex->image.width = 512;
-//		tex->image.height = 512;
-//		tex->image.channels = 3;
-//		image::generate_checker_pattern(tex->image, Color(255, 0, 0), Color(0, 255, 0));
-		
 
 		
-//		renderer::TextureParameters texparams;
-//		texparams.alignment = 4;
 		
-//		renderer::Texture render_texture = renderer::driver()->create_texture(tex->image, texparams);
+		assets::Texture* tex = assets::textures()->allocate_asset();
+		tex->image.width = 512;
+		tex->image.height = 512;
+		tex->image.channels = 3;
+		image::generate_checker_pattern(tex->image, Color(255, 0, 0), Color(0, 255, 0));
+		assets::textures()->take_ownership("render_texture", tex);
+
+		renderer::TextureParameters tex_params;
+		tex->texture = renderer::driver()->texture_create(tex->image, tex_params);
+		rt = renderer::driver()->render_target_create(tex->image.width, tex->image.height);
 		
-		// ... modify the pixel data
-//		renderer::driver()->update_texture(tex->image, texparams);
-		
-		
+		renderer::driver()->render_target_set_attachment(rt, renderer::RenderTarget::COLOR, 0, tex->texture);
+
 		
 		// texture use cases
 		// case 1: create a texture from an uncompressed/compressed image
@@ -519,7 +514,7 @@ public:
 		diffusemap.name = "diffusemap";
 		diffusemap.texture_unit = 0;
 		diffusemap.type = assets::MP_SAMPLER_2D;
-		diffusemap.intValue = 0; //tex->Id();
+		diffusemap.intValue = tex->Id();
 		mat->add_parameter(diffusemap);
 		assets::materials()->take_ownership("render_target", mat);
 
@@ -580,13 +575,14 @@ public:
 	virtual void tick( kernel::Params & params )
 	{
 		process_reload_queue();
-	
-
+//	
+		glEnable(GL_DEPTH_TEST);
+		glDepthMask(GL_TRUE);
 		renderer::driver()->render_target_activate(rt);
 		{
 			RenderStream s;
 			s.add_viewport( 0, 0, rt->width, rt->height );
-			s.add_clearcolor( 1.0, 1.0, 1.0, 1.0f );
+			s.add_clearcolor( 1.0, 0.0, 0.0, 1.0f );
 			s.add_clear( renderer::CLEAR_COLOR_BUFFER );
 			s.run_commands();
 		}
@@ -626,7 +622,7 @@ public:
 		BaseVar::render_values(10, 72);
 		{
 			glm::mat4 modelview;
-			debugdraw::render(modelview, camera.matCamProj, params.render_width, params.render_height);
+//			debugdraw::render(modelview, camera.matCamProj, params.render_width, params.render_height);
 		}
 	}
 	
@@ -635,7 +631,6 @@ public:
 #ifdef USE_WEBSERVER
 		DESTROY(CivetServer, server);
 #endif
-	
 		renderer::driver()->render_target_destroy(rt);
 		DESTROY(Node, root);
 		debugdraw::shutdown();

@@ -55,7 +55,7 @@ struct RenderStream
 	void add_cullmode( renderer::CullMode mode );
 	void add_viewport( int x, int y, int width, int height );
 	void add_uniform1i( int uniform_location, int value );
-	void add_sampler2d( int uniform_location, int texture_unit, int texture_id );
+	void add_sampler2d( int uniform_location, int texture_unit, renderer::Texture* texture );
 	void add_state( renderer::DriverState state, int enable );
 	void add_blendfunc( renderer::RenderBlendType source, renderer::RenderBlendType destination );
 	void add_shader( renderer::ShaderProgram * shader );	

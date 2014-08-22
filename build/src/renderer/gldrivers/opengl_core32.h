@@ -57,9 +57,11 @@ public:
 	virtual bool destroy_texture( renderer::TextureParameters & parameters );
 	virtual bool is_texture( renderer::TextureParameters & parameters );
 	virtual bool texture_update( renderer::TextureParameters & parameters );
+	
 	virtual renderer::Texture* texture_create(image::Image& image, renderer::TextureParameters& parameters);
 	virtual void texture_destroy(renderer::Texture* texture);
-	
+	virtual bool texture_update(renderer::Texture* texture, const image::Image& image, renderer::TextureParameters& parameters);
+			
 	// vertexbuffer
 	virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices );
 	virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream );
@@ -92,4 +94,5 @@ public:
 	virtual void render_target_destroy(renderer::RenderTarget* rt);
 	virtual void render_target_activate(renderer::RenderTarget* rt);
 	virtual void render_target_deactivate(renderer::RenderTarget* rt);
+	virtual void render_target_set_attachment(renderer::RenderTarget* rt, renderer::RenderTarget::AttachmentType type, uint8_t index, renderer::Texture* texture);
 }; // GLCore32

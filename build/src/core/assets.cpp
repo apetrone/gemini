@@ -101,7 +101,8 @@ namespace assets
 	{
 		// setup default texture
 		Texture * default_texture = textures()->allocate_asset();
-		default_texture->texture_id = image::load_default_texture();
+		default_texture->texture = image::load_default_texture(default_texture->image);
+
 		textures()->take_ownership("textures/default", default_texture);
 		textures()->set_default(default_texture);
 		LOGV( "Loaded default texture; id = %i, asset_id = %i\n", default_texture->texture_id, default_texture->asset_id );

@@ -256,6 +256,65 @@ struct GL32VertexBuffer : public VertexBuffer
 	}
 };
 
+struct GL32Texture : public renderer::Texture
+{
+	unsigned int texture_id;
+	GLenum texture_type;
+	
+	GL32Texture()
+	{
+		glGenTextures(1, &texture_id);
+		texture_type = GL_TEXTURE_2D;
+	}
+	
+	~GL32Texture()
+	{
+		glDeleteTextures(1, &texture_id);
+	}
+	
+	void bind(bool activate = true)
+	{
+		GLuint id = activate ? texture_id : 0;
+		gl.BindTexture(texture_type, id);
+	}
+	
+	void unbind()
+	{
+		bind(false);
+	}
+	
+	
+	void set_parameters(image::Image& image, renderer::TextureParameters& parameters)
+	{
+		GLenum wrap_type = GL_REPEAT;
+		// setup texture wrapping
+		if (parameters.image_flags & image::F_CLAMP)
+		{
+			wrap_type = GL_CLAMP_TO_EDGE;
+		}
+		else if (parameters.image_flags & image::F_CLAMP_BORDER)
+		{
+			wrap_type = GL_CLAMP_TO_BORDER;
+					
+			float border[] = {1, 1, 1, 1};
+			glTexParameterfv(texture_type, GL_TEXTURE_BORDER_COLOR, border);
+		}
+		
+		gl.TexParameteri(texture_type, GL_TEXTURE_WRAP_S, wrap_type);
+		gl.TexParameteri(texture_type, GL_TEXTURE_WRAP_T, wrap_type);
+		
+		GLenum min_filter = GL_NEAREST;
+		GLenum mag_filter = GL_NEAREST;
+		
+		// set filtering
+		gl.TexParameteri(texture_type, GL_TEXTURE_MIN_FILTER, min_filter);
+		gl.TexParameteri(texture_type, GL_TEXTURE_MAG_FILTER, mag_filter);
+		
+		
+		//gl.TexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4 );
+	}
+};
+
 struct GL32RenderTarget : public renderer::RenderTarget
 {
 	GLuint framebuffer;
@@ -264,8 +323,48 @@ struct GL32RenderTarget : public renderer::RenderTarget
 	
 	GL32RenderTarget()
 	{
-		framebuffer = 0;
 		renderbuffer = 0;
+		
+		gl.GenFramebuffers(1, &framebuffer);
+	}
+	
+	~GL32RenderTarget()
+	{
+		
+	}
+	
+	void bind(bool activate = true)
+	{
+		GLuint fbo = activate ? framebuffer : 0;
+		gl.BindFramebuffer(GL_FRAMEBUFFER, fbo);
+	}
+	
+	void unbind()
+	{
+		bind(false);
+	}
+	
+	void set_attachment(renderer::RenderTarget::AttachmentType type, uint8_t index, GL32Texture* texture)
+	{
+		bind();
+		
+		if (type == renderer::RenderTarget::COLOR)
+		{
+			gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+index, texture->texture_type, texture->texture_id, 0);
+		}
+		else
+		{
+			// not implemented!
+			assert(0);
+		}
+		
+		unbind();
+	}
+	
+	bool is_complete()
+	{
+		GLenum status = gl.CheckFramebufferStatus(GL_FRAMEBUFFER);
+		LOGV("fbo complete? %i\n", status == GL_FRAMEBUFFER_COMPLETE);
 	}
 };
 
@@ -370,18 +469,26 @@ void c_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 	
 	int uniform_location;
 	int texture_unit;
-	int texture_id;
+//	int texture_id;
+	renderer::Texture* tex;
+	GL32Texture* texture;
 	
 	stream.read( uniform_location );
 	stream.read( texture_unit );
-	stream.read( texture_id );
-
+//	stream.read( texture_id );
+	stream.read( tex );
+	texture = static_cast<GL32Texture*>(tex);
+	if (!texture)
+	{
+		return;
+	}
+	
 	//	if ( last_texture[ texture_unit ] != texture_id )
 	{
 		gl.ActiveTexture( GL_TEXTURE0+texture_unit );
 		gl.CheckError( "ActiveTexture" );
 		
-		gl.BindTexture( GL_TEXTURE_2D, texture_id );
+		gl.BindTexture( texture->texture_type, texture->texture_id );
 		gl.CheckError( "BindTexture: GL_TEXTURE_2D" );
 		
 		gl.Uniform1i( uniform_location, texture_unit );
@@ -735,13 +842,44 @@ bool GLCore32::texture_update( renderer::TextureParameters & parameters )
 
 renderer::Texture* GLCore32::texture_create(image::Image& image, renderer::TextureParameters& parameters)
 {
-	return 0;
+	GL32Texture* texture = CREATE(GL32Texture);
+
+	GLenum source_format = image_source_format(image.channels);
+	GLenum internal_format = image_to_internal_format(parameters.image_flags);
+	
+	// bind the texture
+	texture->bind();
+	
+	// setup parameters
+	texture->set_parameters(image, parameters);
+	
+	// upload image and generate mipmaps
+	gl.TexImage2D(texture->texture_type, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, &image.pixels[0]);
+	gl.GenerateMipmap(texture->texture_type);
+	
+	// unbind
+	texture->unbind();
+
+	return texture;
 }
 
 void GLCore32::texture_destroy(renderer::Texture* texture)
 {
-	
+	GL32Texture* gltexture = static_cast<GL32Texture*>(texture);
+	DESTROY(GL32Texture, gltexture);
 }
+
+bool GLCore32::texture_update(renderer::Texture* texture, const image::Image& image, renderer::TextureParameters& parameters)
+{
+	// upload the texture
+
+	return false;
+}
+
+
+
+
+
 
 renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices )
 {
@@ -1235,44 +1373,14 @@ renderer::RenderTarget* GLCore32::render_target_create(uint16_t width, uint16_t 
 	
 	rt->width = width;
 	rt->height = height;
-	gl.GenFramebuffers(1, &rt->framebuffer);
-	gl.BindFramebuffer(GL_FRAMEBUFFER, rt->framebuffer);
-	gl.CheckError("BindFramebuffer");
+
 //	GLint is_srgb_capable = 0;
 //	gl.GetIntegerv(GL_FRAMEBUFFER_SRGB_CAPABLE_EXT, &is_srgb_capable);
 //	LOGV( "srgb capable?: %s\n", (is_srgb_capable?"Yes":"No"));
 
-	GLboolean is_fb = gl.IsFramebuffer(rt->framebuffer);
-	LOGV("is framebuffer? %s\n", (is_fb==GL_TRUE) ? "Yes" : "No");
-	gl.CheckError("IsFramebuffer");
-		
-	renderer::TextureParameters& params = rt->tex_params;
-	params.width = width;
-	params.height = height;
-	params.channels = 4;
-	params.pixels = 0;
-	params.texture_flags = (renderer::TEXTURE_CLAMP | renderer::TEXTURE_MIP_LINEAR);
-	
-	// try to create a texture
-	generate_texture(params);
-	gl.BindTexture(GL_TEXTURE_2D, params.texture_id);
-	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//	gl.GenerateMipmap(GL_TEXTURE_2D);
-	float border[] = {1, 1, 1, 1};
-	glTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border );
-	
-	gl.TexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-	
-	gl.CheckError("Texture setup");
-	
-	rt->color_texture_id = params.texture_id;
-	assert(params.texture_id != 0);
 	// attach the texture to the FBO
-	gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, params.texture_id, 0);
-	gl.CheckError("FramebufferTexture2D");
+//	gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, params.texture_id, 0);
+//	gl.CheckError("FramebufferTexture2D");
 	
 	rt->depth_texture_id = 0;
 	// if we need a depth attachment... do that here.
@@ -1283,15 +1391,9 @@ renderer::RenderTarget* GLCore32::render_target_create(uint16_t width, uint16_t 
 	
 	
 	
-	GLenum status = gl.CheckFramebufferStatus(GL_FRAMEBUFFER);
-	LOGV("fbo complete? %i\n", status==GL_FRAMEBUFFER_COMPLETE);
-	gl.CheckError("CheckFramebufferStatus");
-
-	
-	// deactivate
-	gl.BindFramebuffer(GL_FRAMEBUFFER, 0);
-	gl.CheckError("BindFramebuffer 0");
-	
+//	GLenum status = gl.CheckFramebufferStatus(GL_FRAMEBUFFER);
+//	LOGV("fbo complete? %i\n", status==GL_FRAMEBUFFER_COMPLETE);
+//	gl.CheckError("CheckFramebufferStatus");
 	return rt;
 }
 
@@ -1300,7 +1402,10 @@ void GLCore32::render_target_destroy(renderer::RenderTarget* rendertarget)
 {
 	GL_LOG();
 	GL32RenderTarget* rt = static_cast<GL32RenderTarget*>(rendertarget);
-	
+	if (!rt)
+	{
+		return;
+	}
 	gl.BindFramebuffer(GL_FRAMEBUFFER, 0);
 	gl.BindRenderbuffer(GL_RENDERBUFFER, 0);
 
@@ -1327,4 +1432,10 @@ void GLCore32::render_target_deactivate(renderer::RenderTarget* rendertarget)
 	GL_LOG();
 	gl.CheckError("fb deactivate");
 	gl.BindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void GLCore32::render_target_set_attachment(renderer::RenderTarget* rt, renderer::RenderTarget::AttachmentType type, uint8_t index, renderer::Texture* texture)
+{
+	GL32RenderTarget* render_target = static_cast<GL32RenderTarget*>(rt);
+	render_target->set_attachment(type, index, static_cast<GL32Texture*>(texture));
 }
