@@ -105,7 +105,7 @@ namespace assets
 
 		textures()->take_ownership("textures/default", default_texture);
 		textures()->set_default(default_texture);
-		LOGV( "Loaded default texture; id = %i, asset_id = %i\n", default_texture->texture_id, default_texture->asset_id );
+		LOGV( "Loaded default texture; asset_id = %i\n", default_texture->asset_id );
 		
 		// setup default material
 		Material * default_material = materials()->allocate_asset();

@@ -178,7 +178,7 @@ namespace image
 		pixels = stbi_load_from_memory( data, data_size, &w, &h, &c, 0 );
 		*width = w;
 		*height = h;
-		*channels = c;	
+		*channels = c;
 		
 		return pixels;
 	} // load_image_from_memory

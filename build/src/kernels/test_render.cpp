@@ -488,41 +488,35 @@ public:
 
 		
 		
-		assets::Texture* tex = assets::textures()->allocate_asset();
-		tex->image.width = 512;
-		tex->image.height = 512;
-		tex->image.channels = 3;
-		image::generate_checker_pattern(tex->image, Color(255, 0, 0), Color(0, 255, 0));
-		assets::textures()->take_ownership("render_texture", tex);
+//		assets::Texture* tex = assets::textures()->allocate_asset();
+//		tex->image.width = 512;
+//		tex->image.height = 512;
+//		tex->image.channels = 3;
+//		image::generate_checker_pattern(tex->image, Color(255, 0, 0), Color(0, 255, 0));
+//		assets::textures()->take_ownership("render_texture", tex);
+//
+//		tex->texture = renderer::driver()->texture_create(tex->image);
+//		rt = renderer::driver()->render_target_create(tex->image.width, tex->image.height);
+//		
+//		renderer::driver()->render_target_set_attachment(rt, renderer::RenderTarget::COLOR, 0, tex->texture);
 
-		tex->texture = renderer::driver()->texture_create(tex->image);
-		rt = renderer::driver()->render_target_create(tex->image.width, tex->image.height);
-		
-		renderer::driver()->render_target_set_attachment(rt, renderer::RenderTarget::COLOR, 0, tex->texture);
-
-		
-		// texture use cases
-		// case 1: create a texture from an uncompressed/compressed image
-		// case 2: create an empty texture
-		// case 3: update a subarea of an existing texture
 		
 		
-		
-		assets::Material* mat = assets::materials()->allocate_asset();
-		assets::Material::Parameter diffusemap;
-		diffusemap.name = "diffusemap";
-		diffusemap.texture_unit = 0;
-		diffusemap.type = assets::MP_SAMPLER_2D;
-		diffusemap.intValue = tex->Id();
-		mat->add_parameter(diffusemap);
-		assets::materials()->take_ownership("render_target", mat);
+//		assets::Material* mat = assets::materials()->allocate_asset();
+//		assets::Material::Parameter diffusemap;
+//		diffusemap.name = "diffusemap";
+//		diffusemap.texture_unit = 0;
+//		diffusemap.type = assets::MP_SAMPLER_2D;
+//		diffusemap.intValue = tex->Id();
+//		mat->add_parameter(diffusemap);
+//		assets::materials()->take_ownership("render_target", mat);
+//
+//		LOGV("created rtt material; asset: %i\n", mat->asset_id);
 
-		LOGV("created rtt material; asset: %i\n", mat->asset_id);
-
-
+//		assets::Material* def = assets::materials()->get_default();
 
 		ground = CREATE(scenegraph::MeshNode);
-		ground->load_mesh("models/render_test0", false, mat, world);
+		ground->load_mesh("models/render_test0", false, 0, world);
 		root->add_child(ground);
 //		ground->visible = false;
 
@@ -574,18 +568,16 @@ public:
 	virtual void tick( kernel::Params & params )
 	{
 		process_reload_queue();
-//	
-		glEnable(GL_DEPTH_TEST);
-		glDepthMask(GL_TRUE);
-		renderer::driver()->render_target_activate(rt);
-		{
-			RenderStream s;
-			s.add_viewport( 0, 0, rt->width, rt->height );
-			s.add_clearcolor( 1.0, 0.0, 0.0, 1.0f );
-			s.add_clear( renderer::CLEAR_COLOR_BUFFER );
-			s.run_commands();
-		}
-		renderer::driver()->render_target_deactivate(rt);
+
+//		renderer::driver()->render_target_activate(rt);
+//		{
+//			RenderStream s;
+//			s.add_viewport( 0, 0, rt->width, rt->height );
+//			s.add_clearcolor( 1.0, 0.0, 0.0, 1.0f );
+//			s.add_clear( renderer::CLEAR_COLOR_BUFFER );
+//			s.run_commands();
+//		}
+//		renderer::driver()->render_target_deactivate(rt);
 
 		
 		renderer::ConstantBuffer cb;

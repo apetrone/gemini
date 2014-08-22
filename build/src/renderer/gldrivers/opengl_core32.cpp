@@ -746,7 +746,7 @@ renderer::Texture* GLCore32::texture_create(image::Image& image)
 	texture->set_parameters(image);
 	
 	// upload image and generate mipmaps
-	gl.TexImage2D(texture->texture_type, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, &image.pixels[0]);
+	gl.TexImage2D(texture->texture_type, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, (GLvoid*)&image.pixels[0]);
 	gl.GenerateMipmap(texture->texture_type);
 	
 	// unbind
@@ -783,8 +783,6 @@ void GLCore32::texture_update(renderer::Texture* texture, const image::Image& im
 	{
 		gl.PixelStorei(GL_UNPACK_ALIGNMENT, 4);
 	}
-	
-
 }
 
 

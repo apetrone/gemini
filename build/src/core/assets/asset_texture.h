@@ -36,10 +36,8 @@ namespace assets
 	struct Texture : public Asset
 	{
 		char * path;
-		unsigned int texture_id;
 		image::Image image;
 		renderer::Texture* texture;
-		
 		
 		Texture();
 		virtual ~Texture();

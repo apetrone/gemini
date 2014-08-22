@@ -78,8 +78,7 @@ namespace assets
 		
 		if ( load_result )
 		{
-			texture->texture_id = texture_id;
-			texture->image.flags = flags;
+			texture->image.flags = parameters.flags;
 			texture->image.width = width;
 			texture->image.height = width;
 			return assets::AssetLoad_Success;
@@ -136,8 +135,7 @@ namespace assets
 //				may need to actually flip the image vertically here
 //				flip_image_vertically( width, height, components, pixels );
 
-				image.pixels.allocate(buffer_size);
-				memcpy(&image.pixels[0], pixels, buffer_size);
+				image.pixels = pixels;
 				render_texture = renderer::driver()->texture_create(image);
 				
 				LOGV( "Loaded texture \"%s\"; (%i x %i @ %ibpp)\n", filename, image.width, image.height, image.channels );
