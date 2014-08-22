@@ -35,8 +35,7 @@ class FixedArray
 private:
 	void assert_valid_index(size_t index)
 	{
-		assert( elements != 0 );
-		assert( index >= 0 && index < total_elements );
+		assert( index >= 0 && index <= total_elements );
 	}
 	
 public:
@@ -74,7 +73,7 @@ public:
 	
 	void clear()
 	{
-		if ( elements )
+		if (elements)
 		{
 			DESTROY_ARRAY(Type, elements, total_elements);
 			total_elements = 0;
