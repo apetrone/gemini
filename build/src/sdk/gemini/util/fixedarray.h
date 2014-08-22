@@ -33,7 +33,7 @@ class FixedArray
 	FixedArray<Type> & operator=(const FixedArray<Type>& other) {}
 	
 private:
-	void assert_valid_index(size_t index)
+	void assert_valid_index(size_t index) const
 	{
 		assert( index >= 0 && index <= total_elements );
 	}
@@ -61,6 +61,11 @@ public:
 		clear();
 	} // ~FixedArray
 	
+	void operator=(Type* other)
+	{
+		elements = other;
+	}
+	
 	size_t size() const
 	{
 		return total_elements;
@@ -73,7 +78,7 @@ public:
 	
 	void clear()
 	{
-		if (elements)
+		if (elements && total_elements > 0)
 		{
 			DESTROY_ARRAY(Type, elements, total_elements);
 			total_elements = 0;
@@ -84,14 +89,17 @@ public:
 	{
 		clear();
 		total_elements = element_total;
-		
-		// allocate space for the pointers
-		elements = CREATE_ARRAY(Type, total_elements);
-
-		// optionally, zero the new memory
-		if (zero_memory)
+		if (element_total > 0)
 		{
-			memset(elements, 0, sizeof(Type) * total_elements);
+			
+			// allocate space for the pointers
+			elements = CREATE_ARRAY(Type, total_elements);
+
+			// optionally, zero the new memory
+			if (zero_memory)
+			{
+				memset(elements, 0, sizeof(Type) * total_elements);
+			}
 		}
 	} // allocate
 	
