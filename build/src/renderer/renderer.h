@@ -233,37 +233,6 @@ namespace renderer
 		TEXTURE_MIP_LINEAR		= (1 << 3)
 	};
 	
-	struct TextureParameters
-	{
-		// flags from image::
-		uint32_t image_flags;
-		
-		// flags specific to textures, "images" uploaded to gpu
-		uint32_t texture_flags;
-		
-		// texture dimensions
-		uint32_t width;
-		uint32_t height;
-
-		// reference id for texture (should this be moved?)
-		uint32_t texture_id;
-		
-		// origin (used to replacing a rectangle of data)
-		uint32_t x;
-		uint32_t y;
-		
-		uint8_t channels;
-		uint8_t alignment;
-		uint8_t unused[1];
-		uint8_t* pixels;
-		
-		TextureParameters()
-		{
-			memset(this, 0, sizeof(TextureParameters));
-		}
-	}; // TextureParameters
-	
-	
 	struct BlendParameters
 	{
 		unsigned int source;
@@ -407,11 +376,6 @@ namespace renderer
 		virtual ~Renderer() {}
 		
 		virtual void apply_settings(const renderer::RenderSettings& settings) = 0;
-		
-		virtual renderer::Texture* create_texture(renderer::TextureParameters& parameters) = 0;
-		virtual void destroy_texture(renderer::Texture* texture) = 0;
-		virtual void update_texture(renderer::Texture* texture, renderer::TextureParameters& parameters) = 0;
-		virtual void activate_texture(renderer::Texture* texture, uint16_t texture_unit) = 0;
 	};
 
 	//
@@ -434,17 +398,9 @@ namespace renderer
 		virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStream & stream ) = 0;
 		
 		// texture
-		virtual bool upload_texture_2d( TextureParameters & parameters ) = 0;
-		virtual bool generate_texture( renderer::TextureParameters & parameters ) = 0;
-		virtual bool destroy_texture( renderer::TextureParameters & parameters ) = 0;
-		virtual bool is_texture( renderer::TextureParameters & parameters ) = 0;
-		virtual bool texture_update( renderer::TextureParameters & parameters ) = 0;
-		
-		virtual renderer::Texture* texture_create(image::Image& image, renderer::TextureParameters& parameters) = 0;
+		virtual renderer::Texture* texture_create(image::Image& image) = 0;
+		virtual void texture_update(renderer::Texture* texture, const image::Image& image, const gemini::Recti& rect) = 0;
 		virtual void texture_destroy(renderer::Texture* texture) = 0;
-		
-		// replace region?
-		virtual bool texture_update(renderer::Texture* texture, const image::Image& image, renderer::TextureParameters& parameters) = 0;
 		
 		virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices ) = 0;
 		virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream ) = 0;
