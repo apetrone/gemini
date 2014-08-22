@@ -44,70 +44,57 @@ namespace font
 		renderer::VertexStream _vertexstream;
 		struct sth_stash * _stash;
 		assets::Shader * _shader;
+		
+		uint32_t _uniforms[3];
 	}; // namespace internal
 	
 
 	
-	unsigned int f_generate_texture( int width, int height, void * pixels )
+	void* f_generate_texture( int width, int height, void * pixels )
 	{
 		renderer::IRenderDriver * driver = renderer::driver();
-		renderer::TextureParameters params;
+		renderer::Texture* texture = nullptr;
+				
+		image::Image image;
+		image.flags |= image::F_ALPHA;
+		image.width = width;
+		image.height = height;
+		image.pixels = (uint8_t*)pixels;
 		
-		params.image_flags = image::F_ALPHA;
-		params.channels = 1;
-		params.width = width;
-		params.height = height;
-		params.pixels = (unsigned char*)pixels;
-		params.alignment = 1;
+		texture = driver->texture_create(image);
 		
-		if ( !driver->generate_texture( params ) )
-		{
-			LOGE( "[font] generate texture failed!\n" );
-		}
-		
-		if ( !driver->upload_texture_2d( params ) )
-		{
-			LOGE( "[font] upload of 2d texture failed!\n" );
-		}
-		
-		LOGV( "[font] generate texture %i x %i -> %i\n", width, height, params.texture_id );
-		return params.texture_id;
+		LOGV( "[font] texture dimensions %i x %i\n", width, height );
+		return texture;
 	}
 	
-	void f_delete_texture( unsigned int texture_id )
+	void f_delete_texture(void* userdata)
 	{
+		renderer::Texture* texture = static_cast<renderer::Texture*>(userdata);
 		renderer::IRenderDriver * driver = renderer::driver();
-		renderer::TextureParameters params;
-		params.texture_id = texture_id;
-		driver->destroy_texture( params );
+		driver->texture_destroy(texture);
 	}
 	
-	void f_update_texture(unsigned int texture_id, int origin_x, int origin_y, int width, int height, void * pixels)
+	void f_update_texture(void* userdata, int origin_x, int origin_y, int width, int height, void * pixels)
 	{
 		renderer::IRenderDriver * driver = renderer::driver();
-		renderer::TextureParameters params;
+		renderer::Texture* texture = static_cast<renderer::Texture*>(userdata);
+
+		image::Image image;
+		image.flags |= image::F_ALPHA;
+		image.width = width;
+		image.height = height;
+		image.pixels = (unsigned char*)pixels;
 		
-		params.x = origin_x;
-		params.y = origin_y;
-		params.width = width;
-		params.height = height;
-		params.alignment = 1;
-		params.image_flags = image::F_ALPHA;
-		params.pixels = (unsigned char*)pixels;
-		params.texture_id = texture_id;
+		gemini::Recti area(origin_x, origin_y, width, height);
 		
-		if ( !driver->texture_update( params ) )
-		{
-			LOGW( "driver texture_update is failing!\n" );
-		}
+		driver->texture_update(texture, image, area);
 	}
 
-	void f_draw_with_texture(unsigned int texture_id, void * data, int uv_offset, int color_offset, int stride, int vertex_count)
+	void f_draw_with_texture(void* userdata, void * data, int uv_offset, int color_offset, int stride, int vertex_count)
 	{
-		renderer::TextureParameters params;
-		params.texture_id = texture_id;
-
 		renderer::VertexStream & vs = internal::_vertexstream;
+
+		renderer::Texture* texture = static_cast<renderer::Texture*>(userdata);
 
 		if ( !vs.has_room( vertex_count, 0 ) )
 		{
@@ -133,10 +120,9 @@ namespace font
 			rs.add_shader( internal::_shader );
 			
 			// setup uniforms
-			rs.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &modelview_matrix );
-			rs.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &projection_matrix );
-			
-			rs.add_sampler2d( shader->get_uniform_location("diffusemap"), 0, texture_id );
+			rs.add_uniform_matrix4(internal::_uniforms[0], &modelview_matrix );
+			rs.add_uniform_matrix4(internal::_uniforms[1], &projection_matrix );
+			rs.add_sampler2d(internal::_uniforms[2], 0, texture);
 			
 			// add draw call for vertexbuffer
 			rs.add_draw_call( internal::_vertexstream.vertexbuffer );
@@ -170,6 +156,10 @@ namespace font
 		
 		internal::_stash = sth_create( 256, 256 );
 		internal::_shader = assets::shaders()->load_from_path("shaders/fontshader");
+		
+		internal::_uniforms[0] = internal::_shader->get_uniform_location("modelview_matrix");
+		internal::_uniforms[1] = internal::_shader->get_uniform_location("projection_matrix");
+		internal::_uniforms[2] = internal::_shader->get_uniform_location("diffusemap");
 		
 		// generate ccw triangles
 		sth_set_ccw_triangles();
