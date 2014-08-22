@@ -20,6 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <stdio.h> // for stdout
+#include <list>
 
 #include <gemini/typedefs.h>
 #include "mem_stl_allocator.h"
@@ -50,6 +51,10 @@ namespace memory
 		size_t num_active_allocations;
 		size_t num_total_allocations;
 		size_t num_total_bytes;
+		
+		typedef std::list<MemoryHeader*> MemoryBlockList;
+		MemoryBlockList allocated_blocks;
+		
 	public:
 		SimpleAllocator() : num_active_bytes(0), num_active_allocations(0), num_total_allocations(0), num_total_bytes(0) {}
 		
@@ -75,6 +80,8 @@ namespace memory
 				mheader->alloc_num = num_total_allocations-1;
 				mheader->file = file;
 				mheader->line = line;
+				
+				allocated_blocks.push_back(mheader);
 
 				// advance the block pointer
 				block += MemoryHeaderSize;
@@ -98,6 +105,19 @@ namespace memory
 				// get a header to the block pointer
 				char * block = ((char*)memory) - MemoryHeaderSize;
 				MemoryHeader * mheader = (MemoryHeader*)block;
+				
+				// remove from allocated block list
+				// find and remove
+				MemoryBlockList::iterator it = allocated_blocks.begin();
+				for (; it != allocated_blocks.end(); ++it)
+				{
+					if (*it == mheader)
+					{
+						allocated_blocks.erase(it);
+						break;
+					}
+				}
+
 
 				// subtract allocations and sizes
 				num_active_bytes -= (mheader->alloc_size + MemoryHeaderSize);
@@ -106,6 +126,16 @@ namespace memory
 				free( block );
 			}
 		} // deallocate
+		
+		virtual void print_report()
+		{
+			MemoryBlockList::iterator it = allocated_blocks.begin();
+			for (; it != allocated_blocks.end(); ++it)
+			{
+				MemoryHeader* block = (*it);
+				fprintf(stdout, "[memory-leak] [file=%s] [line=%i] [size=%zu] [alloc_num=%zu]\n", block->file, block->line, block->alloc_size, block->alloc_num);
+			}
+		}
 			
 		virtual size_t active_bytes() const { return num_active_bytes; }
 		virtual size_t active_allocations() const { return num_active_allocations; }
@@ -123,6 +153,8 @@ namespace memory
 	{
 		fprintf( stdout, "[memory-status] total_allocations = %zu, total_bytes = %zu\n", _allocator->total_allocations(), _allocator->total_bytes() );
 		fprintf( stdout, "[memory-status] active_allocations = %zu, active_bytes = %zu\n", _allocator->active_allocations(), _allocator->active_bytes() );
+		
+		_allocator->print_report();
 		
 		// if you hit this, there may be a memory leak!
 		assert( _allocator->active_allocations() == 0 && _allocator->active_bytes() == 0 );
