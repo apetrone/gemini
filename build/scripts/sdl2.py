@@ -2,6 +2,10 @@ import logging
 
 from pegasus.models import Product, ProductType
 
+SDL_SUBSYSTEMS = """Atomic Audio Video Render Events
+	Joystick Haptic Power Threads Timers
+	File Loadso CPUinfo Filesystem""".replace("\n", " ").split(" ")
+
 def arguments(p):
 
 	p.add_argument("--disk-audio", 				dest="disk_audio", 					default=True, 		help="Support the disk writer audio driver")
@@ -45,15 +49,12 @@ def arguments(p):
 	p.add_argument("--x11-shared",				dest="x11_shared",					default=True,		help="Dynamically load X11 support")
 
 	# add options for subsystems
-	subsystems = """Atomic Audio Video Render Events
-		Joystick Haptic Power Threads Timers
-		File Loadso CPUinfo Filesystem""".replace("\n", " ").split(" ")
-
-	for subsystem in subsystems:
+	global SDL_SUBSYSTEMS
+	for subsystem in SDL_SUBSYSTEMS:
 		name = "--with-%s" % subsystem.lstrip().lower()
 		dest = name[2:].replace("-", "_")
 		help = "Enable the %s subsystem" % subsystem
-		p.add_argument(name, dest=dest, help=help, default=True)
+		p.add_argument(name, dest=dest, help=help, default=1, type=int)
 
 def check_pulseaudio(arguments, product, target_platform, vars):
 	logging.info("TODO: check_library_exists: libpulse-simple")
@@ -432,12 +433,19 @@ def check_pthread(arguments, product, target_platform, vars):
 
 def get_config_variables(arguments, product, target_platform):
 	vars = {}
+	global SDL_SUBSYSTEMS
+
+	# check for various subsystems
+	for subsystem in SDL_SUBSYSTEMS:
+		name = "with-%s" % subsystem.lstrip().lower()
+		attrib_name = name.replace("-", "_")
+		if hasattr(arguments, attrib_name):
+			value = getattr(arguments, attrib_name, 1)
+			if value == 0:
+				name = subsystem.lstrip().upper()
+				vars["SDL_%s_DISABLED" % name] = True
 
 	product.cflags += ["-DUSING_GENERATED_CONFIG_H"]
-
-	# these can be arguments
-	#subsystems = """Atomic Audio Video Render Events Joystick Haptic Power Threads Timers
-	#	File Loadso CPUinfo Filesystem""".replace("\n", " ").split(" ")
 
 	#for system in subsystems:
 	#	varname = "%s_OPT" % system.upper()
@@ -590,7 +598,6 @@ def get_config_variables(arguments, product, target_platform):
 	if target_platform.get() in ["macosx", "linux"]:
 		have_dlopen = check_dlopen(arguments, product, target_platform, vars)
 
-	# check for various subsystems	
 	if arguments.with_joystick:
 		product.sources += ["src/joystick/*.c"]		
 
@@ -657,7 +664,6 @@ def get_config_variables(arguments, product, target_platform):
 			check_nas(arguments, product, target_platform, vars)
 			check_sndio(arguments, product, target_platform, vars)
 			check_fusionsound(arguments, product, target_platform, vars)
-
 
 	if arguments.with_video:
 		if arguments.video_dummy:
