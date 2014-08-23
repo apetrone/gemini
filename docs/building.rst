@@ -52,13 +52,13 @@ Debian/Ubuntu/SteamOS
 
 	.. code-block:: bash
 
-		sudo apt-get install sox libasound-dev
+		sudo apt-get install sox libopenal-dev
 
 Arch Linux
 
 	.. code-block:: bash
 
-		pacman -S extra/openal alsa-lib
+		pacman -S extra/openal
 
 These optional variables should be specified when building for the RaspberryPi.
 
