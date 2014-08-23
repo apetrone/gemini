@@ -9,7 +9,16 @@ BLACKSMITH_PATH = "../tools/blacksmith/blacksmith.py"
 COMMON_PRODUCT_ROOT = "latest/bin/${CONFIGURATION}_${ARCHITECTURE}"
 
 # dependencies
-libsdl = Dependency(file="sdl2.py", arguments=[])
+libsdl = Dependency(file="sdl2.py",
+		arguments=[
+		"--with-audio=0",
+		"--with-render=0",
+		#"--with-filesystem=0",
+		#"--with-file=0", required on MacOSX.
+		"--with-cpuinfo=0",
+		#"--with-power=0"
+	]
+)
 
 def setup_common_variables(arguments, target_platform, product):
 	product.sources += [
