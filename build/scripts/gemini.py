@@ -51,11 +51,7 @@ def setup_common_variables(arguments, target_platform, product):
 		"src/game/menuscreen.*",
 		"src/game/helpscreen.*",
 		"src/game/logoscreen.*",
-		"src/game/screencontrol.*",
-
-		"src/kernels/test_bullet2.cpp",
-		"src/kernels/test_mobile.cpp",
-		"src/kernels/test_nom.cpp"
+		"src/game/screencontrol.*"
 	]
 
 	index_type_map = {
@@ -341,7 +337,9 @@ def arguments(parser):
 	parser.add_argument("--with-glesv2", dest="glesv2", action="store_true", help="Build with GLES V2", default=False)
 	parser.add_argument("--raspberrypi", dest="raspberrypi", action="store_true", help="Build for the RaspberryPi", default=False)
 	parser.add_argument("--indextype", dest="index_type", choices=["uint", "ushort"], type=str, default="uint", help="Set the IndexBuffer type; defaults to uint")
+
 	parser.add_argument("--with-civet", dest="with_civet", action="store_true", help="Build with CivetServer (default=True)", default=True)
+	parser.add_argument("--with-oculusvr", dest="with_oculusvr", action="store_true", help="Build with OculusVR support (default=True)", default=True)
 
 def products(arguments, **kwargs):
 	# global params will be inherited by all dependent products
@@ -376,10 +374,23 @@ def products(arguments, **kwargs):
 		Dependency(file="sqrat.py"),
 		Dependency(file="squirrel3.py", products=["squirrel", "sqstdlib"]),
 		Dependency(file="nom.py"),
-		Dependency(file="bullet2.py", products=["BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"]),
+		Dependency(file="bullet2.py", products=["BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"])
 		#Dependency(file="box2d.py")
-
 	]
+
+	if arguments.with_oculusvr:
+		gemini.dependencies += [
+			Dependency(file="oculusvr.py")
+		]
+
+		gemini.defines += [
+			"GEMINI_WITH_OCULUSVR=1"
+		]
+
+	else:
+		gemini.excludes += [
+			"src/kernels/test_oculusvr.cpp"
+		]
 
 	# common sources
 	setup_common_variables(arguments, target_platform, gemini)
@@ -403,7 +414,11 @@ def products(arguments, **kwargs):
 	gemini.excludes += [
 		"*.DS_Store",
 		"src/kernels/test_assimp.cpp",
-		"src/kernels/project_huckleberry.cpp"
+		"src/kernels/project_huckleberry.cpp",
+
+		"src/kernels/test_bullet2.cpp",
+		"src/kernels/test_mobile.cpp",
+		"src/kernels/test_nom.cpp"
 	]
 
 
