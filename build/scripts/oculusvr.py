@@ -25,7 +25,8 @@ def products(arguments, **kwargs):
 	ovr.product_root = "LibOVR/Lib/%(platform)s/%(title_configuration)s" % vars
 
 	ovr.includes = [
-		"LibOVR/Include"
+		"LibOVR/Include",
+		"LibOVR/Src"
 	]
 
 	#
