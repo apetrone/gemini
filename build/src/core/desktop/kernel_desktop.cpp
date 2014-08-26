@@ -32,13 +32,7 @@
 
 using namespace input;
 
-#if GEMINI_USE_XWL
-	#include <xwl/xwl.h>
-#endif
-
-#if GEMINI_USE_SDL2
-	#include <SDL.h>
-#endif
+#include <SDL.h>
 
 namespace kernel
 {
@@ -69,94 +63,14 @@ namespace kernel
 }; // namespace kernel
 
 
-#if GEMINI_USE_XWL
-static xwl_window_t * _window = 0;
 
-void event_callback_xwl( xwl_event_t * e )
-{
-//	LOGV( "event_callback_xwl - event->type = %i\n", e->type );
+SDL_Window * _window = 0;
+SDL_GLContext _context = 0;
+typedef GeminiAllocator<std::pair<const unsigned int, input::Button> > ButtonKeyMapAllocator;
+typedef std::map<unsigned int, input::Button, std::less<unsigned int>, ButtonKeyMapAllocator> SDLToButtonKeyMap;
+SDLToButtonKeyMap _key_map;
+input::MouseButton _mouse_map[input::MOUSE_COUNT];
 
-	if ( e->type == XWLE_KEYRELEASED || e->type == XWLE_KEYPRESSED )
-	{
-#if 0
-		if ( e->type == XWLE_KEYRELEASED && e->key == XWLK_ESCAPE )
-		{
-			kernel::instance()->set_active( false );
-		}
-#endif
-		
-		input::state()->keyboard().inject_key_event( e->key, (e->type == XWLE_KEYPRESSED) );
-		
-		//printf( "\t-> key: %i (%s)\n", e->key, xwl_key_to_string(e->key) );		
-		kernel::KeyboardEvent ev;
-		ev.is_down = (e->type == XWLE_KEYPRESSED);
-		ev.key = e->key;
-		ev.unicode = e->unicode;
-		kernel::event_dispatch( ev );
-	}
-	else if ( e->type == XWLE_MOUSEMOVE )
-	{
-		input::state()->mouse().inject_mouse_move( e->mx, e->my );
-		
-		kernel::MouseEvent ev;
-		ev.subtype = kernel::MouseMoved;
-		ev.mx = e->mx;
-		ev.my = e->my;
-		kernel::event_dispatch( ev );
-	}
-	else if ( e->type == XWLE_MOUSEBUTTON_PRESSED || e->type == XWLE_MOUSEBUTTON_RELEASED )
-	{
-		input::state()->mouse().inject_mouse_button( (input::MouseButton)e->button, (e->type == XWLE_MOUSEBUTTON_PRESSED) );
-		
-		kernel::MouseEvent ev;
-		ev.subtype = kernel::MouseButton;
-		ev.button = e->button;
-		ev.is_down = (e->type == XWLE_MOUSEBUTTON_PRESSED);
-		ev.mx = e->mx;
-		ev.my = e->my;
-		kernel::event_dispatch( ev );
-	}
-	else if ( e->type == XWLE_MOUSEWHEEL )
-	{
-		input::state()->mouse().inject_mouse_wheel( e->wheelDelta );
-		
-		kernel::MouseEvent ev;
-		ev.subtype = kernel::MouseWheelMoved;
-		ev.mx = e->mx;
-		ev.my = e->my;
-		ev.wheel_direction = e->wheelDelta;
-		kernel::event_dispatch( ev );
-	}
-	else if ( e->type == XWLE_SIZE )
-	{
-		kernel::SystemEvent ev;
-		ev.subtype = kernel::WindowResized;
-		ev.window_width = e->width;
-		ev.window_height = e->height;
-		kernel::event_dispatch( ev );
-	}
-	else if ( e->type == XWLE_GAINFOCUS || e->type == XWLE_LOSTFOCUS )
-	{
-		kernel::SystemEvent ev;
-		ev.subtype = (e->type == XWLE_GAINFOCUS) ? kernel::WindowGainFocus : kernel::WindowLostFocus;
-		ev.window_width = e->width;
-		ev.window_height = e->height;
-		kernel::event_dispatch( ev );
-	}
-} // event_callback_xwl
-#endif
-
-
-
-#if GEMINI_USE_SDL2
-	SDL_Window * _window = 0;
-	SDL_GLContext _context = 0;
-	typedef GeminiAllocator<std::pair<const unsigned int, input::Button> > ButtonKeyMapAllocator;
-	typedef std::map<unsigned int, input::Button, std::less<unsigned int>, ButtonKeyMapAllocator> SDLToButtonKeyMap;
-	SDLToButtonKeyMap _key_map;
-	input::MouseButton _mouse_map[input::MOUSE_COUNT];
-
-#endif
 
 
 
@@ -168,18 +82,11 @@ DesktopKernel::DesktopKernel( int argc, char ** argv ) : target_renderer(0)
 
 void DesktopKernel::startup()
 {
-#if GEMINI_USE_XWL
-	xwl_startup( XWL_WINDOW_PROVIDER_DEFAULT, XWL_API_PROVIDER_DEFAULT, XWL_INPUT_PROVIDER_DEFAULT );
-#endif
-
-#if GEMINI_USE_SDL2
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) == -1)
 	{
 		// failure!
 		LOGV("failure to init SDL\n");
 	}
-	
-#endif
 
 	this->parameters().device_flags |= kernel::DeviceDesktop;
 } // startup
@@ -190,11 +97,6 @@ void DesktopKernel::register_services()
 
 void DesktopKernel::pre_tick()
 {
-#if GEMINI_USE_XWL
-	xwl_dispatch_events();
-#endif
-
-#if GEMINI_USE_SDL2
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
 	{
@@ -268,18 +170,11 @@ void DesktopKernel::pre_tick()
 			}
 		}
 	}
-#endif
 } // pre_tick
 
 void DesktopKernel::post_tick()
 {
-#if GEMINI_USE_XWL
-	xwl_swap_buffers( _window );
-#endif
-
-#if GEMINI_USE_SDL2
 	SDL_GL_SwapWindow(_window);
-#endif
 } // post_tick
 
 void DesktopKernel::post_application_config( kernel::ApplicationResult result )
@@ -292,47 +187,6 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 	if ( is_active() )
 	{
 		assert( parameters().window_width != 0 || parameters().window_height != 0 );
-		
-		
-		
-#if GEMINI_USE_XWL
-		unsigned int attribs[] = {
-
-#if defined( PLATFORM_USE_GLES2 )
-			XWL_API, XWL_API_GLES2,
-			XWL_API_MAJOR_VERSION, 2,
-			XWL_API_MINOR_VERSION, 0,
-#else
-			XWL_API, XWL_API_OPENGL,
-			XWL_API_MAJOR_VERSION, 3,
-			XWL_API_MINOR_VERSION, 2,
-#endif
-
-
-			XWL_WINDOW_WIDTH, parameters().window_width,
-			XWL_WINDOW_HEIGHT, parameters().window_height,
-//			XWL_DEPTH_SIZE, 24,
-//			XWL_STENCIL_SIZE, 8,
-//			XWL_USE_FULLSCREEN, 1,
-			XWL_NONE,
-		};
-		
-		_window = xwl_create_window( parameters().window_title, attribs );
-		if ( !_window )
-		{
-			fprintf( stderr, "Window creation failed\n" );
-		}
-	
-		xwl_set_callback( event_callback_xwl );
-		
-
-
-		xwl_get_window_size(_window, &window_width, &window_height );
-		xwl_get_window_render_size( _window, &render_width, &render_height );
-#endif // GEMINI_USE_XWL
-
-
-#if GEMINI_USE_SDL2
 
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
@@ -476,8 +330,7 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 		_mouse_map[SDL_BUTTON_X1] = MOUSE_MOUSE4;
 		_mouse_map[SDL_BUTTON_X2] = MOUSE_MOUSE5;
 
-#endif
-		
+
 		parameters().window_width = window_width;
 		parameters().window_height = window_height;
 		parameters().render_width = render_width;
@@ -503,32 +356,16 @@ void DesktopKernel::post_application_startup( kernel::ApplicationResult result )
 
 void DesktopKernel::shutdown()
 {
-#if GEMINI_USE_XWL
-	xwl_shutdown();
-	_window = 0;
-#endif
-
-#if GEMINI_USE_SDL2
 	SDL_GL_DeleteContext(_context);
 	SDL_DestroyWindow(_window);
 	SDL_Quit();
 	
 	_key_map.clear();
-#endif
-
-
-
 } // shutdown
 
 
 void DesktopKernel::capture_mouse(bool capture)
 {
-#if GEMINI_USE_SDL2
 	SDL_bool is_enabled = capture ? SDL_TRUE : SDL_FALSE;
 	SDL_SetRelativeMouseMode(is_enabled);
-#elif GEMINI_USE_XWL
-	
-#else
-	#error capture_mouse is not implemented for this configuration!
-#endif
 }
