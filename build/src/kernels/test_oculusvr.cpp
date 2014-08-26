@@ -29,7 +29,7 @@
 #include "input.h"
 
 #include "OVR.h"
-
+#include "OVR_CAPI_GL.h"
 using namespace kernel;
 
 
@@ -45,8 +45,15 @@ namespace vr
 	{
 		ovrHmd hmd;
 		ovrPosef head_pose[2];
-		ovrTexture textures[2];
 		ovrSizei render_target_size;
+		ovrGLTexture textures[2];
+		renderer::RenderTarget* rt;
+		renderer::Texture* render_texture;
+		
+		Device()
+		{
+			rt = 0;
+		}
 		
 		void query_display_resolution(int32_t& width, int32_t& height)
 		{
@@ -70,7 +77,7 @@ namespace vr
 		
 		void end_frame()
 		{
-			ovrHmd_EndFrame(hmd, head_pose, textures);
+			ovrHmd_EndFrame(hmd, head_pose, (const ovrTexture*)textures);
 		}
 		
 		EyeDescription get_eye_description(uint32_t eye_index)
@@ -114,9 +121,27 @@ namespace vr
 			device.render_target_size.w,
 			device.render_target_size.h
 		 );
-		 
-		 // TODO: create render target here
-		 // cache off correct size of created render target
+
+		// generate texture
+		image::Image image;
+		image.width = device.render_target_size.w;
+		image.height = device.render_target_size.h;
+		image.channels = 3;
+		
+		device.render_texture = renderer::driver()->texture_create(image);
+		
+		// create render target
+		device.rt = renderer::driver()->render_target_create(
+			device.render_target_size.w,
+			device.render_target_size.h
+		);
+		
+		renderer::driver()->render_target_set_attachment(
+			device.rt,
+			renderer::RenderTarget::COLOR,
+			0,
+			device.render_texture
+		);
 	}
 	
 	void setup_rendering(Device& device, uint16_t width, uint16_t height)
@@ -154,13 +179,28 @@ namespace vr
 		
 		assert(result != 0);
 		
-		ovrRecti viewport;
+		ovrRecti viewport_left;
+		viewport_left.Pos.x = 0;
+		viewport_left.Pos.y = 0;
+		viewport_left.Size.w = width/2;
+		viewport_left.Size.h = height;
+		
+		ovrRecti viewport_right;
+		viewport_right.Pos.x = width/2;
+		viewport_right.Pos.y = 0;
+		viewport_right.Size.w = width/2;
+		viewport_right.Size.h = height;
 		
 		// now build textures
-		device.textures[0].Header.API = ovrRenderAPI_OpenGL;
-		device.textures[0].Header.TextureSize = device.render_target_size;
-		device.textures[0].Header.RenderViewport = viewport;
+		device.textures[0].OGL.Header.API = ovrRenderAPI_OpenGL;
+		device.textures[0].OGL.Header.TextureSize = device.render_target_size;
+		device.textures[0].OGL.Header.RenderViewport = viewport_left;
+		device.textures[0].OGL.TexId = 2;
 
+		device.textures[1].OGL.Header.API = ovrRenderAPI_OpenGL;
+		device.textures[1].OGL.Header.TextureSize = device.render_target_size;
+		device.textures[1].OGL.Header.RenderViewport = viewport_right;
+		device.textures[1].OGL.TexId = 2;
 	}
 	
 	Device create_device()
@@ -193,6 +233,15 @@ namespace vr
 	
 	void destroy_device(const Device& device)
 	{
+		if (device.render_texture)
+		{
+			renderer::driver()->texture_destroy(device.render_texture);
+		}
+	
+		if (device.rt)
+		{
+			renderer::driver()->render_target_destroy(device.rt);
+		}
 		ovrHmd_Destroy(device.hmd);
 	}
 	
@@ -252,7 +301,7 @@ public:
 		params.window_width = (uint16_t)w;
 		params.window_height = (uint16_t)h;
 		params.window_title = "TestOculusVR";
-		
+				
 		return kernel::Application_Success;
 	}
 
@@ -275,7 +324,7 @@ public:
 		MemoryStream ms;
 		char buffer[128] = {0};
 		ms.init( buffer, 128 );
-		
+
 		device.begin_frame();
 		
 		for (uint32_t eye_index = 0; eye_index < device.get_eye_count(); ++eye_index)
@@ -310,7 +359,7 @@ public:
 		
 		// This will crash in end_frame because currently, there are no textures
 		// setup in the renderer. Fix this!
-		assert(0);
+//		assert(0);
 		
 		
 		device.end_frame();
