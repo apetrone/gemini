@@ -15,14 +15,16 @@ def products(arguments, **kwargs):
 		"windows": "Win32"
 	}
 
+	# TODO: customize these per-platform
 	vars = {
 		"platform": to_oculus_platform[target_platform.name],
-		"title_configuration": "Debug"
+		"title_configuration": "Debug",
+		"project" : "Xcode"
 	}
 
 	ovr = Product(name="ovr", output=ProductType.StaticLibrary)
 	ovr.root = "../dependencies/oculussdk"
-	ovr.product_root = "LibOVR/Lib/%(platform)s/%(title_configuration)s" % vars
+	ovr.product_root = "LibOVR/Lib/%(platform)s/%(project)s/%(title_configuration)s" % vars
 
 	ovr.includes = [
 		"LibOVR/Include",
