@@ -170,7 +170,12 @@ namespace prism
 		}
 	}
 	
-	void MeshData::read_bones(ToolEnvironment& env, const aiMesh* mesh, Json::Value& bones, Json::Value& out_blend_weights)
+	void MeshData::read_bones(
+			ToolEnvironment& env,
+			const aiMesh* mesh,
+			Json::Value& bones,
+			Json::Value& out_blend_weights
+		)
 	{
 		std::vector< std::vector<VertexWeight> > indices;
 		indices.resize(mesh->mNumVertices);
@@ -191,13 +196,10 @@ namespace prism
 				bone = mesh->mBones[boneid];
 				LOGV("\tbone %i, \"%s\"\n", boneid, bone->mName.C_Str());
 				LOGV("\tweights: %i\n", bone->mNumWeights);
-				
-				
-				
+
 				jbone["name"] = bone->mName.C_Str();
 				//jbone["bone_index"] = Json::valueToString((unsigned)total_bones);
 				
-
 				aiMatrix4x4 offset = bone->mOffsetMatrix;
 //				if (env.convert_zup_to_yup)
 //				{
@@ -207,21 +209,27 @@ namespace prism
 				Json::Value offset_matrix(Json::arrayValue);
 				jsonify_matrix(offset_matrix, offset);
 				jbone["inverse_bind_pose"] = offset_matrix;
-				
-				
-				Json::Value jtransform;
+			
+
 				Node* node = find_node_with_name(bone->mName.C_Str());
 				if (node)
 				{
+					LOGV("found bone node: %s\n", bone->mName.C_Str());
+				
 					node->type = Node::BONE;
 					node->bone_index = total_bones;
-					jsonify_matrix(jtransform, node->local_transform);
+					
+					Json::Value local_transform(Json::arrayValue);
+					jsonify_matrix(local_transform, node->local_transform);
+					jbone["local_transform"] = local_transform;
+					
+					Json::Value world_transform(Json::arrayValue);
+					jsonify_matrix(world_transform, node->world_transform);
+					jbone["world_transform"] = world_transform;
 				}
-				
-				// node transforms are not used in the case of bones.
-#if 0
-				jbone["transform"] = jtransform;
-#endif
+
+
+
 				total_bones++;
 				
 				Json::Value weights(Json::arrayValue);
@@ -633,7 +641,6 @@ namespace prism
 		MeshData& meshdata,
 		aiNode* node,
 		Node* parent,
-		aiMatrix4x4& accumulated_transform,
 		size_t& total_nodes
 		)
 	{
@@ -643,7 +650,17 @@ namespace prism
 		Node* newnode = meshdata.create_node(node->mName.C_Str(), Node::TRANSFORM, parent);
 		LOGV("created node \"%s\"\n", newnode->name.c_str());
 		
-		newnode->local_transform = node->mTransformation * accumulated_transform;
+		newnode->local_transform = node->mTransformation;
+
+		
+		if (node->mParent)
+		{
+			newnode->world_transform = node->mParent->mTransformation * newnode->local_transform;
+		}
+		else
+		{
+			newnode->world_transform = newnode->local_transform;
+		}
 		
 		// if node has meshes, create a new scene object for it
 		if (node->mNumMeshes > 0)
@@ -662,16 +679,15 @@ namespace prism
 		//LOGV("[node] %s has %i children.\n", node->mName.C_Str(), node->mNumChildren);
 		for(size_t child_index = 0; child_index < node->mNumChildren; ++child_index)
 		{
-			iterate_nodes(info, meshdata, node->mChildren[child_index], newnode, accumulated_transform, total_nodes);
+			iterate_nodes(info, meshdata, node->mChildren[child_index], newnode, total_nodes);
 		}
 	}
 
 	void traverse_nodes(SceneInfo& info, MeshData& meshdata, const aiScene* scene)
 	{
 		LOGV("iterating over scene nodes...\n");
-		aiMatrix4x4 accumulated_transform;
 		size_t total_nodes = 0;
-		iterate_nodes(info, meshdata, scene->mRootNode, meshdata.root, accumulated_transform, total_nodes);
+		iterate_nodes(info, meshdata, scene->mRootNode, meshdata.root, total_nodes);
 
 		LOGV("scene nodes traversed.\n");
 	}

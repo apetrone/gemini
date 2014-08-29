@@ -312,8 +312,19 @@ namespace assets
 				Json::Value inverse_bind_pose = bone_node["inverse_bind_pose"];
 				bone->inverse_bind_matrix = json_to_mat4(inverse_bind_pose);
 				bone->bind_matrix = glm::inverse(bone->inverse_bind_matrix);
-//				Json::Value local_transform = bone_node["transform"];
-//				bone->local_transform = json_to_mat4(local_transform);
+				
+				
+				if (!bone_node["local_transform"].isNull())
+				{
+					Json::Value local_transform = bone_node["local_transform"];
+					bone->local_transform = json_to_mat4(local_transform);
+				}
+				
+				if (!bone_node["world_transform"].isNull())
+				{
+					Json::Value world_transform = bone_node["world_transform"];
+					bone->world_transform = json_to_mat4(world_transform);
+				}
 
 				LOGV("bone: %s\n", bone->name.c_str());
 				

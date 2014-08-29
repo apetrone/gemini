@@ -66,6 +66,8 @@ namespace prism
 		
 		aiMatrix4x4 local_transform;
 		
+		aiMatrix4x4 world_transform;
+		
 		// node's name
 		std::string name;
 		
