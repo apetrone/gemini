@@ -472,9 +472,15 @@ public:
 //		root->add_child(skydome);
 
 
-//		assets::Shader* character = assets::shaders()->load_from_path("shaders/character");
+		assets::Shader* character = assets::shaders()->load_from_path("shaders/character");
 		assets::Shader* world = assets::shaders()->load_from_path("shaders/world");
 
+
+		scenegraph::SkeletalNode* skel = CREATE(scenegraph::SkeletalNode);
+		skel->load_mesh("models/character", false, 0, character);
+		skel->setup_skeleton();
+		root->add_child(skel);
+		
 
 //		scenegraph::SkeletalNode* sn = CREATE(scenegraph::SkeletalNode);
 //		sn->load_mesh("models/test_yup", false, 0, character);
@@ -516,7 +522,7 @@ public:
 //		assets::Material* def = assets::materials()->get_default();
 
 		ground = CREATE(scenegraph::MeshNode);
-		ground->load_mesh("models/render_test0", false, 0, world);
+		ground->load_mesh("models/future", false, 0, world);
 		root->add_child(ground);
 //		ground->visible = false;
 
