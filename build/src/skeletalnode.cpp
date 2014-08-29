@@ -137,20 +137,20 @@ namespace scenegraph
 			if (bone->parent_index == -1)
 			{
 				tr = node->local_to_world;
-				start = glm::vec3(glm::column(tr, 3));
+				start = glm::vec3(glm::column(this->world_transform * tr, 3));
 			}
 			else
 			{
 				tr = transforms[bone->parent_index] * node->local_to_world;
 				
 //				glm::mat4 t = transforms[bone->parent_index] * bone->local_transform;
-				end = glm::vec3(glm::column(tr, 3));
+				end = glm::vec3(glm::column(this->world_transform * this->local_to_world * tr, 3));
 			}
 			
 			final_transforms[bone_index] = this->local_to_world * tr * bone->inverse_bind_matrix;
 
-//			debugdraw::axes(this->local_to_world * tr, 0.5f, 0.0f);
-//			debugdraw::line(start, end, Color(255,255,255,255), 0.0f);
+			debugdraw::axes(this->world_transform * this->local_to_world * tr, 0.5f, 0.0f);
+			debugdraw::line(start, end, Color(255,255,0,255), 0.0f);
 			start = end;
 		}
 	}
