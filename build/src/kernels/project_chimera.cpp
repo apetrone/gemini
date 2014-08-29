@@ -177,13 +177,13 @@ public:
 		
 
 
-		scenegraph::MeshNode* skydome = 0;
-		skydome = CREATE(scenegraph::MeshNode);
-		assets::Material* colormat = assets::materials()->load_from_path("materials/skydome");
-		skydome->load_mesh("models/skydome", false, 0);
-		// make it extend slightly below ground level
-		skydome->local_position = glm::vec3(0, -50, 0);
-		root->add_child(skydome);
+//		scenegraph::MeshNode* skydome = 0;
+//		skydome = CREATE(scenegraph::MeshNode);
+//		assets::Material* colormat = assets::materials()->load_from_path("materials/skydome");
+//		skydome->load_mesh("models/skydome", false, 0);
+//		// make it extend slightly below ground level
+//		skydome->local_position = glm::vec3(0, -50, 0);
+//		root->add_child(skydome);
 
 //		scenegraph::SkeletalNode* sn = 0;
 //		sn = CREATE(scenegraph::SkeletalNode);
@@ -197,16 +197,16 @@ public:
 //		test5->load_mesh("models/delorean", false);
 //		root->add_child(test5);
 		
-		scenegraph::MeshNode* ground = 0;
-		ground = CREATE(scenegraph::MeshNode);
-		ground->load_mesh("models/vapor", true);
-		root->add_child(ground);
+//		scenegraph::MeshNode* ground = 0;
+//		ground = CREATE(scenegraph::MeshNode);
+//		ground->load_mesh("models/vapor", true);
+//		root->add_child(ground);
 //		ground->visible = false;
 
-		player = CREATE(scenegraph::SkeletalNode);
-		player->load_mesh("models/test_yup", false);
-		player->setup_skeleton();
-		root->add_child(player);
+//		player = CREATE(scenegraph::SkeletalNode);
+//		player->load_mesh("models/test_yup", false);
+//		player->setup_skeleton();
+//		root->add_child(player);
 //		player->visible = false;
 		
 //		scenegraph::MeshNode* test = CREATE(scenegraph::MeshNode);

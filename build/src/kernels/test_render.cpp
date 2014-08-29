@@ -39,7 +39,7 @@
 #include "scene_graph.h"
 #include "meshnode.h"
 #include "skeletalnode.h"
-
+#include "physics.h"
 #include "gemgl.h"
 
 #include <json/json.h>
@@ -328,14 +328,11 @@ public:
 				{
 					// clear the scene
 					root->clear();
-					
+
 					// force mesh reload
 					assets::Mesh* mesh = assets::meshes()->load_from_path(item.c_str(), assets::AssetParameters(), true);
-
-					assets::Shader* world = assets::shaders()->load_from_path("shaders/world");
-					scenegraph::MeshNode* model = CREATE(scenegraph::MeshNode);
-					model->load_mesh(item.c_str(), false, 0, world);
-					root->add_child(model);
+					
+					add_mesh_to_root(root, item.c_str(), false);
 				}
 				else if (dirname == "materials")
 				{
@@ -442,6 +439,87 @@ public:
 		return kernel::Application_Success;
 	}
 
+	scenegraph::Node* add_mesh_to_root(scenegraph::Node* root, const char* path, bool build_physics_from_mesh)
+	{
+		assets::Shader* character = assets::shaders()->load_from_path("shaders/character");
+		assets::Shader* world = assets::shaders()->load_from_path("shaders/world");
+		
+		scenegraph::Node* node = 0;
+		
+		// load mesh through the asset system
+		assets::Mesh* mesh = assets::meshes()->load_from_path(path);
+		if (mesh)
+		{
+			assets::Shader* shader = nullptr;
+			
+			// prepare geometry (this uploads data to the gpu)
+			mesh->prepare_geometry();
+			
+			scenegraph::MeshNode* mesh_node = nullptr;
+			scenegraph::SkeletalNode* skel_node = nullptr;
+			
+			if (!mesh->bones.empty())
+			{
+				LOGV("\"%s\" created as a skeletal node\n", path);
+				node = skel_node = CREATE(scenegraph::SkeletalNode);
+				skel_node->mesh = mesh;
+				shader = character;
+			}
+			else
+			{
+				LOGV("\"%s\" created as a mesh node\n", path);
+				node = mesh_node = CREATE(scenegraph::MeshNode);
+				mesh_node->mesh = mesh;
+				shader = world;
+			}
+			
+			assert(shader != nullptr);
+			
+			// using this node as the parent node; we create render nodes as children
+			for (size_t id = 0; id < mesh->geometry.size(); ++id)
+			{
+				
+				assets::Geometry* geometry = &mesh->geometry[id];
+				assets::Material* geometry_material = nullptr; //material;
+				
+				scenegraph::RenderNode* rn = 0;
+				rn = CREATE(scenegraph::RenderNode);
+				rn->geometry = geometry;
+				rn->material_id = geometry->material_id;
+				if (!geometry_material)
+				{
+					geometry_material = assets::materials()->find_with_id(geometry->material_id);
+				}
+
+				rn->material = geometry_material;
+				rn->shader = shader;
+				
+				node->add_child(rn);
+			}
+			
+			if (build_physics_from_mesh)
+			{
+				physics::create_physics_for_mesh(mesh);
+			}
+			
+			if (skel_node)
+			{
+				skel_node->setup_skeleton();
+			}
+			
+			root->add_child(node);
+		}
+		else
+		{
+			LOGW("Unable to load model: %s\n", path);
+		}
+		
+		
+		
+		
+		return node;
+	}
+
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 #ifdef USE_WEBSERVER
@@ -471,16 +549,8 @@ public:
 //		skydome->local_position = glm::vec3(0, -50, 0);
 //		root->add_child(skydome);
 
-
-		assets::Shader* character = assets::shaders()->load_from_path("shaders/character");
-		assets::Shader* world = assets::shaders()->load_from_path("shaders/world");
-
-
-		scenegraph::SkeletalNode* skel = CREATE(scenegraph::SkeletalNode);
-		skel->load_mesh("models/character", false, 0, character);
-		skel->setup_skeleton();
-		root->add_child(skel);
-		
+//		add_mesh_to_root(root, "models/future", false);
+		add_mesh_to_root(root, "models/character", false);
 
 //		scenegraph::SkeletalNode* sn = CREATE(scenegraph::SkeletalNode);
 //		sn->load_mesh("models/test_yup", false, 0, character);
@@ -521,9 +591,9 @@ public:
 
 //		assets::Material* def = assets::materials()->get_default();
 
-		ground = CREATE(scenegraph::MeshNode);
-		ground->load_mesh("models/future", false, 0, world);
-		root->add_child(ground);
+//		ground = CREATE(scenegraph::MeshNode);
+//		ground->load_mesh("models/future", false, 0, world);
+//		root->add_child(ground);
 //		ground->visible = false;
 
 		debugdraw::startup(1024);
