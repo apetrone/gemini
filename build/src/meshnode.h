@@ -43,13 +43,9 @@ namespace scenegraph
 	{
 		assets::Mesh* mesh;
 		bool visible;
-		
-		
-		
+
 		MeshNode();
 		virtual ~MeshNode();
-		
-		void load_mesh(const char* path, bool build_physics_from_mesh = false, assets::Material* material = 0, assets::Shader* shader = 0);
 	};
 }; // namespace scenegraph
 
