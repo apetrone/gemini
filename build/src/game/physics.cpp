@@ -302,7 +302,7 @@ namespace physics
 		{
 			assets::Geometry* geo = &mesh->geometry[ i ];
 			
-#if defined(GEMINI_ZUP_TO_YUP_CONVERSION)
+#if GEMINI_ZUP_TO_YUP_CONVERSION
 			// we need to transform from Z-up to Y-up before
 			// generating the physics.
 			geo->physics_vertices.allocate(geo->vertex_count);
