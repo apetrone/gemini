@@ -219,10 +219,35 @@ def get_tools(libgemini):
 
 	prism.dependencies.extend([
 		libgemini,
-		Dependency(file="assimp.py", products="assimp", arguments=["--enable-static"])
+		Dependency(file="assimp.py", products=["assimp"], arguments=["--enable-static"])
 	])
 
-	return [rnd, prism]
+
+
+	#
+	# FBX reader test
+	#
+	libfbx = Product(name="libfbxsdk", output=ProductType.DynamicLibrary)
+	libfbx.root = "../dependencies/fbx_2015.1"
+	libfbx.includes = [
+		"include"
+	]
+	libfbx.product_root = "lib/clang/${CONFIGURATION}"
+
+	fbx = Product(name="fbxtest", output=ProductType.Commandline)
+	fbx.root = "../"
+	fbx.sources += [
+		"src/tools/fbxtest/fbxtest.cpp"
+	]
+	fbx.dependencies.extend([
+		libgemini,
+		libfbx
+	])
+	fbx.product_root = COMMON_PRODUCT_ROOT
+	setup_driver(fbx)
+	setup_common_tool(fbx)
+
+	return [rnd, prism, fbx, libfbx]
 
 
 def get_libgemini():
