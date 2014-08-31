@@ -150,8 +150,8 @@ public:
 			scenegraph::MeshNode* meshnode = static_cast<scenegraph::MeshNode*>(node);
 			node->world_transform = meshnode->mesh->node_transform * node->world_transform;
 		}
-#else
-#error No conversion to Y-up! Missing asset_mesh.h include.
+#elif !defined(GEMINI_ZUP_TO_YUP_CONVERSION)
+	#error No conversion to Y-up! Missing asset_mesh.h include.
 #endif
 		
 		
