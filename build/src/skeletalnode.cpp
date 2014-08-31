@@ -91,6 +91,7 @@ namespace scenegraph
 				node->post_processing(mesh, bone_index);
 				add_child(node);
 				node->name = bone->name.c_str();
+				//node->local_to_world = bone->local_transform;
 			}
 		}
 	}
@@ -121,7 +122,7 @@ namespace scenegraph
 			 d.x, d.y, d.z, d.w);
 	}
 
-	
+	// ref: http://ehc.ac/p/assimp/discussion/817654/thread/a7bf155b/
 	void SkeletalNode::update_skeleton()
 	{
 		int childOffset = 1;
@@ -145,9 +146,12 @@ namespace scenegraph
 				end = glm::vec3(glm::column(this->world_transform * this->local_to_world * tr, 3));
 			}
 			
+			
 			final_transforms[bone_index] = this->local_to_world * tr * bone->inverse_bind_matrix;
 
-			glm::vec3 bone_center = glm::vec3(glm::column(this->world_transform * this->local_to_world * tr, 3));
+//			glm::mat4 center_bone = this->world_transform * this->local_to_world * tr;
+			glm::mat4 center_bone = bone->world_transform;
+			glm::vec3 bone_center = glm::vec3(glm::column(center_bone, 3));
 			debugdraw::sphere(bone_center, Color(0, 128, 255, 255), 0.10f, 0.0f);
 			debugdraw::axes(this->world_transform * this->local_to_world * tr, 0.5f, 0.0f);
 			debugdraw::line(start, end, Color(255,255,0,255), 0.0f);
