@@ -38,6 +38,15 @@
 
 #include <fbxsdk.h>
 
+// need to support:
+// static (non-animated) meshes
+// hierarchical/skeletal meshes
+// morph targets
+
+// skeleton (bones in a hierarchical tree)
+// mesh/geometry (vertices, normals, uvs[2], vertex-colors)
+
+
 //https://docs.unrealengine.com/latest/INT/Engine/Content/FBX/index.html
 
 struct IndentState
@@ -74,6 +83,11 @@ struct IndentState
 		return buffer.c_str();
 	}
 };
+
+
+
+
+
 
 void load_mesh(IndentState& state, FbxNode* node)
 {
@@ -182,19 +196,185 @@ void test(const char* path)
 		print_node(state, root);
 	}
 	
-	
-
-	
+		
 	m->Destroy();
 }
 
+namespace datamodel
+{
+	struct SceneNode
+	{
+		
+	};
+	
+	
+	
+}
+
+#include <map>
+#include <string>
+
+namespace tools
+{
+	template <class Type>
+	class DataSource
+	{
+	public:
+		virtual ~DataSource() {}
+	};
+
+	template <class Type>
+	class Reader
+	{
+		typedef DataSource<Type> data_source;
+		
+	private:
+		data_source* data;
+	
+	
+	public:
+		Reader() : data(nullptr)
+		{
+		}
+		
+		virtual ~Reader() {}
+		
+		void set_data_source(const data_source* source)
+		{
+			data = source;
+		}
+		
+		virtual void read(Type* model, const char* data, size_t data_length) = 0;
+	};
+	
+	
+	
+	template <class Type>
+	struct ArchiverExtension
+	{
+		Reader<Type>* reader;
+//		Writer<Type>* writer;
+
+		ArchiverExtension() : reader(nullptr) {}
+	};
+	
+	template <class Type>
+	struct ExtensionRegistry
+	{
+		typedef std::map<std::string, ArchiverExtension<Type> > ExtensionMap;
+
+		static ExtensionMap extensions;
+	};
+	
+	template <class Type>
+	typename ExtensionRegistry<Type>::ExtensionMap ExtensionRegistry<Type>::extensions;
+	
+	
+	template <class Type>
+	void register_extension(const std::string& extension, const ArchiverExtension<Type> & ptr)
+	{
+		ExtensionRegistry<Type>::extensions.insert(std::pair<std::string, ArchiverExtension<Type> >(extension, ptr));
+	}
+
+
+	template <class Type>
+	const ArchiverExtension<Type> find_archiver_for_extension(const std::string& target_extension, uint8_t flags = 1)
+	{
+		for (auto v : ExtensionRegistry<Type>::extensions)
+		{
+			LOGV("ext: %s\n", v.first.c_str());
+			const ArchiverExtension<Type>& archiver_extension = v.second;
+			
+			if (target_extension == v.first)
+			{
+				if (flags == 0)
+				{
+					return archiver_extension;
+				}
+				
+				if ((flags & 1) && archiver_extension.reader)
+				{
+					return archiver_extension;
+				}
+//				else if ((flags && 2) && archiver_extension.writer)
+//				{
+//					return archiver_extension;
+//				}
+			}
+		}
+	
+		return ArchiverExtension<Type>();
+	}
+	
+
+	void convert_scene(const char* input_path, const char* output_path)
+	{
+		datamodel::SceneNode root;
+		
+		// TODO: get extension from input_path
+		std::string ext = "fbx";
+		
+		const ArchiverExtension<datamodel::SceneNode> archiver_extension = find_archiver_for_extension<datamodel::SceneNode>(ext);
+		tools::Reader<datamodel::SceneNode>* reader = archiver_extension.reader;
+		if (!reader)
+		{
+			LOGE("no reader found for extension: %s\n", ext.c_str());
+			return;
+		}
+		
+		reader->read(&root, 0, 0);
+	}
+}
+
+using namespace tools;
+
+class AutodeskFbxReader : public tools::Reader<datamodel::SceneNode>
+{
+public:
+
+	AutodeskFbxReader() : tools::Reader<datamodel::SceneNode>() {}
+	virtual ~AutodeskFbxReader() {}
+	
+	virtual void read(datamodel::SceneNode* model, const char* data, size_t data_length)
+	{
+		LOGV("reading type\n");
+		
+		
+		
+	}
+};
+
+
+void register_types()
+{
+	// TODO: load scene node archivers
+	ArchiverExtension<datamodel::SceneNode> ext;
+	ext.reader = new AutodeskFbxReader();
+
+	register_extension<datamodel::SceneNode>("fbx", ext);
+}
 
 int main(int argc, char** argv)
 {
 	memory::startup();
 	core::startup();
 	
-	test(argv[1]);
+//	args::Argument* asset_root = args::add("asset_root","-d", "--asset-root", 0, 0);
+	args::Argument* input_file = args::add("input_file", "-f", "--input", 0, 0);
+	args::Argument* output_file = args::add("output_file", "-o", "--output", 0, 0);
+//	args::Argument* output_root = args::add("output_root", "-o", "--output-root", 0, 0);
+//	args::Argument* convert_axis = args::add("convert_zup_to_yup", "-y", 0, args::NO_PARAMS | args::NOT_REQUIRED, 0);
+	
+	if (!args::parse_args(argc, argv))
+	{
+		LOGE("Argument parsing failed.\n");
+		return -1;
+	}
+		
+//	test(argv[1]);
+	register_types();
+
+	tools::convert_scene(input_file->string, output_file->string);
 
 	core::shutdown();
 	memory::shutdown();
