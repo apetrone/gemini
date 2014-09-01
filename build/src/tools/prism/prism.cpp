@@ -190,12 +190,12 @@ int main(int argc, char** argv)
 	memory::startup();
 	core::startup();
 
-	arg_t* asset_root = arg_add("asset_root", "-a", "--asset-root", 0, 0);
-	arg_t* input_file = arg_add("input_file", "-f", "--input", 0, 0);
-	arg_t* output_root = arg_add("output_root", "-o", "--output-root", 0, 0);
-	arg_t* convert_axis = arg_add("convert_zup_to_yup", "-y", 0, ARG_NO_PARAMS | ARG_NOT_REQUIRED, 0);
+	args::Argument* asset_root = args::add("asset_root","-d", "--asset-root", 0, 0);
+	args::Argument* input_file = args::add("input_file", "-f", "--input", 0, 0);
+	args::Argument* output_root = args::add("output_root", "-o", "--output-root", 0, 0);
+	args::Argument* convert_axis = args::add("convert_zup_to_yup", "-y", 0, args::NO_PARAMS | args::NOT_REQUIRED, 0);
 	
-	if (arg_parse(argc, argv) != 0)
+	if (args::parse_args(argc, argv) != 0)
 	{
 		return -1;
 	}
