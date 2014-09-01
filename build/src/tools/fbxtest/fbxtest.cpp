@@ -34,6 +34,8 @@
 #include <gemini/util/fixedarray.h>
 #include <gemini/util/arg.h>
 
+#include <gemini/mathlib.h>
+
 #include <slim/xlog.h>
 
 #include <fbxsdk.h>
@@ -84,12 +86,24 @@ struct IndentState
 	}
 };
 
-
 namespace datamodel
 {
+	const int MAX_SUPPORTED_UV_CHANNELS = 2;
+
+	struct Mesh
+	{
+		FixedArray<glm::vec4> blend_indices;
+		FixedArray<glm::vec4> blend_weights;
+		FixedArray<glm::vec3> vertices;
+		FixedArray<glm::vec3> normals;
+		FixedArray<glm::vec4> vertex_colors;
+		FixedArray<glm::vec2> uvs[MAX_SUPPORTED_UV_CHANNELS];
+		FixedArray<uint32_t> indices;
+	};
+
 	struct SceneNode
 	{
-		
+		glm::mat4 local_to_world;
 	};
 	
 	
