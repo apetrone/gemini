@@ -85,121 +85,6 @@ struct IndentState
 };
 
 
-
-
-
-
-void load_mesh(IndentState& state, FbxNode* node)
-{
-	FbxMesh* mesh = node->GetMesh();
-	int total_vertices = mesh->GetControlPointsCount();
-	LOGV("%stotal vertices: %i\n", state.indent(), total_vertices);
-//	FbxVector4 v = mesh->GetControlPointAt(0);
-
-	int total_indices = mesh->GetPolygonVertexCount();
-	LOGV("%stotal indices: %i\n", state.indent(), total_indices);
-//	int* indices = mesh->GetPolygonVertices();
-
-	FbxGeometryElementNormal* normal_element = mesh->GetElementNormal();
-	if (normal_element)
-	{
-		int total_normals = mesh->GetPolygonCount() * 3;
-		LOGV("%stotal normals: %i\n", state.indent(), total_normals);
-	}
-}
-
-void print_node(IndentState& state, FbxNode* node)
-{
-	const char* node_name = node->GetName();
-	
-	FbxDouble3 translation = node->LclTranslation.Get();
-	FbxDouble3 rotation = node->LclRotation.Get();
-	FbxDouble3 scaling = node->LclScaling.Get();
-	
-	state.push();
-	
-	if (node->GetSkeleton())
-	{
-		LOGV("%sfound skeleton\n", state.indent());
-	}
-	else if (node->GetMesh())
-	{
-		LOGV("%sfound mesh\n", state.indent());
-		state.push();
-		load_mesh(state, node);
-		state.pop();
-	}
-	
-	LOGV("%s\"%s\", t = (%g %g %g), r = (%g %g %g), s = (%g %g %g)\n",
-		state.indent(),
-		node_name,
-		translation[0], translation[1], translation[2],
-		rotation[0], rotation[1], rotation[2],
-		scaling[0], scaling[1], scaling[2]
-	 );
-
-	for (size_t index = 0; index < node->GetChildCount(); ++index)
-	{
-		print_node(state, node->GetChild(index));
-	}
-	
-	state.pop();
-}
-
-void test(const char* path)
-{
-	LOGV("loading model: %s\n", path);
-	
-	FbxManager* m = FbxManager::Create();
-	FbxIOSettings* settings = FbxIOSettings::Create(m, IOSROOT);
-	
-	FbxImporter* importer = FbxImporter::Create(m, "");
-	
-	if (!importer->Initialize(path, -1, m->GetIOSettings()))
-	{
-		LOGE("initialize exporter failed\n");
-		LOGE("%s\n", importer->GetStatus().GetErrorString());
-		return;
-	}
-	
-	
-	FbxScene* scene = FbxScene::Create(m, "test_scene");
-
-	importer->Import(scene);
-	
-	// safe to destroy the importer after importing a scene
-	importer->Destroy();
-	
-	// analyze scene
-	LOGV("scene info:\n");
-	LOGV("\toriginal_application: %s\n", scene->GetSceneInfo()->Original_ApplicationName.Get().Buffer());
-	LOGV("\toriginal_application_vendor: %s\n", scene->GetSceneInfo()->Original_ApplicationVendor.Get().Buffer());
-	LOGV("\toriginal_application_version: %s\n", scene->GetSceneInfo()->Original_ApplicationVersion.Get().Buffer());
-	LOGV("\toriginal_datetime_gmt: %s\n", scene->GetSceneInfo()->Original_DateTime_GMT.Get().toString().Buffer());
-	LOGV("\toriginal_filename: %s\n", scene->GetSceneInfo()->Original_FileName.Get().Buffer());
-
-	
-	int total_animation_stacks = scene->GetSrcObjectCount<FbxAnimStack>();
-	LOGV("animation stacks: %i\n", total_animation_stacks);
-	
-	
-//	int total_bones = scene->GetPoseCount();
-	int total_poses = scene->GetPoseCount();
-	LOGV("pose count: %i\n", total_poses);
-	
-	FbxNode* root = scene->GetRootNode();
-	if (root)
-	{
-		IndentState state;
-		
-		// traverse
-		print_node(state, root);
-	}
-	
-		
-	m->Destroy();
-}
-
 namespace datamodel
 {
 	struct SceneNode
@@ -216,35 +101,32 @@ namespace datamodel
 
 namespace tools
 {
-	template <class Type>
 	class DataSource
 	{
 	public:
 		virtual ~DataSource() {}
+		
+		virtual uint8_t* get_data() const = 0;
+	};
+	
+	class MemoryDataSource : public DataSource
+	{
+	public:
+		uint8_t* data;
+		size_t data_length;
+		
+		virtual uint8_t* get_data() const { return data; }
 	};
 
 	template <class Type>
 	class Reader
 	{
-		typedef DataSource<Type> data_source;
-		
-	private:
-		data_source* data;
-	
-	
+
 	public:
-		Reader() : data(nullptr)
-		{
-		}
-		
+		Reader() {}
 		virtual ~Reader() {}
 		
-		void set_data_source(const data_source* source)
-		{
-			data = source;
-		}
-		
-		virtual void read(Type* model, const char* data, size_t data_length) = 0;
+		virtual void read(Type* model, DataSource& data) = 0;
 	};
 	
 	
@@ -322,7 +204,11 @@ namespace tools
 			return;
 		}
 		
-		reader->read(&root, 0, 0);
+		MemoryDataSource mds;
+		mds.data = (uint8_t*)input_path;
+		
+		// TODO: until I switch the reader to use streams, simply pass input_path
+		reader->read(&root, mds);
 	}
 }
 
@@ -335,12 +221,119 @@ public:
 	AutodeskFbxReader() : tools::Reader<datamodel::SceneNode>() {}
 	virtual ~AutodeskFbxReader() {}
 	
-	virtual void read(datamodel::SceneNode* model, const char* data, size_t data_length)
+	void load_mesh(IndentState& state, FbxNode* node)
 	{
-		LOGV("reading type\n");
+		FbxMesh* mesh = node->GetMesh();
+		int total_vertices = mesh->GetControlPointsCount();
+		LOGV("%stotal vertices: %i\n", state.indent(), total_vertices);
+		//	FbxVector4 v = mesh->GetControlPointAt(0);
+		
+		int total_indices = mesh->GetPolygonVertexCount();
+		LOGV("%stotal indices: %i\n", state.indent(), total_indices);
+		//	int* indices = mesh->GetPolygonVertices();
+		
+		FbxGeometryElementNormal* normal_element = mesh->GetElementNormal();
+		if (normal_element)
+		{
+			int total_normals = mesh->GetPolygonCount() * 3;
+			LOGV("%stotal normals: %i\n", state.indent(), total_normals);
+		}
+	}
+	
+	void print_node(IndentState& state, FbxNode* node)
+	{
+		const char* node_name = node->GetName();
+		
+		FbxDouble3 translation = node->LclTranslation.Get();
+		FbxDouble3 rotation = node->LclRotation.Get();
+		FbxDouble3 scaling = node->LclScaling.Get();
+		
+		state.push();
+		
+		if (node->GetSkeleton())
+		{
+			LOGV("%sfound skeleton\n", state.indent());
+		}
+		else if (node->GetMesh())
+		{
+			LOGV("%sfound mesh\n", state.indent());
+			state.push();
+			load_mesh(state, node);
+			state.pop();
+		}
+		
+		LOGV("%s\"%s\", t = (%g %g %g), r = (%g %g %g), s = (%g %g %g)\n",
+			 state.indent(),
+			 node_name,
+			 translation[0], translation[1], translation[2],
+			 rotation[0], rotation[1], rotation[2],
+			 scaling[0], scaling[1], scaling[2]
+			 );
+		
+		for (size_t index = 0; index < node->GetChildCount(); ++index)
+		{
+			print_node(state, node->GetChild(index));
+		}
+		
+		state.pop();
+	}
+	
+	virtual void read(datamodel::SceneNode* root, DataSource& data_source)
+	{
+		LOGV("TODO: switch this over to FbxStream\n");
+//		http://docs.autodesk.com/FBX/2014/ENU/FBX-SDK-Documentation/index.html
+		const char* path = (const char*)data_source.get_data();
+
+		LOGV("loading model: %s\n", path);
+		
+		FbxManager* m = FbxManager::Create();
+		FbxIOSettings* settings = FbxIOSettings::Create(m, IOSROOT);
+		
+		FbxImporter* importer = FbxImporter::Create(m, "");
+		
+		if (!importer->Initialize(path, -1, m->GetIOSettings()))
+		{
+			LOGE("initialize exporter failed\n");
+			LOGE("%s\n", importer->GetStatus().GetErrorString());
+			return;
+		}
 		
 		
+		FbxScene* scene = FbxScene::Create(m, "test_scene");
 		
+		importer->Import(scene);
+		
+		// safe to destroy the importer after importing a scene
+		importer->Destroy();
+		
+		// analyze scene
+		LOGV("scene info:\n");
+		LOGV("\toriginal_application: %s\n", scene->GetSceneInfo()->Original_ApplicationName.Get().Buffer());
+		LOGV("\toriginal_application_vendor: %s\n", scene->GetSceneInfo()->Original_ApplicationVendor.Get().Buffer());
+		LOGV("\toriginal_application_version: %s\n", scene->GetSceneInfo()->Original_ApplicationVersion.Get().Buffer());
+		LOGV("\toriginal_datetime_gmt: %s\n", scene->GetSceneInfo()->Original_DateTime_GMT.Get().toString().Buffer());
+		LOGV("\toriginal_filename: %s\n", scene->GetSceneInfo()->Original_FileName.Get().Buffer());
+		
+		
+		int total_animation_stacks = scene->GetSrcObjectCount<FbxAnimStack>();
+		LOGV("animation stacks: %i\n", total_animation_stacks);
+		
+		
+		//	int total_bones = scene->GetPoseCount();
+		int total_poses = scene->GetPoseCount();
+		LOGV("pose count: %i\n", total_poses);
+		
+		FbxNode* fbxroot = scene->GetRootNode();
+		if (fbxroot)
+		{
+			IndentState state;
+			
+			// traverse
+			print_node(state, fbxroot);
+		}
+		
+		
+		m->Destroy();
 	}
 };
 
@@ -370,8 +363,7 @@ int main(int argc, char** argv)
 		LOGE("Argument parsing failed.\n");
 		return -1;
 	}
-		
-//	test(argv[1]);
+	
 	register_types();
 
 	tools::convert_scene(input_file->string, output_file->string);
