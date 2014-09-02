@@ -39,6 +39,8 @@
 
 #include <slim/xlog.h>
 
+#include <json/json.h>
+
 #include <fbxsdk.h>
 
 // need to support:
@@ -49,7 +51,6 @@
 // skeleton (bones in a hierarchical tree)
 // mesh/geometry (vertices, normals, uvs[2], vertex-colors)
 
-using namespace util;
 
 //https://docs.unrealengine.com/latest/INT/Engine/Content/FBX/index.html
 
@@ -105,8 +106,7 @@ namespace datamodel
 		FixedArray<uint32_t> indices;
 	};
 
-	struct SceneNode;
-	typedef std::vector<SceneNode, GeminiAllocator<SceneNode>> SceneNodeVector;
+	typedef std::vector<struct SceneNode*, GeminiAllocator<struct SceneNode*>> SceneNodeVector;
 	
 	struct SceneNode
 	{
@@ -114,7 +114,50 @@ namespace datamodel
 		glm::mat4 local_to_world;
 		
 		
+		SceneNode* parent;
 		SceneNodeVector children;
+		
+		
+		SceneNode()
+		{
+			parent = nullptr;
+		}
+		
+		virtual ~SceneNode()
+		{
+			SceneNodeVector::iterator it = children.begin();
+			for( ; it != children.end(); ++it)
+			{
+				SceneNode* node = (*it);
+				DESTROY(SceneNode, node);
+			}
+			
+			children.clear();
+		}
+		
+		void add_child(SceneNode* child)
+		{
+			if (child->parent)
+			{
+				child->parent->remove_child(child);
+			}
+			
+			child->parent = this;
+			children.push_back(child);
+		}
+		
+		void remove_child(SceneNode* child)
+		{
+			// find the child and detach from the old parent
+			for (SceneNodeVector::iterator it = children.begin(); it != children.end(); ++it)
+			{
+				if (child == (*it))
+				{
+					children.erase(it);
+					break;
+				}
+			}
+		}
 	};
 }
 
@@ -147,7 +190,7 @@ namespace tools
 		Reader() {}
 		virtual ~Reader() {}
 		
-		virtual void read(Type* model, DataStream& data) = 0;
+		virtual void read(Type* model, util::DataStream& data) = 0;
 	};
 	
 	template <class Type>
@@ -157,7 +200,7 @@ namespace tools
 		Writer() {}
 		virtual ~Writer() {}
 		
-		virtual void write(Type* model, DataStream& data) = 0;
+		virtual void write(Type* model, util::DataStream& data) = 0;
 	};
 	
 	template <class Type>
@@ -185,6 +228,24 @@ namespace tools
 	void register_extension(const std::string& extension, const ArchiverExtension<Type> & ptr)
 	{
 		ExtensionRegistry<Type>::extensions.insert(std::pair<std::string, ArchiverExtension<Type> >(extension, ptr));
+	}
+	
+	template <class Type>
+	void purge_registry()
+	{
+		for (auto data : ExtensionRegistry<Type>::extensions)
+		{
+			ArchiverExtension<Type>& ext = data.second;
+			if (ext.reader)
+			{
+				DESTROY(Reader<Type>, ext.reader);
+			}
+			
+			if (ext.writer)
+			{
+				DESTROY(Writer<Type>, ext.writer);
+			}
+		}
 	}
 
 
@@ -244,13 +305,21 @@ namespace tools
 			return Result(false, "Unable to write format");
 		}
 		
-		MemoryStream mds;
+		util::MemoryStream mds;
 		mds.data = (uint8_t*)input_path;
-		
 		reader->read(&root, mds);
 		
-		writer->write(&root, mds);
+		util::ResizableMemoryStream rs;
+		writer->write(&root, rs);
 
+		rs.rewind();
+		
+		xfile_t out = xfile_open(output_path, XF_WRITE);
+		if (xfile_isopen(out))
+		{
+			xfile_write(out, rs.get_data(), rs.get_data_size(), 1);
+			xfile_close(out);
+		}
 		return Result(true);
 	}
 }
@@ -321,7 +390,23 @@ public:
 		state.pop();
 	}
 	
-	virtual void read(datamodel::SceneNode* root, DataStream& data_source)
+	void populate_hierarchy(IndentState& state, datamodel::SceneNode* root, FbxNode* node)
+	{
+		datamodel::SceneNode* scene_node = 0;
+		
+		scene_node = CREATE(datamodel::SceneNode);
+		root->add_child(scene_node);
+		
+		scene_node->name = node->GetName();
+		LOGV("adding: %s\n", scene_node->name.c_str());
+		
+		for (size_t index = 0; index < node->GetChildCount(); ++index)
+		{
+			populate_hierarchy(state, scene_node, node->GetChild(index));
+		}
+	}
+	
+	virtual void read(datamodel::SceneNode* root, util::DataStream& data_source)
 	{
 		LOGV("TODO: switch this over to FbxStream\n");
 //		http://docs.autodesk.com/FBX/2014/ENU/FBX-SDK-Documentation/index.html
@@ -373,6 +458,12 @@ public:
 			
 			// traverse
 			print_node(state, fbxroot);
+			
+			// add children
+			for (size_t index = 0; index < fbxroot->GetChildCount(); ++index)
+			{
+				populate_hierarchy(state, root, fbxroot->GetChild(index));
+			}
 		}
 		
 		
@@ -384,20 +475,54 @@ public:
 class JsonSceneWriter : public tools::Writer<datamodel::SceneNode>
 {
 public:
-	virtual void write(datamodel::SceneNode* root, DataStream& source)
+
+	void populate_json_hierarchy(datamodel::SceneNode* node, Json::Value& jnodes)
+	{
+		Json::Value jnode;
+		jnode["name"] = node->name;
+		LOGV("out: %s\n", node->name.c_str());
+		
+		Json::Value child_nodes(Json::arrayValue);
+		for (auto child : node->children)
+		{
+			populate_json_hierarchy(child, child_nodes);
+		}
+		jnode["children"] = child_nodes;
+		jnodes.append(jnode);
+	}
+
+
+	virtual void write(datamodel::SceneNode* root, util::DataStream& source)
 	{
 		LOGV("write json file!\n");
+		
+		Json::Value jroot;
+		Json::Value jnodes(Json::arrayValue);
+		
+		
+		
+		for (auto child : root->children)
+		{
+			populate_json_hierarchy(child, jnodes);
+		}
+		
+		jroot["nodes"] = jnodes;
+		
+		Json::StyledWriter writer;
+		
+		std::string buffer = writer.write(jroot);
+		source.write(buffer.data(), buffer.size());
 	}
 };
 
 void register_types()
 {
 	ArchiverExtension<datamodel::SceneNode> ext;
-	ext.reader = new AutodeskFbxReader();
+	ext.reader = CREATE(AutodeskFbxReader);
 	register_extension<datamodel::SceneNode>("fbx", ext);
 	
 	ext.reader = 0;
-	ext.writer = new JsonSceneWriter();
+	ext.writer = CREATE(JsonSceneWriter);
 	register_extension<datamodel::SceneNode>("model", ext);
 }
 
@@ -425,6 +550,8 @@ int main(int argc, char** argv)
 	{
 		LOGV("conversion failed: %s\n", result.message());
 	}
+	
+	purge_registry<datamodel::SceneNode>();
 
 	core::shutdown();
 	memory::shutdown();
