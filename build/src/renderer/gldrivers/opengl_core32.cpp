@@ -27,7 +27,7 @@
 #include "image.h"
 
 #include <gemini/mathlib.h>
-#include "memorystream.h"
+#include <gemini/util/datastream.h>
 
 #include "assets.h"
 
@@ -396,7 +396,7 @@ GLCore32::~GLCore32()
 	gemgl_shutdown( gl );
 }
 
-void c_shader( MemoryStream & stream, GLCore32 & renderer )
+void c_shader( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -406,7 +406,7 @@ void c_shader( MemoryStream & stream, GLCore32 & renderer )
 	renderer.shaderprogram_activate( shader_program );
 }
 
-void p_shader( MemoryStream & stream, GLCore32 & renderer )
+void p_shader( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -416,7 +416,7 @@ void p_shader( MemoryStream & stream, GLCore32 & renderer )
 	renderer.shaderprogram_deactivate( shader_program );
 }
 
-void c_uniform_matrix4( MemoryStream & stream, GLCore32 & renderer )
+void c_uniform_matrix4( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -431,7 +431,7 @@ void c_uniform_matrix4( MemoryStream & stream, GLCore32 & renderer )
 	gl.CheckError( "uniform matrix 4" );
 }
 
-void c_uniform1i( MemoryStream & stream, GLCore32 & renderer )
+void c_uniform1i( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -444,7 +444,7 @@ void c_uniform1i( MemoryStream & stream, GLCore32 & renderer )
 	gl.CheckError( "uniform1i" );
 }
 
-void c_uniform3f( MemoryStream & stream, GLCore32 & renderer )
+void c_uniform3f( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -457,7 +457,7 @@ void c_uniform3f( MemoryStream & stream, GLCore32 & renderer )
 	gl.CheckError( "uniform3f" );
 }
 
-void c_uniform4f( MemoryStream & stream, GLCore32 & renderer )
+void c_uniform4f( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -470,7 +470,7 @@ void c_uniform4f( MemoryStream & stream, GLCore32 & renderer )
 	gl.CheckError( "uniform4f" );
 }
 
-void c_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
+void c_uniform_sampler2d( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -504,7 +504,7 @@ void c_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 	}
 }
 
-void p_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
+void p_uniform_sampler2d( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -523,7 +523,7 @@ void p_uniform_sampler2d( MemoryStream & stream, GLCore32 & renderer )
 	gl.CheckError( "BindTexture: GL_TEXTURE_2D" );
 }
 
-void c_clear( MemoryStream & stream, GLCore32 & renderer )
+void c_clear( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -533,7 +533,7 @@ void c_clear( MemoryStream & stream, GLCore32 & renderer )
 	gl.CheckError( "Clear" );
 }
 
-void c_clearcolor( MemoryStream & stream, GLCore32 & renderer )
+void c_clearcolor( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -543,7 +543,7 @@ void c_clearcolor( MemoryStream & stream, GLCore32 & renderer )
 	gl.CheckError( "ClearColor" );
 }
 
-void c_cleardepth( MemoryStream & stream, GLCore32 & renderer )
+void c_cleardepth( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -553,7 +553,7 @@ void c_cleardepth( MemoryStream & stream, GLCore32 & renderer )
 	gl.CheckError( "glClearDepth" );
 }
 
-void c_cullface( MemoryStream & stream, GLCore32 & renderer )
+void c_cullface( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -563,7 +563,7 @@ void c_cullface( MemoryStream & stream, GLCore32 & renderer )
 	gl.CheckError( "glCullFace" );
 }
 
-void c_viewport( MemoryStream & stream, GLCore32 & renderer )
+void c_viewport( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	int x, y, width, height;
 	//			stream.read(x);
@@ -580,7 +580,7 @@ void c_viewport( MemoryStream & stream, GLCore32 & renderer )
 	gl.CheckError( "glViewport" );
 }
 
-void c_drawcall( MemoryStream & stream, GLCore32 & renderer )
+void c_drawcall( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL32VertexBuffer * vertex_buffer = 0;
 	GLenum draw_type;
@@ -602,7 +602,7 @@ void c_drawcall( MemoryStream & stream, GLCore32 & renderer )
 	}
 }
 
-void c_state( MemoryStream & stream, GLCore32 & renderer )
+void c_state( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	// state change
 	DriverState driver_state;
@@ -613,7 +613,7 @@ void c_state( MemoryStream & stream, GLCore32 & renderer )
 	op( driver_state, stream, &renderer );
 }
 
-void p_state( MemoryStream & stream, GLCore32 & renderer )
+void p_state( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	// state change
 	DriverState driver_state;
@@ -624,7 +624,7 @@ void p_state( MemoryStream & stream, GLCore32 & renderer )
 	op( driver_state, stream, &renderer );
 }
 
-void c_blendfunc( MemoryStream & stream, GLCore32 & renderer )
+void c_blendfunc( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	RenderBlendType render_blendstate_source, render_blendstate_destination;
 		
@@ -640,11 +640,11 @@ void c_blendfunc( MemoryStream & stream, GLCore32 & renderer )
 }
 
 
-void c_noop( MemoryStream & stream, GLCore32 & renderer )
+void c_noop( util::MemoryStream & stream, GLCore32 & renderer )
 {
 }
 
-typedef void (*render_command_function)( MemoryStream & stream, GLCore32 & renderer );
+typedef void (*render_command_function)( util::MemoryStream & stream, GLCore32 & renderer );
 
 render_command_function commands[] = {
 	c_shader, // shader
@@ -708,17 +708,17 @@ void GLCore32::init_with_settings(const RenderSettings& settings)
 	}
 }
 
-void GLCore32::run_command( renderer::DriverCommandType command, MemoryStream & stream )
+void GLCore32::run_command( renderer::DriverCommandType command, util::MemoryStream & stream )
 {
 	commands[ (command*2) ]( stream, *this );
 }
 
-void GLCore32::post_command( renderer::DriverCommandType command, MemoryStream & stream )
+void GLCore32::post_command( renderer::DriverCommandType command, util::MemoryStream & stream )
 {
 	commands[ (command*2)+1 ]( stream, *this );
 }
 
-void GLCore32::setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStream & stream )
+void GLCore32::setup_drawcall( renderer::VertexBuffer * vertexbuffer, util::MemoryStream & stream )
 {
 	GL32VertexBuffer * vb = (GL32VertexBuffer*)vertexbuffer;
 	stream.write( vb );
@@ -917,7 +917,7 @@ void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, render
 	
 	unsigned int data_size = geometry->vertex_count * stream->vertex_stride;
 	char * vertex_data = (char*)ALLOC( data_size );
-	MemoryStream ms;
+	util::MemoryStream ms;
 	ms.init( vertex_data, data_size );
 	
 //	assets::ShaderString parameter = "normals";

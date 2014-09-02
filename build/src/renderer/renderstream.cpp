@@ -35,7 +35,7 @@ RenderStream::RenderStream( unsigned int max_bytes, unsigned int max_commands )
 
 void RenderStream::save_offset( long & offset )
 {
-	offset = stream.offset_pointer();
+	offset = stream.current_offset();
 } // save_offset
 
 void RenderStream::load_offset( long offset )
@@ -97,7 +97,7 @@ void RenderStream::add_command( int type )
 {
 	RenderState * state = new_render_state();
 	state->type = type;
-	state->offset = stream.offset_pointer();
+	state->offset = stream.current_offset();
 }
 
 void RenderStream::add_clearcolor( float r, float g, float b, float a )

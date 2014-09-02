@@ -147,7 +147,7 @@ public:
 	virtual void tick( kernel::Params & params )
 	{
 		renderer::IRenderDriver * driver = renderer::driver();
-		MemoryStream ms;
+		util::MemoryStream ms;
 		char buffer[128] = {0};
 		ms.init( buffer, 128 );
 		

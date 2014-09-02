@@ -25,8 +25,9 @@
 #include <slim/xlog.h>
 
 #include "kernel.h"
-#include "memorystream.h"
+#include <gemini/util/datastream.h>
 
+using namespace util;
 class TestMemoryStream : public kernel::IApplication
 {
 public:
@@ -47,7 +48,7 @@ public:
 		char out[ 4 ];
 		s.rewind();
 		s.read( out, 3 );
-		LOGV( "out: '%s', %i\n", out, s.offset_pointer() );
+		LOGV( "out: '%s', %i\n", out, s.current_offset() );
 		
 		
 		// okay, so the base functions read and write arbitrary data streams properly.

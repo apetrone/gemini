@@ -33,6 +33,7 @@
 #include <gemini/util/stackstring.h>
 #include <gemini/util/fixedarray.h>
 #include <gemini/util/arg.h>
+#include <gemini/util/datastream.h>
 
 #include <gemini/mathlib.h>
 
@@ -48,6 +49,7 @@
 // skeleton (bones in a hierarchical tree)
 // mesh/geometry (vertices, normals, uvs[2], vertex-colors)
 
+using namespace util;
 
 //https://docs.unrealengine.com/latest/INT/Engine/Content/FBX/index.html
 
@@ -86,6 +88,8 @@ struct IndentState
 	}
 };
 
+
+#include <vector>
 namespace datamodel
 {
 	const int MAX_SUPPORTED_UV_CHANNELS = 2;
@@ -101,37 +105,40 @@ namespace datamodel
 		FixedArray<uint32_t> indices;
 	};
 
+	struct SceneNode;
+	typedef std::vector<SceneNode, GeminiAllocator<SceneNode>> SceneNodeVector;
+	
 	struct SceneNode
 	{
+		std::string name;
 		glm::mat4 local_to_world;
+		
+		
+		SceneNodeVector children;
 	};
-	
-	
-	
 }
 
 #include <map>
 #include <string>
 
+
 namespace tools
 {
-	class DataSource
+	struct Result
 	{
-	public:
-		virtual ~DataSource() {}
+		const char* result_message;
+		bool success;
 		
-		virtual uint8_t* get_data() const = 0;
-	};
-	
-	class MemoryDataSource : public DataSource
-	{
-	public:
-		uint8_t* data;
-		size_t data_length;
+		Result(bool result, const char* message = 0) : success(result), result_message(message) {}
 		
-		virtual uint8_t* get_data() const { return data; }
+		bool failed() const { return (success == false); }
+		const char* message() const { return result_message; }
 	};
+}
 
+
+namespace tools
+{
 	template <class Type>
 	class Reader
 	{
@@ -140,18 +147,26 @@ namespace tools
 		Reader() {}
 		virtual ~Reader() {}
 		
-		virtual void read(Type* model, DataSource& data) = 0;
+		virtual void read(Type* model, DataStream& data) = 0;
 	};
 	
-	
+	template <class Type>
+	class Writer
+	{
+	public:
+		Writer() {}
+		virtual ~Writer() {}
+		
+		virtual void write(Type* model, DataStream& data) = 0;
+	};
 	
 	template <class Type>
 	struct ArchiverExtension
 	{
 		Reader<Type>* reader;
-//		Writer<Type>* writer;
+		Writer<Type>* writer;
 
-		ArchiverExtension() : reader(nullptr) {}
+		ArchiverExtension() : reader(nullptr), writer(nullptr) {}
 	};
 	
 	template <class Type>
@@ -174,11 +189,10 @@ namespace tools
 
 
 	template <class Type>
-	const ArchiverExtension<Type> find_archiver_for_extension(const std::string& target_extension, uint8_t flags = 1)
+	const ArchiverExtension<Type> find_archiver_for_extension(const std::string& target_extension, uint8_t flags = 0)
 	{
 		for (auto v : ExtensionRegistry<Type>::extensions)
 		{
-			LOGV("ext: %s\n", v.first.c_str());
 			const ArchiverExtension<Type>& archiver_extension = v.second;
 			
 			if (target_extension == v.first)
@@ -187,12 +201,12 @@ namespace tools
 				{
 					return archiver_extension;
 				}
-				
-				if ((flags & 1) && archiver_extension.reader)
-				{
-					return archiver_extension;
-				}
-//				else if ((flags && 2) && archiver_extension.writer)
+//				
+//				if ((flags & 1) && archiver_extension.reader)
+//				{
+//					return archiver_extension;
+//				}
+//				else if ((flags & 2) && archiver_extension.writer)
 //				{
 //					return archiver_extension;
 //				}
@@ -201,28 +215,43 @@ namespace tools
 	
 		return ArchiverExtension<Type>();
 	}
-	
 
-	void convert_scene(const char* input_path, const char* output_path)
+
+
+	Result convert_scene(const char* input_path, const char* output_path)
 	{
 		datamodel::SceneNode root;
 		
 		// TODO: get extension from input_path
 		std::string ext = "fbx";
 		
+		// verify we can read the format
 		const ArchiverExtension<datamodel::SceneNode> archiver_extension = find_archiver_for_extension<datamodel::SceneNode>(ext);
 		tools::Reader<datamodel::SceneNode>* reader = archiver_extension.reader;
 		if (!reader)
 		{
 			LOGE("no reader found for extension: %s\n", ext.c_str());
-			return;
+			return Result(false, "Unable to read format");
 		}
 		
-		MemoryDataSource mds;
+		// verify we can write the format
+		ext = "model";
+		const ArchiverExtension<datamodel::SceneNode> writer_extension = find_archiver_for_extension<datamodel::SceneNode>(ext);
+		tools::Writer<datamodel::SceneNode>* writer = writer_extension.writer;
+		if (!writer)
+		{
+			LOGE("no writer found for extension: %s\n", ext.c_str());
+			return Result(false, "Unable to write format");
+		}
+		
+		MemoryStream mds;
 		mds.data = (uint8_t*)input_path;
 		
-		// TODO: until I switch the reader to use streams, simply pass input_path
 		reader->read(&root, mds);
+		
+		writer->write(&root, mds);
+
+		return Result(true);
 	}
 }
 
@@ -292,7 +321,7 @@ public:
 		state.pop();
 	}
 	
-	virtual void read(datamodel::SceneNode* root, DataSource& data_source)
+	virtual void read(datamodel::SceneNode* root, DataStream& data_source)
 	{
 		LOGV("TODO: switch this over to FbxStream\n");
 //		http://docs.autodesk.com/FBX/2014/ENU/FBX-SDK-Documentation/index.html
@@ -352,13 +381,24 @@ public:
 };
 
 
+class JsonSceneWriter : public tools::Writer<datamodel::SceneNode>
+{
+public:
+	virtual void write(datamodel::SceneNode* root, DataStream& source)
+	{
+		LOGV("write json file!\n");
+	}
+};
+
 void register_types()
 {
-	// TODO: load scene node archivers
 	ArchiverExtension<datamodel::SceneNode> ext;
 	ext.reader = new AutodeskFbxReader();
-
 	register_extension<datamodel::SceneNode>("fbx", ext);
+	
+	ext.reader = 0;
+	ext.writer = new JsonSceneWriter();
+	register_extension<datamodel::SceneNode>("model", ext);
 }
 
 int main(int argc, char** argv)
@@ -380,7 +420,11 @@ int main(int argc, char** argv)
 	
 	register_types();
 
-	tools::convert_scene(input_file->string, output_file->string);
+	Result result = tools::convert_scene(input_file->string, output_file->string);
+	if (result.failed())
+	{
+		LOGV("conversion failed: %s\n", result.message());
+	}
 
 	core::shutdown();
 	memory::shutdown();

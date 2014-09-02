@@ -47,9 +47,9 @@ public:
 	
 	virtual void init_with_settings(const renderer::RenderSettings& settings);
 	
-	virtual void run_command( renderer::DriverCommandType command, MemoryStream & stream );
-	virtual void post_command( renderer::DriverCommandType command, MemoryStream & stream );
-	virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStream & stream );
+	virtual void run_command( renderer::DriverCommandType command, util::MemoryStream & stream );
+	virtual void post_command( renderer::DriverCommandType command, util::MemoryStream & stream );
+	virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, util::MemoryStream & stream );
 			
 	// texture
 	virtual renderer::Texture* texture_create(image::Image& image);

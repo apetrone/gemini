@@ -29,7 +29,7 @@
 #include <gemini/util/stackstring.h>
 #include <gemini/mathlib.h> // for glm
 
-#include "memorystream.h"
+#include <gemini/util/datastream.h>
 #include "image.h"
 
 
@@ -392,10 +392,10 @@ namespace renderer
 		virtual void init_with_settings(const renderer::RenderSettings& settings) = 0;
 		
 		// these commands are called with the command and current memory stream
-		virtual void run_command( DriverCommandType command, MemoryStream & stream ) = 0;
-		virtual void post_command( DriverCommandType command, MemoryStream & stream ) = 0;
+		virtual void run_command( DriverCommandType command, util::MemoryStream & stream ) = 0;
+		virtual void post_command( DriverCommandType command, util::MemoryStream & stream ) = 0;
 		
-		virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStream & stream ) = 0;
+		virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, util::MemoryStream & stream ) = 0;
 		
 		// texture
 		virtual renderer::Texture* texture_create(image::Image& image) = 0;
