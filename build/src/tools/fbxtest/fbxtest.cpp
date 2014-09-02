@@ -111,8 +111,10 @@ namespace datamodel
 	struct SceneNode
 	{
 		std::string name;
-		glm::mat4 local_to_world;
 		
+		glm::vec3 scale;
+		glm::quat rotation;
+		glm::vec3 translation;
 		
 		SceneNode* parent;
 		SceneNodeVector children;
@@ -373,6 +375,14 @@ public:
 			load_mesh(state, node);
 			state.pop();
 		}
+		else if (node->GetCamera())
+		{
+			LOGV("%sfound camera\n", state.indent());
+		}
+		else if (node->GetLight())
+		{
+			LOGV("%sfound light\n", state.indent());
+		}
 		
 		LOGV("%s\"%s\", t = (%g %g %g), r = (%g %g %g), s = (%g %g %g)\n",
 			 state.indent(),
@@ -392,18 +402,57 @@ public:
 	
 	void populate_hierarchy(IndentState& state, datamodel::SceneNode* root, FbxNode* node)
 	{
-		datamodel::SceneNode* scene_node = 0;
+		datamodel::SceneNode* scene_node = root;
 		
-		scene_node = CREATE(datamodel::SceneNode);
-		root->add_child(scene_node);
+		bool is_valid = true;
 		
-		scene_node->name = node->GetName();
-		LOGV("adding: %s\n", scene_node->name.c_str());
+		state.push();
 		
-		for (size_t index = 0; index < node->GetChildCount(); ++index)
+//		if (node->GetSkeleton())
+//		{
+//			LOGV("%sfound skeleton\n", state.indent());
+//		}
+//		else if (node->GetMesh())
+//		{
+//			LOGV("%sfound mesh\n", state.indent());
+//		}
+//		else if (node->GetCamera())
+//		{
+//			LOGV("%sfound camera\n", state.indent());
+//		}
+//		else if (node->GetLight())
+//		{
+//			LOGV("%sfound light\n", state.indent());
+//		}
+		
+		if (node->GetLight() || node->GetCamera())
 		{
-			populate_hierarchy(state, scene_node, node->GetChild(index));
+			is_valid = false;
 		}
+
+		if (is_valid)
+		{
+			// create a new node
+			scene_node = CREATE(datamodel::SceneNode);
+			root->add_child(scene_node);
+			
+			// copy data
+			scene_node->name = node->GetName();
+			FbxDouble3 translation = node->LclTranslation.Get();
+			FbxDouble3 rotation = node->LclRotation.Get();
+			FbxDouble3 scaling = node->LclScaling.Get();
+			
+			scene_node->scale = glm::vec3(scaling[0], scaling[1], scaling[2]);
+			scene_node->rotation = glm::quat(glm::vec3(rotation[0], rotation[1], rotation[2]));
+			scene_node->translation = glm::vec3(translation[0], translation[1], translation[2]);
+			
+			for (size_t index = 0; index < node->GetChildCount(); ++index)
+			{
+				populate_hierarchy(state, scene_node, node->GetChild(index));
+			}
+		}
+		
+		state.pop();
 	}
 	
 	virtual void read(datamodel::SceneNode* root, util::DataStream& data_source)
@@ -457,7 +506,7 @@ public:
 			IndentState state;
 			
 			// traverse
-			print_node(state, fbxroot);
+			//print_node(state, fbxroot);
 			
 			// add children
 			for (size_t index = 0; index < fbxroot->GetChildCount(); ++index)
@@ -476,16 +525,34 @@ class JsonSceneWriter : public tools::Writer<datamodel::SceneNode>
 {
 public:
 
-	void populate_json_hierarchy(datamodel::SceneNode* node, Json::Value& jnodes)
+	void append_node(datamodel::SceneNode* node, Json::Value& jnodes)
 	{
 		Json::Value jnode;
 		jnode["name"] = node->name;
-		LOGV("out: %s\n", node->name.c_str());
+		
+		Json::Value jscale;
+		jscale.append(node->scale.x);
+		jscale.append(node->scale.y);
+		jscale.append(node->scale.z);
+		jnode["scaling"] = jscale;
+		
+		Json::Value jrotation;
+		jrotation.append(node->rotation.x);
+		jrotation.append(node->rotation.y);
+		jrotation.append(node->rotation.z);
+		jrotation.append(node->rotation.w);
+		jnode["rotation"] = jrotation;
+		
+		Json::Value jtranslation;
+		jtranslation.append(node->translation.x);
+		jtranslation.append(node->translation.y);
+		jtranslation.append(node->translation.z);
+		jnode["translation"] = jtranslation;
 		
 		Json::Value child_nodes(Json::arrayValue);
 		for (auto child : node->children)
 		{
-			populate_json_hierarchy(child, child_nodes);
+			append_node(child, child_nodes);
 		}
 		jnode["children"] = child_nodes;
 		jnodes.append(jnode);
@@ -494,19 +561,16 @@ public:
 
 	virtual void write(datamodel::SceneNode* root, util::DataStream& source)
 	{
-		LOGV("write json file!\n");
-		
 		Json::Value jroot;
 		Json::Value jnodes(Json::arrayValue);
-		
-		
+			
 		
 		for (auto child : root->children)
 		{
-			populate_json_hierarchy(child, jnodes);
+			append_node(child, jnodes);
 		}
 		
-		jroot["nodes"] = jnodes;
+		jroot["children"] = jnodes;
 		
 		Json::StyledWriter writer;
 		
