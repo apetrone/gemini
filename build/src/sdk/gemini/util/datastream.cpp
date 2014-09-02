@@ -94,4 +94,43 @@ namespace util
 			}
 		}
 	}
+	
+	
+	
+
+	uint8_t* ResizableMemoryStream::get_data() const
+	{
+		return (uint8_t*)data.data();
+	}
+	
+	size_t ResizableMemoryStream::get_data_size() const
+	{
+		return data.size();
+	}
+	
+	size_t ResizableMemoryStream::read(void* destination, size_t length)
+	{
+		
+	}
+	
+	size_t ResizableMemoryStream::write(const void* source, size_t length)
+	{
+		data.resize(data.size() + length);
+		memcpy(data.data()+offset, source, length);
+		
+		offset += length;
+	}
+	
+	void ResizableMemoryStream::seek(size_t requested_offset, bool is_absolute)
+	{
+		if (is_absolute)
+		{
+			offset = requested_offset;
+		}
+		else
+		{
+			offset += requested_offset;
+		}
+	}
+	
 }

@@ -21,6 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <vector>
+
 #include <gemini/typedefs.h>
 
 #include "datastream.h"
@@ -49,6 +51,9 @@ namespace util
 		// seek to an offset location within the stream
 		// if is_absolute is false, the seek happens relative to the current position
 		virtual void seek(size_t offset, bool is_absolute) = 0;
+		
+		// flush the data stream
+		virtual void flush() = 0;
 	};
 	
 	class MemoryStream : public DataStream
@@ -84,5 +89,22 @@ namespace util
 		virtual size_t read(void* destination, size_t length);
 		virtual size_t write(const void* data, size_t length);
 		virtual void seek(size_t offset, bool is_absolute);
+		virtual void flush() {}
+	};
+	
+	class ResizableMemoryStream : public MemoryStream
+	{
+		std::vector<char> data;
+		size_t offset;
+		
+	public:
+		ResizableMemoryStream() : offset(0) {}
+		
+		virtual uint8_t* get_data() const;
+		virtual size_t get_data_size() const;
+		virtual size_t read(void* destination, size_t length);
+		virtual size_t write(const void* data, size_t length);
+		virtual void seek(size_t offset, bool is_absolute);
+		virtual void flush() {}
 	};
 }
