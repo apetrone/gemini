@@ -103,7 +103,13 @@ namespace datamodel
 		FixedArray<glm::vec3> normals;
 		FixedArray<glm::vec4> vertex_colors;
 		FixedArray<glm::vec2> uvs[MAX_SUPPORTED_UV_CHANNELS];
+		uint8_t total_uv_sets;
 		FixedArray<uint32_t> indices;
+	};
+	
+	struct Skeleton
+	{
+		
 	};
 
 	typedef std::vector<struct SceneNode*, GeminiAllocator<struct SceneNode*>> SceneNodeVector;
@@ -111,6 +117,7 @@ namespace datamodel
 	struct SceneNode
 	{
 		std::string name;
+		std::string type;
 		
 		glm::vec3 scale;
 		glm::quat rotation;
@@ -120,9 +127,14 @@ namespace datamodel
 		SceneNodeVector children;
 		
 		
+		Mesh* mesh;
+		Skeleton* skeleton;
+		
 		SceneNode()
 		{
 			parent = nullptr;
+			mesh = nullptr;
+			skeleton = nullptr;
 		}
 		
 		virtual ~SceneNode()
@@ -135,6 +147,16 @@ namespace datamodel
 			}
 			
 			children.clear();
+			
+			if (mesh)
+			{
+				DESTROY(Mesh, mesh);
+			}
+			
+			if (skeleton)
+			{
+				DESTROY(Skeleton, skeleton);
+			}
 		}
 		
 		void add_child(SceneNode* child)
@@ -335,22 +357,179 @@ public:
 	AutodeskFbxReader() : tools::Reader<datamodel::SceneNode>() {}
 	virtual ~AutodeskFbxReader() {}
 	
-	void load_mesh(IndentState& state, FbxNode* node)
+	void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh)
 	{
-		FbxMesh* mesh = node->GetMesh();
-		int total_vertices = mesh->GetControlPointsCount();
-		LOGV("%stotal vertices: %i\n", state.indent(), total_vertices);
-		//	FbxVector4 v = mesh->GetControlPointAt(0);
+		FbxMesh* fbxmesh = node->GetMesh();
 		
-		int total_indices = mesh->GetPolygonVertexCount();
+		//
+		// copy vertices
+		int total_vertices = fbxmesh->GetControlPointsCount();
+		LOGV("%stotal vertices: %i\n", state.indent(), total_vertices);
+		mesh->vertices.allocate(total_vertices);
+		for (int vertex_id = 0; vertex_id < total_vertices; ++vertex_id)
+		{
+			const FbxVector4& vertex = fbxmesh->GetControlPointAt(vertex_id);
+			glm::vec3& mesh_vertex = mesh->vertices[vertex_id];
+			mesh_vertex.x = vertex[0];
+			mesh_vertex.y = vertex[1];
+			mesh_vertex.z = vertex[2];
+		}
+		
+		//
+		// copy indices
+		int total_indices = fbxmesh->GetPolygonVertexCount();
 		LOGV("%stotal indices: %i\n", state.indent(), total_indices);
 		//	int* indices = mesh->GetPolygonVertices();
-		
-		FbxGeometryElementNormal* normal_element = mesh->GetElementNormal();
+		mesh->indices.allocate(total_indices);
+		int* indices = fbxmesh->GetPolygonVertices();
+		memcpy(&mesh->indices[0], indices, sizeof(int)*total_indices);
+	
+		//
+		// copy normals
+		FbxGeometryElementNormal* normal_element = fbxmesh->GetElementNormal();
 		if (normal_element)
 		{
-			int total_normals = mesh->GetPolygonCount() * 3;
-			LOGV("%stotal normals: %i\n", state.indent(), total_normals);
+			mesh->normals.allocate(total_vertices);
+			
+			// two mapping modes are possible: by control points and by polygon-vertex
+			if (normal_element->GetMappingMode() == FbxGeometryElement::eByControlPoint)
+			{
+				for (int vertex_index = 0; vertex_index < total_vertices; ++vertex_index)
+				{
+					int normal_index = 0;
+					
+					// reference mode can be Direct or IndexToDirect
+					
+					if (normal_element->GetReferenceMode() == FbxGeometryElement::eDirect)
+					{
+						normal_index = vertex_index;
+					}
+					else if (normal_element->GetReferenceMode() == FbxGeometryElement::eIndexToDirect)
+					{
+						normal_index = normal_element->GetIndexArray().GetAt(vertex_index);
+					}
+					
+					FbxVector4 normal = normal_element->GetDirectArray().GetAt(normal_index);
+					glm::vec3& n = mesh->normals[vertex_index];
+					n.x = normal[0];
+					n.y = normal[1];
+					n.z = normal[2];
+				}
+			}
+			else if (normal_element->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
+			{
+				int index_by_vertex = 0;
+				for (int polygon_index = 0; polygon_index < fbxmesh->GetPolygonCount(); ++polygon_index)
+				{
+					int num_vertices = fbxmesh->GetPolygonSize(polygon_index);
+					for (int vertex = 0; vertex < num_vertices; ++vertex)
+					{
+						int normal_index = 0;
+						if (normal_element->GetReferenceMode() == FbxGeometryElement::eDirect)
+						{
+							normal_index = index_by_vertex;
+						}
+						else if (normal_element->GetReferenceMode() == FbxGeometryElement::eIndexToDirect)
+						{
+							normal_index = normal_element->GetIndexArray().GetAt(index_by_vertex);
+						}
+						
+						FbxVector4 normal = normal_element->GetDirectArray().GetAt(normal_index);
+						glm::vec3& n = mesh->normals[index_by_vertex];
+						n.x = normal[0];
+						n.y = normal[1];
+						n.z = normal[2];
+						
+						++index_by_vertex;
+					}
+				}
+			}
+		}
+		
+		//
+		// copy uv coordinate sets
+		FbxStringList uv_set_list;
+		fbxmesh->GetUVSetNames(uv_set_list);
+		
+		LOGV("total_uv_sets: %i\n", uv_set_list.GetCount());
+		
+		// don't need to assert here; just need to ignore unsupported channels
+		assert(uv_set_list.GetCount() < datamodel::MAX_SUPPORTED_UV_CHANNELS);
+		
+		mesh->total_uv_sets = uv_set_list.GetCount();
+		
+		for (int uv_set_id = 0; uv_set_id < uv_set_list.GetCount(); ++uv_set_id)
+		{
+			const char* uv_set_name = uv_set_list.GetStringAt(uv_set_id);
+			LOGV("read uv set \"%s\"\n", uv_set_name);
+			
+			mesh->uvs[uv_set_id].allocate(total_vertices);
+			
+			const FbxGeometryElementUV* uv_element = fbxmesh->GetElementUV(uv_set_name);
+			if (!uv_element)
+			{
+				continue;
+			}
+			
+			// only support mapping by polygon vertex and by control point
+			if (uv_element->GetMappingMode() != FbxGeometryElement::eByPolygonVertex &&
+				uv_element->GetMappingMode() != FbxGeometryElement::eByControlPoint)
+			{
+				LOGW("ignoring uv set \"%s\"; no supported mapping mode!\n", uv_set_name);
+				continue;
+			}
+			
+			bool use_index = uv_element->GetReferenceMode() != FbxGeometryElement::eDirect;
+			const int index_count = (use_index) ? uv_element->GetIndexArray().GetCount() : 0;
+			const int poly_count = fbxmesh->GetPolygonCount();
+			
+			if (uv_element->GetMappingMode() == FbxGeometryElement::eByControlPoint)
+			{
+				for (int poly_index = 0; poly_index < poly_count; ++poly_index)
+				{
+					int vertex_count = fbxmesh->GetPolygonSize(poly_index);
+					for (int vertex = 0; vertex < vertex_count; ++vertex)
+					{
+						FbxVector2 uv_value;
+						
+						// get index of current vertex
+						int poly_vertex_index = fbxmesh->GetPolygonVertex(poly_index, vertex);
+						
+						// the uv index depends on reference mode
+						int uv_index = use_index ? uv_element->GetIndexArray().GetAt(poly_vertex_index) : poly_vertex_index;
+						
+						uv_value = uv_element->GetDirectArray().GetAt(uv_index);
+						
+						glm::vec2& uv = mesh->uvs[uv_set_id][uv_index];
+						uv.x = uv_value[0];
+						uv.y = uv_value[1];
+					}
+				}
+			}
+			else if (uv_element->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
+			{
+				int poly_counter = 0;
+				for (int poly_index = 0; poly_index < poly_count; ++poly_index)
+				{
+					int vertex_count = fbxmesh->GetPolygonSize(poly_index);
+					for (int vertex = 0; vertex < vertex_count; ++vertex)
+					{
+						if (poly_counter < index_count)
+						{
+							FbxVector2 uv_value;
+							
+							int uv_index = use_index ? uv_element->GetIndexArray().GetAt(poly_counter) : poly_index;
+							uv_value = uv_element->GetDirectArray().GetAt(uv_index);
+							
+							glm::vec2& uv = mesh->uvs[uv_set_id][uv_index];
+							uv.x = uv_value[0];
+							uv.y = uv_value[1];
+							
+							++poly_counter;
+						}
+					}
+				}
+			}
 		}
 	}
 	
@@ -371,9 +550,6 @@ public:
 		else if (node->GetMesh())
 		{
 			LOGV("%sfound mesh\n", state.indent());
-			state.push();
-			load_mesh(state, node);
-			state.pop();
 		}
 		else if (node->GetCamera())
 		{
@@ -400,6 +576,22 @@ public:
 		state.pop();
 	}
 	
+	std::string type_from_node(FbxNode* node)
+	{
+		if (node->GetSkeleton())
+		{
+			return "skeleton";
+		}
+		else if (node->GetMesh())
+		{
+			return "mesh";
+		}
+		else
+		{
+			return "node";
+		}
+	}
+	
 	void populate_hierarchy(IndentState& state, datamodel::SceneNode* root, FbxNode* node)
 	{
 		datamodel::SceneNode* scene_node = root;
@@ -407,24 +599,8 @@ public:
 		bool is_valid = true;
 		
 		state.push();
-		
-//		if (node->GetSkeleton())
-//		{
-//			LOGV("%sfound skeleton\n", state.indent());
-//		}
-//		else if (node->GetMesh())
-//		{
-//			LOGV("%sfound mesh\n", state.indent());
-//		}
-//		else if (node->GetCamera())
-//		{
-//			LOGV("%sfound camera\n", state.indent());
-//		}
-//		else if (node->GetLight())
-//		{
-//			LOGV("%sfound light\n", state.indent());
-//		}
-		
+
+		// engine doesn't read lights or cameras
 		if (node->GetLight() || node->GetCamera())
 		{
 			is_valid = false;
@@ -437,10 +613,26 @@ public:
 			root->add_child(scene_node);
 			
 			// copy data
+			scene_node->type = type_from_node(node);
+			if (scene_node->type == "mesh")
+			{
+				scene_node->mesh = CREATE(datamodel::Mesh);
+				// populate mesh from fbxnode
+				state.push();
+				load_mesh(state, node, scene_node->mesh);
+				state.pop();
+			}
 			scene_node->name = node->GetName();
 			FbxDouble3 translation = node->LclTranslation.Get();
 			FbxDouble3 rotation = node->LclRotation.Get();
 			FbxDouble3 scaling = node->LclScaling.Get();
+			
+//			FbxAMatrix local_transform = node->EvaluateLocalTransform();
+			
+//			FbxVector4 scaling = node->EvaluateLocalScaling();
+//			FbxVector4 rotation = node->EvaluateLocalRotation();
+//			FbxVector4 translation = node->EvaluateLocalTranslation();
+			
 			
 			scene_node->scale = glm::vec3(scaling[0], scaling[1], scaling[2]);
 			scene_node->rotation = glm::quat(glm::vec3(rotation[0], rotation[1], rotation[2]));
@@ -529,6 +721,7 @@ public:
 	{
 		Json::Value jnode;
 		jnode["name"] = node->name;
+		jnode["type"] = node->type;
 		
 		Json::Value jscale;
 		jscale.append(node->scale.x);
@@ -555,6 +748,75 @@ public:
 			append_node(child, child_nodes);
 		}
 		jnode["children"] = child_nodes;
+		
+		
+		if (node->mesh)
+		{
+			Json::Value mesh_data;
+			
+			// write vertices
+			Json::Value vertices(Json::arrayValue);
+			for (size_t vertex_id = 0; vertex_id < node->mesh->vertices.size(); ++vertex_id)
+			{
+				const glm::vec3& vertex = node->mesh->vertices[vertex_id];
+				Json::Value jvertex(Json::arrayValue);
+				jvertex.append(vertex.x);
+				jvertex.append(vertex.y);
+				jvertex.append(vertex.z);
+				vertices.append(jvertex);
+			}
+			mesh_data["vertices"] = vertices;
+			
+			// write indices
+			Json::Value indices(Json::arrayValue);
+			for (size_t index_id = 0; index_id < node->mesh->indices.size(); ++index_id)
+			{
+				indices.append(node->mesh->indices[index_id]);
+			}
+			mesh_data["indices"] = indices;
+			
+			// write normals
+			Json::Value normals(Json::arrayValue);
+			for (size_t normal_id = 0; normal_id < node->mesh->normals.size(); ++normal_id)
+			{
+				const glm::vec3& normal = node->mesh->normals[normal_id];
+				Json::Value jnormal(Json::arrayValue);
+				jnormal.append(normal.x);
+				jnormal.append(normal.y);
+				jnormal.append(normal.z);
+				normals.append(jnormal);
+			}
+			mesh_data["normals"] = normals;
+			
+			
+			// write uvs
+			Json::Value uv_sets(Json::arrayValue);
+			for (size_t uv_set_id = 0; uv_set_id < node->mesh->total_uv_sets; ++uv_set_id)
+			{
+				Json::Value juvs(Json::arrayValue);
+				for (size_t uv_id = 0; uv_id < node->mesh->uvs[uv_set_id].size(); ++uv_id)
+				{
+					glm::vec2& uv = node->mesh->uvs[uv_set_id][uv_id];
+					Json::Value juv(Json::arrayValue);
+					juv.append(uv.x);
+					juv.append(uv.y);
+					juvs.append(juv);
+				}
+				uv_sets.append(juvs);
+			}
+			mesh_data["uv_sets"] = uv_sets;
+			
+			jnode["mesh"] = mesh_data;
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		// add this node
 		jnodes.append(jnode);
 	}
 
