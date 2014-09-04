@@ -54,6 +54,154 @@ namespace assets
 	// -------------------------------------------------------------
 	// Mesh
 	
+	struct MeshLoaderState
+	{
+		size_t current_geometry;
+		Mesh* mesh;
+		
+		MeshLoaderState(Mesh* input) : current_geometry(0), mesh(input) {}
+	};
+	
+	void traverse_nodes(MeshLoaderState& state, const Json::Value& node)
+	{
+		std::string node_type = node["type"].asString();
+		if (node_type == "mesh")
+		{
+			LOGV("create mesh\n");
+			Geometry* geo = &state.mesh->geometry[state.current_geometry++];
+			
+			Json::Value mesh_root = node["mesh"];
+			assert(!mesh_root.isNull());
+
+			Json::Value index_array = mesh_root["indices"];
+			Json::Value vertex_array = mesh_root["vertices"];
+			Json::Value normal_array = mesh_root["normals"];
+			Json::Value uv_sets = mesh_root["uv_sets"];
+
+			Material * default_material = assets::materials()->get_default();
+			geo->material_id = default_material->Id();
+			geo->draw_type = renderer::DRAW_INDEXED_TRIANGLES;
+			geo->name = node["name"].asString().c_str();
+			LOGV("load geometry: %s\n", geo->name());
+
+			// TODO: remove this legacy code
+			geo->index_count = index_array.size();
+			geo->vertex_count = vertex_array.size();
+			LOGV("index_count = %i, vertex_count = %i\n", geo->index_count, geo->vertex_count);
+			geo->indices.allocate(index_array.size());
+			geo->vertices.allocate(vertex_array.size());
+			geo->normals.allocate(vertex_array.size());
+			
+			geo->uvs.allocate(1);
+			geo->uvs[0].allocate(vertex_array.size());
+//			geo->uvs.allocate(vertex_array.size());
+//			geo->colors.allocate(vertex_array.size());
+
+			for (int i = 0; i < geo->indices.size(); ++i)
+			{
+				geo->indices[i] = index_array[i].asInt();
+			}
+			
+			for (int v = 0; v < geo->vertices.size(); ++v)
+			{
+				const Json::Value& vertex = vertex_array[v];
+				geo->vertices[v] = glm::vec3(vertex[0].asFloat(), vertex[1].asFloat(), vertex[2].asFloat());
+				//LOGV("v: %i | %g %g %g\n", v, geo->vertices[v].x, geo->vertices[v].y, geo->vertices[v].z);
+				
+				const Json::Value& normal = normal_array[v];
+				geo->normals[v] = glm::vec3(normal[0].asFloat(), normal[1].asFloat(), normal[2].asFloat());
+			}
+		}
+		else if (node_type == "skeleton")
+		{
+			LOGV("create skeleton\n");
+		}
+	
+		const Json::Value& children = node["children"];
+		if (!children.isNull())
+		{
+			Json::ValueIterator child_iter = children.begin();
+			for (; child_iter != children.end(); ++child_iter)
+			{
+				traverse_nodes(state, (*child_iter));
+			}
+		}
+	}
+	
+	void count_nodes(const Json::Value& node, size_t& total_meshes, size_t& total_bones)
+	{
+		assert(!node["name"].isNull());
+		assert(!node["type"].isNull());
+		std::string node_name = node["name"].asString();
+		LOGV("node %s\n", node_name.c_str());
+		
+		std::string node_type = node["type"].asString();
+		if (node_type == "mesh")
+		{
+			++total_meshes;
+		}
+		else if (node_type == "skeleton")
+		{
+			++total_bones;
+		}
+		
+		const Json::Value& children = node["children"];
+		if (!children.isNull())
+		{
+			Json::ValueIterator child_iter = children.begin();
+			for (; child_iter != children.end(); ++child_iter)
+			{
+				count_nodes((*child_iter), total_meshes, total_bones);
+			}
+		}
+	}
+	
+	
+	util::ConfigLoadStatus load_json_model(const Json::Value& root, void* data)
+	{
+		Mesh* mesh = (Mesh*)data;
+		
+		// make sure we can load the default material
+		assets::Material* default_mat = assets::materials()->load_from_path("materials/default");
+		if (!default_mat)
+		{
+			LOGE("Could not load the default material!\n");
+			return util::ConfigLoad_Failure;
+		}
+		
+		
+		// n-meshes
+		// skeleton (should this be separate?)
+		// animation (should be separate)
+		
+		// try to read all geometry
+		// first pass will examine nodes
+		
+		size_t total_meshes = 0;
+		size_t total_bones = 0;
+		
+		Json::ValueIterator node_iter = root.begin();
+		for (; node_iter != root.end(); ++node_iter)
+		{
+			Json::Value node = (*node_iter);
+			count_nodes(node, total_meshes, total_bones);
+		}
+		
+		LOGV("meshes: %i, bones: %i\n", total_meshes, total_bones);
+		mesh->geometry.allocate(total_meshes);
+		
+		MeshLoaderState state(mesh);
+		node_iter = root.begin();
+		for (; node_iter != root.end(); ++node_iter)
+		{
+			Json::Value node = (*node_iter);
+			traverse_nodes(state, node);
+		}
+		
+	
+		return util::ConfigLoad_Success;
+	}
+	
 	util::ConfigLoadStatus mesh_load_from_json( const Json::Value & root, void * data )
 	{
 		Mesh * mesh = (Mesh*)data;
@@ -633,9 +781,9 @@ namespace assets
 		}
 	} // prepare_geometry
 
-	AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, const AssetParameters & parameters )
+	AssetLoadStatus mesh_load_callback(const char * path, Mesh * mesh, const AssetParameters & parameters)
 	{
-		if ( util::json_load_with_callback(path, mesh_load_from_json, mesh, true ) == util::ConfigLoad_Success )
+		if (util::json_load_with_callback(path, /*mesh_load_from_json*/load_json_model, mesh, true) == util::ConfigLoad_Success)
 		{
 			return AssetLoad_Success;
 		}
