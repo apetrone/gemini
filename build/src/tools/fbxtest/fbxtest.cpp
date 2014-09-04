@@ -42,7 +42,7 @@
 #include <json/json.h>
 
 #include <fbxsdk.h>
-
+#include <fbxsdk/utils/fbxgeometryconverter.h>
 // need to support:
 // static (non-animated) meshes
 // hierarchical/skeletal meshes
@@ -357,14 +357,13 @@ public:
 	AutodeskFbxReader() : tools::Reader<datamodel::SceneNode>() {}
 	virtual ~AutodeskFbxReader() {}
 	
-	void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh)
+	
+	void read_vertices(IndentState& state, FbxMesh* fbxmesh, datamodel::Mesh* mesh)
 	{
-		FbxMesh* fbxmesh = node->GetMesh();
-		
 		//
 		// copy vertices
 		int total_vertices = fbxmesh->GetControlPointsCount();
-		LOGV("%stotal vertices: %i\n", state.indent(), total_vertices);
+//		LOGV("%stotal vertices: %i\n", state.indent(), total_vertices);
 		mesh->vertices.allocate(total_vertices);
 		for (int vertex_id = 0; vertex_id < total_vertices; ++vertex_id)
 		{
@@ -374,77 +373,49 @@ public:
 			mesh_vertex.y = vertex[1];
 			mesh_vertex.z = vertex[2];
 		}
-		
-		//
-		// copy indices
-		int total_indices = fbxmesh->GetPolygonVertexCount();
-		LOGV("%stotal indices: %i\n", state.indent(), total_indices);
-		//	int* indices = mesh->GetPolygonVertices();
-		mesh->indices.allocate(total_indices);
-		int* indices = fbxmesh->GetPolygonVertices();
-		memcpy(&mesh->indices[0], indices, sizeof(int)*total_indices);
+	}
 	
-		//
-		// copy normals
-		FbxGeometryElementNormal* normal_element = fbxmesh->GetElementNormal();
-		if (normal_element)
+	void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh)
+	{
+		FbxMesh* fbxmesh = node->GetMesh();
+
+		int total_layers = fbxmesh->GetLayerCount();
+		LOGV("total layers: %i\n", total_layers);
+		assert(total_layers == 1);
+
+
+
+		int bad_polys_removed = fbxmesh->RemoveBadPolygons();
+		if (bad_polys_removed > 0)
 		{
-			mesh->normals.allocate(total_vertices);
-			
-			// two mapping modes are possible: by control points and by polygon-vertex
-			if (normal_element->GetMappingMode() == FbxGeometryElement::eByControlPoint)
+			LOGV("bad_polys_removed = %i\n", bad_polys_removed);
+		}
+
+		FbxLayerElementNormal* normals = nullptr;
+		FbxLayer* normal_layer = fbxmesh->GetLayer(0, FbxLayerElement::eNormal);
+		if (normal_layer)
+		{
+			normals = normal_layer->GetNormals();
+		}
+		else
+		{
+			LOGW("No normals present; generating normals...\n");
+			fbxmesh->GenerateNormals();
+			normal_layer = fbxmesh->GetLayer(0, FbxLayerElement::eNormal);
+			assert(normal_layer != 0);
+			if (normal_layer)
 			{
-				for (int vertex_index = 0; vertex_index < total_vertices; ++vertex_index)
-				{
-					int normal_index = 0;
-					
-					// reference mode can be Direct or IndexToDirect
-					
-					if (normal_element->GetReferenceMode() == FbxGeometryElement::eDirect)
-					{
-						normal_index = vertex_index;
-					}
-					else if (normal_element->GetReferenceMode() == FbxGeometryElement::eIndexToDirect)
-					{
-						normal_index = normal_element->GetIndexArray().GetAt(vertex_index);
-					}
-					
-					FbxVector4 normal = normal_element->GetDirectArray().GetAt(normal_index);
-					glm::vec3& n = mesh->normals[vertex_index];
-					n.x = normal[0];
-					n.y = normal[1];
-					n.z = normal[2];
-				}
-			}
-			else if (normal_element->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
-			{
-				int index_by_vertex = 0;
-				for (int polygon_index = 0; polygon_index < fbxmesh->GetPolygonCount(); ++polygon_index)
-				{
-					int num_vertices = fbxmesh->GetPolygonSize(polygon_index);
-					for (int vertex = 0; vertex < num_vertices; ++vertex)
-					{
-						int normal_index = 0;
-						if (normal_element->GetReferenceMode() == FbxGeometryElement::eDirect)
-						{
-							normal_index = index_by_vertex;
-						}
-						else if (normal_element->GetReferenceMode() == FbxGeometryElement::eIndexToDirect)
-						{
-							normal_index = normal_element->GetIndexArray().GetAt(index_by_vertex);
-						}
-						
-						FbxVector4 normal = normal_element->GetDirectArray().GetAt(normal_index);
-						glm::vec3& n = mesh->normals[index_by_vertex];
-						n.x = normal[0];
-						n.y = normal[1];
-						n.z = normal[2];
-						
-						++index_by_vertex;
-					}
-				}
+				normals = normal_layer->GetNormals();
 			}
 		}
+		
+		FbxLayerElementVertexColor* colors = fbxmesh->GetLayer(0)->GetVertexColors();
+		
+		FbxLayerElementUV* uvs = fbxmesh->GetLayer(0)->GetUVs();
+		
+		fbxmesh->GenerateTangentsData();
+//		FbxLayerElementBinormal* binormals = fbxmesh->GetLayer(0)->GetBinormals();
+//		FbxLayerElementTangent* tangents = fbxmesh->GetLayer(0)->GetTangents();
 		
 		//
 		// copy uv coordinate sets
@@ -457,80 +428,80 @@ public:
 		assert(uv_set_list.GetCount() < datamodel::MAX_SUPPORTED_UV_CHANNELS);
 		
 		mesh->total_uv_sets = uv_set_list.GetCount();
+
+		assert(normals != 0);
 		
-		for (int uv_set_id = 0; uv_set_id < uv_set_list.GetCount(); ++uv_set_id)
+		int total_vertices = fbxmesh->GetControlPointsCount();
+		LOGV("%stotal vertices: %i\n", state.indent(), total_vertices);
+
+		int total_indices = fbxmesh->GetPolygonVertexCount();
+		LOGV("%stotal indices: %i\n", state.indent(), total_indices);
+		mesh->indices.allocate(total_indices);
+		int* indices = fbxmesh->GetPolygonVertices();
+		memcpy(&mesh->indices[0], indices, sizeof(int)*total_indices);
+		
+		
+		
+		mesh->vertices.allocate(total_vertices);
+		mesh->normals.allocate(total_vertices);
+		if (colors)
 		{
-			const char* uv_set_name = uv_set_list.GetStringAt(uv_set_id);
-			LOGV("read uv set \"%s\"\n", uv_set_name);
-			
-			mesh->uvs[uv_set_id].allocate(total_vertices);
-			
-			const FbxGeometryElementUV* uv_element = fbxmesh->GetElementUV(uv_set_name);
-			if (!uv_element)
+			mesh->vertex_colors.allocate(total_vertices);
+		}
+		
+		if (uvs)
+		{
+			mesh->uvs[0].allocate(total_vertices);
+		}
+
+		int total_polygons = fbxmesh->GetPolygonCount();
+		for (int poly = 0; poly < total_polygons; ++poly)
+		{
+			for (int v = 0; v < fbxmesh->GetPolygonSize(poly); ++v)
 			{
-				continue;
-			}
-			
-			// only support mapping by polygon vertex and by control point
-			if (uv_element->GetMappingMode() != FbxGeometryElement::eByPolygonVertex &&
-				uv_element->GetMappingMode() != FbxGeometryElement::eByControlPoint)
-			{
-				LOGW("ignoring uv set \"%s\"; no supported mapping mode!\n", uv_set_name);
-				continue;
-			}
-			
-			bool use_index = uv_element->GetReferenceMode() != FbxGeometryElement::eDirect;
-			const int index_count = (use_index) ? uv_element->GetIndexArray().GetCount() : 0;
-			const int poly_count = fbxmesh->GetPolygonCount();
-			
-			if (uv_element->GetMappingMode() == FbxGeometryElement::eByControlPoint)
-			{
-				for (int poly_index = 0; poly_index < poly_count; ++poly_index)
+				int vertex_position = fbxmesh->GetPolygonVertex(poly, v);
+				
+				
+				FbxVector4 vertex = fbxmesh->GetControlPoints()[vertex_position];
+				glm::vec3& m_vertex = mesh->vertices[vertex_position];
+				m_vertex.x = vertex[0];
+				m_vertex.y = vertex[1];
+				m_vertex.z = vertex[2];
+//				LOGV("v: %i [%g %g %g]\n", v, vertex[0], vertex[1], vertex[2]);
+				
+				FbxVector4 normal = normals->GetDirectArray()[vertex_position];
+				glm::vec3& m_normal = mesh->normals[vertex_position];
+				m_normal.x = normal[0];
+				m_normal.y = normal[1];
+				m_normal.z = normal[2];
+//				LOGV("n: %i [%g %g %g]\n", v, normal[0], normal[1], normal[2]);
+
+				if (colors)
 				{
-					int vertex_count = fbxmesh->GetPolygonSize(poly_index);
-					for (int vertex = 0; vertex < vertex_count; ++vertex)
-					{
-						FbxVector2 uv_value;
-						
-						// get index of current vertex
-						int poly_vertex_index = fbxmesh->GetPolygonVertex(poly_index, vertex);
-						
-						// the uv index depends on reference mode
-						int uv_index = use_index ? uv_element->GetIndexArray().GetAt(poly_vertex_index) : poly_vertex_index;
-						
-						uv_value = uv_element->GetDirectArray().GetAt(uv_index);
-						
-						glm::vec2& uv = mesh->uvs[uv_set_id][uv_index];
-						uv.x = uv_value[0];
-						uv.y = uv_value[1];
-					}
+					FbxColor color = colors->GetDirectArray()[vertex_position];
+//					LOGV("c: %i %g %g %g %g\n", v, color.mRed, color.mGreen, color.mBlue, color.mAlpha);
+					glm::vec4& m_color = mesh->vertex_colors[vertex_position];
+					m_color.r = color.mRed;
+					m_color.g = color.mGreen;
+					m_color.b = color.mBlue;
+					m_color.a = color.mAlpha;
 				}
-			}
-			else if (uv_element->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
-			{
-				int poly_counter = 0;
-				for (int poly_index = 0; poly_index < poly_count; ++poly_index)
+				
+				if (uvs)
 				{
-					int vertex_count = fbxmesh->GetPolygonSize(poly_index);
-					for (int vertex = 0; vertex < vertex_count; ++vertex)
-					{
-						if (poly_counter < index_count)
-						{
-							FbxVector2 uv_value;
-							
-							int uv_index = use_index ? uv_element->GetIndexArray().GetAt(poly_counter) : poly_index;
-							uv_value = uv_element->GetDirectArray().GetAt(uv_index);
-							
-							glm::vec2& uv = mesh->uvs[uv_set_id][uv_index];
-							uv.x = uv_value[0];
-							uv.y = uv_value[1];
-							
-							++poly_counter;
-						}
-					}
+					int mesh_index = fbxmesh->GetTextureUVIndex(poly, v);
+					FbxVector2 uv = uvs->GetDirectArray()[mesh_index];
+//					LOGV("mesh_index: %i [%g %g]\n", uv[0], uv[1]);
+					glm::vec2& m_uv = mesh->uvs[0][vertex_position];
+					m_uv.x = uv[0];
+					m_uv.y = uv[1];
 				}
 			}
 		}
+		
+		// polygon count returns triangles if geometry converter was used to
+		// triangulate the scene.
+		LOGV("%striangles count: %i\n", state.indent(), fbxmesh->GetPolygonCount());
 	}
 	
 	void print_node(IndentState& state, FbxNode* node)
@@ -651,6 +622,10 @@ public:
 	{
 		LOGV("TODO: switch this over to FbxStream\n");
 //		http://docs.autodesk.com/FBX/2014/ENU/FBX-SDK-Documentation/index.html
+//		http://www.gamedev.net/topic/653502-useful-things-you-might-want-to-know-about-fbxsdk/?hl=%2Bfbx+%2Bsdk#entry5149612
+//		http://www.gamedev.net/page/resources/_/technical/graphics-programming-and-theory/how-to-work-with-fbx-sdk-r3582
+//		http://forums.autodesk.com/t5/fbx-sdk/how-to-get-uv-coord-per-vertex/td-p/4239532
+// 		http://forums.autodesk.com/t5/fbx-sdk/splitmeshespermaterial-reached-limits/td-p/4239623
 		const char* path = (const char*)data_source.get_data();
 
 		LOGV("loading model: %s\n", path);
@@ -668,9 +643,15 @@ public:
 		}
 		
 		
+		
+		
 		FbxScene* scene = FbxScene::Create(m, "test_scene");
 		
 		importer->Import(scene);
+		
+		FbxGeometryConverter converter(m);
+		converter.Triangulate(scene, true);
+		//converter.SplitMeshesPerMaterial(scene, false);
 		
 		// safe to destroy the importer after importing a scene
 		importer->Destroy();
@@ -788,6 +769,20 @@ public:
 			}
 			mesh_data["normals"] = normals;
 			
+			// write vertex_colors
+			Json::Value vertex_colors(Json::arrayValue);
+			for (size_t color_id = 0; color_id < node->mesh->vertex_colors.size(); ++color_id)
+			{
+				const glm::vec4& color = node->mesh->vertex_colors[color_id];
+				Json::Value jcolor(Json::arrayValue);
+				jcolor.append(color.r);
+				jcolor.append(color.g);
+				jcolor.append(color.b);
+				jcolor.append(color.a);
+				vertex_colors.append(jcolor);
+			}
+			mesh_data["vertex_colors"] = vertex_colors;
+			
 			
 			// write uvs
 			Json::Value uv_sets(Json::arrayValue);
@@ -823,17 +818,13 @@ public:
 
 	virtual void write(datamodel::SceneNode* root, util::DataStream& source)
 	{
-		Json::Value jroot;
-		Json::Value jnodes(Json::arrayValue);
-			
-		
+		Json::Value jroot(Json::arrayValue);
+
 		for (auto child : root->children)
 		{
-			append_node(child, jnodes);
+			append_node(child, jroot);
 		}
-		
-		jroot["children"] = jnodes;
-		
+			
 		Json::StyledWriter writer;
 		
 		std::string buffer = writer.write(jroot);
