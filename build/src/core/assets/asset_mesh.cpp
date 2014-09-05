@@ -368,10 +368,10 @@ namespace assets
 					Json::Value& uv = uvs[i];
 					for( int v = 0; v < geometry->vertex_count; ++v )
 					{
-						geometry->uvs[i][v].u = uv[v*2].asFloat();
+						geometry->uvs[i][v].s = uv[v*2].asFloat();
 						// Invert the UV coordinates on models when we import them.
 						// TODO: should this be done in the exporter?
-						geometry->uvs[i][v].v = 1.0f - uv[v*2+1].asFloat();
+						geometry->uvs[i][v].t = 1.0f - uv[v*2+1].asFloat();
 					}
 				}
 			}

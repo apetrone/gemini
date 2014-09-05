@@ -298,12 +298,6 @@ namespace renderer
 		uint32_t depth_texture_id;
 	}; // RenderTarget
 
-	
-	struct UV
-	{
-		float u, v;
-	};
-	
 	struct Geometry
 	{
 		unsigned short attributes;
@@ -316,7 +310,7 @@ namespace renderer
 		FixedArray<glm::vec3> vertices;
 		FixedArray<glm::vec3> normals;
 		FixedArray<Color> colors;
-		FixedArray< FixedArray<UV> > uvs;
+		FixedArray< FixedArray<glm::vec2> > uvs;
 		FixedArray<glm::vec4> blend_indices;
 		FixedArray<glm::vec4> blend_weights;
 		FixedArray<renderer::IndexType> indices;

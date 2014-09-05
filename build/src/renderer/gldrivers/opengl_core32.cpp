@@ -951,12 +951,12 @@ void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, render
 
 		if ( !geometry->uvs[0].empty() )
 		{
-			ms.write( &geometry->uvs[0][ vertex_id ], sizeof(renderer::UV) );
+			ms.write( &geometry->uvs[0][ vertex_id ], sizeof(glm::vec2) );
 		}
 
 		if ( geometry->uvs.size() > 1 && !geometry->uvs[1].empty() )
 		{
-			ms.write( &geometry->uvs[1][ vertex_id ], sizeof(renderer::UV) );
+			ms.write( &geometry->uvs[1][ vertex_id ], sizeof(glm::vec2) );
 		}
 		
 		if ( !geometry->blend_indices.empty() && !geometry->blend_weights.empty() )
