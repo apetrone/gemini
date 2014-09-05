@@ -55,7 +55,7 @@ const real R2D_180PI = (180.0/PI);
 
 namespace mathlib
 {
-	inline real degree_to_radians(real degrees)
+	inline real degrees_to_radians(real degrees)
 	{
 		return degrees * D2R_PI180;
 	}

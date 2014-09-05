@@ -76,7 +76,7 @@ namespace debugdraw
 					vertex = &vertices[v];
 				}
 				
-				radians = mathlib::degree_to_radians(circle_step * degree_step);
+				radians = mathlib::degrees_to_radians(circle_step * degree_step);
 				ca = (radius * cos(radians));
 				sa = (radius * sin(radians));
 				if ( plane == 0 )
