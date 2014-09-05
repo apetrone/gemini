@@ -128,16 +128,16 @@ void Camera::move_backward( real dt )
 
 void Camera::update_view()
 {
-	float _yaw = DegToRad( yaw );
+	float _yaw = mathlib::degree_to_radians(yaw);
 	float _pitch;
 	
 	if ( invert_y_axis )
 	{
-		_pitch = DegToRad( -pitch );
+		_pitch = mathlib::degree_to_radians(-pitch);
 	}
 	else
 	{
-		_pitch = DegToRad( pitch );
+		_pitch = mathlib::degree_to_radians(pitch);
 	}
 	
 	float sy = sin(_yaw);
