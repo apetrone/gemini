@@ -24,7 +24,7 @@
 #include <gemini/util/fixedarray.h>
 
 #include "scene_graph.h"
-#include "meshnode.h"
+#include "skeletalnode.h"
 #include "assets/asset_mesh.h"
 #include "keyframechannel.h"
 #include "assets/asset_mesh.h"
@@ -47,9 +47,26 @@ namespace scenegraph
 		void post_processing(assets::Mesh* mesh, int32_t node_index);
 		
 		virtual void update(float delta_seconds);
+		
+		virtual Node* clone() { return CREATE(AnimatedNode, *this); }
 	};
 
-	struct SkeletalNode : public MeshNode
+	struct RenderNode : public AnimatedNode
+	{
+		uint16_t material_id;
+		uint16_t shader_id;
+		
+		assets::Geometry* geometry;
+		assets::Mesh* mesh;
+		
+		bool visible;
+		
+		RenderNode();
+		
+		virtual Node* clone() { return CREATE(RenderNode, *this); }
+	};
+
+	struct SkeletalNode : public RenderNode
 	{
 		// TODO: This should be moved into an animation controller
 		// which can manage multiple animation skeletal transforms
@@ -58,10 +75,11 @@ namespace scenegraph
 		FixedArray<glm::mat4> final_transforms;
 
 		SkeletalNode();
-		virtual ~SkeletalNode() {}
 		void setup_skeleton();
 		virtual void update(float delta_seconds);
 		void update_skeleton();
+		
+		virtual Node* clone() { return CREATE(SkeletalNode, *this); }
 	};
 }; // namespace scenegraph
 

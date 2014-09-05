@@ -66,6 +66,11 @@ namespace scenegraph
 		Node::update(delta_seconds);
 	}
 	
+	RenderNode::RenderNode() : visible(true)
+	{
+		type = RENDER;
+	}
+	
 	SkeletalNode::SkeletalNode()
 	{
 		type = scenegraph::SKELETON;
@@ -98,7 +103,7 @@ namespace scenegraph
 
 	void SkeletalNode::update(float delta_seconds)
 	{
-		MeshNode::update(delta_seconds);
+		RenderNode::update(delta_seconds);
 		if (this->visible)
 		{
 			update_skeleton();

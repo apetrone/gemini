@@ -37,7 +37,7 @@ namespace scenegraph
 	{
 		SCENEROOT, 		// the scene root
 		NODE, 			// generic node
-		MESH,			// geometry/mesh node
+		STATIC_MESH,	// geometry/mesh node
 		RENDER,			// is a render node
 		SKELETON		// render a skeleton
 	};
@@ -66,6 +66,7 @@ namespace scenegraph
 		NodeType type;
 
 		Node();
+		Node(const Node& other);
 		virtual ~Node();
 		
 		void add_child(Node* child);
@@ -73,6 +74,8 @@ namespace scenegraph
 		virtual void update(float delta_seconds);
 		void clear();
 		NodeType get_type() const { return type; }
+		
+		virtual Node* clone() { return CREATE(Node, *this); }
 	};
 
 	struct Visitor

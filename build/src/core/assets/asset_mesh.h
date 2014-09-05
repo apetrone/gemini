@@ -33,6 +33,8 @@
 #include <gemini/util/fixedarray.h>
 #include "keyframechannel.h"
 
+#include "scene_graph.h"
+
 #include <json/json.h>
 
 #define GEMINI_ZUP_TO_YUP_CONVERSION 1
@@ -111,11 +113,15 @@ namespace assets
 		FixedArray<Geometry> geometry_vn;
 		FixedArray<Bone> bones;
 		glm::mat4 world_matrix;
+				
 		StackString<MAX_PATH_SIZE> path;
+		
+		scenegraph::Node* scene_root;
 		
 		unsigned short total_bones;
 		
 		Mesh();
+		~Mesh();
 		void reset();
 
 		virtual void release();

@@ -26,6 +26,8 @@
 #include "assets/asset_mesh.h"
 #include "renderer/renderer.h"
 
+#include "skeletalnode.h"
+
 using namespace renderer;
 
 namespace assets
@@ -62,13 +64,21 @@ namespace assets
 		MeshLoaderState(Mesh* input) : current_geometry(0), mesh(input) {}
 	};
 	
-	void traverse_nodes(MeshLoaderState& state, const Json::Value& node)
+	void traverse_nodes(MeshLoaderState& state, const Json::Value& node, scenegraph::Node* scene_root)
 	{
 		std::string node_type = node["type"].asString();
+		scenegraph::Node* node_root = nullptr;
+		
 		if (node_type == "mesh")
 		{
 			LOGV("create mesh\n");
 			Geometry* geo = &state.mesh->geometry[state.current_geometry++];
+			scenegraph::RenderNode* render_node = CREATE(scenegraph::RenderNode);
+			scene_root->add_child(render_node);
+			node_root = render_node;
+			render_node->geometry = geo;
+			render_node->type = scenegraph::STATIC_MESH;
+			render_node->name = node["name"].asString().c_str();
 			
 			Json::Value mesh_root = node["mesh"];
 			assert(!mesh_root.isNull());
@@ -80,6 +90,11 @@ namespace assets
 
 			Material * default_material = assets::materials()->get_default();
 			geo->material_id = default_material->Id();
+			render_node->material_id = geo->material_id;
+			
+			assets::Shader* shader = assets::shaders()->load_from_path("shaders/world");
+			render_node->shader_id = shader->Id();
+			
 			geo->draw_type = renderer::DRAW_INDEXED_TRIANGLES;
 			geo->name = node["name"].asString().c_str();
 			LOGV("load geometry: %s\n", geo->name());
@@ -92,8 +107,9 @@ namespace assets
 			geo->vertices.allocate(vertex_array.size());
 			geo->normals.allocate(vertex_array.size());
 			
-			geo->uvs.allocate(1);
-			geo->uvs[0].allocate(vertex_array.size());
+			LOGV("uv sets: %i\n", uv_sets.size());
+			
+			geo->uvs.allocate(uv_sets.size());
 //			geo->uvs.allocate(vertex_array.size());
 //			geo->colors.allocate(vertex_array.size());
 
@@ -106,16 +122,42 @@ namespace assets
 			{
 				const Json::Value& vertex = vertex_array[v];
 				geo->vertices[v] = glm::vec3(vertex[0].asFloat(), vertex[1].asFloat(), vertex[2].asFloat());
-				//LOGV("v: %i | %g %g %g\n", v, geo->vertices[v].x, geo->vertices[v].y, geo->vertices[v].z);
+//				LOGV("v: %i | %g %g %g\n", v, geo->vertices[v].x, geo->vertices[v].y, geo->vertices[v].z);
 				
 				const Json::Value& normal = normal_array[v];
 				geo->normals[v] = glm::vec3(normal[0].asFloat(), normal[1].asFloat(), normal[2].asFloat());
+			}
+			
+			for (int set_id = 0; set_id < uv_sets.size(); ++set_id)
+			{
+				geo->uvs[set_id].allocate(vertex_array.size());
+				
+				for (int v = 0; v < geo->vertices.size(); ++v)
+				{
+					const Json::Value& texcoord = uv_sets[set_id][v];
+					glm::vec2& uv = geo->uvs[set_id][v];
+					uv.s = texcoord[0].asFloat();
+					uv.t = texcoord[1].asFloat();
+				}
 			}
 		}
 		else if (node_type == "skeleton")
 		{
 			LOGV("create skeleton\n");
 		}
+		
+
+		const Json::Value& scaling = node["scaling"];
+		const Json::Value& rotation = node["rotation"];
+		const Json::Value& translation = node["translation"];
+		assert(!scaling.isNull() && !rotation.isNull() && !translation.isNull());
+
+		node_root->local_scale = glm::vec3(scaling[0].asFloat(), scaling[1].asFloat(), scaling[2].asFloat());
+		node_root->local_rotation = glm::quat(rotation[3].asFloat(), rotation[0].asFloat(), rotation[1].asFloat(), rotation[2].asFloat());
+		node_root->local_position = glm::vec3(translation[0].asFloat(), translation[1].asFloat(), translation[2].asFloat());
+		LOGV("scale: %g %g %g\n", node_root->local_scale.x, node_root->local_scale.y, node_root->local_scale.z);
+		LOGV("rotation: %g %g %g %g\n", node_root->local_rotation.x, node_root->local_rotation.y, node_root->local_rotation.z, node_root->local_rotation.w);
+		LOGV("translation: %g %g %g\n", node_root->local_position.x, node_root->local_position.y, node_root->local_position.z);
 	
 		const Json::Value& children = node["children"];
 		if (!children.isNull())
@@ -123,7 +165,7 @@ namespace assets
 			Json::ValueIterator child_iter = children.begin();
 			for (; child_iter != children.end(); ++child_iter)
 			{
-				traverse_nodes(state, (*child_iter));
+				traverse_nodes(state, (*child_iter), node_root);
 			}
 		}
 	}
@@ -169,6 +211,8 @@ namespace assets
 			return util::ConfigLoad_Failure;
 		}
 		
+		mesh->scene_root = CREATE(scenegraph::Node);
+		mesh->scene_root->name = mesh->path();
 		
 		// n-meshes
 		// skeleton (should this be separate?)
@@ -195,9 +239,8 @@ namespace assets
 		for (; node_iter != root.end(); ++node_iter)
 		{
 			Json::Value node = (*node_iter);
-			traverse_nodes(state, node);
+			traverse_nodes(state, node, mesh->scene_root);
 		}
-		
 	
 		return util::ConfigLoad_Success;
 	}
@@ -758,6 +801,11 @@ namespace assets
 	Mesh::Mesh()
 	{
 	} // Mesh
+	
+	Mesh::~Mesh()
+	{
+		DESTROY(Node, scene_root);
+	}
 
 	
 //	void Mesh::alloc( unsigned int num_geometry )
@@ -781,8 +829,9 @@ namespace assets
 		}
 	} // prepare_geometry
 
-	AssetLoadStatus mesh_load_callback(const char * path, Mesh * mesh, const AssetParameters & parameters)
+	AssetLoadStatus mesh_load_callback(const char* path, Mesh* mesh, const AssetParameters& parameters)
 	{
+		mesh->path = path;
 		if (util::json_load_with_callback(path, /*mesh_load_from_json*/load_json_model, mesh, true) == util::ConfigLoad_Success)
 		{
 			return AssetLoad_Success;

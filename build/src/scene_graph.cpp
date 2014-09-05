@@ -50,6 +50,23 @@ namespace scenegraph
 		type = NODE;
 	}
 	
+	Node::Node(const Node& other)
+	{
+		name = other.name;
+		type = other.type;
+		
+		local_scale = other.local_scale;
+		local_rotation = other.local_rotation;
+		local_position = other.local_position;
+		
+		local_to_world = other.local_to_world;
+		local_to_pivot = other.local_to_pivot;
+		
+		world_transform = other.world_transform;
+		
+		parent = other.parent;
+	}
+	
 	Node::~Node()
 	{
 		clear();
@@ -97,9 +114,11 @@ namespace scenegraph
 		start = root->children.begin();
 		end = root->children.end();
 		
+		visitor->visit((root));
+		
 		while (start != end)
 		{
-			visitor->visit((*start));
+			recursive_visit_nodes(*start, visitor);
 			++start;
 		}
 	}

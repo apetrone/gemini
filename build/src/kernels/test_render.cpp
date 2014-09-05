@@ -37,7 +37,6 @@
 #include "font.h"
 #include "assets/asset_font.h"
 #include "scene_graph.h"
-#include "meshnode.h"
 #include "skeletalnode.h"
 #include "physics.h"
 #include "gemgl.h"
@@ -291,7 +290,7 @@ public:
 	
 	glm::vec3 light_position;
 	float current_time;
-	scenegraph::MeshNode* ground;
+	scenegraph::Node* ground;
 	bool advance_time;
 
 	renderer::RenderTarget* rt;
@@ -332,7 +331,7 @@ public:
 					// force mesh reload
 					assets::Mesh* mesh = assets::meshes()->load_from_path(item.c_str(), assets::AssetParameters(), true);
 					
-					add_mesh_to_root(root, item.c_str(), false);
+					//add_mesh_to_root(root, item.c_str(), false);
 				}
 				else if (dirname == "materials")
 				{
@@ -415,18 +414,30 @@ public:
 	{
 		++total_scene_nodes_visited;
 
-		glm::mat4 object_to_local = glm::translate(glm::mat4(1.0), node->local_position);
-		node->world_transform = object_to_local * node->local_to_world;
 
-#if GEMINI_ZUP_TO_YUP_CONVERSION
-		if (node->type == scenegraph::MESH || node->type == scenegraph::SKELETON)
+		glm::mat4 tr = glm::scale(glm::mat4(1.0), node->local_scale) *
+			glm::toMat4(node->local_rotation) *
+			glm::translate(glm::mat4(1.0), node->local_position);
+
+//		glm::mat4 object_to_local = glm::translate(glm::mat4(1.0), node->local_position);
+		node->world_transform = tr * node->local_to_world;
+		
+		if (node->parent)
 		{
-			scenegraph::MeshNode* meshnode = static_cast<scenegraph::MeshNode*>(node);
-			node->world_transform = meshnode->mesh->node_transform * node->world_transform;
+			LOGV("using parent (%s) for %s\n", node->parent->name(), node->name());
+			node->world_transform = node->parent->world_transform * node->world_transform;
 		}
-#elif !defined(GEMINI_ZUP_TO_YUP_CONVERSION)
-	#error No conversion to Y-up! Missing asset_mesh.h include.
-#endif
+
+//		LOGV("visit: %s\n", node->name());
+//#if GEMINI_ZUP_TO_YUP_CONVERSION
+//		if (node->type == scenegraph::MESH || node->type == scenegraph::SKELETON)
+//		{
+//			scenegraph::MeshNode* meshnode = static_cast<scenegraph::MeshNode*>(node);
+//			node->world_transform = meshnode->mesh->node_transform * node->world_transform;
+//		}
+//#elif !defined(GEMINI_ZUP_TO_YUP_CONVERSION)
+//	#error No conversion to Y-up! Missing asset_mesh.h include.
+//#endif
 		
 		return 0;
 	}
@@ -437,6 +448,18 @@ public:
 		params.window_width = 1280;
 		params.window_height = 720;
 		return kernel::Application_Success;
+	}
+
+
+	void clone_to_scene(scenegraph::Node* template_node, scenegraph::Node* root)
+	{
+		scenegraph::Node* newnode = template_node->clone();
+		root->add_child(newnode);
+		
+		for (auto child : template_node->children)
+		{
+			clone_to_scene(child, newnode);
+		}
 	}
 
 	scenegraph::Node* add_mesh_to_root(scenegraph::Node* root, const char* path, bool build_physics_from_mesh)
@@ -450,73 +473,49 @@ public:
 		assets::Mesh* mesh = assets::meshes()->load_from_path(path);
 		if (mesh)
 		{
-			assets::Shader* shader = nullptr;
-			
-			// prepare geometry (this uploads data to the gpu)
 			mesh->prepare_geometry();
-			
-			scenegraph::MeshNode* mesh_node = nullptr;
-			scenegraph::SkeletalNode* skel_node = nullptr;
-			
-			if (!mesh->bones.empty())
-			{
-				LOGV("\"%s\" created as a skeletal node\n", path);
-				node = skel_node = CREATE(scenegraph::SkeletalNode);
-				skel_node->mesh = mesh;
-				shader = character;
-			}
-			else
-			{
-				LOGV("\"%s\" created as a mesh node\n", path);
-				node = mesh_node = CREATE(scenegraph::MeshNode);
-				mesh_node->mesh = mesh;
-				shader = world;
-			}
-			
-			assert(shader != nullptr);
-			
-			// using this node as the parent node; we create render nodes as children
-			for (size_t id = 0; id < mesh->geometry.size(); ++id)
-			{
-				
-				assets::Geometry* geometry = &mesh->geometry[id];
-				assets::Material* geometry_material = nullptr; //material;
-				
-				scenegraph::RenderNode* rn = 0;
-				rn = CREATE(scenegraph::RenderNode);
-				rn->geometry = geometry;
-				rn->material_id = geometry->material_id;
-				if (!geometry_material)
-				{
-					geometry_material = assets::materials()->find_with_id(geometry->material_id);
-				}
+		
+			clone_to_scene(mesh->scene_root, root);
+		
+//			assets::Shader* shader = nullptr;
+//
+//			
+//			scenegraph::MeshNode* mesh_node = nullptr;
+//			scenegraph::SkeletalNode* skel_node = nullptr;
+//			
+//			if (!mesh->bones.empty())
+//			{
+//				LOGV("\"%s\" created as a skeletal node\n", path);
+//				node = skel_node = CREATE(scenegraph::SkeletalNode);
+//				skel_node->mesh = mesh;
+//				shader = character;
+//			}
+//			else
+//			{
+//				LOGV("\"%s\" created as a mesh node\n", path);
+//				node = mesh_node = CREATE(scenegraph::MeshNode);
+//				mesh_node->mesh = mesh;
+//				shader = world;
+//			}
+//			
+//			assert(shader != nullptr);
 
-				rn->material = geometry_material;
-				rn->shader = shader;
-				
-				node->add_child(rn);
-			}
-			
 			if (build_physics_from_mesh)
 			{
 				physics::create_physics_for_mesh(mesh);
 			}
-			
-			if (skel_node)
-			{
-				skel_node->setup_skeleton();
-			}
-			
-			root->add_child(node);
+//
+//			if (skel_node)
+//			{
+//				skel_node->setup_skeleton();
+//			}
+
 		}
 		else
 		{
 			LOGW("Unable to load model: %s\n", path);
 		}
-		
-		
-		
-		
+
 		return node;
 	}
 
@@ -550,7 +549,7 @@ public:
 //		root->add_child(skydome);
 
 //		add_mesh_to_root(root, "models/future", false);
-		add_mesh_to_root(root, "models/character", false);
+		scenegraph::Node* ground = add_mesh_to_root(root, "models/ground", false);
 
 //		scenegraph::SkeletalNode* sn = CREATE(scenegraph::SkeletalNode);
 //		sn->load_mesh("models/test_yup", false, 0, character);
@@ -599,7 +598,7 @@ public:
 		debugdraw::startup(1024);
 
 		camera.target_lookatOffset = glm::vec3(0, 0, 1);
-		camera.perspective( 50.0f, params.render_width, params.render_height, 0.1f, 8192.0f );
+		camera.perspective( 50.0f, params.render_width, params.render_height, 0.1f, 32768.0f );
 		
 		// This is appropriate for drawing 3D models, but not sprites
 		camera.set_absolute_position( glm::vec3(1, 1, 1.0f) );
