@@ -425,7 +425,7 @@ public:
 		LOGV("total_uv_sets: %i\n", uv_set_list.GetCount());
 		
 		// don't need to assert here; just need to ignore unsupported channels
-		assert(uv_set_list.GetCount() < datamodel::MAX_SUPPORTED_UV_CHANNELS);
+		assert(uv_set_list.GetCount() <= datamodel::MAX_SUPPORTED_UV_CHANNELS);
 		
 		mesh->total_uv_sets = uv_set_list.GetCount();
 
@@ -603,9 +603,13 @@ public:
 //			FbxVector4 scaling = node->EvaluateLocalScaling();
 //			FbxVector4 rotation = node->EvaluateLocalRotation();
 //			FbxVector4 translation = node->EvaluateLocalTranslation();
-			
-			
+
+
 			scene_node->scale = glm::vec3(scaling[0], scaling[1], scaling[2]);
+			// convert these to radians
+			rotation[0] = mathlib::degrees_to_radians(rotation[0]);
+		  	rotation[1] = mathlib::degrees_to_radians(rotation[1]);
+		  	rotation[2] = mathlib::degrees_to_radians(rotation[2]);
 			scene_node->rotation = glm::quat(glm::vec3(rotation[0], rotation[1], rotation[2]));
 			scene_node->translation = glm::vec3(translation[0], translation[1], translation[2]);
 			
