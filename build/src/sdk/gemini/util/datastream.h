@@ -72,16 +72,16 @@ namespace util
 		size_t current_offset() const;
 		template <class Type>
 		
-		int write( const Type & value )
+		int write(const Type & value)
 		{
-			return write( &value, sizeof(Type) );
+			return write(&value, sizeof(Type));
 		}
 		
 		
 		template <class Type>
-		int read( Type & destination )
+		int read(Type & destination)
 		{
-			return read( &destination, sizeof(Type) );
+			return read(&destination, sizeof(Type));
 		}
 		
 		virtual uint8_t* get_data() const;
