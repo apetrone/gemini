@@ -46,6 +46,7 @@
 
 #include "common.h"
 #include "datamodel.h"
+#include "common/extension.h"
 
 // need to support:
 // static (non-animated) meshes
@@ -60,108 +61,9 @@
 
 using namespace tools;
 
-#include <map>
-#include <string>
 
 namespace tools
 {
-	template <class Type>
-	class Reader
-	{
-
-	public:
-		Reader() {}
-		virtual ~Reader() {}
-		
-		virtual void read(Type* model, util::DataStream& data) = 0;
-	};
-	
-	template <class Type>
-	class Writer
-	{
-	public:
-		Writer() {}
-		virtual ~Writer() {}
-		
-		virtual void write(Type* model, util::DataStream& data) = 0;
-	};
-	
-	template <class Type>
-	struct ArchiverExtension
-	{
-		Reader<Type>* reader;
-		Writer<Type>* writer;
-
-		ArchiverExtension() : reader(nullptr), writer(nullptr) {}
-	};
-	
-	template <class Type>
-	struct ExtensionRegistry
-	{
-		typedef std::map<std::string, ArchiverExtension<Type> > ExtensionMap;
-
-		static ExtensionMap extensions;
-	};
-	
-	template <class Type>
-	typename ExtensionRegistry<Type>::ExtensionMap ExtensionRegistry<Type>::extensions;
-	
-	
-	template <class Type>
-	void register_extension(const std::string& extension, const ArchiverExtension<Type> & ptr)
-	{
-		ExtensionRegistry<Type>::extensions.insert(std::pair<std::string, ArchiverExtension<Type> >(extension, ptr));
-	}
-	
-	template <class Type>
-	void purge_registry()
-	{
-		for (auto data : ExtensionRegistry<Type>::extensions)
-		{
-			ArchiverExtension<Type>& ext = data.second;
-			if (ext.reader)
-			{
-				DESTROY(Reader<Type>, ext.reader);
-			}
-			
-			if (ext.writer)
-			{
-				DESTROY(Writer<Type>, ext.writer);
-			}
-		}
-	}
-
-
-	template <class Type>
-	const ArchiverExtension<Type> find_archiver_for_extension(const std::string& target_extension, uint8_t flags = 0)
-	{
-		for (auto v : ExtensionRegistry<Type>::extensions)
-		{
-			const ArchiverExtension<Type>& archiver_extension = v.second;
-			
-			if (target_extension == v.first)
-			{
-				if (flags == 0)
-				{
-					return archiver_extension;
-				}
-//				
-//				if ((flags & 1) && archiver_extension.reader)
-//				{
-//					return archiver_extension;
-//				}
-//				else if ((flags & 2) && archiver_extension.writer)
-//				{
-//					return archiver_extension;
-//				}
-			}
-		}
-	
-		return ArchiverExtension<Type>();
-	}
-
-
-
 	core::Result convert_scene(const char* input_path, const char* output_path)
 	{
 		datamodel::SceneNode root;
@@ -170,7 +72,7 @@ namespace tools
 		std::string ext = "fbx";
 		
 		// verify we can read the format
-		const ArchiverExtension<datamodel::SceneNode> archiver_extension = find_archiver_for_extension<datamodel::SceneNode>(ext);
+		const Extension<datamodel::SceneNode> archiver_extension = find_entry_for_extension<datamodel::SceneNode>(ext);
 		tools::Reader<datamodel::SceneNode>* reader = archiver_extension.reader;
 		if (!reader)
 		{
@@ -180,7 +82,7 @@ namespace tools
 		
 		// verify we can write the format
 		ext = "model";
-		const ArchiverExtension<datamodel::SceneNode> writer_extension = find_archiver_for_extension<datamodel::SceneNode>(ext);
+		const Extension<datamodel::SceneNode> writer_extension = find_entry_for_extension<datamodel::SceneNode>(ext);
 		tools::Writer<datamodel::SceneNode>* writer = writer_extension.writer;
 		if (!writer)
 		{
@@ -207,7 +109,7 @@ namespace tools
 	}
 }
 
-using namespace tools;
+
 
 class AutodeskFbxReader : public tools::Reader<datamodel::SceneNode>
 {
@@ -789,7 +691,7 @@ public:
 
 void register_types()
 {
-	ArchiverExtension<datamodel::SceneNode> ext;
+	Extension<datamodel::SceneNode> ext;
 	ext.reader = CREATE(AutodeskFbxReader);
 	register_extension<datamodel::SceneNode>("fbx", ext);
 	

@@ -21,7 +21,109 @@
 // -------------------------------------------------------------
 #pragma once
 
-namespace prism
-{
+#include <string>
+#include <map>
 
+#include <gemini/util/datastream.h>
+
+namespace tools
+{
+	// interface for reader extensions
+	template <class Type>
+	class Reader
+	{
+	public:
+		Reader() {}
+		virtual ~Reader() {}
+		
+		virtual void read(Type* model, util::DataStream& data) = 0;
+	};
+	
+	// interface for writer extensions
+	template <class Type>
+	class Writer
+	{
+	public:
+		Writer() {}
+		virtual ~Writer() {}
+		
+		virtual void write(Type* model, util::DataStream& data) = 0;
+	};
+	
+	// generic 'extension' data; subject to change
+	template <class Type>
+	struct Extension
+	{
+		Reader<Type>* reader;
+		Writer<Type>* writer;
+		
+		Extension() : reader(nullptr), writer(nullptr) {}
+	};
+	
+	// registry to keep track of extensions via file path extension
+	template <class Type>
+	struct ExtensionRegistry
+	{
+		typedef std::map<std::string, Extension<Type> > ExtensionMap;
+		
+		static ExtensionMap extensions;
+	};
+	
+	template <class Type>
+	typename ExtensionRegistry<Type>::ExtensionMap ExtensionRegistry<Type>::extensions;
+	
+	// map a file path extension to an extension datamodel type
+	template <class Type>
+	void register_extension(const std::string& extension, const Extension<Type> & ptr)
+	{
+		ExtensionRegistry<Type>::extensions.insert(std::pair<std::string, Extension<Type> >(extension, ptr));
+	}
+	
+	// purge a type registry
+	template <class Type>
+	void purge_registry()
+	{
+		for (auto data : ExtensionRegistry<Type>::extensions)
+		{
+			Extension<Type>& ext = data.second;
+			if (ext.reader)
+			{
+				DESTROY(Reader<Type>, ext.reader);
+			}
+			
+			if (ext.writer)
+			{
+				DESTROY(Writer<Type>, ext.writer);
+			}
+		}
+	}
+	
+	// get the extension struct for a file path extension
+	template <class Type>
+	const Extension<Type> find_entry_for_extension(const std::string& target_extension, uint8_t flags = 0)
+	{
+		for (auto v : ExtensionRegistry<Type>::extensions)
+		{
+			const Extension<Type>& archiver_extension = v.second;
+			
+			if (target_extension == v.first)
+			{
+				if (flags == 0)
+				{
+					return archiver_extension;
+				}
+				//
+				//				if ((flags & 1) && archiver_extension.reader)
+				//				{
+				//					return archiver_extension;
+				//				}
+				//				else if ((flags & 2) && archiver_extension.writer)
+				//				{
+				//					return archiver_extension;
+				//				}
+			}
+		}
+		
+		return Extension<Type>();
+	}
 };
