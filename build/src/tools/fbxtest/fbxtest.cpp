@@ -342,26 +342,7 @@ public:
 
 	AutodeskFbxReader() : tools::Reader<datamodel::SceneNode>() {}
 	virtual ~AutodeskFbxReader() {}
-	
-	
-	void read_vertices(IndentState& state, FbxMesh* fbxmesh, datamodel::Mesh* mesh)
-	{
-		//
-		// copy vertices
-		int total_vertices = fbxmesh->GetControlPointsCount();
-//		LOGV("%stotal vertices: %i\n", state.indent(), total_vertices);
-		mesh->vertices.allocate(total_vertices);
-		for (int vertex_id = 0; vertex_id < total_vertices; ++vertex_id)
-		{
-			const FbxVector4& vertex = fbxmesh->GetControlPointAt(vertex_id);
-			glm::vec3& mesh_vertex = mesh->vertices[vertex_id];
-			mesh_vertex.x = vertex[0];
-			mesh_vertex.y = vertex[1];
-			mesh_vertex.z = vertex[2];
-		}
-	}
-	
-	
+		
 	int get_layer_element_index(
 								FbxLayerElement::EMappingMode mapping_mode,
 								FbxLayerElement::EReferenceMode reference_mode,
@@ -511,13 +492,11 @@ public:
 			{
 				int vertex_position = fbxmesh->GetPolygonVertex(poly, v);
 				
-				
 				FbxVector4 vertex = fbxmesh->GetControlPoints()[vertex_position];
 				glm::vec3& m_vertex = mesh->vertices[vertex_position];
 				m_vertex.x = vertex[0];
 				m_vertex.y = vertex[1];
 				m_vertex.z = vertex[2];
-//				LOGV("v: %i [%g %g %g]\n", v, vertex[0], vertex[1], vertex[2]);
 				
 				int normal_index = get_layer_element_index(normals->GetMappingMode(), normals->GetReferenceMode(), normals->GetIndexArray(), vertex_position, vertex_counter);
 				FbxVector4 normal = normals->GetDirectArray().GetAt(normal_index);
@@ -525,13 +504,11 @@ public:
 				m_normal.x = normal[0];
 				m_normal.y = normal[1];
 				m_normal.z = normal[2];
-//				LOGV("n: %i [%g %g %g]\n", v, normal[0], normal[1], normal[2]);
 
 				if (colors)
 				{
 					int color_index = get_layer_element_index(colors->GetMappingMode(), colors->GetReferenceMode(), colors->GetIndexArray(), vertex_position, vertex_counter);
 					FbxColor color = colors->GetDirectArray()[color_index];
-//					LOGV("c: %i %g %g %g %g\n", v, color.mRed, color.mGreen, color.mBlue, color.mAlpha);
 					glm::vec4& m_color = mesh->vertex_colors[vertex_position];
 					m_color.r = color.mRed;
 					m_color.g = color.mGreen;
@@ -541,20 +518,30 @@ public:
 				
 				if (uvs)
 				{
-					
+					int poly_vertex_index = fbxmesh->GetTextureUVIndex(poly, v);
 					int uv_index = -1;
+
 					if (uvs->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
 					{
-						uv_index = fbxmesh->GetTextureUVIndex(poly, v);
+						FbxLayerElement::EReferenceMode uv_ref_mode = uvs->GetReferenceMode();
+						if (uv_ref_mode != FbxGeometryElement::eDirect)
+						{
+							uv_index = uvs->GetIndexArray().GetAt(vertex_counter);
+						}
+						else
+						{
+							uv_index = vertex_counter;
+						}
 					}
-					else
+					else if (uvs->GetMappingMode() == FbxGeometryElement::eByControlPoint)
 					{
+						// TODO: support this
 						assert(0);
-//						uv_index = get_layer_element_index(uvs->GetMappingMode(), uvs->GetReferenceMode(), uvs->GetIndexArray(), vertex_position, vertex_counter);
 					}
 
-					FbxVector2 uv = uvs->GetDirectArray()[uv_index];
-//					LOGV("mesh_index: %i [%g %g]\n", uv[0], uv[1]);
+
+					FbxVector2 uv = uvs->GetDirectArray().GetAt(uv_index);
+					
 					glm::vec2& m_uv = mesh->uvs[0][vertex_position];
 					m_uv.x = uv[0];
 					m_uv.y = uv[1];
@@ -568,50 +555,7 @@ public:
 		// triangulate the scene.
 		LOGV("%striangles count: %i\n", state.indent(), fbxmesh->GetPolygonCount());
 	}
-	
-	void print_node(IndentState& state, FbxNode* node)
-	{
-		const char* node_name = node->GetName();
 		
-		FbxDouble3 translation = node->LclTranslation.Get();
-		FbxDouble3 rotation = node->LclRotation.Get();
-		FbxDouble3 scaling = node->LclScaling.Get();
-		
-		state.push();
-		
-//		if (node->GetSkeleton())
-//		{
-//			LOGV("%sfound skeleton\n", state.indent());
-//		}
-//		else if (node->GetMesh())
-//		{
-//			LOGV("%sfound mesh\n", state.indent());
-//		}
-//		else if (node->GetCamera())
-//		{
-//			LOGV("%sfound camera\n", state.indent());
-//		}
-//		else if (node->GetLight())
-//		{
-//			LOGV("%sfound light\n", state.indent());
-//		}
-		
-		LOGV("%s\"%s\", t = (%g %g %g), r = (%g %g %g), s = (%g %g %g)\n",
-			 state.indent(),
-			 node_name,
-			 translation[0], translation[1], translation[2],
-			 rotation[0], rotation[1], rotation[2],
-			 scaling[0], scaling[1], scaling[2]
-			 );
-		
-		for (size_t index = 0; index < node->GetChildCount(); ++index)
-		{
-			print_node(state, node->GetChild(index));
-		}
-		
-		state.pop();
-	}
-	
 	std::string type_from_node(FbxNode* node)
 	{
 		if (node->GetSkeleton())
@@ -687,27 +631,27 @@ public:
 			FbxDouble3 scaling = node->LclScaling.Get();
 
 
-			LOGV("%s\"%s\", (LCL) t = (%g %g %g), r = (%g %g %g), s = (%g %g %g)\n",
-				 state.indent(),
-				 scene_node->name.c_str(),
-				 translation[0], translation[1], translation[2],
-				 rotation[0], rotation[1], rotation[2],
-				 scaling[0], scaling[1], scaling[2]
-				 );
+//			LOGV("%s\"%s\", (LCL) t = (%g %g %g), r = (%g %g %g), s = (%g %g %g)\n",
+//				 state.indent(),
+//				 scene_node->name.c_str(),
+//				 translation[0], translation[1], translation[2],
+//				 rotation[0], rotation[1], rotation[2],
+//				 scaling[0], scaling[1], scaling[2]
+//				 );
 
-			{
-				FbxVector4 translation = node->GetGeometricTranslation(FbxNode::eSourcePivot);
-				FbxVector4 rotation = node->GetGeometricRotation(FbxNode::eSourcePivot);
-				FbxVector4 scaling = node->GetGeometricScaling(FbxNode::eSourcePivot);
-				
-				LOGV("%s\"%s\", (GEO) t = (%g %g %g), r = (%g %g %g), s = (%g %g %g)\n",
-					 state.indent(),
-					 scene_node->name.c_str(),
-					 translation[0], translation[1], translation[2],
-					 rotation[0], rotation[1], rotation[2],
-					 scaling[0], scaling[1], scaling[2]
-					 );
-			}
+//			{
+//				FbxVector4 translation = node->GetGeometricTranslation(FbxNode::eSourcePivot);
+//				FbxVector4 rotation = node->GetGeometricRotation(FbxNode::eSourcePivot);
+//				FbxVector4 scaling = node->GetGeometricScaling(FbxNode::eSourcePivot);
+//				
+//				LOGV("%s\"%s\", (GEO) t = (%g %g %g), r = (%g %g %g), s = (%g %g %g)\n",
+//					 state.indent(),
+//					 scene_node->name.c_str(),
+//					 translation[0], translation[1], translation[2],
+//					 rotation[0], rotation[1], rotation[2],
+//					 scaling[0], scaling[1], scaling[2]
+//					 );
+//			}
 //			FbxAMatrix local_transform = node->EvaluateLocalTransform();
 
 			FbxAMatrix global_transform = node->EvaluateGlobalTransform();
@@ -758,10 +702,7 @@ public:
 			LOGE("%s\n", importer->GetStatus().GetErrorString());
 			return;
 		}
-		
-		
-		
-		
+
 		FbxScene* scene = FbxScene::Create(m, "test_scene");
 		
 		importer->Import(scene);
@@ -796,19 +737,9 @@ public:
 		if (fbxroot)
 		{
 			IndentState state;
-			
-			// traverse
-			print_node(state, fbxroot);
-			
-			// add children
-//			for (size_t index = 0; index < fbxroot->GetChildCount(); ++index)
-//			{
-//				populate_hierarchy(state, root, fbxroot->GetChild(index));
-//			}
 
 			populate_hierarchy(state, root, fbxroot);
 		}
-		
 		
 		m->Destroy();
 	}

@@ -74,12 +74,11 @@ namespace assets
 			LOGV("create mesh\n");
 			Geometry* geo = &state.mesh->geometry[state.current_geometry++];
 			scenegraph::RenderNode* render_node = CREATE(scenegraph::RenderNode);
-			scene_root->add_child(render_node);
+
 			node_root = render_node;
 			render_node->geometry = geo;
 			render_node->type = scenegraph::STATIC_MESH;
-			render_node->name = node["name"].asString().c_str();
-			
+						
 			Json::Value mesh_root = node["mesh"];
 			assert(!mesh_root.isNull());
 
@@ -131,13 +130,14 @@ namespace assets
 			for (int set_id = 0; set_id < uv_sets.size(); ++set_id)
 			{
 				geo->uvs[set_id].allocate(vertex_array.size());
-				
+				assert(vertex_array.size() == geo->vertices.size());
 				for (int v = 0; v < geo->vertices.size(); ++v)
 				{
 					const Json::Value& texcoord = uv_sets[set_id][v];
 					glm::vec2& uv = geo->uvs[set_id][v];
-					uv.s = texcoord[0].asFloat();
-					uv.t = texcoord[1].asFloat();
+					uv.x = texcoord[0].asFloat();
+					uv.y = texcoord[1].asFloat();
+					//LOGV("uv (set=%i) (vertex=%i) %g %g\n", set_id, v, uv.s, uv.t);
 				}
 			}
 		}
@@ -145,8 +145,13 @@ namespace assets
 		{
 			LOGV("create skeleton\n");
 		}
+		else
+		{
+			node_root = CREATE(scenegraph::Node);
+		}
 		
-		
+		scene_root->add_child(node_root);
+		node_root->name = node["name"].asString().c_str();
 
 		const Json::Value& scaling = node["scaling"];
 		const Json::Value& rotation = node["rotation"];
@@ -404,18 +409,25 @@ namespace assets
 			
 			if (!uvs.isNull() && uvs.size() > 0 )
 			{
+				// allocate enough UV sets
 				geometry->uvs.allocate(uvs.size());
-				for( int i = 0; i < uvs.size(); ++i)
+				for( int set_id = 0; set_id < uvs.size(); ++set_id)
 				{
-					geometry->uvs[i].allocate(geometry->vertex_count);
+					// allocate enough space for uvs in this set
+					geometry->uvs[set_id].allocate(geometry->vertex_count);
 					
-					Json::Value& uv = uvs[i];
+					Json::Value& uv_array = uvs[set_id];
 					for( int v = 0; v < geometry->vertex_count; ++v )
 					{
-						geometry->uvs[i][v].s = uv[v*2].asFloat();
+						glm::vec2& uv = geometry->uvs[set_id][v];
+						const Json::Value& juv = uv_array[v];
+//						uv.s = juv[0].asFloat();
+//						uv.t = juv[1].asFloat();
+						
+//						geometry->uvs[i][v].s = uv[v*2].asFloat();
 						// Invert the UV coordinates on models when we import them.
 						// TODO: should this be done in the exporter?
-						geometry->uvs[i][v].t = 1.0f - uv[v*2+1].asFloat();
+//						geometry->uvs[i][v].t = 1.0f - uv[v*2+1].asFloat();
 					}
 				}
 			}
