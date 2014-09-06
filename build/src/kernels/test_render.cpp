@@ -415,9 +415,15 @@ public:
 		++total_scene_nodes_visited;
 
 
-		glm::mat4 tr = glm::scale(glm::mat4(1.0), node->local_scale) *
+//		glm::mat4 tr = glm::scale(glm::mat4(1.0), node->local_scale) *
+//			glm::toMat4(node->local_rotation) *
+//			glm::translate(glm::mat4(1.0), node->local_position);
+
+		glm::mat4 tr = glm::translate(glm::mat4(1.0), node->local_position) *
 			glm::toMat4(node->local_rotation) *
-			glm::translate(glm::mat4(1.0), node->local_position);
+			glm::scale(glm::mat4(1.0), node->local_scale);
+
+		
 
 		node->world_transform = tr * node->local_to_world;
 		
