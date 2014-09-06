@@ -302,20 +302,7 @@ namespace physics
 		{
 			assets::Geometry* geo = &mesh->geometry[ i ];
 			
-#if GEMINI_ZUP_TO_YUP_CONVERSION
-			// we need to transform from Z-up to Y-up before
-			// generating the physics.
-			geo->physics_vertices.allocate(geo->vertex_count);
-
-			// transform vertices by node transform here
-			for (uint32_t v = 0; v < geo->vertex_count; ++v)
-			{
-				geo->physics_vertices[v] = glm::vec3(mesh->node_transform * glm::vec4(geo->vertices[v], 1.0f));
-			}
-			FixedArray<glm::vec3>& vertices = geo->physics_vertices;
-#else
 			FixedArray<glm::vec3>& vertices = geo->vertices;
-#endif
 			
 			
 			

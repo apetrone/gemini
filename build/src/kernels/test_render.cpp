@@ -419,7 +419,6 @@ public:
 			glm::toMat4(node->local_rotation) *
 			glm::translate(glm::mat4(1.0), node->local_position);
 
-//		glm::mat4 object_to_local = glm::translate(glm::mat4(1.0), node->local_position);
 		node->world_transform = tr * node->local_to_world;
 		
 		if (node->parent)
@@ -429,15 +428,6 @@ public:
 		}
 
 //		LOGV("visit: %s\n", node->name());
-//#if GEMINI_ZUP_TO_YUP_CONVERSION
-//		if (node->type == scenegraph::MESH || node->type == scenegraph::SKELETON)
-//		{
-//			scenegraph::MeshNode* meshnode = static_cast<scenegraph::MeshNode*>(node);
-//			node->world_transform = meshnode->mesh->node_transform * node->world_transform;
-//		}
-//#elif !defined(GEMINI_ZUP_TO_YUP_CONVERSION)
-//	#error No conversion to Y-up! Missing asset_mesh.h include.
-//#endif
 		
 		return 0;
 	}
@@ -449,7 +439,6 @@ public:
 		params.window_height = 720;
 		return kernel::Application_Success;
 	}
-
 
 	void clone_to_scene(scenegraph::Node* template_node, scenegraph::Node* root)
 	{
@@ -549,7 +538,7 @@ public:
 //		root->add_child(skydome);
 
 //		add_mesh_to_root(root, "models/future", false);
-		scenegraph::Node* ground = add_mesh_to_root(root, "models/ground", false);
+		scenegraph::Node* ground = add_mesh_to_root(root, "models/plane", false);
 
 //		scenegraph::SkeletalNode* sn = CREATE(scenegraph::SkeletalNode);
 //		sn->load_mesh("models/test_yup", false, 0, character);
@@ -605,8 +594,6 @@ public:
 		camera.yaw = -45;
 		camera.pitch = 30;
 		camera.update_view();
-		
-
 
 		return kernel::Application_Success;
 	}

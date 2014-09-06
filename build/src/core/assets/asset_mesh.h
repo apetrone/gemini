@@ -37,8 +37,6 @@
 
 #include <json/json.h>
 
-#define GEMINI_ZUP_TO_YUP_CONVERSION 1
-
 namespace assets
 {
 	// -------------------------------------------------------------
@@ -131,10 +129,8 @@ namespace assets
 		
 		// For now, we only have room for a single animation -- so make it worthwhile.
 		AnimationData animation;
-		
-//#if GEMINI_ZUP_TO_YUP_CONVERSION
+
 		glm::mat4 node_transform;
-//#endif
 	}; // Mesh
 	
 	// EXPERIMENTAL

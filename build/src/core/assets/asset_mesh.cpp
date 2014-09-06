@@ -146,6 +146,7 @@ namespace assets
 			LOGV("create skeleton\n");
 		}
 		
+		
 
 		const Json::Value& scaling = node["scaling"];
 		const Json::Value& rotation = node["rotation"];
@@ -155,9 +156,9 @@ namespace assets
 		node_root->local_scale = glm::vec3(scaling[0].asFloat(), scaling[1].asFloat(), scaling[2].asFloat());
 		node_root->local_rotation = glm::quat(rotation[3].asFloat(), rotation[0].asFloat(), rotation[1].asFloat(), rotation[2].asFloat());
 		node_root->local_position = glm::vec3(translation[0].asFloat(), translation[1].asFloat(), translation[2].asFloat());
-		LOGV("scale: %g %g %g\n", node_root->local_scale.x, node_root->local_scale.y, node_root->local_scale.z);
-		LOGV("rotation: %g %g %g %g\n", node_root->local_rotation.x, node_root->local_rotation.y, node_root->local_rotation.z, node_root->local_rotation.w);
-		LOGV("translation: %g %g %g\n", node_root->local_position.x, node_root->local_position.y, node_root->local_position.z);
+//		LOGV("scale: %g %g %g\n", node_root->local_scale.x, node_root->local_scale.y, node_root->local_scale.z);
+//		LOGV("rotation: %g %g %g %g\n", node_root->local_rotation.x, node_root->local_rotation.y, node_root->local_rotation.z, node_root->local_rotation.w);
+//		LOGV("translation: %g %g %g\n", node_root->local_position.x, node_root->local_position.y, node_root->local_position.z);
 	
 		const Json::Value& children = node["children"];
 		if (!children.isNull())
