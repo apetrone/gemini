@@ -70,9 +70,9 @@ namespace core
 		void log_android_close( xlog_handler_t * handler );
 #endif
 				
-		core::Error open_log_handlers()
+		Result open_log_handlers()
 		{
-			core::Error error( 0 );
+			Result result(Result::Success);
 			
 			int total_log_handlers = 0;
 			
@@ -150,12 +150,12 @@ namespace core
 			if ( xlog_open( &_system_log ) < total_log_handlers )
 			{
 				fprintf( stderr, "Could not open one or more log handlers\n" );
-				error = core::Error( core::Error::Warning, "Could not open one or more log handlers" );
+				result = core::Result( core::Result::Warning, "Could not open one or more log handlers" );
 			}
 			
 			LOGV( "Logging system initialized.\n" );
 			
-			return error;
+			return result;
 		} // open_log_handlers
 		
 		
@@ -166,51 +166,47 @@ namespace core
 	}; // namespace _internal
 	
 	
-	
-	Error::Error( int error_status, const char * error_message ) :
-		status(error_status), message(error_message)
-	{
-	}
+
 	
 
 	
-	Error startup()
+	Result startup()
 	{
-		core::Error error = platform::startup();
-		if ( error.failed() )
+		core::Result result = platform::startup();
+		if (result.failed())
 		{
-			fprintf( stderr, "platform startup failed! %s\n", error.message );
-			return error;
+			fprintf(stderr, "platform startup failed! %s\n", result.message);
+			return result;
 		}
 		
 		//
 		// setup our file system...
 		StackString< MAX_PATH_SIZE > fullpath;
-		error = platform::program_directory( &fullpath[0], fullpath.max_size() );
-		if ( error.failed() )
+		result = platform::program_directory(&fullpath[0], fullpath.max_size());
+		if (result.failed())
 		{
-			fprintf( stderr, "failed to get the program directory!\n" );
-			return error;
+			fprintf(stderr, "failed to get the program directory!\n");
+			return result;
 		}
 
 		// set the startup directory: where the binary lives
-		filesystem::root_directory( &fullpath[0], fullpath.max_size() );
+		filesystem::root_directory(&fullpath[0], fullpath.max_size());
 		
 		// set the content directory
-		_internal::set_content_directory_from_root( fullpath );
+		_internal::set_content_directory_from_root(fullpath);
 
 		
 		// open logs
-		error = _internal::open_log_handlers();
-		if ( error.failed() )
+		result = _internal::open_log_handlers();
+		if (result.failed())
 		{
-			fprintf( stderr, "failed to open logging handlers: %s\n", error.message );
-			return error;
+			fprintf( stderr, "failed to open logging handlers: %s\n", result.message);
+			return result;
 		}
 		
-		LOGV( "setting root to '%s', content: '%s'\n", filesystem::root_directory(), filesystem::content_directory() );
+		LOGV("setting root to '%s', content: '%s'\n", filesystem::root_directory(), filesystem::content_directory());
 		
-		return error;
+		return result;
 	} // startup
 	
 	void shutdown()

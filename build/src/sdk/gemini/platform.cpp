@@ -50,18 +50,20 @@
 
 #include <string.h> // for strrchr
 
+using namespace core;
+
 namespace platform
 {
-	core::Error startup()
+	core::Result startup()
 	{
-		core::Error error(0);
+		Result result(Result::Success);
 		
 #if PLATFORM_APPLE
-		error = osx_startup();
+		result = osx_startup();
 #endif
 
 		
-		return error;
+		return result;
 	}
 	
 	void shutdown()
@@ -71,15 +73,15 @@ namespace platform
 #endif
 	}
 	
-	core::Error program_directory( char * path, size_t size )
+	core::Result program_directory(char* path, size_t size)
 	{
-		core::Error error(0);
+		Result error(Result::Success);
 		int result = 0;
-		char * sep;
+		char* sep;
 		
 #if PLATFORM_WINDOWS
-		result = GetModuleFileNameA( GetModuleHandleA(0), path, size);
-		if ( result == 0 )
+		result = GetModuleFileNameA(GetModuleHandleA(0), path, size);
+		if (result == 0)
 		{
 			error.status = core::Error::Failure;
 			error.message = "GetModuleFileNameA failed!";
@@ -88,22 +90,18 @@ namespace platform
 #elif PLATFORM_LINUX
 		{
 			// http://www.flipcode.com/archives/Path_To_Executable_On_Linux.shtml
-			char linkname[ 64 ] = {0};
-			pid_t pid;
+			char linkname[64] = {0};
+			pid_t pid = getpid();
 			
-			
-			pid = getpid();
-			
-			if ( snprintf(linkname, sizeof(linkname), "/proc/%i/exe", pid ) < 0 )
+			if (snprintf(linkname, sizeof(linkname), "/proc/%i/exe", pid) < 0)
 			{
 				abort();
 			}
 			
-			result = readlink( linkname, path, size );
-			
-			if ( result == -1 )
+			result = readlink(linkname, path, size);
+			if (result == -1)
 			{
-				error.status = core::Error::Failure;
+				error.status = Result::Failure;
 				error.message = "readlink failed";
 			}
 			else
@@ -113,18 +111,18 @@ namespace platform
 		}
 #endif
 		
-		if ( result != 0 )
+		if (result != 0)
 		{
-			sep = strrchr( path, PATH_SEPARATOR );
+			sep = strrchr(path, PATH_SEPARATOR);
 			
-			if ( sep )
+			if (sep)
 			{
 				*sep = '\0';
 			}
 		}
 		
 #if PLATFORM_APPLE
-		error = osx_program_directory( path, size );
+		error = osx_program_directory(path, size);
 #endif
 		return error;
 	}
@@ -132,29 +130,29 @@ namespace platform
 	
 	namespace path
 	{		
-		core::Error make_directory( const char * path )
+		Result make_directory(const char* path)
 		{
-			core::Error error(0);
-			int result = 0;
+			Result result(Result::Success);
+			int status_code = 0;
 			
 #if PLATFORM_WINDOWS
-			result = _mkdir( path );
-			if ( result == -1 )
+			status_code = _mkdir(path);
+			if (status_code == -1)
 			{
 				// TODO: print out the errno
-				error = core::Error( core::Error::Failure, "_mkdir failed!" );
+				result = Result(Result::Failure, "_mkdir failed!");
 			}
 #elif PLATFORM_LINUX || PLATFORM_APPLE
 			// http://pubs.opengroup.org/onlinepubs/009695399/functions/mkdir.html
-			result = mkdir( path, (S_IRUSR | S_IWUSR | S_IXUSR ) | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH );
-			if ( result == -1 )
+			status_code = mkdir(path, (S_IRUSR | S_IWUSR | S_IXUSR ) | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH);
+			if (status_code == -1)
 			{
 				// TODO: print out the errno
-				error = core::Error( core::Error::Failure, "mkdir failed!" );
+				result = Result(Result::Failure, "mkdir failed!");
 			}
 #endif
 			
-			return error;
+			return result;
 		} // makeDirectory
 	}; // namespace path
 }; // namespace platform

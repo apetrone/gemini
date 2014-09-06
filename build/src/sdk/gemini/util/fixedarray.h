@@ -34,7 +34,7 @@ class FixedArray
 private:
 	void assert_valid_index(size_t index) const
 	{
-		assert( index >= 0 && index <= total_elements );
+		assert(index >= 0 && index <= total_elements);
 	}
 	
 public:

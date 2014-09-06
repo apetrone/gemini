@@ -48,14 +48,14 @@
 
 namespace platform
 {
-	core::Error startup();
+	core::Result startup();
 	void shutdown();
 	
 	// the directory where the active binary resides:
 	// on Linux and Windows platforms, it returns the folder where the binary exists
 	// on MacOS X when run as a command line tool, it returns the folder where the binary exists (similar to Linux and Windows)
 	// on MacOS X / iPhoneOS (for Bundles), it returns the root bundle path (.app)
-	core::Error program_directory( char * path, size_t size );
+	core::Result program_directory( char * path, size_t size );
 
 	namespace path
 	{
@@ -63,7 +63,7 @@ namespace platform
 		void normalize( char * path, size_t size );
 		
 		// make a directory at path
-		core::Error make_directory( const char * path );
+		core::Result make_directory( const char * path );
 		
 		// make all non-existent directories along a normalized_path
 		void make_directories( const char * normalized_path );

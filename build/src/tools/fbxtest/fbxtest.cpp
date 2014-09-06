@@ -190,22 +190,6 @@ namespace datamodel
 #include <map>
 #include <string>
 
-
-namespace tools
-{
-	struct Result
-	{
-		const char* result_message;
-		bool success;
-		
-		Result(bool result, const char* message = 0) : success(result), result_message(message) {}
-		
-		bool failed() const { return (success == false); }
-		const char* message() const { return result_message; }
-	};
-}
-
-
 namespace tools
 {
 	template <class Type>
@@ -305,7 +289,7 @@ namespace tools
 
 
 
-	Result convert_scene(const char* input_path, const char* output_path)
+	core::Result convert_scene(const char* input_path, const char* output_path)
 	{
 		datamodel::SceneNode root;
 		
@@ -318,7 +302,7 @@ namespace tools
 		if (!reader)
 		{
 			LOGE("no reader found for extension: %s\n", ext.c_str());
-			return Result(false, "Unable to read format");
+			return core::Result(core::Result::Failure, "Unable to read format");
 		}
 		
 		// verify we can write the format
@@ -328,7 +312,7 @@ namespace tools
 		if (!writer)
 		{
 			LOGE("no writer found for extension: %s\n", ext.c_str());
-			return Result(false, "Unable to write format");
+			return core::Result(core::Result::Failure, "Unable to write format");
 		}
 		
 		util::MemoryStream mds;
@@ -346,7 +330,7 @@ namespace tools
 			xfile_write(out, rs.get_data(), rs.get_data_size(), 1);
 			xfile_close(out);
 		}
-		return Result(true);
+		return core::Result(core::Result::Success);
 	}
 }
 
@@ -1029,10 +1013,10 @@ int main(int argc, char** argv)
 	
 	register_types();
 
-	Result result = tools::convert_scene(input_file->string, output_file->string);
+	core::Result result = tools::convert_scene(input_file->string, output_file->string);
 	if (result.failed())
 	{
-		LOGV("conversion failed: %s\n", result.message());
+		LOGV("conversion failed: %s\n", result.message);
 	}
 	
 	purge_registry<datamodel::SceneNode>();

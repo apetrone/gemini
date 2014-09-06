@@ -29,12 +29,12 @@
 
 namespace platform
 {
-	NSAutoreleasePool * pool;
+	NSAutoreleasePool* pool;
 	
-	core::Error osx_startup()
+	core::Result osx_startup()
 	{
 		pool = [[NSAutoreleasePool alloc] init];
-		return core::Error(0);
+		return core::Result(core::Result::Success);
 	}
 	
 	void osx_shutdown()
@@ -43,9 +43,9 @@ namespace platform
 		pool = 0;
 	}
 	
-	core::Error osx_program_directory( char * path, size_t size )
+	core::Result osx_program_directory(char* path, size_t size)
 	{
-		core::Error error(0);
+		core::Result result(core::Result::Success);
 		NSString * bundle_path = [[NSBundle mainBundle] bundlePath];
 		if (bundle_path)
 		{
@@ -53,8 +53,8 @@ namespace platform
 		}
 		else
 		{
-			error = core::Error( core::Error::Failure, "Unable mainBundle reference is invalid!" );
+			result = core::Result(core::Result::Failure, "Unable mainBundle reference is invalid!");
 		}
-		return error;
+		return result;
 	}
 }; // namespace platform

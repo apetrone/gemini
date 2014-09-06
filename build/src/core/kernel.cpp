@@ -206,9 +206,9 @@ namespace kernel
 		return _kernel;
 	} // instance
 	
-	core::Error load_application( const char * application_name )
+	core::Result load_application( const char * application_name )
 	{
-		core::Error error(0);
+		core::Result result(core::Result::Success);
 		fprintf(stdout, "Loading kernel '%s'\n", application_name);
 		
 		// search for the named kernel instance (passed on the command line or overriden above)
@@ -220,26 +220,26 @@ namespace kernel
 			if ( !_active_application )
 			{
 				fprintf(stdout, "Unable to create an instance of application: \"%s\", aborting!\n", application_name);
-				error = core::Error( core::Error::Failure, "Cannot " );
+				result = core::Result(core::Result::Failure, "Cannot " );
 			}
 		}
 		else
 		{
 			fprintf(stdout, "Application named \"%s\" not found, aborting!\n", application_name);
-			error = core::Error( core::Error::Failure, "Application not found by name" );
+			result = core::Result(core::Result::Failure, "Application not found by name" );
 		}
 		
-		return error;
+		return result;
 	} // load_application
 	
 	
-	Error startup( IKernel * kernel_instance )
+	Error startup(IKernel * kernel_instance)
 	{
 		// set instance
 		_kernel = kernel_instance;
-		if ( !_kernel )
+		if (!_kernel)
 		{
-			fprintf( stderr, "No valid kernel instance found\n" );
+			fprintf(stderr, "No valid kernel instance found\n");
 			return kernel::NoInstance;
 		}
 		
@@ -253,22 +253,21 @@ namespace kernel
 		params.step_interval_seconds = 1/60.0f;
 		
 		// the kernel is ACTIVE here; callbacks after config/start may modify this
-		_kernel->set_active( true );
+		_kernel->set_active(true);
 		
 		// initialize kernel's timer
-		xtime_startup( &_internal::_kernel_state.timer );
-		_internal::_kernel_state.last_time = xtime_msec( &_internal::_kernel_state.timer );
+		xtime_startup(&_internal::_kernel_state.timer);
+		_internal::_kernel_state.last_time = xtime_msec(&_internal::_kernel_state.timer);
 		_internal::_kernel_state.accumulator = 0;
 
-		
 		// perform any startup duties here before we init the core
 		_kernel->startup();
 		
 		// startup duties; lower-level system init
-		core::Error core_error = core::startup();
-		if ( core_error.failed() )
+		core::Result result = core::startup();
+		if (result.failed())
 		{
-			fprintf( stderr, "Fatal error: %s\n", core_error.message );
+			fprintf(stderr, "Fatal error: %s\n", result.message);
 			core::shutdown();
 			return kernel::CoreFailed;
 		}
@@ -278,30 +277,30 @@ namespace kernel
 		
 		// load boot config
 		_internal::BootConfig boot_config;
-		_internal::load_boot_config( boot_config );
+		_internal::load_boot_config(boot_config);
 		
 		// load application
-		core_error = load_application( boot_config.kernel_name() );
-		if ( core_error.failed() )
+		result = load_application(boot_config.kernel_name());
+		if (result.failed())
 		{
-			fprintf( stderr, "Fatal error loading application '%s' -> %s, aborting.\n", boot_config.kernel_name(), core_error.message );
+			fprintf(stderr, "Fatal error loading application '%s' -> %s, aborting.\n", boot_config.kernel_name(), result.message);
 			_kernel->set_active(false);
 			return kernel::ApplicationFailure;
 		}
 		
 		// application config
 		ApplicationResult config_result = Application_Failure;
-		if ( _active_application )
+		if (_active_application)
 		{
-			config_result = _active_application->config( kernel::instance()->parameters() );
+			config_result = _active_application->config(kernel::instance()->parameters());
 		}
 		
 		// evaluate config result
-		kernel::instance()->post_application_config( config_result );
+		kernel::instance()->post_application_config(config_result);
 	
-		if ( config_result == kernel::Application_Failure )
+		if (config_result == kernel::Application_Failure)
 		{
-			fprintf( stderr, "Application config failed. aborting.\n" );
+			fprintf(stderr, "Application config failed. aborting.\n");
 			return kernel::ConfigFailed;
 		}
 		
@@ -309,12 +308,12 @@ namespace kernel
 		script::startup();
 		
 		// try to setup the renderer
-		if ( config_result != kernel::Application_NoWindow )
+		if (config_result != kernel::Application_NoWindow)
 		{
-			int render_result =	renderer::startup( renderer::Default );
+			int render_result =	renderer::startup(renderer::Default);
 			if ( render_result == 0 )
 			{
-				LOGE( "renderer initialization failed!\n" );
+				LOGE("renderer initialization failed!\n");
 				return kernel::RendererFailed;
 			}
 
@@ -328,14 +327,14 @@ namespace kernel
 		
 		
 		// application instance failed startup
-		ApplicationResult startup_result = _active_application->startup( kernel::instance()->parameters() );
+		ApplicationResult startup_result = _active_application->startup(kernel::instance()->parameters());
 		
 		// evaluate startup result
-		_kernel->post_application_startup( startup_result );
+		_kernel->post_application_startup(startup_result);
 		
-		if ( startup_result == kernel::Application_Failure )
+		if (startup_result == kernel::Application_Failure)
 		{
-			fprintf( stderr, "Application startup failed!\n" );
+			fprintf(stderr, "Application startup failed!\n");
 			return kernel::StartupFailed;
 		}
 		
