@@ -75,6 +75,21 @@ def setup_common_variables(arguments, target_platform, product):
 
 def setup_common_tool(product):
 
+	product.sources += [
+		"src/tools/*.cpp",
+		"src/tools/*.h",
+		"src/tools/common/*.cpp",
+		"src/tools/common/*.h",
+		"src/tools/datamodel/*.cpp",
+		"src/tools/datamodel/*.h"
+	]
+
+	product.includes += [
+		"src/tools/",
+		"src/tools/common",
+		"src/tools/datamodel"
+	]
+
 	product.defines += [
 		"JSON_IS_AMALGAMATION"
 	]

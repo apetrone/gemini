@@ -31,7 +31,7 @@
 #include <gemini/core/log.h>
 #include <gemini/core/xfile.h>
 #include <gemini/util/stackstring.h>
-#include <gemini/util/fixedarray.h>
+
 #include <gemini/util/arg.h>
 #include <gemini/util/datastream.h>
 
@@ -43,6 +43,10 @@
 
 #include <fbxsdk.h>
 #include <fbxsdk/utils/fbxgeometryconverter.h>
+
+#include "common.h"
+#include "datamodel.h"
+
 // need to support:
 // static (non-animated) meshes
 // hierarchical/skeletal meshes
@@ -54,138 +58,7 @@
 
 //https://docs.unrealengine.com/latest/INT/Engine/Content/FBX/index.html
 
-struct IndentState
-{
-	size_t depth;
-	std::string buffer;
-	
-	IndentState() : depth(0)
-	{}
-	
-	void push()
-	{
-		++depth;
-		update();
-	}
-	
-	void pop()
-	{
-		--depth;
-		update();
-	}
-	
-	void update()
-	{
-		buffer.clear();
-		for (size_t i = 0; i < depth; ++i)
-		{
-			buffer += "\t";
-		}
-	}
-	
-	const char* indent()
-	{
-		return buffer.c_str();
-	}
-};
-
-
-#include <vector>
-namespace datamodel
-{
-	const int MAX_SUPPORTED_UV_CHANNELS = 2;
-
-	struct Mesh
-	{
-		FixedArray<glm::vec4> blend_indices;
-		FixedArray<glm::vec4> blend_weights;
-		FixedArray<glm::vec3> vertices;
-		FixedArray<glm::vec3> normals;
-		FixedArray<glm::vec4> vertex_colors;
-		FixedArray<glm::vec2> uvs[MAX_SUPPORTED_UV_CHANNELS];
-		uint8_t total_uv_sets;
-		FixedArray<uint32_t> indices;
-	};
-	
-	struct Skeleton
-	{
-		
-	};
-
-	typedef std::vector<struct SceneNode*, GeminiAllocator<struct SceneNode*>> SceneNodeVector;
-	
-	struct SceneNode
-	{
-		std::string name;
-		std::string type;
-		
-		glm::vec3 scale;
-		glm::quat rotation;
-		glm::vec3 translation;
-		
-		glm::mat4 global_transform;
-		
-		SceneNode* parent;
-		SceneNodeVector children;
-		
-		
-		Mesh* mesh;
-		Skeleton* skeleton;
-		
-		SceneNode()
-		{
-			parent = nullptr;
-			mesh = nullptr;
-			skeleton = nullptr;
-		}
-		
-		virtual ~SceneNode()
-		{
-			SceneNodeVector::iterator it = children.begin();
-			for( ; it != children.end(); ++it)
-			{
-				SceneNode* node = (*it);
-				DESTROY(SceneNode, node);
-			}
-			
-			children.clear();
-			
-			if (mesh)
-			{
-				DESTROY(Mesh, mesh);
-			}
-			
-			if (skeleton)
-			{
-				DESTROY(Skeleton, skeleton);
-			}
-		}
-		
-		void add_child(SceneNode* child)
-		{
-			if (child->parent)
-			{
-				child->parent->remove_child(child);
-			}
-			
-			child->parent = this;
-			children.push_back(child);
-		}
-		
-		void remove_child(SceneNode* child)
-		{
-			// find the child and detach from the old parent
-			for (SceneNodeVector::iterator it = children.begin(); it != children.end(); ++it)
-			{
-				if (child == (*it))
-				{
-					children.erase(it);
-					break;
-				}
-			}
-		}
-	};
-}
+using namespace tools;
 
 #include <map>
 #include <string>
