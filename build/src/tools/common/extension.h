@@ -100,7 +100,7 @@ namespace tools
 	
 	// get the extension struct for a file path extension
 	template <class Type>
-	const Extension<Type> find_entry_for_extension(const std::string& target_extension, uint8_t flags = 0)
+	const Extension<Type> find_entry_for_extension(const std::string& target_extension)
 	{
 		for (auto v : ExtensionRegistry<Type>::extensions)
 		{
@@ -108,19 +108,7 @@ namespace tools
 			
 			if (target_extension == v.first)
 			{
-				if (flags == 0)
-				{
-					return archiver_extension;
-				}
-				//
-				//				if ((flags & 1) && archiver_extension.reader)
-				//				{
-				//					return archiver_extension;
-				//				}
-				//				else if ((flags & 2) && archiver_extension.writer)
-				//				{
-				//					return archiver_extension;
-				//				}
+				return archiver_extension;
 			}
 		}
 		
