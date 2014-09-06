@@ -949,7 +949,7 @@ void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, render
 			ms.write( &geometry->colors[ vertex_id ], sizeof(Color) );
 		}
 
-		if ( !geometry->uvs[0].empty() )
+		if ( !geometry->uvs.empty() && !geometry->uvs[0].empty() )
 		{
 			ms.write( &geometry->uvs[0][ vertex_id ], sizeof(glm::vec2) );
 		}
