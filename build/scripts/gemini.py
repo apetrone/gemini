@@ -252,12 +252,16 @@ def get_tools(libgemini):
 	fbx = Product(name="fbxtest", output=ProductType.Commandline)
 	fbx.root = "../"
 	fbx.sources += [
-		"src/tools/fbxtest/fbxtest.cpp"
+		"src/tools/fbxtest/*.cpp",
+		"src/tools/fbxtest/*.h"
 	]
 	fbx.dependencies.extend([
 		libgemini,
 		libfbx
 	])
+	fbx.includes += [
+		"src/tools/fbxtest"
+	]
 	fbx.product_root = COMMON_PRODUCT_ROOT
 	setup_driver(fbx)
 	setup_common_tool(fbx)
