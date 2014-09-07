@@ -47,12 +47,10 @@ namespace tools
 		};
 	
 		virtual ~Plugin() {}
-		
-		virtual Plugin* create() = 0;
 	};
 	
 #define DECLARE_PLUGIN_CLASS(classname) \
-	public: virtual Plugin* create() { return CREATE(classname); }
+	public: static classname* plugin_create() { return CREATE(classname); }
 
 
 

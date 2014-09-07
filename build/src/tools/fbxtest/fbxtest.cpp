@@ -113,11 +113,11 @@ namespace tools
 void register_types()
 {
 	Extension<datamodel::SceneNode> ext;
-	ext.reader = CREATE(AutodeskFbxReader);
+	ext.reader = AutodeskFbxReader::plugin_create();
 	register_extension<datamodel::SceneNode>("fbx", ext);
 	
 	ext.reader = 0;
-	ext.writer = CREATE(JsonSceneWriter);
+	ext.writer = JsonSceneWriter::plugin_create();
 	register_extension<datamodel::SceneNode>("model", ext);
 }
 

@@ -30,6 +30,8 @@
 #include "common.h"
 #include "datamodel/mesh.h"
 
+// http://gamedev.stackexchange.com/questions/59419/c-fbx-animation-importer-using-the-fbx-sdk
+
 using namespace tools;
 
 static int get_layer_element_index(
@@ -85,8 +87,40 @@ static int get_layer_element_index(
 	}
 }
 
+static void load_mesh2(IndentState& state, FbxNode* node, datamodel::Mesh* mesh)
+{
+	FbxMesh* fbxmesh = node->GetMesh();
+	
+	
+	int total_triangles = fbxmesh->GetPolygonCount()/3;
+	LOGV("%s# triangles: %i\n", state.indent(), total_triangles);
+	
+	for (int triangle_index = 0; triangle_index < total_triangles; ++triangle_index)
+	{
+		for (int vertex_index = 0; vertex_index < 3; ++vertex_index)
+		{
+			int index = fbxmesh->GetPolygonVertex(triangle_index, vertex_index);
+			LOGV("%sindex: %i\n", state.indent(), index);
+			
+			const FbxVector4& vertex = fbxmesh->GetControlPointAt(index);
+			LOGV("%svertex: %g %g %g\n", state.indent(), vertex[0], vertex[1], vertex[2]);
+			
+			FbxVector4 normal;
+			fbxmesh->GetPolygonVertexNormal(triangle_index, vertex_index, normal);
+			LOGV("%snormal: %g %g %g\n", state.indent(), normal[0], normal[1], normal[2]);
+			
+			FbxVector2 uv;
+			bool unmapped;
+			fbxmesh->GetPolygonVertexUV(triangle_index, vertex_index, "UVMap", uv, unmapped);
+			LOGV("%suv: %g %g\n", state.indent(), uv[0], uv[1]);
+		}
+	}
+}
+
 static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh)
 {
+	return load_mesh2(state, node, mesh);
+	
 	FbxMesh* fbxmesh = node->GetMesh();
 	
 	int total_layers = fbxmesh->GetLayerCount();
@@ -164,12 +198,19 @@ static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh)
 	mesh->normals.allocate(total_vertices);
 	if (colors)
 	{
+		LOGV("%stotal colors: %i\n", colors->GetDirectArray().GetCount());
 		mesh->vertex_colors.allocate(total_vertices);
 	}
 	
 	if (uvs)
 	{
+		LOGV("%stotal uvs: %i\n", state.indent(), uvs->GetDirectArray().GetCount());
 		mesh->uvs[0].allocate(total_vertices);
+	}
+	
+	if (normals)
+	{
+		LOGV("%stotal normals: %i\n", state.indent(), normals->GetDirectArray().GetCount());
 	}
 	
 	
@@ -228,7 +269,7 @@ static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh)
 					assert(0);
 				}
 				
-				
+//				LOGV("uv_index: %i\n", uv_index);
 				FbxVector2 uv = uvs->GetDirectArray().GetAt(uv_index);
 				
 				glm::vec2& m_uv = mesh->uvs[0][vertex_position];
