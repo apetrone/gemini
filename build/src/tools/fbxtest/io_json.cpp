@@ -25,10 +25,6 @@
 
 void JsonSceneWriter::jsonify_matrix(Json::Value& array, glm::mat4& matrix)
 {
-	// The matrix must be transposed before copying to json
-	// because aiMatrix4x4 is ALWAYS row-major.
-	//aiMatrix4x4 matrix = source;
-	//matrix.Transpose();
 	array.append(matrix[0].x);
 	array.append(matrix[1].x);
 	array.append(matrix[2].x);
