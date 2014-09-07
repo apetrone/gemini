@@ -28,9 +28,37 @@
 
 namespace tools
 {
+
+	// Base class for plugins
+	class Plugin
+	{
+	public:
+	
+		struct Info
+		{
+			enum Flags
+			{
+				None,
+				IsLoaded
+			};
+		
+			std::string path;
+			uint32_t flags;
+		};
+	
+		virtual ~Plugin() {}
+		
+		virtual Plugin* create() = 0;
+	};
+	
+#define DECLARE_PLUGIN_CLASS(classname) \
+	public: virtual Plugin* create() { return CREATE(classname); }
+
+
+
 	// interface for reader extensions
 	template <class Type>
-	class Reader
+	class Reader : public Plugin
 	{
 	public:
 		Reader() {}
@@ -41,7 +69,7 @@ namespace tools
 	
 	// interface for writer extensions
 	template <class Type>
-	class Writer
+	class Writer : public Plugin
 	{
 	public:
 		Writer() {}

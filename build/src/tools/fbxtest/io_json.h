@@ -30,6 +30,8 @@
 
 class JsonSceneWriter : public tools::Writer<datamodel::SceneNode>
 {
+	DECLARE_PLUGIN_CLASS(JsonSceneWriter);
+	
 public:
 	void jsonify_matrix(Json::Value& array, glm::mat4& matrix);
 	void append_node(datamodel::SceneNode* node, Json::Value& jnodes);
