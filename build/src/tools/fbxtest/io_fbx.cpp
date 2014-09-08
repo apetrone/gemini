@@ -90,31 +90,60 @@ static int get_layer_element_index(
 static void load_mesh2(IndentState& state, FbxNode* node, datamodel::Mesh* mesh)
 {
 	FbxMesh* fbxmesh = node->GetMesh();
-	
-	
-	int total_triangles = fbxmesh->GetPolygonCount()/3;
+
+	fbxmesh->GenerateNormals();
+	state.update();
+	int total_triangles = fbxmesh->GetPolygonCount();
 	LOGV("%s# triangles: %i\n", state.indent(), total_triangles);
+	LOGV("%s# vertices: %i\n", state.indent(), fbxmesh->GetControlPointsCount());
+	
+	size_t total_indices = fbxmesh->GetPolygonCount()*3;
+	
+	mesh->indices.allocate(total_indices);
+	mesh->vertices.allocate(total_indices);
+	mesh->normals.allocate(total_indices);
+	mesh->uvs[0].allocate(total_indices);
+	mesh->total_uv_sets = 1;
+	LOGV("%s# indices: %i\n", state.indent(), total_indices);
+	
+	datamodel::Vertex* vertices = CREATE_ARRAY(datamodel::Vertex, total_indices);
+	size_t vertex_index = 0;
+	size_t local_index = 0;
 	
 	for (int triangle_index = 0; triangle_index < total_triangles; ++triangle_index)
 	{
-		for (int vertex_index = 0; vertex_index < 3; ++vertex_index)
+		for (int local_vertex_id = 0; local_vertex_id < 3; ++local_vertex_id)
 		{
-			int index = fbxmesh->GetPolygonVertex(triangle_index, vertex_index);
-			LOGV("%sindex: %i\n", state.indent(), index);
+			int index = fbxmesh->GetPolygonVertex(triangle_index, local_vertex_id);
+//			LOGV("%sindex: %i\n", state.indent(), index);
+			mesh->indices[local_index] = local_index;
 			
-			const FbxVector4& vertex = fbxmesh->GetControlPointAt(index);
-			LOGV("%svertex: %g %g %g\n", state.indent(), vertex[0], vertex[1], vertex[2]);
+			const FbxVector4& position = fbxmesh->GetControlPointAt(index);
+//			LOGV("%svertex: %g %g %g\n", state.indent(), position[0], position[1], position[2]);
 			
 			FbxVector4 normal;
-			fbxmesh->GetPolygonVertexNormal(triangle_index, vertex_index, normal);
-			LOGV("%snormal: %g %g %g\n", state.indent(), normal[0], normal[1], normal[2]);
+			fbxmesh->GetPolygonVertexNormal(triangle_index, local_vertex_id, normal);
+//			LOGV("%snormal: %g %g %g\n", state.indent(), normal[0], normal[1], normal[2]);
 			
 			FbxVector2 uv;
 			bool unmapped;
-			fbxmesh->GetPolygonVertexUV(triangle_index, vertex_index, "UVMap", uv, unmapped);
-			LOGV("%suv: %g %g\n", state.indent(), uv[0], uv[1]);
+			fbxmesh->GetPolygonVertexUV(triangle_index, local_vertex_id, "UVMap", uv, unmapped);
+//			LOGV("%suv: %g %g\n", state.indent(), uv[0], uv[1]);
+
+			datamodel::Vertex* vertex = &vertices[vertex_index];
+			vertex->position = glm::vec3(position[0], position[1], position[2]);
+			vertex->normal = glm::vec3(normal[0], normal[1], normal[2]);
+			mesh->vertices[vertex_index] = vertex->position;
+			mesh->normals[vertex_index] = vertex->normal;
+			mesh->uvs[0][vertex_index] = glm::vec2(uv[0], uv[1]);
+
+			++vertex_index;
+			++local_index;
 		}
 	}
+
+	LOGV("%svertex_index: %i\n", state.indent(), vertex_index);
+	DESTROY_ARRAY(Vertex, vertices, mesh->indices.size());
 }
 
 static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh)

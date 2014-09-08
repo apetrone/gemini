@@ -50,7 +50,7 @@ namespace tools
 			buffer.clear();
 			for (size_t i = 0; i < depth; ++i)
 			{
-				buffer += "\t";
+				buffer += "    ";
 			}
 		}
 		

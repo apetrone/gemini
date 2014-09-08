@@ -28,6 +28,14 @@ namespace datamodel
 {
 	const int MAX_SUPPORTED_UV_CHANNELS = 2;
 	
+	struct Vertex
+	{
+		glm::vec3 position;
+		glm::vec3 normal;
+		glm::vec4 color;
+	};
+	
+	
 	struct Mesh
 	{
 		FixedArray<glm::vec4> blend_indices;
