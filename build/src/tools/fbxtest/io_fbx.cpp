@@ -522,6 +522,14 @@ void AutodeskFbxReader::read(datamodel::SceneNode* root, util::DataStream& data_
 	FbxTime::EMode time_mode = scene->GetGlobalSettings().GetTimeMode();
 	LOGV("\ttime mode = %s\n", FbxGetTimeModeName(time_mode));
 	
+//	FbxAxisSystem axis_system = scene->GetGlobalSettings().GetAxisSystem();
+//	FbxAxisSystem target_axis_system(FbxAxisSystem::eYAxis, FbxAxisSystem::eParityEven, FbxAxisSystem::eRightHanded);
+//	if (axis_system != target_axis_system)
+//	{
+//		LOGV("converting axis...\n");
+//		target_axis_system.ConvertScene(scene);
+//	}
+	
 	int total_animation_stacks = scene->GetSrcObjectCount<FbxAnimStack>();
 	LOGV("animation stacks: %i\n", total_animation_stacks);
 	
