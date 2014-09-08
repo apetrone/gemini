@@ -44,6 +44,9 @@
 #include "datamodel.h"
 #include "common/extension.h"
 
+#include <gemini/core/timer.h>
+#include <slim/xtime.h>
+
 
 // include reader/writers
 #include "io_fbx.h"
@@ -140,11 +143,18 @@ int main(int argc, char** argv)
 	
 	register_types();
 
+	xtime_t timer;
+	xtime_startup(&timer);
+	double start = xtime_msec(&timer);
+
 	core::Result result = tools::convert_scene(input_file->string, output_file->string);
 	if (result.failed())
 	{
 		LOGV("conversion failed: %s\n", result.message);
 	}
+
+	double duration = (xtime_msec(&timer) - start);
+	LOGV("processed scene in %2.2f seconds\n", duration*.001f);
 	
 	purge_registry<datamodel::SceneNode>();
 
