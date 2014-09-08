@@ -33,6 +33,7 @@ namespace datamodel
 		glm::vec3 position;
 		glm::vec3 normal;
 		glm::vec4 color;
+		glm::vec2 uv[MAX_SUPPORTED_UV_CHANNELS];
 	};
 	
 	
@@ -43,8 +44,7 @@ namespace datamodel
 		FixedArray<glm::vec3> vertices;
 		FixedArray<glm::vec3> normals;
 		FixedArray<glm::vec4> vertex_colors;
-		FixedArray<glm::vec2> uvs[MAX_SUPPORTED_UV_CHANNELS];
-		uint8_t total_uv_sets;
+		FixedArray< FixedArray<glm::vec2> > uvs;
 		FixedArray<uint32_t> indices;
 	};
 };

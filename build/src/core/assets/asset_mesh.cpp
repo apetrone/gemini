@@ -144,11 +144,14 @@ namespace assets
 		else if (node_type == "skeleton")
 		{
 			LOGV("create skeleton\n");
+			node_root = CREATE(scenegraph::Node);
 		}
 		else
 		{
 			node_root = CREATE(scenegraph::Node);
 		}
+		
+		assert(node_root != nullptr);
 		
 		scene_root->add_child(node_root);
 		node_root->name = node["name"].asString().c_str();

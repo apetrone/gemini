@@ -102,14 +102,41 @@ static void load_mesh2(IndentState& state, FbxNode* node, datamodel::Mesh* mesh)
 	mesh->indices.allocate(total_indices);
 	mesh->vertices.allocate(total_indices);
 	mesh->normals.allocate(total_indices);
-	mesh->uvs[0].allocate(total_indices);
-	mesh->total_uv_sets = 1;
 	LOGV("%s# indices: %i\n", state.indent(), total_indices);
 	
 	datamodel::Vertex* vertices = CREATE_ARRAY(datamodel::Vertex, total_indices);
 	size_t vertex_index = 0;
 	size_t local_index = 0;
 	
+	// uv coordinates
+	FbxStringList uv_set_list;
+	fbxmesh->GetUVSetNames(uv_set_list);
+	LOGV("%stotal_uv_sets: %i\n", state.indent(), uv_set_list.GetCount());
+	
+	
+	// clamp the # of maximum uv sets
+	int total_uv_sets = uv_set_list.GetCount();
+	if (total_uv_sets > datamodel::MAX_SUPPORTED_UV_CHANNELS)
+	{
+		LOGW("%stotal uv sets exceeds MAX_SUPPORTED_UV_CHANNELS (%i)\n", state.indent(), datamodel::MAX_SUPPORTED_UV_CHANNELS);
+
+		// print out the sets being ignored
+		state.push();
+		for (int item_index = datamodel::MAX_SUPPORTED_UV_CHANNELS; item_index < total_uv_sets; ++item_index)
+		{
+			FbxStringListItem* item = uv_set_list.GetItemAt(item_index);
+			LOGW("%signoring set: \"%s\"\n", state.indent(), item->mString.Buffer());
+		}
+		state.pop();
+		total_uv_sets = datamodel::MAX_SUPPORTED_UV_CHANNELS;
+	}
+	
+	mesh->uvs.allocate(total_uv_sets);
+	for (int uvset = 0; uvset < total_uv_sets; ++uvset)
+	{
+		mesh->uvs[uvset].allocate(total_indices);
+	}
+
 	for (int triangle_index = 0; triangle_index < total_triangles; ++triangle_index)
 	{
 		for (int local_vertex_id = 0; local_vertex_id < 3; ++local_vertex_id)
@@ -125,17 +152,29 @@ static void load_mesh2(IndentState& state, FbxNode* node, datamodel::Mesh* mesh)
 			fbxmesh->GetPolygonVertexNormal(triangle_index, local_vertex_id, normal);
 //			LOGV("%snormal: %g %g %g\n", state.indent(), normal[0], normal[1], normal[2]);
 			
-			FbxVector2 uv;
-			bool unmapped;
-			fbxmesh->GetPolygonVertexUV(triangle_index, local_vertex_id, "UVMap", uv, unmapped);
-//			LOGV("%suv: %g %g\n", state.indent(), uv[0], uv[1]);
+
 
 			datamodel::Vertex* vertex = &vertices[vertex_index];
 			vertex->position = glm::vec3(position[0], position[1], position[2]);
 			vertex->normal = glm::vec3(normal[0], normal[1], normal[2]);
+			for (int uvset = 0; uvset < total_uv_sets; ++uvset)
+			{
+				FbxVector2 uv;
+				bool unmapped;
+				FbxStringListItem* item = uv_set_list.GetItemAt(uvset);
+				bool has_uv = fbxmesh->GetPolygonVertexUV(triangle_index, local_vertex_id, item->mString, uv, unmapped);
+				if (!has_uv)
+				{
+					LOGE("%sUnable to get polygon vertex at [t=%i, v=%i, set=%s\n", state.indent(), triangle_index, local_vertex_id, item->mString.Buffer());
+				}
+	//			LOGV("%suv: %g %g\n", state.indent(), uv[0], uv[1]);
+				vertex->uv[uvset] = glm::vec2(uv[0], uv[1]);
+				mesh->uvs[uvset][vertex_index] = vertex->uv[uvset];
+			}
+			
 			mesh->vertices[vertex_index] = vertex->position;
 			mesh->normals[vertex_index] = vertex->normal;
-			mesh->uvs[0][vertex_index] = glm::vec2(uv[0], uv[1]);
+			
 
 			++vertex_index;
 			++local_index;
@@ -208,7 +247,7 @@ static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh)
 	// don't need to assert here; just need to ignore unsupported channels
 	assert(uv_set_list.GetCount() <= datamodel::MAX_SUPPORTED_UV_CHANNELS);
 	
-	mesh->total_uv_sets = uv_set_list.GetCount();
+	int total_uv_sets = uv_set_list.GetCount();
 	
 	assert(normals != 0);
 	

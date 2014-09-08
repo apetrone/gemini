@@ -138,7 +138,7 @@ void JsonSceneWriter::append_node(datamodel::SceneNode* node, Json::Value& jnode
 		
 		// write uvs
 		Json::Value uv_sets(Json::arrayValue);
-		for (size_t uv_set_id = 0; uv_set_id < node->mesh->total_uv_sets; ++uv_set_id)
+		for (size_t uv_set_id = 0; uv_set_id < node->mesh->uvs.size(); ++uv_set_id)
 		{
 			Json::Value juvs(Json::arrayValue);
 			for (size_t uv_id = 0; uv_id < node->mesh->uvs[uv_set_id].size(); ++uv_id)
