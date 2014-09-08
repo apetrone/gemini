@@ -29,5 +29,8 @@ class AutodeskFbxReader : public tools::Reader<datamodel::SceneNode>
 	DECLARE_PLUGIN_CLASS(AutodeskFbxReader);
 	
 public:
+	AutodeskFbxReader();
+	virtual ~AutodeskFbxReader();
+
 	virtual void read(datamodel::SceneNode* root, util::DataStream& data_source);
 };

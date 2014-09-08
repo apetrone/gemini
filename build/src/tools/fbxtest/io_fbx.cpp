@@ -402,7 +402,7 @@ static void populate_hierarchy(IndentState& state, datamodel::SceneNode* root, F
 		{
 			FbxGeometry* geometry = (FbxGeometry*)node_attribute;
 			int blend_shape_count = geometry->GetDeformerCount(FbxDeformer::eBlendShape);
-			LOGV("blend_shapes = %i\n", blend_shape_count);
+			LOGV("%sblend_shapes = %i\n", state.indent(), blend_shape_count);
 		}
 	}
 	
@@ -428,38 +428,6 @@ static void populate_hierarchy(IndentState& state, datamodel::SceneNode* root, F
 		FbxDouble3 rotation = node->LclRotation.Get();
 		FbxDouble3 scaling = node->LclScaling.Get();
 		
-		
-		//			LOGV("%s\"%s\", (LCL) t = (%g %g %g), r = (%g %g %g), s = (%g %g %g)\n",
-		//				 state.indent(),
-		//				 scene_node->name.c_str(),
-		//				 translation[0], translation[1], translation[2],
-		//				 rotation[0], rotation[1], rotation[2],
-		//				 scaling[0], scaling[1], scaling[2]
-		//				 );
-		
-		//			{
-		//				FbxVector4 translation = node->GetGeometricTranslation(FbxNode::eSourcePivot);
-		//				FbxVector4 rotation = node->GetGeometricRotation(FbxNode::eSourcePivot);
-		//				FbxVector4 scaling = node->GetGeometricScaling(FbxNode::eSourcePivot);
-		//
-		//				LOGV("%s\"%s\", (GEO) t = (%g %g %g), r = (%g %g %g), s = (%g %g %g)\n",
-		//					 state.indent(),
-		//					 scene_node->name.c_str(),
-		//					 translation[0], translation[1], translation[2],
-		//					 rotation[0], rotation[1], rotation[2],
-		//					 scaling[0], scaling[1], scaling[2]
-		//					 );
-		//			}
-		//			FbxAMatrix local_transform = node->EvaluateLocalTransform();
-		
-		FbxAMatrix global_transform = node->EvaluateGlobalTransform();
-		to_mat4(global_transform, scene_node->global_transform);
-		
-		//			FbxVector4 scaling = node->EvaluateLocalScaling();
-		//			FbxVector4 rotation = node->EvaluateLocalRotation();
-		//			FbxVector4 translation = node->EvaluateLocalTranslation();
-		
-		
 		scene_node->scale = glm::vec3(scaling[0], scaling[1], scaling[2]);
 		// convert these to radians
 		rotation[0] = mathlib::degrees_to_radians(rotation[0]);
@@ -477,6 +445,29 @@ static void populate_hierarchy(IndentState& state, datamodel::SceneNode* root, F
 	state.pop();
 }
 
+namespace internal
+{
+	static FbxManager* _manager;
+}
+
+AutodeskFbxReader::AutodeskFbxReader()
+{
+	internal::_manager = FbxManager::Create();
+	
+	LOGV("FBX SDK %s\n", FbxManager::GetVersion());
+	
+	int sdk_version_major;
+	int sdk_version_minor;
+	int sdk_version_patch;
+	
+	FbxManager::GetFileFormatVersion(sdk_version_major, sdk_version_minor, sdk_version_patch);
+	LOGV("FBX SDK default file version: %i.%i.%i\n", sdk_version_major, sdk_version_minor, sdk_version_patch);
+}
+
+AutodeskFbxReader::~AutodeskFbxReader()
+{
+	internal::_manager->Destroy();
+}
 
 void AutodeskFbxReader::read(datamodel::SceneNode* root, util::DataStream& data_source)
 {
@@ -490,23 +481,30 @@ void AutodeskFbxReader::read(datamodel::SceneNode* root, util::DataStream& data_
 	
 	LOGV("loading model: %s\n", path);
 	
-	FbxManager* m = FbxManager::Create();
-	FbxIOSettings* settings = FbxIOSettings::Create(m, IOSROOT);
+	FbxManager* manager = internal::_manager;
 	
-	FbxImporter* importer = FbxImporter::Create(m, "");
+	FbxIOSettings* settings = FbxIOSettings::Create(manager, IOSROOT);
+	FbxImporter* importer = FbxImporter::Create(manager, "");
 	
-	if (!importer->Initialize(path, -1, m->GetIOSettings()))
+	if (!importer->Initialize(path, -1, manager->GetIOSettings()))
 	{
 		LOGE("initialize exporter failed\n");
 		LOGE("%s\n", importer->GetStatus().GetErrorString());
 		return;
 	}
 	
-	FbxScene* scene = FbxScene::Create(m, "test_scene");
+	// query and print out the detected file version
+	int file_version_major;
+	int file_version_minor;
+	int file_version_patch;
+	importer->GetFileVersion(file_version_major, file_version_minor, file_version_patch);
+	LOGV("FBX File Format: %i.%i.%i\n", file_version_major, file_version_minor, file_version_patch);
+	
+	FbxScene* scene = FbxScene::Create(manager, "test_scene");
 	
 	importer->Import(scene);
 	
-	FbxGeometryConverter converter(m);
+	FbxGeometryConverter converter(manager);
 	converter.Triangulate(scene, true);
 	//converter.SplitMeshesPerMaterial(scene, false);
 	
@@ -539,6 +537,4 @@ void AutodeskFbxReader::read(datamodel::SceneNode* root, util::DataStream& data_
 		
 		populate_hierarchy(state, root, fbxroot);
 	}
-	
-	m->Destroy();
 }

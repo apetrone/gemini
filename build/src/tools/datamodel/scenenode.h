@@ -44,9 +44,7 @@ namespace datamodel
 		glm::vec3 scale;
 		glm::quat rotation;
 		glm::vec3 translation;
-		
-		glm::mat4 global_transform;
-		
+
 		SceneNode* parent;
 		SceneNodeVector children;
 		

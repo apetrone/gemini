@@ -71,10 +71,6 @@ void JsonSceneWriter::append_node(datamodel::SceneNode* node, Json::Value& jnode
 	jtranslation.append(node->translation.z);
 	jnode["translation"] = jtranslation;
 	
-	Json::Value jglobal_transform;
-	jsonify_matrix(jglobal_transform, node->global_transform);
-	jnode["global_transform"] = jglobal_transform;
-	
 	Json::Value child_nodes(Json::arrayValue);
 	for (auto child : node->children)
 	{
