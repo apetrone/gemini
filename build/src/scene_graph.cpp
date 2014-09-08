@@ -46,6 +46,8 @@ namespace scenegraph
 {
 	Node::Node()
 	{
+		// sane defaults
+		local_scale = glm::vec3(1.0f, 1.0f, 1.0f);
 		parent = 0;
 		type = NODE;
 	}
@@ -74,6 +76,11 @@ namespace scenegraph
 	
 	void Node::add_child(Node* child)
 	{
+		if (child->parent && child->parent != this)
+		{
+			child->parent->remove_child(child);
+		}
+		child->parent = this;
 		children.push_back(child);
 	}
 	
