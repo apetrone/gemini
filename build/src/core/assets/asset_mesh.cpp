@@ -184,7 +184,7 @@ namespace assets
 		assert(!node["name"].isNull());
 		assert(!node["type"].isNull());
 		std::string node_name = node["name"].asString();
-		LOGV("node %s\n", node_name.c_str());
+//		LOGV("node %s\n", node_name.c_str());
 		
 		std::string node_type = node["type"].asString();
 		if (node_type == "mesh")
