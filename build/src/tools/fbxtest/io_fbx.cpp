@@ -87,9 +87,38 @@ static int get_layer_element_index(
 	}
 }
 
+
+static void parse_materials(IndentState& state, FbxNode* node)
+{
+	// materials for this piece of geometry
+	int total_materials = node->GetMaterialCount();
+	LOGV("%stotal_materials: %i\n", state.indent(), total_materials);
+	
+	if (total_materials > 0)
+	{
+		for (int material_id = 0; material_id < total_materials; ++material_id)
+		{
+			FbxSurfaceMaterial* material = node->GetMaterial(material_id);
+			LOGV("%smaterial: %s\n", state.indent(), material->GetName());
+			
+			
+			if (material->GetClassId().Is(FbxSurfaceLambert::ClassId))
+			{
+				LOGV("%sfound lambert material!\n", state.indent());
+			}
+			else if (material->GetClassId().Is(FbxSurfacePhong::ClassId))
+			{
+				LOGV("%sfound phong material!\n", state.indent());
+			}
+		}
+	}
+}
+
 static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh)
 {
 	FbxMesh* fbxmesh = node->GetMesh();
+	
+	parse_materials(state, node);
 	
 	fbxmesh->GenerateNormals();
 	fbxmesh->GenerateTangentsData();
@@ -211,10 +240,6 @@ static void to_mat4(FbxAMatrix& tr, glm::mat4& out)
 	
 }
 
-static void parse_materials(IndentState& state)
-{
-	
-}
 
 static void populate_hierarchy(IndentState& state, datamodel::SceneNode* root, FbxNode* node)
 {
