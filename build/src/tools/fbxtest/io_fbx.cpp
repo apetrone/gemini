@@ -110,6 +110,60 @@ static void parse_materials(IndentState& state, FbxNode* node)
 			{
 				LOGV("%sfound phong material!\n", state.indent());
 			}
+			
+			int texture_index;
+			FBXSDK_FOR_EACH_TEXTURE(texture_index)
+			{
+				FbxProperty property = material->FindProperty(FbxLayerElement::sTextureChannelNames[texture_index]);
+				if (property.IsValid())
+				{
+					int texture_count = property.GetSrcObjectCount<FbxTexture>();
+					if (texture_count > 0)
+					{
+						LOGV("%stexture_count = %i\n", state.indent(), texture_count);
+						for (int texture_id = 0; texture_id < texture_count; ++texture_id)
+						{
+							// check if it's a layered texture
+							FbxLayeredTexture* layered_texture = property.GetSrcObject<FbxLayeredTexture>(texture_id);
+							if (layered_texture)
+							{
+								LOGV("%sfound a layered texture!\n", state.indent());
+								assert(0);
+							}
+							else
+							{
+								FbxTexture* texture = property.GetSrcObject<FbxTexture>(texture_id);
+								if (texture)
+								{
+									LOGV("%stexture name: %s\n", state.indent(), texture->GetName());
+									LOGV("%sproperty name: %s\n", state.indent(), property.GetName().Buffer());
+									FbxFileTexture* file_texture = FbxCast<FbxFileTexture>(texture);
+									FbxProceduralTexture* procedural_texture = FbxCast<FbxProceduralTexture>(texture);
+									if (file_texture)
+									{
+										LOGV("%sfile name: %s, relative filename: %s\n", state.indent(), file_texture->GetFileName(), file_texture->GetRelativeFileName());
+									}
+									else if (procedural_texture)
+									{
+										LOGV("%sdetected procedural texture!\n", state.indent());
+										assert(0);
+									}
+									
+									
+									LOGV("%sscale u: %g\n", state.indent(), texture->GetScaleU());
+									LOGV("%sscale v: %g\n", state.indent(), texture->GetScaleV());
+									LOGV("%stranslation u: %g\n", state.indent(), texture->GetTranslationU());
+									LOGV("%stranslation v: %g\n", state.indent(), texture->GetTranslationV());
+									LOGV("%sswap uv: %i\n", state.indent(), texture->GetSwapUV());
+									LOGV("%srotation u: %g\n", state.indent(), texture->GetRotationU());
+									LOGV("%srotation v: %g\n", state.indent(), texture->GetRotationV());
+									LOGV("%srotation w: %g\n", state.indent(), texture->GetRotationW());
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 }
