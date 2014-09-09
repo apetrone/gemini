@@ -276,7 +276,7 @@ static void populate_hierarchy(IndentState& state, datamodel::SceneNode* root, F
 		rotation[2] = mathlib::degrees_to_radians(rotation[2]);
 		scene_node->rotation = glm::quat(glm::vec3(rotation[0], rotation[1], rotation[2]));
 		scene_node->translation = glm::vec3(translation[0], translation[1], translation[2]);
-		LOGV("translation: %g %g %g\n", scene_node->translation.x, scene_node->translation.y, scene_node->translation.z);
+//		LOGV("translation: %g %g %g\n", scene_node->translation.x, scene_node->translation.y, scene_node->translation.z);
 		
 		for (size_t index = 0; index < node->GetChildCount(); ++index)
 		{
@@ -369,6 +369,9 @@ void AutodeskFbxReader::read(datamodel::SceneNode* root, util::DataStream& data_
 	LOGV("\ttime mode = %s\n", FbxGetTimeModeName(time_mode));
 	
 	// this will ONLY modify the first layer of node transforms in the scene
+	// also, I bet the DCC tool has to export this with the correct up-axis
+	// as some are still aligned on the Z axis even though they report
+	// MayaYUp.
 	FbxAxisSystem axis_system = scene->GetGlobalSettings().GetAxisSystem();
 	if (axis_system == FbxAxisSystem::MayaYUp)
 	{
