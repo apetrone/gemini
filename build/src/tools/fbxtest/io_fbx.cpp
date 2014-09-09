@@ -406,8 +406,12 @@ void AutodeskFbxReader::read(datamodel::SceneNode* root, util::DataStream& data_
 	
 	FbxIOSettings* settings = FbxIOSettings::Create(manager, IOSROOT);
 	FbxImporter* importer = FbxImporter::Create(manager, "");
+
+	settings->SetBoolProp(IMP_FBX_MATERIAL, true);
+	settings->SetBoolProp(IMP_FBX_TEXTURE, true);
+
 	
-	if (!importer->Initialize(path, -1, manager->GetIOSettings()))
+	if (!importer->Initialize(path, -1, settings))
 	{
 		LOGE("initialize exporter failed\n");
 		LOGE("%s\n", importer->GetStatus().GetErrorString());
