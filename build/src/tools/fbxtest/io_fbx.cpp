@@ -211,6 +211,11 @@ static void to_mat4(FbxAMatrix& tr, glm::mat4& out)
 	
 }
 
+static void parse_materials(IndentState& state)
+{
+	
+}
+
 static void populate_hierarchy(IndentState& state, datamodel::SceneNode* root, FbxNode* node)
 {
 	datamodel::SceneNode* scene_node = root;
@@ -342,8 +347,12 @@ void AutodeskFbxReader::read(datamodel::SceneNode* root, util::DataStream& data_
 	importer->Import(scene);
 	
 	FbxGeometryConverter converter(manager);
+	
+	// triangulate the scene
 	converter.Triangulate(scene, true);
-	//converter.SplitMeshesPerMaterial(scene, false);
+	
+	// split meshes by material
+	converter.SplitMeshesPerMaterial(scene, true);
 	
 	// safe to destroy the importer after importing a scene
 	importer->Destroy();
@@ -359,13 +368,26 @@ void AutodeskFbxReader::read(datamodel::SceneNode* root, util::DataStream& data_
 	FbxTime::EMode time_mode = scene->GetGlobalSettings().GetTimeMode();
 	LOGV("\ttime mode = %s\n", FbxGetTimeModeName(time_mode));
 	
-//	FbxAxisSystem axis_system = scene->GetGlobalSettings().GetAxisSystem();
-//	FbxAxisSystem target_axis_system(FbxAxisSystem::eYAxis, FbxAxisSystem::eParityEven, FbxAxisSystem::eRightHanded);
-//	if (axis_system != target_axis_system)
-//	{
-//		LOGV("converting axis...\n");
-//		target_axis_system.ConvertScene(scene);
-//	}
+	// this will ONLY modify the first layer of node transforms in the scene
+	FbxAxisSystem axis_system = scene->GetGlobalSettings().GetAxisSystem();
+	if (axis_system == FbxAxisSystem::MayaYUp)
+	{
+		LOGV("model matches Maya's Y-up axis. nothing to do.\n");
+	}
+	else
+	{
+		LOGV("axis_system needs to be changed\n");
+		FbxAxisSystem::MayaYUp.ConvertScene(scene);
+	}
+	
+	// gemini needs a scene defined in meters
+	FbxSystemUnit system_unit = scene->GetGlobalSettings().GetSystemUnit();
+
+	if (system_unit != FbxSystemUnit::m)
+	{
+		LOGV("Converting scene units from: %s\n", system_unit.GetScaleFactorAsString().Buffer());
+		FbxSystemUnit::m.ConvertScene(scene);
+	}
 	
 	int total_animation_stacks = scene->GetSrcObjectCount<FbxAnimStack>();
 	LOGV("animation stacks: %i\n", total_animation_stacks);
