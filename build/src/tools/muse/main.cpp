@@ -32,7 +32,7 @@
 #include <gemini/core/xfile.h>
 #include <gemini/util/stackstring.h>
 
-#include <gemini/util/arg.h>
+//#include <gemini/util/arg.h>
 #include <gemini/util/datastream.h>
 
 #include <gemini/mathlib.h>
@@ -125,15 +125,20 @@ int main(int argc, char** argv)
 	memory::startup();
 	core::startup();
 	
-	args::Argument* asset_root = args::add("asset_root","-d", "--asset-root", 0, 0);
-	args::Argument* input_file = args::add("input_file", "-f", "--input", 0, 0);
-	args::Argument* output_root = args::add("output_root", "-o", "--output-root", 0, 0);
-		
-	if (!args::parse_args(argc, argv))
+	// Commented out until I fix some issues with it.
+//	args::Argument* asset_root = args::add("asset_root","-d", "--asset-root", 0, 0);
+//	args::Argument* input_file = args::add("input_file", "-f", "--input", 0, 0);
+//	args::Argument* output_root = args::add("output_root", "-o", "--output-root", 0, 0);
+	
+	if (argc < 4)
 	{
-		LOGE("Argument parsing failed. Usage: -d \"/path/to/assets\" -f \"models/plane.fbx\" -o \"/path/to/build/latest\"\n");
+		LOGE("Argument parsing failed. Usage: \"/path/to/assets\" \"models/plane.fbx\" \"/path/to/build/latest\"\n");
 		return -1;
 	}
+	
+	const char* asset_root = argv[1];
+	const char* input_file = argv[2];
+	const char* output_root = argv[3];
 	
 	register_types();
 
@@ -142,15 +147,15 @@ int main(int argc, char** argv)
 	double start = xtime_msec(&timer);
 
 	// determine our input and output filenames
-	StackString<MAX_PATH_SIZE> input_filename = asset_root->string;
+	StackString<MAX_PATH_SIZE> input_filename = asset_root;
 	input_filename.normalize();
 	input_filename.strip_trailing('/').append("/");
-	input_filename.append(input_file->string);
+	input_filename.append(input_file);
 	
-	StackString<MAX_PATH_SIZE> output_filename = output_root->string;
+	StackString<MAX_PATH_SIZE> output_filename = output_root;
 	output_filename.normalize();
 	output_filename.strip_trailing('/').append("/");
-	output_filename = output_filename.append(input_file->string).remove_extension().append(".model");
+	output_filename = output_filename.append(input_file).remove_extension().append(".model");
 
 	// perform the conversion -- right now, we always assume it's a scene/model
 	core::Result result = tools::convert_scene(input_filename, output_filename);
