@@ -113,6 +113,8 @@ public:
 	
 	StackStringType basename()
 	{
+		// return the basename of a filepath. (just the filename)
+		// this replicates the behavior in python
 		Type * pos = find_last_slash();
 		if (pos)
 		{
@@ -123,11 +125,12 @@ public:
 
 		return *this;
 	}
-	
 
 
 	StackStringType dirname()
 	{
+		// return the dirname of a filepath.
+		// this replicates the behavior in python
 		Type * pos = find_last_slash();
 
 		if ( pos )
@@ -142,7 +145,7 @@ public:
 		return *this;
 	}
 	
-	const Type * extension() const
+	const Type* extension() const
 	{
 		Type * p = strrchr( (Type*)_data, '.' );
 		if ( !p )
@@ -166,7 +169,7 @@ public:
 		return *this;
 	}
 	
-	void normalize( Type prefer = '/' )
+	void normalize(Type prefer = '/')
 	{
 		for( int i = 0; i < _length; ++i )
 		{
@@ -203,9 +206,20 @@ public:
 	{
 		return _data;
 	}
+	
+	StackStringType& strip_trailing(char character)
+	{
+		if (_data[_length-1] == character)
+		{
+			_data[_length-1] = 0;
+			_length--;
+		}
+		
+		return *this;
+	}
 
 	
-	void lshift( int pos, int count )
+	void lshift(int pos, int count)
 	{
 		char * src;
 		char temp[ size ];
@@ -216,7 +230,7 @@ public:
 		memcpy( _data+pos, src, size-pos );
 	}
 	
-	void shift( int pos, int count )
+	void shift(int pos, int count)
 	{
 		char * src;
 		char temp[ size ];

@@ -28,7 +28,6 @@
 #include <string>
 
 
-
 namespace datamodel
 {
 	struct Mesh;
@@ -55,5 +54,6 @@ namespace datamodel
 		virtual ~SceneNode();
 		void add_child(SceneNode* child);
 		void remove_child(SceneNode* child);
+		SceneNode* find_child_named(const std::string& name);
 	};
 };

@@ -37,16 +37,13 @@
 
 #include <gemini/mathlib.h>
 
-#include <slim/xlog.h>
+#include <slim/xtime.h>
 
+#include <slim/xlog.h>
 
 #include "common.h"
 #include "datamodel.h"
 #include "common/extension.h"
-
-#include <gemini/core/timer.h>
-#include <slim/xtime.h>
-
 
 // include reader/writers
 #include "io_fbx.h"
@@ -68,14 +65,12 @@ using namespace tools;
 
 namespace tools
 {
-	core::Result convert_scene(const char* input_path, const char* output_path)
+	core::Result convert_scene(StackString<MAX_PATH_SIZE>& input_path, StackString<MAX_PATH_SIZE>& output_path)
 	{
 		datamodel::SceneNode root;
-		
-		// TODO: get extension from input_path
-		std::string ext = "fbx";
-		
+
 		// verify we can read the format
+		std::string ext = input_path.extension();
 		const Extension<datamodel::SceneNode> archiver_extension = find_entry_for_extension<datamodel::SceneNode>(ext);
 		tools::Reader<datamodel::SceneNode>* reader = archiver_extension.reader;
 		if (!reader)
@@ -85,7 +80,7 @@ namespace tools
 		}
 		
 		// verify we can write the format
-		ext = "model";
+		ext = output_path.extension();
 		const Extension<datamodel::SceneNode> writer_extension = find_entry_for_extension<datamodel::SceneNode>(ext);
 		tools::Writer<datamodel::SceneNode>* writer = writer_extension.writer;
 		if (!writer)
@@ -95,7 +90,7 @@ namespace tools
 		}
 		
 		util::MemoryStream mds;
-		mds.data = (uint8_t*)input_path;
+		mds.data = (uint8_t*)input_path();
 		reader->read(&root, mds);
 		
 		util::ResizableMemoryStream rs;
@@ -103,7 +98,7 @@ namespace tools
 
 		rs.rewind();
 		
-		xfile_t out = xfile_open(output_path, XF_WRITE);
+		xfile_t out = xfile_open(output_path(), XF_WRITE);
 		if (xfile_isopen(out))
 		{
 			xfile_write(out, rs.get_data(), rs.get_data_size(), 1);
@@ -113,6 +108,7 @@ namespace tools
 	}
 }
 
+// register all datamodel io types
 void register_types()
 {
 	Extension<datamodel::SceneNode> ext;
@@ -129,15 +125,13 @@ int main(int argc, char** argv)
 	memory::startup();
 	core::startup();
 	
-//	args::Argument* asset_root = args::add("asset_root","-d", "--asset-root", 0, 0);
+	args::Argument* asset_root = args::add("asset_root","-d", "--asset-root", 0, 0);
 	args::Argument* input_file = args::add("input_file", "-f", "--input", 0, 0);
-	args::Argument* output_file = args::add("output_file", "-o", "--output", 0, 0);
-//	args::Argument* output_root = args::add("output_root", "-o", "--output-root", 0, 0);
-//	args::Argument* convert_axis = args::add("convert_zup_to_yup", "-y", 0, args::NO_PARAMS | args::NOT_REQUIRED, 0);
-	
+	args::Argument* output_root = args::add("output_root", "-o", "--output-root", 0, 0);
+		
 	if (!args::parse_args(argc, argv))
 	{
-		LOGE("Argument parsing failed.\n");
+		LOGE("Argument parsing failed. Usage: -d \"/path/to/assets\" -f \"models/plane.fbx\" -o \"/path/to/build/latest\"\n");
 		return -1;
 	}
 	
@@ -147,14 +141,26 @@ int main(int argc, char** argv)
 	xtime_startup(&timer);
 	double start = xtime_msec(&timer);
 
-	core::Result result = tools::convert_scene(input_file->string, output_file->string);
+	// determine our input and output filenames
+	StackString<MAX_PATH_SIZE> input_filename = asset_root->string;
+	input_filename.normalize();
+	input_filename.strip_trailing('/').append("/");
+	input_filename.append(input_file->string);
+	
+	StackString<MAX_PATH_SIZE> output_filename = output_root->string;
+	output_filename.normalize();
+	output_filename.strip_trailing('/').append("/");
+	output_filename = output_filename.append(input_file->string).remove_extension().append(".model");
+
+	// perform the conversion -- right now, we always assume it's a scene/model
+	core::Result result = tools::convert_scene(input_filename, output_filename);
 	if (result.failed())
 	{
 		LOGV("conversion failed: %s\n", result.message);
 	}
 
 	double duration = (xtime_msec(&timer) - start);
-	LOGV("processed scene in %2.2f seconds\n", duration*.001f);
+	LOGV("processed in %2.2f seconds\n", duration*.001f);
 	
 	purge_registry<datamodel::SceneNode>();
 
