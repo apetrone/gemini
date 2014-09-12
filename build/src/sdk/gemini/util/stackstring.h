@@ -47,7 +47,10 @@ public:
 	StackString(const Type * s)
 	{
 		clear();
-		copy_data(s);
+		if (s)
+		{
+			copy_data(s);
+		}
 	}
 	
 	unsigned int max_size() const
@@ -182,14 +185,17 @@ public:
 	
 	StackStringType& append(const Type * s)
 	{
-		if (_length + xstr_len(s) < size)
+		if (s)
 		{
-			xstr_cat(_data, s);
-			_length = xstr_len(_data);
-		}
-		else
-		{
-			assert( 0 );
+			if (_length + xstr_len(s) < size)
+			{
+				xstr_cat(_data, s);
+				_length = xstr_len(_data);
+			}
+			else
+			{
+				assert( 0 );
+			}
 		}
 		
 		return *this;
@@ -209,10 +215,13 @@ public:
 	
 	StackStringType& strip_trailing(char character)
 	{
-		if (_data[_length-1] == character)
+		if (_length > 0)
 		{
-			_data[_length-1] = 0;
-			_length--;
+			if (_data[_length-1] == character)
+			{
+				_data[_length-1] = 0;
+				_length--;
+			}
 		}
 		
 		return *this;

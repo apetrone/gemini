@@ -153,6 +153,9 @@ namespace args
 	
 	bool validate_arguments(int argc, char** argv)
 	{
+		// returns true if:
+		// 1. All required arguments were found
+		
 		int index = 0;
 		Argument* param = nullptr;
 		
@@ -197,9 +200,11 @@ namespace args
 					fprintf(stderr, "Missing required option: %s\n", param->name);
 				}
 				
-				return 1;
+				return false;
 			}
 		}
+		
+		return true;
 	}
 	
 	
