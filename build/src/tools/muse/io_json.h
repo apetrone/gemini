@@ -26,15 +26,15 @@
 #include <json/json.h>
 
 #include "common/extension.h"
-#include "datamodel/scenenode.h"
+#include "datamodel/Node.h"
 
-class JsonSceneWriter : public tools::Writer<datamodel::SceneNode>
+class JsonSceneWriter : public tools::Writer<datamodel::Node>
 {
 	DECLARE_PLUGIN_CLASS(JsonSceneWriter);
 	
 public:
 	void jsonify_matrix(Json::Value& array, glm::mat4& matrix);
-	void append_node(datamodel::SceneNode* node, Json::Value& jnodes);
+	void append_node(datamodel::Node* node, Json::Value& jnodes);
 
-	virtual void write(datamodel::SceneNode* root, util::DataStream& source);
+	virtual void write(datamodel::Node* root, util::DataStream& source);
 };

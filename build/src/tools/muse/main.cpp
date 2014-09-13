@@ -58,12 +58,12 @@ namespace tools
 {
 	core::Result convert_scene(StackString<MAX_PATH_SIZE>& input_path, StackString<MAX_PATH_SIZE>& output_path)
 	{
-		datamodel::SceneNode root;
+		datamodel::Node root;
 
 		// verify we can read the format
 		std::string ext = input_path.extension();
-		const Extension<datamodel::SceneNode> archiver_extension = find_entry_for_extension<datamodel::SceneNode>(ext);
-		tools::Reader<datamodel::SceneNode>* reader = archiver_extension.reader;
+		const Extension<datamodel::Node> archiver_extension = find_entry_for_extension<datamodel::Node>(ext);
+		tools::Reader<datamodel::Node>* reader = archiver_extension.reader;
 		if (!reader)
 		{
 			LOGE("no reader found for extension: %s\n", ext.c_str());
@@ -72,8 +72,8 @@ namespace tools
 		
 		// verify we can write the format
 		ext = output_path.extension();
-		const Extension<datamodel::SceneNode> writer_extension = find_entry_for_extension<datamodel::SceneNode>(ext);
-		tools::Writer<datamodel::SceneNode>* writer = writer_extension.writer;
+		const Extension<datamodel::Node> writer_extension = find_entry_for_extension<datamodel::Node>(ext);
+		tools::Writer<datamodel::Node>* writer = writer_extension.writer;
 		if (!writer)
 		{
 			LOGE("no writer found for extension: %s\n", ext.c_str());

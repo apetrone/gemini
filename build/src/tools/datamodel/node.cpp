@@ -22,29 +22,29 @@
 
 #include "datamodel/mesh.h"
 #include "datamodel/skeleton.h"
-#include "datamodel/scenenode.h"
+#include "datamodel/node.h"
 
 namespace datamodel
 {
-	SceneNode::SceneNode()
+	Node::Node()
 	{
 		parent = nullptr;
 		mesh = nullptr;
 		skeleton = nullptr;
 	}
 	
-	SceneNode::~SceneNode()
+	Node::~Node()
 	{
-//		SceneNodeVector::iterator it = children.begin();
+//		NodeVector::iterator it = children.begin();
 //		for( ; it != children.end(); ++it)
 //		{
-//			SceneNode* node = (*it);
-//			DESTROY(SceneNode, node);
+//			Node* node = (*it);
+//			DESTROY(Node, node);
 //		}
 		
 		for (auto& child : children)
 		{
-			DESTROY(SceneNode, child);
+			DESTROY(Node, child);
 		}
 		
 		children.clear();
@@ -60,7 +60,7 @@ namespace datamodel
 		}
 	}
 	
-	void SceneNode::add_child(SceneNode* child)
+	void Node::add_child(Node* child)
 	{
 		if (child->parent)
 		{
@@ -71,10 +71,10 @@ namespace datamodel
 		children.push_back(child);
 	}
 	
-	void SceneNode::remove_child(SceneNode* child)
+	void Node::remove_child(Node* child)
 	{
 		// find the child and detach from the old parent
-		for (SceneNodeVector::iterator it = children.begin(); it != children.end(); ++it)
+		for (NodeVector::iterator it = children.begin(); it != children.end(); ++it)
 		{
 			if (child == (*it))
 			{
@@ -84,7 +84,7 @@ namespace datamodel
 		}
 	}
 	
-	SceneNode* SceneNode::find_child_named(const std::string& name)
+	Node* Node::find_child_named(const std::string& name)
 	{
 		if (this->name == name)
 		{
@@ -93,7 +93,7 @@ namespace datamodel
 
 		for (auto& child : children)
 		{
-			SceneNode* node = child->find_child_named(name);
+			Node* node = child->find_child_named(name);
 			if (node)
 			{
 				return node;

@@ -312,9 +312,9 @@ static void to_mat4(FbxAMatrix& tr, glm::mat4& out)
 }
 
 
-static void populate_hierarchy(IndentState& state, datamodel::SceneNode* root, FbxNode* node)
+static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNode* node)
 {
-	datamodel::SceneNode* scene_node = root;
+	datamodel::Node* scene_node = root;
 	
 	bool is_valid = true;
 	
@@ -347,7 +347,7 @@ static void populate_hierarchy(IndentState& state, datamodel::SceneNode* root, F
 	if (is_valid)
 	{
 		// create a new node
-		scene_node = CREATE(datamodel::SceneNode);
+		scene_node = CREATE(datamodel::Node);
 		root->add_child(scene_node);
 		
 		// copy data
@@ -402,7 +402,7 @@ AutodeskFbxReader::~AutodeskFbxReader()
 	internal::_manager->Destroy();
 }
 
-void AutodeskFbxReader::read(datamodel::SceneNode* root, util::DataStream& data_source)
+void AutodeskFbxReader::read(datamodel::Node* root, util::DataStream& data_source)
 {
 	LOGV("TODO: switch this over to FbxStream\n");
 	//		http://docs.autodesk.com/FBX/2014/ENU/FBX-SDK-Documentation/index.html

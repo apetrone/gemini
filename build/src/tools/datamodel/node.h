@@ -33,9 +33,9 @@ namespace datamodel
 	struct Mesh;
 	struct Skeleton;
 
-	typedef std::vector<struct SceneNode*, GeminiAllocator<struct SceneNode*>> SceneNodeVector;
+	typedef std::vector<struct Node*, GeminiAllocator<struct Node*>> NodeVector;
 	
-	struct SceneNode
+	struct Node
 	{
 		std::string name;
 		std::string type;
@@ -44,16 +44,16 @@ namespace datamodel
 		glm::quat rotation;
 		glm::vec3 translation;
 
-		SceneNode* parent;
-		SceneNodeVector children;
+		Node* parent;
+		NodeVector children;
 		
 		Mesh* mesh;
 		Skeleton* skeleton;
 		
-		SceneNode();
-		virtual ~SceneNode();
-		void add_child(SceneNode* child);
-		void remove_child(SceneNode* child);
-		SceneNode* find_child_named(const std::string& name);
+		Node();
+		virtual ~Node();
+		void add_child(Node* child);
+		void remove_child(Node* child);
+		Node* find_child_named(const std::string& name);
 	};
 };

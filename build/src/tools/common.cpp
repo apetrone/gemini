@@ -34,13 +34,13 @@ namespace tools
 	// register all datamodel io types
 	void register_types()
 	{
-		Extension<datamodel::SceneNode> ext;
+		Extension<datamodel::Node> ext;
 		ext.reader = AutodeskFbxReader::plugin_create();
-		register_extension<datamodel::SceneNode>("fbx", ext);
+		register_extension<datamodel::Node>("fbx", ext);
 		
 		ext.reader = 0;
 		ext.writer = JsonSceneWriter::plugin_create();
-		register_extension<datamodel::SceneNode>("model", ext);
+		register_extension<datamodel::Node>("model", ext);
 	}
 
 	void startup()
@@ -53,7 +53,7 @@ namespace tools
 	
 	void shutdown()
 	{
-		purge_registry<datamodel::SceneNode>();
+		purge_registry<datamodel::Node>();
 		
 		core::shutdown();
 		memory::shutdown();

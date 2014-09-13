@@ -46,7 +46,7 @@ void JsonSceneWriter::jsonify_matrix(Json::Value& array, glm::mat4& matrix)
 	array.append(matrix[3].w);
 }
 
-void JsonSceneWriter::append_node(datamodel::SceneNode* node, Json::Value& jnodes)
+void JsonSceneWriter::append_node(datamodel::Node* node, Json::Value& jnodes)
 {
 	Json::Value jnode;
 	jnode["name"] = node->name;
@@ -157,7 +157,7 @@ void JsonSceneWriter::append_node(datamodel::SceneNode* node, Json::Value& jnode
 }
 
 
-void JsonSceneWriter::write(datamodel::SceneNode* root, util::DataStream& source)
+void JsonSceneWriter::write(datamodel::Node* root, util::DataStream& source)
 {
 	Json::Value jroot(Json::arrayValue);
 	
