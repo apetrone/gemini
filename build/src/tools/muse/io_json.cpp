@@ -21,6 +21,7 @@
 // -------------------------------------------------------------
 #include "io_json.h"
 
+#include "datamodel/model.h"
 #include "datamodel/mesh.h"
 
 void JsonSceneWriter::jsonify_matrix(Json::Value& array, glm::mat4& matrix)
@@ -157,11 +158,11 @@ void JsonSceneWriter::append_node(datamodel::Node* node, Json::Value& jnodes)
 }
 
 
-void JsonSceneWriter::write(datamodel::Node* root, util::DataStream& source)
+void JsonSceneWriter::write(datamodel::Model* model, util::DataStream& source)
 {
 	Json::Value jroot(Json::arrayValue);
-	
-	for (auto child : root->children)
+		
+	for (auto child : model->root.children)
 	{
 		append_node(child, jroot);
 	}

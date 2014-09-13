@@ -37,7 +37,7 @@
 
 #include "common.h"
 #include "common/extension.h"
-#include "datamodel.h"
+#include "datamodel/model.h"
 
 
 // need to support:
@@ -56,14 +56,14 @@ using namespace tools;
 
 namespace tools
 {
-	core::Result convert_scene(StackString<MAX_PATH_SIZE>& input_path, StackString<MAX_PATH_SIZE>& output_path)
+	core::Result convert_model(StackString<MAX_PATH_SIZE>& input_path, StackString<MAX_PATH_SIZE>& output_path)
 	{
-		datamodel::Node root;
+		datamodel::Model model;
 
 		// verify we can read the format
 		std::string ext = input_path.extension();
-		const Extension<datamodel::Node> archiver_extension = find_entry_for_extension<datamodel::Node>(ext);
-		tools::Reader<datamodel::Node>* reader = archiver_extension.reader;
+		const Extension<datamodel::Model> archiver_extension = find_entry_for_extension<datamodel::Model>(ext);
+		tools::Reader<datamodel::Model>* reader = archiver_extension.reader;
 		if (!reader)
 		{
 			LOGE("no reader found for extension: %s\n", ext.c_str());
@@ -72,8 +72,8 @@ namespace tools
 		
 		// verify we can write the format
 		ext = output_path.extension();
-		const Extension<datamodel::Node> writer_extension = find_entry_for_extension<datamodel::Node>(ext);
-		tools::Writer<datamodel::Node>* writer = writer_extension.writer;
+		const Extension<datamodel::Model> writer_extension = find_entry_for_extension<datamodel::Model>(ext);
+		tools::Writer<datamodel::Model>* writer = writer_extension.writer;
 		if (!writer)
 		{
 			LOGE("no writer found for extension: %s\n", ext.c_str());
@@ -82,10 +82,10 @@ namespace tools
 		
 		util::MemoryStream mds;
 		mds.data = (uint8_t*)input_path();
-		reader->read(&root, mds);
+		reader->read(&model, mds);
 		
 		util::ResizableMemoryStream rs;
-		writer->write(&root, rs);
+		writer->write(&model, rs);
 
 		rs.rewind();
 		
@@ -95,6 +95,9 @@ namespace tools
 			xfile_write(out, rs.get_data(), rs.get_data_size(), 1);
 			xfile_close(out);
 		}
+
+
+
 		return core::Result(core::Result::Success);
 	}
 }
@@ -135,7 +138,7 @@ int main(int argc, char** argv)
 	output_filename = output_filename.append(input_file).remove_extension().append(".model");
 
 	// perform the conversion -- right now, we always assume it's a scene/model
-	core::Result result = tools::convert_scene(input_filename, output_filename);
+	core::Result result = tools::convert_model(input_filename, output_filename);
 	if (result.failed())
 	{
 		LOGV("conversion failed: %s\n", result.message);

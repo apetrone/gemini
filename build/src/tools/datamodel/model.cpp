@@ -19,10 +19,10 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
 
-#include "datamodel/mesh.h"
-#include "datamodel/skeleton.h"
-#include "datamodel/node.h"
-#include "datamodel/material.h"
 #include "datamodel/model.h"
+
+namespace datamodel
+{
+
+};

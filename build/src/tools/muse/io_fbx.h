@@ -22,9 +22,9 @@
 #pragma once
 
 #include "common/extension.h"
-#include "datamodel/Node.h"
+#include "datamodel/model.h"
 
-class AutodeskFbxReader : public tools::Reader<datamodel::Node>
+class AutodeskFbxReader : public tools::Reader<datamodel::Model>
 {
 	DECLARE_PLUGIN_CLASS(AutodeskFbxReader);
 	
@@ -32,5 +32,5 @@ public:
 	AutodeskFbxReader();
 	virtual ~AutodeskFbxReader();
 
-	virtual void read(datamodel::Node* root, util::DataStream& data_source);
+	virtual void read(datamodel::Model* root, util::DataStream& data_source);
 };

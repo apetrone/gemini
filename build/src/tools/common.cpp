@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include "datamodel/model.h"
+
 // include reader/writers
 #include "io_fbx.h"
 #include "io_json.h"
@@ -34,13 +36,13 @@ namespace tools
 	// register all datamodel io types
 	void register_types()
 	{
-		Extension<datamodel::Node> ext;
+		Extension<datamodel::Model> ext;
 		ext.reader = AutodeskFbxReader::plugin_create();
-		register_extension<datamodel::Node>("fbx", ext);
+		register_extension<datamodel::Model>("fbx", ext);
 		
 		ext.reader = 0;
 		ext.writer = JsonSceneWriter::plugin_create();
-		register_extension<datamodel::Node>("model", ext);
+		register_extension<datamodel::Model>("model", ext);
 	}
 
 	void startup()
@@ -53,6 +55,7 @@ namespace tools
 	
 	void shutdown()
 	{
+		purge_registry<datamodel::Model>();
 		purge_registry<datamodel::Node>();
 		
 		core::shutdown();

@@ -402,7 +402,7 @@ AutodeskFbxReader::~AutodeskFbxReader()
 	internal::_manager->Destroy();
 }
 
-void AutodeskFbxReader::read(datamodel::Node* root, util::DataStream& data_source)
+void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_source)
 {
 	LOGV("TODO: switch this over to FbxStream\n");
 	//		http://docs.autodesk.com/FBX/2014/ENU/FBX-SDK-Documentation/index.html
@@ -500,6 +500,6 @@ void AutodeskFbxReader::read(datamodel::Node* root, util::DataStream& data_sourc
 	{
 		IndentState state;
 		
-		populate_hierarchy(state, root, fbxroot);
+		populate_hierarchy(state, &model->root, fbxroot);
 	}
 }
