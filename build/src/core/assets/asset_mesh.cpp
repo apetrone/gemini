@@ -32,6 +32,8 @@ using namespace renderer;
 
 namespace assets
 {
+	typedef std::map<int, std::string> MaterialByIdContainer;
+
 	static glm::mat4 json_to_mat4(Json::Value& value)
 	{
 		glm::mat4 output;
@@ -64,7 +66,7 @@ namespace assets
 		MeshLoaderState(Mesh* input) : current_geometry(0), mesh(input) {}
 	};
 	
-	void traverse_nodes(MeshLoaderState& state, const Json::Value& node, scenegraph::Node* scene_root)
+	void traverse_nodes(MeshLoaderState& state, const Json::Value& node, scenegraph::Node* scene_root, MaterialByIdContainer& materials)
 	{
 		std::string node_type = node["type"].asString();
 		scenegraph::Node* node_root = nullptr;
@@ -87,8 +89,22 @@ namespace assets
 			Json::Value normal_array = mesh_root["normals"];
 			Json::Value uv_sets = mesh_root["uv_sets"];
 
+			// setup materials
 			Material * default_material = assets::materials()->get_default();
 			geo->material_id = default_material->Id();
+			
+			Json::Value material_id = mesh_root["material_id"];
+			if (!material_id.isNull())
+			{
+				// assign this material
+				auto it = materials.find(material_id.asInt());
+				if (it != materials.end())
+				{
+					const std::string& material_name = it->second;
+					Material* material = assets::materials()->load_from_path(material_name.c_str());
+					geo->material_id = material->Id();
+				}
+			}
 			render_node->material_id = geo->material_id;
 			
 			assets::Shader* shader = assets::shaders()->load_from_path("shaders/world");
@@ -136,7 +152,7 @@ namespace assets
 					const Json::Value& texcoord = uv_sets[set_id][v];
 					glm::vec2& uv = geo->uvs[set_id][v];
 					uv.x = texcoord[0].asFloat();
-					uv.y = texcoord[1].asFloat();
+					uv.y = 1.0 - texcoord[1].asFloat();
 					//LOGV("uv (set=%i) (vertex=%i) %g %g\n", set_id, v, uv.s, uv.t);
 				}
 			}
@@ -174,7 +190,7 @@ namespace assets
 			Json::ValueIterator child_iter = children.begin();
 			for (; child_iter != children.end(); ++child_iter)
 			{
-				traverse_nodes(state, (*child_iter), node_root);
+				traverse_nodes(state, (*child_iter), node_root, materials);
 			}
 		}
 	}
@@ -238,6 +254,22 @@ namespace assets
 		// The model has no nodes. What have you done?
 		assert(!node_root.isNull());
 		
+		MaterialByIdContainer materials_by_id;
+		
+		// read in materials
+		Json::Value materials = root["materials"];
+		if (!materials.isNull())
+		{
+			Json::ValueIterator miter = materials.begin();
+			for (; miter != materials.end(); ++miter)
+			{
+				Json::Value material = (*miter);
+				materials_by_id.insert(MaterialByIdContainer::value_type(material["id"].asInt(), material["name"].asString()));
+			}
+		}
+		
+		
+		// iterate over all nodes and count how many there are, of each kind
 		Json::ValueIterator node_iter = node_root.begin();
 		for (; node_iter != node_root.end(); ++node_iter)
 		{
@@ -245,26 +277,20 @@ namespace assets
 			count_nodes(node, total_meshes, total_bones);
 		}
 		
+		// allocate nodes
 		LOGV("meshes: %i, bones: %i\n", total_meshes, total_bones);
 		mesh->geometry.allocate(total_meshes);
 		
 		MeshLoaderState state(mesh);
-				
+		
+		// traverse over hierarchy
 		node_iter = node_root.begin();
 		for (; node_iter != node_root.end(); ++node_iter)
 		{
 			Json::Value node = (*node_iter);
-			traverse_nodes(state, node, mesh->scene_root);
+			traverse_nodes(state, node, mesh->scene_root, materials_by_id);
 		}
 		
-		
-		// now read in materials
-		Json::Value materials = root["materials"];
-		if (!materials.isNull())
-		{
-			
-		}
-	
 		return util::ConfigLoad_Success;
 	}
 	
