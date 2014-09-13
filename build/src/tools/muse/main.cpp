@@ -21,33 +21,24 @@
 // -------------------------------------------------------------
 
 #include <string>
-
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <gemini/mem.h>
-#include <gemini/core.h>
-#include <gemini/core/filesystem.h>
-#include <gemini/core/log.h>
+//#include <gemini/core/filesystem.h>
+//#include <gemini/core/log.h>
 #include <gemini/core/xfile.h>
 #include <gemini/util/stackstring.h>
 
 //#include <gemini/util/arg.h>
 #include <gemini/util/datastream.h>
 
-#include <gemini/mathlib.h>
-
 #include <slim/xtime.h>
-
 #include <slim/xlog.h>
 
 #include "common.h"
-#include "datamodel.h"
 #include "common/extension.h"
+#include "datamodel.h"
 
-// include reader/writers
-#include "io_fbx.h"
-#include "io_json.h"
 
 // need to support:
 // static (non-animated) meshes
@@ -108,22 +99,10 @@ namespace tools
 	}
 }
 
-// register all datamodel io types
-void register_types()
-{
-	Extension<datamodel::SceneNode> ext;
-	ext.reader = AutodeskFbxReader::plugin_create();
-	register_extension<datamodel::SceneNode>("fbx", ext);
-	
-	ext.reader = 0;
-	ext.writer = JsonSceneWriter::plugin_create();
-	register_extension<datamodel::SceneNode>("model", ext);
-}
 
 int main(int argc, char** argv)
 {
-	memory::startup();
-	core::startup();
+	tools::startup();
 	
 	// Commented out until I fix some issues with it.
 //	args::Argument* asset_root = args::add("asset_root","-d", "--asset-root", 0, 0);
@@ -139,8 +118,6 @@ int main(int argc, char** argv)
 	const char* asset_root = argv[1];
 	const char* input_file = argv[2];
 	const char* output_root = argv[3];
-	
-	register_types();
 
 	xtime_t timer;
 	xtime_startup(&timer);
@@ -167,9 +144,6 @@ int main(int argc, char** argv)
 	double duration = (xtime_msec(&timer) - start);
 	LOGV("processed in %2.2f seconds\n", duration*.001f);
 	
-	purge_registry<datamodel::SceneNode>();
-
-	core::shutdown();
-	memory::shutdown();
+	tools::shutdown();
 	return 0;
 }

@@ -19,59 +19,50 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
+#include <gemini/typedefs.h>
+#include <gemini/mem.h>
+#include <gemini/core.h>
 
-#include <string>
+#include "common.h"
 
-#include "datamodel/material.h"
+// include reader/writers
+#include "io_fbx.h"
+#include "io_json.h"
 
 namespace tools
 {
-	struct IndentState
+	// register all datamodel io types
+	void register_types()
 	{
-		size_t depth;
-		std::string buffer;
+		Extension<datamodel::SceneNode> ext;
+		ext.reader = AutodeskFbxReader::plugin_create();
+		register_extension<datamodel::SceneNode>("fbx", ext);
 		
-		IndentState() : depth(0)
-		{}
-		
-		void push()
-		{
-			++depth;
-			update();
-		}
-		
-		void pop()
-		{
-			--depth;
-			update();
-		}
-		
-		void update()
-		{
-			buffer.clear();
-			for (size_t i = 0; i < depth; ++i)
-			{
-				buffer += "    ";
-			}
-		}
-		
-		const char* indent()
-		{
-			return buffer.c_str();
-		}
-	};
-	
+		ext.reader = 0;
+		ext.writer = JsonSceneWriter::plugin_create();
+		register_extension<datamodel::SceneNode>("model", ext);
+	}
 
-	struct ApplicationData
+	void startup()
 	{
-		datamodel::MaterialMap materials;
-	};
+		memory::startup();
+		core::startup();
+		
+		register_types();
+	}
+	
+	void shutdown()
+	{
+		purge_registry<datamodel::SceneNode>();
+		
+		core::shutdown();
+		memory::shutdown();
+	}
 	
 	
-	void startup();
-	void shutdown();
-	
-	ApplicationData& data();
-	
+	ApplicationData& data()
+	{
+		static ApplicationData _data;
+		return _data;
+	}
 }

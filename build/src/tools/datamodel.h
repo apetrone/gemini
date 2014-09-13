@@ -24,3 +24,4 @@
 #include "datamodel/mesh.h"
 #include "datamodel/skeleton.h"
 #include "datamodel/scenenode.h"
+#include "datamodel/material.h"

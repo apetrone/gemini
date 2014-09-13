@@ -19,59 +19,87 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
 
-#include <string>
+#include "datamodel/mesh.h"
+#include "datamodel/skeleton.h"
+#include "datamodel/scenenode.h"
 
-#include "datamodel/material.h"
-
-namespace tools
+namespace datamodel
 {
-	struct IndentState
+	SceneNode::SceneNode()
 	{
-		size_t depth;
-		std::string buffer;
+		parent = nullptr;
+		mesh = nullptr;
+		skeleton = nullptr;
+	}
+	
+	SceneNode::~SceneNode()
+	{
+//		SceneNodeVector::iterator it = children.begin();
+//		for( ; it != children.end(); ++it)
+//		{
+//			SceneNode* node = (*it);
+//			DESTROY(SceneNode, node);
+//		}
 		
-		IndentState() : depth(0)
-		{}
-		
-		void push()
+		for (auto& child : children)
 		{
-			++depth;
-			update();
+			DESTROY(SceneNode, child);
 		}
 		
-		void pop()
+		children.clear();
+		
+		if (mesh)
 		{
-			--depth;
-			update();
+			DESTROY(Mesh, mesh);
 		}
 		
-		void update()
+		if (skeleton)
 		{
-			buffer.clear();
-			for (size_t i = 0; i < depth; ++i)
+			DESTROY(Skeleton, skeleton);
+		}
+	}
+	
+	void SceneNode::add_child(SceneNode* child)
+	{
+		if (child->parent)
+		{
+			child->parent->remove_child(child);
+		}
+		
+		child->parent = this;
+		children.push_back(child);
+	}
+	
+	void SceneNode::remove_child(SceneNode* child)
+	{
+		// find the child and detach from the old parent
+		for (SceneNodeVector::iterator it = children.begin(); it != children.end(); ++it)
+		{
+			if (child == (*it))
 			{
-				buffer += "    ";
+				children.erase(it);
+				break;
+			}
+		}
+	}
+	
+	SceneNode* SceneNode::find_child_named(const std::string& name)
+	{
+		if (this->name == name)
+		{
+			return this;
+		}
+
+		for (auto& child : children)
+		{
+			SceneNode* node = child->find_child_named(name);
+			if (node)
+			{
+				return node;
 			}
 		}
 		
-		const char* indent()
-		{
-			return buffer.c_str();
-		}
-	};
-	
-
-	struct ApplicationData
-	{
-		datamodel::MaterialMap materials;
-	};
-	
-	
-	void startup();
-	void shutdown();
-	
-	ApplicationData& data();
-	
-}
+		return 0;
+	}
+};

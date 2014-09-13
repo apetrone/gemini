@@ -19,59 +19,53 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
-
-#include <string>
 
 #include "datamodel/material.h"
 
-namespace tools
+namespace datamodel
 {
-	struct IndentState
-	{
-		size_t depth;
-		std::string buffer;
-		
-		IndentState() : depth(0)
-		{}
-		
-		void push()
-		{
-			++depth;
-			update();
-		}
-		
-		void pop()
-		{
-			--depth;
-			update();
-		}
-		
-		void update()
-		{
-			buffer.clear();
-			for (size_t i = 0; i < depth; ++i)
-			{
-				buffer += "    ";
-			}
-		}
-		
-		const char* indent()
-		{
-			return buffer.c_str();
-		}
-	};
-	
+	static Material _default_material;
 
-	struct ApplicationData
+	MaterialMap::MaterialMap()
 	{
-		datamodel::MaterialMap materials;
-	};
+		_default_material.id = 0;
+		_default_material.name = "default";
+		next_id = 1;
+	}
+
+	const Material& MaterialMap::find_with_id(MaterialId id)
+	{
+		// no materials; use the default
+		if (materials.empty() || id == 0)
+		{
+			return _default_material;
+		}
+		
+		// catch out of range ids
+		assert(materials.size() >= id);
+		
+		return materials[ (next_id-id-1) ];
+	}
 	
-	
-	void startup();
-	void shutdown();
-	
-	ApplicationData& data();
-	
+	const Material& MaterialMap::find_with_name(const std::string& name)
+	{
+		auto it = materials_by_name.find(name);
+		if (it != materials_by_name.end())
+		{
+			return it->second;
+		}
+		
+		return _default_material;
+	}
+
+	const Material& MaterialMap::add_material(const std::string& name)
+	{
+		Material material;
+		material.id = next_id++;
+		material.name = name;
+		materials.push_back(material);
+		materials_by_name.insert(MaterialContainer::value_type(name, material));
+		
+		return find_with_id(material.id);
+	}
 }

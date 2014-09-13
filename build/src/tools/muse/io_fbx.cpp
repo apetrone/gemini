@@ -24,15 +24,22 @@
 #include <fbxsdk/utils/fbxgeometryconverter.h>
 
 #include <gemini/core/log.h>
+#include <gemini/util/stackstring.h>
 #include <slim/xlog.h>
 
 #include "io_fbx.h"
 #include "common.h"
 #include "datamodel/mesh.h"
+#include "datamodel/material.h"
 
 // http://gamedev.stackexchange.com/questions/59419/c-fbx-animation-importer-using-the-fbx-sdk
 
 using namespace tools;
+
+namespace internal
+{
+	static FbxManager* _manager;
+}
 
 static int get_layer_element_index(
 							FbxLayerElement::EMappingMode mapping_mode,
@@ -101,7 +108,6 @@ static void parse_materials(IndentState& state, FbxNode* node)
 			FbxSurfaceMaterial* material = node->GetMaterial(material_id);
 			LOGV("%smaterial: %s\n", state.indent(), material->GetName());
 			
-			
 			if (material->GetClassId().Is(FbxSurfaceLambert::ClassId))
 			{
 				LOGV("%sfound lambert material!\n", state.indent());
@@ -137,11 +143,23 @@ static void parse_materials(IndentState& state, FbxNode* node)
 								{
 									LOGV("%stexture name: %s\n", state.indent(), texture->GetName());
 									LOGV("%sproperty name: %s\n", state.indent(), property.GetName().Buffer());
+
 									FbxFileTexture* file_texture = FbxCast<FbxFileTexture>(texture);
 									FbxProceduralTexture* procedural_texture = FbxCast<FbxProceduralTexture>(texture);
 									if (file_texture)
 									{
+										StackString<MAX_PATH_SIZE> texture_path = file_texture->GetFileName();
+										LOGV("%stexture basename: %s\n", state.indent(), texture_path.basename()());
 										LOGV("%sfile name: %s, relative filename: %s\n", state.indent(), file_texture->GetFileName(), file_texture->GetRelativeFileName());
+										
+										std::string texture_name = texture_path.basename().remove_extension()();
+										const datamodel::Material& material = tools::data().materials.find_with_name(texture_name);
+										if (material.id == 0)
+										{
+											const datamodel::Material& new_material = tools::data().materials.add_material(texture_name);
+											LOGV("%sadded material: \"%s\" at index: %i\n", state.indent(), new_material.name.c_str(), new_material.id);
+											
+										}
 									}
 									else if (procedural_texture)
 									{
@@ -149,15 +167,14 @@ static void parse_materials(IndentState& state, FbxNode* node)
 										assert(0);
 									}
 									
-									
-									LOGV("%sscale u: %g\n", state.indent(), texture->GetScaleU());
-									LOGV("%sscale v: %g\n", state.indent(), texture->GetScaleV());
-									LOGV("%stranslation u: %g\n", state.indent(), texture->GetTranslationU());
-									LOGV("%stranslation v: %g\n", state.indent(), texture->GetTranslationV());
-									LOGV("%sswap uv: %i\n", state.indent(), texture->GetSwapUV());
-									LOGV("%srotation u: %g\n", state.indent(), texture->GetRotationU());
-									LOGV("%srotation v: %g\n", state.indent(), texture->GetRotationV());
-									LOGV("%srotation w: %g\n", state.indent(), texture->GetRotationW());
+//									LOGV("%sscale u: %g\n", state.indent(), texture->GetScaleU());
+//									LOGV("%sscale v: %g\n", state.indent(), texture->GetScaleV());
+//									LOGV("%stranslation u: %g\n", state.indent(), texture->GetTranslationU());
+//									LOGV("%stranslation v: %g\n", state.indent(), texture->GetTranslationV());
+//									LOGV("%sswap uv: %i\n", state.indent(), texture->GetSwapUV());
+//									LOGV("%srotation u: %g\n", state.indent(), texture->GetRotationU());
+//									LOGV("%srotation v: %g\n", state.indent(), texture->GetRotationV());
+//									LOGV("%srotation w: %g\n", state.indent(), texture->GetRotationW());
 								}
 							}
 						}
@@ -364,11 +381,6 @@ static void populate_hierarchy(IndentState& state, datamodel::SceneNode* root, F
 	}
 	
 	state.pop();
-}
-
-namespace internal
-{
-	static FbxManager* _manager;
 }
 
 AutodeskFbxReader::AutodeskFbxReader()

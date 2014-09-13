@@ -21,57 +21,36 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <gemini/typedefs.h>
+
 #include <string>
+#include <vector>
+#include <map>
 
-#include "datamodel/material.h"
-
-namespace tools
+namespace datamodel
 {
-	struct IndentState
+	typedef uint32_t MaterialId;
+	struct Material
 	{
-		size_t depth;
-		std::string buffer;
-		
-		IndentState() : depth(0)
-		{}
-		
-		void push()
-		{
-			++depth;
-			update();
-		}
-		
-		void pop()
-		{
-			--depth;
-			update();
-		}
-		
-		void update()
-		{
-			buffer.clear();
-			for (size_t i = 0; i < depth; ++i)
-			{
-				buffer += "    ";
-			}
-		}
-		
-		const char* indent()
-		{
-			return buffer.c_str();
-		}
+		uint32_t id;
+		std::string name;
 	};
-	
 
-	struct ApplicationData
+	// Maintains a list of materials
+	class MaterialMap
 	{
-		datamodel::MaterialMap materials;
+		typedef std::map<std::string, Material> MaterialContainer;
+		MaterialContainer materials_by_name;
+		std::vector<Material> materials;
+		MaterialId next_id;
+				
+	public:
+		MaterialMap();
+		virtual ~MaterialMap() {}
+		
+		const Material& find_with_id(MaterialId id);
+		const Material& find_with_name(const std::string& name);
+		const Material& add_material(const std::string& name);
+		size_t size() const { return materials.size(); }
 	};
-	
-	
-	void startup();
-	void shutdown();
-	
-	ApplicationData& data();
-	
-}
+};
