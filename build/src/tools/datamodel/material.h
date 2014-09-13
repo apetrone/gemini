@@ -52,5 +52,8 @@ namespace datamodel
 		const Material& find_with_name(const std::string& name);
 		const Material& add_material(const std::string& name);
 		size_t size() const { return materials.size(); }
+		
+		Material* begin();
+		Material* end();
 	};
 };

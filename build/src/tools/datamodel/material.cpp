@@ -68,4 +68,14 @@ namespace datamodel
 		
 		return find_with_id(material.id);
 	}
+	
+	Material* MaterialMap::begin()
+	{
+		return &materials[0];
+	}
+	
+	Material* MaterialMap::end()
+	{
+		return &materials[materials.size()];
+	}
 }

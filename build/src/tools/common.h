@@ -61,17 +61,7 @@ namespace tools
 			return buffer.c_str();
 		}
 	};
-	
-
-	struct ApplicationData
-	{
-		datamodel::MaterialMap materials;
-	};
-	
-	
+		
 	void startup();
 	void shutdown();
-	
-	ApplicationData& data();
-	
 }

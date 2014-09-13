@@ -41,7 +41,7 @@ namespace tools
 		register_extension<datamodel::Model>("fbx", ext);
 		
 		ext.reader = 0;
-		ext.writer = JsonSceneWriter::plugin_create();
+		ext.writer = JsonModelWriter::plugin_create();
 		register_extension<datamodel::Model>("model", ext);
 	}
 
@@ -60,12 +60,5 @@ namespace tools
 		
 		core::shutdown();
 		memory::shutdown();
-	}
-	
-	
-	ApplicationData& data()
-	{
-		static ApplicationData _data;
-		return _data;
 	}
 }

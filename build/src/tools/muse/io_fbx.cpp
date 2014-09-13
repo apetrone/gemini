@@ -95,7 +95,7 @@ static int get_layer_element_index(
 }
 
 
-static void parse_materials(IndentState& state, FbxNode* node)
+static void parse_materials(IndentState& state, FbxNode* node, datamodel::MaterialMap& materials)
 {
 	// materials for this piece of geometry
 	int total_materials = node->GetMaterialCount();
@@ -153,10 +153,10 @@ static void parse_materials(IndentState& state, FbxNode* node)
 										LOGV("%sfile name: %s, relative filename: %s\n", state.indent(), file_texture->GetFileName(), file_texture->GetRelativeFileName());
 										
 										std::string texture_name = texture_path.basename().remove_extension()();
-										const datamodel::Material& material = tools::data().materials.find_with_name(texture_name);
+										const datamodel::Material& material = materials.find_with_name(texture_name);
 										if (material.id == 0)
 										{
-											const datamodel::Material& new_material = tools::data().materials.add_material(texture_name);
+											const datamodel::Material& new_material = materials.add_material(texture_name);
 											LOGV("%sadded material: \"%s\" at index: %i\n", state.indent(), new_material.name.c_str(), new_material.id);
 											
 										}
@@ -185,11 +185,11 @@ static void parse_materials(IndentState& state, FbxNode* node)
 	}
 }
 
-static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh)
+static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh, datamodel::Model* model)
 {
 	FbxMesh* fbxmesh = node->GetMesh();
 	
-	parse_materials(state, node);
+	parse_materials(state, node, model->materials);
 	
 	fbxmesh->GenerateNormals();
 	fbxmesh->GenerateTangentsData();
@@ -312,21 +312,21 @@ static void to_mat4(FbxAMatrix& tr, glm::mat4& out)
 }
 
 
-static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNode* node)
+static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNode* fbxnode, datamodel::Model* model)
 {
-	datamodel::Node* scene_node = root;
+	datamodel::Node* node = root;
 	
 	bool is_valid = true;
 	
 	state.push();
 	
 	// engine doesn't read lights or cameras
-	if (node->GetLight() || node->GetCamera())
+	if (fbxnode->GetLight() || fbxnode->GetCamera())
 	{
 		is_valid = false;
 	}
 	
-	FbxNodeAttribute* node_attribute = node->GetNodeAttribute();
+	FbxNodeAttribute* node_attribute = fbxnode->GetNodeAttribute();
 	if (node_attribute)
 	{
 		bool is_geometry = (
@@ -347,36 +347,36 @@ static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNod
 	if (is_valid)
 	{
 		// create a new node
-		scene_node = CREATE(datamodel::Node);
-		root->add_child(scene_node);
+		node = CREATE(datamodel::Node);
+		root->add_child(node);
 		
 		// copy data
-		scene_node->type = type_from_node(node);
-		if (scene_node->type == "mesh")
+		node->type = type_from_node(fbxnode);
+		if (node->type == "mesh")
 		{
-			scene_node->mesh = CREATE(datamodel::Mesh);
+			node->mesh = CREATE(datamodel::Mesh);
 			// populate mesh from fbxnode
 			state.push();
-			load_mesh(state, node, scene_node->mesh);
+			load_mesh(state, fbxnode, node->mesh, model);
 			state.pop();
 		}
-		scene_node->name = node->GetName();
-		FbxDouble3 translation = node->LclTranslation.Get();
-		FbxDouble3 rotation = node->LclRotation.Get();
-		FbxDouble3 scaling = node->LclScaling.Get();
+		node->name = fbxnode->GetName();
+		FbxDouble3 translation = fbxnode->LclTranslation.Get();
+		FbxDouble3 rotation = fbxnode->LclRotation.Get();
+		FbxDouble3 scaling = fbxnode->LclScaling.Get();
 		
-		scene_node->scale = glm::vec3(scaling[0], scaling[1], scaling[2]);
+		node->scale = glm::vec3(scaling[0], scaling[1], scaling[2]);
 		// convert these to radians
 		rotation[0] = mathlib::degrees_to_radians(rotation[0]);
 		rotation[1] = mathlib::degrees_to_radians(rotation[1]);
 		rotation[2] = mathlib::degrees_to_radians(rotation[2]);
-		scene_node->rotation = glm::quat(glm::vec3(rotation[0], rotation[1], rotation[2]));
-		scene_node->translation = glm::vec3(translation[0], translation[1], translation[2]);
-//		LOGV("translation: %g %g %g\n", scene_node->translation.x, scene_node->translation.y, scene_node->translation.z);
+		node->rotation = glm::quat(glm::vec3(rotation[0], rotation[1], rotation[2]));
+		node->translation = glm::vec3(translation[0], translation[1], translation[2]);
+//		LOGV("translation: %g %g %g\n", node->translation.x, node->translation.y, node->translation.z);
 		
-		for (size_t index = 0; index < node->GetChildCount(); ++index)
+		for (size_t index = 0; index < fbxnode->GetChildCount(); ++index)
 		{
-			populate_hierarchy(state, scene_node, node->GetChild(index));
+			populate_hierarchy(state, node, fbxnode->GetChild(index), model);
 		}
 	}
 	
@@ -437,7 +437,7 @@ void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_sou
 	importer->GetFileVersion(file_version_major, file_version_minor, file_version_patch);
 	LOGV("FBX File Format: %i.%i.%i\n", file_version_major, file_version_minor, file_version_patch);
 	
-	FbxScene* scene = FbxScene::Create(manager, "test_scene");
+	FbxScene* scene = FbxScene::Create(manager, "");
 	
 	importer->Import(scene);
 	
@@ -500,6 +500,6 @@ void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_sou
 	{
 		IndentState state;
 		
-		populate_hierarchy(state, &model->root, fbxroot);
+		populate_hierarchy(state, &model->root, fbxroot, model);
 	}
 }

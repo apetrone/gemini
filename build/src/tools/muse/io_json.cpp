@@ -23,8 +23,9 @@
 
 #include "datamodel/model.h"
 #include "datamodel/mesh.h"
+#include "datamodel/material.h"
 
-void JsonSceneWriter::jsonify_matrix(Json::Value& array, glm::mat4& matrix)
+void JsonModelWriter::jsonify_matrix(Json::Value& array, glm::mat4& matrix)
 {
 	array.append(matrix[0].x);
 	array.append(matrix[1].x);
@@ -47,7 +48,17 @@ void JsonSceneWriter::jsonify_matrix(Json::Value& array, glm::mat4& matrix)
 	array.append(matrix[3].w);
 }
 
-void JsonSceneWriter::append_node(datamodel::Node* node, Json::Value& jnodes)
+void JsonModelWriter::append_material(datamodel::Material* material, Json::Value& jmaterials)
+{
+	Json::Value jmaterial;
+
+	jmaterial["name"] = material->name;
+	jmaterial["id"] = material->id;
+	
+	jmaterials.append(jmaterial);
+}
+
+void JsonModelWriter::append_node(datamodel::Node* node, Json::Value& jnodes)
 {
 	Json::Value jnode;
 	jnode["name"] = node->name;
@@ -158,14 +169,26 @@ void JsonSceneWriter::append_node(datamodel::Node* node, Json::Value& jnodes)
 }
 
 
-void JsonSceneWriter::write(datamodel::Model* model, util::DataStream& source)
+void JsonModelWriter::write(datamodel::Model* model, util::DataStream& source)
 {
-	Json::Value jroot(Json::arrayValue);
-		
+	Json::Value jroot;
+	Json::Value jnodes(Json::arrayValue);
+
+	// write out all nodes
 	for (auto child : model->root.children)
 	{
-		append_node(child, jroot);
+		append_node(child, jnodes);
 	}
+	jroot["nodes"] = jnodes;
+	
+	Json::Value jmaterials(Json::arrayValue);
+	
+	// write out all materials
+	for (auto& material : model->materials)
+	{
+		append_material(&material, jmaterials);
+	}
+	jroot["materials"] = jmaterials;
 	
 	Json::StyledWriter writer;
 	
