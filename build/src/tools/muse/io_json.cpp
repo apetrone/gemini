@@ -19,6 +19,11 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+
+#include <gemini/typedefs.h>
+
+#include <slim/xlog.h>
+
 #include "io_json.h"
 
 #include "datamodel/model.h"
@@ -172,6 +177,48 @@ void JsonModelWriter::append_node(datamodel::Node* node, Json::Value& jnodes)
 }
 
 
+template <class Type>
+void jsonify_value(Json::Value& jvalue, const Type& value);
+
+template <>
+void jsonify_value(Json::Value& jvalue, const glm::vec3& vector)
+{
+	Json::Value v;
+	v.append(vector.x);
+	v.append(vector.y);
+	v.append(vector.z);
+	
+	jvalue.append(v);
+}
+
+template <>
+void jsonify_value(Json::Value& jvalue, const glm::quat& quat)
+{
+	Json::Value q;
+	q.append(quat.x);
+	q.append(quat.y);
+	q.append(quat.z);
+	q.append(quat.w);
+	
+	jvalue.append(q);
+}
+
+template <class Type>
+void gather_keys(Json::Value& jkeys, std::vector<datamodel::Keyframe<Type>* >& keys )
+{
+	Json::Value jtime(Json::arrayValue);
+	Json::Value jvalue(Json::arrayValue);
+	for (auto key : keys)
+	{
+		jtime.append(key->time_seconds);
+		jsonify_value(jvalue, key->value);
+	}
+	
+	jkeys["time"] = jtime;
+	jkeys["value"] = jvalue;
+}
+
+
 void JsonModelWriter::write(datamodel::Model* model, util::DataStream& source)
 {
 	Json::Value jroot;
@@ -192,6 +239,56 @@ void JsonModelWriter::write(datamodel::Model* model, util::DataStream& source)
 		append_material(&material, jmaterials);
 	}
 	jroot["materials"] = jmaterials;
+	
+	
+	Json::Value janimations(Json::arrayValue);
+	for (auto animation : model->animations)
+	{
+		Json::Value janimation;
+		
+		janimation["name"] = animation->name;
+		LOGV("animation: %s\n", animation->name.c_str());
+		
+		janimation["frames_per_second"] = animation->frames_per_second;
+		
+		Json::Value jnodes(Json::arrayValue);
+		for (auto data : animation->node_animations)
+		{
+			Json::Value jnode;
+			datamodel::Node* node = model->root.find_child_named(data->name);
+			
+			// Node animation present for node that was not added to the model
+			assert(node != nullptr);
+			
+			if (node)
+			{
+				LOGV("node: %s\n", node->name.c_str());
+				LOGV("# keys: %i %i %i\n", data->position.keys.size(), data->rotation.keys.size(), data->scale.keys.size());
+
+				Json::Value jscale;
+				gather_keys(jscale, data->scale.keys);
+
+				Json::Value jrotation;
+				gather_keys(jrotation, data->rotation.keys);
+				
+				Json::Value jtranslation;
+				gather_keys(jtranslation, data->position.keys);
+		
+				jnode["name"] = node->name;
+				jnode["scale"] = jscale;
+				jnode["rotation"] = jrotation;
+				jnode["translation"] = jtranslation;
+				jnodes.append(jnode);
+			}
+		}
+		janimation["nodes"] = jnodes;
+		janimations.append(janimation);
+	}
+	
+	jroot["animations"] = janimations;
+	
+	
+	
 	
 	Json::StyledWriter writer;
 	

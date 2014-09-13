@@ -19,11 +19,44 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
 
-#include "datamodel/mesh.h"
-#include "datamodel/skeleton.h"
-#include "datamodel/node.h"
-#include "datamodel/material.h"
-#include "datamodel/model.h"
 #include "datamodel/animation.h"
+
+namespace datamodel
+{
+	Animation::Animation() :
+		frames_per_second(30),
+		name("Unnamed Animation")
+	{
+		
+	}
+	
+	Animation::~Animation()
+	{
+		for (auto data : node_animations)
+		{
+			DESTROY(NodeAnimation, data);
+		}
+	}
+	
+	NodeAnimation* Animation::data_with_name(const std::string& node_name)
+	{
+		auto it = nodes_by_name.find(node_name);
+		if (it != nodes_by_name.end())
+		{
+			return it->second;
+		}
+	
+		return nullptr;
+	}
+	
+	NodeAnimation* Animation::add_node_data(const std::string& node_name)
+	{
+		NodeAnimation* data = CREATE(NodeAnimation);
+		data->name = node_name;
+		node_animations.push_back(data);
+		nodes_by_name.insert(NodeAnimationByNameContainer::value_type(node_name, data));
+		
+		return data;
+	}
+};

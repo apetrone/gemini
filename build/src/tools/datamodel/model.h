@@ -23,14 +23,17 @@
 
 //#include <gemini/mem.h>
 //#include <gemini/mathlib.h>
-//#include <vector>
+#include <vector>
 //#include <string>
+
+
 
 #include <gemini/typedefs.h>
 
 #include "datamodel/material.h"
 #include "datamodel/node.h"
 #include "datamodel/skeleton.h"
+#include "datamodel/animation.h"
 
 namespace datamodel
 {
@@ -40,6 +43,10 @@ namespace datamodel
 		MaterialMap materials;
 		
 //		Skeleton* skeleton;
-//		AnimationSequence* animation;
+		std::vector<Animation*> animations;
+		
+		~Model();
+		
+		Animation* add_animation(const std::string& name);		
 	};
 };

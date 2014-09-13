@@ -31,6 +31,7 @@
 #include "common.h"
 #include "datamodel/mesh.h"
 #include "datamodel/material.h"
+#include "datamodel/animation.h"
 
 // http://gamedev.stackexchange.com/questions/59419/c-fbx-animation-importer-using-the-fbx-sdk
 
@@ -93,7 +94,6 @@ static int get_layer_element_index(
 		}
 	}
 }
-
 
 static void parse_materials(IndentState& state, FbxNode* node, datamodel::MaterialMap& materials, datamodel::Mesh* mesh)
 {
@@ -321,20 +321,86 @@ static void to_mat4(FbxAMatrix& tr, glm::mat4& out)
 	
 }
 
+bool is_data_node(FbxNode* node)
+{
+	// engine doesn't read lights or cameras
+	if (node->GetLight() || node->GetCamera())
+	{
+		return false;
+	}
+	
+	return true;
+}
+
+static void populate_animations(IndentState& state, datamodel::Model* model, FbxNode* fbxnode, FbxTakeInfo* take, FbxTime::EMode time_mode, datamodel::Animation& animation)
+{
+	FbxTime start = take->mLocalTimeSpan.GetStart();
+	FbxTime end = take->mLocalTimeSpan.GetStop();
+	int frame_count = end.GetFrameCount(time_mode) - start.GetFrameCount(time_mode) + 1;
+//	LOGV("%stotal frames: %i\n", state.indent(), frame_count);
+	
+	state.push();
+	
+	bool is_valid = is_data_node(fbxnode);
+	if (!is_valid)
+	{
+		return;
+	}
+	
+	std::string node_name = fbxnode->GetName();
+	datamodel::Node* node = model->root.find_child_named(node_name);
+
+//	if (!node)
+//	{
+//		LOGW("%sCould not find node named \"%s\"\n", state.indent(), node_name.c_str());
+//		return;
+//	}
+	LOGV("%snode: %s\n", state.indent(), node_name.c_str());
+	
+	datamodel::NodeAnimation node_data;
+
+	datamodel::NodeAnimation* data = animation.data_with_name(node_name);
+	
+	// we shouldn't run into the event where we're adding multiple animation data
+	// to the same node name
+	assert(!data);
+	if (!data)
+	{
+		data = animation.add_node_data(node_name);
+	}
+	
+	for (FbxLongLong t = start.GetFrameCount(time_mode); t <= end.GetFrameCount(time_mode); ++t)
+	{
+		FbxTime current_time;
+		current_time.SetFrame(t, time_mode);
+		
+//		FbxAMatrix transform = fbxnode->EvaluateGlobalTransform(current_time);
+		FbxVector4 scaling = fbxnode->EvaluateLocalScaling(current_time);
+		FbxVector4 rotation = fbxnode->EvaluateLocalRotation(current_time);
+		FbxVector4 translation = fbxnode->EvaluateLocalTranslation(current_time);
+
+//		LOGV("%srotation: %g %g %g %g\n", state.indent(), rotation[0], rotation[1], rotation[2], rotation[3]);
+		float frame_time = current_time.GetSecondDouble();
+		datamodel::Keyframe<glm::vec3>* position_key = data->position.add_key(frame_time, glm::vec3(translation[0], translation[1], translation[2]));
+		datamodel::Keyframe<glm::quat>* rotation_key = data->rotation.add_key(frame_time, glm::quat(glm::vec3(rotation[0], rotation[1], rotation[2])));
+		datamodel::Keyframe<glm::vec3>* scale_key = data->scale.add_key(frame_time, glm::vec3(scaling[0], scaling[1], scaling[2]));
+	}
+		
+	for (size_t index = 0; index < fbxnode->GetChildCount(); ++index)
+	{
+		populate_animations(state, model, fbxnode->GetChild(index), take, time_mode, animation);
+	}
+	
+	state.pop();
+}
 
 static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNode* fbxnode, datamodel::Model* model)
 {
 	datamodel::Node* node = root;
-	
-	bool is_valid = true;
-	
+
 	state.push();
-	
-	// engine doesn't read lights or cameras
-	if (fbxnode->GetLight() || fbxnode->GetCamera())
-	{
-		is_valid = false;
-	}
+		
+	bool is_valid = is_data_node(fbxnode);
 	
 	FbxNodeAttribute* node_attribute = fbxnode->GetNodeAttribute();
 	if (node_attribute)
@@ -496,10 +562,7 @@ void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_sou
 		LOGV("Converting scene units from: %s\n", system_unit.GetScaleFactorAsString().Buffer());
 		FbxSystemUnit::m.ConvertScene(scene);
 	}
-	
-	int total_animation_stacks = scene->GetSrcObjectCount<FbxAnimStack>();
-	LOGV("animation stacks: %i\n", total_animation_stacks);
-	
+
 	
 	//	int total_bones = scene->GetPoseCount();
 	int total_poses = scene->GetPoseCount();
@@ -511,5 +574,25 @@ void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_sou
 		IndentState state;
 		
 		populate_hierarchy(state, &model->root, fbxroot, model);
+		
+		
+		int total_animation_stacks = scene->GetSrcObjectCount<FbxAnimStack>();
+		LOGV("animation stacks: %i\n", total_animation_stacks);
+		
+		// if we need to implement more than one animation... do that now.
+		assert(total_animation_stacks <= 1);
+		
+		for (int stack = 0; stack < total_animation_stacks; ++stack)
+		{
+			FbxAnimStack* anim_stack = scene->GetSrcObject<FbxAnimStack>(stack);
+			FbxString stack_name = anim_stack->GetName();
+			LOGV("stack: %s\n", stack_name.Buffer());
+			FbxTakeInfo* take = scene->GetTakeInfo(stack_name);
+			
+			datamodel::Animation* animation = model->add_animation(stack_name.Buffer());
+			LOGV("reading data for animation \"%s\"\n", animation->name.c_str());
+			
+			populate_animations(state, model, fbxroot, take, time_mode, *animation);
+		}
 	}
 }

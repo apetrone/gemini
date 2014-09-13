@@ -24,5 +24,19 @@
 
 namespace datamodel
 {
-
+	Model::~Model()
+	{
+		for (auto animation : animations)
+		{
+			DESTROY(Animation, animation);
+		}
+	}
+	
+	Animation* Model::add_animation(const std::string& name)
+	{
+		Animation* animation = CREATE(Animation);
+		animation->name = name;
+		animations.push_back(animation);
+		return animation;
+	}
 };
