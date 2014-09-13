@@ -161,6 +161,9 @@ void JsonModelWriter::append_node(datamodel::Node* node, Json::Value& jnodes)
 		}
 		mesh_data["uv_sets"] = uv_sets;
 		
+		
+		mesh_data["material_id"] = node->mesh->material;
+		
 		jnode["mesh"] = mesh_data;
 	}
 	

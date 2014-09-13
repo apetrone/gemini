@@ -95,7 +95,7 @@ static int get_layer_element_index(
 }
 
 
-static void parse_materials(IndentState& state, FbxNode* node, datamodel::MaterialMap& materials)
+static void parse_materials(IndentState& state, FbxNode* node, datamodel::MaterialMap& materials, datamodel::Mesh* mesh)
 {
 	// materials for this piece of geometry
 	int total_materials = node->GetMaterialCount();
@@ -153,19 +153,29 @@ static void parse_materials(IndentState& state, FbxNode* node, datamodel::Materi
 										LOGV("%sfile name: %s, relative filename: %s\n", state.indent(), file_texture->GetFileName(), file_texture->GetRelativeFileName());
 										
 										std::string texture_name = texture_path.basename().remove_extension()();
-										const datamodel::Material& material = materials.find_with_name(texture_name);
+										datamodel::Material& material = materials.find_with_name(texture_name);
 										if (material.id == 0)
 										{
-											const datamodel::Material& new_material = materials.add_material(texture_name);
-											LOGV("%sadded material: \"%s\" at index: %i\n", state.indent(), new_material.name.c_str(), new_material.id);
+											texture_name = "materials/" + texture_name;
+											material = materials.add_material(texture_name);
+											LOGV("%sadded material: \"%s\" at index: %i\n", state.indent(), material.name.c_str(), material.id);
 											
 										}
+										
+										// If you hit this assert, the mesh has multiple materials.
+										// Each mesh should only have one material
+										assert(mesh->material == 0);
+										
+										// for now, assign material to the mesh
+										mesh->material = material.id;
 									}
 									else if (procedural_texture)
 									{
 										LOGV("%sdetected procedural texture!\n", state.indent());
 										assert(0);
 									}
+									
+
 									
 //									LOGV("%sscale u: %g\n", state.indent(), texture->GetScaleU());
 //									LOGV("%sscale v: %g\n", state.indent(), texture->GetScaleV());
@@ -189,7 +199,7 @@ static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh, 
 {
 	FbxMesh* fbxmesh = node->GetMesh();
 	
-	parse_materials(state, node, model->materials);
+	parse_materials(state, node, model->materials, mesh);
 	
 	fbxmesh->GenerateNormals();
 	fbxmesh->GenerateTangentsData();

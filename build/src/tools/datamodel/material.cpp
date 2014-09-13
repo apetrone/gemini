@@ -33,7 +33,7 @@ namespace datamodel
 		next_id = 1;
 	}
 
-	const Material& MaterialMap::find_with_id(MaterialId id)
+	Material& MaterialMap::find_with_id(MaterialId id)
 	{
 		// no materials; use the default
 		if (materials.empty() || id == 0)
@@ -47,7 +47,7 @@ namespace datamodel
 		return materials[ (next_id-id-1) ];
 	}
 	
-	const Material& MaterialMap::find_with_name(const std::string& name)
+	Material& MaterialMap::find_with_name(const std::string& name)
 	{
 		auto it = materials_by_name.find(name);
 		if (it != materials_by_name.end())
@@ -58,7 +58,7 @@ namespace datamodel
 		return _default_material;
 	}
 
-	const Material& MaterialMap::add_material(const std::string& name)
+	Material& MaterialMap::add_material(const std::string& name)
 	{
 		Material material;
 		material.id = next_id++;

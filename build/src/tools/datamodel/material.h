@@ -48,9 +48,9 @@ namespace datamodel
 		MaterialMap();
 		virtual ~MaterialMap() {}
 		
-		const Material& find_with_id(MaterialId id);
-		const Material& find_with_name(const std::string& name);
-		const Material& add_material(const std::string& name);
+		Material& find_with_id(MaterialId id);
+		Material& find_with_name(const std::string& name);
+		Material& add_material(const std::string& name);
 		size_t size() const { return materials.size(); }
 		
 		Material* begin();

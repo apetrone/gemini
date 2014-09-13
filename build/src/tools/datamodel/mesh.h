@@ -24,6 +24,8 @@
 #include <gemini/util/fixedarray.h>
 #include <gemini/mathlib.h>
 
+#include "datamodel/material.h"
+
 namespace datamodel
 {
 	const int MAX_SUPPORTED_UV_CHANNELS = 2;
@@ -46,5 +48,6 @@ namespace datamodel
 		FixedArray<glm::vec4> vertex_colors;
 		FixedArray< FixedArray<glm::vec2> > uvs;
 		FixedArray<uint32_t> indices;
+		MaterialId material;
 	};
 };
