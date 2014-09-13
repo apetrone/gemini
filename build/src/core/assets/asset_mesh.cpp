@@ -233,8 +233,13 @@ namespace assets
 		size_t total_meshes = 0;
 		size_t total_bones = 0;
 		
-		Json::ValueIterator node_iter = root.begin();
-		for (; node_iter != root.end(); ++node_iter)
+		Json::Value node_root = root["nodes"];
+		
+		// The model has no nodes. What have you done?
+		assert(!node_root.isNull());
+		
+		Json::ValueIterator node_iter = node_root.begin();
+		for (; node_iter != node_root.end(); ++node_iter)
 		{
 			Json::Value node = (*node_iter);
 			count_nodes(node, total_meshes, total_bones);
@@ -244,11 +249,20 @@ namespace assets
 		mesh->geometry.allocate(total_meshes);
 		
 		MeshLoaderState state(mesh);
-		node_iter = root.begin();
-		for (; node_iter != root.end(); ++node_iter)
+				
+		node_iter = node_root.begin();
+		for (; node_iter != node_root.end(); ++node_iter)
 		{
 			Json::Value node = (*node_iter);
 			traverse_nodes(state, node, mesh->scene_root);
+		}
+		
+		
+		// now read in materials
+		Json::Value materials = root["materials"];
+		if (!materials.isNull())
+		{
+			
 		}
 	
 		return util::ConfigLoad_Success;
