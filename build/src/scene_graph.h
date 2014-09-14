@@ -39,7 +39,8 @@ namespace scenegraph
 		NODE, 			// generic node
 		STATIC_MESH,	// geometry/mesh node
 		RENDER,			// is a render node
-		SKELETON		// render a skeleton
+		SKELETON,		// render a skeleton
+		ANIMATED
 	};
 	
 	struct Node
@@ -71,6 +72,7 @@ namespace scenegraph
 		
 		void add_child(Node* child);
 		void remove_child(Node* child);
+		Node* find_child_named(const StackString<128>& name);
 		virtual void update(float delta_seconds);
 		void clear();
 		NodeType get_type() const { return type; }

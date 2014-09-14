@@ -71,6 +71,9 @@ public:
 		frame_delay_seconds = frame_delay;
 	}
 	
+	KeyframeData<Type>* get_data_source() { return data_source; }
+	float get_frame_delay() const { return frame_delay_seconds; }
+	
 	void update_value(uint32_t frame, float alpha)
 	{
 		alpha = glm::clamp(alpha, 0.0f, 1.0f);
@@ -134,13 +137,15 @@ public:
 		{
 			// advance the frame
 			++current_frame;
-			
+
 			// catch out of frame bounds
 			if (current_frame == data_source->keys.size()-1)
 			{
 				current_frame = 0;
 				current_time_seconds -= next_time;
 			}
+			
+//			LOGV("frame: %i\n", current_frame);
 		}
 	}
 	
@@ -179,9 +184,9 @@ public:
 	
 	void update(float delta_seconds)
 	{
-//		update_with_time(delta_seconds);
+		update_with_time(delta_seconds);
 
-		update_sampled(delta_seconds);
+//		update_sampled(delta_seconds);
 	}
 	
 private:

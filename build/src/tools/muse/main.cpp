@@ -73,6 +73,8 @@ namespace tools
 		// TODO: compress animation keys
 		// This should eliminate duplicate values by merging them into a single key.
 		
+		// TODO: add modifier to flip UVs vertically
+		
 		// verify we can write the format
 		ext = output_path.extension();
 		const Extension<datamodel::Model> writer_extension = find_entry_for_extension<datamodel::Model>(ext);

@@ -91,6 +91,29 @@ public:
 		}
 	}
 	
+	bool operator== (const StackStringType& other) const
+	{
+		if (other._length != _length)
+		{
+			return false;
+		}
+		
+		const Type* data = other._data;
+		const Type* self = _data;
+		for (size_t i = 0; i < other._length; ++i)
+		{
+			if (*data != *self)
+			{
+				return false;
+			}
+			
+			++data;
+			++self;
+		}
+		
+		return true;
+	}
+	
 	const Type & operator[] ( int index ) const
 	{
 		return _data[ index ];

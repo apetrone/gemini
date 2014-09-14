@@ -64,9 +64,14 @@ namespace assets
 		FixedArray< KeyframeData<glm::vec3> > scale;
 		FixedArray< KeyframeData<glm::quat> > rotation;
 		FixedArray< KeyframeData<glm::vec3> > translation;
-				
+		
+		
+		// name to index map is the best I can do for now.
+		typedef std::map<std::string, size_t> NodeToIndexContainer;
+		NodeToIndexContainer node_id_by_name;
+
 		// duration of the full animation, in seconds
-		float duration_seconds;
+//		float duration_seconds;
 		
 		float frames_per_second;
 		float frame_delay_seconds; // 1.0f / frames_per_second

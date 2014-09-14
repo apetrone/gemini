@@ -84,6 +84,25 @@ namespace scenegraph
 		children.push_back(child);
 	}
 	
+	Node* Node::find_child_named(const StackString<128>& name)
+	{
+		if (this->name == name)
+		{
+			return this;
+		}
+		
+		for (auto& child : children)
+		{
+			Node* node = child->find_child_named(name);
+			if (node)
+			{
+				return node;
+			}
+		}
+		
+		return 0;
+	}
+	
 	void Node::remove_child(Node* child)
 	{
 		// TODO: implement

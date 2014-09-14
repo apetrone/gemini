@@ -91,6 +91,10 @@ namespace renderer
 			{
 				queue_skeleton(node);
 			}
+			else
+			{
+//				LOGW("node->type of %i is unhandled. Will not render!\n", node->type);
+			}
 
 			return 0;
 		}

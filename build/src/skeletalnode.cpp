@@ -37,6 +37,19 @@ namespace scenegraph
 	{
 		scale = glm::vec3(1.0f, 1.0f, 1.0f);
 	}
+	
+	AnimatedNode::AnimatedNode(AnimatedNode& other) :
+		scale_channel(scale),
+		rotation_channel(rotation),
+		translation_channel(translation),
+		Node(other)
+	{
+		scale = glm::vec3(1.0f, 1.0f, 1.0f);
+		
+		scale_channel.set_data_source(other.scale_channel.get_data_source(), other.scale_channel.get_frame_delay());
+		rotation_channel.set_data_source(other.rotation_channel.get_data_source(), other.rotation_channel.get_frame_delay());
+		translation_channel.set_data_source(other.translation_channel.get_data_source(), other.translation_channel.get_frame_delay());
+	}
 
 	void AnimatedNode::post_processing(assets::Mesh* mesh, int32_t node_index)
 	{
@@ -61,6 +74,7 @@ namespace scenegraph
 		glm::mat4 ro = glm::toMat4(rotation);
 		glm::mat4 tr = glm::translate(glm::mat4(1.0), translation);
 		
+		assert(scale.x != 0 && scale.y != 0 && scale.z != 0);
 		local_to_world = sc * ro * tr;
 		
 		Node::update(delta_seconds);
@@ -130,14 +144,14 @@ namespace scenegraph
 	// ref: http://ehc.ac/p/assimp/discussion/817654/thread/a7bf155b/
 	void SkeletalNode::update_skeleton()
 	{
-		int childOffset = 1;
+		int child_offset = 1;
 		glm::vec3 start, end;
 		for (size_t bone_index = 0; bone_index < mesh->total_bones; ++bone_index)
 		{
 			// Iterate over each bone and calculate the global transform
 			// for each bone.
 			assets::Bone* bone = &mesh->bones[bone_index];
-			AnimatedNode* node = (AnimatedNode*)children[childOffset+bone_index];
+			AnimatedNode* node = (AnimatedNode*)children[child_offset+bone_index];
 			glm::mat4& tr = transforms[bone_index];
 
 			if (bone->parent_index == -1)
