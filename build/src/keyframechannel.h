@@ -25,7 +25,7 @@
 
 #include <gemini/util/fixedarray.h>
 
-#include "color.h"
+//#include "color.h"
 #include "renderer/render_utilities.h"
 
 
@@ -103,19 +103,37 @@ public:
 		// interpolate between frame and frame+1
 		value = Channel<Type, Interpolator>::interpolator(last, next, alpha);
 		
-		assert(!isnan(value.x));
-		assert(!isnan(value.y));
-		assert(!isnan(value.z));
+//		assert(!isnan(value.x));
+//		assert(!isnan(value.y));
+//		assert(!isnan(value.z));
+	}
+	
+	void update_with_time2(float delta_seconds)
+	{
+		// determine the next frame; don't let this wrap
+		uint16_t next_frame = clamp_frame(current_frame+1);
+		
+		float current_key_time = data_source->time[current_frame];
+		float next_key_time = data_source->time[next_frame];
+		
+		if (current_time_seconds > next_key_time)
+		{
+			// advance the frame
+			++current_frame;
+			
+			// catch out of frame bounds
+			if (current_frame >= data_source->keys.size())
+			{
+				current_frame = 0;
+				current_time_seconds -= next_key_time;
+			}
+			
+			LOGV("frame: %i\n", current_frame);			
+		}
 	}
 	
 	void update_with_time(float delta_seconds)
 	{
-		if (!data_source)
-		{
-			return;
-		}
-		
-		current_time_seconds += delta_seconds;
 		next_advance_timeleft -= delta_seconds;
 		
 		// determine the next frame; don't let this wrap
@@ -128,9 +146,11 @@ public:
 		// alpha is calculated by dividing the deltas: (a/b)
 		// a. The delta between the current simulation time and the last key frame's time
 		// b. The delta between the next key frame's time and the last key frame's time.
-		float alpha = (current_time_seconds - last_keyframe_time)/(next_time - last_keyframe_time);
+		float alpha = (next_time - current_time_seconds)/(next_time - last_keyframe_time);
 		alpha = glm::clamp(alpha, 0.0f, 1.0f);
 		
+		
+		alpha = 1.0f;
 		update_value(current_frame, alpha);
 		
 		if (current_time_seconds >= next_time)
@@ -151,12 +171,6 @@ public:
 	
 	void update_sampled(float delta_seconds)
 	{
-		if (!data_source)
-		{
-			return;
-		}
-		
-		current_time_seconds += delta_seconds;
 		next_advance_timeleft -= delta_seconds;
 		
 		float start_time = (current_frame * frame_delay_seconds);
@@ -184,7 +198,16 @@ public:
 	
 	void update(float delta_seconds)
 	{
-		update_with_time(delta_seconds);
+		if (!data_source)
+		{
+			return;
+		}
+		
+		current_time_seconds += delta_seconds;
+		
+//		update_with_time(delta_seconds);
+
+		update_with_time2(delta_seconds);
 
 //		update_sampled(delta_seconds);
 	}
@@ -193,9 +216,9 @@ private:
 	uint32_t clamp_frame(uint32_t frame)
 	{
 		assert(data_source != 0);
-		if (frame >= data_source->keys.size())
+		if (frame > data_source->keys.size())
 		{
-			frame = data_source->keys.size()-1;
+			frame = data_source->keys.size();
 		}
 		return frame;
 	}

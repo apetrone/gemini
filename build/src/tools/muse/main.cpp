@@ -40,6 +40,11 @@
 #include "datamodel/model.h"
 
 
+// include reader/writers
+#include "io_fbx.h"
+#include "io_json.h"
+
+
 // need to support:
 // static (non-animated) meshes
 // hierarchical/skeletal meshes
@@ -56,6 +61,18 @@ using namespace tools;
 
 namespace tools
 {
+	// register all datamodel io types
+	void register_types()
+	{
+		Extension<datamodel::Model> ext;
+		ext.reader = AutodeskFbxReader::plugin_create();
+		register_extension<datamodel::Model>("fbx", ext);
+		
+		ext.reader = 0;
+		ext.writer = JsonModelWriter::plugin_create();
+		register_extension<datamodel::Model>("model", ext);
+	}
+
 	core::Result convert_model(StackString<MAX_PATH_SIZE>& input_path, StackString<MAX_PATH_SIZE>& output_path)
 	{
 		datamodel::Model model;
@@ -111,6 +128,8 @@ namespace tools
 int main(int argc, char** argv)
 {
 	tools::startup();
+	
+	register_types();
 	
 	// Commented out until I fix some issues with it.
 //	args::Argument* asset_root = args::add("asset_root","-d", "--asset-root", 0, 0);

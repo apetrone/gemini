@@ -19,29 +19,60 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <gemini/typedefs.h>
-#include <gemini/mem.h>
-#include <gemini/core.h>
+#include "keyframechannel.h"
 
-#include "common.h"
 
-#include "datamodel/model.h"
-#include "common/extension.h"
 
-namespace tools
+#if 0
+
+Channel::Channel(float& value_in) :
+	value(value_in)
 {
-	void startup()
+	
+}
+
+void Channel::set_keys(float* data, size_t total_keys)
+{
+	keys.allocate(total_keys);
+	memcpy(&keys[0], data, sizeof(float)*total_keys);
+}
+
+float Channel::get_value(uint32_t frame, float alpha)
+{
+	alpha = glm::clamp(alpha, 0.0f, 1.0f);
+	
+	frame = clamp_frame(frame);
+	
+	assert(keys.size() > 0);
+	
+	float last = keys[frame];
+	float next;
+	if ((frame+1) >= keys.size())
 	{
-		memory::startup();
-		core::startup();
+		// TODO: Should use post-infinity here
+		// For now, just use the max.
+		next = keys[frame];
+	}
+	else
+	{
+		next = keys[frame+1];
 	}
 	
-	void shutdown()
-	{
-		purge_registry<datamodel::Model>();
-		purge_registry<datamodel::Node>();
-		
-		core::shutdown();
-		memory::shutdown();
-	}
+	float delta = (next-last);
+	
+	// interpolate between frame and frame+1
+	return glm::mix(last, delta, alpha);
 }
+
+
+uint32_t Channel::clamp_frame(uint32_t frame)
+{
+	if (frame >= keys.size())
+	{
+		frame = keys.size()-1;
+	}
+	return frame;
+}
+
+#endif
+

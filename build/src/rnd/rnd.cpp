@@ -35,6 +35,10 @@ using namespace std;
 	#error Not implemented on this platform.
 #endif
 
+#include "common.h"
+
+#include "keyframechannel.h"
+
 template< typename T>
 void fill( vector<int>& v, T done )
 {
@@ -286,14 +290,56 @@ void test_rendering()
 }
 
 
+
 int main(int argc, char** argv)
 {
-	memory::startup();
-	core::startup();
+	tools::startup();
 //	test_function();
-	test_rendering();
+//	test_rendering();
+	{
+		// animation sample rate
+		const float FRAME_RATE = (1.0f/30.0f);
+		
+		// time between updates
+		const float FRAME_DELTA = (1.0f/60.0f);
+
+		float values[] = { 0.0f, 0.25f, 0.5f, 1.0f};
+		KeyframeChannel<float> k1;
+		k1.create(4, values, FRAME_RATE);
+		
+		
+		KeyframeData<float> data;
+		data.keys.allocate(4);
+		data.keys[0] = values[0];
+		data.keys[1] = values[1];
+		data.keys[2] = values[2];
+		data.keys[3] = values[3];
+		
+		data.time.allocate(4);
+		data.time[0] = 0.0f;
+		data.time[1] = FRAME_RATE;
+		data.time[2] = FRAME_RATE * 2.0f;
+		data.time[3] = FRAME_RATE * 3.0f;
+		
+		float value = 0.0f;
+		Channel<float> c0(value);
+		c0.set_data_source(&data, FRAME_RATE);
+
+
+		float accum = 0;
+		for(int i = 0; i < 10; ++i)
+		{
+			c0.update(FRAME_DELTA);
+
+			LOGV("frame: %i, c0 value: %g, k1 value: %g\n", i, value, k1.get_value(accum));
+			accum += FRAME_DELTA;
+			if (accum >= (FRAME_DELTA*6))
+			{
+				accum -= (FRAME_DELTA*6);
+			}
+		}
+	}
 	
-	core::shutdown();
-	memory::shutdown();
+	tools::shutdown();
 	return 0;
 }
