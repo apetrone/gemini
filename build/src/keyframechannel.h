@@ -113,22 +113,32 @@ public:
 		// determine the next frame; don't let this wrap
 		uint16_t next_frame = clamp_frame(current_frame+1);
 		
-		float current_key_time = data_source->time[current_frame];
-		float next_key_time = data_source->time[next_frame];
+		float t0 = data_source->time[current_frame];
+		float t1 = data_source->time[next_frame];
 		
-		if (current_time_seconds > next_key_time)
+		float start_time = (current_frame * frame_delay_seconds);
+		
+
+		float alpha = (current_time_seconds - start_time) / (t1 - t0);
+//		LOGV("alpha: %g\n", alpha);
+		
+		assert(!isnan(alpha));
+		update_value(current_frame, alpha);
+
+		
+		if (current_time_seconds >= t1 || (next_frame >= data_source->keys.size()-1))
 		{
 			// advance the frame
 			++current_frame;
 			
 			// catch out of frame bounds
-			if (current_frame >= data_source->keys.size())
+			if ((current_frame >= data_source->keys.size()))
 			{
 				current_frame = 0;
-				current_time_seconds -= next_key_time;
+				current_time_seconds = 0;
 			}
 			
-			LOGV("frame: %i\n", current_frame);			
+//			LOGV("frame: %i\n", current_frame);
 		}
 	}
 	
@@ -203,13 +213,15 @@ public:
 			return;
 		}
 		
-		current_time_seconds += delta_seconds;
-		
-//		update_with_time(delta_seconds);
 
-		update_with_time2(delta_seconds);
+		
+		update_with_time(delta_seconds);
+
+//		update_with_time2(delta_seconds);
 
 //		update_sampled(delta_seconds);
+
+		current_time_seconds += delta_seconds;
 	}
 	
 private:

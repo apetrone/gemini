@@ -619,11 +619,19 @@ public:
 		light_position = glm::vec3(dist*cos(quotient), 3.0f, dist*sin(quotient));
 
 #ifndef SCENE_GRAPH_MANUAL
-		root->update(params.step_interval_seconds);
+		if (advance_time)
+			root->update(params.step_interval_seconds);
 #endif
 
-
-
+		debugdraw::sphere(light_position, Color(255, 255, 255, 255), 0.5f, 0.0f);
+		debugdraw::axes(glm::mat4(1.0), 1.0f);
+		
+		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
+		debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", camera.eye_position.x, camera.eye_position.y, camera.eye_position.z), Color(255, 0, 255));
+		debugdraw::text(10, 24, xstr_format("camera.view = %.2g %.2g %.2g", camera.view.x, camera.view.y, camera.view.z), Color(128, 128, 255));
+		debugdraw::text(10, 36, xstr_format("camera.right = %.2g %.2g %.2g", camera.side.x, camera.side.y, camera.side.z), Color(255, 0, 0));
+		debugdraw::text(10, 48, xstr_format("frame_delta = %g", params.framedelta_raw_msec), Color(255, 255, 255));
+		debugdraw::text(10, 60, xstr_format("scene graph nodes = %i", total_scene_nodes_visited), Color(128, 128, 255));
 		debugdraw::update(params.step_interval_seconds);
 	}
 
@@ -662,15 +670,7 @@ public:
 		
 
 		
-		debugdraw::sphere(light_position, Color(255, 255, 255, 255), 0.5f, 0.0f);
-		debugdraw::axes(glm::mat4(1.0), 1.0f);
-		
-		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
-		debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", camera.eye_position.x, camera.eye_position.y, camera.eye_position.z), Color(255, 0, 255));
-		debugdraw::text(10, 24, xstr_format("camera.view = %.2g %.2g %.2g", camera.view.x, camera.view.y, camera.view.z), Color(128, 128, 255));
-		debugdraw::text(10, 36, xstr_format("camera.right = %.2g %.2g %.2g", camera.side.x, camera.side.y, camera.side.z), Color(255, 0, 0));
-		debugdraw::text(10, 48, xstr_format("frame_delta = %g", params.framedelta_raw_msec), Color(255, 255, 255));
-		debugdraw::text(10, 60, xstr_format("scene graph nodes = %i", total_scene_nodes_visited), Color(128, 128, 255));
+
 		
 		BaseVar::render_values(10, 72);
 		{
