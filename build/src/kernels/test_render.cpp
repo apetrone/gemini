@@ -600,22 +600,21 @@ public:
 
 	virtual void step( kernel::Params & params )
 	{
-		float dt_seconds = params.framedelta_filtered_msec * .001f;
-		camera.move_left(input::state()->keyboard().is_down(input::KEY_A) * dt_seconds);
-		camera.move_right(input::state()->keyboard().is_down(input::KEY_D) * dt_seconds);
-		camera.move_forward(input::state()->keyboard().is_down(input::KEY_W) * dt_seconds);
-		camera.move_backward(input::state()->keyboard().is_down(input::KEY_S) * dt_seconds);
+		camera.move_left(input::state()->keyboard().is_down(input::KEY_A));
+		camera.move_right(input::state()->keyboard().is_down(input::KEY_D));
+		camera.move_forward(input::state()->keyboard().is_down(input::KEY_W));
+		camera.move_backward(input::state()->keyboard().is_down(input::KEY_S));
 		
 		camera.update_view();
 
 
 		if (advance_time)
 		{
-			current_time += params.framedelta_filtered_msec;
+			current_time += params.step_interval_seconds;
 		}
 		
 		const float dist = 9.0f;
-		float quotient = (current_time * (1.0f/2000.0f));
+		float quotient = (current_time * (1.0f/2.0f));
 		light_position = glm::vec3(dist*cos(quotient), 3.0f, dist*sin(quotient));
 
 #ifndef SCENE_GRAPH_MANUAL

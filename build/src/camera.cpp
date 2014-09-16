@@ -30,7 +30,7 @@
 Camera::Camera(CameraType _type)
 {
 	yaw = pitch = 0;
-	move_speed = 5.0;
+	move_speed = 0.5f;
 	invert_y_axis = true;
 	is_ortho = false;
 	sensitivity = 0.15f;
