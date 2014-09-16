@@ -42,6 +42,25 @@ namespace internal
 	static FbxManager* _manager;
 }
 
+template <class Type>
+void from_fbx(Type& output, const FbxVector4& input);
+
+template <>
+void from_fbx(glm::vec3& output, const FbxVector4& input)
+{
+	output = glm::vec3(input[0], input[1], input[2]);
+}
+
+template <>
+void from_fbx(glm::quat& output, const FbxVector4& input)
+{
+	// convert these to radians
+	float x = mathlib::degrees_to_radians(input[0]);
+	float y = mathlib::degrees_to_radians(input[1]);
+	float z = mathlib::degrees_to_radians(input[2]);
+	output = glm::quat(glm::vec3(x, y, z));
+}
+
 static int get_layer_element_index(
 							FbxLayerElement::EMappingMode mapping_mode,
 							FbxLayerElement::EReferenceMode reference_mode,
@@ -380,11 +399,19 @@ static void populate_animations(IndentState& state, datamodel::Model* model, Fbx
 			FbxVector4 rotation = fbxnode->EvaluateLocalRotation(current_time);
 			FbxVector4 translation = fbxnode->EvaluateLocalTranslation(current_time);
 
-	//		LOGV("%srotation: %g %g %g %g\n", state.indent(), rotation[0], rotation[1], rotation[2], rotation[3]);
+//			LOGV("%srotation: %g %g %g %g\n", state.indent(), rotation[0], rotation[1], rotation[2], rotation[3]);
 			float frame_time = current_time.GetSecondDouble();
-			datamodel::Keyframe<glm::vec3>* position_key = data->position.add_key(frame_time, glm::vec3(translation[0], translation[1], translation[2]));
-			datamodel::Keyframe<glm::quat>* rotation_key = data->rotation.add_key(frame_time, glm::quat(glm::vec3(rotation[0], rotation[1], rotation[2])));
-			datamodel::Keyframe<glm::vec3>* scale_key = data->scale.add_key(frame_time, glm::vec3(scaling[0], scaling[1], scaling[2]));
+			glm::vec3 key_scaling;
+			glm::quat key_rotation;
+			glm::vec3 key_translation;
+
+			from_fbx(key_scaling, scaling);
+			from_fbx(key_rotation, rotation);
+			from_fbx(key_translation, translation);
+			
+			datamodel::Keyframe<glm::vec3>* scale_key = data->scale.add_key(frame_time, key_scaling);
+			datamodel::Keyframe<glm::quat>* rotation_key = data->rotation.add_key(frame_time, key_rotation);
+			datamodel::Keyframe<glm::vec3>* position_key = data->position.add_key(frame_time, key_translation);
 		}
 	}
 		
@@ -443,15 +470,10 @@ static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNod
 		FbxDouble3 rotation = fbxnode->LclRotation.Get();
 		FbxDouble3 scaling = fbxnode->LclScaling.Get();
 		
-		node->scale = glm::vec3(scaling[0], scaling[1], scaling[2]);
-		// convert these to radians
-		rotation[0] = mathlib::degrees_to_radians(rotation[0]);
-		rotation[1] = mathlib::degrees_to_radians(rotation[1]);
-		rotation[2] = mathlib::degrees_to_radians(rotation[2]);
-		node->rotation = glm::quat(glm::vec3(rotation[0], rotation[1], rotation[2]));
-		node->translation = glm::vec3(translation[0], translation[1], translation[2]);
-//		LOGV("translation: %g %g %g\n", node->translation.x, node->translation.y, node->translation.z);
-		
+		from_fbx(node->scale, scaling);
+		from_fbx(node->rotation, rotation);
+		from_fbx(node->translation, translation);
+
 		for (size_t index = 0; index < fbxnode->GetChildCount(); ++index)
 		{
 			populate_hierarchy(state, node, fbxnode->GetChild(index), model);
