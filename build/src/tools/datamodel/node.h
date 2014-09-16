@@ -34,9 +34,18 @@ namespace datamodel
 	struct Skeleton;
 
 	typedef std::vector<struct Node*, GeminiAllocator<struct Node*>> NodeVector;
+
 	
 	struct Node
 	{
+		enum Flags
+		{
+			None,
+			NoAnimations, // this node cannot have animations
+		};
+		
+		uint32_t flags;
+		
 		std::string name;
 		std::string type;
 		
@@ -55,5 +64,7 @@ namespace datamodel
 		void add_child(Node* child);
 		void remove_child(Node* child);
 		Node* find_child_named(const std::string& name);
+		
+		bool has_animations() const { return (flags & NoAnimations) == 0; }
 	};
 };

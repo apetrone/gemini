@@ -31,6 +31,7 @@ namespace datamodel
 		parent = nullptr;
 		mesh = nullptr;
 		skeleton = nullptr;
+		flags = 0;
 	}
 	
 	Node::~Node()

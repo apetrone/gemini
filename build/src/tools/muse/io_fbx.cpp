@@ -349,41 +349,43 @@ static void populate_animations(IndentState& state, datamodel::Model* model, Fbx
 	
 	std::string node_name = fbxnode->GetName();
 	datamodel::Node* node = model->root.find_child_named(node_name);
-
+	if (node && node->has_animations())
+	{
 //	if (!node)
 //	{
 //		LOGW("%sCould not find node named \"%s\"\n", state.indent(), node_name.c_str());
 //		return;
 //	}
-	LOGV("%snode: %s\n", state.indent(), node_name.c_str());
-	
-	datamodel::NodeAnimation node_data;
-
-	datamodel::NodeAnimation* data = animation.data_with_name(node_name);
-	
-	// we shouldn't run into the event where we're adding multiple animation data
-	// to the same node name
-	assert(!data);
-	if (!data)
-	{
-		data = animation.add_node_data(node_name);
-	}
-	
-	for (FbxLongLong t = start.GetFrameCount(time_mode); t <= end.GetFrameCount(time_mode); ++t)
-	{
-		FbxTime current_time;
-		current_time.SetFrame(t, time_mode);
+		LOGV("%snode: %s\n", state.indent(), node_name.c_str());
 		
-//		FbxAMatrix transform = fbxnode->EvaluateGlobalTransform(current_time);
-		FbxVector4 scaling = fbxnode->EvaluateLocalScaling(current_time);
-		FbxVector4 rotation = fbxnode->EvaluateLocalRotation(current_time);
-		FbxVector4 translation = fbxnode->EvaluateLocalTranslation(current_time);
+		datamodel::NodeAnimation node_data;
 
-//		LOGV("%srotation: %g %g %g %g\n", state.indent(), rotation[0], rotation[1], rotation[2], rotation[3]);
-		float frame_time = current_time.GetSecondDouble();
-		datamodel::Keyframe<glm::vec3>* position_key = data->position.add_key(frame_time, glm::vec3(translation[0], translation[1], translation[2]));
-		datamodel::Keyframe<glm::quat>* rotation_key = data->rotation.add_key(frame_time, glm::quat(glm::vec3(rotation[0], rotation[1], rotation[2])));
-		datamodel::Keyframe<glm::vec3>* scale_key = data->scale.add_key(frame_time, glm::vec3(scaling[0], scaling[1], scaling[2]));
+		datamodel::NodeAnimation* data = animation.data_with_name(node_name);
+		
+		// we shouldn't run into the event where we're adding multiple animation data
+		// to the same node name
+		assert(!data);
+		if (!data)
+		{
+			data = animation.add_node_data(node_name);
+		}
+		
+		for (FbxLongLong t = start.GetFrameCount(time_mode); t <= end.GetFrameCount(time_mode); ++t)
+		{
+			FbxTime current_time;
+			current_time.SetFrame(t, time_mode);
+			
+	//		FbxAMatrix transform = fbxnode->EvaluateGlobalTransform(current_time);
+			FbxVector4 scaling = fbxnode->EvaluateLocalScaling(current_time);
+			FbxVector4 rotation = fbxnode->EvaluateLocalRotation(current_time);
+			FbxVector4 translation = fbxnode->EvaluateLocalTranslation(current_time);
+
+	//		LOGV("%srotation: %g %g %g %g\n", state.indent(), rotation[0], rotation[1], rotation[2], rotation[3]);
+			float frame_time = current_time.GetSecondDouble();
+			datamodel::Keyframe<glm::vec3>* position_key = data->position.add_key(frame_time, glm::vec3(translation[0], translation[1], translation[2]));
+			datamodel::Keyframe<glm::quat>* rotation_key = data->rotation.add_key(frame_time, glm::quat(glm::vec3(rotation[0], rotation[1], rotation[2])));
+			datamodel::Keyframe<glm::vec3>* scale_key = data->scale.add_key(frame_time, glm::vec3(scaling[0], scaling[1], scaling[2]));
+		}
 	}
 		
 	for (size_t index = 0; index < fbxnode->GetChildCount(); ++index)
@@ -573,8 +575,14 @@ void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_sou
 	{
 		IndentState state;
 		
-		populate_hierarchy(state, &model->root, fbxroot, model);
+		// root node cannot have animations applied
+		model->root.flags |= datamodel::Node::NoAnimations;
 		
+//		populate_hierarchy(state, &model->root, fbxroot, model);
+		for (size_t index = 0; index < fbxroot->GetChildCount(); ++index)
+		{
+			populate_hierarchy(state, &model->root, fbxroot->GetChild(index), model);
+		}
 		
 		int total_animation_stacks = scene->GetSrcObjectCount<FbxAnimStack>();
 		LOGV("animation stacks: %i\n", total_animation_stacks);
