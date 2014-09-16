@@ -30,6 +30,22 @@
 
 using namespace renderer;
 
+
+template <class Type>
+void from_json(Type& output, const Json::Value& input);
+
+template <>
+void from_json(glm::vec3& output, const Json::Value& input)
+{
+	output = glm::vec3(input[0].asFloat(), input[1].asFloat(), input[2].asFloat());
+}
+
+template <>
+void from_json(glm::quat& output, const Json::Value& input)
+{
+	output = glm::quat(input[3].asFloat(), input[0].asFloat(), input[1].asFloat(), input[2].asFloat());
+}
+
 namespace assets
 {
 	typedef std::map<int, std::string> MaterialByIdContainer;
@@ -178,9 +194,10 @@ namespace assets
 		const Json::Value& translation = node["translation"];
 		assert(!scaling.isNull() && !rotation.isNull() && !translation.isNull());
 
-		node_root->local_scale = glm::vec3(scaling[0].asFloat(), scaling[1].asFloat(), scaling[2].asFloat());
-		node_root->local_rotation = glm::quat(rotation[3].asFloat(), rotation[0].asFloat(), rotation[1].asFloat(), rotation[2].asFloat());
-		node_root->local_position = glm::vec3(translation[0].asFloat(), translation[1].asFloat(), translation[2].asFloat());
+
+		from_json(node_root->local_scale, scaling);
+		from_json(node_root->local_rotation, rotation);
+		from_json(node_root->local_position, translation);
 //		LOGV("scale: %g %g %g\n", node_root->local_scale.x, node_root->local_scale.y, node_root->local_scale.z);
 //		LOGV("rotation: %g %g %g %g\n", node_root->local_rotation.x, node_root->local_rotation.y, node_root->local_rotation.z, node_root->local_rotation.w);
 //		LOGV("translation: %g %g %g\n", node_root->local_position.x, node_root->local_position.y, node_root->local_position.z);
@@ -225,31 +242,9 @@ namespace assets
 			}
 		}
 	}
-	
-	
-	
+		
 	template <class Type>
-	void read_channel_data(const Json::Value& channel_data, Type& data);
-	
-	void read_channel_data(const Json::Value& channel_data, glm::vec3& data)
-	{
-		data.x = channel_data[0].asFloat();
-		data.y = channel_data[1].asFloat();
-		data.z = channel_data[2].asFloat();
-//		LOGV("data: %g %g %g\n", data.x, data.y, data.z);
-	}
-	
-	void read_channel_data(const Json::Value& channel_data, glm::quat& data)
-	{
-		data.x = channel_data[0].asFloat();
-		data.y = channel_data[1].asFloat();
-		data.z = channel_data[2].asFloat();
-		data.w = channel_data[3].asFloat();
-//		LOGV("data: %g %g %g %g\n", data.x, data.y, data.z, data.w);
-	}
-	
-	template <class Type>
-	void read_channel(const Json::Value& animation_channel, KeyframeData<Type>& channel)
+	void read_channel(KeyframeData<Type>& channel, const Json::Value& animation_channel)
 	{
 		const Json::Value& times = animation_channel["time"];
 		const Json::Value& values = animation_channel["value"];
@@ -266,7 +261,7 @@ namespace assets
 			channel.time[key] = time_data.asFloat();
 			
 			const Json::Value& value_data = values[key];
-			read_channel_data(value_data, channel.keys[key]);
+			from_json(channel.keys[key], value_data);
 		}
 	}
 	
@@ -385,9 +380,9 @@ namespace assets
 					assert(animated_node != nullptr);
 					if (animated_node)
 					{
-						read_channel(jnode["scale"], mesh->animation.scale[node_index]);
-						read_channel(jnode["rotation"], mesh->animation.rotation[node_index]);
-						read_channel(jnode["translation"], mesh->animation.translation[node_index]);
+						read_channel(mesh->animation.scale[node_index], jnode["scale"]);
+						read_channel(mesh->animation.rotation[node_index], jnode["rotation"]);
+						read_channel(mesh->animation.translation[node_index], jnode["translation"]);
 
 						animated_node->scale_channel.set_data_source(&mesh->animation.scale[node_index], mesh->animation.frame_delay_seconds);
 						animated_node->rotation_channel.set_data_source(&mesh->animation.rotation[node_index], mesh->animation.frame_delay_seconds);
