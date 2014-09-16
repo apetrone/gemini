@@ -46,9 +46,20 @@ namespace scenegraph
 	{
 		scale = glm::vec3(1.0f, 1.0f, 1.0f);
 		
-		scale_channel.set_data_source(other.scale_channel.get_data_source(), other.scale_channel.get_frame_delay());
-		rotation_channel.set_data_source(other.rotation_channel.get_data_source(), other.rotation_channel.get_frame_delay());
-		translation_channel.set_data_source(other.translation_channel.get_data_source(), other.translation_channel.get_frame_delay());
+		if (other.scale_channel.get_data_source())
+		{
+			scale_channel.set_data_source(other.scale_channel.get_data_source(), other.scale_channel.get_frame_delay());
+		}
+		
+		if (other.rotation_channel.get_data_source())
+		{
+			rotation_channel.set_data_source(other.rotation_channel.get_data_source(), other.rotation_channel.get_frame_delay());
+		}
+		
+		if (other.translation_channel.get_data_source())
+		{
+			translation_channel.set_data_source(other.translation_channel.get_data_source(), other.translation_channel.get_frame_delay());
+		}
 	}
 
 	void AnimatedNode::post_processing(assets::Mesh* mesh, int32_t node_index)
