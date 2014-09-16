@@ -375,7 +375,7 @@ namespace assets
 					assert(!scale_keys.isNull() && !rotation_keys.isNull() && !translation_keys.isNull());
 					
 					// set this node to an animated node
-					LOGV("node type: %i\n", node->type);
+					LOGV("node %s, type: %i\n", node_name(), node->type);
 					if (node->type == scenegraph::NODE || node->type == scenegraph::STATIC_MESH)
 					{
 //						node->type = scenegraph::ANIMATED;
@@ -393,6 +393,8 @@ namespace assets
 						animated_node->rotation_channel.set_data_source(&mesh->animation.rotation[node_index], mesh->animation.frame_delay_seconds);
 						animated_node->translation_channel.set_data_source(&mesh->animation.translation[node_index], mesh->animation.frame_delay_seconds);
 					}
+					
+					++node_index;
 				}
 			}
 			
