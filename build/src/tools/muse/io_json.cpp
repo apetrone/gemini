@@ -263,7 +263,7 @@ void JsonModelWriter::write(datamodel::Model* model, util::DataStream& source)
 			if (node)
 			{
 				LOGV("node: %s\n", node->name.c_str());
-				LOGV("# keys: %i %i %i\n", data->position.keys.size(), data->rotation.keys.size(), data->scale.keys.size());
+				LOGV("# keys: %i %i %i\n", data->translation.keys.size(), data->rotation.keys.size(), data->scale.keys.size());
 
 				Json::Value jscale;
 				gather_keys(jscale, data->scale.keys);
@@ -272,7 +272,7 @@ void JsonModelWriter::write(datamodel::Model* model, util::DataStream& source)
 				gather_keys(jrotation, data->rotation.keys);
 				
 				Json::Value jtranslation;
-				gather_keys(jtranslation, data->position.keys);
+				gather_keys(jtranslation, data->translation.keys);
 		
 				jnode["name"] = node->name;
 				jnode["scale"] = jscale;

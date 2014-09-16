@@ -393,14 +393,13 @@ static void populate_animations(IndentState& state, datamodel::Model* model, Fbx
 		{
 			FbxTime current_time;
 			current_time.SetFrame(t, time_mode);
-			
-	//		FbxAMatrix transform = fbxnode->EvaluateGlobalTransform(current_time);
+
+			float frame_time = current_time.GetSecondDouble();
+
 			FbxVector4 scaling = fbxnode->EvaluateLocalScaling(current_time);
 			FbxVector4 rotation = fbxnode->EvaluateLocalRotation(current_time);
 			FbxVector4 translation = fbxnode->EvaluateLocalTranslation(current_time);
 
-//			LOGV("%srotation: %g %g %g %g\n", state.indent(), rotation[0], rotation[1], rotation[2], rotation[3]);
-			float frame_time = current_time.GetSecondDouble();
 			glm::vec3 key_scaling;
 			glm::quat key_rotation;
 			glm::vec3 key_translation;
@@ -409,9 +408,9 @@ static void populate_animations(IndentState& state, datamodel::Model* model, Fbx
 			from_fbx(key_rotation, rotation);
 			from_fbx(key_translation, translation);
 			
-			datamodel::Keyframe<glm::vec3>* scale_key = data->scale.add_key(frame_time, key_scaling);
-			datamodel::Keyframe<glm::quat>* rotation_key = data->rotation.add_key(frame_time, key_rotation);
-			datamodel::Keyframe<glm::vec3>* position_key = data->position.add_key(frame_time, key_translation);
+			data->scale.add_key(frame_time, key_scaling);
+			data->rotation.add_key(frame_time, key_rotation);
+			data->translation.add_key(frame_time, key_translation);
 		}
 	}
 		

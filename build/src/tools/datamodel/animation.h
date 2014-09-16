@@ -72,7 +72,7 @@ namespace datamodel
 		
 		Channel<glm::vec3> scale;
 		Channel<glm::quat> rotation;
-		Channel<glm::vec3> position;
+		Channel<glm::vec3> translation;
 	};
 
 	// This represents a single animation
