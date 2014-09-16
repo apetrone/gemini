@@ -413,22 +413,6 @@ public:
 	virtual int visit(scenegraph::Node* node)
 	{
 		++total_scene_nodes_visited;
-
-		glm::mat4 tr = glm::translate(glm::mat4(1.0), node->local_position) *
-			glm::toMat4(node->local_rotation) *
-			glm::scale(glm::mat4(1.0), node->local_scale);
-		
-		if (node->parent)
-		{
-			node->world_transform = node->parent->world_transform * tr * node->local_to_world;
-		}
-		else
-		{
-			node->world_transform = tr * node->local_to_world;
-		}
-
-//		LOGV("visit: %s\n", node->name());
-		
 		return 0;
 	}
 

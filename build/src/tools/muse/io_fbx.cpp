@@ -467,9 +467,9 @@ static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNod
 		node->name = fbxnode->GetName();
 
 //		FbxVector4 zero(0, 0, 0);
-//		fbxnode->SetPivotState(FbxNode::eSourcePivot, FbxNode::ePivotActive);
-//		fbxnode->SetPivotState(FbxNode::eDestinationPivot, FbxNode::ePivotActive);
-//		
+		fbxnode->SetPivotState(FbxNode::eSourcePivot, FbxNode::ePivotActive);
+		fbxnode->SetPivotState(FbxNode::eDestinationPivot, FbxNode::ePivotActive);
+//
 //		fbxnode->SetPostRotation(FbxNode::eDestinationPivot, zero);
 //		fbxnode->SetPreRotation(FbxNode::eDestinationPivot, zero);
 //		fbxnode->SetRotationOffset(FbxNode::eDestinationPivot, zero);
@@ -488,9 +488,12 @@ static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNod
 //		LOGV("s: %g %g %g %g\n", global_scale[0], global_scale[1], global_scale[2], global_scale[3]);
 //		LOGV("r: %g %g %g %g\n", global_rotation[0], global_rotation[1], global_rotation[2], global_rotation[3]);
 //		LOGV("t: %g %g %g %g\n", global_translation[0], global_translation[1], global_translation[2], global_translation[3]);
-
-
+		const FbxVector4& rotation_pivot = fbxnode->GetRotationPivot(FbxNode::eDestinationPivot);
+		LOGV("rp: %g %g %g %g\n", rotation_pivot[0], rotation_pivot[1], rotation_pivot[2], rotation_pivot[3]);
 		
+		const FbxVector4& pre_rotation = fbxnode->GetPreRotation(FbxNode::eDestinationPivot);
+		LOGV("rp: %g %g %g %g\n", pre_rotation[0], pre_rotation[1], pre_rotation[2], pre_rotation[3]);
+				
 		FbxDouble3 translation = fbxnode->LclTranslation.Get();
 		FbxDouble3 rotation = fbxnode->LclRotation.Get();
 		FbxDouble3 scaling = fbxnode->LclScaling.Get();
