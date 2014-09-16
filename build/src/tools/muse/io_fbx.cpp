@@ -465,6 +465,32 @@ static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNod
 			state.pop();
 		}
 		node->name = fbxnode->GetName();
+
+//		FbxVector4 zero(0, 0, 0);
+//		fbxnode->SetPivotState(FbxNode::eSourcePivot, FbxNode::ePivotActive);
+//		fbxnode->SetPivotState(FbxNode::eDestinationPivot, FbxNode::ePivotActive);
+//		
+//		fbxnode->SetPostRotation(FbxNode::eDestinationPivot, zero);
+//		fbxnode->SetPreRotation(FbxNode::eDestinationPivot, zero);
+//		fbxnode->SetRotationOffset(FbxNode::eDestinationPivot, zero);
+//		fbxnode->SetScalingOffset(FbxNode::eDestinationPivot, zero);
+//		fbxnode->SetRotationPivot(FbxNode::eDestinationPivot, zero);
+//		fbxnode->SetScalingPivot(FbxNode::eDestinationPivot, zero);
+//
+//		fbxnode->SetRotationOrder(FbxNode::eDestinationPivot, eEulerXYZ);
+//		
+//		fbxnode->SetQuaternionInterpolation(FbxNode::eDestinationPivot, fbxnode->GetQuaternionInterpolation(FbxNode::eSourcePivot));
+
+//		FbxVector4 global_scale = fbxnode->GetGeometricScaling(FbxNode::eSourcePivot);
+//		FbxVector4 global_rotation = fbxnode->GetGeometricRotation(FbxNode::eSourcePivot);
+//		FbxVector4 global_translation = fbxnode->GetGeometricTranslation(FbxNode::eSourcePivot);
+//
+//		LOGV("s: %g %g %g %g\n", global_scale[0], global_scale[1], global_scale[2], global_scale[3]);
+//		LOGV("r: %g %g %g %g\n", global_rotation[0], global_rotation[1], global_rotation[2], global_rotation[3]);
+//		LOGV("t: %g %g %g %g\n", global_translation[0], global_translation[1], global_translation[2], global_translation[3]);
+
+
+		
 		FbxDouble3 translation = fbxnode->LclTranslation.Get();
 		FbxDouble3 rotation = fbxnode->LclRotation.Get();
 		FbxDouble3 scaling = fbxnode->LclScaling.Get();
@@ -621,6 +647,7 @@ void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_sou
 			datamodel::Animation* animation = model->add_animation(stack_name.Buffer());
 			LOGV("reading data for animation \"%s\"\n", animation->name.c_str());
 			
+//			fbxroot->ConvertPivotAnimationRecursive(anim_stack, FbxNode::eDestinationPivot, 30.0);
 			populate_animations(state, model, fbxroot, take, time_mode, *animation);
 		}
 	}
