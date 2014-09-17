@@ -90,19 +90,14 @@ namespace scenegraph
 		
 		assert(scale.x != 0 && scale.y != 0 && scale.z != 0);
 		local_to_world = inv_pivot * sc * ro * pivot * tr;
-		
-		
-		glm::mat4 transform = glm::translate(glm::mat4(1.0), local_position) *
-			glm::toMat4(local_rotation) *
-			glm::scale(glm::mat4(1.0), local_scale);
 
 		if (parent)
 		{
-			world_transform = parent->world_transform * transform * local_to_world;
+			world_transform = parent->world_transform * local_to_world;
 		}
 		else
 		{
-			world_transform = transform * local_to_world;
+			world_transform = local_to_world;
 		}
 		
 		Node::update(delta_seconds);
