@@ -348,7 +348,7 @@ bool is_data_node(FbxNode* node)
 		return false;
 	}
 	
-	return true;
+	return (node->GetMesh() || node->GetGeometry());
 }
 
 static void populate_animations(IndentState& state, datamodel::Model* model, FbxNode* fbxnode, FbxTakeInfo* take, FbxTime::EMode time_mode, datamodel::Animation& animation)
@@ -361,14 +361,10 @@ static void populate_animations(IndentState& state, datamodel::Model* model, Fbx
 	state.push();
 	
 	bool is_valid = is_data_node(fbxnode);
-	if (!is_valid)
-	{
-		return;
-	}
 	
 	std::string node_name = fbxnode->GetName();
 	datamodel::Node* node = model->root.find_child_named(node_name);
-	if (node && node->has_animations())
+	if (is_valid && node && node->has_animations())
 	{
 //	if (!node)
 //	{
@@ -427,29 +423,26 @@ static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNod
 	datamodel::Node* node = root;
 
 	state.push();
-		
-	bool is_valid = is_data_node(fbxnode);
-	
-	FbxNodeAttribute* node_attribute = fbxnode->GetNodeAttribute();
-	if (node_attribute)
+
+	if (is_data_node(fbxnode))
 	{
-		bool is_geometry = (
-							node_attribute->GetAttributeType() == FbxNodeAttribute::eMesh ||
-							node_attribute->GetAttributeType() == FbxNodeAttribute::eNurbs ||
-							node_attribute->GetAttributeType() == FbxNodeAttribute::ePatch
-							);
-		
-		if (is_geometry)
-		{
-			FbxGeometry* geometry = (FbxGeometry*)node_attribute;
-			int blend_shape_count = geometry->GetDeformerCount(FbxDeformer::eBlendShape);
-//			LOGV("%sblend_shapes = %i\n", state.indent(), blend_shape_count);
-		}
-	}
+//		FbxNodeAttribute* node_attribute = fbxnode->GetNodeAttribute();
+//		if (node_attribute)
+//		{
+//			bool is_geometry = (
+//								node_attribute->GetAttributeType() == FbxNodeAttribute::eMesh ||
+//								node_attribute->GetAttributeType() == FbxNodeAttribute::eNurbs ||
+//								node_attribute->GetAttributeType() == FbxNodeAttribute::ePatch
+//								);
+//			
+//			if (is_geometry)
+//			{
+//				FbxGeometry* geometry = (FbxGeometry*)node_attribute;
+//				int blend_shape_count = geometry->GetDeformerCount(FbxDeformer::eBlendShape);
+//				//			LOGV("%sblend_shapes = %i\n", state.indent(), blend_shape_count);
+//			}
+//		}
 	
-	
-	if (is_valid)
-	{
 		// create a new node
 		node = CREATE(datamodel::Node);
 		root->add_child(node);
@@ -489,10 +482,10 @@ static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNod
 //		LOGV("r: %g %g %g %g\n", global_rotation[0], global_rotation[1], global_rotation[2], global_rotation[3]);
 //		LOGV("t: %g %g %g %g\n", global_translation[0], global_translation[1], global_translation[2], global_translation[3]);
 		const FbxVector4& rotation_pivot = fbxnode->GetRotationPivot(FbxNode::eDestinationPivot);
-		LOGV("rp: %g %g %g %g\n", rotation_pivot[0], rotation_pivot[1], rotation_pivot[2], rotation_pivot[3]);
+//		LOGV("rp: %g %g %g %g\n", rotation_pivot[0], rotation_pivot[1], rotation_pivot[2], rotation_pivot[3]);
 		
 		const FbxVector4& pre_rotation = fbxnode->GetPreRotation(FbxNode::eDestinationPivot);
-		LOGV("rp: %g %g %g %g\n", pre_rotation[0], pre_rotation[1], pre_rotation[2], pre_rotation[3]);
+//		LOGV("rp: %g %g %g %g\n", pre_rotation[0], pre_rotation[1], pre_rotation[2], pre_rotation[3]);
 				
 		FbxDouble3 translation = fbxnode->LclTranslation.Get();
 		FbxDouble3 rotation = fbxnode->LclRotation.Get();
@@ -608,6 +601,8 @@ void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_sou
 	
 	// gemini needs a scene defined in meters
 	FbxSystemUnit system_unit = scene->GetGlobalSettings().GetSystemUnit();
+
+	LOGV("scene is in unit: %s\n", system_unit.GetScaleFactorAsString().Buffer());
 
 	if (system_unit != FbxSystemUnit::m)
 	{
