@@ -340,15 +340,14 @@ static void to_mat4(FbxAMatrix& tr, glm::mat4& out)
 	
 }
 
-bool is_data_node(FbxNode* node)
+bool is_hierarchical_node(FbxNode* node)
 {
-	// engine doesn't read lights or cameras
-	if (node->GetLight() || node->GetCamera())
-	{
-		return false;
-	}
-	
-	return (node->GetMesh() || node->GetGeometry());
+	// doesn't need to traverse into children of this node
+	// or create it as part of the scene graph for transforms, etc.
+	// One major annoyance here is:
+	// if a user exports to FBX but unchecks 'Lights' or 'Cameras';
+	// they will still be exported, but will just not be flagged as their type.
+	return !(node->GetLight() || node->GetCamera());
 }
 
 static void populate_animations(IndentState& state, datamodel::Model* model, FbxNode* fbxnode, FbxTakeInfo* take, FbxTime::EMode time_mode, datamodel::Animation& animation)
@@ -360,11 +359,11 @@ static void populate_animations(IndentState& state, datamodel::Model* model, Fbx
 	
 	state.push();
 	
-	bool is_valid = is_data_node(fbxnode);
+	bool is_hierarchical = is_hierarchical_node(fbxnode);
 	
 	std::string node_name = fbxnode->GetName();
 	datamodel::Node* node = model->root.find_child_named(node_name);
-	if (is_valid && node && node->has_animations())
+	if (is_hierarchical && node && node->has_animations())
 	{
 //	if (!node)
 //	{
@@ -409,7 +408,11 @@ static void populate_animations(IndentState& state, datamodel::Model* model, Fbx
 			data->translation.add_key(frame_time, key_translation);
 		}
 	}
-		
+	else
+	{
+		LOGV("skip: %s\n", fbxnode->GetName());
+	}
+	
 	for (size_t index = 0; index < fbxnode->GetChildCount(); ++index)
 	{
 		populate_animations(state, model, fbxnode->GetChild(index), take, time_mode, animation);
@@ -424,7 +427,7 @@ static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNod
 
 	state.push();
 
-	if (is_data_node(fbxnode))
+	if (is_hierarchical_node(fbxnode))
 	{
 //		FbxNodeAttribute* node_attribute = fbxnode->GetNodeAttribute();
 //		if (node_attribute)
@@ -608,12 +611,13 @@ void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_sou
 	{
 		LOGV("Converting scene units from: %s\n", system_unit.GetScaleFactorAsString().Buffer());
 		FbxSystemUnit::m.ConvertScene(scene);
+//		FbxSystemUnit::m.ConvertChildren(scene->GetRootNode(), system_unit);
+//		float conversion_factor = FbxSystemUnit::m.GetConversionFactorTo(system_unit);
+//		LOGV("conversion_factor: %g\n", conversion_factor);
 	}
-
 	
-	//	int total_bones = scene->GetPoseCount();
-	int total_poses = scene->GetPoseCount();
-	LOGV("pose count: %i\n", total_poses);
+//	int total_poses = scene->GetPoseCount();
+//	LOGV("pose count: %i\n", total_poses);
 	
 	FbxNode* fbxroot = scene->GetRootNode();
 	if (fbxroot)

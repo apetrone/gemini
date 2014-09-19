@@ -103,9 +103,17 @@ namespace scenegraph
 		return 0;
 	}
 	
-	void Node::remove_child(Node* child)
+	void Node::remove_child(Node* node)
 	{
-		// TODO: implement
+		auto it = children.begin();
+		for ( ; it != children.end(); ++it)
+		{
+			if ((*it) == node)
+			{
+				children.erase(it);
+				break;
+			}
+		}
 	}
 	
 	void Node::update(float delta_seconds)
