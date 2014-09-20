@@ -367,6 +367,7 @@ public:
 
 	virtual void shutdown( kernel::Params & params )
 	{
+		vr::destroy_device(device);
 		vr::shutdown();
 	}
 };
