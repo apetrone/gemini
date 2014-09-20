@@ -93,6 +93,7 @@ public:
 	
 	bool operator== (const StackStringType& other) const
 	{
+		assert(_length != 0 && _data != nullptr);
 		if (other._length != _length)
 		{
 			return false;
