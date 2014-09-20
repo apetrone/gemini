@@ -219,7 +219,7 @@ def get_tools(libgemini):
 
 	prism.dependencies.extend([
 		libgemini,
-		Dependency(file="assimp.py", products="assimp", arguments=["--enable-static"])
+		Dependency(file="assimp.py", products=["assimp"], arguments=["--enable-static"])
 	])
 
 	return [rnd, prism]
