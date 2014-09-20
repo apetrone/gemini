@@ -1,7 +1,6 @@
 import logging
 from pegasus.models import Product, ProductType
 
-
 def arguments(parser):
 	pass
 
@@ -23,7 +22,7 @@ def products(arguments, **kwargs):
 	}
 
 	ovr = Product(name="ovr", output=ProductType.StaticLibrary)
-	ovr.root = "../dependencies/oculussdk"
+	ovr.root = "../dependencies/oculussdk_%s" % "0.4.2"
 	ovr.product_root = "LibOVR/Lib/%(platform)s/%(project)s/%(title_configuration)s" % vars
 
 	ovr.includes = [
