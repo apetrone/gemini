@@ -176,12 +176,12 @@ namespace assets
 		else if (node_type == "skeleton")
 		{
 			LOGV("create skeleton\n");
-			node_root = CREATE(scenegraph::Node);
+			node_root = CREATE(scenegraph::AnimatedNode);
 		}
 		else
 		{
 			LOGV("create group node\n");
-			node_root = CREATE(scenegraph::Node);
+			node_root = CREATE(scenegraph::AnimatedNode);
 		}
 		
 		assert(node_root != nullptr);
@@ -251,6 +251,8 @@ namespace assets
 
 		assert(!times.empty());
 		assert(!values.empty());
+		
+		assert(times.size() == values.size());
 		
 		channel.time.allocate(times.size());
 		channel.keys.allocate(values.size());
@@ -361,21 +363,30 @@ namespace assets
 				for (; node_iter != nodes_array.end(); ++node_iter)
 				{
 					const Json::Value& jnode = (*node_iter);
-					StackString<128> node_name = jnode["name"].asString().c_str();
-					scenegraph::Node* node = mesh->scene_root->find_child_named(node_name);
+//					StackString<128> node_name = jnode["name"].asString().c_str();
+					std::string node_name = jnode["name"].asString().c_str();
+					scenegraph::Node* node = mesh->scene_root->find_child_named(node_name.c_str());
+					
+
+					
+					if (!node)
+					{
+						LOGV("ignoring node: %s\n", node_name.c_str());
+						continue;
+					}
+					else
+					{
+						LOGV("found node: %s\n", node_name.c_str());
+					}
+//					assert(node != nullptr);
+
+					assert(node->has_attributes(scenegraph::ANIMATED));
 					
 					const Json::Value& scale_keys = jnode["scale"];
 					const Json::Value& rotation_keys = jnode["rotation"];
 					const Json::Value& translation_keys = jnode["translation"];
 					assert(!scale_keys.isNull() && !rotation_keys.isNull() && !translation_keys.isNull());
-					
-					// set this node to an animated node
-					LOGV("node %s, type: %i\n", node_name(), node->type);
-					if (node->type == scenegraph::NODE || node->type == scenegraph::STATIC_MESH)
-					{
-//						node->type = scenegraph::ANIMATED;
-					}
-					
+				
 					scenegraph::AnimatedNode* animated_node = static_cast<scenegraph::AnimatedNode*>(node);
 					assert(animated_node != nullptr);
 					if (animated_node)
@@ -409,10 +420,9 @@ namespace assets
 		material_id = 0;
 		vertex_count = 0;
 		index_count = 0;
-		draw_type = renderer::DRAW_TRIANGLES;
-		
 		attributes = 0;
 		vertexbuffer = 0;
+		draw_type = renderer::DRAW_TRIANGLES;
 	}
 	
 	Geometry::~Geometry()

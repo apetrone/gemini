@@ -25,7 +25,6 @@
 
 #include <gemini/typedefs.h>
 #include <gemini/mem.h>
-#include <gemini/util/stackstring.h>
 
 #include <slim/xlog.h>
 
@@ -50,12 +49,14 @@ namespace scenegraph
 		local_scale = glm::vec3(1.0f, 1.0f, 1.0f);
 		parent = 0;
 		type = NODE;
+		attributes = 0;
 	}
 	
 	Node::Node(const Node& other)
 	{
 		name = other.name;
 		type = other.type;
+		attributes = other.attributes;
 		
 		local_scale = other.local_scale;
 		local_rotation = other.local_rotation;
@@ -84,7 +85,7 @@ namespace scenegraph
 		children.push_back(child);
 	}
 	
-	Node* Node::find_child_named(const StackString<128>& name)
+	Node* Node::find_child_named(const std::string& name)
 	{
 		if (this->name == name)
 		{
@@ -175,7 +176,7 @@ namespace scenegraph
 			indent += "\t";
 		}
 		
-		LOGV("[Node] Name=\"%s\" (%x), # Children=%i\n", root->name(), root, root->children.size());
+		LOGV("[Node] Name=\"%s\" (%x), # Children=%i\n", root->name.c_str(), root, root->children.size());
 		
 		NodeVector::iterator start, end;
 		start = root->children.begin();

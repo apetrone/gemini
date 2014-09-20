@@ -36,6 +36,8 @@ namespace scenegraph
 		translation_channel(translation)
 	{
 		scale = glm::vec3(1.0f, 1.0f, 1.0f);
+		type = ANIMATED;
+		attributes = ANIMATED;
 	}
 	
 	AnimatedNode::AnimatedNode(AnimatedNode& other) :
@@ -106,11 +108,13 @@ namespace scenegraph
 	RenderNode::RenderNode() : visible(true)
 	{
 		type = RENDER;
+		attributes = ANIMATED;
 	}
 	
 	SkeletalNode::SkeletalNode()
 	{
 		type = scenegraph::SKELETON;
+		attributes = ANIMATED | SKELETON;
 	}
 
 	void SkeletalNode::setup_skeleton()

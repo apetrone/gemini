@@ -445,6 +445,26 @@ static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNod
 //				//			LOGV("%sblend_shapes = %i\n", state.indent(), blend_shape_count);
 //			}
 //		}
+
+		// determine which order the rotation and scaling operations are performed...
+		FbxTransform::EInheritType transform_inherit_type;
+		fbxnode->GetTransformationInheritType(transform_inherit_type);
+		
+		StackString<64> inherit_type;
+		switch(transform_inherit_type)
+		{
+			case FbxTransform::eInheritRrSs:
+				inherit_type = "RrSs\n";
+				break;
+			case FbxTransform::eInheritRSrs:
+				inherit_type = "RSrs";
+				break;
+			case FbxTransform::eInheritRrs:
+				inherit_type = "Rrs";
+				break;
+		}
+		
+		LOGV("Node inherit type: %s\n", inherit_type());
 	
 		// create a new node
 		node = CREATE(datamodel::Node);
@@ -461,49 +481,91 @@ static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNod
 			state.pop();
 		}
 		node->name = fbxnode->GetName();
+		LOGV("-------------- %s --------------\n", node->name.c_str());
 
-//		FbxVector4 zero(0, 0, 0);
+		FbxVector4 zero(0, 0, 0);
 		fbxnode->SetPivotState(FbxNode::eSourcePivot, FbxNode::ePivotActive);
 		fbxnode->SetPivotState(FbxNode::eDestinationPivot, FbxNode::ePivotActive);
 //
-//		fbxnode->SetPostRotation(FbxNode::eDestinationPivot, zero);
-//		fbxnode->SetPreRotation(FbxNode::eDestinationPivot, zero);
-//		fbxnode->SetRotationOffset(FbxNode::eDestinationPivot, zero);
-//		fbxnode->SetScalingOffset(FbxNode::eDestinationPivot, zero);
-//		fbxnode->SetRotationPivot(FbxNode::eDestinationPivot, zero);
-//		fbxnode->SetScalingPivot(FbxNode::eDestinationPivot, zero);
-//
-//		fbxnode->SetRotationOrder(FbxNode::eDestinationPivot, eEulerXYZ);
-//		
-//		fbxnode->SetQuaternionInterpolation(FbxNode::eDestinationPivot, fbxnode->GetQuaternionInterpolation(FbxNode::eSourcePivot));
+		FbxNode::EPivotSet pivot_set = FbxNode::eSourcePivot;
 
-//		FbxVector4 global_scale = fbxnode->GetGeometricScaling(FbxNode::eSourcePivot);
-//		FbxVector4 global_rotation = fbxnode->GetGeometricRotation(FbxNode::eSourcePivot);
-//		FbxVector4 global_translation = fbxnode->GetGeometricTranslation(FbxNode::eSourcePivot);
-//
-//		LOGV("s: %g %g %g %g\n", global_scale[0], global_scale[1], global_scale[2], global_scale[3]);
-//		LOGV("r: %g %g %g %g\n", global_rotation[0], global_rotation[1], global_rotation[2], global_rotation[3]);
-//		LOGV("t: %g %g %g %g\n", global_translation[0], global_translation[1], global_translation[2], global_translation[3]);
-		const FbxVector4& rotation_pivot = fbxnode->GetRotationPivot(FbxNode::eDestinationPivot);
-//		LOGV("rp: %g %g %g %g\n", rotation_pivot[0], rotation_pivot[1], rotation_pivot[2], rotation_pivot[3]);
+//		fbxnode->SetPostRotation(pivot_set, zero);
+//		fbxnode->SetPreRotation(pivot_set, zero);
+//		fbxnode->SetRotationOffset(pivot_set, zero);
+//		fbxnode->SetScalingOffset(pivot_set, zero);
+//		fbxnode->SetRotationPivot(pivot_set, zero);
+//		fbxnode->SetScalingPivot(pivot_set, zero);
+//		fbxnode->SetRotationOrder(pivot_set, eEulerXYZ);
+//		fbxnode->SetQuaternionInterpolation(pivot_set, fbxnode->GetQuaternionInterpolation(pivot_set));
+
+//		fbxnode->ResetPivotSet(FbxNode::eSourcePivot);
+
+//		FbxDouble3 global_scale = fbxnode->GetGeometricScaling(pivot_set);
+//		FbxDouble3 global_rotation = fbxnode->GetGeometricRotation(pivot_set);
+//		FbxDouble3 global_translation = fbxnode->GetGeometricTranslation(pivot_set);
+//		LOGV("s: %g %g %g\n", global_scale[0], global_scale[1], global_scale[2]);
+//		LOGV("r: %g %g %g\n", global_rotation[0], global_rotation[1], global_rotation[2]);
+//		LOGV("t: %g %g %g\n", global_translation[0], global_translation[1], global_translation[2]);
+
+
+		FbxAMatrix& local_transform = fbxnode->EvaluateLocalTransform();
+		const FbxDouble3& local_scale = local_transform.GetS();
+		const FbxDouble3& local_rotation = local_transform.GetR();
+		const FbxDouble3& local_translation = local_transform.GetT();
+		LOGV("ls: %g %g %g\n", local_scale[0], local_scale[1], local_scale[2]);
+		LOGV("lr: %g %g %g\n", local_rotation[0], local_rotation[1], local_rotation[2]);
+		LOGV("lt: %g %g %g\n", local_translation[0], local_translation[1], local_translation[2]);
+
 		
-		const FbxVector4& pre_rotation = fbxnode->GetPreRotation(FbxNode::eDestinationPivot);
-//		LOGV("rp: %g %g %g %g\n", pre_rotation[0], pre_rotation[1], pre_rotation[2], pre_rotation[3]);
+		FbxAMatrix& global_transform = fbxnode->EvaluateGlobalTransform();
+		const FbxDouble3& global_scale = global_transform.GetS();
+		const FbxDouble3& global_rotation = global_transform.GetR();
+		const FbxDouble3& global_translation = global_transform.GetT();
+		LOGV("gs: %g %g %g\n", global_scale[0], global_scale[1], global_scale[2]);
+		LOGV("gr: %g %g %g\n", global_rotation[0], global_rotation[1], global_rotation[2]);
+		LOGV("gt: %g %g %g\n", global_translation[0], global_translation[1], global_translation[2]);
+		
+		
+		
+		const FbxDouble3& rotation_pivot = fbxnode->GetRotationPivot(pivot_set);
+		LOGV("rotation_pivot: %g %g %g\n", rotation_pivot[0], rotation_pivot[1], rotation_pivot[2]);
+		
+		const FbxDouble3& pre_rotation = fbxnode->GetPreRotation(pivot_set);
+		LOGV("pre_rotation: %g %g %g\n", pre_rotation[0], pre_rotation[1], pre_rotation[2]);
+		
+		const FbxDouble3& post_rotation = fbxnode->GetPostRotation(pivot_set);
+		LOGV("post_rotation: %g %g %g\n", post_rotation[0], post_rotation[1], post_rotation[2]);
+		
+		const FbxDouble3& rotation_offset = fbxnode->GetRotationOffset(pivot_set);
+		LOGV("rotation_offset: %g %g %g\n", rotation_offset[0], rotation_offset[1], rotation_offset[2]);
+		
+		const FbxDouble3& scaling_pivot = fbxnode->GetScalingPivot(pivot_set);
+		LOGV("scaling_pivot: %g %g %g\n", scaling_pivot[0], scaling_pivot[1], scaling_pivot[2]);
 				
-		FbxDouble3 translation = fbxnode->LclTranslation.Get();
-		FbxDouble3 rotation = fbxnode->LclRotation.Get();
-		FbxDouble3 scaling = fbxnode->LclScaling.Get();
+		const FbxDouble3& scaling_offset = fbxnode->GetScalingOffset(pivot_set);
+		LOGV("scaling_offset: %g %g %g\n", scaling_offset[0], scaling_offset[1], scaling_offset[2]);
 		
-		from_fbx(node->scale, scaling);
-		from_fbx(node->rotation, rotation);
-		from_fbx(node->translation, translation);
+		
+
+				
+//		FbxDouble3 translation = fbxnode->LclTranslation.Get();
+//		FbxDouble3 rotation = fbxnode->LclRotation.Get();
+//		FbxDouble3 scaling = fbxnode->LclScaling.Get();
+//		from_fbx(node->scale, scaling);
+//		from_fbx(node->rotation, rotation);
+//		from_fbx(node->translation, translation);
+
+		from_fbx(node->scale, local_scale);
+		from_fbx(node->rotation, local_rotation);
+		from_fbx(node->translation, local_translation);
+		
 
 		for (size_t index = 0; index < fbxnode->GetChildCount(); ++index)
 		{
 			populate_hierarchy(state, node, fbxnode->GetChild(index), model);
 		}
 	}
-	
+
 	state.pop();
 }
 

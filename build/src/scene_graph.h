@@ -23,8 +23,6 @@
 
 #include <vector>
 
-#include <gemini/util/stackstring.h>
-
 #include <gemini/mathlib.h>
 #include "keyframechannel.h"
 
@@ -35,16 +33,18 @@ namespace scenegraph
 	
 	enum NodeType
 	{
-		SCENEROOT, 		// the scene root
-		NODE, 			// generic node
-		STATIC_MESH,	// geometry/mesh node
-		RENDER,			// is a render node
-		SKELETON,		// render a skeleton
-		ANIMATED
+		SCENEROOT 		= 0, 	// the scene root
+		NODE			= 1, 	// generic node
+		STATIC_MESH		= 2,	// geometry/mesh node
+		RENDER			= 4,	// is a render node
+		SKELETON		= 8,	// render a skeleton
+		ANIMATED		= 16,	// has animatable position/rotation/scale
 	};
 	
 	struct Node
 	{
+		typedef uint16_t AttributeType;
+	
 		// decomposed pieces
 		glm::vec3 local_scale;
 		glm::quat local_rotation;
@@ -58,13 +58,14 @@ namespace scenegraph
 		
 		// the final world-transform for this model
 		glm::mat4 world_transform;
-		
-		StackString<128> name;
+
+		std::string name;
 		
 		NodeVector children;
 		Node* parent;
 		
 		NodeType type;
+		AttributeType attributes;
 
 		Node();
 		Node(const Node& other);
@@ -72,11 +73,12 @@ namespace scenegraph
 		
 		void add_child(Node* child);
 		void remove_child(Node* child);
-		Node* find_child_named(const StackString<128>& name);
+		Node* find_child_named(const std::string& name);
 		virtual void update(float delta_seconds);
 		void clear();
 		NodeType get_type() const { return type; }
 		
+		bool has_attributes(AttributeType flags) { return (flags & attributes); }
 		virtual Node* clone() { return CREATE(Node, *this); }
 	};
 
