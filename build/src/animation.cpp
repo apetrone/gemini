@@ -22,7 +22,6 @@
 #include <vector>
 
 #include <gemini/typedefs.h>
-//#include <gemini/util/stackstring.h>
 #include <slim/xlog.h>
 
 #include "animation.h"

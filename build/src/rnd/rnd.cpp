@@ -39,7 +39,7 @@ using namespace std;
 
 #include "common.h"
 
-#include "keyframechannel.h"
+//#include "keyframechannel.h"
 
 template< typename T>
 void fill( vector<int>& v, T done )
@@ -403,6 +403,7 @@ void test_rendering()
 #endif
 }
 
+#if 0
 void test_animation()
 {
 	// animation sample rate
@@ -447,6 +448,7 @@ void test_animation()
 		}
 	}
 }
+#endif
 
 void test_serial2()
 {
