@@ -295,6 +295,21 @@ public:
 			{
 				kernel::instance()->set_active(false);
 			}
+			else if (event.key == input::KEY_SPACE)
+			{
+				ovrHSWDisplayState warning;
+				ovrHmd_GetHSWDisplayState(device.hmd, &warning);
+				if (warning.Displayed)
+				{
+					LOGV("dismissing health and safety warning message\n");
+					ovrHmd_DismissHSWDisplay(device.hmd);
+				}
+			}
+			else if (event.key == input::KEY_TAB)
+			{
+				LOGV("re-centering head pose\n");
+				ovrHmd_RecenterPose(device.hmd);
+			}
         }
 	}
 
