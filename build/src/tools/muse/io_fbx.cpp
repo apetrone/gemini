@@ -172,21 +172,26 @@ static void parse_materials(IndentState& state, FbxNode* node, datamodel::Materi
 										LOGV("%sfile name: %s, relative filename: %s\n", state.indent(), file_texture->GetFileName(), file_texture->GetRelativeFileName());
 										
 										std::string texture_name = texture_path.basename().remove_extension()();
-										datamodel::Material& material = materials.find_with_name(texture_name);
-										if (material.id == 0)
-										{
-											texture_name = "materials/" + texture_name;
-											material = materials.add_material(texture_name);
-											LOGV("%sadded material: \"%s\" at index: %i\n", state.indent(), material.name.c_str(), material.id);
-											
-										}
+										std::string internal_material_name = "materials/" + texture_name;
+										const datamodel::Material& material = materials.find_with_name(internal_material_name);
 										
 										// If you hit this assert, the mesh has multiple materials.
 										// Each mesh should only have one material
 										assert(mesh->material == 0);
 										
-										// for now, assign material to the mesh
-										mesh->material = material.id;
+										if (material.id == -1)
+										{
+											datamodel::Material newmaterial = materials.add_material(internal_material_name);
+											LOGV("%sadded material: \"%s\" at index: %i\n", state.indent(), texture_name.c_str(), newmaterial.id);
+											
+											mesh->material = newmaterial.id;
+										}
+										else
+										{
+											LOGV("%sfound material: \"%s\" at index: %i\n", state.indent(), texture_name.c_str(), material.id);
+											mesh->material = material.id;
+										}
+
 									}
 									else if (procedural_texture)
 									{

@@ -29,10 +29,10 @@
 
 namespace datamodel
 {
-	typedef uint32_t MaterialId;
+	typedef int32_t MaterialId;
 	struct Material
 	{
-		uint32_t id;
+		MaterialId id;
 		std::string name;
 	};
 

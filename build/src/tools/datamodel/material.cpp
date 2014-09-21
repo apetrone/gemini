@@ -28,15 +28,15 @@ namespace datamodel
 
 	MaterialMap::MaterialMap()
 	{
-		_default_material.id = 0;
+		_default_material.id = -1;
 		_default_material.name = "default";
-		next_id = 1;
+		next_id = 0;
 	}
 
 	Material& MaterialMap::find_with_id(MaterialId id)
 	{
 		// no materials; use the default
-		if (materials.empty() || id == 0)
+		if (materials.empty() || id < 0)
 		{
 			return _default_material;
 		}
@@ -44,7 +44,7 @@ namespace datamodel
 		// catch out of range ids
 		assert(materials.size() >= id);
 		
-		return materials[ (next_id-id-1) ];
+		return materials[ id ];
 	}
 	
 	Material& MaterialMap::find_with_name(const std::string& name)
