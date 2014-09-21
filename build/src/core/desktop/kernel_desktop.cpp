@@ -175,7 +175,9 @@ void DesktopKernel::pre_tick()
 
 void DesktopKernel::post_tick()
 {
-	SDL_GL_SwapWindow(_window);
+	// TODO: this needs to be controlled somehow
+	// as the rift sdk performs buffer swaps during end frame.
+//	SDL_GL_SwapWindow(_window);
 } // post_tick
 
 void DesktopKernel::post_application_config( kernel::ApplicationResult result )
@@ -214,7 +216,13 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 			LOGE("Failed to create SDL GL context: %s\n", SDL_GetError());
 		}
 
-		// fetch the window size
+		// try to set our window size; it might still be smaller than requested.
+		SDL_SetWindowSize(_window, parameters().window_width, parameters().window_height);
+		
+		// center our window
+		SDL_SetWindowPosition(_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+		
+		// fetch the window size and renderable size
 		SDL_GetWindowSize(_window, &window_width, &window_height);
 		SDL_GL_GetDrawableSize(_window, &render_width, &render_height);
 		

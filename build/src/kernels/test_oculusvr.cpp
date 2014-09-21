@@ -49,6 +49,7 @@ namespace vr
 		ovrGLTexture textures[2];
 		renderer::RenderTarget* rt;
 		renderer::Texture* render_texture;
+		ovrEyeRenderDesc eye_render[2];
 		
 		Device()
 		{
@@ -98,30 +99,37 @@ namespace vr
 		return ovrHmd_Detect();
 	}
 	
-	void setup_render_targets(Device& device)
+
+	
+	void setup_rendering(Device& device, uint16_t width, uint16_t height)
 	{
 		ovrSizei tex0 = ovrHmd_GetFovTextureSize(
-			device.hmd,
-			ovrEye_Left,
-			device.hmd->DefaultEyeFov[0],
-			1.0f
-		);
+												 device.hmd,
+												 ovrEye_Left,
+												 device.hmd->DefaultEyeFov[0],
+												 1.0f
+												 );
 		
 		ovrSizei tex1 = ovrHmd_GetFovTextureSize(
-			 device.hmd,
-			 ovrEye_Right,
-			 device.hmd->DefaultEyeFov[1],
-			 1.0f
-		 );
-
+												 device.hmd,
+												 ovrEye_Right,
+												 device.hmd->DefaultEyeFov[1],
+												 1.0f
+												 );
+		
+		// determine combined width for both eyes
+		// get max height of the two eyes (in case they differ)
 		device.render_target_size.w = tex0.w + tex1.w;
 		device.render_target_size.h = glm::max(tex0.h, tex1.h);
 		
 		LOGV("recommended render_target size: %i x %i\n",
-			device.render_target_size.w,
-			device.render_target_size.h
-		 );
-
+			 device.render_target_size.w,
+			 device.render_target_size.h
+			 );
+		
+		device.render_target_size.w = fmin(device.render_target_size.w, width);
+		device.render_target_size.h = fmin(device.render_target_size.h, height);
+		
 		// generate texture
 		image::Image image;
 		image.width = device.render_target_size.w;
@@ -132,52 +140,22 @@ namespace vr
 		
 		// create render target
 		device.rt = renderer::driver()->render_target_create(
-			device.render_target_size.w,
-			device.render_target_size.h
-		);
+															 device.render_target_size.w,
+															 device.render_target_size.h
+															 );
 		
 		renderer::driver()->render_target_set_attachment(
-			device.rt,
-			renderer::RenderTarget::COLOR,
-			0,
-			device.render_texture
-		);
-	}
+														 device.rt,
+														 renderer::RenderTarget::COLOR,
+														 0,
+														 device.render_texture
+														 );
 	
-	void setup_rendering(Device& device, uint16_t width, uint16_t height)
-	{
-		ovrRenderAPIConfig rc;
-		rc.Header.API = ovrRenderAPI_OpenGL;
-		rc.Header.Multisample = false;
-		rc.Header.RTSize = device.render_target_size;
+		// TODO: call ovrHmd_AttachToWindow under win32?
 		
-		float vfov = tan(90/2);
-		float hfov = tan(100/2);
+		width = device.render_target_size.w;
+		height = device.render_target_size.h;
 		
-		unsigned int distortion_caps = 0;
-		ovrFovPort eye_fov[2];
-		eye_fov[0].UpTan = vfov;
-		eye_fov[0].DownTan = vfov;
-		eye_fov[0].LeftTan = hfov;
-		eye_fov[0].RightTan = hfov;
-		eye_fov[1].UpTan = vfov;
-		eye_fov[1].DownTan = vfov;
-		eye_fov[1].LeftTan = hfov;
-		eye_fov[1].RightTan = hfov;
-		
-		ovrEyeRenderDesc eye_render[2];
-		
-		ovrBool result = ovrHmd_ConfigureRendering(
-			device.hmd,
-			&rc,
-			distortion_caps,
-			eye_fov,
-			eye_render
-		);
-		LOGV("vr: setup rendering %s\n", result ? "Success": "Failed");
-		
-		
-		assert(result != 0);
 		
 		ovrRecti viewport_left;
 		viewport_left.Pos.x = 0;
@@ -190,17 +168,59 @@ namespace vr
 		viewport_right.Pos.y = 0;
 		viewport_right.Size.w = width/2;
 		viewport_right.Size.h = height;
-		
+
 		// now build textures
 		device.textures[0].OGL.Header.API = ovrRenderAPI_OpenGL;
 		device.textures[0].OGL.Header.TextureSize = device.render_target_size;
 		device.textures[0].OGL.Header.RenderViewport = viewport_left;
-		device.textures[0].OGL.TexId = 2;
+		device.textures[0].OGL.TexId = device.rt->color_texture_id;
 
 		device.textures[1].OGL.Header.API = ovrRenderAPI_OpenGL;
 		device.textures[1].OGL.Header.TextureSize = device.render_target_size;
 		device.textures[1].OGL.Header.RenderViewport = viewport_right;
-		device.textures[1].OGL.TexId = 2;
+		device.textures[1].OGL.TexId = device.rt->color_texture_id;
+		
+		if (device.hmd->HmdCaps & ovrHmdCap_ExtendDesktop)
+		{
+			LOGV("running in \"extended desktop\" mode\n");
+		}
+		else
+		{
+			LOGV("running in \"direct to hmd\" mode\n");
+		}
+		
+		// try to enable low-persistence display and dynamic prediction
+		ovrHmd_SetEnabledCaps(device.hmd, ovrHmdCap_LowPersistence | ovrHmdCap_DynamicPrediction);
+		
+		ovrRenderAPIConfig rc;
+		memset(&rc, 0, sizeof(ovrRenderAPIConfig));
+		rc.Header.API = ovrRenderAPI_OpenGL;
+		rc.Header.Multisample = false;
+		rc.Header.RTSize = device.render_target_size;
+
+		unsigned int distortion_caps = ovrDistortionCap_Chromatic |
+										ovrDistortionCap_Vignette |
+										ovrDistortionCap_TimeWarp |
+										ovrDistortionCap_Overdrive;
+		
+		ovrBool result = ovrHmd_ConfigureRendering(
+												   device.hmd,
+												   &rc,
+												   distortion_caps,
+												   device.hmd->DefaultEyeFov,
+												   device.eye_render
+												   );
+								
+		LOGV("vr: setup rendering -> %s\n", result ? "Success": "Failed");
+	}
+	
+	void setup_sensors(Device& device)
+	{
+		ovrBool result = ovrHmd_ConfigureTracking(device.hmd, 0xFFFFFFFF, 0);
+		if (!result)
+		{
+			LOGW("Failed to configure tracking!\n");
+		}
 	}
 	
 	Device create_device()
@@ -307,9 +327,9 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
-		vr::setup_render_targets(device);
-	
 		vr::setup_rendering(device, params.render_width, params.render_height);
+		
+		vr::setup_sensors(device);
 		
 		return kernel::Application_Success;
 	}
@@ -322,46 +342,91 @@ public:
 	{
 		renderer::IRenderDriver * driver = renderer::driver();
 		MemoryStream ms;
-		char buffer[128] = {0};
-		ms.init( buffer, 128 );
+		char buffer[256] = {0};
+		ms.init(buffer, 256);
 
 		device.begin_frame();
 		
+		driver->render_target_activate(device.rt);
+
+
+
 		for (uint32_t eye_index = 0; eye_index < device.get_eye_count(); ++eye_index)
 		{
+			ovrEyeType eye_type = device.hmd->EyeRenderOrder[eye_index];
 			vr::EyeDescription eye = device.get_eye_description(eye_index);
 //			glm::quat orientation = device.get_eye_orientation(eye_index);
+
+			
+			int x;
+			int y = 0;
+			int width, height;
+
+			width = device.rt->width/2;
+			height = device.rt->height;
+			
+			if (eye_type == ovrEye_Left)
+			{
+				x = 0;
+				y = 0;
+			}
+			else if (eye_type == ovrEye_Right)
+			{
+				x = width;
+				y = 0;
+			}
 			
 			// viewport
 			ms.rewind();
-			ms.write( 0 );
-			ms.write( 0 );
-			ms.write( params.window_width );
-			ms.write( params.window_width );
+			ms.write( x );
+			ms.write( y );
+			ms.write( width );
+			ms.write( height );
 			ms.rewind();
 			driver->run_command( renderer::DC_VIEWPORT, ms );
 			
 			// set clear color
 			ms.rewind();
-			ms.write( 0.5f );
+			ms.write( 1.0f );
 			ms.write( 0.0f );
-			ms.write( 0.75f );
+			ms.write( 0.0f );
 			ms.write( 1.0f );
 			ms.rewind();
 			driver->run_command( renderer::DC_CLEARCOLOR, ms );
-			
+
 			// color_buffer_bit
 			ms.rewind();
 			ms.write( 0x00004000 );
 			ms.rewind();
 			driver->run_command( renderer::DC_CLEAR, ms );
 		}
+
+		driver->render_target_deactivate(device.rt);
 		
-		// This will crash in end_frame because currently, there are no textures
-		// setup in the renderer. Fix this!
-//		assert(0);
-		
-		
+		// viewport
+		ms.rewind();
+		ms.write( 0 );
+		ms.write( 0 );
+		ms.write( params.window_width );
+		ms.write( params.window_height );
+		ms.rewind();
+		driver->run_command( renderer::DC_VIEWPORT, ms );
+
+		// set clear color
+		ms.rewind();
+		ms.write( 0.5f );
+		ms.write( 0.0f );
+		ms.write( 0.75f );
+		ms.write( 1.0f );
+		ms.rewind();
+		driver->run_command( renderer::DC_CLEARCOLOR, ms );
+
+		// color_buffer_bit
+		ms.rewind();
+		ms.write( 0x00004000 );
+		ms.rewind();
+		driver->run_command( renderer::DC_CLEAR, ms );
+
 		device.end_frame();
 	}
 

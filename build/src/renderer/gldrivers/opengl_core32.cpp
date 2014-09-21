@@ -1291,6 +1291,7 @@ renderer::RenderTarget* GLCore32::render_target_create(uint16_t width, uint16_t 
 //	gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, params.texture_id, 0);
 //	gl.CheckError("FramebufferTexture2D");
 	
+	rt->color_texture_id = 0;
 	rt->depth_texture_id = 0;
 	// if we need a depth attachment... do that here.
 //	gl.GenRenderbuffers(1, &rt->renderbuffer);
@@ -1340,7 +1341,6 @@ void GLCore32::render_target_activate(renderer::RenderTarget* rendertarget)
 void GLCore32::render_target_deactivate(renderer::RenderTarget* rendertarget)
 {
 	GL_LOG();
-	gl.CheckError("fb deactivate");
 	gl.BindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -1348,4 +1348,15 @@ void GLCore32::render_target_set_attachment(renderer::RenderTarget* rt, renderer
 {
 	GL32RenderTarget* render_target = static_cast<GL32RenderTarget*>(rt);
 	render_target->set_attachment(type, index, static_cast<GL32Texture*>(texture));
+	
+	GL32Texture* tex = static_cast<GL32Texture*>(texture);
+	
+	if (type == renderer::RenderTarget::COLOR)
+	{
+		render_target->color_texture_id = tex->texture_id;
+	}
+	else if (type == renderer::RenderTarget::DEPTHSTENCIL)
+	{
+		render_target->depth_texture_id = tex->texture_id;
+	}
 }
