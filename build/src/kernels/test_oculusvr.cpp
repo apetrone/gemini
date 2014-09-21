@@ -387,9 +387,9 @@ public:
 			
 			// set clear color
 			ms.rewind();
-			ms.write( 1.0f );
 			ms.write( 0.0f );
-			ms.write( 0.0f );
+			ms.write( 0.5f );
+			ms.write( 0.5f );
 			ms.write( 1.0f );
 			ms.rewind();
 			driver->run_command( renderer::DC_CLEARCOLOR, ms );
