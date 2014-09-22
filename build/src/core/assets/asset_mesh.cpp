@@ -433,20 +433,6 @@ namespace assets
 		}
 	}
 	
-#if 0
-	void Geometry::alloc_vertices( unsigned int num_vertices )
-	{
-		vertex_count = num_vertices;
-		vertices = CREATE_ARRAY( glm::vec3, num_vertices );
-	} // alloc_vertices
-	
-	void Geometry::alloc_indices( unsigned int num_indices )
-	{
-		index_count = num_indices;
-		indices = CREATE_ARRAY( renderer::IndexType, num_indices );
-	} // alloc_indices
-#endif
-	
 	void Geometry::render_setup()
 	{
 		VertexDescriptor descriptor;
