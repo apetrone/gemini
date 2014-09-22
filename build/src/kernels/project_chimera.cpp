@@ -43,8 +43,9 @@
 #include "script.h"
 #include "scene_graph.h"
 
-#include "meshnode.h"
 #include "skeletalnode.h"
+
+#include <gemini/mathlib.h>
 
 #include "renderer/scenelink.h"
 
@@ -57,8 +58,7 @@ using namespace physics;
 class ProjectChimera : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
-public kernel::IEventListener<kernel::SystemEvent>,
-public scenegraph::Visitor
+public kernel::IEventListener<kernel::SystemEvent>
 {
 
 public:
@@ -67,7 +67,6 @@ public:
 	physics::CharacterController* character;
 	scenegraph::Node* root;
 	
-	size_t total_scene_nodes_visited;
 	scenegraph::SkeletalNode* player;
 	
 	renderer::SceneLink scenelink;
@@ -134,28 +133,6 @@ public:
 	virtual void event( kernel::SystemEvent & event )
 	{
 		
-	}
-
-	virtual int visit(scenegraph::Node* node)
-	{
-		++total_scene_nodes_visited;
-		
-
-		glm::mat4 object_to_local = glm::translate(glm::mat4(1.0), node->local_position);
-		node->world_transform = object_to_local * node->local_to_world;
-		
-#if GEMINI_ZUP_TO_YUP_CONVERSION
-		if (node->type == scenegraph::MESH || node->type == scenegraph::SKELETON)
-		{
-			scenegraph::MeshNode* meshnode = static_cast<scenegraph::MeshNode*>(node);
-			node->world_transform = meshnode->mesh->node_transform * node->world_transform;
-		}
-#elif !defined(GEMINI_ZUP_TO_YUP_CONVERSION)
-	#error No conversion to Y-up! Missing asset_mesh.h include.
-#endif
-		
-		
-		return 0;
 	}
 
 	virtual kernel::ApplicationResult config( kernel::Params & params )
@@ -267,7 +244,7 @@ public:
 
 		// rotate physics body
 		btTransform worldTrans = character->getGhostObject()->getWorldTransform();
-		btQuaternion rotation(btVector3(0,1,0), DegToRad(-camera.yaw));
+		btQuaternion rotation(btVector3(0,1,0), mathlib::degrees_to_radians(-camera.yaw));
 		
 		worldTrans.setRotation(rotation);
 		character->getGhostObject()->setWorldTransform(worldTrans);
@@ -294,7 +271,6 @@ public:
 		debugdraw::text(10, 24, xstr_format("camera.view = %.2g %.2g %.2g", camera.view.x, camera.view.y, camera.view.z), Color(128, 128, 255));
 		debugdraw::text(10, 36, xstr_format("camera.right = %.2g %.2g %.2g", camera.side.x, camera.side.y, camera.side.z), Color(255, 0, 0));
 		debugdraw::text(10, 48, xstr_format("frame_delta = %g", params.framedelta_raw_msec), Color(255, 255, 255));
-		debugdraw::text(10, 60, xstr_format("scene graph nodes = %i", total_scene_nodes_visited), Color(128, 128, 255));
 		
 #if 0
 		for(size_t boneid = 0; boneid < plane_mesh->total_bones; ++boneid)
@@ -320,12 +296,7 @@ public:
 		rs.add_viewport( 0, 0, params.render_width, params.render_height );
 		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
-
-		// render nodes
-		total_scene_nodes_visited = 0;
-		scenegraph::visit_nodes(root, this);
-
-		
+	
 		glm::mat4 char_mat = glm::mat4(1.0);
 		
 		// TODO: this should use the actual player height instead of
