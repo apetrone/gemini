@@ -507,6 +507,7 @@ namespace assets
 
 	Mesh::Mesh()
 	{
+		scene_root = 0;
 	} // Mesh
 	
 	Mesh::~Mesh()
