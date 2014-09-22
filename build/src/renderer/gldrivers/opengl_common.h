@@ -49,7 +49,7 @@ GLenum convert_blendstate( renderer::RenderBlendType state );
 
 GLenum cullmode_to_gl_cullmode( renderer::CullMode mode );
 
-typedef void (*gemgl_state_function)(renderer::DriverState, MemoryStream &, renderer::IRenderDriver *);
+typedef void (*gemgl_state_function)(renderer::DriverState, util::MemoryStream &, renderer::IRenderDriver *);
 
 gemgl_state_function operator_for_state( renderer::DriverState state );
 

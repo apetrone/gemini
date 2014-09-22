@@ -36,6 +36,32 @@ namespace scenegraph
 		translation_channel(translation)
 	{
 		scale = glm::vec3(1.0f, 1.0f, 1.0f);
+		type = ANIMATED;
+		attributes = ANIMATED;
+	}
+	
+	AnimatedNode::AnimatedNode(AnimatedNode& other) :
+		scale_channel(scale),
+		rotation_channel(rotation),
+		translation_channel(translation),
+		Node(other)
+	{
+		scale = glm::vec3(1.0f, 1.0f, 1.0f);
+		
+		if (other.scale_channel.get_data_source())
+		{
+			scale_channel.set_data_source(other.scale_channel.get_data_source(), other.scale_channel.get_frame_delay());
+		}
+		
+		if (other.rotation_channel.get_data_source())
+		{
+			rotation_channel.set_data_source(other.rotation_channel.get_data_source(), other.rotation_channel.get_frame_delay());
+		}
+		
+		if (other.translation_channel.get_data_source())
+		{
+			translation_channel.set_data_source(other.translation_channel.get_data_source(), other.translation_channel.get_frame_delay());
+		}
 	}
 
 	void AnimatedNode::post_processing(assets::Mesh* mesh, int32_t node_index)
@@ -61,14 +87,34 @@ namespace scenegraph
 		glm::mat4 ro = glm::toMat4(rotation);
 		glm::mat4 tr = glm::translate(glm::mat4(1.0), translation);
 		
-		local_to_world = sc * ro * tr;
+		glm::mat4 inv_pivot = glm::translate(glm::mat4(1.0), local_position);
+		glm::mat4 pivot = glm::translate(glm::mat4(1.0), -local_position);
+		
+		assert(scale.x != 0 && scale.y != 0 && scale.z != 0);
+		local_to_world = inv_pivot * sc * ro * pivot * tr;
+
+		if (parent)
+		{
+			world_transform = parent->world_transform * local_to_world;
+		}
+		else
+		{
+			world_transform = local_to_world;
+		}
 		
 		Node::update(delta_seconds);
+	}
+	
+	RenderNode::RenderNode() : visible(true)
+	{
+		type = RENDER;
+		attributes = ANIMATED;
 	}
 	
 	SkeletalNode::SkeletalNode()
 	{
 		type = scenegraph::SKELETON;
+		attributes = ANIMATED | SKELETON;
 	}
 
 	void SkeletalNode::setup_skeleton()
@@ -98,7 +144,7 @@ namespace scenegraph
 
 	void SkeletalNode::update(float delta_seconds)
 	{
-		MeshNode::update(delta_seconds);
+		RenderNode::update(delta_seconds);
 		if (this->visible)
 		{
 			update_skeleton();
@@ -125,14 +171,14 @@ namespace scenegraph
 	// ref: http://ehc.ac/p/assimp/discussion/817654/thread/a7bf155b/
 	void SkeletalNode::update_skeleton()
 	{
-		int childOffset = 1;
+		int child_offset = 1;
 		glm::vec3 start, end;
 		for (size_t bone_index = 0; bone_index < mesh->total_bones; ++bone_index)
 		{
 			// Iterate over each bone and calculate the global transform
 			// for each bone.
 			assets::Bone* bone = &mesh->bones[bone_index];
-			AnimatedNode* node = (AnimatedNode*)children[childOffset+bone_index];
+			AnimatedNode* node = (AnimatedNode*)children[child_offset+bone_index];
 			glm::mat4& tr = transforms[bone_index];
 
 			if (bone->parent_index == -1)

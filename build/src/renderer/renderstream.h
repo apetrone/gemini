@@ -22,7 +22,7 @@
 #pragma once
 #include <gemini/typedefs.h>
 #include "renderer.h"
-#include "memorystream.h"
+#include <gemini/util/datastream.h>
 #include "assets.h"
 
 const unsigned int MAX_RENDERER_STREAM_BYTES = 32768 * 8;
@@ -39,7 +39,7 @@ struct RenderStream
 	char buffer[ MAX_RENDERER_STREAM_BYTES ];
 	RenderState commands[ MAX_RENDERER_STREAM_COMMANDS ];
 	unsigned int num_commands;
-	MemoryStream stream;
+	util::MemoryStream stream;
 	
 	RenderStream( unsigned int max_bytes = MAX_RENDERER_STREAM_BYTES, unsigned int max_commands = MAX_RENDERER_STREAM_COMMANDS );
 	

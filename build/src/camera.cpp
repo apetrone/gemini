@@ -30,7 +30,7 @@
 Camera::Camera(CameraType _type)
 {
 	yaw = pitch = 0;
-	move_speed = 5.0;
+	move_speed = 0.5f;
 	invert_y_axis = true;
 	is_ortho = false;
 	sensitivity = 0.15f;
@@ -128,16 +128,16 @@ void Camera::move_backward( real dt )
 
 void Camera::update_view()
 {
-	float _yaw = DegToRad( yaw );
+	float _yaw = mathlib::degrees_to_radians(yaw);
 	float _pitch;
 	
 	if ( invert_y_axis )
 	{
-		_pitch = DegToRad( -pitch );
+		_pitch = mathlib::degrees_to_radians(-pitch);
 	}
 	else
 	{
-		_pitch = DegToRad( pitch );
+		_pitch = mathlib::degrees_to_radians(pitch);
 	}
 	
 	float sy = sin(_yaw);

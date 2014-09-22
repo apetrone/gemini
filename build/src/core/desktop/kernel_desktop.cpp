@@ -88,6 +88,7 @@ void DesktopKernel::startup()
 		LOGV("failure to init SDL\n");
 	}
 
+	SDL_GL_SetSwapInterval(1);
 	this->parameters().device_flags |= kernel::DeviceDesktop;
 } // startup
 

@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2014- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -19,29 +19,35 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <gemini/typedefs.h>
-#include <slim/xlog.h>
+#pragma once
 
-#include "scene_graph.h"
-#include "meshnode.h"
+#include <gemini/util/fixedarray.h>
+#include <gemini/mathlib.h>
 
-#include "physics.h"
+#include "datamodel/material.h"
 
-namespace scenegraph
+namespace datamodel
 {
-	RenderNode::RenderNode()
-	{
-		type = RENDER;
-	}
+	const int MAX_SUPPORTED_UV_CHANNELS = 2;
 	
-	MeshNode::MeshNode()
+	struct Vertex
 	{
-		type = MESH;
-		mesh = 0;
-		visible = true;
-	}
+		glm::vec3 position;
+		glm::vec3 normal;
+		glm::vec4 color;
+		glm::vec2 uv[MAX_SUPPORTED_UV_CHANNELS];
+	};
 	
-	MeshNode::~MeshNode()
+	
+	struct Mesh
 	{
-	}
-}; // namespace scenegraph
+		FixedArray<glm::vec4> blend_indices;
+		FixedArray<glm::vec4> blend_weights;
+		FixedArray<glm::vec3> vertices;
+		FixedArray<glm::vec3> normals;
+		FixedArray<glm::vec4> vertex_colors;
+		FixedArray< FixedArray<glm::vec2> > uvs;
+		FixedArray<uint32_t> indices;
+		MaterialId material;
+	};
+};

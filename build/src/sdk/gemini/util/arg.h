@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2004-2011 Adam Petrone
+// Copyright (C) 2004- Adam Petrone
 
 //	This file is part of the aengine source code.
 //
@@ -18,13 +18,13 @@
 // -------------------------------------------------------------
 #if 0
 USAGE:
-	arg_t * arg_verbose;
-	arg_t * arg_file;
+	args::Argument* arg_verbose;
+	args::Argument* arg_file;
 
-	arg_verbose = arg_add( "verbose", "-v", "--verbosity", ARG_NO_PARAMS | ARG_NOT_REQUIRED );
-	arg_file = arg_add( "file", "-f", 0, 0 );
+	arg_verbose = args::add( "verbose", "-v", "--verbosity", ARG_NO_PARAMS | ARG_NOT_REQUIRED );
+	arg_file = args::add( "file", "-f", 0, 0 );
 	
-	if ( arg_parse( argc, argv ) )
+	if ( args::parse_args( argc, argv ) )
 	{
 		return 1;
 	}
@@ -38,43 +38,37 @@ USAGE:
 
 #pragma once
 
-#define ARG_MAX_SHORTNAME 4
-#define ARG_MAX_LONGNAME 16
-#define ARG_MAX_PARAMS 64
-
-enum
+namespace args
 {
-	// indicates this item was found in the argument list
-	ARG_FOUND			= (1<<0),
-	ARG_NO_PARAMS		= (1<<1),
-	ARG_NOT_REQUIRED	= (1<<2)
-};
+	static const int MAX_SHORTNAME = 4;
+	static const int MAX_LONGNAME = 16;
+	static const int MAX_PARAMS = 64;
 
-typedef struct arg_s
-{
-	int integer;
-	float value;
-	const char * name;
-	const char * string;
-	int flags;
-	const char * shortname;
-	const char * longname;
-	struct arg_s * parent;
-} arg_t;
+	enum
+	{
+		// indicates this item was found in the argument list
+		FOUND			= (1<<0),
+		NO_PARAMS		= (1<<1),
+		NOT_REQUIRED	= (1<<2)
+	};
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+	struct Argument
+	{
+		int flags;
+		int integer;
+		float float_value;
+		const char * name;
+		const char * string;
+		const char * shortname;
+		const char * longname;
+		Argument* parent;
+		
+		Argument() : flags(0), integer(0), float_value(0.0f), parent(0)
+		{
+		}
+	};
 
-
-extern const char * ARG_VALUE_TRUE;
-extern const char * ARG_VALUE_FALSE;
-
-
-int arg_parse( int argc, char ** argv );
-arg_t *arg_add( const char * name, const char * shortname, const char * longname, int flags, arg_t * parent );
-const char * arg_get( const char * name );
-
-#ifdef __cplusplus
-}; // extern "C"
-#endif
+	Argument* add(const char* name, const char* shortname, const char* longname, int flags = 0, Argument* parent = 0);
+	
+	bool parse_args(int argc, char** argv);
+}

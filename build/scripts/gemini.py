@@ -75,6 +75,26 @@ def setup_common_variables(arguments, target_platform, product):
 
 def setup_common_tool(product):
 
+	product.root = "../"
+	product.sources += [
+		"src/tools/%s/*.cpp" % product.name,
+		"src/tools/%s/*.h" % product.name,
+		"src/tools/*.cpp",
+		"src/tools/*.h",
+		"src/tools/common/*.cpp",
+		"src/tools/common/*.h",
+		"src/tools/datamodel/*.cpp",
+		"src/tools/datamodel/*.h"
+	]
+
+	product.includes += [
+		"src/tools/%s" % product.name,
+		"src/tools/",
+		"src/tools/common",
+		"src/tools/datamodel"
+	]
+
+
 	product.defines += [
 		"JSON_IS_AMALGAMATION"
 	]
@@ -176,6 +196,7 @@ def get_tools(libgemini):
 	#
 	#
 	#
+	tools = []
 
 	rnd = Product(name="rnd", output=ProductType.Commandline)
 
@@ -198,31 +219,54 @@ def get_tools(libgemini):
 		"Cocoa.framework",
 		"OpenGL.framework"
 	]
-
+	tools.append(rnd)
+	
 	#
 	# other tools?
 	# 
 	# 
-	prism = Product(name="prism", output=ProductType.Commandline)
+	# prism = Product(name="prism", output=ProductType.Commandline)
 
-	prism.root = "../"
-	prism.sources += [
-		"src/tools/prism/**.cpp",
-		"src/tools/prism/**.h"
+	# prism.root = "../"
+	# prism.sources += [
+	# 	"src/tools/prism/**.cpp",
+	# 	"src/tools/prism/**.h"
+	# ]
+
+
+	# prism.product_root = COMMON_PRODUCT_ROOT
+
+	# setup_driver(prism)
+	# setup_common_tool(prism)
+
+	# prism.dependencies.extend([
+	# 	libgemini,
+	# 	Dependency(file="assimp.py", products=["assimp"], arguments=["--enable-static"])
+	# ])
+
+
+	#
+	# muse: asset conversion tool
+	#
+	libfbx = Product(name="libfbxsdk", output=ProductType.DynamicLibrary)
+	libfbx.root = "../dependencies/fbx_2015.1"
+	libfbx.includes = [
+		"include"
 	]
+	libfbx.product_root = "lib/clang/${CONFIGURATION}"
+	tools.append(libfbx)
 
-
-	prism.product_root = COMMON_PRODUCT_ROOT
-
-	setup_driver(prism)
-	setup_common_tool(prism)
-
-	prism.dependencies.extend([
+	muse = Product(name="muse", output=ProductType.Commandline)
+	muse.dependencies.extend([
 		libgemini,
-		Dependency(file="assimp.py", products=["assimp"], arguments=["--enable-static"])
+		libfbx
 	])
+	muse.product_root = COMMON_PRODUCT_ROOT
+	setup_driver(muse)
+	setup_common_tool(muse)
+	tools.append(muse)
 
-	return [rnd, prism]
+	return tools
 
 
 def get_libgemini():

@@ -47,7 +47,10 @@ public:
 	StackString(const Type * s)
 	{
 		clear();
-		copy_data(s);
+		if (s)
+		{
+			copy_data(s);
+		}
 	}
 	
 	unsigned int max_size() const
@@ -88,6 +91,30 @@ public:
 		}
 	}
 	
+	bool operator== (const StackStringType& other) const
+	{
+		assert(_length != 0 && _data != nullptr);
+		if (other._length != _length)
+		{
+			return false;
+		}
+		
+		const Type* data = other._data;
+		const Type* self = _data;
+		for (size_t i = 0; i < other._length; ++i)
+		{
+			if (*data != *self)
+			{
+				return false;
+			}
+			
+			++data;
+			++self;
+		}
+		
+		return true;
+	}
+	
 	const Type & operator[] ( int index ) const
 	{
 		return _data[ index ];
@@ -113,6 +140,8 @@ public:
 	
 	StackStringType basename()
 	{
+		// return the basename of a filepath. (just the filename)
+		// this replicates the behavior in python
 		Type * pos = find_last_slash();
 		if (pos)
 		{
@@ -123,11 +152,12 @@ public:
 
 		return *this;
 	}
-	
 
 
 	StackStringType dirname()
 	{
+		// return the dirname of a filepath.
+		// this replicates the behavior in python
 		Type * pos = find_last_slash();
 
 		if ( pos )
@@ -142,7 +172,7 @@ public:
 		return *this;
 	}
 	
-	const Type * extension() const
+	const Type* extension() const
 	{
 		Type * p = strrchr( (Type*)_data, '.' );
 		if ( !p )
@@ -166,7 +196,7 @@ public:
 		return *this;
 	}
 	
-	void normalize( Type prefer = '/' )
+	void normalize(Type prefer = '/')
 	{
 		for( int i = 0; i < _length; ++i )
 		{
@@ -179,14 +209,17 @@ public:
 	
 	StackStringType& append(const Type * s)
 	{
-		if (_length + xstr_len(s) < size)
+		if (s)
 		{
-			xstr_cat(_data, s);
-			_length = xstr_len(_data);
-		}
-		else
-		{
-			assert( 0 );
+			if (_length + xstr_len(s) < size)
+			{
+				xstr_cat(_data, s);
+				_length = xstr_len(_data);
+			}
+			else
+			{
+				assert( 0 );
+			}
 		}
 		
 		return *this;
@@ -203,9 +236,23 @@ public:
 	{
 		return _data;
 	}
+	
+	StackStringType& strip_trailing(char character)
+	{
+		if (_length > 0)
+		{
+			if (_data[_length-1] == character)
+			{
+				_data[_length-1] = 0;
+				_length--;
+			}
+		}
+		
+		return *this;
+	}
 
 	
-	void lshift( int pos, int count )
+	void lshift(int pos, int count)
 	{
 		char * src;
 		char temp[ size ];
@@ -216,7 +263,7 @@ public:
 		memcpy( _data+pos, src, size-pos );
 	}
 	
-	void shift( int pos, int count )
+	void shift(int pos, int count)
 	{
 		char * src;
 		char temp[ size ];

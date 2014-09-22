@@ -28,14 +28,13 @@ class FixedArray
 {
 	Type *elements;
 	size_t total_elements;
-	
-	FixedArray(const FixedArray<Type>& other) {}
+
 	FixedArray<Type> & operator=(const FixedArray<Type>& other) {}
 	
 private:
 	void assert_valid_index(size_t index) const
 	{
-		assert( index >= 0 && index <= total_elements );
+		assert(index >= 0 && index <= total_elements);
 	}
 	
 public:
@@ -55,6 +54,12 @@ public:
 		elements = 0;
 		total_elements = 0;
 	} // FixedArray
+	
+	FixedArray(const FixedArray<Type>& other)
+	{
+		allocate(other.total_elements);
+		memcpy(elements, other.elements, sizeof(Type) * total_elements);
+	}
 	
 	~FixedArray()
 	{

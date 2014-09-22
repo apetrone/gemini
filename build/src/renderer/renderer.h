@@ -29,7 +29,7 @@
 #include <gemini/util/stackstring.h>
 #include <gemini/mathlib.h> // for glm
 
-#include "memorystream.h"
+#include <gemini/util/datastream.h>
 #include "image.h"
 
 
@@ -298,12 +298,6 @@ namespace renderer
 		uint32_t depth_texture_id;
 	}; // RenderTarget
 
-	
-	struct UV
-	{
-		float u, v;
-	};
-	
 	struct Geometry
 	{
 		unsigned short attributes;
@@ -316,7 +310,7 @@ namespace renderer
 		FixedArray<glm::vec3> vertices;
 		FixedArray<glm::vec3> normals;
 		FixedArray<Color> colors;
-		FixedArray< FixedArray<UV> > uvs;
+		FixedArray< FixedArray<glm::vec2> > uvs;
 		FixedArray<glm::vec4> blend_indices;
 		FixedArray<glm::vec4> blend_weights;
 		FixedArray<renderer::IndexType> indices;
@@ -392,10 +386,10 @@ namespace renderer
 		virtual void init_with_settings(const renderer::RenderSettings& settings) = 0;
 		
 		// these commands are called with the command and current memory stream
-		virtual void run_command( DriverCommandType command, MemoryStream & stream ) = 0;
-		virtual void post_command( DriverCommandType command, MemoryStream & stream ) = 0;
+		virtual void run_command( DriverCommandType command, util::MemoryStream & stream ) = 0;
+		virtual void post_command( DriverCommandType command, util::MemoryStream & stream ) = 0;
 		
-		virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStream & stream ) = 0;
+		virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, util::MemoryStream & stream ) = 0;
 		
 		// texture
 		virtual renderer::Texture* texture_create(image::Image& image) = 0;

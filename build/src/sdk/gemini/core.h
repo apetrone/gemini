@@ -27,22 +27,24 @@ namespace core
 {
 	// generic error struct instead of trying to organize various int
 	// values across API calls.
-	struct Error
+	struct Result
 	{
-		enum
+		enum ResultStatus
 		{
-			Failure = 0xBADDAE, // non-recoverable error, bad day :(
-			Warning // unexpected result, will proceed
+			Success,
+			Failure = 0xBADDAE, 	// non-recoverable error, bad day :(
+			Warning = 1 			// unexpected result, will proceed
 		};
 		
-		int status;
-		const char * message;
+		ResultStatus status;
+		const char* message;
 		
-		Error( int error_status, const char * error_message = 0 );
+		Result(ResultStatus result_status, const char* result_message = "") : status(result_status), message(result_message) {}
 		bool failed() const { return status == Failure; }
+		bool success() const { return status == Success; }
 	};
 	
-	Error startup();
+	Result startup();
 	void shutdown();
 
 } // namespace core

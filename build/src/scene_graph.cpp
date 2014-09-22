@@ -25,7 +25,6 @@
 
 #include <gemini/typedefs.h>
 #include <gemini/mem.h>
-#include <gemini/util/stackstring.h>
 
 #include <slim/xlog.h>
 
@@ -46,8 +45,29 @@ namespace scenegraph
 {
 	Node::Node()
 	{
+		// sane defaults
+		local_scale = glm::vec3(1.0f, 1.0f, 1.0f);
 		parent = 0;
 		type = NODE;
+		attributes = 0;
+	}
+	
+	Node::Node(const Node& other)
+	{
+		name = other.name;
+		type = other.type;
+		attributes = other.attributes;
+		
+		local_scale = other.local_scale;
+		local_rotation = other.local_rotation;
+		local_position = other.local_position;
+		
+		local_to_world = other.local_to_world;
+		local_to_pivot = other.local_to_pivot;
+		
+		world_transform = other.world_transform;
+		
+		parent = other.parent;
 	}
 	
 	Node::~Node()
@@ -57,12 +77,44 @@ namespace scenegraph
 	
 	void Node::add_child(Node* child)
 	{
+		if (child->parent && child->parent != this)
+		{
+			child->parent->remove_child(child);
+		}
+		child->parent = this;
 		children.push_back(child);
 	}
 	
-	void Node::remove_child(Node* child)
+	Node* Node::find_child_named(const std::string& name)
 	{
-		// TODO: implement
+		if (this->name == name)
+		{
+			return this;
+		}
+		
+		for (auto& child : children)
+		{
+			Node* node = child->find_child_named(name);
+			if (node)
+			{
+				return node;
+			}
+		}
+		
+		return 0;
+	}
+	
+	void Node::remove_child(Node* node)
+	{
+		auto it = children.begin();
+		for ( ; it != children.end(); ++it)
+		{
+			if ((*it) == node)
+			{
+				children.erase(it);
+				break;
+			}
+		}
 	}
 	
 	void Node::update(float delta_seconds)
@@ -97,9 +149,11 @@ namespace scenegraph
 		start = root->children.begin();
 		end = root->children.end();
 		
+		visitor->visit((root));
+		
 		while (start != end)
 		{
-			visitor->visit((*start));
+			recursive_visit_nodes(*start, visitor);
 			++start;
 		}
 	}
@@ -122,7 +176,7 @@ namespace scenegraph
 			indent += "\t";
 		}
 		
-		LOGV("[Node] Name=\"%s\" (%x), # Children=%i\n", root->name(), root, root->children.size());
+		LOGV("[Node] Name=\"%s\" (%x), # Children=%i\n", root->name.c_str(), root, root->children.size());
 		
 		NodeVector::iterator start, end;
 		start = root->children.begin();

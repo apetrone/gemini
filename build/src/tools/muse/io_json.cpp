@@ -1,0 +1,297 @@
+// -------------------------------------------------------------
+// Copyright (C) 2014- Adam Petrone
+
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+// -------------------------------------------------------------
+
+#include <gemini/typedefs.h>
+
+#include <slim/xlog.h>
+
+#include "io_json.h"
+
+#include "datamodel/model.h"
+#include "datamodel/mesh.h"
+#include "datamodel/material.h"
+
+void JsonModelWriter::jsonify_matrix(Json::Value& array, glm::mat4& matrix)
+{
+	array.append(matrix[0].x);
+	array.append(matrix[1].x);
+	array.append(matrix[2].x);
+	array.append(matrix[3].x);
+	
+	array.append(matrix[0].y);
+	array.append(matrix[1].y);
+	array.append(matrix[2].y);
+	array.append(matrix[3].y);
+	
+	array.append(matrix[0].z);
+	array.append(matrix[1].z);
+	array.append(matrix[2].z);
+	array.append(matrix[3].z);
+	
+	array.append(matrix[0].w);
+	array.append(matrix[1].w);
+	array.append(matrix[2].w);
+	array.append(matrix[3].w);
+}
+
+void JsonModelWriter::append_material(datamodel::Material* material, Json::Value& jmaterials)
+{
+	Json::Value jmaterial;
+
+	jmaterial["name"] = material->name;
+	jmaterial["id"] = material->id;
+	
+	jmaterials.append(jmaterial);
+}
+
+void JsonModelWriter::append_node(datamodel::Node* node, Json::Value& jnodes)
+{
+	Json::Value jnode;
+	jnode["name"] = node->name;
+	jnode["type"] = node->type;
+	
+	Json::Value jscale;
+	jscale.append(node->scale.x);
+	jscale.append(node->scale.y);
+	jscale.append(node->scale.z);
+	jnode["scaling"] = jscale;
+	
+	Json::Value jrotation;
+	jrotation.append(node->rotation.x);
+	jrotation.append(node->rotation.y);
+	jrotation.append(node->rotation.z);
+	jrotation.append(node->rotation.w);
+	jnode["rotation"] = jrotation;
+	
+	Json::Value jtranslation;
+	jtranslation.append(node->translation.x);
+	jtranslation.append(node->translation.y);
+	jtranslation.append(node->translation.z);
+	jnode["translation"] = jtranslation;
+	
+	Json::Value child_nodes(Json::arrayValue);
+	for (auto child : node->children)
+	{
+		append_node(child, child_nodes);
+	}
+	jnode["children"] = child_nodes;
+	
+	
+	if (node->mesh)
+	{
+		Json::Value mesh_data;
+		
+		// write vertices
+		Json::Value vertices(Json::arrayValue);
+		for (size_t vertex_id = 0; vertex_id < node->mesh->vertices.size(); ++vertex_id)
+		{
+			const glm::vec3& vertex = node->mesh->vertices[vertex_id];
+			Json::Value jvertex(Json::arrayValue);
+			jvertex.append(vertex.x);
+			jvertex.append(vertex.y);
+			jvertex.append(vertex.z);
+			vertices.append(jvertex);
+		}
+		mesh_data["vertices"] = vertices;
+		
+		// write indices
+		Json::Value indices(Json::arrayValue);
+		for (size_t index_id = 0; index_id < node->mesh->indices.size(); ++index_id)
+		{
+			indices.append(node->mesh->indices[index_id]);
+		}
+		mesh_data["indices"] = indices;
+		
+		// write normals
+		Json::Value normals(Json::arrayValue);
+		for (size_t normal_id = 0; normal_id < node->mesh->normals.size(); ++normal_id)
+		{
+			const glm::vec3& normal = node->mesh->normals[normal_id];
+			Json::Value jnormal(Json::arrayValue);
+			jnormal.append(normal.x);
+			jnormal.append(normal.y);
+			jnormal.append(normal.z);
+			normals.append(jnormal);
+		}
+		mesh_data["normals"] = normals;
+		
+		// write vertex_colors
+		Json::Value vertex_colors(Json::arrayValue);
+		for (size_t color_id = 0; color_id < node->mesh->vertex_colors.size(); ++color_id)
+		{
+			const glm::vec4& color = node->mesh->vertex_colors[color_id];
+			Json::Value jcolor(Json::arrayValue);
+			jcolor.append(color.r);
+			jcolor.append(color.g);
+			jcolor.append(color.b);
+			jcolor.append(color.a);
+			vertex_colors.append(jcolor);
+		}
+		mesh_data["vertex_colors"] = vertex_colors;
+		
+		
+		// write uvs
+		Json::Value uv_sets(Json::arrayValue);
+		for (size_t uv_set_id = 0; uv_set_id < node->mesh->uvs.size(); ++uv_set_id)
+		{
+			Json::Value juvs(Json::arrayValue);
+			for (size_t uv_id = 0; uv_id < node->mesh->uvs[uv_set_id].size(); ++uv_id)
+			{
+				glm::vec2& uv = node->mesh->uvs[uv_set_id][uv_id];
+				Json::Value juv(Json::arrayValue);
+				juv.append(uv.x);
+				juv.append(uv.y);
+				juvs.append(juv);
+			}
+			uv_sets.append(juvs);
+		}
+		mesh_data["uv_sets"] = uv_sets;
+		
+		
+		mesh_data["material_id"] = node->mesh->material;
+		
+		jnode["mesh"] = mesh_data;
+	}
+	
+	// add this node
+	jnodes.append(jnode);
+}
+
+
+template <class Type>
+void jsonify_value(Json::Value& jvalue, const Type& value);
+
+template <>
+void jsonify_value(Json::Value& jvalue, const glm::vec3& vector)
+{
+	Json::Value v;
+	v.append(vector.x);
+	v.append(vector.y);
+	v.append(vector.z);
+	
+	jvalue.append(v);
+}
+
+template <>
+void jsonify_value(Json::Value& jvalue, const glm::quat& quat)
+{
+	Json::Value q;
+	q.append(quat.x);
+	q.append(quat.y);
+	q.append(quat.z);
+	q.append(quat.w);
+	
+	jvalue.append(q);
+}
+
+template <class Type>
+void gather_keys(Json::Value& jkeys, std::vector<datamodel::Keyframe<Type>* >& keys )
+{
+	Json::Value jtime(Json::arrayValue);
+	Json::Value jvalue(Json::arrayValue);
+	for (auto key : keys)
+	{
+		jtime.append(key->time_seconds);
+		jsonify_value(jvalue, key->value);
+	}
+	
+	jkeys["time"] = jtime;
+	jkeys["value"] = jvalue;
+}
+
+
+void JsonModelWriter::write(datamodel::Model* model, util::DataStream& source)
+{
+	Json::Value jroot;
+	Json::Value jnodes(Json::arrayValue);
+
+	// write out all nodes
+	for (auto child : model->root.children)
+	{
+		append_node(child, jnodes);
+	}
+	jroot["nodes"] = jnodes;
+	
+	Json::Value jmaterials(Json::arrayValue);
+	
+	// write out all materials
+	for (auto& material : model->materials)
+	{
+		append_material(&material, jmaterials);
+	}
+	jroot["materials"] = jmaterials;
+	
+	
+	Json::Value janimations(Json::arrayValue);
+	for (auto animation : model->animations)
+	{
+		Json::Value janimation;
+		
+		janimation["name"] = animation->name;
+		LOGV("animation: %s\n", animation->name.c_str());
+		
+		janimation["frames_per_second"] = animation->frames_per_second;
+		
+		Json::Value jnodes(Json::arrayValue);
+		for (auto data : animation->node_animations)
+		{
+			Json::Value jnode;
+			datamodel::Node* node = model->root.find_child_named(data->name);
+			
+			// Node animation present for node that was not added to the model
+			assert(node != nullptr);
+			
+			if (node)
+			{
+				LOGV("node: %s\n", node->name.c_str());
+				LOGV("# keys: %i %i %i\n", data->translation.keys.size(), data->rotation.keys.size(), data->scale.keys.size());
+
+				Json::Value jscale;
+				gather_keys(jscale, data->scale.keys);
+
+				Json::Value jrotation;
+				gather_keys(jrotation, data->rotation.keys);
+				
+				Json::Value jtranslation;
+				gather_keys(jtranslation, data->translation.keys);
+		
+				jnode["name"] = node->name;
+				jnode["scale"] = jscale;
+				jnode["rotation"] = jrotation;
+				jnode["translation"] = jtranslation;
+				jnodes.append(jnode);
+			}
+		}
+		janimation["nodes"] = jnodes;
+		janimations.append(janimation);
+	}
+	
+	jroot["animations"] = janimations;
+	
+	
+	
+	
+	Json::StyledWriter writer;
+	
+	std::string buffer = writer.write(jroot);
+	source.write(buffer.data(), buffer.size());
+}

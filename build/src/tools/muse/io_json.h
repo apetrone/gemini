@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2014- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -21,32 +21,27 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "scene_graph.h"
-#include "assets/asset_mesh.h"
+#include <gemini/mathlib.h>
 
-namespace scenegraph
+#include <json/json.h>
+
+#include "common/extension.h"
+
+namespace datamodel
 {
-	struct RenderNode : public Node
-	{
-		uint16_t material_id;
-		uint16_t shader_id;
+	struct Node;
+	struct Model;
+	struct Material;
+}
 
-		void* material;
-		void* shader;
-		
-		assets::Geometry* geometry;
-		
-		RenderNode();
-	};
+class JsonModelWriter : public tools::Writer<datamodel::Model>
+{
+	DECLARE_PLUGIN_CLASS(JsonModelWriter);
+	
+public:
+	void jsonify_matrix(Json::Value& array, glm::mat4& matrix);
+	void append_material(datamodel::Material* node, Json::Value& jroot);
+	void append_node(datamodel::Node* node, Json::Value& jnodes);
 
-	struct MeshNode : public Node
-	{
-		assets::Mesh* mesh;
-		bool visible;
-
-		MeshNode();
-		virtual ~MeshNode();
-	};
-}; // namespace scenegraph
-
-
+	virtual void write(datamodel::Model* root, util::DataStream& source);
+};

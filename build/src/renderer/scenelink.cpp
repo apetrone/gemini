@@ -24,7 +24,6 @@
 #include <slim/xlog.h>
 
 #include "scenelink.h"
-#include "meshnode.h"
 #include "skeletalnode.h"
 
 #include "renderstream.h"
@@ -39,21 +38,13 @@ namespace renderer
 	public:
 		SceneVisitor(RenderQueue& _queue): queue(_queue) {}
 
-		void queue_render_node(scenegraph::RenderNode* rn, glm::mat4* world_transform, glm::mat4* transforms = 0, uint8_t total_transforms = 0)
+		void queue_render_node(scenegraph::RenderNode* render_node, glm::mat4* transforms = 0, uint8_t total_transforms = 0)
 		{
-			assert(rn->get_type() == scenegraph::RENDER);
-			if (rn->get_type() != scenegraph::RENDER)
-			{
-				return;
-			}
-			
-			RenderKey key = compute_render_key(rn->geometry);
-			RenderBlock block(key, rn->geometry);
-			block.object_matrix = world_transform;
-			block.material_id = rn->material_id;
-			block.material = rn->material;
-			block.shader = rn->shader;
-			//						block.shader_id = rn->shader_id;
+			RenderKey key = compute_render_key(render_node->geometry);
+			RenderBlock block(key, render_node->geometry);
+			block.object_matrix = &render_node->world_transform;
+			block.material_id = render_node->material_id;
+			block.shader_id = render_node->shader_id;
 			
 			block.node_transforms = transforms;
 			block.total_transforms = total_transforms;
@@ -61,18 +52,15 @@ namespace renderer
 			queue.insert(block);
 		}
 		
-
 		void queue_mesh(scenegraph::Node* node)
 		{
-			scenegraph::MeshNode* meshnode = static_cast<scenegraph::MeshNode*>(node);
-			if (meshnode && meshnode->visible)
+			scenegraph::RenderNode* render_node = static_cast<scenegraph::RenderNode*>(node);
+			if (!render_node)
 			{
-				for (auto child : meshnode->children)
-				{
-					scenegraph::RenderNode* rn = static_cast<scenegraph::RenderNode*>(child);
-					queue_render_node(rn, &meshnode->world_transform);
-				}
+				return;
 			}
+			
+			queue_render_node(render_node);
 		}
 		
 		void queue_skeleton(scenegraph::Node* node)
@@ -88,20 +76,24 @@ namespace renderer
 			scenegraph::RenderNode* rn = static_cast<scenegraph::RenderNode*>(node->children[0]);
 			if (rn && rn->get_type() == scenegraph::RENDER)
 			{
-				queue_render_node(rn, &skeleton->world_transform, &skeleton->final_transforms[0], skeleton->final_transforms.size());
+				queue_render_node(rn, &skeleton->final_transforms[0], skeleton->final_transforms.size());
 			}
 		}
 		
 		virtual int visit(scenegraph::Node* node)
 		{
 			++total_nodes;
-			if (node->type == scenegraph::MESH)
+			if (node->type == scenegraph::STATIC_MESH)
 			{
 				queue_mesh(node);
 			}
 			else if (node->type == scenegraph::SKELETON)
 			{
 				queue_skeleton(node);
+			}
+			else
+			{
+//				LOGW("node->type of %i is unhandled. Will not render!\n", node->type);
 			}
 
 			return 0;

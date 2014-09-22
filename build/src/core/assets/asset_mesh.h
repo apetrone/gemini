@@ -33,9 +33,9 @@
 #include <gemini/util/fixedarray.h>
 #include "keyframechannel.h"
 
-#include <json/json.h>
+#include "scene_graph.h"
 
-#define GEMINI_ZUP_TO_YUP_CONVERSION 1
+#include <json/json.h>
 
 namespace assets
 {
@@ -64,9 +64,14 @@ namespace assets
 		FixedArray< KeyframeData<glm::vec3> > scale;
 		FixedArray< KeyframeData<glm::quat> > rotation;
 		FixedArray< KeyframeData<glm::vec3> > translation;
-				
+		
+		
+		// name to index map is the best I can do for now.
+		typedef std::map<std::string, size_t> NodeToIndexContainer;
+		NodeToIndexContainer node_id_by_name;
+
 		// duration of the full animation, in seconds
-		float duration_seconds;
+//		float duration_seconds;
 		
 		float frames_per_second;
 		float frame_delay_seconds; // 1.0f / frames_per_second
@@ -111,11 +116,15 @@ namespace assets
 		FixedArray<Geometry> geometry_vn;
 		FixedArray<Bone> bones;
 		glm::mat4 world_matrix;
+				
 		StackString<MAX_PATH_SIZE> path;
+		
+		scenegraph::Node* scene_root;
 		
 		unsigned short total_bones;
 		
 		Mesh();
+		~Mesh();
 		void reset();
 
 		virtual void release();
@@ -125,10 +134,8 @@ namespace assets
 		
 		// For now, we only have room for a single animation -- so make it worthwhile.
 		AnimationData animation;
-		
-//#if GEMINI_ZUP_TO_YUP_CONVERSION
+
 		glm::mat4 node_transform;
-//#endif
 	}; // Mesh
 	
 	// EXPERIMENTAL

@@ -168,7 +168,7 @@ GLenum cullmode_to_gl_cullmode( renderer::CullMode mode )
 	return cullmode[ mode ];
 } // cullmode_to_gl_cullmode
 
-void state_op_enabledisable( renderer::DriverState state, MemoryStream & stream, renderer::IRenderDriver * driver )
+void state_op_enabledisable( renderer::DriverState state, util::MemoryStream & stream, renderer::IRenderDriver * driver )
 {
 	GLenum gl_state;
 	int enable = 0;
@@ -190,7 +190,7 @@ void state_op_enabledisable( renderer::DriverState state, MemoryStream & stream,
 	}
 } // state_op_enabledisable
 
-void state_op_depthmask( renderer::DriverState state, MemoryStream & stream, renderer::IRenderDriver * driver )
+void state_op_depthmask( renderer::DriverState state, util::MemoryStream & stream, renderer::IRenderDriver * driver )
 {
 	int enable = 0;
 	GLboolean flag;

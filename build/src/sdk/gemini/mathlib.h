@@ -53,16 +53,18 @@ const real PI = 3.14159265358979323846;
 const real D2R_PI180 = (PI/180.0);
 const real R2D_180PI = (180.0/PI);
 
-inline real DegToRad( real degrees )
+namespace mathlib
 {
-	return degrees * D2R_PI180;
-}
+	inline real degrees_to_radians(real degrees)
+	{
+		return degrees * D2R_PI180;
+	}
 
-inline real RadToDeg( real radians )
-{
-	return radians * R2D_180PI;
+	inline real radians_to_degrees(real radians)
+	{
+		return radians * R2D_180PI;
+	}
 }
-
 
 #if 0
 struct Segment
