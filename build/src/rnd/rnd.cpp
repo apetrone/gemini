@@ -457,7 +457,7 @@ void test_serial2()
 	
 	const char port[] = "/dev/tty.usbserial-A9014A4H";
 //	const char port[] = "/dev/tty.usbserial-A100RYUU";
-	const uint32_t baud_rate = 9600;
+	const uint32_t baud_rate = 115200;
 	
 	SerialPort s;
 	if (s.open(port, baud_rate))
@@ -471,12 +471,20 @@ void test_serial2()
 //		LOGV("finished writing data\n");
 
 		LOGV("reading data...\n");
-		std::string buffer;
+
+
 		for(int i = 0; i < 0xFFFF; ++i)
 		{
+//			char buffer[128] = {0};
+//			int bytes = s.read(buffer, 4);
+//			LOGV("read %i, %s\n", bytes, buffer);
+
+			std::string buffer;
 			s.readline(buffer);
 			LOGV("%s\n", buffer.c_str());
 		}
+		
+		LOGV("finished reading data..\n");
 	}
 }
 
