@@ -31,8 +31,11 @@ namespace vr
 	struct EyePose
 	{
 		// eye pose information
-		glm::vec3 position;
+		glm::vec3 translation;
 		glm::quat rotation;
+		
+		// this offset takes the interpupilary distance into account
+		glm::vec3 offset;
 		
 		// current index of this eye pose
 		// *used to determine which eye it is)

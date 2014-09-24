@@ -28,7 +28,14 @@
 #include "renderer/renderer.h"
 #include "input.h"
 
+#include "scene_graph.h"
+
 #include "vr.h"
+#include "debugdraw.h"
+
+
+#include "renderer/renderstream.h"
+#include "renderer/scenelink.h"
 
 using namespace kernel;
 
@@ -43,6 +50,9 @@ public:
 	DECLARE_APPLICATION( TestOculusVR );
 
 	vr::HeadMountedDevice* device;
+	scenegraph::Node* root;
+	renderer::SceneLink scenelink;
+	Camera camera;
 	
 	virtual void event( KeyboardEvent & event )
 	{
@@ -63,8 +73,23 @@ public:
         }
 	}
 
-	virtual void event( MouseEvent & event )
+	virtual void event(MouseEvent& event)
 	{
+		switch(event.subtype)
+		{
+			case kernel::MouseMoved:
+			{
+				if (input::state()->mouse().is_down(input::MOUSE_LEFT))
+				{
+					int lastx, lasty;
+					input::state()->mouse().last_mouse_position(lastx, lasty);
+					
+					camera.move_view(event.mx-lastx, event.my-lasty);
+				}
+                break;
+			}
+			default: break;
+		}
 	}
 
 	virtual void event( SystemEvent & event )
@@ -94,11 +119,30 @@ public:
 	{
 		vr::setup_rendering(device, params.render_width, params.render_height);
 		
+		// setup scene
+		root = CREATE(scenegraph::Node);
+		root->name = "root";
+		
+		scenegraph::add_mesh_to_root(root, "models/test_group", false);
+		
+		
+		debugdraw::startup(1024);
+		camera.perspective(100.0f, params.render_width, params.render_height, 0.1f, 32768.0f);
+		camera.set_absolute_position(glm::vec3(0, 0, 5));
+		
 		return kernel::Application_Success;
 	}
 	
 	virtual void step( kernel::Params & params )
 	{
+		camera.move_left(input::state()->keyboard().is_down(input::KEY_A));
+		camera.move_right(input::state()->keyboard().is_down(input::KEY_D));
+		camera.move_forward(input::state()->keyboard().is_down(input::KEY_W));
+		camera.move_backward(input::state()->keyboard().is_down(input::KEY_S));
+		camera.update_view();
+		
+		root->update(params.step_interval_seconds);
+		debugdraw::update(params.step_interval_seconds);
 	}
 
 	virtual void tick(kernel::Params& params)
@@ -161,6 +205,36 @@ public:
 			ms.write( 0x00004000 );
 			ms.rewind();
 			driver->run_command( renderer::DC_CLEAR, ms );
+			
+			
+			
+			
+			{
+				glm::vec3 light_position;
+				glm::vec3 camera_position = camera.pos;
+				glm::vec3 render_pos = eye_pose.offset + camera_position + eye_pose.translation;
+
+				camera.set_absolute_position(render_pos);
+				camera.update_view();
+
+				renderer::ConstantBuffer cb;
+				cb.modelview_matrix = &camera.matCam;
+				cb.projection_matrix = &camera.matProj;
+				cb.viewer_direction = &camera.view;
+				cb.viewer_position = &camera.eye_position;
+				cb.light_position = &light_position;
+				
+				RenderStream rs;
+				rs.add_viewport(0, 0, params.render_width, params.render_height);
+				rs.add_clearcolor(0.1, 0.1, 0.1, 1.0f);
+				rs.add_clear(renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER);
+				
+				// render nodes
+				rs.run_commands();
+				scenelink.draw(root, cb);
+				
+				camera.set_absolute_position(camera_position);
+			}
 		}
 
 		device->end_frame(driver);
@@ -170,6 +244,11 @@ public:
 	{
 		vr::destroy_device(device);
 		vr::shutdown();
+		
+		
+		DESTROY(Node, root);
+		
+		debugdraw::shutdown();
 	}
 };
 

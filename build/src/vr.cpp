@@ -78,16 +78,21 @@ namespace vr
 		virtual EyePose eye_pose_at(uint32_t eye_index)
 		{
 			EyePose pose;
-		
+			
 			ovrEyeType eye = hmd->EyeRenderOrder[eye_index];
-			head_pose[eye_index] = ovrHmd_GetEyePose(hmd, eye);
-			
 			pose.eye_index = (eye == ovrEye_Left) ? 0 : 1;
-			const ovrVector3f& position = head_pose[eye_index].Position;
-			const ovrQuatf& rotation = head_pose[eye_index].Orientation;
 			
-			pose.position = glm::vec3(position.x, position.y, position.z);
+			head_pose[eye] = ovrHmd_GetEyePose(hmd, eye);
+			
+			
+			const ovrVector3f& translation = head_pose[eye].Position;
+			pose.translation = glm::vec3(translation.x, translation.y, translation.z);
+			
+			const ovrQuatf& rotation = head_pose[eye].Orientation;
 			pose.rotation = glm::quat(rotation.w, rotation.x, rotation.y, rotation.z);
+			
+			const ovrVector3f& adjust = eye_render[eye].ViewAdjust;
+			pose.offset = glm::vec3(adjust.x, adjust.y, adjust.z);
 			
 			return pose;
 		}
@@ -283,10 +288,11 @@ namespace vr
 		rc.Header.Multisample = false;
 		rc.Header.RTSize = rift->render_target_size;
 		
-		unsigned int distortion_caps = ovrDistortionCap_Chromatic |
-		ovrDistortionCap_Vignette |
-		ovrDistortionCap_TimeWarp |
-		ovrDistortionCap_Overdrive;
+		unsigned int distortion_caps = 0;
+//		distortion_caps |= ovrDistortionCap_Chromatic;
+//		distortion_caps |= ovrDistortionCap_Vignette;
+		distortion_caps |= ovrDistortionCap_TimeWarp;
+		distortion_caps |= ovrDistortionCap_Overdrive;
 		
 		ovrBool result = ovrHmd_ConfigureRendering(
 												   rift->hmd,
