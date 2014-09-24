@@ -124,8 +124,7 @@ public:
 		root->name = "root";
 		
 		scenegraph::add_mesh_to_root(root, "models/test_group", false);
-		
-		
+
 		debugdraw::startup(1024);
 		camera.perspective(100.0f, params.render_width, params.render_height, 0.1f, 32768.0f);
 		camera.set_absolute_position(glm::vec3(0, 0, 5));
@@ -148,15 +147,19 @@ public:
 	virtual void tick(kernel::Params& params)
 	{
 		renderer::IRenderDriver * driver = renderer::driver();
-		util::MemoryStream ms;
-		char buffer[256] = {0};
-		ms.init(buffer, 256);
 
 		device->begin_frame(driver);
 		
 		renderer::RenderTarget* rt = device->render_target();
 		
-		for (uint32_t eye_index = 0; eye_index < 2; ++eye_index)
+		RenderStream rs;
+		rs.add_clearcolor(0.0f, 0.5f, 0.5f, 1.0f);
+		rs.add_clear(renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER);
+		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
+		rs.run_commands();
+		rs.rewind();
+		
+		for (uint32_t eye_index = 0; eye_index < device->total_eyes(); ++eye_index)
 		{
 			vr::EyePose eye_pose = device->eye_pose_at(eye_index);
 
@@ -177,64 +180,29 @@ public:
 				x = width;
 				y = 0;
 			}
-			
-//			driver->viewport(x, y, width, height);
-//			driver->clearcolor(0.0f, 0.5f, 0.5f, 1.0f);
-//			driver->clear(renderer::COLOR_BUFFER);
-			
-			// viewport
-			ms.rewind();
-			ms.write( x );
-			ms.write( y );
-			ms.write( width );
-			ms.write( height );
-			ms.rewind();
-			driver->run_command( renderer::DC_VIEWPORT, ms );
-			
-			// set clear color
-			ms.rewind();
-			ms.write( 0.0f );
-			ms.write( 0.5f );
-			ms.write( 0.5f );
-			ms.write( 1.0f );
-			ms.rewind();
-			driver->run_command( renderer::DC_CLEARCOLOR, ms );
 
-			// color_buffer_bit
-			ms.rewind();
-			ms.write( 0x00004000 );
-			ms.rewind();
-			driver->run_command( renderer::DC_CLEAR, ms );
 			
-			
-			
-			
-			{
-				glm::vec3 light_position;
-				glm::vec3 camera_position = camera.pos;
-				glm::vec3 render_pos = eye_pose.offset + camera_position + eye_pose.translation;
+			glm::vec3 light_position(0, 4, 0);
+			glm::vec3 camera_position = camera.pos;
+			glm::vec3 render_pos = eye_pose.offset + camera_position + eye_pose.translation;
 
-				camera.set_absolute_position(render_pos);
-				camera.update_view();
+			camera.set_absolute_position(render_pos);
+			camera.update_view();
 
-				renderer::ConstantBuffer cb;
-				cb.modelview_matrix = &camera.matCam;
-				cb.projection_matrix = &camera.matProj;
-				cb.viewer_direction = &camera.view;
-				cb.viewer_position = &camera.eye_position;
-				cb.light_position = &light_position;
-				
-				RenderStream rs;
-				rs.add_viewport(0, 0, params.render_width, params.render_height);
-				rs.add_clearcolor(0.1, 0.1, 0.1, 1.0f);
-				rs.add_clear(renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER);
-				
-				// render nodes
-				rs.run_commands();
-				scenelink.draw(root, cb);
-				
-				camera.set_absolute_position(camera_position);
-			}
+			renderer::ConstantBuffer cb;
+			cb.modelview_matrix = &camera.matCam;
+			cb.projection_matrix = &camera.matProj;
+			cb.viewer_direction = &camera.view;
+			cb.viewer_position = &render_pos;
+			cb.light_position = &light_position;
+					
+			rs.add_viewport(x, y, width, height);
+			
+			// render nodes
+			rs.run_commands();
+			scenelink.draw(root, cb);
+			
+			camera.set_absolute_position(camera_position);
 		}
 
 		device->end_frame(driver);

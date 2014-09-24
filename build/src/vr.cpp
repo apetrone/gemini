@@ -240,6 +240,13 @@ namespace vr
 														 0,
 														 rift->render_texture
 														 );
+								
+		renderer::driver()->render_target_set_attachment(
+														rift->rt,
+														 renderer::RenderTarget::DEPTHSTENCIL,
+														 0,
+														 0
+														 );
 		
 		// TODO: call ovrHmd_AttachToWindow under win32?
 		
