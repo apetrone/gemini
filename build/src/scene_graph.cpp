@@ -31,6 +31,9 @@
 #include "scene_graph.h"
 #include <gemini/mathlib.h>
 
+#include "core/assets/asset_mesh.h"
+#include "physics.h"
+
 // Useful to hand to a std::for_each statement in order to clean up a container.
 template <class _Type>
 struct DestroyPointer
@@ -192,6 +195,75 @@ namespace scenegraph
 	void print_tree(Node* root)
 	{
 		print_tree_node(root, 0);
+	}
+	
+	
+	void clone_to_scene(scenegraph::Node* template_node, scenegraph::Node* root)
+	{
+		scenegraph::Node* newnode = template_node->clone();
+		root->add_child(newnode);
+		
+		for (auto child : template_node->children)
+		{
+			clone_to_scene(child, newnode);
+		}
+	}
+	
+	scenegraph::Node* add_mesh_to_root(scenegraph::Node* root, const char* path, bool build_physics_from_mesh)
+	{
+		assets::Shader* character = assets::shaders()->load_from_path("shaders/character");
+		assets::Shader* world = assets::shaders()->load_from_path("shaders/world");
+		
+		scenegraph::Node* node = 0;
+		
+		// load mesh through the asset system
+		assets::Mesh* mesh = assets::meshes()->load_from_path(path);
+		if (mesh)
+		{
+			mesh->prepare_geometry();
+			
+			clone_to_scene(mesh->scene_root, root);
+			
+			//			assets::Shader* shader = nullptr;
+			//
+			//
+			//			scenegraph::MeshNode* mesh_node = nullptr;
+			//			scenegraph::SkeletalNode* skel_node = nullptr;
+			//
+			//			if (!mesh->bones.empty())
+			//			{
+			//				LOGV("\"%s\" created as a skeletal node\n", path);
+			//				node = skel_node = CREATE(scenegraph::SkeletalNode);
+			//				skel_node->mesh = mesh;
+			//				shader = character;
+			//			}
+			//			else
+			//			{
+			//				LOGV("\"%s\" created as a mesh node\n", path);
+			//				node = mesh_node = CREATE(scenegraph::MeshNode);
+			//				mesh_node->mesh = mesh;
+			//				shader = world;
+			//			}
+			//
+			//			assert(shader != nullptr);
+			
+			if (build_physics_from_mesh)
+			{
+				physics::create_physics_for_mesh(mesh);
+			}
+			//
+			//			if (skel_node)
+			//			{
+			//				skel_node->setup_skeleton();
+			//			}
+			
+		}
+		else
+		{
+			LOGW("Unable to load model: %s\n", path);
+		}
+		
+		return node;
 	}
 	
 }; // namespace scenegraph
