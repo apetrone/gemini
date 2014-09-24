@@ -337,7 +337,8 @@ struct GL32RenderTarget : public renderer::RenderTarget
 	
 	~GL32RenderTarget()
 	{
-		
+		gl.DeleteFramebuffers(1, &framebuffer);
+		gl.DeleteRenderbuffers(1, &renderbuffer);
 	}
 	
 	void bind(bool activate = true)
@@ -361,8 +362,22 @@ struct GL32RenderTarget : public renderer::RenderTarget
 		}
 		else
 		{
-			// not implemented!
-			assert(0);
+			if (!texture)
+			{
+				assert(renderbuffer == 0);
+			
+				// create as render buffer
+				gl.GenRenderbuffers(1, &renderbuffer);
+				
+				gl.BindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+				gl.RenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, this->width, this->height);
+				gl.FramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
+			}
+			else
+			{
+				// not implemented!
+				assert(0);
+			}
 		}
 		
 		unbind();
@@ -1357,6 +1372,9 @@ void GLCore32::render_target_set_attachment(renderer::RenderTarget* rt, renderer
 	}
 	else if (type == renderer::RenderTarget::DEPTHSTENCIL)
 	{
-		render_target->depth_texture_id = tex->texture_id;
+		if (tex)
+		{
+			render_target->depth_texture_id = tex->texture_id;
+		}
 	}
 }
