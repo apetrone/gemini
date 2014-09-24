@@ -103,7 +103,7 @@ namespace vr
 			ovrHmd_GetHSWDisplayState(this->hmd, &warning);
 			if (warning.Displayed)
 			{
-				LOGV("dismissing health and safety warning message\n");
+				LOGV("dismissing health and safety warning message (mandatory 5s timeout)\n");
 				ovrHmd_DismissHSWDisplay(this->hmd);
 			}
 		}
