@@ -219,7 +219,7 @@ static void parse_materials(IndentState& state, FbxNode* node, datamodel::Materi
 	}
 }
 
-static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh, datamodel::Model* model)
+static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh, datamodel::Model* model, float conversion_factor)
 {
 	FbxMesh* fbxmesh = node->GetMesh();
 	
@@ -294,7 +294,9 @@ static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh, 
 
 
 			datamodel::Vertex* vertex = &vertices[vertex_index];
-			vertex->position = glm::vec3(position[0], position[1], position[2]);
+			
+			// MUSE_FBX_UNIT_FIX
+			vertex->position = glm::vec3(position[0], position[1], position[2]) * conversion_factor;
 			vertex->normal = glm::vec3(normal[0], normal[1], normal[2]);
 			for (int uvset = 0; uvset < total_uv_sets; ++uvset)
 			{
@@ -355,7 +357,7 @@ bool is_hierarchical_node(FbxNode* node)
 	return !(node->GetLight() || node->GetCamera());
 }
 
-static void populate_animations(IndentState& state, datamodel::Model* model, FbxNode* fbxnode, FbxTakeInfo* take, FbxTime::EMode time_mode, datamodel::Animation& animation)
+static void populate_animations(IndentState& state, datamodel::Model* model, FbxNode* fbxnode, FbxTakeInfo* take, FbxTime::EMode time_mode, datamodel::Animation& animation, float conversion_factor)
 {
 	FbxTime start = take->mLocalTimeSpan.GetStart();
 	FbxTime end = take->mLocalTimeSpan.GetStop();
@@ -405,6 +407,9 @@ static void populate_animations(IndentState& state, datamodel::Model* model, Fbx
 			glm::vec3 key_translation;
 
 			from_fbx(key_scaling, scaling);
+			// MUSE_FBX_UNIT_FIX
+			key_scaling *= 1.0f/conversion_factor;
+			
 			from_fbx(key_rotation, rotation);
 			from_fbx(key_translation, translation);
 			
@@ -420,13 +425,13 @@ static void populate_animations(IndentState& state, datamodel::Model* model, Fbx
 	
 	for (size_t index = 0; index < fbxnode->GetChildCount(); ++index)
 	{
-		populate_animations(state, model, fbxnode->GetChild(index), take, time_mode, animation);
+		populate_animations(state, model, fbxnode->GetChild(index), take, time_mode, animation, conversion_factor);
 	}
 	
 	state.pop();
 }
 
-static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNode* fbxnode, datamodel::Model* model)
+static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNode* fbxnode, datamodel::Model* model, float conversion_factor)
 {
 	datamodel::Node* node = root;
 
@@ -482,7 +487,7 @@ static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNod
 			node->mesh = CREATE(datamodel::Mesh);
 			// populate mesh from fbxnode
 			state.push();
-			load_mesh(state, fbxnode, node->mesh, model);
+			load_mesh(state, fbxnode, node->mesh, model, conversion_factor);
 			state.pop();
 		}
 		node->name = fbxnode->GetName();
@@ -561,13 +566,17 @@ static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNod
 //		from_fbx(node->translation, translation);
 
 		from_fbx(node->scale, local_scale);
+		
+		// MUSE_FBX_UNIT_FIX
+		node->scale *= (1/conversion_factor);
+		
 		from_fbx(node->rotation, local_rotation);
 		from_fbx(node->translation, local_translation);
 		
 
 		for (size_t index = 0; index < fbxnode->GetChildCount(); ++index)
 		{
-			populate_hierarchy(state, node, fbxnode->GetChild(index), model);
+			populate_hierarchy(state, node, fbxnode->GetChild(index), model, conversion_factor);
 		}
 	}
 
@@ -680,9 +689,11 @@ void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_sou
 		LOGV("Converting scene units from: %s\n", system_unit.GetScaleFactorAsString().Buffer());
 //		FbxSystemUnit::m.ConvertScene(scene);
 //		FbxSystemUnit::m.ConvertChildren(scene->GetRootNode(), system_unit);
-		float conversion_factor = FbxSystemUnit::m.GetConversionFactorTo(system_unit);
-		LOGV("conversion_factor: %g (%g)\n", conversion_factor, 1/conversion_factor);
 	}
+	
+	// assume exporting from Maya
+	conversion_factor = FbxSystemUnit::cm.GetConversionFactorTo(system_unit);
+	LOGV("conversion_factor: %g\n", conversion_factor);
 	
 //	int total_poses = scene->GetPoseCount();
 //	LOGV("pose count: %i\n", total_poses);
@@ -698,7 +709,7 @@ void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_sou
 //		populate_hierarchy(state, &model->root, fbxroot, model);
 		for (size_t index = 0; index < fbxroot->GetChildCount(); ++index)
 		{
-			populate_hierarchy(state, &model->root, fbxroot->GetChild(index), model);
+			populate_hierarchy(state, &model->root, fbxroot->GetChild(index), model, conversion_factor);
 		}
 		
 		int total_animation_stacks = scene->GetSrcObjectCount<FbxAnimStack>();
@@ -718,7 +729,7 @@ void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_sou
 			LOGV("reading data for animation \"%s\"\n", animation->name.c_str());
 			
 //			fbxroot->ConvertPivotAnimationRecursive(anim_stack, FbxNode::eDestinationPivot, 30.0);
-			populate_animations(state, model, fbxroot, take, time_mode, *animation);
+			populate_animations(state, model, fbxroot, take, time_mode, *animation, conversion_factor);
 		}
 	}
 }

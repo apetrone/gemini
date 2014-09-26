@@ -28,6 +28,10 @@ class AutodeskFbxReader : public tools::Reader<datamodel::Model>
 {
 	DECLARE_PLUGIN_CLASS(AutodeskFbxReader);
 	
+	// used by the reader to convert to correct units
+	// since the SDK will only convert root nodes
+	float conversion_factor;
+	
 public:
 	AutodeskFbxReader();
 	virtual ~AutodeskFbxReader();
