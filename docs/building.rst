@@ -1,6 +1,6 @@
 .. _Linux: build-linux_
 .. _MacOS X: build-desktop_
-.. _Windows: build-desktop_
+.. _Windows: build-windows_
 .. _iOS: build-mobile_
 .. _Android: build-mobile_
 
@@ -64,6 +64,12 @@ These optional variables should be specified when building for the RaspberryPi.
 
 	1. --indextype 2
 	2. --build-raspberry-pi
+
+
+.. _build-windows:
+
+On Windows, unfortunately, the DirectX SDK must be installed. As of this writing, SDL2 requires it.
+
 
 
 ----------------------------

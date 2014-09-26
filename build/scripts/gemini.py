@@ -192,7 +192,7 @@ def setup_driver(product):
 	
 	mac_release = product.layout(platform="macosx", configuration="release")
 
-def get_tools(libgemini):
+def get_tools(target_platform, libgemini):
 	#
 	#
 	#
@@ -248,12 +248,17 @@ def get_tools(libgemini):
 	#
 	# muse: asset conversion tool
 	#
+	libfbx_roots = {
+		"macosx": "lib/clang/${CONFIGURATION}",
+		"windows": "lib/vs2013/${ARCHITECTURE}/${CONFIGURATION}"
+
+	}
 	libfbx = Product(name="libfbxsdk", output=ProductType.DynamicLibrary)
 	libfbx.root = "../dependencies/fbx_2015.1"
 	libfbx.includes = [
 		"include"
 	]
-	libfbx.product_root = "lib/clang/${CONFIGURATION}"
+	libfbx.product_root = libfbx_roots[target_platform.name]
 	tools.append(libfbx)
 
 	muse = Product(name="muse", output=ProductType.Commandline)
@@ -494,7 +499,7 @@ def products(arguments, **kwargs):
 
 
 	libgemini = get_libgemini()
-	tools = get_tools(libgemini)
+	tools = get_tools(target_platform, libgemini)
 
 	gemini.dependencies.extend([libgemini])
 

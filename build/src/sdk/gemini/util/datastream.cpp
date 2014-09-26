@@ -110,7 +110,7 @@ namespace util
 	
 	size_t ResizableMemoryStream::read(void* destination, size_t length)
 	{
-		
+		return 0;
 	}
 	
 	size_t ResizableMemoryStream::write(const void* source, size_t length)
@@ -119,6 +119,8 @@ namespace util
 		memcpy(data.data()+offset, source, length);
 		
 		offset += length;
+
+		return length;
 	}
 	
 	void ResizableMemoryStream::seek(size_t requested_offset, bool is_absolute)
