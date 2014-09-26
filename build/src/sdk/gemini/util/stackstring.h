@@ -198,7 +198,7 @@ public:
 	
 	void normalize(Type prefer = '/')
 	{
-		for( int i = 0; i < _length; ++i )
+		for(unsigned int i = 0; i < _length; ++i)
 		{
 			if ( _data[i] == '\\' || _data[i] == '/' )
 			{

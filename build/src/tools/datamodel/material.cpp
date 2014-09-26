@@ -42,7 +42,7 @@ namespace datamodel
 		}
 		
 		// catch out of range ids
-		assert(materials.size() >= id);
+		assert(materials.size() <= (uint32_t)id);
 		
 		return materials[ id ];
 	}

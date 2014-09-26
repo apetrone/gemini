@@ -423,7 +423,7 @@ static void populate_animations(IndentState& state, datamodel::Model* model, Fbx
 		LOGV("skip: %s\n", fbxnode->GetName());
 	}
 	
-	for (size_t index = 0; index < fbxnode->GetChildCount(); ++index)
+	for (int index = 0; index < fbxnode->GetChildCount(); ++index)
 	{
 		populate_animations(state, model, fbxnode->GetChild(index), take, time_mode, animation, conversion_factor);
 	}
@@ -574,7 +574,7 @@ static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNod
 		from_fbx(node->translation, local_translation);
 		
 
-		for (size_t index = 0; index < fbxnode->GetChildCount(); ++index)
+		for (int index = 0; index < fbxnode->GetChildCount(); ++index)
 		{
 			populate_hierarchy(state, node, fbxnode->GetChild(index), model, conversion_factor);
 		}
@@ -707,7 +707,7 @@ void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_sou
 		model->root.flags |= datamodel::Node::NoAnimations;
 		
 //		populate_hierarchy(state, &model->root, fbxroot, model);
-		for (size_t index = 0; index < fbxroot->GetChildCount(); ++index)
+		for (int index = 0; index < fbxroot->GetChildCount(); ++index)
 		{
 			populate_hierarchy(state, &model->root, fbxroot->GetChild(index), model, conversion_factor);
 		}
