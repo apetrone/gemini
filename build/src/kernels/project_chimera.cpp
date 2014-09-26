@@ -51,10 +51,6 @@
 
 using namespace physics;
 
-//#define SCENE_GRAPH_MANUAL 1
-
-#define USE_MESH_NODE_RENDERING 0
-
 class ProjectChimera : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -62,23 +58,20 @@ public kernel::IEventListener<kernel::SystemEvent>
 {
 
 public:
-	DECLARE_APPLICATION( ProjectChimera );
+	DECLARE_APPLICATION(ProjectChimera);
 	Camera camera;
 	physics::CharacterController* character;
 	scenegraph::Node* root;
-	
-	scenegraph::SkeletalNode* player;
+
 	
 	renderer::SceneLink scenelink;
 	
 
 	ProjectChimera()
 	{
-//		camera.type = Camera::TARGET;
-		player = 0;
 		character = 0;
 		root = 0;
-
+		camera.type = Camera::FIRST_PERSON;
 	}
 	
 	virtual void event( kernel::KeyboardEvent & event )
@@ -91,9 +84,6 @@ public:
 			}
 			else if (event.key == input::KEY_SPACE)
 			{
-#ifdef SCENE_GRAPH_MANUAL
-				root->update(kernel::instance()->parameters().step_interval_seconds);
-#endif
 			}
 			else if (event.key == input::KEY_J)
 			{
@@ -147,66 +137,21 @@ public:
 	{
 		physics::startup();
 		
-		character = physics::create_character_controller(btVector3(0, 5, 0), false);
+		character = physics::create_character_controller(btVector3(0, 2, 0), false);
 
 		root = CREATE(scenegraph::Node);
 		root->name = "scene_root";
 		
-
-
-//		scenegraph::MeshNode* skydome = 0;
-//		skydome = CREATE(scenegraph::MeshNode);
-//		assets::Material* colormat = assets::materials()->load_from_path("materials/skydome");
-//		skydome->load_mesh("models/skydome", false, 0);
-//		// make it extend slightly below ground level
-//		skydome->local_position = glm::vec3(0, -50, 0);
-//		root->add_child(skydome);
-
-//		scenegraph::SkeletalNode* sn = 0;
-//		sn = CREATE(scenegraph::SkeletalNode);
-//		sn->load_mesh("models/test2", false);
-//		sn->setup_skeleton();
-//		sn->local_position = glm::vec3(0, 1, 0);
-//		root->add_child(sn);
-
-//		scenegraph::MeshNode* test5 = 0;
-//		test5 = CREATE(scenegraph::MeshNode);
-//		test5->load_mesh("models/delorean", false);
-//		root->add_child(test5);
-		
-//		scenegraph::MeshNode* ground = 0;
-//		ground = CREATE(scenegraph::MeshNode);
-//		ground->load_mesh("models/vapor", true);
-//		root->add_child(ground);
-//		ground->visible = false;
-
-//		player = CREATE(scenegraph::SkeletalNode);
-//		player->load_mesh("models/test_yup", false);
-//		player->setup_skeleton();
-//		root->add_child(player);
-//		player->visible = false;
-		
-//		scenegraph::MeshNode* test = CREATE(scenegraph::MeshNode);
-//		test->load_mesh("models/teapot");
-//		root->add_child(test);
-//		
-//		scenegraph::MeshNode* room = CREATE(scenegraph::MeshNode);
-//		room->load_mesh("models/room2", true);
-//		room->local_position = glm::vec3(0,0,0);
-//		root->add_child(room);
-
-
-		
 		
 		debugdraw::startup(1024);
 
-		camera.target_lookatOffset = glm::vec3(0, 0, 1);
+		//camera.target_lookatOffset = glm::vec3(0, 0, 1);
 		
-		camera.perspective( 50.0f, params.render_width, params.render_height, 0.1f, 8192.0f );
+		camera.perspective(50.0f, params.render_width, params.render_height, 0.1f, 8192.0f);
 		// This is appropriate for drawing 3D models, but not sprites
 		//camera.set_absolute_position( glm::vec3(8, 5, 8.0f) );
-		//camera.yaw = -45;
-		//camera.pitch = 30;
+		camera.yaw = -45;
+		camera.pitch = 30;
 		camera.update_view();
 		
 		character->reset();
@@ -214,7 +159,7 @@ public:
 		// capture the mouse
 		kernel::instance()->capture_mouse( true );
 		
-
+		scenegraph::Node* ground = add_mesh_to_root(root, "models/powergrid", true);
 
 		entity_startup();
 	
@@ -227,18 +172,23 @@ public:
 
 	virtual void step( kernel::Params & params )
 	{
-		physics::step( params.step_interval_seconds );
+		physics::step(params.step_interval_seconds);
 
 		// grab state here?
-		physics::MovementCommand command;
-		command.time = 0;
-		command.left = input::state()->keyboard().is_down(input::KEY_A);
-		command.right = input::state()->keyboard().is_down(input::KEY_D);
-		command.forward = input::state()->keyboard().is_down(input::KEY_W);
-		command.back = input::state()->keyboard().is_down(input::KEY_S);
+//		physics::MovementCommand command;
+//		command.time = 0;
+//		command.left = input::state()->keyboard().is_down(input::KEY_A);
+//		command.right = input::state()->keyboard().is_down(input::KEY_D);
+//		command.forward = input::state()->keyboard().is_down(input::KEY_W);
+//		command.back = input::state()->keyboard().is_down(input::KEY_S);
+//		physics::player_move(character, camera, command);
 		
-		physics::player_move(character, camera, command);
-		
+		// if you want to move JUST the camera instead...
+		camera.move_left(input::state()->keyboard().is_down(input::KEY_A));
+		camera.move_right(input::state()->keyboard().is_down(input::KEY_D));
+		camera.move_forward(input::state()->keyboard().is_down(input::KEY_W));
+		camera.move_backward(input::state()->keyboard().is_down(input::KEY_S));
+		camera.update_view();
 		
 
 
@@ -249,10 +199,10 @@ public:
 		worldTrans.setRotation(rotation);
 		character->getGhostObject()->setWorldTransform(worldTrans);
 		
-		if (player)
-		{
-			physics::copy_ghost_to_camera(character->getGhostObject(), camera);
-		}
+//		if (player)
+//		{
+//			physics::copy_ghost_to_camera(character->getGhostObject(), camera);
+//		}
 		
 		
 		
@@ -264,27 +214,14 @@ public:
 		camera.update_view();
 
 		physics::debug_draw();
-		
-//		debugdraw::axes(glm::mat4(1.0), 2.0f);
+
 		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
 		debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", camera.eye_position.x, camera.eye_position.y, camera.eye_position.z), Color(255, 0, 255));
 		debugdraw::text(10, 24, xstr_format("camera.view = %.2g %.2g %.2g", camera.view.x, camera.view.y, camera.view.z), Color(128, 128, 255));
 		debugdraw::text(10, 36, xstr_format("camera.right = %.2g %.2g %.2g", camera.side.x, camera.side.y, camera.side.z), Color(255, 0, 0));
 		debugdraw::text(10, 48, xstr_format("frame_delta = %g", params.framedelta_raw_msec), Color(255, 255, 255));
-		
-#if 0
-		for(size_t boneid = 0; boneid < plane_mesh->total_bones; ++boneid)
-		{
-			debugdraw::axes(plane_mesh->bones[boneid].inverse_bind_matrix, 1.0f);
-//			debugdraw::sphere(plane_mesh->bones[boneid].world_position, Color(255,0,0), 0.25f);
-//			plane_mesh->bones
-		}
-#endif
 
-#ifndef SCENE_GRAPH_MANUAL
 		root->update(params.step_interval_seconds);
-#endif
-
 		debugdraw::update(params.step_interval_seconds);
 	}
 
@@ -301,9 +238,9 @@ public:
 		
 		// TODO: this should use the actual player height instead of
 		// hard coding the value.
-		char_mat = glm::translate(camera.pos - glm::vec3(0,1.82,0));
-		char_mat = glm::rotate(char_mat, -camera.yaw, glm::vec3(0,1,0));
-		if (player)
+//		char_mat = glm::translate(camera.pos - glm::vec3(0,1.82,0));
+//		char_mat = glm::rotate(char_mat, -camera.yaw, glm::vec3(0,1,0));
+		//if (player)
 		{
 			//player->world_transform = char_mat;
 		}
@@ -313,12 +250,15 @@ public:
 		//rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
 		
 		rs.run_commands();
-		
+
+		glm::vec3 light_position(0, 2, 0);
 		renderer::ConstantBuffer cb;
+
 		cb.modelview_matrix = &camera.matCam;
 		cb.projection_matrix = &camera.matProj;
 		cb.viewer_direction = &camera.view;
 		cb.viewer_position = &camera.eye_position;
+		cb.light_position = &light_position;
 		
 		scenelink.draw(root, cb);
 		

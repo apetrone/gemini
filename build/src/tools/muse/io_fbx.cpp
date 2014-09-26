@@ -670,6 +670,7 @@ void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_sou
 	}
 	
 	// gemini needs a scene defined in meters
+	// ugh, this is stupid: http://forums.autodesk.com/t5/fbx-sdk/scene-units-for-animation-translations/td-p/4262325
 	FbxSystemUnit system_unit = scene->GetGlobalSettings().GetSystemUnit();
 
 	LOGV("scene is in unit: %s\n", system_unit.GetScaleFactorAsString().Buffer());
@@ -677,10 +678,10 @@ void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_sou
 	if (system_unit != FbxSystemUnit::m)
 	{
 		LOGV("Converting scene units from: %s\n", system_unit.GetScaleFactorAsString().Buffer());
-		FbxSystemUnit::m.ConvertScene(scene);
+//		FbxSystemUnit::m.ConvertScene(scene);
 //		FbxSystemUnit::m.ConvertChildren(scene->GetRootNode(), system_unit);
-//		float conversion_factor = FbxSystemUnit::m.GetConversionFactorTo(system_unit);
-//		LOGV("conversion_factor: %g\n", conversion_factor);
+		float conversion_factor = FbxSystemUnit::m.GetConversionFactorTo(system_unit);
+		LOGV("conversion_factor: %g (%g)\n", conversion_factor, 1/conversion_factor);
 	}
 	
 //	int total_poses = scene->GetPoseCount();
