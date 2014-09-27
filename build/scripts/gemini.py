@@ -251,9 +251,14 @@ def get_tools(target_platform, libgemini):
 	libfbx_roots = {
 		"macosx": "lib/clang/${CONFIGURATION}",
 		"windows": "lib/vs2013/${ARCHITECTURE}/${CONFIGURATION}"
-
 	}
-	libfbx = Product(name="libfbxsdk", output=ProductType.DynamicLibrary)
+	libfbx_names = {
+		"macosx": "libfbxsdk",
+		"linux": "libfbxsdk",
+		"windows": "libfbxsdk-md"
+	}
+
+	libfbx = Product(name=libfbx_names[target_platform.name], output=ProductType.DynamicLibrary)
 	libfbx.root = "../dependencies/fbx_2015.1"
 	libfbx.includes = [
 		"include"
