@@ -33,13 +33,8 @@ namespace scenegraph
 {
 	struct AnimatedNode : public Node
 	{
-		glm::vec3 scale;
 		Channel<glm::vec3> scale_channel;
-		
-		glm::quat rotation;
 		Channel<glm::quat> rotation_channel;
-		
-		glm::vec3 translation;
 		Channel<glm::vec3> translation_channel;
 		
 		AnimatedNode();

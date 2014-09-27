@@ -160,6 +160,9 @@ public:
 		kernel::instance()->capture_mouse( true );
 		
 		scenegraph::Node* ground = add_mesh_to_root(root, "models/powergrid", true);
+		
+		scenegraph::Node* generator = add_mesh_to_root(root, "models/generator_core", true);
+		generator->translation = glm::vec3(4, 0, -10);
 
 		entity_startup();
 	
@@ -175,20 +178,20 @@ public:
 		physics::step(params.step_interval_seconds);
 
 		// grab state here?
-//		physics::MovementCommand command;
-//		command.time = 0;
-//		command.left = input::state()->keyboard().is_down(input::KEY_A);
-//		command.right = input::state()->keyboard().is_down(input::KEY_D);
-//		command.forward = input::state()->keyboard().is_down(input::KEY_W);
-//		command.back = input::state()->keyboard().is_down(input::KEY_S);
-//		physics::player_move(character, camera, command);
+		physics::MovementCommand command;
+		command.time = 0;
+		command.left = input::state()->keyboard().is_down(input::KEY_A);
+		command.right = input::state()->keyboard().is_down(input::KEY_D);
+		command.forward = input::state()->keyboard().is_down(input::KEY_W);
+		command.back = input::state()->keyboard().is_down(input::KEY_S);
+		physics::player_move(character, camera, command);
 		
 		// if you want to move JUST the camera instead...
-		camera.move_left(input::state()->keyboard().is_down(input::KEY_A));
-		camera.move_right(input::state()->keyboard().is_down(input::KEY_D));
-		camera.move_forward(input::state()->keyboard().is_down(input::KEY_W));
-		camera.move_backward(input::state()->keyboard().is_down(input::KEY_S));
-		camera.update_view();
+//		camera.move_left(input::state()->keyboard().is_down(input::KEY_A));
+//		camera.move_right(input::state()->keyboard().is_down(input::KEY_D));
+//		camera.move_forward(input::state()->keyboard().is_down(input::KEY_W));
+//		camera.move_backward(input::state()->keyboard().is_down(input::KEY_S));
+//		camera.update_view();
 		
 
 
@@ -201,7 +204,7 @@ public:
 		
 //		if (player)
 //		{
-//			physics::copy_ghost_to_camera(character->getGhostObject(), camera);
+			physics::copy_ghost_to_camera(character->getGhostObject(), camera);
 //		}
 		
 		
@@ -213,7 +216,7 @@ public:
 		//camera.pos += glm::vec3(0, 2.5, 5);
 		camera.update_view();
 
-		physics::debug_draw();
+//		physics::debug_draw();
 
 		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
 		debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", camera.eye_position.x, camera.eye_position.y, camera.eye_position.z), Color(255, 0, 255));
@@ -251,7 +254,7 @@ public:
 		
 		rs.run_commands();
 
-		glm::vec3 light_position(0, 2, 0);
+		glm::vec3 light_position(0.5f, 2.5f, -12);
 		renderer::ConstantBuffer cb;
 
 		cb.modelview_matrix = &camera.matCam;

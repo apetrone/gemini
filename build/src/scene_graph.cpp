@@ -50,6 +50,7 @@ namespace scenegraph
 	{
 		// sane defaults
 		local_scale = glm::vec3(1.0f, 1.0f, 1.0f);
+		scale = glm::vec3(1.0f, 1.0f, 1.0f);
 		parent = 0;
 		type = NODE;
 		attributes = 0;
@@ -67,6 +68,10 @@ namespace scenegraph
 		
 		local_to_world = other.local_to_world;
 		local_to_pivot = other.local_to_pivot;
+		
+		scale = other.scale;
+		rotation = other.rotation;
+		translation = other.translation;
 		
 		world_transform = other.world_transform;
 		
@@ -125,6 +130,26 @@ namespace scenegraph
 		NodeVector::iterator start, end;
 		start = children.begin();
 		end = children.end();
+		
+		glm::mat4 sc = glm::scale(glm::mat4(1.0), scale);
+		glm::mat4 ro = glm::toMat4(rotation);
+		glm::mat4 tr = glm::translate(glm::mat4(1.0), translation);
+		
+		glm::mat4 inv_pivot = glm::translate(glm::mat4(1.0), local_position);
+		glm::mat4 pivot = glm::translate(glm::mat4(1.0), -local_position);
+	
+		assert(scale.x != 0 && scale.y != 0 && scale.z != 0);
+		local_to_world = inv_pivot * sc * ro * pivot * tr;
+
+
+		if (parent)
+		{
+			world_transform = parent->world_transform * local_to_world;
+		}
+		else
+		{
+			world_transform = local_to_world;
+		}
 		
 		while (start != end)
 		{
@@ -198,7 +223,7 @@ namespace scenegraph
 	}
 	
 	
-	void clone_to_scene(scenegraph::Node* template_node, scenegraph::Node* root)
+	scenegraph::Node* clone_to_scene(scenegraph::Node* template_node, scenegraph::Node* root)
 	{
 		scenegraph::Node* newnode = template_node->clone();
 		root->add_child(newnode);
@@ -207,6 +232,8 @@ namespace scenegraph
 		{
 			clone_to_scene(child, newnode);
 		}
+		
+		return newnode;
 	}
 	
 	scenegraph::Node* add_mesh_to_root(scenegraph::Node* root, const char* path, bool build_physics_from_mesh)
@@ -222,7 +249,7 @@ namespace scenegraph
 		{
 			mesh->prepare_geometry();
 			
-			clone_to_scene(mesh->scene_root, root);
+			node = clone_to_scene(mesh->scene_root, root);
 			
 			//			assets::Shader* shader = nullptr;
 			//

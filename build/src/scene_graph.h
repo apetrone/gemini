@@ -59,6 +59,10 @@ namespace scenegraph
 		// the final world-transform for this model
 		glm::mat4 world_transform;
 
+		glm::vec3 scale;
+		glm::quat rotation;
+		glm::vec3 translation;
+
 		std::string name;
 		
 		NodeVector children;
@@ -95,7 +99,7 @@ namespace scenegraph
 	void print_tree(Node* root);
 	
 	// TODO: move these?
-	void clone_to_scene(scenegraph::Node* template_node, scenegraph::Node* root);
+	scenegraph::Node* clone_to_scene(scenegraph::Node* template_node, scenegraph::Node* root);
 	scenegraph::Node* add_mesh_to_root(scenegraph::Node* root, const char* path, bool build_physics_from_mesh);
 }; // namespace scenegraph
 

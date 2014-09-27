@@ -35,7 +35,6 @@ namespace scenegraph
 		rotation_channel(rotation),
 		translation_channel(translation)
 	{
-		scale = glm::vec3(1.0f, 1.0f, 1.0f);
 		type = ANIMATED;
 		attributes = ANIMATED;
 	}
@@ -46,8 +45,6 @@ namespace scenegraph
 		translation_channel(translation),
 		Node(other)
 	{
-		scale = glm::vec3(1.0f, 1.0f, 1.0f);
-		
 		if (other.scale_channel.get_data_source())
 		{
 			scale_channel.set_data_source(other.scale_channel.get_data_source(), other.scale_channel.get_frame_delay());
@@ -79,29 +76,19 @@ namespace scenegraph
 	
 	void AnimatedNode::update(float delta_seconds)
 	{
-		scale_channel.update(delta_seconds);
-		rotation_channel.update(delta_seconds);
-		translation_channel.update(delta_seconds);
-		
-		glm::mat4 sc = glm::scale(glm::mat4(1.0), scale);
-		glm::mat4 ro = glm::toMat4(rotation);
-		glm::mat4 tr = glm::translate(glm::mat4(1.0), translation);
-		
-		glm::mat4 inv_pivot = glm::translate(glm::mat4(1.0), local_position);
-		glm::mat4 pivot = glm::translate(glm::mat4(1.0), -local_position);
-		
-		assert(scale.x != 0 && scale.y != 0 && scale.z != 0);
-		local_to_world = inv_pivot * sc * ro * pivot * tr;
-
-		if (parent)
+		if (scale_channel.get_data_source() && !scale_channel.get_data_source()->keys.empty())
 		{
-			world_transform = parent->world_transform * local_to_world;
+			scale_channel.update(delta_seconds);
+			rotation_channel.update(delta_seconds);
+			translation_channel.update(delta_seconds);
 		}
 		else
 		{
-			world_transform = local_to_world;
+			scale = local_scale;
+			translation = local_position;
+			rotation = local_rotation;
 		}
-		
+	
 		Node::update(delta_seconds);
 	}
 	
