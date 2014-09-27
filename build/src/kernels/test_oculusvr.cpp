@@ -123,7 +123,7 @@ public:
 		root = CREATE(scenegraph::Node);
 		root->name = "root";
 		
-		scenegraph::add_mesh_to_root(root, "models/test_group", false);
+		scenegraph::add_mesh_to_root(root, "models/powergrid", false);
 
 		debugdraw::startup(1024);
 		camera.perspective(100.0f, params.render_width, params.render_height, 0.1f, 32768.0f);
