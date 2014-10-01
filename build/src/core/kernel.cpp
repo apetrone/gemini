@@ -37,9 +37,8 @@
 #include "assets.h"
 #include "font.h"
 #include "script.h"
-
-
 #include "debugdraw.h"
+#include "physics.h"
 
 #if PLATFORM_LINUX
 	#include <stdlib.h> // for qsort
@@ -353,6 +352,7 @@ namespace kernel
 		// initialize subsystems
 		audio::startup();
 		input::startup();
+		physics::startup();
 		
 		
 		// application instance failed startup
@@ -380,6 +380,7 @@ namespace kernel
 		}
 	
 		// system cleanup
+		physics::shutdown();
 		debugdraw::shutdown();
 		font::shutdown();
 		assets::shutdown();
@@ -419,7 +420,13 @@ namespace kernel
 				_kernel->parameters().step_alpha -= 1.0f;
 			}
 			
+			// step physics before we let the application have a chance
+			physics::step(_kernel->parameters().step_interval_seconds);
+			
+			// pass off to application
 			_active_application->step( _kernel->parameters() );
+			
+			// step debug draw
 			debugdraw::update(_kernel->parameters().step_interval_seconds);
 		}
 	} // update

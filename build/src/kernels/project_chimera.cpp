@@ -135,7 +135,7 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
-		physics::startup();
+		
 		
 		character = physics::create_character_controller(btVector3(0, 2, 0), false);
 
@@ -172,8 +172,6 @@ public:
 
 	virtual void step( kernel::Params & params )
 	{
-		physics::step(params.step_interval_seconds);
-
 		// grab state here?
 		physics::MovementCommand command;
 		command.time = 0;
@@ -272,8 +270,6 @@ public:
 		DESTROY(Node, root);
 		
 		entity_shutdown();
-
-		physics::shutdown();
 	}
 };
 
