@@ -38,6 +38,9 @@
 #include "font.h"
 #include "script.h"
 
+
+#include "debugdraw.h"
+
 #if PLATFORM_LINUX
 	#include <stdlib.h> // for qsort
 #endif
@@ -161,6 +164,16 @@ namespace kernel
 		struct BootConfig
 		{
 			StackString<64> kernel_name;
+			uint32_t physics_tick_rate;
+			int32_t debugdraw_max_primitives;
+			
+			
+			BootConfig()
+			{
+				// setup sane defaults
+				physics_tick_rate = 60;
+				debugdraw_max_primitives = 2048;
+			}
 		};
 		
 		
@@ -173,8 +186,23 @@ namespace kernel
 			}
 			
 			LOGV( "loading boot.conf...\n" );
+			const Json::Value& kernel_name = root["kernel_name"];
+			if (!kernel_name.isNull())
+			{
+				cfg->kernel_name = kernel_name.asString().c_str();
+			}
+
+			const Json::Value& physics_tick_rate = root["physics_tick_rate"];
+			if (!physics_tick_rate.isNull())
+			{
+				cfg->physics_tick_rate = physics_tick_rate.asUInt();
+			}
 			
-			cfg->kernel_name = root["kernel_name"].asString().c_str();
+			const Json::Value& debugdraw_max_primitives = root["debugdraw_max_primitives"];
+			if (!debugdraw_max_primitives.isNull())
+			{
+				cfg->debugdraw_max_primitives = debugdraw_max_primitives.asInt();
+			}
 		
 		
 			return util::ConfigLoad_Success;
@@ -319,6 +347,7 @@ namespace kernel
 
 			assets::startup();
 			font::startup();
+			debugdraw::startup(boot_config.debugdraw_max_primitives);
 		}
 		
 		// initialize subsystems
@@ -351,6 +380,7 @@ namespace kernel
 		}
 	
 		// system cleanup
+		debugdraw::shutdown();
 		font::shutdown();
 		assets::shutdown();
 		input::shutdown();
@@ -390,6 +420,7 @@ namespace kernel
 			}
 			
 			_active_application->step( _kernel->parameters() );
+			debugdraw::update(_kernel->parameters().step_interval_seconds);
 		}
 	} // update
 

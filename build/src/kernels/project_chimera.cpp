@@ -141,9 +141,6 @@ public:
 
 		root = CREATE(scenegraph::Node);
 		root->name = "scene_root";
-		
-		
-		debugdraw::startup(1024);
 
 		//camera.target_lookatOffset = glm::vec3(0, 0, 1);
 		
@@ -225,7 +222,6 @@ public:
 		debugdraw::text(10, 48, xstr_format("frame_delta = %g", params.framedelta_raw_msec), Color(255, 255, 255));
 
 		root->update(params.step_interval_seconds);
-		debugdraw::update(params.step_interval_seconds);
 	}
 
 	virtual void tick( kernel::Params & params )
@@ -278,8 +274,6 @@ public:
 		entity_shutdown();
 
 		physics::shutdown();
-		
-		debugdraw::shutdown();
 	}
 };
 
