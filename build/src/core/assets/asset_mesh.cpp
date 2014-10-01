@@ -89,7 +89,6 @@ namespace assets
 		
 		if (node_type == "mesh")
 		{
-			LOGV("create mesh\n");
 			Geometry* geo = &state.mesh->geometry[state.current_geometry++];
 			scenegraph::RenderNode* render_node = CREATE(scenegraph::RenderNode);
 
@@ -128,17 +127,17 @@ namespace assets
 			
 			geo->draw_type = renderer::DRAW_INDEXED_TRIANGLES;
 			geo->name = node["name"].asString().c_str();
-			LOGV("load geometry: %s\n", geo->name());
+//			LOGV("load geometry: %s\n", geo->name());
 
 			// TODO: remove this legacy code
 			geo->index_count = index_array.size();
 			geo->vertex_count = vertex_array.size();
-			LOGV("index_count = %i, vertex_count = %i\n", geo->index_count, geo->vertex_count);
+//			LOGV("index_count = %i, vertex_count = %i\n", geo->index_count, geo->vertex_count);
 			geo->indices.allocate(index_array.size());
 			geo->vertices.allocate(vertex_array.size());
 			geo->normals.allocate(vertex_array.size());
 			
-			LOGV("uv sets: %i\n", uv_sets.size());
+//			LOGV("uv sets: %i\n", uv_sets.size());
 			
 			geo->uvs.allocate(uv_sets.size());
 //			geo->uvs.allocate(vertex_array.size());
