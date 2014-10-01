@@ -39,6 +39,7 @@
 #include "script.h"
 #include "debugdraw.h"
 #include "physics.h"
+#include "hotloading.h"
 
 #if PLATFORM_LINUX
 	#include <stdlib.h> // for qsort
@@ -165,13 +166,14 @@ namespace kernel
 			StackString<64> kernel_name;
 			uint32_t physics_tick_rate;
 			int32_t debugdraw_max_primitives;
-			
+			uint32_t enable_asset_reloading : 1;
 			
 			BootConfig()
 			{
 				// setup sane defaults
 				physics_tick_rate = 60;
 				debugdraw_max_primitives = 2048;
+				enable_asset_reloading = 0;
 			}
 		};
 		
@@ -201,6 +203,12 @@ namespace kernel
 			if (!debugdraw_max_primitives.isNull())
 			{
 				cfg->debugdraw_max_primitives = debugdraw_max_primitives.asInt();
+			}
+			
+			const Json::Value& enable_asset_reloading = root["enable_asset_reloading"];
+			if (!enable_asset_reloading.isNull())
+			{
+				cfg->enable_asset_reloading = enable_asset_reloading.asBool();
 			}
 		
 		
@@ -356,6 +364,10 @@ namespace kernel
 		input::startup();
 		physics::startup();
 		
+		if (boot_config.enable_asset_reloading)
+		{
+			hotloading::startup();
+		}
 		
 		// application instance failed startup
 		ApplicationResult startup_result = _active_application->startup(kernel::instance()->parameters());
@@ -380,7 +392,9 @@ namespace kernel
 			_active_application->shutdown( _kernel->parameters() );
 			DESTROY(IApplication, _active_application);
 		}
-	
+
+		hotloading::shutdown();
+
 		// system cleanup
 		physics::shutdown();
 		debugdraw::shutdown();
@@ -440,6 +454,7 @@ namespace kernel
 
 		update();
 		_kernel->pre_tick();
+		hotloading::tick();
 		_active_application->tick( _kernel->parameters() );
 		_kernel->post_tick();
 	} // tick

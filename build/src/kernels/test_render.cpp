@@ -23,7 +23,6 @@
 
 #include <slim/xlog.h>
 #include <gemini/mathlib.h>
-#include <gemini/util/threadsafequeue.h>
 
 #include "kernel.h"
 #include "debugdraw.h"
@@ -32,246 +31,10 @@
 #include "renderer/renderstream.h"
 #include "renderer/scenelink.h"
 #include "camera.h"
-#include "assets/asset_mesh.h"
-#include "assets/asset_material.h"
 #include "font.h"
-#include "assets/asset_font.h"
 #include "scene_graph.h"
 #include "skeletalnode.h"
 #include "physics.h"
-#include "gemgl.h"
-
-#include <json/json.h>
-
-struct BaseVar
-{
-	BaseVar* next;
-	std::string name;
-
-	virtual void load(Json::Value& value) = 0;
-	virtual std::string value_string() = 0;
-	
-	static void render_values(int x, int y);
-};
-
-BaseVar* tail = 0;
-
-void BaseVar::render_values(int x, int y)
-{
-	BaseVar* current = tail;
-	while (current)
-	{
-		debugdraw::text(x, y, xstr_format("[VAR] %s = %s", current->name.c_str(), current->value_string().c_str()), Color(255, 255, 255, 255));
-	
-		y += 12;
-		current = current->next;
-	}
-}
-
-BaseVar* find_by_name(const std::string& name)
-{
-	BaseVar* current = tail;
-	
-	while( current )
-	{
-		if (name == current->name)
-		{
-			return current;
-		}
-		current = current->next;
-	}
-	
-	return 0;
-}
-
-template <class Type>
-struct JsonLoader
-{
-	static void load(Json::Value& json_value, Type* value);
-};
-
-template <>
-struct JsonLoader<float>
-{
-	static void load(Json::Value& json_value, float* value)
-	{
-		if (json_value.isDouble())
-		{
-			*value = json_value.asFloat();
-		}
-	}
-};
-
-template <>
-struct JsonLoader<int>
-{
-	static void load(Json::Value& json_value, int* value)
-	{
-		if (json_value.isInt())
-		{
-			*value = json_value.asInt();
-		}
-	}
-};
-
-template <class Type>
-struct Var : public BaseVar
-{
-	Type value;
-
-	Var(const char* varname)
-	{
-		name = varname;
-		next = tail;
-		tail = this;
-	}
-
-
-	virtual void load(Json::Value& json_value)
-	{
-		JsonLoader<Type>::load(json_value, &value);
-	}
-	
-	virtual std::string value_string()
-	{
-		std::string val = std::to_string(value);
-		return val;
-	}
-};
-
-
-void put_new_json(const std::string& json_document)
-{
-	Json::Value root;
-	Json::Reader reader;
-	
-	bool success = reader.parse(json_document, root);
-	if (success)
-	{
-		// apply this to variables
-		Json::ValueIterator it = root.begin();
-		
-		size_t total_values_loaded = 0;
-		size_t missing_values = 0;
-		for( ; it != root.end(); ++it)
-		{
-			Json::Value key = it.key();
-			Json::Value value = (*it);
-
-			const std::string& name = key.asString();
-			BaseVar* v = find_by_name(name);
-			if (v)
-			{
-				v->load(value);
-				++total_values_loaded;
-			}
-			else
-			{
-				++missing_values;
-			}
-		}
-		
-		LOGV("loaded (%u/%u) values\n", total_values_loaded, (total_values_loaded+missing_values));
-	}
-}
-
-
-Var<float> meter("meter");
-Var<int> test("value_test");
-
-#ifdef USE_WEBSERVER
-	#include "civetweb.h"
-	#include "CivetServer.h"
-
-	class TestHandler : public CivetHandler
-	{
-		virtual bool handlePut(CivetServer* server, struct mg_connection* conn)
-		{
-			const struct mg_request_info* request = mg_get_request_info(conn);
-			std::string buf;
-			
-			buf.resize(1024);
-			int bytes = mg_read(conn, &buf[0], 1024);
-			assert(bytes < 1024);
-
-			
-//			LOGV("read %i bytes, %s\n", bytes, buf.c_str());
-
-			put_new_json(buf);
-			
-			// On Error, we can return "400 Bad Request",
-			// but we'll have to provide a response body to describe why.
-			
-			std::string output = "204 No Content";
-			mg_write(conn, &output[0], output.length());
-
-			return true;
-		}
-		
-		virtual bool handleDelete(CivetServer* server, struct mg_connection* conn)
-		{
-			return true;
-		}
-	};
-
-
-	class ReloadHandler : public CivetHandler
-	{
-		ThreadSafeQueue<std::string>& queue;
-		
-	public:
-	
-		ReloadHandler(ThreadSafeQueue<std::string>& command_queue) : queue(command_queue)
-		{}
-
-		virtual bool handlePut(CivetServer* server, struct mg_connection* conn)
-		{
-			const struct mg_request_info* request = mg_get_request_info(conn);
-			std::string buf;
-			
-			buf.resize(1024);
-			int bytes = mg_read(conn, &buf[0], 1024);
-			assert(bytes < 1024);
-			
-			// send a response that we received it.
-			std::string output = "204 No Content";
-			mg_write(conn, &output[0], output.length());
-			
-
-			LOGV("reload: %s\n", buf.c_str());
-			
-			Json::Reader reader;
-			Json::Value root;
-
-			bool success = reader.parse(&buf[0], &buf[0] + buf.size(), root);
-			if (!success)
-			{
-				LOGW("ignored reload request: failed to parse json\n");
-				LOGW("json parsing failed: %s\n", reader.getFormatedErrorMessages().c_str());
-			}
-			else
-			{
-				if (!root["resource"].isNull())
-				{
-					StackString<1024> filename = root["resource"].asString().c_str();
-					StackString<1024> dirname = filename.dirname();
-					LOGV("dir: %s, file: %s\n", dirname(), filename.basename().remove_extension()());
-					queue.enqueue(filename.remove_extension()());
-				}
-			}
-
-			return true;
-		}
-	};
-
-	static int log_message(const struct mg_connection *conn, const char *message)
-	{
-		(void) conn;
-		printf("%s\n", message);
-		return 0;
-	}
-#endif
-
 
 class TestRender : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
@@ -294,56 +57,8 @@ public:
 	bool advance_time;
 
 	renderer::RenderTarget* rt;
-	
-#ifdef USE_WEBSERVER
-	CivetServer* server;
-#endif
 
 	
-	ThreadSafeQueue<std::string> reload_queue;
-	
-	void process_reload_queue()
-	{
-		// process queue
-		size_t queued_items = reload_queue.size();
-		if (queued_items > 0)
-		{
-			for(size_t i = 0; i < queued_items; ++i)
-			{
-				std::string item = reload_queue.dequeue();
-				// for now, assume everything is a shader.
-//				LOGV("processing: %s\n", item.c_str());
-				StackString<512> relative_path = item.c_str();
-				
-				// get the basename to lookup asset library.
-				std::string dirname = relative_path.dirname()();
-				
-				// TODO: replace this with a better mechanism
-				if (dirname == "shaders")
-				{
-					assets::shaders()->load_from_path(item.c_str(), assets::AssetParameters(), true);
-				}
-				else if (dirname == "models")
-				{
-					// clear the scene
-					root->clear();
-
-					// force mesh reload
-					assets::Mesh* mesh = assets::meshes()->load_from_path(item.c_str(), assets::AssetParameters(), true);
-					
-					//add_mesh_to_root(root, item.c_str(), false);
-				}
-				else if (dirname == "materials")
-				{
-					assets::materials()->load_from_path(item.c_str(), assets::AssetParameters(), true);
-				}
-				else
-				{
-					LOGW("Reload is not supported for assets in \"%s\"\n", dirname.c_str());
-				}
-			}
-		}
-	}
 	
 	TestRender()
 	{
@@ -353,10 +68,6 @@ public:
 		ground = 0;
 		advance_time = 1;
 		rt = 0;
-		
-#ifdef USE_WEBSERVER
-		server = 0;
-#endif
 	}
 	
 	virtual void event( kernel::KeyboardEvent & event )
@@ -426,22 +137,6 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
-#ifdef USE_WEBSERVER
-		struct mg_callbacks cb;
-		memset(&cb, 0, sizeof(mg_callbacks));
-		cb.log_message = log_message;
-		
-		const char* options[] = {
-			"listening_ports", "1983",
-			"request_timeout_ms", "10",
-			0
-		};
-		
-		server = CREATE(CivetServer, options, &cb);
-		server->addHandler("/json", new TestHandler());
-		server->addHandler("/reload", new ReloadHandler(reload_queue));
-#endif
-		
 		root = CREATE(scenegraph::Node);
 		root->name = "scene_root";
 		
@@ -500,7 +195,6 @@ public:
 //		root->add_child(ground);
 //		ground->visible = false;
 
-		debugdraw::startup(1024);
 
 		camera.target_lookatOffset = glm::vec3(0, 0, 1);
 		camera.perspective( 50.0f, params.render_width, params.render_height, 0.1f, 32768.0f );
@@ -547,13 +241,11 @@ public:
 		debugdraw::text(10, 36, xstr_format("camera.right = %.2g %.2g %.2g", camera.side.x, camera.side.y, camera.side.z), Color(255, 0, 0));
 		debugdraw::text(10, 48, xstr_format("frame_delta = %g", params.framedelta_raw_msec), Color(255, 255, 255));
 		debugdraw::text(10, 60, xstr_format("scene graph nodes = %i", total_scene_nodes_visited), Color(128, 128, 255));
-		debugdraw::update(params.step_interval_seconds);
+
 	}
 
 	virtual void tick( kernel::Params & params )
 	{
-		process_reload_queue();
-
 //		renderer::driver()->render_target_activate(rt);
 //		{
 //			RenderStream s;
@@ -587,7 +279,7 @@ public:
 		
 
 		
-		BaseVar::render_values(10, 72);
+//		BaseVar::render_values(10, 72);
 		{
 			glm::mat4 modelview;
 			debugdraw::render(modelview, camera.matCamProj, params.render_width, params.render_height);
@@ -596,12 +288,8 @@ public:
 	
 	virtual void shutdown( kernel::Params & params )
 	{
-#ifdef USE_WEBSERVER
-		DESTROY(CivetServer, server);
-#endif
 		renderer::driver()->render_target_destroy(rt);
 		DESTROY(Node, root);
-		debugdraw::shutdown();
 	}
 };
 
