@@ -135,8 +135,6 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
-		
-		
 		character = physics::create_character_controller(btVector3(0, 2, 0), false);
 
 		root = CREATE(scenegraph::Node);

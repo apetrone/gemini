@@ -277,7 +277,7 @@ namespace kernel
 		params.window_width = 0;
 		params.window_height = 0;
 		params.step_alpha = 0;
-		params.step_interval_seconds = 1/60.0f;
+		params.step_interval_seconds = 0;
 		
 		// the kernel is ACTIVE here; callbacks after config/start may modify this
 		_kernel->set_active(true);
@@ -305,6 +305,8 @@ namespace kernel
 		// load boot config
 		_internal::BootConfig boot_config;
 		_internal::load_boot_config(boot_config);
+		
+		params.step_interval_seconds = (1.0f/(float)boot_config.physics_tick_rate);
 		
 		// load application
 		result = load_application(boot_config.kernel_name());
