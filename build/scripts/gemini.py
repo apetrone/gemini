@@ -250,6 +250,7 @@ def get_tools(target_platform, libgemini):
 	#
 	libfbx_roots = {
 		"macosx": "lib/clang/${CONFIGURATION}",
+		"linux": "lib/gcc4/${ARCHITECTURE}/${CONFIGURATION}",
 		"windows": "lib/vs2013/${ARCHITECTURE}/${CONFIGURATION}"
 	}
 	libfbx_names = {
