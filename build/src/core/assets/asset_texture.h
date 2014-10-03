@@ -27,7 +27,7 @@
 
 #include "assets.h"
 
-#include "renderer.h"
+#include "renderer/renderer.h"
 
 namespace assets
 {

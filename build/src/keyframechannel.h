@@ -23,6 +23,7 @@
 
 #include <slim/xlog.h>
 
+#include <gemini/typedefs.h>
 #include <gemini/util/fixedarray.h>
 
 //#include "color.h"

@@ -23,6 +23,18 @@
 
 #include <gemini/typedefs.h>
 
+#ifdef Success
+	#undef Success
+#endif
+
+#ifdef Failure
+	#undef Failure
+#endif
+
+#ifdef Warning
+	#undef Warning
+#endif
+
 namespace core
 {
 	// generic error struct instead of trying to organize various int
