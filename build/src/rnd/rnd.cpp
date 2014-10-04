@@ -33,6 +33,13 @@ using namespace std;
 #if PLATFORM_MACOSX
 	#include <OpenGL/OpenGL.h>
 	#include <OpenGL/gl.h>
+#elif PLATFORM_LINUX
+	#if PLATFORM_USE_GLES2
+		#include <GLES2/gl2.h>
+	#else
+		#include <GL/gl.h>
+		#include <GL/glx.h>
+	#endif
 #else
 	#error Not implemented on this platform.
 #endif
