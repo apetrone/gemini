@@ -26,6 +26,11 @@
 #include <gemini/mathlib.h>
 #include "keyframechannel.h"
 
+// forward declared, because including physics.h wasn't working.
+namespace physics
+{
+	class RigidBody;
+}
 
 namespace scenegraph
 {
@@ -64,6 +69,12 @@ namespace scenegraph
 		glm::vec3 translation;
 
 		std::string name;
+		
+		
+		// TODO: this probably shouldn't live here
+		// but until I find a better spot to place it
+		// this is where it is
+		physics::RigidBody* rigidbody;
 		
 		NodeVector children;
 		Node* parent;

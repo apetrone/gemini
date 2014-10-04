@@ -46,6 +46,37 @@ namespace physics
 	// but for now, a single one will do.
 	CharacterController* _controller = 0;
 	
+	
+	class BulletRigidBody : public RigidBody
+	{
+	
+		
+	
+	public:
+	
+		btRigidBody* body;
+	
+	
+		BulletRigidBody() : body(nullptr)
+		{
+			
+		}
+		
+		virtual void position(const glm::vec3& position)
+		{
+			
+		}
+		
+		virtual glm::vec3 position() const
+		{
+			glm::vec3 pos;
+			
+			return pos;
+		}
+	};
+	
+	
+	
 	void DebugPhysicsRenderer::drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color )
 	{
 		Color c = Color::fromFloatPointer( &color[0], 3 );
@@ -276,7 +307,7 @@ namespace physics
 		}
 	} // player_move
 
-	void create_physics_for_mesh(assets::Mesh* mesh)
+	RigidBody* create_physics_for_mesh(assets::Mesh* mesh)
 	{
 		bool use_quantized_bvh_tree = true;
 		btBvhTriangleMeshShape * trishape = 0;
@@ -296,7 +327,8 @@ namespace physics
 			return;
 		}
 		
-
+		BulletRigidBody* rb = 0;
+		rb = CREATE(BulletRigidBody);
 		
 		for( uint32_t i = 0; i < mesh->geometry.size(); ++i )
 		{
@@ -320,10 +352,13 @@ namespace physics
 			btDefaultMotionState * myMotionState = new btDefaultMotionState( xf );
 			btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, myMotionState, trishape, localInertia );
 			btRigidBody * body = new btRigidBody( rbInfo );
+			rb->body = body;
 			body->setCollisionFlags( body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT );
 			
 			collision_shapes.push_back(trishape);
 			dynamics_world->addRigidBody(body);
 		}
+		
+		return rb;
 	} // create_physics_for_mesh
 }; // namespace physics

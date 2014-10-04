@@ -46,7 +46,15 @@ namespace physics
 		}
 	};
 
-
+	// abstract physics body
+	class RigidBody
+	{
+	public:
+		virtual ~RigidBody() {}
+		
+		virtual void position(const glm::vec3& position) = 0;
+		virtual glm::vec3 position() const = 0;
+	};
 
 #define BTVECTOR3_TO_VEC3( v ) glm::vec3( v.x(), v.y(), v.z() )
 	class DebugPhysicsRenderer : public btIDebugDraw
@@ -72,6 +80,6 @@ namespace physics
 	CharacterController* create_character_controller(const btVector3& spawnLocation, bool addActionToWorld);
 	void copy_ghost_to_camera(btPairCachingGhostObject* ghost, Camera& cam);
 	void player_move(CharacterController* character, Camera& camera, const MovementCommand& command);
-	void create_physics_for_mesh(assets::Mesh* mesh);
+	RigidBody* create_physics_for_mesh(assets::Mesh* mesh);
 	
 }; // namespace physics

@@ -54,6 +54,7 @@ namespace scenegraph
 		parent = 0;
 		type = NODE;
 		attributes = 0;
+		rigidbody = 0;
 	}
 	
 	Node::Node(const Node& other)
@@ -76,11 +77,13 @@ namespace scenegraph
 		world_transform = other.world_transform;
 		
 		parent = other.parent;
+		rigidbody = other.rigidbody;
 	}
 	
 	Node::~Node()
 	{
 		clear();
+		DESTROY(RigidBody, rigidbody);
 	}
 	
 	void Node::add_child(Node* child)
@@ -149,6 +152,11 @@ namespace scenegraph
 		else
 		{
 			world_transform = local_to_world;
+		}
+		
+		if (rigidbody)
+		{
+			rigidbody->position(translation);
 		}
 		
 		while (start != end)
@@ -276,7 +284,7 @@ namespace scenegraph
 			
 			if (build_physics_from_mesh)
 			{
-				physics::create_physics_for_mesh(mesh);
+				node->rigidbody = physics::create_physics_for_mesh(mesh);
 			}
 			//
 			//			if (skel_node)
