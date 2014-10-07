@@ -5,8 +5,9 @@ from pegasus.models import Product, ProductType, Dependency
 
 DEPENDENCIES_FOLDER = "dependencies"
 DESKTOP = ["macosx", "linux", "windows"]
-BLACKSMITH_PATH = "../tools/blacksmith/blacksmith.py"
-COMMON_PRODUCT_ROOT = "latest/bin/${CONFIGURATION}_${ARCHITECTURE}"
+#BLACKSMITH_PATH = "../tools/blacksmith/blacksmith.py"
+COMMON_PRODUCT_ROOT = "bin/${CONFIGURATION}_${ARCHITECTURE}"
+COMMON_LIB_ROOT = "lib/${CONFIGURATION}_${ARCHITECTURE}"
 
 # dependencies
 libsdl = Dependency(file="sdl2.py",
@@ -330,7 +331,7 @@ def get_libgemini():
 	#libgemini.defines += [
 	#	"GEMINI_USE_SDL2=1"
 	#]
-	libgemini.product_root = "latest/lib/${CONFIGURATION}_${ARCHITECTURE}"
+	libgemini.product_root = COMMON_LIB_ROOT
 
 
 
@@ -420,9 +421,9 @@ def products(arguments, **kwargs):
 			"src/core/audio"
 		]
 
-		gemini.prebuild_commands = [
-			"python %s -c ../assets/desktop.conf" % (BLACKSMITH_PATH)
-		]
+		#gemini.prebuild_commands = [
+		#	"python %s -c ../assets/desktop.conf" % (BLACKSMITH_PATH)
+		#]
 
 		xwl_params = []
 		if target_platform.get() == "linux":
@@ -490,9 +491,9 @@ def products(arguments, **kwargs):
 
 
 	iphoneos = gemini.layout(platform="iphoneos")
-	iphoneos.prebuild_commands += [
-		"python %s -c ../assets/ios.conf -y" % (BLACKSMITH_PATH)
-	]
+	# iphoneos.prebuild_commands += [
+	# 	"python %s -c ../assets/ios.conf -y" % (BLACKSMITH_PATH)
+	# ]
 
 	iphoneos.sources += [
 		"src/core/audio/audio_extaudio_decoder.*"
