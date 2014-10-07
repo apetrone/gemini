@@ -77,7 +77,7 @@ namespace core
 		} // root_directory
 		
 		static char _content_directory[ MAX_PATH_SIZE ];
-		void content_directory( const char * path, int size )
+		void content_directory( const char * path )
 		{
 			memset( _content_directory, 0, MAX_PATH_SIZE );
 			xstr_ncpy( _content_directory, path, xstr_len(path) );
@@ -208,6 +208,21 @@ namespace core
 			return (result == 0) && ((stFileInfo.st_mode & S_IFMT) == S_IFDIR);
 			return false;
 		} // directory_exists
+		
+		void construct_content_directory(StackString<MAX_PATH_SIZE>& path)
+		{
+			path = root_directory();
+#if PLATFORM_LINUX || PLATFORM_WINDOWS
+	#error Not yet implemented.
+#elif PLATFORM_MACOSX || PLATFORM_IPHONEOS
+			// On Mac/iOS, the root directory points to the app bundle
+			path.append(PATH_SEPARATOR_STRING);
+			path.append("Resources");
+			return;
+#else
+	#error Not yet implemented.
+#endif
+		}
 		
 		char * file_to_buffer( const char * filename, char * buffer, size_t * buffer_length, bool path_is_relative )
 		{

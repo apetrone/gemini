@@ -22,11 +22,14 @@
 #include <gemini/typedefs.h>
 #include <Cocoa/Cocoa.h>
 #include <CoreFoundation/CoreFoundation.h>
- 
+
+#include "kernel.h"
+
 int main( int argc, char ** argv )
 {
 	// this is called here to initialize before we even enter Cocoa.
 	// the shutdown is called in the appdelegate: applicationWillTerminate
 	memory::startup();
+	kernel::parse_commandline(argc, argv);
 	return NSApplicationMain(argc, (const char**)argv);
 }

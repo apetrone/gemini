@@ -32,7 +32,6 @@
 #include <gemini/util/datastream.h>
 #include "image.h"
 
-
 namespace renderer
 {
 	enum DriverType
@@ -112,8 +111,25 @@ namespace renderer
 		CULLMODE_BACK,
 	}; // CullMode
 	
+	
+	
+	struct RenderSettings
+	{
+		// enable gamma correct rendering
+		bool gamma_correct;
+		
+		// try to establish some sane defaults
+		RenderSettings() :
+		gamma_correct(false)
+		{
+		}
+		
+	};
+	
+	
+	
 	// returns 0 on failure, 1 on success
-	int startup( DriverType driver );
+	int startup( DriverType driver, const RenderSettings& settings );
 	void shutdown();
 
 	
@@ -331,21 +347,6 @@ namespace renderer
 namespace renderer
 {
 	struct VertexStream;
-	
-	
-	struct RenderSettings
-	{
-		// enable gamma correct rendering
-		bool gamma_correct;
-		
-		// try to establish some sane defaults
-		RenderSettings() :
-			gamma_correct(false)
-		{
-		}
-		
-	};
-	
 	
 	// This interface can be derived for each new platform
 	class RenderDevice

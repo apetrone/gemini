@@ -157,7 +157,10 @@ public:
 		scenegraph::Node* ground = add_mesh_to_root(root, "models/powergrid", true);
 		
 		scenegraph::Node* generator = add_mesh_to_root(root, "models/generator_core", true);
-		generator->translation = glm::vec3(4, 0, -10);
+		if (generator)
+		{
+			generator->translation = glm::vec3(4, 0, -10);
+		}
 
 		entity_startup();
 	

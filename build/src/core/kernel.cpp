@@ -26,6 +26,7 @@
 #include <gemini/core.h>
 #include <gemini/platform.h>
 #include <gemini/util/configloader.h>
+#include <gemini/core/filesystem.h>
 
 #include <slim/xlog.h>
 #include <slim/xtime.h>
@@ -53,6 +54,24 @@ namespace kernel
 	IKernel * _kernel = 0;
 	IApplication * _active_application = 0;
 
+	struct Settings
+	{
+		StackString<64> kernel_name;
+		uint32_t physics_tick_rate;
+		int32_t debugdraw_max_primitives;
+		uint32_t enable_asset_reloading : 1;
+		
+		renderer::RenderSettings render_settings;
+		
+		Settings()
+		{
+			// setup sane defaults
+			physics_tick_rate = 60;
+			debugdraw_max_primitives = 2048;
+			enable_asset_reloading = 0;
+		}
+	};
+
 	namespace _internal
 	{
 		struct EventHooks
@@ -67,7 +86,7 @@ namespace kernel
 		}
 		
 		EventHooks _event_hooks;
-		
+		std::string game_path;
 		
 		ApplicationCreatorByString & creator_map()
 		{
@@ -160,33 +179,30 @@ namespace kernel
 			TimeStepFilter tsa;
 		};
 		
-		
-		struct BootConfig
+		util::ConfigLoadStatus load_render_config(const Json::Value& root, void* data)
 		{
-			StackString<64> kernel_name;
-			uint32_t physics_tick_rate;
-			int32_t debugdraw_max_primitives;
-			uint32_t enable_asset_reloading : 1;
+			renderer::RenderSettings* settings = static_cast<renderer::RenderSettings*>(data);
 			
-			BootConfig()
+			// TODO: there should be a better way to do this?
+			if (!root["gamma_correct"].isNull())
 			{
-				// setup sane defaults
-				physics_tick_rate = 60;
-				debugdraw_max_primitives = 2048;
-				enable_asset_reloading = 0;
+				settings->gamma_correct = root["gamma_correct"].asBool();
 			}
-		};
+			
+			return util::ConfigLoad_Success;
+		}
 		
-		
-		util::ConfigLoadStatus boot_conf_loader( const Json::Value & root, void * data )
+		util::ConfigLoadStatus settings_conf_loader( const Json::Value & root, void * data )
 		{
-			BootConfig * cfg = (BootConfig*)data;
+			util::ConfigLoadStatus result = util::ConfigLoad_Success;
+		
+			kernel::Settings * cfg = (kernel::Settings*)data;
 			if ( !cfg )
 			{
 				return util::ConfigLoad_Failure;
 			}
 			
-			LOGV( "loading boot.conf...\n" );
+			LOGV( "loading settings...\n" );
 			const Json::Value& kernel_name = root["kernel_name"];
 			if (!kernel_name.isNull())
 			{
@@ -212,21 +228,28 @@ namespace kernel
 			}
 		
 		
-			return util::ConfigLoad_Success;
+			const Json::Value& renderer = root["renderer"];
+			if (!renderer.isNull())
+			{
+				// load renderer settings
+				result = load_render_config(renderer, &cfg->render_settings);
+			}
+		
+			return result;
 		}
 		
-		bool load_boot_config( BootConfig & boot_config )
+		bool load_config( kernel::Settings& config )
 		{
-			bool success = util::json_load_with_callback( "conf/boot.conf", boot_conf_loader, &boot_config, true );
+			bool success = util::json_load_with_callback( "conf/settings.conf", settings_conf_loader, &config, true );
 			if ( !success )
 			{
-				LOGV( "Unable to locate boot.conf.\n" );
+				LOGV( "Unable to locate settings.conf.\n" );
 				// load sane defaults
-				boot_config.kernel_name = "HelloWorld";
+				config.kernel_name = "HelloWorld";
 			}
 			
 			return success;
-		} // load_boot_config
+		} // load_config
 
 		State _kernel_state;
 	}; // namespace _internal
@@ -298,29 +321,59 @@ namespace kernel
 		// perform any startup duties here before we init the core
 		_kernel->startup();
 		
+		//
+		// setup our file system...
+		StackString< MAX_PATH_SIZE > root_path;
+		core::Result result = platform::program_directory(&root_path[0], root_path.max_size());
+		assert(!result.failed());
+		
+		// set the startup directory: where the binary lives
+		core::filesystem::root_directory(&root_path[0], root_path.max_size());
+		
+		// if no game is specified on the command line, construct the content path
+		// from the current root directory
+		StackString<MAX_PATH_SIZE> content_path;
+		if (_internal::game_path.empty())
+		{
+			core::filesystem::construct_content_directory(content_path);
+		}
+		else
+		{
+			// dev builds (passed by -game) are located at:
+			// "<game_path>/builds/<PLATFORM_NAME>"
+			content_path = _internal::game_path.c_str();
+			content_path.append(PATH_SEPARATOR_STRING);
+			content_path.append("builds");
+			content_path.append(PATH_SEPARATOR_STRING);
+			content_path.append(PLATFORM_NAME);
+		}
+		
+		// set the content path
+		core::filesystem::content_directory(content_path());
+		
 		// startup duties; lower-level system init
-		core::Result result = core::startup();
+		result = core::startup();
 		if (result.failed())
 		{
 			fprintf(stderr, "Fatal error: %s\n", result.message);
 			core::shutdown();
 			return kernel::CoreFailed;
 		}
-		
+				
 		// ask the kernel to register services
 		_kernel->register_services();
 		
 		// load boot config
-		_internal::BootConfig boot_config;
-		_internal::load_boot_config(boot_config);
+		kernel::Settings config;
+		_internal::load_config(config);
 		
-		params.step_interval_seconds = (1.0f/(float)boot_config.physics_tick_rate);
+		params.step_interval_seconds = (1.0f/(float)config.physics_tick_rate);
 		
 		// load application
-		result = load_application(boot_config.kernel_name());
+		result = load_application(config.kernel_name());
 		if (result.failed())
 		{
-			fprintf(stderr, "Fatal error loading application '%s' -> %s, aborting.\n", boot_config.kernel_name(), result.message);
+			fprintf(stderr, "Fatal error loading application '%s' -> %s, aborting.\n", config.kernel_name(), result.message);
 			_kernel->set_active(false);
 			return kernel::ApplicationFailure;
 		}
@@ -347,7 +400,7 @@ namespace kernel
 		// try to setup the renderer
 		if (config_result != kernel::Application_NoWindow)
 		{
-			int render_result =	renderer::startup(renderer::Default);
+			int render_result =	renderer::startup(renderer::Default, config.render_settings);
 			if ( render_result == 0 )
 			{
 				LOGE("renderer initialization failed!\n");
@@ -356,7 +409,7 @@ namespace kernel
 
 			assets::startup();
 			font::startup();
-			debugdraw::startup(boot_config.debugdraw_max_primitives);
+			debugdraw::startup(config.debugdraw_max_primitives);
 		}
 		
 		// initialize subsystems
@@ -364,7 +417,7 @@ namespace kernel
 		input::startup();
 		physics::startup();
 		
-		if (boot_config.enable_asset_reloading)
+		if (config.enable_asset_reloading)
 		{
 			hotloading::startup();
 		}
@@ -459,6 +512,18 @@ namespace kernel
 		_kernel->post_tick();
 	} // tick
 	
+	void parse_commandline(int argc, char** argv)
+	{
+		const char* arg;
+		for(size_t i = 0; i < argc; ++i)
+		{
+			arg = argv[i];
+			if (std::string(arg) == "-game")
+			{
+				_internal::game_path = std::string(argv[i+1]);
+			}
+		}
+	}
 	
 	void assign_listener_for_eventtype( kernel::EventType event_type, void * listener )
 	{

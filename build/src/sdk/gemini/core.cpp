@@ -28,8 +28,6 @@
 
 #include <gemini/platform.h>
 
-#include <gemini/util/stackstring.h>
-
 #include <slim/xlog.h>
 #include <slim/xtime.h>
 
@@ -39,14 +37,6 @@ namespace core
 	{
 		#define GEMINI_LOG_PATH "logs"
 		const unsigned int GEMINI_DATETIME_STRING_MAX = 128;
-		
-		void set_content_directory_from_root( StackString<MAX_PATH_SIZE> & root )
-		{
-#if !TARGET_OS_IPHONE
-			filesystem::truncate_string_at_path( &root[0], "bin" );
-#endif
-			filesystem::content_directory( &root[0], root.max_size() );
-		}
 				
 		static xlog_t _system_log;
 		// log handler function declarations
@@ -164,10 +154,6 @@ namespace core
 			xlog_close( &_system_log );
 		} // close_log_handlers
 	}; // namespace _internal
-	
-	
-
-	
 
 	
 	Result startup()
@@ -178,24 +164,7 @@ namespace core
 			fprintf(stderr, "platform startup failed! %s\n", result.message);
 			return result;
 		}
-		
-		//
-		// setup our file system...
-		StackString< MAX_PATH_SIZE > fullpath;
-		result = platform::program_directory(&fullpath[0], fullpath.max_size());
-		if (result.failed())
-		{
-			fprintf(stderr, "failed to get the program directory!\n");
-			return result;
-		}
 
-		// set the startup directory: where the binary lives
-		filesystem::root_directory(&fullpath[0], fullpath.max_size());
-		
-		// set the content directory
-		_internal::set_content_directory_from_root(fullpath);
-
-		
 		// open logs
 		result = _internal::open_log_handlers();
 		if (result.failed())

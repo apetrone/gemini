@@ -154,7 +154,7 @@ namespace kernel
 	void shutdown();
 	void update();
 	void tick();
-	
+	void parse_commandline(int argc, char** argv);
 
 	IKernel * instance();
 

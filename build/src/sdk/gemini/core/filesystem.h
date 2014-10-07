@@ -23,6 +23,8 @@
 
 #include <gemini/typedefs.h>
 
+#include <gemini/util/stackstring.h>
+
 namespace core
 {
 	struct File
@@ -56,12 +58,18 @@ namespace core
 		void startup();
 		void shutdown();
 		
+		// directory where the binary actually resides
+		// this may vary between operating systems as some
+		// will bundle their assets (MacOS X/iOS)
 		void root_directory(char* path, int size);
 		const char* root_directory();
 		
 		// the content directory is where resources for this application can be found
-		void content_directory(const char* path, int size);
+		void content_directory( const char* path );
 		const char * content_directory();
+		
+		// return the platform content directory
+		void construct_content_directory(StackString<MAX_PATH_SIZE>& path);
 		
 		// Load a file into buffer. The pointer is returned.
 		// bufferLength will contain the size of the buffer
