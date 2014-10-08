@@ -41,6 +41,7 @@
 #include "debugdraw.h"
 #include "physics.h"
 #include "hotloading.h"
+#include "entity.h"
 
 #if PLATFORM_LINUX
 	#include <stdlib.h> // for qsort
@@ -446,9 +447,11 @@ namespace kernel
 			DESTROY(IApplication, _active_application);
 		}
 
-		hotloading::shutdown();
-
 		// system cleanup
+		hotloading::shutdown();
+		script::shutdown();
+		entity_shutdown();
+		
 		physics::shutdown();
 		debugdraw::shutdown();
 		font::shutdown();
@@ -456,7 +459,7 @@ namespace kernel
 		input::shutdown();
 		audio::shutdown();
 		renderer::shutdown();
-		script::shutdown();
+
 		core::shutdown();
 		
 		// shutdown, cleanup

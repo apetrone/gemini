@@ -23,6 +23,13 @@
 
 #include "entity.h"
 
+EntityListType _entity_list;
+
+EntityListType& entity_list()
+{
+	return _entity_list;
+}
+
 void entity_startup()
 {
 	Sqrat::RootTable root( script::get_vm() );
@@ -76,8 +83,8 @@ void entity_step()
 	}
 	
 	// tick entities
-	EntityVector::iterator it =	entity_list<Entity>().objects.begin();
-	EntityVector::iterator end = entity_list<Entity>().objects.end();
+	EntityVector::iterator it =	entity_list().objects.begin();
+	EntityVector::iterator end = entity_list().objects.end();
 	for( ; it != end; ++it )
 	{
 		(*it)->step( kernel::instance()->parameters().step_interval_seconds );
@@ -87,16 +94,16 @@ void entity_step()
 void entity_deferred_delete( bool only_deferred )
 {
 	// trim entities flagged for removal
-	EntityVector::iterator it = entity_list<Entity>().objects.begin();
-	EntityVector::iterator end = entity_list<Entity>().objects.end();
+	EntityVector::iterator it = entity_list().objects.begin();
+	EntityVector::iterator end = entity_list().objects.end();
 	for( ; it != end; ++it )
 	{
 		Entity * ent = (*it);
 		if ((only_deferred && (ent->flags & Entity::EF_DELETE_INSTANCE)) || !only_deferred )
 		{
-			//				LOGV( "removing flagged entity: %p\n", ent );
-			it = entity_list<Entity>().objects.erase( it );
-			//				ent->flags &= ~Entity::EF_DELETE_INSTANCE;
+//			LOGV( "removing flagged entity: %p\n", ent );
+			it = entity_list().objects.erase( it );
+//			ent->flags &= ~Entity::EF_DELETE_INSTANCE;
 			delete ent;
 		}
 	}
@@ -116,8 +123,8 @@ void entity_tick()
 	}
 	
 	// tick entities
-	EntityVector::iterator it =	entity_list<Entity>().objects.begin();
-	EntityVector::iterator end = entity_list<Entity>().objects.end();
+	EntityVector::iterator it =	entity_list().objects.begin();
+	EntityVector::iterator end = entity_list().objects.end();
 	Entity * ent;
 	for( ; it != end; ++it )
 	{
@@ -134,7 +141,8 @@ void entity_tick()
 
 void entity_shutdown()
 {
-	
+	LOGV("entity_shutdown!\n");
+	entity_list().clear();
 }
 
 
@@ -142,9 +150,9 @@ Entity::Entity()
 {
 	
 	this->type = Logic;
-	this->id = entity_list<Entity>().count();
+	this->id = entity_list().count();
 	this->flags = 0;
-	entity_list<Entity>().add( this );
+	entity_list().add( this );
 	//	LOGV( "Entity() - %p, %zu\n", this, this->id );
 	
 	sq_resetobject( &instance );
@@ -168,8 +176,8 @@ Entity::Entity()
 
 Entity::~Entity()
 {
-	//	LOGV( "~Entity() - %p, %zu\n", this, this->id );
-	//	entity_list<Entity>().remove( this );
+	LOGV( "~Entity() - %p, %zu\n", this, this->id );
+	entity_list().remove( this );
 } // ~Entity
 
 void Entity::step( float delta_seconds )

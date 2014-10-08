@@ -270,7 +270,7 @@ public:
 	{
 		DESTROY(Node, root);
 		
-		entity_shutdown();
+//		entity_shutdown();
 	}
 };
 

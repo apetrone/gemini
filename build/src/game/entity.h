@@ -315,7 +315,11 @@ public:
 template <class Type>
 struct EntityList
 {
-	typedef std::vector< Type*, GeminiAllocator<Type*> > EntityVectorType;
+// There's definitely an issue where the vector isn't deallocating
+// using the custom allocator. This may be my mis-understanding of the usage
+// pattern though. For now, switching this over to non GeminiAllocator.
+//	typedef std::vector< Type*, GeminiAllocator<Type*> > EntityVectorType;
+	typedef std::vector< Type* > EntityVectorType;
 	EntityVectorType objects;
 	
 	void add( Type * object )
@@ -331,7 +335,7 @@ struct EntityList
 			
 			if ( obj == object )
 			{
-				//				LOGV( "removing from entity list\n" );
+//				LOGV( "removing from entity list\n" );
 				objects.erase( it );
 				break;
 			}
@@ -386,12 +390,15 @@ struct EntityList
 }; // EntityList
 
 
-template <class Type>
-EntityList<Type> & entity_list()
-{
-	static EntityList<Type> _entity_list;
-	return _entity_list;
-} // entity_list
+typedef EntityList<Entity> EntityListType;
+EntityListType& entity_list();
+
+//template <class Type>
+//EntityList<Type> & entity_list()
+//{
+//	static EntityList<Type> _entity_list;
+//	return _entity_list;
+//} // entity_list
 
 
 
