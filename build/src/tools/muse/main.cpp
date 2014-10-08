@@ -112,6 +112,7 @@ namespace tools
 		rs.rewind();
 		
 		xfile_t out = xfile_open(output_path(), XF_WRITE);
+		LOGV("writing destination file: %s\n", output_path());
 		if (xfile_isopen(out))
 		{
 			xfile_write(out, rs.get_data(), rs.get_data_size(), 1);
