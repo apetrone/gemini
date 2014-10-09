@@ -67,10 +67,6 @@ struct Entity
 	uint8_t type;
 	uint32_t flags;
 	
-	
-	glm::vec3 position;
-	glm::quat rotation;
-	
 	Entity();
 	virtual ~Entity();
 	
@@ -87,8 +83,8 @@ struct Entity
 	virtual void native_step( float delta_seconds );
 	virtual void native_tick();
 	
-	void set_position(const glm::vec3& position) { this->position = position; }
-	glm::vec3 get_position() { return position; }
+	void set_position(const glm::vec3& position);
+	glm::vec3 get_position() const;
 	
 //	assets::Mesh* mesh;
 	scenegraph::Node* node;

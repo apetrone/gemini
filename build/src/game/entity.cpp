@@ -49,7 +49,7 @@ void entity_startup()
 	
 	// for now, all these are going to be bolted onto the Entity class
 	entity.Func("set_model", &Entity::set_model);
-//	entity.Prop("position", &Entity::get_position, &Entity::set_position);
+	entity.Prop("position", &Entity::get_position, &Entity::set_position);
 //	entity.Prop("rotation", &Entity::get_rotation, &Entity::set_rotation);
 	
 	
@@ -263,6 +263,27 @@ void Entity::native_tick()
 {
 	//	LOGV( "Entity::native_tick\n" );
 } // native_tick
+
+void Entity::set_position(const glm::vec3& position)
+{
+	if (node)
+	{
+		node->translation = position;
+		// TODO: this should also translate the physics body
+	}
+}
+
+glm::vec3 Entity::get_position() const
+{
+	if (node)
+	{
+		return node->translation;
+	}
+	else
+	{
+		return glm::vec3(0.0f, 0.0f, 0.0f);
+	}
+}
 
 void Entity::set_model(const char* path)
 {
