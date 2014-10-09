@@ -154,15 +154,17 @@ public:
 		// capture the mouse
 		kernel::instance()->capture_mouse( true );
 		
-		scenegraph::Node* ground = add_mesh_to_root(root, "models/powergrid", true);
+//		scenegraph::Node* ground = add_mesh_to_root(root, "models/power_grid", true);
 		
-		scenegraph::Node* generator = add_mesh_to_root(root, "models/generator_core", true);
-		if (generator)
-		{
-			generator->translation = glm::vec3(4, 0, -10);
-		}
+//		scenegraph::Node* generator = add_mesh_to_root(root, "models/generator_core", true);
+//		if (generator)
+//		{
+//			generator->translation = glm::vec3(4, 0, -10);
+//		}
 
 		entity_startup();
+	
+		entity_set_scene_root(root);
 	
 		script::execute_file("scripts/project_chimera.nut");
 		
@@ -213,7 +215,7 @@ public:
 		camera.update_view();
 
 //		physics::debug_draw();
-
+		debugdraw::axes(glm::mat4(1.0), 1.0f);
 		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
 		debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", camera.eye_position.x, camera.eye_position.y, camera.eye_position.z), Color(255, 0, 255));
 		debugdraw::text(10, 24, xstr_format("camera.view = %.2g %.2g %.2g", camera.view.x, camera.view.y, camera.view.z), Color(128, 128, 255));
