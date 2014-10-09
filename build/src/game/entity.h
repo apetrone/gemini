@@ -34,6 +34,9 @@
 
 #include "kernel.h"
 
+#include "core/assets/asset_mesh.h"
+#include "scene_graph.h"
+
 enum EntityType
 {
 	Logic,
@@ -64,6 +67,10 @@ struct Entity
 	uint8_t type;
 	uint32_t flags;
 	
+	
+	glm::vec3 position;
+	glm::quat rotation;
+	
 	Entity();
 	virtual ~Entity();
 	
@@ -79,6 +86,18 @@ struct Entity
 	void set_name( const std::string & object_name ) { this->name = object_name; }
 	virtual void native_step( float delta_seconds );
 	virtual void native_tick();
+	
+	void set_position(const glm::vec3& position) { this->position = position; }
+	glm::vec3 get_position() { return position; }
+	
+//	assets::Mesh* mesh;
+	scenegraph::Node* node;
+		
+	// functions for this script object
+	void set_model(const char* path);
+	
+
+	
 }; // Entity
 
 
@@ -517,3 +536,4 @@ void entity_post_script_load();
 void entity_shutdown();
 void entity_step();
 void entity_tick();
+void entity_set_scene_root(scenegraph::Node* root);

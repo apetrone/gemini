@@ -23,7 +23,10 @@
 
 #include "entity.h"
 
+
+
 EntityListType _entity_list;
+scenegraph::Node* _entity_root = 0;
 
 EntityListType& entity_list()
 {
@@ -36,11 +39,20 @@ void entity_startup()
 	
 	// bind Entity to scripting language
 	Sqrat::Class<Entity, EntityAllocator<Entity> > entity( script::get_vm() );
-	entity.Func( "tick", &Entity::native_tick );
-	entity.Func( "step", &Entity::native_step );
 	entity.Var( "id", &Entity::id );
 	entity.Prop( "name", &Entity::get_name, &Entity::set_name );
-	entity.Func( "remove", &Entity::remove );
+		
+	entity.Func( "step", &Entity::native_step );	
+	entity.Func( "tick", &Entity::native_tick );
+	
+	entity.Func( "remove", &Entity::remove );	
+	
+	// for now, all these are going to be bolted onto the Entity class
+	entity.Func("set_model", &Entity::set_model);
+//	entity.Prop("position", &Entity::get_position, &Entity::set_position);
+//	entity.Prop("rotation", &Entity::get_rotation, &Entity::set_rotation);
+	
+	
 	
 	root.Bind( "Entity", entity );
 	
@@ -139,9 +151,15 @@ void entity_tick()
 	
 }
 
+void entity_set_scene_root(scenegraph::Node* root)
+{
+	_entity_root = root;
+}
+
 void entity_shutdown()
 {
 	LOGV("entity_shutdown!\n");
+	_entity_root = nullptr;
 	entity_list().clear();
 }
 
@@ -152,6 +170,9 @@ Entity::Entity()
 	this->type = Logic;
 	this->id = entity_list().count();
 	this->flags = 0;
+//	this->mesh = 0;
+	this->node = 0;
+	
 	entity_list().add( this );
 	//	LOGV( "Entity() - %p, %zu\n", this, this->id );
 	
@@ -242,3 +263,8 @@ void Entity::native_tick()
 {
 	//	LOGV( "Entity::native_tick\n" );
 } // native_tick
+
+void Entity::set_model(const char* path)
+{
+	this->node = scenegraph::add_mesh_to_root(_entity_root, path, true);
+}
