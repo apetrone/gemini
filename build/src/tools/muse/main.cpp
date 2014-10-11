@@ -58,6 +58,25 @@
 
 using namespace tools;
 
+struct ToolSettings
+{
+	// compress animation keys to reduce output size
+	bool compress_animation;
+
+	// flip UVs vertically
+	bool flip_vertically;
+
+	// bake transforms from hierarchy into geometry
+	bool bake_transforms;
+	
+	ToolSettings()
+	{
+		// some sane defaults?
+		compress_animation = false;
+		flip_vertically = false;
+		bake_transforms = true;
+	}
+};
 
 namespace tools
 {
@@ -92,6 +111,9 @@ namespace tools
 		
 		// TODO: add modifier to flip UVs vertically
 		
+		// TODO: bake transforms into geometry
+		
+		
 		// verify we can write the format
 		ext = output_path.extension();
 		const Extension<datamodel::Model> writer_extension = find_entry_for_extension<datamodel::Model>(ext);
@@ -118,8 +140,6 @@ namespace tools
 			xfile_write(out, rs.get_data(), rs.get_data_size(), 1);
 			xfile_close(out);
 		}
-
-
 
 		return core::Result(core::Result::Success);
 	}
