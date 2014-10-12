@@ -38,7 +38,7 @@
 #include "common.h"
 #include "common/extension.h"
 #include "datamodel/model.h"
-
+#include "datamodel/mesh.h"
 
 // include reader/writers
 #include "io_fbx.h"
@@ -81,9 +81,64 @@ struct ToolOptions
 
 namespace extensions
 {
-	core::Result bake_node_transforms(datamodel::Model* model)
+	void compose_matrix(glm::mat4& out, const glm::vec3& translation, const glm::quat& rotation, const glm::vec3& scale)
+	{
+		out = glm::translate(glm::mat4(1.0f), translation) *
+		glm::toMat4(rotation) *
+		glm::scale(glm::mat4(1.0f), scale);
+	}
+
+	void bake_geometry_transform(datamodel::Node* node, glm::mat4& parent_transform)
+	{
+		LOGV("node: %s\n", node->name.c_str());
+		
+		// local transform is from this node
+		glm::mat4 local_transform;
+		compose_matrix(local_transform, node->translation, node->rotation, node->scale);
+		
+		// reset transforms
+		node->translation = glm::vec3(0.0f, 0.0f, 0.0f);
+		node->rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+		node->scale = glm::vec3(1.0f, 1.0f, 1.0f);
+		
+		// world transform is the accumulated parent transform of this node
+		// multiplied by this node's local transform
+		glm::mat4 world_transform = parent_transform * local_transform;
+		
+
+		if (node->type == "mesh")
+		{
+			
+			assert(node->mesh != 0);
+			if (node->mesh)
+			{
+				LOGV("applying transform to mesh '%s'\n", node->name.c_str());
+				for(size_t v = 0; v < node->mesh->vertices.size(); ++v)
+				{
+					glm::vec3& vertex = node->mesh->vertices[v];
+					vertex = glm::vec3(world_transform * glm::vec4(vertex, 1.0f));
+				}
+			}
+		}
+		
+		for (auto& child : node->children)
+		{
+			bake_geometry_transform(child, world_transform);
+		}
+	}
+
+	core::Result bake_node_transforms(datamodel::Model& model)
 	{
 		core::Result result(core::Result::Success);
+		
+		glm::mat4 transform;
+
+		for (auto& child : model.root.children)
+		{
+			bake_geometry_transform(child, transform);
+		}
+		
+		
 		
 		return result;
 	}
@@ -139,7 +194,7 @@ namespace tools
 		// bake transforms into geometry nodes
 		if (options.bake_transforms)
 		{
-			
+			extensions::bake_node_transforms(model);
 		}
 		
 		
