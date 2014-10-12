@@ -58,7 +58,7 @@
 
 using namespace tools;
 
-struct ToolSettings
+struct ToolOptions
 {
 	// compress animation keys to reduce output size
 	bool compress_animation;
@@ -69,7 +69,7 @@ struct ToolSettings
 	// bake transforms from hierarchy into geometry
 	bool bake_transforms;
 	
-	ToolSettings()
+	ToolOptions()
 	{
 		// some sane defaults?
 		compress_animation = false;
@@ -77,6 +77,17 @@ struct ToolSettings
 		bake_transforms = true;
 	}
 };
+
+
+namespace extensions
+{
+	core::Result bake_node_transforms(datamodel::Model* model)
+	{
+		core::Result result(core::Result::Success);
+		
+		return result;
+	}
+}
 
 namespace tools
 {
@@ -92,7 +103,7 @@ namespace tools
 		register_extension<datamodel::Model>("model", ext);
 	}
 
-	core::Result convert_model(StackString<MAX_PATH_SIZE>& input_path, StackString<MAX_PATH_SIZE>& output_path)
+	core::Result convert_model(const ToolOptions& options, StackString<MAX_PATH_SIZE>& input_path, StackString<MAX_PATH_SIZE>& output_path)
 	{
 		datamodel::Model model;
 
@@ -105,15 +116,7 @@ namespace tools
 			LOGE("no reader found for extension: %s\n", ext.c_str());
 			return core::Result(core::Result::Failure, "Unable to read format");
 		}
-		
-		// TODO: compress animation keys
-		// This should eliminate duplicate values by merging them into a single key.
-		
-		// TODO: add modifier to flip UVs vertically
-		
-		// TODO: bake transforms into geometry
-		
-		
+				
 		// verify we can write the format
 		ext = output_path.extension();
 		const Extension<datamodel::Model> writer_extension = find_entry_for_extension<datamodel::Model>(ext);
@@ -127,6 +130,19 @@ namespace tools
 		util::MemoryStream mds;
 		mds.data = (uint8_t*)input_path();
 		reader->read(&model, mds);
+		
+		// TODO: compress animation keys
+		// This should eliminate duplicate values by merging them into a single key.
+		
+		// TODO: add modifier to flip UVs vertically
+		
+		// bake transforms into geometry nodes
+		if (options.bake_transforms)
+		{
+			
+		}
+		
+		
 		
 		util::ResizableMemoryStream rs;
 		writer->write(&model, rs);
@@ -148,6 +164,8 @@ namespace tools
 
 int main(int argc, char** argv)
 {
+	ToolOptions options;
+
 	tools::startup();
 	
 	register_types();
@@ -183,7 +201,7 @@ int main(int argc, char** argv)
 	output_filename = output_filename.append(input_file).remove_extension().append(".model");
 
 	// perform the conversion -- right now, we always assume it's a scene/model
-	core::Result result = tools::convert_model(input_filename, output_filename);
+	core::Result result = tools::convert_model(options, input_filename, output_filename);
 	if (result.failed())
 	{
 		LOGV("conversion failed: %s\n", result.message);
