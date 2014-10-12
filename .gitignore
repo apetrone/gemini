@@ -14,6 +14,7 @@
 *.pdb
 *.ilk
 *.vcproj
+*.vcxproj
 *.sln.cache
 *.sln
 *.user
@@ -25,6 +26,8 @@
 *.manifest*
 *.dep
 msbuild.*
+*.sdf
+*.opensdf
 
 *.log
 *.mode1v3
@@ -47,8 +50,7 @@ DerivedData
 **Makefile
 
 # project-specific
-build/obj/
-build/latest*
+build
 buildinfo.c
 *.cache
-**deps.lua
+*.filecache
