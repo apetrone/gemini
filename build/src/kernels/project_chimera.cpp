@@ -49,6 +49,10 @@
 
 #include "renderer/scenelink.h"
 
+
+#define LOCK_CAMERA_TO_CHARACTER 0
+
+
 using namespace physics;
 
 class ProjectChimera : public kernel::IApplication,
@@ -182,15 +186,17 @@ public:
 		command.right = input::state()->keyboard().is_down(input::KEY_D);
 		command.forward = input::state()->keyboard().is_down(input::KEY_W);
 		command.back = input::state()->keyboard().is_down(input::KEY_S);
+		
+#if LOCK_CAMERA_TO_CHARACTER
 		physics::player_move(character, camera, command);
-		
+#else
 		// if you want to move JUST the camera instead...
-//		camera.move_left(input::state()->keyboard().is_down(input::KEY_A));
-//		camera.move_right(input::state()->keyboard().is_down(input::KEY_D));
-//		camera.move_forward(input::state()->keyboard().is_down(input::KEY_W));
-//		camera.move_backward(input::state()->keyboard().is_down(input::KEY_S));
-//		camera.update_view();
-		
+		camera.move_left(input::state()->keyboard().is_down(input::KEY_A));
+		camera.move_right(input::state()->keyboard().is_down(input::KEY_D));
+		camera.move_forward(input::state()->keyboard().is_down(input::KEY_W));
+		camera.move_backward(input::state()->keyboard().is_down(input::KEY_S));
+		camera.update_view();
+#endif
 
 
 		// rotate physics body
@@ -199,11 +205,10 @@ public:
 		
 		worldTrans.setRotation(rotation);
 		character->getGhostObject()->setWorldTransform(worldTrans);
-		
-//		if (player)
-//		{
-			physics::copy_ghost_to_camera(character->getGhostObject(), camera);
-//		}
+
+#if LOCK_CAMERA_TO_CHARACTER
+		physics::copy_ghost_to_camera(character->getGhostObject(), camera);
+#endif
 		
 		
 		
@@ -214,7 +219,7 @@ public:
 		//camera.pos += glm::vec3(0, 2.5, 5);
 		camera.update_view();
 
-//		physics::debug_draw();
+		physics::debug_draw();
 		debugdraw::axes(glm::mat4(1.0), 1.0f);
 		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
 		debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", camera.eye_position.x, camera.eye_position.y, camera.eye_position.z), Color(255, 0, 255));

@@ -629,7 +629,7 @@ namespace script
 			std::string front = include_paths.top();
 			front.append(path);
 
-			//execute_file(front.c_str());
+			execute_file(front.c_str());
 		} // script_include
 		
 
