@@ -22,7 +22,7 @@
 #include <gemini/mem.h>
 
 #include "entity.h"
-
+#include "physics.h"
 
 
 EntityListType _entity_list;
@@ -172,6 +172,7 @@ Entity::Entity()
 	this->flags = 0;
 //	this->mesh = 0;
 	this->node = 0;
+	this->body = 0;
 	
 	entity_list().add( this );
 	//	LOGV( "Entity() - %p, %zu\n", this, this->id );
@@ -199,6 +200,11 @@ Entity::~Entity()
 {
 	LOGV( "~Entity() - %p, %zu\n", this, this->id );
 	entity_list().remove( this );
+	
+	if (this->body)
+	{
+		DESTROY(RigidBody, this->body);
+	}
 } // ~Entity
 
 void Entity::step( float delta_seconds )
@@ -285,7 +291,32 @@ glm::vec3 Entity::get_position() const
 	}
 }
 
+
+void load_mesh(scenegraph::Node* root, const char* path, scenegraph::Node*& node, physics::RigidBody*& body, bool build_physics_from_mesh = true)
+{
+	// 1. load the mesh from file
+	assets::Mesh* mesh = assets::meshes()->load_from_path(path);
+	if (mesh)
+	{
+		mesh->prepare_geometry();
+		
+		// clone the hierarchy to the renderable scene
+		node = clone_to_scene(mesh->scene_root, root);
+	}
+	else
+	{
+		LOGW("Unable to load model: %s\n", path);
+	}
+
+	// 2. if physics is to be used; generate physics body from mesh
+	if (mesh && build_physics_from_mesh)
+	{
+		body = physics::create_physics_for_mesh(mesh);
+	}
+}
+
 void Entity::set_model(const char* path)
 {
-	this->node = scenegraph::add_mesh_to_root(_entity_root, path, true);
+	load_mesh(_entity_root, path, this->node, this->body, true);
+	
 }

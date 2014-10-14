@@ -88,6 +88,7 @@ struct Entity
 	
 //	assets::Mesh* mesh;
 	scenegraph::Node* node;
+	physics::RigidBody* body;
 		
 	// functions for this script object
 	void set_model(const char* path);

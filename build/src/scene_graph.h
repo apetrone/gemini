@@ -111,7 +111,6 @@ namespace scenegraph
 	
 	// TODO: move these?
 	scenegraph::Node* clone_to_scene(scenegraph::Node* template_node, scenegraph::Node* root);
-	scenegraph::Node* add_mesh_to_root(scenegraph::Node* root, const char* path, bool build_physics_from_mesh);
 }; // namespace scenegraph
 
 

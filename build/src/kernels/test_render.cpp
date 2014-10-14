@@ -149,7 +149,7 @@ public:
 //		root->add_child(skydome);
 
 //		add_mesh_to_root(root, "models/future", false);
-		scenegraph::Node* ground = add_mesh_to_root(root, "models/plane", false);
+		//scenegraph::Node* ground = add_mesh_to_root(root, "models/plane", false);
 
 //		scenegraph::SkeletalNode* sn = CREATE(scenegraph::SkeletalNode);
 //		sn->load_mesh("models/test_yup", false, 0, character);
