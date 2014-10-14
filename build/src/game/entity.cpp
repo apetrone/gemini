@@ -284,19 +284,22 @@ void Entity::set_position(const glm::vec3& position)
 	{
 		// translate the physics body
 		body->set_world_position(position);
-		
+	}
+	else
+	{
+		node->translation = position;
 	}
 }
 
 glm::vec3 Entity::get_position() const
 {
-	if (node)
+	if (body)
+	{
+		return body->get_world_position();
+	}
+	else if (node)
 	{
 		return node->translation;
-	}
-	else
-	{
-		return glm::vec3(0.0f, 0.0f, 0.0f);
 	}
 }
 
@@ -320,7 +323,8 @@ void load_mesh(scenegraph::Node* root, const char* path, scenegraph::Node*& node
 	// 2. if physics is to be used; generate physics body from mesh
 	if (mesh && build_physics_from_mesh)
 	{
-		body = physics::create_physics_for_mesh(mesh);
+		float mass_kg = 0.0f;
+		body = physics::create_physics_for_mesh(mesh, mass_kg);
 	}
 }
 

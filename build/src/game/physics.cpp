@@ -313,12 +313,12 @@ namespace physics
 		}
 	} // player_move
 
-	RigidBody* create_physics_for_mesh(assets::Mesh* mesh)
+	RigidBody* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg)
 	{
 		bool use_quantized_bvh_tree = true;
 		btBvhTriangleMeshShape * trishape = 0;
 		btTransform xf;
-		btScalar mass(0);
+		btScalar mass(mass_kg);
 		btVector3 localInertia(0, 0, 0);
 		
 		if (!mesh)
