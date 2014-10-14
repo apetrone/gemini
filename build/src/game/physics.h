@@ -52,8 +52,8 @@ namespace physics
 	public:
 		virtual ~RigidBody() {}
 		
-		virtual void position(const glm::vec3& position) = 0;
-		virtual glm::vec3 position() const = 0;
+		virtual void set_world_position(const glm::vec3& position) = 0;
+		virtual glm::vec3 get_world_position() const = 0;
 	};
 
 #define BTVECTOR3_TO_VEC3( v ) glm::vec3( v.x(), v.y(), v.z() )

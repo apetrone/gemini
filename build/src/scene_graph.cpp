@@ -54,7 +54,6 @@ namespace scenegraph
 		parent = 0;
 		type = NODE;
 		attributes = 0;
-		rigidbody = 0;
 	}
 	
 	Node::Node(const Node& other)
@@ -77,13 +76,11 @@ namespace scenegraph
 		world_transform = other.world_transform;
 		
 		parent = other.parent;
-		rigidbody = other.rigidbody;
 	}
 	
 	Node::~Node()
 	{
 		clear();
-		DESTROY(RigidBody, rigidbody);
 	}
 	
 	void Node::add_child(Node* child)
@@ -130,6 +127,11 @@ namespace scenegraph
 	
 	void Node::update(float delta_seconds)
 	{
+
+	}
+	
+	void Node::update_transforms()
+	{
 		NodeVector::iterator start, end;
 		start = children.begin();
 		end = children.end();
@@ -140,11 +142,11 @@ namespace scenegraph
 		
 		glm::mat4 inv_pivot = glm::translate(glm::mat4(1.0), local_position);
 		glm::mat4 pivot = glm::translate(glm::mat4(1.0), -local_position);
-	
+		
 		assert(scale.x != 0 && scale.y != 0 && scale.z != 0);
 		local_to_world = inv_pivot * sc * ro * pivot * tr;
-
-
+		
+		
 		if (parent)
 		{
 			world_transform = parent->world_transform * local_to_world;
@@ -154,14 +156,9 @@ namespace scenegraph
 			world_transform = local_to_world;
 		}
 		
-		if (rigidbody)
-		{
-			rigidbody->position(translation);
-		}
-		
 		while (start != end)
 		{
-			(*start)->update(delta_seconds);
+			(*start)->update_transforms();
 			++start;
 		}
 	}

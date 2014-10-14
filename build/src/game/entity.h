@@ -36,6 +36,7 @@
 
 #include "core/assets/asset_mesh.h"
 #include "scene_graph.h"
+#include "physics.h"
 
 enum EntityType
 {

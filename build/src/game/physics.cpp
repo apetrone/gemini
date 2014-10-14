@@ -62,16 +62,22 @@ namespace physics
 			
 		}
 		
-		virtual void position(const glm::vec3& position)
+		virtual void set_world_position(const glm::vec3& position)
 		{
+			assert(body != nullptr);
 			
+			btTransform& world_transform = body->getWorldTransform();
+			world_transform.setOrigin(btVector3(position.x, position.y, position.z));
+			body->setWorldTransform(world_transform);
 		}
 		
-		virtual glm::vec3 position() const
+		virtual glm::vec3 get_world_position() const
 		{
-			glm::vec3 pos;
-			
-			return pos;
+			assert(body != nullptr);
+						
+			const btTransform& world_transform = body->getWorldTransform();
+			const btVector3& origin = world_transform.getOrigin();
+			return glm::vec3(origin.x(), origin.y(), origin.z());
 		}
 	};
 	

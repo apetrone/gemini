@@ -94,7 +94,7 @@ void entity_step()
 		}
 	}
 	
-	// tick entities
+	// step entities
 	EntityVector::iterator it =	entity_list().objects.begin();
 	EntityVector::iterator end = entity_list().objects.end();
 	for( ; it != end; ++it )
@@ -144,6 +144,14 @@ void entity_tick()
 		if ( !(ent->flags & Entity::EF_DELETE_INSTANCE) )
 		{
 			(*it)->tick();
+			
+			// update entity node data
+			if (ent->node && ent->body)
+			{
+				const glm::vec3& world_position = ent->body->get_world_position();
+				ent->node->translation = world_position;
+			}
+
 		}
 	}
 	
@@ -272,10 +280,11 @@ void Entity::native_tick()
 
 void Entity::set_position(const glm::vec3& position)
 {
-	if (node)
+	if (body)
 	{
-		node->translation = position;
-		// TODO: this should also translate the physics body
+		// translate the physics body
+		body->set_world_position(position);
+		
 	}
 }
 

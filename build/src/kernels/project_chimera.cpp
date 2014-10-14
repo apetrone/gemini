@@ -233,6 +233,8 @@ public:
 	virtual void tick( kernel::Params & params )
 	{
 		entity_tick();
+		
+		root->update_transforms();
 	
 		RenderStream rs;
 		rs.add_viewport( 0, 0, params.render_width, params.render_height );

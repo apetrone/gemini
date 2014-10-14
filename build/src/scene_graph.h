@@ -26,12 +26,6 @@
 #include <gemini/mathlib.h>
 #include "keyframechannel.h"
 
-// forward declared, because including physics.h wasn't working.
-namespace physics
-{
-	class RigidBody;
-}
-
 namespace scenegraph
 {
 	typedef std::vector< struct Node*, GeminiAllocator<Node*> > NodeVector;
@@ -70,12 +64,6 @@ namespace scenegraph
 
 		std::string name;
 		
-		
-		// TODO: this probably shouldn't live here
-		// but until I find a better spot to place it
-		// this is where it is
-		physics::RigidBody* rigidbody;
-		
 		NodeVector children;
 		Node* parent;
 		
@@ -90,6 +78,7 @@ namespace scenegraph
 		void remove_child(Node* child);
 		Node* find_child_named(const std::string& name);
 		virtual void update(float delta_seconds);
+		void update_transforms();
 		void clear();
 		NodeType get_type() const { return type; }
 		
