@@ -49,6 +49,7 @@ void entity_startup()
 	
 	// for now, all these are going to be bolted onto the Entity class
 	entity.Func("set_model", &Entity::set_model);
+	
 	entity.Prop("position", &Entity::get_position, &Entity::set_position);
 //	entity.Prop("rotation", &Entity::get_rotation, &Entity::set_rotation);
 	
@@ -81,8 +82,30 @@ void entity_post_script_load()
 	}
 }
 
+
+void entity_prestep()
+{
+	// this updates the ent's position with that of the physics body
+	EntityVector::iterator it =	entity_list().objects.begin();
+	EntityVector::iterator end = entity_list().objects.end();
+	Entity* ent;
+	for( ; it != end; ++it )
+	{
+		ent = (*it);
+		if (ent->body)
+		{
+			// copy body's position over to node and entity
+			const glm::vec3& world_position = ent->body->get_world_position();
+			ent->node->translation = world_position;
+			ent->position = world_position;
+		}
+	}
+}
+
 void entity_step()
 {
+	entity_prestep();
+	
 	Sqrat::RootTable root( script::get_vm() );
 	Sqrat::Object gamerules = root.GetSlot( "gamerules" );
 	if ( !gamerules.IsNull() )
@@ -94,13 +117,25 @@ void entity_step()
 		}
 	}
 	
+	
+	
 	// step entities
 	EntityVector::iterator it =	entity_list().objects.begin();
 	EntityVector::iterator end = entity_list().objects.end();
 	for( ; it != end; ++it )
 	{
 		(*it)->step( kernel::instance()->parameters().step_interval_seconds );
+		
+		Entity* ent = (*it);
+		// update render node and body
+		if (ent->node && ent->body)
+		{
+			ent->node->translation = ent->position;
+			ent->body->set_world_position(ent->position);
+		}
 	}
+	
+	
 }
 
 void entity_deferred_delete( bool only_deferred )
@@ -144,14 +179,6 @@ void entity_tick()
 		if ( !(ent->flags & Entity::EF_DELETE_INSTANCE) )
 		{
 			(*it)->tick();
-			
-			// update entity node data
-			if (ent->node && ent->body)
-			{
-				const glm::vec3& world_position = ent->body->get_world_position();
-				ent->node->translation = world_position;
-			}
-
 		}
 	}
 	
@@ -278,31 +305,15 @@ void Entity::native_tick()
 	//	LOGV( "Entity::native_tick\n" );
 } // native_tick
 
-void Entity::set_position(const glm::vec3& position)
+void Entity::set_position(glm::vec3 *new_position)
 {
-	if (body)
-	{
-		// translate the physics body
-		body->set_world_position(position);
-	}
-	else
-	{
-		node->translation = position;
-	}
+	position = *new_position;
 }
 
-glm::vec3 Entity::get_position() const
+glm::vec3* Entity::get_position()
 {
-	if (body)
-	{
-		return body->get_world_position();
-	}
-	else if (node)
-	{
-		return node->translation;
-	}
+	return &position;
 }
-
 
 void load_mesh(scenegraph::Node* root, const char* path, scenegraph::Node*& node, physics::RigidBody*& body, bool build_physics_from_mesh = true)
 {

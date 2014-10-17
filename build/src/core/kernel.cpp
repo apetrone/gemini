@@ -492,11 +492,11 @@ namespace kernel
 				_kernel->parameters().step_alpha -= 1.0f;
 			}
 			
-			// step physics before we let the application have a chance
-			physics::step(_kernel->parameters().step_interval_seconds);
-			
 			// pass off to application
 			_active_application->step( _kernel->parameters() );
+			
+			// step physics before we let the application have a chance
+			physics::step(_kernel->parameters().step_interval_seconds);
 			
 			// step debug draw
 			debugdraw::update(_kernel->parameters().step_interval_seconds);

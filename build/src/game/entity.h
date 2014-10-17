@@ -84,8 +84,9 @@ struct Entity
 	virtual void native_step( float delta_seconds );
 	virtual void native_tick();
 	
-	void set_position(const glm::vec3& position);
-	glm::vec3 get_position() const;
+	glm::vec3 position;
+	void set_position(glm::vec3* new_position);
+	glm::vec3* get_position();
 	
 //	assets::Mesh* mesh;
 	scenegraph::Node* node;
