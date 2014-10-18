@@ -82,7 +82,7 @@ DesktopKernel::DesktopKernel( int argc, char ** argv ) : target_renderer(0)
 
 void DesktopKernel::startup()
 {
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) == -1)
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC) == -1)
 	{
 		// failure!
 		fprintf(stdout, "failure to init SDL\n");
@@ -109,6 +109,41 @@ void DesktopKernel::startup()
 	}
 	
 	this->parameters().device_flags |= kernel::DeviceDesktop;
+	
+	
+	fprintf(stdout, "Gather joystick infos...\n");
+	fprintf(stdout, "Num Haptics: %i\n", SDL_NumHaptics());
+	fprintf(stdout, "Num Joysticks: %i\n", SDL_NumJoysticks());
+	
+	// add game controller mappings?
+//	SDL_GameControllerAddMappingsFromFile(<#file#>)
+	
+	for( int i = 0; i < SDL_NumJoysticks(); ++i )
+	{
+		SDL_GameController * gamecontroller = SDL_GameControllerOpen( i );
+		SDL_Joystick * joystick = SDL_GameControllerGetJoystick( gamecontroller );
+		SDL_JoystickID joystickID = SDL_JoystickInstanceID(joystick);
+		if (SDL_JoystickIsHaptic(joystick))
+		{
+			fprintf(stdout, "Joystick is haptic!\n");
+			
+			SDL_Haptic * haptic = SDL_HapticOpenFromJoystick(joystick);
+			if (haptic)
+			{
+				SDL_HapticRumbleInit(haptic);
+				SDL_HapticRumblePlay(haptic, 1.0, 2000);
+				
+				SDL_Delay(2000);
+				SDL_HapticClose(haptic);
+			}
+			else
+			{
+				fprintf(stdout, "error opening haptic for joystickID: %i\n", joystickID);
+			}
+		}
+		
+		
+	}
 } // startup
 
 void DesktopKernel::register_services()
@@ -186,6 +221,39 @@ void DesktopKernel::pre_tick()
 				ev.wheel_direction = event.wheel.y;
 				input::state()->mouse().inject_mouse_wheel(ev.wheel_direction);
 				kernel::event_dispatch(ev);
+				break;
+			}
+			
+			
+			case SDL_CONTROLLERAXISMOTION:
+			{
+				LOGV("Axis Motion!\n");
+				break;
+			}
+				
+			case SDL_CONTROLLERBUTTONDOWN:
+			{
+				LOGV("Button Down!\n");
+				break;
+			}
+				
+			case SDL_CONTROLLERBUTTONUP:
+			{
+				LOGV("Button Up!\n");
+				break;
+			}
+			
+			case SDL_CONTROLLERDEVICEADDED:
+			{
+				LOGV("Device Added\n");
+				// event 'which' member
+				// describes an index into the list of active devices; NOT joystick id.
+				break;
+			}
+				
+			case SDL_CONTROLLERDEVICEREMOVED:
+			{
+				LOGV("Device Removed\n");
 				break;
 			}
 		}
