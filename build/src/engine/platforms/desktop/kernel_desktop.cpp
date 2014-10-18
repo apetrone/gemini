@@ -70,8 +70,17 @@ namespace kernel
 
 SDL_Window * _window = 0;
 SDL_GLContext _context = 0;
+
 SDL_Rect* _display_rects = 0;
 int _total_displays;
+
+typedef GeminiAllocator<std::pair<const unsigned int, input::Button> > ButtonKeyMapAllocator;
+typedef std::map<unsigned int, input::Button, std::less<unsigned int>, ButtonKeyMapAllocator> SDLToButtonKeyMap;
+SDLToButtonKeyMap _key_map;
+input::MouseButton _mouse_map[input::MOUSE_COUNT];
+
+SDL_GameController* _controllers[input::MAX_JOYSTICKS] = {0};
+uint8_t _total_controllers = 0;
 
 
 DesktopKernel::DesktopKernel( int argc, char ** argv ) : target_renderer(0)
@@ -118,22 +127,28 @@ void DesktopKernel::startup()
 	// add game controller mappings?
 //	SDL_GameControllerAddMappingsFromFile(<#file#>)
 	
-	for( int i = 0; i < SDL_NumJoysticks(); ++i )
+	assert(SDL_NumJoysticks() < input::MAX_JOYSTICKS);
+	_total_controllers = SDL_NumJoysticks();
+	for( uint8_t i = 0; i < _total_controllers; ++i )
 	{
-		SDL_GameController * gamecontroller = SDL_GameControllerOpen( i );
-		SDL_Joystick * joystick = SDL_GameControllerGetJoystick( gamecontroller );
-		SDL_JoystickID joystickID = SDL_JoystickInstanceID(joystick);
+		input::JoystickInput& js = input::state()->joystick(i);
+		input::state()->connect_joystick(i);
+		
+		_controllers[ i ] = SDL_GameControllerOpen( i );
+		SDL_Joystick * joystick = SDL_GameControllerGetJoystick( _controllers[i] );
+		SDL_JoystickID joystickID = SDL_JoystickInstanceID( joystick );
 		if (SDL_JoystickIsHaptic(joystick))
 		{
+			js.flags |= input::JoystickInput::HapticSupport;
 			fprintf(stdout, "Joystick is haptic!\n");
-			
-			SDL_Haptic * haptic = SDL_HapticOpenFromJoystick(joystick);
+//			http://blog.5pmcasual.com/game-controller-api-in-sdl2.html
+			SDL_Haptic * haptic = SDL_HapticOpenFromJoystick( joystick );
 			if (haptic)
 			{
 				SDL_HapticRumbleInit(haptic);
-				SDL_HapticRumblePlay(haptic, 1.0, 2000);
+//				SDL_HapticRumblePlay(haptic, 1.0, 2000);
 				
-				SDL_Delay(2000);
+//				SDL_Delay(2000);
 				SDL_HapticClose(haptic);
 			}
 			else
@@ -141,8 +156,6 @@ void DesktopKernel::startup()
 				fprintf(stdout, "error opening haptic for joystickID: %i\n", joystickID);
 			}
 		}
-		
-		
 	}
 } // startup
 
@@ -227,25 +240,27 @@ void DesktopKernel::pre_tick()
 			
 			case SDL_CONTROLLERAXISMOTION:
 			{
-				LOGV("Axis Motion!\n");
+				LOGV("Axis Motion: %i, %i, %i\n", event.caxis.which, event.caxis.axis, event.caxis.value);
 				break;
 			}
 				
 			case SDL_CONTROLLERBUTTONDOWN:
 			{
-				LOGV("Button Down!\n");
+				LOGV("Button Down: %i, %i, %i\n", event.caxis.which, event.cbutton.button, event.cbutton.state);
 				break;
 			}
 				
 			case SDL_CONTROLLERBUTTONUP:
 			{
-				LOGV("Button Up!\n");
+				LOGV("Button Up: %i, %i, %i\n", event.caxis.which, event.cbutton.button, event.cbutton.state);
 				break;
 			}
 			
 			case SDL_CONTROLLERDEVICEADDED:
 			{
-				LOGV("Device Added\n");
+				LOGV("Device Added: %u %i\n", event.cdevice.timestamp, event.cdevice.which);
+								
+
 				// event 'which' member
 				// describes an index into the list of active devices; NOT joystick id.
 				break;
@@ -470,6 +485,20 @@ void DesktopKernel::post_application_startup( kernel::ApplicationResult result )
 void DesktopKernel::shutdown()
 {
 	DESTROY_ARRAY(SDL_Rect, _display_rects, _total_displays);
+
+	// close all controllers
+	for (uint8_t i = 0; i < _total_controllers; ++i)
+	{
+		input::JoystickInput& js = input::state()->joystick(i);
+		input::state()->disconnect_joystick(i);
+		
+		SDL_GameController* controller = _controllers[i];
+		if (controller)
+		{
+			SDL_GameControllerClose(controller);
+			_controllers[i] = 0;
+		}
+	}
 
 	SDL_GL_DeleteContext(_context);
 	SDL_DestroyWindow(_window);

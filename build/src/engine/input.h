@@ -182,6 +182,10 @@ namespace input
 	#define MAX_INPUTSTATE_TOUCHES 10
 	#define TOTAL_INPUTSTATE_KEYS (MAX_INPUTSTATE_KEYS+MAX_INPUTSTATE_BUTTONS)
 
+	const uint8_t MAX_JOYSTICK_BUTTONS = 16;
+	const uint8_t MAX_JOYSTICK_AXES = 6;
+	const uint8_t MAX_JOYSTICKS = 8;
+	
 	struct ButtonState
 	{
 		unsigned char state : 4;
@@ -193,6 +197,10 @@ namespace input
 		void update();
 	}; // ButtonState
 	
+	struct AxisState
+	{
+		int16_t value;
+	};
 	
 	class InputDevice
 	{
@@ -281,17 +289,48 @@ namespace input
 		void touch_at_index( TouchState & touch, int touch_id );
 	}; // TouchInput
 	
+
+	class JoystickInput : public InputDevice
+	{
+	public:
+		enum Flags
+		{
+			Disconnected 	= 0, // joystick disconnected / not used
+			Connected 		= 1, // joystick is connected and enabled
+			HapticSupport 	= 2, // joystick has haptics support
+		};
+	
+		uint8_t flags;
+		ButtonState buttons[MAX_JOYSTICK_BUTTONS];
+		AxisState axes[MAX_JOYSTICK_AXES];
+		
+		virtual void reset();
+		virtual void update( float delta_msec );
+	}; // JoystickInput
+	
 	// This is a facade interface which holds the current input state
 	class InputState
 	{
 		KeyboardInput keyboard_input;
 		MouseInput mouse_input;
 		TouchInput touch_input;
+		
+		JoystickInput joystick_input[MAX_JOYSTICKS];
+		uint8_t joysticks_connected;
+		
 	public:
+
+		InputState() : joysticks_connected(0) {}
+		~InputState() {}
 
 		inline KeyboardInput & keyboard() { return keyboard_input; }
 		inline MouseInput & mouse() { return mouse_input; }
 		inline TouchInput & touch() { return touch_input; }
+		inline JoystickInput& joystick(uint8_t index) { return joystick_input[index]; }
+		void connect_joystick(uint8_t index) { joystick_input[index].flags |= JoystickInput::Connected; ++joysticks_connected; }
+		void disconnect_joystick(uint8_t index) { joystick_input[index].flags &= ~JoystickInput::Connected; --joysticks_connected; }
+		
+		uint8_t total_joysticks_connected() const { return joysticks_connected; }
 	}; // InputState
 	
 	InputState * state( void );

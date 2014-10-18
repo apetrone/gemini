@@ -246,6 +246,27 @@ namespace input
 	} // update
 	
 	
+	//
+	// JoystickInput
+	void JoystickInput::reset()
+	{
+		memset(&buttons, 0, sizeof(ButtonState) * MAX_JOYSTICK_BUTTONS);
+		memset(&axes, 0, sizeof(AxisState) * MAX_JOYSTICK_AXES);
+		flags = 0;
+	}
+	
+	void JoystickInput::update(float delta_msec)
+	{
+		for(uint8_t i = 0; i < MAX_JOYSTICK_BUTTONS; ++i)
+		{
+			buttons[ i ].update();
+		}
+		
+		for (uint8_t i = 0; i < MAX_JOYSTICK_AXES; ++i)
+		{
+			// ..
+		}
+	}
 	
 	const char * mouse_button_name( MouseButton button )
 	{
