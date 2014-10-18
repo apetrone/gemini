@@ -36,4 +36,4 @@
 	url = git://github.com/spurious/SDL-mirror.git
 [submodule "build/dependencies/civetweb"]
 	path = build/dependencies/civetweb
-	url = git://github.com/bel2125/civetweb.git
+	url = git://github.com/apetrone/civetweb.git
