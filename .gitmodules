@@ -9,7 +9,7 @@
 	url = git://github.com/apetrone/squirrel3.git
 [submodule "build/dependencies/glm"]
 	path = build/dependencies/glm
-	url = git://github.com/Groovounet/glm.git
+	url = git://github.com/g-truc/glm.git
 [submodule "build/dependencies/font-stash"]
 	path = build/dependencies/font-stash
 	url = git://github.com/apetrone/font-stash.git
