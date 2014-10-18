@@ -83,6 +83,31 @@ SDL_GameController* _controllers[input::MAX_JOYSTICKS] = {0};
 uint8_t _total_controllers = 0;
 
 
+void controller_axis_event(SDL_ControllerDeviceEvent& device, SDL_ControllerAxisEvent& axis)
+{
+	LOGV("Axis Motion: %i, %i, %i, %i\n", device.which, axis.which, axis.axis, axis.value);
+}
+
+void controller_button_event(SDL_ControllerDeviceEvent& device, SDL_ControllerButtonEvent& button)
+{
+	bool is_down = (button.state == SDL_PRESSED);
+	LOGV("Button %s: %i, %i, %i\n", (is_down ? "Yes" : "No"), device.which, button.button, button.state);
+}
+
+void add_controller(SDL_ControllerDeviceEvent& device)
+{
+	// event 'which' member
+	// describes an index into the list of active devices; NOT joystick id.
+	LOGV("Device Added: %i\n", device.which);
+}
+
+void remove_controller(SDL_ControllerDeviceEvent& device)
+{
+	LOGV("Device Removed: %i\n", device.which);
+}
+
+
+
 DesktopKernel::DesktopKernel( int argc, char ** argv ) : target_renderer(0)
 {
 	params.argc = argc;
@@ -133,6 +158,7 @@ void DesktopKernel::startup()
 	{
 		input::JoystickInput& js = input::state()->joystick(i);
 		input::state()->connect_joystick(i);
+		js.reset();
 		
 		_controllers[ i ] = SDL_GameControllerOpen( i );
 		SDL_Joystick * joystick = SDL_GameControllerGetJoystick( _controllers[i] );
@@ -236,39 +262,34 @@ void DesktopKernel::pre_tick()
 				kernel::event_dispatch(ev);
 				break;
 			}
-			
-			
+						
 			case SDL_CONTROLLERAXISMOTION:
 			{
-				LOGV("Axis Motion: %i, %i, %i\n", event.caxis.which, event.caxis.axis, event.caxis.value);
+				controller_axis_event(event.cdevice, event.caxis);
 				break;
 			}
 				
 			case SDL_CONTROLLERBUTTONDOWN:
 			{
-				LOGV("Button Down: %i, %i, %i\n", event.caxis.which, event.cbutton.button, event.cbutton.state);
+				controller_button_event(event.cdevice, event.cbutton);
 				break;
 			}
 				
 			case SDL_CONTROLLERBUTTONUP:
 			{
-				LOGV("Button Up: %i, %i, %i\n", event.caxis.which, event.cbutton.button, event.cbutton.state);
+				controller_button_event(event.cdevice, event.cbutton);
 				break;
 			}
 			
 			case SDL_CONTROLLERDEVICEADDED:
 			{
-				LOGV("Device Added: %u %i\n", event.cdevice.timestamp, event.cdevice.which);
-								
-
-				// event 'which' member
-				// describes an index into the list of active devices; NOT joystick id.
+				add_controller(event.cdevice);
 				break;
 			}
 				
 			case SDL_CONTROLLERDEVICEREMOVED:
 			{
-				LOGV("Device Removed\n");
+				remove_controller(event.cdevice);
 				break;
 			}
 		}
