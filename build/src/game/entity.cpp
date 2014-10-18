@@ -41,14 +41,15 @@ void entity_startup()
 	Sqrat::Class<Entity, EntityAllocator<Entity> > entity( script::get_vm() );
 	entity.Var( "id", &Entity::id );
 	entity.Prop( "name", &Entity::get_name, &Entity::set_name );
-		
-	entity.Func( "step", &Entity::native_step );	
-	entity.Func( "tick", &Entity::native_tick );
 	
-	entity.Func( "remove", &Entity::remove );	
+
+	entity.Func(ENTITY_UPDATE_NAME, &Entity::native_update);
+	entity.Func(ENTITY_FIXED_UPDATE_NAME, &Entity::native_fixed_update);
+	
+	entity.Func( "Remove", &Entity::remove );
 	
 	// for now, all these are going to be bolted onto the Entity class
-	entity.Func("set_model", &Entity::set_model);
+	entity.Func("SetModel", &Entity::set_model);
 	
 	entity.Prop("position", &Entity::get_position, &Entity::set_position);
 //	entity.Prop("rotation", &Entity::get_rotation, &Entity::set_rotation);
@@ -59,9 +60,9 @@ void entity_startup()
 	
 	// gamerules
 	Sqrat::Class<GameRules> gamerules( script::get_vm() );
-	gamerules.Func( "startup", &GameRules::native_startup );
-	gamerules.Func( "tick", &GameRules::native_tick );
-	gamerules.Func( "step", &GameRules::native_step );
+	gamerules.Func(ENTITY_START_NAME, &GameRules::native_start );
+	gamerules.Func(ENTITY_UPDATE_NAME, &GameRules::native_update );
+	gamerules.Func(ENTITY_FIXED_UPDATE_NAME, &GameRules::native_fixed_update );
 	root.Bind( "GameRules", gamerules );
 	
 
@@ -77,7 +78,7 @@ void entity_post_script_load()
 		GameRules * gr = gamerules.Cast<GameRules*>();
 		if ( gr )
 		{
-			gr->startup();
+			gr->start();
 		}
 	}
 }
@@ -113,7 +114,7 @@ void entity_step()
 		GameRules * gr = gamerules.Cast<GameRules*>();
 		if ( gr )
 		{
-			gr->step( kernel::instance()->parameters().step_interval_seconds );
+			gr->fixed_update( kernel::instance()->parameters().step_interval_seconds );
 		}
 	}
 	
@@ -124,7 +125,7 @@ void entity_step()
 	EntityVector::iterator end = entity_list().objects.end();
 	for( ; it != end; ++it )
 	{
-		(*it)->step( kernel::instance()->parameters().step_interval_seconds );
+		(*it)->fixed_update( kernel::instance()->parameters().step_interval_seconds );
 		
 		Entity* ent = (*it);
 		// update render node and body
@@ -165,7 +166,7 @@ void entity_tick()
 		GameRules * gr = gamerules.Cast<GameRules*>();
 		if ( gr )
 		{
-			gr->tick();
+			gr->update();
 		}
 	}
 	
@@ -178,7 +179,7 @@ void entity_tick()
 		ent = (*it);
 		if ( !(ent->flags & Entity::EF_DELETE_INSTANCE) )
 		{
-			(*it)->tick();
+			(*it)->update();
 		}
 	}
 	
@@ -242,15 +243,15 @@ Entity::~Entity()
 	}
 } // ~Entity
 
-void Entity::step( float delta_seconds )
+void Entity::fixed_update( float delta_seconds )
 {
-	if ( sq_isnull(this->on_step) || sq_isnull(this->instance) )
+	if ( sq_isnull(this->on_fixed_update) || sq_isnull(this->instance) )
 	{
 		return;
 	}
 	
 	SQRESULT res;
-	sq_pushobject( script::get_vm(), this->on_step );
+	sq_pushobject( script::get_vm(), this->on_fixed_update );
 	sq_pushobject( script::get_vm(), this->instance );
 	sq_pushfloat( script::get_vm(), delta_seconds );
 	res = sq_call( script::get_vm(), 2, SQFalse, SQTrue );
@@ -263,15 +264,15 @@ void Entity::step( float delta_seconds )
 	}
 } // step
 
-void Entity::tick()
+void Entity::update()
 {
-	if ( sq_isnull(this->on_tick) || sq_isnull(this->instance) )
+	if ( sq_isnull(this->on_update) || sq_isnull(this->instance) )
 	{
 		return;
 	}
 	
 	SQRESULT res;
-	sq_pushobject( script::get_vm(), this->on_tick );
+	sq_pushobject( script::get_vm(), this->on_update );
 	sq_pushobject( script::get_vm(), this->instance );
 	res = sq_call( script::get_vm(), 1, SQFalse, SQTrue );
 	
@@ -287,8 +288,9 @@ void Entity::tick()
 void Entity::bind_functions()
 {
 	//	LOGV( "Entity::bind_functions: %p\n", this );
-	this->on_tick = script::find_member( this->class_object, "tick" );
-	this->on_step = script::find_member( this->class_object, "step" );
+
+	this->on_fixed_update = script::find_member( this->class_object, ENTITY_FIXED_UPDATE_NAME );
+	this->on_update = script::find_member( this->class_object, ENTITY_UPDATE_NAME );
 } // bind_functions
 
 void Entity::remove()
@@ -296,14 +298,14 @@ void Entity::remove()
 	this->flags = 1;
 }
 
-void Entity::native_step( float delta_seconds )
+void Entity::native_fixed_update( float delta_seconds )
 {
-} // native_step
+} // native_fixed_update
 
-void Entity::native_tick()
+void Entity::native_update()
 {
 	//	LOGV( "Entity::native_tick\n" );
-} // native_tick
+} // native_update
 
 void Entity::set_position(glm::vec3 *new_position)
 {

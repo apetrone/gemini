@@ -48,6 +48,11 @@ enum EntityType
 
 typedef std::vector< struct Entity*, GeminiAllocator<struct Entity*> > EntityVector;
 
+
+const char ENTITY_START_NAME[] = "Start";
+const char ENTITY_UPDATE_NAME[] = "Update";
+const char ENTITY_FIXED_UPDATE_NAME[] = "FixedUpdate";
+
 // script stuff
 struct Entity
 {
@@ -60,8 +65,8 @@ struct Entity
 	HSQOBJECT instance;
 	HSQOBJECT class_object;
 	
-	HSQOBJECT on_step;
-	HSQOBJECT on_tick;
+	HSQOBJECT on_fixed_update;
+	HSQOBJECT on_update;
 	
 	uint64_t id;
 	std::string name;
@@ -71,8 +76,8 @@ struct Entity
 	Entity();
 	virtual ~Entity();
 	
-	void step( float delta_seconds );
-	void tick();
+	void fixed_update(float delta_seconds);
+	void update();
 	
 	// bind functions for this object
 	void bind_functions();
@@ -81,8 +86,8 @@ struct Entity
 	// get/set functions for script interop
 	const std::string & get_name() { return this->name; }
 	void set_name( const std::string & object_name ) { this->name = object_name; }
-	virtual void native_step( float delta_seconds );
-	virtual void native_tick();
+	virtual void native_fixed_update( float delta_seconds );
+	virtual void native_update();
 	
 	glm::vec3 position;
 	void set_position(glm::vec3* new_position);
@@ -419,18 +424,14 @@ EntityListType& entity_list();
 //} // entity_list
 
 
-
-
-
-
 struct GameRules
 {
 	HSQOBJECT instance;
 	HSQOBJECT class_object;
 	
-	HSQOBJECT on_startup;
-	HSQOBJECT on_tick;
-	HSQOBJECT on_step;
+	HSQOBJECT on_start;
+	HSQOBJECT on_update;
+	HSQOBJECT on_fixed_update;
 	
 	GameRules()
 	{
@@ -457,24 +458,24 @@ struct GameRules
 	
 	void bind_functions()
 	{
-		this->on_startup = script::find_member( this->class_object, "startup" );
-		this->on_tick = script::find_member( this->class_object, "tick" );
-		this->on_step = script::find_member( this->class_object, "step" );
+		this->on_start = script::find_member( this->class_object, ENTITY_START_NAME );
+		this->on_update = script::find_member( this->class_object, ENTITY_UPDATE_NAME );
+		this->on_fixed_update = script::find_member( this->class_object, ENTITY_FIXED_UPDATE_NAME );
 	}
 	
-	void native_startup() {}
-	void native_tick() {}
-	void native_step( float delta_seconds ) {}
+	void native_start() {}
+	void native_update() {}
+	void native_fixed_update( float delta_seconds ) {}
 	
-	void startup()
+	void start()
 	{
-		if ( sq_isnull(this->on_startup) || sq_isnull(this->instance) )
+		if ( sq_isnull(this->on_start) || sq_isnull(this->instance) )
 		{
 			return;
 		}
 		
 		SQRESULT res;
-		sq_pushobject( script::get_vm(), this->on_startup );
+		sq_pushobject( script::get_vm(), this->on_start );
 		sq_pushobject( script::get_vm(), this->instance );
 		res = sq_call( script::get_vm(), 1, SQFalse, SQTrue );
 		
@@ -486,38 +487,38 @@ struct GameRules
 		}
 	}
 	
-	void tick()
+	void fixed_update(float delta_seconds)
 	{
-		if ( sq_isnull(this->on_tick) || sq_isnull(this->instance) )
+		if ( sq_isnull(this->on_fixed_update) || sq_isnull(this->instance) )
 		{
 			return;
 		}
 		
 		SQRESULT res;
-		sq_pushobject( script::get_vm(), this->on_tick );
-		sq_pushobject( script::get_vm(), this->instance );
-		res = sq_call( script::get_vm(), 1, SQFalse, SQTrue );
-		
-		sq_pop( script::get_vm(), 1 );
-		if ( SQ_FAILED(res) )
-		{
-			script::check_result( res, "sq_call" );
-			sq_pop( script::get_vm(), 1 );
-		}
-	}
-	
-	void step( float delta_seconds )
-	{
-		if ( sq_isnull(this->on_step) || sq_isnull(this->instance) )
-		{
-			return;
-		}
-		
-		SQRESULT res;
-		sq_pushobject( script::get_vm(), this->on_step );
+		sq_pushobject( script::get_vm(), this->on_fixed_update );
 		sq_pushobject( script::get_vm(), this->instance );
 		sq_pushfloat( script::get_vm(), delta_seconds );
 		res = sq_call( script::get_vm(), 2, SQFalse, SQTrue );
+		
+		sq_pop( script::get_vm(), 1 );
+		if ( SQ_FAILED(res) )
+		{
+			script::check_result( res, "sq_call" );
+			sq_pop( script::get_vm(), 1 );
+		}
+	}
+	
+	void update()
+	{
+		if ( sq_isnull(this->on_update) || sq_isnull(this->instance) )
+		{
+			return;
+		}
+		
+		SQRESULT res;
+		sq_pushobject( script::get_vm(), this->on_update );
+		sq_pushobject( script::get_vm(), this->instance );
+		res = sq_call( script::get_vm(), 1, SQFalse, SQTrue );
 		
 		sq_pop( script::get_vm(), 1 );
 		if ( SQ_FAILED(res) )
