@@ -38,14 +38,6 @@
 #include "scene_graph.h"
 #include "physics.h"
 
-enum EntityType
-{
-	Logic,
-	Model,
-	Sprite,
-	Emitter,
-};
-
 typedef std::vector< struct Entity*, GeminiAllocator<struct Entity*> > EntityVector;
 
 
@@ -68,10 +60,12 @@ struct Entity
 	HSQOBJECT on_fixed_update;
 	HSQOBJECT on_update;
 	
+
+
 	uint64_t id;
-	std::string name;
-	uint8_t type;
 	uint32_t flags;
+	
+	std::string name;
 	
 	Entity();
 	virtual ~Entity();

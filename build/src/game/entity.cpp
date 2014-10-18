@@ -202,8 +202,6 @@ void entity_shutdown()
 
 Entity::Entity()
 {
-	
-	this->type = Logic;
 	this->id = entity_list().count();
 	this->flags = 0;
 //	this->mesh = 0;
