@@ -1,4 +1,0 @@
-[rsync]
-
-remote = cb2:/home/apetrone/sdks
-sshuser = apetrone

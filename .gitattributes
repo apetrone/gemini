@@ -1,11 +1,5 @@
-*.blend filter=fat
-*.png filter=fat
-*.psd filter=fat
-*.tga filter=fat
-
 * text=auto
 *.c   text
 *.cpp text
 *.h   text
 *.hpp text
-
