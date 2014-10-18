@@ -50,7 +50,5 @@ DerivedData
 **Makefile
 
 # project-specific
-build
-buildinfo.c
 *.cache
 *.filecache
