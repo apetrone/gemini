@@ -22,16 +22,12 @@
 #include <gemini/mem.h>
 
 #include "entity.h"
+#include "entity_allocator.h"
+#include "entity_list.h"
 #include "physics.h"
 
 
-EntityListType _entity_list;
-scenegraph::Node* _entity_root = 0;
 
-EntityListType& entity_list()
-{
-	return _entity_list;
-}
 
 void entity_startup()
 {
@@ -189,13 +185,13 @@ void entity_tick()
 
 void entity_set_scene_root(scenegraph::Node* root)
 {
-	_entity_root = root;
+	set_entity_root(root);
 }
 
 void entity_shutdown()
 {
 	LOGV("entity_shutdown!\n");
-	_entity_root = nullptr;
+	set_entity_root(nullptr);
 	entity_list().clear();
 }
 
@@ -341,6 +337,6 @@ void load_mesh(scenegraph::Node* root, const char* path, scenegraph::Node*& node
 
 void Entity::set_model(const char* path)
 {
-	load_mesh(_entity_root, path, this->node, this->body, true);
+	load_mesh(get_entity_root(), path, this->node, this->body, true);
 	
 }
