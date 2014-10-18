@@ -44,6 +44,7 @@ typedef std::vector< struct Entity*, GeminiAllocator<struct Entity*> > EntityVec
 const char ENTITY_START_NAME[] = "Start";
 const char ENTITY_UPDATE_NAME[] = "Update";
 const char ENTITY_FIXED_UPDATE_NAME[] = "FixedUpdate";
+const char ENTITY_REMOVE_NAME[] = "Remove";
 
 // script stuff
 struct Entity
@@ -86,6 +87,7 @@ struct Entity
 	glm::vec3 position;
 	void set_position(glm::vec3* new_position);
 	glm::vec3* get_position();
+
 	
 //	assets::Mesh* mesh;
 	scenegraph::Node* node;

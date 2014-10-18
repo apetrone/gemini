@@ -38,11 +38,9 @@ void entity_startup()
 	entity.Var( "id", &Entity::id );
 	entity.Prop( "name", &Entity::get_name, &Entity::set_name );
 	
-
 	entity.Func(ENTITY_UPDATE_NAME, &Entity::native_update);
 	entity.Func(ENTITY_FIXED_UPDATE_NAME, &Entity::native_fixed_update);
-	
-	entity.Func( "Remove", &Entity::remove );
+	entity.Func(ENTITY_REMOVE_NAME, &Entity::remove );
 	
 	// for now, all these are going to be bolted onto the Entity class
 	entity.Func("SetModel", &Entity::set_model);
@@ -304,6 +302,11 @@ void Entity::native_update()
 void Entity::set_position(glm::vec3 *new_position)
 {
 	position = *new_position;
+	
+	if (body)
+	{
+		body->set_world_position(*new_position);
+	}
 }
 
 glm::vec3* Entity::get_position()
