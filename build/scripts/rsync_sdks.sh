@@ -9,6 +9,10 @@
 # However, I still need a way to keep them updated and I haven't found
 # an integrated git solution I like yet.
 
+
+# NOTE
+# It is assumed this will be run from the gemini root!
+
 RSYNC=rsync
 SOURCE=cb2:sdks
 DESTINATION=build/dependencies
@@ -17,14 +21,7 @@ SDKS=(
 	oculussdk_0.4.2
 )
 
-# navigate to gemini root
-pushd ../../
-
 # sync all sdks
 for SDK in ${SDKS[@]}; do
 	$RSYNC -az --progress "${SOURCE}/${SDK}/" "${DESTINATION}/${SDK}"
 done
-
-# restore original directory
-popd
-
