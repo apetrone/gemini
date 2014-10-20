@@ -769,6 +769,7 @@ def get_config_variables(arguments, product, target_platform):
 		iokit_framework = False
 		forcefeedback_framework = False
 		carbon_framework = False
+		core_video_framework = False
 
 		if arguments.with_file:
 			product.sources += ["src/file/cocoa/*.m"]
@@ -817,6 +818,7 @@ def get_config_variables(arguments, product, target_platform):
 
 		# final step to add in frameworks
 		if arguments.with_video:
+			core_video_framework = True
 			if arguments.video_cocoa:
 				product.sources += ["src/video/cocoa/*.m"]
 				vars["SDL_VIDEO_DRIVER_COCOA"] = True
@@ -835,7 +837,8 @@ def get_config_variables(arguments, product, target_platform):
 			"AudioUnit.framework" : audio_unit_framework,
 			"IOKit.framework" : iokit_framework,
 			"ForceFeedback.framework" : forcefeedback_framework,
-			"Carbon.framework" : carbon_framework
+			"Carbon.framework" : carbon_framework,
+			"CoreVideo.framework" : core_video_framework
 		}
 
 		for key, value in framework_value_map.iteritems():
