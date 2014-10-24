@@ -278,7 +278,7 @@ public:
 	virtual void shutdown( kernel::Params & params )
 	{
 		DESTROY(Node, root);
-		
+
 //		entity_shutdown();
 	}
 };

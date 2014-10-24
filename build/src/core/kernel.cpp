@@ -311,6 +311,9 @@ namespace kernel
 		params.step_alpha = 0;
 		params.step_interval_seconds = 0;
 		
+		// we should default to swapping buffers ourself
+		params.swap_buffers = 1;
+		
 		// the kernel is ACTIVE here; callbacks after config/start may modify this
 		_kernel->set_active(true);
 		

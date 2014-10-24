@@ -87,6 +87,11 @@ namespace kernel
 		
 		// need to take this into account when calculating screen coordinates
 		unsigned short titlebar_height;
+		
+		// this is needed to allow normal rendering and Oculus Rift rendering.
+		// the Rift SDK will swap buffers itself, which causes flickering
+		// if we also do it.
+		bool swap_buffers;
 	}; // Params
 	
 	

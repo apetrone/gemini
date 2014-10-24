@@ -111,7 +111,7 @@ public:
 		params.window_width = (uint16_t)w;
 		params.window_height = (uint16_t)h;
 		params.window_title = "TestOculusVR";
-				
+		params.swap_buffers = 0;
 		return kernel::Application_Success;
 	}
 
@@ -122,10 +122,7 @@ public:
 		// setup scene
 		root = CREATE(scenegraph::Node);
 		root->name = "root";
-		
-		scenegraph::add_mesh_to_root(root, "models/powergrid", false);
 
-		debugdraw::startup(1024);
 		camera.perspective(100.0f, params.render_width, params.render_height, 0.1f, 32768.0f);
 		camera.set_absolute_position(glm::vec3(0, 0, 5));
 		
@@ -215,8 +212,6 @@ public:
 		
 		
 		DESTROY(Node, root);
-		
-		debugdraw::shutdown();
 	}
 };
 

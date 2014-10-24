@@ -177,7 +177,10 @@ void DesktopKernel::post_tick()
 {
 	// TODO: this needs to be controlled somehow
 	// as the rift sdk performs buffer swaps during end frame.
-//	SDL_GL_SwapWindow(_window);
+	if (parameters().swap_buffers)
+	{
+		SDL_GL_SwapWindow(_window);
+	}
 } // post_tick
 
 void DesktopKernel::post_application_config( kernel::ApplicationResult result )
