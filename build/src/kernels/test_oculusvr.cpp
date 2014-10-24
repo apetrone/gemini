@@ -64,11 +64,17 @@ public:
 			}
 			else if (event.key == input::KEY_SPACE)
 			{
-				device->dismiss_warning();
+				if (device)
+				{
+					device->dismiss_warning();
+				}
 			}
 			else if (event.key == input::KEY_TAB)
 			{
-				device->reset_head_pose();
+				if (device)
+				{
+					device->reset_head_pose();
+				}
 			}
         }
 	}
