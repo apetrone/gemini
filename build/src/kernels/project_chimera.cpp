@@ -139,39 +139,31 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
+		// create character
 		character = physics::create_character_controller(btVector3(0, 2, 0), false);
-
-		root = CREATE(scenegraph::Node);
-		root->name = "scene_root";
-
-		//camera.target_lookatOffset = glm::vec3(0, 0, 1);
+		character->reset();
 		
+		// setup character
 		camera.perspective(50.0f, params.render_width, params.render_height, 0.1f, 8192.0f);
-		// This is appropriate for drawing 3D models, but not sprites
-		//camera.set_absolute_position( glm::vec3(8, 5, 8.0f) );
 		camera.yaw = -45;
 		camera.pitch = 30;
 		camera.update_view();
-		
-		character->reset();
-		
+			
 		// capture the mouse
 		kernel::instance()->capture_mouse( true );
-		
-//		scenegraph::Node* ground = add_mesh_to_root(root, "models/power_grid", true);
-		
-//		scenegraph::Node* generator = add_mesh_to_root(root, "models/generator_core", true);
-//		if (generator)
-//		{
-//			generator->translation = glm::vec3(4, 0, -10);
-//		}
 
+		// entity startup
 		entity_startup();
-	
+		
+		// create scene graph root
+		root = CREATE(scenegraph::Node);
+		root->name = "scene_root";
 		entity_set_scene_root(root);
 	
+		// run a script
 		script::execute_file("scripts/project_chimera.nut");
 		
+		// perform post-script load duties
 		entity_post_script_load();
 
 		return kernel::Application_Success;
@@ -198,25 +190,19 @@ public:
 		camera.update_view();
 #endif
 
-
-		// rotate physics body
+		// rotate physics body based on camera yaw
 		btTransform worldTrans = character->getGhostObject()->getWorldTransform();
 		btQuaternion rotation(btVector3(0,1,0), mathlib::degrees_to_radians(-camera.yaw));
-		
 		worldTrans.setRotation(rotation);
 		character->getGhostObject()->setWorldTransform(worldTrans);
-
+		
 #if LOCK_CAMERA_TO_CHARACTER
 		physics::copy_ghost_to_camera(character->getGhostObject(), camera);
 #endif
 		
 		
-		
-		
 		entity_step();
 
-		
-		//camera.pos += glm::vec3(0, 2.5, 5);
 		camera.update_view();
 
 		physics::debug_draw();
@@ -277,9 +263,11 @@ public:
 	
 	virtual void shutdown( kernel::Params & params )
 	{
+		entity_shutdown();
+		
 		DESTROY(Node, root);
 
-//		entity_shutdown();
+		
 	}
 };
 
