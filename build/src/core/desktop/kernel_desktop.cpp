@@ -202,11 +202,22 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 		SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 	
-
+		uint32_t window_flags = 0;
+		window_flags |= SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
+		
+		if (parameters().use_fullscreen)
+		{
+			window_flags |= SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS;
+		}
+		else
+		{
+			window_flags |= SDL_WINDOW_RESIZABLE;
+		}
+		
 		_window = SDL_CreateWindow(
 			parameters().window_title, 0, 0,
 			parameters().window_width, parameters().window_height,
-			SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+			window_flags);
 			
 		if (!_window)
 		{

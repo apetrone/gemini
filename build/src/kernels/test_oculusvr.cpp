@@ -107,9 +107,9 @@ public:
 		device = vr::create_device();
 		if (device)
 		{
-			
 			device->query_display_resolution(w, h);
 			LOGV("creating window with resolution: %i x %i\n", w, h);
+			params.use_fullscreen = true;
 		}
 		
 		params.window_width = (uint16_t)w;

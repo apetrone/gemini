@@ -92,6 +92,9 @@ namespace kernel
 		// the Rift SDK will swap buffers itself, which causes flickering
 		// if we also do it.
 		bool swap_buffers;
+		
+		// set to true to create a fullscreen window
+		bool use_fullscreen;
 	}; // Params
 	
 	
