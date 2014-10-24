@@ -86,13 +86,6 @@ public:
 			{
 				kernel::instance()->set_active(false);
 			}
-			else if (event.key == input::KEY_SPACE)
-			{
-			}
-			else if (event.key == input::KEY_J)
-			{
-				LOGV("check controllers\n");
-			}
 		}
 	}
 	
@@ -218,15 +211,18 @@ public:
 
 	virtual void tick( kernel::Params & params )
 	{
+		// need to tick entities
 		entity_tick();
 		
+		// then update the scene graph
 		root->update_transforms();
 	
 		RenderStream rs;
 		rs.add_viewport( 0, 0, params.render_width, params.render_height );
 		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
-	
+		rs.run_commands();
+		
 		glm::mat4 char_mat = glm::mat4(1.0);
 		
 		// TODO: this should use the actual player height instead of
@@ -237,24 +233,20 @@ public:
 		{
 			//player->world_transform = char_mat;
 		}
-
-		//rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
-		//rs.add_state( renderer::STATE_BLEND, 1 );
-		//rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
 		
-		rs.run_commands();
-
+		// setup constant buffer
 		glm::vec3 light_position(0.5f, 2.5f, -12);
 		renderer::ConstantBuffer cb;
-
 		cb.modelview_matrix = &camera.matCam;
 		cb.projection_matrix = &camera.matProj;
 		cb.viewer_direction = &camera.view;
 		cb.viewer_position = &camera.eye_position;
 		cb.light_position = &light_position;
 		
+		// draw scene graph
 		scenelink.draw(root, cb);
 		
+		// draw debug graphics
 		{
 			glm::mat4 modelview;
 			debugdraw::render(modelview, camera.matCamProj, params.render_width, params.render_height);
@@ -266,8 +258,6 @@ public:
 		entity_shutdown();
 		
 		DESTROY(Node, root);
-
-		
 	}
 };
 
