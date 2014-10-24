@@ -339,7 +339,7 @@ def arguments(parser):
 	parser.add_argument("--indextype", dest="index_type", choices=["uint", "ushort"], type=str, default="uint", help="Set the IndexBuffer type; defaults to uint")
 
 	parser.add_argument("--with-civet", dest="with_civet", action="store_true", help="Build with CivetServer (default=True)", default=True)
-	parser.add_argument("--with-oculusvr", dest="with_oculusvr", action="store_true", help="Build with OculusVR support (default=True)", default=True)
+	parser.add_argument("--with-oculusvr", dest="with_oculusvr", action="store_true", help="Build with OculusVR support", default=False)
 
 def products(arguments, **kwargs):
 	# global params will be inherited by all dependent products
