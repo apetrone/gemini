@@ -28,16 +28,14 @@
 
 #include "vr.h"
 
-#define USE_OCULUS_RIFT 1
-
-#if USE_OCULUS_RIFT
+#if GEMINI_WITH_OCULUSVR
 	#include "OVR.h"
 	#include "OVR_CAPI_GL.h"
 #endif
 
 namespace vr
 {
-#if USE_OCULUS_RIFT
+#if GEMINI_WITH_OCULUSVR
 	struct OculusRift : public HeadMountedDevice
 	{
 		ovrHmd hmd;
@@ -119,25 +117,34 @@ namespace vr
 			return this->rt;
 		}
 	};
-#endif // USE_OCULUS_RIFT
+#endif // GEMINI_WITH_OCULUSVR
 	
 	void startup()
 	{
+#if GEMINI_WITH_OCULUSVR
 		ovr_Initialize();
+#endif
 	}
 	
 	void shutdown()
 	{
+#if GEMINI_WITH_OCULUSVR
 		ovr_Shutdown();
+#endif
 	}
 	
 	int32_t total_devices()
 	{
+#if GEMINI_WITH_OCULUSVR
 		return ovrHmd_Detect();
+#else
+		return 0;
+#endif
 	}
 	
 	HeadMountedDevice* create_device()
 	{
+#if GEMINI_WITH_OCULUSVR
 		LOGV("creating an instance of a VR device...\n");
 		ovrHmd hmd = ovrHmd_Create(0);
 		
@@ -170,10 +177,14 @@ namespace vr
 		rift->hmd = hmd;
 		
 		return rift;
+#else
+		return nullptr;
+#endif
 	}
 	
 	void destroy_device(HeadMountedDevice* device)
 	{
+#if GEMINI_WITH_OCULUSVR
 		OculusRift* rift = static_cast<OculusRift*>(device);
 		if (rift->render_texture)
 		{
@@ -187,10 +198,13 @@ namespace vr
 		ovrHmd_Destroy(rift->hmd);
 		
 		DESTROY(OculusRift, rift);
+#else
+#endif
 	}
 	
 	void setup_rendering(HeadMountedDevice* device, uint16_t width, uint16_t height)
 	{
+#if GEMINI_WITH_OCULUSVR
 		vr::OculusRift* rift = static_cast<OculusRift*>(device);
 		
 		ovrSizei tex0 = ovrHmd_GetFovTextureSize(
@@ -310,5 +324,6 @@ namespace vr
 												   );
 		
 		LOGV("vr: setup rendering -> %s\n", result ? "Success": "Failed");
+#endif
 	}
 }

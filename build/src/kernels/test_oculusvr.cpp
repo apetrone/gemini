@@ -101,23 +101,31 @@ public:
 		// try to setup VR device and resolution here.
 		vr::startup();
 		
+		int32_t w = 800, h = 600;
 		LOGV("total VR devices: %i\n", vr::total_devices());
+
 		device = vr::create_device();
-	
-		int32_t w, h;
-		device->query_display_resolution(w, h);
-		LOGV("creating window with resolution: %i x %i\n", w, h);
+		if (device)
+		{
+			
+			device->query_display_resolution(w, h);
+			LOGV("creating window with resolution: %i x %i\n", w, h);
+		}
 		
 		params.window_width = (uint16_t)w;
 		params.window_height = (uint16_t)h;
 		params.window_title = "TestOculusVR";
 		params.swap_buffers = 0;
+		
 		return kernel::Application_Success;
 	}
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
-		vr::setup_rendering(device, params.render_width, params.render_height);
+		if (device)
+		{
+			vr::setup_rendering(device, params.render_width, params.render_height);
+		}
 		
 		// setup scene
 		root = CREATE(scenegraph::Node);
@@ -143,8 +151,12 @@ public:
 
 	virtual void tick(kernel::Params& params)
 	{
+		if (!device)
+		{
+			return;
+		}
+		
 		renderer::IRenderDriver * driver = renderer::driver();
-
 		device->begin_frame(driver);
 		
 		renderer::RenderTarget* rt = device->render_target();
