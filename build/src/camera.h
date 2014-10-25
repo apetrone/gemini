@@ -87,7 +87,7 @@ struct Camera
 	
 	glm::mat4 matProj;
 	glm::mat4 matCam;
-	glm::mat4 matCamProj; // matCam * matProj
+	glm::mat4 matCamProj;
 	
 	// directional vectors
 	glm::vec3 view;
