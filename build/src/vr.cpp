@@ -45,7 +45,10 @@ namespace vr
 		renderer::RenderTarget* rt;
 		renderer::Texture* render_texture;
 		ovrEyeRenderDesc eye_render[2];
-				
+		ovrFrameTiming frame_timing;
+		ovrTrackingState tracking_state;
+		ovrPosef predicted_head_pose;
+		
 		virtual uint32_t total_eyes() const
 		{
 			return ovrEye_Count;
@@ -54,7 +57,15 @@ namespace vr
 		virtual void begin_frame(renderer::IRenderDriver* renderer)
 		{
 			renderer->render_target_activate(this->rt);
-			ovrHmd_BeginFrame(hmd, 0);
+			frame_timing = ovrHmd_BeginFrame(hmd, 0);
+			
+			// check state
+			tracking_state = ovrHmd_GetTrackingState(hmd, frame_timing.ScanoutMidpointSeconds);
+			
+			// TODO: key off statusflags to determine if tracking was lost
+			
+			// copy predicted head pose
+			predicted_head_pose = tracking_state.HeadPose.ThePose;
 		}
 		
 		virtual void end_frame(renderer::IRenderDriver* renderer)
@@ -76,16 +87,16 @@ namespace vr
 		void copy_eye_pose(ovrPosef& pose, EyePose& out, ovrVector3f& hmdToEyeViewOffset)
 		{
 			const ovrVector3f& translation = pose.Position;
-			out.translation = glm::vec3(translation.x, translation.y, translation.z);
+			out.translation = glm::make_vec3(&pose.Position.x);
 			
 			const ovrQuatf& rotation = pose.Orientation;
-			out.rotation = glm::quat(rotation.w, rotation.x, rotation.y, rotation.z);
+			out.rotation = glm::make_quat(&pose.Orientation.x);
 
 			const ovrVector3f& adjust = hmdToEyeViewOffset;
-			out.offset = glm::vec3(adjust.x, adjust.y, adjust.z);
+			out.offset = glm::make_vec3(&adjust.x);
 		}
 		
-		virtual void get_eye_poses(EyePose poses[2])
+		virtual void get_eye_poses(EyePose poses[2], glm::mat4 projections[2])
 		{
 			ovrVector3f hmdToEyeViewOffset[2] = { eye_render[0].HmdToEyeViewOffset, eye_render[1].HmdToEyeViewOffset };
 			
@@ -101,6 +112,18 @@ namespace vr
 			
 			copy_eye_pose(head_pose[0], poses[1], hmdToEyeViewOffset[1]);
 			poses[1].eye_index = 1;
+			
+			
+			// calculate projections
+			float near_plane = 1.0f;
+			float far_plane = 8192.0f;
+			
+			ovrMatrix4f eye_projections[2];
+			eye_projections[ ovrEye_Left ] = ovrMatrix4f_Projection(hmd->DefaultEyeFov[ovrEye_Left], near_plane, far_plane, true);
+			projections[0] = glm::make_mat4(&eye_projections[ovrEye_Left].M[0][0]);
+			
+			eye_projections[ ovrEye_Right ] = ovrMatrix4f_Projection(hmd->DefaultEyeFov[ovrEye_Right], near_plane, far_plane, true);
+			projections[1] = glm::make_mat4(&eye_projections[ovrEye_Right].M[0][0]);
 		}
 		
 		virtual void dismiss_warning()
@@ -128,7 +151,8 @@ namespace vr
 		virtual void test(glm::mat4& xform)
 		{
 			EyePose poses[2];
-			get_eye_poses(poses);
+			glm::mat4 proj[2];
+			get_eye_poses(poses, proj);
 			
 			xform = glm::toMat4(poses[0].rotation);
 			xform = glm::translate(xform, poses[0].translation);
@@ -182,7 +206,8 @@ namespace vr
 		
 		LOGV("VR device: %s\n", hmd->ProductName);
 		LOGV("VR device manufacturer: %s\n", hmd->Manufacturer);
-		
+		LOGV("Your Eye Height: %3.2f\n", ovrHmd_GetFloat(hmd, OVR_KEY_EYE_HEIGHT, 0));
+		LOGV("Your IPD: %3.1fmm\n", ovrHmd_GetFloat(hmd, OVR_KEY_IPD, 0) * 1000.0f);
 		
 		// try to setup tracking and other sensors
 		unsigned int sensor_flags = ovrTrackingCap_Orientation | ovrTrackingCap_MagYawCorrection | ovrTrackingCap_Position;
@@ -225,7 +250,7 @@ namespace vr
 	{
 #if GEMINI_WITH_OCULUSVR
 		vr::OculusRift* rift = static_cast<OculusRift*>(device);
-		
+
 		ovrSizei tex0 = ovrHmd_GetFovTextureSize(
 												 rift->hmd,
 												 ovrEye_Left,
@@ -239,6 +264,7 @@ namespace vr
 												 rift->hmd->DefaultEyeFov[1],
 												 1.0f
 												 );
+		
 		
 		// determine combined width for both eyes
 		// get max height of the two eyes (in case they differ)
@@ -320,7 +346,11 @@ namespace vr
 		}
 		
 		// try to enable low-persistence display and dynamic prediction
-		ovrHmd_SetEnabledCaps(rift->hmd, ovrHmdCap_LowPersistence | ovrHmdCap_DynamicPrediction);
+		unsigned int enable_flags = 0;
+		enable_flags |= ovrHmdCap_LowPersistence;
+		enable_flags |= ovrHmdCap_DynamicPrediction;
+		
+		ovrHmd_SetEnabledCaps(rift->hmd, enable_flags);
 		
 		ovrRenderAPIConfig rc;
 		memset(&rc, 0, sizeof(ovrRenderAPIConfig));
@@ -329,10 +359,10 @@ namespace vr
 		rc.Header.RTSize = rift->render_target_size;
 		
 		unsigned int distortion_caps = 0;
-//		distortion_caps |= ovrDistortionCap_Chromatic;
-//		distortion_caps |= ovrDistortionCap_Vignette;
-//		distortion_caps |= ovrDistortionCap_TimeWarp;
-//		distortion_caps |= ovrDistortionCap_Overdrive;
+		distortion_caps |= ovrDistortionCap_Chromatic;
+		distortion_caps |= ovrDistortionCap_Vignette;
+		distortion_caps |= ovrDistortionCap_TimeWarp;
+		distortion_caps |= ovrDistortionCap_Overdrive;
 		
 		ovrBool result = ovrHmd_ConfigureRendering(
 												   rift->hmd,
@@ -341,6 +371,8 @@ namespace vr
 												   rift->hmd->DefaultEyeFov,
 												   rift->eye_render
 												   );
+		
+		// TODO: for monoscoping rendering; remove rift->eye_render[].HmdToEyeViewOffset
 		
 		LOGV("vr: setup rendering -> %s\n", result ? "Success": "Failed");
 #endif

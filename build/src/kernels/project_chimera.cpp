@@ -105,9 +105,11 @@ public:
 		rs.run_commands();
 		rs.rewind();
 		
-		glm::vec3 camera_position = camera.pos;
+		glm::vec3 old_camera_position = camera.pos;
+		glm::vec3 camera_position = camera.pos + glm::vec3(0, 1.82f, 0.0f);
 		vr::EyePose eye_poses[2];
-		device->get_eye_poses(eye_poses);
+		glm::mat4 proj[2];
+		device->get_eye_poses(eye_poses, proj);
 
 		for (uint32_t eye_index = 0; eye_index < 2; ++eye_index)
 		{
@@ -139,12 +141,13 @@ public:
 			
 			glm::quat character_rotation;
 			glm::quat rotation = eye_pose.rotation;
-			glm::vec3 translation = eye_pose.offset + camera_position;
+			glm::vec3 translation = camera_position + eye_pose.offset + eye_pose.translation;
 
-			glm::mat4 tr = glm::translate(glm::mat4(1.0f), translation + glm::vec3(0, 1.82f, 0.0f));
-			
+			glm::mat4 tr = glm::translate(glm::mat4(1.0f), translation);
 			glm::mat4 ro = glm::toMat4(rotation);
 			camera.matCam = glm::inverse(tr * ro);
+			camera.matProj = proj[eye_index];
+//			PRINT_MAT4(camera.matProj);
 			
 			//camera.pos = translation;
 //			camera.update_view();
@@ -158,7 +161,7 @@ public:
 			render_scene_from_camera(root, camera);
 		}
 		
-		camera.pos = camera_position;
+		camera.pos = old_camera_position;
 		
 		// draw debug graphics
 		// this is just bad.
@@ -284,7 +287,7 @@ public:
 		vr::startup();
 		
 		// if there's a rift connected
-		if (vr::total_devices() > 0)
+		//if (vr::total_devices() > 0)
 		{
 			// create one
 			device = vr::create_device();
