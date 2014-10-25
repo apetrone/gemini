@@ -98,13 +98,13 @@ namespace vr
 		
 		virtual void get_eye_poses(EyePose poses[2], glm::mat4 projections[2])
 		{
-			ovrVector3f hmdToEyeViewOffset[2] = { eye_render[0].HmdToEyeViewOffset, eye_render[1].HmdToEyeViewOffset };
+			ovrVector3f hmdToEyeViewOffset[2] = { eye_render[ovrEye_Left].HmdToEyeViewOffset, eye_render[ovrEye_Right].HmdToEyeViewOffset };
 			
 			// unused for now
 			int frame_index = 0;
 			ovrHmd_GetEyePoses(hmd, frame_index, hmdToEyeViewOffset, head_pose, nullptr);
 			
-			LOGV("TODO: we must scale head movement with IPD. See OWD sample\n");
+			//LOGV("TODO: we must scale head movement with IPD. See OWD sample\n");
 
 			// copy eye poses
 			copy_eye_pose(head_pose[0], poses[0], hmdToEyeViewOffset[0]);
@@ -116,14 +116,15 @@ namespace vr
 			
 			// calculate projections
 			float near_plane = 1.0f;
-			float far_plane = 8192.0f;
+			float far_plane = 1000.0f;
+			
 			
 			ovrMatrix4f eye_projections[2];
 			eye_projections[ ovrEye_Left ] = ovrMatrix4f_Projection(hmd->DefaultEyeFov[ovrEye_Left], near_plane, far_plane, true);
-			projections[0] = glm::make_mat4(&eye_projections[ovrEye_Left].M[0][0]);
+			projections[ovrEye_Left] = glm::make_mat4(&eye_projections[ovrEye_Left].M[0][0]);
 			
 			eye_projections[ ovrEye_Right ] = ovrMatrix4f_Projection(hmd->DefaultEyeFov[ovrEye_Right], near_plane, far_plane, true);
-			projections[1] = glm::make_mat4(&eye_projections[ovrEye_Right].M[0][0]);
+			projections[ovrEye_Right] = glm::make_mat4(&eye_projections[ovrEye_Right].M[0][0]);
 		}
 		
 		virtual void dismiss_warning()
@@ -204,6 +205,7 @@ namespace vr
 		// reach this and get a prize. couldn't even create a debug version...
 		assert(hmd != 0);
 		
+		LOGV("Firmware version: %i.%i\n", hmd->FirmwareMajor, hmd->FirmwareMinor);
 		LOGV("VR device: %s\n", hmd->ProductName);
 		LOGV("VR device manufacturer: %s\n", hmd->Manufacturer);
 		LOGV("Your Eye Height: %3.2f\n", ovrHmd_GetFloat(hmd, OVR_KEY_EYE_HEIGHT, 0));
@@ -359,10 +361,10 @@ namespace vr
 		rc.Header.RTSize = rift->render_target_size;
 		
 		unsigned int distortion_caps = 0;
-		distortion_caps |= ovrDistortionCap_Chromatic;
-		distortion_caps |= ovrDistortionCap_Vignette;
-		distortion_caps |= ovrDistortionCap_TimeWarp;
-		distortion_caps |= ovrDistortionCap_Overdrive;
+//		distortion_caps |= ovrDistortionCap_Chromatic;
+//		distortion_caps |= ovrDistortionCap_Vignette;
+//		distortion_caps |= ovrDistortionCap_TimeWarp;
+//		distortion_caps |= ovrDistortionCap_Overdrive;
 		
 		ovrBool result = ovrHmd_ConfigureRendering(
 												   rift->hmd,

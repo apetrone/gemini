@@ -323,8 +323,7 @@ namespace debugdraw
 		font::draw_string(_internal::debug_font, primitive->start.x, primitive->start.y, primitive->buffer.c_str(), primitive->color);
 	} // render_text
 	
-	void render(const glm::mat4 & modelview, const glm::mat4 & projection,
-		int viewport_width, int viewport_height)
+	void render(const glm::mat4 & modelview, const glm::mat4 & projection, int x, int y, int viewport_width, int viewport_height)
 	{
 		unsigned int attribs = 0;
 		assets::ShaderString name;
@@ -333,7 +332,7 @@ namespace debugdraw
 
 		glm::mat4 object;
 		RenderStream rs;
-		rs.add_viewport( 0, 0, viewport_width, viewport_height );
+		rs.add_viewport( x, y, viewport_width, viewport_height );
 		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
 
 		rs.add_shader( _internal::debug_shader );

@@ -106,7 +106,7 @@ public:
 		rs.rewind();
 		
 		glm::vec3 old_camera_position = camera.pos;
-		glm::vec3 camera_position = camera.pos + glm::vec3(0, 1.82f, 0.0f);
+		glm::vec3 camera_position = camera.pos + glm::vec3(0, 1.6f, 0.0f);
 		vr::EyePose eye_poses[2];
 		glm::mat4 proj[2];
 		device->get_eye_poses(eye_poses, proj);
@@ -143,11 +143,13 @@ public:
 			glm::quat rotation = eye_pose.rotation;
 			glm::vec3 translation = camera_position + eye_pose.offset + eye_pose.translation;
 
-			glm::mat4 tr = glm::translate(glm::mat4(1.0f), translation);
-			glm::mat4 ro = glm::toMat4(rotation);
-			camera.matCam = glm::inverse(tr * ro);
+//			glm::mat4 tr = glm::translate(glm::mat4(1.0f), translation);
+//			glm::mat4 ro = glm::toMat4(rotation);
+//			camera.matCam = glm::inverse(tr * ro);
 			camera.matProj = proj[eye_index];
-//			PRINT_MAT4(camera.matProj);
+			
+			LOGV("eye_matrix: %i\n", eye_index);
+			PRINT_MAT4(camera.matProj);
 			
 			//camera.pos = translation;
 //			camera.update_view();
@@ -159,17 +161,20 @@ public:
 			rs.rewind();
 
 			render_scene_from_camera(root, camera);
+			
+			// draw debug graphics
+			// this is just bad.
+			{
+				debugdraw::render(camera.matCam, camera.matProj, x, y, width, height);
+			}
 		}
 		
+
+		
+
+
 		camera.pos = old_camera_position;
-		
-		// draw debug graphics
-		// this is just bad.
-//		{
-//			glm::mat4 modelview;
-//			debugdraw::render(modelview, camera.matCamProj, params.render_width, params.render_height);
-//		}
-		
+				
 		device->end_frame(driver);
 	}
 };
@@ -189,8 +194,7 @@ public:
 		
 		// draw debug graphics
 		{
-			glm::mat4 modelview;
-			debugdraw::render(modelview, camera.matCamProj, params.render_width, params.render_height);
+			debugdraw::render(camera.matCam, camera.matProj, 0, 0, params.render_width, params.render_height);
 		}
 	}
 };
@@ -218,6 +222,7 @@ public:
 		camera.type = Camera::FIRST_PERSON;
 		device = 0;
 		render_method = 0;
+		camera.move_speed = 0.1f;
 	}
 	
 	virtual void event( kernel::KeyboardEvent & event )
@@ -318,7 +323,6 @@ public:
 		if (device && RENDER_TO_VR)
 		{
 			vr::setup_rendering(device, params.render_width, params.render_height);
-			camera_fov = 100.0f;
 			render_method = CREATE(VRRenderMethod, device);
 		}
 		else
@@ -331,7 +335,7 @@ public:
 		character->reset();
 		
 		// setup character
-		camera.perspective(camera_fov, params.render_width, params.render_height, 0.1f, 8192.0f);
+		camera.perspective(camera_fov, params.render_width, params.render_height, 0.01f, 1000.0f);
 		camera.set_absolute_position(glm::vec3(0, 0, 5));
 		camera.update_view();
 			

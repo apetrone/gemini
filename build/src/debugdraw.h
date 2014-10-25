@@ -72,7 +72,7 @@ namespace debugdraw
 	void shutdown();
 	
 	void update( float deltamsec );
-	void render( const glm::mat4 & modelview, const glm::mat4 & projection, int viewport_width, int viewport_height );
+	void render( const glm::mat4 & modelview, const glm::mat4 & projection, int x, int y, int viewport_width, int viewport_height );
 	
 	void axes( const glm::mat4 & transform, float length, float duration = MIN_DURATION_MSEC );
 	void box( const glm::vec3 & mins, const glm::vec3 & maxs, const Color & color, float duration = MIN_DURATION_MSEC );

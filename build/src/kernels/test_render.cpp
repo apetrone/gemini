@@ -281,8 +281,7 @@ public:
 		
 //		BaseVar::render_values(10, 72);
 		{
-			glm::mat4 modelview;
-			debugdraw::render(modelview, camera.matCamProj, params.render_width, params.render_height);
+			debugdraw::render(camera.matCam, camera.matProj, 0, 0, params.render_width, params.render_height);
 		}
 	}
 	
