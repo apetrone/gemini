@@ -19,9 +19,10 @@ DESTINATION=build/dependencies
 SDKS=(
 	fbx_2015.1
 	oculussdk_0.4.2
+	oculussdk_0.4.3
 )
 
 # sync all sdks
 for SDK in ${SDKS[@]}; do
-	$RSYNC -az --progress "${SOURCE}/${SDK}/" "${DESTINATION}/${SDK}"
+	${RSYNC} --delete -az --exclude '*.DS_Store' --progress "${SOURCE}/${SDK}/" "${DESTINATION}/${SDK}"
 done
