@@ -115,16 +115,16 @@ namespace vr
 			
 			
 			// calculate projections
-			float near_plane = 1.0f;
-			float far_plane = 1000.0f;
+			float near_plane = 0.01f;
+			float far_plane = 8192.0f;
 			
 			
 			ovrMatrix4f eye_projections[2];
 			eye_projections[ ovrEye_Left ] = ovrMatrix4f_Projection(hmd->DefaultEyeFov[ovrEye_Left], near_plane, far_plane, true);
-			projections[ovrEye_Left] = glm::make_mat4(&eye_projections[ovrEye_Left].M[0][0]);
+			projections[ovrEye_Left] = glm::transpose(glm::make_mat4(&eye_projections[ovrEye_Left].M[0][0]));
 			
 			eye_projections[ ovrEye_Right ] = ovrMatrix4f_Projection(hmd->DefaultEyeFov[ovrEye_Right], near_plane, far_plane, true);
-			projections[ovrEye_Right] = glm::make_mat4(&eye_projections[ovrEye_Right].M[0][0]);
+			projections[ovrEye_Right] = glm::transpose(glm::make_mat4(&eye_projections[ovrEye_Right].M[0][0]));
 		}
 		
 		virtual void dismiss_warning()

@@ -141,18 +141,12 @@ public:
 			
 			glm::quat character_rotation;
 			glm::quat rotation = eye_pose.rotation;
-			glm::vec3 translation = camera_position + eye_pose.offset + eye_pose.translation;
+			glm::vec3 translation = camera_position + eye_pose.offset;// + eye_pose.translation;
 
-//			glm::mat4 tr = glm::translate(glm::mat4(1.0f), translation);
-//			glm::mat4 ro = glm::toMat4(rotation);
-//			camera.matCam = glm::inverse(tr * ro);
+			glm::mat4 tr = glm::translate(glm::mat4(1.0f), translation);
+			glm::mat4 ro = glm::toMat4(rotation);
+			camera.matCam = glm::inverse(tr * ro);
 			camera.matProj = proj[eye_index];
-			
-			LOGV("eye_matrix: %i\n", eye_index);
-			PRINT_MAT4(camera.matProj);
-			
-			//camera.pos = translation;
-//			camera.update_view();
 			
 			rs.add_viewport(x, y, width, height);
 			
@@ -163,15 +157,8 @@ public:
 			render_scene_from_camera(root, camera);
 			
 			// draw debug graphics
-			// this is just bad.
-			{
-				debugdraw::render(camera.matCam, camera.matProj, x, y, width, height);
-			}
+//			debugdraw::render(camera.matCam, camera.matProj, x, y, width, height);
 		}
-		
-
-		
-
 
 		camera.pos = old_camera_position;
 				
@@ -335,7 +322,7 @@ public:
 		character->reset();
 		
 		// setup character
-		camera.perspective(camera_fov, params.render_width, params.render_height, 0.01f, 1000.0f);
+		camera.perspective(camera_fov, params.render_width, params.render_height, 0.01f, 8192.0f);
 		camera.set_absolute_position(glm::vec3(0, 0, 5));
 		camera.update_view();
 			
@@ -395,7 +382,8 @@ public:
 
 		camera.update_view();
 
-		physics::debug_draw();
+		//physics::debug_draw();
+		
 //		debugdraw::axes(glm::mat4(1.0), 1.0f);
 		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
 		debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", camera.eye_position.x, camera.eye_position.y, camera.eye_position.z), Color(255, 0, 255));
