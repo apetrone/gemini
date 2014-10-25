@@ -48,12 +48,150 @@
 #include <gemini/mathlib.h>
 
 #include "renderer/scenelink.h"
-
+#include "vr.h"
 
 #define LOCK_CAMERA_TO_CHARACTER 0
 
+// even if a VR device is attached, this will NOT render to it
+// this allows debugging in some other mechanism to check sensor data.
+uint8_t RENDER_TO_VR = 1;
 
 using namespace physics;
+
+void render_scene_from_camera(scenegraph::Node* root, Camera& camera)
+{
+	// setup constant buffer
+	glm::vec3 light_position(0.5f, 2.5f, -12);
+	renderer::ConstantBuffer cb;
+	cb.modelview_matrix = &camera.matCam;
+	cb.projection_matrix = &camera.matProj;
+	cb.viewer_direction = &camera.view;
+	cb.viewer_position = &camera.eye_position;
+	cb.light_position = &light_position;
+	
+	// draw scene graph
+	renderer::SceneLink scenelink;
+	scenelink.draw(root, cb);
+}
+
+class SceneRenderMethod
+{
+public:
+	virtual ~SceneRenderMethod() {}
+	virtual void render_frame( scenegraph::Node* root, Camera& camera, const kernel::Params& params ) = 0;
+};
+
+
+class VRRenderMethod : public SceneRenderMethod
+{
+	vr::HeadMountedDevice* device;
+
+public:
+	VRRenderMethod(vr::HeadMountedDevice* in_device) : device(in_device) {}
+	
+	virtual void render_frame( scenegraph::Node* root, Camera& camera, const kernel::Params& params )
+	{
+		assert( device != nullptr );
+		
+		renderer::IRenderDriver * driver = renderer::driver();
+		device->begin_frame(driver);
+		
+		renderer::RenderTarget* rt = device->render_target();
+		
+		RenderStream rs;
+		rs.add_clearcolor(0.0f, 0.5f, 0.5f, 1.0f);
+		rs.add_clear(renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER);
+		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
+		rs.run_commands();
+		rs.rewind();
+		
+		glm::vec3 camera_position = camera.pos;
+		vr::EyePose eye_poses[2];
+		device->get_eye_poses(eye_poses);
+
+		for (uint32_t eye_index = 0; eye_index < 2; ++eye_index)
+		{
+			vr::EyePose& eye_pose = eye_poses[eye_index];
+			
+			int x;
+			int y = 0;
+			int width, height;
+			
+			width = rt->width/2;
+			height = rt->height;
+			
+			if (eye_pose.is_left_eye())
+			{
+				x = 0;
+				y = 0;
+			}
+			else if (eye_pose.is_right_eye())
+			{
+				x = width;
+				y = 0;
+			}
+			
+			// setup camera matrix for this eye
+			
+			// rotation = character rotation * eye pose rotation
+			// translation = characer position + character rotation.rotate_vector(eye pose translation) // q(t) * V * q(t)^-1
+			
+			
+			glm::quat character_rotation;
+			glm::quat rotation = eye_pose.rotation;
+			glm::vec3 translation = eye_pose.offset + camera_position;
+
+			glm::mat4 tr = glm::translate(glm::mat4(1.0f), translation + glm::vec3(0, 1.82f, 0.0f));
+			
+			glm::mat4 ro = glm::toMat4(rotation);
+			camera.matCam = glm::inverse(tr * ro);
+			
+			//camera.pos = translation;
+//			camera.update_view();
+			
+			rs.add_viewport(x, y, width, height);
+			
+			// render nodes
+			rs.run_commands();
+			rs.rewind();
+
+			render_scene_from_camera(root, camera);
+		}
+		
+		camera.pos = camera_position;
+		
+		// draw debug graphics
+		// this is just bad.
+//		{
+//			glm::mat4 modelview;
+//			debugdraw::render(modelview, camera.matCamProj, params.render_width, params.render_height);
+//		}
+		
+		device->end_frame(driver);
+	}
+};
+
+class DefaultRenderMethod : public SceneRenderMethod
+{
+public:
+	virtual void render_frame( scenegraph::Node* root, Camera& camera, const kernel::Params& params )
+	{
+		RenderStream rs;
+		rs.add_viewport( 0, 0, params.render_width, params.render_height );
+		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
+		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
+		rs.run_commands();
+		
+		render_scene_from_camera(root, camera);
+		
+		// draw debug graphics
+		{
+			glm::mat4 modelview;
+			debugdraw::render(modelview, camera.matCamProj, params.render_width, params.render_height);
+		}
+	}
+};
+
 
 class ProjectChimera : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
@@ -66,16 +204,17 @@ public:
 	Camera camera;
 	physics::CharacterController* character;
 	scenegraph::Node* root;
+	vr::HeadMountedDevice* device;
 
-	
-	renderer::SceneLink scenelink;
-	
+	SceneRenderMethod* render_method;
 
 	ProjectChimera()
 	{
 		character = 0;
 		root = 0;
 		camera.type = Camera::FIRST_PERSON;
+		device = 0;
+		render_method = 0;
 	}
 	
 	virtual void event( kernel::KeyboardEvent & event )
@@ -85,6 +224,20 @@ public:
 			if (event.key == input::KEY_ESCAPE)
 			{
 				kernel::instance()->set_active(false);
+			}
+			else if (event.key == input::KEY_SPACE)
+			{
+				if (device)
+				{
+					device->dismiss_warning();
+				}
+			}
+			else if (event.key == input::KEY_TAB)
+			{
+				if (device)
+				{
+					device->reset_head_pose();
+				}
 			}
 		}
 	}
@@ -127,19 +280,56 @@ public:
 		params.window_title = "project_chimera";
 		params.window_width = 1280;
 		params.window_height = 720;
+		
+		vr::startup();
+		
+		// if there's a rift connected
+		if (vr::total_devices() > 0)
+		{
+			// create one
+			device = vr::create_device();
+			if (device)
+			{
+				int32_t width, height;
+				device->query_display_resolution(width, height);
+
+				
+				// required such that the kernel doesn't swap buffers
+				// as this is handled by the rift sdk.
+				params.swap_buffers = !RENDER_TO_VR;
+				
+				if (RENDER_TO_VR)
+				{
+					params.window_width = (uint16_t)width;
+					params.window_height = (uint16_t)height;
+				}
+			}
+		}
+		
 		return kernel::Application_Success;
 	}
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
+		float camera_fov = 50.0f;
+		if (device && RENDER_TO_VR)
+		{
+			vr::setup_rendering(device, params.render_width, params.render_height);
+			camera_fov = 100.0f;
+			render_method = CREATE(VRRenderMethod, device);
+		}
+		else
+		{
+			render_method = CREATE(DefaultRenderMethod);
+		}
+	
 		// create character
 		character = physics::create_character_controller(btVector3(0, 2, 0), false);
 		character->reset();
 		
 		// setup character
-		camera.perspective(50.0f, params.render_width, params.render_height, 0.1f, 8192.0f);
-		camera.yaw = -45;
-		camera.pitch = 30;
+		camera.perspective(camera_fov, params.render_width, params.render_height, 0.1f, 8192.0f);
+		camera.set_absolute_position(glm::vec3(0, 0, 5));
 		camera.update_view();
 			
 		// capture the mouse
@@ -199,7 +389,7 @@ public:
 		camera.update_view();
 
 		physics::debug_draw();
-		debugdraw::axes(glm::mat4(1.0), 1.0f);
+//		debugdraw::axes(glm::mat4(1.0), 1.0f);
 		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
 		debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", camera.eye_position.x, camera.eye_position.y, camera.eye_position.z), Color(255, 0, 255));
 		debugdraw::text(10, 24, xstr_format("camera.view = %.2g %.2g %.2g", camera.view.x, camera.view.y, camera.view.z), Color(128, 128, 255));
@@ -217,14 +407,14 @@ public:
 		// then update the scene graph
 		root->update_transforms();
 	
-		RenderStream rs;
-		rs.add_viewport( 0, 0, params.render_width, params.render_height );
-		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
-		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
-		rs.run_commands();
+		if (device)
+		{
+			glm::mat4 xform;
+			device->test(xform);
+			debugdraw::axes(xform, 2.0f, 0.1f);
+		}
 		
-		glm::mat4 char_mat = glm::mat4(1.0);
-		
+		//glm::mat4 char_mat = glm::mat4(1.0);
 		// TODO: this should use the actual player height instead of
 		// hard coding the value.
 //		char_mat = glm::translate(camera.pos - glm::vec3(0,1.82,0));
@@ -233,24 +423,8 @@ public:
 		{
 			//player->world_transform = char_mat;
 		}
-		
-		// setup constant buffer
-		glm::vec3 light_position(0.5f, 2.5f, -12);
-		renderer::ConstantBuffer cb;
-		cb.modelview_matrix = &camera.matCam;
-		cb.projection_matrix = &camera.matProj;
-		cb.viewer_direction = &camera.view;
-		cb.viewer_position = &camera.eye_position;
-		cb.light_position = &light_position;
-		
-		// draw scene graph
-		scenelink.draw(root, cb);
-		
-		// draw debug graphics
-		{
-			glm::mat4 modelview;
-			debugdraw::render(modelview, camera.matCamProj, params.render_width, params.render_height);
-		}
+
+		render_method->render_frame(root, camera, params);
 	}
 	
 	virtual void shutdown( kernel::Params & params )
@@ -258,6 +432,14 @@ public:
 		entity_shutdown();
 		
 		DESTROY(Node, root);
+		
+		DESTROY(SceneRenderMethod, render_method);
+		
+		if (device)
+		{
+			vr::destroy_device(device);
+		}
+		vr::shutdown();
 	}
 };
 

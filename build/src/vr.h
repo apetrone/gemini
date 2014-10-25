@@ -58,11 +58,15 @@ namespace vr
 		virtual void end_frame(renderer::IRenderDriver* renderer) = 0;
 
 		virtual void query_display_resolution(int32_t& width, int32_t& height) = 0;
-		virtual EyePose eye_pose_at(uint32_t eye_index) = 0;
+		virtual void get_eye_poses(EyePose poses[2]) = 0;
+		
 		virtual void dismiss_warning() = 0;
 		virtual void reset_head_pose() = 0;
 		
 		virtual renderer::RenderTarget* render_target() = 0;
+		
+		
+		virtual void test(glm::mat4& xform) = 0;
 	};
 
 	
@@ -72,7 +76,7 @@ namespace vr
 	void shutdown();
 	int32_t total_devices();
 		
-	HeadMountedDevice* create_device();
+	HeadMountedDevice* create_device(int32_t index = 0);
 	void destroy_device(HeadMountedDevice* device);
 	
 	// device operations

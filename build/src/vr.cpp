@@ -73,31 +73,34 @@ namespace vr
 			}
 		}
 		
-		virtual EyePose eye_pose_at(uint32_t eye_index)
+		void copy_eye_pose(ovrPosef& pose, EyePose& out, ovrVector3f& hmdToEyeViewOffset)
 		{
-			EyePose pose;
+			const ovrVector3f& translation = pose.Position;
+			out.translation = glm::vec3(translation.x, translation.y, translation.z);
 			
-			ovrEyeType eye = hmd->EyeRenderOrder[eye_index];
-			pose.eye_index = (eye == ovrEye_Left) ? 0 : 1;
-			
-			ovrVector3f eyeViewOffset[2];
+			const ovrQuatf& rotation = pose.Orientation;
+			out.rotation = glm::quat(rotation.w, rotation.x, rotation.y, rotation.z);
+
+			const ovrVector3f& adjust = hmdToEyeViewOffset;
+			out.offset = glm::vec3(adjust.x, adjust.y, adjust.z);
+		}
+		
+		virtual void get_eye_poses(EyePose poses[2])
+		{
+			ovrVector3f hmdToEyeViewOffset[2] = { eye_render[0].HmdToEyeViewOffset, eye_render[1].HmdToEyeViewOffset };
 			
 			// unused for now
 			int frame_index = 0;
+			ovrHmd_GetEyePoses(hmd, frame_index, hmdToEyeViewOffset, head_pose, nullptr);
 			
-			ovrHmd_GetEyePoses(hmd, frame_index, eyeViewOffset, head_pose, nullptr);
+			LOGV("TODO: we must scale head movement with IPD. See OWD sample\n");
 
+			// copy eye poses
+			copy_eye_pose(head_pose[0], poses[0], hmdToEyeViewOffset[0]);
+			poses[0].eye_index = 0;
 			
-			const ovrVector3f& translation = head_pose[eye].Position;
-			pose.translation = glm::vec3(translation.x, translation.y, translation.z);
-			
-			const ovrQuatf& rotation = head_pose[eye].Orientation;
-			pose.rotation = glm::quat(rotation.w, rotation.x, rotation.y, rotation.z);
-			
-			const ovrVector3f& adjust = eye_render[eye].HmdToEyeViewOffset;
-			pose.offset = glm::vec3(adjust.x, adjust.y, adjust.z);
-			
-			return pose;
+			copy_eye_pose(head_pose[0], poses[1], hmdToEyeViewOffset[1]);
+			poses[1].eye_index = 1;
 		}
 		
 		virtual void dismiss_warning()
@@ -120,6 +123,16 @@ namespace vr
 		virtual renderer::RenderTarget* render_target()
 		{
 			return this->rt;
+		}
+		
+		virtual void test(glm::mat4& xform)
+		{
+			EyePose poses[2];
+			get_eye_poses(poses);
+			
+			xform = glm::toMat4(poses[0].rotation);
+			xform = glm::translate(xform, poses[0].translation);
+			xform = glm::inverse(xform);
 		}
 	};
 #endif // GEMINI_WITH_OCULUSVR
@@ -147,11 +160,11 @@ namespace vr
 #endif
 	}
 	
-	HeadMountedDevice* create_device()
+	HeadMountedDevice* create_device(int32_t index)
 	{
 #if GEMINI_WITH_OCULUSVR
 		LOGV("creating an instance of a VR device...\n");
-		ovrHmd hmd = ovrHmd_Create(0);
+		ovrHmd hmd = ovrHmd_Create(index);
 		
 		if (hmd)
 		{
@@ -172,7 +185,8 @@ namespace vr
 		
 		
 		// try to setup tracking and other sensors
-		ovrBool result = ovrHmd_ConfigureTracking(hmd, 0xFFFFFFFF, 0);
+		unsigned int sensor_flags = ovrTrackingCap_Orientation | ovrTrackingCap_MagYawCorrection | ovrTrackingCap_Position;
+		ovrBool result = ovrHmd_ConfigureTracking(hmd, sensor_flags, 0);
 		if (!result)
 		{
 			LOGW("Failed to configure tracking!\n");
@@ -317,8 +331,8 @@ namespace vr
 		unsigned int distortion_caps = 0;
 //		distortion_caps |= ovrDistortionCap_Chromatic;
 //		distortion_caps |= ovrDistortionCap_Vignette;
-		distortion_caps |= ovrDistortionCap_TimeWarp;
-		distortion_caps |= ovrDistortionCap_Overdrive;
+//		distortion_caps |= ovrDistortionCap_TimeWarp;
+//		distortion_caps |= ovrDistortionCap_Overdrive;
 		
 		ovrBool result = ovrHmd_ConfigureRendering(
 												   rift->hmd,

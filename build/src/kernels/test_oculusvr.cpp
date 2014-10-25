@@ -176,7 +176,7 @@ public:
 		
 		for (uint32_t eye_index = 0; eye_index < device->total_eyes(); ++eye_index)
 		{
-			vr::EyePose eye_pose = device->eye_pose_at(eye_index);
+			vr::EyePose eye_pose;// = device->eye_pose_at(eye_index);
 
 			int x;
 			int y = 0;
