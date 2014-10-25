@@ -80,8 +80,13 @@ namespace vr
 			ovrEyeType eye = hmd->EyeRenderOrder[eye_index];
 			pose.eye_index = (eye == ovrEye_Left) ? 0 : 1;
 			
-			head_pose[eye] = ovrHmd_GetEyePose(hmd, eye);
+			ovrVector3f eyeViewOffset[2];
 			
+			// unused for now
+			int frame_index = 0;
+			
+			ovrHmd_GetEyePoses(hmd, frame_index, eyeViewOffset, head_pose, nullptr);
+
 			
 			const ovrVector3f& translation = head_pose[eye].Position;
 			pose.translation = glm::vec3(translation.x, translation.y, translation.z);
@@ -89,7 +94,7 @@ namespace vr
 			const ovrQuatf& rotation = head_pose[eye].Orientation;
 			pose.rotation = glm::quat(rotation.w, rotation.x, rotation.y, rotation.z);
 			
-			const ovrVector3f& adjust = eye_render[eye].ViewAdjust;
+			const ovrVector3f& adjust = eye_render[eye].HmdToEyeViewOffset;
 			pose.offset = glm::vec3(adjust.x, adjust.y, adjust.z);
 			
 			return pose;

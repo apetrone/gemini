@@ -22,7 +22,7 @@ def products(arguments, **kwargs):
 	}
 
 	ovr = Product(name="ovr", output=ProductType.StaticLibrary)
-	ovr.root = "../dependencies/oculussdk_%s" % "0.4.2"
+	ovr.root = "../dependencies/oculussdk_%s" % "0.4.3"
 
 	# 0.4.1 needs "%(project)s/" between platform and configuration
 	ovr.product_root = "LibOVR/Lib/%(platform)s/%(title_configuration)s" % vars
