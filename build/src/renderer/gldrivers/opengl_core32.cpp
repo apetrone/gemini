@@ -309,6 +309,17 @@ struct GL32Texture : public renderer::Texture
 		GLenum min_filter = GL_NEAREST;
 		GLenum mag_filter = GL_NEAREST;
 		
+		if (image.filter == image::FILTER_LINEAR)
+		{
+			min_filter = GL_LINEAR_MIPMAP_NEAREST;
+			mag_filter = GL_NEAREST;
+		}
+		else if (image.filter == image::FILTER_LINEAR_MIPMAP)
+		{
+			min_filter = GL_LINEAR_MIPMAP_LINEAR;
+			mag_filter = GL_LINEAR;
+		}
+		
 		// set filtering
 		gl.TexParameteri(texture_type, GL_TEXTURE_MIN_FILTER, min_filter);
 		gl.TexParameteri(texture_type, GL_TEXTURE_MAG_FILTER, mag_filter);

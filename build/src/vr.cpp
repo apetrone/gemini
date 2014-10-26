@@ -361,10 +361,10 @@ namespace vr
 		rc.Header.RTSize = rift->render_target_size;
 		
 		unsigned int distortion_caps = 0;
-//		distortion_caps |= ovrDistortionCap_Chromatic;
-//		distortion_caps |= ovrDistortionCap_Vignette;
-//		distortion_caps |= ovrDistortionCap_TimeWarp;
-//		distortion_caps |= ovrDistortionCap_Overdrive;
+		distortion_caps |= ovrDistortionCap_Chromatic;
+		distortion_caps |= ovrDistortionCap_Vignette;
+		distortion_caps |= ovrDistortionCap_TimeWarp;
+		distortion_caps |= ovrDistortionCap_Overdrive;
 		
 		ovrBool result = ovrHmd_ConfigureRendering(
 												   rift->hmd,

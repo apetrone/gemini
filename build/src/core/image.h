@@ -59,10 +59,17 @@ namespace image
 		F_CUBEMAP = 64,			// load this texture as a cubemap
 	}; // ImageFlags
 	
+	enum FilterType
+	{
+		FILTER_NONE,				// nearest
+		FILTER_LINEAR,				// linear
+		FILTER_LINEAR_MIPMAP,		// linear, with mipmapping
+	};
 	
 	struct Image
 	{
 		ImageType type;
+		FilterType filter;
 		uint32_t flags;
 		
 		uint32_t width;
@@ -77,6 +84,7 @@ namespace image
 		Image()
 		{
 			type = IT_UNKNOWN;
+			filter = FILTER_NONE;
 			flags = 0;
 			
 			width = 0;

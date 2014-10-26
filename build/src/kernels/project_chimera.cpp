@@ -141,7 +141,7 @@ public:
 			
 			glm::quat character_rotation;
 			glm::quat rotation = eye_pose.rotation;
-			glm::vec3 translation = camera_position + eye_pose.offset;// + eye_pose.translation;
+			glm::vec3 translation = camera_position + eye_pose.offset + eye_pose.translation;
 
 			glm::mat4 tr = glm::translate(glm::mat4(1.0f), translation);
 			glm::mat4 ro = glm::toMat4(rotation);
@@ -295,6 +295,8 @@ public:
 				
 				if (RENDER_TO_VR)
 				{
+					params.use_fullscreen = 1;
+					
 					params.window_width = (uint16_t)width;
 					params.window_height = (uint16_t)height;
 				}
