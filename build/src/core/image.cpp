@@ -33,6 +33,18 @@
 
 namespace image
 {
+	Image::Image()
+	{
+		type = IT_UNKNOWN;
+		filter = FILTER_NONE;
+		flags = 0;
+		
+		width = 0;
+		height = 0;
+		
+		channels = 3;
+	}
+
 	void generate_checker_pattern(Image& image, const Color & color1, const Color & color2)
 	{
 		// image dimensions must be specified

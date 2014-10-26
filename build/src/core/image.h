@@ -81,17 +81,7 @@ namespace image
 		// can be raw pixel data, or compressed data, etc.
 		FixedArray<uint8_t> pixels;
 		
-		Image()
-		{
-			type = IT_UNKNOWN;
-			filter = FILTER_NONE;
-			flags = 0;
-			
-			width = 0;
-			height = 0;
-			
-			channels = 3;
-		}
+		Image();
 	};
 	
 	const unsigned int ERROR_TEXTURE_WIDTH = 128;
