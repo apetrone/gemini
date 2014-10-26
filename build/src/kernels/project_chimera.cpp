@@ -54,7 +54,7 @@
 
 // even if a VR device is attached, this will NOT render to it
 // this allows debugging in some other mechanism to check sensor data.
-uint8_t RENDER_TO_VR = 1;
+uint8_t RENDER_TO_VR = 0;
 
 using namespace physics;
 
@@ -275,7 +275,7 @@ public:
 		params.window_title = "project_chimera";
 		params.window_width = 1280;
 		params.window_height = 720;
-		
+
 		vr::startup();
 		
 		// if there's a rift connected
@@ -296,7 +296,7 @@ public:
 				if (RENDER_TO_VR)
 				{
 					params.use_fullscreen = 1;
-					
+					params.use_vsync = false; // disable vsync? does this reduce jutter when in extended mode?
 					params.window_width = (uint16_t)width;
 					params.window_height = (uint16_t)height;
 				}

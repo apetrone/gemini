@@ -311,6 +311,7 @@ namespace kernel
 		params.step_alpha = 0;
 		params.step_interval_seconds = 0;
 		params.use_fullscreen = false;
+		params.use_vsync = true;
 		
 		// we should default to swapping buffers ourself
 		params.swap_buffers = 1;

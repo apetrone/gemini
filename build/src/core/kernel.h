@@ -95,6 +95,9 @@ namespace kernel
 		
 		// set to true to create a fullscreen window
 		bool use_fullscreen;
+		
+		// vertical sync
+		bool use_vsync;
 	}; // Params
 	
 	
