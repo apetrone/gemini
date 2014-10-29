@@ -196,7 +196,8 @@ public kernel::IEventListener<kernel::SystemEvent>
 
 public:
 	DECLARE_APPLICATION(ProjectChimera);
-	Camera camera;
+
+	Camera* active_camera;
 	physics::CharacterController* character;
 	scenegraph::Node* root;
 	vr::HeadMountedDevice* device;
@@ -207,10 +208,9 @@ public:
 	{
 		character = 0;
 		root = 0;
-		camera.type = Camera::FIRST_PERSON;
 		device = 0;
 		render_method = 0;
-		camera.move_speed = 0.1f;
+		active_camera = 0;
 	}
 	
 	virtual void event( kernel::KeyboardEvent & event )
@@ -244,7 +244,10 @@ public:
 		{
 			case kernel::MouseMoved:
 			{
-				camera.move_view(event.dx, event.dy);
+				if (active_camera)
+				{
+					active_camera->move_view(event.dx, event.dy);
+				}
 				//camera.update_view();
 				break;
 			}
@@ -280,7 +283,7 @@ public:
 		vr::startup();
 		
 		// if there's a rift connected
-		//if (vr::total_devices() > 0)
+		if (vr::total_devices() > 0)
 		{
 			// create one
 			device = vr::create_device();
@@ -329,11 +332,6 @@ public:
 		// create character
 		character = physics::create_character_controller(btVector3(0, 2, 0), false);
 		character->reset();
-		
-		// setup character
-		camera.perspective(camera_fov, params.render_width, params.render_height, 0.01f, 8192.0f);
-		camera.set_absolute_position(glm::vec3(0, 0, 5));
-		camera.update_view();
 			
 		// capture the mouse
 		kernel::instance()->capture_mouse( true );
@@ -352,6 +350,36 @@ public:
 		// perform post-script load duties
 		entity_post_script_load();
 
+		
+		// setup camera
+		Sqrat::RootTable roottable( script::get_vm() );
+		Sqrat::Object gamerules = roottable.GetSlot( "gamerules" );
+		if ( !gamerules.IsNull() )
+		{
+			GameRules * gr = gamerules.Cast<GameRules*>();
+			if ( gr )
+			{
+				active_camera = gr->get_active_camera();
+				if (active_camera)
+				{
+					active_camera->type = Camera::FIRST_PERSON;
+					active_camera->move_speed = 0.1f;
+					active_camera->perspective(camera_fov, params.render_width, params.render_height, 0.01f, 8192.0f);
+					active_camera->set_absolute_position(glm::vec3(0, 0, 5));
+					active_camera->update_view();
+				}
+				else
+				{
+					LOGE("Error! No camera attached to gamerules!\n");
+				}
+			}
+			else
+			{
+				LOGE("Error! Gamerules is invalid!\n");
+			}
+		}
+
+
 		return kernel::Application_Success;
 	}
 
@@ -365,39 +393,61 @@ public:
 		command.forward = input::state()->keyboard().is_down(input::KEY_W);
 		command.back = input::state()->keyboard().is_down(input::KEY_S);
 		
+		
+		Sqrat::RootTable roottable( script::get_vm() );
+		Sqrat::Object gamerules = roottable.GetSlot( "gamerules" );
+		if ( !gamerules.IsNull() )
+		{
+			GameRules * gr = gamerules.Cast<GameRules*>();
+			if ( gr )
+			{
+				active_camera = gr->get_active_camera();
+			}
+		}
+		
+		if (active_camera)
+		{
+		
 #if LOCK_CAMERA_TO_CHARACTER
-		physics::player_move(character, camera, command);
+		physics::player_move(character, *active_camera, command);
 #else
 		// if you want to move JUST the camera instead...
-		camera.move_left(input::state()->keyboard().is_down(input::KEY_A));
-		camera.move_right(input::state()->keyboard().is_down(input::KEY_D));
-		camera.move_forward(input::state()->keyboard().is_down(input::KEY_W));
-		camera.move_backward(input::state()->keyboard().is_down(input::KEY_S));
-		camera.update_view();
+		active_camera->move_left(input::state()->keyboard().is_down(input::KEY_A));
+		active_camera->move_right(input::state()->keyboard().is_down(input::KEY_D));
+		active_camera->move_forward(input::state()->keyboard().is_down(input::KEY_W));
+		active_camera->move_backward(input::state()->keyboard().is_down(input::KEY_S));
+		active_camera->update_view();
 #endif
 
 		// rotate physics body based on camera yaw
 		btTransform worldTrans = character->getGhostObject()->getWorldTransform();
-		btQuaternion rotation(btVector3(0,1,0), mathlib::degrees_to_radians(-camera.yaw));
+		btQuaternion rotation(btVector3(0,1,0), mathlib::degrees_to_radians(-active_camera->yaw));
 		worldTrans.setRotation(rotation);
 		character->getGhostObject()->setWorldTransform(worldTrans);
 		
 #if LOCK_CAMERA_TO_CHARACTER
-		physics::copy_ghost_to_camera(character->getGhostObject(), camera);
+		physics::copy_ghost_to_camera(character->getGhostObject(), *active_camera);
 #endif
+	
 		
+		}
 		
-		entity_step();
-
-		camera.update_view();
+		if (active_camera)
+		{
+			entity_step();
+			active_camera->update_view();
+		}
 
 		//physics::debug_draw();
 		
 //		debugdraw::axes(glm::mat4(1.0), 1.0f);
-		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
-		debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", camera.eye_position.x, camera.eye_position.y, camera.eye_position.z), Color(255, 0, 255));
-		debugdraw::text(10, 24, xstr_format("camera.view = %.2g %.2g %.2g", camera.view.x, camera.view.y, camera.view.z), Color(128, 128, 255));
-		debugdraw::text(10, 36, xstr_format("camera.right = %.2g %.2g %.2g", camera.side.x, camera.side.y, camera.side.z), Color(255, 0, 0));
+		if (active_camera)
+		{
+			debugdraw::text(10, 0, xstr_format("active_camera->pos = %.2g %.2g %.2g", active_camera->pos.x, active_camera->pos.y, active_camera->pos.z), Color(255, 255, 255));
+			debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", active_camera->eye_position.x, active_camera->eye_position.y, active_camera->eye_position.z), Color(255, 0, 255));
+			debugdraw::text(10, 24, xstr_format("active_camera->view = %.2g %.2g %.2g", active_camera->view.x, active_camera->view.y, active_camera->view.z), Color(128, 128, 255));
+			debugdraw::text(10, 36, xstr_format("active_camera->right = %.2g %.2g %.2g", active_camera->side.x, active_camera->side.y, active_camera->side.z), Color(255, 0, 0));
+		}
 		debugdraw::text(10, 48, xstr_format("frame_delta = %g", params.framedelta_raw_msec), Color(255, 255, 255));
 
 		root->update(params.step_interval_seconds);
@@ -421,14 +471,18 @@ public:
 		//glm::mat4 char_mat = glm::mat4(1.0);
 		// TODO: this should use the actual player height instead of
 		// hard coding the value.
-//		char_mat = glm::translate(camera.pos - glm::vec3(0,1.82,0));
-//		char_mat = glm::rotate(char_mat, -camera.yaw, glm::vec3(0,1,0));
+//		char_mat = glm::translate(active_camera->pos - glm::vec3(0,1.82,0));
+//		char_mat = glm::rotate(char_mat, -active_camera->yaw, glm::vec3(0,1,0));
 		//if (player)
 		{
 			//player->world_transform = char_mat;
 		}
 
-		render_method->render_frame(root, camera, params);
+		if (active_camera)
+		{
+			assert(active_camera != nullptr);
+			render_method->render_frame(root, *active_camera, params);
+		}
 	}
 	
 	virtual void shutdown( kernel::Params & params )

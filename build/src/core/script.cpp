@@ -32,6 +32,10 @@
 #include <gemini/mathlib.h>
 #include "debugdraw.h"
 
+
+#include "camera.h"
+
+
 namespace script
 {
 	HSQUIRRELVM _sqvm = 0;
@@ -727,6 +731,12 @@ namespace script
 			debug.Func( "sphere", debugdraw::sphere );
 			
 			root.Bind( "debug", debug );
+			
+			
+			
+			
+			Sqrat::Class<Camera> camera( vm );
+			root.Bind("Camera", camera);
 			
 		} // initialize_vm
 

@@ -25,9 +25,7 @@
 #include "entity_allocator.h"
 #include "entity_list.h"
 #include "physics.h"
-
-
-
+#include "camera.h"
 
 void entity_startup()
 {
@@ -48,7 +46,7 @@ void entity_startup()
 	entity.Prop("position", &Entity::get_position, &Entity::set_position);
 //	entity.Prop("rotation", &Entity::get_rotation, &Entity::set_rotation);
 	
-	
+	entity.Func("AttachCamera", &Entity::attach_camera);
 	
 	root.Bind( "Entity", entity );
 	
@@ -57,6 +55,7 @@ void entity_startup()
 	gamerules.Func(ENTITY_START_NAME, &GameRules::native_start );
 	gamerules.Func(ENTITY_UPDATE_NAME, &GameRules::native_update );
 	gamerules.Func(ENTITY_FIXED_UPDATE_NAME, &GameRules::native_fixed_update );
+	gamerules.Func( "SetActiveCamera", &GameRules::set_active_camera );
 	root.Bind( "GameRules", gamerules );
 	
 
@@ -307,6 +306,11 @@ void Entity::set_position(glm::vec3 *new_position)
 	{
 		body->set_world_position(*new_position);
 	}
+}
+
+void Entity::attach_camera(Camera* camera)
+{
+	
 }
 
 glm::vec3* Entity::get_position()

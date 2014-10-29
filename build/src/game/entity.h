@@ -87,7 +87,7 @@ struct Entity
 	glm::vec3 position;
 	void set_position(glm::vec3* new_position);
 	glm::vec3* get_position();
-
+	void attach_camera(Camera* camera);
 	
 //	assets::Mesh* mesh;
 	scenegraph::Node* node;
@@ -107,6 +107,8 @@ struct GameRules
 	HSQOBJECT on_start;
 	HSQOBJECT on_update;
 	HSQOBJECT on_fixed_update;
+	
+	Camera* active_camera;
 	
 	GameRules()
 	{
@@ -129,6 +131,7 @@ struct GameRules
 		sq_poptop( script::get_vm() );
 		
 		this->bind_functions();
+		active_camera = nullptr;
 	}
 	
 	void bind_functions()
@@ -141,6 +144,12 @@ struct GameRules
 	void native_start() {}
 	void native_update() {}
 	void native_fixed_update( float delta_seconds ) {}
+	void set_active_camera(Camera* camera)
+	{
+		active_camera = camera;
+	}
+	
+	Camera* get_active_camera() const { return active_camera; }
 	
 	void start()
 	{
