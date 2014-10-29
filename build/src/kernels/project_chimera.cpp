@@ -50,11 +50,11 @@
 #include "renderer/scenelink.h"
 #include "vr.h"
 
-#define LOCK_CAMERA_TO_CHARACTER 1
+#define LOCK_CAMERA_TO_CHARACTER 0
 
 // even if a VR device is attached, this will NOT render to it
 // this allows debugging in some other mechanism to check sensor data.
-uint8_t RENDER_TO_VR = 0;
+uint8_t RENDER_TO_VR = 1;
 
 using namespace physics;
 
@@ -146,7 +146,12 @@ public:
 
 			glm::mat4 tr = glm::translate(glm::mat4(1.0f), translation);
 			glm::mat4 ro = glm::toMat4(rotation);
-			camera.matCam = glm::inverse(tr * ro);
+			glm::mat4 final_rift = glm::inverse(tr * ro);
+			// TODO: the camera needs work because we need the base character rotation
+			// then we need to add the rift rotation
+			// then need to translate the character
+			// and finally add the rift translation to that.
+			camera.matCam = final_rift;
 			camera.matProj = proj[eye_index];
 			camera.pos = translation;
 			

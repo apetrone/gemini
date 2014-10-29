@@ -365,6 +365,7 @@ namespace vr
 		distortion_caps |= ovrDistortionCap_Vignette;
 		distortion_caps |= ovrDistortionCap_TimeWarp;
 		distortion_caps |= ovrDistortionCap_Overdrive;
+		distortion_caps |= ovrDistortionCap_SRGB;
 		
 		ovrBool result = ovrHmd_ConfigureRendering(
 												   rift->hmd,
