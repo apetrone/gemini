@@ -312,6 +312,7 @@ namespace kernel
 		params.step_interval_seconds = 0;
 		params.use_fullscreen = false;
 		params.use_vsync = true;
+		params.target_display = 0;
 		
 		// we should default to swapping buffers ourself
 		params.swap_buffers = 1;

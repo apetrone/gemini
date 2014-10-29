@@ -147,6 +147,7 @@ public:
 			glm::mat4 ro = glm::toMat4(rotation);
 			camera.matCam = glm::inverse(tr * ro);
 			camera.matProj = proj[eye_index];
+			camera.pos = translation;
 			
 			rs.add_viewport(x, y, width, height);
 			
@@ -295,8 +296,14 @@ public:
 				
 				if (RENDER_TO_VR)
 				{
-					params.use_fullscreen = 1;
-					params.use_vsync = false; // disable vsync? does this reduce jutter when in extended mode?
+//					params.use_fullscreen = 1;
+
+					
+#if PLATFORM_MACOSX
+					// target the rift.
+					params.target_display = 2;
+#endif
+					params.use_vsync = true;
 					params.window_width = (uint16_t)width;
 					params.window_height = (uint16_t)height;
 				}

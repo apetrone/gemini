@@ -78,6 +78,10 @@ namespace kernel
 		unsigned short window_width;
 		unsigned short window_height;
 		
+		// in windowed modes, this is the target display the window
+		// will be transferred to
+		unsigned short target_display;
+		
 		// dimensions of the rendering area in pixels
 		unsigned short render_width;
 		unsigned short render_height;

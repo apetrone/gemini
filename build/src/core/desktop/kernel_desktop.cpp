@@ -70,8 +70,8 @@ typedef GeminiAllocator<std::pair<const unsigned int, input::Button> > ButtonKey
 typedef std::map<unsigned int, input::Button, std::less<unsigned int>, ButtonKeyMapAllocator> SDLToButtonKeyMap;
 SDLToButtonKeyMap _key_map;
 input::MouseButton _mouse_map[input::MOUSE_COUNT];
-
-
+SDL_Rect* _display_rects = 0;
+int _total_displays;
 
 
 DesktopKernel::DesktopKernel( int argc, char ** argv ) : target_renderer(0)
@@ -85,8 +85,23 @@ void DesktopKernel::startup()
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) == -1)
 	{
 		// failure!
-		LOGV("failure to init SDL\n");
+		fprintf(stdout, "failure to init SDL\n");
 	}
+	
+	_total_displays = SDL_GetNumVideoDisplays();
+	fprintf(stdout, "Found %i total displays.\n", _total_displays);
+	
+	_display_rects = CREATE_ARRAY(SDL_Rect, _total_displays);
+	for (int index = 0; index < _total_displays; ++index)
+	{
+		SDL_DisplayMode current;
+		SDL_GetCurrentDisplayMode(index, &current);
+		fprintf(stdout, "%i) width: %i, height: %i, refresh_rate: %iHz\n", index, current.w, current.h, current.refresh_rate);
+		
+		// cache display bounds
+		SDL_GetDisplayBounds(index, &_display_rects[index]);
+	}
+		
 
 	if (this->parameters().use_vsync)
 	{
@@ -227,7 +242,10 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 		{
 			LOGE("Failed to create SDL window: %s\n", SDL_GetError());
 		}
-
+		
+		// move the window to the correct display
+		SDL_SetWindowPosition(_window, _display_rects[params.target_display].x, _display_rects[params.target_display].y);
+		
 		_context = SDL_GL_CreateContext(_window);
 		if (!_context)
 		{
@@ -383,6 +401,8 @@ void DesktopKernel::post_application_startup( kernel::ApplicationResult result )
 
 void DesktopKernel::shutdown()
 {
+	DESTROY_ARRAY(SDL_Rect, _display_rects, _total_displays);
+
 	SDL_GL_DeleteContext(_context);
 	SDL_DestroyWindow(_window);
 	SDL_Quit();
