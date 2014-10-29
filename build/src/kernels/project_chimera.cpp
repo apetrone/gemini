@@ -50,7 +50,7 @@
 #include "renderer/scenelink.h"
 #include "vr.h"
 
-#define LOCK_CAMERA_TO_CHARACTER 0
+#define LOCK_CAMERA_TO_CHARACTER 1
 
 // even if a VR device is attached, this will NOT render to it
 // this allows debugging in some other mechanism to check sensor data.
@@ -61,7 +61,8 @@ using namespace physics;
 void render_scene_from_camera(scenegraph::Node* root, Camera& camera)
 {
 	// setup constant buffer
-	glm::vec3 light_position(0.5f, 2.5f, -12);
+	glm::vec3 light_position;
+	light_position = camera.pos + -camera.view + glm::vec3(0.0f, 1.0f, 0.0f);
 	renderer::ConstantBuffer cb;
 	cb.modelview_matrix = &camera.matCam;
 	cb.projection_matrix = &camera.matProj;
@@ -438,7 +439,7 @@ public:
 			active_camera->update_view();
 		}
 
-		//physics::debug_draw();
+//		physics::debug_draw();
 		
 //		debugdraw::axes(glm::mat4(1.0), 1.0f);
 		if (active_camera)
