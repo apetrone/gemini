@@ -324,13 +324,13 @@ namespace physics
 		if (!mesh)
 		{
 			LOGW("Unable to create physics for null mesh\n");
-			return;
+			return nullptr;
 		}
 		
 		if (!dynamics_world)
 		{
 			LOGE("Unable to add physics for mesh; invalid physics state\n");
-			return;
+			return nullptr;
 		}
 		
 		BulletRigidBody* rb = 0;

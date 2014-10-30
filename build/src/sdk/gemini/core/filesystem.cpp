@@ -213,7 +213,7 @@ namespace core
 		{
 			path = root_directory();
 #if PLATFORM_LINUX || PLATFORM_WINDOWS
-	#error Not yet implemented.
+	
 #elif PLATFORM_MACOSX || PLATFORM_IPHONEOS
 			// On Mac/iOS, the root directory points to the app bundle
 			path.append(PATH_SEPARATOR_STRING);
