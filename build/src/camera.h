@@ -87,7 +87,13 @@ struct Camera
 	
 	glm::mat4 matProj;
 	glm::mat4 matCam;
-	glm::mat4 matCamProj;
+
+	// components as matrices
+	glm::mat4 inverse_rotation;
+	glm::mat4 inverse_translation;
+	
+	// final inverted world matrix
+	glm::mat4 inverse_world_transform;
 	
 	// directional vectors
 	glm::vec3 view;
@@ -131,5 +137,8 @@ struct Camera
 	
 	// projection type functions
 	void perspective( real fovy, int32_t width, int32_t height, real nearz, real farz );
-	void ortho( real left, real right, real bottom, real top, real nearz, real farz );	
+	void ortho( real left, real right, real bottom, real top, real nearz, real farz );
+	
+	const glm::mat4& get_inverse_world_transform() const { return inverse_world_transform; }
+	const glm::mat4& get_inverse_rotation() const { return inverse_rotation; }
 }; // Camera

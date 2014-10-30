@@ -161,12 +161,15 @@ void Camera::update_view()
 	if ( type == FIRST_PERSON )
 	{
 		glm::vec3 target = world_pos + view;
+		inverse_rotation = glm::lookAt(glm::vec3(), view, up);
 		matCam = glm::lookAt(world_pos, target, up );
 		eye_position = world_pos;
+		
+		inverse_world_transform = matCam;
 	}
 	else if ( type == TARGET )
 	{
-		glm::mat4 inv_rotation;
+//		glm::mat4 inv_rotation;
 		glm::mat4 inv_translation;
 		glm::mat4 pivot;
 		glm::mat4 inv_pivot;
@@ -175,7 +178,7 @@ void Camera::update_view()
 		inv_position = target_position;
 		
 		// setup inverse rotation matrix for 'view' and 'up' vectors
-		inv_rotation = glm::lookAt( glm::vec3(), view, up );
+		inverse_rotation = glm::lookAt( glm::vec3(), view, up );
 		
 		
 		glm::vec3 pivot_point = target_lookatOffset;
@@ -191,16 +194,16 @@ void Camera::update_view()
 		inv_translation = glm::translate( inv_translation, -inv_position );
 		
 		// target camera with position + orientation
-		matCam = inv_pivot * inv_rotation * pivot * inv_translation;
+		matCam = inv_pivot * inverse_rotation * pivot * inv_translation;
 		
 		// now calculate eye pos
 		eye_position = view * target_lookatOffset.z;
 		
 		// eye is Cam -> Target; so invert it. It now becomes a vector from the origin to the eye position
 		eye_position = -eye_position + target_position;
+		
+		inverse_world_transform = matCam;
 	}
-	
-	matCamProj = matProj * matCam;
 }
 
 void Camera::set_absolute_position( const glm::vec3 & position )

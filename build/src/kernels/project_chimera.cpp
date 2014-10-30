@@ -151,7 +151,7 @@ public:
 			// then we need to add the rift rotation
 			// then need to translate the character
 			// and finally add the rift translation to that.
-			camera.matCam = final_rift;
+			camera.matCam = final_rift; //camera.get_inverse_rotation() * glm::translate(glm::mat4(1.0), -camera.pos);
 			camera.matProj = proj[eye_index];
 			camera.pos = translation;
 			
