@@ -467,14 +467,31 @@ namespace script
 				if ( !Sqrat::Error::Instance().Occurred(v) )
 				{
 					// operation on mat4
+					int return_value = 0;
 
 					Sqrat::Var<float> angle(v,3);
-					Sqrat::Var<const glm::vec3&> axis(v,4);
+					if (!Sqrat::Error::Instance().Occurred(v))
+					{
+						Sqrat::Var<const glm::vec3&> axis(v,4);
+						if (!Sqrat::Error::Instance().Occurred(v))
+						{
+							glm::mat4 result = glm::rotate( mat4_param.value, angle.value, axis.value );
+							Sqrat::PushVar(v, result);
+							return_value = 1;
+						}
+						else
+						{
+							LOGE("Expected vec3 value for parameter 3\n");
+							Sqrat::Error::Instance().Clear(v);
+						}
+					}
+					else
+					{
+						LOGE("Expected float value for parameter 2\n");
+						Sqrat::Error::Instance().Clear(v);
+					}
 
-
-					glm::mat4 result = glm::rotate( mat4_param.value, angle.value, axis.value );
-					Sqrat::PushVar(v, result);
-					return 1;
+					return return_value;
 				}
 				/*
 				Sqrat::Var<const glm::mat4&> other(v, 2);
@@ -653,16 +670,19 @@ namespace script
 			// bind all functions and classes to make squirrel aware
 			Sqrat::RootTable root( vm );
 			
+			
+			
+			
 			//
 			// FUNCTIONS
 			root.Func( "include", script_include );
-			root.Func( "max", fmax );
-			root.Func( "min", fmin );
-
+			
 			Sqrat::Table random( vm );
 			random.Func( "random", bind::random_float );
 			random.Func( "range", ::util::random_range );
 			root.Bind( "random", random );
+			
+		
 
 			//
 			// CLASSES
@@ -686,13 +706,21 @@ namespace script
 			bind_vec3.Var( "z", &glm::vec3::z );
 			Sqrat::RootTable( vm ).Bind( "vec3", bind_vec3 );
 			
-			root.SquirrelFunc( "normalize", bind::math_normalize );
-			root.SquirrelFunc( "inverse", bind::math_inverse );
-			root.SquirrelFunc( "transpose", bind::math_transpose );
-			root.SquirrelFunc( "dot", bind::math_dot );
-			root.SquirrelFunc( "cross", bind::math_cross );
-			root.SquirrelFunc( "rotate", bind::rotate );
-			root.SquirrelFunc( "translate", bind::translate );
+			//
+			// MATH
+			Sqrat::Table math(vm);
+			math.Func( "max", fmax );
+			math.Func( "min", fmin );
+			
+			math.SquirrelFunc( "normalize", bind::math_normalize );
+			math.SquirrelFunc( "inverse", bind::math_inverse );
+			math.SquirrelFunc( "transpose", bind::math_transpose );
+			math.SquirrelFunc( "dot", bind::math_dot );
+			math.SquirrelFunc( "cross", bind::math_cross );
+			math.SquirrelFunc( "rotate", bind::rotate );
+			math.SquirrelFunc( "translate", bind::translate );
+			
+			root.Bind("math", math);
 			
 			Sqrat::Class<glm::vec4> bind_vec4( vm );
 			bind_vec4.Ctor<float, float, float, float>();
@@ -711,6 +739,7 @@ namespace script
 			
 			
 			Sqrat::Class<glm::mat4> bind_mat4( vm );
+			bind_mat4.Ctor<float>();
 			bind_mat4.SquirrelFunc( "_mul", bind::mat4_multiply );
 			root.Bind( "mat4", bind_mat4 );
 			

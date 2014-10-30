@@ -445,7 +445,7 @@ public:
 		}
 
 //		physics::debug_draw();
-		
+
 //		debugdraw::axes(glm::mat4(1.0), 1.0f);
 		if (active_camera)
 		{
