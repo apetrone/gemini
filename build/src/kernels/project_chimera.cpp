@@ -497,6 +497,7 @@ public:
 		// TODO: this should use the actual player height instead of
 		// hard coding the value.
 //		char_mat = glm::translate(active_camera->pos - glm::vec3(0,1.82,0));
+// needs to be RADIANS now
 //		char_mat = glm::rotate(char_mat, -active_camera->yaw, glm::vec3(0,1,0));
 		//if (player)
 		{

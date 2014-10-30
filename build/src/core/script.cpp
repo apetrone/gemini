@@ -475,7 +475,7 @@ namespace script
 						Sqrat::Var<const glm::vec3&> axis(v,4);
 						if (!Sqrat::Error::Instance().Occurred(v))
 						{
-							glm::mat4 result = glm::rotate( mat4_param.value, angle.value, axis.value );
+							glm::mat4 result = glm::rotate( mat4_param.value, glm::radians(angle.value), axis.value );
 							Sqrat::PushVar(v, result);
 							return_value = 1;
 						}

@@ -222,7 +222,7 @@ void Camera::perspective( real fovy, int32_t width, int32_t height, real nearz, 
 	this->aspect_ratio = (float)(width/(float)height);
 	this->near_clip = nearz;
 	this->far_clip = farz;
-	matProj = glm::perspective(fovy, (width/(float)height), nearz, farz );
+	matProj = glm::perspective(glm::radians(fovy), (width/(float)height), nearz, farz );
 	is_ortho = false;
 }
 
