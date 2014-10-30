@@ -56,6 +56,8 @@
 // this allows debugging in some other mechanism to check sensor data.
 uint8_t RENDER_TO_VR = 1;
 
+uint8_t REQUIRE_RIFT = 1;
+
 using namespace physics;
 
 void render_scene_from_camera(scenegraph::Node* root, Camera& camera)
@@ -111,9 +113,12 @@ public:
 		vr::EyePose eye_poses[2];
 		glm::mat4 proj[2];
 		device->get_eye_poses(eye_poses, proj);
+		
+		
 
 		for (uint32_t eye_index = 0; eye_index < 2; ++eye_index)
 		{
+			glm::mat4 old_matcam = camera.matCam;
 			vr::EyePose& eye_pose = eye_poses[eye_index];
 			
 			int x;
@@ -142,7 +147,7 @@ public:
 			
 			glm::quat character_rotation;
 			glm::quat rotation = eye_pose.rotation;
-			glm::vec3 translation = camera_position + eye_pose.offset + eye_pose.translation;
+			glm::vec3 translation = eye_pose.offset + eye_pose.translation;
 
 			glm::mat4 tr = glm::translate(glm::mat4(1.0f), translation);
 			glm::mat4 ro = glm::toMat4(rotation);
@@ -151,9 +156,18 @@ public:
 			// then we need to add the rift rotation
 			// then need to translate the character
 			// and finally add the rift translation to that.
-			camera.matCam = final_rift; //camera.get_inverse_rotation() * glm::translate(glm::mat4(1.0), -camera.pos);
+			
+//			camera.matCam = final_rift; //camera.get_inverse_rotation() * glm::translate(glm::mat4(1.0), -camera.pos);
+
+
+			glm::mat4 character_transform = glm::translate(glm::mat4(1.0), camera_position) * glm::transpose(camera.get_inverse_rotation());
+			glm::mat4 head_transform = tr * ro;
+			
+			camera.matCam = glm::inverse(character_transform * head_transform);
+
+
 			camera.matProj = proj[eye_index];
-			camera.pos = translation;
+			//camera.pos = translation;
 			
 			rs.add_viewport(x, y, width, height);
 			
@@ -163,6 +177,8 @@ public:
 
 			render_scene_from_camera(root, camera);
 			
+			
+			camera.matCam = old_matcam;
 			// draw debug graphics
 //			debugdraw::render(camera.matCam, camera.matProj, x, y, width, height);
 		}
@@ -289,7 +305,7 @@ public:
 		vr::startup();
 		
 		// if there's a rift connected
-		if (vr::total_devices() > 0)
+		if ((REQUIRE_RIFT && (vr::total_devices() > 0)) || (!REQUIRE_RIFT))
 		{
 			// create one
 			device = vr::create_device();
@@ -310,7 +326,10 @@ public:
 					
 #if PLATFORM_MACOSX
 					// target the rift.
-					params.target_display = 2;
+					if (REQUIRE_RIFT)
+					{
+						params.target_display = 2;
+					}
 #endif
 					params.use_vsync = true;
 					params.window_width = (uint16_t)width;
@@ -444,9 +463,9 @@ public:
 			active_camera->update_view();
 		}
 
-//		physics::debug_draw();
+		//physics::debug_draw();
 
-//		debugdraw::axes(glm::mat4(1.0), 1.0f);
+		debugdraw::axes(glm::mat4(1.0), 1.0f);
 		if (active_camera)
 		{
 			debugdraw::text(10, 0, xstr_format("active_camera->pos = %.2g %.2g %.2g", active_camera->pos.x, active_camera->pos.y, active_camera->pos.z), Color(255, 255, 255));
