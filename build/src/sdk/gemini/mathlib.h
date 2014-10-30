@@ -29,6 +29,8 @@
 
 // show output at build time regarding glm
 //#define GLM_MESSAGES 1
+// acknowledge (and accept) the conversion to radians
+#define GLM_FORCE_RADIANS 1
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
