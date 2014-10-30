@@ -80,8 +80,8 @@ void entity_post_script_load()
 void entity_prestep()
 {
 	// this updates the ent's position with that of the physics body
-	EntityVector::iterator it =	entity_list().objects.begin();
-	EntityVector::iterator end = entity_list().objects.end();
+	EntityListType::Vector::iterator it =	entity_list().objects.begin();
+	EntityListType::Vector::iterator end = entity_list().objects.end();
 	Entity* ent;
 	for( ; it != end; ++it )
 	{
@@ -114,8 +114,8 @@ void entity_step()
 	
 	
 	// step entities
-	EntityVector::iterator it =	entity_list().objects.begin();
-	EntityVector::iterator end = entity_list().objects.end();
+	EntityListType::Vector::iterator it =	entity_list().objects.begin();
+	EntityListType::Vector::iterator end = entity_list().objects.end();
 	for( ; it != end; ++it )
 	{
 		(*it)->fixed_update( kernel::instance()->parameters().step_interval_seconds );
@@ -135,8 +135,8 @@ void entity_step()
 void entity_deferred_delete( bool only_deferred )
 {
 	// trim entities flagged for removal
-	EntityVector::iterator it = entity_list().objects.begin();
-	EntityVector::iterator end = entity_list().objects.end();
+	EntityListType::Vector::iterator it = entity_list().objects.begin();
+	EntityListType::Vector::iterator end = entity_list().objects.end();
 	for( ; it != end; ++it )
 	{
 		Entity * ent = (*it);
@@ -164,8 +164,8 @@ void entity_tick()
 	}
 	
 	// tick entities
-	EntityVector::iterator it =	entity_list().objects.begin();
-	EntityVector::iterator end = entity_list().objects.end();
+	EntityListType::Vector::iterator it =	entity_list().objects.begin();
+	EntityListType::Vector::iterator end = entity_list().objects.end();
 	Entity * ent;
 	for( ; it != end; ++it )
 	{

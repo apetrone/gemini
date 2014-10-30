@@ -38,7 +38,7 @@
 #include "scene_graph.h"
 #include "physics.h"
 
-typedef std::vector< struct Entity*, GeminiAllocator<struct Entity*> > EntityVector;
+//typedef std::vector< struct Entity*, GeminiAllocator<struct Entity*> > EntityVector;
 
 
 const char ENTITY_START_NAME[] = "Start";
