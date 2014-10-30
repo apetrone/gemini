@@ -1361,7 +1361,7 @@ void GLCore32::render_target_activate(renderer::RenderTarget* rendertarget)
 	GL32RenderTarget* rt = static_cast<GL32RenderTarget*>(rendertarget);
 	gl.BindFramebuffer(GL_FRAMEBUFFER, rt->framebuffer);
 	GLenum drawbufs [] = { GL_COLOR_ATTACHMENT0 };
-	glDrawBuffers(1, drawbufs);
+	gl.DrawBuffers(1, drawbufs);
 }
 
 void GLCore32::render_target_deactivate(renderer::RenderTarget* rendertarget)

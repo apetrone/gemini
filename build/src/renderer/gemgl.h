@@ -294,6 +294,8 @@ enum gemgl_renderer_type
 	typedef void (GEMGLAPI GEMGLFNGETQUERYOBJECTI64V)(GLuint id, GLenum pname, GLint64* params);
 	typedef void (GEMGLAPI GEMGLFNGETQUERYOBJECTUI64V)(GLuint id, GLenum pname, GLuint64* params);
 
+	typedef void (GEMGLAPI GEMGLFNDRAWBUFFERS)(GLsizei n, const GLenum *bufs);
+
     typedef GLenum (*GEMGL_CHECKERROR)( const char * );
 
 	typedef struct
@@ -600,6 +602,8 @@ enum gemgl_renderer_type
 		GEMGLFNQUERYCOUNTER QueryCounter;
 		GEMGLFNGETQUERYOBJECTI64V GetQueryObjecti64v;
 		GEMGLFNGETQUERYOBJECTUI64V GetQueryObjectui64v;
+
+		GEMGLFNDRAWBUFFERS DrawBuffers;
 		
 		// ARB_uniform_buffer_object
 

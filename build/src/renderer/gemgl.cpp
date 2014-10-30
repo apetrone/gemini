@@ -438,6 +438,8 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 	GEMGL_LINK( gl.GetQueryObjecti64v, "glGetQueryObjecti64v", GEMGLFNGETQUERYOBJECTI64V);
 	GEMGL_LINK( gl.GetQueryObjectui64v, "glGetQueryObjectui64v", GEMGLFNGETQUERYOBJECTUI64V);
 	
+	GEMGL_LINK( gl.DrawBuffers, "glDrawBuffers", GEMGLFNDRAWBUFFERS);
+	
 #if PLATFORM_WINDOWS
 	GEMGL_LINK( gl.SwapInterval, "wglSwapIntervalEXT", GEMGLSWAPINTERVAL );
 #endif
