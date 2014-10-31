@@ -216,6 +216,12 @@ def get_tools(target_platform, libgemini):
 		"Cocoa.framework",
 		"OpenGL.framework"
 	]
+
+	rnd_linux = rnd.layout(platform="linux")
+	rnd_linux.links += [
+		"GL"
+	]
+
 	tools.append(rnd)
 	
 	#
