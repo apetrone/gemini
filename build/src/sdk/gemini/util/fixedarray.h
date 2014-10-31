@@ -21,6 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <assert.h>
+
 #include <gemini/mem.h>
 
 template <class Type>
