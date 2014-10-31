@@ -251,14 +251,18 @@ def get_tools(target_platform, libgemini):
 	#
 	# muse: asset conversion tool
 	#
+	linux_arch_map = {
+		"x86_64": "x64",
+		"x86": "x86"
+	}
 	libfbx_roots = {
 		"macosx": "lib/clang/${CONFIGURATION}",
-		"linux": "lib/gcc4/${ARCHITECTURE}/${CONFIGURATION}",
+		"linux": "lib/gcc4/x64/${CONFIGURATION}",
 		"windows": "lib/vs2013/${ARCHITECTURE}/${CONFIGURATION}"
 	}
 	libfbx_names = {
 		"macosx": "libfbxsdk",
-		"linux": "libfbxsdk",
+		"linux": "fbxsdk",
 		"windows": "libfbxsdk-md"
 	}
 
@@ -267,6 +271,7 @@ def get_tools(target_platform, libgemini):
 	libfbx.includes = [
 		"include"
 	]
+
 	libfbx.product_root = libfbx_roots[target_platform.name]
 	tools.append(libfbx)
 
