@@ -26,6 +26,7 @@
 int main( int argc, char ** argv )
 {
 	memory::startup();
+	kernel::parse_commandline(argc, argv);
 	
 	DesktopKernel desktop_kernel( argc, argv );
 	kernel::Error error = kernel::main( &desktop_kernel, "TestUniversal" );
