@@ -570,6 +570,85 @@ namespace script
 				return 0;
 			}
 		} // translate
+		
+		
+		template <class Type>
+		void bind_class(HSQUIRRELVM vm, Sqrat::Table table);
+		
+		template <>
+		void bind_class<glm::vec2>(HSQUIRRELVM vm, Sqrat::Table table)
+		{
+			Sqrat::Class<glm::vec2> bind_vec2( vm );
+			bind_vec2.Ctor<float, float>();
+			bind_vec2.Var( "x", &glm::vec2::x );
+			bind_vec2.Var( "y", &glm::vec2::y );
+			bind_vec2.SquirrelFunc( "_add", bind::vec2_add );
+			bind_vec2.SquirrelFunc( "_mul", bind::vec2_multiply );
+			table.Bind( "vec2", bind_vec2 );
+		}
+		
+		template <>
+		void bind_class<glm::vec3>(HSQUIRRELVM vm, Sqrat::Table table)
+		{
+			Sqrat::Class<glm::vec3> bind_vec3( vm );
+			bind_vec3.Ctor<float, float, float>();
+			bind_vec3.Ctor<glm::vec4>();
+			bind_vec3.SquirrelFunc( "_add", bind::vec3_add );
+			bind_vec3.SquirrelFunc( "_sub", bind::vec3_subtract );
+			bind_vec3.SquirrelFunc( "_mul", bind::vec3_multiply );
+			bind_vec3.SquirrelFunc( "_div", bind::vec3_divide );
+			bind_vec3.Var( "x", &glm::vec3::x );
+			bind_vec3.Var( "y", &glm::vec3::y );
+			bind_vec3.Var( "z", &glm::vec3::z );
+			table.Bind( "vec3", bind_vec3 );
+		}
+		
+		
+		
+		template <>
+		void bind_class<glm::vec4>(HSQUIRRELVM vm, Sqrat::Table table)
+		{
+			Sqrat::Class<glm::vec4> bind_vec4( vm );
+			bind_vec4.Ctor<float, float, float, float>();
+			bind_vec4.Ctor<glm::vec3, float>();
+			bind_vec4.Var( "x", &glm::vec4::x );
+			bind_vec4.Var( "y", &glm::vec4::y );
+			bind_vec4.Var( "z", &glm::vec4::z );
+			bind_vec4.Var( "w", &glm::vec4::w );
+			table.Bind( "vec4", bind_vec4 );
+		}
+		
+		template <>
+		void bind_class<glm::mat3>(HSQUIRRELVM vm, Sqrat::Table table)
+		{
+			Sqrat::Class<glm::mat3> bind_mat3( vm );
+			bind_mat3.Ctor<glm::vec3, glm::vec3, glm::vec3>();
+			bind_mat3.Ctor<glm::mat4>();
+			bind_mat3.SquirrelFunc( "_mul", bind::mat3_multiply );
+			table.Bind( "mat3", bind_mat3 );
+		}
+		
+		template <>
+		void bind_class<glm::mat4>(HSQUIRRELVM vm, Sqrat::Table table)
+		{
+			Sqrat::Class<glm::mat4> bind_mat4( vm );
+			bind_mat4.Ctor<float>();
+			bind_mat4.SquirrelFunc( "_mul", bind::mat4_multiply );
+			table.Bind( "mat4", bind_mat4 );
+		}
+		
+		template <>
+		void bind_class<Color>(HSQUIRRELVM vm, Sqrat::Table table)
+		{
+			Sqrat::Class<Color> color( vm );
+			color.Ctor<unsigned char, unsigned char, unsigned char, unsigned char>();
+			color.Var( "r", &Color::r );
+			color.Var( "g", &Color::g );
+			color.Var( "b", &Color::b );
+			color.Var( "a", &Color::a );
+			color.Func( "set", &Color::set );
+			table.Bind( "Color", color );
+		}
 	}; // bind
 
 
@@ -682,29 +761,15 @@ namespace script
 			random.Func( "range", ::util::random_range );
 			root.Bind( "random", random );
 			
-		
-
+			
 			//
 			// CLASSES
-			Sqrat::Class<glm::vec2> bind_vec2( vm );
-			bind_vec2.Ctor<float, float>();
-			bind_vec2.Var( "x", &glm::vec2::x );
-			bind_vec2.Var( "y", &glm::vec2::y );
-			bind_vec2.SquirrelFunc( "_add", bind::vec2_add );
-			bind_vec2.SquirrelFunc( "_mul", bind::vec2_multiply );
-			Sqrat::RootTable( vm ).Bind( "vec2", bind_vec2 );
-			
-			Sqrat::Class<glm::vec3> bind_vec3( vm );
-			bind_vec3.Ctor<float, float, float>();
-			bind_vec3.Ctor<glm::vec4>();
-			bind_vec3.SquirrelFunc( "_add", bind::vec3_add );
-			bind_vec3.SquirrelFunc( "_sub", bind::vec3_subtract );
-			bind_vec3.SquirrelFunc( "_mul", bind::vec3_multiply );
-			bind_vec3.SquirrelFunc( "_div", bind::vec3_divide );
-			bind_vec3.Var( "x", &glm::vec3::x );
-			bind_vec3.Var( "y", &glm::vec3::y );
-			bind_vec3.Var( "z", &glm::vec3::z );
-			Sqrat::RootTable( vm ).Bind( "vec3", bind_vec3 );
+			script::bind::bind_class<glm::vec2>(vm, root);
+			script::bind::bind_class<glm::vec3>(vm, root);
+			script::bind::bind_class<glm::vec4>(vm, root);
+			script::bind::bind_class<glm::mat3>(vm, root);
+			script::bind::bind_class<glm::mat4>(vm, root);
+			script::bind::bind_class<Color>(vm, root);
 			
 			//
 			// MATH
@@ -721,38 +786,7 @@ namespace script
 			math.SquirrelFunc( "translate", bind::translate );
 			
 			root.Bind("math", math);
-			
-			Sqrat::Class<glm::vec4> bind_vec4( vm );
-			bind_vec4.Ctor<float, float, float, float>();
-			bind_vec4.Ctor<glm::vec3, float>();
-			bind_vec4.Var( "x", &glm::vec4::x );
-			bind_vec4.Var( "y", &glm::vec4::y );
-			bind_vec4.Var( "z", &glm::vec4::z );
-			bind_vec4.Var( "w", &glm::vec4::w );
-			Sqrat::RootTable( vm ).Bind( "vec4", bind_vec4 );
-			
-			Sqrat::Class<glm::mat3> bind_mat3( vm );
-			bind_mat3.Ctor<glm::vec3, glm::vec3, glm::vec3>();
-			bind_mat3.Ctor<glm::mat4>();
-			bind_mat3.SquirrelFunc( "_mul", bind::mat3_multiply );
-			root.Bind( "mat3", bind_mat3 );
-			
-			
-			Sqrat::Class<glm::mat4> bind_mat4( vm );
-			bind_mat4.Ctor<float>();
-			bind_mat4.SquirrelFunc( "_mul", bind::mat4_multiply );
-			root.Bind( "mat4", bind_mat4 );
-			
-			
-			Sqrat::Class<Color> color( vm );
-			color.Ctor<unsigned char, unsigned char, unsigned char, unsigned char>();
-			color.Var( "r", &Color::r );
-			color.Var( "g", &Color::g );
-			color.Var( "b", &Color::b );
-			color.Var( "a", &Color::a );
-			color.Func( "set", &Color::set );
-			root.Bind( "Color", color );
-			
+						
 			Sqrat::Table debug( vm );
 			debug.Func( "axes", debugdraw::axes );
 			debug.Func( "point", debugdraw::point );
@@ -978,9 +1012,4 @@ namespace script
 			LOGE( "script_error: %s\n", sqc );
 		}
 	} // check_result
-	
-	void bind_common()
-	{
-		initialize_vm( script::get_vm() );
-	} // bind_common
 }; // namespace script
