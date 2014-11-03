@@ -293,7 +293,14 @@ public:
 	
 	virtual void event( kernel::SystemEvent & event )
 	{
-		
+		if (event.subtype == kernel::WindowLostFocus)
+		{
+			kernel::instance()->capture_mouse(false);
+		}
+		else if (event.subtype == kernel::WindowGainFocus)
+		{
+			kernel::instance()->capture_mouse(true);
+		}
 	}
 
 	virtual kernel::ApplicationResult config( kernel::Params & params )
