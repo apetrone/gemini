@@ -71,11 +71,21 @@ namespace datamodel
 	
 	Material* MaterialMap::begin()
 	{
-		return &materials[0];
+		if (!materials.empty())
+		{
+			return &materials[0];
+		}
+		
+		return nullptr;
 	}
 	
 	Material* MaterialMap::end()
 	{
-		return &materials[materials.size()];
+		if (!materials.empty())
+		{
+			return &materials[materials.size()];
+		}
+		
+		return nullptr;
 	}
 }
