@@ -1,3 +1,8 @@
+# general project
+
+build/obj/*
+
+
 # Code::Blocks
 *.workspace
 *.cbp
@@ -29,6 +34,9 @@ msbuild.*
 *.sdf
 *.opensdf
 
+build/*.vcxproj*
+build/*.sln
+
 *.log
 *.mode1v3
 *.pbxuser
@@ -52,3 +60,10 @@ DerivedData
 # project-specific
 *.cache
 *.filecache
+
+
+# rsynced dependencies
+build/dependencies/fbx_2015.1/*
+
+
+
