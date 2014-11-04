@@ -524,7 +524,7 @@ namespace kernel
 	void parse_commandline(int argc, char** argv)
 	{
 		const char* arg;
-		for(size_t i = 0; i < argc; ++i)
+		for(int i = 0; i < argc; ++i)
 		{
 			arg = argv[i];
 			if (std::string(arg) == "-game")

@@ -213,6 +213,7 @@ namespace assets
 		else
 		{
 			LOGE("Unknown shader stage: %s!\n", stage.c_str());
+			return renderer::SHADER_VERTEX;
 		}
 	}
 	

@@ -64,9 +64,9 @@ namespace image
 		uint8_t* pixels = &image.pixels[0];
 		assert( pixels != 0 );
 		
-		for(int y = 0; y < image.height; ++y)
+		for(uint32_t y = 0; y < image.height; ++y)
 		{
-			for(int x = 0; x < image.width; ++x)
+			for(uint32_t x = 0; x < image.width; ++x)
 			{
 				// less than half
 				if (y <= height_mask)
