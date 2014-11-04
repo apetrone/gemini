@@ -204,12 +204,19 @@ namespace tools
 
 		rs.rewind();
 		
+		// TODO: ensure the destination path exists?
+
 		xfile_t out = xfile_open(output_path(), XF_WRITE);
 		LOGV("writing destination file: %s\n", output_path());
 		if (xfile_isopen(out))
 		{
 			xfile_write(out, rs.get_data(), rs.get_data_size(), 1);
 			xfile_close(out);
+		}
+		else
+		{
+			LOGE("error writing to file %s\n", output_path());
+			LOGE("does the path exist?\n");
 		}
 
 		return core::Result(core::Result::Success);
