@@ -49,5 +49,14 @@ namespace datamodel
 		FixedArray< FixedArray<glm::vec2> > uvs;
 		FixedArray<uint32_t> indices;
 		MaterialId material;
+
+		Mesh()
+		{
+			material = 0;
+		}
+
+		~Mesh()
+		{
+		}
 	};
 };
