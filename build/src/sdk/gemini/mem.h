@@ -67,6 +67,20 @@ namespace memory
 	// instance of the active allocator
 	IAllocator & allocator();
 
+	// helper function for creating arrays from a contiguous block of memory
+	// and then calling placement new on each one
+	template <class Type>
+	Type* create_array(size_t num_elements, const char* file, int line)
+	{
+		Type* block = (Type*)memory::allocator().allocate(sizeof(Type)*num_elements, file, line);
+		for (size_t i = 0; i < num_elements; ++i)
+		{
+			new (&block[i]) Type;
+		}
+
+		return block;
+	}
+
 #if USE_DEBUG_ALLOCATOR
 	// raw memory alloc/dealloc
 	#define ALLOC(byte_count)	memory::allocator().allocate(byte_count, __FILE__, __LINE__)
@@ -76,8 +90,11 @@ namespace memory
 	#define CREATE(Type, ...)	new (memory::allocator().allocate(sizeof(Type), __FILE__, __LINE__)) Type(__VA_ARGS__)
 	#define DESTROY(Type, pointer) { if (pointer) { pointer->~Type(); memory::allocator().deallocate(pointer); pointer = 0; } }
 	
-	// at the moment: this only works if the Type has a default constructor
-	#define CREATE_ARRAY(Type, num_elements, ...)		new (memory::allocator().allocate(sizeof(Type)*num_elements, __FILE__, __LINE__)) Type[ num_elements ]
+	// NOTES:
+	// 1. This only works if the Type has a default constructor
+	// 2. In order to work around the ridiculous "standard" of placement new in 5.3.4.12,
+	//	  This allocates a contiguous block of memory and then calls placement new on each element.
+	#define CREATE_ARRAY(Type, num_elements) memory::create_array<Type>(num_elements, __FILE__, __LINE__)
 	#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { for( size_t i = 0; i < num_elements; ++i ) { (&pointer[i])->~Type(); } memory::allocator().deallocate(pointer); pointer = 0;  }
 #else
 	#define ALLOC(byte_count)	malloc(byte_count)
