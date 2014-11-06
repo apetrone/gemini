@@ -789,6 +789,25 @@ def get_config_variables(arguments, product, target_platform):
 
 	elif target_platform.matches("windows"):
 		logging.info("TODO: support windows")
+		windows = product.layout(platform="windows")
+
+		if arguments.with_file:
+			windows.sources += ["src/filesystem/windows/*.c"]
+
+		if arguments.with_joystick:
+			windows.sources += ["src/joystick/windows/*.c"]
+
+		if arguments.with_haptic:
+			windows.sources += ["src/haptic/windows/*.c"]
+
+		if arguments.with_power:
+			windows.sources += ["src/power/windows/*.c"]
+
+		if arguments.with_timers:
+			windows.sources += ["src/timer/windows/*.c"]
+
+		if arguments.with_threads:
+			windows.sources += ["src/thread/windows/*.c"]
 
 	elif target_platform.matches("macosx"):
 		# TODO: until I come up with a way to set this globally
@@ -932,7 +951,13 @@ def products(arguments, **kwargs):
 	# generate SDL_config.h from a template. This is disabled for iPhone, iPhoneSimulator, Windows
 	generate_config = True
 
-	sdl2 = Product(name="SDL2", output=ProductType.DynamicLibrary)
+	product_type = ProductType.DynamicLibrary
+
+	# temporarily use static lib on windows
+	if target_platform.matches("windows"):
+		product_type = ProductType.StaticLibrary
+
+	sdl2 = Product(name="SDL2", output=product_type)
 	sdl2.root = "../dependencies/SDL2"
 	sdl2.includes = [
 		"include"
@@ -947,6 +972,7 @@ def products(arguments, **kwargs):
 		"src/libm/*.c",
 		"src/stdlib/*.c",
 
+		"src/thread/generic/*.c",
 		# Are these common for unix?
 		#"src/audio/*.c",
 		#"src/cpuinfo/*.c",
