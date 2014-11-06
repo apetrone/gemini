@@ -774,8 +774,8 @@ namespace script
 			//
 			// MATH
 			Sqrat::Table math(vm);
-			math.Func(_SC("max"), static_cast<float(*)(float, float)>(fmax));
-			math.Func(_SC("min"), static_cast<float(*)(float, float)>(fmin));
+			math.Func(_SC("max"), static_cast<float(*)(float, float)>(std::fmax));
+			math.Func(_SC("min"), static_cast<float(*)(float, float)>(std::fmin));
 			
 			math.SquirrelFunc(_SC("normalize"), bind::math_normalize);
 			math.SquirrelFunc(_SC("inverse"), bind::math_inverse);
