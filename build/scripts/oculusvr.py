@@ -33,17 +33,22 @@ def products(arguments, **kwargs):
 
 	ovr = Product(name="ovr", output=ProductType.StaticLibrary)
 
+
+	# 0.4.1 needs "%(project)s/" between platform and configuration
+	# 0.4.3 has "experimental" linux support
 	if target_platform.matches("windows"):
 		# need to use its own folder due to line endings
 		# until I move that to a better solution
 		ovr.root = "../dependencies/oculussdk_%s_windows" % LIBOVR_VERSION
+		ovr.name = "libovr"
+		ovr.product_root = "LibOVR/Lib/Win32/VS2013"
 	else:
 		ovr.root = "../dependencies/oculussdk_%s" % LIBOVR_VERSION
+		ovr.product_root = "LibOVR/Lib/%(platform)s/%(title_configuration)s%(architecture)s" % vars
 
 
-	# 0.4.1 needs "%(project)s/" between platform and configuration
-	# 0.4.3 has "experimental" linux support
-	ovr.product_root = "LibOVR/Lib/%(platform)s/%(title_configuration)s%(architecture)s" % vars
+	
+
 
 	ovr.includes = [
 		"LibOVR/Include",

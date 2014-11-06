@@ -511,7 +511,17 @@ def products(arguments, **kwargs):
 			linux.links += ["GL"]
 
 
-
+		windows = gemini.layout(platform="windows")
+		windows.links += [
+			"OpenGL32",
+			"gdi32",
+			"winspool",
+			"comdlg32",
+			"advapi32",
+			"shell32",
+			"ole32",
+			"user32"
+		]
 
 
 
