@@ -1,3 +1,4 @@
+import os
 import logging
 
 from pegasus.models import Product, ProductType
@@ -431,6 +432,48 @@ def check_pthread(arguments, product, target_platform, vars):
 		if have_pthreads_sem:
 			pass
 
+def check_directx(vars, arguments, product, target_platform):
+	header_define_map = {
+		"d3d9.h" : "D3D",
+		"d3d11_1.h" : "D3D11",
+		"ddraw.h" : "DDRAW",
+		"dsound.h" : "DSOUND",
+		"dinput.h" : "DINPUT",
+		"xaudio2.h" : "XAUDIO2",
+		"xinput.h" : "XINPUT",
+		"dxgi.h" : "DXGI"
+	}
+
+	have_directx_headers = False
+	for header, name in header_define_map.iteritems():
+		key = "HAVE_%s_H" % name
+		vars[key] = target_platform.check_include_exists(header)
+		logging.info("check %s (%s) -> %s" % (header, key, vars[key]))
+		if vars[key]:
+			have_directx_headers = True
+
+	# Since Microsoft changed the way they distribute DirectX after June2010,
+	# (most headers are now included with the Windows Platform SDK)
+	# We also have to detect if the $(DXSDK) is in the environment.
+	# This will indicate that the DXSDK is installed -- which is required by SDL2
+	# because it doesn't seem to support these headers in the Platform SDK.
+
+
+
+	if have_directx_headers and "DXSDK_DIR" in os.environ:
+		dxsdk_root = os.environ["DXSDK_DIR"]
+		logging.info("Detected DirectX SDK in: %s" % dxsdk_root)
+		
+		product.includes += [
+			"$(DXSDK_DIR)/Include"
+		]
+
+		#product.libdirs += [
+		#	"%s/Lib/${ARCHITECTURE}" % dxsdk_root
+		#]
+		
+
+
 def get_config_variables(arguments, product, target_platform):
 	vars = {}
 	global SDL_SUBSYSTEMS
@@ -595,8 +638,9 @@ def get_config_variables(arguments, product, target_platform):
 		vars[varname] = target_platform.check_function_exists(symbol, includes=available_headers, cpp=True)
 
 	have_dlopen = False
-	if target_platform.get() in ["macosx", "linux"]:
-		have_dlopen = check_dlopen(arguments, product, target_platform, vars)
+	if arguments.with_loadso:
+		if target_platform.get() in ["macosx", "linux"]:
+			have_dlopen = check_dlopen(arguments, product, target_platform, vars)
 
 	if arguments.with_joystick:
 		product.sources += ["src/joystick/*.c"]		
@@ -845,13 +889,47 @@ def get_config_variables(arguments, product, target_platform):
 			if value:
 				product.links.append(key)
 
+
+	if target_platform.matches("windows"):
+		windows = product.layout(platform="windows")
+
+		# check for directx
+		check_directx(vars, arguments, windows, target_platform)
+
+		windows.sources += [
+			"src/core/windows/*.c",
+		]
+
+		windows.links += [
+			"winmm",
+			"imm32",
+			"version",
+			"kernel32"
+		]
+
+		product.sources += [
+			"src/audio/winmm/*.c"
+		]
+
+		if vars["HAVE_DSOUND_H"]:
+			product.sources += [
+				"src/audio/directsound/*.c"
+			]
+
+		if vars["HAVE_XAUDIO2_H"]:
+			logging.info("have xaudio2")
+			product.sources += [
+				"src/audio/xaudio2/*.c"
+			]		
+
+
 	return vars
 
 def products(arguments, **kwargs):
 	target_platform = kwargs.get("target_platform", None)
 
 
-	# generate SDL_config.h from a template. This is disabled for iPhone.
+	# generate SDL_config.h from a template. This is disabled for iPhone, iPhoneSimulator, Windows
 	generate_config = True
 
 	sdl2 = Product(name="SDL2", output=ProductType.DynamicLibrary)
@@ -864,21 +942,56 @@ def products(arguments, **kwargs):
 	sdl2.sources = [
 		"src/*.c",
 		"src/atomic/*.c",
-		"src/audio/*.c",
-		"src/cpuinfo/*.c",
-		"src/dynapi/*.c",
 		"src/events/*.c",
 		"src/file/*.c",
 		"src/libm/*.c",
-		"src/render/*.c",
-		"src/render/**.c",
 		"src/stdlib/*.c",
-		"src/thread/*.c",
-		"src/timer/*.c",
-		"src/video/*.c",
+
+		# Are these common for unix?
+		#"src/audio/*.c",
+		#"src/cpuinfo/*.c",
+		#"src/dynapi/*.c",
+		#"src/render/*.c",
+		#"src/render/**.c",
+		#"src/thread/*.c",
+		#"src/timer/*.c",
+		#"src/video/*.c",
 
 		"include/*.h"
 	]
+
+	# We cannot disable these in Windows builds because we 
+	# do not generate a config.
+	if target_platform.matches("windows"):
+		sdl2.sources += [
+			"src/audio/*.c",
+			"src/audio/disk/*.c",
+			"src/audio/dummy/*.c",
+			"src/dynapi/*.c",
+			"src/render/*.c",
+			"src/render/**.c",
+			"src/thread/*.c",
+			"src/timer/*.c",
+			"src/video/*.c",
+			"src/timer/windows/*.c",
+			"src/thread/windows/*.c",
+			"src/haptic/windows/*.c",
+			"src/filesystem/windows/*.c",
+			"src/power/windows/*.c",
+			"src/joystick/windows/*.c",
+			"src/loadso/windows/*.c",
+			"src/video/windows/*.c"
+		]
+
+	sdl2.excludes = [
+		"src/SDL_test*",
+		"include/SDL_test*"
+	]
+
+	if arguments.with_cpuinfo:
+		sdl2.sources += [
+			"src/cpuinfo/*.c"
+		]
 
 
 	debug = sdl2.layout(configuration="debug")
@@ -952,9 +1065,15 @@ def products(arguments, **kwargs):
 		logging.info("Copy config setup!")
 		sdl2.copy_config("include/SDL_config_iphoneos.h", "include/SDL_config.h")
 
+	elif target_platform.matches("windows"):
+		generate_config = False
+
+	# TODO: For now this is called because it is performs multiple tasks
+	# including adding source files to the product. This needs to be broken up.
+	config_vars = get_config_variables(arguments, sdl2, target_platform)
+
 	if generate_config:
 		# create the SDL_config.h
-		config_vars = get_config_variables(arguments, sdl2, target_platform)
 		cfg = sdl2.create_config("include/SDL_config.h", template="include/SDL_config.h.cmake", variables=config_vars)
 
 	return [sdl2]
