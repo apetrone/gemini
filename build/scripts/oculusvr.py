@@ -5,6 +5,9 @@ def arguments(parser):
 	pass
 
 def products(arguments, **kwargs):
+
+	LIBOVR_VERSION = "0.4.3"
+
 	target_platform = kwargs.get("target_platform", None)
 
 	# assemble these mappings for oculus sdk
@@ -29,7 +32,14 @@ def products(arguments, **kwargs):
 	}
 
 	ovr = Product(name="ovr", output=ProductType.StaticLibrary)
-	ovr.root = "../dependencies/oculussdk_%s" % "0.4.3"
+
+	if target_platform.matches("windows"):
+		# need to use its own folder due to line endings
+		# until I move that to a better solution
+		ovr.root = "../dependencies/oculussdk_%s_windows" % LIBOVR_VERSION
+	else:
+		ovr.root = "../dependencies/oculussdk_%s" % LIBOVR_VERSION
+
 
 	# 0.4.1 needs "%(project)s/" between platform and configuration
 	# 0.4.3 has "experimental" linux support
