@@ -30,7 +30,8 @@ def setup_common_variables(arguments, target_platform, product):
 
 	product.includes += [
 		"src",
-		"src/game"
+		"src/game",
+		"src/renderer/gldrivers"
 	]
 
 	# TODO: Allow generic *.DS_Store excludes

@@ -33,7 +33,7 @@
 	#include <limits.h>
 	#include <windows.h>
 	#include <gl/gl.h>
-	#include <glext.h>
+	#include "glext.h"
 	//#include <wglext.h>
 	#pragma comment( lib, "opengl32.lib" )
 	#define GEMGLAPI WINAPI*
