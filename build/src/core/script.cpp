@@ -580,11 +580,11 @@ namespace script
 		{
 			Sqrat::Class<glm::vec2> bind_vec2( vm );
 			bind_vec2.Ctor<float, float>();
-			bind_vec2.Var( "x", &glm::vec2::x );
-			bind_vec2.Var( "y", &glm::vec2::y );
-			bind_vec2.SquirrelFunc( "_add", bind::vec2_add );
-			bind_vec2.SquirrelFunc( "_mul", bind::vec2_multiply );
-			table.Bind( "vec2", bind_vec2 );
+			bind_vec2.Var(_SC("x"), &glm::vec2::x );
+			bind_vec2.Var(_SC("y"), &glm::vec2::y );
+			bind_vec2.SquirrelFunc(_SC("_add"), bind::vec2_add );
+			bind_vec2.SquirrelFunc(_SC("_mul"), bind::vec2_multiply );
+			table.Bind(_SC("vec2"), bind_vec2 );
 		}
 		
 		template <>
@@ -593,14 +593,14 @@ namespace script
 			Sqrat::Class<glm::vec3> bind_vec3( vm );
 			bind_vec3.Ctor<float, float, float>();
 			bind_vec3.Ctor<glm::vec4>();
-			bind_vec3.SquirrelFunc( "_add", bind::vec3_add );
-			bind_vec3.SquirrelFunc( "_sub", bind::vec3_subtract );
-			bind_vec3.SquirrelFunc( "_mul", bind::vec3_multiply );
-			bind_vec3.SquirrelFunc( "_div", bind::vec3_divide );
-			bind_vec3.Var( "x", &glm::vec3::x );
-			bind_vec3.Var( "y", &glm::vec3::y );
-			bind_vec3.Var( "z", &glm::vec3::z );
-			table.Bind( "vec3", bind_vec3 );
+			bind_vec3.SquirrelFunc(_SC("_add"), bind::vec3_add );
+			bind_vec3.SquirrelFunc(_SC("_sub"), bind::vec3_subtract);
+			bind_vec3.SquirrelFunc(_SC("_mul"), bind::vec3_multiply);
+			bind_vec3.SquirrelFunc(_SC("_div"), bind::vec3_divide );
+			bind_vec3.Var(_SC("x"), &glm::vec3::x);
+			bind_vec3.Var(_SC("y"), &glm::vec3::y);
+			bind_vec3.Var(_SC("z"), &glm::vec3::z);
+			table.Bind(_SC("vec3"), bind_vec3);
 		}
 		
 		
@@ -611,11 +611,11 @@ namespace script
 			Sqrat::Class<glm::vec4> bind_vec4( vm );
 			bind_vec4.Ctor<float, float, float, float>();
 			bind_vec4.Ctor<glm::vec3, float>();
-			bind_vec4.Var( "x", &glm::vec4::x );
-			bind_vec4.Var( "y", &glm::vec4::y );
-			bind_vec4.Var( "z", &glm::vec4::z );
-			bind_vec4.Var( "w", &glm::vec4::w );
-			table.Bind( "vec4", bind_vec4 );
+			bind_vec4.Var(_SC("x"), &glm::vec4::x);
+			bind_vec4.Var(_SC("y"), &glm::vec4::y);
+			bind_vec4.Var(_SC("z"), &glm::vec4::z);
+			bind_vec4.Var(_SC("w"), &glm::vec4::w);
+			table.Bind(_SC("vec4"), bind_vec4);
 		}
 		
 		template <>
@@ -624,8 +624,8 @@ namespace script
 			Sqrat::Class<glm::mat3> bind_mat3( vm );
 			bind_mat3.Ctor<glm::vec3, glm::vec3, glm::vec3>();
 			bind_mat3.Ctor<glm::mat4>();
-			bind_mat3.SquirrelFunc( "_mul", bind::mat3_multiply );
-			table.Bind( "mat3", bind_mat3 );
+			bind_mat3.SquirrelFunc(_SC("_mul"), bind::mat3_multiply);
+			table.Bind(_SC("mat3"), bind_mat3);
 		}
 		
 		template <>
@@ -633,8 +633,8 @@ namespace script
 		{
 			Sqrat::Class<glm::mat4> bind_mat4( vm );
 			bind_mat4.Ctor<float>();
-			bind_mat4.SquirrelFunc( "_mul", bind::mat4_multiply );
-			table.Bind( "mat4", bind_mat4 );
+			bind_mat4.SquirrelFunc(_SC("_mul"), bind::mat4_multiply);
+			table.Bind(_SC("mat4"), bind_mat4);
 		}
 		
 		template <>
@@ -642,12 +642,12 @@ namespace script
 		{
 			Sqrat::Class<Color> color( vm );
 			color.Ctor<unsigned char, unsigned char, unsigned char, unsigned char>();
-			color.Var( "r", &Color::r );
-			color.Var( "g", &Color::g );
-			color.Var( "b", &Color::b );
-			color.Var( "a", &Color::a );
-			color.Func( "set", &Color::set );
-			table.Bind( "Color", color );
+			color.Var(_SC("r"), &Color::r);
+			color.Var(_SC("g"), &Color::g);
+			color.Var(_SC("b"), &Color::b);
+			color.Var(_SC("a"), &Color::a);
+			color.Func(_SC("set"), &Color::set);
+			table.Bind(_SC("Color"), color);
 		}
 	}; // bind
 
@@ -754,12 +754,12 @@ namespace script
 			
 			//
 			// FUNCTIONS
-			root.Func( "include", script_include );
+			root.Func(_SC("include"), script_include);
 			
 			Sqrat::Table random( vm );
-			random.Func( "random", bind::random_float );
-			random.Func( "range", ::util::random_range );
-			root.Bind( "random", random );
+			random.Func(_SC("random"), bind::random_float);
+			random.Func(_SC("range"), ::util::random_range);
+			root.Bind(_SC("random"), random);
 			
 			
 			//
@@ -774,32 +774,32 @@ namespace script
 			//
 			// MATH
 			Sqrat::Table math(vm);
-			math.Func( "max", fmax );
-			math.Func( "min", fmin );
+			math.Func(_SC("max"), static_cast<float(*)(float, float)>(fmax));
+			math.Func(_SC("min"), static_cast<float(*)(float, float)>(fmin));
 			
-			math.SquirrelFunc( "normalize", bind::math_normalize );
-			math.SquirrelFunc( "inverse", bind::math_inverse );
-			math.SquirrelFunc( "transpose", bind::math_transpose );
-			math.SquirrelFunc( "dot", bind::math_dot );
-			math.SquirrelFunc( "cross", bind::math_cross );
-			math.SquirrelFunc( "rotate", bind::rotate );
-			math.SquirrelFunc( "translate", bind::translate );
+			math.SquirrelFunc(_SC("normalize"), bind::math_normalize);
+			math.SquirrelFunc(_SC("inverse"), bind::math_inverse);
+			math.SquirrelFunc(_SC("transpose"), bind::math_transpose);
+			math.SquirrelFunc(_SC("dot"), bind::math_dot);
+			math.SquirrelFunc(_SC("cross"), bind::math_cross);
+			math.SquirrelFunc(_SC("rotate"), bind::rotate);
+			math.SquirrelFunc(_SC("translate"), bind::translate);
 			
-			root.Bind("math", math);
+			root.Bind(_SC("math"), math);
 						
 			Sqrat::Table debug( vm );
-			debug.Func( "axes", debugdraw::axes );
-			debug.Func( "point", debugdraw::point );
-			debug.Func( "line", debugdraw::line );
-			debug.Func( "sphere", debugdraw::sphere );
+			debug.Func(_SC("axes"), debugdraw::axes);
+			debug.Func(_SC("point"), debugdraw::point);
+			debug.Func(_SC("line"), debugdraw::line);
+			debug.Func(_SC("sphere"), debugdraw::sphere);
 			
-			root.Bind( "debug", debug );
+			root.Bind(_SC("debug"), debug);
 			
 			
 			
 			
 			Sqrat::Class<Camera> camera( vm );
-			root.Bind("Camera", camera);
+			root.Bind(_SC("Camera"), camera);
 			
 		} // initialize_vm
 
@@ -924,12 +924,12 @@ namespace script
 		
 		// fetch the script from our filesystem
 		size_t buffer_length = 0;
-		char * buffer = core::filesystem::file_to_buffer( filename, 0, &buffer_length );
+		char* buffer = core::filesystem::file_to_buffer( filename, 0, &buffer_length );
 		
 //		StackMonitor sm(vm);
 		
 		// compile the buffer and execute it in squirrel VM
-		if ( SQ_SUCCEEDED( sq_compilebuffer( vm, buffer, buffer_length, "console", 1 )))
+		if ( SQ_SUCCEEDED( sq_compilebuffer( vm, (SQChar*)buffer, buffer_length, _SC("console"), 1 )))
 		{
 			DEALLOC(buffer);
 			sq_pushroottable( vm );
@@ -961,7 +961,7 @@ namespace script
 		return false;
 	} // execute_file
 	
-	bool find_function( const char * name, Sqrat::Function & function )
+	bool find_function( const SQChar* name, Sqrat::Function & function )
 	{
 		function = Sqrat::RootTable( get_vm() ).GetFunction( name );
 		if ( function.IsNull() )
@@ -973,7 +973,7 @@ namespace script
 		return true;
 	} // find_function
 	
-	HSQOBJECT find_member( HSQOBJECT class_obj, const char * name )
+	HSQOBJECT find_member( HSQOBJECT class_obj, const SQChar* name )
 	{
 //		StackMonitor sm( get_vm() );
 		

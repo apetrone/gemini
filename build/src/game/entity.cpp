@@ -33,30 +33,30 @@ void entity_startup()
 	
 	// bind Entity to scripting language
 	Sqrat::Class<Entity, EntityAllocator<Entity> > entity( script::get_vm() );
-	entity.Var( "id", &Entity::id );
-	entity.Prop( "name", &Entity::get_name, &Entity::set_name );
+	entity.Var( _SC("id"), &Entity::id );
+	entity.Prop( _SC("name"), &Entity::get_name, &Entity::set_name );
 	
 	entity.Func(ENTITY_UPDATE_NAME, &Entity::native_update);
 	entity.Func(ENTITY_FIXED_UPDATE_NAME, &Entity::native_fixed_update);
 	entity.Func(ENTITY_REMOVE_NAME, &Entity::remove );
 	
 	// for now, all these are going to be bolted onto the Entity class
-	entity.Func("SetModel", &Entity::set_model);
+	entity.Func(_SC("SetModel"), &Entity::set_model);
 	
-	entity.Prop("position", &Entity::get_position, &Entity::set_position);
-//	entity.Prop("rotation", &Entity::get_rotation, &Entity::set_rotation);
+	entity.Prop(_SC("position"), &Entity::get_position, &Entity::set_position);
+//	entity.Prop(_SC("rotation"), &Entity::get_rotation, &Entity::set_rotation);
 	
-	entity.Func("AttachCamera", &Entity::attach_camera);
+	entity.Func(_SC("AttachCamera"), &Entity::attach_camera);
 	
-	root.Bind( "Entity", entity );
+	root.Bind(_SC("Entity"), entity);
 	
 	// gamerules
 	Sqrat::Class<GameRules> gamerules( script::get_vm() );
 	gamerules.Func(ENTITY_START_NAME, &GameRules::native_start );
 	gamerules.Func(ENTITY_UPDATE_NAME, &GameRules::native_update );
 	gamerules.Func(ENTITY_FIXED_UPDATE_NAME, &GameRules::native_fixed_update );
-	gamerules.Func( "SetActiveCamera", &GameRules::set_active_camera );
-	root.Bind( "GameRules", gamerules );
+	gamerules.Func(_SC("SetActiveCamera"), &GameRules::set_active_camera);
+	root.Bind(_SC("GameRules"), gamerules);
 	
 
 }
@@ -65,7 +65,7 @@ void entity_post_script_load()
 {
 	// execute script?
 	Sqrat::RootTable root( script::get_vm() );
-	Sqrat::Object gamerules = root.GetSlot( "gamerules" );
+	Sqrat::Object gamerules = root.GetSlot(_SC("gamerules"));
 	if ( !gamerules.IsNull() )
 	{
 		GameRules * gr = gamerules.Cast<GameRules*>();
@@ -101,7 +101,7 @@ void entity_step()
 	entity_prestep();
 	
 	Sqrat::RootTable root( script::get_vm() );
-	Sqrat::Object gamerules = root.GetSlot( "gamerules" );
+	Sqrat::Object gamerules = root.GetSlot(_SC("gamerules"));
 	if ( !gamerules.IsNull() )
 	{
 		GameRules * gr = gamerules.Cast<GameRules*>();
@@ -153,7 +153,7 @@ void entity_deferred_delete( bool only_deferred )
 void entity_tick()
 {
 	Sqrat::RootTable root( script::get_vm() );
-	Sqrat::Object gamerules = root.GetSlot( "gamerules" );
+	Sqrat::Object gamerules = root.GetSlot(_SC("gamerules"));
 	if ( !gamerules.IsNull() )
 	{
 		GameRules * gr = gamerules.Cast<GameRules*>();

@@ -144,7 +144,8 @@ def setup_common_libs(arguments, product):
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3"),
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),
 		os.path.join(DEPENDENCIES_FOLDER, "font-stash"),
-		os.path.join(DEPENDENCIES_FOLDER, "slim")
+		os.path.join(DEPENDENCIES_FOLDER, "slim"),
+		os.path.join(DEPENDENCIES_FOLDER, "openal-1.1", "include")
 	]
 
 

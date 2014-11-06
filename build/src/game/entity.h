@@ -41,10 +41,10 @@
 //typedef std::vector< struct Entity*, GeminiAllocator<struct Entity*> > EntityVector;
 
 
-const char ENTITY_START_NAME[] = "Start";
-const char ENTITY_UPDATE_NAME[] = "Update";
-const char ENTITY_FIXED_UPDATE_NAME[] = "FixedUpdate";
-const char ENTITY_REMOVE_NAME[] = "Remove";
+const SQChar ENTITY_START_NAME[] = _SC("Start");
+const SQChar ENTITY_UPDATE_NAME[] = _SC("Update");
+const SQChar ENTITY_FIXED_UPDATE_NAME[] = _SC("FixedUpdate");
+const SQChar ENTITY_REMOVE_NAME[] = _SC("Remove");
 
 // script stuff
 struct Entity

@@ -385,7 +385,7 @@ public:
 		
 		// setup camera
 		Sqrat::RootTable roottable( script::get_vm() );
-		Sqrat::Object gamerules = roottable.GetSlot( "gamerules" );
+		Sqrat::Object gamerules = roottable.GetSlot( _SC("gamerules") );
 		if ( !gamerules.IsNull() )
 		{
 			GameRules * gr = gamerules.Cast<GameRules*>();
@@ -427,7 +427,7 @@ public:
 		
 		
 		Sqrat::RootTable roottable( script::get_vm() );
-		Sqrat::Object gamerules = roottable.GetSlot( "gamerules" );
+		Sqrat::Object gamerules = roottable.GetSlot( _SC("gamerules") );
 		if ( !gamerules.IsNull() )
 		{
 			GameRules * gr = gamerules.Cast<GameRules*>();
