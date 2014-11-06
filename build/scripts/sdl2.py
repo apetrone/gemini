@@ -972,7 +972,6 @@ def products(arguments, **kwargs):
 		"src/libm/*.c",
 		"src/stdlib/*.c",
 
-		"src/thread/generic/*.c",
 		# Are these common for unix?
 		#"src/audio/*.c",
 		#"src/cpuinfo/*.c",
