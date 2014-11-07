@@ -89,13 +89,14 @@ struct Entity
 	glm::vec3* get_position();
 	void attach_camera(Camera* camera);
 	
-//	assets::Mesh* mesh;
+	assets::Mesh* mesh;
 	scenegraph::Node* node;
 	physics::RigidBody* body;
 		
 	// functions for this script object
 	void set_model(const char* path);
 	
+	void set_physics(int physics_type);
 }; // Entity
 
 

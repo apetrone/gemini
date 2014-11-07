@@ -42,6 +42,7 @@ void entity_startup()
 	
 	// for now, all these are going to be bolted onto the Entity class
 	entity.Func(_SC("SetModel"), &Entity::set_model);
+	entity.Func(_SC("SetPhysics"), &Entity::set_physics);
 	
 	entity.Prop(_SC("position"), &Entity::get_position, &Entity::set_position);
 //	entity.Prop(_SC("rotation"), &Entity::get_rotation, &Entity::set_rotation);
@@ -318,7 +319,7 @@ glm::vec3* Entity::get_position()
 	return &position;
 }
 
-void load_mesh(scenegraph::Node* root, const char* path, scenegraph::Node*& node, physics::RigidBody*& body, bool build_physics_from_mesh = true)
+assets::Mesh* load_mesh(scenegraph::Node* root, const char* path, scenegraph::Node*& node)
 {
 	// 1. load the mesh from file
 	assets::Mesh* mesh = assets::meshes()->load_from_path(path);
@@ -333,17 +334,45 @@ void load_mesh(scenegraph::Node* root, const char* path, scenegraph::Node*& node
 	{
 		LOGW("Unable to load model: %s\n", path);
 	}
-
-	// 2. if physics is to be used; generate physics body from mesh
-	if (mesh && build_physics_from_mesh)
-	{
-		float mass_kg = 0.0f;
-		body = physics::create_physics_for_mesh(mesh, mass_kg);
-	}
+	
+	return mesh;
 }
 
 void Entity::set_model(const char* path)
 {
-	load_mesh(get_entity_root(), path, this->node, this->body, true);
+	mesh = load_mesh(get_entity_root(), path, this->node);
+}
+
+void Entity::set_physics(int physics_type)
+{
+	if (!mesh)
+	{
+		// no mesh loaded, we need one for physics
+		LOGW("No mesh for entity. Have no implemented ghost objects yet.\n");
+		return;
+	}
 	
+	float mass_kg = 0.0f;
+	
+	if (physics_type == 0)
+	{
+	}
+	else if (physics_type == 1)
+	{
+		// set dynamic physics type
+		mass_kg = 3.0f;
+	}
+	
+	// generate physics body from mesh
+	// until we need a different system.
+	body = physics::create_physics_for_mesh(mesh, mass_kg);
+
+	if (body)
+	{
+		body->set_world_position(position);
+	}
+	else
+	{
+		LOGW("Unable to create physics body!\n");
+	}
 }

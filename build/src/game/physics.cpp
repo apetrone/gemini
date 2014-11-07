@@ -319,7 +319,7 @@ namespace physics
 		btBvhTriangleMeshShape * trishape = 0;
 		btTransform xf;
 		btScalar mass(mass_kg);
-		btVector3 localInertia(0, 0, 0);
+		btVector3 local_intertia(0, 0, 0);
 		
 		if (!mesh)
 		{
@@ -336,32 +336,79 @@ namespace physics
 		BulletRigidBody* rb = 0;
 		rb = CREATE(BulletRigidBody);
 		
+		// If you hit this, there will be a leak of RigidBody objects
+		// as the loop below runs for each item in the geometry list
+		// but this function only returns a single RigidBody.
+		assert(mesh->geometry.size() == 1);
+		
+		int rigid_body_flags = 0;
+		
+		bool dynamic_body = (mass != 0.0f);
+		if (!dynamic_body)
+		{
+			rigid_body_flags = btCollisionObject::CF_STATIC_OBJECT;
+		}
+		
 		for( uint32_t i = 0; i < mesh->geometry.size(); ++i )
 		{
 			assets::Geometry* geo = &mesh->geometry[ i ];
 			
 			FixedArray<glm::vec3>& vertices = geo->vertices;
 			
+			btCollisionShape* shape = 0;
+			// NOTE: Triangle shapes can ONLY be static objects.
+			// TODO: look into an alternative with btGImpactMeshShape or
+			// btCompoundShape + convex decomposition.
+			// Could also use btConvexHullShape.
+			if (dynamic_body)
+			{
+				shape = new btBoxShape(btVector3(0.5f, 0.5f, 0.5f));
+			}
+			else
+			{
+				// specify verts/indices from our meshdef
+				// NOTE: This does NOT make a copy of the data. Whatever you pass it
+				// must persist for the life of the shape.
+				btTriangleIndexVertexArray * mesh = new btTriangleIndexVertexArray(geo->index_count/3, (int*)&geo->indices[0], sizeof(int)*3, geo->vertex_count, (btScalar*)&vertices[0], sizeof(glm::vec3));
 			
+				// use that to create a Bvh triangle mesh shape
+				trishape = new btBvhTriangleMeshShape( mesh, use_quantized_bvh_tree );
+				shape = trishape;
+			}
 			
-			// specify verts/indices from our meshdef
-			// NOTE: This does NOT make a copy of the data. Whatever you pass it
-			// must persist for the life of the shape.
-			btTriangleIndexVertexArray * mesh = new btTriangleIndexVertexArray(geo->index_count/3, (int*)&geo->indices[0], sizeof(int)*3, geo->vertex_count, (btScalar*)&vertices[0], sizeof(glm::vec3));
+			collision_shapes.push_back(shape);
 			
-			// use that to creat ea Bvh triangle mesh shape
-			trishape = new btBvhTriangleMeshShape( mesh, use_quantized_bvh_tree );
-			
+			// calculate local intertia for non-static objects
+			if (dynamic_body)
+			{
+				shape->calculateLocalInertia(mass, local_intertia);
+			}
+						
 			// setup transform and parameters for static rigid body
 			xf.setIdentity();
 			
 			btDefaultMotionState * myMotionState = new btDefaultMotionState( xf );
-			btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, myMotionState, trishape, localInertia );
+			
+			
+			
+			
+			btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, myMotionState, shape, local_intertia );
 			btRigidBody * body = new btRigidBody( rbInfo );
 			rb->body = body;
-			body->setCollisionFlags( body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT );
+			if (dynamic_body)
+			{
+				body->setRestitution(.1f);
+				body->setFriction(0.3f);
+				body->setCcdMotionThreshold(0.1f);
+				body->setCcdSweptSphereRadius(0.1f);
+				body->setUserPointer(0);
+			}
+			else
+			{
+				int body_flags = body->getCollisionFlags() | rigid_body_flags;
+				body->setCollisionFlags( body_flags );
+			}
 			
-			collision_shapes.push_back(trishape);
 			dynamics_world->addRigidBody(body);
 		}
 		

@@ -801,6 +801,12 @@ namespace script
 			Sqrat::Class<Camera> camera( vm );
 			root.Bind(_SC("Camera"), camera);
 			
+			Sqrat::Enumeration physics_type(vm);
+			physics_type.Const(_SC("STATIC"), 0);
+			physics_type.Const(_SC("DYNAMIC"), 1);
+			
+			Sqrat::ConstTable(vm).Enum("PhysicsType", physics_type);
+			
 		} // initialize_vm
 
 		
