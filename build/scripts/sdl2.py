@@ -972,18 +972,20 @@ def products(arguments, **kwargs):
 		"src/libm/*.c",
 		"src/stdlib/*.c",
 
-		# Are these common for unix?
-		#"src/audio/*.c",
-		#"src/cpuinfo/*.c",
-		#"src/dynapi/*.c",
-		#"src/render/*.c",
-		#"src/render/**.c",
-		#"src/thread/*.c",
-		#"src/timer/*.c",
-		#"src/video/*.c",
-
 		"include/*.h"
 	]
+
+	if not target_platform.matches("windows"):
+		sdl2.sources += [
+			"src/audio/*.c",
+			"src/cpuinfo/*.c",
+			"src/dynapi/*.c",
+			"src/render/*.c",
+			"src/render/**.c",
+			"src/thread/*.c",
+			"src/timer/*.c",
+			"src/video/*.c"	
+		]
 
 	# We cannot disable these in Windows builds because we 
 	# do not generate a config.
