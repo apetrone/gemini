@@ -971,6 +971,7 @@ def products(arguments, **kwargs):
 		"src/file/*.c",
 		"src/libm/*.c",
 		"src/stdlib/*.c",
+		"src/cpuinfo/*.c",
 
 		"include/*.h"
 	]
@@ -978,7 +979,6 @@ def products(arguments, **kwargs):
 	if not target_platform.matches("windows"):
 		sdl2.sources += [
 			"src/audio/*.c",
-			"src/cpuinfo/*.c",
 			"src/dynapi/*.c",
 			"src/render/*.c",
 			"src/render/**.c",
@@ -1007,7 +1007,8 @@ def products(arguments, **kwargs):
 			"src/power/windows/*.c",
 			"src/joystick/windows/*.c",
 			"src/loadso/windows/*.c",
-			"src/video/windows/*.c"
+			"src/video/windows/*.c",
+			"src/thread/generic/SDL_syscond.c"
 		]
 
 	sdl2.excludes = [
