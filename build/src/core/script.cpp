@@ -805,7 +805,7 @@ namespace script
 			physics_type.Const(_SC("STATIC"), 0);
 			physics_type.Const(_SC("DYNAMIC"), 1);
 			
-			Sqrat::ConstTable(vm).Enum("PhysicsType", physics_type);
+			Sqrat::ConstTable(vm).Enum(_SC("PhysicsType"), physics_type);
 			
 		} // initialize_vm
 
