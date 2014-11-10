@@ -28,8 +28,11 @@ int main( int argc, char ** argv )
 	memory::startup();
 	kernel::parse_commandline(argc, argv);
 	
-	DesktopKernel desktop_kernel( argc, argv );
-	kernel::Error error = kernel::main( &desktop_kernel, "TestUniversal" );
+	kernel::Error error = kernel::NoError;
+	{
+		DesktopKernel desktop_kernel( argc, argv );
+		error = kernel::main( &desktop_kernel, "TestUniversal" );
+	}
 	
 	memory::shutdown();
 	return error;
