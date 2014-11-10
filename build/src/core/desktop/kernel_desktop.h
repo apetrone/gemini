@@ -20,7 +20,10 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
+
+#include "input.h"
 #include "kernel.h"
+#include <map>
 
 struct xwl_window_s;
 struct xwl_windowparams_s;
@@ -39,6 +42,12 @@ class DesktopKernel : public virtual kernel::IKernel
 	DesktopParams params;
 	
 	int target_renderer;
+
+	typedef GeminiAllocator<std::pair<const unsigned int, input::Button> > ButtonKeyMapAllocator;
+	typedef std::map<unsigned int, input::Button, std::less<unsigned int>, ButtonKeyMapAllocator> SDLToButtonKeyMap;
+	SDLToButtonKeyMap key_map;
+	input::MouseButton mouse_map[input::MOUSE_COUNT];
+
 public:
 	DesktopKernel( int argc, char ** argv );
 	
