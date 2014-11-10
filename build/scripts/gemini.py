@@ -144,8 +144,7 @@ def setup_common_libs(arguments, product):
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3"),
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),
 		os.path.join(DEPENDENCIES_FOLDER, "font-stash"),
-		os.path.join(DEPENDENCIES_FOLDER, "slim"),
-		os.path.join(DEPENDENCIES_FOLDER, "openal-1.1", "include")
+		os.path.join(DEPENDENCIES_FOLDER, "slim")
 	]
 
 
@@ -177,7 +176,23 @@ def setup_common_libs(arguments, product):
 	linux.linkflags += [
 		"-Wl,-rpath,.",
 		"-Wl,--unresolved-symbols=ignore-in-shared-libs"
-	]	
+	]
+
+
+	windows = product.layout(platform="windows")
+	windows.includes += [
+		os.path.join(DEPENDENCIES_FOLDER, "openal-1.1", "include")	
+	]
+
+	win32 = product.layout(platform="windows", architecture="x86")
+	win32.libdirs += [ 
+		os.path.join(DEPENDENCIES_FOLDER, "openal-1.1", "libs/Win32")
+	]
+
+	win64 = product.layout(platform="windows", architecture="x86_64")
+	win64.libdirs += [ 
+		os.path.join(DEPENDENCIES_FOLDER, "openal-1.1", "libs/Win64")
+	]
 
 def setup_driver(product):
 
@@ -514,6 +529,7 @@ def products(arguments, **kwargs):
 		windows = gemini.layout(platform="windows")
 		windows.links += [
 			"OpenGL32",
+			"OpenAL32",
 			"gdi32",
 			"winspool",
 			"comdlg32",
@@ -523,7 +539,9 @@ def products(arguments, **kwargs):
 			"user32"
 		]
 
-
+		windows.sources += [
+			"src/core/desktop/entry_windows.cpp"
+		]
 
 
 
