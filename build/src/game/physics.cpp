@@ -319,7 +319,7 @@ namespace physics
 		btBvhTriangleMeshShape * trishape = 0;
 		btTransform xf;
 		btScalar mass(mass_kg);
-		btVector3 local_intertia(0, 0, 0);
+		btVector3 local_inertia(0, 0, 0);
 		
 		if (!mesh)
 		{
@@ -381,18 +381,27 @@ namespace physics
 			// calculate local intertia for non-static objects
 			if (dynamic_body)
 			{
-				shape->calculateLocalInertia(mass, local_intertia);
+				shape->calculateLocalInertia(mass, local_inertia);
 			}
 						
 			// setup transform and parameters for static rigid body
+			//xf.setIdentity();
+			
+			// The rigid body world transform is the center of mass. This is at the origin.
+			// In order to apply an offset; use btCompoundShape to shift the rendered mesh relative to the center of mass.
+			// then, use btDefaultMotionState to apply the inverse shift.
+			
 			xf.setIdentity();
-			
+//			xf.setOrigin();
 			btDefaultMotionState * myMotionState = new btDefaultMotionState( xf );
+		
+//			btCompoundShape* compound = new btCompoundShape();
+//			btTransform local_transform;
+//			local_transform.setIdentity();
+//			local_transform.setOrigin(btVector3(0.5f, 0.5f, -0.5f));
+//			compound->addChildShape(local_transform, shape);
 			
-			
-			
-			
-			btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, myMotionState, shape, local_intertia );
+			btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, myMotionState, shape, local_inertia );
 			btRigidBody * body = new btRigidBody( rbInfo );
 			rb->body = body;
 			if (dynamic_body)
