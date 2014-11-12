@@ -49,9 +49,6 @@ namespace physics
 	
 	class BulletRigidBody : public RigidBody
 	{
-	
-		
-	
 	public:
 	
 		btRigidBody* body;
@@ -74,7 +71,7 @@ namespace physics
 		virtual glm::vec3 get_world_position() const
 		{
 			assert(body != nullptr);
-						
+		
 			const btTransform& world_transform = body->getWorldTransform();
 			const btVector3& origin = world_transform.getOrigin();
 			return glm::vec3(origin.x(), origin.y(), origin.z());
@@ -313,7 +310,46 @@ namespace physics
 		}
 	} // player_move
 
-	RigidBody* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg)
+	class CustomMotionState : public btMotionState
+	{
+		btTransform initial_transform;
+		PhysicsMotionInterface* motion_interface;
+		
+	public:
+		CustomMotionState(const btTransform& transform) : initial_transform(transform), motion_interface(nullptr)
+		{
+			
+		}
+		
+		virtual ~CustomMotionState()
+		{
+		}
+	
+		void set_motion_interface(PhysicsMotionInterface* motion)
+		{
+			motion_interface = motion;
+		}
+		
+		virtual void getWorldTransform(btTransform &world_transform) const
+		{
+			world_transform = initial_transform;
+		}
+		
+		virtual void setWorldTransform(const btTransform &world_transform)
+		{
+			btQuaternion rot = world_transform.getRotation();
+			btVector3 pos = world_transform.getOrigin();
+			glm::quat orientation(rot.w(), rot.x(), rot.y(), rot.z());
+			glm::vec3 position(pos.x(), pos.y(), pos.z());
+			
+			if (motion_interface)
+			{
+				motion_interface->set_transform(position, orientation);
+			}
+		}
+	};
+
+	RigidBody* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg, PhysicsMotionInterface* motion)
 	{
 		bool use_quantized_bvh_tree = true;
 		btBvhTriangleMeshShape * trishape = 0;
@@ -393,15 +429,16 @@ namespace physics
 			
 			xf.setIdentity();
 //			xf.setOrigin();
-			btDefaultMotionState * myMotionState = new btDefaultMotionState( xf );
-		
-//			btCompoundShape* compound = new btCompoundShape();
-//			btTransform local_transform;
-//			local_transform.setIdentity();
-//			local_transform.setOrigin(btVector3(0.5f, 0.5f, -0.5f));
-//			compound->addChildShape(local_transform, shape);
+			CustomMotionState * motion_state = new CustomMotionState( xf );
+			motion_state->set_motion_interface(motion);
 			
-			btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, myMotionState, shape, local_inertia );
+			btCompoundShape* compound = new btCompoundShape();
+			btTransform local_transform;
+			local_transform.setIdentity();
+			//local_transform.setOrigin(btVector3(0.5f, 0.5f, -0.5f));
+			compound->addChildShape(local_transform, shape);
+			
+			btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, motion_state, compound, local_inertia );
 			btRigidBody * body = new btRigidBody( rbInfo );
 			rb->body = body;
 			if (dynamic_body)

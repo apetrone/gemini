@@ -55,6 +55,18 @@ namespace physics
 		virtual void set_world_position(const glm::vec3& position) = 0;
 		virtual glm::vec3 get_world_position() const = 0;
 	};
+	
+	class PhysicsMotionInterface
+	{
+	public:
+		virtual ~PhysicsMotionInterface() {};
+		
+		// called when the physics body's motion state needs to be retrieved
+		virtual void get_transform(glm::vec3& position, const glm::quat& orientation) = 0;
+		
+		// called when the physics body's motion state has been set
+		virtual void set_transform(const glm::vec3& position, const glm::quat& orientation) = 0;
+	};
 
 #define BTVECTOR3_TO_VEC3( v ) glm::vec3( v.x(), v.y(), v.z() )
 	class DebugPhysicsRenderer : public btIDebugDraw
@@ -80,6 +92,6 @@ namespace physics
 	CharacterController* create_character_controller(const btVector3& spawnLocation, bool addActionToWorld);
 	void copy_ghost_to_camera(btPairCachingGhostObject* ghost, Camera& cam);
 	void player_move(CharacterController* character, Camera& camera, const MovementCommand& command);
-	RigidBody* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f);
+	RigidBody* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr);
 	
 }; // namespace physics

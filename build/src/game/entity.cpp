@@ -27,6 +27,21 @@
 #include "physics.h"
 #include "camera.h"
 
+void EntityMotionInterface::get_transform(glm::vec3& position, const glm::quat& orientation)
+{
+			
+}
+
+void EntityMotionInterface::set_transform(const glm::vec3& position, const glm::quat& orientation)
+{
+	this->node->local_position = glm::vec3(0.0f, -0.5f, 0.0f);
+	this->node->translation = position + glm::vec3(0.0f, -0.5f, 0.0f);
+	this->node->rotation = orientation;
+	this->target->position = position;
+}
+
+
+
 void entity_startup()
 {
 	Sqrat::RootTable root( script::get_vm() );
@@ -99,7 +114,7 @@ void entity_prestep()
 
 void entity_step()
 {
-	entity_prestep();
+	//entity_prestep();
 	
 	Sqrat::RootTable root( script::get_vm() );
 	Sqrat::Object gamerules = root.GetSlot(_SC("gamerules"));
@@ -121,13 +136,13 @@ void entity_step()
 	{
 		(*it)->fixed_update( kernel::instance()->parameters().step_interval_seconds );
 		
-		Entity* ent = (*it);
-		// update render node and body
-		if (ent->node && ent->body)
-		{
-			ent->node->translation = ent->position;
-			ent->body->set_world_position(ent->position);
-		}
+//		Entity* ent = (*it);
+//		// update render node and body
+//		if (ent->node && ent->body)
+//		{
+//			ent->node->translation = ent->position;
+//			ent->body->set_world_position(ent->position);
+//		}
 	}
 	
 	
@@ -201,6 +216,7 @@ Entity::Entity()
 //	this->mesh = 0;
 	this->node = 0;
 	this->body = 0;
+	this->motion_interface = 0;
 	
 	entity_list().add( this );
 	//	LOGV( "Entity() - %p, %zu\n", this, this->id );
@@ -232,6 +248,11 @@ Entity::~Entity()
 	if (this->body)
 	{
 		DESTROY(RigidBody, this->body);
+	}
+	
+	if (this->motion_interface)
+	{
+		DESTROY(EntityMotionInterface, this->motion_interface);
 	}
 } // ~Entity
 
@@ -360,12 +381,14 @@ void Entity::set_physics(int physics_type)
 	else if (physics_type == 1)
 	{
 		// set dynamic physics type
-		mass_kg = 3.0f;
+		mass_kg = 1.0f;
 	}
+	
+	this->motion_interface = CREATE(EntityMotionInterface, this, this->node);
 	
 	// generate physics body from mesh
 	// until we need a different system.
-	body = physics::create_physics_for_mesh(mesh, mass_kg);
+	body = physics::create_physics_for_mesh(mesh, mass_kg, this->motion_interface);
 
 	if (body)
 	{

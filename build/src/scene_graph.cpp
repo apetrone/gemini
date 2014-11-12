@@ -140,12 +140,13 @@ namespace scenegraph
 		glm::mat4 ro = glm::toMat4(rotation);
 		glm::mat4 tr = glm::translate(glm::mat4(1.0), translation);
 		
-		//glm::mat4 inv_pivot = glm::translate(glm::mat4(1.0), local_position);
-		//glm::mat4 pivot = glm::translate(glm::mat4(1.0), -local_position);
+		glm::mat4 inv_pivot = glm::translate(glm::mat4(1.0), local_position);
+		glm::mat4 pivot = glm::translate(glm::mat4(1.0), -local_position);
 		
 		assert(scale.x != 0 && scale.y != 0 && scale.z != 0);
 //		local_to_world = inv_pivot * sc * ro * pivot * tr;
-		local_to_world = tr * ro * sc;
+		local_to_world = tr * pivot * ro * sc * inv_pivot;
+//		local_to_world = tr * ro * sc;
 		
 		if (parent)
 		{

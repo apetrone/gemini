@@ -46,6 +46,26 @@ const SQChar ENTITY_UPDATE_NAME[] = _SC("Update");
 const SQChar ENTITY_FIXED_UPDATE_NAME[] = _SC("FixedUpdate");
 const SQChar ENTITY_REMOVE_NAME[] = _SC("Remove");
 
+struct Entity;
+
+class EntityMotionInterface : public physics::PhysicsMotionInterface
+{
+	Entity* target;
+	scenegraph::Node* node;
+	
+public:
+	
+	EntityMotionInterface(Entity* entity, scenegraph::Node* sgnode) : target(entity), node(sgnode)
+	{
+	}
+	
+	virtual void get_transform(glm::vec3& position, const glm::quat& orientation);
+	
+	virtual void set_transform(const glm::vec3& position, const glm::quat& orientation);
+};
+
+
+
 // script stuff
 struct Entity
 {
@@ -70,6 +90,7 @@ struct Entity
 	
 	Entity();
 	virtual ~Entity();
+	EntityMotionInterface* motion_interface;
 	
 	void fixed_update(float delta_seconds);
 	void update();
