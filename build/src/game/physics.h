@@ -65,7 +65,7 @@ namespace physics
 		virtual void get_transform(glm::vec3& position, const glm::quat& orientation) = 0;
 		
 		// called when the physics body's motion state has been set
-		virtual void set_transform(const glm::vec3& position, const glm::quat& orientation) = 0;
+		virtual void set_transform(const glm::vec3& position, const glm::quat& orientation, const glm::vec3& mass_center_offset) = 0;
 	};
 
 #define BTVECTOR3_TO_VEC3( v ) glm::vec3( v.x(), v.y(), v.z() )
@@ -92,6 +92,6 @@ namespace physics
 	CharacterController* create_character_controller(const btVector3& spawnLocation, bool addActionToWorld);
 	void copy_ghost_to_camera(btPairCachingGhostObject* ghost, Camera& cam);
 	void player_move(CharacterController* character, Camera& camera, const MovementCommand& command);
-	RigidBody* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr);
+	RigidBody* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr, const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0));
 	
 }; // namespace physics

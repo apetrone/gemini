@@ -314,20 +314,19 @@ namespace physics
 	{
 		btTransform initial_transform;
 		PhysicsMotionInterface* motion_interface;
+		glm::vec3 mass_center_offset;
 		
 	public:
-		CustomMotionState(const btTransform& transform) : initial_transform(transform), motion_interface(nullptr)
+		CustomMotionState(const btTransform& transform,
+			PhysicsMotionInterface* motion,
+			const glm::vec3& center_mass_offset) : initial_transform(transform),
+													motion_interface(motion),
+													mass_center_offset(center_mass_offset)
 		{
-			
 		}
 		
 		virtual ~CustomMotionState()
 		{
-		}
-	
-		void set_motion_interface(PhysicsMotionInterface* motion)
-		{
-			motion_interface = motion;
 		}
 		
 		virtual void getWorldTransform(btTransform &world_transform) const
@@ -344,12 +343,12 @@ namespace physics
 			
 			if (motion_interface)
 			{
-				motion_interface->set_transform(position, orientation);
+				motion_interface->set_transform(position, orientation, mass_center_offset);
 			}
 		}
 	};
 
-	RigidBody* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg, PhysicsMotionInterface* motion)
+	RigidBody* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg, PhysicsMotionInterface* motion, const glm::vec3& mass_center_offset)
 	{
 		bool use_quantized_bvh_tree = true;
 		btBvhTriangleMeshShape * trishape = 0;
@@ -429,8 +428,7 @@ namespace physics
 			
 			xf.setIdentity();
 //			xf.setOrigin();
-			CustomMotionState * motion_state = new CustomMotionState( xf );
-			motion_state->set_motion_interface(motion);
+			CustomMotionState * motion_state = new CustomMotionState(xf, motion, mass_center_offset);
 			
 			btCompoundShape* compound = new btCompoundShape();
 			btTransform local_transform;

@@ -171,6 +171,13 @@ namespace assets
 					//LOGV("uv (set=%i) (vertex=%i) %g %g\n", set_id, v, uv.s, uv.t);
 				}
 			}
+			
+			// physics related settings
+			const Json::Value& center_mass_offset = mesh_root["mass_center_offset"];
+			if (!center_mass_offset.isNull())
+			{
+				state.mesh->mass_center_offset = glm::vec3(center_mass_offset[0].asFloat(), center_mass_offset[1].asFloat(), center_mass_offset[2].asFloat());
+			}
 		}
 		else if (node_type == "skeleton")
 		{

@@ -123,6 +123,9 @@ namespace assets
 		
 		unsigned short total_bones;
 		
+		// offset to the center of mass
+		glm::vec3 mass_center_offset;
+		
 		Mesh();
 		~Mesh();
 		void reset();

@@ -32,10 +32,10 @@ void EntityMotionInterface::get_transform(glm::vec3& position, const glm::quat& 
 			
 }
 
-void EntityMotionInterface::set_transform(const glm::vec3& position, const glm::quat& orientation)
+void EntityMotionInterface::set_transform(const glm::vec3& position, const glm::quat& orientation, const glm::vec3& mass_center_offset)
 {
-	this->node->local_position = glm::vec3(0.0f, -0.5f, 0.0f);
-	this->node->translation = position + glm::vec3(0.0f, -0.5f, 0.0f);
+	this->node->local_position = mass_center_offset;
+	this->node->translation = position + mass_center_offset;
 	this->node->rotation = orientation;
 	this->target->position = position;
 }
@@ -388,7 +388,7 @@ void Entity::set_physics(int physics_type)
 	
 	// generate physics body from mesh
 	// until we need a different system.
-	body = physics::create_physics_for_mesh(mesh, mass_kg, this->motion_interface);
+	body = physics::create_physics_for_mesh(mesh, mass_kg, this->motion_interface, mesh->mass_center_offset);
 
 	if (body)
 	{
