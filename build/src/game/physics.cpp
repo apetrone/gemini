@@ -418,22 +418,14 @@ namespace physics
 			{
 				shape->calculateLocalInertia(mass, local_inertia);
 			}
-						
-			// setup transform and parameters for static rigid body
-			//xf.setIdentity();
 			
 			// The rigid body world transform is the center of mass. This is at the origin.
-			// In order to apply an offset; use btCompoundShape to shift the rendered mesh relative to the center of mass.
-			// then, use btDefaultMotionState to apply the inverse shift.
-			
 			xf.setIdentity();
-//			xf.setOrigin();
 			CustomMotionState * motion_state = new CustomMotionState(xf, motion, mass_center_offset);
 			
 			btCompoundShape* compound = new btCompoundShape();
 			btTransform local_transform;
 			local_transform.setIdentity();
-			//local_transform.setOrigin(btVector3(0.5f, 0.5f, -0.5f));
 			compound->addChildShape(local_transform, shape);
 			
 			btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, motion_state, compound, local_inertia );
@@ -441,8 +433,8 @@ namespace physics
 			rb->body = body;
 			if (dynamic_body)
 			{
-				body->setRestitution(.1f);
-				body->setFriction(0.3f);
+				body->setRestitution(0.25f);
+				body->setFriction(0.5f);
 				body->setCcdMotionThreshold(0.1f);
 				body->setCcdSweptSphereRadius(0.1f);
 				body->setUserPointer(0);
@@ -451,6 +443,7 @@ namespace physics
 			{
 				int body_flags = body->getCollisionFlags() | rigid_body_flags;
 				body->setCollisionFlags( body_flags );
+				body->setFriction(0.75f);
 			}
 			
 			dynamics_world->addRigidBody(body);

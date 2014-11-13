@@ -381,7 +381,7 @@ void Entity::set_physics(int physics_type)
 	else if (physics_type == 1)
 	{
 		// set dynamic physics type
-		mass_kg = 1.0f;
+		mass_kg = 50.0f;
 	}
 	
 	this->motion_interface = CREATE(EntityMotionInterface, this, this->node);
