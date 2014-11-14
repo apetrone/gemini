@@ -151,8 +151,9 @@ namespace memory
 	
 	void shutdown()
 	{
-		fprintf( stdout, "[memory-status] total_allocations = %zu, total_bytes = %zu\n", _allocator->total_allocations(), _allocator->total_bytes() );
-		fprintf( stdout, "[memory-status] active_allocations = %zu, active_bytes = %zu\n", _allocator->active_allocations(), _allocator->active_bytes() );
+		// could use %zu on C99, but fallback to %lu and casts for C89.
+		fprintf(stdout, "[memory-status] total_allocations = %lu, total_bytes = %lu\n", (unsigned long)_allocator->total_allocations(), (unsigned long)_allocator->total_bytes());
+		fprintf(stdout, "[memory-status] active_allocations = %lu, active_bytes = %lu\n", (unsigned long)_allocator->active_allocations(), (unsigned long)_allocator->active_bytes());
 		
 		_allocator->print_report();
 		
