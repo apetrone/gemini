@@ -20,6 +20,7 @@ SDKS=(
 	fbx_2015.1
 	oculussdk_0.4.2
 	oculussdk_0.4.3
+	oculussdk_0.4.3_windows
 )
 
 # sync all sdks

@@ -65,5 +65,5 @@ DerivedData
 # rsynced dependencies
 build/dependencies/fbx_2015.1/*
 build/dependencies/oculussdk_*/*
-
+build/dependencies/openal-1.1/*
 
