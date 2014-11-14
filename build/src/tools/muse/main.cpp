@@ -254,12 +254,12 @@ int main(int argc, char** argv)
 	// determine our input and output filenames
 	StackString<MAX_PATH_SIZE> input_filename = asset_root;
 	input_filename.normalize();
-	input_filename.strip_trailing('/').append("/");
+	input_filename.strip_trailing(PATH_SEPARATOR).append(PATH_SEPARATOR_STRING);
 	input_filename.append(input_file);
 	
 	StackString<MAX_PATH_SIZE> output_filename = output_root;
 	output_filename.normalize();
-	output_filename.strip_trailing('/').append("/");
+	output_filename.strip_trailing(PATH_SEPARATOR).append(PATH_SEPARATOR_STRING);
 	output_filename = output_filename.append(input_file).remove_extension().append(".model");
 
 	// perform the conversion -- right now, we always assume it's a scene/model

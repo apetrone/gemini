@@ -196,7 +196,7 @@ public:
 		return *this;
 	}
 	
-	void normalize(Type prefer = '/')
+	void normalize(Type prefer = PATH_SEPARATOR)
 	{
 		for(unsigned int i = 0; i < _length; ++i)
 		{
