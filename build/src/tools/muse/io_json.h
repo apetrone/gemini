@@ -40,7 +40,7 @@ class JsonModelWriter : public tools::Writer<datamodel::Model>
 	
 public:
 	void jsonify_matrix(Json::Value& array, glm::mat4& matrix);
-	void append_material(datamodel::Material* node, Json::Value& jroot);
+	void append_material(const datamodel::Material& node, Json::Value& jroot);
 	void append_node(datamodel::Node* node, Json::Value& jnodes);
 
 	virtual void write(datamodel::Model* root, util::DataStream& source);

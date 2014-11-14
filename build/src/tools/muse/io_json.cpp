@@ -53,12 +53,12 @@ void JsonModelWriter::jsonify_matrix(Json::Value& array, glm::mat4& matrix)
 	array.append(matrix[3].w);
 }
 
-void JsonModelWriter::append_material(datamodel::Material* material, Json::Value& jmaterials)
+void JsonModelWriter::append_material(const datamodel::Material& material, Json::Value& jmaterials)
 {
 	Json::Value jmaterial;
 
-	jmaterial["name"] = material->name;
-	jmaterial["id"] = material->id;
+	jmaterial["name"] = material.name;
+	jmaterial["id"] = material.id;
 	
 	jmaterials.append(jmaterial);
 }
@@ -234,9 +234,9 @@ void JsonModelWriter::write(datamodel::Model* model, util::DataStream& source)
 	Json::Value jmaterials(Json::arrayValue);
 	
 	// write out all materials
-	for (auto& material : model->materials)
+	for (const auto& material : model->materials)
 	{
-		append_material(&material, jmaterials);
+		append_material(material, jmaterials);
 	}
 	jroot["materials"] = jmaterials;
 	

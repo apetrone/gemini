@@ -39,9 +39,13 @@ namespace datamodel
 	// Maintains a list of materials
 	class MaterialMap
 	{
+	public:
 		typedef std::map<std::string, Material> MaterialContainer;
+		typedef std::vector<Material> MaterialVector;
+
+	private:
 		MaterialContainer materials_by_name;
-		std::vector<Material> materials;
+		MaterialVector materials;
 		MaterialId next_id;
 				
 	public:
@@ -52,8 +56,10 @@ namespace datamodel
 		Material& find_with_name(const std::string& name);
 		Material& add_material(const std::string& name);
 		size_t size() const { return materials.size(); }
-		
-		Material* begin();
-		Material* end();
+	
+		MaterialVector::iterator MaterialMap::begin();
+		MaterialVector::iterator MaterialMap::end();
+		MaterialVector::const_iterator MaterialMap::begin() const;
+		MaterialVector::const_iterator MaterialMap::end() const;
 	};
 };

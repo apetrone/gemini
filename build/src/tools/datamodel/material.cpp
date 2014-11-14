@@ -69,23 +69,23 @@ namespace datamodel
 		return find_with_id(material.id);
 	}
 	
-	Material* MaterialMap::begin()
+	MaterialMap::MaterialVector::iterator MaterialMap::begin()
 	{
-		if (!materials.empty())
-		{
-			return &materials[0];
-		}
-		
-		return nullptr;
+		return materials.begin();
 	}
 	
-	Material* MaterialMap::end()
+	MaterialMap::MaterialVector::iterator MaterialMap::end()
 	{
-		if (!materials.empty())
-		{
-			return &materials[materials.size()];
-		}
-		
-		return nullptr;
+		return materials.end();
+	}
+
+	MaterialMap::MaterialVector::const_iterator MaterialMap::begin() const
+	{
+		return materials.begin();
+	}
+
+	MaterialMap::MaterialVector::const_iterator MaterialMap::end() const
+	{
+		return materials.end();
 	}
 }
