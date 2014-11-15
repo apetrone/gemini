@@ -1290,6 +1290,7 @@ void GLCore32::shaderprogram_activate( renderer::ShaderProgram shader_program )
 	if ( !is_program )
 	{
 		LOGW( "program: %i is NOT an OpenGL program\n", shader_program.object );
+		assert(is_program);
 	}
 
 	gl.UseProgram( shader_program.object );

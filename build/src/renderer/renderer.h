@@ -204,11 +204,17 @@ namespace renderer
 	struct ShaderObject
 	{
 		unsigned int shader_id;
+
+		ShaderObject() : shader_id(0) {}
+		virtual ~ShaderObject() {}
 	}; // ShaderObject
 	
 	struct ShaderProgram
 	{
 		unsigned int object;
+
+		ShaderProgram() : object(0) {}
+		virtual ~ShaderProgram() {}
 	}; // ShaderProgram
 
 
