@@ -57,9 +57,9 @@ namespace datamodel
 		Material& add_material(const std::string& name);
 		size_t size() const { return materials.size(); }
 	
-		MaterialVector::iterator MaterialMap::begin();
-		MaterialVector::iterator MaterialMap::end();
-		MaterialVector::const_iterator MaterialMap::begin() const;
-		MaterialVector::const_iterator MaterialMap::end() const;
+		MaterialVector::iterator begin();
+		MaterialVector::iterator end();
+		MaterialVector::const_iterator begin() const;
+		MaterialVector::const_iterator end() const;
 	};
 };
