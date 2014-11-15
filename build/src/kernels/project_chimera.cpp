@@ -195,6 +195,8 @@ public:
 	virtual void render_frame( scenegraph::Node* root, Camera& camera, const kernel::Params& params )
 	{
 		RenderStream rs;
+		rs.add_cullmode(renderer::CullMode::CULLMODE_BACK);
+		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
 		rs.add_viewport( 0, 0, params.render_width, params.render_height );
 		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
