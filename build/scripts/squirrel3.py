@@ -45,6 +45,7 @@ def add_settings_to_product(target_platform, product):
 	windows.driver.enhanced_instruction_set = "true"
 	windows.driver.floating_point_model = "fast"
 	windows.driver.enable_large_addresses = "true"
+	windows.driver.characterset = "MultiByte"
 
 def create_sqstdlib(arguments, **kwargs):
 	# fetch vars

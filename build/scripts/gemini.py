@@ -194,6 +194,11 @@ def setup_common_libs(arguments, product):
 		os.path.join(DEPENDENCIES_FOLDER, "openal-1.1", "libs/Win64")
 	]
 
+	# currently, we use MultiByte character set (and with Squirrel3)
+	# to avoid Unicode. This is a problem with squirrel that should be
+	# addressed to use utf8 internally.
+	windows.driver.characterset = "MultiByte"
+
 def setup_driver(product):
 
 	#macosx = product.layout(platform="macosx")
