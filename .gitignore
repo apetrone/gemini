@@ -33,6 +33,7 @@ build/obj/*
 msbuild.*
 *.sdf
 *.opensdf
+*.exp
 
 build/*.vcxproj*
 build/*.sln
