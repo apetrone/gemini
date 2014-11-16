@@ -1,8 +1,10 @@
 #include "mainwindow.h"
 
 #include <QVBoxLayout>
+
+#include <QMessageBox>
+#include <QFileDialog>
 #include <QDockWidget>
-#include <QPlainTextEdit>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -30,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     QDockWidget* properties_panel = new QDockWidget("properties");
     this->addDockWidget(Qt::RightDockWidgetArea, properties_panel);
+    properties_panel->setMinimumWidth(200);
 
     QDockWidget* log_console = new QDockWidget("log console");
     QWidget* log = new QWidget(log_console);
@@ -47,9 +50,36 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     plainTextEdit->appendPlainText("log initialized");
+    log_text_field = plainTextEdit;
+
+    create_menus();
 }
 
 MainWindow::~MainWindow()
 {
 
+}
+
+void MainWindow::create_menus()
+{
+    // create main menu
+    menu_bar = new QMenuBar(this);
+    QMenu* file_menu = new QMenu("&File", this);
+    QAction* test = file_menu->addAction("&Open Project...");
+    connect(test, SIGNAL(triggered()), this, SLOT(about()));
+    file_menu->addAction(test);
+    menu_bar->addMenu(file_menu);
+}
+
+void MainWindow::about()
+{
+    QString directory = QFileDialog::getExistingDirectory(this, tr("Choose Project Path"), "", QFileDialog::ShowDirsOnly);
+
+    // TODO: redirect this to a log service
+    if (log_text_field)
+    {
+        log_text_field->appendPlainText(directory);
+    }
+
+    // startup blacksmith
 }
