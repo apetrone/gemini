@@ -289,7 +289,7 @@ namespace core
 				{
 					if ( file_size > *buffer_length )
 					{
-						printf( "Request to read file size larger than buffer! (%ld > %zu)\n", file_size, *buffer_length );
+						fprintf(stdout, "Request to read file size larger than buffer! (%ld > %lu)\n", file_size, (unsigned long)*buffer_length);
 						file_size = *buffer_length;
 					}
 				}

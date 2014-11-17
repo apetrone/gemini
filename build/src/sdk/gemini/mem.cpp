@@ -133,7 +133,7 @@ namespace memory
 			for (; it != allocated_blocks.end(); ++it)
 			{
 				MemoryHeader* block = (*it);
-				fprintf(stdout, "[memory-leak] [file=%s] [line=%i] [size=%zu] [alloc_num=%zu]\n", block->file, block->line, block->alloc_size, block->alloc_num);
+				fprintf(stdout, "[memory-leak] [file=%s] [line=%i] [size=%lu] [alloc_num=%lu]\n", block->file, block->line, (unsigned long)block->alloc_size, (unsigned long)block->alloc_num);
 			}
 		}
 			
