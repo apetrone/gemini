@@ -9,6 +9,25 @@ import subprocess
 BOOTSTRAP_VIRTUALENV_PATH = "env"
 REQUIREMENTS_FILE = "requirements"
 
+def get_virtualenv_path(root_path, name):
+	# if the system is posix, the virtualenv binaries are placed
+	# into a "bin" folder. Windows places these into "Scripts"
+
+	intermediate_paths = {
+		"posix": "bin",
+		"nt": "Scripts"
+	}
+
+	extensions = {
+		"posix": "",
+		"nt": ".exe"
+	}
+
+	path = intermediate_paths[os.name]
+	binary_name = name + extensions[os.name]
+
+	return os.path.join(root_path, path, binary_name)
+
 def setup_environment(after_install):
 	try:
 		import virtualenv
@@ -18,7 +37,7 @@ def setup_environment(after_install):
 	root_path = os.path.dirname(__file__)
 	virtualenv_root = os.path.join(root_path, BOOTSTRAP_VIRTUALENV_PATH)
 
-	if os.path.exists(virtualenv_root):
+	if os.path.exists(virtualenv_root) and False:
 		logging.info(
 			"virtualenv already exists at \"%s\". Nothing to do." %
 			 virtualenv_root
@@ -32,7 +51,7 @@ def setup_environment(after_install):
 	virtualenv.main()
 
 def install_packages(root_path):
-	pip = os.path.join(root_path, "bin", "pip")
+	pip = get_virtualenv_path(root_path, "pip")
 	abs_requirements_path = os.path.abspath(
 		os.path.join(root_path, os.path.pardir, REQUIREMENTS_FILE)
 	)
@@ -40,7 +59,7 @@ def install_packages(root_path):
 	subprocess.call(command)
 
 def build_docs(root_path):
-	sphinx_build = os.path.join(root_path, "bin", "sphinx-build")
+	sphinx_build = get_virtualenv_path(root_path, "sphinx-build")
 	command = [
 		sphinx_build,
 		"-b",
