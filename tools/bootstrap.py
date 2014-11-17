@@ -37,7 +37,7 @@ def setup_environment(after_install):
 	root_path = os.path.dirname(__file__)
 	virtualenv_root = os.path.join(root_path, BOOTSTRAP_VIRTUALENV_PATH)
 
-	if os.path.exists(virtualenv_root) and False:
+	if os.path.exists(virtualenv_root):
 		logging.info(
 			"virtualenv already exists at \"%s\". Nothing to do." %
 			 virtualenv_root
