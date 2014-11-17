@@ -23,7 +23,7 @@
 
 #include <string>
 
-#include "datamodel/material.h"
+#include <gemini/mathlib.h>
 
 namespace tools
 {
@@ -64,4 +64,14 @@ namespace tools
 		
 	void startup();
 	void shutdown();
+}
+
+namespace datamodel
+{
+	struct Mesh;
+}
+
+namespace geometry
+{
+	glm::vec3 compute_center_of_mass(struct datamodel::Mesh* mesh);
 }

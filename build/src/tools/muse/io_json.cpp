@@ -169,6 +169,12 @@ void JsonModelWriter::append_node(datamodel::Node* node, Json::Value& jnodes)
 		
 		mesh_data["material_id"] = node->mesh->material;
 		
+		Json::Value mass_center_offset(Json::arrayValue);
+		mass_center_offset.append(node->mesh->mass_center_offset.x);
+		mass_center_offset.append(node->mesh->mass_center_offset.y);
+		mass_center_offset.append(node->mesh->mass_center_offset.z);
+		mesh_data["mass_center_offset"] = mass_center_offset;
+
 		jnode["mesh"] = mesh_data;
 	}
 	

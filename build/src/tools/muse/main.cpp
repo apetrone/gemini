@@ -196,9 +196,17 @@ namespace tools
 		{
 			extensions::bake_node_transforms(model);
 		}
+
+		// calculate mass_center_offsets for all meshes
+		for (auto& child : model.root.children)
+		{
+			if (child->type == "mesh" && child->mesh)
+			{
+				child->mesh->mass_center_offset = child->translation - geometry::compute_center_of_mass(child->mesh);
+			}
+		}
 		
-		
-		
+
 		util::ResizableMemoryStream rs;
 		writer->write(&model, rs);
 
