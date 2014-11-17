@@ -34,7 +34,7 @@ namespace util
 {
 	unsigned int hash_32bit( const void * data, int data_size, unsigned int seed )
 	{
-		unsigned int hash;
+		unsigned int hash = 0;
 		
 		//MurmurHash3_x86_32( data, data_size, seed, &hash );
 		
