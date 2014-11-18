@@ -217,6 +217,7 @@ Entity::Entity()
 	this->node = 0;
 	this->body = 0;
 	this->motion_interface = 0;
+	this->mesh = 0;
 	
 	entity_list().add( this );
 	//	LOGV( "Entity() - %p, %ld\n", this, (unsigned long)this->id );
