@@ -219,7 +219,7 @@ Entity::Entity()
 	this->motion_interface = 0;
 	
 	entity_list().add( this );
-	//	LOGV( "Entity() - %p, %zu\n", this, this->id );
+	//	LOGV( "Entity() - %p, %ld\n", this, (unsigned long)this->id );
 	
 	sq_resetobject( &instance );
 	sq_resetobject( &class_object );
@@ -242,7 +242,7 @@ Entity::Entity()
 
 Entity::~Entity()
 {
-	LOGV( "~Entity() - %p, %zu\n", this, this->id );
+	LOGV( "~Entity() - %p, %ld\n", this, (unsigned long)this->id );
 	entity_list().remove( this );
 	
 	if (this->body)

@@ -66,7 +66,7 @@ namespace memory
 			assert(block != 0);
 			if ( block )
 			{
-//				fprintf( stdout, "+ %zu (%zu) bytes\n", total_size, bytes );
+//				fprintf( stdout, "+ %ld (%ld) bytes\n", (unsigned long)total_size, (unsigned long)bytes );
 			
 				// increment totals
 				num_active_bytes += bytes+MemoryHeaderSize;
