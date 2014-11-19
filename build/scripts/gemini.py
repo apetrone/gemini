@@ -108,7 +108,7 @@ def setup_common_tool(product):
 		#"asound"
 	]
 	linux.linkflags += [
-		"-Wl,-rpath,."
+		"-Wl,-rpath='$$$\ORIGIN'",
 	]
 
 
@@ -174,7 +174,7 @@ def setup_common_libs(arguments, product):
 		"asound" # TODO: need to detect ALSA
 	]
 	linux.linkflags += [
-		"-Wl,-rpath,.",
+		"-Wl,-rpath='$$$\ORIGIN'",
 		"-Wl,--unresolved-symbols=ignore-in-shared-libs"
 	]
 
