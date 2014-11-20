@@ -25,7 +25,7 @@
 #include <gemini/util/datastream.h>
 #include "assets.h"
 
-const unsigned int MAX_RENDERER_STREAM_BYTES = 32768 * 8;
+const unsigned int MAX_RENDERER_STREAM_BYTES = 8192 * 8;
 const unsigned int MAX_RENDERER_STREAM_COMMANDS = 2048 * 8;
 
 struct RenderState
