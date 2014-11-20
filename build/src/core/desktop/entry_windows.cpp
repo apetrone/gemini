@@ -36,6 +36,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR commandlin
 	kernel::Error error = kernel::NoError;
 	{
 		DesktopKernel desktop_kernel(2, argv);
+
+		// set title bar height, debugdraw uses this as an offset for text.
+		desktop_kernel.parameters().titlebar_height = GetSystemMetrics(SM_CYCAPTION);
+
 		error = kernel::main( &desktop_kernel, "TestUniversal" );
 	}
 	
