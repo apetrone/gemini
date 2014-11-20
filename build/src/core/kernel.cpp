@@ -73,6 +73,24 @@ namespace kernel
 		}
 	};
 
+	Params::Params()
+	{
+		error_message = 0;
+		device_flags = 0;
+		window_width = 0;
+		window_height = 0;
+		step_alpha = 0;
+		step_interval_seconds = 0;
+		use_fullscreen = false;
+		use_vsync = true;
+		target_display = 0;
+
+		// we should default to swapping buffers ourself
+		swap_buffers = 1;
+
+		titlebar_height = 0;
+	}
+
 	namespace _internal
 	{
 		struct EventHooks
@@ -304,18 +322,6 @@ namespace kernel
 		
 		// setup parameters
 		kernel::Params & params = kernel_instance->parameters();
-		params.error_message = 0;
-		params.device_flags = 0;
-		params.window_width = 0;
-		params.window_height = 0;
-		params.step_alpha = 0;
-		params.step_interval_seconds = 0;
-		params.use_fullscreen = false;
-		params.use_vsync = true;
-		params.target_display = 0;
-		
-		// we should default to swapping buffers ourself
-		params.swap_buffers = 1;
 		
 		// the kernel is ACTIVE here; callbacks after config/start may modify this
 		_kernel->set_active(true);

@@ -102,6 +102,10 @@ namespace kernel
 		
 		// vertical sync
 		bool use_vsync;
+
+
+		Params();
+		~Params() {};
 	}; // Params
 	
 	
