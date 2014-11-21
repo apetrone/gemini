@@ -112,6 +112,8 @@ static int get_layer_element_index(
 			}
 		}
 	}
+
+	return -1;
 }
 
 static void parse_materials(IndentState& state, FbxNode* node, datamodel::MaterialMap& materials, datamodel::Mesh* mesh)
@@ -247,6 +249,11 @@ static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh, 
 	size_t vertex_index = 0;
 	size_t local_index = 0;
 	
+	if (fbxmesh->GetElementVertexColorCount() > 0)
+	{
+		mesh->vertex_colors.allocate(total_indices);
+	}
+
 	// uv coordinates
 	FbxStringList uv_set_list;
 	fbxmesh->GetUVSetNames(uv_set_list);
@@ -276,6 +283,17 @@ static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh, 
 		mesh->uvs[uvset].allocate(total_indices);
 	}
 
+	FbxGeometryElementVertexColor* vertex_colors = 0;
+	if (fbxmesh->GetElementVertexColorCount() > 0)
+	{
+		vertex_colors = fbxmesh->GetElementVertexColor(0);
+
+		// At the moment, we do not handle more than a single Vertex Color layer
+		assert(fbxmesh->GetElementVertexColorCount() <= 1);
+	}
+
+	
+	
 	for (int triangle_index = 0; triangle_index < total_triangles; ++triangle_index)
 	{
 		for (int local_vertex_id = 0; local_vertex_id < 3; ++local_vertex_id)
@@ -290,8 +308,6 @@ static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh, 
 			FbxVector4 normal;
 			fbxmesh->GetPolygonVertexNormal(triangle_index, local_vertex_id, normal);
 //			LOGV("%snormal: %g %g %g\n", state.indent(), normal[0], normal[1], normal[2]);
-			
-
 
 			datamodel::Vertex* vertex = &vertices[vertex_index];
 			
@@ -312,9 +328,19 @@ static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh, 
 				vertex->uv[uvset] = glm::vec2(uv[0], uv[1]);
 				mesh->uvs[uvset][vertex_index] = vertex->uv[uvset];
 			}
+
+			if (vertex_colors)
+			{
+				int vertex_color_id = get_layer_element_index(vertex_colors->GetMappingMode(), vertex_colors->GetReferenceMode(), vertex_colors->GetIndexArray(), triangle_index, local_index);
+				const FbxColor& color = vertex_colors->GetDirectArray().GetAt(vertex_color_id);
+				//LOGV("%scolor: %2.2f %2.2f %2.2f %2.2f\n", state.indent(), color.mRed, color.mGreen, color.mBlue, color.mAlpha);
+				vertex->color = glm::vec4(color.mRed, color.mGreen, color.mBlue, color.mAlpha);
+			}
 			
 			mesh->vertices[vertex_index] = vertex->position;
 			mesh->normals[vertex_index] = vertex->normal;
+			mesh->vertex_colors[vertex_index] = vertex->color;
+
 			
 
 			++vertex_index;

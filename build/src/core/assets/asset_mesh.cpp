@@ -103,6 +103,7 @@ namespace assets
 			Json::Value vertex_array = mesh_root["vertices"];
 			Json::Value normal_array = mesh_root["normals"];
 			Json::Value uv_sets = mesh_root["uv_sets"];
+			Json::Value vertex_colors = mesh_root["vertex_colors"];
 
 			// setup materials
 			Material * default_material = assets::materials()->get_default();
@@ -141,7 +142,7 @@ namespace assets
 			
 			geo->uvs.allocate(uv_sets.size());
 //			geo->uvs.allocate(vertex_array.size());
-//			geo->colors.allocate(vertex_array.size());
+			geo->colors.allocate(vertex_colors.size());
 
 			for (int i = 0; i < geo->indices.size(); ++i)
 			{
@@ -156,6 +157,12 @@ namespace assets
 				
 				const Json::Value& normal = normal_array[v];
 				geo->normals[v] = glm::vec3(normal[0].asFloat(), normal[1].asFloat(), normal[2].asFloat());
+			}
+
+			for (int v = 0; v < geo->colors.size(); ++v)
+			{
+				const Json::Value& vertex_color = vertex_colors[v];
+				geo->colors[v] = Color(255 * vertex_color[0].asFloat(), 255 * vertex_color[1].asFloat(), 255 * vertex_color[2].asFloat(), 255 * vertex_color[3].asFloat());
 			}
 			
 			for (int set_id = 0; set_id < uv_sets.size(); ++set_id)
