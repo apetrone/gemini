@@ -35,9 +35,7 @@
 	#define PLATFORM_COMPILER "gcc"
 	#define PLATFORM_COMPILER_VERSION CONCAT_PERIOD( STRINGIZE(__GNUC__), STRINGIZE(__GNUC_MINOR__) )
 	#define PLATFORM_FANCY_FUNCTION __PRETTY_FUNCTION__
-#endif
-
-#if defined( _MSC_VER )
+#elif defined( _MSC_VER )
 	#define PLATFORM_COMPILER "msvc"
 	#if _MSC_VER < 1300
 		#define PLATFORM_COMPILER_VERSION STRINGIZE(12.0)
@@ -61,7 +59,7 @@
 
 // Define the following macros for this platform:
 // PLATFORM_NAME - a string describing the OS at compile time (win32, linux, macosx)
-#if _WIN32 || _WIN64
+#if (defined(_WIN32) || defined(_WIN64)) && defined(_MSC_VER)
 	#ifndef WIN32_LEAN_AND_MEAN
 		#define WIN32_LEAN_AND_MEAN 1
 	#endif
