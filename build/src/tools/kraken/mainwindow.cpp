@@ -5,6 +5,7 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QDockWidget>
+#include <QApplication>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -51,6 +52,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     plainTextEdit->appendPlainText("log initialized");
     log_text_field = plainTextEdit;
+
+    plainTextEdit->appendPlainText(QDir::currentPath());
 
     create_menus();
 }

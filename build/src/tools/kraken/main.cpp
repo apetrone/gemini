@@ -7,7 +7,6 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     MainWindow w;
 
-
     // load styles
     QFile stylesheet(":/resources/stylesheet.qss");
     if (stylesheet.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -22,9 +21,6 @@ int main(int argc, char *argv[])
 
     w.setVisible(true);
     w.show();
-
-
-
 
     return a.exec();
 }

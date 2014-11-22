@@ -8,6 +8,7 @@ QT       += core gui opengl
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+# temporary developer lib path
 QMAKE_LFLAGS += -F/Users/apetrone/Qt5.3.1/5.3/clang_64/lib
 
 TARGET = kraken
@@ -23,3 +24,5 @@ HEADERS  += mainwindow.h \
 
 RESOURCES += \
     kraken.qrc
+
+DESTDIR = ../../../bin/debug_x86_64/
