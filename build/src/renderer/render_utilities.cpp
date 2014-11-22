@@ -23,7 +23,7 @@
 #include <slim/xlog.h>
 
 
-#include "assets.h"
+//#include "assets.h"
 #include "renderer.h"
 #include "renderstream.h"
 #include "rqueue.h"

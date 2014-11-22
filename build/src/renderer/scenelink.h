@@ -27,7 +27,6 @@
 #include "renderer.h"
 #include "rqueue.h"
 #include "scene_graph.h"
-#include "camera.h"
 
 namespace renderer
 {

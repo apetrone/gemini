@@ -26,11 +26,11 @@
 
 #include <gemini/util/stackstring.h>
 
-#include "renderer/renderer.h"
+#include "renderer.h"
 
 #define FAIL_IF_GLERROR( error ) if ( error != GL_NO_ERROR ) { return false; }
 
-#include "renderer/gemgl.h" // for GLObject
+#include "gemgl.h" // for GLObject
 
 typedef GLenum (*get_internal_image_format)(unsigned int);
 

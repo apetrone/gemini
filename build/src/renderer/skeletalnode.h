@@ -25,7 +25,7 @@
 
 #include "scene_graph.h"
 #include "skeletalnode.h"
-#include "assets/asset_mesh.h"
+//#include "assets/asset_mesh.h"
 #include "keyframechannel.h"
 #include "assets/asset_mesh.h"
 

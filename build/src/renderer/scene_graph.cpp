@@ -31,7 +31,7 @@
 #include "scene_graph.h"
 #include <gemini/mathlib.h>
 
-#include "core/assets/asset_mesh.h"
+//#include "core/assets/asset_mesh.h"
 #include "physics.h"
 
 // Useful to hand to a std::for_each statement in order to clean up a container.

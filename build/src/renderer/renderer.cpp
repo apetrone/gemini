@@ -19,28 +19,28 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#include "renderer.h"
+//#include "kernel.h"
+
 #include <gemini/typedefs.h>
+#include <gemini/factory.h>
 
 #include <slim/xstr.h>
 #include <slim/xlog.h>
-
-#include "renderer.h"
-#include "factory.h"
-#include "kernel.h"
 
 // compile-time selection of these classes starts here.
 
 #if PLATFORM_USE_GLES2
 	// force use of OpenGL ES v2
-	#include "renderer/gldrivers/opengl_glesv2.h"
+	#include "gldrivers/opengl_glesv2.h"
 	#define RENDERER_TYPE 1
 #elif PLATFORM_USE_GLES3
 	#error Not yet implemented.
-	#include "renderer/gldrivers/opengl_glesv3.h"
+	#include "gldrivers/opengl_glesv3.h"
 	#define RENDER_TYPE 2
 #else
 	// use OpenGL
-	#include "renderer/gldrivers/opengl_core32.h"
+	#include "gldrivers/opengl_core32.h"
 	#define RENDERER_TYPE 0
 #endif
 

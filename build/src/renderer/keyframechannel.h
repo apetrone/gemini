@@ -27,7 +27,7 @@
 #include <gemini/util/fixedarray.h>
 
 //#include "color.h"
-#include "renderer/render_utilities.h"
+#include "render_utilities.h"
 
 
 

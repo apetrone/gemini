@@ -20,11 +20,11 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include "renderer/renderer.h"
-#include "factory.h"
-
-#include "renderer/gemgl.h"
+#include "renderer.h"
+#include "gemgl.h"
 #include "opengl_common.h"
+
+#include <gemini/factory.h>
 
 class GLCore32 : public renderer::IRenderDriver
 {

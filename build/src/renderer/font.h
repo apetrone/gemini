@@ -22,37 +22,29 @@
 #pragma once
 
 #include <gemini/typedefs.h>
-#include "renderer/render_utilities.h"
+#include "color.h"
+//#include "assets/asset_font.h"
 
-#ifdef RGB
-#undef RGB
-#endif
-
-#define RGBToUInt( r, g, b ) (((r&255)<<24) | ((g&255) <<16) | ((b&255)<<8) | 255)
-#define UIntToRGB( i, c ) c[0] = ((i>>24)&255); c[1] = ((i>>16)&255); c[2] = ((i>>8)&255)
-
-// unsigned char rgba[3];
-// unsigned int mycolor = RGBToUInt( 255, 128, 75 );
-// UIntToRGB( mycolor, rgb );
-
-struct Color
+namespace font
 {
-	unsigned char r, g, b, a;
+	void startup();
+	void shutdown();
 	
-	Color( unsigned char _r = 255, unsigned char _g = 255, unsigned char _b = 255, unsigned char _a = 255 );
-	static Color fromFloatPointer( const float * fl, int num_elements );
-	void set( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a = 255 );
-}; // Color
-
-
-template <>
-struct Interpolator<Color>
-{
-	Color operator()( const Color & start, const Color & end, float t )
-	{
-		return Color( lerp( start.r, end.r, t ),
-					 lerp( start.g, end.g, t ),
-					 lerp( start.b, end.b, t ),
-					 lerp( start.a, end.a, t ) );
-	}
-};
+	// draw a string
+	// this accepts x and y coordinates with the origin in the upper left of the screen
+	void draw_string( assets::Font * font, int x, int y, const char * utf8, const Color & color );
+	
+	// query the height of the font in pixels
+	unsigned int measure_height( assets::Font * font, const char * utf8 );
+	
+	// measure the width of the string in a given font in pixels
+	unsigned int measure_width( assets::Font * font, const char * utf8 );
+	
+	assets::FontHandle load_font_from_memory( const void * data, unsigned int data_size, unsigned short point_size );
+	
+	/// @param path relative path to the font file: "fonts/nokifc22.ttf"
+	/// @param point_size font rendered with this size
+	/// @param handle Output font handle
+	/// @returns Font data as char *
+	char * load_font_from_file( const char * path, unsigned short point_size, assets::FontHandle & handle );
+}; // namespace font

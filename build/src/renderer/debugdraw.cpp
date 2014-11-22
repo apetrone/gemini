@@ -21,9 +21,9 @@
 // -------------------------------------------------------------
 #include <slim/xlog.h>
 
-#include "renderer/renderer.h"
-#include "renderer/vertexstream.h"
-#include "renderer/renderstream.h"
+#include "renderer.h"
+#include "vertexstream.h"
+#include "renderstream.h"
 
 #include "debugdraw.h"
 #include "assets.h"
