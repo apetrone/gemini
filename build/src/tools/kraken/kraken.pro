@@ -51,7 +51,7 @@ DESTDIR = ../../../bin/debug_x86_64/
 
 unix:LIBS += "-L../../../lib/debug_x86_64"
 unix:LIBS += "-lgemini"
-mac:LIBS += "-framework Cocoa"
+macx:LIBS += "-framework Cocoa"
 
 INCLUDEPATH += "../"
 INCLUDEPATH += "../../sdk/"
