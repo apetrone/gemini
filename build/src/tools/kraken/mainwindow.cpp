@@ -76,6 +76,8 @@ MainWindow::MainWindow(ApplicationContext* application_context, QWidget *parent)
     context->log()->set_target_widget(plainTextEdit);
     context->log()->log("log initialized");
 
+    context->log()->log("current working directory: " + QDir::currentPath());
+
     create_menus();
 }
 

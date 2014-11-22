@@ -37,9 +37,6 @@ void AssetService::start_watching_assets(const QString& project_path)
     QDir dir = QDir(old_path);
     dir.cd("../../../");
 
-    // TODO: if on Mac
-    dir.cd("../../../");
-
     QString engine_root = dir.path() + QDir::separator();
     QDir::setCurrent(engine_root);
 
