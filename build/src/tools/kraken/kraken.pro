@@ -20,3 +20,6 @@ SOURCES += main.cpp\
 
 HEADERS  += mainwindow.h \
     renderwindow.h
+
+RESOURCES += \
+    kraken.qrc

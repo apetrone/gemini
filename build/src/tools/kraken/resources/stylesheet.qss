@@ -1,0 +1,11 @@
+QWidget
+{
+    color: #b1b1b1;
+    background-color: #323232;
+}
+
+#logwindow
+{
+    background-color: black;
+    color: red
+}

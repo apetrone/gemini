@@ -41,7 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     QPlainTextEdit* plainTextEdit = new QPlainTextEdit();
     plainTextEdit->setReadOnly(true);
-    plainTextEdit->setStyleSheet("QAbstractScrollArea { background-color: black; color: red }");
+    plainTextEdit->setObjectName("logwindow");
     layout->addWidget(plainTextEdit);
 
     log_console->setWidget(log);
