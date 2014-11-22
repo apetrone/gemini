@@ -21,6 +21,8 @@
 // -------------------------------------------------------------
 #include "applicationcontext.h"
 
+#include <gemini/typedefs.h>
+
 ApplicationContext::ApplicationContext() :
     log_instance(QSharedPointer<LogService>(new LogService())),
     asset_instance(QSharedPointer<AssetService>(new AssetService(log_instance)))

@@ -25,9 +25,12 @@
 #include <QApplication>
 #include <QFile>
 
+#include "common.h" // TODO: move this to "tools" ?
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    tools::startup();
     ApplicationContext context;
 
     // load styles
@@ -47,6 +50,10 @@ int main(int argc, char *argv[])
     w.setVisible(true);
     w.show();
 
-    return a.exec();
+    int result = a.exec();
+
+    tools::shutdown();
+
+    return result;
 }
 
