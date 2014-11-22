@@ -20,33 +20,14 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 
-#include "applicationcontext.h"
-#include "mainwindow.h"
-#include <QApplication>
-#include <QFile>
+#include "log_service.h"
 
-int main(int argc, char *argv[])
+
+
+void LogService::log(const QString& message)
 {
-    QApplication a(argc, argv);
-    ApplicationContext context;
-
-    // load styles
-    QFile stylesheet(":/resources/stylesheet.qss");
-    if (stylesheet.open(QIODevice::ReadOnly | QIODevice::Text))
+    if (target_widget)
     {
-        a.setStyleSheet(stylesheet.readAll());
-        stylesheet.close();
+        target_widget->appendPlainText(message);
     }
-
-
-    // setup the window
-    MainWindow w(&context);
-    w.setWindowTitle("kraken");
-    w.resize(1280, 720);
-
-    w.setVisible(true);
-    w.show();
-
-    return a.exec();
 }
-

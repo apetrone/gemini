@@ -19,34 +19,28 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#pragma once
 
-#include "applicationcontext.h"
-#include "mainwindow.h"
-#include <QApplication>
-#include <QFile>
+#include <QObject>
+#include <QProcess>
+#include "log_service.h"
 
-int main(int argc, char *argv[])
+class AssetService : public QObject
 {
-    QApplication a(argc, argv);
-    ApplicationContext context;
+private:
+    QSharedPointer<LogService> log;
+    QProcess blacksmith;
 
-    // load styles
-    QFile stylesheet(":/resources/stylesheet.qss");
-    if (stylesheet.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        a.setStyleSheet(stylesheet.readAll());
-        stylesheet.close();
-    }
+    Q_OBJECT;
+
+public:
+    AssetService(QSharedPointer<LogService> log_instance) : log(log_instance) {}
+
+    void start_watching_assets(const QString& path);
+    void stop_watching_assets();
 
 
-    // setup the window
-    MainWindow w(&context);
-    w.setWindowTitle("kraken");
-    w.resize(1280, 720);
-
-    w.setVisible(true);
-    w.show();
-
-    return a.exec();
-}
-
+public slots:
+    void on_standard_output();
+    void on_standard_error();
+};

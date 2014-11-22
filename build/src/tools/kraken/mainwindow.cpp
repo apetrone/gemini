@@ -30,9 +30,10 @@
 #include <QApplication>
 #include <QProcess>
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(ApplicationContext* application_context, QWidget *parent)
     : QMainWindow(parent)
 {
+    context = application_context;
 
     QGLFormat format;
     format.setVersion(3, 2);
@@ -72,10 +73,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     this->addDockWidget(Qt::BottomDockWidgetArea, log_console);
 
-
-    plainTextEdit->appendPlainText("log initialized");
-    log_text_field = plainTextEdit;
-
+    context->log()->set_target_widget(plainTextEdit);
+    context->log()->log("log initialized");
 
     create_menus();
 }
@@ -99,52 +98,7 @@ void MainWindow::create_menus()
 void MainWindow::about()
 {
     QString project_path = QFileDialog::getExistingDirectory(this, tr("Choose Project Path"), "", QFileDialog::ShowDirsOnly);
-    project_path.append(QDir::separator());
-    project_path.append("assets");
 
-    // TODO: redirect this to a log service
-    if (log_text_field)
-    {
-        log_text_field->appendPlainText(project_path);
-    }
-    else
-    {
-        return;
-    }
-
-    // startup blacksmith
-
-    QString old_path = QDir::currentPath();
-
-    // TODO: if in development
-    QDir dir = QDir(old_path);
-    dir.cd("../../../");
-
-    // TODO: if on Mac
-    dir.cd("../../../");
-
-    QString engine_root = dir.path() + QDir::separator();
-    log_text_field->appendPlainText(engine_root);
-
-    QProcess process;
-
-    QDir::setCurrent(engine_root);
-    log_text_field->appendPlainText(engine_root);
-
-    // TODO: need to setup virtualenv
-    QString blacksmith_script_path = engine_root + "tools/blacksmith/blacksmith.py";
-    QString config_path = engine_root + "tools/conf/blacksmith/desktop.conf";
-    QString blacksmith = "python " + blacksmith_script_path + " -c " + config_path + " -y -s " + project_path;
-
-
-    log_text_field->appendPlainText(blacksmith);
-    process.start(blacksmith);
-    process.waitForFinished();
-    log_text_field->appendPlainText("process finished");
-
-    log_text_field->appendPlainText(process.readAllStandardOutput());
-    log_text_field->appendPlainText(process.readAllStandardError());
-
-    // restore the old path
-    QDir::setCurrent(old_path);
+    context->log()->log("setting project path to: " + project_path);
+    context->assets()->start_watching_assets(project_path);
 }

@@ -19,34 +19,20 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#pragma once
 
-#include "applicationcontext.h"
-#include "mainwindow.h"
-#include <QApplication>
-#include <QFile>
+#include <QObject>
+#include <QPlainTextEdit>
 
-int main(int argc, char *argv[])
+class LogService : public QObject
 {
-    QApplication a(argc, argv);
-    ApplicationContext context;
+private:
+    QPlainTextEdit* target_widget;
 
-    // load styles
-    QFile stylesheet(":/resources/stylesheet.qss");
-    if (stylesheet.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        a.setStyleSheet(stylesheet.readAll());
-        stylesheet.close();
-    }
+    Q_OBJECT;
 
+public:
+    void set_target_widget(QPlainTextEdit* edit_widget) { target_widget = edit_widget; }
 
-    // setup the window
-    MainWindow w(&context);
-    w.setWindowTitle("kraken");
-    w.resize(1280, 720);
-
-    w.setVisible(true);
-    w.show();
-
-    return a.exec();
-}
-
+    void log(const QString& message);
+};

@@ -17,10 +17,16 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    renderwindow.cpp
+    renderwindow.cpp \
+    log_service.cpp \
+    applicationcontext.cpp \
+    asset_service.cpp
 
 HEADERS  += mainwindow.h \
-    renderwindow.h
+    renderwindow.h \
+    log_service.h \
+    applicationcontext.h \
+    asset_service.h
 
 RESOURCES += \
     kraken.qrc

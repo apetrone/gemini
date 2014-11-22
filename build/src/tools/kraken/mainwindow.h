@@ -26,7 +26,7 @@
 #include <QMenuBar>
 #include <QPlainTextEdit>
 #include "renderwindow.h"
-
+#include "applicationcontext.h"
 
 class MainWindow : public QMainWindow
 {
@@ -35,12 +35,12 @@ class MainWindow : public QMainWindow
 private:
     RenderWindow* render_window;
     QMenuBar* menu_bar;
-    QPlainTextEdit* log_text_field;
+    ApplicationContext* context;
 
     void create_menus();
 
 public:
-    MainWindow(QWidget *parent = 0);
+    MainWindow(ApplicationContext* context, QWidget *parent = 0);
     ~MainWindow();
 
 public slots:
