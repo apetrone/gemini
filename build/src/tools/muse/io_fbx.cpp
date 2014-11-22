@@ -339,7 +339,11 @@ static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh, 
 			
 			mesh->vertices[vertex_index] = vertex->position;
 			mesh->normals[vertex_index] = vertex->normal;
-			mesh->vertex_colors[vertex_index] = vertex->color;
+			
+			if (!mesh->vertex_colors.empty())
+			{
+				mesh->vertex_colors[vertex_index] = vertex->color;
+			}
 
 			
 
