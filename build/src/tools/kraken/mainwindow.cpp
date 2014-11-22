@@ -114,9 +114,10 @@ void MainWindow::about()
 
     // startup blacksmith
 
+    QString old_path = QDir::currentPath();
 
     // TODO: if in development
-    QDir dir = QDir(QDir::currentPath());
+    QDir dir = QDir(old_path);
     dir.cd("../../../");
 
     // TODO: if on Mac
@@ -128,6 +129,7 @@ void MainWindow::about()
     QProcess process;
 
     QDir::setCurrent(engine_root);
+    log_text_field->appendPlainText(engine_root);
 
     // TODO: need to setup virtualenv
     QString blacksmith_script_path = engine_root + "tools/blacksmith/blacksmith.py";
@@ -142,4 +144,7 @@ void MainWindow::about()
 
     log_text_field->appendPlainText(process.readAllStandardOutput());
     log_text_field->appendPlainText(process.readAllStandardError());
+
+    // restore the old path
+    QDir::setCurrent(old_path);
 }
