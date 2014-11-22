@@ -76,12 +76,14 @@ void MainWindow::create_menus()
 
 void MainWindow::about()
 {
-    QString directory = QFileDialog::getExistingDirectory(this, tr("Choose Project Path"), "", QFileDialog::ShowDirsOnly);
+    QString project_path = QFileDialog::getExistingDirectory(this, tr("Choose Project Path"), "", QFileDialog::ShowDirsOnly);
+    project_path.append(QDir::separator());
+    project_path.append("assets");
 
     // TODO: redirect this to a log service
     if (log_text_field)
     {
-        log_text_field->appendPlainText(directory);
+        log_text_field->appendPlainText(project_path);
     }
     else
     {
@@ -98,17 +100,24 @@ void MainWindow::about()
     // TODO: if on Mac
     dir.cd("../../../");
 
-    QString engine_root = dir.path();
+    QString engine_root = dir.path() + QDir::separator();
     log_text_field->appendPlainText(engine_root);
 
     QProcess process;
 
-    QString project_path = "/Users/apetrone/Documents/games/vrpowergrid/assets";
-    QString blacksmith = "python tools/blacksmith/blacksmith.py -c tools/conf/blacksmith/desktop.conf -y -s " + project_path;
+    QDir::setCurrent(engine_root);
+
+    // TODO: need to setup virtualenv
+    QString blacksmith_script_path = engine_root + "tools/blacksmith/blacksmith.py";
+    QString config_path = engine_root + "tools/conf/blacksmith/desktop.conf";
+    QString blacksmith = "python " + blacksmith_script_path + " -c " + config_path + " -y -s " + project_path;
 
 
     log_text_field->appendPlainText(blacksmith);
-    //process.start(blacksmith);
-    //process.waitForFinished();
+    process.start(blacksmith);
+    process.waitForFinished();
+    log_text_field->appendPlainText("process finished");
 
+    log_text_field->appendPlainText(process.readAllStandardOutput());
+    log_text_field->appendPlainText(process.readAllStandardError());
 }
