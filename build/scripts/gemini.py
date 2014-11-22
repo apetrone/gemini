@@ -30,8 +30,7 @@ def setup_common_variables(arguments, target_platform, product):
 
 	product.includes += [
 		"src",
-		"src/game",
-		"src/renderer/gldrivers"
+		"src/game"
 	]
 
 	# TODO: Allow generic *.DS_Store excludes
@@ -124,9 +123,6 @@ def setup_common_libs(arguments, product):
 
 		# include this almagamated version of jsoncpp until we replace it.
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp"),
-
-		os.path.join(DEPENDENCIES_FOLDER, "font-stash/fontstash.c"),
-		os.path.join(DEPENDENCIES_FOLDER, "font-stash/stb_truetype.c"),
 
 		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.c"),
 		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.h"),
@@ -366,6 +362,41 @@ def get_libgemini():
 
 	return libgemini
 
+def get_librenderer(arguments, target_platform):
+	librenderer = Product(name="renderer", output=ProductType.StaticLibrary)
+	librenderer.root = "../"
+	librenderer.sources += [
+		"src/renderer/*.*",
+		"src/renderer/gldrivers/opengl_common.*",
+
+		os.path.join(DEPENDENCIES_FOLDER, "font-stash/fontstash.c"),
+		os.path.join(DEPENDENCIES_FOLDER, "font-stash/stb_truetype.c")		
+	]
+
+	librenderer.includes += [
+		"src/contrib",
+		"src/renderer/gldrivers"
+	]
+
+	librenderer.excludes += [
+		"*.DS_Store"	
+	]
+
+
+	if target_platform in DESKTOP:
+		librenderer.sources += [
+			"src/renderer/gldrivers/opengl_core32.*"
+		]
+
+
+	if arguments.glesv2:
+		librenderer.sources += [
+			"src/renderer/gldrivers/opengl_glesv2.*"
+		]	
+
+
+	return librenderer
+
 def arguments(parser):
 	parser.add_argument("--with-glesv2", dest="glesv2", action="store_true", help="Build with GLES V2", default=False)
 	parser.add_argument("--raspberrypi", dest="raspberrypi", action="store_true", help="Build for the RaspberryPi", default=False)
@@ -436,8 +467,6 @@ def products(arguments, **kwargs):
 	gemini.sources += [
 		"src/kernels/**.c*",
 		"src/core/*.*",
-		"src/renderer/*.*",
-		"src/renderer/gldrivers/opengl_common.*",
 		"src/core/audio/openal.*",
 		"src/core/assets/*.*",
 		"src/contrib/*",
@@ -461,8 +490,7 @@ def products(arguments, **kwargs):
 	if target_platform.get() in DESKTOP:
 		gemini.sources += [
 			"src/core/desktop/kernel_desktop.cpp",
-			"src/core/audio/openal_vorbis_decoder.*",
-			"src/renderer/gldrivers/opengl_core32.*"
+			"src/core/audio/openal_vorbis_decoder.*"
 		]
 
 		gemini.includes += [
@@ -520,9 +548,6 @@ def products(arguments, **kwargs):
 			linux.links += ["X11"]
 
 		if arguments.glesv2:
-			linux.sources += [
-				"src/renderer/gldrivers/opengl_glesv2.*"
-			]
 
 			linux.defines += [
 				"PLATFORM_USE_GLES2=1"
@@ -567,9 +592,12 @@ def products(arguments, **kwargs):
 
 
 	libgemini = get_libgemini()
+	librenderer = get_librenderer(arguments, target_platform)
+	librenderer.dependencies += [libgemini, Dependency(file="glm.py")]
+
 	tools = get_tools(target_platform, libgemini)
 
-	gemini.dependencies.extend([libgemini])
+	gemini.dependencies.extend([libgemini, librenderer])
 
-	return [gemini] + tools + [libgemini]
+	return [gemini] + tools + [libgemini, librenderer]
 
