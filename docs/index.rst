@@ -13,6 +13,8 @@ Contents:
    
    assets
 
+   developer
+
 Indices and tables
 ==================
 

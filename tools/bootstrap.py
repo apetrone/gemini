@@ -42,13 +42,14 @@ def setup_environment(after_install):
 			"virtualenv already exists at \"%s\". Nothing to do." %
 			 virtualenv_root
 		)
-		return
+		return virtualenv_root
 
 	logging.info("creating virtualenv at \"%s\"" % virtualenv_root)
 	sys.argv.append("--distribute")
 	sys.argv.append(virtualenv_root)
 	virtualenv.after_install = after_install
 	virtualenv.main()
+	return virtualenv_root
 
 def install_packages(root_path):
 	pip = get_virtualenv_path(root_path, "pip")
@@ -76,10 +77,9 @@ def post_install(options, root_path):
 	# install via requirements file
 	install_packages(root_path)
 
-	# (this should be moved) build documentation
-	build_docs(root_path)
-
-
 if __name__ == "__main__":
 	logging.basicConfig(level=logging.INFO)
-	setup_environment(post_install)
+	root_path = setup_environment(post_install)
+
+	# (this should be moved) build documentation
+	build_docs(root_path)	
