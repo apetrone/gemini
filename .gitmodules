@@ -19,9 +19,6 @@
 [submodule "tools/pegasus"]
 	path = tools/pegasus
 	url = git://github.com/apetrone/pegasus.git
-[submodule "build/dependencies/assimp"]
-	path = build/dependencies/assimp
-	url = git://github.com/assimp/assimp.git
 [submodule "build/dependencies/bullet2"]
 	path = build/dependencies/bullet2
 	url = git://github.com/apetrone/bulletphysics.git
