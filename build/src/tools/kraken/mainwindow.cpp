@@ -6,6 +6,7 @@
 #include <QFileDialog>
 #include <QDockWidget>
 #include <QApplication>
+#include <QProcess>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -53,7 +54,6 @@ MainWindow::MainWindow(QWidget *parent)
     plainTextEdit->appendPlainText("log initialized");
     log_text_field = plainTextEdit;
 
-    plainTextEdit->appendPlainText(QDir::currentPath());
 
     create_menus();
 }
@@ -83,6 +83,32 @@ void MainWindow::about()
     {
         log_text_field->appendPlainText(directory);
     }
+    else
+    {
+        return;
+    }
 
     // startup blacksmith
+
+
+    // TODO: if in development
+    QDir dir = QDir(QDir::currentPath());
+    dir.cd("../../../");
+
+    // TODO: if on Mac
+    dir.cd("../../../");
+
+    QString engine_root = dir.path();
+    log_text_field->appendPlainText(engine_root);
+
+    QProcess process;
+
+    QString project_path = "/Users/apetrone/Documents/games/vrpowergrid/assets";
+    QString blacksmith = "python tools/blacksmith/blacksmith.py -c tools/conf/blacksmith/desktop.conf -y -s " + project_path;
+
+
+    log_text_field->appendPlainText(blacksmith);
+    //process.start(blacksmith);
+    //process.waitForFinished();
+
 }
