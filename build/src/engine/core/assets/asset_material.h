@@ -46,8 +46,8 @@ namespace assets
 	{
 		struct Parameter
 		{
-			ShaderString name;
-			ShaderString value;
+			renderer::ShaderString name;
+			renderer::ShaderString value;
 			unsigned int type; // MaterialParameterType
 			int intValue;
 			glm::vec4 vecValue;
@@ -61,7 +61,7 @@ namespace assets
 			CUBEMAP = 4,
 		};
 		
-		ShaderString name;
+		renderer::ShaderString name;
 		Shader * shader;
 		std::vector< Parameter, GeminiAllocator<Parameter> > parameters;
 
@@ -83,7 +83,7 @@ namespace assets
 		void print_parameters();
 	}; // Material
 	
-	unsigned int texture_unit_for_map( ShaderString & name );
+	unsigned int texture_unit_for_map( renderer::ShaderString & name );
 	
 	unsigned int material_type_to_parameter_type( const char * name );
 	int material_parameter_type_to_render_state( unsigned int type );

@@ -23,10 +23,10 @@
 #include <stdio.h>
 #include <slim/xlog.h>
 #include <gemini/mathlib.h>
-#include "debugdraw.h"
+#include <renderer/debugdraw.h>
 #include "input.h"
-#include "renderer/renderer.h"
-#include "renderer/renderstream.h"
+#include <renderer/renderer.h>
+#include <renderer/renderstream.h>
 
 #include "camera.h"
 
@@ -37,7 +37,7 @@
 
 #include "physics.h"
 
-#include "font.h"
+#include <renderer/font.h>
 #include "assets/asset_font.h"
 #include "entity.h"
 #include "script.h"
@@ -47,7 +47,7 @@
 
 #include <gemini/mathlib.h>
 
-#include "renderer/scenelink.h"
+#include "scenelink.h"
 #include "vr.h"
 
 #define LOCK_CAMERA_TO_CHARACTER 0
@@ -275,6 +275,16 @@ public:
 				//camera.update_view();
 				break;
 			}
+			
+			case kernel::WindowLostFocus:
+			case kernel::WindowGainFocus:
+			case kernel::WindowResized:
+			case kernel::MouseButton:
+			case kernel::MouseWheelMoved:
+			case kernel::TouchBegin:
+			case kernel::TouchMoved:
+			case kernel::TouchEnd:
+			default: break;
 		}
 //		switch( event.subtype )
 //		{

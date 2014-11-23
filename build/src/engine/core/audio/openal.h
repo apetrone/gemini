@@ -23,7 +23,7 @@
 
 #include <gemini/config.h>
 
-#include "factory.h" // for DECLARE_FACTORY_CLASS
+#include <gemini/factory.h> // for DECLARE_FACTORY_CLASS
 
 #if PLATFORM_WINDOWS
 	#include <al.h>

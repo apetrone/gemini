@@ -30,7 +30,7 @@
 #include "script.h"
 #define scvprintf vfprintf
 #include <gemini/mathlib.h>
-#include "debugdraw.h"
+#include <renderer/debugdraw.h>
 
 
 #include "camera.h"

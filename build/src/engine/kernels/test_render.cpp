@@ -25,13 +25,15 @@
 #include <gemini/mathlib.h>
 
 #include "kernel.h"
-#include "debugdraw.h"
 #include "input.h"
-#include "renderer/renderer.h"
-#include "renderer/renderstream.h"
-#include "renderer/scenelink.h"
+#include <renderer/debugdraw.h>
+
+#include <renderer/renderer.h>
+#include <renderer/renderstream.h>
+#include "scenelink.h"
+#include <renderer/font.h>
 #include "camera.h"
-#include "font.h"
+
 #include "scene_graph.h"
 #include "skeletalnode.h"
 #include "physics.h"

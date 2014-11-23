@@ -19,60 +19,65 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "keyframechannel.h"
+#pragma once
 
+#include <gemini/util/stackstring.h>
+#include <gemini/util/fixedarray.h>
 
+#include <string>
+#include <utility> // for std::pair
 
-#if 0
-
-Channel::Channel(float& value_in) :
-	value(value_in)
+namespace renderer
 {
 	
-}
-
-void Channel::set_keys(float* data, size_t total_keys)
-{
-	keys.allocate(total_keys);
-	memcpy(&keys[0], data, sizeof(float)*total_keys);
-}
-
-float Channel::get_value(uint32_t frame, float alpha)
-{
-	alpha = glm::clamp(alpha, 0.0f, 1.0f);
-	
-	frame = clamp_frame(frame);
-	
-	assert(keys.size() > 0);
-	
-	float last = keys[frame];
-	float next;
-	if ((frame+1) >= keys.size())
+	enum ShaderObjectType
 	{
-		// TODO: Should use post-infinity here
-		// For now, just use the max.
-		next = keys[frame];
-	}
-	else
-	{
-		next = keys[frame+1];
-	}
+		SHADER_VERTEX,
+		SHADER_FRAGMENT,
+		SHADER_GEOMETRY,
+		SHADER_COMPUTE,
+		
+		SHADER_LIMIT
+	}; // ShaderObjectType
 	
-	float delta = (next-last);
+	typedef std::pair<std::string, int> ShaderKeyValuePair;
 	
-	// interpolate between frame and frame+1
-	return glm::mix(last, delta, alpha);
-}
-
-
-uint32_t Channel::clamp_frame(uint32_t frame)
-{
-	if (frame >= keys.size())
+	// Generic container for shader objects before they are linked into a shader
+	// program.
+	struct ShaderObject
 	{
-		frame = keys.size()-1;
-	}
-	return frame;
-}
+		unsigned int shader_id;
+		
+		ShaderObject() : shader_id(0) {}
+	}; // ShaderObject
+	
+	struct ShaderProgram
+	{
+		//unsigned int id;
+		unsigned int capabilities;
+		
+		StackString<64> frag_data_location;
+		
+		FixedArray<ShaderKeyValuePair> uniforms;
+		FixedArray<ShaderKeyValuePair> attributes;
+		
+		unsigned int object;
+		
+		ShaderProgram() : object(0) {}
+		virtual ~ShaderProgram();
+		
+		int get_uniform_location( const char * name );
+		
+		void show_uniforms();
+		void show_attributes();
+	}; // ShaderProgram
+	
+	
+	
+	enum ShaderErrorType
+	{
+		SHADER_ERROR_NONE = 0,
+		SHADER_ERROR_COMPILE_FAILED,
+	}; // ShaderErrorType
 
-#endif
-
+}; // namespace renderer

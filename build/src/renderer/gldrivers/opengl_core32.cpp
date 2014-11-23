@@ -22,16 +22,12 @@
 #include <gemini/typedefs.h>
 #include <slim/xlog.h>
 
-#include "renderer/gldrivers/opengl_core32.h"
+#include "opengl_core32.h"
 
 #include "image.h"
 
 #include <gemini/mathlib.h>
 #include <gemini/util/datastream.h>
-
-#include "assets.h"
-
-
 
 // utility functions
 GLenum image_source_format( int num_channels )
@@ -1095,7 +1091,7 @@ void GLCore32::shaderobject_destroy( renderer::ShaderObject shader_object )
 #endif
 }
 
-renderer::ShaderProgram GLCore32::shaderprogram_create( renderer::ShaderParameters & parameters )
+renderer::ShaderProgram GLCore32::shaderprogram_create()
 {
 	ShaderProgram program;
 	program.object = gl.CreateProgram();
@@ -1109,11 +1105,11 @@ renderer::ShaderProgram GLCore32::shaderprogram_create( renderer::ShaderParamete
 	return program;
 }
 
-void GLCore32::shaderprogram_destroy( renderer::ShaderProgram program )
+void GLCore32::shaderprogram_destroy( renderer::ShaderProgram shader_program )
 {
-	if ( program.object != 0 )
+	if ( shader_program.object != 0 )
 	{
-		gl.DeleteProgram( program.object );
+		gl.DeleteProgram( shader_program.object );
 		gl.CheckError( "DeleteProgram" );
 	}
 }
@@ -1130,29 +1126,29 @@ void GLCore32::shaderprogram_detach( renderer::ShaderProgram shader_program, ren
 	gl.CheckError( "DetachShader" );
 }
 
-void GLCore32::shaderprogram_bind_attributes( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters )
+void GLCore32::shaderprogram_bind_attributes( renderer::ShaderProgram shader_program )
 {
 	// gl.BindFragDataLocation(shader_program.object, 0, parameters.frag_data_location);
 	// gl.CheckError( "BindFragDataLocation" );
 
-	for(uint32_t i = 0; i < parameters.attributes.size(); ++i)
+	for(uint32_t i = 0; i < shader_program.attributes.size(); ++i)
 	{
-		ShaderKeyValuePair * keyvalue = &parameters.attributes[i];
+		ShaderKeyValuePair * keyvalue = &shader_program.attributes[i];
 		SHADER_DEBUG( "BindAttribLocation -> %s to %i\n", keyvalue->first, keyvalue->second );
 		gl.BindAttribLocation( shader_program.object, keyvalue->second, keyvalue->first.c_str() );
 		gl.CheckError( xstr_format( "BindAttribLocation: %s", keyvalue->first.c_str() ));
 	}
 }
 
-void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters )
+void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_program )
 {
 	// ensure this is the active shader before binding uniforms
 	//this->shaderprogram_activate( shader_program );
 
 	// fetch uniforms from the shader
-	for(uint32_t uniform_id = 0; uniform_id < parameters.uniforms.size(); ++uniform_id)
+	for(uint32_t uniform_id = 0; uniform_id < shader_program.uniforms.size(); ++uniform_id)
 	{
-		ShaderKeyValuePair * keyvalue = &parameters.uniforms[ uniform_id ];
+		ShaderKeyValuePair * keyvalue = &shader_program.uniforms[ uniform_id ];
 		
 		keyvalue->second = gl.GetUniformLocation( shader_program.object, keyvalue->first.c_str() );
 		SHADER_DEBUG( "GetUniformLocation: \"%s\" -> %i\n", keyvalue->first.c_str(), keyvalue->second );
@@ -1165,7 +1161,7 @@ void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_progr
 	}
 }
 
-void GLCore32::shaderprogram_bind_uniform_block(renderer::ShaderProgram shader_program, renderer::ShaderParameters& parameters, const char* block_name)
+void GLCore32::shaderprogram_bind_uniform_block(renderer::ShaderProgram shader_program, const char* block_name)
 {
 	// find the uniform block
 	GLuint block_index = gl.GetUniformBlockIndex(shader_program.object, block_name);
@@ -1203,10 +1199,10 @@ void GLCore32::shaderprogram_bind_uniform_block(renderer::ShaderProgram shader_p
 	}
 }
 
-bool GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters )
+bool GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_program )
 {
 	bool status = true;
-	gl.BindFragDataLocation(shader_program.object, 0, parameters.frag_data_location());
+	gl.BindFragDataLocation(shader_program.object, 0, shader_program.frag_data_location());
 	gl.CheckError( "BindFragDataLocation" );
 
 	gl.LinkProgram( shader_program.object );

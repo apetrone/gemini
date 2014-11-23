@@ -29,6 +29,7 @@ def setup_common_variables(arguments, target_platform, product):
 
 
 	product.includes += [
+		"src",
 		"src/engine",
 		"src/engine/game"
 	]
@@ -380,7 +381,7 @@ def get_librenderer(arguments, target_platform):
 	]
 
 
-	if target_platform in DESKTOP:
+	if target_platform.get() in DESKTOP:
 		librenderer.sources += [
 			"src/renderer/gldrivers/opengl_core32.*"
 		]

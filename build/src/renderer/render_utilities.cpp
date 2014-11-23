@@ -24,21 +24,15 @@
 
 
 //#include "assets.h"
-#include "renderer.h"
+
 #include "renderstream.h"
 #include "rqueue.h"
 
 
 namespace render_utilities
 {
-	void queue_geometry(RenderStream& rs, const renderer::RenderBlock& block, const renderer::ConstantBuffer& cb)
+	void queue_geometry(RenderStream& rs, const renderer::RenderBlock& block, const renderer::ConstantBuffer& cb, renderer::Material* material, renderer::ShaderProgram* shader)
 	{
-		assets::Material* material = assets::materials()->find_with_id(block.material_id);
-		assert(material != 0);
-
-		assets::Shader* shader = assets::shaders()->find_with_id(block.shader_id);
-		assert(shader != 0);
-
 		rs.add_shader(shader);
 
 		rs.add_uniform_matrix4(shader->get_uniform_location("modelview_matrix"), cb.modelview_matrix);

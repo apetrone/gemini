@@ -25,13 +25,15 @@
 
 #include "assets.h"
 
+#include <renderer/font.h>
+
 namespace assets
 {
-	typedef int FontHandle;
+//	typedef int FontHandle;
 	struct Font : public Asset
 	{
 		unsigned short font_size;
-		FontHandle font_id;
+		renderer::FontHandle font_id;
 		char * font_data;
 		
 		Font();

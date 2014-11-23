@@ -106,6 +106,49 @@ namespace renderer
 
 namespace renderer
 {
+	ShaderProgram::~ShaderProgram()
+	{
+		renderer::driver()->shaderprogram_destroy( *this );
+	}
+	
+	
+	int ShaderProgram::get_uniform_location( const char * name )
+	{
+		//		LOGV( "# uniforms: %i\n", total_uniforms );
+		for( int i = 0; i < uniforms.size(); ++i )
+		{
+			if (std::string(name) == uniforms[i].first)
+			{
+				//				LOGV( "uniform: %s, at %i\n", name, uniforms[i].second );
+				return uniforms[i].second;
+			}
+		}
+		
+		LOGW( "No uniform named %s (%i)\n", name, -1 );
+		return -1;
+	} // get_uniform_location
+	
+	void ShaderProgram::show_uniforms()
+	{
+		LOGV("uniforms:\n");
+		for (size_t i = 0; i < uniforms.size(); ++i)
+		{
+			LOGV("%s -> %i\n", uniforms[i].first.c_str(), uniforms[i].second);
+		}
+	}
+	
+	void ShaderProgram::show_attributes()
+	{
+		LOGV("attributes:\n");
+		for (size_t i = 0; i < attributes.size(); ++i)
+		{
+			LOGV("%s -> %i\n", attributes[i].first.c_str(), attributes[i].second);
+		}
+	}
+}
+
+namespace renderer
+{
 	
 	// VertexTypeDescriptor
 	uint16_t VertexDescriptor::size[ VD_TOTAL ] = {0};
@@ -214,13 +257,4 @@ namespace renderer
 		return *this;
 	} // operator=
 
-	ShaderParameters::ShaderParameters()
-	{
-
-	}
-	
-	ShaderParameters::~ShaderParameters()
-	{
-
-	}
 }; // namespace renderer

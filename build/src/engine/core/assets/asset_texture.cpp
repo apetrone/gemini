@@ -24,13 +24,14 @@
 #include <gemini/util/stackstring.h>
 #include <gemini/platform.h>
 #include <gemini/core/filesystem.h>
-
 #include <gemini/mathlib.h> // for glm
-#include "color.h"
-#include "renderer/renderer.h"
+
+#include <renderer/color.h>
+#include <renderer/image.h>
+#include <renderer/renderer.h>
+
 #include "assets.h"
 #include "assets/asset_texture.h"
-#include "image.h"
 
 #include "kernel.h" // for device_flags
 

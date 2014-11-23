@@ -19,16 +19,13 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <slim/xlog.h>
-
+#include "debugdraw.h"
 #include "renderer.h"
 #include "vertexstream.h"
 #include "renderstream.h"
-
-#include "debugdraw.h"
-#include "assets.h"
 #include "font.h"
 
+#include <slim/xlog.h>
 
 
 namespace debugdraw
@@ -40,8 +37,8 @@ namespace debugdraw
 		unsigned int next_primitive = 0;
 		unsigned int max_primitives = 0;
 		DebugPrimitive * primitive_list = 0;
-		assets::Font * debug_font = 0;
-		assets::Shader* debug_shader = 0;
+		renderer::Font * debug_font = 0;
+		renderer::ShaderProgram* debug_shader = 0;
 
 		DebugPrimitive * request_primitive()
 		{
@@ -128,12 +125,14 @@ namespace debugdraw
 		
 		
 		// load the debug font we'll use
-		_internal::debug_font = assets::fonts()->load_from_path( DEBUG_FONT_FILE );
+//		_internal::debug_font = assets::fonts()->load_from_path( DEBUG_FONT_FILE );
 		assert(_internal::debug_font != 0);
 		
 		// load debug shader
-		_internal::debug_shader = assets::shaders()->load_from_path(DEBUG_SHADER);
+//		_internal::debug_shader = assets::shaders()->load_from_path(DEBUG_SHADER);
 		assert(_internal::debug_shader != 0);
+		
+		
 //		render_utilities::create_descriptor_from_shader(_internal::vertex_stream.desc, _internal::debug_shader);
 	} // startup
 	
@@ -326,7 +325,7 @@ namespace debugdraw
 	void render(const glm::mat4 & modelview, const glm::mat4 & projection, int x, int y, int viewport_width, int viewport_height)
 	{
 		unsigned int attribs = 0;
-		assets::ShaderString name;
+		renderer::ShaderString name;
 		name = "colors";
 //		attribs |= assets::find_parameter_mask( name );
 

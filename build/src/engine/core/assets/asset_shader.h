@@ -32,17 +32,10 @@ namespace assets
 	// -------------------------------------------------------------
 	// Shader
 	
-	struct Shader : public Asset, public renderer::ShaderParameters, public renderer::ShaderProgram
+	struct Shader : public Asset, public renderer::ShaderProgram
 	{
 		int get_uniform_location( const char * name );
 		virtual void release();
-		
-		void create_program();
-		void destroy_program();
-		void attach_shader( /*GLObject shader*/ );
-		void bind_attributes();
-		bool link_and_validate();
-		void bind_uniforms();
 		
 		void show_uniforms();
 		void show_attributes();

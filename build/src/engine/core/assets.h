@@ -27,7 +27,8 @@
 #include <gemini/platform.h>
 
 #include <gemini/mathlib.h> // for glm
-#include "color.h"
+
+#include <renderer/color.h>
 
 namespace assets
 {
@@ -75,10 +76,6 @@ namespace assets
 		AssetLoad_Success = 0,
 		AssetLoad_Failure = 1
 	};
-	
-	// other shared types
-//	typedef std::string ShaderString;
-	typedef std::basic_string<char, std::char_traits<char>, GeminiAllocator<char> > ShaderString;
 }; // namespace assets
 
 #define IMPLEMENT_ASSET_LIBRARY_ACCESSOR( type, name )\
@@ -104,5 +101,5 @@ namespace assets
 
 namespace assets
 {
-	unsigned int find_parameter_mask( ShaderString & name );
+	unsigned int find_parameter_mask( renderer::ShaderString & name );
 }; // namespace assets

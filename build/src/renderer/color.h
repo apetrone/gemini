@@ -22,7 +22,7 @@
 #pragma once
 
 #include <gemini/typedefs.h>
-#include "render_utilities.h"
+#include "interpolation.h"
 
 #ifdef RGB
 #undef RGB

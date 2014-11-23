@@ -23,11 +23,12 @@
 
 #include <gemini/util/stackstring.h>
 
-#include "image.h"
+
 
 #include "assets.h"
 
-#include "renderer/renderer.h"
+#include <renderer/renderer.h>
+#include <renderer/image.h>
 
 namespace assets
 {

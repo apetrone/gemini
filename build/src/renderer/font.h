@@ -21,6 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "renderer.h"
+
 #include <gemini/typedefs.h>
 #include "color.h"
 //#include "assets/asset_font.h"
@@ -32,19 +34,19 @@ namespace font
 	
 	// draw a string
 	// this accepts x and y coordinates with the origin in the upper left of the screen
-	void draw_string( assets::Font * font, int x, int y, const char * utf8, const Color & color );
+	void draw_string( renderer::Font * font, int x, int y, const char * utf8, const Color & color );
 	
 	// query the height of the font in pixels
-	unsigned int measure_height( assets::Font * font, const char * utf8 );
+	unsigned int measure_height( renderer::Font * font, const char * utf8 );
 	
 	// measure the width of the string in a given font in pixels
-	unsigned int measure_width( assets::Font * font, const char * utf8 );
+	unsigned int measure_width( renderer::Font * font, const char * utf8 );
 	
-	assets::FontHandle load_font_from_memory( const void * data, unsigned int data_size, unsigned short point_size );
+	renderer::FontHandle load_font_from_memory( const void * data, unsigned int data_size, unsigned short point_size );
 	
 	/// @param path relative path to the font file: "fonts/nokifc22.ttf"
 	/// @param point_size font rendered with this size
 	/// @param handle Output font handle
 	/// @returns Font data as char *
-	char * load_font_from_file( const char * path, unsigned short point_size, assets::FontHandle & handle );
+	char * load_font_from_file( const char * path, unsigned short point_size, renderer::FontHandle & handle );
 }; // namespace font

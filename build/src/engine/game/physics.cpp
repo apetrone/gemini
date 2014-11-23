@@ -22,8 +22,8 @@
 #include <gemini/typedefs.h>
 #include <slim/xlog.h>
 #include "physics.h"
-#include "color.h"
-#include "debugdraw.h"
+#include <renderer/color.h>
+#include <renderer/debugdraw.h>
 
 #include <btBulletDynamicsCommon.h>
 

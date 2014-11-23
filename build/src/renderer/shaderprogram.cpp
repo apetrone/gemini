@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2014- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -19,30 +19,9 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
-
-#include <gemini/typedefs.h>
-#include <gemini/mem.h>
-
-#include "renderer.h"
-#include "rqueue.h"
-#include "scene_graph.h"
+#include "shaderprogram.h"
 
 namespace renderer
 {
-	// The purpose of this class is to provide a connection between
-	// a scene graph and the render queue.
-	// In short, it will provide the conversion from scene graph nodes
-	// to RenderBlocks.
-	class SceneLink
-	{
-		RenderQueue* queue;
-		
-	public:
-		SceneLink();
-		~SceneLink();
-		
-		// render the queue
-		void draw(scenegraph::Node* root, ConstantBuffer& constant_buffer);
-	};
+	
 }; // namespace renderer

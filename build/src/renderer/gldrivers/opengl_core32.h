@@ -73,14 +73,14 @@ public:
 	virtual bool shaderobject_compile( renderer::ShaderObject shader_object, const char * shader_source, const char * preprocessor_defines, const char * version );
 	virtual void shaderobject_destroy( renderer::ShaderObject shader_object );
 	
-	virtual renderer::ShaderProgram shaderprogram_create( renderer::ShaderParameters & parameters );
+	virtual renderer::ShaderProgram shaderprogram_create();
 	virtual void shaderprogram_destroy( renderer::ShaderProgram program );
 	virtual void shaderprogram_attach( renderer::ShaderProgram shader_program, renderer::ShaderObject shader_object );
 	virtual void shaderprogram_detach( renderer::ShaderProgram shader_program, renderer::ShaderObject shader_object );
-	virtual void shaderprogram_bind_attributes( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters );
-	virtual void shaderprogram_bind_uniforms( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters );
-	virtual void shaderprogram_bind_uniform_block(renderer::ShaderProgram shader_program, renderer::ShaderParameters& parameters, const char* block_name);
-	virtual bool shaderprogram_link_and_validate( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters );
+	virtual void shaderprogram_bind_attributes( renderer::ShaderProgram shader_program );
+	virtual void shaderprogram_bind_uniforms( renderer::ShaderProgram shader_program );
+	virtual void shaderprogram_bind_uniform_block(renderer::ShaderProgram shader_program, const char* block_name);
+	virtual bool shaderprogram_link_and_validate( renderer::ShaderProgram shader_program );
 	virtual void shaderprogram_activate( renderer::ShaderProgram shader_program );
 	virtual void shaderprogram_deactivate( renderer::ShaderProgram shader_program );
 	

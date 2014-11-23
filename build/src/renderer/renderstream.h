@@ -20,10 +20,11 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include <gemini/typedefs.h>
+
 #include "renderer.h"
+
+#include <gemini/typedefs.h>
 #include <gemini/util/datastream.h>
-//#include "assets.h"
 
 const unsigned int MAX_RENDERER_STREAM_BYTES = 8192 * 8;
 const unsigned int MAX_RENDERER_STREAM_COMMANDS = 2048 * 8;
@@ -63,5 +64,5 @@ struct RenderStream
 	void add_uniform4f( int location, const glm::vec4 * data );
 	void add_uniform_matrix4( int location, const glm::mat4 * data, uint8_t count = 1 );
 	void add_draw_call( renderer::VertexBuffer * vertexbuffer );
-	void add_material( assets::Material * material, assets::Shader * shader );
+	void add_material( renderer::Material * material, renderer::ShaderProgram * shader );
 }; // RenderStream

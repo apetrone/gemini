@@ -38,46 +38,12 @@ namespace assets
 	// -------------------------------------------------------------
 	// Shader
 	
-	int Shader::get_uniform_location( const char * name )
-	{
-		//		LOGV( "# uniforms: %i\n", total_uniforms );
-		for( int i = 0; i < uniforms.size(); ++i )
-		{
-			if (std::string(name) == uniforms[i].first)
-			{
-//				LOGV( "uniform: %s, at %i\n", name, uniforms[i].second );
-				return uniforms[i].second;
-			}
-		}
-		
-		LOGW( "No uniform named %s (%i)\n", name, id );
-		return -1;
-	} // get_uniform_location
-	
 	void Shader::release()
 	{
 		renderer::ShaderProgram program;
 		program.object = object;
 
 		renderer::driver()->shaderprogram_destroy( program );
-	}
-	
-	void Shader::show_uniforms()
-	{
-		LOGV("uniforms:\n");
-		for (size_t i = 0; i < uniforms.size(); ++i)
-		{
-			LOGV("%s -> %i\n", uniforms[i].first.c_str(), uniforms[i].second);
-		}
-	}
-	
-	void Shader::show_attributes()
-	{
-		LOGV("attributes:\n");
-		for (size_t i = 0; i < attributes.size(); ++i)
-		{
-			LOGV("%s -> %i\n", attributes[i].first.c_str(), attributes[i].second);
-		}
 	}
 		
 	renderer::ShaderObject create_shader_from_file( const char * shader_path, renderer::ShaderObjectType type, std::string& preprocessor_defines )
@@ -238,8 +204,7 @@ namespace assets
 		// shader program is uninitialized; create a new one
 		if (shader->object == 0)
 		{
-			renderer::ShaderParameters params;
-			renderer::ShaderProgram program = driver->shaderprogram_create(params);
+			renderer::ShaderProgram program = driver->shaderprogram_create();
 			shader->object = program.object;
 		}
 
@@ -254,15 +219,15 @@ namespace assets
 		}
 
 		// attributes must be bound before linking the program
-		driver->shaderprogram_bind_attributes(*shader, *shader);
+		driver->shaderprogram_bind_attributes(*shader);
 		
 		// Link and validate the program; spit out any log info
-		if (driver->shaderprogram_link_and_validate(*shader, *shader))
+		if (driver->shaderprogram_link_and_validate(*shader))
 		{
 			driver->shaderprogram_activate(*shader);
 			
 			// loop through all uniforms and cache their locations
-			driver->shaderprogram_bind_uniforms(*shader, *shader);
+			driver->shaderprogram_bind_uniforms(*shader);
 			
 //			driver->shaderprogram_bind_uniform_block(*shader, *shader, "constant_buffer");
 			

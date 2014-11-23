@@ -32,13 +32,13 @@
 #include <slim/xtime.h>
 
 #include "kernel.h"
-#include "renderer/renderer.h"
+#include <renderer/renderer.h>
 #include "audio.h"
 #include "input.h"
 #include "assets.h"
-#include "font.h"
+#include <renderer/font.h>
 #include "script.h"
-#include "debugdraw.h"
+#include <renderer/debugdraw.h>
 #include "physics.h"
 #include "hotloading.h"
 

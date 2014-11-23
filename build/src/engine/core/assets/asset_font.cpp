@@ -24,8 +24,8 @@
 
 #include "assets.h"
 #include "assets/asset_font.h"
-#include "renderer/render_utilities.h"
-#include "font.h"
+#include <renderer/render_utilities.h>
+#include <renderer/font.h>
 #include "kernel.h"
 
 namespace assets

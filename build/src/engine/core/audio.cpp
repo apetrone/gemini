@@ -27,7 +27,7 @@
 
 #include "audio.h"
 #include "assets.h"
-#include "factory.h"
+#include <gemini/factory.h>
 
 #if !PLATFORM_IS_MOBILE
 	#include "openal.h"

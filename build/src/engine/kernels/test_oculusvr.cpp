@@ -25,17 +25,17 @@
 #include <slim/xlog.h>
 
 #include "kernel.h"
-#include "renderer/renderer.h"
+#include <renderer/renderstream.h>
+#include <renderer/renderer.h>
+#include <renderer/debugdraw.h>
 #include "input.h"
-
 #include "scene_graph.h"
-
 #include "vr.h"
-#include "debugdraw.h"
+#include "scenelink.h"
+#include "camera.h"
 
 
-#include "renderer/renderstream.h"
-#include "renderer/scenelink.h"
+
 
 using namespace kernel;
 

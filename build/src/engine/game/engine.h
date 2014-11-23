@@ -23,7 +23,7 @@
 #include <gemini/mem.h>
 
 #include "screencontrol.h"
-#include "font.h"
+#include <renderer/font.h>
 
 namespace engine
 {

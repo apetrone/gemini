@@ -195,13 +195,15 @@ void RenderStream::add_draw_call( renderer::VertexBuffer * vertexbuffer )
 	renderer::driver()->setup_drawcall( vertexbuffer, this->stream );
 }
 
-void RenderStream::add_material( assets::Material * material, assets::Shader * shader )
+void RenderStream::add_material( renderer::Material * material, renderer::ShaderProgram * shader )
 {
 	assert( material != 0 );
 	assert( shader != 0 );
 
 	// setup shader parameters
-	assets::Material::Parameter * parameter;
+	assert(0);
+#if 0
+	renderer::Material::Parameter * parameter;
 	for( int p = 0; p < material->parameters.size(); ++p )
 	{
 		parameter = &material->parameters[ p ];
@@ -236,4 +238,5 @@ void RenderStream::add_material( assets::Material * material, assets::Shader * s
 		}
 
 	}
+#endif
 }

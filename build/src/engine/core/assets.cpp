@@ -31,8 +31,8 @@
 
 #include "assets.h"
 #include "kernel.h"
-#include "image.h"
-#include "renderer/renderer.h"
+#include <renderer/image.h>
+#include <renderer/renderer.h>
 
 using namespace renderer;
 

@@ -26,10 +26,10 @@
 #include <gemini/mem.h>
 #include <gemini/util.h>
 
-#include "color.h"
+#include <renderer/color.h>
 #include <gemini/mathlib.h>
 #include "keyframechannel.h"
-#include "renderer/render_utilities.h"
+#include <renderer/render_utilities.h>
 #include "assets/asset_emitter.h"
 
 // -------------------------------------------------------------

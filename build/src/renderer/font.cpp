@@ -43,7 +43,7 @@ namespace font
 	{	
 		renderer::VertexStream _vertexstream;
 		struct sth_stash * _stash;
-		assets::Shader * _shader;
+		renderer::ShaderProgram * _shader;
 		
 		uint32_t _uniforms[3];
 	}; // namespace internal
@@ -105,13 +105,15 @@ namespace font
 			internal::_vertexstream.fill_data( (renderer::VertexType*)data, vertex_count, 0, 0 );
 			internal::_vertexstream.update();
 			
-			assets::Shader * shader = internal::_shader;
+			renderer::ShaderProgram* shader = internal::_shader;
 			
 			glm::mat4 modelview_matrix = glm::mat4(1.0f);
 			glm::mat4 projection_matrix;
-			
-			real w = (real)kernel::instance()->parameters().render_width;
-			real h = (real)kernel::instance()->parameters().render_height;
+
+			assert(0);
+			float w = 0; float h = 0;
+//			real w = (real)kernel::instance()->parameters().render_width;
+//			real h = (real)kernel::instance()->parameters().render_height;
 			projection_matrix = glm::ortho(0.0f, w, 0.0f, h, -1.0f, 1.0f );
 			
 			RenderStream rs;
@@ -155,7 +157,8 @@ namespace font
 		sth_set_render_callbacks( &cb );
 		
 		internal::_stash = sth_create( 256, 256 );
-		internal::_shader = assets::shaders()->load_from_path("shaders/fontshader");
+//		internal::_shader = assets::shaders()->load_from_path("shaders/fontshader");
+		assert(internal::_shader != 0);
 		
 		internal::_uniforms[0] = internal::_shader->get_uniform_location("modelview_matrix");
 		internal::_uniforms[1] = internal::_shader->get_uniform_location("projection_matrix");
@@ -189,11 +192,13 @@ namespace font
 	
 
 	
-	void draw_string( assets::Font * font, int x, int y, const char * utf8, const Color & color )
+	void draw_string( renderer::Font * font, int x, int y, const char * utf8, const Color & color )
 	{
 //		int r_width = kernel::instance()->parameters().render_width;
-		int r_height = kernel::instance()->parameters().render_height;
-		int y_offset = kernel::instance()->parameters().titlebar_height;
+
+		assert(0);
+		int r_height = 0; //kernel::instance()->parameters().render_height;
+		int y_offset = 0; //kernel::instance()->parameters().titlebar_height;
 		
 		if ( !font )
 		{
@@ -212,7 +217,8 @@ namespace font
 		sth_begin_draw( internal::_stash );
 		float width = 0;
 		unsigned int vcolor = STH_RGBA(color.r, color.g, color.b, color.a);
-		sth_draw_text( internal::_stash, font->font_id, font->font_size, x, r_height-y-y_offset, vcolor, utf8, &width );
+		assert(0);
+//		sth_draw_text( internal::_stash, font->font_id, font->font_size, x, r_height-y-y_offset, vcolor, utf8, &width );
 		sth_end_draw( internal::_stash );
 		
 		// restore state
@@ -223,7 +229,7 @@ namespace font
 	} // draw_string
 	
 	
-	void dimensions_for_text( assets::FontHandle handle, const char * utf8, float & minx, float & miny, float & maxx, float & maxy )
+	void dimensions_for_text( renderer::FontHandle handle, const char * utf8, float & minx, float & miny, float & maxx, float & maxy )
 	{
 		if ( handle > 0 )
 		{
@@ -231,7 +237,7 @@ namespace font
 		}
 	} // dimensions_for_text
 	
-	unsigned int measure_height( assets::Font * font, const char * utf8 )
+	unsigned int measure_height( renderer::Font * font, const char * utf8 )
 	{
 		if ( !font )
 		{
@@ -239,11 +245,12 @@ namespace font
 		}
 		
 		float minx = 0, miny = 0, maxx = 0, maxy = 0;
-		dimensions_for_text( font->font_id, utf8, minx, miny, maxx, maxy );
+		assert(0);
+		//dimensions_for_text( font->font_id, utf8, minx, miny, maxx, maxy );
 		return maxy-miny;
 	} // measure_height
 	
-	unsigned int measure_width( assets::Font * font, const char * utf8 )
+	unsigned int measure_width( renderer::Font * font, const char * utf8 )
 	{
 		if ( !font )
 		{
@@ -251,15 +258,16 @@ namespace font
 		}
 
 		float minx = 0, miny = 0, maxx = 0, maxy = 0;
-		dimensions_for_text( font->font_id, utf8, minx, miny, maxx, maxy );
+		assert(0);
+//		dimensions_for_text( font->font_id, utf8, minx, miny, maxx, maxy );
 		return maxx-minx;
 	} // measure_width
 	
-	assets::FontHandle load_font_from_memory( const void * data, unsigned int data_size, unsigned short point_size )
+	renderer::FontHandle load_font_from_memory( const void * data, unsigned int data_size, unsigned short point_size )
 	{
 		assert( internal::_stash != 0 );
 		
-		assets::FontHandle result = sth_add_font_from_memory( internal::_stash, (unsigned char*)data );
+		renderer::FontHandle result = sth_add_font_from_memory( internal::_stash, (unsigned char*)data );
 		if ( result == 0 )
 		{
 			LOGE( "Unable to load font from memory!\n" );
@@ -269,7 +277,7 @@ namespace font
 		return result;
 	} // load_font_from_memory
 
-	char * load_font_from_file( const char * path, unsigned short point_size, assets::FontHandle & handle )
+	char * load_font_from_file( const char * path, unsigned short point_size, renderer::FontHandle & handle )
 	{
 		size_t font_data_size = 0;
 		char * font_data = 0;

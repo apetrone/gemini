@@ -22,8 +22,9 @@
 #pragma once
 
 #include <string>
-#include <utility> // for std::pair
 
+
+#include <gemini/mem_stl_allocator.h>
 #include <gemini/typedefs.h>
 #include <gemini/util/fixedarray.h>
 #include <gemini/util/stackstring.h>
@@ -32,8 +33,12 @@
 #include <gemini/util/datastream.h>
 #include "image.h"
 
+#include "shaderprogram.h"
+
 namespace renderer
 {
+	typedef std::basic_string<char, std::char_traits<char>, GeminiAllocator<char> > ShaderString;
+
 	enum DriverType
 	{
 		Default, // pick one.
@@ -190,40 +195,6 @@ namespace renderer
 		VERTEX_BUFFER_ERROR_NONE = 0,
 		
 	}; // VertexBufferErrorType
-
-	enum ShaderObjectType
-	{
-		SHADER_VERTEX,
-		SHADER_FRAGMENT,
-		SHADER_GEOMETRY,
-		SHADER_COMPUTE,
-		
-		SHADER_LIMIT
-	}; // ShaderObjectType
-		
-	struct ShaderObject
-	{
-		unsigned int shader_id;
-
-		ShaderObject() : shader_id(0) {}
-		virtual ~ShaderObject() {}
-	}; // ShaderObject
-	
-	struct ShaderProgram
-	{
-		unsigned int object;
-
-		ShaderProgram() : object(0) {}
-		virtual ~ShaderProgram() {}
-	}; // ShaderProgram
-
-
-	
-	enum ShaderErrorType
-	{
-		SHADER_ERROR_NONE = 0,
-		SHADER_ERROR_COMPILE_FAILED,
-	}; // ShaderErrorType
 	
 	struct VertexDescriptor
 	{
@@ -261,22 +232,7 @@ namespace renderer
 		unsigned int destination;
 	}; // BlendParameters
 	
-	typedef std::pair<std::string, int> ShaderKeyValuePair;
 
-	struct ShaderParameters
-	{
-		unsigned int id;
-		unsigned int capabilities;
-		
-		StackString<64> frag_data_location;
-		
-		FixedArray<ShaderKeyValuePair> uniforms;
-		FixedArray<ShaderKeyValuePair> attributes;
-
-		ShaderParameters();
-		virtual ~ShaderParameters();
-	}; // ShaderParameters
-	
 	struct VertexBuffer
 	{
 		int vertex_count;
@@ -288,6 +244,17 @@ namespace renderer
 			index_count = 0;
 		}
 	}; // VertexBuffer
+	
+	struct Material
+	{
+		
+	}; // Material
+	
+	typedef int FontHandle;
+	struct Font
+	{
+		
+	}; // Font
 	
 	struct Texture
 	{
@@ -423,14 +390,14 @@ namespace renderer
 		virtual bool shaderobject_compile( renderer::ShaderObject shader_object, const char * shader_source, const char * preprocessor_defines, const char * version ) = 0;
 		virtual void shaderobject_destroy( renderer::ShaderObject shader_object ) = 0;
 		
-		virtual renderer::ShaderProgram shaderprogram_create( renderer::ShaderParameters & parameters ) = 0;
+		virtual renderer::ShaderProgram shaderprogram_create() = 0;
 		virtual void shaderprogram_destroy( renderer::ShaderProgram program ) = 0;
 		virtual void shaderprogram_attach( renderer::ShaderProgram shader_program, renderer::ShaderObject shader_object ) = 0;
 		virtual void shaderprogram_detach( renderer::ShaderProgram shader_program, renderer::ShaderObject shader_object ) = 0;
-		virtual void shaderprogram_bind_attributes( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters ) = 0;
-		virtual void shaderprogram_bind_uniforms( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters ) = 0;
-		virtual void shaderprogram_bind_uniform_block(renderer::ShaderProgram shader_program, renderer::ShaderParameters& parameters, const char* block_name) = 0;
-		virtual bool shaderprogram_link_and_validate( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters ) = 0;
+		virtual void shaderprogram_bind_attributes( renderer::ShaderProgram shader_program ) = 0;
+		virtual void shaderprogram_bind_uniforms( renderer::ShaderProgram shader_program ) = 0;
+		virtual void shaderprogram_bind_uniform_block(renderer::ShaderProgram shader_program, const char* block_name) = 0;
+		virtual bool shaderprogram_link_and_validate( renderer::ShaderProgram shader_program ) = 0;
 		virtual void shaderprogram_activate( renderer::ShaderProgram shader_program ) = 0;
 		virtual void shaderprogram_deactivate( renderer::ShaderProgram shader_program ) = 0;
 
