@@ -23,35 +23,35 @@ libsdl = Dependency(file="sdl2.py",
 
 def setup_common_variables(arguments, target_platform, product):
 	product.sources += [
-		"src/*.c*",
-		"src/*.h*"
+		"src/engine/*.c*",
+		"src/engine/*.h*"
 	]
 
 
 	product.includes += [
-		"src",
-		"src/game"
+		"src/engine",
+		"src/engine/game"
 	]
 
 	# TODO: Allow generic *.DS_Store excludes
 	product.excludes = [
-		"src/core/.DS_Store",
-		"src/core/assets/.DS_Store",
-		"src/contrib/.DS_Store",
-		"src/game/.DS_Store",
-		"src/entry.cpp",
+		"src/engine/core/.DS_Store",
+		"src/engine/core/assets/.DS_Store",
+		"src/engine/contrib/.DS_Store",
+		"src/engine/game/.DS_Store",
+		"src/engine/entry.cpp",
 
 		# excluded, but not yet removed game crap
-		"src/kernels/test_universal.cpp",
-		"src/game/gamescreen.*",
-		"src/game/win_loss_screen.*",
-		"src/game/componentmanager.*",
-		"src/game/componentlibrary.*",
-		"src/game/components.h",
-		"src/game/menuscreen.*",
-		"src/game/helpscreen.*",
-		"src/game/logoscreen.*",
-		"src/game/screencontrol.*"
+		"src/engine/kernels/test_universal.cpp",
+		"src/engine/game/gamescreen.*",
+		"src/engine/game/win_loss_screen.*",
+		"src/engine/game/componentmanager.*",
+		"src/engine/game/componentlibrary.*",
+		"src/engine/game/components.h",
+		"src/engine/game/menuscreen.*",
+		"src/engine/game/helpscreen.*",
+		"src/engine/game/logoscreen.*",
+		"src/engine/game/screencontrol.*"
 	]
 
 	index_type_map = {
@@ -125,16 +125,13 @@ def setup_common_libs(arguments, product):
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp"),
 
 		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.c"),
-		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.h"),
-
-#		"src/util.cpp",
-#		"src/core/mem.cpp"
+		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.h")
 	]
 
 	product.includes += [
-		"src",
-		"src/core",
-		"src/core/audio",
+		"srcengine/",
+		"src/engine/core",
+		"src/engine/core/audio",
 		"src/contrib",
 
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3"),
@@ -465,22 +462,22 @@ def products(arguments, **kwargs):
 
 	# more sources
 	gemini.sources += [
-		"src/kernels/**.c*",
-		"src/core/*.*",
-		"src/core/audio/openal.*",
-		"src/core/assets/*.*",
+		"src/engine/kernels/**.c*",
+		"src/engine/core/*.*",
+		"src/engine/core/audio/openal.*",
+		"src/engine/core/assets/*.*",
+		"src/engine/game/**.*",
 		"src/contrib/*",
-		"src/game/**.*",
 	]
 
 	gemini.excludes += [
 		"*.DS_Store",
-		"src/kernels/test_assimp.cpp",
-		"src/kernels/project_huckleberry.cpp",
+		"src/engine/kernels/test_assimp.cpp",
+		"src/engine/kernels/project_huckleberry.cpp",
 
-		"src/kernels/test_bullet2.cpp",
-		"src/kernels/test_mobile.cpp",
-		"src/kernels/test_nom.cpp"
+		"src/engine/kernels/test_bullet2.cpp",
+		"src/engine/kernels/test_mobile.cpp",
+		"src/engine/kernels/test_nom.cpp"
 	]
 
 
@@ -489,12 +486,12 @@ def products(arguments, **kwargs):
 
 	if target_platform.get() in DESKTOP:
 		gemini.sources += [
-			"src/core/desktop/kernel_desktop.cpp",
-			"src/core/audio/openal_vorbis_decoder.*"
+			"src/engine/core/desktop/kernel_desktop.cpp",
+			"src/engine/core/audio/openal_vorbis_decoder.*"
 		]
 
 		gemini.includes += [
-			"src/core/audio"
+			"src/engine/core/audio"
 		]
 
 		#gemini.prebuild_commands = [
@@ -512,9 +509,9 @@ def products(arguments, **kwargs):
 
 		macosx = gemini.layout(platform="macosx")
 		macosx.sources = [
-			"src/core/osx/osx_gemgl.*",
-			"src/core/osx/*.m*",
-			"src/core/osx/*.h*"
+			"src/engine/core/osx/osx_gemgl.*",
+			"src/engine/core/osx/*.m*",
+			"src/engine/core/osx/*.h*"
 		]
 		macosx.links = [
 			"Cocoa.framework",
@@ -533,7 +530,7 @@ def products(arguments, **kwargs):
 
 		linux = gemini.layout(platform="linux")
 		linux.sources += [
-			"src/core/desktop/entry.cpp"
+			"src/engine/core/desktop/entry.cpp"
 		]
 
 		linux.links += [
@@ -582,7 +579,7 @@ def products(arguments, **kwargs):
 	# ]
 
 	iphoneos.sources += [
-		"src/core/audio/audio_extaudio_decoder.*"
+		"src/engine/core/audio/audio_extaudio_decoder.*"
 	]
 
 	iphoneos.resources = [
