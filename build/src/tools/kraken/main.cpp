@@ -50,7 +50,11 @@ int main(int argc, char *argv[])
     w.setVisible(true);
     w.show();
 
+    context.startup();
+
     int result = a.exec();
+
+    context.shutdown();
 
     tools::shutdown();
 

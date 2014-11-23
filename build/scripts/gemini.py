@@ -390,7 +390,13 @@ def get_librenderer(arguments, target_platform):
 	if arguments.glesv2:
 		librenderer.sources += [
 			"src/renderer/gldrivers/opengl_glesv2.*"
-		]	
+		]
+
+
+	macosx = librenderer.layout(platform="macosx")
+	macosx.sources += [
+		"src/renderer/osx/osx_gemgl.*"
+	]
 
 
 	return librenderer
@@ -510,7 +516,6 @@ def products(arguments, **kwargs):
 
 		macosx = gemini.layout(platform="macosx")
 		macosx.sources = [
-			"src/engine/core/osx/osx_gemgl.*",
 			"src/engine/core/osx/*.m*",
 			"src/engine/core/osx/*.h*"
 		]

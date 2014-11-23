@@ -39,4 +39,6 @@ public:
     ApplicationContext();
     ~ApplicationContext();
 
+    void startup();
+    void shutdown();
 };

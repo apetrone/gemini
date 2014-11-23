@@ -23,6 +23,8 @@
 
 #include <gemini/typedefs.h>
 
+#include <renderer/renderer.h>
+
 ApplicationContext::ApplicationContext() :
     log_instance(QSharedPointer<LogService>(new LogService())),
     asset_instance(QSharedPointer<AssetService>(new AssetService(log_instance)))
@@ -34,3 +36,15 @@ ApplicationContext::~ApplicationContext()
     asset_instance->stop_watching_assets();
 }
 
+void ApplicationContext::startup()
+{
+    renderer::RenderSettings settings;
+    int render_result = renderer::startup(renderer::Default, settings);
+
+    log()->log(QString("initialized renderer %1").arg(render_result));
+}
+
+void ApplicationContext::shutdown()
+{
+    renderer::shutdown();
+}

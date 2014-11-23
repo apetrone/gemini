@@ -18,7 +18,7 @@
 // -------------------------------------------------------------
 #import <CoreFoundation/CoreFoundation.h>
 
-#import "renderer/gemgl.h"
+#import "gemgl.h"
 
 
 CFBundleRef gemgl_bundle = 0;
