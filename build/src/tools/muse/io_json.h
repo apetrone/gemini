@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <gemini/mathlib.h>
+#include <core/mathlib.h>
 
 #include <json/json.h>
 

@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 
-#include <gemini/typedefs.h>
+#include <platform/typedefs.h>
 
 #include <slim/xlog.h>
 

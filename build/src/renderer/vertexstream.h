@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include <gemini/typedefs.h>
+#include <platform/typedefs.h>
 #include "renderer.h"
 
 namespace renderer

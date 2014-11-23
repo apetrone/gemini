@@ -23,14 +23,14 @@
 
 #include <string>
 
+#include <platform/typedefs.h>
+#include <platform/mem_stl_allocator.h>
 
-#include <gemini/mem_stl_allocator.h>
-#include <gemini/typedefs.h>
-#include <gemini/util/fixedarray.h>
-#include <gemini/util/stackstring.h>
-#include <gemini/mathlib.h> // for glm
+#include <core/fixedarray.h>
+#include <core/stackstring.h>
+#include <core/mathlib.h> // for glm
+#include <core/datastream.h>
 
-#include <gemini/util/datastream.h>
 #include "image.h"
 
 #include "shaderprogram.h"

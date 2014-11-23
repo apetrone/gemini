@@ -23,7 +23,7 @@
 
 #include <string>
 
-#include <gemini/mathlib.h>
+#include <core/mathlib.h>
 
 namespace tools
 {

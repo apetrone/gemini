@@ -21,11 +21,11 @@
 // -------------------------------------------------------------
 #include <stdio.h>
 
-#include <gemini/config.h>
+#include <platform/config.h>
 #include <slim/xlog.h>
 
 #include "kernel.h"
-#include <gemini/util/datastream.h>
+#include <core/datastream.h>
 
 using namespace util;
 class TestMemoryStream : public kernel::IApplication

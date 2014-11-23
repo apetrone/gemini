@@ -21,8 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <gemini/util/stackstring.h>
-#include <gemini/util/fixedarray.h>
+#include <core/stackstring.h>
+#include <core/fixedarray.h>
 
 #include <string>
 #include <utility> // for std::pair

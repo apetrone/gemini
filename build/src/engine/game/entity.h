@@ -26,7 +26,7 @@
 
 #include <slim/xlog.h>
 
-#include <gemini/mem.h>
+#include <platform/mem.h>
 
 #include <sqrat.h>
 
@@ -34,7 +34,7 @@
 
 #include "kernel.h"
 
-#include "core/assets/asset_mesh.h"
+#include "assets/asset_mesh.h"
 #include "scene_graph.h"
 #include "physics.h"
 

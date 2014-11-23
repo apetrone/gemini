@@ -19,15 +19,15 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <gemini/typedefs.h>
+#include <platform/typedefs.h>
 #include <slim/xlog.h>
 
 #include "opengl_core32.h"
 
 #include "image.h"
 
-#include <gemini/mathlib.h>
-#include <gemini/util/datastream.h>
+#include <core/mathlib.h>
+#include <core/datastream.h>
 
 // utility functions
 GLenum image_source_format( int num_channels )

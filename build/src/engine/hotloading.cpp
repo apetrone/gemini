@@ -25,10 +25,10 @@
 #include <slim/xlog.h>
 #include <slim/xstr.h>
 
-#include <gemini/typedefs.h>
-#include <gemini/mathlib.h>
-#include <gemini/util/threadsafequeue.h>
-#include <gemini/util/stackstring.h>
+#include <platform/typedefs.h>
+#include <core/mathlib.h>
+#include <core/threadsafequeue.h>
+#include <core/stackstring.h>
 
 #include <json/json.h>
 

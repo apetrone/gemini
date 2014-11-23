@@ -24,7 +24,7 @@
 #include <stack>
 #include <string>
 
-#include <gemini/util/stackstring.h>
+#include <core/stackstring.h>
 
 #include "renderer.h"
 

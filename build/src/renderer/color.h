@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <gemini/typedefs.h>
+#include <platform/typedefs.h>
 #include "interpolation.h"
 
 #ifdef RGB

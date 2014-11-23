@@ -24,13 +24,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//#include <gemini/core/filesystem.h>
-//#include <gemini/core/log.h>
-#include <gemini/core/xfile.h>
-#include <gemini/util/stackstring.h>
-
-//#include <gemini/util/arg.h>
-#include <gemini/util/datastream.h>
+#include <core/xfile.h>
+#include <core/stackstring.h>
+#include <core/datastream.h>
 
 #include <slim/xtime.h>
 #include <slim/xlog.h>
@@ -127,9 +123,9 @@ namespace extensions
 		}
 	}
 
-	core::Result bake_node_transforms(datamodel::Model& model)
+	int bake_node_transforms(datamodel::Model& model)
 	{
-		core::Result result(core::Result::Success);
+		int result = 0;
 		
 		glm::mat4 transform;
 
@@ -158,7 +154,7 @@ namespace tools
 		register_extension<datamodel::Model>("model", ext);
 	}
 
-	core::Result convert_model(const ToolOptions& options, StackString<MAX_PATH_SIZE>& input_path, StackString<MAX_PATH_SIZE>& output_path)
+	platform::Result convert_model(const ToolOptions& options, StackString<MAX_PATH_SIZE>& input_path, StackString<MAX_PATH_SIZE>& output_path)
 	{
 		datamodel::Model model;
 
@@ -169,7 +165,7 @@ namespace tools
 		if (!reader)
 		{
 			LOGE("no reader found for extension: %s\n", ext.c_str());
-			return core::Result(core::Result::Failure, "Unable to read format");
+			return platform::Result(platform::Result::Failure, "Unable to read format");
 		}
 				
 		// verify we can write the format
@@ -179,7 +175,7 @@ namespace tools
 		if (!writer)
 		{
 			LOGE("no writer found for extension: %s\n", ext.c_str());
-			return core::Result(core::Result::Failure, "Unable to write format");
+			return platform::Result(platform::Result::Failure, "Unable to write format");
 		}
 		
 		util::MemoryStream mds;
@@ -227,7 +223,7 @@ namespace tools
 			LOGE("does the path exist?\n");
 		}
 
-		return core::Result(core::Result::Success);
+		return platform::Result(platform::Result::Success);
 	}
 }
 
@@ -271,7 +267,7 @@ int main(int argc, char** argv)
 	output_filename = output_filename.append(input_file).remove_extension().append(".model");
 
 	// perform the conversion -- right now, we always assume it's a scene/model
-	core::Result result = tools::convert_model(options, input_filename, output_filename);
+	platform::Result result = tools::convert_model(options, input_filename, output_filename);
 	if (result.failed())
 	{
 		LOGV("conversion failed: %s\n", result.message);

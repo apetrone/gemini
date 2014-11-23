@@ -24,7 +24,7 @@
 #include <string>
 #include <map>
 
-#include <gemini/util/datastream.h>
+#include <core/datastream.h>
 
 namespace tools
 {

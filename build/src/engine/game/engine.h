@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include <gemini/mem.h>
+#include <platform/mem.h>
 
 #include "screencontrol.h"
 #include <renderer/font.h>

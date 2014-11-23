@@ -23,12 +23,12 @@
 #include <vector>
 #include <map>
 
-#include <gemini/typedefs.h>
-#include <gemini/mem.h>
+#include <platform/typedefs.h>
+#include <platform/mem.h>
 #include <slim/xlog.h>
 
 #include "kernel.h"
-#include <gemini/util/fixedarray.h>
+#include <core/fixedarray.h>
 
 struct Test
 {

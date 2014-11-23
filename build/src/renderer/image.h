@@ -21,8 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <gemini/typedefs.h>
-#include <gemini/util/fixedarray.h>
+#include <platform/typedefs.h>
+#include <core/fixedarray.h>
 
 #include "color.h"
 

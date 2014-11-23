@@ -19,9 +19,9 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <gemini/typedefs.h>
-#include <gemini/mem.h>
-#include <gemini/core.h>
+#include <platform/typedefs.h>
+#include <platform/mem.h>
+#include <core/core.h>
 
 #include <slim/xlog.h>
 

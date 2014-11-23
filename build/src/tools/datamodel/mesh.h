@@ -21,8 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <gemini/util/fixedarray.h>
-#include <gemini/mathlib.h>
+#include <core/fixedarray.h>
+#include <core/mathlib.h>
 
 #include "datamodel/material.h"
 

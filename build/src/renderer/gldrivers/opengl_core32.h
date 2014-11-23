@@ -24,7 +24,7 @@
 #include "gemgl.h"
 #include "opengl_common.h"
 
-#include <gemini/factory.h>
+#include <core/factory.h>
 
 class GLCore32 : public renderer::IRenderDriver
 {

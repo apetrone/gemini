@@ -23,11 +23,11 @@
 
 #include <vector>
 
-#include <gemini/mem.h>
-#include <gemini/util.h>
+#include <platform/mem.h>
+#include <core/util.h>
 
 #include <renderer/color.h>
-#include <gemini/mathlib.h>
+#include <core/mathlib.h>
 #include "keyframechannel.h"
 #include <renderer/render_utilities.h>
 #include "assets/asset_emitter.h"

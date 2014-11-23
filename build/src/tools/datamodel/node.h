@@ -21,9 +21,9 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <gemini/typedefs.h>
-#include <gemini/mem.h>
-#include <gemini/mathlib.h>
+#include <platform/typedefs.h>
+#include <platform/mem.h>
+#include <core/mathlib.h>
 #include <vector>
 #include <string>
 

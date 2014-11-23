@@ -23,8 +23,8 @@
 
 #include "renderer.h"
 
-#include <gemini/typedefs.h>
-#include <gemini/util/datastream.h>
+#include <platform/typedefs.h>
+#include <core/datastream.h>
 
 const unsigned int MAX_RENDERER_STREAM_BYTES = 8192 * 8;
 const unsigned int MAX_RENDERER_STREAM_COMMANDS = 2048 * 8;

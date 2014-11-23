@@ -21,8 +21,8 @@
 // -------------------------------------------------------------
 #include <stdlib.h>
 
-#include <gemini/typedefs.h>
-#include <gemini/core/filesystem.h>
+#include <platform/typedefs.h>
+#include <core/filesystem.h>
 
 #include <slim/xstr.h>
 #include <slim/xlog.h>

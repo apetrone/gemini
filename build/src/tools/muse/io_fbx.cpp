@@ -23,8 +23,8 @@
 #include <fbxsdk.h>
 #include <fbxsdk/utils/fbxgeometryconverter.h>
 
-#include <gemini/core/log.h>
-#include <gemini/util/stackstring.h>
+//#include <core/log.h>
+#include <core/stackstring.h>
 #include <slim/xlog.h>
 
 #include "io_fbx.h"

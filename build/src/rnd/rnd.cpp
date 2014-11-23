@@ -8,15 +8,15 @@
 
 using namespace std;
 
-#include <gemini/typedefs.h>
-#include <gemini/mem.h>
+#include <platform/typedefs.h>
+#include <platform/mem.h>
 #include <gemini/core.h>
-#include <gemini/core/filesystem.h>
+#include <core/filesystem.h>
 #include <gemini/core/log.h>
-#include <gemini/util/stackstring.h>
+#include <core/stackstring.h>
 #include <gemini/core/xfile.h>
-#include <gemini/util/fixedarray.h>
-#include <gemini/util/arg.h>
+#include <core/fixedarray.h>
+#include <core/arg.h>
 
 #include <slim/xlog.h>
 

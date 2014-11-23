@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <gemini/typedefs.h>
+#include <platform/typedefs.h>
 
 #include <string>
 #include <vector>

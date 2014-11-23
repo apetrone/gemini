@@ -22,8 +22,8 @@
 #pragma once
 
 
-#include <gemini/typedefs.h>
-#include <gemini/mathlib.h>
+#include <platform/typedefs.h>
+#include <core/mathlib.h>
 
 
 // REFERENCE LINKS

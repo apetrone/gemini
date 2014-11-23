@@ -36,8 +36,8 @@ def setup_common_variables(arguments, target_platform, product):
 
 	# TODO: Allow generic *.DS_Store excludes
 	product.excludes = [
-		"src/engine/core/.DS_Store",
-		"src/engine/core/assets/.DS_Store",
+		"src/engine/.DS_Store",
+		"src/engine/assets/.DS_Store",
 		"src/engine/contrib/.DS_Store",
 		"src/engine/game/.DS_Store",
 		"src/engine/entry.cpp",
@@ -131,8 +131,8 @@ def setup_common_libs(arguments, product):
 
 	product.includes += [
 		"srcengine/",
-		"src/engine/core",
-		"src/engine/core/audio",
+		"src/engine",
+		"src/engine/audio",
 		"src/contrib",
 
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3"),
@@ -205,7 +205,7 @@ def setup_driver(product):
 	
 	mac_release = product.layout(platform="macosx", configuration="release")
 
-def get_tools(target_platform, libgemini):
+def get_tools(target_platform, libplatform, libcore):
 	#
 	#
 	#
@@ -223,7 +223,6 @@ def get_tools(target_platform, libgemini):
 	setup_common_tool(rnd)
 
 	rnd.dependencies.extend([
-		libgemini,
 		libsdl
 	])
 
@@ -238,7 +237,7 @@ def get_tools(target_platform, libgemini):
 		"GL"
 	]
 
-	tools.append(rnd)
+	#tools.append(rnd)
 	
 	#
 	# other tools?
@@ -293,9 +292,15 @@ def get_tools(target_platform, libgemini):
 
 	muse = Product(name="muse", output=ProductType.Commandline)
 	muse.dependencies.extend([
-		libgemini,
+		libplatform,
+		libcore,
 		libfbx
 	])
+
+	macosx = muse.layout(platform="macosx")
+	macosx.links += [
+		"Cocoa.framework"	
+	]
 	muse.product_root = COMMON_PRODUCT_ROOT
 	setup_driver(muse)
 	setup_common_tool(muse)
@@ -303,7 +308,7 @@ def get_tools(target_platform, libgemini):
 
 	return tools
 
-
+'''
 def get_libgemini():
 	libgemini = Product(name="gemini", output=ProductType.StaticLibrary)
 	libgemini.root = "../"
@@ -326,6 +331,7 @@ def get_libgemini():
 	]
 
 	libgemini.includes += [
+		"src/",
 		"src/sdk",
 
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3"),
@@ -359,7 +365,7 @@ def get_libgemini():
 
 
 	return libgemini
-
+'''
 def get_librenderer(arguments, target_platform):
 	librenderer = Product(name="renderer", output=ProductType.StaticLibrary)
 	librenderer.root = "../"
@@ -398,8 +404,71 @@ def get_librenderer(arguments, target_platform):
 		"src/renderer/osx/osx_gemgl.*"
 	]
 
-
 	return librenderer
+
+def get_libplatform(arguments, target_platform):
+	libplatform = Product(name="platform", output=ProductType.StaticLibrary)
+	libplatform.root = "../"
+	libplatform.sources += [
+		"src/platform/*.*"
+	]
+
+	libplatform.includes += [
+		"src/platform"
+	]
+
+	libplatform.excludes += [
+		"*.DS_Store"
+	]
+
+	macosx = libplatform.layout(platform="macosx")
+	macosx.sources += [
+		"src/platform/osx/*.*"
+	]
+
+	linux = libplatform.layout(platform="linux")
+	linux.sources += [
+		"src/platform/linux/*.*"
+	]
+
+	windows = libplatform.layout(platform="windows")
+	windows.sources += [
+		"src/platform/windows/*.*"
+	]
+
+	return libplatform
+
+def get_libcore(arguments, target_platform):
+	libcore = Product(name="core", output=ProductType.StaticLibrary)
+	libcore.root = "../"
+	libcore.sources += [
+		"src/core/*.*",
+
+		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.c"),
+		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.h"),
+
+		# include this almagamated version of jsoncpp until we replace it.
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")
+	]
+
+	libcore.defines += [
+		"JSON_IS_AMALGAMATION"
+	]
+
+	libcore.includes += [
+		"src",
+		"src/core",
+
+		os.path.join(DEPENDENCIES_FOLDER, "slim"),
+
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp")
+	]
+
+	libcore.excludes += [
+		"*.DS_Store"
+	]
+
+	return libcore
 
 def arguments(parser):
 	parser.add_argument("--with-glesv2", dest="glesv2", action="store_true", help="Build with GLES V2", default=False)
@@ -470,9 +539,9 @@ def products(arguments, **kwargs):
 	# more sources
 	gemini.sources += [
 		"src/engine/kernels/**.c*",
-		"src/engine/core/*.*",
-		"src/engine/core/audio/openal.*",
-		"src/engine/core/assets/*.*",
+		"src/engine/*.*",
+		"src/engine/audio/openal.*",
+		"src/engine/assets/*.*",
 		"src/engine/game/**.*",
 		"src/contrib/*",
 	]
@@ -493,12 +562,12 @@ def products(arguments, **kwargs):
 
 	if target_platform.get() in DESKTOP:
 		gemini.sources += [
-			"src/engine/core/desktop/kernel_desktop.cpp",
-			"src/engine/core/audio/openal_vorbis_decoder.*"
+			"src/engine/platforms/desktop/kernel_desktop.cpp",
+			"src/engine/audio/openal_vorbis_decoder.*"
 		]
 
 		gemini.includes += [
-			"src/engine/core/audio"
+			"src/engine/audio"
 		]
 
 		#gemini.prebuild_commands = [
@@ -516,8 +585,8 @@ def products(arguments, **kwargs):
 
 		macosx = gemini.layout(platform="macosx")
 		macosx.sources = [
-			"src/engine/core/osx/*.m*",
-			"src/engine/core/osx/*.h*"
+			"src/engine/platforms/osx/*.m*",
+			"src/engine/platforms/osx/*.h*"
 		]
 		macosx.links = [
 			"Cocoa.framework",
@@ -526,17 +595,17 @@ def products(arguments, **kwargs):
 			"OpenAL.framework"
 		]
 
-		macosx.driver.infoplist_file = "resources/osx/Info.plist"
+		macosx.driver.infoplist_file = "src/engine/resources/osx/Info.plist"
 		macosx.resources = [
-			"resources/osx/en.lproj/*.xib",
-			"resources/osx/en.lproj/*.strings"
+			"src/engine/resources/osx/en.lproj/*.xib",
+			"src/engine/resources/osx/en.lproj/*.strings"
 		]
 
 
 
 		linux = gemini.layout(platform="linux")
 		linux.sources += [
-			"src/engine/core/desktop/entry.cpp"
+			"src/engine/platforms/desktop/entry.cpp"
 		]
 
 		linux.links += [
@@ -585,7 +654,7 @@ def products(arguments, **kwargs):
 	# ]
 
 	iphoneos.sources += [
-		"src/engine/core/audio/audio_extaudio_decoder.*"
+		"src/engine/audio/audio_extaudio_decoder.*"
 	]
 
 	iphoneos.resources = [
@@ -593,14 +662,20 @@ def products(arguments, **kwargs):
 		"resources/ios/en.lproj/*.*"
 	]
 
+	libplatform = get_libplatform(arguments, target_platform)
 
-	libgemini = get_libgemini()
+	libcore = get_libcore(arguments, target_platform)
+	libcore.dependencies += [libplatform, Dependency(file="glm.py")]
+
+	#libgemini = get_libgemini()
+	#libgemini.dependencies += [libcore, libplatform]
+
 	librenderer = get_librenderer(arguments, target_platform)
-	librenderer.dependencies += [libgemini, Dependency(file="glm.py")]
+	librenderer.dependencies += [Dependency(file="glm.py"), libplatform, libcore]
 
-	tools = get_tools(target_platform, libgemini)
+	tools = get_tools(target_platform, libplatform, libcore)
 
-	gemini.dependencies.extend([libgemini, librenderer])
+	gemini.dependencies.extend([librenderer, libcore, libplatform])
 
-	return [gemini] + tools + [libgemini, librenderer]
+	return [gemini] + tools + [librenderer, libcore, libplatform]
 

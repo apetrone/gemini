@@ -22,8 +22,8 @@
 #include "renderer.h"
 //#include "kernel.h"
 
-#include <gemini/typedefs.h>
-#include <gemini/factory.h>
+#include <platform/typedefs.h>
+#include <core/factory.h>
 
 #include <slim/xstr.h>
 #include <slim/xlog.h>

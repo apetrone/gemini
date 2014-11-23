@@ -23,7 +23,7 @@
 
 #include "renderer.h"
 
-#include <gemini/typedefs.h>
+#include <platform/typedefs.h>
 #include "color.h"
 //#include "assets/asset_font.h"
 

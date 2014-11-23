@@ -21,12 +21,12 @@
 // -------------------------------------------------------------
 
 #include "keyvalues.h"
-#include <gemini/typedefs.h>
+#include <platform/typedefs.h>
 
 #include <slim/xlog.h>
 #include <slim/xstr.h>
 
-#include <gemini/mathlib.h>
+#include <core/mathlib.h>
 
 template <class Type>
 class PODPolicy : public PolicyBase

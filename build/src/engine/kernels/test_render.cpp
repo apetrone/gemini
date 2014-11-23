@@ -22,7 +22,7 @@
 #include <stdio.h>
 
 #include <slim/xlog.h>
-#include <gemini/mathlib.h>
+#include <core/mathlib.h>
 
 #include "kernel.h"
 #include "input.h"

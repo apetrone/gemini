@@ -21,14 +21,14 @@
 // -------------------------------------------------------------
 #pragma once
 
-//#include <gemini/mem.h>
-//#include <gemini/mathlib.h>
+//#include <platform/mem.h>
+//#include <core/mathlib.h>
 #include <vector>
 //#include <string>
 
 
 
-#include <gemini/typedefs.h>
+#include <platform/typedefs.h>
 
 #include "datamodel/material.h"
 #include "datamodel/node.h"

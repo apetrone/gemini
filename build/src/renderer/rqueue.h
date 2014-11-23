@@ -23,8 +23,8 @@
 
 #include <vector>
 
-#include <gemini/typedefs.h>
-#include <gemini/mem.h>
+#include <platform/typedefs.h>
+#include <platform/mem.h>
 
 
 #include "renderer.h"

@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
-#include <gemini/mathlib.h>
+#include <core/mathlib.h>
 
 template <class Type>
 Type lerp( const Type & a, const Type & b, float t )

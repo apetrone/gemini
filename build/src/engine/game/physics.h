@@ -23,7 +23,7 @@
 
 #include <btBulletDynamicsCommon.h>
 
-#include <gemini/mem.h>
+#include <platform/mem.h>
 
 #include "camera.h"
 #include "charactercontroller.h"

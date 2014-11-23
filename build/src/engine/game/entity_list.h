@@ -21,8 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <gemini/typedefs.h>
-#include <gemini/mem.h>
+#include <platform/typedefs.h>
+#include <platform/mem.h>
 
 #include "entity.h"
 #include "entity_allocator.h"

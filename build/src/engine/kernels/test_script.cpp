@@ -22,7 +22,7 @@
 #include "kernel.h"
 #include <stdio.h>
 #include <slim/xlog.h>
-#include <gemini/mathlib.h>
+#include <core/mathlib.h>
 #include <renderer/debugdraw.h>
 #include "input.h"
 #include "script.h"
