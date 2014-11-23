@@ -7,7 +7,6 @@ DEPENDENCIES_FOLDER = "dependencies"
 DESKTOP = ["macosx", "linux", "windows"]
 #BLACKSMITH_PATH = "../tools/blacksmith/blacksmith.py"
 COMMON_PRODUCT_ROOT = "bin/${CONFIGURATION}_${ARCHITECTURE}"
-COMMON_LIB_ROOT = "lib/${CONFIGURATION}_${ARCHITECTURE}"
 
 # dependencies
 libsdl = Dependency(file="sdl2.py",
@@ -121,22 +120,16 @@ def setup_common_libs(arguments, product):
 	product.sources += [
 		# dependencies
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c"),
-
-		# include this almagamated version of jsoncpp until we replace it.
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp"),
-
 		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.c"),
 		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.h")
 	]
 
 	product.includes += [
-		"srcengine/",
 		"src/engine",
 		"src/engine/audio",
 		"src/contrib",
 
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3"),
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),
 		os.path.join(DEPENDENCIES_FOLDER, "font-stash"),
 		os.path.join(DEPENDENCIES_FOLDER, "slim")
 	]
@@ -240,30 +233,6 @@ def get_tools(target_platform, libplatform, libcore):
 	#tools.append(rnd)
 	
 	#
-	# other tools?
-	# 
-	# 
-	# prism = Product(name="prism", output=ProductType.Commandline)
-
-	# prism.root = "../"
-	# prism.sources += [
-	# 	"src/tools/prism/**.cpp",
-	# 	"src/tools/prism/**.h"
-	# ]
-
-
-	# prism.product_root = COMMON_PRODUCT_ROOT
-
-	# setup_driver(prism)
-	# setup_common_tool(prism)
-
-	# prism.dependencies.extend([
-	# 	libgemini,
-	# 	Dependency(file="assimp.py", products=["assimp"], arguments=["--enable-static"])
-	# ])
-
-
-	#
 	# muse: asset conversion tool
 	#
 	linux_arch_map = {
@@ -308,64 +277,6 @@ def get_tools(target_platform, libplatform, libcore):
 
 	return tools
 
-'''
-def get_libgemini():
-	libgemini = Product(name="gemini", output=ProductType.StaticLibrary)
-	libgemini.root = "../"
-	libgemini.sources += [
-		"src/sdk/**.c*",
-		"src/sdk/**.h"
-	]
-	libgemini.sources += [
-		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c"),
-
-		# include this almagamated version of jsoncpp until we replace it.
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp"),
-
-		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.c"),
-		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.h")		
-	]
-
-	libgemini.defines += [
-		"JSON_IS_AMALGAMATION"
-	]
-
-	libgemini.includes += [
-		"src/",
-		"src/sdk",
-
-		os.path.join(DEPENDENCIES_FOLDER, "murmur3"),
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),
-		os.path.join(DEPENDENCIES_FOLDER, "slim")
-	]
-
-
-	libgemini.dependencies += [
-		Dependency(file="glm.py")
-	]
-
-	macosx = libgemini.layout(platform="macosx")
-	macosx.sources = [
-		"src/sdk/gemini/platform/osx/osx_gemgl.*",
-		"src/sdk/gemini/platform/osx/*.m*",
-		"src/sdk/gemini/platform/osx/*.h*"
-	]
-	macosx.links = [
-		"Cocoa.framework",
-		"OpenGL.framework",
-		"AudioToolbox.framework",
-		"OpenAL.framework"
-	]	
-
-	#libgemini.defines += [
-	#	"GEMINI_USE_SDL2=1"
-	#]
-	libgemini.product_root = COMMON_LIB_ROOT
-
-
-
-	return libgemini
-'''
 def get_librenderer(arguments, target_platform):
 	librenderer = Product(name="renderer", output=ProductType.StaticLibrary)
 	librenderer.root = "../"
@@ -666,9 +577,6 @@ def products(arguments, **kwargs):
 
 	libcore = get_libcore(arguments, target_platform)
 	libcore.dependencies += [libplatform, Dependency(file="glm.py")]
-
-	#libgemini = get_libgemini()
-	#libgemini.dependencies += [libcore, libplatform]
 
 	librenderer = get_librenderer(arguments, target_platform)
 	librenderer.dependencies += [Dependency(file="glm.py"), libplatform, libcore]
