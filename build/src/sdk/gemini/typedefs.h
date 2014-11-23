@@ -29,10 +29,6 @@
 #define STRINGIZE( x ) STRINGIZE_A( x )
 #define STRINGIZE_A( x ) #x
 
-/// concat two params
-#define CONCAT( x, y ) x##y
-/// concat two params with a space inbetween
-#define CONCAT_SPACE( x, y ) x " " y
 /// concat two params with a period inbetween
 #define CONCAT_PERIOD( x, y ) x "." y
 
@@ -73,15 +69,6 @@
 
 // prefer the C99 types
 #include <stdint.h>
-
-#if _MSC_VER
-	/// 16-bit char
-	typedef wchar_t wchar;
-#elif __GNUC__
-	/// 16-bit char
-	typedef int16_t wchar;
-#endif
-
 
 #include <gemini/config.h>
 #include <assert.h>
