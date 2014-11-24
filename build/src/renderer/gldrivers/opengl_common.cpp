@@ -24,6 +24,10 @@
 
 #include "renderer.h"
 #include "opengl_common.h"
+#include "render_utilities.h"
+
+#include <core/filesystem.h>
+#include <json/json.h>
 
 GLenum vertexbuffer_drawtype_to_gl_drawtype( renderer::VertexBufferDrawType type )
 {
@@ -242,3 +246,6 @@ GLFunctionLogger::~GLFunctionLogger()
 	}
 	LOGV(".. %s%s\n", prefix.c_str(), call.c_str());
 }
+
+
+

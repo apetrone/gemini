@@ -76,6 +76,10 @@ namespace render_utilities
 			render = interpolator( last, current, t );
 		}
 	}; // PhysicsState
+	
+	
+	// strip the version line from shader source
+	void strip_shader_version( char * buffer, StackString<32> & version );
 }; // namespace render_utilities
 
 

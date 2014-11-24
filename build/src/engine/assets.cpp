@@ -135,17 +135,12 @@ namespace assets
 		_emitters = CREATE(EmitterConfigAssetLibrary, emitterconfig_load_callback, emitterconfig_construct_extension);
 		_fonts = CREATE(FontAssetLibrary, font_load_callback, font_construct_extension);
 		_shaders = CREATE(ShaderAssetLibrary, shader_load_callback, shader_construct_extension);
-		
-		// load shader config
-		create_shader_config();
 
 		load_default_texture_and_material();
 	} // startup
 	
 	void shutdown()
 	{
-		destroy_shader_config();
-		
 		// 4. Delete asset library
 		DESTROY(TextureAssetLibrary, _textures);
 		DESTROY(MeshAssetLibrary, _meshes);

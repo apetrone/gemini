@@ -21,12 +21,16 @@
 // -------------------------------------------------------------
 #include <core/configloader.h>
 #include <core/stackstring.h>
+#include <core/filesystem.h>
 
 #include "assets.h"
 #include "assets/asset_font.h"
-#include <renderer/render_utilities.h>
-#include <renderer/font.h>
+//#include <renderer/render_utilities.h>
+//#include <renderer/font.h>
 #include "kernel.h"
+
+#include <renderer/font.h>
+
 
 namespace assets
 {
@@ -47,6 +51,28 @@ namespace assets
 	
 	
 	
+	char* load_font_from_file(const char* path, unsigned short point_size, renderer::Font& font)
+	{
+		size_t font_data_size = 0;
+		char * font_data = 0;
+		font_data = core::filesystem::file_to_buffer( path, 0, &font_data_size );
+		
+		if ( font_data )
+		{
+//			LOGV( "font data size: %i bytes\n", font_data_size );
+			font = font::load_font_from_memory( font_data, font_data_size, point_size );
+		}
+		else
+		{
+			LOGE( "Unable to load font from file: '%s'\n", path );
+			return 0;
+		}
+		
+		return font_data;
+	} // load_font_from_file
+	
+	
+	
 	util::ConfigLoadStatus load_font_from_file( const Json::Value & root, void * data )
 	{
 		Font * font = (Font*)data;
@@ -59,14 +85,14 @@ namespace assets
 		Json::Value font_file = root["file"];
 		
 		font->font_size = point_size.asInt();
-		font->font_data = font::load_font_from_file( font_file.asString().c_str(), font->font_size, font->font_id );
+		font->font_data = load_font_from_file(font_file.asString().c_str(), font->font_size, font->handle);
 		
 		if (kernel::instance()->parameters().device_flags & kernel::DeviceSupportsRetinaDisplay)
 		{
 			font->font_size = font->font_size * 2;
 		}
 		
-		if ( font->font_id != 0 )
+		if ( font->handle.handle != 0 )
 		{
 			return util::ConfigLoad_Success;
 		}

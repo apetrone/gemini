@@ -30,7 +30,6 @@
 #include "font.h"
 #include "renderer.h"
 #include "renderstream.h"
-//#include "kernel.h"
 #include "fontstash.h"
 
 
@@ -44,6 +43,15 @@ namespace font
 		renderer::VertexStream _vertexstream;
 		struct sth_stash * _stash;
 		renderer::ShaderProgram * _shader;
+		
+		struct StashData
+		{
+			renderer::Texture* texture;
+			int render_width;
+			int render_height;
+			
+			StashData() : texture(nullptr), render_width(0), render_height(0) {}
+		};
 		
 		uint32_t _uniforms[3];
 	}; // namespace internal
@@ -69,15 +77,15 @@ namespace font
 	
 	void f_delete_texture(void* userdata)
 	{
-		renderer::Texture* texture = static_cast<renderer::Texture*>(userdata);
+		internal::StashData* data = static_cast<internal::StashData*>(userdata);
 		renderer::IRenderDriver * driver = renderer::driver();
-		driver->texture_destroy(texture);
+//		driver->texture_destroy(data->texture);
 	}
 	
 	void f_update_texture(void* userdata, int origin_x, int origin_y, int width, int height, void * pixels)
 	{
 		renderer::IRenderDriver * driver = renderer::driver();
-		renderer::Texture* texture = static_cast<renderer::Texture*>(userdata);
+		internal::StashData* data = static_cast<internal::StashData*>(userdata);
 
 		image::Image image;
 		image.flags |= image::F_ALPHA;
@@ -87,33 +95,30 @@ namespace font
 		
 		gemini::Recti area(origin_x, origin_y, width, height);
 		
-		driver->texture_update(texture, image, area);
+		driver->texture_update(data->texture, image, area);
 	}
 
-	void f_draw_with_texture(void* userdata, void * data, int uv_offset, int color_offset, int stride, int vertex_count)
+	void f_draw_with_texture(void* userdata, void * vertex_data, int uv_offset, int color_offset, int stride, int vertex_count)
 	{
 		renderer::VertexStream & vs = internal::_vertexstream;
-
-		renderer::Texture* texture = static_cast<renderer::Texture*>(userdata);
-
+		internal::StashData* data = static_cast<internal::StashData*>(userdata);
+		
 		if ( !vs.has_room( vertex_count, 0 ) )
 		{
 			LOGE( "Unable to draw font: vertexstream has no room! (%i)\n", vs.total_vertices );
 		}
 		else
 		{
-			internal::_vertexstream.fill_data( (renderer::VertexType*)data, vertex_count, 0, 0 );
+			internal::_vertexstream.fill_data( (renderer::VertexType*)vertex_data, vertex_count, 0, 0 );
 			internal::_vertexstream.update();
-			
-			renderer::ShaderProgram* shader = internal::_shader;
-			
+
 			glm::mat4 modelview_matrix = glm::mat4(1.0f);
 			glm::mat4 projection_matrix;
 
 			assert(0);
 			float w = 0; float h = 0;
-//			real w = (real)kernel::instance()->parameters().render_width;
-//			real h = (real)kernel::instance()->parameters().render_height;
+			w = (real)data->render_width;
+			h = (real)data->render_height;
 			projection_matrix = glm::ortho(0.0f, w, 0.0f, h, -1.0f, 1.0f );
 			
 			RenderStream rs;
@@ -124,7 +129,7 @@ namespace font
 			// setup uniforms
 			rs.add_uniform_matrix4(internal::_uniforms[0], &modelview_matrix );
 			rs.add_uniform_matrix4(internal::_uniforms[1], &projection_matrix );
-			rs.add_sampler2d(internal::_uniforms[2], 0, texture);
+			rs.add_sampler2d(internal::_uniforms[2], 0, data->texture);
 			
 			// add draw call for vertexbuffer
 			rs.add_draw_call( internal::_vertexstream.vertexbuffer );
@@ -137,7 +142,7 @@ namespace font
 	}
 
 
-	void startup()
+	void startup(renderer::ShaderProgram* fontshader)
 	{	
 		// initialize the vertex stream
 		internal::_vertexstream.desc.add( renderer::VD_FLOAT2 );
@@ -157,7 +162,7 @@ namespace font
 		sth_set_render_callbacks( &cb );
 		
 		internal::_stash = sth_create( 256, 256 );
-//		internal::_shader = assets::shaders()->load_from_path("shaders/fontshader");
+		internal::_shader = fontshader;
 		assert(internal::_shader != 0);
 		
 		internal::_uniforms[0] = internal::_shader->get_uniform_location("modelview_matrix");
@@ -169,14 +174,7 @@ namespace font
 	} // startup
 
 	void shutdown()
-	{	
-//		if ( internal::_shader )
-//		{
-//			assets::destroy_shader( internal::_shader );
-//		
-//			DESTROY( Shader, internal::_shader );
-//		}
-	
+	{
 		// cleanup used memory here
 		internal::_vertexstream.destroy();
 		
@@ -192,15 +190,12 @@ namespace font
 	
 
 	
-	void draw_string( renderer::Font * font, int x, int y, const char * utf8, const Color & color )
+	void draw_string(const renderer::Font& font, int x, int y, const char* utf8, const Color& color)
 	{
-//		int r_width = kernel::instance()->parameters().render_width;
-
-		assert(0);
-		int r_height = 0; //kernel::instance()->parameters().render_height;
-		int y_offset = 0; //kernel::instance()->parameters().titlebar_height;
+		// TODO: should be passed in from callee
+		// y = (render_height-y-titlebar_height);
 		
-		if ( !font )
+		if (font.handle == 0)
 		{
 			return;
 		}
@@ -208,18 +203,17 @@ namespace font
 		RenderStream rs;
 
 		// setup global rendering state
-		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
-		rs.add_state( renderer::STATE_BLEND, 1 );
-		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+		rs.add_state(renderer::STATE_DEPTH_TEST, 0);
+		rs.add_state(renderer::STATE_BLEND, 1);
+		rs.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
 		rs.run_commands();
 				
 		// draw
 		sth_begin_draw( internal::_stash );
 		float width = 0;
 		unsigned int vcolor = STH_RGBA(color.r, color.g, color.b, color.a);
-		assert(0);
-//		sth_draw_text( internal::_stash, font->font_id, font->font_size, x, r_height-y-y_offset, vcolor, utf8, &width );
-		sth_end_draw( internal::_stash );
+		sth_draw_text(internal::_stash, font.handle, font.point_size, x, y, vcolor, utf8, &width);
+		sth_end_draw(internal::_stash);
 		
 		// restore state
 		rs.rewind();
@@ -229,71 +223,51 @@ namespace font
 	} // draw_string
 	
 	
-	void dimensions_for_text( renderer::FontHandle handle, const char * utf8, float & minx, float & miny, float & maxx, float & maxy )
+	void dimensions_for_text(const renderer::Font& font, const char* utf8, float& minx, float& miny, float& maxx, float& maxy)
 	{
-		if ( handle > 0 )
+		if (font.handle > 0)
 		{
-			sth_dim_text(internal::_stash, handle, handle, utf8, &minx, &miny, &maxx, &maxy);
+			sth_dim_text(internal::_stash, font.handle, font.handle, utf8, &minx, &miny, &maxx, &maxy);
 		}
 	} // dimensions_for_text
 	
-	unsigned int measure_height( renderer::Font * font, const char * utf8 )
+	unsigned int measure_height(const renderer::Font& font, const char * utf8 )
 	{
-		if ( !font )
+		if (font.handle == 0)
 		{
 			return 0;
 		}
 		
 		float minx = 0, miny = 0, maxx = 0, maxy = 0;
-		assert(0);
-		//dimensions_for_text( font->font_id, utf8, minx, miny, maxx, maxy );
+		dimensions_for_text(font, utf8, minx, miny, maxx, maxy);
 		return maxy-miny;
 	} // measure_height
 	
-	unsigned int measure_width( renderer::Font * font, const char * utf8 )
+	unsigned int measure_width(const renderer::Font& font, const char* utf8 )
 	{
-		if ( !font )
+		if (font.handle == 0)
 		{
 			return 0;
 		}
-
+		
 		float minx = 0, miny = 0, maxx = 0, maxy = 0;
-		assert(0);
-//		dimensions_for_text( font->font_id, utf8, minx, miny, maxx, maxy );
+		dimensions_for_text(font, utf8, minx, miny, maxx, maxy);
 		return maxx-minx;
 	} // measure_width
 	
-	renderer::FontHandle load_font_from_memory( const void * data, unsigned int data_size, unsigned short point_size )
+	renderer::Font load_font_from_memory(const void* data, unsigned int data_size, unsigned short point_size)
 	{
-		assert( internal::_stash != 0 );
+		assert(internal::_stash != 0);
 		
-		renderer::FontHandle result = sth_add_font_from_memory( internal::_stash, (unsigned char*)data );
-		if ( result == 0 )
+		renderer::Font font;
+		
+		font.handle = sth_add_font_from_memory(internal::_stash, (unsigned char*)data);
+		if ( font.handle == 0 )
 		{
 			LOGE( "Unable to load font from memory!\n" );
-			return 0;
+			font.handle = 0;
 		}
 
-		return result;
+		return font;
 	} // load_font_from_memory
-
-	char * load_font_from_file( const char * path, unsigned short point_size, renderer::FontHandle & handle )
-	{
-		size_t font_data_size = 0;
-		char * font_data = 0;
-		font_data = core::filesystem::file_to_buffer( path, 0, &font_data_size );
-		
-		if ( font_data )
-		{
-//			LOGV( "font data size: %i bytes\n", font_data_size );
-			handle = load_font_from_memory( font_data, font_data_size, point_size );
-		}
-		else
-		{
-			LOGE( "Unable to load font from file: '%s'\n", path );
-			return 0;
-		}
-		
-		return font_data;
-	} // load_font_from_file
 }; // namespace font

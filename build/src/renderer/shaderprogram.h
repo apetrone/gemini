@@ -64,7 +64,7 @@ namespace renderer
 		unsigned int object;
 		
 		ShaderProgram() : object(0) {}
-		virtual ~ShaderProgram();
+		virtual ~ShaderProgram() {}
 		
 		int get_uniform_location( const char * name );
 		

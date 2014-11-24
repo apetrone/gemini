@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2014- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -19,29 +19,40 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
+#include "constantbuffer.h"
 
-#include <core/stackstring.h>
-
-#include "assets.h"
-
-#include <renderer/font.h>
-
-namespace assets
+namespace renderer
 {
-//	typedef int FontHandle;
-	struct Font : public Asset
+	ConstantBuffer::ConstantBuffer(ShaderProgram* shader_program) : program(shader_program)
 	{
-		unsigned short font_size;
-		renderer::Font handle;
-		char * font_data;
+		modelview_matrix = nullptr;
+		projection_matrix = nullptr;
+		viewer_direction = nullptr;
+		viewer_position = nullptr;
+		light_position = nullptr;
+	}
+	
+	void ConstantBuffer::add_uniform_matrix4(const char* name, const glm::mat4* data)
+	{
 		
-		Font();
-		virtual void release();
-	}; // Font
-
-	AssetLoadStatus font_load_callback( const char * path, Font * config, const AssetParameters & parameters );
-	void font_construct_extension( StackString<MAX_PATH_SIZE> & extension );
-
-	DECLARE_ASSET_LIBRARY_ACCESSOR(Font, AssetParameters, fonts);
-}; // namespace assets
+	}
+//	void ConstantBuffer::add_uniform1i(int uniform_location, int value)
+//	{
+//		
+//	}
+//	
+//	void ConstantBuffer::add_uniform3f(int location, const glm::vec3* data)
+//	{
+//		
+//	}
+//	
+//	void ConstantBuffer::add_uniform4f(int location, const glm::vec4* data)
+//	{
+//		
+//	}
+//	
+//	void ConstantBuffer::add_uniform_matrix4(int location, const glm::mat4* data, uint8_t count)
+//	{
+//		
+//	}
+}; // namespace renderer

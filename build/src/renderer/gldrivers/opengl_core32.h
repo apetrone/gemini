@@ -39,6 +39,8 @@ class GLCore32 : public renderer::IRenderDriver
 //	unsigned int shader_changes;
 //	unsigned int texture_changes;
 
+	renderer::RenderTarget* default_render_target;
+
 public:
 	GLCore32();
 	~GLCore32();
@@ -73,20 +75,24 @@ public:
 	virtual bool shaderobject_compile( renderer::ShaderObject shader_object, const char * shader_source, const char * preprocessor_defines, const char * version );
 	virtual void shaderobject_destroy( renderer::ShaderObject shader_object );
 	
-	virtual renderer::ShaderProgram shaderprogram_create();
-	virtual void shaderprogram_destroy( renderer::ShaderProgram program );
-	virtual void shaderprogram_attach( renderer::ShaderProgram shader_program, renderer::ShaderObject shader_object );
-	virtual void shaderprogram_detach( renderer::ShaderProgram shader_program, renderer::ShaderObject shader_object );
-	virtual void shaderprogram_bind_attributes( renderer::ShaderProgram shader_program );
-	virtual void shaderprogram_bind_uniforms( renderer::ShaderProgram shader_program );
-	virtual void shaderprogram_bind_uniform_block(renderer::ShaderProgram shader_program, const char* block_name);
-	virtual bool shaderprogram_link_and_validate( renderer::ShaderProgram shader_program );
-	virtual void shaderprogram_activate( renderer::ShaderProgram shader_program );
-	virtual void shaderprogram_deactivate( renderer::ShaderProgram shader_program );
+	virtual renderer::ShaderProgram* shaderprogram_create();
+	virtual void shaderprogram_destroy( renderer::ShaderProgram* program );
+	virtual void shaderprogram_attach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object );
+	virtual void shaderprogram_detach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object );
+	virtual void shaderprogram_bind_attributes( renderer::ShaderProgram* shader_program );
+	virtual void shaderprogram_bind_uniforms( renderer::ShaderProgram* shader_program );
+	virtual void shaderprogram_bind_uniform_block(renderer::ShaderProgram* shader_program, const char* block_name);
+	virtual bool shaderprogram_link_and_validate( renderer::ShaderProgram* shader_program );
+	virtual void shaderprogram_activate( renderer::ShaderProgram* shader_program );
+	virtual void shaderprogram_deactivate( renderer::ShaderProgram* shader_program );
 	
 	virtual renderer::RenderTarget* render_target_create(uint16_t width, uint16_t height);
 	virtual void render_target_destroy(renderer::RenderTarget* rt);
 	virtual void render_target_activate(renderer::RenderTarget* rt);
 	virtual void render_target_deactivate(renderer::RenderTarget* rt);
 	virtual void render_target_set_attachment(renderer::RenderTarget* rt, renderer::RenderTarget::AttachmentType type, uint8_t index, renderer::Texture* texture);
+	
+	virtual renderer::RenderTarget* get_default_render_target() const;
+	virtual renderer::PipelineState* pipelinestate_create(const renderer::PipelineDescriptor& desc);
+	virtual void pipelinestate_destroy(renderer::PipelineState* state);
 }; // GLCore32

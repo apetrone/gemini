@@ -20,13 +20,17 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "renderer.h"
-//#include "kernel.h"
+#include "shaderconfig.h"
 
 #include <platform/typedefs.h>
 #include <core/factory.h>
 
 #include <slim/xstr.h>
 #include <slim/xlog.h>
+
+#include <core/configloader.h>
+
+#include "gldrivers/opengl_common.h"
 
 // compile-time selection of these classes starts here.
 
@@ -49,13 +53,18 @@ namespace renderer
 	IRenderDriver * _render_driver = 0;
 	
 	IRenderDriver * driver() { return _render_driver; }
-	
-	
+
+	renderer::ShaderProgram* create_shaderprogram_from_file(const char* path)
+	{
+		return shader_config::load_shaderprogram_from_file(path);
+	}
+
 	int startup( DriverType driver_type, const RenderSettings& settings )
 	{
 		// setup vertex descriptor
 		VertexDescriptor::startup();
 	
+		shader_config::startup();
 	
 		typedef Factory<IRenderDriver, 4> RendererFactory;
 		RendererFactory factory;
@@ -95,6 +104,8 @@ namespace renderer
 	
 	void shutdown()
 	{
+		shader_config::shutdown();
+	
 		if ( _render_driver )
 		{
 			DESTROY(IRenderDriver, _render_driver);
@@ -105,21 +116,15 @@ namespace renderer
 
 
 namespace renderer
-{
-	ShaderProgram::~ShaderProgram()
-	{
-		renderer::driver()->shaderprogram_destroy( *this );
-	}
-	
-	
+{	
 	int ShaderProgram::get_uniform_location( const char * name )
 	{
-		//		LOGV( "# uniforms: %i\n", total_uniforms );
+//		LOGV( "# uniforms: %i\n", total_uniforms );
 		for( int i = 0; i < uniforms.size(); ++i )
 		{
 			if (std::string(name) == uniforms[i].first)
 			{
-				//				LOGV( "uniform: %s, at %i\n", name, uniforms[i].second );
+//				LOGV( "uniform: %s, at %i\n", name, uniforms[i].second );
 				return uniforms[i].second;
 			}
 		}

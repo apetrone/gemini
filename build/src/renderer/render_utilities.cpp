@@ -28,11 +28,13 @@
 #include "renderstream.h"
 #include "rqueue.h"
 
+#include <slim/xstr.h>
 
 namespace render_utilities
 {
 	void queue_geometry(RenderStream& rs, const renderer::RenderBlock& block, const renderer::ConstantBuffer& cb, renderer::Material* material, renderer::ShaderProgram* shader)
 	{
+#if 0
 		rs.add_shader(shader);
 
 		rs.add_uniform_matrix4(shader->get_uniform_location("modelview_matrix"), cb.modelview_matrix);
@@ -65,6 +67,7 @@ namespace render_utilities
 		rs.add_material(material, shader);
 		
 		rs.add_draw_call(block.object->vertexbuffer);
+#endif
 	}
 	
 	//
@@ -91,4 +94,23 @@ namespace render_utilities
 			uvs[7] = y / (float)sheet_height;
 		} // calc_tile_uvs
 	}; // sprite
+	
+	
+	
+	
+	void strip_shader_version( char * buffer, StackString<32> & version )
+	{
+		// remove preceding "#version" shader
+		char * pos = xstr_str( buffer, "#version" );
+		if ( pos )
+		{
+			char * end = pos;
+			while( *end != '\n' )
+				++end;
+			
+			version._length = (end-pos);
+			memcpy( &version[0], &buffer[(pos-buffer)], version._length );
+			memset( &buffer[(pos-buffer)], ' ', (end-pos) );
+		}
+	} // strip_shader_version
 }; // mamespace render_utilities

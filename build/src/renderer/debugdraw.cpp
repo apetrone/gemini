@@ -37,7 +37,7 @@ namespace debugdraw
 		unsigned int next_primitive = 0;
 		unsigned int max_primitives = 0;
 		DebugPrimitive * primitive_list = 0;
-		renderer::Font * debug_font = 0;
+		renderer::Font debug_font;
 		renderer::ShaderProgram* debug_shader = 0;
 
 		DebugPrimitive * request_primitive()
@@ -110,7 +110,7 @@ namespace debugdraw
 		type = 0;
 	} // DebugPrimitive
 	
-	void startup(unsigned int max_primitives)
+	void startup(unsigned int max_primitives, renderer::ShaderProgram* program, const renderer::Font& font)
 	{
 		_internal::current_time = 0;
 		_internal::max_primitives = max_primitives;
@@ -123,16 +123,14 @@ namespace debugdraw
 		_internal::vertex_stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
 		_internal::vertex_stream.create( 4 * max_primitives, 0, renderer::DRAW_LINES, renderer::BUFFER_DYNAMIC );
 		
+		// the debug font we'll use
+		_internal::debug_font = font;
+		assert(_internal::debug_font.handle != 0);
 		
-		// load the debug font we'll use
-//		_internal::debug_font = assets::fonts()->load_from_path( DEBUG_FONT_FILE );
-		assert(_internal::debug_font != 0);
-		
-		// load debug shader
-//		_internal::debug_shader = assets::shaders()->load_from_path(DEBUG_SHADER);
+		// debug shader
+		_internal::debug_shader = program;
 		assert(_internal::debug_shader != 0);
-		
-		
+
 //		render_utilities::create_descriptor_from_shader(_internal::vertex_stream.desc, _internal::debug_shader);
 	} // startup
 	
@@ -140,7 +138,6 @@ namespace debugdraw
 	{
 		DESTROY_ARRAY(DebugPrimitive, _internal::primitive_list, _internal::max_primitives);
 		_internal::max_primitives = 0;
-		_internal::debug_font = 0;
 		_internal::next_primitive = 0;
 
 		_internal::vertex_stream.destroy();
@@ -319,14 +316,14 @@ namespace debugdraw
 		// This doesn't place the text into a buffer like the other primitives.
 		// however, it is deferred to make everything render in order.
 	
-		font::draw_string(_internal::debug_font, primitive->start.x, primitive->start.y, primitive->buffer.c_str(), primitive->color);
+		//font::draw_string(_internal::debug_font, primitive->start.x, primitive->start.y, primitive->buffer.c_str(), primitive->color);
 	} // render_text
 	
 	void render(const glm::mat4 & modelview, const glm::mat4 & projection, int x, int y, int viewport_width, int viewport_height)
 	{
 		unsigned int attribs = 0;
-		renderer::ShaderString name;
-		name = "colors";
+//		renderer::ShaderString name;
+//		name = "colors";
 //		attribs |= assets::find_parameter_mask( name );
 
 		glm::mat4 object;
@@ -337,7 +334,6 @@ namespace debugdraw
 		rs.add_shader( _internal::debug_shader );
 		rs.add_uniform_matrix4( _internal::debug_shader->get_uniform_location("modelview_matrix"), &modelview );
 		rs.add_uniform_matrix4( _internal::debug_shader->get_uniform_location("projection_matrix"), &projection );
-		rs.add_uniform_matrix4( _internal::debug_shader->get_uniform_location("object_matrix"), &object );
 		//rs.run_commands();
 		//rs.rewind();
 		
@@ -371,6 +367,52 @@ namespace debugdraw
 		
 		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
 		rs.run_commands();
+		
+		
+#if 0
+		// on startup; create this descriptor
+		
+		struct DebugDrawConstantBuffer : public renderer::ConstantBuffer
+		{
+			DebugDrawConstantBuffer(renderer::ShaderProgram* program) : renderer::ConstantBuffer(program) {}
+			
+			const glm::mat4* modelview_matrix;
+			const glm::mat4* projection_matrix;
+		};
+		
+		renderer::IRenderDriver* driver = renderer::driver();
+		
+		renderer::ShaderProgram* program = 0;
+		//assets::Shader* shader = assets::shaders()->load_from_path("shaders/debug");
+		
+		DebugDrawConstantBuffer cbo(program);
+		cbo.add_uniform_matrix4("modelview_matrix", cbo.modelview_matrix);
+		cbo.add_uniform_matrix4("projection_matrix", cbo.projection_matrix);
+		
+		renderer::PipelineDescriptor desc;
+		desc.constant_buffer = &cbo;
+		desc.program = program;
+		desc.depth_write_enabled = false;
+		desc.stencil_write_enabled = false;
+		desc.render_target = driver->get_default_render_target();
+	
+		renderer::PipelineState* debug_render_state = driver->pipelinestate_create(desc);
+		
+		
+		
+		
+		// each frame
+//		driver->set_render_state(renderer::STATE_DEPTH_TEST, 0);
+		cbo.modelview_matrix = &modelview;
+		cbo.projection_matrix = &projection;
+		
+		renderer::CommandBuffer buffer;
+		buffer.set_pipeline_state(debug_render_state);
+		buffer.draw_vertexbuffer(nullptr);
+		
+		buffer.commit();
+//		device.set_render_state(renderer::STATE_DEPTH_TEST, 1);
+#endif
 
 	} // render
 	

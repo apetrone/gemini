@@ -288,6 +288,10 @@ def get_librenderer(arguments, target_platform):
 		os.path.join(DEPENDENCIES_FOLDER, "font-stash/stb_truetype.c")		
 	]
 
+	librenderer.defines += [
+		"JSON_IS_AMALGAMATION"
+	]
+
 	librenderer.includes += [
 		"src/contrib",
 		"src/renderer/gldrivers"

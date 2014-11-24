@@ -398,6 +398,13 @@ struct GL32RenderTarget : public renderer::RenderTarget
 };
 
 
+struct GLCore32ShaderProgram : public renderer::ShaderProgram
+{
+	GLint object;
+
+	GLCore32ShaderProgram() : object(0) {}
+};
+
 GLCore32::GLCore32()
 {
 	LOGV( "GLCore32 instanced.\n" );
@@ -410,11 +417,20 @@ GLCore32::GLCore32()
 	last_shader = 0;
 	
 	image_to_internal_format = image_internal_format;
+	
+	
+	default_render_target = CREATE(GL32RenderTarget);
+	default_render_target->color_texture_id = 0;
+	default_render_target->depth_texture_id = 0;
+	default_render_target->width = 0;
+	default_render_target->height = 0;
 }
 
 GLCore32::~GLCore32()
 {
 	LOGV( "GLCore32 shutting down.\n" );
+	DESTROY(RenderTarget, default_render_target);
+	
 	gemgl_shutdown( gl );
 }
 
@@ -422,8 +438,8 @@ void c_shader( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
-	ShaderProgram shader_program;
-	stream.read( shader_program.object );
+	ShaderProgram* shader_program;
+	stream.read( shader_program );
 
 	renderer.shaderprogram_activate( shader_program );
 }
@@ -432,8 +448,8 @@ void p_shader( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
-	ShaderProgram shader_program;
-	stream.read( shader_program.object );
+	ShaderProgram* shader_program;
+	stream.read( shader_program );
 	
 	renderer.shaderprogram_deactivate( shader_program );
 }
@@ -1091,13 +1107,13 @@ void GLCore32::shaderobject_destroy( renderer::ShaderObject shader_object )
 #endif
 }
 
-renderer::ShaderProgram GLCore32::shaderprogram_create()
+renderer::ShaderProgram* GLCore32::shaderprogram_create()
 {
-	ShaderProgram program;
-	program.object = gl.CreateProgram();
+	GLCore32ShaderProgram* program = CREATE(GLCore32ShaderProgram);
+	program->object = gl.CreateProgram();
 	gl.CheckError( "CreateProgram" );
 	
-	if ( !gl.IsProgram( program.object ) )
+	if ( !gl.IsProgram( program->object ) )
 	{
 		LOGE("generated object is NOT a program!\n" );
 	}
@@ -1105,52 +1121,58 @@ renderer::ShaderProgram GLCore32::shaderprogram_create()
 	return program;
 }
 
-void GLCore32::shaderprogram_destroy( renderer::ShaderProgram shader_program )
+void GLCore32::shaderprogram_destroy( renderer::ShaderProgram* shader_program )
 {
-	if ( shader_program.object != 0 )
+	GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
+	if ( program->object != 0 )
 	{
-		gl.DeleteProgram( shader_program.object );
+		gl.DeleteProgram( program->object );
 		gl.CheckError( "DeleteProgram" );
 	}
 }
 
-void GLCore32::shaderprogram_attach( renderer::ShaderProgram shader_program, renderer::ShaderObject shader_object )
+void GLCore32::shaderprogram_attach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object )
 {
-	gl.AttachShader( shader_program.object, shader_object.shader_id );
+	GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
+	gl.AttachShader( program->object, shader_object.shader_id );
 	gl.CheckError( "AttachShader" );
 }
 
-void GLCore32::shaderprogram_detach( renderer::ShaderProgram shader_program, renderer::ShaderObject shader_object )
+void GLCore32::shaderprogram_detach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object )
 {
-	gl.DetachShader( shader_program.object, shader_object.shader_id );
+	GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
+	gl.DetachShader( program->object, shader_object.shader_id );
 	gl.CheckError( "DetachShader" );
 }
 
-void GLCore32::shaderprogram_bind_attributes( renderer::ShaderProgram shader_program )
+void GLCore32::shaderprogram_bind_attributes( renderer::ShaderProgram* shader_program )
 {
 	// gl.BindFragDataLocation(shader_program.object, 0, parameters.frag_data_location);
 	// gl.CheckError( "BindFragDataLocation" );
-
-	for(uint32_t i = 0; i < shader_program.attributes.size(); ++i)
+	GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
+	
+	for(uint32_t i = 0; i < program->attributes.size(); ++i)
 	{
-		ShaderKeyValuePair * keyvalue = &shader_program.attributes[i];
+		ShaderKeyValuePair * keyvalue = &program->attributes[i];
 		SHADER_DEBUG( "BindAttribLocation -> %s to %i\n", keyvalue->first, keyvalue->second );
-		gl.BindAttribLocation( shader_program.object, keyvalue->second, keyvalue->first.c_str() );
+		gl.BindAttribLocation( program->object, keyvalue->second, keyvalue->first.c_str() );
 		gl.CheckError( xstr_format( "BindAttribLocation: %s", keyvalue->first.c_str() ));
 	}
 }
 
-void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_program )
+void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram* shader_program )
 {
+	GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
+	
 	// ensure this is the active shader before binding uniforms
 	//this->shaderprogram_activate( shader_program );
 
 	// fetch uniforms from the shader
-	for(uint32_t uniform_id = 0; uniform_id < shader_program.uniforms.size(); ++uniform_id)
+	for(uint32_t uniform_id = 0; uniform_id < program->uniforms.size(); ++uniform_id)
 	{
-		ShaderKeyValuePair * keyvalue = &shader_program.uniforms[ uniform_id ];
+		ShaderKeyValuePair * keyvalue = &program->uniforms[ uniform_id ];
 		
-		keyvalue->second = gl.GetUniformLocation( shader_program.object, keyvalue->first.c_str() );
+		keyvalue->second = gl.GetUniformLocation( program->object, keyvalue->first.c_str() );
 		SHADER_DEBUG( "GetUniformLocation: \"%s\" -> %i\n", keyvalue->first.c_str(), keyvalue->second );
 		gl.CheckError( "GetUniformLocation" );
 		
@@ -1161,10 +1183,12 @@ void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram shader_progr
 	}
 }
 
-void GLCore32::shaderprogram_bind_uniform_block(renderer::ShaderProgram shader_program, const char* block_name)
+void GLCore32::shaderprogram_bind_uniform_block(renderer::ShaderProgram* shader_program, const char* block_name)
 {
+	GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
+	
 	// find the uniform block
-	GLuint block_index = gl.GetUniformBlockIndex(shader_program.object, block_name);
+	GLuint block_index = gl.GetUniformBlockIndex(program->object, block_name);
 	if (block_index == GL_INVALID_INDEX)
 	{
 		LOGV("uniform block \"%s\" could not be found\n", block_name);
@@ -1175,7 +1199,7 @@ void GLCore32::shaderprogram_bind_uniform_block(renderer::ShaderProgram shader_p
 	
 	// determine the size of the uniform block
 	GLint block_size = 0;
-	gl.GetActiveUniformBlockiv(shader_program.object, block_index, GL_UNIFORM_BLOCK_DATA_SIZE, &block_size);
+	gl.GetActiveUniformBlockiv(program->object, block_index, GL_UNIFORM_BLOCK_DATA_SIZE, &block_size);
 	LOGV("block_size = %i\n", block_size);
 	
 	// Query for the offsets of each uniform
@@ -1185,38 +1209,40 @@ void GLCore32::shaderprogram_bind_uniform_block(renderer::ShaderProgram shader_p
 	};
 	
 	GLuint indices[] = {0, 0};
-	gl.GetUniformIndices(shader_program.object, 2, names, indices);
+	gl.GetUniformIndices(program->object, 2, names, indices);
 	for (auto i : indices)
 	{
 		LOGV("index: %i\n", i);
 	}
 	
 	GLint offset[] = {-1, -1};
-	gl.GetActiveUniformsiv(shader_program.object, 2, indices, GL_UNIFORM_OFFSET, offset);
+	gl.GetActiveUniformsiv(program->object, 2, indices, GL_UNIFORM_OFFSET, offset);
 	for (auto o: offset)
 	{
 		LOGV("offset: %i\n", o);
 	}
 }
 
-bool GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_program )
+bool GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram* shader_program )
 {
+	GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
+	
 	bool status = true;
-	gl.BindFragDataLocation(shader_program.object, 0, shader_program.frag_data_location());
+	gl.BindFragDataLocation(program->object, 0, program->frag_data_location());
 	gl.CheckError( "BindFragDataLocation" );
 
-	gl.LinkProgram( shader_program.object );
+	gl.LinkProgram( program->object );
 	gl.CheckError( "LinkProgram" );
 	
 	GLint link_status;
-	gl.GetProgramiv( shader_program.object, GL_LINK_STATUS, &link_status );
+	gl.GetProgramiv( program->object, GL_LINK_STATUS, &link_status );
 	gl.CheckError( "GetProgramiv" );
 	
 	if ( !link_status )
 	{
 		status = false;
 		LOGE( "Error linking program!\n" );
-		char * logbuffer = query_program_info_log( shader_program.object );
+		char * logbuffer = query_program_info_log( program->object );
 		if ( logbuffer )
 		{
 			LOGW( "Program Info Log:\n" );
@@ -1279,21 +1305,23 @@ bool GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram shader_p
 	return status;
 }
 
-void GLCore32::shaderprogram_activate( renderer::ShaderProgram shader_program )
+void GLCore32::shaderprogram_activate( renderer::ShaderProgram* shader_program )
 {
-	bool is_program = gl.IsProgram( shader_program.object );
+	GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
+	
+	bool is_program = gl.IsProgram( program->object );
 	gl.CheckError( "IsProgram shaderprogram_activate" );
 	if ( !is_program )
 	{
-		LOGW( "program: %i is NOT an OpenGL program\n", shader_program.object );
+		LOGW( "program: %i is NOT an OpenGL program\n", program->object );
 		assert(is_program);
 	}
 
-	gl.UseProgram( shader_program.object );
+	gl.UseProgram( program->object );
 	gl.CheckError( "UseProgram shaderprogram_activate" );
 }
 
-void GLCore32::shaderprogram_deactivate( renderer::ShaderProgram shader_program )
+void GLCore32::shaderprogram_deactivate( renderer::ShaderProgram* shader_program )
 {
 	gl.UseProgram( 0 );
 	gl.CheckError( "UseProgram shaderprogram_deactivate" );
@@ -1385,4 +1413,19 @@ void GLCore32::render_target_set_attachment(renderer::RenderTarget* rt, renderer
 			render_target->depth_texture_id = tex->texture_id;
 		}
 	}
+}
+
+RenderTarget* GLCore32::get_default_render_target() const
+{
+	return default_render_target;
+}
+
+PipelineState* GLCore32::pipelinestate_create(const PipelineDescriptor& desc)
+{
+	return nullptr;
+}
+
+void GLCore32::pipelinestate_destroy(PipelineState* state)
+{
+
 }

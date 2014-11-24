@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2014- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -21,27 +21,17 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/stackstring.h>
+#include "pipeline.h"
+#include "vertexbuffer.h"
 
-#include "assets.h"
-
-#include <renderer/font.h>
-
-namespace assets
+namespace renderer
 {
-//	typedef int FontHandle;
-	struct Font : public Asset
+	struct CommandBuffer
 	{
-		unsigned short font_size;
-		renderer::Font handle;
-		char * font_data;
+		void set_pipeline_state(const PipelineState* state) {}
+		void draw_vertexbuffer(const VertexBuffer* buffer) {}
 		
-		Font();
-		virtual void release();
-	}; // Font
-
-	AssetLoadStatus font_load_callback( const char * path, Font * config, const AssetParameters & parameters );
-	void font_construct_extension( StackString<MAX_PATH_SIZE> & extension );
-
-	DECLARE_ASSET_LIBRARY_ACCESSOR(Font, AssetParameters, fonts);
-}; // namespace assets
+		// execute commands on the GPU
+		void commit() {}
+	};
+}; // namespace renderer

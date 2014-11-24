@@ -52,6 +52,10 @@ namespace kernel
 	// This is NOT hooked up to the memory allocator because this is accessed before the memory allocator is initialized.
 	typedef std::map< std::string, ApplicationCreator> ApplicationCreatorByString;
 	
+	const char FONT_SHADER[] = "shaders/fontshader";
+	const char DEBUG_FONT[] = "fonts/debug";
+	const char DEBUG_SHADER[] = "shaders/debug";
+	
 	IKernel * _kernel = 0;
 	IApplication * _active_application = 0;
 
@@ -421,8 +425,13 @@ namespace kernel
 			}
 
 			assets::startup();
-			font::startup();
-			debugdraw::startup(config.debugdraw_max_primitives);
+			
+			assets::Shader* fontshader = assets::shaders()->load_from_path(FONT_SHADER);
+			font::startup(fontshader->program);
+			
+			assets::Shader* debugshader = assets::shaders()->load_from_path(DEBUG_SHADER);
+			assets::Font* debugfont = assets::fonts()->load_from_path(DEBUG_FONT);			
+			debugdraw::startup(config.debugdraw_max_primitives, debugshader->program, debugfont->handle);
 		}
 		
 		// initialize subsystems

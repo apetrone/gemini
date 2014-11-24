@@ -28,28 +28,20 @@
 
 namespace assets
 {
-	const char SHADER_CONFIG[] = "conf/shaders.conf";
 	// -------------------------------------------------------------
 	// Shader
 	
-	struct Shader : public Asset, public renderer::ShaderProgram
+	struct Shader : public Asset
 	{
-		int get_uniform_location( const char * name );
-		virtual void release();
+		renderer::ShaderProgram* program;
 		
-		void show_uniforms();
-		void show_attributes();
+		Shader() : program(nullptr) {}
+		virtual void release();
 	}; // Shader
-	
-	
-	renderer::ShaderObject create_shader_from_file( const char * shader_path, renderer::ShaderObjectType type, const char * preprocessor_defines );
 
 	AssetLoadStatus shader_load_callback(const char* path, Shader* shader, const AssetParameters& parameters);
 	void shader_construct_extension(StackString<MAX_PATH_SIZE>& extension);
-	
-	void create_shader_config();
-	void destroy_shader_config();
-	
+
 	DECLARE_ASSET_LIBRARY_ACCESSOR(Shader, AssetParameters, shaders);
 	
 }; // namespace assets

@@ -35,6 +35,8 @@
 
 #include "shaderprogram.h"
 
+#include "vertexbuffer.h"
+
 namespace renderer
 {
 	typedef std::basic_string<char, std::char_traits<char>, GeminiAllocator<char> > ShaderString;
@@ -196,6 +198,8 @@ namespace renderer
 		
 	}; // VertexBufferErrorType
 	
+
+	
 	struct VertexDescriptor
 	{
 		unsigned char id;
@@ -231,30 +235,11 @@ namespace renderer
 		unsigned int source;
 		unsigned int destination;
 	}; // BlendParameters
-	
-
-	struct VertexBuffer
-	{
-		int vertex_count;
-		int index_count;
 		
-		VertexBuffer()
-		{
-			vertex_count = 0;
-			index_count = 0;
-		}
-	}; // VertexBuffer
-	
 	struct Material
 	{
 		
 	}; // Material
-	
-	typedef int FontHandle;
-	struct Font
-	{
-		
-	}; // Font
 	
 	struct Texture
 	{
@@ -270,23 +255,7 @@ namespace renderer
 		PixelFormat format;
 		
 	}; // Texture
-
-
-	struct RenderTarget
-	{
-		enum AttachmentType
-		{
-			COLOR,
-			DEPTHSTENCIL
-		};
-		
-		uint16_t width;
-		uint16_t height;
-		
-		uint32_t color_texture_id;
-		uint32_t depth_texture_id;
-	}; // RenderTarget
-
+	
 	struct Geometry
 	{
 		unsigned short attributes;
@@ -315,7 +284,18 @@ namespace renderer
 
 };
 
+#include "rendertarget.h"
 #include "vertexstream.h"
+#include "constantbuffer.h"
+#include "pipeline.h"
+#include "commandbuffer.h"
+
+namespace renderer
+{
+	renderer::ShaderProgram* create_shaderprogram_from_file(const char* path);
+}
+
+
 
 namespace renderer
 {
@@ -390,16 +370,16 @@ namespace renderer
 		virtual bool shaderobject_compile( renderer::ShaderObject shader_object, const char * shader_source, const char * preprocessor_defines, const char * version ) = 0;
 		virtual void shaderobject_destroy( renderer::ShaderObject shader_object ) = 0;
 		
-		virtual renderer::ShaderProgram shaderprogram_create() = 0;
-		virtual void shaderprogram_destroy( renderer::ShaderProgram program ) = 0;
-		virtual void shaderprogram_attach( renderer::ShaderProgram shader_program, renderer::ShaderObject shader_object ) = 0;
-		virtual void shaderprogram_detach( renderer::ShaderProgram shader_program, renderer::ShaderObject shader_object ) = 0;
-		virtual void shaderprogram_bind_attributes( renderer::ShaderProgram shader_program ) = 0;
-		virtual void shaderprogram_bind_uniforms( renderer::ShaderProgram shader_program ) = 0;
-		virtual void shaderprogram_bind_uniform_block(renderer::ShaderProgram shader_program, const char* block_name) = 0;
-		virtual bool shaderprogram_link_and_validate( renderer::ShaderProgram shader_program ) = 0;
-		virtual void shaderprogram_activate( renderer::ShaderProgram shader_program ) = 0;
-		virtual void shaderprogram_deactivate( renderer::ShaderProgram shader_program ) = 0;
+		virtual renderer::ShaderProgram* shaderprogram_create() = 0;
+		virtual void shaderprogram_destroy( renderer::ShaderProgram* program ) = 0;
+		virtual void shaderprogram_attach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object ) = 0;
+		virtual void shaderprogram_detach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object ) = 0;
+		virtual void shaderprogram_bind_attributes( renderer::ShaderProgram* shader_program ) = 0;
+		virtual void shaderprogram_bind_uniforms( renderer::ShaderProgram* shader_program ) = 0;
+		virtual void shaderprogram_bind_uniform_block(renderer::ShaderProgram* shader_program, const char* block_name) = 0;
+		virtual bool shaderprogram_link_and_validate( renderer::ShaderProgram* shader_program ) = 0;
+		virtual void shaderprogram_activate( renderer::ShaderProgram* shader_program ) = 0;
+		virtual void shaderprogram_deactivate( renderer::ShaderProgram* shader_program ) = 0;
 
 		virtual renderer::RenderTarget* render_target_create(uint16_t width, uint16_t height) = 0;
 		virtual void render_target_destroy(renderer::RenderTarget* rt) = 0;
@@ -407,6 +387,11 @@ namespace renderer
 		virtual void render_target_deactivate(renderer::RenderTarget* rt) = 0;
 		virtual void render_target_set_attachment(renderer::RenderTarget* rt, renderer::RenderTarget::AttachmentType type, uint8_t index, renderer::Texture* texture) = 0;
 		
+		
+		
+		virtual RenderTarget* get_default_render_target() const = 0;
+		virtual PipelineState* pipelinestate_create(const PipelineDescriptor& desc) = 0;
+		virtual void pipelinestate_destroy(PipelineState* state) = 0;
 	}; // IRenderDriver
 	typedef IRenderDriver * (*RenderDriverCreator)();
 	

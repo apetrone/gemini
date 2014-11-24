@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2014- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -21,27 +21,17 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/stackstring.h>
-
-#include "assets.h"
-
-#include <renderer/font.h>
-
-namespace assets
+namespace renderer
 {
-//	typedef int FontHandle;
-	struct Font : public Asset
+	struct VertexBuffer
 	{
-		unsigned short font_size;
-		renderer::Font handle;
-		char * font_data;
+		int vertex_count;
+		int index_count;
 		
-		Font();
-		virtual void release();
-	}; // Font
-
-	AssetLoadStatus font_load_callback( const char * path, Font * config, const AssetParameters & parameters );
-	void font_construct_extension( StackString<MAX_PATH_SIZE> & extension );
-
-	DECLARE_ASSET_LIBRARY_ACCESSOR(Font, AssetParameters, fonts);
-}; // namespace assets
+		VertexBuffer()
+		{
+			vertex_count = 0;
+			index_count = 0;
+		}
+	}; // VertexBuffer
+}; // namespace renderer

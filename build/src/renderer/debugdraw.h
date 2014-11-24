@@ -26,12 +26,16 @@
 #include <core/mathlib.h>
 #include "color.h"
 
+#include "shaderprogram.h"
+
+namespace renderer
+{
+	struct Font;
+}
+
 namespace debugdraw
 {
 	const float MIN_DURATION_MSEC = 0.1;
-	const char DEBUG_FONT_FILE[] = "fonts/debug";
-	const char DEBUG_SHADER[] = "shaders/debug";
-	
 	const int MAX_CIRCLE_SIDES = 12;
 	const int TOTAL_CIRCLE_VERTICES = 2 * MAX_CIRCLE_SIDES;
 	enum
@@ -68,7 +72,7 @@ namespace debugdraw
 		Color color;
 	}; // DebugDrawVertex
 	
-	void startup( unsigned int max_primitives );
+	void startup(unsigned int max_primitives, renderer::ShaderProgram* program, const renderer::Font& font);
 	void shutdown();
 	
 	void update( float deltamsec );

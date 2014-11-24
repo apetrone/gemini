@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2014- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -21,70 +21,31 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <vector>
-
-#include <platform/typedefs.h>
-#include <platform/mem.h>
-
-
-#include "renderer.h"
+#include "constantbuffer.h"
+#include "rendertarget.h"
 
 namespace renderer
 {
-	typedef unsigned int RenderKey;
-
-	// This is used for sorting the texture/shader combination
-	struct RenderMaterial
+	struct PipelineDescriptor
 	{
-		uint16_t texture;
-		uint16_t shader;
-	};
-
-	// Contains necessary data needed in order to submit this to the renderer
-	typedef Geometry RenderObject;
-
-
-	// An item in a queue/list that contains a sorting key and a pointer to a RenderObject
-	// A RenderBlock is created for each renderable scene graph node.
-	struct RenderBlock
-	{
-		RenderKey key;
+		ConstantBuffer* constant_buffer;
+		ShaderProgram* program;
+		RenderTarget* render_target;
 		
-		RenderObject* object;
-		glm::mat4* object_matrix;
+		bool depth_write_enabled;
+		bool stencil_write_enabled;
 		
-		unsigned int material_id;
-		unsigned int shader_id;
-		
-		glm::mat4* node_transforms;
-		uint8_t total_transforms;
-		
-		RenderBlock(RenderKey _key, RenderObject* _object) :
-			key(_key), object(_object)
+		PipelineDescriptor() :
+		constant_buffer(0),
+		program(0),
+		render_target(0),
+		depth_write_enabled(true),
+		stencil_write_enabled(false)
 		{
-			object_matrix = 0;
-			node_transforms = 0;
-			total_transforms = 0;
 		}
 	};
-
-	class RenderQueue
-	{
-
-		
-		
-	public:
-		typedef std::vector< RenderBlock, GeminiAllocator<RenderBlock> > RenderList;
-		
-		RenderList render_list;
 	
-		RenderQueue() {}
-		~RenderQueue() {}
-		
-//		void insert(RenderKey key, RenderObject* object);
-		void insert(const RenderBlock& block);
-		void sort();
-		void clear();
-		size_t size() const;
+	struct PipelineState
+	{
 	};
 }; // namespace renderer

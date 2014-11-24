@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2014- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -19,29 +19,9 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
+#include "commandbuffer.h"
 
-#include <core/stackstring.h>
-
-#include "assets.h"
-
-#include <renderer/font.h>
-
-namespace assets
+namespace renderer
 {
-//	typedef int FontHandle;
-	struct Font : public Asset
-	{
-		unsigned short font_size;
-		renderer::Font handle;
-		char * font_data;
-		
-		Font();
-		virtual void release();
-	}; // Font
 
-	AssetLoadStatus font_load_callback( const char * path, Font * config, const AssetParameters & parameters );
-	void font_construct_extension( StackString<MAX_PATH_SIZE> & extension );
-
-	DECLARE_ASSET_LIBRARY_ACCESSOR(Font, AssetParameters, fonts);
-}; // namespace assets
+}; // namespace renderer

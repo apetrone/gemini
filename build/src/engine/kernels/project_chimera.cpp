@@ -50,6 +50,8 @@
 #include "scenelink.h"
 #include "vr.h"
 
+#include <renderer/constantbuffer.h>
+
 #define LOCK_CAMERA_TO_CHARACTER 0
 
 // even if a VR device is attached, this will NOT render to it
@@ -65,14 +67,14 @@ void render_scene_from_camera(scenegraph::Node* root, Camera& camera)
 	// setup constant buffer
 	glm::vec3 light_position;
 	light_position = camera.pos + -camera.view + glm::vec3(0.0f, 1.0f, 0.0f);
-	renderer::ConstantBuffer cb;
+	renderer::ConstantBuffer cb(0);
 	cb.modelview_matrix = &camera.matCam;
 	cb.projection_matrix = &camera.matProj;
 	cb.viewer_direction = &camera.view;
 	cb.viewer_position = &camera.eye_position;
 	cb.light_position = &light_position;
-	
-	// draw scene graph
+
+//	// draw scene graph
 	renderer::SceneLink scenelink;
 	scenelink.draw(root, cb);
 }

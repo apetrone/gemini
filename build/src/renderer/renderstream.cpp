@@ -163,7 +163,7 @@ void RenderStream::add_blendfunc( renderer::RenderBlendType source, renderer::Re
 void RenderStream::add_shader( renderer::ShaderProgram * shader )
 {
 	add_command( renderer::DC_SHADER );
-	stream.write( shader->object );
+	stream.write( shader );
 }
 
 void RenderStream::add_uniform3f( int location, const glm::vec3 * data )

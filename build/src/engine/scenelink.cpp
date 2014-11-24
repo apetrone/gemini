@@ -28,6 +28,10 @@
 
 #include <renderer/renderstream.h>
 
+
+#include <assets/asset_shader.h>
+#include <assets/asset_material.h>
+
 namespace renderer
 {
 	class SceneVisitor : public scenegraph::Visitor
@@ -136,7 +140,18 @@ namespace renderer
 		for(auto& block : queue->render_list)
 		{
 			// TODO: Fix this
-			render_utilities::queue_geometry(rs, block, constant_buffer, 0, 0);
+			//render_utilities::queue_geometry(rs, block, constant_buffer, 0, 0);
+			
+			assets::Shader* shader = assets::shaders()->find_with_id(block.shader_id);
+			assets::Material* material = assets::materials()->find_with_id(block.material_id);
+			
+			rs.add_shader(shader->program);
+			
+			rs.add_uniform_matrix4(shader->program->get_uniform_location("modelview_matrix"), constant_buffer.modelview_matrix);
+			rs.add_uniform_matrix4(shader->program->get_uniform_location("projection_matrix"), constant_buffer.projection_matrix);
+			rs.add_uniform_matrix4(shader->program->get_uniform_location("object_matrix"), block.object_matrix);
+			
+			rs.add_draw_call(block.object->vertexbuffer);
 		}
 		
 		rs.run_commands();
