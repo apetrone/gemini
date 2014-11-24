@@ -43,8 +43,6 @@ namespace renderer
 #include "renderer.h"
 namespace render_utilities
 {
-	void queue_geometry(RenderStream& rs, const renderer::RenderBlock& block, const renderer::ConstantBuffer& constant_buffer, renderer::Material* material, renderer::ShaderProgram* shader);
-
 	//
 	// misc sprite tools
 	namespace sprite

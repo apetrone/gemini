@@ -36,62 +36,7 @@ namespace assets
 	{
 	} // release
 	
-	void Material::calculate_requirements()
-	{
-		// calculate material requirements
-		this->requirements = 0;
-		
-//		for( int id = 0; id < this->total_parameters; ++id )
-//		{
-//			Material::Parameter * param = &this->parameters[ id ];
-//			unsigned int mask = find_parameter_mask( param->name );
-			//			LOGV( "param \"%s\" -> %i\n", param->name(), mask );
-//			this->requirements |= mask;
-//		}
-		
-		//		LOGV( "Material requirements: %i\n", this->requirements );
-	} // calculate_requirements
-	
-	Material::Parameter * Material::parameter_by_name( const char * name )
-	{
-		for (auto& parameter : parameters)
-		{
-			if (parameter.name == ShaderString(name))
-			{
-				return &parameter;
-			}
-		}
-		
-		return 0;
-	} // parameter_by_name
-	
 
-	void Material::set_parameter_name( unsigned int id, const char * name )
-	{
-		this->parameters[id].name = name;
-	} // set_parameter_name
-	
-	void Material::set_parameter_vec4( unsigned int id, const glm::vec4 & vec )
-	{
-		this->parameters[id].vecValue = vec;
-		this->parameters[id].type = MP_VEC4;
-	} // set_parameter_vec4
-	
-	void Material::add_parameter(const Material::Parameter& param)
-	{
-		parameters.push_back(param);
-	}
-	
-	void Material::print_parameters()
-	{
-		LOGV("material parameters for %s\n", name.c_str());
-		int i = 0;
-		for (auto& parameter : parameters)
-		{
-			LOGV("param %i, %s, %i\n", i, parameter.name.c_str(), parameter.intValue);
-			++i;
-		}
-	}
 	
 	enum ParamFlags
 	{
@@ -143,7 +88,7 @@ namespace assets
 		if (!param_list.empty())
 		{
 			material->parameters.resize(param_list.size());
-			Material::Parameter * parameter;
+			MaterialParameter * parameter;
 			unsigned int param_id = 0;
 			for( ; piter != piter_end; ++piter, ++param_id )
 			{
@@ -175,7 +120,7 @@ namespace assets
 					if ( !value.isNull() )
 					{
 						//						param_flags |= PF_VALUE;
-						parameter->intValue = atoi( value.asString().c_str() );
+						parameter->int_value = atoi( value.asString().c_str() );
 						//						LOGV( "param value: %i\n", parameter->intValue );
 					}
 				}
@@ -228,7 +173,9 @@ namespace assets
 					if ( param_flags & PF_VALUE )
 					{
 						assets::Texture * tex = assets::textures()->load_from_path( texture_param.asString().c_str() );
-						parameter->intValue = tex->Id();
+//						parameter->int_value = tex->Id();
+
+						parameter->texture = tex->texture;
 						//						LOGV( "param value: %i\n", parameter->intValue );
 						
 						parameter->texture_unit = texture_unit_for_map( parameter->name );
@@ -283,7 +230,7 @@ namespace assets
 					}
 					else
 					{
-						int results = sscanf( value.asString().c_str(), "%g,%g,%g,%g", &parameter->vecValue[0], &parameter->vecValue[1], &parameter->vecValue[2], &parameter->vecValue[3] );
+						int results = sscanf( value.asString().c_str(), "%g,%g,%g,%g", &parameter->vector_value[0], &parameter->vector_value[1], &parameter->vector_value[2], &parameter->vector_value[3] );
 						if ( results < 4 )
 						{
 							LOGW( "Unable to parse \"vec4\" type\n" );
@@ -350,23 +297,11 @@ namespace assets
 		LOGW( "Couldn't find material parameter with name: %s\n", name );
 		return 0;
 	} // material_type_to_parameter_type
-	
-	int material_parameter_type_to_render_state( unsigned int type )
-	{
-		int params[] =
-		{
-			DC_UNIFORM1i,
-			DC_UNIFORM_SAMPLER_2D,
-			DC_UNIFORM_SAMPLER_CUBE,
-			DC_UNIFORM4f
-		};
-		
-		return params[ type ];
-	} // material_parameter_type_to_render_state
+
 	
 
 	
-	unsigned int texture_unit_for_map( ShaderString & name )
+	unsigned int texture_unit_for_map(const std::string& name)
 	{
 		if ( xstr_nicmp( name.c_str(), "diffusemap", 0 ) == 0 )
 		{

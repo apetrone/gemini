@@ -139,17 +139,41 @@ namespace renderer
 		// finally, draw from the queue
 		for(auto& block : queue->render_list)
 		{
-			// TODO: Fix this
-			//render_utilities::queue_geometry(rs, block, constant_buffer, 0, 0);
-			
 			assets::Shader* shader = assets::shaders()->find_with_id(block.shader_id);
 			assets::Material* material = assets::materials()->find_with_id(block.material_id);
+			
+			//render_utilities::queue_geometry(rs, block, constant_buffer, 0, 0);
+			
+
 			
 			rs.add_shader(shader->program);
 			
 			rs.add_uniform_matrix4(shader->program->get_uniform_location("modelview_matrix"), constant_buffer.modelview_matrix);
 			rs.add_uniform_matrix4(shader->program->get_uniform_location("projection_matrix"), constant_buffer.projection_matrix);
 			rs.add_uniform_matrix4(shader->program->get_uniform_location("object_matrix"), block.object_matrix);
+			
+//			if (block.total_transforms > 0)
+//			{
+//				rs.add_uniform_matrix4(shader->get_uniform_location("node_transforms"), block.node_transforms, block.total_transforms);
+//			}
+			
+
+			if (constant_buffer.viewer_direction)
+			{
+				rs.add_uniform3f(shader->program->get_uniform_location("viewer_direction"), constant_buffer.viewer_direction);
+			}
+			
+			if (constant_buffer.viewer_position)
+			{
+				rs.add_uniform3f(shader->program->get_uniform_location("viewer_position"), constant_buffer.viewer_position);
+			}
+			
+			if (constant_buffer.light_position)
+			{
+				rs.add_uniform3f(shader->program->get_uniform_location("light_position"), constant_buffer.light_position);
+			}
+			
+			rs.add_material(material, shader->program);
 			
 			rs.add_draw_call(block.object->vertexbuffer);
 		}

@@ -19,21 +19,57 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
+#include "material.h"
 
-#include <core/mathlib.h>
+#include <slim/xlog.h>
 
 namespace renderer
 {
-	struct ConstantBuffer
+	
+//	unsigned int texture_unit_for_map( renderer::ShaderString & name );
+//	
+//	unsigned int material_type_to_parameter_type( const char * name );
+//	int material_parameter_type_to_render_state( unsigned int type );
+
+	MaterialParameter * Material::parameter_by_name(const std::string& name)
 	{
-		const glm::mat4* modelview_matrix;
-		const glm::mat4* projection_matrix;
-		const glm::vec3* viewer_direction;
-		const glm::vec3* viewer_position;
-		const glm::vec3* light_position;
+		for (auto& parameter : parameters)
+		{
+			if (parameter.name == name)
+			{
+				return &parameter;
+			}
+		}
 		
-		ConstantBuffer();
-		virtual ~ConstantBuffer() {};
-	};
+		return 0;
+	} // parameter_by_name
+	
+	
+	void Material::set_parameter_name( unsigned int id, const char * name )
+	{
+		this->parameters[id].name = name;
+	} // set_parameter_name
+	
+	void Material::set_parameter_vec4( unsigned int id, const glm::vec4 & vec )
+	{
+		this->parameters[id].vector_value = vec;
+		this->parameters[id].type = MP_VEC4;
+	} // set_parameter_vec4
+	
+	void Material::add_parameter(const MaterialParameter& param)
+	{
+		parameters.push_back(param);
+	}
+	
+	void Material::print_parameters()
+	{
+		LOGV("material parameters for %s\n", name.c_str());
+		int i = 0;
+		for (auto& parameter : parameters)
+		{
+			LOGV("param %i, %s, %i\n", i, parameter.name.c_str(), parameter.int_value);
+			++i;
+		}
+	}
+
 }; // namespace renderer

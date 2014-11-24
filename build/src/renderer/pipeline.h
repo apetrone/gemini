@@ -21,6 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "shaderprogram.h"
 #include "constantbuffer.h"
 #include "rendertarget.h"
 

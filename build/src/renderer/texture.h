@@ -21,19 +21,20 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/mathlib.h>
-
 namespace renderer
 {
-	struct ConstantBuffer
+	struct Texture
 	{
-		const glm::mat4* modelview_matrix;
-		const glm::mat4* projection_matrix;
-		const glm::vec3* viewer_direction;
-		const glm::vec3* viewer_position;
-		const glm::vec3* light_position;
+		enum PixelFormat
+		{
+			RGBA8,
+			BGRA8,
+			RGB8,
+			BGR8
+			
+		};
 		
-		ConstantBuffer();
-		virtual ~ConstantBuffer() {};
-	};
+		PixelFormat format;
+		
+	}; // Texture
 }; // namespace renderer

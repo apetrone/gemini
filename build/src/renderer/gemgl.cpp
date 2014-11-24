@@ -33,8 +33,8 @@ gemgl_interface_t gl;
 
 typedef const GLubyte * (GEMGLAPI gemgl_GLGETSTRINGPROC)( GLenum param );
 
-#define GEMGL_LOG(...) NULL_MACRO
-//#define GEMGL_LOG(...) LOGV(__VA_ARGS__)
+//#define GEMGL_LOG(...) NULL_MACRO
+#define GEMGL_LOG(...) LOGV(__VA_ARGS__)
 
 GLenum gemgl_check_error( const char * msg )
 {

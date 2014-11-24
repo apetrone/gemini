@@ -23,7 +23,7 @@
 
 namespace renderer
 {
-	ConstantBuffer::ConstantBuffer(ShaderProgram* shader_program) : program(shader_program)
+	ConstantBuffer::ConstantBuffer()
 	{
 		modelview_matrix = nullptr;
 		projection_matrix = nullptr;
@@ -31,28 +31,4 @@ namespace renderer
 		viewer_position = nullptr;
 		light_position = nullptr;
 	}
-	
-	void ConstantBuffer::add_uniform_matrix4(const char* name, const glm::mat4* data)
-	{
-		
-	}
-//	void ConstantBuffer::add_uniform1i(int uniform_location, int value)
-//	{
-//		
-//	}
-//	
-//	void ConstantBuffer::add_uniform3f(int location, const glm::vec3* data)
-//	{
-//		
-//	}
-//	
-//	void ConstantBuffer::add_uniform4f(int location, const glm::vec4* data)
-//	{
-//		
-//	}
-//	
-//	void ConstantBuffer::add_uniform_matrix4(int location, const glm::mat4* data, uint8_t count)
-//	{
-//		
-//	}
 }; // namespace renderer

@@ -32,44 +32,6 @@
 
 namespace render_utilities
 {
-	void queue_geometry(RenderStream& rs, const renderer::RenderBlock& block, const renderer::ConstantBuffer& cb, renderer::Material* material, renderer::ShaderProgram* shader)
-	{
-#if 0
-		rs.add_shader(shader);
-
-		rs.add_uniform_matrix4(shader->get_uniform_location("modelview_matrix"), cb.modelview_matrix);
-		rs.add_uniform_matrix4(shader->get_uniform_location("projection_matrix"), cb.projection_matrix);
-		rs.add_uniform_matrix4(shader->get_uniform_location("object_matrix"), block.object_matrix);
-		
-		if (block.total_transforms > 0)
-		{
-			rs.add_uniform_matrix4(shader->get_uniform_location("node_transforms"), block.node_transforms, block.total_transforms);
-		}
-		
-		if (shader->uniforms.size() > 4)
-		{
-			if (cb.viewer_direction)
-			{
-				rs.add_uniform3f(shader->get_uniform_location("viewer_direction"), cb.viewer_direction);
-			}
-			
-			if (cb.viewer_position)
-			{
-				rs.add_uniform3f(shader->get_uniform_location("viewer_position"), cb.viewer_position);
-			}
-			
-			if (cb.light_position)
-			{
-				rs.add_uniform3f(shader->get_uniform_location("light_position"), cb.light_position);
-			}
-		}
-
-		rs.add_material(material, shader);
-		
-		rs.add_draw_call(block.object->vertexbuffer);
-#endif
-	}
-	
 	//
 	// misc sprite tools
 	namespace sprite

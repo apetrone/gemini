@@ -235,26 +235,8 @@ namespace renderer
 		unsigned int source;
 		unsigned int destination;
 	}; // BlendParameters
-		
-	struct Material
-	{
-		
-	}; // Material
 	
-	struct Texture
-	{
-		enum PixelFormat
-		{
-			RGBA8,
-			BGRA8,
-			RGB8,
-			BGR8
-			
-		};
-		
-		PixelFormat format;
-		
-	}; // Texture
+
 	
 	struct Geometry
 	{
@@ -284,6 +266,8 @@ namespace renderer
 
 };
 
+#include "texture.h"
+#include "material.h"
 #include "rendertarget.h"
 #include "vertexstream.h"
 #include "constantbuffer.h"
@@ -295,7 +279,7 @@ namespace renderer
 	renderer::ShaderProgram* create_shaderprogram_from_file(const char* path);
 }
 
-
+struct RenderStream;
 
 namespace renderer
 {
@@ -344,6 +328,7 @@ namespace renderer
 		virtual void post_command( DriverCommandType command, util::MemoryStream & stream ) = 0;
 		
 		virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, util::MemoryStream & stream ) = 0;
+		virtual void setup_material( renderer::Material* material, renderer::ShaderProgram* program, RenderStream& stream) = 0;
 		
 		// texture
 		virtual renderer::Texture* texture_create(image::Image& image) = 0;

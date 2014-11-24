@@ -22,72 +22,27 @@
 #pragma once
 
 #include <vector>
+#include <string>
 
 #include <core/stackstring.h>
 
 #include "assets.h"
 #include "assets/asset_shader.h"
 
+#include <renderer/material.h>
+
 namespace assets
 {
-	
-
-	
-	// must also make a change in: MaterialParameterTypeToRenderState
-	enum MaterialParameterType
+	struct Material : public Asset, public renderer::Material
 	{
-		MP_INT = 0,
-		MP_SAMPLER_2D,
-		MP_SAMPLER_CUBE,
-		MP_VEC4
-	};
-	
-	struct Material : public Asset
-	{
-		struct Parameter
-		{
-			renderer::ShaderString name;
-			renderer::ShaderString value;
-			unsigned int type; // MaterialParameterType
-			int intValue;
-			glm::vec4 vecValue;
-			unsigned int texture_unit;
-		}; // Parameter
-		
-		enum
-		{
-			BLENDING = 1,
-			SHADOWMAP = 2,
-			CUBEMAP = 4,
-		};
-		
-		renderer::ShaderString name;
 		Shader * shader;
-		std::vector< Parameter, GeminiAllocator<Parameter> > parameters;
 
-		unsigned int flags;
-		unsigned int requirements; // used to lookup the correct shader permutation for this material
 		virtual void release();
-		
-		// this will generate a value based on the parameters applied
-		// to this material such that the correct shader can be found and used when rendering
-		void calculate_requirements();
-		
-		Parameter * parameter_by_name( const char * name );
-
-		void set_parameter_name( unsigned int id, const char * name );
-		void set_parameter_vec4( unsigned int id, const glm::vec4 & vec );
-		
-		void add_parameter(const Material::Parameter& param);
-		
-		void print_parameters();
 	}; // Material
-	
-	unsigned int texture_unit_for_map( renderer::ShaderString & name );
-	
-	unsigned int material_type_to_parameter_type( const char * name );
-	int material_parameter_type_to_render_state( unsigned int type );
 		
+	unsigned int texture_unit_for_map(const std::string& name );
+	unsigned int material_type_to_parameter_type( const char * name );
+
 	
 	AssetLoadStatus material_load_callback( const char * path, Material * material, const AssetParameters & parameters );
 	void material_construct_extension( StackString<MAX_PATH_SIZE> & extension );

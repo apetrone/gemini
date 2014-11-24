@@ -79,7 +79,7 @@ namespace font
 	{
 		internal::StashData* data = static_cast<internal::StashData*>(userdata);
 		renderer::IRenderDriver * driver = renderer::driver();
-//		driver->texture_destroy(data->texture);
+		driver->texture_destroy(data->texture);
 	}
 	
 	void f_update_texture(void* userdata, int origin_x, int origin_y, int width, int height, void * pixels)

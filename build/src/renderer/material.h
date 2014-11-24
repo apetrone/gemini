@@ -22,18 +22,61 @@
 #pragma once
 
 #include <core/mathlib.h>
+#include <platform/mem_stl_allocator.h>
+#include <vector>
+#include <string>
+
+#include "texture.h"
 
 namespace renderer
 {
-	struct ConstantBuffer
+	// must also make a change in: MaterialParameterTypeToRenderState
+	enum MaterialParameterType
 	{
-		const glm::mat4* modelview_matrix;
-		const glm::mat4* projection_matrix;
-		const glm::vec3* viewer_direction;
-		const glm::vec3* viewer_position;
-		const glm::vec3* light_position;
+		MP_INT = 0,
+		MP_SAMPLER_2D,
+		MP_SAMPLER_CUBE,
+		MP_VEC4
+	};
+	
+	
+	struct MaterialParameter
+	{
+		std::string name;
+		std::string value;
+		unsigned int type; // MaterialParameterType
+		int int_value;
+		glm::vec4 vector_value;
+		unsigned int texture_unit;
+		renderer::Texture* texture;
+	}; // MaterialParameter
+
+	struct Material
+	{
+		enum
+		{
+			BLENDING = 1,
+			SHADOWMAP = 2,
+			CUBEMAP = 4,
+		};
 		
-		ConstantBuffer();
-		virtual ~ConstantBuffer() {};
+		std::string name;
+		std::vector< MaterialParameter, GeminiAllocator<MaterialParameter> > parameters;
+		unsigned int flags;
+		unsigned int requirements; // used to lookup the correct shader permutation for this material
+		
+		
+		// this will generate a value based on the parameters applied
+		// to this material such that the correct shader can be found and used when rendering
+		void calculate_requirements();
+		
+		MaterialParameter * parameter_by_name(const std::string& name);
+		
+		void set_parameter_name( unsigned int id, const char * name );
+		void set_parameter_vec4( unsigned int id, const glm::vec4 & vec );
+		
+		void add_parameter(const renderer::MaterialParameter& param);
+		
+		void print_parameters();
 	};
 }; // namespace renderer

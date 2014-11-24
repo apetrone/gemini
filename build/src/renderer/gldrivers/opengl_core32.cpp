@@ -29,6 +29,8 @@
 #include <core/mathlib.h>
 #include <core/datastream.h>
 
+#include <renderer/renderstream.h>
+
 // utility functions
 GLenum image_source_format( int num_channels )
 {
@@ -765,6 +767,62 @@ void GLCore32::setup_drawcall( renderer::VertexBuffer * vertexbuffer, util::Memo
 	stream.write( vb->index_count ); // or vertices
 } // setup_drawcall
 
+
+int material_parameter_type_to_render_state( unsigned int type )
+{
+	int params[] =
+	{
+		DC_UNIFORM1i,
+		DC_UNIFORM_SAMPLER_2D,
+		DC_UNIFORM_SAMPLER_CUBE,
+		DC_UNIFORM4f
+	};
+	
+	return params[ type ];
+} // material_parameter_type_to_render_state
+
+void GLCore32::setup_material(renderer::Material *material, renderer::ShaderProgram *program, RenderStream& stream)
+{
+	GLCore32ShaderProgram* shader = static_cast<GLCore32ShaderProgram*>(program);
+	
+
+	// setup shader parameters
+	renderer::MaterialParameter * parameter;
+	for( int p = 0; p < material->parameters.size(); ++p )
+	{
+		parameter = &material->parameters[ p ];
+		int renderstate = material_parameter_type_to_render_state( parameter->type );
+		int uniform_location = shader->get_uniform_location( parameter->name.c_str() );
+		
+		// this needs to be converted to a table of function pointers...
+		if ( renderstate == renderer::DC_UNIFORM1i )
+		{
+			stream.add_uniform1i( uniform_location, parameter->int_value );
+		}
+		else if ( renderstate == renderer::DC_UNIFORM3f )
+		{
+			assert(renderstate == renderer::DC_UNIFORM3f);
+			stream.add_uniform3f( uniform_location, (glm::vec3*)&parameter->vector_value );
+		}
+		else if ( renderstate == renderer::DC_UNIFORM4f )
+		{
+			stream.add_uniform4f( uniform_location, (glm::vec4*)&parameter->vector_value );
+		}
+		else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_2D )
+		{
+//			assets::Texture * texture = assets::textures()->find_with_id(parameter->int_value);
+			if ( parameter->texture )
+			{
+				stream.add_sampler2d( uniform_location, parameter->texture_unit, parameter->texture );
+			}
+		}
+		else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_CUBE )
+		{
+			// ...
+		}
+	}
+} // setup_material
+
 renderer::Texture* GLCore32::texture_create(image::Image& image)
 {
 	GL32Texture* texture = CREATE(GL32Texture);
@@ -1129,6 +1187,8 @@ void GLCore32::shaderprogram_destroy( renderer::ShaderProgram* shader_program )
 		gl.DeleteProgram( program->object );
 		gl.CheckError( "DeleteProgram" );
 	}
+	
+	DESTROY(GLCore32ShaderProgram, program);
 }
 
 void GLCore32::shaderprogram_attach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object )

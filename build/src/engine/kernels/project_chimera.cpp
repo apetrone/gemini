@@ -67,7 +67,7 @@ void render_scene_from_camera(scenegraph::Node* root, Camera& camera)
 	// setup constant buffer
 	glm::vec3 light_position;
 	light_position = camera.pos + -camera.view + glm::vec3(0.0f, 1.0f, 0.0f);
-	renderer::ConstantBuffer cb(0);
+	renderer::ConstantBuffer cb;
 	cb.modelview_matrix = &camera.matCam;
 	cb.projection_matrix = &camera.matProj;
 	cb.viewer_direction = &camera.view;

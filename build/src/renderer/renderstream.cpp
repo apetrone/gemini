@@ -195,48 +195,11 @@ void RenderStream::add_draw_call( renderer::VertexBuffer * vertexbuffer )
 	renderer::driver()->setup_drawcall( vertexbuffer, this->stream );
 }
 
+
 void RenderStream::add_material( renderer::Material * material, renderer::ShaderProgram * shader )
 {
 	assert( material != 0 );
 	assert( shader != 0 );
-
-	// setup shader parameters
-	assert(0);
-#if 0
-	renderer::Material::Parameter * parameter;
-	for( int p = 0; p < material->parameters.size(); ++p )
-	{
-		parameter = &material->parameters[ p ];
-		int renderstate = assets::material_parameter_type_to_render_state( parameter->type );
-		int uniform_location = shader->get_uniform_location( parameter->name.c_str() );
-		
-		// this needs to be converted to a table of function pointers...
-		if ( renderstate == renderer::DC_UNIFORM1i )
-		{
-			add_uniform1i( uniform_location, parameter->intValue );
-		}
-		else if ( renderstate == renderer::DC_UNIFORM3f )
-		{
-			assert(renderstate == renderer::DC_UNIFORM3f);
-			add_uniform3f( uniform_location, (glm::vec3*)&parameter->vecValue );
-		}
-		else if ( renderstate == renderer::DC_UNIFORM4f )
-		{
-			add_uniform4f( uniform_location, (glm::vec4*)&parameter->vecValue );
-		}
-		else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_2D )
-		{
-			assets::Texture * texture = assets::textures()->find_with_id(parameter->intValue);
-			if ( texture )
-			{
-				add_sampler2d( uniform_location, parameter->texture_unit, texture->texture );
-			}
-		}
-		else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_CUBE )
-		{
-			// ...
-		}
-
-	}
-#endif
+	renderer::driver()->setup_material(material, shader, *this);
 }
+

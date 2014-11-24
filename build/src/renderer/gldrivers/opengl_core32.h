@@ -52,7 +52,8 @@ public:
 	virtual void run_command( renderer::DriverCommandType command, util::MemoryStream & stream );
 	virtual void post_command( renderer::DriverCommandType command, util::MemoryStream & stream );
 	virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, util::MemoryStream & stream );
-			
+	virtual void setup_material( renderer::Material* material, renderer::ShaderProgram* program, RenderStream& stream);
+	
 	// texture
 	virtual renderer::Texture* texture_create(image::Image& image);
 	virtual void texture_destroy(renderer::Texture* texture);

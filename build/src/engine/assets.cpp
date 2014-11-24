@@ -111,11 +111,11 @@ namespace assets
 		Material * default_material = materials()->allocate_asset();
 		default_material->name = "default";
 
-		Material::Parameter diffusemap;
+		MaterialParameter diffusemap;
 		diffusemap.name = "diffusemap";
 		diffusemap.type = MP_SAMPLER_2D;
 		diffusemap.texture_unit = texture_unit_for_map(diffusemap.name);
-		diffusemap.intValue = default_texture->Id();
+		diffusemap.int_value = default_texture->Id();
 		
 		default_material->add_parameter(diffusemap);
 
