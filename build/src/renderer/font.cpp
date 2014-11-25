@@ -106,16 +106,11 @@ namespace font
 			renderer::IRenderDriver * driver = renderer::driver();
 			FontData* data = static_cast<FontData*>(userdata);
 			
-			int width = (rect[2] - rect[0]);
-			int height = (rect[3] - rect[1]);
-			
 			image::Image image;
 			image.flags |= image::F_ALPHA;
-//			image.width = width;
-//			image.height = height;
 			image.pixels = (unsigned char*)pixels;
 
-			gemini::Recti area(rect[0], rect[1], width, height);
+			gemini::Recti area(rect[0], rect[1], rect[2], rect[3]);
 			
 			driver->texture_update(data->texture, image, area);
 		}
@@ -141,8 +136,6 @@ namespace font
 					memcpy(&vertex[i].uv, &tcoords[i*2], sizeof(float)*2);
 					memcpy(&vertex[i].color, &colors[i], sizeof(unsigned int));
 				}
-			
-//				internal::_vertexstream.fill_data( (renderer::VertexType*)verts, vertex_count, 0, 0 );
 				internal::_vertexstream.update();
 				
 				glm::mat4 modelview_matrix = glm::mat4(1.0f);
@@ -180,96 +173,8 @@ namespace font
 			renderer::IRenderDriver * driver = renderer::driver();
 			driver->texture_destroy(data->texture);
 		}
-		
-		
 	}; // namespace internal
 	
-
-	
-//	void* f_generate_texture( int width, int height, void * pixels )
-//	{
-//		renderer::IRenderDriver * driver = renderer::driver();
-//		renderer::Texture* texture = nullptr;
-//				
-//		image::Image image;
-//		image.flags |= image::F_ALPHA;
-//		image.width = width;
-//		image.height = height;
-//		image.pixels = (uint8_t*)pixels;
-//		
-//		texture = driver->texture_create(image);
-//		
-//		LOGV( "[font] texture dimensions %i x %i\n", width, height );
-//		return texture;
-//	}
-//
-//	void f_delete_texture(void* userdata)
-//	{
-//		internal::StashData* data = static_cast<internal::StashData*>(userdata);
-//		renderer::IRenderDriver * driver = renderer::driver();
-//		driver->texture_destroy(data->texture);
-//	}
-//	
-//	void f_update_texture(void* userdata, int origin_x, int origin_y, int width, int height, void * pixels)
-//	{
-//		renderer::IRenderDriver * driver = renderer::driver();
-//		internal::StashData* data = static_cast<internal::StashData*>(userdata);
-//
-//		image::Image image;
-//		image.flags |= image::F_ALPHA;
-//		image.width = width;
-//		image.height = height;
-//		image.pixels = (unsigned char*)pixels;
-//		
-//		gemini::Recti area(origin_x, origin_y, width, height);
-//		
-//		driver->texture_update(data->texture, image, area);
-//	}
-//
-//	void f_draw_with_texture(void* userdata, void * vertex_data, int uv_offset, int color_offset, int stride, int vertex_count)
-//	{
-//		renderer::VertexStream & vs = internal::_vertexstream;
-//		internal::StashData* data = static_cast<internal::StashData*>(userdata);
-//		
-//		if ( !vs.has_room( vertex_count, 0 ) )
-//		{
-//			LOGE( "Unable to draw font: vertexstream has no room! (%i)\n", vs.total_vertices );
-//		}
-//		else
-//		{
-//			internal::_vertexstream.fill_data( (renderer::VertexType*)vertex_data, vertex_count, 0, 0 );
-//			internal::_vertexstream.update();
-//
-//			glm::mat4 modelview_matrix = glm::mat4(1.0f);
-//			glm::mat4 projection_matrix;
-//
-//			assert(0);
-//			float w = 0; float h = 0;
-//			w = (real)data->render_width;
-//			h = (real)data->render_height;
-//			projection_matrix = glm::ortho(0.0f, w, 0.0f, h, -1.0f, 1.0f );
-//			
-//			RenderStream rs;
-//			
-//			// activate shader
-//			rs.add_shader( internal::_shader );
-//			
-//			// setup uniforms
-//			rs.add_uniform_matrix4(internal::_uniforms[0], &modelview_matrix );
-//			rs.add_uniform_matrix4(internal::_uniforms[1], &projection_matrix );
-//			rs.add_sampler2d(internal::_uniforms[2], 0, data->texture);
-//			
-//			// add draw call for vertexbuffer
-//			rs.add_draw_call( internal::_vertexstream.vertexbuffer );
-//			
-//			// run all commands
-//			rs.run_commands();
-//			
-//			vs.reset();
-//		}
-//	}
-//
-
 	void startup(renderer::ShaderProgram* fontshader, int render_width, int render_height)
 	{
 		// initialize the vertex stream
@@ -307,9 +212,6 @@ namespace font
 		internal::_uniforms[0] = internal::_shader->get_uniform_location("modelview_matrix");
 		internal::_uniforms[1] = internal::_shader->get_uniform_location("projection_matrix");
 		internal::_uniforms[2] = internal::_shader->get_uniform_location("diffusemap");
-		
-		// generate ccw triangles
-//		sth_set_ccw_triangles();
 	} // startup
 
 	void shutdown()
@@ -325,17 +227,12 @@ namespace font
 			
 			DESTROY(FontData, internal::_font_data);
 		}
-		
-//		sth_reset_internal_data();
 	} // shutdown
 	
 
 	
 	void draw_string(const renderer::Font& font, int x, int y, const char* utf8, const Color& color)
 	{
-		// TODO: should be passed in from callee
-		// y = (render_height-y-titlebar_height);
-		
 		if (font.is_valid())
 		{
 			RenderStream rs;
@@ -363,7 +260,13 @@ namespace font
 	{
 		if (font.is_valid())
 		{
-//			sth_dim_text(internal::_stash, font.handle, font.handle, utf8, &minx, &miny, &maxx, &maxy);
+			float bounds[4];
+			fonsTextBounds(internal::_font_context, 0, 0, utf8, 0, bounds);
+			
+			minx = bounds[0];
+			miny = bounds[1];
+			maxx = bounds[2];
+			maxy = bounds[3];
 		}
 	} // dimensions_for_text
 	
