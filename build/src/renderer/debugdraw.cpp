@@ -125,7 +125,7 @@ namespace debugdraw
 		
 		// the debug font we'll use
 		_internal::debug_font = font;
-		assert(_internal::debug_font.handle != 0);
+		assert(_internal::debug_font.is_valid());
 		
 		// debug shader
 		_internal::debug_shader = program;
@@ -316,7 +316,7 @@ namespace debugdraw
 		// This doesn't place the text into a buffer like the other primitives.
 		// however, it is deferred to make everything render in order.
 	
-		//font::draw_string(_internal::debug_font, primitive->start.x, primitive->start.y, primitive->buffer.c_str(), primitive->color);
+		font::draw_string(_internal::debug_font, primitive->start.x, primitive->start.y, primitive->buffer.c_str(), primitive->color);
 	} // render_text
 	
 	void render(const glm::mat4 & modelview, const glm::mat4 & projection, int x, int y, int viewport_width, int viewport_height)

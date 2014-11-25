@@ -427,7 +427,7 @@ namespace kernel
 			assets::startup();
 			
 			assets::Shader* fontshader = assets::shaders()->load_from_path(FONT_SHADER);
-			font::startup(fontshader->program);
+			font::startup(fontshader->program, params.render_width, params.render_height);
 			
 			assets::Shader* debugshader = assets::shaders()->load_from_path(DEBUG_SHADER);
 			assets::Font* debugfont = assets::fonts()->load_from_path(DEBUG_FONT);			

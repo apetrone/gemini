@@ -21,6 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <stdint.h>
+
 namespace renderer
 {
 	struct Texture
@@ -35,6 +37,13 @@ namespace renderer
 		};
 		
 		PixelFormat format;
+		
+		uint32_t width;
+		uint32_t height;
+		
+		Texture() : width(0), height(0)
+		{
+		}
 		
 	}; // Texture
 }; // namespace renderer

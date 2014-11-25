@@ -92,7 +92,7 @@ namespace assets
 			font->font_size = font->font_size * 2;
 		}
 		
-		if ( font->handle.handle != 0 )
+		if ( font->handle.is_valid() )
 		{
 			return util::ConfigLoad_Success;
 		}

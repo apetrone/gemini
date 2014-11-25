@@ -198,6 +198,7 @@ public:
 	{
 		RenderStream rs;
 		rs.add_cullmode(renderer::CullMode::CULLMODE_BACK);
+//		rs.add_state(renderer::STATE_BACKFACE_CULLING, 0);
 		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
 		rs.add_viewport( 0, 0, params.render_width, params.render_height );
 		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
@@ -484,17 +485,20 @@ public:
 			active_camera->update_view();
 		}
 
-		//physics::debug_draw();
+		physics::debug_draw();
+
 
 		debugdraw::axes(glm::mat4(1.0), 1.0f);
+		int x = 10;
+		int y = params.render_height - 60 - params.titlebar_height;
 		if (active_camera)
 		{
-			debugdraw::text(10, 0, xstr_format("active_camera->pos = %.2g %.2g %.2g", active_camera->pos.x, active_camera->pos.y, active_camera->pos.z), Color(255, 255, 255));
-			debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", active_camera->eye_position.x, active_camera->eye_position.y, active_camera->eye_position.z), Color(255, 0, 255));
-			debugdraw::text(10, 24, xstr_format("active_camera->view = %.2g %.2g %.2g", active_camera->view.x, active_camera->view.y, active_camera->view.z), Color(128, 128, 255));
-			debugdraw::text(10, 36, xstr_format("active_camera->right = %.2g %.2g %.2g", active_camera->side.x, active_camera->side.y, active_camera->side.z), Color(255, 0, 0));
+			debugdraw::text(x, y, xstr_format("active_camera->pos = %.2g %.2g %.2g", active_camera->pos.x, active_camera->pos.y, active_camera->pos.z), Color(255, 255, 255));
+			debugdraw::text(x, y+12, xstr_format("eye_position = %.2g %.2g %.2g", active_camera->eye_position.x, active_camera->eye_position.y, active_camera->eye_position.z), Color(255, 0, 255));
+			debugdraw::text(x, y+24, xstr_format("active_camera->view = %.2g %.2g %.2g", active_camera->view.x, active_camera->view.y, active_camera->view.z), Color(128, 128, 255));
+			debugdraw::text(x, y+36, xstr_format("active_camera->right = %.2g %.2g %.2g", active_camera->side.x, active_camera->side.y, active_camera->side.z), Color(255, 0, 0));
 		}
-		debugdraw::text(10, 48, xstr_format("frame_delta = %g", params.framedelta_raw_msec), Color(255, 255, 255));
+		debugdraw::text(x, y+48, xstr_format("frame delta = %2.2fms\n", params.framedelta_filtered_msec), Color(255, 255, 255));
 
 		root->update(params.step_interval_seconds);
 	}

@@ -30,6 +30,7 @@
 
 #define RGBToUInt( r, g, b ) (((r&255)<<24) | ((g&255) <<16) | ((b&255)<<8) | 255)
 #define UIntToRGB( i, c ) c[0] = ((i>>24)&255); c[1] = ((i>>16)&255); c[2] = ((i>>8)&255)
+#define RGBAToUInt(r, g, b, a) ((r) | (g << 8) | (b << 16) | (a << 24))
 
 // unsigned char rgba[3];
 // unsigned int mycolor = RGBToUInt( 255, 128, 75 );
