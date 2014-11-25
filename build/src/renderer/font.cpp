@@ -106,11 +106,14 @@ namespace font
 			renderer::IRenderDriver * driver = renderer::driver();
 			FontData* data = static_cast<FontData*>(userdata);
 			
+			int width = (rect[2] - rect[0]);
+			int height = (rect[3] - rect[1]);
+			
 			image::Image image;
 			image.flags |= image::F_ALPHA;
 			image.pixels = (unsigned char*)pixels;
 
-			gemini::Recti area(rect[0], rect[1], rect[2], rect[3]);
+			gemini::Recti area(rect[0], rect[1], width, height);
 			
 			driver->texture_update(data->texture, image, area);
 		}
