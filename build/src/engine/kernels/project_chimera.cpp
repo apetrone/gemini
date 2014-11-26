@@ -77,7 +77,7 @@ void render_scene_from_camera(scenegraph::Node* root, Camera& camera, renderer::
 	cb.light_position = &light_position;
 
 	// draw scene graph
-	//scenelink.draw(root, cb);
+	scenelink.draw(root, cb);
 }
 
 class SceneRenderMethod
