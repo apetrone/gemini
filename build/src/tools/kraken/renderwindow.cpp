@@ -22,6 +22,8 @@
 
 #include "renderwindow.h"
 
+#include <renderer/renderer.h>
+#include <renderer/renderstream.h>
 
 #if defined(__APPLE__)
 #include <OpenGL/gl3.h>
@@ -41,16 +43,19 @@ RenderWindow::RenderWindow(
 
 void RenderWindow::initializeGL()
 {
-
 }
 
 void RenderWindow::paintGL()
 {
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    RenderStream rs;
+    rs.add_clearcolor(0.15f, 0.15f, 0.35f, 1.0f);
+    rs.add_clear(renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER);
+    rs.run_commands();
 }
 
 void RenderWindow::resizeGL(int w, int h)
-{
-    glViewport(0, 0, w, h);
+{    
+    RenderStream rs;
+    rs.add_viewport(0, 0, w, h);
+    rs.run_commands();
 }

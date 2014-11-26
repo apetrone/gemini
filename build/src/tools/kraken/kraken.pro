@@ -50,11 +50,15 @@ DESTDIR = ../../../bin/debug_x86_64/
 
 
 unix:LIBS += "-L../../../lib/debug_x86_64"
-unix:LIBS += "-lgemini"
+unix:LIBS += "-lplatform"
+unix:LIBS += "-lcore"
 unix:LIBS += "-lrenderer"
 macx:LIBS += "-framework Cocoa"
 
 INCLUDEPATH += "../"
+INCLUDEPATH += "../../platform"
+INCLUDEPATH += "../../core"
+INCLUDEPATH += "../../renderer"
 INCLUDEPATH += "../../sdk/"
 INCLUDEPATH += "../../../dependencies/glm"
 INCLUDEPATH += "../../../dependencies/slim"

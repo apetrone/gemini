@@ -21,7 +21,8 @@
 // -------------------------------------------------------------
 #include "applicationcontext.h"
 
-#include <gemini/typedefs.h>
+#include <platform/typedefs.h>
+
 
 #include <renderer/renderer.h>
 
