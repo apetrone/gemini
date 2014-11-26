@@ -39,7 +39,7 @@ namespace datamodel
 		}
 	}
 	
-	NodeAnimation* Animation::data_with_name(const std::string& node_name)
+	NodeAnimation* Animation::data_with_name(const String& node_name)
 	{
 		auto it = nodes_by_name.find(node_name);
 		if (it != nodes_by_name.end())
@@ -50,7 +50,7 @@ namespace datamodel
 		return nullptr;
 	}
 	
-	NodeAnimation* Animation::add_node_data(const std::string& node_name)
+	NodeAnimation* Animation::add_node_data(const String& node_name)
 	{
 		NodeAnimation* data = CREATE(NodeAnimation);
 		data->name = node_name;

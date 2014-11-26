@@ -48,13 +48,6 @@ namespace renderer
 		}
 	};
 
-
-//	void RenderQueue::insert(RenderKey key, RenderObject* object)
-//	{
-//		RenderBlock block = RenderBlock(key, object);
-//		render_list.push_back(block);
-//	}
-
 	void RenderQueue::insert(const RenderBlock& block)
 	{
 		render_list.push_back(block);

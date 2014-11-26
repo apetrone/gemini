@@ -57,7 +57,7 @@ void JsonModelWriter::append_material(const datamodel::Material& material, Json:
 {
 	Json::Value jmaterial;
 
-	jmaterial["name"] = material.name;
+	jmaterial["name"] = material.name.c_str();
 	jmaterial["id"] = material.id;
 	
 	jmaterials.append(jmaterial);
@@ -66,8 +66,8 @@ void JsonModelWriter::append_material(const datamodel::Material& material, Json:
 void JsonModelWriter::append_node(datamodel::Node* node, Json::Value& jnodes)
 {
 	Json::Value jnode;
-	jnode["name"] = node->name;
-	jnode["type"] = node->type;
+	jnode["name"] = node->name.c_str();
+	jnode["type"] = node->type.c_str();
 	
 	Json::Value jscale;
 	jscale.append(node->scale.x);
@@ -252,7 +252,7 @@ void JsonModelWriter::write(datamodel::Model* model, util::DataStream& source)
 	{
 		Json::Value janimation;
 		
-		janimation["name"] = animation->name;
+		janimation["name"] = animation->name.c_str();
 		LOGV("animation: %s\n", animation->name.c_str());
 		
 		janimation["frames_per_second"] = animation->frames_per_second;
@@ -280,7 +280,7 @@ void JsonModelWriter::write(datamodel::Model* model, util::DataStream& source)
 				Json::Value jtranslation;
 				gather_keys(jtranslation, data->translation.keys);
 		
-				jnode["name"] = node->name;
+				jnode["name"] = node->name.c_str();
 				jnode["scale"] = jscale;
 				jnode["rotation"] = jrotation;
 				jnode["translation"] = jtranslation;

@@ -23,6 +23,7 @@
 
 #include <platform/typedefs.h>
 #include <core/mathlib.h>
+#include <core/str.h>
 
 #include <vector>
 #include <map>
@@ -68,7 +69,7 @@ namespace datamodel
 	struct NodeAnimation
 	{
 		// the name of the node corresponding to this data
-		std::string name;
+		String name;
 		
 		Channel<glm::vec3> scale;
 		Channel<glm::quat> rotation;
@@ -78,20 +79,20 @@ namespace datamodel
 	// This represents a single animation
 	struct Animation
 	{
-		typedef std::map<std::string, NodeAnimation*> NodeAnimationByNameContainer;
+		typedef std::map<String, NodeAnimation*> NodeAnimationByNameContainer;
 		
 		// keyframe/node data
 		std::vector< NodeAnimation* > node_animations;
 		NodeAnimationByNameContainer nodes_by_name;
 		
 		// this animations' data
-		std::string name;
+		String name;
 		uint16_t frames_per_second;
 		
 		Animation();
 		~Animation();
 		
-		NodeAnimation* data_with_name(const std::string& node_name);
-		NodeAnimation* add_node_data(const std::string& node_name);
+		NodeAnimation* data_with_name(const String& node_name);
+		NodeAnimation* add_node_data(const String& node_name);
 	};
 };

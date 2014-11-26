@@ -85,7 +85,7 @@ namespace assets
 		shader->frag_data_location = "out_color";
 		create_shader_attributes_and_uniforms(shader, attributes, uniforms);
 
-		std::string preprocessor_defines;
+		String preprocessor_defines;
 		for (auto item : preprocessor)
 		{
 			preprocessor_defines += item;

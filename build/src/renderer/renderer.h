@@ -21,8 +21,6 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <string>
-
 #include <platform/typedefs.h>
 #include <platform/mem_stl_allocator.h>
 
@@ -37,9 +35,11 @@
 
 #include "vertexbuffer.h"
 
+#include <core/str.h>
+
 namespace renderer
 {
-	typedef std::basic_string<char, std::char_traits<char>, GeminiAllocator<char> > ShaderString;
+	typedef String ShaderString;
 
 	enum DriverType
 	{

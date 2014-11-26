@@ -62,7 +62,7 @@ namespace scenegraph
 		glm::quat rotation;
 		glm::vec3 translation;
 
-		std::string name;
+		String name;
 		
 		NodeVector children;
 		Node* parent;
@@ -76,7 +76,7 @@ namespace scenegraph
 		
 		void add_child(Node* child);
 		void remove_child(Node* child);
-		Node* find_child_named(const std::string& name);
+		Node* find_child_named(const String& name);
 		virtual void update(float delta_seconds);
 		void update_transforms();
 		void clear();

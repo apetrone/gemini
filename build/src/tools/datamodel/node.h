@@ -24,8 +24,8 @@
 #include <platform/typedefs.h>
 #include <platform/mem.h>
 #include <core/mathlib.h>
+#include <core/str.h>
 #include <vector>
-#include <string>
 
 
 namespace datamodel
@@ -46,8 +46,8 @@ namespace datamodel
 		
 		uint32_t flags;
 		
-		std::string name;
-		std::string type;
+		String name;
+		String type;
 		
 		glm::vec3 scale;
 		glm::quat rotation;
@@ -63,7 +63,7 @@ namespace datamodel
 		virtual ~Node();
 		void add_child(Node* child);
 		void remove_child(Node* child);
-		Node* find_child_named(const std::string& name);
+		Node* find_child_named(const String& name);
 		
 		bool has_animations() const { return (flags & NoAnimations) == 0; }
 	};

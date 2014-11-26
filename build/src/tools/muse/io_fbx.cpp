@@ -173,8 +173,8 @@ static void parse_materials(IndentState& state, FbxNode* node, datamodel::Materi
 										LOGV("%stexture basename: %s\n", state.indent(), texture_path.basename()());
 										LOGV("%sfile name: %s, relative filename: %s\n", state.indent(), file_texture->GetFileName(), file_texture->GetRelativeFileName());
 										
-										std::string texture_name = texture_path.basename().remove_extension()();
-										std::string internal_material_name = "materials/" + texture_name;
+										String texture_name = texture_path.basename().remove_extension()();
+										String internal_material_name = "materials/" + texture_name;
 										const datamodel::Material& material = materials.find_with_name(internal_material_name);
 										
 										// If you hit this assert, the mesh has multiple materials.
@@ -356,7 +356,7 @@ static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh, 
 	DESTROY_ARRAY(Vertex, vertices, mesh->indices.size());
 }
 
-static std::string type_from_node(FbxNode* node)
+static String type_from_node(FbxNode* node)
 {
 	if (node->GetSkeleton())
 	{
@@ -398,7 +398,7 @@ static void populate_animations(IndentState& state, datamodel::Model* model, Fbx
 	
 	bool is_hierarchical = is_hierarchical_node(fbxnode);
 	
-	std::string node_name = fbxnode->GetName();
+	String node_name = fbxnode->GetName();
 	datamodel::Node* node = model->root.find_child_named(node_name);
 	if (is_hierarchical && node && node->has_animations())
 	{

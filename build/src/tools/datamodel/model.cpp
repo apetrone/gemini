@@ -32,7 +32,7 @@ namespace datamodel
 		}
 	}
 	
-	Animation* Model::add_animation(const std::string& name)
+	Animation* Model::add_animation(const String& name)
 	{
 		Animation* animation = CREATE(Animation);
 		animation->name = name;

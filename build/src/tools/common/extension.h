@@ -25,6 +25,7 @@
 #include <map>
 
 #include <core/datastream.h>
+#include <core/str.h>
 
 namespace tools
 {
@@ -42,7 +43,7 @@ namespace tools
 				IsLoaded
 			};
 		
-			std::string path;
+			String path;
 			uint32_t flags;
 		};
 	

@@ -85,7 +85,7 @@ namespace datamodel
 		}
 	}
 	
-	Node* Node::find_child_named(const std::string& name)
+	Node* Node::find_child_named(const String& name)
 	{
 		if (this->name == name)
 		{

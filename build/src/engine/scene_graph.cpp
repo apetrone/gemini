@@ -93,7 +93,7 @@ namespace scenegraph
 		children.push_back(child);
 	}
 	
-	Node* Node::find_child_named(const std::string& name)
+	Node* Node::find_child_named(const String& name)
 	{
 		if (this->name == name)
 		{
@@ -203,7 +203,7 @@ namespace scenegraph
 	
 	static void print_tree_node(Node* root, uint32_t indent_depth)
 	{
-		std::string indent;
+		String indent;
 		for (uint32_t i = 0; i < indent_depth; ++i)
 		{
 			indent += "\t";

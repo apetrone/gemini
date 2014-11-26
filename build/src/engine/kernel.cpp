@@ -50,7 +50,7 @@
 namespace kernel
 {
 	// This is NOT hooked up to the memory allocator because this is accessed before the memory allocator is initialized.
-	typedef std::map< std::string, ApplicationCreator> ApplicationCreatorByString;
+	typedef std::map< String, ApplicationCreator> ApplicationCreatorByString;
 	
 	const char FONT_SHADER[] = "shaders/fontshader";
 	const char DEBUG_FONT[] = "fonts/debug";
@@ -109,7 +109,7 @@ namespace kernel
 		}
 		
 		EventHooks _event_hooks;
-		std::string game_path;
+		String game_path;
 		
 		ApplicationCreatorByString & creator_map()
 		{
@@ -124,7 +124,7 @@ namespace kernel
 		
 		static ApplicationCreator find_application_by_name( const char * kernel_name )
 		{
-			std::string kname = kernel_name;
+			String kname = kernel_name;
 			ApplicationCreatorByString::iterator it = creator_map().find( kname );
 			if ( it != creator_map().end() )
 			{
@@ -544,7 +544,7 @@ namespace kernel
 			arg = argv[i];
 			if (std::string(arg) == "-game")
 			{
-				_internal::game_path = std::string(argv[i+1]);
+				_internal::game_path = String(argv[i+1]);
 			}
 		}
 	}

@@ -43,7 +43,6 @@ namespace renderer
 	// Contains necessary data needed in order to submit this to the renderer
 	typedef Geometry RenderObject;
 
-
 	// An item in a queue/list that contains a sorting key and a pointer to a RenderObject
 	// A RenderBlock is created for each renderable scene graph node.
 	struct RenderBlock
@@ -82,9 +81,6 @@ namespace renderer
 
 	class RenderQueue
 	{
-
-		
-		
 	public:
 		typedef std::vector< RenderBlock, GeminiAllocator<RenderBlock> > RenderList;
 		
@@ -92,8 +88,7 @@ namespace renderer
 	
 		RenderQueue() {}
 		~RenderQueue() {}
-		
-//		void insert(RenderKey key, RenderObject* object);
+
 		void insert(const RenderBlock& block);
 		void sort();
 		void clear();

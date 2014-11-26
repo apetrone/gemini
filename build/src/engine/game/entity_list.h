@@ -75,7 +75,7 @@ struct EntityList
 	
 	
 	
-	Type * find_with_name( const std::string & name )
+	Type * find_with_name( const String & name )
 	{
 		for (typename Vector::iterator it = this->objects.begin(); it != this->objects.end(); ++it )
 		{

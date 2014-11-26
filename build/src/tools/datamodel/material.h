@@ -22,8 +22,8 @@
 #pragma once
 
 #include <platform/typedefs.h>
+#include <core/str.h>
 
-#include <string>
 #include <vector>
 #include <map>
 
@@ -33,14 +33,14 @@ namespace datamodel
 	struct Material
 	{
 		MaterialId id;
-		std::string name;
+		String name;
 	};
 
 	// Maintains a list of materials
 	class MaterialMap
 	{
 	public:
-		typedef std::map<std::string, Material> MaterialContainer;
+		typedef std::map<String, Material> MaterialContainer;
 		typedef std::vector<Material> MaterialVector;
 
 	private:
@@ -53,8 +53,8 @@ namespace datamodel
 		virtual ~MaterialMap() {}
 		
 		Material& find_with_id(MaterialId id);
-		Material& find_with_name(const std::string& name);
-		Material& add_material(const std::string& name);
+		Material& find_with_name(const String& name);
+		Material& add_material(const String& name);
 		size_t size() const { return materials.size(); }
 	
 		MaterialVector::iterator begin();

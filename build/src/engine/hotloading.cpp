@@ -20,8 +20,6 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 
-#include <string>
-
 #include <slim/xlog.h>
 #include <slim/xstr.h>
 
@@ -187,7 +185,7 @@ namespace hotloading
 	namespace _internal
 	{
 		CivetServer* server = nullptr;
-		ThreadSafeQueue<std::string> reload_queue;
+		ThreadSafeQueue<String> reload_queue;
 	}
 	
 
@@ -196,7 +194,7 @@ namespace hotloading
 		virtual bool handlePut(CivetServer* server, struct mg_connection* conn)
 		{
 			const struct mg_request_info* request = mg_get_request_info(conn);
-			std::string buf;
+			String buf;
 			
 			buf.resize(1024);
 			int bytes = mg_read(conn, &buf[0], 1024);
@@ -210,7 +208,7 @@ namespace hotloading
 			// On Error, we can return "400 Bad Request",
 			// but we'll have to provide a response body to describe why.
 			
-			std::string output = "204 No Content";
+			String output = "204 No Content";
 			mg_write(conn, &output[0], output.length());
 			
 			return true;
@@ -225,24 +223,24 @@ namespace hotloading
 	
 	class AssetHotloadHandler : public CivetHandler
 	{
-		ThreadSafeQueue<std::string>& queue;
+		ThreadSafeQueue<String>& queue;
 		
 	public:
 		
-		AssetHotloadHandler(ThreadSafeQueue<std::string>& command_queue) : queue(command_queue)
+		AssetHotloadHandler(ThreadSafeQueue<String>& command_queue) : queue(command_queue)
 		{}
 		
 		virtual bool handlePut(CivetServer* server, struct mg_connection* conn)
 		{
 			const struct mg_request_info* request = mg_get_request_info(conn);
-			std::string buf;
+			String buf;
 			
 			buf.resize(1024);
 			int bytes = mg_read(conn, &buf[0], 1024);
 			assert(bytes < 1024);
 			
 			// send a response that we received it.
-			std::string output = "204 No Content";
+			String output = "204 No Content";
 			mg_write(conn, &output[0], output.length());
 			
 			
@@ -289,13 +287,13 @@ namespace hotloading
 		{
 			for(size_t i = 0; i < queued_items; ++i)
 			{
-				std::string item = _internal::reload_queue.dequeue();
+				String item = _internal::reload_queue.dequeue();
 				// for now, assume everything is a shader.
 				//				LOGV("processing: %s\n", item.c_str());
 				StackString<512> relative_path = item.c_str();
 				
 				// get the basename to lookup asset library.
-				std::string dirname = relative_path.dirname()();
+				String dirname = relative_path.dirname()();
 				
 				// TODO: replace this with a better mechanism
 				if (dirname == "shaders")

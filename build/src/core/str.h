@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2014- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -21,30 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <vector>
+#include <platform/mem.h>
+#include <string>
 
-#include <core/stackstring.h>
-
-#include "assets.h"
-#include "assets/asset_shader.h"
-
-#include <renderer/material.h>
-
-namespace assets
-{
-	struct Material : public Asset, public renderer::Material
-	{
-		Shader * shader;
-
-		virtual void release();
-	}; // Material
-		
-	unsigned int texture_unit_for_map(const std::string& name );
-	unsigned int material_type_to_parameter_type( const char * name );
-
-	
-	AssetLoadStatus material_load_callback( const char * path, Material * material, const AssetParameters & parameters );
-	void material_construct_extension( StackString<MAX_PATH_SIZE> & extension );
-
-	DECLARE_ASSET_LIBRARY_ACCESSOR(Material, AssetParameters, materials);
-}; // namespace assets
+typedef std::basic_string<char, std::char_traits<char>, GeminiAllocator<char> > String;

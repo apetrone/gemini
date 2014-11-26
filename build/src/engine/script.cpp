@@ -32,7 +32,7 @@
 #include <core/mathlib.h>
 #include <renderer/debugdraw.h>
 
-
+#include <core/str.h>
 #include "camera.h"
 
 
@@ -720,13 +720,13 @@ namespace script
 
 		
 		// used for includes to determine the path of the currently loaded script
-		typedef std::stack< std::string > StringStack;
+		typedef std::stack< String > StringStack;
 		
 		StringStack include_paths;
 		
 		void script_include( const char * path )
 		{
-			std::string front = include_paths.top();
+			String front = include_paths.top();
 			front.append(path);
 
 			execute_file(front.c_str());
@@ -920,9 +920,9 @@ namespace script
 		// based on the path passed into this function
 		// determine what the relative directory is and push that
 		// on the include_paths stack.
-		std::string path = filename;
+		String path = filename;
 		size_t pos = path.find_last_of("/");
-		std::string temp = path.substr(0, pos+1);
+		String temp = path.substr(0, pos+1);
 		include_paths.push(temp);
 		
 		//fprintf( stdout, "execute: %s\n", filename );

@@ -22,7 +22,6 @@
 #pragma once
 
 #include <vector>
-#include <string>
 
 #include <slim/xlog.h>
 
@@ -86,7 +85,7 @@ struct Entity
 	uint64_t id;
 	uint32_t flags;
 	
-	std::string name;
+	String name;
 	
 	Entity();
 	virtual ~Entity();
@@ -100,8 +99,8 @@ struct Entity
 	virtual void remove();
 	
 	// get/set functions for script interop
-	const std::string & get_name() { return this->name; }
-	void set_name( const std::string & object_name ) { this->name = object_name; }
+	const String & get_name() { return this->name; }
+	void set_name( const String & object_name ) { this->name = object_name; }
 	virtual void native_fixed_update( float delta_seconds );
 	virtual void native_update();
 	

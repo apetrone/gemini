@@ -26,7 +26,7 @@
 #include <vector>
 //#include <string>
 
-
+#include <core/str.h>
 
 #include <platform/typedefs.h>
 
@@ -47,6 +47,6 @@ namespace datamodel
 		
 		~Model();
 		
-		Animation* add_animation(const std::string& name);		
+		Animation* add_animation(const String& name);
 	};
 };

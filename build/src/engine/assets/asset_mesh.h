@@ -92,7 +92,7 @@ namespace assets
 		~Bone() {}
 		
 		// name of this bone
-		std::string name;
+		String name;
 		
 		// local to bone space (vertex to bone)
 		glm::mat4 inverse_bind_matrix;

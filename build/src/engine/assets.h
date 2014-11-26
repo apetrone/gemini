@@ -21,8 +21,6 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <string>
-
 #include <core/stackstring.h>
 #include <platform/platform.h>
 

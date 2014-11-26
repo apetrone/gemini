@@ -24,13 +24,14 @@
 #include <string>
 
 #include <core/mathlib.h>
+#include <core/str.h>
 
 namespace tools
 {
 	struct IndentState
 	{
 		size_t depth;
-		std::string buffer;
+		String buffer;
 		
 		IndentState() : depth(0)
 		{}

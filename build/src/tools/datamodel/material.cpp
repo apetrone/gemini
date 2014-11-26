@@ -47,7 +47,7 @@ namespace datamodel
 		return materials[ id ];
 	}
 	
-	Material& MaterialMap::find_with_name(const std::string& name)
+	Material& MaterialMap::find_with_name(const String& name)
 	{
 		auto it = materials_by_name.find(name);
 		if (it != materials_by_name.end())
@@ -58,7 +58,7 @@ namespace datamodel
 		return _default_material;
 	}
 
-	Material& MaterialMap::add_material(const std::string& name)
+	Material& MaterialMap::add_material(const String& name)
 	{
 		Material material;
 		material.id = next_id++;
