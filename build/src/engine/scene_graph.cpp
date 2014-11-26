@@ -178,7 +178,6 @@ namespace scenegraph
 	
 	void recursive_visit_nodes(Node* root, Visitor* visitor)
 	{
-		visitor->visit(root);
 		NodeVector::iterator start, end;
 		start = root->children.begin();
 		end = root->children.end();
