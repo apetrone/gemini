@@ -191,69 +191,6 @@ namespace renderer
 			}
 		}
 		
-	#if 0
-		bool create_shader_program_from_file(const char* path, StringVector& stages, std::string& preprocessor)
-		{
-			if (!renderer::driver())
-			{
-				LOGW( "Renderer is not initialized!\n" );
-				return false;
-			}
-			
-			renderer::IRenderDriver* driver = renderer::driver();
-			
-			// verify all stages exist
-			bool stages_exist = verify_stages_exist_on_disk(path, stages);
-			if (!stages_exist)
-			{
-				LOGW("One or more stages do not exist for shader %s. Aborting.\n", path);
-				return false;
-			}
-			
-			// shader program is uninitialized; create a new one
-			if (shader == 0)
-			{
-				shader = driver->shaderprogram_create();
-			}
-			
-			// attach shader objects to program
-			FixedArray<renderer::ShaderObject> shader_objects;
-			shader_objects.allocate(stages.size());
-			for (int i = 0; i < shader_objects.size(); ++i)
-			{
-				std::string filename = path + shader_stage_to_extension(stages[i]);
-				shader_objects[i] = create_shader_from_file(filename.c_str(), shader_stage_to_shaderobject_type(stages[i]), preprocessor);
-				driver->shaderprogram_attach(shader, shader_objects[i]);
-			}
-			
-			// attributes must be bound before linking the program
-			driver->shaderprogram_bind_attributes(shader);
-			
-			// Link and validate the program; spit out any log info
-			if (driver->shaderprogram_link_and_validate(shader))
-			{
-				driver->shaderprogram_activate(shader);
-				
-				// loop through all uniforms and cache their locations
-				driver->shaderprogram_bind_uniforms(shader);
-				
-	//			driver->shaderprogram_bind_uniform_block(*shader, *shader, "constant_buffer");
-				
-				driver->shaderprogram_deactivate(shader);
-			}
-			
-			// detach and destroy shader objects
-			for (auto& object : shader_objects)
-			{
-				driver->shaderprogram_detach(*shader, object);
-				driver->shaderobject_destroy(object);
-			}
-			
-			return true;
-		}
-	#endif
-		
-		
 		renderer::ShaderObject create_shader_from_file(const char* shader_path, renderer::ShaderObjectType type, std::string& preprocessor_defines )
 		{
 			renderer::ShaderObject shader_object;
