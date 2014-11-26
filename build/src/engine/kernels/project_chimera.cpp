@@ -62,7 +62,9 @@ uint8_t REQUIRE_RIFT = 1;
 
 using namespace physics;
 
-void render_scene_from_camera(scenegraph::Node* root, Camera& camera)
+
+
+void render_scene_from_camera(scenegraph::Node* root, Camera& camera, renderer::SceneLink& scenelink)
 {
 	// setup constant buffer
 	glm::vec3 light_position;
@@ -74,9 +76,8 @@ void render_scene_from_camera(scenegraph::Node* root, Camera& camera)
 	cb.viewer_position = &camera.eye_position;
 	cb.light_position = &light_position;
 
-//	// draw scene graph
-	renderer::SceneLink scenelink;
-	scenelink.draw(root, cb);
+	// draw scene graph
+	//scenelink.draw(root, cb);
 }
 
 class SceneRenderMethod
@@ -90,9 +91,11 @@ public:
 class VRRenderMethod : public SceneRenderMethod
 {
 	vr::HeadMountedDevice* device;
+	
+	renderer::SceneLink& scenelink;
 
 public:
-	VRRenderMethod(vr::HeadMountedDevice* in_device) : device(in_device) {}
+	VRRenderMethod(vr::HeadMountedDevice* in_device, renderer::SceneLink& in_link) : device(in_device), scenelink(in_link) {}
 	
 	virtual void render_frame( scenegraph::Node* root, Camera& camera, const kernel::Params& params )
 	{
@@ -177,7 +180,7 @@ public:
 			rs.run_commands();
 			rs.rewind();
 
-			render_scene_from_camera(root, camera);
+			render_scene_from_camera(root, camera, scenelink);
 			
 			
 			camera.matCam = old_matcam;
@@ -193,7 +196,10 @@ public:
 
 class DefaultRenderMethod : public SceneRenderMethod
 {
+	renderer::SceneLink& scenelink;
 public:
+	DefaultRenderMethod(renderer::SceneLink& in_link) : scenelink(in_link) {};
+
 	virtual void render_frame( scenegraph::Node* root, Camera& camera, const kernel::Params& params )
 	{
 		RenderStream rs;
@@ -205,7 +211,7 @@ public:
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
 		rs.run_commands();
 		
-		render_scene_from_camera(root, camera);
+		render_scene_from_camera(root, camera, scenelink);
 		
 		// draw debug graphics
 		{
@@ -229,6 +235,7 @@ public:
 	scenegraph::Node* root;
 	vr::HeadMountedDevice* device;
 
+	renderer::SceneLink scenelink;
 	SceneRenderMethod* render_method;
 
 	ProjectChimera()
@@ -369,11 +376,11 @@ public:
 		if (device && RENDER_TO_VR)
 		{
 			vr::setup_rendering(device, params.render_width, params.render_height);
-			render_method = CREATE(VRRenderMethod, device);
+			render_method = CREATE(VRRenderMethod, device, scenelink);
 		}
 		else
 		{
-			render_method = CREATE(DefaultRenderMethod);
+			render_method = CREATE(DefaultRenderMethod, scenelink);
 		}
 	
 		// create character
