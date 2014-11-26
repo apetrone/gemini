@@ -490,7 +490,7 @@ public:
 
 		debugdraw::axes(glm::mat4(1.0), 1.0f);
 		int x = 10;
-		int y = params.render_height - 60 - params.titlebar_height;
+		int y = params.render_height - 50 - params.titlebar_height;
 		if (active_camera)
 		{
 			debugdraw::text(x, y, xstr_format("active_camera->pos = %.2g %.2g %.2g", active_camera->pos.x, active_camera->pos.y, active_camera->pos.z), Color(255, 255, 255));
@@ -499,6 +499,7 @@ public:
 			debugdraw::text(x, y+36, xstr_format("active_camera->right = %.2g %.2g %.2g", active_camera->side.x, active_camera->side.y, active_camera->side.z), Color(255, 0, 0));
 		}
 		debugdraw::text(x, y+48, xstr_format("frame delta = %2.2fms\n", params.framedelta_filtered_msec), Color(255, 255, 255));
+		debugdraw::text(x, y+60, xstr_format("# allocations = %i, total %i Kbytes\n", memory::allocator().total_allocations(), memory::allocator().total_bytes()/1024), Color(64, 102, 192));
 
 		root->update(params.step_interval_seconds);
 	}
