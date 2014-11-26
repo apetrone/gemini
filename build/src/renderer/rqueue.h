@@ -59,12 +59,24 @@ namespace renderer
 		glm::mat4* node_transforms;
 		uint8_t total_transforms;
 		
-		RenderBlock(RenderKey _key, RenderObject* _object) :
+		RenderBlock(RenderKey _key = 0, RenderObject* _object = 0) :
 			key(_key), object(_object)
 		{
 			object_matrix = 0;
 			node_transforms = 0;
 			total_transforms = 0;
+			material_id = 0;
+			shader_id = 0;
+		}
+			
+		RenderBlock& operator= (const RenderBlock& other)
+		{
+			key = other.key;
+			object = other.object;
+			
+			object_matrix = other.object_matrix;
+			node_transforms = other.node_transforms;
+			total_transforms = other.total_transforms;
 		}
 	};
 
