@@ -109,7 +109,7 @@ namespace kernel
 		}
 		
 		EventHooks _event_hooks;
-		String game_path;
+		const char* game_path = 0;
 		
 		ApplicationCreatorByString & creator_map()
 		{
@@ -350,7 +350,7 @@ namespace kernel
 		// if no game is specified on the command line, construct the content path
 		// from the current root directory
 		StackString<MAX_PATH_SIZE> content_path;
-		if (_internal::game_path.empty())
+		if (_internal::game_path == 0)
 		{
 			core::filesystem::construct_content_directory(content_path);
 		}
@@ -358,7 +358,7 @@ namespace kernel
 		{
 			// dev builds (passed by -game) are located at:
 			// "<game_path>/builds/<PLATFORM_NAME>"
-			content_path = _internal::game_path.c_str();
+			content_path = _internal::game_path;
 			content_path.append(PATH_SEPARATOR_STRING);
 			content_path.append("builds");
 			content_path.append(PATH_SEPARATOR_STRING);
@@ -490,6 +490,8 @@ namespace kernel
 			_kernel = 0;
 		}
 		
+		_internal::game_path = 0;
+		
 	} // shutdown
 
 	void update()
@@ -542,9 +544,9 @@ namespace kernel
 		for(int i = 0; i < argc; ++i)
 		{
 			arg = argv[i];
-			if (std::string(arg) == "-game")
+			if (String(arg) == "-game")
 			{
-				_internal::game_path = String(argv[i+1]);
+				_internal::game_path = argv[i+1];
 			}
 		}
 	}
