@@ -1219,14 +1219,15 @@ void GLCore32::shaderprogram_detach( renderer::ShaderProgram* shader_program, re
 
 void GLCore32::shaderprogram_bind_attributes( renderer::ShaderProgram* shader_program )
 {
-	// gl.BindFragDataLocation(shader_program.object, 0, parameters.frag_data_location);
-	// gl.CheckError( "BindFragDataLocation" );
 	GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
+
+	gl.BindFragDataLocation(program->object, 0, program->frag_data_location());
+	gl.CheckError( "BindFragDataLocation" );
 	
 	for(uint32_t i = 0; i < program->attributes.size(); ++i)
 	{
 		ShaderKeyValuePair * keyvalue = &program->attributes[i];
-		SHADER_DEBUG( "BindAttribLocation -> %s to %i\n", keyvalue->first, keyvalue->second );
+		SHADER_DEBUG( "BindAttribLocation -> %s to %i\n", keyvalue->first.c_str(), keyvalue->second );
 		gl.BindAttribLocation( program->object, keyvalue->second, keyvalue->first.c_str() );
 		gl.CheckError( xstr_format( "BindAttribLocation: %s", keyvalue->first.c_str() ));
 	}

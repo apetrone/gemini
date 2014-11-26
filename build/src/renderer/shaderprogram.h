@@ -53,9 +53,6 @@ namespace renderer
 	
 	struct ShaderProgram
 	{
-		//unsigned int id;
-		unsigned int capabilities;
-		
 		StackString<64> frag_data_location;
 		
 		FixedArray<ShaderKeyValuePair> uniforms;
@@ -63,7 +60,7 @@ namespace renderer
 		
 		unsigned int object;
 		
-		ShaderProgram() : object(0) {}
+		ShaderProgram() : object(0), frag_data_location("out_color") {}
 		virtual ~ShaderProgram() {}
 		
 		int get_uniform_location( const char * name );
