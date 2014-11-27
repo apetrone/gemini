@@ -290,6 +290,8 @@ def get_librenderer(arguments, target_platform):
 
 	librenderer.includes += [
 		"src/contrib",
+
+		"src/renderer",
 		"src/renderer/gldrivers",
 
 		os.path.join(DEPENDENCIES_FOLDER, "fontstash/src")		
@@ -339,7 +341,6 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/osx/*.*"
 	]
 
-	mac
 
 	linux = libplatform.layout(platform="linux")
 	linux.sources += [
@@ -562,7 +563,7 @@ def products(arguments, **kwargs):
 		]
 
 		windows.sources += [
-			"src/core/desktop/entry_windows.cpp"
+			"src/engine/platforms/desktop/entry_windows.cpp"
 		]
 
 
