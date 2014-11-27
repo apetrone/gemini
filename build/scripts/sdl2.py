@@ -458,9 +458,9 @@ def check_directx(vars, arguments, product, target_platform):
 	# This will indicate that the DXSDK is installed -- which is required by SDL2
 	# because it doesn't seem to support these headers in the Platform SDK.
 
+	found_dxsdk_dir = "DXSDK_DIR" in os.environ
 
-
-	if have_directx_headers and "DXSDK_DIR" in os.environ:
+	if have_directx_headers and found_dxsdk_dir:
 		dxsdk_root = os.environ["DXSDK_DIR"]
 		logging.info("Detected DirectX SDK in: %s" % dxsdk_root)
 		
@@ -471,6 +471,13 @@ def check_directx(vars, arguments, product, target_platform):
 		#product.libdirs += [
 		#	"%s/Lib/${ARCHITECTURE}" % dxsdk_root
 		#]
+	else:
+		if not found_dxsdk_dir:
+			raise Exception("Unable to find $(DXSDK_DIR) in the environment\n"
+				"The June 2010 DirectX SDK is required to build SDL2.\n"
+				"It's possible that the installer malfunctioned and failed to setup the environment variable.\n"
+				)
+
 		
 
 
