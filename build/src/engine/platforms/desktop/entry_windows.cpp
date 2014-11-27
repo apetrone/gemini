@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <iostream>
-#include <gemini/typedefs.h>
+#include <platform/typedefs.h>
 #include "kernel_desktop.h"
  
 #include <windows.h>
@@ -28,6 +28,7 @@
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR commandline, int show)
 {
 	memory::startup();
+	// TODO: parse the LPSTR commandline
 	char *argv[] = { "-game", "C:\\Users\\apetrone\\dev\\games" };
 	kernel::parse_commandline(2, argv);
 

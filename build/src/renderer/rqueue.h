@@ -76,6 +76,8 @@ namespace renderer
 			object_matrix = other.object_matrix;
 			node_transforms = other.node_transforms;
 			total_transforms = other.total_transforms;
+
+			return *this;
 		}
 	};
 
