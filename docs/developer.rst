@@ -7,8 +7,8 @@ Removing a git submodule:
 	.. code-block:: c
 	
 		git submodule deinit -f <submodule>
-		rm .git/modules/<submodule>
-		rm --cached <submodule>
+		rm -rf .git/modules/<submodule>
+		git rm --cached <submodule>
 
 - edit the .gitmodules file and remove traces of the module
 	.. code-block:: c
