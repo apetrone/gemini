@@ -80,7 +80,7 @@ namespace platform
 		result = GetModuleFileNameA(GetModuleHandleA(0), path, size);
 		if (result == 0)
 		{
-			error.status = core::Result::Failure;
+			error.status = platform::Result::Failure;
 			error.message = "GetModuleFileNameA failed!";
 		}
 		
