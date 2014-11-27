@@ -130,7 +130,6 @@ def setup_common_libs(arguments, product):
 		"src/contrib",
 
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3"),
-		os.path.join(DEPENDENCIES_FOLDER, "font-stash"),
 		os.path.join(DEPENDENCIES_FOLDER, "slim")
 	]
 
@@ -282,10 +281,7 @@ def get_librenderer(arguments, target_platform):
 	librenderer.root = "../"
 	librenderer.sources += [
 		"src/renderer/*.*",
-		"src/renderer/gldrivers/opengl_common.*",
-
-		os.path.join(DEPENDENCIES_FOLDER, "font-stash/fontstash.c"),
-		os.path.join(DEPENDENCIES_FOLDER, "font-stash/stb_truetype.c")		
+		"src/renderer/gldrivers/opengl_common.*"
 	]
 
 	librenderer.defines += [
@@ -294,7 +290,9 @@ def get_librenderer(arguments, target_platform):
 
 	librenderer.includes += [
 		"src/contrib",
-		"src/renderer/gldrivers"
+		"src/renderer/gldrivers",
+
+		os.path.join(DEPENDENCIES_FOLDER, "fontstash/src")		
 	]
 
 	librenderer.excludes += [
@@ -340,6 +338,8 @@ def get_libplatform(arguments, target_platform):
 	macosx.sources += [
 		"src/platform/osx/*.*"
 	]
+
+	mac
 
 	linux = libplatform.layout(platform="linux")
 	linux.sources += [
@@ -406,6 +406,11 @@ def products(arguments, **kwargs):
 	g_macosx.driver.clang_cxx_library = "libc++"
 	g_macosx.driver.macosx_deployment_target = "10.8"
 	g_macosx.driver.sdkroot = "macosx10.9"
+
+	# make sure we get smybols for libs
+	debug_mac = global_params.layout(platform="macosx", configuration="debug")
+	debug_mac.driver.gcc_optimization_level = "0"
+	debug_mac.driver.debug_information_format = "dwarf-with-dsym"
 
 
 	#g_linux = global_params.layout(platform="linux")
