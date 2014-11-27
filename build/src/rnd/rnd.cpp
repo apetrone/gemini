@@ -41,7 +41,7 @@ using namespace std;
 		#include <GL/glx.h>
 	#endif
 #else
-	#error Not implemented on this platform.
+	#include <gl/GL.h>
 #endif
 
 #include "common.h"
@@ -87,10 +87,16 @@ void test_function()
 
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <termios.h>
+
+
+#if defined(__linux__) || defined(__APPLE__)
+	#include <unistd.h>
+	#include <termios.h>
+#elif defined(WIN32)
+	#error Not implemented on this platform!
+#endif
 
 class SerialPort
 {
