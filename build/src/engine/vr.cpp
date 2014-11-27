@@ -33,6 +33,16 @@
 	#include "OVR_CAPI_GL.h"
 #endif
 
+#if defined(PLATFORM_WINDOWS)
+	#if defined(min)
+		#undef min
+	#endif
+
+	#if defined(max)
+		#undef max
+	#endif
+#endif
+
 namespace vr
 {
 #if GEMINI_WITH_OCULUSVR
