@@ -10,9 +10,6 @@
 [submodule "build/dependencies/glm"]
 	path = build/dependencies/glm
 	url = git://github.com/g-truc/glm.git
-[submodule "build/dependencies/font-stash"]
-	path = build/dependencies/font-stash
-	url = git://github.com/apetrone/font-stash.git
 [submodule "build/dependencies/slim"]
 	path = build/dependencies/slim
 	url = git://github.com/apetrone/slim.git
@@ -34,3 +31,6 @@
 [submodule "build/dependencies/civetweb"]
 	path = build/dependencies/civetweb
 	url = git://github.com/apetrone/civetweb.git
+[submodule "build/dependencies/fontstash"]
+	path = build/dependencies/fontstash
+	url = git@github.com:memononen/fontstash.git
