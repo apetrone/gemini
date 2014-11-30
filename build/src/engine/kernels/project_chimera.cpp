@@ -237,6 +237,8 @@ public:
 
 	renderer::SceneLink scenelink;
 	SceneRenderMethod* render_method;
+	
+	bool draw_physics_debug;
 
 	ProjectChimera()
 	{
@@ -245,6 +247,7 @@ public:
 		device = 0;
 		render_method = 0;
 		active_camera = 0;
+		draw_physics_debug = false;
 	}
 	
 	virtual void event( kernel::KeyboardEvent & event )
@@ -268,6 +271,10 @@ public:
 				{
 					device->reset_head_pose();
 				}
+			}
+			else if (event.key == input::KEY_P)
+			{
+				draw_physics_debug = !draw_physics_debug;
 			}
 		}
 	}
@@ -492,7 +499,10 @@ public:
 			active_camera->update_view();
 		}
 
-		physics::debug_draw();
+		if (draw_physics_debug)
+		{
+			physics::debug_draw();
+		}
 
 
 		debugdraw::axes(glm::mat4(1.0), 1.0f);
