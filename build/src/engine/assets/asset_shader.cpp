@@ -108,7 +108,7 @@ namespace assets
 
 	AssetLoadStatus shader_load_callback(const char* path, Shader* shader, const AssetParameters& parameters)
 	{
-		shader->program = renderer::create_shaderprogram_from_file(path);
+		renderer::create_shaderprogram_from_file(path, &shader->program);
 		if (!shader->program)
 		{
 			return AssetLoad_Failure;

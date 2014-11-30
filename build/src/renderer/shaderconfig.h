@@ -30,6 +30,6 @@ namespace renderer
 		void startup();
 		void shutdown();
 		
-		renderer::ShaderProgram* load_shaderprogram_from_file(const char* path);
+		void load_shaderprogram_from_file(const char* path, renderer::ShaderProgram** program);
 	}
 }; // namespace renderer

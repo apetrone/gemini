@@ -277,7 +277,7 @@ namespace renderer
 			return true;
 		}
 		
-		renderer::ShaderProgram* load_shaderprogram_from_file(const char* path)
+		void load_shaderprogram_from_file(const char* path, renderer::ShaderProgram** shader_program)
 		{
 			// find the specific shader requested in the shader config
 			// We could actually use the dirname here in case someone requests
@@ -302,9 +302,15 @@ namespace renderer
 				preprocessor_defines += "\n";
 			}
 			
+
+			assert(shader_program != 0);
 			renderer::IRenderDriver* driver = renderer::driver();
-			renderer::ShaderProgram* program = driver->shaderprogram_create();
-			
+			renderer::ShaderProgram* program = *shader_program;
+			if (!program)
+			{
+				program = driver->shaderprogram_create();
+			}
+
 			assert(program != 0);
 			map_attributes_and_uniforms(program, attributes, uniforms);
 			
@@ -315,6 +321,8 @@ namespace renderer
 				driver->shaderprogram_destroy(program);
 				program = nullptr;
 			}
+			
+			*shader_program = program;
 			
 			return program;
 		}

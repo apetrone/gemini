@@ -54,9 +54,9 @@ namespace renderer
 	
 	IRenderDriver * driver() { return _render_driver; }
 
-	renderer::ShaderProgram* create_shaderprogram_from_file(const char* path)
+	void create_shaderprogram_from_file(const char* path, renderer::ShaderProgram** program)
 	{
-		return shader_config::load_shaderprogram_from_file(path);
+		shader_config::load_shaderprogram_from_file(path, program);
 	}
 
 	int startup( DriverType driver_type, const RenderSettings& settings )

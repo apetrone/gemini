@@ -276,7 +276,7 @@ namespace renderer
 
 namespace renderer
 {
-	renderer::ShaderProgram* create_shaderprogram_from_file(const char* path);
+	void create_shaderprogram_from_file(const char* path, renderer::ShaderProgram** program);
 }
 
 struct RenderStream;

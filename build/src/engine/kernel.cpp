@@ -427,10 +427,13 @@ namespace kernel
 			assets::startup();
 			
 			assets::Shader* fontshader = assets::shaders()->load_from_path(FONT_SHADER);
+			assert(fontshader != 0);
 			font::startup(fontshader->program, params.render_width, params.render_height);
 			
 			assets::Shader* debugshader = assets::shaders()->load_from_path(DEBUG_SHADER);
-			assets::Font* debugfont = assets::fonts()->load_from_path(DEBUG_FONT);			
+			assets::Font* debugfont = assets::fonts()->load_from_path(DEBUG_FONT);
+			assert(debugshader != 0);
+			assert(debugfont != 0);
 			debugdraw::startup(config.debugdraw_max_primitives, debugshader->program, debugfont->handle);
 		}
 		
