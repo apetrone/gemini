@@ -163,8 +163,8 @@ struct GL32VertexBuffer : public VertexBuffer
 		descriptor.reset();
 		
 		VertexDescriptorType desc_type;
-		unsigned int attribID = 0;
-		unsigned int attribSize = 0;
+		unsigned int attrib_id = 0;
+		unsigned int attrib_size = 0;
 		unsigned int num_elements = 0;
 		unsigned int normalized = 0;
 		size_t offset = 0;
@@ -212,16 +212,16 @@ struct GL32VertexBuffer : public VertexBuffer
 			assert(attrib_type != GL_INVALID_ENUM);
 			
 			num_elements = VertexDescriptor::elements[ desc_type ];
-			attribSize = VertexDescriptor::size[ desc_type ];
+			attrib_size = VertexDescriptor::size[ desc_type ];
 			
-			gl.EnableVertexAttribArray( attribID );
+			gl.EnableVertexAttribArray( attrib_id );
 			gl.CheckError( "EnableVertexAttribArray" );
 			
-			gl.VertexAttribPointer( attribID, num_elements, attrib_type, normalized, vertex_stride, (void*)offset );
+			gl.VertexAttribPointer( attrib_id, num_elements, attrib_type, normalized, vertex_stride, (void*)offset );
 			gl.CheckError( "VertexAttribPointer" );
 
-			offset += attribSize;
-			++attribID;
+			offset += attrib_size;
+			++attrib_id;
 		}
 		
 		gl.BindVertexArray( 0 );
