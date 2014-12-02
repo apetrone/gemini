@@ -32,11 +32,24 @@
 
 #include "common/extension.h"
 
+#include <core/filesystem.h>
+#include <core/stackstring.h>
+
 namespace tools
 {
 	void startup()
 	{
 		memory::startup();
+
+        // setup root path
+        StackString<MAX_PATH_SIZE> root_path;
+        platform::Result result = platform::program_directory(&root_path[0], root_path.max_size());
+        core::filesystem::root_directory(&root_path[0], root_path.max_size());
+
+        StackString<MAX_PATH_SIZE> content_path;
+        core::filesystem::construct_content_directory(content_path);
+        core::filesystem::content_directory(content_path());
+
 		core::startup();
 	}
 	

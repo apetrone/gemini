@@ -42,7 +42,7 @@ void ApplicationContext::startup()
     renderer::RenderSettings settings;
     int render_result = renderer::startup(renderer::Default, settings);
 
-    log()->log(QString("initialized renderer %1").arg(render_result));
+    log()->log(QString("initialized renderer with result: %1").arg(render_result));
 }
 
 void ApplicationContext::shutdown()
