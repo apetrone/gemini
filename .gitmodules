@@ -33,4 +33,4 @@
 	url = git://github.com/apetrone/civetweb.git
 [submodule "build/dependencies/fontstash"]
 	path = build/dependencies/fontstash
-	url = git@github.com:memononen/fontstash.git
+	url = git://github.com/memononen/fontstash.git
