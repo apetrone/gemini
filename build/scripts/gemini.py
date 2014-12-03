@@ -389,10 +389,14 @@ def get_libcore(arguments, target_platform):
 def arguments(parser):
 	parser.add_argument("--with-glesv2", dest="glesv2", action="store_true", help="Build with GLES V2", default=False)
 	parser.add_argument("--raspberrypi", dest="raspberrypi", action="store_true", help="Build for the RaspberryPi", default=False)
+	
 	parser.add_argument("--indextype", dest="index_type", choices=["uint", "ushort"], type=str, default="uint", help="Set the IndexBuffer type; defaults to uint")
 
-	parser.add_argument("--with-civet", dest="with_civet", action="store_true", help="Build with CivetServer (default=True)", default=True)
-	parser.add_argument("--with-oculusvr", dest="with_oculusvr", action="store_true", help="Build with OculusVR support (default=True)", default=True)
+	parser.add_argument("--with-civet", dest="with_civet", action="store_true", help="Build with CivetServer", default=True)
+	parser.add_argument("--no-civet", dest="with_civet", action="store_false", help="Build without CivetServer")
+
+	parser.add_argument("--with-oculusvr", dest="with_oculusvr", action="store_true", help="Build with OculusVR support", default=True)
+	parser.add_argument("--no-oculusvr", dest="with_oculusvr", action="store_false", help="Build without OculusVR support")
 
 def products(arguments, **kwargs):
 	# global params will be inherited by all dependent products
