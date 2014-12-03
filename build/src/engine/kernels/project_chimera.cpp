@@ -224,7 +224,8 @@ public:
 class ProjectChimera : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
-public kernel::IEventListener<kernel::SystemEvent>
+public kernel::IEventListener<kernel::SystemEvent>,
+public kernel::IEventListener<kernel::GameControllerEvent>
 {
 
 public:
@@ -330,6 +331,11 @@ public:
 		{
 			kernel::instance()->capture_mouse(true);
 		}
+	}
+	
+	virtual void event(kernel::GameControllerEvent& event)
+	{
+		LOGV("game controller event received: %i\n", event.subtype);
 	}
 
 	virtual kernel::ApplicationResult config( kernel::Params & params )

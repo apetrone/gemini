@@ -99,11 +99,26 @@ void add_controller(SDL_ControllerDeviceEvent& device)
 	// event 'which' member
 	// describes an index into the list of active devices; NOT joystick id.
 	LOGV("Device Added: %i\n", device.which);
+	
+	
+	input::JoystickInput& js = input::state()->joystick(device.which);
+	input::state()->connect_joystick(device.which);
+	js.reset();
+	
+	_controllers[device.which] = SDL_GameControllerOpen(device.which);
+	SDL_Joystick * joystick = SDL_GameControllerGetJoystick( _controllers[device.which] );
+	
 }
 
 void remove_controller(SDL_ControllerDeviceEvent& device)
 {
 	LOGV("Device Removed: %i\n", device.which);
+	
+	input::state()->disconnect_joystick(device.which);
+		
+	SDL_GameControllerClose(_controllers[device.which]);
+	_controllers[device.which] = 0;
+	
 }
 
 
@@ -266,30 +281,54 @@ void DesktopKernel::pre_tick()
 			case SDL_CONTROLLERAXISMOTION:
 			{
 				controller_axis_event(event.cdevice, event.caxis);
+				
+				kernel::GameControllerEvent ev;
+				ev.subtype = kernel::JoystickAxisMoved;
+				kernel::event_dispatch(ev);
 				break;
 			}
 				
 			case SDL_CONTROLLERBUTTONDOWN:
 			{
 				controller_button_event(event.cdevice, event.cbutton);
+				
+				kernel::GameControllerEvent ev;
+				ev.subtype = kernel::JoystickButton;
+				ev.is_down = true;
+				ev.button = event.cbutton.button;
+				kernel::event_dispatch(ev);
 				break;
 			}
 				
 			case SDL_CONTROLLERBUTTONUP:
 			{
 				controller_button_event(event.cdevice, event.cbutton);
+				
+				kernel::GameControllerEvent ev;
+				ev.subtype = kernel::JoystickButton;
+				ev.is_down = false;
+				ev.button = event.cbutton.button;
+				kernel::event_dispatch(ev);
 				break;
 			}
 			
 			case SDL_CONTROLLERDEVICEADDED:
 			{
 				add_controller(event.cdevice);
+				
+				kernel::GameControllerEvent ev;
+				ev.subtype = kernel::JoystickConnected;
+				kernel::event_dispatch(ev);
 				break;
 			}
 				
 			case SDL_CONTROLLERDEVICEREMOVED:
 			{
 				remove_controller(event.cdevice);
+				
+				kernel::GameControllerEvent ev;
+				ev.subtype = kernel::JoystickDisconnected;
+				kernel::event_dispatch(ev);
 				break;
 			}
 		}

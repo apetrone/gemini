@@ -41,10 +41,8 @@ namespace kernel
 		Gyroscope,
 		Touch,
 		
-		JoystickAxis,
-		JoystickButton,
-		JoystickMotion,
-		
+		GameController,
+				
 		EventTypeCount
 	}; // EventType
 	
@@ -64,6 +62,11 @@ namespace kernel
 		TouchBegin,
 		TouchMoved,
 		TouchEnd,
+
+		JoystickButton,
+		JoystickAxisMoved,
+		JoystickConnected,
+		JoystickDisconnected
 	}; // EventSubType
 	
 	//
@@ -124,6 +127,13 @@ namespace kernel
 		int y;
 	}; // TouchEvent
 	
+	struct GameControllerEvent : public Event<GameController>
+	{
+		int button;
+		bool is_down;		
+		int joystick_id;
+		int joystick_value;
+	}; // GameControllerEvent
 	
 	void assign_listener_for_eventtype( kernel::EventType type, void * listener );
 	void * find_listener_for_eventtype( kernel::EventType type );
