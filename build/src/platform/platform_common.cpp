@@ -65,6 +65,6 @@ namespace platform
 				
 				++path;
 			}
-		} // makeDirectories
+		} // make_directories
 	}; // namespace path
 }; // namespace platform
