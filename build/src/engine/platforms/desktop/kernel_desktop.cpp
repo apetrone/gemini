@@ -67,20 +67,28 @@ namespace kernel
 }; // namespace kernel
 
 
+struct DesktopKernelState
+{
+	SDL_Window* window;
+	SDL_GLContext context;
+	SDL_Rect* display_rects;
+	uint8_t total_displays;
+	uint8_t total_controllers;
 
-SDL_Window * _window = 0;
-SDL_GLContext _context = 0;
+	typedef GeminiAllocator<std::pair<const unsigned int, input::Button> > ButtonKeyMapAllocator;
+	typedef std::map<unsigned int, input::Button, std::less<unsigned int>, ButtonKeyMapAllocator> SDLToButtonKeyMap;
+	SDLToButtonKeyMap key_map;
 
-SDL_Rect* _display_rects = 0;
-int _total_displays;
+	input::MouseButton mouse_map[input::MOUSE_COUNT];
+	SDL_GameController* controllers[input::MAX_JOYSTICKS];
 
-typedef GeminiAllocator<std::pair<const unsigned int, input::Button> > ButtonKeyMapAllocator;
-typedef std::map<unsigned int, input::Button, std::less<unsigned int>, ButtonKeyMapAllocator> SDLToButtonKeyMap;
-SDLToButtonKeyMap _key_map;
-input::MouseButton _mouse_map[input::MOUSE_COUNT];
+	DesktopKernelState() : window(0), total_displays(0), total_controllers(0)
+	{
+		memset(mouse_map, 0, sizeof(input::MouseButton)*input::MOUSE_COUNT);
+		memset(controllers, 0, sizeof(SDL_GameController*)*input::MAX_JOYSTICKS);
+	}
+};
 
-SDL_GameController* _controllers[input::MAX_JOYSTICKS] = {0};
-uint8_t _total_controllers = 0;
 
 
 void controller_axis_event(SDL_ControllerDeviceEvent& device, SDL_ControllerAxisEvent& axis)
@@ -94,39 +102,12 @@ void controller_button_event(SDL_ControllerDeviceEvent& device, SDL_ControllerBu
 	LOGV("Button %s: %i, %i, %i\n", (is_down ? "Yes" : "No"), device.which, button.button, button.state);
 }
 
-void add_controller(SDL_ControllerDeviceEvent& device)
-{
-	// event 'which' member
-	// describes an index into the list of active devices; NOT joystick id.
-	LOGV("Device Added: %i\n", device.which);
-	
-	
-	input::JoystickInput& js = input::state()->joystick(device.which);
-	input::state()->connect_joystick(device.which);
-	js.reset();
-	
-	_controllers[device.which] = SDL_GameControllerOpen(device.which);
-	SDL_Joystick * joystick = SDL_GameControllerGetJoystick( _controllers[device.which] );
-	
-}
-
-void remove_controller(SDL_ControllerDeviceEvent& device)
-{
-	LOGV("Device Removed: %i\n", device.which);
-	
-	input::state()->disconnect_joystick(device.which);
-		
-	SDL_GameControllerClose(_controllers[device.which]);
-	_controllers[device.which] = 0;
-	
-}
-
-
-
 DesktopKernel::DesktopKernel( int argc, char ** argv ) : target_renderer(0)
 {
 	params.argc = argc;
 	params.argv = argv;
+
+
 }
 
 void DesktopKernel::startup()
@@ -137,18 +118,20 @@ void DesktopKernel::startup()
 		fprintf(stdout, "failure to init SDL\n");
 	}
 	
-	_total_displays = SDL_GetNumVideoDisplays();
-	fprintf(stdout, "Found %i total displays.\n", _total_displays);
+	state = CREATE(DesktopKernelState);
+
+	state->total_displays = SDL_GetNumVideoDisplays();
+	fprintf(stdout, "Found %i total displays.\n", state->total_displays);
 	
-	_display_rects = CREATE_ARRAY(SDL_Rect, _total_displays);
-	for (int index = 0; index < _total_displays; ++index)
+	state->display_rects = CREATE_ARRAY(SDL_Rect, state->total_displays);
+	for (int index = 0; index < state->total_displays; ++index)
 	{
 		SDL_DisplayMode current;
 		SDL_GetCurrentDisplayMode(index, &current);
 		fprintf(stdout, "%i) width: %i, height: %i, refresh_rate: %iHz\n", index, current.w, current.h, current.refresh_rate);
 		
 		// cache display bounds
-		SDL_GetDisplayBounds(index, &_display_rects[index]);
+		SDL_GetDisplayBounds(index, &state->display_rects[index]);
 	}
 		
 
@@ -168,15 +151,15 @@ void DesktopKernel::startup()
 //	SDL_GameControllerAddMappingsFromFile(<#file#>)
 	
 	assert(SDL_NumJoysticks() < input::MAX_JOYSTICKS);
-	_total_controllers = SDL_NumJoysticks();
-	for( uint8_t i = 0; i < _total_controllers; ++i )
+	state->total_controllers = SDL_NumJoysticks();
+	for (uint8_t i = 0; i < state->total_controllers; ++i)
 	{
 		input::JoystickInput& js = input::state()->joystick(i);
 		input::state()->connect_joystick(i);
 		js.reset();
 		
-		_controllers[ i ] = SDL_GameControllerOpen( i );
-		SDL_Joystick * joystick = SDL_GameControllerGetJoystick( _controllers[i] );
+		state->controllers[i] = SDL_GameControllerOpen(i);
+		SDL_Joystick * joystick = SDL_GameControllerGetJoystick(state->controllers[i]);
 		SDL_JoystickID joystickID = SDL_JoystickInstanceID( joystick );
 		if (SDL_JoystickIsHaptic(joystick))
 		{
@@ -227,7 +210,7 @@ void DesktopKernel::pre_tick()
 			case SDL_KEYUP:
 			case SDL_KEYDOWN:
 			{
-				button = key_map[event.key.keysym.sym];
+				button = state->key_map[event.key.keysym.sym];
 				
 				if (event.key.repeat)
 				{
@@ -248,7 +231,7 @@ void DesktopKernel::pre_tick()
 			{
 				kernel::MouseEvent ev;
 				ev.subtype = kernel::MouseButton;
-				ev.button = mouse_map[event.button.button];
+				ev.button = state->mouse_map[event.button.button];
 				ev.is_down = (event.type == SDL_MOUSEBUTTONDOWN);
 				input::state()->mouse().inject_mouse_button((MouseButton)ev.button, ev.is_down);
 				kernel::event_dispatch(ev);
@@ -314,7 +297,17 @@ void DesktopKernel::pre_tick()
 			
 			case SDL_CONTROLLERDEVICEADDED:
 			{
-				add_controller(event.cdevice);
+				// event 'which' member
+				// describes an index into the list of active devices; NOT joystick id.
+				LOGV("Device Added: %i\n", event.cdevice.which);
+
+				input::JoystickInput& js = input::state()->joystick(event.cdevice.which);
+				input::state()->connect_joystick(event.cdevice.which);
+				js.reset();
+
+				state->controllers[event.cdevice.which] = SDL_GameControllerOpen(event.cdevice.which);
+				SDL_Joystick * joystick = SDL_GameControllerGetJoystick(state->controllers[event.cdevice.which]);
+
 				
 				kernel::GameControllerEvent ev;
 				ev.subtype = kernel::JoystickConnected;
@@ -324,8 +317,14 @@ void DesktopKernel::pre_tick()
 				
 			case SDL_CONTROLLERDEVICEREMOVED:
 			{
-				remove_controller(event.cdevice);
-				
+				LOGV("Device Removed: %i\n", event.cdevice.which);
+
+				input::state()->disconnect_joystick(event.cdevice.which);
+
+				SDL_GameControllerClose(state->controllers[event.cdevice.which]);
+				state->controllers[event.cdevice.which] = 0;
+
+
 				kernel::GameControllerEvent ev;
 				ev.subtype = kernel::JoystickDisconnected;
 				kernel::event_dispatch(ev);
@@ -341,7 +340,7 @@ void DesktopKernel::post_tick()
 	// as the rift sdk performs buffer swaps during end frame.
 	if (parameters().swap_buffers)
 	{
-		SDL_GL_SwapWindow(_window);
+		SDL_GL_SwapWindow(state->window);
 	}
 } // post_tick
 
@@ -376,147 +375,147 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 			window_flags |= SDL_WINDOW_RESIZABLE;
 		}
 		
-		_window = SDL_CreateWindow(
+		state->window = SDL_CreateWindow(
 			parameters().window_title, 0, 0,
 			parameters().window_width, parameters().window_height,
 			window_flags);
 			
-		if (!_window)
+		if (!state->window)
 		{
 			LOGE("Failed to create SDL window: %s\n", SDL_GetError());
 		}
 		
 		// move the window to the correct display
-		SDL_SetWindowPosition(_window, _display_rects[params.target_display].x, _display_rects[params.target_display].y);
+		SDL_SetWindowPosition(state->window, state->display_rects[params.target_display].x, state->display_rects[params.target_display].y);
 		
-		_context = SDL_GL_CreateContext(_window);
-		if (!_context)
+		state->context = SDL_GL_CreateContext(state->window);
+		if (!state->context)
 		{
 			LOGE("Failed to create SDL GL context: %s\n", SDL_GetError());
 		}
 
 		// try to set our window size; it might still be smaller than requested.
-		SDL_SetWindowSize(_window, parameters().window_width, parameters().window_height);
+		SDL_SetWindowSize(state->window, parameters().window_width, parameters().window_height);
 		
 		// center our window
-		SDL_SetWindowPosition(_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+		SDL_SetWindowPosition(state->window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 		
 		// fetch the window size and renderable size
-		SDL_GetWindowSize(_window, &window_width, &window_height);
-		SDL_GL_GetDrawableSize(_window, &render_width, &render_height);
+		SDL_GetWindowSize(state->window, &window_width, &window_height);
+		SDL_GL_GetDrawableSize(state->window, &render_width, &render_height);
 		
 		
 		// populate and set input key map
-		key_map[SDLK_a] = KEY_A;
-		key_map[SDLK_b] = KEY_B;
-		key_map[SDLK_c] = KEY_C;
-		key_map[SDLK_d] = KEY_D;
-		key_map[SDLK_e] = KEY_E;
-		key_map[SDLK_f] = KEY_F;
-		key_map[SDLK_g] = KEY_G;
-		key_map[SDLK_h] = KEY_H;
-		key_map[SDLK_i] = KEY_I;
-		key_map[SDLK_j] = KEY_J;
-		key_map[SDLK_k] = KEY_K;
-		key_map[SDLK_l] = KEY_L;
-		key_map[SDLK_m] = KEY_M;
-		key_map[SDLK_n] = KEY_N;
-		key_map[SDLK_o] = KEY_O;
-		key_map[SDLK_p] = KEY_P;
-		key_map[SDLK_q] = KEY_Q;
-		key_map[SDLK_r] = KEY_R;
-		key_map[SDLK_s] = KEY_S;
-		key_map[SDLK_t] = KEY_T;
-		key_map[SDLK_u] = KEY_U;
-		key_map[SDLK_v] = KEY_V;
-		key_map[SDLK_w] = KEY_W;
-		key_map[SDLK_y] = KEY_Y;
-		key_map[SDLK_x] = KEY_X;
-		key_map[SDLK_z] = KEY_Z;
-		key_map[SDLK_MENU] = KEY_MENU;
-		key_map[SDLK_SEMICOLON] = KEY_SEMICOLON;
-		key_map[SDLK_SLASH] = KEY_SLASH;
-		key_map[SDLK_BACKSLASH] = KEY_BACKSLASH;
-		key_map[SDLK_EQUALS] = KEY_EQUALS;
-		key_map[SDLK_MINUS] = KEY_MINUS;
-		key_map[SDLK_LEFTBRACKET] = KEY_LBRACKET;
-		key_map[SDLK_RIGHTBRACKET] = KEY_RBRACKET;
-		key_map[SDLK_COMMA] = KEY_COMMA;
-		key_map[SDLK_PERIOD] = KEY_PERIOD;
-		key_map[SDLK_QUOTE] = KEY_QUOTE;
-		key_map[SDLK_ESCAPE] = KEY_ESCAPE;
-		key_map[SDLK_SPACE] = KEY_SPACE;
-		key_map[SDLK_RETURN] = KEY_RETURN;
-		key_map[SDLK_BACKSPACE] = KEY_BACKSPACE;
-		key_map[SDLK_TAB] = KEY_TAB;
-		key_map[SDLK_PAGEUP] = KEY_PAGEUP;
-		key_map[SDLK_PAGEDOWN] = KEY_PAGEDN;
-		key_map[SDLK_END] = KEY_END;
-		key_map[SDLK_HOME] = KEY_HOME;
-		key_map[SDLK_INSERT] = KEY_INSERT;
-		key_map[SDLK_DELETE] = KEY_DELETE;
-		key_map[SDLK_PAUSE] = KEY_PAUSE;
-		key_map[SDLK_LSHIFT] = KEY_LSHIFT;
-		key_map[SDLK_RSHIFT] = KEY_RSHIFT;
-		key_map[SDLK_LCTRL] = KEY_LCONTROL;
-		key_map[SDLK_RCTRL] = KEY_RCONTROL;
-		key_map[SDLK_LALT] = KEY_LALT;
-		key_map[SDLK_RALT] = KEY_RALT;
-		key_map[SDLK_NUMLOCKCLEAR] = KEY_NUMLOCK;
-		key_map[SDLK_CAPSLOCK] = KEY_CAPSLOCK;
-		key_map[SDLK_LGUI] = KEY_LGUI;
-		key_map[SDLK_0] = KEY_0;
-		key_map[SDLK_1] = KEY_1;
-		key_map[SDLK_2] = KEY_2;
-		key_map[SDLK_3] = KEY_3;
-		key_map[SDLK_4] = KEY_4;
-		key_map[SDLK_5] = KEY_5;
-		key_map[SDLK_6] = KEY_6;
-		key_map[SDLK_7] = KEY_7;
-		key_map[SDLK_8] = KEY_8;
-		key_map[SDLK_9] = KEY_9;
-		key_map[SDLK_F1] = KEY_F1;
-		key_map[SDLK_F2] = KEY_F2;
-		key_map[SDLK_F3] = KEY_F3;
-		key_map[SDLK_F4] = KEY_F4;
-		key_map[SDLK_F5] = KEY_F5;
-		key_map[SDLK_F6] = KEY_F6;
-		key_map[SDLK_F7] = KEY_F7;
-		key_map[SDLK_F8] = KEY_F8;
-		key_map[SDLK_F9] = KEY_F9;
-		key_map[SDLK_F10] = KEY_F10;
-		key_map[SDLK_F11] = KEY_F11;
-		key_map[SDLK_F12] = KEY_F12;
-		key_map[SDLK_F13] = KEY_F13;
-		key_map[SDLK_F14] = KEY_F14;
-		key_map[SDLK_F15] = KEY_F15;
-		key_map[SDLK_LEFT] = KEY_LEFT;
-		key_map[SDLK_RIGHT] = KEY_RIGHT;
-		key_map[SDLK_UP] = KEY_UP;
-		key_map[SDLK_DOWN] = KEY_DOWN;
-		key_map[SDLK_KP_0] = KEY_NUMPAD0;
-		key_map[SDLK_KP_1] = KEY_NUMPAD1;
-		key_map[SDLK_KP_2] = KEY_NUMPAD2;
-		key_map[SDLK_KP_3] = KEY_NUMPAD3;
-		key_map[SDLK_KP_4] = KEY_NUMPAD4;
-		key_map[SDLK_KP_5] = KEY_NUMPAD5;
-		key_map[SDLK_KP_6] = KEY_NUMPAD6;
-		key_map[SDLK_KP_7] = KEY_NUMPAD7;
-		key_map[SDLK_KP_8] = KEY_NUMPAD8;
-		key_map[SDLK_KP_9] = KEY_NUMPAD9;
-		key_map[SDLK_KP_PLUS] = KEY_NUMPAD_PLUS;
-		key_map[SDLK_KP_MINUS] = KEY_NUMPAD_MINUS;
-		key_map[SDLK_KP_PLUSMINUS] = KEY_NUMPAD_PLUSMINUS;
-		key_map[SDLK_KP_MULTIPLY] = KEY_NUMPAD_MULTIPLY;
-		key_map[SDLK_KP_DIVIDE] = KEY_NUMPAD_DIVIDE;
+		state->key_map[SDLK_a] = KEY_A;
+		state->key_map[SDLK_b] = KEY_B;
+		state->key_map[SDLK_c] = KEY_C;
+		state->key_map[SDLK_d] = KEY_D;
+		state->key_map[SDLK_e] = KEY_E;
+		state->key_map[SDLK_f] = KEY_F;
+		state->key_map[SDLK_g] = KEY_G;
+		state->key_map[SDLK_h] = KEY_H;
+		state->key_map[SDLK_i] = KEY_I;
+		state->key_map[SDLK_j] = KEY_J;
+		state->key_map[SDLK_k] = KEY_K;
+		state->key_map[SDLK_l] = KEY_L;
+		state->key_map[SDLK_m] = KEY_M;
+		state->key_map[SDLK_n] = KEY_N;
+		state->key_map[SDLK_o] = KEY_O;
+		state->key_map[SDLK_p] = KEY_P;
+		state->key_map[SDLK_q] = KEY_Q;
+		state->key_map[SDLK_r] = KEY_R;
+		state->key_map[SDLK_s] = KEY_S;
+		state->key_map[SDLK_t] = KEY_T;
+		state->key_map[SDLK_u] = KEY_U;
+		state->key_map[SDLK_v] = KEY_V;
+		state->key_map[SDLK_w] = KEY_W;
+		state->key_map[SDLK_y] = KEY_Y;
+		state->key_map[SDLK_x] = KEY_X;
+		state->key_map[SDLK_z] = KEY_Z;
+		state->key_map[SDLK_MENU] = KEY_MENU;
+		state->key_map[SDLK_SEMICOLON] = KEY_SEMICOLON;
+		state->key_map[SDLK_SLASH] = KEY_SLASH;
+		state->key_map[SDLK_BACKSLASH] = KEY_BACKSLASH;
+		state->key_map[SDLK_EQUALS] = KEY_EQUALS;
+		state->key_map[SDLK_MINUS] = KEY_MINUS;
+		state->key_map[SDLK_LEFTBRACKET] = KEY_LBRACKET;
+		state->key_map[SDLK_RIGHTBRACKET] = KEY_RBRACKET;
+		state->key_map[SDLK_COMMA] = KEY_COMMA;
+		state->key_map[SDLK_PERIOD] = KEY_PERIOD;
+		state->key_map[SDLK_QUOTE] = KEY_QUOTE;
+		state->key_map[SDLK_ESCAPE] = KEY_ESCAPE;
+		state->key_map[SDLK_SPACE] = KEY_SPACE;
+		state->key_map[SDLK_RETURN] = KEY_RETURN;
+		state->key_map[SDLK_BACKSPACE] = KEY_BACKSPACE;
+		state->key_map[SDLK_TAB] = KEY_TAB;
+		state->key_map[SDLK_PAGEUP] = KEY_PAGEUP;
+		state->key_map[SDLK_PAGEDOWN] = KEY_PAGEDN;
+		state->key_map[SDLK_END] = KEY_END;
+		state->key_map[SDLK_HOME] = KEY_HOME;
+		state->key_map[SDLK_INSERT] = KEY_INSERT;
+		state->key_map[SDLK_DELETE] = KEY_DELETE;
+		state->key_map[SDLK_PAUSE] = KEY_PAUSE;
+		state->key_map[SDLK_LSHIFT] = KEY_LSHIFT;
+		state->key_map[SDLK_RSHIFT] = KEY_RSHIFT;
+		state->key_map[SDLK_LCTRL] = KEY_LCONTROL;
+		state->key_map[SDLK_RCTRL] = KEY_RCONTROL;
+		state->key_map[SDLK_LALT] = KEY_LALT;
+		state->key_map[SDLK_RALT] = KEY_RALT;
+		state->key_map[SDLK_NUMLOCKCLEAR] = KEY_NUMLOCK;
+		state->key_map[SDLK_CAPSLOCK] = KEY_CAPSLOCK;
+		state->key_map[SDLK_LGUI] = KEY_LGUI;
+		state->key_map[SDLK_0] = KEY_0;
+		state->key_map[SDLK_1] = KEY_1;
+		state->key_map[SDLK_2] = KEY_2;
+		state->key_map[SDLK_3] = KEY_3;
+		state->key_map[SDLK_4] = KEY_4;
+		state->key_map[SDLK_5] = KEY_5;
+		state->key_map[SDLK_6] = KEY_6;
+		state->key_map[SDLK_7] = KEY_7;
+		state->key_map[SDLK_8] = KEY_8;
+		state->key_map[SDLK_9] = KEY_9;
+		state->key_map[SDLK_F1] = KEY_F1;
+		state->key_map[SDLK_F2] = KEY_F2;
+		state->key_map[SDLK_F3] = KEY_F3;
+		state->key_map[SDLK_F4] = KEY_F4;
+		state->key_map[SDLK_F5] = KEY_F5;
+		state->key_map[SDLK_F6] = KEY_F6;
+		state->key_map[SDLK_F7] = KEY_F7;
+		state->key_map[SDLK_F8] = KEY_F8;
+		state->key_map[SDLK_F9] = KEY_F9;
+		state->key_map[SDLK_F10] = KEY_F10;
+		state->key_map[SDLK_F11] = KEY_F11;
+		state->key_map[SDLK_F12] = KEY_F12;
+		state->key_map[SDLK_F13] = KEY_F13;
+		state->key_map[SDLK_F14] = KEY_F14;
+		state->key_map[SDLK_F15] = KEY_F15;
+		state->key_map[SDLK_LEFT] = KEY_LEFT;
+		state->key_map[SDLK_RIGHT] = KEY_RIGHT;
+		state->key_map[SDLK_UP] = KEY_UP;
+		state->key_map[SDLK_DOWN] = KEY_DOWN;
+		state->key_map[SDLK_KP_0] = KEY_NUMPAD0;
+		state->key_map[SDLK_KP_1] = KEY_NUMPAD1;
+		state->key_map[SDLK_KP_2] = KEY_NUMPAD2;
+		state->key_map[SDLK_KP_3] = KEY_NUMPAD3;
+		state->key_map[SDLK_KP_4] = KEY_NUMPAD4;
+		state->key_map[SDLK_KP_5] = KEY_NUMPAD5;
+		state->key_map[SDLK_KP_6] = KEY_NUMPAD6;
+		state->key_map[SDLK_KP_7] = KEY_NUMPAD7;
+		state->key_map[SDLK_KP_8] = KEY_NUMPAD8;
+		state->key_map[SDLK_KP_9] = KEY_NUMPAD9;
+		state->key_map[SDLK_KP_PLUS] = KEY_NUMPAD_PLUS;
+		state->key_map[SDLK_KP_MINUS] = KEY_NUMPAD_MINUS;
+		state->key_map[SDLK_KP_PLUSMINUS] = KEY_NUMPAD_PLUSMINUS;
+		state->key_map[SDLK_KP_MULTIPLY] = KEY_NUMPAD_MULTIPLY;
+		state->key_map[SDLK_KP_DIVIDE] = KEY_NUMPAD_DIVIDE;
 		
 		
 		// populate the mouse map
-		mouse_map[SDL_BUTTON_LEFT] = MOUSE_LEFT;
-		mouse_map[SDL_BUTTON_RIGHT] = MOUSE_RIGHT;
-		mouse_map[SDL_BUTTON_MIDDLE] = MOUSE_MIDDLE;
-		mouse_map[SDL_BUTTON_X1] = MOUSE_MOUSE4;
-		mouse_map[SDL_BUTTON_X2] = MOUSE_MOUSE5;
+		state->mouse_map[SDL_BUTTON_LEFT] = MOUSE_LEFT;
+		state->mouse_map[SDL_BUTTON_RIGHT] = MOUSE_RIGHT;
+		state->mouse_map[SDL_BUTTON_MIDDLE] = MOUSE_MIDDLE;
+		state->mouse_map[SDL_BUTTON_X1] = MOUSE_MOUSE4;
+		state->mouse_map[SDL_BUTTON_X2] = MOUSE_MOUSE5;
 
 
 		parameters().window_width = window_width;
@@ -544,27 +543,30 @@ void DesktopKernel::post_application_startup( kernel::ApplicationResult result )
 
 void DesktopKernel::shutdown()
 {
-	DESTROY_ARRAY(SDL_Rect, _display_rects, _total_displays);
+	DESTROY_ARRAY(SDL_Rect, state->display_rects, state->total_displays);
 
 	// close all controllers
-	for (uint8_t i = 0; i < _total_controllers; ++i)
+	for (uint8_t i = 0; i < state->total_controllers; ++i)
 	{
 		input::JoystickInput& js = input::state()->joystick(i);
 		input::state()->disconnect_joystick(i);
 		
-		SDL_GameController* controller = _controllers[i];
+		SDL_GameController* controller = state->controllers[i];
 		if (controller)
 		{
 			SDL_GameControllerClose(controller);
-			_controllers[i] = 0;
+			state->controllers[i] = 0;
 		}
 	}
 
-	SDL_GL_DeleteContext(_context);
-	SDL_DestroyWindow(_window);
+	SDL_GL_DeleteContext(state->context);
+	SDL_DestroyWindow(state->window);
 	SDL_Quit();
 	
-	key_map.clear();
+	state->key_map.clear();
+
+	DESTROY(DesktopKernelState, state);
+
 } // shutdown
 
 

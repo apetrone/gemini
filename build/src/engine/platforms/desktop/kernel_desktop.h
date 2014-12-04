@@ -25,8 +25,7 @@
 #include "kernel.h"
 #include <map>
 
-struct xwl_window_s;
-struct xwl_windowparams_s;
+struct DesktopKernelState;
 
 class DesktopKernel : public virtual kernel::IKernel
 {
@@ -43,14 +42,11 @@ class DesktopKernel : public virtual kernel::IKernel
 	
 	int target_renderer;
 
-	typedef GeminiAllocator<std::pair<const unsigned int, input::Button> > ButtonKeyMapAllocator;
-	typedef std::map<unsigned int, input::Button, std::less<unsigned int>, ButtonKeyMapAllocator> SDLToButtonKeyMap;
-	SDLToButtonKeyMap key_map;
-	input::MouseButton mouse_map[input::MOUSE_COUNT];
+	DesktopKernelState* state;
 
 public:
 	DesktopKernel( int argc, char ** argv );
-	
+
 	virtual bool is_active() const { return active; }
 	virtual void set_active( bool isactive ) { active = isactive; }
 	virtual kernel::Params & parameters() { return params; }
