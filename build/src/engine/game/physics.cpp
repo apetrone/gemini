@@ -52,13 +52,27 @@ namespace physics
 	public:
 	
 		btRigidBody* body;
+		btCollisionShape* shape;
 	
 	
-		BulletRigidBody() : body(nullptr)
+		BulletRigidBody() : body(nullptr), shape(nullptr)
 		{
 			
 		}
 		
+		~BulletRigidBody()
+		{
+			if (body && body->getMotionState())
+			{
+				delete body->getMotionState();
+			}
+			dynamics_world->removeCollisionObject(body);
+			delete body;
+
+			delete shape;
+			shape = 0;
+		}
+
 		virtual void set_world_position(const glm::vec3& position)
 		{
 			assert(body != nullptr);
@@ -172,11 +186,15 @@ namespace physics
 		}
 		
 		//delete collision shapes
+		LOGV("total collision shapes: %ld\n", (unsigned int)collision_shapes.size());
 		for ( int j = 0; j < collision_shapes.size(); j++ )
 		{
 			btCollisionShape* shape = collision_shapes[j];
-			collision_shapes[j] = 0;
-			delete shape;
+			if (shape)
+			{
+				collision_shapes[j] = 0;
+				delete shape;
+			}
 		}
 		
 		dynamics_world->setDebugDrawer(0);
@@ -411,7 +429,8 @@ namespace physics
 				shape = trishape;
 			}
 			
-			collision_shapes.push_back(shape);
+			//collision_shapes.push_back(shape);
+			rb->shape = shape;
 			
 			// calculate local intertia for non-static objects
 			if (dynamic_body)
