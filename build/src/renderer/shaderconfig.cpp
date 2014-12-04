@@ -244,7 +244,7 @@ namespace renderer
 			// attach shader objects to program
 			FixedArray<renderer::ShaderObject> shader_objects;
 			shader_objects.allocate(stages.size());
-			for (int i = 0; i < shader_objects.size(); ++i)
+			for (size_t i = 0; i < shader_objects.size(); ++i)
 			{
 				std::string filename = path + shader_stage_to_extension(stages[i]);
 				shader_objects[i] = create_shader_from_file(filename.c_str(), shader_stage_to_shaderobject_type(stages[i]), preprocessor);
@@ -291,7 +291,7 @@ namespace renderer
 			if (!fetch_shader_config(_shader_config, shader_name(), attributes, uniforms, stages, preprocessor))
 			{
 				LOGE("Error while loading shader \"%s\" from shader_config\n", shader_name());
-				return nullptr;
+				return;
 			}
 			
 			// create a single string of all the preprocessor_defines
@@ -323,8 +323,6 @@ namespace renderer
 			}
 			
 			*shader_program = program;
-			
-			return program;
 		}
 	}
 }; // namespace renderer
