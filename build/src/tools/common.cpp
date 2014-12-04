@@ -29,6 +29,7 @@
 
 #include "datamodel/model.h"
 #include "datamodel/mesh.h"
+#include "datamodel/material.h"
 
 #include "common/extension.h"
 
@@ -50,6 +51,11 @@ namespace tools
         core::filesystem::construct_content_directory(content_path);
         core::filesystem::content_directory(content_path());
 
+		// create default material
+		// TODO: move this to a better location one day
+		datamodel::Material* material = CREATE(datamodel::Material);
+		datamodel::set_default_material(material);
+
 		core::startup();
 	}
 	
@@ -57,6 +63,11 @@ namespace tools
 	{
 		purge_registry<datamodel::Model>();
 		purge_registry<datamodel::Node>();
+
+		// TODO: move this to a better location one day.
+		datamodel::Material* material = &datamodel::get_default_material();
+		DESTROY(Material, material);
+		datamodel::set_default_material(0);
 		
 		core::shutdown();
 		memory::shutdown();

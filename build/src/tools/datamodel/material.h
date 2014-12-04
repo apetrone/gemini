@@ -62,4 +62,8 @@ namespace datamodel
 		MaterialVector::const_iterator begin() const;
 		MaterialVector::const_iterator end() const;
 	};
+
+
+	void set_default_material(Material* material);
+	Material& get_default_material();
 };

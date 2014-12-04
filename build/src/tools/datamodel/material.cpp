@@ -24,12 +24,11 @@
 
 namespace datamodel
 {
-	static Material _default_material;
+	static Material* _default_material = 0;
+
 
 	MaterialMap::MaterialMap()
 	{
-		_default_material.id = -1;
-		_default_material.name = "default";
 		next_id = 0;
 	}
 
@@ -38,7 +37,7 @@ namespace datamodel
 		// no materials; use the default
 		if (materials.empty() || id < 0)
 		{
-			return _default_material;
+			return get_default_material();
 		}
 		
 		// catch out of range ids
@@ -55,7 +54,7 @@ namespace datamodel
 			return it->second;
 		}
 		
-		return _default_material;
+		return get_default_material();
 	}
 
 	Material& MaterialMap::add_material(const String& name)
@@ -87,5 +86,21 @@ namespace datamodel
 	MaterialMap::MaterialVector::const_iterator MaterialMap::end() const
 	{
 		return materials.end();
+	}
+
+	void set_default_material(Material* material)
+	{
+		if (material)
+		{
+			material->id = -1;
+			material->name = "default";
+			_default_material = material;
+		}
+	}
+
+	Material& get_default_material()
+	{
+		assert(_default_material != 0);
+		return *_default_material;
 	}
 }
