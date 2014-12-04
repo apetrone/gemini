@@ -562,10 +562,14 @@ public:
 	
 	virtual void shutdown( kernel::Params & params )
 	{
+		// cleanup entities
+		// perhaps just destroy the gamerules and the entities will follow?
+		script::shutdown();
+
 		entity_shutdown();
-		
+
 		DESTROY(Node, root);
-		
+
 		DESTROY(SceneRenderMethod, render_method);
 		
 		if (device)
