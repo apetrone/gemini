@@ -329,6 +329,13 @@ void Entity::set_position(glm::vec3 *new_position)
 	{
 		body->set_world_position(*new_position);
 	}
+
+	// if this is a static body; we have to sync the position
+	// with the node because there is no 'motion state' to do it automatically.
+	if (this->node)
+	{
+		this->node->translation = position;
+	}
 }
 
 void Entity::attach_camera(Camera* camera)
@@ -370,7 +377,7 @@ void Entity::set_physics(int physics_type)
 	if (!mesh)
 	{
 		// no mesh loaded, we need one for physics
-		LOGW("No mesh for entity. Have no implemented ghost objects yet.\n");
+		LOGW("No mesh for entity. Have not implemented ghost objects yet.\n");
 		return;
 	}
 	
