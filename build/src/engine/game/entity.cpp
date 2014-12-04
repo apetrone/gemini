@@ -96,8 +96,8 @@ void entity_post_script_load()
 void entity_prestep()
 {
 	// this updates the ent's position with that of the physics body
-	EntityListType::Vector::iterator it =	entity_list().objects.begin();
-	EntityListType::Vector::iterator end = entity_list().objects.end();
+	EntityListType::Collection::iterator it = entity_list().objects.begin();
+	EntityListType::Collection::iterator end = entity_list().objects.end();
 	Entity* ent;
 	for( ; it != end; ++it )
 	{
@@ -130,8 +130,8 @@ void entity_step()
 	
 	
 	// step entities
-	EntityListType::Vector::iterator it =	entity_list().objects.begin();
-	EntityListType::Vector::iterator end = entity_list().objects.end();
+	EntityListType::Collection::iterator it = entity_list().objects.begin();
+	EntityListType::Collection::iterator end = entity_list().objects.end();
 	for( ; it != end; ++it )
 	{
 		(*it)->fixed_update( kernel::instance()->parameters().step_interval_seconds );
@@ -151,9 +151,9 @@ void entity_step()
 void entity_deferred_delete( bool only_deferred )
 {
 	// trim entities flagged for removal
-	EntityListType::Vector::iterator it = entity_list().objects.begin();
-	EntityListType::Vector::iterator end = entity_list().objects.end();
-	for( ; it != end; ++it )
+	EntityListType::Collection::iterator it = entity_list().objects.begin();
+	EntityListType::Collection::iterator end = entity_list().objects.end();
+	for( ; it != end; )
 	{
 		Entity * ent = (*it);
 		if ((only_deferred && (ent->flags & Entity::EF_DELETE_INSTANCE)) || !only_deferred )
@@ -162,7 +162,10 @@ void entity_deferred_delete( bool only_deferred )
 			it = entity_list().objects.erase( it );
 //			ent->flags &= ~Entity::EF_DELETE_INSTANCE;
 			delete ent;
+			continue;
 		}
+
+		++it;
 	}
 }
 
@@ -180,8 +183,8 @@ void entity_tick()
 	}
 	
 	// tick entities
-	EntityListType::Vector::iterator it =	entity_list().objects.begin();
-	EntityListType::Vector::iterator end = entity_list().objects.end();
+	EntityListType::Collection::iterator it = entity_list().objects.begin();
+	EntityListType::Collection::iterator end = entity_list().objects.end();
 	Entity * ent;
 	for( ; it != end; ++it )
 	{
@@ -220,7 +223,7 @@ Entity::Entity()
 	this->mesh = 0;
 	
 	entity_list().add( this );
-	//	LOGV( "Entity() - %p, %ld\n", this, (unsigned long)this->id );
+	//LOGV( "Entity() - %p, %ld\n", this, (unsigned long)this->id );
 	
 	sq_resetobject( &instance );
 	sq_resetobject( &class_object );
@@ -243,7 +246,7 @@ Entity::Entity()
 
 Entity::~Entity()
 {
-	LOGV( "~Entity() - %p, %ld\n", this, (unsigned long)this->id );
+	//LOGV( "~Entity() - %p, %ld\n", this, (unsigned long)this->id );
 	entity_list().remove( this );
 	
 	if (this->body)
@@ -254,6 +257,17 @@ Entity::~Entity()
 	if (this->motion_interface)
 	{
 		DESTROY(EntityMotionInterface, this->motion_interface);
+	}
+
+	if (this->node)
+	{
+		// remove the node
+		if (this->node->parent)
+		{
+			this->node->parent->remove_child(this->node);
+		}
+		DESTROY(Node, this->node);
+		this->node = 0;
 	}
 } // ~Entity
 
@@ -390,6 +404,15 @@ void Entity::set_physics(int physics_type)
 	{
 		// set dynamic physics type
 		mass_kg = 50.0f;
+	}
+	else if (physics_type == 2)
+	{
+
+	}
+	else
+	{
+		// If you reach this, the physics type is unknown/unsupported!
+		assert(0);
 	}
 	
 	this->motion_interface = CREATE(EntityMotionInterface, this, this->node);

@@ -34,8 +34,15 @@ struct EntityList
 	// using the custom allocator. This may be my mis-understanding of the usage
 	// pattern though. For now, switching this over to non GeminiAllocator.
 	//	typedef std::vector< Type*, GeminiAllocator<Type*> > EntityVectorType;
-	typedef std::vector< Type* > Vector;
-	Vector objects;
+
+	// Switching this over from vector to a list because we need to iterate over
+	// the collection and delete items. Doing so over a vector is bad because it
+	// invalidates the next iterator when an item is removed.
+	//typedef std::vector< Type* > Vector;
+
+	typedef std::list< Type* > Collection;
+
+	Collection objects;
 	
 	void add( Type * object )
 	{
@@ -44,7 +51,7 @@ struct EntityList
 	
 	virtual void remove( Type * object )
 	{
-		for (typename Vector::iterator it = this->objects.begin(); it != this->objects.end(); ++it )
+		for (typename Collection::iterator it = this->objects.begin(); it != this->objects.end(); ++it)
 		{
 			Type * obj = (*it);
 			
@@ -64,7 +71,7 @@ struct EntityList
 	
 	void purge()
 	{
-		for (typename Vector::iterator it = this->objects.begin(); it != this->objects.end(); ++it )
+		for (typename Collection::iterator it = this->objects.begin(); it != this->objects.end(); ++it)
 		{
 			Entity * obj = (*it);
 			delete obj;
@@ -77,7 +84,7 @@ struct EntityList
 	
 	Type * find_with_name( const String & name )
 	{
-		for (typename Vector::iterator it = this->objects.begin(); it != this->objects.end(); ++it )
+		for (typename Collection::iterator it = this->objects.begin(); it != this->objects.end(); ++it)
 		{
 			Entity * obj = (*it);
 			
