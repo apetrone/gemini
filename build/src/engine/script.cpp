@@ -847,6 +847,12 @@ namespace script
 			sq_close( _sqvm );
 			_sqvm = 0;
 		}
+
+		// apparently, std::stack doesn't have a clear, so this happened:
+		while (!include_paths.empty())
+		{
+			include_paths.pop();
+		}
 	} // shutdown
 	
 	const char * string_for_type( int sqtype )
