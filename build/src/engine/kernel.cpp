@@ -50,7 +50,7 @@
 namespace kernel
 {
 	// This is NOT hooked up to the memory allocator because this is accessed before the memory allocator is initialized.
-	typedef std::map< String, ApplicationCreator> ApplicationCreatorByString;
+	typedef std::map< std::string, ApplicationCreator> ApplicationCreatorByString;
 	
 	const char FONT_SHADER[] = "shaders/fontshader";
 	const char DEBUG_FONT[] = "fonts/debug";
@@ -124,7 +124,7 @@ namespace kernel
 		
 		static ApplicationCreator find_application_by_name( const char * kernel_name )
 		{
-			String kname = kernel_name;
+			std::string kname = kernel_name;
 			ApplicationCreatorByString::iterator it = creator_map().find( kname );
 			if ( it != creator_map().end() )
 			{
