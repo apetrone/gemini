@@ -21,6 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <stdint.h>
+
 namespace input
 {
 	// this matches xwl key codes
