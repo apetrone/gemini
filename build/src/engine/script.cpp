@@ -804,6 +804,8 @@ namespace script
 			Sqrat::Enumeration physics_type(vm);
 			physics_type.Const(_SC("STATIC"), 0);
 			physics_type.Const(_SC("DYNAMIC"), 1);
+			physics_type.Const(_SC("CHARACTER"), 2);
+			physics_type.Const(_SC("TRIGGER"), 3);
 			
 			Sqrat::ConstTable(vm).Enum(_SC("PhysicsType"), physics_type);
 			

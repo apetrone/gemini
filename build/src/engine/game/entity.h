@@ -119,6 +119,11 @@ struct Entity
 	void set_physics(int physics_type);
 }; // Entity
 
+struct Trigger : public Entity
+{
+
+};
+
 
 struct GameRules
 {

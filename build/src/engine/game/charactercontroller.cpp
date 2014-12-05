@@ -96,10 +96,17 @@ public:
 		m_me = me;
 	}
 
-	virtual btScalar addSingleResult(btCollisionWorld::LocalRayResult& rayResult,bool normalInWorldSpace)
+	virtual btScalar addSingleResult(btCollisionWorld::LocalRayResult& rayResult, bool normalInWorldSpace)
 	{
 		if (rayResult.m_collisionObject == m_me)
-			return 1.0;
+		{
+			return btScalar(1.0);
+		}
+
+		if (!rayResult.m_collisionObject->hasContactResponse())
+		{
+			return btScalar(1.0);
+		}
 
 		return ClosestRayResultCallback::addSingleResult (rayResult, normalInWorldSpace);
 	}
@@ -235,6 +242,12 @@ bool btKinematicCharacterController::recoverFromPenetration ( btCollisionWorld* 
 		m_manifoldArray.resize(0);
 
 		btBroadphasePair* collisionPair = &m_ghostObject->getOverlappingPairCache()->getOverlappingPairArray()[i];
+
+		btCollisionObject* obj0 = static_cast<btCollisionObject*>(collisionPair->m_pProxy0->m_clientObject);
+		btCollisionObject* obj1 = static_cast<btCollisionObject*>(collisionPair->m_pProxy1->m_clientObject);
+
+		if ((obj0 && !obj0->hasContactResponse()) || (obj1 && !obj1->hasContactResponse()))
+			continue;
 
 		if (collisionPair->m_algorithm)
 			collisionPair->m_algorithm->getAllContactManifolds(m_manifoldArray);
@@ -867,6 +880,15 @@ void btKinematicCharacterController::playerStep (  btCollisionWorld* collisionWo
 	m_ghostObject->setWorldTransform (xform);
 
 	m_prevOnGround = m_wasOnGround;
+
+	// clear the pair cache at the end of the step
+	btHashedOverlappingPairCache* cache = m_ghostObject->getOverlappingPairCache();
+	while (cache->getOverlappingPairArray().size() > 0)
+	{
+		cache->removeOverlappingPair(cache->getOverlappingPairArray()[0].m_pProxy0,
+			cache->getOverlappingPairArray()[0].m_pProxy1,
+			collisionWorld->getDispatcher());
+	}
 }
 
 void btKinematicCharacterController::setFallSpeed (btScalar fallSpeed)

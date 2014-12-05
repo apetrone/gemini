@@ -237,6 +237,40 @@ namespace physics
 			_controller->updateAction(dynamics_world, 1/60.0f);
 		}
 		
+
+		//int total_manifolds = dynamics_world->getDispatcher()->getNumManifolds();
+		//for (int i = 0; i < total_manifolds; ++i)
+		//{
+		//	btPersistentManifold* manifold = dynamics_world->getDispatcher()->getManifoldByIndexInternal(i);
+		//	const btCollisionObject* obj1 = static_cast<const btCollisionObject*>(manifold->getBody0());
+		//	const btCollisionObject* obj2 = static_cast<const btCollisionObject*>(manifold->getBody1());
+
+		//	int total_contacts = manifold->getNumContacts();
+		//	for (int contact = 0; contact < total_contacts; ++contact)
+		//	{
+		//		btManifoldPoint& point = manifold->getContactPoint(contact);
+		//		if (point.getDistance() < 0.0f)
+		//		{
+		//			const btVector3& position1 = point.getPositionWorldOnA();
+		//			const btVector3& position2 = point.getPositionWorldOnB();
+		//			const btVector3& normal2 = point.m_normalWorldOnB;
+		//			//LOGV("normal: %2.f, %2.f, %2.f\n", normal2.x(), normal2.y(), normal2.z());
+		//		}
+		//	}
+		//}
+
+		// perhaps a separate array of ghost objects?
+		//const btCollisionObjectArray& collision_objects = dynamics_world->getCollisionObjectArray();
+		//for (size_t i = 0; i < collision_objects.size(); ++i)
+		//{
+		//	btCollisionObject* obj = collision_objects[i];
+		//	btGhostObject* ghost = btGhostObject::upcast(obj);
+		//	if (ghost)
+		//	{
+		//		int overlapped_objects = ghost->getNumOverlappingObjects();
+		//		LOGV("overlapped objects: %i\n", overlapped_objects);
+		//	}
+		//}
 	} // step
 	
 	void debug_draw()
@@ -269,7 +303,7 @@ namespace physics
 		CharacterController * character = new CharacterController (ghost,capsule_shape,stepHeight);
 		
 		///only collide with static for now (no interaction with dynamic objects)
-		dynamics_world->addCollisionObject(ghost, btBroadphaseProxy::CharacterFilter, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
+		dynamics_world->addCollisionObject(ghost, btBroadphaseProxy::CharacterFilter, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter | btBroadphaseProxy::SensorTrigger);
 		
 		if ( addActionToWorld )
 		{
@@ -470,4 +504,23 @@ namespace physics
 		
 		return rb;
 	} // create_physics_for_mesh
+
+	void create_trigger(const glm::vec3& size)
+	{
+		btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
+
+		btCollisionShape* shape = new btBoxShape(btVector3(size.x, size.y, size.z));
+		collision_shapes.push_back(shape);
+
+		ghost->setCollisionShape(shape);
+		ghost->setCollisionFlags(ghost->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
+
+		btTransform tr;
+		tr.setIdentity();
+		ghost->setWorldTransform(tr);
+
+		// There was a fix in September of 2013 which fixed sensors and characters, see: https://code.google.com/p/bullet/issues/detail?id=719
+		dynamics_world->addCollisionObject(ghost, btBroadphaseProxy::SensorTrigger, btBroadphaseProxy::CharacterFilter);
+	} // create_trigger
+
 }; // namespace physics

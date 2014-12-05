@@ -66,6 +66,19 @@ void entity_startup()
 	
 	root.Bind(_SC("Entity"), entity);
 	
+
+
+	// trigger
+
+	Sqrat::DerivedClass< Trigger, Entity, EntityAllocator<Trigger> > trigger(script::get_vm());
+	root.Bind(_SC("Trigger"), trigger);
+
+
+
+
+
+
+
 	// gamerules
 	Sqrat::Class<GameRules> gamerules( script::get_vm() );
 	gamerules.Func(ENTITY_START_NAME, &GameRules::native_start );
@@ -392,7 +405,7 @@ void Entity::set_physics(int physics_type)
 	{
 		// no mesh loaded, we need one for physics
 		LOGW("No mesh for entity. Have not implemented ghost objects yet.\n");
-		return;
+		//return;
 	}
 	
 	float mass_kg = 0.0f;
@@ -409,6 +422,11 @@ void Entity::set_physics(int physics_type)
 	{
 
 	}
+	else if (physics_type == 3)
+	{
+		// ghost/trigger
+		physics::create_trigger(glm::vec3(1, 1, 1));
+	}
 	else
 	{
 		// If you reach this, the physics type is unknown/unsupported!
@@ -419,14 +437,17 @@ void Entity::set_physics(int physics_type)
 	
 	// generate physics body from mesh
 	// until we need a different system.
-	body = physics::create_physics_for_mesh(mesh, mass_kg, this->motion_interface, mesh->mass_center_offset);
+	if (mesh)
+	{
+		body = physics::create_physics_for_mesh(mesh, mass_kg, this->motion_interface, mesh->mass_center_offset);
 
-	if (body)
-	{
-		body->set_world_position(position);
-	}
-	else
-	{
-		LOGW("Unable to create physics body!\n");
+		if (body)
+		{
+			body->set_world_position(position);
+		}
+		else
+		{
+			LOGW("Unable to create physics body!\n");
+		}
 	}
 }
