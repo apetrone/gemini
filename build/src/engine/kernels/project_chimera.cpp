@@ -52,7 +52,7 @@
 
 #include <renderer/constantbuffer.h>
 
-#define LOCK_CAMERA_TO_CHARACTER 0
+#define LOCK_CAMERA_TO_CHARACTER 1
 
 // even if a VR device is attached, this will NOT render to it
 // this allows debugging in some other mechanism to check sensor data.
