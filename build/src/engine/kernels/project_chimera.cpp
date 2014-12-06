@@ -398,7 +398,7 @@ public:
 	
 		// create character
 		character = physics::create_character_controller(btVector3(0, 2, 0), false);
-		character->reset();
+		character->clear_state();
 			
 		// capture the mouse
 		kernel::instance()->capture_mouse( true );

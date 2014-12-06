@@ -184,7 +184,10 @@ public:
 	virtual void setVelocityForTimeInterval(const btVector3& velocity,
 				btScalar timeInterval);
 
-	void reset ();
+	virtual void reset (btCollisionWorld* collisionWorld);
+	virtual void setUpInterpolate(bool value);
+	void clear_state();
+	
 	void warp (const btVector3& origin);
 
 	void preStep (  btCollisionWorld* collisionWorld);

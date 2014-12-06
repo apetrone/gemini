@@ -316,7 +316,7 @@ namespace physics
 		ghost->setCcdSweptSphereRadius( 0.1 );
 		
 		character->SetSpawnLocation( spawnLocation );
-		character->reset();
+		character->clear_state();
 		
 		_controller = character;
 		

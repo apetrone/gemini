@@ -647,23 +647,38 @@ void btKinematicCharacterController::SetSpawnLocation( const btVector3 & spawn )
 	mSpawnPoint = spawn;
 }
 
-void btKinematicCharacterController::reset ()
+void btKinematicCharacterController::reset (btCollisionWorld* collisionWorld)
 {
 	F( reset );
+	
+	// clear pair cache on ghostobject
+	btHashedOverlappingPairCache *cache = m_ghostObject->getOverlappingPairCache();
+	while (cache->getOverlappingPairArray().size() > 0)
+	{
+		cache->removeOverlappingPair(cache->getOverlappingPairArray()[0].m_pProxy0, cache->getOverlappingPairArray()[0].m_pProxy1, collisionWorld->getDispatcher());
+	}
+}
 
+void btKinematicCharacterController::setUpInterpolate(bool value)
+{
+	
+}
+
+void btKinematicCharacterController::clear_state()
+{
 	btTransform tr;
 	tr.setIdentity();
 	tr.setOrigin( mSpawnPoint );
-
+	
 	m_ghostObject->setWorldTransform( tr );
-
+	
 	// set gravity back to zero
 	//mVerticalAccel = 0;
     //m_verticalVelocity = 0;
     //m_velocity.setValue( 0, 0, 0 );
-
+	
 	m_accMoveDir.setValue(0,1,0);
-
+	
 	mFrontMove = 0;
 	mBackMove = 0;
 	mLeftMove = 0;
