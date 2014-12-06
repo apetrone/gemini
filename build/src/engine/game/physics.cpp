@@ -235,6 +235,8 @@ namespace physics
 		if (_controller)
 		{
 			_controller->updateAction(dynamics_world, 1/60.0f);
+			
+			_controller->reset(dynamics_world);
 		}
 		
 

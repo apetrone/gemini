@@ -128,13 +128,21 @@ public:
 	virtual btScalar addSingleResult(btCollisionWorld::LocalConvexResult& convexResult,bool normalInWorldSpace)
 	{
 		if (convexResult.m_hitCollisionObject == m_me)
+		{
 			return btScalar(1.0);
+		}
+			
+		if (!convexResult.m_hitCollisionObject->hasContactResponse())
+		{
+			return btScalar(1.0);
+		}
 
 		btVector3 hitNormalWorld;
 		if (normalInWorldSpace)
 		{
 			hitNormalWorld = convexResult.m_hitNormalLocal;
-		} else
+		}
+		else
 		{
 			///need to transform normal into worldspace
 			hitNormalWorld = m_hitCollisionObject->getWorldTransform().getBasis()*convexResult.m_hitNormalLocal;
