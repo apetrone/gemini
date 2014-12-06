@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <iostream>
-#include <gemini/typedefs.h>
+#include <platform/typedefs.h>
 #include "kernel_desktop.h"
  
 int main( int argc, char ** argv )
