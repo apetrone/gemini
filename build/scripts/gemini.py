@@ -436,7 +436,7 @@ def products(arguments, **kwargs):
 		Dependency(file="sqrat.py"),
 		Dependency(file="squirrel3.py", products=["squirrel", "sqstdlib"]),
 		Dependency(file="nom.py"),
-		Dependency(file="bullet2.py", products=["BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"])
+		Dependency(file="bullet3.py", products=["BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"])
 		#Dependency(file="box2d.py")
 	]
 
