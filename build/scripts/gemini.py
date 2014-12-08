@@ -425,6 +425,21 @@ def products(arguments, **kwargs):
 
 	target_platform = kwargs.get("target_platform")
 
+
+	libplatform = get_libplatform(arguments, target_platform)
+
+	libcore = get_libcore(arguments, target_platform)
+	libcore.dependencies += [libplatform, Dependency(file="glm.py")]
+
+	librenderer = get_librenderer(arguments, target_platform)
+	librenderer.dependencies += [libcore, libplatform, Dependency(file="glm.py")]
+
+	tools = get_tools(target_platform, libplatform, libcore)
+
+
+
+
+
 	gemini = Product(name="gemini_desktop", output=ProductType.Application)
 	gemini.root = "../"
 	gemini.product_root = COMMON_PRODUCT_ROOT
@@ -436,7 +451,10 @@ def products(arguments, **kwargs):
 		Dependency(file="sqrat.py"),
 		Dependency(file="squirrel3.py", products=["squirrel", "sqstdlib"]),
 		Dependency(file="nom.py"),
-		Dependency(file="bullet2.py", products=["BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"])
+		Dependency(file="bullet2.py", products=["BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"]),
+		librenderer,
+		libcore,
+		libplatform
 	]
 
 	if arguments.with_oculusvr:
@@ -584,18 +602,7 @@ def products(arguments, **kwargs):
 		"resources/ios/en.lproj/*.*"
 	]
 
-	libplatform = get_libplatform(arguments, target_platform)
 
-	libcore = get_libcore(arguments, target_platform)
-	libcore.dependencies += [libplatform, Dependency(file="glm.py")]
-
-	librenderer = get_librenderer(arguments, target_platform)
-	librenderer.dependencies += [Dependency(file="glm.py"), libplatform, libcore]
-
-	tools = get_tools(target_platform, libplatform, libcore)
-
-	# dependencies are added in expected build-order here.
-	gemini.dependencies.extend([libplatform, libcore, librenderer])
 
 	return [gemini] + tools + [librenderer, libcore, libplatform]
 
