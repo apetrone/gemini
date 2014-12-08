@@ -57,6 +57,7 @@ Thumbs.db
 *.dSYM*
 DerivedData
 **Makefile
+.Python
 
 # project-specific
 *.cache
