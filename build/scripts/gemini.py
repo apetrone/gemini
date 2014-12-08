@@ -436,8 +436,7 @@ def products(arguments, **kwargs):
 		Dependency(file="sqrat.py"),
 		Dependency(file="squirrel3.py", products=["squirrel", "sqstdlib"]),
 		Dependency(file="nom.py"),
-		Dependency(file="bullet3.py", products=["BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"])
-		#Dependency(file="box2d.py")
+		Dependency(file="bullet2.py", products=["BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"])
 	]
 
 	if arguments.with_oculusvr:
@@ -458,8 +457,6 @@ def products(arguments, **kwargs):
 	setup_common_variables(arguments, target_platform, gemini)
 
 	setup_driver(gemini)
-
-
 
 	# more sources
 	gemini.sources += [
@@ -597,7 +594,8 @@ def products(arguments, **kwargs):
 
 	tools = get_tools(target_platform, libplatform, libcore)
 
-	gemini.dependencies.extend([librenderer, libcore, libplatform])
+	# dependencies are added in expected build-order here.
+	gemini.dependencies.extend([libplatform, libcore, librenderer])
 
 	return [gemini] + tools + [librenderer, libcore, libplatform]
 
