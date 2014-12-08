@@ -260,8 +260,8 @@ def get_tools(target_platform, libplatform, libcore):
 
 	muse = Product(name="muse", output=ProductType.Commandline)
 	muse.dependencies.extend([
-		libplatform,
 		libcore,
+		libplatform,
 		libfbx
 	])
 
