@@ -398,6 +398,7 @@ struct GL32RenderTarget : public renderer::RenderTarget
 	{
 		GLenum status = gl.CheckFramebufferStatus(GL_FRAMEBUFFER);
 		LOGV("fbo complete? %i\n", status == GL_FRAMEBUFFER_COMPLETE);
+		return (status == GL_FRAMEBUFFER_COMPLETE);
 	}
 };
 
