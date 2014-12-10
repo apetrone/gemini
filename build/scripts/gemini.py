@@ -520,11 +520,6 @@ def products(arguments, **kwargs):
 		#	"python %s -c ../assets/desktop.conf" % (BLACKSMITH_PATH)
 		#]
 
-		xwl_params = []
-		if target_platform.get() == "linux":
-			xwl_params.append("--with-x11")
-			#xwl_params.append("--with-egl")
-
 		gemini.dependencies += [
 			libsdl
 		]
