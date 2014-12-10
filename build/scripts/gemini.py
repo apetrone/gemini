@@ -7,6 +7,7 @@ DEPENDENCIES_FOLDER = "dependencies"
 DESKTOP = ["macosx", "linux", "windows"]
 #BLACKSMITH_PATH = "../tools/blacksmith/blacksmith.py"
 COMMON_PRODUCT_ROOT = "bin/${CONFIGURATION}_${ARCHITECTURE}"
+COMMON_PROJECT_ROOT = "_projects"
 
 # dependencies
 libsdl = Dependency(file="sdl2.py",
@@ -204,7 +205,7 @@ def get_tools(target_platform, libplatform, libcore):
 	tools = []
 
 	rnd = Product(name="rnd", output=ProductType.Commandline)
-
+	rnd.project_root = COMMON_PROJECT_ROOT
 	rnd.root = "../"
 	rnd.sources += [
 		"src/rnd/rnd.cpp"
@@ -259,6 +260,7 @@ def get_tools(target_platform, libplatform, libcore):
 	tools.append(libfbx)
 
 	muse = Product(name="muse", output=ProductType.Commandline)
+	muse.project_root = COMMON_PROJECT_ROOT
 	muse.dependencies.extend([
 		libcore,
 		libplatform,
@@ -278,6 +280,7 @@ def get_tools(target_platform, libplatform, libcore):
 
 def get_librenderer(arguments, target_platform):
 	librenderer = Product(name="renderer", output=ProductType.StaticLibrary)
+	librenderer.project_root = COMMON_PROJECT_ROOT
 	librenderer.root = "../"
 	librenderer.sources += [
 		"src/renderer/*.*",
@@ -323,6 +326,7 @@ def get_librenderer(arguments, target_platform):
 
 def get_libplatform(arguments, target_platform):
 	libplatform = Product(name="platform", output=ProductType.StaticLibrary)
+	libplatform.project_root = COMMON_PROJECT_ROOT
 	libplatform.root = "../"
 	libplatform.sources += [
 		"src/platform/*.*"
@@ -356,6 +360,7 @@ def get_libplatform(arguments, target_platform):
 
 def get_libcore(arguments, target_platform):
 	libcore = Product(name="core", output=ProductType.StaticLibrary)
+	libcore.project_root = COMMON_PROJECT_ROOT
 	libcore.root = "../"
 	libcore.sources += [
 		"src/core/*.*",
@@ -441,6 +446,7 @@ def products(arguments, **kwargs):
 
 
 	gemini = Product(name="gemini_desktop", output=ProductType.Application)
+	gemini.project_root = COMMON_PROJECT_ROOT
 	gemini.root = "../"
 	gemini.product_root = COMMON_PRODUCT_ROOT
 	gemini.object_root = "obj"
@@ -535,7 +541,8 @@ def products(arguments, **kwargs):
 			"OpenAL.framework"
 		]
 
-		macosx.driver.infoplist_file = "src/engine/resources/osx/Info.plist"
+		# TODO: This path is relative to the *project*
+		macosx.driver.infoplist_file = "../src/engine/resources/osx/Info.plist"
 		macosx.resources = [
 			"src/engine/resources/osx/en.lproj/*.xib",
 			"src/engine/resources/osx/en.lproj/*.strings"
