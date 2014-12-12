@@ -516,10 +516,6 @@ def products(arguments, **kwargs):
 			"src/engine/audio"
 		]
 
-		#gemini.prebuild_commands = [
-		#	"python %s -c ../assets/desktop.conf" % (BLACKSMITH_PATH)
-		#]
-
 		gemini.dependencies += [
 			libsdl
 		]

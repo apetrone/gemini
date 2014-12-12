@@ -23,6 +23,30 @@
 #include "openal.h"
 #include <slim/xlog.h>
 
+#if 0 // capture sample
+	const uint8_t TOTAL_SAMPLES = 1024;
+
+	ALbyte buffer[22050];
+	 
+	capture_device = alcCaptureOpenDevice(0, 22050, AL_FORMAT_MONO8, TOTAL_SAMPLES);
+	alcCaptureStart(capture_device);
+
+	while (true)
+	{
+		alcGetIntegerv(capture_device, ALC_CAPTURE_SAMPLES, (ALCsizei)sizeof(ALint), &sample);
+		alcCaptureSamples(capture_device, (ALCvoid*)buffer, sample);
+	}
+
+	alcCaptureStop(capture_device);
+
+	if (capture_device != 0)
+	{
+
+		alcCaptureCloseDevice(capture_device);
+		capture_device = 0;
+	}
+#endif
+
 OpenAL::OpenAL()
 {
 	device = alcOpenDevice( 0 );

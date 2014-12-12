@@ -43,6 +43,7 @@ class OpenAL : public audio::IAudioDriver
 	DECLARE_FACTORY_CLASS( OpenAL, audio::IAudioDriver );
 	ALCdevice * device;
 	ALCcontext * context;
+	ALCdevice* capture_device;
 	
 	int check_alc_error();
 	int check_al_error( const char * context );

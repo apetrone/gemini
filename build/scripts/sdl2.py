@@ -8,6 +8,9 @@ SDL_SUBSYSTEMS = """Atomic Audio Video Render Events
 	File Loadso CPUinfo Filesystem""".replace("\n", " ").split(" ")
 
 def arguments(p):
+# building SDL2 for Raspberry Pi
+# --disable-pulseaudio
+# --disable-esd
 
 	p.add_argument("--disk-audio", 				dest="disk_audio", 					default=True, 		help="Support the disk writer audio driver")
 	p.add_argument("--dummy-audio", 			dest="dummy_audio", 				default=True, 		help="Support the dummy audio driver")
