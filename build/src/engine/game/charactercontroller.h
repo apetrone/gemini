@@ -59,21 +59,9 @@ class btPairCachingGhostObject;
 
 #include "physics_collisionobject.h"
 
-
 namespace physics
 {
 	class CharacterController;
-	// If I try to make CharacterController derive from physics::CollisionObject,
-	// the vtable is all kinds of fucked up. Until that is figured out,
-	// this proxy object will have to be in place.
-	struct CharacterProxyObject : public physics::CollisionObject
-	{
-		CharacterController* character;
-		
-		CharacterProxyObject(CharacterController* character_controller) : character(character_controller) {}
-		virtual void collision_began(physics::CollisionObject* other);
-		virtual void collision_ended(physics::CollisionObject* other);
-	};
 
 	///CharacterController is an object that supports a sliding motion in a world.
 	///It uses a ghost object and convex sweep test to test for upcoming collisions. This is combined with discrete collision detection to recover from penetrations.
@@ -81,11 +69,11 @@ namespace physics
 	class CharacterController : public btCharacterControllerInterface
 	{
 	public:
-		CharacterProxyObject* get_proxy() const { return m_proxy; }
+		CollisionObject* get_collision_object() const { return m_collision_object; }
 
 	protected:
 
-		CharacterProxyObject* m_proxy;
+		CollisionObject* m_collision_object;
 
 		btScalar m_halfHeight;
 

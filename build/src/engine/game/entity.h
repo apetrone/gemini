@@ -80,7 +80,8 @@ struct Entity
 	HSQOBJECT on_fixed_update;
 	HSQOBJECT on_update;
 	
-
+	HSQOBJECT on_collision_began;
+	HSQOBJECT on_collision_ended;
 
 	uint64_t id;
 	uint32_t flags;
@@ -103,6 +104,11 @@ struct Entity
 	void set_name( const String & object_name ) { this->name = object_name; }
 	virtual void native_fixed_update( float delta_seconds );
 	virtual void native_update();
+	virtual void native_collision_began();
+	virtual void native_collision_ended();
+	
+	void collision_began();
+	void collision_ended();
 	
 	glm::vec3 position;
 	void set_position(glm::vec3* new_position);
@@ -113,8 +119,7 @@ struct Entity
 	scenegraph::Node* node;
 	
 	// perhaps move these into a unified interface?
-	physics::RigidBody* body;
-	physics::Trigger* trigger;
+	physics::CollisionObject* collision_object;
 		
 	// functions for this script object
 	void set_model(const char* path);
@@ -124,8 +129,6 @@ struct Entity
 
 struct Trigger : public Entity
 {
-	void native_activate();
-	void native_deactivate();
 };
 
 

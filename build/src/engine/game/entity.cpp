@@ -64,6 +64,9 @@ void entity_startup()
 	
 	entity.Func(_SC("AttachCamera"), &Entity::attach_camera);
 	
+	entity.Func("collision_began", &Entity::native_collision_began);
+	entity.Func("collision_ended", &Entity::native_collision_ended);
+	
 	root.Bind(_SC("Entity"), entity);
 	
 
@@ -73,8 +76,7 @@ void entity_startup()
 	Sqrat::DerivedClass< Trigger, Entity, EntityAllocator<Trigger> > trigger(script::get_vm());
 	root.Bind(_SC("Trigger"), trigger);
 
-	trigger.Func("activate", &Trigger::native_activate);
-	trigger.Func("deactivate", &Trigger::native_deactivate);
+
 
 
 
@@ -116,10 +118,10 @@ void entity_prestep()
 	for( ; it != end; ++it )
 	{
 		ent = (*it);
-		if (ent->body)
+		if (ent->collision_object)
 		{
 			// copy body's position over to node and entity
-			const glm::vec3& world_position = ent->body->get_world_position();
+			const glm::vec3& world_position = ent->collision_object->get_world_position();
 			ent->node->translation = world_position;
 			ent->position = world_position;
 		}
@@ -228,8 +230,7 @@ void entity_shutdown()
 
 Entity::Entity() :
 	flags(0),
-	body(0),
-	trigger(0),
+	collision_object(0),
 	node(0),
 	motion_interface(0),
 	mesh(0)
@@ -263,9 +264,9 @@ Entity::~Entity()
 	//LOGV( "~Entity() - %p, %ld\n", this, (unsigned long)this->id );
 	entity_list().remove( this );
 	
-	if (this->body)
+	if (this->collision_object)
 	{
-		DESTROY(RigidBody, this->body);
+		DESTROY(CollisionObject, this->collision_object);
 	}
 	
 	if (this->motion_interface)
@@ -324,7 +325,7 @@ void Entity::update()
 		script::check_result( res, "sq_call" );
 		sq_pop( script::get_vm(), 1 );
 	}
-} // tick
+} // update
 
 
 void Entity::bind_functions()
@@ -333,6 +334,9 @@ void Entity::bind_functions()
 
 	this->on_fixed_update = script::find_member( this->class_object, ENTITY_FIXED_UPDATE_NAME );
 	this->on_update = script::find_member( this->class_object, ENTITY_UPDATE_NAME );
+	
+	this->on_collision_began = script::find_member(this->class_object, _SC("collision_began"));
+	this->on_collision_ended = script::find_member(this->class_object, _SC("collision_ended"));
 } // bind_functions
 
 void Entity::remove()
@@ -349,13 +353,63 @@ void Entity::native_update()
 	//	LOGV( "Entity::native_tick\n" );
 } // native_update
 
+void Entity::native_collision_began()
+{
+	
+}
+
+void Entity::native_collision_ended()
+{
+	
+}
+
+void Entity::collision_began()
+{
+	if ( sq_isnull(this->on_collision_began) || sq_isnull(this->instance) )
+	{
+		return;
+	}
+	
+	SQRESULT res;
+	sq_pushobject( script::get_vm(), this->on_collision_began );
+	sq_pushobject( script::get_vm(), this->instance );
+	res = sq_call( script::get_vm(), 1, SQFalse, SQTrue );
+	
+	sq_pop( script::get_vm(), 1 );
+	if ( SQ_FAILED(res) )
+	{
+		script::check_result( res, "sq_call" );
+		sq_pop( script::get_vm(), 1 );
+	}
+}
+
+void Entity::collision_ended()
+{
+	if ( sq_isnull(this->on_collision_ended) || sq_isnull(this->instance) )
+	{
+		return;
+	}
+	
+	SQRESULT res;
+	sq_pushobject( script::get_vm(), this->on_collision_ended );
+	sq_pushobject( script::get_vm(), this->instance );
+	res = sq_call( script::get_vm(), 1, SQFalse, SQTrue );
+	
+	sq_pop( script::get_vm(), 1 );
+	if ( SQ_FAILED(res) )
+	{
+		script::check_result( res, "sq_call" );
+		sq_pop( script::get_vm(), 1 );
+	}
+}
+
 void Entity::set_position(glm::vec3 *new_position)
 {
 	position = *new_position;
 	
-	if (body)
+	if (collision_object)
 	{
-		body->set_world_position(*new_position);
+		collision_object->set_world_position(*new_position);
 	}
 
 	// if this is a static body; we have to sync the position
@@ -409,6 +463,12 @@ void Entity::set_physics(int physics_type)
 		//return;
 	}
 	
+	if (this->collision_object)
+	{
+		LOGW("Physics type already set on this entity! ignoring\n");
+		return;
+	}
+	
 	float mass_kg = 0.0f;
 	
 	if (physics_type == 0)
@@ -421,12 +481,12 @@ void Entity::set_physics(int physics_type)
 	}
 	else if (physics_type == 2)
 	{
-
+		// character
 	}
 	else if (physics_type == 3)
 	{
 		// ghost/trigger
-		physics::create_trigger(glm::vec3(1, 1, 1));
+		this->collision_object = physics::create_trigger(glm::vec3(1, 1, 1));
 	}
 	else
 	{
@@ -440,25 +500,15 @@ void Entity::set_physics(int physics_type)
 	// until we need a different system.
 	if (mesh)
 	{
-		body = physics::create_physics_for_mesh(mesh, mass_kg, this->motion_interface, mesh->mass_center_offset);
+		this->collision_object = physics::create_physics_for_mesh(mesh, mass_kg, this->motion_interface, mesh->mass_center_offset);
 
-		if (body)
+		if (this->collision_object)
 		{
-			body->set_world_position(position);
+			this->collision_object->set_world_position(position);
 		}
 		else
 		{
 			LOGW("Unable to create physics body!\n");
 		}
 	}
-}
-
-void Trigger::native_activate()
-{
-	
-}
-
-void Trigger::native_deactivate()
-{
-	
 }

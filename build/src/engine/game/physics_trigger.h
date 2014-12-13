@@ -25,12 +25,13 @@
 
 namespace physics
 {
-	struct Trigger : public CollisionObject
+	class Trigger
 	{
-		// called when object touches this trigger and "activates" it
-		virtual void activate(CollisionObject* other) = 0;
-		
-		virtual void collision_began(CollisionObject* other);
-		virtual void collision_ended(CollisionObject* other);
+	private:
+		// flags: such as trigger once?
+		// trigger count?
+	
+	public:
+
 	};
 }; // namespace physics

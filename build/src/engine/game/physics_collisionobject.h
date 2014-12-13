@@ -21,8 +21,15 @@
 // -------------------------------------------------------------
 #pragma once
 
+
+#include <core/mathlib.h>
+
 namespace physics
 {
+	// forward declarations
+	class CollisionObject;
+	
+	// enums, flags
 	enum CollisionObjectType
 	{
 		CollisionType_Invalid = 0,
@@ -30,14 +37,34 @@ namespace physics
 		CollisionType_Character = 3,
 	};
 	
-	struct CollisionObject
+	enum CollisionEventType
 	{
-		CollisionObjectType collision_type;
+		Collision_Began,
+		Collision_Ended
+	};
 	
-		CollisionObject(CollisionObjectType type = CollisionType_Invalid) : collision_type(type) {}
+	typedef void (*CollisionCallback)(CollisionEventType, CollisionObject*);
+	
+	class CollisionObject
+	{
+	protected:
+		CollisionObjectType collision_type;
+		CollisionCallback callback;
+	
+	public:
+		CollisionObject(CollisionObjectType type = CollisionType_Invalid) : collision_type(type), callback(0) {}
 		virtual ~CollisionObject() {}
 		
 		bool is_type(CollisionObjectType _type) const { return collision_type == _type; }
+		
+		
+		void set_collision_callback(CollisionCallback _callback)
+		{
+			callback = _callback;
+		}
+		
+		virtual void set_world_position(const glm::vec3& position) = 0;
+		virtual glm::vec3 get_world_position() const = 0;
 		
 		// invoked when this object when another object collides with it
 		virtual void collision_began(CollisionObject* other) = 0;

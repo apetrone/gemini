@@ -46,7 +46,6 @@ namespace physics
 	// but for now, a single one will do.
 	CharacterController* _controller = 0;
 
-
 	class CustomGhostPairCallback : public btOverlappingPairCallback
 	{
 	public:
@@ -118,55 +117,101 @@ namespace physics
 		}
 	};
 
-
-	
-	class BulletRigidBody : public RigidBody
+	class BulletCollisionObject : public CollisionObject
 	{
+	protected:
+		btCollisionObject* object;
+		
+		
 	public:
 	
-		btRigidBody* body;
+		BulletCollisionObject() : object(0) {}
+	
+		virtual ~BulletCollisionObject()
+		{
+			if (object)
+			{
+				dynamics_world->removeCollisionObject(object);
+				delete object;
+				object = 0;
+			}
+		}
+		
+		void set_collision_object(btCollisionObject* collision_object)
+		{
+			object = collision_object;
+		}
+		
+		btCollisionObject* get_collision_object() const { return object; }
+	
+		virtual void set_world_position(const glm::vec3& position)
+		{
+			assert(object != nullptr);
+			btTransform& world_transform = object->getWorldTransform();
+			world_transform.setOrigin(btVector3(position.x, position.y, position.z));
+			object->setWorldTransform(world_transform);
+		}
+		
+		virtual glm::vec3 get_world_position() const
+		{
+			assert(object != nullptr);
+			const btTransform& world_transform = object->getWorldTransform();
+			const btVector3& origin = world_transform.getOrigin();
+			return glm::vec3(origin.x(), origin.y(), origin.z());
+		}
+		
+		virtual void collision_began(CollisionObject* other)
+		{
+			if (callback)
+			{
+				callback(Collision_Began, other);
+			}
+		}
+		
+		virtual void collision_ended(CollisionObject* other)
+		{
+			if (callback)
+			{
+				callback(Collision_Ended, other);
+			}
+		}
+	};
+
+	
+	class BulletRigidBody : public BulletCollisionObject, public RigidBody
+	{
 		btCollisionShape* shape;
 	
-	
-		BulletRigidBody() : body(nullptr), shape(nullptr)
+	public:
+		BulletRigidBody() : shape(nullptr)
 		{
 			
 		}
 		
 		~BulletRigidBody()
 		{
+			btRigidBody* body = btRigidBody::upcast(object);
+			
 			if (body && body->getMotionState())
 			{
 				delete body->getMotionState();
 			}
 			dynamics_world->removeCollisionObject(body);
-			delete body;
 
 			delete shape;
 			shape = 0;
 		}
-
-		virtual void set_world_position(const glm::vec3& position)
+		
+		void set_collision_shape(btCollisionShape* collision_shape)
 		{
-			assert(body != nullptr);
-			
-			btTransform& world_transform = body->getWorldTransform();
-			world_transform.setOrigin(btVector3(position.x, position.y, position.z));
-			body->setWorldTransform(world_transform);
+			shape = collision_shape;
 		}
 		
-		virtual glm::vec3 get_world_position() const
-		{
-			assert(body != nullptr);
-		
-			const btTransform& world_transform = body->getWorldTransform();
-			const btVector3& origin = world_transform.getOrigin();
-			return glm::vec3(origin.x(), origin.y(), origin.z());
-		}
+		btCollisionShape* get_collision_shape() const { return shape; }
 	};
 	
 	
-	class CustomTrigger : public Trigger
+	class CustomTrigger : public BulletCollisionObject, public Trigger
 	{
 	public:
 		uint16_t type;
@@ -180,16 +225,16 @@ namespace physics
 		{
 		}
 		
-		// called when object touches this trigger and "activates" it
-		virtual void activate(CollisionObject* object)
+		virtual void collision_began(CollisionObject* other)
 		{
-//			BulletRigidBody* bullet_rb = static_cast<BulletRigidBody*>(object);
-//			
-//			void* pointer = bullet_rb->body->getUserPointer();
-			LOGV("activate trigger: %p\n", object);
+			LOGV("collision began\n");
+		}
+		
+		virtual void collision_ended(CollisionObject* other)
+		{
+			LOGV("collision ended\n");
 		}
 	};
-	FixedArray<Trigger*> _triggers;
 	
 	void DebugPhysicsRenderer::drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color )
 	{
@@ -265,8 +310,6 @@ namespace physics
 		// instance and set the debug renderer
 		debug_renderer = CREATE(DebugPhysicsRenderer);
 		dynamics_world->setDebugDrawer(debug_renderer);
-		
-		_triggers.allocate(4, true);
 	}
 	
 	void shutdown()
@@ -297,16 +340,6 @@ namespace physics
 				delete shape;
 			}
 		}
-		
-		for (size_t i = 0; i < _triggers.size(); ++i)
-		{
-			if (_triggers[i])
-			{
-				Trigger* trigger = _triggers[i];
-				DESTROY(Trigger, trigger);
-			}
-		}
-		_triggers.clear();
 		
 		dynamics_world->setDebugDrawer(0);
 		DESTROY(DebugPhysicsRenderer, debug_renderer);
@@ -425,8 +458,8 @@ namespace physics
 		//m_ghost->setCcdMotionThreshold( 1 );
 		ghost->setCcdMotionThreshold( .1 );
 		ghost->setCcdSweptSphereRadius( 0.1 );
-		LOGV("set character proxy: %p\n", character->get_proxy());
-		ghost->setUserPointer(character->get_proxy());
+		LOGV("set character proxy: %p\n", character->get_collision_object());
+		ghost->setUserPointer(character->get_collision_object());
 		
 		character->SetSpawnLocation( spawnLocation );
 		character->clear_state();
@@ -513,7 +546,7 @@ namespace physics
 		}
 	};
 
-	RigidBody* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg, PhysicsMotionInterface* motion, const glm::vec3& mass_center_offset)
+	CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg, PhysicsMotionInterface* motion, const glm::vec3& mass_center_offset)
 	{
 		bool use_quantized_bvh_tree = true;
 		btBvhTriangleMeshShape * trishape = 0;
@@ -577,7 +610,7 @@ namespace physics
 			}
 			
 			//collision_shapes.push_back(shape);
-			rb->shape = shape;
+			rb->set_collision_shape(shape);
 			
 			// calculate local intertia for non-static objects
 			if (dynamic_body)
@@ -596,7 +629,8 @@ namespace physics
 			
 			btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, motion_state, compound, local_inertia );
 			btRigidBody * body = new btRigidBody( rbInfo );
-			rb->body = body;
+
+			rb->set_collision_object(body);
 			body->setUserPointer(rb);
 			
 			if (dynamic_body)
@@ -620,15 +654,14 @@ namespace physics
 		return rb;
 	} // create_physics_for_mesh
 
-	Trigger* create_trigger(const glm::vec3& size)
+	CollisionObject* create_trigger(const glm::vec3& size)
 	{
 		btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
 		
 		CustomTrigger* trigger = CREATE(CustomTrigger);
-//		trigger->ghost = ghost;
-		_triggers[0] = trigger;
-		LOGV("set trigger: %p\n", trigger);
 		ghost->setUserPointer(trigger);
+		
+		trigger->set_collision_object(ghost);
 
 		btCollisionShape* shape = new btBoxShape(btVector3(size.x, size.y, size.z));
 		collision_shapes.push_back(shape);
@@ -646,13 +679,4 @@ namespace physics
 		return trigger;
 	} // create_trigger
 
-	void Trigger::collision_began(physics::CollisionObject *other)
-	{
-		LOGV("(trigger) began collision!\n");
-	}
-	
-	void Trigger::collision_ended(physics::CollisionObject *other)
-	{
-		LOGV("(trigger) ended collision!\n");
-	}
 }; // namespace physics

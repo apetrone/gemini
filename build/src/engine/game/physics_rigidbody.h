@@ -27,12 +27,7 @@
 namespace physics
 {
 	// abstract physics body
-	struct RigidBody : public CollisionObject
+	class RigidBody
 	{
-		virtual void set_world_position(const glm::vec3& position) = 0;
-		virtual glm::vec3 get_world_position() const = 0;
-		
-		virtual void collision_began(CollisionObject* other) {}
-		virtual void collision_ended(CollisionObject* other) {}
 	};
 }; // namespace physics

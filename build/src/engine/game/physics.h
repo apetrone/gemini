@@ -88,6 +88,6 @@ namespace physics
 	CharacterController* create_character_controller(const btVector3& spawnLocation, bool addActionToWorld);
 	void copy_ghost_to_camera(btPairCachingGhostObject* ghost, Camera& cam);
 	void player_move(CharacterController* character, Camera& camera, const MovementCommand& command);
-	RigidBody* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr, const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0));
-	Trigger* create_trigger(const glm::vec3& size);
+	CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr, const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0));
+	CollisionObject* create_trigger(const glm::vec3& size);
 }; // namespace physics
