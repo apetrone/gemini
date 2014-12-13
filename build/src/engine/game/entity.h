@@ -111,7 +111,10 @@ struct Entity
 	
 	assets::Mesh* mesh;
 	scenegraph::Node* node;
+	
+	// perhaps move these into a unified interface?
 	physics::RigidBody* body;
+	physics::Trigger* trigger;
 		
 	// functions for this script object
 	void set_model(const char* path);
@@ -121,7 +124,8 @@ struct Entity
 
 struct Trigger : public Entity
 {
-
+	void native_activate();
+	void native_deactivate();
 };
 
 

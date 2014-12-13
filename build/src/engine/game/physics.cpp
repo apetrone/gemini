@@ -45,7 +45,80 @@ namespace physics
 	// TODO: this should support an array of character controllers,
 	// but for now, a single one will do.
 	CharacterController* _controller = 0;
-	
+
+
+	class CustomGhostPairCallback : public btOverlappingPairCallback
+	{
+	public:
+		CustomGhostPairCallback() {}
+		virtual ~CustomGhostPairCallback() {}
+
+		virtual btBroadphasePair* addOverlappingPair(btBroadphaseProxy* proxy0, btBroadphaseProxy* proxy1)
+		{
+			btCollisionObject* colObj0 = (btCollisionObject*) proxy0->m_clientObject;
+			btCollisionObject* colObj1 = (btCollisionObject*) proxy1->m_clientObject;
+			btGhostObject* ghost0 = btGhostObject::upcast(colObj0);
+			btGhostObject* ghost1 = btGhostObject::upcast(colObj1);
+			CollisionObject* obj0 = 0;
+			CollisionObject* obj1 = 0;
+			
+			if (ghost0)
+			{
+				obj0 = static_cast<CollisionObject*>(ghost0->getUserPointer());
+				ghost0->addOverlappingObjectInternal(proxy1, proxy0);
+			}
+			
+			if (ghost1)
+			{
+				obj1 = static_cast<CollisionObject*>(ghost1->getUserPointer());
+				ghost1->addOverlappingObjectInternal(proxy0, proxy1);
+			}
+
+			if (obj0 && obj1)
+			{
+				obj0->collision_began(obj1);
+				obj1->collision_began(obj0);
+			}
+			
+			return 0;
+		}
+		
+		virtual void* removeOverlappingPair(btBroadphaseProxy* proxy0, btBroadphaseProxy* proxy1, btDispatcher* dispatcher)
+		{
+			btCollisionObject* colObj0 = (btCollisionObject*) proxy0->m_clientObject;
+			btCollisionObject* colObj1 = (btCollisionObject*) proxy1->m_clientObject;
+			btGhostObject* ghost0 =	btGhostObject::upcast(colObj0);
+			btGhostObject* ghost1 =	btGhostObject::upcast(colObj1);
+			CollisionObject* obj0 = 0;
+			CollisionObject* obj1 = 0;
+			
+			if (ghost0)
+			{
+				obj0 = static_cast<CollisionObject*>(ghost0->getUserPointer());
+				ghost0->removeOverlappingObjectInternal(proxy1,dispatcher,proxy0);
+			}
+			
+			if (ghost1)
+			{
+				obj1 = static_cast<CollisionObject*>(ghost1->getUserPointer());
+				ghost1->removeOverlappingObjectInternal(proxy0,dispatcher,proxy1);
+			}
+			
+			if (obj0 && obj1)
+			{
+				obj0->collision_ended(obj1);
+				obj1->collision_ended(obj0);
+			}
+			return 0;
+		}
+		
+		virtual void	removeOverlappingPairsContainingProxy(btBroadphaseProxy* /*proxy0*/,btDispatcher* /*dispatcher*/)
+		{
+			btAssert(0);
+		}
+	};
+
+
 	
 	class BulletRigidBody : public RigidBody
 	{
@@ -93,6 +166,30 @@ namespace physics
 	};
 	
 	
+	class CustomTrigger : public Trigger
+	{
+	public:
+		uint16_t type;
+		btPairCachingGhostObject* ghost;
+		
+		uint8_t overlapped_objects;
+		
+		CustomTrigger() : type(physics::CollisionType_Trigger),
+		ghost(0),
+		overlapped_objects(0)
+		{
+		}
+		
+		// called when object touches this trigger and "activates" it
+		virtual void activate(CollisionObject* object)
+		{
+//			BulletRigidBody* bullet_rb = static_cast<BulletRigidBody*>(object);
+//			
+//			void* pointer = bullet_rb->body->getUserPointer();
+			LOGV("activate trigger: %p\n", object);
+		}
+	};
+	FixedArray<Trigger*> _triggers;
 	
 	void DebugPhysicsRenderer::drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color )
 	{
@@ -160,12 +257,16 @@ namespace physics
 		dynamics_world->getDispatchInfo().m_convexConservativeDistanceThreshold = 0.01;
 		dynamics_world->getDispatchInfo().m_allowedCcdPenetration = 0.0;
 		
+		// setup ghost pair callback instance
+		pair_cache->setInternalGhostPairCallback( new CustomGhostPairCallback() );
 		
 		//btAlignedAllocSetCustom( bullet2_custom_alloc, bullet2_custom_free );
 		
 		// instance and set the debug renderer
 		debug_renderer = CREATE(DebugPhysicsRenderer);
 		dynamics_world->setDebugDrawer(debug_renderer);
+		
+		_triggers.allocate(4, true);
 	}
 	
 	void shutdown()
@@ -196,6 +297,16 @@ namespace physics
 				delete shape;
 			}
 		}
+		
+		for (size_t i = 0; i < _triggers.size(); ++i)
+		{
+			if (_triggers[i])
+			{
+				Trigger* trigger = _triggers[i];
+				DESTROY(Trigger, trigger);
+			}
+		}
+		_triggers.clear();
 		
 		dynamics_world->setDebugDrawer(0);
 		DESTROY(DebugPhysicsRenderer, debug_renderer);
@@ -260,19 +371,20 @@ namespace physics
 		//		}
 		//	}
 		//}
-
-		// perhaps a separate array of ghost objects?
-		//const btCollisionObjectArray& collision_objects = dynamics_world->getCollisionObjectArray();
-		//for (size_t i = 0; i < collision_objects.size(); ++i)
-		//{
-		//	btCollisionObject* obj = collision_objects[i];
-		//	btGhostObject* ghost = btGhostObject::upcast(obj);
-		//	if (ghost)
-		//	{
-		//		int overlapped_objects = ghost->getNumOverlappingObjects();
-		//		LOGV("overlapped objects: %i\n", overlapped_objects);
-		//	}
-		//}
+		
+//		for (int i = 0; i < dynamics_world->getCollisionObjectArray().size(); ++i)
+//		{
+//			btCollisionObject* collision_object = dynamics_world->getCollisionObjectArray()[i];
+//			
+//			if (collision_object->getCollisionFlags() & btCollisionObject::CF_CHARACTER_OBJECT)
+//			{
+//				btGhostObject* ghost = btGhostObject::upcast(collision_object);
+//				if (ghost)
+//				{
+//					LOGV("ghost userpointer: %p\n", ghost->getUserPointer());
+//				}
+//			}
+//		}
 	} // step
 	
 	void debug_draw()
@@ -290,9 +402,6 @@ namespace physics
 		
 		btPairCachingGhostObject * ghost = new btPairCachingGhostObject();
 		ghost->setWorldTransform( tr );
-		
-		// what the hell does this do?
-		pair_cache->setInternalGhostPairCallback( new btGhostPairCallback() );
 		
 		btCapsuleShape* capsule_shape = new btCapsuleShape(PHYSICS_PLAYER_HALF_WIDTH, (PHYSICS_PLAYER_HALF_HEIGHT*2)-(PHYSICS_PLAYER_HALF_WIDTH*2));
 		//btConvexShape * playerShape = new btCylinderShape( btVector3( .6, .90, .6 ) );
@@ -316,12 +425,14 @@ namespace physics
 		//m_ghost->setCcdMotionThreshold( 1 );
 		ghost->setCcdMotionThreshold( .1 );
 		ghost->setCcdSweptSphereRadius( 0.1 );
+		LOGV("set character proxy: %p\n", character->get_proxy());
+		ghost->setUserPointer(character->get_proxy());
 		
 		character->SetSpawnLocation( spawnLocation );
 		character->clear_state();
 		
 		_controller = character;
-		
+				
 		return character;
 	} // create_character_controller
 	
@@ -486,6 +597,8 @@ namespace physics
 			btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, motion_state, compound, local_inertia );
 			btRigidBody * body = new btRigidBody( rbInfo );
 			rb->body = body;
+			body->setUserPointer(rb);
+			
 			if (dynamic_body)
 			{
 				body->setRestitution(0.25f);
@@ -507,9 +620,15 @@ namespace physics
 		return rb;
 	} // create_physics_for_mesh
 
-	void create_trigger(const glm::vec3& size)
+	Trigger* create_trigger(const glm::vec3& size)
 	{
 		btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
+		
+		CustomTrigger* trigger = CREATE(CustomTrigger);
+//		trigger->ghost = ghost;
+		_triggers[0] = trigger;
+		LOGV("set trigger: %p\n", trigger);
+		ghost->setUserPointer(trigger);
 
 		btCollisionShape* shape = new btBoxShape(btVector3(size.x, size.y, size.z));
 		collision_shapes.push_back(shape);
@@ -523,6 +642,17 @@ namespace physics
 
 		// There was a fix in September of 2013 which fixed sensors and characters, see: https://code.google.com/p/bullet/issues/detail?id=719
 		dynamics_world->addCollisionObject(ghost, btBroadphaseProxy::SensorTrigger, btBroadphaseProxy::CharacterFilter);
+		
+		return trigger;
 	} // create_trigger
 
+	void Trigger::collision_began(physics::CollisionObject *other)
+	{
+		LOGV("(trigger) began collision!\n");
+	}
+	
+	void Trigger::collision_ended(physics::CollisionObject *other)
+	{
+		LOGV("(trigger) ended collision!\n");
+	}
 }; // namespace physics

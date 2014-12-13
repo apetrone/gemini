@@ -73,7 +73,8 @@ void entity_startup()
 	Sqrat::DerivedClass< Trigger, Entity, EntityAllocator<Trigger> > trigger(script::get_vm());
 	root.Bind(_SC("Trigger"), trigger);
 
-
+	trigger.Func("activate", &Trigger::native_activate);
+	trigger.Func("deactivate", &Trigger::native_deactivate);
 
 
 
@@ -225,15 +226,15 @@ void entity_shutdown()
 }
 
 
-Entity::Entity()
+Entity::Entity() :
+	flags(0),
+	body(0),
+	trigger(0),
+	node(0),
+	motion_interface(0),
+	mesh(0)
 {
 	this->id = entity_list().count();
-	this->flags = 0;
-//	this->mesh = 0;
-	this->node = 0;
-	this->body = 0;
-	this->motion_interface = 0;
-	this->mesh = 0;
 	
 	entity_list().add( this );
 	//LOGV( "Entity() - %p, %ld\n", this, (unsigned long)this->id );
@@ -450,4 +451,14 @@ void Entity::set_physics(int physics_type)
 			LOGW("Unable to create physics body!\n");
 		}
 	}
+}
+
+void Trigger::native_activate()
+{
+	
+}
+
+void Trigger::native_deactivate()
+{
+	
 }

@@ -26,7 +26,15 @@
 #include <platform/mem.h>
 
 #include "camera.h"
+
+#include "physics_collisionobject.h"
+#include "physics_rigidbody.h"
+#include "physics_trigger.h"
+
+
+
 #include "charactercontroller.h"
+
 
 #include "assets/asset_mesh.h"
 
@@ -46,15 +54,6 @@ namespace physics
 		}
 	};
 
-	// abstract physics body
-	class RigidBody
-	{
-	public:
-		virtual ~RigidBody() {}
-		
-		virtual void set_world_position(const glm::vec3& position) = 0;
-		virtual glm::vec3 get_world_position() const = 0;
-	};
 	
 	class PhysicsMotionInterface
 	{
@@ -81,9 +80,6 @@ namespace physics
 		virtual int		getDebugMode() const;
 	}; // DebugPhysicsRenderer
 
-
-	typedef btKinematicCharacterController CharacterController;
-
 	void startup();
 	void shutdown();
 	void step(float seconds);
@@ -93,5 +89,5 @@ namespace physics
 	void copy_ghost_to_camera(btPairCachingGhostObject* ghost, Camera& cam);
 	void player_move(CharacterController* character, Camera& camera, const MovementCommand& command);
 	RigidBody* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr, const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0));
-	void create_trigger(const glm::vec3& size);
+	Trigger* create_trigger(const glm::vec3& size);
 }; // namespace physics
