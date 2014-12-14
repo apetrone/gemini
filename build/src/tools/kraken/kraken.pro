@@ -9,7 +9,7 @@ QT       += core gui opengl
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 # temporary developer lib path
-QMAKE_LFLAGS += -F/Users/apetrone/Qt5.3.1/5.3/clang_64/lib
+macx:QMAKE_LFLAGS += -F/Users/apetrone/Qt5.3.1/5.3/clang_64/lib
 CONFIG += c++11
 
 TARGET = kraken
@@ -54,6 +54,11 @@ unix:LIBS += "-lplatform"
 unix:LIBS += "-lcore"
 unix:LIBS += "-lrenderer"
 macx:LIBS += "-framework Cocoa"
+
+win32:LIBS += "../../../lib/debug_x86_64"
+win32:LIBS += "platform.lib"
+win32:LIBS += "core.lib"
+win32:LIBS += "renderer.lib"
 
 INCLUDEPATH += "../"
 INCLUDEPATH += "../../platform"
