@@ -994,24 +994,28 @@ namespace script
 		bool success = false;
 		
 		HSQOBJECT obj;
-		sq_resetobject( &obj );
+		obj._type = OT_NULL;
 		
-		Sqrat::Object classobj( class_obj, get_vm() );
-		if ( !classobj.IsNull() )
+		if (sq_isclass(class_obj))
 		{
-			Sqrat::Function function = classobj.GetSlot( name ).Cast<Sqrat::Function>();
-			if ( !function.IsNull() )
+			sq_resetobject( &obj );
+			
+			Sqrat::Object classobj( class_obj, get_vm() );
+			if ( !classobj.IsNull() )
 			{
-				obj = function.GetFunc();
-				success = true;
+				Sqrat::Function function = classobj.GetSlot( name ).Cast<Sqrat::Function>();
+				if ( !function.IsNull() )
+				{
+					obj = function.GetFunc();
+					success = true;
+				}
+			}
+			
+			if ( !success )
+			{
+				LOGW( "Unable to find '%s'\n", name );
 			}
 		}
-		
-		if ( !success )
-		{
-			LOGW( "Unable to find '%s'\n", name );
-		}
-		
 		return obj;
 	} // find_member
 	

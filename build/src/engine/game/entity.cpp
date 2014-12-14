@@ -29,7 +29,8 @@
 
 static void entity_collision_callback(physics::CollisionEventType type, physics::CollisionObject* first, physics::CollisionObject* second)
 {
-	LOGV("collision callback event!\n");
+	assert(first != 0);
+	assert(second != 0);
 	
 	Entity* ent0 = static_cast<Entity*>(first->get_user_data());
 	Entity* ent1 = static_cast<Entity*>(second->get_user_data());
@@ -354,7 +355,6 @@ void Entity::update()
 void Entity::bind_functions()
 {
 	//	LOGV( "Entity::bind_functions: %p\n", this );
-
 	this->on_fixed_update = script::find_member( this->class_object, ENTITY_FIXED_UPDATE_NAME );
 	this->on_update = script::find_member( this->class_object, ENTITY_UPDATE_NAME );
 	

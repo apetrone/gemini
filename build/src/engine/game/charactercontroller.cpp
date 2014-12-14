@@ -112,7 +112,6 @@ namespace physics
 		const btTransform& world_transform = ghost->getWorldTransform();
 		const btVector3& origin = world_transform.getOrigin();
 		return glm::vec3(origin.x(), origin.y(), origin.z());
-//		return glm::vec3(0.0f);
 	}
 	
 	void CharacterProxyObject::collision_began(CollisionObject* other)
