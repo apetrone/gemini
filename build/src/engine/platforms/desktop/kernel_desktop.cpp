@@ -350,6 +350,8 @@ void DesktopKernel::post_application_config( kernel::ApplicationResult result )
 	int render_width, render_height;
 	
 	set_active( (result != kernel::Application_NoWindow) );
+	
+	state->context = 0;
 
 	if ( is_active() )
 	{
