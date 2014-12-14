@@ -29,9 +29,6 @@
 
 #include "physics_collisionobject.h"
 #include "physics_rigidbody.h"
-#include "physics_trigger.h"
-
-
 
 #include "charactercontroller.h"
 

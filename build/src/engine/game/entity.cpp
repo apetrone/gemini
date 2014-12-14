@@ -27,6 +27,29 @@
 #include "physics.h"
 #include "camera.h"
 
+static void entity_collision_callback(physics::CollisionEventType type, physics::CollisionObject* first, physics::CollisionObject* second)
+{
+	LOGV("collision callback event!\n");
+	
+	Entity* ent0 = static_cast<Entity*>(first->get_user_data());
+	Entity* ent1 = static_cast<Entity*>(second->get_user_data());
+	
+	if (ent0 && ent1)
+	{
+		if (type == physics::Collision_Began)
+		{
+			ent0->collision_began();
+			ent1->collision_began();
+		}
+		else if (type == physics::Collision_Ended)
+		{
+			ent0->collision_ended();
+			ent1->collision_ended();
+		}
+	}
+}
+
+
 void EntityMotionInterface::get_transform(glm::vec3& position, const glm::quat& orientation)
 {
 			
@@ -493,7 +516,7 @@ void Entity::set_physics(int physics_type)
 		// If you reach this, the physics type is unknown/unsupported!
 		assert(0);
 	}
-	
+		
 	this->motion_interface = CREATE(EntityMotionInterface, this, this->node);
 	
 	// generate physics body from mesh
@@ -510,5 +533,11 @@ void Entity::set_physics(int physics_type)
 		{
 			LOGW("Unable to create physics body!\n");
 		}
+	}
+	
+	if (this->collision_object)
+	{
+		this->collision_object->set_collision_callback(entity_collision_callback);
+		this->collision_object->set_user_data(this);
 	}
 }

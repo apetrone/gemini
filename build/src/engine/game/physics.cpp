@@ -164,7 +164,7 @@ namespace physics
 		{
 			if (callback)
 			{
-				callback(Collision_Began, other);
+				callback(Collision_Began, this, other);
 			}
 		}
 		
@@ -172,7 +172,7 @@ namespace physics
 		{
 			if (callback)
 			{
-				callback(Collision_Ended, other);
+				callback(Collision_Ended, this, other);
 			}
 		}
 	};
@@ -209,33 +209,7 @@ namespace physics
 		
 		btCollisionShape* get_collision_shape() const { return shape; }
 	};
-	
-	
-	class CustomTrigger : public BulletCollisionObject, public Trigger
-	{
-	public:
-		uint16_t type;
-		btPairCachingGhostObject* ghost;
-		
-		uint8_t overlapped_objects;
-		
-		CustomTrigger() : type(physics::CollisionType_Trigger),
-		ghost(0),
-		overlapped_objects(0)
-		{
-		}
-		
-		virtual void collision_began(CollisionObject* other)
-		{
-			LOGV("collision began\n");
-		}
-		
-		virtual void collision_ended(CollisionObject* other)
-		{
-			LOGV("collision ended\n");
-		}
-	};
-	
+
 	void DebugPhysicsRenderer::drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color )
 	{
 		Color c = Color::fromFloatPointer( &color[0], 3 );
@@ -658,10 +632,10 @@ namespace physics
 	{
 		btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
 		
-		CustomTrigger* trigger = CREATE(CustomTrigger);
-		ghost->setUserPointer(trigger);
+		BulletCollisionObject* collision_object = CREATE(BulletCollisionObject);
+		ghost->setUserPointer(collision_object);
 		
-		trigger->set_collision_object(ghost);
+		collision_object->set_collision_object(ghost);
 
 		btCollisionShape* shape = new btBoxShape(btVector3(size.x, size.y, size.z));
 		collision_shapes.push_back(shape);
@@ -676,7 +650,7 @@ namespace physics
 		// There was a fix in September of 2013 which fixed sensors and characters, see: https://code.google.com/p/bullet/issues/detail?id=719
 		dynamics_world->addCollisionObject(ghost, btBroadphaseProxy::SensorTrigger, btBroadphaseProxy::CharacterFilter);
 		
-		return trigger;
+		return collision_object;
 	} // create_trigger
 
 }; // namespace physics

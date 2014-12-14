@@ -43,20 +43,30 @@ namespace physics
 		Collision_Ended
 	};
 	
-	typedef void (*CollisionCallback)(CollisionEventType, CollisionObject*);
+	typedef void (*CollisionCallback)(CollisionEventType, CollisionObject*, CollisionObject*);
 	
 	class CollisionObject
 	{
 	protected:
 		CollisionObjectType collision_type;
 		CollisionCallback callback;
+		void* user_data;
 	
 	public:
-		CollisionObject(CollisionObjectType type = CollisionType_Invalid) : collision_type(type), callback(0) {}
+		CollisionObject(CollisionObjectType type = CollisionType_Invalid) :
+			collision_type(type),
+			callback(0),
+			user_data(0)
+		{
+		}
+		
 		virtual ~CollisionObject() {}
 		
 		bool is_type(CollisionObjectType _type) const { return collision_type == _type; }
 		
+		
+		void set_user_data(void* userdata) { user_data = userdata; }
+		void* get_user_data() const { return user_data; }
 		
 		void set_collision_callback(CollisionCallback _callback)
 		{
