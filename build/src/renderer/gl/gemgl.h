@@ -99,14 +99,6 @@
 
 typedef GLuint GLObject;
 
-enum gemgl_renderer_type
-{
-	GEMGL_INVALID = 0,
-	GEMGL_CORE_32,
-	GEMGL_ES_20,	
-};
-
-
 	// ---------------------------------------
 	typedef void (GEMGLAPI GEMGLFNVIEWPORT) ( GLint x, GLint y, GLsizei width, GLsizei height );
 	typedef void (GEMGLAPI GEMGLFNDRAWARRAYS) ( GLenum mode, GLint first, GLsizei count );
@@ -633,18 +625,16 @@ enum gemgl_renderer_type
 
 	// init GL interface
 	int gemgl_startup(gemgl_interface_t& gl_interface);
-	int gemgl_load_symbols( gemgl_interface_t & gl_interface, 
-gemgl_config & config );
-	void gemgl_shutdown( gemgl_interface_t & gl_interface );
-	void * gemgl_findsymbol( gemgl_interface_t & gl_interface, const char * symbol_name );
-	const char * gemgl_uniform_to_string( GLenum type );
-	bool gemgl_find_extension( const char * extension );
+	int gemgl_load_symbols(gemgl_interface_t& gl_interface);
+	void gemgl_shutdown(gemgl_interface_t& gl_interface);
+	void * gemgl_findsymbol(gemgl_interface_t& gl_interface, const char* symbol_name);
+	const char * gemgl_uniform_to_string(GLenum type);
+	bool gemgl_find_extension(const char * extension);
 	
-	void gemgl_parse_version(short& major, short& minor, int 
-renderer_type);
+	void gemgl_parse_version(short& major, short& minor);
 
 #if PLATFORM_APPLE
-	int gemgl_osx_startup( void );
-	void gemgl_osx_shutdown( void );
-	void * gemgl_native_findsymbol( const char * name );
+	int gemgl_osx_startup(void);
+	void gemgl_osx_shutdown(void);
+	void * gemgl_native_findsymbol(const char* name);
 #endif

@@ -22,7 +22,7 @@
 #include <platform/typedefs.h>
 #include <slim/xlog.h>
 
-#include "opengl_21.h"
+#include "opengl_core32.h"
 
 #include "image.h"
 
@@ -32,7 +32,7 @@
 #include <renderer/renderstream.h>
 
 // utility functions
-GLenum image_source_format( int num_channels )
+static GLenum image_source_format( int num_channels )
 {
 	if ( num_channels == 3 )
 	{
@@ -50,7 +50,7 @@ GLenum image_source_format( int num_channels )
 	return GL_RGBA;
 } // image_source_format
 
-GLenum image_internal_format( unsigned int image_flags )
+static GLenum image_internal_format( unsigned int image_flags )
 {
 	//GLenum internalFormat = GL_SRGB8;
 	if ( image_flags & image::F_RGBA )
@@ -65,7 +65,7 @@ GLenum image_internal_format( unsigned int image_flags )
 	return GL_RGBA;
 } // image_internal_format
 
-GLenum srgb_image_to_internal_format(unsigned int image_flags)
+static GLenum srgb_image_to_internal_format(unsigned int image_flags)
 {
 	if (image_flags & image::F_RGBA)
 	{
@@ -83,7 +83,7 @@ GLenum srgb_image_to_internal_format(unsigned int image_flags)
 using namespace renderer;
 
 
-enum GL21VAOType
+enum GL32VAOType
 {
 //	VAO_POSITIONS_ONLY,
 	VAO_INTERLEAVED,
@@ -91,12 +91,12 @@ enum GL21VAOType
 	VAO_LIMIT = 1
 };
 
-enum GL21VBOType
+enum GL32VBOType
 {
 	VBO_LIMIT = 2
 };
 
-struct GL21VertexBuffer : public VertexBuffer
+struct GL32VertexBuffer : public VertexBuffer
 {
 	GLuint vao[ VAO_LIMIT ];
 	GLuint vbo[ VBO_LIMIT ];
@@ -104,7 +104,7 @@ struct GL21VertexBuffer : public VertexBuffer
 	GLenum gl_draw_type;
 	unsigned int vertex_stride;
 	
-	GL21VertexBuffer()
+	GL32VertexBuffer()
 	{
 		for( unsigned int i = 0; i < VAO_LIMIT; ++i )
 		{
@@ -254,13 +254,13 @@ struct GL21VertexBuffer : public VertexBuffer
 	}
 };
 
-struct GL21Texture : public renderer::Texture
+struct GL32Texture : public renderer::Texture
 {
 	unsigned int texture_id;
 	GLenum texture_type;
 	uint8_t unpack_alignment;
 	
-	GL21Texture()
+	GL32Texture()
 	{
 		glGenTextures(1, &texture_id);
 		
@@ -269,7 +269,7 @@ struct GL21Texture : public renderer::Texture
 		unpack_alignment = 4;
 	}
 	
-	~GL21Texture()
+	~GL32Texture()
 	{
 		glDeleteTextures(1, &texture_id);
 	}
@@ -334,19 +334,19 @@ struct GL21Texture : public renderer::Texture
 //	}
 };
 
-struct GL21RenderTarget : public renderer::RenderTarget
+struct GL32RenderTarget : public renderer::RenderTarget
 {
 	GLuint framebuffer;
 	GLuint renderbuffer;
 
-	GL21RenderTarget()
+	GL32RenderTarget()
 	{
 		renderbuffer = 0;
 		
 		gl.GenFramebuffers(1, &framebuffer);
 	}
 	
-	~GL21RenderTarget()
+	~GL32RenderTarget()
 	{
 		gl.DeleteFramebuffers(1, &framebuffer);
 		gl.DeleteRenderbuffers(1, &renderbuffer);
@@ -363,7 +363,7 @@ struct GL21RenderTarget : public renderer::RenderTarget
 		bind(false);
 	}
 	
-	void set_attachment(renderer::RenderTarget::AttachmentType type, uint8_t index, GL21Texture* texture)
+	void set_attachment(renderer::RenderTarget::AttachmentType type, uint8_t index, GL32Texture* texture)
 	{
 		bind();
 		
@@ -403,38 +403,29 @@ struct GL21RenderTarget : public renderer::RenderTarget
 };
 
 
-struct GL21ShaderProgram : public renderer::ShaderProgram
+struct GLCore32ShaderProgram : public renderer::ShaderProgram
 {
 	GLint object;
 
-	GL21ShaderProgram() : object(0) {}
+	GLCore32ShaderProgram() : object(0) {}
 };
 
-GL21::GL21()
+GLCore32::GLCore32()
 {
-	LOGV( "GL21 instanced.\n" );
+	LOGV( "GLCore32 instanced.\n" );
 	
 	last_shader = 0;
 	
 	image_to_internal_format = image_internal_format;
-	
-	
-	default_render_target = CREATE(GL21RenderTarget);
-	default_render_target->color_texture_id = 0;
-	default_render_target->depth_texture_id = 0;
-	default_render_target->width = 0;
-	default_render_target->height = 0;
 }
 
-GL21::~GL21()
+GLCore32::~GLCore32()
 {
-	LOGV( "GL21 shutting down.\n" );
+	LOGV( "GLCore32 shutting down.\n" );
 	DESTROY(RenderTarget, default_render_target);
-	
-	gemgl_shutdown( gl );
 }
 
-void c_shader( util::MemoryStream & stream, GL21 & renderer )
+void c_shader( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -444,7 +435,7 @@ void c_shader( util::MemoryStream & stream, GL21 & renderer )
 	renderer.shaderprogram_activate( shader_program );
 }
 
-void p_shader( util::MemoryStream & stream, GL21 & renderer )
+void p_shader( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -454,7 +445,7 @@ void p_shader( util::MemoryStream & stream, GL21 & renderer )
 	renderer.shaderprogram_deactivate( shader_program );
 }
 
-void c_uniform_matrix4( util::MemoryStream & stream, GL21 & renderer )
+void c_uniform_matrix4( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -469,7 +460,7 @@ void c_uniform_matrix4( util::MemoryStream & stream, GL21 & renderer )
 	gl.CheckError( "uniform matrix 4" );
 }
 
-void c_uniform1i( util::MemoryStream & stream, GL21 & renderer )
+void c_uniform1i( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -482,7 +473,7 @@ void c_uniform1i( util::MemoryStream & stream, GL21 & renderer )
 	gl.CheckError( "uniform1i" );
 }
 
-void c_uniform3f( util::MemoryStream & stream, GL21 & renderer )
+void c_uniform3f( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -495,7 +486,7 @@ void c_uniform3f( util::MemoryStream & stream, GL21 & renderer )
 	gl.CheckError( "uniform3f" );
 }
 
-void c_uniform4f( util::MemoryStream & stream, GL21 & renderer )
+void c_uniform4f( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -508,19 +499,19 @@ void c_uniform4f( util::MemoryStream & stream, GL21 & renderer )
 	gl.CheckError( "uniform4f" );
 }
 
-void c_uniform_sampler2d( util::MemoryStream & stream, GL21 & renderer )
+void c_uniform_sampler2d( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
 	int uniform_location;
 	int texture_unit;
 	renderer::Texture* tex;
-	GL21Texture* texture;
+	GL32Texture* texture;
 	
 	stream.read( uniform_location );
 	stream.read( texture_unit );
 	stream.read( tex );
-	texture = static_cast<GL21Texture*>(tex);
+	texture = static_cast<GL32Texture*>(tex);
 	if (!texture)
 	{
 		return;
@@ -542,7 +533,7 @@ void c_uniform_sampler2d( util::MemoryStream & stream, GL21 & renderer )
 	}
 }
 
-void p_uniform_sampler2d( util::MemoryStream & stream, GL21 & renderer )
+void p_uniform_sampler2d( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -561,7 +552,7 @@ void p_uniform_sampler2d( util::MemoryStream & stream, GL21 & renderer )
 	gl.CheckError( "BindTexture: GL_TEXTURE_2D" );
 }
 
-void c_clear( util::MemoryStream & stream, GL21 & renderer )
+void c_clear( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -571,7 +562,7 @@ void c_clear( util::MemoryStream & stream, GL21 & renderer )
 	gl.CheckError( "Clear" );
 }
 
-void c_clearcolor( util::MemoryStream & stream, GL21 & renderer )
+void c_clearcolor( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -581,7 +572,7 @@ void c_clearcolor( util::MemoryStream & stream, GL21 & renderer )
 	gl.CheckError( "ClearColor" );
 }
 
-void c_cleardepth( util::MemoryStream & stream, GL21 & renderer )
+void c_cleardepth( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -591,7 +582,7 @@ void c_cleardepth( util::MemoryStream & stream, GL21 & renderer )
 	gl.CheckError( "glClearDepth" );
 }
 
-void c_cullface( util::MemoryStream & stream, GL21 & renderer )
+void c_cullface( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	GL_LOG();
 	
@@ -601,7 +592,7 @@ void c_cullface( util::MemoryStream & stream, GL21 & renderer )
 	gl.CheckError( "glCullFace" );
 }
 
-void c_viewport( util::MemoryStream & stream, GL21 & renderer )
+void c_viewport( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	int x, y, width, height;
 	//			stream.read(x);
@@ -618,9 +609,9 @@ void c_viewport( util::MemoryStream & stream, GL21 & renderer )
 	gl.CheckError( "glViewport" );
 }
 
-void c_drawcall( util::MemoryStream & stream, GL21 & renderer )
+void c_drawcall( util::MemoryStream & stream, GLCore32 & renderer )
 {
-	GL21VertexBuffer * vertex_buffer = 0;
+	GL32VertexBuffer * vertex_buffer = 0;
 	GLenum draw_type;
 	unsigned int num_indices;
 	unsigned int num_vertices;
@@ -640,7 +631,7 @@ void c_drawcall( util::MemoryStream & stream, GL21 & renderer )
 	}
 }
 
-void c_state( util::MemoryStream & stream, GL21 & renderer )
+void c_state( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	// state change
 	DriverState driver_state;
@@ -651,7 +642,7 @@ void c_state( util::MemoryStream & stream, GL21 & renderer )
 	op( driver_state, stream, &renderer );
 }
 
-void p_state( util::MemoryStream & stream, GL21 & renderer )
+void p_state( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	// state change
 	DriverState driver_state;
@@ -662,7 +653,7 @@ void p_state( util::MemoryStream & stream, GL21 & renderer )
 	op( driver_state, stream, &renderer );
 }
 
-void c_blendfunc( util::MemoryStream & stream, GL21 & renderer )
+void c_blendfunc( util::MemoryStream & stream, GLCore32 & renderer )
 {
 	RenderBlendType render_blendstate_source, render_blendstate_destination;
 		
@@ -678,13 +669,13 @@ void c_blendfunc( util::MemoryStream & stream, GL21 & renderer )
 }
 
 
-void c_noop( util::MemoryStream & stream, GL21 & renderer )
+void c_noop( util::MemoryStream & stream, GLCore32 & renderer )
 {
 }
 
-typedef void (*render_command_function)( util::MemoryStream & stream, GL21 & renderer );
+typedef void (*render_command_function)( util::MemoryStream & stream, GLCore32 & renderer );
 
-render_command_function commands[] = {
+static render_command_function commands[] = {
 	c_shader, // shader
 	p_shader,
 	
@@ -735,7 +726,7 @@ render_command_function commands[] = {
 };
 
 
-void GL21::init_with_settings(const RenderSettings& settings)
+void GLCore32::init_with_settings(const RenderSettings& settings)
 {
 	enable_gamma_correct = settings.gamma_correct;
 	if (settings.gamma_correct)
@@ -746,19 +737,28 @@ void GL21::init_with_settings(const RenderSettings& settings)
 	}
 }
 
-void GL21::run_command( renderer::DriverCommandType command, util::MemoryStream & stream )
+void GLCore32::create_default_render_target()
+{
+	default_render_target = CREATE(GL32RenderTarget);
+	default_render_target->color_texture_id = 0;
+	default_render_target->depth_texture_id = 0;
+	default_render_target->width = 0;
+	default_render_target->height = 0;
+}
+
+void GLCore32::run_command( renderer::DriverCommandType command, util::MemoryStream & stream )
 {
 	commands[ (command*2) ]( stream, *this );
 }
 
-void GL21::post_command( renderer::DriverCommandType command, util::MemoryStream & stream )
+void GLCore32::post_command( renderer::DriverCommandType command, util::MemoryStream & stream )
 {
 	commands[ (command*2)+1 ]( stream, *this );
 }
 
-void GL21::setup_drawcall( renderer::VertexBuffer * vertexbuffer, util::MemoryStream & stream )
+void GLCore32::setup_drawcall( renderer::VertexBuffer * vertexbuffer, util::MemoryStream & stream )
 {
-	GL21VertexBuffer * vb = (GL21VertexBuffer*)vertexbuffer;
+	GL32VertexBuffer * vb = (GL32VertexBuffer*)vertexbuffer;
 	stream.write( vb );
 	stream.write( vb->gl_draw_type );
 	stream.write( vb->vertex_count );
@@ -766,7 +766,7 @@ void GL21::setup_drawcall( renderer::VertexBuffer * vertexbuffer, util::MemorySt
 } // setup_drawcall
 
 
-int material_parameter_type_to_render_state( unsigned int type )
+static int material_parameter_type_to_render_state( unsigned int type )
 {
 	int params[] =
 	{
@@ -779,9 +779,9 @@ int material_parameter_type_to_render_state( unsigned int type )
 	return params[ type ];
 } // material_parameter_type_to_render_state
 
-void GL21::setup_material(renderer::Material *material, renderer::ShaderProgram *program, RenderStream& stream)
+void GLCore32::setup_material(renderer::Material *material, renderer::ShaderProgram *program, RenderStream& stream)
 {
-	GL21ShaderProgram* shader = static_cast<GL21ShaderProgram*>(program);
+	GLCore32ShaderProgram* shader = static_cast<GLCore32ShaderProgram*>(program);
 	
 
 	// setup shader parameters
@@ -821,9 +821,9 @@ void GL21::setup_material(renderer::Material *material, renderer::ShaderProgram 
 	}
 } // setup_material
 
-renderer::Texture* GL21::texture_create(image::Image& image)
+renderer::Texture* GLCore32::texture_create(image::Image& image)
 {
-	GL21Texture* texture = CREATE(GL21Texture);
+	GL32Texture* texture = CREATE(GL32Texture);
 
 	GLenum source_format = image_source_format(image.channels);
 	GLenum internal_format = image_to_internal_format(image.flags);
@@ -849,15 +849,15 @@ renderer::Texture* GL21::texture_create(image::Image& image)
 	return texture;
 }
 
-void GL21::texture_destroy(renderer::Texture* texture)
+void GLCore32::texture_destroy(renderer::Texture* texture)
 {
-	GL21Texture* gltexture = static_cast<GL21Texture*>(texture);
-	DESTROY(GL21Texture, gltexture);
+	GL32Texture* gltexture = static_cast<GL32Texture*>(texture);
+	DESTROY(GL32Texture, gltexture);
 }
 
-void GL21::texture_update(renderer::Texture* texture, const image::Image& image, const gemini::Recti& rect)
+void GLCore32::texture_update(renderer::Texture* texture, const image::Image& image, const gemini::Recti& rect)
 {
-	GL21Texture* gltexture = static_cast<GL21Texture*>(texture);
+	GL32Texture* gltexture = static_cast<GL32Texture*>(texture);
 	GLenum internal_format = image_to_internal_format(image.flags);
 	
 	gltexture->bind();
@@ -894,9 +894,9 @@ void GL21::texture_update(renderer::Texture* texture, const image::Image& image,
 
 
 
-renderer::VertexBuffer * GL21::vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices )
+renderer::VertexBuffer * GLCore32::vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices )
 {
-	GL21VertexBuffer * stream = CREATE(GL21VertexBuffer);
+	GL32VertexBuffer * stream = CREATE(GL32VertexBuffer);
 	assert( stream != 0 );
 	
 	// initial values for stream
@@ -908,9 +908,9 @@ renderer::VertexBuffer * GL21::vertexbuffer_create( renderer::VertexDescriptor &
 	return stream;
 } // vertexbuffer_create
 
-void GL21::vertexbuffer_destroy( renderer::VertexBuffer * vertexbuffer )
+void GLCore32::vertexbuffer_destroy( renderer::VertexBuffer * vertexbuffer )
 {
-	GL21VertexBuffer * stream = (GL21VertexBuffer*)vertexbuffer;
+	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	
 	gl.DeleteVertexArrays( VAO_INTERLEAVED, stream->vao );
 	gl.CheckError( "DeleteVertexArrays" );
@@ -928,12 +928,12 @@ void GL21::vertexbuffer_destroy( renderer::VertexBuffer * vertexbuffer )
 	}
 	
 	
-	DESTROY(GL21VertexBuffer, stream);
+	DESTROY(GL32VertexBuffer, stream);
 } // vertexbuffer_destroy
 
-void GL21::vertexbuffer_upload_data( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
+void GLCore32::vertexbuffer_upload_data( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
 {
-	GL21VertexBuffer * stream = (GL21VertexBuffer*)vertexbuffer;
+	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	
 	// If you hit this assert,
 	// the VertexBuffer has NOT been initialized properly!
@@ -962,9 +962,9 @@ void GL21::vertexbuffer_upload_data( VertexBuffer * vertexbuffer, unsigned int v
 }
 
 
-void GL21::vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, unsigned int num_indices )
+void GLCore32::vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, unsigned int num_indices )
 {
-	GL21VertexBuffer * stream = (GL21VertexBuffer*)vertexbuffer;
+	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	assert( stream != 0 );
 	gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
 	gl.CheckError( "BindVertexArray" );
@@ -976,9 +976,9 @@ void GL21::vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, uns
 	gl.CheckError( "BindVertexArray" );
 }
 
-void GL21::vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned int num_vertices )
+void GLCore32::vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned int num_vertices )
 {
-	GL21VertexBuffer * stream = (GL21VertexBuffer*)vertexbuffer;
+	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	assert( stream != 0 );
 	
 	gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
@@ -991,9 +991,9 @@ void GL21::vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned in
 	gl.CheckError( "BindVertexArray" );
 }
 
-renderer::VertexBuffer * GL21::vertexbuffer_from_geometry( renderer::VertexDescriptor & descriptor, renderer::Geometry * geometry )
+renderer::VertexBuffer * GLCore32::vertexbuffer_from_geometry( renderer::VertexDescriptor & descriptor, renderer::Geometry * geometry )
 {
-	GL21VertexBuffer * stream = CREATE(GL21VertexBuffer);
+	GL32VertexBuffer * stream = CREATE(GL32VertexBuffer);
 	assert( stream != 0 );
 		
 	renderer::VertexBufferBufferType buffer_type = renderer::BUFFER_STATIC;
@@ -1011,9 +1011,9 @@ renderer::VertexBuffer * GL21::vertexbuffer_from_geometry( renderer::VertexDescr
 	return stream;
 }
 
-void GL21::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer::Geometry * geometry )
+void GLCore32::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer::Geometry * geometry )
 {
-	GL21VertexBuffer * stream = (GL21VertexBuffer*)vertexbuffer;
+	GL32VertexBuffer * stream = (GL32VertexBuffer*)vertexbuffer;
 	assert( stream != 0 );
 	
 	gl.BindVertexArray( stream->vao[ VAO_INTERLEAVED ] );
@@ -1096,7 +1096,7 @@ void GL21::vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer::
 #define SHADER_DEBUG( fmt, ... ) (void(0))
 //#define SHADER_DEBUG LOGV
 
-renderer::ShaderObject GL21::shaderobject_create( renderer::ShaderObjectType shader_type )
+renderer::ShaderObject GLCore32::shaderobject_create( renderer::ShaderObjectType shader_type )
 {
 	GLenum type = shaderobject_type_to_gl_shaderobjecttype( shader_type );
 	ShaderObject object;
@@ -1114,7 +1114,7 @@ renderer::ShaderObject GL21::shaderobject_create( renderer::ShaderObjectType sha
 	return object;
 }
 
-bool GL21::shaderobject_compile( renderer::ShaderObject shader_object, const char * shader_source, const char * preprocessor_defines, const char * version )
+bool GLCore32::shaderobject_compile( renderer::ShaderObject shader_object, const char * shader_source, const char * preprocessor_defines, const char * version )
 {
 	bool status = true;
 	const int MAX_SHADER_SOURCES = 3;
@@ -1147,7 +1147,7 @@ bool GL21::shaderobject_compile( renderer::ShaderObject shader_object, const cha
 	return status;
 }
 
-void GL21::shaderobject_destroy( renderer::ShaderObject shader_object )
+void GLCore32::shaderobject_destroy( renderer::ShaderObject shader_object )
 {
 #if 0
 	bool is_shader = gl.IsShader( shader_object.shader_id );
@@ -1173,9 +1173,9 @@ void GL21::shaderobject_destroy( renderer::ShaderObject shader_object )
 #endif
 }
 
-renderer::ShaderProgram* GL21::shaderprogram_create()
+renderer::ShaderProgram* GLCore32::shaderprogram_create()
 {
-	GL21ShaderProgram* program = CREATE(GL21ShaderProgram);
+	GLCore32ShaderProgram* program = CREATE(GLCore32ShaderProgram);
 	program->object = gl.CreateProgram();
 	gl.CheckError( "CreateProgram" );
 	
@@ -1187,35 +1187,35 @@ renderer::ShaderProgram* GL21::shaderprogram_create()
 	return program;
 }
 
-void GL21::shaderprogram_destroy( renderer::ShaderProgram* shader_program )
+void GLCore32::shaderprogram_destroy( renderer::ShaderProgram* shader_program )
 {
-	GL21ShaderProgram* program = static_cast<GL21ShaderProgram*>(shader_program);
+	GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
 	if ( program->object != 0 )
 	{
 		gl.DeleteProgram( program->object );
 		gl.CheckError( "DeleteProgram" );
 	}
 	
-	DESTROY(GL21ShaderProgram, program);
+	DESTROY(GLCore32ShaderProgram, program);
 }
 
-void GL21::shaderprogram_attach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object )
+void GLCore32::shaderprogram_attach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object )
 {
-	GL21ShaderProgram* program = static_cast<GL21ShaderProgram*>(shader_program);
+	GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
 	gl.AttachShader( program->object, shader_object.shader_id );
 	gl.CheckError( "AttachShader" );
 }
 
-void GL21::shaderprogram_detach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object )
+void GLCore32::shaderprogram_detach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object )
 {
-	GL21ShaderProgram* program = static_cast<GL21ShaderProgram*>(shader_program);
+	GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
 	gl.DetachShader( program->object, shader_object.shader_id );
 	gl.CheckError( "DetachShader" );
 }
 
-void GL21::shaderprogram_bind_attributes( renderer::ShaderProgram* shader_program )
+void GLCore32::shaderprogram_bind_attributes( renderer::ShaderProgram* shader_program )
 {
-	GL21ShaderProgram* program = static_cast<GL21ShaderProgram*>(shader_program);
+	GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
 
 	gl.BindFragDataLocation(program->object, 0, program->frag_data_location());
 	gl.CheckError( "BindFragDataLocation" );
@@ -1229,9 +1229,9 @@ void GL21::shaderprogram_bind_attributes( renderer::ShaderProgram* shader_progra
 	}
 }
 
-void GL21::shaderprogram_bind_uniforms( renderer::ShaderProgram* shader_program )
+void GLCore32::shaderprogram_bind_uniforms( renderer::ShaderProgram* shader_program )
 {
-	GL21ShaderProgram* program = static_cast<GL21ShaderProgram*>(shader_program);
+	GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
 	
 	// ensure this is the active shader before binding uniforms
 	//this->shaderprogram_activate( shader_program );
@@ -1252,9 +1252,9 @@ void GL21::shaderprogram_bind_uniforms( renderer::ShaderProgram* shader_program 
 	}
 }
 
-void GL21::shaderprogram_bind_uniform_block(renderer::ShaderProgram* shader_program, const char* block_name)
+void GLCore32::shaderprogram_bind_uniform_block(renderer::ShaderProgram* shader_program, const char* block_name)
 {
-	GL21ShaderProgram* program = static_cast<GL21ShaderProgram*>(shader_program);
+	GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
 	
 	// find the uniform block
 	GLuint block_index = gl.GetUniformBlockIndex(program->object, block_name);
@@ -1292,9 +1292,9 @@ void GL21::shaderprogram_bind_uniform_block(renderer::ShaderProgram* shader_prog
 	}
 }
 
-bool GL21::shaderprogram_link_and_validate( renderer::ShaderProgram* shader_program )
+bool GLCore32::shaderprogram_link_and_validate( renderer::ShaderProgram* shader_program )
 {
-	GL21ShaderProgram* program = static_cast<GL21ShaderProgram*>(shader_program);
+	GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
 	
 	bool status = true;
 	gl.BindFragDataLocation(program->object, 0, program->frag_data_location());
@@ -1374,9 +1374,9 @@ bool GL21::shaderprogram_link_and_validate( renderer::ShaderProgram* shader_prog
 	return status;
 }
 
-void GL21::shaderprogram_activate( renderer::ShaderProgram* shader_program )
+void GLCore32::shaderprogram_activate( renderer::ShaderProgram* shader_program )
 {
-	GL21ShaderProgram* program = static_cast<GL21ShaderProgram*>(shader_program);
+	GLCore32ShaderProgram* program = static_cast<GLCore32ShaderProgram*>(shader_program);
 	
 	bool is_program = gl.IsProgram( program->object );
 	gl.CheckError( "IsProgram shaderprogram_activate" );
@@ -1390,15 +1390,15 @@ void GL21::shaderprogram_activate( renderer::ShaderProgram* shader_program )
 	gl.CheckError( "UseProgram shaderprogram_activate" );
 }
 
-void GL21::shaderprogram_deactivate( renderer::ShaderProgram* shader_program )
+void GLCore32::shaderprogram_deactivate( renderer::ShaderProgram* shader_program )
 {
 	gl.UseProgram( 0 );
 	gl.CheckError( "UseProgram shaderprogram_deactivate" );
 }
 
-renderer::RenderTarget* GL21::render_target_create(uint16_t width, uint16_t height)
+renderer::RenderTarget* GLCore32::render_target_create(uint16_t width, uint16_t height)
 {
-	GL21RenderTarget* rt = CREATE(GL21RenderTarget);
+	GL32RenderTarget* rt = CREATE(GL32RenderTarget);
 	
 	rt->width = width;
 	rt->height = height;
@@ -1428,10 +1428,10 @@ renderer::RenderTarget* GL21::render_target_create(uint16_t width, uint16_t heig
 }
 
 // http://www.lighthouse3d.com/tutorials/opengl-short-tutorials/opengl_framebuffer_objects/
-void GL21::render_target_destroy(renderer::RenderTarget* rendertarget)
+void GLCore32::render_target_destroy(renderer::RenderTarget* rendertarget)
 {
 	GL_LOG();
-	GL21RenderTarget* rt = static_cast<GL21RenderTarget*>(rendertarget);
+	GL32RenderTarget* rt = static_cast<GL32RenderTarget*>(rendertarget);
 	if (!rt)
 	{
 		return;
@@ -1445,31 +1445,31 @@ void GL21::render_target_destroy(renderer::RenderTarget* rendertarget)
 	gl.DeleteFramebuffers(1, &rt->framebuffer);
 	gl.DeleteRenderbuffers(1, &rt->renderbuffer);
 	
-	DESTROY(GL21RenderTarget, rt);
+	DESTROY(GL32RenderTarget, rt);
 }
 
-void GL21::render_target_activate(renderer::RenderTarget* rendertarget)
+void GLCore32::render_target_activate(renderer::RenderTarget* rendertarget)
 {
 	GL_LOG();
 	
-	GL21RenderTarget* rt = static_cast<GL21RenderTarget*>(rendertarget);
+	GL32RenderTarget* rt = static_cast<GL32RenderTarget*>(rendertarget);
 	gl.BindFramebuffer(GL_FRAMEBUFFER, rt->framebuffer);
 	GLenum drawbufs [] = { GL_COLOR_ATTACHMENT0 };
 	gl.DrawBuffers(1, drawbufs);
 }
 
-void GL21::render_target_deactivate(renderer::RenderTarget* rendertarget)
+void GLCore32::render_target_deactivate(renderer::RenderTarget* rendertarget)
 {
 	GL_LOG();
 	gl.BindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void GL21::render_target_set_attachment(renderer::RenderTarget* rt, renderer::RenderTarget::AttachmentType type, uint8_t index, renderer::Texture* texture)
+void GLCore32::render_target_set_attachment(renderer::RenderTarget* rt, renderer::RenderTarget::AttachmentType type, uint8_t index, renderer::Texture* texture)
 {
-	GL21RenderTarget* render_target = static_cast<GL21RenderTarget*>(rt);
-	render_target->set_attachment(type, index, static_cast<GL21Texture*>(texture));
+	GL32RenderTarget* render_target = static_cast<GL32RenderTarget*>(rt);
+	render_target->set_attachment(type, index, static_cast<GL32Texture*>(texture));
 	
-	GL21Texture* tex = static_cast<GL21Texture*>(texture);
+	GL32Texture* tex = static_cast<GL32Texture*>(texture);
 	
 	if (type == renderer::RenderTarget::COLOR)
 	{
@@ -1484,17 +1484,17 @@ void GL21::render_target_set_attachment(renderer::RenderTarget* rt, renderer::Re
 	}
 }
 
-RenderTarget* GL21::get_default_render_target() const
+RenderTarget* GLCore32::get_default_render_target() const
 {
 	return default_render_target;
 }
 
-PipelineState* GL21::pipelinestate_create(const PipelineDescriptor& desc)
+PipelineState* GLCore32::pipelinestate_create(const PipelineDescriptor& desc)
 {
 	return nullptr;
 }
 
-void GL21::pipelinestate_destroy(PipelineState* state)
+void GLCore32::pipelinestate_destroy(PipelineState* state)
 {
 
 }

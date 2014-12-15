@@ -322,6 +322,7 @@ namespace renderer
 		
 		
 		virtual void init_with_settings(const renderer::RenderSettings& settings) = 0;
+		virtual void create_default_render_target() = 0;
 		
 		// these commands are called with the command and current memory stream
 		virtual void run_command( DriverCommandType command, util::MemoryStream & stream ) = 0;

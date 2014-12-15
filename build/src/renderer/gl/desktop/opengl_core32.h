@@ -24,12 +24,8 @@
 #include "gemgl.h"
 #include "opengl_common.h"
 
-#include <core/factory.h>
-
 class GLCore32 : public renderer::IRenderDriver
 {
-	DECLARE_FACTORY_CLASS( GLCore32, renderer::IRenderDriver );
-
 
 	GLObject last_shader;
 	bool enable_gamma_correct;
@@ -48,6 +44,7 @@ public:
 	virtual const char * description() { return "OpenGL Core 3.2"; }
 	
 	virtual void init_with_settings(const renderer::RenderSettings& settings);
+	virtual void create_default_render_target();
 	
 	virtual void run_command( renderer::DriverCommandType command, util::MemoryStream & stream );
 	virtual void post_command( renderer::DriverCommandType command, util::MemoryStream & stream );

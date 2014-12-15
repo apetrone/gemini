@@ -65,8 +65,7 @@ GLenum gemgl_check_error( const char * msg )
 	return e;
 } // gemgl_check_error
 
-void gemgl_parse_version(short& major, short& minor, int 
-renderer_type )
+void gemgl_parse_version(short& major, short& minor)
 {
 	int major_version = 0;
 	int minor_version = 0;
@@ -143,30 +142,8 @@ int gemgl_startup(gemgl_interface_t& gl_interface)
 }
 
 
-int gemgl_load_symbols( gemgl_interface_t & gl_interface, 
-gemgl_config & config )
+int gemgl_load_symbols(gemgl_interface_t& gl_interface)
 {
-	//int major = 0;
-	//int minor = 0;
-	
-	
-	//gemgl_parse_version( major, minor, config.type );
-
-// this needs to be moved to the renderer.	
-#if 0
-#if GEMGL_ENABLE_ES
-#else
-	if ( config.type == renderer::OpenGL )
-	{
-		if ( major < config.major_version || (major == config.major_version && minor < config.minor_version) )
-		{
-			LOGV( "Minimum OpenGL 3.2 required!\n" );
-			return 0;
-		}
-	}
-#endif
-#endif
-
 #if GEMGL_ENABLE_ES
 	GEMGL_LINK( gl.Viewport, "glViewport", GEMGLFNVIEWPORT );
 	GEMGL_LINK( gl.DepthRange, "glDepthRangef", GEMGLFNDEPTHRANGEF );

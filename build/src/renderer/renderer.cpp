@@ -23,7 +23,6 @@
 #include "shaderconfig.h"
 
 #include <platform/typedefs.h>
-#include <core/factory.h>
 
 #include <slim/xstr.h>
 #include <slim/xlog.h>
@@ -32,23 +31,19 @@
 
 #include <core/configloader.h>
 
-#include "gldrivers/opengl_common.h"
+#include "gl/opengl_common.h"
 
 // compile-time selection of these classes starts here.
 
 #if PLATFORM_USE_GLES2
 	// force use of OpenGL ES v2
-	#include "gldrivers/opengl_glesv2.h"
-	#define RENDERER_TYPE 1
+	#include "gl/mobile/opengl_glesv2.h"
 #elif PLATFORM_USE_GLES3
 	#error Not yet implemented.
-	#include "gldrivers/opengl_glesv3.h"
-	#define RENDER_TYPE 2
 #else
 	// use OpenGL
-	#include "gldrivers/opengl_core32.h"
-	#include "gldrivers/opengl_core21.h"
-	#define RENDERER_TYPE 0
+	#include "gl/desktop/opengl_core32.h"
+	#include "gl/desktop/opengl_21.h"
 #endif
 
 namespace renderer
@@ -67,23 +62,11 @@ namespace renderer
 		// setup vertex descriptor
 		VertexDescriptor::startup();
 	
+		// load the shader config data
 		shader_config::startup();
-	
-		typedef Factory<IRenderDriver, 4> RendererFactory;
-		RendererFactory factory;
 
-		// run-time selection of the renderer has to happen here based on hints by the kernel
-		// for now, we just hard-code these
-#if RENDERER_TYPE > 0
-		factory.register_class( GLESv2::creator, "OpenGL ES 2.0", GLESv2 );
-		driver_type = GLESv2;
-#else
-		factory.register_class( &GLCore32::creator, "OpenGL3.2", OpenGL );
-		driver_type = OpenGL;
-#endif
-
+		// link with GL lib for this platform
 		int glstartup = gemgl_startup(gl);
-
 		if (glstartup != 0)
 		{
 			LOGE("gemgl startup failed!\n");
@@ -92,57 +75,42 @@ namespace renderer
 
 
 		gemgl_config config;
+		
+		// parse the GL_VERSION string and determine which renderer to use.
+		gemgl_parse_version(config.major_version, config.minor_version);
 
-		// determine renderer type?
-		// essentially get the renderer type: GL/GLES
-		config.type = renderer::OpenGL;
-
-
-		gemgl_parse_version(config.major_version, config.minor_version, 
-config.type);
-
-		if (config.type == renderer::OpenGL)
-		{
-			if (config.major_version == 3 && config.major_version == 2)
+#if !defined(PLATFORM_USE_GLES)
+			if (config.major_version == 3 && config.minor_version == 2)
 			{
 				// use core32
-				_render_driver = new GLCore32();
+				_render_driver = CREATE(GLCore32);
 			}
 			else // fallback to 2.1
 			{
 				// TODO: if at least 2.1 is NOT supported,
 				// this has to fail hard.
-				_render_driver = new GL21();
+				_render_driver = CREATE(GL21);
 			}
-		}
-		else
-		{
+#else
 			// TODO: load GLES
-		}
+			if (config.major_version == 2)
+			{
+				_render_driver = CREATE(GLESv2);
+			}
+#endif
 
 		if (_render_driver)
 		{
+			LOGV( "Initialized renderer: '%s'\n", _render_driver->description() );
 
-		}
-				
-		// choose the correct driver at run time; based on some hints?
-		RendererFactory::Record * record = factory.find_class( 0, driver_type );
-		if ( record )
-		{
-			_render_driver = record->creator();
-			if ( _render_driver )
-			{
-				LOGV( "Initialized renderer: '%s'\n", _render_driver->description() );
+			gemgl_load_symbols(gl);
 
-				// init render driver settings
-				_render_driver->init_with_settings(settings);
-				
-				return 1;
-			}
-		}
-		else
-		{
-			LOGE( "Unable to find a renderer matching driver type: %i\n", driver_type );
+			// init render driver settings
+			_render_driver->init_with_settings(settings);
+			
+			_render_driver->create_default_render_target();
+			
+			return 1;
 		}
 
 		return 0;
@@ -156,6 +124,8 @@ config.type);
 		{
 			DESTROY(IRenderDriver, _render_driver);
 		}
+		
+		gemgl_shutdown(gl);		
 	} // shutdown
 	
 }; // namespace renderer

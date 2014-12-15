@@ -284,7 +284,8 @@ def get_librenderer(arguments, target_platform):
 	librenderer.root = "../"
 	librenderer.sources += [
 		"src/renderer/*.*",
-		"src/renderer/gldrivers/opengl_common.*"
+		"src/renderer/gl/*.cpp",
+		"src/renderer/gl/*.h"
 	]
 
 	librenderer.defines += [
@@ -295,7 +296,7 @@ def get_librenderer(arguments, target_platform):
 		"src/contrib",
 
 		"src/renderer",
-		"src/renderer/gldrivers",
+		"src/renderer/gl",
 
 		os.path.join(DEPENDENCIES_FOLDER, "fontstash/src")		
 	]
@@ -307,19 +308,24 @@ def get_librenderer(arguments, target_platform):
 
 	if target_platform.get() in DESKTOP:
 		librenderer.sources += [
-			"src/renderer/gldrivers/opengl_core32.*"
+			"src/renderer/gl/desktop/*.cpp",
+			"src/renderer/gl/desktop/*.h"
 		]
 
 
-	if arguments.glesv2:
+	if arguments.gles:
 		librenderer.sources += [
-			"src/renderer/gldrivers/opengl_glesv2.*"
+			"src/renderer/gl/mobile/*.cpp",
+			"src/renderer/gl/mobile/*.h"			
 		]
 
+		librenderer.defines += [
+			"PLATFORM_USE_GLES2=1"
+		]
 
 	macosx = librenderer.layout(platform="macosx")
 	macosx.sources += [
-		"src/renderer/osx/osx_gemgl.*"
+		"src/renderer/gl/gemgl_osx.mm"
 	]
 
 	return librenderer
@@ -392,7 +398,7 @@ def get_libcore(arguments, target_platform):
 	return libcore
 
 def arguments(parser):
-	parser.add_argument("--with-glesv2", dest="glesv2", action="store_true", help="Build with GLES V2", default=False)
+	parser.add_argument("--with-gles", dest="gles", action="store_true", help="Build with GLES support", default=False)
 	parser.add_argument("--raspberrypi", dest="raspberrypi", action="store_true", help="Build for the RaspberryPi", default=False)
 	
 	parser.add_argument("--indextype", dest="index_type", choices=["uint", "ushort"], type=str, default="uint", help="Set the IndexBuffer type; defaults to uint")
@@ -557,10 +563,10 @@ def products(arguments, **kwargs):
 
 			linux.links += ["X11"]
 
-		if arguments.glesv2:
+		if arguments.gles:
 
 			linux.defines += [
-				"PLATFORM_USE_GLES2=1"
+				"PLATFORM_USE_GLES=1"
 			]			
 		else:
 			linux.links += ["GL"]
