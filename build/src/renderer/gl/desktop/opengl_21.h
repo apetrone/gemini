@@ -40,7 +40,7 @@ public:
 	GL21();
 	~GL21();
 	
-	virtual const char * description() { return "OpenGL Core 3.2"; }
+	virtual const char * description() { return "OpenGL Core 2.1"; }
 	
 	virtual void init_with_settings(const renderer::RenderSettings& settings);
 	virtual void create_default_render_target();
