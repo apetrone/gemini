@@ -632,11 +632,16 @@ enum gemgl_renderer_type
 	extern gemgl_interface_t gl;
 
 	// init GL interface
-	int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config );
+	int gemgl_startup(gemgl_interface_t& gl_interface);
+	int gemgl_load_symbols( gemgl_interface_t & gl_interface, 
+gemgl_config & config );
 	void gemgl_shutdown( gemgl_interface_t & gl_interface );
 	void * gemgl_findsymbol( gemgl_interface_t & gl_interface, const char * symbol_name );
 	const char * gemgl_uniform_to_string( GLenum type );
 	bool gemgl_find_extension( const char * extension );
+	
+	void gemgl_parse_version(short& major, short& minor, int 
+renderer_type);
 
 #if PLATFORM_APPLE
 	int gemgl_osx_startup( void );

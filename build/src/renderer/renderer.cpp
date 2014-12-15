@@ -28,6 +28,8 @@
 #include <slim/xstr.h>
 #include <slim/xlog.h>
 
+#include "gemgl.h"
+
 #include <core/configloader.h>
 
 #include "gldrivers/opengl_common.h"
@@ -45,6 +47,7 @@
 #else
 	// use OpenGL
 	#include "gldrivers/opengl_core32.h"
+	#include "gldrivers/opengl_core21.h"
 	#define RENDERER_TYPE 0
 #endif
 
@@ -78,7 +81,50 @@ namespace renderer
 		factory.register_class( &GLCore32::creator, "OpenGL3.2", OpenGL );
 		driver_type = OpenGL;
 #endif
-		
+
+		int glstartup = gemgl_startup(gl);
+
+		if (glstartup != 0)
+		{
+			LOGE("gemgl startup failed!\n");
+			return glstartup;
+		}
+
+
+		gemgl_config config;
+
+		// determine renderer type?
+		// essentially get the renderer type: GL/GLES
+		config.type = renderer::OpenGL;
+
+
+		gemgl_parse_version(config.major_version, config.minor_version, 
+config.type);
+
+		if (config.type == renderer::OpenGL)
+		{
+			if (config.major_version == 3 && config.major_version == 2)
+			{
+				// use core32
+				_render_driver = new GLCore32();
+			}
+			else // fallback to 2.1
+			{
+				// TODO: if at least 2.1 is NOT supported,
+				// this has to fail hard.
+				_render_driver = new GL21();
+			}
+		}
+		else
+		{
+			// TODO: load GLES
+		}
+
+		if (_render_driver)
+		{
+
+		}
+				
 		// choose the correct driver at run time; based on some hints?
 		RendererFactory::Record * record = factory.find_class( 0, driver_type );
 		if ( record )

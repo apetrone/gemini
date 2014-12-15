@@ -413,12 +413,7 @@ struct GLCore32ShaderProgram : public renderer::ShaderProgram
 GLCore32::GLCore32()
 {
 	LOGV( "GLCore32 instanced.\n" );
-	gemgl_config config;
-	config.type = renderer::OpenGL;
-	config.major_version = 3;
-	config.minor_version = 2;
 	
-	gemgl_startup( gl, config );
 	last_shader = 0;
 	
 	image_to_internal_format = image_internal_format;

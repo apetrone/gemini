@@ -65,8 +65,12 @@ GLenum gemgl_check_error( const char * msg )
 	return e;
 } // gemgl_check_error
 
-void gemgl_parse_version( int & major, int & minor, int renderer_type )
+void gemgl_parse_version(short& major, short& minor, int 
+renderer_type )
 {
+	int major_version = 0;
+	int minor_version = 0;
+
 	gemgl_GLGETSTRINGPROC gl_get_string = (gemgl_GLGETSTRINGPROC)gemgl_findsymbol( gl, "glGetString" );
 	if ( gl_get_string )
 	{
@@ -80,7 +84,7 @@ void gemgl_parse_version( int & major, int & minor, int renderer_type )
 		}
 
 #if GEMGL_ENABLE_ES
-		// sscanf isn't working in iOS 5 Simulator. Well, there are multiple ways to skin a cat...
+		// sscanf isn't working in iOS 5 Simulator.
 		if( !strstr( (const char*)version, "OpenGL ES 2.0" ) )
 		{
 			LOGE( "Error parsing OpenGL version\n" );
@@ -89,7 +93,8 @@ void gemgl_parse_version( int & major, int & minor, int renderer_type )
 		major = 2;
 		minor = 0;
 #else
-		if ( sscanf( (const char*)version, "%d.%d", &major, &minor ) < 2 )
+		if ( sscanf( (const char*)version, "%d.%d", 
+&major_version, &minor_version ) < 2 )
 		{
 			LOGE( "Error parsing OpenGL version\n" );
 			return;
@@ -100,16 +105,15 @@ void gemgl_parse_version( int & major, int & minor, int renderer_type )
 	{
 		LOGE( "Unable to retrieve glGetString pointer!\n" );
 	}
+
+	major = (short)major_version;
+	minor = (short)minor_version;
 } // gemgl_parse_version
 
 
-
-int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
+int gemgl_startup(gemgl_interface_t& gl_interface)
 {
-	int major = 0;
-	int minor = 0;
-	
-	
+	// load the platform-specific GL library
 #if PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_ANDROID
 	const char * libName = "";
 
@@ -135,10 +139,21 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 		return 0;
 	}
 #endif
+	return 0;
+}
 
-	gemgl_parse_version( major, minor, config.type );
+
+int gemgl_load_symbols( gemgl_interface_t & gl_interface, 
+gemgl_config & config )
+{
+	//int major = 0;
+	//int minor = 0;
 	
+	
+	//gemgl_parse_version( major, minor, config.type );
 
+// this needs to be moved to the renderer.	
+#if 0
 #if GEMGL_ENABLE_ES
 #else
 	if ( config.type == renderer::OpenGL )
@@ -149,6 +164,7 @@ int gemgl_startup( gemgl_interface_t & gl_interface, gemgl_config & config )
 			return 0;
 		}
 	}
+#endif
 #endif
 
 #if GEMGL_ENABLE_ES
