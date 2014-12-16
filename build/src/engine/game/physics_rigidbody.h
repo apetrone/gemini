@@ -29,5 +29,7 @@ namespace physics
 	// abstract physics body
 	class RigidBody
 	{
+	public:
+		virtual ~RigidBody() {}
 	};
 }; // namespace physics

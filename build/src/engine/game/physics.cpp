@@ -185,12 +185,12 @@ namespace physics
 	public:
 		BulletRigidBody() : shape(nullptr)
 		{
-			
+			this->collision_type = physics::CollisionType_Dynamic;
 		}
 		
 		~BulletRigidBody()
 		{
-			btRigidBody* body = btRigidBody::upcast(object);
+			btRigidBody* body = get_bullet_body();
 			
 			if (body && body->getMotionState())
 			{
@@ -208,6 +208,27 @@ namespace physics
 		}
 		
 		btCollisionShape* get_collision_shape() const { return shape; }
+		btRigidBody* get_bullet_body() const { return  btRigidBody::upcast(object); }
+		
+		virtual void apply_force(const glm::vec3& force, const glm::vec3& local_position)
+		{
+			btRigidBody* body = get_bullet_body();
+			if (body)
+			{
+				body->activate();
+				body->applyForce(btVector3(force.x, force.y, force.z), btVector3(local_position.x, local_position.y, local_position.z));
+			}
+		}
+		
+		virtual void apply_central_force(const glm::vec3& force)
+		{
+			btRigidBody* body = get_bullet_body();
+			if (body)
+			{
+				body->activate();
+				body->applyCentralForce(btVector3(force.x, force.y, force.z));
+			}
+		}
 	};
 
 	void DebugPhysicsRenderer::drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color )

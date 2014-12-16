@@ -35,6 +35,7 @@ namespace physics
 		CollisionType_Invalid = 0,
 		CollisionType_Trigger = 2,
 		CollisionType_Character = 3,
+		CollisionType_Dynamic = 4
 	};
 	
 	enum CollisionEventType
@@ -81,5 +82,8 @@ namespace physics
 		
 		// invoked when this object no longer collides with other
 		virtual void collision_ended(CollisionObject* other) = 0;
+		
+		virtual void apply_force(const glm::vec3& force, const glm::vec3& local_position) {};
+		virtual void apply_central_force(const glm::vec3& force) {};
 	};
 }; // namespace physics

@@ -27,6 +27,8 @@
 #include "physics.h"
 #include "camera.h"
 
+#include "physics_rigidbody.h"
+
 static void entity_collision_callback(physics::CollisionEventType type, physics::CollisionObject* first, physics::CollisionObject* second)
 {
 	assert(first != 0);
@@ -87,6 +89,11 @@ void entity_startup()
 //	entity.Prop(_SC("rotation"), &Entity::get_rotation, &Entity::set_rotation);
 	
 	entity.Func(_SC("AttachCamera"), &Entity::attach_camera);
+	
+	
+	entity.Func(_SC("apply_force"), &Entity::apply_force);
+	entity.Func(_SC("apply_central_force"), &Entity::apply_central_force);
+	
 	
 	entity.Func("collision_began", &Entity::native_collision_began);
 	entity.Func("collision_ended", &Entity::native_collision_ended);
@@ -175,17 +182,7 @@ void entity_step()
 	for( ; it != end; ++it )
 	{
 		(*it)->fixed_update( kernel::instance()->parameters().step_interval_seconds );
-		
-//		Entity* ent = (*it);
-//		// update render node and body
-//		if (ent->node && ent->body)
-//		{
-//			ent->node->translation = ent->position;
-//			ent->body->set_world_position(ent->position);
-//		}
 	}
-	
-	
 }
 
 void entity_deferred_delete( bool only_deferred )
@@ -448,6 +445,22 @@ void Entity::attach_camera(Camera* camera)
 	
 }
 
+void Entity::apply_force(glm::vec3* force, glm::vec3* local_position)
+{
+	if (this->collision_object && this->collision_object->is_type(physics::CollisionType_Dynamic))
+	{
+		this->collision_object->apply_force(*force, *local_position);
+	}
+}
+
+void Entity::apply_central_force(glm::vec3 *force)
+{
+	if (this->collision_object && this->collision_object->is_type(physics::CollisionType_Dynamic))
+	{
+		this->collision_object->apply_central_force(*force);
+	}
+}
+
 glm::vec3* Entity::get_position()
 {
 	return &position;
@@ -500,7 +513,7 @@ void Entity::set_physics(int physics_type)
 	else if (physics_type == 1)
 	{
 		// set dynamic physics type
-		mass_kg = 50.0f;
+		mass_kg = 5.0f;
 	}
 	else if (physics_type == 2)
 	{
