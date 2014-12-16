@@ -82,8 +82,8 @@ void entity_startup()
 	entity.Func(ENTITY_REMOVE_NAME, &Entity::remove );
 	
 	// for now, all these are going to be bolted onto the Entity class
-	entity.Func(_SC("SetModel"), &Entity::set_model);
-	entity.Func(_SC("SetPhysics"), &Entity::set_physics);
+	entity.Func(_SC("set_model"), &Entity::set_model);
+	entity.Func(_SC("set_physics"), &Entity::set_physics);
 	
 	entity.Prop(_SC("position"), &Entity::get_position, &Entity::set_position);
 //	entity.Prop(_SC("rotation"), &Entity::get_rotation, &Entity::set_rotation);
