@@ -114,8 +114,10 @@ struct Entity
 	void set_position(glm::vec3* new_position);
 	glm::vec3* get_position();
 	void attach_camera(Camera* camera);
+	
 	void apply_force(glm::vec3* force, glm::vec3* local_position);
 	void apply_central_force(glm::vec3* force);
+	void set_mass(float mass);
 	
 	assets::Mesh* mesh;
 	scenegraph::Node* node;

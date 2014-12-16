@@ -229,6 +229,19 @@ namespace physics
 				body->applyCentralForce(btVector3(force.x, force.y, force.z));
 			}
 		}
+		
+		virtual void set_mass(float mass)
+		{
+			btRigidBody* body = get_bullet_body();
+			if (body)
+			{
+				// update mass and inertia tensor
+				btVector3 local_inertia;
+				body->getCollisionShape()->calculateLocalInertia(mass, local_inertia);
+				body->setMassProps(mass, local_inertia);
+				body->updateInertiaTensor();
+			}
+		}
 	};
 
 	void DebugPhysicsRenderer::drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color )

@@ -85,5 +85,7 @@ namespace physics
 		
 		virtual void apply_force(const glm::vec3& force, const glm::vec3& local_position) {};
 		virtual void apply_central_force(const glm::vec3& force) {};
+		
+		virtual void set_mass(float mass) {};
 	};
 }; // namespace physics
