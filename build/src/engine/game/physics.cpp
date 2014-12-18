@@ -32,6 +32,8 @@ const float PHYSICS_PLAYER_HALF_HEIGHT = 0.91f; // .91 == 6 ft tall
 
 namespace physics
 {
+	class BulletConstraint;
+
 	// TODO: move these to an internal namespace
 	btDefaultCollisionConfiguration * collision_config;
 	btCollisionDispatcher * dispatcher;
@@ -41,6 +43,7 @@ namespace physics
 	btAlignedObjectArray<btCollisionShape*> collision_shapes;
 	btBroadphaseInterface * broadphase;
 	DebugPhysicsRenderer* debug_renderer;
+	std::vector<BulletConstraint*> constraints;
 
 	// TODO: this should support an array of character controllers,
 	// but for now, a single one will do.
@@ -131,9 +134,23 @@ namespace physics
 		{
 			if (object)
 			{
+				remove_constraints();
+			
 				dynamics_world->removeCollisionObject(object);
 				delete object;
 				object = 0;
+			}
+		}
+		
+		void remove_constraints()
+		{
+			// need to remove constraints here...
+			for (int i = 0; i < MAX_CONSTRAINTS_PER_OBJECT; ++i)
+			{
+				if (constraints[i])
+				{
+					constraints[i]->remove();
+				}
 			}
 		}
 		
@@ -178,6 +195,45 @@ namespace physics
 	};
 
 	
+	class BulletConstraint : public Constraint
+	{
+	public:
+		btTypedConstraint* constraint;
+		
+		BulletConstraint(btTypedConstraint* bullet_constraint)
+		{
+			constraint = bullet_constraint;
+			constraints.push_back(this);
+			dynamics_world->addConstraint(bullet_constraint);
+		}
+		
+		virtual ~BulletConstraint()
+		{
+			if (constraint)
+			{
+				remove();
+				for (std::vector<BulletConstraint*>::iterator it = constraints.begin(); it != constraints.end(); ++it)
+				{
+					if (*it == this)
+					{
+						constraints.erase(it);
+						break;
+					}
+				}
+				delete constraint;
+				constraint = 0;
+			}
+		}
+		
+		virtual void remove()
+		{
+			if (constraint)
+			{
+				dynamics_world->removeConstraint(constraint);
+			}
+		}
+	};
+	
 	class BulletRigidBody : public BulletCollisionObject, public RigidBody
 	{
 		btCollisionShape* shape;
@@ -190,6 +246,8 @@ namespace physics
 		
 		~BulletRigidBody()
 		{
+			remove_constraints();
+	
 			btRigidBody* body = get_bullet_body();
 			
 			if (body && body->getMotionState())
@@ -242,7 +300,22 @@ namespace physics
 				body->updateInertiaTensor();
 			}
 		}
+		
+		virtual void set_parent(CollisionObject* first, CollisionObject* second)
+		{
+			btRigidBody* rb0 = get_bullet_body();
+			btRigidBody* rb1 = (static_cast<BulletRigidBody*>(second))->get_bullet_body();
+
+			btTypedConstraint* joint = new btPoint2PointConstraint(*rb0, *rb1, btVector3(0, 1, 0), btVector3(0, -1, 0));
+			dynamics_world->addConstraint(joint);
+			joint->setDbgDrawSize(btScalar(5.0f));
+			
+			BulletConstraint* constraint = CREATE(BulletConstraint, joint);
+			first->add_constraint(constraint);
+			second->add_constraint(constraint);
+		}
 	};
+
 
 	void DebugPhysicsRenderer::drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color )
 	{
@@ -325,6 +398,15 @@ namespace physics
 		//
 		// Cleanup
 		//
+		
+		// remove all constraints from objects
+		for (int i = constraints.size()-1; i >= 0; --i)
+		{
+			DESTROY(BulletConstraint, constraints[i]);
+		}
+		constraints.clear();
+
+		
 		for( int i = dynamics_world->getNumCollisionObjects()-1; i >= 0; --i )
 		{
 			btCollisionObject * obj = dynamics_world->getCollisionObjectArray()[i];

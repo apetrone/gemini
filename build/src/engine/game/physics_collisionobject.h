@@ -28,6 +28,7 @@ namespace physics
 {
 	// forward declarations
 	class CollisionObject;
+	class Constraint;
 	
 	// enums, flags
 	enum CollisionObjectType
@@ -46,25 +47,33 @@ namespace physics
 	
 	typedef void (*CollisionCallback)(CollisionEventType, CollisionObject*, CollisionObject*);
 	
+	static const uint8_t MAX_CONSTRAINTS_PER_OBJECT = 1;
+	
 	class CollisionObject
 	{
 	protected:
 		CollisionObjectType collision_type;
 		CollisionCallback callback;
 		void* user_data;
-	
+		Constraint* constraints[MAX_CONSTRAINTS_PER_OBJECT];
+		
 	public:
 		CollisionObject(CollisionObjectType type = CollisionType_Invalid) :
 			collision_type(type),
 			callback(0),
 			user_data(0)
 		{
+			memset(constraints, 0, sizeof(Constraint*)*MAX_CONSTRAINTS_PER_OBJECT);
 		}
 		
 		virtual ~CollisionObject() {}
 		
 		bool is_type(CollisionObjectType _type) const { return collision_type == _type; }
-		
+				
+		void add_constraint(Constraint* constraint)
+		{
+			constraints[0] = constraint;
+		}
 		
 		void set_user_data(void* userdata) { user_data = userdata; }
 		void* get_user_data() const { return user_data; }
@@ -87,5 +96,7 @@ namespace physics
 		virtual void apply_central_force(const glm::vec3& force) {};
 		
 		virtual void set_mass(float mass) {};
+		
+		virtual void set_parent(CollisionObject* first, CollisionObject* second) {};
 	};
 }; // namespace physics

@@ -27,8 +27,10 @@
 
 #include "camera.h"
 
+#include "physics_constraint.h"
 #include "physics_collisionobject.h"
 #include "physics_rigidbody.h"
+
 
 #include "charactercontroller.h"
 

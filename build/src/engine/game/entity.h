@@ -118,6 +118,7 @@ struct Entity
 	void apply_force(glm::vec3* force, glm::vec3* local_position);
 	void apply_central_force(glm::vec3* force);
 	void set_mass(float mass);
+	void set_parent(Entity* other);
 	
 	assets::Mesh* mesh;
 	scenegraph::Node* node;

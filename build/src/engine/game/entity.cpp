@@ -94,6 +94,7 @@ void entity_startup()
 	entity.Func(_SC("apply_force"), &Entity::apply_force);
 	entity.Func(_SC("apply_central_force"), &Entity::apply_central_force);
 	entity.Func(_SC("set_mass"), &Entity::set_mass);
+	entity.Func(_SC("set_parent"), &Entity::set_parent);
 	
 	entity.Func("collision_began", &Entity::native_collision_began);
 	entity.Func("collision_ended", &Entity::native_collision_ended);
@@ -466,6 +467,14 @@ void Entity::set_mass(float mass)
 	if (this->collision_object && this->collision_object->is_type(physics::CollisionType_Dynamic))
 	{
 		this->collision_object->set_mass(mass);
+	}
+}
+
+void Entity::set_parent(Entity *other)
+{
+	if (this->collision_object && this->collision_object->is_type(physics::CollisionType_Dynamic))
+	{
+		this->collision_object->set_parent(this->collision_object, other->collision_object);
 	}
 }
 
