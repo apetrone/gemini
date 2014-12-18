@@ -57,24 +57,15 @@ class btCollisionWorld;
 class btCollisionDispatcher;
 class btPairCachingGhostObject;
 
-#include "physics_collisionobject.h"
 
 namespace physics
 {
-	class CharacterController;
-
 	///CharacterController is an object that supports a sliding motion in a world.
 	///It uses a ghost object and convex sweep test to test for upcoming collisions. This is combined with discrete collision detection to recover from penetrations.
 	///Interaction between CharacterController and dynamic rigid bodies needs to be explicity implemented by the user.
 	class CharacterController : public btCharacterControllerInterface
 	{
-	public:
-		CollisionObject* get_collision_object() const { return m_collision_object; }
-
 	protected:
-
-		CollisionObject* m_collision_object;
-
 		btScalar m_halfHeight;
 
 		btPairCachingGhostObject* m_ghostObject;

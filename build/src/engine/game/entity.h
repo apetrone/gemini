@@ -104,17 +104,16 @@ struct Entity
 	void set_name( const String & object_name ) { this->name = object_name; }
 	virtual void native_fixed_update( float delta_seconds );
 	virtual void native_update();
-	virtual void native_collision_began();
-	virtual void native_collision_ended();
+	virtual void native_collision_began(Entity* other);
+	virtual void native_collision_ended(Entity* other);
 	
-	void collision_began();
-	void collision_ended();
+	void collision_began(Entity* other);
+	void collision_ended(Entity* other);
 	
 	glm::vec3 position;
 	void set_position(glm::vec3* new_position);
 	glm::vec3* get_position();
-	void attach_camera(Camera* camera);
-	
+
 	void apply_force(glm::vec3* force, glm::vec3* local_position);
 	void apply_central_force(glm::vec3* force);
 	void set_mass(float mass);

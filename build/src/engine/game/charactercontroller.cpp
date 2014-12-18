@@ -80,50 +80,6 @@ namespace physics
 		return n;
 	}
 
-	// If I try to make CharacterController derive from physics::CollisionObject,
-	// the vtable is all kinds of fucked up. Until that is figured out,
-	// this proxy object will have to be in place.
-	struct CharacterProxyObject : public physics::CollisionObject
-	{
-		CharacterController* character;
-		
-		CharacterProxyObject(CharacterController* character_controller) : character(character_controller) {}
-		
-		virtual void set_world_position(const glm::vec3& position);
-		virtual glm::vec3 get_world_position() const;
-		
-		virtual void collision_began(physics::CollisionObject* other);
-		virtual void collision_ended(physics::CollisionObject* other);
-	};
-	
-	void CharacterProxyObject::set_world_position(const glm::vec3 &position)
-	{
-		btGhostObject* ghost = character->getGhostObject();
-		assert(ghost != nullptr);
-		btTransform& world_transform = ghost->getWorldTransform();
-		world_transform.setOrigin(btVector3(position.x, position.y, position.z));
-		ghost->setWorldTransform(world_transform);
-	}
-	
-	glm::vec3 CharacterProxyObject::get_world_position() const
-	{
-		btGhostObject* ghost = character->getGhostObject();
-		assert(ghost != nullptr);
-		const btTransform& world_transform = ghost->getWorldTransform();
-		const btVector3& origin = world_transform.getOrigin();
-		return glm::vec3(origin.x(), origin.y(), origin.z());
-	}
-	
-	void CharacterProxyObject::collision_began(CollisionObject* other)
-	{
-		LOGV("character collision began: %p\n", other);
-	}
-
-	void CharacterProxyObject::collision_ended(CollisionObject* other)
-	{
-		LOGV("character collision ended: %p\n", other);
-	}
-
 	///@todo Interact with dynamic objects,
 	///Ride kinematicly animated platforms properly
 	///More realistic (or maybe just a config option) falling
@@ -232,7 +188,6 @@ namespace physics
 
 	CharacterController::CharacterController (btPairCachingGhostObject* ghostObject,btConvexShape* convexShape,btScalar stepHeight, int upAxis)
 	{
-		m_collision_object = new CharacterProxyObject(this);
 		m_upAxis = upAxis;
 		m_addedMargin = 0.02;
 		m_walkDirection.setValue(0,0,0);
@@ -264,7 +219,6 @@ namespace physics
 
 	CharacterController::~CharacterController ()
 	{
-		delete m_collision_object;
 	}
 
 	btPairCachingGhostObject* CharacterController::getGhostObject()

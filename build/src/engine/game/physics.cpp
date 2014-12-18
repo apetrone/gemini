@@ -317,6 +317,50 @@ namespace physics
 	};
 
 
+	// If I try to make CharacterController derive from physics::CollisionObject,
+	// the vtable is all kinds of fucked up. Until that is figured out,
+	// this proxy object will have to be in place.
+	struct CharacterProxyObject : public physics::CollisionObject
+	{
+		CharacterController* character;
+		
+		CharacterProxyObject(CharacterController* character_controller) : character(character_controller) {}
+		
+		virtual void set_world_position(const glm::vec3& position);
+		virtual glm::vec3 get_world_position() const;
+		
+		virtual void collision_began(physics::CollisionObject* other);
+		virtual void collision_ended(physics::CollisionObject* other);
+	};
+	
+	void CharacterProxyObject::set_world_position(const glm::vec3 &position)
+	{
+		btGhostObject* ghost = character->getGhostObject();
+		assert(ghost != nullptr);
+		btTransform& world_transform = ghost->getWorldTransform();
+		world_transform.setOrigin(btVector3(position.x, position.y, position.z));
+		ghost->setWorldTransform(world_transform);
+	}
+	
+	glm::vec3 CharacterProxyObject::get_world_position() const
+	{
+		btGhostObject* ghost = character->getGhostObject();
+		assert(ghost != nullptr);
+		const btTransform& world_transform = ghost->getWorldTransform();
+		const btVector3& origin = world_transform.getOrigin();
+		return glm::vec3(origin.x(), origin.y(), origin.z());
+	}
+	
+	void CharacterProxyObject::collision_began(CollisionObject* other)
+	{
+		LOGV("character collision began: %p\n", other);
+	}
+	
+	void CharacterProxyObject::collision_ended(CollisionObject* other)
+	{
+		LOGV("character collision ended: %p\n", other);
+	}
+
 	void DebugPhysicsRenderer::drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color )
 	{
 		Color c = Color::fromFloatPointer( &color[0], 3 );
@@ -548,8 +592,6 @@ namespace physics
 		//m_ghost->setCcdMotionThreshold( 1 );
 		ghost->setCcdMotionThreshold( .1 );
 		ghost->setCcdSweptSphereRadius( 0.1 );
-		LOGV("set character proxy: %p\n", character->get_collision_object());
-		ghost->setUserPointer(character->get_collision_object());
 		
 		character->SetSpawnLocation( spawnLocation );
 		character->clear_state();
@@ -558,6 +600,24 @@ namespace physics
 				
 		return character;
 	} // create_character_controller
+	
+	CharacterController* get_character_controller(int index)
+	{
+		// not handling more than one at the moment
+		assert(index == 0);
+		
+		return _controller;
+	}
+	
+	CollisionObject* create_character_proxy(CharacterController* controller)
+	{
+		btGhostObject* ghost = controller->getGhostObject();
+		
+		CharacterProxyObject* proxy = CREATE(CharacterProxyObject, controller);
+		ghost->setUserPointer(proxy);
+		
+		return proxy;
+	}
 	
 	void copy_ghost_to_camera(btPairCachingGhostObject* ghost, Camera& cam)
 	{

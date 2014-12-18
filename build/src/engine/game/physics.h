@@ -85,6 +85,8 @@ namespace physics
 	void debug_draw();
 	
 	CharacterController* create_character_controller(const btVector3& spawnLocation, bool addActionToWorld);
+	CharacterController* get_character_controller(int index);
+	CollisionObject* create_character_proxy(CharacterController* controller);
 	void copy_ghost_to_camera(btPairCachingGhostObject* ghost, Camera& cam);
 	void player_move(CharacterController* character, Camera& camera, const MovementCommand& command);
 	CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr, const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0));

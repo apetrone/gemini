@@ -29,6 +29,8 @@
 
 #include "physics_rigidbody.h"
 
+#include "charactercontroller.h"
+
 static void entity_collision_callback(physics::CollisionEventType type, physics::CollisionObject* first, physics::CollisionObject* second)
 {
 	assert(first != 0);
@@ -41,13 +43,13 @@ static void entity_collision_callback(physics::CollisionEventType type, physics:
 	{
 		if (type == physics::Collision_Began)
 		{
-			ent0->collision_began();
-			ent1->collision_began();
+			ent0->collision_began(ent1);
+			ent1->collision_began(ent0);
 		}
 		else if (type == physics::Collision_Ended)
 		{
-			ent0->collision_ended();
-			ent1->collision_ended();
+			ent0->collision_ended(ent1);
+			ent1->collision_ended(ent0);
 		}
 	}
 }
@@ -87,10 +89,7 @@ void entity_startup()
 	
 	entity.Prop(_SC("position"), &Entity::get_position, &Entity::set_position);
 //	entity.Prop(_SC("rotation"), &Entity::get_rotation, &Entity::set_rotation);
-	
-	entity.Func(_SC("AttachCamera"), &Entity::attach_camera);
-	
-	
+
 	entity.Func(_SC("apply_force"), &Entity::apply_force);
 	entity.Func(_SC("apply_central_force"), &Entity::apply_central_force);
 	entity.Func(_SC("set_mass"), &Entity::set_mass);
@@ -119,7 +118,7 @@ void entity_startup()
 	gamerules.Func(ENTITY_START_NAME, &GameRules::native_start );
 	gamerules.Func(ENTITY_UPDATE_NAME, &GameRules::native_update );
 	gamerules.Func(ENTITY_FIXED_UPDATE_NAME, &GameRules::native_fixed_update );
-	gamerules.Func(_SC("SetActiveCamera"), &GameRules::set_active_camera);
+	gamerules.Func(_SC("set_active_camera"), &GameRules::set_active_camera);
 	root.Bind(_SC("GameRules"), gamerules);
 	
 
@@ -374,17 +373,17 @@ void Entity::native_update()
 	//	LOGV( "Entity::native_tick\n" );
 } // native_update
 
-void Entity::native_collision_began()
+void Entity::native_collision_began(Entity* other)
 {
 	
 }
 
-void Entity::native_collision_ended()
+void Entity::native_collision_ended(Entity* other)
 {
 	
 }
 
-void Entity::collision_began()
+void Entity::collision_began(Entity* other)
 {
 	if ( sq_isnull(this->on_collision_began) || sq_isnull(this->instance) )
 	{
@@ -394,7 +393,8 @@ void Entity::collision_began()
 	SQRESULT res;
 	sq_pushobject( script::get_vm(), this->on_collision_began );
 	sq_pushobject( script::get_vm(), this->instance );
-	res = sq_call( script::get_vm(), 1, SQFalse, SQTrue );
+	sq_pushobject(script::get_vm(), other->instance);
+	res = sq_call( script::get_vm(), 2, SQFalse, SQTrue );
 	
 	sq_pop( script::get_vm(), 1 );
 	if ( SQ_FAILED(res) )
@@ -404,7 +404,7 @@ void Entity::collision_began()
 	}
 }
 
-void Entity::collision_ended()
+void Entity::collision_ended(Entity* other)
 {
 	if ( sq_isnull(this->on_collision_ended) || sq_isnull(this->instance) )
 	{
@@ -414,7 +414,8 @@ void Entity::collision_ended()
 	SQRESULT res;
 	sq_pushobject( script::get_vm(), this->on_collision_ended );
 	sq_pushobject( script::get_vm(), this->instance );
-	res = sq_call( script::get_vm(), 1, SQFalse, SQTrue );
+	sq_pushobject(script::get_vm(), other->instance);
+	res = sq_call( script::get_vm(), 2, SQFalse, SQTrue );
 	
 	sq_pop( script::get_vm(), 1 );
 	if ( SQ_FAILED(res) )
@@ -441,10 +442,6 @@ void Entity::set_position(glm::vec3 *new_position)
 	}
 }
 
-void Entity::attach_camera(Camera* camera)
-{
-	
-}
 
 void Entity::apply_force(glm::vec3* force, glm::vec3* local_position)
 {
@@ -535,6 +532,9 @@ void Entity::set_physics(int physics_type)
 	else if (physics_type == 2)
 	{
 		// character
+		physics::CharacterController* controller = physics::get_character_controller(0);
+		assert(controller);
+		this->collision_object = physics::create_character_proxy(controller);
 	}
 	else if (physics_type == 3)
 	{
