@@ -329,8 +329,8 @@ namespace physics
 		virtual void set_world_position(const glm::vec3& position);
 		virtual glm::vec3 get_world_position() const;
 		
-		virtual void collision_began(physics::CollisionObject* other);
-		virtual void collision_ended(physics::CollisionObject* other);
+		virtual void collision_began(physics::CollisionObject* other) {};
+		virtual void collision_ended(physics::CollisionObject* other) {};
 	};
 	
 	void CharacterProxyObject::set_world_position(const glm::vec3 &position)
@@ -349,16 +349,6 @@ namespace physics
 		const btTransform& world_transform = ghost->getWorldTransform();
 		const btVector3& origin = world_transform.getOrigin();
 		return glm::vec3(origin.x(), origin.y(), origin.z());
-	}
-	
-	void CharacterProxyObject::collision_began(CollisionObject* other)
-	{
-		LOGV("character collision began: %p\n", other);
-	}
-	
-	void CharacterProxyObject::collision_ended(CollisionObject* other)
-	{
-		LOGV("character collision ended: %p\n", other);
 	}
 
 	void DebugPhysicsRenderer::drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color )
