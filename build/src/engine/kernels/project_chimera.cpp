@@ -298,6 +298,16 @@ public:
 			case kernel::WindowGainFocus:
 			case kernel::WindowResized:
 			case kernel::MouseButton:
+			{
+				if (event.is_down && active_camera)
+				{
+					// try to raycast?
+					glm::vec3 start, direction;
+					physics::CollisionObject* char_object = (physics::CollisionObject*)character->getGhostObject()->getUserPointer();
+					physics::raycast(char_object, active_camera->pos, active_camera->view, 4096.0f);
+				}
+				break;
+			}
 			case kernel::MouseWheelMoved:
 			case kernel::TouchBegin:
 			case kernel::TouchMoved:

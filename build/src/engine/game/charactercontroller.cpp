@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include "btBulletDynamicsCommon.h"
+#include "physics_common.h"
 
 #include "charactercontroller.h"
 #include <slim/xlog.h>
@@ -80,84 +81,6 @@ namespace physics
 		return n;
 	}
 
-	///@todo Interact with dynamic objects,
-	///Ride kinematicly animated platforms properly
-	///More realistic (or maybe just a config option) falling
-	/// -> Should integrate falling velocity manually and use that in stepDown()
-	///Support jumping
-	///Support ducking
-	class btKinematicClosestNotMeRayResultCallback : public btCollisionWorld::ClosestRayResultCallback
-	{
-	public:
-		btKinematicClosestNotMeRayResultCallback (btCollisionObject* me) : btCollisionWorld::ClosestRayResultCallback(btVector3(0.0, 0.0, 0.0), btVector3(0.0, 0.0, 0.0))
-		{
-			m_me = me;
-		}
-
-		virtual btScalar addSingleResult(btCollisionWorld::LocalRayResult& rayResult, bool normalInWorldSpace)
-		{
-			if (rayResult.m_collisionObject == m_me)
-			{
-				return btScalar(1.0);
-			}
-
-			if (!rayResult.m_collisionObject->hasContactResponse())
-			{
-				return btScalar(1.0);
-			}
-
-			return ClosestRayResultCallback::addSingleResult (rayResult, normalInWorldSpace);
-		}
-	protected:
-		btCollisionObject* m_me;
-	};
-
-	class btKinematicClosestNotMeConvexResultCallback : public btCollisionWorld::ClosestConvexResultCallback
-	{
-	public:
-		btKinematicClosestNotMeConvexResultCallback (btCollisionObject* me, const btVector3& up, btScalar minSlopeDot)
-		: btCollisionWorld::ClosestConvexResultCallback(btVector3(0.0, 0.0, 0.0), btVector3(0.0, 0.0, 0.0))
-		, m_me(me)
-		, m_up(up)
-		, m_minSlopeDot(minSlopeDot)
-		{
-		}
-
-		virtual btScalar addSingleResult(btCollisionWorld::LocalConvexResult& convexResult,bool normalInWorldSpace)
-		{
-			if (convexResult.m_hitCollisionObject == m_me)
-			{
-				return btScalar(1.0);
-			}
-				
-			if (!convexResult.m_hitCollisionObject->hasContactResponse())
-			{
-				return btScalar(1.0);
-			}
-
-			btVector3 hitNormalWorld;
-			if (normalInWorldSpace)
-			{
-				hitNormalWorld = convexResult.m_hitNormalLocal;
-			}
-			else
-			{
-				///need to transform normal into worldspace
-				hitNormalWorld = m_hitCollisionObject->getWorldTransform().getBasis()*convexResult.m_hitNormalLocal;
-			}
-
-			btScalar dotUp = m_up.dot(hitNormalWorld);
-			if (dotUp < m_minSlopeDot) {
-				return btScalar(1.0);
-			}
-
-			return ClosestConvexResultCallback::addSingleResult (convexResult, normalInWorldSpace);
-		}
-	protected:
-		btCollisionObject* m_me;
-		const btVector3 m_up;
-		btScalar m_minSlopeDot;
-	};
 
 	/*
 	 * Returns the reflection direction of a ray going 'direction' hitting a surface with normal 'normal'
@@ -309,7 +232,7 @@ namespace physics
 		start.setOrigin (m_currentPosition + getUpAxisDirections()[m_upAxis] * (m_convexShape->getMargin() + m_addedMargin));
 		end.setOrigin (m_targetPosition);
 
-		btKinematicClosestNotMeConvexResultCallback callback (m_ghostObject, -getUpAxisDirections()[m_upAxis], btScalar(0.7071));
+		ClosestNotMeConvexResultCallback callback (m_ghostObject, -getUpAxisDirections()[m_upAxis], btScalar(0.7071));
 		callback.m_collisionFilterGroup = getGhostObject()->getBroadphaseHandle()->m_collisionFilterGroup;
 		callback.m_collisionFilterMask = getGhostObject()->getBroadphaseHandle()->m_collisionFilterMask;
 
@@ -499,7 +422,7 @@ namespace physics
 			end.setOrigin (m_targetPosition);
 			btVector3 sweepDirNegative(m_currentPosition - m_targetPosition);
 
-			btKinematicClosestNotMeConvexResultCallback callback (m_ghostObject, sweepDirNegative, btScalar(0.0));
+			ClosestNotMeConvexResultCallback callback (m_ghostObject, sweepDirNegative, btScalar(0.0));
 			callback.m_collisionFilterGroup = getGhostObject()->getBroadphaseHandle()->m_collisionFilterGroup;
 			callback.m_collisionFilterMask = getGhostObject()->getBroadphaseHandle()->m_collisionFilterMask;
 
@@ -585,7 +508,7 @@ namespace physics
 		start.setOrigin (m_currentPosition);
 		end.setOrigin (m_targetPosition);
 
-		btKinematicClosestNotMeConvexResultCallback callback (m_ghostObject, getUpAxisDirections()[m_upAxis], m_maxSlopeCosine);
+		ClosestNotMeConvexResultCallback callback (m_ghostObject, getUpAxisDirections()[m_upAxis], m_maxSlopeCosine);
 		callback.m_collisionFilterGroup = getGhostObject()->getBroadphaseHandle()->m_collisionFilterGroup;
 		callback.m_collisionFilterMask = getGhostObject()->getBroadphaseHandle()->m_collisionFilterMask;
 

@@ -22,6 +22,7 @@
 #include <platform/typedefs.h>
 #include <slim/xlog.h>
 #include "physics.h"
+#include "physics_common.h"
 #include <renderer/color.h>
 #include <renderer/debugdraw.h>
 
@@ -551,6 +552,34 @@ namespace physics
 			dynamics_world->debugDrawWorld();
 		}
 	} // debug_draw
+	
+	void raycast(CollisionObject* object, const glm::vec3& start, const glm::vec3& direction, float max_distance)
+	{
+		glm::vec3 destination = (start + direction * max_distance);
+		btVector3 ray_start(start.x, start.y, start.z);
+		btVector3 ray_end(destination.x, destination.y, destination.z);
+		
+		BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(object);
+		btCollisionObject* obj = bullet_object->get_collision_object();
+		
+		ClosestNotMeRayResultCallback callback(obj);
+		dynamics_world->rayTest(ray_start, ray_end, callback);
+		
+		if (callback.hasHit())
+		{
+			glm::vec3 hit = start + (destination * callback.m_closestHitFraction);
+			if (callback.m_collisionObject->getCollisionFlags() & btCollisionObject::CF_STATIC_OBJECT)
+			{
+				LOGV("hit: %g (static object)\n", callback.m_closestHitFraction);
+			}
+			else
+			{
+				LOGV("hit: %g (dynamic object)\n", callback.m_closestHitFraction);
+			}
+		}
+		
+		// should probably return a structure with data regarding the hit?
+	} // raycast
 
 	CharacterController* create_character_controller(const btVector3& spawnLocation, bool addActionToWorld)
 	{

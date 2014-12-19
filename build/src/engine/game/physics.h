@@ -79,10 +79,14 @@ namespace physics
 		virtual int		getDebugMode() const;
 	}; // DebugPhysicsRenderer
 
+
+
+
 	void startup();
 	void shutdown();
 	void step(float seconds);
 	void debug_draw();
+	void raycast(CollisionObject* object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
 	
 	CharacterController* create_character_controller(const btVector3& spawnLocation, bool addActionToWorld);
 	CharacterController* get_character_controller(int index);
