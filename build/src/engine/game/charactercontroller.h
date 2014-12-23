@@ -45,10 +45,9 @@ extern btVector3 upAxis;
 
 #include "LinearMath/btVector3.h"
 
-//#include "btCharacterControllerInterface.h"
-#include "BulletDynamics/Character/btCharacterControllerInterface.h"
-
+//#include "btKinematicCharacterInterface.h"
 #include "BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h"
+
 
 
 class btCollisionShape;
@@ -57,13 +56,29 @@ class btCollisionWorld;
 class btCollisionDispatcher;
 class btPairCachingGhostObject;
 
+class Camera;
 
 namespace physics
 {
-	///CharacterController is an object that supports a sliding motion in a world.
+	typedef int16_t MovementValue;
+	struct MovementCommand
+	{
+		unsigned int time;
+		MovementValue left;
+		MovementValue right;
+		MovementValue forward;
+		MovementValue back;
+		
+		MovementCommand()
+		{
+			memset(this, 0, sizeof(MovementCommand));
+		}
+	};
+
+	///KinematicCharacter is an object that supports a sliding motion in a world.
 	///It uses a ghost object and convex sweep test to test for upcoming collisions. This is combined with discrete collision detection to recover from penetrations.
-	///Interaction between CharacterController and dynamic rigid bodies needs to be explicity implemented by the user.
-	class CharacterController : public btCharacterControllerInterface
+	///Interaction between KinematicCharacter and dynamic rigid bodies needs to be explicity implemented by the user.
+	class KinematicCharacter : public btCharacterControllerInterface
 	{
 	protected:
 		btScalar m_halfHeight;
@@ -144,8 +159,8 @@ namespace physics
 		bool bEnableFreeCam;
 
 	public:
-		CharacterController (btPairCachingGhostObject* ghostObject,btConvexShape* convexShape,btScalar stepHeight, int upAxis = 1);
-		virtual ~CharacterController ();
+		KinematicCharacter (btPairCachingGhostObject* ghostObject,btConvexShape* convexShape,btScalar stepHeight, int upAxis = 1);
+		virtual ~KinematicCharacter ();
 
 		void StopWalking();
 
@@ -223,5 +238,25 @@ namespace physics
 		bool onGround () const;
 
 		void SetSpawnLocation( const btVector3 & spawn );
+		
+		
+		void get_movement_command(physics::MovementCommand& command);
+	};
+	
+	void player_move(KinematicCharacter* character, Camera& camera, const MovementCommand& command);
+	
+	// aggregate controller
+	class CharacterController
+	{
+	public:
+		KinematicCharacter* character;
+		Camera* camera;
+		
+		CharacterController() : character(0), camera(0)
+		{}
+		
+		void get_input_command(MovementCommand& command);
+		
+		void apply_command(const MovementCommand& command);
 	};
 } // namespace physics

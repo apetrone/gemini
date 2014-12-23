@@ -232,7 +232,8 @@ public:
 	DECLARE_APPLICATION(ProjectChimera);
 
 	Camera* active_camera;
-	physics::CharacterController* character;
+	physics::CharacterController* player_controller;
+	physics::KinematicCharacter* character;
 	scenegraph::Node* root;
 	vr::HeadMountedDevice* device;
 
@@ -243,6 +244,7 @@ public:
 
 	ProjectChimera()
 	{
+		player_controller = 0;
 		character = 0;
 		root = 0;
 		device = 0;
@@ -428,6 +430,9 @@ public:
 		// create character
 		character = physics::create_character_controller(btVector3(0, 2, 0), false);
 		character->clear_state();
+		
+		player_controller = CREATE(CharacterController);
+		player_controller->character = character;
 			
 		// capture the mouse
 		kernel::instance()->capture_mouse( true );
@@ -484,15 +489,12 @@ public:
 		// grab state here?
 		physics::MovementCommand command;
 		command.time = 0;
-		command.left = input::state()->keyboard().is_down(input::KEY_A);
-		command.right = input::state()->keyboard().is_down(input::KEY_D);
-		command.forward = input::state()->keyboard().is_down(input::KEY_W);
-		command.back = input::state()->keyboard().is_down(input::KEY_S);
 
-		command.left = command.left || input::state()->joystick(0).axes[0].normalized_value < 0;
-		command.right = command.right || input::state()->joystick(0).axes[0].normalized_value > 0;
-		command.forward = command.forward || input::state()->joystick(0).axes[1].normalized_value < 0;
-		command.back = command.back || input::state()->joystick(0).axes[1].normalized_value > 0;
+		// handle input
+		player_controller->get_input_command(command);
+		
+
+
 
 		Sqrat::RootTable roottable( script::get_vm() );
 		Sqrat::Object gamerules = roottable.GetSlot( _SC("gamerules") );
@@ -502,14 +504,18 @@ public:
 			if ( gr )
 			{
 				active_camera = gr->get_active_camera();
+				player_controller->camera = active_camera;
 			}
 		}
+		
+		// apply input
+		player_controller->apply_command(command);
 		
 		if (active_camera)
 		{
 		
 #if LOCK_CAMERA_TO_CHARACTER
-		physics::player_move(character, *active_camera, command);
+		//physics::player_move(character, *active_camera, command);
 #else
 		// if you want to move JUST the camera instead...
 		active_camera->move_left(input::state()->keyboard().is_down(input::KEY_A));
@@ -517,16 +523,6 @@ public:
 		active_camera->move_forward(input::state()->keyboard().is_down(input::KEY_W));
 		active_camera->move_backward(input::state()->keyboard().is_down(input::KEY_S));
 		active_camera->update_view();
-#endif
-
-		// rotate physics body based on camera yaw
-		btTransform worldTrans = character->getGhostObject()->getWorldTransform();
-		btQuaternion rotation(btVector3(0,1,0), mathlib::degrees_to_radians(-active_camera->yaw));
-		worldTrans.setRotation(rotation);
-		character->getGhostObject()->setWorldTransform(worldTrans);
-		
-#if LOCK_CAMERA_TO_CHARACTER
-		physics::copy_ghost_to_camera(character->getGhostObject(), *active_camera);
 #endif
 	
 		
@@ -602,6 +598,8 @@ public:
 	
 	virtual void shutdown( kernel::Params & params )
 	{
+		DESTROY(CharacterController, player_controller);
+	
 		// cleanup entities
 		// perhaps just destroy the gamerules and the entities will follow?
 		script::shutdown();

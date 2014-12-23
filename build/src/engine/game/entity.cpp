@@ -532,7 +532,7 @@ void Entity::set_physics(int physics_type)
 	else if (physics_type == 2)
 	{
 		// character
-		physics::CharacterController* controller = physics::get_character_controller(0);
+		physics::KinematicCharacter* controller = physics::get_character_controller(0);
 		assert(controller);
 		this->collision_object = physics::create_character_proxy(controller);
 	}

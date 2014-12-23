@@ -48,7 +48,7 @@ namespace physics
 
 	// TODO: this should support an array of character controllers,
 	// but for now, a single one will do.
-	CharacterController* _controller = 0;
+	KinematicCharacter* _controller = 0;
 
 	class CustomGhostPairCallback : public btOverlappingPairCallback
 	{
@@ -318,14 +318,14 @@ namespace physics
 	};
 
 
-	// If I try to make CharacterController derive from physics::CollisionObject,
+	// If I try to make KinematicCharacter derive from physics::CollisionObject,
 	// the vtable is all kinds of fucked up. Until that is figured out,
 	// this proxy object will have to be in place.
 	struct CharacterProxyObject : public physics::CollisionObject
 	{
-		CharacterController* character;
+		KinematicCharacter* character;
 		
-		CharacterProxyObject(CharacterController* character_controller) : character(character_controller) {}
+		CharacterProxyObject(KinematicCharacter* character_controller) : character(character_controller) {}
 		
 		virtual void set_world_position(const glm::vec3& position);
 		virtual glm::vec3 get_world_position() const;
@@ -589,7 +589,7 @@ namespace physics
 		return info;
 	} // raycast
 
-	CharacterController* create_character_controller(const btVector3& spawnLocation, bool addActionToWorld)
+	KinematicCharacter* create_character_controller(const btVector3& spawnLocation, bool addActionToWorld)
 	{
 		btTransform tr;
 		tr.setIdentity();
@@ -605,7 +605,7 @@ namespace physics
 		ghost->setCollisionFlags( btCollisionObject::CF_CHARACTER_OBJECT );
 		
 		btScalar stepHeight = btScalar(.36);
-		CharacterController * character = new CharacterController (ghost,capsule_shape,stepHeight);
+		KinematicCharacter * character = new KinematicCharacter (ghost,capsule_shape,stepHeight);
 		
 		///only collide with static for now (no interaction with dynamic objects)
 		dynamics_world->addCollisionObject(ghost, btBroadphaseProxy::CharacterFilter, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter | btBroadphaseProxy::SensorTrigger);
@@ -628,7 +628,7 @@ namespace physics
 		return character;
 	} // create_character_controller
 	
-	CharacterController* get_character_controller(int index)
+	KinematicCharacter* get_character_controller(int index)
 	{
 		// not handling more than one at the moment
 		assert(index == 0);
@@ -636,7 +636,7 @@ namespace physics
 		return _controller;
 	}
 	
-	CollisionObject* create_character_proxy(CharacterController* controller)
+	CollisionObject* create_character_proxy(KinematicCharacter* controller)
 	{
 		btGhostObject* ghost = controller->getGhostObject();
 		
@@ -645,45 +645,6 @@ namespace physics
 		
 		return proxy;
 	}
-	
-	void copy_ghost_to_camera(btPairCachingGhostObject* ghost, Camera& cam)
-	{
-		btTransform tr = ghost->getWorldTransform();
-		btVector3 origin = tr.getOrigin();
-		origin += btVector3(0, .9, 0);
-		
-		cam.pos = glm::vec3(origin.x(), origin.y(), origin.z());
-	} // copy_ghost_to_camera
-	
-	void player_move(CharacterController* character, Camera& camera, const MovementCommand& command)
-	{
-		glm::vec3 cam_right = camera.side;
-		glm::vec3 cam_dir = camera.view;
-		
-		if (character)
-		{
-			character->setFacingDirections(
-				btVector3(cam_dir.x, cam_dir.y, cam_dir.z),
-				btVector3(cam_right.x, cam_right.y, cam_right.z)
-			);
-			
-			character->setMovementWeight(
-				command.forward,
-				command.back,
-				command.left,
-				command.right
-			);
-				
-			bool movement_is_zero = (
-				command.forward == 0 &&
-				command.right == 0 &&
-				command.left == 0 &&
-				command.back == 0
-			);
-			
-			character->enableDamping(movement_is_zero);
-		}
-	} // player_move
 
 	class CustomMotionState : public btMotionState
 	{

@@ -38,22 +38,7 @@
 #include "assets/asset_mesh.h"
 
 namespace physics
-{
-	struct MovementCommand
-	{
-		unsigned int time;
-		bool left;
-		bool right;
-		bool forward;
-		bool back;
-		
-		MovementCommand()
-		{
-			memset(this, 0, sizeof(MovementCommand));
-		}
-	};
-
-	
+{	
 	class PhysicsMotionInterface
 	{
 	public:
@@ -96,11 +81,10 @@ namespace physics
 	void debug_draw();
 	RaycastInfo raycast(CollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
 	
-	CharacterController* create_character_controller(const btVector3& spawnLocation, bool addActionToWorld);
-	CharacterController* get_character_controller(int index);
-	CollisionObject* create_character_proxy(CharacterController* controller);
-	void copy_ghost_to_camera(btPairCachingGhostObject* ghost, Camera& cam);
-	void player_move(CharacterController* character, Camera& camera, const MovementCommand& command);
+	KinematicCharacter* create_character_controller(const btVector3& spawnLocation, bool addActionToWorld);
+	KinematicCharacter* get_character_controller(int index);
+	CollisionObject* create_character_proxy(KinematicCharacter* controller);
+
 	CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr, const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0));
 	CollisionObject* create_trigger(const glm::vec3& size);
 }; // namespace physics

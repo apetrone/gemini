@@ -27,6 +27,8 @@
 #include "charactercontroller.h"
 #include <slim/xlog.h>
 
+#include <core/mathlib.h>
+#include "camera.h"
 
 #define SMOOTH_UNIDIRECTIONAL_MOVEMENT 1
 #define CHARACTER_MOVEMENT_MULTIPLIER 1.5
@@ -63,6 +65,12 @@ subject to the following restrictions:
 #include "BulletCollision/CollisionDispatch/btCollisionWorld.h"
 #include "LinearMath/btDefaultMotionState.h"
 
+
+// for CharacterController
+#include "input.h"
+
+
+
 namespace physics
 {
 
@@ -87,7 +95,7 @@ namespace physics
 	 *
 	 * from: http://www-cs-students.stanford.edu/~adityagp/final/node3.html
 	 */
-	btVector3 CharacterController::computeReflectionDirection (const btVector3& direction, const btVector3& normal)
+	btVector3 KinematicCharacter::computeReflectionDirection (const btVector3& direction, const btVector3& normal)
 	{
 		return direction - (btScalar(2.0) * direction.dot(normal)) * normal;
 	}
@@ -95,7 +103,7 @@ namespace physics
 	/*
 	 * Returns the portion of 'direction' that is parallel to 'normal'
 	 */
-	btVector3 CharacterController::parallelComponent (const btVector3& direction, const btVector3& normal)
+	btVector3 KinematicCharacter::parallelComponent (const btVector3& direction, const btVector3& normal)
 	{
 		btScalar magnitude = direction.dot(normal);
 		return normal * magnitude;
@@ -104,12 +112,12 @@ namespace physics
 	/*
 	 * Returns the portion of 'direction' that is perpindicular to 'normal'
 	 */
-	btVector3 CharacterController::perpindicularComponent (const btVector3& direction, const btVector3& normal)
+	btVector3 KinematicCharacter::perpindicularComponent (const btVector3& direction, const btVector3& normal)
 	{
 		return direction - parallelComponent(direction, normal);
 	}
 
-	CharacterController::CharacterController (btPairCachingGhostObject* ghostObject,btConvexShape* convexShape,btScalar stepHeight, int upAxis)
+	KinematicCharacter::KinematicCharacter (btPairCachingGhostObject* ghostObject,btConvexShape* convexShape,btScalar stepHeight, int upAxis)
 	{
 		m_upAxis = upAxis;
 		m_addedMargin = 0.02;
@@ -140,23 +148,23 @@ namespace physics
 		m_prevMoveWeight.setZero();
 	}
 
-	CharacterController::~CharacterController ()
+	KinematicCharacter::~KinematicCharacter ()
 	{
 	}
 
-	btPairCachingGhostObject* CharacterController::getGhostObject()
+	btPairCachingGhostObject* KinematicCharacter::getGhostObject()
 	{
 		return m_ghostObject;
 	}
 
-	void CharacterController::StopWalking()
+	void KinematicCharacter::StopWalking()
 	{
 
 		//m_useWalkDirection = false;
 		m_dampenMovement = true;
 	}
 
-	bool CharacterController::recoverFromPenetration ( btCollisionWorld* collisionWorld)
+	bool KinematicCharacter::recoverFromPenetration ( btCollisionWorld* collisionWorld)
 	{
 
 		bool penetration = false;
@@ -217,7 +225,7 @@ namespace physics
 		return penetration;
 	}
 
-	void CharacterController::stepUp ( btCollisionWorld* world)
+	void KinematicCharacter::stepUp ( btCollisionWorld* world)
 	{
 		F( stepUp );
 
@@ -264,7 +272,7 @@ namespace physics
 		}
 	}
 
-	void CharacterController::updateTargetPositionBasedOnCollision (const btVector3& hitNormal, btScalar tangentMag, btScalar normalMag)
+	void KinematicCharacter::updateTargetPositionBasedOnCollision (const btVector3& hitNormal, btScalar tangentMag, btScalar normalMag)
 	{
 		F( updateTargetPositionBasedOnCollision );
 
@@ -302,16 +310,16 @@ namespace physics
 		}
 	}
 
-	void CharacterController::setMovementWeight( float _forward, float _back, float _left, float _right )
+	void KinematicCharacter::setMovementWeight( float _forward, float _back, float _left, float _right )
 	{
 		mFrontMove = _forward * movementWeightFactor;
-		//printf( "Front Move: %g\n", mFrontMove );
 		mBackMove = _back * movementWeightFactor;
 		mLeftMove = _left * movementWeightFactor;
 		mRightMove = _right * movementWeightFactor;
+//		LOGV("weight: %g %g %g %g\n", _forward, _back, _left, _right);
 	}
 
-	void CharacterController::setFacingDirections( const btVector3 & front, const btVector3 & right )
+	void KinematicCharacter::setFacingDirections( const btVector3 & front, const btVector3 & right )
 	{
 		mDirFront = front;
 		mDirRight = right;
@@ -326,12 +334,12 @@ namespace physics
 		mDirRight.normalize();
 	}
 
-	void CharacterController::enableDamping( bool bEnable )
+	void KinematicCharacter::enableDamping( bool bEnable )
 	{
 		m_dampenMovement = bEnable;
 	}
 
-	void CharacterController::stepForwardAndStrafe ( btCollisionWorld* collisionWorld, const btVector3& walkMove, const btVector3 & airMove, btScalar dt)
+	void KinematicCharacter::stepForwardAndStrafe ( btCollisionWorld* collisionWorld, const btVector3& walkMove, const btVector3 & airMove, btScalar dt)
 	{
 		F( stepForwardAndStrafe );
 
@@ -478,7 +486,7 @@ namespace physics
 		}
 	}
 
-	void CharacterController::stepDown ( btCollisionWorld* collisionWorld, btScalar dt)
+	void KinematicCharacter::stepDown ( btCollisionWorld* collisionWorld, btScalar dt)
 	{
 		F( stepDown );
 
@@ -537,7 +545,7 @@ namespace physics
 
 
 
-	void CharacterController::setWalkDirection
+	void KinematicCharacter::setWalkDirection
 	(
 	const btVector3& walkDirection
 	)
@@ -554,7 +562,7 @@ namespace physics
 
 
 
-	void CharacterController::setVelocityForTimeInterval
+	void KinematicCharacter::setVelocityForTimeInterval
 	(
 	const btVector3& velocity,
 	btScalar timeInterval
@@ -571,12 +579,17 @@ namespace physics
 		m_velocityTimeInterval = timeInterval;
 	}
 
-	void CharacterController::SetSpawnLocation( const btVector3 & spawn )
+	void KinematicCharacter::SetSpawnLocation( const btVector3 & spawn )
 	{
 		mSpawnPoint = spawn;
 	}
 
-	void CharacterController::reset (btCollisionWorld* collisionWorld)
+	void KinematicCharacter::get_movement_command(physics::MovementCommand& command)
+	{
+		
+	}
+
+	void KinematicCharacter::reset (btCollisionWorld* collisionWorld)
 	{
 		F( reset );
 		
@@ -588,12 +601,12 @@ namespace physics
 //		}
 	}
 
-	void CharacterController::setUpInterpolate(bool value)
+	void KinematicCharacter::setUpInterpolate(bool value)
 	{
 		
 	}
 
-	void CharacterController::clear_state()
+	void KinematicCharacter::clear_state()
 	{
 		btTransform tr;
 		tr.setIdentity();
@@ -614,7 +627,7 @@ namespace physics
 		mRightMove = 0;
 	}
 
-	void CharacterController::warp (const btVector3& origin)
+	void KinematicCharacter::warp (const btVector3& origin)
 	{
 		F( warp );
 
@@ -624,7 +637,7 @@ namespace physics
 		m_ghostObject->setWorldTransform (xform);
 	}
 
-	void CharacterController::preStep (  btCollisionWorld* collisionWorld)
+	void KinematicCharacter::preStep (  btCollisionWorld* collisionWorld)
 	{
 		F( preStep );
 
@@ -648,7 +661,7 @@ namespace physics
 
 	}
 
-	void CharacterController::updateAction( btCollisionWorld* collisionWorld,btScalar deltaTime)
+	void KinematicCharacter::updateAction( btCollisionWorld* collisionWorld,btScalar deltaTime)
 	{
 		//printf( "------------------ Update Action Begin------------\n" );
 		preStep ( collisionWorld);
@@ -661,7 +674,7 @@ namespace physics
 	
 	#include <stdio.h>
 
-	void CharacterController::playerStep (  btCollisionWorld* collisionWorld, btScalar dt)
+	void KinematicCharacter::playerStep (  btCollisionWorld* collisionWorld, btScalar dt)
 	{
 		F( playerStep );
 
@@ -712,34 +725,27 @@ namespace physics
 		}
 
 		const float moveSpeed = 100;
-
-		btVector3 fbMove;
-		float fbw = (mFrontMove - mBackMove) * dt * moveSpeed;
-
-
-
-		//fbMove = (mDirFront * (mFrontMove * dt * moveSpeed));
-		//fbMove -= (mDirFront * (mBackMove * dt * moveSpeed));
-
-		if ( fbw > 1.0 )
-			fbw = 1.0;
+		float fbw = (mFrontMove - mBackMove);
+		if ( fbw > 1.0f )
+			fbw = 1.0f;
 		else if ( fbw < -1.0 )
 			fbw = -1.0f;
 
-		fbMove = (mDirFront * fbw);
+		btVector3 fbMove;
+		fbMove.setZero();
+		fbMove = (mDirFront * fbw) * dt * moveSpeed;
 
+		float lrw = (mRightMove - mLeftMove);
+		if (lrw > 1.0f)
+			lrw = 1.0f;
+		else if (lrw < -1.0f)
+			lrw = -1.0f;
+			
 		btVector3 lrMove;
 		lrMove.setZero();
-		float lrw = (mRightMove - mLeftMove) * dt * moveSpeed;
-		lrMove = (mDirRight * lrw);
-
-		//printf( "mFrontMove: %g | mBackMove: %g (%g)| mLeftMove: %g | mRightMove: %g (%g)\n", mFrontMove, mBackMove, fbw, mLeftMove, mRightMove, lrw );
-
-		//if ( mFrontMove > 0 || mBackMove > 0 || mLeftMove > 0 || mRightMove > 0 )
-
-
-		//printf( "FBMove: %g %g %g - LRMove: %g %g %g\n", BTV3( fbMove ), BTV3( lrMove ) );
-		//printf( "m_velocity: %g %g %g\n", BTV3( m_velocity ) );
+		lrMove = (mDirRight * lrw) * dt * moveSpeed;
+		
+//		printf( "mFrontMove: %g | mBackMove: %g (%g)| mLeftMove: %g | mRightMove: %g (%g)\n", mFrontMove, mBackMove, fbw, mLeftMove, mRightMove, lrw );
 
 		btScalar length = 0;
 		const float MAX_MAG = 3.0f;
@@ -754,21 +760,15 @@ namespace physics
 			m_moveWeight = (m_moveWeight*(MAX_MAG/length));
 		}
 
-		m_velocity += (m_moveWeight * .5) + (m_prevMoveWeight * .5);
-		//m_velocity += m_moveWeight;
+		m_velocity = (m_moveWeight * .5) + (m_prevMoveWeight * .5);
 		m_prevMoveWeight = m_moveWeight;
 
 		length = m_velocity.length();
-
-		//printf( "Length: %g\n", length );
-
 		if ( length > MAX_MAG )
 		{
 			m_velocity.setX( (m_velocity.x() / length) * MAX_MAG );
 			m_velocity.setY( (m_velocity.y() / length) * MAX_MAG );
 			m_velocity.setZ( (m_velocity.z() / length) * MAX_MAG );
-
-
 		}
 		else if ( length < FLT_EPSILON )
 		{
@@ -838,27 +838,27 @@ namespace physics
 //		}
 	}
 
-	void CharacterController::setFallSpeed (btScalar fallSpeed)
+	void KinematicCharacter::setFallSpeed (btScalar fallSpeed)
 	{
 		m_fallSpeed = fallSpeed;
 	}
 
-	void CharacterController::setJumpSpeed (btScalar jumpSpeed)
+	void KinematicCharacter::setJumpSpeed (btScalar jumpSpeed)
 	{
 		m_jumpSpeed = jumpSpeed;
 	}
 
-	void CharacterController::setMaxJumpHeight (btScalar maxJumpHeight)
+	void KinematicCharacter::setMaxJumpHeight (btScalar maxJumpHeight)
 	{
 		m_maxJumpHeight = maxJumpHeight;
 	}
 
-	bool CharacterController::canJump () const
+	bool KinematicCharacter::canJump () const
 	{
 		return onGround();
 	}
 
-	void CharacterController::jump ()
+	void KinematicCharacter::jump ()
 	{
 		F( jump );
 
@@ -878,28 +878,28 @@ namespace physics
 	#endif
 	}
 
-	void CharacterController::setGravity(btScalar gravity)
+	void KinematicCharacter::setGravity(btScalar gravity)
 	{
 		m_gravity = gravity;
 	}
 
-	btScalar CharacterController::getGravity() const
+	btScalar KinematicCharacter::getGravity() const
 	{
 		return m_gravity;
 	}
 
-	void CharacterController::setMaxSlope(btScalar slopeRadians)
+	void KinematicCharacter::setMaxSlope(btScalar slopeRadians)
 	{
 		m_maxSlopeRadians = slopeRadians;
 		m_maxSlopeCosine = btCos(slopeRadians);
 	}
 
-	btScalar CharacterController::getMaxSlope() const
+	btScalar KinematicCharacter::getMaxSlope() const
 	{
 		return m_maxSlopeRadians;
 	}
 
-	bool CharacterController::onGround () const
+	bool KinematicCharacter::onGround () const
 	{
 		//return ( m_verticalVelocity < 0.001 && m_verticalOffset < 0.001 );
 
@@ -907,34 +907,119 @@ namespace physics
 	}
 
 
-	btVector3* CharacterController::getUpAxisDirections()
+	btVector3* KinematicCharacter::getUpAxisDirections()
 	{
 		static btVector3 sUpAxisDirection[3] = { btVector3(1.0f, 0.0f, 0.0f), btVector3(0.0f, 1.0f, 0.0f), btVector3(0.0f, 0.0f, 1.0f) };
 
 		return sUpAxisDirection;
 	}
 
-	void CharacterController::debugDraw(btIDebugDraw* debugDrawer)
+	void KinematicCharacter::debugDraw(btIDebugDraw* debugDrawer)
 	{
 	}
 
-	void CharacterController::ToggleFreeCam()
+	void KinematicCharacter::ToggleFreeCam()
 	{
 		bEnableFreeCam = !bEnableFreeCam;
 	}
 
-	void CharacterController::setDamping( btScalar dampingFactor )
+	void KinematicCharacter::setDamping( btScalar dampingFactor )
 	{
 		m_movementDamping = dampingFactor;
 	}
 
-	const btVector3 CharacterController::getVelocity()
+	const btVector3 KinematicCharacter::getVelocity()
 	{
 		return m_velocity*CHARACTER_MOVEMENT_MULTIPLIER;	
 	}
 
-	btVector3 CharacterController::getOrigin()
+	btVector3 KinematicCharacter::getOrigin()
 	{
 		return this->getGhostObject()->getWorldTransform().getOrigin();
 	}
+	
+	
+	
+	void player_move(KinematicCharacter* character, Camera& camera, const MovementCommand& command)
+	{
+		glm::vec3 cam_right = camera.side;
+		glm::vec3 cam_dir = camera.view;
+		
+		const float QUOTIENT = (1.0f/input::AxisValueMaximum);
+		
+		if (character)
+		{
+			character->setFacingDirections(
+										   btVector3(cam_dir.x, cam_dir.y, cam_dir.z),
+										   btVector3(cam_right.x, cam_right.y, cam_right.z)
+										   );
+			
+			character->setMovementWeight(
+										 command.forward * QUOTIENT,
+										 command.back * QUOTIENT,
+										 command.left * QUOTIENT,
+										 command.right * QUOTIENT
+										 );
+			
+			bool movement_is_zero = (
+									 command.forward == 0 &&
+									 command.right == 0 &&
+									 command.left == 0 &&
+									 command.back == 0
+									 );
+			
+			character->enableDamping(movement_is_zero);
+		}
+	} // player_move
+	
+	
+	// CharacterController
+	void CharacterController::get_input_command(MovementCommand& command)
+	{
+		// add the inputs and then normalize
+		input::JoystickInput& joystick = input::state()->joystick(0);
+
+		command.left += input::state()->keyboard().is_down(input::KEY_A) * input::AxisValueMaximum;
+		command.right += input::state()->keyboard().is_down(input::KEY_D) * input::AxisValueMaximum;
+		command.forward += input::state()->keyboard().is_down(input::KEY_W) * input::AxisValueMaximum;
+		command.back += input::state()->keyboard().is_down(input::KEY_S) * input::AxisValueMaximum;
+		
+		if (joystick.axes[0].value < 0)
+		{
+			command.left += (joystick.axes[0].value/(float)input::AxisValueMinimum) * input::AxisValueMaximum;
+		}
+		if (joystick.axes[0].value > 0)
+		{
+			command.right += (joystick.axes[0].value/(float)input::AxisValueMaximum) * input::AxisValueMaximum;
+		}
+
+		if (joystick.axes[1].value < 0)
+		{
+			command.forward += (joystick.axes[1].value/(float)input::AxisValueMinimum) * input::AxisValueMaximum;
+		}
+		if (joystick.axes[1].value > 0)
+		{
+			command.back += (joystick.axes[1].value/(float)input::AxisValueMaximum) * input::AxisValueMaximum;
+		}
+	}
+	
+	void CharacterController::apply_command(const MovementCommand& command)
+	{
+		physics::player_move(character, *camera, command);
+				
+		// rotate physics body based on camera yaw
+		btTransform worldTrans = character->getGhostObject()->getWorldTransform();
+		btQuaternion rotation(btVector3(0,1,0), mathlib::degrees_to_radians(-camera->yaw));
+		worldTrans.setRotation(rotation);
+		character->getGhostObject()->setWorldTransform(worldTrans);
+		
+		// sync the camera to the ghost object
+		btGhostObject* ghost = character->getGhostObject();
+		btTransform tr = ghost->getWorldTransform();
+		btVector3 origin = tr.getOrigin();
+		origin += btVector3(0, .9, 0);
+		camera->pos = glm::vec3(origin.x(), origin.y(), origin.z());
+	}
+	
+	
 } // namespace physics
