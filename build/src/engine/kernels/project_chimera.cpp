@@ -535,6 +535,13 @@ public:
 		if (active_camera)
 		{
 			entity_step();
+			
+			float joystick_sensitivity = 20;
+			active_camera->move_view(
+				joystick_sensitivity*input::state()->joystick(0).axes[2].normalized_value,
+				joystick_sensitivity*input::state()->joystick(0).axes[3].normalized_value
+			);
+			
 			active_camera->update_view();
 		}
 
