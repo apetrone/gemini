@@ -228,6 +228,7 @@ namespace input
 	struct AxisState
 	{
 		int16_t value;
+		float normalized_value;
 	};
 	
 	class InputDevice

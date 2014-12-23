@@ -106,6 +106,14 @@ namespace input
 	{
 		_input_state.keyboard().update( 0 );
 		_input_state.mouse().update( 0 );
+		for (uint8_t j = 0; j < MAX_JOYSTICKS; ++j)
+		{
+			JoystickInput& joystick = _input_state.joystick(j);
+			if (joystick.flags & JoystickInput::Connected)
+			{
+				joystick.update(0);
+			}
+		}
 	}
 
 	//
@@ -260,11 +268,6 @@ namespace input
 		for(uint8_t i = 0; i < MAX_JOYSTICK_BUTTONS; ++i)
 		{
 			buttons[ i ].update();
-		}
-		
-		for (uint8_t i = 0; i < MAX_JOYSTICK_AXES; ++i)
-		{
-			// ..
 		}
 	}
 	

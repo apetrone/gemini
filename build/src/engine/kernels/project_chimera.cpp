@@ -345,26 +345,26 @@ public:
 	
 	virtual void event(kernel::GameControllerEvent& event)
 	{
-		if (event.subtype == kernel::JoystickConnected)
-		{
-			LOGV("gamepad [%i] connected\n", event.gamepad_id);
-		}
-		else if (event.subtype == kernel::JoystickDisconnected)
-		{
-			LOGV("gamepad [%i] disconnected\n", event.gamepad_id);
-		}
-		else if (event.subtype == kernel::JoystickButton)
-		{
-			LOGV("gamepad [%i] button: %i, is_down: %i\n", event.gamepad_id, event.button, event.is_down);
-		}
-		else if (event.subtype == kernel::JoystickAxisMoved)
-		{
-			LOGV("gamepad [%i] joystick: %i, value: %i\n", event.gamepad_id, event.joystick_id, event.joystick_value);
-		}
-		else
-		{
-			LOGV("gamepad [%i] controller event received: %i\n", event.gamepad_id, event.subtype);
-		}
+//		if (event.subtype == kernel::JoystickConnected)
+//		{
+//			LOGV("gamepad [%i] connected\n", event.gamepad_id);
+//		}
+//		else if (event.subtype == kernel::JoystickDisconnected)
+//		{
+//			LOGV("gamepad [%i] disconnected\n", event.gamepad_id);
+//		}
+//		else if (event.subtype == kernel::JoystickButton)
+//		{
+//			LOGV("gamepad [%i] button: %i, is_down: %i\n", event.gamepad_id, event.button, event.is_down);
+//		}
+//		else if (event.subtype == kernel::JoystickAxisMoved)
+//		{
+//			LOGV("gamepad [%i] joystick: %i, value: %i\n", event.gamepad_id, event.joystick_id, event.joystick_value);
+//		}
+//		else
+//		{
+//			LOGV("gamepad [%i] controller event received: %i\n", event.gamepad_id, event.subtype);
+//		}
 	}
 
 	virtual kernel::ApplicationResult config( kernel::Params & params )
@@ -488,8 +488,12 @@ public:
 		command.right = input::state()->keyboard().is_down(input::KEY_D);
 		command.forward = input::state()->keyboard().is_down(input::KEY_W);
 		command.back = input::state()->keyboard().is_down(input::KEY_S);
-		
-		
+
+		command.left = command.left || input::state()->joystick(0).axes[0].normalized_value < 0;
+		command.right = command.right || input::state()->joystick(0).axes[0].normalized_value > 0;
+		command.forward = command.forward || input::state()->joystick(0).axes[1].normalized_value < 0;
+		command.back = command.back || input::state()->joystick(0).axes[1].normalized_value > 0;
+
 		Sqrat::RootTable roottable( script::get_vm() );
 		Sqrat::Object gamerules = roottable.GetSlot( _SC("gamerules") );
 		if ( !gamerules.IsNull() )

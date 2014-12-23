@@ -143,7 +143,7 @@ namespace kernel
 		int gamepad_id;
 		
 		uint8_t joystick_id;
-		uint16_t joystick_value;
+		int16_t joystick_value;
 	}; // GameControllerEvent
 	
 	void assign_listener_for_eventtype( kernel::EventType type, void * listener );

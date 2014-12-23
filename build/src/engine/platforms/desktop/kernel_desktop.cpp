@@ -288,14 +288,26 @@ void DesktopKernel::pre_tick()
 						
 			case SDL_CONTROLLERAXISMOTION:
 			{
-				controller_axis_event(event.cdevice, event.caxis);
+				JoystickInput& joystick = input::state()->joystick(event.cdevice.which);
+				input::AxisState& axis = joystick.axes[event.caxis.axis];
+				axis.value = event.caxis.value;
+				axis.normalized_value = (event.caxis.value/(float)SHRT_MAX);
 				
-				kernel::GameControllerEvent ev;
-				ev.gamepad_id = event.cdevice.which;
-				ev.subtype = kernel::JoystickAxisMoved;
-				ev.joystick_id = event.caxis.axis;
-				ev.joystick_value = event.caxis.value;
-				kernel::event_dispatch(ev);
+				// check for values outside the deadzone
+				if (event.caxis.value > 3200 || event.caxis.value < -3200)
+				{
+					kernel::GameControllerEvent ev;
+					ev.gamepad_id = event.cdevice.which;
+					ev.subtype = kernel::JoystickAxisMoved;
+					ev.joystick_id = event.caxis.axis;
+					ev.joystick_value = event.caxis.value;
+					kernel::event_dispatch(ev);
+				}
+				else
+				{
+					axis.value = 0;
+					axis.normalized_value = 0;
+				}
 				break;
 			}
 				
@@ -332,8 +344,9 @@ void DesktopKernel::pre_tick()
 				LOGV("Device Added: %i\n", event.cdevice.which);
 
 				input::JoystickInput& js = input::state()->joystick(event.cdevice.which);
-				input::state()->connect_joystick(event.cdevice.which);
 				js.reset();
+				input::state()->connect_joystick(event.cdevice.which);
+				
 
 				state->controllers[event.cdevice.which] = SDL_GameControllerOpen(event.cdevice.which);
 				SDL_Joystick * joystick = SDL_GameControllerGetJoystick(state->controllers[event.cdevice.which]);
