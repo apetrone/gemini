@@ -46,6 +46,14 @@ namespace kernel
 		EventTypeCount
 	}; // EventType
 	
+	
+	// Buttons should be normalized: [0, 1]
+	// This allows digital buttons to be either 0 or 1
+	// and analog buttons (like Xbox triggers) be analog between 0 and 1.
+	
+	// Joystick Axes should be normalized in the range: [-1, 1]
+	
+	
 	// EventSubTypes do not need a separate event structure.
 	// These provide the specific event for which to extract
 	// information from the structure.
@@ -130,9 +138,12 @@ namespace kernel
 	struct GameControllerEvent : public Event<GameController>
 	{
 		int button;
-		bool is_down;		
-		int joystick_id;
-		int joystick_value;
+		bool is_down;
+		
+		int gamepad_id;
+		
+		uint8_t joystick_id;
+		uint16_t joystick_value;
 	}; // GameControllerEvent
 	
 	void assign_listener_for_eventtype( kernel::EventType type, void * listener );

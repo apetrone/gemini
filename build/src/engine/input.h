@@ -22,6 +22,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <limits.h>
 
 namespace input
 {
@@ -162,6 +163,28 @@ namespace input
 		MOUSE_COUNT
 	}; // enum MouseButton
 	
+	// This is modeled after SDL2's enums, which are in turn, modeled after the
+	// Xbox 360 config.
+	enum GamepadButton
+	{
+		GAMEPAD_BUTTON_INVALID = -1,
+		GAMEPAD_BUTTON_A,
+		GAMEPAD_BUTTON_B,
+		GAMEPAD_BUTTON_X,
+		GAMEPAD_BUTTON_Y,
+		GAMEPAD_BUTTON_BACK,
+		GAMEPAD_BUTTON_GUIDE,
+		GAMEPAD_BUTTON_START,
+		GAMEPAD_BUTTON_LEFTSTICK,
+		GAMEPAD_BUTTON_RIGHTSTICK,
+		GAMEPAD_BUTTON_LEFTSHOULDER,
+		GAMEPAD_BUTTON_RIGHTSHOULDER,
+		GAMEPAD_BUTTON_DPAD_UP,
+		GAMEPAD_BUTTON_DPAD_DOWN,
+		GAMEPAD_BUTTON_DPAD_LEFT,
+		GAMEPAD_BUTTON_DPAD_RIGHT
+	}; // enum GamepadButton
+	
 	// key mods
 	enum
 	{
@@ -198,6 +221,9 @@ namespace input
 		// update this button state for this frame
 		void update();
 	}; // ButtonState
+	
+	const int16_t AxisValueMinimum = SHRT_MIN;
+	const int16_t AxisValueMaximum = SHRT_MAX;
 	
 	struct AxisState
 	{

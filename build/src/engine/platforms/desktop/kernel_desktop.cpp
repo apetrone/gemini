@@ -34,6 +34,10 @@ using namespace input;
 
 #include <SDL.h>
 
+
+#include <core/filesystem.h>
+
+
 #ifdef main
 #undef main
 #endif
@@ -141,14 +145,27 @@ void DesktopKernel::startup()
 	}
 	
 	this->parameters().device_flags |= kernel::DeviceDesktop;
+} // startup
+
+void DesktopKernel::register_services()
+{
+	// this is a poor callback name, but meh.
+	
+	// add game controller db
+	size_t length = 0;
+	char* buffer = core::filesystem::file_to_buffer("conf/gamecontrollerdb.conf", 0, &length);
+	int result = SDL_GameControllerAddMapping(buffer);
+	DEALLOC(buffer);
+	
+	// If you hit this assert, there was an error laoding the gamecontrollerdb.
+	// Otherwise, it was either added (result == 1) or updated (result == 0).
+	assert(result != -1);
 	
 	
 	fprintf(stdout, "Gather joystick infos...\n");
 	fprintf(stdout, "Num Haptics: %i\n", SDL_NumHaptics());
 	fprintf(stdout, "Num Joysticks: %i\n", SDL_NumJoysticks());
 	
-	// add game controller mappings?
-//	SDL_GameControllerAddMappingsFromFile(<#file#>)
 	
 	assert(SDL_NumJoysticks() < input::MAX_JOYSTICKS);
 	state->total_controllers = SDL_NumJoysticks();
@@ -159,32 +176,40 @@ void DesktopKernel::startup()
 		js.reset();
 		
 		state->controllers[i] = SDL_GameControllerOpen(i);
-		SDL_Joystick * joystick = SDL_GameControllerGetJoystick(state->controllers[i]);
-		SDL_JoystickID joystickID = SDL_JoystickInstanceID( joystick );
-		if (SDL_JoystickIsHaptic(joystick))
+		if (SDL_IsGameController(i))
 		{
-			js.flags |= input::JoystickInput::HapticSupport;
-			fprintf(stdout, "Joystick is haptic!\n");
-//			http://blog.5pmcasual.com/game-controller-api-in-sdl2.html
-			SDL_Haptic * haptic = SDL_HapticOpenFromJoystick( joystick );
-			if (haptic)
+			fprintf(stdout, "Found compatible controller: \"%s\"\n", SDL_GameControllerNameForIndex(i));
+//			fprintf(stdout, "Mapped as: \"%s\"\n", SDL_GameControllerMapping(state->controllers[i]));
+		
+			SDL_Joystick * joystick = SDL_GameControllerGetJoystick(state->controllers[i]);
+			SDL_JoystickID joystickID = SDL_JoystickInstanceID( joystick );
+			if (SDL_JoystickIsHaptic(joystick))
 			{
-				SDL_HapticRumbleInit(haptic);
-//				SDL_HapticRumblePlay(haptic, 1.0, 2000);
-				
-//				SDL_Delay(2000);
-				SDL_HapticClose(haptic);
-			}
-			else
-			{
-				fprintf(stdout, "error opening haptic for joystickID: %i\n", joystickID);
+				js.flags |= input::JoystickInput::HapticSupport;
+				fprintf(stdout, "Joystick is haptic!\n");
+				//			http://blog.5pmcasual.com/game-controller-api-in-sdl2.html
+				SDL_Haptic * haptic = SDL_HapticOpenFromJoystick( joystick );
+				if (haptic)
+				{
+					SDL_HapticRumbleInit(haptic);
+					//				SDL_HapticRumblePlay(haptic, 1.0, 2000);
+					
+					//				SDL_Delay(2000);
+					SDL_HapticClose(haptic);
+				}
+				else
+				{
+					fprintf(stdout, "error opening haptic for joystickID: %i\n", joystickID);
+				}
 			}
 		}
+		else
+		{
+			fprintf(stderr, "GameController at index %i, is not a compatible controller.\n", i);
+		}
 	}
-} // startup
-
-void DesktopKernel::register_services()
-{
+	
+	
 } // register_services
 
 void DesktopKernel::pre_tick()
@@ -266,7 +291,10 @@ void DesktopKernel::pre_tick()
 				controller_axis_event(event.cdevice, event.caxis);
 				
 				kernel::GameControllerEvent ev;
+				ev.gamepad_id = event.cdevice.which;
 				ev.subtype = kernel::JoystickAxisMoved;
+				ev.joystick_id = event.caxis.axis;
+				ev.joystick_value = event.caxis.value;
 				kernel::event_dispatch(ev);
 				break;
 			}
@@ -276,6 +304,7 @@ void DesktopKernel::pre_tick()
 				controller_button_event(event.cdevice, event.cbutton);
 				
 				kernel::GameControllerEvent ev;
+				ev.gamepad_id = event.cdevice.which;
 				ev.subtype = kernel::JoystickButton;
 				ev.is_down = true;
 				ev.button = event.cbutton.button;
@@ -288,6 +317,7 @@ void DesktopKernel::pre_tick()
 				controller_button_event(event.cdevice, event.cbutton);
 				
 				kernel::GameControllerEvent ev;
+				ev.gamepad_id = event.cdevice.which;
 				ev.subtype = kernel::JoystickButton;
 				ev.is_down = false;
 				ev.button = event.cbutton.button;
@@ -310,6 +340,7 @@ void DesktopKernel::pre_tick()
 
 				
 				kernel::GameControllerEvent ev;
+				ev.gamepad_id = event.cdevice.which;
 				ev.subtype = kernel::JoystickConnected;
 				kernel::event_dispatch(ev);
 				break;
@@ -326,6 +357,7 @@ void DesktopKernel::pre_tick()
 
 
 				kernel::GameControllerEvent ev;
+				ev.gamepad_id = event.cdevice.which;
 				ev.subtype = kernel::JoystickDisconnected;
 				kernel::event_dispatch(ev);
 				break;

@@ -207,7 +207,7 @@ public:
 //		rs.add_state(renderer::STATE_BACKFACE_CULLING, 0);
 		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
 		rs.add_viewport( 0, 0, params.render_width, params.render_height );
-		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
+		rs.add_clearcolor( 0.0, 0.0, 0.0, 1.0f );
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
 		rs.run_commands();
 		
@@ -298,16 +298,16 @@ public:
 			case kernel::WindowGainFocus:
 			case kernel::WindowResized:
 			case kernel::MouseButton:
-			{
-				if (event.is_down && active_camera)
-				{
-					// try to raycast?
-					glm::vec3 start, direction;
-					physics::CollisionObject* char_object = (physics::CollisionObject*)character->getGhostObject()->getUserPointer();
-					physics::raycast(char_object, active_camera->pos, active_camera->view, 4096.0f);
-				}
-				break;
-			}
+//			{
+//				if (event.is_down && active_camera)
+//				{
+//					// try to raycast?
+//					glm::vec3 start, direction;
+//					physics::CollisionObject* char_object = (physics::CollisionObject*)character->getGhostObject()->getUserPointer();
+//					physics::raycast(char_object, active_camera->pos, active_camera->view, 4096.0f);
+//				}
+//				break;
+//			}
 			case kernel::MouseWheelMoved:
 			case kernel::TouchBegin:
 			case kernel::TouchMoved:
@@ -345,7 +345,26 @@ public:
 	
 	virtual void event(kernel::GameControllerEvent& event)
 	{
-		LOGV("game controller event received: %i\n", event.subtype);
+		if (event.subtype == kernel::JoystickConnected)
+		{
+			LOGV("gamepad [%i] connected\n", event.gamepad_id);
+		}
+		else if (event.subtype == kernel::JoystickDisconnected)
+		{
+			LOGV("gamepad [%i] disconnected\n", event.gamepad_id);
+		}
+		else if (event.subtype == kernel::JoystickButton)
+		{
+			LOGV("gamepad [%i] button: %i, is_down: %i\n", event.gamepad_id, event.button, event.is_down);
+		}
+		else if (event.subtype == kernel::JoystickAxisMoved)
+		{
+			LOGV("gamepad [%i] joystick: %i, value: %i\n", event.gamepad_id, event.joystick_id, event.joystick_value);
+		}
+		else
+		{
+			LOGV("gamepad [%i] controller event received: %i\n", event.gamepad_id, event.subtype);
+		}
 	}
 
 	virtual kernel::ApplicationResult config( kernel::Params & params )
