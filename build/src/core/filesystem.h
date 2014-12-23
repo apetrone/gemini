@@ -73,7 +73,7 @@ namespace core
 		
 		// Load a file into buffer. The pointer is returned.
 		// bufferLength will contain the size of the buffer
-		// if buffer is null, a new buffer is allocated and must be freed after use
+		// if buffer is null, a new buffer is allocated and must be DEALLOC'd after use
 		// if buffer is not null, bufferLength should contain the size of the buffer which will not be exceeded.
 		char * file_to_buffer(const char* filename, char* buffer, size_t* buffer_length, bool path_is_relative=true);
 		
