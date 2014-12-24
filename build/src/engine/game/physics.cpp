@@ -235,6 +235,42 @@ namespace physics
 		}
 	};
 	
+	
+	class BulletStaticBody : public BulletCollisionObject
+	{
+		btAlignedObjectArray<btCollisionShape*> bodies;
+	
+	public:
+		BulletStaticBody()
+		{
+			
+		}
+		
+		virtual ~BulletStaticBody()
+		{
+			remove_constraints();
+			
+			btRigidBody* body = btRigidBody::upcast(object);
+			
+			if (body && body->getMotionState())
+			{
+				delete body->getMotionState();
+			}
+			dynamics_world->removeCollisionObject(body);
+			
+			for (int i = 0; i < bodies.size(); ++i)
+			{
+				delete bodies[i];
+			}
+			bodies.clear();
+		}
+		
+		void add_shape(btCollisionShape* shape)
+		{
+			bodies.push_back(shape);
+		}
+	};
+	
 	class BulletRigidBody : public BulletCollisionObject, public RigidBody
 	{
 		btCollisionShape* shape;
@@ -687,8 +723,8 @@ namespace physics
 	CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg, PhysicsMotionInterface* motion, const glm::vec3& mass_center_offset)
 	{
 		bool use_quantized_bvh_tree = true;
-		btBvhTriangleMeshShape * trishape = 0;
-		btTransform xf;
+
+
 		btScalar mass(mass_kg);
 		btVector3 local_inertia(0, 0, 0);
 		
@@ -704,20 +740,20 @@ namespace physics
 			return nullptr;
 		}
 		
+		CollisionObject* object = 0;
+		BulletStaticBody* static_body = 0;
 		BulletRigidBody* rb = 0;
-		rb = CREATE(BulletRigidBody);
-		
-		// If you hit this, there will be a leak of RigidBody objects
-		// as the loop below runs for each item in the geometry list
-		// but this function only returns a single RigidBody.
-		assert(mesh->geometry.size() == 1);
-		
-		int rigid_body_flags = 0;
-		
+
 		bool dynamic_body = (mass != 0.0f);
 		if (!dynamic_body)
 		{
-			rigid_body_flags = btCollisionObject::CF_STATIC_OBJECT;
+			static_body = CREATE(BulletStaticBody);
+			object = static_body;
+		}
+		else
+		{
+			rb = CREATE(BulletRigidBody);
+			object = rb;
 		}
 		
 		for( uint32_t i = 0; i < mesh->geometry.size(); ++i )
@@ -725,6 +761,13 @@ namespace physics
 			assets::Geometry* geo = &mesh->geometry[ i ];
 			
 			FixedArray<glm::vec3>& vertices = geo->vertices;
+			
+			btRigidBody* body = 0;
+			
+			// The rigid body world transform is the center of mass. This is at the origin.
+			btTransform xf;
+			xf.setIdentity();
+			CustomMotionState * motion_state = new CustomMotionState(xf, motion, mass_center_offset);
 			
 			btCollisionShape* shape = 0;
 			// NOTE: Triangle shapes can ONLY be static objects.
@@ -734,6 +777,26 @@ namespace physics
 			if (dynamic_body)
 			{
 				shape = new btBoxShape(btVector3(0.5f, 0.5f, 0.5f));
+				rb->set_collision_shape(shape);
+				
+				// calculate local intertia
+				shape->calculateLocalInertia(mass, local_inertia);
+				
+				btCompoundShape* compound = new btCompoundShape();
+				btTransform local_transform;
+				local_transform.setIdentity();
+				compound->addChildShape(local_transform, shape);
+				
+				btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, motion_state, compound, local_inertia );
+				body = new btRigidBody( rbInfo );
+				
+				rb->set_collision_object(body);
+				body->setUserPointer(rb);
+				
+				body->setRestitution(0.25f);
+				body->setFriction(0.5f);
+				body->setCcdMotionThreshold(0.1f);
+				body->setCcdSweptSphereRadius(0.1f);
 			}
 			else
 			{
@@ -743,53 +806,26 @@ namespace physics
 				btTriangleIndexVertexArray * mesh = new btTriangleIndexVertexArray(geo->index_count/3, (int*)&geo->indices[0], sizeof(int)*3, geo->vertex_count, (btScalar*)&vertices[0], sizeof(glm::vec3));
 			
 				// use that to create a Bvh triangle mesh shape
-				trishape = new btBvhTriangleMeshShape( mesh, use_quantized_bvh_tree );
-				shape = trishape;
-			}
-			
-			//collision_shapes.push_back(shape);
-			rb->set_collision_shape(shape);
-			
-			// calculate local intertia for non-static objects
-			if (dynamic_body)
-			{
-				shape->calculateLocalInertia(mass, local_inertia);
-			}
-			
-			// The rigid body world transform is the center of mass. This is at the origin.
-			xf.setIdentity();
-			CustomMotionState * motion_state = new CustomMotionState(xf, motion, mass_center_offset);
-			
-			btCompoundShape* compound = new btCompoundShape();
-			btTransform local_transform;
-			local_transform.setIdentity();
-			compound->addChildShape(local_transform, shape);
-			
-			btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, motion_state, compound, local_inertia );
-			btRigidBody * body = new btRigidBody( rbInfo );
-
-			rb->set_collision_object(body);
-			body->setUserPointer(rb);
-			
-			if (dynamic_body)
-			{
-				body->setRestitution(0.25f);
-				body->setFriction(0.5f);
-				body->setCcdMotionThreshold(0.1f);
-				body->setCcdSweptSphereRadius(0.1f);
-				body->setUserPointer(0);
-			}
-			else
-			{
-				int body_flags = body->getCollisionFlags() | rigid_body_flags;
+				btBvhTriangleMeshShape * trishape = new btBvhTriangleMeshShape( mesh, use_quantized_bvh_tree );
+				static_body->add_shape(trishape);
+				
+				btTransform local_transform;
+				local_transform.setIdentity();
+				btRigidBody::btRigidBodyConstructionInfo rigid_body_info(0.0f, motion_state, trishape, local_inertia );
+				body = new btRigidBody(rigid_body_info);
+				
+				static_body->set_collision_object(body);
+				body->setUserPointer(static_body);
+				
+				int body_flags = body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT;
 				body->setCollisionFlags( body_flags );
 				body->setFriction(0.75f);
 			}
-			
+
 			dynamics_world->addRigidBody(body);
 		}
 		
-		return rb;
+		return object;
 	} // create_physics_for_mesh
 
 	CollisionObject* create_trigger(const glm::vec3& size)
