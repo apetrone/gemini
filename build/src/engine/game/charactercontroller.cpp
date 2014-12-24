@@ -760,7 +760,7 @@ namespace physics
 			m_moveWeight = (m_moveWeight*(MAX_MAG/length));
 		}
 
-		m_velocity = (m_moveWeight * .5) + (m_prevMoveWeight * .5);
+		m_velocity = (m_moveWeight * MAX_MAG) * 0.5f + (m_prevMoveWeight * MAX_MAG * 0.5f);
 		m_prevMoveWeight = m_moveWeight;
 
 		length = m_velocity.length();
