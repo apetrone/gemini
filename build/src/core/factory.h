@@ -26,7 +26,8 @@
 
 #define DECLARE_FACTORY_CLASS( class_name, abstract_class )\
 	public:\
-		static abstract_class * creator() { return CREATE(class_name); }
+		static abstract_class* creator() { return CREATE(class_name); }\
+		static const char* get_classname() { return #class_name; }
 
 template <class Type, unsigned int max_items>
 class Factory
