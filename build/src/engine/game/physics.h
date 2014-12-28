@@ -21,21 +21,17 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <btBulletDynamicsCommon.h>
 
 #include <platform/mem.h>
-
-#include "camera.h"
 
 #include "physics_constraint.h"
 #include "physics_collisionobject.h"
 #include "physics_rigidbody.h"
 
-
-#include "charactercontroller.h"
-
-
-#include "assets/asset_mesh.h"
+namespace assets
+{
+	class Mesh;
+}
 
 namespace physics
 {	
@@ -52,17 +48,8 @@ namespace physics
 	};
 
 #define BTVECTOR3_TO_VEC3( v ) glm::vec3( v.x(), v.y(), v.z() )
-	class DebugPhysicsRenderer : public btIDebugDraw
-	{
-	public:
-		virtual void drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color );
-		virtual void    drawLine( const btVector3& from, const btVector3& to, const btVector3& fromColor, const btVector3& toColor );
-		virtual void	drawContactPoint(const btVector3& PointOnB,const btVector3& normalOnB,btScalar distance,int lifeTime,const btVector3& color);
-		virtual void	reportErrorWarning(const char* warningString);
-		virtual void	draw3dText(const btVector3& location,const char* textString);
-		virtual void	setDebugMode(int debugMode);
-		virtual int		getDebugMode() const;
-	}; // DebugPhysicsRenderer
+
+	class KinematicCharacter;
 
 
 	struct RaycastInfo
@@ -81,7 +68,7 @@ namespace physics
 	void debug_draw();
 	RaycastInfo raycast(CollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
 	
-	KinematicCharacter* create_character_controller(const btVector3& spawnLocation, bool addActionToWorld);
+	KinematicCharacter* create_character_controller(const glm::vec3& spawnLocation, bool addActionToWorld);
 	KinematicCharacter* get_character_controller(int index);
 	CollisionObject* create_character_proxy(KinematicCharacter* controller);
 

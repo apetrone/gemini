@@ -22,14 +22,16 @@
 #include <platform/mem.h>
 
 #include "entity.h"
-#include "entity_allocator.h"
 #include "entity_list.h"
 #include "physics.h"
 #include "camera.h"
-
+#include "kernel.h"
 #include "physics_rigidbody.h"
 
 #include "charactercontroller.h"
+
+#include "scene_graph.h"
+#include "assets/asset_mesh.h"
 
 static void entity_collision_callback(physics::CollisionEventType type, physics::CollisionObject* first, physics::CollisionObject* second)
 {
@@ -72,71 +74,10 @@ void EntityMotionInterface::set_transform(const glm::vec3& position, const glm::
 
 void entity_startup()
 {
-	Sqrat::RootTable root( script::get_vm() );
-	
-	// bind Entity to scripting language
-	Sqrat::Class<Entity, EntityAllocator<Entity> > entity( script::get_vm() );
-	entity.Var( _SC("id"), &Entity::id );
-	entity.Prop( _SC("name"), &Entity::get_name, &Entity::set_name );
-	
-	entity.Func(ENTITY_UPDATE_NAME, &Entity::native_update);
-	entity.Func(ENTITY_FIXED_UPDATE_NAME, &Entity::native_fixed_update);
-	entity.Func(ENTITY_REMOVE_NAME, &Entity::remove );
-	
-	// for now, all these are going to be bolted onto the Entity class
-	entity.Func(_SC("set_model"), &Entity::set_model);
-	entity.Func(_SC("set_physics"), &Entity::set_physics);
-	
-	entity.Prop(_SC("position"), &Entity::get_position, &Entity::set_position);
-//	entity.Prop(_SC("rotation"), &Entity::get_rotation, &Entity::set_rotation);
-
-	entity.Func(_SC("apply_force"), &Entity::apply_force);
-	entity.Func(_SC("apply_central_force"), &Entity::apply_central_force);
-	entity.Func(_SC("set_mass"), &Entity::set_mass);
-	entity.Func(_SC("set_parent"), &Entity::set_parent);
-	
-	entity.Func("collision_began", &Entity::native_collision_began);
-	entity.Func("collision_ended", &Entity::native_collision_ended);
-	
-	root.Bind(_SC("Entity"), entity);
-	
-
-
-	// trigger
-
-	Sqrat::DerivedClass< Trigger, Entity, EntityAllocator<Trigger> > trigger(script::get_vm());
-	root.Bind(_SC("Trigger"), trigger);
-
-
-
-
-
-
-
-	// gamerules
-	Sqrat::Class<GameRules> gamerules( script::get_vm() );
-	gamerules.Func(ENTITY_START_NAME, &GameRules::native_start );
-	gamerules.Func(ENTITY_UPDATE_NAME, &GameRules::native_update );
-	gamerules.Func(ENTITY_FIXED_UPDATE_NAME, &GameRules::native_fixed_update );
-	gamerules.Func(_SC("set_active_camera"), &GameRules::set_active_camera);
-	root.Bind(_SC("GameRules"), gamerules);
-	
-
 }
 
 void entity_post_script_load()
 {
-	// execute script?
-	Sqrat::RootTable root( script::get_vm() );
-	Sqrat::Object gamerules = root.GetSlot(_SC("gamerules"));
-	if ( !gamerules.IsNull() )
-	{
-		GameRules * gr = gamerules.Cast<GameRules*>();
-		if ( gr )
-		{
-			gr->start();
-		}
-	}
 }
 
 
@@ -161,21 +102,6 @@ void entity_prestep()
 
 void entity_step()
 {
-	//entity_prestep();
-	
-	Sqrat::RootTable root( script::get_vm() );
-	Sqrat::Object gamerules = root.GetSlot(_SC("gamerules"));
-	if ( !gamerules.IsNull() )
-	{
-		GameRules * gr = gamerules.Cast<GameRules*>();
-		if ( gr )
-		{
-			gr->fixed_update( kernel::instance()->parameters().step_interval_seconds );
-		}
-	}
-	
-	
-	
 	// step entities
 	EntityListType::Collection::iterator it = entity_list().objects.begin();
 	EntityListType::Collection::iterator end = entity_list().objects.end();
@@ -208,17 +134,6 @@ void entity_deferred_delete( bool only_deferred )
 
 void entity_tick()
 {
-	Sqrat::RootTable root( script::get_vm() );
-	Sqrat::Object gamerules = root.GetSlot(_SC("gamerules"));
-	if ( !gamerules.IsNull() )
-	{
-		GameRules * gr = gamerules.Cast<GameRules*>();
-		if ( gr )
-		{
-			gr->update();
-		}
-	}
-	
 	// tick entities
 	EntityListType::Collection::iterator it = entity_list().objects.begin();
 	EntityListType::Collection::iterator end = entity_list().objects.end();
@@ -245,6 +160,8 @@ void entity_shutdown()
 {
 	LOGV("entity_shutdown!\n");
 	set_entity_root(nullptr);
+
+	
 	entity_list().clear();
 }
 
@@ -259,30 +176,13 @@ Entity::Entity() :
 	this->id = entity_list().count();
 	
 	entity_list().add( this );
-	//LOGV( "Entity() - %p, %ld\n", this, (unsigned long)this->id );
-	
-	sq_resetobject( &instance );
-	sq_resetobject( &class_object );
-	
-	// Assumes the OT_INSTANCE is at position 1 in the stack
-	SQRESULT res = sq_getstackobj( script::get_vm(), 1, &instance );
-	script::check_result(res, "getstackobj");
-	
-	res = sq_getclass( script::get_vm(), 1 );
-	script::check_result(res, "getclass" );
-	
-	res = sq_getstackobj( script::get_vm(), -1, &class_object );
-	script::check_result(res, "getstackobj");
-	
-	// pop the OT_CLASS
-	sq_poptop( script::get_vm() );
-	
-	this->bind_functions();
+	LOGV( "Entity() - %p, %ld\n", this, (unsigned long)this->id );
+
 } // Entity
 
 Entity::~Entity()
 {
-	//LOGV( "~Entity() - %p, %ld\n", this, (unsigned long)this->id );
+	LOGV( "~Entity() - %p, %ld\n", this, (unsigned long)this->id );
 	entity_list().remove( this );
 	
 	if (this->collision_object)
@@ -309,120 +209,23 @@ Entity::~Entity()
 
 void Entity::fixed_update( float delta_seconds )
 {
-	if ( sq_isnull(this->on_fixed_update) || sq_isnull(this->instance) )
-	{
-		return;
-	}
-	
-	SQRESULT res;
-	sq_pushobject( script::get_vm(), this->on_fixed_update );
-	sq_pushobject( script::get_vm(), this->instance );
-	sq_pushfloat( script::get_vm(), delta_seconds );
-	res = sq_call( script::get_vm(), 2, SQFalse, SQTrue );
-	
-	sq_pop( script::get_vm(), 1 );
-	if ( SQ_FAILED(res) )
-	{
-		script::check_result( res, "sq_call" );
-		sq_pop( script::get_vm(), 1 );
-	}
-} // step
+} // fixed_update
 
 void Entity::update()
 {
-	if ( sq_isnull(this->on_update) || sq_isnull(this->instance) )
-	{
-		return;
-	}
-	
-	SQRESULT res;
-	sq_pushobject( script::get_vm(), this->on_update );
-	sq_pushobject( script::get_vm(), this->instance );
-	res = sq_call( script::get_vm(), 1, SQFalse, SQTrue );
-	
-	sq_pop( script::get_vm(), 1 );
-	if ( SQ_FAILED(res) )
-	{
-		script::check_result( res, "sq_call" );
-		sq_pop( script::get_vm(), 1 );
-	}
 } // update
-
-
-void Entity::bind_functions()
-{
-	//	LOGV( "Entity::bind_functions: %p\n", this );
-	this->on_fixed_update = script::find_member( this->class_object, ENTITY_FIXED_UPDATE_NAME );
-	this->on_update = script::find_member( this->class_object, ENTITY_UPDATE_NAME );
-	
-	this->on_collision_began = script::find_member(this->class_object, _SC("collision_began"));
-	this->on_collision_ended = script::find_member(this->class_object, _SC("collision_ended"));
-} // bind_functions
 
 void Entity::remove()
 {
 	this->flags = 1;
 }
 
-void Entity::native_fixed_update( float delta_seconds )
-{
-} // native_fixed_update
-
-void Entity::native_update()
-{
-	//	LOGV( "Entity::native_tick\n" );
-} // native_update
-
-void Entity::native_collision_began(Entity* other)
-{
-	
-}
-
-void Entity::native_collision_ended(Entity* other)
-{
-	
-}
-
 void Entity::collision_began(Entity* other)
 {
-	if ( sq_isnull(this->on_collision_began) || sq_isnull(this->instance) )
-	{
-		return;
-	}
-	
-	SQRESULT res;
-	sq_pushobject( script::get_vm(), this->on_collision_began );
-	sq_pushobject( script::get_vm(), this->instance );
-	sq_pushobject(script::get_vm(), other->instance);
-	res = sq_call( script::get_vm(), 2, SQFalse, SQTrue );
-	
-	sq_pop( script::get_vm(), 1 );
-	if ( SQ_FAILED(res) )
-	{
-		script::check_result( res, "sq_call" );
-		sq_pop( script::get_vm(), 1 );
-	}
 }
 
 void Entity::collision_ended(Entity* other)
 {
-	if ( sq_isnull(this->on_collision_ended) || sq_isnull(this->instance) )
-	{
-		return;
-	}
-	
-	SQRESULT res;
-	sq_pushobject( script::get_vm(), this->on_collision_ended );
-	sq_pushobject( script::get_vm(), this->instance );
-	sq_pushobject(script::get_vm(), other->instance);
-	res = sq_call( script::get_vm(), 2, SQFalse, SQTrue );
-	
-	sq_pop( script::get_vm(), 1 );
-	if ( SQ_FAILED(res) )
-	{
-		script::check_result( res, "sq_call" );
-		sq_pop( script::get_vm(), 1 );
-	}
 }
 
 void Entity::set_position(glm::vec3 *new_position)

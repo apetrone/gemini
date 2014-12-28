@@ -25,7 +25,8 @@
 #include <platform/mem.h>
 
 #include "entity.h"
-#include "entity_allocator.h"
+
+#include <list>
 
 template <class Type>
 struct EntityList

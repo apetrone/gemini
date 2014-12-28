@@ -36,11 +36,12 @@
 #include "btBulletDynamicsCommon.h"
 
 #include "physics.h"
+#include "charactercontroller.h"
 
 #include <renderer/font.h>
 #include "assets/asset_font.h"
 #include "entity.h"
-#include "script.h"
+
 #include "scene_graph.h"
 
 #include "skeletalnode.h"
@@ -53,6 +54,15 @@
 #include <renderer/constantbuffer.h>
 
 #include "audio.h"
+
+
+#include <slim/xlib.h>
+#include <core/filesystem.h>
+
+#include "entity_player.h"
+#include "gamerules.h"
+
+using namespace gemini::game;
 
 #define LOCK_CAMERA_TO_CHARACTER 1
 
@@ -242,11 +252,23 @@ public:
 	renderer::SceneLink scenelink;
 	SceneRenderMethod* render_method;
 	
+
+	Camera main_camera;
 	
 	audio::SoundHandle background;
 	audio::SoundSource background_source;
 	
 	bool draw_physics_debug;
+	
+	gemini::game::Player* player;
+	gemini::game::GameRules* gamerules;
+	gemini::game::create_gamerules_fn create_gamerules;
+	gemini::game::destroy_gamerules_fn destroy_gamerules;
+	xlib_t gamelib;
+	
+	
+	Entity* world;
+	
 
 	ProjectChimera()
 	{
@@ -255,8 +277,14 @@ public:
 		root = 0;
 		device = 0;
 		render_method = 0;
-		active_camera = 0;
+		active_camera = &main_camera;
 		draw_physics_debug = false;
+		
+		world = 0;
+		player = 0;
+		gamerules = 0;
+		create_gamerules = 0;
+		destroy_gamerules = 0;
 	}
 	
 	virtual void event( kernel::KeyboardEvent & event )
@@ -434,15 +462,24 @@ public:
 		}
 		
 		
+
+		
 //		background = audio::create_sound("sounds/wind_loop");
 //		background_source = audio::play(background, -1);
 		
 		// create character
-		character = physics::create_character_controller(btVector3(0, 2, 0), false);
+		character = physics::create_character_controller(glm::vec3(0, 2, 0), false);
 		character->clear_state();
 		
 		player_controller = CREATE(CharacterController);
 		player_controller->character = character;
+			
+		player_controller->camera = active_camera;
+		active_camera->type = Camera::FIRST_PERSON;
+		active_camera->move_speed = 0.1f;
+		active_camera->perspective(camera_fov, params.render_width, params.render_height, 0.01f, 8192.0f);
+		active_camera->set_absolute_position(glm::vec3(0, 0, 5));
+		active_camera->update_view();
 			
 		// capture the mouse
 		kernel::instance()->capture_mouse( true );
@@ -454,42 +491,44 @@ public:
 		root = CREATE(scenegraph::Node);
 		root->name = "scene_root";
 		entity_set_scene_root(root);
-	
-		// run a script
-		script::execute_file("scripts/project_chimera.nut");
-		
-		// perform post-script load duties
-		entity_post_script_load();
 
 		
-		// setup camera
-		Sqrat::RootTable roottable( script::get_vm() );
-		Sqrat::Object gamerules = roottable.GetSlot( _SC("gamerules") );
-		if ( !gamerules.IsNull() )
+		// create the player entity
+		player = (Player*)CREATE(Entity);
+		player->set_physics(2);
+
+
+		world = CREATE(Entity);
+		world->set_model("models/cabin");
+		world->set_physics(0);
+
+		// load the game library
+		StackString<MAX_PATH_SIZE> game_library_path = core::filesystem::content_directory();
+		game_library_path.append(PATH_SEPARATOR_STRING).append("bin").append(PATH_SEPARATOR_STRING).append("game.dylib");
+		
+		if (!xlib_open(&gamelib, game_library_path()))
 		{
-			GameRules * gr = gamerules.Cast<GameRules*>();
-			if ( gr )
+			LOGV("unable to open game: \"%s\"\n", game_library_path());
+			assert(0);
+		}
+		else
+		{
+			LOGV("opened game library!\n");
+			
+			create_gamerules = (gemini::game::create_gamerules_fn) xlib_find_symbol(&gamelib, "create_gamerules");
+			destroy_gamerules = (gemini::game::destroy_gamerules_fn) xlib_find_symbol(&gamelib, "destroy_gamerules");
+			
+			assert(create_gamerules && destroy_gamerules);
+			
+			if (create_gamerules)
 			{
-				active_camera = gr->get_active_camera();
-				if (active_camera)
-				{
-					active_camera->type = Camera::FIRST_PERSON;
-					active_camera->move_speed = 0.1f;
-					active_camera->perspective(camera_fov, params.render_width, params.render_height, 0.01f, 8192.0f);
-					active_camera->set_absolute_position(glm::vec3(0, 0, 5));
-					active_camera->update_view();
-				}
-				else
-				{
-					LOGE("Error! No camera attached to gamerules!\n");
-				}
+				gamerules = create_gamerules();
 			}
 			else
 			{
-				LOGE("Error! Gamerules is invalid!\n");
+				LOGE("Unable to find create_gamerules function!\n");
 			}
 		}
-
 
 		return kernel::Application_Success;
 	}
@@ -502,22 +541,7 @@ public:
 
 		// handle input
 		player_controller->get_input_command(command);
-		
 
-
-
-		Sqrat::RootTable roottable( script::get_vm() );
-		Sqrat::Object gamerules = roottable.GetSlot( _SC("gamerules") );
-		if ( !gamerules.IsNull() )
-		{
-			GameRules * gr = gamerules.Cast<GameRules*>();
-			if ( gr )
-			{
-				active_camera = gr->get_active_camera();
-				player_controller->camera = active_camera;
-			}
-		}
-		
 		// apply input
 		player_controller->apply_command(command);
 		
@@ -609,10 +633,10 @@ public:
 	virtual void shutdown( kernel::Params & params )
 	{
 		DESTROY(CharacterController, player_controller);
-	
-		// cleanup entities
-		// perhaps just destroy the gamerules and the entities will follow?
-		script::shutdown();
+
+
+		DESTROY(Player, player);
+		DESTROY(Entity, world);
 
 		entity_shutdown();
 
@@ -625,6 +649,14 @@ public:
 			vr::destroy_device(device);
 		}
 		vr::shutdown();
+		
+		
+		if (destroy_gamerules)
+		{
+			destroy_gamerules(gamerules);
+		}
+		
+		xlib_close(&gamelib);
 	}
 };
 

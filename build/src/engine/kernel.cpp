@@ -37,7 +37,7 @@
 #include "input.h"
 #include "assets.h"
 #include <renderer/font.h>
-#include "script.h"
+
 #include <renderer/debugdraw.h>
 #include "physics.h"
 #include "hotloading.h"
@@ -411,9 +411,6 @@ namespace kernel
 			return kernel::ConfigFailed;
 		}
 		
-		// setup script subsystem
-		script::startup();
-		
 		// try to setup the renderer
 		if (config_result != kernel::Application_NoWindow)
 		{
@@ -473,8 +470,6 @@ namespace kernel
 
 		// system cleanup
 		hotloading::shutdown();
-		script::shutdown();
-		
 		
 		physics::shutdown();
 		debugdraw::shutdown();

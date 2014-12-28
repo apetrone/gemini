@@ -22,11 +22,16 @@
 #include <platform/typedefs.h>
 #include <slim/xlog.h>
 #include "physics.h"
+#include <btBulletDynamicsCommon.h>
 #include "physics_common.h"
 #include <renderer/color.h>
 #include <renderer/debugdraw.h>
 
-#include <btBulletDynamicsCommon.h>
+#include "charactercontroller.h"
+
+#include "assets/asset_mesh.h"
+
+#include <vector>
 
 const float PHYSICS_PLAYER_HALF_WIDTH = 0.25f; // .25 == 1.6 ft wide
 const float PHYSICS_PLAYER_HALF_HEIGHT = 0.91f; // .91 == 6 ft tall
@@ -34,6 +39,21 @@ const float PHYSICS_PLAYER_HALF_HEIGHT = 0.91f; // .91 == 6 ft tall
 namespace physics
 {
 	class BulletConstraint;
+
+	class DebugPhysicsRenderer : public btIDebugDraw
+	{
+	public:
+		virtual void drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color );
+		virtual void    drawLine( const btVector3& from, const btVector3& to, const btVector3& fromColor, const btVector3& toColor );
+		virtual void	drawContactPoint(const btVector3& PointOnB,const btVector3& normalOnB,btScalar distance,int lifeTime,const btVector3& color);
+		virtual void	reportErrorWarning(const char* warningString);
+		virtual void	draw3dText(const btVector3& location,const char* textString);
+		virtual void	setDebugMode(int debugMode);
+		virtual int		getDebugMode() const;
+	}; // DebugPhysicsRenderer
+
+
+
 
 	// TODO: move these to an internal namespace
 	btDefaultCollisionConfiguration * collision_config;
@@ -625,7 +645,7 @@ namespace physics
 		return info;
 	} // raycast
 
-	KinematicCharacter* create_character_controller(const btVector3& spawnLocation, bool addActionToWorld)
+	KinematicCharacter* create_character_controller(const glm::vec3& spawnLocation, bool addActionToWorld)
 	{
 		btTransform tr;
 		tr.setIdentity();
@@ -656,7 +676,7 @@ namespace physics
 		ghost->setCcdMotionThreshold( .1 );
 		ghost->setCcdSweptSphereRadius( 0.1 );
 		
-		character->SetSpawnLocation( spawnLocation );
+		character->SetSpawnLocation( btVector3(spawnLocation.x, spawnLocation.y, spawnLocation.z) );
 		character->clear_state();
 		
 		_controller = character;
