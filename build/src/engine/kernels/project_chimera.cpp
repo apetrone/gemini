@@ -52,6 +52,8 @@
 
 #include <renderer/constantbuffer.h>
 
+#include "audio.h"
+
 #define LOCK_CAMERA_TO_CHARACTER 1
 
 // even if a VR device is attached, this will NOT render to it
@@ -240,6 +242,10 @@ public:
 	renderer::SceneLink scenelink;
 	SceneRenderMethod* render_method;
 	
+	
+	audio::SoundHandle background;
+	audio::SoundSource background_source;
+	
 	bool draw_physics_debug;
 
 	ProjectChimera()
@@ -426,7 +432,11 @@ public:
 		{
 			render_method = CREATE(DefaultRenderMethod, scenelink);
 		}
-	
+		
+		
+//		background = audio::create_sound("sounds/wind_loop");
+//		background_source = audio::play(background, -1);
+		
 		// create character
 		character = physics::create_character_controller(btVector3(0, 2, 0), false);
 		character->clear_state();
