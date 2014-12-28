@@ -227,7 +227,7 @@ namespace audio
 	// interface
 	void startup()
 	{
-		typedef Factory<IAudioDriver, 4> AudioDriverFactory;
+		typedef Factory<IAudioDriver> AudioDriverFactory;
 		AudioDriverFactory factory;
 		
 		
