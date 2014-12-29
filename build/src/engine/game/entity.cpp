@@ -39,8 +39,9 @@
 #include <sdk/model_interface.h>
 
 using namespace gemini;
+using namespace gemini::physics;
 
-static void entity_collision_callback(physics::CollisionEventType type, physics::CollisionObject* first, physics::CollisionObject* second)
+static void entity_collision_callback(CollisionEventType type, CollisionObject* first, CollisionObject* second)
 {
 	assert(first != 0);
 	assert(second != 0);
@@ -50,12 +51,12 @@ static void entity_collision_callback(physics::CollisionEventType type, physics:
 	
 	if (ent0 && ent1)
 	{
-		if (type == physics::Collision_Began)
+		if (type == Collision_Began)
 		{
 			ent0->collision_began(ent1);
 			ent1->collision_began(ent0);
 		}
-		else if (type == physics::Collision_Ended)
+		else if (type == Collision_Ended)
 		{
 			ent0->collision_ended(ent1);
 			ent1->collision_ended(ent0);
@@ -245,6 +246,19 @@ void Entity::collision_ended(Entity* other)
 {
 }
 
+
+
+//
+// PHYSICS
+//
+
+CollisionObject* Entity::physics_create_static()
+{
+	return 0;
+}
+
+
+
 void Entity::set_position(glm::vec3 *new_position)
 {
 	position = *new_position;
@@ -258,7 +272,7 @@ void Entity::set_position(glm::vec3 *new_position)
 
 void Entity::apply_force(glm::vec3* force, glm::vec3* local_position)
 {
-	if (this->collision_object && this->collision_object->is_type(physics::CollisionType_Dynamic))
+	if (this->collision_object && this->collision_object->is_type(CollisionType_Dynamic))
 	{
 		this->collision_object->apply_force(*force, *local_position);
 	}
@@ -266,7 +280,7 @@ void Entity::apply_force(glm::vec3* force, glm::vec3* local_position)
 
 void Entity::apply_central_force(glm::vec3 *force)
 {
-	if (this->collision_object && this->collision_object->is_type(physics::CollisionType_Dynamic))
+	if (this->collision_object && this->collision_object->is_type(CollisionType_Dynamic))
 	{
 		this->collision_object->apply_central_force(*force);
 	}
@@ -274,7 +288,7 @@ void Entity::apply_central_force(glm::vec3 *force)
 
 void Entity::set_mass(float mass)
 {
-	if (this->collision_object && this->collision_object->is_type(physics::CollisionType_Dynamic))
+	if (this->collision_object && this->collision_object->is_type(CollisionType_Dynamic))
 	{
 		this->collision_object->set_mass(mass);
 	}
@@ -282,7 +296,7 @@ void Entity::set_mass(float mass)
 
 void Entity::set_parent(Entity *other)
 {
-	if (this->collision_object && this->collision_object->is_type(physics::CollisionType_Dynamic))
+	if (this->collision_object && this->collision_object->is_type(CollisionType_Dynamic))
 	{
 		this->collision_object->set_parent(this->collision_object, other->collision_object);
 	}
@@ -321,14 +335,14 @@ void Entity::set_physics(int physics_type)
 	else if (physics_type == 2)
 	{
 		// character
-		physics::KinematicCharacter* controller = physics::get_character_controller(0);
+		KinematicCharacter* controller = get_character_controller(0);
 		assert(controller);
-		this->collision_object = physics::create_character_proxy(controller);
+		this->collision_object = create_character_proxy(controller);
 	}
 	else if (physics_type == 3)
 	{
 		// ghost/trigger
-		this->collision_object = physics::create_trigger(glm::vec3(1, 1, 1));
+		this->collision_object = create_trigger(glm::vec3(1, 1, 1));
 	}
 	else
 	{

@@ -437,7 +437,7 @@ namespace kernel
 		// initialize subsystems
 		audio::startup();
 		input::startup();
-		physics::startup();
+		gemini::physics::startup();
 		
 		if (config.enable_asset_reloading)
 		{
@@ -471,7 +471,7 @@ namespace kernel
 		// system cleanup
 		hotloading::shutdown();
 		
-		physics::shutdown();
+		gemini::physics::shutdown();
 		debugdraw::shutdown();
 		font::shutdown();
 		assets::shutdown();
@@ -517,7 +517,7 @@ namespace kernel
 			_active_application->step( _kernel->parameters() );
 			
 			// step physics before we let the application have a chance
-			physics::step(_kernel->parameters().step_interval_seconds);
+			gemini::physics::step(_kernel->parameters().step_interval_seconds);
 			
 			// step debug draw
 			debugdraw::update(_kernel->parameters().step_interval_seconds);

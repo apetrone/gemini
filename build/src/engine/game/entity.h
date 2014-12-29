@@ -33,7 +33,6 @@
 
 #include <sdk/iengineentity.h>
 
-
 #include <core/factory.h>
 
 #define DECLARE_ENTITY(entity_class, base_class)\
@@ -65,23 +64,27 @@ namespace gemini
 {
 	class EntityManager;
 	class GameInterface;
+	
+	
+	class EntityMotionInterface : public physics::PhysicsMotionInterface
+	{
+		Entity* target;
+		scenegraph::Node* node;
+		
+	public:
+		
+		EntityMotionInterface(Entity* entity, scenegraph::Node* sgnode) : target(entity), node(sgnode)
+		{
+		}
+		
+		virtual void get_transform(glm::vec3& position, const glm::quat& orientation);
+		
+		virtual void set_transform(const glm::vec3& position, const glm::quat& orientation, const glm::vec3& mass_center_offset);
+	};
+	
 }
 
-class EntityMotionInterface : public physics::PhysicsMotionInterface
-{
-	Entity* target;
-	scenegraph::Node* node;
-	
-public:
-	
-	EntityMotionInterface(Entity* entity, scenegraph::Node* sgnode) : target(entity), node(sgnode)
-	{
-	}
-	
-	virtual void get_transform(glm::vec3& position, const glm::quat& orientation);
-	
-	virtual void set_transform(const glm::vec3& position, const glm::quat& orientation, const glm::vec3& mass_center_offset);
-};
+
 
 
 
@@ -102,14 +105,12 @@ struct Entity : public gemini::IEngineEntity
 	
 	Entity();
 	virtual ~Entity();
-	EntityMotionInterface* motion_interface;
+	gemini::EntityMotionInterface* motion_interface;
 	
 //	virtual void set_model_index(int32_t index);
 	virtual int32_t get_model_index() const;
 //	virtual gemini::EntityTransform get_transform() const;
 //	virtual void set_transform(const gemini::EntityTransform& txform);
-	
-	
 	
 	
 	// called after the constructor
@@ -125,6 +126,35 @@ struct Entity : public gemini::IEngineEntity
 	
 	virtual void collision_began(Entity* other);
 	virtual void collision_ended(Entity* other);
+	
+	
+public:
+	
+	//
+	// PHYSICS
+	//
+
+	// create a static physics object using the model's collision model
+	// TODO: also expose a way to create a static box?
+	gemini::physics::CollisionObject* physics_create_static();
+	
+//	physics::CollisionObject* physics_create_sphere(const glm::vec3& local_center, float radius);
+	
+	// create a collision box to use for physics
+//	physics::CollisionObject* physics_create_box(const glm::vec3& local_center, const glm::vec3& mins, const glm::vec3& maxs);
+	
+	// use the collision model associated with this entity's model to create
+	// a physics body.
+//	physics::CollisionObject* physics_create_model();
+	
+	// create a trigger
+//	physics::CollisionObject* physics_create_trigger(const glm::vec3& local_center, const glm::vec3& mins, const glm::vec3& maxs);
+	
+	
+	void set_physics_object(gemini::physics::CollisionObject* object) { this->collision_object = object; }
+	
+	
+	
 	
 	// get/set functions for script interop
 	const String & get_name() { return this->name; }
@@ -142,7 +172,7 @@ struct Entity : public gemini::IEngineEntity
 	void set_parent(Entity* other);
 	
 	// perhaps move these into a unified interface?
-	physics::CollisionObject* collision_object;
+	gemini::physics::CollisionObject* collision_object;
 		
 	// functions for this script object
 	void set_model(const char* path);

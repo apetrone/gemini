@@ -27,15 +27,16 @@ namespace gemini
 {
 	class EntityManager;
 	class ModelInterface;
+	class PhysicsInterface;
 
 	class EngineInterface
 	{
 	public:
 		virtual ~EngineInterface() {};
-		
-//		virtual uint32_t load_model(const char* model_path) = 0;
+
 		virtual EntityManager* entities() = 0;
 		virtual ModelInterface* models() = 0;
+		virtual PhysicsInterface* physics() = 0;
 	};
 	
 	namespace engine

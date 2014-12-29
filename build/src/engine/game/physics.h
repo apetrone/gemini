@@ -21,8 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-
-#include <platform/mem.h>
+#include <sdk/physics_interface.h>
 
 #include "physics_constraint.h"
 #include "physics_collisionobject.h"
@@ -33,45 +32,45 @@ namespace assets
 	class Mesh;
 }
 
-namespace physics
-{	
-	class PhysicsMotionInterface
-	{
-	public:
-		virtual ~PhysicsMotionInterface() {};
-		
-		// called when the physics body's motion state needs to be retrieved
-		virtual void get_transform(glm::vec3& position, const glm::quat& orientation) = 0;
-		
-		// called when the physics body's motion state has been set
-		virtual void set_transform(const glm::vec3& position, const glm::quat& orientation, const glm::vec3& mass_center_offset) = 0;
-	};
+namespace gemini
+{
 
-#define BTVECTOR3_TO_VEC3( v ) glm::vec3( v.x(), v.y(), v.z() )
-
-	class KinematicCharacter;
+	namespace physics
+	{	
 
 
-	struct RaycastInfo
-	{
-		glm::vec3 hit;
-		CollisionObject* object;
-		
-		RaycastInfo() : object(0)
+	#define BTVECTOR3_TO_VEC3( v ) glm::vec3( v.x(), v.y(), v.z() )
+
+		class KinematicCharacter;
+
+
+		struct RaycastInfo
 		{
-		}
-	};
+			glm::vec3 hit;
+			CollisionObject* object;
+			
+			RaycastInfo() : object(0)
+			{
+			}
+		};
 
-	void startup();
-	void shutdown();
-	void step(float seconds);
-	void debug_draw();
-	RaycastInfo raycast(CollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
-	
-	KinematicCharacter* create_character_controller(const glm::vec3& spawnLocation, bool addActionToWorld);
-	KinematicCharacter* get_character_controller(int index);
-	CollisionObject* create_character_proxy(KinematicCharacter* controller);
+		void startup();
+		void shutdown();
+		void step(float seconds);
+		void debug_draw();
+		
+		
+		//CollisionObject*
 
-	CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr, const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0));
-	CollisionObject* create_trigger(const glm::vec3& size);
-}; // namespace physics
+		
+		
+		RaycastInfo raycast(CollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
+		
+		KinematicCharacter* create_character_controller(const glm::vec3& spawn_location, bool add_action_to_world);
+		KinematicCharacter* get_character_controller(int index);
+		CollisionObject* create_character_proxy(KinematicCharacter* controller);
+
+		CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr, const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0));
+		CollisionObject* create_trigger(const glm::vec3& size);
+	}; // namespace physics
+} // namespace gemini

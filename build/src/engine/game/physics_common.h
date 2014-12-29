@@ -23,86 +23,88 @@
 
 // This _should_ only be included in files that have ALREADY
 // included Bullet. It's not meant to be included outright.
-
-namespace physics
+namespace gemini
 {
-	///@todo Interact with dynamic objects,
-	///Ride kinematicly animated platforms properly
-	///More realistic (or maybe just a config option) falling
-	/// -> Should integrate falling velocity manually and use that in stepDown()
-	///Support jumping
-	///Support ducking
-	class ClosestNotMeRayResultCallback : public btCollisionWorld::ClosestRayResultCallback
+	namespace physics
 	{
-	public:
-		ClosestNotMeRayResultCallback (btCollisionObject* me) : btCollisionWorld::ClosestRayResultCallback(btVector3(0.0, 0.0, 0.0), btVector3(0.0, 0.0, 0.0))
+		///@todo Interact with dynamic objects,
+		///Ride kinematicly animated platforms properly
+		///More realistic (or maybe just a config option) falling
+		/// -> Should integrate falling velocity manually and use that in stepDown()
+		///Support jumping
+		///Support ducking
+		class ClosestNotMeRayResultCallback : public btCollisionWorld::ClosestRayResultCallback
 		{
-			m_me = me;
-		}
+		public:
+			ClosestNotMeRayResultCallback (btCollisionObject* me) : btCollisionWorld::ClosestRayResultCallback(btVector3(0.0, 0.0, 0.0), btVector3(0.0, 0.0, 0.0))
+			{
+				m_me = me;
+			}
+			
+			virtual btScalar addSingleResult(btCollisionWorld::LocalRayResult& rayResult, bool normalInWorldSpace)
+			{
+				if (rayResult.m_collisionObject == m_me)
+				{
+					return btScalar(1.0);
+				}
+				
+				if (!rayResult.m_collisionObject->hasContactResponse())
+				{
+					return btScalar(1.0);
+				}
+				
+				return ClosestRayResultCallback::addSingleResult (rayResult, normalInWorldSpace);
+			}
+		protected:
+			btCollisionObject* m_me;
+		};
 		
-		virtual btScalar addSingleResult(btCollisionWorld::LocalRayResult& rayResult, bool normalInWorldSpace)
+		class ClosestNotMeConvexResultCallback : public btCollisionWorld::ClosestConvexResultCallback
 		{
-			if (rayResult.m_collisionObject == m_me)
+		public:
+			ClosestNotMeConvexResultCallback (btCollisionObject* me, const btVector3& up, btScalar minSlopeDot)
+			: btCollisionWorld::ClosestConvexResultCallback(btVector3(0.0, 0.0, 0.0), btVector3(0.0, 0.0, 0.0))
+			, m_me(me)
+			, m_up(up)
+			, m_minSlopeDot(minSlopeDot)
 			{
-				return btScalar(1.0);
 			}
 			
-			if (!rayResult.m_collisionObject->hasContactResponse())
+			virtual btScalar addSingleResult(btCollisionWorld::LocalConvexResult& convexResult,bool normalInWorldSpace)
 			{
-				return btScalar(1.0);
+				if (convexResult.m_hitCollisionObject == m_me)
+				{
+					return btScalar(1.0);
+				}
+				
+				if (!convexResult.m_hitCollisionObject->hasContactResponse())
+				{
+					return btScalar(1.0);
+				}
+				
+				btVector3 hitNormalWorld;
+				if (normalInWorldSpace)
+				{
+					hitNormalWorld = convexResult.m_hitNormalLocal;
+				}
+				else
+				{
+					///need to transform normal into worldspace
+					hitNormalWorld = m_hitCollisionObject->getWorldTransform().getBasis()*convexResult.m_hitNormalLocal;
+				}
+				
+				btScalar dotUp = m_up.dot(hitNormalWorld);
+				if (dotUp < m_minSlopeDot) {
+					return btScalar(1.0);
+				}
+				
+				return ClosestConvexResultCallback::addSingleResult (convexResult, normalInWorldSpace);
 			}
-			
-			return ClosestRayResultCallback::addSingleResult (rayResult, normalInWorldSpace);
-		}
-	protected:
-		btCollisionObject* m_me;
-	};
-	
-	class ClosestNotMeConvexResultCallback : public btCollisionWorld::ClosestConvexResultCallback
-	{
-	public:
-		ClosestNotMeConvexResultCallback (btCollisionObject* me, const btVector3& up, btScalar minSlopeDot)
-		: btCollisionWorld::ClosestConvexResultCallback(btVector3(0.0, 0.0, 0.0), btVector3(0.0, 0.0, 0.0))
-		, m_me(me)
-		, m_up(up)
-		, m_minSlopeDot(minSlopeDot)
-		{
-		}
-		
-		virtual btScalar addSingleResult(btCollisionWorld::LocalConvexResult& convexResult,bool normalInWorldSpace)
-		{
-			if (convexResult.m_hitCollisionObject == m_me)
-			{
-				return btScalar(1.0);
-			}
-			
-			if (!convexResult.m_hitCollisionObject->hasContactResponse())
-			{
-				return btScalar(1.0);
-			}
-			
-			btVector3 hitNormalWorld;
-			if (normalInWorldSpace)
-			{
-				hitNormalWorld = convexResult.m_hitNormalLocal;
-			}
-			else
-			{
-				///need to transform normal into worldspace
-				hitNormalWorld = m_hitCollisionObject->getWorldTransform().getBasis()*convexResult.m_hitNormalLocal;
-			}
-			
-			btScalar dotUp = m_up.dot(hitNormalWorld);
-			if (dotUp < m_minSlopeDot) {
-				return btScalar(1.0);
-			}
-			
-			return ClosestConvexResultCallback::addSingleResult (convexResult, normalInWorldSpace);
-		}
-	protected:
-		btCollisionObject* m_me;
-		const btVector3 m_up;
-		btScalar m_minSlopeDot;
-	};
+		protected:
+			btCollisionObject* m_me;
+			const btVector3 m_up;
+			btScalar m_minSlopeDot;
+		};
 
-}; // namespace physics
+	} // namespace physics
+} // namespace gemini

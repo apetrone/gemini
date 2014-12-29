@@ -24,12 +24,15 @@
 #include "physics_collisionobject.h"
 #include <core/mathlib.h>
 
-namespace physics
+namespace gemini
 {
-	// abstract physics body
-	class RigidBody
+	namespace physics
 	{
-	public:
-		virtual ~RigidBody() {}
-	};
-}; // namespace physics
+		// abstract physics body
+		class RigidBody
+		{
+		public:
+			virtual ~RigidBody() {}
+		};
+	} // namespace physics
+} // namespace gemini

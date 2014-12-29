@@ -78,7 +78,7 @@ uint8_t RENDER_TO_VR = 1;
 
 uint8_t REQUIRE_RIFT = 1;
 
-using namespace physics;
+using namespace gemini::physics;
 
 
 
@@ -379,21 +379,22 @@ class EngineInterfaceImpl : public EngineInterface
 {
 	EntityManager* entity_manager;
 	ModelInterface* model_interface;
-
+	PhysicsInterface* physics_interface;
 public:
 
 	EngineInterfaceImpl(EntityManager* em, ModelInterface* mi) :
 		entity_manager(em),
-		model_interface(mi)
+		model_interface(mi),
+		physics_interface(0)
 	{
 	}
 
 
 	virtual ~EngineInterfaceImpl() {};
 
-//	virtual uint32_t load_model(const char* model_path);
 	virtual EntityManager* entities() { return entity_manager; }
 	virtual ModelInterface* models() { return model_interface; }
+	virtual PhysicsInterface* physics() { return 0; }
 };
 
 
@@ -409,8 +410,8 @@ public:
 	DECLARE_APPLICATION(ProjectChimera);
 
 	Camera* active_camera;
-	physics::CharacterController* player_controller;
-	physics::KinematicCharacter* character;
+	CharacterController* player_controller;
+	KinematicCharacter* character;
 
 	vr::HeadMountedDevice* device;
 
@@ -650,7 +651,7 @@ public:
 //		background_source = audio::play(background, -1);
 		
 		// create character
-		character = physics::create_character_controller(glm::vec3(0, 2, 0), false);
+		character = create_character_controller(glm::vec3(0, 2, 0), false);
 		character->clear_state();
 		
 		player_controller = CREATE(CharacterController);
