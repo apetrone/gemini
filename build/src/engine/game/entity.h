@@ -141,9 +141,6 @@ struct Entity : public gemini::IEngineEntity
 	void set_mass(float mass);
 	void set_parent(Entity* other);
 	
-	assets::Mesh* mesh;
-	scenegraph::Node* node;
-	
 	// perhaps move these into a unified interface?
 	physics::CollisionObject* collision_object;
 		

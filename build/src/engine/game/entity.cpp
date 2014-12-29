@@ -101,7 +101,7 @@ void entity_prestep()
 		{
 			// copy body's position over to node and entity
 			const glm::vec3& world_position = ent->collision_object->get_world_position();
-			ent->node->translation = world_position;
+//			ent->node->translation = world_position;
 			ent->position = world_position;
 		}
 	}
@@ -176,9 +176,7 @@ void entity_shutdown()
 Entity::Entity() :
 	flags(0),
 	collision_object(0),
-	node(0),
 	motion_interface(0),
-	mesh(0),
 	model_index(0)
 {
 	this->id = entity_list().count();
@@ -201,17 +199,6 @@ Entity::~Entity()
 	if (this->motion_interface)
 	{
 		DESTROY(EntityMotionInterface, this->motion_interface);
-	}
-
-	if (this->node)
-	{
-		// remove the node
-		if (this->node->parent)
-		{
-			this->node->parent->remove_child(this->node);
-		}
-		DESTROY(Node, this->node);
-		this->node = 0;
 	}
 } // ~Entity
 
@@ -266,13 +253,6 @@ void Entity::set_position(glm::vec3 *new_position)
 	{
 		collision_object->set_world_position(*new_position);
 	}
-
-	// if this is a static body; we have to sync the position
-	// with the node because there is no 'motion state' to do it automatically.
-	if (this->node)
-	{
-		this->node->translation = position;
-	}
 }
 
 
@@ -313,36 +293,11 @@ glm::vec3* Entity::get_position()
 	return &position;
 }
 
-assets::Mesh* load_mesh(scenegraph::Node* root, const char* path, scenegraph::Node*& node)
-{
-	// 1. load the mesh from file
-	assets::Mesh* mesh = assets::meshes()->load_from_path(path);
-	if (mesh)
-	{
-		mesh->prepare_geometry();
-		
-		// clone the hierarchy to the renderable scene
-		node = clone_to_scene(mesh->scene_root, root);
-	}
-	else
-	{
-		LOGW("Unable to load model: %s\n", path);
-	}
-	
-	return mesh;
-}
-
 void Entity::set_model(const char* path)
 {
-//	mesh = load_mesh(get_entity_root(), path, this->node);
-	
-//	model_index = engine::instance()->load_model(path);
-	
-//	engine::instance()->set_model_index(this->node, model_index);
-
 //	engine::instance()->models()->destroy_instance_data(model_index);
 	model_index = engine::instance()->models()->create_instance_data(path);
-	LOGV("set model index: %i, for model: %s\n", model_index, path);
+//	LOGV("set model index: %i, for model: %s\n", model_index, path);
 }
 
 void Entity::set_physics(int physics_type)
@@ -381,23 +336,23 @@ void Entity::set_physics(int physics_type)
 		assert(0);
 	}
 		
-	this->motion_interface = CREATE(EntityMotionInterface, this, this->node);
+//	this->motion_interface = CREATE(EntityMotionInterface, this, this->node);
 	
 	// generate physics body from mesh
 	// until we need a different system.
-	if (model_index > 0 || mesh)
-	{
-		this->collision_object = physics::create_physics_for_mesh(mesh, mass_kg, this->motion_interface, mesh->mass_center_offset);
-
-		if (this->collision_object)
-		{
-			this->collision_object->set_world_position(position);
-		}
-		else
-		{
-			LOGW("Unable to create physics body!\n");
-		}
-	}
+//	if (mesh)
+//	{
+//		this->collision_object = physics::create_physics_for_mesh(mesh, mass_kg, this->motion_interface, mesh->mass_center_offset);
+//
+//		if (this->collision_object)
+//		{
+//			this->collision_object->set_world_position(position);
+//		}
+//		else
+//		{
+//			LOGW("Unable to create physics body!\n");
+//		}
+//	}
 	
 	if (this->collision_object)
 	{

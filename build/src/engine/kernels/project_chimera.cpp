@@ -42,10 +42,6 @@
 #include "assets/asset_font.h"
 #include "entity.h"
 
-#include "scene_graph.h"
-
-#include "skeletalnode.h"
-
 #include <core/mathlib.h>
 
 #include "scenelink.h"
@@ -98,11 +94,7 @@ void render_scene_from_camera(gemini::IEngineEntity** entity_list, Camera& camer
 	cb.viewer_position = &camera.eye_position;
 	cb.light_position = &light_position;
 
-	// OLD WAY; using scene graph to drive the rendering
-	// draw scene graph
-//	scenelink.draw(root, cb);
-	
-	// NEW WAY: using entity list
+	// use the entity list to render
 	scenelink.clear();
 	scenelink.queue_entities(cb, entity_list);
 	scenelink.sort();
@@ -419,7 +411,7 @@ public:
 	Camera* active_camera;
 	physics::CharacterController* player_controller;
 	physics::KinematicCharacter* character;
-	scenegraph::Node* root;
+
 	vr::HeadMountedDevice* device;
 
 	renderer::SceneLink scenelink;
@@ -453,7 +445,6 @@ public:
 	{
 		player_controller = 0;
 		character = 0;
-		root = 0;
 		device = 0;
 		render_method = 0;
 		active_camera = &main_camera;
@@ -681,16 +672,6 @@ public:
 
 		// entity startup
 		entity_startup();
-		
-		
-		
-		// create scene graph root
-		root = CREATE(scenegraph::Node);
-		root->name = "scene_root";
-		entity_set_scene_root(root);
-
-
-
 
 		world = CREATE(Entity);
 		world->set_model("models/cabin");
@@ -815,17 +796,12 @@ public:
 		}
 		debugdraw::text(x, y+48, xstr_format("frame delta = %2.2fms\n", params.framedelta_filtered_msec), Color(255, 255, 255));
 		debugdraw::text(x, y+60, xstr_format("# allocations = %i, total %i Kbytes\n", memory::allocator().total_allocations(), memory::allocator().total_bytes()/1024), Color(64, 102, 192));
-
-		root->update(params.step_interval_seconds);
 	}
 
 	virtual void tick( kernel::Params & params )
 	{
 		// need to tick entities
 		entity_tick();
-		
-		// then update the scene graph
-		root->update_transforms();
 	
 		if (device)
 		{
@@ -861,8 +837,6 @@ public:
 		DESTROY(Entity, world);
 
 		entity_shutdown();
-
-		DESTROY(Node, root);
 
 		DESTROY(SceneRenderMethod, render_method);
 		
