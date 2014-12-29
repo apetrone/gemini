@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 
-#include "engine_interface.h"
+#include <sdk/engine_interface.h>
 #include <assert.h>
 
 namespace gemini

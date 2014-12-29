@@ -33,7 +33,7 @@
 #include <assets/asset_material.h>
 
 
-#include "engine_interface.h"
+#include <sdk/engine_interface.h>
 #include <sdk/iengineentity.h>
 #include <sdk/model_interface.h>
 

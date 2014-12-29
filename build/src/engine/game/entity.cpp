@@ -35,7 +35,7 @@
 
 
 #include "entity_manager.h"
-#include "engine_interface.h"
+#include <sdk/engine_interface.h>
 #include <sdk/model_interface.h>
 
 using namespace gemini;
@@ -254,7 +254,9 @@ void Entity::collision_ended(Entity* other)
 
 CollisionObject* Entity::physics_create_static()
 {
-	return 0;
+	assert(engine::instance() && engine::instance()->physics());
+	
+	return engine::instance()->physics()->create_physics_model(model_index);
 }
 
 

@@ -48,9 +48,11 @@ namespace gemini
 	public:
 		virtual ~PhysicsInterface() {};
 		
-		virtual physics::CollisionObject* create_physics_model(int32_t model_index,
-													float mass_kg = 0.0f,
-													physics::PhysicsMotionInterface* motion_interface = 0,
-													const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0)) = 0;
+		virtual physics::CollisionObject* create_physics_model(
+			int32_t model_index,
+			float mass_kg = 0.0f,
+			physics::PhysicsMotionInterface* motion_interface = 0,
+			const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0)
+		) = 0;
 	};
 } // namespace gemini

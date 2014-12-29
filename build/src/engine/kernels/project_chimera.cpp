@@ -64,7 +64,7 @@
 #include <sdk/model_interface.h>
 
 #include <core/factory.h>
-#include "engine_interface.h"
+#include <sdk/engine_interface.h>
 
 using namespace gemini;
 
@@ -373,6 +373,22 @@ public:
 	}
 };
 
+class PhysicsInterfaceImpl : public PhysicsInterface
+{
+public:
+	virtual physics::CollisionObject* create_physics_model(
+		int32_t model_index,
+		float mass_kg,
+		physics::PhysicsMotionInterface* motion_interface,
+		const glm::vec3& mass_center_offset)
+	{
+		
+	
+	
+	
+		return 0;
+	}
+};
 
 
 class EngineInterfaceImpl : public EngineInterface
@@ -382,10 +398,10 @@ class EngineInterfaceImpl : public EngineInterface
 	PhysicsInterface* physics_interface;
 public:
 
-	EngineInterfaceImpl(EntityManager* em, ModelInterface* mi) :
+	EngineInterfaceImpl(EntityManager* em, ModelInterface* mi, PhysicsInterface* pi) :
 		entity_manager(em),
 		model_interface(mi),
-		physics_interface(0)
+		physics_interface(pi)
 	{
 	}
 
@@ -394,8 +410,10 @@ public:
 
 	virtual EntityManager* entities() { return entity_manager; }
 	virtual ModelInterface* models() { return model_interface; }
-	virtual PhysicsInterface* physics() { return 0; }
+	virtual PhysicsInterface* physics() { return physics_interface; }
 };
+
+
 
 
 
@@ -439,7 +457,8 @@ public:
 	
 	EntityManagerImpl entity_manager;
 	ModelInterfaceImpl model_interface;
-
+	PhysicsInterfaceImpl physics_interface;
+	
 	EngineInterface* engine_interface;
 
 	ProjectChimera()
@@ -459,7 +478,7 @@ public:
 		
 		
 		memset(entity_list, 0, sizeof(gemini::IEngineEntity*)*8);
-		engine_interface = CREATE(EngineInterfaceImpl, &entity_manager, &model_interface);
+		engine_interface = CREATE(EngineInterfaceImpl, &entity_manager, &model_interface, &physics_interface);
 		engine::set_instance(engine_interface);
 	}
 	
@@ -676,6 +695,7 @@ public:
 
 		world = CREATE(Entity);
 		world->set_model("models/cabin");
+		world->set_physics_object(world->physics_create_static());
 		world->set_physics(0);
 		entity_list[0] = world;
 
