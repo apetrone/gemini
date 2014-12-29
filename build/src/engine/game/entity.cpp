@@ -334,7 +334,7 @@ assets::Mesh* load_mesh(scenegraph::Node* root, const char* path, scenegraph::No
 
 void Entity::set_model(const char* path)
 {
-	mesh = load_mesh(get_entity_root(), path, this->node);
+//	mesh = load_mesh(get_entity_root(), path, this->node);
 	
 //	model_index = engine::instance()->load_model(path);
 	

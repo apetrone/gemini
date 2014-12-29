@@ -345,6 +345,10 @@ public:
 		assets::Mesh* mesh = assets::meshes()->load_from_path(model_path);
 		if (mesh)
 		{
+			if (mesh->is_dirty)
+			{
+				mesh->prepare_geometry();
+			}
 			ModelInstanceDataImpl data;
 			data.mesh_asset_index = mesh->Id();
 			int32_t index = (int32_t)id_to_instance.size();

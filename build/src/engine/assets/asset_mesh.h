@@ -124,6 +124,9 @@ namespace assets
 		
 		unsigned short total_bones;
 		
+		// if this is true, it needs to be re-uploaded to the gpu
+		bool is_dirty;
+		
 		// offset to the center of mass
 		glm::vec3 mass_center_offset;
 		

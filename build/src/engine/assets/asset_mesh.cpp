@@ -523,6 +523,7 @@ namespace assets
 	{
 		scene_root = 0;
 		total_bones = 0;
+		is_dirty = true;
 	} // Mesh
 	
 	Mesh::~Mesh()
@@ -543,6 +544,11 @@ namespace assets
 	
 	void Mesh::prepare_geometry()
 	{
+		if (!is_dirty)
+		{
+			return;
+		}
+
 		assert(geometry.size() != 0);
 		
 		for( unsigned int geo_id = 0; geo_id < geometry.size(); ++geo_id )
@@ -550,6 +556,8 @@ namespace assets
 			assets::Geometry * g = &geometry[ geo_id ];
 			g->render_setup();
 		}
+		
+		is_dirty = false;
 	} // prepare_geometry
 
 	AssetLoadStatus mesh_load_callback(const char* path, Mesh* mesh, const AssetParameters& parameters)
