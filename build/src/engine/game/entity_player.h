@@ -21,18 +21,16 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <platform/typedefs.h>
-#include <platform/mem.h>
+#include "entity.h"
 
 namespace gemini
 {
 	namespace game
 	{
-		class EntityManager;
-	
-		struct GameInterface
+		class Player : public Entity
 		{
-			EntityManager* entities;
+		public:
+			virtual ~Player() {};
 		};
 	} // namespace game
 } // namespace gemini

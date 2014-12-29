@@ -32,6 +32,13 @@
 #include <assets/asset_shader.h>
 #include <assets/asset_material.h>
 
+
+#include "engine_interface.h"
+#include <sdk/iengineentity.h>
+#include <sdk/model_interface.h>
+
+using namespace gemini;
+
 namespace renderer
 {
 	class SceneVisitor : public scenegraph::Visitor
@@ -115,6 +122,7 @@ namespace renderer
 	{
 		queue = CREATE(RenderQueue);
 	}
+	
 	SceneLink::~SceneLink()
 	{
 		DESTROY(RenderQueue, queue);
@@ -133,7 +141,21 @@ namespace renderer
 		// sort the queue
 		queue->sort();
 		
-		
+		draw(constant_buffer);
+	}
+	
+	void SceneLink::clear()
+	{
+		queue->clear();
+	}
+	
+	void SceneLink::sort()
+	{
+		queue->sort();
+	}
+	
+	void SceneLink::draw(ConstantBuffer& constant_buffer)
+	{
 		RenderStream rs;
 		
 		// finally, draw from the queue
@@ -144,7 +166,7 @@ namespace renderer
 			
 			//render_utilities::queue_geometry(rs, block, constant_buffer, 0, 0);
 			
-
+			
 			
 			rs.add_shader(shader->program);
 			
@@ -152,12 +174,12 @@ namespace renderer
 			rs.add_uniform_matrix4(shader->program->get_uniform_location("projection_matrix"), constant_buffer.projection_matrix);
 			rs.add_uniform_matrix4(shader->program->get_uniform_location("object_matrix"), block.object_matrix);
 			
-//			if (block.total_transforms > 0)
-//			{
-//				rs.add_uniform_matrix4(shader->get_uniform_location("node_transforms"), block.node_transforms, block.total_transforms);
-//			}
+			//			if (block.total_transforms > 0)
+			//			{
+			//				rs.add_uniform_matrix4(shader->get_uniform_location("node_transforms"), block.node_transforms, block.total_transforms);
+			//			}
 			
-
+			
 			if (constant_buffer.viewer_direction)
 			{
 				rs.add_uniform3f(shader->program->get_uniform_location("viewer_direction"), constant_buffer.viewer_direction);
@@ -179,5 +201,58 @@ namespace renderer
 		}
 		
 		rs.run_commands();
+	}
+	
+	void SceneLink::queue_entities(ConstantBuffer& constant_buffer, gemini::IEngineEntity** entity_list)
+	{
+		queue->clear();
+		
+		for (int i = 0; i < 8; ++i)
+		{
+			gemini::IEngineEntity* e = entity_list[i];
+			if (e)
+			{
+				int32_t model_index = e->get_model_index();
+				if (model_index > -1)
+				{
+//					LOGV("ent [%i], model_index = %i\n", i, model_index);
+					// fetch model instance data
+					gemini::ModelInstanceData* model_instance = engine::instance()->models()->get_instance_data(model_index);
+					if (model_instance)
+					{
+						// TODO: determine if this is a static or animated mesh.
+					
+//						LOGV("model_instance: %i\n", model_instance->asset_index());
+						assets::Mesh* mesh = assets::meshes()->find_with_id(model_instance->asset_index());
+						if (mesh)
+						{
+							// queue this mesh
+							for (size_t geometry_index = 0; geometry_index < mesh->geometry.size(); ++geometry_index)
+							{
+								assets::Geometry* geometry = &mesh->geometry[geometry_index];
+								
+								// TODO: compute render key
+								RenderKey key = 0;
+
+								GeometryInstanceData geometry_data;
+								model_instance->get_geometry_data(geometry_index, geometry_data);
+								
+								// setup render block
+								RenderBlock block(key, geometry);
+								block.object_matrix = &model_instance->get_local_transform();
+								block.material_id = geometry_data.material_id;
+								block.shader_id = geometry_data.shader_id;
+								block.node_transforms = 0;
+								block.total_transforms = 0;
+								queue->insert(block);
+							}
+							
+						}
+					}
+				}
+			}
+		}
+		
+		queue->sort();
 	}
 }; // namespace renderer

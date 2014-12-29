@@ -63,7 +63,14 @@
 #include "gamerules.h"
 
 #include "entity_manager.h"
-#include "game_interface.h"
+
+#include <sdk/iengineentity.h>
+#include <sdk/model_interface.h>
+
+#include <core/factory.h>
+#include "engine_interface.h"
+
+using namespace gemini;
 
 using namespace gemini::game;
 
@@ -79,7 +86,7 @@ using namespace physics;
 
 
 
-void render_scene_from_camera(scenegraph::Node* root, Camera& camera, renderer::SceneLink& scenelink)
+void render_scene_from_camera(gemini::IEngineEntity** entity_list, Camera& camera, renderer::SceneLink& scenelink)
 {
 	// setup constant buffer
 	glm::vec3 light_position;
@@ -91,15 +98,22 @@ void render_scene_from_camera(scenegraph::Node* root, Camera& camera, renderer::
 	cb.viewer_position = &camera.eye_position;
 	cb.light_position = &light_position;
 
+	// OLD WAY; using scene graph to drive the rendering
 	// draw scene graph
-	scenelink.draw(root, cb);
+//	scenelink.draw(root, cb);
+	
+	// NEW WAY: using entity list
+	scenelink.clear();
+	scenelink.queue_entities(cb, entity_list);
+	scenelink.sort();
+	scenelink.draw(cb);
 }
 
 class SceneRenderMethod
 {
 public:
 	virtual ~SceneRenderMethod() {}
-	virtual void render_frame( scenegraph::Node* root, Camera& camera, const kernel::Params& params ) = 0;
+	virtual void render_frame(gemini::IEngineEntity** entity_list, Camera& camera, const kernel::Params& params ) = 0;
 };
 
 
@@ -112,7 +126,7 @@ class VRRenderMethod : public SceneRenderMethod
 public:
 	VRRenderMethod(vr::HeadMountedDevice* in_device, renderer::SceneLink& in_link) : device(in_device), scenelink(in_link) {}
 	
-	virtual void render_frame( scenegraph::Node* root, Camera& camera, const kernel::Params& params )
+	virtual void render_frame(gemini::IEngineEntity** entity_list, Camera& camera, const kernel::Params& params )
 	{
 		assert( device != nullptr );
 		
@@ -195,7 +209,7 @@ public:
 			rs.run_commands();
 			rs.rewind();
 
-			render_scene_from_camera(root, camera, scenelink);
+			render_scene_from_camera(entity_list, camera, scenelink);
 			
 			
 			camera.matCam = old_matcam;
@@ -209,13 +223,14 @@ public:
 	}
 };
 
+
 class DefaultRenderMethod : public SceneRenderMethod
 {
 	renderer::SceneLink& scenelink;
 public:
 	DefaultRenderMethod(renderer::SceneLink& in_link) : scenelink(in_link) {};
 
-	virtual void render_frame( scenegraph::Node* root, Camera& camera, const kernel::Params& params )
+	virtual void render_frame(gemini::IEngineEntity** entity_list, Camera& camera, const kernel::Params& params )
 	{
 		RenderStream rs;
 		rs.add_cullmode(renderer::CullMode::CULLMODE_BACK);
@@ -226,7 +241,7 @@ public:
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
 		rs.run_commands();
 		
-		render_scene_from_camera(root, camera, scenelink);
+		render_scene_from_camera(entity_list, camera, scenelink);
 		
 		// draw debug graphics
 		{
@@ -235,8 +250,6 @@ public:
 	}
 };
 
-
-#include <core/factory.h>
 
 class EntityManagerImpl : public EntityManager
 {
@@ -290,6 +303,105 @@ void EntityManagerImpl::shutdown()
 
 
 
+
+class ModelInterfaceImpl : public gemini::ModelInterface
+{
+	// Each entity that has a model associated with it
+	// will have a model instance data allocated.
+	class ModelInstanceDataImpl : public ModelInstanceData
+	{
+	public:
+		unsigned int mesh_asset_index;
+		assets::Mesh* mesh;
+		glm::mat4 transform;
+		ModelInstanceDataImpl() : mesh_asset_index(0)
+		{
+			mesh = assets::meshes()->find_with_id(mesh_asset_index);
+		}
+		
+		virtual unsigned int asset_index() const { return mesh_asset_index; }
+		virtual glm::mat4& get_local_transform() { return transform; }
+		
+		
+		virtual void get_geometry_data(unsigned int index, GeometryInstanceData& geometry_data) const
+		{
+			assert(mesh != 0);
+		
+			// TODO: verify index is valid
+			assets::Geometry* geometry = &mesh->geometry[index];
+			geometry_data.material_id = geometry->material_id;
+			geometry_data.shader_id = geometry->shader_id;
+		}
+	};
+
+
+	typedef std::map<int32_t, ModelInstanceDataImpl> ModelInstanceMap;
+	ModelInstanceMap id_to_instance;
+
+
+public:
+	virtual int32_t create_instance_data(const char* model_path)
+	{
+		assets::Mesh* mesh = assets::meshes()->load_from_path(model_path);
+		if (mesh)
+		{
+			ModelInstanceDataImpl data;
+			data.mesh_asset_index = mesh->Id();
+			int32_t index = (int32_t)id_to_instance.size();
+			id_to_instance.insert(ModelInstanceMap::value_type(index, data));
+			return index;
+		}
+	
+		return -1;
+	}
+	
+	virtual void destroy_instance_data(int32_t index)
+	{
+		ModelInstanceMap::iterator it = id_to_instance.find(index);
+		if (it != id_to_instance.end())
+		{
+			id_to_instance.erase(it);
+		}
+	}
+
+	
+	ModelInstanceData* get_instance_data(int32_t index)
+	{
+		ModelInstanceMap::iterator it = id_to_instance.find(index);
+		if (it != id_to_instance.end())
+		{
+			return &(*it).second;
+		}
+
+		return 0;
+	}
+};
+
+
+
+class EngineInterfaceImpl : public EngineInterface
+{
+	EntityManager* entity_manager;
+	ModelInterface* model_interface;
+
+public:
+
+	EngineInterfaceImpl(EntityManager* em, ModelInterface* mi) :
+		entity_manager(em),
+		model_interface(mi)
+	{
+	}
+
+
+	virtual ~EngineInterfaceImpl() {};
+
+//	virtual uint32_t load_model(const char* model_path);
+	virtual EntityManager* entities() { return entity_manager; }
+	virtual ModelInterface* models() { return model_interface; }
+};
+
+
+
 class ProjectChimera : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -325,9 +437,13 @@ public:
 	
 	
 	Entity* world;
+
+	gemini::IEngineEntity* entity_list[8];
 	
-	gemini::game::GameInterface game_interface;
-	
+	EntityManagerImpl entity_manager;
+	ModelInterfaceImpl model_interface;
+
+	EngineInterface* engine_interface;
 
 	ProjectChimera()
 	{
@@ -344,6 +460,17 @@ public:
 		gamerules = 0;
 		create_gamerules = 0;
 		destroy_gamerules = 0;
+		
+		
+		memset(entity_list, 0, sizeof(gemini::IEngineEntity*)*8);
+		engine_interface = CREATE(EngineInterfaceImpl, &entity_manager, &model_interface);
+		engine::set_instance(engine_interface);
+	}
+	
+	virtual ~ProjectChimera()
+	{
+		engine::set_instance(0);
+		DESTROY(EngineInterface, engine_interface);
 	}
 	
 	virtual void event( kernel::KeyboardEvent & event )
@@ -521,7 +648,8 @@ public:
 		}
 		
 		
-
+		
+		
 		
 //		background = audio::create_sound("sounds/wind_loop");
 //		background_source = audio::play(background, -1);
@@ -544,26 +672,45 @@ public:
 		kernel::instance()->capture_mouse( true );
 
 		// setup the game interface
-		game_interface.entities = CREATE(EntityManagerImpl);
+		//game_interface.entities = CREATE(EntityManagerImpl);
 
 
 		// entity startup
-		entity_startup(game_interface);
+		entity_startup();
+		
+		
 		
 		// create scene graph root
 		root = CREATE(scenegraph::Node);
 		root->name = "scene_root";
 		entity_set_scene_root(root);
 
-		
-		// create the player entity
-		player = (Player*)CREATE(Entity);
-		player->set_physics(2);
+
 
 
 		world = CREATE(Entity);
 		world->set_model("models/cabin");
 		world->set_physics(0);
+		entity_list[0] = world;
+
+		// create the player entity
+		player = (Player*)CREATE(Entity);
+		player->set_physics(2);
+		entity_list[1] = player;
+
+		// EXPERIMENTAL
+		int32_t i = model_interface.create_instance_data("models/cabin");
+		int32_t j = model_interface.create_instance_data("models/generator_core");
+		int32_t k = model_interface.create_instance_data("models/doorway");
+		int32_t l = model_interface.create_instance_data("models/plane");
+		
+		
+		model_interface.destroy_instance_data(i);
+		model_interface.destroy_instance_data(j);
+		model_interface.destroy_instance_data(l);
+		model_interface.destroy_instance_data(k);
+
+
 
 		// load the game library
 		StackString<MAX_PATH_SIZE> game_library_path = core::filesystem::content_directory();
@@ -593,12 +740,12 @@ public:
 			}
 			
 			// try to install game interface
-			typedef void (*link_game_interface_fn)(gemini::game::GameInterface*);
-			link_game_interface_fn install_game_interface = (link_game_interface_fn)xlib_find_symbol(&gamelib, "link_game_interface");
-			if (install_game_interface)
-			{
-				install_game_interface(&game_interface);
-			}
+//			typedef void (*link_game_interface_fn)(gemini::game::GameInterface*);
+//			link_game_interface_fn install_game_interface = (link_game_interface_fn)xlib_find_symbol(&gamelib, "link_game_interface");
+//			if (install_game_interface)
+//			{
+//				install_game_interface(&game_interface);
+//			}
 		}
 
 		return kernel::Application_Success;
@@ -697,7 +844,7 @@ public:
 		if (active_camera)
 		{
 			assert(active_camera != nullptr);
-			render_method->render_frame(root, *active_camera, params);
+			render_method->render_frame(entity_list, *active_camera, params);
 		}
 	}
 	
@@ -710,10 +857,6 @@ public:
 		DESTROY(Entity, world);
 
 		entity_shutdown();
-
-
-		DESTROY(EntityManager, game_interface.entities);
-
 
 		DESTROY(Node, root);
 

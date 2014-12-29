@@ -19,5 +19,19 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#pragma once
 
-#include "game_interface.h"
+//#include "physics_collisionobject.h"
+//#include <core/mathlib.h>
+
+namespace physics
+{
+	class Constraint
+	{
+	public:
+		virtual ~Constraint() {};
+		
+		// remove this constraint from objects
+		virtual void remove() {};
+	};
+}; // namespace physics

@@ -21,33 +21,22 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <platform/typedefs.h>
-#include <platform/mem.h>
-
-#include "entity.h"
-
-class Entity;
-
-typedef Entity* (*entity_creator_fn)();
-
 namespace gemini
 {
-	class EntityManager
+	namespace game
 	{
-	public:
-		virtual ~EntityManager() {};
+		class GameRules
+		{
+		public:
+			virtual ~GameRules() {}
+			
+			
+			virtual void test() = 0;
+			
+		};
 		
+		typedef gemini::game::GameRules* (*create_gamerules_fn)();
+		typedef void (*destroy_gamerules_fn)(gemini::game::GameRules*);
 		
-		// register new entities
-		virtual void register_entity(entity_creator_fn creator, const char* classname) = 0;
-
-		// populates entity vector with all entities found
-		virtual void find_by_classname(const char* classname, std::vector<Entity*>& entities) = 0;
-		
-		// create an entity from classname
-		virtual Entity* create_by_classname(const char* classname) = 0;
-		
-		virtual void startup() = 0;
-		virtual void shutdown() = 0;
-	};
+	} // namespace game
 } // namespace gemini

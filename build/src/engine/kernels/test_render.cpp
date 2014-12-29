@@ -38,6 +38,8 @@
 #include "skeletalnode.h"
 #include "physics.h"
 
+#include "assets/asset_material.h"
+
 class TestRender : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,

@@ -21,33 +21,36 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <platform/typedefs.h>
-#include <platform/mem.h>
-
-#include "entity.h"
-
-class Entity;
-
-typedef Entity* (*entity_creator_fn)();
-
 namespace gemini
 {
-	class EntityManager
+	struct GeometryInstanceData
+	{
+		unsigned int material_id;
+		unsigned int shader_id;
+	};
+
+	class ModelInstanceData
 	{
 	public:
-		virtual ~EntityManager() {};
+		virtual ~ModelInstanceData() {};
 		
-		
-		// register new entities
-		virtual void register_entity(entity_creator_fn creator, const char* classname) = 0;
-
-		// populates entity vector with all entities found
-		virtual void find_by_classname(const char* classname, std::vector<Entity*>& entities) = 0;
-		
-		// create an entity from classname
-		virtual Entity* create_by_classname(const char* classname) = 0;
-		
-		virtual void startup() = 0;
-		virtual void shutdown() = 0;
+		virtual unsigned int asset_index() const = 0;
+		virtual glm::mat4& get_local_transform() = 0;
+		virtual void get_geometry_data(unsigned int index, GeometryInstanceData& geometry_data) const = 0;
 	};
-} // namespace gemini
+
+	class ModelInterface
+	{
+	public:
+		virtual ~ModelInterface() {};
+		
+		
+//		virtual int32_t get_model_index(const char* model_path) = 0;
+		
+		virtual int32_t create_instance_data(const char* model_path) = 0;
+		virtual void destroy_instance_data(int32_t index) = 0;
+		
+		virtual ModelInstanceData* get_instance_data(int32_t index) = 0;
+		
+	};
+}

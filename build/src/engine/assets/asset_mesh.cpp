@@ -125,6 +125,7 @@ namespace assets
 			
 			assets::Shader* shader = assets::shaders()->load_from_path("shaders/world");
 			render_node->shader_id = shader->Id();
+			geo->shader_id = render_node->shader_id;
 			
 			geo->draw_type = renderer::DRAW_INDEXED_TRIANGLES;
 			geo->name = node["name"].asString().c_str();
@@ -521,6 +522,7 @@ namespace assets
 	Mesh::Mesh()
 	{
 		scene_root = 0;
+		total_bones = 0;
 	} // Mesh
 	
 	Mesh::~Mesh()

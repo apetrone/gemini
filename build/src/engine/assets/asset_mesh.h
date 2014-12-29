@@ -46,6 +46,7 @@ namespace assets
 	{
 		StackString<128> name;
 		unsigned int material_id;
+		unsigned int shader_id;
 		
 		Geometry();
 		~Geometry();

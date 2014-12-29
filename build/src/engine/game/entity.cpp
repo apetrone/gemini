@@ -35,12 +35,10 @@
 
 
 #include "entity_manager.h"
-#include "game_interface.h"
-
-
 #include "engine_interface.h"
+#include <sdk/model_interface.h>
 
-static gemini::game::GameInterface gamefuncs;
+using namespace gemini;
 
 static void entity_collision_callback(physics::CollisionEventType type, physics::CollisionObject* first, physics::CollisionObject* second)
 {
@@ -81,9 +79,8 @@ void EntityMotionInterface::set_transform(const glm::vec3& position, const glm::
 
 
 
-void entity_startup(const gemini::game::GameInterface& giface)
+void entity_startup()
 {
-	gamefuncs = giface;
 }
 
 void entity_post_script_load()
@@ -181,6 +178,7 @@ Entity::Entity() :
 	collision_object(0),
 	node(0),
 	motion_interface(0),
+	mesh(0),
 	model_index(0)
 {
 	this->id = entity_list().count();
@@ -216,6 +214,28 @@ Entity::~Entity()
 		this->node = 0;
 	}
 } // ~Entity
+
+//void Entity::set_model_index(int32_t index)
+//{
+//	model_index = index;
+//}
+
+int32_t Entity::get_model_index() const
+{
+	return model_index;
+}
+
+//gemini::EntityTransform Entity::get_transform() const
+//{
+//	gemini::EntityTransform txform;
+//	return txform;
+//}
+//
+//void Entity::set_transform(const gemini::EntityTransform& txform)
+//{
+//	
+//}
+
 
 void Entity::fixed_update( float delta_seconds )
 {
@@ -314,11 +334,15 @@ assets::Mesh* load_mesh(scenegraph::Node* root, const char* path, scenegraph::No
 
 void Entity::set_model(const char* path)
 {
-	//mesh = load_mesh(get_entity_root(), path, this->node);
+	mesh = load_mesh(get_entity_root(), path, this->node);
 	
-	model_index = engine::instance()->load_model(path);
+//	model_index = engine::instance()->load_model(path);
 	
 //	engine::instance()->set_model_index(this->node, model_index);
+
+//	engine::instance()->models()->destroy_instance_data(model_index);
+	model_index = engine::instance()->models()->create_instance_data(path);
+	LOGV("set model index: %i, for model: %s\n", model_index, path);
 }
 
 void Entity::set_physics(int physics_type)
@@ -361,18 +385,18 @@ void Entity::set_physics(int physics_type)
 	
 	// generate physics body from mesh
 	// until we need a different system.
-	if (model_index > 0)
+	if (model_index > 0 || mesh)
 	{
-//		this->collision_object = physics::create_physics_for_mesh(mesh, mass_kg, this->motion_interface, mesh->mass_center_offset);
-//
-//		if (this->collision_object)
-//		{
-//			this->collision_object->set_world_position(position);
-//		}
-//		else
-//		{
-//			LOGW("Unable to create physics body!\n");
-//		}
+		this->collision_object = physics::create_physics_for_mesh(mesh, mass_kg, this->motion_interface, mesh->mass_center_offset);
+
+		if (this->collision_object)
+		{
+			this->collision_object->set_world_position(position);
+		}
+		else
+		{
+			LOGW("Unable to create physics body!\n");
+		}
 	}
 	
 	if (this->collision_object)

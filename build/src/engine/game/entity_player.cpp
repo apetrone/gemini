@@ -19,35 +19,13 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
-
-#include <platform/typedefs.h>
-#include <platform/mem.h>
-
-#include "entity.h"
-
-class Entity;
-
-typedef Entity* (*entity_creator_fn)();
+#include "entity_player.h"
 
 namespace gemini
 {
-	class EntityManager
+	namespace game
 	{
-	public:
-		virtual ~EntityManager() {};
-		
-		
-		// register new entities
-		virtual void register_entity(entity_creator_fn creator, const char* classname) = 0;
 
-		// populates entity vector with all entities found
-		virtual void find_by_classname(const char* classname, std::vector<Entity*>& entities) = 0;
 		
-		// create an entity from classname
-		virtual Entity* create_by_classname(const char* classname) = 0;
-		
-		virtual void startup() = 0;
-		virtual void shutdown() = 0;
-	};
+	} // namespace game
 } // namespace gemini

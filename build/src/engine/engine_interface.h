@@ -21,18 +21,26 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <platform/typedefs.h>
+#include <stdint.h>
 
-namespace engine
+namespace gemini
 {
-	struct EngineInterface
+	class EntityManager;
+	class ModelInterface;
+
+	class EngineInterface
 	{
+	public:
 		virtual ~EngineInterface() {};
 		
-		
-		virtual uint32_t load_model(const char* model_path) = 0;
+//		virtual uint32_t load_model(const char* model_path) = 0;
+		virtual EntityManager* entities() = 0;
+		virtual ModelInterface* models() = 0;
 	};
 	
-	
-	EngineInterface* instance();
+	namespace engine
+	{
+		EngineInterface* instance();
+		void set_instance(EngineInterface* instance);
+	}
 }

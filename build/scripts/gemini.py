@@ -24,14 +24,19 @@ libsdl = Dependency(file="sdl2.py",
 def setup_common_variables(arguments, target_platform, product):
 	product.sources += [
 		"src/engine/*.c*",
-		"src/engine/*.h*"
+		"src/engine/*.h*",
+
+
+		"src/sdk/include/**.h"
 	]
 
 
 	product.includes += [
 		"src",
 		"src/engine",
-		"src/engine/game"
+		"src/engine/game",
+
+		"src/sdk/include"
 	]
 
 	# TODO: Allow generic *.DS_Store excludes
@@ -52,7 +57,11 @@ def setup_common_variables(arguments, target_platform, product):
 		"src/engine/game/menuscreen.*",
 		"src/engine/game/helpscreen.*",
 		"src/engine/game/logoscreen.*",
-		"src/engine/game/screencontrol.*"
+		"src/engine/game/screencontrol.*",
+
+		# temporarily removing script/squirrel
+		"src/engine/script.*",
+		"src/engine/kernels/test_script.cpp"
 	]
 
 	index_type_map = {

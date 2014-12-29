@@ -19,13 +19,24 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "engine_interface.h"
 
-namespace engine
+#include "engine_interface.h"
+#include <assert.h>
+
+namespace gemini
 {
-	EngineInterface* instance()
+	namespace engine
 	{
-		return 0;
+		static EngineInterface* _instance = 0;
+		EngineInterface* instance()
+		{
+			return _instance;
+		}
+		
+		void set_instance(EngineInterface* instance)
+		{
+			_instance = instance;
+		}
 	}
 }
 

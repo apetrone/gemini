@@ -31,6 +31,21 @@
 
 #include "physics.h"
 
+#include <sdk/iengineentity.h>
+
+
+#include <core/factory.h>
+
+#define DECLARE_ENTITY(entity_class, base_class)\
+	DECLARE_FACTORY_CLASS(entity_class, base_class);\
+	typedef entity_class ThisClass;\
+	typedef base_class BaseClass
+
+#define DECLARE_ENTITY_NO_BASE(entity_class)\
+	DECLARE_FACTORY_CLASS(entity_class, entity_class);\
+	typedef entity_class ThisClass;\
+	typedef entity_class BaseClass;
+
 //typedef std::vector< struct Entity*, GeminiAllocator<struct Entity*> > EntityVector;
 
 struct Entity;
@@ -48,11 +63,8 @@ namespace scenegraph
 
 namespace gemini
 {
-	namespace game
-	{
-		class EntityManager;
-		class GameInterface;
-	}
+	class EntityManager;
+	class GameInterface;
 }
 
 class EntityMotionInterface : public physics::PhysicsMotionInterface
@@ -72,8 +84,11 @@ public:
 };
 
 
-struct Entity
+
+struct Entity : public gemini::IEngineEntity
 {
+	DECLARE_ENTITY_NO_BASE(Entity);
+	
 	enum Flags
 	{
 		EF_NONE = 0,
@@ -83,13 +98,18 @@ struct Entity
 	uint64_t id;
 	uint32_t flags;
 	uint32_t model_index;
-	
-	
 	String name;
 	
 	Entity();
 	virtual ~Entity();
 	EntityMotionInterface* motion_interface;
+	
+//	virtual void set_model_index(int32_t index);
+	virtual int32_t get_model_index() const;
+//	virtual gemini::EntityTransform get_transform() const;
+//	virtual void set_transform(const gemini::EntityTransform& txform);
+	
+	
 	
 	
 	// called after the constructor
@@ -121,7 +141,7 @@ struct Entity
 	void set_mass(float mass);
 	void set_parent(Entity* other);
 	
-	//assets::Mesh* mesh;
+	assets::Mesh* mesh;
 	scenegraph::Node* node;
 	
 	// perhaps move these into a unified interface?
@@ -140,7 +160,7 @@ struct Trigger : public Entity
 
 
 
-void entity_startup(const gemini::game::GameInterface& game_interface);
+void entity_startup();
 void entity_post_script_load();
 void entity_shutdown();
 void entity_step();
