@@ -62,6 +62,9 @@
 #include "entity_player.h"
 #include "gamerules.h"
 
+#include "entity_manager.h"
+#include "game_interface.h"
+
 using namespace gemini::game;
 
 #define LOCK_CAMERA_TO_CHARACTER 1
@@ -233,6 +236,60 @@ public:
 };
 
 
+#include <core/factory.h>
+
+class EntityManagerImpl : public EntityManager
+{
+	typedef Factory<Entity> EntityFactory;
+	EntityFactory factory;
+	
+public:
+	virtual void register_entity(entity_creator_fn creator, const char* classname);
+	virtual void find_by_classname(const char* classname, std::vector<Entity*>& entities);
+	virtual Entity* create_by_classname(const char* classname);
+	virtual void startup();
+	virtual void shutdown();
+};
+
+
+
+void EntityManagerImpl::register_entity(entity_creator_fn creator, const char* classname)
+{
+	factory.register_class(creator, classname);
+}
+
+
+void EntityManagerImpl::find_by_classname(const char* classname, std::vector<Entity*>& entities)
+{
+	
+}
+
+Entity* EntityManagerImpl::create_by_classname(const char* classname)
+{
+	EntityFactory::Record* record = factory.find_class(classname);
+	if (record)
+	{
+		return record->creator();
+	}
+	
+	LOGW("Unknown entity classname %s\n", classname);
+	
+	return 0;
+}
+
+void EntityManagerImpl::startup()
+{
+	
+}
+
+void EntityManagerImpl::shutdown()
+{
+	
+}
+
+
+
+
 class ProjectChimera : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -268,6 +325,8 @@ public:
 	
 	
 	Entity* world;
+	
+	gemini::game::GameInterface game_interface;
 	
 
 	ProjectChimera()
@@ -484,8 +543,12 @@ public:
 		// capture the mouse
 		kernel::instance()->capture_mouse( true );
 
+		// setup the game interface
+		game_interface.entities = CREATE(EntityManagerImpl);
+
+
 		// entity startup
-		entity_startup();
+		entity_startup(game_interface);
 		
 		// create scene graph root
 		root = CREATE(scenegraph::Node);
@@ -527,6 +590,14 @@ public:
 			else
 			{
 				LOGE("Unable to find create_gamerules function!\n");
+			}
+			
+			// try to install game interface
+			typedef void (*link_game_interface_fn)(gemini::game::GameInterface*);
+			link_game_interface_fn install_game_interface = (link_game_interface_fn)xlib_find_symbol(&gamelib, "link_game_interface");
+			if (install_game_interface)
+			{
+				install_game_interface(&game_interface);
 			}
 		}
 
@@ -639,6 +710,10 @@ public:
 		DESTROY(Entity, world);
 
 		entity_shutdown();
+
+
+		DESTROY(EntityManager, game_interface.entities);
+
 
 		DESTROY(Node, root);
 

@@ -33,6 +33,15 @@
 #include "scene_graph.h"
 #include "assets/asset_mesh.h"
 
+
+#include "entity_manager.h"
+#include "game_interface.h"
+
+
+#include "engine_interface.h"
+
+static gemini::game::GameInterface gamefuncs;
+
 static void entity_collision_callback(physics::CollisionEventType type, physics::CollisionObject* first, physics::CollisionObject* second)
 {
 	assert(first != 0);
@@ -72,8 +81,9 @@ void EntityMotionInterface::set_transform(const glm::vec3& position, const glm::
 
 
 
-void entity_startup()
+void entity_startup(const gemini::game::GameInterface& giface)
 {
+	gamefuncs = giface;
 }
 
 void entity_post_script_load()
@@ -171,7 +181,7 @@ Entity::Entity() :
 	collision_object(0),
 	node(0),
 	motion_interface(0),
-	mesh(0)
+	model_index(0)
 {
 	this->id = entity_list().count();
 	
@@ -304,18 +314,15 @@ assets::Mesh* load_mesh(scenegraph::Node* root, const char* path, scenegraph::No
 
 void Entity::set_model(const char* path)
 {
-	mesh = load_mesh(get_entity_root(), path, this->node);
+	//mesh = load_mesh(get_entity_root(), path, this->node);
+	
+	model_index = engine::instance()->load_model(path);
+	
+//	engine::instance()->set_model_index(this->node, model_index);
 }
 
 void Entity::set_physics(int physics_type)
 {
-	if (!mesh)
-	{
-		// no mesh loaded, we need one for physics
-		LOGW("No mesh for entity. Have not implemented ghost objects yet.\n");
-		//return;
-	}
-	
 	if (this->collision_object)
 	{
 		LOGW("Physics type already set on this entity! ignoring\n");
@@ -354,18 +361,18 @@ void Entity::set_physics(int physics_type)
 	
 	// generate physics body from mesh
 	// until we need a different system.
-	if (mesh)
+	if (model_index > 0)
 	{
-		this->collision_object = physics::create_physics_for_mesh(mesh, mass_kg, this->motion_interface, mesh->mass_center_offset);
-
-		if (this->collision_object)
-		{
-			this->collision_object->set_world_position(position);
-		}
-		else
-		{
-			LOGW("Unable to create physics body!\n");
-		}
+//		this->collision_object = physics::create_physics_for_mesh(mesh, mass_kg, this->motion_interface, mesh->mass_center_offset);
+//
+//		if (this->collision_object)
+//		{
+//			this->collision_object->set_world_position(position);
+//		}
+//		else
+//		{
+//			LOGW("Unable to create physics body!\n");
+//		}
 	}
 	
 	if (this->collision_object)

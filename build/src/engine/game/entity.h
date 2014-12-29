@@ -45,6 +45,16 @@ namespace scenegraph
 	struct Node;
 }
 
+
+namespace gemini
+{
+	namespace game
+	{
+		class EntityManager;
+		class GameInterface;
+	}
+}
+
 class EntityMotionInterface : public physics::PhysicsMotionInterface
 {
 	Entity* target;
@@ -72,12 +82,21 @@ struct Entity
 
 	uint64_t id;
 	uint32_t flags;
+	uint32_t model_index;
+	
 	
 	String name;
 	
 	Entity();
 	virtual ~Entity();
 	EntityMotionInterface* motion_interface;
+	
+	
+	// called after the constructor
+	virtual void spawn() {};
+	
+	// called after each entity has spawned
+	virtual void activate() {};
 	
 	virtual void fixed_update(float delta_seconds);
 	virtual void update();
@@ -102,7 +121,7 @@ struct Entity
 	void set_mass(float mass);
 	void set_parent(Entity* other);
 	
-	assets::Mesh* mesh;
+	//assets::Mesh* mesh;
 	scenegraph::Node* node;
 	
 	// perhaps move these into a unified interface?
@@ -112,6 +131,7 @@ struct Entity
 	void set_model(const char* path);
 	
 	void set_physics(int physics_type);
+
 }; // Entity
 
 struct Trigger : public Entity
@@ -120,7 +140,7 @@ struct Trigger : public Entity
 
 
 
-void entity_startup();
+void entity_startup(const gemini::game::GameInterface& game_interface);
 void entity_post_script_load();
 void entity_shutdown();
 void entity_step();
