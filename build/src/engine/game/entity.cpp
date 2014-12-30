@@ -260,7 +260,7 @@ CollisionObject* Entity::physics_create_static()
 {
 	assert(engine::api::instance() && engine::api::instance()->physics());
 	
-	return engine::api::instance()->physics()->create_physics_model(model_index);
+	return engine::api::instance()->physics()->create_physics_model(model_index, 0.0f, 0, glm::vec3(0, 0, 0));
 }
 
 
@@ -332,6 +332,7 @@ void Entity::set_physics(int physics_type)
 	
 	if (physics_type == 0)
 	{
+		this->collision_object = physics_create_static();
 	}
 	else if (physics_type == 1)
 	{
@@ -341,14 +342,14 @@ void Entity::set_physics(int physics_type)
 	else if (physics_type == 2)
 	{
 		// character
-		KinematicCharacter* controller = get_character_controller(0);
-		assert(controller);
-		this->collision_object = create_character_proxy(controller);
+//		KinematicCharacter* controller = get_character_controller(0);
+//		assert(controller);
+//		this->collision_object = create_character_proxy(controller);
 	}
 	else if (physics_type == 3)
 	{
 		// ghost/trigger
-		this->collision_object = create_trigger(glm::vec3(1, 1, 1));
+//		this->collision_object = create_trigger(glm::vec3(1, 1, 1));
 	}
 	else
 	{
@@ -373,6 +374,8 @@ void Entity::set_physics(int physics_type)
 //			LOGW("Unable to create physics body!\n");
 //		}
 //	}
+
+
 	
 	if (this->collision_object)
 	{

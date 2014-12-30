@@ -70,7 +70,7 @@ namespace gemini
 		KinematicCharacter* get_character_controller(int index);
 		CollisionObject* create_character_proxy(KinematicCharacter* controller);
 
-		CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr, const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0));
+		CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr);
 		CollisionObject* create_trigger(const glm::vec3& size);
 	}; // namespace physics
 } // namespace gemini

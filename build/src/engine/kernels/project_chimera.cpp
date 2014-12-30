@@ -68,8 +68,8 @@
 #include "physics/physics_interface.h"
 
 using namespace gemini;
-
 using namespace gemini::game;
+using namespace gemini::physics;
 
 #define LOCK_CAMERA_TO_CHARACTER 1
 
@@ -78,9 +78,6 @@ using namespace gemini::game;
 uint8_t RENDER_TO_VR = 1;
 
 uint8_t REQUIRE_RIFT = 1;
-
-using namespace gemini::physics;
-
 
 
 void render_scene_from_camera(gemini::IEngineEntity** entity_list, Camera& camera, renderer::SceneLink& scenelink)

@@ -744,7 +744,7 @@ namespace gemini
 			}
 		};
 
-		CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg, PhysicsMotionInterface* motion, const glm::vec3& mass_center_offset)
+		CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg, PhysicsMotionInterface* motion)
 		{
 			bool use_quantized_bvh_tree = true;
 
@@ -791,7 +791,7 @@ namespace gemini
 				// The rigid body world transform is the center of mass. This is at the origin.
 				btTransform xf;
 				xf.setIdentity();
-				CustomMotionState * motion_state = new CustomMotionState(xf, motion, mass_center_offset);
+				CustomMotionState * motion_state = new CustomMotionState(xf, motion, mesh->mass_center_offset);
 				
 				btCollisionShape* shape = 0;
 				// NOTE: Triangle shapes can ONLY be static objects.
