@@ -40,7 +40,6 @@
 
 #include <renderer/font.h>
 #include "assets/asset_font.h"
-#include "entity.h"
 
 #include <core/mathlib.h>
 
@@ -682,13 +681,13 @@ public:
 		kernel::instance()->capture_mouse( true );
 
 		// entity startup
-		entity_startup();
+//		entity_startup();
 
-		world = CREATE(Entity);
-		world->set_model("models/cabin");
-		world->set_physics_object(world->physics_create_static());
-		world->set_physics(0);
-		entity_list[0] = world;
+//		world = CREATE(Entity);
+//		world->set_model("models/cabin");
+//		world->set_physics_object(world->physics_create_static());
+//		world->set_physics(0);
+//		entity_list[0] = world;
 
 		// create the player entity
 //		player = (Player*)CREATE(Entity);
@@ -774,10 +773,10 @@ public:
 		command.time = 0;
 
 		// handle input
-		player_controller->get_input_command(command);
+//		player_controller->get_input_command(command);
 
 		// apply input
-		player_controller->apply_command(command);
+//		player_controller->apply_command(command);
 		
 		if (active_camera)
 		{
@@ -796,10 +795,13 @@ public:
 		
 		}
 		
+		if (game_interface)
+		{
+			game_interface->step(params.step_interval_seconds);
+		}
+		
 		if (active_camera)
 		{
-			entity_step();
-			
 			float joystick_sensitivity = 20;
 			active_camera->move_view(
 				joystick_sensitivity*input::state()->joystick(0).axes[2].normalized_value,
@@ -831,8 +833,10 @@ public:
 
 	virtual void tick( kernel::Params & params )
 	{
-		// need to tick entities
-		entity_tick();
+		if (game_interface)
+		{
+			game_interface->tick();
+		}
 	
 		if (device)
 		{
@@ -865,9 +869,9 @@ public:
 
 //
 //		DESTROY(Player, player);
-		DESTROY(Entity, world);
+//		DESTROY(Entity, world);
 
-		entity_shutdown();
+//		entity_shutdown();
 
 		DESTROY(SceneRenderMethod, render_method);
 		

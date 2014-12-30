@@ -142,6 +142,11 @@ struct Entity : public gemini::IEngineEntity
 	
 	
 public:
+	// memory overloads
+	void* operator new(size_t bytes);
+	void operator delete(void* memory);
+	
+public:
 	
 	//
 	// PHYSICS

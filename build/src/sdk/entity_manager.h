@@ -19,23 +19,35 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#pragma once
 
-#include "entity_list.h"
+#include <platform/typedefs.h>
+#include <platform/mem.h>
 
-static EntityListType _entity_list;
-static scenegraph::Node* _entity_root = 0;
+#include <vector>
 
-EntityListType& entity_list()
+class Entity;
+
+typedef Entity* (*entity_creator_fn)();
+
+namespace gemini
 {
-	return _entity_list;
-}
+	class EntityManager
+	{
+	public:
+		virtual ~EntityManager() {};
+		
+		
+		// register new entities
+		virtual void register_entity(entity_creator_fn creator, const char* classname) = 0;
 
-scenegraph::Node* get_entity_root()
-{
-	return _entity_root;
-}
-
-void set_entity_root(scenegraph::Node* root)
-{
-	_entity_root = root;
-}
+		// populates entity vector with all entities found
+		virtual void find_by_classname(const char* classname, std::vector<Entity*>& entities) = 0;
+		
+		// create an entity from classname
+		virtual Entity* create_by_classname(const char* classname) = 0;
+		
+		virtual void startup() = 0;
+		virtual void shutdown() = 0;
+	};
+} // namespace gemini

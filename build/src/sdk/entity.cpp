@@ -23,15 +23,16 @@
 
 #include "entity.h"
 #include "entity_list.h"
-#include "physics/physics.h"
-#include "camera.h"
-#include "kernel.h"
+//#include "physics/physics.h"
+//#include "camera.h"
+//#include "kernel.h"
 #include <sdk/physics_rigidbody.h>
 
-#include "charactercontroller.h"
+// TODO: this should not bring in the character controller!
+//#include "charactercontroller.h"
 
-#include "scene_graph.h"
-#include "assets/asset_mesh.h"
+//#include "scene_graph.h"
+//#include "assets/asset_mesh.h"
 
 
 #include "entity_manager.h"
@@ -119,7 +120,7 @@ void entity_step()
 	EntityListType::Collection::iterator end = entity_list().objects.end();
 	for( ; it != end; ++it )
 	{
-		(*it)->fixed_update( kernel::instance()->parameters().step_interval_seconds );
+//		(*it)->fixed_update( kernel::instance()->parameters().step_interval_seconds );
 	}
 }
 
@@ -163,18 +164,12 @@ void entity_tick()
 	
 }
 
-void entity_set_scene_root(scenegraph::Node* root)
-{
-	set_entity_root(root);
-}
 
 void entity_shutdown()
 {
 	LOGV("entity_shutdown!\n");
-	set_entity_root(nullptr);
 
-	
-	entity_list().clear();
+	entity_list().purge();
 }
 
 
@@ -194,7 +189,7 @@ Entity::Entity() :
 Entity::~Entity()
 {
 	LOGV( "~Entity() - %p, %ld\n", this, (unsigned long)this->id );
-	entity_list().remove( this );
+//	entity_list().remove( this );
 	
 	if (this->collision_object)
 	{
@@ -251,6 +246,18 @@ void Entity::collision_ended(Entity* other)
 }
 
 
+//
+// MEMORY OVERLOADS
+//
+void* Entity::operator new(size_t bytes)
+{
+	return engine::api::instance()->allocate(bytes);
+}
+
+void Entity::operator delete(void* memory)
+{
+	engine::api::instance()->deallocate(memory);
+}
 
 //
 // PHYSICS

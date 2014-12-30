@@ -39,5 +39,11 @@ namespace gemini
 		
 		// called on level change
 		virtual void level_load() = 0;
+		
+		// called each physics step
+		virtual void step(float seconds) = 0;
+		
+		// called every frame
+		virtual void tick() = 0;
 	}; // GameInterface
 } // namespace gemini

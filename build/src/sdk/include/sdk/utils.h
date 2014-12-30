@@ -41,7 +41,6 @@ namespace gemini
 		virtual ~FactoryClass() {};
 		
 		virtual IEngineEntity* create() = 0;
-		virtual void destroy(IEngineEntity* entity) = 0;
 	};
 	
 	class EntityFactoryRegistrar
@@ -83,14 +82,7 @@ namespace gemini
 		
 		virtual IEngineEntity* create()
 		{
-			void* mem = (IEngineEntity*)gemini::engine::api::instance()->allocate(sizeof(Type));
-			
-			return new (mem) Type();
-		}
-		
-		virtual void destroy(IEngineEntity* entity)
-		{
-			gemini::engine::api::instance()->deallocate(entity);
+			return new Type();
 		}
 	};
 	
