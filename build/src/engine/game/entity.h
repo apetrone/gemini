@@ -32,18 +32,28 @@
 //#include "physics/physics.h"
 
 #include <sdk/iengineentity.h>
-
-#include <core/factory.h>
+#include <sdk/utils.h>
 
 #define DECLARE_ENTITY(entity_class, base_class)\
-	DECLARE_FACTORY_CLASS(entity_class, base_class);\
 	typedef entity_class ThisClass;\
 	typedef base_class BaseClass
 
 #define DECLARE_ENTITY_NO_BASE(entity_class)\
-	DECLARE_FACTORY_CLASS(entity_class, entity_class);\
 	typedef entity_class ThisClass;\
 	typedef entity_class BaseClass;
+
+#define LINK_ENTITY_TO_CLASS(entity_class, classname)\
+	static EntityFactoryClass<entity_class> classname(#classname)
+
+
+
+namespace gemini
+{
+
+
+
+
+}
 
 //typedef std::vector< struct Entity*, GeminiAllocator<struct Entity*> > EntityVector;
 

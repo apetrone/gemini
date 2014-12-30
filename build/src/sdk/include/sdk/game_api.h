@@ -21,6 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <stdint.h>
+
 namespace gemini
 {
 	// Describes the interface exposed to the engine from the game.
@@ -29,9 +31,13 @@ namespace gemini
 	public:
 		virtual ~GameInterface() {};
 		
-		
+		// called when the engine connects to the game library
 		virtual bool startup() = 0;
 		
+		// called just before the engine disconnects from the game library
 		virtual void shutdown() = 0;
+		
+		// called on level change
+		virtual void level_load() = 0;
 	}; // GameInterface
 } // namespace gemini

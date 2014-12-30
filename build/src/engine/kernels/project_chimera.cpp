@@ -55,7 +55,6 @@
 #include <slim/xlib.h>
 #include <core/filesystem.h>
 
-#include "entity_player.h"
 #include "gamerules.h"
 
 #include "entity_manager.h"
@@ -240,6 +239,7 @@ public:
 	}
 };
 
+#include <core/factory.h>
 
 class EntityManagerImpl : public EntityManager
 {
@@ -437,7 +437,6 @@ public:
 	
 	bool draw_physics_debug;
 	
-	gemini::game::Player* player;
 	gemini::game::GameRules* gamerules;
 	gemini::game::create_gamerules_fn create_gamerules;
 	gemini::game::destroy_gamerules_fn destroy_gamerules;
@@ -468,7 +467,7 @@ public:
 		draw_physics_debug = false;
 		
 		world = 0;
-		player = 0;
+
 		gamerules = 0;
 		create_gamerules = 0;
 		destroy_gamerules = 0;
@@ -692,9 +691,9 @@ public:
 		entity_list[0] = world;
 
 		// create the player entity
-		player = (Player*)CREATE(Entity);
-		player->set_physics(2);
-		entity_list[1] = player;
+//		player = (Player*)CREATE(Entity);
+//		player->set_physics(2);
+//		entity_list[1] = player;
 
 		// EXPERIMENTAL
 		int32_t i = model_interface.create_instance_data("models/cabin");
@@ -738,6 +737,9 @@ public:
 			assert(game_interface != 0);
 			
 			game_interface->startup();
+			
+			
+			game_interface->level_load();
 			
 //			create_gamerules = (gemini::game::create_gamerules_fn) xlib_find_symbol(&gamelib, "create_gamerules");
 //			destroy_gamerules = (gemini::game::destroy_gamerules_fn) xlib_find_symbol(&gamelib, "destroy_gamerules");
@@ -861,8 +863,8 @@ public:
 	{
 		DESTROY(CharacterController, player_controller);
 
-
-		DESTROY(Player, player);
+//
+//		DESTROY(Player, player);
 		DESTROY(Entity, world);
 
 		entity_shutdown();

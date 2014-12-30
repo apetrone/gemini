@@ -19,18 +19,27 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
-
-#include "entity.h"
+#include <sdk/utils.h>
 
 namespace gemini
 {
-	namespace game
+	EntityFactoryRegistrar& entity_factory_registrar()
 	{
-		class Player : public Entity
+		static EntityFactoryRegistrar _registrar;
+		return _registrar;
+	}
+	
+	namespace util
+	{
+		Entity* create_entity_by_classname(const char* classname)
 		{
-		public:
-			virtual ~Player() {};
-		};
-	} // namespace game
-} // namespace gemini
+			FactoryClass* factory_class = entity_factory_registrar().find_factory_by_name(classname);
+			if (factory_class)
+			{
+				return (Entity*)factory_class->create();
+			}
+
+			return (Entity*)0;
+		}
+	}
+}
