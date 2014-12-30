@@ -26,7 +26,7 @@
 #include "physics/physics.h"
 #include "camera.h"
 #include "kernel.h"
-#include "physics/physics_rigidbody.h"
+#include <sdk/physics_rigidbody.h>
 
 #include "charactercontroller.h"
 
@@ -69,18 +69,18 @@ static void entity_collision_callback(CollisionEventType type, CollisionObject* 
 }
 
 
-void EntityMotionInterface::get_transform(glm::vec3& position, const glm::quat& orientation)
-{
-			
-}
-
-void EntityMotionInterface::set_transform(const glm::vec3& position, const glm::quat& orientation, const glm::vec3& mass_center_offset)
-{
-	this->node->local_position = mass_center_offset;
-	this->node->translation = position + mass_center_offset;
-	this->node->rotation = orientation;
-	this->target->position = position;
-}
+//void EntityMotionInterface::get_transform(glm::vec3& position, const glm::quat& orientation)
+//{
+//			
+//}
+//
+//void EntityMotionInterface::set_transform(const glm::vec3& position, const glm::quat& orientation, const glm::vec3& mass_center_offset)
+//{
+//	this->node->local_position = mass_center_offset;
+//	this->node->translation = position + mass_center_offset;
+//	this->node->rotation = orientation;
+//	this->target->position = position;
+//}
 
 
 
@@ -181,7 +181,7 @@ void entity_shutdown()
 Entity::Entity() :
 	flags(0),
 	collision_object(0),
-	motion_interface(0),
+//	motion_interface(0),
 	model_index(0)
 {
 	this->id = entity_list().count();
@@ -201,10 +201,10 @@ Entity::~Entity()
 		DESTROY(CollisionObject, this->collision_object);
 	}
 	
-	if (this->motion_interface)
-	{
-		DESTROY(EntityMotionInterface, this->motion_interface);
-	}
+//	if (this->motion_interface)
+//	{
+//		DESTROY(EntityMotionInterface, this->motion_interface);
+//	}
 } // ~Entity
 
 //void Entity::set_model_index(int32_t index)
@@ -356,7 +356,7 @@ void Entity::set_physics(int physics_type)
 		// If you reach this, the physics type is unknown/unsupported!
 		assert(0);
 	}
-		
+
 //	this->motion_interface = CREATE(EntityMotionInterface, this, this->node);
 	
 	// generate physics body from mesh

@@ -36,346 +36,24 @@
 const float PHYSICS_PLAYER_HALF_WIDTH = 0.25f; // .25 == 1.6 ft wide
 const float PHYSICS_PLAYER_HALF_HEIGHT = 0.91f; // .91 == 6 ft tall
 
+#include "physics/bullet/bullet_collisionobject.h"
+#include "physics/bullet/bullet_constraint.h"
+#include "physics/bullet/bullet_debugdraw.h"
+
+
+#include "physics_interface.h"
+
 namespace gemini
 {
 	namespace physics
 	{
-		
-	
-		class BulletConstraint;
 
-		class DebugPhysicsRenderer : public btIDebugDraw
-		{
-		public:
-			virtual void drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color );
-			virtual void    drawLine( const btVector3& from, const btVector3& to, const btVector3& fromColor, const btVector3& toColor );
-			virtual void	drawContactPoint(const btVector3& PointOnB,const btVector3& normalOnB,btScalar distance,int lifeTime,const btVector3& color);
-			virtual void	reportErrorWarning(const char* warningString);
-			virtual void	draw3dText(const btVector3& location,const char* textString);
-			virtual void	setDebugMode(int debugMode);
-			virtual int		getDebugMode() const;
-		}; // DebugPhysicsRenderer
-
-
-
-
-		// TODO: move these to an internal namespace
-		btDefaultCollisionConfiguration * collision_config;
-		btCollisionDispatcher * dispatcher;
-		btSequentialImpulseConstraintSolver * constraint_solver;
-		btDiscreteDynamicsWorld * dynamics_world;
-		btOverlappingPairCache * pair_cache;
-		btAlignedObjectArray<btCollisionShape*> collision_shapes;
-		btBroadphaseInterface * broadphase;
-		DebugPhysicsRenderer* debug_renderer;
-		std::vector<BulletConstraint*> constraints;
 
 		// TODO: this should support an array of character controllers,
 		// but for now, a single one will do.
-		KinematicCharacter* _controller = 0;
-
-		class CustomGhostPairCallback : public btOverlappingPairCallback
-		{
-		public:
-			CustomGhostPairCallback() {}
-			virtual ~CustomGhostPairCallback() {}
-
-			virtual btBroadphasePair* addOverlappingPair(btBroadphaseProxy* proxy0, btBroadphaseProxy* proxy1)
-			{
-				btCollisionObject* colObj0 = (btCollisionObject*) proxy0->m_clientObject;
-				btCollisionObject* colObj1 = (btCollisionObject*) proxy1->m_clientObject;
-				btGhostObject* ghost0 = btGhostObject::upcast(colObj0);
-				btGhostObject* ghost1 = btGhostObject::upcast(colObj1);
-				CollisionObject* obj0 = 0;
-				CollisionObject* obj1 = 0;
-				
-				if (ghost0)
-				{
-					obj0 = static_cast<CollisionObject*>(ghost0->getUserPointer());
-					ghost0->addOverlappingObjectInternal(proxy1, proxy0);
-				}
-				
-				if (ghost1)
-				{
-					obj1 = static_cast<CollisionObject*>(ghost1->getUserPointer());
-					ghost1->addOverlappingObjectInternal(proxy0, proxy1);
-				}
-
-				if (obj0 && obj1)
-				{
-					obj0->collision_began(obj1);
-					obj1->collision_began(obj0);
-				}
-				
-				return 0;
-			}
-			
-			virtual void* removeOverlappingPair(btBroadphaseProxy* proxy0, btBroadphaseProxy* proxy1, btDispatcher* dispatcher)
-			{
-				btCollisionObject* colObj0 = (btCollisionObject*) proxy0->m_clientObject;
-				btCollisionObject* colObj1 = (btCollisionObject*) proxy1->m_clientObject;
-				btGhostObject* ghost0 =	btGhostObject::upcast(colObj0);
-				btGhostObject* ghost1 =	btGhostObject::upcast(colObj1);
-				CollisionObject* obj0 = 0;
-				CollisionObject* obj1 = 0;
-				
-				if (ghost0)
-				{
-					obj0 = static_cast<CollisionObject*>(ghost0->getUserPointer());
-					ghost0->removeOverlappingObjectInternal(proxy1,dispatcher,proxy0);
-				}
-				
-				if (ghost1)
-				{
-					obj1 = static_cast<CollisionObject*>(ghost1->getUserPointer());
-					ghost1->removeOverlappingObjectInternal(proxy0,dispatcher,proxy1);
-				}
-				
-				if (obj0 && obj1)
-				{
-					obj0->collision_ended(obj1);
-					obj1->collision_ended(obj0);
-				}
-				return 0;
-			}
-			
-			virtual void	removeOverlappingPairsContainingProxy(btBroadphaseProxy* /*proxy0*/,btDispatcher* /*dispatcher*/)
-			{
-				btAssert(0);
-			}
-		};
-
-		class BulletCollisionObject : public CollisionObject
-		{
-		protected:
-			btCollisionObject* object;
-			
-			
-		public:
-		
-			BulletCollisionObject() : object(0) {}
-		
-			virtual ~BulletCollisionObject()
-			{
-				if (object)
-				{
-					remove_constraints();
-				
-					dynamics_world->removeCollisionObject(object);
-					delete object;
-					object = 0;
-				}
-			}
-			
-			void remove_constraints()
-			{
-				// need to remove constraints here...
-				for (int i = 0; i < MAX_CONSTRAINTS_PER_OBJECT; ++i)
-				{
-					if (constraints[i])
-					{
-						constraints[i]->remove();
-					}
-				}
-			}
-			
-			void set_collision_object(btCollisionObject* collision_object)
-			{
-				object = collision_object;
-			}
-			
-			btCollisionObject* get_collision_object() const { return object; }
-		
-			virtual void set_world_position(const glm::vec3& position)
-			{
-				assert(object != nullptr);
-				btTransform& world_transform = object->getWorldTransform();
-				world_transform.setOrigin(btVector3(position.x, position.y, position.z));
-				object->setWorldTransform(world_transform);
-			}
-			
-			virtual glm::vec3 get_world_position() const
-			{
-				assert(object != nullptr);
-				const btTransform& world_transform = object->getWorldTransform();
-				const btVector3& origin = world_transform.getOrigin();
-				return glm::vec3(origin.x(), origin.y(), origin.z());
-			}
-			
-			virtual void collision_began(CollisionObject* other)
-			{
-				if (callback)
-				{
-					callback(Collision_Began, this, other);
-				}
-			}
-			
-			virtual void collision_ended(CollisionObject* other)
-			{
-				if (callback)
-				{
-					callback(Collision_Ended, this, other);
-				}
-			}
-		};
-
-		
-		class BulletConstraint : public Constraint
-		{
-		public:
-			btTypedConstraint* constraint;
-			
-			BulletConstraint(btTypedConstraint* bullet_constraint)
-			{
-				constraint = bullet_constraint;
-				constraints.push_back(this);
-				dynamics_world->addConstraint(bullet_constraint);
-			}
-			
-			virtual ~BulletConstraint()
-			{
-				if (constraint)
-				{
-					remove();
-					for (std::vector<BulletConstraint*>::iterator it = constraints.begin(); it != constraints.end(); ++it)
-					{
-						if (*it == this)
-						{
-							constraints.erase(it);
-							break;
-						}
-					}
-					delete constraint;
-					constraint = 0;
-				}
-			}
-			
-			virtual void remove()
-			{
-				if (constraint)
-				{
-					dynamics_world->removeConstraint(constraint);
-				}
-			}
-		};
+		KinematicCharacter* _controller = 0;		
 		
 		
-		class BulletStaticBody : public BulletCollisionObject
-		{
-			btAlignedObjectArray<btCollisionShape*> bodies;
-		
-		public:
-			BulletStaticBody()
-			{
-				
-			}
-			
-			virtual ~BulletStaticBody()
-			{
-				remove_constraints();
-				
-				btRigidBody* body = btRigidBody::upcast(object);
-				
-				if (body && body->getMotionState())
-				{
-					delete body->getMotionState();
-				}
-				dynamics_world->removeCollisionObject(body);
-				
-				for (int i = 0; i < bodies.size(); ++i)
-				{
-					delete bodies[i];
-				}
-				bodies.clear();
-			}
-			
-			void add_shape(btCollisionShape* shape)
-			{
-				bodies.push_back(shape);
-			}
-		};
-		
-		class BulletRigidBody : public BulletCollisionObject, public RigidBody
-		{
-			btCollisionShape* shape;
-		
-		public:
-			BulletRigidBody() : shape(nullptr)
-			{
-				this->collision_type = physics::CollisionType_Dynamic;
-			}
-			
-			~BulletRigidBody()
-			{
-				remove_constraints();
-		
-				btRigidBody* body = get_bullet_body();
-				
-				if (body && body->getMotionState())
-				{
-					delete body->getMotionState();
-				}
-				dynamics_world->removeCollisionObject(body);
-
-				delete shape;
-				shape = 0;
-			}
-			
-			void set_collision_shape(btCollisionShape* collision_shape)
-			{
-				shape = collision_shape;
-			}
-			
-			btCollisionShape* get_collision_shape() const { return shape; }
-			btRigidBody* get_bullet_body() const { return  btRigidBody::upcast(object); }
-			
-			virtual void apply_force(const glm::vec3& force, const glm::vec3& local_position)
-			{
-				btRigidBody* body = get_bullet_body();
-				if (body)
-				{
-					body->activate();
-					body->applyForce(btVector3(force.x, force.y, force.z), btVector3(local_position.x, local_position.y, local_position.z));
-				}
-			}
-			
-			virtual void apply_central_force(const glm::vec3& force)
-			{
-				btRigidBody* body = get_bullet_body();
-				if (body)
-				{
-					body->activate();
-					body->applyCentralForce(btVector3(force.x, force.y, force.z));
-				}
-			}
-			
-			virtual void set_mass(float mass)
-			{
-				btRigidBody* body = get_bullet_body();
-				if (body)
-				{
-					// update mass and inertia tensor
-					btVector3 local_inertia;
-					body->getCollisionShape()->calculateLocalInertia(mass, local_inertia);
-					body->setMassProps(mass, local_inertia);
-					body->updateInertiaTensor();
-				}
-			}
-			
-			virtual void set_parent(CollisionObject* first, CollisionObject* second)
-			{
-				btRigidBody* rb0 = get_bullet_body();
-				btRigidBody* rb1 = (static_cast<BulletRigidBody*>(second))->get_bullet_body();
-
-				btTypedConstraint* joint = new btPoint2PointConstraint(*rb0, *rb1, btVector3(0, 1, 0), btVector3(0, -1, 0));
-				dynamics_world->addConstraint(joint);
-				joint->setDbgDrawSize(btScalar(5.0f));
-				
-				BulletConstraint* constraint = CREATE(BulletConstraint, joint);
-				first->add_constraint(constraint);
-				second->add_constraint(constraint);
-			}
-		};
 
 
 		// If I try to make KinematicCharacter derive from physics::CollisionObject,
@@ -412,39 +90,7 @@ namespace gemini
 			return glm::vec3(origin.x(), origin.y(), origin.z());
 		}
 
-		void DebugPhysicsRenderer::drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color )
-		{
-			Color c = Color::fromFloatPointer( &color[0], 3 );
-			debugdraw::line( BTVECTOR3_TO_VEC3( from ), BTVECTOR3_TO_VEC3( to ), c, 0 );
-		}
-		
-		void DebugPhysicsRenderer::drawLine( const btVector3& from, const btVector3& to, const btVector3& fromColor, const btVector3& color )
-		{
-			Color c = Color::fromFloatPointer( &color[0], 3 );
-			debugdraw::line( BTVECTOR3_TO_VEC3( from ), BTVECTOR3_TO_VEC3( to ), c, 0 );
-		}
-		
-		void DebugPhysicsRenderer::drawContactPoint(const btVector3& PointOnB,const btVector3& normalOnB,btScalar distance,int lifeTime,const btVector3& color)
-		{
-		}
-		
-		void DebugPhysicsRenderer::reportErrorWarning(const char* warningString)
-		{
-			LOGE("[bullet2] %s\n", warningString );
-		}
-		
-		void DebugPhysicsRenderer::draw3dText(const btVector3& location,const char* textString)
-		{
-		}
-		
-		void DebugPhysicsRenderer::setDebugMode(int debugMode)
-		{
-		}
-		
-		int	DebugPhysicsRenderer::getDebugMode() const
-		{
-			return (btIDebugDraw::DBG_DrawWireframe); // | btIDebugDraw::DBG_DrawAabb;
-		}
+
 
 
 		
@@ -460,32 +106,10 @@ namespace gemini
 		
 		void startup()
 		{
-			collision_config = new btDefaultCollisionConfiguration();
-			dispatcher = new btCollisionDispatcher( collision_config );
-			
-			btVector3 worldAabbMin(-1000,-1000,-1000);
-			btVector3 worldAabbMax(1000,1000,1000);
-			
-			constraint_solver = new btSequentialImpulseConstraintSolver();
-			
-			//		broadphase = new btDbvtBroadphase();
-			broadphase = new btAxisSweep3(worldAabbMin, worldAabbMax);
-			
-			pair_cache = broadphase->getOverlappingPairCache();
-			dynamics_world = new btDiscreteDynamicsWorld(dispatcher, (btBroadphaseInterface*)broadphase, constraint_solver, collision_config);
-			dynamics_world->setGravity( btVector3( 0, -10, 0 ) );
-			dynamics_world->getDispatchInfo().m_useConvexConservativeDistanceUtil = true;
-			dynamics_world->getDispatchInfo().m_convexConservativeDistanceThreshold = 0.01;
-			dynamics_world->getDispatchInfo().m_allowedCcdPenetration = 0.0;
-			
-			// setup ghost pair callback instance
-			pair_cache->setInternalGhostPairCallback( new CustomGhostPairCallback() );
-			
-			//btAlignedAllocSetCustom( bullet2_custom_alloc, bullet2_custom_free );
-			
-			// instance and set the debug renderer
-			debug_renderer = CREATE(DebugPhysicsRenderer);
-			dynamics_world->setDebugDrawer(debug_renderer);
+			PhysicsInterface* physics_interface = CREATE(PhysicsInterfaceImpl);
+			api::set_instance(physics_interface);
+		
+			bullet::startup();
 		}
 		
 		void shutdown()
@@ -493,157 +117,55 @@ namespace gemini
 			//
 			// Cleanup
 			//
-			
-			// remove all constraints from objects
-			for (int i = constraints.size()-1; i >= 0; --i)
-			{
-				DESTROY(BulletConstraint, constraints[i]);
-			}
-			constraints.clear();
 
+			bullet::shutdown();
 			
-			for( int i = dynamics_world->getNumCollisionObjects()-1; i >= 0; --i )
-			{
-				btCollisionObject * obj = dynamics_world->getCollisionObjectArray()[i];
-				btRigidBody * body = btRigidBody::upcast(obj);
-				if ( body && body->getMotionState() )
-				{
-					delete body->getMotionState();
-				}
-				dynamics_world->removeCollisionObject( obj );
-				delete obj;
-			}
-			
-			//delete collision shapes
-			LOGV("total collision shapes: %ld\n", (unsigned int)collision_shapes.size());
-			for ( int j = 0; j < collision_shapes.size(); j++ )
-			{
-				btCollisionShape* shape = collision_shapes[j];
-				if (shape)
-				{
-					collision_shapes[j] = 0;
-					delete shape;
-				}
-			}
-			
-			dynamics_world->setDebugDrawer(0);
-			DESTROY(DebugPhysicsRenderer, debug_renderer);
-			
-			//delete dynamics world
-			delete dynamics_world;
-			
-			//delete solver
-			delete constraint_solver;
-			
-			//delete broadphase
-			//delete mPairCache;
-			delete broadphase;
-			
-			//delete dispatcher
-			delete dispatcher;
-			
-			// delete the collision configuration
-			delete collision_config;
-			
-			//next line is optional: it will be cleared by the destructor when the array goes out of scope
-			collision_shapes.clear();
-			
-			
-			// cleanup controllers
-	//		delete _controller;
+			PhysicsInterface* physics_interface = api::instance();
+			DESTROY(PhysicsInterface, physics_interface);
 		} // shutdown
 		
 		
 		void step( float seconds )
 		{
-			assert( dynamics_world != 0 );
-			
-			dynamics_world->stepSimulation( seconds, 1, 1/60.0f );
-			
-			// TODO: update actions
-			if (_controller)
-			{
-				_controller->updateAction(dynamics_world, 1/60.0f);
-				
-				_controller->reset(dynamics_world);
-			}
-			
-
-			//int total_manifolds = dynamics_world->getDispatcher()->getNumManifolds();
-			//for (int i = 0; i < total_manifolds; ++i)
-			//{
-			//	btPersistentManifold* manifold = dynamics_world->getDispatcher()->getManifoldByIndexInternal(i);
-			//	const btCollisionObject* obj1 = static_cast<const btCollisionObject*>(manifold->getBody0());
-			//	const btCollisionObject* obj2 = static_cast<const btCollisionObject*>(manifold->getBody1());
-
-			//	int total_contacts = manifold->getNumContacts();
-			//	for (int contact = 0; contact < total_contacts; ++contact)
-			//	{
-			//		btManifoldPoint& point = manifold->getContactPoint(contact);
-			//		if (point.getDistance() < 0.0f)
-			//		{
-			//			const btVector3& position1 = point.getPositionWorldOnA();
-			//			const btVector3& position2 = point.getPositionWorldOnB();
-			//			const btVector3& normal2 = point.m_normalWorldOnB;
-			//			//LOGV("normal: %2.f, %2.f, %2.f\n", normal2.x(), normal2.y(), normal2.z());
-			//		}
-			//	}
-			//}
-			
-	//		for (int i = 0; i < dynamics_world->getCollisionObjectArray().size(); ++i)
-	//		{
-	//			btCollisionObject* collision_object = dynamics_world->getCollisionObjectArray()[i];
-	//			
-	//			if (collision_object->getCollisionFlags() & btCollisionObject::CF_CHARACTER_OBJECT)
-	//			{
-	//				btGhostObject* ghost = btGhostObject::upcast(collision_object);
-	//				if (ghost)
-	//				{
-	//					LOGV("ghost userpointer: %p\n", ghost->getUserPointer());
-	//				}
-	//			}
-	//		}
+			bullet::step(seconds);
 		} // step
 		
 		void debug_draw()
 		{
-			if (dynamics_world)
-			{
-				dynamics_world->debugDrawWorld();
-			}
+			bullet::debug_draw();
 		} // debug_draw
 		
 		RaycastInfo raycast(CollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance)
 		{
-			glm::vec3 destination = (start + direction * max_distance);
-			btVector3 ray_start(start.x, start.y, start.z);
-			btVector3 ray_end(destination.x, destination.y, destination.z);
-			
-			BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(ignored_object);
-			btCollisionObject* obj = bullet_object->get_collision_object();
-			
-			ClosestNotMeRayResultCallback callback(obj);
-			dynamics_world->rayTest(ray_start, ray_end, callback);
+//			glm::vec3 destination = (start + direction * max_distance);
+//			btVector3 ray_start(start.x, start.y, start.z);
+//			btVector3 ray_end(destination.x, destination.y, destination.z);
+//			
+//			BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(ignored_object);
+//			btCollisionObject* obj = bullet_object->get_collision_object();
+//			
+//			ClosestNotMeRayResultCallback callback(obj);
+//			dynamics_world->rayTest(ray_start, ray_end, callback);
 			
 			RaycastInfo info;
 			
 			
-			if (callback.hasHit())
-			{
-				info.hit = start + (destination * callback.m_closestHitFraction);
-				info.object = static_cast<CollisionObject*>(callback.m_collisionObject->getUserPointer());
-				
-				LOGV("fraction: %2.2f\n", callback.m_closestHitFraction);
-				
-				if (callback.m_collisionObject->getCollisionFlags() & btCollisionObject::CF_STATIC_OBJECT)
-				{
-					LOGV("hit: %g (static object)\n", callback.m_closestHitFraction);
-				}
-				else
-				{
-					LOGV("hit: %g (dynamic object)\n", callback.m_closestHitFraction);
-				}
-			}
+//			if (callback.hasHit())
+//			{
+//				info.hit = start + (destination * callback.m_closestHitFraction);
+//				info.object = static_cast<CollisionObject*>(callback.m_collisionObject->getUserPointer());
+//				
+//				LOGV("fraction: %2.2f\n", callback.m_closestHitFraction);
+//				
+//				if (callback.m_collisionObject->getCollisionFlags() & btCollisionObject::CF_STATIC_OBJECT)
+//				{
+//					LOGV("hit: %g (static object)\n", callback.m_closestHitFraction);
+//				}
+//				else
+//				{
+//					LOGV("hit: %g (dynamic object)\n", callback.m_closestHitFraction);
+//				}
+//			}
 			
 			// should probably return a structure with data regarding the hit?
 			return info;
@@ -651,41 +173,42 @@ namespace gemini
 
 		KinematicCharacter* create_character_controller(const glm::vec3& spawnLocation, bool addActionToWorld)
 		{
-			btTransform tr;
-			tr.setIdentity();
-			
-			btPairCachingGhostObject * ghost = new btPairCachingGhostObject();
-			ghost->setWorldTransform( tr );
-			
-			btCapsuleShape* capsule_shape = new btCapsuleShape(PHYSICS_PLAYER_HALF_WIDTH, (PHYSICS_PLAYER_HALF_HEIGHT*2)-(PHYSICS_PLAYER_HALF_WIDTH*2));
-			//btConvexShape * playerShape = new btCylinderShape( btVector3( .6, .90, .6 ) );
-
-			
-			ghost->setCollisionShape( capsule_shape );
-			ghost->setCollisionFlags( btCollisionObject::CF_CHARACTER_OBJECT );
-			
-			btScalar stepHeight = btScalar(.36);
-			KinematicCharacter * character = new KinematicCharacter (ghost,capsule_shape,stepHeight);
-			
-			///only collide with static for now (no interaction with dynamic objects)
-			dynamics_world->addCollisionObject(ghost, btBroadphaseProxy::CharacterFilter, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter | btBroadphaseProxy::SensorTrigger);
-			
-			if ( addActionToWorld )
-			{
-				dynamics_world->addAction(character);
-			}
-			
-			ghost->setContactProcessingThreshold( 0. );
-			//m_ghost->setCcdMotionThreshold( 1 );
-			ghost->setCcdMotionThreshold( .1 );
-			ghost->setCcdSweptSphereRadius( 0.1 );
-			
-			character->SetSpawnLocation( btVector3(spawnLocation.x, spawnLocation.y, spawnLocation.z) );
-			character->clear_state();
-			
-			_controller = character;
-					
-			return character;
+			return nullptr;
+//			btTransform tr;
+//			tr.setIdentity();
+//			
+//			btPairCachingGhostObject * ghost = new btPairCachingGhostObject();
+//			ghost->setWorldTransform( tr );
+//			
+//			btCapsuleShape* capsule_shape = new btCapsuleShape(PHYSICS_PLAYER_HALF_WIDTH, (PHYSICS_PLAYER_HALF_HEIGHT*2)-(PHYSICS_PLAYER_HALF_WIDTH*2));
+//			//btConvexShape * playerShape = new btCylinderShape( btVector3( .6, .90, .6 ) );
+//
+//			
+//			ghost->setCollisionShape( capsule_shape );
+//			ghost->setCollisionFlags( btCollisionObject::CF_CHARACTER_OBJECT );
+//			
+//			btScalar stepHeight = btScalar(.36);
+//			KinematicCharacter * character = new KinematicCharacter (ghost,capsule_shape,stepHeight);
+//			
+//			///only collide with static for now (no interaction with dynamic objects)
+//			dynamics_world->addCollisionObject(ghost, btBroadphaseProxy::CharacterFilter, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter | btBroadphaseProxy::SensorTrigger);
+//			
+//			if ( addActionToWorld )
+//			{
+//				dynamics_world->addAction(character);
+//			}
+//			
+//			ghost->setContactProcessingThreshold( 0. );
+//			//m_ghost->setCcdMotionThreshold( 1 );
+//			ghost->setCcdMotionThreshold( .1 );
+//			ghost->setCcdSweptSphereRadius( 0.1 );
+//			
+//			character->SetSpawnLocation( btVector3(spawnLocation.x, spawnLocation.y, spawnLocation.z) );
+//			character->clear_state();
+//			
+//			_controller = character;
+//					
+//			return character;
 		} // create_character_controller
 		
 		KinematicCharacter* get_character_controller(int index)
@@ -698,12 +221,13 @@ namespace gemini
 		
 		CollisionObject* create_character_proxy(KinematicCharacter* controller)
 		{
-			btGhostObject* ghost = controller->getGhostObject();
-			
-			CharacterProxyObject* proxy = CREATE(CharacterProxyObject, controller);
-			ghost->setUserPointer(proxy);
-			
-			return proxy;
+//			btGhostObject* ghost = controller->getGhostObject();
+//			
+//			CharacterProxyObject* proxy = CREATE(CharacterProxyObject, controller);
+//			ghost->setUserPointer(proxy);
+//			
+//			return proxy;
+			return nullptr;
 		}
 
 		class CustomMotionState : public btMotionState
@@ -746,6 +270,7 @@ namespace gemini
 
 		CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg, PhysicsMotionInterface* motion)
 		{
+#if 0
 			bool use_quantized_bvh_tree = true;
 
 
@@ -850,10 +375,13 @@ namespace gemini
 			}
 			
 			return object;
+#endif
+			return nullptr;
 		} // create_physics_for_mesh
 
 		CollisionObject* create_trigger(const glm::vec3& size)
 		{
+#if 0
 			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
 			
 			BulletCollisionObject* collision_object = CREATE(BulletCollisionObject);
@@ -875,6 +403,8 @@ namespace gemini
 			dynamics_world->addCollisionObject(ghost, btBroadphaseProxy::SensorTrigger, btBroadphaseProxy::CharacterFilter);
 			
 			return collision_object;
+#endif
+			return nullptr;
 		} // create_trigger
 
 	} // namespace physics

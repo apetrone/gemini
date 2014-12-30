@@ -63,9 +63,9 @@
 #include <sdk/iengineentity.h>
 #include <sdk/model_api.h>
 #include <sdk/engine_api.h>
+#include <sdk/game_api.h>
 
-
-#include "physics/physics_interface.h"
+#include <platform/mem.h>
 
 using namespace gemini;
 using namespace gemini::game;
@@ -393,11 +393,22 @@ public:
 	virtual EntityManager* entities() { return entity_manager; }
 	virtual ModelInterface* models() { return model_interface; }
 	virtual PhysicsInterface* physics() { return physics_interface; }
+	
+	virtual void* allocate(size_t bytes)
+	{
+		return memory::allocator().allocate(bytes, __FILE__, __LINE__);
+	}
+	
+	virtual void deallocate(void* pointer)
+	{
+		memory::allocator().deallocate(pointer);
+	}
 };
 
 
 
-
+typedef gemini::GameInterface* (*connect_engine_fn)(gemini::EngineInterface*);
+typedef void (*disconnect_engine_fn)();
 
 class ProjectChimera : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
@@ -430,7 +441,11 @@ public:
 	gemini::game::GameRules* gamerules;
 	gemini::game::create_gamerules_fn create_gamerules;
 	gemini::game::destroy_gamerules_fn destroy_gamerules;
+	
+	
+	
 	xlib_t gamelib;
+	disconnect_engine_fn disconnect_engine;
 	
 	
 	Entity* world;
@@ -439,9 +454,9 @@ public:
 	
 	EntityManagerImpl entity_manager;
 	ModelInterfaceImpl model_interface;
-	PhysicsInterface* physics_interface;
 	
 	EngineInterface* engine_interface;
+	GameInterface* game_interface;
 
 	ProjectChimera()
 	{
@@ -457,14 +472,9 @@ public:
 		gamerules = 0;
 		create_gamerules = 0;
 		destroy_gamerules = 0;
-		
-		
-		physics_interface = CREATE(PhysicsInterfaceImpl);
-		gemini::physics::api::set_instance(physics_interface);
-		
+
+		game_interface = 0;
 		memset(entity_list, 0, sizeof(gemini::IEngineEntity*)*8);
-		engine_interface = CREATE(EngineInterfaceImpl, &entity_manager, &model_interface, physics_interface);
-		gemini::engine::api::set_instance(engine_interface);
 	}
 	
 	virtual ~ProjectChimera()
@@ -646,33 +656,31 @@ public:
 			render_method = CREATE(DefaultRenderMethod, scenelink);
 		}
 		
-		
-		
+		engine_interface = CREATE(EngineInterfaceImpl, &entity_manager, &model_interface, physics::api::instance());
+		gemini::engine::api::set_instance(engine_interface);
 		
 		
 //		background = audio::create_sound("sounds/wind_loop");
 //		background_source = audio::play(background, -1);
 		
+		LOGV("TODO: create character controller!\n");
 		// create character
-		character = create_character_controller(glm::vec3(0, 2, 0), false);
-		character->clear_state();
+
+//		character = create_character_controller(glm::vec3(0, 2, 0), false);
+//		character->clear_state();
 		
-		player_controller = CREATE(CharacterController);
-		player_controller->character = character;
+//		player_controller = CREATE(CharacterController);
+//		player_controller->character = character;
 			
-		player_controller->camera = active_camera;
-		active_camera->type = Camera::FIRST_PERSON;
-		active_camera->move_speed = 0.1f;
-		active_camera->perspective(camera_fov, params.render_width, params.render_height, 0.01f, 8192.0f);
-		active_camera->set_absolute_position(glm::vec3(0, 0, 5));
-		active_camera->update_view();
+//		player_controller->camera = active_camera;
+//		active_camera->type = Camera::FIRST_PERSON;
+//		active_camera->move_speed = 0.1f;
+//		active_camera->perspective(camera_fov, params.render_width, params.render_height, 0.01f, 8192.0f);
+//		active_camera->set_absolute_position(glm::vec3(0, 0, 5));
+//		active_camera->update_view();
 			
 		// capture the mouse
 		kernel::instance()->capture_mouse( true );
-
-		// setup the game interface
-		//game_interface.entities = CREATE(EntityManagerImpl);
-
 
 		// entity startup
 		entity_startup();
@@ -715,19 +723,35 @@ public:
 		{
 			LOGV("opened game library!\n");
 			
-			create_gamerules = (gemini::game::create_gamerules_fn) xlib_find_symbol(&gamelib, "create_gamerules");
-			destroy_gamerules = (gemini::game::destroy_gamerules_fn) xlib_find_symbol(&gamelib, "destroy_gamerules");
-			
-			assert(create_gamerules && destroy_gamerules);
-			
-			if (create_gamerules)
+			// link the engine interface
+			connect_engine_fn connect_engine = (connect_engine_fn)xlib_find_symbol(&gamelib, "connect_engine");
+			disconnect_engine = (disconnect_engine_fn)xlib_find_symbol(&gamelib, "disconnect_engine");
+			if (connect_engine)
 			{
-				gamerules = create_gamerules();
+				game_interface = connect_engine(gemini::engine::api::instance());
 			}
-			else
+			if (!game_interface)
 			{
-				LOGE("Unable to find create_gamerules function!\n");
+				LOGE("Unable to connect engine to game library\n");
 			}
+			
+			assert(game_interface != 0);
+			
+			game_interface->startup();
+			
+//			create_gamerules = (gemini::game::create_gamerules_fn) xlib_find_symbol(&gamelib, "create_gamerules");
+//			destroy_gamerules = (gemini::game::destroy_gamerules_fn) xlib_find_symbol(&gamelib, "destroy_gamerules");
+			
+//			assert(create_gamerules && destroy_gamerules);
+			
+//			if (create_gamerules)
+//			{
+//				gamerules = create_gamerules();
+//			}
+//			else
+//			{
+//				LOGE("Unable to find create_gamerules function!\n");
+//			}
 			
 			// try to install game interface
 //			typedef void (*link_game_interface_fn)(gemini::game::GameInterface*);
@@ -852,14 +876,24 @@ public:
 		vr::shutdown();
 		
 		
-		if (destroy_gamerules)
+//		if (destroy_gamerules)
+//		{
+//			destroy_gamerules(gamerules);
+//		}
+		
+		
+		if (game_interface)
 		{
-			destroy_gamerules(gamerules);
+			game_interface->shutdown();
 		}
 		
-		xlib_close(&gamelib);
+		if (disconnect_engine)
+		{
+			disconnect_engine();
+		}
 		
-		DESTROY(PhysicsInterface, physics_interface);
+		
+		xlib_close(&gamelib);
 	}
 };
 

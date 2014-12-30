@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2014- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -23,9 +23,9 @@
 
 #include <sdk/physics_api.h>
 
-#include <sdk/physics_constraint.h>
-#include <sdk/physics_collisionobject.h>
-#include <sdk/physics_rigidbody.h>
+#include "physics_constraint.h"
+#include "physics_collisionobject.h"
+#include "physics_rigidbody.h"
 
 namespace assets
 {
@@ -38,6 +38,8 @@ namespace gemini
 	namespace physics
 	{	
 
+
+	#define BTVECTOR3_TO_VEC3( v ) glm::vec3( v.x(), v.y(), v.z() )
 
 		class KinematicCharacter;
 
@@ -62,13 +64,13 @@ namespace gemini
 
 		
 		
-//		RaycastInfo raycast(CollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
-//		
-//		KinematicCharacter* create_character_controller(const glm::vec3& spawn_location, bool add_action_to_world);
-//		KinematicCharacter* get_character_controller(int index);
-//		CollisionObject* create_character_proxy(KinematicCharacter* controller);
-//
-//		CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr);
-//		CollisionObject* create_trigger(const glm::vec3& size);
+		RaycastInfo raycast(CollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
+		
+		KinematicCharacter* create_character_controller(const glm::vec3& spawn_location, bool add_action_to_world);
+		KinematicCharacter* get_character_controller(int index);
+		CollisionObject* create_character_proxy(KinematicCharacter* controller);
+
+		CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr);
+		CollisionObject* create_trigger(const glm::vec3& size);
 	}; // namespace physics
 } // namespace gemini

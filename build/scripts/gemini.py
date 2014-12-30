@@ -28,7 +28,10 @@ def setup_common_variables(arguments, target_platform, product):
 
 		"src/engine/physics/*.c*",
 		"src/engine/physics/*.h*",
-		
+
+		"src/engine/physics/bullet/*.c*",
+		"src/engine/physics/bullet/*.h*",
+
 		"src/sdk/include/**.h"
 	]
 
@@ -467,6 +470,11 @@ def products(arguments, **kwargs):
 	gemini.root = "../"
 	gemini.product_root = COMMON_PRODUCT_ROOT
 	gemini.object_root = "obj"
+
+	# DO NOT COMMIT, FOR DEVELOPMENT ONLY (oops)
+	gemini.commandline = [
+		"-game \"/Users/apetrone/Documents/games/vrpowergrid\""
+	]
 
 	setup_common_libs(arguments, gemini)
 

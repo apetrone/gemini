@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2014- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -21,54 +21,48 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <sdk/physics_api.h>
-
-#include <sdk/physics_constraint.h>
-#include <sdk/physics_collisionobject.h>
 #include <sdk/physics_rigidbody.h>
 
-namespace assets
-{
-	class Mesh;
-}
+#include "bullet_collisionobject.h"
+
+class btCollisionShape;
 
 namespace gemini
 {
-
 	namespace physics
 	{	
-
-
-		class KinematicCharacter;
-
-
-		struct RaycastInfo
+		namespace bullet
 		{
-			glm::vec3 hit;
-			CollisionObject* object;
 			
-			RaycastInfo() : object(0)
+			class BulletStaticBody : public BulletCollisionObject
 			{
-			}
-		};
-
-		void startup();
-		void shutdown();
-		void step(float seconds);
-		void debug_draw();
-		
-		
-		//CollisionObject*
-
-		
-		
-//		RaycastInfo raycast(CollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
-//		
-//		KinematicCharacter* create_character_controller(const glm::vec3& spawn_location, bool add_action_to_world);
-//		KinematicCharacter* get_character_controller(int index);
-//		CollisionObject* create_character_proxy(KinematicCharacter* controller);
-//
-//		CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr);
-//		CollisionObject* create_trigger(const glm::vec3& size);
-	}; // namespace physics
+				btAlignedObjectArray<btCollisionShape*> bodies;
+				
+			public:
+				BulletStaticBody();
+				virtual ~BulletStaticBody();
+				
+				void add_shape(btCollisionShape* shape);
+			};
+			
+			class BulletRigidBody : public BulletCollisionObject, public RigidBody
+			{
+				btCollisionShape* shape;
+				
+			public:
+				BulletRigidBody();
+				virtual ~BulletRigidBody();
+				
+				void set_collision_shape(btCollisionShape* collision_shape);
+				
+				btCollisionShape* get_collision_shape() const { return shape; }
+				btRigidBody* get_bullet_body() const;
+				
+				virtual void apply_force(const glm::vec3& force, const glm::vec3& local_position);
+				virtual void apply_central_force(const glm::vec3& force);
+				virtual void set_mass(float mass);
+				virtual void set_parent(CollisionObject* first, CollisionObject* second);
+			};
+		} // namespace bullet
+	} // namespace physics
 } // namespace gemini

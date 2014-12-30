@@ -29,7 +29,7 @@
 
 #include <core/str.h>
 
-#include "physics/physics.h"
+//#include "physics/physics.h"
 
 #include <sdk/iengineentity.h>
 
@@ -65,22 +65,25 @@ namespace gemini
 	class EntityManager;
 	class GameInterface;
 	
-	
-	class EntityMotionInterface : public physics::PhysicsMotionInterface
+	namespace physics
 	{
-		Entity* target;
-		scenegraph::Node* node;
-		
-	public:
-		
-		EntityMotionInterface(Entity* entity, scenegraph::Node* sgnode) : target(entity), node(sgnode)
-		{
-		}
-		
-		virtual void get_transform(glm::vec3& position, const glm::quat& orientation);
-		
-		virtual void set_transform(const glm::vec3& position, const glm::quat& orientation, const glm::vec3& mass_center_offset);
-	};
+		class CollisionObject;
+	}
+//	class EntityMotionInterface : public physics::PhysicsMotionInterface
+//	{
+//		Entity* target;
+//		scenegraph::Node* node;
+//		
+//	public:
+//		
+//		EntityMotionInterface(Entity* entity, scenegraph::Node* sgnode) : target(entity), node(sgnode)
+//		{
+//		}
+//		
+//		virtual void get_transform(glm::vec3& position, const glm::quat& orientation);
+//		
+//		virtual void set_transform(const glm::vec3& position, const glm::quat& orientation, const glm::vec3& mass_center_offset);
+//	};
 	
 }
 
@@ -105,7 +108,7 @@ struct Entity : public gemini::IEngineEntity
 	
 	Entity();
 	virtual ~Entity();
-	gemini::EntityMotionInterface* motion_interface;
+//	gemini::EntityMotionInterface* motion_interface;
 	
 //	virtual void set_model_index(int32_t index);
 	virtual int32_t get_model_index() const;

@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2014- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -21,54 +21,26 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <sdk/physics_api.h>
 
-#include <sdk/physics_constraint.h>
-#include <sdk/physics_collisionobject.h>
-#include <sdk/physics_rigidbody.h>
-
-namespace assets
-{
-	class Mesh;
-}
+#include <btBulletDynamicsCommon.h>
 
 namespace gemini
 {
-
 	namespace physics
 	{	
-
-
-		class KinematicCharacter;
-
-
-		struct RaycastInfo
+		namespace bullet
 		{
-			glm::vec3 hit;
-			CollisionObject* object;
-			
-			RaycastInfo() : object(0)
+			class DebugPhysicsRenderer : public btIDebugDraw
 			{
-			}
-		};
-
-		void startup();
-		void shutdown();
-		void step(float seconds);
-		void debug_draw();
-		
-		
-		//CollisionObject*
-
-		
-		
-//		RaycastInfo raycast(CollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
-//		
-//		KinematicCharacter* create_character_controller(const glm::vec3& spawn_location, bool add_action_to_world);
-//		KinematicCharacter* get_character_controller(int index);
-//		CollisionObject* create_character_proxy(KinematicCharacter* controller);
-//
-//		CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr);
-//		CollisionObject* create_trigger(const glm::vec3& size);
-	}; // namespace physics
+			public:
+				virtual void drawLine( const btVector3& from, const btVector3& to, const btVector3& color );
+				virtual void    drawLine( const btVector3& from, const btVector3& to, const btVector3& fromColor, const btVector3& toColor );
+				virtual void	drawContactPoint(const btVector3& PointOnB, const btVector3& normalOnB, btScalar distance, int lifeTime, const btVector3& color);
+				virtual void	reportErrorWarning(const char* warningString);
+				virtual void	draw3dText(const btVector3& location, const char* textString);
+				virtual void	setDebugMode(int debugMode);
+				virtual int		getDebugMode() const;
+			}; // DebugPhysicsRenderer
+		} // namespace bullet
+	} // namespace physics
 } // namespace gemini

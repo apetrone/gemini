@@ -42,6 +42,10 @@ namespace gemini
 		virtual EntityManager* entities() = 0;
 		virtual ModelInterface* models() = 0;
 		virtual physics::PhysicsInterface* physics() = 0;
+		
+		
+		virtual void* allocate(size_t bytes) = 0;
+		virtual void deallocate(void* pointer) = 0;
 	};
 	
 	namespace engine
