@@ -25,7 +25,9 @@ def setup_common_variables(arguments, target_platform, product):
 	product.sources += [
 		"src/engine/*.c*",
 		"src/engine/*.h*",
+
 		"src/engine/physics/*.c*",
+		"src/engine/physics/*.h*",
 		
 		"src/sdk/include/**.h"
 	]
