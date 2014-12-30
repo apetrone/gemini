@@ -230,43 +230,6 @@ namespace gemini
 			return nullptr;
 		}
 
-		class CustomMotionState : public btMotionState
-		{
-			btTransform initial_transform;
-			PhysicsMotionInterface* motion_interface;
-			glm::vec3 mass_center_offset;
-			
-		public:
-			CustomMotionState(const btTransform& transform,
-				PhysicsMotionInterface* motion,
-				const glm::vec3& center_mass_offset) : initial_transform(transform),
-														motion_interface(motion),
-														mass_center_offset(center_mass_offset)
-			{
-			}
-			
-			virtual ~CustomMotionState()
-			{
-			}
-			
-			virtual void getWorldTransform(btTransform &world_transform) const
-			{
-				world_transform = initial_transform;
-			}
-			
-			virtual void setWorldTransform(const btTransform &world_transform)
-			{
-				btQuaternion rot = world_transform.getRotation();
-				btVector3 pos = world_transform.getOrigin();
-				glm::quat orientation(rot.w(), rot.x(), rot.y(), rot.z());
-				glm::vec3 position(pos.x(), pos.y(), pos.z());
-				
-				if (motion_interface)
-				{
-					motion_interface->set_transform(position, orientation, mass_center_offset);
-				}
-			}
-		};
 
 		CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg, PhysicsMotionInterface* motion)
 		{

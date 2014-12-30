@@ -21,28 +21,36 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <stdint.h>
-#include <core/mathlib.h>
-
+#include <sdk/physics_collisionobject.h>
+#include <sdk/physics_constraint.h>
 #include <sdk/physics_api.h>
+
+#include "physics/bullet/bullet_common.h"
+
+#include <btBulletDynamicsCommon.h>
 
 namespace gemini
 {
 	namespace physics
 	{
-		
-		class PhysicsInterfaceImpl : public PhysicsInterface
+		namespace bullet
 		{
-		public:
-			virtual physics::CollisionObject* create_physics_model(
-			   int32_t model_index,
-			   float mass_kg,
-			   physics::PhysicsMotionInterface* motion_interface,
-			   const glm::vec3& mass_center_offset
-			);
-			
-			virtual void destroy_object(CollisionObject* object);
-		};
-
+			class CustomMotionState : public btMotionState
+			{
+				btTransform initial_transform;
+				PhysicsMotionInterface* motion_interface;
+				glm::vec3 mass_center_offset;
+				
+			public:
+				CustomMotionState(const btTransform& transform,
+								  PhysicsMotionInterface* motion,
+								  const glm::vec3& center_mass_offset);
+				
+				virtual ~CustomMotionState();
+				
+				virtual void getWorldTransform(btTransform &world_transform) const;
+				virtual void setWorldTransform(const btTransform &world_transform);
+			};
+		} // namespace bullet
 	} // namespace physics
 } // namespace gemini

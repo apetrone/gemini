@@ -26,8 +26,15 @@
 #include "physics_interface.h"
 
 
-//#include "bullet/bullet_common.h"
+#include <btBulletDynamicsCommon.h>
 
+#include "bullet/bullet_common.h"
+#include "bullet/bullet_rigidbody.h"
+#include "bullet/bullet_motionstate.h"
+
+#include "assets/asset_mesh.h"
+
+using namespace gemini::physics::bullet;
 
 namespace gemini
 {
@@ -40,12 +47,119 @@ namespace gemini
 													   physics::PhysicsMotionInterface* motion_interface,
 													   const glm::vec3& mass_center_offset)
 		{
+			bool use_quantized_bvh_tree = true;
 			
 			
+			btScalar mass(mass_kg);
+			btVector3 local_inertia(0, 0, 0);
 			
 			
-			return 0;
-		}
+			assets::Mesh* mesh = assets::meshes()->find_with_id(model_index);
+			if (!mesh)
+			{
+				LOGW("Unable to create physics for null mesh\n");
+				return nullptr;
+			}
+			
+			if (!bullet::get_world())
+			{
+				LOGE("Unable to add physics for mesh; invalid physics state\n");
+				return nullptr;
+			}
+			
+			CollisionObject* object = 0;
+			BulletStaticBody* static_body = 0;
+			BulletRigidBody* rb = 0;
+			
+			bool dynamic_body = (mass != 0.0f);
+			if (!dynamic_body)
+			{
+				static_body = CREATE(BulletStaticBody);
+				object = static_body;
+			}
+			else
+			{
+				rb = CREATE(BulletRigidBody);
+				object = rb;
+			}
+			
+			for( uint32_t i = 0; i < mesh->geometry.size(); ++i )
+			{
+				assets::Geometry* geo = &mesh->geometry[ i ];
+				
+				FixedArray<glm::vec3>& vertices = geo->vertices;
+				
+				btRigidBody* body = 0;
+				
+				// The rigid body world transform is the center of mass. This is at the origin.
+				btTransform xf;
+				xf.setIdentity();
+				CustomMotionState * motion_state = new CustomMotionState(xf, motion_interface, mesh->mass_center_offset);
+				
+				btCollisionShape* shape = 0;
+				// NOTE: Triangle shapes can ONLY be static objects.
+				// TODO: look into an alternative with btGImpactMeshShape or
+				// btCompoundShape + convex decomposition.
+				// Could also use btConvexHullShape.
+				if (dynamic_body)
+				{
+					shape = new btBoxShape(btVector3(0.5f, 0.5f, 0.5f));
+					rb->set_collision_shape(shape);
+					
+					// calculate local intertia
+					shape->calculateLocalInertia(mass, local_inertia);
+					
+					btCompoundShape* compound = new btCompoundShape();
+					btTransform local_transform;
+					local_transform.setIdentity();
+					compound->addChildShape(local_transform, shape);
+					
+					btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, motion_state, compound, local_inertia );
+					body = new btRigidBody( rbInfo );
+					
+					rb->set_collision_object(body);
+					body->setUserPointer(rb);
+					
+					body->setRestitution(0.25f);
+					body->setFriction(0.5f);
+					body->setCcdMotionThreshold(0.1f);
+					body->setCcdSweptSphereRadius(0.1f);
+				}
+				else
+				{
+					// specify verts/indices from our meshdef
+					// NOTE: This does NOT make a copy of the data. Whatever you pass it
+					// must persist for the life of the shape.
+					btTriangleIndexVertexArray * mesh = new btTriangleIndexVertexArray(geo->index_count/3, (int*)&geo->indices[0], sizeof(int)*3, geo->vertex_count, (btScalar*)&vertices[0], sizeof(glm::vec3));
+					
+					// use that to create a Bvh triangle mesh shape
+					btBvhTriangleMeshShape * trishape = new btBvhTriangleMeshShape( mesh, use_quantized_bvh_tree );
+					static_body->add_shape(trishape);
+					
+					btTransform local_transform;
+					local_transform.setIdentity();
+					btRigidBody::btRigidBodyConstructionInfo rigid_body_info(0.0f, motion_state, trishape, local_inertia );
+					body = new btRigidBody(rigid_body_info);
+					
+					static_body->set_collision_object(body);
+					body->setUserPointer(static_body);
+					
+					int body_flags = body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT;
+					body->setCollisionFlags( body_flags );
+					body->setFriction(0.75f);
+				}
+				
+				bullet:get_world()->addRigidBody(body);
+			}
+			
+			return object;
+		} // create_physics_model
+		
+		
+		void PhysicsInterfaceImpl::destroy_object(CollisionObject* object)
+		{
+			DESTROY(CollisionObject, object);
+		} // destroy_object
 
 
 

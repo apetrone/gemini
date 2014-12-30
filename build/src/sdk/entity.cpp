@@ -195,8 +195,10 @@ Entity::~Entity()
 	
 	if (this->collision_object)
 	{
-		DESTROY(CollisionObject, this->collision_object);
+		engine::api::instance()->physics()->destroy_object(this->collision_object);
+		this->collision_object = 0;
 	}
+	
 	
 //	if (this->motion_interface)
 //	{

@@ -55,6 +55,9 @@ namespace gemini
 																   physics::PhysicsMotionInterface* motion_interface = 0,
 																   const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0)
 																   ) = 0;
+												
+												
+			virtual void destroy_object(CollisionObject* object) = 0;
 		};
 
 		

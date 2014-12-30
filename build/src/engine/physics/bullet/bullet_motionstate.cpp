@@ -19,30 +19,48 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#pragma once
 
-#include <stdint.h>
-#include <core/mathlib.h>
+//#include <sdk/physics_collisionobject.h>
+//#include <sdk/physics_constraint.h>
 
-#include <sdk/physics_api.h>
+//#include "physics/bullet/bullet_common.h"
+#include "physics/bullet/bullet_motionstate.h"
 
 namespace gemini
 {
 	namespace physics
 	{
-		
-		class PhysicsInterfaceImpl : public PhysicsInterface
+		namespace bullet
 		{
-		public:
-			virtual physics::CollisionObject* create_physics_model(
-			   int32_t model_index,
-			   float mass_kg,
-			   physics::PhysicsMotionInterface* motion_interface,
-			   const glm::vec3& mass_center_offset
-			);
+			CustomMotionState::CustomMotionState(const btTransform& transform,
+							  PhysicsMotionInterface* motion,
+							  const glm::vec3& center_mass_offset) : initial_transform(transform),
+			motion_interface(motion),
+			mass_center_offset(center_mass_offset)
+			{
+			}
 			
-			virtual void destroy_object(CollisionObject* object);
-		};
-
+			CustomMotionState::~CustomMotionState()
+			{
+			}
+			
+			void CustomMotionState::getWorldTransform(btTransform &world_transform) const
+			{
+				world_transform = initial_transform;
+			}
+			
+			void CustomMotionState::setWorldTransform(const btTransform &world_transform)
+			{
+				btQuaternion rot = world_transform.getRotation();
+				btVector3 pos = world_transform.getOrigin();
+				glm::quat orientation(rot.w(), rot.x(), rot.y(), rot.z());
+				glm::vec3 position(pos.x(), pos.y(), pos.z());
+				
+				if (motion_interface)
+				{
+					motion_interface->set_transform(position, orientation, mass_center_offset);
+				}
+			}
+		} // namespace bullet
 	} // namespace physics
 } // namespace gemini
