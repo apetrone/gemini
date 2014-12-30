@@ -190,7 +190,8 @@ Entity::Entity() :
 Entity::~Entity()
 {
 	LOGV( "~Entity() - %p, %ld\n", this, (unsigned long)this->id );
-//	entity_list().remove( this );
+	entity_list().remove( this );
+	engine::api::instance()->entities()->remove(this);
 	
 	if (this->collision_object)
 	{

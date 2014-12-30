@@ -72,7 +72,10 @@ struct EntityList
 	
 	void purge()
 	{
-		for (typename Collection::iterator it = this->objects.begin(); it != this->objects.end(); ++it)
+		// create a local copy that won't be modified as we traverse it.
+		Collection objects = this->objects;
+	
+		for (typename Collection::iterator it = objects.begin(); it != objects.end(); ++it)
 		{
 			Entity * obj = (*it);
 			delete obj;
