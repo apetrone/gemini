@@ -242,41 +242,33 @@ public:
 
 class EntityManagerImpl : public EntityManager
 {
-	typedef Factory<Entity> EntityFactory;
-	EntityFactory factory;
+	gemini::IEngineEntity* entity_list[8];
+	size_t index;
 	
 public:
-	virtual void register_entity(entity_creator_fn creator, const char* classname);
-	virtual void find_by_classname(const char* classname, std::vector<Entity*>& entities);
-	virtual Entity* create_by_classname(const char* classname);
+	EntityManagerImpl() : index(0)
+	{
+		memset(entity_list, 0, sizeof(gemini::IEngineEntity*)*8);
+	}
+
+	virtual void add(IEngineEntity* entity);
+	virtual void remove(IEngineEntity* entity);
+
 	virtual void startup();
 	virtual void shutdown();
+	
+	IEngineEntity** get_entity_list() { return entity_list; }
 };
 
 
-
-void EntityManagerImpl::register_entity(entity_creator_fn creator, const char* classname)
+void EntityManagerImpl::add(IEngineEntity* entity)
 {
-	factory.register_class(creator, classname);
+	entity_list[index++] = entity;
 }
 
-
-void EntityManagerImpl::find_by_classname(const char* classname, std::vector<Entity*>& entities)
+void EntityManagerImpl::remove(IEngineEntity* entity)
 {
-	
-}
-
-Entity* EntityManagerImpl::create_by_classname(const char* classname)
-{
-	EntityFactory::Record* record = factory.find_class(classname);
-	if (record)
-	{
-		return record->creator();
-	}
-	
-	LOGW("Unknown entity classname %s\n", classname);
-	
-	return 0;
+	LOGV("TODO: implement entity removal\n");
 }
 
 void EntityManagerImpl::startup()
@@ -445,11 +437,6 @@ public:
 	xlib_t gamelib;
 	disconnect_engine_fn disconnect_engine;
 	
-	
-	Entity* world;
-
-	gemini::IEngineEntity* entity_list[8];
-	
 	EntityManagerImpl entity_manager;
 	ModelInterfaceImpl model_interface;
 	
@@ -464,15 +451,12 @@ public:
 		render_method = 0;
 		active_camera = &main_camera;
 		draw_physics_debug = false;
-		
-		world = 0;
 
 		gamerules = 0;
 		create_gamerules = 0;
 		destroy_gamerules = 0;
 
 		game_interface = 0;
-		memset(entity_list, 0, sizeof(gemini::IEngineEntity*)*8);
 	}
 	
 	virtual ~ProjectChimera()
@@ -671,11 +655,11 @@ public:
 //		player_controller->character = character;
 			
 //		player_controller->camera = active_camera;
-//		active_camera->type = Camera::FIRST_PERSON;
-//		active_camera->move_speed = 0.1f;
-//		active_camera->perspective(camera_fov, params.render_width, params.render_height, 0.01f, 8192.0f);
-//		active_camera->set_absolute_position(glm::vec3(0, 0, 5));
-//		active_camera->update_view();
+		active_camera->type = Camera::FIRST_PERSON;
+		active_camera->move_speed = 0.1f;
+		active_camera->perspective(camera_fov, params.render_width, params.render_height, 0.01f, 8192.0f);
+		active_camera->set_absolute_position(glm::vec3(0, 0, 5));
+		active_camera->update_view();
 			
 		// capture the mouse
 		kernel::instance()->capture_mouse( true );
@@ -781,7 +765,7 @@ public:
 		if (active_camera)
 		{
 		
-#if LOCK_CAMERA_TO_CHARACTER
+#if LOCK_CAMERA_TO_CHARACTER && 0
 		//physics::player_move(character, *active_camera, command);
 #else
 		// if you want to move JUST the camera instead...
@@ -859,7 +843,7 @@ public:
 		if (active_camera)
 		{
 			assert(active_camera != nullptr);
-			render_method->render_frame(entity_list, *active_camera, params);
+			render_method->render_frame(entity_manager.get_entity_list(), *active_camera, params);
 		}
 	}
 	

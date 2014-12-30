@@ -182,6 +182,7 @@ Entity::Entity() :
 	this->id = entity_list().count();
 	
 	entity_list().add( this );
+	engine::api::instance()->entities()->add(this);
 	LOGV( "Entity() - %p, %ld\n", this, (unsigned long)this->id );
 
 } // Entity

@@ -26,27 +26,19 @@
 
 #include <vector>
 
-class Entity;
-
-typedef Entity* (*entity_creator_fn)();
 
 namespace gemini
 {
+	class IEngineEntity;
+	
 	class EntityManager
 	{
 	public:
 		virtual ~EntityManager() {};
-		
-		
-		// register new entities
-		virtual void register_entity(entity_creator_fn creator, const char* classname) = 0;
 
-		// populates entity vector with all entities found
-		virtual void find_by_classname(const char* classname, std::vector<Entity*>& entities) = 0;
-		
-		// create an entity from classname
-		virtual Entity* create_by_classname(const char* classname) = 0;
-		
+		virtual void add(IEngineEntity* entity) = 0;
+		virtual void remove(IEngineEntity* entity) = 0;
+
 		virtual void startup() = 0;
 		virtual void shutdown() = 0;
 	};
