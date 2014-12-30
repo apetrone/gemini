@@ -61,10 +61,11 @@
 #include "entity_manager.h"
 
 #include <sdk/iengineentity.h>
-#include <sdk/model_interface.h>
+#include <sdk/model_api.h>
+#include <sdk/engine_api.h>
 
-#include <core/factory.h>
-#include <sdk/engine_interface.h>
+
+#include "physics_interface.h"
 
 using namespace gemini;
 
@@ -373,22 +374,6 @@ public:
 	}
 };
 
-class PhysicsInterfaceImpl : public PhysicsInterface
-{
-public:
-	virtual physics::CollisionObject* create_physics_model(
-		int32_t model_index,
-		float mass_kg,
-		physics::PhysicsMotionInterface* motion_interface,
-		const glm::vec3& mass_center_offset)
-	{
-		
-	
-	
-	
-		return 0;
-	}
-};
 
 
 class EngineInterfaceImpl : public EngineInterface
@@ -457,7 +442,7 @@ public:
 	
 	EntityManagerImpl entity_manager;
 	ModelInterfaceImpl model_interface;
-	PhysicsInterfaceImpl physics_interface;
+	PhysicsInterface* physics_interface;
 	
 	EngineInterface* engine_interface;
 
@@ -477,14 +462,16 @@ public:
 		destroy_gamerules = 0;
 		
 		
+		physics_interface = CREATE(PhysicsInterfaceImpl);
+		gemini::physics::api::set_instance(physics_interface);
+		
 		memset(entity_list, 0, sizeof(gemini::IEngineEntity*)*8);
-		engine_interface = CREATE(EngineInterfaceImpl, &entity_manager, &model_interface, &physics_interface);
-		engine::set_instance(engine_interface);
+		engine_interface = CREATE(EngineInterfaceImpl, &entity_manager, &model_interface, physics_interface);
+		gemini::engine::api::set_instance(engine_interface);
 	}
 	
 	virtual ~ProjectChimera()
 	{
-		engine::set_instance(0);
 		DESTROY(EngineInterface, engine_interface);
 	}
 	
@@ -874,6 +861,8 @@ public:
 		}
 		
 		xlib_close(&gamelib);
+		
+		DESTROY(PhysicsInterface, physics_interface);
 	}
 };
 

@@ -24,6 +24,8 @@
 #include <stdint.h>
 #include <core/mathlib.h>
 
+#include <sdk/interface.h>
+
 namespace gemini
 {
 	namespace physics
@@ -41,18 +43,21 @@ namespace gemini
 			// called when the physics body's motion state has been set
 			virtual void set_transform(const glm::vec3& position, const glm::quat& orientation, const glm::vec3& mass_center_offset) = 0;
 		};
-	} // namespace physics
-	
-	class PhysicsInterface
-	{
-	public:
-		virtual ~PhysicsInterface() {};
 		
-		virtual physics::CollisionObject* create_physics_model(
-			int32_t model_index,
-			float mass_kg = 0.0f,
-			physics::PhysicsMotionInterface* motion_interface = 0,
-			const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0)
-		) = 0;
-	};
+		class PhysicsInterface
+		{
+		public:
+			virtual ~PhysicsInterface() {};
+			
+			virtual physics::CollisionObject* create_physics_model(
+																   int32_t model_index,
+																   float mass_kg = 0.0f,
+																   physics::PhysicsMotionInterface* motion_interface = 0,
+																   const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0)
+																   ) = 0;
+		};
+
+		
+		typedef Interface<PhysicsInterface> api;
+	} // namespace physics
 } // namespace gemini

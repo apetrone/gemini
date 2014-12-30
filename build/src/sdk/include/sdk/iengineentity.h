@@ -19,29 +19,33 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+
 #pragma once
 
-#include <stdint.h>
+#include <core/mathlib.h>
 
 namespace gemini
 {
-	class EntityManager;
-	class ModelInterface;
-	class PhysicsInterface;
+	struct EntityTransform
+	{
+		glm::vec3 local_position;
+		glm::quat local_orientation;
 
-	class EngineInterface
+		glm::mat4 parent_world_transform;
+	};
+
+
+	class IEngineEntity
 	{
 	public:
-		virtual ~EngineInterface() {};
+		virtual ~IEngineEntity() {};
 
-		virtual EntityManager* entities() = 0;
-		virtual ModelInterface* models() = 0;
-		virtual PhysicsInterface* physics() = 0;
+		// model instance accessors; returns -1 if no model
+//		virtual void set_model_index(int32_t index) = 0;
+		virtual int32_t get_model_index() const = 0;
+
+		// transform accessors
+//		virtual EntityTransform get_transform() const = 0;
+//		virtual void set_transform(const EntityTransform& txform) = 0;
 	};
-	
-	namespace engine
-	{
-		EngineInterface* instance();
-		void set_instance(EngineInterface* instance);
-	}
 }

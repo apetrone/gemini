@@ -40,6 +40,8 @@ namespace gemini
 {
 	namespace physics
 	{
+		
+	
 		class BulletConstraint;
 
 		class DebugPhysicsRenderer : public btIDebugDraw

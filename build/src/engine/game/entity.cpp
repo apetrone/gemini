@@ -35,8 +35,12 @@
 
 
 #include "entity_manager.h"
-#include <sdk/engine_interface.h>
-#include <sdk/model_interface.h>
+#include <sdk/engine_api.h>
+#include <sdk/physics_api.h>
+#include <sdk/model_api.h>
+
+
+
 
 using namespace gemini;
 using namespace gemini::physics;
@@ -254,9 +258,9 @@ void Entity::collision_ended(Entity* other)
 
 CollisionObject* Entity::physics_create_static()
 {
-	assert(engine::instance() && engine::instance()->physics());
+	assert(engine::api::instance() && engine::api::instance()->physics());
 	
-	return engine::instance()->physics()->create_physics_model(model_index);
+	return engine::api::instance()->physics()->create_physics_model(model_index);
 }
 
 
@@ -312,7 +316,7 @@ glm::vec3* Entity::get_position()
 void Entity::set_model(const char* path)
 {
 //	engine::instance()->models()->destroy_instance_data(model_index);
-	model_index = engine::instance()->models()->create_instance_data(path);
+	model_index = engine::api::instance()->models()->create_instance_data(path);
 //	LOGV("set model index: %i, for model: %s\n", model_index, path);
 }
 

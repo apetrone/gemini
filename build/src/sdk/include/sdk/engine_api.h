@@ -19,26 +19,33 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#pragma once
 
-#include <sdk/engine_interface.h>
-#include <assert.h>
+#include <stdint.h>
+#include <sdk/interface.h>
 
 namespace gemini
 {
+	class EntityManager;
+	class ModelInterface;
+	
+	namespace physics
+	{
+		class PhysicsInterface;
+	}
+
+	class EngineInterface
+	{
+	public:
+		virtual ~EngineInterface() {};
+
+		virtual EntityManager* entities() = 0;
+		virtual ModelInterface* models() = 0;
+		virtual physics::PhysicsInterface* physics() = 0;
+	};
+	
 	namespace engine
 	{
-		static EngineInterface* _instance = 0;
-		EngineInterface* instance()
-		{
-			return _instance;
-		}
-		
-		void set_instance(EngineInterface* instance)
-		{
-			_instance = instance;
-		}
+		typedef Interface<EngineInterface> api;
 	}
 }
-
-
-

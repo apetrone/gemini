@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2014- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -21,56 +21,25 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <sdk/physics_api.h>
-
-#include "physics_constraint.h"
-#include "physics_collisionobject.h"
-#include "physics_rigidbody.h"
-
-namespace assets
-{
-	class Mesh;
-}
-
 namespace gemini
 {
-
-	namespace physics
-	{	
-
-
-	#define BTVECTOR3_TO_VEC3( v ) glm::vec3( v.x(), v.y(), v.z() )
-
-		class KinematicCharacter;
-
-
-		struct RaycastInfo
+	template <class InterfaceType>
+	class Interface
+	{
+		static InterfaceType* _interface;
+	public:
+		
+		static InterfaceType* instance()
 		{
-			glm::vec3 hit;
-			CollisionObject* object;
-			
-			RaycastInfo() : object(0)
-			{
-			}
-		};
-
-		void startup();
-		void shutdown();
-		void step(float seconds);
-		void debug_draw();
+			return _interface;
+		}
 		
-		
-		//CollisionObject*
-
-		
-		
-		RaycastInfo raycast(CollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
-		
-		KinematicCharacter* create_character_controller(const glm::vec3& spawn_location, bool add_action_to_world);
-		KinematicCharacter* get_character_controller(int index);
-		CollisionObject* create_character_proxy(KinematicCharacter* controller);
-
-		CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr, const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0));
-		CollisionObject* create_trigger(const glm::vec3& size);
-	}; // namespace physics
-} // namespace gemini
+		static void set_instance(InterfaceType* instance)
+		{
+			_interface = instance;
+		}
+	};
+	
+	template <class InterfaceType>
+	InterfaceType* Interface<InterfaceType>::_interface;
+}
