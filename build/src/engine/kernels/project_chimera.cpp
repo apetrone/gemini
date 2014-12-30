@@ -35,7 +35,7 @@
 
 #include "btBulletDynamicsCommon.h"
 
-#include "physics.h"
+#include "physics/physics.h"
 #include "charactercontroller.h"
 
 #include <renderer/font.h>
@@ -65,7 +65,7 @@
 #include <sdk/engine_api.h>
 
 
-#include "physics_interface.h"
+#include "physics/physics_interface.h"
 
 using namespace gemini;
 

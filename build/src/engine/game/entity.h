@@ -29,7 +29,7 @@
 
 #include <core/str.h>
 
-#include "physics.h"
+#include "physics/physics.h"
 
 #include <sdk/iengineentity.h>
 

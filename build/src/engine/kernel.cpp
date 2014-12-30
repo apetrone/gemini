@@ -39,7 +39,7 @@
 #include <renderer/font.h>
 
 #include <renderer/debugdraw.h>
-#include "physics.h"
+#include "physics/physics.h"
 #include "hotloading.h"
 
 

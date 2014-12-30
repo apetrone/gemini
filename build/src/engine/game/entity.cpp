@@ -23,10 +23,10 @@
 
 #include "entity.h"
 #include "entity_list.h"
-#include "physics.h"
+#include "physics/physics.h"
 #include "camera.h"
 #include "kernel.h"
-#include "physics_rigidbody.h"
+#include "physics/physics_rigidbody.h"
 
 #include "charactercontroller.h"
 

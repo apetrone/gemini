@@ -36,7 +36,7 @@
 
 #include "scene_graph.h"
 #include "skeletalnode.h"
-#include "physics.h"
+#include "physics/physics.h"
 
 #include "assets/asset_material.h"
 

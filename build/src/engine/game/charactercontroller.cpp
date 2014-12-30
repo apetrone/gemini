@@ -22,7 +22,7 @@
 
 #include <iostream>
 #include "btBulletDynamicsCommon.h"
-#include "physics_common.h"
+#include "physics/physics_common.h"
 
 #include "charactercontroller.h"
 #include <slim/xlog.h>
