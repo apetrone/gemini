@@ -31,6 +31,33 @@ namespace gemini
 {
 	namespace physics
 	{
+	
+		class BulletCollisionShape : public CollisionShape
+		{
+		protected:
+			btCollisionShape* shape;
+			
+		public:
+		
+			virtual ~BulletCollisionShape()
+			{
+				// TODO: does this need to remove any bodies, first?
+				// If we crash, then maybe.
+				
+				if (shape)
+				{
+					delete shape;
+					shape = 0;
+				}
+			}
+		
+			void set_shape(btCollisionShape* _shape)
+			{
+				shape = _shape;
+			}
+			
+			btCollisionShape* get_shape() const { return shape; }
+		};
 		
 		class BulletCollisionObject : public CollisionObject
 		{

@@ -50,6 +50,12 @@ namespace gemini
 		
 		static const uint8_t MAX_CONSTRAINTS_PER_OBJECT = 1;
 		
+		class CollisionShape
+		{
+		public:
+			virtual ~CollisionShape() {};
+		};
+		
 		class CollisionObject
 		{
 		protected:

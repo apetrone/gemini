@@ -26,6 +26,8 @@
 
 #include <sdk/physics_api.h>
 
+#include <vector>
+
 namespace gemini
 {
 	namespace physics
@@ -33,13 +35,21 @@ namespace gemini
 		
 		class PhysicsInterfaceImpl : public PhysicsInterface
 		{
+		private:
+			std::vector<CollisionShape*> collision_shapes;
+		
 		public:
+			PhysicsInterfaceImpl() {}
+			virtual ~PhysicsInterfaceImpl();
+		
 			virtual physics::CollisionObject* create_physics_model(
 				int32_t model_index,
 				float mass_kg,
 				physics::PhysicsMotionInterface* motion_interface,
 				const glm::vec3& mass_center_offset
 			);
+			
+			virtual physics::CollisionObject* create_character_object(CollisionShape* shape);
 			
 			virtual physics::CollisionShape* create_capsule(
 				float radius_meters,

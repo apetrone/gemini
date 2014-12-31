@@ -65,6 +65,8 @@ namespace gemini
 				const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0)
 			) = 0;
 			
+			virtual physics::CollisionObject* create_character_object(CollisionShape* shape) = 0;
+			
 			// Shapes
 			// Shapes are handled internally by the physics system and do not
 			// need to be explicitly deleted.

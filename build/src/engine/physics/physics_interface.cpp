@@ -27,6 +27,7 @@
 
 
 #include <btBulletDynamicsCommon.h>
+#include "BulletCollision/CollisionDispatch/btGhostObject.h"
 
 #include "bullet/bullet_common.h"
 #include "bullet/bullet_rigidbody.h"
@@ -40,6 +41,15 @@ namespace gemini
 {
 	namespace physics
 	{
+
+		PhysicsInterfaceImpl::~PhysicsInterfaceImpl()
+		{
+			// purge collision shapes
+			for (auto& shape : collision_shapes)
+			{
+				DESTROY(CollisionShape, shape);
+			}
+		}
 
 		physics::CollisionObject* PhysicsInterfaceImpl::create_physics_model(
 													   int32_t model_index,
@@ -155,9 +165,38 @@ namespace gemini
 			return object;
 		} // create_physics_model
 		
+		physics::CollisionObject* PhysicsInterfaceImpl::create_character_object(CollisionShape* shape)
+		{
+			BulletCollisionObject* collision_object = CREATE(BulletCollisionObject);
+			
+			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
+			
+			// TODO: set ghost transform
+			BulletCollisionShape* bullet_shape = static_cast<BulletCollisionShape*>(shape);
+			assert(bullet_shape != 0);
+
+			ghost->setCollisionShape(bullet_shape->get_shape());
+			ghost->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
+			
+			bullet::get_world()->addCollisionObject(ghost, btBroadphaseProxy::CharacterFilter, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter | btBroadphaseProxy::SensorTrigger);
+			
+			ghost->setContactProcessingThreshold(0.0f);
+			ghost->setCcdMotionThreshold(0.1f);
+			ghost->setCcdSweptSphereRadius(0.1f);
+		
+			return collision_object;
+		}
+		
 		physics::CollisionShape* PhysicsInterfaceImpl::create_capsule(float radius_meters, float height_meters)
 		{
-			return 0;
+			BulletCollisionShape* collision_shape = CREATE(BulletCollisionShape);
+			collision_shapes.push_back(collision_shape);
+						
+			btCollisionShape* capsule = new btCapsuleShape(radius_meters, height_meters);
+			collision_shape->set_shape(capsule);
+
+		
+			return collision_shape;
 		}
 		
 		
