@@ -243,8 +243,13 @@ namespace renderer
 								
 								// TODO: this should really happen in another step?
 								glm::mat4 transform;
-								const EntityTransform& etx = e->get_transform();
-								transform = glm::translate(transform, etx.local_position);
+								glm::vec3 position;
+								glm::quat orientation;
+								
+								e->get_world_transform(position, orientation);
+								transform = glm::toMat4(orientation);
+								transform = glm::translate(transform, position);
+								
 								model_instance->set_local_transform(transform);
 								
 								block.object_matrix = &model_instance->get_local_transform();

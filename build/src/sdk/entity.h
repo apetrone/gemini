@@ -123,9 +123,7 @@ struct Entity : public gemini::IEngineEntity
 //	virtual void set_model_index(int32_t index);
 	virtual int32_t get_model_index() const;
 	
-	virtual gemini::EntityTransform get_transform() const;
-	virtual void set_transform(const gemini::EntityTransform& txform);
-	
+	virtual void get_world_transform(glm::vec3& position, glm::quat& orientation) const;
 	
 	// called after the constructor
 	virtual void spawn() {};

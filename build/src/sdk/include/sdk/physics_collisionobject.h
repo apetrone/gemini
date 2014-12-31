@@ -93,6 +93,9 @@ namespace gemini
 			virtual void set_world_position(const glm::vec3& position) = 0;
 			virtual glm::vec3 get_world_position() const = 0;
 			
+//			virtual void set_world_orientation(const glm::quat& orientation) = 0;
+//			virtual glm::quat get_world_orientation() const = 0;
+			
 			// invoked when this object when another object collides with it
 			virtual void collision_began(CollisionObject* other) = 0;
 			

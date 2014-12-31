@@ -26,28 +26,15 @@
 
 namespace gemini
 {
-	// TODO: Perhaps this should be rolled into another class
-	// with a better name. Perhaps the Physics objects?
-	struct EntityTransform
-	{
-		glm::vec3 local_position;
-		glm::quat local_orientation;
-
-		glm::mat4 parent_world_transform;
-	};
-
-
 	class IEngineEntity
 	{
 	public:
 		virtual ~IEngineEntity() {};
 
-		// model instance accessors; returns -1 if no model
-//		virtual void set_model_index(int32_t index) = 0;
+		// returns -1 if no model
 		virtual int32_t get_model_index() const = 0;
-
-		// transform accessors
-		virtual EntityTransform get_transform() const = 0;
-		virtual void set_transform(const EntityTransform& txform) = 0;
+		
+		// world position and orientation for this entity
+		virtual void get_world_transform(glm::vec3& position, glm::quat& orientation) const = 0;
 	};
 }

@@ -216,23 +216,21 @@ int32_t Entity::get_model_index() const
 	return model_index;
 }
 
-gemini::EntityTransform Entity::get_transform() const
+void Entity::get_world_transform(glm::vec3& position, glm::quat& orientation) const
 {
-	gemini::EntityTransform txform;
 	if (this->collision_object)
 	{
-		txform.local_position = collision_object->get_world_position();
+		position = collision_object->get_world_position();
 	}
-	return txform;
 }
 
-void Entity::set_transform(const gemini::EntityTransform& txform)
-{
-	if (this->collision_object)
-	{
-		collision_object->set_world_position(txform.local_position);
-	}
-}
+//void Entity::set_transform(const gemini::EntityTransform& txform)
+//{
+//	if (this->collision_object)
+//	{
+//		collision_object->set_world_position(txform.local_position);
+//	}
+//}
 
 
 void Entity::fixed_update( float delta_seconds )
