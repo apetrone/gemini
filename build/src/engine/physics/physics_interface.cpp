@@ -134,14 +134,14 @@ namespace gemini
 					
 					// use that to create a Bvh triangle mesh shape
 					btBvhTriangleMeshShape * trishape = new btBvhTriangleMeshShape( mesh, use_quantized_bvh_tree );
-					static_body->add_shape(trishape);
 					
 					btTransform local_transform;
 					local_transform.setIdentity();
 					btRigidBody::btRigidBodyConstructionInfo rigid_body_info(0.0f, motion_state, trishape, local_inertia );
 					body = new btRigidBody(rigid_body_info);
-					
 					static_body->set_collision_object(body);
+					static_body->add_shape(trishape);
+					
 					body->setUserPointer(static_body);
 					
 					int body_flags = body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT;
