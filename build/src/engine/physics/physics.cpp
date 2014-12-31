@@ -19,6 +19,8 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#include <vector>
+
 #include <platform/typedefs.h>
 #include <slim/xlog.h>
 #include "physics.h"
@@ -31,7 +33,7 @@
 
 #include "assets/asset_mesh.h"
 
-#include <vector>
+
 
 const float PHYSICS_PLAYER_HALF_WIDTH = 0.25f; // .25 == 1.6 ft wide
 const float PHYSICS_PLAYER_HALF_HEIGHT = 0.91f; // .91 == 6 ft tall
@@ -106,7 +108,7 @@ namespace gemini
 		
 		void startup()
 		{
-			PhysicsInterface* physics_interface = CREATE(PhysicsInterfaceImpl);
+			IPhysicsInterface* physics_interface = CREATE(PhysicsInterfaceImpl);
 			api::set_instance(physics_interface);
 		
 			bullet::startup();
@@ -120,8 +122,8 @@ namespace gemini
 
 			bullet::shutdown();
 			
-			PhysicsInterface* physics_interface = api::instance();
-			DESTROY(PhysicsInterface, physics_interface);
+			IPhysicsInterface* physics_interface = api::instance();
+			DESTROY(IPhysicsInterface, physics_interface);
 		} // shutdown
 		
 		

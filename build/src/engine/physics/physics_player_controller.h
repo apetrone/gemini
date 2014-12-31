@@ -21,36 +21,17 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <sdk/physics_api.h>
+
 namespace gemini
 {
-	struct GeometryInstanceData
+	namespace physics
 	{
-		unsigned int material_id;
-		unsigned int shader_id;
-	};
-
-	class IModelInstanceData
-	{
-	public:
-		virtual ~IModelInstanceData() {};
 		
-		virtual unsigned int asset_index() const = 0;
-		virtual glm::mat4& get_local_transform() = 0;
-		virtual void get_geometry_data(unsigned int index, GeometryInstanceData& geometry_data) const = 0;
-	};
-
-	class IModelInterface
-	{
-	public:
-		virtual ~IModelInterface() {};
+		class PlayerController : public IPlayerController
+		{
+			
+		};
 		
-		
-//		virtual int32_t get_model_index(const char* model_path) = 0;
-		
-		virtual int32_t create_instance_data(const char* model_path) = 0;
-		virtual void destroy_instance_data(int32_t index) = 0;
-		
-		virtual IModelInstanceData* get_instance_data(int32_t index) = 0;
-		
-	};
-}
+	} // namespace physics
+} // namespace gemini

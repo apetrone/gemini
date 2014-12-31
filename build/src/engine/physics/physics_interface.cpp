@@ -206,12 +206,12 @@ namespace gemini
 		} // destroy_object
 
 
-		PlayerController* PhysicsInterfaceImpl::create_player_controller(CollisionObject* object)
+		IPlayerController* PhysicsInterfaceImpl::create_player_controller(CollisionObject* object)
 		{
 			return 0;
 		}
 		
-		void PhysicsInterfaceImpl::destroy_player_controller(PlayerController* object)
+		void PhysicsInterfaceImpl::destroy_player_controller(IPlayerController* object)
 		{
 			
 		}

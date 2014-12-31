@@ -21,10 +21,10 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <vector>
+
 #include <slim/xstr.h>
 #include <platform/mem.h>
-
-#include <vector>
 
 #define DECLARE_FACTORY_CLASS( class_name, abstract_class )\
 	public:\

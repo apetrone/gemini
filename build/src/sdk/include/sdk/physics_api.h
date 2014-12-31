@@ -46,17 +46,17 @@ namespace gemini
 		};
 		
 		
-		class PlayerController
+		class IPlayerController
 		{
 		public:
-			virtual ~PlayerController() {};
+			virtual ~IPlayerController() {};
 			
 		}; // PlayerController
 		
-		class PhysicsInterface
+		class IPhysicsInterface
 		{
 		public:
-			virtual ~PhysicsInterface() {};
+			virtual ~IPhysicsInterface() {};
 			
 			virtual physics::CollisionObject* create_physics_model(
 				int32_t model_index,
@@ -78,11 +78,11 @@ namespace gemini
 			virtual void destroy_object(CollisionObject* object) = 0;
 			
 			
-			virtual PlayerController* create_player_controller(CollisionObject* object) = 0;
-			virtual void destroy_player_controller(PlayerController* object) = 0;
+			virtual IPlayerController* create_player_controller(CollisionObject* object) = 0;
+			virtual void destroy_player_controller(IPlayerController* object) = 0;
 		};
 
 		
-		typedef Interface<PhysicsInterface> api;
+		typedef Interface<IPhysicsInterface> api;
 	} // namespace physics
 } // namespace gemini

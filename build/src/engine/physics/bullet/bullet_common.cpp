@@ -19,11 +19,11 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
+#include <vector>
 
 #include <platform/mem.h>
 #include <slim/xlog.h>
 
-//#include <btBulletDynamicsCommon.h>
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
 
 #include <sdk/physics_collisionobject.h>
@@ -32,7 +32,6 @@
 #include "bullet_common.h"
 #include "bullet_debugdraw.h"
 
-#include <vector>
 
 namespace gemini
 {

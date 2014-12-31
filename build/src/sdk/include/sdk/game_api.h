@@ -26,10 +26,10 @@
 namespace gemini
 {
 	// Describes the interface exposed to the engine from the game.
-	class GameInterface
+	class IGameInterface
 	{
 	public:
-		virtual ~GameInterface() {};
+		virtual ~IGameInterface() {};
 		
 		// called when the engine connects to the game library
 		virtual bool startup() = 0;

@@ -31,10 +31,10 @@ namespace gemini
 {
 	class IEngineEntity;
 	
-	class EntityManager
+	class IEntityManager
 	{
 	public:
-		virtual ~EntityManager() {};
+		virtual ~IEntityManager() {};
 
 		virtual void add(IEngineEntity* entity) = 0;
 		virtual void remove(IEngineEntity* entity) = 0;

@@ -240,7 +240,7 @@ public:
 
 #include <core/factory.h>
 
-class EntityManagerImpl : public EntityManager
+class EntityManagerImpl : public IEntityManager
 {
 	gemini::IEngineEntity* entity_list[8];
 	size_t index;
@@ -285,11 +285,11 @@ void EntityManagerImpl::shutdown()
 
 
 
-class ModelInterfaceImpl : public gemini::ModelInterface
+class ModelInterfaceImpl : public gemini::IModelInterface
 {
 	// Each entity that has a model associated with it
 	// will have a model instance data allocated.
-	class ModelInstanceDataImpl : public ModelInstanceData
+	class ModelInstanceDataImpl : public IModelInstanceData
 	{
 	public:
 		unsigned int mesh_asset_index;
@@ -350,7 +350,7 @@ public:
 	}
 
 	
-	ModelInstanceData* get_instance_data(int32_t index)
+	IModelInstanceData* get_instance_data(int32_t index)
 	{
 		ModelInstanceMap::iterator it = id_to_instance.find(index);
 		if (it != id_to_instance.end())
@@ -364,14 +364,14 @@ public:
 
 
 
-class EngineInterfaceImpl : public EngineInterface
+class EngineInterfaceImpl : public IEngineInterface
 {
-	EntityManager* entity_manager;
-	ModelInterface* model_interface;
-	PhysicsInterface* physics_interface;
+	IEntityManager* entity_manager;
+	IModelInterface* model_interface;
+	IPhysicsInterface* physics_interface;
 public:
 
-	EngineInterfaceImpl(EntityManager* em, ModelInterface* mi, PhysicsInterface* pi) :
+	EngineInterfaceImpl(IEntityManager* em, IModelInterface* mi, IPhysicsInterface* pi) :
 		entity_manager(em),
 		model_interface(mi),
 		physics_interface(pi)
@@ -381,9 +381,9 @@ public:
 
 	virtual ~EngineInterfaceImpl() {};
 
-	virtual EntityManager* entities() { return entity_manager; }
-	virtual ModelInterface* models() { return model_interface; }
-	virtual PhysicsInterface* physics() { return physics_interface; }
+	virtual IEntityManager* entities() { return entity_manager; }
+	virtual IModelInterface* models() { return model_interface; }
+	virtual IPhysicsInterface* physics() { return physics_interface; }
 	
 	virtual void* allocate(size_t bytes)
 	{
@@ -398,7 +398,7 @@ public:
 
 
 
-typedef gemini::GameInterface* (*connect_engine_fn)(gemini::EngineInterface*);
+typedef gemini::IGameInterface* (*connect_engine_fn)(gemini::IEngineInterface*);
 typedef void (*disconnect_engine_fn)();
 
 class ProjectChimera : public kernel::IApplication,
@@ -440,8 +440,8 @@ public:
 	EntityManagerImpl entity_manager;
 	ModelInterfaceImpl model_interface;
 	
-	EngineInterface* engine_interface;
-	GameInterface* game_interface;
+	IEngineInterface* engine_interface;
+	IGameInterface* game_interface;
 
 	ProjectChimera()
 	{
@@ -461,7 +461,7 @@ public:
 	
 	virtual ~ProjectChimera()
 	{
-		DESTROY(EngineInterface, engine_interface);
+		DESTROY(IEngineInterface, engine_interface);
 	}
 	
 	virtual void event( kernel::KeyboardEvent & event )

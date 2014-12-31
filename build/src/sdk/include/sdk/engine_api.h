@@ -26,22 +26,22 @@
 
 namespace gemini
 {
-	class EntityManager;
-	class ModelInterface;
+	class IEntityManager;
+	class IModelInterface;
 	
 	namespace physics
 	{
-		class PhysicsInterface;
+		class IPhysicsInterface;
 	}
 
-	class EngineInterface
+	class IEngineInterface
 	{
 	public:
-		virtual ~EngineInterface() {};
+		virtual ~IEngineInterface() {};
 
-		virtual EntityManager* entities() = 0;
-		virtual ModelInterface* models() = 0;
-		virtual physics::PhysicsInterface* physics() = 0;
+		virtual IEntityManager* entities() = 0;
+		virtual IModelInterface* models() = 0;
+		virtual physics::IPhysicsInterface* physics() = 0;
 		
 		
 		virtual void* allocate(size_t bytes) = 0;
@@ -50,6 +50,6 @@ namespace gemini
 	
 	namespace engine
 	{
-		typedef Interface<EngineInterface> api;
+		typedef Interface<IEngineInterface> api;
 	}
 }

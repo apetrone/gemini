@@ -139,7 +139,31 @@ Style Rules
 		};
 
 
-- No prefixes are added to interface/abstract classes.
+- Only the following prefixes are added to classes:
+
+	a) Interface/Abstract classes are prefixed with the letter I.
+		The concrete implementation of this interface can merely drop the I.
+
+		.. code-block:: c
+
+			class IPlayerController
+			{
+			public:
+				virtual ~IPlayerController() {}
+
+				virtual void important_function() = 0;
+			};
+
+			// ...
+
+			class PlayerController : public IPlayerController
+			{
+				// ...
+			};
+
+	In the event this interface class is placed into its own file,
+	the file would also be prefixed with the letter I; lower-cased
+	to conform to file naming conventions.
 
 - Curly Braces
 
@@ -184,3 +208,16 @@ Style Rules
 			// ...
 		};
 
+- Files should be all lower-cased characters.
+	This eases the transition across platforms.
+
+	Additionally, underscores can be used to denote break up the name
+	to make it easier to read.
+
+	a) As an example:
+
+		.. code-block:: c
+
+			model_api.h
+			iplayercontroller.h
+			physics_interface.h

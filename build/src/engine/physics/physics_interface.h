@@ -21,19 +21,21 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <vector>
+
 #include <stdint.h>
 #include <core/mathlib.h>
 
 #include <sdk/physics_api.h>
 
-#include <vector>
+
 
 namespace gemini
 {
 	namespace physics
 	{
 		
-		class PhysicsInterfaceImpl : public PhysicsInterface
+		class PhysicsInterfaceImpl : public IPhysicsInterface
 		{
 		private:
 			std::vector<CollisionShape*> collision_shapes;
@@ -58,8 +60,8 @@ namespace gemini
 			
 			virtual void destroy_object(CollisionObject* object);
 			
-			virtual PlayerController* create_player_controller(CollisionObject* object);
-			virtual void destroy_player_controller(PlayerController* object);
+			virtual IPlayerController* create_player_controller(CollisionObject* object);
+			virtual void destroy_player_controller(IPlayerController* object);
 		};
 
 	} // namespace physics

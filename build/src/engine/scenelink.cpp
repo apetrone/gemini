@@ -218,7 +218,7 @@ namespace renderer
 //					LOGV("ent [%i], model_index = %i\n", i, model_index);
 					// fetch model instance data
 
-					gemini::ModelInstanceData* model_instance = engine::api::instance()->models()->get_instance_data(model_index);
+					gemini::IModelInstanceData* model_instance = engine::api::instance()->models()->get_instance_data(model_index);
 					if (model_instance)
 					{
 						// TODO: determine if this is a static or animated mesh.
