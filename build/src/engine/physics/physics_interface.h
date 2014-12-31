@@ -46,9 +46,7 @@ namespace gemini
 		
 			virtual physics::CollisionObject* create_physics_model(
 				int32_t model_index,
-				float mass_kg,
-				physics::PhysicsMotionInterface* motion_interface,
-				const glm::vec3& mass_center_offset
+				ObjectProperties& properties
 			);
 			
 			virtual physics::CollisionObject* create_character_object(CollisionShape* shape);

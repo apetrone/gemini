@@ -52,15 +52,14 @@ namespace gemini
 		}
 
 		physics::CollisionObject* PhysicsInterface::create_physics_model(
-													   int32_t model_index,
-													   float mass_kg,
-													   physics::PhysicsMotionInterface* motion_interface,
-													   const glm::vec3& mass_center_offset)
+				int32_t model_index,
+				ObjectProperties& properties
+			)
 		{
 			bool use_quantized_bvh_tree = true;
 			
 			
-			btScalar mass(mass_kg);
+			btScalar mass(properties.mass_kg);
 			btVector3 local_inertia(0, 0, 0);
 			
 			
@@ -82,6 +81,9 @@ namespace gemini
 			BulletRigidBody* rb = 0;
 			
 			bool dynamic_body = (mass != 0.0f);
+			
+			LOGV("dynamic body: %s\n", dynamic_body ? "Yes" : "No");
+			
 			if (!dynamic_body)
 			{
 				static_body = CREATE(BulletStaticBody);
@@ -104,8 +106,10 @@ namespace gemini
 				// The rigid body world transform is the center of mass. This is at the origin.
 				btTransform xf;
 				xf.setIdentity();
-				CustomMotionState * motion_state = new CustomMotionState(xf, motion_interface, mesh->mass_center_offset);
-				
+				btMotionState* motion_state = new btDefaultMotionState(xf);
+//				CustomMotionState * motion_state = new CustomMotionState(xf, motion_interface, mesh->mass_center_offset);
+//				const glm::vec3& mco = mesh->mass_center_offset;
+//				LOGV("mass_center_offset: %2.f, %2.f, %2.f\n", mco.x, mco.y, mco.z);
 				btCollisionShape* shape = 0;
 				// NOTE: Triangle shapes can ONLY be static objects.
 				// TODO: look into an alternative with btGImpactMeshShape or

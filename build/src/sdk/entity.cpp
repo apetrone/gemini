@@ -276,9 +276,22 @@ CollisionObject* Entity::physics_create_static()
 {
 	assert(engine::api::instance() && engine::api::instance()->physics());
 	
-	return engine::api::instance()->physics()->create_physics_model(model_index, 0.0f, 0, glm::vec3(0, 0, 0));
+	physics::ObjectProperties properties;
+	return engine::api::instance()->physics()->create_physics_model(model_index, properties);
 }
 
+
+
+
+
+CollisionObject* Entity::physics_create_model()
+{
+	assert(engine::api::instance() && engine::api::instance()->physics());
+	
+	physics::ObjectProperties properties;
+	properties.mass_kg = 50.0f;
+	return engine::api::instance()->physics()->create_physics_model(model_index, properties);
+}
 
 
 void Entity::set_position(glm::vec3 *new_position)

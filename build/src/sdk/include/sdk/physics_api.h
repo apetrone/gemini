@@ -53,16 +53,37 @@ namespace gemini
 			
 		}; // PlayerController
 		
+		struct SurfaceProperties
+		{
+			
+		}; // SurfaceProperties
+		
+		
+		struct ObjectProperties
+		{
+			float mass_kg;
+			
+			ObjectProperties() : mass_kg(0.0f) {}
+		}; // ObjectProperties
+		
 		class IPhysicsInterface
 		{
 		public:
 			virtual ~IPhysicsInterface() {};
 			
+			
+//			virtual physics::CollisionObject* create_static_object(
+//				CollisionShape* shape,
+//				const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0)
+//			) = 0;
+			
+//			virtual physics::CollisionObject* create_dynamic_object(
+//				CollisionShape* shape
+//			) = 0;
+			
 			virtual physics::CollisionObject* create_physics_model(
 				int32_t model_index,
-				float mass_kg = 0.0f,
-				physics::PhysicsMotionInterface* motion_interface = 0,
-				const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0)
+				ObjectProperties& properties
 			) = 0;
 			
 			virtual physics::CollisionObject* create_character_object(CollisionShape* shape) = 0;

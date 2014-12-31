@@ -162,7 +162,7 @@ public:
 	
 	// use the collision model associated with this entity's model to create
 	// a physics body.
-//	physics::CollisionObject* physics_create_model();
+	gemini::physics::CollisionObject* physics_create_model();
 	
 	// create a trigger
 //	physics::CollisionObject* physics_create_trigger(const glm::vec3& local_center, const glm::vec3& mins, const glm::vec3& maxs);
