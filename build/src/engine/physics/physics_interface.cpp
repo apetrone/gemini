@@ -178,14 +178,14 @@ namespace gemini
 			
 			short collision_filter_mask = btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter | btBroadphaseProxy::SensorTrigger;
 			
-			// must set the collision shape before adding it to the world
+			// NOTE: you must set the collision shape before adding it to the world
 			ghost->setCollisionShape(bullet_shape->get_shape());
-			bullet::get_world()->addCollisionObject(ghost, btBroadphaseProxy::CharacterFilter, collision_filter_mask);
-
 			ghost->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
 			ghost->setContactProcessingThreshold(0.0f);
 			ghost->setCcdMotionThreshold(0.1f);
 			ghost->setCcdSweptSphereRadius(0.1f);
+		
+			bullet::get_world()->addCollisionObject(ghost, btBroadphaseProxy::CharacterFilter, collision_filter_mask);
 		
 			return collision_object;
 		}
@@ -197,8 +197,6 @@ namespace gemini
 						
 			btCollisionShape* capsule = new btCapsuleShape(radius_meters, height_meters);
 			collision_shape->set_shape(capsule);
-
-		
 			return collision_shape;
 		}
 		
