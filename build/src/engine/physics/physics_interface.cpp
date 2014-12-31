@@ -104,7 +104,6 @@ namespace gemini
 				if (dynamic_body)
 				{
 					shape = new btBoxShape(btVector3(0.5f, 0.5f, 0.5f));
-					rb->set_collision_shape(shape);
 					
 					// calculate local intertia
 					shape->calculateLocalInertia(mass, local_inertia);
@@ -113,11 +112,12 @@ namespace gemini
 					btTransform local_transform;
 					local_transform.setIdentity();
 					compound->addChildShape(local_transform, shape);
-					
+
 					btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, motion_state, compound, local_inertia );
 					body = new btRigidBody( rbInfo );
 					
 					rb->set_collision_object(body);
+					rb->set_collision_shape(compound);
 					body->setUserPointer(rb);
 					
 					body->setRestitution(0.25f);
@@ -155,6 +155,11 @@ namespace gemini
 			return object;
 		} // create_physics_model
 		
+		physics::CollisionShape* PhysicsInterfaceImpl::create_capsule(float radius_meters, float height_meters)
+		{
+			return 0;
+		}
+		
 		
 		void PhysicsInterfaceImpl::destroy_object(CollisionObject* object)
 		{
@@ -162,6 +167,15 @@ namespace gemini
 		} // destroy_object
 
 
-
+		PlayerController* PhysicsInterfaceImpl::create_player_controller(CollisionObject* object)
+		{
+			return 0;
+		}
+		
+		void PhysicsInterfaceImpl::destroy_player_controller(PlayerController* object)
+		{
+			
+		}
+		
 	} // namespace physics
 } // namespace gemini

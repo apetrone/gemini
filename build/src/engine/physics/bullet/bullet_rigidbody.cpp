@@ -21,6 +21,7 @@
 // -------------------------------------------------------------
 
 #include <platform/mem.h>
+#include <slim/xlog.h>
 
 #include <btBulletDynamicsCommon.h>
 #include "bullet_rigidbody.h"
@@ -50,16 +51,16 @@ namespace gemini
 				}
 				bullet::get_world()->removeCollisionObject(body);
 				
-				for (int i = 0; i < bodies.size(); ++i)
+				for (int i = 0; i < shapes.size(); ++i)
 				{
-					delete bodies[i];
+					delete shapes[i];
 				}
-				bodies.clear();
+				shapes.clear();
 			}
 			
 			void BulletStaticBody::add_shape(btCollisionShape* shape)
 			{
-				bodies.push_back(shape);
+				shapes.push_back(shape);
 			}
 			
 
@@ -80,13 +81,19 @@ namespace gemini
 				}
 				bullet::get_world()->removeCollisionObject(body);
 				
-				delete shape;
+//				delete shape;
 				shape = 0;
 			}
 			
 			void BulletRigidBody::set_collision_shape(btCollisionShape* collision_shape)
 			{
 				shape = collision_shape;
+				
+				btRigidBody* body = get_bullet_body();
+				
+				// you cannot assign a collision shape until the body has been created
+				assert(body != 0);
+				body->setCollisionShape(collision_shape);
 			}
 
 			btRigidBody* BulletRigidBody::get_bullet_body() const { return  btRigidBody::upcast(object); }
@@ -126,16 +133,17 @@ namespace gemini
 			
 			void BulletRigidBody::set_parent(CollisionObject* first, CollisionObject* second)
 			{
-				btRigidBody* rb0 = get_bullet_body();
-				btRigidBody* rb1 = (static_cast<BulletRigidBody*>(second))->get_bullet_body();
-				
-				btTypedConstraint* joint = new btPoint2PointConstraint(*rb0, *rb1, btVector3(0, 1, 0), btVector3(0, -1, 0));
-				bullet::get_world()->addConstraint(joint);
-				joint->setDbgDrawSize(btScalar(5.0f));
-				
-				BulletConstraint* constraint = CREATE(BulletConstraint, joint);
-				first->add_constraint(constraint);
-				second->add_constraint(constraint);
+				LOGV("TODO: implement set_parent\n");
+//				btRigidBody* rb0 = get_bullet_body();
+//				btRigidBody* rb1 = (static_cast<BulletRigidBody*>(second))->get_bullet_body();
+//				
+//				btTypedConstraint* joint = new btPoint2PointConstraint(*rb0, *rb1, btVector3(0, 1, 0), btVector3(0, -1, 0));
+//				bullet::get_world()->addConstraint(joint);
+//				joint->setDbgDrawSize(btScalar(5.0f));
+//				
+//				BulletConstraint* constraint = CREATE(BulletConstraint, joint);
+//				first->add_constraint(constraint);
+//				second->add_constraint(constraint);
 			}
 		} // namespace bullet
 	} // namespace physics

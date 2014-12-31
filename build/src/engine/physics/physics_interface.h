@@ -35,13 +35,21 @@ namespace gemini
 		{
 		public:
 			virtual physics::CollisionObject* create_physics_model(
-			   int32_t model_index,
-			   float mass_kg,
-			   physics::PhysicsMotionInterface* motion_interface,
-			   const glm::vec3& mass_center_offset
+				int32_t model_index,
+				float mass_kg,
+				physics::PhysicsMotionInterface* motion_interface,
+				const glm::vec3& mass_center_offset
 			);
 			
+			virtual physics::CollisionShape* create_capsule(
+				float radius_meters,
+				float height_meters
+			 );
+			
 			virtual void destroy_object(CollisionObject* object);
+			
+			virtual PlayerController* create_player_controller(CollisionObject* object);
+			virtual void destroy_player_controller(PlayerController* object);
 		};
 
 	} // namespace physics

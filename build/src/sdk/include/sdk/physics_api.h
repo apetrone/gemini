@@ -30,6 +30,7 @@ namespace gemini
 {
 	namespace physics
 	{
+		class CollisionShape;
 		class CollisionObject;
 		
 		class PhysicsMotionInterface
@@ -44,20 +45,39 @@ namespace gemini
 			virtual void set_transform(const glm::vec3& position, const glm::quat& orientation, const glm::vec3& mass_center_offset) = 0;
 		};
 		
+		
+		class PlayerController
+		{
+		public:
+			virtual ~PlayerController() {};
+			
+		}; // PlayerController
+		
 		class PhysicsInterface
 		{
 		public:
 			virtual ~PhysicsInterface() {};
 			
 			virtual physics::CollisionObject* create_physics_model(
-																   int32_t model_index,
-																   float mass_kg = 0.0f,
-																   physics::PhysicsMotionInterface* motion_interface = 0,
-																   const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0)
-																   ) = 0;
-												
-												
+				int32_t model_index,
+				float mass_kg = 0.0f,
+				physics::PhysicsMotionInterface* motion_interface = 0,
+				const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0)
+			) = 0;
+			
+			// Shapes
+			// Shapes are handled internally by the physics system and do not
+			// need to be explicitly deleted.
+			virtual physics::CollisionShape* create_capsule(
+				float radius_meters,
+				float height_meters
+			) = 0;
+			
 			virtual void destroy_object(CollisionObject* object) = 0;
+			
+			
+			virtual PlayerController* create_player_controller(CollisionObject* object) = 0;
+			virtual void destroy_player_controller(PlayerController* object) = 0;
 		};
 
 		

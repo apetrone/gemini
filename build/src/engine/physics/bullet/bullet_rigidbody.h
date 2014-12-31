@@ -33,10 +33,10 @@ namespace gemini
 	{	
 		namespace bullet
 		{
-			
+			// The static body will manage its collision shapes
 			class BulletStaticBody : public BulletCollisionObject
 			{
-				btAlignedObjectArray<btCollisionShape*> bodies;
+				btAlignedObjectArray<btCollisionShape*> shapes;
 				
 			public:
 				BulletStaticBody();
@@ -47,6 +47,8 @@ namespace gemini
 			
 			class BulletRigidBody : public BulletCollisionObject, public RigidBody
 			{
+				// This will have keep a pointer to its active collision shape
+				// however, it will NOT manage it -- as it can be hot swapped.
 				btCollisionShape* shape;
 				
 			public:
