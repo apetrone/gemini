@@ -42,7 +42,7 @@ namespace gemini
 	namespace physics
 	{
 
-		PhysicsInterfaceImpl::~PhysicsInterfaceImpl()
+		PhysicsInterface::~PhysicsInterface()
 		{
 			// purge collision shapes
 			for (auto& shape : collision_shapes)
@@ -51,7 +51,7 @@ namespace gemini
 			}
 		}
 
-		physics::CollisionObject* PhysicsInterfaceImpl::create_physics_model(
+		physics::CollisionObject* PhysicsInterface::create_physics_model(
 													   int32_t model_index,
 													   float mass_kg,
 													   physics::PhysicsMotionInterface* motion_interface,
@@ -165,7 +165,7 @@ namespace gemini
 			return object;
 		} // create_physics_model
 		
-		physics::CollisionObject* PhysicsInterfaceImpl::create_character_object(CollisionShape* shape)
+		physics::CollisionObject* PhysicsInterface::create_character_object(CollisionShape* shape)
 		{
 			BulletCollisionObject* collision_object = CREATE(BulletCollisionObject);
 			
@@ -187,7 +187,7 @@ namespace gemini
 			return collision_object;
 		}
 		
-		physics::CollisionShape* PhysicsInterfaceImpl::create_capsule(float radius_meters, float height_meters)
+		physics::CollisionShape* PhysicsInterface::create_capsule(float radius_meters, float height_meters)
 		{
 			BulletCollisionShape* collision_shape = CREATE(BulletCollisionShape);
 			collision_shapes.push_back(collision_shape);
@@ -200,18 +200,18 @@ namespace gemini
 		}
 		
 		
-		void PhysicsInterfaceImpl::destroy_object(CollisionObject* object)
+		void PhysicsInterface::destroy_object(CollisionObject* object)
 		{
 			DESTROY(CollisionObject, object);
 		} // destroy_object
 
 
-		IPlayerController* PhysicsInterfaceImpl::create_player_controller(CollisionObject* object)
+		IPlayerController* PhysicsInterface::create_player_controller(CollisionObject* object)
 		{
 			return 0;
 		}
 		
-		void PhysicsInterfaceImpl::destroy_player_controller(IPlayerController* object)
+		void PhysicsInterface::destroy_player_controller(IPlayerController* object)
 		{
 			
 		}

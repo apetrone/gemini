@@ -240,13 +240,13 @@ public:
 
 #include <core/factory.h>
 
-class EntityManagerImpl : public IEntityManager
+class EntityManager : public IEntityManager
 {
 	gemini::IEngineEntity* entity_list[8];
 	size_t index;
 	
 public:
-	EntityManagerImpl() : index(0)
+	EntityManager() : index(0)
 	{
 		memset(entity_list, 0, sizeof(gemini::IEngineEntity*)*8);
 	}
@@ -261,22 +261,22 @@ public:
 };
 
 
-void EntityManagerImpl::add(IEngineEntity* entity)
+void EntityManager::add(IEngineEntity* entity)
 {
 	entity_list[index++] = entity;
 }
 
-void EntityManagerImpl::remove(IEngineEntity* entity)
+void EntityManager::remove(IEngineEntity* entity)
 {
 	LOGV("TODO: implement entity removal\n");
 }
 
-void EntityManagerImpl::startup()
+void EntityManager::startup()
 {
 	
 }
 
-void EntityManagerImpl::shutdown()
+void EntityManager::shutdown()
 {
 	
 }
@@ -285,17 +285,17 @@ void EntityManagerImpl::shutdown()
 
 
 
-class ModelInterfaceImpl : public gemini::IModelInterface
+class ModelInterface : public gemini::IModelInterface
 {
 	// Each entity that has a model associated with it
 	// will have a model instance data allocated.
-	class ModelInstanceDataImpl : public IModelInstanceData
+	class ModelInstanceData : public IModelInstanceData
 	{
 	public:
 		unsigned int mesh_asset_index;
 		assets::Mesh* mesh;
 		glm::mat4 transform;
-		ModelInstanceDataImpl() : mesh_asset_index(0)
+		ModelInstanceData() : mesh_asset_index(0)
 		{
 			mesh = assets::meshes()->find_with_id(mesh_asset_index);
 		}
@@ -316,7 +316,7 @@ class ModelInterfaceImpl : public gemini::IModelInterface
 	};
 
 
-	typedef std::map<int32_t, ModelInstanceDataImpl> ModelInstanceMap;
+	typedef std::map<int32_t, ModelInstanceData> ModelInstanceMap;
 	ModelInstanceMap id_to_instance;
 
 
@@ -330,7 +330,7 @@ public:
 			{
 				mesh->prepare_geometry();
 			}
-			ModelInstanceDataImpl data;
+			ModelInstanceData data;
 			data.mesh_asset_index = mesh->Id();
 			int32_t index = (int32_t)id_to_instance.size();
 			id_to_instance.insert(ModelInstanceMap::value_type(index, data));
@@ -364,14 +364,14 @@ public:
 
 
 
-class EngineInterfaceImpl : public IEngineInterface
+class EngineInterface : public IEngineInterface
 {
 	IEntityManager* entity_manager;
 	IModelInterface* model_interface;
 	IPhysicsInterface* physics_interface;
 public:
 
-	EngineInterfaceImpl(IEntityManager* em, IModelInterface* mi, IPhysicsInterface* pi) :
+	EngineInterface(IEntityManager* em, IModelInterface* mi, IPhysicsInterface* pi) :
 		entity_manager(em),
 		model_interface(mi),
 		physics_interface(pi)
@@ -379,7 +379,7 @@ public:
 	}
 
 
-	virtual ~EngineInterfaceImpl() {};
+	virtual ~EngineInterface() {};
 
 	virtual IEntityManager* entities() { return entity_manager; }
 	virtual IModelInterface* models() { return model_interface; }
@@ -437,8 +437,8 @@ public:
 	xlib_t gamelib;
 	disconnect_engine_fn disconnect_engine;
 	
-	EntityManagerImpl entity_manager;
-	ModelInterfaceImpl model_interface;
+	EntityManager entity_manager;
+	ModelInterface model_interface;
 	
 	IEngineInterface* engine_interface;
 	IGameInterface* game_interface;
@@ -638,7 +638,7 @@ public:
 			render_method = CREATE(DefaultRenderMethod, scenelink);
 		}
 		
-		engine_interface = CREATE(EngineInterfaceImpl, &entity_manager, &model_interface, physics::api::instance());
+		engine_interface = CREATE(EngineInterface, &entity_manager, &model_interface, physics::api::instance());
 		gemini::engine::api::set_instance(engine_interface);
 		
 		

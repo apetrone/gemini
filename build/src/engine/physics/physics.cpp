@@ -108,7 +108,7 @@ namespace gemini
 		
 		void startup()
 		{
-			IPhysicsInterface* physics_interface = CREATE(PhysicsInterfaceImpl);
+			IPhysicsInterface* physics_interface = CREATE(PhysicsInterface);
 			api::set_instance(physics_interface);
 		
 			bullet::startup();

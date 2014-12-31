@@ -35,14 +35,14 @@ namespace gemini
 	namespace physics
 	{
 		
-		class PhysicsInterfaceImpl : public IPhysicsInterface
+		class PhysicsInterface : public IPhysicsInterface
 		{
 		private:
 			std::vector<CollisionShape*> collision_shapes;
 		
 		public:
-			PhysicsInterfaceImpl() {}
-			virtual ~PhysicsInterfaceImpl();
+			PhysicsInterface() {}
+			virtual ~PhysicsInterface();
 		
 			virtual physics::CollisionObject* create_physics_model(
 				int32_t model_index,
