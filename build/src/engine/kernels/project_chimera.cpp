@@ -753,8 +753,8 @@ public:
 	virtual void step( kernel::Params & params )
 	{
 		// grab state here?
-		physics::MovementCommand command;
-		command.time = 0;
+//		physics::MovementCommand command;
+//		command.time = 0;
 
 		// handle input
 //		player_controller->get_input_command(command);
@@ -781,7 +781,8 @@ public:
 		
 		if (game_interface)
 		{
-			game_interface->step(params.step_interval_seconds);
+			game_interface->pre_physics_update();
+			game_interface->physics_update();
 		}
 		
 		if (active_camera)

@@ -40,10 +40,13 @@ namespace gemini
 		// called on level change
 		virtual void level_load() = 0;
 		
-		// called each physics step
-		virtual void step(float seconds) = 0;
+		// called before physics simulation is run
+		virtual void pre_physics_update() = 0;
 		
-		// called every frame
+		// called after physics simulation has run
+		virtual void physics_update() = 0;
+		
+		// called for each tick (frame) of the engine
 		virtual void tick() = 0;
 	}; // GameInterface
 } // namespace gemini

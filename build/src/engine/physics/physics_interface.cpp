@@ -171,15 +171,18 @@ namespace gemini
 			
 			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
 			
-			// TODO: set ghost transform
+			LOGV("TODO: set character object transform!\n");
+			
 			BulletCollisionShape* bullet_shape = static_cast<BulletCollisionShape*>(shape);
 			assert(bullet_shape != 0);
-
+			
+			short collision_filter_mask = btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter | btBroadphaseProxy::SensorTrigger;
+			
+			// must set the collision shape before adding it to the world
 			ghost->setCollisionShape(bullet_shape->get_shape());
+			bullet::get_world()->addCollisionObject(ghost, btBroadphaseProxy::CharacterFilter, collision_filter_mask);
+
 			ghost->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
-			
-			bullet::get_world()->addCollisionObject(ghost, btBroadphaseProxy::CharacterFilter, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter | btBroadphaseProxy::SensorTrigger);
-			
 			ghost->setContactProcessingThreshold(0.0f);
 			ghost->setCcdMotionThreshold(0.1f);
 			ghost->setCcdSweptSphereRadius(0.1f);
