@@ -302,7 +302,7 @@ class ModelInterface : public gemini::IModelInterface
 		
 		virtual unsigned int asset_index() const { return mesh_asset_index; }
 		virtual glm::mat4& get_local_transform() { return transform; }
-		
+		virtual void set_local_transform(const glm::mat4& _transform) { transform = _transform; }
 		
 		virtual void get_geometry_data(unsigned int index, GeometryInstanceData& geometry_data) const
 		{

@@ -40,6 +40,9 @@ namespace gemini
 		// called on level change
 		virtual void level_load() = 0;
 		
+		// the physics_update functions are synced with the physics
+		// simulation. the default rate is 1/60 second.
+		
 		// called before physics simulation is run
 		virtual void pre_physics_update() = 0;
 		

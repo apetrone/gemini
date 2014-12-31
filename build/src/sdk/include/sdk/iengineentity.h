@@ -26,6 +26,8 @@
 
 namespace gemini
 {
+	// TODO: Perhaps this should be rolled into another class
+	// with a better name. Perhaps the Physics objects?
 	struct EntityTransform
 	{
 		glm::vec3 local_position;
@@ -45,7 +47,7 @@ namespace gemini
 		virtual int32_t get_model_index() const = 0;
 
 		// transform accessors
-//		virtual EntityTransform get_transform() const = 0;
-//		virtual void set_transform(const EntityTransform& txform) = 0;
+		virtual EntityTransform get_transform() const = 0;
+		virtual void set_transform(const EntityTransform& txform) = 0;
 	};
 }
