@@ -233,6 +233,7 @@ void Entity::get_world_transform(glm::vec3& out_position, glm::quat& out_orienta
 
 void Entity::fixed_update( float delta_seconds )
 {
+	set_current_transform_from_physics();
 } // fixed_update
 
 void Entity::update()
@@ -252,11 +253,21 @@ void Entity::collision_ended(Entity* other)
 {
 }
 
-void Entity::physics_set_from_current_transform()
+void Entity::set_physics_from_current_transform()
 {
 	if (collision_object)
 	{
 		collision_object->set_world_position(position);
+//		collision_object->set_world_orientation(orientation);
+	}
+}
+
+void Entity::set_current_transform_from_physics()
+{
+	if (this->collision_object)
+	{
+		position = collision_object->get_world_position();
+//		orientation = collision_object->get_world_orientation();
 	}
 }
 

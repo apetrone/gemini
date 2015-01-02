@@ -141,7 +141,10 @@ struct Entity : public gemini::IEngineEntity
 	virtual void collision_began(Entity* other);
 	virtual void collision_ended(Entity* other);
 	
-	virtual void physics_set_from_current_transform();
+	
+	void set_physics_from_current_transform();
+	void set_current_transform_from_physics();
+	
 public:
 	// memory overloads
 	void* operator new(size_t bytes);
