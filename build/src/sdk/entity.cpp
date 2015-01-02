@@ -233,11 +233,11 @@ void Entity::get_world_transform(glm::vec3& out_position, glm::quat& out_orienta
 
 void Entity::fixed_update( float delta_seconds )
 {
-	set_current_transform_from_physics();
 } // fixed_update
 
 void Entity::update()
 {
+	set_current_transform_from_physics();
 } // update
 
 void Entity::remove()
