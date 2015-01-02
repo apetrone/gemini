@@ -143,6 +143,7 @@ namespace gemini
 					
 					rb->set_collision_object(body);
 					rb->set_collision_shape(compound);
+					rb->set_mass_center_offset(mass_center_offset);
 					body->setUserPointer(rb);
 					
 					body->setRestitution(0.25f);

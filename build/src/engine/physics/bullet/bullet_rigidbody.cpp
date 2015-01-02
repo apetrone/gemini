@@ -145,6 +145,30 @@ namespace gemini
 //				first->add_constraint(constraint);
 //				second->add_constraint(constraint);
 			}
+			
+			void BulletRigidBody::set_mass_center_offset(const glm::vec3 &mass_center_offset)
+			{
+				this->mass_center_offset = mass_center_offset;
+			}
+			
+			void BulletRigidBody::set_world_position(const glm::vec3& position)
+			{
+				assert(object != nullptr);
+				btTransform& world_transform = object->getWorldTransform();
+				
+				glm::vec3 target_position = position - mass_center_offset;
+				
+				world_transform.setOrigin(btVector3(target_position.x, target_position.y, target_position.z));
+				object->setWorldTransform(world_transform);
+			}
+			
+			glm::vec3 BulletRigidBody::get_world_position() const
+			{
+				assert(object != nullptr);
+				const btTransform& world_transform = object->getWorldTransform();
+				const btVector3& origin = world_transform.getOrigin();
+				return glm::vec3(origin.x(), origin.y(), origin.z()) + mass_center_offset;
+			}
 		} // namespace bullet
 	} // namespace physics
 } // namespace gemini
