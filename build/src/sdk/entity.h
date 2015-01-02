@@ -115,6 +115,8 @@ struct Entity : public gemini::IEngineEntity
 	uint32_t flags;
 	uint32_t model_index;
 	String name;
+	glm::vec3 position;
+	glm::quat orientation;
 	
 	Entity();
 	virtual ~Entity();
@@ -139,11 +141,17 @@ struct Entity : public gemini::IEngineEntity
 	virtual void collision_began(Entity* other);
 	virtual void collision_ended(Entity* other);
 	
-	
+	virtual void physics_set_from_current_transform();
 public:
 	// memory overloads
 	void* operator new(size_t bytes);
 	void operator delete(void* memory);
+	
+	
+public:
+	// ACCESSORS
+	void set_position(glm::vec3* new_position);
+	glm::vec3* get_position();
 	
 public:
 	
@@ -176,12 +184,8 @@ public:
 	// get/set functions for script interop
 	const String & get_name() { return this->name; }
 	void set_name( const String & object_name ) { this->name = object_name; }
-	
 
-	
-	glm::vec3 position;
-	void set_position(glm::vec3* new_position);
-	glm::vec3* get_position();
+
 
 	void apply_force(glm::vec3* force, glm::vec3* local_position);
 	void apply_central_force(glm::vec3* force);

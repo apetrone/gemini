@@ -35,6 +35,11 @@
 
 #include "assets/asset_mesh.h"
 
+
+#include <sdk/engine_api.h>
+#include <sdk/model_api.h>
+
+using namespace gemini;
 using namespace gemini::physics::bullet;
 
 namespace gemini
@@ -63,7 +68,8 @@ namespace gemini
 			btVector3 local_inertia(0, 0, 0);
 			
 			
-			assets::Mesh* mesh = assets::meshes()->find_with_id(model_index);
+			IModelInstanceData* model_interface = engine::api::instance()->models()->get_instance_data(model_index);
+			assets::Mesh* mesh = assets::meshes()->find_with_id(model_interface->asset_index());
 			if (!mesh)
 			{
 				LOGW("Unable to create physics for null mesh\n");
@@ -106,15 +112,21 @@ namespace gemini
 				// The rigid body world transform is the center of mass. This is at the origin.
 				btTransform xf;
 				xf.setIdentity();
+
+				const glm::vec3& mass_center_offset = mesh->mass_center_offset;
+//				xf.setOrigin(btVector3(mass_center_offset.x, mass_center_offset.y, mass_center_offset.z));
 				btMotionState* motion_state = new btDefaultMotionState(xf);
 //				CustomMotionState * motion_state = new CustomMotionState(xf, motion_interface, mesh->mass_center_offset);
-//				const glm::vec3& mco = mesh->mass_center_offset;
-//				LOGV("mass_center_offset: %2.f, %2.f, %2.f\n", mco.x, mco.y, mco.z);
 				btCollisionShape* shape = 0;
 				// NOTE: Triangle shapes can ONLY be static objects.
 				// TODO: look into an alternative with btGImpactMeshShape or
 				// btCompoundShape + convex decomposition.
 				// Could also use btConvexHullShape.
+				
+				btTransform local_transform;
+				local_transform.setIdentity();
+//				local_transform.setOrigin(btVector3(-mass_center_offset.x, -mass_center_offset.y, -mass_center_offset.z));
+				
 				if (dynamic_body)
 				{
 					shape = new btBoxShape(btVector3(0.5f, 0.5f, 0.5f));
@@ -123,8 +135,7 @@ namespace gemini
 					shape->calculateLocalInertia(mass, local_inertia);
 					
 					btCompoundShape* compound = new btCompoundShape();
-					btTransform local_transform;
-					local_transform.setIdentity();
+
 					compound->addChildShape(local_transform, shape);
 
 					btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, motion_state, compound, local_inertia );
@@ -149,8 +160,6 @@ namespace gemini
 					// use that to create a Bvh triangle mesh shape
 					btBvhTriangleMeshShape * trishape = new btBvhTriangleMeshShape( mesh, use_quantized_bvh_tree );
 					
-					btTransform local_transform;
-					local_transform.setIdentity();
 					btRigidBody::btRigidBodyConstructionInfo rigid_body_info(0.0f, motion_state, trishape, local_inertia );
 					body = new btRigidBody(rigid_body_info);
 					static_body->set_collision_object(body);

@@ -216,12 +216,10 @@ int32_t Entity::get_model_index() const
 	return model_index;
 }
 
-void Entity::get_world_transform(glm::vec3& position, glm::quat& orientation) const
+void Entity::get_world_transform(glm::vec3& out_position, glm::quat& out_orientation) const
 {
-	if (this->collision_object)
-	{
-		position = collision_object->get_world_position();
-	}
+	out_position = position;
+	out_orientation = orientation;
 }
 
 //void Entity::set_transform(const gemini::EntityTransform& txform)
@@ -254,6 +252,13 @@ void Entity::collision_ended(Entity* other)
 {
 }
 
+void Entity::physics_set_from_current_transform()
+{
+	if (collision_object)
+	{
+		collision_object->set_world_position(position);
+	}
+}
 
 //
 // MEMORY OVERLOADS
