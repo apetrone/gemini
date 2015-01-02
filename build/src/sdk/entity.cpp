@@ -293,6 +293,10 @@ CollisionObject* Entity::physics_create_model()
 {
 	assert(engine::api::instance() && engine::api::instance()->physics());
 	
+	// If you hit this assert, you need to set_model on this Entity before
+	// attempting to create a physics object from it.
+	assert(model_index != -1);
+	
 	physics::ObjectProperties properties;
 	properties.mass_kg = 50.0f;
 	return engine::api::instance()->physics()->create_physics_model(model_index, properties);
