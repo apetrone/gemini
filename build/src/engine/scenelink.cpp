@@ -247,8 +247,9 @@ namespace renderer
 								glm::quat orientation;
 								
 								e->get_world_transform(position, orientation);
-								transform = glm::toMat4(orientation);
-								transform = glm::translate(transform, position);
+								glm::mat4 rotation = glm::toMat4(orientation);
+								glm::mat4 translation = glm::translate(transform, position);
+								transform = translation*rotation;
 								
 								model_instance->set_local_transform(transform);
 								

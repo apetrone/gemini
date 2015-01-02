@@ -50,7 +50,6 @@ namespace gemini
 				// This will have keep a pointer to its active collision shape
 				// however, it will NOT manage it -- as it can be hot swapped.
 				btCollisionShape* shape;
-				glm::vec3 mass_center_offset;
 				
 			public:
 				BulletRigidBody();
@@ -65,10 +64,6 @@ namespace gemini
 				virtual void apply_central_force(const glm::vec3& force);
 				virtual void set_mass(float mass);
 				virtual void set_parent(CollisionObject* first, CollisionObject* second);
-				virtual void set_mass_center_offset(const glm::vec3& mass_center_offset);
-				
-				virtual void set_world_position(const glm::vec3& position);				
-				virtual glm::vec3 get_world_position() const;
 			};
 		} // namespace bullet
 	} // namespace physics

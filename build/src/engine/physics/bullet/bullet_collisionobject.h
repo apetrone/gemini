@@ -100,20 +100,41 @@ namespace gemini
 			
 			btCollisionObject* get_collision_object() const { return object; }
 			
-			virtual void set_world_position(const glm::vec3& position)
+			virtual void set_mass_center_offset(const glm::vec3 &mass_center_offset)
 			{
-				assert(object != nullptr);
-				btTransform& world_transform = object->getWorldTransform();
-				world_transform.setOrigin(btVector3(position.x, position.y, position.z));
-				object->setWorldTransform(world_transform);
+				this->mass_center_offset = mass_center_offset;
 			}
 			
-			virtual glm::vec3 get_world_position() const
+			virtual void set_world_transform(const glm::vec3& position, const glm::quat& orientation)
 			{
 				assert(object != nullptr);
+				btTransform world_transform = object->getWorldTransform();
+				
+				glm::vec3 target_position = position - mass_center_offset;
+
+//				world_transform.setOrigin(btVector3(target_position.x, target_position.y, target_position.z));
+//				world_transform.setRotation(btQuaternion(orientation.x, orientation.y, orientation.z, orientation.w));
+				
+				
+				btTransform translation;
+				translation.setOrigin(btVector3(target_position.x, target_position.y, target_position.z));
+				btTransform rotation;
+				rotation.setRotation(btQuaternion(orientation.x, orientation.y, orientation.z, orientation.w));
+				
+				
+				object->setWorldTransform(translation*rotation);
+			}
+			
+			
+			virtual void get_world_transform(glm::vec3& out_position, glm::quat& out_orientation)
+			{
+				assert(object != 0);
 				const btTransform& world_transform = object->getWorldTransform();
 				const btVector3& origin = world_transform.getOrigin();
-				return glm::vec3(origin.x(), origin.y(), origin.z());
+				const btQuaternion& rot = world_transform.getRotation();
+				
+				out_position = glm::vec3(origin.x(), origin.y(), origin.z()) + mass_center_offset;
+				out_orientation = glm::quat(rot.w(), rot.x(), rot.y(), rot.z());
 			}
 			
 			virtual void collision_began(CollisionObject* other)

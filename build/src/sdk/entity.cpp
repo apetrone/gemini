@@ -69,48 +69,12 @@ static void entity_collision_callback(CollisionEventType type, CollisionObject* 
 	}
 }
 
-
-//void EntityMotionInterface::get_transform(glm::vec3& position, const glm::quat& orientation)
-//{
-//			
-//}
-//
-//void EntityMotionInterface::set_transform(const glm::vec3& position, const glm::quat& orientation, const glm::vec3& mass_center_offset)
-//{
-//	this->node->local_position = mass_center_offset;
-//	this->node->translation = position + mass_center_offset;
-//	this->node->rotation = orientation;
-//	this->target->position = position;
-//}
-
-
-
 void entity_startup()
 {
 }
 
 void entity_post_script_load()
 {
-}
-
-
-void entity_prestep()
-{
-	// this updates the ent's position with that of the physics body
-	EntityListType::Collection::iterator it = entity_list().objects.begin();
-	EntityListType::Collection::iterator end = entity_list().objects.end();
-	Entity* ent;
-	for( ; it != end; ++it )
-	{
-		ent = (*it);
-		if (ent->collision_object)
-		{
-			// copy body's position over to node and entity
-			const glm::vec3& world_position = ent->collision_object->get_world_position();
-//			ent->node->translation = world_position;
-			ent->position = world_position;
-		}
-	}
 }
 
 void entity_step()
@@ -198,18 +162,9 @@ Entity::~Entity()
 		engine::api::instance()->physics()->destroy_object(this->collision_object);
 		this->collision_object = 0;
 	}
-	
-	
-//	if (this->motion_interface)
-//	{
-//		DESTROY(EntityMotionInterface, this->motion_interface);
-//	}
+
 } // ~Entity
 
-//void Entity::set_model_index(int32_t index)
-//{
-//	model_index = index;
-//}
 
 int32_t Entity::get_model_index() const
 {
@@ -257,8 +212,7 @@ void Entity::set_physics_from_current_transform()
 {
 	if (collision_object)
 	{
-		collision_object->set_world_position(position);
-//		collision_object->set_world_orientation(orientation);
+		collision_object->set_world_transform(position, orientation);
 	}
 }
 
@@ -266,8 +220,7 @@ void Entity::set_current_transform_from_physics()
 {
 	if (this->collision_object)
 	{
-		position = collision_object->get_world_position();
-//		orientation = collision_object->get_world_orientation();
+		collision_object->get_world_transform(position, orientation);
 	}
 }
 
@@ -320,7 +273,7 @@ void Entity::set_position(glm::vec3 *new_position)
 	
 	if (collision_object)
 	{
-		collision_object->set_world_position(*new_position);
+		collision_object->set_world_transform(*new_position, orientation);
 	}
 }
 

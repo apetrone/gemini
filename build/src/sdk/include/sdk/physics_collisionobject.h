@@ -63,6 +63,8 @@ namespace gemini
 			CollisionCallback callback;
 			void* user_data;
 			Constraint* constraints[MAX_CONSTRAINTS_PER_OBJECT];
+			glm::vec3 mass_center_offset;
+
 			
 		public:
 			CollisionObject(CollisionObjectType type = CollisionType_Invalid) :
@@ -89,12 +91,11 @@ namespace gemini
 			{
 				callback = _callback;
 			}
+						
+			virtual void set_mass_center_offset(const glm::vec3& mass_center_offset) = 0;
 			
-			virtual void set_world_position(const glm::vec3& position) = 0;
-			virtual glm::vec3 get_world_position() const = 0;
-			
-//			virtual void set_world_orientation(const glm::quat& orientation) = 0;
-//			virtual glm::quat get_world_orientation() const = 0;
+			virtual void get_world_transform(glm::vec3& position, glm::quat& orientation) = 0;
+			virtual void set_world_transform(const glm::vec3& position, const glm::quat& orientation) = 0;
 			
 			// invoked when this object when another object collides with it
 			virtual void collision_began(CollisionObject* other) = 0;

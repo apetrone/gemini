@@ -33,8 +33,6 @@ namespace gemini
 		{
 		public:
 			virtual ~RigidBody() {}
-			
-			virtual void set_mass_center_offset(const glm::vec3& mass_center_offset) = 0;
 		};
 	} // namespace physics
 } // namespace gemini
