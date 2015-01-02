@@ -21,12 +21,6 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <platform/typedefs.h>
-#include <platform/mem.h>
-
-#include <vector>
-
-
 namespace gemini
 {
 	class IEngineEntity;

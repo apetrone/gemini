@@ -56,8 +56,7 @@
 
 #include "gamerules.h"
 
-#include "entity_manager.h"
-
+#include <sdk/entity_api.h>
 #include <sdk/iengineentity.h>
 #include <sdk/model_api.h>
 #include <sdk/engine_api.h>

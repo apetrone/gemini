@@ -35,7 +35,7 @@
 //#include "assets/asset_mesh.h"
 
 
-#include "entity_manager.h"
+#include <sdk/entity_api.h>
 #include <sdk/engine_api.h>
 #include <sdk/physics_api.h>
 #include <sdk/model_api.h>
