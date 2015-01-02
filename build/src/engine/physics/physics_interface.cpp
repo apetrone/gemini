@@ -221,5 +221,10 @@ namespace gemini
 			
 		}
 		
+		void PhysicsInterface::step_simulation(float delta_seconds)
+		{
+			bullet::step(delta_seconds);
+		}
+		
 	} // namespace physics
 } // namespace gemini

@@ -101,6 +101,8 @@ namespace gemini
 			
 			virtual IPlayerController* create_player_controller(CollisionObject* object) = 0;
 			virtual void destroy_player_controller(IPlayerController* object) = 0;
+			
+			virtual void step_simulation(float delta_seconds) = 0;
 		};
 
 		

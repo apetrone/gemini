@@ -516,9 +516,6 @@ namespace kernel
 			// pass off to application
 			_active_application->step( _kernel->parameters() );
 			
-			// step physics before we let the application have a chance
-			gemini::physics::step(_kernel->parameters().step_interval_seconds);
-			
 			// step debug draw
 			debugdraw::update(_kernel->parameters().step_interval_seconds);
 		}

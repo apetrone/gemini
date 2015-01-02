@@ -60,6 +60,8 @@ namespace gemini
 			
 			virtual IPlayerController* create_player_controller(CollisionObject* object);
 			virtual void destroy_player_controller(IPlayerController* object);
+			
+			virtual void step_simulation(float delta_seconds);
 		};
 
 	} // namespace physics

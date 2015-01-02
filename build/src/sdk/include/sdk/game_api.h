@@ -42,12 +42,9 @@ namespace gemini
 		
 		// the physics_update functions are synced with the physics
 		// simulation. the default rate is 1/60 second.
-		
-		// called before physics simulation is run
-		virtual void pre_physics_update() = 0;
-		
-		// called after physics simulation has run
-		virtual void physics_update() = 0;
+				
+		// called when physics simulation should run
+		virtual void physics_update(float delta_seconds) = 0;
 		
 		// called for each tick (frame) of the engine
 		virtual void tick() = 0;
