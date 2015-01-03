@@ -21,6 +21,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <core/mathlib.h>
+
 namespace gemini
 {
 	struct GeometryInstanceData
