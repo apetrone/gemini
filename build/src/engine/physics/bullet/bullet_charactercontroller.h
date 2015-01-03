@@ -58,27 +58,13 @@ class btPairCachingGhostObject;
 
 class Camera;
 
+#include <sdk/experimental_api.h>
 
 namespace gemini
 {
 
 	namespace physics
 	{
-		typedef int16_t MovementValue;
-		struct MovementCommand
-		{
-			unsigned int time;
-			MovementValue left;
-			MovementValue right;
-			MovementValue forward;
-			MovementValue back;
-			
-			MovementCommand()
-			{
-				memset(this, 0, sizeof(MovementCommand));
-			}
-		};
-
 		///KinematicCharacter is an object that supports a sliding motion in a world.
 		///It uses a ghost object and convex sweep test to test for upcoming collisions. This is combined with discrete collision detection to recover from penetrations.
 		///Interaction between KinematicCharacter and dynamic rigid bodies needs to be explicity implemented by the user.
@@ -245,23 +231,6 @@ namespace gemini
 			
 			
 			void get_movement_command(physics::MovementCommand& command);
-		};
-		
-		void player_move(KinematicCharacter* character, Camera& camera, const MovementCommand& command);
-		
-		// aggregate controller
-		class CharacterController
-		{
-		public:
-			KinematicCharacter* character;
-			Camera* camera;
-			
-			CharacterController() : character(0), camera(0)
-			{}
-			
-			void get_input_command(MovementCommand& command);
-			
-			void apply_command(const MovementCommand& command);
 		};
 	} // namespace physics
 } // namespace gemini

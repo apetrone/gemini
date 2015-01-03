@@ -36,7 +36,6 @@
 #include "btBulletDynamicsCommon.h"
 
 #include "physics/physics.h"
-//#include "bullet/bullet_charactercontroller.h"
 #include "physics/physics_player_controller.h"
 
 #include <renderer/font.h>
@@ -62,6 +61,7 @@
 #include <sdk/model_api.h>
 #include <sdk/engine_api.h>
 #include <sdk/game_api.h>
+#include <sdk/experimental_api.h>
 
 #include <platform/mem.h>
 
@@ -366,18 +366,55 @@ public:
 };
 
 
+class Experimental : public gemini::IExperimental
+{
+public:
+
+	virtual void get_player_command(uint8_t index, physics::MovementCommand& command)
+	{
+		// add the inputs and then normalize
+		input::JoystickInput& joystick = input::state()->joystick(0);
+		
+		command.left += input::state()->keyboard().is_down(input::KEY_A) * input::AxisValueMaximum;
+		command.right += input::state()->keyboard().is_down(input::KEY_D) * input::AxisValueMaximum;
+		command.forward += input::state()->keyboard().is_down(input::KEY_W) * input::AxisValueMaximum;
+		command.back += input::state()->keyboard().is_down(input::KEY_S) * input::AxisValueMaximum;
+		
+		if (joystick.axes[0].value < 0)
+		{
+			command.left += (joystick.axes[0].value/(float)input::AxisValueMinimum) * input::AxisValueMaximum;
+		}
+		if (joystick.axes[0].value > 0)
+		{
+			command.right += (joystick.axes[0].value/(float)input::AxisValueMaximum) * input::AxisValueMaximum;
+		}
+		
+		if (joystick.axes[1].value < 0)
+		{
+			command.forward += (joystick.axes[1].value/(float)input::AxisValueMinimum) * input::AxisValueMaximum;
+		}
+		if (joystick.axes[1].value > 0)
+		{
+			command.back += (joystick.axes[1].value/(float)input::AxisValueMaximum) * input::AxisValueMaximum;
+		}
+	}
+
+};
+
 
 class EngineInterface : public IEngineInterface
 {
 	IEntityManager* entity_manager;
 	IModelInterface* model_interface;
 	IPhysicsInterface* physics_interface;
+	IExperimental* experimental_interface;
 public:
 
-	EngineInterface(IEntityManager* em, IModelInterface* mi, IPhysicsInterface* pi) :
+	EngineInterface(IEntityManager* em, IModelInterface* mi, IPhysicsInterface* pi, IExperimental* ei) :
 		entity_manager(em),
 		model_interface(mi),
-		physics_interface(pi)
+		physics_interface(pi),
+		experimental_interface(ei)
 	{
 	}
 
@@ -387,6 +424,7 @@ public:
 	virtual IEntityManager* entities() { return entity_manager; }
 	virtual IModelInterface* models() { return model_interface; }
 	virtual IPhysicsInterface* physics() { return physics_interface; }
+	virtual IExperimental* experiment() { return experimental_interface; }
 	
 	virtual void* allocate(size_t bytes)
 	{
@@ -415,8 +453,6 @@ public:
 	DECLARE_APPLICATION(ProjectChimera);
 
 	Camera* active_camera;
-//	CharacterController* player_controller;
-//	KinematicCharacter* character;
 
 	vr::HeadMountedDevice* device;
 
@@ -442,14 +478,14 @@ public:
 	
 	EntityManager entity_manager;
 	ModelInterface model_interface;
-	
+	Experimental experimental;
+		
 	IEngineInterface* engine_interface;
 	IGameInterface* game_interface;
 
+public:
 	ProjectChimera()
 	{
-//		player_controller = 0;
-//		character = 0;
 		device = 0;
 		render_method = 0;
 		active_camera = &main_camera;
@@ -641,22 +677,13 @@ public:
 			render_method = CREATE(DefaultRenderMethod, scenelink);
 		}
 		
-		engine_interface = CREATE(EngineInterface, &entity_manager, &model_interface, physics::api::instance());
+		engine_interface = CREATE(EngineInterface, &entity_manager, &model_interface, physics::api::instance(), &experimental);
 		gemini::engine::api::set_instance(engine_interface);
 		
 		
 //		background = audio::create_sound("sounds/wind_loop");
 //		background_source = audio::play(background, -1);
-		
-		LOGV("TODO: create character controller!\n");
-		// create character
 
-//		character = create_character_controller(glm::vec3(0, 2, 0), false);
-//		character->clear_state();
-		
-//		player_controller = CREATE(CharacterController);
-//		player_controller->character = character;
-			
 //		player_controller->camera = active_camera;
 		active_camera->type = Camera::FIRST_PERSON;
 		active_camera->move_speed = 0.1f;
@@ -666,34 +693,6 @@ public:
 			
 		// capture the mouse
 		kernel::instance()->capture_mouse( true );
-
-		// entity startup
-//		entity_startup();
-
-//		world = CREATE(Entity);
-//		world->set_model("models/cabin");
-//		world->set_physics_object(world->physics_create_static());
-//		world->set_physics(0);
-//		entity_list[0] = world;
-
-		// create the player entity
-//		player = (Player*)CREATE(Entity);
-//		player->set_physics(2);
-//		entity_list[1] = player;
-
-		// EXPERIMENTAL
-		int32_t i = model_interface.create_instance_data("models/cabin");
-		int32_t j = model_interface.create_instance_data("models/generator_core");
-		int32_t k = model_interface.create_instance_data("models/doorway");
-		int32_t l = model_interface.create_instance_data("models/plane");
-		
-		
-		model_interface.destroy_instance_data(i);
-		model_interface.destroy_instance_data(j);
-		model_interface.destroy_instance_data(l);
-		model_interface.destroy_instance_data(k);
-
-
 
 		// load the game library
 		StackString<MAX_PATH_SIZE> game_library_path = core::filesystem::content_directory();
@@ -718,36 +717,13 @@ public:
 			if (!game_interface)
 			{
 				LOGE("Unable to connect engine to game library\n");
+				assert(game_interface != 0);
 			}
-			
-			assert(game_interface != 0);
 			
 			game_interface->startup();
 			
 			
 			game_interface->level_load();
-			
-//			create_gamerules = (gemini::game::create_gamerules_fn) xlib_find_symbol(&gamelib, "create_gamerules");
-//			destroy_gamerules = (gemini::game::destroy_gamerules_fn) xlib_find_symbol(&gamelib, "destroy_gamerules");
-			
-//			assert(create_gamerules && destroy_gamerules);
-			
-//			if (create_gamerules)
-//			{
-//				gamerules = create_gamerules();
-//			}
-//			else
-//			{
-//				LOGE("Unable to find create_gamerules function!\n");
-//			}
-			
-			// try to install game interface
-//			typedef void (*link_game_interface_fn)(gemini::game::GameInterface*);
-//			link_game_interface_fn install_game_interface = (link_game_interface_fn)xlib_find_symbol(&gamelib, "link_game_interface");
-//			if (install_game_interface)
-//			{
-//				install_game_interface(&game_interface);
-//			}
 		}
 
 		return kernel::Application_Success;
@@ -851,14 +827,6 @@ public:
 	
 	virtual void shutdown( kernel::Params & params )
 	{
-//		DESTROY(CharacterController, player_controller);
-
-//
-//		DESTROY(Player, player);
-//		DESTROY(Entity, world);
-
-//		entity_shutdown();
-
 		DESTROY(SceneRenderMethod, render_method);
 		
 		if (device)

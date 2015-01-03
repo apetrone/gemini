@@ -33,6 +33,8 @@ namespace gemini
 		class CollisionShape;
 		class CollisionObject;
 		
+		struct MovementCommand;
+		
 		class PhysicsMotionInterface
 		{
 		public:
@@ -55,6 +57,7 @@ namespace gemini
 			virtual CollisionObject* get_controlled_object() const = 0;
 			
 			virtual void simulate(float delta_seconds) = 0;
+			virtual void apply_movement_command(const physics::MovementCommand& command) = 0;
 		}; // PlayerController
 		
 		struct SurfaceProperties
@@ -66,9 +69,12 @@ namespace gemini
 		struct ObjectProperties
 		{
 			float mass_kg;
+			float restitution;
+			float friction;
 			
-			ObjectProperties() : mass_kg(0.0f) {}
+			ObjectProperties() : mass_kg(0.0f), restitution(1.0f), friction(0.25f) {}
 		}; // ObjectProperties
+	
 		
 		class IPhysicsInterface
 		{

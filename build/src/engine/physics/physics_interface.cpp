@@ -45,6 +45,9 @@
 using namespace gemini;
 using namespace gemini::physics::bullet;
 
+
+#include "input.h"
+
 namespace gemini
 {
 	namespace physics
@@ -55,6 +58,78 @@ namespace gemini
 			{
 				CollisionObject* target;
 				KinematicCharacter* character;
+				
+			private:
+				void move_player(KinematicCharacter* character, const MovementCommand& command)
+				{
+					if (character)
+					{
+						LOGV("TODO: fetch camera angles\n");
+						
+						glm::vec3 cam_right = glm::vec3(1, 0, 0);
+						glm::vec3 cam_dir = glm::vec3(0, 0, -1);
+						
+						const float QUOTIENT = (1.0f/input::AxisValueMaximum);
+						
+						if (character)
+						{
+							character->setFacingDirections(
+														   btVector3(cam_dir.x, cam_dir.y, cam_dir.z),
+														   btVector3(cam_right.x, cam_right.y, cam_right.z)
+														   );
+							
+							character->setMovementWeight(
+														 command.forward * QUOTIENT,
+														 command.back * QUOTIENT,
+														 command.left * QUOTIENT,
+														 command.right * QUOTIENT
+														 );
+							
+							bool movement_is_zero = (
+													 command.forward == 0 &&
+													 command.right == 0 &&
+													 command.left == 0 &&
+													 command.back == 0
+													 );
+							
+							character->enableDamping(movement_is_zero);
+						}
+					
+					
+					// old version
+#if 0
+						glm::vec3 cam_right = camera.side;
+						glm::vec3 cam_dir = camera.view;
+						
+						const float QUOTIENT = (1.0f/input::AxisValueMaximum);
+						
+						if (character)
+						{
+							character->setFacingDirections(
+														   btVector3(cam_dir.x, cam_dir.y, cam_dir.z),
+														   btVector3(cam_right.x, cam_right.y, cam_right.z)
+														   );
+							
+							character->setMovementWeight(
+														 command.forward * QUOTIENT,
+														 command.back * QUOTIENT,
+														 command.left * QUOTIENT,
+														 command.right * QUOTIENT
+														 );
+							
+							bool movement_is_zero = (
+													 command.forward == 0 &&
+													 command.right == 0 &&
+													 command.left == 0 &&
+													 command.back == 0
+													 );
+							
+							character->enableDamping(movement_is_zero);
+						}
+#endif
+					}
+				} // player_move
+				
 				
 			public:
 				BulletPlayerController() : target(0), character(0)
@@ -99,6 +174,32 @@ namespace gemini
 					if (character)
 					{
 						character->updateAction(bullet::get_world(), delta_seconds);
+					}
+				}
+				
+				virtual void apply_movement_command(const MovementCommand& command)
+				{
+					if (character)
+					{
+//						physics::player_move(character, *camera, command);
+						move_player(character, command);
+						
+						// rotate physics body based on camera yaw
+						btTransform worldTrans = character->getGhostObject()->getWorldTransform();
+						LOGV("TODO: get angles from camera\n");
+//						btQuaternion rotation(btVector3(0,1,0), mathlib::degrees_to_radians(-camera->yaw));
+//						worldTrans.setRotation(rotation);
+
+						character->getGhostObject()->setWorldTransform(worldTrans);
+						
+						// sync the camera to the ghost object
+						btGhostObject* ghost = character->getGhostObject();
+						btTransform tr = ghost->getWorldTransform();
+						btVector3 origin = tr.getOrigin();
+						origin += btVector3(0, .9, 0);
+						
+						LOGV("TODO: sync with camera\n");
+//						camera->pos = glm::vec3(origin.x(), origin.y(), origin.z());
 					}
 				}
 			};
@@ -204,8 +305,8 @@ namespace gemini
 					rb->set_mass_center_offset(mass_center_offset);
 					body->setUserPointer(rb);
 					
-					body->setRestitution(0.25f);
-					body->setFriction(0.5f);
+					body->setRestitution(properties.restitution);
+					body->setFriction(properties.friction);
 					body->setCcdMotionThreshold(0.1f);
 					body->setCcdSweptSphereRadius(0.1f);
 				}

@@ -22,38 +22,35 @@
 #pragma once
 
 #include <stdint.h>
-#include <sdk/interface.h>
 
 namespace gemini
 {
-	class IEntityManager;
-	class IModelInterface;
-	
 	namespace physics
 	{
-		class IPhysicsInterface;
+		typedef int16_t MovementValue;
+		struct MovementCommand
+		{
+			unsigned int time;
+			MovementValue left;
+			MovementValue right;
+			MovementValue forward;
+			MovementValue back;
+			
+			MovementCommand()
+			{
+				memset(this, 0, sizeof(MovementCommand));
+			}
+		};
 	}
-	
-	class IExperimental;
 
-	class IEngineInterface
+	class IExperimental
 	{
 	public:
-		virtual ~IEngineInterface() {};
-
-		// systems
-		virtual IEntityManager* entities() = 0;
-		virtual IModelInterface* models() = 0;
-		virtual physics::IPhysicsInterface* physics() = 0;
-		virtual IExperimental* experiment() = 0;
+		virtual ~IExperimental() {}
 		
-		// memory hooks
-		virtual void* allocate(size_t bytes) = 0;
-		virtual void deallocate(void* pointer) = 0;
+		
+		
+		virtual void get_player_command(uint8_t index, physics::MovementCommand& command) = 0;
+		
 	};
-	
-	namespace engine
-	{
-		typedef Interface<IEngineInterface> api;
-	}
-}
+} // namespace gemini

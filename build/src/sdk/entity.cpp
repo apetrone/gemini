@@ -262,7 +262,9 @@ CollisionObject* Entity::physics_create_model()
 	assert(model_index != -1);
 	
 	physics::ObjectProperties properties;
-	properties.mass_kg = 50.0f;
+	properties.mass_kg = 10.0f;
+	properties.restitution = 0.5f;
+	properties.friction = 0.5f;
 	return engine::api::instance()->physics()->create_physics_model(model_index, properties);
 }
 
