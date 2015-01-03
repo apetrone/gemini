@@ -110,19 +110,13 @@ namespace gemini
 				assert(object != nullptr);
 				btTransform world_transform = object->getWorldTransform();
 				
-				glm::vec3 target_position = position - mass_center_offset;
+				glm::vec3 target_position = position;// - mass_center_offset;
 
-//				world_transform.setOrigin(btVector3(target_position.x, target_position.y, target_position.z));
-//				world_transform.setRotation(btQuaternion(orientation.x, orientation.y, orientation.z, orientation.w));
-				
-				
-				btTransform translation;
-				translation.setOrigin(btVector3(target_position.x, target_position.y, target_position.z));
-				btTransform rotation;
-				rotation.setRotation(btQuaternion(orientation.x, orientation.y, orientation.z, orientation.w));
-				
-				
-				object->setWorldTransform(translation*rotation);
+				btTransform transform;
+				transform.setIdentity();
+				transform.setRotation(btQuaternion(orientation.x, orientation.y, orientation.z, orientation.w));
+				transform.setOrigin(btVector3(target_position.x, target_position.y, target_position.z));
+				object->setWorldTransform(transform);
 			}
 			
 			
@@ -133,7 +127,7 @@ namespace gemini
 				const btVector3& origin = world_transform.getOrigin();
 				const btQuaternion& rot = world_transform.getRotation();
 				
-				out_position = glm::vec3(origin.x(), origin.y(), origin.z()) + mass_center_offset;
+				out_position = glm::vec3(origin.x(), origin.y(), origin.z());// + mass_center_offset;
 				out_orientation = glm::quat(rot.w(), rot.x(), rot.y(), rot.z());
 			}
 			
