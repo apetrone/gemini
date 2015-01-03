@@ -64,7 +64,7 @@ namespace gemini
 			}
 			
 
-			BulletRigidBody::BulletRigidBody() : shape(nullptr)
+			BulletRigidBody::BulletRigidBody()
 			{
 				this->collision_type = physics::CollisionType_Dynamic;
 			}
@@ -74,27 +74,18 @@ namespace gemini
 				remove_constraints();
 				
 				btRigidBody* body = get_bullet_body();
-				
-				if (body && body->getMotionState())
+
+				if (body)
 				{
-					delete body->getMotionState();
+					if (body->getMotionState())
+					{
+						delete body->getMotionState();
+					}
+					
+					bullet::get_world()->removeCollisionObject(body);
 				}
-				bullet::get_world()->removeCollisionObject(body);
-				
-//				delete shape;
-				shape = 0;
 			}
-			
-			void BulletRigidBody::set_collision_shape(btCollisionShape* collision_shape)
-			{
-				shape = collision_shape;
-				
-				btRigidBody* body = get_bullet_body();
-				
-				// you cannot assign a collision shape until the body has been created
-				assert(body != 0);
-				body->setCollisionShape(collision_shape);
-			}
+
 
 			btRigidBody* BulletRigidBody::get_bullet_body() const { return  btRigidBody::upcast(object); }
 			

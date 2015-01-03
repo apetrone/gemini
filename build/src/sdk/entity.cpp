@@ -141,7 +141,7 @@ Entity::Entity() :
 	flags(0),
 	collision_object(0),
 //	motion_interface(0),
-	model_index(0)
+	model_index(-1)
 {
 	this->id = entity_list().count();
 	

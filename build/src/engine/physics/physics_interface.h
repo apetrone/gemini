@@ -59,7 +59,7 @@ namespace gemini
 			virtual void destroy_object(CollisionObject* object);
 			
 			virtual IPlayerController* create_player_controller(CollisionObject* object);
-			virtual void destroy_player_controller(IPlayerController* object);
+			virtual void destroy_player_controller(IPlayerController* controller);
 			
 			virtual void step_simulation(float delta_seconds);
 		};

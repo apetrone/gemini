@@ -50,7 +50,11 @@ namespace gemini
 		{
 		public:
 			virtual ~IPlayerController() {};
+						
+			virtual void set_controlled_object(CollisionObject* collision_object) = 0;
+			virtual CollisionObject* get_controlled_object() const = 0;
 			
+			virtual void simulate(float delta_seconds) = 0;
 		}; // PlayerController
 		
 		struct SurfaceProperties

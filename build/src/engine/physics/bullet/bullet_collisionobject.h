@@ -64,10 +64,13 @@ namespace gemini
 		protected:
 			btCollisionObject* object;
 			
+			// This will have keep a pointer to its active collision shape
+			// however, it will NOT manage it -- as it can be hot swapped.
+			btCollisionShape* shape;
 			
 		public:
 			
-			BulletCollisionObject() : object(0) {}
+			BulletCollisionObject() : object(0), shape(0) {}
 			
 			virtual ~BulletCollisionObject()
 			{
@@ -79,6 +82,8 @@ namespace gemini
 					delete object;
 					object = 0;
 				}
+				
+				shape = 0;
 			}
 			
 			void remove_constraints()
@@ -92,6 +97,22 @@ namespace gemini
 					}
 				}
 			}
+			
+			
+			void set_collision_shape(btCollisionShape* collision_shape)
+			{
+				shape = collision_shape;
+				
+				btCollisionObject* collision_object = static_cast<btCollisionObject*>(object);
+				assert(collision_object != 0);
+				
+				// you cannot assign a collision shape until the body has been created
+				collision_object->setCollisionShape(collision_shape);
+			}
+			
+			btCollisionShape* get_collision_shape() const { return shape; }
+			
+			
 			
 			void set_collision_object(btCollisionObject* collision_object)
 			{

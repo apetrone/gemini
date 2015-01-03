@@ -36,7 +36,8 @@
 #include "btBulletDynamicsCommon.h"
 
 #include "physics/physics.h"
-#include "charactercontroller.h"
+//#include "bullet/bullet_charactercontroller.h"
+#include "physics/physics_player_controller.h"
 
 #include <renderer/font.h>
 #include "assets/asset_font.h"
@@ -414,8 +415,8 @@ public:
 	DECLARE_APPLICATION(ProjectChimera);
 
 	Camera* active_camera;
-	CharacterController* player_controller;
-	KinematicCharacter* character;
+//	CharacterController* player_controller;
+//	KinematicCharacter* character;
 
 	vr::HeadMountedDevice* device;
 
@@ -447,12 +448,12 @@ public:
 
 	ProjectChimera()
 	{
-		player_controller = 0;
-		character = 0;
+//		player_controller = 0;
+//		character = 0;
 		device = 0;
 		render_method = 0;
 		active_camera = &main_camera;
-		draw_physics_debug = false;
+		draw_physics_debug = true;
 
 		gamerules = 0;
 		create_gamerules = 0;
@@ -850,7 +851,7 @@ public:
 	
 	virtual void shutdown( kernel::Params & params )
 	{
-		DESTROY(CharacterController, player_controller);
+//		DESTROY(CharacterController, player_controller);
 
 //
 //		DESTROY(Player, player);

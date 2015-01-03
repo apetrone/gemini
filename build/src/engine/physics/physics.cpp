@@ -29,7 +29,7 @@
 #include <renderer/color.h>
 #include <renderer/debugdraw.h>
 
-#include "charactercontroller.h"
+#include "bullet/bullet_charactercontroller.h"
 
 #include "assets/asset_mesh.h"
 

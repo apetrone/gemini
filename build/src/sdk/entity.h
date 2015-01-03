@@ -113,7 +113,7 @@ struct Entity : public gemini::IEngineEntity
 
 	uint64_t id;
 	uint32_t flags;
-	uint32_t model_index;
+	int32_t model_index;
 	String name;
 	glm::vec3 position;
 	glm::quat orientation;

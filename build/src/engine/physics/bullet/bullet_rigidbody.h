@@ -46,18 +46,11 @@ namespace gemini
 			};
 			
 			class BulletRigidBody : public BulletCollisionObject, public RigidBody
-			{
-				// This will have keep a pointer to its active collision shape
-				// however, it will NOT manage it -- as it can be hot swapped.
-				btCollisionShape* shape;
-				
+			{				
 			public:
 				BulletRigidBody();
 				virtual ~BulletRigidBody();
-				
-				void set_collision_shape(btCollisionShape* collision_shape);
-				
-				btCollisionShape* get_collision_shape() const { return shape; }
+
 				btRigidBody* get_bullet_body() const;
 				
 				virtual void apply_force(const glm::vec3& force, const glm::vec3& local_position);

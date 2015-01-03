@@ -39,6 +39,9 @@
 #include <sdk/engine_api.h>
 #include <sdk/model_api.h>
 
+
+#include "bullet/bullet_charactercontroller.h"
+
 using namespace gemini;
 using namespace gemini::physics::bullet;
 
@@ -46,6 +49,64 @@ namespace gemini
 {
 	namespace physics
 	{
+		namespace bullet
+		{
+			class BulletPlayerController : public IPlayerController
+			{
+				CollisionObject* target;
+				KinematicCharacter* character;
+				
+			public:
+				BulletPlayerController() : target(0), character(0)
+				{
+				}
+				
+				virtual ~BulletPlayerController()
+				{
+					set_controlled_object(0);
+				}
+				
+				virtual void set_controlled_object(CollisionObject* collision_object)
+				{
+					target = collision_object;
+					
+					if (collision_object != 0)
+					{
+						// TODO: handle hot swapping of controlled object
+						assert(character == 0);
+						
+						BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(collision_object);
+
+						
+						btScalar step_height = btScalar(.36);
+						character = new KinematicCharacter((btPairCachingGhostObject*)bullet_object->get_collision_object(), (btConvexShape*)bullet_object->get_collision_shape(), step_height);
+//						bullet::get_world()->addAction(character);
+					}
+					else
+					{
+//						bullet::get_world()->removeAction(character);
+						delete character;
+					}
+				}
+				
+				virtual CollisionObject* get_controlled_object() const
+				{
+					return target;
+				}
+				
+				virtual void simulate(float delta_seconds)
+				{
+					if (character)
+					{
+						character->updateAction(bullet::get_world(), delta_seconds);
+					}
+				}
+			};
+		}
+
+
+
+
 
 		PhysicsInterface::~PhysicsInterface()
 		{
@@ -87,9 +148,6 @@ namespace gemini
 			BulletRigidBody* rb = 0;
 			
 			bool dynamic_body = (mass != 0.0f);
-			
-			LOGV("dynamic body: %s\n", dynamic_body ? "Yes" : "No");
-			
 			if (!dynamic_body)
 			{
 				static_body = CREATE(BulletStaticBody);
@@ -157,20 +215,23 @@ namespace gemini
 					// NOTE: This does NOT make a copy of the data. Whatever you pass it
 					// must persist for the life of the shape.
 					btTriangleIndexVertexArray * mesh = new btTriangleIndexVertexArray(geo->index_count/3, (int*)&geo->indices[0], sizeof(int)*3, geo->vertex_count, (btScalar*)&vertices[0], sizeof(glm::vec3));
+
 					
 					// use that to create a Bvh triangle mesh shape
-					btBvhTriangleMeshShape * trishape = new btBvhTriangleMeshShape( mesh, use_quantized_bvh_tree );
+					btBvhTriangleMeshShape * shape_mesh = new btBvhTriangleMeshShape( mesh, use_quantized_bvh_tree );
+//					btConvexTriangleMeshShape* shape_mesh = new btConvexTriangleMeshShape(mesh);
 					
-					btRigidBody::btRigidBodyConstructionInfo rigid_body_info(0.0f, motion_state, trishape, local_inertia );
+					btRigidBody::btRigidBodyConstructionInfo rigid_body_info(0.0f, motion_state, shape_mesh, local_inertia );
 					body = new btRigidBody(rigid_body_info);
 					static_body->set_collision_object(body);
-					static_body->add_shape(trishape);
+					static_body->add_shape(shape_mesh);
 					
 					body->setUserPointer(static_body);
 					
 					int body_flags = body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT;
 					body->setCollisionFlags( body_flags );
 					body->setFriction(0.75f);
+					body->setWorldTransform(local_transform);
 				}
 				
 				bullet:get_world()->addRigidBody(body);
@@ -189,6 +250,9 @@ namespace gemini
 			
 			BulletCollisionShape* bullet_shape = static_cast<BulletCollisionShape*>(shape);
 			assert(bullet_shape != 0);
+			
+			collision_object->set_collision_object(ghost);
+			collision_object->set_collision_shape(bullet_shape->get_shape());
 			
 			short collision_filter_mask = btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter | btBroadphaseProxy::SensorTrigger;
 			
@@ -223,12 +287,14 @@ namespace gemini
 
 		IPlayerController* PhysicsInterface::create_player_controller(CollisionObject* object)
 		{
-			return 0;
+			IPlayerController* controller = CREATE(BulletPlayerController);
+			controller->set_controlled_object(object);
+			return controller;
 		}
 		
-		void PhysicsInterface::destroy_player_controller(IPlayerController* object)
+		void PhysicsInterface::destroy_player_controller(IPlayerController* controller)
 		{
-			
+			DESTROY(IPlayerController, controller);
 		}
 		
 		void PhysicsInterface::step_simulation(float delta_seconds)
