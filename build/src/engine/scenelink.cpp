@@ -203,11 +203,11 @@ namespace renderer
 		rs.run_commands();
 	}
 	
-	void SceneLink::queue_entities(ConstantBuffer& constant_buffer, gemini::IEngineEntity** entity_list)
+	void SceneLink::queue_entities(ConstantBuffer& constant_buffer, gemini::IEngineEntity** entity_list, uint32_t max_entities)
 	{
 		queue->clear();
 		
-		for (int i = 0; i < 8; ++i)
+		for (int i = 0; i < max_entities; ++i)
 		{
 			gemini::IEngineEntity* e = entity_list[i];
 			if (e)

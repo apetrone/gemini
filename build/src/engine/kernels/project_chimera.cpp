@@ -76,6 +76,8 @@ uint8_t RENDER_TO_VR = 1;
 
 uint8_t REQUIRE_RIFT = 1;
 
+const uint16_t MAX_ENTITIES = 2048;
+
 
 void render_scene_from_camera(gemini::IEngineEntity** entity_list, Camera& camera, renderer::SceneLink& scenelink)
 {
@@ -91,7 +93,7 @@ void render_scene_from_camera(gemini::IEngineEntity** entity_list, Camera& camer
 
 	// use the entity list to render
 	scenelink.clear();
-	scenelink.queue_entities(cb, entity_list);
+	scenelink.queue_entities(cb, entity_list, MAX_ENTITIES);
 	scenelink.sort();
 	scenelink.draw(cb);
 }
@@ -239,15 +241,16 @@ public:
 
 #include <core/factory.h>
 
+
 class EntityManager : public IEntityManager
 {
-	gemini::IEngineEntity* entity_list[8];
+	gemini::IEngineEntity* entity_list[MAX_ENTITIES];
 	size_t index;
 	
 public:
 	EntityManager() : index(0)
 	{
-		memset(entity_list, 0, sizeof(gemini::IEngineEntity*)*8);
+		memset(entity_list, 0, sizeof(gemini::IEngineEntity*)*MAX_ENTITIES);
 	}
 
 	virtual void add(IEngineEntity* entity);
