@@ -214,6 +214,6 @@ struct Trigger : public Entity
 void entity_startup();
 void entity_post_script_load();
 void entity_shutdown();
-void entity_step();
-void entity_tick();
+void entity_physics_update(float delta_seconds);
+void entity_update();
 void entity_set_scene_root(scenegraph::Node* root);

@@ -77,14 +77,14 @@ void entity_post_script_load()
 {
 }
 
-void entity_step()
+void entity_physics_update(float delta_seconds)
 {
 	// step entities
 	EntityListType::Collection::iterator it = entity_list().objects.begin();
 	EntityListType::Collection::iterator end = entity_list().objects.end();
 	for( ; it != end; ++it )
 	{
-//		(*it)->fixed_update( kernel::instance()->parameters().step_interval_seconds );
+		(*it)->fixed_update(delta_seconds);
 	}
 }
 
@@ -109,23 +109,16 @@ void entity_deferred_delete( bool only_deferred )
 	}
 }
 
-void entity_tick()
+void entity_update()
 {
-	// tick entities
-	EntityListType::Collection::iterator it = entity_list().objects.begin();
-	EntityListType::Collection::iterator end = entity_list().objects.end();
-	Entity * ent;
-	for( ; it != end; ++it )
+	for(auto& entity : entity_list().objects)
 	{
-		ent = (*it);
-		if ( !(ent->flags & Entity::EF_DELETE_INSTANCE) )
+		if ( !(entity->flags & Entity::EF_DELETE_INSTANCE) )
 		{
-			(*it)->update();
+			entity->update();
 		}
 	}
-	
 	entity_deferred_delete( true );
-	
 }
 
 
