@@ -27,8 +27,6 @@
 
 #include "physics/bullet/bullet_common.h"
 
-#include <btBulletDynamicsCommon.h>
-
 namespace gemini
 {
 	namespace physics

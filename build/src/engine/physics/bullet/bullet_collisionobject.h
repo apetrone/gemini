@@ -26,6 +26,8 @@
 
 #include "physics/bullet/bullet_common.h"
 
+class btCollisionShape;
+class btCollisionObject;
 
 namespace gemini
 {

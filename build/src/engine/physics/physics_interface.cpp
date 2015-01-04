@@ -25,12 +25,11 @@
 #include <sdk/physics_api.h>
 #include "physics_interface.h"
 
-
-#include <btBulletDynamicsCommon.h>
 #include "BulletCollision/CollisionDispatch/btGhostObject.h"
 
 #include "bullet/bullet_common.h"
 #include "bullet/bullet_rigidbody.h"
+#include "bullet/bullet_staticbody.h"
 #include "bullet/bullet_motionstate.h"
 
 #include "assets/asset_mesh.h"

@@ -23,54 +23,29 @@
 
 #include <sdk/physics_api.h>
 
-#include "physics_constraint.h"
-#include "physics_collisionobject.h"
-#include "physics_rigidbody.h"
+#include "bullet_collisionobject.h"
 
-namespace assets
-{
-	class Mesh;
-}
+
+class btCollisionShape;
 
 namespace gemini
 {
 
 	namespace physics
 	{	
-
-
-	#define BTVECTOR3_TO_VEC3( v ) glm::vec3( v.x(), v.y(), v.z() )
-
-		class KinematicCharacter;
-
-
-		struct RaycastInfo
+		namespace bullet
 		{
-			glm::vec3 hit;
-			CollisionObject* object;
-			
-			RaycastInfo() : object(0)
+			// The static body will manage its collision shapes
+			class BulletStaticBody : public BulletCollisionObject
 			{
-			}
-		};
-
-		void startup();
-		void shutdown();
-		void step(float seconds);
-		void debug_draw();
-		
-		
-		//CollisionObject*
-
-		
-		
-		RaycastInfo raycast(CollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
-		
-		KinematicCharacter* create_character_controller(const glm::vec3& spawn_location, bool add_action_to_world);
-		KinematicCharacter* get_character_controller(int index);
-		CollisionObject* create_character_proxy(KinematicCharacter* controller);
-
-		CollisionObject* create_physics_for_mesh(assets::Mesh* mesh, float mass_kg = 0.0f, PhysicsMotionInterface* motion = nullptr);
-		CollisionObject* create_trigger(const glm::vec3& size);
-	}; // namespace physics
+				btAlignedObjectArray<btCollisionShape*> shapes;
+				
+			public:
+				BulletStaticBody();
+				virtual ~BulletStaticBody();
+				
+				void add_shape(btCollisionShape* shape);
+			};
+		} // namespace bullet
+	} // namespace physics
 } // namespace gemini

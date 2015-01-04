@@ -20,10 +20,6 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 
-//#include <sdk/physics_collisionobject.h>
-//#include <sdk/physics_constraint.h>
-
-//#include "physics/bullet/bullet_common.h"
 #include "physics/bullet/bullet_motionstate.h"
 
 namespace gemini

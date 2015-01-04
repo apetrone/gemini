@@ -41,17 +41,6 @@ namespace gemini
 
 		class KinematicCharacter;
 
-
-		struct RaycastInfo
-		{
-			glm::vec3 hit;
-			CollisionObject* object;
-			
-			RaycastInfo() : object(0)
-			{
-			}
-		};
-
 		void startup();
 		void shutdown();
 		void step(float seconds);

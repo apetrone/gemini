@@ -79,6 +79,20 @@ namespace gemini
 		}; // ObjectProperties
 	
 		
+		
+		
+		struct RaycastInfo
+		{
+			glm::vec3 hit;
+			CollisionObject* object;
+			
+			RaycastInfo() : object(0)
+			{
+			}
+		};
+		
+		
+		
 		class IPhysicsInterface
 		{
 		public:
@@ -116,6 +130,8 @@ namespace gemini
 			virtual void destroy_player_controller(IPlayerController* object) = 0;
 			
 			virtual void step_simulation(float delta_seconds) = 0;
+			
+//			RaycastInfo raycast(CollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
 		};
 
 		

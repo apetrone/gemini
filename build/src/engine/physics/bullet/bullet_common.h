@@ -24,6 +24,9 @@
 //#include "physics_collisionobject.h"
 //#include <core/mathlib.h>
 
+
+#include <btBulletDynamicsCommon.h>
+
 class btDiscreteDynamicsWorld;
 
 namespace gemini

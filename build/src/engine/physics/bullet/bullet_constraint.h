@@ -21,12 +21,6 @@
 // -------------------------------------------------------------
 #pragma once
 
-//#include "physics_collisionobject.h"
-//#include <core/mathlib.h>
-
-#include <btBulletDynamicsCommon.h>
-
-
 #include "physics/bullet/bullet_common.h"
 #include <sdk/physics_constraint.h>
 

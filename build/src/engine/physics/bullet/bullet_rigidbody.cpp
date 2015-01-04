@@ -23,7 +23,6 @@
 #include <platform/mem.h>
 #include <slim/xlog.h>
 
-#include <btBulletDynamicsCommon.h>
 #include "bullet_rigidbody.h"
 #include "bullet_common.h"
 #include "bullet_constraint.h"
@@ -34,36 +33,6 @@ namespace gemini
 	{	
 		namespace bullet
 		{
-			BulletStaticBody::BulletStaticBody()
-			{
-				
-			}
-			
-			BulletStaticBody::~BulletStaticBody()
-			{
-				remove_constraints();
-				
-				btRigidBody* body = btRigidBody::upcast(object);
-				
-				if (body && body->getMotionState())
-				{
-					delete body->getMotionState();
-				}
-				bullet::get_world()->removeCollisionObject(body);
-				
-				for (int i = 0; i < shapes.size(); ++i)
-				{
-					delete shapes[i];
-				}
-				shapes.clear();
-			}
-			
-			void BulletStaticBody::add_shape(btCollisionShape* shape)
-			{
-				shapes.push_back(shape);
-			}
-			
-
 			BulletRigidBody::BulletRigidBody()
 			{
 				this->collision_type = physics::CollisionType_Dynamic;
