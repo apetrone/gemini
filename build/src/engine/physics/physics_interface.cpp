@@ -59,21 +59,16 @@ namespace gemini
 				CollisionObject* target;
 				KinematicCharacter* character;
 				
+				// view angles in degrees
+				glm::vec2 view_angles;
+				
 			private:
 				void move_player(KinematicCharacter* character, const MovementCommand& command)
 				{
 					if (character)
 					{
-						btPairCachingGhostObject* ghost = character->getGhostObject();
-						const btTransform& ghost_transform = ghost->getWorldTransform();
-						const btMatrix3x3& basis = ghost_transform.getBasis();
-						
-						btVector3 side = basis.getColumn(0);
-//						btVector3 up = basis.getColumn(1);
-						btVector3 view = -basis.getColumn(2);
-						
-						glm::vec3 cam_right = glm::vec3(side.x(), side.y(), side.z());
-						glm::vec3 cam_dir = glm::vec3(view.x(), view.y(), view.z());
+						glm::vec3 cam_dir, cam_right;
+						mathlib::basis_vectors_from_pitch_yaw(view_angles.x, view_angles.y, cam_right, cam_dir);
 						
 						const float QUOTIENT = (1.0f/input::AxisValueMaximum);
 						
@@ -173,6 +168,11 @@ namespace gemini
 //						LOGV("TODO: sync with camera\n");
 //						camera->pos = glm::vec3(origin.x(), origin.y(), origin.z());
 					}
+				}
+				
+				virtual void set_view_angles(const glm::vec2& view_angles_degrees)
+				{
+					view_angles = view_angles_degrees;
 				}
 			};
 		}

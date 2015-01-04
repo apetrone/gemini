@@ -22,7 +22,7 @@
 #include <platform/typedefs.h>
 #include <slim/xlog.h>
 #include "camera.h"
-
+#include <core/mathlib.h>
 
 // --------------------------------------------------------
 // Camera
@@ -128,32 +128,34 @@ void Camera::move_backward( real dt )
 
 void Camera::update_view()
 {
-	float _yaw = mathlib::degrees_to_radians(yaw);
-	float _pitch;
-	
-	if ( invert_y_axis )
-	{
-		_pitch = mathlib::degrees_to_radians(-pitch);
-	}
-	else
-	{
-		_pitch = mathlib::degrees_to_radians(pitch);
-	}
-	
-	float sy = sin(_yaw);
-	float cy = cos(_yaw);
-	float sp = sin(_pitch);
-	float cp = cos(_pitch);
-	
-	glm::vec3 forward( sy, 0, -cy );
-	side = glm::vec3( cy, 0, sy );
-	
-	
-	view[0] = sy * cp;
-	view[1] = sp;
-	view[2] = -cy * cp;
-	
-	view = glm::normalize(view);
+//	float _yaw = mathlib::degrees_to_radians(yaw);
+//	float _pitch;
+//	
+//	if ( invert_y_axis )
+//	{
+//		_pitch = mathlib::degrees_to_radians(-pitch);
+//	}
+//	else
+//	{
+//		_pitch = mathlib::degrees_to_radians(pitch);
+//	}
+//	
+//	float sy = sin(_yaw);
+//	float cy = cos(_yaw);
+//	float sp = sin(_pitch);
+//	float cp = cos(_pitch);
+//
+//	side = glm::vec3( cy, 0, sy );
+//	
+//	
+//	view[0] = sy * cp;
+//	view[1] = sp;
+//	view[2] = -cy * cp;
+//	
+//	view = glm::normalize(view);
+//	
+//	
+	mathlib::basis_vectors_from_pitch_yaw(pitch, yaw, side, view, invert_y_axis);
 
 	glm::vec3 up( 0, 1, 0 );
 	

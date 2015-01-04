@@ -58,6 +58,9 @@ namespace gemini
 			
 			virtual void simulate(float delta_seconds) = 0;
 			virtual void apply_movement_command(const physics::MovementCommand& command) = 0;
+			
+			// set view angles in degrees
+			virtual void set_view_angles(const glm::vec2& view_angles) = 0;
 		}; // PlayerController
 		
 		struct SurfaceProperties

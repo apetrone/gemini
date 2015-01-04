@@ -33,6 +33,43 @@
 // math functions
 //
 
+
+
+namespace mathlib
+{
+	void basis_vectors_from_pitch_yaw(float pitch, float yaw, glm::vec3& right, glm::vec3& view, bool invert_y_axis)
+	{
+		float _pitch;
+		
+		if (invert_y_axis)
+		{
+			_pitch = mathlib::degrees_to_radians(-pitch);
+		}
+		else
+		{
+			_pitch = mathlib::degrees_to_radians(pitch);
+		}
+		
+		float _yaw = mathlib::degrees_to_radians(yaw);
+		
+		float sp = sin(_pitch);
+		float cp = cos(_pitch);
+		float sy = sin(_yaw);
+		float cy = cos(_yaw);
+		
+		right = glm::vec3( cy, 0, sy );
+		
+		view[0] = sy * cp;
+		view[1] = sp;
+		view[2] = -cy * cp;
+		view = glm::normalize(view);
+	}
+}
+
+
+
+
+
 bool AABB2::overlaps( const AABB2 & other ) const
 {
 	if ( this->left > other.right )
@@ -56,6 +93,7 @@ bool AABB2::overlaps( const AABB2 & other ) const
 	
 	return true;
 } // overlaps
+
 
 #if 0
 

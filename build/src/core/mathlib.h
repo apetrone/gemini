@@ -73,6 +73,10 @@ namespace mathlib
 	{
 		return radians * R2D_180PI;
 	}
+	
+	
+	// pitch and yaw are in degrees; internally converted to radians
+	void basis_vectors_from_pitch_yaw(float pitch, float yaw, glm::vec3& right, glm::vec3& view, bool invert_y_axis = true);
 }
 
 #if 0
@@ -175,8 +179,6 @@ namespace gemini
 
 	typedef Rect<float> Rectf;
 	typedef Rect<int> Recti;
-	
-	
 }; // namespace gemini
 
 struct AABB2
