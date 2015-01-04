@@ -50,6 +50,7 @@ namespace gemini
 			);
 			
 			virtual physics::CollisionObject* create_character_object(CollisionShape* shape);
+			virtual physics::CollisionObject* create_trigger_object(CollisionShape* shape);
 			
 			virtual physics::CollisionShape* create_capsule(
 				float radius_meters,

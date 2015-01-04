@@ -114,6 +114,7 @@ namespace gemini
 			) = 0;
 			
 			virtual physics::CollisionObject* create_character_object(CollisionShape* shape) = 0;
+			virtual physics::CollisionObject* create_trigger_object(CollisionShape* shape) = 0;
 			
 			// Shapes
 			// Shapes are handled internally by the physics system and do not

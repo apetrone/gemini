@@ -205,11 +205,6 @@ public:
 
 }; // Entity
 
-struct Trigger : public Entity
-{
-};
-
-
 
 void entity_startup();
 void entity_post_script_load();

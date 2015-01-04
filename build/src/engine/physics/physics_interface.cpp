@@ -340,6 +340,30 @@ namespace gemini
 			return collision_object;
 		}
 		
+		physics::CollisionObject* PhysicsInterface::create_trigger_object(CollisionShape* shape)
+		{
+			BulletCollisionObject* collision_object = CREATE(BulletCollisionObject);
+			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
+			ghost->setUserPointer(collision_object);
+			collision_object->set_collision_object(ghost);
+			
+			BulletCollisionShape* bullet_shape = static_cast<BulletCollisionShape*>(shape);
+			assert(bullet_shape != 0);
+			
+			ghost->setCollisionShape(bullet_shape->get_shape());
+			ghost->setCollisionFlags(ghost->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
+			
+			btTransform tr;
+			tr.setIdentity();
+			ghost->setWorldTransform(tr);
+			
+			// for now, triggers can only interact with character objects.
+			// There was a fix in September of 2013 which fixed sensors and characters, see: https://code.google.com/p/bullet/issues/detail?id=719
+			bullet::get_world()->addCollisionObject(ghost, btBroadphaseProxy::SensorTrigger, btBroadphaseProxy::CharacterFilter);
+			
+			return collision_object;
+		}
+		
 		physics::CollisionShape* PhysicsInterface::create_capsule(float radius_meters, float height_meters)
 		{
 			BulletCollisionShape* collision_shape = CREATE(BulletCollisionShape);
