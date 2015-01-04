@@ -62,6 +62,7 @@
 #include <sdk/engine_api.h>
 #include <sdk/game_api.h>
 #include <sdk/experimental_api.h>
+#include <sdk/shared.h>
 
 #include <platform/mem.h>
 
@@ -99,11 +100,36 @@ void render_scene_from_camera(gemini::IEngineEntity** entity_list, Camera& camer
 	scenelink.draw(cb);
 }
 
+void render_scene_from_entity(gemini::IEngineEntity** entity_list, const glm::mat4& modelview, const glm::mat4& projection, renderer::SceneLink& scenelink)
+{
+	// setup constant buffer
+	glm::vec3 light_position;
+//	light_position = camera.pos + -camera.view + glm::vec3(0.0f, 1.0f, 0.0f);
+	light_position = glm::vec3(0, 2.0f, 0);
+	
+	glm::vec3 viewer_dir;
+	glm::vec3 viewer_pos;
+	
+	renderer::ConstantBuffer cb;
+	cb.modelview_matrix = &modelview;
+	cb.projection_matrix = &projection;
+	cb.viewer_direction = &viewer_dir;
+	cb.viewer_position = &viewer_pos;
+	cb.light_position = &light_position;
+	
+	// use the entity list to render
+	scenelink.clear();
+	scenelink.queue_entities(cb, entity_list, MAX_ENTITIES);
+	scenelink.sort();
+	scenelink.draw(cb);
+}
+
 class SceneRenderMethod
 {
 public:
 	virtual ~SceneRenderMethod() {}
 	virtual void render_frame(gemini::IEngineEntity** entity_list, Camera& camera, const kernel::Params& params ) = 0;
+	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Params& params, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
 };
 
 
@@ -211,6 +237,11 @@ public:
 				
 		device->end_frame(driver);
 	}
+	
+	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Params& params, const glm::vec3& origin, const glm::vec2& view_angles)
+	{
+		
+	}
 };
 
 
@@ -234,6 +265,37 @@ public:
 		render_scene_from_camera(entity_list, camera, scenelink);
 		
 		// draw debug graphics
+		{
+			debugdraw::render(camera.matCam, camera.matProj, 0, 0, params.render_width, params.render_height);
+		}
+	}
+
+	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Params& params, const glm::vec3& origin, const glm::vec2& view_angles)
+	{
+	
+		RenderStream rs;
+		rs.add_cullmode(renderer::CullMode::CULLMODE_BACK);
+//		rs.add_state(renderer::STATE_BACKFACE_CULLING, 0);
+		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
+		rs.add_viewport( 0, 0, params.render_width, params.render_height );
+		rs.add_clearcolor( 0.0, 0.0, 0.0, 1.0f );
+		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
+		rs.run_commands();
+	
+		Camera camera;
+		camera.type = Camera::FIRST_PERSON;
+
+		camera.perspective(50.0f, params.render_width, params.render_height, 0.01f, 8192.0f);
+
+		camera.set_absolute_position(origin);
+		camera.eye_position = origin;
+		camera.view = glm::vec3(0, 0, -1);
+		camera.pitch = view_angles.x;
+		camera.yaw = view_angles.y;
+		camera.update_view();
+		
+		render_scene_from_camera(entity_list, camera, scenelink);
+	
 		{
 			debugdraw::render(camera.matCam, camera.matProj, 0, 0, params.render_width, params.render_height);
 		}
@@ -408,13 +470,19 @@ class EngineInterface : public IEngineInterface
 	IModelInterface* model_interface;
 	IPhysicsInterface* physics_interface;
 	IExperimental* experimental_interface;
+	
+	SceneRenderMethod* render_method;
+	Camera* camera;
+	
 public:
 
-	EngineInterface(IEntityManager* em, IModelInterface* mi, IPhysicsInterface* pi, IExperimental* ei) :
+	EngineInterface(IEntityManager* em, IModelInterface* mi, IPhysicsInterface* pi, IExperimental* ei, SceneRenderMethod* rm, Camera* cam) :
 		entity_manager(em),
 		model_interface(mi),
 		physics_interface(pi),
-		experimental_interface(ei)
+		experimental_interface(ei),
+		render_method(rm),
+		camera(cam)
 	{
 	}
 
@@ -435,7 +503,28 @@ public:
 	{
 		memory::allocator().deallocate(pointer);
 	}
+	
+	virtual void render_view(const glm::vec3& origin, const glm::vec2& view_angles)
+	{
+		// TODO: need to validate this origin/orientation is allowed.
+		// otherwise, client could ask us to render from anyone's POV.
+		EntityManager* em = static_cast<EntityManager*>(engine::api::instance()->entities());
+		render_method->render_view(em->get_entity_list(), kernel::instance()->parameters(), origin, view_angles);
+	}
+
+	virtual void get_view_angles(glm::vec2& view_angles)
+	{
+		if (camera)
+		{
+			view_angles.x = camera->pitch;
+			view_angles.y = camera->yaw;
+		}
+	}
 };
+
+
+
+
 
 
 
@@ -677,18 +766,19 @@ public:
 			render_method = CREATE(DefaultRenderMethod, scenelink);
 		}
 		
-		engine_interface = CREATE(EngineInterface, &entity_manager, &model_interface, physics::api::instance(), &experimental);
+		engine_interface = CREATE(EngineInterface, &entity_manager, &model_interface, physics::api::instance(), &experimental, render_method, &main_camera);
 		gemini::engine::api::set_instance(engine_interface);
 		
 		
-//		background = audio::create_sound("sounds/wind_loop");
+//		background = audio::create_sound("sounds/8b_shoot");
 //		background_source = audio::play(background, -1);
 
 //		player_controller->camera = active_camera;
 		active_camera->type = Camera::FIRST_PERSON;
 		active_camera->move_speed = 0.1f;
 		active_camera->perspective(camera_fov, params.render_width, params.render_height, 0.01f, 8192.0f);
-		active_camera->set_absolute_position(glm::vec3(0, 0, 5));
+		active_camera->set_absolute_position(glm::vec3(0, 4, 7));
+		active_camera->pitch = 30;
 		active_camera->update_view();
 			
 		// capture the mouse
@@ -734,6 +824,7 @@ public:
 		if (game_interface)
 		{
 			game_interface->physics_update(params.step_interval_seconds);
+//			background_source = audio::play(background, 1);
 		}
 		// grab state here?
 //		physics::MovementCommand command;
@@ -750,7 +841,7 @@ public:
 		
 #if LOCK_CAMERA_TO_CHARACTER && 0
 		//physics::player_move(character, *active_camera, command);
-#else
+#elif 0
 		// if you want to move JUST the camera instead...
 		active_camera->move_left(input::state()->keyboard().is_down(input::KEY_A));
 		active_camera->move_right(input::state()->keyboard().is_down(input::KEY_D));
@@ -762,16 +853,16 @@ public:
 		
 		}
 		
-		if (active_camera)
-		{
-			float joystick_sensitivity = 20;
-			active_camera->move_view(
-				joystick_sensitivity*input::state()->joystick(0).axes[2].normalized_value,
-				joystick_sensitivity*input::state()->joystick(0).axes[3].normalized_value
-			);
-			
-			active_camera->update_view();
-		}
+//		if (active_camera)
+//		{
+//			float joystick_sensitivity = 20;
+//			active_camera->move_view(
+//				joystick_sensitivity*input::state()->joystick(0).axes[2].normalized_value,
+//				joystick_sensitivity*input::state()->joystick(0).axes[3].normalized_value
+//			);
+//			
+//			active_camera->update_view();
+//		}
 
 		if (draw_physics_debug)
 		{
@@ -795,6 +886,7 @@ public:
 
 	virtual void tick( kernel::Params & params )
 	{
+		// run server frame
 		if (game_interface)
 		{
 			game_interface->tick();
@@ -818,11 +910,13 @@ public:
 			//player->world_transform = char_mat;
 		}
 
-		if (active_camera)
-		{
-			assert(active_camera != nullptr);
-			render_method->render_frame(entity_manager.get_entity_list(), *active_camera, params);
-		}
+//		if (active_camera)
+//		{
+//			assert(active_camera != nullptr);
+//			render_method->render_frame(entity_manager.get_entity_list(), *active_camera, params);
+//		}
+
+		// run client frame
 	}
 	
 	virtual void shutdown( kernel::Params & params )

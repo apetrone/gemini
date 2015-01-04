@@ -64,42 +64,16 @@ namespace gemini
 				{
 					if (character)
 					{
-						LOGV("TODO: fetch camera angles\n");
+						btPairCachingGhostObject* ghost = character->getGhostObject();
+						const btTransform& ghost_transform = ghost->getWorldTransform();
+						const btMatrix3x3& basis = ghost_transform.getBasis();
 						
-						glm::vec3 cam_right = glm::vec3(1, 0, 0);
-						glm::vec3 cam_dir = glm::vec3(0, 0, -1);
+						btVector3 side = basis.getColumn(0);
+//						btVector3 up = basis.getColumn(1);
+						btVector3 view = -basis.getColumn(2);
 						
-						const float QUOTIENT = (1.0f/input::AxisValueMaximum);
-						
-						if (character)
-						{
-							character->setFacingDirections(
-														   btVector3(cam_dir.x, cam_dir.y, cam_dir.z),
-														   btVector3(cam_right.x, cam_right.y, cam_right.z)
-														   );
-							
-							character->setMovementWeight(
-														 command.forward * QUOTIENT,
-														 command.back * QUOTIENT,
-														 command.left * QUOTIENT,
-														 command.right * QUOTIENT
-														 );
-							
-							bool movement_is_zero = (
-													 command.forward == 0 &&
-													 command.right == 0 &&
-													 command.left == 0 &&
-													 command.back == 0
-													 );
-							
-							character->enableDamping(movement_is_zero);
-						}
-					
-					
-					// old version
-#if 0
-						glm::vec3 cam_right = camera.side;
-						glm::vec3 cam_dir = camera.view;
+						glm::vec3 cam_right = glm::vec3(side.x(), side.y(), side.z());
+						glm::vec3 cam_dir = glm::vec3(view.x(), view.y(), view.z());
 						
 						const float QUOTIENT = (1.0f/input::AxisValueMaximum);
 						
@@ -126,7 +100,6 @@ namespace gemini
 							
 							character->enableDamping(movement_is_zero);
 						}
-#endif
 					}
 				} // player_move
 				
@@ -181,12 +154,11 @@ namespace gemini
 				{
 					if (character)
 					{
-//						physics::player_move(character, *camera, command);
 						move_player(character, command);
 						
 						// rotate physics body based on camera yaw
 						btTransform worldTrans = character->getGhostObject()->getWorldTransform();
-						LOGV("TODO: get angles from camera\n");
+//						LOGV("TODO: get angles from camera\n");
 //						btQuaternion rotation(btVector3(0,1,0), mathlib::degrees_to_radians(-camera->yaw));
 //						worldTrans.setRotation(rotation);
 
@@ -198,7 +170,7 @@ namespace gemini
 						btVector3 origin = tr.getOrigin();
 						origin += btVector3(0, .9, 0);
 						
-						LOGV("TODO: sync with camera\n");
+//						LOGV("TODO: sync with camera\n");
 //						camera->pos = glm::vec3(origin.x(), origin.y(), origin.z());
 					}
 				}
@@ -347,7 +319,7 @@ namespace gemini
 			
 			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
 			
-			LOGV("TODO: set character object transform!\n");
+//			LOGV("TODO: set character object transform!\n");
 			
 			BulletCollisionShape* bullet_shape = static_cast<BulletCollisionShape*>(shape);
 			assert(bullet_shape != 0);

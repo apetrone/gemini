@@ -22,37 +22,9 @@
 #pragma once
 
 #include <stdint.h>
+#include <core/mathlib.h>
 
 namespace gemini
-{
-	// Describes the interface exposed to the engine from the game.
-	class IGameInterface
-	{
-	public:
-		virtual ~IGameInterface() {};
-		
-		// called when the engine connects to the game library
-		virtual bool startup() = 0;
-		
-		// called just before the engine disconnects from the game library
-		virtual void shutdown() = 0;
-		
-		// called on level change
-		virtual void level_load() = 0;
-		
-		// the physics_update functions are synced with the physics
-		// simulation. the default rate is 1/60 second.
-				
-		// called when physics simulation should run
-		virtual void physics_update(float delta_seconds) = 0;
-		
-		// called for each tick (frame) of the engine
-		virtual void tick() = 0;
-	}; // GameInterface
-	
-	
-	class IClientGameInterface
-	{
-		virtual void run_frame() = 0;
-	}; // IClientGameInterface
+{	
+	typedef uint8_t PlayerIndex;
 } // namespace gemini

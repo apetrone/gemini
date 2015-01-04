@@ -24,6 +24,8 @@
 #include <stdint.h>
 #include <sdk/interface.h>
 
+#include <core/mathlib.h>
+
 namespace gemini
 {
 	class IEntityManager;
@@ -50,6 +52,11 @@ namespace gemini
 		// memory hooks
 		virtual void* allocate(size_t bytes) = 0;
 		virtual void deallocate(void* pointer) = 0;
+		
+		virtual void render_view(const glm::vec3& origin, const glm::vec2& view_angles) = 0;
+//		virtual void render_view_from_entity(int32_t entity_index) = 0;
+
+		virtual void get_view_angles(glm::vec2& view_angles) = 0;
 	};
 	
 	namespace engine
