@@ -66,7 +66,10 @@ def setup_common_variables(arguments, target_platform, product):
 
 		# temporarily removing script/squirrel
 		"src/engine/script.*",
-		"src/engine/kernels/test_script.cpp"
+		"src/engine/kernels/test_script.cpp",
+
+		"src/engine/keyvalues.*"
+
 	]
 
 	index_type_map = {
