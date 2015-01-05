@@ -149,7 +149,7 @@ namespace gemini
 			bool bEnableFreeCam;
 
 		public:
-			KinematicCharacter (btPairCachingGhostObject* ghostObject,btConvexShape* convexShape,btScalar stepHeight, int upAxis = 1);
+			KinematicCharacter (btPairCachingGhostObject* ghostObject, btConvexShape* convexShape, btScalar stepHeight, int upAxis = 1);
 			virtual ~KinematicCharacter ();
 
 			void StopWalking();
@@ -164,7 +164,7 @@ namespace gemini
 			///btActionInterface interface
 			virtual void updateAction( btCollisionWorld* collisionWorld,btScalar deltaTime);
 
-	//		virtual void handle_collision(CollisionObject* other);
+	//		virtual void handle_collision(ICollisionObject* other);
 
 			///btActionInterface interface
 			void	debugDraw(btIDebugDraw* debugDrawer);

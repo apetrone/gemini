@@ -46,7 +46,7 @@
 using namespace gemini;
 using namespace gemini::physics;
 
-static void entity_collision_callback(CollisionEventType type, CollisionObject* first, CollisionObject* second)
+static void entity_collision_callback(CollisionEventType type, ICollisionObject* first, ICollisionObject* second)
 {
 	assert(first != 0);
 	assert(second != 0);
@@ -195,10 +195,12 @@ void Entity::remove()
 
 void Entity::collision_began(Entity* other)
 {
+	fprintf(stdout, "[Entity] collision_began\n");
 }
 
 void Entity::collision_ended(Entity* other)
 {
+	fprintf(stdout, "[Entity] collision_ended\n");
 }
 
 void Entity::set_physics_from_current_transform()
@@ -234,7 +236,7 @@ void Entity::operator delete(void* memory)
 // PHYSICS
 //
 
-CollisionObject* Entity::physics_create_static()
+ICollisionObject* Entity::physics_create_static()
 {
 	assert(engine::api::instance() && engine::api::instance()->physics());
 	
@@ -246,7 +248,7 @@ CollisionObject* Entity::physics_create_static()
 
 
 
-CollisionObject* Entity::physics_create_model()
+ICollisionObject* Entity::physics_create_model()
 {
 	assert(engine::api::instance() && engine::api::instance()->physics());
 	
@@ -275,34 +277,34 @@ void Entity::set_position(glm::vec3 *new_position)
 
 void Entity::apply_force(glm::vec3* force, glm::vec3* local_position)
 {
-	if (this->collision_object && this->collision_object->is_type(CollisionType_Dynamic))
-	{
-		this->collision_object->apply_force(*force, *local_position);
-	}
+//	if (this->collision_object && this->collision_object->is_type(CollisionType_Dynamic))
+//	{
+//		this->collision_object->apply_force(*force, *local_position);
+//	}
 }
 
 void Entity::apply_central_force(glm::vec3 *force)
 {
-	if (this->collision_object && this->collision_object->is_type(CollisionType_Dynamic))
-	{
-		this->collision_object->apply_central_force(*force);
-	}
+//	if (this->collision_object && this->collision_object->is_type(CollisionType_Dynamic))
+//	{
+//		this->collision_object->apply_central_force(*force);
+//	}
 }
 
 void Entity::set_mass(float mass)
 {
-	if (this->collision_object && this->collision_object->is_type(CollisionType_Dynamic))
-	{
-		this->collision_object->set_mass(mass);
-	}
+//	if (this->collision_object && this->collision_object->is_type(CollisionType_Dynamic))
+//	{
+//		this->collision_object->set_mass(mass);
+//	}
 }
 
 void Entity::set_parent(Entity *other)
 {
-	if (this->collision_object && this->collision_object->is_type(CollisionType_Dynamic))
-	{
-		this->collision_object->set_parent(this->collision_object, other->collision_object);
-	}
+//	if (this->collision_object && this->collision_object->is_type(CollisionType_Dynamic))
+//	{
+//		this->collision_object->set_parent(this->collision_object, other->collision_object);
+//	}
 }
 
 glm::vec3* Entity::get_position()
@@ -376,7 +378,7 @@ void Entity::set_physics(int physics_type)
 	
 	if (this->collision_object)
 	{
-		this->collision_object->set_collision_callback(entity_collision_callback);
+//		this->collision_object->set_collision_callback(entity_collision_callback);
 		this->collision_object->set_user_data(this);
 	}
 }

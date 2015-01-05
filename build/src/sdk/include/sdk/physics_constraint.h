@@ -21,17 +21,14 @@
 // -------------------------------------------------------------
 #pragma once
 
-//#include "physics_collisionobject.h"
-//#include <core/mathlib.h>
-
 namespace gemini
 {
 	namespace physics
 	{
-		class Constraint
+		class IConstraint
 		{
 		public:
-			virtual ~Constraint() {};
+			virtual ~IConstraint() {};
 			
 			// remove this constraint from objects
 			virtual void remove() {};

@@ -35,7 +35,6 @@ namespace gemini
 		{
 			BulletRigidBody::BulletRigidBody()
 			{
-				this->collision_type = physics::CollisionType_Dynamic;
 			}
 			
 			BulletRigidBody::~BulletRigidBody()
@@ -91,7 +90,7 @@ namespace gemini
 				}
 			}
 			
-			void BulletRigidBody::set_parent(CollisionObject* first, CollisionObject* second)
+			void BulletRigidBody::set_parent(ICollisionObject* first, ICollisionObject* second)
 			{
 				LOGV("TODO: implement set_parent\n");
 //				btRigidBody* rb0 = get_bullet_body();

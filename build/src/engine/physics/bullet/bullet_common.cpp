@@ -52,18 +52,18 @@ namespace gemini
 					btCollisionObject* colObj1 = (btCollisionObject*) proxy1->m_clientObject;
 					btGhostObject* ghost0 = btGhostObject::upcast(colObj0);
 					btGhostObject* ghost1 = btGhostObject::upcast(colObj1);
-					CollisionObject* obj0 = 0;
-					CollisionObject* obj1 = 0;
+					ICollisionObject* obj0 = 0;
+					ICollisionObject* obj1 = 0;
 					
 					if (ghost0)
 					{
-						obj0 = static_cast<CollisionObject*>(ghost0->getUserPointer());
+						obj0 = static_cast<ICollisionObject*>(ghost0->getUserPointer());
 						ghost0->addOverlappingObjectInternal(proxy1, proxy0);
 					}
 					
 					if (ghost1)
 					{
-						obj1 = static_cast<CollisionObject*>(ghost1->getUserPointer());
+						obj1 = static_cast<ICollisionObject*>(ghost1->getUserPointer());
 						ghost1->addOverlappingObjectInternal(proxy0, proxy1);
 					}
 					
@@ -82,18 +82,18 @@ namespace gemini
 					btCollisionObject* colObj1 = (btCollisionObject*) proxy1->m_clientObject;
 					btGhostObject* ghost0 =	btGhostObject::upcast(colObj0);
 					btGhostObject* ghost1 =	btGhostObject::upcast(colObj1);
-					CollisionObject* obj0 = 0;
-					CollisionObject* obj1 = 0;
+					ICollisionObject* obj0 = 0;
+					ICollisionObject* obj1 = 0;
 					
 					if (ghost0)
 					{
-						obj0 = static_cast<CollisionObject*>(ghost0->getUserPointer());
+						obj0 = static_cast<ICollisionObject*>(ghost0->getUserPointer());
 						ghost0->removeOverlappingObjectInternal(proxy1,dispatcher,proxy0);
 					}
 					
 					if (ghost1)
 					{
-						obj1 = static_cast<CollisionObject*>(ghost1->getUserPointer());
+						obj1 = static_cast<ICollisionObject*>(ghost1->getUserPointer());
 						ghost1->removeOverlappingObjectInternal(proxy0,dispatcher,proxy1);
 					}
 					

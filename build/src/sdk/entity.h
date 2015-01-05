@@ -77,7 +77,7 @@ namespace gemini
 	
 	namespace physics
 	{
-		class CollisionObject;
+		class ICollisionObject;
 	}
 //	class EntityMotionInterface : public physics::PhysicsMotionInterface
 //	{
@@ -164,22 +164,22 @@ public:
 
 	// create a static physics object using the model's collision model
 	// TODO: also expose a way to create a static box?
-	gemini::physics::CollisionObject* physics_create_static();
+	gemini::physics::ICollisionObject* physics_create_static();
 	
-//	physics::CollisionObject* physics_create_sphere(const glm::vec3& local_center, float radius);
+//	physics::ICollisionObject* physics_create_sphere(const glm::vec3& local_center, float radius);
 	
 	// create a collision box to use for physics
-//	physics::CollisionObject* physics_create_box(const glm::vec3& local_center, const glm::vec3& mins, const glm::vec3& maxs);
+//	physics::ICollisionObject* physics_create_box(const glm::vec3& local_center, const glm::vec3& mins, const glm::vec3& maxs);
 	
 	// use the collision model associated with this entity's model to create
 	// a physics body.
-	gemini::physics::CollisionObject* physics_create_model();
+	gemini::physics::ICollisionObject* physics_create_model();
 	
 	// create a trigger
-//	physics::CollisionObject* physics_create_trigger(const glm::vec3& local_center, const glm::vec3& mins, const glm::vec3& maxs);
+//	physics::ICollisionObject* physics_create_trigger(const glm::vec3& local_center, const glm::vec3& mins, const glm::vec3& maxs);
 	
 	
-	void set_physics_object(gemini::physics::CollisionObject* object) { this->collision_object = object; }
+	void set_physics_object(gemini::physics::ICollisionObject* object) { this->collision_object = object; }
 	
 	
 	
@@ -196,7 +196,7 @@ public:
 	void set_parent(Entity* other);
 	
 	// perhaps move these into a unified interface?
-	gemini::physics::CollisionObject* collision_object;
+	gemini::physics::ICollisionObject* collision_object;
 		
 	// functions for this script object
 	void set_model(const char* path);

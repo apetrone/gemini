@@ -34,7 +34,7 @@ namespace gemini
 	namespace physics
 	{
 	
-		class BulletCollisionShape : public CollisionShape
+		class BulletCollisionShape : public ICollisionShape
 		{
 		protected:
 			btCollisionShape* shape;
@@ -61,7 +61,7 @@ namespace gemini
 			btCollisionShape* get_shape() const { return shape; }
 		};
 		
-		class BulletCollisionObject : public CollisionObject
+		class BulletCollisionObject : public ICollisionObject
 		{
 		protected:
 			btCollisionObject* object;
@@ -90,14 +90,14 @@ namespace gemini
 			
 			void remove_constraints()
 			{
-				// need to remove constraints here...
-				for (int i = 0; i < MAX_CONSTRAINTS_PER_OBJECT; ++i)
-				{
-					if (constraints[i])
-					{
-						constraints[i]->remove();
-					}
-				}
+//				// need to remove constraints here...
+//				for (int i = 0; i < MAX_CONSTRAINTS_PER_OBJECT; ++i)
+//				{
+//					if (constraints[i])
+//					{
+//						constraints[i]->remove();
+//					}
+//				}
 			}
 			
 			
@@ -123,10 +123,10 @@ namespace gemini
 			
 			btCollisionObject* get_collision_object() const { return object; }
 			
-			virtual void set_mass_center_offset(const glm::vec3 &mass_center_offset)
-			{
-				this->mass_center_offset = mass_center_offset;
-			}
+//			virtual void set_mass_center_offset(const glm::vec3 &mass_center_offset)
+//			{
+//				this->mass_center_offset = mass_center_offset;
+//			}
 			
 			virtual void set_world_transform(const glm::vec3& position, const glm::quat& orientation)
 			{
@@ -154,20 +154,20 @@ namespace gemini
 				out_orientation = glm::quat(rot.w(), rot.x(), rot.y(), rot.z());
 			}
 			
-			virtual void collision_began(CollisionObject* other)
+			virtual void collision_began(ICollisionObject* other)
 			{
-				if (callback)
-				{
-					callback(Collision_Began, this, other);
-				}
+//				if (callback)
+//				{
+//					callback(Collision_Began, this, other);
+//				}
 			}
 			
-			virtual void collision_ended(CollisionObject* other)
+			virtual void collision_ended(ICollisionObject* other)
 			{
-				if (callback)
-				{
-					callback(Collision_Ended, this, other);
-				}
+//				if (callback)
+//				{
+//					callback(Collision_Ended, this, other);
+//				}
 			}
 		};
 	} // namespace physics

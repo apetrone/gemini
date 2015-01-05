@@ -48,54 +48,7 @@ const float PHYSICS_PLAYER_HALF_HEIGHT = 0.91f; // .91 == 6 ft tall
 namespace gemini
 {
 	namespace physics
-	{
-
-
-		// TODO: this should support an array of character controllers,
-		// but for now, a single one will do.
-		KinematicCharacter* _controller = 0;		
-		
-		
-
-
-		// If I try to make KinematicCharacter derive from physics::CollisionObject,
-		// the vtable is all kinds of fucked up. Until that is figured out,
-		// this proxy object will have to be in place.
-		struct CharacterProxyObject : public physics::CollisionObject
-		{
-			KinematicCharacter* character;
-			
-			CharacterProxyObject(KinematicCharacter* character_controller) : character(character_controller) {}
-			
-			virtual void set_world_position(const glm::vec3& position);
-			virtual glm::vec3 get_world_position() const;
-			
-			virtual void collision_began(physics::CollisionObject* other) {};
-			virtual void collision_ended(physics::CollisionObject* other) {};
-		};
-		
-		void CharacterProxyObject::set_world_position(const glm::vec3 &position)
-		{
-			btGhostObject* ghost = character->getGhostObject();
-			assert(ghost != nullptr);
-			btTransform& world_transform = ghost->getWorldTransform();
-			world_transform.setOrigin(btVector3(position.x, position.y, position.z));
-			ghost->setWorldTransform(world_transform);
-		}
-		
-		glm::vec3 CharacterProxyObject::get_world_position() const
-		{
-			btGhostObject* ghost = character->getGhostObject();
-			assert(ghost != nullptr);
-			const btTransform& world_transform = ghost->getWorldTransform();
-			const btVector3& origin = world_transform.getOrigin();
-			return glm::vec3(origin.x(), origin.y(), origin.z());
-		}
-
-
-
-
-		
+	{		
 		void * bullet2_custom_alloc( size_t size )
 		{
 			return ALLOC( size );
@@ -137,7 +90,7 @@ namespace gemini
 			bullet::debug_draw();
 		} // debug_draw
 		
-		RaycastInfo raycast(CollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance)
+		RaycastInfo raycast(ICollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance)
 		{
 //			glm::vec3 destination = (start + direction * max_distance);
 //			btVector3 ray_start(start.x, start.y, start.z);
@@ -155,7 +108,7 @@ namespace gemini
 //			if (callback.hasHit())
 //			{
 //				info.hit = start + (destination * callback.m_closestHitFraction);
-//				info.object = static_cast<CollisionObject*>(callback.m_collisionObject->getUserPointer());
+//				info.object = static_cast<ICollisionObject*>(callback.m_collisionObject->getUserPointer());
 //				
 //				LOGV("fraction: %2.2f\n", callback.m_closestHitFraction);
 //				

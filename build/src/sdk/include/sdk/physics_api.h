@@ -30,8 +30,10 @@ namespace gemini
 {
 	namespace physics
 	{
-		class CollisionShape;
-		class CollisionObject;
+		class ICollisionShape;
+		class ICollisionObject;
+	
+
 		
 		struct MovementCommand;
 		
@@ -53,8 +55,8 @@ namespace gemini
 		public:
 			virtual ~IPlayerController() {};
 						
-			virtual void set_controlled_object(CollisionObject* collision_object) = 0;
-			virtual CollisionObject* get_controlled_object() const = 0;
+			virtual void set_controlled_object(ICollisionObject* collision_object) = 0;
+			virtual ICollisionObject* get_controlled_object() const = 0;
 			
 			virtual void simulate(float delta_seconds) = 0;
 			virtual void apply_movement_command(const physics::MovementCommand& command) = 0;
@@ -84,7 +86,7 @@ namespace gemini
 		struct RaycastInfo
 		{
 			glm::vec3 hit;
-			CollisionObject* object;
+			ICollisionObject* object;
 			
 			RaycastInfo() : object(0)
 			{
@@ -99,40 +101,40 @@ namespace gemini
 			virtual ~IPhysicsInterface() {};
 			
 			
-//			virtual physics::CollisionObject* create_static_object(
-//				CollisionShape* shape,
+//			virtual physics::ICollisionObject* create_static_object(
+//				ICollisionShape* shape,
 //				const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0)
 //			) = 0;
 			
-//			virtual physics::CollisionObject* create_dynamic_object(
-//				CollisionShape* shape
+//			virtual physics::ICollisionObject* create_dynamic_object(
+//				ICollisionShape* shape
 //			) = 0;
 			
-			virtual physics::CollisionObject* create_physics_model(
+			virtual physics::ICollisionObject* create_physics_model(
 				int32_t model_index,
 				ObjectProperties& properties
 			) = 0;
 			
-			virtual physics::CollisionObject* create_character_object(CollisionShape* shape) = 0;
-			virtual physics::CollisionObject* create_trigger_object(CollisionShape* shape) = 0;
+			virtual physics::ICollisionObject* create_character_object(ICollisionShape* shape) = 0;
+			virtual physics::ICollisionObject* create_trigger_object(ICollisionShape* shape) = 0;
 			
 			// Shapes
 			// Shapes are handled internally by the physics system and do not
 			// need to be explicitly deleted.
-			virtual physics::CollisionShape* create_capsule(
+			virtual physics::ICollisionShape* create_capsule(
 				float radius_meters,
 				float height_meters
 			) = 0;
 			
-			virtual void destroy_object(CollisionObject* object) = 0;
+			virtual void destroy_object(ICollisionObject* object) = 0;
 			
 			
-			virtual IPlayerController* create_player_controller(CollisionObject* object) = 0;
+			virtual IPlayerController* create_player_controller(ICollisionObject* object) = 0;
 			virtual void destroy_player_controller(IPlayerController* object) = 0;
 			
 			virtual void step_simulation(float delta_seconds) = 0;
 			
-//			RaycastInfo raycast(CollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
+//			RaycastInfo raycast(ICollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
 		};
 
 		

@@ -30,7 +30,7 @@ namespace gemini
 	{
 		namespace bullet
 		{
-			class BulletConstraint : public Constraint
+			class BulletConstraint : public IConstraint
 			{
 			public:
 				btTypedConstraint* constraint;

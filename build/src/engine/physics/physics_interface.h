@@ -38,28 +38,28 @@ namespace gemini
 		class PhysicsInterface : public IPhysicsInterface
 		{
 		private:
-			std::vector<CollisionShape*> collision_shapes;
+			std::vector<ICollisionShape*> collision_shapes;
 		
 		public:
 			PhysicsInterface() {}
 			virtual ~PhysicsInterface();
 		
-			virtual physics::CollisionObject* create_physics_model(
+			virtual physics::ICollisionObject* create_physics_model(
 				int32_t model_index,
 				ObjectProperties& properties
 			);
 			
-			virtual physics::CollisionObject* create_character_object(CollisionShape* shape);
-			virtual physics::CollisionObject* create_trigger_object(CollisionShape* shape);
+			virtual physics::ICollisionObject* create_character_object(ICollisionShape* shape);
+			virtual physics::ICollisionObject* create_trigger_object(ICollisionShape* shape);
 			
-			virtual physics::CollisionShape* create_capsule(
+			virtual physics::ICollisionShape* create_capsule(
 				float radius_meters,
 				float height_meters
 			 );
 			
-			virtual void destroy_object(CollisionObject* object);
+			virtual void destroy_object(ICollisionObject* object);
 			
-			virtual IPlayerController* create_player_controller(CollisionObject* object);
+			virtual IPlayerController* create_player_controller(ICollisionObject* object);
 			virtual void destroy_player_controller(IPlayerController* controller);
 			
 			virtual void step_simulation(float delta_seconds);

@@ -55,7 +55,7 @@ namespace gemini
 		{
 			class BulletPlayerController : public IPlayerController
 			{
-				CollisionObject* target;
+				ICollisionObject* target;
 				KinematicCharacter* character;
 				
 				// view angles in degrees
@@ -108,7 +108,7 @@ namespace gemini
 					set_controlled_object(0);
 				}
 				
-				virtual void set_controlled_object(CollisionObject* collision_object)
+				virtual void set_controlled_object(ICollisionObject* collision_object)
 				{
 					target = collision_object;
 					
@@ -131,7 +131,7 @@ namespace gemini
 					}
 				}
 				
-				virtual CollisionObject* get_controlled_object() const
+				virtual ICollisionObject* get_controlled_object() const
 				{
 					return target;
 				}
@@ -185,11 +185,11 @@ namespace gemini
 			// purge collision shapes
 			for (auto& shape : collision_shapes)
 			{
-				DESTROY(CollisionShape, shape);
+				DESTROY(ICollisionShape, shape);
 			}
 		}
 
-		physics::CollisionObject* PhysicsInterface::create_physics_model(
+		physics::ICollisionObject* PhysicsInterface::create_physics_model(
 				int32_t model_index,
 				ObjectProperties& properties
 			)
@@ -215,7 +215,7 @@ namespace gemini
 				return nullptr;
 			}
 			
-			CollisionObject* object = 0;
+			ICollisionObject* object = 0;
 			BulletStaticBody* static_body = 0;
 			BulletRigidBody* rb = 0;
 			
@@ -273,7 +273,7 @@ namespace gemini
 					
 					rb->set_collision_object(body);
 					rb->set_collision_shape(compound);
-					rb->set_mass_center_offset(mass_center_offset);
+//					rb->set_mass_center_offset(mass_center_offset);
 					body->setUserPointer(rb);
 					
 					body->setRestitution(properties.restitution);
@@ -312,11 +312,12 @@ namespace gemini
 			return object;
 		} // create_physics_model
 		
-		physics::CollisionObject* PhysicsInterface::create_character_object(CollisionShape* shape)
+		physics::ICollisionObject* PhysicsInterface::create_character_object(ICollisionShape* shape)
 		{
 			BulletCollisionObject* collision_object = CREATE(BulletCollisionObject);
 			
 			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
+			ghost->setUserPointer(collision_object);
 			
 //			LOGV("TODO: set character object transform!\n");
 			
@@ -340,7 +341,7 @@ namespace gemini
 			return collision_object;
 		}
 		
-		physics::CollisionObject* PhysicsInterface::create_trigger_object(CollisionShape* shape)
+		physics::ICollisionObject* PhysicsInterface::create_trigger_object(ICollisionShape* shape)
 		{
 			BulletCollisionObject* collision_object = CREATE(BulletCollisionObject);
 			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
@@ -364,7 +365,7 @@ namespace gemini
 			return collision_object;
 		}
 		
-		physics::CollisionShape* PhysicsInterface::create_capsule(float radius_meters, float height_meters)
+		physics::ICollisionShape* PhysicsInterface::create_capsule(float radius_meters, float height_meters)
 		{
 			BulletCollisionShape* collision_shape = CREATE(BulletCollisionShape);
 			collision_shapes.push_back(collision_shape);
@@ -375,13 +376,13 @@ namespace gemini
 		}
 		
 		
-		void PhysicsInterface::destroy_object(CollisionObject* object)
+		void PhysicsInterface::destroy_object(ICollisionObject* object)
 		{
-			DESTROY(CollisionObject, object);
+			DESTROY(ICollisionObject, object);
 		} // destroy_object
 
 
-		IPlayerController* PhysicsInterface::create_player_controller(CollisionObject* object)
+		IPlayerController* PhysicsInterface::create_player_controller(ICollisionObject* object)
 		{
 			IPlayerController* controller = CREATE(BulletPlayerController);
 			controller->set_controlled_object(object);
