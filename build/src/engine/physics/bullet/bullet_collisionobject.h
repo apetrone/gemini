@@ -70,9 +70,19 @@ namespace gemini
 			// however, it will NOT manage it -- as it can be hot swapped.
 			btCollisionShape* shape;
 			
+			void* user_data;
+			
+			
+			CollisionCallback callback;
 		public:
 			
-			BulletCollisionObject() : object(0), shape(0) {}
+			BulletCollisionObject() :
+				object(0),
+				shape(0),
+				user_data(0),
+				callback(0)
+			{
+			}
 			
 			virtual ~BulletCollisionObject()
 			{
@@ -87,6 +97,68 @@ namespace gemini
 				
 				shape = 0;
 			}
+			
+			
+			virtual void set_user_data(void* userdata)
+			{
+				user_data = userdata;
+			}
+			
+			virtual void* get_user_data() const
+			{
+				return user_data;
+			}
+			
+			virtual void set_collision_callback(CollisionCallback collision_callback)
+			{
+				callback = collision_callback;
+			}
+			
+			virtual void set_world_transform(const glm::vec3& position, const glm::quat& orientation)
+			{
+				assert(object != nullptr);
+				btTransform world_transform = object->getWorldTransform();
+				
+				glm::vec3 target_position = position;// - mass_center_offset;
+				
+				btTransform transform;
+				transform.setIdentity();
+				transform.setRotation(btQuaternion(orientation.x, orientation.y, orientation.z, orientation.w));
+				transform.setOrigin(btVector3(target_position.x, target_position.y, target_position.z));
+				object->setWorldTransform(transform);
+			}
+			
+			
+			virtual void get_world_transform(glm::vec3& out_position, glm::quat& out_orientation)
+			{
+				assert(object != 0);
+				const btTransform& world_transform = object->getWorldTransform();
+				const btVector3& origin = world_transform.getOrigin();
+				const btQuaternion& rot = world_transform.getRotation();
+				
+				out_position = glm::vec3(origin.x(), origin.y(), origin.z());// + mass_center_offset;
+				out_orientation = glm::quat(rot.w(), rot.x(), rot.y(), rot.z());
+			}
+			
+			virtual void collision_began(ICollisionObject* other)
+			{
+				if (callback)
+				{
+					callback(Collision_Began, this, other);
+				}
+			}
+			
+			virtual void collision_ended(ICollisionObject* other)
+			{
+				if (callback)
+				{
+					callback(Collision_Ended, this, other);
+				}
+			}
+			
+
+			
+			
 			
 			void remove_constraints()
 			{
@@ -127,48 +199,7 @@ namespace gemini
 //			{
 //				this->mass_center_offset = mass_center_offset;
 //			}
-			
-			virtual void set_world_transform(const glm::vec3& position, const glm::quat& orientation)
-			{
-				assert(object != nullptr);
-				btTransform world_transform = object->getWorldTransform();
-				
-				glm::vec3 target_position = position;// - mass_center_offset;
 
-				btTransform transform;
-				transform.setIdentity();
-				transform.setRotation(btQuaternion(orientation.x, orientation.y, orientation.z, orientation.w));
-				transform.setOrigin(btVector3(target_position.x, target_position.y, target_position.z));
-				object->setWorldTransform(transform);
-			}
-			
-			
-			virtual void get_world_transform(glm::vec3& out_position, glm::quat& out_orientation)
-			{
-				assert(object != 0);
-				const btTransform& world_transform = object->getWorldTransform();
-				const btVector3& origin = world_transform.getOrigin();
-				const btQuaternion& rot = world_transform.getRotation();
-				
-				out_position = glm::vec3(origin.x(), origin.y(), origin.z());// + mass_center_offset;
-				out_orientation = glm::quat(rot.w(), rot.x(), rot.y(), rot.z());
-			}
-			
-			virtual void collision_began(ICollisionObject* other)
-			{
-//				if (callback)
-//				{
-//					callback(Collision_Began, this, other);
-//				}
-			}
-			
-			virtual void collision_ended(ICollisionObject* other)
-			{
-//				if (callback)
-//				{
-//					callback(Collision_Ended, this, other);
-//				}
-			}
 		};
 	} // namespace physics
 } // namespace gemini

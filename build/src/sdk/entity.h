@@ -179,7 +179,7 @@ public:
 //	physics::ICollisionObject* physics_create_trigger(const glm::vec3& local_center, const glm::vec3& mins, const glm::vec3& maxs);
 	
 	
-	void set_physics_object(gemini::physics::ICollisionObject* object) { this->collision_object = object; }
+	void set_physics_object(gemini::physics::ICollisionObject* object);
 	
 	
 	
@@ -200,9 +200,6 @@ public:
 		
 	// functions for this script object
 	void set_model(const char* path);
-	
-	void set_physics(int physics_type);
-
 }; // Entity
 
 

@@ -59,12 +59,12 @@ static void entity_collision_callback(CollisionEventType type, ICollisionObject*
 		if (type == Collision_Began)
 		{
 			ent0->collision_began(ent1);
-			ent1->collision_began(ent0);
+//			ent1->collision_began(ent0);
 		}
 		else if (type == Collision_Ended)
 		{
 			ent0->collision_ended(ent1);
-			ent1->collision_ended(ent0);
+//			ent1->collision_ended(ent0);
 		}
 	}
 }
@@ -195,12 +195,10 @@ void Entity::remove()
 
 void Entity::collision_began(Entity* other)
 {
-	fprintf(stdout, "[Entity] collision_began\n");
 }
 
 void Entity::collision_ended(Entity* other)
 {
-	fprintf(stdout, "[Entity] collision_ended\n");
 }
 
 void Entity::set_physics_from_current_transform()
@@ -263,6 +261,13 @@ ICollisionObject* Entity::physics_create_model()
 	return engine::api::instance()->physics()->create_physics_model(model_index, properties);
 }
 
+void Entity::set_physics_object(physics::ICollisionObject *object)
+{
+	assert(object != 0);
+	object->set_user_data(this);
+	this->collision_object = object;
+	this->collision_object->set_collision_callback(entity_collision_callback);
+}
 
 void Entity::set_position(glm::vec3 *new_position)
 {
@@ -317,68 +322,4 @@ void Entity::set_model(const char* path)
 //	engine::instance()->models()->destroy_instance_data(model_index);
 	model_index = engine::api::instance()->models()->create_instance_data(path);
 //	LOGV("set model index: %i, for model: %s\n", model_index, path);
-}
-
-void Entity::set_physics(int physics_type)
-{
-	if (this->collision_object)
-	{
-		LOGW("Physics type already set on this entity! ignoring\n");
-		return;
-	}
-	
-	float mass_kg = 0.0f;
-	
-	if (physics_type == 0)
-	{
-		this->collision_object = physics_create_static();
-	}
-	else if (physics_type == 1)
-	{
-		// set dynamic physics type
-		mass_kg = 5.0f;
-	}
-	else if (physics_type == 2)
-	{
-		// character
-//		KinematicCharacter* controller = get_character_controller(0);
-//		assert(controller);
-//		this->collision_object = create_character_proxy(controller);
-	}
-	else if (physics_type == 3)
-	{
-		// ghost/trigger
-//		this->collision_object = create_trigger(glm::vec3(1, 1, 1));
-	}
-	else
-	{
-		// If you reach this, the physics type is unknown/unsupported!
-		assert(0);
-	}
-
-//	this->motion_interface = CREATE(EntityMotionInterface, this, this->node);
-	
-	// generate physics body from mesh
-	// until we need a different system.
-//	if (mesh)
-//	{
-//		this->collision_object = physics::create_physics_for_mesh(mesh, mass_kg, this->motion_interface, mesh->mass_center_offset);
-//
-//		if (this->collision_object)
-//		{
-//			this->collision_object->set_world_position(position);
-//		}
-//		else
-//		{
-//			LOGW("Unable to create physics body!\n");
-//		}
-//	}
-
-
-	
-	if (this->collision_object)
-	{
-//		this->collision_object->set_collision_callback(entity_collision_callback);
-		this->collision_object->set_user_data(this);
-	}
 }

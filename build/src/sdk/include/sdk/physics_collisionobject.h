@@ -65,7 +65,7 @@ namespace gemini
 		protected:
 //			CollisionObjectType collision_type;
 //			CollisionCallback callback;
-			void* user_data;
+//			void* user_data;
 //			Constraint* constraints[MAX_CONSTRAINTS_PER_OBJECT];
 //			glm::vec3 mass_center_offset;
 //			std::vector<ICollisionObject*> overlapping_shapes;
@@ -88,9 +88,12 @@ namespace gemini
 //				constraints[0] = constraint;
 //			}
 			
-			void set_user_data(void* userdata) { user_data = userdata; }
-			void* get_user_data() const { return user_data; }
-//			
+			virtual void set_user_data(void* userdata) = 0;
+			virtual void* get_user_data() const = 0;
+
+
+			virtual void set_collision_callback(CollisionCallback collision_callback) = 0;
+//
 //			void set_collision_callback(CollisionCallback _callback)
 //			{
 //				callback = _callback;
@@ -107,12 +110,12 @@ namespace gemini
 			// invoked when this object no longer collides with other
 			virtual void collision_ended(ICollisionObject* other) = 0;
 			
-			virtual void apply_force(const glm::vec3& force, const glm::vec3& local_position) {};
-			virtual void apply_central_force(const glm::vec3& force) {};
-			
-			virtual void set_mass(float mass) {};
-			
-			virtual void set_parent(ICollisionObject* first, ICollisionObject* second) {};
+//			virtual void apply_force(const glm::vec3& force, const glm::vec3& local_position) {};
+//			virtual void apply_central_force(const glm::vec3& force) {};
+//			
+//			virtual void set_mass(float mass) {};
+//			
+//			virtual void set_parent(ICollisionObject* first, ICollisionObject* second) {};
 		};
 	} // namespace physics
 } // namespace gemini
