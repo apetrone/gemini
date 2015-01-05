@@ -26,6 +26,17 @@
 
 namespace gemini
 {
+	enum RenderFlags
+	{
+		RENDER_NONE,
+		
+		RENDER_VISIBLE = 1,
+		
+		// clear z buffer before rendering
+		RENDER_VIEWMODEL = 2
+	};
+
+
 	class IEngineEntity
 	{
 	public:
@@ -33,6 +44,8 @@ namespace gemini
 
 		// returns -1 if no model
 		virtual int32_t get_model_index() const = 0;
+		
+		virtual uint32_t get_render_flags() const = 0;
 		
 		// world position and orientation for this entity
 		virtual void get_world_transform(glm::vec3& position, glm::quat& orientation) const = 0;

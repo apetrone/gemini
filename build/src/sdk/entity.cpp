@@ -164,6 +164,11 @@ int32_t Entity::get_model_index() const
 	return model_index;
 }
 
+uint32_t Entity::get_render_flags() const
+{
+	return RENDER_NONE;
+}
+
 void Entity::get_world_transform(glm::vec3& out_position, glm::quat& out_orientation) const
 {
 	out_position = position;

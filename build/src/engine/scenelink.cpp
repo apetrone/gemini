@@ -210,7 +210,7 @@ namespace renderer
 		for (int i = 0; i < max_entities; ++i)
 		{
 			gemini::IEngineEntity* e = entity_list[i];
-			if (e)
+			if (e && (e->get_render_flags() & RENDER_VISIBLE))
 			{
 				int32_t model_index = e->get_model_index();
 				if (model_index > -1)
