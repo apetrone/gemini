@@ -155,6 +155,8 @@ namespace assets
 					StackString<MAX_PATH_SIZE> store_path = path;
 					take_ownership(store_path(), asset);
 				}
+				
+				LOGV("loaded asset \"%s\", asset_id = %i\n", fullpath(), asset->Id());
 				return asset;
 			}
 			else

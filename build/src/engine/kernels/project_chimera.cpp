@@ -356,12 +356,19 @@ class ModelInterface : public gemini::IModelInterface
 	// will have a model instance data allocated.
 	class ModelInstanceData : public IModelInstanceData
 	{
-	public:
 		unsigned int mesh_asset_index;
 		assets::Mesh* mesh;
 		glm::mat4 transform;
+		
+	public:
+	
 		ModelInstanceData() : mesh_asset_index(0)
 		{
+		}
+	
+		void set_mesh_index(unsigned int mesh_asset_id)
+		{
+			mesh_asset_index = mesh_asset_id;
 			mesh = assets::meshes()->find_with_id(mesh_asset_index);
 		}
 		
@@ -369,15 +376,15 @@ class ModelInterface : public gemini::IModelInterface
 		virtual glm::mat4& get_local_transform() { return transform; }
 		virtual void set_local_transform(const glm::mat4& _transform) { transform = _transform; }
 		
-		virtual void get_geometry_data(unsigned int index, GeometryInstanceData& geometry_data) const
-		{
-			assert(mesh != 0);
-		
-			// TODO: verify index is valid
-			assets::Geometry* geometry = &mesh->geometry[index];
-			geometry_data.material_id = geometry->material_id;
-			geometry_data.shader_id = geometry->shader_id;
-		}
+//		virtual void get_geometry_data(unsigned int index, GeometryInstanceData& geometry_data) const
+//		{
+//			assert(mesh != 0);
+//		
+//			// TODO: verify index is valid
+//			assets::Geometry* geometry = &mesh->geometry[index];
+//			geometry_data.material_id = geometry->material_id;
+//			geometry_data.shader_id = geometry->shader_id;
+//		}
 	};
 
 
@@ -396,7 +403,7 @@ public:
 				mesh->prepare_geometry();
 			}
 			ModelInstanceData data;
-			data.mesh_asset_index = mesh->Id();
+			data.set_mesh_index(mesh->Id());
 			int32_t index = (int32_t)id_to_instance.size();
 			id_to_instance.insert(ModelInstanceMap::value_type(index, data));
 			return index;

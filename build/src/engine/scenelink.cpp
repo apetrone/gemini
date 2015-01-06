@@ -236,7 +236,9 @@ namespace renderer
 								RenderKey key = 0;
 
 								GeometryInstanceData geometry_data;
-								model_instance->get_geometry_data(geometry_index, geometry_data);
+//								model_instance->get_geometry_data(geometry_index, geometry_data);
+								geometry_data.material_id = geometry->material_id;
+								geometry_data.shader_id = geometry->shader_id;
 								
 								// setup render block
 								RenderBlock block(key, geometry);

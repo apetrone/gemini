@@ -129,6 +129,8 @@ namespace assets
 			
 			geo->draw_type = renderer::DRAW_INDEXED_TRIANGLES;
 			geo->name = node["name"].asString().c_str();
+			
+			LOGV("assign material id %i to geometry: %s\n", geo->material_id, geo->name());
 //			LOGV("load geometry: %s\n", geo->name());
 
 			// TODO: remove this legacy code

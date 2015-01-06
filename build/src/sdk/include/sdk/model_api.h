@@ -39,7 +39,7 @@ namespace gemini
 		virtual unsigned int asset_index() const = 0;
 		virtual glm::mat4& get_local_transform() = 0;
 		virtual void set_local_transform(const glm::mat4& transform) = 0;
-		virtual void get_geometry_data(unsigned int index, GeometryInstanceData& geometry_data) const = 0;
+//		virtual void get_geometry_data(unsigned int index, GeometryInstanceData& geometry_data) const = 0;
 	};
 
 	class IModelInterface
