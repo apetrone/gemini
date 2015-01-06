@@ -161,12 +161,7 @@ namespace gemini
 			const btVector3 getVelocity();
 			btVector3 getOrigin();
 
-			///btActionInterface interface
 			virtual void updateAction( btCollisionWorld* collisionWorld,btScalar deltaTime);
-
-	//		virtual void handle_collision(ICollisionObject* other);
-
-			///btActionInterface interface
 			void	debugDraw(btIDebugDraw* debugDrawer);
 
 			void setUpAxis (int axis)
