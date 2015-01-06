@@ -99,8 +99,7 @@ void entity_deferred_delete( bool only_deferred )
 		if ((only_deferred && (ent->flags & Entity::EF_DELETE_INSTANCE)) || !only_deferred )
 		{
 //			LOGV( "removing flagged entity: %p\n", ent );
-			it = entity_list().objects.erase( it );
-//			ent->flags &= ~Entity::EF_DELETE_INSTANCE;
+			it = entity_list().objects.erase(it);
 			delete ent;
 			continue;
 		}
@@ -195,7 +194,7 @@ void Entity::update()
 
 void Entity::remove()
 {
-	this->flags = 1;
+	this->flags = EF_DELETE_INSTANCE;
 }
 
 void Entity::collision_began(Entity* other)
