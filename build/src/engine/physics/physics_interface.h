@@ -44,18 +44,13 @@ namespace gemini
 			PhysicsInterface() {}
 			virtual ~PhysicsInterface();
 		
-			virtual physics::ICollisionObject* create_physics_model(
-				int32_t model_index,
-				ObjectProperties& properties
-			);
-			
+			virtual physics::ICollisionObject* create_physics_object(ICollisionShape* shape, ObjectProperties& properties);
+			virtual physics::ICollisionObject* create_physics_model(int32_t model_index, ObjectProperties& properties);
 			virtual physics::ICollisionObject* create_character_object(ICollisionShape* shape);
 			virtual physics::ICollisionObject* create_trigger_object(ICollisionShape* shape);
 			
-			virtual physics::ICollisionShape* create_capsule(
-				float radius_meters,
-				float height_meters
-			 );
+			virtual physics::ICollisionShape* create_capsule(float radius_meters, float height_meters);
+			virtual physics::ICollisionShape* create_box(const glm::vec3& dimensions);
 			
 			virtual void destroy_object(ICollisionObject* object);
 			

@@ -77,7 +77,7 @@ namespace gemini
 			float restitution;
 			float friction;
 			
-			ObjectProperties() : mass_kg(0.0f), restitution(1.0f), friction(0.25f) {}
+			ObjectProperties() : mass_kg(0.0f), restitution(0.25f), friction(0.25f) {}
 		}; // ObjectProperties
 	
 		
@@ -106,25 +106,16 @@ namespace gemini
 //				const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0)
 //			) = 0;
 			
-//			virtual physics::ICollisionObject* create_dynamic_object(
-//				ICollisionShape* shape
-//			) = 0;
-			
-			virtual physics::ICollisionObject* create_physics_model(
-				int32_t model_index,
-				ObjectProperties& properties
-			) = 0;
-			
+			virtual physics::ICollisionObject* create_physics_object(ICollisionShape* shape, ObjectProperties& properties) = 0;
+			virtual physics::ICollisionObject* create_physics_model(int32_t model_index, ObjectProperties& properties) = 0;
 			virtual physics::ICollisionObject* create_character_object(ICollisionShape* shape) = 0;
 			virtual physics::ICollisionObject* create_trigger_object(ICollisionShape* shape) = 0;
 			
 			// Shapes
 			// Shapes are handled internally by the physics system and do not
 			// need to be explicitly deleted.
-			virtual physics::ICollisionShape* create_capsule(
-				float radius_meters,
-				float height_meters
-			) = 0;
+			virtual physics::ICollisionShape* create_capsule(float radius_meters, float height_meters) = 0;
+			virtual physics::ICollisionShape* create_box(const glm::vec3& dimensions) = 0;
 			
 			virtual void destroy_object(ICollisionObject* object) = 0;
 			

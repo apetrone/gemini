@@ -188,11 +188,51 @@ namespace gemini
 				DESTROY(ICollisionShape, shape);
 			}
 		}
+		
+		physics::ICollisionObject* PhysicsInterface::create_physics_object(ICollisionShape* shape, ObjectProperties& properties)
+		{
+			BulletRigidBody* rigidbody = CREATE(BulletRigidBody);
+			
+			btScalar mass(properties.mass_kg);
+			btVector3 local_inertia(0.0f, 0.0f, 0.0f);
+		
+			btTransform xf;
+			xf.setIdentity();
+		
+			CustomMotionState* motion_state = new CustomMotionState(xf);
 
-		physics::ICollisionObject* PhysicsInterface::create_physics_model(
-				int32_t model_index,
-				ObjectProperties& properties
-			)
+			btCollisionShape* bullet_shape = ((BulletCollisionShape*)shape)->get_shape();
+			
+			// calculate local intertia
+			bullet_shape->calculateLocalInertia(mass, local_inertia);
+			
+			btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motion_state, bullet_shape, local_inertia);
+			btRigidBody* body = new btRigidBody(rbInfo);
+			body->setUserPointer(rigidbody);
+			body->setRestitution(properties.restitution);
+			body->setFriction(properties.friction);
+			body->setCcdMotionThreshold(0.1f);
+			body->setCcdSweptSphereRadius(0.1f);
+			bullet:get_world()->addRigidBody(body);
+			
+			btGhostObject* ghost = new btPairCachingGhostObject();
+			ghost->setCollisionShape(bullet_shape);
+			ghost->setUserPointer(rigidbody);
+			ghost->setCollisionFlags(ghost->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
+			bullet::get_world()->addCollisionObject(ghost, btBroadphaseProxy::SensorTrigger, btBroadphaseProxy::CharacterFilter);
+
+			
+			motion_state->set_body_and_ghost(body, ghost);
+			
+			rigidbody->set_collision_object(body);
+			rigidbody->set_collision_shape(bullet_shape);
+			rigidbody->set_collision_ghost(ghost);
+		
+			return rigidbody;
+		}
+		
+
+		physics::ICollisionObject* PhysicsInterface::create_physics_model(int32_t model_index, ObjectProperties& properties)
 		{
 			bool use_quantized_bvh_tree = true;
 			
@@ -375,6 +415,18 @@ namespace gemini
 			return collision_shape;
 		}
 		
+		
+		physics::ICollisionShape* PhysicsInterface::create_box(const glm::vec3& dimensions)
+		{
+			BulletCollisionShape* collision_shape = CREATE(BulletCollisionShape);
+			collision_shapes.push_back(collision_shape);
+			
+			btVector3 half_extents(dimensions.x*0.5f, dimensions.y*0.5f, dimensions.z*0.5f);
+			btCollisionShape* box = new btBoxShape(half_extents);
+			collision_shape->set_shape(box);
+			
+			return collision_shape;
+		}
 		
 		void PhysicsInterface::destroy_object(ICollisionObject* object)
 		{

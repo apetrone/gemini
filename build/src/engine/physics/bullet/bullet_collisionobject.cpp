@@ -24,6 +24,8 @@
 
 #include "bullet_common.h"
 
+#include "BulletCollision/CollisionDispatch/btGhostObject.h"
+
 namespace gemini
 {
 	namespace physics
@@ -33,6 +35,7 @@ namespace gemini
 			BulletCollisionObject::BulletCollisionObject() :
 				object(0),
 				shape(0),
+				ghost(0),
 				user_data(0),
 				callback(0)
 			{
@@ -47,6 +50,13 @@ namespace gemini
 					bullet::get_world()->removeCollisionObject(object);
 					delete object;
 					object = 0;
+				}
+				
+				if (ghost)
+				{
+					bullet::get_world()->removeCollisionObject(ghost);
+					delete ghost;
+					ghost = 0;
 				}
 				
 				shape = 0;
@@ -81,7 +91,6 @@ namespace gemini
 				transform.setOrigin(btVector3(target_position.x, target_position.y, target_position.z));
 				object->setWorldTransform(transform);
 			}
-			
 			
 			void BulletCollisionObject::get_world_transform(glm::vec3& out_position, glm::quat& out_orientation)
 			{
@@ -148,6 +157,15 @@ namespace gemini
 			}
 			
 			btCollisionObject* BulletCollisionObject::get_collision_object() const { return object; }
+			
+			
+			
+			void BulletCollisionObject::set_collision_ghost(btGhostObject* collision_ghost)
+			{
+				ghost = collision_ghost;
+			}
+			
+			btGhostObject* BulletCollisionObject::get_collision_ghost() const { return ghost; }
 			
 	//		void BulletCollisionObject::set_mass_center_offset(const glm::vec3 &mass_center_offset)
 	//		{

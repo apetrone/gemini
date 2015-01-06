@@ -21,6 +21,7 @@
 // -------------------------------------------------------------
 
 #include "physics/bullet/bullet_motionstate.h"
+#include "BulletCollision/CollisionDispatch/btGhostObject.h"
 
 namespace gemini
 {
@@ -28,16 +29,23 @@ namespace gemini
 	{
 		namespace bullet
 		{
-			CustomMotionState::CustomMotionState(const btTransform& transform,
-							  PhysicsMotionInterface* motion,
-							  const glm::vec3& center_mass_offset) : initial_transform(transform),
-			motion_interface(motion),
-			mass_center_offset(center_mass_offset)
+			CustomMotionState::CustomMotionState(
+				const btTransform& transform
+			/*PhysicsMotionInterface* motion, */
+//			const glm::vec3& center_mass_offset
+//				btRigidBody* body,
+//				btGhostObject* ghost_object
+			) :
+				initial_transform(transform)
+//				motion_interface(motion),
+//				mass_center_offset(center_mass_offset)
 			{
 			}
 			
-			CustomMotionState::~CustomMotionState()
+			void CustomMotionState::set_body_and_ghost(btRigidBody* body, btGhostObject* ghost)
 			{
+				this->body = body;
+				this->ghost = ghost;
 			}
 			
 			void CustomMotionState::getWorldTransform(btTransform &world_transform) const
@@ -52,10 +60,15 @@ namespace gemini
 				glm::quat orientation(rot.w(), rot.x(), rot.y(), rot.z());
 				glm::vec3 position(pos.x(), pos.y(), pos.z());
 				
-				if (motion_interface)
+				// sync up the ghost object when this rigid body moves
+				if (ghost)
 				{
-					motion_interface->set_transform(position, orientation, mass_center_offset);
+					ghost->setWorldTransform(world_transform);
 				}
+//				if (motion_interface)
+//				{
+//					motion_interface->set_transform(position, orientation, mass_center_offset);
+//				}
 			}
 		} // namespace bullet
 	} // namespace physics

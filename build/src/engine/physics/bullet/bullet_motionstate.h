@@ -27,6 +27,8 @@
 
 #include "physics/bullet/bullet_common.h"
 
+class btGhostObject;
+
 namespace gemini
 {
 	namespace physics
@@ -36,16 +38,23 @@ namespace gemini
 			class CustomMotionState : public btMotionState
 			{
 				btTransform initial_transform;
-				PhysicsMotionInterface* motion_interface;
-				glm::vec3 mass_center_offset;
-				
+				//PhysicsMotionInterface* motion_interface;
+//				glm::vec3 mass_center_offset;
+				btGhostObject* ghost;
+				btRigidBody* body;
+
 			public:
-				CustomMotionState(const btTransform& transform,
-								  PhysicsMotionInterface* motion,
-								  const glm::vec3& center_mass_offset);
-				
-				virtual ~CustomMotionState();
-				
+				CustomMotionState(const btTransform& transform
+//									PhysicsMotionInterface* motion,
+//									const glm::vec3& center_mass_offset
+//									btRigidBody* rigid_body,
+//									btGhostObject* ghost_object
+								  );
+						  
+				void set_body_and_ghost(btRigidBody* body, btGhostObject* ghost);
+
+				virtual ~CustomMotionState() {}
+
 				virtual void getWorldTransform(btTransform &world_transform) const;
 				virtual void setWorldTransform(const btTransform &world_transform);
 			};

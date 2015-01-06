@@ -66,14 +66,14 @@ namespace gemini
 			class BulletCollisionObject : public ICollisionObject
 			{
 			protected:
-				// ghost object to sense collisions with other objects
-				btGhostObject* ghost;
-
 				btCollisionObject* object;
 				
 				// This will have keep a pointer to its active collision shape
 				// however, it will NOT manage it -- as it can be hot swapped.
 				btCollisionShape* shape;
+				
+				// ghost object to sense collisions with other objects
+				btGhostObject* ghost;
 				
 				void* user_data;
 							
@@ -102,6 +102,8 @@ namespace gemini
 				void set_collision_object(btCollisionObject* collision_object);
 				btCollisionObject* get_collision_object() const;
 				
+				void set_collision_ghost(btGhostObject* collision_ghost);
+				btGhostObject* get_collision_ghost() const;
 	//			virtual void set_mass_center_offset(const glm::vec3 &mass_center_offset);
 			};
 		
