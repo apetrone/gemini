@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include <vector>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <slim/xlog.h>
 #include "physics.h"
 #include <btBulletDynamicsCommon.h>

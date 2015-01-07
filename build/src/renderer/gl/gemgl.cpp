@@ -24,7 +24,7 @@
 
 #include "gemgl.h"
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 #include <slim/xstr.h>
 #include <slim/xlog.h>

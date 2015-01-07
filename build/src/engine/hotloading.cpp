@@ -23,7 +23,7 @@
 #include <slim/xlog.h>
 #include <slim/xstr.h>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <core/mathlib.h>
 #include <core/threadsafequeue.h>
 #include <core/stackstring.h>

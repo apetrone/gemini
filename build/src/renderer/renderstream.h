@@ -23,7 +23,7 @@
 
 #include "renderer.h"
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <core/datastream.h>
 
 const unsigned int MAX_RENDERER_STREAM_BYTES = 8192 * 8;

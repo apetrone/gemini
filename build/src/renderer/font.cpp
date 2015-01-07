@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include <stdlib.h>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <core/filesystem.h>
 
 #include <slim/xstr.h>

@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <platform/mem.h>
 #include <core/configloader.h>
 //#include <core/filesystem.h>

@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include "interpolation.h"
 
 #ifdef RGB

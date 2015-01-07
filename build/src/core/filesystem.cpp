@@ -22,7 +22,7 @@
 #include <stdio.h> // for printf
 #include <sys/stat.h> // for fs::FileExists
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <platform/platform.h>
 #include "xfile.h"
 

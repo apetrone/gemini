@@ -23,7 +23,7 @@
 #include <algorithm>
 #include <string>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <platform/mem.h>
 
 #include <slim/xlog.h>

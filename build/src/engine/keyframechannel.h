@@ -23,7 +23,7 @@
 
 #include <slim/xlog.h>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <core/fixedarray.h>
 
 //#include "color.h"

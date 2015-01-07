@@ -22,7 +22,7 @@
 #include <string>
 #include <map>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <core/core.h>
 #include <platform/platform.h>
 #include <core/configloader.h>

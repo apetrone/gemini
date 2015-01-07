@@ -19,7 +19,7 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <slim/xlog.h>
 #include "camera.h"
 #include <core/mathlib.h>

@@ -28,7 +28,7 @@
 
 #include <core/str.h>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 #include "datamodel/material.h"
 #include "datamodel/node.h"

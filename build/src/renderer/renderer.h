@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <platform/mem_stl_allocator.h>
 
 #include <core/fixedarray.h>

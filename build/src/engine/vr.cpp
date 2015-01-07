@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <core/mathlib.h>
 
 #include <slim/xlog.h>
