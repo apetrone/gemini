@@ -22,7 +22,9 @@
 #include <stdio.h> // for stdout
 #include <list>
 
-#include "typedefs.h"
+#include "assert.h"
+
+#include "mem.h"
 #include "mem_stl_allocator.h"
 
 namespace memory
