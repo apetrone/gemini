@@ -209,8 +209,8 @@ namespace gemini
 			body->setUserPointer(rigidbody);
 			body->setRestitution(properties.restitution);
 			body->setFriction(properties.friction);
-			body->setCcdMotionThreshold(1.0f);
-			body->setCcdSweptSphereRadius(1.0f);
+			body->setCcdMotionThreshold(0.01f);
+			body->setCcdSweptSphereRadius(0.01f);
 			
 			btGhostObject* ghost = new btPairCachingGhostObject();
 			ghost->setCollisionShape(bullet_shape);
