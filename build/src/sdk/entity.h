@@ -120,7 +120,6 @@ struct Entity : public gemini::IEngineEntity
 	
 	Entity();
 	virtual ~Entity();
-//	gemini::EntityMotionInterface* motion_interface;
 	
 //	virtual void set_model_index(int32_t index);
 	virtual int32_t get_model_index() const;
@@ -143,8 +142,13 @@ struct Entity : public gemini::IEngineEntity
 	virtual void collision_began(Entity* other);
 	virtual void collision_ended(Entity* other);
 	
-	
+	// Call this when you need to explicitly set the physics transform
+	// from the current entity's position and rotation. Normally, you don't
+	// need to use this; but the player controller makes use of it.
 	void set_physics_from_current_transform();
+	
+	// Set the entity's transform (position/orientation) from the associated
+	// physics object, if one is set.
 	void set_current_transform_from_physics();
 	
 public:

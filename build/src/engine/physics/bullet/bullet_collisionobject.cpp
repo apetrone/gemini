@@ -37,7 +37,8 @@ namespace gemini
 				shape(0),
 				ghost(0),
 				user_data(0),
-				callback(0)
+				callback(0),
+				motion_state(0)
 			{
 			}
 				
@@ -60,6 +61,15 @@ namespace gemini
 				}
 				
 				shape = 0;
+				
+				
+				
+				// maybe the motion states are already deleted by bullet?
+//				if (motion_state)
+//				{
+//					delete motion_state;
+//					motion_state = 0;
+//				}
 			}
 				
 				
@@ -81,26 +91,28 @@ namespace gemini
 			void BulletCollisionObject::set_world_transform(const glm::vec3& position, const glm::quat& orientation)
 			{
 				assert(object != nullptr);
-				btTransform world_transform = object->getWorldTransform();
-				
-				glm::vec3 target_position = position;// - mass_center_offset;
-				
-				btTransform transform;
-				transform.setIdentity();
-				transform.setRotation(btQuaternion(orientation.x, orientation.y, orientation.z, orientation.w));
-				transform.setOrigin(btVector3(target_position.x, target_position.y, target_position.z));
+				btTransform transform = bullet::position_and_orientation_to_transform(position, orientation);
 				object->setWorldTransform(transform);
 			}
 			
 			void BulletCollisionObject::get_world_transform(glm::vec3& out_position, glm::quat& out_orientation)
 			{
 				assert(object != 0);
-				const btTransform& world_transform = object->getWorldTransform();
-				const btVector3& origin = world_transform.getOrigin();
-				const btQuaternion& rot = world_transform.getRotation();
 				
-				out_position = glm::vec3(origin.x(), origin.y(), origin.z());// + mass_center_offset;
-				out_orientation = glm::quat(rot.w(), rot.x(), rot.y(), rot.z());
+				btTransform world_transform;
+				
+				if (motion_state)
+				{
+					// grab interpolated current transform
+					motion_state->getWorldTransform(world_transform);
+				}
+				else // fall back and grab immediate state of the body (not interpolated)
+				{
+					// static bodies have to use this; they don't have a motionstate.
+					world_transform = object->getWorldTransform();
+				}
+				
+				position_and_orientation_from_transform(out_position, out_orientation, world_transform);
 			}
 			
 			void BulletCollisionObject::collision_began(ICollisionObject* other)
@@ -171,7 +183,13 @@ namespace gemini
 	//		{
 	//			this->mass_center_offset = mass_center_offset;
 	//		}
-
+			
+			void BulletCollisionObject::set_motion_state(btMotionState *motionstate)
+			{
+				motion_state = motionstate;
+			}
+			
+			btMotionState* BulletCollisionObject::get_motion_state() const  { return motion_state; }
 		}; // namespace bullet
 	} // namespace physics
 } // namespace gemini

@@ -37,25 +37,22 @@ namespace gemini
 		{
 			class CustomMotionState : public btMotionState
 			{
-				btTransform initial_transform;
-				//PhysicsMotionInterface* motion_interface;
-//				glm::vec3 mass_center_offset;
-				btGhostObject* ghost;
+				glm::vec3 position;
+				glm::quat orientation;
 				btRigidBody* body;
+				btGhostObject* ghost;
 
 			public:
-				CustomMotionState(const btTransform& transform
-//									PhysicsMotionInterface* motion,
-//									const glm::vec3& center_mass_offset
-//									btRigidBody* rigid_body,
-//									btGhostObject* ghost_object
-								  );
-						  
+				CustomMotionState(const glm::vec3& origin, const glm::quat& basis);
+				
 				void set_body_and_ghost(btRigidBody* body, btGhostObject* ghost);
+				btTransform compose_transform() const;
 
 				virtual ~CustomMotionState() {}
 
 				virtual void getWorldTransform(btTransform &world_transform) const;
+				
+				// world_transform will be the interpolated value
 				virtual void setWorldTransform(const btTransform &world_transform);
 			};
 		} // namespace bullet

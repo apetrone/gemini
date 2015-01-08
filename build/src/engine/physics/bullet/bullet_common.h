@@ -50,6 +50,9 @@ namespace gemini
 			void shutdown();
 			void step(float seconds);
 			void debug_draw();
+			
+			btTransform position_and_orientation_to_transform(const glm::vec3& position, const glm::quat& orientation);
+			void position_and_orientation_from_transform(glm::vec3& out_position, glm::quat& out_orientation, const btTransform& world_transform);
 		}
 	} // namespace physics
 } // namespace gemini

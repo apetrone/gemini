@@ -189,19 +189,17 @@ namespace gemini
 			}
 		}
 		
-		physics::ICollisionObject* PhysicsInterface::create_physics_object(ICollisionShape* shape, ObjectProperties& properties)
+		physics::ICollisionObject* PhysicsInterface::create_physics_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation, ObjectProperties& properties)
 		{
 			BulletRigidBody* rigidbody = CREATE(BulletRigidBody);
 			
 			btScalar mass(properties.mass_kg);
 			btVector3 local_inertia(0.0f, 0.0f, 0.0f);
 		
-			btTransform xf;
-			xf.setIdentity();
-		
-			CustomMotionState* motion_state = new CustomMotionState(xf);
+			CustomMotionState* motion_state = new CustomMotionState(position, orientation);
 
 			btCollisionShape* bullet_shape = ((BulletCollisionShape*)shape)->get_shape();
+			rigidbody->set_motion_state(motion_state);
 			
 			// calculate local intertia
 			bullet_shape->calculateLocalInertia(mass, local_inertia);
@@ -211,22 +209,22 @@ namespace gemini
 			body->setUserPointer(rigidbody);
 			body->setRestitution(properties.restitution);
 			body->setFriction(properties.friction);
-			body->setCcdMotionThreshold(0.1f);
-			body->setCcdSweptSphereRadius(0.1f);
-			bullet:get_world()->addRigidBody(body);
+			body->setCcdMotionThreshold(1.0f);
+			body->setCcdSweptSphereRadius(1.0f);
 			
 			btGhostObject* ghost = new btPairCachingGhostObject();
 			ghost->setCollisionShape(bullet_shape);
 			ghost->setUserPointer(rigidbody);
 			ghost->setCollisionFlags(ghost->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
-			bullet::get_world()->addCollisionObject(ghost, btBroadphaseProxy::SensorTrigger, btBroadphaseProxy::CharacterFilter);
 
-			
 			motion_state->set_body_and_ghost(body, ghost);
 			
 			rigidbody->set_collision_object(body);
 			rigidbody->set_collision_shape(bullet_shape);
 			rigidbody->set_collision_ghost(ghost);
+			
+			bullet:get_world()->addRigidBody(body);
+			bullet::get_world()->addCollisionObject(ghost, btBroadphaseProxy::SensorTrigger, btBroadphaseProxy::CharacterFilter);
 		
 			return rigidbody;
 		}
@@ -381,7 +379,7 @@ namespace gemini
 			return collision_object;
 		}
 		
-		physics::ICollisionObject* PhysicsInterface::create_trigger_object(ICollisionShape* shape)
+		physics::ICollisionObject* PhysicsInterface::create_trigger_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation)
 		{
 			BulletCollisionObject* collision_object = CREATE(BulletCollisionObject);
 			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
@@ -396,6 +394,7 @@ namespace gemini
 			
 			btTransform tr;
 			tr.setIdentity();
+			tr.setOrigin(btVector3(position.x, position.y, position.z));
 			ghost->setWorldTransform(tr);
 			
 			// for now, triggers can only interact with character objects.

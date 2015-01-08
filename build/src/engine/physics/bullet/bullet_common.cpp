@@ -304,6 +304,23 @@ namespace gemini
 					dynamics_world->debugDrawWorld();
 				}
 			}
+			
+			btTransform position_and_orientation_to_transform(const glm::vec3& position, const glm::quat& orientation)
+			{
+				btTransform transform;
+				transform.setIdentity();
+				transform.setRotation(btQuaternion(orientation.x, orientation.y, orientation.z, orientation.w));
+				transform.setOrigin(btVector3(position.x, position.y, position.z));
+				return transform;
+			}
+			
+			void position_and_orientation_from_transform(glm::vec3& out_position, glm::quat& out_orientation, const btTransform& world_transform)
+			{
+				const btVector3& origin = world_transform.getOrigin();
+				const btQuaternion& rot = world_transform.getRotation();
+				out_position = glm::vec3(origin.x(), origin.y(), origin.z());
+				out_orientation = glm::quat(rot.w(), rot.x(), rot.y(), rot.z());
+			}
 		} // namespace bullet
 	} // namespace physics
 } // namespace gemini

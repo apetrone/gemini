@@ -29,16 +29,11 @@ namespace gemini
 	{
 		namespace bullet
 		{
-			CustomMotionState::CustomMotionState(
-				const btTransform& transform
-			/*PhysicsMotionInterface* motion, */
-//			const glm::vec3& center_mass_offset
-//				btRigidBody* body,
-//				btGhostObject* ghost_object
-			) :
-				initial_transform(transform)
-//				motion_interface(motion),
-//				mass_center_offset(center_mass_offset)
+			CustomMotionState::CustomMotionState(const glm::vec3& origin, const glm::quat& basis) :
+				position(origin),
+				orientation(basis),
+				body(0),
+				ghost(0)
 			{
 			}
 			
@@ -46,29 +41,34 @@ namespace gemini
 			{
 				this->body = body;
 				this->ghost = ghost;
+				
+				// set the ghost's transform when we setup this motion state
+				// so the first physics update doesn't leave the ghost at the origin.
+				if (ghost)
+				{
+					ghost->setWorldTransform(compose_transform());
+				}
+			}
+			
+			btTransform CustomMotionState::compose_transform() const
+			{
+				return bullet::position_and_orientation_to_transform(position, orientation);
 			}
 			
 			void CustomMotionState::getWorldTransform(btTransform &world_transform) const
 			{
-				world_transform = initial_transform;
+				world_transform = compose_transform();
 			}
 			
 			void CustomMotionState::setWorldTransform(const btTransform &world_transform)
 			{
-				btQuaternion rot = world_transform.getRotation();
-				btVector3 pos = world_transform.getOrigin();
-				glm::quat orientation(rot.w(), rot.x(), rot.y(), rot.z());
-				glm::vec3 position(pos.x(), pos.y(), pos.z());
+				position_and_orientation_from_transform(position, orientation, world_transform);
 				
 				// sync up the ghost object when this rigid body moves
 				if (ghost)
 				{
 					ghost->setWorldTransform(world_transform);
 				}
-//				if (motion_interface)
-//				{
-//					motion_interface->set_transform(position, orientation, mass_center_offset);
-//				}
 			}
 		} // namespace bullet
 	} // namespace physics

@@ -75,6 +75,8 @@ namespace gemini
 				// ghost object to sense collisions with other objects
 				btGhostObject* ghost;
 				
+				btMotionState* motion_state;
+				
 				void* user_data;
 							
 				CollisionCallback callback;
@@ -105,6 +107,9 @@ namespace gemini
 				void set_collision_ghost(btGhostObject* collision_ghost);
 				btGhostObject* get_collision_ghost() const;
 	//			virtual void set_mass_center_offset(const glm::vec3 &mass_center_offset);
+	
+				void set_motion_state(btMotionState* motionstate);
+				btMotionState* get_motion_state() const;
 			};
 		
 		} // namespace bullet
