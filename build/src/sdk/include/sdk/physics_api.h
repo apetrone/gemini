@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <core/mathlib.h>
 
-#include <sdk/interface.h>
+#include <core/interface.h>
 
 namespace gemini
 {

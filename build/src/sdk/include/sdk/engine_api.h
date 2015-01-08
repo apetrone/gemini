@@ -22,7 +22,7 @@
 #pragma once
 
 #include <stdint.h>
-#include <sdk/interface.h>
+#include <core/interface.h>
 
 #include <core/mathlib.h>
 

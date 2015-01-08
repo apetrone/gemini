@@ -302,9 +302,6 @@ public:
 	}
 };
 
-#include <core/factory.h>
-
-
 class EntityManager : public IEntityManager
 {
 	gemini::IEngineEntity* entity_list[MAX_ENTITIES];
