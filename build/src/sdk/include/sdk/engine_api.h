@@ -31,6 +31,14 @@ namespace gemini
 	class IEntityManager;
 	class IModelInterface;
 	
+	namespace core
+	{
+		namespace logging
+		{
+			class ILog;
+		}
+	}
+	
 	namespace physics
 	{
 		class IPhysicsInterface;
@@ -48,6 +56,7 @@ namespace gemini
 		virtual IModelInterface* models() = 0;
 		virtual physics::IPhysicsInterface* physics() = 0;
 		virtual IExperimental* experiment() = 0;
+		virtual core::logging::ILog* log() = 0;
 		
 		// memory hooks
 		virtual void* allocate(size_t bytes) = 0;

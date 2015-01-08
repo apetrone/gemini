@@ -53,6 +53,7 @@
 
 #include <slim/xlib.h>
 #include <core/filesystem.h>
+#include <core/logging.h>
 
 #include "gamerules.h"
 
@@ -489,13 +490,19 @@ class EngineInterface : public IEngineInterface
 	
 public:
 
-	EngineInterface(IEntityManager* em, IModelInterface* mi, IPhysicsInterface* pi, IExperimental* ei, SceneRenderMethod* rm, Camera* cam) :
-		entity_manager(em),
-		model_interface(mi),
-		physics_interface(pi),
-		experimental_interface(ei),
-		render_method(rm),
-		camera(cam)
+	EngineInterface(
+		IEntityManager* em,
+		IModelInterface* mi,
+		IPhysicsInterface* pi,
+		IExperimental* ei,
+		SceneRenderMethod* rm,
+		Camera* cam) :
+			entity_manager(em),
+			model_interface(mi),
+			physics_interface(pi),
+			experimental_interface(ei),
+			render_method(rm),
+			camera(cam)
 	{
 	}
 
@@ -506,6 +513,7 @@ public:
 	virtual IModelInterface* models() { return model_interface; }
 	virtual IPhysicsInterface* physics() { return physics_interface; }
 	virtual IExperimental* experiment() { return experimental_interface; }
+	virtual gemini::core::logging::ILog* log() { return gemini::core::log::instance(); }
 	
 	virtual void* allocate(size_t bytes)
 	{
@@ -798,7 +806,7 @@ public:
 		kernel::instance()->capture_mouse( true );
 
 		// load the game library
-		StackString<MAX_PATH_SIZE> game_library_path = core::filesystem::content_directory();
+		StackString<MAX_PATH_SIZE> game_library_path = ::core::filesystem::content_directory();
 		game_library_path.append(PATH_SEPARATOR_STRING).append("bin").append(PATH_SEPARATOR_STRING).append("game.dylib");
 		
 		if (!xlib_open(&gamelib, game_library_path()))
