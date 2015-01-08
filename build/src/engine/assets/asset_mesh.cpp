@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <core/configloader.h>
-#include <core/log.h>
+#include <core/logging.h>
 
 #include "assets.h"
 #include "assets/asset_mesh.h"

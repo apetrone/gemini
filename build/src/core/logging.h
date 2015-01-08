@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2014- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -20,3 +20,37 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #pragma once
+
+
+//#define LOGV(format, ...) \
+//	ILog::instance()->message(\
+//		gemini::sdk::ILog::Verbose,\
+//
+//
+//	^ unfinished.
+
+#include <core/interface.h>
+
+namespace gemini
+{
+	namespace core
+	{
+		class ILog
+		{
+		public:
+			enum MessageType
+			{
+				Verbose,
+				Warning,
+				Error
+			};
+		
+		public:
+			virtual ~ILog() {}
+			
+			virtual void message(ILog::MessageType type, const char* buffer, const char* function, int linenumber) = 0;
+		}; // ILog
+		
+		typedef Interface<ILog> logging;
+	}
+} // namespace gemini

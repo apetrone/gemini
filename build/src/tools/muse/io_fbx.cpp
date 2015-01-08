@@ -23,7 +23,6 @@
 #include <fbxsdk.h>
 #include <fbxsdk/utils/fbxgeometryconverter.h>
 
-//#include <core/log.h>
 #include <core/stackstring.h>
 #include <slim/xlog.h>
 

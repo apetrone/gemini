@@ -22,7 +22,7 @@
 
 #include <platform/mem.h>
 #include <core/filesystem.h>
-#include <core/log.h>
+#include <core/logging.h>
 
 
 #include <slim/xlog.h>

@@ -23,8 +23,6 @@
 
 #include "core.h"
 #include "filesystem.h"
-//#include <gemini/core/log.h>
-//#include <gemini/core/timer.h>
 
 #include <platform/platform.h>
 
