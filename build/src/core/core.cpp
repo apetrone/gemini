@@ -29,6 +29,12 @@
 #include <slim/xlog.h>
 #include <slim/xtime.h>
 
+
+#include "logging.h"
+#include "logging_interface.h"
+
+using namespace gemini::core;
+
 namespace core
 {
 	namespace _internal
@@ -42,9 +48,9 @@ namespace core
 		int file_logger_open( xlog_handler_t * handler );
 		void file_logger_close( xlog_handler_t * handler );
 		
-		void stdout_message( xlog_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );
-		int stdout_open( xlog_handler_t * handler );
-		void stdout_close( xlog_handler_t * handler );
+		void stdout_message(logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type);
+		int stdout_open(logging::Handler* handler);
+		void stdout_close(logging::Handler* handler);
 		
 #if _WIN32
 		void vs_message( xlog_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );
@@ -58,16 +64,32 @@ namespace core
 		void log_android_close( xlog_handler_t * handler );
 #endif
 				
-		platform::Result open_log_handlers()
+		platform::Result open_log_handlers(gemini::core::logging::ILog* log_system)
 		{
 			platform::Result result(platform::Result::Success);
 			
 			int total_log_handlers = 0;
 			
+
+			
 			// setup system log
 			xlog_init( &_system_log );
 			
 			xlog_set_default_log( &_system_log );
+			
+			
+			{
+				logging::Handler stdout_handler;
+				stdout_handler.message = stdout_message;
+				stdout_handler.open = stdout_open;
+				stdout_handler.close = stdout_close;
+				log_system->add_handler(&stdout_handler);
+				
+				++total_log_handlers;
+			}
+			
+			
+
 			
 #if _WIN32
 			xlog_handler_t msvc_logger;
@@ -81,16 +103,16 @@ namespace core
 			xlog_add_handler( &_system_log, &msvc_logger );
 #endif
 			
-#ifndef __ANDROID__
-			xlog_handler_t stdout_logger;
-			memset( &stdout_logger, 0, sizeof(xlog_handler_t) );
-			stdout_logger.message = stdout_message;
-			stdout_logger.open = stdout_open;
-			stdout_logger.close = stdout_close;
-			
-			++total_log_handlers;
-			xlog_add_handler( &_system_log, &stdout_logger );
-#endif
+//#ifndef __ANDROID__
+//			xlog_handler_t stdout_logger;
+//			memset( &stdout_logger, 0, sizeof(xlog_handler_t) );
+//			stdout_logger.message = stdout_message;
+//			stdout_logger.open = stdout_open;
+//			stdout_logger.close = stdout_close;
+//			
+//			++total_log_handlers;
+//			xlog_add_handler( &_system_log, &stdout_logger );
+//#endif
 			
 #if !PLATFORM_IS_MOBILE
 			
@@ -134,6 +156,10 @@ namespace core
 			xlog_add_handler( &_system_log, &android_log );
 			++total_log_handlers;
 #endif
+
+			log_system->startup();
+			
+			log_verbose("just testing, but this is now live\n");
 			
 			if ( xlog_open( &_system_log ) < total_log_handlers )
 			{
@@ -162,9 +188,13 @@ namespace core
 			fprintf(stderr, "platform startup failed! %s\n", result.message);
 			return result;
 		}
+		
+		// create an instance of the log system
+		gemini::core::logging::ILog* log_system = CREATE(gemini::core::logging::LogInterface);
+		gemini::core::log::set_instance(log_system);
 
 		// open logs
-		result = _internal::open_log_handlers();
+		result = _internal::open_log_handlers(log_system);
 		if (result.failed())
 		{
 			fprintf( stderr, "failed to open logging handlers: %s\n", result.message);
@@ -179,6 +209,11 @@ namespace core
 	void shutdown()
 	{
 		_internal::close_log_handlers();
+		
+		gemini::core::log::instance()->shutdown();
+		
+		gemini::core::logging::ILog* log_system = gemini::core::log::instance();
+		DESTROY(ILog, log_system);
 		
 		platform::shutdown();
 	} // shutdown

@@ -21,13 +21,31 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <core/str.h>
 
-//#define LOGV(format, ...) \
-//	ILog::instance()->message(\
-//		gemini::sdk::ILog::Verbose,\
-//
-//
-//	^ unfinished.
+#define log_verbose(format, ...) \
+	gemini::core::log::instance()->dispatch(\
+	gemini::core::logging::ILog::Verbose,\
+	xstr_format(format, ##__VA_ARGS__),\
+	__FUNCTION__,\
+	__FILE__,\
+	__LINE__)
+
+#define log_warning(format, ...) \
+	gemini::core::log::instance()->dispatch(\
+	gemini::core::logging::ILog::Warning,\
+	gemini::core::str::format(format, ##__VA_ARGS__),\
+	__FUNCTION__,\
+	__FILE__,\
+	__LINE__)
+
+#define log_error(format, ...) \
+	gemini::core::log::instance()->dispatch(\
+	gemini::core::logging::ILog::Warning,\
+	gemini::core::str::format(format, ##__VA_ARGS__),\
+	__FUNCTION__,\
+	__FILE__,\
+	__LINE__)
 
 #include <core/interface.h>
 
@@ -35,22 +53,56 @@ namespace gemini
 {
 	namespace core
 	{
-		class ILog
+		namespace logging
 		{
-		public:
-			enum MessageType
+			struct Handler
 			{
-				Verbose,
-				Warning,
-				Error
+				// called when a log message is received
+				void (*message)(struct Handler* handler, const char* message, const char* filename, const char* function, int line, int type );
+				
+				// called when the log should open
+				// expects 0 on failure; 1 on success
+				int (*open)(Handler* handler);
+				
+				// called when the log should close
+				void (*close)(Handler* handler);
+				
+				// userdata
+				void * userdata;
+				
+				Handler() : message(0), open(0), close(0), userdata(0) {}
 			};
 		
-		public:
-			virtual ~ILog() {}
+			class ILog
+			{
+			public:
+				enum MessageType
+				{
+					Invalid,
+					Verbose,
+					Warning,
+					Error
+				};
 			
-			virtual void message(ILog::MessageType type, const char* buffer, const char* function, int linenumber) = 0;
-		}; // ILog
+			public:
+				virtual ~ILog() {}
+				
+				/// @desc Dispatches a message to all handlers
+				virtual void dispatch(ILog::MessageType type, const char* message, const char* function, const char* filename, int linenumber) = 0;
+				
+				/// @desc Add a log handler for dispatch
+				/// @param handler Handler struct with pointers to functions
+				virtual void add_handler(Handler* handler) = 0;
+				
+				/// @desc Open the log handlers
+				/// @returns The total number of successfully opened handlers
+				virtual uint32_t startup() = 0;
+				
+				/// @desc Shutdown the log handlers
+				virtual void shutdown() = 0;
+			}; // ILog
+		} // namespace logging
 		
-		typedef Interface<ILog> logging;
+		typedef Interface<logging::ILog> log;
 	}
 } // namespace gemini

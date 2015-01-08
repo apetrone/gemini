@@ -27,6 +27,11 @@
 	#include <android/log.h>
 #endif
 
+
+#include "logging.h"
+
+using namespace gemini::core::logging;
+
 namespace core
 {
 	// log handler function definitions
@@ -55,19 +60,19 @@ namespace core
 		}
 		
 		
-		void stdout_message( xlog_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type )
+		void stdout_message(Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
 		{
-			const char *message_types[] = { 0, "VERBOSE", "WARNING", " ERROR " };
-			fprintf( stdout, "[%s] %s, %s, %i | %s", message_types[ type ], xstr_filefrompath(filename), function, line, message );
+			const char *message_types[] = {0, "VERBOSE", "WARNING", " ERROR "};
+			fprintf(stdout, "[%s] %s, %s, %i | %s", message_types[type], xstr_filefrompath(filename), function, line, message);
 			//fflush( stdout );
 		}
 		
-		int stdout_open( xlog_handler_t * handler )
+		int stdout_open(Handler* handler)
 		{
 			return 1;
 		}
 		
-		void stdout_close( xlog_handler_t * handler )
+		void stdout_close(Handler* handler)
 		{
 		}
 
