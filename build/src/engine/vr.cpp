@@ -24,7 +24,6 @@
 #include <core/mathlib.h>
 
 #include <slim/xlog.h>
-#include <slim/xstr.h>
 
 #include "vr.h"
 

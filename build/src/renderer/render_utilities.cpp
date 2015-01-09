@@ -28,8 +28,6 @@
 #include "renderstream.h"
 #include "rqueue.h"
 
-#include <slim/xstr.h>
-
 namespace render_utilities
 {
 	//

@@ -26,7 +26,6 @@
 
 #include <core/typedefs.h>
 
-#include <slim/xstr.h>
 #include <slim/xlog.h>
 
 gemgl_interface_t gl;

@@ -26,8 +26,6 @@
 #include <platform/platform.h>
 #include "xfile.h"
 
-#include <slim/xstr.h>
-
 #include "filesystem.h"
 
 #include <slim/xlog.h>

@@ -23,7 +23,6 @@
 
 #include <vector>
 
-#include <slim/xstr.h>
 #include <platform/mem.h>
 
 #define DECLARE_FACTORY_CLASS( class_name, abstract_class )\

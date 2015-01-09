@@ -23,9 +23,7 @@
 
 #include <assert.h>
 #include <platform/platform.h>
-//#include <core/asciistring.h> // for xstr_cat
-
-#include <slim/xstr.h>
+#include <core/str.h>
 
 template <unsigned int size, class Type=char>
 struct StackString
@@ -62,8 +60,8 @@ public:
 	void copy_data(const Type* source)
 	{
 		clear();
-		_length = xstr_len(source);
-		xstr_ncpy(_data, source, _length );
+		_length = gemini::core::str::len(source);
+		gemini::core::str::copy(_data, source, _length );
 	}
 	
 	void clear()
@@ -191,7 +189,7 @@ public:
 			size_t location = (p-_data-1);
 			
 			_data[location] = '\0';
-			_length = xstr_len(_data);
+			_length = gemini::core::str::len(_data);
 		}
 		
 		return *this;
@@ -212,10 +210,10 @@ public:
 	{
 		if (s)
 		{
-			if (_length + xstr_len(s) < size)
+			if (_length + gemini::core::str::len(s) < size)
 			{
-				xstr_cat(_data, s);
-				_length = xstr_len(_data);
+				gemini::core::str::cat(_data, s);
+				_length = gemini::core::str::len(_data);
 			}
 			else
 			{

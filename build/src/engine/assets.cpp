@@ -26,7 +26,6 @@
 //#include <core/filesystem.h>
 
 #include <slim/xlog.h>
-#include <slim/xstr.h>
 #include <slim/xtime.h>
 
 #include "assets.h"

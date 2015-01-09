@@ -24,7 +24,6 @@
 #include <core/typedefs.h>
 #include <core/filesystem.h>
 
-#include <slim/xstr.h>
 #include <slim/xlog.h>
 
 #include "font.h"

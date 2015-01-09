@@ -21,7 +21,6 @@
 // -------------------------------------------------------------
 
 #include <slim/xlog.h>
-#include <slim/xstr.h>
 
 #include <core/typedefs.h>
 #include <core/mathlib.h>
