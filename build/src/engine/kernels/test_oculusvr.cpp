@@ -35,7 +35,7 @@
 #include "camera.h"
 
 
-
+using namespace gemini;
 
 using namespace kernel;
 

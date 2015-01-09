@@ -31,89 +31,91 @@
 
 #include <renderer/font.h>
 
-
-namespace assets
+namespace gemini
 {
-	Font::Font()
+	namespace assets
 	{
-		font_data = 0;
-		font_size = 0;
-	}
+		Font::Font()
+		{
+			font_data = 0;
+			font_size = 0;
+		}
 
-	void Font::release()
-	{
-		if ( font_data != 0 )
+		void Font::release()
 		{
-			DEALLOC( this->font_data );
-			this->font_size = 0;
-		}
-	} // release
-	
-	
-	
-	char* load_font_from_file(const char* path, unsigned short point_size, renderer::Font& font)
-	{
-		size_t font_data_size = 0;
-		char * font_data = 0;
-		font_data = core::filesystem::file_to_buffer( path, 0, &font_data_size );
+			if ( font_data != 0 )
+			{
+				DEALLOC( this->font_data );
+				this->font_size = 0;
+			}
+		} // release
 		
-		if ( font_data )
-		{
-//			LOGV( "font data size: %i bytes\n", font_data_size );
-			font = font::load_font_from_memory( font_data, font_data_size, point_size );
-		}
-		else
-		{
-			LOGE( "Unable to load font from file: '%s'\n", path );
-			return 0;
-		}
 		
-		return font_data;
-	} // load_font_from_file
-	
-	
-	
-	util::ConfigLoadStatus load_font_from_file( const Json::Value & root, void * data )
-	{
-		Font * font = (Font*)data;
-		if (!font)
+		
+		char* load_font_from_file(const char* path, unsigned short point_size, renderer::Font& font)
 		{
+			size_t font_data_size = 0;
+			char * font_data = 0;
+			font_data = core::filesystem::file_to_buffer( path, 0, &font_data_size );
+			
+			if ( font_data )
+			{
+	//			LOGV( "font data size: %i bytes\n", font_data_size );
+				font = font::load_font_from_memory( font_data, font_data_size, point_size );
+			}
+			else
+			{
+				LOGE( "Unable to load font from file: '%s'\n", path );
+				return 0;
+			}
+			
+			return font_data;
+		} // load_font_from_file
+		
+		
+		
+		util::ConfigLoadStatus load_font_from_file( const Json::Value & root, void * data )
+		{
+			Font * font = (Font*)data;
+			if (!font)
+			{
+				return util::ConfigLoad_Failure;
+			}
+			
+			Json::Value point_size = root["point_size"];
+			Json::Value font_file = root["file"];
+			
+			font->font_size = point_size.asInt();
+			font->font_data = load_font_from_file(font_file.asString().c_str(), font->font_size, font->handle);
+			
+			if (kernel::instance()->parameters().device_flags & kernel::DeviceSupportsRetinaDisplay)
+			{
+				font->font_size = font->font_size * 2;
+			}
+			
+			if ( font->handle.is_valid() )
+			{
+				return util::ConfigLoad_Success;
+			}
+
 			return util::ConfigLoad_Failure;
-		}
-		
-		Json::Value point_size = root["point_size"];
-		Json::Value font_file = root["file"];
-		
-		font->font_size = point_size.asInt();
-		font->font_data = load_font_from_file(font_file.asString().c_str(), font->font_size, font->handle);
-		
-		if (kernel::instance()->parameters().device_flags & kernel::DeviceSupportsRetinaDisplay)
+		} // load_font_from_file
+
+		AssetLoadStatus font_load_callback( const char * path, Font * font, const AssetParameters & parameters )
 		{
-			font->font_size = font->font_size * 2;
-		}
+			if ( util::json_load_with_callback(path, load_font_from_file, font, true ) == util::ConfigLoad_Success )
+			{		
+				return AssetLoad_Success;
+			}
+			
+			return AssetLoad_Failure;
+		} // font_load_callback
 		
-		if ( font->handle.is_valid() )
+		
+		void font_construct_extension( StackString<MAX_PATH_SIZE> & extension )
 		{
-			return util::ConfigLoad_Success;
-		}
+			extension = ".conf";
+		} // font_construct_extension
 
-		return util::ConfigLoad_Failure;
-	} // load_font_from_file
-
-	AssetLoadStatus font_load_callback( const char * path, Font * font, const AssetParameters & parameters )
-	{
-		if ( util::json_load_with_callback(path, load_font_from_file, font, true ) == util::ConfigLoad_Success )
-		{		
-			return AssetLoad_Success;
-		}
-		
-		return AssetLoad_Failure;
-	} // font_load_callback
-	
-	
-	void font_construct_extension( StackString<MAX_PATH_SIZE> & extension )
-	{
-		extension = ".conf";
-	} // font_construct_extension
-
-}; // namespace assets
+	} // namespace assets
+} // namespace gemini

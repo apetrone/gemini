@@ -56,4 +56,4 @@ namespace gemini
 		virtual IModelInstanceData* get_instance_data(int32_t index) = 0;
 		
 	};
-}
+} // namespace gemini

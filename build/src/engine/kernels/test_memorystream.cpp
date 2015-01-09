@@ -27,7 +27,7 @@
 #include "kernel.h"
 #include <core/datastream.h>
 
-using namespace util;
+using namespace gemini::util;
 class TestMemoryStream : public kernel::IApplication
 {
 public:

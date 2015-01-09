@@ -30,21 +30,24 @@
 
 #include <renderer/material.h>
 
-namespace assets
+namespace gemini
 {
-	struct Material : public Asset, public renderer::Material
+	namespace assets
 	{
-		Shader * shader;
+		struct Material : public Asset, public renderer::Material
+		{
+			Shader * shader;
 
-		virtual void release();
-	}; // Material
+			virtual void release();
+		}; // Material
+			
+		unsigned int texture_unit_for_map(const std::string& name );
+		unsigned int material_type_to_parameter_type( const char * name );
+
 		
-	unsigned int texture_unit_for_map(const std::string& name );
-	unsigned int material_type_to_parameter_type( const char * name );
+		AssetLoadStatus material_load_callback( const char * path, Material * material, const AssetParameters & parameters );
+		void material_construct_extension( StackString<MAX_PATH_SIZE> & extension );
 
-	
-	AssetLoadStatus material_load_callback( const char * path, Material * material, const AssetParameters & parameters );
-	void material_construct_extension( StackString<MAX_PATH_SIZE> & extension );
-
-	DECLARE_ASSET_LIBRARY_ACCESSOR(Material, AssetParameters, materials);
-}; // namespace assets
+		DECLARE_ASSET_LIBRARY_ACCESSOR(Material, AssetParameters, materials);
+	} // namespace assets
+} // namespace gemini

@@ -42,4 +42,4 @@ namespace gemini
 	
 	template <class InterfaceType>
 	InterfaceType* Interface<InterfaceType>::_interface;
-}
+} // namespace gemini

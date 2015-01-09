@@ -28,5 +28,5 @@ namespace gemini
 	namespace platform
 	{
 		
-	};
-}
+	} // namespace platform
+} // namespace gemini

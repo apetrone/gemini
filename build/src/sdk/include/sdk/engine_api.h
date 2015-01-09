@@ -72,4 +72,4 @@ namespace gemini
 	{
 		typedef Interface<IEngineInterface> api;
 	}
-}
+} // namespace gemini

@@ -26,6 +26,8 @@
 
 #include "kernel.h"
 
+using namespace gemini;
+
 class HelloWorld : public kernel::IApplication
 {
 public:

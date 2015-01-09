@@ -31,30 +31,30 @@
 namespace gemini
 {
 	class IEngineEntity;
-}
 
-namespace renderer
-{
-	// The purpose of this class is to provide a connection between
-	// a scene graph and the render queue.
-	// In short, it will provide the conversion from scene graph nodes
-	// to RenderBlocks.
-	class SceneLink
+	namespace renderer
 	{
-		RenderQueue* queue;
-		
-	public:
-		SceneLink();
-		~SceneLink();
-		
-		// render the queue
-		void draw(scenegraph::Node* root, ConstantBuffer& constant_buffer);
-		
-		
-		void clear();
-		void sort();
-		void draw(ConstantBuffer& constant_buffer);
-		
-		void queue_entities(ConstantBuffer& constant_buffer, gemini::IEngineEntity** entity_list, uint32_t max_entities);
-	};
-}; // namespace renderer
+		// The purpose of this class is to provide a connection between
+		// a scene graph and the render queue.
+		// In short, it will provide the conversion from scene graph nodes
+		// to RenderBlocks.
+		class SceneLink
+		{
+			RenderQueue* queue;
+			
+		public:
+			SceneLink();
+			~SceneLink();
+			
+			// render the queue
+			void draw(scenegraph::Node* root, ConstantBuffer& constant_buffer);
+			
+			
+			void clear();
+			void sort();
+			void draw(ConstantBuffer& constant_buffer);
+			
+			void queue_entities(ConstantBuffer& constant_buffer, gemini::IEngineEntity** entity_list, uint32_t max_entities);
+		};
+	}; // namespace renderer
+} // namespace gemini

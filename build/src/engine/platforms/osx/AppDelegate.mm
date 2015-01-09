@@ -24,7 +24,7 @@
 #import "platforms/desktop/kernel_desktop.h"
 
 static bool has_started = false;
-DesktopKernel _desktop_kernel( 0, 0 );
+gemini::DesktopKernel _desktop_kernel( 0, 0 );
 
 @implementation AppDelegate
 
@@ -45,11 +45,11 @@ DesktopKernel _desktop_kernel( 0, 0 );
 	// Unfortunately, the OpenGL drawable surface contains the area
 	// used by the title bar, so we have to use that in our screen-space
 	// calculations.
-	kernel::instance()->parameters().titlebar_height = [self calculate_titlebar_height];
+	gemini::kernel::instance()->parameters().titlebar_height = [self calculate_titlebar_height];
 	
-	while( kernel::instance()->is_active() )
+	while( gemini::kernel::instance()->is_active() )
 	{
-		kernel::tick();
+		gemini::kernel::tick();
 	}
 
 	[[NSApplication sharedApplication] terminate:nil];
@@ -67,9 +67,9 @@ DesktopKernel _desktop_kernel( 0, 0 );
 //	NSLog( @"applicationWillResignActive" );
 	if ( has_started )
 	{
-		kernel::Event<kernel::System> event;
-		event.subtype = kernel::WindowLostFocus;
-		kernel::event_dispatch(event);
+		gemini::kernel::Event<gemini::kernel::System> event;
+		event.subtype = gemini::kernel::WindowLostFocus;
+		gemini::kernel::event_dispatch(event);
 	}
 }
 
@@ -80,7 +80,7 @@ DesktopKernel _desktop_kernel( 0, 0 );
 	if ( !has_started )
 	{
 		has_started = true;
-		kernel::startup( &_desktop_kernel );
+		gemini::kernel::startup( &_desktop_kernel );
 
 // http://fredandrandall.com/blog/2011/09/08/how-to-make-your-app-open-in-full-screen-on-lion/
 //	[window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
@@ -90,9 +90,9 @@ DesktopKernel _desktop_kernel( 0, 0 );
 	}
 	else
 	{
-		kernel::Event<kernel::System> event;
-		event.subtype = kernel::WindowGainFocus;
-		kernel::event_dispatch(event);
+		gemini::kernel::Event<gemini::kernel::System> event;
+		event.subtype = gemini::kernel::WindowGainFocus;
+		gemini::kernel::event_dispatch(event);
 	}
 }
 
@@ -105,8 +105,8 @@ DesktopKernel _desktop_kernel( 0, 0 );
 -(void)applicationWillTerminate:(NSNotification *)notification
 {
 //	NSLog( @"applicationWillTerminate" );
-	kernel::shutdown();
-	memory::shutdown();
+	gemini::kernel::shutdown();
+	gemini::memory::shutdown();
 }
 
 @end

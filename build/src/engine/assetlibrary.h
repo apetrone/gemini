@@ -28,222 +28,222 @@
 #include "assets.h"
 #include <slim/xlog.h>
 
-namespace assets
+namespace gemini
 {
-	
-
-
-	template <class AssetClass, class AssetParameterClass = AssetParameters>
-	class AssetLibrary
+	namespace assets
 	{
-		typedef AssetLoadStatus (*AssetLoadCallback)( const char * path, AssetClass * asset, const AssetParameterClass & parameters );
-		typedef void (*AssetConstructExtension)( StackString<MAX_PATH_SIZE> & path );
-		typedef void (*AssetIterator)( AssetClass * asset, void * userdata );
-		
-		typedef std::map<std::string, AssetClass*> AssetHashTable;
-		typedef typename AssetHashTable::iterator AssetHashTableIterator;
-		typedef std::list<AssetClass*, GeminiAllocator<AssetClass*> > AssetList;
-		
-		unsigned int total_assets;
-		AssetLoadCallback load_callback;
-		AssetConstructExtension construct_extension_callback;
-		AssetHashTable asset_by_name;
-		AssetList asset_list;
-		AssetClass * default_asset;
-		
-	public:
-		
-		AssetLibrary( AssetLoadCallback callback, AssetConstructExtension extension_callback )
+		template <class AssetClass, class AssetParameterClass = AssetParameters>
+		class AssetLibrary
 		{
-			load_callback = callback;
-			assert( load_callback != 0 );
+			typedef AssetLoadStatus (*AssetLoadCallback)( const char * path, AssetClass * asset, const AssetParameterClass & parameters );
+			typedef void (*AssetConstructExtension)( StackString<MAX_PATH_SIZE> & path );
+			typedef void (*AssetIterator)( AssetClass * asset, void * userdata );
 			
-			construct_extension_callback = extension_callback;
-			assert( construct_extension_callback != 0 );
+			typedef std::map<std::string, AssetClass*> AssetHashTable;
+			typedef typename AssetHashTable::iterator AssetHashTableIterator;
+			typedef std::list<AssetClass*, GeminiAllocator<AssetClass*> > AssetList;
 			
-			total_assets = 0;
-			default_asset = 0;
-		} // AssetLibrary
-		
-		~AssetLibrary()
-		{
-			release_and_purge();
-		}
-	
-		AssetClass * allocate_asset() { return CREATE(AssetClass); }
-		void deallocate_asset( AssetClass * asset ) { DESTROY(AssetClass, asset); }
-		unsigned int total_asset_count() const { return total_assets; }
-		
-		void for_each( AssetIterator iterator, void * userdata )
-		{
-			AssetClass * asset = 0;
-			typename AssetList::iterator it = asset_list.begin();
-			typename AssetList::iterator end = asset_list.end();
+			unsigned int total_assets;
+			AssetLoadCallback load_callback;
+			AssetConstructExtension construct_extension_callback;
+			AssetHashTable asset_by_name;
+			AssetList asset_list;
+			AssetClass * default_asset;
 			
-			for( ; it != end; ++it )
+		public:
+			
+			AssetLibrary( AssetLoadCallback callback, AssetConstructExtension extension_callback )
 			{
-				asset = (*it);
-				iterator( asset, userdata );
-			}
-		} // for_each
-	
-		// providing stubs for these functions
-		AssetLoadStatus load_with_callback( const char * path, AssetClass * asset, const AssetParameterClass & parameters )
-		{
-			if ( !load_callback )
-			{
-				return AssetLoad_Failure;
-			}
-		
-			return load_callback( path, asset, parameters );
-		} // load_with_callback
-		
-		void construct_extension( StackString<MAX_PATH_SIZE> & extension )
-		{
-			construct_extension_callback(extension);
-		} // construct_extension
-		
-		void append_extension( StackString<MAX_PATH_SIZE> & path )
-		{
-			StackString<MAX_PATH_SIZE> extension;
-			this->construct_extension(extension);
-			path.append( extension() );
-		}
-
-		AssetClass * load_from_path(const char* path, const AssetParameterClass & parameters = AssetParameterClass(), bool ignore_cache = false)
-		{
-			// This should handle the following cases:
-			// 1) Asset is loaded, obey cache and return loaded asset
-			// 2) Asset is loaded. User requests a reload of asset by ignoring the cache.
-			// 3) Asset is not loaded yet. Load it.
-			AssetClass * asset = 0;
-			StackString<MAX_PATH_SIZE> fullpath = path;
-			int load_result = 0;
-			int asset_is_new = 0;
-			
-			// is this asset already loaded?
-			AssetHashTableIterator iter = asset_by_name.find(path);
-			if (iter != asset_by_name.end())
-			{
-				asset = iter->second;
+				load_callback = callback;
+				assert( load_callback != 0 );
 				
-				if (!ignore_cache)
+				construct_extension_callback = extension_callback;
+				assert( construct_extension_callback != 0 );
+				
+				total_assets = 0;
+				default_asset = 0;
+			} // AssetLibrary
+			
+			~AssetLibrary()
+			{
+				release_and_purge();
+			}
+		
+			AssetClass * allocate_asset() { return CREATE(AssetClass); }
+			void deallocate_asset( AssetClass * asset ) { DESTROY(AssetClass, asset); }
+			unsigned int total_asset_count() const { return total_assets; }
+			
+			void for_each( AssetIterator iterator, void * userdata )
+			{
+				AssetClass * asset = 0;
+				typename AssetList::iterator it = asset_list.begin();
+				typename AssetList::iterator end = asset_list.end();
+				
+				for( ; it != end; ++it )
 				{
-					// case 1
-//					LOGV( "asset (%s) already loaded. returning from cache\n", path );
+					asset = (*it);
+					iterator( asset, userdata );
+				}
+			} // for_each
+		
+			// providing stubs for these functions
+			AssetLoadStatus load_with_callback( const char * path, AssetClass * asset, const AssetParameterClass & parameters )
+			{
+				if ( !load_callback )
+				{
+					return AssetLoad_Failure;
+				}
+			
+				return load_callback( path, asset, parameters );
+			} // load_with_callback
+			
+			void construct_extension( StackString<MAX_PATH_SIZE> & extension )
+			{
+				construct_extension_callback(extension);
+			} // construct_extension
+			
+			void append_extension( StackString<MAX_PATH_SIZE> & path )
+			{
+				StackString<MAX_PATH_SIZE> extension;
+				this->construct_extension(extension);
+				path.append( extension() );
+			}
+
+			AssetClass * load_from_path(const char* path, const AssetParameterClass & parameters = AssetParameterClass(), bool ignore_cache = false)
+			{
+				// This should handle the following cases:
+				// 1) Asset is loaded, obey cache and return loaded asset
+				// 2) Asset is loaded. User requests a reload of asset by ignoring the cache.
+				// 3) Asset is not loaded yet. Load it.
+				AssetClass * asset = 0;
+				StackString<MAX_PATH_SIZE> fullpath = path;
+				int load_result = 0;
+				int asset_is_new = 0;
+				
+				// is this asset already loaded?
+				AssetHashTableIterator iter = asset_by_name.find(path);
+				if (iter != asset_by_name.end())
+				{
+					asset = iter->second;
+					
+					if (!ignore_cache)
+					{
+						// case 1
+	//					LOGV( "asset (%s) already loaded. returning from cache\n", path );
+						return asset;
+					}
+				}
+				
+				// append the proper extension for this platform
+				this->append_extension(fullpath);
+
+				
+				if (!asset)
+				{
+					// case 3
+					asset = allocate_asset();
+					asset_is_new = 1;
+				}
+				
+				// case 2 && 3
+				load_result = load_with_callback(fullpath(), asset, parameters);
+				if (load_result != AssetLoad_Failure)
+				{
+					if (asset_is_new)
+					{
+						StackString<MAX_PATH_SIZE> store_path = path;
+						take_ownership(store_path(), asset);
+					}
+					
+					LOGV("loaded asset \"%s\", asset_id = %i\n", fullpath(), asset->Id());
 					return asset;
 				}
-			}
-			
-			// append the proper extension for this platform
-			this->append_extension(fullpath);
-
-			
-			if (!asset)
-			{
-				// case 3
-				asset = allocate_asset();
-				asset_is_new = 1;
-			}
-			
-			// case 2 && 3
-			load_result = load_with_callback(fullpath(), asset, parameters);
-			if (load_result != AssetLoad_Failure)
-			{
-				if (asset_is_new)
+				else
 				{
-					StackString<MAX_PATH_SIZE> store_path = path;
-					take_ownership(store_path(), asset);
+					if ( asset_is_new )
+					{
+						deallocate_asset( asset );
+					}
+					LOGV( "asset (%s) loading failed!\n", path );
 				}
 				
-				LOGV("loaded asset \"%s\", asset_id = %i\n", fullpath(), asset->Id());
-				return asset;
-			}
-			else
+				return default_asset;
+			} // load_from_path
+			
+			
+			// take ownership of this asset; should be managed by this class from here on
+			void take_ownership(const char* path, AssetClass * asset)
 			{
-				if ( asset_is_new )
+				if (!this->find_with_path(path))
 				{
+					asset->asset_id = total_assets++;
+					asset_list.push_back(asset);
+					
+					asset_by_name[path] = asset;
+				}
+			} // take_ownership
+			
+			AssetClass* find_with_path(const char* path)
+			{
+				AssetClass * asset = 0;
+				
+				AssetHashTableIterator iter = asset_by_name.find(path);
+				if (iter != asset_by_name.end())
+				{
+					asset = iter->second;
+					return asset;
+				}
+				
+				return 0;
+			} // find
+			
+			AssetClass * find_with_id( assets::AssetID id )
+			{
+				AssetClass * asset = 0;
+				typename AssetList::iterator it = asset_list.begin();
+				typename AssetList::iterator end = asset_list.end();
+				
+				for( ; it != end; ++it )
+				{
+					asset = (*it);
+					if ( asset->asset_id == id )
+					{
+						return asset;
+					}
+				}
+				
+				return 0;
+			} // find_with_id
+			
+			// release and purge all assets
+			void release_and_purge()
+			{
+				typename AssetList::iterator it = asset_list.begin();
+				typename AssetList::iterator end = asset_list.end();
+				
+				AssetClass * asset;
+				for( ; it != end; ++it )
+				{
+					asset = (*it);
+					asset->release();
 					deallocate_asset( asset );
 				}
-				LOGV( "asset (%s) loading failed!\n", path );
-			}
-			
-			return default_asset;
-		} // load_from_path
-		
-		
-		// take ownership of this asset; should be managed by this class from here on
-		void take_ownership(const char* path, AssetClass * asset)
-		{
-			if (!this->find_with_path(path))
-			{
-				asset->asset_id = total_assets++;
-				asset_list.push_back(asset);
 				
-				asset_by_name[path] = asset;
-			}
-		} // take_ownership
-		
-		AssetClass* find_with_path(const char* path)
-		{
-			AssetClass * asset = 0;
-			
-			AssetHashTableIterator iter = asset_by_name.find(path);
-			if (iter != asset_by_name.end())
-			{
-				asset = iter->second;
-				return asset;
-			}
-			
-			return 0;
-		} // find
-		
-		AssetClass * find_with_id( assets::AssetID id )
-		{
-			AssetClass * asset = 0;
-			typename AssetList::iterator it = asset_list.begin();
-			typename AssetList::iterator end = asset_list.end();
-			
-			for( ; it != end; ++it )
-			{
-				asset = (*it);
-				if ( asset->asset_id == id )
-				{
-					return asset;
-				}
-			}
-			
-			return 0;
-		} // find_with_id
-		
-		// release and purge all assets
-		void release_and_purge()
-		{
-			typename AssetList::iterator it = asset_list.begin();
-			typename AssetList::iterator end = asset_list.end();
-			
-			AssetClass * asset;
-			for( ; it != end; ++it )
-			{
-				asset = (*it);
-				asset->release();
-				deallocate_asset( asset );
-			}
-			
-			total_assets = 0;
+				total_assets = 0;
 
-			asset_by_name.clear();
-		} // release_and_purge
-		
-		void set_default( AssetClass * asset )
-		{
-			default_asset = asset;
-		} // set_default
-		
-		AssetClass * get_default() const
-		{
-			return default_asset;
-		} // get_default
-	}; // AssetLibrary
+				asset_by_name.clear();
+			} // release_and_purge
+			
+			void set_default( AssetClass * asset )
+			{
+				default_asset = asset;
+			} // set_default
+			
+			AssetClass * get_default() const
+			{
+				return default_asset;
+			} // get_default
+		}; // AssetLibrary
 
-}; // namespace assets
+	} // namespace assets
+} // namespace gemini

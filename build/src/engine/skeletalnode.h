@@ -29,54 +29,55 @@
 #include "keyframechannel.h"
 //#include "assets/asset_mesh.h"
 
-namespace scenegraph
+namespace gemini
 {
-	struct AnimatedNode : public Node
+	namespace scenegraph
 	{
-		Channel<glm::vec3> scale_channel;
-		Channel<glm::quat> rotation_channel;
-		Channel<glm::vec3> translation_channel;
-		
-		AnimatedNode();
-		AnimatedNode(AnimatedNode& other);
-		
-		//void post_processing(assets::Mesh* mesh, int32_t node_index);
-		
-		virtual void update(float delta_seconds);
-		
-		virtual Node* clone() { return CREATE(AnimatedNode, *this); }
-	};
+		struct AnimatedNode : public Node
+		{
+			Channel<glm::vec3> scale_channel;
+			Channel<glm::quat> rotation_channel;
+			Channel<glm::vec3> translation_channel;
+			
+			AnimatedNode();
+			AnimatedNode(AnimatedNode& other);
+			
+			//void post_processing(assets::Mesh* mesh, int32_t node_index);
+			
+			virtual void update(float delta_seconds);
+			
+			virtual Node* clone() { return CREATE(AnimatedNode, *this); }
+		};
 
-	struct RenderNode : public AnimatedNode
-	{
-		uint16_t material_id;
-		uint16_t shader_id;
-		
-		renderer::Geometry* geometry;
-		//assets::Mesh* mesh;
-		
-		bool visible;
-		
-		RenderNode();
-		
-		virtual Node* clone() { return CREATE(RenderNode, *this); }
-	};
+		struct RenderNode : public AnimatedNode
+		{
+			uint16_t material_id;
+			uint16_t shader_id;
+			
+			renderer::Geometry* geometry;
+			//assets::Mesh* mesh;
+			
+			bool visible;
+			
+			RenderNode();
+			
+			virtual Node* clone() { return CREATE(RenderNode, *this); }
+		};
 
-	struct SkeletalNode : public RenderNode
-	{
-		// TODO: This should be moved into an animation controller
-		// which can manage multiple animation skeletal transforms
-		// instead of one.
-		FixedArray<glm::mat4> transforms;
-		FixedArray<glm::mat4> final_transforms;
+		struct SkeletalNode : public RenderNode
+		{
+			// TODO: This should be moved into an animation controller
+			// which can manage multiple animation skeletal transforms
+			// instead of one.
+			core::FixedArray<glm::mat4> transforms;
+			core::FixedArray<glm::mat4> final_transforms;
 
-		SkeletalNode();
-		void setup_skeleton();
-		virtual void update(float delta_seconds);
-		void update_skeleton();
-		
-		virtual Node* clone() { return CREATE(SkeletalNode, *this); }
-	};
-}; // namespace scenegraph
-
-
+			SkeletalNode();
+			void setup_skeleton();
+			virtual void update(float delta_seconds);
+			void update_skeleton();
+			
+			virtual Node* clone() { return CREATE(SkeletalNode, *this); }
+		};
+	} // namespace scenegraph
+} // namespace gemini

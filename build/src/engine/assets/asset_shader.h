@@ -26,22 +26,25 @@
 #include "assets.h"
 #include "renderer/renderer.h"
 
-namespace assets
+namespace gemini
 {
-	// -------------------------------------------------------------
-	// Shader
-	
-	struct Shader : public Asset
+	namespace assets
 	{
-		renderer::ShaderProgram* program;
+		// -------------------------------------------------------------
+		// Shader
 		
-		Shader() : program(nullptr) {}
-		virtual void release();
-	}; // Shader
+		struct Shader : public Asset
+		{
+			renderer::ShaderProgram* program;
+			
+			Shader() : program(nullptr) {}
+			virtual void release();
+		}; // Shader
 
-	AssetLoadStatus shader_load_callback(const char* path, Shader* shader, const AssetParameters& parameters);
-	void shader_construct_extension(StackString<MAX_PATH_SIZE>& extension);
+		AssetLoadStatus shader_load_callback(const char* path, Shader* shader, const AssetParameters& parameters);
+		void shader_construct_extension(StackString<MAX_PATH_SIZE>& extension);
 
-	DECLARE_ASSET_LIBRARY_ACCESSOR(Shader, AssetParameters, shaders);
-	
-}; // namespace assets
+		DECLARE_ASSET_LIBRARY_ACCESSOR(Shader, AssetParameters, shaders);
+		
+	} // namespace assets
+} // namespace gemini

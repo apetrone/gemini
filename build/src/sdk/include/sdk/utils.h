@@ -89,5 +89,5 @@ namespace gemini
 	namespace util
 	{
 		Entity* create_entity_by_classname(const char* classname);
-	}
-}
+	} // namespace util
+} // namespace gemini

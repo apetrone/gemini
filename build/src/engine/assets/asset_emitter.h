@@ -28,31 +28,33 @@
 #include "renderer/renderer.h"
 #include "keyframechannel.h"
 
-
-namespace assets
+namespace gemini
 {
-	struct EmitterConfig : public Asset
+	namespace assets
 	{
-		unsigned short max_particles;
-		unsigned short spawn_rate;
-	
-		unsigned int material_id;
-		float spawn_delay_seconds;
+		struct EmitterConfig : public Asset
+		{
+			unsigned short max_particles;
+			unsigned short spawn_rate;
+		
+			unsigned int material_id;
+			float spawn_delay_seconds;
 
-		RangedValue<unsigned int> life;
-		RangedValue<glm::vec3> velocity;
-		RangedValue<float> size;
+			RangedValue<unsigned int> life;
+			RangedValue<glm::vec3> velocity;
+			RangedValue<float> size;
 
-		KeyframeChannel<Color> color_channel;
-		KeyframeChannel<float> alpha_channel;
-		KeyframeChannel<float> size_channel;
+			KeyframeChannel<Color> color_channel;
+			KeyframeChannel<float> alpha_channel;
+			KeyframeChannel<float> size_channel;
 
-		EmitterConfig();
-		virtual void release();
-	}; // EmitterConfig
+			EmitterConfig();
+			virtual void release();
+		}; // EmitterConfig
 
-	AssetLoadStatus emitterconfig_load_callback( const char * path, EmitterConfig * config, const AssetParameters & parameters );
-	void emitterconfig_construct_extension( StackString<MAX_PATH_SIZE> & extension );
+		AssetLoadStatus emitterconfig_load_callback( const char * path, EmitterConfig * config, const AssetParameters & parameters );
+		void emitterconfig_construct_extension( StackString<MAX_PATH_SIZE> & extension );
 
-	DECLARE_ASSET_LIBRARY_ACCESSOR(EmitterConfig, AssetParameters, emitters);
-}; // namespace assets
+		DECLARE_ASSET_LIBRARY_ACCESSOR(EmitterConfig, AssetParameters, emitters);
+	} // namespace assets
+} // namespace gemini

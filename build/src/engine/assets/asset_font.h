@@ -27,21 +27,24 @@
 
 #include <renderer/font.h>
 
-namespace assets
+namespace gemini
 {
-//	typedef int FontHandle;
-	struct Font : public Asset
+	namespace assets
 	{
-		unsigned short font_size;
-		renderer::Font handle;
-		char * font_data;
-		
-		Font();
-		virtual void release();
-	}; // Font
+	//	typedef int FontHandle;
+		struct Font : public Asset
+		{
+			unsigned short font_size;
+			renderer::Font handle;
+			char * font_data;
+			
+			Font();
+			virtual void release();
+		}; // Font
 
-	AssetLoadStatus font_load_callback( const char * path, Font * config, const AssetParameters & parameters );
-	void font_construct_extension( StackString<MAX_PATH_SIZE> & extension );
+		AssetLoadStatus font_load_callback( const char * path, Font * config, const AssetParameters & parameters );
+		void font_construct_extension( StackString<MAX_PATH_SIZE> & extension );
 
-	DECLARE_ASSET_LIBRARY_ACCESSOR(Font, AssetParameters, fonts);
-}; // namespace assets
+		DECLARE_ASSET_LIBRARY_ACCESSOR(Font, AssetParameters, fonts);
+	} // namespace assets
+} // namespace gemini

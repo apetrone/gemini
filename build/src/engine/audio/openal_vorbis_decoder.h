@@ -363,7 +363,7 @@ extern "C" {
 
 #include "audio.h"
 
-class stb_vorbis_decoder : public IAudioDecoder
+class stb_vorbis_decoder : public gemini::audio::IAudioDecoder
 {
 	stb_vorbis * _stream;
 	stb_vorbis_info _info;

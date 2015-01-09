@@ -21,152 +21,155 @@
 // -------------------------------------------------------------
 #pragma once
 
-namespace kernel
+namespace gemini
 {
-	//
-	// Event Types
-	// These are all the event types recognized and translated by the kernel.
-	// The Application must be able to handle a subset of these.
-	//
-	enum EventType
+	namespace kernel
 	{
-		System,
-		
-		// common to desktop applications
-		Keyboard,
-		Mouse,
-		
-		// common to mobile
-		Accelerometer,
-		Gyroscope,
-		Touch,
-		
-		GameController,
-				
-		EventTypeCount
-	}; // EventType
-	
-	
-	// Buttons should be normalized: [0, 1]
-	// This allows digital buttons to be either 0 or 1
-	// and analog buttons (like Xbox triggers) be analog between 0 and 1.
-	
-	// Joystick Axes should be normalized in the range: [-1, 1]
-	
-	
-	// EventSubTypes do not need a separate event structure.
-	// These provide the specific event for which to extract
-	// information from the structure.
-	enum EventSubType
-	{
-		WindowLostFocus,
-		WindowGainFocus,
-		WindowResized,
-
-		MouseButton,
-		MouseMoved,
-		MouseWheelMoved,
-		
-		TouchBegin,
-		TouchMoved,
-		TouchEnd,
-
-		JoystickButton,
-		JoystickAxisMoved,
-		JoystickConnected,
-		JoystickDisconnected
-	}; // EventSubType
-	
-	//
-	// These are all events used by the kernel. Any new events that a kernel should
-	// support must be added here.
-	//
-	
-	template <EventType type>
-	struct Event
-	{
-		static const EventType event_type = type;
-		EventSubType subtype;
-	}; // Event
-	
-	struct SystemEvent : public Event<System>
-	{
-		short window_width;
-		short window_height;
-		short render_width;
-		short render_height;
-	}; // SystemEvent
-	
-	struct KeyboardEvent : public Event<Keyboard>
-	{
-		bool is_down;
-		int unicode;
-		int key;
-	}; // KeyboardEvent
-
-	struct MouseEvent : public Event<Mouse>
-	{
-		bool is_down;
-		unsigned int button;
-		
-		// absolute mouse values
-		int mx;
-		int my;
-		
-		// delta mouse values
-		int dx;
-		int dy;
-		
-		// < 0 is movement towards the user; > 0 is movement away toward the screen
-		short wheel_direction;
-	}; // MouseEvent
-
-	
-	struct TouchEvent : public Event<Touch>
-	{
-		int id;
-		
-		// coordinates where the touch event began
-		int start_x;
-		int start_y;
-		
-		// current x/y for this touch
-		int x;
-		int y;
-	}; // TouchEvent
-	
-	struct GameControllerEvent : public Event<GameController>
-	{
-		int button;
-		bool is_down;
-		
-		int gamepad_id;
-		
-		uint8_t joystick_id;
-		int16_t joystick_value;
-	}; // GameControllerEvent
-	
-	void assign_listener_for_eventtype( kernel::EventType type, void * listener );
-	void * find_listener_for_eventtype( kernel::EventType type );
-	
-	//
-	// event support classes
-	//
-	
-	template <class Type>
-	class IEventListener
-	{
-	public:
-		IEventListener()
+		//
+		// Event Types
+		// These are all the event types recognized and translated by the kernel.
+		// The Application must be able to handle a subset of these.
+		//
+		enum EventType
 		{
-			EventType event_type = Type::event_type;
-			kernel::assign_listener_for_eventtype( event_type, this );
-		}
+			System,
+			
+			// common to desktop applications
+			Keyboard,
+			Mouse,
+			
+			// common to mobile
+			Accelerometer,
+			Gyroscope,
+			Touch,
+			
+			GameController,
+					
+			EventTypeCount
+		}; // EventType
 		
-		virtual ~IEventListener() {}
 		
-		// called to handle an event of Type
-		virtual void event( Type & event ) = 0;
-	}; // IKernelEventListener
-	
-}; // namespace kernel
+		// Buttons should be normalized: [0, 1]
+		// This allows digital buttons to be either 0 or 1
+		// and analog buttons (like Xbox triggers) be analog between 0 and 1.
+		
+		// Joystick Axes should be normalized in the range: [-1, 1]
+		
+		
+		// EventSubTypes do not need a separate event structure.
+		// These provide the specific event for which to extract
+		// information from the structure.
+		enum EventSubType
+		{
+			WindowLostFocus,
+			WindowGainFocus,
+			WindowResized,
+
+			MouseButton,
+			MouseMoved,
+			MouseWheelMoved,
+			
+			TouchBegin,
+			TouchMoved,
+			TouchEnd,
+
+			JoystickButton,
+			JoystickAxisMoved,
+			JoystickConnected,
+			JoystickDisconnected
+		}; // EventSubType
+		
+		//
+		// These are all events used by the kernel. Any new events that a kernel should
+		// support must be added here.
+		//
+		
+		template <EventType type>
+		struct Event
+		{
+			static const EventType event_type = type;
+			EventSubType subtype;
+		}; // Event
+		
+		struct SystemEvent : public Event<System>
+		{
+			short window_width;
+			short window_height;
+			short render_width;
+			short render_height;
+		}; // SystemEvent
+		
+		struct KeyboardEvent : public Event<Keyboard>
+		{
+			bool is_down;
+			int unicode;
+			int key;
+		}; // KeyboardEvent
+
+		struct MouseEvent : public Event<Mouse>
+		{
+			bool is_down;
+			unsigned int button;
+			
+			// absolute mouse values
+			int mx;
+			int my;
+			
+			// delta mouse values
+			int dx;
+			int dy;
+			
+			// < 0 is movement towards the user; > 0 is movement away toward the screen
+			short wheel_direction;
+		}; // MouseEvent
+
+		
+		struct TouchEvent : public Event<Touch>
+		{
+			int id;
+			
+			// coordinates where the touch event began
+			int start_x;
+			int start_y;
+			
+			// current x/y for this touch
+			int x;
+			int y;
+		}; // TouchEvent
+		
+		struct GameControllerEvent : public Event<GameController>
+		{
+			int button;
+			bool is_down;
+			
+			int gamepad_id;
+			
+			uint8_t joystick_id;
+			int16_t joystick_value;
+		}; // GameControllerEvent
+		
+		void assign_listener_for_eventtype( kernel::EventType type, void * listener );
+		void * find_listener_for_eventtype( kernel::EventType type );
+		
+		//
+		// event support classes
+		//
+		
+		template <class Type>
+		class IEventListener
+		{
+		public:
+			IEventListener()
+			{
+				EventType event_type = Type::event_type;
+				kernel::assign_listener_for_eventtype( event_type, this );
+			}
+			
+			virtual ~IEventListener() {}
+			
+			// called to handle an event of Type
+			virtual void event( Type & event ) = 0;
+		}; // IKernelEventListener
+		
+	} // namespace kernel
+} // namespace gemini

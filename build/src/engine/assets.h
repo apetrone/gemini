@@ -28,53 +28,56 @@
 
 #include <renderer/color.h>
 
-namespace assets
+namespace gemini
 {
-	// Asset utils
-	enum AssetType
+	namespace assets
 	{
-		SoundAsset
-	}; // AssetType
-	
-	
-	// called to initialize default textures and other required resources.
-	void startup();
-	
-	// purge all assets
-	void purge();
-	
-	// purge all assets and reclaim unused memory
-	void shutdown();
-	
-	// Given a relative path to an asset, tack on a platform-specific file extension
-	void append_asset_extension( AssetType type, StackString< MAX_PATH_SIZE > & path );
-	
-	typedef unsigned int AssetID;
-	
-	struct Asset
-	{
-		assets::AssetID asset_id;
-		virtual ~Asset() {}
-		virtual void release() = 0;
-		
-		inline unsigned int Id() const
+		// Asset utils
+		enum AssetType
 		{
-			return asset_id;
-		} // Id
-	}; // Asset
-	
-	
-	struct AssetParameters
-	{
+			SoundAsset
+		}; // AssetType
 		
-	}; // AssetParameters
-	
-	enum AssetLoadStatus
-	{
-		AssetLoad_Success = 0,
-		AssetLoad_Failure = 1
-	};
-}; // namespace assets
+		
+		// called to initialize default textures and other required resources.
+		void startup();
+		
+		// purge all assets
+		void purge();
+		
+		// purge all assets and reclaim unused memory
+		void shutdown();
+		
+		// Given a relative path to an asset, tack on a platform-specific file extension
+		void append_asset_extension( AssetType type, StackString< MAX_PATH_SIZE > & path );
+		
+		typedef unsigned int AssetID;
+		
+		struct Asset
+		{
+			assets::AssetID asset_id;
+			virtual ~Asset() {}
+			virtual void release() = 0;
+			
+			inline unsigned int Id() const
+			{
+				return asset_id;
+			} // Id
+		}; // Asset
+		
+		
+		struct AssetParameters
+		{
+			
+		}; // AssetParameters
+		
+		enum AssetLoadStatus
+		{
+			AssetLoad_Success = 0,
+			AssetLoad_Failure = 1
+		};
+	} // namespace assets
+} // namespace gemini
 
 #define IMPLEMENT_ASSET_LIBRARY_ACCESSOR( type, name )\
 	type * _##name = 0;\
@@ -97,7 +100,10 @@ namespace assets
 #include "assets/asset_emitter.h"
 #include "assets/asset_font.h"
 
-namespace assets
+namespace gemini
 {
-	unsigned int find_parameter_mask( renderer::ShaderString & name );
-}; // namespace assets
+	namespace assets
+	{
+		unsigned int find_parameter_mask( renderer::ShaderString & name );
+	} // namespace assets
+} // namespace gemini

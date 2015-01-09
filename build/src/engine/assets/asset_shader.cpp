@@ -27,98 +27,99 @@
 #include "renderer/renderer.h"
 #include "assets/asset_shader.h"
 
-
-namespace assets
+namespace gemini
 {
-	// -------------------------------------------------------------
-	// Shader
-	
-	void Shader::release()
+	namespace assets
 	{
-		if (program)
+		// -------------------------------------------------------------
+		// Shader
+		
+		void Shader::release()
 		{
-			renderer::driver()->shaderprogram_destroy( program );
+			if (program)
+			{
+				renderer::driver()->shaderprogram_destroy( program );
+			}
 		}
-	}
 
-	
+		
 
-#if 0
-	AssetLoadStatus shader_load_callback(const char* path, Shader* shader, const AssetParameters& parameters)
-	{
-		// populate all attribute names
-		const Json::Value& attribute_block = _internal::shader_config["attribute_block"];
-		StringVector attributes;
-		append_list_items(attributes, attribute_block);
-
-		// populate all uniform names
-		const Json::Value& uniform_block = _internal::shader_config["uniform_block"];
-		StringVector uniforms;
-		append_list_items(uniforms, uniform_block);
-		
-		// find the specific shader requested in the shader config
-		StackString<128> shader_path = path;
-		StackString<128> shader_name = shader_path.basename();
-		// We could actually use the dirname here in case someone requests
-		// a shader that doesn't reside in "shaders". Nah, unlikely.
-		
-		const Json::Value& shader_list = _internal::shader_config["shaders"];
-		
-		const Json::Value& shader_block = shader_list[ shader_name() ];
-		if (shader_block.isNull())
+	#if 0
+		AssetLoadStatus shader_load_callback(const char* path, Shader* shader, const AssetParameters& parameters)
 		{
-			LOGV("unable to find the shader block named \"%s\"\n", shader_name());
-			return AssetLoad_Failure;
-		}
-		
-		append_list_items(attributes, shader_block["attributes"]);
-		append_list_items(uniforms, shader_block["uniforms"]);
-		
-		StringVector stages;
-		append_list_items(stages, shader_block["stages"]);
+			// populate all attribute names
+			const Json::Value& attribute_block = _internal::shader_config["attribute_block"];
+			StringVector attributes;
+			append_list_items(attributes, attribute_block);
+
+			// populate all uniform names
+			const Json::Value& uniform_block = _internal::shader_config["uniform_block"];
+			StringVector uniforms;
+			append_list_items(uniforms, uniform_block);
+			
+			// find the specific shader requested in the shader config
+			StackString<128> shader_path = path;
+			StackString<128> shader_name = shader_path.basename();
+			// We could actually use the dirname here in case someone requests
+			// a shader that doesn't reside in "shaders". Nah, unlikely.
+			
+			const Json::Value& shader_list = _internal::shader_config["shaders"];
+			
+			const Json::Value& shader_block = shader_list[ shader_name() ];
+			if (shader_block.isNull())
+			{
+				LOGV("unable to find the shader block named \"%s\"\n", shader_name());
+				return AssetLoad_Failure;
+			}
+			
+			append_list_items(attributes, shader_block["attributes"]);
+			append_list_items(uniforms, shader_block["uniforms"]);
+			
+			StringVector stages;
+			append_list_items(stages, shader_block["stages"]);
 
 
-		StringVector preprocessor;
-		Json::Value preprocessor_block = _internal::shader_config["preprocessor_block"];
-		append_list_items(preprocessor, preprocessor_block);
+			StringVector preprocessor;
+			Json::Value preprocessor_block = _internal::shader_config["preprocessor_block"];
+			append_list_items(preprocessor, preprocessor_block);
 
-		shader->frag_data_location = "out_color";
-		create_shader_attributes_and_uniforms(shader, attributes, uniforms);
+			shader->frag_data_location = "out_color";
+			create_shader_attributes_and_uniforms(shader, attributes, uniforms);
 
-		String preprocessor_defines;
-		for (auto item : preprocessor)
+			String preprocessor_defines;
+			for (auto item : preprocessor)
+			{
+				preprocessor_defines += item;
+				preprocessor_defines += "\n";
+			}
+			
+			bool success = create_shader_program_from_file(path, stages, preprocessor_defines);
+			if (!success)
+			{
+				return AssetLoad_Failure;
+			}
+			
+			
+	//		shader->show_attributes();
+
+			return AssetLoad_Success;
+		} // font_load_callback
+	#endif
+
+
+		AssetLoadStatus shader_load_callback(const char* path, Shader* shader, const AssetParameters& parameters)
 		{
-			preprocessor_defines += item;
-			preprocessor_defines += "\n";
-		}
-		
-		bool success = create_shader_program_from_file(path, stages, preprocessor_defines);
-		if (!success)
+			renderer::create_shaderprogram_from_file(path, &shader->program);
+			if (!shader->program)
+			{
+				return AssetLoad_Failure;
+			}
+			
+			return AssetLoad_Success;
+		} // font_load_callback
+
+		void shader_construct_extension(StackString<MAX_PATH_SIZE>& extension)
 		{
-			return AssetLoad_Failure;
-		}
-		
-		
-//		shader->show_attributes();
-
-		return AssetLoad_Success;
-	} // font_load_callback
-#endif
-
-
-	AssetLoadStatus shader_load_callback(const char* path, Shader* shader, const AssetParameters& parameters)
-	{
-		renderer::create_shaderprogram_from_file(path, &shader->program);
-		if (!shader->program)
-		{
-			return AssetLoad_Failure;
-		}
-		
-		return AssetLoad_Success;
-	} // font_load_callback
-
-	void shader_construct_extension(StackString<MAX_PATH_SIZE>& extension)
-	{
-	} // shader_construct_extension
-		
-}; // namespace assets
+		} // shader_construct_extension
+	} // namespace assets
+} // namespace gemini

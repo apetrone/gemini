@@ -32,75 +32,78 @@
 #include <renderer/render_utilities.h>
 #include "assets/asset_emitter.h"
 
-// -------------------------------------------------------------
-// Particle
-// -------------------------------------------------------------
-struct Particle
+namespace gemini
 {
-	Color color;
-	render_utilities::PhysicsState<glm::vec3> position;
-	glm::vec3 velocity;
-	
-	float life_remaining;
-	float life_total;
-	float size;
-
-	Particle();
-//	~Particle()=default;
-}; // Particle
-
-
-
-
-
-// -------------------------------------------------------------
-// ParticleEmitter
-// -------------------------------------------------------------
-struct ParticleEmitter
-{
-	enum
+	// -------------------------------------------------------------
+	// Particle
+	// -------------------------------------------------------------
+	struct Particle
 	{
-		PLANE,
-		SPHERE,
-		CONE,
-		BOX
-	};
+		Color color;
+		render_utilities::PhysicsState<glm::vec3> position;
+		glm::vec3 velocity;
+		
+		float life_remaining;
+		float life_total;
+		float size;
 
-	assets::EmitterConfig * emitter_config;
-	
+		Particle();
+	//	~Particle()=default;
+	}; // Particle
 
-	
-	
-	render_utilities::PhysicsState<glm::vec3> world_position;
-	unsigned int num_particles_alive;
-	Particle * particle_list;
-	float next_spawn;
 
-	ParticleEmitter();
-	~ParticleEmitter();
-	void init();
-	void step( float delta_seconds );
-	void purge();
-	void load_from_emitter_config( assets::EmitterConfig * emitter_config );
-	void generate_particle( Particle * particle );
-}; // ParticleEmitter
 
-typedef std::vector<ParticleEmitter*> ParticleEmitterVector;
 
-// -------------------------------------------------------------
-// ParticleSystem
-// -------------------------------------------------------------
-struct ParticleSystem
-{
-//	unsigned int num_active_emitters;
-//	ParticleEmitter * emitter_list;
-	ParticleEmitterVector emitters;
-	
-	ParticleSystem();
-	~ParticleSystem();
-	void purge();
-	void step( float delta_seconds );
-	
-	ParticleEmitter * add_emitter();
-	void remove_emitter( ParticleEmitter * emitter );
-}; // ParticleSystem
+
+	// -------------------------------------------------------------
+	// ParticleEmitter
+	// -------------------------------------------------------------
+	struct ParticleEmitter
+	{
+		enum
+		{
+			PLANE,
+			SPHERE,
+			CONE,
+			BOX
+		};
+
+		assets::EmitterConfig * emitter_config;
+		
+
+		
+		
+		render_utilities::PhysicsState<glm::vec3> world_position;
+		unsigned int num_particles_alive;
+		Particle * particle_list;
+		float next_spawn;
+
+		ParticleEmitter();
+		~ParticleEmitter();
+		void init();
+		void step( float delta_seconds );
+		void purge();
+		void load_from_emitter_config( assets::EmitterConfig * emitter_config );
+		void generate_particle( Particle * particle );
+	}; // ParticleEmitter
+
+	typedef std::vector<ParticleEmitter*> ParticleEmitterVector;
+
+	// -------------------------------------------------------------
+	// ParticleSystem
+	// -------------------------------------------------------------
+	struct ParticleSystem
+	{
+	//	unsigned int num_active_emitters;
+	//	ParticleEmitter * emitter_list;
+		ParticleEmitterVector emitters;
+		
+		ParticleSystem();
+		~ParticleSystem();
+		void purge();
+		void step( float delta_seconds );
+		
+		ParticleEmitter * add_emitter();
+		void remove_emitter( ParticleEmitter * emitter );
+	}; // ParticleSystem
+} // namespace gemini

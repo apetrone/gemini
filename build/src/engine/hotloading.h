@@ -21,10 +21,12 @@
 // -------------------------------------------------------------
 #pragma once
 
-
-namespace hotloading
+namespace gemini
 {
-	void startup();
-	void tick();
-	void shutdown();
-}
+	namespace hotloading
+	{
+		void startup();
+		void tick();
+		void shutdown();
+	} // namespace hotloading
+} // namespace gemini

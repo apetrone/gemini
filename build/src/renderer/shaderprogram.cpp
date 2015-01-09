@@ -26,4 +26,4 @@ namespace gemini
 	namespace renderer
 	{
 	} // namespace renderer
-}
+} // namespace gemini

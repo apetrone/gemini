@@ -50,4 +50,4 @@ namespace gemini
 		// world position and orientation for this entity
 		virtual void get_world_transform(glm::vec3& position, glm::quat& orientation) const = 0;
 	};
-}
+} // namespace gemini

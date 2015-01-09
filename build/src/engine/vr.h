@@ -26,75 +26,78 @@
 
 #include "renderer/renderer.h"
 
-namespace vr
+namespace gemini
 {
-	struct EyePose
+	namespace vr
 	{
-		// eye pose information
-		glm::vec3 translation;
-		glm::quat rotation;
+		struct EyePose
+		{
+			// eye pose information
+			glm::vec3 translation;
+			glm::quat rotation;
+			
+			// this offset takes the interpupilary distance into account
+			glm::vec3 offset;
+			
+			// current index of this eye pose
+			// *used to determine which eye it is)
+			uint8_t eye_index;
+			
+			bool is_left_eye() const { return eye_index == 0; }
+			bool is_right_eye() const { return eye_index == 1; }
+		};
 		
-		// this offset takes the interpupilary distance into account
-		glm::vec3 offset;
-		
-		// current index of this eye pose
-		// *used to determine which eye it is)
-		uint8_t eye_index;
-		
-		bool is_left_eye() const { return eye_index == 0; }
-		bool is_right_eye() const { return eye_index == 1; }
-	};
-	
-	struct HeadMountedDevice
-	{
-		HeadMountedDevice() {}
-		virtual ~HeadMountedDevice() {}
-		
+		struct HeadMountedDevice
+		{
+			HeadMountedDevice() {}
+			virtual ~HeadMountedDevice() {}
+			
 
-		// I don't really see this changing.
-		virtual uint32_t total_eyes() const = 0;
-		
-		virtual void begin_frame(renderer::IRenderDriver* renderer) = 0;
-		virtual void end_frame(renderer::IRenderDriver* renderer) = 0;
+			// I don't really see this changing.
+			virtual uint32_t total_eyes() const = 0;
+			
+			virtual void begin_frame(gemini::renderer::IRenderDriver* renderer) = 0;
+			virtual void end_frame(gemini::renderer::IRenderDriver* renderer) = 0;
 
-		virtual void query_display_resolution(int32_t& width, int32_t& height) = 0;
-		virtual void get_eye_poses(EyePose poses[2], glm::mat4 projections[2]) = 0;
-		
-		virtual void dismiss_warning() = 0;
-		virtual void reset_head_pose() = 0;
-		
-		virtual renderer::RenderTarget* render_target() = 0;
-		
-		
-		virtual void test(glm::mat4& xform) = 0;
-	};
+			virtual void query_display_resolution(int32_t& width, int32_t& height) = 0;
+			virtual void get_eye_poses(EyePose poses[2], glm::mat4 projections[2]) = 0;
+			
+			virtual void dismiss_warning() = 0;
+			virtual void reset_head_pose() = 0;
+			
+			virtual gemini::renderer::RenderTarget* render_target() = 0;
+			
+			
+			virtual void test(glm::mat4& xform) = 0;
+		};
 
-	
-	// generic interface
-	
-	void startup();
-	void shutdown();
-	int32_t total_devices();
 		
-	HeadMountedDevice* create_device(int32_t index = 0);
-	void destroy_device(HeadMountedDevice* device);
-	
-	// device operations
-	void setup_rendering(HeadMountedDevice* device, uint16_t width, uint16_t height);
+		// generic interface
+		
+		void startup();
+		void shutdown();
+		int32_t total_devices();
+			
+		HeadMountedDevice* create_device(int32_t index = 0);
+		void destroy_device(HeadMountedDevice* device);
+		
+		// device operations
+		void setup_rendering(HeadMountedDevice* device, uint16_t width, uint16_t height);
 
-	// TODO: use these device flags to identify features
-//	enum DeviceFlags
-//	{
-//		None,
-//		
-//		SupportsHeadTranslation,
-//		SupportsHeadRotation
-//	};
+		// TODO: use these device flags to identify features
+	//	enum DeviceFlags
+	//	{
+	//		None,
+	//		
+	//		SupportsHeadTranslation,
+	//		SupportsHeadRotation
+	//	};
 
-	// TODO: Abstraction layer for an AR/VR library integration
-//	class VRInterface
-//	{
-//	public:
-//		virtual ~VRInterface() {}
-//	};
-} // namespace vr
+		// TODO: Abstraction layer for an AR/VR library integration
+	//	class VRInterface
+	//	{
+	//	public:
+	//		virtual ~VRInterface() {}
+	//	};
+	} // namespace vr
+} // namespace gemini

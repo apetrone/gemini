@@ -27,14 +27,15 @@
 #include <sdk/physics_collisionobject.h>
 #include <sdk/physics_rigidbody.h>
 
-namespace assets
-{
-	class Mesh;
-}
+
 
 namespace gemini
 {
-
+	namespace assets
+	{
+		class Mesh;
+	}
+	
 	namespace physics
 	{
 		void startup();

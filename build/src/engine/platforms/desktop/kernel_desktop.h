@@ -25,49 +25,52 @@
 #include "kernel.h"
 #include <map>
 
-struct DesktopKernelState;
-
-class DesktopKernel : public virtual kernel::IKernel
+namespace gemini
 {
-	struct DesktopParams : public kernel::Params
+	struct DesktopKernelState;
+
+	class DesktopKernel : public virtual kernel::IKernel
 	{
-		int argc;
-		char ** argv;
+		struct DesktopParams : public kernel::Params
+		{
+			int argc;
+			char ** argv;
+			
+			bool has_window;
+		};
 		
-		bool has_window;
+		bool active;
+		DesktopParams params;
+		
+		int target_renderer;
+
+		DesktopKernelState* state;
+
+	public:
+		DesktopKernel( int argc, char ** argv );
+
+		virtual bool is_active() const { return active; }
+		virtual void set_active( bool isactive ) { active = isactive; }
+		virtual kernel::Params & parameters() { return params; }
+		
+		virtual void startup();
+		virtual void register_services();
+		virtual void pre_tick();
+		virtual void post_tick();
+		virtual void post_application_config( kernel::ApplicationResult result );
+		virtual void post_application_startup( kernel::ApplicationResult result );
+		virtual void shutdown();
+		
+		virtual void capture_mouse(bool capture);
+		
+	private:
+		struct xwl_window_s *create_window( struct xwl_windowparams_s * windowparams, const char * title, unsigned int * attribs );
 	};
-	
-	bool active;
-	DesktopParams params;
-	
-	int target_renderer;
 
-	DesktopKernelState* state;
-
-public:
-	DesktopKernel( int argc, char ** argv );
-
-	virtual bool is_active() const { return active; }
-	virtual void set_active( bool isactive ) { active = isactive; }
-	virtual kernel::Params & parameters() { return params; }
-	
-	virtual void startup();
-	virtual void register_services();
-	virtual void pre_tick();
-	virtual void post_tick();
-	virtual void post_application_config( kernel::ApplicationResult result );
-	virtual void post_application_startup( kernel::ApplicationResult result );
-	virtual void shutdown();
-	
-	virtual void capture_mouse(bool capture);
-	
-private:
-	struct xwl_window_s *create_window( struct xwl_windowparams_s * windowparams, const char * title, unsigned int * attribs );
-};
-
-namespace kernel
-{
-	// main loop for a desktop app; this manages the main loop itself.
-	// it's enough in a desktop application to simply hand off control to this function.
-	Error main( IKernel * kernel_instance, const char * application_name );
-}; // namespace kernel
+	namespace kernel
+	{
+		// main loop for a desktop app; this manages the main loop itself.
+		// it's enough in a desktop application to simply hand off control to this function.
+		Error main( IKernel * kernel_instance, const char * application_name );
+	} // namespace kernel
+} // namespace gemini

@@ -37,119 +37,122 @@
 
 #include <json/json.h>
 
-namespace assets
+namespace gemini
 {
-	// -------------------------------------------------------------
-	// Mesh
-	
-	struct Geometry : public renderer::Geometry
+	namespace assets
 	{
-		StackString<128> name;
-		unsigned int material_id;
-		unsigned int shader_id;
+		// -------------------------------------------------------------
+		// Mesh
 		
-		Geometry();
-		~Geometry();
-		
-		// set this geometry up for rendering
-		void render_setup();
-		
-//		FixedArray<glm::vec3> untransformed_vertices;
-		FixedArray<glm::vec3> physics_vertices;
-	}; // Geometry
-	
-
-	// TEMP struct to test the whole shebang.
-	struct AnimationData
-	{
-		FixedArray< KeyframeData<glm::vec3> > scale;
-		FixedArray< KeyframeData<glm::quat> > rotation;
-		FixedArray< KeyframeData<glm::vec3> > translation;
-		
-		
-		// name to index map is the best I can do for now.
-		typedef std::map<std::string, size_t> NodeToIndexContainer;
-		NodeToIndexContainer node_id_by_name;
-
-		// duration of the full animation, in seconds
-//		float duration_seconds;
-		
-		float frames_per_second;
-		float frame_delay_seconds; // 1.0f / frames_per_second
-		
-		// total frames in this animation
-		uint32_t total_frames;
-	};
-	
-	const int MAX_VERTEX_WEIGHTS = 4;
-	
-	struct Bone
-	{
-		Bone()
+		struct Geometry : public gemini::renderer::Geometry
 		{
-			parent_index = -1;
-			index = -1;
-		}
-		~Bone() {}
+			gemini::StackString<128> name;
+			unsigned int material_id;
+			unsigned int shader_id;
+			
+			Geometry();
+			~Geometry();
+			
+			// set this geometry up for rendering
+			void render_setup();
+			
+	//		FixedArray<glm::vec3> untransformed_vertices;
+			core::FixedArray<glm::vec3> physics_vertices;
+		}; // Geometry
 		
-		// name of this bone
-		String name;
-		
-		// local to bone space (vertex to bone)
-		glm::mat4 inverse_bind_matrix;
-		
-		// from bone space to local space
-		glm::mat4 bind_matrix;
-		
-		
-		glm::mat4 local_transform;
-		glm::mat4 world_transform;
-		
-		// -1: No parent
-		int32_t parent_index;
-		
-		int32_t index;
-	};
-	
-	struct Mesh : public Asset
-	{
-		FixedArray<Geometry> geometry;
-		FixedArray<Geometry> geometry_vn;
-		FixedArray<Bone> bones;
-		glm::mat4 world_matrix;
-				
-		StackString<MAX_PATH_SIZE> path;
-		
-		scenegraph::Node* scene_root;
-		
-		unsigned short total_bones;
-		
-		// if this is true, it needs to be re-uploaded to the gpu
-		bool is_dirty;
-		
-		// offset to the center of mass
-		glm::vec3 mass_center_offset;
-		
-		Mesh();
-		~Mesh();
-		void reset();
 
-		virtual void release();
-		
-		// prepare all geometry
-		void prepare_geometry();
-		
-		// For now, we only have room for a single animation -- so make it worthwhile.
-		AnimationData animation;
+		// TEMP struct to test the whole shebang.
+		struct AnimationData
+		{
+			core::FixedArray< KeyframeData<glm::vec3> > scale;
+			core::FixedArray< KeyframeData<glm::quat> > rotation;
+			core::FixedArray< KeyframeData<glm::vec3> > translation;
+			
+			
+			// name to index map is the best I can do for now.
+			typedef std::map<std::string, size_t> NodeToIndexContainer;
+			NodeToIndexContainer node_id_by_name;
 
-		glm::mat4 node_transform;
-	}; // Mesh
-	
-	// EXPERIMENTAL
-	void read_keys_object(AnimationData& anim, Bone* bone, Json::Value& jkeys);
-	
-	AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, const AssetParameters & parameters );
-	void mesh_construct_extension( StackString<MAX_PATH_SIZE> & extension );
-	
-	DECLARE_ASSET_LIBRARY_ACCESSOR(Mesh, AssetParameters, meshes);
-}; // namespace assets
+			// duration of the full animation, in seconds
+	//		float duration_seconds;
+			
+			float frames_per_second;
+			float frame_delay_seconds; // 1.0f / frames_per_second
+			
+			// total frames in this animation
+			uint32_t total_frames;
+		};
+		
+		const int MAX_VERTEX_WEIGHTS = 4;
+		
+		struct Bone
+		{
+			Bone()
+			{
+				parent_index = -1;
+				index = -1;
+			}
+			~Bone() {}
+			
+			// name of this bone
+			String name;
+			
+			// local to bone space (vertex to bone)
+			glm::mat4 inverse_bind_matrix;
+			
+			// from bone space to local space
+			glm::mat4 bind_matrix;
+			
+			
+			glm::mat4 local_transform;
+			glm::mat4 world_transform;
+			
+			// -1: No parent
+			int32_t parent_index;
+			
+			int32_t index;
+		};
+		
+		struct Mesh : public Asset
+		{
+			core::FixedArray<Geometry> geometry;
+			core::FixedArray<Geometry> geometry_vn;
+			core::FixedArray<Bone> bones;
+			glm::mat4 world_matrix;
+					
+			StackString<MAX_PATH_SIZE> path;
+			
+			scenegraph::Node* scene_root;
+			
+			unsigned short total_bones;
+			
+			// if this is true, it needs to be re-uploaded to the gpu
+			bool is_dirty;
+			
+			// offset to the center of mass
+			glm::vec3 mass_center_offset;
+			
+			Mesh();
+			~Mesh();
+			void reset();
+
+			virtual void release();
+			
+			// prepare all geometry
+			void prepare_geometry();
+			
+			// For now, we only have room for a single animation -- so make it worthwhile.
+			AnimationData animation;
+
+			glm::mat4 node_transform;
+		}; // Mesh
+		
+		// EXPERIMENTAL
+		void read_keys_object(AnimationData& anim, Bone* bone, Json::Value& jkeys);
+		
+		AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, const AssetParameters & parameters );
+		void mesh_construct_extension( StackString<MAX_PATH_SIZE> & extension );
+		
+		DECLARE_ASSET_LIBRARY_ACCESSOR(Mesh, AssetParameters, meshes);
+	} // namespace assets
+} // namespace gemini

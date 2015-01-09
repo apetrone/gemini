@@ -30,33 +30,36 @@
 #include <renderer/renderer.h>
 #include <renderer/image.h>
 
-namespace assets
+namespace gemini
 {
-	// -------------------------------------------------------------
-	// Texture
-	struct Texture : public Asset
+	namespace assets
 	{
-		char * path;
-		image::Image image;
-		renderer::Texture* texture;
+		// -------------------------------------------------------------
+		// Texture
+		struct Texture : public Asset
+		{
+			char * path;
+			image::Image image;
+			renderer::Texture* texture;
+			
+			Texture();
+			virtual ~Texture();
+			virtual void release();
+		};
 		
-		Texture();
-		virtual ~Texture();
-		virtual void release();
-	};
-	
-	
-	struct TextureParameters : public AssetParameters
-	{
-		unsigned int flags;
-		TextureParameters() : flags(0) {}
-	};
 		
-//	Texture * load_cubemap( const char * basename, unsigned int flags = 0, bool ignore_cache = false );
-	renderer::Texture* load_texture_from_file(const char * filename, unsigned int flags, image::Image& image);
-	
-	AssetLoadStatus texture_load_callback( const char * path, Texture * texture, const TextureParameters & parameters );
-	void texture_construct_extension( StackString<MAX_PATH_SIZE> & extension );
+		struct TextureParameters : public AssetParameters
+		{
+			unsigned int flags;
+			TextureParameters() : flags(0) {}
+		};
+			
+	//	Texture * load_cubemap( const char * basename, unsigned int flags = 0, bool ignore_cache = false );
+		renderer::Texture* load_texture_from_file(const char * filename, unsigned int flags, image::Image& image);
+		
+		AssetLoadStatus texture_load_callback( const char * path, Texture * texture, const TextureParameters & parameters );
+		void texture_construct_extension( StackString<MAX_PATH_SIZE> & extension );
 
-	DECLARE_ASSET_LIBRARY_ACCESSOR(Texture, TextureParameters, textures);
-}; // namespace assets
+		DECLARE_ASSET_LIBRARY_ACCESSOR(Texture, TextureParameters, textures);
+	}; // namespace assets
+} // namespace gemini
