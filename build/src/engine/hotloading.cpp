@@ -20,8 +20,6 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 
-#include <slim/xlog.h>
-
 #include <core/typedefs.h>
 #include <core/mathlib.h>
 #include <core/threadsafequeue.h>

@@ -24,83 +24,86 @@
 #include "datamodel/skeleton.h"
 #include "datamodel/node.h"
 
-namespace datamodel
+namespace gemini
 {
-	Node::Node()
+	namespace datamodel
 	{
-		parent = nullptr;
-		mesh = nullptr;
-		skeleton = nullptr;
-		flags = 0;
-	}
-	
-	Node::~Node()
-	{
-//		NodeVector::iterator it = children.begin();
-//		for( ; it != children.end(); ++it)
-//		{
-//			Node* node = (*it);
-//			DESTROY(Node, node);
-//		}
-		
-		for (auto& child : children)
+		Node::Node()
 		{
-			DESTROY(Node, child);
+			parent = nullptr;
+			mesh = nullptr;
+			skeleton = nullptr;
+			flags = 0;
 		}
 		
-		children.clear();
-		
-		if (mesh)
+		Node::~Node()
 		{
-			DESTROY(Mesh, mesh);
-		}
-		
-		if (skeleton)
-		{
-			DESTROY(Skeleton, skeleton);
-		}
-	}
-	
-	void Node::add_child(Node* child)
-	{
-		if (child->parent)
-		{
-			child->parent->remove_child(child);
-		}
-		
-		child->parent = this;
-		children.push_back(child);
-	}
-	
-	void Node::remove_child(Node* child)
-	{
-		// find the child and detach from the old parent
-		for (NodeVector::iterator it = children.begin(); it != children.end(); ++it)
-		{
-			if (child == (*it))
+	//		NodeVector::iterator it = children.begin();
+	//		for( ; it != children.end(); ++it)
+	//		{
+	//			Node* node = (*it);
+	//			DESTROY(Node, node);
+	//		}
+			
+			for (auto& child : children)
 			{
-				children.erase(it);
-				break;
+				DESTROY(Node, child);
+			}
+			
+			children.clear();
+			
+			if (mesh)
+			{
+				DESTROY(Mesh, mesh);
+			}
+			
+			if (skeleton)
+			{
+				DESTROY(Skeleton, skeleton);
 			}
 		}
-	}
-	
-	Node* Node::find_child_named(const String& name)
-	{
-		if (this->name == name)
+		
+		void Node::add_child(Node* child)
 		{
-			return this;
+			if (child->parent)
+			{
+				child->parent->remove_child(child);
+			}
+			
+			child->parent = this;
+			children.push_back(child);
 		}
+		
+		void Node::remove_child(Node* child)
+		{
+			// find the child and detach from the old parent
+			for (NodeVector::iterator it = children.begin(); it != children.end(); ++it)
+			{
+				if (child == (*it))
+				{
+					children.erase(it);
+					break;
+				}
+			}
+		}
+		
+		Node* Node::find_child_named(const String& name)
+		{
+			if (this->name == name)
+			{
+				return this;
+			}
 
-		for (auto& child : children)
-		{
-			Node* node = child->find_child_named(name);
-			if (node)
+			for (auto& child : children)
 			{
-				return node;
+				Node* node = child->find_child_named(name);
+				if (node)
+				{
+					return node;
+				}
 			}
+			
+			return 0;
 		}
-		
-		return 0;
-	}
-};
+	} // namespace datamodel
+} // namespace gemini

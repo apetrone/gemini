@@ -21,7 +21,10 @@
 // -------------------------------------------------------------
 #include "extension.h"
 
-namespace tools
+namespace gemini
 {
+	namespace tools
+	{
 
-};
+	} // namespace tools
+} // namespace gemini

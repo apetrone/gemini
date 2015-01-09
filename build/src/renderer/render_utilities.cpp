@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "render_utilities.h"
-#include <slim/xlog.h>
+#include <core/logging.h>
 
 
 //#include "assets.h"
@@ -57,19 +57,19 @@ namespace gemini
 			} // calc_tile_uvs
 		}; // sprite
 		
-		void strip_shader_version( char * buffer, StackString<32> & version )
+		void strip_shader_version(char* buffer, StackString<32>& version)
 		{
 			// remove preceding "#version" shader
-			char * pos = xstr_str( buffer, "#version" );
-			if ( pos )
+			char* pos = core::str::strstr(buffer, "#version");
+			if (pos)
 			{
-				char * end = pos;
-				while( *end != '\n' )
+				char* end = pos;
+				while(*end != '\n')
 					++end;
 				
 				version._length = (end-pos);
-				memcpy( &version[0], &buffer[(pos-buffer)], version._length );
-				memset( &buffer[(pos-buffer)], ' ', (end-pos) );
+				memcpy(&version[0], &buffer[(pos-buffer)], version._length);
+				memset(&buffer[(pos-buffer)], ' ', (end-pos));
 			}
 		} // strip_shader_version
 	} // mamespace render_utilities

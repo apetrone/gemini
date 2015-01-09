@@ -22,85 +22,88 @@
 
 #include "datamodel/material.h"
 
-namespace datamodel
+namespace gemini
 {
-	static Material* _default_material = 0;
-
-
-	MaterialMap::MaterialMap()
+	namespace datamodel
 	{
-		next_id = 0;
-	}
+		static Material* _default_material = 0;
 
-	Material& MaterialMap::find_with_id(MaterialId id)
-	{
-		// no materials; use the default
-		if (materials.empty() || id < 0)
+
+		MaterialMap::MaterialMap()
 		{
+			next_id = 0;
+		}
+
+		Material& MaterialMap::find_with_id(MaterialId id)
+		{
+			// no materials; use the default
+			if (materials.empty() || id < 0)
+			{
+				return get_default_material();
+			}
+			
+			// catch out of range ids
+			assert(materials.size() >= (uint32_t)id);
+			
+			return materials[ id ];
+		}
+		
+		Material& MaterialMap::find_with_name(const String& name)
+		{
+			auto it = materials_by_name.find(name);
+			if (it != materials_by_name.end())
+			{
+				return it->second;
+			}
+			
 			return get_default_material();
 		}
-		
-		// catch out of range ids
-		assert(materials.size() >= (uint32_t)id);
-		
-		return materials[ id ];
-	}
-	
-	Material& MaterialMap::find_with_name(const String& name)
-	{
-		auto it = materials_by_name.find(name);
-		if (it != materials_by_name.end())
+
+		Material& MaterialMap::add_material(const String& name)
 		{
-			return it->second;
+			Material material;
+			material.id = next_id++;
+			material.name = name;
+			materials.push_back(material);
+			materials_by_name.insert(MaterialContainer::value_type(name, material));
+			
+			return find_with_id(material.id);
 		}
 		
-		return get_default_material();
-	}
-
-	Material& MaterialMap::add_material(const String& name)
-	{
-		Material material;
-		material.id = next_id++;
-		material.name = name;
-		materials.push_back(material);
-		materials_by_name.insert(MaterialContainer::value_type(name, material));
-		
-		return find_with_id(material.id);
-	}
-	
-	MaterialMap::MaterialVector::iterator MaterialMap::begin()
-	{
-		return materials.begin();
-	}
-	
-	MaterialMap::MaterialVector::iterator MaterialMap::end()
-	{
-		return materials.end();
-	}
-
-	MaterialMap::MaterialVector::const_iterator MaterialMap::begin() const
-	{
-		return materials.begin();
-	}
-
-	MaterialMap::MaterialVector::const_iterator MaterialMap::end() const
-	{
-		return materials.end();
-	}
-
-	void set_default_material(Material* material)
-	{
-		if (material)
+		MaterialMap::MaterialVector::iterator MaterialMap::begin()
 		{
-			material->id = -1;
-			material->name = "default";
-			_default_material = material;
+			return materials.begin();
 		}
-	}
+		
+		MaterialMap::MaterialVector::iterator MaterialMap::end()
+		{
+			return materials.end();
+		}
 
-	Material& get_default_material()
-	{
-		assert(_default_material != 0);
-		return *_default_material;
-	}
-}
+		MaterialMap::MaterialVector::const_iterator MaterialMap::begin() const
+		{
+			return materials.begin();
+		}
+
+		MaterialMap::MaterialVector::const_iterator MaterialMap::end() const
+		{
+			return materials.end();
+		}
+
+		void set_default_material(Material* material)
+		{
+			if (material)
+			{
+				material->id = -1;
+				material->name = "default";
+				_default_material = material;
+			}
+		}
+
+		Material& get_default_material()
+		{
+			assert(_default_material != 0);
+			return *_default_material;
+		}
+	} // namespace datamodel
+} // namespace gemini

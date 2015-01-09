@@ -21,10 +21,13 @@
 // -------------------------------------------------------------
 #pragma once
 
-namespace datamodel
+namespace gemini
 {
-	struct Skeleton
+	namespace datamodel
 	{
-		
-	};
-};
+		struct Skeleton
+		{
+			
+		};
+	} // namespace datamodel
+} // namespace gemini

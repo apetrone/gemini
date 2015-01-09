@@ -27,8 +27,8 @@
 #include <platform/platform.h>
 #include <core/configloader.h>
 #include <core/filesystem.h>
+#include <core/logging.h>
 
-#include <slim/xlog.h>
 #include <slim/xtime.h>
 
 #include "kernel.h"

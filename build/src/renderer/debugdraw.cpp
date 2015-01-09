@@ -25,8 +25,6 @@
 #include "renderstream.h"
 #include "font.h"
 
-#include <slim/xlog.h>
-
 namespace gemini
 {
 	namespace debugdraw

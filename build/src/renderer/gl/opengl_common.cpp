@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <core/typedefs.h>
-#include <slim/xlog.h>
+#include <core/logging.h>
 
 #include "renderer.h"
 #include "opengl_common.h"

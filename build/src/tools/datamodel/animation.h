@@ -31,68 +31,71 @@
 
 //#include "datamodel/node.h"
 
-namespace datamodel
+namespace gemini
 {
-	template <class Type>
-	struct Keyframe
+	namespace datamodel
 	{
-		float time_seconds;
-		Type value;
-		
-		
-		Keyframe(float seconds, Type val) : time_seconds(seconds), value(val)
+		template <class Type>
+		struct Keyframe
 		{
-		}
-	};
-	
-	template <class Type>
-	struct Channel
-	{
-		typedef Keyframe<Type> KeyframeType;
-		std::vector< KeyframeType* > keys;
-		KeyframeType* add_key(float seconds, const Type& val)
-		{
-			KeyframeType* key = CREATE(KeyframeType, seconds, val);
-			keys.push_back(key);
-			return key;
-		}
-		
-		~Channel()
-		{
-			for (auto key : keys)
+			float time_seconds;
+			Type value;
+			
+			
+			Keyframe(float seconds, Type val) : time_seconds(seconds), value(val)
 			{
-				DESTROY(KeyframeType, key);
 			}
-		}
-	};
+		};
+		
+		template <class Type>
+		struct Channel
+		{
+			typedef Keyframe<Type> KeyframeType;
+			std::vector< KeyframeType* > keys;
+			KeyframeType* add_key(float seconds, const Type& val)
+			{
+				KeyframeType* key = CREATE(KeyframeType, seconds, val);
+				keys.push_back(key);
+				return key;
+			}
+			
+			~Channel()
+			{
+				for (auto key : keys)
+				{
+					DESTROY(KeyframeType, key);
+				}
+			}
+		};
 
-	struct NodeAnimation
-	{
-		// the name of the node corresponding to this data
-		String name;
-		
-		Channel<glm::vec3> scale;
-		Channel<glm::quat> rotation;
-		Channel<glm::vec3> translation;
-	};
+		struct NodeAnimation
+		{
+			// the name of the node corresponding to this data
+			String name;
+			
+			Channel<glm::vec3> scale;
+			Channel<glm::quat> rotation;
+			Channel<glm::vec3> translation;
+		};
 
-	// This represents a single animation
-	struct Animation
-	{
-		typedef std::map<String, NodeAnimation*> NodeAnimationByNameContainer;
-		
-		// keyframe/node data
-		std::vector< NodeAnimation* > node_animations;
-		NodeAnimationByNameContainer nodes_by_name;
-		
-		// this animations' data
-		String name;
-		uint16_t frames_per_second;
-		
-		Animation();
-		~Animation();
-		
-		NodeAnimation* data_with_name(const String& node_name);
-		NodeAnimation* add_node_data(const String& node_name);
-	};
-};
+		// This represents a single animation
+		struct Animation
+		{
+			typedef std::map<String, NodeAnimation*> NodeAnimationByNameContainer;
+			
+			// keyframe/node data
+			std::vector< NodeAnimation* > node_animations;
+			NodeAnimationByNameContainer nodes_by_name;
+			
+			// this animations' data
+			String name;
+			uint16_t frames_per_second;
+			
+			Animation();
+			~Animation();
+			
+			NodeAnimation* data_with_name(const String& node_name);
+			NodeAnimation* add_node_data(const String& node_name);
+		};
+	} // namespace datamodel
+} // namespace gemini

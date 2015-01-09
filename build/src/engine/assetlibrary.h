@@ -25,8 +25,9 @@
 #include <list>
 
 #include <core/typedefs.h>
+#include <core/logging.h>
+
 #include "assets.h"
-#include <slim/xlog.h>
 
 namespace gemini
 {

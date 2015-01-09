@@ -27,44 +27,46 @@
 #include <core/str.h>
 #include <vector>
 
-
-namespace datamodel
+namespace gemini
 {
-	struct Mesh;
-	struct Skeleton;
-
-	typedef std::vector<struct Node*, GeminiAllocator<struct Node*>> NodeVector;
-
-	
-	struct Node
+	namespace datamodel
 	{
-		enum Flags
-		{
-			None,
-			NoAnimations, // this node cannot have animations
-		};
-		
-		uint32_t flags;
-		
-		String name;
-		String type;
-		
-		glm::vec3 scale;
-		glm::quat rotation;
-		glm::vec3 translation;
+		struct Mesh;
+		struct Skeleton;
 
-		Node* parent;
-		NodeVector children;
+		typedef std::vector<struct Node*, GeminiAllocator<struct Node*>> NodeVector;
+
 		
-		Mesh* mesh;
-		Skeleton* skeleton;
-		
-		Node();
-		virtual ~Node();
-		void add_child(Node* child);
-		void remove_child(Node* child);
-		Node* find_child_named(const String& name);
-		
-		bool has_animations() const { return (flags & NoAnimations) == 0; }
-	};
-};
+		struct Node
+		{
+			enum Flags
+			{
+				None,
+				NoAnimations, // this node cannot have animations
+			};
+			
+			uint32_t flags;
+			
+			String name;
+			String type;
+			
+			glm::vec3 scale;
+			glm::quat rotation;
+			glm::vec3 translation;
+
+			Node* parent;
+			NodeVector children;
+			
+			Mesh* mesh;
+			Skeleton* skeleton;
+			
+			Node();
+			virtual ~Node();
+			void add_child(Node* child);
+			void remove_child(Node* child);
+			Node* find_child_named(const String& name);
+			
+			bool has_animations() const { return (flags & NoAnimations) == 0; }
+		};
+	} // namespace datamodel
+} // namespace gemini

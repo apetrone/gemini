@@ -35,18 +35,21 @@
 #include "datamodel/skeleton.h"
 #include "datamodel/animation.h"
 
-namespace datamodel
+namespace gemini
 {
-	struct Model
+	namespace datamodel
 	{
-		Node root;
-		MaterialMap materials;
-		
-//		Skeleton* skeleton;
-		std::vector<Animation*> animations;
-		
-		~Model();
-		
-		Animation* add_animation(const String& name);
-	};
-};
+		struct Model
+		{
+			Node root;
+			MaterialMap materials;
+			
+	//		Skeleton* skeleton;
+			std::vector<Animation*> animations;
+			
+			~Model();
+			
+			Animation* add_animation(const String& name);
+		};
+	} // namespace datamodel
+} // namespace gemini

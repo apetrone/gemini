@@ -23,13 +23,14 @@
 #include <algorithm>
 #include <string>
 
-#include <core/typedefs.h>
 #include <platform/mem.h>
 
-#include <slim/xlog.h>
+#include <core/typedefs.h>
+#include <core/logging.h>
+#include <core/mathlib.h>
 
 #include "scene_graph.h"
-#include <core/mathlib.h>
+
 
 //#include "core/assets/asset_mesh.h"
 //#include "physics.h"

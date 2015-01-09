@@ -22,7 +22,7 @@
 
 #include "bullet_debugdraw.h"
 
-#include <slim/xlog.h>
+#include <core/logging.h>
 #include <renderer/color.h>
 #include <renderer/debugdraw.h>
 

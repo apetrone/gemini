@@ -20,12 +20,13 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <core/typedefs.h>
+#include <core/logging.h>
+
 #include "vertexstream.h"
 #include "renderer.h"
 
 #include <string.h> // for memset
 #include <stdio.h> // for printf
-#include <slim/xlog.h>
 
 namespace gemini
 {

@@ -23,8 +23,7 @@
 
 #include <core/typedefs.h>
 #include <core/filesystem.h>
-
-#include <slim/xlog.h>
+#include <core/logging.h>
 
 #include "font.h"
 #include "renderer.h"

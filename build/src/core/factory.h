@@ -25,6 +25,8 @@
 
 #include <platform/mem.h>
 
+#include <core/str.h>
+
 #define DECLARE_FACTORY_CLASS( class_name, abstract_class )\
 	public:\
 		static abstract_class* creator() { return CREATE(class_name); }\
@@ -72,7 +74,7 @@ namespace gemini
 				{
 					// if this category matches the record, or if category is not-specified (0)
 					// and the name matches
-					if ( (category != 0 && record.category_type == category) || (category == 0 && name != 0 && (xstr_nicmp(record.class_name, name, 0) == 0)) )
+					if ( (category != 0 && record.category_type == category) || (category == 0 && name != 0 && (str::case_insensitive_compare(record.class_name, name, 0) == 0)) )
 					{
 						return &record;
 					}

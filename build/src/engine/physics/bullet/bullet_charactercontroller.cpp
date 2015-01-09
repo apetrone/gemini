@@ -25,7 +25,6 @@
 #include "physics/physics_common.h"
 
 #include "physics/bullet/bullet_charactercontroller.h"
-#include <slim/xlog.h>
 
 #include <core/mathlib.h>
 #include "camera.h"

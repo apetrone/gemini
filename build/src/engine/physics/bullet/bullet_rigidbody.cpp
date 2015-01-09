@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 
 #include <platform/mem.h>
-#include <slim/xlog.h>
+#include <core/logging.h>
 
 #include "bullet_rigidbody.h"
 #include "bullet_common.h"

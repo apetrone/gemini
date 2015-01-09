@@ -21,6 +21,8 @@
 // -------------------------------------------------------------
 #include <platform/mem.h>
 
+#include <core/logging.h>
+
 #include "entity.h"
 #include "entity_list.h"
 //#include "physics/physics.h"

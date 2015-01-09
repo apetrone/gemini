@@ -27,43 +27,46 @@
 #include <vector>
 #include <map>
 
-namespace datamodel
+namespace gemini
 {
-	typedef int32_t MaterialId;
-	struct Material
+	namespace datamodel
 	{
-		MaterialId id;
-		String name;
-	};
+		typedef int32_t MaterialId;
+		struct Material
+		{
+			MaterialId id;
+			String name;
+		};
 
-	// Maintains a list of materials
-	class MaterialMap
-	{
-	public:
-		typedef std::map<String, Material> MaterialContainer;
-		typedef std::vector<Material> MaterialVector;
+		// Maintains a list of materials
+		class MaterialMap
+		{
+		public:
+			typedef std::map<String, Material> MaterialContainer;
+			typedef std::vector<Material> MaterialVector;
 
-	private:
-		MaterialContainer materials_by_name;
-		MaterialVector materials;
-		MaterialId next_id;
-				
-	public:
-		MaterialMap();
-		virtual ~MaterialMap() {}
+		private:
+			MaterialContainer materials_by_name;
+			MaterialVector materials;
+			MaterialId next_id;
+					
+		public:
+			MaterialMap();
+			virtual ~MaterialMap() {}
+			
+			Material& find_with_id(MaterialId id);
+			Material& find_with_name(const String& name);
+			Material& add_material(const String& name);
+			size_t size() const { return materials.size(); }
 		
-		Material& find_with_id(MaterialId id);
-		Material& find_with_name(const String& name);
-		Material& add_material(const String& name);
-		size_t size() const { return materials.size(); }
-	
-		MaterialVector::iterator begin();
-		MaterialVector::iterator end();
-		MaterialVector::const_iterator begin() const;
-		MaterialVector::const_iterator end() const;
-	};
+			MaterialVector::iterator begin();
+			MaterialVector::iterator end();
+			MaterialVector::const_iterator begin() const;
+			MaterialVector::const_iterator end() const;
+		};
 
 
-	void set_default_material(Material* material);
-	Material& get_default_material();
-};
+		void set_default_material(Material* material);
+		Material& get_default_material();
+	} // namespace datamodel
+} // namespace gemini

@@ -23,8 +23,6 @@
 #include <core/stackstring.h>
 #include <core/filesystem.h>
 
-#include <slim/xlog.h>
-
 #include "audio.h"
 #include "assets.h"
 #include <core/factory.h>

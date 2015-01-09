@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <core/typedefs.h>
-#include <slim/xlog.h>
+//#include <core/logging.h>
 
 #include <sdk/physics_api.h>
 #include "physics_interface.h"

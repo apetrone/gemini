@@ -22,7 +22,7 @@
 #include <vector>
 
 #include <platform/mem.h>
-#include <slim/xlog.h>
+#include <core/logging.h>
 
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
 

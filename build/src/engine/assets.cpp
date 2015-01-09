@@ -23,9 +23,7 @@
 #include <core/typedefs.h>
 #include <platform/mem.h>
 #include <core/configloader.h>
-//#include <core/filesystem.h>
 
-#include <slim/xlog.h>
 #include <slim/xtime.h>
 
 #include "assets.h"

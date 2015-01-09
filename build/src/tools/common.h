@@ -26,53 +26,56 @@
 #include <core/mathlib.h>
 #include <core/str.h>
 
-namespace tools
+namespace gemini
 {
-	struct IndentState
+	namespace tools
 	{
-		size_t depth;
-		String buffer;
-		
-		IndentState() : depth(0)
-		{}
-		
-		void push()
+		struct IndentState
 		{
-			++depth;
-			update();
-		}
-		
-		void pop()
-		{
-			--depth;
-			update();
-		}
-		
-		void update()
-		{
-			buffer.clear();
-			for (size_t i = 0; i < depth; ++i)
+			size_t depth;
+			String buffer;
+			
+			IndentState() : depth(0)
+			{}
+			
+			void push()
 			{
-				buffer += "    ";
+				++depth;
+				update();
 			}
-		}
-		
-		const char* indent()
-		{
-			return buffer.c_str();
-		}
-	};
-		
-	void startup();
-	void shutdown();
-}
+			
+			void pop()
+			{
+				--depth;
+				update();
+			}
+			
+			void update()
+			{
+				buffer.clear();
+				for (size_t i = 0; i < depth; ++i)
+				{
+					buffer += "    ";
+				}
+			}
+			
+			const char* indent()
+			{
+				return buffer.c_str();
+			}
+		};
+			
+		void startup();
+		void shutdown();
+	} // namespace tools
 
-namespace datamodel
-{
-	struct Mesh;
-}
+	namespace datamodel
+	{
+		struct Mesh;
+	} // namespace datamodel
 
-namespace geometry
-{
-	glm::vec3 compute_center_of_mass(struct datamodel::Mesh* mesh);
-}
+	namespace geometry
+	{
+		glm::vec3 compute_center_of_mass(struct datamodel::Mesh* mesh);
+	} // namespace geometry
+} // namespace gemini

@@ -22,8 +22,7 @@
 
 #include <core/typedefs.h>
 #include <core/mathlib.h>
-
-#include <slim/xlog.h>
+#include <core/logging.h>
 
 #include "vr.h"
 

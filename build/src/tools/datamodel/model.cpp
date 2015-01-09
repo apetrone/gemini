@@ -22,21 +22,24 @@
 
 #include "datamodel/model.h"
 
-namespace datamodel
+namespace gemini
 {
-	Model::~Model()
+	namespace datamodel
 	{
-		for (auto animation : animations)
+		Model::~Model()
 		{
-			DESTROY(Animation, animation);
+			for (auto animation : animations)
+			{
+				DESTROY(Animation, animation);
+			}
 		}
-	}
-	
-	Animation* Model::add_animation(const String& name)
-	{
-		Animation* animation = CREATE(Animation);
-		animation->name = name;
-		animations.push_back(animation);
-		return animation;
-	}
-};
+		
+		Animation* Model::add_animation(const String& name)
+		{
+			Animation* animation = CREATE(Animation);
+			animation->name = name;
+			animations.push_back(animation);
+			return animation;
+		}
+	} // namespace datamodel
+} // namespace gemini

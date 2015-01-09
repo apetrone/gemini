@@ -21,12 +21,9 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <slim/xlog.h>
-
 #include <core/typedefs.h>
 #include <core/fixedarray.h>
 
-//#include "color.h"
 #include <renderer/render_utilities.h>
 
 

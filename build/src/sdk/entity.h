@@ -23,8 +23,6 @@
 
 #include <vector>
 
-#include <slim/xlog.h>
-
 #include <platform/mem.h>
 
 #include <core/str.h>

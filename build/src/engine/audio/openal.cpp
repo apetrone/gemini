@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include "audio.h"
 #include "openal.h"
-#include <slim/xlog.h>
+#include <core/logging.h>
 
 #if 0 // capture sample
 	const uint8_t TOTAL_SAMPLES = 1024;
@@ -194,7 +194,7 @@ namespace gemini
 				return;
 			
 			alBufferData( bufferid, format, pcmbuffer, bytes, source->_decoder->frequency() );
-			check_al_error( xstr_format("OpenAL::stream_source - alBufferData [%i, %i, %i, %i]", source->source_id, (source->flags & SF_PLAYING), source->num_repeats, bytes) );
+			check_al_error(core::str::format("OpenAL::stream_source - alBufferData [%i, %i, %i, %i]", source->source_id, (source->flags & SF_PLAYING), source->num_repeats, bytes));
 		} // stream_source
 
 		void OpenAL::event( audio::EventType event )

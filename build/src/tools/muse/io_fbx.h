@@ -24,17 +24,20 @@
 #include "common/extension.h"
 #include "datamodel/model.h"
 
-class AutodeskFbxReader : public tools::Reader<datamodel::Model>
+namespace gemini
 {
-	DECLARE_PLUGIN_CLASS(AutodeskFbxReader);
-	
-	// used by the reader to convert to correct units
-	// since the SDK will only convert root nodes
-	float conversion_factor;
-	
-public:
-	AutodeskFbxReader();
-	virtual ~AutodeskFbxReader();
+	class AutodeskFbxReader : public tools::Reader<datamodel::Model>
+	{
+		DECLARE_PLUGIN_CLASS(AutodeskFbxReader);
+		
+		// used by the reader to convert to correct units
+		// since the SDK will only convert root nodes
+		float conversion_factor;
+		
+	public:
+		AutodeskFbxReader();
+		virtual ~AutodeskFbxReader();
 
-	virtual void read(datamodel::Model* root, util::DataStream& data_source);
-};
+		virtual void read(datamodel::Model* root, util::DataStream& data_source);
+	};
+} // namespace gemini

@@ -28,13 +28,12 @@
 #include "kernel_desktop.h"
 
 //#include "hashtable.h"
-#include <slim/xlog.h>
 
 using namespace input;
 
 #include <SDL.h>
 
-
+#include <core/logging.h>
 #include <core/filesystem.h>
 
 

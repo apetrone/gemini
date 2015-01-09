@@ -25,8 +25,7 @@
 #include "gemgl.h"
 
 #include <core/typedefs.h>
-
-#include <slim/xlog.h>
+#include <core/logging.h>
 
 namespace gemini
 {
@@ -568,11 +567,11 @@ namespace gemini
 	} // gemgl_uniform_to_string
 
 
-	bool gemgl_find_extension( const char * extension )
+	bool gemgl_find_extension(const char* extension)
 	{
 		bool found_extension = false;
-		const GLubyte * extension_string = gl.GetString( GL_EXTENSIONS );
-		found_extension = (xstr_str( (const char*)extension_string, extension ) != 0);
+		const GLubyte* extension_string = gl.GetString(GL_EXTENSIONS);
+		found_extension = (core::str::strstr((const char*)extension_string, extension) != 0);
 		
 		return found_extension;
 	} // gemgl_find_extension

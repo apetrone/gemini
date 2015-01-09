@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include "material.h"
 
-#include <slim/xlog.h>
+#include <core/logging.h>
 
 namespace gemini
 {

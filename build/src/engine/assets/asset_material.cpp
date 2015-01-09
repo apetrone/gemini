@@ -20,6 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <core/configloader.h>
+#include <core/str.h>
 
 #include "assets.h"
 #include "assets/asset_material.h"
@@ -277,21 +278,21 @@ namespace gemini
 		
 
 		
-		unsigned int material_type_to_parameter_type( const char * name )
+		unsigned int material_type_to_parameter_type(const char* name)
 		{
-			if ( xstr_nicmp( name, "int", 0 ) == 0 )
+			if (core::str::case_insensitive_compare(name, "int", 0) == 0)
 			{
 				return MP_INT;
 			}
-			else if ( xstr_nicmp( name, "samplerCube", 0 ) == 0 )
+			else if (core::str::case_insensitive_compare(name, "samplerCube", 0) == 0)
 			{
 				return MP_SAMPLER_CUBE;
 			}
-			else if ( xstr_nicmp( name, "sampler", 0 ) == 0 )
+			else if (core::str::case_insensitive_compare(name, "sampler", 0) == 0)
 			{
 				return MP_SAMPLER_2D;
 			}
-			else if ( xstr_nicmp( name, "vec4", 0 ) == 0 )
+			else if (core::str::case_insensitive_compare(name, "vec4", 0) == 0)
 			{
 				return MP_VEC4;
 			}
@@ -305,23 +306,23 @@ namespace gemini
 		
 		unsigned int texture_unit_for_map(const std::string& name)
 		{
-			if ( xstr_nicmp( name.c_str(), "diffusemap", 0 ) == 0 )
+			if (core::str::case_insensitive_compare(name.c_str(), "diffusemap", 0) == 0)
 			{
 				return 0;
 			}
-			else if ( xstr_nicmp( name.c_str(), "normalmap", 0 ) == 0 )
+			else if (core::str::case_insensitive_compare(name.c_str(), "normalmap", 0) == 0)
 			{
 				return 1;
 			}
-			else if ( xstr_nicmp( name.c_str(), "specularmap", 0 ) == 0 )
+			else if (core::str::case_insensitive_compare(name.c_str(), "specularmap", 0) == 0)
 			{
 				return 2;
 			}
-			else if ( xstr_nicmp( name.c_str(), "cubemap", 0 ) == 0 )
+			else if (core::str::case_insensitive_compare(name.c_str(), "cubemap", 0) == 0)
 			{
 				return 0;
 			}
-			else if ( xstr_nicmp( name.c_str(), "lightmap", 0 ) == 0 )
+			else if (core::str::case_insensitive_compare(name.c_str(), "lightmap", 0) == 0)
 			{
 				return 3;
 			}
@@ -329,9 +330,9 @@ namespace gemini
 			return 0;
 		} // texture_unit_for_map
 		
-		AssetLoadStatus material_load_callback( const char * path, Material * material, const AssetParameters & parameters )
+		AssetLoadStatus material_load_callback(const char* path, Material* material, const AssetParameters& parameters )
 		{
-			if (util::json_load_with_callback( path, material_load_from_json, material, true ) == util::ConfigLoad_Success )
+			if (util::json_load_with_callback(path, material_load_from_json, material, true) == util::ConfigLoad_Success)
 			{
 				return AssetLoad_Success;
 			}

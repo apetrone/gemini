@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <core/typedefs.h>
-#include <slim/xlog.h>
+#include <core/logging.h>
 
 #include "opengl_core32.h"
 
@@ -1227,7 +1227,7 @@ namespace gemini
 			ShaderKeyValuePair * keyvalue = &program->attributes[i];
 			SHADER_DEBUG( "BindAttribLocation -> %s to %i\n", keyvalue->first.c_str(), keyvalue->second );
 			gl.BindAttribLocation( program->object, keyvalue->second, keyvalue->first.c_str() );
-			gl.CheckError( xstr_format( "BindAttribLocation: %s", keyvalue->first.c_str() ));
+			gl.CheckError(core::str::format("BindAttribLocation: %s", keyvalue->first.c_str()));
 		}
 	}
 

@@ -22,7 +22,7 @@
 #include <vector>
 
 #include <core/typedefs.h>
-#include <slim/xlog.h>
+//#include <core/logging.h>
 #include "physics.h"
 #include <btBulletDynamicsCommon.h>
 #include "physics_common.h"

@@ -26,38 +26,41 @@
 
 #include "datamodel/material.h"
 
-namespace datamodel
+namespace gemini
 {
-	const int MAX_SUPPORTED_UV_CHANNELS = 2;
-	
-	struct Vertex
+	namespace datamodel
 	{
-		glm::vec3 position;
-		glm::vec3 normal;
-		glm::vec4 color;
-		glm::vec2 uv[MAX_SUPPORTED_UV_CHANNELS];
-	};
-	
-	
-	struct Mesh
-	{
-		FixedArray<glm::vec4> blend_indices;
-		FixedArray<glm::vec4> blend_weights;
-		FixedArray<glm::vec3> vertices;
-		FixedArray<glm::vec3> normals;
-		FixedArray<glm::vec4> vertex_colors;
-		FixedArray< FixedArray<glm::vec2> > uvs;
-		FixedArray<uint32_t> indices;
-		MaterialId material;
-		glm::vec3 mass_center_offset;
-
-		Mesh()
+		const int MAX_SUPPORTED_UV_CHANNELS = 2;
+		
+		struct Vertex
 		{
-			material = 0;
-		}
-
-		~Mesh()
+			glm::vec3 position;
+			glm::vec3 normal;
+			glm::vec4 color;
+			glm::vec2 uv[MAX_SUPPORTED_UV_CHANNELS];
+		};
+		
+		
+		struct Mesh
 		{
-		}
-	};
-};
+			core::FixedArray<glm::vec4> blend_indices;
+			core::FixedArray<glm::vec4> blend_weights;
+			core::FixedArray<glm::vec3> vertices;
+			core::FixedArray<glm::vec3> normals;
+			core::FixedArray<glm::vec4> vertex_colors;
+			core::FixedArray< core::FixedArray<glm::vec2> > uvs;
+			core::FixedArray<uint32_t> indices;
+			MaterialId material;
+			glm::vec3 mass_center_offset;
+
+			Mesh()
+			{
+				material = 0;
+			}
+
+			~Mesh()
+			{
+			}
+		};
+	} // namespace datamodel
+} // namespace gemini

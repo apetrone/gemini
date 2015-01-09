@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include <algorithm>
 
-#include <slim/xlog.h>
+//#include <core/logging.h>
 
 #include "scenelink.h"
 #include "skeletalnode.h"

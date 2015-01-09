@@ -27,9 +27,9 @@
 #include <core/xfile.h>
 #include <core/stackstring.h>
 #include <core/datastream.h>
+#include <core/logging.h>
 
 #include <slim/xtime.h>
-#include <slim/xlog.h>
 
 #include "common.h"
 #include "common/extension.h"
@@ -52,189 +52,194 @@
 
 //https://docs.unrealengine.com/latest/INT/Engine/Content/FBX/index.html
 
-using namespace tools;
-
-struct ToolOptions
+namespace gemini
 {
-	// compress animation keys to reduce output size
-	bool compress_animation;
-
-	// flip UVs vertically
-	bool flip_vertically;
-
-	// bake transforms from hierarchy into geometry
-	bool bake_transforms;
-	
-	ToolOptions()
+	struct ToolOptions
 	{
-		// some sane defaults?
-		compress_animation = false;
-		flip_vertically = false;
-		bake_transforms = true;
-	}
-};
+		// compress animation keys to reduce output size
+		bool compress_animation;
 
+		// flip UVs vertically
+		bool flip_vertically;
 
-namespace extensions
-{
-	void compose_matrix(glm::mat4& out, const glm::vec3& translation, const glm::quat& rotation, const glm::vec3& scale)
-	{
-		out = glm::translate(glm::mat4(1.0f), translation) *
-		glm::toMat4(rotation) *
-		glm::scale(glm::mat4(1.0f), scale);
-	}
-
-	void bake_geometry_transform(datamodel::Node* node, glm::mat4& parent_transform)
-	{
-		LOGV("node: %s\n", node->name.c_str());
+		// bake transforms from hierarchy into geometry
+		bool bake_transforms;
 		
-		// local transform is from this node
-		glm::mat4 local_transform;
-		compose_matrix(local_transform, node->translation, node->rotation, node->scale);
-		
-		// reset transforms
-		node->translation = glm::vec3(0.0f, 0.0f, 0.0f);
-		node->rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-		node->scale = glm::vec3(1.0f, 1.0f, 1.0f);
-		
-		// world transform is the accumulated parent transform of this node
-		// multiplied by this node's local transform
-		glm::mat4 world_transform = parent_transform * local_transform;
-		
-
-		if (node->type == "mesh")
+		ToolOptions()
 		{
+			// some sane defaults?
+			compress_animation = false;
+			flip_vertically = false;
+			bake_transforms = true;
+		}
+	};
+
+
+	namespace extensions
+	{
+		void compose_matrix(glm::mat4& out, const glm::vec3& translation, const glm::quat& rotation, const glm::vec3& scale)
+		{
+			out = glm::translate(glm::mat4(1.0f), translation) *
+			glm::toMat4(rotation) *
+			glm::scale(glm::mat4(1.0f), scale);
+		}
+
+		void bake_geometry_transform(datamodel::Node* node, glm::mat4& parent_transform)
+		{
+			LOGV("node: %s\n", node->name.c_str());
 			
-			assert(node->mesh != 0);
-			if (node->mesh)
+			// local transform is from this node
+			glm::mat4 local_transform;
+			compose_matrix(local_transform, node->translation, node->rotation, node->scale);
+			
+			// reset transforms
+			node->translation = glm::vec3(0.0f, 0.0f, 0.0f);
+			node->rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+			node->scale = glm::vec3(1.0f, 1.0f, 1.0f);
+			
+			// world transform is the accumulated parent transform of this node
+			// multiplied by this node's local transform
+			glm::mat4 world_transform = parent_transform * local_transform;
+			
+
+			if (node->type == "mesh")
 			{
-				LOGV("applying transform to mesh '%s'\n", node->name.c_str());
-				for(size_t v = 0; v < node->mesh->vertices.size(); ++v)
+				
+				assert(node->mesh != 0);
+				if (node->mesh)
 				{
-					glm::vec3& vertex = node->mesh->vertices[v];
-					vertex = glm::vec3(world_transform * glm::vec4(vertex, 1.0f));
+					LOGV("applying transform to mesh '%s'\n", node->name.c_str());
+					for(size_t v = 0; v < node->mesh->vertices.size(); ++v)
+					{
+						glm::vec3& vertex = node->mesh->vertices[v];
+						vertex = glm::vec3(world_transform * glm::vec4(vertex, 1.0f));
+					}
 				}
 			}
-		}
-		
-		for (auto& child : node->children)
-		{
-			bake_geometry_transform(child, world_transform);
-		}
-	}
-
-	int bake_node_transforms(datamodel::Model& model)
-	{
-		int result = 0;
-		
-		glm::mat4 transform;
-
-		for (auto& child : model.root.children)
-		{
-			bake_geometry_transform(child, transform);
-		}
-		
-		
-		
-		return result;
-	}
-}
-
-namespace tools
-{
-	// register all datamodel io types
-	void register_types()
-	{
-		Extension<datamodel::Model> ext;
-		ext.reader = AutodeskFbxReader::plugin_create();
-		register_extension<datamodel::Model>("fbx", ext);
-		
-		ext.reader = 0;
-		ext.writer = JsonModelWriter::plugin_create();
-		register_extension<datamodel::Model>("model", ext);
-	}
-
-	platform::Result convert_model(const ToolOptions& options, StackString<MAX_PATH_SIZE>& input_path, StackString<MAX_PATH_SIZE>& output_path)
-	{
-		datamodel::Model model;
-
-		// verify we can read the format
-		std::string ext = input_path.extension();
-		const Extension<datamodel::Model> archiver_extension = find_entry_for_extension<datamodel::Model>(ext);
-		tools::Reader<datamodel::Model>* reader = archiver_extension.reader;
-		if (!reader)
-		{
-			LOGE("no reader found for extension: %s\n", ext.c_str());
-			return platform::Result(platform::Result::Failure, "Unable to read format");
-		}
-				
-		// verify we can write the format
-		ext = output_path.extension();
-		const Extension<datamodel::Model> writer_extension = find_entry_for_extension<datamodel::Model>(ext);
-		tools::Writer<datamodel::Model>* writer = writer_extension.writer;
-		if (!writer)
-		{
-			LOGE("no writer found for extension: %s\n", ext.c_str());
-			return platform::Result(platform::Result::Failure, "Unable to write format");
-		}
-		
-		util::MemoryStream mds;
-		mds.data = (uint8_t*)input_path();
-		reader->read(&model, mds);
-		
-		// TODO: compress animation keys
-		// This should eliminate duplicate values by merging them into a single key.
-		
-		// TODO: add modifier to flip UVs vertically
-		
-		// bake transforms into geometry nodes
-		if (options.bake_transforms)
-		{
-			extensions::bake_node_transforms(model);
-		}
-
-		// calculate mass_center_offsets for all meshes
-		for (auto& child : model.root.children)
-		{
-			if (child->type == "mesh" && child->mesh)
+			
+			for (auto& child : node->children)
 			{
-				child->mesh->mass_center_offset = child->translation - geometry::compute_center_of_mass(child->mesh);
+				bake_geometry_transform(child, world_transform);
 			}
 		}
-		
 
-		util::ResizableMemoryStream rs;
-		writer->write(&model, rs);
-
-		rs.rewind();
-		
-		// TODO: ensure the destination path exists?
-
-		xfile_t out = xfile_open(output_path(), XF_WRITE);
-		LOGV("writing destination file: %s\n", output_path());
-		if (xfile_isopen(out))
+		int bake_node_transforms(datamodel::Model& model)
 		{
-			xfile_write(out, rs.get_data(), rs.get_data_size(), 1);
-			xfile_close(out);
+			int result = 0;
+			
+			glm::mat4 transform;
+
+			for (auto& child : model.root.children)
+			{
+				bake_geometry_transform(child, transform);
+			}
+			
+			
+			
+			return result;
 		}
-		else
+	} // namespace extensions
+
+	namespace tools
+	{
+		// register all datamodel io types
+		void register_types()
 		{
-			LOGE("error writing to file %s\n", output_path());
-			LOGE("does the path exist?\n");
+			Extension<datamodel::Model> ext;
+			ext.reader = AutodeskFbxReader::plugin_create();
+			register_extension<datamodel::Model>("fbx", ext);
+			
+			ext.reader = 0;
+			ext.writer = JsonModelWriter::plugin_create();
+			register_extension<datamodel::Model>("model", ext);
 		}
 
-		return platform::Result(platform::Result::Success);
-	}
-}
+		platform::Result convert_model(const ToolOptions& options, StackString<MAX_PATH_SIZE>& input_path, StackString<MAX_PATH_SIZE>& output_path)
+		{
+			datamodel::Model model;
+
+			// verify we can read the format
+			std::string ext = input_path.extension();
+			const Extension<datamodel::Model> archiver_extension = find_entry_for_extension<datamodel::Model>(ext);
+			tools::Reader<datamodel::Model>* reader = archiver_extension.reader;
+			if (!reader)
+			{
+				LOGE("no reader found for extension: %s\n", ext.c_str());
+				return platform::Result(platform::Result::Failure, "Unable to read format");
+			}
+					
+			// verify we can write the format
+			ext = output_path.extension();
+			const Extension<datamodel::Model> writer_extension = find_entry_for_extension<datamodel::Model>(ext);
+			tools::Writer<datamodel::Model>* writer = writer_extension.writer;
+			if (!writer)
+			{
+				LOGE("no writer found for extension: %s\n", ext.c_str());
+				return platform::Result(platform::Result::Failure, "Unable to write format");
+			}
+			
+			util::MemoryStream mds;
+			mds.data = (uint8_t*)input_path();
+			reader->read(&model, mds);
+			
+			// TODO: compress animation keys
+			// This should eliminate duplicate values by merging them into a single key.
+			
+			// TODO: add modifier to flip UVs vertically
+			
+			// bake transforms into geometry nodes
+			if (options.bake_transforms)
+			{
+				extensions::bake_node_transforms(model);
+			}
+
+			// calculate mass_center_offsets for all meshes
+			for (auto& child : model.root.children)
+			{
+				if (child->type == "mesh" && child->mesh)
+				{
+					child->mesh->mass_center_offset = child->translation - geometry::compute_center_of_mass(child->mesh);
+				}
+			}
+			
+
+			util::ResizableMemoryStream rs;
+			writer->write(&model, rs);
+
+			rs.rewind();
+			
+			// TODO: ensure the destination path exists?
+
+			xfile_t out = xfile_open(output_path(), XF_WRITE);
+			LOGV("writing destination file: %s\n", output_path());
+			if (xfile_isopen(out))
+			{
+				xfile_write(out, rs.get_data(), rs.get_data_size(), 1);
+				xfile_close(out);
+			}
+			else
+			{
+				LOGE("error writing to file %s\n", output_path());
+				LOGE("does the path exist?\n");
+			}
+
+			return platform::Result(platform::Result::Success);
+		}
+	} // namespace tools
+} // namespace gemini
+
+
 
 
 int main(int argc, char** argv)
 {
+	using namespace gemini;
+	
 	ToolOptions options;
 
 	tools::startup();
 	
-	register_types();
+	tools::register_types();
 	
 	// Commented out until I fix some issues with it.
 //	args::Argument* asset_root = args::add("asset_root","-d", "--asset-root", 0, 0);

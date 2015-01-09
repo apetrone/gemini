@@ -20,7 +20,6 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <core/typedefs.h>
-#include <slim/xlog.h>
 #include "camera.h"
 #include <core/mathlib.h>
 

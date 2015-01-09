@@ -21,7 +21,6 @@
 // -------------------------------------------------------------
 
 #include <core/typedefs.h>
-#include <slim/xlog.h>
 
 #include "color.h"
 

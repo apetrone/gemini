@@ -24,8 +24,7 @@
 
 #include <core/filesystem.h>
 #include <core/configloader.h>
-
-#include <slim/xlog.h>
+#include <core/logging.h>
 
 #include <string>
 
