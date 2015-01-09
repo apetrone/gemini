@@ -29,7 +29,6 @@
 #include <slim/xlog.h>
 #include <slim/xtime.h>
 
-
 #include "logging.h"
 #include "logging_interface.h"
 
@@ -158,8 +157,8 @@ namespace core
 #endif
 
 			log_system->startup();
-			
 			log_verbose("just testing, but this is now live\n");
+
 			
 			if ( xlog_open( &_system_log ) < total_log_handlers )
 			{

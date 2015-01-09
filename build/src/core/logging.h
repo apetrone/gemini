@@ -23,26 +23,26 @@
 
 #include <core/str.h>
 
-#define log_verbose(format, ...) \
+#define log_verbose(message, ...) \
 	gemini::core::log::instance()->dispatch(\
 	gemini::core::logging::ILog::Verbose,\
-	xstr_format(format, ##__VA_ARGS__),\
+	gemini::core::str::format(message, ##__VA_ARGS__),\
 	__FUNCTION__,\
 	__FILE__,\
 	__LINE__)
 
-#define log_warning(format, ...) \
+#define log_warning(message, ...) \
 	gemini::core::log::instance()->dispatch(\
 	gemini::core::logging::ILog::Warning,\
-	gemini::core::str::format(format, ##__VA_ARGS__),\
+	gemini::core::str::format(message, ##__VA_ARGS__),\
 	__FUNCTION__,\
 	__FILE__,\
 	__LINE__)
 
-#define log_error(format, ...) \
+#define log_error(message, ...) \
 	gemini::core::log::instance()->dispatch(\
 	gemini::core::logging::ILog::Warning,\
-	gemini::core::str::format(format, ##__VA_ARGS__),\
+	gemini::core::str::format(message, ##__VA_ARGS__),\
 	__FUNCTION__,\
 	__FILE__,\
 	__LINE__)
