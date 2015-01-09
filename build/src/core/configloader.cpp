@@ -24,9 +24,6 @@
 #include <core/filesystem.h>
 #include <core/logging.h>
 
-
-#include <slim/xlog.h>
-
 #include "configloader.h"
 
 namespace util

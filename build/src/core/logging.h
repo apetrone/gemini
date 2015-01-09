@@ -23,7 +23,7 @@
 
 #include <core/str.h>
 
-#define log_verbose(message, ...) \
+#define LOGV(message, ...) \
 	gemini::core::log::instance()->dispatch(\
 	gemini::core::logging::ILog::Verbose,\
 	gemini::core::str::format(message, ##__VA_ARGS__),\
@@ -31,7 +31,7 @@
 	__FILE__,\
 	__LINE__)
 
-#define log_warning(message, ...) \
+#define LOGW(message, ...) \
 	gemini::core::log::instance()->dispatch(\
 	gemini::core::logging::ILog::Warning,\
 	gemini::core::str::format(message, ##__VA_ARGS__),\
@@ -39,7 +39,7 @@
 	__FILE__,\
 	__LINE__)
 
-#define log_error(message, ...) \
+#define LOGE(message, ...) \
 	gemini::core::log::instance()->dispatch(\
 	gemini::core::logging::ILog::Warning,\
 	gemini::core::str::format(message, ##__VA_ARGS__),\
@@ -57,15 +57,15 @@ namespace gemini
 		{
 			struct Handler
 			{
-				// called when a log message is received
-				void (*message)(struct Handler* handler, const char* message, const char* filename, const char* function, int line, int type );
-				
 				// called when the log should open
 				// expects 0 on failure; 1 on success
 				int (*open)(Handler* handler);
 				
 				// called when the log should close
 				void (*close)(Handler* handler);
+
+				// called when a log message is received
+				void (*message)(struct Handler* handler, const char* message, const char* filename, const char* function, int line, int type );
 				
 				// userdata
 				void * userdata;

@@ -26,7 +26,6 @@
 
 #include <platform/platform.h>
 
-#include <slim/xlog.h>
 #include <slim/xtime.h>
 
 #include "logging.h"
@@ -40,142 +39,95 @@ namespace core
 	{
 		#define GEMINI_LOG_PATH "logs"
 		const unsigned int GEMINI_DATETIME_STRING_MAX = 128;
-				
-		static xlog_t _system_log;
+
 		// log handler function declarations
-		void file_logger_message( xlog_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );
-		int file_logger_open( xlog_handler_t * handler );
-		void file_logger_close( xlog_handler_t * handler );
+		void file_logger_message(logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type);
+		int file_logger_open(logging::Handler* handler);
+		void file_logger_close(logging::Handler* handler);
 		
 		void stdout_message(logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type);
 		int stdout_open(logging::Handler* handler);
 		void stdout_close(logging::Handler* handler);
 		
 #if _WIN32
-		void vs_message( xlog_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );
-		int vs_open( xlog_handler_t * handler );
-		void vs_close( xlog_handler_t * handler );
+		void vs_message(logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type);
+		int vs_open(logging::Handler* handler);
+		void vs_close(logging::Handler* handler);
 #endif
 		
 #if __ANDROID__
-		void log_android_message( xlog_handler_t * handler, const char * message, const char * filename, const char * function, int line, int type );
-		int log_android_open( xlog_handler_t * handler );
-		void log_android_close( xlog_handler_t * handler );
+		void log_android_message(logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type);
+		int log_android_open(logging::Handler* handler);
+		void log_android_close(logging::Handler* handler);
 #endif
 				
-		platform::Result open_log_handlers(gemini::core::logging::ILog* log_system)
+		uint32_t add_log_handlers(gemini::core::logging::ILog* log_system)
 		{
-			platform::Result result(platform::Result::Success);
-			
-			int total_log_handlers = 0;
+			uint32_t total_log_handlers = 0;
 			
 
 			
-			// setup system log
-			xlog_init( &_system_log );
-			
-			xlog_set_default_log( &_system_log );
-			
-			
 			{
 				logging::Handler stdout_handler;
-				stdout_handler.message = stdout_message;
 				stdout_handler.open = stdout_open;
 				stdout_handler.close = stdout_close;
+				stdout_handler.message = stdout_message;
 				log_system->add_handler(&stdout_handler);
 				
 				++total_log_handlers;
 			}
-			
-			
 
 			
 #if _WIN32
-			xlog_handler_t msvc_logger;
-			memset( &msvc_logger, 0, sizeof(xlog_handler_t) );
-			msvc_logger.close = vs_close;
+			logging::Handler msvc_logger;
 			msvc_logger.open = vs_open;
+			msvc_logger.close = vs_close;
 			msvc_logger.message = vs_message;
-			msvc_logger.userdata = 0;
+			log_system->add_handler(&msvc_logger);
 			
 			++total_log_handlers;
-			xlog_add_handler( &_system_log, &msvc_logger );
 #endif
-			
-//#ifndef __ANDROID__
-//			xlog_handler_t stdout_logger;
-//			memset( &stdout_logger, 0, sizeof(xlog_handler_t) );
-//			stdout_logger.message = stdout_message;
-//			stdout_logger.open = stdout_open;
-//			stdout_logger.close = stdout_close;
-//			
-//			++total_log_handlers;
-//			xlog_add_handler( &_system_log, &stdout_logger );
-//#endif
-			
+
 #if !PLATFORM_IS_MOBILE
-			
-			
 			xdatetime_t dt;
 			xtime_now( &dt );
 			char datetime_string[ GEMINI_DATETIME_STRING_MAX ];
-			xstr_sprintf( datetime_string, GEMINI_DATETIME_STRING_MAX, "%02d-%02d-%04d-%02d-%02d-%02d.log",
-						 dt.month, dt.day, dt.year, dt.hour, dt.minute, dt.second );
+			str::sprintf(datetime_string, GEMINI_DATETIME_STRING_MAX, "%02d-%02d-%04d-%02d-%02d-%02d.log",
+						 dt.month, dt.day, dt.year, dt.hour, dt.minute, dt.second);
 			
 			char logdir[MAX_PATH_SIZE];
-			memset( logdir, 0, MAX_PATH_SIZE );
-			xstr_ncpy( logdir, filesystem::content_directory(), -1 );
-			xstr_cat( logdir, "/" GEMINI_LOG_PATH "/" );
-			platform::path::normalize( logdir, MAX_PATH_SIZE );
+			memset(logdir, 0, MAX_PATH_SIZE);
+			str::copy(logdir, filesystem::content_directory(), -1);
+			str::cat(logdir, "/" GEMINI_LOG_PATH "/");
+			platform::path::normalize(logdir, MAX_PATH_SIZE);
 			
 			// make sure target folder is created
 			platform::path::make_directories( logdir );
 			
-			xstr_cat( logdir, datetime_string );
+			gemini::core::str::cat(logdir, datetime_string);
 			
-			xlog_handler_t filelogger;
-			filelogger.message = file_logger_message;
+			logging::Handler filelogger;
 			filelogger.open = file_logger_open;
 			filelogger.close = file_logger_close;
+			filelogger.message = file_logger_message;
 			filelogger.userdata = logdir;
-			
-			xlog_add_handler( &_system_log, &filelogger );
+			log_system->add_handler(&filelogger);
 			
 			++total_log_handlers;
 #endif
-			
 			
 #if __ANDROID__
-			xlog_handler_t android_log;
-			android_log.message = log_android_message;
+			logging::Handler android_log;
 			android_log.open = log_android_open;
 			android_log.close = log_android_close;
-			android_log.userdata = 0;
+			android_log.message = log_android_message;
+			log_system->add_handler(&android_log);
 			
-			xlog_add_handler( &_system_log, &android_log );
 			++total_log_handlers;
 #endif
 
-			log_system->startup();
-			log_verbose("just testing, but this is now live\n");
-
-			
-			if ( xlog_open( &_system_log ) < total_log_handlers )
-			{
-				fprintf( stderr, "Could not open one or more log handlers\n" );
-				result = platform::Result( platform::Result::Warning, "Could not open one or more log handlers" );
-			}
-			
-			LOGV( "Logging system initialized.\n" );
-			
-			return result;
-		} // open_log_handlers
-		
-		
-		void close_log_handlers()
-		{
-			xlog_close( &_system_log );
-		} // close_log_handlers
+			return total_log_handlers;
+		} // add_log_handlers
 	}; // namespace _internal
 
 	
@@ -192,13 +144,17 @@ namespace core
 		gemini::core::logging::ILog* log_system = CREATE(gemini::core::logging::LogInterface);
 		gemini::core::log::set_instance(log_system);
 
-		// open logs
-		result = _internal::open_log_handlers(log_system);
-		if (result.failed())
+		// add logs
+		uint32_t total_log_handlers = _internal::add_log_handlers(log_system);
+		
+		// startup the log system; open handlers
+		if (log_system->startup() < total_log_handlers)
 		{
-			fprintf( stderr, "failed to open logging handlers: %s\n", result.message);
-			return result;
+			fprintf(stderr, "Could not open one or more log handlers\n");
+			result = platform::Result(platform::Result::Warning, "Could not open one or more log handlers");
 		}
+		
+		LOGV("Logging system initialized.\n");
 		
 		LOGV("setting root to '%s', content: '%s'\n", filesystem::root_directory(), filesystem::content_directory());
 		
@@ -207,8 +163,6 @@ namespace core
 	
 	void shutdown()
 	{
-		_internal::close_log_handlers();
-		
 		gemini::core::log::instance()->shutdown();
 		
 		gemini::core::logging::ILog* log_system = gemini::core::log::instance();

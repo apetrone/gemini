@@ -77,7 +77,7 @@ namespace gemini
 			
 			uint32_t LogInterface::startup()
 			{			
-				int total_handlers_opened = 0;
+				uint32_t total_handlers_opened = 0;
 			
 				// initialize all log handlers
 				for (size_t i = 0; i < handlers.size(); ++i)
