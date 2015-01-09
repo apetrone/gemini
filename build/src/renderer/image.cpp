@@ -31,175 +31,178 @@
 #define STBI_NO_STDIO 1
 #include "stb_image.c"
 
-namespace image
+namespace gemini
 {
-	Image::Image()
+	namespace image
 	{
-		type = IT_UNKNOWN;
-		filter = FILTER_NONE;
-		flags = 0;
-		
-		width = 0;
-		height = 0;
-		
-		channels = 3;
-	}
-
-	void generate_checker_pattern(Image& image, const Color & color1, const Color & color2)
-	{
-		// image dimensions must be specified
-		assert((image.width > 0) && (image.height > 0));
-		
-		// only generate 3 channel RGB image for now.
-		assert(image.channels == 3);
-		
-		
-		image.pixels.allocate(image.channels*image.width*image.height);
-		
-		// width/height should be power of two
-		int width_mask = (image.width >> 1) - 1;
-		int height_mask = (image.height >> 1) - 1;
-		
-		const Color * color = 0;
-		uint8_t* pixels = &image.pixels[0];
-		assert( pixels != 0 );
-		
-		for(uint32_t y = 0; y < image.height; ++y)
+		Image::Image()
 		{
-			for(uint32_t x = 0; x < image.width; ++x)
+			type = IT_UNKNOWN;
+			filter = FILTER_NONE;
+			flags = 0;
+			
+			width = 0;
+			height = 0;
+			
+			channels = 3;
+		}
+
+		void generate_checker_pattern(Image& image, const Color & color1, const Color & color2)
+		{
+			// image dimensions must be specified
+			assert((image.width > 0) && (image.height > 0));
+			
+			// only generate 3 channel RGB image for now.
+			assert(image.channels == 3);
+			
+			
+			image.pixels.allocate(image.channels*image.width*image.height);
+			
+			// width/height should be power of two
+			int width_mask = (image.width >> 1) - 1;
+			int height_mask = (image.height >> 1) - 1;
+			
+			const Color * color = 0;
+			uint8_t* pixels = &image.pixels[0];
+			assert( pixels != 0 );
+			
+			for(uint32_t y = 0; y < image.height; ++y)
 			{
-				// less than half
-				if (y <= height_mask)
+				for(uint32_t x = 0; x < image.width; ++x)
 				{
 					// less than half
-					if (x <= width_mask)
+					if (y <= height_mask)
 					{
-						color = &color1;
+						// less than half
+						if (x <= width_mask)
+						{
+							color = &color1;
+						}
+						else
+						{
+							color = &color2;
+						}
 					}
 					else
 					{
-						color = &color2;
+						// less than half
+						if (x <= width_mask)
+						{
+							color = &color2;
+						}
+						else
+						{
+							color = &color1;
+						}
 					}
+					
+					memcpy(pixels, color, image.channels);
+					
+					pixels += image.channels;
 				}
-				else
-				{
-					// less than half
-					if (x <= width_mask)
-					{
-						color = &color2;
-					}
-					else
-					{
-						color = &color1;
-					}
-				}
-				
-				memcpy(pixels, color, image.channels);
-				
-				pixels += image.channels;
 			}
 		}
-	}
 
-	// given two colors, generate an alternating checker pattern image
-	void generate_checker_image( unsigned char * pixels, int width, int height, const Color & color1, const Color & color2 )
-	{
-		// width/height should be power of two
-		int width_mask = (width >> 1) - 1;
-		int height_mask = (height >> 1) - 1;
-		
-		const Color * color = 0;
-	
-		assert( pixels != 0 );
-
-		for( int y = 0; y < height; ++y )
+		// given two colors, generate an alternating checker pattern image
+		void generate_checker_image( unsigned char * pixels, int width, int height, const Color & color1, const Color & color2 )
 		{
-			for( int x = 0; x < width; ++x )
+			// width/height should be power of two
+			int width_mask = (width >> 1) - 1;
+			int height_mask = (height >> 1) - 1;
+			
+			const Color * color = 0;
+		
+			assert( pixels != 0 );
+
+			for( int y = 0; y < height; ++y )
 			{
-				// less than half
-				if ( y <= height_mask )
+				for( int x = 0; x < width; ++x )
 				{
 					// less than half
-					if ( x <= width_mask )
+					if ( y <= height_mask )
 					{
-						color = &color1;
+						// less than half
+						if ( x <= width_mask )
+						{
+							color = &color1;
+						}
+						else
+						{
+							color = &color2;
+						}
 					}
 					else
 					{
-						color = &color2;
+						// less than half
+						if ( x <= width_mask )
+						{
+							color = &color2;
+						}
+						else
+						{
+							color = &color1;
+						}
 					}
+					
+					// we want this to be an opaque texture, so we'll ignore the alpha channel
+					memcpy( pixels, color, 3 );
+					
+					pixels += 3;
 				}
-				else
-				{
-					// less than half
-					if ( x <= width_mask )
-					{
-						color = &color2;
-					}
-					else
-					{
-						color = &color1;
-					}
-				}
-				
-				// we want this to be an opaque texture, so we'll ignore the alpha channel
-				memcpy( pixels, color, 3 );
-				
-				pixels += 3;
 			}
-		}
-	} // generate_texture_image
+		} // generate_texture_image
 
-	// flip an image vertically - this uses heap space to create a copy, but deletes it when finished
-	void flip_image_vertically( int width, int height, int components, unsigned char * pixels )
-	{
-		int scanline_size = width*components;
-		int dst = 0;
-		unsigned char * copy;
-		copy = (unsigned char*)ALLOC( (width*height*components) );
-		memcpy( copy, pixels, (width*height*components) );
-		
-		for( int h = 0; h < height; ++h )
+		// flip an image vertically - this uses heap space to create a copy, but deletes it when finished
+		void flip_image_vertically( int width, int height, int components, unsigned char * pixels )
 		{
-			dst = (height-(h+1));
-			memcpy( &pixels[ (h*scanline_size) ], &copy[ (dst*scanline_size) ], scanline_size );
-		}
+			int scanline_size = width*components;
+			int dst = 0;
+			unsigned char * copy;
+			copy = (unsigned char*)ALLOC( (width*height*components) );
+			memcpy( copy, pixels, (width*height*components) );
+			
+			for( int h = 0; h < height; ++h )
+			{
+				dst = (height-(h+1));
+				memcpy( &pixels[ (h*scanline_size) ], &copy[ (dst*scanline_size) ], scanline_size );
+			}
+			
+			DEALLOC(copy);
+		} // flip_image_vertically
+
+
+		renderer::Texture* load_default_texture(Image& image)
+		{
+			image.width = ERROR_TEXTURE_WIDTH;
+			image.height = ERROR_TEXTURE_HEIGHT;
+			image.channels = 3;
+			generate_checker_pattern(image, Color(0, 0, 0), Color(255, 0, 255));
+			
+			renderer::Texture* texture = renderer::driver()->texture_create(image);
+
+			return texture;
+
+		} // load_default_texture
 		
-		DEALLOC(copy);
-	} // flip_image_vertically
+		unsigned char * load_image_from_memory( unsigned char * data, unsigned int data_size, unsigned int * width, unsigned int * height, unsigned int * channels )
+		{
+			unsigned char * pixels = 0;
+			int w, h, c;
 
-
-	renderer::Texture* load_default_texture(Image& image)
-	{
-		image.width = ERROR_TEXTURE_WIDTH;
-		image.height = ERROR_TEXTURE_HEIGHT;
-		image.channels = 3;
-		generate_checker_pattern(image, Color(0, 0, 0), Color(255, 0, 255));
+			pixels = stbi_load_from_memory( data, data_size, &w, &h, &c, 0 );
+			*width = w;
+			*height = h;
+			*channels = c;
+			
+			return pixels;
+		} // load_image_from_memory
 		
-		renderer::Texture* texture = renderer::driver()->texture_create(image);
+		void free_image( unsigned char * pixels )
+		{
+			// this was not allocated by our allocator (was done through stb_image)
+			// so must not ask our deallocator to delete it.
+			stbi_image_free( pixels );
+		} // free_image
 
-		return texture;
-
-	} // load_default_texture
-	
-	unsigned char * load_image_from_memory( unsigned char * data, unsigned int data_size, unsigned int * width, unsigned int * height, unsigned int * channels )
-	{
-		unsigned char * pixels = 0;
-		int w, h, c;
-
-		pixels = stbi_load_from_memory( data, data_size, &w, &h, &c, 0 );
-		*width = w;
-		*height = h;
-		*channels = c;
-		
-		return pixels;
-	} // load_image_from_memory
-	
-	void free_image( unsigned char * pixels )
-	{
-		// this was not allocated by our allocator (was done through stb_image)
-		// so must not ask our deallocator to delete it.
-		stbi_image_free( pixels );
-	} // free_image
-
-}; // namespace image
+	} // namespace image
+} // namespace gemini

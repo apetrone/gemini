@@ -25,100 +25,106 @@
 
 #include <platform/mem.h>
 
-template <class Type>
-class FixedArray
+namespace gemini
 {
-	Type *elements;
-	size_t total_elements;
+	namespace core
+	{
+		template <class Type>
+		class FixedArray
+		{
+			Type *elements;
+			size_t total_elements;
 
-	FixedArray<Type> & operator=(const FixedArray<Type>& other) {}
-	
-private:
-	void assert_valid_index(size_t index) const
-	{
-		assert(index >= 0 && index <= total_elements);
-	}
-	
-public:
-	
-	Type* begin()
-	{
-		return &elements[0];
-	}
-	
-	Type* end()
-	{
-		return &elements[total_elements];
-	}
-	
-	FixedArray()
-	{
-		elements = 0;
-		total_elements = 0;
-	} // FixedArray
-	
-	FixedArray(const FixedArray<Type>& other)
-	{
-		allocate(other.total_elements);
-		memcpy(elements, other.elements, sizeof(Type) * total_elements);
-	}
-	
-	~FixedArray()
-	{
-		clear();
-	} // ~FixedArray
-	
-	void operator=(Type* other)
-	{
-		elements = other;
-	}
-	
-	size_t size() const
-	{
-		return total_elements;
-	} // size
-	
-	bool empty() const
-	{
-		return (total_elements == 0);
-	}
-	
-	void clear()
-	{
-		if (elements && total_elements > 0)
-		{
-			DESTROY_ARRAY(Type, elements, total_elements);
-			total_elements = 0;
-		}
-	} // clear
-	
-	void allocate(size_t element_total, bool zero_memory = false)
-	{
-		clear();
-		total_elements = element_total;
-		if (element_total > 0)
-		{
+			FixedArray<Type> & operator=(const FixedArray<Type>& other) {}
 			
-			// allocate space for the pointers
-			elements = CREATE_ARRAY(Type, total_elements);
-
-			// optionally, zero the new memory
-			if (zero_memory)
+		private:
+			void assert_valid_index(size_t index) const
 			{
-				memset(elements, 0, sizeof(Type) * total_elements);
+				assert(index >= 0 && index <= total_elements);
 			}
-		}
-	} // allocate
-	
-	Type& operator[](size_t index)
-	{
-		assert_valid_index(index);
-		return elements[index];
-	} // operator[]
-	
-	const Type& operator[](size_t index) const
-	{
-		assert_valid_index(index);
-		return elements[index];
-	} // operator[] const
-}; // class FixedArray
+			
+		public:
+			
+			Type* begin()
+			{
+				return &elements[0];
+			}
+			
+			Type* end()
+			{
+				return &elements[total_elements];
+			}
+			
+			FixedArray()
+			{
+				elements = 0;
+				total_elements = 0;
+			} // FixedArray
+			
+			FixedArray(const FixedArray<Type>& other)
+			{
+				allocate(other.total_elements);
+				memcpy(elements, other.elements, sizeof(Type) * total_elements);
+			}
+			
+			~FixedArray()
+			{
+				clear();
+			} // ~FixedArray
+			
+			void operator=(Type* other)
+			{
+				elements = other;
+			}
+			
+			size_t size() const
+			{
+				return total_elements;
+			} // size
+			
+			bool empty() const
+			{
+				return (total_elements == 0);
+			}
+			
+			void clear()
+			{
+				if (elements && total_elements > 0)
+				{
+					DESTROY_ARRAY(Type, elements, total_elements);
+					total_elements = 0;
+				}
+			} // clear
+			
+			void allocate(size_t element_total, bool zero_memory = false)
+			{
+				clear();
+				total_elements = element_total;
+				if (element_total > 0)
+				{
+					
+					// allocate space for the pointers
+					elements = CREATE_ARRAY(Type, total_elements);
+
+					// optionally, zero the new memory
+					if (zero_memory)
+					{
+						memset(elements, 0, sizeof(Type) * total_elements);
+					}
+				}
+			} // allocate
+			
+			Type& operator[](size_t index)
+			{
+				assert_valid_index(index);
+				return elements[index];
+			} // operator[]
+			
+			const Type& operator[](size_t index) const
+			{
+				assert_valid_index(index);
+				return elements[index];
+			} // operator[] const
+		}; // class FixedArray
+	} // namespace core
+} // namespace gemini

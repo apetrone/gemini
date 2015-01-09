@@ -23,53 +23,56 @@
 
 #include <slim/xlog.h>
 
-namespace renderer
+namespace gemini
 {
-	
-//	unsigned int texture_unit_for_map( renderer::ShaderString & name );
-//	
-//	unsigned int material_type_to_parameter_type( const char * name );
-//	int material_parameter_type_to_render_state( unsigned int type );
-
-	MaterialParameter * Material::parameter_by_name(const std::string& name)
+	namespace renderer
 	{
-		for (auto& parameter : parameters)
+		
+	//	unsigned int texture_unit_for_map( renderer::ShaderString & name );
+	//	
+	//	unsigned int material_type_to_parameter_type( const char * name );
+	//	int material_parameter_type_to_render_state( unsigned int type );
+
+		MaterialParameter * Material::parameter_by_name(const std::string& name)
 		{
-			if (parameter.name == name)
+			for (auto& parameter : parameters)
 			{
-				return &parameter;
+				if (parameter.name == name)
+				{
+					return &parameter;
+				}
 			}
+			
+			return 0;
+		} // parameter_by_name
+		
+		
+		void Material::set_parameter_name( unsigned int id, const char * name )
+		{
+			this->parameters[id].name = name;
+		} // set_parameter_name
+		
+		void Material::set_parameter_vec4( unsigned int id, const glm::vec4 & vec )
+		{
+			this->parameters[id].vector_value = vec;
+			this->parameters[id].type = MP_VEC4;
+		} // set_parameter_vec4
+		
+		void Material::add_parameter(const MaterialParameter& param)
+		{
+			parameters.push_back(param);
 		}
 		
-		return 0;
-	} // parameter_by_name
-	
-	
-	void Material::set_parameter_name( unsigned int id, const char * name )
-	{
-		this->parameters[id].name = name;
-	} // set_parameter_name
-	
-	void Material::set_parameter_vec4( unsigned int id, const glm::vec4 & vec )
-	{
-		this->parameters[id].vector_value = vec;
-		this->parameters[id].type = MP_VEC4;
-	} // set_parameter_vec4
-	
-	void Material::add_parameter(const MaterialParameter& param)
-	{
-		parameters.push_back(param);
-	}
-	
-	void Material::print_parameters()
-	{
-		LOGV("material parameters for %s\n", name.c_str());
-		int i = 0;
-		for (auto& parameter : parameters)
+		void Material::print_parameters()
 		{
-			LOGV("param %i, %s, %i\n", i, parameter.name.c_str(), parameter.int_value);
-			++i;
+			LOGV("material parameters for %s\n", name.c_str());
+			int i = 0;
+			for (auto& parameter : parameters)
+			{
+				LOGV("param %i, %s, %i\n", i, parameter.name.c_str(), parameter.int_value);
+				++i;
+			}
 		}
-	}
 
-}; // namespace renderer
+	} // namespace renderer
+} // namespace gemini

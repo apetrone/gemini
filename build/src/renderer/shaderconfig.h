@@ -23,13 +23,16 @@
 
 #include "shaderprogram.h"
 
-namespace renderer
+namespace gemini
 {
-	namespace shader_config
+	namespace renderer
 	{
-		void startup();
-		void shutdown();
-		
-		void load_shaderprogram_from_file(const char* path, renderer::ShaderProgram** program);
-	}
-}; // namespace renderer
+		namespace shader_config
+		{
+			void startup();
+			void shutdown();
+			
+			void load_shaderprogram_from_file(const char* path, renderer::ShaderProgram** program);
+		}
+	} // namespace renderer
+} // namespace gemini

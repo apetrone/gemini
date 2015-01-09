@@ -26,43 +26,46 @@
 #include <core/typedefs.h>
 #include <core/datastream.h>
 
-const unsigned int MAX_RENDERER_STREAM_BYTES = 8192 * 8;
-const unsigned int MAX_RENDERER_STREAM_COMMANDS = 2048 * 8;
-
-struct RenderState
+namespace gemini
 {
-	int type;
-	long offset; // offset into parameters
-}; // RenderState
+	const unsigned int MAX_RENDERER_STREAM_BYTES = 8192 * 8;
+	const unsigned int MAX_RENDERER_STREAM_COMMANDS = 2048 * 8;
 
-struct RenderStream
-{
-	char buffer[ MAX_RENDERER_STREAM_BYTES ];
-	RenderState commands[ MAX_RENDERER_STREAM_COMMANDS ];
-	unsigned int num_commands;
-	util::MemoryStream stream;
-	
-	RenderStream( unsigned int max_bytes = MAX_RENDERER_STREAM_BYTES, unsigned int max_commands = MAX_RENDERER_STREAM_COMMANDS );
-	
-	void save_offset( long & offset );
-	void load_offset( long offset );
-	
-	void rewind();
-	RenderState * new_render_state();
-	void run_commands();
-	void add_command( int type );
-	void add_clearcolor( float r, float g, float b, float a );
-	void add_clear( unsigned int bitflags );
-	void add_cullmode( renderer::CullMode mode );
-	void add_viewport( int x, int y, int width, int height );
-	void add_uniform1i( int uniform_location, int value );
-	void add_sampler2d( int uniform_location, int texture_unit, renderer::Texture* texture );
-	void add_state( renderer::DriverState state, int enable );
-	void add_blendfunc( renderer::RenderBlendType source, renderer::RenderBlendType destination );
-	void add_shader( renderer::ShaderProgram * shader );	
-	void add_uniform3f( int location, const glm::vec3 * data );
-	void add_uniform4f( int location, const glm::vec4 * data );
-	void add_uniform_matrix4( int location, const glm::mat4 * data, uint8_t count = 1 );
-	void add_draw_call( renderer::VertexBuffer * vertexbuffer );
-	void add_material( renderer::Material * material, renderer::ShaderProgram * shader );
-}; // RenderStream
+	struct RenderState
+	{
+		int type;
+		long offset; // offset into parameters
+	}; // RenderState
+
+	struct RenderStream
+	{
+		char buffer[ MAX_RENDERER_STREAM_BYTES ];
+		RenderState commands[ MAX_RENDERER_STREAM_COMMANDS ];
+		unsigned int num_commands;
+		util::MemoryStream stream;
+		
+		RenderStream( unsigned int max_bytes = MAX_RENDERER_STREAM_BYTES, unsigned int max_commands = MAX_RENDERER_STREAM_COMMANDS );
+		
+		void save_offset( long & offset );
+		void load_offset( long offset );
+		
+		void rewind();
+		RenderState * new_render_state();
+		void run_commands();
+		void add_command( int type );
+		void add_clearcolor( float r, float g, float b, float a );
+		void add_clear( unsigned int bitflags );
+		void add_cullmode( renderer::CullMode mode );
+		void add_viewport( int x, int y, int width, int height );
+		void add_uniform1i( int uniform_location, int value );
+		void add_sampler2d( int uniform_location, int texture_unit, renderer::Texture* texture );
+		void add_state( renderer::DriverState state, int enable );
+		void add_blendfunc( renderer::RenderBlendType source, renderer::RenderBlendType destination );
+		void add_shader( renderer::ShaderProgram * shader );	
+		void add_uniform3f( int location, const glm::vec3 * data );
+		void add_uniform4f( int location, const glm::vec4 * data );
+		void add_uniform_matrix4( int location, const glm::mat4 * data, uint8_t count = 1 );
+		void add_draw_call( renderer::VertexBuffer * vertexbuffer );
+		void add_material( renderer::Material * material, renderer::ShaderProgram * shader );
+	}; // RenderStream
+} // namespace gemini

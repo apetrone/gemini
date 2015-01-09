@@ -28,61 +28,64 @@
 
 #include "shaderprogram.h"
 
-namespace renderer
+namespace gemini
 {
-	struct Font;
-}
+	namespace renderer
+	{
+		struct Font;
+	}
 
-namespace debugdraw
-{
-	const float MIN_DURATION_MSEC = 0.1;
-	const int MAX_CIRCLE_SIDES = 12;
-	const int TOTAL_CIRCLE_VERTICES = 2 * MAX_CIRCLE_SIDES;
-	enum
+	namespace debugdraw
 	{
-		TYPE_BOX=1,
-		TYPE_LINE,
-		TYPE_AXES,
-		TYPE_SPHERE,
-		TYPE_TEXT,
+		const float MIN_DURATION_MSEC = 0.1;
+		const int MAX_CIRCLE_SIDES = 12;
+		const int TOTAL_CIRCLE_VERTICES = 2 * MAX_CIRCLE_SIDES;
+		enum
+		{
+			TYPE_BOX=1,
+			TYPE_LINE,
+			TYPE_AXES,
+			TYPE_SPHERE,
+			TYPE_TEXT,
+			
+			TYPE_COUNT
+		};
 		
-		TYPE_COUNT
-	};
-	
-	struct DebugPrimitive
-	{
-		short type; // type of primitive
-		short flags;
-		float timeleft; // the time left until this object is no longer rendered
-		float radius;
-		glm::vec3 start;
-		glm::vec3 end;
-		Color color;
+		struct DebugPrimitive
+		{
+			short type; // type of primitive
+			short flags;
+			float timeleft; // the time left until this object is no longer rendered
+			float radius;
+			glm::vec3 start;
+			glm::vec3 end;
+			Color color;
+			
+			// for text
+			std::string buffer;
+			glm::mat4 transform;
+			
+			DebugPrimitive();
+		}; // DebugPrimitive
 		
-		// for text
-		std::string buffer;
-		glm::mat4 transform;
+		struct DebugDrawVertex
+		{
+			glm::vec3 position;
+			Color color;
+		}; // DebugDrawVertex
 		
-		DebugPrimitive();
-	}; // DebugPrimitive
-	
-	struct DebugDrawVertex
-	{
-		glm::vec3 position;
-		Color color;
-	}; // DebugDrawVertex
-	
-	void startup(unsigned int max_primitives, renderer::ShaderProgram* program, const renderer::Font& font);
-	void shutdown();
-	
-	void update( float deltamsec );
-	void render( const glm::mat4 & modelview, const glm::mat4 & projection, int x, int y, int viewport_width, int viewport_height );
-	
-	void axes( const glm::mat4 & transform, float length, float duration = MIN_DURATION_MSEC );
-	void box( const glm::vec3 & mins, const glm::vec3 & maxs, const Color & color, float duration = MIN_DURATION_MSEC );
-	void point( const glm::vec3 & pt, const Color & color, float size = 2.0, float duration = MIN_DURATION_MSEC );
-	void line( const glm::vec3 & start, const glm::vec3 & end, const Color & color, float duration = MIN_DURATION_MSEC );
-	void sphere( const glm::vec3 & center, const Color & color, float radius = 2.0, float duration = MIN_DURATION_MSEC );
-	void text( int x, int y, const char * string, const Color & color, float duration = 0 );
+		void startup(unsigned int max_primitives, renderer::ShaderProgram* program, const renderer::Font& font);
+		void shutdown();
+		
+		void update( float deltamsec );
+		void render( const glm::mat4 & modelview, const glm::mat4 & projection, int x, int y, int viewport_width, int viewport_height );
+		
+		void axes( const glm::mat4 & transform, float length, float duration = MIN_DURATION_MSEC );
+		void box( const glm::vec3 & mins, const glm::vec3 & maxs, const Color & color, float duration = MIN_DURATION_MSEC );
+		void point( const glm::vec3 & pt, const Color & color, float size = 2.0, float duration = MIN_DURATION_MSEC );
+		void line( const glm::vec3 & start, const glm::vec3 & end, const Color & color, float duration = MIN_DURATION_MSEC );
+		void sphere( const glm::vec3 & center, const Color & color, float radius = 2.0, float duration = MIN_DURATION_MSEC );
+		void text( int x, int y, const char * string, const Color & color, float duration = 0 );
 
-}; // debugdraw
+	} // debugdraw
+} // namespace gemini

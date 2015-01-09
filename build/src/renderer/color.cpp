@@ -29,40 +29,44 @@
 // unsigned int mycolor = RGBToUInt( 255, 128, 75 );
 // UIntToRGB( mycolor, rgb );
 
-static inline float ubTof32( unsigned char c )
+namespace gemini
 {
-	return float(( c / 255.0f ));
-}
 
-static inline unsigned int f32Toub( float f )
-{
-	return (f * 255.0f);
-}
-
-
-Color::Color( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a )
-{
-	set( _r, _g, _b, _a );
-}
-
-Color Color::fromFloatPointer( const float * fl, int num_elements )
-{
-	Color c;
-	if ( num_elements == 4 )
+	static inline float ubTof32( unsigned char c )
 	{
-		c.set( f32Toub(fl[0]), f32Toub(fl[1]), f32Toub(fl[2]), f32Toub(fl[3]) );
+		return float(( c / 255.0f ));
 	}
-	else
-	{
-		c.set( f32Toub(fl[0]), f32Toub(fl[1]), f32Toub(fl[2]), 255 );
-	}
-	return c;
-}
 
-void Color::set( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a )
-{
-	r = _r;
-	g = _g;
-	b = _b;
-	a = _a;
-}
+	static inline unsigned int f32Toub( float f )
+	{
+		return (f * 255.0f);
+	}
+
+
+	Color::Color( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a )
+	{
+		set( _r, _g, _b, _a );
+	}
+
+	Color Color::fromFloatPointer( const float * fl, int num_elements )
+	{
+		Color c;
+		if ( num_elements == 4 )
+		{
+			c.set( f32Toub(fl[0]), f32Toub(fl[1]), f32Toub(fl[2]), f32Toub(fl[3]) );
+		}
+		else
+		{
+			c.set( f32Toub(fl[0]), f32Toub(fl[1]), f32Toub(fl[2]), 255 );
+		}
+		return c;
+	}
+
+	void Color::set( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a )
+	{
+		r = _r;
+		g = _g;
+		b = _b;
+		a = _a;
+	}
+} // namespace gemini

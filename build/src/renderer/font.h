@@ -26,37 +26,40 @@
 #include "shaderprogram.h"
 #include "color.h"
 
-namespace renderer
+namespace gemini
 {
-	typedef int FontHandle;
-	struct Font
+	namespace renderer
 	{
-		FontHandle handle;
-		uint16_t point_size;
-		
-		inline bool is_valid() const { return (handle >= 0); }
-	};
-}
+		typedef int FontHandle;
+		struct Font
+		{
+			FontHandle handle;
+			uint16_t point_size;
+			
+			inline bool is_valid() const { return (handle >= 0); }
+		};
+	} // namespace renderer
 
-namespace font
-{
-	// provide the shader to use for rendering as well as the render width and height
-	// of the target buffer or viewport
-	void startup(renderer::ShaderProgram* fontshader, int width, int height);
-	void shutdown();
-	
-	// draw string at (x, y) screen coordinates with the origin in the upper left of the screen
-	void draw_string(const renderer::Font& font, int x, int y, const char* utf8, const Color& color );
-	
-	// set the viewport size for the future draw calls
-	void set_viewport_size(int render_width, int render_height);
-	
-	// query the height of the font in pixels
-	unsigned int measure_height(const renderer::Font& font, const char* utf8 );
-	
-	// measure the width of the string in a given font in pixels
-	unsigned int measure_width(const renderer::Font& font, const char* utf8 );
-	
-	// load font from memory with the desired point size
-	renderer::Font load_font_from_memory(const void* data, unsigned int data_size, unsigned short point_size);
-}; // namespace font
+	namespace font
+	{
+		// provide the shader to use for rendering as well as the render width and height
+		// of the target buffer or viewport
+		void startup(renderer::ShaderProgram* fontshader, int width, int height);
+		void shutdown();
+		
+		// draw string at (x, y) screen coordinates with the origin in the upper left of the screen
+		void draw_string(const renderer::Font& font, int x, int y, const char* utf8, const Color& color );
+		
+		// set the viewport size for the future draw calls
+		void set_viewport_size(int render_width, int render_height);
+		
+		// query the height of the font in pixels
+		unsigned int measure_height(const renderer::Font& font, const char* utf8 );
+		
+		// measure the width of the string in a given font in pixels
+		unsigned int measure_width(const renderer::Font& font, const char* utf8 );
+		
+		// load font from memory with the desired point size
+		renderer::Font load_font_from_memory(const void* data, unsigned int data_size, unsigned short point_size);
+	} // namespace font
+} // namespace gemini

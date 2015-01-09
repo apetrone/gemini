@@ -21,66 +21,70 @@
 // -------------------------------------------------------------
 #pragma once
 
-
-namespace assets
+namespace gemini
 {
-	struct Geometry;
-};
+	namespace assets
+	{
+		struct Geometry;
+	};
 
-struct RenderStream;
+	struct RenderStream;
 
-namespace assets
-{
-	struct Shader;
-};
+	namespace assets
+	{
+		struct Shader;
+	};
 
-namespace renderer
-{
-	struct RenderBlock;
-	struct ConstantBuffer;
-};
+	namespace renderer
+	{
+		struct RenderBlock;
+		struct ConstantBuffer;
+	};
+} // namespace gemini
 
 #include "renderer.h"
-namespace render_utilities
+
+namespace gemini
 {
-	//
-	// misc sprite tools
-	namespace sprite
+	namespace render_utilities
 	{
-		void calc_tile_uvs( float * uvs, unsigned int x, unsigned int y, unsigned int sprite_width, unsigned int sprite_height, unsigned int sheet_width, unsigned int sheet_height );
-	}; // sprite
-	
-	
-	template <class Type>
-	struct PhysicsState
-	{
-		Type last;
-		Type current;
-		Type render;
-		
-		void snap( const Type & value )
+		//
+		// misc sprite tools
+		namespace sprite
 		{
-			render = current = last = value;
-		}
+			void calc_tile_uvs( float * uvs, unsigned int x, unsigned int y, unsigned int sprite_width, unsigned int sprite_height, unsigned int sheet_width, unsigned int sheet_height );
+		}; // sprite
 		
-		void step( float delta_sec )
-		{
-			last = current;
-		}
 		
-		void interpolate( float t )
+		template <class Type>
+		struct PhysicsState
 		{
-			Interpolator<Type> interpolator;
-			render = interpolator( last, current, t );
-		}
-	}; // PhysicsState
-	
-	
-	// strip the version line from shader source
-	void strip_shader_version( char * buffer, StackString<32> & version );
-}; // namespace render_utilities
-
-
+			Type last;
+			Type current;
+			Type render;
+			
+			void snap( const Type & value )
+			{
+				render = current = last = value;
+			}
+			
+			void step( float delta_sec )
+			{
+				last = current;
+			}
+			
+			void interpolate( float t )
+			{
+				Interpolator<Type> interpolator;
+				render = interpolator( last, current, t );
+			}
+		}; // PhysicsState
+		
+		
+		// strip the version line from shader source
+		void strip_shader_version( char * buffer, StackString<32> & version );
+	} // namespace render_utilities
+} // namespace gemini
 
 
 

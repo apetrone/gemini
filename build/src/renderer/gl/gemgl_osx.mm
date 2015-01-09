@@ -20,42 +20,44 @@
 
 #import "gemgl.h"
 
-
-CFBundleRef gemgl_bundle = 0;
-	
-int gemgl_osx_startup( void )
+namespace gemini
 {
-	gemgl_bundle = 0;
-	
-	// get bundle ref
-#if TARGET_OS_IPHONE
-	gemgl_bundle = CFBundleGetBundleWithIdentifier( CFSTR( "com.apple.opengles" ) );
-#else
-	gemgl_bundle = CFBundleGetBundleWithIdentifier( CFSTR( "com.apple.opengl" ) );
-#endif
-	if ( !gemgl_bundle )
+	CFBundleRef gemgl_bundle = 0;
+		
+	int gemgl_osx_startup( void )
 	{
-		printf( "FATAL ERROR: Unable to get OpenGL bundle ref.\n" );
-		return 0;
-	}
-	
-	return 1;
-} // gemgl_osx_startup
-	
-void gemgl_osx_shutdown( void )
-{
-	if ( gemgl_bundle )
-	{
-		CFRelease( gemgl_bundle );
 		gemgl_bundle = 0;
-	}
-} // gemgl_osx_shutdown
-	
-void * gemgl_native_findsymbol( const char * name )
-{
-	CFStringRef symbol_name = CFStringCreateWithCString( kCFAllocatorDefault, name, kCFStringEncodingASCII );
-	void * symbol = CFBundleGetFunctionPointerForName( gemgl_bundle, symbol_name );
-	CFRelease( symbol_name );
-	return symbol;
-} // gemgl_native_findsymbol
+		
+		// get bundle ref
+#if TARGET_OS_IPHONE
+		gemgl_bundle = CFBundleGetBundleWithIdentifier( CFSTR( "com.apple.opengles" ) );
+#else
+		gemgl_bundle = CFBundleGetBundleWithIdentifier( CFSTR( "com.apple.opengl" ) );
+#endif
+		if ( !gemgl_bundle )
+		{
+			printf( "FATAL ERROR: Unable to get OpenGL bundle ref.\n" );
+			return 0;
+		}
+		
+		return 1;
+	} // gemgl_osx_startup
+		
+	void gemgl_osx_shutdown( void )
+	{
+		if ( gemgl_bundle )
+		{
+			CFRelease( gemgl_bundle );
+			gemgl_bundle = 0;
+		}
+	} // gemgl_osx_shutdown
+		
+	void * gemgl_native_findsymbol( const char * name )
+	{
+		CFStringRef symbol_name = CFStringCreateWithCString( kCFAllocatorDefault, name, kCFStringEncodingASCII );
+		void * symbol = CFBundleGetFunctionPointerForName( gemgl_bundle, symbol_name );
+		CFRelease( symbol_name );
+		return symbol;
+	} // gemgl_native_findsymbol
 
+} // namespace gemini

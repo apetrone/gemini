@@ -38,37 +38,40 @@ USAGE:
 
 #pragma once
 
-namespace args
+namespace gemini
 {
-	static const int MAX_SHORTNAME = 4;
-	static const int MAX_LONGNAME = 16;
-	static const int MAX_PARAMS = 64;
-
-	enum
+	namespace args
 	{
-		// indicates this item was found in the argument list
-		FOUND			= (1<<0),
-		NO_PARAMS		= (1<<1),
-		NOT_REQUIRED	= (1<<2)
-	};
+		static const int MAX_SHORTNAME = 4;
+		static const int MAX_LONGNAME = 16;
+		static const int MAX_PARAMS = 64;
 
-	struct Argument
-	{
-		int flags;
-		int integer;
-		float float_value;
-		const char * name;
-		const char * string;
-		const char * shortname;
-		const char * longname;
-		Argument* parent;
-		
-		Argument() : flags(0), integer(0), float_value(0.0f), parent(0)
+		enum
 		{
-		}
-	};
+			// indicates this item was found in the argument list
+			FOUND			= (1<<0),
+			NO_PARAMS		= (1<<1),
+			NOT_REQUIRED	= (1<<2)
+		};
 
-	Argument* add(const char* name, const char* shortname, const char* longname, int flags = 0, Argument* parent = 0);
-	
-	bool parse_args(int argc, char** argv);
-}
+		struct Argument
+		{
+			int flags;
+			int integer;
+			float float_value;
+			const char * name;
+			const char * string;
+			const char * shortname;
+			const char * longname;
+			Argument* parent;
+			
+			Argument() : flags(0), integer(0), float_value(0.0f), parent(0)
+			{
+			}
+		};
+
+		Argument* add(const char* name, const char* shortname, const char* longname, int flags = 0, Argument* parent = 0);
+		
+		bool parse_args(int argc, char** argv);
+	} // namespace args
+} // namespace gemini

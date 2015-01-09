@@ -24,9 +24,11 @@
 #include <core/typedefs.h>
 #include <platform/platform.h>
 
-namespace core
+namespace gemini
 {
-	platform::Result startup();
-	void shutdown();
-
-} // namespace core
+	namespace core
+	{
+		platform::Result startup();
+		void shutdown();
+	} // namespace core
+} // namespace gemini

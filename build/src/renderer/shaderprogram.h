@@ -27,54 +27,57 @@
 #include <string>
 #include <utility> // for std::pair
 
-namespace renderer
+namespace gemini
 {
-	
-	enum ShaderObjectType
+	namespace renderer
 	{
-		SHADER_VERTEX,
-		SHADER_FRAGMENT,
-		SHADER_GEOMETRY,
-		SHADER_COMPUTE,
 		
-		SHADER_LIMIT
-	}; // ShaderObjectType
-	
-	typedef std::pair<std::string, int> ShaderKeyValuePair;
-	
-	// Generic container for shader objects before they are linked into a shader
-	// program.
-	struct ShaderObject
-	{
-		unsigned int shader_id;
+		enum ShaderObjectType
+		{
+			SHADER_VERTEX,
+			SHADER_FRAGMENT,
+			SHADER_GEOMETRY,
+			SHADER_COMPUTE,
+			
+			SHADER_LIMIT
+		}; // ShaderObjectType
 		
-		ShaderObject() : shader_id(0) {}
-	}; // ShaderObject
-	
-	struct ShaderProgram
-	{
-		StackString<64> frag_data_location;
+		typedef std::pair<std::string, int> ShaderKeyValuePair;
 		
-		FixedArray<ShaderKeyValuePair> uniforms;
-		FixedArray<ShaderKeyValuePair> attributes;
+		// Generic container for shader objects before they are linked into a shader
+		// program.
+		struct ShaderObject
+		{
+			unsigned int shader_id;
+			
+			ShaderObject() : shader_id(0) {}
+		}; // ShaderObject
 		
-		unsigned int object;
+		struct ShaderProgram
+		{
+			StackString<64> frag_data_location;
+			
+			core::FixedArray<ShaderKeyValuePair> uniforms;
+			core::FixedArray<ShaderKeyValuePair> attributes;
+			
+			unsigned int object;
+			
+			ShaderProgram() : object(0), frag_data_location("out_color") {}
+			virtual ~ShaderProgram() {}
+			
+			int get_uniform_location( const char * name );
+			
+			void show_uniforms();
+			void show_attributes();
+		}; // ShaderProgram
 		
-		ShaderProgram() : object(0), frag_data_location("out_color") {}
-		virtual ~ShaderProgram() {}
 		
-		int get_uniform_location( const char * name );
 		
-		void show_uniforms();
-		void show_attributes();
-	}; // ShaderProgram
-	
-	
-	
-	enum ShaderErrorType
-	{
-		SHADER_ERROR_NONE = 0,
-		SHADER_ERROR_COMPILE_FAILED,
-	}; // ShaderErrorType
+		enum ShaderErrorType
+		{
+			SHADER_ERROR_NONE = 0,
+			SHADER_ERROR_COMPILE_FAILED,
+		}; // ShaderErrorType
 
-}; // namespace renderer
+	}; // namespace renderer
+} // namespace gemini

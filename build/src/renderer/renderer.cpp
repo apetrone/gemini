@@ -45,236 +45,239 @@
 	#include "gl/desktop/opengl_21.h"
 #endif
 
-namespace renderer
+namespace gemini
 {
-	IRenderDriver * _render_driver = 0;
-	
-	IRenderDriver * driver() { return _render_driver; }
-
-	void create_shaderprogram_from_file(const char* path, renderer::ShaderProgram** program)
+	namespace renderer
 	{
-		shader_config::load_shaderprogram_from_file(path, program);
-	}
+		IRenderDriver * _render_driver = 0;
+		
+		IRenderDriver * driver() { return _render_driver; }
 
-	int startup( DriverType driver_type, const RenderSettings& settings )
-	{
-		// setup vertex descriptor
-		VertexDescriptor::startup();
-	
-		// load the shader config data
-		shader_config::startup();
-
-		// link with GL lib for this platform
-		int glstartup = gemgl_startup(gl);
-		if (glstartup != 0)
+		void create_shaderprogram_from_file(const char* path, renderer::ShaderProgram** program)
 		{
-			LOGE("gemgl startup failed!\n");
-			return glstartup;
+			shader_config::load_shaderprogram_from_file(path, program);
 		}
 
-
-		gemgl_config config;
-		
-		// parse the GL_VERSION string and determine which renderer to use.
-		gemgl_parse_version(config.major_version, config.minor_version);
-
-#if !defined(PLATFORM_USE_GLES)
-			if (config.major_version == 3 && config.minor_version == 2)
-			{
-				// use core32
-				_render_driver = CREATE(GLCore32);
-			}
-			else // fallback to 2.1
-			{
-				// TODO: if at least 2.1 is NOT supported,
-				// this has to fail hard.
-				_render_driver = CREATE(GL21);
-			}
-#else
-			// TODO: load GLES
-			if (config.major_version == 2)
-			{
-				_render_driver = CREATE(GLESv2);
-			}
-#endif
-
-		if (_render_driver)
+		int startup( DriverType driver_type, const RenderSettings& settings )
 		{
-			LOGV( "Initialized renderer: '%s'\n", _render_driver->description() );
+			// setup vertex descriptor
+			VertexDescriptor::startup();
+		
+			// load the shader config data
+			shader_config::startup();
 
-			gemgl_load_symbols(gl);
+			// link with GL lib for this platform
+			int glstartup = gemgl_startup(gl);
+			if (glstartup != 0)
+			{
+				LOGE("gemgl startup failed!\n");
+				return glstartup;
+			}
 
-			// init render driver settings
-			_render_driver->init_with_settings(settings);
+
+			gemgl_config config;
 			
-			_render_driver->create_default_render_target();
-			
-			return 1;
-		}
+			// parse the GL_VERSION string and determine which renderer to use.
+			gemgl_parse_version(config.major_version, config.minor_version);
 
-		return 0;
-	} // startup
-	
-	void shutdown()
-	{
-		shader_config::shutdown();
-	
-		if ( _render_driver )
-		{
-			DESTROY(IRenderDriver, _render_driver);
-		}
-		
-		gemgl_shutdown(gl);		
-	} // shutdown
-	
-}; // namespace renderer
+	#if !defined(PLATFORM_USE_GLES)
+				if (config.major_version == 3 && config.minor_version == 2)
+				{
+					// use core32
+					_render_driver = CREATE(GLCore32);
+				}
+				else // fallback to 2.1
+				{
+					// TODO: if at least 2.1 is NOT supported,
+					// this has to fail hard.
+					_render_driver = CREATE(GL21);
+				}
+	#else
+				// TODO: load GLES
+				if (config.major_version == 2)
+				{
+					_render_driver = CREATE(GLESv2);
+				}
+	#endif
 
-
-namespace renderer
-{	
-	int ShaderProgram::get_uniform_location( const char * name )
-	{
-//		LOGV( "# uniforms: %i\n", total_uniforms );
-		for( int i = 0; i < uniforms.size(); ++i )
-		{
-			if (std::string(name) == uniforms[i].first)
+			if (_render_driver)
 			{
-//				LOGV( "uniform: %s, at %i\n", name, uniforms[i].second );
-				return uniforms[i].second;
+				LOGV( "Initialized renderer: '%s'\n", _render_driver->description() );
+
+				gemgl_load_symbols(gl);
+
+				// init render driver settings
+				_render_driver->init_with_settings(settings);
+				
+				_render_driver->create_default_render_target();
+				
+				return 1;
+			}
+
+			return 0;
+		} // startup
+		
+		void shutdown()
+		{
+			shader_config::shutdown();
+		
+			if ( _render_driver )
+			{
+				DESTROY(IRenderDriver, _render_driver);
+			}
+			
+			gemgl_shutdown(gl);		
+		} // shutdown
+		
+	}; // namespace renderer
+
+
+	namespace renderer
+	{	
+		int ShaderProgram::get_uniform_location( const char * name )
+		{
+	//		LOGV( "# uniforms: %i\n", total_uniforms );
+			for( int i = 0; i < uniforms.size(); ++i )
+			{
+				if (std::string(name) == uniforms[i].first)
+				{
+	//				LOGV( "uniform: %s, at %i\n", name, uniforms[i].second );
+					return uniforms[i].second;
+				}
+			}
+			
+			LOGW( "No uniform named %s (%i)\n", name, -1 );
+			return -1;
+		} // get_uniform_location
+		
+		void ShaderProgram::show_uniforms()
+		{
+			LOGV("uniforms:\n");
+			for (size_t i = 0; i < uniforms.size(); ++i)
+			{
+				LOGV("%s -> %i\n", uniforms[i].first.c_str(), uniforms[i].second);
 			}
 		}
 		
-		LOGW( "No uniform named %s (%i)\n", name, -1 );
-		return -1;
-	} // get_uniform_location
-	
-	void ShaderProgram::show_uniforms()
-	{
-		LOGV("uniforms:\n");
-		for (size_t i = 0; i < uniforms.size(); ++i)
+		void ShaderProgram::show_attributes()
 		{
-			LOGV("%s -> %i\n", uniforms[i].first.c_str(), uniforms[i].second);
+			LOGV("attributes:\n");
+			for (size_t i = 0; i < attributes.size(); ++i)
+			{
+				LOGV("%s -> %i\n", attributes[i].first.c_str(), attributes[i].second);
+			}
 		}
 	}
-	
-	void ShaderProgram::show_attributes()
-	{
-		LOGV("attributes:\n");
-		for (size_t i = 0; i < attributes.size(); ++i)
-		{
-			LOGV("%s -> %i\n", attributes[i].first.c_str(), attributes[i].second);
-		}
-	}
-}
 
-namespace renderer
-{
-	
-	// VertexTypeDescriptor
-	uint16_t VertexDescriptor::size[ VD_TOTAL ] = {0};
-	uint16_t VertexDescriptor::elements[ VD_TOTAL ] = {0};
-	
-	void VertexDescriptor::startup()
+	namespace renderer
 	{
-		// clear table
-		memset(VertexDescriptor::size, 0, sizeof(uint16_t)*VD_TOTAL);
-		memset(VertexDescriptor::elements, 0, sizeof(uint16_t)*VD_TOTAL);
 		
-		// populate table with vertex descriptor types
-		map_type(VD_FLOAT2, sizeof(float), 2);
-		map_type(VD_FLOAT3, sizeof(float), 3);
-		map_type(VD_FLOAT4, sizeof(float), 4);
+		// VertexTypeDescriptor
+		uint16_t VertexDescriptor::size[ VD_TOTAL ] = {0};
+		uint16_t VertexDescriptor::elements[ VD_TOTAL ] = {0};
 		
-		map_type(VD_INT4, sizeof(int), 4);
-		
-		map_type(VD_UNSIGNED_BYTE3, sizeof(unsigned char), 3);
-		map_type(VD_UNSIGNED_BYTE4, sizeof(unsigned char), 4);
-		
-		map_type(VD_UNSIGNED_INT, sizeof(unsigned int), 1);
-		
-		// validate table
-		for (size_t i = 0; i < VD_TOTAL; ++i)
+		void VertexDescriptor::startup()
 		{
-			assert(VertexDescriptor::size[i] != 0);
-			assert(VertexDescriptor::elements[i] != 0);
+			// clear table
+			memset(VertexDescriptor::size, 0, sizeof(uint16_t)*VD_TOTAL);
+			memset(VertexDescriptor::elements, 0, sizeof(uint16_t)*VD_TOTAL);
+			
+			// populate table with vertex descriptor types
+			map_type(VD_FLOAT2, sizeof(float), 2);
+			map_type(VD_FLOAT3, sizeof(float), 3);
+			map_type(VD_FLOAT4, sizeof(float), 4);
+			
+			map_type(VD_INT4, sizeof(int), 4);
+			
+			map_type(VD_UNSIGNED_BYTE3, sizeof(unsigned char), 3);
+			map_type(VD_UNSIGNED_BYTE4, sizeof(unsigned char), 4);
+			
+			map_type(VD_UNSIGNED_INT, sizeof(unsigned int), 1);
+			
+			// validate table
+			for (size_t i = 0; i < VD_TOTAL; ++i)
+			{
+				assert(VertexDescriptor::size[i] != 0);
+				assert(VertexDescriptor::elements[i] != 0);
+			}
 		}
-	}
-	
-	void VertexDescriptor::map_type(uint32_t type, uint16_t size, uint16_t elements)
-	{
-		VertexDescriptor::size[type] = size*elements;
-		VertexDescriptor::elements[type] = elements;
-	}
-	
-	VertexDescriptor::VertexDescriptor()
-	{
-		id = 0;
-		reset();
-		memset( description, 0, sizeof(VertexDescriptorType) * MAX_DESCRIPTORS );
-	}
-	
-	void VertexDescriptor::add( VertexDescriptorType desc )
-	{
-		description[ id ] = desc;
-		++id;
 		
-		if ( id >= MAX_DESCRIPTORS-1 )
+		void VertexDescriptor::map_type(uint32_t type, uint16_t size, uint16_t elements)
 		{
-			printf( "Reached MAX_DESCRIPTORS. Resetting\n" );
+			VertexDescriptor::size[type] = size*elements;
+			VertexDescriptor::elements[type] = elements;
+		}
+		
+		VertexDescriptor::VertexDescriptor()
+		{
 			id = 0;
+			reset();
+			memset( description, 0, sizeof(VertexDescriptorType) * MAX_DESCRIPTORS );
 		}
 		
-		attribs = id;
-	} // add
-	
-	VertexDescriptorType VertexDescriptor::get( int i )
-	{
-		return description[ i ];
-	} // get
-	
-	void VertexDescriptor::reset()
-	{
-		if ( id > 0 )
+		void VertexDescriptor::add( VertexDescriptorType desc )
 		{
+			description[ id ] = desc;
+			++id;
+			
+			if ( id >= MAX_DESCRIPTORS-1 )
+			{
+				printf( "Reached MAX_DESCRIPTORS. Resetting\n" );
+				id = 0;
+			}
+			
 			attribs = id;
-		}
-		id = 0;
-	} // reset
-	
-	unsigned int VertexDescriptor::calculate_vertex_stride()
-	{
-		unsigned int size = 0;
-		unsigned int attribSize = 0;
-		unsigned int descriptor;
+		} // add
 		
-		for( unsigned int i = 0; i < attribs; ++i )
+		VertexDescriptorType VertexDescriptor::get( int i )
 		{
-			descriptor = description[i];
-			attribSize = VertexDescriptor::size[descriptor];
-						
-			size += attribSize;
-		}
+			return description[ i ];
+		} // get
 		
-		return size;
-	} // calculate_vertex_stride
+		void VertexDescriptor::reset()
+		{
+			if ( id > 0 )
+			{
+				attribs = id;
+			}
+			id = 0;
+		} // reset
+		
+		unsigned int VertexDescriptor::calculate_vertex_stride()
+		{
+			unsigned int size = 0;
+			unsigned int attribSize = 0;
+			unsigned int descriptor;
+			
+			for( unsigned int i = 0; i < attribs; ++i )
+			{
+				descriptor = description[i];
+				attribSize = VertexDescriptor::size[descriptor];
+							
+				size += attribSize;
+			}
+			
+			return size;
+		} // calculate_vertex_stride
 
-	const VertexDescriptor & VertexDescriptor::operator= ( const VertexDescriptor & other )
-	{
-		this->attribs = other.attribs;
-		this->id = other.id;
-		
-		for( unsigned int i = 0; i < VD_TOTAL; ++i )
+		const VertexDescriptor & VertexDescriptor::operator= ( const VertexDescriptor & other )
 		{
-			this->size[i] = other.size[i];
-			this->elements[i] = other.elements[i];
-		}
+			this->attribs = other.attribs;
+			this->id = other.id;
+			
+			for( unsigned int i = 0; i < VD_TOTAL; ++i )
+			{
+				this->size[i] = other.size[i];
+				this->elements[i] = other.elements[i];
+			}
+			
+			for( unsigned int id = 0; id < MAX_DESCRIPTORS; ++id )
+			{
+				this->description[id] = other.description[id];
+			}
 		
-		for( unsigned int id = 0; id < MAX_DESCRIPTORS; ++id )
-		{
-			this->description[id] = other.description[id];
-		}
-	
-		return *this;
-	} // operator=
+			return *this;
+		} // operator=
 
-}; // namespace renderer
+	} // namespace renderer
+} // namespace gemini

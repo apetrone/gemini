@@ -30,88 +30,91 @@
 
 using namespace gemini::core::logging;
 
-namespace core
+namespace gemini
 {
-	// log handler function definitions
-	namespace _internal
+	namespace core
 	{
-		void file_logger_message(Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
+		// log handler function definitions
+		namespace _internal
 		{
-			StackString<MAX_PATH_SIZE> path = filename;
-			fprintf((FILE*)handler->userdata, "[%i %s %s %i] %s", type, path.basename()(), function, line, message);
-			//fprintf( (FILE*)handler->userdata, "\t%s", message );
-			fflush((FILE*)handler->userdata);
-		}
-		
-		int file_logger_open(Handler* handler)
-		{
-			const char* logname = (const char*)handler->userdata;
-			handler->userdata = fopen(logname, "wb");
-			return handler->userdata != 0;
-		}
-		
-		void file_logger_close(Handler* handler)
-		{
-			if (handler->userdata)
+			void file_logger_message(Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
 			{
-				fclose((FILE*)handler->userdata);
+				StackString<MAX_PATH_SIZE> path = filename;
+				fprintf((FILE*)handler->userdata, "[%i %s %s %i] %s", type, path.basename()(), function, line, message);
+				//fprintf( (FILE*)handler->userdata, "\t%s", message );
+				fflush((FILE*)handler->userdata);
 			}
-		}
-		
-		
-		void stdout_message(Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
-		{
-			const char *message_types[] = {0, "VERBOSE", "WARNING", " ERROR "};
-			StackString<MAX_PATH_SIZE> path = filename;
-			fprintf(stdout, "[%s] %s, %s, %i | %s", message_types[type], path.basename()(), function, line, message);
-			//fflush( stdout );
-		}
-		
-		int stdout_open(Handler* handler)
-		{
-			return 1;
-		}
-		
-		void stdout_close(Handler* handler)
-		{
-		}
+			
+			int file_logger_open(Handler* handler)
+			{
+				const char* logname = (const char*)handler->userdata;
+				handler->userdata = fopen(logname, "wb");
+				return handler->userdata != 0;
+			}
+			
+			void file_logger_close(Handler* handler)
+			{
+				if (handler->userdata)
+				{
+					fclose((FILE*)handler->userdata);
+				}
+			}
+			
+			
+			void stdout_message(Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
+			{
+				const char *message_types[] = {0, "VERBOSE", "WARNING", " ERROR "};
+				StackString<MAX_PATH_SIZE> path = filename;
+				fprintf(stdout, "[%s] %s, %s, %i | %s", message_types[type], path.basename()(), function, line, message);
+				//fflush( stdout );
+			}
+			
+			int stdout_open(Handler* handler)
+			{
+				return 1;
+			}
+			
+			void stdout_close(Handler* handler)
+			{
+			}
 
-#if _WIN32
-		void vs_message(Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
-		{
-	//		const char *message_types[] = { 0, "VERBOSE", "WARNING", " ERROR " };
-//			fprintf( stdout, "[%s] %s, %s, %i | %s", message_types[ type ], xstr_filefrompath(filename), function, line, message );
+	#if _WIN32
+			void vs_message(Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
+			{
+		//		const char *message_types[] = { 0, "VERBOSE", "WARNING", " ERROR " };
+	//			fprintf( stdout, "[%s] %s, %s, %i | %s", message_types[ type ], xstr_filefrompath(filename), function, line, message );
 
 
-			OutputDebugStringA(message);
-		}
-		
-		int vs_open(Handler* handler)
-		{
-			return 1;
-		}
-		
-		void vs_close(Handler* handler)
-		{
-		}	
-#endif
-		
-#if __ANDROID__
-		void log_android_message(Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
-		{
-			// this must match with the android_LogPriority enum in <android/log.h>
-			android_LogPriority message_types[] = {ANDROID_LOG_UNKNOWN, ANDROID_LOG_VERBOSE, ANDROID_LOG_WARN, ANDROID_LOG_ERROR};
-			__android_log_print(message_types[ type ], "gemini", message);
-		}
-		
-		int log_android_open(Handle* handler)
-		{
-			return 1;
-		}
-		
-		void log_android_close(Handler* handler)
-		{
-		}
-#endif
-	}; // namespace _internal
-}; // namespace core
+				OutputDebugStringA(message);
+			}
+			
+			int vs_open(Handler* handler)
+			{
+				return 1;
+			}
+			
+			void vs_close(Handler* handler)
+			{
+			}	
+	#endif
+			
+	#if __ANDROID__
+			void log_android_message(Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
+			{
+				// this must match with the android_LogPriority enum in <android/log.h>
+				android_LogPriority message_types[] = {ANDROID_LOG_UNKNOWN, ANDROID_LOG_VERBOSE, ANDROID_LOG_WARN, ANDROID_LOG_ERROR};
+				__android_log_print(message_types[ type ], "gemini", message);
+			}
+			
+			int log_android_open(Handle* handler)
+			{
+				return 1;
+			}
+			
+			void log_android_close(Handler* handler)
+			{
+			}
+	#endif
+		} // namespace _internal
+	} // namespace core
+} // namespace gemini

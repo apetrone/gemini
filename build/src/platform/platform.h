@@ -57,44 +57,46 @@
 	#undef Warning
 #endif
 
-
-namespace platform
+namespace gemini
 {
-	struct Result
+	namespace platform
 	{
-		enum ResultStatus
+		struct Result
 		{
-			Success,
-			Failure = 0xBADDAE, 	// non-recoverable error, bad day :(
-			Warning = 1 			// unexpected result, will proceed
+			enum ResultStatus
+			{
+				Success,
+				Failure = 0xBADDAE, 	// non-recoverable error, bad day :(
+				Warning = 1 			// unexpected result, will proceed
+			};
+			
+			ResultStatus status;
+			const char* message;
+			
+			Result(ResultStatus result_status, const char* result_message = "") : status(result_status), message(result_message) {}
+			bool failed() const { return status == Failure; }
+			bool success() const { return status == Success; }
 		};
-		
-		ResultStatus status;
-		const char* message;
-		
-		Result(ResultStatus result_status, const char* result_message = "") : status(result_status), message(result_message) {}
-		bool failed() const { return status == Failure; }
-		bool success() const { return status == Success; }
-	};
 
-	Result startup();
-	void shutdown();
-	
-	// the directory where the active binary resides:
-	// on Linux and Windows platforms, it returns the folder where the binary exists
-	// on MacOS X when run as a command line tool, it returns the folder where the binary exists (similar to Linux and Windows)
-	// on MacOS X / iPhoneOS (for Bundles), it returns the root bundle path (.app)
-	Result program_directory(char* path, size_t size);
+		Result startup();
+		void shutdown();
+		
+		// the directory where the active binary resides:
+		// on Linux and Windows platforms, it returns the folder where the binary exists
+		// on MacOS X when run as a command line tool, it returns the folder where the binary exists (similar to Linux and Windows)
+		// on MacOS X / iPhoneOS (for Bundles), it returns the root bundle path (.app)
+		Result program_directory(char* path, size_t size);
 
-	namespace path
-	{
-		// normalize a path to the host platform's notation
-		void normalize(char* path, size_t size);
-		
-		// make a directory at path
-		Result make_directory(const char* path);
-		
-		// make all non-existent directories along a normalized_path
-		void make_directories(const char* normalized_path);
-	}; // namespace path
-}; // namespace platform
+		namespace path
+		{
+			// normalize a path to the host platform's notation
+			void normalize(char* path, size_t size);
+			
+			// make a directory at path
+			Result make_directory(const char* path);
+			
+			// make all non-existent directories along a normalized_path
+			void make_directories(const char* normalized_path);
+		} // namespace path
+	} // namespace platform
+} // namespace gemini

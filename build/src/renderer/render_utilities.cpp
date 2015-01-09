@@ -28,49 +28,49 @@
 #include "renderstream.h"
 #include "rqueue.h"
 
-namespace render_utilities
+namespace gemini
 {
-	//
-	// misc sprite tools
-	namespace sprite
+	namespace render_utilities
 	{
-		void calc_tile_uvs( float * uvs, unsigned int x, unsigned int y, unsigned int sprite_width, unsigned int sprite_height, unsigned int sheet_width, unsigned int sheet_height )
+		//
+		// misc sprite tools
+		namespace sprite
 		{
-			// This assumes an Orthographic projection set with the origin in the upper left
-			// upper left
-			uvs[0] = x / (float)sheet_width;
-			uvs[1] = y / (float)sheet_height;
-			
-			// lower left
-			uvs[2] = x / (float)sheet_width;
-			uvs[3] = (y+sprite_height) / (float)sheet_height;
-			
-			// lower right
-			uvs[4] = (x+sprite_width) / (float)sheet_width;
-			uvs[5] = (y+sprite_height) / (float)sheet_height;
-			
-			// upper right
-			uvs[6] = (x+sprite_width) / (float)sheet_width;
-			uvs[7] = y / (float)sheet_height;
-		} // calc_tile_uvs
-	}; // sprite
-	
-	
-	
-	
-	void strip_shader_version( char * buffer, StackString<32> & version )
-	{
-		// remove preceding "#version" shader
-		char * pos = xstr_str( buffer, "#version" );
-		if ( pos )
+			void calc_tile_uvs( float * uvs, unsigned int x, unsigned int y, unsigned int sprite_width, unsigned int sprite_height, unsigned int sheet_width, unsigned int sheet_height )
+			{
+				// This assumes an Orthographic projection set with the origin in the upper left
+				// upper left
+				uvs[0] = x / (float)sheet_width;
+				uvs[1] = y / (float)sheet_height;
+				
+				// lower left
+				uvs[2] = x / (float)sheet_width;
+				uvs[3] = (y+sprite_height) / (float)sheet_height;
+				
+				// lower right
+				uvs[4] = (x+sprite_width) / (float)sheet_width;
+				uvs[5] = (y+sprite_height) / (float)sheet_height;
+				
+				// upper right
+				uvs[6] = (x+sprite_width) / (float)sheet_width;
+				uvs[7] = y / (float)sheet_height;
+			} // calc_tile_uvs
+		}; // sprite
+		
+		void strip_shader_version( char * buffer, StackString<32> & version )
 		{
-			char * end = pos;
-			while( *end != '\n' )
-				++end;
-			
-			version._length = (end-pos);
-			memcpy( &version[0], &buffer[(pos-buffer)], version._length );
-			memset( &buffer[(pos-buffer)], ' ', (end-pos) );
-		}
-	} // strip_shader_version
-}; // mamespace render_utilities
+			// remove preceding "#version" shader
+			char * pos = xstr_str( buffer, "#version" );
+			if ( pos )
+			{
+				char * end = pos;
+				while( *end != '\n' )
+					++end;
+				
+				version._length = (end-pos);
+				memcpy( &version[0], &buffer[(pos-buffer)], version._length );
+				memset( &buffer[(pos-buffer)], ' ', (end-pos) );
+			}
+		} // strip_shader_version
+	} // mamespace render_utilities
+} // namespace gemini

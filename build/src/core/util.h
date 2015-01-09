@@ -23,24 +23,26 @@
 
 #include <core/stackstring.h>
 
-template <class Type>
-struct RangedValue
+namespace gemini
 {
-	Type min;
-	Type max;
-	
-	void set_range( const Type & minimum, const Type & maximum )
+	template <class Type>
+	struct RangedValue
 	{
-		this->min = minimum;
-		this->max = maximum;
-	}
-}; // RangedValue
+		Type min;
+		Type max;
+		
+		void set_range( const Type & minimum, const Type & maximum )
+		{
+			this->min = minimum;
+			this->max = maximum;
+		}
+	}; // RangedValue
 
+	namespace util
+	{
+		unsigned int hash_32bit( const void * data, int data_size, unsigned int seed );
 
-namespace util
-{
-	unsigned int hash_32bit( const void * data, int data_size, unsigned int seed );
-	
-	// return a float within the range: min, max, inclusive
-	float random_range( float min, float max );
-}; // namespace util
+		// return a float within the range: min, max, inclusive
+		float random_range( float min, float max );
+	} // namespace util
+} // namespace gemini

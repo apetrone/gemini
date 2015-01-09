@@ -21,14 +21,17 @@
 // -------------------------------------------------------------
 #include "constantbuffer.h"
 
-namespace renderer
+namespace gemini
 {
-	ConstantBuffer::ConstantBuffer()
+	namespace renderer
 	{
-		modelview_matrix = nullptr;
-		projection_matrix = nullptr;
-		viewer_direction = nullptr;
-		viewer_position = nullptr;
-		light_position = nullptr;
-	}
-}; // namespace renderer
+		ConstantBuffer::ConstantBuffer()
+		{
+			modelview_matrix = nullptr;
+			projection_matrix = nullptr;
+			viewer_direction = nullptr;
+			viewer_position = nullptr;
+			light_position = nullptr;
+		}
+	} // namespace renderer
+} // namespace gemini

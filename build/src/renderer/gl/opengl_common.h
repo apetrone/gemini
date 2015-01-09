@@ -32,34 +32,37 @@
 
 #include "gemgl.h" // for GLObject
 
-typedef GLenum (*get_internal_image_format)(unsigned int);
-
-GLenum vertexbuffer_drawtype_to_gl_drawtype( renderer::VertexBufferDrawType type );
-GLenum vertexbuffer_buffertype_to_gl_buffertype( renderer::VertexBufferBufferType type );
-GLenum shaderobject_type_to_gl_shaderobjecttype( renderer::ShaderObjectType type );
-
-// the callee is responsible for deallocating the memory returned from this function
-char * query_shader_info_log( GLObject handle );
-
-// the callee is responsible for deallocating the memory returned from this function
-char * query_program_info_log( GLObject handle );
-
-GLenum driver_state_to_gl_state( renderer::DriverState state );
-GLenum convert_blendstate( renderer::RenderBlendType state );
-
-GLenum cullmode_to_gl_cullmode( renderer::CullMode mode );
-
-typedef void (*gemgl_state_function)(renderer::DriverState, util::MemoryStream &, renderer::IRenderDriver *);
-
-gemgl_state_function operator_for_state( renderer::DriverState state );
-
-//#define GL_LOG(...) GLFunctionLogger _gl_log(__FUNCTION__)
-#define GL_LOG(...)
-struct GLFunctionLogger
+namespace gemini
 {
-	const char* function;
-	static std::stack<std::string> call_stack;
-	
-	GLFunctionLogger(const char* fn);
-	~GLFunctionLogger();
-};
+	typedef GLenum (*get_internal_image_format)(unsigned int);
+
+	GLenum vertexbuffer_drawtype_to_gl_drawtype( renderer::VertexBufferDrawType type );
+	GLenum vertexbuffer_buffertype_to_gl_buffertype( renderer::VertexBufferBufferType type );
+	GLenum shaderobject_type_to_gl_shaderobjecttype( renderer::ShaderObjectType type );
+
+	// the callee is responsible for deallocating the memory returned from this function
+	char * query_shader_info_log( GLObject handle );
+
+	// the callee is responsible for deallocating the memory returned from this function
+	char * query_program_info_log( GLObject handle );
+
+	GLenum driver_state_to_gl_state( renderer::DriverState state );
+	GLenum convert_blendstate( renderer::RenderBlendType state );
+
+	GLenum cullmode_to_gl_cullmode( renderer::CullMode mode );
+
+	typedef void (*gemgl_state_function)(renderer::DriverState, util::MemoryStream &, renderer::IRenderDriver *);
+
+	gemgl_state_function operator_for_state( renderer::DriverState state );
+
+	//#define GL_LOG(...) GLFunctionLogger _gl_log(__FUNCTION__)
+	#define GL_LOG(...)
+	struct GLFunctionLogger
+	{
+		const char* function;
+		static std::stack<std::string> call_stack;
+		
+		GLFunctionLogger(const char* fn);
+		~GLFunctionLogger();
+	};
+} // namespace gemini

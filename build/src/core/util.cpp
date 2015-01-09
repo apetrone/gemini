@@ -30,19 +30,22 @@ extern "C"
 	//#include <murmur3.h>
 };
 
-namespace util
+namespace gemini
 {
-	unsigned int hash_32bit( const void * data, int data_size, unsigned int seed )
+	namespace util
 	{
-		unsigned int hash = 0;
+		unsigned int hash_32bit( const void * data, int data_size, unsigned int seed )
+		{
+			unsigned int hash = 0;
+			
+			//MurmurHash3_x86_32( data, data_size, seed, &hash );
+			
+			return hash;
+		} // hash_32bit
 		
-		//MurmurHash3_x86_32( data, data_size, seed, &hash );
-		
-		return hash;
-	} // hash_32bit
-	
-	float random_range( float min, float max )
-	{
-		return (float)rand() / RAND_MAX * (max - min) + min;
-	} // random_range
-}; // mamespace util
+		float random_range( float min, float max )
+		{
+			return (float)rand() / RAND_MAX * (max - min) + min;
+		} // random_range
+	}; // mamespace util
+} // namespace gemini

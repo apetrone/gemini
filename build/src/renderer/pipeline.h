@@ -25,28 +25,31 @@
 #include "constantbuffer.h"
 #include "rendertarget.h"
 
-namespace renderer
+namespace gemini
 {
-	struct PipelineDescriptor
+	namespace renderer
 	{
-		ConstantBuffer* constant_buffer;
-		ShaderProgram* program;
-		RenderTarget* render_target;
-		
-		bool depth_write_enabled;
-		bool stencil_write_enabled;
-		
-		PipelineDescriptor() :
-		constant_buffer(0),
-		program(0),
-		render_target(0),
-		depth_write_enabled(true),
-		stencil_write_enabled(false)
+		struct PipelineDescriptor
 		{
-		}
-	};
-	
-	struct PipelineState
-	{
-	};
-}; // namespace renderer
+			ConstantBuffer* constant_buffer;
+			ShaderProgram* program;
+			RenderTarget* render_target;
+			
+			bool depth_write_enabled;
+			bool stencil_write_enabled;
+			
+			PipelineDescriptor() :
+			constant_buffer(0),
+			program(0),
+			render_target(0),
+			depth_write_enabled(true),
+			stencil_write_enabled(false)
+			{
+			}
+		};
+		
+		struct PipelineState
+		{
+		};
+	} // namespace renderer
+} // namespace gemini

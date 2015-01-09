@@ -69,31 +69,32 @@ namespace mathlib
 
 
 
-
-bool AABB2::overlaps( const AABB2 & other ) const
+namespace gemini
 {
-	if ( this->left > other.right )
+	bool AABB2::overlaps( const AABB2 & other ) const
 	{
-		return false;
-	}
-	else if ( this->right < other.left )
-	{
-		return false;
-	}
-	
-	if ( this->bottom < other.top )
-	{
-		return false;
-	}
-	else if ( this->top > other.bottom )
-	{
-		return false;
-	}
-	
-	
-	return true;
-} // overlaps
-
+		if ( this->left > other.right )
+		{
+			return false;
+		}
+		else if ( this->right < other.left )
+		{
+			return false;
+		}
+		
+		if ( this->bottom < other.top )
+		{
+			return false;
+		}
+		else if ( this->top > other.bottom )
+		{
+			return false;
+		}
+		
+		
+		return true;
+	} // overlaps
+} // namespace gemini
 
 #if 0
 

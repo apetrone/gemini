@@ -27,34 +27,37 @@
 
 #include "osx_platform.h"
 
-namespace platform
+namespace gemini
 {
-	NSAutoreleasePool* pool;
-	
-	Result osx_startup()
+	namespace platform
 	{
-		pool = [[NSAutoreleasePool alloc] init];
-		return Result(Result::Success);
-	}
-	
-	void osx_shutdown()
-	{
-		[pool release];
-		pool = 0;
-	}
-	
-	Result osx_program_directory(char* path, size_t size)
-	{
-		Result result(Result::Success);
-		NSString * bundle_path = [[NSBundle mainBundle] bundlePath];
-		if (bundle_path)
+		NSAutoreleasePool* pool;
+		
+		Result osx_startup()
 		{
-			[bundle_path getCString:path maxLength:size encoding:NSUTF8StringEncoding];
+			pool = [[NSAutoreleasePool alloc] init];
+			return Result(Result::Success);
 		}
-		else
+		
+		void osx_shutdown()
 		{
-			result = Result(Result::Failure, "Unable mainBundle reference is invalid!");
+			[pool release];
+			pool = 0;
 		}
-		return result;
-	}
-}; // namespace platform
+		
+		Result osx_program_directory(char* path, size_t size)
+		{
+			Result result(Result::Success);
+			NSString * bundle_path = [[NSBundle mainBundle] bundlePath];
+			if (bundle_path)
+			{
+				[bundle_path getCString:path maxLength:size encoding:NSUTF8StringEncoding];
+			}
+			else
+			{
+				result = Result(Result::Failure, "Unable mainBundle reference is invalid!");
+			}
+			return result;
+		}
+	} // namespace platform
+} // namespace gemini

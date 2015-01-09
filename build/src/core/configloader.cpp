@@ -26,51 +26,51 @@
 
 #include "configloader.h"
 
-namespace util
+namespace gemini
 {
-	bool parse_json_string_with_callback( const char * buffer, size_t buffer_length, JsonLoaderCallback callback, void * context )
+	namespace util
 	{
-		bool is_success = false;
-		
-		Json::Value root;
-		Json::Reader reader;
-		ConfigLoadStatus status;
-		is_success = reader.parse( buffer, buffer+buffer_length, root );
-		if ( is_success )
+		bool parse_json_string_with_callback( const char * buffer, size_t buffer_length, JsonLoaderCallback callback, void * context )
 		{
-			status = callback( root, context );
-		}
-		else
-		{
-			LOGV( "json parsing failed: %s\n", reader.getFormattedErrorMessages().c_str() );
-		}
-		
-		return is_success && (status == ConfigLoad_Success);
-	} // parse_json_string_with_callback
+			bool is_success = false;
+			
+			Json::Value root;
+			Json::Reader reader;
+			ConfigLoadStatus status;
+			is_success = reader.parse( buffer, buffer+buffer_length, root );
+			if ( is_success )
+			{
+				status = callback( root, context );
+			}
+			else
+			{
+				LOGV( "json parsing failed: %s\n", reader.getFormattedErrorMessages().c_str() );
+			}
+			
+			return is_success && (status == ConfigLoad_Success);
+		} // parse_json_string_with_callback
 
 
-	bool json_load_with_callback( const char * filename, JsonLoaderCallback callback, void * context, bool path_is_relative )
-	{
-		size_t buffer_size = 0;
-		char * buffer = 0;
-		bool is_success = false;
+		bool json_load_with_callback( const char * filename, JsonLoaderCallback callback, void * context, bool path_is_relative )
+		{
+			size_t buffer_size = 0;
+			char * buffer = 0;
+			bool is_success = false;
 
-		// load the file into a memory buffer
-		buffer = core::filesystem::file_to_buffer( filename, 0, &buffer_size, path_is_relative );
-		if ( buffer )
-		{
-			is_success = parse_json_string_with_callback( buffer, buffer_size, callback, context );
-			DEALLOC(buffer);
-		}
-		else
-		{
-			is_success = false;
-			LOGE( "ERROR loading %s\n", filename );
-		}
-		
-		return is_success;
-	} // json_load_with_callback
-	
-	
-	
-}; // mamespace util
+			// load the file into a memory buffer
+			buffer = core::filesystem::file_to_buffer( filename, 0, &buffer_size, path_is_relative );
+			if ( buffer )
+			{
+				is_success = parse_json_string_with_callback( buffer, buffer_size, callback, context );
+				DEALLOC(buffer);
+			}
+			else
+			{
+				is_success = false;
+				LOGE( "ERROR loading %s\n", filename );
+			}
+			
+			return is_success;
+		} // json_load_with_callback
+	} // mamespace util
+} // namespace gemini

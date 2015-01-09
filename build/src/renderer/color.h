@@ -36,24 +36,27 @@
 // unsigned int mycolor = RGBToUInt( 255, 128, 75 );
 // UIntToRGB( mycolor, rgb );
 
-struct Color
+namespace gemini
 {
-	unsigned char r, g, b, a;
-	
-	Color( unsigned char _r = 255, unsigned char _g = 255, unsigned char _b = 255, unsigned char _a = 255 );
-	static Color fromFloatPointer( const float * fl, int num_elements );
-	void set( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a = 255 );
-}; // Color
-
-
-template <>
-struct Interpolator<Color>
-{
-	Color operator()( const Color & start, const Color & end, float t )
+	struct Color
 	{
-		return Color( lerp( start.r, end.r, t ),
-					 lerp( start.g, end.g, t ),
-					 lerp( start.b, end.b, t ),
-					 lerp( start.a, end.a, t ) );
-	}
-};
+		unsigned char r, g, b, a;
+		
+		Color( unsigned char _r = 255, unsigned char _g = 255, unsigned char _b = 255, unsigned char _a = 255 );
+		static Color fromFloatPointer( const float * fl, int num_elements );
+		void set( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a = 255 );
+	}; // Color
+
+
+	template <>
+	struct Interpolator<Color>
+	{
+		Color operator()( const Color & start, const Color & end, float t )
+		{
+			return Color( lerp( start.r, end.r, t ),
+						 lerp( start.g, end.g, t ),
+						 lerp( start.b, end.b, t ),
+						 lerp( start.a, end.a, t ) );
+		}
+	}; // Interpolator
+} // namespace gemini

@@ -23,7 +23,10 @@
 
 #include "platform.h"
 
-namespace platform
+namespace gemini
 {
-	
-};
+	namespace platform
+	{
+		
+	};
+}

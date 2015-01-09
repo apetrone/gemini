@@ -49,107 +49,111 @@
 
 #include <string.h> // for strrchr
 
-namespace platform
-{
-	Result startup()
-	{
-		Result result(Result::Success);
-		
-#if PLATFORM_APPLE
-		result = osx_startup();
-#endif
 
-		
-		return result;
-	}
-	
-	void shutdown()
-	{		
-#if PLATFORM_APPLE
-		osx_shutdown();
-#endif
-	}
-	
-	Result program_directory(char* path, size_t size)
+namespace gemini
+{
+	namespace platform
 	{
-		Result error(Result::Success);
-		int result = 0;
-		char* sep;
-		
-#if PLATFORM_WINDOWS
-		result = GetModuleFileNameA(GetModuleHandleA(0), path, size);
-		if (result == 0)
-		{
-			error.status = platform::Result::Failure;
-			error.message = "GetModuleFileNameA failed!";
-		}
-		
-#elif PLATFORM_LINUX
-		{
-			// http://www.flipcode.com/archives/Path_To_Executable_On_Linux.shtml
-			char linkname[64] = {0};
-			pid_t pid = getpid();
-			
-			if (snprintf(linkname, sizeof(linkname), "/proc/%i/exe", pid) < 0)
-			{
-				abort();
-			}
-			
-			result = readlink(linkname, path, size);
-			if (result == -1)
-			{
-				error.status = Result::Failure;
-				error.message = "readlink failed";
-			}
-			else
-			{
-				path[result] = 0;
-			}
-		}
-#endif
-		
-		if (result != 0)
-		{
-			sep = strrchr(path, PATH_SEPARATOR);
-			
-			if (sep)
-			{
-				*sep = '\0';
-			}
-		}
-		
-#if PLATFORM_APPLE
-		error = osx_program_directory(path, size);
-#endif
-		return error;
-	}
-	
-	
-	namespace path
-	{		
-		Result make_directory(const char* path)
+		Result startup()
 		{
 			Result result(Result::Success);
-			int status_code = 0;
 			
-#if PLATFORM_WINDOWS
-			status_code = _mkdir(path);
-			if (status_code == -1)
-			{
-				// TODO: print out the errno
-				result = Result(Result::Failure, "_mkdir failed!");
-			}
-#elif PLATFORM_LINUX || PLATFORM_APPLE
-			// http://pubs.opengroup.org/onlinepubs/009695399/functions/mkdir.html
-			status_code = mkdir(path, (S_IRUSR | S_IWUSR | S_IXUSR ) | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH);
-			if (status_code == -1)
-			{
-				// TODO: print out the errno
-				result = Result(Result::Failure, "mkdir failed!");
-			}
-#endif
+	#if PLATFORM_APPLE
+			result = osx_startup();
+	#endif
+
 			
 			return result;
-		} // make_directory
-	}; // namespace path
-}; // namespace platform
+		}
+		
+		void shutdown()
+		{		
+	#if PLATFORM_APPLE
+			osx_shutdown();
+	#endif
+		}
+		
+		Result program_directory(char* path, size_t size)
+		{
+			Result error(Result::Success);
+			int result = 0;
+			char* sep;
+			
+	#if PLATFORM_WINDOWS
+			result = GetModuleFileNameA(GetModuleHandleA(0), path, size);
+			if (result == 0)
+			{
+				error.status = platform::Result::Failure;
+				error.message = "GetModuleFileNameA failed!";
+			}
+			
+	#elif PLATFORM_LINUX
+			{
+				// http://www.flipcode.com/archives/Path_To_Executable_On_Linux.shtml
+				char linkname[64] = {0};
+				pid_t pid = getpid();
+				
+				if (snprintf(linkname, sizeof(linkname), "/proc/%i/exe", pid) < 0)
+				{
+					abort();
+				}
+				
+				result = readlink(linkname, path, size);
+				if (result == -1)
+				{
+					error.status = Result::Failure;
+					error.message = "readlink failed";
+				}
+				else
+				{
+					path[result] = 0;
+				}
+			}
+	#endif
+			
+			if (result != 0)
+			{
+				sep = strrchr(path, PATH_SEPARATOR);
+				
+				if (sep)
+				{
+					*sep = '\0';
+				}
+			}
+			
+	#if PLATFORM_APPLE
+			error = osx_program_directory(path, size);
+	#endif
+			return error;
+		}
+		
+		
+		namespace path
+		{		
+			Result make_directory(const char* path)
+			{
+				Result result(Result::Success);
+				int status_code = 0;
+				
+	#if PLATFORM_WINDOWS
+				status_code = _mkdir(path);
+				if (status_code == -1)
+				{
+					// TODO: print out the errno
+					result = Result(Result::Failure, "_mkdir failed!");
+				}
+	#elif PLATFORM_LINUX || PLATFORM_APPLE
+				// http://pubs.opengroup.org/onlinepubs/009695399/functions/mkdir.html
+				status_code = mkdir(path, (S_IRUSR | S_IWUSR | S_IXUSR ) | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH);
+				if (status_code == -1)
+				{
+					// TODO: print out the errno
+					result = Result(Result::Failure, "mkdir failed!");
+				}
+	#endif
+				
+				return result;
+			} // make_directory
+		} // namespace path
+	} // namespace platform
+} // namespace gemini

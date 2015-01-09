@@ -23,46 +23,49 @@
 #include <core/typedefs.h>
 #include "renderer.h"
 
-namespace renderer
+namespace gemini
 {
-	// By default, this provides an array of Vertex data interleaved.
-	// In order to use this data with separate data arrays,
-	// 
-	struct VertexStream
+	namespace renderer
 	{
-		unsigned int _debug_flags;
+		// By default, this provides an array of Vertex data interleaved.
+		// In order to use this data with separate data arrays,
+		// 
+		struct VertexStream
+		{
+			unsigned int _debug_flags;
 
-		IndexType total_vertices;
-		IndexType total_indices;
-		IndexType last_vertex;
-		IndexType last_index;
-		IndexType highest_index;
-		VertexType * vertices;
-		IndexType * indices;
-		unsigned int vertex_stride;
-		
-		VertexBuffer * vertexbuffer;
+			IndexType total_vertices;
+			IndexType total_indices;
+			IndexType last_vertex;
+			IndexType last_index;
+			IndexType highest_index;
+			VertexType * vertices;
+			IndexType * indices;
+			unsigned int vertex_stride;
+			
+			VertexBuffer * vertexbuffer;
 
-		VertexDescriptor desc;
-		
-		VertexStream();
-		~VertexStream();
-		void alloc( IndexType max_vertices, IndexType max_indices = 0 );
-		void reset();
-		void dealloc();
-		unsigned int bytes_used();
-		VertexType * request( IndexType num_vertices, int dont_advance_pointer = 0 );
-		VertexType * operator[](int index);
-		void append_indices( IndexType * inIndices, IndexType num_indices );
-		bool has_room( unsigned int num_vertices, unsigned int num_indices ) const;
-		
-		void create( IndexType max_vertices, IndexType max_indices, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type = renderer::BUFFER_STATIC );
-		void destroy();
-		void update();
-		void draw_elements();
-		void draw();
-		void fill_data( VertexType * vertex_source, unsigned int vertex_count, IndexType * index_source, unsigned int index_count );
-		
-	}; // VertexStream
+			VertexDescriptor desc;
+			
+			VertexStream();
+			~VertexStream();
+			void alloc( IndexType max_vertices, IndexType max_indices = 0 );
+			void reset();
+			void dealloc();
+			unsigned int bytes_used();
+			VertexType * request( IndexType num_vertices, int dont_advance_pointer = 0 );
+			VertexType * operator[](int index);
+			void append_indices( IndexType * inIndices, IndexType num_indices );
+			bool has_room( unsigned int num_vertices, unsigned int num_indices ) const;
+			
+			void create( IndexType max_vertices, IndexType max_indices, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type = renderer::BUFFER_STATIC );
+			void destroy();
+			void update();
+			void draw_elements();
+			void draw();
+			void fill_data( VertexType * vertex_source, unsigned int vertex_count, IndexType * index_source, unsigned int index_count );
+			
+		}; // VertexStream
 
-}; // namespace renderer
+	} // namespace renderer
+} // namespace gemini

@@ -23,27 +23,30 @@
 
 #include <stdint.h>
 
-namespace renderer
+namespace gemini
 {
-	struct Texture
+	namespace renderer
 	{
-		enum PixelFormat
+		struct Texture
 		{
-			RGBA8,
-			BGRA8,
-			RGB8,
-			BGR8
+			enum PixelFormat
+			{
+				RGBA8,
+				BGRA8,
+				RGB8,
+				BGR8
+				
+			};
 			
-		};
-		
-		PixelFormat format;
-		
-		uint32_t width;
-		uint32_t height;
-		
-		Texture() : width(0), height(0)
-		{
-		}
-		
-	}; // Texture
-}; // namespace renderer
+			PixelFormat format;
+			
+			uint32_t width;
+			uint32_t height;
+			
+			Texture() : width(0), height(0)
+			{
+			}
+			
+		}; // Texture
+	} // namespace renderer
+} // namespace gemini

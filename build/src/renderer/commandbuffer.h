@@ -24,14 +24,17 @@
 #include "pipeline.h"
 #include "vertexbuffer.h"
 
-namespace renderer
+namespace gemini
 {
-	struct CommandBuffer
+	namespace renderer
 	{
-		void set_pipeline_state(const PipelineState* state) {}
-		void draw_vertexbuffer(const VertexBuffer* buffer) {}
-		
-		// execute commands on the GPU
-		void commit() {}
-	};
-}; // namespace renderer
+		struct CommandBuffer
+		{
+			void set_pipeline_state(const PipelineState* state) {}
+			void draw_vertexbuffer(const VertexBuffer* buffer) {}
+			
+			// execute commands on the GPU
+			void commit() {}
+		};
+	} // namespace renderer
+} // namespace gemini

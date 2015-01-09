@@ -41,77 +41,80 @@
 // set this to 0 to enable normal new/delete and malloc/free to narrow down problems
 #define USE_DEBUG_ALLOCATOR 1
 
-namespace memory
+namespace gemini
 {
-	class IAllocator
+	namespace memory
 	{
-	public:
-		virtual ~IAllocator() {}
-		
-		virtual void * allocate( size_t bytes, const char * file, int line ) = 0;
-		virtual void deallocate( void * memory ) = 0;
-		virtual void print_report() = 0;
-
-		virtual size_t active_bytes() const = 0;
-		virtual size_t active_allocations() const = 0;
-		virtual size_t total_allocations() const = 0;
-		virtual size_t total_bytes() const = 0;
-	}; // IAllocator
-	
-	// initialize memory handling
-	void startup();
-	
-	// shutdown services and optionally perform any metrics, leak detection, etc
-	void shutdown();
-	
-	// instance of the active allocator
-	IAllocator & allocator();
-
-	// helper function for creating arrays from a contiguous block of memory
-	// and then calling placement new on each one
-	template <class Type>
-	Type* create_array(size_t num_elements, const char* file, int line)
-	{
-		Type* block = (Type*)memory::allocator().allocate(sizeof(Type)*num_elements, file, line);
-		for (size_t i = 0; i < num_elements; ++i)
+		class IAllocator
 		{
-			new (&block[i]) Type;
+		public:
+			virtual ~IAllocator() {}
+			
+			virtual void * allocate( size_t bytes, const char * file, int line ) = 0;
+			virtual void deallocate( void * memory ) = 0;
+			virtual void print_report() = 0;
+
+			virtual size_t active_bytes() const = 0;
+			virtual size_t active_allocations() const = 0;
+			virtual size_t total_allocations() const = 0;
+			virtual size_t total_bytes() const = 0;
+		}; // IAllocator
+		
+		// initialize memory handling
+		void startup();
+		
+		// shutdown services and optionally perform any metrics, leak detection, etc
+		void shutdown();
+		
+		// instance of the active allocator
+		IAllocator & allocator();
+
+		// helper function for creating arrays from a contiguous block of memory
+		// and then calling placement new on each one
+		template <class Type>
+		Type* create_array(size_t num_elements, const char* file, int line)
+		{
+			Type* block = (Type*)memory::allocator().allocate(sizeof(Type)*num_elements, file, line);
+			for (size_t i = 0; i < num_elements; ++i)
+			{
+				new (&block[i]) Type;
+			}
+
+			return block;
 		}
 
-		return block;
-	}
-
 #if USE_DEBUG_ALLOCATOR
-	// raw memory alloc/dealloc
-	#define ALLOC(byte_count)	memory::allocator().allocate(byte_count, __FILE__, __LINE__)
-	#define DEALLOC(pointer) { memory::allocator().deallocate(pointer); pointer = 0; }
-	
-	// helper macros for alloc and dealloc on classes and structures
-	#define CREATE(Type, ...)	new (memory::allocator().allocate(sizeof(Type), __FILE__, __LINE__)) Type(__VA_ARGS__)
-	#define DESTROY(Type, pointer) { if (pointer) { pointer->~Type(); memory::allocator().deallocate(pointer); pointer = 0; } }
-	
-	// NOTES:
-	// 1. This only works if the Type has a default constructor
-	// 2. In order to work around the ridiculous "standard" of placement new in 5.3.4.12,
-	//	  This allocates a contiguous block of memory and then calls placement new on each element.
-	#define CREATE_ARRAY(Type, num_elements) memory::create_array<Type>(num_elements, __FILE__, __LINE__)
-	#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { for( size_t i = 0; i < num_elements; ++i ) { (&pointer[i])->~Type(); } memory::allocator().deallocate(pointer); pointer = 0;  }
+		// raw memory alloc/dealloc
+		#define ALLOC(byte_count)	gemini::memory::allocator().allocate(byte_count, __FILE__, __LINE__)
+		#define DEALLOC(pointer) { gemini::memory::allocator().deallocate(pointer); pointer = 0; }
+		
+		// helper macros for alloc and dealloc on classes and structures
+		#define CREATE(Type, ...)	new (gemini::memory::allocator().allocate(sizeof(Type), __FILE__, __LINE__)) Type(__VA_ARGS__)
+		#define DESTROY(Type, pointer) { if (pointer) { pointer->~Type(); gemini::memory::allocator().deallocate(pointer); pointer = 0; } }
+		
+		// NOTES:
+		// 1. This only works if the Type has a default constructor
+		// 2. In order to work around the ridiculous "standard" of placement new in 5.3.4.12,
+		//	  This allocates a contiguous block of memory and then calls placement new on each element.
+		#define CREATE_ARRAY(Type, num_elements) gemini::memory::create_array<Type>(num_elements, __FILE__, __LINE__)
+		#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { for( size_t i = 0; i < num_elements; ++i ) { (&pointer[i])->~Type(); } gemini::memory::allocator().deallocate(pointer); pointer = 0;  }
 #else
-	#define ALLOC(byte_count)	malloc(byte_count)
-	#define DEALLOC(pointer) { free(pointer); pointer = 0; }
+		#define ALLOC(byte_count)	malloc(byte_count)
+		#define DEALLOC(pointer) { free(pointer); pointer = 0; }
 
-	#define CREATE(Type, ...)	new Type(__VA_ARGS__)
-	#define DESTROY(Type, pointer) { delete pointer; pointer = 0; }
+		#define CREATE(Type, ...)	new Type(__VA_ARGS__)
+		#define DESTROY(Type, pointer) { delete pointer; pointer = 0; }
 
-	#define CREATE_ARRAY(Type, num_elements, ...)		new Type[ num_elements ]
-	#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { delete [] pointer; pointer = 0;  }
+		#define CREATE_ARRAY(Type, num_elements, ...)		new Type[ num_elements ]
+		#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { delete [] pointer; pointer = 0;  }
 #endif
-} // namespace memory
+	} // namespace memory
+} // namespace gemini
 
 #include "mem_stl_allocator.h"
 
 #if USE_DEBUG_ALLOCATOR
-	#define GeminiAllocator memory::DebugAllocator
+	#define GeminiAllocator gemini::memory::DebugAllocator
 #else
 	#define GeminiAllocator std::allocator
 #endif

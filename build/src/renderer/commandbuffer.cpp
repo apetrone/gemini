@@ -21,7 +21,10 @@
 // -------------------------------------------------------------
 #include "commandbuffer.h"
 
-namespace renderer
+namespace gemini
 {
+	namespace renderer
+	{
 
-}; // namespace renderer
+	} // namespace renderer
+} // namespace gemini

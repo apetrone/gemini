@@ -179,14 +179,16 @@ namespace gemini
 
 	typedef Rect<float> Rectf;
 	typedef Rect<int> Recti;
-}; // namespace gemini
 
-struct AABB2
-{
-	float left;
-	float right;
-	float top;
-	float bottom;
-	
-	bool overlaps( const AABB2 & other ) const;
-}; // AABB2
+
+	struct AABB2
+	{
+		float left;
+		float right;
+		float top;
+		float bottom;
+		
+		bool overlaps( const AABB2 & other ) const;
+	}; // AABB2
+
+} // namespace gemini

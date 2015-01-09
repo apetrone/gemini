@@ -115,5 +115,5 @@ namespace gemini
 		} // namespace logging
 		
 		typedef Interface<logging::ILog> log;
-	}
+	} // namespace core
 } // namespace gemini
