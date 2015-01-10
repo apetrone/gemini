@@ -24,7 +24,7 @@
 #include <vector>
 
 struct MenuItem;
-typedef std::vector<MenuItem*, GeminiAllocator<MenuItem*> > MenuItemVector;
+typedef std::vector<MenuItem*, CustomPlatformAllocator<MenuItem*> > MenuItemVector;
 
 struct MenuItem
 {

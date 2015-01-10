@@ -34,7 +34,7 @@ namespace gemini
 		struct Mesh;
 		struct Skeleton;
 
-		typedef std::vector<struct Node*, GeminiAllocator<struct Node*>> NodeVector;
+		typedef std::vector<struct Node*, CustomPlatformAllocator<struct Node*>> NodeVector;
 
 		
 		struct Node

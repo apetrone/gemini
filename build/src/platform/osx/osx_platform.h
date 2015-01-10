@@ -23,13 +23,10 @@
 
 #include "platform.h" // for platform::Result
 
-namespace gemini
+namespace platform
 {
-	namespace platform
-	{
-		Result osx_startup();
-		void osx_shutdown();
-		
-		Result osx_program_directory(char * path, size_t size);
-	} // namespace platform
-} // namespace gemini
+	Result osx_startup();
+	void osx_shutdown();
+	
+	Result osx_program_directory(char * path, size_t size);
+} // namespace platform

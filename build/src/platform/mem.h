@@ -41,7 +41,7 @@
 // set this to 0 to enable normal new/delete and malloc/free to narrow down problems
 #define USE_DEBUG_ALLOCATOR 1
 
-namespace gemini
+namespace platform
 {
 	namespace memory
 	{
@@ -85,19 +85,19 @@ namespace gemini
 
 #if USE_DEBUG_ALLOCATOR
 		// raw memory alloc/dealloc
-		#define ALLOC(byte_count)	gemini::memory::allocator().allocate(byte_count, __FILE__, __LINE__)
-		#define DEALLOC(pointer) { gemini::memory::allocator().deallocate(pointer); pointer = 0; }
+		#define ALLOC(byte_count)	platform::memory::allocator().allocate(byte_count, __FILE__, __LINE__)
+		#define DEALLOC(pointer) { platform::memory::allocator().deallocate(pointer); pointer = 0; }
 		
 		// helper macros for alloc and dealloc on classes and structures
-		#define CREATE(Type, ...)	new (gemini::memory::allocator().allocate(sizeof(Type), __FILE__, __LINE__)) Type(__VA_ARGS__)
-		#define DESTROY(Type, pointer) { if (pointer) { pointer->~Type(); gemini::memory::allocator().deallocate(pointer); pointer = 0; } }
+		#define CREATE(Type, ...)	new (platform::memory::allocator().allocate(sizeof(Type), __FILE__, __LINE__)) Type(__VA_ARGS__)
+		#define DESTROY(Type, pointer) { if (pointer) { pointer->~Type(); platform::memory::allocator().deallocate(pointer); pointer = 0; } }
 		
 		// NOTES:
 		// 1. This only works if the Type has a default constructor
 		// 2. In order to work around the ridiculous "standard" of placement new in 5.3.4.12,
 		//	  This allocates a contiguous block of memory and then calls placement new on each element.
-		#define CREATE_ARRAY(Type, num_elements) gemini::memory::create_array<Type>(num_elements, __FILE__, __LINE__)
-		#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { for( size_t i = 0; i < num_elements; ++i ) { (&pointer[i])->~Type(); } gemini::memory::allocator().deallocate(pointer); pointer = 0;  }
+		#define CREATE_ARRAY(Type, num_elements) platform::memory::create_array<Type>(num_elements, __FILE__, __LINE__)
+		#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { for( size_t i = 0; i < num_elements; ++i ) { (&pointer[i])->~Type(); } platform::memory::allocator().deallocate(pointer); pointer = 0;  }
 #else
 		#define ALLOC(byte_count)	malloc(byte_count)
 		#define DEALLOC(pointer) { free(pointer); pointer = 0; }
@@ -109,12 +109,12 @@ namespace gemini
 		#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { delete [] pointer; pointer = 0;  }
 #endif
 	} // namespace memory
-} // namespace gemini
+} // namespace platform
 
 #include "mem_stl_allocator.h"
 
 #if USE_DEBUG_ALLOCATOR
-	#define GeminiAllocator gemini::memory::DebugAllocator
+	#define CustomPlatformAllocator platform::memory::DebugAllocator
 #else
-	#define GeminiAllocator std::allocator
+	#define CustomPlatformAllocator std::allocator
 #endif

@@ -23,7 +23,7 @@
 
 #include "arg.h"
 
-namespace gemini
+namespace platform
 {
 	namespace args
 	{
@@ -221,4 +221,4 @@ namespace gemini
 			return validate_arguments(argc, argv);
 		}
 	} // namespace args
-} // namespace gemini
+} // namespace platform

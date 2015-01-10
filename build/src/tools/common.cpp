@@ -42,11 +42,11 @@ namespace gemini
 	{
 		void startup()
 		{
-			memory::startup();
+			platform::memory::startup();
 
 			// setup root path
 			StackString<MAX_PATH_SIZE> root_path;
-			platform::Result result = platform::program_directory(&root_path[0], root_path.max_size());
+			platform::Result result = platform::instance()->get_program_directory(&root_path[0], root_path.max_size());
 			core::filesystem::root_directory(&root_path[0], root_path.max_size());
 
 			StackString<MAX_PATH_SIZE> content_path;
@@ -72,7 +72,7 @@ namespace gemini
 			datamodel::set_default_material(0);
 			
 			core::shutdown();
-			memory::shutdown();
+			platform::memory::shutdown();
 		}
 	} // namespace tools
 

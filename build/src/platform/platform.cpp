@@ -60,133 +60,126 @@
 	#error Platform not implemented!
 #endif
 
-
-namespace gemini
+namespace platform
 {
-	namespace platform
+	IPlatformInterface* _instance = 0;
+	IPlatformInterface* instance()
 	{
-		IPlatformInterface* _instance = 0;
-		IPlatformInterface* instance()
-		{
-			return _instance;
-		}
+		return _instance;
+	}
+
+	Result startup()
+	{
+		Result result(Result::Success);
+		_instance = CREATE(PlatformInterface);
+
+		assert(_instance != 0);
+		result = _instance->startup();
+		
+		return result;
+	}
 	
-		Result startup()
+	void shutdown()
+	{
+		_instance->shutdown();
+		DESTROY(IPlatformInterface, _instance);
+	}
+	
+	Result program_directory(char* path, size_t size)
+	{
+#if PLATFORM_WINDOWS
+		Result error(Result::Success);
+		int result = 0;
+		char* sep;
+		result = GetModuleFileNameA(GetModuleHandleA(0), path, size);
+		if (result == 0)
+		{
+			error.status = platform::Result::Failure;
+			error.message = "GetModuleFileNameA failed!";
+		}
+		
+		if (result != 0)
+		{
+			sep = strrchr(path, PATH_SEPARATOR);
+			
+			if (sep)
+			{
+				*sep = '\0';
+			}
+		}
+#endif
+
+		return _instance->get_program_directory(path, size);
+	}
+	
+	
+	namespace path
+	{
+		void normalize(char* path, size_t size)
+		{
+			while(*path)
+			{
+				if (*path == '/' || *path == '\\')
+				{
+					// conform to this platform's path separator
+					*path = PATH_SEPARATOR;
+				}
+				
+				++path;
+			}
+		} // normalize
+		
+		
+		Result make_directory(const char* path)
 		{
 			Result result(Result::Success);
-			_instance = CREATE(PlatformInterface);
-
-			assert(_instance != 0);
-			result = _instance->startup();
+			int status_code = 0;
+			
+#if PLATFORM_WINDOWS
+			status_code = _mkdir(path);
+			if (status_code == -1)
+			{
+				// TODO: print out the errno
+				result = Result(Result::Failure, "_mkdir failed!");
+			}
+#elif PLATFORM_LINUX || PLATFORM_APPLE
+			// http://pubs.opengroup.org/onlinepubs/009695399/functions/mkdir.html
+			status_code = mkdir(path, (S_IRUSR | S_IWUSR | S_IXUSR ) | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH);
+			if (status_code == -1)
+			{
+				// TODO: print out the errno
+				result = Result(Result::Failure, "mkdir failed!");
+			}
+#endif
 			
 			return result;
-		}
+		} // make_directory
 		
-		void shutdown()
+
+		void make_directories(const char* normalized_path)
 		{
-			_instance->shutdown();
-			DESTROY(IPlatformInterface, _instance);
-		}
-		
-		Result program_directory(char* path, size_t size)
-		{
-	#if PLATFORM_WINDOWS
-			Result error(Result::Success);
-			int result = 0;
-			char* sep;
-			result = GetModuleFileNameA(GetModuleHandleA(0), path, size);
-			if (result == 0)
+			const char* path = normalized_path;
+			char directory[MAX_PATH_SIZE];
+			
+			// don't accept paths that are too short
+			if (strlen(normalized_path) < 2)
 			{
-				error.status = platform::Result::Failure;
-				error.message = "GetModuleFileNameA failed!";
+				return;
 			}
 			
-			if (result != 0)
+			memset(directory, 0, MAX_PATH_SIZE);
+			
+			// loop through and call mkdir on each separate directory progressively
+			while(*path)
 			{
-				sep = strrchr(path, PATH_SEPARATOR);
-				
-				if (sep)
+				if (*path == PATH_SEPARATOR)
 				{
-					*sep = '\0';
+					strncpy(directory, normalized_path, (path+1)-normalized_path);
+					platform::instance()->make_directory( directory );
 				}
+				
+				++path;
 			}
-	#endif
-
-			return _instance->get_program_directory(path, size);
-		}
-		
-		
-		namespace path
-		{
-			void normalize(char* path, size_t size)
-			{
-				while(*path)
-				{
-					if (*path == '/' || *path == '\\')
-					{
-						// conform to this platform's path separator
-						*path = PATH_SEPARATOR;
-					}
-					
-					++path;
-				}
-			} // normalize
-			
-			
-			Result make_directory(const char* path)
-			{
-				Result result(Result::Success);
-				int status_code = 0;
-				
-	#if PLATFORM_WINDOWS
-				status_code = _mkdir(path);
-				if (status_code == -1)
-				{
-					// TODO: print out the errno
-					result = Result(Result::Failure, "_mkdir failed!");
-				}
-	#elif PLATFORM_LINUX || PLATFORM_APPLE
-				// http://pubs.opengroup.org/onlinepubs/009695399/functions/mkdir.html
-				status_code = mkdir(path, (S_IRUSR | S_IWUSR | S_IXUSR ) | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH);
-				if (status_code == -1)
-				{
-					// TODO: print out the errno
-					result = Result(Result::Failure, "mkdir failed!");
-				}
-	#endif
-				
-				return result;
-			} // make_directory
-			
-			
-
-			
-			
-			void make_directories(const char * normalized_path)
-			{
-				const char * path = normalized_path;
-				char directory[MAX_PATH_SIZE];
-				
-				// don't accept paths that are too short
-				if (strlen(normalized_path) < 2)
-				{
-					return;
-				}
-				
-				memset(directory, 0, MAX_PATH_SIZE);
-				
-				// loop through and call mkdir on each separate directory progressively
-				while(*path)
-				{
-					if (*path == PATH_SEPARATOR)
-					{
-						strncpy(directory, normalized_path, (path+1)-normalized_path);
-						platform::instance()->make_directory( directory );
-					}
-					
-					++path;
-				}
-			} // make_directories
-		} // namespace path
-	} // namespace platform
-} // namespace gemini
+		} // make_directories
+	} // namespace path
+} // namespace platform

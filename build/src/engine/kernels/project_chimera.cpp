@@ -519,12 +519,12 @@ public:
 	
 	virtual void* allocate(size_t bytes)
 	{
-		return memory::allocator().allocate(bytes, __FILE__, __LINE__);
+		return platform::memory::allocator().allocate(bytes, __FILE__, __LINE__);
 	}
 	
 	virtual void deallocate(void* pointer)
 	{
-		memory::allocator().deallocate(pointer);
+		platform::memory::allocator().deallocate(pointer);
 	}
 	
 	virtual void render_view(const glm::vec3& origin, const glm::vec2& view_angles)
@@ -906,7 +906,7 @@ public:
 			debugdraw::text(x, y+36, core::str::format("active_camera->right = %.2g %.2g %.2g", active_camera->side.x, active_camera->side.y, active_camera->side.z), Color(255, 0, 0));
 		}
 		debugdraw::text(x, y+48, core::str::format("frame delta = %2.2fms\n", params.framedelta_filtered_msec), Color(255, 255, 255));
-		debugdraw::text(x, y+60, core::str::format("# allocations = %i, total %i Kbytes\n", memory::allocator().total_allocations(), memory::allocator().total_bytes()/1024), Color(64, 102, 192));
+		debugdraw::text(x, y+60, core::str::format("# allocations = %i, total %i Kbytes\n", platform::memory::allocator().total_allocations(), platform::memory::allocator().total_bytes()/1024), Color(64, 102, 192));
 	}
 
 	virtual void tick( kernel::Params & params )

@@ -23,12 +23,9 @@
 
 #include "platform.h"
 
-namespace gemini
+namespace platform
 {
-	namespace platform
-	{
-		DynamicLibrary* posix_dynamiclibrary_open(const char* library_path);
-		void posix_dynamiclibrary_close(DynamicLibrary* library);	
-		DynamicLibrarySymbol posix_dynamiclibrary_find(DynamicLibrary* library, const char* symbol_name);
-	} // namespace platform
-} // namespace gemini
+	DynamicLibrary* posix_dynamiclibrary_open(const char* library_path);
+	void posix_dynamiclibrary_close(DynamicLibrary* library);	
+	DynamicLibrarySymbol posix_dynamiclibrary_find(DynamicLibrary* library, const char* symbol_name);
+} // namespace platform

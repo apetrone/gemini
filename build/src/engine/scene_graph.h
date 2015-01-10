@@ -30,7 +30,7 @@ namespace gemini
 {
 	namespace scenegraph
 	{
-		typedef std::vector< struct Node*, GeminiAllocator<Node*> > NodeVector;
+		typedef std::vector< struct Node*, CustomPlatformAllocator<Node*> > NodeVector;
 		
 		enum NodeType
 		{

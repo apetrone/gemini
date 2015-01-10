@@ -27,7 +27,7 @@
 #include "mem.h"
 #include "mem_stl_allocator.h"
 
-namespace gemini
+namespace platform
 {
 	namespace memory
 	{
@@ -171,4 +171,4 @@ namespace gemini
 			return *_allocator;
 		} // allocator
 	} // namespace memory
-} // namespace gemini
+} // namespace platform

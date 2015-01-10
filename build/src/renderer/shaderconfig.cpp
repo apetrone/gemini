@@ -38,7 +38,7 @@ namespace gemini
 				
 			Json::Value _shader_config;
 			
-			typedef std::vector< std::string, GeminiAllocator<std::string> > StringVector;
+			typedef std::vector< std::string, CustomPlatformAllocator<std::string> > StringVector;
 
 			util::ConfigLoadStatus shader_parameter_load_callback(const Json::Value& root, void* context)
 			{

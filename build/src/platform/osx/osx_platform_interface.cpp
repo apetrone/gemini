@@ -24,7 +24,7 @@
 
 #include "posix/posix_dynamiclibrary.h"
 
-using namespace gemini::platform;
+using namespace platform;
 
 Result OSXPlatformInterface::startup()
 {

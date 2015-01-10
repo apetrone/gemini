@@ -23,10 +23,10 @@
 
 #include "platform.h"
 
-using gemini::platform::Result;
-using gemini::platform::IPlatformInterface;
-using gemini::platform::DynamicLibrary;
-using gemini::platform::DynamicLibrarySymbol;
+using platform::Result;
+using platform::IPlatformInterface;
+using platform::DynamicLibrary;
+using platform::DynamicLibrarySymbol;
 
 class OSXPlatformInterface : public IPlatformInterface
 {

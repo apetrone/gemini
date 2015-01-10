@@ -80,7 +80,7 @@ namespace gemini
 		uint8_t total_displays;
 		uint8_t total_controllers;
 
-		typedef GeminiAllocator<std::pair<const unsigned int, input::Button> > ButtonKeyMapAllocator;
+		typedef CustomPlatformAllocator<std::pair<const unsigned int, input::Button> > ButtonKeyMapAllocator;
 		typedef std::map<unsigned int, input::Button, std::less<unsigned int>, ButtonKeyMapAllocator> SDLToButtonKeyMap;
 		SDLToButtonKeyMap key_map;
 

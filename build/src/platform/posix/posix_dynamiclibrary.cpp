@@ -25,40 +25,37 @@
 
 #include <dlfcn.h>
 
-namespace gemini
+namespace platform
 {
-	namespace platform
+	struct PosixDynamicLibrary : public DynamicLibrary
 	{
-		struct PosixDynamicLibrary : public DynamicLibrary
+		void* handle;
+	};
+
+	DynamicLibrary* posix_dynamiclibrary_open(const char* library_path)
+	{
+		void* handle = dlopen(library_path, RTLD_LAZY);
+		if (!handle)
 		{
-			void* handle;
-		};
+			return 0;
+		}
+		
+		PosixDynamicLibrary* lib = CREATE(PosixDynamicLibrary);
+		lib->handle = handle;
+		return lib;
+	}
 	
-		DynamicLibrary* posix_dynamiclibrary_open(const char* library_path)
-		{
-			void* handle = dlopen(library_path, RTLD_LAZY);
-			if (!handle)
-			{
-				return 0;
-			}
-			
-			PosixDynamicLibrary* lib = CREATE(PosixDynamicLibrary);
-			lib->handle = handle;
-			return lib;
-		}
+	void posix_dynamiclibrary_close(DynamicLibrary* library)
+	{
+		PosixDynamicLibrary* lib = static_cast<PosixDynamicLibrary*>(library);
+		dlclose(lib->handle);
 		
-		void posix_dynamiclibrary_close(DynamicLibrary* library)
-		{
-			PosixDynamicLibrary* lib = static_cast<PosixDynamicLibrary*>(library);
-			dlclose(lib->handle);
-			
-			DESTROY(PosixDynamicLibrary, lib);
-		}
-		
-		DynamicLibrarySymbol posix_dynamiclibrary_find(DynamicLibrary* library, const char* symbol_name)
-		{
-			PosixDynamicLibrary* lib = static_cast<PosixDynamicLibrary*>(library);
-			return dlsym(lib->handle, symbol_name);
-		}
-	} // namespace platform
-} // namespace gemini
+		DESTROY(PosixDynamicLibrary, lib);
+	}
+	
+	DynamicLibrarySymbol posix_dynamiclibrary_find(DynamicLibrary* library, const char* symbol_name)
+	{
+		PosixDynamicLibrary* lib = static_cast<PosixDynamicLibrary*>(library);
+		return dlsym(lib->handle, symbol_name);
+	}
+} // namespace platform

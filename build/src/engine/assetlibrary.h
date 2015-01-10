@@ -42,7 +42,7 @@ namespace gemini
 			
 			typedef std::map<std::string, AssetClass*> AssetHashTable;
 			typedef typename AssetHashTable::iterator AssetHashTableIterator;
-			typedef std::list<AssetClass*, GeminiAllocator<AssetClass*> > AssetList;
+			typedef std::list<AssetClass*, CustomPlatformAllocator<AssetClass*> > AssetList;
 			
 			unsigned int total_assets;
 			AssetLoadCallback load_callback;

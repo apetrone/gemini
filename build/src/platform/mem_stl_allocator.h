@@ -24,7 +24,7 @@
 #include "mem.h"
 #include <limits> // for std::numeric_limits
 
-namespace gemini
+namespace platform
 {
 	namespace memory
 	{
@@ -135,4 +135,4 @@ namespace gemini
 			return true;
 		}
 	} // namespace memory
-} // namespace gemini
+} // namespace platform

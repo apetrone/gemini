@@ -57,85 +57,82 @@
 	#undef Warning
 #endif
 
-namespace gemini
+namespace platform
 {
-	namespace platform
+	struct Result
 	{
-		struct Result
+		enum ResultStatus
 		{
-			enum ResultStatus
-			{
-				Success,
-				Failure = 0xBADDAE, 	// non-recoverable error, bad day :(
-				Warning = 1 			// unexpected result, will proceed
-			};
-			
-			ResultStatus status;
-			const char* message;
-			
-			Result(ResultStatus result_status, const char* result_message = "") : status(result_status), message(result_message) {}
-			bool failed() const { return status == Failure; }
-			bool success() const { return status == Success; }
+			Success,
+			Failure = 0xBADDAE, 	// non-recoverable error, bad day :(
+			Warning = 1 			// unexpected result, will proceed
 		};
+		
+		ResultStatus status;
+		const char* message;
+		
+		Result(ResultStatus result_status, const char* result_message = "") : status(result_status), message(result_message) {}
+		bool failed() const { return status == Failure; }
+		bool success() const { return status == Success; }
+	};
 
-		Result startup();
-		void shutdown();
+	Result startup();
+	void shutdown();
 
-		namespace path
-		{
-			// normalize a path to the host platform's notation
-			void normalize(char* path, size_t size);
+	namespace path
+	{
+		// normalize a path to the host platform's notation
+		void normalize(char* path, size_t size);
+
+		// make all non-existent directories along a normalized_path
+		void make_directories(const char* normalized_path);
+	} // namespace path
 	
-			// make all non-existent directories along a normalized_path
-			void make_directories(const char* normalized_path);
-		} // namespace path
+	struct DynamicLibrary {};
+	
+	typedef void* DynamicLibrarySymbol;
+	
+	class IPlatformInterface
+	{
+	public:
+		virtual ~IPlatformInterface() {}
 		
-		struct DynamicLibrary {};
+		//
+		// GENERAL
+		//
 		
-		typedef void* DynamicLibrarySymbol;
+		virtual Result startup() = 0;
+		virtual void shutdown() = 0;
 		
-		class IPlatformInterface
-		{
-		public:
-			virtual ~IPlatformInterface() {}
-			
-			//
-			// GENERAL
-			//
-			
-			virtual Result startup() = 0;
-			virtual void shutdown() = 0;
-			
-			//
-			// PATHS
-			//
-			
-			/// @desc Returns the directory where the active binary resides:
-			/// on Linux and Windows platforms, it returns the folder where the binary exists
-			/// on MacOS X when run as a command line tool, it returns the folder where the binary exists (similar to Linux and Windows)
-			/// on MacOS X / iPhoneOS (for Bundles), it returns the root bundle path (.app)
-			virtual Result get_program_directory(char* path, size_t size) = 0;
-			
-			/// @desc Make directory on disk
-			virtual Result make_directory(const char* path) = 0;
-			
-			//
-			// DYNAMIC LIBRARY HANDLING
-			//
-			
-			/// @desc load a dynamic library at library_path
-			/// @returns A pointer to a DynamicLibrary object on success; 0 on failure
-			virtual DynamicLibrary* open_dynamiclibrary(const char* library_path) = 0;
-			
-			/// @desc close a library handle
-			virtual void close_dynamiclibrary(DynamicLibrary* library) = 0;
-			
-			/// @desc Load a symbol from the dynamic library
-			/// @returns 0 on failure, 1 on success
-			virtual DynamicLibrarySymbol find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name) = 0;
-			
-		};
+		//
+		// PATHS
+		//
+		
+		/// @desc Returns the directory where the active binary resides:
+		/// on Linux and Windows platforms, it returns the folder where the binary exists
+		/// on MacOS X when run as a command line tool, it returns the folder where the binary exists (similar to Linux and Windows)
+		/// on MacOS X / iPhoneOS (for Bundles), it returns the root bundle path (.app)
+		virtual Result get_program_directory(char* path, size_t size) = 0;
+		
+		/// @desc Make directory on disk
+		virtual Result make_directory(const char* path) = 0;
+		
+		//
+		// DYNAMIC LIBRARY HANDLING
+		//
+		
+		/// @desc load a dynamic library at library_path
+		/// @returns A pointer to a DynamicLibrary object on success; 0 on failure
+		virtual DynamicLibrary* open_dynamiclibrary(const char* library_path) = 0;
+		
+		/// @desc close a library handle
+		virtual void close_dynamiclibrary(DynamicLibrary* library) = 0;
+		
+		/// @desc Load a symbol from the dynamic library
+		/// @returns 0 on failure, 1 on success
+		virtual DynamicLibrarySymbol find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name) = 0;
+		
+	};
 
-		IPlatformInterface* instance();
-	} // namespace platform
-} // namespace gemini
+	IPlatformInterface* instance();
+} // namespace platform

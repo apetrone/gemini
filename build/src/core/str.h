@@ -24,7 +24,7 @@
 #include <platform/mem.h>
 #include <string>
 
-typedef std::basic_string<char, std::char_traits<char>, GeminiAllocator<char> > String;
+typedef std::basic_string<char, std::char_traits<char>, CustomPlatformAllocator<char> > String;
 
 
 namespace gemini

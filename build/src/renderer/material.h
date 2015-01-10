@@ -63,7 +63,7 @@ namespace gemini
 			};
 			
 			std::string name;
-			std::vector< MaterialParameter, GeminiAllocator<MaterialParameter> > parameters;
+			std::vector< MaterialParameter, CustomPlatformAllocator<MaterialParameter> > parameters;
 			unsigned int flags;
 			unsigned int requirements; // used to lookup the correct shader permutation for this material
 			

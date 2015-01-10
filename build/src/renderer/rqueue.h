@@ -86,7 +86,7 @@ namespace gemini
 		class RenderQueue
 		{
 		public:
-			typedef std::vector< RenderBlock, GeminiAllocator<RenderBlock> > RenderList;
+			typedef std::vector< RenderBlock, CustomPlatformAllocator<RenderBlock> > RenderList;
 			
 			RenderList render_list;
 		

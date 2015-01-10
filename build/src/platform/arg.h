@@ -38,7 +38,7 @@ USAGE:
 
 #pragma once
 
-namespace gemini
+namespace platform
 {
 	namespace args
 	{
@@ -74,4 +74,4 @@ namespace gemini
 		
 		bool parse_args(int argc, char** argv);
 	} // namespace args
-} // namespace gemini
+} // namespace platform
