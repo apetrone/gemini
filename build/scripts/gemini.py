@@ -365,7 +365,12 @@ def get_libplatform(arguments, target_platform):
 
 	macosx = libplatform.layout(platform="macosx")
 	macosx.sources += [
-		"src/platform/osx/*.*"
+		"src/platform/osx/*.*",
+		"src/platform/posix/posix_dynamiclibrary.*"
+	]
+
+	macosx.includes += [
+		"src/platform/posix"
 	]
 
 
@@ -512,7 +517,7 @@ def products(arguments, **kwargs):
 
 	# more sources
 	gemini.sources += [
-		"src/engine/kernels/**.c*",
+		"src/engine/kernels/project_chimera.cpp",
 		"src/engine/*.*",
 		"src/engine/audio/openal.*",
 		"src/engine/assets/*.*",
