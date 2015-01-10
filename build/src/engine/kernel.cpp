@@ -317,6 +317,14 @@ namespace gemini
 		
 		Error startup(IKernel * kernel_instance)
 		{
+			platform::Result result = platform::startup();
+			if (result.failed())
+			{
+				fprintf(stderr, "platform startup failed! %s\n", result.message);
+				return kernel::StartupFailed;
+			}
+		
+		
 			// set instance
 			_kernel = kernel_instance;
 			if (!_kernel)
@@ -342,7 +350,7 @@ namespace gemini
 			//
 			// setup our file system...
 			StackString< MAX_PATH_SIZE > root_path;
-			platform::Result result = platform::program_directory(&root_path[0], root_path.max_size());
+			result = platform::instance()->get_program_directory(&root_path[0], root_path.max_size());
 			assert(!result.failed());
 			
 			// set the startup directory: where the binary lives
@@ -491,6 +499,8 @@ namespace gemini
 			
 			_internal::game_path = 0;
 			
+			
+			platform::shutdown();
 		} // shutdown
 
 		void update()

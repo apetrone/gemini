@@ -22,12 +22,7 @@
 #pragma once
 
 #include <platform/config.h>
-
-#if PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_ANDROID || PLATFORM_APPLE
-	#include <slim/xlib.h>
-#else
-	#error Unknown platform!
-#endif
+#include <platform/platform.h>
 
 #if PLATFORM_WINDOWS
 	#include <limits.h>
@@ -611,7 +606,7 @@ namespace gemini
 			GEMGLFNGETFLOATV GetFloatv;
 
 #if PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_ANDROID
-			xlib_t library;
+			gemini::platform::DynamicLibrary* library;
 #endif
 		} gemgl_interface_t;
 

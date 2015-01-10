@@ -20,6 +20,9 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include "kernel.h"
+
+#include <platform/platform.h>
+
 #include <stdio.h>
 #include <core/logging.h>
 #include <core/mathlib.h>
@@ -51,7 +54,6 @@
 #include "audio.h"
 
 
-#include <slim/xlib.h>
 #include <core/filesystem.h>
 #include <core/logging.h>
 
@@ -582,8 +584,7 @@ public:
 	gemini::game::destroy_gamerules_fn destroy_gamerules;
 	
 	
-	
-	xlib_t gamelib;
+	platform::DynamicLibrary* gamelib;
 	disconnect_engine_fn disconnect_engine;
 	
 	EntityManager entity_manager;
@@ -809,7 +810,9 @@ public:
 		StackString<MAX_PATH_SIZE> game_library_path = ::core::filesystem::content_directory();
 		game_library_path.append(PATH_SEPARATOR_STRING).append("bin").append(PATH_SEPARATOR_STRING).append("game.dylib");
 		
-		if (!xlib_open(&gamelib, game_library_path()))
+		gamelib = platform::instance()->open_dynamiclibrary(game_library_path());
+		
+		if (gamelib == 0)
 		{
 			LOGV("unable to open game: \"%s\"\n", game_library_path());
 			assert(0);
@@ -819,8 +822,9 @@ public:
 			LOGV("opened game library!\n");
 			
 			// link the engine interface
-			connect_engine_fn connect_engine = (connect_engine_fn)xlib_find_symbol(&gamelib, "connect_engine");
-			disconnect_engine = (disconnect_engine_fn)xlib_find_symbol(&gamelib, "disconnect_engine");
+			
+			connect_engine_fn connect_engine = (connect_engine_fn)platform::instance()->find_dynamiclibrary_symbol(gamelib, "connect_engine");
+			disconnect_engine = (disconnect_engine_fn)platform::instance()->find_dynamiclibrary_symbol(gamelib, "disconnect_engine");
 			if (connect_engine)
 			{
 				game_interface = connect_engine(gemini::engine::api::instance());
@@ -967,8 +971,7 @@ public:
 			disconnect_engine();
 		}
 		
-		
-		xlib_close(&gamelib);
+		platform::instance()->close_dynamiclibrary(gamelib);
 	}
 };
 

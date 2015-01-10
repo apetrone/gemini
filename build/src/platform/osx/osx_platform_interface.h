@@ -19,55 +19,25 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <string.h> // for strlen, memset
+#pragma once
+
 #include "platform.h"
 
-namespace gemini
+using gemini::platform::Result;
+using gemini::platform::IPlatformInterface;
+using gemini::platform::DynamicLibrary;
+using gemini::platform::DynamicLibrarySymbol;
+
+class OSXPlatformInterface : public IPlatformInterface
 {
-	namespace platform
-	{
-		namespace path
-		{
-			void normalize(char* path, size_t size)
-			{
-				while(*path)
-				{
-					if (*path == '/' || *path == '\\')
-					{
-						// conform to this platform's path separator
-						*path = PATH_SEPARATOR;
-					}
-					
-					++path;
-				}
-			} // normalize
-			
-			
-			void make_directories(const char * normalized_path)
-			{
-				const char * path = normalized_path;
-				char directory[MAX_PATH_SIZE];
-				
-				// don't accept paths that are too short
-				if (strlen(normalized_path) < 2)
-				{
-					return;
-				}
-				
-				memset(directory, 0, MAX_PATH_SIZE);
-				
-				// loop through and call mkdir on each separate directory progressively
-				while(*path)
-				{
-					if (*path == PATH_SEPARATOR)
-					{
-						strncpy(directory, normalized_path, (path+1)-normalized_path);
-						platform::instance()->make_directory( directory );
-					}
-					
-					++path;
-				}
-			} // make_directories
-		} // namespace path
-	} // namespace platform
-} // namespace gemini
+public:
+	virtual Result startup();
+	virtual void shutdown();
+	
+	virtual Result get_program_directory(char* path, size_t size);
+	virtual Result make_directory(const char* path);
+	
+	virtual DynamicLibrary* open_dynamiclibrary(const char* library_path);
+	virtual void close_dynamiclibrary(DynamicLibrary* library);
+	virtual DynamicLibrarySymbol find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name);
+};

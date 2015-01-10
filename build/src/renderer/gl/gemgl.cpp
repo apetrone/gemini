@@ -114,21 +114,22 @@ namespace gemini
 	{
 		// load the platform-specific GL library
 #if PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_ANDROID
-		const char * libName = "";
+		const char* lib_name = "";
 
 #if PLATFORM_WINDOWS
-		libName = "OpenGL32.dll";
+		lib_name = "OpenGL32.dll";
 #elif defined(PLATFORM_IS_RASPBERRYPI) || defined(PLATFORM_USE_GLES2)
-		libName = "libGLESv2.so";
+		lib_name = "libGLESv2.so";
 #elif PLATFORM_LINUX
-		libName = "libGL.so";
+		lib_name = "libGL.so";
 #endif
 
-		LOGV( "Loading gl driver \"%s\"...\n", libName );
+		LOGV("Loading gl driver \"%s\"...\n", lib_name);
 
-		if ( !xlib_open( &gl_interface.library, libName ) )
+		gl_interface.library = platform::instance()->dynamiclibrary_open(lib_name);
+		if (gl_interface.library == 0)
 		{
-			LOGV( "Could not load gl driver: \"%s\"\n", libName );
+			LOGV("Could not load gl driver: \"%s\"\n", lib_name);
 			return 0;
 		}
 #elif PLATFORM_APPLE
@@ -505,9 +506,9 @@ namespace gemini
 #endif
 
 #if PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_ANDROID
-		if ( !ptr )
+		if (!ptr)
 		{
-			ptr = xlib_find_symbol( &gl_interface.library, name );
+			ptr = platform::instance()->find_dynamiclibrary_symbol(gl_interface.library, name);
 		}
 #endif
 
@@ -527,7 +528,7 @@ namespace gemini
 	void gemgl_shutdown( gemgl_interface_t & gl_interface  )
 	{
 #if PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_ANDROID
-		xlib_close( &gl_interface.library );
+		platform::instance()->close_dynamiclibrary(gl_interface.library);
 #elif PLATFORM_APPLE
 		gemgl_osx_shutdown();
 #endif

@@ -21,6 +21,8 @@
 // -------------------------------------------------------------
 #include "platform.h"
 #include "platform_common.h"
+#include "mem.h"
+#include <assert.h>
 
 #if TARGET_OS_MAC
 	#include "osx/osx_platform.h"
@@ -49,67 +51,56 @@
 
 #include <string.h> // for strrchr
 
+#if PLATFORM_LINUX || PLATFORM_ANDROID
+	#include "posix/posix_platform_interface.h"
+	typedef PosixPlatformInterface PlatformInterface;
+#elif PLATFORM_APPLE
+	#include "osx/osx_platform_interface.h"
+	typedef OSXPlatformInterface PlatformInterface;
+#else
+	#error Platform not implemented!
+#endif
+
 
 namespace gemini
 {
 	namespace platform
 	{
+		IPlatformInterface* _instance = 0;
+		IPlatformInterface* instance()
+		{
+			return _instance;
+		}
+	
 		Result startup()
 		{
 			Result result(Result::Success);
-			
-	#if PLATFORM_APPLE
-			result = osx_startup();
-	#endif
+			_instance = CREATE(PlatformInterface);
 
+			assert(_instance != 0);
+			result = _instance->startup();
 			
 			return result;
 		}
 		
 		void shutdown()
-		{		
-	#if PLATFORM_APPLE
-			osx_shutdown();
-	#endif
+		{
+			_instance->shutdown();
+			DESTROY(IPlatformInterface, _instance);
 		}
 		
 		Result program_directory(char* path, size_t size)
 		{
+	#if PLATFORM_WINDOWS
 			Result error(Result::Success);
 			int result = 0;
 			char* sep;
-			
-	#if PLATFORM_WINDOWS
 			result = GetModuleFileNameA(GetModuleHandleA(0), path, size);
 			if (result == 0)
 			{
 				error.status = platform::Result::Failure;
 				error.message = "GetModuleFileNameA failed!";
 			}
-			
-	#elif PLATFORM_LINUX
-			{
-				// http://www.flipcode.com/archives/Path_To_Executable_On_Linux.shtml
-				char linkname[64] = {0};
-				pid_t pid = getpid();
-				
-				if (snprintf(linkname, sizeof(linkname), "/proc/%i/exe", pid) < 0)
-				{
-					abort();
-				}
-				
-				result = readlink(linkname, path, size);
-				if (result == -1)
-				{
-					error.status = Result::Failure;
-					error.message = "readlink failed";
-				}
-				else
-				{
-					path[result] = 0;
-				}
-			}
-	#endif
 			
 			if (result != 0)
 			{
@@ -120,11 +111,9 @@ namespace gemini
 					*sep = '\0';
 				}
 			}
-			
-	#if PLATFORM_APPLE
-			error = osx_program_directory(path, size);
 	#endif
-			return error;
+
+			return _instance->get_program_directory(path, size);
 		}
 		
 		

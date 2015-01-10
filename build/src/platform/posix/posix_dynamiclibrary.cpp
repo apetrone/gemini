@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -19,55 +19,46 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <string.h> // for strlen, memset
-#include "platform.h"
+
+#include "mem.h"
+#include "posix_dynamiclibrary.h"
+
+#include <dlfcn.h>
 
 namespace gemini
 {
 	namespace platform
 	{
-		namespace path
+		struct PosixDynamicLibrary : public DynamicLibrary
 		{
-			void normalize(char* path, size_t size)
+			void* handle;
+		};
+	
+		DynamicLibrary* posix_dynamiclibrary_open(const char* library_path)
+		{
+			void* handle = dlopen(library_path, RTLD_LAZY);
+			if (!handle)
 			{
-				while(*path)
-				{
-					if (*path == '/' || *path == '\\')
-					{
-						// conform to this platform's path separator
-						*path = PATH_SEPARATOR;
-					}
-					
-					++path;
-				}
-			} // normalize
+				return 0;
+			}
 			
+			PosixDynamicLibrary* lib = CREATE(PosixDynamicLibrary);
+			lib->handle = handle;
+			return lib;
+		}
+		
+		void posix_dynamiclibrary_close(DynamicLibrary* library)
+		{
+			PosixDynamicLibrary* lib = static_cast<PosixDynamicLibrary*>(library);
+			dlclose(lib->handle);
 			
-			void make_directories(const char * normalized_path)
-			{
-				const char * path = normalized_path;
-				char directory[MAX_PATH_SIZE];
-				
-				// don't accept paths that are too short
-				if (strlen(normalized_path) < 2)
-				{
-					return;
-				}
-				
-				memset(directory, 0, MAX_PATH_SIZE);
-				
-				// loop through and call mkdir on each separate directory progressively
-				while(*path)
-				{
-					if (*path == PATH_SEPARATOR)
-					{
-						strncpy(directory, normalized_path, (path+1)-normalized_path);
-						platform::instance()->make_directory( directory );
-					}
-					
-					++path;
-				}
-			} // make_directories
-		} // namespace path
+			DESTROY(PosixDynamicLibrary, lib);
+		}
+		
+		DynamicLibrarySymbol posix_dynamiclibrary_find(DynamicLibrary* library, const char* symbol_name)
+		{
+			PosixDynamicLibrary* lib = static_cast<PosixDynamicLibrary*>(library);
+			return dlsym(lib->handle, symbol_name);
+		}
 	} // namespace platform
 } // namespace gemini

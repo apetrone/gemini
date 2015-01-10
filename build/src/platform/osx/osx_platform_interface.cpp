@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -19,55 +19,44 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include <string.h> // for strlen, memset
-#include "platform.h"
+#include "osx_platform_interface.h"
+#include "osx_platform.h"
 
-namespace gemini
+#include "posix/posix_dynamiclibrary.h"
+
+using namespace gemini::platform;
+
+Result OSXPlatformInterface::startup()
 {
-	namespace platform
-	{
-		namespace path
-		{
-			void normalize(char* path, size_t size)
-			{
-				while(*path)
-				{
-					if (*path == '/' || *path == '\\')
-					{
-						// conform to this platform's path separator
-						*path = PATH_SEPARATOR;
-					}
-					
-					++path;
-				}
-			} // normalize
-			
-			
-			void make_directories(const char * normalized_path)
-			{
-				const char * path = normalized_path;
-				char directory[MAX_PATH_SIZE];
-				
-				// don't accept paths that are too short
-				if (strlen(normalized_path) < 2)
-				{
-					return;
-				}
-				
-				memset(directory, 0, MAX_PATH_SIZE);
-				
-				// loop through and call mkdir on each separate directory progressively
-				while(*path)
-				{
-					if (*path == PATH_SEPARATOR)
-					{
-						strncpy(directory, normalized_path, (path+1)-normalized_path);
-						platform::instance()->make_directory( directory );
-					}
-					
-					++path;
-				}
-			} // make_directories
-		} // namespace path
-	} // namespace platform
-} // namespace gemini
+	return osx_startup();
+}
+
+void OSXPlatformInterface::shutdown()
+{
+	osx_shutdown();
+}
+
+Result OSXPlatformInterface::get_program_directory(char* path, size_t size)
+{
+	return osx_program_directory(path, size);
+}
+
+Result OSXPlatformInterface::make_directory(const char* path)
+{
+	return Result(Result::Success);
+}
+
+DynamicLibrary* OSXPlatformInterface::open_dynamiclibrary(const char* library_path)
+{
+	return posix_dynamiclibrary_open(library_path);
+}
+
+void OSXPlatformInterface::close_dynamiclibrary(DynamicLibrary* library)
+{
+	posix_dynamiclibrary_close(library);
+}
+
+DynamicLibrarySymbol OSXPlatformInterface::find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name)
+{
+	return posix_dynamiclibrary_find(library, symbol_name);
+}

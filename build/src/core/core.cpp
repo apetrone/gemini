@@ -134,12 +134,7 @@ namespace gemini
 		
 		platform::Result startup()
 		{
-			platform::Result result = platform::startup();
-			if (result.failed())
-			{
-				fprintf(stderr, "platform startup failed! %s\n", result.message);
-				return result;
-			}
+			platform::Result result(platform::Result::Success);
 			
 			// create an instance of the log system
 			gemini::core::logging::ILog* log_system = CREATE(gemini::core::logging::LogInterface);
@@ -168,8 +163,6 @@ namespace gemini
 			
 			gemini::core::logging::ILog* log_system = gemini::core::log::instance();
 			DESTROY(ILog, log_system);
-			
-			platform::shutdown();
 		} // shutdown
 
 	} // namespace core
