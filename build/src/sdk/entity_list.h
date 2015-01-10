@@ -119,7 +119,3 @@ struct EntityList
 typedef EntityList<Entity> EntityListType;
 EntityListType& entity_list();
 
-scenegraph::Node* get_entity_root();
-void set_entity_root(scenegraph::Node* root);
-
-

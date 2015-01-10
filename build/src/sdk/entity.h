@@ -44,29 +44,9 @@
 	static EntityFactoryClass<entity_class> classname(#classname)
 
 
-
-namespace gemini
-{
-
-
-
-
-}
-
 //typedef std::vector< struct Entity*, GeminiAllocator<struct Entity*> > EntityVector;
 
 struct Entity;
-
-namespace assets
-{
-	class Mesh;
-}
-
-namespace scenegraph
-{
-	struct Node;
-}
-
 
 namespace gemini
 {
@@ -212,4 +192,3 @@ void entity_post_script_load();
 void entity_shutdown();
 void entity_physics_update(float delta_seconds);
 void entity_update();
-void entity_set_scene_root(scenegraph::Node* root);
