@@ -42,7 +42,6 @@ namespace gemini
 	{
 		void startup()
 		{
-			platform::memory::startup();
 			platform::startup();
 
 			// setup root path
@@ -74,7 +73,6 @@ namespace gemini
 			
 			core::shutdown();
 			platform::shutdown();
-			platform::memory::shutdown();
 		}
 	} // namespace tools
 

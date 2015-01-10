@@ -24,12 +24,13 @@
 #include <CoreFoundation/CoreFoundation.h>
 
 #include "kernel.h"
+#include "platform.h"
 
 int main(int argc, char ** argv)
 {
 	// this is called here to initialize before we even enter Cocoa.
 	// the shutdown is called in the appdelegate: applicationWillTerminate
-	platform::memory::startup();
+	platform::startup();
 	gemini::kernel::parse_commandline(argc, argv);
 	return NSApplicationMain(argc, (const char**)argv);
 }

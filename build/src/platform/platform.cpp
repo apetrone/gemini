@@ -70,6 +70,8 @@ namespace platform
 
 	Result startup()
 	{
+		memory::startup();
+		
 		Result result(Result::Success);
 		_instance = CREATE(PlatformInterface);
 
@@ -83,6 +85,8 @@ namespace platform
 	{
 		_instance->shutdown();
 		DESTROY(IPlatformInterface, _instance);
+		
+		memory::shutdown();
 	}
 	
 	Result program_directory(char* path, size_t size)

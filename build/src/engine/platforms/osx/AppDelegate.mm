@@ -21,6 +21,7 @@
 // -------------------------------------------------------------
 #import "AppDelegate.h"
 
+#import <platform/platform.h>
 #import "platforms/desktop/kernel_desktop.h"
 
 static bool has_started = false;
@@ -106,7 +107,7 @@ gemini::DesktopKernel _desktop_kernel( 0, 0 );
 {
 //	NSLog( @"applicationWillTerminate" );
 	gemini::kernel::shutdown();
-	platform::memory::shutdown();
+	platform::shutdown();
 }
 
 @end
