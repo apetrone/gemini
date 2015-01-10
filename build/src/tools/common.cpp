@@ -43,6 +43,7 @@ namespace gemini
 		void startup()
 		{
 			platform::memory::startup();
+			platform::startup();
 
 			// setup root path
 			StackString<MAX_PATH_SIZE> root_path;
@@ -72,6 +73,7 @@ namespace gemini
 			datamodel::set_default_material(0);
 			
 			core::shutdown();
+			platform::shutdown();
 			platform::memory::shutdown();
 		}
 	} // namespace tools
