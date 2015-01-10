@@ -26,8 +26,6 @@
 
 #include <platform/platform.h>
 
-#include <slim/xtime.h>
-
 #include "logging.h"
 #include "logging_interface.h"
 
@@ -90,8 +88,9 @@ namespace gemini
 	#endif
 
 	#if !PLATFORM_IS_MOBILE
-				xdatetime_t dt;
-				xtime_now( &dt );
+				platform::DateTime dt;
+				platform::instance()->get_current_datetime(dt);
+				
 				char datetime_string[ GEMINI_DATETIME_STRING_MAX ];
 				str::sprintf(datetime_string, GEMINI_DATETIME_STRING_MAX, "%02d-%02d-%04d-%02d-%02d-%02d.log",
 							 dt.month, dt.day, dt.year, dt.hour, dt.minute, dt.second);

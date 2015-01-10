@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -23,29 +23,10 @@
 
 #include "platform.h"
 
-using platform::Result;
-using platform::IPlatformInterface;
-using platform::DynamicLibrary;
-using platform::DynamicLibrarySymbol;
-
-using platform::TimerHandle;
-using platform::DateTime;
-
-class OSXPlatformInterface : public IPlatformInterface
+namespace platform
 {
-public:
-	virtual Result startup();
-	virtual void shutdown();
-	
-	virtual Result get_program_directory(char* path, size_t size);
-	virtual Result make_directory(const char* path);
-	
-	virtual DynamicLibrary* open_dynamiclibrary(const char* library_path);
-	virtual void close_dynamiclibrary(DynamicLibrary* library);
-	virtual DynamicLibrarySymbol find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name);
-	
-	virtual TimerHandle* create_timer();
-	virtual void destroy_timer(TimerHandle* timer);
-	virtual double get_timer_msec(TimerHandle* timer);
-	virtual void get_current_datetime(DateTime& datetime);
-};
+	TimerHandle* posix_create_timer();
+	void posix_destroy_timer(TimerHandle* timer);
+	double posix_get_timer_msec(TimerHandle* timer);
+	void posix_get_date_time(DateTime& datetime);
+} // namespace platform

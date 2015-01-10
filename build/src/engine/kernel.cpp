@@ -29,8 +29,6 @@
 #include <core/filesystem.h>
 #include <core/logging.h>
 
-#include <slim/xtime.h>
-
 #include "kernel.h"
 #include <renderer/renderer.h>
 #include "audio.h"
@@ -197,7 +195,7 @@ namespace gemini
 			
 			struct State
 			{
-				xtime_t timer;
+				platform::TimerHandle* timer;
 				double accumulator;
 				float last_time;
 				TimeStepFilter tsa;
@@ -332,8 +330,8 @@ namespace gemini
 			_kernel->set_active(true);
 			
 			// initialize kernel's timer
-			xtime_startup(&_internal::_kernel_state.timer);
-			_internal::_kernel_state.last_time = xtime_msec(&_internal::_kernel_state.timer);
+			_internal::_kernel_state.timer = platform::instance()->create_timer();
+			_internal::_kernel_state.last_time = platform::instance()->get_timer_msec(_internal::_kernel_state.timer);
 			_internal::_kernel_state.accumulator = 0;
 
 			// perform any startup duties here before we init the core
@@ -490,11 +488,13 @@ namespace gemini
 			}
 			
 			_internal::game_path = 0;
+			
+			platform::instance()->destroy_timer(_internal::_kernel_state.timer);
 		} // shutdown
 
 		void update()
 		{
-			float now_msec = xtime_msec(&_internal::_kernel_state.timer);
+			float now_msec = platform::instance()->get_timer_msec(_internal::_kernel_state.timer);
 			float raw_delta_msec = now_msec - _internal::_kernel_state.last_time;
 			_internal::_kernel_state.last_time = now_msec;
 

@@ -24,8 +24,6 @@
 #include <platform/mem.h>
 #include <core/configloader.h>
 
-#include <slim/xtime.h>
-
 #include "assets.h"
 #include "kernel.h"
 #include <renderer/image.h>

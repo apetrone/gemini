@@ -24,12 +24,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <platform/platform.h>
+
 #include <core/xfile.h>
 #include <core/stackstring.h>
 #include <core/datastream.h>
 #include <core/logging.h>
-
-#include <slim/xtime.h>
 
 #include "common.h"
 #include "common/extension.h"
@@ -256,9 +256,8 @@ int main(int argc, char** argv)
 	const char* input_file = argv[2];
 	const char* output_root = argv[3];
 
-	xtime_t timer;
-	xtime_startup(&timer);
-	double start = xtime_msec(&timer);
+	platform::TimerHandle* timer = platform::instance()->create_timer();
+	double start = platform::instance()->get_timer_msec(timer);
 
 	// determine our input and output filenames
 	StackString<MAX_PATH_SIZE> input_filename = asset_root;
@@ -278,8 +277,9 @@ int main(int argc, char** argv)
 		LOGV("conversion failed: %s\n", result.message);
 	}
 
-	double duration = (xtime_msec(&timer) - start);
+	double duration = (platform::instance()->get_timer_msec(timer) - start);
 	LOGV("processed in %2.2f seconds\n", duration*.001f);
+	platform::instance()->destroy_timer(timer);
 	
 	tools::shutdown();
 	return 0;

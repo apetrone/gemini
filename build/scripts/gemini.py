@@ -366,7 +366,8 @@ def get_libplatform(arguments, target_platform):
 	macosx = libplatform.layout(platform="macosx")
 	macosx.sources += [
 		"src/platform/osx/*.*",
-		"src/platform/posix/posix_dynamiclibrary.*"
+		"src/platform/posix/posix_dynamiclibrary.*",
+		"src/platform/posix/posix_timer.*"
 	]
 
 	macosx.includes += [

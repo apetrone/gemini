@@ -22,7 +22,9 @@
 #include "osx_platform_interface.h"
 #include "osx_platform.h"
 
+// we can use some posix-compatible functions
 #include "posix/posix_dynamiclibrary.h"
+#include "posix/posix_timer.h"
 
 using namespace platform;
 
@@ -59,4 +61,25 @@ void OSXPlatformInterface::close_dynamiclibrary(DynamicLibrary* library)
 DynamicLibrarySymbol OSXPlatformInterface::find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name)
 {
 	return posix_dynamiclibrary_find(library, symbol_name);
+}
+
+
+TimerHandle* OSXPlatformInterface::create_timer()
+{
+	return posix_create_timer();
+}
+
+void OSXPlatformInterface::destroy_timer(TimerHandle* timer)
+{
+	return posix_destroy_timer(timer);
+}
+
+double OSXPlatformInterface::get_timer_msec(TimerHandle* timer)
+{
+	return posix_get_timer_msec(timer);
+}
+
+void OSXPlatformInterface::get_current_datetime(DateTime& datetime)
+{
+	return posix_get_date_time(datetime);
 }

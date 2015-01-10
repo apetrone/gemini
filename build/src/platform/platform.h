@@ -89,8 +89,22 @@ namespace platform
 	} // namespace path
 	
 	struct DynamicLibrary {};
-	
 	typedef void* DynamicLibrarySymbol;
+	
+	struct TimerHandle {};
+	
+	
+	struct DateTime
+	{
+		unsigned short year;
+		unsigned short month; // 1-12
+		unsigned short dayOfWeek; // 0-6, starting from Sunday
+		unsigned short day;
+		unsigned short hour; // 24-hour format
+		unsigned short minute;
+		unsigned short second;
+		unsigned short milliseconds;
+	};
 	
 	class IPlatformInterface
 	{
@@ -132,6 +146,23 @@ namespace platform
 		/// @returns 0 on failure, 1 on success
 		virtual DynamicLibrarySymbol find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name) = 0;
 		
+		//
+		// TIMERS
+		//
+		
+		/// @desc Create and return a handle to a platform timer.
+		/// @returns Handle to a platform timer or 0 on failure.
+		virtual TimerHandle* create_timer() = 0;
+		
+		/// @desc Destroys a previously created timer.
+		virtual void destroy_timer(TimerHandle* timer) = 0;
+		
+		/// @desc Queries the timer for the current time
+		/// @returns The current time as a double in miliseconds
+		virtual double get_timer_msec(TimerHandle* timer) = 0;
+		
+		/// @desc Populates the DateTime struct with the system's current date and time
+		virtual void get_current_datetime(DateTime& datetime) = 0;
 	};
 
 	IPlatformInterface* instance();
