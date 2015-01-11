@@ -60,10 +60,10 @@ namespace gemini
 		void strip_shader_version(char* buffer, StackString<32>& version)
 		{
 			// remove preceding "#version" shader
-			char* pos = core::str::strstr(buffer, "#version");
+			const char* pos = core::str::strstr(buffer, "#version");
 			if (pos)
 			{
-				char* end = pos;
+				const char* end = pos;
 				while(*end != '\n')
 					++end;
 				

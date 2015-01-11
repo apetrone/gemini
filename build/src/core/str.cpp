@@ -23,6 +23,8 @@
 #include <platform/config.h>
 #include "str.h"
 
+#include <string.h>
+#include <stdarg.h>
 
 namespace gemini
 {
@@ -71,7 +73,7 @@ namespace gemini
 			
 			char* copy(char* destination, const char* source, size_t source_bytes)
 			{
-				if (source_bytes == -1)
+				if (source_bytes == 0)
 				{
 					source_bytes = len(source);
 				}
@@ -154,7 +156,7 @@ namespace gemini
 #endif
 			} // case_insensitive_compare
 			
-			char* strstr(const char* s1, const char* s2)
+			const char* strstr(const char* s1, const char* s2)
 			{
 				return ::strstr(s1, s2);
 			} // strstr
