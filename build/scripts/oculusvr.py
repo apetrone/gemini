@@ -1,5 +1,9 @@
+import os
 import logging
 from pegasus.models import Product, ProductType
+
+
+SDK_ROOT = "../dependencies/sdks"
 
 def arguments(parser):
 	pass
@@ -39,15 +43,13 @@ def products(arguments, **kwargs):
 	if target_platform.matches("windows"):
 		# need to use its own folder due to line endings
 		# until I move that to a better solution
-		ovr.root = "../dependencies/oculussdk_%s_windows" % LIBOVR_VERSION
+		ovr.root = os.path.join(SDK_ROOT, "oculussdk_%s_windows" % LIBOVR_VERSION)
 		ovr.name = "libovr"
 		ovr.product_root = "LibOVR/Lib/Win32/VS2013"
 	else:
-		ovr.root = "../dependencies/oculussdk_%s" % LIBOVR_VERSION
+		ovr.root = os.path.join(SDK_ROOT, "oculussdk_%s" % LIBOVR_VERSION)
 		ovr.product_root = "LibOVR/Lib/%(platform)s/%(title_configuration)s%(architecture)s" % vars
 
-
-	
 
 
 	ovr.includes = [

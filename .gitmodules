@@ -37,3 +37,6 @@
 [submodule "build/dependencies/bullet2"]
 	path = build/dependencies/bullet2
 	url = git://github.com/apetrone/bulletphysics.git
+[submodule "build/dependencies/sdks"]
+	path = build/dependencies/sdks
+	url = git://solo/gemini/sdks.git

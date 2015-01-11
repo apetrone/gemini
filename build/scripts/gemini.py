@@ -4,6 +4,7 @@ import logging
 from pegasus.models import Product, ProductType, Dependency
 
 DEPENDENCIES_FOLDER = "dependencies"
+SDKS_FOLDER = "dependencies/sdks"
 DESKTOP = ["macosx", "linux", "windows"]
 #BLACKSMITH_PATH = "../tools/blacksmith/blacksmith.py"
 COMMON_PRODUCT_ROOT = "bin/${CONFIGURATION}_${ARCHITECTURE}"
@@ -185,17 +186,17 @@ def setup_common_libs(arguments, product):
 
 	windows = product.layout(platform="windows")
 	windows.includes += [
-		os.path.join(DEPENDENCIES_FOLDER, "openal-1.1", "include")	
+		os.path.join(SDKS_FOLDER, "openal-1.1", "include")	
 	]
 
 	win32 = product.layout(platform="windows", architecture="x86")
 	win32.libdirs += [ 
-		os.path.join(DEPENDENCIES_FOLDER, "openal-1.1", "libs/Win32")
+		os.path.join(SDKS_FOLDER, "openal-1.1", "libs/Win32")
 	]
 
 	win64 = product.layout(platform="windows", architecture="x86_64")
 	win64.libdirs += [ 
-		os.path.join(DEPENDENCIES_FOLDER, "openal-1.1", "libs/Win64")
+		os.path.join(SDKS_FOLDER, "openal-1.1", "libs/Win64")
 	]
 
 	# currently, we use MultiByte character set (and with Squirrel3)
