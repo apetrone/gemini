@@ -606,7 +606,7 @@ namespace gemini
 			GEMGLFNGETFLOATV GetFloatv;
 
 #if PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_ANDROID
-			gemini::platform::DynamicLibrary* library;
+			platform::DynamicLibrary* library;
 #endif
 		} gemgl_interface_t;
 

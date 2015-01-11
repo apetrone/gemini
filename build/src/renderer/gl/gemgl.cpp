@@ -126,7 +126,7 @@ namespace gemini
 
 		LOGV("Loading gl driver \"%s\"...\n", lib_name);
 
-		gl_interface.library = platform::instance()->dynamiclibrary_open(lib_name);
+		gl_interface.library = platform::instance()->open_dynamiclibrary(lib_name);
 		if (gl_interface.library == 0)
 		{
 			LOGV("Could not load gl driver: \"%s\"\n", lib_name);
