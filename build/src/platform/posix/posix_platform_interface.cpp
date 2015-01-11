@@ -21,7 +21,7 @@
 // -------------------------------------------------------------
 #include "posix_platform_interface.h"
 
-using namespace gemini::platform;
+using namespace platform;
 
 #include <sys/sysinfo.h>
 //#include <errno.h>
@@ -82,6 +82,11 @@ Result PosixPlatformInterface::get_program_directory(char* path, size_t size)
 	return error;
 }
 
+Result PosixPlatformInterface::make_directory(const char* path)
+{
+	return Result(Result::Success);
+}
+
 DynamicLibrary* PosixPlatformInterface::open_dynamic_library(const char* library_path)
 {
 	return 0;
@@ -95,4 +100,24 @@ void PosixPlatformInterface::close_dynamic_library(DynamicLibrary* library)
 DynamicLibrarySymbol PosixPlatformInterface::find_dynamic_library_symbol(DynamicLibrary* library, const char* symbol_name)
 {
 	return 0;
+}
+
+TimerHandle* PosixPlatformInterface::create_timer()
+{
+	return posix_create_timer();
+}
+
+void PosixPlatformInterface::destroy_timer(TimerHandle* timer)
+{
+	return posix_destroy_timer(timer);
+}
+
+double PosixPlatformInterface::get_timer_msec(TimerHandle* timer)
+{
+	return posix_get_timer_msec(timer);
+}
+
+void PosixPlatformInterface::get_current_datetime(DateTime& datetime)
+{
+	return posix_get_date_time(datetime);
 }

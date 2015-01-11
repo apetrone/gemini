@@ -23,10 +23,12 @@
 
 #include "platform.h"
 
-using gemini::platform::Result;
-using gemini::platform::IPlatformInterface;
-using gemini::platform::DynamicLibrary;
-using gemini::platform::DynamicLibrarySymbol;
+using platform::Result;
+using platform::IPlatformInterface;
+using platform::DynamicLibrary;
+using platform::DynamicLibrarySymbol;
+using platform::TimerHandle;
+using platform::DateTime;
 
 class PosixPlatformInterface : public IPlatformInterface
 {
@@ -35,8 +37,14 @@ public:
 	virtual void shutdown();
 
 	virtual Result get_program_directory(char* path, size_t size);
+	virtual Result make_directory(const char* path);
 
-	virtual DynamicLibrary* open_dynamic_library(const char* library_path);
-	virtual void close_dynamic_library(DynamicLibrary* library);
-	virtual DynamicLibrarySymbol find_dynamic_library_symbol(DynamicLibrary* library, const char* symbol_name);
+	virtual DynamicLibrary* open_dynamiclibrary(const char* library_path);
+	virtual void close_dynamiclibrary(DynamicLibrary* library);
+	virtual DynamicLibrarySymbol find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name);
+	
+	virtual TimerHandle* create_timer();
+	virtual void destroy_timer(TimerHandle* timer);
+	virtual double get_timer_msec(TimerHandle* timer);
+	virtual void get_current_datetime(DateTime& datetime);
 };
