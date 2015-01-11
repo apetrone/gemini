@@ -269,7 +269,7 @@ def get_tools(target_platform, libplatform, libcore):
 	}
 
 	libfbx = Product(name=libfbx_names[target_platform.name], output=ProductType.DynamicLibrary)
-	libfbx.root = "../dependencies/fbx_2015.1"
+	libfbx.root = os.path.join("..", SDKS_FOLDER, "fbx_2015.1")
 	libfbx.includes = [
 		"include"
 	]
