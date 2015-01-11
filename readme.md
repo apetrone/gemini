@@ -12,7 +12,22 @@ This project may contain code which is distributed under a different
 license. See LICENSE for additional details.
 
 
+#### foreword
+
+Currently, there are private sdks which are not included in this repository.
+This is by design to ensure most of this project's code can be open-sourced
+while keeping private code and sdks off public repositories.
+
+Therefore, this may NOT build out of the box without these SDKs.
+
+If you still wish to build on your own, you would need to provide certain SDKs
+yourself and place them in the right folder. These are:
+	oculussdk
+	openal-1.1
+
 #### getting started
+
+See the foreword first if you have not read it.
 
 First, clone the repository.
 
