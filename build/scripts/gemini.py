@@ -377,9 +377,16 @@ def get_libplatform(arguments, target_platform):
 
 
 	linux = libplatform.layout(platform="linux")
-	linux.sources += [
-		"src/platform/linux/*.*"
+    linux.sources += [
+           "src/platform/posix/posix_platform_interface.cpp",
+           "src/platform/posix/posix_dynamiclibrary.cpp",
+           "src/platform/posix/posix_timer.cpp"
 	]
+
+	linux.includes += [
+           "src/platform/posix"
+    ]
+
 
 	windows = libplatform.layout(platform="windows")
 	windows.sources += [

@@ -21,7 +21,12 @@
 // -------------------------------------------------------------
 #include "posix_platform_interface.h"
 
+#include "posix/posix_dynamiclibrary.h"
+#include "posix/posix_timer.h"
+
 using namespace platform;
+
+#include <string.h> // for strrchr
 
 #include <sys/sysinfo.h>
 //#include <errno.h>
@@ -87,17 +92,17 @@ Result PosixPlatformInterface::make_directory(const char* path)
 	return Result(Result::Success);
 }
 
-DynamicLibrary* PosixPlatformInterface::open_dynamic_library(const char* library_path)
+DynamicLibrary* PosixPlatformInterface::open_dynamiclibrary(const char* library_path)
 {
 	return 0;
 }
 
-void PosixPlatformInterface::close_dynamic_library(DynamicLibrary* library)
+void PosixPlatformInterface::close_dynamiclibrary(DynamicLibrary* library)
 {
 	
 }
 
-DynamicLibrarySymbol PosixPlatformInterface::find_dynamic_library_symbol(DynamicLibrary* library, const char* symbol_name)
+DynamicLibrarySymbol PosixPlatformInterface::find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name)
 {
 	return 0;
 }
