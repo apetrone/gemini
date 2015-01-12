@@ -23,6 +23,7 @@
 
 #include "posix/posix_dynamiclibrary.h"
 #include "posix/posix_timer.h"
+#include "posix/posix_filesystem.h"
 
 using namespace platform;
 
@@ -89,7 +90,7 @@ Result PosixPlatformInterface::get_program_directory(char* path, size_t size)
 
 Result PosixPlatformInterface::make_directory(const char* path)
 {
-	return Result(Result::Success);
+	return posix_make_directory(path);
 }
 
 DynamicLibrary* PosixPlatformInterface::open_dynamiclibrary(const char* library_path)

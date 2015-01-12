@@ -147,13 +147,7 @@ namespace platform
 				result = Result(Result::Failure, "_mkdir failed!");
 			}
 #elif PLATFORM_LINUX || PLATFORM_APPLE
-			// http://pubs.opengroup.org/onlinepubs/009695399/functions/mkdir.html
-			status_code = mkdir(path, (S_IRUSR | S_IWUSR | S_IXUSR ) | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH);
-			if (status_code == -1)
-			{
-				// TODO: print out the errno
-				result = Result(Result::Failure, "mkdir failed!");
-			}
+			return _instance->make_directory(path);
 #endif
 			
 			return result;
