@@ -181,7 +181,7 @@ namespace gemini
 				}
 				else
 				{
-					str::copy(fullpath, path, -1);
+					str::copy(fullpath, path, 0);
 					platform::path::normalize(fullpath, MAX_PATH_SIZE);
 				}
 				result = stat(fullpath, &stFileInfo);
@@ -201,7 +201,7 @@ namespace gemini
 				}
 				else
 				{
-					str::copy(fullpath, path, -1);
+					str::copy(fullpath, path, 0);
 					platform::path::normalize(fullpath, MAX_PATH_SIZE);
 				}
 				result = stat(fullpath, &stFileInfo);
@@ -273,7 +273,7 @@ namespace gemini
 				}
 				else
 				{
-					str::copy(fullpath, filename, -1);
+					str::copy(fullpath, filename, 0);
 					platform::path::normalize(fullpath, MAX_PATH_SIZE);
 				}
 

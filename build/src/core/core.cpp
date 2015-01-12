@@ -97,7 +97,7 @@ namespace gemini
 				
 				char logdir[MAX_PATH_SIZE];
 				memset(logdir, 0, MAX_PATH_SIZE);
-				str::copy(logdir, filesystem::content_directory(), -1);
+				str::copy(logdir, filesystem::content_directory(), 0);
 				str::cat(logdir, "/" GEMINI_LOG_PATH "/");
 				platform::path::normalize(logdir, MAX_PATH_SIZE);
 				
