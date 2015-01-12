@@ -368,7 +368,8 @@ def get_libplatform(arguments, target_platform):
 	macosx.sources += [
 		"src/platform/osx/*.*",
 		"src/platform/posix/posix_dynamiclibrary.*",
-		"src/platform/posix/posix_timer.*"
+		"src/platform/posix/posix_timer.*",
+		"src/platform/posix/posix_filesystem.*"
 	]
 
 	macosx.includes += [
@@ -378,9 +379,10 @@ def get_libplatform(arguments, target_platform):
 
 	linux = libplatform.layout(platform="linux")
 	linux.sources += [
-		"src/platform/posix/posix_platform_interface.cpp",
-		"src/platform/posix/posix_dynamiclibrary.cpp",
-		"src/platform/posix/posix_timer.cpp"
+		"src/platform/posix/posix_platform_interface.*",
+		"src/platform/posix/posix_dynamiclibrary.*",
+		"src/platform/posix/posix_timer.*",
+		"src/platform/posix/posix_filesystem.*"
 	]
 
 	linux.includes += [
