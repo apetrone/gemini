@@ -20,20 +20,21 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <iostream>
-#include <platform/typedefs.h>
+#include <platform/platform.h>
+#include <core/typedefs.h>
 #include "kernel_desktop.h"
  
 int main( int argc, char ** argv )
 {
-	memory::startup();
-	kernel::parse_commandline(argc, argv);
+	platform::startup();
+	gemini::kernel::parse_commandline(argc, argv);
 	
-	kernel::Error error = kernel::NoError;
+	gemini::kernel::Error error = gemini::kernel::NoError;
 	{
-		DesktopKernel desktop_kernel( argc, argv );
-		error = kernel::main( &desktop_kernel, "TestUniversal" );
+		gemini::DesktopKernel desktop_kernel( argc, argv );
+		error = gemini::kernel::main( &desktop_kernel, "TestUniversal" );
 	}
 	
-	memory::shutdown();
+	platform::shutdown();
 	return error;
 }
