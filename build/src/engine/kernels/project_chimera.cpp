@@ -57,8 +57,6 @@
 #include <core/filesystem.h>
 #include <core/logging.h>
 
-#include "gamerules.h"
-
 #include <sdk/entity_api.h>
 #include <sdk/iengineentity.h>
 #include <sdk/model_api.h>
@@ -70,7 +68,6 @@
 #include <platform/mem.h>
 
 using namespace gemini;
-using namespace gemini::game;
 using namespace gemini::physics;
 
 #define LOCK_CAMERA_TO_CHARACTER 1
@@ -578,12 +575,7 @@ public:
 	audio::SoundSource background_source;
 	
 	bool draw_physics_debug;
-	
-	gemini::game::GameRules* gamerules;
-	gemini::game::create_gamerules_fn create_gamerules;
-	gemini::game::destroy_gamerules_fn destroy_gamerules;
-	
-	
+
 	platform::DynamicLibrary* gamelib;
 	disconnect_engine_fn disconnect_engine;
 	
@@ -601,10 +593,6 @@ public:
 		render_method = 0;
 		active_camera = &main_camera;
 		draw_physics_debug = true;
-
-		gamerules = 0;
-		create_gamerules = 0;
-		destroy_gamerules = 0;
 
 		game_interface = 0;
 	}
