@@ -115,7 +115,7 @@ TimerHandle* PosixPlatformInterface::create_timer()
 
 void PosixPlatformInterface::destroy_timer(TimerHandle* timer)
 {
-	return posix_destroy_timer(timer);
+	posix_destroy_timer(timer);
 }
 
 double PosixPlatformInterface::get_timer_msec(TimerHandle* timer)
@@ -125,5 +125,5 @@ double PosixPlatformInterface::get_timer_msec(TimerHandle* timer)
 
 void PosixPlatformInterface::get_current_datetime(DateTime& datetime)
 {
-	return posix_get_date_time(datetime);
+	posix_get_date_time(datetime);
 }

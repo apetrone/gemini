@@ -60,7 +60,7 @@ namespace platform
 	void posix_get_date_time(DateTime& datetime)
 	{
 		// this code is from cplusplus.com
-		struct tm * timeinfo;
+		struct tm* timeinfo;
 		time_t rawtime;
 		
 		time(&rawtime);

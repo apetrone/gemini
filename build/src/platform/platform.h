@@ -30,8 +30,9 @@
 #endif
 
 #if PLATFORM_WINDOWS
-	#define WIN32_LEAN_AND_MEAN 1
-#include <windows.h>
+	// see if we still need these here...
+//	#define WIN32_LEAN_AND_MEAN 1
+//	#include <windows.h>
 	#define MAX_PATH_SIZE MAX_PATH
 	#define PATH_SEPARATOR '\\'
 	#define PATH_SEPARATOR_STRING "\\"

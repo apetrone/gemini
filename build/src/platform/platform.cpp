@@ -56,6 +56,9 @@
 #elif PLATFORM_APPLE
 	#include "osx/osx_platform_interface.h"
 	typedef OSXPlatformInterface PlatformInterface;
+#elif PLATFORM_WINDOWS
+	#include "windows/win32_platform_interface.h"
+	typedef Win32PlatformInterface PlatformInterface;
 #else
 	#error Platform not implemented!
 #endif
@@ -91,31 +94,8 @@ namespace platform
 	
 	Result program_directory(char* path, size_t size)
 	{
-#if PLATFORM_WINDOWS
-		Result error(Result::Success);
-		int result = 0;
-		char* sep;
-		result = GetModuleFileNameA(GetModuleHandleA(0), path, size);
-		if (result == 0)
-		{
-			error.status = platform::Result::Failure;
-			error.message = "GetModuleFileNameA failed!";
-		}
-		
-		if (result != 0)
-		{
-			sep = strrchr(path, PATH_SEPARATOR);
-			
-			if (sep)
-			{
-				*sep = '\0';
-			}
-		}
-#endif
-
 		return _instance->get_program_directory(path, size);
 	}
-	
 	
 	namespace path
 	{
@@ -136,21 +116,7 @@ namespace platform
 		
 		Result make_directory(const char* path)
 		{
-			Result result(Result::Success);
-			int status_code = 0;
-			
-#if PLATFORM_WINDOWS
-			status_code = _mkdir(path);
-			if (status_code == -1)
-			{
-				// TODO: print out the errno
-				result = Result(Result::Failure, "_mkdir failed!");
-			}
-#elif PLATFORM_LINUX || PLATFORM_APPLE
 			return _instance->make_directory(path);
-#endif
-			
-			return result;
 		} // make_directory
 		
 
