@@ -473,11 +473,6 @@ public:
 			command.back += (joystick.axes[1].value/(float)input::AxisValueMaximum) * input::AxisValueMaximum;
 		}
 	}
-
-	virtual UserCommand* get_player_commands(uint8_t index, uint8_t& total_commands)
-	{
-		return 0;
-	}
 };
 
 
@@ -854,6 +849,9 @@ public:
 		command.set_button(1, right);
 		command.set_button(2, forward);
 		command.set_button(3, back);
+		
+		command.angles[0] = main_camera.pitch;
+		command.angles[1] = main_camera.yaw;
 		
 		//LOGV("command flags: %i\n", command.buttonflags);
 	

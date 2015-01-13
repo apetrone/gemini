@@ -31,7 +31,7 @@ namespace gemini
 	{
 		int sequence;
 		uint32_t buttonflags;
-		uint8_t angles[2]; // yaw and pitch
+		float angles[2]; // pitch, yaw
 		
 		UserCommand()
 		{
