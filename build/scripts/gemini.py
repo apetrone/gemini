@@ -139,9 +139,7 @@ def setup_common_libs(arguments, product):
 
 	product.sources += [
 		# dependencies
-		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c"),
-		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.c"),
-		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.h")
+		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c")
 	]
 
 	product.includes += [
@@ -149,8 +147,7 @@ def setup_common_libs(arguments, product):
 		"src/engine/audio",
 		"src/contrib",
 
-		os.path.join(DEPENDENCIES_FOLDER, "murmur3"),
-		os.path.join(DEPENDENCIES_FOLDER, "slim")
+		os.path.join(DEPENDENCIES_FOLDER, "murmur3")
 	]
 
 
@@ -409,9 +406,6 @@ def get_libcore(arguments, target_platform):
 	libcore.sources += [
 		"src/core/*.*",
 
-		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.c"),
-		os.path.join(DEPENDENCIES_FOLDER, "slim/slim/*.h"),
-
 		# include this almagamated version of jsoncpp until we replace it.
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")
 	]
@@ -423,8 +417,6 @@ def get_libcore(arguments, target_platform):
 	libcore.includes += [
 		"src",
 		"src/core",
-
-		os.path.join(DEPENDENCIES_FOLDER, "slim"),
 
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp")
 	]
