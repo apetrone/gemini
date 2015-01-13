@@ -839,49 +839,11 @@ public:
 			game_interface->physics_update(params.step_interval_seconds);
 //			background_source = audio::play(background, 1);
 		}
-		// grab state here?
-//		physics::MovementCommand command;
-//		command.time = 0;
-
-		// handle input
-//		player_controller->get_input_command(command);
-
-		// apply input
-//		player_controller->apply_command(command);
-		
-		if (active_camera)
-		{
-		
-#if LOCK_CAMERA_TO_CHARACTER && 0
-		//physics::player_move(character, *active_camera, command);
-#elif 0
-		// if you want to move JUST the camera instead...
-		active_camera->move_left(input::state()->keyboard().is_down(input::KEY_A));
-		active_camera->move_right(input::state()->keyboard().is_down(input::KEY_D));
-		active_camera->move_forward(input::state()->keyboard().is_down(input::KEY_W));
-		active_camera->move_backward(input::state()->keyboard().is_down(input::KEY_S));
-		active_camera->update_view();
-#endif
-	
-		
-		}
-		
-//		if (active_camera)
-//		{
-//			float joystick_sensitivity = 20;
-//			active_camera->move_view(
-//				joystick_sensitivity*input::state()->joystick(0).axes[2].normalized_value,
-//				joystick_sensitivity*input::state()->joystick(0).axes[3].normalized_value
-//			);
-//			
-//			active_camera->update_view();
-//		}
 
 		if (draw_physics_debug)
 		{
 			physics::debug_draw();
 		}
-
 
 		debugdraw::axes(glm::mat4(1.0), 1.0f);
 		int x = 10;
@@ -922,14 +884,6 @@ public:
 		{
 			//player->world_transform = char_mat;
 		}
-
-//		if (active_camera)
-//		{
-//			assert(active_camera != nullptr);
-//			render_method->render_frame(entity_manager.get_entity_list(), *active_camera, params);
-//		}
-
-		// run client frame
 	}
 	
 	virtual void shutdown( kernel::Params & params )
