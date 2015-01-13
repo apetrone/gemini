@@ -25,6 +25,8 @@
 
 namespace gemini
 {
+	struct UserCommand;
+
 	// Describes the interface exposed to the engine from the game.
 	class IGameInterface
 	{
@@ -40,9 +42,11 @@ namespace gemini
 		// called on level change
 		virtual void level_load() = 0;
 		
+		// called before physics update to process latest input
+		virtual void process_commands(uint8_t player_index, UserCommand* commands, uint8_t total_commands) = 0;
+		
 		// the physics_update functions are synced with the physics
 		// simulation. the default rate is 1/60 second.
-				
 		// called when physics simulation should run
 		virtual void physics_update(float delta_seconds) = 0;
 		

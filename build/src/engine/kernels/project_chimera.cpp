@@ -474,6 +474,10 @@ public:
 		}
 	}
 
+	virtual UserCommand* get_player_commands(uint8_t index, uint8_t& total_commands)
+	{
+		return 0;
+	}
 };
 
 
@@ -834,8 +838,34 @@ public:
 
 	virtual void step( kernel::Params & params )
 	{
+	
+		
+	
+	
+		UserCommand command;
+		
+		// attempt to sample input here -- may need to be moved.
+		bool left = input::state()->keyboard().is_down(input::KEY_A);
+		bool right = input::state()->keyboard().is_down(input::KEY_D);
+		bool forward = input::state()->keyboard().is_down(input::KEY_W);
+		bool back = input::state()->keyboard().is_down(input::KEY_S);
+		
+		command.set_button(0, left);
+		command.set_button(1, right);
+		command.set_button(2, forward);
+		command.set_button(3, back);
+		
+		//LOGV("command flags: %i\n", command.buttonflags);
+	
+	
+	
+	
 		if (game_interface)
 		{
+			// loop through all players and process inputs
+			game_interface->process_commands(0, &command, 1);
+		
+		
 			game_interface->physics_update(params.step_interval_seconds);
 //			background_source = audio::play(background, 1);
 		}
