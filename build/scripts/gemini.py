@@ -4,7 +4,8 @@ import logging
 from pegasus.models import Product, ProductType, Dependency
 
 DEPENDENCIES_FOLDER = "dependencies"
-SDKS_FOLDER = "dependencies/sdks"
+SDKS_FOLDER = os.path.join(DEPENDENCIES_FOLDER, "sdks")
+
 DESKTOP = ["macosx", "linux", "windows"]
 #BLACKSMITH_PATH = "../tools/blacksmith/blacksmith.py"
 COMMON_PRODUCT_ROOT = "bin/${CONFIGURATION}_${ARCHITECTURE}"
@@ -257,10 +258,14 @@ def get_tools(target_platform, libplatform, libcore):
 		"x86_64": "x64",
 		"x86": "x86"
 	}
+	windows_arch_map = {
+		"x86_64": "x64",
+		"x86" : "x86"
+	}
 	libfbx_roots = {
 		"macosx": "lib/clang/${CONFIGURATION}",
 		"linux": "lib/gcc4/x64/${CONFIGURATION}",
-		"windows": "lib/vs2013/${ARCHITECTURE}/${CONFIGURATION}"
+		"windows": "lib/vs2013/x64/${CONFIGURATION}" # TODO: bugger fix this!
 	}
 	libfbx_names = {
 		"macosx": "libfbxsdk",

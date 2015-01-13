@@ -44,8 +44,8 @@ def products(arguments, **kwargs):
 		# need to use its own folder due to line endings
 		# until I move that to a better solution
 		ovr.root = os.path.join(SDK_ROOT, "oculussdk_%s_windows" % LIBOVR_VERSION)
-		ovr.name = "libovr"
-		ovr.product_root = "LibOVR/Lib/Win32/VS2013"
+		ovr.name = "libovr64d" # use libovr/d or libovr64/d
+		ovr.product_root = "LibOVR/Lib/x64/VS2013" # use Win32 or x64 for platform
 	else:
 		ovr.root = os.path.join(SDK_ROOT, "oculussdk_%s" % LIBOVR_VERSION)
 		ovr.product_root = "LibOVR/Lib/%(platform)s/%(title_configuration)s%(architecture)s" % vars
