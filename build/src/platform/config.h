@@ -55,6 +55,8 @@
 		#define PLATFORM_COMPILER_VERSION "Unknown version of msvc"
 	#endif
 	#define PLATFORM_FANCY_FUNCTION __FUNCSIG__
+#else
+	#error Unknown compiler!
 #endif
 
 // Define the following macros for this platform:
@@ -106,7 +108,7 @@
 		#define PLATFORM_MACOSX 1
 	#endif
 #elif __ANDROID__
-	#define PLATFORM_NAME "Android"
+	#define PLATFORM_NAME "android"
 	#define PLATFORM_ANDROID 1
 	#define PLATFORM_IS_MOBILE 1
 #else
