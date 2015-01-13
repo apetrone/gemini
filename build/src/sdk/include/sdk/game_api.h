@@ -46,8 +46,9 @@ namespace gemini
 		// called when physics simulation should run
 		virtual void physics_update(float delta_seconds) = 0;
 		
-		// called for each tick (frame) of the engine
-		virtual void tick() = 0;
+		// called each tick of the engine
+		virtual void server_frame() = 0;
+		virtual void client_frame() = 0;
 	}; // GameInterface
 	
 	

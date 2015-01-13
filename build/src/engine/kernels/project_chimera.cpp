@@ -864,8 +864,12 @@ public:
 		// run server frame
 		if (game_interface)
 		{
-			game_interface->tick();
+			game_interface->server_frame();
+						
+			game_interface->client_frame();
 		}
+		
+		
 	
 		if (device)
 		{
