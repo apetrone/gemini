@@ -19,11 +19,9 @@
 // FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
-#include "win32_platform_interface.h"
 
-//#include "Win32/Win32_dynamiclibrary.h"
-//#include "Win32/Win32_timer.h"
-//#include "Win32/Win32_filesystem.h"
+#include "mem.h"
+#include "win32_platform_interface.h"
 
 #define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
@@ -106,7 +104,7 @@ Result Win32PlatformInterface::make_directory(const char* path)
 DynamicLibrary* Win32PlatformInterface::open_dynamiclibrary(const char* library_path)
 {
 	Win32DynamicLibrary* library = CREATE(Win32DynamicLibrary);
-	library->handle = LoadModuleA(library_path);
+	library->handle = LoadLibraryA(library_path);
 	return library;
 }
 
@@ -114,7 +112,7 @@ void Win32PlatformInterface::close_dynamiclibrary(DynamicLibrary* library)
 {
 	Win32DynamicLibrary* instance = static_cast<Win32DynamicLibrary*>(library);
 	FreeLibrary(instance->handle);
-	DESTROY(DynamicLibrary, instance);
+	DESTROY(Win32DynamicLibrary, instance);
 }
 
 DynamicLibrarySymbol Win32PlatformInterface::find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name)
@@ -133,7 +131,7 @@ TimerHandle* Win32PlatformInterface::create_timer()
 void Win32PlatformInterface::destroy_timer(TimerHandle* timer)
 {
 	Win32Timer* instance = static_cast<Win32Timer*>(timer);
-	DELETE(TimerHandle, instance);
+	DESTROY(Win32Timer, instance);
 }
 
 double Win32PlatformInterface::get_timer_msec(TimerHandle* timer)

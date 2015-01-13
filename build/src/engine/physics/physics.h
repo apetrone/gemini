@@ -33,7 +33,7 @@ namespace gemini
 {
 	namespace assets
 	{
-		class Mesh;
+		struct Mesh;
 	}
 	
 	namespace physics

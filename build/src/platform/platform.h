@@ -33,7 +33,7 @@
 	// see if we still need these here...
 //	#define WIN32_LEAN_AND_MEAN 1
 //	#include <windows.h>
-	#define MAX_PATH_SIZE MAX_PATH
+	#define MAX_PATH_SIZE 260
 	#define PATH_SEPARATOR '\\'
 	#define PATH_SEPARATOR_STRING "\\"
 #elif PLATFORM_LINUX || PLATFORM_APPLE || PLATFORM_ANDROID
@@ -89,10 +89,17 @@ namespace platform
 		void make_directories(const char* normalized_path);
 	} // namespace path
 	
-	struct DynamicLibrary {};
+	struct DynamicLibrary
+	{
+		virtual ~DynamicLibrary() {}
+	};
+
 	typedef void* DynamicLibrarySymbol;
 	
-	struct TimerHandle {};
+	struct TimerHandle
+	{
+		virtual ~TimerHandle() {}
+	};
 	
 	
 	struct DateTime

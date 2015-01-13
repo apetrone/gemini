@@ -56,7 +56,7 @@ class btCollisionWorld;
 class btCollisionDispatcher;
 class btPairCachingGhostObject;
 
-class Camera;
+struct Camera;
 
 #include <sdk/experimental_api.h>
 

@@ -20,14 +20,16 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <iostream>
-#include <platform/typedefs.h>
+#include <platform/platform.h>
 #include "kernel_desktop.h"
  
 #include <windows.h>
 
+using namespace gemini;
+
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR commandline, int show)
 {
-	memory::startup();
+	platform::startup();
 	// TODO: parse the LPSTR commandline
 	char *argv[] = { "-game", "C:\\Users\\apetrone\\dev\\games" };
 	kernel::parse_commandline(2, argv);
@@ -44,6 +46,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR commandlin
 		error = kernel::main( &desktop_kernel, "TestUniversal" );
 	}
 	
-	memory::shutdown();
+	platform::shutdown();
 	return (int)error;
 }
