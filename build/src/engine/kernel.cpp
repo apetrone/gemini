@@ -520,7 +520,7 @@ namespace gemini
 				_active_application->step( _kernel->parameters() );
 				
 				// step debug draw
-				debugdraw::update(_kernel->parameters().step_interval_seconds);
+//				debugdraw::update(_kernel->parameters().step_interval_seconds);
 			}
 		} // update
 

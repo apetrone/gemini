@@ -256,7 +256,7 @@ namespace gemini
 		}
 	}
 	
-	void DebugDrawInterface::render(const glm::mat4 & modelview, const glm::mat4 & projection, int x, int y, int viewport_width, int viewport_height)
+	void DebugDrawInterface::render(const glm::mat4& modelview, const glm::mat4& projection, int x, int y, int viewport_width, int viewport_height)
 	{
 		
 		unsigned int attribs = 0;
