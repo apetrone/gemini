@@ -45,7 +45,7 @@ namespace input
 			else
 			{
 				state |= 1;
-				state |= 8;
+				state |= Button_Impulse;
 			}
 		}
 		else
@@ -54,42 +54,57 @@ namespace input
 			state &= ~1;
 			
 			// set 'released' and 'impulse' flag
-			state |= 12;
+			state |= Button_Impulse | Button_Released;
 		}
 	} // press_release
 	
 	void ButtonState::update()
 	{
 		// impulse flag
-		if ( state & 8 )
+		if ( state & Button_Impulse )
 		{
-			if ( state & 1 ) // button down this update
+			if ( state & Button_IsDown ) // button down this update
 			{
 //				LOGV( "button %i is down\n", i );
 			}
-			else if ( state & 4 ) // button released this update
+			else if ( state & Button_Released ) // button released this update
 			{
 //				LOGV( "button %i is released\n", i );
-				state &= ~1;
+				state &= ~Button_IsDown;
 			}
 		}
 		else
 		{
-			if ( state & 1 ) // button held
+			if ( state & Button_IsDown ) // button held
 			{
-				state |= 2;
+				state |= Button_Held;
 			}
-			else if ( state & 4 ) // button released last update
+			else if ( state & Button_Released ) // button released last update
 			{
-				state &= ~4;
-				state &= ~2;
-				state &= ~1;
+				state &= ~Button_Released;
+				state &= ~Button_Held;
+				state &= ~Button_IsDown;
 			}
 		}
 		
 		// clear impulse flag
-		state &= ~8;
+		state &= ~Button_Impulse;
 	} // update
+	
+	bool ButtonState::is_down() const
+	{
+		return (state & Button_Held);
+	}
+	
+	bool ButtonState::was_pressed() const
+	{
+		return (state == (Button_Impulse|Button_IsDown));
+	}
+	
+	bool ButtonState::was_released() const
+	{
+		return (state == (Button_Impulse|Button_Released));
+	}
 	
 	void startup( void )
 	{

@@ -211,6 +211,14 @@ namespace input
 	const uint8_t MAX_JOYSTICK_AXES = 6;
 	const uint8_t MAX_JOYSTICKS = 8;
 	
+	enum ButtonStateFlags
+	{
+		Button_IsDown 	= 1,
+		Button_Held 	= 2,
+		Button_Released = 4,
+		Button_Impulse 	= 8,
+	};
+	
 	struct ButtonState
 	{
 		unsigned char state : 4;
@@ -220,6 +228,15 @@ namespace input
 		
 		// update this button state for this frame
 		void update();
+		
+		// returns whether the button is down or not this frame
+		bool is_down() const;
+		
+		// returns whether or not the button was just pressed
+		bool was_pressed() const;
+		
+		// returns whether or not the button was just released
+		bool was_released() const;
 	}; // ButtonState
 	
 	const int16_t AxisValueMinimum = SHRT_MIN;
