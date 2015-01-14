@@ -300,7 +300,7 @@ public:
 		render_scene_from_camera(entity_list, camera, scenelink);
 	
 		{
-			debugdraw::update(params.framedelta_filtered_msec);
+			debugdraw::update(params.framedelta_filtered_msec*.001f);
 			debugdraw::render(camera.matCam, camera.matProj, 0, 0, params.render_width, params.render_height);
 		}
 	}

@@ -20,9 +20,8 @@
 // DEALINGS IN THE SOFTWARE.
 // -------------------------------------------------------------
 #include <core/typedefs.h>
-//#include <core/logging.h>
 
-#include <sdk/physics_api.h>
+
 #include "physics_interface.h"
 
 #include "BulletCollision/CollisionDispatch/btGhostObject.h"
@@ -37,13 +36,15 @@
 
 #include <sdk/engine_api.h>
 #include <sdk/model_api.h>
-
+#include <sdk/physics_api.h>
 
 #include "bullet/bullet_charactercontroller.h"
 
+#include "physics_common.h"
+
 using namespace gemini;
 using namespace gemini::physics::bullet;
-
+using gemini::physics::RaycastInfo;
 
 #include "input.h"
 
@@ -389,8 +390,9 @@ namespace gemini
 			BulletCollisionShape* bullet_shape = static_cast<BulletCollisionShape*>(shape);
 			assert(bullet_shape != 0);
 			
+			int flags = btCollisionObject::CF_NO_CONTACT_RESPONSE | GHOST_OBJECT | STATIC_OBJECT;
 			ghost->setCollisionShape(bullet_shape->get_shape());
-			ghost->setCollisionFlags(ghost->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
+			ghost->setCollisionFlags(flags);
 			
 			btTransform tr;
 			tr.setIdentity();
@@ -449,6 +451,41 @@ namespace gemini
 		{
 			bullet::step(delta_seconds);
 		}
-		
+
+		RaycastInfo PhysicsInterface::raycast(ICollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance)
+		{
+			glm::vec3 destination = start + (direction * max_distance);
+			btVector3 ray_start(start.x, start.y, start.z);
+			btVector3 ray_end(destination.x, destination.y, destination.z);
+
+			BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(ignored_object);
+			btCollisionObject* obj = bullet_object->get_collision_object();
+
+			ClosestNotMeRayResultCallback callback(obj);
+			bullet::get_world()->rayTest(ray_start, ray_end, callback);
+			
+			RaycastInfo info;
+			
+			
+			if (callback.hasHit())
+			{
+				info.hit = start + (destination * callback.m_closestHitFraction);
+				info.object = static_cast<ICollisionObject*>(callback.m_collisionObject->getUserPointer());
+
+				LOGV("fraction: %2.2f\n", callback.m_closestHitFraction);
+
+				if (callback.m_collisionObject->getCollisionFlags() & btCollisionObject::CF_STATIC_OBJECT)
+				{
+					LOGV("hit: %g (static object)\n", callback.m_closestHitFraction);
+				}
+				else
+				{
+					LOGV("hit: %g (dynamic object)\n", callback.m_closestHitFraction);
+				}
+			}
+			
+			// should probably return a structure with data regarding the hit?
+			return info;
+		}
 	} // namespace physics
 } // namespace gemini

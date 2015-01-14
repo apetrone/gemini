@@ -125,7 +125,7 @@ namespace gemini
 			
 			virtual void step_simulation(float delta_seconds) = 0;
 			
-//			RaycastInfo raycast(ICollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
+			virtual RaycastInfo raycast(ICollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance) = 0;
 		};
 
 		

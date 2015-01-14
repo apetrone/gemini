@@ -21,12 +21,20 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <core/logging.h>
+
 // This _should_ only be included in files that have ALREADY
 // included Bullet. It's not meant to be included outright.
 namespace gemini
 {
 	namespace physics
 	{
+		enum ObjectType
+		{
+			STATIC_OBJECT = 1,
+			GHOST_OBJECT = 512
+		};
+	
 		///@todo Interact with dynamic objects,
 		///Ride kinematicly animated platforms properly
 		///More realistic (or maybe just a config option) falling
@@ -35,22 +43,47 @@ namespace gemini
 		///Support ducking
 		class ClosestNotMeRayResultCallback : public btCollisionWorld::ClosestRayResultCallback
 		{
+			bool ignore_ghosts;
+			bool ignore_static;
+			
 		public:
-			ClosestNotMeRayResultCallback (btCollisionObject* me) : btCollisionWorld::ClosestRayResultCallback(btVector3(0.0, 0.0, 0.0), btVector3(0.0, 0.0, 0.0))
+			ClosestNotMeRayResultCallback (btCollisionObject* me, bool ignore_ghost_objects = false, bool ignore_static_objects = false) :
+				btCollisionWorld::ClosestRayResultCallback(btVector3(0.0, 0.0, 0.0), btVector3(0.0, 0.0, 0.0)),
+				ignore_ghosts(ignore_ghost_objects),
+				ignore_static(ignore_static_objects)
+				
 			{
 				m_me = me;
 			}
 			
+			virtual bool needsCollision(btBroadphaseProxy* proxy) const
+			{
+				return true;
+			}
+			
 			virtual btScalar addSingleResult(btCollisionWorld::LocalRayResult& rayResult, bool normalInWorldSpace)
 			{
+//				LOGV("testing result\n");
+				
 				if (rayResult.m_collisionObject == m_me)
 				{
+//					LOGV("ignoring me\n");
+					return btScalar(1.0);
+				}
+
+				bool has_static = rayResult.m_collisionObject->getCollisionFlags() & STATIC_OBJECT;
+				bool has_ghost = rayResult.m_collisionObject->getCollisionFlags() & GHOST_OBJECT;
+				
+				if (ignore_ghosts && !rayResult.m_collisionObject->hasContactResponse() && has_ghost)
+				{
+//					LOGV("ignoring ghost\n");
 					return btScalar(1.0);
 				}
 				
-				if (!rayResult.m_collisionObject->hasContactResponse())
+
+				if (ignore_static && has_static && !has_ghost)
 				{
-					return btScalar(1.0);
+					return btScalar(1.0f);
 				}
 				
 				return ClosestRayResultCallback::addSingleResult (rayResult, normalInWorldSpace);

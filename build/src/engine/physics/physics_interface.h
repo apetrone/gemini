@@ -33,8 +33,7 @@
 namespace gemini
 {
 	namespace physics
-	{
-		
+	{		
 		class PhysicsInterface : public IPhysicsInterface
 		{
 		private:
@@ -58,6 +57,8 @@ namespace gemini
 			virtual void destroy_player_controller(IPlayerController* controller);
 			
 			virtual void step_simulation(float delta_seconds);
+			
+			virtual RaycastInfo raycast(ICollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
 		};
 
 	} // namespace physics
