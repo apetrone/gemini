@@ -192,16 +192,7 @@ namespace input
 		KEYMOD_SHIFT = 2,
 		KEYMOD_CONTROL = 4,
 	};
-	
-	// This is a similar pattern to that found in Quake. I find it very logical to determining input state.
-	enum
-	{
-		ISB_ISDOWN = 1,			// isDown this update
-		ISB_WASDOWN = 2,		// wasDown last update
-		ISB_JUST_RELEASED = 4,	// released this update
-		ISB_IMPULSE = 8			// impulse flag; if set, isDown or released happened this update
-	};
-	
+		
 	#define MAX_INPUTSTATE_KEYS 320
 	#define MAX_INPUTSTATE_BUTTONS 8
 	#define MAX_INPUTSTATE_TOUCHES 10
@@ -211,6 +202,7 @@ namespace input
 	const uint8_t MAX_JOYSTICK_AXES = 6;
 	const uint8_t MAX_JOYSTICKS = 8;
 	
+	// This is a similar pattern to that found in Quake. I find it very logical to determining input state.
 	enum ButtonStateFlags
 	{
 		Button_IsDown 	= 1,

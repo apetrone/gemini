@@ -38,20 +38,20 @@ namespace input
 		if ( is_down )
 		{
 			// this button was down last update, too
-			if ( state & 1 )
+			if ( state & Button_IsDown )
 			{
-				state |= 2;
+				state |= Button_Held;
 			}
 			else
 			{
-				state |= 1;
+				state |= Button_IsDown;
 				state |= Button_Impulse;
 			}
 		}
 		else
 		{
 			// remove 'isDown' flag
-			state &= ~1;
+			state &= ~Button_IsDown;
 			
 			// set 'released' and 'impulse' flag
 			state |= Button_Impulse | Button_Released;
@@ -63,13 +63,8 @@ namespace input
 		// impulse flag
 		if ( state & Button_Impulse )
 		{
-			if ( state & Button_IsDown ) // button down this update
+			if ( state & Button_Released ) // button released this update
 			{
-//				LOGV( "button %i is down\n", i );
-			}
-			else if ( state & Button_Released ) // button released this update
-			{
-//				LOGV( "button %i is released\n", i );
 				state &= ~Button_IsDown;
 			}
 		}
@@ -151,47 +146,24 @@ namespace input
 	{
 		input::Button button = (input::Button)key;
 		assert( button <= KEY_COUNT );
-		
-		ButtonState * b = &this->keys[ button ];
-		if ( is_down )
-		{
-			// this button was down last update, too		
-			if ( b->state & 1 )
-			{
-				b->state |= 2;
-			}
-			else
-			{
-				b->state |= 1;
-				b->state |= 8;
-			}
-		}
-		else
-		{
-			// remove 'isDown' flag
-			b->state &= ~1;
-			
-			// set 'released' and 'impulse' flag
-			b->state |= 12;
-		}
-		
+		ButtonState* b = &this->keys[ button ];
+		b->press_release(is_down);
 	} // inject_key_event
 	
 	bool KeyboardInput::is_down(input::Button key)
 	{
-		ButtonState * b;
+		ButtonState* b;
 		assert( key < KEY_COUNT );
 		b = &keys[ key ];
-		return (b->state & 1);
+		return b->is_down();
 	} // is_down
 	
 	bool KeyboardInput::was_released(input::Button key )
 	{
-		ButtonState * b;
+		ButtonState* b;
 		assert( key < KEY_COUNT );		
 		b = &keys[ key ];
-		// WAS down and NOT down now
-		return (b->state & 2) && !(b->state & 1);
+		return b->was_released();
 	} // was_released
 	
 	//
@@ -234,14 +206,14 @@ namespace input
 	bool MouseInput::is_down( input::MouseButton button )
 	{
 		assert( button < MOUSE_COUNT && button >= 0 );
-		return buttons[ button ].state & 1;
+		return buttons[ button ].is_down();
 	} // is_down
 	
 	bool MouseInput::was_released( input::MouseButton button )
 	{
 		assert( button < MOUSE_COUNT && button >= 0 );
 		// WAS down and NOT down now
-		return (buttons[ button ].state & 2) && !(buttons[ button ].state & 1 );
+		return buttons[button].was_released();
 	} // was_released
 	
 	void MouseInput::last_mouse_position( int & x, int & y )
