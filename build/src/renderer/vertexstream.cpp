@@ -70,6 +70,14 @@ namespace gemini
 			last_vertex = 0;
 			last_index = 0;
 			highest_index = 0;
+			
+			// I'm not sure we WANT to reset the vertexbuffer each time
+			// we reset the stream -- in this fashion.
+			if (vertexbuffer)
+			{
+				vertexbuffer->index_count = 0;
+				vertexbuffer->vertex_count = 0;
+			}
 		} // reset
 
 		void VertexStream::dealloc()
