@@ -22,7 +22,7 @@
 #include <core/typedefs.h>
 #include <core/logging.h>
 
-#include <renderer/debugdraw.h>
+#include "debugdraw.h"
 
 #include "scene_graph.h"
 #include "skeletalnode.h"

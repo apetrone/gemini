@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <core/logging.h>
 #include <core/mathlib.h>
-#include <renderer/debugdraw.h>
+#include "debugdraw.h"
 #include "input.h"
 #include <renderer/renderer.h>
 #include <renderer/renderstream.h>
@@ -56,6 +56,7 @@
 
 #include <core/filesystem.h>
 #include <core/logging.h>
+#include <core/ringbuffer.h>
 
 #include <sdk/entity_api.h>
 #include <sdk/iengineentity.h>
@@ -63,6 +64,7 @@
 #include <sdk/engine_api.h>
 #include <sdk/game_api.h>
 #include <sdk/experimental_api.h>
+#include <sdk/debugdraw_api.h>
 #include <sdk/shared.h>
 
 #include <platform/mem.h>
@@ -272,6 +274,7 @@ public:
 
 	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Params& params, const glm::vec3& origin, const glm::vec2& view_angles)
 	{
+		
 	
 		RenderStream rs;
 		rs.add_cullmode(renderer::CullMode::CULLMODE_BACK);
@@ -297,6 +300,7 @@ public:
 		render_scene_from_camera(entity_list, camera, scenelink);
 	
 		{
+			//debugdraw::update(params.framedelta_filtered_msec);
 			debugdraw::render(camera.matCam, camera.matProj, 0, 0, params.render_width, params.render_height);
 		}
 	}
@@ -512,6 +516,7 @@ public:
 	virtual IPhysicsInterface* physics() { return physics_interface; }
 	virtual IExperimental* experiment() { return experimental_interface; }
 	virtual gemini::core::logging::ILog* log() { return gemini::core::log::instance(); }
+	virtual gemini::IDebugDraw* debugdraw() { return debugdraw::instance(); }
 	
 	virtual void* allocate(size_t bytes)
 	{
@@ -557,6 +562,7 @@ public kernel::IEventListener<kernel::SystemEvent>,
 public kernel::IEventListener<kernel::GameControllerEvent>
 {
 
+
 public:
 	DECLARE_APPLICATION(ProjectChimera);
 
@@ -584,6 +590,8 @@ public:
 		
 	IEngineInterface* engine_interface;
 	IGameInterface* game_interface;
+
+	core::RingBuffer<UserCommand, 32> client_commands;
 
 public:
 	ProjectChimera()
@@ -626,6 +634,7 @@ public:
 			else if (event.key == input::KEY_P)
 			{
 				draw_physics_debug = !draw_physics_debug;
+				LOGV("draw_physics_debug = %s\n", draw_physics_debug?"ON":"OFF");
 			}
 		}
 	}
@@ -846,6 +855,8 @@ public:
 		command.set_button(2, forward);
 		command.set_button(3, back);
 		
+		command.set_button(5, input::state()->keyboard().is_down(input::KEY_E));
+		
 		command.angles[0] = main_camera.pitch;
 		command.angles[1] = main_camera.yaw;
 		
@@ -868,8 +879,11 @@ public:
 		{
 			physics::debug_draw();
 		}
+	}
 
-		debugdraw::axes(glm::mat4(1.0), 1.0f);
+	virtual void tick( kernel::Params & params )
+	{
+//		debugdraw::axes(glm::mat4(1.0), 1.0f);
 		int x = 10;
 		int y = params.render_height - 50 - params.titlebar_height;
 		if (active_camera)
@@ -881,10 +895,8 @@ public:
 		}
 		debugdraw::text(x, y+48, core::str::format("frame delta = %2.2fms\n", params.framedelta_filtered_msec), Color(255, 255, 255));
 		debugdraw::text(x, y+60, core::str::format("# allocations = %i, total %i Kbytes\n", platform::memory::allocator().total_allocations(), platform::memory::allocator().total_bytes()/1024), Color(64, 102, 192));
-	}
-
-	virtual void tick( kernel::Params & params )
-	{
+		
+	
 		// run server frame
 		if (game_interface)
 		{
@@ -893,7 +905,7 @@ public:
 			game_interface->client_frame();
 		}
 		
-		
+
 	
 		if (device)
 		{
@@ -923,13 +935,6 @@ public:
 			vr::destroy_device(device);
 		}
 		vr::shutdown();
-		
-		
-//		if (destroy_gamerules)
-//		{
-//			destroy_gamerules(gamerules);
-//		}
-		
 		
 		if (game_interface)
 		{

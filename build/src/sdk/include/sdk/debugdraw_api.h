@@ -21,58 +21,29 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <stdint.h>
 #include <core/interface.h>
-
-#include <core/mathlib.h>
+#include <core/color.h>
 
 namespace gemini
 {
-	class IEntityManager;
-	class IModelInterface;
-	
-	namespace core
-	{
-		namespace logging
-		{
-			class ILog;
-		}
-	}
-	
-	namespace physics
-	{
-		class IPhysicsInterface;
-	}
-	
-	class IDebugDraw;
-	
-	class IExperimental;
+	const float DEBUGDRAW_MIN_DURATION_MSEC = 0.1;
 
-	class IEngineInterface
+	class IDebugDraw
 	{
 	public:
-		virtual ~IEngineInterface() {};
+		virtual ~IDebugDraw() {};
 
-		// systems
-		virtual IEntityManager* entities() = 0;
-		virtual IModelInterface* models() = 0;
-		virtual physics::IPhysicsInterface* physics() = 0;
-		virtual IExperimental* experiment() = 0;
-		virtual core::logging::ILog* log() = 0;
-		virtual IDebugDraw* debugdraw() = 0;
-		
-		// memory hooks
-		virtual void* allocate(size_t bytes) = 0;
-		virtual void deallocate(void* pointer) = 0;
-		
-		virtual void render_view(const glm::vec3& origin, const glm::vec2& view_angles) = 0;
-//		virtual void render_view_from_entity(int32_t entity_index) = 0;
-
-		virtual void get_view_angles(glm::vec2& view_angles) = 0;
+		virtual void axes(const glm::mat4& transform, float length, float duration = DEBUGDRAW_MIN_DURATION_MSEC) = 0;
+		virtual void box(const glm::vec3& mins, const glm::vec3& maxs, const Color& color, float duration = DEBUGDRAW_MIN_DURATION_MSEC) = 0;
+		virtual void point(const glm::vec3& pt, const Color& color, float size = 2.0, float duration = DEBUGDRAW_MIN_DURATION_MSEC) = 0;
+		virtual void line(const glm::vec3& start, const glm::vec3& end, const Color& color, float duration = DEBUGDRAW_MIN_DURATION_MSEC) = 0;
+		virtual void sphere(const glm::vec3& center, const Color& color, float radius = 2.0, float duration = DEBUGDRAW_MIN_DURATION_MSEC) = 0;
+		virtual void text(int x, int y, const char* string, const Color& color, float duration = 0) = 0;
 	};
 	
-	namespace engine
+	namespace debugdraw
 	{
-		typedef Interface<IEngineInterface> api;
-	}
+		static Interface<IDebugDraw> instance;
+	} // namespace debugdraw
+	
 } // namespace gemini

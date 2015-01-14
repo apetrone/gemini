@@ -24,7 +24,7 @@
 
 #include <core/logging.h>
 #include <core/color.h>
-#include <renderer/debugdraw.h>
+#include "debugdraw.h"
 
 #define BTVECTOR3_TO_VEC3( v ) glm::vec3( v.x(), v.y(), v.z() )
 

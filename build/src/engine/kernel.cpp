@@ -36,10 +36,13 @@
 #include "assets.h"
 #include <renderer/font.h>
 
-#include <renderer/debugdraw.h>
+#include "debugdraw.h"
 #include "physics/physics.h"
 #include "hotloading.h"
 
+
+
+#include "debugdraw_interface.h"
 
 #if PLATFORM_LINUX
 	#include <stdlib.h> // for qsort

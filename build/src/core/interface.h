@@ -38,6 +38,18 @@ namespace gemini
 		{
 			_interface = instance;
 		}
+		
+		// act like a functor
+		InterfaceType* operator()()
+		{
+			return Interface<InterfaceType>::_interface;
+		}
+		
+		// handle assignment from pointer type
+		void operator=(InterfaceType* const pointer)
+		{
+			_interface = pointer;
+		}
 	};
 	
 	template <class InterfaceType>
