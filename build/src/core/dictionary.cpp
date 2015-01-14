@@ -25,7 +25,7 @@
 #include <core/str.h>
 #include <core/mathlib.h>
 
-#include "keyvalues.h"
+#include "dictionary.h"
 
 namespace gemini
 {

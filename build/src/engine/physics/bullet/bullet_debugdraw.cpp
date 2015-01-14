@@ -23,7 +23,7 @@
 #include "bullet_debugdraw.h"
 
 #include <core/logging.h>
-#include <renderer/color.h>
+#include <core/color.h>
 #include <renderer/debugdraw.h>
 
 #define BTVECTOR3_TO_VEC3( v ) glm::vec3( v.x(), v.y(), v.z() )

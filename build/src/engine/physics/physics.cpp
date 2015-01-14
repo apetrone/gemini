@@ -26,7 +26,7 @@
 #include "physics.h"
 #include <btBulletDynamicsCommon.h>
 #include "physics_common.h"
-#include <renderer/color.h>
+#include <core/color.h>
 #include <renderer/debugdraw.h>
 
 #include "bullet/bullet_charactercontroller.h"

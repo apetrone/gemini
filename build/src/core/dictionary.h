@@ -22,7 +22,7 @@
 #pragma once
 
 
-#include <renderer/color.h>
+#include <core/color.h>
 
 namespace gemini
 {
@@ -137,5 +137,12 @@ namespace gemini
 				return value;
 			}
 		}; // KeyValues
+		
+		
+		class Dictionary
+		{
+		public:
+			virtual ~Dictionary() {}
+		};
 	} // namespace core
 } // namespace gemini

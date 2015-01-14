@@ -26,7 +26,7 @@
 
 #include <core/mathlib.h> // for glm
 
-#include <renderer/color.h>
+#include <core/color.h>
 
 namespace gemini
 {

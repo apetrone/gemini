@@ -26,7 +26,7 @@
 #include <platform/mem.h>
 #include <core/util.h>
 
-#include <renderer/color.h>
+#include <core/color.h>
 #include <core/mathlib.h>
 #include "keyframechannel.h"
 #include <renderer/render_utilities.h>

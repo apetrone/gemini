@@ -833,10 +833,6 @@ public:
 
 	virtual void step( kernel::Params & params )
 	{
-	
-		
-	
-	
 		UserCommand command;
 		
 		// attempt to sample input here -- may need to be moved.

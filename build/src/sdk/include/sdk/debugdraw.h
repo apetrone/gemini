@@ -25,12 +25,35 @@
 
 namespace gemini
 {
+	namespace core
+	{
+		class Dictionary;
+	}
+	
+	
+	const float DEBUGDRAW_MIN_DURATION_MSEC = 0.1;
+	const int DEBUGDRAW_MAX_CIRCLE_SIDES = 12;
+	const int DEBUGDRAW_TOTAL_CIRCLE_VERTICES = 2 * DEBUGDRAW_MAX_CIRCLE_SIDES;
+	enum DebugDrawPrimitiveType
+	{
+		TYPE_BOX=1,
+		TYPE_LINE,
+		TYPE_AXES,
+		TYPE_SPHERE,
+		TYPE_TEXT,
+		
+		TYPE_COUNT
+	};
+	
+	
+	
+	
 	class IDebugDraw
 	{
 	public:
 		virtual ~IDebugDraw() {};
 
-		virtual void startup() = 0;
+		virtual void startup(core::Dictionary* settings) = 0;
 		virtual void shutdown() = 0;
 	};
 	
