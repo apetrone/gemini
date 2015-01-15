@@ -47,8 +47,8 @@ namespace gemini
 			bool ignore_static;
 			
 		public:
-			ClosestNotMeRayResultCallback (btCollisionObject* me, bool ignore_ghost_objects = false, bool ignore_static_objects = false) :
-				btCollisionWorld::ClosestRayResultCallback(btVector3(0.0, 0.0, 0.0), btVector3(0.0, 0.0, 0.0)),
+			ClosestNotMeRayResultCallback (btCollisionObject* me, const btVector3& start, const btVector3& direction, bool ignore_ghost_objects = false, bool ignore_static_objects = false) :
+				btCollisionWorld::ClosestRayResultCallback(start, direction),
 				ignore_ghosts(ignore_ghost_objects),
 				ignore_static(ignore_static_objects)
 				

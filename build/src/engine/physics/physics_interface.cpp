@@ -461,30 +461,30 @@ namespace gemini
 			BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(ignored_object);
 			btCollisionObject* obj = bullet_object->get_collision_object();
 
-			ClosestNotMeRayResultCallback callback(obj);
+			ClosestNotMeRayResultCallback callback(obj, ray_start, ray_end);
+			
+			// rayTest accepts a line segment from start to end
 			bullet::get_world()->rayTest(ray_start, ray_end, callback);
 			
 			RaycastInfo info;
-			
-			
 			if (callback.hasHit())
 			{
-				info.hit = start + (destination * callback.m_closestHitFraction);
+				const btVector3& hit_point_world = callback.m_hitPointWorld;
+				info.hit = glm::vec3(hit_point_world.x(), hit_point_world.y(), hit_point_world.z());
 				info.object = static_cast<ICollisionObject*>(callback.m_collisionObject->getUserPointer());
 
-				LOGV("fraction: %2.2f\n", callback.m_closestHitFraction);
-
-				if (callback.m_collisionObject->getCollisionFlags() & btCollisionObject::CF_STATIC_OBJECT)
-				{
-					LOGV("hit: %g (static object)\n", callback.m_closestHitFraction);
-				}
-				else
-				{
-					LOGV("hit: %g (dynamic object)\n", callback.m_closestHitFraction);
-				}
+//				LOGV("fraction: %2.2f\n", callback.m_closestHitFraction);
+//
+//				if (callback.m_collisionObject->getCollisionFlags() & btCollisionObject::CF_STATIC_OBJECT)
+//				{
+//					LOGV("hit: %g (static object)\n", callback.m_closestHitFraction);
+//				}
+//				else
+//				{
+//					LOGV("hit: %g (dynamic object)\n", callback.m_closestHitFraction);
+//				}
 			}
-			
-			// should probably return a structure with data regarding the hit?
+
 			return info;
 		}
 	} // namespace physics
