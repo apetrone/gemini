@@ -207,6 +207,10 @@ void Entity::collision_ended(Entity* other)
 {
 }
 
+void Entity::use(Entity *user)
+{
+}
+
 void Entity::set_physics_from_current_transform()
 {
 	if (collision_object)
