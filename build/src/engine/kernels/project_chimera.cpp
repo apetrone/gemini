@@ -58,6 +58,7 @@
 #include <core/logging.h>
 //#include <core/ringbuffer.h>
 
+#include <sdk/audio_api.h>
 #include <sdk/entity_api.h>
 #include <sdk/iengineentity.h>
 #include <sdk/model_api.h>
@@ -517,6 +518,7 @@ public:
 	virtual IExperimental* experiment() { return experimental_interface; }
 	virtual gemini::core::logging::ILog* log() { return gemini::core::log::instance(); }
 	virtual gemini::IDebugDraw* debugdraw() { return debugdraw::instance(); }
+	virtual gemini::IAudioInterface* audio() { return gemini::audio::instance(); }
 	
 	virtual void* allocate(size_t bytes)
 	{

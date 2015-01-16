@@ -27,6 +27,9 @@
 #include "assets.h"
 #include <core/factory.h>
 
+
+#include <sdk/audio_api.h>
+
 #if !PLATFORM_IS_MOBILE
 	#include "openal.h"
 	#include "openal_vorbis_decoder.h"
@@ -231,12 +234,44 @@ namespace gemini
 		}; // namespace _internal
 
 
+
+
+
+		class AudioInterface : public IAudioInterface
+		{
+		public:
+			virtual gemini::AudioHandle load(const char* path)
+			{
+				return (gemini::AudioHandle)create_sound(path);
+			}
+			
+			virtual gemini::AudioSource play(AudioHandle handle, int num_repeats)
+			{
+				return gemini::audio::play((SoundHandle)handle, num_repeats);
+			}
+			
+			virtual void stop(gemini::AudioSource source)
+			{
+				gemini::audio::stop((SoundSource)source);
+			}
+			
+			virtual void stop_all_sounds()
+			{
+				audio::stop_all_sounds();
+			}
+		};
+
+
+
+
+
 		// interface
 		void startup()
 		{
 			typedef core::Factory<IAudioDriver> AudioDriverFactory;
 			AudioDriverFactory factory;
 			
+			audio::instance = CREATE(AudioInterface);
 			
 			factory.register_class( DRIVER_CREATOR, DRIVER_NAME );
 
@@ -273,6 +308,10 @@ namespace gemini
 				DESTROY( IAudioDriver, _audio_driver );
 				_audio_driver = 0;
 			}
+			
+			IAudioInterface* interface = audio::instance();
+			DESTROY(IAudioInterface, interface);
+			audio::instance = 0;
 		} // shutdown
 		
 		// update all sources

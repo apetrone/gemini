@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2014- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -21,59 +21,26 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <stdint.h>
 #include <core/interface.h>
-
-#include <core/mathlib.h>
 
 namespace gemini
 {
-	class IEntityManager;
-	class IModelInterface;
+	typedef unsigned int AudioHandle;
+	typedef int AudioSource;
 	
-	namespace core
-	{
-		namespace logging
-		{
-			class ILog;
-		}
-	}
-	
-	namespace physics
-	{
-		class IPhysicsInterface;
-	}
-	
-	class IDebugDraw;
-	class IAudioInterface;
-	class IExperimental;
-
-	class IEngineInterface
+	class IAudioInterface
 	{
 	public:
-		virtual ~IEngineInterface() {};
-
-		// systems
-		virtual IEntityManager* entities() = 0;
-		virtual IModelInterface* models() = 0;
-		virtual physics::IPhysicsInterface* physics() = 0;
-		virtual IExperimental* experiment() = 0;
-		virtual core::logging::ILog* log() = 0;
-		virtual IDebugDraw* debugdraw() = 0;
-		virtual IAudioInterface* audio() = 0;
+		virtual ~IAudioInterface() {}
 		
-		// memory hooks
-		virtual void* allocate(size_t bytes) = 0;
-		virtual void deallocate(void* pointer) = 0;
-		
-		virtual void render_view(const glm::vec3& origin, const glm::vec2& view_angles) = 0;
-//		virtual void render_view_from_entity(int32_t entity_index) = 0;
-
-		virtual void get_view_angles(glm::vec2& view_angles) = 0;
+		virtual AudioHandle load(const char* path) = 0;
+		virtual AudioSource play(AudioHandle handle, int num_repeats = 0) = 0;
+		virtual void stop(AudioSource source) = 0;
+		virtual void stop_all_sounds() = 0;
 	};
 	
-	namespace engine
+	namespace audio
 	{
-		typedef Interface<IEngineInterface> api;
-	}
+		static Interface<IAudioInterface> instance;
+	} // namespace audio
 } // namespace gemini
