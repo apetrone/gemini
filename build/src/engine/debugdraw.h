@@ -49,7 +49,7 @@ namespace gemini
 		void point(const glm::vec3& pt, const Color& color, float size = 2.0, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
 		void line(const glm::vec3& start, const glm::vec3& end, const Color& color, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
 		void sphere(const glm::vec3& center, const Color& color, float radius = 2.0, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
-		void text(int x, int y, const char* string, const Color& color, float duration = 0);
+		void text(int x, int y, const char* string, const Color& color, float duration = 0.0f);
 
 	} // debugdraw
 } // namespace gemini
