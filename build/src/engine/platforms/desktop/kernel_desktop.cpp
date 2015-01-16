@@ -453,6 +453,9 @@ namespace gemini
 			SDL_GL_GetDrawableSize(state->window, &render_width, &render_height);
 			
 			
+			// hide the mouse cursor
+			show_mouse(false);
+			
 			// populate and set input key map
 			state->key_map[SDLK_a] = KEY_A;
 			state->key_map[SDLK_b] = KEY_B;
@@ -623,5 +626,21 @@ namespace gemini
 		SDL_bool is_enabled = capture ? SDL_TRUE : SDL_FALSE;
 		SDL_SetRelativeMouseMode(is_enabled);
 	}
+	
+	void DesktopKernel::warp_mouse(int x, int y)
+	{
+		SDL_EventState(SDL_MOUSEMOTION, SDL_IGNORE);
+		SDL_WarpMouseInWindow(state->window, x, y);
+		SDL_EventState(SDL_MOUSEMOTION, SDL_ENABLE);
+	}
 
+	void DesktopKernel::get_mouse_position(int& x, int& y)
+	{
+		SDL_GetMouseState(&x, &y);
+	}
+	
+	void DesktopKernel::show_mouse(bool show)
+	{
+		SDL_ShowCursor((show ? SDL_TRUE : SDL_FALSE));
+	}
 } // namespace gemini

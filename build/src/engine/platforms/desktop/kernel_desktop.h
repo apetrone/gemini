@@ -62,7 +62,9 @@ namespace gemini
 		virtual void shutdown();
 		
 		virtual void capture_mouse(bool capture);
-		
+		virtual void warp_mouse(int x, int y);
+		virtual void get_mouse_position(int& x, int& y);
+		virtual void show_mouse(bool show);
 	private:
 		struct xwl_window_s *create_window( struct xwl_windowparams_s * windowparams, const char * title, unsigned int * attribs );
 	};

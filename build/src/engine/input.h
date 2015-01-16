@@ -274,7 +274,7 @@ namespace input
 		// thus: deltax = mousex[1] - mousex[0];
 		int mousex[2];
 		int mousey[2];
-		
+		int mousedelta[2];
 		int wheel_direction;
 		
 	public:
@@ -295,6 +295,8 @@ namespace input
 		
 		// retrieve the current mouse position
 		void mouse_position( int & x, int & y );
+		
+		void mouse_delta(int &dx, int &dy);
 	}; // MouseInput
 	
 	class TouchInput : public InputDevice

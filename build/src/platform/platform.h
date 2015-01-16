@@ -126,6 +126,12 @@ namespace platform
 		virtual Result startup() = 0;
 		virtual void shutdown() = 0;
 		
+		/// @desc Explicitly set the system's mouse cursor position
+		/// Assuming the origin is in the upper left corner of the window.
+		/// @param x X-coordinate of the window
+		/// @param y Y-coordinate of the window
+		virtual void set_cursor_position(int x, int y) = 0;
+		
 		//
 		// PATHS
 		//

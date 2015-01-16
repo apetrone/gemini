@@ -557,7 +557,7 @@ typedef void (*disconnect_engine_fn)();
 
 class ProjectChimera : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
-public kernel::IEventListener<kernel::MouseEvent>,
+//public kernel::IEventListener<kernel::MouseEvent>,
 public kernel::IEventListener<kernel::SystemEvent>,
 public kernel::IEventListener<kernel::GameControllerEvent>
 {
@@ -593,6 +593,8 @@ public:
 
 	core::RingBuffer<UserCommand, 32> client_commands;
 
+	bool has_focus;
+
 public:
 	ProjectChimera()
 	{
@@ -602,6 +604,8 @@ public:
 		draw_physics_debug = true;
 
 		game_interface = 0;
+
+		has_focus = true;
 	}
 	
 	virtual ~ProjectChimera()
@@ -638,67 +642,18 @@ public:
 			}
 		}
 	}
-	
-	virtual void event( kernel::MouseEvent & event )
-	{
-		switch(event.subtype)
-		{
-			case kernel::MouseMoved:
-			{
-				if (active_camera)
-				{
-					active_camera->move_view(event.dx, event.dy);
-				}
-				//camera.update_view();
-				break;
-			}
-			
-			case kernel::WindowLostFocus:
-			case kernel::WindowGainFocus:
-			case kernel::WindowResized:
-			case kernel::MouseButton:
-//			{
-//				if (event.is_down && active_camera)
-//				{
-//					// try to raycast?
-//					glm::vec3 start, direction;
-//					physics::CollisionObject* char_object = (physics::CollisionObject*)character->getGhostObject()->getUserPointer();
-//					physics::raycast(char_object, active_camera->pos, active_camera->view, 4096.0f);
-//				}
-//				break;
-//			}
-			case kernel::MouseWheelMoved:
-			case kernel::TouchBegin:
-			case kernel::TouchMoved:
-			case kernel::TouchEnd:
-			default: break;
-		}
-//		switch( event.subtype )
-//		{
-//			case kernel::MouseMoved:
-//			{
-//				if ( input::state()->mouse().is_down( input::MOUSE_LEFT ) )
-//				{
-//					int lastx, lasty;
-//					input::state()->mouse().last_mouse_position( lastx, lasty );
-//					
-//					camera.move_view( event.mx-lastx, event.my-lasty );
-//				}
-//                break;
-//			}
-//			default: break;
-//		}
-	}
-	
+
 	virtual void event( kernel::SystemEvent & event )
 	{
 		if (event.subtype == kernel::WindowLostFocus)
 		{
-			kernel::instance()->capture_mouse(false);
+			kernel::instance()->show_mouse(true);
+			has_focus = false;
 		}
 		else if (event.subtype == kernel::WindowGainFocus)
 		{
-			kernel::instance()->capture_mouse(true);
+			kernel::instance()->show_mouse(false);
+			has_focus = true;
 		}
 	}
 	
@@ -800,7 +755,7 @@ public:
 		active_camera->update_view();
 			
 		// capture the mouse
-		kernel::instance()->capture_mouse( true );
+//		kernel::instance()->capture_mouse( true );
 
 		// load the game library
 		StackString<MAX_PATH_SIZE> game_library_path = ::core::filesystem::content_directory();
@@ -856,9 +811,32 @@ public:
 		command.set_button(3, back);
 		
 		command.set_button(5, input::state()->keyboard().is_down(input::KEY_E));
+
+		
+		int mouse[2];
+		kernel::instance()->get_mouse_position(mouse[0], mouse[1]);
+		
+		int half_width = params.window_width/2;
+		int half_height = params.window_height/2;
+
+		// capture the state of the mouse
+		int mdx, mdy;
+		mdx = (mouse[0] - half_width);
+		mdy = (mouse[1] - half_height);
+		if (mdx != 0 || mdy != 0)
+		{
+			main_camera.move_view(mdx, mdy);
+		}
 		
 		command.angles[0] = main_camera.pitch;
 		command.angles[1] = main_camera.yaw;
+		
+		
+		if (has_focus)
+		{
+			kernel::instance()->warp_mouse(half_width, half_height);
+		}
+//		platform::instance()->set_cursor_position(half_width, half_height);
 		
 		//LOGV("command flags: %i\n", command.buttonflags);
 	

@@ -27,6 +27,14 @@
 #include "posix/posix_timer.h"
 #include "posix/posix_filesystem.h"
 
+#include <TargetConditionals.h>
+
+#if TARGET_OS_MAC
+	#include <CoreGraphics/CoreGraphics.h>
+#else
+	#error Not implemented on this platform
+#endif
+
 using namespace platform;
 
 Result OSXPlatformInterface::startup()
@@ -37,6 +45,16 @@ Result OSXPlatformInterface::startup()
 void OSXPlatformInterface::shutdown()
 {
 	osx_shutdown();
+}
+
+void OSXPlatformInterface::set_cursor_position(int x, int y)
+{
+	CGPoint target = CGPointMake(x, y);
+//	NSScreen* screen = [NSScreen screen];
+	
+	// this operates in the global display coordinate space
+	CGWarpMouseCursorPosition(target);
+	CGAssociateMouseAndMouseCursorPosition(true);
 }
 
 Result OSXPlatformInterface::get_program_directory(char* path, size_t size)

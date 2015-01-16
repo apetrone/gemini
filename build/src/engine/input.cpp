@@ -180,6 +180,11 @@ namespace input
 		{
 			buttons[ MOUSE_LEFT+i ].update();
 		}
+		
+		mousedelta[0] = mousex[1] - mousex[0];
+		mousedelta[1] = mousey[1] - mousey[0];
+		mousex[0] = mousex[1];
+		mousey[0] = mousey[1];
 	} // update
 	
 	
@@ -227,6 +232,12 @@ namespace input
 		x = mousex[1];
 		y = mousey[1];
 	} // mouse_position
+	
+	void MouseInput::mouse_delta(int &dx, int &dy)
+	{
+		dx = mousedelta[0];
+		dy = mousedelta[1];
+	}
 
 	//
 	// TouchInput
