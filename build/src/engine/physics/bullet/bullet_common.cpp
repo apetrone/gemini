@@ -208,7 +208,7 @@ namespace gemini
 				}
 				
 				//delete collision shapes
-				LOGV("total collision shapes: %ld\n", (unsigned int)collision_shapes.size());
+//				LOGV("total collision shapes: %ld\n", (unsigned int)collision_shapes.size());
 				for ( int j = 0; j < collision_shapes.size(); j++ )
 				{
 					btCollisionShape* shape = collision_shapes[j];
