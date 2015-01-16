@@ -56,7 +56,7 @@
 
 #include <core/filesystem.h>
 #include <core/logging.h>
-#include <core/ringbuffer.h>
+//#include <core/ringbuffer.h>
 
 #include <sdk/entity_api.h>
 #include <sdk/iengineentity.h>
@@ -591,7 +591,7 @@ public:
 	IEngineInterface* engine_interface;
 	IGameInterface* game_interface;
 
-	core::RingBuffer<UserCommand, 32> client_commands;
+//	core::RingBuffer<UserCommand, 32> client_commands;
 
 	bool has_focus;
 
