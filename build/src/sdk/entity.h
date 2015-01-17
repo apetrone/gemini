@@ -29,7 +29,7 @@
 #include <platform/mem.h>
 
 #include <core/str.h>
-
+#include <core/stackstring.h>
 //#include "physics/physics.h"
 
 #include <sdk/iengineentity.h>
@@ -79,7 +79,7 @@ namespace gemini
 }
 
 
-
+typedef gemini::StackString<128> EntityName;
 
 
 class Entity : public gemini::IEngineEntity
@@ -96,7 +96,8 @@ public:
 	uint64_t id;
 	uint32_t flags;
 	int32_t model_index;
-	String name;
+	EntityName name;
+
 	glm::vec3 position;
 	glm::quat orientation;
 	
@@ -176,8 +177,8 @@ public:
 	
 	
 	// get/set functions for script interop
-	const String & get_name() { return this->name; }
-	void set_name( const String & object_name ) { this->name = object_name; }
+	const EntityName& get_name() { return this->name; }
+	void set_name( const EntityName& object_name ) { this->name = object_name; }
 
 
 
