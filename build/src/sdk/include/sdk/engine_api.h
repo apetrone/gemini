@@ -67,7 +67,7 @@ namespace gemini
 		virtual void deallocate(void* pointer) = 0;
 		
 		virtual void render_view(const glm::vec3& origin, const glm::vec2& view_angles) = 0;
-//		virtual void render_view_from_entity(int32_t entity_index) = 0;
+		virtual void render_gui() = 0;
 
 		virtual void get_view_angles(glm::vec2& view_angles) = 0;
 	};

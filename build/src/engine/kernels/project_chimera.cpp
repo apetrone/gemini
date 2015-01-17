@@ -538,6 +538,11 @@ public:
 		render_method->render_view(em->get_entity_list(), kernel::instance()->parameters(), origin, view_angles);
 	}
 
+	virtual void render_gui()
+	{
+		
+	}
+
 	virtual void get_view_angles(glm::vec2& view_angles)
 	{
 		if (camera)
