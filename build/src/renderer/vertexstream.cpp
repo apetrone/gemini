@@ -44,6 +44,7 @@ namespace gemini
 			last_index = 0;
 			highest_index = 0;
 			indices = 0;
+			vertexbuffer = 0;
 		} // VertexStream
 		
 		VertexStream::~VertexStream()
