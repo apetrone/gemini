@@ -130,6 +130,11 @@ DynamicLibrarySymbol Win32PlatformInterface::find_dynamiclibrary_symbol(DynamicL
 	return GetProcAddress(instance->handle, (LPSTR)symbol_name);
 }
 
+const char* Win32PlatformInterface::get_dynamiclibrary_extension() const
+{
+	return ".dll";
+}
+
 TimerHandle* Win32PlatformInterface::create_timer()
 {
 	Win32Timer* timer = CREATE(Win32Timer);

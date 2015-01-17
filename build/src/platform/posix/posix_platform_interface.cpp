@@ -111,6 +111,11 @@ DynamicLibrarySymbol PosixPlatformInterface::find_dynamiclibrary_symbol(DynamicL
 	return 0;
 }
 
+const char* PosixPlatformInterface::get_dynamiclibrary_extension() const
+{
+	return ".so";
+}
+
 TimerHandle* PosixPlatformInterface::create_timer()
 {
 	return posix_create_timer();

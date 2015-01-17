@@ -85,6 +85,10 @@ DynamicLibrarySymbol OSXPlatformInterface::find_dynamiclibrary_symbol(DynamicLib
 	return posix_dynamiclibrary_find(library, symbol_name);
 }
 
+const char* OSXPlatformInterface::get_dynamiclibrary_extension() const
+{
+	return ".dylib";
+}
 
 TimerHandle* OSXPlatformInterface::create_timer()
 {

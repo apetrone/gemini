@@ -45,6 +45,7 @@ public:
 	virtual DynamicLibrary* open_dynamiclibrary(const char* library_path);
 	virtual void close_dynamiclibrary(DynamicLibrary* library);
 	virtual DynamicLibrarySymbol find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name);
+	virtual const char* get_dynamiclibrary_extension() const;
 	
 	virtual TimerHandle* create_timer();
 	virtual void destroy_timer(TimerHandle* timer);

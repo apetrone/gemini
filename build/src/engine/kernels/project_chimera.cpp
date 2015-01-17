@@ -779,7 +779,11 @@ public:
 
 		// load the game library
 		StackString<MAX_PATH_SIZE> game_library_path = ::core::filesystem::content_directory();
-		game_library_path.append(PATH_SEPARATOR_STRING).append("bin").append(PATH_SEPARATOR_STRING).append("game.dylib");
+
+
+		const char* dynamiclibrary_extension = platform::instance()->get_dynamiclibrary_extension();
+
+		game_library_path.append(PATH_SEPARATOR_STRING).append("bin").append(PATH_SEPARATOR_STRING).append("game").append(dynamiclibrary_extension);
 		
 		gamelib = platform::instance()->open_dynamiclibrary(game_library_path());
 		

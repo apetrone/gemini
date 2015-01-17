@@ -39,11 +39,17 @@
 	#define MAX_PATH_SIZE 260
 	#define PATH_SEPARATOR '\\'
 	#define PATH_SEPARATOR_STRING "\\"
+
+	#define PLATFORM_LIBRARY_EXPORT __declspec(dllexport)
+	#define PLATFORM_LIBRARY_IMPORT __declspec(dllimport)
 #elif PLATFORM_LINUX || PLATFORM_APPLE || PLATFORM_ANDROID
 	#include <limits.h>
 	#define MAX_PATH_SIZE PATH_MAX
 	#define PATH_SEPARATOR '/'
 	#define PATH_SEPARATOR_STRING "/"
+
+	#define PLATFORM_LIBRARY_EXPORT
+	#define PLATFORM_LIBRARY_IMPORT
 #else
 	#error Unknown platform!
 #endif
@@ -163,6 +169,11 @@ namespace platform
 		/// @returns 0 on failure, 1 on success
 		virtual DynamicLibrarySymbol find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name) = 0;
 		
+		/// @desc Returns the extension on this platform for a dynamiclibrary.
+		/// @returns ".dylib", ".so", or ".dll" for Mac/Linux/Windows.
+		/// NOTE: This MUST return the period character if required by the platform!
+		virtual const char* get_dynamiclibrary_extension() const = 0;
+
 		//
 		// TIMERS
 		//
