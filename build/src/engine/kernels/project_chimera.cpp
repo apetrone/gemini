@@ -728,6 +728,14 @@ public:
 		return kernel::Application_Success;
 	}
 
+	void center_mouse(const kernel::Params& params)
+	{
+		if (has_focus)
+		{
+			kernel::instance()->warp_mouse(params.window_width/2, params.window_height/2);
+		}
+	}
+
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 		float camera_fov = 50.0f;
@@ -744,6 +752,7 @@ public:
 		engine_interface = CREATE(EngineInterface, &entity_manager, &model_interface, physics::api::instance(), &experimental, render_method, &main_camera);
 		gemini::engine::api::set_instance(engine_interface);
 		
+		center_mouse(params);
 		
 //		background = audio::create_sound("sounds/8b_shoot");
 //		background_source = audio::play(background, -1);
@@ -834,10 +843,7 @@ public:
 		command.angles[1] = main_camera.yaw;
 		
 		
-		if (has_focus)
-		{
-			kernel::instance()->warp_mouse(half_width, half_height);
-		}
+		center_mouse(params);
 //		platform::instance()->set_cursor_position(half_width, half_height);
 		
 		//LOGV("command flags: %i\n", command.buttonflags);
