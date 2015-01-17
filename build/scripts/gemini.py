@@ -11,6 +11,12 @@ DESKTOP = ["macosx", "linux", "windows"]
 COMMON_PRODUCT_ROOT = "bin/${CONFIGURATION}_${ARCHITECTURE}"
 COMMON_PROJECT_ROOT = "_projects"
 
+# TODO:
+	# windows:
+	# - platform needs user32.lib
+	# 
+
+
 # dependencies
 libsdl = Dependency(file="sdl2.py",
 		arguments=[
