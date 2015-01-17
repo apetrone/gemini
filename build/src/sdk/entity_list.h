@@ -86,16 +86,14 @@ struct EntityList
 		
 		clear();
 	} // purge
-	
-	
-	
-	Type * find_with_name( const String & name )
+
+	Type* find_with_name(const EntityName& name)
 	{
 		for (typename Collection::iterator it = this->objects.begin(); it != this->objects.end(); ++it)
 		{
 			Entity * obj = (*it);
-			
-			if ( name == obj->name )
+
+			if (name == obj->name)
 			{
 				return obj;
 			}
