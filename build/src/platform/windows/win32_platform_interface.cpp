@@ -64,6 +64,12 @@ void Win32PlatformInterface::shutdown()
 	SetErrorMode(previous_error_mode);
 }
 
+void Win32PlatformInterface::set_cursor_position(int x, int y)
+{
+	// moves cursor in screen coordinates
+	SetCursorPos(x, y);
+}
+
 Result Win32PlatformInterface::get_program_directory(char* path, size_t size)
 {
 	Result error(Result::Success);
