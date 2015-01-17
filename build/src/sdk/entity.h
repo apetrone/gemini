@@ -49,7 +49,7 @@
 
 //typedef std::vector< struct Entity*, GeminiAllocator<struct Entity*> > EntityVector;
 
-struct Entity;
+class Entity;
 
 namespace gemini
 {
@@ -82,8 +82,9 @@ namespace gemini
 
 
 
-struct Entity : public gemini::IEngineEntity
+class Entity : public gemini::IEngineEntity
 {
+public:
 	DECLARE_ENTITY_NO_BASE(Entity);
 	
 	enum Flags
