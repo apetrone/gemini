@@ -127,11 +127,12 @@ namespace gemini
 			// the movement vector is oriented to the character.
 			// we rotate the movement vector by the current rotation
 			// and then we can apply it to the acceleration.
+			// p' = q * p * q^(-1)
 			btQuaternion p(movement.x(), movement.y(), movement.z(), 0);
 			btQuaternion result = current_rotation * p * current_rotation.inverse();
 			btVector3 result_movement(result.x(), result.y(), result.z());
 			
-			// draw the reuslt_movement vector for debugging purposes.
+			// draw the result_movement vector for debugging purposes.
 //			glm::vec3 target_origin(position.x(), position.y(), position.z());
 //			glm::vec3 basis(result_movement.x(), result_movement.y(), result_movement.z());
 //			debugdraw::basis(target_origin, basis, 2.0f, 0);
@@ -140,53 +141,12 @@ namespace gemini
 
 			velocity += acceleration*delta_time;
 		
-			// test for drop
-			btVector3 target_position;
-			btVector3 step_drop = delta_time * velocity;
-			target_position = position + step_drop;
-						
-			btTransform start, end;
-			start.setIdentity();
-			end.setIdentity();
-			
-			start.setOrigin(position);
-			end.setOrigin(target_position);
-			
-			ClosestNotMeConvexResultCallback callback(ghost, btVector3(0, 1.0f, 0), 0.7071);
-			callback.m_collisionFilterGroup = ghost->getBroadphaseHandle()->m_collisionFilterGroup;
-			callback.m_collisionFilterMask = ghost->getBroadphaseHandle()->m_collisionFilterMask;
 
-			ghost->convexSweepTest(active_shape, start, end, callback, bullet::get_world()->getDispatchInfo().m_allowedCcdPenetration);
-
-			if (callback.hasHit())
-			{
-				if (callback.m_closestHitFraction > 0.4f)
-				{
-					// we only dropped a fraction of the distance
-					position.setInterpolate3(position, target_position, callback.m_closestHitFraction);
-				
-				
-					// at this point, we've hit the ground
-					LOGV("we've hit the ground.\n");
-					velocity.setY(0);
-
-				}
-				else
-				{
-					// still on the ground
-					velocity.setY(0);
-				}
-			}
-			else
-			{
-				LOGV("dropped full distance\n");
-				// we dropped the full distance.
-				position = target_position;
-			}
+			float step_height = step_down(world, delta_time);
 			
 			
 
-			
+			velocity.setY(step_height);
 			const float friction = 0.85f;
 			velocity.setX(velocity.x() * friction);
 			velocity.setZ(velocity.z() * friction);
@@ -225,6 +185,57 @@ namespace gemini
 		{
 			right = vec_right;
 			view = vec_view;
+		}
+		
+		float CharacterTwo::step_down(btCollisionWorld* world, btScalar delta_time)
+		{
+			float distance = 0;
+			btVector3 current_position = position;
+			
+			// test for drop
+			btVector3 target_position;
+			btVector3 step_drop = delta_time * velocity;
+			target_position = current_position + step_drop;
+			
+			btTransform start, end;
+			start.setIdentity();
+			end.setIdentity();
+			
+			start.setOrigin(current_position);
+			end.setOrigin(target_position);
+			
+			ClosestNotMeConvexResultCallback callback(ghost, btVector3(0, 1.0f, 0), 0.7071);
+			callback.m_collisionFilterGroup = ghost->getBroadphaseHandle()->m_collisionFilterGroup;
+			callback.m_collisionFilterMask = ghost->getBroadphaseHandle()->m_collisionFilterMask;
+			
+			ghost->convexSweepTest(active_shape, start, end, callback, bullet::get_world()->getDispatchInfo().m_allowedCcdPenetration);
+			
+			if (callback.hasHit())
+			{
+				if (callback.m_closestHitFraction > 0.4f)
+				{
+					// we only dropped a fraction of the distance
+					current_position.setInterpolate3(current_position, target_position, callback.m_closestHitFraction);
+					distance = lerp(current_position.y(), target_position.y(), callback.m_closestHitFraction);
+					
+					// at this point, we've hit the ground
+					LOGV("we've hit the ground.\n");
+					distance = 0;
+				}
+				else
+				{
+					// still on the ground
+					distance = 0;
+				}
+			}
+			else
+			{
+				LOGV("dropped full distance\n");
+				// we dropped the full distance.
+				distance = velocity.y();
+			}
+			
+			return distance;
 		}
 
 		//
