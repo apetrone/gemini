@@ -32,6 +32,8 @@
 #include <core/mathlib.h>
 #include "camera.h"
 
+#include "debugdraw.h"
+
 #define SMOOTH_UNIDIRECTIONAL_MOVEMENT 0
 #define CHARACTER_MOVEMENT_MULTIPLIER 1.5
 //
@@ -116,15 +118,27 @@ namespace gemini
 
 		void CharacterTwo::updateAction(btCollisionWorld* world, btScalar delta_time)
 		{
+			btTransform xform = ghost->getWorldTransform();
+			btQuaternion current_rotation = xform.getRotation();
+		
 			// player step
 			acceleration = gravity;
 			
-			acceleration += movement*10.0f;
-//			LOGV("movement: %g %g %g\n", movement.x(), movement.y(), movement.z());
+			// the movement vector is oriented to the character.
+			// we rotate the movement vector by the current rotation
+			// and then we can apply it to the acceleration.
+			btQuaternion p(movement.x(), movement.y(), movement.z(), 0);
+			btQuaternion result = current_rotation * p * current_rotation.inverse();
+			btVector3 result_movement(result.x(), result.y(), result.z());
 			
-			velocity += acceleration*delta_time;
+			// draw the reuslt_movement vector for debugging purposes.
+//			glm::vec3 target_origin(position.x(), position.y(), position.z());
+//			glm::vec3 basis(result_movement.x(), result_movement.y(), result_movement.z());
+//			debugdraw::basis(target_origin, basis, 2.0f, 0);
 
-//			position += velocity*delta_time;
+			acceleration += result_movement*60.0f;
+
+			velocity += acceleration*delta_time;
 		
 			// test for drop
 			btVector3 target_position;
@@ -170,13 +184,24 @@ namespace gemini
 				position = target_position;
 			}
 			
-			const float friction = 0.95f;
+			
+
+			
+			const float friction = 0.85f;
 			velocity.setX(velocity.x() * friction);
 			velocity.setZ(velocity.z() * friction);
+			
+			
+			{
+				// draw velocity
+				glm::vec3 target_origin(position.x(), position.y(), position.z());
+				debugdraw::line(target_origin, target_origin+glm::vec3(velocity.x(), velocity.y(), velocity.z()), Color(255, 255, 0), 0);
+			}
+			
 			position += velocity*delta_time;
 			
 			
-			btTransform xform = ghost->getWorldTransform();
+			
 			xform.setOrigin(position);
 //			xform.setRotation(rotation);
 			

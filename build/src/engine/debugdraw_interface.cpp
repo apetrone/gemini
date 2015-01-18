@@ -425,6 +425,24 @@ namespace gemini
 		}
 	}
 	
+	void DebugDrawInterface::basis(const glm::vec3& origin, const glm::vec3& basis, float axis_length, float duration)
+	{
+		DebugPrimitive* p = request_primitive();
+		if (p)
+		{
+			p->type = TYPE_AXES;
+			glm::mat4 transform;
+			transform[0] = glm::vec4(basis.x, 0, 0, 0);
+			transform[1] = glm::vec4(0, basis.y, 0, 0);
+			transform[2] = glm::vec4(0, 0, basis.z, 0);
+			transform[3] = glm::vec4(origin.x, origin.y, origin.z, 0);
+			p->start = origin;
+			p->transform = transform;
+			p->timeleft = duration;
+			p->radius = axis_length;
+		}
+	}
+	
 	void DebugDrawInterface::box(const glm::vec3& mins, const glm::vec3& maxs, const Color& color, float duration)
 	{
 		DebugPrimitive* p = request_primitive();

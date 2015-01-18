@@ -84,7 +84,7 @@ namespace gemini
 //														   btVector3(cam_right.x, cam_right.y, cam_right.z)
 //														   );
 //
-							btVector3 movement((command.forward * QUOTIENT + command.back * -QUOTIENT), 0.0f, (command.left * -QUOTIENT + command.right * QUOTIENT));
+							btVector3 movement((command.left * -QUOTIENT + command.right * QUOTIENT), 0.0f, -(command.forward * QUOTIENT + command.back * -QUOTIENT));
 							character->set_movement(movement);
 //
 //							bool movement_is_zero = (

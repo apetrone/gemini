@@ -36,6 +36,7 @@ namespace gemini
 {
 	namespace debugdraw
 	{
+		// if you modify this, you must also update the buffer_primitive_table.
 		enum
 		{
 			TYPE_BOX=1,
@@ -95,6 +96,7 @@ namespace gemini
 		
 		// IDebugDraw interface
 		virtual void axes(const glm::mat4& transform, float axis_length, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
+		virtual void basis(const glm::vec3& origin, const glm::vec3& basis, float axis_length, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
 		virtual void box(const glm::vec3& mins, const glm::vec3& maxs, const Color& color, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
 		virtual void point(const glm::vec3& pt, const Color& color, float size = 2.0, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
 		virtual void line(const glm::vec3& start, const glm::vec3& end, const Color& color, float duration = DEBUGDRAW_MIN_DURATION_MSEC);

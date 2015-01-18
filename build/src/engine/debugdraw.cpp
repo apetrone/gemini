@@ -72,6 +72,11 @@ namespace gemini
 			debugdraw_interface->axes(transform, axis_length, duration);
 		} // axes
 		
+		void basis(const glm::vec3& origin, const glm::vec3& basis, float axis_length, float duration)
+		{
+			DebugDrawInterface* debugdraw_interface = static_cast<DebugDrawInterface*>(debugdraw::instance());
+			debugdraw_interface->basis(origin, basis, axis_length, duration);
+		} // basis
 		
 		void box(const glm::vec3& mins, const glm::vec3& maxs, const Color& color, float duration)
 		{

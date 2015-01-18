@@ -36,11 +36,25 @@ namespace gemini
 	public:
 		virtual ~IDebugDraw() {};
 
-		virtual void axes(const glm::mat4& transform, float length, float duration = DEBUGDRAW_MIN_DURATION_MSEC) = 0;
+		// draw axes for a matrix4
+		virtual void axes(const glm::mat4& transform, float axis_length, float duration = DEBUGDRAW_MIN_DURATION_MSEC) = 0;
+		
+		// draw basis vectors at origin, assuming unit length basis
+		virtual void basis(const glm::vec3& origin, const glm::vec3& basis, float axis_length, float duration = DEBUGDRAW_MIN_DURATION_MSEC) = 0;
+		
+		// draw a box given the mins and maxs
 		virtual void box(const glm::vec3& mins, const glm::vec3& maxs, const Color& color, float duration = DEBUGDRAW_MIN_DURATION_MSEC) = 0;
+		
+		// draw a point in space
 		virtual void point(const glm::vec3& pt, const Color& color, float size = 2.0, float duration = DEBUGDRAW_MIN_DURATION_MSEC) = 0;
+		
+		// draw a line segment
 		virtual void line(const glm::vec3& start, const glm::vec3& end, const Color& color, float duration = DEBUGDRAW_MIN_DURATION_MSEC) = 0;
+		
+		// draw a sphere
 		virtual void sphere(const glm::vec3& center, const Color& color, float radius = 2.0, float duration = DEBUGDRAW_MIN_DURATION_MSEC) = 0;
+		
+		// text, in screen space coordinates
 		virtual void text(int x, int y, const char* string, const Color& color, float duration = 0.0f) = 0;
 	};
 	
