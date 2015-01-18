@@ -61,11 +61,44 @@ namespace gemini
 			{
 				ICollisionObject* target;
 				KinematicCharacter* character;
+				CharacterTwo* character2;
 				
 				// view angles in degrees
 				glm::vec2 view_angles;
 				
 			private:
+				void move_player2(CharacterTwo* character, const MovementCommand& command)
+				{
+					if (character)
+					{
+						glm::vec3 cam_dir, cam_right;
+						mathlib::basis_vectors_from_pitch_yaw(view_angles.x, view_angles.y, cam_right, cam_dir);
+						
+						const float QUOTIENT = (1.0f/input::AxisValueMaximum);
+						
+						if (character)
+						{
+							character->set_view_direction(btVector3(cam_right.x, cam_right.y, cam_right.z), btVector3(cam_dir.x, cam_dir.y, cam_dir.z));
+//							character->setFacingDirections(
+//														   btVector3(cam_dir.x, cam_dir.y, cam_dir.z),
+//														   btVector3(cam_right.x, cam_right.y, cam_right.z)
+//														   );
+//
+							btVector3 movement((command.forward * QUOTIENT + command.back * -QUOTIENT), 0.0f, (command.left * -QUOTIENT + command.right * QUOTIENT));
+							character->set_movement(movement);
+//
+//							bool movement_is_zero = (
+//													 command.forward == 0 &&
+//													 command.right == 0 &&
+//													 command.left == 0 &&
+//													 command.back == 0
+//													 );
+//							
+//							character->enableDamping(movement_is_zero);
+						}
+					}
+				}
+			
 				void move_player(KinematicCharacter* character, const MovementCommand& command)
 				{
 					if (character)
@@ -101,9 +134,32 @@ namespace gemini
 					}
 				} // player_move
 				
+				void orient_player(KinematicCharacter* character)
+				{
+					// rotate physics body based on camera yaw
+//					btTransform worldTrans = character->getGhostObject()->getWorldTransform();
+//					LOGV("TODO: get angles from camera\n");
+//					btQuaternion rotation(btVector3(0,1,0), mathlib::degrees_to_radians(-camera->yaw));
+//					worldTrans.setRotation(rotation);
+
+//					character->getGhostObject()->setWorldTransform(worldTrans);
+
+					// sync the camera to the ghost object
+					btGhostObject* ghost = character->getGhostObject();
+					btTransform tr = ghost->getWorldTransform();
+					btVector3 origin = tr.getOrigin();
+					origin += btVector3(0, .9, 0);
+				}
+				
+				void orient_player2(CharacterTwo* character)
+				{
+					const btTransform& transform = character->get_ghost()->getWorldTransform();
+					btVector3 origin = transform.getOrigin();
+					origin += btVector3(0, .9, 0);
+				}
 				
 			public:
-				BulletPlayerController() : target(0), character(0)
+				BulletPlayerController() : target(0), character(0), character2(0)
 				{
 				}
 				
@@ -125,13 +181,16 @@ namespace gemini
 
 						
 						btScalar step_height = btScalar(.36);
-						character = new KinematicCharacter((btPairCachingGhostObject*)bullet_object->get_collision_object(), (btConvexShape*)bullet_object->get_collision_shape(), step_height);
+//						character = new KinematicCharacter((btPairCachingGhostObject*)bullet_object->get_collision_object(), (btConvexShape*)bullet_object->get_collision_shape(), step_height);
+
+						character2 = new CharacterTwo((btPairCachingGhostObject*)bullet_object->get_collision_object(), (btConvexShape*)bullet_object->get_collision_shape());
 //						bullet::get_world()->addAction(character);
 					}
 					else
 					{
 //						bullet::get_world()->removeAction(character);
 						delete character;
+						delete character2;
 					}
 				}
 				
@@ -146,6 +205,11 @@ namespace gemini
 					{
 						character->updateAction(bullet::get_world(), delta_seconds);
 					}
+					
+					if (character2)
+					{
+						character2->updateAction(bullet::get_world(), delta_seconds);
+					}
 				}
 				
 				virtual void apply_movement_command(const MovementCommand& command)
@@ -153,23 +217,13 @@ namespace gemini
 					if (character)
 					{
 						move_player(character, command);
-						
-						// rotate physics body based on camera yaw
-						btTransform worldTrans = character->getGhostObject()->getWorldTransform();
-//						LOGV("TODO: get angles from camera\n");
-//						btQuaternion rotation(btVector3(0,1,0), mathlib::degrees_to_radians(-camera->yaw));
-//						worldTrans.setRotation(rotation);
-
-						character->getGhostObject()->setWorldTransform(worldTrans);
-						
-						// sync the camera to the ghost object
-						btGhostObject* ghost = character->getGhostObject();
-						btTransform tr = ghost->getWorldTransform();
-						btVector3 origin = tr.getOrigin();
-						origin += btVector3(0, .9, 0);
-						
-//						LOGV("TODO: sync with camera\n");
-//						camera->pos = glm::vec3(origin.x(), origin.y(), origin.z());
+						orient_player(character);
+					}
+					
+					if (character2)
+					{
+						move_player2(character2, command);
+						orient_player2(character2);
 					}
 				}
 				
@@ -367,6 +421,7 @@ namespace gemini
 			assert(bullet_shape != 0);
 			
 			collision_object->set_collision_object(ghost);
+//			collision_object->set_collision_ghost(ghost);
 			collision_object->set_collision_shape(bullet_shape->get_shape());
 			
 			short collision_filter_mask = btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter | btBroadphaseProxy::SensorTrigger;

@@ -87,9 +87,14 @@ void entity_physics_update(float delta_seconds)
 	// step entities
 	EntityListType::Collection::iterator it = entity_list().objects.begin();
 	EntityListType::Collection::iterator end = entity_list().objects.end();
+	Entity* ent;
 	for( ; it != end; ++it )
 	{
-		(*it)->fixed_update(delta_seconds);
+		ent = (*it);
+		if (!ent->is_player()) // don't step players here as they're done separately.
+		{
+			ent->fixed_update(delta_seconds);
+		}
 	}
 }
 

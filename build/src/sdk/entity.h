@@ -128,6 +128,8 @@ public:
 	// Use is called on this entity
 	virtual void use(Entity* user);
 	
+	virtual bool is_player() const { return false; }
+	
 	// Call this when you need to explicitly set the physics transform
 	// from the current entity's position and rotation. Normally, you don't
 	// need to use this; but the player controller makes use of it.

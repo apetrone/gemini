@@ -65,6 +65,43 @@ namespace gemini
 
 	namespace physics
 	{
+		class CharacterTwo : public btActionInterface
+		{
+			btPairCachingGhostObject* ghost;
+
+			btVector3 position;
+			btVector3 velocity;
+			btVector3 acceleration;
+			btVector3 gravity;
+			btQuaternion rotation;
+			
+			btConvexShape* active_shape;
+			
+			// basis vectors for orientation
+			btVector3 right;
+			btVector3 view;
+			
+			btVector3 movement;
+			
+		public:
+			CharacterTwo(btPairCachingGhostObject* ghost_object, btConvexShape* shape);
+			virtual ~CharacterTwo() {}
+		
+			// action interface overrides
+			virtual void updateAction(btCollisionWorld* world, btScalar delta_time);
+			virtual void debugDraw(btIDebugDraw* debug_draw);
+
+
+			void warp(const btVector3& target_position);
+			void set_view_direction(const btVector3& right, const btVector3& view);
+			
+			btPairCachingGhostObject* get_ghost() const { return ghost; }
+			void set_movement(const btVector3& move) { movement = move; }
+			
+		};
+	
+	
+	
 		///KinematicCharacter is an object that supports a sliding motion in a world.
 		///It uses a ghost object and convex sweep test to test for upcoming collisions. This is combined with discrete collision detection to recover from penetrations.
 		///Interaction between KinematicCharacter and dynamic rigid bodies needs to be explicity implemented by the user.

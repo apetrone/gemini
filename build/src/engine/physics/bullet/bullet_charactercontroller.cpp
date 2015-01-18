@@ -32,7 +32,7 @@
 #include <core/mathlib.h>
 #include "camera.h"
 
-#define SMOOTH_UNIDIRECTIONAL_MOVEMENT 1
+#define SMOOTH_UNIDIRECTIONAL_MOVEMENT 0
 #define CHARACTER_MOVEMENT_MULTIPLIER 1.5
 //
 //  Hybrid Character Controller
@@ -71,6 +71,8 @@ subject to the following restrictions:
 // for CharacterController
 #include "input.h"
 
+#include "bullet_common.h"
+
 namespace gemini
 {
 	namespace physics
@@ -92,6 +94,118 @@ namespace gemini
 		}
 
 
+		//
+		// CharacterTwo
+		// 
+
+		CharacterTwo::CharacterTwo(btPairCachingGhostObject* ghost_object, btConvexShape* shape)
+		{
+			ghost = ghost_object;
+			position.setValue(0, 0, 0);
+			velocity.setValue(0, 0, 0);			
+			acceleration.setValue(0, 0, 0);
+			gravity.setValue(0.0f, -9.8f, 0.0f);
+			rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
+			
+			active_shape = shape;
+			
+			// set initial transform from ghost
+			const btTransform& tx = ghost->getWorldTransform();
+			position = tx.getOrigin();
+		}
+
+		void CharacterTwo::updateAction(btCollisionWorld* world, btScalar delta_time)
+		{
+			// player step
+			acceleration = gravity;
+			
+			acceleration += movement*10.0f;
+//			LOGV("movement: %g %g %g\n", movement.x(), movement.y(), movement.z());
+			
+			velocity += acceleration*delta_time;
+
+//			position += velocity*delta_time;
+		
+			// test for drop
+			btVector3 target_position;
+			btVector3 step_drop = delta_time * velocity;
+			target_position = position + step_drop;
+						
+			btTransform start, end;
+			start.setIdentity();
+			end.setIdentity();
+			
+			start.setOrigin(position);
+			end.setOrigin(target_position);
+			
+			ClosestNotMeConvexResultCallback callback(ghost, btVector3(0, 1.0f, 0), 0.7071);
+			callback.m_collisionFilterGroup = ghost->getBroadphaseHandle()->m_collisionFilterGroup;
+			callback.m_collisionFilterMask = ghost->getBroadphaseHandle()->m_collisionFilterMask;
+
+			ghost->convexSweepTest(active_shape, start, end, callback, bullet::get_world()->getDispatchInfo().m_allowedCcdPenetration);
+
+			if (callback.hasHit())
+			{
+				if (callback.m_closestHitFraction > 0.4f)
+				{
+					// we only dropped a fraction of the distance
+					position.setInterpolate3(position, target_position, callback.m_closestHitFraction);
+				
+				
+					// at this point, we've hit the ground
+					LOGV("we've hit the ground.\n");
+					velocity.setY(0);
+
+				}
+				else
+				{
+					// still on the ground
+					velocity.setY(0);
+				}
+			}
+			else
+			{
+				LOGV("dropped full distance\n");
+				// we dropped the full distance.
+				position = target_position;
+			}
+			
+			const float friction = 0.95f;
+			velocity.setX(velocity.x() * friction);
+			velocity.setZ(velocity.z() * friction);
+			position += velocity*delta_time;
+			
+			
+			btTransform xform = ghost->getWorldTransform();
+			xform.setOrigin(position);
+//			xform.setRotation(rotation);
+			
+			ghost->setWorldTransform(xform);
+		}
+		
+		void CharacterTwo::debugDraw(btIDebugDraw* debug_draw)
+		{
+			
+		}
+
+		void CharacterTwo::warp(const btVector3& target_position)
+		{
+			btTransform xform;
+			xform.setIdentity();
+			xform.setOrigin(target_position);
+			ghost->setWorldTransform(xform);
+		}
+		
+		void CharacterTwo::set_view_direction(const btVector3 &vec_right, const btVector3 &vec_view)
+		{
+			right = vec_right;
+			view = vec_view;
+		}
+
+		//
+		// KinematicCharacter
+		//
+		
 		/*
 		 * Returns the reflection direction of a ray going 'direction' hitting a surface with normal 'normal'
 		 *
@@ -223,7 +337,7 @@ namespace gemini
 			btTransform newTrans = m_ghostObject->getWorldTransform();
 			newTrans.setOrigin(m_currentPosition);
 			m_ghostObject->setWorldTransform(newTrans);
-		//	printf("m_touchingNormal = %f,%f,%f\n",m_touchingNormal[0],m_touchingNormal[1],m_touchingNormal[2]);
+//			printf("m_touchingNormal = %f,%f,%f\n",m_touchingNormal[0],m_touchingNormal[1],m_touchingNormal[2]);
 			return penetration;
 		}
 
