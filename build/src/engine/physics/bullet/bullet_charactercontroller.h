@@ -70,6 +70,7 @@ namespace gemini
 			btPairCachingGhostObject* ghost;
 
 			btVector3 position;
+			btVector3 target_position;
 			btVector3 velocity;
 			btVector3 acceleration;
 			btVector3 gravity;
@@ -95,8 +96,9 @@ namespace gemini
 			void warp(const btVector3& target_position);
 			void set_view_direction(const btVector3& right, const btVector3& view);
 			
-			// compute step down value
-			float step_down(btCollisionWorld* world, btScalar delta_time);
+			void step_up(btCollisionWorld* world, btScalar delta_time);
+			void step_forward_and_strafe(btCollisionWorld* world, btScalar delta_time);
+			void step_down(btCollisionWorld* world, btScalar delta_time);
 			
 			btPairCachingGhostObject* get_ghost() const { return ghost; }
 			void set_movement(const btVector3& move) { movement = move; }

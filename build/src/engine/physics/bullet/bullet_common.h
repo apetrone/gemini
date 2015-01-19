@@ -30,6 +30,9 @@
 
 #include <btBulletDynamicsCommon.h>
 
+#include <core/mathlib.h>
+
+
 class btDiscreteDynamicsWorld;
 
 namespace gemini
@@ -38,8 +41,17 @@ namespace gemini
 	{
 		class Constraint;
 	
+		
+		
+		inline const glm::vec3 toglm(const btVector3& input)
+		{
+			return glm::vec3(input.x(), input.y(), input.z());
+		}
+	
+	
 		namespace bullet
 		{
+
 			class BulletConstraint;
 		
 			btDiscreteDynamicsWorld* get_world();

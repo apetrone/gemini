@@ -104,6 +104,7 @@ namespace gemini
 		{
 			ghost = ghost_object;
 			position.setValue(0, 0, 0);
+			target_position.setValue(0, 0, 0);
 			velocity.setValue(0, 0, 0);			
 			acceleration.setValue(0, 0, 0);
 			gravity.setValue(0.0f, -9.8f, 0.0f);
@@ -141,16 +142,22 @@ namespace gemini
 
 			velocity += acceleration*delta_time;
 		
+			target_position = position;
 
-			float step_height = step_down(world, delta_time);
+			step_up(world, delta_time);
+			step_forward_and_strafe(world, delta_time);
+			step_down(world, delta_time);
 			
-			
+			target_position += velocity*delta_time;
 
-			velocity.setY(step_height);
+
+
 			const float friction = 0.85f;
 			velocity.setX(velocity.x() * friction);
 			velocity.setZ(velocity.z() * friction);
 			
+			
+			position = target_position;
 			
 			{
 				// draw velocity
@@ -158,7 +165,7 @@ namespace gemini
 				debugdraw::line(target_origin, target_origin+glm::vec3(velocity.x(), velocity.y(), velocity.z()), Color(255, 255, 0), 0);
 			}
 			
-			position += velocity*delta_time;
+
 			
 			
 			
@@ -187,22 +194,63 @@ namespace gemini
 			view = vec_view;
 		}
 		
-		float CharacterTwo::step_down(btCollisionWorld* world, btScalar delta_time)
+		void CharacterTwo::step_up(btCollisionWorld *world, btScalar delta_time)
 		{
-			float distance = 0;
-			btVector3 current_position = position;
+		}
+		
+		void CharacterTwo::step_forward_and_strafe(btCollisionWorld *world, btScalar delta_time)
+		{
+			
+			// try to move
+			{
+				btVector3 current_position = target_position;
+				btVector3 new_position = target_position + velocity*delta_time;
+				
+				btTransform start, end;
+				start.setIdentity();
+				end.setIdentity();
+				
+				start.setOrigin(current_position);
+				end.setOrigin(new_position);
+				
+				ClosestNotMeConvexResultCallback callback(ghost, btVector3(0, 1.0f, 0), 0.0f);
+				callback.m_collisionFilterGroup = ghost->getBroadphaseHandle()->m_collisionFilterGroup;
+				callback.m_collisionFilterMask = ghost->getBroadphaseHandle()->m_collisionFilterMask;
+				
+				ghost->convexSweepTest(active_shape, start, end, callback, bullet::get_world()->getDispatchInfo().m_allowedCcdPenetration);
+				
+				if (callback.hasHit())
+				{
+//					LOGV("frac: %g\n", callback.m_closestHitFraction);
+					//					if (callback.m_closestHitFraction > 0.4f)
+					//					{
+					//						position += (velocity*callback.m_closestHitFraction*delta_time);
+					//					}
+					debugdraw::sphere(toglm(callback.m_hitPointWorld), Color(255, 0, 0), 0.05f, 2.0f);
+					debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+callback.m_hitNormalWorld), Color(0, 255, 255), 2.0f);
+				}
+				else
+				{
+//					target_position = new_position;
+				}
+			}
+		}
+		
+		void CharacterTwo::step_down(btCollisionWorld* world, btScalar delta_time)
+		{
+			btVector3 current_position = target_position;
 			
 			// test for drop
-			btVector3 target_position;
-			btVector3 step_drop = delta_time * velocity;
-			target_position = current_position + step_drop;
+			btVector3 new_position;
+			btVector3 step_drop = velocity*delta_time;
+			new_position = current_position + step_drop;
 			
 			btTransform start, end;
 			start.setIdentity();
 			end.setIdentity();
 			
 			start.setOrigin(current_position);
-			end.setOrigin(target_position);
+			end.setOrigin(new_position);
 			
 			ClosestNotMeConvexResultCallback callback(ghost, btVector3(0, 1.0f, 0), 0.7071);
 			callback.m_collisionFilterGroup = ghost->getBroadphaseHandle()->m_collisionFilterGroup;
@@ -212,30 +260,27 @@ namespace gemini
 			
 			if (callback.hasHit())
 			{
-				if (callback.m_closestHitFraction > 0.4f)
+				if (callback.m_closestHitFraction > 0.1f)
 				{
 					// we only dropped a fraction of the distance
-					current_position.setInterpolate3(current_position, target_position, callback.m_closestHitFraction);
-					distance = lerp(current_position.y(), target_position.y(), callback.m_closestHitFraction);
-					
+					current_position.setInterpolate3(current_position, new_position, callback.m_closestHitFraction);
+				
 					// at this point, we've hit the ground
-					LOGV("we've hit the ground.\n");
-					distance = 0;
+//					LOGV("we've hit the ground.\n");
+					target_position.setY(current_position.y());
+//					velocity.setY(0);
 				}
 				else
 				{
 					// still on the ground
-					distance = 0;
+					velocity.setY(0);
 				}
 			}
 			else
 			{
-				LOGV("dropped full distance\n");
+//				LOGV("dropped full distance\n");
 				// we dropped the full distance.
-				distance = velocity.y();
 			}
-			
-			return distance;
 		}
 
 		//
