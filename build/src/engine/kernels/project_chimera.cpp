@@ -893,7 +893,7 @@ public:
 			debugdraw::text(x, y+36, core::str::format("active_camera->right = %.2g %.2g %.2g", active_camera->side.x, active_camera->side.y, active_camera->side.z), Color(255, 0, 0));
 		}
 		debugdraw::text(x, y+48, core::str::format("frame delta = %2.2fms\n", params.framedelta_filtered_msec), Color(255, 255, 255));
-		debugdraw::text(x, y+60, core::str::format("# allocations = %i, total %i Kbytes\n", platform::memory::allocator().total_allocations(), platform::memory::allocator().total_bytes()/1024), Color(64, 102, 192));
+		debugdraw::text(x, y+60, core::str::format("# allocations = %i, total %i Kbytes\n", platform::memory::allocator().active_allocations(), platform::memory::allocator().active_bytes()/1024), Color(64, 102, 192));
 		
 	
 		// run server frame
