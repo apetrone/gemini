@@ -835,7 +835,8 @@ public:
 		command.set_button(3, back);
 		
 		command.set_button(5, input::state()->keyboard().is_down(input::KEY_E));
-
+		command.set_button(6, input::state()->keyboard().is_down(input::KEY_SPACE));
+		command.set_button(7, input::state()->keyboard().is_down(input::KEY_LALT) || input::state()->keyboard().is_down(input::KEY_RALT));
 		
 		int mouse[2];
 		kernel::instance()->get_mouse_position(mouse[0], mouse[1]);

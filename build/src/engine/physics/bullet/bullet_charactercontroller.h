@@ -84,6 +84,9 @@ namespace gemini
 			
 			btVector3 movement;
 			
+			
+			btScalar step_height;
+			
 		public:
 			CharacterTwo(btPairCachingGhostObject* ghost_object, btConvexShape* shape);
 			virtual ~CharacterTwo() {}
@@ -91,7 +94,6 @@ namespace gemini
 			// action interface overrides
 			virtual void updateAction(btCollisionWorld* world, btScalar delta_time);
 			virtual void debugDraw(btIDebugDraw* debug_draw);
-
 
 			void warp(const btVector3& target_position);
 			void set_view_direction(const btVector3& right, const btVector3& view);

@@ -184,7 +184,7 @@ namespace gemini
 //						character = new KinematicCharacter((btPairCachingGhostObject*)bullet_object->get_collision_object(), (btConvexShape*)bullet_object->get_collision_shape(), step_height);
 
 						character2 = new CharacterTwo((btPairCachingGhostObject*)bullet_object->get_collision_object(), (btConvexShape*)bullet_object->get_collision_shape());
-//						bullet::get_world()->addAction(character);
+						bullet::get_world()->addAction(character2);
 					}
 					else
 					{

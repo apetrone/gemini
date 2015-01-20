@@ -521,9 +521,6 @@ namespace gemini
 				
 				// pass off to application
 				_active_application->step( _kernel->parameters() );
-				
-				// step debug draw
-//				debugdraw::update(_kernel->parameters().step_interval_seconds);
 			}
 		} // update
 
