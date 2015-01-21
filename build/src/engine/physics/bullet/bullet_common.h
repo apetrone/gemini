@@ -47,6 +47,11 @@ namespace gemini
 		{
 			return glm::vec3(input.x(), input.y(), input.z());
 		}
+		
+		inline const btVector3 fromglm(const glm::vec3& input)
+		{
+			return btVector3(input.x, input.y, input.z);
+		}
 	
 	
 		namespace bullet

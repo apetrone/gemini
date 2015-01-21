@@ -105,6 +105,8 @@ namespace gemini
 			btPairCachingGhostObject* get_ghost() const { return ghost; }
 			void set_movement(const btVector3& move) { movement = move; }
 			
+			
+			void attempt_move(const btVector3& target_velocity, float delta_time);
 		};
 	
 	

@@ -142,7 +142,7 @@ namespace gemini
 //			glm::vec3 basis(result_movement.x(), result_movement.y(), result_movement.z());
 //			debugdraw::basis(target_origin, basis, 2.0f, 0);
 
-			acceleration += result_movement*60.0f;
+			acceleration += result_movement*40.0f;
 
 			velocity += acceleration*delta_time;
 		
@@ -201,16 +201,17 @@ namespace gemini
 			target_position += btVector3(0, step_height, 0) * delta_time;
 		}
 		
-		void CharacterTwo::step_forward_and_strafe(btCollisionWorld *world, btScalar delta_time)
+		
+		void CharacterTwo::attempt_move(const btVector3& target_velocity, float delta_time)
 		{
-			btVector3 new_position = target_position + btVector3(velocity.x(), 0.0f, velocity.z())*delta_time;
-
+			btVector3 new_position = target_position + target_velocity*delta_time;
+			
 			// try to move
 			btTransform start, end;
 			start.setIdentity();
 			end.setIdentity();
 			
-			start.setOrigin(position);
+			start.setOrigin(target_position);
 			end.setOrigin(new_position);
 			
 			ClosestNotMeConvexResultCallback callback(ghost, btVector3(0, 1.0f, 0), 0.0f);
@@ -222,16 +223,33 @@ namespace gemini
 			if (callback.hasHit())
 			{
 				LOGV("frac: %g\n", callback.m_closestHitFraction);
-
+				
 				debugdraw::sphere(toglm(callback.m_hitPointWorld), Color(255, 0, 0), 0.05f, 2.0f);
 				debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+callback.m_hitNormalWorld), Color(0, 255, 255), 2.0f);
+
+				target_position.setInterpolate3(target_position, new_position, callback.m_closestHitFraction);
+
+				if (callback.m_closestHitFraction < 1.0f)
+				{
+					glm::vec3 normal = toglm(callback.m_hitNormalWorld);
+					glm::vec3 reflected = glm::reflect(toglm(target_velocity), normal);
+					float diff = (1.0f - callback.m_closestHitFraction);
+					attempt_move(fromglm(reflected*diff), delta_time);
+				}
 			}
 			else
 			{
+//				LOGV("no hit\n");
 				target_position = new_position;
 			}
 			
-			LOGV("target_position: %2.2f\n", target_position.x());
+//			LOGV("target_position: %2.2f\n", target_position.x());
+		}
+		
+		void CharacterTwo::step_forward_and_strafe(btCollisionWorld *world, btScalar delta_time)
+		{
+			attempt_move(btVector3(velocity.x(), 0, 0), delta_time);
+			attempt_move(btVector3(0.0f, 0.0f, velocity.z()), delta_time);
 		}
 		
 		void CharacterTwo::step_down(btCollisionWorld* world, btScalar delta_time)
