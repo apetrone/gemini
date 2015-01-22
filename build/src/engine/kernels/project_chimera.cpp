@@ -761,8 +761,6 @@ public:
 		engine_interface = CREATE(EngineInterface, &entity_manager, &model_interface, physics::api::instance(), &experimental, render_method, &main_camera);
 		gemini::engine::api::set_instance(engine_interface);
 		
-		center_mouse(params);
-		
 //		background = audio::create_sound("sounds/8b_shoot");
 //		background_source = audio::play(background, -1);
 
@@ -816,6 +814,7 @@ public:
 			game_interface->level_load();
 		}
 
+		center_mouse(params);
 		return kernel::Application_Success;
 	}
 
