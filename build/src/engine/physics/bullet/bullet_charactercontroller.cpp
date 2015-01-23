@@ -142,7 +142,7 @@ namespace gemini
 //			glm::vec3 basis(result_movement.x(), result_movement.y(), result_movement.z());
 //			debugdraw::basis(target_origin, basis, 2.0f, 0);
 
-			acceleration += result_movement*40.0f;
+			acceleration += result_movement*20.0f;
 
 			velocity += acceleration*delta_time;
 		
@@ -242,16 +242,48 @@ namespace gemini
 //			LOGV("target_position: %2.2f\n", target_position.x());
 		}
 		
+		
+		bool CharacterTwo::collide_segment(ClosestNotMeConvexResultCallback& callback, const btVector3& start_position, const btVector3& end_position)
+		{
+			btTransform start;
+			btTransform end;
+			start.setIdentity();
+			end.setIdentity();
+			start.setOrigin(start_position);
+			end.setOrigin(end_position);
+
+			callback.m_collisionFilterGroup = ghost->getBroadphaseHandle()->m_collisionFilterGroup;
+			callback.m_collisionFilterMask = ghost->getBroadphaseHandle()->m_collisionFilterMask;
+			
+			ghost->convexSweepTest(active_shape, start, end, callback, bullet::get_world()->getDispatchInfo().m_allowedCcdPenetration);
+			
+			if (callback.hasHit())
+			{
+				debugdraw::sphere(toglm(callback.m_hitPointWorld), Color(255, 0, 0), 0.025f, 2.0f);
+//				debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+callback.m_hitNormalWorld), Color(0, 255, 255), 2.0f);
+				return true;
+			}
+		
+			return callback.hasHit();
+		}
+		
+		
+		
 		void CharacterTwo::step_forward_and_strafe(btCollisionWorld *world, btScalar delta_time)
 		{
 //			attempt_move(btVector3(velocity.x(), 0, 0), delta_time);
 			//attempt_move(btVector3(0.0f, 0.0f, velocity.z()), delta_time);
 			btVector3 move_velocity = btVector3(velocity.x(), 0.0f, velocity.z());
 			
-			btVector3 new_position = target_position + move_velocity*delta_time;
+			float remaining_time = delta_time;
 		
 			for (int i = 0; i < 1; i++)
 			{
+				if (remaining_time <= 0)
+					break;
+					
+				btVector3 new_position = target_position + move_velocity*remaining_time;
+				
 				btTransform start, end;
 				start.setIdentity();
 				end.setIdentity();
@@ -260,53 +292,92 @@ namespace gemini
 				end.setOrigin(new_position);
 				
 				ClosestNotMeConvexResultCallback callback(ghost, btVector3(0, 1.0f, 0), 0.0f);
-				callback.m_collisionFilterGroup = ghost->getBroadphaseHandle()->m_collisionFilterGroup;
-				callback.m_collisionFilterMask = ghost->getBroadphaseHandle()->m_collisionFilterMask;
+//				callback.m_collisionFilterGroup = ghost->getBroadphaseHandle()->m_collisionFilterGroup;
+//				callback.m_collisionFilterMask = ghost->getBroadphaseHandle()->m_collisionFilterMask;
 				
-				ghost->convexSweepTest(active_shape, start, end, callback, bullet::get_world()->getDispatchInfo().m_allowedCcdPenetration);
+//				ghost->convexSweepTest(active_shape, start, end, callback, bullet::get_world()->getDispatchInfo().m_allowedCcdPenetration);
+
+				collide_segment(callback, target_position, new_position);
+
 				if (callback.hasHit())
 				{
 //					LOGV("frac: %g\n", callback.m_closestHitFraction);
 					
-//					debugdraw::sphere(toglm(callback.m_hitPointWorld), Color(255, 0, 0), 0.05f, 0.0f);
-//					debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+callback.m_hitNormalWorld), Color(0, 255, 255), 0.0f);
-					float margin = 0.01f;
+//					debugdraw::sphere(toglm(callback.m_hitPointWorld), Color(255, 0, 0), 0.05f, 2.0f);
+//					debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+callback.m_hitNormalWorld), Color(0, 255, 255), 2.0f);
+					float margin = 0.0f;
 					float used_time = (callback.m_closestHitFraction-margin) * delta_time;
-					float remaining_time = delta_time - used_time;
-					LOGV("rem: %g\n", remaining_time);
+					remaining_time = remaining_time - used_time;
+//					LOGV("rem: %g\n", remaining_time);
 					
+					// travel until the first collision
 					btVector3 hitpoint = lerp(target_position, new_position, callback.m_closestHitFraction);
-					debugdraw::line(toglm(position), toglm(hitpoint), Color(0, 255, 255), 2.0f);
+					
+					
+//					debugdraw::line(toglm(position), toglm(hitpoint), Color(0, 255, 255), 2.0f);
 					
 					btVector3 up(fromglm(glm::vec3(0, 1, 0)));
 					
+					// compute the new normal -- which should be orthogonal to the wall
 					btVector3 new_forward = callback.m_hitNormalWorld.cross(up);
+					new_forward.normalize();
 					
-					glm::vec3 temp = toglm(new_forward);
-//					debugdraw::line(toglm(target_position), toglm(target_position)+temp*3.0f, Color(255, 0, 0), 2.0f);
-					
-					target_position = hitpoint;
+					float dot_new = new_forward.dot(callback.m_hitNormalWorld);
 					
 					
-					// visualize the remaining velocity
-//					hitpoint += remaining_time*move_velocity;
-//					debugdraw::line(toglm(target_position), toglm(hitpoint), Color(255, 0, 0), 0.0f);
+					// get distance from object and player center
+					// and see if it's greater than the capsule radius
+//					btVector3 player_to_wall_distance = callback.m_hitPointWorld - target_position;				
+//					float dist = player_to_wall_distance.length();
+//					LOGV("dist = %g\n", dist);
+					
+					
+					// if the new forward normal is orthogonal OR facing away from the wall
+					if (dot_new <= 0)
+					{
+//						glm::vec3 temp = toglm(new_forward);
+	//					debugdraw::line(toglm(target_position), toglm(target_position)+temp*3.0f, Color(255, 0, 0), 2.0f);
+						
+						target_position = hitpoint;
+						
+						// visualize the remaining velocity
+//						hitpoint += remaining_time*move_velocity;
+//						debugdraw::line(toglm(target_position), toglm(hitpoint), Color(255, 0, 0), 0.0f);
 
-					// the velocity that extends into the wall
-					glm::vec3 normal_velocity = glm::dot(toglm(callback.m_hitNormalWorld), toglm(move_velocity)) * toglm(callback.m_hitNormalWorld);
-					glm::vec3 new_velocity = toglm(move_velocity) - 1.0f*normal_velocity;
-					new_velocity = glm::length(toglm(move_velocity)) / glm::length(new_velocity)*new_velocity;
+						// the velocity that extends into the wall
+						glm::vec3 normal_velocity = glm::dot(toglm(callback.m_hitNormalWorld), toglm(move_velocity)) * toglm(callback.m_hitNormalWorld);
+						
+						glm::vec3 new_velocity = toglm(move_velocity) - 1.0f*normal_velocity;
+						new_velocity = glm::length(toglm(move_velocity)) / glm::length(new_velocity)*new_velocity;
 
-					hitpoint = fromglm(remaining_time * new_velocity);
-					
-					// draw the new velocity vector from current position
-					debugdraw::line(toglm(target_position), toglm(target_position)+new_velocity, Color(255, 0, 0), 5.0f);
+						hitpoint = fromglm(remaining_time * new_velocity*.9f);
+						
+						// see if the new velocity would cause a collision
+						ClosestNotMeConvexResultCallback cb2(ghost, btVector3(0, 1.0f, 0), 0.0f);
+						collide_segment(cb2, target_position, target_position+hitpoint);
 
-					target_position += hitpoint;
+						if (!cb2.hasHit())
+						{
+							// draw the new velocity vector from current position
+//							debugdraw::line(toglm(target_position), toglm(target_position+hitpoint), Color(255, 0, 0), 5.0f);
+							
+							btVector3 final_position = target_position + hitpoint;
+							target_position = final_position;
+						}
+						else
+						{
+//							btVector3 new_slide;
+//							new_slide.setInterpolate3(target_position, target_position+hitpoint, cb2.m_closestHitFraction);
+//							target_position = new_slide;
+						}
+						
+
+					}
 				}
 				else
 				{
 					target_position = new_position;
+					break;
 				}
 			}
 		}

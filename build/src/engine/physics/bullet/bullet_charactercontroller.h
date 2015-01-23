@@ -65,6 +65,8 @@ namespace gemini
 
 	namespace physics
 	{
+		class ClosestNotMeConvexResultCallback;
+		
 		class CharacterTwo : public btActionInterface
 		{
 			btPairCachingGhostObject* ghost;
@@ -99,6 +101,7 @@ namespace gemini
 			void set_view_direction(const btVector3& right, const btVector3& view);
 			
 			void step_up(btCollisionWorld* world, btScalar delta_time);
+			bool collide_segment(ClosestNotMeConvexResultCallback& callback, const btVector3& start, const btVector3& end);
 			void step_forward_and_strafe(btCollisionWorld* world, btScalar delta_time);
 			void step_down(btCollisionWorld* world, btScalar delta_time);
 			
