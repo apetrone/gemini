@@ -259,12 +259,10 @@ namespace gemini
 			
 			if (callback.hasHit())
 			{
+				btVector3 normal = callback.m_hitNormalWorld.normalize();
+				
 				debugdraw::sphere(toglm(callback.m_hitPointWorld), Color(255, 0, 0), 0.025f, 2.0f);
-				debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+callback.m_hitNormalWorld), Color(0, 255, 255), 2.0f);
-			}
-			else
-			{
-				debugdraw::line(toglm(start_position), toglm(end_position), Color(255, 255, 0), 2.0f);
+				debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+normal*0.25f), Color(0, 255, 255), 2.0f);
 			}
 		
 			return callback.hasHit();
@@ -281,8 +279,9 @@ namespace gemini
 			
 			float remaining_time = delta_time;
 		
-			for (int i = 0; i < 1 && remaining_time > 0.0f; i++)
+			for (int i = 0; i < 3 && remaining_time > 0.0f; ++i)
 			{
+				// calculate the new position based on the remaining velocity and time
 				btVector3 new_position = target_position + remaining_velocity*remaining_time;
 				
 				btTransform start, end;
@@ -297,37 +296,22 @@ namespace gemini
 
 				if (callback.hasHit())
 				{
-					float margin = 0.0f;
-					float used_time = (callback.m_closestHitFraction-margin) * delta_time;
-					remaining_time = remaining_time - used_time;
+					LOGV("[%i] hit something, t = %g, frac: %g\n", i, remaining_time, callback.m_closestHitFraction);
 
-					// travel until the first collision
-					btVector3 hitpoint = lerp(target_position, new_position, callback.m_closestHitFraction);
+					// lerp to that position
+					target_position.setInterpolate3(target_position, new_position, callback.m_closestHitFraction);
 					
-					// if the new forward normal is orthogonal OR facing away from the wall
-
-					{
-						target_position = hitpoint;
+					// remove the used time (that we travel on that collision)
+					// from the remaining time
+					float used_time = callback.m_closestHitFraction * remaining_time;
+					remaining_time -= used_time;
 	
-						// the velocity that extends into the wall
-						btVector3 new_velocity = move_velocity - 1*move_velocity.dot(callback.m_hitNormalWorld)*callback.m_hitNormalWorld;
-						btVector3 remaining_velocity = move_velocity - new_velocity;
-						btVector3 vector_projection = (callback.m_hitNormalWorld.dot(remaining_velocity) / remaining_velocity.dot(remaining_velocity)) * remaining_velocity;
-
-						hitpoint = remaining_time*new_velocity*.9f;
-						
-						// see if the new velocity would cause a collision
-						ClosestNotMeConvexResultCallback cb2(ghost, btVector3(0, 1.0f, 0), 0.0f);
-						collide_segment(cb2, target_position, target_position+hitpoint);
-
-						btVector3 final_position = target_position + hitpoint;
-						target_position = final_position;
-						velocity = new_velocity;
-					}
+					// the velocity that extends into the wall
+					remaining_velocity = remaining_velocity - 1*remaining_velocity.dot(callback.m_hitNormalWorld)*callback.m_hitNormalWorld;
 				}
 				else
 				{
-//					assert(new_position.z() > 1.2f);
+					LOGV("[%i] move full step\n", i);
 					target_position = new_position;
 					break;
 				}
