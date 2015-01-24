@@ -277,15 +277,13 @@ namespace gemini
 //			attempt_move(btVector3(velocity.x(), 0, 0), delta_time);
 			//attempt_move(btVector3(0.0f, 0.0f, velocity.z()), delta_time);
 			btVector3 move_velocity = btVector3(velocity.x(), 0.0f, velocity.z());
+			btVector3 remaining_velocity = move_velocity;
 			
 			float remaining_time = delta_time;
 		
-			for (int i = 0; i < 1; i++)
+			for (int i = 0; i < 1 && remaining_time > 0.0f; i++)
 			{
-				if (remaining_time <= 0)
-					break;
-					
-				btVector3 new_position = target_position + move_velocity*remaining_time;
+				btVector3 new_position = target_position + remaining_velocity*remaining_time;
 				
 				btTransform start, end;
 				start.setIdentity();
@@ -299,86 +297,32 @@ namespace gemini
 
 				if (callback.hasHit())
 				{
-//					LOGV("initial hit at: %g\n", callback.m_closestHitFraction);
-					
-//					debugdraw::sphere(toglm(callback.m_hitPointWorld), Color(255, 0, 0), 0.05f, 2.0f);
-//					debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+callback.m_hitNormalWorld), Color(0, 255, 255), 2.0f);
 					float margin = 0.0f;
 					float used_time = (callback.m_closestHitFraction-margin) * delta_time;
 					remaining_time = remaining_time - used_time;
-//					LOGV("rem: %g\n", remaining_time);
-					
+
 					// travel until the first collision
 					btVector3 hitpoint = lerp(target_position, new_position, callback.m_closestHitFraction);
 					
-					
-//					debugdraw::line(toglm(position), toglm(hitpoint), Color(0, 255, 255), 2.0f);
-					
-//					btVector3 up(fromglm(glm::vec3(0, 1, 0)));
-					
-					// compute the new normal -- which should be orthogonal to the wall
-//					btVector3 new_forward = callback.m_hitNormalWorld.cross(up);
-//					new_forward.normalize();
-//					debugdraw::line(toglm(target_position), toglm(target_position+new_forward*1.0f), Color(255, 255, 0), 2.0f);
-//					float dot_new = new_forward.dot(callback.m_hitNormalWorld);
-					
-					
-					// get distance from object and player center
-					// and see if it's greater than the capsule radius
-//					btVector3 player_to_wall_distance = callback.m_hitPointWorld - target_position;				
-//					float dist = player_to_wall_distance.length();
-//					LOGV("dist = %g\n", dist);
-					
-					
 					// if the new forward normal is orthogonal OR facing away from the wall
-					//if (dot_new <= 0)
-					{
-//						glm::vec3 temp = toglm(new_forward);
-	//					debugdraw::line(toglm(target_position), toglm(target_position)+temp*3.0f, Color(255, 0, 0), 2.0f);
-						
-						target_position = hitpoint;
-						
-//						assert(target_position.z() > 1.2f);
-						// visualize the remaining velocity
-//						hitpoint += remaining_time*move_velocity;
-//						debugdraw::line(toglm(target_position), toglm(hitpoint), Color(255, 0, 0), 0.0f);
 
+					{
+						target_position = hitpoint;
+	
 						// the velocity that extends into the wall
 						btVector3 new_velocity = move_velocity - 1*move_velocity.dot(callback.m_hitNormalWorld)*callback.m_hitNormalWorld;
-
 						btVector3 remaining_velocity = move_velocity - new_velocity;
-
 						btVector3 vector_projection = (callback.m_hitNormalWorld.dot(remaining_velocity) / remaining_velocity.dot(remaining_velocity)) * remaining_velocity;
-						
-//						debugdraw::line(toglm(target_position), toglm(target_position+vector_projection), Color(255, 255, 0), 2.0f);
+
 						hitpoint = remaining_time*new_velocity*.9f;
 						
 						// see if the new velocity would cause a collision
 						ClosestNotMeConvexResultCallback cb2(ghost, btVector3(0, 1.0f, 0), 0.0f);
 						collide_segment(cb2, target_position, target_position+hitpoint);
-						
-						
-//						debugdraw::line(toglm(target_position), toglm(target_position+hitpoint), Color(255, 255, 0), 2.0f);
 
-						if (cb2.hasHit())
-						{
-							LOGV("cb2 hit: %2.2f\n", cb2.m_closestHitFraction);
-							
-							// draw the new velocity vector from current position
-							//							debugdraw::line(toglm(target_position), toglm(target_position+hitpoint), Color(255, 0, 0), 5.0f);
-							
-							//							target_position.setInterpolate3(target_position, target_position+hitpoint, cb2.m_closestHitFraction);
-							
-							if (cb2.m_hitCollisionObject == callback.m_hitCollisionObject)
-							{
-								btVector3 final_position = target_position + hitpoint;
-								target_position = final_position;
-							}
-						}
-						else
-						{
-							LOGV("hit nothing!\n");
-						}
+						btVector3 final_position = target_position + hitpoint;
+						target_position = final_position;
+						velocity = new_velocity;
 					}
 				}
 				else
