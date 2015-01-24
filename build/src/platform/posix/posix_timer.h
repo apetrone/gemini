@@ -26,10 +26,22 @@
 
 #include "platform.h"
 
+
+#include <sys/time.h>
+#include <time.h>
+
 namespace platform
 {
-	TimerHandle* posix_create_timer();
-	void posix_destroy_timer(TimerHandle* timer);
-	double posix_get_timer_msec(TimerHandle* timer);
+	struct PosixTimer
+	{
+	private:
+		struct timeval initial_time;
+		
+	public:
+
+		void reset();
+		uint64_t get_microseconds();
+	};
+
 	void posix_get_date_time(DateTime& datetime);
 } // namespace platform

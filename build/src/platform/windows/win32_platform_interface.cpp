@@ -26,25 +26,16 @@
 #include "mem.h"
 #include "win32_platform_interface.h"
 
-#define WIN32_LEAN_AND_MEAN 1
-#include <windows.h>
 #include <direct.h> // for _mkdir
 #include <string.h> // for strrchr
 
 using namespace platform;
-
-
-static LARGE_INTEGER _frequency;
 
 struct Win32DynamicLibrary : public DynamicLibrary
 {
 	HMODULE handle;
 };
 
-struct Win32Timer : public TimerHandle
-{
-	LARGE_INTEGER last;
-};
 
 Result Win32PlatformInterface::startup()
 {
@@ -53,7 +44,10 @@ Result Win32PlatformInterface::startup()
 	previous_error_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
 
 	// cache off the frequency for later timer use.
-	QueryPerformanceFrequency(&_frequency);
+	QueryPerformanceFrequency(&frequency);
+
+	// fetch the initial time
+	get_time_microseconds();
 
 	return Result(Result::Success);
 }
@@ -135,27 +129,28 @@ const char* Win32PlatformInterface::get_dynamiclibrary_extension() const
 	return ".dll";
 }
 
-TimerHandle* Win32PlatformInterface::create_timer()
-{
-	Win32Timer* timer = CREATE(Win32Timer);
-	get_timer_msec(timer);
-	return timer;
-}
+// double Win32PlatformInterface::get_timer_msec(TimerHandle* timer)
+// {
+// 	Win32Timer* instance = static_cast<Win32Timer*>(timer);
+// 	LARGE_INTEGER now;
+// 	QueryPerformanceCounter(&now);
+	
 
-void Win32PlatformInterface::destroy_timer(TimerHandle* timer)
-{
-	Win32Timer* instance = static_cast<Win32Timer*>(timer);
-	DESTROY(Win32Timer, instance);
-}
+// 	return ((now.QuadPart - instance->last.QuadPart) / (double)_frequency.QuadPart) * 1000.0;
+// }
 
-double Win32PlatformInterface::get_timer_msec(TimerHandle* timer)
+uint64_t Win32PlatformInterface::get_time_microseconds()
 {
-	Win32Timer* instance = static_cast<Win32Timer*>(timer);
+	uint64_t delta;
+
 	LARGE_INTEGER now;
 	QueryPerformanceCounter(&now);
-	
-	return ((now.QuadPart - instance->last.QuadPart) / (double)_frequency.QuadPart) * 1000.0;
+
+	delta = ((now.QuadPart - instance->last.QuadPart) / (double)_frequency.QuadPart) * 1000000;
+
+	last_ticks = now;
 }
+
 
 void Win32PlatformInterface::get_current_datetime(DateTime& datetime)
 {

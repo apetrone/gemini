@@ -42,6 +42,7 @@ using namespace platform;
 
 Result OSXPlatformInterface::startup()
 {
+	timer.reset();
 	return osx_startup();
 }
 
@@ -90,19 +91,9 @@ const char* OSXPlatformInterface::get_dynamiclibrary_extension() const
 	return ".dylib";
 }
 
-TimerHandle* OSXPlatformInterface::create_timer()
+uint64_t OSXPlatformInterface::get_time_microseconds()
 {
-	return posix_create_timer();
-}
-
-void OSXPlatformInterface::destroy_timer(TimerHandle* timer)
-{
-	return posix_destroy_timer(timer);
-}
-
-double OSXPlatformInterface::get_timer_msec(TimerHandle* timer)
-{
-	return posix_get_timer_msec(timer);
+	return timer.get_microseconds();
 }
 
 void OSXPlatformInterface::get_current_datetime(DateTime& datetime)

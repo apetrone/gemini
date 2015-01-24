@@ -42,6 +42,7 @@ using namespace platform;
 
 Result PosixPlatformInterface::startup()
 {
+	timer.reset();
 	return Result(Result::Success);
 }
 
@@ -116,19 +117,9 @@ const char* PosixPlatformInterface::get_dynamiclibrary_extension() const
 	return ".so";
 }
 
-TimerHandle* PosixPlatformInterface::create_timer()
+uint64_t PosixPlatformInterface::get_time_microseconds()
 {
-	return posix_create_timer();
-}
-
-void PosixPlatformInterface::destroy_timer(TimerHandle* timer)
-{
-	posix_destroy_timer(timer);
-}
-
-double PosixPlatformInterface::get_timer_msec(TimerHandle* timer)
-{
-	return posix_get_timer_msec(timer);
+	return timer.get_microseconds();
 }
 
 void PosixPlatformInterface::get_current_datetime(DateTime& datetime)

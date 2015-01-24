@@ -26,16 +26,21 @@
 
 #include "platform.h"
 
+#include "posix/posix_timer.h"
+
 using platform::Result;
 using platform::IPlatformInterface;
 using platform::DynamicLibrary;
 using platform::DynamicLibrarySymbol;
 
-using platform::TimerHandle;
+//using platform::TimerHandle;
 using platform::DateTime;
 
 class OSXPlatformInterface : public IPlatformInterface
 {
+	platform::PosixTimer timer;
+
+
 public:
 	virtual Result startup();
 	virtual void shutdown();
@@ -48,9 +53,7 @@ public:
 	virtual void close_dynamiclibrary(DynamicLibrary* library);
 	virtual DynamicLibrarySymbol find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name);
 	virtual const char* get_dynamiclibrary_extension() const;
-	
-	virtual TimerHandle* create_timer();
-	virtual void destroy_timer(TimerHandle* timer);
-	virtual double get_timer_msec(TimerHandle* timer);
+
+	virtual uint64_t get_time_microseconds();
 	virtual void get_current_datetime(DateTime& datetime);
 };

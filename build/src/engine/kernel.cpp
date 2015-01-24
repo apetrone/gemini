@@ -201,9 +201,8 @@ namespace gemini
 			
 			struct State
 			{
-				platform::TimerHandle* timer;
 				double accumulator;
-				float last_time;
+				uint64_t last_time;
 				TimeStepFilter tsa;
 			};
 			
@@ -336,8 +335,7 @@ namespace gemini
 			_kernel->set_active(true);
 			
 			// initialize kernel's timer
-			_internal::_kernel_state.timer = platform::instance()->create_timer();
-			_internal::_kernel_state.last_time = platform::instance()->get_timer_msec(_internal::_kernel_state.timer);
+			_internal::_kernel_state.last_time = platform::instance()->get_time_microseconds();
 			_internal::_kernel_state.accumulator = 0;
 
 			// perform any startup duties here before we init the core
@@ -494,15 +492,14 @@ namespace gemini
 			}
 			
 			_internal::game_path = 0;
-			
-			platform::instance()->destroy_timer(_internal::_kernel_state.timer);
 		} // shutdown
 
 		void update()
 		{
-			float now_msec = platform::instance()->get_timer_msec(_internal::_kernel_state.timer);
-			float raw_delta_msec = now_msec - _internal::_kernel_state.last_time;
-			_internal::_kernel_state.last_time = now_msec;
+			uint64_t now_microseconds = platform::instance()->get_time_microseconds();
+
+			float raw_delta_msec = (now_microseconds - _internal::_kernel_state.last_time)*.001f;
+			_internal::_kernel_state.last_time = now_microseconds;
 
 			_internal::_kernel_state.tsa.tick( raw_delta_msec );
 			

@@ -26,17 +26,22 @@
 
 #include "platform.h"
 
+#define WIN32_LEAN_AND_MEAN 1
+#include <windows.h>
+
 using platform::Result;
 using platform::IPlatformInterface;
 using platform::DynamicLibrary;
 using platform::DynamicLibrarySymbol;
-using platform::TimerHandle;
+
 using platform::DateTime;
 
 class Win32PlatformInterface : public IPlatformInterface
 {
 	unsigned int previous_error_mode;
-
+	LARGE_INTEGER frequency;
+	LARGE_INTEGER last_ticks;
+	
 public:
 	virtual Result startup();
 	virtual void shutdown();
@@ -51,8 +56,6 @@ public:
 	virtual DynamicLibrarySymbol find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name);
 	virtual const char* get_dynamiclibrary_extension() const;
 
-	virtual TimerHandle* create_timer();
-	virtual void destroy_timer(TimerHandle* timer);
-	virtual double get_timer_msec(TimerHandle* timer);
+	virtual uint64_t get_time_microseconds();
 	virtual void get_current_datetime(DateTime& datetime);
 };

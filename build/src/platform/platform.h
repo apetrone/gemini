@@ -32,6 +32,8 @@
 	#include <TargetConditionals.h>
 #endif
 
+#include <stdint.h>
+
 #if PLATFORM_WINDOWS
 	// see if we still need these here...
 //	#define WIN32_LEAN_AND_MEAN 1
@@ -104,13 +106,7 @@ namespace platform
 	};
 
 	typedef void* DynamicLibrarySymbol;
-	
-	struct TimerHandle
-	{
-		virtual ~TimerHandle() {}
-	};
-	
-	
+
 	struct DateTime
 	{
 		unsigned short year;
@@ -178,16 +174,21 @@ namespace platform
 		// TIMERS
 		//
 		
+		/// @desc Fetches the current time in microseconds
+		/// @returns The current time in microseconds since the platform was
+		/// instantiated.
+		virtual uint64_t get_time_microseconds() = 0;
+		
 		/// @desc Create and return a handle to a platform timer.
 		/// @returns Handle to a platform timer or 0 on failure.
-		virtual TimerHandle* create_timer() = 0;
+//		virtual TimerHandle* create_timer() = 0;
 		
 		/// @desc Destroys a previously created timer.
-		virtual void destroy_timer(TimerHandle* timer) = 0;
+//		virtual void destroy_timer(TimerHandle* timer) = 0;
 		
 		/// @desc Queries the timer for the current time
 		/// @returns The current time as a double in miliseconds
-		virtual double get_timer_msec(TimerHandle* timer) = 0;
+//		virtual double get_timer_msec(TimerHandle* timer) = 0;
 		
 		/// @desc Populates the DateTime struct with the system's current date and time
 		virtual void get_current_datetime(DateTime& datetime) = 0;

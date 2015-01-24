@@ -26,38 +26,20 @@
 #include "mem.h"
 #include "posix_timer.h"
 
-#include <sys/time.h>
-#include <time.h>
 #include <assert.h>
 
 namespace platform
-{
-	struct PosixTimerHandle : public TimerHandle
+{	
+	void PosixTimer::reset()
 	{
-		struct timeval initial_time;
-	};
-
-	TimerHandle* posix_create_timer()
-	{
-		PosixTimerHandle* handle = CREATE(PosixTimerHandle);
-		gettimeofday(&handle->initial_time, 0);
-		return handle;
+		gettimeofday(&initial_time, 0);
 	}
 	
-	void posix_destroy_timer(TimerHandle* timer)
+	uint64_t PosixTimer::get_microseconds()
 	{
-		PosixTimerHandle* handle = static_cast<PosixTimerHandle*>(timer);
-		DESTROY(PosixTimerHandle, handle);
-	}
-	
-	double posix_get_timer_msec(TimerHandle* timer)
-	{
-		PosixTimerHandle* handle = static_cast<PosixTimerHandle*>(timer);
-		assert(handle != 0);
-		
 		struct timeval now;
 		gettimeofday(&now, 0);
-		return ((now.tv_sec-handle->initial_time.tv_sec)*1000.0f + (now.tv_usec-handle->initial_time.tv_usec)/1000.0f);
+		return ((now.tv_sec-initial_time.tv_sec)*1000000 + (now.tv_usec-initial_time.tv_usec));
 	}
 	
 	void posix_get_date_time(DateTime& datetime)
