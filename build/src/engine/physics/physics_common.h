@@ -63,7 +63,7 @@ namespace gemini
 			{
 				return true;
 			}
-			
+
 			virtual btScalar addSingleResult(btCollisionWorld::LocalRayResult& rayResult, bool normalInWorldSpace)
 			{
 //				LOGV("testing result\n");
@@ -94,7 +94,7 @@ namespace gemini
 		protected:
 			btCollisionObject* m_me;
 		};
-		
+//		
 		class ClosestNotMeConvexResultCallback : public btCollisionWorld::ClosestConvexResultCallback
 		{
 		public:
@@ -110,11 +110,13 @@ namespace gemini
 			{
 				if (convexResult.m_hitCollisionObject == m_me)
 				{
+					LOGV("ignoring source ghost object\n");
 					return btScalar(1.0);
 				}
 				
 				if (!convexResult.m_hitCollisionObject->hasContactResponse())
 				{
+					LOGV("ignoring object with no response\n");
 					return btScalar(1.0);
 				}
 				
@@ -130,7 +132,8 @@ namespace gemini
 				}
 				
 				btScalar dotUp = m_up.dot(hitNormalWorld);
-				if (dotUp < m_minSlopeDot) {
+				if (fabs(dotUp) < m_minSlopeDot) {
+//					LOGV("ignoring hit with invalid slope\n");
 					return btScalar(1.0);
 				}
 				

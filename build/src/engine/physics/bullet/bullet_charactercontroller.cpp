@@ -260,8 +260,11 @@ namespace gemini
 			if (callback.hasHit())
 			{
 				debugdraw::sphere(toglm(callback.m_hitPointWorld), Color(255, 0, 0), 0.025f, 2.0f);
-//				debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+callback.m_hitNormalWorld), Color(0, 255, 255), 2.0f);
-				return true;
+				debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+callback.m_hitNormalWorld), Color(0, 255, 255), 2.0f);
+			}
+			else
+			{
+				debugdraw::line(toglm(start_position), toglm(end_position), Color(255, 255, 0), 2.0f);
 			}
 		
 			return callback.hasHit();
@@ -296,7 +299,7 @@ namespace gemini
 
 				if (callback.hasHit())
 				{
-//					LOGV("frac: %g\n", callback.m_closestHitFraction);
+//					LOGV("initial hit at: %g\n", callback.m_closestHitFraction);
 					
 //					debugdraw::sphere(toglm(callback.m_hitPointWorld), Color(255, 0, 0), 0.05f, 2.0f);
 //					debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+callback.m_hitNormalWorld), Color(0, 255, 255), 2.0f);
@@ -335,6 +338,7 @@ namespace gemini
 						
 						target_position = hitpoint;
 						
+//						assert(target_position.z() > 1.2f);
 						// visualize the remaining velocity
 //						hitpoint += remaining_time*move_velocity;
 //						debugdraw::line(toglm(target_position), toglm(hitpoint), Color(255, 0, 0), 0.0f);
@@ -346,34 +350,40 @@ namespace gemini
 
 						btVector3 vector_projection = (callback.m_hitNormalWorld.dot(remaining_velocity) / remaining_velocity.dot(remaining_velocity)) * remaining_velocity;
 						
-						debugdraw::line(toglm(target_position), toglm(target_position+vector_projection), Color(255, 255, 0), 2.0f);
+//						debugdraw::line(toglm(target_position), toglm(target_position+vector_projection), Color(255, 255, 0), 2.0f);
 						hitpoint = remaining_time*new_velocity*.9f;
 						
 						// see if the new velocity would cause a collision
 						ClosestNotMeConvexResultCallback cb2(ghost, btVector3(0, 1.0f, 0), 0.0f);
 						collide_segment(cb2, target_position, target_position+hitpoint);
+						
+						
+//						debugdraw::line(toglm(target_position), toglm(target_position+hitpoint), Color(255, 255, 0), 2.0f);
 
-						if (!cb2.hasHit())
+						if (cb2.hasHit())
 						{
-							// draw the new velocity vector from current position
-//							debugdraw::line(toglm(target_position), toglm(target_position+hitpoint), Color(255, 0, 0), 5.0f);
+							LOGV("cb2 hit: %2.2f\n", cb2.m_closestHitFraction);
 							
-							btVector3 final_position = target_position + hitpoint;
-							target_position = final_position;
-
+							// draw the new velocity vector from current position
+							//							debugdraw::line(toglm(target_position), toglm(target_position+hitpoint), Color(255, 0, 0), 5.0f);
+							
+							//							target_position.setInterpolate3(target_position, target_position+hitpoint, cb2.m_closestHitFraction);
+							
+							if (cb2.m_hitCollisionObject == callback.m_hitCollisionObject)
+							{
+								btVector3 final_position = target_position + hitpoint;
+								target_position = final_position;
+							}
 						}
 						else
 						{
-//							btVector3 new_slide;
-//							new_slide.setInterpolate3(target_position, target_position+hitpoint, cb2.m_closestHitFraction);
-//							target_position = new_slide;
+							LOGV("hit nothing!\n");
 						}
-						
-
 					}
 				}
 				else
 				{
+//					assert(new_position.z() > 1.2f);
 					target_position = new_position;
 					break;
 				}
