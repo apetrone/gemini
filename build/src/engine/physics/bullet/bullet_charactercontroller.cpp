@@ -142,7 +142,7 @@ namespace gemini
 //			glm::vec3 basis(result_movement.x(), result_movement.y(), result_movement.z());
 //			debugdraw::basis(target_origin, basis, 2.0f, 0);
 
-			acceleration += result_movement*20.0f;
+			acceleration += result_movement*30.0f;
 
 			velocity += acceleration*delta_time;
 		
@@ -292,11 +292,6 @@ namespace gemini
 				end.setOrigin(new_position);
 				
 				ClosestNotMeConvexResultCallback callback(ghost, btVector3(0, 1.0f, 0), 0.0f);
-//				callback.m_collisionFilterGroup = ghost->getBroadphaseHandle()->m_collisionFilterGroup;
-//				callback.m_collisionFilterMask = ghost->getBroadphaseHandle()->m_collisionFilterMask;
-				
-//				ghost->convexSweepTest(active_shape, start, end, callback, bullet::get_world()->getDispatchInfo().m_allowedCcdPenetration);
-
 				collide_segment(callback, target_position, new_position);
 
 				if (callback.hasHit())
@@ -316,13 +311,13 @@ namespace gemini
 					
 //					debugdraw::line(toglm(position), toglm(hitpoint), Color(0, 255, 255), 2.0f);
 					
-					btVector3 up(fromglm(glm::vec3(0, 1, 0)));
+//					btVector3 up(fromglm(glm::vec3(0, 1, 0)));
 					
 					// compute the new normal -- which should be orthogonal to the wall
-					btVector3 new_forward = callback.m_hitNormalWorld.cross(up);
-					new_forward.normalize();
-					
-					float dot_new = new_forward.dot(callback.m_hitNormalWorld);
+//					btVector3 new_forward = callback.m_hitNormalWorld.cross(up);
+//					new_forward.normalize();
+//					debugdraw::line(toglm(target_position), toglm(target_position+new_forward*1.0f), Color(255, 255, 0), 2.0f);
+//					float dot_new = new_forward.dot(callback.m_hitNormalWorld);
 					
 					
 					// get distance from object and player center
@@ -333,7 +328,7 @@ namespace gemini
 					
 					
 					// if the new forward normal is orthogonal OR facing away from the wall
-					if (dot_new <= 0)
+					//if (dot_new <= 0)
 					{
 //						glm::vec3 temp = toglm(new_forward);
 	//					debugdraw::line(toglm(target_position), toglm(target_position)+temp*3.0f, Color(255, 0, 0), 2.0f);
@@ -345,12 +340,14 @@ namespace gemini
 //						debugdraw::line(toglm(target_position), toglm(hitpoint), Color(255, 0, 0), 0.0f);
 
 						// the velocity that extends into the wall
-						glm::vec3 normal_velocity = glm::dot(toglm(callback.m_hitNormalWorld), toglm(move_velocity)) * toglm(callback.m_hitNormalWorld);
-						
-						glm::vec3 new_velocity = toglm(move_velocity) - 1.0f*normal_velocity;
-						new_velocity = glm::length(toglm(move_velocity)) / glm::length(new_velocity)*new_velocity;
+						btVector3 new_velocity = move_velocity - 1*move_velocity.dot(callback.m_hitNormalWorld)*callback.m_hitNormalWorld;
 
-						hitpoint = fromglm(remaining_time * new_velocity*.9f);
+						btVector3 remaining_velocity = move_velocity - new_velocity;
+
+						btVector3 vector_projection = (callback.m_hitNormalWorld.dot(remaining_velocity) / remaining_velocity.dot(remaining_velocity)) * remaining_velocity;
+						
+						debugdraw::line(toglm(target_position), toglm(target_position+vector_projection), Color(255, 255, 0), 2.0f);
+						hitpoint = remaining_time*new_velocity*.9f;
 						
 						// see if the new velocity would cause a collision
 						ClosestNotMeConvexResultCallback cb2(ghost, btVector3(0, 1.0f, 0), 0.0f);
@@ -363,6 +360,7 @@ namespace gemini
 							
 							btVector3 final_position = target_position + hitpoint;
 							target_position = final_position;
+
 						}
 						else
 						{
