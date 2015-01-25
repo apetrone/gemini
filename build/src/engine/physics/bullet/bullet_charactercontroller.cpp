@@ -219,9 +219,8 @@ namespace gemini
 			if (callback.hasHit())
 			{
 				btVector3 normal = callback.m_hitNormalWorld.normalize();
-				
-				debugdraw::sphere(toglm(callback.m_hitPointWorld), Color(255, 0, 0), 0.005f, 2.0f);
-				debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+normal*0.1f), Color(0, 255, 255), 2.0f);
+//				debugdraw::sphere(toglm(callback.m_hitPointWorld), Color(255, 0, 0), 0.005f, 2.0f);
+//				debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+normal*0.1f), Color(0, 255, 255), 2.0f);
 			}
 		
 			return callback.hasHit();
@@ -251,13 +250,23 @@ namespace gemini
 				ClosestNotMeConvexResultCallback callback(ghost, btVector3(0, 1.0f, 0), 0.0f);
 				collide_segment(callback, target_position, new_position);
 
-				
-				debugdraw::line(toglm(target_position), toglm(target_position+(remaining_velocity*remaining_time)), Color(255, 255, 0), 2.0f);
+				// draw remaining velocity
+//				debugdraw::line(toglm(target_position), toglm(target_position+(remaining_velocity*remaining_time)), Color(255, 255, 0), 2.0f);
 
 				if (callback.hasHit())
 				{
-					LOGV("[%i] hit something, t = %g, frac: %g\n", i, remaining_time, callback.m_closestHitFraction);
+//					LOGV("[%i] hit something, t = %g, frac: %g\n", i, remaining_time, callback.m_closestHitFraction);
 					float t = callback.m_closestHitFraction;
+					
+					// If the sweep test finds a collision and m_closestHitFraction is 0,
+					// this enters an odd state because:
+					// - it hits a wall, but can't move because the fraction is 0.
+					// - so, velocity changes to a perpendicular vector.
+					// - since the previous iteration already hit something at t = 0,
+					// the next sweep test will likely report the same wall, again at t = 0.
+					// This basically forces the vectors to alternate until the loop ends and prevents
+					// any movement. To alleviate this, we're ALWAYS going to back up by 10%.
+					t -= 0.1f;
 
 					// lerp to that position: if we don't interpolate,
 					// releasing movement keys will snap the character to its final position rather jarringly.
@@ -273,7 +282,7 @@ namespace gemini
 				}
 				else
 				{
-					LOGV("[%i] move step, %g\n", i, remaining_time);
+//					LOGV("[%i] move step, %g\n", i, remaining_time);
 					target_position = new_position;
 					break;
 				}
