@@ -45,6 +45,8 @@
 
 #include "physics_common.h"
 
+
+
 using namespace gemini;
 using namespace gemini::physics::bullet;
 using gemini::physics::RaycastInfo;
@@ -61,13 +63,12 @@ namespace gemini
 			{
 				ICollisionObject* target;
 				KinematicCharacter* character;
-				CharacterTwo* character2;
 				
 				// view angles in degrees
 				glm::vec2 view_angles;
 				
 			private:
-				void move_player2(CharacterTwo* character, const MovementCommand& command)
+				void move_player(KinematicCharacter* character, const MovementCommand& command)
 				{
 					if (character)
 					{
@@ -98,41 +99,6 @@ namespace gemini
 						}
 					}
 				}
-			
-				void move_player(KinematicCharacter* character, const MovementCommand& command)
-				{
-					if (character)
-					{
-						glm::vec3 cam_dir, cam_right;
-						mathlib::basis_vectors_from_pitch_yaw(view_angles.x, view_angles.y, cam_right, cam_dir);
-						
-						const float QUOTIENT = (1.0f/input::AxisValueMaximum);
-						
-						if (character)
-						{
-							character->setFacingDirections(
-														   btVector3(cam_dir.x, cam_dir.y, cam_dir.z),
-														   btVector3(cam_right.x, cam_right.y, cam_right.z)
-														   );
-							
-							character->setMovementWeight(
-														 command.forward * QUOTIENT,
-														 command.back * QUOTIENT,
-														 command.left * QUOTIENT,
-														 command.right * QUOTIENT
-														 );
-							
-							bool movement_is_zero = (
-													 command.forward == 0 &&
-													 command.right == 0 &&
-													 command.left == 0 &&
-													 command.back == 0
-													 );
-							
-							character->enableDamping(movement_is_zero);
-						}
-					}
-				} // player_move
 				
 				void orient_player(KinematicCharacter* character)
 				{
@@ -145,21 +111,13 @@ namespace gemini
 //					character->getGhostObject()->setWorldTransform(worldTrans);
 
 					// sync the camera to the ghost object
-					btGhostObject* ghost = character->getGhostObject();
-					btTransform tr = ghost->getWorldTransform();
-					btVector3 origin = tr.getOrigin();
-					origin += btVector3(0, .9, 0);
-				}
-				
-				void orient_player2(CharacterTwo* character)
-				{
 					const btTransform& transform = character->get_ghost()->getWorldTransform();
 					btVector3 origin = transform.getOrigin();
 					origin += btVector3(0, .9, 0);
 				}
-				
+
 			public:
-				BulletPlayerController() : target(0), character(0), character2(0)
+				BulletPlayerController() : target(0), character(0)
 				{
 				}
 				
@@ -178,19 +136,14 @@ namespace gemini
 						assert(character == 0);
 						
 						BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(collision_object);
-
-						
 						btScalar step_height = btScalar(.36);
-//						character = new KinematicCharacter((btPairCachingGhostObject*)bullet_object->get_collision_object(), (btConvexShape*)bullet_object->get_collision_shape(), step_height);
-
-						character2 = new CharacterTwo((btPairCachingGhostObject*)bullet_object->get_collision_object(), (btConvexShape*)bullet_object->get_collision_shape());
-						bullet::get_world()->addAction(character2);
+						character = new KinematicCharacter((btPairCachingGhostObject*)bullet_object->get_collision_object(), (btConvexShape*)bullet_object->get_collision_shape());
+						bullet::get_world()->addAction(character);
 					}
 					else
 					{
-//						bullet::get_world()->removeAction(character);
+						bullet::get_world()->removeAction(character);
 						delete character;
-						delete character2;
 					}
 				}
 				
@@ -205,11 +158,6 @@ namespace gemini
 					{
 						character->updateAction(bullet::get_world(), delta_seconds);
 					}
-					
-					if (character2)
-					{
-						character2->updateAction(bullet::get_world(), delta_seconds);
-					}
 				}
 				
 				virtual void apply_movement_command(const MovementCommand& command)
@@ -218,12 +166,6 @@ namespace gemini
 					{
 						move_player(character, command);
 						orient_player(character);
-					}
-					
-					if (character2)
-					{
-						move_player2(character2, command);
-						orient_player2(character2);
 					}
 				}
 				
