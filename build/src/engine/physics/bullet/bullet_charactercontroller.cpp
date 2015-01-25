@@ -201,48 +201,7 @@ namespace gemini
 			target_position += btVector3(0, step_height, 0) * delta_time;
 		}
 		
-		
-		void CharacterTwo::attempt_move(const btVector3& target_velocity, float delta_time)
-		{
-			btVector3 new_position = target_position + target_velocity*delta_time;
-			
-			// try to move
-			btTransform start, end;
-			start.setIdentity();
-			end.setIdentity();
-			
-			start.setOrigin(target_position);
-			end.setOrigin(new_position);
-			
-			ClosestNotMeConvexResultCallback callback(ghost, btVector3(0, 1.0f, 0), 0.0f);
-			callback.m_collisionFilterGroup = ghost->getBroadphaseHandle()->m_collisionFilterGroup;
-			callback.m_collisionFilterMask = ghost->getBroadphaseHandle()->m_collisionFilterMask;
-			
-			ghost->convexSweepTest(active_shape, start, end, callback, bullet::get_world()->getDispatchInfo().m_allowedCcdPenetration);
-			
-			if (callback.hasHit())
-			{
-				LOGV("frac: %g\n", callback.m_closestHitFraction);
 				
-				debugdraw::sphere(toglm(callback.m_hitPointWorld), Color(255, 0, 0), 0.05f, 2.0f);
-				debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+callback.m_hitNormalWorld), Color(0, 255, 255), 2.0f);
-
-				target_position.setInterpolate3(target_position, new_position, callback.m_closestHitFraction);
-
-				glm::vec3 normal = toglm(callback.m_hitNormalWorld);
-
-				
-			}
-			else
-			{
-//				LOGV("no hit\n");
-				target_position = new_position;
-			}
-			debugdraw::line(toglm(position), toglm(target_position), Color(255, 0, 0), 2.0f);
-//			LOGV("target_position: %2.2f\n", target_position.x());
-		}
-		
-		
 		bool CharacterTwo::collide_segment(ClosestNotMeConvexResultCallback& callback, const btVector3& start_position, const btVector3& end_position)
 		{
 			btTransform start;
@@ -261,8 +220,8 @@ namespace gemini
 			{
 				btVector3 normal = callback.m_hitNormalWorld.normalize();
 				
-				debugdraw::sphere(toglm(callback.m_hitPointWorld), Color(255, 0, 0), 0.025f, 2.0f);
-				debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+normal*0.25f), Color(0, 255, 255), 2.0f);
+				debugdraw::sphere(toglm(callback.m_hitPointWorld), Color(255, 0, 0), 0.005f, 2.0f);
+				debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+normal*0.1f), Color(0, 255, 255), 2.0f);
 			}
 		
 			return callback.hasHit();
@@ -272,8 +231,6 @@ namespace gemini
 		
 		void CharacterTwo::step_forward_and_strafe(btCollisionWorld *world, btScalar delta_time)
 		{
-//			attempt_move(btVector3(velocity.x(), 0, 0), delta_time);
-			//attempt_move(btVector3(0.0f, 0.0f, velocity.z()), delta_time);
 			btVector3 move_velocity = btVector3(velocity.x(), 0.0f, velocity.z());
 			btVector3 remaining_velocity = move_velocity;
 			
@@ -294,16 +251,21 @@ namespace gemini
 				ClosestNotMeConvexResultCallback callback(ghost, btVector3(0, 1.0f, 0), 0.0f);
 				collide_segment(callback, target_position, new_position);
 
+				
+				debugdraw::line(toglm(target_position), toglm(target_position+(remaining_velocity*remaining_time)), Color(255, 255, 0), 2.0f);
+
 				if (callback.hasHit())
 				{
 					LOGV("[%i] hit something, t = %g, frac: %g\n", i, remaining_time, callback.m_closestHitFraction);
+					float t = callback.m_closestHitFraction;
 
-					// lerp to that position
-					target_position.setInterpolate3(target_position, new_position, callback.m_closestHitFraction);
+					// lerp to that position: if we don't interpolate,
+					// releasing movement keys will snap the character to its final position rather jarringly.
+					target_position.setInterpolate3(target_position, new_position, t);
 					
 					// remove the used time (that we travel on that collision)
 					// from the remaining time
-					float used_time = callback.m_closestHitFraction * remaining_time;
+					float used_time = t * remaining_time;
 					remaining_time -= used_time;
 	
 					// the velocity that extends into the wall
@@ -311,7 +273,7 @@ namespace gemini
 				}
 				else
 				{
-					LOGV("[%i] move full step\n", i);
+					LOGV("[%i] move step, %g\n", i, remaining_time);
 					target_position = new_position;
 					break;
 				}
