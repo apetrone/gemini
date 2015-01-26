@@ -54,7 +54,6 @@ namespace gemini
 	{
 
 		const btScalar DEFAULT_MOVEMENT_DAMPING = 0.85f;
-//		const btScalar AIR_MOVEMENT_DAMPING = 0.85f;
 		const btScalar MOVEMENT_MULTIPLIER = 30.0f;
 
 		//
@@ -103,7 +102,7 @@ namespace gemini
 //			glm::vec3 basis(result_movement.x(), result_movement.y(), result_movement.z());
 //			debugdraw::basis(target_origin, basis, 2.0f, 0);
 
-			acceleration += result_movement*30.0f;
+			acceleration += result_movement*MOVEMENT_MULTIPLIER;
 
 			velocity += acceleration*delta_time;
 		
@@ -116,11 +115,8 @@ namespace gemini
 			step_forward_and_strafe(world, delta_time);
 			step_down(world, delta_time);
 
-
-
-			const float friction = 0.85f;
-			velocity.setX(velocity.x() * friction);
-			velocity.setZ(velocity.z() * friction);
+			velocity.setX(velocity.x() * DEFAULT_MOVEMENT_DAMPING);
+			velocity.setZ(velocity.z() * DEFAULT_MOVEMENT_DAMPING);
 			
 			
 			position = target_position;
