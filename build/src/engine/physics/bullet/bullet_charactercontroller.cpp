@@ -54,20 +54,8 @@ namespace gemini
 	{
 
 		const btScalar DEFAULT_MOVEMENT_DAMPING = 0.85f;
-		const btScalar movementWeightFactor = 1.0f;
-		const btScalar AIR_MOVEMENT_DAMPING = 0.85f;
-
-		// static helper method
-		static btVector3
-		getNormalizedVector(const btVector3& v)
-		{
-			btVector3 n = v.normalized();
-			if (n.length() < SIMD_EPSILON) {
-				n.setValue(0, 0, 0);
-			}
-			return n;
-		}
-
+//		const btScalar AIR_MOVEMENT_DAMPING = 0.85f;
+		const btScalar MOVEMENT_MULTIPLIER = 30.0f;
 
 		//
 		// KinematicCharacter

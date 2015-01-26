@@ -110,7 +110,8 @@ public:
 	virtual uint32_t get_render_flags() const;
 	
 	virtual void get_world_transform(glm::vec3& position, glm::quat& orientation) const;
-	
+	virtual void get_render_position(glm::vec3& out_position) const { out_position = position; }
+
 	// called after the constructor
 	virtual void spawn() {};
 	

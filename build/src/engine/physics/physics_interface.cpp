@@ -80,22 +80,8 @@ namespace gemini
 						if (character)
 						{
 							character->set_view_direction(btVector3(cam_right.x, cam_right.y, cam_right.z), btVector3(cam_dir.x, cam_dir.y, cam_dir.z));
-//							character->setFacingDirections(
-//														   btVector3(cam_dir.x, cam_dir.y, cam_dir.z),
-//														   btVector3(cam_right.x, cam_right.y, cam_right.z)
-//														   );
-//
 							btVector3 movement((command.left * -QUOTIENT + command.right * QUOTIENT), 0.0f, -(command.forward * QUOTIENT + command.back * -QUOTIENT));
 							character->set_movement(movement);
-//
-//							bool movement_is_zero = (
-//													 command.forward == 0 &&
-//													 command.right == 0 &&
-//													 command.left == 0 &&
-//													 command.back == 0
-//													 );
-//							
-//							character->enableDamping(movement_is_zero);
 						}
 					}
 				}
@@ -111,9 +97,9 @@ namespace gemini
 //					character->getGhostObject()->setWorldTransform(worldTrans);
 
 					// sync the camera to the ghost object
-					const btTransform& transform = character->get_ghost()->getWorldTransform();
-					btVector3 origin = transform.getOrigin();
-					origin += btVector3(0, .9, 0);
+//					const btTransform& transform = character->get_ghost()->getWorldTransform();
+//					btVector3 origin = transform.getOrigin();
+//					origin += btVector3(0, .9, 0);
 				}
 
 			public:
@@ -136,7 +122,6 @@ namespace gemini
 						assert(character == 0);
 						
 						BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(collision_object);
-						btScalar step_height = btScalar(.36);
 						character = new KinematicCharacter((btPairCachingGhostObject*)bullet_object->get_collision_object(), (btConvexShape*)bullet_object->get_collision_shape());
 						bullet::get_world()->addAction(character);
 					}
@@ -154,6 +139,7 @@ namespace gemini
 				
 				virtual void simulate(float delta_seconds)
 				{
+					assert(0); // not needed if character is added to world's actions.
 					if (character)
 					{
 						character->updateAction(bullet::get_world(), delta_seconds);
@@ -165,7 +151,7 @@ namespace gemini
 					if (character)
 					{
 						move_player(character, command);
-						orient_player(character);
+//						orient_player(character);
 					}
 				}
 				

@@ -107,29 +107,7 @@ void render_scene_from_camera(gemini::IEngineEntity** entity_list, Camera& camer
 	scenelink.draw(cb);
 }
 
-void render_scene_from_entity(gemini::IEngineEntity** entity_list, const glm::mat4& modelview, const glm::mat4& projection, renderer::SceneLink& scenelink)
-{
-	// setup constant buffer
-	glm::vec3 light_position;
-//	light_position = camera.pos + -camera.view + glm::vec3(0.0f, 1.0f, 0.0f);
-	light_position = glm::vec3(0, 2.0f, 0);
-	
-	glm::vec3 viewer_dir;
-	glm::vec3 viewer_pos;
-	
-	renderer::ConstantBuffer cb;
-	cb.modelview_matrix = &modelview;
-	cb.projection_matrix = &projection;
-	cb.viewer_direction = &viewer_dir;
-	cb.viewer_position = &viewer_pos;
-	cb.light_position = &light_position;
-	
-	// use the entity list to render
-	scenelink.clear();
-	scenelink.queue_entities(cb, entity_list, MAX_ENTITIES);
-	scenelink.sort();
-	scenelink.draw(cb);
-}
+
 
 class SceneRenderMethod
 {
@@ -899,9 +877,9 @@ public:
 		// run server frame
 		if (game_interface)
 		{
-			game_interface->server_frame();
+			game_interface->server_frame(params.step_alpha);
 						
-			game_interface->client_frame();
+			game_interface->client_frame(params.step_alpha);
 		}
 		
 

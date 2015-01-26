@@ -54,8 +54,8 @@ namespace gemini
 		virtual void physics_update(float delta_seconds) = 0;
 		
 		// called each tick of the engine
-		virtual void server_frame() = 0;
-		virtual void client_frame() = 0;
+		virtual void server_frame(float step_alpha) = 0;
+		virtual void client_frame(float step_alpha) = 0;
 	}; // GameInterface
 	
 	
