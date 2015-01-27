@@ -46,9 +46,6 @@ Result Win32PlatformInterface::startup()
 	// cache off the frequency for later timer use.
 	QueryPerformanceFrequency(&frequency);
 
-	// fetch the initial time
-	get_time_microseconds();
-
 	return Result(Result::Success);
 }
 
@@ -141,14 +138,10 @@ const char* Win32PlatformInterface::get_dynamiclibrary_extension() const
 
 uint64_t Win32PlatformInterface::get_time_microseconds()
 {
-	uint64_t delta;
-
 	LARGE_INTEGER now;
 	QueryPerformanceCounter(&now);
 
-	delta = ((now.QuadPart - instance->last.QuadPart) / (double)_frequency.QuadPart) * 1000000;
-
-	last_ticks = now;
+	return ((now.QuadPart) / (double)frequency.QuadPart) * 1000000;
 }
 
 

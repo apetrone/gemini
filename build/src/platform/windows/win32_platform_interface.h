@@ -40,8 +40,7 @@ class Win32PlatformInterface : public IPlatformInterface
 {
 	unsigned int previous_error_mode;
 	LARGE_INTEGER frequency;
-	LARGE_INTEGER last_ticks;
-	
+
 public:
 	virtual Result startup();
 	virtual void shutdown();
