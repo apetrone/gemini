@@ -379,6 +379,29 @@ namespace gemini
 					kernel::event_dispatch(ev);
 					break;
 				}
+
+				// handle window events
+				case SDL_WINDOWEVENT:
+				{
+					switch (event.window.event)
+					{
+						case SDL_WINDOWEVENT_FOCUS_LOST:
+						{
+							kernel::Event<kernel::System> event;
+							event.subtype = kernel::WindowLostFocus;
+							kernel::event_dispatch(event);
+							break;
+						}
+
+						case SDL_WINDOWEVENT_FOCUS_GAINED:
+						{
+							kernel::Event<kernel::System> event;
+							event.subtype = kernel::WindowGainFocus;
+							kernel::event_dispatch(event);
+							break;
+						}
+					}
+				}
 			}
 		}
 	} // pre_tick
