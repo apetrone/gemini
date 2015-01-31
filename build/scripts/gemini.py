@@ -226,33 +226,6 @@ def get_tools(target_platform, libplatform, libcore):
 	#
 	tools = []
 
-	rnd = Product(name="rnd", output=ProductType.Commandline)
-	rnd.project_root = COMMON_PROJECT_ROOT
-	rnd.root = "../"
-	rnd.sources += [
-		"src/rnd/rnd.cpp"
-	]
-	rnd.product_root = COMMON_PRODUCT_ROOT
-
-	setup_driver(rnd)
-	setup_common_tool(rnd)
-
-	rnd.dependencies.extend([
-		libsdl
-	])
-
-	rnd_macosx = rnd.layout(platform="macosx")
-	rnd_macosx.links += [
-		"Cocoa.framework",
-		"OpenGL.framework"
-	]
-
-	rnd_linux = rnd.layout(platform="linux")
-	rnd_linux.links += [
-		"GL"
-	]
-
-	#tools.append(rnd)
 	
 	#
 	# muse: asset conversion tool
@@ -432,6 +405,43 @@ def get_libcore(arguments, target_platform):
 	]
 
 	return libcore
+
+
+def get_rnd(arguments, libplatform, libcore, librenderer, **kwargs):
+	global_params = kwargs.get("global_params")
+	target_platform = kwargs.get("target_platform")
+
+	rnd = Product(name="rnd", output=ProductType.Commandline)
+	rnd.project_root = COMMON_PROJECT_ROOT
+	rnd.root = "../"
+	rnd.sources += [
+		"src/rnd/rnd.cpp"
+	]
+	rnd.product_root = COMMON_PRODUCT_ROOT
+
+	setup_driver(rnd)
+	setup_common_tool(rnd)
+
+	rnd.dependencies.extend([
+		libsdl,
+		libplatform,
+		libcore,
+		librenderer
+	])
+
+	rnd_macosx = rnd.layout(platform="macosx")
+	rnd_macosx.links += [
+		"Cocoa.framework",
+		"OpenGL.framework"
+	]
+
+	rnd_linux = rnd.layout(platform="linux")
+	rnd_linux.links += [
+		"GL"
+	]
+
+	return rnd
+
 
 def arguments(parser):
 	parser.add_argument("--with-gles", dest="gles", action="store_true", help="Build with GLES support", default=False)
@@ -648,6 +658,9 @@ def products(arguments, **kwargs):
 	]
 
 
+	rnd = get_rnd(arguments, libplatform, libcore, librenderer, **kwargs)
 
-	return [librenderer, libcore, libplatform] + [gemini] + tools
+
+
+	return [librenderer, libcore, libplatform] + [gemini] + tools + [rnd]
 
