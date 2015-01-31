@@ -127,7 +127,7 @@ namespace gemini
 			static void register_application_by_name( const char * kernel_name, ApplicationCreator ApplicationCreator )
 			{
 				creator_map().insert( ApplicationCreatorByString::value_type( kernel_name, ApplicationCreator) );
-			} // registerKernelApplicationCreatorByName
+			} // register_application_by_name
 			
 			static ApplicationCreator find_application_by_name( const char * kernel_name )
 			{
@@ -139,73 +139,13 @@ namespace gemini
 				}
 				
 				return 0;
-			} // findKernelApplicationCreatorByName
+			} // find_application_by_name
 			
-			
-			const int TimeStepFilterMaxFrames = 11;
-			struct TimeStepFilter
-			{
-				float deltas[ TimeStepFilterMaxFrames ];
-				int current_frame;
-				float filtered_value;
-				float last_step;
-				float lerp_value;
-				
-				TimeStepFilter();
-				void tick( float delta_msec );
-			};
-			
-			
-			// this is a descending compare function
-			static int TimeStepFilter_Compare( const void * left, const void * right )
-			{
-				float * lk = ((float*)left);
-				float * rk = ((float*)right);
-				if ( *lk < *rk )
-				{
-					return 1;
-				}
-				else if ( *lk > *rk )
-				{
-					return -1;
-				}
-				
-				return 0;
-			}
-			
-			TimeStepFilter::TimeStepFilter()
-			{
-				current_frame = 0;
-				memset( deltas, 0, sizeof(float)*TimeStepFilterMaxFrames );
-				filtered_value = 0;
-				last_step = 0;
-				lerp_value = 0.1;
-			}
-			
-			void TimeStepFilter::tick( float delta_msec )
-			{
-				deltas[ (current_frame++ % TimeStepFilterMaxFrames) ] = delta_msec;
-				
-				// sort these from highest to lowest
-				qsort( deltas, TimeStepFilterMaxFrames, sizeof(float), TimeStepFilter_Compare );
-				
-				// sum 7 of the middle values
-				float sum = 0;
-				for( int i = 2; i < TimeStepFilterMaxFrames-2; ++i )
-				{
-					sum += deltas[ i ];
-				}
-				
-				float mean = sum / 7.0;
-				filtered_value = (last_step * (1-lerp_value)) + (mean * lerp_value);
-				last_step = filtered_value;
-			}
 			
 			struct State
 			{
 				double accumulator;
 				uint64_t last_time;
-				TimeStepFilter tsa;
 			};
 			
 			util::ConfigLoadStatus load_render_config(const Json::Value& root, void* data)
