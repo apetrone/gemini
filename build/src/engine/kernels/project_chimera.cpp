@@ -283,7 +283,6 @@ public:
 		render_scene_from_camera(entity_list, camera, scenelink);
 	
 		{
-			debugdraw::update(params.framedelta_filtered_msec*.001f);
 			debugdraw::render(camera.matCam, camera.matProj, 0, 0, params.render_width, params.render_height);
 		}
 	}
@@ -875,6 +874,10 @@ public:
 			physics::debug_draw();
 		}
 		
+		// this is going to be incorrect (since it should really be updating when
+		// it gets another tick.
+		// additionally, these aren't interpolated: figure how to; for example,
+		// draw hit boxes for a moving player with this system.
 		debugdraw::update(params.step_interval_seconds);
 		
 		// run server frame
