@@ -102,8 +102,28 @@ void render_scene_from_camera(gemini::IEngineEntity** entity_list, Camera& camer
 
 	// use the entity list to render
 	scenelink.clear();
-	scenelink.queue_entities(cb, entity_list, MAX_ENTITIES);
+	scenelink.queue_entities(cb, entity_list, MAX_ENTITIES, RENDER_VISIBLE);
 	scenelink.sort();
+	scenelink.draw(cb);
+}
+
+void render_entity_from_camera(gemini::IEngineEntity* entity, Camera& camera, renderer::SceneLink& scenelink)
+{
+	// setup constant buffer
+	glm::vec3 light_position;
+	light_position = camera.pos + -camera.view + glm::vec3(0.0f, 1.0f, 0.0f);
+	renderer::ConstantBuffer cb;
+	
+	cb.modelview_matrix = &camera.matCam;
+	cb.projection_matrix = &camera.matProj;
+	cb.viewer_direction = &camera.view;
+	cb.viewer_position = &camera.eye_position;
+	cb.light_position = &light_position;
+	
+	scenelink.clear();
+	
+	scenelink.queue_entities(cb, &entity, 1, RENDER_VIEWMODEL);
+	
 	scenelink.draw(cb);
 }
 
@@ -115,6 +135,7 @@ public:
 	virtual ~SceneRenderMethod() {}
 	virtual void render_frame(gemini::IEngineEntity** entity_list, Camera& camera, const kernel::Params& params ) = 0;
 	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Params& params, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
+	virtual void render_viewmodel(gemini::IEngineEntity* entity, const kernel::Params& params, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
 };
 
 
@@ -227,6 +248,11 @@ public:
 	{
 		
 	}
+	
+	virtual void render_viewmodel(gemini::IEngineEntity* entity, const kernel::Params& params, const glm::vec3& origin, const glm::vec2& view_angles)
+	{
+		
+	}
 };
 
 
@@ -257,10 +283,9 @@ public:
 
 	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Params& params, const glm::vec3& origin, const glm::vec2& view_angles)
 	{
-		
-	
 		RenderStream rs;
 		rs.add_cullmode(renderer::CullMode::CULLMODE_BACK);
+		rs.add_state(renderer::STATE_DEPTH_WRITE, 1);
 //		rs.add_state(renderer::STATE_BACKFACE_CULLING, 0);
 		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
 		rs.add_viewport( 0, 0, params.render_width, params.render_height );
@@ -285,6 +310,31 @@ public:
 		{
 			debugdraw::render(camera.matCam, camera.matProj, 0, 0, params.render_width, params.render_height);
 		}
+	}
+	
+	virtual void render_viewmodel(gemini::IEngineEntity* entity, const kernel::Params& params, const glm::vec3& origin, const glm::vec2& view_angles)
+	{
+		RenderStream rs;
+		rs.add_cullmode(renderer::CullMode::CULLMODE_BACK);
+		rs.add_state(renderer::STATE_BACKFACE_CULLING, 1);
+		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
+
+		rs.add_clear( renderer::CLEAR_DEPTH_BUFFER );
+		rs.run_commands();
+		
+		Camera camera;
+		camera.type = Camera::FIRST_PERSON;
+		
+		camera.perspective(35.0f, params.render_width, params.render_height, 0.01f, 32.0f);
+		
+		camera.set_absolute_position(glm::vec3(-1.0f, 0.6f, 2.5f));
+		camera.eye_position = origin;
+		camera.view = glm::vec3(0, 0, -1);
+		camera.pitch = 0;
+		camera.yaw = 0;
+		camera.update_view();
+
+		render_entity_from_camera(entity, camera, scenelink);
 	}
 };
 
@@ -522,6 +572,11 @@ public:
 	virtual void render_gui()
 	{
 		
+	}
+	
+	virtual void render_viewmodel(IEngineEntity* entity, const glm::vec3& origin, const glm::vec2& view_angles)
+	{
+		render_method->render_viewmodel(entity, kernel::instance()->parameters(), origin, view_angles);
 	}
 
 	virtual void get_view_angles(glm::vec2& view_angles)

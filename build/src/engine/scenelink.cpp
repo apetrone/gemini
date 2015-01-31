@@ -206,14 +206,33 @@ namespace gemini
 			rs.run_commands();
 		}
 		
-		void SceneLink::queue_entities(ConstantBuffer& constant_buffer, gemini::IEngineEntity** entity_list, uint32_t max_entities)
+		void SceneLink::queue_entities(ConstantBuffer& constant_buffer, gemini::IEngineEntity** entity_list, uint32_t max_entities, uint32_t render_flags)
 		{
 			queue->clear();
-			
+
 			for (int i = 0; i < max_entities; ++i)
 			{
 				gemini::IEngineEntity* e = entity_list[i];
-				if (e && (e->get_render_flags() & RENDER_VISIBLE))
+				
+				// draw visible, non view model entities
+				if (!e)
+				{
+					continue;
+				}
+				
+				uint32_t eflags = e->get_render_flags();
+				
+
+				bool is_view_model = eflags & RENDER_VIEWMODEL;
+				bool is_world_model = !is_view_model;
+				bool is_visible = eflags & RENDER_VISIBLE;
+				
+				if (is_view_model && !(render_flags & RENDER_VIEWMODEL))
+				{
+					is_visible = false;
+				}
+				
+				if ((is_visible && is_view_model && !is_world_model) || (is_visible && is_world_model && !is_view_model))
 				{
 					int32_t model_index = e->get_model_index();
 					if (model_index > -1)

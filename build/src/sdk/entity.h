@@ -90,7 +90,8 @@ public:
 	enum Flags
 	{
 		EF_NONE = 0,
-		EF_DELETE_INSTANCE,	// remove this instance
+		EF_DELETE_INSTANCE = 1,	// remove this instance
+		EF_DELETE_PHYSICS = 2, // remove the collision model
 	};
 
 	uint64_t id;
@@ -124,6 +125,7 @@ public:
 	virtual void update(float alpha);
 	
 	virtual void remove();
+	virtual void remove_collision();
 	
 	virtual void collision_began(Entity* other);
 	virtual void collision_ended(Entity* other);
@@ -141,6 +143,9 @@ public:
 	// Set the entity's transform (position/orientation) from the associated
 	// physics object, if one is set.
 	virtual void set_current_transform_from_physics();
+	
+	
+	void delete_collision_object();
 	
 public:
 	// memory overloads

@@ -97,6 +97,12 @@ void entity_deferred_delete( bool only_deferred )
 			delete ent;
 			continue;
 		}
+		
+		if (ent->flags & Entity::EF_DELETE_PHYSICS)
+		{
+			ent->flags &= ~Entity::EF_DELETE_PHYSICS;
+			ent->delete_collision_object();
+		}
 
 		++it;
 	}
@@ -106,7 +112,10 @@ void entity_update_physics()
 {
 	for(auto& entity : entity_list().objects)
 	{
-		entity->set_current_transform_from_physics();
+		if (!(entity->flags & Entity::EF_DELETE_PHYSICS))
+		{
+			entity->set_current_transform_from_physics();
+		}
 	}
 }
 
@@ -151,11 +160,7 @@ Entity::~Entity()
 	entity_list().remove( this );
 	engine::api::instance()->entities()->remove(this);
 	
-	if (this->collision_object)
-	{
-		engine::api::instance()->physics()->destroy_object(this->collision_object);
-		this->collision_object = 0;
-	}
+	delete_collision_object();
 
 } // ~Entity
 
@@ -202,6 +207,11 @@ void Entity::update(float alpha)
 void Entity::remove()
 {
 	this->flags = EF_DELETE_INSTANCE;
+}
+
+void Entity::remove_collision()
+{
+	this->flags |= EF_DELETE_PHYSICS;
 }
 
 void Entity::collision_began(Entity* other)
@@ -337,4 +347,13 @@ void Entity::set_model(const char* path)
 //	engine::instance()->models()->destroy_instance_data(model_index);
 	model_index = engine::api::instance()->models()->create_instance_data(path);
 //	LOGV("set model index: %i, for model: %s\n", model_index, path);
+}
+
+void Entity::delete_collision_object()
+{
+	if (this->collision_object)
+	{
+		engine::api::instance()->physics()->destroy_object(this->collision_object);
+		this->collision_object = 0;
+	}
 }

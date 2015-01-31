@@ -50,7 +50,8 @@ namespace gemini
 	class IDebugDraw;
 	class IAudioInterface;
 	class IExperimental;
-
+	class IEngineEntity;
+	
 	class IEngineInterface
 	{
 	public:
@@ -71,7 +72,15 @@ namespace gemini
 		
 		virtual void render_view(const glm::vec3& origin, const glm::vec2& view_angles) = 0;
 		virtual void render_gui() = 0;
+		
+		
+		
+		
+//		virtual void render_world(const glm::vec3& origin, const glm::vec2& view_angles) = 0;
 
+		// render a viewmodel (no depth testing; different fov)
+		virtual void render_viewmodel(IEngineEntity* entity, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
+		
 		virtual void get_view_angles(glm::vec2& view_angles) = 0;
 	};
 	

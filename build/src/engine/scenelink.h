@@ -57,7 +57,7 @@ namespace gemini
 			void sort();
 			void draw(ConstantBuffer& constant_buffer);
 			
-			void queue_entities(ConstantBuffer& constant_buffer, gemini::IEngineEntity** entity_list, uint32_t max_entities);
+			void queue_entities(ConstantBuffer& constant_buffer, gemini::IEngineEntity** entity_list, uint32_t max_entities, uint32_t render_flags = 0);
 		};
 	}; // namespace renderer
 } // namespace gemini
