@@ -201,6 +201,7 @@ struct ApplicationState
 {
 	float accumulator;
 	float framedelta_msec;
+	float time;
 	
 	glm::vec3 last_position;
 	glm::vec3 position;
@@ -209,6 +210,9 @@ struct ApplicationState
 	
 	ApplicationState()
 	{
+		accumulator = 0.0f;
+		framedelta_msec = 0.0f;
+		time = 0.0f;
 		position = last_position = glm::vec3(0.0f, 300.0f, 0.0f);
 	}
 };
@@ -220,6 +224,7 @@ void run_frame(ApplicationState& state)
 //	LOGV("df: %g\n", state.framedelta_msec);
 	float delta_seconds = (state.framedelta_msec*.001f);
 	state.accumulator += delta_seconds;
+	state.time += delta_seconds;
 //	LOGV("accumulator: %2.2f\n", state.accumulator);
 	
 	if (state.accumulator >= STEP_INTERVAL)
@@ -228,6 +233,7 @@ void run_frame(ApplicationState& state)
 		
 		state.last_position = state.position;
 		state.position += glm::vec3(70.0f, 0.0f, 0.0f) * STEP_INTERVAL;
+//		state.position = glm::vec3(400+(300.0f*cos(state.time)),300+(300.0f*sin(state.time)), 0.0f) * STEP_INTERVAL;
 	}
 	
 	float alpha = state.accumulator / STEP_INTERVAL;
