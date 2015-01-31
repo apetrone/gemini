@@ -82,19 +82,6 @@ void entity_post_script_load()
 {
 }
 
-void entity_physics_update(float delta_seconds)
-{
-	// step entities
-	EntityListType::Collection::iterator it = entity_list().objects.begin();
-	EntityListType::Collection::iterator end = entity_list().objects.end();
-	Entity* ent;
-	for( ; it != end; ++it )
-	{
-		ent = (*it);
-		ent->fixed_update(delta_seconds);
-	}
-}
-
 void entity_deferred_delete( bool only_deferred )
 {
 	// trim entities flagged for removal
@@ -115,13 +102,21 @@ void entity_deferred_delete( bool only_deferred )
 	}
 }
 
-void entity_update()
+void entity_update_physics()
+{
+	for(auto& entity : entity_list().objects)
+	{
+		entity->set_current_transform_from_physics();
+	}
+}
+
+void entity_update(float alpha)
 {
 	for(auto& entity : entity_list().objects)
 	{
 		if ( !(entity->flags & Entity::EF_DELETE_INSTANCE) )
 		{
-			entity->update();
+			entity->update(alpha);
 		}
 	}
 	entity_deferred_delete( true );
@@ -189,14 +184,19 @@ void Entity::get_world_transform(glm::vec3& out_position, glm::quat& out_orienta
 //	}
 //}
 
-
-void Entity::fixed_update( float delta_seconds )
+void Entity::pre_tick()
 {
-} // fixed_update
+	
+}
 
-void Entity::update()
+void Entity::post_tick()
 {
 	set_current_transform_from_physics();
+}
+
+void Entity::update(float alpha)
+{
+	
 } // update
 
 void Entity::remove()

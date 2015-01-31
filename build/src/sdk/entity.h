@@ -113,13 +113,15 @@ public:
 	virtual void get_render_position(glm::vec3& out_position) const { out_position = position; }
 
 	// called after the constructor
-	virtual void spawn() {};
+	virtual void spawn() {}
 	
 	// called after each entity has spawned
-	virtual void activate() {};
+	virtual void activate() {}
+
+	virtual void pre_tick();
+	virtual void post_tick();
 	
-	virtual void fixed_update(float delta_seconds);
-	virtual void update();
+	virtual void update(float alpha);
 	
 	virtual void remove();
 	
@@ -134,11 +136,11 @@ public:
 	// Call this when you need to explicitly set the physics transform
 	// from the current entity's position and rotation. Normally, you don't
 	// need to use this; but the player controller makes use of it.
-	void set_physics_from_current_transform();
+	virtual void set_physics_from_current_transform();
 	
 	// Set the entity's transform (position/orientation) from the associated
 	// physics object, if one is set.
-	void set_current_transform_from_physics();
+	virtual void set_current_transform_from_physics();
 	
 public:
 	// memory overloads
@@ -201,5 +203,5 @@ public:
 void entity_startup();
 void entity_post_script_load();
 void entity_shutdown();
-void entity_physics_update(float delta_seconds);
-void entity_update();
+void entity_update_physics();
+void entity_update(float alpha);
