@@ -66,10 +66,10 @@ namespace gemini
 			position.setValue(0, 0, 0);
 			target_position.setValue(0, 0, 0);
 			velocity.setValue(0, 0, 0);			
-			acceleration.setValue(0, 0, 0);
-			gravity.setValue(0.0f, -9.8f, 0.0f);
+			acceleration.setValue(0.0f, 0.0f, 0.0f);
+			gravity.setValue(0.0f, -9.81f, 0.0f);
 			rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
-			
+			movement.setValue(0.0f, 0.0f, 0.0f);
 			active_shape = shape;
 			
 			// set initial transform from ghost
@@ -82,11 +82,12 @@ namespace gemini
 
 		void KinematicCharacter::updateAction(btCollisionWorld* world, btScalar delta_time)
 		{
+//			LOGV("delta_time: %g\n", delta_time);
 			btTransform xform = ghost->getWorldTransform();
 			btQuaternion current_rotation = xform.getRotation();
 		
 			// player step
-			acceleration.setValue(0, 0, 0);
+
 			acceleration = gravity;
 			
 			// the movement vector is oriented to the character.

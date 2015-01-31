@@ -43,7 +43,12 @@ namespace gemini
 	{
 		void startup();
 		void shutdown();
-		void step(float seconds);
+		
+		/// @desc Perform a physics step
+		/// framedelta_seconds The actual frame delta time
+		/// fixed_step_seconds The target fixed timestep for physics (1/60.0f, for example)
+		void step(float framedelta_seconds, float fixed_step_seconds);
+		
 		void debug_draw();
 
 	}; // namespace physics

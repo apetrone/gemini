@@ -798,68 +798,64 @@ public:
 
 	virtual void step( kernel::Params & params )
 	{
-		UserCommand command;
-		
-		// attempt to sample input here -- may need to be moved.
-		bool left = input::state()->keyboard().is_down(input::KEY_A);
-		bool right = input::state()->keyboard().is_down(input::KEY_D);
-		bool forward = input::state()->keyboard().is_down(input::KEY_W);
-		bool back = input::state()->keyboard().is_down(input::KEY_S);
-		
-		command.set_button(0, left);
-		command.set_button(1, right);
-		command.set_button(2, forward);
-		command.set_button(3, back);
-		
-		command.set_button(5, input::state()->keyboard().is_down(input::KEY_E));
-		command.set_button(6, input::state()->keyboard().is_down(input::KEY_SPACE));
-		command.set_button(7, input::state()->keyboard().is_down(input::KEY_LALT) || input::state()->keyboard().is_down(input::KEY_RALT));
-		
-		int mouse[2];
-		kernel::instance()->get_mouse_position(mouse[0], mouse[1]);
-		
-		int half_width = params.window_width/2;
-		int half_height = params.window_height/2;
 
-		// capture the state of the mouse
-		int mdx, mdy;
-		mdx = (mouse[0] - half_width);
-		mdy = (mouse[1] - half_height);
-		if (mdx != 0 || mdy != 0)
-		{
-			main_camera.move_view(mdx, mdy);
-		}
-		
-		command.angles[0] = main_camera.pitch;
-		command.angles[1] = main_camera.yaw;
-		
-		
-		center_mouse(params);
-//		platform::instance()->set_cursor_position(half_width, half_height);
-		
-		//LOGV("command flags: %i\n", command.buttonflags);
-	
-	
-	
-	
-		if (game_interface)
-		{
-			// loop through all players and process inputs
-			game_interface->process_commands(0, &command, 1);
-		
-		
-			game_interface->physics_update(params.step_interval_seconds);
-//			background_source = audio::play(background, 1);
-		}
 
-		if (draw_physics_debug)
-		{
-			physics::debug_draw();
-		}
 	}
 
 	virtual void tick( kernel::Params & params )
 	{
+		{
+			UserCommand command;
+			
+			// attempt to sample input here -- may need to be moved.
+			bool left = input::state()->keyboard().is_down(input::KEY_A);
+			bool right = input::state()->keyboard().is_down(input::KEY_D);
+			bool forward = input::state()->keyboard().is_down(input::KEY_W);
+			bool back = input::state()->keyboard().is_down(input::KEY_S);
+			
+			command.set_button(0, left);
+			command.set_button(1, right);
+			command.set_button(2, forward);
+			command.set_button(3, back);
+			
+			command.set_button(5, input::state()->keyboard().is_down(input::KEY_E));
+			command.set_button(6, input::state()->keyboard().is_down(input::KEY_SPACE));
+			command.set_button(7, input::state()->keyboard().is_down(input::KEY_LALT) || input::state()->keyboard().is_down(input::KEY_RALT));
+			
+			int mouse[2];
+			kernel::instance()->get_mouse_position(mouse[0], mouse[1]);
+			
+			int half_width = params.window_width/2;
+			int half_height = params.window_height/2;
+			
+			// capture the state of the mouse
+			int mdx, mdy;
+			mdx = (mouse[0] - half_width);
+			mdy = (mouse[1] - half_height);
+			if (mdx != 0 || mdy != 0)
+			{
+				main_camera.move_view(mdx, mdy);
+			}
+			
+			command.angles[0] = main_camera.pitch;
+			command.angles[1] = main_camera.yaw;
+			
+			
+			center_mouse(params);
+			
+			if (game_interface)
+			{
+				// loop through all players and process inputs
+				game_interface->process_commands(0, &command, 1);
+				
+				//			game_interface->physics_update(params.step_interval_seconds);
+				//			background_source = audio::play(background, 1);
+			}
+		}
+	
+	
+	
+	
 //		debugdraw::axes(glm::mat4(1.0), 1.0f);
 		int x = 10;
 		int y = params.render_height - 50 - params.titlebar_height;
@@ -870,16 +866,24 @@ public:
 			debugdraw::text(x, y+24, core::str::format("active_camera->view = %.2g %.2g %.2g", active_camera->view.x, active_camera->view.y, active_camera->view.z), Color(128, 128, 255));
 			debugdraw::text(x, y+36, core::str::format("active_camera->right = %.2g %.2g %.2g", active_camera->side.x, active_camera->side.y, active_camera->side.z), Color(255, 0, 0));
 		}
-		debugdraw::text(x, y+48, core::str::format("frame delta = %2.2fms\n", params.framedelta_filtered_msec), Color(255, 255, 255));
+		debugdraw::text(x, y+48, core::str::format("frame delta = %2.2fms\n", params.framedelta_raw_msec), Color(255, 255, 255));
 		debugdraw::text(x, y+60, core::str::format("# allocations = %i, total %i Kbytes\n", platform::memory::allocator().active_allocations(), platform::memory::allocator().active_bytes()/1024), Color(64, 102, 192));
 		
-	
+		
+		if (draw_physics_debug)
+		{
+			physics::debug_draw();
+		}
+		
+		debugdraw::update(params.step_interval_seconds);
+		
 		// run server frame
 		if (game_interface)
 		{
-			game_interface->server_frame(params.step_alpha);
+			float framedelta_seconds = params.framedelta_raw_msec*0.001f;
+			game_interface->server_frame(params.current_tick, framedelta_seconds, params.step_alpha);
 						
-			game_interface->client_frame(params.step_alpha);
+			game_interface->client_frame(framedelta_seconds, params.step_alpha);
 		}
 		
 

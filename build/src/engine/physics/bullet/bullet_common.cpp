@@ -167,18 +167,20 @@ namespace gemini
 				
 				constraint_solver = new btSequentialImpulseConstraintSolver();
 				
-				//		broadphase = new btDbvtBroadphase();
-				broadphase = new btAxisSweep3(worldAabbMin, worldAabbMax);
+				broadphase = new btDbvtBroadphase();
+//				broadphase = new btAxisSweep3(worldAabbMin, worldAabbMax);
 				
 				pair_cache = broadphase->getOverlappingPairCache();
+				// setup ghost pair callback instance
+				pair_cache->setInternalGhostPairCallback( new CustomGhostPairCallback() );
+				
 				dynamics_world = new btDiscreteDynamicsWorld(dispatcher, (btBroadphaseInterface*)broadphase, constraint_solver, collision_config);
 				dynamics_world->setGravity( btVector3( 0, -10, 0 ) );
 				dynamics_world->getDispatchInfo().m_useConvexConservativeDistanceUtil = true;
 				dynamics_world->getDispatchInfo().m_convexConservativeDistanceThreshold = 0.01;
 				dynamics_world->getDispatchInfo().m_allowedCcdPenetration = 0.0;
 				
-				// setup ghost pair callback instance
-				pair_cache->setInternalGhostPairCallback( new CustomGhostPairCallback() );
+
 				
 				//btAlignedAllocSetCustom( bullet2_custom_alloc, bullet2_custom_free );
 				
@@ -249,19 +251,19 @@ namespace gemini
 				//		delete _controller;
 			}
 			
-			void step(float seconds)
+			void step(float framedelta_seconds, float fixed_step_seconds)
 			{
 				assert( dynamics_world != 0 );
 				
-				dynamics_world->stepSimulation( seconds, 1, 1/60.0f );
+				const int max_substeps = 0;
+
+				// From the Bullet wiki on stepping the world: timeStep < maxSubSteps * fixedTimeStep
+				// The above equation must be satisfied, otherwise we're losing time.
 				
-				// TODO: update actions
-//				if (_controller)
-//				{
-//					_controller->updateAction(dynamics_world, 1/60.0f);
-//					
-//					_controller->reset(dynamics_world);
-//				}
+				// We force substeps to 0 and pass in the fixed timestep as the delta time.
+				// this treats it as a variable frame delta step -- however:
+				// this step function is only called when we SHOULD step at our pre-determined fixed step.
+				dynamics_world->stepSimulation(fixed_step_seconds, max_substeps);
 				
 				
 				//int total_manifolds = dynamics_world->getDispatcher()->getNumManifolds();

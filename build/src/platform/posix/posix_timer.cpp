@@ -28,18 +28,20 @@
 
 #include <assert.h>
 
+#include <sys/time.h>
+#include <time.h>
+
 namespace platform
 {	
 	void PosixTimer::reset()
 	{
-		gettimeofday(&initial_time, 0);
 	}
 	
 	uint64_t PosixTimer::get_microseconds()
 	{
 		struct timeval now;
 		gettimeofday(&now, 0);
-		return ((now.tv_sec-initial_time.tv_sec)*1000000 + (now.tv_usec-initial_time.tv_usec));
+		return (now.tv_sec*1000000 + now.tv_usec);
 	}
 	
 	void posix_get_date_time(DateTime& datetime)

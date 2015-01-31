@@ -98,6 +98,8 @@ namespace gemini
 			swap_buffers = 1;
 
 			titlebar_height = 0;
+			current_tick = 0;
+			current_frame = 0;
 		}
 
 		namespace _internal
@@ -459,6 +461,7 @@ namespace gemini
 				return kernel::StartupFailed;
 			}
 			
+			_internal::_kernel_state.last_time = platform::instance()->get_time_microseconds();
 			return kernel::NoError;
 		} // startup
 		
@@ -496,41 +499,46 @@ namespace gemini
 
 		void update()
 		{
-			uint64_t now_microseconds = platform::instance()->get_time_microseconds();
+			uint64_t current_ticks = platform::instance()->get_time_microseconds();
 
-			float raw_delta_msec = (now_microseconds - _internal::_kernel_state.last_time)*.001f;
-			_internal::_kernel_state.last_time = now_microseconds;
+			// calculate delta ticks in miliseconds
+			_kernel->parameters().framedelta_raw_msec = (current_ticks - _internal::_kernel_state.last_time)*0.001f;
+			_internal::_kernel_state.last_time = current_ticks;
 
-			_internal::_kernel_state.tsa.tick( raw_delta_msec );
-			
-			_kernel->parameters().framedelta_filtered_msec = _internal::_kernel_state.tsa.filtered_value;
-			_kernel->parameters().framedelta_raw_msec = raw_delta_msec;
-			
-			_internal::_kernel_state.accumulator += (_internal::_kernel_state.tsa.filtered_value * .001);
-			while( _internal::_kernel_state.accumulator >= _kernel->parameters().step_interval_seconds )
+			// convert delta msec to seconds
+			_internal::_kernel_state.accumulator += (_kernel->parameters().framedelta_raw_msec * 0.001f);
+
+			while(_internal::_kernel_state.accumulator >= _kernel->parameters().step_interval_seconds)
 			{
-				_internal::_kernel_state.accumulator -= _kernel->parameters().step_interval_seconds;
-				_kernel->parameters().step_alpha = _internal::_kernel_state.accumulator / _kernel->parameters().step_interval_seconds;
-				if ( _kernel->parameters().step_alpha >= 1.0f )
-				{
-					_kernel->parameters().step_alpha -= 1.0f;
-				}
-				
 				// pass off to application
 				_active_application->step( _kernel->parameters() );
+				
+				// subtract the interval from the accumulator
+				_internal::_kernel_state.accumulator -= _kernel->parameters().step_interval_seconds;
+
+				// increment tick counter
+				_kernel->parameters().current_tick++;
+			}
+			
+			_kernel->parameters().step_alpha = _internal::_kernel_state.accumulator / _kernel->parameters().step_interval_seconds;
+			if ( _kernel->parameters().step_alpha >= 1.0f )
+			{
+				_kernel->parameters().step_alpha -= 1.0f;
 			}
 		} // update
 
 		void tick()
 		{
+			update();
+			
 			audio::update();
 			input::update();
-
-			update();
+			
 			_kernel->pre_tick();
-			hotloading::tick();
+			hotloading::tick();			
 			_active_application->tick( _kernel->parameters() );
 			_kernel->post_tick();
+			_kernel->parameters().current_frame++;
 		} // tick
 		
 		void parse_commandline(int argc, char** argv)

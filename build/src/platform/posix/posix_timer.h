@@ -26,17 +26,10 @@
 
 #include "platform.h"
 
-
-#include <sys/time.h>
-#include <time.h>
-
 namespace platform
 {
 	struct PosixTimer
 	{
-	private:
-		struct timeval initial_time;
-		
 	public:
 
 		void reset();

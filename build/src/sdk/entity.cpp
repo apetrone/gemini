@@ -91,10 +91,7 @@ void entity_physics_update(float delta_seconds)
 	for( ; it != end; ++it )
 	{
 		ent = (*it);
-//		if (!ent->is_player()) // don't step players here as they're done separately.
-		{
-			ent->fixed_update(delta_seconds);
-		}
+		ent->fixed_update(delta_seconds);
 	}
 }
 

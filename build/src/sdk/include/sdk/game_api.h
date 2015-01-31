@@ -48,14 +48,9 @@ namespace gemini
 		// called before physics update to process latest input
 		virtual void process_commands(uint8_t player_index, UserCommand* commands, uint8_t total_commands) = 0;
 		
-		// the physics_update functions are synced with the physics
-		// simulation. the default rate is 1/60 second.
-		// called when physics simulation should run
-		virtual void physics_update(float delta_seconds) = 0;
-		
 		// called each tick of the engine
-		virtual void server_frame(float step_alpha) = 0;
-		virtual void client_frame(float step_alpha) = 0;
+		virtual void server_frame(uint64_t current_ticks, float framedelta_seconds, float step_alpha) = 0;
+		virtual void client_frame(float framedelta_seconds, float step_alpha) = 0;
 	}; // GameInterface
 	
 	

@@ -83,9 +83,9 @@ namespace gemini
 		} // shutdown
 		
 		
-		void step( float seconds )
+		void step(float framedelta_seconds, float fixed_step_seconds)
 		{
-			bullet::step(seconds);
+			bullet::step(framedelta_seconds, fixed_step_seconds);
 		} // step
 		
 		void debug_draw()

@@ -126,7 +126,7 @@ namespace gemini
 			virtual IPlayerController* create_player_controller(ICollisionObject* object) = 0;
 			virtual void destroy_player_controller(IPlayerController* object) = 0;
 			
-			virtual void step_simulation(float delta_seconds) = 0;
+			virtual void step_simulation(float framedelta_seconds) = 0;
 			
 			virtual RaycastInfo raycast(ICollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance) = 0;
 		};
