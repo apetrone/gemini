@@ -8,18 +8,15 @@
 
 using namespace std;
 
-#include <platform/typedefs.h>
-#include <platform/mem.h>
-#include <gemini/core.h>
+#include <platform/platform.h>
+
+#include <core/typedefs.h>
+#include <core/core.h>
 #include <core/filesystem.h>
-#include <gemini/core/log.h>
+#include <core/logging.h>
 #include <core/stackstring.h>
-#include <gemini/core/xfile.h>
 #include <core/fixedarray.h>
-#include <core/arg.h>
-
-#include <slim/xlog.h>
-
+#include <core/interpolation.h>
 
 #include <json/json.h>
 
@@ -200,6 +197,79 @@ void SerialPort::baud_rate(uint32_t baud_rate)
 }
 
 
+struct ApplicationState
+{
+	float accumulator;
+	float framedelta_msec;
+	
+	glm::vec3 last_position;
+	glm::vec3 position;
+	glm::vec3 render_position;
+	
+	
+	ApplicationState()
+	{
+		position = last_position = glm::vec3(0.0f, 300.0f, 0.0f);
+	}
+};
+
+const float STEP_INTERVAL = (1.0f/30.0f);
+
+void run_frame(ApplicationState& state)
+{
+//	LOGV("df: %g\n", state.framedelta_msec);
+	float delta_seconds = (state.framedelta_msec*.001f);
+	state.accumulator += delta_seconds;
+//	LOGV("accumulator: %2.2f\n", state.accumulator);
+	
+	if (state.accumulator >= STEP_INTERVAL)
+	{
+		state.accumulator -= STEP_INTERVAL;
+		
+		state.last_position = state.position;
+		state.position += glm::vec3(70.0f, 0.0f, 0.0f) * STEP_INTERVAL;
+	}
+	
+	float alpha = state.accumulator / STEP_INTERVAL;
+	if (alpha > 1.0f)
+	{
+		alpha = 1.0f;
+	}
+//	LOGV("alpha is: %g\n", alpha);
+	
+	state.render_position = gemini::lerp(state.last_position, state.position, alpha);
+
+
+	glViewport(0, 0, 800, 600);
+	glClearColor(0.25f, 0.25f, 0.35f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, 800, 0, 600, -0.1f, 10.0f);
+	
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glTranslatef(0.0f, 0.0f, -1.0f);
+	
+	
+	{
+		glm::vec2 tri[3];
+		tri[0] = glm::vec2(state.render_position.x, state.render_position.y+10);
+		tri[1] = glm::vec2(state.render_position.x+50, state.render_position.y+10);
+		tri[2] = glm::vec2(state.render_position.x+25, state.render_position.y+30);
+		
+		glColor3ub(255, 0, 255);
+		glBegin(GL_TRIANGLES);
+
+		glVertex2fv(glm::value_ptr(tri[0]));
+		glVertex2fv(glm::value_ptr(tri[1]));
+		glVertex2fv(glm::value_ptr(tri[2]));
+		
+		glEnd();
+	}
+}
+
 void test_rendering()
 {
 
@@ -231,10 +301,16 @@ void test_rendering()
 	LOGV("GL_RENDERER: %s\n", glGetString(GL_RENDERER));
 	LOGV("GL_VENDOR: %s\n", glGetString(GL_VENDOR));
 
-	
+	ApplicationState state;
+	uint64_t last_ticks = platform::instance()->get_time_microseconds();
 	
 	while(run)
 	{
+		uint64_t current_ticks = platform::instance()->get_time_microseconds();
+		
+		state.framedelta_msec = (current_ticks - last_ticks) * 0.001f;
+		last_ticks = current_ticks;
+	
 		while(SDL_PollEvent(&event))
 		{
 			switch(event.type)
@@ -252,26 +328,8 @@ void test_rendering()
 				}
 			}
 		}
-		
-		glViewport(0, 0, 800, 600);
-		glClearColor(0.25f, 0.25f, 0.35f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(0, 800, 0, 600, -0.1f, 10.0f);
-		
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		glTranslatef(0.0f, 0.0f, -1.0f);
-		
 
-		glColor3ub(255, 255, 255);
-		glBegin(GL_TRIANGLES);
-		glVertex2d(0, 10);
-		glVertex2d(50, 10);
-		glVertex2d(25, 30);
-		glEnd();
+		run_frame(state);
 
 		
 		SDL_GL_SwapWindow(window);
@@ -284,102 +342,15 @@ void test_rendering()
 #endif
 }
 
-#if 0
-void test_animation()
-{
-	// animation sample rate
-	const float FRAME_RATE = (1.0f/30.0f);
-	
-	// time between updates
-	const float FRAME_DELTA = (1.0f/60.0f);
-	
-	float values[] = { 0.0f, 0.25f, 0.5f, 1.0f};
-	KeyframeChannel<float> k1;
-	k1.create(4, values, FRAME_RATE);
-	
-	
-	KeyframeData<float> data;
-	data.keys.allocate(4);
-	data.keys[0] = values[0];
-	data.keys[1] = values[1];
-	data.keys[2] = values[2];
-	data.keys[3] = values[3];
-	
-	data.time.allocate(4);
-	data.time[0] = 0.0f;
-	data.time[1] = FRAME_RATE;
-	data.time[2] = FRAME_RATE * 2.0f;
-	data.time[3] = FRAME_RATE * 3.0f;
-	
-	float value = 0.0f;
-	Channel<float> c0(value);
-	c0.set_data_source(&data, FRAME_RATE);
-	
-	
-	float accum = 0;
-	for(int i = 0; i < 10; ++i)
-	{
-		c0.update(FRAME_DELTA);
-		
-		LOGV("frame: %i, c0 value: %g, k1 value: %g\n", i, value, k1.get_value(accum));
-		accum += FRAME_DELTA;
-		if (accum >= (FRAME_DELTA*6))
-		{
-			accum -= (FRAME_DELTA*6);
-		}
-	}
-}
-#endif
-
-void test_serial2()
-{
-//	const char port[] = "/dev/tty.usbmodem1441";
-//	const uint32_t baud_rate = 9600;
-	
-	const char port[] = "/dev/tty.usbserial-A9014A4H";
-//	const char port[] = "/dev/tty.usbserial-A100RYUU";
-	const uint32_t baud_rate = 115200;
-	
-	SerialPort s;
-	if (s.open(port, baud_rate))
-	{
-//		LOGV("writing data...\n");
-//		for (int i = 0; i < 0xFFF; ++i)
-//		{
-//			const char data[] = "adam";
-//			s.write(data, 4);
-//		}
-//		LOGV("finished writing data\n");
-
-		LOGV("reading data...\n");
-
-
-		for(int i = 0; i < 0xFFFF; ++i)
-		{
-//			char buffer[128] = {0};
-//			int bytes = s.read(buffer, 4);
-//			LOGV("read %i, %s\n", bytes, buffer);
-
-			std::string buffer;
-			s.readline(buffer);
-			LOGV("%s\n", buffer.c_str());
-		}
-		
-		LOGV("finished reading data..\n");
-	}
-}
 
 int main(int argc, char** argv)
 {
-	tools::startup();
-//	test_function();
-	std::thread t0(test_serial2);
-	
+	platform::startup();
+	gemini::core::startup();
 	
 	test_rendering();
-//  test_animation();
-	t0.join();
 	
-	tools::shutdown();
+	gemini::core::shutdown();
+	platform::shutdown();
 	return 0;
 }
