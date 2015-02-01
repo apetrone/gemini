@@ -79,7 +79,7 @@ namespace gemini
 }
 
 
-typedef gemini::StackString<128> EntityName;
+typedef core::StackString<128> EntityName;
 
 
 class Entity : public gemini::IEngineEntity
