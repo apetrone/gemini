@@ -39,7 +39,7 @@
 // unsigned int mycolor = RGBToUInt( 255, 128, 75 );
 // UIntToRGB( mycolor, rgb );
 
-namespace gemini
+namespace core
 {
 	struct Color
 	{
@@ -62,4 +62,4 @@ namespace gemini
 						 lerp( start.a, end.a, t ) );
 		}
 	}; // Interpolator
-} // namespace gemini
+} // namespace core

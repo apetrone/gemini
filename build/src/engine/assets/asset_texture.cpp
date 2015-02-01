@@ -64,7 +64,7 @@ namespace gemini
 			}
 			else // load cubemap
 			{
-				StackString< MAX_PATH_SIZE > fullpath[6];
+				core::StackString< MAX_PATH_SIZE > fullpath[6];
 				const char ext[][4] = { "_rt", "_lt", "_up", "_dn", "_ft", "_bk" };
 				const char * names[6];
 				for( int i = 0; i < 6; ++i )
@@ -92,7 +92,7 @@ namespace gemini
 		} // texture_load_callback
 		
 		
-		void texture_construct_extension( StackString<MAX_PATH_SIZE> & extension )
+		void texture_construct_extension( core::StackString<MAX_PATH_SIZE> & extension )
 		{
 			kernel::KernelDeviceFlags device_flags = kernel::instance()->parameters().device_flags;
 			const char * ext = 0;

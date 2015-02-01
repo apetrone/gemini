@@ -29,7 +29,7 @@
 
 #include "configloader.h"
 
-namespace gemini
+namespace core
 {
 	namespace util
 	{
@@ -76,4 +76,4 @@ namespace gemini
 			return is_success;
 		} // json_load_with_callback
 	} // mamespace util
-} // namespace gemini
+} // namespace core

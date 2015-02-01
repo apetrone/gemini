@@ -212,8 +212,8 @@ namespace gemini
 					return 0;
 				}
 				
-				StackString<MAX_PATH_SIZE> path = filename;
-				StackString<MAX_PATH_SIZE> extension;
+				core::StackString<MAX_PATH_SIZE> path = filename;
+				core::StackString<MAX_PATH_SIZE> extension;
 				assets::append_asset_extension( assets::SoundAsset, path );
 	//			assets::sounds()->append_extension( path );
 				

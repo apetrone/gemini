@@ -35,56 +35,53 @@
 		static abstract_class* creator() { return CREATE(class_name); }\
 		static const char* get_classname() { return #class_name; }
 
-namespace gemini
+namespace core
 {
-	namespace core
+	template <class Type>
+	class Factory
 	{
-		template <class Type>
-		class Factory
+	public:
+		typedef Type * (*TypeCreator)();
+		
+		struct Record
 		{
-		public:
-			typedef Type * (*TypeCreator)();
-			
-			struct Record
+			TypeCreator creator;
+			const char * class_name;
+			unsigned int category_type;
+		};
+		
+		typedef std::vector<Record> RecordContainer;
+		RecordContainer records;
+		
+		//
+		// Register a class creator with this factory.
+		// It will associated by name, a create function.
+		// Category is optional
+		void register_class( TypeCreator creator, const char * name, unsigned int category = 0 )
+		{
+			Record record;
+			record.creator = creator;
+			record.class_name = name;
+			record.category_type = category;
+			records.push_back(record);
+		} // register a class
+		
+		//
+		// Find a class record by name or
+		// if category is specified, by category
+		Record* find_class( const char * name, unsigned int category = 0 )
+		{
+			for(auto& record : records)
 			{
-				TypeCreator creator;
-				const char * class_name;
-				unsigned int category_type;
-			};
-			
-			typedef std::vector<Record> RecordContainer;
-			RecordContainer records;
-			
-			//
-			// Register a class creator with this factory.
-			// It will associated by name, a create function.
-			// Category is optional
-			void register_class( TypeCreator creator, const char * name, unsigned int category = 0 )
-			{
-				Record record;
-				record.creator = creator;
-				record.class_name = name;
-				record.category_type = category;
-				records.push_back(record);
-			} // register a class
-			
-			//
-			// Find a class record by name or
-			// if category is specified, by category
-			Record* find_class( const char * name, unsigned int category = 0 )
-			{
-				for(auto& record : records)
+				// if this category matches the record, or if category is not-specified (0)
+				// and the name matches
+				if ( (category != 0 && record.category_type == category) || (category == 0 && name != 0 && (str::case_insensitive_compare(record.class_name, name, 0) == 0)) )
 				{
-					// if this category matches the record, or if category is not-specified (0)
-					// and the name matches
-					if ( (category != 0 && record.category_type == category) || (category == 0 && name != 0 && (str::case_insensitive_compare(record.class_name, name, 0) == 0)) )
-					{
-						return &record;
-					}
+					return &record;
 				}
-				
-				return 0;
-			} // find a class
-		}; // class Factory
-	} // namespace core
-} // namespace gemini
+			}
+			
+			return 0;
+		} // find a class
+	}; // class Factory
+} // namespace core

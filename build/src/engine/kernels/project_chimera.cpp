@@ -76,6 +76,7 @@
 
 using namespace gemini;
 using namespace gemini::physics;
+using namespace core;
 
 #define LOCK_CAMERA_TO_CHARACTER 1
 
@@ -547,7 +548,7 @@ public:
 	virtual IModelInterface* models() { return model_interface; }
 	virtual IPhysicsInterface* physics() { return physics_interface; }
 	virtual IExperimental* experiment() { return experimental_interface; }
-	virtual gemini::core::logging::ILog* log() { return gemini::core::log::instance(); }
+	virtual core::logging::ILog* log() { return core::log::instance(); }
 	virtual gemini::IDebugDraw* debugdraw() { return debugdraw::instance(); }
 	virtual gemini::IAudioInterface* audio() { return gemini::audio::instance(); }
 	

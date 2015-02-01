@@ -51,15 +51,15 @@ namespace gemini
 		virtual void init_with_settings(const renderer::RenderSettings& settings);
 		virtual void create_default_render_target();
 		
-		virtual void run_command( renderer::DriverCommandType command, util::MemoryStream & stream );
-		virtual void post_command( renderer::DriverCommandType command, util::MemoryStream & stream );
-		virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, util::MemoryStream & stream );
+		virtual void run_command( renderer::DriverCommandType command, core::util::MemoryStream & stream );
+		virtual void post_command( renderer::DriverCommandType command, core::util::MemoryStream & stream );
+		virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, core::util::MemoryStream & stream );
 		virtual void setup_material( renderer::Material* material, renderer::ShaderProgram* program, RenderStream& stream);
 		
 		// texture
 		virtual renderer::Texture* texture_create(image::Image& image);
 		virtual void texture_destroy(renderer::Texture* texture);
-		virtual void texture_update(renderer::Texture* texture, const image::Image& image, const gemini::Recti& rect);
+		virtual void texture_update(renderer::Texture* texture, const image::Image& image, const mathlib::Recti& rect);
 				
 		// vertexbuffer
 		virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices );

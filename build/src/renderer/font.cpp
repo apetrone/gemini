@@ -115,7 +115,7 @@ namespace gemini
 				image.flags |= image::F_ALPHA;
 				image.pixels = (unsigned char*)pixels;
 
-				gemini::Recti area(rect[0], rect[1], width, height);
+				mathlib::Recti area(rect[0], rect[1], width, height);
 				
 				driver->texture_update(data->texture, image, area);
 			}
@@ -236,7 +236,7 @@ namespace gemini
 		
 
 		
-		void draw_string(const renderer::Font& font, int x, int y, const char* utf8, const Color& color)
+		void draw_string(const renderer::Font& font, int x, int y, const char* utf8, const core::Color& color)
 		{
 			if (font.is_valid())
 			{

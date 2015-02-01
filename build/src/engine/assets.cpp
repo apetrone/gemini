@@ -149,7 +149,7 @@ namespace gemini
 			DESTROY(ShaderAssetLibrary, _shaders);
 		} // shutdown
 
-		void append_asset_extension( AssetType type, StackString<MAX_PATH_SIZE> & path )
+		void append_asset_extension( AssetType type, core::StackString<MAX_PATH_SIZE> & path )
 		{
 			const char * extension = "";
 			kernel::KernelDeviceFlags device_flags = kernel::instance()->parameters().device_flags;

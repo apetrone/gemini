@@ -51,7 +51,7 @@ namespace gemini
 		void shutdown();
 		
 		// draw string at (x, y) screen coordinates with the origin in the upper left of the screen
-		void draw_string(const renderer::Font& font, int x, int y, const char* utf8, const Color& color );
+		void draw_string(const renderer::Font& font, int x, int y, const char* utf8, const core::Color& color );
 		
 		// set the viewport size for the future draw calls
 		void set_viewport_size(int render_width, int render_height);

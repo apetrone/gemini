@@ -170,7 +170,7 @@ namespace gemini
 				for (int v = 0; v < geo->colors.size(); ++v)
 				{
 					const Json::Value& vertex_color = vertex_colors[v];
-					geo->colors[v] = Color(255 * vertex_color[0].asFloat(), 255 * vertex_color[1].asFloat(), 255 * vertex_color[2].asFloat(), 255 * vertex_color[3].asFloat());
+					geo->colors[v] = core::Color(255 * vertex_color[0].asFloat(), 255 * vertex_color[1].asFloat(), 255 * vertex_color[2].asFloat(), 255 * vertex_color[3].asFloat());
 				}
 				
 				for (int set_id = 0; set_id < uv_sets.size(); ++set_id)
@@ -288,7 +288,7 @@ namespace gemini
 			}
 		}
 		
-		util::ConfigLoadStatus load_json_model(const Json::Value& root, void* data)
+		core::util::ConfigLoadStatus load_json_model(const Json::Value& root, void* data)
 		{
 			Mesh* mesh = (Mesh*)data;
 			
@@ -297,7 +297,7 @@ namespace gemini
 			if (!default_mat)
 			{
 				LOGE("Could not load the default material!\n");
-				return util::ConfigLoad_Failure;
+				return core::util::ConfigLoad_Failure;
 			}
 			
 			mesh->scene_root = CREATE(scenegraph::Node);
@@ -427,11 +427,11 @@ namespace gemini
 				
 			}
 			
-			return util::ConfigLoad_Success;
+			return core::util::ConfigLoad_Success;
 		}
 		
 		
-		void mesh_construct_extension( StackString<MAX_PATH_SIZE> & extension )
+		void mesh_construct_extension( core::StackString<MAX_PATH_SIZE> & extension )
 		{
 			extension = ".model";
 		} // mesh_construct_extension
@@ -570,7 +570,7 @@ namespace gemini
 		AssetLoadStatus mesh_load_callback(const char* path, Mesh* mesh, const AssetParameters& parameters)
 		{
 			mesh->path = path;
-			if (util::json_load_with_callback(path, /*mesh_load_from_json*/load_json_model, mesh, true) == util::ConfigLoad_Success)
+			if (core::util::json_load_with_callback(path, /*mesh_load_from_json*/load_json_model, mesh, true) == core::util::ConfigLoad_Success)
 			{
 				return AssetLoad_Success;
 			}

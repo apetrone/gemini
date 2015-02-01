@@ -29,25 +29,22 @@
 
 #define LOG_MAX_HANDLERS 4
 
-namespace gemini
+namespace core
 {
-	namespace core
+	namespace logging
 	{
-		namespace logging
+		class LogInterface : public ILog
 		{
-			class LogInterface : public ILog
-			{
-				FixedArray<Handler> handlers;
-				
-			public:
-				LogInterface();
-				virtual ~LogInterface();
-				
-				virtual void dispatch(ILog::MessageType type, const char* message, const char* function, const char* filename, int linenumber);
-				virtual void add_handler(Handler* handler);
-				virtual uint32_t startup();
-				virtual void shutdown();
-			}; // LogInterface
-		} // namespace logging
-	}
-} // namespace gemini
+			FixedArray<Handler> handlers;
+			
+		public:
+			LogInterface();
+			virtual ~LogInterface();
+			
+			virtual void dispatch(ILog::MessageType type, const char* message, const char* function, const char* filename, int linenumber);
+			virtual void add_handler(Handler* handler);
+			virtual uint32_t startup();
+			virtual void shutdown();
+		}; // LogInterface
+	} // namespace logging
+} // namespace core

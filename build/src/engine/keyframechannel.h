@@ -43,7 +43,7 @@ namespace gemini
 
 
 
-	template <class Type, class Interpolator=Interpolator<Type> >
+	template <class Type, class Interpolator=core::Interpolator<Type> >
 	class Channel
 	{
 		Type& value;
@@ -242,7 +242,7 @@ namespace gemini
 	Interpolator Channel<Type, Interpolator>::interpolator;
 
 
-	template <class Type, class Interpolator=Interpolator<Type> >
+	template <class Type, class Interpolator=core::Interpolator<Type> >
 	struct KeyframeChannel
 	{
 		unsigned int total_samples;

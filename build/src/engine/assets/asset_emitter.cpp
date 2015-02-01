@@ -47,7 +47,7 @@ namespace gemini
 		} // release
 		
 		
-		void color_value( Json::Value & value, Color & out )
+		void color_value( Json::Value & value, core::Color & out )
 		{
 			std::string temp = value.asString();
 			
@@ -80,12 +80,12 @@ namespace gemini
 			}
 		}
 		
-		util::ConfigLoadStatus load_emitter_from_file( const Json::Value & root, void * data )
+		core::util::ConfigLoadStatus load_emitter_from_file( const Json::Value & root, void * data )
 		{
 			EmitterConfig * cfg = (EmitterConfig*)data;
 			if (!cfg)
 			{
-				return util::ConfigLoad_Failure;
+				return core::util::ConfigLoad_Failure;
 			}
 			
 			Json::Value max_particles = root["max_particles"];
@@ -105,7 +105,7 @@ namespace gemini
 				velocity_max.isNull() || material.isNull() )
 			{
 				LOGE("Missing one or more required parameters from emitter configuration. Aborting.\n");
-				return util::ConfigLoad_Failure;
+				return core::util::ConfigLoad_Failure;
 			}
 			
 			
@@ -143,7 +143,7 @@ namespace gemini
 	//			LOGV("total items: %i\n", frames.size());
 				if (citer.key().asString() == "color")
 				{
-					Color * colors = CREATE_ARRAY(Color, frames.size());
+					core::Color * colors = CREATE_ARRAY(core::Color, frames.size());
 					read_channel_frames(colors, frames, color_value);
 					cfg->color_channel.create(frames.size(), colors, frame_delay_seconds.asFloat());
 					DESTROY_ARRAY(Color, colors, frames.size());
@@ -165,12 +165,12 @@ namespace gemini
 			}
 			
 
-			return util::ConfigLoad_Success;
+			return core::util::ConfigLoad_Success;
 		} // load_emitter_from_file
 
 		AssetLoadStatus emitterconfig_load_callback( const char * path, EmitterConfig * config, const AssetParameters & parameters )
 		{
-			if ( util::json_load_with_callback(path, load_emitter_from_file, config, true ) == util::ConfigLoad_Success )
+			if ( core::util::json_load_with_callback(path, load_emitter_from_file, config, true ) == core::util::ConfigLoad_Success )
 			{
 				return AssetLoad_Success;
 			}
@@ -179,7 +179,7 @@ namespace gemini
 		} // emitterconfig_load_callback
 		
 		
-		void emitterconfig_construct_extension( StackString<MAX_PATH_SIZE> & extension )
+		void emitterconfig_construct_extension( core::StackString<MAX_PATH_SIZE> & extension )
 		{
 			extension = ".conf";
 		} // emitterconfig_construct_extension

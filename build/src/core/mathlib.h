@@ -122,7 +122,7 @@ aengine::real Segment_Slope( const aengine::Segment & segment );
 int Segment_Intersection( const aengine::Segment & line1, const aengine::Segment & line2, aengine::vec3 & pt );
 #endif
 
-namespace gemini
+namespace mathlib
 {
 	// this class assumes an origin in the upper left hand corner and assumes bottom > top, right > left
 	template <class _Type>
@@ -194,4 +194,4 @@ namespace gemini
 		bool overlaps( const AABB2 & other ) const;
 	}; // AABB2
 
-} // namespace gemini
+} // namespace mathlib

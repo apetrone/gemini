@@ -49,7 +49,7 @@ namespace gemini
 
 		
 		AssetLoadStatus material_load_callback( const char * path, Material * material, const AssetParameters & parameters );
-		void material_construct_extension( StackString<MAX_PATH_SIZE> & extension );
+		void material_construct_extension( core::StackString<MAX_PATH_SIZE> & extension );
 
 		DECLARE_ASSET_LIBRARY_ACCESSOR(Material, AssetParameters, materials);
 	} // namespace assets

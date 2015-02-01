@@ -44,6 +44,6 @@ namespace gemini
 	
 	namespace audio
 	{
-		static Interface<IAudioInterface> instance;
+		static core::Interface<IAudioInterface> instance;
 	} // namespace audio
 } // namespace gemini

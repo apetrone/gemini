@@ -121,7 +121,7 @@ namespace gemini
 			return AssetLoad_Success;
 		} // font_load_callback
 
-		void shader_construct_extension(StackString<MAX_PATH_SIZE>& extension)
+		void shader_construct_extension(core::StackString<MAX_PATH_SIZE>& extension)
 		{
 		} // shader_construct_extension
 	} // namespace assets

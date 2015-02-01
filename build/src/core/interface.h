@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-namespace gemini
+namespace core
 {
 	template <class InterfaceType>
 	class Interface
@@ -57,4 +57,4 @@ namespace gemini
 	
 	template <class InterfaceType>
 	InterfaceType* Interface<InterfaceType>::_interface;
-} // namespace gemini
+} // namespace core

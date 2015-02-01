@@ -31,6 +31,8 @@
 
 #include <string>
 
+using namespace core;
+
 namespace gemini
 {
 	namespace renderer

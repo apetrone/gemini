@@ -52,7 +52,7 @@ namespace gemini
 		void shutdown();
 		
 		// Given a relative path to an asset, tack on a platform-specific file extension
-		void append_asset_extension( AssetType type, StackString< MAX_PATH_SIZE > & path );
+		void append_asset_extension( AssetType type, core::StackString< MAX_PATH_SIZE > & path );
 		
 		typedef unsigned int AssetID;
 		

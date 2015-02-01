@@ -46,7 +46,7 @@ namespace gemini
 		}; // Font
 
 		AssetLoadStatus font_load_callback( const char * path, Font * config, const AssetParameters & parameters );
-		void font_construct_extension( StackString<MAX_PATH_SIZE> & extension );
+		void font_construct_extension( core::StackString<MAX_PATH_SIZE> & extension );
 
 		DECLARE_ASSET_LIBRARY_ACCESSOR(Font, AssetParameters, fonts);
 	} // namespace assets

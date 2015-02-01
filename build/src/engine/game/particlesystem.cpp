@@ -152,11 +152,11 @@ namespace gemini
 
 	void ParticleEmitter::generate_particle( Particle * p )
 	{
-		p->life_total = p->life_remaining = util::random_range(this->emitter_config->life.min, this->emitter_config->life.max);
-		p->velocity = glm::vec3(util::random_range(
+		p->life_total = p->life_remaining = core::util::random_range(this->emitter_config->life.min, this->emitter_config->life.max);
+		p->velocity = glm::vec3(core::util::random_range(
 												   this->emitter_config->velocity.min[0], this->emitter_config->velocity.max[0]),
-								util::random_range(this->emitter_config->velocity.min[1], this->emitter_config->velocity.max[1]),
-								util::random_range(this->emitter_config->velocity.min[2], this->emitter_config->velocity.max[2]));
+								core::util::random_range(this->emitter_config->velocity.min[1], this->emitter_config->velocity.max[1]),
+								core::util::random_range(this->emitter_config->velocity.min[2], this->emitter_config->velocity.max[2]));
 		
 		p->position.snap(world_position.render);
 	//	LOGV( "p->position: %g, %g %g\n", p->position.render.x, p->position.render.y, p->position.render.z );

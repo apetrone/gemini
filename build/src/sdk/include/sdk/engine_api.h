@@ -29,18 +29,20 @@
 
 #include <core/mathlib.h>
 
+
+namespace core
+{
+	namespace logging
+	{
+		class ILog;
+	}
+}
+
 namespace gemini
 {
 	class IEntityManager;
 	class IModelInterface;
-	
-	namespace core
-	{
-		namespace logging
-		{
-			class ILog;
-		}
-	}
+
 	
 	namespace physics
 	{
@@ -86,6 +88,6 @@ namespace gemini
 	
 	namespace engine
 	{
-		typedef Interface<IEngineInterface> api;
+		typedef core::Interface<IEngineInterface> api;
 	}
 } // namespace gemini

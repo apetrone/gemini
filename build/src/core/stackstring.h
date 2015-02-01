@@ -28,7 +28,7 @@
 #include <platform/platform.h>
 #include <core/str.h>
 
-namespace gemini
+namespace core
 {
 	template <unsigned int size, class Type=char>
 	struct StackString
@@ -65,8 +65,8 @@ namespace gemini
 		void copy_data(const Type* source)
 		{
 			clear();
-			_length = gemini::core::str::len(source);
-			gemini::core::str::copy(_data, source, _length );
+			_length = core::str::len(source);
+			core::str::copy(_data, source, _length );
 		}
 		
 		void clear()
@@ -194,7 +194,7 @@ namespace gemini
 				size_t location = (p-_data-1);
 				
 				_data[location] = '\0';
-				_length = gemini::core::str::len(_data);
+				_length = core::str::len(_data);
 			}
 			
 			return *this;
@@ -215,10 +215,10 @@ namespace gemini
 		{
 			if (s)
 			{
-				if (_length + gemini::core::str::len(s) < size)
+				if (_length + core::str::len(s) < size)
 				{
-					gemini::core::str::cat(_data, s);
-					_length = gemini::core::str::len(_data);
+					core::str::cat(_data, s);
+					_length = core::str::len(_data);
 				}
 				else
 				{
@@ -327,4 +327,4 @@ namespace gemini
 			}
 		}
 	}; // class StackString
-} // namespace gemini
+} // namespace core

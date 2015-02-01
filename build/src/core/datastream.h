@@ -30,7 +30,7 @@
 
 #include "datastream.h"
 
-namespace gemini
+namespace core
 {
 	namespace util
 	{
@@ -113,4 +113,4 @@ namespace gemini
 			virtual void flush() {}
 		};
 	} // namespace util
-} // namespace gemini
+} // namespace core

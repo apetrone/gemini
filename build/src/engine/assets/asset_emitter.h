@@ -43,11 +43,11 @@ namespace gemini
 			unsigned int material_id;
 			float spawn_delay_seconds;
 
-			RangedValue<unsigned int> life;
-			RangedValue<glm::vec3> velocity;
-			RangedValue<float> size;
+			core::RangedValue<unsigned int> life;
+			core::RangedValue<glm::vec3> velocity;
+			core::RangedValue<float> size;
 
-			KeyframeChannel<Color> color_channel;
+			KeyframeChannel<core::Color> color_channel;
 			KeyframeChannel<float> alpha_channel;
 			KeyframeChannel<float> size_channel;
 
@@ -56,7 +56,7 @@ namespace gemini
 		}; // EmitterConfig
 
 		AssetLoadStatus emitterconfig_load_callback( const char * path, EmitterConfig * config, const AssetParameters & parameters );
-		void emitterconfig_construct_extension( StackString<MAX_PATH_SIZE> & extension );
+		void emitterconfig_construct_extension( core::StackString<MAX_PATH_SIZE> & extension );
 
 		DECLARE_ASSET_LIBRARY_ACCESSOR(EmitterConfig, AssetParameters, emitters);
 	} // namespace assets

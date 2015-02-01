@@ -29,44 +29,41 @@
 #include <mutex>
 #include <condition_variable>
 
-namespace gemini
+namespace core
 {
-	namespace core
+	template <class Type>
+	class ThreadSafeQueue
 	{
-		template <class Type>
-		class ThreadSafeQueue
+		std::queue<Type> queue;
+		std::condition_variable wait_condition;
+		mutable std::mutex local_mutex;
+		
+	public:
+		void enqueue(Type in)
 		{
-			std::queue<Type> queue;
-			std::condition_variable wait_condition;
-			mutable std::mutex local_mutex;
-			
-		public:
-			void enqueue(Type in)
+			std::lock_guard<std::mutex> lock(local_mutex);
+			queue.push(in);
+			wait_condition.notify_one();
+		}
+		
+		Type dequeue()
+		{
+			std::unique_lock<std::mutex> lock(local_mutex);
+			while(queue.empty())
 			{
-				std::lock_guard<std::mutex> lock(local_mutex);
-				queue.push(in);
-				wait_condition.notify_one();
+				wait_condition.wait(lock);
 			}
 			
-			Type dequeue()
-			{
-				std::unique_lock<std::mutex> lock(local_mutex);
-				while(queue.empty())
-				{
-					wait_condition.wait(lock);
-				}
-				
-				Type value = queue.front();
-				queue.pop();
-				return value;
-			}
-			
-			size_t size()
-			{
-				std::lock_guard<std::mutex> lock(local_mutex);
-				size_t total_size = queue.size();
-				return total_size;
-			}
-		}; // ThreadSafeQueue
-	} // namespace core
-} // namespace gemini
+			Type value = queue.front();
+			queue.pop();
+			return value;
+		}
+		
+		size_t size()
+		{
+			std::lock_guard<std::mutex> lock(local_mutex);
+			size_t total_size = queue.size();
+			return total_size;
+		}
+	}; // ThreadSafeQueue
+} // namespace core

@@ -430,7 +430,7 @@ namespace gemini
 		DESTROY(RenderTarget, default_render_target);
 	}
 
-	void c_shader( util::MemoryStream & stream, GLCore32 & renderer )
+	void c_shader( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 		GL_LOG();
 		
@@ -440,7 +440,7 @@ namespace gemini
 		renderer.shaderprogram_activate( shader_program );
 	}
 
-	void p_shader( util::MemoryStream & stream, GLCore32 & renderer )
+	void p_shader( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 		GL_LOG();
 		
@@ -450,7 +450,7 @@ namespace gemini
 		renderer.shaderprogram_deactivate( shader_program );
 	}
 
-	void c_uniform_matrix4( util::MemoryStream & stream, GLCore32 & renderer )
+	void c_uniform_matrix4( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 		GL_LOG();
 		
@@ -465,7 +465,7 @@ namespace gemini
 		gl.CheckError( "uniform matrix 4" );
 	}
 
-	void c_uniform1i( util::MemoryStream & stream, GLCore32 & renderer )
+	void c_uniform1i( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 		GL_LOG();
 		
@@ -478,7 +478,7 @@ namespace gemini
 		gl.CheckError( "uniform1i" );
 	}
 
-	void c_uniform3f( util::MemoryStream & stream, GLCore32 & renderer )
+	void c_uniform3f( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 		GL_LOG();
 		
@@ -491,7 +491,7 @@ namespace gemini
 		gl.CheckError( "uniform3f" );
 	}
 
-	void c_uniform4f( util::MemoryStream & stream, GLCore32 & renderer )
+	void c_uniform4f( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 		GL_LOG();
 		
@@ -504,7 +504,7 @@ namespace gemini
 		gl.CheckError( "uniform4f" );
 	}
 
-	void c_uniform_sampler2d( util::MemoryStream & stream, GLCore32 & renderer )
+	void c_uniform_sampler2d( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 		GL_LOG();
 		
@@ -538,7 +538,7 @@ namespace gemini
 		}
 	}
 
-	void p_uniform_sampler2d( util::MemoryStream & stream, GLCore32 & renderer )
+	void p_uniform_sampler2d( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 		GL_LOG();
 		
@@ -557,7 +557,7 @@ namespace gemini
 		gl.CheckError( "BindTexture: GL_TEXTURE_2D" );
 	}
 
-	void c_clear( util::MemoryStream & stream, GLCore32 & renderer )
+	void c_clear( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 		GL_LOG();
 		
@@ -567,7 +567,7 @@ namespace gemini
 		gl.CheckError( "Clear" );
 	}
 
-	void c_clearcolor( util::MemoryStream & stream, GLCore32 & renderer )
+	void c_clearcolor( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 		GL_LOG();
 		
@@ -577,7 +577,7 @@ namespace gemini
 		gl.CheckError( "ClearColor" );
 	}
 
-	void c_cleardepth( util::MemoryStream & stream, GLCore32 & renderer )
+	void c_cleardepth( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 		GL_LOG();
 		
@@ -587,7 +587,7 @@ namespace gemini
 		gl.CheckError( "glClearDepth" );
 	}
 
-	void c_cullface( util::MemoryStream & stream, GLCore32 & renderer )
+	void c_cullface( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 		GL_LOG();
 		
@@ -597,7 +597,7 @@ namespace gemini
 		gl.CheckError( "glCullFace" );
 	}
 
-	void c_viewport( util::MemoryStream & stream, GLCore32 & renderer )
+	void c_viewport( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 		int x, y, width, height;
 		//			stream.read(x);
@@ -614,7 +614,7 @@ namespace gemini
 		gl.CheckError( "glViewport" );
 	}
 
-	void c_drawcall( util::MemoryStream & stream, GLCore32 & renderer )
+	void c_drawcall( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 		GL32VertexBuffer * vertex_buffer = 0;
 		GLenum draw_type;
@@ -636,7 +636,7 @@ namespace gemini
 		}
 	}
 
-	void c_state( util::MemoryStream & stream, GLCore32 & renderer )
+	void c_state( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 		// state change
 		DriverState driver_state;
@@ -647,7 +647,7 @@ namespace gemini
 		op( driver_state, stream, &renderer );
 	}
 
-	void p_state( util::MemoryStream & stream, GLCore32 & renderer )
+	void p_state( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 		// state change
 		DriverState driver_state;
@@ -658,7 +658,7 @@ namespace gemini
 		op( driver_state, stream, &renderer );
 	}
 
-	void c_blendfunc( util::MemoryStream & stream, GLCore32 & renderer )
+	void c_blendfunc( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 		RenderBlendType render_blendstate_source, render_blendstate_destination;
 			
@@ -674,11 +674,11 @@ namespace gemini
 	}
 
 
-	void c_noop( util::MemoryStream & stream, GLCore32 & renderer )
+	void c_noop( core::util::MemoryStream & stream, GLCore32 & renderer )
 	{
 	}
 
-	typedef void (*render_command_function)( util::MemoryStream & stream, GLCore32 & renderer );
+	typedef void (*render_command_function)( core::util::MemoryStream & stream, GLCore32 & renderer );
 
 	static render_command_function commands[] = {
 		c_shader, // shader
@@ -751,17 +751,17 @@ namespace gemini
 		default_render_target->height = 0;
 	}
 
-	void GLCore32::run_command( renderer::DriverCommandType command, util::MemoryStream & stream )
+	void GLCore32::run_command( renderer::DriverCommandType command, core::util::MemoryStream & stream )
 	{
 		commands[ (command*2) ]( stream, *this );
 	}
 
-	void GLCore32::post_command( renderer::DriverCommandType command, util::MemoryStream & stream )
+	void GLCore32::post_command( renderer::DriverCommandType command, core::util::MemoryStream & stream )
 	{
 		commands[ (command*2)+1 ]( stream, *this );
 	}
 
-	void GLCore32::setup_drawcall( renderer::VertexBuffer * vertexbuffer, util::MemoryStream & stream )
+	void GLCore32::setup_drawcall( renderer::VertexBuffer * vertexbuffer, core::util::MemoryStream & stream )
 	{
 		GL32VertexBuffer * vb = (GL32VertexBuffer*)vertexbuffer;
 		stream.write( vb );
@@ -860,7 +860,7 @@ namespace gemini
 		DESTROY(GL32Texture, gltexture);
 	}
 
-	void GLCore32::texture_update(renderer::Texture* texture, const image::Image& image, const gemini::Recti& rect)
+	void GLCore32::texture_update(renderer::Texture* texture, const image::Image& image, const mathlib::Recti& rect)
 	{
 		GL32Texture* gltexture = static_cast<GL32Texture*>(texture);
 		GLenum internal_format = image_to_internal_format(image.flags);
@@ -1026,7 +1026,7 @@ namespace gemini
 		
 		unsigned int data_size = geometry->vertex_count * stream->vertex_stride;
 		char * vertex_data = (char*)ALLOC( data_size );
-		util::MemoryStream ms;
+		core::util::MemoryStream ms;
 		ms.init( vertex_data, data_size );
 		
 	//	assets::ShaderString parameter = "normals";
@@ -1055,7 +1055,7 @@ namespace gemini
 			
 			if ( !geometry->colors.empty() )
 			{
-				ms.write( &geometry->colors[ vertex_id ], sizeof(Color) );
+				ms.write( &geometry->colors[ vertex_id ], sizeof(core::Color) );
 			}
 
 			if ( !geometry->uvs.empty() && !geometry->uvs[0].empty() )

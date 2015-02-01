@@ -60,7 +60,7 @@ namespace gemini
 			} // calc_tile_uvs
 		}; // sprite
 		
-		void strip_shader_version(char* buffer, StackString<32>& version)
+		void strip_shader_version(char* buffer, core::StackString<32>& version)
 		{
 			// remove preceding "#version" shader
 			const char* pos = core::str::strstr(buffer, "#version");

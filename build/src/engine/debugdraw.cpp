@@ -78,35 +78,35 @@ namespace gemini
 			debugdraw_interface->basis(origin, basis, axis_length, duration);
 		} // basis
 		
-		void box(const glm::vec3& mins, const glm::vec3& maxs, const Color& color, float duration)
+		void box(const glm::vec3& mins, const glm::vec3& maxs, const core::Color& color, float duration)
 		{
 			DebugDrawInterface* debugdraw_interface = static_cast<DebugDrawInterface*>(debugdraw::instance());
 			debugdraw_interface->box(mins, maxs, color, duration);
 		} // box
 		
 		
-		void point(const glm::vec3& pt, const Color& color, float size, float duration)
+		void point(const glm::vec3& pt, const core::Color& color, float size, float duration)
 		{
 			DebugDrawInterface* debugdraw_interface = static_cast<DebugDrawInterface*>(debugdraw::instance());
 			debugdraw_interface->point(pt, color, size, duration);
 		} // point
 		
 		
-		void line(const glm::vec3& start, const glm::vec3& end, const Color& color, float duration)
+		void line(const glm::vec3& start, const glm::vec3& end, const core::Color& color, float duration)
 		{
 			DebugDrawInterface* debugdraw_interface = static_cast<DebugDrawInterface*>(debugdraw::instance());
 			debugdraw_interface->line(start, end, color, duration);
 		} // line
 		
 		
-		void sphere(const glm::vec3& center, const Color& color, float radius, float duration)
+		void sphere(const glm::vec3& center, const core::Color& color, float radius, float duration)
 		{
 			DebugDrawInterface* debugdraw_interface = static_cast<DebugDrawInterface*>(debugdraw::instance());
 			debugdraw_interface->sphere(center, color, radius, duration);
 		} // sphere
 
 
-		void text(int x, int y, const char* string, const Color& color, float duration)
+		void text(int x, int y, const char* string, const core::Color& color, float duration)
 		{
 			DebugDrawInterface* debugdraw_interface = static_cast<DebugDrawInterface*>(debugdraw::instance());
 			debugdraw_interface->text(x, y, string, color, duration);

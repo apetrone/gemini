@@ -78,14 +78,14 @@ namespace gemini
 			
 			void interpolate( float t )
 			{
-				Interpolator<Type> interpolator;
+				core::Interpolator<Type> interpolator;
 				render = interpolator( last, current, t );
 			}
 		}; // PhysicsState
 		
 		
 		// strip the version line from shader source
-		void strip_shader_version( char * buffer, StackString<32> & version );
+		void strip_shader_version( char * buffer, core::StackString<32> & version );
 	} // namespace render_utilities
 } // namespace gemini
 

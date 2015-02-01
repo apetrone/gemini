@@ -45,7 +45,7 @@ namespace gemini
 		char buffer[ MAX_RENDERER_STREAM_BYTES ];
 		RenderState commands[ MAX_RENDERER_STREAM_COMMANDS ];
 		unsigned int num_commands;
-		util::MemoryStream stream;
+		core::util::MemoryStream stream;
 		
 		RenderStream( unsigned int max_bytes = MAX_RENDERER_STREAM_BYTES, unsigned int max_commands = MAX_RENDERER_STREAM_COMMANDS );
 		

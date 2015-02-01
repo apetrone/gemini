@@ -33,6 +33,8 @@
 #define STBI_NO_STDIO 1
 #include "stb_image.c"
 
+using namespace core;
+
 namespace gemini
 {
 	namespace image

@@ -25,98 +25,95 @@
 
 #include "logging_interface.h"
 
-namespace gemini
+namespace core
 {
-	namespace core
+	namespace logging
 	{
-		namespace logging
+		LogInterface::LogInterface()
 		{
-			LogInterface::LogInterface()
-			{
-				handlers.allocate(LOG_MAX_HANDLERS);
-			}
-			
-			LogInterface::~LogInterface()
-			{
-				handlers.clear();
-			}
+			handlers.allocate(LOG_MAX_HANDLERS);
+		}
 		
-			void LogInterface::dispatch(ILog::MessageType type, const char *message, const char *function, const char* filename, int linenumber)
+		LogInterface::~LogInterface()
+		{
+			handlers.clear();
+		}
+	
+		void LogInterface::dispatch(ILog::MessageType type, const char *message, const char *function, const char* filename, int linenumber)
+		{
+			// dispatch message to all handlers
+			for (size_t i = 0; i < handlers.size(); ++i)
 			{
-				// dispatch message to all handlers
-				for (size_t i = 0; i < handlers.size(); ++i)
+				Handler* handler = &handlers[i];
+				if (handler->open && handler->message && handler->close)
 				{
-					Handler* handler = &handlers[i];
-					if (handler->open && handler->message && handler->close)
-					{
-						handler->message(handler, message, filename, function, linenumber, type);
-					}
+					handler->message(handler, message, filename, function, linenumber, type);
 				}
 			}
-			
-			void LogInterface::add_handler(Handler *handler)
+		}
+		
+		void LogInterface::add_handler(Handler *handler)
+		{
+			Handler* slot = 0;
+			for (size_t i = 0; i < handlers.size(); ++i)
 			{
-				Handler* slot = 0;
-				for (size_t i = 0; i < handlers.size(); ++i)
+				slot = &handlers[i];
+				if (slot->open == 0 && slot->close == 0 && slot->message == 0)
 				{
-					slot = &handlers[i];
-					if (slot->open == 0 && slot->close == 0 && slot->message == 0)
-					{
-						break;
-					}
-					slot = 0;
+					break;
 				}
-				
-				// if we found an open slot...
-				if (slot)
+				slot = 0;
+			}
+			
+			// if we found an open slot...
+			if (slot)
+			{
+				memcpy(slot, handler, sizeof(Handler));
+			}
+			else
+			{
+				// TODO: warn the user we've exceeded LOG_MAX_HANDLERS
+			}
+		}
+		
+		uint32_t LogInterface::startup()
+		{			
+			uint32_t total_handlers_opened = 0;
+		
+			// initialize all log handlers
+			for (size_t i = 0; i < handlers.size(); ++i)
+			{
+				Handler* handler = &handlers[i];
+				if (!handler->open || (handler->open && !handler->open(handler)))
 				{
-					memcpy(slot, handler, sizeof(Handler));
+					handler->open = 0;
 				}
 				else
 				{
-					// TODO: warn the user we've exceeded LOG_MAX_HANDLERS
+					++total_handlers_opened;
 				}
 			}
 			
-			uint32_t LogInterface::startup()
-			{			
-				uint32_t total_handlers_opened = 0;
-			
-				// initialize all log handlers
-				for (size_t i = 0; i < handlers.size(); ++i)
-				{
-					Handler* handler = &handlers[i];
-					if (!handler->open || (handler->open && !handler->open(handler)))
-					{
-						handler->open = 0;
-					}
-					else
-					{
-						++total_handlers_opened;
-					}
-				}
-				
-				// TODO: create mutex
-							
-				return total_handlers_opened;
-			}
-			
-			void LogInterface::shutdown()
-			{
-				// close all log handlers
-				for (size_t i = 0; i < handlers.size(); ++i)
-				{
-					Handler* handler = &handlers[i];
-					if (handler->close)
-					{
-						handler->close(handler);
-					}
-				}
-				
-				// TODO: destroy mutex
-			}
-		} // namespace logging
+			// TODO: create mutex
+						
+			return total_handlers_opened;
+		}
 		
-		typedef Interface<logging::ILog> log;
-	} // namespace core
-} // namespace gemini
+		void LogInterface::shutdown()
+		{
+			// close all log handlers
+			for (size_t i = 0; i < handlers.size(); ++i)
+			{
+				Handler* handler = &handlers[i];
+				if (handler->close)
+				{
+					handler->close(handler);
+				}
+			}
+			
+			// TODO: destroy mutex
+		}
+	} // namespace logging
+	
+	typedef Interface<logging::ILog> log;
+} // namespace core

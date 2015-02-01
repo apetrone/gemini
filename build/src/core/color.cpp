@@ -31,7 +31,7 @@
 // unsigned int mycolor = RGBToUInt( 255, 128, 75 );
 // UIntToRGB( mycolor, rgb );
 
-namespace gemini
+namespace core
 {
 
 	static inline float ubTof32( unsigned char c )
@@ -71,4 +71,4 @@ namespace gemini
 		b = _b;
 		a = _a;
 	}
-} // namespace gemini
+} // namespace core

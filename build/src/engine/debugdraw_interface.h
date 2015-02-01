@@ -56,7 +56,7 @@ namespace gemini
 			float radius;
 			glm::vec3 start;
 			glm::vec3 end;
-			Color color;
+			core::Color color;
 			
 			// for text
 			std::string buffer;
@@ -68,7 +68,7 @@ namespace gemini
 		struct DebugDrawVertex
 		{
 			glm::vec3 position;
-			Color color;
+			core::Color color;
 		}; // DebugDrawVertex
 	} // namespace debugdraw
 
@@ -97,11 +97,11 @@ namespace gemini
 		// IDebugDraw interface
 		virtual void axes(const glm::mat4& transform, float axis_length, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
 		virtual void basis(const glm::vec3& origin, const glm::vec3& basis, float axis_length, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
-		virtual void box(const glm::vec3& mins, const glm::vec3& maxs, const Color& color, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
-		virtual void point(const glm::vec3& pt, const Color& color, float size = 2.0, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
-		virtual void line(const glm::vec3& start, const glm::vec3& end, const Color& color, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
-		virtual void sphere(const glm::vec3& center, const Color& color, float radius = 2.0, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
-		virtual void text(int x, int y, const char* string, const Color& color, float duration = 0);
+		virtual void box(const glm::vec3& mins, const glm::vec3& maxs, const core::Color& color, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
+		virtual void point(const glm::vec3& pt, const core::Color& color, float size = 2.0, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
+		virtual void line(const glm::vec3& start, const glm::vec3& end, const core::Color& color, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
+		virtual void sphere(const glm::vec3& center, const core::Color& color, float radius = 2.0, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
+		virtual void text(int x, int y, const char* string, const core::Color& color, float duration = 0);
 	}; // DebugDrawInterface
 	
 } // namespace gemini

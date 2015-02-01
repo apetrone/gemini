@@ -33,7 +33,7 @@ extern "C"
 	//#include <murmur3.h>
 };
 
-namespace gemini
+namespace core
 {
 	namespace util
 	{
@@ -51,4 +51,4 @@ namespace gemini
 			return (float)rand() / RAND_MAX * (max - min) + min;
 		} // random_range
 	}; // mamespace util
-} // namespace gemini
+} // namespace core

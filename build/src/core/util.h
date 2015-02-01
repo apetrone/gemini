@@ -26,7 +26,7 @@
 
 #include <core/stackstring.h>
 
-namespace gemini
+namespace core
 {
 	template <class Type>
 	struct RangedValue
@@ -48,4 +48,4 @@ namespace gemini
 		// return a float within the range: min, max, inclusive
 		float random_range( float min, float max );
 	} // namespace util
-} // namespace gemini
+} // namespace core

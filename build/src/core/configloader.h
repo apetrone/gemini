@@ -26,7 +26,7 @@
 
 #include <json/json.h>
 
-namespace gemini
+namespace core
 {
 	namespace util
 	{
@@ -39,4 +39,4 @@ namespace gemini
 		typedef ConfigLoadStatus (JsonLoaderCallback)( const Json::Value & root, void * data );
 		bool json_load_with_callback( const char * filename, JsonLoaderCallback callback, void * context, bool path_is_relative );
 	} // namespace util
-} // namespace gemini
+} // namespace core

@@ -178,7 +178,7 @@ namespace gemini
 		return cullmode[ mode ];
 	} // cullmode_to_gl_cullmode
 
-	void state_op_enabledisable( renderer::DriverState state, util::MemoryStream & stream, renderer::IRenderDriver * driver )
+	void state_op_enabledisable( renderer::DriverState state, core::util::MemoryStream & stream, renderer::IRenderDriver * driver )
 	{
 		GLenum gl_state;
 		int enable = 0;
@@ -200,7 +200,7 @@ namespace gemini
 		}
 	} // state_op_enabledisable
 
-	void state_op_depthmask( renderer::DriverState state, util::MemoryStream & stream, renderer::IRenderDriver * driver )
+	void state_op_depthmask( renderer::DriverState state, core::util::MemoryStream & stream, renderer::IRenderDriver * driver )
 	{
 		int enable = 0;
 		GLboolean flag;

@@ -49,7 +49,7 @@ namespace gemini
 		
 		struct Geometry : public gemini::renderer::Geometry
 		{
-			gemini::StackString<128> name;
+			core::StackString<128> name;
 			unsigned int material_id;
 			unsigned int shader_id;
 			
@@ -123,7 +123,7 @@ namespace gemini
 			core::FixedArray<Bone> bones;
 			glm::mat4 world_matrix;
 					
-			StackString<MAX_PATH_SIZE> path;
+			core::StackString<MAX_PATH_SIZE> path;
 			
 			scenegraph::Node* scene_root;
 			
@@ -154,7 +154,7 @@ namespace gemini
 		void read_keys_object(AnimationData& anim, Bone* bone, Json::Value& jkeys);
 		
 		AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, const AssetParameters & parameters );
-		void mesh_construct_extension( StackString<MAX_PATH_SIZE> & extension );
+		void mesh_construct_extension( core::StackString<MAX_PATH_SIZE> & extension );
 		
 		DECLARE_ASSET_LIBRARY_ACCESSOR(Mesh, AssetParameters, meshes);
 	} // namespace assets

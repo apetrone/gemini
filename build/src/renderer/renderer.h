@@ -254,7 +254,7 @@ namespace gemini
 			// they will be vertex_count in length.
 			core::FixedArray<glm::vec3> vertices;
 			core::FixedArray<glm::vec3> normals;
-			core::FixedArray<Color> colors;
+			core::FixedArray<core::Color> colors;
 			core::FixedArray< core::FixedArray<glm::vec2> > uvs;
 			core::FixedArray<glm::vec4> blend_indices;
 			core::FixedArray<glm::vec4> blend_weights;
@@ -333,15 +333,15 @@ namespace gemini
 			virtual void create_default_render_target() = 0;
 			
 			// these commands are called with the command and current memory stream
-			virtual void run_command( DriverCommandType command, util::MemoryStream & stream ) = 0;
-			virtual void post_command( DriverCommandType command, util::MemoryStream & stream ) = 0;
+			virtual void run_command( DriverCommandType command, core::util::MemoryStream & stream ) = 0;
+			virtual void post_command( DriverCommandType command, core::util::MemoryStream & stream ) = 0;
 			
-			virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, util::MemoryStream & stream ) = 0;
+			virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, core::util::MemoryStream & stream ) = 0;
 			virtual void setup_material( renderer::Material* material, renderer::ShaderProgram* program, RenderStream& stream) = 0;
 			
 			// texture
 			virtual renderer::Texture* texture_create(image::Image& image) = 0;
-			virtual void texture_update(renderer::Texture* texture, const image::Image& image, const gemini::Recti& rect) = 0;
+			virtual void texture_update(renderer::Texture* texture, const image::Image& image, const mathlib::Recti& rect) = 0;
 			virtual void texture_destroy(renderer::Texture* texture) = 0;
 			
 			virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices ) = 0;

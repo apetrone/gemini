@@ -50,6 +50,9 @@
 #if PLATFORM_LINUX
 	#include <stdlib.h> // for qsort
 #endif
+
+using namespace core;
+
 namespace gemini
 {
 	namespace kernel

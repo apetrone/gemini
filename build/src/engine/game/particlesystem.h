@@ -42,7 +42,7 @@ namespace gemini
 	// -------------------------------------------------------------
 	struct Particle
 	{
-		Color color;
+		core::Color color;
 		render_utilities::PhysicsState<glm::vec3> position;
 		glm::vec3 velocity;
 		

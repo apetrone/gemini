@@ -77,12 +77,12 @@ namespace gemini
 		
 		
 		
-		util::ConfigLoadStatus load_font_from_file( const Json::Value & root, void * data )
+		core::util::ConfigLoadStatus load_font_from_file( const Json::Value & root, void * data )
 		{
 			Font * font = (Font*)data;
 			if (!font)
 			{
-				return util::ConfigLoad_Failure;
+				return core::util::ConfigLoad_Failure;
 			}
 			
 			Json::Value point_size = root["point_size"];
@@ -98,15 +98,15 @@ namespace gemini
 			
 			if ( font->handle.is_valid() )
 			{
-				return util::ConfigLoad_Success;
+				return core::util::ConfigLoad_Success;
 			}
 
-			return util::ConfigLoad_Failure;
+			return core::util::ConfigLoad_Failure;
 		} // load_font_from_file
 
 		AssetLoadStatus font_load_callback( const char * path, Font * font, const AssetParameters & parameters )
 		{
-			if ( util::json_load_with_callback(path, load_font_from_file, font, true ) == util::ConfigLoad_Success )
+			if ( core::util::json_load_with_callback(path, load_font_from_file, font, true ) == core::util::ConfigLoad_Success )
 			{		
 				return AssetLoad_Success;
 			}
@@ -115,7 +115,7 @@ namespace gemini
 		} // font_load_callback
 		
 		
-		void font_construct_extension( StackString<MAX_PATH_SIZE> & extension )
+		void font_construct_extension( core::StackString<MAX_PATH_SIZE> & extension )
 		{
 			extension = ".conf";
 		} // font_construct_extension

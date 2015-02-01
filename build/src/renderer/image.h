@@ -92,9 +92,9 @@ namespace gemini
 		const unsigned int ERROR_TEXTURE_WIDTH = 128;
 		const unsigned int ERROR_TEXTURE_HEIGHT = 128;
 
-		void generate_checker_pattern(Image& image, const Color& color1, const Color& color2);
+		void generate_checker_pattern(Image& image, const core::Color& color1, const core::Color& color2);
 
-		void generate_checker_image( unsigned char * pixels, int width, int height, const Color & color1, const Color & color2 );
+		void generate_checker_image( unsigned char * pixels, int width, int height, const core::Color & color1, const core::Color & color2 );
 		void flip_image_vertically( int width, int height, int components, unsigned char * pixels );
 		renderer::Texture* load_default_texture(Image& image);
 		

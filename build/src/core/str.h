@@ -30,29 +30,26 @@
 typedef std::basic_string<char, std::char_traits<char>, CustomPlatformAllocator<char> > String;
 
 
-namespace gemini
+namespace core
 {
-	namespace core
+	namespace str
 	{
-		namespace str
-		{
-			// ANSI string utils
-			
-			// returns a mutable buffer of characters; works in the style
-			// of printf.
-			char* format(const char* format, ...);
+		// ANSI string utils
+		
+		// returns a mutable buffer of characters; works in the style
+		// of printf.
+		char* format(const char* format, ...);
 
-			// cross platform functions
-			int sprintf(char* destination, size_t destination_max_size, const char* format, ...);
-			int vsnprintf(char* destination, size_t destination_max_size, const char* format, va_list arg);
-			
-			// pass 0 for source_bytes in order to count the source string; (runs len on it)
-			char* copy(char* destination, const char* source, size_t source_bytes);
-			size_t len(const char* str);
-			char* cat(char* destination, const char* source);
-			char* ncat(char* destination, const char* source, size_t destination_size);
-			int case_insensitive_compare(const char* s1, const char* s2, size_t count);
-			const char* strstr(const char* s1, const char* s2);
-		} // namespace str
-	} // namespace core
-} // namespace gemini
+		// cross platform functions
+		int sprintf(char* destination, size_t destination_max_size, const char* format, ...);
+		int vsnprintf(char* destination, size_t destination_max_size, const char* format, va_list arg);
+		
+		// pass 0 for source_bytes in order to count the source string; (runs len on it)
+		char* copy(char* destination, const char* source, size_t source_bytes);
+		size_t len(const char* str);
+		char* cat(char* destination, const char* source);
+		char* ncat(char* destination, const char* source, size_t destination_size);
+		int case_insensitive_compare(const char* s1, const char* s2, size_t count);
+		const char* strstr(const char* s1, const char* s2);
+	} // namespace str
+} // namespace core

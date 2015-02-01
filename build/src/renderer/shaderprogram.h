@@ -58,7 +58,7 @@ namespace gemini
 		
 		struct ShaderProgram
 		{
-			StackString<64> frag_data_location;
+			core::StackString<64> frag_data_location;
 			
 			core::FixedArray<ShaderKeyValuePair> uniforms;
 			core::FixedArray<ShaderKeyValuePair> attributes;

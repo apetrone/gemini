@@ -37,7 +37,7 @@
 #include "civetweb.h"
 #include "CivetServer.h"
 
-
+using namespace core;
 
 
 #if 0

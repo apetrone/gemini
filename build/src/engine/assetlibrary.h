@@ -40,7 +40,7 @@ namespace gemini
 		class AssetLibrary
 		{
 			typedef AssetLoadStatus (*AssetLoadCallback)( const char * path, AssetClass * asset, const AssetParameterClass & parameters );
-			typedef void (*AssetConstructExtension)( StackString<MAX_PATH_SIZE> & path );
+			typedef void (*AssetConstructExtension)( core::StackString<MAX_PATH_SIZE> & path );
 			typedef void (*AssetIterator)( AssetClass * asset, void * userdata );
 			
 			typedef std::map<std::string, AssetClass*> AssetHashTable;
@@ -101,14 +101,14 @@ namespace gemini
 				return load_callback( path, asset, parameters );
 			} // load_with_callback
 			
-			void construct_extension( StackString<MAX_PATH_SIZE> & extension )
+			void construct_extension( core::StackString<MAX_PATH_SIZE> & extension )
 			{
 				construct_extension_callback(extension);
 			} // construct_extension
 			
-			void append_extension( StackString<MAX_PATH_SIZE> & path )
+			void append_extension( core::StackString<MAX_PATH_SIZE> & path )
 			{
-				StackString<MAX_PATH_SIZE> extension;
+				core::StackString<MAX_PATH_SIZE> extension;
 				this->construct_extension(extension);
 				path.append( extension() );
 			}
@@ -120,7 +120,7 @@ namespace gemini
 				// 2) Asset is loaded. User requests a reload of asset by ignoring the cache.
 				// 3) Asset is not loaded yet. Load it.
 				AssetClass * asset = 0;
-				StackString<MAX_PATH_SIZE> fullpath = path;
+				core::StackString<MAX_PATH_SIZE> fullpath = path;
 				int load_result = 0;
 				int asset_is_new = 0;
 				
@@ -155,7 +155,7 @@ namespace gemini
 				{
 					if (asset_is_new)
 					{
-						StackString<MAX_PATH_SIZE> store_path = path;
+						core::StackString<MAX_PATH_SIZE> store_path = path;
 						take_ownership(store_path(), asset);
 					}
 					

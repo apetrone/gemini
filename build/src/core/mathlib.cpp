@@ -72,7 +72,7 @@ namespace mathlib
 
 
 
-namespace gemini
+namespace mathlib
 {
 	bool AABB2::overlaps( const AABB2 & other ) const
 	{
@@ -97,7 +97,7 @@ namespace gemini
 		
 		return true;
 	} // overlaps
-} // namespace gemini
+} // namespace mathlib
 
 #if 0
 

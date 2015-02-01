@@ -51,7 +51,7 @@ namespace gemini
 		};
 
 		
-		util::ConfigLoadStatus material_load_from_json( const Json::Value & root, void * data )
+		core::util::ConfigLoadStatus material_load_from_json( const Json::Value & root, void * data )
 		{
 			Material * material = (Material*)data;
 			Json::Value name = root["name"];
@@ -117,7 +117,7 @@ namespace gemini
 					else
 					{
 						LOGE( "Couldn't find parameter field: \"type\"\n" );
-						return util::ConfigLoad_Failure;
+						return core::util::ConfigLoad_Failure;
 					}
 					
 					if ( parameter->type == MP_INT )
@@ -189,7 +189,7 @@ namespace gemini
 						}
 						else
 						{
-							return util::ConfigLoad_Failure;
+							return core::util::ConfigLoad_Failure;
 						}
 					}
 					else if ( parameter->type == MP_SAMPLER_CUBE )
@@ -222,7 +222,7 @@ namespace gemini
 						}
 						else
 						{
-							return util::ConfigLoad_Failure;
+							return core::util::ConfigLoad_Failure;
 						}
 					}
 					else if ( parameter->type == MP_VEC4 )
@@ -251,7 +251,7 @@ namespace gemini
 					else
 					{
 						LOGE( "Couldn't find parameter field: \"value\"\n" );
-						return util::ConfigLoad_Failure;
+						return core::util::ConfigLoad_Failure;
 					}
 				} // read all shader parameters
 			} //  total_parameters
@@ -276,7 +276,7 @@ namespace gemini
 				LOGW( "Couldn't find shader \"%s\" for material!\n", shader.asString().c_str() );
 			}
 	#endif
-			return util::ConfigLoad_Success;
+			return core::util::ConfigLoad_Success;
 		}
 		
 
@@ -335,7 +335,7 @@ namespace gemini
 		
 		AssetLoadStatus material_load_callback(const char* path, Material* material, const AssetParameters& parameters )
 		{
-			if (util::json_load_with_callback(path, material_load_from_json, material, true) == util::ConfigLoad_Success)
+			if (core::util::json_load_with_callback(path, material_load_from_json, material, true) == core::util::ConfigLoad_Success)
 			{
 				return AssetLoad_Success;
 			}
@@ -343,7 +343,7 @@ namespace gemini
 			return AssetLoad_Failure;
 		} // material_load_callback
 		
-		void material_construct_extension( StackString<MAX_PATH_SIZE> & extension )
+		void material_construct_extension( core::StackString<MAX_PATH_SIZE> & extension )
 		{
 			extension = ".material";
 		} // material_construct_extension

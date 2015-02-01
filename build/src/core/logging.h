@@ -27,85 +27,82 @@
 #include <core/str.h>
 
 #define LOGV(message, ...) \
-	gemini::core::log::instance()->dispatch(\
-	gemini::core::logging::ILog::Verbose,\
-	gemini::core::str::format(message, ##__VA_ARGS__),\
+	core::log::instance()->dispatch(\
+	core::logging::ILog::Verbose,\
+	core::str::format(message, ##__VA_ARGS__),\
 	__FUNCTION__,\
 	__FILE__,\
 	__LINE__)
 
 #define LOGW(message, ...) \
-	gemini::core::log::instance()->dispatch(\
-	gemini::core::logging::ILog::Warning,\
-	gemini::core::str::format(message, ##__VA_ARGS__),\
+	core::log::instance()->dispatch(\
+	core::logging::ILog::Warning,\
+	core::str::format(message, ##__VA_ARGS__),\
 	__FUNCTION__,\
 	__FILE__,\
 	__LINE__)
 
 #define LOGE(message, ...) \
-	gemini::core::log::instance()->dispatch(\
-	gemini::core::logging::ILog::Warning,\
-	gemini::core::str::format(message, ##__VA_ARGS__),\
+	core::log::instance()->dispatch(\
+	core::logging::ILog::Warning,\
+	core::str::format(message, ##__VA_ARGS__),\
 	__FUNCTION__,\
 	__FILE__,\
 	__LINE__)
 
 #include <core/interface.h>
 
-namespace gemini
+namespace core
 {
-	namespace core
+	namespace logging
 	{
-		namespace logging
+		struct Handler
 		{
-			struct Handler
-			{
-				// called when the log should open
-				// expects 0 on failure; 1 on success
-				int (*open)(Handler* handler);
-				
-				// called when the log should close
-				void (*close)(Handler* handler);
+			// called when the log should open
+			// expects 0 on failure; 1 on success
+			int (*open)(Handler* handler);
+			
+			// called when the log should close
+			void (*close)(Handler* handler);
 
-				// called when a log message is received
-				void (*message)(struct Handler* handler, const char* message, const char* filename, const char* function, int line, int type );
-				
-				// userdata
-				void * userdata;
-				
-				Handler() : message(0), open(0), close(0), userdata(0) {}
+			// called when a log message is received
+			void (*message)(struct Handler* handler, const char* message, const char* filename, const char* function, int line, int type );
+			
+			// userdata
+			void * userdata;
+			
+			Handler() : message(0), open(0), close(0), userdata(0) {}
+		};
+	
+		class ILog
+		{
+		public:
+			enum MessageType
+			{
+				Invalid,
+				Verbose,
+				Warning,
+				Error
 			};
 		
-			class ILog
-			{
-			public:
-				enum MessageType
-				{
-					Invalid,
-					Verbose,
-					Warning,
-					Error
-				};
+		public:
+			virtual ~ILog() {}
 			
-			public:
-				virtual ~ILog() {}
-				
-				/// @desc Dispatches a message to all handlers
-				virtual void dispatch(ILog::MessageType type, const char* message, const char* function, const char* filename, int linenumber) = 0;
-				
-				/// @desc Add a log handler for dispatch
-				/// @param handler Handler struct with pointers to functions
-				virtual void add_handler(Handler* handler) = 0;
-				
-				/// @desc Open the log handlers
-				/// @returns The total number of successfully opened handlers
-				virtual uint32_t startup() = 0;
-				
-				/// @desc Shutdown the log handlers
-				virtual void shutdown() = 0;
-			}; // ILog
-		} // namespace logging
-		
-		typedef Interface<logging::ILog> log;
-	} // namespace core
-} // namespace gemini
+			/// @desc Dispatches a message to all handlers
+			virtual void dispatch(ILog::MessageType type, const char* message, const char* function, const char* filename, int linenumber) = 0;
+			
+			/// @desc Add a log handler for dispatch
+			/// @param handler Handler struct with pointers to functions
+			virtual void add_handler(Handler* handler) = 0;
+			
+			/// @desc Open the log handlers
+			/// @returns The total number of successfully opened handlers
+			virtual uint32_t startup() = 0;
+			
+			/// @desc Shutdown the log handlers
+			virtual void shutdown() = 0;
+		}; // ILog
+	} // namespace logging
+	
+	typedef Interface<logging::ILog> log;
+} // namespace core

@@ -131,17 +131,17 @@ namespace gemini
 		DebugDrawVertex * vertices = (DebugDrawVertex*)vs->request(6);
 		vertices[0].position = primitive->start;
 		vertices[1].position = right;
-		vertices[0].color = vertices[1].color = Color( 255, 0, 0 );
+		vertices[0].color = vertices[1].color = core::Color( 255, 0, 0 );
 		
 		glm::vec3 up = glm::vec3(primitive->transform * glm::vec4(0.0f, primitive->radius, 0.0f, 1.0f));
 		vertices[2].position = primitive->start;
 		vertices[3].position = up;
-		vertices[2].color = vertices[3].color = Color( 0, 255, 0 );
+		vertices[2].color = vertices[3].color = core::Color( 0, 255, 0 );
 		
 		glm::vec3 view = glm::vec3(primitive->transform * glm::vec4(0.0f, 0.0f, primitive->radius, 1.0f));
 		vertices[4].position = primitive->start;
 		vertices[5].position = view;
-		vertices[4].color = vertices[5].color = Color( 0, 0, 255 );
+		vertices[4].color = vertices[5].color = core::Color( 0, 0, 255 );
 	} // buffer_axes
 	
 	void buffer_sphere(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, renderer::VertexStream* vs)
@@ -443,7 +443,7 @@ namespace gemini
 		}
 	}
 	
-	void DebugDrawInterface::box(const glm::vec3& mins, const glm::vec3& maxs, const Color& color, float duration)
+	void DebugDrawInterface::box(const glm::vec3& mins, const glm::vec3& maxs, const core::Color& color, float duration)
 	{
 		DebugPrimitive* p = request_primitive();
 		if ( p )
@@ -456,7 +456,7 @@ namespace gemini
 		}
 	}
 	
-	void DebugDrawInterface::point(const glm::vec3& pt, const Color& color, float size, float duration)
+	void DebugDrawInterface::point(const glm::vec3& pt, const core::Color& color, float size, float duration)
 	{
 		DebugPrimitive* p = request_primitive();
 		if ( p )
@@ -469,7 +469,7 @@ namespace gemini
 		}
 	}
 	
-	void DebugDrawInterface::line(const glm::vec3& start, const glm::vec3& end, const Color& color, float duration)
+	void DebugDrawInterface::line(const glm::vec3& start, const glm::vec3& end, const core::Color& color, float duration)
 	{
 		DebugPrimitive* p = request_primitive();
 		if ( p )
@@ -482,7 +482,7 @@ namespace gemini
 		}
 	}
 	
-	void DebugDrawInterface::sphere(const glm::vec3& center, const Color& color, float radius, float duration)
+	void DebugDrawInterface::sphere(const glm::vec3& center, const core::Color& color, float radius, float duration)
 	{
 		DebugPrimitive* p = request_primitive();
 		if ( p )
@@ -495,7 +495,7 @@ namespace gemini
 		}
 	}
 	
-	void DebugDrawInterface::text(int x, int y, const char* string, const Color& color, float duration)
+	void DebugDrawInterface::text(int x, int y, const char* string, const core::Color& color, float duration)
 	{
 		DebugPrimitive* p = request_primitive();
 		if ( p )

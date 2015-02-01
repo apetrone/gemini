@@ -51,6 +51,8 @@ using namespace gemini;
 using namespace gemini::physics::bullet;
 using gemini::physics::RaycastInfo;
 
+using namespace core;
+
 #include "input.h"
 
 namespace gemini

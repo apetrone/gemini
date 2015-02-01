@@ -132,6 +132,6 @@ namespace gemini
 		};
 
 		
-		typedef Interface<IPhysicsInterface> api;
+		typedef core::Interface<IPhysicsInterface> api;
 	} // namespace physics
 } // namespace gemini
