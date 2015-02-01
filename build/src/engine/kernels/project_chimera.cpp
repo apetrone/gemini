@@ -645,7 +645,7 @@ public:
 		device = 0;
 		render_method = 0;
 		active_camera = &main_camera;
-		draw_physics_debug = true;
+		draw_physics_debug = false;
 
 		game_interface = 0;
 
@@ -853,8 +853,10 @@ public:
 
 	virtual void step( kernel::Params & params )
 	{
-
-
+		// this is going to be incorrect unless this is placed in the step.
+		// additionally, these aren't interpolated: figure how to; for example,
+		// draw hit boxes for a moving player with this system.
+		debugdraw::update(params.step_interval_seconds);
 	}
 
 	virtual void tick( kernel::Params & params )
@@ -876,6 +878,10 @@ public:
 			command.set_button(5, input::state()->keyboard().is_down(input::KEY_E));
 			command.set_button(6, input::state()->keyboard().is_down(input::KEY_SPACE));
 			command.set_button(7, input::state()->keyboard().is_down(input::KEY_LALT) || input::state()->keyboard().is_down(input::KEY_RALT));
+			
+			command.set_button(8, input::state()->mouse().is_down(input::MOUSE_LEFT));
+			command.set_button(9, input::state()->mouse().is_down(input::MOUSE_MIDDLE));
+			command.set_button(10, input::state()->mouse().is_down(input::MOUSE_RIGHT));
 			
 			int mouse[2];
 			kernel::instance()->get_mouse_position(mouse[0], mouse[1]);
@@ -929,12 +935,7 @@ public:
 		{
 			physics::debug_draw();
 		}
-		
-		// this is going to be incorrect (since it should really be updating when
-		// it gets another tick.
-		// additionally, these aren't interpolated: figure how to; for example,
-		// draw hit boxes for a moving player with this system.
-		debugdraw::update(params.step_interval_seconds);
+
 		
 		// run server frame
 		if (game_interface)
