@@ -99,6 +99,9 @@ namespace gemini
 				virtual void collision_began(ICollisionObject* other);
 				virtual void collision_ended(ICollisionObject* other);
 				
+				virtual void apply_impulse(const glm::vec3& force, const glm::vec3& local_position);
+				virtual void apply_central_impulse(const glm::vec3& force);
+				
 				void remove_constraints();
 							
 				void set_collision_shape(btCollisionShape* collision_shape);

@@ -192,8 +192,8 @@ public:
 
 
 
-	void apply_force(glm::vec3* force, glm::vec3* local_position);
-	void apply_central_force(glm::vec3* force);
+	void apply_impulse(const glm::vec3& force, const glm::vec3& local_position);
+	void apply_central_impulse(const glm::vec3& force);
 	void set_mass(float mass);
 	void set_parent(Entity* other);
 	

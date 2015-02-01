@@ -305,20 +305,20 @@ void Entity::set_position(glm::vec3 *new_position)
 }
 
 
-void Entity::apply_force(glm::vec3* force, glm::vec3* local_position)
+void Entity::apply_impulse(const glm::vec3& impulse, const glm::vec3& local_position)
 {
-//	if (this->collision_object && this->collision_object->is_type(CollisionType_Dynamic))
-//	{
-//		this->collision_object->apply_force(*force, *local_position);
-//	}
+	if (this->collision_object)
+	{
+		this->collision_object->apply_impulse(impulse, local_position);
+	}
 }
 
-void Entity::apply_central_force(glm::vec3 *force)
+void Entity::apply_central_impulse(const glm::vec3& impulse)
 {
-//	if (this->collision_object && this->collision_object->is_type(CollisionType_Dynamic))
-//	{
-//		this->collision_object->apply_central_force(*force);
-//	}
+	if (this->collision_object)
+	{
+		this->collision_object->apply_central_impulse(impulse);
+	}
 }
 
 void Entity::set_mass(float mass)

@@ -134,8 +134,28 @@ namespace gemini
 				}
 			}
 			
-
+			// forces are given for the full second, but need to be re-applied each step.
+			// impulses are an instant change to velocity.
 			
+			void BulletCollisionObject::apply_impulse(const glm::vec3& impulse, const glm::vec3& local_position)
+			{
+				btRigidBody* rigid_body = btRigidBody::upcast(object);
+				if (rigid_body)
+				{
+					rigid_body->activate();
+					rigid_body->applyImpulse(btVector3(impulse.x, impulse.y, impulse.z), btVector3(local_position.x, local_position.y, local_position.z));
+				}
+			}
+			
+			void BulletCollisionObject::apply_central_impulse(const glm::vec3 &impulse)
+			{
+				btRigidBody* rigid_body = btRigidBody::upcast(object);
+				if (rigid_body)
+				{
+					rigid_body->activate();
+					rigid_body->applyCentralImpulse(btVector3(impulse.x, impulse.y, impulse.z));
+				}
+			}
 			
 			
 			void BulletCollisionObject::remove_constraints()
