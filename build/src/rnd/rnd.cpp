@@ -243,7 +243,7 @@ void run_frame(ApplicationState& state)
 	}
 //	LOGV("alpha is: %g\n", alpha);
 	
-	state.render_position = gemini::lerp(state.last_position, state.position, alpha);
+	state.render_position = core::lerp(state.last_position, state.position, alpha);
 
 
 	glViewport(0, 0, 800, 600);
@@ -352,11 +352,11 @@ void test_rendering()
 int main(int argc, char** argv)
 {
 	platform::startup();
-	gemini::core::startup();
+	core::startup();
 	
 	test_rendering();
 	
-	gemini::core::shutdown();
+	core::shutdown();
 	platform::shutdown();
 	return 0;
 }
