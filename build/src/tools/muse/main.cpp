@@ -55,6 +55,8 @@
 
 //https://docs.unrealengine.com/latest/INT/Engine/Content/FBX/index.html
 
+using namespace core;
+
 namespace gemini
 {
 	struct ToolOptions
@@ -258,9 +260,9 @@ int main(int argc, char** argv)
 	const char* asset_root = argv[1];
 	const char* input_file = argv[2];
 	const char* output_root = argv[3];
-
-	platform::TimerHandle* timer = platform::instance()->create_timer();
-	double start = platform::instance()->get_timer_msec(timer);
+	
+	
+	uint64_t start_ticks = platform::instance()->get_time_microseconds();
 
 	// determine our input and output filenames
 	StackString<MAX_PATH_SIZE> input_filename = asset_root;
@@ -280,9 +282,8 @@ int main(int argc, char** argv)
 		LOGV("conversion failed: %s\n", result.message);
 	}
 
-	double duration = (platform::instance()->get_timer_msec(timer) - start);
+	float duration = (platform::instance()->get_time_microseconds() - start_ticks);
 	LOGV("processed in %2.2f seconds\n", duration*.001f);
-	platform::instance()->destroy_timer(timer);
 	
 	tools::shutdown();
 	return 0;

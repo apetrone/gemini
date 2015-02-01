@@ -33,6 +33,8 @@
 #include "datamodel/mesh.h"
 #include "datamodel/material.h"
 
+using namespace core;
+
 namespace gemini
 {
 	void JsonModelWriter::jsonify_matrix(Json::Value& array, glm::mat4& matrix)

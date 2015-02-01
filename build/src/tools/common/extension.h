@@ -68,7 +68,7 @@ namespace gemini
 			Reader() {}
 			virtual ~Reader() {}
 			
-			virtual void read(Type* model, util::DataStream& data) = 0;
+			virtual void read(Type* model, core::util::DataStream& data) = 0;
 		};
 		
 		// interface for writer extensions
@@ -79,7 +79,7 @@ namespace gemini
 			Writer() {}
 			virtual ~Writer() {}
 			
-			virtual void write(Type* model, util::DataStream& data) = 0;
+			virtual void write(Type* model, core::util::DataStream& data) = 0;
 		};
 		
 		// generic 'extension' data; subject to change

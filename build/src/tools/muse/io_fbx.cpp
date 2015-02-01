@@ -39,6 +39,8 @@
 
 using namespace gemini::tools;
 
+using namespace core;
+
 namespace gemini
 {
 	namespace internal

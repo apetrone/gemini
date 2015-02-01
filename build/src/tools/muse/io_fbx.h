@@ -41,6 +41,6 @@ namespace gemini
 		AutodeskFbxReader();
 		virtual ~AutodeskFbxReader();
 
-		virtual void read(datamodel::Model* root, util::DataStream& data_source);
+		virtual void read(datamodel::Model* root, core::util::DataStream& data_source);
 	};
 } // namespace gemini

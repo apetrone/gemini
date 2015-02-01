@@ -39,6 +39,8 @@
 #include <core/filesystem.h>
 #include <core/stackstring.h>
 
+using namespace core;
+
 namespace gemini
 {
 	namespace tools
