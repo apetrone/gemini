@@ -94,6 +94,7 @@ const uint16_t MAX_ENTITIES = 2048;
 #include <nom/label.hpp>
 #include <nom/button.hpp>
 #include <nom/renderer.hpp>
+#include <nom/graph.hpp>
 
 gui::Compositor* _compositor = 0;
 
@@ -108,6 +109,7 @@ class GUIRenderer : public gui::Renderer
 	
 	gui::Compositor* compositor;
 	renderer::VertexStream stream;
+	renderer::VertexStream lines;
 	assets::Shader* shader;
 
 	assets::Material * solid_color;
@@ -115,14 +117,15 @@ class GUIRenderer : public gui::Renderer
 	
 	unsigned int vertex_attribs;
 	
+	float current_depth;
 	
 private:
-	void render_buffer(RenderStream& rs, assets::Shader* shader, assets::Material* material)
+	void render_buffer(renderer::VertexStream& vs, RenderStream& rs, assets::Shader* shader, assets::Material* material)
 	{
-		stream.update();
+		vs.update();
 		
 		glm::mat4 modelview;
-		glm::mat4 projection = glm::ortho( 0.0f, (float)compositor->width, (float)compositor->height, 0.0f, -0.1f, 256.0f );
+		glm::mat4 projection = glm::ortho( 0.0f, (float)compositor->width, (float)compositor->height, 0.0f, -0.1f, 32.0f );
 		glm::mat4 object_matrix;
 
 		rs.add_shader( shader->program );
@@ -131,10 +134,10 @@ private:
 		
 		rs.add_material( material, shader->program );
 		
-		rs.add_draw_call( stream.vertexbuffer );
+		rs.add_draw_call( vs.vertexbuffer );
 		
 		rs.run_commands();
-		stream.reset();
+		vs.reset();
 	}
 	
 	
@@ -144,7 +147,8 @@ public:
 		shader(0),
 		solid_color(0),
 		texture_map(0),
-		vertex_attribs(0)
+		vertex_attribs(0),
+		current_depth(0.0f)
 	{
 	}
 
@@ -159,9 +163,12 @@ public:
 		stream.desc.add( renderer::VD_FLOAT3 );
 		stream.desc.add( renderer::VD_FLOAT2 );
 		stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
-		
-		
 		stream.create( 64, 64, renderer::DRAW_INDEXED_TRIANGLES );
+		
+		lines.desc.add(renderer::VD_FLOAT3);
+		lines.desc.add(renderer::VD_FLOAT2);
+		lines.desc.add(renderer::VD_UNSIGNED_BYTE4);
+		lines.create(128, 0, renderer::DRAW_LINES);
 		
 //		assets::ShaderString name("uv0");
 //		vertex_attribs = assets::find_parameter_mask( name );
@@ -181,6 +188,13 @@ public:
 			parameter.name = "diffusecolor";
 			parameter.vector_value = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 			solid_color->add_parameter(parameter);
+			
+			renderer::MaterialParameter enable_sampler;
+			enable_sampler.type = renderer::MP_INT;
+			enable_sampler.name = "enable_sampler";
+			enable_sampler.int_value = 0;
+			solid_color->add_parameter(enable_sampler);
+			
 			assets::materials()->take_ownership("gui/solid_color", solid_color);
 		}
 		
@@ -192,6 +206,13 @@ public:
 			parameter.name = "diffusemap";
 			parameter.int_value = assets::textures()->get_default()->Id();
 			texture_map->add_parameter(parameter);
+			
+			renderer::MaterialParameter enable_sampler;
+			enable_sampler.type = renderer::MP_INT;
+			enable_sampler.name = "enable_sampler";
+			enable_sampler.int_value = 1;
+			texture_map->add_parameter(enable_sampler);
+			
 			assets::materials()->take_ownership("gui/texture_map", texture_map);
 		}
 	}
@@ -222,6 +243,8 @@ public:
 		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
 		rs.add_state(renderer::STATE_DEPTH_WRITE, 1);
 		rs.run_commands();
+		
+		current_depth = 0.0f;
 	}
 	
 	
@@ -263,7 +286,7 @@ public:
 			stream.append_indices( indices, 6 );
 		}
 		
-		this->render_buffer(rs, shader, solid_color);
+		this->render_buffer(stream, rs, shader, solid_color);
 	}
 	
 	virtual void draw_textured_bounds(const gui::Bounds& bounds, const gui::TextureHandle& handle)
@@ -301,7 +324,35 @@ public:
 			stream.append_indices( indices, 6 );
 		}
 		
-		this->render_buffer(rs, shader, texture_map);
+		this->render_buffer(stream, rs, shader, texture_map);
+	}
+	
+	virtual void draw_line(const gui::Point& start, const gui::Point& end, const gui::Color& color)
+	{
+		float div = (1.0f/255.0f);
+		solid_color->parameters[0].vector_value = glm::vec4(color.r()*div, color.g()*div, color.b()*div, color.a()*div);
+		
+		lines.reset();
+		
+		
+
+		
+		RenderStream rs;
+		
+		if (lines.has_room(2, 0))
+		{
+			VertexType* v = (VertexType*)lines.request(2);
+			
+
+			v[0].color = v[1].color = Color(255, 255, 255, 255);
+
+			v[0].position = glm::vec3(start.x, start.y, 0.0f);
+			v[1].position = glm::vec3(end.x, end.y, 0.0f);
+
+			//v[0].color = v[1].color = Color(rgba[0], rgba[1], rgba[2], rgba[3]);
+		}
+		
+		this->render_buffer(lines, rs, shader, solid_color);
 	}
 	
 	virtual gui::TextureResult texture_create(const char* path, gui::TextureHandle& handle)
@@ -881,7 +932,24 @@ public:
 
 
 
+class TestListener : public gui::Listener
+{
+public:
+	audio::SoundHandle ui_select;
 
+	virtual void focus_changed(gui::Panel* oldfocus, gui::Panel* newfocus)
+	{
+	
+	}
+	
+	virtual void hot_changed(gui::Panel* oldhot, gui::Panel* newhot)
+	{
+		if (newhot->is_button())
+		{
+			audio::play(ui_select);
+		}
+	}
+};
 
 
 typedef gemini::IGameInterface* (*connect_engine_fn)(gemini::IEngineInterface*);
@@ -930,6 +998,8 @@ public:
 	GUIRenderer gui_renderer;
 	gui::Compositor* compositor;
 	bool in_gui;
+	TestListener listener;
+	gui::Graph* graph;
 	
 public:
 	ProjectChimera()
@@ -945,6 +1015,7 @@ public:
 		
 		compositor = 0;
 		in_gui = true;
+		graph = 0;
 	}
 	
 	virtual ~ProjectChimera()
@@ -1166,10 +1237,11 @@ public:
 		active_camera->pitch = 30;
 		active_camera->update_view();
 			
-		
+		listener.ui_select = audio::create_sound("sounds/8b_select1");
 		
 		compositor = new gui::Compositor(params.render_width, params.render_height);
 		_compositor = compositor;
+		compositor->set_listener(&this->listener);
 		compositor->set_renderer(&this->gui_renderer);
 		gui::Panel* root = new gui::Panel(compositor);
 //		gui::Label* b = new gui::Label(compositor);
@@ -1179,14 +1251,29 @@ public:
 //		b->set_background_color(gui::Color(0, 0, 0, 128));
 //		b->set_foreground_color(gui::Color(255, 255, 255, 255));
 
-		gui::Button* play = new gui::Button(compositor);
-		play->set_bounds(400, 200, 100, 100);
-		play->set_font(compositor, "fonts/default16");
-		play->set_text("New Game");
-		play->notify_subscribe(
+//		gui::Button* play = new gui::Button(compositor);
+//		play->set_bounds(400, 200, 120, 24);
+//		play->set_font(compositor, "fonts/default16");
+//		play->set_text("New Game");
+//		compositor->add_child(play);
+//
+//		gui::Button* quit = new gui::Button(compositor);
+//		quit->set_bounds(400, 250, 120, 24);
+//		quit->set_font(compositor, "fonts/default16");
+//		quit->set_text("Quit");
+//		compositor->add_child(quit);
 
-		compositor->add_child(play);
 
+		graph = new gui::Graph(compositor);
+		graph->set_foreground_color(gui::Color(255, 255, 255, 128));
+		graph->set_background_color(gui::Color(0, 0, 0, 192));
+		graph->set_bounds(200, 300, 200, 160);
+		graph->create_samples(100, 1);
+		graph->enable_baseline(true, 0.0f, gui::Color(255, 128, 0, 255));
+		graph->configure_channel(0, gui::Color(255, 0, 0, 255), gui::Color(255, 0, 255, 255), gui::Color(0, 255, 0, 255));
+		graph->set_range(-10.0f, 50);
+		graph->set_font(compositor, "font/debug");
+		compositor->add_child(graph);
 
 		// capture the mouse
 //		kernel::instance()->capture_mouse( true );
@@ -1251,6 +1338,10 @@ public:
 
 	virtual void tick( kernel::Parameters& params )
 	{
+		if (graph)
+		{
+			graph->record_value(params.framedelta_raw_msec, 0);
+		}
 		{
 			UserCommand command;
 			
