@@ -44,13 +44,6 @@ gemini::DesktopKernel _desktop_kernel( 0, 0 );
 
 -(void)run_kernel
 {
-	// On Mac, the window created is actually larger than requested
-	// to account for the added height of the title bar.
-	// Unfortunately, the OpenGL drawable surface contains the area
-	// used by the title bar, so we have to use that in our screen-space
-	// calculations.
-	gemini::kernel::instance()->parameters().titlebar_height = [self calculate_titlebar_height];
-	
 	while( gemini::kernel::instance()->is_active() )
 	{
 		gemini::kernel::tick();
@@ -84,6 +77,15 @@ gemini::DesktopKernel _desktop_kernel( 0, 0 );
 	if ( !has_started )
 	{
 		has_started = true;
+		
+		// On Mac, the window created is actually larger than requested
+		// to account for the added height of the title bar.
+		// Unfortunately, the OpenGL drawable surface contains the area
+		// used by the title bar, so we have to use that in our screen-space
+		// calculations.
+		gemini::kernel::parameters().titlebar_height = [self calculate_titlebar_height];
+		
+		
 		gemini::kernel::startup( &_desktop_kernel );
 
 // http://fredandrandall.com/blog/2011/09/08/how-to-make-your-app-open-in-full-screen-on-lion/

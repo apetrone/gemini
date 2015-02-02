@@ -92,7 +92,7 @@ namespace gemini
 			font->font_size = point_size.asInt();
 			font->font_data = load_font_from_file(font_file.asString().c_str(), font->font_size, font->handle);
 			
-			if (kernel::instance()->parameters().device_flags & kernel::DeviceSupportsRetinaDisplay)
+			if (kernel::parameters().device_flags & kernel::DeviceSupportsRetinaDisplay)
 			{
 				font->font_size = font->font_size * 2;
 			}

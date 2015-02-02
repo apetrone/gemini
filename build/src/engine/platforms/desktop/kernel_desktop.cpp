@@ -110,12 +110,10 @@ namespace gemini
 		LOGV("Button %s: %i, %i, %i\n", (is_down ? "Yes" : "No"), device.which, button.button, button.state);
 	}
 
-	DesktopKernel::DesktopKernel( int argc, char ** argv ) : target_renderer(0)
+	DesktopKernel::DesktopKernel(int argc, char ** argv) : target_renderer(0)
 	{
-		params.argc = argc;
-		params.argv = argv;
-
-
+		kernel::parameters().argc = argc;
+		kernel::parameters().argv = argv;
 	}
 
 	void DesktopKernel::startup()
@@ -143,12 +141,12 @@ namespace gemini
 		}
 			
 
-		if (this->parameters().use_vsync)
+		if (kernel::parameters().use_vsync)
 		{
 			SDL_GL_SetSwapInterval(1);
 		}
 		
-		this->parameters().device_flags |= kernel::DeviceDesktop;
+		kernel::parameters().device_flags |= kernel::DeviceDesktop;
 	} // startup
 
 	void DesktopKernel::register_services()
@@ -410,7 +408,7 @@ namespace gemini
 	{
 		// TODO: this needs to be controlled somehow
 		// as the rift sdk performs buffer swaps during end frame.
-		if (parameters().swap_buffers)
+		if (kernel::parameters().swap_buffers)
 		{
 			SDL_GL_SwapWindow(state->window);
 		}
@@ -427,7 +425,7 @@ namespace gemini
 
 		if ( is_active() )
 		{
-			assert( parameters().window_width != 0 || parameters().window_height != 0 );
+			assert( kernel::parameters().window_width != 0 || kernel::parameters().window_height != 0 );
 
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
@@ -438,9 +436,9 @@ namespace gemini
 			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 		
 			uint32_t window_flags = 0;
-			window_flags |= SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
+			window_flags |= SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS;
 			
-			if (parameters().use_fullscreen)
+			if (kernel::parameters().use_fullscreen)
 			{
 				window_flags |= SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS;
 			}
@@ -450,8 +448,8 @@ namespace gemini
 			}
 			
 			state->window = SDL_CreateWindow(
-				parameters().window_title, 0, 0,
-				parameters().window_width, parameters().window_height,
+				kernel::parameters().window_title, 0, 0,
+				kernel::parameters().window_width, kernel::parameters().window_height,
 				window_flags);
 				
 			if (!state->window)
@@ -460,7 +458,7 @@ namespace gemini
 			}
 			
 			// move the window to the correct display
-			SDL_SetWindowPosition(state->window, state->display_rects[params.target_display].x, state->display_rects[params.target_display].y);
+			SDL_SetWindowPosition(state->window, state->display_rects[kernel::parameters().target_display].x, state->display_rects[kernel::parameters().target_display].y);
 			
 			state->context = SDL_GL_CreateContext(state->window);
 			if (!state->context)
@@ -469,7 +467,7 @@ namespace gemini
 			}
 
 			// try to set our window size; it might still be smaller than requested.
-			SDL_SetWindowSize(state->window, parameters().window_width, parameters().window_height);
+			SDL_SetWindowSize(state->window, kernel::parameters().window_width, kernel::parameters().window_height);
 			
 			// center our window
 			SDL_SetWindowPosition(state->window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
@@ -595,15 +593,15 @@ namespace gemini
 			state->mouse_map[SDL_BUTTON_X2] = MOUSE_MOUSE5;
 
 
-			parameters().window_width = window_width;
-			parameters().window_height = window_height;
-			parameters().render_width = render_width;
-			parameters().render_height = render_height;
+			kernel::parameters().window_width = window_width;
+			kernel::parameters().window_height = window_height;
+			kernel::parameters().render_width = render_width;
+			kernel::parameters().render_height = render_height;
 			
 			if ( render_width > window_width && render_height > window_height )
 			{
 				LOGV( "Retina display detected. Render Resolution is (%i x %i)\n", render_width, render_height );
-				this->parameters().device_flags |= kernel::DeviceSupportsRetinaDisplay;
+				kernel::parameters().device_flags |= kernel::DeviceSupportsRetinaDisplay;
 			}
 			else
 			{

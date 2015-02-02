@@ -94,7 +94,7 @@ namespace gemini
 		
 		void texture_construct_extension( core::StackString<MAX_PATH_SIZE> & extension )
 		{
-			kernel::KernelDeviceFlags device_flags = kernel::instance()->parameters().device_flags;
+			kernel::KernelDeviceFlags device_flags = kernel::parameters().device_flags;
 			const char * ext = 0;
 			
 			if ( device_flags & kernel::DeviceDesktop || (device_flags & kernel::DeviceAndroid) )

@@ -33,18 +33,8 @@ namespace gemini
 	struct DesktopKernelState;
 
 	class DesktopKernel : public virtual kernel::IKernel
-	{
-		struct DesktopParams : public kernel::Params
-		{
-			int argc;
-			char ** argv;
-			
-			bool has_window;
-		};
-		
+	{		
 		bool active;
-		DesktopParams params;
-		
 		int target_renderer;
 
 		DesktopKernelState* state;
@@ -54,7 +44,6 @@ namespace gemini
 
 		virtual bool is_active() const { return active; }
 		virtual void set_active( bool isactive ) { active = isactive; }
-		virtual kernel::Params & parameters() { return params; }
 		
 		virtual void startup();
 		virtual void register_services();

@@ -67,6 +67,14 @@ namespace gemini
 		IKernel * _kernel = 0;
 		IApplication * _active_application = 0;
 
+		static Parameters _parameters;
+		Parameters& parameters()
+		{
+			return _parameters;
+		}
+		
+
+
 		struct Settings
 		{
 			StackString<64> kernel_name;
@@ -85,7 +93,7 @@ namespace gemini
 			}
 		};
 
-		Params::Params()
+		Parameters::Parameters()
 		{
 			error_message = 0;
 			device_flags = 0;
@@ -274,7 +282,7 @@ namespace gemini
 			}
 			
 			// setup parameters
-			kernel::Params & params = kernel_instance->parameters();
+			kernel::Parameters& params = parameters();
 			
 			// the kernel is ACTIVE here; callbacks after config/start may modify this
 			_kernel->set_active(true);
@@ -347,7 +355,7 @@ namespace gemini
 			ApplicationResult config_result = Application_Failure;
 			if (_active_application)
 			{
-				config_result = _active_application->config(kernel::instance()->parameters());
+				config_result = _active_application->config(kernel::parameters());
 			}
 			
 			// evaluate config result
@@ -394,7 +402,7 @@ namespace gemini
 			}
 			
 			// application instance failed startup
-			ApplicationResult startup_result = _active_application->startup(kernel::instance()->parameters());
+			ApplicationResult startup_result = _active_application->startup(kernel::parameters());
 			
 			// evaluate startup result
 			_kernel->post_application_startup(startup_result);
@@ -414,7 +422,7 @@ namespace gemini
 			// cleanup
 			if ( _active_application )
 			{
-				_active_application->shutdown( _kernel->parameters() );
+				_active_application->shutdown(parameters());
 				DESTROY(IApplication, _active_application);
 			}
 
@@ -446,28 +454,28 @@ namespace gemini
 			uint64_t current_ticks = platform::instance()->get_time_microseconds();
 
 			// calculate delta ticks in miliseconds
-			_kernel->parameters().framedelta_raw_msec = (current_ticks - _internal::_kernel_state.last_time)*0.001f;
+			_parameters.framedelta_raw_msec = (current_ticks - _internal::_kernel_state.last_time)*0.001f;
 			_internal::_kernel_state.last_time = current_ticks;
 
 			// convert delta msec to seconds
-			_internal::_kernel_state.accumulator += (_kernel->parameters().framedelta_raw_msec * 0.001f);
+			_internal::_kernel_state.accumulator += (_parameters.framedelta_raw_msec * 0.001f);
 
-			while(_internal::_kernel_state.accumulator >= _kernel->parameters().step_interval_seconds)
+			while(_internal::_kernel_state.accumulator >= _parameters.step_interval_seconds)
 			{
 				// pass off to application
-				_active_application->step( _kernel->parameters() );
+				_active_application->step( _parameters );
 				
 				// subtract the interval from the accumulator
-				_internal::_kernel_state.accumulator -= _kernel->parameters().step_interval_seconds;
+				_internal::_kernel_state.accumulator -= _parameters.step_interval_seconds;
 
 				// increment tick counter
-				_kernel->parameters().current_tick++;
+				_parameters.current_tick++;
 			}
 			
-			_kernel->parameters().step_alpha = _internal::_kernel_state.accumulator / _kernel->parameters().step_interval_seconds;
-			if ( _kernel->parameters().step_alpha >= 1.0f )
+			_parameters.step_alpha = _internal::_kernel_state.accumulator / _parameters.step_interval_seconds;
+			if ( _parameters.step_alpha >= 1.0f )
 			{
-				_kernel->parameters().step_alpha -= 1.0f;
+				_parameters.step_alpha -= 1.0f;
 			}
 		} // update
 
@@ -480,9 +488,9 @@ namespace gemini
 			
 			_kernel->pre_tick();
 			hotloading::tick();			
-			_active_application->tick( _kernel->parameters() );
+			_active_application->tick( _parameters );
 			_kernel->post_tick();
-			_kernel->parameters().current_frame++;
+			_parameters.current_frame++;
 		} // tick
 		
 		void parse_commandline(int argc, char** argv)

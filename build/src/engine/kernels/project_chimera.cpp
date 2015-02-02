@@ -416,9 +416,9 @@ class SceneRenderMethod
 {
 public:
 	virtual ~SceneRenderMethod() {}
-	virtual void render_frame(gemini::IEngineEntity** entity_list, Camera& camera, const kernel::Params& params ) = 0;
-	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Params& params, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
-	virtual void render_viewmodel(gemini::IEngineEntity* entity, const kernel::Params& params, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
+	virtual void render_frame(gemini::IEngineEntity** entity_list, Camera& camera, const kernel::Parameters& params ) = 0;
+	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
+	virtual void render_viewmodel(gemini::IEngineEntity* entity, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
 };
 
 
@@ -431,7 +431,7 @@ class VRRenderMethod : public SceneRenderMethod
 public:
 	VRRenderMethod(vr::HeadMountedDevice* in_device, renderer::SceneLink& in_link) : device(in_device), scenelink(in_link) {}
 	
-	virtual void render_frame(gemini::IEngineEntity** entity_list, Camera& camera, const kernel::Params& params )
+	virtual void render_frame(gemini::IEngineEntity** entity_list, Camera& camera, const kernel::Parameters& params )
 	{
 		assert( device != nullptr );
 		
@@ -527,12 +527,12 @@ public:
 		device->end_frame(driver);
 	}
 	
-	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Params& params, const glm::vec3& origin, const glm::vec2& view_angles)
+	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles)
 	{
 		
 	}
 	
-	virtual void render_viewmodel(gemini::IEngineEntity* entity, const kernel::Params& params, const glm::vec3& origin, const glm::vec2& view_angles)
+	virtual void render_viewmodel(gemini::IEngineEntity* entity, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles)
 	{
 		
 	}
@@ -545,7 +545,7 @@ class DefaultRenderMethod : public SceneRenderMethod
 public:
 	DefaultRenderMethod(renderer::SceneLink& in_link) : scenelink(in_link) {};
 
-	virtual void render_frame(gemini::IEngineEntity** entity_list, Camera& camera, const kernel::Params& params )
+	virtual void render_frame(gemini::IEngineEntity** entity_list, Camera& camera, const kernel::Parameters& params )
 	{
 		RenderStream rs;
 		rs.add_cullmode(renderer::CullMode::CULLMODE_BACK);
@@ -564,7 +564,7 @@ public:
 		}
 	}
 
-	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Params& params, const glm::vec3& origin, const glm::vec2& view_angles)
+	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles)
 	{
 		RenderStream rs;
 		rs.add_cullmode(renderer::CullMode::CULLMODE_BACK);
@@ -598,7 +598,7 @@ public:
 		debugdraw::render(camera.matCam, camera.matProj, 0, 0, params.render_width, params.render_height);
 	}
 	
-	virtual void render_viewmodel(gemini::IEngineEntity* entity, const kernel::Params& params, const glm::vec3& origin, const glm::vec2& view_angles)
+	virtual void render_viewmodel(gemini::IEngineEntity* entity, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles)
 	{
 		RenderStream rs;
 		rs.add_cullmode(renderer::CullMode::CULLMODE_BACK);
@@ -852,7 +852,7 @@ public:
 		// TODO: need to validate this origin/orientation is allowed.
 		// otherwise, client could ask us to render from anyone's POV.
 		EntityManager* em = static_cast<EntityManager*>(engine::api::instance()->entities());
-		render_method->render_view(em->get_entity_list(), kernel::instance()->parameters(), origin, view_angles);
+		render_method->render_view(em->get_entity_list(), kernel::parameters(), origin, view_angles);
 	}
 
 	virtual void render_gui()
@@ -862,7 +862,7 @@ public:
 	
 	virtual void render_viewmodel(IEngineEntity* entity, const glm::vec3& origin, const glm::vec2& view_angles)
 	{
-		render_method->render_viewmodel(entity, kernel::instance()->parameters(), origin, view_angles);
+		render_method->render_viewmodel(entity, kernel::parameters(), origin, view_angles);
 	}
 
 	virtual void get_view_angles(glm::vec2& view_angles)
@@ -1083,7 +1083,7 @@ public:
 //		}
 	}
 
-	virtual kernel::ApplicationResult config( kernel::Params & params )
+	virtual kernel::ApplicationResult config( kernel::Parameters& params )
 	{
 		params.window_title = "project_chimera";
 		params.window_width = 1280;
@@ -1128,7 +1128,7 @@ public:
 		return kernel::Application_Success;
 	}
 
-	void center_mouse(const kernel::Params& params)
+	void center_mouse(const kernel::Parameters& params)
 	{
 		if (has_focus && !in_gui)
 		{
@@ -1136,7 +1136,7 @@ public:
 		}
 	}
 
-	virtual kernel::ApplicationResult startup( kernel::Params & params )
+	virtual kernel::ApplicationResult startup( kernel::Parameters& params )
 	{
 		float camera_fov = 50.0f;
 		if (device && RENDER_TO_VR)
@@ -1222,7 +1222,7 @@ public:
 		return kernel::Application_Success;
 	}
 
-	virtual void step( kernel::Params & params )
+	virtual void step( kernel::Parameters& params )
 	{
 	
 		if (compositor)
@@ -1236,7 +1236,7 @@ public:
 		debugdraw::update(params.step_interval_seconds);
 	}
 
-	virtual void tick( kernel::Params & params )
+	virtual void tick( kernel::Parameters& params )
 	{
 		{
 			UserCommand command;
@@ -1296,7 +1296,6 @@ public:
 	
 //		debugdraw::axes(glm::mat4(1.0), 1.0f);
 		int x = 10;
-//		int y = params.render_height - 50 - params.titlebar_height;
 		int y = 0;
 		
 		if (active_camera)
@@ -1346,7 +1345,7 @@ public:
 		}
 	}
 	
-	virtual void shutdown( kernel::Params & params )
+	virtual void shutdown( kernel::Parameters& params )
 	{
 		delete compositor;
 		compositor = 0;

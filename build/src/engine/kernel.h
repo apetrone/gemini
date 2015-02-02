@@ -66,10 +66,10 @@ namespace gemini
 		typedef unsigned char KernelDeviceFlags;
 
 		// parameters passed to callbacks
-		struct Params
+		struct Parameters
 		{
-			const char * error_message;
-			const char * window_title;
+			const char* error_message;
+			const char* window_title;
 			
 			// kDevice constants above describe the current system
 			KernelDeviceFlags device_flags;
@@ -106,19 +106,28 @@ namespace gemini
 			// the Rift SDK will swap buffers itself, which causes flickering
 			// if we also do it.
 			bool swap_buffers;
-			
-			// set to true to create a fullscreen window
-			bool use_fullscreen;
-			
+					
 			// vertical sync
 			bool use_vsync;
 
 
-			Params();
-			~Params() {};
+			//
+			// DESKTOP-specific params
+			//
+			int argc;
+			char ** argv;
+			
+			// has a valid window
+			bool has_window;
+			
+			// set to true to create a fullscreen window
+			bool use_fullscreen;
+
+
+			Parameters();
 		}; // Params
 		
-		
+		Parameters& parameters();
 
 		class IApplication;
 		class IKernel
@@ -128,7 +137,7 @@ namespace gemini
 
 			virtual bool is_active() const = 0;
 			virtual void set_active( bool isactive ) = 0;
-			virtual kernel::Params & parameters() = 0;
+//			virtual kernel::Parameters& parameters() = 0;
 
 			// called first thing during setup; useful for initializing libraries
 			virtual void startup() = 0;
@@ -162,11 +171,11 @@ namespace gemini
 		public:
 			virtual ~IApplication() {}
 			
-			virtual ApplicationResult config( kernel::Params & params ) = 0;
-			virtual ApplicationResult startup( kernel::Params & params ) = 0;
-			virtual void step( kernel::Params & params ) = 0;
-			virtual void tick( kernel::Params & params ) = 0; // called every frame
-			virtual void shutdown( kernel::Params & params ) = 0;
+			virtual ApplicationResult config(kernel::Parameters& params) = 0;
+			virtual ApplicationResult startup(kernel::Parameters& params) = 0;
+			virtual void step(kernel::Parameters& params) = 0;
+			virtual void tick(kernel::Parameters& params) = 0; // called every frame
+			virtual void shutdown(kernel::Parameters& params) = 0;
 		};
 		
 		typedef IApplication * (*ApplicationCreator)();

@@ -152,7 +152,7 @@ namespace gemini
 		void append_asset_extension( AssetType type, core::StackString<MAX_PATH_SIZE> & path )
 		{
 			const char * extension = "";
-			kernel::KernelDeviceFlags device_flags = kernel::instance()->parameters().device_flags;
+			kernel::KernelDeviceFlags device_flags = kernel::parameters().device_flags;
 			
 			switch( type )
 			{

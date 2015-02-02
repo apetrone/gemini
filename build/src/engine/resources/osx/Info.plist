@@ -2,26 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>BreakpadLogFileTailSize</key>
-	<string>40000</string>
-	<key>BreakpadLogFiles</key>
-	<array>
-		<string>/var/log/system.log</string>
-	</array>
-	<key>BreakpadProduct</key>
-	<string>${PRODUCT_NAME}</string>
-	<key>BreakpadProductDisplay</key>
-	<string>${PRODUCT_NAME}</string>
-	<key>BreakpadReportInterval</key>
-	<string>0</string>
-	<key>BreakpadRequestComments</key>
-	<string>none</string>
-	<key>BreakpadURL</key>
-	<string>http://localhost:8000/</string>
-	<key>BreakpadVendor</key>
-	<string>arcfusion</string>
-	<key>BreakpadVersion</key>
-	<string>1</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
@@ -50,6 +30,8 @@
 	<string>Copyright © 2013 Adam Petrone. All rights reserved.</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
 	<key>NSPrincipalClass</key>
 	<string>osx_application</string>
 </dict>

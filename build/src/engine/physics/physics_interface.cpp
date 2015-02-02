@@ -437,7 +437,7 @@ namespace gemini
 		
 		void PhysicsInterface::step_simulation(float framedelta_seconds)
 		{
-			bullet::step(framedelta_seconds, kernel::instance()->parameters().step_interval_seconds);
+			bullet::step(framedelta_seconds, kernel::parameters().step_interval_seconds);
 		}
 
 		RaycastInfo PhysicsInterface::raycast(ICollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance)
