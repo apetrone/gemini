@@ -27,13 +27,17 @@
 #include <core/typedefs.h>
 #include "interpolation.h"
 
-#ifdef RGB
-#undef RGB
-#endif
+//#ifdef RGB
+//#undef RGB
+//#endif
 
-#define RGBToUInt( r, g, b ) (((r&255)<<24) | ((g&255) <<16) | ((b&255)<<8) | 255)
-#define UIntToRGB( i, c ) c[0] = ((i>>24)&255); c[1] = ((i>>16)&255); c[2] = ((i>>8)&255)
-#define RGBAToUInt(r, g, b, a) ((r) | (g << 8) | (b << 16) | (a << 24))
+//#define RGBToUInt( r, g, b ) (((r&255)<<24) | ((g&255) <<16) | ((b&255)<<8) | 255)
+//#define UIntToRGB( i, c ) c[0] = ((i>>24)&255); c[1] = ((i>>16)&255); c[2] = ((i>>8)&255)
+//#define RGBAToUInt(r, g, b, a) ((r) | (g << 8) | (b << 16) | (a << 24))
+//#define PACK_RGBA( r, g, b, a ) ((a << 24) | (b << 16) | (g << 8) | r)
+//#define UNPACK_RGBA( i, c ) c[3] = ((i>>24)&255); c[2] = ((i>>16)&255); c[1] = ((i>>8)&255); c[0] = (i&255);
+
+
 
 // unsigned char rgba[3];
 // unsigned int mycolor = RGBToUInt( 255, 128, 75 );
@@ -48,6 +52,8 @@ namespace core
 		Color( unsigned char _r = 255, unsigned char _g = 255, unsigned char _b = 255, unsigned char _a = 255 );
 		static Color fromFloatPointer( const float * fl, int num_elements );
 		void set( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a = 255 );
+		
+		uint32_t as_uint32() const;
 	}; // Color
 
 

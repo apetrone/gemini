@@ -71,4 +71,9 @@ namespace core
 		b = _b;
 		a = _a;
 	}
+	
+	uint32_t Color::as_uint32() const
+	{
+		return (((a << 24) | (b << 16) | (g << 8) | r));
+	}
 } // namespace core

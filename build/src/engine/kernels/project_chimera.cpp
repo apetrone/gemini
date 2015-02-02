@@ -90,6 +90,11 @@ const uint16_t MAX_ENTITIES = 2048;
 
 
 #include <nom/nom.hpp>
+#include <nom/compositor.hpp>
+#include <nom/label.hpp>
+#include <nom/button.hpp>
+#include <nom/renderer.hpp>
+
 gui::Compositor* _compositor = 0;
 
 class GUIRenderer : public gui::Renderer
@@ -220,18 +225,16 @@ public:
 	}
 	
 	
-	virtual void draw_bounds(const gui::Bounds& bounds, gui::ColorInt color)
+	virtual void draw_bounds(const gui::Bounds& bounds, const gui::Color& color)
 	{
 		//		gui::Size size = bounds.size;
 		//		glm::vec3 start = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );
 		//		glm::vec3 end = start + glm::vec3( size.width, size.height, 0.0f );
 		//		debugdraw::line( start, end, Color( 255, 0, 255 ) );
 		//		debugdraw::point( glm::vec3( bounds.origin.x + size.width, bounds.origin.y + size.height, 0.0f ), Color(255, 255, 255) );
-		
-		gui::ColorRGBA rgba;
-		UNPACK_RGBA( color, rgba );
-		
-		solid_color->parameters[0].vector_value = glm::vec4( (rgba[0] / 255.0f), (rgba[1] / 255.0f), (rgba[2] / 255.0f), (rgba[3] / 255.0f) );
+
+		float div = (1.0f/255.0f);
+		solid_color->parameters[0].vector_value = glm::vec4(color.r()*div, color.g()*div, color.b()*div, color.a()*div);
 		//		debugdraw::box( start, end, Color(rgba[0], rgba[1], rgba[2], rgba[3]), 0.0f );
 		
 		stream.reset();
@@ -258,10 +261,6 @@ public:
 			
 			renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
 			stream.append_indices( indices, 6 );
-		}
-		else
-		{
-			LOGV( "buffer be full\n" );
 		}
 		
 		this->render_buffer(rs, shader, solid_color);
@@ -357,9 +356,13 @@ public:
 		return gui::FontResult_Success;
 	}
 	
-	virtual void font_draw(const gui::FontHandle& handle, const char* string, const gui::Bounds& bounds, gui::ColorInt color)
+	virtual void font_draw(const gui::FontHandle& handle, const char* string, const gui::Bounds& bounds, const gui::Color& color)
 	{
-		Color font_color(255, 255, 255, 255);
+		core::Color font_color(
+			color.r(),
+			color.g(),
+			color.b(),
+			color.a());
 		assets::Font* font = assets::fonts()->find_with_id(handle);
 		if (font)
 		{
@@ -1163,16 +1166,26 @@ public:
 		active_camera->pitch = 30;
 		active_camera->update_view();
 			
-			
+		
+		
 		compositor = new gui::Compositor(params.render_width, params.render_height);
 		_compositor = compositor;
 		compositor->set_renderer(&this->gui_renderer);
 		gui::Panel* root = new gui::Panel(compositor);
-		gui::Label* b = new gui::Label(compositor);
-		b->set_bounds(50, 50, 250, 250);
-		b->set_font(compositor, "fonts/default16");
-		b->set_text("hello");
-		compositor->add_child(b);
+//		gui::Label* b = new gui::Label(compositor);
+//		b->set_bounds(450, 250, 250, 250);
+//		b->set_font(compositor, "fonts/default16");
+//		b->set_text("hello");
+//		b->set_background_color(gui::Color(0, 0, 0, 128));
+//		b->set_foreground_color(gui::Color(255, 255, 255, 255));
+
+		gui::Button* play = new gui::Button(compositor);
+		play->set_bounds(400, 200, 100, 100);
+		play->set_font(compositor, "fonts/default16");
+		play->set_text("New Game");
+		play->notify_subscribe(
+
+		compositor->add_child(play);
 
 
 		// capture the mouse

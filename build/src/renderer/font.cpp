@@ -239,8 +239,9 @@ namespace gemini
 				rs.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
 				rs.run_commands();
 				
+				
 				// draw
-				fonsSetColor(font->context, RGBAToUInt(color.r, color.g, color.b, color.a));
+				fonsSetColor(font->context, color.as_uint32());
 				fonsDrawText(font->context, x, y, utf8, 0);
 				
 				// restore state
