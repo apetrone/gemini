@@ -62,10 +62,7 @@ namespace gemini
 		
 		// set the viewport size for the future draw calls
 		void set_viewport_size(int render_width, int render_height);
-		
-		// set a vertical offset in pixels; commonly used to offset for titlebar
-		void set_vertical_offset(int8_t height_pixels);
-		
+	
 		// query the height of the font in pixels
 		unsigned int measure_height(Handle handle, const char* utf8);
 		

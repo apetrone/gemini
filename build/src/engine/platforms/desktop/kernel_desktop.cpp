@@ -436,7 +436,7 @@ namespace gemini
 			SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 		
 			uint32_t window_flags = 0;
-			window_flags |= SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS;
+			window_flags |= SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
 			
 			if (kernel::parameters().use_fullscreen)
 			{

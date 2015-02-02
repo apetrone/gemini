@@ -49,7 +49,6 @@ namespace gemini
 
 			int16_t render_width;
 			int16_t render_height;
-			int8_t vertical_offset_pixels;
 					
 			struct FontVertex
 			{
@@ -62,9 +61,11 @@ namespace gemini
 			{
 				renderer::Texture* texture;
 				struct FONScontext* context;
-
+				int16_t font_height;
 				
-				FontData() : texture(0), context(0) {}
+				float line_height;
+				
+				FontData() : texture(0), context(0), line_height(0.0f) {}
 			};
 			
 			
@@ -222,9 +223,12 @@ namespace gemini
 		
 		void draw_string(Handle handle, int x, int y, const char* utf8, const core::Color& color)
 		{
-			y = internal::render_height - y - internal::vertical_offset_pixels;
-		
 			internal::FontData* font = internal::_font_data[handle];
+			
+			// adjust for the baseline
+			y = internal::render_height - y - font->line_height;
+		
+
 			if (font->is_valid())
 			{
 				RenderStream rs;
@@ -266,11 +270,6 @@ namespace gemini
 		{
 			internal::render_width = render_width;
 			internal::render_height = render_height;
-		}
-		
-		void set_vertical_offset(int8_t height_pixels)
-		{
-			internal::vertical_offset_pixels = height_pixels;
 		}
 		
 		unsigned int measure_height(Handle handle, const char * utf8 )
@@ -334,6 +333,11 @@ namespace gemini
 			// setup the font
 			fonsSetFont(font->context, font->handle);
 			fonsSetSize(font->context, point_size);
+
+			// read and cache metrics
+			float ascender = 0;
+			float descender = 0;
+			fonsVertMetrics(font->context, &ascender, &descender, &font->line_height);
 
 			return handle;
 		} // load_font_from_memory
