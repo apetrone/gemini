@@ -374,6 +374,7 @@ namespace gemini
 				assets::Shader* fontshader = assets::shaders()->load_from_path(FONT_SHADER);
 				assert(fontshader != 0);
 				font::startup(fontshader->program, params.render_width, params.render_height);
+				font::set_vertical_offset(params.titlebar_height);
 				
 				assets::Shader* debugshader = assets::shaders()->load_from_path(DEBUG_SHADER);
 				assets::Font* debugfont = assets::fonts()->load_from_path(DEBUG_FONT);

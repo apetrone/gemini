@@ -33,6 +33,11 @@
 
 namespace gemini
 {
+	namespace font
+	{
+		typedef int Handle;
+	}
+
 	namespace renderer
 	{
 		struct Font;
@@ -41,7 +46,7 @@ namespace gemini
 
 	namespace debugdraw
 	{
-		void startup(unsigned int max_primitives, renderer::ShaderProgram* program, const renderer::Font& font);
+		void startup(unsigned int max_primitives, renderer::ShaderProgram* program, const font::Handle& font);
 		void shutdown();
 		
 		void update(float deltamsec);

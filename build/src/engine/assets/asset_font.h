@@ -38,9 +38,9 @@ namespace gemini
 		struct Font : public Asset
 		{
 			unsigned short font_size;
-			renderer::Font handle;
-			char * font_data;
-			
+			char* font_data;
+			font::Handle handle;
+						
 			Font();
 			virtual void release();
 		}; // Font

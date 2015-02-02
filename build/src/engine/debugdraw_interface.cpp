@@ -207,7 +207,7 @@ namespace gemini
 	} // request_primitive
 	
 	
-	void DebugDrawInterface::startup(unsigned int in_max_primitives, renderer::ShaderProgram* program, const renderer::Font& font)
+	void DebugDrawInterface::startup(unsigned int in_max_primitives, renderer::ShaderProgram* program, const font::Handle& font)
 	{
 		next_primitive = 0;
 		debug_shader = 0;
@@ -217,13 +217,12 @@ namespace gemini
 		// cache the shader we'll use
 		
 		// setup the vertex stream
-		vertex_stream.desc.add( renderer::VD_FLOAT3 );
-		vertex_stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
-		vertex_stream.create( 4 * max_primitives, 0, renderer::DRAW_LINES, renderer::BUFFER_DYNAMIC );
+		vertex_stream.desc.add(renderer::VD_FLOAT3);
+		vertex_stream.desc.add(renderer::VD_UNSIGNED_BYTE4);
+		vertex_stream.create(4 * max_primitives, 0, renderer::DRAW_LINES, renderer::BUFFER_DYNAMIC);
 		
 		// the debug font we'll use
 		debug_font = font;
-		assert(debug_font.is_valid());
 		
 		// debug shader
 		debug_shader = program;

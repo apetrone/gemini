@@ -89,6 +89,288 @@ uint8_t REQUIRE_RIFT = 1;
 const uint16_t MAX_ENTITIES = 2048;
 
 
+#include <nom/nom.hpp>
+gui::Compositor* _compositor = 0;
+
+class GUIRenderer : public gui::Renderer
+{
+	struct VertexType
+	{
+		glm::vec3 position;
+		Color color;
+		glm::vec2 uv;
+	};
+	
+	gui::Compositor* compositor;
+	renderer::VertexStream stream;
+	assets::Shader* shader;
+
+	assets::Material * solid_color;
+	assets::Material * texture_map;
+	
+	unsigned int vertex_attribs;
+	
+	
+private:
+	void render_buffer(RenderStream& rs, assets::Shader* shader, assets::Material* material)
+	{
+		stream.update();
+		
+		glm::mat4 modelview;
+		glm::mat4 projection = glm::ortho( 0.0f, (float)compositor->width, (float)compositor->height, 0.0f, -0.1f, 256.0f );
+		glm::mat4 object_matrix;
+
+		rs.add_shader( shader->program );
+		rs.add_uniform_matrix4( shader->program->get_uniform_location("modelview_matrix"), &modelview );
+		rs.add_uniform_matrix4( shader->program->get_uniform_location("projection_matrix"), &projection );
+		
+		rs.add_material( material, shader->program );
+		
+		rs.add_draw_call( stream.vertexbuffer );
+		
+		rs.run_commands();
+		stream.reset();
+	}
+	
+	
+public:
+	GUIRenderer() :
+		compositor(0),
+		shader(0),
+		solid_color(0),
+		texture_map(0),
+		vertex_attribs(0)
+	{
+	}
+
+	virtual ~GUIRenderer()
+	{
+	}
+
+
+	virtual void startup(gui::Compositor* c)
+	{
+		this->compositor = c;
+		stream.desc.add( renderer::VD_FLOAT3 );
+		stream.desc.add( renderer::VD_FLOAT2 );
+		stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
+		
+		
+		stream.create( 64, 64, renderer::DRAW_INDEXED_TRIANGLES );
+		
+//		assets::ShaderString name("uv0");
+//		vertex_attribs = assets::find_parameter_mask( name );
+//		
+//		name = "colors";
+//		vertex_attribs |= assets::find_parameter_mask( name );
+
+		// load shader
+		shader = assets::shaders()->load_from_path("shaders/gui");
+
+		// setup materials
+		solid_color = assets::materials()->allocate_asset();
+		if (solid_color)
+		{
+			renderer::MaterialParameter parameter;
+			parameter.type = renderer::MP_VEC4;
+			parameter.name = "diffusecolor";
+			parameter.vector_value = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+			solid_color->add_parameter(parameter);
+			assets::materials()->take_ownership("gui/solid_color", solid_color);
+		}
+		
+		texture_map = assets::materials()->allocate_asset();
+		if (texture_map)
+		{
+			renderer::MaterialParameter parameter;
+			parameter.type = renderer::MP_SAMPLER_2D;
+			parameter.name = "diffusemap";
+			parameter.int_value = assets::textures()->get_default()->Id();
+			texture_map->add_parameter(parameter);
+			assets::materials()->take_ownership("gui/texture_map", texture_map);
+		}
+	}
+	
+	virtual void shutdown(gui::Compositor* c)
+	{
+		
+	}
+	
+	
+	virtual void begin_frame(gui::Compositor* c)
+	{
+		RenderStream rs;
+		
+		rs.add_state( renderer::STATE_BLEND, 1 );
+		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+		rs.add_state(renderer::STATE_DEPTH_TEST, 0);
+		rs.add_state(renderer::STATE_DEPTH_WRITE, 0);
+		
+		rs.run_commands();
+	}
+	
+	virtual void end_frame()
+	{
+		RenderStream rs;
+		
+		rs.add_state( renderer::STATE_BLEND, 0 );
+		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
+		rs.add_state(renderer::STATE_DEPTH_WRITE, 1);
+		rs.run_commands();
+	}
+	
+	
+	virtual void draw_bounds(const gui::Bounds& bounds, gui::ColorInt color)
+	{
+		//		gui::Size size = bounds.size;
+		//		glm::vec3 start = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );
+		//		glm::vec3 end = start + glm::vec3( size.width, size.height, 0.0f );
+		//		debugdraw::line( start, end, Color( 255, 0, 255 ) );
+		//		debugdraw::point( glm::vec3( bounds.origin.x + size.width, bounds.origin.y + size.height, 0.0f ), Color(255, 255, 255) );
+		
+		gui::ColorRGBA rgba;
+		UNPACK_RGBA( color, rgba );
+		
+		solid_color->parameters[0].vector_value = glm::vec4( (rgba[0] / 255.0f), (rgba[1] / 255.0f), (rgba[2] / 255.0f), (rgba[3] / 255.0f) );
+		//		debugdraw::box( start, end, Color(rgba[0], rgba[1], rgba[2], rgba[3]), 0.0f );
+		
+		stream.reset();
+		
+		RenderStream rs;
+		
+		if ( stream.has_room(4, 6) )
+		{
+			VertexType* v = (VertexType*)stream.request(4);
+			
+			gui::Size size = bounds.size;
+			v[0].position = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );
+			v[1].position = v[0].position + glm::vec3( 0.0f, size.height, 0.0f );
+			v[2].position = v[0].position + glm::vec3( size.width, size.height, 0.0f );
+			v[3].position = v[0].position + glm::vec3( size.width, 0.0f, 0.0f );
+			
+			// lower left corner is the origin in OpenGL
+			v[0].uv = glm::vec2(0, 0);
+			v[1].uv = glm::vec2(0, 1);
+			v[2].uv = glm::vec2(1, 1);
+			v[3].uv = glm::vec2(1, 0);
+			
+			//v[0].color = v[1].color = v[2].color = v[3].color = Color(rgba[0], rgba[1], rgba[2], rgba[3]);
+			
+			renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+			stream.append_indices( indices, 6 );
+		}
+		else
+		{
+			LOGV( "buffer be full\n" );
+		}
+		
+		this->render_buffer(rs, shader, solid_color);
+	}
+	
+	virtual void draw_textured_bounds(const gui::Bounds& bounds, const gui::TextureHandle& handle)
+	{
+		stream.reset();
+		RenderStream rs;
+		assets::Texture * tex = assets::textures()->find_with_id( handle );
+		if ( !tex )
+		{
+			return;
+		}
+		
+		texture_map->parameters[0].int_value = handle;
+		texture_map->parameters[0].texture_unit = 0;
+		
+		if ( stream.has_room(4, 6) )
+		{
+			VertexType * v = (VertexType*)stream.request(4);
+			
+			gui::Size size = bounds.size;
+			v[0].position = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );
+			v[1].position = v[0].position + glm::vec3( 0.0f, size.height, 0.0f );
+			v[2].position = v[0].position + glm::vec3( size.width, size.height, 0.0f );
+			v[3].position = v[0].position + glm::vec3( size.width, 0.0f, 0.0f );
+			
+			// lower left corner is the origin in OpenGL
+			v[0].uv = glm::vec2(0, 0);
+			v[1].uv = glm::vec2(0, 1);
+			v[2].uv = glm::vec2(1, 1);
+			v[3].uv = glm::vec2(1, 0);
+			
+			v[0].color = v[1].color = v[2].color = v[3].color = Color(255, 255, 255, 255);
+			
+			renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+			stream.append_indices( indices, 6 );
+		}
+		
+		this->render_buffer(rs, shader, texture_map);
+	}
+	
+	virtual gui::TextureResult texture_create(const char* path, gui::TextureHandle& handle)
+	{
+		assets::Texture * tex = assets::textures()->load_from_path((char*)path);
+		if ( !tex )
+		{
+			return gui::TextureResult_Failed;
+		}
+		
+		handle = tex->Id();
+		
+		return gui::TextureResult_Success;
+	}
+	
+	virtual void texture_destroy(const gui::TextureHandle& handle)
+	{
+		// nothing really to do in our system
+	}
+	
+	virtual gui::TextureResult texture_info(const gui::TextureHandle& handle, uint32_t& width, uint32_t& height, uint8_t& channels)
+	{
+		assets::Texture * tex = assets::textures()->find_with_id( handle );
+		if ( !tex )
+		{
+			return gui::TextureResult_Failed;
+		}
+		
+		return gui::TextureResult_Success;
+	}
+	
+	virtual gui::FontResult font_create(const char* path, gui::FontHandle& handle)
+	{
+		assets::Font* font = assets::fonts()->load_from_path((char*)path);
+		if (font == 0)
+		{
+			return gui::FontResult_Failed;
+		}
+		
+		handle = font->Id();
+		
+		return gui::FontResult_Success;
+	}
+	
+	virtual void font_destroy(const gui::FontHandle& handle)
+	{
+		// nothing really to do in our system
+	}
+	
+	virtual gui::FontResult font_measure_string(const gui::FontHandle& handle, const char* string, gui::Bounds& bounds)
+	{
+		return gui::FontResult_Success;
+	}
+	
+	virtual void font_draw(const gui::FontHandle& handle, const char* string, const gui::Bounds& bounds, gui::ColorInt color)
+	{
+		Color font_color(255, 255, 255, 255);
+		assets::Font* font = assets::fonts()->find_with_id(handle);
+		if (font)
+		{
+			font::draw_string(font->handle, bounds.origin.x, bounds.origin.y, string, font_color);
+		}
+	}
+};
+
+
+
+
 void render_scene_from_camera(gemini::IEngineEntity** entity_list, Camera& camera, renderer::SceneLink& scenelink)
 {
 	// setup constant buffer
@@ -308,9 +590,12 @@ public:
 		
 		render_scene_from_camera(entity_list, camera, scenelink);
 	
+		if (_compositor)
 		{
-			debugdraw::render(camera.matCam, camera.matProj, 0, 0, params.render_width, params.render_height);
+			_compositor->render();
 		}
+	
+		debugdraw::render(camera.matCam, camera.matProj, 0, 0, params.render_width, params.render_height);
 	}
 	
 	virtual void render_viewmodel(gemini::IEngineEntity* entity, const kernel::Params& params, const glm::vec3& origin, const glm::vec2& view_angles)
@@ -601,7 +886,7 @@ typedef void (*disconnect_engine_fn)();
 
 class ProjectChimera : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
-//public kernel::IEventListener<kernel::MouseEvent>,
+public kernel::IEventListener<kernel::MouseEvent>,
 public kernel::IEventListener<kernel::SystemEvent>,
 public kernel::IEventListener<kernel::GameControllerEvent>
 {
@@ -638,7 +923,11 @@ public:
 //	core::RingBuffer<UserCommand, 32> client_commands;
 
 	bool has_focus;
-
+	
+	GUIRenderer gui_renderer;
+	gui::Compositor* compositor;
+	bool in_gui;
+	
 public:
 	ProjectChimera()
 	{
@@ -650,6 +939,9 @@ public:
 		game_interface = 0;
 
 		has_focus = true;
+		
+		compositor = 0;
+		in_gui = true;
 	}
 	
 	virtual ~ProjectChimera()
@@ -685,18 +977,84 @@ public:
 				LOGV("draw_physics_debug = %s\n", draw_physics_debug?"ON":"OFF");
 			}
 		}
+		
+		
+		if (in_gui && compositor)
+		{
+			compositor->key_event(event.key, event.is_down, 0);
+		}
+	}
+	
+	virtual void event(kernel::MouseEvent& event)
+	{
+		if (in_gui)
+		{
+			gui::CursorButton::Type input_to_gui[] = {
+				gui::CursorButton::Left,
+				gui::CursorButton::Right,
+				gui::CursorButton::Middle,
+				gui::CursorButton::Mouse4,
+				gui::CursorButton::Mouse5
+			};
+			
+			gui::CursorButton::Type button;
+			
+			
+			switch( event.subtype )
+			{
+				case kernel::MouseMoved:
+				{
+					if ( compositor )
+					{
+						compositor->cursor_move_absolute( event.mx, event.my );
+					}
+					break;
+				}
+				case kernel::MouseButton:
+					
+					button = input_to_gui[ event.button ];
+					if ( event.is_down )
+					{
+						fprintf( stdout, "mouse button %i is pressed\n", event.button );
+					}
+					else
+					{
+						fprintf( stdout, "mouse button %i is released\n", event.button );
+					}
+					
+					if ( compositor )
+					{
+						compositor->cursor_button( button, event.is_down );
+					}
+					break;
+					
+				case kernel::MouseWheelMoved:
+					if ( event.wheel_direction > 0 )
+					{
+						fprintf( stdout, "mouse wheel toward screen\n" );
+					}
+					else
+					{
+						fprintf( stdout, "mouse wheel away from screen\n" );
+					}
+					break;
+				default:
+					fprintf( stdout, "mouse event received!\n" );
+					break;
+			}
+		}
 	}
 
 	virtual void event( kernel::SystemEvent & event )
 	{
 		if (event.subtype == kernel::WindowLostFocus)
 		{
-			kernel::instance()->show_mouse(true);
+//			kernel::instance()->show_mouse(true);
 			has_focus = false;
 		}
 		else if (event.subtype == kernel::WindowGainFocus)
 		{
-			kernel::instance()->show_mouse(false);
+//			kernel::instance()->show_mouse(false);
 			has_focus = true;
 		}
 	}
@@ -772,7 +1130,7 @@ public:
 
 	void center_mouse(const kernel::Params& params)
 	{
-		if (has_focus)
+		if (has_focus && !in_gui)
 		{
 			kernel::instance()->warp_mouse(params.window_width/2, params.window_height/2);
 		}
@@ -805,6 +1163,18 @@ public:
 		active_camera->pitch = 30;
 		active_camera->update_view();
 			
+			
+		compositor = new gui::Compositor(params.render_width, params.render_height);
+		_compositor = compositor;
+		compositor->set_renderer(&this->gui_renderer);
+		gui::Panel* root = new gui::Panel(compositor);
+		gui::Label* b = new gui::Label(compositor);
+		b->set_bounds(50, 50, 250, 250);
+		b->set_font(compositor, "fonts/default16");
+		b->set_text("hello");
+		compositor->add_child(b);
+
+
 		// capture the mouse
 //		kernel::instance()->capture_mouse( true );
 
@@ -847,12 +1217,19 @@ public:
 			game_interface->level_load();
 		}
 
+		kernel::instance()->show_mouse(true);
 		center_mouse(params);
 		return kernel::Application_Success;
 	}
 
 	virtual void step( kernel::Params & params )
 	{
+	
+		if (compositor)
+		{
+			compositor->update(params.step_interval_seconds);
+		}
+	
 		// this is going to be incorrect unless this is placed in the step.
 		// additionally, these aren't interpolated: figure how to; for example,
 		// draw hit boxes for a moving player with this system.
@@ -919,16 +1296,18 @@ public:
 	
 //		debugdraw::axes(glm::mat4(1.0), 1.0f);
 		int x = 10;
-		int y = params.render_height - 50 - params.titlebar_height;
+//		int y = params.render_height - 50 - params.titlebar_height;
+		int y = 0;
+		
 		if (active_camera)
 		{
 			debugdraw::text(x, y, core::str::format("active_camera->pos = %.2g %.2g %.2g", active_camera->pos.x, active_camera->pos.y, active_camera->pos.z), Color(255, 255, 255));
-			debugdraw::text(x, y+12, core::str::format("eye_position = %.2g %.2g %.2g", active_camera->eye_position.x, active_camera->eye_position.y, active_camera->eye_position.z), Color(255, 0, 255));
-			debugdraw::text(x, y+24, core::str::format("active_camera->view = %.2g %.2g %.2g", active_camera->view.x, active_camera->view.y, active_camera->view.z), Color(128, 128, 255));
-			debugdraw::text(x, y+36, core::str::format("active_camera->right = %.2g %.2g %.2g", active_camera->side.x, active_camera->side.y, active_camera->side.z), Color(255, 0, 0));
+//			debugdraw::text(x, y+12, core::str::format("eye_position = %.2g %.2g %.2g", active_camera->eye_position.x, active_camera->eye_position.y, active_camera->eye_position.z), Color(255, 0, 255));
+//			debugdraw::text(x, y+24, core::str::format("active_camera->view = %.2g %.2g %.2g", active_camera->view.x, active_camera->view.y, active_camera->view.z), Color(128, 128, 255));
+//			debugdraw::text(x, y+36, core::str::format("active_camera->right = %.2g %.2g %.2g", active_camera->side.x, active_camera->side.y, active_camera->side.z), Color(255, 0, 0));
 		}
-		debugdraw::text(x, y+48, core::str::format("frame delta = %2.2fms\n", params.framedelta_raw_msec), Color(255, 255, 255));
-		debugdraw::text(x, y+60, core::str::format("# allocations = %i, total %i Kbytes\n", platform::memory::allocator().active_allocations(), platform::memory::allocator().active_bytes()/1024), Color(64, 102, 192));
+//		debugdraw::text(x, y+48, core::str::format("frame delta = %2.2fms\n", params.framedelta_raw_msec), Color(255, 255, 255));
+//		debugdraw::text(x, y+60, core::str::format("# allocations = %i, total %i Kbytes\n", platform::memory::allocator().active_allocations(), platform::memory::allocator().active_bytes()/1024), Color(64, 102, 192));
 		
 		
 		if (draw_physics_debug)
@@ -969,6 +1348,9 @@ public:
 	
 	virtual void shutdown( kernel::Params & params )
 	{
+		delete compositor;
+		compositor = 0;
+	
 		DESTROY(SceneRenderMethod, render_method);
 		
 		if (device)

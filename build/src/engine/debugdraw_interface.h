@@ -78,21 +78,21 @@ namespace gemini
 		unsigned int next_primitive;
 		unsigned int max_primitives;
 		debugdraw::DebugPrimitive* primitive_list;
-		renderer::Font debug_font;
+		font::Handle debug_font;
 		renderer::ShaderProgram* debug_shader;
 	private:
 	
 		debugdraw::DebugPrimitive* request_primitive();
 	
 	public:
-		void startup(unsigned int max_primitives, renderer::ShaderProgram* program, const renderer::Font& font);
+		void startup(unsigned int max_primitives, renderer::ShaderProgram* program, const font::Handle& font);
 		void shutdown();
 		void update(float delta_msec);
 		
 		void render(const glm::mat4 & modelview, const glm::mat4 & projection, int x, int y, int viewport_width, int viewport_height);
 		void generate_circle(const glm::vec3 & origin, glm::vec3 * vertices, int num_sides, float radius, int plane);
 		
-		renderer::Font get_debug_font() const { return debug_font; }
+		font::Handle get_debug_font() const { return debug_font; }
 		
 		// IDebugDraw interface
 		virtual void axes(const glm::mat4& transform, float axis_length, float duration = DEBUGDRAW_MIN_DURATION_MSEC);

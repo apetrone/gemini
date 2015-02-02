@@ -31,12 +31,12 @@ namespace gemini
 {
 	namespace debugdraw
 	{
-		void startup(unsigned int max_primitives, renderer::ShaderProgram* program, const renderer::Font& font)
+		void startup(unsigned int max_primitives, renderer::ShaderProgram* program, const font::Handle& handle)
 		{
 			// create an instance for the api
 			DebugDrawInterface* debugdraw_instance = CREATE(DebugDrawInterface);
 			debugdraw::instance = debugdraw_instance;
-			debugdraw_instance->startup(max_primitives, program, font);
+			debugdraw_instance->startup(max_primitives, program, handle);
 		} // startup
 		
 		

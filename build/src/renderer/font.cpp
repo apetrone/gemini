@@ -45,8 +45,11 @@ namespace gemini
 		namespace internal
 		{	
 			renderer::VertexStream _vertexstream;
-			struct FONScontext* _font_context;
 			renderer::ShaderProgram * _shader;
+
+			int16_t render_width;
+			int16_t render_height;
+			int8_t vertical_offset_pixels;
 					
 			struct FontVertex
 			{
@@ -54,17 +57,19 @@ namespace gemini
 				float uv[2];
 				unsigned char color[4];
 			};
-			
-			struct FontData
+
+			struct FontData : public renderer::Font
 			{
 				renderer::Texture* texture;
-				int render_width;
-				int render_height;
-				
-				FontData() : texture(nullptr), render_width(0), render_height(0) {}
-			};
+				struct FONScontext* context;
 
-			FontData* _font_data = nullptr;
+				
+				FontData() : texture(0), context(0) {}
+			};
+			
+			
+			typedef std::vector<FontData*> FontDataVector;
+			FontDataVector _font_data;
 
 			uint32_t _uniforms[3];
 
@@ -147,8 +152,8 @@ namespace gemini
 					glm::mat4 projection_matrix;
 					
 					float w = 0; float h = 0;
-					w = (real)data->render_width;
-					h = (real)data->render_height;
+					w = internal::render_width;
+					h = internal::render_height;
 					projection_matrix = glm::ortho(0.0f, w, 0.0f, h, -1.0f, 1.0f);
 					
 					RenderStream rs;
@@ -188,29 +193,10 @@ namespace gemini
 			internal::_vertexstream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
 				
 			internal::_vertexstream.create( FONT_MAX_VERTICES, 0, renderer::DRAW_TRIANGLES, renderer::BUFFER_STREAM );
-			
 
-			internal::_font_data = CREATE(internal::FontData);
 			set_viewport_size(render_width, render_height);
 			
-			
-			// setup font stash parameters
-			FONSparams params;
-			memset(&params, 0, sizeof(FONSparams));
-			
-			params.width = 256;
-			params.height = 256;
-			params.flags = FONS_ZERO_BOTTOMLEFT;
-			params.renderCreate = internal::font_create;
-			params.renderResize = internal::font_resize;
-			params.renderUpdate = internal::font_update;
-			params.renderDraw = internal::font_draw;
-			params.renderDelete = internal::font_delete;
-			params.userPtr = internal::_font_data;
-			
-			internal::_font_context = fonsCreateInternal(&params);
-			assert(internal::_font_context != 0);
-
+			// setup the font shader
 			internal::_shader = fontshader;
 			assert(internal::_shader != 0);
 			
@@ -224,21 +210,22 @@ namespace gemini
 			// cleanup used memory here
 			internal::_vertexstream.destroy();
 			
-			if (internal::_font_context)
+			for (internal::FontData* font : internal::_font_data)
 			{
 				// delete internal font stash context and data
-				fonsDeleteInternal(internal::_font_context);
-				internal::_font_context = 0;
-				
-				DESTROY(FontData, internal::_font_data);
+				fonsDeleteInternal(font->context);
+				DESTROY(FontData, font);
 			}
 		} // shutdown
 		
 
 		
-		void draw_string(const renderer::Font& font, int x, int y, const char* utf8, const core::Color& color)
+		void draw_string(Handle handle, int x, int y, const char* utf8, const core::Color& color)
 		{
-			if (font.is_valid())
+			y = internal::render_height - y - internal::vertical_offset_pixels;
+		
+			internal::FontData* font = internal::_font_data[handle];
+			if (font->is_valid())
 			{
 				RenderStream rs;
 				
@@ -249,24 +236,24 @@ namespace gemini
 				rs.run_commands();
 				
 				// draw
-				fonsSetColor(internal::_font_context, RGBAToUInt(color.r, color.g, color.b, color.a));
-				fonsDrawText(internal::_font_context, x, y, utf8, 0);
+				fonsSetColor(font->context, RGBAToUInt(color.r, color.g, color.b, color.a));
+				fonsDrawText(font->context, x, y, utf8, 0);
 				
 				// restore state
 				rs.rewind();
-				rs.add_state( renderer::STATE_BLEND, 0 );
-				rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
+				rs.add_state(renderer::STATE_BLEND, 0);
+				rs.add_state(renderer::STATE_DEPTH_TEST, 1);
 				rs.run_commands();
 			}
 		} // draw_string
 		
 		
-		void dimensions_for_text(const renderer::Font& font, const char* utf8, float& minx, float& miny, float& maxx, float& maxy)
+		void dimensions_for_text(internal::FontData* font, const char* utf8, float& minx, float& miny, float& maxx, float& maxy)
 		{
-			if (font.is_valid())
+			if (font->is_valid())
 			{
 				float bounds[4];
-				fonsTextBounds(internal::_font_context, 0, 0, utf8, 0, bounds);
+				fonsTextBounds(font->context, 0, 0, utf8, 0, bounds);
 				
 				minx = bounds[0];
 				miny = bounds[1];
@@ -277,13 +264,19 @@ namespace gemini
 		
 		void set_viewport_size(int render_width, int render_height)
 		{
-			internal::_font_data->render_width = render_width;
-			internal::_font_data->render_height = render_height;
+			internal::render_width = render_width;
+			internal::render_height = render_height;
 		}
 		
-		unsigned int measure_height(const renderer::Font& font, const char * utf8 )
+		void set_vertical_offset(int8_t height_pixels)
 		{
-			if (!font.is_valid())
+			internal::vertical_offset_pixels = height_pixels;
+		}
+		
+		unsigned int measure_height(Handle handle, const char * utf8 )
+		{
+			internal::FontData* font = internal::_font_data[handle];
+			if (!font)
 			{
 				return 0;
 			}
@@ -293,9 +286,10 @@ namespace gemini
 			return maxy-miny;
 		} // measure_height
 		
-		unsigned int measure_width(const renderer::Font& font, const char* utf8 )
+		unsigned int measure_width(Handle handle, const char* utf8 )
 		{
-			if (!font.is_valid())
+			internal::FontData* font = internal::_font_data[handle];
+			if (!font)
 			{
 				return 0;
 			}
@@ -305,21 +299,43 @@ namespace gemini
 			return maxx-minx;
 		} // measure_width
 		
-		renderer::Font load_font_from_memory(const void* data, unsigned int data_size, unsigned short point_size)
+		Handle load_font_from_memory(const void* data, unsigned int data_size, unsigned short point_size)
 		{
-			renderer::Font font;
-			font.handle = fonsAddFontMem(internal::_font_context, "font", (unsigned char*)data, data_size, 0);
-			if (!font.is_valid())
+			internal::FontData* font = CREATE(internal::FontData);
+			
+			Handle handle = internal::_font_data.size();
+			internal::_font_data.push_back(font);
+						
+			// setup font stash parameters
+			FONSparams params;
+			memset(&params, 0, sizeof(FONSparams));
+			
+			params.width = 256;
+			params.height = 256;
+			params.flags = FONS_ZERO_BOTTOMLEFT;
+			params.renderCreate = internal::font_create;
+			params.renderResize = internal::font_resize;
+			params.renderUpdate = internal::font_update;
+			params.renderDraw = internal::font_draw;
+			params.renderDelete = internal::font_delete;
+			params.userPtr = font;
+			
+			font->context = fonsCreateInternal(&params);
+			assert(font->context != 0);
+			
+			
+			font->handle = fonsAddFontMem(font->context, "font", (unsigned char*)data, data_size, 0);
+			if (!font->is_valid())
 			{
 				LOGE( "Unable to load font from memory!\n" );
-				font.handle = -1;
+				font->handle = -1;
 			}
 			
 			// setup the font
-			fonsSetFont(internal::_font_context, font.handle);
-			fonsSetSize(internal::_font_context, point_size);
+			fonsSetFont(font->context, font->handle);
+			fonsSetSize(font->context, point_size);
 
-			return font;
+			return handle;
 		} // load_font_from_memory
 	} // namespace font
 } // namespace gemini

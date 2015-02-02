@@ -40,8 +40,9 @@ namespace gemini
 	{
 		Font::Font()
 		{
+			font_size = 0;		
 			font_data = 0;
-			font_size = 0;
+			handle = 0;
 		}
 
 		void Font::release()
@@ -55,7 +56,7 @@ namespace gemini
 		
 		
 		
-		char* load_font_from_file(const char* path, unsigned short point_size, renderer::Font& font)
+		char* load_font_from_file(const char* path, unsigned short point_size, font::Handle& font)
 		{
 			size_t font_data_size = 0;
 			char * font_data = 0;
@@ -79,7 +80,7 @@ namespace gemini
 		
 		core::util::ConfigLoadStatus load_font_from_file( const Json::Value & root, void * data )
 		{
-			Font * font = (Font*)data;
+			Font* font = (Font*)data;
 			if (!font)
 			{
 				return core::util::ConfigLoad_Failure;
@@ -96,7 +97,7 @@ namespace gemini
 				font->font_size = font->font_size * 2;
 			}
 			
-			if ( font->handle.is_valid() )
+			if (font)
 			{
 				return core::util::ConfigLoad_Success;
 			}

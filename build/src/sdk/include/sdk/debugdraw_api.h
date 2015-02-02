@@ -54,7 +54,7 @@ namespace gemini
 		// draw a sphere
 		virtual void sphere(const glm::vec3& center, const core::Color& color, float radius = 2.0, float duration = DEBUGDRAW_MIN_DURATION_MSEC) = 0;
 		
-		// text, in screen space coordinates
+		// text, in screen space coordinates; origin at the top left
 		virtual void text(int x, int y, const char* string, const core::Color& color, float duration = 0.0f) = 0;
 	};
 	

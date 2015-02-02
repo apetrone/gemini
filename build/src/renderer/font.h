@@ -31,16 +31,23 @@
 
 namespace gemini
 {
+	namespace font
+	{
+		typedef int Handle;
+	}
+	
 	namespace renderer
 	{
-		typedef int FontHandle;
 		struct Font
 		{
-			FontHandle handle;
+			font::Handle handle;
 			uint16_t point_size;
 			
+			Font() : handle(-1), point_size(0) {}
+			virtual ~Font() {}
+			
 			inline bool is_valid() const { return (handle >= 0); }
-		};
+		}; // Font
 	} // namespace renderer
 
 	namespace font
@@ -51,18 +58,21 @@ namespace gemini
 		void shutdown();
 		
 		// draw string at (x, y) screen coordinates with the origin in the upper left of the screen
-		void draw_string(const renderer::Font& font, int x, int y, const char* utf8, const core::Color& color );
+		void draw_string(Handle handle, int x, int y, const char* utf8, const core::Color& color);
 		
 		// set the viewport size for the future draw calls
 		void set_viewport_size(int render_width, int render_height);
 		
+		// set a vertical offset in pixels; commonly used to offset for titlebar
+		void set_vertical_offset(int8_t height_pixels);
+		
 		// query the height of the font in pixels
-		unsigned int measure_height(const renderer::Font& font, const char* utf8 );
+		unsigned int measure_height(Handle handle, const char* utf8);
 		
 		// measure the width of the string in a given font in pixels
-		unsigned int measure_width(const renderer::Font& font, const char* utf8 );
+		unsigned int measure_width(Handle handle, const char* utf8);
 		
 		// load font from memory with the desired point size
-		renderer::Font load_font_from_memory(const void* data, unsigned int data_size, unsigned short point_size);
+		Handle load_font_from_memory(const void* data, unsigned int data_size, unsigned short point_size);
 	} // namespace font
 } // namespace gemini
