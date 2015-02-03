@@ -44,7 +44,6 @@ class OSXPlatformInterface : public IPlatformInterface
 public:
 	virtual Result startup();
 	virtual void shutdown();
-	virtual void set_cursor_position(int x, int y);
 	
 	virtual Result get_program_directory(char* path, size_t size);
 	virtual Result make_directory(const char* path);

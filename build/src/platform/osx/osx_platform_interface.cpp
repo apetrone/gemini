@@ -51,16 +51,6 @@ void OSXPlatformInterface::shutdown()
 	osx_shutdown();
 }
 
-void OSXPlatformInterface::set_cursor_position(int x, int y)
-{
-	CGPoint target = CGPointMake(x, y);
-//	NSScreen* screen = [NSScreen screen];
-	
-	// this operates in the global display coordinate space
-	CGWarpMouseCursorPosition(target);
-	CGAssociateMouseAndMouseCursorPosition(true);
-}
-
 Result OSXPlatformInterface::get_program_directory(char* path, size_t size)
 {
 	return osx_program_directory(path, size);
