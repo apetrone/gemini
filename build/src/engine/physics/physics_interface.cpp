@@ -211,7 +211,7 @@ namespace gemini
 			rigidbody->set_collision_shape(bullet_shape);
 			rigidbody->set_collision_ghost(ghost);
 			
-			bullet:get_world()->addRigidBody(body);
+			bullet::get_world()->addRigidBody(body);
 			bullet::get_world()->addCollisionObject(ghost, btBroadphaseProxy::SensorTrigger, btBroadphaseProxy::CharacterFilter);
 		
 			return rigidbody;
@@ -332,7 +332,7 @@ namespace gemini
 					body->setWorldTransform(local_transform);
 				}
 				
-				bullet:get_world()->addRigidBody(body);
+				bullet::get_world()->addRigidBody(body);
 			}
 			
 			return object;
