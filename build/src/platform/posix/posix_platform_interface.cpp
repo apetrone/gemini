@@ -99,17 +99,17 @@ Result PosixPlatformInterface::make_directory(const char* path)
 
 DynamicLibrary* PosixPlatformInterface::open_dynamiclibrary(const char* library_path)
 {
-	return 0;
+	return posix_dynamiclibrary_open(library_path);
 }
 
 void PosixPlatformInterface::close_dynamiclibrary(DynamicLibrary* library)
 {
-	
+	posix_dynamiclibrary_close(library);
 }
 
 DynamicLibrarySymbol PosixPlatformInterface::find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name)
 {
-	return 0;
+	return posix_dynamiclibrary_find(library, symbol_name);
 }
 
 const char* PosixPlatformInterface::get_dynamiclibrary_extension() const

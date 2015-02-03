@@ -40,6 +40,7 @@ namespace platform
 		void* handle = dlopen(library_path, RTLD_LAZY);
 		if (!handle)
 		{
+			fprintf(stderr, dlerror());
 			return 0;
 		}
 		
