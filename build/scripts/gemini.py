@@ -327,6 +327,12 @@ def get_librenderer(arguments, target_platform):
 		"src/renderer/gl/gemgl_osx.mm"
 	]
 
+
+	linux = librenderer.layout(platform="linux")
+	linux.cflags += [
+		"-fPIC"
+	]
+
 	return librenderer
 
 def get_libplatform(arguments, target_platform):
@@ -364,6 +370,10 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/posix/posix_dynamiclibrary.*",
 		"src/platform/posix/posix_timer.*",
 		"src/platform/posix/posix_filesystem.*"
+	]
+
+	linux.cflags += [
+		"-fPIC"
 	]
 
 	linux.includes += [
@@ -404,6 +414,11 @@ def get_libcore(arguments, target_platform):
 		"*.DS_Store"
 	]
 
+	linux = libcore.layout(platform="linux")
+	linux.cflags += [
+		"-fPIC"
+	]	
+
 	return libcore
 
 
@@ -439,6 +454,10 @@ def get_rnd(arguments, libplatform, libcore, librenderer, **kwargs):
 	rnd_linux.links += [
 		"GL"
 	]
+
+	rnd_linux.cflags += [
+		"-fPIC"
+	]	
 
 	return rnd
 
