@@ -91,9 +91,6 @@ const uint16_t MAX_ENTITIES = 2048;
 
 #include <nom/nom.hpp>
 #include <nom/compositor.hpp>
-#include <nom/label.hpp>
-#include <nom/button.hpp>
-#include <nom/renderer.hpp>
 #include <nom/graph.hpp>
 
 gui::Compositor* _compositor = 0;
@@ -120,24 +117,25 @@ class GUIRenderer : public gui::Renderer
 	float current_depth;
 	
 private:
-	void render_buffer(renderer::VertexStream& vs, RenderStream& rs, assets::Shader* shader, assets::Material* material)
+	void render_buffer(renderer::VertexStream& stream, assets::Shader* shader, assets::Material* material)
 	{
-		vs.update();
+		stream.update();
 		
 		glm::mat4 modelview;
-		glm::mat4 projection = glm::ortho( 0.0f, (float)compositor->width, (float)compositor->height, 0.0f, -0.1f, 32.0f );
+		glm::mat4 projection = glm::ortho( 0.0f, (float)compositor->width, (float)compositor->height, 0.0f, -0.1f, 256.0f );
 		glm::mat4 object_matrix;
 
+		RenderStream rs;
 		rs.add_shader( shader->program );
 		rs.add_uniform_matrix4( shader->program->get_uniform_location("modelview_matrix"), &modelview );
 		rs.add_uniform_matrix4( shader->program->get_uniform_location("projection_matrix"), &projection );
 		
 		rs.add_material( material, shader->program );
 		
-		rs.add_draw_call( vs.vertexbuffer );
+		rs.add_draw_call( stream.vertexbuffer );
 		
 		rs.run_commands();
-		vs.reset();
+		stream.reset();
 	}
 	
 	
@@ -157,24 +155,23 @@ public:
 	}
 
 
+	virtual void increment_depth()
+	{
+		current_depth += 1.0f;
+	}
+
 	virtual void startup(gui::Compositor* c)
 	{
 		this->compositor = c;
-		stream.desc.add( renderer::VD_FLOAT3 );
-		stream.desc.add( renderer::VD_FLOAT2 );
-		stream.desc.add( renderer::VD_UNSIGNED_BYTE4 );
-		stream.create( 64, 64, renderer::DRAW_INDEXED_TRIANGLES );
+		stream.desc.add(renderer::VD_FLOAT3);
+		stream.desc.add(renderer::VD_FLOAT2);
+		stream.desc.add(renderer::VD_UNSIGNED_BYTE4);
+		stream.create(64, 64, renderer::DRAW_INDEXED_TRIANGLES);
 		
 		lines.desc.add(renderer::VD_FLOAT3);
 		lines.desc.add(renderer::VD_FLOAT2);
 		lines.desc.add(renderer::VD_UNSIGNED_BYTE4);
 		lines.create(128, 0, renderer::DRAW_LINES);
-		
-//		assets::ShaderString name("uv0");
-//		vertex_attribs = assets::find_parameter_mask( name );
-//		
-//		name = "colors";
-//		vertex_attribs |= assets::find_parameter_mask( name );
 
 		// load shader
 		shader = assets::shaders()->load_from_path("shaders/gui");
@@ -219,10 +216,8 @@ public:
 	
 	virtual void shutdown(gui::Compositor* c)
 	{
-		
 	}
-	
-	
+		
 	virtual void begin_frame(gui::Compositor* c)
 	{
 		RenderStream rs;
@@ -243,8 +238,6 @@ public:
 		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
 		rs.add_state(renderer::STATE_DEPTH_WRITE, 1);
 		rs.run_commands();
-		
-		current_depth = 0.0f;
 	}
 	
 	
@@ -255,9 +248,9 @@ public:
 		//		glm::vec3 end = start + glm::vec3( size.width, size.height, 0.0f );
 		//		debugdraw::line( start, end, Color( 255, 0, 255 ) );
 		//		debugdraw::point( glm::vec3( bounds.origin.x + size.width, bounds.origin.y + size.height, 0.0f ), Color(255, 255, 255) );
-
-		float div = (1.0f/255.0f);
-		solid_color->parameters[0].vector_value = glm::vec4(color.r()*div, color.g()*div, color.b()*div, color.a()*div);
+		
+		float div = 1.0f/255.0f;
+		solid_color->parameters[0].vector_value = glm::vec4( (color.r() * div), (color.g() * div), (color.b() * div), (color.a() * div) );
 		//		debugdraw::box( start, end, Color(rgba[0], rgba[1], rgba[2], rgba[3]), 0.0f );
 		
 		stream.reset();
@@ -285,8 +278,12 @@ public:
 			renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
 			stream.append_indices( indices, 6 );
 		}
+		else
+		{
+			LOGV( "buffer be full\n" );
+		}
 		
-		this->render_buffer(stream, rs, shader, solid_color);
+		this->render_buffer(stream, shader, solid_color);
 	}
 	
 	virtual void draw_textured_bounds(const gui::Bounds& bounds, const gui::TextureHandle& handle)
@@ -324,35 +321,27 @@ public:
 			stream.append_indices( indices, 6 );
 		}
 		
-		this->render_buffer(stream, rs, shader, texture_map);
+		this->render_buffer(stream, shader, texture_map);
 	}
 	
-	virtual void draw_line(const gui::Point& start, const gui::Point& end, const gui::Color& color)
+	void draw_line(const gui::Point& start, const gui::Point& end, const gui::Color& color)
 	{
-		float div = (1.0f/255.0f);
-		solid_color->parameters[0].vector_value = glm::vec4(color.r()*div, color.g()*div, color.b()*div, color.a()*div);
-		
 		lines.reset();
-		
-		
 
-		
-		RenderStream rs;
-		
+		float div = 1.0f/255.0f;
+		solid_color->parameters[0].vector_value = glm::vec4( (color.r() * div), (color.g() * div), (color.b() * div), (color.a() * div) );
+
+
 		if (lines.has_room(2, 0))
 		{
 			VertexType* v = (VertexType*)lines.request(2);
 			
-
-			v[0].color = v[1].color = Color(255, 255, 255, 255);
-
 			v[0].position = glm::vec3(start.x, start.y, 0.0f);
 			v[1].position = glm::vec3(end.x, end.y, 0.0f);
-
-			//v[0].color = v[1].color = Color(rgba[0], rgba[1], rgba[2], rgba[3]);
+//			v[0].color = v[1].color = Color(255, 255, 255, 255);
 		}
-		
-		this->render_buffer(lines, rs, shader, solid_color);
+	
+		this->render_buffer(lines, shader, solid_color);
 	}
 	
 	virtual gui::TextureResult texture_create(const char* path, gui::TextureHandle& handle)
@@ -409,15 +398,10 @@ public:
 	
 	virtual void font_draw(const gui::FontHandle& handle, const char* string, const gui::Bounds& bounds, const gui::Color& color)
 	{
-		core::Color font_color(
-			color.r(),
-			color.g(),
-			color.b(),
-			color.a());
 		assets::Font* font = assets::fonts()->find_with_id(handle);
 		if (font)
 		{
-			font::draw_string(font->handle, bounds.origin.x, bounds.origin.y, string, font_color);
+			font::draw_string(font->handle, bounds.origin.x, bounds.origin.y, string, Color(color.r(), color.g(), color.b(), color.a()));
 		}
 	}
 };
@@ -932,24 +916,7 @@ public:
 
 
 
-class TestListener : public gui::Listener
-{
-public:
-	audio::SoundHandle ui_select;
 
-	virtual void focus_changed(gui::Panel* oldfocus, gui::Panel* newfocus)
-	{
-	
-	}
-	
-	virtual void hot_changed(gui::Panel* oldhot, gui::Panel* newhot)
-	{
-		if (newhot->is_button())
-		{
-			audio::play(ui_select);
-		}
-	}
-};
 
 
 typedef gemini::IGameInterface* (*connect_engine_fn)(gemini::IEngineInterface*);
@@ -998,7 +965,6 @@ public:
 	GUIRenderer gui_renderer;
 	gui::Compositor* compositor;
 	bool in_gui;
-	TestListener listener;
 	gui::Graph* graph;
 	
 public:
@@ -1237,44 +1203,29 @@ public:
 		active_camera->pitch = 30;
 		active_camera->update_view();
 			
-		listener.ui_select = audio::create_sound("sounds/8b_select1");
-		
+			
 		compositor = new gui::Compositor(params.render_width, params.render_height);
 		_compositor = compositor;
-		compositor->set_listener(&this->listener);
 		compositor->set_renderer(&this->gui_renderer);
-		gui::Panel* root = new gui::Panel(compositor);
+//		gui::Panel* root = new gui::Panel(compositor);
 //		gui::Label* b = new gui::Label(compositor);
-//		b->set_bounds(450, 250, 250, 250);
+//		b->set_bounds(50, 50, 250, 250);
 //		b->set_font(compositor, "fonts/default16");
 //		b->set_text("hello");
-//		b->set_background_color(gui::Color(0, 0, 0, 128));
-//		b->set_foreground_color(gui::Color(255, 255, 255, 255));
-
-//		gui::Button* play = new gui::Button(compositor);
-//		play->set_bounds(400, 200, 120, 24);
-//		play->set_font(compositor, "fonts/default16");
-//		play->set_text("New Game");
-//		compositor->add_child(play);
-//
-//		gui::Button* quit = new gui::Button(compositor);
-//		quit->set_bounds(400, 250, 120, 24);
-//		quit->set_font(compositor, "fonts/default16");
-//		quit->set_text("Quit");
-//		compositor->add_child(quit);
+//		compositor->add_child(b);
 
 
 		graph = new gui::Graph(compositor);
-		graph->set_foreground_color(gui::Color(255, 255, 255, 128));
-		graph->set_background_color(gui::Color(0, 0, 0, 192));
-		graph->set_bounds(200, 300, 200, 160);
+		graph->set_bounds(400, 300, 250, 250);
+		graph->set_font(compositor, "fonts/debug");
+		graph->set_background_color(gui::Color(0, 0, 0, 128));
+		graph->set_foreground_color(gui::Color(255, 255, 255, 255));
 		graph->create_samples(100, 1);
-		graph->enable_baseline(true, 0.0f, gui::Color(255, 128, 0, 255));
-		graph->configure_channel(0, gui::Color(255, 0, 0, 255), gui::Color(255, 0, 255, 255), gui::Color(0, 255, 0, 255));
-		graph->set_range(-10.0f, 50);
-		graph->set_font(compositor, "font/debug");
+		graph->configure_channel(0, gui::Color(255, 0, 0, 255));
+		graph->set_range(-10.0f, 30.0f);
 		compositor->add_child(graph);
-
+		graph->enable_baseline(true, 16.0f, gui::Color(255, 0, 255, 255));
+		
 		// capture the mouse
 //		kernel::instance()->capture_mouse( true );
 
@@ -1324,7 +1275,6 @@ public:
 
 	virtual void step( kernel::Parameters& params )
 	{
-	
 		if (compositor)
 		{
 			compositor->update(params.step_interval_seconds);
@@ -1342,6 +1292,7 @@ public:
 		{
 			graph->record_value(params.framedelta_raw_msec, 0);
 		}
+	
 		{
 			UserCommand command;
 			
