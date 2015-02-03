@@ -915,10 +915,6 @@ public:
 
 
 
-
-
-
-
 typedef gemini::IGameInterface* (*connect_engine_fn)(gemini::IEngineInterface*);
 typedef void (*disconnect_engine_fn)();
 
@@ -928,8 +924,6 @@ public kernel::IEventListener<kernel::MouseEvent>,
 public kernel::IEventListener<kernel::SystemEvent>,
 public kernel::IEventListener<kernel::GameControllerEvent>
 {
-
-
 public:
 	DECLARE_APPLICATION(ProjectChimera);
 
@@ -1215,10 +1209,14 @@ public:
 //		compositor->add_child(b);
 
 
+		gui::Panel* root = new gui::Panel(compositor);
+		root->set_bounds(0, 0, 500, 500);
+		compositor->add_child(root);
+
 		graph = new gui::Graph(compositor);
 		graph->set_bounds(400, 300, 250, 250);
 		graph->set_font(compositor, "fonts/debug");
-		graph->set_background_color(gui::Color(0, 0, 0, 128));
+		graph->set_background_color(gui::Color(0, 0, 0, 230));
 		graph->set_foreground_color(gui::Color(255, 255, 255, 255));
 		graph->create_samples(100, 1);
 		graph->configure_channel(0, gui::Color(255, 0, 0, 255));
@@ -1275,11 +1273,6 @@ public:
 
 	virtual void step( kernel::Parameters& params )
 	{
-		if (compositor)
-		{
-			compositor->update(params.step_interval_seconds);
-		}
-	
 		// this is going to be incorrect unless this is placed in the step.
 		// additionally, these aren't interpolated: figure how to; for example,
 		// draw hit boxes for a moving player with this system.
@@ -1291,6 +1284,11 @@ public:
 		if (graph)
 		{
 			graph->record_value(params.framedelta_raw_msec, 0);
+		}
+	
+		if (compositor)
+		{
+			compositor->update(params.framedelta_raw_msec);
 		}
 	
 		{
