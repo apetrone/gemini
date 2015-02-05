@@ -57,6 +57,7 @@
 
 #include "audio.h"
 
+#include <core/dictionary.h>
 
 #include <core/filesystem.h>
 #include <core/logging.h>
@@ -87,6 +88,81 @@ uint8_t RENDER_TO_VR = 1;
 uint8_t REQUIRE_RIFT = 1;
 
 const uint16_t MAX_ENTITIES = 2048;
+
+
+class IGameState
+{
+public:
+	virtual ~IGameState() {}
+	
+	/// @desc Called when this game state becomes active
+	virtual void activate() = 0;
+	
+	/// @desc Called when this game state should go inactive
+	virtual void deactivate() = 0;
+	
+	/// @desc Called each frame
+	/// @param framedelta_seconds The elapsed time since the last run_frame call (in seconds).
+	virtual void run_frame(float framedelta_seconds) = 0;
+};
+
+
+class MainMenuState : public IGameState
+{
+public:
+	virtual void activate() {}
+	
+	virtual void deactivate() {}
+	
+	virtual void run_frame(float framedelta_seconds) {}
+};
+
+class InGameMenuState : public IGameState
+{
+public:
+	virtual void activate() {}
+	
+	virtual void deactivate() {}
+	
+	virtual void run_frame(float framedelta_seconds) {}
+};
+
+class GameState : public IGameState
+{
+public:
+	virtual void activate() {}
+	
+	virtual void deactivate() {}
+	
+	virtual void run_frame(float framedelta_seconds) {}
+};
+
+class StateController
+{
+private:
+	typedef Dictionary<IGameState*> StatesByHash;
+	StatesByHash states;
+	IGameState* active_game_state;
+
+public:
+	StateController() : active_game_state(0) {}
+	virtual ~StateController() {}
+
+
+	void add_state(const char* name, IGameState* state)
+	{
+		states.insert(name, state);
+	}
+	
+	IGameState* state_by_name(const char* name)
+	{
+		IGameState* state = 0;
+		states.get(name, state);
+		return state;
+	}
+	
+	IGameState* active_state() const { return active_game_state; }
+};
 
 
 #include <nom/nom.hpp>
@@ -1172,6 +1248,19 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Parameters& params )
 	{
+		{
+			StateController sc;
+			
+			sc.add_state("mainmenu", new MainMenuState());
+			sc.add_state("ingame", new InGameMenuState());
+			sc.add_state("game", new GameState());
+			
+			
+			IGameState* mainmenu = sc.state_by_name("mainmenu");
+			mainmenu->activate();
+		}
+	
+	
 		float camera_fov = 50.0f;
 		if (device && RENDER_TO_VR)
 		{
