@@ -30,18 +30,18 @@
 
 extern "C"
 {
-	//#include <murmur3.h>
+	#include <murmur3.h>
 };
 
 namespace core
 {
 	namespace util
 	{
-		unsigned int hash_32bit( const void * data, int data_size, unsigned int seed )
+		uint32_t hash_32bit( const void * data, int data_size, unsigned int seed )
 		{
-			unsigned int hash = 0;
+			uint32_t hash = 0;
 			
-			//MurmurHash3_x86_32( data, data_size, seed, &hash );
+			MurmurHash3_x86_32(data, data_size, seed, &hash);
 			
 			return hash;
 		} // hash_32bit

@@ -349,12 +349,36 @@ void test_rendering()
 }
 
 
+#include <core/dictionary.h>
+
+void test_hash()
+{
+	core::Dictionary<int> d;
+	
+	d.insert("adam", 30);
+	d.insert("what", 32);
+	
+	if (d.has_key("what"))
+	{
+		LOGV("dictionary has key\n");
+	}
+	else
+	{
+		LOGV("dictionary doesn't have key!\n");
+	}
+
+	int value = 0;
+	d.get("adam", value);
+	d.get("what", value);
+}
+
 int main(int argc, char** argv)
 {
 	platform::startup();
 	core::startup();
 	
-	test_rendering();
+	test_hash();
+//	test_rendering();
 	
 	core::shutdown();
 	platform::shutdown();

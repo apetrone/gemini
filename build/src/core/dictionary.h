@@ -26,6 +26,7 @@
 
 
 #include <core/color.h>
+#include <core/util.h>
 
 namespace core
 {
@@ -139,10 +140,204 @@ namespace core
 		}
 	}; // KeyValues
 	
-	
+	template <class Type, int HashTableSize=16>
 	class Dictionary
 	{
+	private:
+		typedef const char* KeyType;
+		typedef uint32_t HashType;
+	
+		struct Bucket
+		{
+			char* key;
+			HashType hash;
+			Type data;
+			Bucket* next;
+			
+			
+			static Bucket* create()
+			{
+				return CREATE(Bucket);
+			}
+			
+			static void destroy(Bucket* bucket)
+			{
+				DESTROY(Bucket, bucket);
+			}
+			
+			
+			Bucket()
+			{
+				key = 0;
+				hash = 0;
+				next = 0;
+			}
+
+			~Bucket()
+			{
+				if (key)
+				{
+					platform::memory::allocator().deallocate(key);
+					key = 0;
+				}
+				
+				Bucket* iter = next;
+				while(iter)
+				{
+					Bucket* temp = iter;
+					Bucket::destroy(temp);
+					iter = iter->next;
+				}
+			}
+			
+			Bucket(const Bucket& other)
+			{
+				*this = other;
+			}
+			
+			const Bucket& operator=(const Bucket& other)
+			{
+				key = other.key;
+				hash = other.hash;
+				data = other.data;
+				next = other.next;
+				
+				return *this;
+			}
+			
+			bool key_matches(KeyType key) const
+			{
+				return (core::str::case_insensitive_compare(this->key, key, 0) == 0);
+			}
+			
+			void set_key(KeyType newkey)
+			{
+				if (key != 0)
+				{
+					platform::memory::allocator().deallocate(key);
+				}
+				
+				size_t key_length = core::str::len(newkey);
+				this->key = (char*)platform::memory::allocator().allocate(key_length+1, __FILE__, __LINE__);
+				this->key[key_length] = 0;
+				core::str::copy(this->key, newkey, key_length);
+			}
+			
+			void set_value(const Type& value)
+			{
+				data = value;
+			}
+			
+			bool is_used() const
+			{
+				return (key != 0);
+			}
+		};
+
+
+		Bucket* table[HashTableSize];
+
+	private:
+		HashType hash(KeyType key) const
+		{
+			return core::util::hash_32bit(key, core::str::len(key), 0);
+		} // hash
+		
+		uint32_t get_table_index(KeyType key) const
+		{
+			return (hash(key) % HashTableSize);
+		} // get_table_index
+		
+		const Bucket* find_bucket(uint32_t index, KeyType key) const
+		{
+			const Bucket* bucket = table[index];
+			if (bucket && bucket->is_used())
+			{
+				while(bucket)
+				{
+					if (bucket->key_matches(key))
+					{
+						return bucket;
+					}
+					bucket = bucket->next;
+				}
+			}
+			
+			return 0;
+		} // find_bucket
+
+
 	public:
-		virtual ~Dictionary() {}
-	};
+		Dictionary()
+		{
+			for (size_t index = 0; index < HashTableSize; ++index)
+			{
+				table[index] = 0;
+			}
+		}
+		
+		~Dictionary()
+		{
+			for (size_t index = 0; index < HashTableSize; ++index)
+			{
+				if (table[index])
+				{
+					Bucket::destroy(table[index]);
+				}
+			}
+		}
+		
+		
+		void insert(KeyType key, const Type& value)
+		{
+			HashType index = get_table_index(key);
+			const Bucket* existing_node = find_bucket(index, key);
+			if (!existing_node)
+			{
+				Bucket* bucket = table[index];
+				Bucket* newbucket = 0;
+				
+				newbucket = Bucket::create();
+				newbucket->set_key(key);
+				newbucket->set_value(value);
+				
+				// bucket is not used
+				if (!bucket)
+				{
+					table[index] = newbucket;
+				}
+				else
+				{
+					// need to insert a new bucket in the chain
+					newbucket->next = bucket;
+					table[index] = newbucket;
+				}
+			}
+			else
+			{
+				// update the data
+				Bucket* bucket = table[index];
+				bucket->set_value(value);
+			}
+			
+		} // insert
+		
+		bool has_key(KeyType key) const
+		{
+			return (find_bucket(get_table_index(key), key) != 0);
+		} // has_key
+		
+		bool get(KeyType key, Type& value)
+		{
+			const Bucket* bucket = find_bucket(get_table_index(key), key);
+			if (bucket)
+			{
+				value = bucket->data;
+				return true;
+			}
+			
+			return false;
+		} // get
+
+	}; // Dictionary
 } // namespace core
