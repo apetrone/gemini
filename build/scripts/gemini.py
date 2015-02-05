@@ -396,7 +396,8 @@ def get_libcore(arguments, target_platform):
 		"src/core/*.*",
 
 		# include this almagamated version of jsoncpp until we replace it.
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp"),
+		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c")
 	]
 
 	libcore.defines += [
@@ -407,7 +408,8 @@ def get_libcore(arguments, target_platform):
 		"src",
 		"src/core",
 
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp")
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),
+		os.path.join(DEPENDENCIES_FOLDER, "murmur3")
 	]
 
 	libcore.excludes += [
