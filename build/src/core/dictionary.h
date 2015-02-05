@@ -150,7 +150,6 @@ namespace core
 		struct Bucket
 		{
 			char* key;
-			HashType hash;
 			Type data;
 			Bucket* next;
 			
@@ -169,7 +168,6 @@ namespace core
 			Bucket()
 			{
 				key = 0;
-				hash = 0;
 				next = 0;
 			}
 
@@ -198,10 +196,8 @@ namespace core
 			const Bucket& operator=(const Bucket& other)
 			{
 				key = other.key;
-				hash = other.hash;
 				data = other.data;
 				next = other.next;
-				
 				return *this;
 			}
 			
