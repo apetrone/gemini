@@ -534,6 +534,8 @@ public:
 	virtual void render_frame(gemini::IEngineEntity** entity_list, Camera& camera, const kernel::Parameters& params ) = 0;
 	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
 	virtual void render_viewmodel(gemini::IEngineEntity* entity, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
+	
+	virtual void render_gui() = 0;
 };
 
 
@@ -651,6 +653,11 @@ public:
 	{
 		
 	}
+	
+	virtual void render_gui()
+	{
+		
+	}
 };
 
 
@@ -704,12 +711,7 @@ public:
 		camera.update_view();
 		
 		render_scene_from_camera(entity_list, camera, scenelink);
-	
-		if (_compositor)
-		{
-			_compositor->render();
-		}
-	
+		
 		debugdraw::render(camera.matCam, camera.matProj, 0, 0, params.render_width, params.render_height);
 	}
 	
@@ -736,6 +738,14 @@ public:
 		camera.update_view();
 
 		render_entity_from_camera(entity, camera, scenelink);
+	}
+	
+	virtual void render_gui()
+	{
+		if (_compositor)
+		{
+			_compositor->render();
+		}
 	}
 };
 
@@ -972,7 +982,7 @@ public:
 
 	virtual void render_gui()
 	{
-		
+		render_method->render_gui();
 	}
 	
 	virtual void render_viewmodel(IEngineEntity* entity, const glm::vec3& origin, const glm::vec2& view_angles)
@@ -1058,6 +1068,7 @@ public:
 	gui::Graph* graph;
 	
 	
+	gui::Panel* root;
 	gui::Button* newgame;
 	gui::Button* quit;
 	
@@ -1099,8 +1110,7 @@ public:
 				
 				kernel::instance()->show_mouse(in_gui);
 				
-				newgame->set_visible(in_gui);
-				quit->set_visible(in_gui);
+				root->set_visible(in_gui);
 			}
 			else if (event.key == input::KEY_SPACE)
 			{
@@ -1327,22 +1337,27 @@ public:
 		compositor->set_renderer(&this->gui_renderer);
 		compositor->set_listener(&gui_listener);
 		
-		quit = new gui::Button(compositor);
+		root = new gui::Panel(compositor);
+		root->set_bounds(0, 0, params.render_width, params.render_height);
+		root->set_background_color(gui::Color(0, 0, 0, 192));
+		compositor->add_child(root);
+		
+		
+		quit = new gui::Button(root);
 		quit->set_bounds(0, 200, 120, 40);
 		quit->set_font(compositor, "fonts/debug");
 		quit->set_text("Quit Game");
 		quit->set_background_color(gui::Color(128, 128, 128, 255));
 		quit->set_userdata((void*)1);
-		compositor->add_child(quit);
+		root->add_child(quit);
 		
-		newgame = new gui::Button(compositor);
+		newgame = new gui::Button(root);
 		newgame->set_bounds(0, 250, 120, 40);
 		newgame->set_font(compositor, "fonts/debug");
 		newgame->set_text("New Game");
 		newgame->set_background_color(gui::Color(128, 128, 128, 255));
 		newgame->set_userdata((void*)2);
-		compositor->add_child(newgame);
-		
+		root->add_child(newgame);
 								
 								
 //		gui::Panel* root = new gui::Panel(compositor);
@@ -1360,7 +1375,7 @@ public:
 		graph = new gui::Graph(compositor);
 		graph->set_bounds(400, 300, 250, 250);
 		graph->set_font(compositor, "fonts/debug");
-		graph->set_background_color(gui::Color(0, 0, 0, 230));
+		graph->set_background_color(gui::Color(10, 10, 10, 210));
 		graph->set_foreground_color(gui::Color(255, 255, 255, 255));
 		graph->create_samples(100, 1);
 		graph->configure_channel(0, gui::Color(255, 0, 0, 255));
