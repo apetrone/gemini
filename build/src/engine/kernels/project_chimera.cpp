@@ -1402,7 +1402,7 @@ public:
 //		root->set_bounds(0, 0, 500, 500);
 //		compositor->add_child(root);
 
-		graph = new gui::Graph(compositor);
+		graph = new gui::Graph(root);
 		graph->set_bounds(params.render_width-250, 0, 250, 250);
 		graph->set_font(compositor, "fonts/debug");
 		graph->set_background_color(gui::Color(10, 10, 10, 210));
@@ -1410,7 +1410,7 @@ public:
 		graph->create_samples(100, 1);
 		graph->configure_channel(0, gui::Color(255, 0, 0, 255));
 		graph->set_range(-10.0f, 30.0f);
-		compositor->add_child(graph);
+		root->add_child(graph);
 		graph->enable_baseline(true, 16.0f, gui::Color(255, 0, 255, 255));
 		
 		// capture the mouse
