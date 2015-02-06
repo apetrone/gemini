@@ -470,7 +470,16 @@ public:
 	
 	virtual gui::FontResult font_measure_string(const gui::FontHandle& handle, const char* string, gui::Bounds& bounds)
 	{
-		return gui::FontResult_Success;
+		assets::Font* font = assets::fonts()->find_with_id(handle);
+		if (font)
+		{
+			unsigned int width = font::measure_width(font->handle, string);
+			unsigned int height = font::measure_height(font->handle, string);
+			bounds.set(0, 0, width, height);
+			return gui::FontResult_Success;
+		}
+		
+		return gui::FontResult_Failed;
 	}
 	
 	virtual void font_draw(const gui::FontHandle& handle, const char* string, const gui::Bounds& bounds, const gui::Color& color)
