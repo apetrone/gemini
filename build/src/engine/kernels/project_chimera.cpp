@@ -1007,8 +1007,22 @@ typedef void (*disconnect_engine_fn)();
 
 class CustomListener : public gui::Listener
 {
+private:
+
+	audio::SoundHandle hover_sound;
+	
+public:
+	void set_hover_sound(audio::SoundHandle handle) { hover_sound = handle; }
+
 	virtual void focus_changed(gui::Panel* old_focus, gui::Panel* new_focus) {}
-	virtual void hot_changed(gui::Panel* old_hot, gui::Panel* new_hot) {}
+	virtual void hot_changed(gui::Panel* old_hot, gui::Panel* new_hot)
+	{
+		size_t data = reinterpret_cast<size_t>(new_hot->get_userdata());
+		if (data > 0)
+		{
+			audio::play(hover_sound);
+		}
+	}
 	
 	virtual void handle_event(const gui::EventArgs& event)
 	{
@@ -1305,6 +1319,8 @@ public:
 			mainmenu->activate();
 		}
 	
+
+		gui_listener.set_hover_sound(audio::create_sound("sounds/8bchoice"));
 	
 		float camera_fov = 50.0f;
 		if (device && RENDER_TO_VR)
@@ -1342,24 +1358,42 @@ public:
 		root->set_background_color(gui::Color(0, 0, 0, 192));
 		compositor->add_child(root);
 		
+		gui::Color button_background(128, 128, 128, 255);
+		gui::Color button_hover(255, 255, 128, 255);
 		
-		quit = new gui::Button(root);
-		quit->set_bounds(0, 200, 120, 40);
-		quit->set_font(compositor, "fonts/debug");
-		quit->set_text("Quit Game");
-		quit->set_background_color(gui::Color(128, 128, 128, 255));
-		quit->set_userdata((void*)1);
-		root->add_child(quit);
+		uint32_t button_width = 120;
+		uint32_t button_height = 40;
+		uint32_t button_spacing = 10;
+		uint32_t total_buttons = 2;
+		uint32_t vertical_offset = 0;
+		uint32_t origin_x = (params.render_width/2.0f) - (button_width/2.0f);
+		uint32_t origin_y = (params.render_height/2.0f) - ((button_height*total_buttons)/2.0f);
 		
 		newgame = new gui::Button(root);
-		newgame->set_bounds(0, 250, 120, 40);
+		newgame->set_bounds(origin_x, origin_y, 120, 40);
 		newgame->set_font(compositor, "fonts/debug");
 		newgame->set_text("New Game");
-		newgame->set_background_color(gui::Color(128, 128, 128, 255));
+		newgame->set_background_color(button_background);
+		newgame->set_hover_color(button_hover);
 		newgame->set_userdata((void*)2);
 		root->add_child(newgame);
-								
-								
+		origin_y += (button_height+button_spacing);
+		
+		
+		quit = new gui::Button(root);
+		quit->set_bounds(origin_x, origin_y, 120, 40);
+		quit->set_font(compositor, "fonts/debug");
+		quit->set_text("Quit Game");
+		quit->set_background_color(button_background);
+		quit->set_hover_color(button_hover);
+		quit->set_userdata((void*)1);
+		root->add_child(quit);
+		origin_y += (button_height+button_spacing);
+		
+		
+
+
+
 //		gui::Panel* root = new gui::Panel(compositor);
 //		gui::Label* b = new gui::Label(compositor);
 //		b->set_bounds(50, 50, 250, 250);
@@ -1373,7 +1407,7 @@ public:
 //		compositor->add_child(root);
 
 		graph = new gui::Graph(compositor);
-		graph->set_bounds(400, 300, 250, 250);
+		graph->set_bounds(params.render_width-250, 0, 250, 250);
 		graph->set_font(compositor, "fonts/debug");
 		graph->set_background_color(gui::Color(10, 10, 10, 210));
 		graph->set_foreground_color(gui::Color(255, 255, 255, 255));
