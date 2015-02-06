@@ -1077,6 +1077,9 @@ public:
 	bool in_gui;
 	gui::Graph* graph;
 	
+	audio::SoundHandle menu_show;
+	audio::SoundHandle menu_hide;
+	
 	
 	gui::Panel* root;
 	gui::Button* newgame;
@@ -1116,6 +1119,11 @@ public:
 				if (!in_gui)
 				{
 					center_mouse(kernel::parameters());
+					audio::play(menu_hide);
+				}
+				else
+				{
+					audio::play(menu_show);
 				}
 				
 				kernel::instance()->show_mouse(in_gui);
@@ -1303,20 +1311,23 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Parameters& params )
 	{
-		{
-			StateController sc;
-			
-			sc.add_state("mainmenu", new MainMenuState());
-			sc.add_state("ingame", new InGameMenuState());
-			sc.add_state("game", new GameState());
-			
-			
-			IGameState* mainmenu = sc.state_by_name("mainmenu");
-			mainmenu->activate();
-		}
+//		{
+//			StateController sc;
+//			
+//			sc.add_state("mainmenu", new MainMenuState());
+//			sc.add_state("ingame", new InGameMenuState());
+//			sc.add_state("game", new GameState());
+//			
+//			
+//			IGameState* mainmenu = sc.state_by_name("mainmenu");
+//			mainmenu->activate();
+//		}
 	
 
-		gui_listener.set_hover_sound(audio::create_sound("sounds/8bchoice"));
+		gui_listener.set_hover_sound(audio::create_sound("sounds/8b_select1"));
+	
+		menu_show = audio::create_sound("sounds/menu_show3");
+		menu_hide = audio::create_sound("sounds/menu_hide");
 	
 		float camera_fov = 50.0f;
 		if (device && RENDER_TO_VR)
