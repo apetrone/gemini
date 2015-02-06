@@ -54,7 +54,7 @@ namespace gemini
 	{
 
 		const btScalar DEFAULT_MOVEMENT_DAMPING = 0.85f;
-		const btScalar MOVEMENT_MULTIPLIER = 30.0f;
+		const btScalar MOVEMENT_MULTIPLIER = 60.0f;
 
 		//
 		// KinematicCharacter
