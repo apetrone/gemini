@@ -168,6 +168,7 @@ public:
 #include <nom/nom.hpp>
 #include <nom/compositor.hpp>
 #include <nom/graph.hpp>
+#include <nom/button.hpp>
 
 gui::Compositor* _compositor = 0;
 
@@ -994,6 +995,25 @@ public:
 typedef gemini::IGameInterface* (*connect_engine_fn)(gemini::IEngineInterface*);
 typedef void (*disconnect_engine_fn)();
 
+class CustomListener : public gui::Listener
+{
+	virtual void focus_changed(gui::Panel* old_focus, gui::Panel* new_focus) {}
+	virtual void hot_changed(gui::Panel* old_hot, gui::Panel* new_hot) {}
+	
+	virtual void handle_event(const gui::EventArgs& event)
+	{
+		LOGV("focus: %p\n", event.focus);
+		LOGV("hot: %p\n", event.hot);
+		LOGV("handle event: %i\n", event.type);
+		size_t data = reinterpret_cast<size_t>(event.focus->get_userdata());
+		if (event.focus->is_button() && data == 1)
+		{
+			kernel::instance()->set_active(false);
+		}
+	}
+};
+
+
 class ProjectChimera : public kernel::IApplication,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -1037,6 +1057,12 @@ public:
 	bool in_gui;
 	gui::Graph* graph;
 	
+	
+	gui::Button* newgame;
+	gui::Button* quit;
+	
+	CustomListener gui_listener;
+	
 public:
 	ProjectChimera()
 	{
@@ -1065,7 +1091,16 @@ public:
 		{
 			if (event.key == input::KEY_ESCAPE)
 			{
-				kernel::instance()->set_active(false);
+				in_gui = !in_gui;
+				if (!in_gui)
+				{
+					center_mouse(kernel::parameters());
+				}
+				
+				kernel::instance()->show_mouse(in_gui);
+				
+				newgame->set_visible(in_gui);
+				quit->set_visible(in_gui);
 			}
 			else if (event.key == input::KEY_SPACE)
 			{
@@ -1290,6 +1325,26 @@ public:
 		compositor = new gui::Compositor(params.render_width, params.render_height);
 		_compositor = compositor;
 		compositor->set_renderer(&this->gui_renderer);
+		compositor->set_listener(&gui_listener);
+		
+		quit = new gui::Button(compositor);
+		quit->set_bounds(0, 200, 120, 40);
+		quit->set_font(compositor, "fonts/debug");
+		quit->set_text("Quit Game");
+		quit->set_background_color(gui::Color(128, 128, 128, 255));
+		quit->set_userdata((void*)1);
+		compositor->add_child(quit);
+		
+		newgame = new gui::Button(compositor);
+		newgame->set_bounds(0, 250, 120, 40);
+		newgame->set_font(compositor, "fonts/debug");
+		newgame->set_text("New Game");
+		newgame->set_background_color(gui::Color(128, 128, 128, 255));
+		newgame->set_userdata((void*)2);
+		compositor->add_child(newgame);
+		
+								
+								
 //		gui::Panel* root = new gui::Panel(compositor);
 //		gui::Label* b = new gui::Label(compositor);
 //		b->set_bounds(50, 50, 250, 250);
@@ -1298,9 +1353,9 @@ public:
 //		compositor->add_child(b);
 
 
-		gui::Panel* root = new gui::Panel(compositor);
-		root->set_bounds(0, 0, 500, 500);
-		compositor->add_child(root);
+//		gui::Panel* root = new gui::Panel(compositor);
+//		root->set_bounds(0, 0, 500, 500);
+//		compositor->add_child(root);
 
 		graph = new gui::Graph(compositor);
 		graph->set_bounds(400, 300, 250, 250);
@@ -1380,6 +1435,7 @@ public:
 			compositor->update(params.framedelta_raw_msec);
 		}
 	
+		if (!in_gui)
 		{
 			UserCommand command;
 			
