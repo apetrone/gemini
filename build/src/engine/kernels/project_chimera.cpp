@@ -540,7 +540,6 @@ class SceneRenderMethod
 {
 public:
 	virtual ~SceneRenderMethod() {}
-	virtual void render_frame(gemini::IEngineEntity** entity_list, Camera& camera, const kernel::Parameters& params ) = 0;
 	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
 	virtual void render_viewmodel(gemini::IEngineEntity* entity, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
 	
@@ -557,7 +556,7 @@ class VRRenderMethod : public SceneRenderMethod
 public:
 	VRRenderMethod(vr::HeadMountedDevice* in_device, renderer::SceneLink& in_link) : device(in_device), scenelink(in_link) {}
 	
-	virtual void render_frame(gemini::IEngineEntity** entity_list, Camera& camera, const kernel::Parameters& params )
+	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles)
 	{
 		assert( device != nullptr );
 		
@@ -573,6 +572,17 @@ public:
 		rs.run_commands();
 		rs.rewind();
 		
+		Camera camera;
+		camera.type = Camera::FIRST_PERSON;
+		camera.perspective(50.0f, params.render_width, params.render_height, 0.01f, 8192.0f);
+		camera.set_absolute_position(origin);
+		camera.eye_position = origin;
+		camera.view = glm::vec3(0, 0, -1);
+		camera.pitch = view_angles.x;
+		camera.yaw = view_angles.y;
+		camera.update_view();
+		
+		
 		glm::vec3 old_camera_position = camera.pos;
 		glm::vec3 camera_position = camera.pos + glm::vec3(0, 1.6f, 0.0f);
 		vr::EyePose eye_poses[2];
@@ -580,7 +590,7 @@ public:
 		device->get_eye_poses(eye_poses, proj);
 		
 		
-
+		
 		for (uint32_t eye_index = 0; eye_index < 2; ++eye_index)
 		{
 			glm::mat4 old_matcam = camera.matCam;
@@ -613,7 +623,7 @@ public:
 			glm::quat character_rotation;
 			glm::quat rotation = eye_pose.rotation;
 			glm::vec3 translation = eye_pose.offset + eye_pose.translation;
-
+			
 			glm::mat4 tr = glm::translate(glm::mat4(1.0f), translation);
 			glm::mat4 ro = glm::toMat4(rotation);
 			glm::mat4 final_rift = glm::inverse(tr * ro);
@@ -622,15 +632,15 @@ public:
 			// then need to translate the character
 			// and finally add the rift translation to that.
 			
-//			camera.matCam = final_rift; //camera.get_inverse_rotation() * glm::translate(glm::mat4(1.0), -camera.pos);
-
-
+			//			camera.matCam = final_rift; //camera.get_inverse_rotation() * glm::translate(glm::mat4(1.0), -camera.pos);
+			
+			
 			glm::mat4 character_transform = glm::translate(glm::mat4(1.0), camera_position) * glm::transpose(camera.get_inverse_rotation());
 			glm::mat4 head_transform = tr * ro;
 			
 			camera.matCam = glm::inverse(character_transform * head_transform);
-
-
+			
+			
 			camera.matProj = proj[eye_index];
 			//camera.pos = translation;
 			
@@ -639,23 +649,18 @@ public:
 			// render nodes
 			rs.run_commands();
 			rs.rewind();
-
+			
 			render_scene_from_camera(entity_list, camera, scenelink);
 			
 			
 			camera.matCam = old_matcam;
 			// draw debug graphics
-//			debugdraw::render(camera.matCam, camera.matProj, x, y, width, height);
+			//			debugdraw::render(camera.matCam, camera.matProj, x, y, width, height);
 		}
-
-		camera.pos = old_camera_position;
-				
-		device->end_frame(driver);
-	}
-	
-	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles)
-	{
 		
+		camera.pos = old_camera_position;
+		
+		device->end_frame(driver);
 	}
 	
 	virtual void render_viewmodel(gemini::IEngineEntity* entity, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles)
@@ -676,24 +681,6 @@ class DefaultRenderMethod : public SceneRenderMethod
 public:
 	DefaultRenderMethod(renderer::SceneLink& in_link) : scenelink(in_link) {};
 
-	virtual void render_frame(gemini::IEngineEntity** entity_list, Camera& camera, const kernel::Parameters& params )
-	{
-		RenderStream rs;
-		rs.add_cullmode(renderer::CullMode::CULLMODE_BACK);
-//		rs.add_state(renderer::STATE_BACKFACE_CULLING, 0);
-		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
-		rs.add_viewport( 0, 0, params.render_width, params.render_height );
-		rs.add_clearcolor( 0.0, 0.0, 0.0, 1.0f );
-		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
-		rs.run_commands();
-		
-		render_scene_from_camera(entity_list, camera, scenelink);
-		
-		// draw debug graphics
-		{
-			debugdraw::render(camera.matCam, camera.matProj, 0, 0, params.render_width, params.render_height);
-		}
-	}
 
 	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles)
 	{
