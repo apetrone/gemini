@@ -60,22 +60,6 @@ namespace gemini
 	{
 		class ICollisionObject;
 	}
-//	class EntityMotionInterface : public physics::PhysicsMotionInterface
-//	{
-//		Entity* target;
-//		scenegraph::Node* node;
-//		
-//	public:
-//		
-//		EntityMotionInterface(Entity* entity, scenegraph::Node* sgnode) : target(entity), node(sgnode)
-//		{
-//		}
-//		
-//		virtual void get_transform(glm::vec3& position, const glm::quat& orientation);
-//		
-//		virtual void set_transform(const glm::vec3& position, const glm::quat& orientation, const glm::vec3& mass_center_offset);
-//	};
-	
 }
 
 
