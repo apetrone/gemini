@@ -867,6 +867,15 @@ namespace gemini
 		
 		gltexture->bind();
 		
+		// store old items (should be cached by the hal)
+		GLint row_length;
+		GLint skip_pixels;
+		GLint skip_rows;
+		gl.GetIntegerv(GL_UNPACK_ROW_LENGTH, &row_length);
+		gl.GetIntegerv(GL_UNPACK_SKIP_PIXELS, &skip_pixels);
+		gl.GetIntegerv(GL_UNPACK_SKIP_ROWS, &skip_rows);
+
+		
 		// set alignment for this operation
 		if (gltexture->unpack_alignment != 4)
 		{
@@ -886,7 +895,12 @@ namespace gemini
 		gl.CheckError("TexSubImage2D");
 		
 		gltexture->unbind();
-			
+		
+		// restore these parameters
+		gl.PixelStorei(GL_UNPACK_ROW_LENGTH, row_length);
+		gl.PixelStorei(GL_UNPACK_SKIP_PIXELS, skip_pixels);
+		gl.PixelStorei(GL_UNPACK_SKIP_ROWS, skip_rows);
+					
 		// restore default alignment
 		if (gltexture->unpack_alignment != 4)
 		{
