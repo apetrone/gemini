@@ -1396,16 +1396,18 @@ public:
 		gui::Color button_background(128, 128, 128, 255);
 		gui::Color button_hover(255, 255, 128, 255);
 		
-		uint32_t button_width = 120;
-		uint32_t button_height = 40;
+		uint32_t button_width = 320;
+		uint32_t button_height = 50;
 		uint32_t button_spacing = 10;
 		uint32_t total_buttons = 2;
 		uint32_t vertical_offset = 0;
 		uint32_t origin_x = (params.render_width/2.0f) - (button_width/2.0f);
 		uint32_t origin_y = (params.render_height/2.0f) - ((button_height*total_buttons)/2.0f);
 		
+		
+		
 		newgame = new gui::Button(root);
-		newgame->set_bounds(origin_x, origin_y, 120, 40);
+		newgame->set_bounds(origin_x, origin_y, button_width, button_height);
 		newgame->set_font(compositor, "fonts/default16");
 		newgame->set_text("New Game");
 		newgame->set_background_color(button_background);
@@ -1416,7 +1418,7 @@ public:
 		
 		
 		quit = new gui::Button(root);
-		quit->set_bounds(origin_x, origin_y, 120, 40);
+		quit->set_bounds(origin_x, origin_y, button_width, button_height);
 		quit->set_font(compositor, "fonts/default16");
 		quit->set_text("Quit Game");
 		quit->set_background_color(button_background);
