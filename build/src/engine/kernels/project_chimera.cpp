@@ -1006,8 +1006,10 @@ class CustomListener : public gui::Listener
 private:
 
 	audio::SoundHandle hover_sound;
+	IGameInterface* game_interface;
 	
 public:
+	void set_game_interface(IGameInterface* game) { game_interface = game; }
 	void set_hover_sound(audio::SoundHandle handle) { hover_sound = handle; }
 
 	virtual void focus_changed(gui::Panel* old_focus, gui::Panel* new_focus) {}
@@ -1026,9 +1028,17 @@ public:
 		LOGV("hot: %p\n", event.hot);
 		LOGV("handle event: %i\n", event.type);
 		size_t data = reinterpret_cast<size_t>(event.focus->get_userdata());
-		if (event.focus->is_button() && data == 1)
+		if (event.focus->is_button())
 		{
-			kernel::instance()->set_active(false);
+			switch(data)
+			{
+				case 1:
+					kernel::instance()->set_active(false);
+					break;
+				case 2:
+					game_interface->level_load();
+					break;
+			}
 		}
 	}
 };
@@ -1148,6 +1158,11 @@ public:
 			{
 				draw_physics_debug = !draw_physics_debug;
 				LOGV("draw_physics_debug = %s\n", draw_physics_debug?"ON":"OFF");
+			}
+			else if (event.key == input::KEY_M)
+			{
+				LOGV("level load\n");
+				game_interface->level_load();
 			}
 		}
 		
@@ -1464,12 +1479,12 @@ public:
 			}
 			
 			game_interface->startup();
-			
-			
-			game_interface->level_load();
 		}
+		
+		gui_listener.set_game_interface(game_interface);
 
 		center_mouse(params);
+
 		return kernel::Application_Success;
 	}
 
