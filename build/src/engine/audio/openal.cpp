@@ -25,6 +25,7 @@
 #include "audio.h"
 #include "openal.h"
 #include <core/logging.h>
+#include <assert.h>
 
 #if 0 // capture sample
 	const uint8_t TOTAL_SAMPLES = 1024;
@@ -196,6 +197,8 @@ namespace gemini
 			if ( source->flags & SF_STOP )
 				return;
 			
+			// In practice, there hasn't been success playing samples over 44.1kHz.
+			assert(source->_decoder->frequency() <= 44100);
 			alBufferData( bufferid, format, pcmbuffer, bytes, source->_decoder->frequency() );
 			check_al_error(core::str::format("OpenAL::stream_source - alBufferData [%i, %i, %i, %i]", source->source_id, (source->flags & SF_PLAYING), source->num_repeats, bytes));
 		} // stream_source
