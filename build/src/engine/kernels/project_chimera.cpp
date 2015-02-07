@@ -1100,7 +1100,7 @@ public:
 		has_focus = true;
 		
 		compositor = 0;
-		in_gui = true;
+		in_gui = false;
 		graph = 0;
 	}
 	
@@ -1363,6 +1363,7 @@ public:
 		root = new gui::Panel(compositor);
 		root->set_bounds(0, 0, params.render_width, params.render_height);
 		root->set_background_color(gui::Color(0, 0, 0, 192));
+		root->set_visible(in_gui);
 		compositor->add_child(root);
 		
 		gui::Color button_background(128, 128, 128, 255);
@@ -1378,7 +1379,7 @@ public:
 		
 		newgame = new gui::Button(root);
 		newgame->set_bounds(origin_x, origin_y, 120, 40);
-		newgame->set_font(compositor, "fonts/debug");
+		newgame->set_font(compositor, "fonts/default16");
 		newgame->set_text("New Game");
 		newgame->set_background_color(button_background);
 		newgame->set_hover_color(button_hover);
@@ -1389,7 +1390,7 @@ public:
 		
 		quit = new gui::Button(root);
 		quit->set_bounds(origin_x, origin_y, 120, 40);
-		quit->set_font(compositor, "fonts/debug");
+		quit->set_font(compositor, "fonts/default16");
 		quit->set_text("Quit Game");
 		quit->set_background_color(button_background);
 		quit->set_hover_color(button_hover);
@@ -1426,6 +1427,8 @@ public:
 		
 		// capture the mouse
 //		kernel::instance()->capture_mouse( true );
+
+		kernel::instance()->show_mouse(in_gui);
 
 		// load the game library
 		StackString<MAX_PATH_SIZE> game_library_path = ::core::filesystem::content_directory();
@@ -1466,7 +1469,6 @@ public:
 			game_interface->level_load();
 		}
 
-		kernel::instance()->show_mouse(true);
 		center_mouse(params);
 		return kernel::Application_Success;
 	}
