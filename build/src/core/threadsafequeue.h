@@ -41,8 +41,10 @@ namespace core
 	public:
 		void enqueue(Type in)
 		{
-			std::lock_guard<std::mutex> lock(local_mutex);
+			std::unique_lock<std::mutex> lock(local_mutex);
 			queue.push(in);
+			
+			lock.unlock();
 			wait_condition.notify_one();
 		}
 		
@@ -59,7 +61,7 @@ namespace core
 			return value;
 		}
 		
-		size_t size()
+		size_t size() const
 		{
 			std::lock_guard<std::mutex> lock(local_mutex);
 			size_t total_size = queue.size();
