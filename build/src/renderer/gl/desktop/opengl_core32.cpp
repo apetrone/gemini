@@ -292,6 +292,22 @@ namespace gemini
 			
 		void set_parameters(image::Image& image)
 		{
+			if (image.type == image::TEX_2D)
+			{
+				texture_type = GL_TEXTURE_2D;
+			}
+			else if (image.type == image::TEX_CUBE)
+			{
+				texture_type = GL_TEXTURE_CUBE_MAP;
+			}
+			else
+			{
+				// if you reach this assert, this class cannot deal with the image
+				// type you specified.
+				assert(0);
+			}
+			
+		
 			GLenum wrap_type = GL_REPEAT;
 			// setup texture wrapping
 			if (image.flags & image::F_CLAMP)
@@ -305,6 +321,9 @@ namespace gemini
 				float border[] = {1, 1, 1, 1};
 				glTexParameterfv(texture_type, GL_TEXTURE_BORDER_COLOR, border);
 			}
+			
+//			gl.TexParameteri(texture_type, GL_TEXTURE_BASE_LEVEL, 0);
+//			gl.TexParameteri(texture_type, GL_TEXTURE_MAX_LEVEL, 0);
 			
 			gl.TexParameteri(texture_type, GL_TEXTURE_WRAP_S, wrap_type);
 			gl.TexParameteri(texture_type, GL_TEXTURE_WRAP_T, wrap_type);
@@ -844,8 +863,19 @@ namespace gemini
 		// setup parameters
 		texture->set_parameters(image);
 		
-		// upload image and generate mipmaps
-		gl.TexImage2D(texture->texture_type, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, (GLvoid*)&image.pixels[0]);
+		if (image.type == image::TEX_2D)
+		{
+			// upload image and generate mipmaps
+			gl.TexImage2D(texture->texture_type, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, (GLvoid*)&image.pixels[0]);
+		}
+		else if (image.type == image::TEX_CUBE)
+		{
+			for (uint8_t index = 0; index < 6; ++index)
+			{
+				gl.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+index, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, (GLvoid*)&image.pixels[0]);
+			}
+		}
+		
 		gl.GenerateMipmap(texture->texture_type);
 		
 		// unbind

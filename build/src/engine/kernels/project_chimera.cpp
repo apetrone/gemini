@@ -1010,12 +1010,48 @@ private:
 	gui::Panel* root;
 	
 	bool& is_in_gui;
+	
+	
+	
+	renderer::RenderTarget* cubemap;
+	renderer::Texture* cubemap_texture;
+	
 public:
 	CustomListener(bool& in_gui) : is_in_gui(in_gui)
 	{
+		cubemap = 0;
+		cubemap_texture = 0;
 	}
 
 
+
+	void setup_rendering(const kernel::Parameters& params)
+	{
+		renderer::IRenderDriver* driver = renderer::driver();
+		
+		image::Image image;
+		image.type = image::TEX_CUBE;
+		image.width = 128;
+		image.height = 128;
+
+		cubemap_texture = driver->texture_create(image);
+
+		
+
+
+		cubemap = driver->render_target_create(image.width, image.height);
+		driver->render_target_set_attachment(cubemap, renderer::RenderTarget::COLOR, 0, cubemap_texture);
+	}
+	
+	void shutdown()
+	{
+		renderer::IRenderDriver* driver = renderer::driver();
+		driver->render_target_destroy(cubemap);
+		
+		
+		driver->texture_destroy(cubemap_texture);
+	}
+	
 	void set_root(gui::Panel* root_panel) { root = root_panel; }
 	void set_game_interface(IGameInterface* game) { game_interface = game; }
 	void set_hover_sound(audio::SoundHandle handle) { hover_sound = handle; }
@@ -1049,6 +1085,10 @@ public:
 					is_in_gui = false;
 					kernel::instance()->show_mouse(false);
 					game_interface->level_load();
+					break;
+				case 3:
+					// DEBUG: test rendering a cubemap
+					LOGV("rendering a cubemap...\n");
 					break;
 			}
 		}
@@ -1497,7 +1537,8 @@ public:
 		
 		gui_listener.set_game_interface(game_interface);
 		gui_listener.set_root(root);
-
+		gui_listener.setup_rendering(params);
+		
 		center_mouse(params);
 
 		return kernel::Application_Success;
@@ -1635,6 +1676,8 @@ public:
 	
 	virtual void shutdown( kernel::Parameters& params )
 	{
+		gui_listener.shutdown();
+	
 		delete compositor;
 		compositor = 0;
 	

@@ -48,7 +48,6 @@ namespace gemini
 		
 		enum ImageType
 		{
-			IT_UNKNOWN = -1,
 			TEX_2D = 0,
 			TEX_CUBE = 1
 		}; // ImageType

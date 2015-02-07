@@ -41,7 +41,7 @@ namespace gemini
 	{
 		Image::Image()
 		{
-			type = IT_UNKNOWN;
+			type = image::TEX_2D;
 			filter = FILTER_NONE;
 			flags = 0;
 			
