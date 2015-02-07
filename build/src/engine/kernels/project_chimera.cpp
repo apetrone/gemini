@@ -1007,8 +1007,16 @@ private:
 
 	audio::SoundHandle hover_sound;
 	IGameInterface* game_interface;
+	gui::Panel* root;
 	
+	bool& is_in_gui;
 public:
+	CustomListener(bool& in_gui) : is_in_gui(in_gui)
+	{
+	}
+
+
+	void set_root(gui::Panel* root_panel) { root = root_panel; }
 	void set_game_interface(IGameInterface* game) { game_interface = game; }
 	void set_hover_sound(audio::SoundHandle handle) { hover_sound = handle; }
 
@@ -1036,6 +1044,10 @@ public:
 					kernel::instance()->set_active(false);
 					break;
 				case 2:
+					// need to hide the root panel since we loaded a scene as well!
+					root->set_visible(false);
+					is_in_gui = false;
+					kernel::instance()->show_mouse(false);
 					game_interface->level_load();
 					break;
 			}
@@ -1098,7 +1110,7 @@ public:
 	CustomListener gui_listener;
 	
 public:
-	ProjectChimera()
+	ProjectChimera() : gui_listener(in_gui)
 	{
 		device = 0;
 		render_method = 0;
@@ -1110,7 +1122,7 @@ public:
 		has_focus = true;
 		
 		compositor = 0;
-		in_gui = false;
+		in_gui = true;
 		graph = 0;
 	}
 	
@@ -1482,6 +1494,7 @@ public:
 		}
 		
 		gui_listener.set_game_interface(game_interface);
+		gui_listener.set_root(root);
 
 		center_mouse(params);
 
