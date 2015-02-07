@@ -118,6 +118,29 @@ namespace gemini
 				position_and_orientation_from_transform(out_position, out_orientation, world_transform);
 			}
 			
+			
+			void BulletCollisionObject::get_linear_velocity(glm::vec3& velocity)
+			{
+				btRigidBody* rigid_body = btRigidBody::upcast(object);
+				if (rigid_body)
+				{
+					const btVector3& in_velocity = rigid_body->getLinearVelocity();
+					velocity.x = in_velocity.x();
+					velocity.y = in_velocity.y();
+					velocity.z = in_velocity.z();
+				}
+			}
+			
+			void BulletCollisionObject::set_linear_velocity(const glm::vec3& velocity)
+			{
+				btRigidBody* rigid_body = btRigidBody::upcast(object);
+				if (rigid_body)
+				{
+					rigid_body->setLinearVelocity(btVector3(velocity.x, velocity.y, velocity.z));
+				}
+			}
+			
+			
 			void BulletCollisionObject::collision_began(ICollisionObject* other)
 			{
 				if (callback)

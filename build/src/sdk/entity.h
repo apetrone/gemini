@@ -85,6 +85,7 @@ public:
 
 	glm::vec3 position;
 	glm::quat orientation;
+	glm::vec3 velocity;
 	
 	Entity();
 	virtual ~Entity();
@@ -128,6 +129,10 @@ public:
 	// physics object, if one is set.
 	virtual void set_current_transform_from_physics();
 	
+	// update physics velocity from our own
+	virtual void set_physics_from_current_velocity();
+	
+	virtual void set_current_velocity_from_physics();
 	
 	void delete_collision_object();
 	

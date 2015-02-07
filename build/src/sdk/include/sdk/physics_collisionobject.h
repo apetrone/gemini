@@ -107,6 +107,9 @@ namespace gemini
 			virtual void get_world_transform(glm::vec3& position, glm::quat& orientation) = 0;
 			virtual void set_world_transform(const glm::vec3& position, const glm::quat& orientation) = 0;
 			
+			virtual void get_linear_velocity(glm::vec3& velocity) = 0;
+			virtual void set_linear_velocity(const glm::vec3& velocity) = 0;
+			
 			// invoked when this object when another object collides with it
 			virtual void collision_began(ICollisionObject* other) = 0;
 			

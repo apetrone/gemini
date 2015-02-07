@@ -242,6 +242,22 @@ void Entity::set_current_transform_from_physics()
 	}
 }
 
+void Entity::set_physics_from_current_velocity()
+{
+	if (collision_object)
+	{
+		collision_object->set_linear_velocity(velocity);
+	}
+}
+
+void Entity::set_current_velocity_from_physics()
+{
+	if (collision_object)
+	{
+		collision_object->get_linear_velocity(velocity);
+	}
+}
+
 //
 // MEMORY OVERLOADS
 //
