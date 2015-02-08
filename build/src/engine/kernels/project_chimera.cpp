@@ -1052,6 +1052,11 @@ public:
 		driver->texture_destroy(cubemap_texture);
 	}
 	
+	void test_rendercubemap()
+	{
+		LOGV("rendering a cubemap...\n");
+	}
+	
 	void set_root(gui::Panel* root_panel) { root = root_panel; }
 	void set_game_interface(IGameInterface* game) { game_interface = game; }
 	void set_hover_sound(audio::SoundHandle handle) { hover_sound = handle; }
@@ -1088,7 +1093,7 @@ public:
 					break;
 				case 3:
 					// DEBUG: test rendering a cubemap
-					LOGV("rendering a cubemap...\n");
+					test_rendercubemap();
 					break;
 			}
 		}
@@ -1145,6 +1150,7 @@ public:
 	
 	gui::Panel* root;
 	gui::Button* newgame;
+	gui::Button* test;
 	gui::Button* quit;
 	
 	CustomListener gui_listener;
@@ -1456,6 +1462,15 @@ public:
 		root->add_child(newgame);
 		origin_y += (button_height+button_spacing);
 		
+		test = new gui::Button(root);
+		test->set_bounds(origin_x, origin_y, button_width, button_height);
+		test->set_font(compositor, "fonts/default16");
+		test->set_text("[test] render cubemap");
+		test->set_background_color(button_background);
+		test->set_hover_color(button_hover);
+		test->set_userdata((void*)3);
+		root->add_child(test);
+		origin_y += (button_height+button_spacing);
 		
 		quit = new gui::Button(root);
 		quit->set_bounds(origin_x, origin_y, button_width, button_height);
@@ -1466,9 +1481,6 @@ public:
 		quit->set_userdata((void*)1);
 		root->add_child(quit);
 		origin_y += (button_height+button_spacing);
-		
-		
-
 
 
 //		gui::Panel* root = new gui::Panel(compositor);

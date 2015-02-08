@@ -348,7 +348,7 @@ void test_rendering()
 #endif
 }
 
-
+/*
 #include <core/dictionary.h>
 
 void test_hash()
@@ -371,14 +371,15 @@ void test_hash()
 	d.get("adam", value);
 	d.get("what", value);
 }
-
+*/
 int main(int argc, char** argv)
 {
 	platform::startup();
 	core::startup();
-	
-	test_hash();
-//	test_rendering();
+
+	test_rendering();	
+//	test_hash();
+
 	
 	core::shutdown();
 	platform::shutdown();

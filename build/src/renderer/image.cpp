@@ -50,7 +50,7 @@ namespace gemini
 			
 			channels = 3;
 		}
-
+		
 		void generate_checker_pattern(Image& image, const Color & color1, const Color & color2)
 		{
 			// image dimensions must be specified
