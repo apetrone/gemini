@@ -68,7 +68,7 @@ namespace gemini
 			
 			const Color * color = 0;
 			uint8_t* pixels = &image.pixels[0];
-			assert( pixels != 0 );
+			assert(pixels != 0);
 			
 			for(uint32_t y = 0; y < image.height; ++y)
 			{
@@ -105,28 +105,28 @@ namespace gemini
 					pixels += image.channels;
 				}
 			}
-		}
+		} // generate_checker_pattern
 
 		// given two colors, generate an alternating checker pattern image
-		void generate_checker_image( unsigned char * pixels, int width, int height, const Color & color1, const Color & color2 )
+		void generate_checker_image(unsigned char* pixels, int width, int height, const Color& color1, const Color& color2)
 		{
 			// width/height should be power of two
 			int width_mask = (width >> 1) - 1;
 			int height_mask = (height >> 1) - 1;
 			
-			const Color * color = 0;
+			const Color* color = 0;
 		
-			assert( pixels != 0 );
+			assert(pixels != 0);
 
-			for( int y = 0; y < height; ++y )
+			for(int y = 0; y < height; ++y)
 			{
-				for( int x = 0; x < width; ++x )
+				for(int x = 0; x < width; ++x)
 				{
 					// less than half
-					if ( y <= height_mask )
+					if (y <= height_mask)
 					{
 						// less than half
-						if ( x <= width_mask )
+						if (x <= width_mask)
 						{
 							color = &color1;
 						}
@@ -138,7 +138,7 @@ namespace gemini
 					else
 					{
 						// less than half
-						if ( x <= width_mask )
+						if (x <= width_mask)
 						{
 							color = &color2;
 						}
@@ -149,7 +149,7 @@ namespace gemini
 					}
 					
 					// we want this to be an opaque texture, so we'll ignore the alpha channel
-					memcpy( pixels, color, 3 );
+					memcpy(pixels, color, 3);
 					
 					pixels += 3;
 				}
@@ -157,18 +157,18 @@ namespace gemini
 		} // generate_texture_image
 
 		// flip an image vertically - this uses heap space to create a copy, but deletes it when finished
-		void flip_image_vertically( int width, int height, int components, unsigned char * pixels )
+		void flip_image_vertically(int width, int height, int components, unsigned char* pixels)
 		{
 			int scanline_size = width*components;
 			int dst = 0;
-			unsigned char * copy;
-			copy = (unsigned char*)ALLOC( (width*height*components) );
-			memcpy( copy, pixels, (width*height*components) );
+			unsigned char* copy;
+			copy = (unsigned char*)ALLOC((width*height*components));
+			memcpy(copy, pixels, (width*height*components));
 			
-			for( int h = 0; h < height; ++h )
+			for(int h = 0; h < height; ++h)
 			{
 				dst = (height-(h+1));
-				memcpy( &pixels[ (h*scanline_size) ], &copy[ (dst*scanline_size) ], scanline_size );
+				memcpy(&pixels[ (h*scanline_size) ], &copy[ (dst*scanline_size) ], scanline_size);
 			}
 			
 			DEALLOC(copy);
@@ -188,12 +188,12 @@ namespace gemini
 
 		} // load_default_texture
 		
-		unsigned char * load_image_from_memory( unsigned char * data, unsigned int data_size, unsigned int * width, unsigned int * height, unsigned int * channels )
+		unsigned char* load_image_from_memory(unsigned char* data, unsigned int data_size, unsigned int* width, unsigned int* height, unsigned int* channels)
 		{
-			unsigned char * pixels = 0;
+			unsigned char* pixels = 0;
 			int w, h, c;
 
-			pixels = stbi_load_from_memory( data, data_size, &w, &h, &c, 0 );
+			pixels = stbi_load_from_memory(data, data_size, &w, &h, &c, 0);
 			*width = w;
 			*height = h;
 			*channels = c;
@@ -201,11 +201,11 @@ namespace gemini
 			return pixels;
 		} // load_image_from_memory
 		
-		void free_image( unsigned char * pixels )
+		void free_image(unsigned char* pixels)
 		{
 			// this was not allocated by our allocator (was done through stb_image)
 			// so must not ask our deallocator to delete it.
-			stbi_image_free( pixels );
+			stbi_image_free(pixels);
 		} // free_image
 
 	} // namespace image
