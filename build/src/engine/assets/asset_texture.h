@@ -54,13 +54,15 @@ namespace gemini
 		struct TextureParameters : public AssetParameters
 		{
 			unsigned int flags;
+			image::FilterType filter_type;
+			
 			TextureParameters() : flags(0) {}
 		};
 			
 	//	Texture * load_cubemap( const char * basename, unsigned int flags = 0, bool ignore_cache = false );
-		renderer::Texture* load_texture_from_file(const char * filename, unsigned int flags, image::Image& image);
+		renderer::Texture* load_texture_from_file(const char * filename, const TextureParameters& parameters, image::Image& image);
 		
-		AssetLoadStatus texture_load_callback( const char * path, Texture * texture, const TextureParameters & parameters );
+		AssetLoadStatus texture_load_callback(const char* path, Texture* texture, const TextureParameters& parameters);
 		void texture_construct_extension( core::StackString<MAX_PATH_SIZE> & extension );
 
 		DECLARE_ASSET_LIBRARY_ACCESSOR(Texture, TextureParameters, textures);

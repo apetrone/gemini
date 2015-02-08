@@ -87,7 +87,7 @@ namespace gemini
 			MeshLoaderState(Mesh* input) : current_geometry(0), mesh(input) {}
 		};
 		
-		void traverse_nodes(MeshLoaderState& state, const Json::Value& node, scenegraph::Node* scene_root, MaterialByIdContainer& materials)
+		void traverse_nodes(MeshLoaderState& state, const Json::Value& node, scenegraph::Node* scene_root, MaterialByIdContainer& materials, const bool is_world)
 		{
 			std::string node_type = node["type"].asString();
 			scenegraph::Node* node_root = nullptr;
@@ -121,14 +121,24 @@ namespace gemini
 					auto it = materials.find(material_id.asInt());
 					if (it != materials.end())
 					{
-						const std::string& material_name = it->second;
+						std::string material_name = it->second;
+						if (is_world)
+						{
+							material_name.append("_world");
+						}
 						Material* material = assets::materials()->load_from_path(material_name.c_str());
 						geo->material_id = material->Id();
 					}
 				}
 				render_node->material_id = geo->material_id;
 				
-				assets::Shader* shader = assets::shaders()->load_from_path("shaders/world");
+				// TODO: Remove this hack in the rewrite
+				std::string shader_path = "shaders/objects";
+				if (is_world)
+				{
+					shader_path = "shaders/world";
+				}
+				assets::Shader* shader = assets::shaders()->load_from_path(shader_path.c_str());
 				render_node->shader_id = shader->Id();
 				geo->shader_id = render_node->shader_id;
 				
@@ -229,7 +239,7 @@ namespace gemini
 				Json::ValueIterator child_iter = children.begin();
 				for (; child_iter != children.end(); ++child_iter)
 				{
-					traverse_nodes(state, (*child_iter), node_root, materials);
+					traverse_nodes(state, (*child_iter), node_root, materials, is_world);
 				}
 			}
 		}
@@ -291,6 +301,10 @@ namespace gemini
 		core::util::ConfigLoadStatus load_json_model(const Json::Value& root, void* data)
 		{
 			Mesh* mesh = (Mesh*)data;
+
+			// TODO: remove this hack for maps in the re-write.
+			core::StackString<1024> fullpath = mesh->path;
+			bool is_world = fullpath.startswith("maps");
 			
 			// make sure we can load the default material
 			assets::Material* default_mat = assets::materials()->load_from_path("materials/default");
@@ -352,7 +366,7 @@ namespace gemini
 			for (; node_iter != node_root.end(); ++node_iter)
 			{
 				Json::Value node = (*node_iter);
-				traverse_nodes(state, node, mesh->scene_root, materials_by_id);
+				traverse_nodes(state, node, mesh->scene_root, materials_by_id, is_world);
 			}
 			
 			

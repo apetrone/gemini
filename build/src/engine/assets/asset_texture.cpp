@@ -49,7 +49,7 @@ namespace gemini
 		} // release
 
 		
-		AssetLoadStatus texture_load_callback( const char * path, Texture * texture, const TextureParameters & parameters )
+		AssetLoadStatus texture_load_callback(const char * path, Texture * texture, const TextureParameters& parameters)
 		{
 			unsigned int texture_id = 0;
 			unsigned int width = 0;
@@ -59,7 +59,7 @@ namespace gemini
 			
 			if ( !(parameters.flags & image::F_CUBEMAP) ) // load 2d texture
 			{
-				texture->texture = load_texture_from_file(path, parameters.flags, texture->image);
+				texture->texture = load_texture_from_file(path, parameters, texture->image);
 				load_result = texture->texture != 0;
 			}
 			else // load cubemap
@@ -122,7 +122,7 @@ namespace gemini
 			extension.append(ext);
 		} // texture_construct_extension
 
-		renderer::Texture* load_texture_from_file(const char * filename, unsigned int flags, image::Image& image)
+		renderer::Texture* load_texture_from_file(const char* filename, const assets::TextureParameters& parameters, image::Image& image)
 		{
 			size_t buffer_size = 0;
 			char * filedata;
@@ -140,6 +140,8 @@ namespace gemini
 	//				flip_image_vertically( width, height, components, pixels );
 
 					image.pixels = pixels;
+					image.filter = parameters.filter_type;
+					
 					render_texture = renderer::driver()->texture_create(image);
 					
 					LOGV( "Loaded texture \"%s\"; (%i x %i @ %ibpp)\n", filename, image.width, image.height, image.channels );

@@ -294,7 +294,7 @@ namespace core
 			}
 		}
 		
-		void replace( const Type * s1, const Type * s2 )
+		void replace(const Type* s1, const Type* s2)
 		{
 			// replacement can be larger, smaller or equal size
 			size_t srclen = xstr_len(s1);
@@ -325,6 +325,20 @@ namespace core
 					p++;
 				}
 			}
-		}
+		} // replace
+		
+		bool startswith(const Type* s1) const
+		{
+			size_t string_length = core::str::len(s1);
+			for(unsigned int i = 0; i < string_length; ++i)
+			{
+				if (_data[i] != s1[i])
+				{
+					return false;
+				}
+			}
+			
+			return true;
+		} // startswith
 	}; // class StackString
 } // namespace core

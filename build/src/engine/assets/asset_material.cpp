@@ -163,7 +163,9 @@ namespace gemini
 						param_flags |= PF_VALUE;
 						Json::Value texture_unit = plist.get( "texture_unit", Json::nullValue );
 						Json::Value texture_param = plist.get( "texture", Json::nullValue );
+						Json::Value filter = plist.get("filter", Json::nullValue);
 						
+
 						
 						if ( texture_param.isNull() )
 						{
@@ -178,7 +180,24 @@ namespace gemini
 						
 						if ( param_flags & PF_VALUE )
 						{
-							assets::Texture * tex = assets::textures()->load_from_path( texture_param.asString().c_str() );
+							assets::TextureParameters texparams;
+							
+							if (!filter.isNull())
+							{
+								const std::string& filter_type = filter.asString();
+								LOGV("filter_type: %s\n", filter_type.c_str());
+								if (filter_type == "none")
+								{
+									texparams.filter_type = image::FILTER_NONE;
+								}
+								else if (filter_type == "linear")
+								{
+									texparams.filter_type = image::FILTER_LINEAR_MIPMAP;
+								}
+							}
+							
+							
+							assets::Texture * tex = assets::textures()->load_from_path(texture_param.asString().c_str(), texparams);
 	//						parameter->int_value = tex->Id();
 
 							parameter->texture = tex->texture;
