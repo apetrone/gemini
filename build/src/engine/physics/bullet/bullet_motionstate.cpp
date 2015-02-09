@@ -66,7 +66,7 @@ namespace gemini
 			void CustomMotionState::setWorldTransform(const btTransform &world_transform)
 			{
 				position_and_orientation_from_transform(position, orientation, world_transform);
-				
+
 				// sync up the ghost object when this rigid body moves
 				if (ghost)
 				{

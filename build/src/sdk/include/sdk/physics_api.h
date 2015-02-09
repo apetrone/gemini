@@ -39,19 +39,7 @@ namespace gemini
 
 		
 		struct MovementCommand;
-		
-		class PhysicsMotionInterface
-		{
-		public:
-			virtual ~PhysicsMotionInterface() {};
-			
-			// called when the physics body's motion state needs to be retrieved
-			virtual void get_transform(glm::vec3& position, const glm::quat& orientation) = 0;
-			
-			// called when the physics body's motion state has been set
-			virtual void set_transform(const glm::vec3& position, const glm::quat& orientation, const glm::vec3& mass_center_offset) = 0;
-		};
-		
+	
 		
 		class IPlayerController
 		{
@@ -80,7 +68,7 @@ namespace gemini
 			float restitution;
 			float friction;
 			
-			ObjectProperties() : mass_kg(0.0f), restitution(0.25f), friction(0.25f) {}
+			ObjectProperties() : mass_kg(0.0f), restitution(0.25f), friction(0.75f) {}
 		}; // ObjectProperties
 	
 		

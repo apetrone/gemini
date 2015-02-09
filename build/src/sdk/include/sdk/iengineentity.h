@@ -39,6 +39,11 @@ namespace gemini
 		RENDER_VIEWMODEL = 2
 	};
 
+	class IBone
+	{
+	public:
+		
+	};
 
 	class IEngineEntity
 	{

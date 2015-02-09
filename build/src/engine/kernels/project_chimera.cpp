@@ -1161,14 +1161,14 @@ public:
 		device = 0;
 		render_method = 0;
 		active_camera = &main_camera;
-		draw_physics_debug = false;
+		draw_physics_debug = true;
 
 		game_interface = 0;
 
 		has_focus = true;
 		
 		compositor = 0;
-		in_gui = true;
+		in_gui = false;
 		graph = 0;
 	}
 	
@@ -1552,6 +1552,9 @@ public:
 		gui_listener.setup_rendering(params);
 		
 		center_mouse(params);
+		
+		// for debugging
+		game_interface->level_load();
 
 		return kernel::Application_Success;
 	}
@@ -1667,12 +1670,12 @@ public:
 		
 
 	
-		if (device)
-		{
-			glm::mat4 xform;
-			device->test(xform);
-			debugdraw::axes(xform, 2.0f, 0.1f);
-		}
+//		if (device)
+//		{
+//			glm::mat4 xform;
+//			device->test(xform);
+//			debugdraw::axes(xform, 2.0f, 0.1f);
+//		}
 		
 		//glm::mat4 char_mat = glm::mat4(1.0);
 		// TODO: this should use the actual player height instead of

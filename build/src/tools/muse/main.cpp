@@ -75,7 +75,7 @@ namespace gemini
 			// some sane defaults?
 			compress_animation = false;
 			flip_vertically = false;
-			bake_transforms = true;
+			bake_transforms = false;
 		}
 	};
 

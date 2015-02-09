@@ -183,10 +183,10 @@ namespace gemini
 			
 			btScalar mass(properties.mass_kg);
 			btVector3 local_inertia(0.0f, 0.0f, 0.0f);
-		
 			CustomMotionState* motion_state = new CustomMotionState(position, orientation);
 
 			btCollisionShape* bullet_shape = ((BulletCollisionShape*)shape)->get_shape();
+			
 			rigidbody->set_motion_state(motion_state);
 			
 			// calculate local intertia
@@ -411,8 +411,17 @@ namespace gemini
 			collision_shapes.push_back(collision_shape);
 			
 			btVector3 half_extents(dimensions.x*0.5f, dimensions.y*0.5f, dimensions.z*0.5f);
+			
+//			btCompoundShape* compound = new btCompoundShape();
 			btCollisionShape* box = new btBoxShape(half_extents);
+
 			collision_shape->set_shape(box);
+			
+//			btTransform local_transform;
+//			local_transform.setIdentity();
+//			local_transform.setOrigin(btVector3(-0.0f, -0.0f, -0.0f));
+//			compound->addChildShape(local_transform, box);
+//			collision_shape->set_shape(compound);
 			
 			return collision_shape;
 		}
