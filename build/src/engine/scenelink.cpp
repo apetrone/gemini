@@ -274,6 +274,7 @@ namespace gemini
 									
 									e->get_world_transform(physics_position, orientation);
 									e->get_render_position(position);
+
 									glm::mat4 rotation = glm::toMat4(orientation);
 									glm::mat4 translation = glm::translate(transform, position);
 									transform = translation*rotation;

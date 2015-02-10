@@ -53,7 +53,20 @@
 // mesh/geometry (vertices, normals, uvs[2], vertex-colors)
 
 
-//https://docs.unrealengine.com/latest/INT/Engine/Content/FBX/index.html
+// https://docs.unrealengine.com/latest/INT/Engine/Content/FBX/index.html
+// https://docs.unrealengine.com/latest/INT/Engine/Content/FBX/StaticMeshes/index.html
+
+
+/*
+Static Meshes:
+- The pivot point is always at the origin (0, 0, 0) of your exported mesh.
+
+
+
+
+
+*/
+
 
 using namespace core;
 
@@ -75,7 +88,7 @@ namespace gemini
 			// some sane defaults?
 			compress_animation = false;
 			flip_vertically = false;
-			bake_transforms = false;
+			bake_transforms = true;
 		}
 	};
 
