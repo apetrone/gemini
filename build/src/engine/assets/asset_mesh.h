@@ -36,7 +36,7 @@
 #include <core/fixedarray.h>
 #include "keyframechannel.h"
 
-#include "scene_graph.h"
+//#include "scene_graph.h"
 
 #include <json/json.h>
 
@@ -125,7 +125,7 @@ namespace gemini
 					
 			core::StackString<MAX_PATH_SIZE> path;
 			
-			scenegraph::Node* scene_root;
+//			scenegraph::Node* scene_root;
 			
 			unsigned short total_bones;
 			

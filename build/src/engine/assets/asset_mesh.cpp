@@ -30,7 +30,7 @@
 #include "assets/asset_material.h"
 #include "renderer/renderer.h"
 
-#include "skeletalnode.h"
+//#include "skeletalnode.h"
 
 using namespace gemini::renderer;
 
@@ -87,19 +87,19 @@ namespace gemini
 			MeshLoaderState(Mesh* input) : current_geometry(0), mesh(input) {}
 		};
 		
-		void traverse_nodes(MeshLoaderState& state, const Json::Value& node, scenegraph::Node* scene_root, MaterialByIdContainer& materials, const bool is_world)
+		void traverse_nodes(MeshLoaderState& state, const Json::Value& node, MaterialByIdContainer& materials, const bool is_world)
 		{
 			std::string node_type = node["type"].asString();
-			scenegraph::Node* node_root = nullptr;
+//			scenegraph::Node* node_root = nullptr;
 			
 			if (node_type == "mesh")
 			{
 				assets::Geometry* geo = &state.mesh->geometry[state.current_geometry++];
-				scenegraph::RenderNode* render_node = CREATE(scenegraph::RenderNode);
+//				scenegraph::RenderNode* render_node = CREATE(scenegraph::RenderNode);
 
-				node_root = render_node;
-				render_node->geometry = geo;
-				render_node->type = scenegraph::STATIC_MESH;
+//				node_root = render_node;
+//				render_node->geometry = geo;
+//				render_node->type = scenegraph::STATIC_MESH;
 							
 				Json::Value mesh_root = node["mesh"];
 				assert(!mesh_root.isNull());
@@ -130,7 +130,7 @@ namespace gemini
 						geo->material_id = material->Id();
 					}
 				}
-				render_node->material_id = geo->material_id;
+//				render_node->material_id = geo->material_id;
 				
 				// TODO: Remove this hack in the rewrite
 				std::string shader_path = "shaders/objects";
@@ -139,8 +139,8 @@ namespace gemini
 					shader_path = "shaders/world";
 				}
 				assets::Shader* shader = assets::shaders()->load_from_path(shader_path.c_str());
-				render_node->shader_id = shader->Id();
-				geo->shader_id = render_node->shader_id;
+
+				geo->shader_id = shader->Id();
 				
 				geo->draw_type = renderer::DRAW_INDEXED_TRIANGLES;
 				geo->name = node["name"].asString().c_str();
@@ -207,18 +207,17 @@ namespace gemini
 			else if (node_type == "skeleton")
 			{
 				LOGV("create skeleton\n");
-				node_root = CREATE(scenegraph::AnimatedNode);
+//				node_root = CREATE(scenegraph::AnimatedNode);
 			}
 			else
 			{
 				LOGV("create group node\n");
-				node_root = CREATE(scenegraph::AnimatedNode);
+//				node_root = CREATE(scenegraph::AnimatedNode);
 			}
 			
-			assert(node_root != nullptr);
-			
-			scene_root->add_child(node_root);
-			node_root->name = node["name"].asString().c_str();
+//			assert(node_root != nullptr);
+
+//			node_root->name = node["name"].asString().c_str();
 
 			const Json::Value& scaling = node["scaling"];
 			const Json::Value& rotation = node["rotation"];
@@ -226,9 +225,9 @@ namespace gemini
 			assert(!scaling.isNull() && !rotation.isNull() && !translation.isNull());
 
 
-			from_json(node_root->local_scale, scaling);
-			from_json(node_root->local_rotation, rotation);
-			from_json(node_root->local_position, translation);
+//			from_json(node_root->local_scale, scaling);
+//			from_json(node_root->local_rotation, rotation);
+//			from_json(node_root->local_position, translation);
 	//		LOGV("scale: %g %g %g\n", node_root->local_scale.x, node_root->local_scale.y, node_root->local_scale.z);
 	//		LOGV("rotation: %g %g %g %g\n", node_root->local_rotation.x, node_root->local_rotation.y, node_root->local_rotation.z, node_root->local_rotation.w);
 	//		LOGV("translation: %g %g %g\n", node_root->local_position.x, node_root->local_position.y, node_root->local_position.z);
@@ -239,7 +238,7 @@ namespace gemini
 				Json::ValueIterator child_iter = children.begin();
 				for (; child_iter != children.end(); ++child_iter)
 				{
-					traverse_nodes(state, (*child_iter), node_root, materials, is_world);
+					traverse_nodes(state, (*child_iter), materials, is_world);
 				}
 			}
 		}
@@ -314,8 +313,8 @@ namespace gemini
 				return core::util::ConfigLoad_Failure;
 			}
 			
-			mesh->scene_root = CREATE(scenegraph::Node);
-			mesh->scene_root->name = mesh->path();
+//			mesh->scene_root = CREATE(scenegraph::Node);
+//			mesh->scene_root->name = mesh->path();
 			
 			// n-meshes
 			// skeleton (should this be separate?)
@@ -366,7 +365,7 @@ namespace gemini
 			for (; node_iter != node_root.end(); ++node_iter)
 			{
 				Json::Value node = (*node_iter);
-				traverse_nodes(state, node, mesh->scene_root, materials_by_id, is_world);
+				traverse_nodes(state, node, materials_by_id, is_world);
 			}
 			
 			
@@ -400,40 +399,40 @@ namespace gemini
 						const Json::Value& jnode = (*node_iter);
 	//					StackString<128> node_name = jnode["name"].asString().c_str();
 						std::string node_name = jnode["name"].asString().c_str();
-						scenegraph::Node* node = mesh->scene_root->find_child_named(node_name.c_str());
+//						scenegraph::Node* node = mesh->scene_root->find_child_named(node_name.c_str());
 						
 
 						
-						if (!node)
-						{
-							LOGV("ignoring node: %s\n", node_name.c_str());
-							continue;
-						}
-						else
-						{
-							LOGV("found node: %s\n", node_name.c_str());
-						}
+//						if (!node)
+//						{
+//							LOGV("ignoring node: %s\n", node_name.c_str());
+//							continue;
+//						}
+//						else
+//						{
+//							LOGV("found node: %s\n", node_name.c_str());
+//						}
 	//					assert(node != nullptr);
 
-						assert(node->has_attributes(scenegraph::ANIMATED));
+//						assert(node->has_attributes(scenegraph::ANIMATED));
 						
 						const Json::Value& scale_keys = jnode["scale"];
 						const Json::Value& rotation_keys = jnode["rotation"];
 						const Json::Value& translation_keys = jnode["translation"];
 						assert(!scale_keys.isNull() && !rotation_keys.isNull() && !translation_keys.isNull());
 					
-						scenegraph::AnimatedNode* animated_node = static_cast<scenegraph::AnimatedNode*>(node);
-						assert(animated_node != nullptr);
-						if (animated_node)
-						{
-							read_channel(mesh->animation.scale[node_index], jnode["scale"]);
-							read_channel(mesh->animation.rotation[node_index], jnode["rotation"]);
-							read_channel(mesh->animation.translation[node_index], jnode["translation"]);
-
-							animated_node->scale_channel.set_data_source(&mesh->animation.scale[node_index], mesh->animation.frame_delay_seconds);
-							animated_node->rotation_channel.set_data_source(&mesh->animation.rotation[node_index], mesh->animation.frame_delay_seconds);
-							animated_node->translation_channel.set_data_source(&mesh->animation.translation[node_index], mesh->animation.frame_delay_seconds);
-						}
+//						scenegraph::AnimatedNode* animated_node = static_cast<scenegraph::AnimatedNode*>(node);
+//						assert(animated_node != nullptr);
+//						if (animated_node)
+//						{
+//							read_channel(mesh->animation.scale[node_index], jnode["scale"]);
+//							read_channel(mesh->animation.rotation[node_index], jnode["rotation"]);
+//							read_channel(mesh->animation.translation[node_index], jnode["translation"]);
+//
+//							animated_node->scale_channel.set_data_source(&mesh->animation.scale[node_index], mesh->animation.frame_delay_seconds);
+//							animated_node->rotation_channel.set_data_source(&mesh->animation.rotation[node_index], mesh->animation.frame_delay_seconds);
+//							animated_node->translation_channel.set_data_source(&mesh->animation.translation[node_index], mesh->animation.frame_delay_seconds);
+//						}
 						
 						++node_index;
 					}
@@ -542,14 +541,14 @@ namespace gemini
 
 		Mesh::Mesh()
 		{
-			scene_root = 0;
+//			scene_root = 0;
 			total_bones = 0;
 			is_dirty = true;
 		} // Mesh
 		
 		Mesh::~Mesh()
 		{
-			DESTROY(Node, scene_root);
+//			DESTROY(Node, scene_root);
 		}
 
 		
