@@ -54,16 +54,22 @@
 
 
 // https://docs.unrealengine.com/latest/INT/Engine/Content/FBX/index.html
-// https://docs.unrealengine.com/latest/INT/Engine/Content/FBX/StaticMeshes/index.html
 
 
 /*
 Static Meshes:
 - The pivot point is always at the origin (0, 0, 0) of your exported mesh.
 
+[references]
+	* https://docs.unrealengine.com/latest/INT/Engine/Content/FBX/StaticMeshes/index.html
 
 
+Skeletal Meshes:
+- The pivot point is always at the root joint. It doesn't matter where the root joint is located.
+  It will be treated as the root joint is the origin.
 
+[references]
+	* https://docs.unrealengine.com/latest/INT/Engine/Content/FBX/SkeletalMeshes/index.html
 
 */
 
