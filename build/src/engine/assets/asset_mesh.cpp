@@ -83,8 +83,9 @@ namespace gemini
 		{
 			size_t current_geometry;
 			Mesh* mesh;
+			BoneIndex parent;
 			
-			MeshLoaderState(Mesh* input) : current_geometry(0), mesh(input) {}
+			MeshLoaderState(Mesh* input) : current_geometry(0), mesh(input), parent(-1) {}
 		};
 		
 		void traverse_nodes(MeshLoaderState& state, const Json::Value& node, MaterialByIdContainer& materials, const bool is_world)
@@ -94,13 +95,7 @@ namespace gemini
 			
 			if (node_type == "mesh")
 			{
-				assets::Geometry* geo = &state.mesh->geometry[state.current_geometry++];
-//				scenegraph::RenderNode* render_node = CREATE(scenegraph::RenderNode);
-
-//				node_root = render_node;
-//				render_node->geometry = geo;
-//				render_node->type = scenegraph::STATIC_MESH;
-							
+			
 				Json::Value mesh_root = node["mesh"];
 				assert(!mesh_root.isNull());
 
@@ -111,7 +106,9 @@ namespace gemini
 				Json::Value vertex_colors = mesh_root["vertex_colors"];
 
 				// setup materials
-				assets::Material * default_material = assets::materials()->get_default();
+				assets::Material* default_material = assets::materials()->get_default();
+				
+				assets::Geometry* geo = &state.mesh->geometry[state.current_geometry++];
 				geo->material_id = default_material->Id();
 				
 				Json::Value material_id = mesh_root["material_id"];
@@ -130,7 +127,6 @@ namespace gemini
 						geo->material_id = material->Id();
 					}
 				}
-//				render_node->material_id = geo->material_id;
 				
 				// TODO: Remove this hack in the rewrite
 				std::string shader_path = "shaders/objects";
@@ -138,35 +134,31 @@ namespace gemini
 				{
 					shader_path = "shaders/world";
 				}
-				assets::Shader* shader = assets::shaders()->load_from_path(shader_path.c_str());
-
-				geo->shader_id = shader->Id();
 				
+				assets::Shader* shader = assets::shaders()->load_from_path(shader_path.c_str());
+				geo->shader_id = shader->Id();
 				geo->draw_type = renderer::DRAW_INDEXED_TRIANGLES;
 				geo->name = node["name"].asString().c_str();
 				
-				LOGV("assign material id %i to geometry: %s\n", geo->material_id, geo->name());
+//				LOGV("assign material id %i to geometry: %s\n", geo->material_id, geo->name());
 	//			LOGV("load geometry: %s\n", geo->name());
 
-				// TODO: remove this legacy code
+				// allocate the geometry arrays
 				geo->index_count = index_array.size();
 				geo->vertex_count = vertex_array.size();
-	//			LOGV("index_count = %i, vertex_count = %i\n", geo->index_count, geo->vertex_count);
 				geo->indices.allocate(index_array.size());
 				geo->vertices.allocate(vertex_array.size());
 				geo->normals.allocate(vertex_array.size());
-				
-	//			LOGV("uv sets: %i\n", uv_sets.size());
-				
 				geo->uvs.allocate(uv_sets.size());
-	//			geo->uvs.allocate(vertex_array.size());
 				geo->colors.allocate(vertex_colors.size());
 
+				// read all indices
 				for (int i = 0; i < geo->indices.size(); ++i)
 				{
 					geo->indices[i] = index_array[i].asInt();
 				}
 				
+				// read vertices and normals
 				for (int v = 0; v < geo->vertices.size(); ++v)
 				{
 					const Json::Value& vertex = vertex_array[v];
@@ -177,12 +169,14 @@ namespace gemini
 					geo->normals[v] = glm::vec3(normal[0].asFloat(), normal[1].asFloat(), normal[2].asFloat());
 				}
 
+				// read vertex colors
 				for (int v = 0; v < geo->colors.size(); ++v)
 				{
 					const Json::Value& vertex_color = vertex_colors[v];
 					geo->colors[v] = core::Color(255 * vertex_color[0].asFloat(), 255 * vertex_color[1].asFloat(), 255 * vertex_color[2].asFloat(), 255 * vertex_color[3].asFloat());
 				}
 				
+				// read uv sets
 				for (int set_id = 0; set_id < uv_sets.size(); ++set_id)
 				{
 					geo->uvs[set_id].allocate(vertex_array.size());
@@ -208,6 +202,17 @@ namespace gemini
 			{
 				LOGV("create skeleton\n");
 //				node_root = CREATE(scenegraph::AnimatedNode);
+
+				// insert the new joint
+				BoneIndex parent_index = state.parent;
+				Joint& joint = state.mesh->skeleton[++state.parent];
+				joint.parent_index = parent_index;
+				joint.index = state.parent;
+				
+				
+				const Json::Value& skeleton_root = node["name"];
+				joint.name = skeleton_root.asString().c_str();
+				LOGV("read joint: %s, parent: %i, index: %i\n", joint.name(), joint.parent_index, joint.index);
 			}
 			else
 			{
@@ -357,6 +362,9 @@ namespace gemini
 			// allocate nodes
 			LOGV("nodes: %i, meshes: %i, bones: %i\n", total_nodes, total_meshes, total_bones);
 			mesh->geometry.allocate(total_meshes);
+			
+			// allocate enough bones
+			mesh->skeleton.allocate(total_bones);
 			
 			MeshLoaderState state(mesh);
 			

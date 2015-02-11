@@ -185,7 +185,6 @@ namespace gemini
 							if (!filter.isNull())
 							{
 								const std::string& filter_type = filter.asString();
-								LOGV("filter_type: %s\n", filter_type.c_str());
 								if (filter_type == "none")
 								{
 									texparams.filter_type = image::FILTER_NONE;

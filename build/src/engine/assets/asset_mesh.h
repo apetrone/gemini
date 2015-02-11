@@ -116,6 +116,28 @@ namespace gemini
 			int32_t index;
 		};
 		
+		
+		struct Joint
+		{
+			int8_t parent_index;
+			int8_t index;
+			core::StackString<128> name;
+			
+			Joint()
+			{
+				parent_index = -1;
+				index = -1;
+			}
+			
+			// model space to bone space
+			glm::mat4 inverse_bind_matrix;
+			
+			// from bone space back to model space
+			glm::mat4 bind_matrix;
+		};
+
+		typedef int8_t BoneIndex;
+		
 		struct Mesh : public Asset
 		{
 			core::FixedArray<Geometry> geometry;
@@ -126,6 +148,9 @@ namespace gemini
 			core::StackString<MAX_PATH_SIZE> path;
 			
 //			scenegraph::Node* scene_root;
+			
+			
+			
 			
 			unsigned short total_bones;
 			
@@ -148,6 +173,11 @@ namespace gemini
 			AnimationData animation;
 
 			glm::mat4 node_transform;
+			
+			
+			
+			// bind pose skeleton
+			core::FixedArray<Joint> skeleton;
 		}; // Mesh
 		
 		// EXPERIMENTAL
