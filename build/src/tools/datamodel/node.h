@@ -61,7 +61,6 @@ namespace gemini
 			NodeVector children;
 			
 			Mesh* mesh;
-			Skeleton* skeleton;
 			
 			Node();
 			virtual ~Node();

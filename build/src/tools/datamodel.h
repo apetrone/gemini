@@ -25,7 +25,7 @@
 #pragma once
 
 #include "datamodel/mesh.h"
-#include "datamodel/skeleton.h"
+//#include "datamodel/skeleton.h"
 #include "datamodel/node.h"
 #include "datamodel/material.h"
 #include "datamodel/model.h"

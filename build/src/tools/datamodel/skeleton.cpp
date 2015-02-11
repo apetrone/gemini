@@ -22,35 +22,46 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
 
-#include "common/extension.h"
-#include "common.h"
-#include "datamodel/model.h"
+#include "datamodel/skeleton.h"
 
 namespace gemini
 {
-	struct AutodeskFbxExtensionState
+	namespace datamodel
 	{
-		datamodel::Model* model;
+		Skeleton::Skeleton()
+		{
+		}
 		
-		// used by the reader to convert to correct units
-		// since the SDK will only convert root nodes
-		float conversion_factor;
+		Skeleton::~Skeleton()
+		{
+			for (Bone* bone : bones)
+			{
+				DESTROY(Bone, bone);
+			}
+		}
 		
-		tools::IndentState indent;
-	};
-	
-	class AutodeskFbxReader : public tools::Reader<datamodel::Model>
-	{
-		DECLARE_PLUGIN_CLASS(AutodeskFbxReader);
+		Bone* Skeleton::add_bone(int16_t parent_index, const String& name)
+		{
+			Bone* bone = CREATE(Bone);
+			bone->index = bones.size();
+			bone->parent = parent_index;
+			bone->name = name;
+			bones.push_back(bone);
+			return bone;
+		} // add_bone
 		
-		AutodeskFbxExtensionState extension_state;
+		Bone* Skeleton::find_bone_named(const String& name)
+		{
+			for(Bone* bone : bones)
+			{
+				if (bone->name == name)
+				{
+					return bone;
+				}
+			}
+			return 0;
+		} // find_bone_named
 		
-	public:
-		AutodeskFbxReader();
-		virtual ~AutodeskFbxReader();
-
-		virtual void read(datamodel::Model* root, core::util::DataStream& data_source);
-	};
+	} // namespace datamodel
 } // namespace gemini

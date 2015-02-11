@@ -47,9 +47,10 @@ namespace gemini
 			Node root;
 			MaterialMap materials;
 			
-	//		Skeleton* skeleton;
+			Skeleton* skeleton;
 			std::vector<Animation*> animations;
 			
+			Model();
 			~Model();
 			
 			Animation* add_animation(const String& name);

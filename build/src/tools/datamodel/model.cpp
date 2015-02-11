@@ -29,11 +29,21 @@ namespace gemini
 {
 	namespace datamodel
 	{
+		Model::Model() : skeleton(0)
+		{
+			
+		}
+	
 		Model::~Model()
 		{
 			for (auto animation : animations)
 			{
 				DESTROY(Animation, animation);
+			}
+			
+			if (skeleton)
+			{
+				DESTROY(Skeleton, skeleton);
 			}
 		}
 		

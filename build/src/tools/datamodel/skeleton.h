@@ -24,13 +24,36 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <platform/mem.h>
+#include <core/str.h> // for String
+
+#include <string>
+#include <vector>
+
 namespace gemini
 {
 	namespace datamodel
 	{
+		struct Bone
+		{
+			int16_t index;
+			int16_t parent;
+			String name;
+		};
+	
+		typedef std::vector<Bone*> BoneVector;
+		
 		struct Skeleton
 		{
+			BoneVector bones;
+		
+		
+			Skeleton();
+			~Skeleton();
 			
+			Bone* add_bone(int16_t parent_index, const String& name);
+			Bone* find_bone_named(const String& name);
 		};
+		
 	} // namespace datamodel
 } // namespace gemini

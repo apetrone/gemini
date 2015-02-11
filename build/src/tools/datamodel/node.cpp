@@ -35,7 +35,6 @@ namespace gemini
 		{
 			parent = nullptr;
 			mesh = nullptr;
-			skeleton = nullptr;
 			flags = 0;
 		}
 		
@@ -58,11 +57,6 @@ namespace gemini
 			if (mesh)
 			{
 				DESTROY(Mesh, mesh);
-			}
-			
-			if (skeleton)
-			{
-				DESTROY(Skeleton, skeleton);
 			}
 		}
 		

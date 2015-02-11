@@ -37,6 +37,16 @@
 
 // http://gamedev.stackexchange.com/questions/59419/c-fbx-animation-importer-using-the-fbx-sdk
 
+// http://stackoverflow.com/questions/13566608/loading-skinning-information-from-fbx
+
+// http://docs.autodesk.com/FBX/2014/ENU/FBX-SDK-Documentation/index.html
+// http://www.gamedev.net/topic/653502-useful-things-you-might-want-to-know-about-fbxsdk/?hl=%2Bfbx+%2Bsdk#entry5149612
+// http://www.gamedev.net/page/resources/_/technical/graphics-programming-and-theory/how-to-work-with-fbx-sdk-r3582
+// http://forums.autodesk.com/t5/fbx-sdk/how-to-get-uv-coord-per-vertex/td-p/4239532
+// http://forums.autodesk.com/t5/fbx-sdk/splitmeshespermaterial-reached-limits/td-p/4239623
+
+// http://stackoverflow.com/questions/13566608/loading-skinning-information-from-fbx
+
 using namespace gemini::tools;
 
 using namespace core;
@@ -46,7 +56,10 @@ namespace gemini
 	namespace internal
 	{
 		static FbxManager* _manager;
+		
 	}
+	
+
 
 	template <class Type>
 	void from_fbx(Type& output, const FbxVector4& input);
@@ -122,26 +135,26 @@ namespace gemini
 		return -1;
 	}
 
-	static void parse_materials(IndentState& state, FbxNode* node, datamodel::MaterialMap& materials, datamodel::Mesh* mesh)
+	static void parse_materials(AutodeskFbxExtensionState& state, FbxNode* node, datamodel::MaterialMap& materials, datamodel::Mesh* mesh)
 	{
 		// materials for this piece of geometry
 		int total_materials = node->GetMaterialCount();
-		LOGV("%stotal_materials: %i\n", state.indent(), total_materials);
+		LOGV("%stotal_materials: %i\n", state.indent.indent(), total_materials);
 		
 		if (total_materials > 0)
 		{
 			for (int material_id = 0; material_id < total_materials; ++material_id)
 			{
 				FbxSurfaceMaterial* material = node->GetMaterial(material_id);
-				LOGV("%smaterial: %s\n", state.indent(), material->GetName());
+				LOGV("%smaterial: %s\n", state.indent.indent(), material->GetName());
 				
 				if (material->GetClassId().Is(FbxSurfaceLambert::ClassId))
 				{
-					LOGV("%sfound lambert material!\n", state.indent());
+					LOGV("%sfound lambert material!\n", state.indent.indent());
 				}
 				else if (material->GetClassId().Is(FbxSurfacePhong::ClassId))
 				{
-					LOGV("%sfound phong material!\n", state.indent());
+					LOGV("%sfound phong material!\n", state.indent.indent());
 				}
 				
 				int texture_index;
@@ -153,14 +166,14 @@ namespace gemini
 						int texture_count = property.GetSrcObjectCount<FbxTexture>();
 						if (texture_count > 0)
 						{
-							LOGV("%stexture_count = %i\n", state.indent(), texture_count);
+							LOGV("%stexture_count = %i\n", state.indent.indent(), texture_count);
 							for (int texture_id = 0; texture_id < texture_count; ++texture_id)
 							{
 								// check if it's a layered texture
 								FbxLayeredTexture* layered_texture = property.GetSrcObject<FbxLayeredTexture>(texture_id);
 								if (layered_texture)
 								{
-									LOGV("%sfound a layered texture!\n", state.indent());
+									LOGV("%sfound a layered texture!\n", state.indent.indent());
 									assert(0);
 								}
 								else
@@ -168,16 +181,16 @@ namespace gemini
 									FbxTexture* texture = property.GetSrcObject<FbxTexture>(texture_id);
 									if (texture)
 									{
-										LOGV("%stexture name: %s\n", state.indent(), texture->GetName());
-										LOGV("%sproperty name: %s\n", state.indent(), property.GetName().Buffer());
+										LOGV("%stexture name: %s\n", state.indent.indent(), texture->GetName());
+										LOGV("%sproperty name: %s\n", state.indent.indent(), property.GetName().Buffer());
 
 										FbxFileTexture* file_texture = FbxCast<FbxFileTexture>(texture);
 										FbxProceduralTexture* procedural_texture = FbxCast<FbxProceduralTexture>(texture);
 										if (file_texture)
 										{
 											StackString<MAX_PATH_SIZE> texture_path = file_texture->GetFileName();
-											LOGV("%stexture basename: %s\n", state.indent(), texture_path.basename()());
-											LOGV("%sfile name: %s, relative filename: %s\n", state.indent(), file_texture->GetFileName(), file_texture->GetRelativeFileName());
+											LOGV("%stexture basename: %s\n", state.indent.indent(), texture_path.basename()());
+											LOGV("%sfile name: %s, relative filename: %s\n", state.indent.indent(), file_texture->GetFileName(), file_texture->GetRelativeFileName());
 											
 											String texture_name = texture_path.basename().remove_extension()();
 											String internal_material_name = "materials/" + texture_name;
@@ -190,20 +203,20 @@ namespace gemini
 											if (material.id == -1)
 											{
 												datamodel::Material newmaterial = materials.add_material(internal_material_name);
-												LOGV("%sadded material: \"%s\" at index: %i\n", state.indent(), texture_name.c_str(), newmaterial.id);
+												LOGV("%sadded material: \"%s\" at index: %i\n", state.indent.indent(), texture_name.c_str(), newmaterial.id);
 												
 												mesh->material = newmaterial.id;
 											}
 											else
 											{
-												LOGV("%sfound material: \"%s\" at index: %i\n", state.indent(), texture_name.c_str(), material.id);
+												LOGV("%sfound material: \"%s\" at index: %i\n", state.indent.indent(), texture_name.c_str(), material.id);
 												mesh->material = material.id;
 											}
 
 										}
 										else if (procedural_texture)
 										{
-											LOGV("%sdetected procedural texture!\n", state.indent());
+											LOGV("%sdetected procedural texture!\n", state.indent.indent());
 											assert(0);
 										}
 										
@@ -227,11 +240,11 @@ namespace gemini
 		}
 	}
 
-	static void load_mesh(IndentState& state, FbxNode* node, datamodel::Mesh* mesh, datamodel::Model* model, float conversion_factor)
+	static void load_mesh(AutodeskFbxExtensionState& state, FbxNode* node, datamodel::Mesh* mesh)
 	{
 		FbxMesh* fbxmesh = node->GetMesh();
 		
-		parse_materials(state, node, model->materials, mesh);
+		parse_materials(state, node, state.model->materials, mesh);
 		
 		fbxmesh->GenerateNormals();
 		fbxmesh->GenerateTangentsData();
@@ -239,7 +252,7 @@ namespace gemini
 		int total_deformers = fbxmesh->GetDeformerCount();
 	//	LOGV("%stotal_deformers: %i\n", state.indent(), total_deformers);
 		
-		state.update();
+		state.indent.update();
 		int total_triangles = fbxmesh->GetPolygonCount();
 	//	LOGV("%s# triangles: %i\n", state.indent(), total_triangles);
 	//	LOGV("%s# vertices: %i\n", state.indent(), fbxmesh->GetControlPointsCount());
@@ -270,16 +283,16 @@ namespace gemini
 		int total_uv_sets = uv_set_list.GetCount();
 		if (total_uv_sets > datamodel::MAX_SUPPORTED_UV_CHANNELS)
 		{
-			LOGW("%stotal uv sets exceeds MAX_SUPPORTED_UV_CHANNELS (%i)\n", state.indent(), datamodel::MAX_SUPPORTED_UV_CHANNELS);
+			LOGW("%stotal uv sets exceeds MAX_SUPPORTED_UV_CHANNELS (%i)\n", state.indent.indent(), datamodel::MAX_SUPPORTED_UV_CHANNELS);
 
 			// print out the sets being ignored
-			state.push();
+			state.indent.push();
 			for (int item_index = datamodel::MAX_SUPPORTED_UV_CHANNELS; item_index < total_uv_sets; ++item_index)
 			{
 				FbxStringListItem* item = uv_set_list.GetItemAt(item_index);
-				LOGW("%signoring set: \"%s\"\n", state.indent(), item->mString.Buffer());
+				LOGW("%signoring set: \"%s\"\n", state.indent.indent(), item->mString.Buffer());
 			}
-			state.pop();
+			state.indent.pop();
 			total_uv_sets = datamodel::MAX_SUPPORTED_UV_CHANNELS;
 		}
 		
@@ -305,11 +318,11 @@ namespace gemini
 			for (int local_vertex_id = 0; local_vertex_id < 3; ++local_vertex_id)
 			{
 				int index = fbxmesh->GetPolygonVertex(triangle_index, local_vertex_id);
-	//			LOGV("%sindex: %i\n", state.indent(), index);
+				LOGV("%sindex: %i [vertex_index = %i]\n", state.indent.indent(), index, vertex_index);
 				mesh->indices[local_index] = local_index;
 				
 				const FbxVector4& position = fbxmesh->GetControlPointAt(index);
-	//			LOGV("%svertex: %g %g %g\n", state.indent(), position[0], position[1], position[2]);
+				LOGV("%svertex: %g %g %g\n", state.indent.indent(), position[0], position[1], position[2]);
 				
 				FbxVector4 normal;
 				fbxmesh->GetPolygonVertexNormal(triangle_index, local_vertex_id, normal);
@@ -318,7 +331,7 @@ namespace gemini
 				datamodel::Vertex* vertex = &vertices[vertex_index];
 				
 				// MUSE_FBX_UNIT_FIX
-				vertex->position = glm::vec3(position[0], position[1], position[2]) * conversion_factor;
+				vertex->position = glm::vec3(position[0], position[1], position[2]) * state.conversion_factor;
 				vertex->normal = glm::vec3(normal[0], normal[1], normal[2]);
 				for (int uvset = 0; uvset < total_uv_sets; ++uvset)
 				{
@@ -328,7 +341,7 @@ namespace gemini
 					bool has_uv = fbxmesh->GetPolygonVertexUV(triangle_index, local_vertex_id, item->mString, uv, unmapped);
 					if (!has_uv)
 					{
-						LOGE("%sUnable to get polygon vertex at [t=%i, v=%i, set=%s\n", state.indent(), triangle_index, local_vertex_id, item->mString.Buffer());
+						LOGE("%sUnable to get polygon vertex at [t=%i, v=%i, set=%s\n", state.indent.indent(), triangle_index, local_vertex_id, item->mString.Buffer());
 					}
 		//			LOGV("%suv: %g %g\n", state.indent(), uv[0], uv[1]);
 					vertex->uv[uvset] = glm::vec2(uv[0], uv[1]);
@@ -361,6 +374,7 @@ namespace gemini
 	//	LOGV("%svertex_index: %i\n", state.indent(), vertex_index);
 		DESTROY_ARRAY(Vertex, vertices, mesh->indices.size());
 	}
+	
 
 	static String type_from_node(FbxNode* node)
 	{
@@ -393,19 +407,19 @@ namespace gemini
 		return !(node->GetLight() || node->GetCamera());
 	}
 
-	static void populate_animations(IndentState& state, datamodel::Model* model, FbxNode* fbxnode, FbxTakeInfo* take, FbxTime::EMode time_mode, datamodel::Animation& animation, float conversion_factor)
+	static void populate_animations(AutodeskFbxExtensionState& state, FbxNode* fbxnode, FbxTakeInfo* take, FbxTime::EMode time_mode, datamodel::Animation& animation)
 	{
 		FbxTime start = take->mLocalTimeSpan.GetStart();
 		FbxTime end = take->mLocalTimeSpan.GetStop();
 		int frame_count = end.GetFrameCount(time_mode) - start.GetFrameCount(time_mode) + 1;
 	//	LOGV("%stotal frames: %i\n", state.indent(), frame_count);
 		
-		state.push();
+		state.indent.push();
 		
 		bool is_hierarchical = is_hierarchical_node(fbxnode);
 		
 		String node_name = fbxnode->GetName();
-		datamodel::Node* node = model->root.find_child_named(node_name);
+		datamodel::Node* node = state.model->root.find_child_named(node_name);
 		if (is_hierarchical && node && node->has_animations())
 		{
 	//	if (!node)
@@ -413,7 +427,7 @@ namespace gemini
 	//		LOGW("%sCould not find node named \"%s\"\n", state.indent(), node_name.c_str());
 	//		return;
 	//	}
-			LOGV("%snode: %s\n", state.indent(), node_name.c_str());
+			LOGV("%snode: %s\n", state.indent.indent(), node_name.c_str());
 			
 			datamodel::NodeAnimation node_data;
 
@@ -444,7 +458,7 @@ namespace gemini
 
 				from_fbx(key_scaling, scaling);
 				// MUSE_FBX_UNIT_FIX
-				key_scaling *= 1.0f/conversion_factor;
+				key_scaling *= 1.0f/state.conversion_factor;
 				
 				from_fbx(key_rotation, rotation);
 				from_fbx(key_translation, translation);
@@ -461,73 +475,155 @@ namespace gemini
 		
 		for (int index = 0; index < fbxnode->GetChildCount(); ++index)
 		{
-			populate_animations(state, model, fbxnode->GetChild(index), take, time_mode, animation, conversion_factor);
+			populate_animations(state, fbxnode->GetChild(index), take, time_mode, animation);
 		}
 		
-		state.pop();
+		state.indent.pop();
+	}
+	
+	static void populate_skeleton(AutodeskFbxExtensionState& state, int16_t parent_index, datamodel::Node* parent, FbxNode* fbxnode)
+	{
+		FbxNodeAttribute::EType node_attribute_type = fbxnode->GetNodeAttribute()->GetAttributeType();
+		assert(node_attribute_type == FbxNodeAttribute::eSkeleton);
+
+		datamodel::Bone* bone = state.model->skeleton->add_bone(parent_index, fbxnode->GetName());
+
+		LOGV("%spopulate_skeleton: [parent_index=%i, index=%i, name=%s]\n", state.indent.indent(), parent_index, bone->index, fbxnode->GetName());
+		
+		for (int index = 0; index < fbxnode->GetChildCount(); ++index)
+		{
+			populate_skeleton(state, bone->index, parent, fbxnode->GetChild(index));
+		}
+	}
+	
+	static void process_blendweights(AutodeskFbxExtensionState& state, datamodel::Node* parent, FbxNode* fbxnode)
+	{
+		if (fbxnode->GetMesh())
+		{
+			datamodel::Node* node = state.model->root.find_child_named(fbxnode->GetName());
+			assert(node != 0);
+			
+			FbxMesh* fbxmesh = fbxnode->GetMesh();
+			assert(fbxmesh != 0);
+			
+			int total_deformers = fbxmesh->GetDeformerCount();
+			FbxAMatrix geometry_transform;
+			
+			// This makes the assumption that there will ONLY ever be a single mesh
+			// linked to a single skeleton.
+			for(int deformer_index = 0; deformer_index < total_deformers; ++deformer_index)
+			{
+				FbxDeformer* deformer = fbxmesh->GetDeformer(deformer_index);
+				
+				if (deformer->GetDeformerType() == FbxDeformer::eSkin)
+				{
+					FbxSkin* skin = reinterpret_cast<FbxSkin*>(deformer);
+					int total_clusters = skin->GetClusterCount();
+					for (int cluster_index = 0; cluster_index < total_clusters; ++cluster_index)
+					{
+						FbxCluster* cluster = skin->GetCluster(cluster_index);
+						LOGV("cluster: %i, joint name: %s\n", cluster_index, cluster->GetLink()->GetName());
+						// TODO: find Bone named with this and assign weights
+						datamodel::Bone* bone = state.model->skeleton->find_bone_named(cluster->GetLink()->GetName());
+						assert(bone != 0);
+						
+						FbxAMatrix transform_matrix;
+						FbxAMatrix link_matrix;
+						FbxAMatrix inverse_bindpose_matrix;
+						
+						cluster->GetTransformMatrix(transform_matrix);
+						cluster->GetTransformLinkMatrix(link_matrix);
+						
+						inverse_bindpose_matrix = link_matrix.Inverse() * transform_matrix * geometry_transform;
+
+						int total_control_points = cluster->GetControlPointIndicesCount();
+						double* control_point_weights = cluster->GetControlPointWeights();
+						for(int control_point_index = 0; control_point_index < total_control_points; ++control_point_index)
+						{
+							LOGV("%i --> %2.2f\n", control_point_index, control_point_weights[control_point_index]);
+							// TODO: map fbx control point index to our mesh's data
+						}
+						
+					}
+				}
+				else if (deformer->GetDeformerType() == FbxDeformer::eBlendShape)
+				{
+					LOGV("Unable to read blend shapes! Fix me.\n");
+					assert(0);
+				}
+				else
+				{
+					assert(0);
+					LOGV("Unknown deformer type!\n");
+				}
+			}
+		}
+		
+		
+		for (int index = 0; index < fbxnode->GetChildCount(); ++index)
+		{
+			process_blendweights(state, parent, fbxnode->GetChild(index));
+		}
 	}
 
-	static void populate_hierarchy(IndentState& state, datamodel::Node* root, FbxNode* fbxnode, datamodel::Model* model, float conversion_factor)
+	static void populate_hierarchy(AutodeskFbxExtensionState& state, datamodel::Node* root, FbxNode* fbxnode)
 	{
-		datamodel::Node* node = root;
-
-		state.push();
+		state.indent.push();
 
 		if (is_hierarchical_node(fbxnode))
 		{
-	//		FbxNodeAttribute* node_attribute = fbxnode->GetNodeAttribute();
-	//		if (node_attribute)
-	//		{
-	//			bool is_geometry = (
-	//								node_attribute->GetAttributeType() == FbxNodeAttribute::eMesh ||
-	//								node_attribute->GetAttributeType() == FbxNodeAttribute::eNurbs ||
-	//								node_attribute->GetAttributeType() == FbxNodeAttribute::ePatch
-	//								);
-	//			
-	//			if (is_geometry)
-	//			{
-	//				FbxGeometry* geometry = (FbxGeometry*)node_attribute;
-	//				int blend_shape_count = geometry->GetDeformerCount(FbxDeformer::eBlendShape);
-	//				//			LOGV("%sblend_shapes = %i\n", state.indent(), blend_shape_count);
-	//			}
-	//		}
-
 			// determine which order the rotation and scaling operations are performed...
-			FbxTransform::EInheritType transform_inherit_type;
-			fbxnode->GetTransformationInheritType(transform_inherit_type);
-			
-			StackString<64> inherit_type;
-			switch(transform_inherit_type)
-			{
-				case FbxTransform::eInheritRrSs:
-					inherit_type = "RrSs\n";
-					break;
-				case FbxTransform::eInheritRSrs:
-					inherit_type = "RSrs";
-					break;
-				case FbxTransform::eInheritRrs:
-					inherit_type = "Rrs";
-					break;
-			}
-			
-			LOGV("Node inherit type: %s\n", inherit_type());
+//			FbxTransform::EInheritType transform_inherit_type;
+//			fbxnode->GetTransformationInheritType(transform_inherit_type);
+//			
+//			StackString<64> inherit_type;
+//			switch(transform_inherit_type)
+//			{
+//				case FbxTransform::eInheritRrSs:
+//					inherit_type = "RrSs\n";
+//					break;
+//				case FbxTransform::eInheritRSrs:
+//					inherit_type = "RSrs";
+//					break;
+//				case FbxTransform::eInheritRrs:
+//					inherit_type = "Rrs";
+//					break;
+//			}
+//			
+//			LOGV("Node inherit type: %s\n", inherit_type());
 		
 			// create a new node
-			node = CREATE(datamodel::Node);
+			datamodel::Node* node = CREATE(datamodel::Node);
 			root->add_child(node);
 			
+			node->name = fbxnode->GetName();
+			LOGV("-------------- %s --------------\n", node->name.c_str());
+
 			// copy data
 			node->type = type_from_node(fbxnode);
 			if (node->type == "mesh")
 			{
 				node->mesh = CREATE(datamodel::Mesh);
 				// populate mesh from fbxnode
-				state.push();
-				load_mesh(state, fbxnode, node->mesh, model, conversion_factor);
-				state.pop();
+				state.indent.push();
+				load_mesh(state, fbxnode, node->mesh);
+				state.indent.pop();
 			}
-			node->name = fbxnode->GetName();
-			LOGV("-------------- %s --------------\n", node->name.c_str());
+			else if (node->type == "skeleton")
+			{
+				// I'm assuming that the skeleton has no parent.
+				assert(root->type != "skeleton");
+
+				// build a skeleton starting from this node; this is the root
+				// if my assertion above is true.
+				state.model->skeleton = CREATE(datamodel::Skeleton);
+				populate_skeleton(state, -1, node, fbxnode);
+			}
+			else
+			{
+				LOGW("Node type ignored: %s\n", node->type.c_str());
+			}
+
 
 			FbxVector4 zero(0, 0, 0);
 			fbxnode->SetPivotState(FbxNode::eSourcePivot, FbxNode::ePivotActive);
@@ -563,33 +659,33 @@ namespace gemini
 			LOGV("lt: %g %g %g\n", local_translation[0], local_translation[1], local_translation[2]);
 
 			
-			FbxAMatrix& global_transform = fbxnode->EvaluateGlobalTransform();
-			const FbxDouble3& global_scale = global_transform.GetS();
-			const FbxDouble3& global_rotation = global_transform.GetR();
-			const FbxDouble3& global_translation = global_transform.GetT();
-			LOGV("gs: %g %g %g\n", global_scale[0], global_scale[1], global_scale[2]);
-			LOGV("gr: %g %g %g\n", global_rotation[0], global_rotation[1], global_rotation[2]);
-			LOGV("gt: %g %g %g\n", global_translation[0], global_translation[1], global_translation[2]);
+//			FbxAMatrix& global_transform = fbxnode->EvaluateGlobalTransform();
+//			const FbxDouble3& global_scale = global_transform.GetS();
+//			const FbxDouble3& global_rotation = global_transform.GetR();
+//			const FbxDouble3& global_translation = global_transform.GetT();
+//			LOGV("gs: %g %g %g\n", global_scale[0], global_scale[1], global_scale[2]);
+//			LOGV("gr: %g %g %g\n", global_rotation[0], global_rotation[1], global_rotation[2]);
+//			LOGV("gt: %g %g %g\n", global_translation[0], global_translation[1], global_translation[2]);
 			
 			
 			
-			const FbxDouble3& rotation_pivot = fbxnode->GetRotationPivot(pivot_set);
-			LOGV("rotation_pivot: %g %g %g\n", rotation_pivot[0], rotation_pivot[1], rotation_pivot[2]);
+//			const FbxDouble3& rotation_pivot = fbxnode->GetRotationPivot(pivot_set);
+//			LOGV("rotation_pivot: %g %g %g\n", rotation_pivot[0], rotation_pivot[1], rotation_pivot[2]);
 			
-			const FbxDouble3& pre_rotation = fbxnode->GetPreRotation(pivot_set);
-			LOGV("pre_rotation: %g %g %g\n", pre_rotation[0], pre_rotation[1], pre_rotation[2]);
+//			const FbxDouble3& pre_rotation = fbxnode->GetPreRotation(pivot_set);
+//			LOGV("pre_rotation: %g %g %g\n", pre_rotation[0], pre_rotation[1], pre_rotation[2]);
 			
-			const FbxDouble3& post_rotation = fbxnode->GetPostRotation(pivot_set);
-			LOGV("post_rotation: %g %g %g\n", post_rotation[0], post_rotation[1], post_rotation[2]);
+//			const FbxDouble3& post_rotation = fbxnode->GetPostRotation(pivot_set);
+//			LOGV("post_rotation: %g %g %g\n", post_rotation[0], post_rotation[1], post_rotation[2]);
 			
-			const FbxDouble3& rotation_offset = fbxnode->GetRotationOffset(pivot_set);
-			LOGV("rotation_offset: %g %g %g\n", rotation_offset[0], rotation_offset[1], rotation_offset[2]);
+//			const FbxDouble3& rotation_offset = fbxnode->GetRotationOffset(pivot_set);
+//			LOGV("rotation_offset: %g %g %g\n", rotation_offset[0], rotation_offset[1], rotation_offset[2]);
 			
-			const FbxDouble3& scaling_pivot = fbxnode->GetScalingPivot(pivot_set);
-			LOGV("scaling_pivot: %g %g %g\n", scaling_pivot[0], scaling_pivot[1], scaling_pivot[2]);
+//			const FbxDouble3& scaling_pivot = fbxnode->GetScalingPivot(pivot_set);
+//			LOGV("scaling_pivot: %g %g %g\n", scaling_pivot[0], scaling_pivot[1], scaling_pivot[2]);
 					
-			const FbxDouble3& scaling_offset = fbxnode->GetScalingOffset(pivot_set);
-			LOGV("scaling_offset: %g %g %g\n", scaling_offset[0], scaling_offset[1], scaling_offset[2]);
+//			const FbxDouble3& scaling_offset = fbxnode->GetScalingOffset(pivot_set);
+//			LOGV("scaling_offset: %g %g %g\n", scaling_offset[0], scaling_offset[1], scaling_offset[2]);
 			
 			
 
@@ -604,19 +700,23 @@ namespace gemini
 			from_fbx(node->scale, local_scale);
 			
 			// MUSE_FBX_UNIT_FIX
-			node->scale *= (1/conversion_factor);
+			node->scale *= (1/state.conversion_factor);
 			
 			from_fbx(node->rotation, local_rotation);
 			from_fbx(node->translation, local_translation);
-			
 
-			for (int index = 0; index < fbxnode->GetChildCount(); ++index)
+			// if this node isn't a skeleton; then we traverse the hierarchy
+			FbxNodeAttribute::EType node_attribute_type = fbxnode->GetNodeAttribute()->GetAttributeType();
+			if (node_attribute_type != FbxNodeAttribute::eSkeleton)
 			{
-				populate_hierarchy(state, node, fbxnode->GetChild(index), model, conversion_factor);
+				for (int index = 0; index < fbxnode->GetChildCount(); ++index)
+				{
+					populate_hierarchy(state, node, fbxnode->GetChild(index));
+				}
 			}
 		}
 
-		state.pop();
+		state.indent.pop();
 	}
 
 	AutodeskFbxReader::AutodeskFbxReader()
@@ -640,12 +740,6 @@ namespace gemini
 
 	void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_source)
 	{
-		LOGV("TODO: switch this over to FbxStream\n");
-		//		http://docs.autodesk.com/FBX/2014/ENU/FBX-SDK-Documentation/index.html
-		//		http://www.gamedev.net/topic/653502-useful-things-you-might-want-to-know-about-fbxsdk/?hl=%2Bfbx+%2Bsdk#entry5149612
-		//		http://www.gamedev.net/page/resources/_/technical/graphics-programming-and-theory/how-to-work-with-fbx-sdk-r3582
-		//		http://forums.autodesk.com/t5/fbx-sdk/how-to-get-uv-coord-per-vertex/td-p/4239532
-		// 		http://forums.autodesk.com/t5/fbx-sdk/splitmeshespermaterial-reached-limits/td-p/4239623
 		const char* path = (const char*)data_source.get_data();
 		
 		LOGV("loading model: %s\n", path);
@@ -728,25 +822,45 @@ namespace gemini
 		}
 		
 		// assume exporting from Maya
-		conversion_factor = FbxSystemUnit::cm.GetConversionFactorTo(system_unit);
-		LOGV("conversion_factor: %g\n", conversion_factor);
+		extension_state.conversion_factor = FbxSystemUnit::cm.GetConversionFactorTo(system_unit);
+		LOGV("conversion_factor: %g\n", extension_state.conversion_factor);
 		
 	//	int total_poses = scene->GetPoseCount();
 	//	LOGV("pose count: %i\n", total_poses);
+
+	
+		extension_state.model = model;
 		
 		FbxNode* fbxroot = scene->GetRootNode();
 		if (fbxroot)
 		{
-			IndentState state;
-			
 			// root node cannot have animations applied
 			model->root.flags |= datamodel::Node::NoAnimations;
 			
-	//		populate_hierarchy(state, &model->root, fbxroot, model);
+			
+			// it would be great if I could have a visitor and mask out the types
+			
+			// 1. build skeleton
+			
+			// 2. read blend weights
+			
+			// 3. read geometry
+			
+			
 			for (int index = 0; index < fbxroot->GetChildCount(); ++index)
 			{
-				populate_hierarchy(state, &model->root, fbxroot->GetChild(index), model, conversion_factor);
+				populate_hierarchy(extension_state, &model->root, fbxroot->GetChild(index));
 			}
+			
+			
+			// now process all weights
+			// This must be done after hierarchy traversal to ensure all the bones
+			// have been created.
+			for (int index = 0; index < fbxroot->GetChildCount(); ++index)
+			{
+				process_blendweights(extension_state, &model->root, fbxroot->GetChild(index));
+			}
+			
 			
 			int total_animation_stacks = scene->GetSrcObjectCount<FbxAnimStack>();
 			LOGV("animation stacks: %i\n", total_animation_stacks);
@@ -765,7 +879,7 @@ namespace gemini
 				LOGV("reading data for animation \"%s\"\n", animation->name.c_str());
 				
 	//			fbxroot->ConvertPivotAnimationRecursive(anim_stack, FbxNode::eDestinationPivot, 30.0);
-				populate_animations(state, model, fbxroot, take, time_mode, *animation, conversion_factor);
+				populate_animations(extension_state, fbxroot, take, time_mode, *animation);
 			}
 		}
 	}
