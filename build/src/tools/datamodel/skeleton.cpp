@@ -23,6 +23,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
+#include <assert.h>
+
 #include "datamodel/skeleton.h"
 
 namespace gemini
@@ -62,6 +64,12 @@ namespace gemini
 			}
 			return 0;
 		} // find_bone_named
+		
+		Bone* Skeleton::get_bone_at_index(int32_t index)
+		{
+			assert(index > -1 && index < bones.size());
+			return bones[index];
+		} // get_bone_at_index
 		
 	} // namespace datamodel
 } // namespace gemini

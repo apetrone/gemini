@@ -53,6 +53,7 @@ namespace gemini
 			
 			Bone* add_bone(int32_t parent_index, const String& name);
 			Bone* find_bone_named(const String& name);
+			Bone* get_bone_at_index(int32_t index);
 		};
 		
 	} // namespace datamodel

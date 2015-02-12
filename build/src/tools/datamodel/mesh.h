@@ -34,6 +34,7 @@ namespace gemini
 	namespace datamodel
 	{
 		const int MAX_SUPPORTED_UV_CHANNELS = 2;
+		const int MAX_SUPPORTED_BONE_INFLUENCES = 4;
 		
 		struct Vertex
 		{
@@ -41,6 +42,26 @@ namespace gemini
 			glm::vec3 normal;
 			glm::vec4 color;
 			glm::vec2 uv[MAX_SUPPORTED_UV_CHANNELS];
+		};
+		
+		struct Weight
+		{
+			String bone_name;
+			float value;
+			
+			Weight() : value(0.0f)
+			{
+			}
+		};
+		
+		struct WeightList
+		{
+			Weight weights[MAX_SUPPORTED_BONE_INFLUENCES];
+			uint8_t total_weights;
+			
+			WeightList() : total_weights(0)
+			{
+			}
 		};
 		
 		
@@ -52,6 +73,7 @@ namespace gemini
 			core::FixedArray<glm::vec3> normals;
 			core::FixedArray<glm::vec4> vertex_colors;
 			core::FixedArray< core::FixedArray<glm::vec2> > uvs;
+			core::FixedArray<WeightList> weights;
 			core::FixedArray<uint32_t> indices;
 			MaterialId material;
 			glm::vec3 mass_center_offset;

@@ -174,6 +174,33 @@ namespace gemini
 			mesh_data["uv_sets"] = uv_sets;
 			
 			
+			// write blend weights
+			Json::Value blend_weights(Json::arrayValue);
+			for (size_t index_id = 0; index_id < node->mesh->indices.size(); ++index_id)
+			{
+				// each index will have an array of weight data.
+				// this weight data will map bone name (by string) to value
+				// at a max of MAX_SUPPORTED_BONE_INFLUENCES.
+				Json::Value weight_array(Json::arrayValue);
+				datamodel::WeightList& weightlist = node->mesh->weights[index_id];
+				
+				for (size_t influence = 0; influence < datamodel::MAX_SUPPORTED_BONE_INFLUENCES; ++influence)
+				{
+					
+					datamodel::Weight& weight = weightlist.weights[influence];
+					if (!weight.bone_name.empty() && weight.value > 0.0f)
+					{
+						Json::Value weightpair;
+						weightpair["bone"] = weight.bone_name.c_str();
+						weightpair["value"] = weight.value;
+						weight_array.append(weightpair);
+					}
+				}
+				blend_weights.append(weight_array);
+			}
+			
+			mesh_data["blend_weights"] = blend_weights;
+			
 			mesh_data["material_id"] = node->mesh->material;
 			
 			Json::Value mass_center_offset(Json::arrayValue);

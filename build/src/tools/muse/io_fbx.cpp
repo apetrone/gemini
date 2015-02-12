@@ -316,7 +316,8 @@ namespace gemini
 			assert(fbxmesh->GetElementVertexColorCount() <= 1);
 		}
 
-		
+		// allocate weights
+		mesh->weights.allocate(total_indices);
 		
 		for (int triangle_index = 0; triangle_index < total_triangles; ++triangle_index)
 		{
@@ -368,12 +369,26 @@ namespace gemini
 				{
 					mesh->vertex_colors[vertex_index] = vertex->color;
 				}
+				
+				
+				datamodel::WeightList& weightlist = mesh->weights[vertex_index];
 
 				state.indent.push();
 				// copy weights
-				for (WeightReference& weight : state.slots[index].weights)
+				for (WeightReference& weight_ref : state.slots[index].weights)
 				{
-					LOGV("%sbone = %i, weight = %2.2f\n", state.indent.indent(), weight.datamodel_bone_index, weight.value);
+//					LOGV("%sbone = %i, weight = %2.2f\n", state.indent.indent(), weight_ref.datamodel_bone_index, weight_ref.value);
+					
+					// assert if we hit this limit -- can probably just drop anything
+					// over the max, but we should be smart -- and re-normalize.
+					assert(weightlist.total_weights < datamodel::MAX_SUPPORTED_BONE_INFLUENCES);
+					
+					// copy weight data over
+					datamodel::Weight& weight = weightlist.weights[weightlist.total_weights++];
+					datamodel::Bone* bone = state.model->skeleton->get_bone_at_index(weight_ref.datamodel_bone_index);
+					assert(bone != nullptr);
+					weight.bone_name = bone->name;
+					weight.value = weight_ref.value;
 				}
 				state.indent.pop();
 
