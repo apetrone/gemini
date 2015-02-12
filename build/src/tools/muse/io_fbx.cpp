@@ -85,6 +85,17 @@ namespace gemini
 		output = glm::quat(glm::vec3(x, y, z));
 	}
 
+	
+	void from_fbx(glm::mat4& output, const FbxAMatrix& inputmatrix)
+	{
+		const double* m = static_cast<const double*>(inputmatrix);
+		output = glm::mat4(
+			m[0], m[1], m[2], m[3],
+			m[4], m[5], m[6], m[7],
+			m[8], m[9], m[10], m[11],
+		    m[12], m[13], m[14], m[15]);
+	}
+
 	static int get_layer_element_index(
 								FbxLayerElement::EMappingMode mapping_mode,
 								FbxLayerElement::EReferenceMode reference_mode,
@@ -527,18 +538,21 @@ namespace gemini
 				{
 					FbxSkin* skin = reinterpret_cast<FbxSkin*>(deformer);
 
-					LOGV("resizing vector to %i\n", fbxmesh->GetControlPointsCount());
+					LOGV("resizing vector to %i control points (indices)\n", fbxmesh->GetControlPointsCount());
 					state.slots.resize(fbxmesh->GetControlPointsCount());
 					
 
-					
 					int total_clusters = skin->GetClusterCount();
 					LOGV("total clusters: %i\n", total_clusters);
+					
+					// There is ONE known issue with this:
+					// It will only calculate the inverse bind pose for bones that are present
+					// as a cluster -- that is; it must be bound to some verts in the mesh.
+					
 					for (int cluster_index = 0; cluster_index < total_clusters; ++cluster_index)
 					{
 						FbxCluster* cluster = skin->GetCluster(cluster_index);
 						LOGV("cluster: %i, joint name: %s\n", cluster_index, cluster->GetLink()->GetName());
-						// TODO: find Bone named with this and assign weights
 						datamodel::Bone* bone = state.model->skeleton->find_bone_named(cluster->GetLink()->GetName());
 						assert(bone != 0);
 						
@@ -550,23 +564,19 @@ namespace gemini
 						cluster->GetTransformLinkMatrix(link_matrix);
 						
 						inverse_bindpose_matrix = link_matrix.Inverse() * transform_matrix * geometry_transform;
-
+						from_fbx(bone->inverse_bind_pose, inverse_bindpose_matrix);
+						
 						int total_control_points = cluster->GetControlPointIndicesCount();
 						double* control_point_weights = cluster->GetControlPointWeights();
 						for(int control_point_index = 0; control_point_index < total_control_points; ++control_point_index)
 						{
-							LOGV("%i --> %2.2f\n", control_point_index, control_point_weights[control_point_index]);
-							// TODO: map fbx control point index to our mesh's data
+//							LOGV("%i --> %2.2f\n", control_point_index, control_point_weights[control_point_index]);
 							
 							WeightReference ref;
-
 							ref.datamodel_bone_index = bone->index;
 							ref.value = control_point_weights[control_point_index];
-							
 							state.slots[control_point_index].weights.push_back(ref);
-							
 						}
-						
 					}
 					
 					

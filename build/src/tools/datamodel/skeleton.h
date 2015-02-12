@@ -30,6 +30,8 @@
 #include <string>
 #include <vector>
 
+#include <core/mathlib.h>
+
 namespace gemini
 {
 	namespace datamodel
@@ -39,6 +41,7 @@ namespace gemini
 			int32_t index;
 			int32_t parent;
 			String name;
+			glm::mat4 inverse_bind_pose;
 		};
 	
 		typedef std::vector<Bone*> BoneVector;

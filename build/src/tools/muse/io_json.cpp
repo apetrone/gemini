@@ -73,6 +73,7 @@ namespace gemini
 	void JsonModelWriter::append_node(datamodel::Node* node, Json::Value& jnodes)
 	{
 		Json::Value jnode;
+			
 		jnode["name"] = node->name.c_str();
 		jnode["type"] = node->type.c_str();
 		
@@ -267,6 +268,8 @@ namespace gemini
 		// write out all nodes
 		for (auto child : model->root.children)
 		{
+			if (child->type == "skeleton")
+				continue;
 			append_node(child, jnodes);
 		}
 		jroot["nodes"] = jnodes;
@@ -337,6 +340,13 @@ namespace gemini
 			{
 				bone_entry["name"] = bone->name.c_str();
 				bone_entry["parent"] = bone->parent;
+				Json::Value inverse_bind_pose;
+				const float* data = (const float*)glm::value_ptr(bone->inverse_bind_pose);
+				for (size_t i = 0; i < 16; ++i)
+				{
+					inverse_bind_pose.append(data[i]);
+				}
+				bone_entry["inverse_bind_pose"] = inverse_bind_pose;
 				jskeleton.append(bone_entry);
 			}
 		
