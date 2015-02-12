@@ -59,6 +59,11 @@ namespace gemini
 		
 	}
 	
+	
+
+	
+	
+
 
 
 	template <class Type>
@@ -364,7 +369,13 @@ namespace gemini
 					mesh->vertex_colors[vertex_index] = vertex->color;
 				}
 
-				
+				state.indent.push();
+				// copy weights
+				for (WeightReference& weight : state.slots[index].weights)
+				{
+					LOGV("%sbone = %i, weight = %2.2f\n", state.indent.indent(), weight.datamodel_bone_index, weight.value);
+				}
+				state.indent.pop();
 
 				++vertex_index;
 				++local_index;
@@ -480,29 +491,11 @@ namespace gemini
 		
 		state.indent.pop();
 	}
-	
-	static void populate_skeleton(AutodeskFbxExtensionState& state, int16_t parent_index, datamodel::Node* parent, FbxNode* fbxnode)
-	{
-		FbxNodeAttribute::EType node_attribute_type = fbxnode->GetNodeAttribute()->GetAttributeType();
-		assert(node_attribute_type == FbxNodeAttribute::eSkeleton);
 
-		datamodel::Bone* bone = state.model->skeleton->add_bone(parent_index, fbxnode->GetName());
-
-		LOGV("%spopulate_skeleton: [parent_index=%i, index=%i, name=%s]\n", state.indent.indent(), parent_index, bone->index, fbxnode->GetName());
-		
-		for (int index = 0; index < fbxnode->GetChildCount(); ++index)
-		{
-			populate_skeleton(state, bone->index, parent, fbxnode->GetChild(index));
-		}
-	}
-	
-	static void process_blendweights(AutodeskFbxExtensionState& state, datamodel::Node* parent, FbxNode* fbxnode)
+	static void process_blendweights(AutodeskFbxExtensionState& state, FbxNode* fbxnode)
 	{
 		if (fbxnode->GetMesh())
 		{
-			datamodel::Node* node = state.model->root.find_child_named(fbxnode->GetName());
-			assert(node != 0);
-			
 			FbxMesh* fbxmesh = fbxnode->GetMesh();
 			assert(fbxmesh != 0);
 			
@@ -518,7 +511,14 @@ namespace gemini
 				if (deformer->GetDeformerType() == FbxDeformer::eSkin)
 				{
 					FbxSkin* skin = reinterpret_cast<FbxSkin*>(deformer);
+
+					LOGV("resizing vector to %i\n", fbxmesh->GetControlPointsCount());
+					state.slots.resize(fbxmesh->GetControlPointsCount());
+					
+
+					
 					int total_clusters = skin->GetClusterCount();
+					LOGV("total clusters: %i\n", total_clusters);
 					for (int cluster_index = 0; cluster_index < total_clusters; ++cluster_index)
 					{
 						FbxCluster* cluster = skin->GetCluster(cluster_index);
@@ -542,8 +542,27 @@ namespace gemini
 						{
 							LOGV("%i --> %2.2f\n", control_point_index, control_point_weights[control_point_index]);
 							// TODO: map fbx control point index to our mesh's data
+							
+							WeightReference ref;
+
+							ref.datamodel_bone_index = bone->index;
+							ref.value = control_point_weights[control_point_index];
+							
+							state.slots[control_point_index].weights.push_back(ref);
+							
 						}
 						
+					}
+					
+					
+					for(int i = 0; i < fbxmesh->GetControlPointsCount(); ++i)
+					{
+						size_t total_weights = state.slots[i].weights.size();
+						LOGV("%i; total influences: %i\n", i, total_weights);
+						for (WeightReference& w : state.slots[i].weights)
+						{
+							LOGV("\tbone: %i, weight: %2.2f\n", w.datamodel_bone_index, w.value);
+						}
 					}
 				}
 				else if (deformer->GetDeformerType() == FbxDeformer::eBlendShape)
@@ -562,8 +581,29 @@ namespace gemini
 		
 		for (int index = 0; index < fbxnode->GetChildCount(); ++index)
 		{
-			process_blendweights(state, parent, fbxnode->GetChild(index));
+			process_blendweights(state, fbxnode->GetChild(index));
 		}
+	}
+	
+	static void process_skeleton(AutodeskFbxExtensionState& state, int32_t parent_index, FbxNode* fbxnode)
+	{
+		// I'm assuming that the skeleton has no parent.
+		FbxNodeAttribute::EType node_attribute_type = fbxnode->GetNodeAttribute()->GetAttributeType();
+		assert(node_attribute_type == FbxNodeAttribute::eSkeleton);
+		
+		datamodel::Bone* bone = state.model->skeleton->add_bone(parent_index, fbxnode->GetName());
+		
+		LOGV("%spopulate_skeleton: [parent_index=%i, index=%i, name=%s]\n", state.indent.indent(), parent_index, bone->index, fbxnode->GetName());
+		
+		for (int index = 0; index < fbxnode->GetChildCount(); ++index)
+		{
+			process_skeleton(state, bone->index, fbxnode->GetChild(index));
+		}
+	}
+	
+	static void process_geometry(AutodeskFbxExtensionState& state, datamodel::Node* root, FbxNode* fbxnode)
+	{
+		
 	}
 
 	static void populate_hierarchy(AutodeskFbxExtensionState& state, datamodel::Node* root, FbxNode* fbxnode)
@@ -599,9 +639,15 @@ namespace gemini
 			node->name = fbxnode->GetName();
 			LOGV("-------------- %s --------------\n", node->name.c_str());
 
+
+
+			
+			FbxNodeAttribute::EType node_attribute_type = fbxnode->GetNodeAttribute()->GetAttributeType();
+
+
 			// copy data
 			node->type = type_from_node(fbxnode);
-			if (node->type == "mesh")
+			if (node_attribute_type == FbxNodeAttribute::eMesh)
 			{
 				node->mesh = CREATE(datamodel::Mesh);
 				// populate mesh from fbxnode
@@ -609,15 +655,8 @@ namespace gemini
 				load_mesh(state, fbxnode, node->mesh);
 				state.indent.pop();
 			}
-			else if (node->type == "skeleton")
+			else if (node_attribute_type == FbxNodeAttribute::eSkeleton)
 			{
-				// I'm assuming that the skeleton has no parent.
-				assert(root->type != "skeleton");
-
-				// build a skeleton starting from this node; this is the root
-				// if my assertion above is true.
-				state.model->skeleton = CREATE(datamodel::Skeleton);
-				populate_skeleton(state, -1, node, fbxnode);
 			}
 			else
 			{
@@ -706,7 +745,6 @@ namespace gemini
 			from_fbx(node->translation, local_translation);
 
 			// if this node isn't a skeleton; then we traverse the hierarchy
-			FbxNodeAttribute::EType node_attribute_type = fbxnode->GetNodeAttribute()->GetAttributeType();
 			if (node_attribute_type != FbxNodeAttribute::eSkeleton)
 			{
 				for (int index = 0; index < fbxnode->GetChildCount(); ++index)
@@ -838,28 +876,45 @@ namespace gemini
 			model->root.flags |= datamodel::Node::NoAnimations;
 			
 			
-			// it would be great if I could have a visitor and mask out the types
+			// The fbx data must be read in the following order:
+			// 1. build skeleton
+			// 2. process blend weights for geometry
+			// 3. read in mesh geometry
+			// It is done so because we need to reference bones by name
+			// and we need to have blendweights when reading in the geometry.
 			
 			// 1. build skeleton
-			
-			// 2. read blend weights
-			
-			// 3. read geometry
-			
-			
 			for (int index = 0; index < fbxroot->GetChildCount(); ++index)
 			{
-				populate_hierarchy(extension_state, &model->root, fbxroot->GetChild(index));
+				FbxNode* node = fbxroot->GetChild(index);;
+				FbxNodeAttribute::EType node_attribute_type = node->GetNodeAttribute()->GetAttributeType();
+				if (node_attribute_type == FbxNodeAttribute::eSkeleton)
+				{
+					// If you hit this assert, there's another skeleton at the root level.
+					// At the moment, only a single skeleton is supported.
+					assert(extension_state.model->skeleton == 0);
+					
+					extension_state.model->skeleton = CREATE(datamodel::Skeleton);
+					process_skeleton(extension_state, -1, node);
+				}
 			}
-			
 			
 			// now process all weights
 			// This must be done after hierarchy traversal to ensure all the bones
 			// have been created.
 			for (int index = 0; index < fbxroot->GetChildCount(); ++index)
 			{
-				process_blendweights(extension_state, &model->root, fbxroot->GetChild(index));
+				process_blendweights(extension_state, fbxroot->GetChild(index));
 			}
+			
+			// 3. read geometry
+			for (int index = 0; index < fbxroot->GetChildCount(); ++index)
+			{
+				populate_hierarchy(extension_state, &model->root, fbxroot->GetChild(index));
+			}
+			
+			
+
 			
 			
 			int total_animation_stacks = scene->GetSrcObjectCount<FbxAnimStack>();

@@ -30,6 +30,26 @@
 
 namespace gemini
 {
+
+	struct WeightReference
+	{
+		// datamodel bone index
+		uint32_t datamodel_bone_index;
+		
+		// weight
+		float value;
+	};
+	
+	typedef std::vector<WeightReference> WeightReferenceVector;
+	struct WeightSlot
+	{
+		WeightReferenceVector weights;
+	};
+	
+	typedef std::vector<WeightSlot> WeightSlotVector;
+
+
+
 	struct AutodeskFbxExtensionState
 	{
 		datamodel::Model* model;
@@ -39,6 +59,8 @@ namespace gemini
 		float conversion_factor;
 		
 		tools::IndentState indent;
+		
+		WeightSlotVector slots;
 	};
 	
 	class AutodeskFbxReader : public tools::Reader<datamodel::Model>

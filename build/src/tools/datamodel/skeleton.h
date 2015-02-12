@@ -36,8 +36,8 @@ namespace gemini
 	{
 		struct Bone
 		{
-			int16_t index;
-			int16_t parent;
+			int32_t index;
+			int32_t parent;
 			String name;
 		};
 	
@@ -51,7 +51,7 @@ namespace gemini
 			Skeleton();
 			~Skeleton();
 			
-			Bone* add_bone(int16_t parent_index, const String& name);
+			Bone* add_bone(int32_t parent_index, const String& name);
 			Bone* find_bone_named(const String& name);
 		};
 		

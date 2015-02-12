@@ -41,7 +41,7 @@ namespace gemini
 			}
 		}
 		
-		Bone* Skeleton::add_bone(int16_t parent_index, const String& name)
+		Bone* Skeleton::add_bone(int32_t parent_index, const String& name)
 		{
 			Bone* bone = CREATE(Bone);
 			bone->index = bones.size();
