@@ -328,7 +328,21 @@ namespace gemini
 		jroot["animations"] = janimations;
 		
 		
+		// write out the skeleton; if one exists
+		Json::Value jskeleton(Json::arrayValue);
+		if (model->skeleton)
+		{
+			Json::Value bone_entry;
+			for (const datamodel::Bone* bone : model->skeleton->bones)
+			{
+				bone_entry["name"] = bone->name.c_str();
+				bone_entry["parent"] = bone->parent;
+				jskeleton.append(bone_entry);
+			}
 		
+			jroot["skeleton"] = jskeleton;
+		}
+
 		
 		Json::StyledWriter writer;
 		
