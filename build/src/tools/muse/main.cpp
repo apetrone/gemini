@@ -94,7 +94,10 @@ namespace gemini
 			// some sane defaults?
 			compress_animation = false;
 			flip_vertically = false;
-			bake_transforms = true;
+			
+			// this should be true for static meshes
+			// and false for skeletal meshes.
+			bake_transforms = false;
 		}
 	};
 

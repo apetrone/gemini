@@ -809,16 +809,32 @@ class ModelInterface : public gemini::IModelInterface
 		assets::Mesh* mesh;
 		glm::mat4 transform;
 		
+		glm::mat4* bone_transforms;
+		
 	public:
 	
-		ModelInstanceData() : mesh_asset_index(0)
+		ModelInstanceData() : mesh_asset_index(0), bone_transforms(0)
 		{
+		}
+		
+		virtual ~ModelInstanceData()
+		{
+			if (bone_transforms)
+			{
+				//delete [] bone_transforms;
+			}
 		}
 	
 		void set_mesh_index(unsigned int mesh_asset_id)
 		{
 			mesh_asset_index = mesh_asset_id;
 			mesh = assets::meshes()->find_with_id(mesh_asset_index);
+			
+			// does this have an animation?
+			if (!mesh->skeleton.empty())
+			{
+				//bone_transforms = new glm::mat4[mesh->skeleton.size()];
+			}
 		}
 		
 		virtual unsigned int asset_index() const { return mesh_asset_index; }
@@ -834,6 +850,8 @@ class ModelInterface : public gemini::IModelInterface
 //			geometry_data.material_id = geometry->material_id;
 //			geometry_data.shader_id = geometry->shader_id;
 //		}
+
+		virtual glm::mat4* get_bone_transforms() const { return bone_transforms; }
 	};
 
 

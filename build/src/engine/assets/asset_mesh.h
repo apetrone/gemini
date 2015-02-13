@@ -174,7 +174,7 @@ namespace gemini
 
 			glm::mat4 node_transform;
 			
-			
+			Joint* find_bone_named(const char* name);
 			
 			// bind pose skeleton
 			core::FixedArray<Joint> skeleton;

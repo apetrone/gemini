@@ -55,7 +55,7 @@ namespace gemini
 	{
 		typedef std::map<int, std::string> MaterialByIdContainer;
 
-		static glm::mat4 json_to_mat4(Json::Value& value)
+		static glm::mat4 json_to_mat4(const Json::Value& value)
 		{
 			glm::mat4 output;
 			Json::ValueIterator it = value.begin();
@@ -104,7 +104,8 @@ namespace gemini
 				Json::Value normal_array = mesh_root["normals"];
 				Json::Value uv_sets = mesh_root["uv_sets"];
 				Json::Value vertex_colors = mesh_root["vertex_colors"];
-
+				const Json::Value& blend_weights = mesh_root["blend_weights"];
+				
 				// setup materials
 				assets::Material* default_material = assets::materials()->get_default();
 				
@@ -134,6 +135,10 @@ namespace gemini
 				{
 					shader_path = "shaders/world";
 				}
+				else if (!state.mesh->skeleton.empty())
+				{
+//					shader_path = "shaders/animation";
+				}
 				
 				assets::Shader* shader = assets::shaders()->load_from_path(shader_path.c_str());
 				geo->shader_id = shader->Id();
@@ -151,6 +156,9 @@ namespace gemini
 				geo->normals.allocate(vertex_array.size());
 				geo->uvs.allocate(uv_sets.size());
 				geo->colors.allocate(vertex_colors.size());
+
+				geo->blend_weights.allocate(geo->vertex_count);
+				geo->blend_indices.allocate(geo->vertex_count);
 
 				// read all indices
 				for (int i = 0; i < geo->indices.size(); ++i)
@@ -191,6 +199,49 @@ namespace gemini
 					}
 				}
 				
+
+				if (!blend_weights.empty())
+				{
+					assert(blend_weights.size() == geo->vertex_count);
+				}
+
+				// read all blend weights and indices
+				Json::ValueIterator it = blend_weights.begin();
+				for (int weight_id = 0; it != blend_weights.end(); ++it, ++weight_id)
+				{
+					const Json::Value& weight_pairs = (*it);
+					LOGV("size: %i\n", weight_pairs.size());
+					
+					
+					int blend_index = 0;
+
+					int bone_indices[4];
+					float bone_weights[4];
+					
+					Json::ValueIterator pair = weight_pairs.begin();
+					for (; pair != weight_pairs.end(); ++pair, ++blend_index)
+					{
+						const Json::Value& weightblock = (*pair);
+						const Json::Value& bone = weightblock["bone"];
+						const Json::Value& value = weightblock["value"];
+						
+						Joint* joint = state.mesh->find_bone_named(bone.asString().c_str());
+						assert(joint != 0);
+						
+						// TODO: get index of this bone
+//						LOGV("bone: %s, value: %2.2f\n", bone.asString().c_str(), value.asFloat());
+						
+						
+						bone_indices[blend_index] = joint->index;
+						bone_weights[blend_index] = value.asFloat();
+					}
+					
+					// assign these values to the blend_weights and blend_indices index
+					geo->blend_indices[weight_id] = glm::vec4(bone_indices[0], bone_indices[1], bone_indices[2], bone_indices[3]);
+					geo->blend_weights[weight_id] = glm::vec4(bone_weights[0], bone_weights[1], bone_weights[2], bone_weights[3]);
+				}
+				
+				
 				// physics related settings
 				const Json::Value& center_mass_offset = mesh_root["mass_center_offset"];
 				if (!center_mass_offset.isNull())
@@ -198,22 +249,22 @@ namespace gemini
 					state.mesh->mass_center_offset = glm::vec3(center_mass_offset[0].asFloat(), center_mass_offset[1].asFloat(), center_mass_offset[2].asFloat());
 				}
 			}
-			else if (node_type == "skeleton")
-			{
-				LOGV("create skeleton\n");
-//				node_root = CREATE(scenegraph::AnimatedNode);
-
-				// insert the new joint
-				BoneIndex parent_index = state.parent;
-				Joint& joint = state.mesh->skeleton[++state.parent];
-				joint.parent_index = parent_index;
-				joint.index = state.parent;
-				
-				
-				const Json::Value& skeleton_root = node["name"];
-				joint.name = skeleton_root.asString().c_str();
-				LOGV("read joint: %s, parent: %i, index: %i\n", joint.name(), joint.parent_index, joint.index);
-			}
+//			else if (node_type == "skeleton")
+//			{
+//				LOGV("create skeleton\n");
+////				node_root = CREATE(scenegraph::AnimatedNode);
+//
+//				// insert the new joint
+//				BoneIndex parent_index = state.parent;
+//				Joint& joint = state.mesh->skeleton[++state.parent];
+//				joint.parent_index = parent_index;
+//				joint.index = state.parent;
+//				
+//				
+//				const Json::Value& skeleton_root = node["name"];
+//				joint.name = skeleton_root.asString().c_str();
+//				LOGV("read joint: %s, parent: %i, index: %i\n", joint.name(), joint.parent_index, joint.index);
+//			}
 			else
 			{
 				LOGV("create group node\n");
@@ -262,10 +313,10 @@ namespace gemini
 			{
 				++total_meshes;
 			}
-			else if (node_type == "skeleton")
-			{
-				++total_bones;
-			}
+//			else if (node_type == "skeleton")
+//			{
+//				++total_bones;
+//			}
 			
 			const Json::Value& children = node["children"];
 			if (!children.isNull())
@@ -351,6 +402,49 @@ namespace gemini
 			size_t total_meshes = 0;
 			size_t total_bones = 0;
 
+
+			// load skeleton, if one exists
+			Json::Value skeleton = root["skeleton"];
+			if (!skeleton.isNull())
+			{
+				total_bones = skeleton.size();
+				
+				// allocate enough bones
+				mesh->skeleton.allocate(total_bones);
+				
+				size_t bone_index = 0;
+				
+				Json::ValueIterator it = skeleton.begin();
+				for (; it != skeleton.end(); ++it, ++bone_index)
+				{
+					const Json::Value& skeleton_entry = (*it);
+					const Json::Value& name = skeleton_entry["name"];
+					const Json::Value& parent = skeleton_entry["parent"];
+					const Json::Value& matrix = skeleton_entry["inverse_bind_pose"];
+					
+					Joint& joint = mesh->skeleton[bone_index];
+					joint.index = bone_index;
+					
+					if (!name.isNull())
+					{
+						joint.name = name.asString().c_str();
+					}
+					
+					if (!parent.isNull())
+					{
+						joint.parent_index = parent.asInt();
+					}
+					
+					if (!matrix.isNull())
+					{
+						joint.inverse_bind_matrix = assets::json_to_mat4(matrix);
+						joint.bind_matrix = glm::inverse(joint.inverse_bind_matrix);
+					}
+					LOGV("read joint: %s, parent: %i, index: %i\n", joint.name(), joint.parent_index, joint.index);
+				}
+			}
+		
+
 			// iterate over all nodes and count how many there are, of each kind
 			Json::ValueIterator node_iter = node_root.begin();
 			for (; node_iter != node_root.end(); ++node_iter)
@@ -363,8 +457,7 @@ namespace gemini
 			LOGV("nodes: %i, meshes: %i, bones: %i\n", total_nodes, total_meshes, total_bones);
 			mesh->geometry.allocate(total_meshes);
 			
-			// allocate enough bones
-			mesh->skeleton.allocate(total_bones);
+
 			
 			MeshLoaderState state(mesh);
 			
@@ -515,10 +608,10 @@ namespace gemini
 				
 				if (!blend_indices.empty() && !blend_weights.empty())
 				{
-					ShaderString hardware_skinning = "hardware_skinning";
+//					ShaderString hardware_skinning = "hardware_skinning";
 	//				attributes |= find_parameter_mask(hardware_skinning);
 					
-					ShaderString node_transforms = "node_transforms";
+//					ShaderString node_transforms = "node_transforms";
 	//				attributes |= find_parameter_mask(node_transforms);
 					
 					descriptor.add(VD_FLOAT4);
@@ -587,6 +680,20 @@ namespace gemini
 			
 			is_dirty = false;
 		} // prepare_geometry
+
+		Joint* Mesh::find_bone_named(const char* name)
+		{
+			core::StackString<128> target_name(name);
+			
+			for (Joint& j : skeleton)
+			{
+				if (j.name == target_name)
+				{
+					return &j;
+				}
+			}
+			return 0;
+		} // find_bone_named
 
 		AssetLoadStatus mesh_load_callback(const char* path, Mesh* mesh, const AssetParameters& parameters)
 		{

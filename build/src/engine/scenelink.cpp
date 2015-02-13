@@ -177,10 +177,10 @@ namespace gemini
 				rs.add_uniform_matrix4(shader->program->get_uniform_location("projection_matrix"), constant_buffer.projection_matrix);
 				rs.add_uniform_matrix4(shader->program->get_uniform_location("object_matrix"), block.object_matrix);
 				
-				//			if (block.total_transforms > 0)
-				//			{
-				//				rs.add_uniform_matrix4(shader->get_uniform_location("node_transforms"), block.node_transforms, block.total_transforms);
-				//			}
+				if (block.total_transforms > 0)
+				{
+					rs.add_uniform_matrix4(shader->program->get_uniform_location("node_transforms"), block.node_transforms, block.total_transforms);
+				}
 				
 				
 				if (constant_buffer.viewer_direction)
@@ -284,8 +284,8 @@ namespace gemini
 									block.object_matrix = &model_instance->get_local_transform();
 									block.material_id = geometry_data.material_id;
 									block.shader_id = geometry_data.shader_id;
-									block.node_transforms = 0;
-									block.total_transforms = 0;
+									block.node_transforms = model_instance->get_bone_transforms();
+									block.total_transforms = mesh->skeleton.size();
 									queue->insert(block);
 								}
 								

@@ -526,7 +526,12 @@ namespace gemini
 			assert(fbxmesh != 0);
 			
 			int total_deformers = fbxmesh->GetDeformerCount();
-			FbxAMatrix geometry_transform;
+						
+			FbxVector4 scale = fbxnode->GetGeometricScaling(FbxNode::eSourcePivot);
+			FbxVector4 rotation = fbxnode->GetGeometricRotation(FbxNode::eSourcePivot);
+			FbxVector4 translation = fbxnode->GetGeometricTranslation(FbxNode::eSourcePivot);
+			
+			FbxAMatrix geometry_transform(translation, rotation, scale);
 			
 			// This makes the assumption that there will ONLY ever be a single mesh
 			// linked to a single skeleton.
