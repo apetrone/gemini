@@ -816,24 +816,34 @@ class ModelInterface : public gemini::IModelInterface
 		ModelInstanceData() : mesh_asset_index(0), bone_transforms(0)
 		{
 		}
-		
-		virtual ~ModelInstanceData()
-		{
-			if (bone_transforms)
-			{
-				//delete [] bone_transforms;
-			}
-		}
 	
 		void set_mesh_index(unsigned int mesh_asset_id)
 		{
 			mesh_asset_index = mesh_asset_id;
 			mesh = assets::meshes()->find_with_id(mesh_asset_index);
+		}
+		
+		void create_bones()
+		{
+			assert(mesh != 0);
 			
 			// does this have an animation?
 			if (!mesh->skeleton.empty())
 			{
-				//bone_transforms = new glm::mat4[mesh->skeleton.size()];
+				bone_transforms = new glm::mat4[mesh->skeleton.size()];
+				
+				
+				glm::mat4& b0 = bone_transforms[0];
+				b0 = glm::rotate(glm::mat4(1.0f), mathlib::degrees_to_radians(45), glm::vec3(0.0f, 1.0f, 0.0f));
+//				b0 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
+			}
+		}
+		
+		void destroy_bones()
+		{
+			if (bone_transforms)
+			{
+				delete [] bone_transforms;
 			}
 		}
 		
@@ -871,6 +881,7 @@ public:
 			}
 			ModelInstanceData data;
 			data.set_mesh_index(mesh->Id());
+			data.create_bones();
 			int32_t index = (int32_t)id_to_instance.size();
 			id_to_instance.insert(ModelInstanceMap::value_type(index, data));
 			return index;
@@ -884,6 +895,9 @@ public:
 		ModelInstanceMap::iterator it = id_to_instance.find(index);
 		if (it != id_to_instance.end())
 		{
+			ModelInstanceData& data = it->second;
+			data.destroy_bones();
+		
 			id_to_instance.erase(it);
 		}
 	}

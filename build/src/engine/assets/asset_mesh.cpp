@@ -137,7 +137,7 @@ namespace gemini
 				}
 				else if (!state.mesh->skeleton.empty())
 				{
-//					shader_path = "shaders/animation";
+					shader_path = "shaders/animation";
 				}
 				
 				assets::Shader* shader = assets::shaders()->load_from_path(shader_path.c_str());

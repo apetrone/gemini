@@ -181,21 +181,22 @@ namespace gemini
 				{
 					rs.add_uniform_matrix4(shader->program->get_uniform_location("node_transforms"), block.node_transforms, block.total_transforms);
 				}
-				
-				
-				if (constant_buffer.viewer_direction)
+				else
 				{
-					rs.add_uniform3f(shader->program->get_uniform_location("viewer_direction"), constant_buffer.viewer_direction);
-				}
-				
-				if (constant_buffer.viewer_position)
-				{
-					rs.add_uniform3f(shader->program->get_uniform_location("viewer_position"), constant_buffer.viewer_position);
-				}
-				
-				if (constant_buffer.light_position)
-				{
-					rs.add_uniform3f(shader->program->get_uniform_location("light_position"), constant_buffer.light_position);
+					if (constant_buffer.viewer_direction)
+					{
+						rs.add_uniform3f(shader->program->get_uniform_location("viewer_direction"), constant_buffer.viewer_direction);
+					}
+					
+					if (constant_buffer.viewer_position)
+					{
+						rs.add_uniform3f(shader->program->get_uniform_location("viewer_position"), constant_buffer.viewer_position);
+					}
+					
+					if (constant_buffer.light_position)
+					{
+						rs.add_uniform3f(shader->program->get_uniform_location("light_position"), constant_buffer.light_position);
+					}
 				}
 				
 				rs.add_material(material, shader->program);
