@@ -521,7 +521,9 @@ namespace gemini
 						const Json::Value& rotation_keys = jnode["rotation"];
 						const Json::Value& translation_keys = jnode["translation"];
 						assert(!scale_keys.isNull() && !rotation_keys.isNull() && !translation_keys.isNull());
-					
+
+						// TODO: read into an animation
+
 //						scenegraph::AnimatedNode* animated_node = static_cast<scenegraph::AnimatedNode*>(node);
 //						assert(animated_node != nullptr);
 //						if (animated_node)

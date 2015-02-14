@@ -831,10 +831,9 @@ class ModelInterface : public gemini::IModelInterface
 			if (!mesh->skeleton.empty())
 			{
 				bone_transforms = new glm::mat4[mesh->skeleton.size()];
-				
-				
-				glm::mat4& b0 = bone_transforms[0];
-				b0 = glm::rotate(glm::mat4(1.0f), mathlib::degrees_to_radians(45), glm::vec3(0.0f, 1.0f, 0.0f));
+								
+//				glm::mat4& b0 = bone_transforms[0];
+//				b0 = glm::rotate(glm::mat4(1.0f), mathlib::degrees_to_radians(45), glm::vec3(0.0f, 1.0f, 0.0f));
 //				b0 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
 			}
 		}
