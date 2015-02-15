@@ -84,6 +84,9 @@ namespace gemini
 			
 			// total frames in this animation
 			uint32_t total_frames;
+			uint32_t total_keys;
+			
+			AnimationData() : frames_per_second(0.0f), frame_delay_seconds(0.0f), total_frames(0), total_keys(0) {}
 		};
 		
 		const int MAX_VERTEX_WEIGHTS = 4;

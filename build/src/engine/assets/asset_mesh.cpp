@@ -472,13 +472,13 @@ namespace gemini
 			
 			// read animations
 			Json::Value animations = root["animations"];
-			if (!animations.isNull())
+			if (!animations.isNull() && total_bones)
 			{
 				LOGV("model has %i animation(s); reading them...\n", animations.size());
 				
-				mesh->animation.scale.allocate(total_nodes);
-				mesh->animation.rotation.allocate(total_nodes);
-				mesh->animation.translation.allocate(total_nodes);
+				mesh->animation.scale.allocate(total_bones);
+				mesh->animation.rotation.allocate(total_bones);
+				mesh->animation.translation.allocate(total_bones);
 				
 				Json::ValueIterator iter = animations.begin();
 				for (; iter != animations.end(); ++iter)
@@ -523,6 +523,18 @@ namespace gemini
 						assert(!scale_keys.isNull() && !rotation_keys.isNull() && !translation_keys.isNull());
 
 						// TODO: read into an animation
+						
+						
+						Joint* joint = mesh->find_bone_named(node_name.c_str());
+						assert(joint != 0);
+						
+						LOGV("reading keyframes for bone \"%s\"\n", joint->name());
+						
+						read_channel(mesh->animation.scale[joint->index], jnode["scale"]);
+						read_channel(mesh->animation.rotation[joint->index], jnode["rotation"]);
+						read_channel(mesh->animation.translation[joint->index], jnode["translation"]);
+						
+						mesh->animation.total_keys++;
 
 //						scenegraph::AnimatedNode* animated_node = static_cast<scenegraph::AnimatedNode*>(node);
 //						assert(animated_node != nullptr);

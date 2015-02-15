@@ -45,6 +45,7 @@ namespace gemini
 //		virtual void get_geometry_data(unsigned int index, GeometryInstanceData& geometry_data) const = 0;
 
 		virtual glm::mat4* get_bone_transforms() const = 0;
+		virtual void get_animation_pose(glm::vec3* positions, glm::quat* orientations, float t) = 0;
 	};
 
 	class IModelInterface

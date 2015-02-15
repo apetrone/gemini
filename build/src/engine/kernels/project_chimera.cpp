@@ -811,9 +811,24 @@ class ModelInterface : public gemini::IModelInterface
 		
 		glm::mat4* bone_transforms;
 		
+		
+		Channel<glm::vec3> scale_channel;
+		Channel<glm::quat> rotation_channel;
+		Channel<glm::vec3> translation_channel;
+
+		glm::vec3 scale;
+		glm::quat rotation;
+		glm::vec3 translation;
+		
 	public:
 	
-		ModelInstanceData() : mesh_asset_index(0), bone_transforms(0)
+		ModelInstanceData() :
+			mesh_asset_index(0),
+			mesh(0),
+			bone_transforms(0),
+			scale_channel(scale),
+			rotation_channel(rotation),
+			translation_channel(translation)
 		{
 		}
 	
@@ -831,7 +846,32 @@ class ModelInterface : public gemini::IModelInterface
 			if (!mesh->skeleton.empty())
 			{
 				bone_transforms = new glm::mat4[mesh->skeleton.size()];
-								
+				for (size_t index = 0; index < mesh->animation.total_keys; ++index)
+				{
+					scale_channel.set_data_source(&mesh->animation.scale[index], mesh->animation.frame_delay_seconds);
+					rotation_channel.set_data_source(&mesh->animation.rotation[index], mesh->animation.frame_delay_seconds);
+					translation_channel.set_data_source(&mesh->animation.translation[index], mesh->animation.frame_delay_seconds);
+				}
+//				animated_node->scale_channel.set_data_source(&mesh->animation.scale[node_index], mesh->animation.frame_delay_seconds);
+//				animated_node->rotation_channel.set_data_source(&mesh->animation.rotation[node_index], mesh->animation.frame_delay_seconds);
+//				animated_node->translation_channel.set_data_source(&mesh->animation.translation[node_index], mesh->animation.frame_delay_seconds);
+				
+				
+#if 0
+				for (size_t index = 0; index < mesh->animation.total_keys; ++index)
+				{
+					assets::Joint* joint = &mesh->skeleton[index];
+					glm::mat4& transform = bone_transforms[index];
+					transform = glm::translate(glm::mat4(1.0f), mesh->animation.translation[index].keys[0]);
+
+					if (joint->parent_index > -1)
+					{
+						transform = bone_transforms[joint->parent_index] * transform;
+					}
+					
+					transform = transform * joint->inverse_bind_matrix;
+				}
+#endif
 //				glm::mat4& b0 = bone_transforms[0];
 //				b0 = glm::rotate(glm::mat4(1.0f), mathlib::degrees_to_radians(45), glm::vec3(0.0f, 1.0f, 0.0f));
 //				b0 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
@@ -861,6 +901,10 @@ class ModelInterface : public gemini::IModelInterface
 //		}
 
 		virtual glm::mat4* get_bone_transforms() const { return bone_transforms; }
+		
+		virtual void get_animation_pose(glm::vec3* positions, glm::quat* orientations, float t)
+		{
+		}
 	};
 
 
