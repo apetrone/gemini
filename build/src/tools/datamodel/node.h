@@ -45,7 +45,7 @@ namespace gemini
 			enum Flags
 			{
 				None,
-				NoAnimations, // this node cannot have animations
+				HasAnimations, // this node has animations
 			};
 			
 			uint32_t flags;
@@ -68,7 +68,7 @@ namespace gemini
 			void remove_child(Node* child);
 			Node* find_child_named(const String& name);
 			
-			bool has_animations() const { return (flags & NoAnimations) == 0; }
+			bool has_animations() const { return (flags & HasAnimations) > 0; }
 		};
 	} // namespace datamodel
 } // namespace gemini

@@ -335,11 +335,11 @@ namespace gemini
 			for (int local_vertex_id = 0; local_vertex_id < 3; ++local_vertex_id)
 			{
 				int index = fbxmesh->GetPolygonVertex(triangle_index, local_vertex_id);
-				LOGV("%sindex: %i [vertex_index = %i]\n", state.indent.indent(), index, vertex_index);
+//				LOGV("%sindex: %i [vertex_index = %i]\n", state.indent.indent(), index, vertex_index);
 				mesh->indices[local_index] = local_index;
 				
 				const FbxVector4& position = fbxmesh->GetControlPointAt(index);
-				LOGV("%svertex: %g %g %g\n", state.indent.indent(), position[0], position[1], position[2]);
+//				LOGV("%svertex: %g %g %g\n", state.indent.indent(), position[0], position[1], position[2]);
 				
 				FbxVector4 normal;
 				fbxmesh->GetPolygonVertexNormal(triangle_index, local_vertex_id, normal);
@@ -581,19 +581,21 @@ namespace gemini
 							ref.datamodel_bone_index = bone->index;
 							ref.value = control_point_weights[control_point_index];
 							state.slots[control_point_index].weights.push_back(ref);
+							
+							bone->total_blendweights++;
 						}
 					}
 					
 					
-					for(int i = 0; i < fbxmesh->GetControlPointsCount(); ++i)
-					{
-						size_t total_weights = state.slots[i].weights.size();
-						LOGV("%i; total influences: %i\n", i, total_weights);
-						for (WeightReference& w : state.slots[i].weights)
-						{
-							LOGV("\tbone: %i, weight: %2.2f\n", w.datamodel_bone_index, w.value);
-						}
-					}
+//					for(int i = 0; i < fbxmesh->GetControlPointsCount(); ++i)
+//					{
+//						size_t total_weights = state.slots[i].weights.size();
+//						LOGV("%i; total influences: %i\n", i, total_weights);
+//						for (WeightReference& w : state.slots[i].weights)
+//						{
+//							LOGV("\tbone: %i, weight: %2.2f\n", w.datamodel_bone_index, w.value);
+//						}
+//					}
 				}
 				else if (deformer->GetDeformerType() == FbxDeformer::eBlendShape)
 				{
@@ -687,6 +689,13 @@ namespace gemini
 			}
 			else if (node_attribute_type == FbxNodeAttribute::eSkeleton)
 			{
+				datamodel::Bone* bone = state.model->skeleton->find_bone_named(fbxnode->GetName());
+				assert(bone != 0);
+				
+				if (bone->total_blendweights > 0)
+				{
+					node->flags |= datamodel::Node::HasAnimations;
+				}
 			}
 			else
 			{
@@ -901,11 +910,7 @@ namespace gemini
 		
 		FbxNode* fbxroot = scene->GetRootNode();
 		if (fbxroot)
-		{
-			// root node cannot have animations applied
-			model->root.flags |= datamodel::Node::NoAnimations;
-			
-			
+		{			
 			// The fbx data must be read in the following order:
 			// 1. build skeleton
 			// 2. process blend weights for geometry
@@ -942,9 +947,6 @@ namespace gemini
 			{
 				populate_hierarchy(extension_state, &model->root, fbxroot->GetChild(index));
 			}
-			
-			
-
 			
 			
 			int total_animation_stacks = scene->GetSrcObjectCount<FbxAnimStack>();

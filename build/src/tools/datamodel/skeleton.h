@@ -42,6 +42,10 @@ namespace gemini
 			int32_t parent;
 			String name;
 			glm::mat4 inverse_bind_pose;
+			
+			uint8_t total_blendweights;
+			
+			Bone() : index(-1), parent(-1), total_blendweights(0) {}
 		};
 	
 		typedef std::vector<Bone*> BoneVector;
