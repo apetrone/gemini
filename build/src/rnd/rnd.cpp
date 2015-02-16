@@ -372,14 +372,14 @@ void test_hash()
 	d.get("what", value);
 }
 */
+
 int main(int argc, char** argv)
 {
 	platform::startup();
 	core::startup();
 
-	test_rendering();	
+	test_rendering();
 //	test_hash();
-
 	
 	core::shutdown();
 	platform::shutdown();

@@ -26,6 +26,7 @@
 
 #include <core/typedefs.h>
 #include <core/fixedarray.h>
+#include <core/logging.h>
 
 #include <renderer/render_utilities.h>
 
@@ -39,10 +40,6 @@ namespace gemini
 		core::FixedArray<float> time; // the time, in seconds, for this keyframe
 	};
 	// -------------------------------------------------------------
-
-
-
-
 	template <class Type, class Interpolator=core::Interpolator<Type> >
 	class Channel
 	{
@@ -334,4 +331,82 @@ namespace gemini
 
 	template <class Type, class Interpolator >
 	Interpolator KeyframeChannel<Type, Interpolator>::interpolator;
+	
+	
+	struct Keyframe
+	{
+		float seconds;
+		float value;
+	};
+	
+	struct KeyChannel
+	{
+		core::FixedArray<Keyframe> keys;
+		float length_seconds;
+		
+		KeyChannel() :
+			length_seconds(0.0f)
+		{
+		}
+		
+		float value_at_time(float time_seconds)
+		{
+			// 1. for an arbitrary time value t,
+			//		map it to a channel's keyframe time length bounds.
+			// 		such that (0 >= t < length_seconds).
+			float value;
+			
+			while(time_seconds > length_seconds)
+				time_seconds -= length_seconds;
+				
+			assert(time_seconds <= length_seconds);
+			
+			// 2. Find the keyframes that bound t.
+			Keyframe* prev = 0;
+			for (size_t key_index = 0; key_index < keys.size(); ++key_index)
+			{
+				Keyframe& key = keys[key_index];
+				if (time_seconds > key.seconds)
+				{
+					prev = &key;
+					continue;
+				}
+				
+				
+				float alpha;
+				float last_value;
+				if (prev)
+				{
+					float dt = key.seconds - prev->seconds;
+					last_value = prev->value;
+					alpha = (time_seconds-prev->seconds)/dt;
+				}
+				else
+				{
+					last_value = key.value;
+					alpha = time_seconds;
+				}
+				
+//				LOGV("alpha: %2.2f\n", alpha);
+				// 3. lerp the value
+				value = core::lerp(last_value, key.value, alpha);
+//				value = key.value;
+				break;
+			}
+			
+			return value;
+		}
+	};
+	
+	struct KeyframeChannelReference
+	{
+		float& target;
+		const KeyChannel& channel;
+		float local_time;
+		
+		KeyframeChannelReference(const KeyChannel& input_channel, float& target_value) :
+			channel(input_channel),
+			target(target_value)
+		{}
+	};
 } // namespace gemini

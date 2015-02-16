@@ -119,13 +119,13 @@ void entity_update_physics()
 	}
 }
 
-void entity_update(float alpha)
+void entity_update(float delta_seconds, float alpha)
 {
 	for(auto& entity : entity_list().objects)
 	{
 		if ( !(entity->flags & Entity::EF_DELETE_INSTANCE) )
 		{
-			entity->update(alpha);
+			entity->update(delta_seconds, alpha);
 		}
 	}
 	entity_deferred_delete( true );
@@ -144,7 +144,8 @@ Entity::Entity() :
 	flags(0),
 	collision_object(0),
 //	motion_interface(0),
-	model_index(-1)
+	model_index(-1),
+	local_time(0)
 {
 	this->id = entity_list().count();
 	
@@ -199,9 +200,9 @@ void Entity::post_tick()
 	set_current_transform_from_physics();
 }
 
-void Entity::update(float alpha)
+void Entity::update(float delta_seconds, float alpha)
 {
-	
+	local_time += delta_seconds;
 } // update
 
 void Entity::remove()

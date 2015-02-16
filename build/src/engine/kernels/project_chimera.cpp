@@ -820,6 +820,9 @@ class ModelInterface : public gemini::IModelInterface
 		glm::quat rotation;
 		glm::vec3 translation;
 		
+		
+		glm::vec3 tr[64];
+		
 	public:
 	
 		ModelInstanceData() :
@@ -902,9 +905,42 @@ class ModelInterface : public gemini::IModelInterface
 
 		virtual glm::mat4* get_bone_transforms() const { return bone_transforms; }
 		
-		virtual void get_animation_pose(glm::vec3* positions, glm::quat* orientations, float t)
+		virtual void get_animation_pose(glm::vec3* positions, glm::quat* rotations, float t)
 		{
+			if (mesh->skeleton.empty())
+				return;
+				
+			mesh->animation.get_pose(positions, rotations, t);
 		}
+		
+		virtual void set_animation_pose(glm::vec3* positions, glm::quat* rotations)
+		{
+			if (mesh->skeleton.empty())
+				return;
+			
+			uint32_t max_bones = mesh->skeleton.size();
+			for (uint32_t index = 0; index < max_bones; ++index)
+			{
+				tr[index] = positions[index];
+			}
+			
+			// recalculate
+			for (size_t index = 0; index < mesh->animation.total_keys; ++index)
+			{
+				assets::Joint* joint = &mesh->skeleton[index];
+				glm::mat4& transform = bone_transforms[index];
+				transform = glm::translate(glm::mat4(1.0f), tr[index]);
+				
+				if (joint->parent_index > -1)
+				{
+					transform = bone_transforms[joint->parent_index] * transform;
+				}
+				
+				transform = transform * joint->inverse_bind_matrix;
+			}
+		}
+		
+		virtual void update(float delta_seconds, float alpha) {}
 	};
 
 
@@ -1403,6 +1439,57 @@ public:
 //			LOGV("gamepad [%i] controller event received: %i\n", event.gamepad_id, event.subtype);
 //		}
 	}
+	
+	
+	
+	void test_animation()
+	{
+		
+		Keyframe key0;
+		Keyframe key1;
+		key0.seconds = 0;
+		key0.value = 0;
+		key1.seconds = 20;
+		key1.value = 1;
+		
+		KeyChannel channel;
+		channel.keys.allocate(2);
+		channel.keys[0] = key0;
+		channel.keys[1] = key1;
+		channel.length_seconds = 20.0f;
+		
+		
+		Keyframe k0;
+		Keyframe k1;
+		k0.seconds = 0.0f;
+		k0.value = 0.0f;
+		k1.seconds = 10.0f;
+		k1.value = 100.0f;
+				
+		KeyChannel channel2;
+		channel2.keys.allocate(2);
+		channel2.keys[0] = k0;
+		channel2.keys[1] = k1;
+		channel2.length_seconds = 10.0f;
+		
+		float local_value = -1.0f;
+		
+		
+		
+//		KeyframeChannelReference cr(channel, local_value);
+		
+		float time_seconds = 15.0f;
+//		for (uint8_t step = 0; step < 10; ++step)
+//		{
+//			time_seconds += 0.1f;
+//		}
+		local_value = channel.value_at_time(time_seconds);
+		float v2 = channel2.value_at_time(time_seconds);
+		
+		
+		LOGV("local_value is: %2.4f, channel2.value is %2.4f\n", local_value, v2);
+	}
+	
 
 	virtual kernel::ApplicationResult config( kernel::Parameters& params )
 	{
@@ -1445,6 +1532,8 @@ public:
 				}
 			}
 		}
+
+		test_animation();
 		
 		return kernel::Application_Success;
 	}

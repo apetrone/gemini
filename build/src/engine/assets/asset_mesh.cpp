@@ -88,6 +88,18 @@ namespace gemini
 			MeshLoaderState(Mesh* input) : current_geometry(0), mesh(input), parent(-1) {}
 		};
 		
+		
+		void AnimationData::get_pose(glm::vec3 *positions, glm::quat *orientations, float animation_time_seconds)
+		{
+			for (uint32_t index = 0; index < 2; ++index)
+			{
+				positions[index] = glm::vec3(0.0f,
+					track_translate[index].value_at_time(animation_time_seconds),
+											0.0f);
+			}
+			
+		}
+		
 		void traverse_nodes(MeshLoaderState& state, const Json::Value& node, MaterialByIdContainer& materials, const bool is_world)
 		{
 			std::string node_type = node["type"].asString();
@@ -480,6 +492,8 @@ namespace gemini
 				mesh->animation.rotation.allocate(total_bones);
 				mesh->animation.translation.allocate(total_bones);
 				
+				mesh->animation.track_translate.allocate(total_bones);
+				
 				Json::ValueIterator iter = animations.begin();
 				for (; iter != animations.end(); ++iter)
 				{
@@ -490,6 +504,24 @@ namespace gemini
 					mesh->animation.frame_delay_seconds = (1.0f / (float)mesh->animation.frames_per_second);
 					
 					LOGV("animation: \"%s\"\n", animation["name"].asString().c_str());
+					
+					for (size_t i = 0; i < total_bones; ++i)
+					{
+						Keyframe key0;
+						Keyframe key1;
+						Keyframe key2;
+						key0.seconds = 0.0f;
+						key0.value = 0.0f;
+						key1.seconds = 2.0f;
+						key1.value = 4.0f;
+						key2.seconds = 4.0f;
+						key2.value = 0.0f;
+						mesh->animation.track_translate[i].keys.allocate(3);
+						mesh->animation.track_translate[i].keys[0] = key0;
+						mesh->animation.track_translate[i].keys[1] = key1;
+						mesh->animation.track_translate[i].keys[2] = key2;
+						mesh->animation.track_translate[i].length_seconds = 4.0f;
+					}
 					
 					const Json::Value& nodes_array = animation["nodes"];
 					assert(!nodes_array.isNull());

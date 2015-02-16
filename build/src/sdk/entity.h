@@ -87,6 +87,8 @@ public:
 	glm::quat orientation;
 	glm::vec3 velocity;
 	
+	float local_time;
+	
 	Entity();
 	virtual ~Entity();
 	
@@ -107,7 +109,7 @@ public:
 	virtual void pre_tick();
 	virtual void post_tick();
 	
-	virtual void update(float alpha);
+	virtual void update(float delta_seconds, float alpha);
 	
 	virtual void remove();
 	virtual void remove_collision();
@@ -198,4 +200,4 @@ void entity_startup();
 void entity_post_script_load();
 void entity_shutdown();
 void entity_update_physics();
-void entity_update(float alpha);
+void entity_update(float delta_seconds, float alpha);

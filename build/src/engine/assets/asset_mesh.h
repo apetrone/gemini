@@ -71,6 +71,7 @@ namespace gemini
 			core::FixedArray< KeyframeData<glm::quat> > rotation;
 			core::FixedArray< KeyframeData<glm::vec3> > translation;
 			
+			core::FixedArray< KeyChannel > track_translate;
 			
 			// name to index map is the best I can do for now.
 			typedef std::map<std::string, size_t> NodeToIndexContainer;
@@ -87,6 +88,8 @@ namespace gemini
 			uint32_t total_keys;
 			
 			AnimationData() : frames_per_second(0.0f), frame_delay_seconds(0.0f), total_frames(0), total_keys(0) {}
+			
+			void get_pose(glm::vec3* positions, glm::quat* orientations, float animation_time_seconds);
 		};
 		
 		const int MAX_VERTEX_WEIGHTS = 4;
