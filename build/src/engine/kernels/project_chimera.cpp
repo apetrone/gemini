@@ -930,22 +930,25 @@ class ModelInterface : public gemini::IModelInterface
 			{
 				assets::Joint* joint = &mesh->skeleton[index];
 				glm::mat4& global_pose = bone_transforms[index];
-				glm::mat4& local_pose = mesh->animation.transforms[index];
+				glm::mat4& saved_pose = mesh->animation.transforms[index];
 				
 				glm::mat4 local_scale;
 				glm::mat4 local_rotation = glm::toMat4(rotations[index]);
 				glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), positions[index]);
-				local_pose = local_transform * local_rotation * local_scale;
+				glm::mat4 local_pose = local_transform * local_rotation * local_scale;
 				
 				
 				if (joint->parent_index > -1)
 				{
 					const glm::mat4& parent_transform = mesh->animation.transforms[joint->parent_index];
-					local_pose = local_pose * parent_transform;
+					saved_pose = parent_transform * local_pose;
+				}
+				else
+				{
+					saved_pose = local_pose;
 				}
 				
-				
-				global_pose = local_pose * joint->inverse_bind_matrix;
+				global_pose = saved_pose * joint->inverse_bind_matrix;
 			}
 		}
 		
