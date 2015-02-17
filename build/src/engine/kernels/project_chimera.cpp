@@ -820,9 +820,6 @@ class ModelInterface : public gemini::IModelInterface
 		glm::quat rotation;
 		glm::vec3 translation;
 		
-		
-		glm::vec3 tr[64];
-		
 	public:
 	
 		ModelInstanceData() :
@@ -919,17 +916,22 @@ class ModelInterface : public gemini::IModelInterface
 				return;
 			
 			uint32_t max_bones = mesh->skeleton.size();
-			for (uint32_t index = 0; index < max_bones; ++index)
-			{
-				tr[index] = positions[index];
-			}
+//			for (uint32_t index = 0; index < max_bones; ++index)
+//			{
+//				tr[index] = positions[index];
+//			}
 			
 			// recalculate
 			for (size_t index = 0; index < mesh->animation.total_keys; ++index)
 			{
 				assets::Joint* joint = &mesh->skeleton[index];
 				glm::mat4& transform = bone_transforms[index];
-				transform = glm::translate(glm::mat4(1.0f), tr[index]);
+				
+				glm::mat4 local_scale;
+				glm::mat4 local_rotation = glm::toMat4(rotations[index]);
+				glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), positions[index]);
+				transform = local_scale * local_rotation * local_transform;
+
 				
 				if (joint->parent_index > -1)
 				{
@@ -1445,28 +1447,28 @@ public:
 	void test_animation()
 	{
 		
-		Keyframe key0;
-		Keyframe key1;
+		Keyframe<float> key0;
+		Keyframe<float> key1;
 		key0.seconds = 0;
 		key0.value = 0;
 		key1.seconds = 20;
 		key1.value = 1;
 		
-		KeyChannel channel;
+		KeyChannel<float> channel;
 		channel.keys.allocate(2);
 		channel.keys[0] = key0;
 		channel.keys[1] = key1;
 		channel.length_seconds = 20.0f;
 		
 		
-		Keyframe k0;
-		Keyframe k1;
+		Keyframe<float> k0;
+		Keyframe<float> k1;
 		k0.seconds = 0.0f;
 		k0.value = 0.0f;
 		k1.seconds = 10.0f;
 		k1.value = 100.0f;
 				
-		KeyChannel channel2;
+		KeyChannel<float> channel2;
 		channel2.keys.allocate(2);
 		channel2.keys[0] = k0;
 		channel2.keys[1] = k1;

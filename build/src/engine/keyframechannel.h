@@ -332,16 +332,17 @@ namespace gemini
 	template <class Type, class Interpolator >
 	Interpolator KeyframeChannel<Type, Interpolator>::interpolator;
 	
-	
+	template <class Type>
 	struct Keyframe
 	{
 		float seconds;
-		float value;
+		Type value;
 	};
 	
+	template <class Type>
 	struct KeyChannel
 	{
-		core::FixedArray<Keyframe> keys;
+		core::FixedArray< Keyframe<Type> > keys;
 		float length_seconds;
 		
 		KeyChannel() :
@@ -349,12 +350,12 @@ namespace gemini
 		{
 		}
 		
-		float value_at_time(float time_seconds)
+		Type value_at_time(float time_seconds)
 		{
 			// 1. for an arbitrary time value t,
 			//		map it to a channel's keyframe time length bounds.
 			// 		such that (0 >= t < length_seconds).
-			float value;
+			Type value;
 			
 			while(time_seconds > length_seconds)
 				time_seconds -= length_seconds;
@@ -362,10 +363,10 @@ namespace gemini
 			assert(time_seconds <= length_seconds);
 			
 			// 2. Find the keyframes that bound t.
-			Keyframe* prev = 0;
+			Keyframe<Type>* prev = 0;
 			for (size_t key_index = 0; key_index < keys.size(); ++key_index)
 			{
-				Keyframe& key = keys[key_index];
+				Keyframe<Type>& key = keys[key_index];
 				if (time_seconds > key.seconds)
 				{
 					prev = &key;
@@ -374,7 +375,7 @@ namespace gemini
 				
 				
 				float alpha;
-				float last_value;
+				Type last_value;
 				if (prev)
 				{
 					float dt = key.seconds - prev->seconds;
@@ -389,7 +390,8 @@ namespace gemini
 				
 //				LOGV("alpha: %2.2f\n", alpha);
 				// 3. lerp the value
-				value = core::lerp(last_value, key.value, alpha);
+//				value = core::lerp(last_value, key.value, alpha);
+				value = core::Interpolator<Type>()(last_value, key.value, alpha);
 //				value = key.value;
 				break;
 			}
@@ -398,13 +400,14 @@ namespace gemini
 		}
 	};
 	
+	template <class Type>
 	struct KeyframeChannelReference
 	{
 		float& target;
-		const KeyChannel& channel;
+		const KeyChannel<Type>& channel;
 		float local_time;
 		
-		KeyframeChannelReference(const KeyChannel& input_channel, float& target_value) :
+		KeyframeChannelReference(const KeyChannel<Type>& input_channel, float& target_value) :
 			channel(input_channel),
 			target(target_value)
 		{}

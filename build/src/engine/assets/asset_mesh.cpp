@@ -89,13 +89,12 @@ namespace gemini
 		};
 		
 		
-		void AnimationData::get_pose(glm::vec3 *positions, glm::quat *orientations, float animation_time_seconds)
+		void AnimationData::get_pose(glm::vec3 *positions, glm::quat *rotations, float animation_time_seconds)
 		{
 			for (uint32_t index = 0; index < 2; ++index)
 			{
-				positions[index] = glm::vec3(0.0f,
-					track_translate[index].value_at_time(animation_time_seconds),
-											0.0f);
+				positions[index] = track_translate[index].value_at_time(animation_time_seconds);
+				rotations[index] = track_rotation[index].value_at_time(animation_time_seconds);
 			}
 			
 		}
@@ -492,6 +491,7 @@ namespace gemini
 				mesh->animation.rotation.allocate(total_bones);
 				mesh->animation.translation.allocate(total_bones);
 				
+				mesh->animation.track_rotation.allocate(total_bones);
 				mesh->animation.track_translate.allocate(total_bones);
 				
 				Json::ValueIterator iter = animations.begin();
@@ -507,20 +507,36 @@ namespace gemini
 					
 					for (size_t i = 0; i < total_bones; ++i)
 					{
-						Keyframe key0;
-						Keyframe key1;
-						Keyframe key2;
+						Keyframe<glm::vec3> key0;
+						Keyframe<glm::vec3> key1;
+						Keyframe<glm::vec3> key2;
 						key0.seconds = 0.0f;
-						key0.value = 0.0f;
+						key0.value = glm::vec3(0.0f);
 						key1.seconds = 2.0f;
-						key1.value = 4.0f;
+						key1.value = glm::vec3(0.0f, 4.0f, 0.0f);
 						key2.seconds = 4.0f;
-						key2.value = 0.0f;
+						key2.value = glm::vec3(0.0f);
 						mesh->animation.track_translate[i].keys.allocate(3);
 						mesh->animation.track_translate[i].keys[0] = key0;
 						mesh->animation.track_translate[i].keys[1] = key1;
 						mesh->animation.track_translate[i].keys[2] = key2;
 						mesh->animation.track_translate[i].length_seconds = 4.0f;
+						
+						
+						Keyframe<glm::quat> q0;
+						Keyframe<glm::quat> q1;
+						Keyframe<glm::quat> q2;
+						q0.seconds = 0.0f;
+						q0.value = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+						q1.seconds = 1.0f;
+						q1.value = glm::angleAxis(mathlib::degrees_to_radians(45), glm::vec3(0.0f, 1.0f, 0.0f));
+						q2.seconds = 2.0f;
+						q2.value = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+						mesh->animation.track_rotation[i].keys.allocate(3);
+						mesh->animation.track_rotation[i].keys[0] = q0;
+						mesh->animation.track_rotation[i].keys[1] = q1;
+						mesh->animation.track_rotation[i].keys[2] = q2;
+						mesh->animation.track_rotation[i].length_seconds = 2.0f;
 					}
 					
 					const Json::Value& nodes_array = animation["nodes"];

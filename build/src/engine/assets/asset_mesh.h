@@ -70,8 +70,11 @@ namespace gemini
 			core::FixedArray< KeyframeData<glm::vec3> > scale;
 			core::FixedArray< KeyframeData<glm::quat> > rotation;
 			core::FixedArray< KeyframeData<glm::vec3> > translation;
-			
-			core::FixedArray< KeyChannel > track_translate;
+
+			core::FixedArray< KeyChannel<glm::vec3> > track_scale;
+			core::FixedArray< KeyChannel<glm::quat> > track_rotation;
+			core::FixedArray< KeyChannel<glm::vec3> > track_translate;
+
 			
 			// name to index map is the best I can do for now.
 			typedef std::map<std::string, size_t> NodeToIndexContainer;
