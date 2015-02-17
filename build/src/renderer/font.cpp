@@ -124,6 +124,7 @@ namespace gemini
 				mathlib::Recti area(rect[0], rect[1], width, height);
 				
 				driver->texture_update(data->texture, image, area);
+				image.pixels = 0;
 			}
 			
 			void font_draw(void* userdata, const float* verts, const float* tcoords, const unsigned int* colors, int vertex_count)

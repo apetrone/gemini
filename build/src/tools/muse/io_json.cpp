@@ -184,10 +184,9 @@ namespace gemini
 				// at a max of MAX_SUPPORTED_BONE_INFLUENCES.
 				Json::Value weight_array(Json::arrayValue);
 				datamodel::WeightList& weightlist = node->mesh->weights[index_id];
-				
+							
 				for (size_t influence = 0; influence < datamodel::MAX_SUPPORTED_BONE_INFLUENCES; ++influence)
 				{
-					
 					datamodel::Weight& weight = weightlist.weights[influence];
 					if (!weight.bone_name.empty() && weight.value > 0.0f)
 					{
@@ -197,6 +196,7 @@ namespace gemini
 						weight_array.append(weightpair);
 					}
 				}
+				assert(!weight_array.empty());
 				blend_weights.append(weight_array);
 			}
 			
@@ -298,14 +298,21 @@ namespace gemini
 			for (auto data : animation->node_animations)
 			{
 				Json::Value jnode;
-				datamodel::Node* node = model->root.find_child_named(data->name);
+//				datamodel::Node* node = model->skeleton-.find_child_named(data->name);
 				
 				// Node animation present for node that was not added to the model
-				assert(node != nullptr);
+//				assert(node != nullptr);
+
+
+
+				datamodel::Bone* bone = model->skeleton->find_bone_named(data->name);
 				
-				if (node)
+				// animation present for bone that was not added to the skeleton
+				assert(bone != 0);
+				
+				if (bone)
 				{
-					LOGV("node: %s\n", node->name.c_str());
+					LOGV("bone: %s\n", bone->name.c_str());
 					LOGV("# keys: %i %i %i\n", data->translation.keys.size(), data->rotation.keys.size(), data->scale.keys.size());
 
 					Json::Value jscale;
@@ -317,7 +324,7 @@ namespace gemini
 					Json::Value jtranslation;
 					gather_keys(jtranslation, data->translation.keys);
 			
-					jnode["name"] = node->name.c_str();
+					jnode["name"] = bone->name.c_str();
 					jnode["scale"] = jscale;
 					jnode["rotation"] = jrotation;
 					jnode["translation"] = jtranslation;

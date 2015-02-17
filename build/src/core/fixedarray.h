@@ -41,7 +41,7 @@ namespace core
 	private:
 		void assert_valid_index(size_t index) const
 		{
-			assert(index >= 0 && index <= total_elements);
+			assert(index >= 0 && index < total_elements);
 		}
 		
 	public:
@@ -76,6 +76,7 @@ namespace core
 		void operator=(Type* other)
 		{
 			elements = other;
+			total_elements = elements ? 1 : 0;
 		}
 		
 		size_t size() const
@@ -85,7 +86,7 @@ namespace core
 		
 		bool empty() const
 		{
-			return (total_elements == 0);
+			return (total_elements == 0) && (elements == 0);
 		}
 		
 		void clear()
@@ -103,7 +104,6 @@ namespace core
 			total_elements = element_total;
 			if (element_total > 0)
 			{
-				
 				// allocate space for the pointers
 				elements = CREATE_ARRAY(Type, total_elements);
 

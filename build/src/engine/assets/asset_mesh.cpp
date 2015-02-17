@@ -91,12 +91,11 @@ namespace gemini
 		
 		void AnimationData::get_pose(glm::vec3 *positions, glm::quat *rotations, float animation_time_seconds)
 		{
-			for (uint32_t index = 0; index < 2; ++index)
+			for (uint32_t index = 0; index < total_bones; ++index)
 			{
 				positions[index] = track_translate[index].value_at_time(animation_time_seconds);
 				rotations[index] = track_rotation[index].value_at_time(animation_time_seconds);
 			}
-			
 		}
 		
 		void traverse_nodes(MeshLoaderState& state, const Json::Value& node, MaterialByIdContainer& materials, const bool is_world)
@@ -213,6 +212,7 @@ namespace gemini
 
 				if (!blend_weights.empty())
 				{
+					LOGV("blend_weights.size = %i, geo->vertex_count = %i\n", blend_weights.size(), geo->vertex_count);
 					assert(blend_weights.size() == geo->vertex_count);
 				}
 
@@ -226,8 +226,8 @@ namespace gemini
 					
 					int blend_index = 0;
 
-					int bone_indices[4];
-					float bone_weights[4];
+					int bone_indices[4] = {0, 0, 0, 0};
+					float bone_weights[4] = {0, 0, 0, 0};
 					
 					Json::ValueIterator pair = weight_pairs.begin();
 					for (; pair != weight_pairs.end(); ++pair, ++blend_index)
@@ -249,7 +249,9 @@ namespace gemini
 					
 					// assign these values to the blend_weights and blend_indices index
 					geo->blend_indices[weight_id] = glm::vec4(bone_indices[0], bone_indices[1], bone_indices[2], bone_indices[3]);
+					LOGV("indices: %g %g %g %g\n", geo->blend_indices[weight_id].x, geo->blend_indices[weight_id].y, geo->blend_indices[weight_id].z, geo->blend_indices[weight_id].w);
 					geo->blend_weights[weight_id] = glm::vec4(bone_weights[0], bone_weights[1], bone_weights[2], bone_weights[3]);
+					LOGV("weights: %g %g %g %g\n", geo->blend_weights[weight_id].x, geo->blend_weights[weight_id].y, geo->blend_weights[weight_id].z, geo->blend_weights[weight_id].w);
 				}
 				
 				
@@ -337,6 +339,36 @@ namespace gemini
 				{
 					count_nodes((*child_iter), total_nodes, total_meshes, total_bones);
 				}
+			}
+		}
+		
+		template <class Type>
+		void read_channel(KeyChannel<Type>& channel, const Json::Value& animation_channel)
+		{
+			if (animation_channel.isNull())
+			{
+				return;
+			}
+			const Json::Value& times = animation_channel["time"];
+			const Json::Value& values = animation_channel["value"];
+			
+			if ((times.isNull() || values.isNull()) || (times.empty() && values.empty()))
+			{
+				return;
+			}
+			
+			assert(times.size() == values.size());
+			channel.keys.allocate(times.size());
+			
+			// Cannot use size_t because jsoncpp raises an 'ambiguous type' error.
+			for (int index = 0; index < channel.keys.size(); ++index)
+			{
+				const Json::Value& time_data = times[index];
+				const Json::Value& value_data = values[index];
+				
+				Keyframe<Type>& keyframe = channel.keys[index];
+				keyframe.seconds = time_data.asFloat();
+				from_json(keyframe.value, value_data);
 			}
 		}
 			
@@ -487,10 +519,14 @@ namespace gemini
 			{
 				LOGV("model has %i animation(s); reading them...\n", animations.size());
 				
+				mesh->animation.total_bones = total_bones;
+				mesh->animation.transforms.allocate(total_bones);
+				
 				mesh->animation.scale.allocate(total_bones);
 				mesh->animation.rotation.allocate(total_bones);
 				mesh->animation.translation.allocate(total_bones);
 				
+				mesh->animation.track_scale.allocate(total_bones);
 				mesh->animation.track_rotation.allocate(total_bones);
 				mesh->animation.track_translate.allocate(total_bones);
 				
@@ -504,41 +540,7 @@ namespace gemini
 					mesh->animation.frame_delay_seconds = (1.0f / (float)mesh->animation.frames_per_second);
 					
 					LOGV("animation: \"%s\"\n", animation["name"].asString().c_str());
-					
-					for (size_t i = 0; i < total_bones; ++i)
-					{
-						Keyframe<glm::vec3> key0;
-						Keyframe<glm::vec3> key1;
-						Keyframe<glm::vec3> key2;
-						key0.seconds = 0.0f;
-						key0.value = glm::vec3(0.0f);
-						key1.seconds = 2.0f;
-						key1.value = glm::vec3(0.0f, 4.0f, 0.0f);
-						key2.seconds = 4.0f;
-						key2.value = glm::vec3(0.0f);
-						mesh->animation.track_translate[i].keys.allocate(3);
-						mesh->animation.track_translate[i].keys[0] = key0;
-						mesh->animation.track_translate[i].keys[1] = key1;
-						mesh->animation.track_translate[i].keys[2] = key2;
-						mesh->animation.track_translate[i].length_seconds = 4.0f;
-						
-						
-						Keyframe<glm::quat> q0;
-						Keyframe<glm::quat> q1;
-						Keyframe<glm::quat> q2;
-						q0.seconds = 0.0f;
-						q0.value = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-						q1.seconds = 1.0f;
-						q1.value = glm::angleAxis(mathlib::degrees_to_radians(45), glm::vec3(0.0f, 1.0f, 0.0f));
-						q2.seconds = 2.0f;
-						q2.value = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-						mesh->animation.track_rotation[i].keys.allocate(3);
-						mesh->animation.track_rotation[i].keys[0] = q0;
-						mesh->animation.track_rotation[i].keys[1] = q1;
-						mesh->animation.track_rotation[i].keys[2] = q2;
-						mesh->animation.track_rotation[i].length_seconds = 2.0f;
-					}
-					
+
 					const Json::Value& nodes_array = animation["nodes"];
 					assert(!nodes_array.isNull());
 					Json::ValueIterator node_iter = nodes_array.begin();
@@ -576,14 +578,17 @@ namespace gemini
 						Joint* joint = mesh->find_bone_named(node_name.c_str());
 						assert(joint != 0);
 						
-						LOGV("reading keyframes for bone \"%s\"\n", joint->name());
+						LOGV("reading keyframes for bone \"%s\", joint->index = %i\n", joint->name(), joint->index);
+						
 						
 						read_channel(mesh->animation.scale[joint->index], jnode["scale"]);
 						read_channel(mesh->animation.rotation[joint->index], jnode["rotation"]);
 						read_channel(mesh->animation.translation[joint->index], jnode["translation"]);
 						
-						mesh->animation.total_keys++;
-
+						read_channel(mesh->animation.track_scale[joint->index], jnode["scale"]);
+						read_channel(mesh->animation.track_rotation[joint->index], jnode["rotation"]);
+						read_channel(mesh->animation.track_translate[joint->index], jnode["translation"]);
+						
 //						scenegraph::AnimatedNode* animated_node = static_cast<scenegraph::AnimatedNode*>(node);
 //						assert(animated_node != nullptr);
 //						if (animated_node)

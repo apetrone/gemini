@@ -147,6 +147,7 @@ namespace gemini
 					LOGV( "Loaded texture \"%s\"; (%i x %i @ %ibpp)\n", filename, image.width, image.height, image.channels );
 					
 					image::free_image( pixels );
+					image.pixels = 0;
 				}
 				else
 				{

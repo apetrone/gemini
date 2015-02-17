@@ -392,7 +392,7 @@ namespace gemini
 					
 					// assert if we hit this limit -- can probably just drop anything
 					// over the max, but we should be smart -- and re-normalize.
-					assert(weightlist.total_weights < datamodel::MAX_SUPPORTED_BONE_INFLUENCES);
+					assert(weightlist.total_weights <= datamodel::MAX_SUPPORTED_BONE_INFLUENCES);
 					
 					// copy weight data over
 					datamodel::Weight& weight = weightlist.weights[weightlist.total_weights++];
@@ -456,8 +456,10 @@ namespace gemini
 		bool is_hierarchical = is_hierarchical_node(fbxnode);
 		
 		String node_name = fbxnode->GetName();
-		datamodel::Node* node = state.model->root.find_child_named(node_name);
-		if (is_hierarchical && node && node->has_animations())
+//		datamodel::Node* node = state.model->root.find_child_named(node_name);
+		datamodel::Bone* bone = state.model->skeleton->find_bone_named(node_name);
+		
+		if (is_hierarchical && bone)
 		{
 	//	if (!node)
 	//	{
@@ -550,6 +552,10 @@ namespace gemini
 					int total_clusters = skin->GetClusterCount();
 					LOGV("total clusters: %i\n", total_clusters);
 					
+					// TODO: When exporting from maya, the local rotation axes for joints
+					// must be 'to world', because that's how we currently assume rotations
+					// are exported.
+					
 					// There is ONE known issue with this:
 					// It will only calculate the inverse bind pose for bones that are present
 					// as a cluster -- that is; it must be bound to some verts in the mesh.
@@ -572,30 +578,43 @@ namespace gemini
 						from_fbx(bone->inverse_bind_pose, inverse_bindpose_matrix);
 						
 						int total_control_points = cluster->GetControlPointIndicesCount();
+						int* indices = cluster->GetControlPointIndices();
 						double* control_point_weights = cluster->GetControlPointWeights();
-						for(int control_point_index = 0; control_point_index < total_control_points; ++control_point_index)
+						int control_point_index = 0;
+						for(; control_point_index < total_control_points; ++control_point_index)
 						{
 //							LOGV("%i --> %2.2f\n", control_point_index, control_point_weights[control_point_index]);
 							
 							WeightReference ref;
 							ref.datamodel_bone_index = bone->index;
 							ref.value = control_point_weights[control_point_index];
-							state.slots[control_point_index].weights.push_back(ref);
-							
+							state.slots[indices[control_point_index]].weights.push_back(ref);
 							bone->total_blendweights++;
 						}
+						
+//						if (bone->index > 0)
+//						{
+//							while(bone->total_blendweights < datamodel::MAX_SUPPORTED_BONE_INFLUENCES)
+//							{
+//								WeightReference ref;
+//								ref.datamodel_bone_index = bone->index;
+//								ref.value = 0.0f;
+//								state.slots[control_point_index].weights.push_back(ref);
+//								bone->total_blendweights++;
+//							}
+//						}
 					}
 					
 					
-//					for(int i = 0; i < fbxmesh->GetControlPointsCount(); ++i)
-//					{
-//						size_t total_weights = state.slots[i].weights.size();
-//						LOGV("%i; total influences: %i\n", i, total_weights);
-//						for (WeightReference& w : state.slots[i].weights)
-//						{
-//							LOGV("\tbone: %i, weight: %2.2f\n", w.datamodel_bone_index, w.value);
-//						}
-//					}
+					for(int i = 0; i < fbxmesh->GetControlPointsCount(); ++i)
+					{
+						size_t total_weights = state.slots[i].weights.size();
+						LOGV("%i; total influences: %i\n", i, total_weights);
+						for (WeightReference& w : state.slots[i].weights)
+						{
+							LOGV("\tbone: %i, weight: %2.2f\n", w.datamodel_bone_index, w.value);
+						}
+					}
 				}
 				else if (deformer->GetDeformerType() == FbxDeformer::eBlendShape)
 				{

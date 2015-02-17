@@ -179,6 +179,9 @@ namespace gemini
 				
 				if (block.total_transforms > 0)
 				{
+					// http://gamedev.stackexchange.com/questions/77854/how-can-i-reliably-implement-gpu-skinning-in-android
+					// lovely, Android. There's a big in Adreno where indexing into Uniform Matrices is wonky.
+					// The solution is to index like a vec4.
 					rs.add_uniform_matrix4(shader->program->get_uniform_location("node_transforms"), block.node_transforms, block.total_transforms);
 				}
 				else
@@ -286,7 +289,7 @@ namespace gemini
 									block.material_id = geometry_data.material_id;
 									block.shader_id = geometry_data.shader_id;
 									block.node_transforms = model_instance->get_bone_transforms();
-									block.total_transforms = mesh->skeleton.size();
+									block.total_transforms = mesh->animation.total_bones;
 									queue->insert(block);
 								}
 								

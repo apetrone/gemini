@@ -479,8 +479,8 @@ namespace gemini
 		stream.read( matrix );
 		stream.read( uniform_location );
 		stream.read( count );
-		
-		gl.UniformMatrix4fv( uniform_location, count, GL_FALSE, glm::value_ptr(*matrix) );
+
+		gl.UniformMatrix4fv(uniform_location, count, GL_FALSE, (GLfloat*)matrix);
 		gl.CheckError( "uniform matrix 4" );
 	}
 
@@ -863,16 +863,23 @@ namespace gemini
 		// setup parameters
 		texture->set_parameters(image);
 		
+		
+		GLvoid* pixels = 0;
+		if (!image.pixels.empty())
+		{
+			pixels = (GLvoid*)&image.pixels[0];
+		}
+		
 		if (image.type == image::TEX_2D)
 		{
 			// upload image and generate mipmaps
-			gl.TexImage2D(texture->texture_type, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, (GLvoid*)&image.pixels[0]);
+			gl.TexImage2D(texture->texture_type, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, pixels);
 		}
 		else if (image.type == image::TEX_CUBE)
 		{
 			for (uint8_t index = 0; index < 6; ++index)
 			{
-				gl.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+index, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, (GLvoid*)&image.pixels[0]);
+				gl.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+index, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, pixels);
 			}
 		}
 		
@@ -921,7 +928,13 @@ namespace gemini
 		assert(rect.top >= 0);
 		assert(rect.top + rect.height() <= gltexture->height);
 		
-		gl.TexSubImage2D(gltexture->texture_type, 0, rect.left, rect.top, rect.right, rect.bottom, internal_format, GL_UNSIGNED_BYTE, (GLvoid*)&image.pixels[0]);
+		GLvoid* pixels = 0;
+		if (!image.pixels.empty())
+		{
+			pixels = (GLvoid*)&image.pixels[0];
+		}
+		
+		gl.TexSubImage2D(gltexture->texture_type, 0, rect.left, rect.top, rect.right, rect.bottom, internal_format, GL_UNSIGNED_BYTE, pixels);
 		gl.CheckError("TexSubImage2D");
 		
 		gltexture->unbind();
@@ -1143,7 +1156,7 @@ namespace gemini
 	// ---------------------------------------
 
 	#define SHADER_DEBUG( fmt, ... ) (void(0))
-	//#define SHADER_DEBUG LOGV
+//	#define SHADER_DEBUG LOGV
 
 	renderer::ShaderObject GLCore32::shaderobject_create( renderer::ShaderObjectType shader_type )
 	{

@@ -143,7 +143,7 @@ namespace gemini
 			{
 				if (std::string(name) == uniforms[i].first)
 				{
-	//				LOGV( "uniform: %s, at %i\n", name, uniforms[i].second );
+//					LOGV( "uniform: %s, at %i\n", name, uniforms[i].second );
 					return uniforms[i].second;
 				}
 			}

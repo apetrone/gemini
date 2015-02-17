@@ -352,15 +352,23 @@ namespace gemini
 		
 		Type value_at_time(float time_seconds)
 		{
+//			assert(!keys.empty());
+			if (keys.empty())
+			{
+				return Type();
+			}
+		
 			// 1. for an arbitrary time value t,
 			//		map it to a channel's keyframe time length bounds.
 			// 		such that (0 >= t < length_seconds).
 			Type value;
 			
-			while(time_seconds > length_seconds)
-				time_seconds -= length_seconds;
+			float last_key_seconds = keys[keys.size()-1].seconds;
+			
+			while(time_seconds > last_key_seconds)
+				time_seconds -= last_key_seconds;
 				
-			assert(time_seconds <= length_seconds);
+			assert(time_seconds <= last_key_seconds);
 			
 			// 2. Find the keyframes that bound t.
 			Keyframe<Type>* prev = 0;
@@ -388,9 +396,7 @@ namespace gemini
 					alpha = time_seconds;
 				}
 				
-//				LOGV("alpha: %2.2f\n", alpha);
 				// 3. lerp the value
-//				value = core::lerp(last_value, key.value, alpha);
 				value = core::Interpolator<Type>()(last_value, key.value, alpha);
 //				value = key.value;
 				break;

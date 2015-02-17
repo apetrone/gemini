@@ -845,13 +845,13 @@ class ModelInterface : public gemini::IModelInterface
 			// does this have an animation?
 			if (!mesh->skeleton.empty())
 			{
-				bone_transforms = new glm::mat4[mesh->skeleton.size()];
-				for (size_t index = 0; index < mesh->animation.total_keys; ++index)
-				{
-					scale_channel.set_data_source(&mesh->animation.scale[index], mesh->animation.frame_delay_seconds);
-					rotation_channel.set_data_source(&mesh->animation.rotation[index], mesh->animation.frame_delay_seconds);
-					translation_channel.set_data_source(&mesh->animation.translation[index], mesh->animation.frame_delay_seconds);
-				}
+				bone_transforms = new glm::mat4[mesh->animation.total_bones];
+//				for (size_t index = 0; index < mesh->animation.total_bones; ++index)
+//				{
+//					scale_channel.set_data_source(&mesh->animation.scale[index], mesh->animation.frame_delay_seconds);
+//					rotation_channel.set_data_source(&mesh->animation.rotation[index], mesh->animation.frame_delay_seconds);
+//					translation_channel.set_data_source(&mesh->animation.translation[index], mesh->animation.frame_delay_seconds);
+//				}
 //				animated_node->scale_channel.set_data_source(&mesh->animation.scale[node_index], mesh->animation.frame_delay_seconds);
 //				animated_node->rotation_channel.set_data_source(&mesh->animation.rotation[node_index], mesh->animation.frame_delay_seconds);
 //				animated_node->translation_channel.set_data_source(&mesh->animation.translation[node_index], mesh->animation.frame_delay_seconds);
@@ -902,10 +902,13 @@ class ModelInterface : public gemini::IModelInterface
 
 		virtual glm::mat4* get_bone_transforms() const { return bone_transforms; }
 		
+		
 		virtual void get_animation_pose(glm::vec3* positions, glm::quat* rotations, float t)
 		{
 			if (mesh->skeleton.empty())
+			{
 				return;
+			}
 				
 			mesh->animation.get_pose(positions, rotations, t);
 		}
@@ -913,32 +916,36 @@ class ModelInterface : public gemini::IModelInterface
 		virtual void set_animation_pose(glm::vec3* positions, glm::quat* rotations)
 		{
 			if (mesh->skeleton.empty())
+			{
 				return;
-			
-			uint32_t max_bones = mesh->skeleton.size();
-//			for (uint32_t index = 0; index < max_bones; ++index)
-//			{
-//				tr[index] = positions[index];
-//			}
+			}
+				
+			if (mesh->animation.total_bones == 0)
+			{
+				return;
+			}
 			
 			// recalculate
-			for (size_t index = 0; index < mesh->animation.total_keys; ++index)
+			for (size_t index = 0; index < mesh->animation.total_bones; ++index)
 			{
 				assets::Joint* joint = &mesh->skeleton[index];
-				glm::mat4& transform = bone_transforms[index];
+				glm::mat4& world_transform = bone_transforms[index];
+				glm::mat4& transform = mesh->animation.transforms[index];
+
 				
 				glm::mat4 local_scale;
 				glm::mat4 local_rotation = glm::toMat4(rotations[index]);
 				glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), positions[index]);
 				transform = local_scale * local_rotation * local_transform;
-
 				
 				if (joint->parent_index > -1)
 				{
-					transform = bone_transforms[joint->parent_index] * transform;
+					const glm::mat4& parent_transform = mesh->animation.transforms[joint->parent_index];
+					transform = parent_transform * transform;
 				}
 				
-				transform = transform * joint->inverse_bind_matrix;
+				
+				world_transform = transform * joint->inverse_bind_matrix;
 			}
 		}
 		
