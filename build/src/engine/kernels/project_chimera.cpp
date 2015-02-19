@@ -903,7 +903,7 @@ class ModelInterface : public gemini::IModelInterface
 		virtual glm::mat4* get_bone_transforms() const { return bone_transforms; }
 		
 		
-		virtual void get_animation_pose(glm::vec3* positions, glm::quat* rotations, float t)
+		virtual void get_animation_pose(int32_t index, glm::vec3* positions, glm::quat* rotations, float t)
 		{
 			if (mesh->skeleton.empty())
 			{
@@ -913,7 +913,7 @@ class ModelInterface : public gemini::IModelInterface
 			mesh->animation.get_pose(positions, rotations, t);
 		}
 		
-		virtual void set_animation_pose(glm::vec3* positions, glm::quat* rotations)
+		virtual void set_pose(glm::vec3* positions, glm::quat* rotations)
 		{
 			if (mesh->skeleton.empty())
 			{
@@ -952,7 +952,10 @@ class ModelInterface : public gemini::IModelInterface
 			}
 		}
 		
-		virtual void update(float delta_seconds, float alpha) {}
+		virtual int32_t get_animation_index(const char* name)
+		{
+			return -1;
+		}
 	};
 
 

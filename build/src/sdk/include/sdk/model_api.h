@@ -45,9 +45,16 @@ namespace gemini
 //		virtual void get_geometry_data(unsigned int index, GeometryInstanceData& geometry_data) const = 0;
 
 		virtual glm::mat4* get_bone_transforms() const = 0;
-		virtual void get_animation_pose(glm::vec3* positions, glm::quat* rotations, float t) = 0;
-		virtual void set_animation_pose(glm::vec3* positions, glm::quat* rotations) = 0;
-		virtual void update(float delta_seconds, float alpha) = 0;
+		
+		// get an animations pose at local time t in seconds
+		virtual void get_animation_pose(int32_t index, glm::vec3* positions, glm::quat* rotations, float t) = 0;
+		
+		// set the pose for this model instance
+		virtual void set_pose(glm::vec3* positions, glm::quat* rotations) = 0;
+		
+		// returns the index of an animation by name
+		// -1 if the animation could not be found.
+		virtual int32_t get_animation_index(const char* name) = 0;
 	};
 
 	class IModelInterface
