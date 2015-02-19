@@ -401,7 +401,7 @@ namespace gemini
 			Mesh* mesh = (Mesh*)data;
 
 			// TODO: remove this hack for maps in the re-write.
-			core::StackString<1024> fullpath = mesh->path;
+			core::StackString<MAX_PATH_SIZE> fullpath = mesh->path;
 			bool is_world = fullpath.startswith("maps");
 			
 			// make sure we can load the default material
