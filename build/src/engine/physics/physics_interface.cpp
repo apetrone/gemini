@@ -220,6 +220,9 @@ namespace gemini
 
 		physics::ICollisionObject* PhysicsInterface::create_physics_model(int32_t model_index, ObjectProperties& properties)
 		{
+			// Passed an invalid model_index. Perhaps the model wasn't loaded?
+			assert(model_index != -1);
+
 			bool use_quantized_bvh_tree = true;
 			
 			
