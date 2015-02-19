@@ -140,7 +140,7 @@ namespace gemini
 			VertexType * vptr = 0;
 			
 			// requested a vertex that hasn't been accessed
-			if ( index > last_vertex )
+			if ( (unsigned int)index > last_vertex )
 			{
 				return 0;
 			}

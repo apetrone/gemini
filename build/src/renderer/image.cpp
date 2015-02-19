@@ -63,8 +63,8 @@ namespace gemini
 			image.pixels.allocate(image.channels*image.width*image.height);
 			
 			// width/height should be power of two
-			int width_mask = (image.width >> 1) - 1;
-			int height_mask = (image.height >> 1) - 1;
+			uint32_t width_mask = (image.width >> 1) - 1;
+			uint32_t height_mask = (image.height >> 1) - 1;
 			
 			const Color * color = 0;
 			uint8_t* pixels = &image.pixels[0];

@@ -71,20 +71,20 @@ namespace gemini
 
 	void RenderStream::run_commands()
 	{
-		RenderState * renderstate;
-		renderer::IRenderDriver * driver = renderer::driver();
-		if ( !driver )
+		RenderState* renderstate;
+		renderer::IRenderDriver* driver = renderer::driver();
+		if (!driver)
 		{
 			return;
 		}
 
-		for( int state_id = 0; state_id < num_commands; state_id++ )
+		for(unsigned int state_id = 0; state_id < num_commands; state_id++)
 		{
 			renderstate = &commands[ state_id ];
 			
 			// setup the stream and run the command
-			stream.seek( renderstate->offset, 1 );
-			driver->run_command( (renderer::DriverCommandType)renderstate->type, stream );
+			stream.seek(renderstate->offset, 1);
+			driver->run_command((renderer::DriverCommandType)renderstate->type, stream);
 		}
 	#if 0
 		for( int state_id = 0; state_id < num_commands; state_id++ )
