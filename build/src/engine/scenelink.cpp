@@ -27,7 +27,6 @@
 //#include <core/logging.h>
 
 #include "scenelink.h"
-#include "skeletalnode.h"
 
 #include <renderer/renderstream.h>
 
@@ -44,83 +43,6 @@ namespace gemini
 {
 	namespace renderer
 	{
-		class SceneVisitor : public scenegraph::Visitor
-		{
-			size_t total_nodes;
-			RenderQueue& queue;
-
-		public:
-			SceneVisitor(RenderQueue& _queue): queue(_queue) {}
-
-			void queue_render_node(scenegraph::RenderNode* render_node, glm::mat4* transforms = 0, uint8_t total_transforms = 0)
-			{
-				RenderKey key = compute_render_key(render_node->geometry);
-				RenderBlock block(key, render_node->geometry);
-				block.object_matrix = &render_node->world_transform;
-				block.material_id = render_node->material_id;
-				block.shader_id = render_node->shader_id;
-				
-				block.node_transforms = transforms;
-				block.total_transforms = total_transforms;
-				
-				queue.insert(block);
-			}
-			
-			void queue_mesh(scenegraph::Node* node)
-			{
-				scenegraph::RenderNode* render_node = static_cast<scenegraph::RenderNode*>(node);
-				if (!render_node)
-				{
-					return;
-				}
-				
-				queue_render_node(render_node);
-			}
-			
-			void queue_skeleton(scenegraph::Node* node)
-			{
-				// TODO: implement!
-				
-				// there will be a render node child: this contains the mesh as normal.
-				// there will be AnimatedNode(s) corresponding to the bones.
-				scenegraph::SkeletalNode* skeleton = static_cast<scenegraph::SkeletalNode*>(node);
-				
-				// If you hit this assert, a non-animated model was loaded via SkeletonNode.
-				assert(!skeleton->final_transforms.empty());
-				scenegraph::RenderNode* rn = static_cast<scenegraph::RenderNode*>(node->children[0]);
-				if (rn && rn->get_type() == scenegraph::RENDER)
-				{
-					queue_render_node(rn, &skeleton->final_transforms[0], skeleton->final_transforms.size());
-				}
-			}
-			
-			virtual int visit(scenegraph::Node* node)
-			{
-				++total_nodes;
-				if (node->type == scenegraph::STATIC_MESH)
-				{
-					queue_mesh(node);
-				}
-				else if (node->type == scenegraph::SKELETON)
-				{
-					queue_skeleton(node);
-				}
-				else
-				{
-	//				LOGW("node->type of %i is unhandled. Will not render!\n", node->type);
-				}
-
-				return 0;
-			}
-			
-		private:
-			RenderKey compute_render_key(RenderObject* object)
-			{
-				return object->attributes;
-			}
-		};
-		
-		
 		SceneLink::SceneLink()
 		{
 			queue = CREATE(RenderQueue);
@@ -129,22 +51,6 @@ namespace gemini
 		SceneLink::~SceneLink()
 		{
 			DESTROY(RenderQueue, queue);
-		}
-
-		void SceneLink::draw(scenegraph::Node* root, ConstantBuffer& constant_buffer)
-		{
-			// clear the queue and prepare for another frame
-			queue->clear();
-			
-			// visit all nodes in the scene graph
-			// add renderable nodes to the queue
-			SceneVisitor visitor(*queue);
-			scenegraph::visit_nodes(root, &visitor);
-		
-			// sort the queue
-			queue->sort();
-			
-			draw(constant_buffer);
 		}
 		
 		void SceneLink::clear()

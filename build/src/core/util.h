@@ -41,6 +41,16 @@ namespace core
 		}
 	}; // RangedValue
 
+	// Useful to hand to a std::for_each statement in order to clean up a container.
+	template <class _Type>
+	struct DestroyPointer
+	{
+		void operator()(_Type * p)
+		{
+			DESTROY(_Type, p);
+		}
+	}; // DestroyPointer
+
 	namespace util
 	{
 		unsigned int hash_32bit( const void * data, int data_size, unsigned int seed );

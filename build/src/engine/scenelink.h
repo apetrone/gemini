@@ -29,7 +29,6 @@
 
 #include <renderer/renderer.h>
 #include <renderer/rqueue.h>
-#include "scene_graph.h"
 
 namespace gemini
 {
@@ -48,10 +47,6 @@ namespace gemini
 		public:
 			SceneLink();
 			~SceneLink();
-			
-			// render the queue
-			void draw(scenegraph::Node* root, ConstantBuffer& constant_buffer);
-			
 			
 			void clear();
 			void sort();

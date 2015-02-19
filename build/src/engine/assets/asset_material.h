@@ -29,7 +29,6 @@
 #include <core/stackstring.h>
 
 #include "assets.h"
-#include "assets/asset_shader.h"
 
 #include <renderer/material.h>
 
@@ -37,19 +36,21 @@ namespace gemini
 {
 	namespace assets
 	{
+		struct Shader;
+	
 		struct Material : public Asset, public renderer::Material
 		{
-			Shader * shader;
+			Shader* shader;
 
 			virtual void release();
 		}; // Material
 			
-		unsigned int texture_unit_for_map(const std::string& name );
-		unsigned int material_type_to_parameter_type( const char * name );
+		unsigned int texture_unit_for_map(const std::string& name);
+		unsigned int material_type_to_parameter_type(const char* name);
 
 		
-		AssetLoadStatus material_load_callback( const char * path, Material * material, const AssetParameters & parameters );
-		void material_construct_extension( core::StackString<MAX_PATH_SIZE> & extension );
+		AssetLoadStatus material_load_callback(const char* path, Material* material, const AssetParameters& parameters);
+		void material_construct_extension(core::StackString<MAX_PATH_SIZE>& extension);
 
 		DECLARE_ASSET_LIBRARY_ACCESSOR(Material, AssetParameters, materials);
 	} // namespace assets

@@ -940,7 +940,7 @@ class ModelInterface : public gemini::IModelInterface
 				glm::mat4 local_rotation = glm::toMat4(rotations[index]);
 				glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), positions[index]);
 				glm::mat4 local_pose = local_transform * local_rotation * local_scale;
-				
+//				local_to_world = tr * pivot * ro * sc * inv_pivot;
 				
 				if (joint->parent_index > -1)
 				{

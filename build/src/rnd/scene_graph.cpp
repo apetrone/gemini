@@ -40,16 +40,6 @@
 
 namespace gemini
 {
-	// Useful to hand to a std::for_each statement in order to clean up a container.
-	template <class _Type>
-	struct DestroyPointer
-	{
-		void operator()(_Type * p)
-		{
-			DESTROY(_Type, p);
-		}
-	}; // DestroyPointer
-
 	namespace scenegraph
 	{
 		Node::Node()
