@@ -925,6 +925,10 @@ class ModelInterface : public gemini::IModelInterface
 				return;
 			}
 			
+			// You've hit the upper bounds for skeletal bones for a single
+			// model. Congrats.
+			assert(mesh->skeleton.size() < MAX_BONES);
+			
 			// recalculate
 			for (size_t index = 0; index < mesh->animation.total_bones; ++index)
 			{

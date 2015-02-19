@@ -33,6 +33,8 @@ namespace gemini
 		unsigned int material_id;
 		unsigned int shader_id;
 	};
+	
+	const unsigned int MAX_BONES = 32;
 
 	class IModelInstanceData
 	{
