@@ -96,6 +96,17 @@ def setup_common_variables(arguments, target_platform, product):
 		"DEBUG"
 	]
 
+def setup_common_application(product):
+	macosx = product.layout(platform="macosx")
+
+	macosx.sources += [
+		"src/platform/osx/osx_appdelegate.mm",
+		"src/platform/osx/osx_appdelegate.h",
+		"src/platform/osx/osx_application.mm",
+		"src/platform/osx/osx_application.h",
+		"src/platform/osx/osx_main.mm"
+	]
+
 def setup_common_tool(product):
 
 	product.root = "../"
@@ -340,7 +351,12 @@ def get_libplatform(arguments, target_platform):
 	libplatform.project_root = COMMON_PROJECT_ROOT
 	libplatform.root = "../"
 	libplatform.sources += [
-		"src/platform/*.*"
+		"src/platform/config.h",
+		"src/platform/mem.cpp",
+		"src/platform/mem.h",
+		"src/platform/mem_stl_allocator.h",
+		"src/platform/platform.cpp",
+		"src/platform/platform.h",
 	]
 
 	libplatform.includes += [
@@ -353,7 +369,11 @@ def get_libplatform(arguments, target_platform):
 
 	macosx = libplatform.layout(platform="macosx")
 	macosx.sources += [
-		"src/platform/osx/*.*",
+		"src/platform/osx/osx_platform_interface.cpp",
+		"src/platform/osx/osx_platform_interface.h",
+		"src/platform/osx/osx_platform.mm",
+		"src/platform/osx/osx_platform.h",
+
 		"src/platform/posix/posix_dynamiclibrary.*",
 		"src/platform/posix/posix_timer.*",
 		"src/platform/posix/posix_filesystem.*"
@@ -530,6 +550,7 @@ def products(arguments, **kwargs):
 	]
 
 	setup_common_libs(arguments, gemini)
+	setup_common_application(gemini)
 
 	gemini.dependencies += [
 		librenderer,
@@ -599,10 +620,6 @@ def products(arguments, **kwargs):
 		]
 
 		macosx = gemini.layout(platform="macosx")
-		macosx.sources = [
-			"src/engine/platforms/osx/*.m*",
-			"src/engine/platforms/osx/*.h*"
-		]
 		macosx.links = [
 			"Cocoa.framework",
 			"OpenGL.framework",
