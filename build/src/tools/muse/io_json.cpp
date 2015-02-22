@@ -196,7 +196,7 @@ namespace gemini
 						weight_array.append(weightpair);
 					}
 				}
-				assert(!weight_array.empty());
+
 				blend_weights.append(weight_array);
 			}
 			

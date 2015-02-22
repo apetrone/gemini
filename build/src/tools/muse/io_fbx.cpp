@@ -382,26 +382,32 @@ namespace gemini
 				}
 				
 				
-				datamodel::WeightList& weightlist = mesh->weights[vertex_index];
+				
 
-				state.indent.push();
-				// copy weights
-				for (WeightReference& weight_ref : state.slots[index].weights)
+				if (!state.slots.empty())
 				{
-//					LOGV("%sbone = %i, weight = %2.2f\n", state.indent.indent(), weight_ref.datamodel_bone_index, weight_ref.value);
-					
-					// assert if we hit this limit -- can probably just drop anything
-					// over the max, but we should be smart -- and re-normalize.
-					assert(weightlist.total_weights <= datamodel::MAX_SUPPORTED_BONE_INFLUENCES);
-					
-					// copy weight data over
-					datamodel::Weight& weight = weightlist.weights[weightlist.total_weights++];
-					datamodel::Bone* bone = state.model->skeleton->get_bone_at_index(weight_ref.datamodel_bone_index);
-					assert(bone != nullptr);
-					weight.bone_name = bone->name;
-					weight.value = weight_ref.value;
+					datamodel::WeightList& weightlist = mesh->weights[vertex_index];
+					state.indent.push();
+					// copy weights
+
+					for (WeightReference& weight_ref : state.slots[index].weights)
+					{
+	//					LOGV("%sbone = %i, weight = %2.2f\n", state.indent.indent(), weight_ref.datamodel_bone_index, weight_ref.value);
+						
+						// assert if we hit this limit -- can probably just drop anything
+						// over the max, but we should be smart -- and re-normalize.
+						assert(weightlist.total_weights <= datamodel::MAX_SUPPORTED_BONE_INFLUENCES);
+						
+						// copy weight data over
+						datamodel::Weight& weight = weightlist.weights[weightlist.total_weights++];
+						datamodel::Bone* bone = state.model->skeleton->get_bone_at_index(weight_ref.datamodel_bone_index);
+						assert(bone != nullptr);
+						weight.bone_name = bone->name;
+						weight.value = weight_ref.value;
+					}
+					state.indent.pop();					
 				}
-				state.indent.pop();
+
 
 				++vertex_index;
 				++local_index;
