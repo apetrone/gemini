@@ -73,10 +73,11 @@ namespace kernel
 		// kDevice constants above describe the current system
 		KernelDeviceFlags device_flags;
 		
-//			double step_interval_seconds;
-//			float step_alpha;
-//			float framedelta_filtered_msec;
-//			float framedelta_raw_msec;
+		double step_interval_seconds;
+		float step_alpha;
+		float framedelta_filtered_msec;
+		float framedelta_filtered_seconds;
+		float framedelta_raw_msec;
 		
 		// dimensions of the actual window in pixels
 		unsigned short window_width;
@@ -97,9 +98,9 @@ namespace kernel
 		unsigned short titlebar_height;
 		
 		// the current tick (physics step)
-//			uint64_t current_tick;
+		uint64_t current_tick;
 		
-//			uint64_t current_frame;
+		uint64_t current_frame;
 		
 		// this is needed to allow normal rendering and Oculus Rift rendering.
 		// the Rift SDK will swap buffers itself, which causes flickering

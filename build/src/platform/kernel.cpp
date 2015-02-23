@@ -85,8 +85,8 @@ namespace kernel
 		device_flags = 0;
 		window_width = 0;
 		window_height = 0;
-//		step_alpha = 0;
-//		step_interval_seconds = 0;
+		step_alpha = 0;
+		step_interval_seconds = 0;
 		use_fullscreen = false;
 		use_vsync = true;
 		target_display = 0;
@@ -95,8 +95,8 @@ namespace kernel
 		swap_buffers = 1;
 		
 		titlebar_height = 0;
-//		current_tick = 0;
-//		current_frame = 0;
+		current_tick = 0;
+		current_frame = 0;
 	}
 
 	
@@ -112,7 +112,7 @@ namespace kernel
 	
 	void shutdown()
 	{
-		
+		detail::kernel_instance->shutdown();
 	}
 	
 	void resolution_changed(int width, int height)
@@ -122,7 +122,7 @@ namespace kernel
 	
 	void tick()
 	{
-		
+		detail::kernel_instance->tick();
 	}
 	
 	
