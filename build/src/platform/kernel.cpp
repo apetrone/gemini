@@ -42,7 +42,7 @@
 #include "debugdraw.h"
 #include "physics/physics.h"
 #include "hotloading.h"
-
+#include "animation.h"
 
 
 #include "debugdraw_interface.h"
@@ -394,6 +394,7 @@ namespace gemini
 			audio::startup();
 			input::startup();
 			gemini::physics::startup();
+			animation::startup();
 			
 			if (config.enable_asset_reloading)
 			{
@@ -428,6 +429,7 @@ namespace gemini
 			// system cleanup
 			hotloading::shutdown();
 			
+			animation::shutdown();
 			gemini::physics::shutdown();
 			debugdraw::shutdown();
 			font::shutdown();
@@ -484,7 +486,7 @@ namespace gemini
 			
 			audio::update();
 			input::update();
-			
+			animation::update(_parameters.framedelta_filtered_msec*.001f);
 			_kernel->pre_tick();
 			hotloading::tick();			
 			_active_application->tick( _parameters );

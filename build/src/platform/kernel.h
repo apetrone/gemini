@@ -35,14 +35,14 @@ namespace gemini
 		// kernel error codes
 		enum Error
 		{
-			NoError = 0,
-			CoreFailed = -1,
-			PostConfigFailed = -2,
-			NoInstance = -3,
-			ConfigFailed = -4,
-			StartupFailed = -5,
-			ApplicationFailure = -6,
-			RendererFailed = -7,
+			NoError 			= 0,
+			CoreFailed 			= -1,
+			PostConfigFailed 	= -2,
+			NoInstance 			= -3,
+			ConfigFailed 		= -4,
+			StartupFailed 		= -5,
+			ApplicationFailure 	= -6,
+			RendererFailed 		= -7,
 		}; // Error
 
 		// Kernel flags for device details
@@ -74,10 +74,10 @@ namespace gemini
 			// kDevice constants above describe the current system
 			KernelDeviceFlags device_flags;
 			
-			double step_interval_seconds;
-			float step_alpha;
-			float framedelta_filtered_msec;
-			float framedelta_raw_msec;
+//			double step_interval_seconds;
+//			float step_alpha;
+//			float framedelta_filtered_msec;
+//			float framedelta_raw_msec;
 			
 			// dimensions of the actual window in pixels
 			unsigned short window_width;
@@ -98,9 +98,9 @@ namespace gemini
 			unsigned short titlebar_height;
 			
 			// the current tick (physics step)
-			uint64_t current_tick;
+//			uint64_t current_tick;
 			
-			uint64_t current_frame;
+//			uint64_t current_frame;
 			
 			// this is needed to allow normal rendering and Oculus Rift rendering.
 			// the Rift SDK will swap buffers itself, which causes flickering
@@ -136,23 +136,28 @@ namespace gemini
 			virtual ~IKernel() {}
 
 			virtual bool is_active() const = 0;
-			virtual void set_active( bool isactive ) = 0;
+			virtual void set_active(bool isactive) = 0;
+
+			virtual void resolution_changed(int width, int height) = 0;
+			
 //			virtual kernel::Parameters& parameters() = 0;
 
 			// called first thing during setup; useful for initializing libraries
 			virtual void startup() = 0;
 			
-			// this is called during startup to register systems specific to this kernel
-			// it can be used to load or specify platform specific services
-			virtual void register_services() = 0;
-			
+			// invoked after kernel startup finishes
+			virtual void post_startup() = 0;
+
 			// these tick functions wrap the application's tick call
-			virtual void pre_tick() = 0;
-			virtual void post_tick() = 0;
+//			virtual void pre_application_tick() = 0;
+//			virtual void post_application_tick() = 0;
+			virtual void tick() = 0;
 			
 			// called after the IApplication's config() call returns successfully
-			virtual void post_application_config( ApplicationResult result ) = 0;
-			virtual void post_application_startup( ApplicationResult result ) = 0;
+//			virtual void post_application_config(ApplicationResult result) = 0;
+//			virtual void post_application_startup(ApplicationResult result) = 0;
+			
+//			virtual void pre_shutdown() = 0;
 			
 			// called right before control returns to the main entry point
 			virtual void shutdown() = 0;
@@ -178,10 +183,10 @@ namespace gemini
 			virtual void shutdown(kernel::Parameters& params) = 0;
 		};
 		
-		typedef IApplication * (*ApplicationCreator)();
+		typedef IApplication* (*ApplicationCreator)();
 		struct Registrar
 		{
-			Registrar( const char * name, ApplicationCreator fn );
+			Registrar(const char* name, ApplicationCreator fn);
 		};
 		
 		//
