@@ -25,10 +25,9 @@
 #import "osx_appdelegate.h"
 
 #import <platform/platform.h>
-#import "platforms/desktop/kernel_desktop.h"
+#import <platform/kernel.h>
 
 static bool has_started = false;
-gemini::DesktopKernel _desktop_kernel( 0, 0 );
 
 @implementation AppDelegate
 
@@ -44,9 +43,9 @@ gemini::DesktopKernel _desktop_kernel( 0, 0 );
 
 -(void)run_kernel
 {
-	while( gemini::kernel::instance()->is_active() )
+	while(kernel::instance() && kernel::instance()->is_active())
 	{
-		gemini::kernel::tick();
+		kernel::tick();
 	}
 
 	[[NSApplication sharedApplication] terminate:nil];
@@ -64,29 +63,34 @@ gemini::DesktopKernel _desktop_kernel( 0, 0 );
 //	NSLog( @"applicationWillResignActive" );
 	if ( has_started )
 	{
-		gemini::kernel::Event<gemini::kernel::System> event;
-		event.subtype = gemini::kernel::WindowLostFocus;
-		gemini::kernel::event_dispatch(event);
+		kernel::Event<kernel::System> event;
+		event.subtype = kernel::WindowLostFocus;
+		kernel::event_dispatch(event);
 	}
 }
 
 -(void)applicationDidBecomeActive:(NSNotification *)notification
 {
-//	NSLog( @"applicationDidBecomeActive" );	
+//	NSLog( @"applicationDidBecomeActive" );
+
+	platform::startup();
 	
 	if ( !has_started )
 	{
 		has_started = true;
+		
+		NSArray* arguments = [[NSProcessInfo processInfo] arguments];
+		// TODO: process command line arguments
+//		platform::parse_commandline(<#int argc#>, <#char **argv#>)
 		
 		// On Mac, the window created is actually larger than requested
 		// to account for the added height of the title bar.
 		// Unfortunately, the OpenGL drawable surface contains the area
 		// used by the title bar, so we have to use that in our screen-space
 		// calculations.
-		gemini::kernel::parameters().titlebar_height = [self calculate_titlebar_height];
+		kernel::parameters().titlebar_height = [self calculate_titlebar_height];
 		
-		
-		gemini::kernel::startup( &_desktop_kernel );
+		kernel::startup();
 
 // http://fredandrandall.com/blog/2011/09/08/how-to-make-your-app-open-in-full-screen-on-lion/
 //	[window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
@@ -96,9 +100,9 @@ gemini::DesktopKernel _desktop_kernel( 0, 0 );
 	}
 	else
 	{
-		gemini::kernel::Event<gemini::kernel::System> event;
-		event.subtype = gemini::kernel::WindowGainFocus;
-		gemini::kernel::event_dispatch(event);
+		kernel::Event<kernel::System> event;
+		event.subtype = kernel::WindowGainFocus;
+		kernel::event_dispatch(event);
 	}
 }
 
@@ -111,7 +115,7 @@ gemini::DesktopKernel _desktop_kernel( 0, 0 );
 -(void)applicationWillTerminate:(NSNotification *)notification
 {
 //	NSLog( @"applicationWillTerminate" );
-	gemini::kernel::shutdown();
+	kernel::shutdown();
 	platform::shutdown();
 }
 

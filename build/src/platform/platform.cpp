@@ -25,6 +25,7 @@
 #include "platform.h"
 #include "mem.h"
 #include <assert.h>
+#include "kernel.h"
 
 #if TARGET_OS_MAC
 	#include "osx/osx_platform.h"
@@ -73,6 +74,9 @@ namespace platform
 	{
 		return _instance;
 	}
+	
+	int _argc = 0;
+	char** _argv = 0;
 
 	Result startup()
 	{
@@ -93,6 +97,67 @@ namespace platform
 		DESTROY(IPlatformInterface, _instance);
 		
 		memory::shutdown();
+	}
+	
+	void parse_commandline(int argc, char** argv)
+	{
+		_argc = argc;
+		_argv = argv;
+		
+		// TODO: parse the command line
+	}
+	
+#if defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
+	kernel::Error main(kernel::IKernel* kernel_instance, const char* kernel_name)
+	{
+		platform::startup();
+		// attempt kernel startup, mostly initializing core systems
+		kernel::Error error = kernel::startup();
+		//kernel::startup(kernel_instance);
+		if (error != kernel::NoError)
+		{
+			fprintf(stderr, "Kernel startup failed with kernel code: %i\n", error);
+			kernel::shutdown();
+			return kernel::StartupFailed;
+		}
+		else
+		{
+			// startup succeeded; enter main loop
+			while(kernel::instance() && kernel::instance()->is_active())
+			{
+				kernel::instance()->tick();
+			}
+		}
+		
+		// cleanup kernel memory
+		kernel::shutdown();
+		platform::shutdown();
+		
+		return error;
+	} // main
+#elif defined(PLATFORM_APPLE)
+	// Handled through osx_run_application
+#else
+	#error Unknown platform!
+#endif
+	
+	
+	
+	
+	int run_application(kernel::IKernel* instance)
+	{
+		kernel::set_instance(instance);
+		instance->set_active(true);
+		
+		
+#if defined(PLATFORM_APPLE)
+		return osx_run_application(_argc, (const char**)_argv);
+#elif defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
+		return desktop_main(0);
+#else
+	#error Unknown platform!
+#endif
+		return 0;
 	}
 	
 	Result program_directory(char* path, size_t size)

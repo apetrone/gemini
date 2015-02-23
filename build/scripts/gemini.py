@@ -483,6 +483,53 @@ def get_rnd(arguments, libplatform, libcore, librenderer, **kwargs):
 
 	return rnd
 
+def get_kraken(arguments, libplatform, libcore, librenderer, **kwargs):
+	global_params = kwargs.get("global_params")
+	target_platform = kwargs.get("target_platform")
+
+	kraken = Product(name="kraken", output=ProductType.Application)
+	kraken.project_root = COMMON_PROJECT_ROOT
+	kraken.product_root = COMMON_PRODUCT_ROOT
+	kraken.root = "../"
+	#kraken.sources += [
+	#]
+
+	setup_driver(kraken)
+	setup_common_tool(kraken)
+	setup_common_application(kraken)
+
+	kraken.dependencies.extend([
+		libsdl,
+		libplatform,
+		libcore,
+		librenderer
+	])
+
+
+
+	macosx = kraken.layout(platform="macosx")
+	macosx.links += [
+		"Cocoa.framework",
+		"OpenGL.framework"
+	]
+
+	# TODO: This path is relative to the *project*
+	macosx.driver.infoplist_file = "../src/tools/kraken/resources/osx/Info.plist"
+	macosx.resources = [
+		"src/tools/kraken/resources/osx/en.lproj/*.xib",
+		"src/tools/kraken/resources/osx/en.lproj/*.strings"
+	]	
+
+	linux = kraken.layout(platform="linux")
+	linux.links += [
+		"GL"
+	]
+
+	linux.cflags += [
+		"-fPIC"
+	]		
+
+	return kraken
 
 def arguments(parser):
 	parser.add_argument("--with-gles", dest="gles", action="store_true", help="Build with GLES support", default=False)
@@ -634,8 +681,6 @@ def products(arguments, **kwargs):
 			"src/engine/resources/osx/en.lproj/*.strings"
 		]
 
-
-
 		linux = gemini.layout(platform="linux")
 		linux.sources += [
 			"src/engine/platforms/desktop/entry.cpp"
@@ -698,7 +743,8 @@ def products(arguments, **kwargs):
 
 	rnd = get_rnd(arguments, libplatform, libcore, librenderer, **kwargs)
 
-
+	kraken = get_kraken(arguments, libplatform, libcore, librenderer, **kwargs)
+	tools.append(kraken)
 
 	return [librenderer, libcore, libplatform] + [gemini] + tools + [rnd]
 

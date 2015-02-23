@@ -30,6 +30,7 @@ namespace platform
 {
 	Result osx_startup();
 	void osx_shutdown();
+	int osx_run_application(int argc, const char* argv[]);
 	
 	Result osx_program_directory(char * path, size_t size);
 } // namespace platform

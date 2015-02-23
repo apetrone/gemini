@@ -22,13 +22,19 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+
+#include "platform.h"
+
 #if TARGET_OS_MAC && !TARGET_OS_IPHONE
 	#import <Cocoa/Cocoa.h>
+	#import <AppKit/AppKit.h>
 #else
 	#import <Foundation/Foundation.h>
 #endif
 
 #include "osx_platform.h"
+
+
 
 namespace platform
 {
@@ -44,6 +50,11 @@ namespace platform
 	{
 		[pool release];
 		pool = 0;
+	}
+	
+	int osx_run_application(int argc, const char* argv[])
+	{
+		return ::NSApplicationMain(argc, argv);
 	}
 	
 	Result osx_program_directory(char* path, size_t size)

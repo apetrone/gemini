@@ -57,6 +57,8 @@
 #endif
 
 
+
+
 #ifdef Success
 	#undef Success
 #endif
@@ -69,8 +71,24 @@
 	#undef Warning
 #endif
 
+namespace kernel
+{
+	class IKernel;
+}
+
 namespace platform
 {
+#if PLATFORM_WINDOWS
+	#define PLATFORM_MAIN int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR commandline, int show)
+#elif PLATFORM_LINUX || PLATFORM_APPLE
+	#define PLATFORM_MAIN int main(int argc, char** argv)
+#elif PLATFORM_ANDROID
+	// This requires: #include <android_native_app_glue.h>
+	#define PLATFORM_MAIN void android_main(struct android_app* state)
+#else
+	#error Unknown platform!
+#endif
+
 	struct Result
 	{
 		enum ResultStatus
@@ -87,9 +105,13 @@ namespace platform
 		bool failed() const { return status == Failure; }
 		bool success() const { return status == Success; }
 	};
+	
+
 
 	Result startup();
 	void shutdown();
+	void parse_commandline(int argc, char** argv);
+	int run_application(kernel::IKernel* instance);
 
 	namespace path
 	{

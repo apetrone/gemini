@@ -22,6 +22,117 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+
+
+#include "kernel.h"
+#include <string.h>
+
+namespace kernel
+{
+	namespace detail
+	{
+		IKernel* kernel_instance = 0;
+		Parameters parameters;
+		
+		
+		struct EventHooks
+		{
+			void* events[ kernel::EventTypeCount ];
+			EventHooks();
+		};
+		
+		EventHooks::EventHooks()
+		{
+			memset(events, 0, sizeof(void*) * kernel::EventTypeCount );
+		}
+		
+		EventHooks event_hooks;
+		
+	} // namespace detail
+	
+	IKernel* instance()
+	{
+		return detail::kernel_instance;
+	} // instance
+	
+	void set_instance(IKernel* instance)
+	{
+		detail::kernel_instance = instance;
+	} // set_instance
+	
+	Parameters& parameters()
+	{
+		return detail::parameters;
+	} // parameters
+	
+	
+	
+	
+	void assign_listener_for_eventtype( kernel::EventType event_type, void * listener )
+	{
+		detail::event_hooks.events[ event_type ] = listener;
+	} // assign_listener_for_eventtype
+	
+	void * find_listener_for_eventtype( kernel::EventType event_type )
+	{
+		return detail::event_hooks.events[ event_type ];
+	} // find_listener_for_eventtype
+	
+	
+	Parameters::Parameters()
+	{
+		error_message = 0;
+		device_flags = 0;
+		window_width = 0;
+		window_height = 0;
+//		step_alpha = 0;
+//		step_interval_seconds = 0;
+		use_fullscreen = false;
+		use_vsync = true;
+		target_display = 0;
+		
+		// we should default to swapping buffers ourself
+		swap_buffers = 1;
+		
+		titlebar_height = 0;
+//		current_tick = 0;
+//		current_frame = 0;
+	}
+
+	
+	Error startup()
+	{
+		Error result = kernel::Error::NoError;
+		
+		// perform any startup duties here before we init the core
+		detail::kernel_instance->startup();
+		
+		return result;
+	} // startup
+	
+	void shutdown()
+	{
+		
+	}
+	
+	void resolution_changed(int width, int height)
+	{
+		
+	}
+	
+	void tick()
+	{
+		
+	}
+	
+	
+	
+
+} // namespace kernel
+
+
+
+#if 0
 #include <string>
 #include <map>
 
@@ -519,3 +630,4 @@ namespace gemini
 
 	} // namespace kernel
 } // namespace gemini
+#endif
