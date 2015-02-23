@@ -192,8 +192,7 @@ private:
 #else
 		kernel::parameters().device_flags |= kernel::DeviceDesktop;
 #endif
-
-
+		
 		//
 		// setup input mappings
 
@@ -334,6 +333,9 @@ private:
 			}
 		}
 		
+		key_map.clear();
+		
+		
 		SDL_GL_DeleteContext(context);
 		SDL_DestroyWindow(window);
 		SDL_Quit();
@@ -397,6 +399,8 @@ private:
 			SDL_GetWindowSize(window, &window_width, &window_height);
 			SDL_GL_GetDrawableSize(window, &render_width, &render_height);
 			
+			// hide the mouse cursor
+			show_mouse(false);
 			
 			kernel::parameters().window_width = window_width;
 			kernel::parameters().window_height = window_height;
@@ -456,6 +460,67 @@ public:
 	
 	virtual void resolution_changed(int width, int height) {}
 	
+	void sdl_setup_joysticks()
+	{
+		// add game controller db
+		size_t length = 0;
+		char* buffer = core::filesystem::file_to_buffer("conf/gamecontrollerdb.conf", 0, &length);
+		int result = SDL_GameControllerAddMapping(buffer);
+		DEALLOC(buffer);
+		
+		// If you hit this assert, there was an error laoding the gamecontrollerdb.
+		// Otherwise, it was either added (result == 1) or updated (result == 0).
+		assert(result != -1);
+		
+		
+		fprintf(stdout, "Gather joystick infos...\n");
+		fprintf(stdout, "Num Haptics: %i\n", SDL_NumHaptics());
+		fprintf(stdout, "Num Joysticks: %i\n", SDL_NumJoysticks());
+		
+		
+		assert(SDL_NumJoysticks() < input::MAX_JOYSTICKS);
+		total_controllers = SDL_NumJoysticks();
+		for (uint8_t i = 0; i < total_controllers; ++i)
+		{
+			input::JoystickInput& js = input::state()->joystick(i);
+			input::state()->connect_joystick(i);
+			js.reset();
+			
+			controllers[i] = SDL_GameControllerOpen(i);
+			if (SDL_IsGameController(i))
+			{
+				fprintf(stdout, "Found compatible controller: \"%s\"\n", SDL_GameControllerNameForIndex(i));
+				//			fprintf(stdout, "Mapped as: \"%s\"\n", SDL_GameControllerMapping(state->controllers[i]));
+				
+				SDL_Joystick * joystick = SDL_GameControllerGetJoystick(controllers[i]);
+				SDL_JoystickID joystickID = SDL_JoystickInstanceID( joystick );
+				if (SDL_JoystickIsHaptic(joystick))
+				{
+					js.flags |= input::JoystickInput::HapticSupport;
+					fprintf(stdout, "Joystick is haptic!\n");
+					//			http://blog.5pmcasual.com/game-controller-api-in-sdl2.html
+					SDL_Haptic * haptic = SDL_HapticOpenFromJoystick( joystick );
+					if (haptic)
+					{
+						SDL_HapticRumbleInit(haptic);
+						//				SDL_HapticRumblePlay(haptic, 1.0, 2000);
+						
+						//				SDL_Delay(2000);
+						SDL_HapticClose(haptic);
+					}
+					else
+					{
+						fprintf(stdout, "error opening haptic for joystickID: %i\n", joystickID);
+					}
+				}
+			}
+			else
+			{
+				fprintf(stderr, "GameController at index %i, is not a compatible controller.\n", i);
+			}
+		}
+	}
+	
 	virtual kernel::Error startup()
 	{
 		const char FONT_SHADER[] = "shaders/fontshader";
@@ -513,7 +578,7 @@ public:
 		}
 		
 		
-		
+		sdl_setup_joysticks();
 		// TODO: kernel_desktop::register_services (load game controller config, etc.)
 		
 		// load engine settings
@@ -860,10 +925,28 @@ public:
 		sdl_shutdown();
 	}
 	
-	virtual void capture_mouse(bool capture) {}
-	virtual void warp_mouse(int x, int y) {}
-	virtual void get_mouse_position(int& x, int& y) {}
-	virtual void show_mouse(bool show) {}
+	virtual void capture_mouse(bool capture)
+	{
+		SDL_bool is_enabled = capture ? SDL_TRUE : SDL_FALSE;
+		SDL_SetRelativeMouseMode(is_enabled);
+	}
+	
+	virtual void warp_mouse(int x, int y)
+	{
+		SDL_EventState(SDL_MOUSEMOTION, SDL_IGNORE);
+		SDL_WarpMouseInWindow(window, x, y);
+		SDL_EventState(SDL_MOUSEMOTION, SDL_ENABLE);
+	}
+	
+	virtual void get_mouse_position(int& x, int& y)
+	{
+		SDL_GetMouseState(&x, &y);
+	}
+	
+	virtual void show_mouse(bool show)
+	{
+		SDL_ShowCursor((show ? SDL_TRUE : SDL_FALSE));
+	}
 };
 
 
@@ -871,7 +954,6 @@ public:
 PLATFORM_MAIN
 {
 	int return_code;
-	EngineKernel ek;
-	return_code = platform::run_application(&ek);
+	return_code = platform::run_application(new EngineKernel());
 	return return_code;
 }

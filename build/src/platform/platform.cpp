@@ -146,18 +146,22 @@ namespace platform
 	
 	int run_application(kernel::IKernel* instance)
 	{
+		int return_code = -1;
 		kernel::set_instance(instance);
 		instance->set_active(true);
 		
 		
 #if defined(PLATFORM_APPLE)
-		return osx_run_application(_argc, (const char**)_argv);
+		return_code = osx_run_application(_argc, (const char**)_argv);
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
-		return desktop_main(0);
+		return_code = desktop_main(0);
 #else
 	#error Unknown platform!
 #endif
-		return 0;
+		// instance is owned by the platform
+		delete instance;
+		
+		return return_code;
 	}
 	
 	Result program_directory(char* path, size_t size)
