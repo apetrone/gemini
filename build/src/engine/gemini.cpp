@@ -1257,7 +1257,11 @@ public:
 
 
 
-class EngineKernel : public kernel::IKernel
+class EngineKernel : public kernel::IKernel,
+public kernel::IEventListener<kernel::KeyboardEvent>,
+public kernel::IEventListener<kernel::MouseEvent>,
+public kernel::IEventListener<kernel::SystemEvent>,
+public kernel::IEventListener<kernel::GameControllerEvent>
 {
 
 
@@ -1313,6 +1317,9 @@ private:
 	gui::Button* quit;
 	CustomListener gui_listener;
 	
+	// audio
+	audio::SoundHandle menu_show;
+	audio::SoundHandle menu_hide;
 	
 private:
 	bool sdl_startup()
@@ -1638,6 +1645,173 @@ public:
 	
 	virtual void resolution_changed(int width, int height) {}
 	
+	
+	
+	
+	
+	
+	virtual void event( kernel::KeyboardEvent & event )
+	{
+		if (event.is_down)
+		{
+			if (event.key == input::KEY_ESCAPE)
+			{
+				in_gui = !in_gui;
+				if (!in_gui)
+				{
+					center_mouse(kernel::parameters());
+					audio::play(menu_hide);
+				}
+				else
+				{
+					audio::play(menu_show);
+				}
+				
+				kernel::instance()->show_mouse(in_gui);
+				
+				root->set_visible(in_gui);
+			}
+			else if (event.key == input::KEY_SPACE)
+			{
+				if (device)
+				{
+					device->dismiss_warning();
+				}
+			}
+			else if (event.key == input::KEY_TAB)
+			{
+				if (device)
+				{
+					device->reset_head_pose();
+				}
+			}
+			else if (event.key == input::KEY_P)
+			{
+				draw_physics_debug = !draw_physics_debug;
+				LOGV("draw_physics_debug = %s\n", draw_physics_debug?"ON":"OFF");
+			}
+			else if (event.key == input::KEY_M)
+			{
+				LOGV("level load\n");
+				game_interface->level_load();
+			}
+		}
+		
+		
+		if (in_gui && compositor)
+		{
+			compositor->key_event(event.key, event.is_down, 0);
+		}
+	}
+	
+	virtual void event(kernel::MouseEvent& event)
+	{
+		if (in_gui)
+		{
+			gui::CursorButton::Type input_to_gui[] = {
+				gui::CursorButton::Left,
+				gui::CursorButton::Right,
+				gui::CursorButton::Middle,
+				gui::CursorButton::Mouse4,
+				gui::CursorButton::Mouse5
+			};
+			
+			gui::CursorButton::Type button;
+			
+			
+			switch( event.subtype )
+			{
+				case kernel::MouseMoved:
+				{
+					if ( compositor )
+					{
+						compositor->cursor_move_absolute( event.mx, event.my );
+					}
+					break;
+				}
+				case kernel::MouseButton:
+					
+					button = input_to_gui[ event.button ];
+					if ( event.is_down )
+					{
+						fprintf( stdout, "mouse button %i is pressed\n", event.button );
+					}
+					else
+					{
+						fprintf( stdout, "mouse button %i is released\n", event.button );
+					}
+					
+					if ( compositor )
+					{
+						compositor->cursor_button( button, event.is_down );
+					}
+					break;
+					
+				case kernel::MouseWheelMoved:
+					if ( event.wheel_direction > 0 )
+					{
+						fprintf( stdout, "mouse wheel toward screen\n" );
+					}
+					else
+					{
+						fprintf( stdout, "mouse wheel away from screen\n" );
+					}
+					break;
+				default:
+					fprintf( stdout, "mouse event received!\n" );
+					break;
+			}
+		}
+	}
+	
+	virtual void event( kernel::SystemEvent & event )
+	{
+		if (event.subtype == kernel::WindowLostFocus)
+		{
+			//			kernel::instance()->show_mouse(true);
+			has_focus = false;
+		}
+		else if (event.subtype == kernel::WindowGainFocus)
+		{
+			//			kernel::instance()->show_mouse(false);
+			has_focus = true;
+		}
+	}
+	
+	virtual void event(kernel::GameControllerEvent& event)
+	{
+		//		if (event.subtype == kernel::JoystickConnected)
+		//		{
+		//			LOGV("gamepad [%i] connected\n", event.gamepad_id);
+		//		}
+		//		else if (event.subtype == kernel::JoystickDisconnected)
+		//		{
+		//			LOGV("gamepad [%i] disconnected\n", event.gamepad_id);
+		//		}
+		//		else if (event.subtype == kernel::JoystickButton)
+		//		{
+		//			LOGV("gamepad [%i] button: %i, is_down: %i\n", event.gamepad_id, event.button, event.is_down);
+		//		}
+		//		else if (event.subtype == kernel::JoystickAxisMoved)
+		//		{
+		//			LOGV("gamepad [%i] joystick: %i, value: %i\n", event.gamepad_id, event.joystick_id, event.joystick_value);
+		//		}
+		//		else
+		//		{
+		//			LOGV("gamepad [%i] controller event received: %i\n", event.gamepad_id, event.subtype);
+		//		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	void sdl_setup_joysticks()
 	{
 		// add game controller db
@@ -1703,7 +1877,6 @@ public:
 	void setup_gui(const kernel::Parameters& params)
 	{
 		
-//		gui_listener.set_hover_sound(audio::create_sound("sounds/8b_select1"));
 		compositor = new gui::Compositor(params.render_width, params.render_height);
 		_compositor = compositor;
 		
@@ -1783,13 +1956,12 @@ public:
 		root->add_child(graph);
 		graph->enable_baseline(true, 16.0f, gui::Color(255, 0, 255, 255));
 		
-		
-		
-
-		compositor->set_listener(&gui_listener);
+		// setup the listener
+		gui_listener.set_hover_sound(audio::create_sound("sounds/8b_select1"));
 		gui_listener.set_game_interface(game_interface);
 		gui_listener.set_root(root);
 		gui_listener.setup_rendering(params);
+		compositor->set_listener(&gui_listener);
 	}
 	
 	virtual kernel::Error startup()
@@ -1946,7 +2118,9 @@ public:
 		}
 		
 
-
+		menu_show = audio::create_sound("sounds/menu_show3");
+		menu_hide = audio::create_sound("sounds/menu_hide");
+		
 		// TODO: setup gui
 		
 		// TODO: setup interfaces
