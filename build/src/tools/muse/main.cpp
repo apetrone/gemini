@@ -89,6 +89,9 @@ namespace gemini
 		// bake transforms from hierarchy into geometry
 		bool bake_transforms;
 		
+		// export the animation only
+		bool animation_only;
+		
 		ToolOptions()
 		{
 			// some sane defaults?
@@ -98,6 +101,8 @@ namespace gemini
 			// this should be true for static meshes
 			// and false for skeletal meshes.
 			bake_transforms = false;
+			
+			animation_only = true;
 		}
 	};
 

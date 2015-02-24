@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -22,19 +22,39 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include <core/typedefs.h>
-#include <Cocoa/Cocoa.h>
-#include <CoreFoundation/CoreFoundation.h>
 
-#include "kernel.h"
-#include "platform.h"
+#include <platform/platform.h>
+#include <platform/kernel.h>
 
-int main(int argc, char** argv)
+class EditorKernel : public kernel::IKernel
 {
-	// this is called here to initialize before we even enter Cocoa.
-	// the shutdown is called in the appdelegate: applicationWillTerminate
-	platform::startup();
-	platform::parse_commandline(argc, argv);
-	return platform::run_application(new EditorApplication());
-//	return NSApplicationMain(argc, (const char**)argv);
+private:
+	bool active;
+	
+public:
+	EditorKernel() : active(true) {}
+	virtual ~EditorKernel() {}
+	
+	virtual bool is_active() const { return active; }
+	virtual void set_active(bool isactive) { active = isactive; }
+	
+	virtual void resolution_changed(int width, int height) {}
+
+	virtual kernel::Error startup() { return kernel::NoError; }
+	virtual void tick() {}
+	virtual void shutdown() {}
+
+	virtual void capture_mouse(bool capture) {}
+	virtual void warp_mouse(int x, int y) {}
+	virtual void get_mouse_position(int& x, int& y) {}
+	virtual void show_mouse(bool show) {}
+};
+
+
+
+PLATFORM_MAIN
+{
+	int return_code;
+	return_code = platform::run_application(new EditorKernel());
+	return return_code;
 }
