@@ -132,7 +132,7 @@ namespace gemini
 			
 			// try to establish some sane defaults
 			RenderSettings() :
-			gamma_correct(false)
+				gamma_correct(false)
 			{
 			}
 			
