@@ -35,6 +35,7 @@
 
 #include <core/fixedarray.h>
 #include "keyframechannel.h"
+#include "animation.h"
 
 //#include "scene_graph.h"
 
@@ -82,7 +83,7 @@ namespace gemini
 			NodeToIndexContainer node_id_by_name;
 
 			// duration of the full animation, in seconds
-	//		float duration_seconds;
+			float duration_seconds;
 			
 			float frames_per_second;
 			float frame_delay_seconds; // 1.0f / frames_per_second
@@ -92,7 +93,12 @@ namespace gemini
 			uint32_t total_frames;
 //			uint32_t total_keys;
 			
-			AnimationData() : frames_per_second(0.0f), frame_delay_seconds(0.0f), total_bones(0), total_frames(0) {}
+			AnimationData() :
+			frames_per_second(0.0f),
+			frame_delay_seconds(0.0f),
+			total_bones(0),
+			total_frames(0)
+			{}
 			
 			void get_pose(glm::vec3* positions, glm::quat* orientations, float animation_time_seconds);
 		};
