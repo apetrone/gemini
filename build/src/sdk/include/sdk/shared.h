@@ -30,4 +30,6 @@
 namespace gemini
 {	
 	typedef uint8_t PlayerIndex;
+	
+	const uint16_t MAX_ENTITIES = 2048;
 } // namespace gemini

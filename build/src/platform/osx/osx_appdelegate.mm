@@ -73,13 +73,16 @@ static bool has_started = false;
 {
 //	NSLog( @"applicationDidBecomeActive" );
 
-	platform::startup();
+
 	
 	if ( !has_started )
 	{
 		has_started = true;
+			
+		platform::startup();
 		
 		NSArray* arguments = [[NSProcessInfo processInfo] arguments];
+		NSLog(@"TODO: process command line arguments");
 		// TODO: process command line arguments
 //		platform::parse_commandline(<#int argc#>, <#char **argv#>)
 		
