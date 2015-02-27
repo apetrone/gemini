@@ -2035,9 +2035,14 @@ public:
 		params.window_height = 720;
 		params.window_title = "gemini";
 		
+		
+		
+		
 		// TODO: do old application config; setup VR headset
 		if ((config.vr_require_headset && (vr::total_devices() > 0)) || (!config.vr_require_headset))
 		{
+			vr::startup();
+		
 			device = vr::create_device();
 			if (device)
 			{
