@@ -652,8 +652,16 @@ public:
 			
 			
 			camera.matCam = old_matcam;
+			
+			// TODO: this HAS to be drawn when the render target is active for the
+			// rift.
+			if (_compositor)
+			{
+				_compositor->render();
+			}			
+			
 			// draw debug graphics
-			//			debugdraw::render(camera.matCam, camera.matProj, x, y, width, height);
+//			debugdraw::render(camera.matCam, camera.matProj, x, y, width, height);
 		}
 		
 		camera.pos = old_camera_position;
@@ -668,7 +676,10 @@ public:
 	
 	virtual void render_gui()
 	{
-		
+		if (_compositor)
+		{
+			_compositor->render();
+		}
 	}
 };
 
@@ -2035,14 +2046,12 @@ public:
 		params.window_height = 720;
 		params.window_title = "gemini";
 		
-		
-		
+		// needs to happen here if we want to rely on vr::total_devices
+		vr::startup();
 		
 		// TODO: do old application config; setup VR headset
 		if ((config.vr_require_headset && (vr::total_devices() > 0)) || (!config.vr_require_headset))
 		{
-			vr::startup();
-		
 			device = vr::create_device();
 			if (device)
 			{
