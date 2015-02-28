@@ -274,15 +274,20 @@ namespace core
 		
 		~Dictionary()
 		{
+			clear();
+		}
+		
+		void clear()
+		{
 			for (size_t index = 0; index < HashTableSize; ++index)
 			{
 				if (table[index])
 				{
 					Bucket::destroy(table[index]);
+					table[index] = 0;
 				}
 			}
 		}
-		
 		
 		void insert(KeyType key, const Type& value)
 		{
