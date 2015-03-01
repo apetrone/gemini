@@ -212,7 +212,7 @@ namespace gemini
 
 				if (!blend_weights.empty())
 				{
-					LOGV("blend_weights.size = %i, geo->vertex_count = %i\n", blend_weights.size(), geo->vertex_count);
+//					LOGV("blend_weights.size = %i, geo->vertex_count = %i\n", blend_weights.size(), geo->vertex_count);
 					assert(blend_weights.size() == geo->vertex_count);
 				}
 
@@ -221,7 +221,7 @@ namespace gemini
 				for (int weight_id = 0; it != blend_weights.end(); ++it, ++weight_id)
 				{
 					const Json::Value& weight_pairs = (*it);
-					LOGV("size: %i\n", weight_pairs.size());
+//					LOGV("size: %i\n", weight_pairs.size());
 					
 					
 					int blend_index = 0;
@@ -249,9 +249,9 @@ namespace gemini
 					
 					// assign these values to the blend_weights and blend_indices index
 					geo->blend_indices[weight_id] = glm::vec4(bone_indices[0], bone_indices[1], bone_indices[2], bone_indices[3]);
-					LOGV("indices: %g %g %g %g\n", geo->blend_indices[weight_id].x, geo->blend_indices[weight_id].y, geo->blend_indices[weight_id].z, geo->blend_indices[weight_id].w);
+//					LOGV("indices: %g %g %g %g\n", geo->blend_indices[weight_id].x, geo->blend_indices[weight_id].y, geo->blend_indices[weight_id].z, geo->blend_indices[weight_id].w);
 					geo->blend_weights[weight_id] = glm::vec4(bone_weights[0], bone_weights[1], bone_weights[2], bone_weights[3]);
-					LOGV("weights: %g %g %g %g\n", geo->blend_weights[weight_id].x, geo->blend_weights[weight_id].y, geo->blend_weights[weight_id].z, geo->blend_weights[weight_id].w);
+//					LOGV("weights: %g %g %g %g\n", geo->blend_weights[weight_id].x, geo->blend_weights[weight_id].y, geo->blend_weights[weight_id].z, geo->blend_weights[weight_id].w);
 				}
 				
 				
