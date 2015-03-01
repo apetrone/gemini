@@ -1313,7 +1313,6 @@ public:
 					// need to hide the root panel since we loaded a scene as well!
 					root->set_visible(false);
 					is_in_gui = false;
-					kernel::instance()->show_mouse(false);
 					game_interface->level_load();
 					break;
 				case 3:
@@ -1326,25 +1325,8 @@ public:
 };
 
 
-
-
-class EngineKernel : public kernel::IKernel,
-public kernel::IEventListener<kernel::KeyboardEvent>,
-public kernel::IEventListener<kernel::MouseEvent>,
-public kernel::IEventListener<kernel::SystemEvent>,
-public kernel::IEventListener<kernel::GameControllerEvent>
+struct KernelSDLData
 {
-
-
-
-private:
-	// kernel stuff
-	bool active;
-	StackString<MAX_PATH_SIZE> game_path;
-	bool has_focus;
-	bool in_gui;
-	bool draw_physics_debug;
-	
 	// SDL related items
 	SDL_Window* window;
 	SDL_GLContext context;
@@ -1356,51 +1338,27 @@ private:
 	SDLToButtonKeyMap key_map;
 	input::MouseButton mouse_map[input::MOUSE_COUNT];
 	SDL_GameController* controllers[input::MAX_JOYSTICKS];
-		
-	// Kernel State variables
-	double accumulator;
-	uint64_t last_time;
 	
-	// rendering
-	renderer::SceneLink* scenelink;
-	SceneRenderMethod* render_method;
-	Camera main_camera;
 	
-	// game library
-	platform::DynamicLibrary* gamelib;
-	disconnect_engine_fn disconnect_engine;
-	EntityManager entity_manager;
-	ModelInterface model_interface;
-	Experimental experimental;
-	IEngineInterface* engine_interface;
-	IGameInterface* game_interface;
+	KernelSDLData() :
+		window(0),
+		context(0),
+		display_rects(0),
+		total_displays(0),
+		total_controllers(0)
+	{
+		memset(mouse_map, 0, sizeof(input::MouseButton)*input::MOUSE_COUNT);
+		memset(controllers, 0, sizeof(SDL_GameController*)*input::MAX_JOYSTICKS);
+	}
 	
-	// VR stuff
-	vr::HeadMountedDevice* device;
-	
-	// GUI stuff
-	GUIRenderer* gui_renderer;
-	gui::Compositor* compositor;
-	gui::Graph* graph;
-	gui::Panel* root;
-	gui::Button* newgame;
-	gui::Button* test;
-	gui::Button* quit;
-	CustomListener gui_listener;
-	
-	// audio
-	audio::SoundHandle menu_show;
-	audio::SoundHandle menu_hide;
-	
-private:
-	bool sdl_startup()
+	void startup(kernel::Parameters& parameters)
 	{
 		if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC) == -1)
 		{
 			// failure!
 			fprintf(stdout, "failure to init SDL\n");
 		}
-
+		
 		total_displays = SDL_GetNumVideoDisplays();
 		fprintf(stdout, "Found %i total displays.\n", total_displays);
 		
@@ -1415,22 +1373,20 @@ private:
 			SDL_GetDisplayBounds(index, &display_rects[index]);
 		}
 		
-		
-		if (kernel::parameters().use_vsync)
+		if (parameters.use_vsync)
 		{
 			SDL_GL_SetSwapInterval(1);
 		}
 		
-#if defined(PLATFORM_MOBILE)
-#else
-		kernel::parameters().device_flags |= kernel::DeviceDesktop;
-#endif
-		
 		//
 		// setup input mappings
-
+		populate_input_map();
+	}
+	
+	void populate_input_map()
+	{
 		// populate the keyboard map
-
+		
 		key_map[SDLK_a] = KEY_A;
 		key_map[SDLK_b] = KEY_B;
 		key_map[SDLK_c] = KEY_C;
@@ -1540,12 +1496,70 @@ private:
 		mouse_map[SDL_BUTTON_MIDDLE] = MOUSE_MIDDLE;
 		mouse_map[SDL_BUTTON_X1] = MOUSE_MOUSE4;
 		mouse_map[SDL_BUTTON_X2] = MOUSE_MOUSE5;
-
-		return true;
-	} // sdl_startup
+	}
 	
+	void setup_joysticks()
+	{
+		// add game controller db
+		size_t length = 0;
+		char* buffer = core::filesystem::file_to_buffer("conf/gamecontrollerdb.conf", 0, &length);
+		int result = SDL_GameControllerAddMapping(buffer);
+		DEALLOC(buffer);
+		
+		// If you hit this assert, there was an error laoding the gamecontrollerdb.
+		// Otherwise, it was either added (result == 1) or updated (result == 0).
+		assert(result != -1);
+		
+		
+		fprintf(stdout, "Gather joystick infos...\n");
+		fprintf(stdout, "Num Haptics: %i\n", SDL_NumHaptics());
+		fprintf(stdout, "Num Joysticks: %i\n", SDL_NumJoysticks());
+		
+		
+		assert(SDL_NumJoysticks() < input::MAX_JOYSTICKS);
+		total_controllers = SDL_NumJoysticks();
+		for (uint8_t i = 0; i < total_controllers; ++i)
+		{
+			input::JoystickInput& js = input::state()->joystick(i);
+			input::state()->connect_joystick(i);
+			js.reset();
+			
+			controllers[i] = SDL_GameControllerOpen(i);
+			if (SDL_IsGameController(i))
+			{
+				fprintf(stdout, "Found compatible controller: \"%s\"\n", SDL_GameControllerNameForIndex(i));
+				//			fprintf(stdout, "Mapped as: \"%s\"\n", SDL_GameControllerMapping(state->controllers[i]));
+				
+				SDL_Joystick * joystick = SDL_GameControllerGetJoystick(controllers[i]);
+				SDL_JoystickID joystickID = SDL_JoystickInstanceID( joystick );
+				if (SDL_JoystickIsHaptic(joystick))
+				{
+					js.flags |= input::JoystickInput::HapticSupport;
+					fprintf(stdout, "Joystick is haptic!\n");
+					//			http://blog.5pmcasual.com/game-controller-api-in-sdl2.html
+					SDL_Haptic * haptic = SDL_HapticOpenFromJoystick( joystick );
+					if (haptic)
+					{
+						SDL_HapticRumbleInit(haptic);
+						//				SDL_HapticRumblePlay(haptic, 1.0, 2000);
+						
+						//				SDL_Delay(2000);
+						SDL_HapticClose(haptic);
+					}
+					else
+					{
+						fprintf(stdout, "error opening haptic for joystickID: %i\n", joystickID);
+					}
+				}
+			}
+			else
+			{
+				fprintf(stderr, "GameController at index %i, is not a compatible controller.\n", i);
+			}
+		}
+	}
 	
-	void sdl_shutdown()
+	void shutdown()
 	{
 		DESTROY_ARRAY(SDL_Rect, display_rects, total_displays);
 		
@@ -1571,14 +1585,15 @@ private:
 		SDL_Quit();
 	} // sdl_shutdown
 	
-	void create_window()
+	
+	void create_window(kernel::Parameters& parameters)
 	{
 		int window_width, window_height;
 		int render_width, render_height;
 		
-		if ( is_active() )
+		if (kernel::instance()->is_active())
 		{
-			assert( kernel::parameters().window_width != 0 || kernel::parameters().window_height != 0 );
+			assert( parameters.window_width != 0 || parameters.window_height != 0 );
 			
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
@@ -1591,7 +1606,7 @@ private:
 			uint32_t window_flags = 0;
 			window_flags |= SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
 			
-			if (kernel::parameters().use_fullscreen)
+			if (parameters.use_fullscreen)
 			{
 				window_flags |= SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS;
 			}
@@ -1601,9 +1616,9 @@ private:
 			}
 			
 			window = SDL_CreateWindow(
-											 kernel::parameters().window_title, 0, 0,
-											 kernel::parameters().window_width, kernel::parameters().window_height,
-											 window_flags);
+									  parameters.window_title, 0, 0,
+									  parameters.window_width, parameters.window_height,
+									  window_flags);
 			
 			if (!window)
 			{
@@ -1611,7 +1626,7 @@ private:
 			}
 			
 			// move the window to the correct display
-			SDL_SetWindowPosition(window, display_rects[kernel::parameters().target_display].x, display_rects[kernel::parameters().target_display].y);
+			SDL_SetWindowPosition(window, display_rects[parameters.target_display].x, display_rects[parameters.target_display].y);
 			
 			context = SDL_GL_CreateContext(window);
 			if (!context)
@@ -1620,7 +1635,7 @@ private:
 			}
 			
 			// try to set our window size; it might still be smaller than requested.
-			SDL_SetWindowSize(window, kernel::parameters().window_width, kernel::parameters().window_height);
+			SDL_SetWindowSize(window, parameters.window_width, parameters.window_height);
 			
 			// center our window
 			SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
@@ -1632,15 +1647,15 @@ private:
 			// hide the mouse cursor
 			show_mouse(false);
 			
-			kernel::parameters().window_width = window_width;
-			kernel::parameters().window_height = window_height;
-			kernel::parameters().render_width = render_width;
-			kernel::parameters().render_height = render_height;
+			parameters.window_width = window_width;
+			parameters.window_height = window_height;
+			parameters.render_width = render_width;
+			parameters.render_height = render_height;
 			
 			if ( render_width > window_width && render_height > window_height )
 			{
 				LOGV( "Retina display detected. Render Resolution is (%i x %i)\n", render_width, render_height );
-				kernel::parameters().device_flags |= kernel::DeviceSupportsRetinaDisplay;
+				parameters.device_flags |= kernel::DeviceSupportsRetinaDisplay;
 			}
 			else
 			{
@@ -1649,7 +1664,291 @@ private:
 			}
 		}
 	} // create_window
+	
+	void controller_axis_event(SDL_ControllerDeviceEvent& device, SDL_ControllerAxisEvent& axis)
+	{
+		LOGV("Axis Motion: %i, %i, %i, %i\n", device.which, axis.which, axis.axis, axis.value);
+	}
+	
+	void controller_button_event(SDL_ControllerDeviceEvent& device, SDL_ControllerButtonEvent& button)
+	{
+		bool is_down = (button.state == SDL_PRESSED);
+		LOGV("Button %s: %i, %i, %i\n", (is_down ? "Yes" : "No"), device.which, button.button, button.state);
+	}
+	
+	void process_window_events()
+	{
+		SDL_Event event;
+		while (SDL_PollEvent(&event))
+		{
+			input::Button button;
+			
+			// dispatch event!
+			switch(event.type)
+			{
+				case SDL_QUIT:
+					kernel::instance()->set_active(false);
+					break;
+					
+				case SDL_TEXTINPUT:
+				{
+					//					LOGV("TODO: add unicode support from SDL: %s\n", event.text.text);
+					break;
+				}
+					
+				case SDL_KEYUP:
+				case SDL_KEYDOWN:
+				{
+					button = key_map[event.key.keysym.sym];
+					
+					if (event.key.repeat)
+					{
+						break;
+					}
+					
+					//printf( "\t-> key: %i (%s)\n", e->key, xwl_key_to_string(e->key) );
+					kernel::KeyboardEvent ev;
+					ev.is_down = (event.type == SDL_KEYDOWN);
+					ev.key = button;
+					input::state()->keyboard().inject_key_event(button, ev.is_down);
+					kernel::event_dispatch(ev);
+					break;
+				}
+					
+				case SDL_MOUSEBUTTONUP:
+				case SDL_MOUSEBUTTONDOWN:
+				{
+					kernel::MouseEvent ev;
+					ev.subtype = kernel::MouseButton;
+					ev.button = mouse_map[event.button.button];
+					ev.is_down = (event.type == SDL_MOUSEBUTTONDOWN);
+					input::state()->mouse().inject_mouse_button((input::MouseButton)ev.button, ev.is_down);
+					kernel::event_dispatch(ev);
+					break;
+				}
+					
+				case SDL_MOUSEMOTION:
+				{
+					kernel::MouseEvent ev;
+					ev.subtype = kernel::MouseMoved;
+					ev.dx = event.motion.xrel;
+					ev.dy = event.motion.yrel;
+					ev.mx = event.motion.x;
+					ev.my = event.motion.y;
+					input::state()->mouse().inject_mouse_move(ev.mx, ev.my);
+					kernel::event_dispatch(ev);
+					break;
+				}
+					
+				case SDL_MOUSEWHEEL:
+				{
+					kernel::MouseEvent ev;
+					ev.subtype = kernel::MouseWheelMoved;
+					ev.wheel_direction = event.wheel.y;
+					input::state()->mouse().inject_mouse_wheel(ev.wheel_direction);
+					kernel::event_dispatch(ev);
+					break;
+				}
+					
+				case SDL_CONTROLLERAXISMOTION:
+				{
+					input::JoystickInput& joystick = input::state()->joystick(event.cdevice.which);
+					input::AxisState& axis = joystick.axes[event.caxis.axis];
+					axis.value = event.caxis.value;
+					axis.normalized_value = (event.caxis.value/(float)SHRT_MAX);
+					
+					// check for values outside the deadzone
+					if (event.caxis.value > 3200 || event.caxis.value < -3200)
+					{
+						kernel::GameControllerEvent ev;
+						ev.gamepad_id = event.cdevice.which;
+						ev.subtype = kernel::JoystickAxisMoved;
+						ev.joystick_id = event.caxis.axis;
+						ev.joystick_value = event.caxis.value;
+						kernel::event_dispatch(ev);
+					}
+					else
+					{
+						axis.value = 0;
+						axis.normalized_value = 0;
+					}
+					break;
+				}
+					
+				case SDL_CONTROLLERBUTTONDOWN:
+				{
+					controller_button_event(event.cdevice, event.cbutton);
+					
+					kernel::GameControllerEvent ev;
+					ev.gamepad_id = event.cdevice.which;
+					ev.subtype = kernel::JoystickButton;
+					ev.is_down = true;
+					ev.button = event.cbutton.button;
+					kernel::event_dispatch(ev);
+					break;
+				}
+					
+				case SDL_CONTROLLERBUTTONUP:
+				{
+					controller_button_event(event.cdevice, event.cbutton);
+					
+					kernel::GameControllerEvent ev;
+					ev.gamepad_id = event.cdevice.which;
+					ev.subtype = kernel::JoystickButton;
+					ev.is_down = false;
+					ev.button = event.cbutton.button;
+					kernel::event_dispatch(ev);
+					break;
+				}
+					
+				case SDL_CONTROLLERDEVICEADDED:
+				{
+					// event 'which' member
+					// describes an index into the list of active devices; NOT joystick id.
+					LOGV("Device Added: %i\n", event.cdevice.which);
+					
+					input::JoystickInput& js = input::state()->joystick(event.cdevice.which);
+					js.reset();
+					input::state()->connect_joystick(event.cdevice.which);
+					
+					
+					controllers[event.cdevice.which] = SDL_GameControllerOpen(event.cdevice.which);
+					SDL_Joystick * joystick = SDL_GameControllerGetJoystick(controllers[event.cdevice.which]);
+					
+					
+					kernel::GameControllerEvent ev;
+					ev.gamepad_id = event.cdevice.which;
+					ev.subtype = kernel::JoystickConnected;
+					kernel::event_dispatch(ev);
+					break;
+				}
+					
+				case SDL_CONTROLLERDEVICEREMOVED:
+				{
+					LOGV("Device Removed: %i\n", event.cdevice.which);
+					
+					input::state()->disconnect_joystick(event.cdevice.which);
+					
+					SDL_GameControllerClose(controllers[event.cdevice.which]);
+					controllers[event.cdevice.which] = 0;
+					
+					
+					kernel::GameControllerEvent ev;
+					ev.gamepad_id = event.cdevice.which;
+					ev.subtype = kernel::JoystickDisconnected;
+					kernel::event_dispatch(ev);
+					break;
+				}
+					
+					// handle window events
+				case SDL_WINDOWEVENT:
+				{
+					switch (event.window.event)
+					{
+						case SDL_WINDOWEVENT_FOCUS_LOST:
+						{
+							kernel::Event<kernel::System> event;
+							event.subtype = kernel::WindowLostFocus;
+							kernel::event_dispatch(event);
+							break;
+						}
+							
+						case SDL_WINDOWEVENT_FOCUS_GAINED:
+						{
+							kernel::Event<kernel::System> event;
+							event.subtype = kernel::WindowGainFocus;
+							kernel::event_dispatch(event);
+							break;
+						}
+					}
+				}
+			}
+		}
+	} // process_window_events
+	
+	void swap_buffers()
+	{
+		SDL_GL_SwapWindow(window);
+	}
+	
+	void capture_mouse(bool capture)
+	{
+		SDL_bool is_enabled = capture ? SDL_TRUE : SDL_FALSE;
+		SDL_SetRelativeMouseMode(is_enabled);
+	}
+	
+	void warp_mouse(int x, int y)
+	{
+		SDL_EventState(SDL_MOUSEMOTION, SDL_IGNORE);
+		SDL_WarpMouseInWindow(window, x, y);
+		SDL_EventState(SDL_MOUSEMOTION, SDL_ENABLE);
+	}
+	
+	void get_mouse_position(int& x, int& y)
+	{
+		SDL_GetMouseState(&x, &y);
+	}
+	
+	void show_mouse(bool show)
+	{
+		SDL_ShowCursor((show ? SDL_TRUE : SDL_FALSE));
+	}
+};
 
+class EngineKernel : public kernel::IKernel,
+public kernel::IEventListener<kernel::KeyboardEvent>,
+public kernel::IEventListener<kernel::MouseEvent>,
+public kernel::IEventListener<kernel::SystemEvent>,
+public kernel::IEventListener<kernel::GameControllerEvent>
+{
+
+private:
+	// kernel stuff
+	bool active;
+	StackString<MAX_PATH_SIZE> game_path;
+	bool has_focus;
+	bool in_gui;
+	bool draw_physics_debug;
+	
+	KernelSDLData ksdl;
+		
+	// Kernel State variables
+	double accumulator;
+	uint64_t last_time;
+	
+	// rendering
+	renderer::SceneLink* scenelink;
+	SceneRenderMethod* render_method;
+	Camera main_camera;
+	
+	// game library
+	platform::DynamicLibrary* gamelib;
+	disconnect_engine_fn disconnect_engine;
+	EntityManager entity_manager;
+	ModelInterface model_interface;
+	Experimental experimental;
+	IEngineInterface* engine_interface;
+	IGameInterface* game_interface;
+	
+	// VR stuff
+	vr::HeadMountedDevice* device;
+	
+	// GUI stuff
+	GUIRenderer* gui_renderer;
+	GUIStyle* gui_style;
+	gui::Compositor* compositor;
+	gui::Graph* graph;
+	gui::Panel* root;
+	gui::Button* newgame;
+	gui::Button* test;
+	gui::Button* quit;
+	CustomListener gui_listener;
+	
+	// audio
+	audio::SoundHandle menu_show;
+	audio::SoundHandle menu_hide;
+	
+private:
 	bool load_config(Settings& config)
 	{
 		bool success = util::json_load_with_callback( "conf/settings.conf", settings_conf_loader, &config, true );
@@ -1677,18 +1976,13 @@ private:
 	{
 		if (has_focus && !in_gui)
 		{
-			kernel::instance()->warp_mouse(params.window_width/2, params.window_height/2);
+			ksdl.warp_mouse(params.window_width/2, params.window_height/2);
 		}
 	}
 	
 public:
 	EngineKernel() :
 		active(true),
-		window(0),
-		context(0),
-		display_rects(0),
-		total_displays(0),
-		total_controllers(0),
 		accumulator(0.0f),
 		last_time(0),
 		engine_interface(0),
@@ -1701,9 +1995,6 @@ public:
 	{
 		game_path = "/Users/apetrone/Documents/games/vrpowergrid";
 		device = 0;
-		
-		memset(mouse_map, 0, sizeof(input::MouseButton)*input::MOUSE_COUNT);
-		memset(controllers, 0, sizeof(SDL_GameController*)*input::MAX_JOYSTICKS);
 	}
 	
 	virtual ~EngineKernel()
@@ -1738,7 +2029,7 @@ public:
 					audio::play(menu_show);
 				}
 				
-				kernel::instance()->show_mouse(in_gui);
+				ksdl.show_mouse(in_gui);
 				
 				root->set_visible(in_gui);
 			}
@@ -2046,7 +2337,12 @@ public:
 		last_time = platform::instance()->get_time_microseconds();
 	
 	
-		sdl_startup();
+		ksdl.startup(kernel::parameters());
+		
+#if defined(PLATFORM_MOBILE)
+#else
+		kernel::parameters().device_flags |= kernel::DeviceDesktop;
+#endif
 	
 	
 	
@@ -2091,8 +2387,7 @@ public:
 			return kernel::CoreFailed;
 		}
 		
-		
-		sdl_setup_joysticks();
+		ksdl.setup_joysticks();
 		
 		// load engine settings
 		// load boot config
@@ -2102,8 +2397,8 @@ public:
 		params.step_interval_seconds = (1.0f/(float)config.physics_tick_rate);
 		
 		// TODO: we should load these from a config; for now just set them.
-		params.window_width = 1280;
-		params.window_height = 720;
+		params.window_width = config.window_width;
+		params.window_height = config.window_height;
 		params.window_title = "gemini";
 		
 		// needs to happen here if we want to rely on vr::total_devices
@@ -2142,7 +2437,7 @@ public:
 		}
 		
 		// TODO: post application config; create the window
-		create_window();
+		ksdl.create_window(kernel::parameters());
 
 		// initialize rendering subsystems
 		{
@@ -2211,9 +2506,7 @@ public:
 			&main_camera
 		);
 		gemini::engine::api::set_instance(engine_interface);
-		
-		kernel::instance()->show_mouse(in_gui);
-		
+		ksdl.show_mouse(in_gui);
 		
 		// TOOD: load game library
 		StackString<MAX_PATH_SIZE> game_library_path = ::core::filesystem::content_directory();
@@ -2303,208 +2596,7 @@ public:
 		}
 	}
 	
-	
-	void controller_axis_event(SDL_ControllerDeviceEvent& device, SDL_ControllerAxisEvent& axis)
-	{
-		LOGV("Axis Motion: %i, %i, %i, %i\n", device.which, axis.which, axis.axis, axis.value);
-	}
-	
-	void controller_button_event(SDL_ControllerDeviceEvent& device, SDL_ControllerButtonEvent& button)
-	{
-		bool is_down = (button.state == SDL_PRESSED);
-		LOGV("Button %s: %i, %i, %i\n", (is_down ? "Yes" : "No"), device.which, button.button, button.state);
-	}
-	
-	void pre_tick()
-	{
-		SDL_Event event;
-		while (SDL_PollEvent(&event))
-		{
-			input::Button button;
-			
-			// dispatch event!
-			switch(event.type)
-			{
-				case SDL_QUIT:
-					kernel::instance()->set_active(false);
-					break;
-					
-				case SDL_TEXTINPUT:
-				{
-//					LOGV("TODO: add unicode support from SDL: %s\n", event.text.text);
-					break;
-				}
-					
-				case SDL_KEYUP:
-				case SDL_KEYDOWN:
-				{
-					button = key_map[event.key.keysym.sym];
-					
-					if (event.key.repeat)
-					{
-						break;
-					}
-					
-					//printf( "\t-> key: %i (%s)\n", e->key, xwl_key_to_string(e->key) );
-					kernel::KeyboardEvent ev;
-					ev.is_down = (event.type == SDL_KEYDOWN);
-					ev.key = button;
-					input::state()->keyboard().inject_key_event(button, ev.is_down);
-					kernel::event_dispatch(ev);
-					break;
-				}
-					
-				case SDL_MOUSEBUTTONUP:
-				case SDL_MOUSEBUTTONDOWN:
-				{
-					kernel::MouseEvent ev;
-					ev.subtype = kernel::MouseButton;
-					ev.button = mouse_map[event.button.button];
-					ev.is_down = (event.type == SDL_MOUSEBUTTONDOWN);
-					input::state()->mouse().inject_mouse_button((input::MouseButton)ev.button, ev.is_down);
-					kernel::event_dispatch(ev);
-					break;
-				}
-					
-				case SDL_MOUSEMOTION:
-				{
-					kernel::MouseEvent ev;
-					ev.subtype = kernel::MouseMoved;
-					ev.dx = event.motion.xrel;
-					ev.dy = event.motion.yrel;
-					ev.mx = event.motion.x;
-					ev.my = event.motion.y;
-					input::state()->mouse().inject_mouse_move(ev.mx, ev.my);
-					kernel::event_dispatch(ev);
-					break;
-				}
-					
-				case SDL_MOUSEWHEEL:
-				{
-					kernel::MouseEvent ev;
-					ev.subtype = kernel::MouseWheelMoved;
-					ev.wheel_direction = event.wheel.y;
-					input::state()->mouse().inject_mouse_wheel(ev.wheel_direction);
-					kernel::event_dispatch(ev);
-					break;
-				}
-					
-				case SDL_CONTROLLERAXISMOTION:
-				{
-					input::JoystickInput& joystick = input::state()->joystick(event.cdevice.which);
-					input::AxisState& axis = joystick.axes[event.caxis.axis];
-					axis.value = event.caxis.value;
-					axis.normalized_value = (event.caxis.value/(float)SHRT_MAX);
-					
-					// check for values outside the deadzone
-					if (event.caxis.value > 3200 || event.caxis.value < -3200)
-					{
-						kernel::GameControllerEvent ev;
-						ev.gamepad_id = event.cdevice.which;
-						ev.subtype = kernel::JoystickAxisMoved;
-						ev.joystick_id = event.caxis.axis;
-						ev.joystick_value = event.caxis.value;
-						kernel::event_dispatch(ev);
-					}
-					else
-					{
-						axis.value = 0;
-						axis.normalized_value = 0;
-					}
-					break;
-				}
-					
-				case SDL_CONTROLLERBUTTONDOWN:
-				{
-					controller_button_event(event.cdevice, event.cbutton);
-					
-					kernel::GameControllerEvent ev;
-					ev.gamepad_id = event.cdevice.which;
-					ev.subtype = kernel::JoystickButton;
-					ev.is_down = true;
-					ev.button = event.cbutton.button;
-					kernel::event_dispatch(ev);
-					break;
-				}
-					
-				case SDL_CONTROLLERBUTTONUP:
-				{
-					controller_button_event(event.cdevice, event.cbutton);
-					
-					kernel::GameControllerEvent ev;
-					ev.gamepad_id = event.cdevice.which;
-					ev.subtype = kernel::JoystickButton;
-					ev.is_down = false;
-					ev.button = event.cbutton.button;
-					kernel::event_dispatch(ev);
-					break;
-				}
-					
-				case SDL_CONTROLLERDEVICEADDED:
-				{
-					// event 'which' member
-					// describes an index into the list of active devices; NOT joystick id.
-					LOGV("Device Added: %i\n", event.cdevice.which);
-					
-					input::JoystickInput& js = input::state()->joystick(event.cdevice.which);
-					js.reset();
-					input::state()->connect_joystick(event.cdevice.which);
-					
-					
-					controllers[event.cdevice.which] = SDL_GameControllerOpen(event.cdevice.which);
-					SDL_Joystick * joystick = SDL_GameControllerGetJoystick(controllers[event.cdevice.which]);
-					
-					
-					kernel::GameControllerEvent ev;
-					ev.gamepad_id = event.cdevice.which;
-					ev.subtype = kernel::JoystickConnected;
-					kernel::event_dispatch(ev);
-					break;
-				}
-					
-				case SDL_CONTROLLERDEVICEREMOVED:
-				{
-					LOGV("Device Removed: %i\n", event.cdevice.which);
-					
-					input::state()->disconnect_joystick(event.cdevice.which);
-					
-					SDL_GameControllerClose(controllers[event.cdevice.which]);
-					controllers[event.cdevice.which] = 0;
-					
-					
-					kernel::GameControllerEvent ev;
-					ev.gamepad_id = event.cdevice.which;
-					ev.subtype = kernel::JoystickDisconnected;
-					kernel::event_dispatch(ev);
-					break;
-				}
-					
-					// handle window events
-				case SDL_WINDOWEVENT:
-				{
-					switch (event.window.event)
-					{
-						case SDL_WINDOWEVENT_FOCUS_LOST:
-						{
-							kernel::Event<kernel::System> event;
-							event.subtype = kernel::WindowLostFocus;
-							kernel::event_dispatch(event);
-							break;
-						}
-							
-						case SDL_WINDOWEVENT_FOCUS_GAINED:
-						{
-							kernel::Event<kernel::System> event;
-							event.subtype = kernel::WindowGainFocus;
-							kernel::event_dispatch(event);
-							break;
-						}
-					}
-				}
-			}
-		}
-	} // pre_tick
-	
+
 	virtual void tick()
 	{
 		update();
@@ -2512,7 +2604,8 @@ public:
 		audio::update();
 		input::update();
 		animation::update(kernel::parameters().framedelta_filtered_seconds);
-		pre_tick();
+		ksdl.process_window_events();
+		
 		hotloading::tick();
 		// TODO: application -> tick
 		post_tick();
@@ -2557,7 +2650,7 @@ public:
 			command.set_button(11, input::state()->keyboard().is_down(input::KEY_G));
 			
 			int mouse[2];
-			kernel::instance()->get_mouse_position(mouse[0], mouse[1]);
+			ksdl.get_mouse_position(mouse[0], mouse[1]);
 			
 			int half_width = kernel::parameters().window_width/2;
 			int half_height = kernel::parameters().window_height/2;
@@ -2630,7 +2723,7 @@ public:
 		// as the rift sdk performs buffer swaps during end frame.
 		if (kernel::parameters().swap_buffers)
 		{
-			SDL_GL_SwapWindow(window);
+			ksdl.swap_buffers();
 		}
 	}
 	
@@ -2680,33 +2773,10 @@ public:
 		renderer::shutdown();
 		core::shutdown();
 	
-		sdl_shutdown();
+		ksdl.shutdown();
 		
 		DESTROY(IEngineInterface, engine_interface);
 		DESTROY(SceneLink, scenelink);
-	}
-	
-	virtual void capture_mouse(bool capture)
-	{
-		SDL_bool is_enabled = capture ? SDL_TRUE : SDL_FALSE;
-		SDL_SetRelativeMouseMode(is_enabled);
-	}
-	
-	virtual void warp_mouse(int x, int y)
-	{
-		SDL_EventState(SDL_MOUSEMOTION, SDL_IGNORE);
-		SDL_WarpMouseInWindow(window, x, y);
-		SDL_EventState(SDL_MOUSEMOTION, SDL_ENABLE);
-	}
-	
-	virtual void get_mouse_position(int& x, int& y)
-	{
-		SDL_GetMouseState(&x, &y);
-	}
-	
-	virtual void show_mouse(bool show)
-	{
-		SDL_ShowCursor((show ? SDL_TRUE : SDL_FALSE));
 	}
 };
 

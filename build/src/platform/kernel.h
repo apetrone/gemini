@@ -165,10 +165,10 @@ namespace kernel
 		
 		// until these are moved to the platform module:
 		// TODO: This feels like it doesn't fit here, move it.
-		virtual void capture_mouse( bool capture ) = 0;
-		virtual void warp_mouse(int x, int y) = 0;
-		virtual void get_mouse_position(int& x, int& y) = 0;
-		virtual void show_mouse(bool show) = 0;
+//		virtual void capture_mouse( bool capture ) = 0;
+//		virtual void warp_mouse(int x, int y) = 0;
+//		virtual void get_mouse_position(int& x, int& y) = 0;
+//		virtual void show_mouse(bool show) = 0;
 	};
 
 //		class IApplication
