@@ -48,6 +48,8 @@ namespace gemini
 
 		virtual glm::mat4* get_bone_transforms() const = 0;
 		
+		virtual void set_animation_enabled(int32_t index, bool enabled) = 0;
+		
 		// get an animations pose at local time t in seconds
 		virtual void get_animation_pose(int32_t index, glm::vec3* positions, glm::quat* rotations, float t) = 0;
 		

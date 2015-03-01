@@ -103,7 +103,12 @@ namespace gemini
 				return;
 			}
 			
-			assert(keyframelist->duration_seconds > 0.0f);
+			if (keyframelist->duration_seconds == 0)
+			{
+				*value = 0;
+				return;
+			}
+//			assert(keyframelist->duration_seconds > 0.0f);
 			
 			local_time_seconds += delta_seconds;
 			
@@ -180,12 +185,14 @@ namespace gemini
 		
 		AnimatedInstance::AnimatedInstance() :
 			local_time_seconds(0.0),
-			enabled(false)
+			enabled(true)
 		{
 		}
 		
 		void AnimatedInstance::initialize(Sequence* sequence)
 		{
+			sequence_index = sequence->index;
+		
 			// reserve enough space
 			AnimationSet.allocate(sequence->AnimationSet.size());
 			ChannelSet.allocate(sequence->AnimationSet.size());
@@ -209,6 +216,9 @@ namespace gemini
 		
 		void AnimatedInstance::advance(float delta_seconds)
 		{
+			Sequence* sequence = animation::get_sequence_by_index(sequence_index);
+			assert(sequence != 0);
+
 			for (auto& channelset : ChannelSet)
 			{
 				for (Channel& channel : channelset)
@@ -257,12 +267,87 @@ namespace gemini
 				Sequence* sequence = CREATE(Sequence);
 				
 				// load the data into the sequence
-				sequence->AnimationSet.allocate(1);
-				sequence->AnimationSet[0].allocate(1);
-				KeyframeList& kfl = sequence->AnimationSet[0][0];
-				kfl.allocate(2);
-				kfl.set_key(0, 0.0f, 0.0f);
-				kfl.set_key(1, 1.0f, 100.0f);
+				sequence->AnimationSet.allocate(2);
+				sequence->AnimationSet[0].allocate(6);
+				sequence->AnimationSet[1].allocate(6);
+				KeyframeList& tx = sequence->AnimationSet[0][0];
+				tx.allocate(2);
+				tx.set_key(0, 0.0f, 0.0f);
+				tx.set_key(1, 1.0f, 0.0f);
+				tx.duration_seconds = 1.0f;
+				
+				KeyframeList& ty = sequence->AnimationSet[0][1];
+				ty.allocate(2);
+				ty.set_key(0, 0.0f, 0.0f);
+				ty.set_key(1, 1.0f, 0.0f);
+				ty.duration_seconds = 1.0f;
+				
+				KeyframeList& tz = sequence->AnimationSet[0][2];
+				tz.allocate(2);
+				tz.set_key(0, 0.0f, 0.0f);
+				tz.set_key(1, 1.0f, 0.0f);
+				tz.duration_seconds = 1.0f;
+				
+				
+				KeyframeList& rx = sequence->AnimationSet[0][3];
+//				rx.allocate(2);
+//				rx.set_key(0, 0.0f, 0.0f);
+//				rx.set_key(1, 60.0f, mathlib::degrees_to_radians(360.0f));
+//				rx.duration_seconds = 60.0f;
+				
+//				KeyframeList& ry = sequence->AnimationSet[0][4];
+//				ry.allocate(2);
+//				ry.set_key(0, 0.0f, 0.0f);
+//				ry.set_key(1, 3.0f, mathlib::degrees_to_radians(45.0f));
+//				ry.duration_seconds = 3.0f;
+//				
+//				KeyframeList& rz = sequence->AnimationSet[0][5];
+//				rz.allocate(2);
+//				rz.set_key(0, 0.0f, 0.0f);
+//				rz.set_key(1, 1.0f, 0.0f);
+//				rz.duration_seconds = 1.0f;
+				
+				
+				
+				// bone 1
+				{
+					KeyframeList& tx = sequence->AnimationSet[1][0];
+					tx.allocate(2);
+					tx.set_key(0, 0.0f, 0.0f);
+					tx.set_key(1, 1.0f, 0.0f);
+					tx.duration_seconds = 1.0f;
+					
+					KeyframeList& ty = sequence->AnimationSet[1][1];
+					ty.allocate(2);
+					ty.set_key(0, 0.0f, 0.0f);
+					ty.set_key(1, 1.0f, 0.0f);
+					ty.duration_seconds = 1.0f;
+					
+					KeyframeList& tz = sequence->AnimationSet[1][2];
+					tz.allocate(2);
+					tz.set_key(0, 0.0f, 0.0f);
+					tz.set_key(1, 1.0f, 0.0f);
+					tz.duration_seconds = 1.0f;
+					
+					KeyframeList& rx = sequence->AnimationSet[1][3];
+					rx.allocate(2);
+					rx.set_key(0, 0.0f, 0.0f);
+					rx.set_key(1, 1.0f, mathlib::degrees_to_radians(360.0f));
+					rx.duration_seconds = 1.0f;
+					
+//					KeyframeList& ry = sequence->AnimationSet[1][4];
+//					ry.allocate(2);
+//					ry.set_key(0, 0.0f, 0.0f);
+//					ry.set_key(1, 1.0f, mathlib::degrees_to_radians(0.0f));
+//					ry.duration_seconds = 1.0f;
+//					
+//					KeyframeList& rz = sequence->AnimationSet[1][5];
+//					rz.allocate(2);
+//					rz.set_key(0, 0.0f, 0.0f);
+//					rz.set_key(1, 1.0f, 0.0f);
+//					rz.duration_seconds = 1.0f;
+				}
+				
 				
 				
 				_sequences.push_back(sequence);
@@ -292,7 +377,7 @@ namespace gemini
 			
 			for (AnimatedInstance* instance : detail::_instances)
 			{
-				DESTROY(AnimatedInstance, instance);
+				destroy_sequence_instance(instance);
 			}
 			detail::_instances.clear();
 			
@@ -302,13 +387,21 @@ namespace gemini
 		
 		void update(float delta_seconds)
 		{
-			
+			for (AnimatedInstance* instance : detail::_instances)
+			{
+				if (instance->enabled)
+				{
+					instance->advance(delta_seconds);
+				}
+			}
 		}
 
 		
 		SequenceId load_sequence(const char* name)
 		{
-			return -1;
+			Sequence* sequence = detail::load_sequence_from_file(name);
+			AnimatedInstance* instance = create_sequence_instance(sequence->index);
+			return instance->index;
 		}
 		
 		SequenceId find_sequence(const char* name)
@@ -318,17 +411,31 @@ namespace gemini
 		
 		Sequence* get_sequence_by_index(SequenceId index)
 		{
-			return 0;
+			assert(index < detail::_sequences.size());
+			return detail::_sequences[index];
 		}
 		
 		AnimatedInstance* create_sequence_instance(SequenceId index)
 		{
-			return 0;
+			Sequence* source = get_sequence_by_index(index);
+			AnimatedInstance* instance = CREATE(AnimatedInstance);
+			instance->initialize(source);
+		
+			instance->index = detail::_instances.size();
+			detail::_instances.push_back(instance);
+		
+			return instance;
 		}
 		
 		void destroy_sequence_instance(AnimatedInstance* instance)
 		{
-			
+			DESTROY(AnimatedInstance, instance);
+		}
+		
+		AnimatedInstance* get_instance_by_index(SequenceId index)
+		{
+			assert(index < detail::_instances.size());
+			return detail::_instances[index];
 		}
 		
 	} // namespace animation

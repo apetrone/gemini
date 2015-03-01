@@ -924,15 +924,58 @@ class ModelInterface : public gemini::IModelInterface
 		
 		virtual glm::mat4* get_bone_transforms() const { return bone_transforms; }
 		
+		virtual void set_animation_enabled(int32_t index, bool enabled)
+		{
+			animation::AnimatedInstance* instance = animation::get_instance_by_index(index);
+			assert(instance != 0);
+			if (instance)
+			{
+				instance->enabled = enabled;
+			}
+		}
 		
 		virtual void get_animation_pose(int32_t index, glm::vec3* positions, glm::quat* rotations, float t)
 		{
+#if 0
 			if (mesh->skeleton.empty())
 			{
 				return;
 			}
 			
 			mesh->animation.get_pose(positions, rotations, t);
+#else
+
+
+			animation::AnimatedInstance* instance = animation::get_instance_by_index(index);
+			size_t node_index = 0;
+			for (core::FixedArray<animation::Channel>& node : instance->ChannelSet)
+			{
+				glm::vec3& pos = positions[node_index];
+				glm::quat& rot = rotations[node_index];
+				const animation::Channel& tx = node[0];
+				const animation::Channel& ty = node[1];
+				const animation::Channel& tz = node[2];
+				pos = glm::vec3(tx(), ty(), tz());
+				
+				if (node.size() > 3)
+				{
+					const animation::Channel& rx = node[3];
+					const animation::Channel& ry = node[4];
+					const animation::Channel& rz = node[5];
+					
+					// pitch, yaw, roll (in radians)
+					rot = glm::quat(glm::vec3(rx(), ry(), rz()));
+				}
+				
+//				for (animation::Channel& channel : node)
+//				{
+//				}
+				
+				++node_index;
+			}
+			
+			
+#endif
 		}
 		
 		virtual void set_pose(glm::vec3* positions, glm::quat* rotations)
@@ -2131,6 +2174,10 @@ public:
 			render_method = CREATE(DefaultRenderMethod, *scenelink);
 		}
 		
+
+//		animation::SequenceId seq = animation::load_sequence("animations/idle");
+//		animation::AnimatedInstance* i0 = animation::create_sequence_instance(seq);
+
 
 		menu_show = audio::create_sound("sounds/menu_show3");
 		menu_hide = audio::create_sound("sounds/menu_hide");

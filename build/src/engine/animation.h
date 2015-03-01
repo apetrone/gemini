@@ -109,6 +109,7 @@ namespace gemini
 		
 		struct AnimatedInstance
 		{
+			SequenceId index;
 			float local_time_seconds;
 			SequenceId sequence_index;
 			core::FixedArray< core::FixedArray<float> > AnimationSet;
@@ -137,5 +138,6 @@ namespace gemini
 		
 		AnimatedInstance* create_sequence_instance(SequenceId index);
 		void destroy_sequence_instance(AnimatedInstance* instance);
+		AnimatedInstance* get_instance_by_index(SequenceId index);
 	}
 } // namespace gemini
