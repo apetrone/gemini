@@ -27,6 +27,7 @@
 #include <core/typedefs.h>
 
 #include <core/fixedarray.h>
+#include <core/stackstring.h>
 
 namespace gemini
 {
@@ -100,6 +101,7 @@ namespace gemini
 			// length of this sequence in seconds
 			float duration_seconds;
 		
+			core::StackString<32> name;
 			SequenceId index;
 
 			core::FixedArray<KeyframeListArray> AnimationSet;

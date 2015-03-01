@@ -955,8 +955,8 @@ class ModelInterface : public gemini::IModelInterface
 			mesh->animation.get_pose(positions, rotations, t);
 #else
 
-
-			animation::AnimatedInstance* instance = animation::get_instance_by_index(index);
+			animation::SequenceId instance_index = animations[index];
+			animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
 			size_t node_index = 0;
 			for (core::FixedArray<animation::Channel>& node : instance->ChannelSet)
 			{
@@ -1033,13 +1033,27 @@ class ModelInterface : public gemini::IModelInterface
 		
 		virtual int32_t get_animation_index(const char* name)
 		{
-			return animation::find_sequence(name);
+			int32_t index = -1;
+			for (auto& id : animations)
+			{
+				animation::Sequence* sequence = animation::get_sequence_by_index(id);
+				if (0 == core::str::case_insensitive_compare(name, sequence->name(), 0))
+				{
+					index++;
+					break;
+				}
+				++index;
+			}
+			
+			assert(index > -1);
+			return index;
 		}
 		
 		virtual int32_t add_animation(const char* name)
 		{
 			animation::SequenceId id = animation::load_sequence(name);
 			animations.push_back(id);
+			LOGV("[engine] added animation %s to index: %i\n", name, animations.size()-1);
 			return id;
 		}
 		

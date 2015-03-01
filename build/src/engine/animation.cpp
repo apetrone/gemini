@@ -265,6 +265,7 @@ namespace gemini
 				
 				// TODO: do file loading
 				Sequence* sequence = CREATE(Sequence);
+				sequence->index = _sequences.size();
 				
 				// load the data into the sequence
 				sequence->AnimationSet.allocate(2);
@@ -349,22 +350,41 @@ namespace gemini
 				}
 				
 				
-				
+				sequence->name = "animations/idle";
 				_sequences.push_back(sequence);
-				_sequences_by_name.insert(name, sequence);
+				_sequences_by_name.insert("animations/idle", sequence);
 				
+				{
+					Sequence* s = CREATE(Sequence);
+					s->index = _sequences.size();
+					s->name = "animations/walk";
+					_sequences.push_back(s);
+					_sequences_by_name.insert("animations/walk", s);
+					
+					s->AnimationSet.allocate(2);
+					s->AnimationSet[0].allocate(3);
+					s->AnimationSet[1].allocate(3);
+					
+					{
+						KeyframeList& ty = s->AnimationSet[0][1];
+						ty.allocate(2);
+						ty.duration_seconds = 1.0f;
+						ty.set_key(0, 0.0f, 0.0f);
+						ty.set_key(1, 1.0f, 5.0f);
+					}
+					
+					
+				}
 				
-				
-				return 0;
+				Sequence* data;
+				_sequences_by_name.get(name, data);
+				return data;
 			} // load_sequence_from_file
 		}
 		
 		
 		void startup()
 		{
-			LOGV("startup animation system: try to load a sequence...\n");
-			
-			Sequence* sequence = detail::load_sequence_from_file("animations/idle");
 		}
 		
 		void shutdown()
@@ -406,6 +426,13 @@ namespace gemini
 		
 		SequenceId find_sequence(const char* name)
 		{
+			if (detail::_sequences_by_name.has_key(name))
+			{
+				Sequence* data = 0;
+				detail::_sequences_by_name.get(name, data);
+				return data->index;
+			}
+			
 			return -1;
 		}
 		
