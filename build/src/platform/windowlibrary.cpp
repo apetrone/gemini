@@ -23,8 +23,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
+#include "mem.h"
 #include "config.h"
-
 #include "windowlibrary.h"
 
 #if PLATFORM_IS_MOBILE
@@ -33,9 +33,6 @@
 	#include "sdl_windowlibrary.h"
 	typedef platform::SDLWindowLibrary WindowLibrary;
 #endif
-
-#include "mem.h"
-
 
 namespace platform
 {

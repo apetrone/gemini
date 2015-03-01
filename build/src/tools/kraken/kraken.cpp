@@ -26,13 +26,26 @@
 #include <platform/platform.h>
 #include <platform/kernel.h>
 
-class EditorKernel : public kernel::IKernel
+#include <core/core.h>
+#include <core/logging.h>
+
+#include <platform/windowlibrary.h>
+#include <platform/input.h>
+
+class EditorKernel : public kernel::IKernel,
+public kernel::IEventListener<kernel::KeyboardEvent>
 {
 private:
 	bool active;
+	platform::IWindowLibrary* window_interface;
 	
 public:
-	EditorKernel() : active(true) {}
+	EditorKernel() :
+		active(true),
+		window_interface(0)
+	{
+	}
+	
 	virtual ~EditorKernel() {}
 	
 	virtual bool is_active() const { return active; }
@@ -40,14 +53,45 @@ public:
 	
 	virtual void resolution_changed(int width, int height) {}
 
-	virtual kernel::Error startup() { return kernel::NoError; }
-	virtual void tick() {}
-	virtual void shutdown() {}
-
-	virtual void capture_mouse(bool capture) {}
-	virtual void warp_mouse(int x, int y) {}
-	virtual void get_mouse_position(int& x, int& y) {}
-	virtual void show_mouse(bool show) {}
+	virtual kernel::Error startup()
+	{
+		core::startup();
+		window_interface = platform::create_window_library();
+		window_interface->startup(kernel::parameters());
+		
+		kernel::Parameters& params = kernel::parameters();
+		params.window_width = 1280;
+		params.window_height = 720;
+		params.window_title = "kraken";
+		
+		window_interface->create_window(kernel::parameters());
+		
+		return kernel::NoError;
+	}
+	
+	virtual void tick()
+	{
+		window_interface->process_events();
+		
+		window_interface->swap_buffers();
+	}
+	
+	virtual void shutdown()
+	{
+		window_interface->shutdown();
+		platform::destroy_window_library();
+		core::shutdown();
+	}
+	
+	
+	virtual void event(kernel::KeyboardEvent& event)
+	{
+		if (event.key == input::KEY_ESCAPE && event.is_down)
+		{
+			set_active(false);
+		}
+	}
+	
 };
 
 

@@ -103,8 +103,7 @@ def setup_common_application(product):
 		"src/platform/osx/osx_appdelegate.mm",
 		"src/platform/osx/osx_appdelegate.h",
 		"src/platform/osx/osx_application.mm",
-		"src/platform/osx/osx_application.h",
-		"src/platform/osx/osx_main.mm"
+		"src/platform/osx/osx_application.h"
 	]
 
 def setup_common_tool(product):
@@ -352,11 +351,20 @@ def get_libplatform(arguments, target_platform):
 	libplatform.root = "../"
 	libplatform.sources += [
 		"src/platform/config.h",
+		"src/platform/kernel.cpp",
+		"src/platform/kernel.h",
+		"src/platform/kernel_events.h",	
 		"src/platform/mem.cpp",
 		"src/platform/mem.h",
 		"src/platform/mem_stl_allocator.h",
 		"src/platform/platform.cpp",
 		"src/platform/platform.h",
+		"src/platform/input.cpp",
+		"src/platform/input.h",
+		"src/platform/windowlibrary.cpp",
+		"src/platform/windowlibrary.h",
+		"src/platform/sdl_windowlibrary.cpp",
+		"src/platform/sdl_windowlibrary.h"
 	]
 
 	libplatform.includes += [
@@ -505,7 +513,9 @@ def get_kraken(arguments, libplatform, libcore, librenderer, **kwargs):
 		librenderer
 	])
 
-
+	kraken.sources += [
+		"src/tools/kraken/kraken.cpp"	
+	]
 
 	macosx = kraken.layout(platform="macosx")
 	macosx.links += [
@@ -572,6 +582,7 @@ def products(arguments, **kwargs):
 
 
 	libplatform = get_libplatform(arguments, target_platform)
+	libplatform.dependencies += [libsdl]
 
 	libcore = get_libcore(arguments, target_platform)
 	libcore.dependencies += [libplatform, Dependency(file="glm.py")]
@@ -599,7 +610,12 @@ def products(arguments, **kwargs):
 	setup_common_libs(arguments, gemini)
 	setup_common_application(gemini)
 
+	gemini.sources += [
+		"src/engine/gemini.cpp"
+	]
+
 	gemini.dependencies += [
+		libsdl,
 		librenderer,
 		libcore,
 		libplatform,
@@ -630,7 +646,6 @@ def products(arguments, **kwargs):
 
 	# more sources
 	gemini.sources += [
-		"src/engine/kernels/project_chimera.cpp",
 		"src/engine/*.*",
 		"src/engine/audio/openal.*",
 		"src/engine/assets/*.*",
@@ -654,16 +669,11 @@ def products(arguments, **kwargs):
 
 	if target_platform.get() in DESKTOP:
 		gemini.sources += [
-			"src/engine/platforms/desktop/kernel_desktop.cpp",
 			"src/engine/audio/openal_vorbis_decoder.*"
 		]
 
 		gemini.includes += [
 			"src/engine/audio"
-		]
-
-		gemini.dependencies += [
-			libsdl
 		]
 
 		macosx = gemini.layout(platform="macosx")
