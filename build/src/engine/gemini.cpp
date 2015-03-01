@@ -77,6 +77,9 @@ struct Settings
 	uint32_t vr_render : 1; // render to the VR render target(s)
 	uint32_t vr_require_headset : 1; // don't render to VR unless a headset is attached
 	
+	uint32_t window_width;
+	uint32_t window_height;
+	
 	renderer::RenderSettings render_settings;
 	
 	Settings()
@@ -87,6 +90,8 @@ struct Settings
 		enable_asset_reloading = 0;
 		vr_render = false;
 		vr_require_headset = false;
+		window_width = 1280;
+		window_height = 720;
 	}
 };
 
@@ -142,6 +147,18 @@ static util::ConfigLoadStatus settings_conf_loader( const Json::Value & root, vo
 	if (!vr_require_headset.isNull())
 	{
 		cfg->vr_require_headset = vr_require_headset.asBool();
+	}
+	
+	const Json::Value& window_width = root["window_width"];
+	if (!window_width.isNull())
+	{
+		cfg->window_width = window_width.asInt();
+	}
+	
+	const Json::Value& window_height = root["window_height"];
+	if (!window_height.isNull())
+	{
+		cfg->window_height = window_height.asInt();
 	}
 	
 	const Json::Value& renderer = root["renderer"];
