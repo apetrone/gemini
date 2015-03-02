@@ -177,329 +177,28 @@ static util::ConfigLoadStatus settings_conf_loader( const Json::Value & root, vo
 #include <nom/graph.hpp>
 #include <nom/button.hpp>
 
+#include "guirenderer.h"
+
 // this is required at the moment because our render method needs it!
 gui::Compositor* _compositor = 0;
 
-class GUIRenderer : public gui::Renderer
+
+
+class GUIStyle : public gui::Style
 {
-	struct VertexType
-	{
-		glm::vec3 position;
-		Color color;
-		glm::vec2 uv;
-	};
-	
-	gui::Compositor* compositor;
-	renderer::VertexStream stream;
-	renderer::VertexStream lines;
-	assets::Shader* shader;
-	
-	assets::Material * solid_color;
-	assets::Material * texture_map;
-	
-	unsigned int vertex_attribs;
-	
-	float current_depth;
-	
-private:
-	void render_buffer(renderer::VertexStream& stream, assets::Shader* shader, assets::Material* material)
-	{
-		stream.update();
-		
-		glm::mat4 modelview;
-		glm::mat4 projection = glm::ortho( 0.0f, (float)compositor->width, (float)compositor->height, 0.0f, -0.1f, 256.0f );
-		glm::mat4 object_matrix;
-		
-		RenderStream rs;
-		rs.add_shader( shader->program );
-		rs.add_uniform_matrix4( shader->program->get_uniform_location("modelview_matrix"), &modelview );
-		rs.add_uniform_matrix4( shader->program->get_uniform_location("projection_matrix"), &projection );
-		
-		rs.add_material( material, shader->program );
-		
-		rs.add_draw_call( stream.vertexbuffer );
-		
-		rs.run_commands();
-		stream.reset();
-	}
-	
-	
 public:
-	GUIRenderer() :
-	compositor(0),
-	shader(0),
-	solid_color(0),
-	texture_map(0),
-	vertex_attribs(0),
-	current_depth(0.0f)
-	{
-	}
 	
-	virtual ~GUIRenderer()
+	virtual void draw_bounds(gui::Renderer* renderer, const gui::Bounds& bounds, const gui::Color& color)
 	{
+		renderer->draw_bounds(bounds, color);
 	}
 	
 	
-	virtual void increment_depth()
+	virtual void draw_font(gui::Renderer* renderer, const gui::FontHandle& handle, const char* string, const gui::Bounds& bounds, const gui::Color& color)
 	{
-		current_depth += 1.0f;
-	}
-	
-	virtual void startup(gui::Compositor* c)
-	{
-		this->compositor = c;
-		stream.desc.add(renderer::VD_FLOAT3);
-		stream.desc.add(renderer::VD_FLOAT2);
-		stream.desc.add(renderer::VD_UNSIGNED_BYTE4);
-		stream.create(64, 64, renderer::DRAW_INDEXED_TRIANGLES);
-		
-		lines.desc.add(renderer::VD_FLOAT3);
-		lines.desc.add(renderer::VD_FLOAT2);
-		lines.desc.add(renderer::VD_UNSIGNED_BYTE4);
-		lines.create(128, 0, renderer::DRAW_LINES);
-		
-		// load shader
-		shader = assets::shaders()->load_from_path("shaders/gui");
-		
-		// setup materials
-		solid_color = assets::materials()->allocate_asset();
-		if (solid_color)
-		{
-			renderer::MaterialParameter parameter;
-			parameter.type = renderer::MP_VEC4;
-			parameter.name = "diffusecolor";
-			parameter.vector_value = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-			solid_color->add_parameter(parameter);
-			
-			renderer::MaterialParameter enable_sampler;
-			enable_sampler.type = renderer::MP_INT;
-			enable_sampler.name = "enable_sampler";
-			enable_sampler.int_value = 0;
-			solid_color->add_parameter(enable_sampler);
-			
-			assets::materials()->take_ownership("gui/solid_color", solid_color);
-		}
-		
-		texture_map = assets::materials()->allocate_asset();
-		if (texture_map)
-		{
-			renderer::MaterialParameter parameter;
-			parameter.type = renderer::MP_SAMPLER_2D;
-			parameter.name = "diffusemap";
-			parameter.int_value = assets::textures()->get_default()->Id();
-			texture_map->add_parameter(parameter);
-			
-			renderer::MaterialParameter enable_sampler;
-			enable_sampler.type = renderer::MP_INT;
-			enable_sampler.name = "enable_sampler";
-			enable_sampler.int_value = 1;
-			texture_map->add_parameter(enable_sampler);
-			
-			assets::materials()->take_ownership("gui/texture_map", texture_map);
-		}
-	}
-	
-	virtual void shutdown(gui::Compositor* c)
-	{
-	}
-	
-	virtual void begin_frame(gui::Compositor* c)
-	{
-		RenderStream rs;
-		
-		rs.add_state( renderer::STATE_BLEND, 1 );
-		rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
-		rs.add_state(renderer::STATE_DEPTH_TEST, 0);
-		rs.add_state(renderer::STATE_DEPTH_WRITE, 0);
-		
-		rs.run_commands();
-	}
-	
-	virtual void end_frame()
-	{
-		RenderStream rs;
-		
-		rs.add_state( renderer::STATE_BLEND, 0 );
-		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
-		rs.add_state(renderer::STATE_DEPTH_WRITE, 1);
-		rs.run_commands();
-	}
-	
-	
-	virtual void draw_bounds(const gui::Bounds& bounds, const gui::Color& color)
-	{
-		//		gui::Size size = bounds.size;
-		//		glm::vec3 start = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );
-		//		glm::vec3 end = start + glm::vec3( size.width, size.height, 0.0f );
-		//		debugdraw::line( start, end, Color( 255, 0, 255 ) );
-		//		debugdraw::point( glm::vec3( bounds.origin.x + size.width, bounds.origin.y + size.height, 0.0f ), Color(255, 255, 255) );
-		
-		float div = 1.0f/255.0f;
-		solid_color->parameters[0].vector_value = glm::vec4( (color.r() * div), (color.g() * div), (color.b() * div), (color.a() * div) );
-		//		debugdraw::box( start, end, Color(rgba[0], rgba[1], rgba[2], rgba[3]), 0.0f );
-		
-		stream.reset();
-		
-		RenderStream rs;
-		
-		if ( stream.has_room(4, 6) )
-		{
-			VertexType* v = (VertexType*)stream.request(4);
-			
-			gui::Size size = bounds.size;
-			v[0].position = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );
-			v[1].position = v[0].position + glm::vec3( 0.0f, size.height, 0.0f );
-			v[2].position = v[0].position + glm::vec3( size.width, size.height, 0.0f );
-			v[3].position = v[0].position + glm::vec3( size.width, 0.0f, 0.0f );
-			
-			// lower left corner is the origin in OpenGL
-			v[0].uv = glm::vec2(0, 0);
-			v[1].uv = glm::vec2(0, 1);
-			v[2].uv = glm::vec2(1, 1);
-			v[3].uv = glm::vec2(1, 0);
-			
-			//v[0].color = v[1].color = v[2].color = v[3].color = Color(rgba[0], rgba[1], rgba[2], rgba[3]);
-			
-			renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
-			stream.append_indices( indices, 6 );
-		}
-		else
-		{
-			LOGV( "buffer be full\n" );
-		}
-		
-		this->render_buffer(stream, shader, solid_color);
-	}
-	
-	virtual void draw_textured_bounds(const gui::Bounds& bounds, const gui::TextureHandle& handle)
-	{
-		stream.reset();
-		RenderStream rs;
-		assets::Texture * tex = assets::textures()->find_with_id( handle );
-		if ( !tex )
-		{
-			return;
-		}
-		
-		texture_map->parameters[0].int_value = handle;
-		texture_map->parameters[0].texture_unit = 0;
-		
-		if ( stream.has_room(4, 6) )
-		{
-			VertexType * v = (VertexType*)stream.request(4);
-			
-			gui::Size size = bounds.size;
-			v[0].position = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );
-			v[1].position = v[0].position + glm::vec3( 0.0f, size.height, 0.0f );
-			v[2].position = v[0].position + glm::vec3( size.width, size.height, 0.0f );
-			v[3].position = v[0].position + glm::vec3( size.width, 0.0f, 0.0f );
-			
-			// lower left corner is the origin in OpenGL
-			v[0].uv = glm::vec2(0, 0);
-			v[1].uv = glm::vec2(0, 1);
-			v[2].uv = glm::vec2(1, 1);
-			v[3].uv = glm::vec2(1, 0);
-			
-			v[0].color = v[1].color = v[2].color = v[3].color = Color(255, 255, 255, 255);
-			
-			renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
-			stream.append_indices( indices, 6 );
-		}
-		
-		this->render_buffer(stream, shader, texture_map);
-	}
-	
-	void draw_line(const gui::Point& start, const gui::Point& end, const gui::Color& color)
-	{
-		lines.reset();
-		
-		float div = 1.0f/255.0f;
-		solid_color->parameters[0].vector_value = glm::vec4( (color.r() * div), (color.g() * div), (color.b() * div), (color.a() * div) );
-		
-		
-		if (lines.has_room(2, 0))
-		{
-			VertexType* v = (VertexType*)lines.request(2);
-			
-			v[0].position = glm::vec3(start.x, start.y, 0.0f);
-			v[1].position = glm::vec3(end.x, end.y, 0.0f);
-			//			v[0].color = v[1].color = Color(255, 255, 255, 255);
-		}
-		
-		this->render_buffer(lines, shader, solid_color);
-	}
-	
-	virtual gui::TextureResult texture_create(const char* path, gui::TextureHandle& handle)
-	{
-		assets::Texture * tex = assets::textures()->load_from_path((char*)path);
-		if ( !tex )
-		{
-			return gui::TextureResult_Failed;
-		}
-		
-		handle = tex->Id();
-		
-		return gui::TextureResult_Success;
-	}
-	
-	virtual void texture_destroy(const gui::TextureHandle& handle)
-	{
-		// nothing really to do in our system
-	}
-	
-	virtual gui::TextureResult texture_info(const gui::TextureHandle& handle, uint32_t& width, uint32_t& height, uint8_t& channels)
-	{
-		assets::Texture * tex = assets::textures()->find_with_id( handle );
-		if ( !tex )
-		{
-			return gui::TextureResult_Failed;
-		}
-		
-		return gui::TextureResult_Success;
-	}
-	
-	virtual gui::FontResult font_create(const char* path, gui::FontHandle& handle)
-	{
-		assets::Font* font = assets::fonts()->load_from_path((char*)path);
-		if (font == 0)
-		{
-			return gui::FontResult_Failed;
-		}
-		
-		handle = font->Id();
-		
-		return gui::FontResult_Success;
-	}
-	
-	virtual void font_destroy(const gui::FontHandle& handle)
-	{
-		// nothing really to do in our system
-	}
-	
-	virtual gui::FontResult font_measure_string(const gui::FontHandle& handle, const char* string, gui::Bounds& bounds)
-	{
-		assets::Font* font = assets::fonts()->find_with_id(handle);
-		if (font)
-		{
-			unsigned int width = font::measure_width(font->handle, string);
-			unsigned int height = font::measure_height(font->handle, string);
-			bounds.set(0, 0, width, height);
-			return gui::FontResult_Success;
-		}
-		
-		return gui::FontResult_Failed;
-	}
-	
-	virtual void font_draw(const gui::FontHandle& handle, const char* string, const gui::Bounds& bounds, const gui::Color& color)
-	{
-		assets::Font* font = assets::fonts()->find_with_id(handle);
-		if (font)
-		{
-			font::draw_string(font->handle, bounds.origin.x, bounds.origin.y, string, Color(color.r(), color.g(), color.b(), color.a()));
-		}
+		renderer->font_draw(handle, string, bounds, color);
 	}
 };
-
 
 
 
@@ -660,6 +359,8 @@ public:
 			
 			render_scene_from_camera(entity_list, camera, scenelink);
 			
+			// draw debug graphics
+			debugdraw::render(camera.matCam, camera.matProj, x, y, width, height);
 			
 			camera.matCam = old_matcam;
 			
@@ -668,10 +369,7 @@ public:
 			if (_compositor)
 			{
 				_compositor->render();
-			}			
-			
-			// draw debug graphics
-//			debugdraw::render(camera.matCam, camera.matProj, x, y, width, height);
+			}
 		}
 		
 		camera.pos = old_camera_position;
@@ -1458,6 +1156,7 @@ public:
 		{
 			if (event.key == input::KEY_ESCAPE)
 			{
+#if 1
 				in_gui = !in_gui;
 				if (!in_gui)
 				{
@@ -1472,6 +1171,10 @@ public:
 				window_interface->show_mouse(in_gui);
 				
 				root->set_visible(in_gui);
+#else
+				set_active(false);
+
+#endif
 			}
 			else if (event.key == input::KEY_SPACE)
 			{
@@ -1606,12 +1309,14 @@ public:
 	
 	void setup_gui(const kernel::Parameters& params)
 	{
-		
 		compositor = new gui::Compositor(params.render_width, params.render_height);
 		_compositor = compositor;
 		
 		gui_renderer = CREATE(GUIRenderer);
 		compositor->set_renderer(gui_renderer);
+		
+		gui_style = CREATE(GUIStyle);
+		compositor->set_style(gui_style);
 		
 		root = new gui::Panel(compositor);
 		root->set_bounds(0, 0, params.render_width, params.render_height);
@@ -2107,6 +1812,7 @@ public:
 		platform::instance()->close_dynamiclibrary(gamelib);
 		
 		// shutdown gui
+		DESTROY(GUIStyle, gui_style);
 		DESTROY(GUIRenderer, gui_renderer);
 		gui_listener.shutdown();
 		delete compositor;
@@ -2123,7 +1829,6 @@ public:
 		}
 		vr::shutdown();
 		
-
 
 		// shutdown subsystems
 		hotloading::shutdown();

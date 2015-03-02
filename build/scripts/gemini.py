@@ -106,19 +106,35 @@ def setup_common_application(product):
 		"src/platform/osx/osx_application.h"
 	]
 
-def setup_common_tool(product):
-
-	product.root = "../"
+def setup_datamodel(product):
 	product.sources += [
-		"src/tools/%s/*.cpp" % product.name,
-		"src/tools/%s/*.h" % product.name,
-		"src/tools/*.cpp",
-		"src/tools/*.h",
+		"src/tools/common.cpp",
+		"src/tools/common.h",
 		"src/tools/common/*.cpp",
 		"src/tools/common/*.h",
 		"src/tools/datamodel/*.cpp",
 		"src/tools/datamodel/*.h"
 	]
+
+
+def setup_gui(product):
+	product.sources += [
+		"src/shared/guirenderer.h",
+		"src/shared/guirenderer.cpp",		
+	]
+	product.includes += [
+		"src/shared"
+	]
+
+def setup_common_tool(product):
+
+	product.root = "../"
+	product.sources += [
+		"src/tools/%s/*.cpp" % product.name,
+		"src/tools/%s/*.h" % product.name
+	]
+
+	setup_datamodel(product)
 
 	product.includes += [
 		"src/tools/%s" % product.name,
@@ -505,12 +521,14 @@ def get_kraken(arguments, libplatform, libcore, librenderer, **kwargs):
 	setup_driver(kraken)
 	setup_common_tool(kraken)
 	setup_common_application(kraken)
+	setup_gui(kraken)
 
 	kraken.dependencies.extend([
 		libsdl,
 		libplatform,
 		libcore,
-		librenderer
+		librenderer,
+		Dependency(file="nom.py")
 	])
 
 	kraken.sources += [
@@ -613,6 +631,8 @@ def products(arguments, **kwargs):
 	gemini.sources += [
 		"src/engine/gemini.cpp"
 	]
+
+	setup_gui(gemini)
 
 	gemini.dependencies += [
 		libsdl,
