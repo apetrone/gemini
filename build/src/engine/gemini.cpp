@@ -765,7 +765,28 @@ class ModelInterface : public gemini::IModelInterface
 		{
 			animation::SequenceId instance_index = animations[index];
 			animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
+
+			// reset all the channels
 			instance->reset_channels();
+			
+			// force an advance, to fetch the first frame
+			// but don't advance time.
+			instance->advance(0.0f);
+		}
+		
+		virtual float get_animation_duration(int32_t index) const
+		{
+			float duration_seconds = 0;
+			animation::SequenceId instance_index = animations[index];
+			animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
+			assert(instance != 0);
+			
+			animation::Sequence* sequence = animation::get_sequence_by_index(instance->sequence_index);
+			assert(sequence != 0 );
+			
+			duration_seconds = sequence->duration_seconds;
+			
+			return duration_seconds;
 		}
 	};
 	
