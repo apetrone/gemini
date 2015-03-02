@@ -646,15 +646,21 @@ namespace gemini
 	{
 		// I'm assuming that the skeleton has no parent.
 		FbxNodeAttribute::EType node_attribute_type = fbxnode->GetNodeAttribute()->GetAttributeType();
-		assert(node_attribute_type == FbxNodeAttribute::eSkeleton);
+	
 		
-		datamodel::Bone* bone = state.model->skeleton->add_bone(parent_index, fbxnode->GetName());
-		
-		LOGV("%spopulate_skeleton: [parent_index=%i, index=%i, name=%s]\n", state.indent.indent(), parent_index, bone->index, fbxnode->GetName());
+		// in the event there's a transform between skeletal nodes
+		// (because of mirroring, for example)
+		if (node_attribute_type == FbxNodeAttribute::eSkeleton)
+		{
+			datamodel::Bone* bone = state.model->skeleton->add_bone(parent_index, fbxnode->GetName());
+
+			LOGV("%spopulate_skeleton: [parent_index=%i, index=%i, name=%s]\n", state.indent.indent(), parent_index, bone->index, fbxnode->GetName());
+			parent_index = bone->index;
+		}
 		
 		for (int index = 0; index < fbxnode->GetChildCount(); ++index)
 		{
-			process_skeleton(state, bone->index, fbxnode->GetChild(index));
+			process_skeleton(state, parent_index, fbxnode->GetChild(index));
 		}
 	}
 	
