@@ -122,6 +122,7 @@ namespace gemini
 			// our local time has passed the sequence duration
 			if (local_time_seconds > keyframelist->duration_seconds)
 			{
+				current_keyframe = 0;
 				if (wrap)
 				{
 					local_time_seconds -= keyframelist->duration_seconds;
@@ -145,13 +146,13 @@ namespace gemini
 			// update value
 			float prev_value = keyframelist->keys[current_keyframe].value;
 			float next_value;
-			//		if ((current_keyframe+1) >= keyframelist->total_keys)
-			//		{
-			//			// TODO: should use post-infinity here
-			//			// For now, just use the last keyframe.
-			//			next_value = keyframelist->keys[current_keyframe].value;
-			//		}
-			//		else
+//			if ((current_keyframe+1) >= keyframelist->total_keys)
+//			{
+//				// TODO: should use post-infinity here
+//				// For now, just use the last keyframe.
+//				next_value = keyframelist->keys[current_keyframe].value;
+//			}
+//			else
 			{
 				next_value = keyframelist->keys[next_keyframe].value;
 			}
@@ -173,6 +174,12 @@ namespace gemini
 				}
 			}
 		} // advance
+		
+		void Channel::reset()
+		{
+			current_keyframe = 0;
+			local_time_seconds = 0;
+		} // reset
 		
 		float Channel::operator()() const
 		{
@@ -237,7 +244,19 @@ namespace gemini
 //			}
 		}
 	
-	
+		void AnimatedInstance::reset_channels()
+		{
+			Sequence* sequence = animation::get_sequence_by_index(sequence_index);
+			assert(sequence != 0);
+			
+			for (auto& channelset : ChannelSet)
+			{
+				for (Channel& channel : channelset)
+				{
+					channel.reset();
+				}
+			}
+		}
 	
 		//
 		// animation system stuff

@@ -84,7 +84,7 @@ namespace gemini
 			void set_target(float* target);
 			void set_keyframe_list(KeyframeList* source_keyframe_list);
 			void advance(float delta_seconds);
-			
+			void reset();
 			
 			float operator()() const;
 		}; // Channel
@@ -125,6 +125,7 @@ namespace gemini
 			virtual void initialize(Sequence* sequence);
 			virtual void advance(float delta_seconds);
 			virtual bool is_playing() const { return enabled; }
+			virtual void reset_channels();
 		};
 	
 		//

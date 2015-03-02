@@ -760,6 +760,13 @@ class ModelInterface : public gemini::IModelInterface
 			//			return animations.size();
 			return 1;
 		}
+		
+		virtual void reset_channels(int32_t index)
+		{
+			animation::SequenceId instance_index = animations[index];
+			animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
+			instance->reset_channels();
+		}
 	};
 	
 	
