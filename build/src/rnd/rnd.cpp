@@ -17,6 +17,7 @@ using namespace std;
 #include <core/stackstring.h>
 #include <core/fixedarray.h>
 #include <core/interpolation.h>
+#include <core/dictionary.h>
 
 #include <json/json.h>
 
@@ -373,15 +374,285 @@ void test_hash()
 
 
 
-
-
-
-
-
-void test_main()
+struct Variant
 {
-	//	test_rendering();
+	
+};
+
+
+struct ArgumentType
+{
+	typedef enum
+	{
+		Integer,
+		Float,
+		String
+	} value;
+};
+
+
+
+
+
+
+class ArgumentParser
+{
+	struct Argument
+	{
+		// is this argument required?
+		bool required;
+
+		std::string name;
+		
+		Argument() : required(false)
+		{
+		}
+	};
+
+
+
+	struct ArgumentEntry
+	{
+		// is this a command argument?
+		bool is_command;
+		std::string command_name;
+		
+		std::vector<Argument> arguments;
+		const char* line;
+		
+		ArgumentEntry() : is_command(false), line(0)
+		{
+		}
+	};
+
+	
+	
+	std::vector<ArgumentEntry> entries;
+
+
+
+
+public:
+	struct ArgumentOption
+	{
+		ArgumentParser* owner;
+		
+		ArgumentOption(ArgumentParser* parent) : owner(parent)
+		{
+		}
+	
+		ArgumentOption& operator()(const char* str, const char* help_string = 0)
+		{
+			owner->parse_string(str, help_string);
+			return *this;
+		}
+	};
+	
+	
+	void parse_string(const char* str, const char* help_string)
+	{
+//		fprintf(stdout, "%s\n", str);
+		const char* cur = str;
+		
+		// states:
+		/*
+			- 0: scan
+			- 1: command token
+			- 2: required token
+			- 3: option
+		*/
+		
+		int state = 0;
+		
+		ArgumentEntry entry;
+		entry.line = str;
+		
+		const char* begin = 0, *end = 0;
+		
+		const char* next = 0;
+		while (*cur)
+		{
+			if (state == 0)
+			{
+				if (isalpha(*cur))
+				{
+					state = 1;
+					begin = cur;
+					// commands must be the FIRST option listed
+					assert(entry.arguments.empty());
+					entry.is_command = true;
+				}
+				else if (*cur == '<')
+				{
+					state = 2;
+					begin = cur+1;
+				}
+			}
+			else if (state == 1)
+			{
+				if (isspace(*cur))
+				{
+					state = 0;
+					end = cur;
+//					fprintf(stdout, "%.*s\n", (int)(end-begin), begin);
+					
+					entry.command_name = std::string(begin, (end-begin));
+				}
+			}
+			else if (state == 2)
+			{
+				bool term_kwarg = *cur == '>';
+				if (term_kwarg)
+				{
+					state = 0;
+					end = cur;
+//					fprintf(stdout, "%.*s\n", (int)(end-begin), begin);
+					
+					Argument ad;
+					ad.required = true;
+					ad.name = std::string(begin, (end-begin));
+					entry.arguments.push_back(ad);
+				}
+			}
+			
+			cur++;
+		}
+		
+		entries.push_back(entry);
+	}
+
+	ArgumentParser::ArgumentOption set_options()
+	{
+		return ArgumentOption(this);
+	}
+	
+	void parse(int argc, char** argv, core::Dictionary<std::string>& dict)
+	{
+//		if (index > argc-1)
+//			return;
+		
+		std::vector<std::string> tokens;
+		for (int i = 1; i < argc; ++i)
+		{
+			tokens.push_back(argv[i]);
+//			fprintf(stdout, "token: %s\n", argv[i]);
+		}
+		
+		// scan through all entries
+		bool failure = true;
+		size_t index = 0;
+		for (ArgumentEntry& entry : entries)
+		{
+			if (entry.is_command)
+			{
+				if (!tokens.empty() && (entry.command_name == tokens[index]))
+				{
+					fprintf(stdout, "found command: %s\n", entry.command_name.c_str());
+					int diff = entry.arguments.size() - (tokens.size()-1);
+					if (diff != 0)
+					{
+						fprintf(stdout, "argument count doesn't match!, diff: %i\n", diff);
+						if (diff > 0)
+						{
+							for (int i = diff-1; i < diff; ++i)
+							{
+								fprintf(stdout, "missing argument: <%s>\n", entry.arguments[i].name.c_str());
+							}
+						}
+						else
+						{
+							fprintf(stdout, "Unexpected argument(s)\n");
+						}
+						break;
+					}
+					else
+					{
+						dict.insert(entry.command_name.c_str(), "true");
+						failure = false;
+						int token_index = 1;
+						for (Argument arg : entry.arguments)
+						{
+							dict.insert(arg.name.c_str(), tokens[token_index++]);
+						}
+						break;
+					}
+				}
+			}
+			else if (!tokens.empty())
+			{
+				fprintf(stdout, "trying to match entry: %i, total args: %i\n", index, entry.arguments.size());
+				int diff = entry.arguments.size() - tokens.size();
+				if (diff != 0)
+				{
+					fprintf(stdout, "argument count doesn't match!, diff: %i\n", diff);
+					if (diff > 0)
+					{
+						for (int i = tokens.size(); i < entry.arguments.size(); ++i)
+						{
+							fprintf(stdout, "missing argument: <%s>\n", entry.arguments[i].name.c_str());
+						}
+					}
+					else
+					{
+						fprintf(stdout, "Unexpected argument(s)\n");
+					}
+				}
+				else
+				{
+					failure = false;
+				}
+			}
+		
+			++index;
+		}
+		
+		if (failure)
+		{
+			// print all entry source strings
+			fprintf(stdout, "USAGE:\n");
+			for (ArgumentEntry& e : entries)
+			{
+				fprintf(stdout, "%s\n", e.line);
+			}
+		}
+	}
+};
+
+void test_args(int argc, char** argv)
+{
+	ArgumentParser parser;
+
+	parser.set_options()
+	("name <username>")
+	("<source_asset_root> <relative_asset_file> <destination_asset_root>")
+	;
+
+
+//	parser.set_options()
+//	("tcp <host> <port>")
+//	("serial <port> [--baud=9600] [--timeout=<seconds>]")
+//	("-h | --help | --version")
+//	;
+	
+	core::Dictionary<std::string> vm;
+	parser.parse(argc, argv, vm);
+	
+	if (vm.has_key("name"))
+	{
+		std::string value;
+		vm.get("username", value);
+		fprintf(stdout, "name is: %s\n", value.c_str());
+	}
+}
+
+
+
+
+void test_main(int argc, char** argv)
+{
+//	test_rendering();
 	//	test_hash();
+	test_args(argc, argv);
 }
 
 int main(int argc, char** argv)
@@ -390,7 +661,7 @@ int main(int argc, char** argv)
 	core::startup();
 
 
-	test_main();
+	test_main(argc, argv);
 	
 	
 	
