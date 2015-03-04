@@ -21,6 +21,10 @@ using namespace std;
 
 #include <json/json.h>
 
+
+
+#include <regex>
+
 #define USE_SDL2 1
 
 #if USE_SDL2
@@ -374,41 +378,54 @@ void test_hash()
 
 
 
-struct Variant
-{
-	
-};
-
-
-struct ArgumentType
-{
-	typedef enum
-	{
-		Integer,
-		Float,
-		String
-	} value;
-};
-
-
-
-
-
 
 class ArgumentParser
 {
+
 	struct Argument
 	{
-		// is this argument required?
-		bool required;
-
-		std::string name;
+		enum EntryType
+		{
+			Optional,		// argument is optional (flags)
+			Positional,	// argument is positional
+			Command
+		};
 		
-		Argument() : required(false)
+		EntryType type;
+		
+		std::string long_name;
+		std::string short_name;
+		std::string value;
+		
+		Argument() : type(Optional)
 		{
 		}
+		
+		bool parse_value(const std::string& token)
+		{
+			fprintf(stdout, "parse_value: %s\n", token.c_str());
+			
+			// if this is a positional argument.
+			// value gets set to true.
+			
+			// this is optional:
+			//	does shortname or long name match.
+			// if short name matches; set value to true.
+			// if long name matches, set value to path after equals.
+		
+			if (long_name == token)
+			{
+				return true;
+			}
+			else if (!short_name.empty() && short_name == token)
+			{
+				return true;
+			}
+			
+			
+			return false;
+		}
 	};
-
 
 
 	struct ArgumentEntry
@@ -419,6 +436,8 @@ class ArgumentParser
 		
 		std::vector<Argument> arguments;
 		const char* line;
+		
+		
 		
 		ArgumentEntry() : is_command(false), line(0)
 		{
@@ -443,10 +462,78 @@ public:
 	
 		ArgumentOption& operator()(const char* str, const char* help_string = 0)
 		{
-			owner->parse_string(str, help_string);
+			owner->parse_argument(str, help_string);
 			return *this;
 		}
 	};
+	
+	
+	void parse_argument(const std::string& str, const char* help_string)
+	{
+		fprintf(stdout, "-----------------------------\n");
+		std::regex argument_specifier("-([a-zA-Z])|--([[:alnum:]][-_[:alnum:]]+)=?(<.*>)?");
+		std::cmatch result;
+//		[-_[:alnum:]]+
+		fprintf(stdout, "testing: %s\n", str.c_str());
+
+		std::vector<std::string> tokens;
+		
+		
+		// determine if this is an option block.
+		// If so, we can tokenize the whole string and simplify the regex.
+		int start = 0;
+		int end = str.length();
+		
+		// TODO: This won't work for options mid-stream
+		// So we probably just need to find the option block in the string
+		// and handle those as flags separately.
+		if (str[0] == '[' && str[str.length()-1] == ']')
+		{
+			start = 1;
+			end--;
+		}
+		
+		const char* cur = str.c_str() + start;
+		const char* begin = cur;
+		// 0: scanning
+		// 1: reading option block [ ]
+		int state = 0;
+		for (size_t i = start; i < end; ++i)
+		{
+			if (*cur == ' ' || *cur == '|')
+			{
+				std::string token = std::string(begin, (cur-begin));
+				tokens.push_back(token);
+//				fprintf(stdout, "-> token: %s\n", token.c_str());
+				begin = cur+1;
+			}
+			
+			++cur;
+		}
+		if ((cur-begin) > 0)
+		{
+			std::string token = std::string(begin, (cur-begin));
+			tokens.push_back(token);
+//			fprintf(stdout, "-> token: %s\n", token.c_str());
+		}
+		
+		
+		for (const std::string& token : tokens)
+		{
+			fprintf(stdout, "-> token: %s\n", token.c_str());
+					
+			std::regex_match(token.c_str(), result, argument_specifier);
+			
+			fprintf(stdout, "total results: %i\n", (int)result.size());
+			
+			size_t index = 0;
+			for (auto& i : result)
+			{
+				fprintf(stdout, "%s\n", result.str(index).c_str());
+				++index;
+			}
+		}
+	}
 	
 	
 	void parse_string(const char* str, const char* help_string)
@@ -459,7 +546,9 @@ public:
 			- 0: scan
 			- 1: command token
 			- 2: required token
-			- 3: option
+			- 3: option block
+			- 4: read short name
+			- 5: read long name
 		*/
 		
 		int state = 0;
@@ -472,6 +561,9 @@ public:
 		const char* next = 0;
 		while (*cur)
 		{
+			next = (cur+1);
+			
+		
 			if (state == 0)
 			{
 				if (isalpha(*cur))
@@ -485,6 +577,11 @@ public:
 				else if (*cur == '<')
 				{
 					state = 2;
+					begin = cur+1;
+				}
+				else if (*cur == '[')
+				{
+					state = 3;
 					begin = cur+1;
 				}
 			}
@@ -509,9 +606,45 @@ public:
 //					fprintf(stdout, "%.*s\n", (int)(end-begin), begin);
 					
 					Argument ad;
-					ad.required = true;
-					ad.name = std::string(begin, (end-begin));
+					ad.type = Argument::Positional;
+					ad.long_name = std::string(begin, (end-begin));
 					entry.arguments.push_back(ad);
+				}
+			}
+			else if (state == 3 || state == 4 || state == 5)
+			{
+				// eat whitespace
+				while(*cur == ' ')
+					cur++;
+				
+				if (*cur == '-' && *next == '-' && state == 3)
+				{
+					begin = cur+2;
+					cur += 2;
+					
+					// read long name
+					state = 5;
+				}
+				else if (*cur == '-' && *next != '-' && state == 3)
+				{
+					begin = cur+1;
+					
+					// reading short name
+					state = 4;
+				}
+				if (*cur == '|')
+				{
+					end = cur;
+					fprintf(stdout, "read option: %.*s\n", (int)(end-begin), begin);
+					state = 3;
+					begin = cur+1;
+				}
+				else if (*cur == ']')
+				{
+				
+					state = 0;
+					end = cur;
+					fprintf(stdout, "read option: %.*s\n", (int)(end-begin), begin);
 				}
 			}
 			
@@ -528,14 +661,11 @@ public:
 	
 	void parse(int argc, char** argv, core::Dictionary<std::string>& dict)
 	{
-//		if (index > argc-1)
-//			return;
-		
 		std::vector<std::string> tokens;
 		for (int i = 1; i < argc; ++i)
 		{
 			tokens.push_back(argv[i]);
-//			fprintf(stdout, "token: %s\n", argv[i]);
+			fprintf(stdout, "token: %s\n", argv[i]);
 		}
 		
 		// scan through all entries
@@ -556,7 +686,7 @@ public:
 						{
 							for (int i = diff-1; i < diff; ++i)
 							{
-								fprintf(stdout, "missing argument: <%s>\n", entry.arguments[i].name.c_str());
+								fprintf(stdout, "missing argument: <%s>\n", entry.arguments[i].long_name.c_str());
 							}
 						}
 						else
@@ -572,7 +702,7 @@ public:
 						int token_index = 1;
 						for (Argument arg : entry.arguments)
 						{
-							dict.insert(arg.name.c_str(), tokens[token_index++]);
+							dict.insert(arg.long_name.c_str(), tokens[token_index++]);
 						}
 						break;
 					}
@@ -580,26 +710,32 @@ public:
 			}
 			else if (!tokens.empty())
 			{
-				fprintf(stdout, "trying to match entry: %i, total args: %i\n", index, entry.arguments.size());
+//				fprintf(stdout, "trying to match entry: %i, total args: %i\n", index, entry.arguments.size());
 				int diff = entry.arguments.size() - tokens.size();
 				if (diff != 0)
 				{
-					fprintf(stdout, "argument count doesn't match!, diff: %i\n", diff);
-					if (diff > 0)
-					{
-						for (int i = tokens.size(); i < entry.arguments.size(); ++i)
-						{
-							fprintf(stdout, "missing argument: <%s>\n", entry.arguments[i].name.c_str());
-						}
-					}
-					else
-					{
-						fprintf(stdout, "Unexpected argument(s)\n");
-					}
+//					fprintf(stdout, "argument count doesn't match!, diff: %i\n", diff);
+//					if (diff > 0)
+//					{
+//						for (int i = tokens.size(); i < entry.arguments.size(); ++i)
+//						{
+//							fprintf(stdout, "missing argument: <%s>\n", entry.arguments[i].name.c_str());
+//						}
+//					}
+//					else
+//					{
+//						fprintf(stdout, "Unexpected argument(s)\n");
+//					}
 				}
 				else
 				{
 					failure = false;
+					for (int i = 0; i < entry.arguments.size(); ++i)
+					{
+						Argument& arg = entry.arguments[i];
+						const std::string& svc = tokens[i];
+						arg.parse_value(svc);
+					}
 				}
 			}
 		
@@ -623,8 +759,18 @@ void test_args(int argc, char** argv)
 	ArgumentParser parser;
 
 	parser.set_options()
-	("name <username>")
-	("<source_asset_root> <relative_asset_file> <destination_asset_root>")
+	("[-t]")
+	("[-a|--animation]")
+	("[-h|--help|--version]")
+	("[-h | --help | --verbose]")
+	("[-v | --verbose-only]")
+	("[-f | --frame=<seconds>]")
+//	("tcp <host> <port> [--timeout=<seconds>]")
+//	("serial <port> [--baud=9600] [--timeout=<seconds>]")
+//	("-h | --help | --version")
+
+//	("name [-a|--animation-only] <username>")
+//	("export <source_asset_root> <relative_asset_file> <destination_asset_root>")
 	;
 
 
@@ -634,18 +780,16 @@ void test_args(int argc, char** argv)
 //	("-h | --help | --version")
 //	;
 	
-	core::Dictionary<std::string> vm;
-	parser.parse(argc, argv, vm);
-	
-	if (vm.has_key("name"))
-	{
-		std::string value;
-		vm.get("username", value);
-		fprintf(stdout, "name is: %s\n", value.c_str());
-	}
+//	core::Dictionary<std::string> vm;
+//	parser.parse(argc, argv, vm);
+//	
+//	if (vm.has_key("name"))
+//	{
+//		std::string value;
+//		vm.get("username", value);
+//		fprintf(stdout, "name is: %s\n", value.c_str());
+//	}
 }
-
-
 
 
 void test_main(int argc, char** argv)
@@ -653,6 +797,16 @@ void test_main(int argc, char** argv)
 //	test_rendering();
 	//	test_hash();
 	test_args(argc, argv);
+
+#if 0
+	std::basic_regex<char> pattern("");
+	std::match_results<const char*> result;
+	std::regex_match(argv[1], result, pattern);
+	for (size_t i = 0; i < result.size(); ++i)
+	{
+		fprintf(stdout, "%s\n", result[i].str().c_str());
+	}
+#endif
 }
 
 int main(int argc, char** argv)
