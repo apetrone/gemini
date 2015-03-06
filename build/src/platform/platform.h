@@ -116,7 +116,7 @@ namespace platform
 	namespace path
 	{
 		// normalize a path to the host platform's notation
-		void normalize(char* path, size_t size);
+		void normalize(char* path);
 
 		// make all non-existent directories along a normalized_path
 		void make_directories(const char* normalized_path);

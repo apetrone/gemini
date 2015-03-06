@@ -108,12 +108,11 @@ namespace platform
 	}
 	
 #if defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
-	kernel::Error main(kernel::IKernel* kernel_instance, const char* kernel_name)
+	kernel::Error run_application()
 	{
 		platform::startup();
 		// attempt kernel startup, mostly initializing core systems
 		kernel::Error error = kernel::startup();
-		//kernel::startup(kernel_instance);
 		if (error != kernel::NoError)
 		{
 			fprintf(stderr, "Kernel startup failed with kernel code: %i\n", error);
@@ -154,7 +153,7 @@ namespace platform
 #if defined(PLATFORM_APPLE)
 		return_code = osx_run_application(_argc, (const char**)_argv);
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
-		return_code = desktop_main(0);
+		return_code = run_application();
 #else
 	#error Unknown platform!
 #endif
@@ -171,7 +170,7 @@ namespace platform
 	
 	namespace path
 	{
-		void normalize(char* path, size_t size)
+		void normalize(char* path)
 		{
 			while(*path)
 			{

@@ -57,7 +57,7 @@
 #include "scenelink.h"
 #include "audio.h"
 #include "animation.h"
-#include "physics.h"
+#include "physics/physics.h"
 #include "hotloading.h"
 #include "vr.h"
 
