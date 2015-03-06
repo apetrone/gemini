@@ -27,6 +27,7 @@
 #include "common/extension.h"
 #include "common.h"
 #include "datamodel/model.h"
+#include <fbxsdk.h>
 
 namespace gemini
 {
@@ -49,6 +50,13 @@ namespace gemini
 	typedef std::vector<WeightSlot> WeightSlotVector;
 
 
+	struct NodeData
+	{
+		FbxAMatrix global_transform;
+		datamodel::Node* node;
+	};
+	typedef std::vector<NodeData> NodeDataVector;
+
 
 	struct AutodeskFbxExtensionState
 	{
@@ -60,7 +68,11 @@ namespace gemini
 		
 		tools::IndentState indent;
 		
+		// accumulating the world transform
+		FbxAMatrix global_transform;
+		
 		WeightSlotVector slots;
+		NodeDataVector nodedata;
 	};
 	
 	class AutodeskFbxReader : public tools::Reader<datamodel::Model>

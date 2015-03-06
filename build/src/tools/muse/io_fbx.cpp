@@ -580,6 +580,8 @@ namespace gemini
 						cluster->GetTransformMatrix(transform_matrix);
 						cluster->GetTransformLinkMatrix(link_matrix);
 						
+						// offset_matrix = link_matrix.inverse() * node_global_transform
+						
 						inverse_bindpose_matrix = link_matrix.Inverse() * transform_matrix * geometry_transform;
 						from_fbx(bone->inverse_bind_pose, inverse_bindpose_matrix);
 						
@@ -615,10 +617,10 @@ namespace gemini
 					for(int i = 0; i < fbxmesh->GetControlPointsCount(); ++i)
 					{
 						size_t total_weights = state.slots[i].weights.size();
-						LOGV("%i; total influences: %i\n", i, total_weights);
+//						LOGV("%i; total influences: %i\n", i, total_weights);
 						for (WeightReference& w : state.slots[i].weights)
 						{
-							LOGV("\tbone: %i, weight: %2.2f\n", w.datamodel_bone_index, w.value);
+//							LOGV("\tbone: %i, weight: %2.2f\n", w.datamodel_bone_index, w.value);
 						}
 					}
 				}
@@ -655,12 +657,41 @@ namespace gemini
 			datamodel::Bone* bone = state.model->skeleton->add_bone(parent_index, fbxnode->GetName());
 
 			LOGV("%spopulate_skeleton: [parent_index=%i, index=%i, name=%s]\n", state.indent.indent(), parent_index, bone->index, fbxnode->GetName());
+			
+			FbxNode::EPivotSet pivot_set = FbxNode::eSourcePivot;
+			FbxDouble3 global_scale = fbxnode->GetGeometricScaling(pivot_set);
+			FbxDouble3 global_rotation = fbxnode->GetGeometricRotation(pivot_set);
+			FbxDouble3 global_translation = fbxnode->GetGeometricTranslation(pivot_set);
+			LOGV("%ss: %g %g %g\n", state.indent.indent(), global_scale[0], global_scale[1], global_scale[2]);
+			LOGV("%sr: %g %g %g\n", state.indent.indent(), global_rotation[0], global_rotation[1], global_rotation[2]);
+			LOGV("%st: %g %g %g\n", state.indent.indent(), global_translation[0], global_translation[1], global_translation[2]);
+			
+			
+			FbxAMatrix& local_transform = fbxnode->EvaluateLocalTransform();
+			const FbxDouble3& local_scale = local_transform.GetS();
+			const FbxDouble3& local_rotation = local_transform.GetR();
+			const FbxDouble3& local_translation = local_transform.GetT();
+			LOGV("%sls: %g %g %g\n", state.indent.indent(), local_scale[0], local_scale[1], local_scale[2]);
+			LOGV("%slr: %g %g %g\n", state.indent.indent(), local_rotation[0], local_rotation[1], local_rotation[2]);
+			LOGV("%slt: %g %g %g\n", state.indent.indent(), local_translation[0], local_translation[1], local_translation[2]);
+			
+			
+			//			FbxAMatrix& global_transform = fbxnode->EvaluateGlobalTransform();
+			//			const FbxDouble3& global_scale = global_transform.GetS();
+			//			const FbxDouble3& global_rotation = global_transform.GetR();
+			//			const FbxDouble3& global_translation = global_transform.GetT();
+			//			LOGV("gs: %g %g %g\n", global_scale[0], global_scale[1], global_scale[2]);
+			//			LOGV("gr: %g %g %g\n", global_rotation[0], global_rotation[1], global_rotation[2]);
+			//			LOGV("gt: %g %g %g\n", global_translation[0], global_translation[1], global_translation[2]);
+			
 			parent_index = bone->index;
 		}
 		
 		for (int index = 0; index < fbxnode->GetChildCount(); ++index)
 		{
+			state.indent.push();
 			process_skeleton(state, parent_index, fbxnode->GetChild(index));
+			state.indent.pop();
 		}
 	}
 	
@@ -702,8 +733,10 @@ namespace gemini
 			node->name = fbxnode->GetName();
 			LOGV("-------------- %s --------------\n", node->name.c_str());
 
-
-
+			NodeData nodedata;
+			nodedata.global_transform = state.global_transform * fbxnode->EvaluateLocalTransform();
+			nodedata.node = node;
+			state.nodedata.push_back(nodedata);
 			
 			FbxNodeAttribute::EType node_attribute_type = fbxnode->GetNodeAttribute()->GetAttributeType();
 
@@ -730,7 +763,7 @@ namespace gemini
 			}
 			else
 			{
-				LOGW("Node type ignored: %s\n", node->type.c_str());
+				LOGW("Node type ignored: %s, name = %s\n", node->type.c_str(), fbxnode->GetName());
 			}
 
 
@@ -817,6 +850,7 @@ namespace gemini
 			// if this node isn't a skeleton; then we traverse the hierarchy
 			if (node_attribute_type != FbxNodeAttribute::eSkeleton)
 			{
+				state.global_transform = state.global_transform * fbxnode->EvaluateLocalTransform();
 				for (int index = 0; index < fbxnode->GetChildCount(); ++index)
 				{
 					populate_hierarchy(state, node, fbxnode->GetChild(index));

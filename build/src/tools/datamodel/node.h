@@ -53,9 +53,13 @@ namespace gemini
 			String name;
 			String type;
 			
+			// local transform
 			glm::vec3 scale;
 			glm::quat rotation;
 			glm::vec3 translation;
+			
+			// global transform
+			glm::mat4 absolute_world_transform;
 
 			Node* parent;
 			NodeVector children;

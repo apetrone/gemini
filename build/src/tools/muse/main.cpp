@@ -310,7 +310,7 @@ int main(int argc, char** argv)
 	}
 
 	float duration = (platform::instance()->get_time_microseconds() - start_ticks);
-	LOGV("processed in %2.2f seconds\n", duration*.001f);
+	LOGV("processed in %2.2f milliseconds\n", duration*.001f);
 	
 	tools::shutdown();
 	return 0;
