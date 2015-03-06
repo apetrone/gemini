@@ -109,7 +109,7 @@ namespace core
 			str::copy(fullpath, content_directory, path_size);
 			str::cat(fullpath, PATH_SEPARATOR_STRING);
 			str::cat(fullpath, relativepath);
-			platform::path::normalize(fullpath, path_size);
+			platform::path::normalize(fullpath);
 		} // absolute_path_from_relative
 
 		void relative_path_from_absolute(char* relative_path, const char* absolute_path, const char* content_directory)
@@ -125,7 +125,7 @@ namespace core
 			if (temp)
 			{
 				str::copy(relative_path, (absolute_path+content_length+1), str::len(absolute_path) - content_length);
-				platform::path::normalize(relative_path, MAX_PATH_SIZE);
+				platform::path::normalize(relative_path);
 			}
 		} // relative_path_from_absolute
 		
@@ -182,7 +182,7 @@ namespace core
 			else
 			{
 				str::copy(fullpath, path, 0);
-				platform::path::normalize(fullpath, MAX_PATH_SIZE);
+				platform::path::normalize(fullpath);
 			}
 			result = stat(fullpath, &stFileInfo);
 			return (result == 0) && ((stFileInfo.st_mode & S_IFMT) == S_IFREG);
@@ -202,7 +202,7 @@ namespace core
 			else
 			{
 				str::copy(fullpath, path, 0);
-				platform::path::normalize(fullpath, MAX_PATH_SIZE);
+				platform::path::normalize(fullpath);
 			}
 			result = stat(fullpath, &stFileInfo);
 			return (result == 0) && ((stFileInfo.st_mode & S_IFMT) == S_IFDIR);
@@ -274,7 +274,7 @@ namespace core
 			else
 			{
 				str::copy(fullpath, filename, 0);
-				platform::path::normalize(fullpath, MAX_PATH_SIZE);
+				platform::path::normalize(fullpath);
 			}
 
 			xfile_t handle = xfile_open(fullpath, XF_READ);

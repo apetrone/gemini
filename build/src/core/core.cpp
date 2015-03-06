@@ -99,7 +99,7 @@ namespace core
 			memset(logdir, 0, MAX_PATH_SIZE);
 			str::copy(logdir, filesystem::content_directory(), 0);
 			str::cat(logdir, "/" GEMINI_LOG_PATH "/");
-			platform::path::normalize(logdir, MAX_PATH_SIZE);
+			platform::path::normalize(logdir);
 			
 			// make sure target folder is created
 			platform::path::make_directories( logdir );
