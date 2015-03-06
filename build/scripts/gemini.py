@@ -58,7 +58,7 @@ def setup_common_variables(arguments, target_platform, product):
 		"src/engine/assets/.DS_Store",
 		"src/engine/contrib/.DS_Store",
 		"src/engine/game/.DS_Store",
-		"src/engine/entry.cpp",
+		#"src/engine/entry.cpp",
 
 		# excluded, but not yet removed game crap
 		"src/engine/kernels/test_universal.cpp",
@@ -635,10 +635,10 @@ def products(arguments, **kwargs):
 	setup_gui(gemini)
 
 	gemini.dependencies += [
-		libsdl,
 		librenderer,
 		libcore,
 		libplatform,
+		libsdl,
 		Dependency(file="sqrat.py"),
 		#Dependency(file="squirrel3.py", products=["squirrel", "sqstdlib"]),
 		Dependency(file="nom.py"),
@@ -712,9 +712,6 @@ def products(arguments, **kwargs):
 		]
 
 		linux = gemini.layout(platform="linux")
-		linux.sources += [
-			"src/engine/platforms/desktop/entry.cpp"
-		]
 
 		linux.links += [
 			"openal"
