@@ -63,9 +63,11 @@
 #elif PLATFORM_WINDOWS
 	#include "windows/win32_platform_interface.h"
 	typedef Win32PlatformInterface PlatformInterface;
+
 #else
 	#error Platform not implemented!
 #endif
+
 
 namespace platform
 {
@@ -75,8 +77,7 @@ namespace platform
 		return _instance;
 	}
 	
-	int _argc = 0;
-	char** _argv = 0;
+	MainParameters _mainparameters;
 
 	Result startup()
 	{
@@ -99,14 +100,9 @@ namespace platform
 		memory::shutdown();
 	}
 	
-	void parse_commandline(int argc, char** argv)
-	{
-		_argc = argc;
-		_argv = argv;
-		
-		// TODO: parse the command line
-	}
-	
+	// This nastiness MUST be here, because on different platforms
+	// platform::startup is called at different times. This is done to allow
+	// startup and shutdown on the correct threads via certain platforms.
 #if defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
 	kernel::Error run_application()
 	{
@@ -151,7 +147,7 @@ namespace platform
 		
 		
 #if defined(PLATFORM_APPLE)
-		return_code = osx_run_application(_argc, (const char**)_argv);
+		return_code = osx_run_application(_mainparameters.argc, (const char**)_mainparameters.argv);
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
 		return_code = run_application();
 #else
@@ -161,6 +157,17 @@ namespace platform
 		delete instance;
 		
 		return return_code;
+	}
+	
+	
+	void set_mainparameters(const MainParameters& params)
+	{
+		_mainparameters = params;
+	}
+	
+	const MainParameters& get_mainparameters()
+	{
+		return _mainparameters;
 	}
 	
 	Result program_directory(char* path, size_t size)

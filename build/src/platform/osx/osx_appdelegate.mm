@@ -82,9 +82,6 @@ static bool has_started = false;
 		platform::startup();
 		
 		NSArray* arguments = [[NSProcessInfo processInfo] arguments];
-		NSLog(@"TODO: process command line arguments");
-		// TODO: process command line arguments
-//		platform::parse_commandline(<#int argc#>, <#char **argv#>)
 		
 		// On Mac, the window created is actually larger than requested
 		// to account for the added height of the title bar.

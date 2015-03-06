@@ -605,19 +605,6 @@ namespace gemini
 			_parameters.current_frame++;
 		} // tick
 		
-		void parse_commandline(int argc, char** argv)
-		{
-			const char* arg;
-			for(int i = 0; i < argc; ++i)
-			{
-				arg = argv[i];
-				if (String(arg) == "-game")
-				{
-					_internal::game_path = argv[i+1];
-				}
-			}
-		}
-		
 		void assign_listener_for_eventtype( kernel::EventType event_type, void * listener )
 		{
 			_internal::_event_hooks.events[ event_type ] = listener;

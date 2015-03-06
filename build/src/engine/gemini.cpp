@@ -1159,7 +1159,7 @@ public:
 		render_method(0),
 		draw_physics_debug(false)
 	{
-		game_path = "/Users/apetrone/Documents/games/vrpowergrid";
+		game_path = "";
 		device = 0;
 	}
 	
@@ -1429,6 +1429,19 @@ public:
 	
 	virtual kernel::Error startup()
 	{
+		// parse command line values
+		core::Dictionary<std::string> valuemap;
+		const platform::MainParameters& mainparams = platform::get_mainparameters();
+		const char* arg;
+		for(int i = 0; i < mainparams.argc; ++i)
+		{
+			arg = mainparams.argv[i];
+			if (String(arg) == "--game")
+			{
+				game_path = mainparams.argv[i+1];
+			}
+		}
+	
 		const char FONT_SHADER[] = "shaders/fontshader";
 		const char DEBUG_FONT[] = "fonts/debug";
 		const char DEBUG_SHADER[] = "shaders/debug";
@@ -1882,6 +1895,20 @@ public:
 
 PLATFORM_MAIN
 {
+	platform::MainParameters mainparameters;
+#if defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE)
+	mainparameters.argc = argc;
+	mainparameters.argv = argv;
+#elif defined(PLATFORM_WINDOWS)
+	mainparameters.commandline = commandline;
+#elif defined(PLATFORM_ANDROID)
+	// nothing to do.
+#else
+	#error TODO: Implement command line parsing on this platform!
+#endif
+
+	platform::set_mainparameters(mainparameters);
+
 	int return_code;
 	return_code = platform::run_application(new EngineKernel());
 	return return_code;

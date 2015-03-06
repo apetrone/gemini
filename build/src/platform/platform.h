@@ -80,11 +80,28 @@ namespace platform
 {
 #if PLATFORM_WINDOWS
 	#define PLATFORM_MAIN int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR commandline, int show)
+	struct MainParameters
+	{
+		LPSTR commandline;
+	};
+
 #elif PLATFORM_LINUX || PLATFORM_APPLE
 	#define PLATFORM_MAIN int main(int argc, char** argv)
+	struct MainParameters
+	{
+		int argc;
+		char** argv;
+	};
 #elif PLATFORM_ANDROID
 	// This requires: #include <android_native_app_glue.h>
 	#define PLATFORM_MAIN void android_main(struct android_app* state)
+	
+	// nothing since exec() is called on Android processes;
+	// so they don't have command line arguments.
+	struct MainParameters
+	{
+		// nothing
+	};
 #else
 	#error Unknown platform!
 #endif
@@ -110,8 +127,9 @@ namespace platform
 
 	Result startup();
 	void shutdown();
-	void parse_commandline(int argc, char** argv);
 	int run_application(kernel::IKernel* instance);
+	void set_mainparameters(const MainParameters& params);
+	const MainParameters& get_mainparameters();
 
 	namespace path
 	{
