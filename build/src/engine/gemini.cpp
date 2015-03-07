@@ -1430,8 +1430,8 @@ public:
 	virtual kernel::Error startup()
 	{
 		// parse command line values
-		core::Dictionary<std::string> valuemap;
 		const platform::MainParameters& mainparams = platform::get_mainparameters();
+#if defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE)
 		const char* arg;
 		for(int i = 0; i < mainparams.argc; ++i)
 		{
@@ -1441,7 +1441,8 @@ public:
 				game_path = mainparams.argv[i+1];
 			}
 		}
-	
+#endif
+
 		const char FONT_SHADER[] = "shaders/fontshader";
 		const char DEBUG_FONT[] = "fonts/debug";
 		const char DEBUG_SHADER[] = "shaders/debug";

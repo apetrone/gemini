@@ -36,8 +36,8 @@
 
 #if PLATFORM_WINDOWS
 	// see if we still need these here...
-//	#define WIN32_LEAN_AND_MEAN 1
-//	#include <windows.h>
+	#define WIN32_LEAN_AND_MEAN 1
+	#include <windows.h>
 	#define MAX_PATH_SIZE 260
 	#define PATH_SEPARATOR '\\'
 	#define PATH_SEPARATOR_STRING "\\"
@@ -82,7 +82,7 @@ namespace platform
 	#define PLATFORM_MAIN int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR commandline, int show)
 	struct MainParameters
 	{
-		LPSTR commandline;
+		char* commandline;
 	};
 
 #elif PLATFORM_LINUX || PLATFORM_APPLE

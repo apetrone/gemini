@@ -107,6 +107,12 @@ namespace platform
 	kernel::Error run_application()
 	{
 		platform::startup();
+
+#if defined(PLATFORM_WINDOWS)
+		// set title bar height, debugdraw uses this as an offset for text.
+		kernel::parameters().titlebar_height = GetSystemMetrics(SM_CYCAPTION);
+#endif
+
 		// attempt kernel startup, mostly initializing core systems
 		kernel::Error error = kernel::startup();
 		if (error != kernel::NoError)

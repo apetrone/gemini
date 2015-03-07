@@ -92,7 +92,7 @@ namespace input
 	
 	bool ButtonState::is_down() const
 	{
-		return (state & Button_Held);
+		return (state & Button_Held) == Button_Held;
 	}
 	
 	bool ButtonState::was_pressed() const
