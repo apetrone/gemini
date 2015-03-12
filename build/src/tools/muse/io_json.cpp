@@ -37,6 +37,18 @@ using namespace core;
 
 namespace gemini
 {
+	typedef glm::quat RotationOutputType;
+	
+	template <class T>
+	bool RotationIsQuaternion() { return false; }
+	
+	template <>
+	bool RotationIsQuaternion<glm::quat>() { return true; }
+	
+	JsonModelWriter::JsonModelWriter() : write_rotations_as_quaternions(RotationIsQuaternion<RotationOutputType>())
+	{
+	}
+
 	void JsonModelWriter::jsonify_matrix(Json::Value& array, glm::mat4& matrix)
 	{
 		array.append(matrix[0].x);
@@ -84,10 +96,20 @@ namespace gemini
 		jnode["scaling"] = jscale;
 		
 		Json::Value jrotation;
-		jrotation.append(node->rotation.x);
-		jrotation.append(node->rotation.y);
-		jrotation.append(node->rotation.z);
-		jrotation.append(node->rotation.w);
+		if (write_rotations_as_quaternions)
+		{
+			glm::quat q = glm::quat(node->rotation);
+			jrotation.append(q.x);
+			jrotation.append(q.y);
+			jrotation.append(q.z);
+			jrotation.append(q.w);
+		}
+		else
+		{
+			jrotation.append(node->rotation.x);
+			jrotation.append(node->rotation.y);
+			jrotation.append(node->rotation.z);
+		}
 		jnode["rotation"] = jrotation;
 		
 		Json::Value jtranslation;
@@ -243,16 +265,34 @@ namespace gemini
 		
 		jvalue.append(q);
 	}
+	
+	template <class Type, class OutType>
+	OutType adapter(const Type& input)
+	{
+		return input;
+	}
+	
+	template <>
+	glm::quat adapter<glm::vec3, glm::quat>(const glm::vec3& input)
+	{
+		// convert from degrees to radians
+		glm::vec3 rads(
+			mathlib::degrees_to_radians(input.x),
+			mathlib::degrees_to_radians(input.y),
+			mathlib::degrees_to_radians(input.z)
+		);
+		return glm::quat(rads);
+	}
 
-	template <class Type>
-	void gather_keys(Json::Value& jkeys, std::vector<datamodel::Keyframe<Type>* >& keys )
+	template <class Type, class OutType>
+	void gather_keys(Json::Value& jkeys, std::vector<datamodel::Keyframe<OutType>* >& keys)
 	{
 		Json::Value jtime(Json::arrayValue);
 		Json::Value jvalue(Json::arrayValue);
 		for (auto key : keys)
 		{
 			jtime.append(key->time_seconds);
-			jsonify_value(jvalue, key->value);
+			jsonify_value(jvalue, adapter<Type, OutType>(key->value));
 		}
 		
 		jkeys["time"] = jtime;
@@ -316,13 +356,13 @@ namespace gemini
 					LOGV("# keys: %i %i %i\n", data->translation.keys.size(), data->rotation.keys.size(), data->scale.keys.size());
 
 					Json::Value jscale;
-					gather_keys(jscale, data->scale.keys);
+					gather_keys<glm::vec3, glm::vec3>(jscale, data->scale.keys);
 
 					Json::Value jrotation;
-					gather_keys(jrotation, data->rotation.keys);
+					gather_keys<glm::quat, glm::quat>(jrotation, data->rotation.keys);
 					
 					Json::Value jtranslation;
-					gather_keys(jtranslation, data->translation.keys);
+					gather_keys<glm::vec3, glm::vec3>(jtranslation, data->translation.keys);
 			
 					jnode["name"] = bone->name.c_str();
 					jnode["scale"] = jscale;

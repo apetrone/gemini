@@ -126,6 +126,7 @@ namespace gemini
 			
 			// reset transforms
 			node->translation = glm::vec3(0.0f, 0.0f, 0.0f);
+//			node->rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 			node->rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 			node->scale = glm::vec3(1.0f, 1.0f, 1.0f);
 			

@@ -43,7 +43,11 @@ namespace gemini
 	{
 		DECLARE_PLUGIN_CLASS(JsonModelWriter);
 		
+		bool write_rotations_as_quaternions;
+		
 	public:
+		JsonModelWriter();	
+	
 		void jsonify_matrix(Json::Value& array, glm::mat4& matrix);
 		void append_material(const datamodel::Material& node, Json::Value& jroot);
 		void append_node(datamodel::Node* node, Json::Value& jnodes);
