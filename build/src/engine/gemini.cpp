@@ -702,6 +702,8 @@ class ModelInterface : public gemini::IModelInterface
 			// model. Congrats.
 			assert(mesh->skeleton.size() < MAX_BONES);
 			
+			const glm::mat4& tx = this->get_local_transform();
+			
 			// recalculate
 			for (size_t index = 0; index < mesh->animation.total_bones; ++index)
 			{
@@ -726,6 +728,10 @@ class ModelInterface : public gemini::IModelInterface
 				}
 				
 				global_pose = saved_pose * joint->inverse_bind_matrix;
+				
+				
+				glm::mat4 bone_world_transform = tx * (saved_pose);
+				debugdraw::axes(bone_world_transform, 0.25f);
 			}
 		}
 		
@@ -757,8 +763,7 @@ class ModelInterface : public gemini::IModelInterface
 		
 		virtual int32_t get_total_animations() const
 		{
-			//			return animations.size();
-			return 1;
+			return animations.size();
 		}
 		
 		virtual void reset_channels(int32_t index)
@@ -787,6 +792,14 @@ class ModelInterface : public gemini::IModelInterface
 			duration_seconds = sequence->duration_seconds;
 			
 			return duration_seconds;
+		}
+		
+		virtual uint32_t get_total_bones(int32_t index) const
+		{
+			animation::SequenceId instance_index = animations[index];
+			animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
+
+			return instance->ChannelSet.size();
 		}
 	};
 	
