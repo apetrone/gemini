@@ -376,8 +376,98 @@ void test_hash()
 }
 */
 
+// Proof of concept inspired by docopt library for Python by Vladimir Keleshev
+// Must be C++
+// Must not use exceptions
+// Must compile with gcc4.8, clang, vs2010/vs2013
+
+struct Pattern
+{
+	virtual bool is_leaf() const { return false; }
+	virtual bool is_branch() const { return false; }
+};
+
+struct LeafPattern : public Pattern
+{
+protected:
+	std::string name;
+	std::string value;
+	
+public:
+	virtual bool is_leaf() const { return true; }
+	
+	virtual const std::string& get_name() const { return name; }
+	virtual const std::string& get_value() const { return value; }
+};
 
 
+struct Argument : public LeafPattern
+{
+	Argument(const std::string& longname)
+	{
+		name = longname;
+	}
+};
+
+struct Option : public LeafPattern
+{
+};
+
+struct Command : public LeafPattern
+{
+	Command(const std::string& longname)
+	{
+		name = longname;
+	}
+};
+
+
+struct BranchPattern : public Pattern
+{
+	typedef std::vector<Pattern*> PatternVector;
+	PatternVector children;
+	
+	virtual bool is_branch() const { return true; }
+	
+	virtual bool matches() const
+	{
+		return false;
+	}
+};
+
+struct Required : public BranchPattern
+{
+	virtual bool matches(const std::string& token) const
+	{
+		for(Pattern* child : children)
+		{
+			if (child->is_leaf())
+			{
+				LeafPattern* leaf = static_cast<LeafPattern*>(child);
+				if (leaf->get_name() == token)
+				{
+					return true;
+				}
+			}
+		}
+		
+		return false;
+	}
+};
+
+struct Optional : public BranchPattern
+{
+};
+
+struct OneOrMore : public BranchPattern
+{
+};
+
+struct Either : public BranchPattern
+{
+	Pattern* left;
+	Pattern* right;
+};
 
 class ArgumentParser
 {
@@ -462,13 +552,28 @@ public:
 	
 		ArgumentOption& operator()(const char* str, const char* help_string = 0)
 		{
-			owner->parse_argument(str, help_string);
+//			owner->parse_argument(str, help_string);
 			return *this;
 		}
 	};
 	
 	
-	void parse_argument(const std::string& str, const char* help_string)
+	struct ArgumentUsage
+	{
+		ArgumentParser* owner;
+		
+		ArgumentUsage(ArgumentParser* parser) : owner(parser)
+		{
+		}
+		
+		ArgumentUsage& operator()(const char* str, const char* help_string = 0)
+		{
+			owner->add_usage(str, help_string);
+			return *this;
+		}
+	};
+	
+	void add_usage(const std::string& str, const char* help_string)
 	{
 		fprintf(stdout, "-----------------------------\n");
 		std::regex argument_specifier("-([a-zA-Z])|--([[:alnum:]][-_[:alnum:]]+)=?(<.*>)?");
@@ -654,6 +759,11 @@ public:
 		entries.push_back(entry);
 	}
 
+	ArgumentParser::ArgumentUsage set_usage()
+	{
+		return ArgumentUsage(this);
+	}
+
 	ArgumentParser::ArgumentOption set_options()
 	{
 		return ArgumentOption(this);
@@ -757,14 +867,58 @@ public:
 void test_args(int argc, char** argv)
 {
 	ArgumentParser parser;
-
+	
+	// Options can be specified in any order.
+	
 	parser.set_options()
-	("[-t]")
-	("[-a|--animation]")
-	("[-h|--help|--version]")
-	("[-h | --help | --verbose]")
-	("[-v | --verbose-only]")
-	("[-f | --frame=<seconds>]")
+	("tcp <host> <port> [--timeout=<seconds>]")
+	("serial <port> [--baud=9600] [--timeout=<seconds>]")
+	("-h | --help | --version")
+	;
+
+	// long option
+	// single letter option
+	
+	// command, positional, optional elements, argument
+	// export <position> [--first] FILE
+	
+	// [command --option <argument>] == [command] [--option] [<argument>]
+	
+	// | means mutually exclusive
+	// ( ) groups elements
+	
+	// [options] (shorthand for all options) OR [-alh]
+	
+	// after [--] denotes following arguments are positional
+	
+	// [-] used to denote a program will take input from stdin as opposed to a file
+	// Usage: my_program [-| <file>...]
+	
+	/*
+		// anything that starts with a dash is documentation for the option
+		Options:
+			-- verbose  # GOOD
+			-o FILE		# GOOD
+			
+		Other:  --bad	# BAD
+	*/
+	
+	// [default: 2.95]
+	
+	// ellipses (allows additional arguments)
+	
+//	IEEE Std 1003.1
+	parser.set_options()
+	("export [--animation] <assets_root> (-d|--destination)=<assets_destination>")
+	;
+
+//	parser.set_options()
+//	("[-t]")
+//	("[-a|--animation]")
+//	("[-h|--help|--version]")
+//	("[-h | --help | --verbose]")
+//	("[-v | --verbose-only]")
+//	("[-f | --frame=<seconds>]")
 //	("tcp <host> <port> [--timeout=<seconds>]")
 //	("serial <port> [--baud=9600] [--timeout=<seconds>]")
 //	("-h | --help | --version")
@@ -789,6 +943,29 @@ void test_args(int argc, char** argv)
 //		vm.get("username", value);
 //		fprintf(stdout, "name is: %s\n", value.c_str());
 //	}
+
+
+
+
+
+
+	std::vector<Pattern*> patterns;
+	Required r0;
+	Command serial("serial");
+	r0.children.push_back(&serial);
+	patterns.push_back(&r0);
+
+	Required r1;
+	Argument port("port");
+	r1.children.push_back(&port);
+	patterns.push_back(&r1);
+
+	Optional baud;
+	patterns.push_back(&baud);
+	
+	Optional timeout;
+	patterns.push_back(&timeout);
+	
 }
 
 
