@@ -68,8 +68,8 @@ namespace gemini
 		
 		tools::IndentState indent;
 		
-		// accumulating the world transform
-		FbxAMatrix global_transform;
+		
+		std::vector<FbxNode*> skeletal_nodes;
 		
 		WeightSlotVector slots;
 		NodeDataVector nodedata;

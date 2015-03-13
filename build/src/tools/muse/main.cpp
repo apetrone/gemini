@@ -182,6 +182,9 @@ namespace gemini
 			ext.reader = AutodeskFbxReader::plugin_create();
 			register_extension<datamodel::Model>("fbx", ext);
 			
+//			ext.reader = OpenGEXReader::plugin_create();
+//			register_extension<datamodel::Model>("ogex", ext);
+			
 			ext.reader = 0;
 			ext.writer = JsonModelWriter::plugin_create();
 			register_extension<datamodel::Model>("model", ext);
@@ -267,17 +270,10 @@ namespace gemini
 int main(int argc, char** argv)
 {
 	using namespace gemini;
-	
-	ToolOptions options;
 
 	tools::startup();
 	
 	tools::register_types();
-	
-	// Commented out until I fix some issues with it.
-//	args::Argument* asset_root = args::add("asset_root","-d", "--asset-root", 0, 0);
-//	args::Argument* input_file = args::add("input_file", "-f", "--input", 0, 0);
-//	args::Argument* output_root = args::add("output_root", "-o", "--output-root", 0, 0);
 	
 	if (argc < 4)
 	{
@@ -289,7 +285,7 @@ int main(int argc, char** argv)
 	const char* input_file = argv[2];
 	const char* output_root = argv[3];
 	
-	
+	ToolOptions options;
 	uint64_t start_ticks = platform::instance()->get_time_microseconds();
 
 	// determine our input and output filenames

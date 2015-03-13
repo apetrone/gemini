@@ -486,16 +486,38 @@ namespace gemini
 				data = animation.add_node_data(node_name);
 			}
 			
-			for (FbxLongLong t = start.GetFrameCount(time_mode); t <= end.GetFrameCount(time_mode); ++t)
+			for (FbxLongLong local_time = start.GetFrameCount(time_mode); local_time <= end.GetFrameCount(time_mode); ++local_time)
 			{
 				FbxTime current_time;
-				current_time.SetFrame(t, time_mode);
+				current_time.SetFrame(local_time, time_mode);
 
 				float frame_time = current_time.GetSecondDouble();
 
+				// Unfortunately, EvaluateLocalTransform doesn't do what I expected.
+				// So we have to generate the local transforms from the global transforms.
+				
+				const FbxAMatrix& global_transform = fbxnode->EvaluateGlobalTransform(current_time);
+	
+				FbxAMatrix transform = global_transform;
 				FbxVector4 scaling = fbxnode->EvaluateLocalScaling(current_time);
 				FbxVector4 rotation = fbxnode->EvaluateLocalRotation(current_time);
 				FbxVector4 translation = fbxnode->EvaluateLocalTranslation(current_time);
+				
+				if (bone->parent != -1)
+				{
+					FbxNode* parent = state.skeletal_nodes[bone->parent];
+					assert(parent != 0);
+					
+					FbxAMatrix parent_global_transform = parent->EvaluateGlobalTransform(current_time);
+					FbxAMatrix local_transform = parent_global_transform.Inverse() * global_transform;
+					scaling = local_transform.GetS();
+					rotation = local_transform.GetR();
+					translation = local_transform.GetT();
+					LOGV("s: %g %g %g\n", scaling[0], scaling[1], scaling[2]);
+					LOGV("r: %g %g %g\n", rotation[0], rotation[1], rotation[2]);
+					LOGV("t: %g %g %g\n", translation[0], translation[1], translation[2]);
+				}
+
 
 				glm::vec3 key_scaling;
 				glm::quat key_rotation;
@@ -507,6 +529,12 @@ namespace gemini
 				
 				from_fbx(key_rotation, rotation);
 				from_fbx(key_translation, translation);
+				
+				// convert quaternion to euler angles for the datamodel
+//				glm::vec3 rotation_degrees = glm::eulerAngles(key_rotation);
+//				rotation_degrees.x = mathlib::radians_to_degrees(rotation_degrees.x);
+//				rotation_degrees.y = mathlib::radians_to_degrees(rotation_degrees.y);
+//				rotation_degrees.z = mathlib::radians_to_degrees(rotation_degrees.z);
 				
 				data->scale.add_key(frame_time, key_scaling);
 				data->rotation.add_key(frame_time, key_rotation);
@@ -576,11 +604,11 @@ namespace gemini
 						FbxAMatrix transform_matrix;
 						FbxAMatrix link_matrix;
 						FbxAMatrix inverse_bindpose_matrix;
-						
+
+
+
 						cluster->GetTransformMatrix(transform_matrix);
 						cluster->GetTransformLinkMatrix(link_matrix);
-						
-						// offset_matrix = link_matrix.inverse() * node_global_transform
 						
 						inverse_bindpose_matrix = link_matrix.Inverse() * transform_matrix * geometry_transform;
 						from_fbx(bone->inverse_bind_pose, inverse_bindpose_matrix);
@@ -656,35 +684,9 @@ namespace gemini
 		{
 			datamodel::Bone* bone = state.model->skeleton->add_bone(parent_index, fbxnode->GetName());
 
-			LOGV("%spopulate_skeleton: [parent_index=%i, index=%i, name=%s]\n", state.indent.indent(), parent_index, bone->index, fbxnode->GetName());
-			
-			FbxNode::EPivotSet pivot_set = FbxNode::eSourcePivot;
-			FbxDouble3 global_scale = fbxnode->GetGeometricScaling(pivot_set);
-			FbxDouble3 global_rotation = fbxnode->GetGeometricRotation(pivot_set);
-			FbxDouble3 global_translation = fbxnode->GetGeometricTranslation(pivot_set);
-			LOGV("%ss: %g %g %g\n", state.indent.indent(), global_scale[0], global_scale[1], global_scale[2]);
-			LOGV("%sr: %g %g %g\n", state.indent.indent(), global_rotation[0], global_rotation[1], global_rotation[2]);
-			LOGV("%st: %g %g %g\n", state.indent.indent(), global_translation[0], global_translation[1], global_translation[2]);
-			
-			
-			FbxAMatrix& local_transform = fbxnode->EvaluateLocalTransform();
-			const FbxDouble3& local_scale = local_transform.GetS();
-			const FbxDouble3& local_rotation = local_transform.GetR();
-			const FbxDouble3& local_translation = local_transform.GetT();
-			LOGV("%sls: %g %g %g\n", state.indent.indent(), local_scale[0], local_scale[1], local_scale[2]);
-			LOGV("%slr: %g %g %g\n", state.indent.indent(), local_rotation[0], local_rotation[1], local_rotation[2]);
-			LOGV("%slt: %g %g %g\n", state.indent.indent(), local_translation[0], local_translation[1], local_translation[2]);
-			
-			
-			//			FbxAMatrix& global_transform = fbxnode->EvaluateGlobalTransform();
-			//			const FbxDouble3& global_scale = global_transform.GetS();
-			//			const FbxDouble3& global_rotation = global_transform.GetR();
-			//			const FbxDouble3& global_translation = global_transform.GetT();
-			//			LOGV("gs: %g %g %g\n", global_scale[0], global_scale[1], global_scale[2]);
-			//			LOGV("gr: %g %g %g\n", global_rotation[0], global_rotation[1], global_rotation[2]);
-			//			LOGV("gt: %g %g %g\n", global_translation[0], global_translation[1], global_translation[2]);
-			
+//			LOGV("%spopulate_skeleton: [parent_index=%i, index=%i, name=%s]\n", state.indent.indent(), parent_index, bone->index, fbxnode->GetName());
 			parent_index = bone->index;
+			state.skeletal_nodes.push_back(fbxnode);
 		}
 		
 		for (int index = 0; index < fbxnode->GetChildCount(); ++index)
@@ -734,7 +736,6 @@ namespace gemini
 			LOGV("-------------- %s --------------\n", node->name.c_str());
 
 			NodeData nodedata;
-			nodedata.global_transform = state.global_transform * fbxnode->EvaluateLocalTransform();
 			nodedata.node = node;
 			state.nodedata.push_back(nodedata);
 			
@@ -766,78 +767,13 @@ namespace gemini
 				LOGW("Node type ignored: %s, name = %s\n", node->type.c_str(), fbxnode->GetName());
 			}
 
-
-			FbxVector4 zero(0, 0, 0);
-			fbxnode->SetPivotState(FbxNode::eSourcePivot, FbxNode::ePivotActive);
-			fbxnode->SetPivotState(FbxNode::eDestinationPivot, FbxNode::ePivotActive);
-	//
-			FbxNode::EPivotSet pivot_set = FbxNode::eSourcePivot;
-
-	//		fbxnode->SetPostRotation(pivot_set, zero);
-	//		fbxnode->SetPreRotation(pivot_set, zero);
-	//		fbxnode->SetRotationOffset(pivot_set, zero);
-	//		fbxnode->SetScalingOffset(pivot_set, zero);
-	//		fbxnode->SetRotationPivot(pivot_set, zero);
-	//		fbxnode->SetScalingPivot(pivot_set, zero);
-	//		fbxnode->SetRotationOrder(pivot_set, eEulerXYZ);
-	//		fbxnode->SetQuaternionInterpolation(pivot_set, fbxnode->GetQuaternionInterpolation(pivot_set));
-
-	//		fbxnode->ResetPivotSet(FbxNode::eSourcePivot);
-
-	//		FbxDouble3 global_scale = fbxnode->GetGeometricScaling(pivot_set);
-	//		FbxDouble3 global_rotation = fbxnode->GetGeometricRotation(pivot_set);
-	//		FbxDouble3 global_translation = fbxnode->GetGeometricTranslation(pivot_set);
-	//		LOGV("s: %g %g %g\n", global_scale[0], global_scale[1], global_scale[2]);
-	//		LOGV("r: %g %g %g\n", global_rotation[0], global_rotation[1], global_rotation[2]);
-	//		LOGV("t: %g %g %g\n", global_translation[0], global_translation[1], global_translation[2]);
-
-
 			FbxAMatrix& local_transform = fbxnode->EvaluateLocalTransform();
 			const FbxDouble3& local_scale = local_transform.GetS();
 			const FbxDouble3& local_rotation = local_transform.GetR();
 			const FbxDouble3& local_translation = local_transform.GetT();
-			LOGV("ls: %g %g %g\n", local_scale[0], local_scale[1], local_scale[2]);
-			LOGV("lr: %g %g %g\n", local_rotation[0], local_rotation[1], local_rotation[2]);
-			LOGV("lt: %g %g %g\n", local_translation[0], local_translation[1], local_translation[2]);
-
-			
-//			FbxAMatrix& global_transform = fbxnode->EvaluateGlobalTransform();
-//			const FbxDouble3& global_scale = global_transform.GetS();
-//			const FbxDouble3& global_rotation = global_transform.GetR();
-//			const FbxDouble3& global_translation = global_transform.GetT();
-//			LOGV("gs: %g %g %g\n", global_scale[0], global_scale[1], global_scale[2]);
-//			LOGV("gr: %g %g %g\n", global_rotation[0], global_rotation[1], global_rotation[2]);
-//			LOGV("gt: %g %g %g\n", global_translation[0], global_translation[1], global_translation[2]);
-			
-			
-			
-//			const FbxDouble3& rotation_pivot = fbxnode->GetRotationPivot(pivot_set);
-//			LOGV("rotation_pivot: %g %g %g\n", rotation_pivot[0], rotation_pivot[1], rotation_pivot[2]);
-			
-//			const FbxDouble3& pre_rotation = fbxnode->GetPreRotation(pivot_set);
-//			LOGV("pre_rotation: %g %g %g\n", pre_rotation[0], pre_rotation[1], pre_rotation[2]);
-			
-//			const FbxDouble3& post_rotation = fbxnode->GetPostRotation(pivot_set);
-//			LOGV("post_rotation: %g %g %g\n", post_rotation[0], post_rotation[1], post_rotation[2]);
-			
-//			const FbxDouble3& rotation_offset = fbxnode->GetRotationOffset(pivot_set);
-//			LOGV("rotation_offset: %g %g %g\n", rotation_offset[0], rotation_offset[1], rotation_offset[2]);
-			
-//			const FbxDouble3& scaling_pivot = fbxnode->GetScalingPivot(pivot_set);
-//			LOGV("scaling_pivot: %g %g %g\n", scaling_pivot[0], scaling_pivot[1], scaling_pivot[2]);
-					
-//			const FbxDouble3& scaling_offset = fbxnode->GetScalingOffset(pivot_set);
-//			LOGV("scaling_offset: %g %g %g\n", scaling_offset[0], scaling_offset[1], scaling_offset[2]);
-			
-			
-
-					
-	//		FbxDouble3 translation = fbxnode->LclTranslation.Get();
-	//		FbxDouble3 rotation = fbxnode->LclRotation.Get();
-	//		FbxDouble3 scaling = fbxnode->LclScaling.Get();
-	//		from_fbx(node->scale, scaling);
-	//		from_fbx(node->rotation, rotation);
-	//		from_fbx(node->translation, translation);
+//			LOGV("ls: %g %g %g\n", local_scale[0], local_scale[1], local_scale[2]);
+//			LOGV("lr: %g %g %g\n", local_rotation[0], local_rotation[1], local_rotation[2]);
+//			LOGV("lt: %g %g %g\n", local_translation[0], local_translation[1], local_translation[2]);
 
 			from_fbx(node->scale, local_scale);
 			
@@ -850,7 +786,6 @@ namespace gemini
 			// if this node isn't a skeleton; then we traverse the hierarchy
 			if (node_attribute_type != FbxNodeAttribute::eSkeleton)
 			{
-				state.global_transform = state.global_transform * fbxnode->EvaluateLocalTransform();
 				for (int index = 0; index < fbxnode->GetChildCount(); ++index)
 				{
 					populate_hierarchy(state, node, fbxnode->GetChild(index));
@@ -972,6 +907,22 @@ namespace gemini
 
 	
 		extension_state.model = model;
+		
+		
+//		LOGV("pose count = %i\n", scene->GetPoseCount());
+//		
+//		if (scene->GetPoseCount() > 0)
+//		{
+//			FbxPose* pose = scene->GetPose(0);
+//			LOGV("is_bind_pose: %s\n", pose->IsBindPose() ? "Yes" : "No");
+//			
+//			for (int p = 0; p < pose->GetCount(); ++p)
+//			{
+//				FbxNode* node = pose->GetNode(p);
+//				LOGV("node: %i, %s\n", p, node->GetName());
+//			}
+//		}
+		
 		
 		FbxNode* fbxroot = scene->GetRootNode();
 		if (fbxroot)
