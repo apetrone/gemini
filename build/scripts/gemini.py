@@ -745,14 +745,7 @@ def products(arguments, **kwargs):
 			"ole32",
 			"user32"
 		]
-
-		windows.sources += [
-			"src/engine/platforms/desktop/entry_windows.cpp"
-		]
-
-
-
-
+		
 	iphoneos = gemini.layout(platform="iphoneos")
 	# iphoneos.prebuild_commands += [
 	# 	"python %s -c ../assets/ios.conf -y" % (BLACKSMITH_PATH)
