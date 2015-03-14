@@ -503,7 +503,22 @@ def get_rnd(arguments, libplatform, libcore, librenderer, **kwargs):
 
 	rnd_linux.cflags += [
 		"-fPIC"
-	]	
+	]
+
+	# Fix undefined reference for SysFreeString
+	rnd_windows = rnd.layout(platform="windows")
+	rnd_windows.links += [
+		"OpenGL32",
+		#"OpenAL32",
+		"gdi32",
+		"winspool",
+		"comdlg32",
+		"advapi32",
+		"shell32",
+		"ole32",
+		"user32",
+		"oleaut32"
+	]
 
 	return rnd
 

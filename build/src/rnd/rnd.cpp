@@ -29,6 +29,12 @@ using namespace std;
 
 #if USE_SDL2
 	#include <SDL.h>
+
+	// So, on Windows, this is defined to SDL_main.
+	// Don't do that.
+#if PLATFORM_WINDOWS
+	#undef main
+#endif
 #endif
 
 
@@ -95,9 +101,9 @@ void test_function()
 	#include <unistd.h>
 	#include <termios.h>
 #elif defined(WIN32)
-	#error Not implemented on this platform!
+	//#error Not implemented on this platform!
 #endif
-
+#if 0
 class SerialPort
 {
 public:
@@ -198,7 +204,7 @@ void SerialPort::baud_rate(uint32_t baud_rate)
 	// set new options
 	tcsetattr(socket, TCSANOW, &options);
 }
-
+#endif
 
 struct ApplicationState
 {
