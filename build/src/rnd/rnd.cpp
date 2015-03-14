@@ -391,6 +391,7 @@ struct Pattern
 {
 	virtual bool is_leaf() const { return false; }
 	virtual bool is_branch() const { return false; }
+	virtual Pattern* matches(const std::string& token) { return 0; }
 };
 
 struct LeafPattern : public Pattern
@@ -404,6 +405,14 @@ public:
 	
 	virtual const std::string& get_name() const { return name; }
 	virtual const std::string& get_value() const { return value; }
+	virtual Pattern* matches(const std::string& token)
+	{
+		if (token == name)
+		{
+			return this;
+		}
+		return 0;
+	}
 };
 
 
@@ -435,29 +444,29 @@ struct BranchPattern : public Pattern
 	
 	virtual bool is_branch() const { return true; }
 	
-	virtual bool matches() const
+	virtual Pattern* matches(const std::string& toke)
 	{
-		return false;
+		return 0;
 	}
 };
 
 struct Required : public BranchPattern
 {
-	virtual bool matches(const std::string& token) const
+	virtual Pattern* matches(const std::string& token)
 	{
 		for(Pattern* child : children)
 		{
 			if (child->is_leaf())
 			{
 				LeafPattern* leaf = static_cast<LeafPattern*>(child);
-				if (leaf->get_name() == token)
+				if (leaf->matches(token))
 				{
-					return true;
+					return leaf;
 				}
 			}
 		}
 		
-		return false;
+		return 0;
 	}
 };
 
@@ -964,14 +973,53 @@ void test_args(int argc, char** argv)
 	Required r1;
 	Argument port("port");
 	r1.children.push_back(&port);
-	patterns.push_back(&r1);
+	//patterns.push_back(&r1);
 
 	Optional baud;
-	patterns.push_back(&baud);
+	//patterns.push_back(&baud);
 	
 	Optional timeout;
-	patterns.push_back(&timeout);
+	//patterns.push_back(&timeout);
+
+
+	std::vector<std::string> arguments;
+	arguments.push_back("serial");
+	arguments.push_back("10423");
 	
+	
+	size_t total_tokens = arguments.size();
+	size_t argument_index = 0;
+	Pattern* pattern = patterns[0];
+	while (true)
+	{
+		const std::string& arg = arguments[argument_index];
+		if (pattern->is_branch())
+		{
+			BranchPattern* branch = static_cast<BranchPattern*>(pattern);
+			Pattern* match = branch->matches(arg);
+			if (match)
+			{
+				pattern = match;
+				++argument_index;
+				continue;
+			}
+			else
+			{
+				LOGV("error! missing token\n");
+				break;
+			}
+		}
+		else
+		{
+			// must be a leaf
+			LeafPattern* leaf = static_cast<LeafPattern*>(pattern);
+			if (leaf->matches(arg))
+			{
+
+			}
+			break;
+		}
+	}
 }
 
 
