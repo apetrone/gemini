@@ -116,14 +116,12 @@ namespace core
 					if (this->longname == option->longname)
 					{
 						LOGV("matched: %s -> '%s'\n", option->longname.c_str(), option->get_value().c_str());
-						//patterns.pop();
-						// we cannot pop, but we can erase.
+
+						// erase this item
 						it = patterns.erase(it);
 						return true;
 					}
 				}
-				
-				//LOGV("class: %s\n", p->get_classname());
 			}
 			return matched;
 		} // single_match
@@ -188,8 +186,7 @@ namespace core
 				{
 					// parse a long option
 					LOGV("\"%s\" is a long option\n", arg.c_str());
-					Option* option = parse_long(tokens, options_registry);
-					patterns.push_back(option);
+					parse_long(patterns, tokens, options_registry);
 				}
 				else if (starts_with("-", arg))
 				{
@@ -244,7 +241,7 @@ namespace core
 			return option;
 		}
 		
-		Option* ArgumentParser::parse_long(TokenWrapper& tokens, PatternList& options)
+		void ArgumentParser::parse_long(PatternList& results, TokenWrapper& tokens, PatternList& options)
 		{
 			// long ::= '--' chars [ ( ' ' | '=' ) chars ] ;
 			// split at the '=', if one exists.
@@ -296,7 +293,7 @@ namespace core
 				}
 
 				option = new Option("", longname, total_arguments);
-				options_registry.push_back(option);
+				options.push_back(option);
 
 				if (state == ParsingInput)
 				{
@@ -340,9 +337,7 @@ namespace core
 				}
 			}
 			
-			options.push_back(option);
-			
-			return option;
+			results.push_back(option);
 		}
 		
 		void ArgumentParser::parse_short(PatternList& results, TokenWrapper &tokens, PatternList &options)
@@ -451,8 +446,7 @@ namespace core
 			else if (starts_with("--", token) && token != "--")
 			{
 				//LOGV("this is a long option\n");
-				Option* option = parse_long(tokens, options_registry);
-				results.push_back(option);
+				parse_long(results, tokens, options_registry);
 			}
 			else if (starts_with("-", token) && token != "-")
 			{

@@ -34,10 +34,14 @@ namespace core
 {
 	namespace argparse
 	{
-		// Proof of concept inspired by docopt library for Python by Vladimir Keleshev
-		// Must be C++
-		// Must not use exceptions
-		// Must compile with gcc4.8, clang, vs2010/vs2013
+		// ArgumentParser heavily inspired by docopt library for Python
+		// by Vladimir Keleshev.
+		
+		// My goals are the following:
+		// - Must be C++
+		// - Must not use exceptions or rtti
+		// - Must compile with gcc4.8, clang, vs2013+
+		// - Should follow docopt's ideals as closely as possible
 
 		struct TokenInfo;
 		struct Pattern;
@@ -411,7 +415,7 @@ namespace core
 								const std::string& longname,
 								int& found_options);
 			
-			Option* parse_long(TokenWrapper& tokens, PatternList& options);
+			void parse_long(PatternList& results, TokenWrapper& tokens, PatternList& options);
 			void parse_short(PatternList& results, TokenWrapper& tokens, PatternList& options);
 			
 			void parse_atom(TokenWrapper& tokens, PatternList& results);
