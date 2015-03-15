@@ -28,6 +28,8 @@
 #include <string>
 #include <vector>
 
+#include <core/dictionary.h>
+
 namespace core
 {
 	namespace argparse
@@ -371,6 +373,61 @@ namespace core
 			
 			virtual const char* get_classname() const { return "Either"; }
 		};
+		
+		
+		
+		// ---------------------------------------------------------------------
+		// ArgumentParser
+		// ---------------------------------------------------------------------
+		
+		class ArgumentParser
+		{
+		public:
+			std::vector<Required*> usage_patterns;
+			std::vector<Option*> options_registry;
+			
+			ArgumentParser();
+			~ArgumentParser();
+			
+			
+			void try_parse(TokenWrapper& tokens, PatternList& patterns);
+			
+			Option* find_option(std::vector<Option*>& options,
+								const std::string& shortname,
+								const std::string& longname,
+								int& found_options);
+			
+			Option* parse_long(TokenWrapper& tokens, std::vector<Option*>& options);
+			
+			void parse_atom(TokenWrapper& tokens, PatternList& results);
+			
+			void parse_sequence(TokenWrapper& tokens, PatternList& results);
+			
+			void parse_expr(TokenWrapper& tokens, PatternList& results);
+			
+			
+			void parse_usage(const std::string& formal_usage, const char* help_string);
+			
+			
+			std::string get_section_regex(const std::string& name);
+			
+			std::vector<std::string> split(const std::string& input, const std::string& substring);
+			
+			std::string trim_left(const std::string& input, const std::string& chars = "\t ");
+			
+			std::vector<std::string> find_section(const char* docstring, const std::string& section_name, bool& section_was_found);
+			
+			
+			void parse_options(std::vector<std::string> lines);
+			
+			void parse_usage(std::vector<std::string> lines);
+			
+			void check_extra(bool enable_automatic_help, const char* version_string);
+			
+			core::Dictionary<std::string> parse(const char* docstring, int argc, char** argv, const char* version_string = "");
+			
+		}; // ArgumentParser
+		
 		
 	} // namespace argparse
 } // namespace core
