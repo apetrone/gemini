@@ -185,10 +185,10 @@ namespace core
 		{
 			int argument_index;
 			int pattern_index;
-			TokenList& arguments;
+			std::vector<std::string>& arguments;
 			PatternList input;
 			
-			TokenInfo(TokenList& input_arguments) :
+			TokenInfo(std::vector<std::string>& input_arguments) :
 			arguments(input_arguments),
 			argument_index(0),
 			pattern_index(0)

@@ -390,12 +390,20 @@ using namespace core::argparse;
 
 
 
-
-
 class ArgumentParser
 {
 public:
-	Pattern* root;
+	std::vector<Required*> usage_patterns;
+	
+	ArgumentParser() {}
+	~ArgumentParser()
+	{
+		for (Required* p : usage_patterns)
+		{
+			delete p;
+		}
+		usage_patterns.clear();
+	}
 
 	struct ArgumentOption
 	{
@@ -407,20 +415,83 @@ public:
 	
 		ArgumentOption& operator()(const char* str, const char* help_string = 0)
 		{
+			owner->parse_option(str, help_string);
+			return *this;
+		}
+	};
+	
+	
+	struct ArgumentUsage
+	{
+		ArgumentParser* owner;
+		
+		ArgumentUsage(ArgumentParser* parser) : owner(parser)
+		{
+		}
+		
+		ArgumentUsage& operator()(const char* str, const char* help_string = 0)
+		{
 			owner->parse_usage(str, help_string);
 			return *this;
 		}
 	};
 	
 	
-	//struct ArgumentUsage
-	//{
-	//	ArgumentParser* owner;
-	//	
-	//	ArgumentUsage(ArgumentParser* parser) : owner(parser)
-	//	{
-	//	}
-	//};
+	
+	void try_parse(TokenWrapper& tokens, PatternList& patterns)
+	{
+		int argument_index = 0;
+		int pattern_index = 0;
+		
+
+		// first, we build a list of the input tokens and categorize these
+		// into a series of patterns.
+		size_t total_tokens = tokens.size();
+		while (true)
+		{
+			const std::string& arg = tokens.current();
+			
+			if (arg == "")
+			{
+				LOGV("end of arguments\n");
+				break;
+			}
+			
+			if (arg == "--")
+			{
+				// the following arguments are positional
+				LOGV("The following arguments will be treated as positional arguments\n");
+				tokens.pop();
+				break;
+			}
+			else if (starts_with("--", arg))
+			{
+				// parse a long option
+				LOGV("\"%s\" is a long option\n", arg.c_str());
+				Option* option = parse_long(tokens);
+				patterns.push_back(option);
+			}
+			else if (starts_with("-", arg))
+			{
+				// parse a short option
+				LOGV("\"%s\" is a short option (or group of)\n", arg.c_str());
+				tokens.pop();
+			}
+			else
+			{
+				// parse an argument
+				LOGV("\"%s\" is an argument\n", arg.c_str());
+				Argument* newargument = new Argument("", arg);
+				tokens.pop();
+				patterns.push_back(newargument);
+			}
+		}
+		
+		// now that info.input is populated, we can determine how to map
+		// them to the usage branches.
+		
+		
+	}
 
 	Option* parse_long(TokenWrapper& tokens)
 	{
@@ -437,22 +508,39 @@ public:
 		// TODO: check options for matches by name
 		// TODO: check for non-unique prefix
 
-		size_t eq_pos = long_arg.find('=');
-		if (eq_pos != std::string::npos)
+
+		Option* option = 0;
+		
+		int found_options = 0;
+		
+		std::string longname = long_arg;
+		std::string value;
+	
+		if (found_options > 1)
 		{
-			std::string longname = long_arg.substr(0, eq_pos);
-
-			total_arguments = 1;
-			Option* option = new Option("", longname, total_arguments);
+			// TODO: warn about non unique option prefix
+			// specified ambiguously 2+ times?
+		}
+		else if (found_options == 0)
+		{
+			size_t eq_pos = long_arg.find('=');
+			if (eq_pos != std::string::npos)
+			{
+				longname = long_arg.substr(0, eq_pos);
+				total_arguments = 1;
+				value = long_arg.substr(eq_pos+1);
+			}
+			
+			option = new Option("", longname, total_arguments, value);
 			// TODO: add to main options list
-
-			return option;
+		}
+		else
+		{
+			// TODO: grab the existing option
+			// if it accepts an argument, then consume one (if we can)
 		}
 
-		// We haven't reached this far yet!
-		assert(0);
-
-		return 0;
+		return option;
 	}
 
 	void parse_atom(TokenWrapper& tokens, PatternList& results)
@@ -540,6 +628,11 @@ public:
 		
 	}
 
+	void parse_option(const std::string& option, const char* help_string)
+	{
+		LOGV("option: %s\n", option.c_str());
+	}
+
 	void parse_usage(const std::string& formal_usage, const char* help_string)
 	{
 		// the formal usage pattern needs to be split up into tokens
@@ -585,45 +678,13 @@ public:
 		//	LOGV("pattern type: %s\n", pattern->get_classname());
 		//}
 
-		PatternList input_items;
-#if 1
-		Argument a("", "tcp"); input_items.push_back(&a);
-		Argument b("", "localhost"); input_items.push_back(&b);
-		Argument c("", "27015"); input_items.push_back(&c);
-		Option d("", "--timeout", 1, "30"); input_items.push_back(&d);
-		Option baud("", "--baud", 1, "4500"); input_items.push_back(&baud);
-//		Option f("-f", "--file", 1, "/dev/USBtty0"); input_items.push_back(&f);
-#elif 0
-		Argument a("", "ship"); input_items.push_back(&a);
-		Argument b("", "adam"); input_items.push_back(&b);
-		Option speed("", "--speed", 1, "100"); input_items.push_back(&speed);
-		Argument c("", "move"); input_items.push_back(&c);
-		Argument d("", "30"); input_items.push_back(&d);
-		Argument e("", "50"); input_items.push_back(&e);
-		//Argument f("", "100"); input_items.push_back(&f);
-		
-#endif
-
-		PatternWrapper input(input_items, nullptr);
-
-		Required pattern(usage_pattern);
-
-		bool matches = pattern.matches(input);
-		LOGV("matches: %i\n", matches);
-
-		// if matches == 0; we didn't match all required arguments
-
-		// too many arguments specified
-		if (input.size() > 0)
-		{
-			LOGV("ignoring unrecognized arguments\n");
-		}
+		usage_patterns.push_back(new Required(usage_pattern));
 	}
 	
-	//ArgumentParser::ArgumentUsage set_usage()
-	//{
-	//	return ArgumentUsage(this);
-	//}
+	ArgumentParser::ArgumentUsage set_usage()
+	{
+		return ArgumentUsage(this);
+	}
 
 	ArgumentParser::ArgumentOption set_options()
 	{
@@ -632,12 +693,19 @@ public:
 	
 	void parse(int argc, char** argv, core::Dictionary<std::string>& dict)
 	{
-		std::vector<std::string> tokens;
+		TokenList tokens;
 		for (int i = 1; i < argc; ++i)
 		{
 			tokens.push_back(argv[i]);
-			fprintf(stdout, "token: %s\n", argv[i]);
 		}
+		
+
+		TokenWrapper tokenwrapper(tokens, std::string(""));
+		PatternList patterns;
+		try_parse(tokenwrapper, patterns);
+		
+		
+		
 		
 		// scan through all entries
 		bool failure = true;
@@ -651,58 +719,50 @@ public:
 		//		fprintf(stdout, "%s\n", e.line);
 		//	}
 		//}
+		
+		
+		PatternList input_items;
+#if 0
+		Argument a("", "tcp"); input_items.push_back(&a);
+		Argument b("", "localhost"); input_items.push_back(&b);
+		Argument c("", "27015"); input_items.push_back(&c);
+		Option d("", "--timeout", 1, "30"); input_items.push_back(&d);
+		Option baud("", "--baud", 1, "4500"); input_items.push_back(&baud);
+		//		Option f("-f", "--file", 1, "/dev/USBtty0"); input_items.push_back(&f);
+#elif 0
+		Argument a("", "ship"); input_items.push_back(&a);
+		Argument b("", "adam"); input_items.push_back(&b);
+		Option speed("", "--speed", 1, "100"); input_items.push_back(&speed);
+		Argument c("", "move"); input_items.push_back(&c);
+		Argument d("", "30"); input_items.push_back(&d);
+		Argument e("", "50"); input_items.push_back(&e);
+		//Argument f("", "100"); input_items.push_back(&f);
+		
+#endif
+
+#if 0
+		PatternWrapper input(input_items, nullptr);
+
+		for (Required* usage : usage_patterns)
+		{
+			bool matches = usage->matches(input);
+			LOGV("matches: %i\n", matches);
+
+			// if matches == 0; we didn't match all required arguments
+			// dump usage strings
+
+			// too many arguments specified
+			if (input.size() > 0)
+			{
+				LOGV("ignoring unrecognized arguments\n");
+			}
+		}
+#endif
 	}
+
 };
 
-void try_parse(PatternList& patterns, TokenInfo& info)
-{
-	// first, we build a list of the input tokens and categorize these
-	// into a series of patterns.
-	size_t total_tokens = info.arguments.size();
-	while (true)
-	{
-		if (info.argument_index > (total_tokens - 1))
-		{
-			LOGV("end of arguments\n");
-			break;
-		}
 
-		const std::string& arg = info.arguments[info.argument_index];
-		Pattern* pattern = patterns[info.pattern_index];
-
-		if (arg == "--")
-		{
-			// the following arguments are positional
-			LOGV("The following arguments will be treated as positional arguments\n");
-			break;
-		}
-		else if (starts_with("--", arg))
-		{
-			// parse a long option
-			LOGV("\"%s\" is a long option\n", arg.c_str());
-			++info.argument_index;
-		}
-		else if (starts_with("-", arg))
-		{
-			// parse a short option
-			LOGV("\"%s\" is a short option (or group of)\n", arg.c_str());
-			++info.argument_index;
-		}
-		else
-		{
-			// parse an argument
-			LOGV("\"%s\" is an argument\n", arg.c_str());
-			++info.argument_index;
-			Argument* newargument = new Argument("", arg);
-			info.input.push_back(newargument);
-		}
-	}
-
-	// now that info.input is populated, we can determine how to map
-	// them to the usage branches.
-
-
-}
 
 void test_args(int argc, char** argv)
 {
@@ -710,12 +770,19 @@ void test_args(int argc, char** argv)
 	
 	// Options can be specified in any order.
 	
-	parser.set_options()
+	parser.set_usage()
 	//("tcp <host> <port>")
 	("tcp <host> <port> [--baud=9600] [--timeout=<seconds>]")
 	//("serial <port> [--baud=9600] [--timeout=<seconds>|--block] [<name>]")
 	//("-h | --help | --version")
 	;
+
+
+#if 0
+	parser.set_options()
+	("-f FILE", "file name")
+	;
+#endif
 
 //	parser.set_options()
 	//("ship new <name>...")
@@ -771,7 +838,7 @@ void test_args(int argc, char** argv)
 
 //	("name [-a|--animation-only] <username>")
 //	("export <source_asset_root> <relative_asset_file> <destination_asset_root>")
-	;
+//	;
 
 
 //	parser.set_options()
@@ -780,9 +847,9 @@ void test_args(int argc, char** argv)
 //	("-h | --help | --version")
 //	;
 	
-//	core::Dictionary<std::string> vm;
-//	parser.parse(argc, argv, vm);
-//	
+	core::Dictionary<std::string> vm;
+	parser.parse(argc, argv, vm);
+//
 //	if (vm.has_key("name"))
 //	{
 //		std::string value;
@@ -790,33 +857,15 @@ void test_args(int argc, char** argv)
 //		fprintf(stdout, "name is: %s\n", value.c_str());
 //	}
 
-
-
-
-
-	//PatternList patterns;
-	//
-	//Command serial("serial", "");
-	//patterns.push_back(&serial);
-
-	//Argument port("port", "");
-	//patterns.push_back(&port);
-
-	////Optional baud;
-	////patterns.push_back(&baud);
-	//
-	////Optional timeout;
-	////patterns.push_back(&timeout);
-
-	//Required r0(patterns);
-	//TokenList arguments;
-	//arguments.push_back("serial");
-	//arguments.push_back("10423");
-	////arguments.push_back("--baud=9600");
-
-
-	//TokenInfo tokeninfo(arguments);
-	//try_parse(patterns, tokeninfo);
+	/*
+	parser.set_options()
+	("-f FILE"  Specify the file name")
+	("--no-rtti  Disable RTTI")
+	("--with-vr  Enable Virtual Reality HMD")
+	("--animation-only  Export animations only")
+	("--skeleton-only  Export skeletons only")
+	;
+	*/
 }
 
 
