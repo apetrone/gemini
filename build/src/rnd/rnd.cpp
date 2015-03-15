@@ -394,6 +394,7 @@ class ArgumentParser
 {
 public:
 	std::vector<Required*> usage_patterns;
+	std::vector<Option*> options_registry;
 	
 	ArgumentParser() {}
 	~ArgumentParser()
@@ -403,39 +404,13 @@ public:
 			delete p;
 		}
 		usage_patterns.clear();
+		
+		for (Option* o : options_registry)
+		{
+			delete o;
+		}
+		options_registry.clear();
 	}
-
-	struct ArgumentOption
-	{
-		ArgumentParser* owner;
-		
-		ArgumentOption(ArgumentParser* parent) : owner(parent)
-		{
-		}
-	
-		ArgumentOption& operator()(const char* str, const char* help_string = 0)
-		{
-			owner->parse_option(str, help_string);
-			return *this;
-		}
-	};
-	
-	
-	struct ArgumentUsage
-	{
-		ArgumentParser* owner;
-		
-		ArgumentUsage(ArgumentParser* parser) : owner(parser)
-		{
-		}
-		
-		ArgumentUsage& operator()(const char* str, const char* help_string = 0)
-		{
-			owner->parse_usage(str, help_string);
-			return *this;
-		}
-	};
-	
 	
 	
 	void try_parse(TokenWrapper& tokens, PatternList& patterns)
@@ -460,7 +435,7 @@ public:
 			if (arg == "--")
 			{
 				// the following arguments are positional
-				LOGV("The following arguments will be treated as positional arguments\n");
+				LOGV("The following arguments will be treated as positional\n");
 				tokens.pop();
 				break;
 			}
@@ -468,7 +443,7 @@ public:
 			{
 				// parse a long option
 				LOGV("\"%s\" is a long option\n", arg.c_str());
-				Option* option = parse_long(tokens);
+				Option* option = parse_long(tokens, options_registry);
 				patterns.push_back(option);
 			}
 			else if (starts_with("-", arg))
@@ -492,11 +467,35 @@ public:
 		
 		
 	}
-
-	Option* parse_long(TokenWrapper& tokens)
+	
+	Option* find_option(std::vector<Option*>& options,
+						const std::string& shortname,
+						const std::string& longname,
+						int& found_options)
 	{
-		int total_arguments = 0;
+		Option* option = 0;
+		
+		bool test_shortname = !shortname.empty();
+		bool test_longname = !longname.empty();
+		
+		for (Option* o : options)
+		{
+			if (test_shortname && o->get_name() == shortname)
+			{
+				option = o;
+				++found_options;
+			}
+			else if (test_longname && o->longname == longname)
+			{
+				option = o;
+				++found_options;
+			}
+		}
+		return option;
+	}
 
+	Option* parse_long(TokenWrapper& tokens, std::vector<Option*>& options)
+	{
 		// long ::= '--' chars [ ( ' ' | '=' ) chars ] ;
 		// split at the '=', if one exists.
 		std::string long_arg = tokens.pop();
@@ -505,16 +504,28 @@ public:
 		// to: ('--longname', '=', '<argument>')
 
 
-		// TODO: check options for matches by name
-		// TODO: check for non-unique prefix
-
-
 		Option* option = 0;
-		
 		int found_options = 0;
-		
-		std::string longname = long_arg;
+		std::string longname;
 		std::string value;
+		int total_arguments = 0;
+		option = find_option(options, "", longname, found_options);
+		
+
+		
+		size_t eq_pos = long_arg.find('=');
+		if (eq_pos != std::string::npos)
+		{
+			longname = long_arg.substr(0, eq_pos);
+			total_arguments = 1;
+			value = long_arg.substr(eq_pos+1);
+		}
+		else
+		{
+			longname = long_arg;
+		}
+		
+		
 	
 		if (found_options > 1)
 		{
@@ -523,16 +534,8 @@ public:
 		}
 		else if (found_options == 0)
 		{
-			size_t eq_pos = long_arg.find('=');
-			if (eq_pos != std::string::npos)
-			{
-				longname = long_arg.substr(0, eq_pos);
-				total_arguments = 1;
-				value = long_arg.substr(eq_pos+1);
-			}
-			
 			option = new Option("", longname, total_arguments, value);
-			// TODO: add to main options list
+			options.push_back(option);
 		}
 		else
 		{
@@ -573,7 +576,7 @@ public:
 		else if (starts_with("--", token) && token != "--")
 		{
 			//LOGV("this is a long option\n");
-			Option* option = parse_long(tokens);
+			Option* option = parse_long(tokens, options_registry);
 			results.push_back(option);
 		}
 		else if (starts_with("-", token) && token != "-")
@@ -628,10 +631,6 @@ public:
 		
 	}
 
-	void parse_option(const std::string& option, const char* help_string)
-	{
-		LOGV("option: %s\n", option.c_str());
-	}
 
 	void parse_usage(const std::string& formal_usage, const char* help_string)
 	{
@@ -680,19 +679,114 @@ public:
 
 		usage_patterns.push_back(new Required(usage_pattern));
 	}
-	
-	ArgumentParser::ArgumentUsage set_usage()
-	{
-		return ArgumentUsage(this);
-	}
 
-	ArgumentParser::ArgumentOption set_options()
+	
+	std::string get_section_regex(const std::string& name)
 	{
-		return ArgumentOption(this);
+		std::string regex = "(^\\s)*(";
+		
+		regex += name;
+		
+		regex += "[^\\n]*\\n?(?:[ \\t].*?(?:\\n|$))*)";
+		
+		return regex;
 	}
 	
-	void parse(int argc, char** argv, core::Dictionary<std::string>& dict)
+	std::vector<std::string> split(const std::string& input, const std::string& delimiter)
 	{
+		std::vector<std::string> elements;
+		
+		std::string::size_type pos = 0, last = 0;
+		
+		using value_type = std::vector<std::string>::value_type;
+		using size_type = std::vector<std::string>::size_type;
+
+		bool end_of_string = false;
+		while(true)
+		{
+			pos = input.find_first_of(delimiter, last);
+			if (pos == std::string::npos)
+			{
+				pos = input.length();
+				end_of_string = true;
+				break;
+			}
+			
+			if (pos != last)
+			{
+				elements.push_back(value_type(input.data()+last, (size_type)pos-last));
+			}
+			
+			if (end_of_string)
+			{
+				break;
+			}
+			
+			last = pos+1;
+		}
+		
+		return elements;
+	}
+	
+	std::string trim_left(const std::string& input, const std::string& chars = "\t ")
+	{
+		std::string out;
+		
+		std::size_t start = input.find_first_not_of(" \t");
+		if (start != std::string::npos)
+		{
+			out = input.substr(start);
+		}
+		else
+		{
+			out = input;
+		}
+		
+		return out;
+	}
+	
+	std::vector<std::string> parse_section(const char* docstring, const std::string& section_name)
+	{
+		std::regex rgx(get_section_regex(section_name));
+		std::cmatch result;
+		std::regex_search(docstring, result, rgx);
+		
+		std::vector<std::string> output;
+
+		if (result.size() > 0)
+		{
+			std::vector<std::string> lines;
+			std::string match = result.str(0);
+			std::size_t pos = match.find_first_of(':');
+			if (pos != std::string::npos)
+			{
+				match = match.substr(pos+1);
+			}
+			lines = split(match, "\n");
+			
+			for (std::string& line : lines)
+			{
+				output.push_back(trim_left(line));
+			}
+		}
+		
+		return output;
+	}
+	
+	void parse_options(std::vector<std::string> lines)
+	{
+		for (auto& s : lines)
+		{
+			LOGV("%s\n", s.c_str());
+		}
+	}
+	
+	void parse(const char* docstring, int argc, char** argv, core::Dictionary<std::string>& dict)
+	{
+		// run through the docstring and parse the options first.
+		parse_options(parse_section(docstring, "Options"));
+
+	
 		TokenList tokens;
 		for (int i = 1; i < argc; ++i)
 		{
@@ -766,29 +860,8 @@ public:
 
 void test_args(int argc, char** argv)
 {
-	ArgumentParser parser;
-	
 	// Options can be specified in any order.
 	
-	parser.set_usage()
-	//("tcp <host> <port>")
-	("tcp <host> <port> [--baud=9600] [--timeout=<seconds>]")
-	//("serial <port> [--baud=9600] [--timeout=<seconds>|--block] [<name>]")
-	//("-h | --help | --version")
-	;
-
-
-#if 0
-	parser.set_options()
-	("-f FILE", "file name")
-	;
-#endif
-
-//	parser.set_options()
-	//("ship new <name>...")
-	//("ship <name> [--speed=<knots>] move <x> <y>")
-//	;
-
 	// long option
 	// single letter option
 	
@@ -821,34 +894,22 @@ void test_args(int argc, char** argv)
 	// ellipses (allows additional arguments)
 	
 //	IEEE Std 1003.1
-	//parser.set_options()
-	//("export [--animation] <assets_root> (-d|--destination)=<assets_destination>")
-	//;
 
-//	parser.set_options()
-//	("[-t]")
-//	("[-a|--animation]")
-//	("[-h|--help|--version]")
-//	("[-h | --help | --verbose]")
-//	("[-v | --verbose-only]")
-//	("[-f | --frame=<seconds>]")
-//	("tcp <host> <port> [--timeout=<seconds>]")
-//	("serial <port> [--baud=9600] [--timeout=<seconds>]")
-//	("-h | --help | --version")
-
-//	("name [-a|--animation-only] <username>")
-//	("export <source_asset_root> <relative_asset_file> <destination_asset_root>")
-//	;
-
-
-//	parser.set_options()
-//	("tcp <host> <port>")
-//	("serial <port> [--baud=9600] [--timeout=<seconds>]")
-//	("-h | --help | --version")
-//	;
+	ArgumentParser parser;
 	
+	const char* test1 = R"(
+Usage:
+	tcp <host> <port> [--baud=9600] [--timeout=<seconds>]
+	serial <port> [--baud=9600] [--timeout=<seconds>]
+	
+Options:
+	-h, --help	Display this help string
+	--version 	Show the program version
+	)";
+	
+
 	core::Dictionary<std::string> vm;
-	parser.parse(argc, argv, vm);
+	parser.parse(test1, argc, argv, vm);
 //
 //	if (vm.has_key("name"))
 //	{
@@ -856,16 +917,6 @@ void test_args(int argc, char** argv)
 //		vm.get("username", value);
 //		fprintf(stdout, "name is: %s\n", value.c_str());
 //	}
-
-	/*
-	parser.set_options()
-	("-f FILE"  Specify the file name")
-	("--no-rtti  Disable RTTI")
-	("--with-vr  Enable Virtual Reality HMD")
-	("--animation-only  Export animations only")
-	("--skeleton-only  Export skeletons only")
-	;
-	*/
 }
 
 
