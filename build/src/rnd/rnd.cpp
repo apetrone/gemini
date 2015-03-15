@@ -780,11 +780,26 @@ public:
 			LOGV("%s\n", s.c_str());
 		}
 	}
+
+	void parse_usage(std::vector<std::string> lines)
+	{
+		for (auto& s : lines)
+		{
+			LOGV("%s\n", s.c_str());
+		}
+	}
 	
 	void parse(const char* docstring, int argc, char** argv, core::Dictionary<std::string>& dict)
 	{
 		// run through the docstring and parse the options first.
 		parse_options(parse_section(docstring, "Options"));
+
+
+		// parse usage block
+		parse_usage(parse_section(docstring, "Usage"));
+
+
+
 
 	
 		TokenList tokens;
