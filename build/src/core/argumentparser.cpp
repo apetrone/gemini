@@ -134,7 +134,11 @@ namespace core
 		// ---------------------------------------------------------------------
 		
 		
-		ArgumentParser::ArgumentParser() {}
+		ArgumentParser::ArgumentParser()
+		{
+			state = ParsingUsage;
+		}
+		
 		ArgumentParser::~ArgumentParser()
 		{
 			for (Required* p : usage_patterns)
@@ -153,6 +157,9 @@ namespace core
 		
 		void ArgumentParser::parse_patterns_from_tokens(PatternList& patterns, TokenWrapper& tokens)
 		{
+			state = ParsingInput;
+		
+		
 			int argument_index = 0;
 			int pattern_index = 0;
 			
@@ -188,7 +195,7 @@ namespace core
 				{
 					// parse a short option
 					LOGV("\"%s\" is a short option (or group of)\n", arg.c_str());
-					tokens.pop();
+					parse_short(patterns, tokens, options_registry);
 				}
 				else
 				{
@@ -252,9 +259,14 @@ namespace core
 			std::string longname;
 			std::string value;
 			int total_arguments = 0;
-			option = find_option(options, "", longname, found_options);
 			
+			// get our first match; if one exists
+			Option* first = find_option(options, "", longname, found_options);
 			
+			if (state == ParsingInput && found_options == 0)
+			{
+				// No exact match; try fuzzy searching?
+			}
 			
 			size_t eq_pos = long_arg.find('=');
 			if (eq_pos != std::string::npos)
@@ -269,24 +281,144 @@ namespace core
 			}
 			
 			
-			
 			if (found_options > 1)
 			{
-				// TODO: warn about non unique option prefix
 				// specified ambiguously 2+ times?
+				set_error("%s is not a unique prefix!", longname.c_str());
 			}
-			else if (found_options == 0)
-			{
-				option = new Option("", longname, total_arguments, value);
-				options.push_back(option);
-			}
-			else
+			else if (found_options < 1)
 			{
 				// TODO: grab the existing option
 				// if it accepts an argument, then consume one (if we can)
+				if (eq_pos != std::string::npos)
+				{
+					total_arguments = 1;
+				}
+
+				option = new Option("", longname, total_arguments);
+				options_registry.push_back(option);
+
+				if (state == ParsingInput)
+				{
+					option = new Option("", longname, total_arguments, value);
+				}
+			}
+			else // exactly one match
+			{
+				option = new Option(first->name,
+									first->longname,
+									first->total_arguments,
+									first->value);
+				
+				if (option->total_arguments == 0)
+				{
+					if (!value.empty())
+					{
+						set_error("%s must not have an argument", option->longname.c_str());
+					}
+				}
+				else
+				{
+					if (value.empty())
+					{
+						if (starts_with(tokens.current(), "--") || tokens.current().empty())
+						{
+							set_error("%s requires argument", option->longname.c_str());
+						}
+						value = tokens.pop();
+					}
+					
+				}
+				
+				if (state == ParsingInput)
+				{
+					// update the option's value
+					if (!value.empty())
+					{
+						option->value = value;
+					}
+				}
 			}
 			
+			options.push_back(option);
+			
 			return option;
+		}
+		
+		void ArgumentParser::parse_short(PatternList& results, TokenWrapper &tokens, PatternList &options)
+		{
+			// shorts ::= '-' ( chars )* [ [ ' ' ] chars ] ;
+			std::string token = tokens.pop();
+			
+			assert(token[0] == '-');
+			
+			std::string left = trim_left(token, "-");
+//			LOGV("left: %s\n", left.c_str());
+
+			size_t total_size = left.length();
+			for (size_t index = 0; index < total_size; ++index)
+			{
+				std::string shortname = "-";
+				std::string longname;
+				std::string value;
+				Option* option = 0;
+
+				int found_options = 0;
+				shortname += left[index];
+				char next = 0;
+				if (index < total_size-1)
+					next = left[index+1];
+				
+
+				LOGV("searching for shortname: '%s'\n", shortname.c_str());
+				Option* first = find_option(options, shortname, "", found_options);
+				
+				if (found_options > 1)
+				{
+					set_error("raise error: %s is specified ambiguously %i times", shortname.c_str(), found_options);
+					break;
+				}
+				else if (found_options < 1)
+				{
+					option = new Option(shortname, "", 0);
+					options.push_back(option);
+					
+					if (state == ParsingInput)
+					{
+						option = new Option(shortname, "", 0, "true");
+					}
+				}
+				else
+				{
+					LOGV("found an option '%s', '%s'\n", first->name.c_str(), first->longname.c_str());
+					option = new Option(first->name, first->longname, first->total_arguments, first->value);
+					if (option->total_arguments)
+					{
+						if (next == 0)
+						{
+							const std::string& current_token = tokens.current();
+							if (starts_with(current_token, "--") || current_token.empty())
+							{
+								LOGV("%s requires argument!\n", shortname.c_str());
+							}
+							value = tokens.pop();
+						}
+						else
+						{
+							value = left;
+							index = total_size;
+						}
+					}
+					
+					// update value
+					if (state == ParsingInput && !value.empty())
+					{
+						option->value = value;
+					}
+				}
+				
+				results.push_back(option);
+			}
 		}
 		
 		void ArgumentParser::parse_atom(TokenWrapper& tokens, PatternList& results)
@@ -325,7 +457,7 @@ namespace core
 			else if (starts_with("-", token) && token != "-")
 			{
 				//LOGV("this is a short option\n");
-				tokens.pop();
+				parse_short(results, tokens, options_registry);
 			}
 			else if (starts_with("<", token) && ends_with(">", token))
 			{
@@ -461,7 +593,7 @@ namespace core
 		{
 			std::string out;
 			
-			std::size_t start = input.find_first_not_of(" \t");
+			std::size_t start = input.find_first_not_of(chars);
 			if (start != std::string::npos)
 			{
 				out = input.substr(start);
@@ -706,13 +838,10 @@ namespace core
 			{
 				success = usage->matches(input);
 				
-				// if matches == 0; we didn't match all required arguments
-				// dump usage strings
-				
 				// too many arguments specified
 				if (success && input.size() > 0)
 				{
-					LOGV("ignoring unrecognized arguments\n");
+					fprintf(stdout, "ArgumentParser: ignoring unrecognized arguments\n");
 				}
 			}
 			
@@ -720,7 +849,6 @@ namespace core
 			{
 				print_docstring();
 			}
-			
 			
 			return dict;
 		}

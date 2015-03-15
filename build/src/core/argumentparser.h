@@ -218,11 +218,9 @@ namespace core
 		
 		struct LeafPattern : public Pattern
 		{
-		protected:
 			std::string name;
 			std::string value;
-			
-		public:
+
 			virtual bool is_leaf() const { return true; }
 			
 			virtual const std::string& get_name() const { return name; }
@@ -382,6 +380,21 @@ namespace core
 		
 		class ArgumentParser
 		{
+			// In docopt, tokens.error is set to an exception type
+			// when either parsing the Usage or parsing user input. This is
+			// used as internal state when reading long and short options.
+			// We equate ParsingUsage with DocoptLanguageError and
+			// ParsingInput with DocoptExit.
+			
+			enum State
+			{
+				ParsingUsage,	// parsing the usage/doc string
+				ParsingInput	// parsing user input passed on commandline
+			};
+		
+		
+			State state;
+		
 		public:
 			const char* docstring;
 			std::vector<Required*> usage_patterns;
@@ -399,6 +412,7 @@ namespace core
 								int& found_options);
 			
 			Option* parse_long(TokenWrapper& tokens, PatternList& options);
+			void parse_short(PatternList& results, TokenWrapper& tokens, PatternList& options);
 			
 			void parse_atom(TokenWrapper& tokens, PatternList& results);
 			
@@ -424,6 +438,7 @@ namespace core
 			void print_docstring() const;
 			core::Dictionary<std::string> parse(const char* docstring, int argc, char** argv, const char* version_string = "");
 			
+			void set_error(const char* format, ...) {};
 		}; // ArgumentParser
 		
 		
