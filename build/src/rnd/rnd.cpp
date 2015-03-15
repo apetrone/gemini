@@ -486,7 +486,6 @@ Options:
 	
 	// test6: many options
 	const char* test6 = R"(
-	Example of program with many options using docopt.
 Usage:
 	options_example.py [-hvqrf NAME] [--exclude=PATTERNS]
 	[--select=ERRORS | --ignore=ERRORS] [--show-source]
@@ -516,7 +515,7 @@ Options:
 			--doctest            run doctest on myself
 	)";
 	
-	core::Dictionary<std::string> vm = parser.parse(test4, argc, argv, "alpha 1.0");
+	core::Dictionary<std::string> vm = parser.parse(test2, argc, argv, "alpha 1.0");
 //
 //	if (vm.has_key("name"))
 //	{

@@ -178,7 +178,7 @@ namespace core
 			
 			template <class T>
 			T* cast() { return static_cast<T*>(this); }
-		};
+		}; // Pattern
 		
 		// ---------------------------------------------------------------------
 		// TokenInfo
@@ -314,6 +314,8 @@ namespace core
 			BranchPattern(const PatternList& child_list) : children(child_list)
 			{
 			}
+			
+			~BranchPattern();
 			
 			virtual bool is_branch() const { return true; }
 			virtual const char* get_classname() const { return "BranchPattern"; }

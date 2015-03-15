@@ -28,6 +28,7 @@
 #include "argumentparser.h"
 #include <core/logging.h>
 
+#include <platform/mem.h>
 
 #include <regex>
 
@@ -50,6 +51,12 @@ namespace core
 			std::string s2 = str.substr(str.length() - postfix.length(), postfix.length());
 			return (postfix == s2);
 		}
+		
+		// ---------------------------------------------------------------------
+		// Pattern
+		// ---------------------------------------------------------------------
+		
+		// ...
 		
 		// ---------------------------------------------------------------------
 		// Leaf Pattern
@@ -128,6 +135,19 @@ namespace core
 		
 		
 		// ---------------------------------------------------------------------
+		// BranchPattern
+		// ---------------------------------------------------------------------
+		
+		BranchPattern::~BranchPattern()
+		{
+			for (Pattern* child : children)
+			{
+				DESTROY(Pattern, child);
+			}
+			children.clear();
+		}
+		
+		// ---------------------------------------------------------------------
 		// ArgumentParser
 		// ---------------------------------------------------------------------
 		
@@ -141,13 +161,13 @@ namespace core
 		{
 			for (Required* p : usage_patterns)
 			{
-				delete p;
+				DESTROY(Required, p);
 			}
 			usage_patterns.clear();
 			
 			for (Pattern* p : options_registry)
 			{
-				delete p;
+				DESTROY(Pattern, p);
 			}
 			options_registry.clear();
 		}
@@ -198,7 +218,7 @@ namespace core
 				{
 					// parse an argument
 					LOGV("\"%s\" is an argument\n", arg.c_str());
-					Argument* newargument = new Argument("", arg);
+					Argument* newargument = CREATE(Argument, "", arg);
 					tokens.pop();
 					patterns.push_back(newargument);
 				}
@@ -292,17 +312,17 @@ namespace core
 					total_arguments = 1;
 				}
 
-				option = new Option("", longname, total_arguments);
+				option = CREATE(Option, "", longname, total_arguments);
 				options.push_back(option);
 
 				if (state == ParsingInput)
 				{
-					option = new Option("", longname, total_arguments, value);
+					option = CREATE(Option, "", longname, total_arguments, value);
 				}
 			}
 			else // exactly one match
 			{
-				option = new Option(first->name,
+				option = CREATE(Option, first->name,
 									first->longname,
 									first->total_arguments,
 									first->value);
@@ -365,7 +385,7 @@ namespace core
 					next = left[index+1];
 				
 
-				LOGV("searching for shortname: '%s'\n", shortname.c_str());
+//				LOGV("searching for shortname: '%s'\n", shortname.c_str());
 				Option* first = find_option(options, shortname, "", found_options);
 				
 				if (found_options > 1)
@@ -375,18 +395,18 @@ namespace core
 				}
 				else if (found_options < 1)
 				{
-					option = new Option(shortname, "", 0);
+					option = CREATE(Option, shortname, "", 0);
 					options.push_back(option);
 					
 					if (state == ParsingInput)
 					{
-						option = new Option(shortname, "", 0, "true");
+						option = CREATE(Option, shortname, "", 0, "true");
 					}
 				}
 				else
 				{
 					LOGV("found an option '%s', '%s'\n", first->name.c_str(), first->longname.c_str());
-					option = new Option(first->name, first->longname, first->total_arguments, first->value);
+					option = CREATE(Option, first->name, first->longname, first->total_arguments, first->value);
 					if (option->total_arguments)
 					{
 						if (next == 0)
@@ -438,7 +458,7 @@ namespace core
 						LOGV("Unmatched '%s'\n", "]");
 					}
 					tokens.pop();
-					Optional* optional = new Optional(option_results);
+					Optional* optional = CREATE(Optional, option_results);
 					results.push_back(optional);
 					return;
 				}
@@ -456,13 +476,13 @@ namespace core
 			else if (starts_with("<", token) && ends_with(">", token))
 			{
 				//LOGV("this is an argument\n");
-				Argument* argument = new Argument(tokens.pop(), "");
+				Argument* argument = CREATE(Argument, tokens.pop(), "");
 				results.push_back(argument);
 			}
 			else
 			{
 				//LOGV("this is a command\n");
-				Command* command = new Command(tokens.pop(), "");
+				Command* command = CREATE(Command, tokens.pop(), "");
 				results.push_back(command);
 			}
 		}
@@ -494,7 +514,7 @@ namespace core
 			//	tokens.pop();
 			//	PatternList other_results;
 			//	parse_sequence(tokens, other_results);
-			//	results.push_back(new Required(other_results));
+			//	results.push_back(CREATE(Required, other_results));
 			//}
 			
 			
@@ -532,7 +552,7 @@ namespace core
 			PatternList usage_pattern;
 			parse_expr(tw, usage_pattern);
 			
-			usage_patterns.push_back(new Required(usage_pattern));
+			usage_patterns.push_back(CREATE(Required, usage_pattern));
 		}
 		
 		
@@ -708,7 +728,7 @@ namespace core
 //				LOGV("shortname: %s\n", shortname.c_str());
 //				LOGV("argument_count: %i\n", argument_count);
 				
-				Option* option = new Option(shortname,
+				Option* option = CREATE(Option, shortname,
 											longname,
 											argument_count,
 											value);
@@ -756,7 +776,7 @@ namespace core
 
 				// save the usage patterns from this formal_usage line under
 				// a new required branch
-				usage_patterns.push_back(new Required(usage_pattern));
+				usage_patterns.push_back(CREATE(Required, usage_pattern));
 			}
 		}
 		
