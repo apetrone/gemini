@@ -143,15 +143,15 @@ namespace core
 			}
 			usage_patterns.clear();
 			
-			for (Option* o : options_registry)
+			for (Pattern* p : options_registry)
 			{
-				delete o;
+				delete p;
 			}
 			options_registry.clear();
 		}
 		
 		
-		void ArgumentParser::try_parse(TokenWrapper& tokens, PatternList& patterns)
+		void ArgumentParser::parse_patterns_from_tokens(PatternList& patterns, TokenWrapper& tokens)
 		{
 			int argument_index = 0;
 			int pattern_index = 0;
@@ -173,7 +173,7 @@ namespace core
 				if (arg == "--")
 				{
 					// the following arguments are positional
-					LOGV("The following arguments will be treated as positional\n");
+//					LOGV("The following arguments will be treated as positional\n");
 					tokens.pop();
 					break;
 				}
@@ -206,7 +206,7 @@ namespace core
 			
 		}
 		
-		Option* ArgumentParser::find_option(std::vector<Option*>& options,
+		Option* ArgumentParser::find_option(PatternList& patterns,
 							const std::string& shortname,
 							const std::string& longname,
 							int& found_options)
@@ -216,23 +216,28 @@ namespace core
 			bool test_shortname = !shortname.empty();
 			bool test_longname = !longname.empty();
 			
-			for (Option* o : options)
+			for (Pattern* p : patterns)
 			{
-				if (test_shortname && o->get_name() == shortname)
+				if (p->get_type() == Pattern::PT_Option)
 				{
-					option = o;
-					++found_options;
-				}
-				else if (test_longname && o->longname == longname)
-				{
-					option = o;
-					++found_options;
+					Option* o = p->cast<Option>();
+
+					if (test_shortname && o->get_name() == shortname)
+					{
+						option = o;
+						++found_options;
+					}
+					else if (test_longname && o->longname == longname)
+					{
+						option = o;
+						++found_options;
+					}
 				}
 			}
 			return option;
 		}
 		
-		Option* ArgumentParser::parse_long(TokenWrapper& tokens, std::vector<Option*>& options)
+		Option* ArgumentParser::parse_long(TokenWrapper& tokens, PatternList& options)
 		{
 			// long ::= '--' chars [ ( ' ' | '=' ) chars ] ;
 			// split at the '=', if one exists.
@@ -629,22 +634,38 @@ namespace core
 			}
 		}
 		
-		void ArgumentParser::check_extra(bool enable_automatic_help, const char* version_string)
+		bool ArgumentParser::check_extra(bool enable_automatic_help, const char* version_string, PatternList& patterns)
 		{
 			int found_options = 0;
-			find_option(options_registry, "-h", "--help", found_options);
+			if (enable_automatic_help && find_option(patterns, "-h", "--help", found_options))
+			{
+				print_docstring();
+				return true;
+			}
 			
-			find_option(options_registry, "", "--version", found_options);
+			if (version_string && find_option(patterns, "", "--version", found_options))
+			{
+				fprintf(stdout, "%s\n", version_string);
+				return true;
+			}
+			
+			return false;
+		}
+		
+		void ArgumentParser::print_docstring() const
+		{
+			// print out the doc string
+			fprintf(stdout, "%s\n", docstring);
 		}
 			
 		core::Dictionary<std::string> ArgumentParser::parse(const char* docstring, int argc, char** argv, const char* version_string)
 		{
+			this->docstring = docstring;
 			bool found_options = false;
 			bool found_usage = false;
 			
 			// run through the docstring and parse the options first.
 			parse_options(find_section(docstring, "Options", found_options));
-			
 			
 			// parse usage block
 			parse_usage(find_section(docstring, "Usage", found_usage));
@@ -666,14 +687,19 @@ namespace core
 			TokenWrapper tokenwrapper(tokens, std::string(""));
 			
 			PatternList input_patterns;
+			parse_patterns_from_tokens(input_patterns, tokenwrapper);
 			
-			try_parse(tokenwrapper, input_patterns);
 			
-			
-			//		bool automatic_help = true;
-			//		check_extra(automatic_help, version_string);
+			bool automatic_help = true;
+			bool should_exit = check_extra(automatic_help, version_string, input_patterns);
+			if (should_exit)
+			{
+				// should bail here; displayed help or version string to user.
+				exit(0);
+			}
 			
 			PatternWrapper input(input_patterns, nullptr);
+			core::Dictionary<std::string> dict;
 			
 			bool success = false;
 			for (Required* usage : usage_patterns)
@@ -692,11 +718,10 @@ namespace core
 			
 			if (!success)
 			{
-				// print out the doc string
-				fprintf(stdout, "%s\n", docstring);
+				print_docstring();
 			}
 			
-			core::Dictionary<std::string> dict;
+			
 			return dict;
 		}
 	} // namespace argparse

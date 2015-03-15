@@ -516,7 +516,7 @@ Options:
 			--doctest            run doctest on myself
 	)";
 	
-	core::Dictionary<std::string> vm = parser.parse(test2, argc, argv, "alpha 1.0");
+	core::Dictionary<std::string> vm = parser.parse(test4, argc, argv, "alpha 1.0");
 //
 //	if (vm.has_key("name"))
 //	{

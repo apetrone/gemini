@@ -383,21 +383,22 @@ namespace core
 		class ArgumentParser
 		{
 		public:
+			const char* docstring;
 			std::vector<Required*> usage_patterns;
-			std::vector<Option*> options_registry;
+			PatternList options_registry;
 			
 			ArgumentParser();
 			~ArgumentParser();
 			
 			
-			void try_parse(TokenWrapper& tokens, PatternList& patterns);
+			void parse_patterns_from_tokens(PatternList& patterns, TokenWrapper& tokens);
 			
-			Option* find_option(std::vector<Option*>& options,
+			Option* find_option(PatternList& patterns,
 								const std::string& shortname,
 								const std::string& longname,
 								int& found_options);
 			
-			Option* parse_long(TokenWrapper& tokens, std::vector<Option*>& options);
+			Option* parse_long(TokenWrapper& tokens, PatternList& options);
 			
 			void parse_atom(TokenWrapper& tokens, PatternList& results);
 			
@@ -410,11 +411,8 @@ namespace core
 			
 			
 			std::string get_section_regex(const std::string& name);
-			
 			std::vector<std::string> split(const std::string& input, const std::string& substring);
-			
 			std::string trim_left(const std::string& input, const std::string& chars = "\t ");
-			
 			std::vector<std::string> find_section(const char* docstring, const std::string& section_name, bool& section_was_found);
 			
 			
@@ -422,8 +420,8 @@ namespace core
 			
 			void parse_usage(std::vector<std::string> lines);
 			
-			void check_extra(bool enable_automatic_help, const char* version_string);
-			
+			bool check_extra(bool enable_automatic_help, const char* version_string, PatternList& patterns);
+			void print_docstring() const;
 			core::Dictionary<std::string> parse(const char* docstring, int argc, char** argv, const char* version_string = "");
 			
 		}; // ArgumentParser
