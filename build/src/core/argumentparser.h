@@ -43,9 +43,6 @@ namespace core
 		typedef std::vector<std::string> TokenList;
 		typedef std::vector<Pattern*> PatternList;
 
-		
-#pragma mark - Wrapper
-
 		template <class T>
 		struct Wrapper
 		{
@@ -103,7 +100,7 @@ namespace core
 			{
 			private:
 				const Wrapper<T>& container;
-				unsigned int index;
+				size_t index;
 				
 			public:
 				Iterator(const Wrapper<T>& container, size_t index = 0) :
