@@ -387,12 +387,185 @@ void test_hash()
 // Must not use exceptions
 // Must compile with gcc4.8, clang, vs2010/vs2013
 
+struct TokenInfo;
+struct Pattern;
+
+typedef std::vector<std::string> TokenList;
+typedef std::vector<Pattern*> PatternList;
+
+
+template <class T>
+struct Wrapper
+{
+	typedef std::vector<T> ContainerType;
+	ContainerType items;
+	size_t index;
+	const T default_value;
+	size_t items_length;
+
+	Wrapper(ContainerType& input_array, const T& default_value) :
+		items(input_array),
+		index(0),
+		default_value(default_value)
+	{
+
+		items_length = items.size();
+	}
+
+	T current() const
+	{
+		if (items.empty())
+		{
+			return default_value;
+		}
+
+		if (index < items.size())
+		{
+			return items[index];
+		}
+
+		return default_value;
+	}
+
+	T pop()
+	{
+		if (items.empty())
+		{
+			return default_value;
+		}
+
+		return items[index++];
+	}
+
+	T& at(size_t index) const
+	{
+		return const_cast<T&>(items[index]);
+	}
+
+	size_t size() const
+	{
+		return items_length - index;
+	}
+
+	class Iterator
+	{
+	private:
+		const Wrapper<T>& container;
+		unsigned int index;
+
+	public:
+		Iterator(const Wrapper<T>& container, size_t index = 0) :
+			container(container),
+			index(index)
+		{
+		}
+
+		bool operator!=(const Iterator& other)
+		{
+			return (index != other.index);
+		}
+
+		const Iterator& operator++()
+		{
+			++index;
+			return *this;
+		}
+
+		T& operator*() const
+		{
+			return container.at(index);
+		}
+
+		Iterator& operator=(const Iterator& other)
+		{
+			//this->container = other.container;
+			this->index = other.index;
+			return *this;
+		}
+
+		size_t get_index() const { return index; }
+	};
+
+	Iterator erase(Iterator& it)
+	{
+		items.erase(items.begin()+it.get_index());
+		--items_length;
+		return Iterator(*this, index);
+	}
+
+	Iterator begin() const { return Iterator(*this, index); }
+	Iterator end() const { return Iterator(*this, items_length); }
+};
+
+
+
+typedef Wrapper<std::string> TokenWrapper;
+typedef Wrapper<Pattern*> PatternWrapper;
+
 struct Pattern
 {
+	enum Type
+	{
+		PT_Pattern,
+		PT_Argument,
+		PT_Command,
+		PT_Option,
+
+		PT_LeafPattern,
+		PT_BranchPattern
+	};
+
+
 	virtual bool is_leaf() const { return false; }
 	virtual bool is_branch() const { return false; }
-	virtual Pattern* matches(const std::string& token) { return 0; }
+	virtual bool matches(PatternWrapper& patterns) { return 0; }
+	virtual const char* get_classname() const { return "Pattern"; }
+	virtual Type get_type() const { return PT_Pattern; }
+
+	template <class T>
+	T* cast() { return static_cast<T*>(this); }
 };
+
+
+struct TokenInfo
+{
+	int argument_index;
+	int pattern_index;
+	TokenList& arguments;
+	PatternList input;
+
+	TokenInfo(TokenList& input_arguments) :
+		arguments(input_arguments),
+		argument_index(0),
+		pattern_index(0)
+	{
+	}
+
+	~TokenInfo()
+	{
+		for (Pattern* p : input)
+		{
+			delete p;
+		}
+		input.clear();
+	}
+};
+
+
+
+bool starts_with(const std::string& prefix, const std::string& str)
+{
+	std::string s2 = str.substr(0, prefix.length());
+	return (prefix == s2);
+}
+
+bool ends_with(const std::string& postfix, const std::string& str)
+{
+	std::string s2 = str.substr(str.length() - postfix.length(), postfix.length());
+	return (postfix == s2);
+}
+
+
 
 struct LeafPattern : public Pattern
 {
@@ -405,158 +578,210 @@ public:
 	
 	virtual const std::string& get_name() const { return name; }
 	virtual const std::string& get_value() const { return value; }
-	virtual Pattern* matches(const std::string& token)
-	{
-		if (token == name)
-		{
-			return this;
-		}
-		return 0;
-	}
+
+	virtual const char* get_classname() const { return "LeafPattern"; }
+	virtual Type get_type() const { return PT_LeafPattern; }
+
+	virtual bool matches(PatternWrapper& patterns);
+	virtual bool single_match(PatternWrapper& patterns);
 };
 
 
 struct Argument : public LeafPattern
 {
-	Argument(const std::string& longname)
+	Argument(const std::string& input_name, const std::string& input_value)
 	{
-		name = longname;
+		name = input_name;
+		value = input_value;
 	}
+
+	virtual bool single_match(PatternWrapper& patterns)
+	{
+		for (Pattern* p : patterns)
+		{
+			if (p->get_type() == PT_Argument)
+			{
+				patterns.pop();
+				return true;
+			}
+		}
+		return false;
+	}
+
+	virtual const char* get_classname() const { return "Argument"; }
+	virtual Type get_type() const { return PT_Argument; }
 };
+
+
+
 
 struct Option : public LeafPattern
 {
+	std::string longname;
+	int total_arguments;
+
+	Option(const std::string& shortname, 
+		const std::string& longname = "", 
+		int argument_count = 0,
+		const std::string& value = "")
+	{
+		this->name = shortname;
+		this->longname = longname;
+		this->value = value;
+		this->total_arguments = argument_count;
+	}
+
+	virtual const char* get_classname() const { return "Option"; }
+	virtual Type get_type() const { return PT_Option; }
+
+	virtual bool single_match(PatternWrapper& patterns)
+	{
+		bool matched = false;
+		for (PatternWrapper::Iterator it = std::begin(patterns); it != std::end(patterns); ++it)
+		{
+			Pattern* p = (*it);
+			if (p->get_type() == PT_Option)
+			{
+				Option* option = p->cast<Option>();
+				if (this->longname == option->longname)
+				{
+					LOGV("matched: %s -> '%s'\n", option->longname.c_str(), option->get_value().c_str());
+					//patterns.pop();
+					// we cannot pop, but we can erase.
+					it = patterns.erase(it);
+					return true;
+				}
+			}
+			
+			//LOGV("class: %s\n", p->get_classname());
+		}
+		return matched;
+	}
 };
 
-struct Command : public LeafPattern
+struct Command : public Argument
 {
-	Command(const std::string& longname)
+	Command(const std::string& input_name, const std::string& input_value) : Argument(input_name, input_value)
 	{
-		name = longname;
+	}
+
+	virtual const char* get_classname() const { return "Command"; }
+	virtual Type get_type() const { return PT_Command; }
+
+	virtual bool single_match(PatternWrapper& patterns)
+	{
+		for (Pattern* p : patterns)
+		{
+			if (p->get_type() == PT_Argument)
+			{
+				Argument* argument = p->cast<Argument>();
+				if (argument->get_value() == this->name)
+				{
+					patterns.pop();
+					return true;
+				}				
+			}
+		}
+		return false;
 	}
 };
 
 
 struct BranchPattern : public Pattern
 {
-	typedef std::vector<Pattern*> PatternVector;
-	PatternVector children;
-	
-	virtual bool is_branch() const { return true; }
-	
-	virtual Pattern* matches(const std::string& toke)
+	PatternList children;
+
+	BranchPattern(const PatternList& child_list) : children(child_list)
 	{
-		return 0;
 	}
+
+	virtual bool is_branch() const { return true; }
+	virtual const char* get_classname() const { return "BranchPattern"; }
+	virtual Type get_type() const { return PT_BranchPattern; }
 };
 
 struct Required : public BranchPattern
 {
-	virtual Pattern* matches(const std::string& token)
+	Required(const PatternList& child_list) : BranchPattern(child_list)
 	{
+	}
+
+	virtual bool matches(PatternWrapper& patterns)
+	{
+		bool matched = false;
 		for(Pattern* child : children)
 		{
-			if (child->is_leaf())
+			matched = child->matches(patterns);
+			if (!matched)
 			{
-				LeafPattern* leaf = static_cast<LeafPattern*>(child);
-				if (leaf->matches(token))
-				{
-					return leaf;
-				}
+				return false;
 			}
 		}
 		
-		return 0;
+		return matched;
 	}
+
+	virtual const char* get_classname() const { return "Required"; }
 };
 
 struct Optional : public BranchPattern
 {
+	Optional(const PatternList& child_list) : BranchPattern(child_list)
+	{
+	}
+
+
+	virtual bool matches(PatternWrapper& patterns)
+	{
+		for (Pattern* child : children)
+		{
+			child->matches(patterns);
+		}
+		return true;
+	}
+
+	virtual const char* get_classname() const { return "Optional"; }
 };
 
 struct OneOrMore : public BranchPattern
 {
+	virtual const char* get_classname() const { return "OneOrMore"; }
 };
 
 struct Either : public BranchPattern
 {
 	Pattern* left;
 	Pattern* right;
+
+	virtual const char* get_classname() const { return "Either"; }
 };
+
+
+bool LeafPattern::matches(PatternWrapper& patterns)
+{
+	bool matched = false;
+	if (this->get_type() == PT_Argument || this->get_type() == PT_Command || this->get_type() == PT_Option)
+	{
+		LeafPattern* leaf = this->cast<LeafPattern>();
+		matched = leaf->single_match(patterns);
+	}
+
+	return matched;
+}
+
+bool LeafPattern::single_match(PatternWrapper& patterns)
+{
+	// should not get here.
+	assert(0);
+	return false;
+}
+
 
 class ArgumentParser
 {
-
-	struct Argument
-	{
-		enum EntryType
-		{
-			Optional,		// argument is optional (flags)
-			Positional,	// argument is positional
-			Command
-		};
-		
-		EntryType type;
-		
-		std::string long_name;
-		std::string short_name;
-		std::string value;
-		
-		Argument() : type(Optional)
-		{
-		}
-		
-		bool parse_value(const std::string& token)
-		{
-			fprintf(stdout, "parse_value: %s\n", token.c_str());
-			
-			// if this is a positional argument.
-			// value gets set to true.
-			
-			// this is optional:
-			//	does shortname or long name match.
-			// if short name matches; set value to true.
-			// if long name matches, set value to path after equals.
-		
-			if (long_name == token)
-			{
-				return true;
-			}
-			else if (!short_name.empty() && short_name == token)
-			{
-				return true;
-			}
-			
-			
-			return false;
-		}
-	};
-
-
-	struct ArgumentEntry
-	{
-		// is this a command argument?
-		bool is_command;
-		std::string command_name;
-		
-		std::vector<Argument> arguments;
-		const char* line;
-		
-		
-		
-		ArgumentEntry() : is_command(false), line(0)
-		{
-		}
-	};
-
-	
-	
-	std::vector<ArgumentEntry> entries;
-
-
-
-
 public:
+	Pattern* root;
+
 	struct ArgumentOption
 	{
 		ArgumentParser* owner;
@@ -567,217 +792,223 @@ public:
 	
 		ArgumentOption& operator()(const char* str, const char* help_string = 0)
 		{
-//			owner->parse_argument(str, help_string);
+			owner->parse_usage(str, help_string);
 			return *this;
 		}
 	};
 	
 	
-	struct ArgumentUsage
-	{
-		ArgumentParser* owner;
-		
-		ArgumentUsage(ArgumentParser* parser) : owner(parser)
-		{
-		}
-		
-		ArgumentUsage& operator()(const char* str, const char* help_string = 0)
-		{
-			owner->add_usage(str, help_string);
-			return *this;
-		}
-	};
-	
-	void add_usage(const std::string& str, const char* help_string)
-	{
-		fprintf(stdout, "-----------------------------\n");
-		std::regex argument_specifier("-([a-zA-Z])|--([[:alnum:]][-_[:alnum:]]+)=?(<.*>)?");
-		std::cmatch result;
-//		[-_[:alnum:]]+
-		fprintf(stdout, "testing: %s\n", str.c_str());
+	//struct ArgumentUsage
+	//{
+	//	ArgumentParser* owner;
+	//	
+	//	ArgumentUsage(ArgumentParser* parser) : owner(parser)
+	//	{
+	//	}
+	//};
 
-		std::vector<std::string> tokens;
-		
-		
-		// determine if this is an option block.
-		// If so, we can tokenize the whole string and simplify the regex.
-		int start = 0;
-		int end = str.length();
-		
-		// TODO: This won't work for options mid-stream
-		// So we probably just need to find the option block in the string
-		// and handle those as flags separately.
-		if (str[0] == '[' && str[str.length()-1] == ']')
-		{
-			start = 1;
-			end--;
-		}
-		
-		const char* cur = str.c_str() + start;
-		const char* begin = cur;
-		// 0: scanning
-		// 1: reading option block [ ]
-		int state = 0;
-		for (size_t i = start; i < end; ++i)
-		{
-			if (*cur == ' ' || *cur == '|')
-			{
-				std::string token = std::string(begin, (cur-begin));
-				tokens.push_back(token);
-//				fprintf(stdout, "-> token: %s\n", token.c_str());
-				begin = cur+1;
-			}
-			
-			++cur;
-		}
-		if ((cur-begin) > 0)
-		{
-			std::string token = std::string(begin, (cur-begin));
-			tokens.push_back(token);
-//			fprintf(stdout, "-> token: %s\n", token.c_str());
-		}
-		
-		
-		for (const std::string& token : tokens)
-		{
-			fprintf(stdout, "-> token: %s\n", token.c_str());
-					
-			std::regex_match(token.c_str(), result, argument_specifier);
-			
-			fprintf(stdout, "total results: %i\n", (int)result.size());
-			
-			size_t index = 0;
-			for (auto& i : result)
-			{
-				fprintf(stdout, "%s\n", result.str(index).c_str());
-				++index;
-			}
-		}
-	}
-	
-	
-	void parse_string(const char* str, const char* help_string)
+	Option* parse_long(TokenWrapper& tokens)
 	{
-//		fprintf(stdout, "%s\n", str);
-		const char* cur = str;
-		
-		// states:
-		/*
-			- 0: scan
-			- 1: command token
-			- 2: required token
-			- 3: option block
-			- 4: read short name
-			- 5: read long name
-		*/
-		
-		int state = 0;
-		
-		ArgumentEntry entry;
-		entry.line = str;
-		
-		const char* begin = 0, *end = 0;
-		
-		const char* next = 0;
-		while (*cur)
+		int total_arguments = 0;
+
+		// long ::= '--' chars [ ( ' ' | '=' ) chars ] ;
+		// split at the '=', if one exists.
+		std::string long_arg = tokens.pop();
+
+		// partition: '--longname=<argument>'
+		// to: ('--longname', '=', '<argument>')
+
+
+		// TODO: check options for matches by name
+		// TODO: check for non-unique prefix
+
+		size_t eq_pos = long_arg.find('=');
+		if (eq_pos != std::string::npos)
 		{
-			next = (cur+1);
-			
-		
-			if (state == 0)
-			{
-				if (isalpha(*cur))
-				{
-					state = 1;
-					begin = cur;
-					// commands must be the FIRST option listed
-					assert(entry.arguments.empty());
-					entry.is_command = true;
-				}
-				else if (*cur == '<')
-				{
-					state = 2;
-					begin = cur+1;
-				}
-				else if (*cur == '[')
-				{
-					state = 3;
-					begin = cur+1;
-				}
-			}
-			else if (state == 1)
-			{
-				if (isspace(*cur))
-				{
-					state = 0;
-					end = cur;
-//					fprintf(stdout, "%.*s\n", (int)(end-begin), begin);
-					
-					entry.command_name = std::string(begin, (end-begin));
-				}
-			}
-			else if (state == 2)
-			{
-				bool term_kwarg = *cur == '>';
-				if (term_kwarg)
-				{
-					state = 0;
-					end = cur;
-//					fprintf(stdout, "%.*s\n", (int)(end-begin), begin);
-					
-					Argument ad;
-					ad.type = Argument::Positional;
-					ad.long_name = std::string(begin, (end-begin));
-					entry.arguments.push_back(ad);
-				}
-			}
-			else if (state == 3 || state == 4 || state == 5)
-			{
-				// eat whitespace
-				while(*cur == ' ')
-					cur++;
-				
-				if (*cur == '-' && *next == '-' && state == 3)
-				{
-					begin = cur+2;
-					cur += 2;
-					
-					// read long name
-					state = 5;
-				}
-				else if (*cur == '-' && *next != '-' && state == 3)
-				{
-					begin = cur+1;
-					
-					// reading short name
-					state = 4;
-				}
-				if (*cur == '|')
-				{
-					end = cur;
-					fprintf(stdout, "read option: %.*s\n", (int)(end-begin), begin);
-					state = 3;
-					begin = cur+1;
-				}
-				else if (*cur == ']')
-				{
-				
-					state = 0;
-					end = cur;
-					fprintf(stdout, "read option: %.*s\n", (int)(end-begin), begin);
-				}
-			}
-			
-			cur++;
+			std::string longname = long_arg.substr(0, eq_pos);
+
+			total_arguments = 1;
+			Option* option = new Option("", longname, total_arguments);
+			// TODO: add to main options list
+
+			return option;
 		}
-		
-		entries.push_back(entry);
+
+		// We haven't reached this far yet!
+		assert(0);
+
+		return 0;
 	}
 
-	ArgumentParser::ArgumentUsage set_usage()
+	void parse_atom(TokenWrapper& tokens, PatternList& results)
 	{
-		return ArgumentUsage(this);
+		// atom ::= '(' expr ')' | '[' expr ']' | 'options'
+		//	| longname | shortnames | argument | command ;
+		const std::string& token = tokens.current();
+
+		if (token == "(" || token == "[")
+		{
+			tokens.pop();
+			if (token == "(")
+			{
+				LOGV("TODO: implement parentheses!\n");
+			}
+			else if (token == "[")
+			{
+				PatternList option_results;
+				parse_expr(tokens, option_results);
+				if (tokens.current() != "]")
+				{
+					LOGV("Unmatched '%s'\n", "]");
+				}
+				tokens.pop();
+				Optional* optional = new Optional(option_results);
+				results.push_back(optional);
+				return;
+			}
+		}
+		else if (starts_with("--", token) && token != "--")
+		{
+			//LOGV("this is a long option\n");
+			Option* option = parse_long(tokens);
+			results.push_back(option);
+		}
+		else if (starts_with("-", token) && token != "-")
+		{
+			//LOGV("this is a short option\n");
+			tokens.pop();
+		}
+		else if (starts_with("<", token) && ends_with(">", token))
+		{
+			//LOGV("this is an argument\n");
+			::Argument* argument = new ::Argument(tokens.pop(), "");
+			results.push_back(argument);
+		}
+		else
+		{
+			//LOGV("this is a command\n");
+			Command* command = new Command(tokens.pop(), "");
+			results.push_back(command);
+		}
 	}
+
+	void parse_sequence(TokenWrapper& tokens, PatternList& results)
+	{
+		// sequence ::= ( atom [ '...' ] )* ;
+		while (true)
+		{
+			std::string current = tokens.current();
+			if (current == "" || current == "]" || current == ")" || current == "|")
+			{
+				//LOGV("detected end of sequence\n");
+				break;
+			}
+
+			parse_atom(tokens, results);
+		}
+	}
+
+	void parse_expr(TokenWrapper& tokens, PatternList& results)
+	{
+		// expr ::= sequence ( '|' sequence )* ;
+
+		parse_sequence(tokens, results);
+
+		//while (tokens.current() == "|")
+		//{
+		//	tokens.pop();
+		//	PatternList other_results;
+		//	parse_sequence(tokens, other_results);
+		//	results.push_back(new Required(other_results));
+		//}
+
+		
+	}
+
+	void parse_usage(const std::string& formal_usage, const char* help_string)
+	{
+		// the formal usage pattern needs to be split up into tokens
+		// which can be fed into a regex.
+		LOGV("formal_usage: %s\n", formal_usage.c_str());
+
+		//std::regex test("");
+		//std::cmatch result;
+		//std::regex_match()
+
+		std::string str;
+
+		// first, we expand the usage string so we have extra whitespace
+		// to separate elements.
+		std::regex replacement("([\\[\\]\\(\\)\\|]|\\.\\.\\.)");
+		std::regex_replace(std::back_inserter(str), formal_usage.begin(), formal_usage.end(), replacement, " $1 ");
+
+		LOGV("str: %s\n", str.c_str());
+
+		TokenList usage;
+
+		std::regex rgx("\\s+");
+		std::sregex_token_iterator iter(str.begin(),
+			str.end(),
+			rgx,
+			-1);
+		std::sregex_token_iterator end;
+
+		// next, we tokenize the expanded string
+		for (; iter != end; ++iter)
+		{
+			//LOGV("t: %s\n", (*iter).str().c_str());
+			usage.push_back( (*iter).str() );
+		}
+
+		// now we parse the expanded string
+		TokenWrapper tw(usage, std::string(""));
+		PatternList usage_pattern;
+		parse_expr(tw, usage_pattern);
+
+		//for (Pattern* pattern : usage_pattern)
+		//{
+		//	LOGV("pattern type: %s\n", pattern->get_classname());
+		//}
+
+		PatternList input_items;
+#if 1
+		Argument a("", "tcp"); input_items.push_back(&a);
+		Argument b("", "localhost"); input_items.push_back(&b);
+		Argument c("", "27015"); input_items.push_back(&c);
+		Option d("", "--timeout", 1, "30"); input_items.push_back(&d);
+		Option baud("", "--baud", 1, "4500"); input_items.push_back(&baud);
+		Option f("-f", "--file", 1, "/dev/USBtty0"); input_items.push_back(&f);
+#elif 1
+		Argument a("", "ship"); input_items.push_back(&a);
+		Argument b("", "adam"); input_items.push_back(&b);
+		Option speed("", "--speed", 1, "100"); input_items.push_back(&speed);
+		Argument c("", "move"); input_items.push_back(&c);
+		Argument d("", "30"); input_items.push_back(&d);
+		Argument e("", "50"); input_items.push_back(&e);
+		//Argument f("", "100"); input_items.push_back(&f);
+		
+#endif
+
+		PatternWrapper input(input_items, nullptr);
+
+		Required pattern(usage_pattern);
+
+		bool matches = pattern.matches(input);
+		LOGV("matches: %i\n", matches);
+
+		// if matches == 0; we didn't match all required arguments
+
+		// too many arguments specified
+		if (input.size() > 0)
+		{
+			LOGV("ignoring unrecognized arguments\n");
+		}
+	}
+	
+	//ArgumentParser::ArgumentUsage set_usage()
+	//{
+	//	return ArgumentUsage(this);
+	//}
 
 	ArgumentParser::ArgumentOption set_options()
 	{
@@ -795,89 +1026,68 @@ public:
 		
 		// scan through all entries
 		bool failure = true;
-		size_t index = 0;
-		for (ArgumentEntry& entry : entries)
-		{
-			if (entry.is_command)
-			{
-				if (!tokens.empty() && (entry.command_name == tokens[index]))
-				{
-					fprintf(stdout, "found command: %s\n", entry.command_name.c_str());
-					int diff = entry.arguments.size() - (tokens.size()-1);
-					if (diff != 0)
-					{
-						fprintf(stdout, "argument count doesn't match!, diff: %i\n", diff);
-						if (diff > 0)
-						{
-							for (int i = diff-1; i < diff; ++i)
-							{
-								fprintf(stdout, "missing argument: <%s>\n", entry.arguments[i].long_name.c_str());
-							}
-						}
-						else
-						{
-							fprintf(stdout, "Unexpected argument(s)\n");
-						}
-						break;
-					}
-					else
-					{
-						dict.insert(entry.command_name.c_str(), "true");
-						failure = false;
-						int token_index = 1;
-						for (Argument arg : entry.arguments)
-						{
-							dict.insert(arg.long_name.c_str(), tokens[token_index++]);
-						}
-						break;
-					}
-				}
-			}
-			else if (!tokens.empty())
-			{
-//				fprintf(stdout, "trying to match entry: %i, total args: %i\n", index, entry.arguments.size());
-				int diff = entry.arguments.size() - tokens.size();
-				if (diff != 0)
-				{
-//					fprintf(stdout, "argument count doesn't match!, diff: %i\n", diff);
-//					if (diff > 0)
-//					{
-//						for (int i = tokens.size(); i < entry.arguments.size(); ++i)
-//						{
-//							fprintf(stdout, "missing argument: <%s>\n", entry.arguments[i].name.c_str());
-//						}
-//					}
-//					else
-//					{
-//						fprintf(stdout, "Unexpected argument(s)\n");
-//					}
-				}
-				else
-				{
-					failure = false;
-					for (int i = 0; i < entry.arguments.size(); ++i)
-					{
-						Argument& arg = entry.arguments[i];
-						const std::string& svc = tokens[i];
-						arg.parse_value(svc);
-					}
-				}
-			}
 		
-			++index;
-		}
-		
-		if (failure)
-		{
-			// print all entry source strings
-			fprintf(stdout, "USAGE:\n");
-			for (ArgumentEntry& e : entries)
-			{
-				fprintf(stdout, "%s\n", e.line);
-			}
-		}
+		//if (failure)
+		//{
+		//	// print all entry source strings
+		//	fprintf(stdout, "USAGE:\n");
+		//	for (ArgumentEntry& e : entries)
+		//	{
+		//		fprintf(stdout, "%s\n", e.line);
+		//	}
+		//}
 	}
 };
+
+void try_parse(PatternList& patterns, TokenInfo& info)
+{
+	// first, we build a list of the input tokens and categorize these
+	// into a series of patterns.
+	size_t total_tokens = info.arguments.size();
+	while (true)
+	{
+		if (info.argument_index > (total_tokens - 1))
+		{
+			LOGV("end of arguments\n");
+			break;
+		}
+
+		const std::string& arg = info.arguments[info.argument_index];
+		Pattern* pattern = patterns[info.pattern_index];
+
+		if (arg == "--")
+		{
+			// the following arguments are positional
+			LOGV("The following arguments will be treated as positional arguments\n");
+			break;
+		}
+		else if (starts_with("--", arg))
+		{
+			// parse a long option
+			LOGV("\"%s\" is a long option\n", arg.c_str());
+			++info.argument_index;
+		}
+		else if (starts_with("-", arg))
+		{
+			// parse a short option
+			LOGV("\"%s\" is a short option (or group of)\n", arg.c_str());
+			++info.argument_index;
+		}
+		else
+		{
+			// parse an argument
+			LOGV("\"%s\" is an argument\n", arg.c_str());
+			++info.argument_index;
+			Argument* newargument = new Argument("", arg);
+			info.input.push_back(newargument);
+		}
+	}
+
+	// now that info.input is populated, we can determine how to map
+	// them to the usage branches.
+
+
+}
 
 void test_args(int argc, char** argv)
 {
@@ -886,9 +1096,15 @@ void test_args(int argc, char** argv)
 	// Options can be specified in any order.
 	
 	parser.set_options()
-	("tcp <host> <port> [--timeout=<seconds>]")
-	("serial <port> [--baud=9600] [--timeout=<seconds>]")
-	("-h | --help | --version")
+	//("tcp <host> <port>")
+	("tcp <host> <port> [--baud=9600] [--timeout=<seconds>]")
+	//("serial <port> [--baud=9600] [--timeout=<seconds>|--block] [<name>]")
+	//("-h | --help | --version")
+	;
+
+	parser.set_options()
+	//("ship new <name>...")
+	//("ship <name> [--speed=<knots>] move <x> <y>")
 	;
 
 	// long option
@@ -923,9 +1139,9 @@ void test_args(int argc, char** argv)
 	// ellipses (allows additional arguments)
 	
 //	IEEE Std 1003.1
-	parser.set_options()
-	("export [--animation] <assets_root> (-d|--destination)=<assets_destination>")
-	;
+	//parser.set_options()
+	//("export [--animation] <assets_root> (-d|--destination)=<assets_destination>")
+	//;
 
 //	parser.set_options()
 //	("[-t]")
@@ -963,63 +1179,29 @@ void test_args(int argc, char** argv)
 
 
 
+	//PatternList patterns;
+	//
+	//Command serial("serial", "");
+	//patterns.push_back(&serial);
 
-	std::vector<Pattern*> patterns;
-	Required r0;
-	Command serial("serial");
-	r0.children.push_back(&serial);
-	patterns.push_back(&r0);
+	//Argument port("port", "");
+	//patterns.push_back(&port);
 
-	Required r1;
-	Argument port("port");
-	r1.children.push_back(&port);
-	//patterns.push_back(&r1);
+	////Optional baud;
+	////patterns.push_back(&baud);
+	//
+	////Optional timeout;
+	////patterns.push_back(&timeout);
 
-	Optional baud;
-	//patterns.push_back(&baud);
-	
-	Optional timeout;
-	//patterns.push_back(&timeout);
+	//Required r0(patterns);
+	//TokenList arguments;
+	//arguments.push_back("serial");
+	//arguments.push_back("10423");
+	////arguments.push_back("--baud=9600");
 
 
-	std::vector<std::string> arguments;
-	arguments.push_back("serial");
-	arguments.push_back("10423");
-	
-	
-	size_t total_tokens = arguments.size();
-	size_t argument_index = 0;
-	Pattern* pattern = patterns[0];
-	while (true)
-	{
-		const std::string& arg = arguments[argument_index];
-		if (pattern->is_branch())
-		{
-			BranchPattern* branch = static_cast<BranchPattern*>(pattern);
-			Pattern* match = branch->matches(arg);
-			if (match)
-			{
-				pattern = match;
-				++argument_index;
-				continue;
-			}
-			else
-			{
-				LOGV("error! missing token\n");
-				break;
-			}
-		}
-		else
-		{
-			// must be a leaf
-			LeafPattern* leaf = static_cast<LeafPattern*>(pattern);
-			if (leaf->matches(arg))
-			{
-
-			}
-			break;
-		}
-	}
+	//TokenInfo tokeninfo(arguments);
+	//try_parse(patterns, tokeninfo);
 }
 
 
@@ -1028,16 +1210,6 @@ void test_main(int argc, char** argv)
 //	test_rendering();
 	//	test_hash();
 	test_args(argc, argv);
-
-#if 0
-	std::basic_regex<char> pattern("");
-	std::match_results<const char*> result;
-	std::regex_match(argv[1], result, pattern);
-	for (size_t i = 0; i < result.size(); ++i)
-	{
-		fprintf(stdout, "%s\n", result[i].str().c_str());
-	}
-#endif
 }
 
 int main(int argc, char** argv)
@@ -1045,11 +1217,8 @@ int main(int argc, char** argv)
 	platform::startup();
 	core::startup();
 
-
 	test_main(argc, argv);
-	
-	
-	
+
 	core::shutdown();
 	platform::shutdown();
 	return 0;
