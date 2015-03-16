@@ -515,7 +515,16 @@ Options:
 			--doctest            run doctest on myself
 	)";
 	
-	core::Dictionary<std::string> vm = parser.parse(test2, argc, argv, "alpha 1.0");
+	const char* test7 = R"(
+		Usage:
+			export <source_asset_path> <asset_path> <output_asset_path>
+	
+		Options:
+			-h, --help  Show this help screen
+			--version  Display the version number
+	)";
+	
+	core::Dictionary<std::string> vm = parser.parse(test7, argc, argv, "alpha 1.0");
 //
 //	if (vm.has_key("name"))
 //	{
@@ -525,22 +534,40 @@ Options:
 //	}
 }
 
+#include <memory>
 
 void test_main(int argc, char** argv)
 {
+	platform::startup();
+	core::startup();
 //	test_rendering();
 	//	test_hash();
 	test_args(argc, argv);
+	
+	core::shutdown();
+	platform::shutdown();
 }
+
+
+struct Test
+{
+	int count;
+	
+	Test(int c) : count(c)
+	{
+		fprintf(stdout, "Test(%i)\n", c);
+	}
+	
+	~Test()
+	{
+		fprintf(stdout, "~Test()\n");
+	}
+};
 
 int main(int argc, char** argv)
 {
-	platform::startup();
-	core::startup();
-
 	test_main(argc, argv);
 
-	core::shutdown();
-	platform::shutdown();
+
 	return 0;
 }

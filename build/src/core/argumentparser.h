@@ -27,6 +27,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 #include <core/dictionary.h>
 
@@ -45,9 +46,14 @@ namespace core
 
 		struct TokenInfo;
 		struct Pattern;
-
+		struct Option;
+		
 		typedef std::vector<std::string> TokenList;
-		typedef std::vector<Pattern*> PatternList;
+		
+		typedef std::shared_ptr<Pattern> PatternPtr;
+		typedef std::shared_ptr<Option> OptionPtr;
+		
+		typedef std::vector<PatternPtr> PatternList;
 
 		template <class T>
 		struct Wrapper
@@ -154,7 +160,7 @@ namespace core
 
 		
 		typedef Wrapper<std::string> TokenWrapper;
-		typedef Wrapper<Pattern*> PatternWrapper;
+		typedef Wrapper<PatternPtr> PatternWrapper;
 		
 		struct Pattern
 		{
@@ -200,10 +206,6 @@ namespace core
 			
 			~TokenInfo()
 			{
-				for (Pattern* p : input)
-				{
-					delete p;
-				}
 				input.clear();
 			}
 		};
@@ -290,7 +292,7 @@ namespace core
 			
 			virtual bool single_match(PatternWrapper& patterns)
 			{
-				for (Pattern* p : patterns)
+				for (PatternPtr p : patterns)
 				{
 					if (p->get_type() == PT_Argument)
 					{
@@ -331,7 +333,7 @@ namespace core
 			virtual bool matches(PatternWrapper& patterns)
 			{
 				bool matched = false;
-				for(Pattern* child : children)
+				for(PatternPtr child : children)
 				{
 					matched = child->matches(patterns);
 					if (!matched)
@@ -355,7 +357,7 @@ namespace core
 			
 			virtual bool matches(PatternWrapper& patterns)
 			{
-				for (Pattern* child : children)
+				for (PatternPtr child : children)
 				{
 					child->matches(patterns);
 				}
@@ -403,7 +405,7 @@ namespace core
 		
 		public:
 			const char* docstring;
-			std::vector<Required*> usage_patterns;
+			std::vector<PatternPtr> usage_patterns;
 			PatternList options_registry;
 			
 			ArgumentParser();

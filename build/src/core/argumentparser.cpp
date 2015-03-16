@@ -28,8 +28,6 @@
 #include "argumentparser.h"
 #include <core/logging.h>
 
-#include <platform/mem.h>
-
 #include <regex>
 
 namespace core
@@ -95,7 +93,7 @@ namespace core
 		
 		bool Argument::single_match(PatternWrapper& patterns)
 		{
-			for (Pattern* p : patterns)
+			for (PatternPtr p : patterns)
 			{
 				if (p->get_type() == PT_Argument)
 				{
@@ -116,7 +114,7 @@ namespace core
 			bool matched = false;
 			for (PatternWrapper::Iterator it = std::begin(patterns); it != std::end(patterns); ++it)
 			{
-				Pattern* p = (*it);
+				PatternPtr p = (*it);
 				if (p->get_type() == PT_Option)
 				{
 					Option* option = p->cast<Option>();
@@ -140,10 +138,6 @@ namespace core
 		
 		BranchPattern::~BranchPattern()
 		{
-			for (Pattern* child : children)
-			{
-				DESTROY(Pattern, child);
-			}
 			children.clear();
 		}
 		
@@ -159,16 +153,7 @@ namespace core
 		
 		ArgumentParser::~ArgumentParser()
 		{
-			for (Required* p : usage_patterns)
-			{
-				DESTROY(Required, p);
-			}
 			usage_patterns.clear();
-			
-			for (Pattern* p : options_registry)
-			{
-				DESTROY(Pattern, p);
-			}
 			options_registry.clear();
 		}
 		
@@ -218,7 +203,7 @@ namespace core
 				{
 					// parse an argument
 					LOGV("\"%s\" is an argument\n", arg.c_str());
-					Argument* newargument = CREATE(Argument, "", arg);
+					PatternPtr newargument(new Argument("", arg));
 					tokens.pop();
 					patterns.push_back(newargument);
 				}
@@ -240,7 +225,7 @@ namespace core
 			bool test_shortname = !shortname.empty();
 			bool test_longname = !longname.empty();
 			
-			for (Pattern* p : patterns)
+			for (PatternPtr p : patterns)
 			{
 				if (p->get_type() == Pattern::PT_Option)
 				{
@@ -271,7 +256,7 @@ namespace core
 			// to: ('--longname', '=', '<argument>')
 			
 			
-			Option* option = 0;
+			OptionPtr option;
 			int found_options = 0;
 			std::string longname;
 			std::string value;
@@ -312,20 +297,20 @@ namespace core
 					total_arguments = 1;
 				}
 
-				option = CREATE(Option, "", longname, total_arguments);
+				option = OptionPtr(new Option("", longname, total_arguments));
 				options.push_back(option);
 
 				if (state == ParsingInput)
 				{
-					option = CREATE(Option, "", longname, total_arguments, value);
+					option = OptionPtr(new Option("", longname, total_arguments, value));
 				}
 			}
 			else // exactly one match
 			{
-				option = CREATE(Option, first->name,
+				option = OptionPtr(new Option(first->name,
 									first->longname,
 									first->total_arguments,
-									first->value);
+									first->value));
 				
 				if (option->total_arguments == 0)
 				{
@@ -376,7 +361,7 @@ namespace core
 				std::string shortname = "-";
 				std::string longname;
 				std::string value;
-				Option* option = 0;
+				OptionPtr option;
 
 				int found_options = 0;
 				shortname += left[index];
@@ -395,18 +380,18 @@ namespace core
 				}
 				else if (found_options < 1)
 				{
-					option = CREATE(Option, shortname, "", 0);
+					option = OptionPtr(new Option(shortname, "", 0));
 					options.push_back(option);
 					
 					if (state == ParsingInput)
 					{
-						option = CREATE(Option, shortname, "", 0, "true");
+						option = OptionPtr(new Option(shortname, "", 0, "true"));
 					}
 				}
 				else
 				{
 					LOGV("found an option '%s', '%s'\n", first->name.c_str(), first->longname.c_str());
-					option = CREATE(Option, first->name, first->longname, first->total_arguments, first->value);
+					option = OptionPtr(new Option(first->name, first->longname, first->total_arguments, first->value));
 					if (option->total_arguments)
 					{
 						if (next == 0)
@@ -458,7 +443,7 @@ namespace core
 						LOGV("Unmatched '%s'\n", "]");
 					}
 					tokens.pop();
-					Optional* optional = CREATE(Optional, option_results);
+					PatternPtr optional = PatternPtr(new Optional(option_results));
 					results.push_back(optional);
 					return;
 				}
@@ -476,14 +461,12 @@ namespace core
 			else if (starts_with("<", token) && ends_with(">", token))
 			{
 				//LOGV("this is an argument\n");
-				Argument* argument = CREATE(Argument, tokens.pop(), "");
-				results.push_back(argument);
+				results.push_back(PatternPtr(new Argument(tokens.pop(), "")));
 			}
 			else
 			{
 				//LOGV("this is a command\n");
-				Command* command = CREATE(Command, tokens.pop(), "");
-				results.push_back(command);
+				results.push_back(PatternPtr(new Command(tokens.pop(), "")));
 			}
 		}
 		
@@ -514,7 +497,7 @@ namespace core
 			//	tokens.pop();
 			//	PatternList other_results;
 			//	parse_sequence(tokens, other_results);
-			//	results.push_back(CREATE(Required, other_results));
+			//	results.push_back(PatternPtr(new Required(other_results)));
 			//}
 			
 			
@@ -552,7 +535,7 @@ namespace core
 			PatternList usage_pattern;
 			parse_expr(tw, usage_pattern);
 			
-			usage_patterns.push_back(CREATE(Required, usage_pattern));
+			usage_patterns.push_back(PatternPtr(new Required(usage_pattern)));
 		}
 		
 		
@@ -728,10 +711,11 @@ namespace core
 //				LOGV("shortname: %s\n", shortname.c_str());
 //				LOGV("argument_count: %i\n", argument_count);
 				
-				Option* option = CREATE(Option, shortname,
+				
+				OptionPtr option = OptionPtr(new Option(shortname,
 											longname,
 											argument_count,
-											value);
+											value));
 											
 				options_registry.push_back(option);
 			}
@@ -776,7 +760,7 @@ namespace core
 
 				// save the usage patterns from this formal_usage line under
 				// a new required branch
-				usage_patterns.push_back(CREATE(Required, usage_pattern));
+				usage_patterns.push_back(PatternPtr(new Required(usage_pattern)));
 			}
 		}
 		
@@ -841,14 +825,14 @@ namespace core
 			if (should_exit)
 			{
 				// should bail here; displayed help or version string to user.
-				exit(0);
+//				exit(0);
 			}
 			
 			PatternWrapper input(input_patterns, nullptr);
 			core::Dictionary<std::string> dict;
 			
 			bool success = false;
-			for (Required* usage : usage_patterns)
+			for (PatternPtr usage : usage_patterns)
 			{
 				success = usage->matches(input);
 				
