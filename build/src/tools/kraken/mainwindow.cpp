@@ -44,23 +44,24 @@ MainWindow::MainWindow(ApplicationContext* application_context, QWidget *parent)
 
     render_window = new RenderWindow(format, this);
     render_window->show();
+    render_window->setMinimumWidth(200);
     this->setCentralWidget(render_window);
 
 
 //    QWidget* widget = new QWidget(this);
 //    this->setCentralWidget(widget);
 
-    QDockWidget* dockWidget1 = new QDockWidget("preview");
+//    QDockWidget* dockWidget1 = new QDockWidget("preview");
     this->setDockNestingEnabled(true);
 
-    render_window->setMinimumWidth(200);
+
 //    dockWidget1->setWidget(render_window);
-    this->addDockWidget(Qt::RightDockWidgetArea, dockWidget1);
+//    this->addDockWidget(Qt::RightDockWidgetArea, dockWidget1);
 
 
-    QDockWidget* properties_panel = new QDockWidget("properties");
-    this->addDockWidget(Qt::RightDockWidgetArea, properties_panel);
-    properties_panel->setMinimumWidth(200);
+//    QDockWidget* properties_panel = new QDockWidget("properties");
+//    this->addDockWidget(Qt::RightDockWidgetArea, properties_panel);
+//    properties_panel->setMinimumWidth(200);
 
     QDockWidget* log_console = new QDockWidget("log console");
     QWidget* log = new QWidget(log_console);

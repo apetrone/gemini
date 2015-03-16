@@ -29,6 +29,8 @@
 
 #include <renderer/renderer.h>
 
+using namespace gemini;
+
 ApplicationContext::ApplicationContext() :
     log_instance(QSharedPointer<LogService>(new LogService())),
     asset_instance(QSharedPointer<AssetService>(new AssetService(log_instance)))

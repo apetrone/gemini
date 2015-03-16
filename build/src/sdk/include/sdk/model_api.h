@@ -68,6 +68,7 @@ namespace gemini
 		
 		virtual void reset_channels(int32_t index) = 0;
 		virtual float get_animation_duration(int32_t index) const = 0;
+		virtual uint32_t get_total_bones(int32_t index) const = 0;
 	};
 
 	class IModelInterface

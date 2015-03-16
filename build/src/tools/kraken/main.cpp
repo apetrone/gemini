@@ -30,6 +30,8 @@
 
 #include "common.h" // TODO: move this to "tools" ?
 
+using namespace gemini;
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);

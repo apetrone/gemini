@@ -210,9 +210,9 @@ void GUIRenderer::draw_textured_bounds(const gui::Bounds& bounds, const gui::Tex
 	texture_map->parameters[0].int_value = handle;
 	texture_map->parameters[0].texture_unit = 0;
 	
-	if ( stream.has_room(4, 6) )
+	if (stream.has_room(4, 6))
 	{
-		VertexType * v = (VertexType*)stream.request(4);
+		VertexType* v = (VertexType*)stream.request(4);
 		
 		gui::Size size = bounds.size;
 		v[0].position = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );

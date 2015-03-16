@@ -192,7 +192,7 @@ namespace gemini
 		
 		AnimatedInstance::AnimatedInstance() :
 			local_time_seconds(0.0),
-			enabled(true)
+			enabled(false)
 		{
 		}
 		

@@ -32,6 +32,8 @@
 #include <OpenGL/gl3.h>
 #endif
 
+using namespace gemini;
+
 RenderWindow::RenderWindow(
         const QGLFormat& format,
         QWidget* parent,

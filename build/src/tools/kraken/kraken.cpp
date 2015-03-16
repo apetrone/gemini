@@ -25,12 +25,19 @@
 
 #include <platform/platform.h>
 #include <platform/kernel.h>
+#include <platform/windowlibrary.h>
+#include <platform/input.h>
 
 #include <core/core.h>
 #include <core/logging.h>
 
-#include <platform/windowlibrary.h>
-#include <platform/input.h>
+
+
+#include <nom/nom.hpp>
+#include <nom/compositor.hpp>
+#include <nom/graph.hpp>
+#include <nom/button.hpp>
+
 
 class EditorKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>

@@ -644,7 +644,7 @@ class ModelInterface : public gemini::IModelInterface
 		
 		virtual void get_animation_pose(int32_t index, glm::vec3* positions, glm::quat* rotations, float t)
 		{
-#if 0
+#if 1
 			if (mesh->skeleton.empty())
 			{
 				return;
@@ -1197,7 +1197,7 @@ public:
 		{
 			if (event.key == input::KEY_ESCAPE)
 			{
-#if 1
+#if 0
 				in_gui = !in_gui;
 				if (!in_gui)
 				{

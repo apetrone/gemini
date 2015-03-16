@@ -635,11 +635,6 @@ def products(arguments, **kwargs):
 	gemini.product_root = COMMON_PRODUCT_ROOT
 	gemini.object_root = "obj"
 
-	# DO NOT COMMIT, FOR DEVELOPMENT ONLY (oops)
-	gemini.commandline = [
-		"-game \"/Users/apetrone/Documents/games/vrpowergrid\""
-	]
-
 	setup_common_libs(arguments, gemini)
 	setup_common_application(gemini)
 

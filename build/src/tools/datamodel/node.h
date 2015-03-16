@@ -55,6 +55,8 @@ namespace gemini
 			
 			// local transform
 			glm::vec3 scale;
+			
+			// euler angles (yaw, pitch, roll)
 			glm::quat rotation;
 			glm::vec3 translation;
 			
