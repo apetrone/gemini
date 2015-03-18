@@ -517,14 +517,19 @@ Options:
 	
 	const char* test7 = R"(
 		Usage:
-			export <source_asset_path> <asset_path> <output_asset_path>
+			export [--animation-only] <source_asset_path> <asset_path> <output_asset_path>
 	
 		Options:
 			-h, --help  Show this help screen
 			--version  Display the version number
 	)";
 	
-	core::Dictionary<std::string> vm = parser.parse(test7, argc, argv, "alpha 1.0");
+	core::argparse::VariableMap vm = parser.parse(test7, argc, argv, "alpha 1.0");
+	for (core::argparse::VariableMap::iterator it = vm.begin(); it != vm.end(); ++it)
+	{
+		const core::argparse::VariableMapEntry& entry = (*it);
+		LOGV("'%s' -> '%s'\n", entry.first.c_str(), entry.second.c_str());
+	}
 //
 //	if (vm.has_key("name"))
 //	{

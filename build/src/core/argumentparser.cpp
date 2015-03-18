@@ -61,19 +61,19 @@ namespace core
 		// ---------------------------------------------------------------------
 		
 
-		bool LeafPattern::matches(PatternWrapper& patterns)
+		bool LeafPattern::matches(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
 		{
 			bool matched = false;
 			if (this->get_type() == PT_Argument || this->get_type() == PT_Command || this->get_type() == PT_Option)
 			{
 				LeafPattern* leaf = this->cast<LeafPattern>();
-				matched = leaf->single_match(patterns);
+				matched = leaf->single_match(pattern_start, patterns, vars);
 			}
 			
 			return matched;
 		}
 		
-		bool LeafPattern::single_match(PatternWrapper& patterns)
+		bool LeafPattern::single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
 		{
 			// should not get here.
 			assert(0);
@@ -91,27 +91,36 @@ namespace core
 			value = input_value;
 		}
 		
-		bool Argument::single_match(PatternWrapper& patterns)
+		bool Argument::single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
 		{
-			for (PatternPtr p : patterns)
+			for (int32_t index = pattern_start; index < patterns.items_length; ++index)
 			{
+				PatternPtr p = patterns.at(index);
 				if (p->get_type() == PT_Argument)
 				{
-					patterns.pop();
+					Argument* argument = p->cast<Argument>();
+
+					vars[this->get_sanitized_name()] = argument->value;
+					++pattern_start;
 					return true;
 				}
 			}
 			return false;
 		}
 		
+		std::string Argument::get_sanitized_name() const
+		{
+			// strip off the leading and trailing brackets (<, >)
+			std::string sanitized_name = this->get_name().substr(1, this->get_name().length()-2);
+			return sanitized_name;
+		}
 		
 		// ---------------------------------------------------------------------
 		// Option
 		// ---------------------------------------------------------------------
 		
-		bool Option::single_match(PatternWrapper& patterns)
+		bool Option::single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
 		{
-			bool matched = false;
 			for (PatternWrapper::Iterator it = std::begin(patterns); it != std::end(patterns); ++it)
 			{
 				PatternPtr p = (*it);
@@ -121,16 +130,39 @@ namespace core
 					if (this->longname == option->longname)
 					{
 						LOGV("matched: %s -> '%s'\n", option->longname.c_str(), option->get_value().c_str());
+						vars[option->longname] = option->get_value();
 
 						// erase this item
 						it = patterns.erase(it);
+						--pattern_start;
 						return true;
 					}
 				}
 			}
-			return matched;
+			return true;
 		} // single_match
 		
+		// ---------------------------------------------------------------------
+		// Command
+		// ---------------------------------------------------------------------
+		bool Command::single_match(int32_t& pattern_start, PatternWrapper &patterns, VariableMap &vars)
+		{
+			for (int32_t index = pattern_start; index < patterns.items_length; ++pattern_start)
+			{
+				PatternPtr p = patterns.at(index);
+				if (p->get_type() == PT_Argument)
+				{
+					Argument* argument = p->cast<Argument>();
+					if (argument->get_value() == this->name)
+					{
+						vars[this->get_name()] = argument->get_value();
+						++pattern_start;
+						return true;
+					}
+				}
+			}
+			return false;
+		}
 		
 		// ---------------------------------------------------------------------
 		// BranchPattern
@@ -139,6 +171,24 @@ namespace core
 		BranchPattern::~BranchPattern()
 		{
 			children.clear();
+		}
+		
+		// ---------------------------------------------------------------------
+		// Required
+		// ---------------------------------------------------------------------
+		bool Required::matches(int32_t &pattern_start, PatternWrapper &patterns, VariableMap &vars)
+		{
+			bool matched = false;
+			for(PatternPtr child : children)
+			{
+				matched = child->matches(pattern_start, patterns, vars);
+				if (!matched)
+				{
+					return false;
+				}
+			}
+			
+			return matched;
 		}
 		
 		// ---------------------------------------------------------------------
@@ -215,12 +265,12 @@ namespace core
 			
 		}
 		
-		Option* ArgumentParser::find_option(PatternList& patterns,
+		PatternPtr ArgumentParser::find_option(PatternList& patterns,
 							const std::string& shortname,
 							const std::string& longname,
 							int& found_options)
 		{
-			Option* option = 0;
+			PatternPtr option = 0;
 			
 			bool test_shortname = !shortname.empty();
 			bool test_longname = !longname.empty();
@@ -233,12 +283,12 @@ namespace core
 
 					if (test_shortname && o->get_name() == shortname)
 					{
-						option = o;
+						option = p;
 						++found_options;
 					}
 					else if (test_longname && o->longname == longname)
 					{
-						option = o;
+						option = p;
 						++found_options;
 					}
 				}
@@ -261,14 +311,7 @@ namespace core
 			std::string longname;
 			std::string value;
 			int total_arguments = 0;
-			
-			// get our first match; if one exists
-			Option* first = find_option(options, "", longname, found_options);
-			
-			if (state == ParsingInput && found_options == 0)
-			{
-				// No exact match; try fuzzy searching?
-			}
+
 			
 			size_t eq_pos = long_arg.find('=');
 			if (eq_pos != std::string::npos)
@@ -282,6 +325,14 @@ namespace core
 				longname = long_arg;
 			}
 			
+			
+			// get our first match; if one exists
+			PatternPtr first_option = find_option(options, "", longname, found_options);
+			
+			if (state == ParsingInput && found_options == 0)
+			{
+				// No exact match; try fuzzy searching?
+			}
 			
 			if (found_options > 1)
 			{
@@ -307,6 +358,7 @@ namespace core
 			}
 			else // exactly one match
 			{
+				Option* first = first_option->cast<Option>();
 				option = OptionPtr(new Option(first->name,
 									first->longname,
 									first->total_arguments,
@@ -318,6 +370,8 @@ namespace core
 					{
 						set_error("%s must not have an argument", option->longname.c_str());
 					}
+					
+					value = "true";
 				}
 				else
 				{
@@ -329,7 +383,6 @@ namespace core
 						}
 						value = tokens.pop();
 					}
-					
 				}
 				
 				if (state == ParsingInput)
@@ -371,7 +424,7 @@ namespace core
 				
 
 //				LOGV("searching for shortname: '%s'\n", shortname.c_str());
-				Option* first = find_option(options, shortname, "", found_options);
+				PatternPtr first_option = find_option(options, shortname, "", found_options);
 				
 				if (found_options > 1)
 				{
@@ -390,6 +443,7 @@ namespace core
 				}
 				else
 				{
+					Option* first = first_option->cast<Option>();
 					LOGV("found an option '%s', '%s'\n", first->name.c_str(), first->longname.c_str());
 					option = OptionPtr(new Option(first->name, first->longname, first->total_arguments, first->value));
 					if (option->total_arguments)
@@ -788,7 +842,7 @@ namespace core
 			fprintf(stdout, "%s\n", docstring);
 		}
 			
-		core::Dictionary<std::string> ArgumentParser::parse(const char* docstring, int argc, char** argv, const char* version_string)
+		VariableMap ArgumentParser::parse(const char* docstring, int argc, char** argv, const char* version_string)
 		{
 			this->docstring = docstring;
 			bool found_options = false;
@@ -829,17 +883,52 @@ namespace core
 			}
 			
 			PatternWrapper input(input_patterns, nullptr);
-			core::Dictionary<std::string> dict;
+			VariableMap dict;
+
+			
+			size_t input_length = input.size();
 			
 			bool success = false;
 			for (PatternPtr usage : usage_patterns)
 			{
-				success = usage->matches(input);
+				int32_t pattern_start = 0;
+				success = usage->matches(pattern_start, input, dict);
 				
 				// too many arguments specified
-				if (success && input.size() > 0)
+				if (success && input_length != pattern_start)
 				{
 					fprintf(stdout, "ArgumentParser: ignoring unrecognized arguments\n");
+				}
+				
+				if (success)
+				{
+					break;
+				}
+				
+				dict.clear();
+			}
+			
+			// insert default option values for the items not in the dict
+			for (PatternPtr option : options_registry)
+			{
+				Option* o = option->cast<Option>();
+				if (dict.find(o->get_name()) == dict.end())
+				{
+					std::string option_name;
+					if (!o->get_name().empty())
+					{
+						option_name = o->get_name();
+					}
+					else if (!o->longname.empty())
+					{
+						option_name = o->longname;
+					}
+					std::string option_value = o->get_value();
+					if (o->get_value().empty() && o->total_arguments == 0)
+					{
+						option_value = "false";
+					}
+					dict[option_name] = option_value;
 				}
 			}
 			

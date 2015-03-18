@@ -29,7 +29,8 @@
 #include <vector>
 #include <memory>
 
-#include <core/dictionary.h>
+//#include <core/dictionary.h>
+#include <unordered_map>
 
 namespace core
 {
@@ -54,6 +55,9 @@ namespace core
 		typedef std::shared_ptr<Option> OptionPtr;
 		
 		typedef std::vector<PatternPtr> PatternList;
+		
+		typedef std::unordered_map<std::string, std::string> VariableMap;
+		typedef VariableMap::value_type VariableMapEntry;
 
 		template <class T>
 		struct Wrapper
@@ -178,7 +182,10 @@ namespace core
 			
 			virtual bool is_leaf() const { return false; }
 			virtual bool is_branch() const { return false; }
-			virtual bool matches(PatternWrapper& patterns) { return 0; }
+			
+			// pattern_start: The index of patterns to begin matching
+			// returns true or false if it found a match
+			virtual bool matches(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars) { return 0; }
 			virtual const char* get_classname() const { return "Pattern"; }
 			virtual Type get_type() const { return PT_Pattern; }
 			
@@ -235,8 +242,14 @@ namespace core
 			virtual const char* get_classname() const { return "LeafPattern"; }
 			virtual Type get_type() const { return PT_LeafPattern; }
 			
-			virtual bool matches(PatternWrapper& patterns);
-			virtual bool single_match(PatternWrapper& patterns);
+			virtual bool matches(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
+			
+			// pattern_start is both input and output
+			// Input, it indexes into patterns as a location to start matching.
+			// If it finds a match (return true) and pattern_start should reference
+			// the next index of patterns to begin matching.
+			// This may not increment, for example, in the case of Optional arguments.
+			virtual bool single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
 		};
 		
 		
@@ -247,10 +260,12 @@ namespace core
 		struct Argument : public LeafPattern
 		{
 			Argument(const std::string& input_name, const std::string& input_value);
-			virtual bool single_match(PatternWrapper& patterns);
+			virtual bool single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
 			
 			virtual const char* get_classname() const { return "Argument"; }
 			virtual Type get_type() const { return PT_Argument; }
+			
+			virtual std::string get_sanitized_name() const;
 		};
 		
 		
@@ -278,8 +293,12 @@ namespace core
 			virtual const char* get_classname() const { return "Option"; }
 			virtual Type get_type() const { return PT_Option; }
 			
-			virtual bool single_match(PatternWrapper& patterns);
+			virtual bool single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
 		};
+		
+		// ---------------------------------------------------------------------
+		// Command
+		// ---------------------------------------------------------------------
 		
 		struct Command : public Argument
 		{
@@ -290,24 +309,12 @@ namespace core
 			virtual const char* get_classname() const { return "Command"; }
 			virtual Type get_type() const { return PT_Command; }
 			
-			virtual bool single_match(PatternWrapper& patterns)
-			{
-				for (PatternPtr p : patterns)
-				{
-					if (p->get_type() == PT_Argument)
-					{
-						Argument* argument = p->cast<Argument>();
-						if (argument->get_value() == this->name)
-						{
-							patterns.pop();
-							return true;
-						}
-					}
-				}
-				return false;
-			}
+			virtual bool single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
 		};
 		
+		// ---------------------------------------------------------------------
+		// BranchPattern
+		// ---------------------------------------------------------------------
 		
 		struct BranchPattern : public Pattern
 		{
@@ -330,20 +337,7 @@ namespace core
 			{
 			}
 			
-			virtual bool matches(PatternWrapper& patterns)
-			{
-				bool matched = false;
-				for(PatternPtr child : children)
-				{
-					matched = child->matches(patterns);
-					if (!matched)
-					{
-						return false;
-					}
-				}
-				
-				return matched;
-			}
+			virtual bool matches(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
 			
 			virtual const char* get_classname() const { return "Required"; }
 		};
@@ -355,11 +349,11 @@ namespace core
 			}
 			
 			
-			virtual bool matches(PatternWrapper& patterns)
+			virtual bool matches(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
 			{
 				for (PatternPtr child : children)
 				{
-					child->matches(patterns);
+					child->matches(pattern_start, patterns, vars);
 				}
 				return true;
 			}
@@ -414,7 +408,7 @@ namespace core
 			
 			void parse_patterns_from_tokens(PatternList& patterns, TokenWrapper& tokens);
 			
-			Option* find_option(PatternList& patterns,
+			PatternPtr find_option(PatternList& patterns,
 								const std::string& shortname,
 								const std::string& longname,
 								int& found_options);
@@ -444,7 +438,7 @@ namespace core
 			
 			bool check_extra(bool enable_automatic_help, const char* version_string, PatternList& patterns);
 			void print_docstring() const;
-			core::Dictionary<std::string> parse(const char* docstring, int argc, char** argv, const char* version_string = "");
+			VariableMap parse(const char* docstring, int argc, char** argv, const char* version_string = "");
 			
 			void set_error(const char* format, ...) {};
 		}; // ArgumentParser
