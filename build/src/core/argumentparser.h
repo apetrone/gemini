@@ -28,8 +28,6 @@
 #include <string>
 #include <vector>
 #include <memory>
-
-//#include <core/dictionary.h>
 #include <unordered_map>
 
 namespace core
@@ -43,7 +41,11 @@ namespace core
 		// - Must be C++
 		// - Must not use exceptions or rtti
 		// - Must compile with gcc4.8, clang, vs2013+
-		// - Should follow docopt's ideals as closely as possible
+		// - Should follow docopt's naming and logic as closely as possible
+		//   except for:
+		
+		//	 I'm requiring upper case for 'Usage' and 'Options'.
+		//   There is no support for your program name at the beginning of usage
 
 		struct TokenInfo;
 		struct Pattern;
