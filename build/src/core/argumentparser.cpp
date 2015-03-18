@@ -24,9 +24,9 @@
 // -------------------------------------------------------------
 
 #include <assert.h>
+#include <stdio.h>
 
 #include "argumentparser.h"
-#include <core/logging.h>
 
 #include <regex>
 
@@ -129,7 +129,6 @@ namespace core
 					Option* option = p->cast<Option>();
 					if (this->longname == option->longname)
 					{
-						LOGV("matched: %s -> '%s'\n", option->longname.c_str(), option->get_value().c_str());
 						vars[option->longname] = option->get_value();
 
 						// erase this item
@@ -396,7 +395,7 @@ namespace core
 			assert(token[0] == '-');
 			
 			std::string left = trim_left(token, "-");
-//			LOGV("left: %s\n", left.c_str());
+
 
 			size_t total_size = left.length();
 			for (size_t index = 0; index < total_size; ++index)
@@ -411,7 +410,6 @@ namespace core
 				char next = 0;
 				
 
-//				LOGV("searching for shortname: '%s'\n", shortname.c_str());
 				PatternPtr first_option = find_option(options, shortname, "", found_options);
 				
 				if (found_options > 1)
@@ -432,7 +430,6 @@ namespace core
 				else
 				{
 					Option* first = first_option->cast<Option>();
-					LOGV("found an option '%s', '%s'\n", first->name.c_str(), first->longname.c_str());
 					option = OptionPtr(new Option(first->name, first->longname, first->total_arguments, first->value));
 					if (option->total_arguments)
 					{
@@ -441,7 +438,7 @@ namespace core
 							const std::string& current_token = tokens.current();
 							if (starts_with(current_token, "--") || current_token.empty())
 							{
-								LOGV("%s requires argument!\n", shortname.c_str());
+								fprintf(stderr, "%s requires argument!\n", shortname.c_str());
 							}
 							value = tokens.pop();
 						}
@@ -474,7 +471,7 @@ namespace core
 				tokens.pop();
 				if (token == "(")
 				{
-					LOGV("TODO: implement parentheses!\n");
+					fprintf(stderr, "TODO: implement parentheses!\n");
 				}
 				else if (token == "[")
 				{
@@ -482,7 +479,7 @@ namespace core
 					parse_expr(tokens, option_results);
 					if (tokens.current() != "]")
 					{
-						LOGV("Unmatched '%s'\n", "]");
+						fprintf(stderr, "Unmatched '%s'\n", "]");
 					}
 					tokens.pop();
 					PatternPtr optional = PatternPtr(new Optional(option_results));
@@ -492,22 +489,18 @@ namespace core
 			}
 			else if (starts_with("--", token) && token != "--")
 			{
-				//LOGV("this is a long option\n");
 				parse_long(results, tokens, options_registry);
 			}
 			else if (starts_with("-", token) && token != "-")
 			{
-				//LOGV("this is a short option\n");
 				parse_short(results, tokens, options_registry);
 			}
 			else if (starts_with("<", token) && ends_with(">", token))
 			{
-				//LOGV("this is an argument\n");
 				results.push_back(PatternPtr(new Argument(tokens.pop(), "")));
 			}
 			else
 			{
-				//LOGV("this is a command\n");
 				results.push_back(PatternPtr(new Command(tokens.pop(), "")));
 			}
 		}
@@ -520,7 +513,6 @@ namespace core
 				std::string current = tokens.current();
 				if (current == "" || current == "]" || current == ")" || current == "|")
 				{
-					//LOGV("detected end of sequence\n");
 					break;
 				}
 				
@@ -743,15 +735,10 @@ namespace core
 					if (matches.size() > 1)
 					{
 						value = matches.str(1);
-//						LOGV("matched: %s\n", value.c_str());
+
 					}
 				}
-				
-//				LOGV("longname: %s\n", longname.c_str());
-//				LOGV("shortname: %s\n", shortname.c_str());
-//				LOGV("argument_count: %i\n", argument_count);
-				
-				
+
 				OptionPtr option = OptionPtr(new Option(shortname,
 											longname,
 											argument_count,
@@ -852,7 +839,7 @@ namespace core
 			
 			if (!found_usage)
 			{
-				LOGV("Usage section not found!\n");
+				fprintf(stderr, "Usage section not found!\n");
 			}
 			
 			
