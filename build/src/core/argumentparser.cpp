@@ -419,8 +419,6 @@ namespace core
 				int found_options = 0;
 				shortname += left[index];
 				char next = 0;
-				if (index < total_size-1)
-					next = left[index+1];
 				
 
 //				LOGV("searching for shortname: '%s'\n", shortname.c_str());
@@ -784,13 +782,18 @@ namespace core
 								
 				// first, we expand the usage string so we have extra whitespace
 				// to separate elements.
-				std::string str;
+				std::string replaced_string;
 				std::regex replacement("([\\[\\]\\(\\)\\|]|\\.\\.\\.)");
-				std::regex_replace(std::back_inserter(str),
+				std::regex_replace(std::back_inserter(replaced_string),
 					formal_usage.begin(),
 					formal_usage.end(),
 					replacement,
 					" $1 ");
+				
+				// this needs to remove the commas from the usage pattern
+				// otherwise it may incorrectly pickup bogus options: "-,"
+				std::string str;
+				std::remove_copy(replaced_string.begin(), replaced_string.end(), std::back_inserter(str), ',');
 				
 				// next, we tokenize the expanded string and insert these
 				// into a vector.
