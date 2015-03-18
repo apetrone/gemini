@@ -33,6 +33,7 @@
 #include <core/stackstring.h>
 #include <core/datastream.h>
 #include <core/logging.h>
+#include <core/argumentparser.h>
 
 #include "common.h"
 #include "common/extension.h"
@@ -270,34 +271,50 @@ namespace gemini
 int main(int argc, char** argv)
 {
 	using namespace gemini;
+	using namespace core::argparse;
 
-	tools::startup();
 	
-	tools::register_types();
+	const char* docstring = R"(
+Usage:
+	[--animation-only] <source_asset_root> <input_path> <output_asset_root>
 	
-	if (argc < 4)
+Options:
+	-h, --help  Show this help screen
+	--version  Display the version number
+	)";
+	
+	
+	core::argparse::ArgumentParser parser;
+	core::argparse::VariableMap vm;
+	
+	if (!parser.parse(docstring, argc, argv, vm, "alpha 1.0.0"))
 	{
-		LOGE("Argument parsing failed. Usage: \"/path/to/assets\" \"models/plane.fbx\" \"/path/to/build/latest\"\n");
 		return -1;
 	}
 	
-	const char* asset_root = argv[1];
-	const char* input_file = argv[2];
-	const char* output_root = argv[3];
+	const std::string asset_root = vm["source_asset_root"];
+	const std::string input_path = vm["input_path"];
+	const std::string output_root = vm["output_asset_root"];
+	
+	
+	
+	tools::startup();
+	
+	tools::register_types();
 	
 	ToolOptions options;
 	uint64_t start_ticks = platform::instance()->get_time_microseconds();
 
 	// determine our input and output filenames
-	StackString<MAX_PATH_SIZE> input_filename = asset_root;
+	StackString<MAX_PATH_SIZE> input_filename = asset_root.c_str();
 	input_filename.normalize();
 	input_filename.strip_trailing(PATH_SEPARATOR).append(PATH_SEPARATOR_STRING);
-	input_filename.append(input_file);
+	input_filename.append(input_path.c_str());
 	
-	StackString<MAX_PATH_SIZE> output_filename = output_root;
+	StackString<MAX_PATH_SIZE> output_filename = output_root.c_str();
 	output_filename.normalize();
 	output_filename.strip_trailing(PATH_SEPARATOR).append(PATH_SEPARATOR_STRING);
-	output_filename = output_filename.append(input_file).remove_extension().append(".model");
+	output_filename = output_filename.append(input_path.c_str()).remove_extension().append(".model");
 
 	// perform the conversion -- right now, we always assume it's a scene/model
 	platform::Result result = tools::convert_model(options, input_filename, output_filename);

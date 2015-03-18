@@ -438,7 +438,7 @@ namespace core
 			
 			bool check_extra(bool enable_automatic_help, const char* version_string, PatternList& patterns);
 			void print_docstring() const;
-			VariableMap parse(const char* docstring, int argc, char** argv, const char* version_string = "");
+			bool parse(const char* docstring, int argc, char** argv, VariableMap& vm, const char* version_string = "");
 			
 			void set_error(const char* format, ...) {};
 		}; // ArgumentParser

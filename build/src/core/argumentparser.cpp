@@ -226,43 +226,33 @@ namespace core
 				
 				if (arg == "")
 				{
-					LOGV("end of arguments\n");
 					break;
 				}
 				
 				if (arg == "--")
 				{
-					// the following arguments are positional
-//					LOGV("The following arguments will be treated as positional\n");
+					// TODO: the following arguments are positional
 					tokens.pop();
 					break;
 				}
 				else if (starts_with("--", arg))
 				{
 					// parse a long option
-					LOGV("\"%s\" is a long option\n", arg.c_str());
 					parse_long(patterns, tokens, options_registry);
 				}
 				else if (starts_with("-", arg))
 				{
 					// parse a short option
-					LOGV("\"%s\" is a short option (or group of)\n", arg.c_str());
 					parse_short(patterns, tokens, options_registry);
 				}
 				else
 				{
 					// parse an argument
-					LOGV("\"%s\" is an argument\n", arg.c_str());
 					PatternPtr newargument(new Argument("", arg));
 					tokens.pop();
 					patterns.push_back(newargument);
 				}
 			}
-			
-			// now that info.input is populated, we can determine how to map
-			// them to the usage branches.
-			
-			
 		}
 		
 		PatternPtr ArgumentParser::find_option(PatternList& patterns,
@@ -695,7 +685,6 @@ namespace core
 			{
 				// the raw option line may also have a help string associated with it
 				// so we need to split the string properly
-//				LOGV("%s\n", raw_option_line.c_str());
 				std::vector<std::string> items = split(raw_option_line, "  ");
 				
 				std::string specifier;
@@ -721,7 +710,6 @@ namespace core
 				std::string result;
 				std::remove_copy(specifier.begin(), specifier.end(), std::back_inserter(result), ',');
 				specifier = result;
-//				LOGV("specifier: %s\n", specifier.c_str());
 				
 				
 				std::string longname;
@@ -795,6 +783,11 @@ namespace core
 				std::string str;
 				std::remove_copy(replaced_string.begin(), replaced_string.end(), std::back_inserter(str), ',');
 				
+				// the above regex_replace will introduce a space when
+				// options are specified first. Obviously, this is bad.
+				// so we trim any whitespace before tokenizing it.
+				str = trim_left(str);
+				
 				// next, we tokenize the expanded string and insert these
 				// into a vector.
 				TokenList usage;
@@ -845,7 +838,7 @@ namespace core
 			fprintf(stdout, "%s\n", docstring);
 		}
 			
-		VariableMap ArgumentParser::parse(const char* docstring, int argc, char** argv, const char* version_string)
+		bool ArgumentParser::parse(const char* docstring, int argc, char** argv, VariableMap& vm, const char* version_string)
 		{
 			this->docstring = docstring;
 			bool found_options = false;
@@ -882,12 +875,10 @@ namespace core
 			if (should_exit)
 			{
 				// should bail here; displayed help or version string to user.
-//				exit(0);
+				return false;
 			}
 			
 			PatternWrapper input(input_patterns, nullptr);
-			VariableMap dict;
-
 			
 			size_t input_length = input.size();
 			
@@ -895,7 +886,7 @@ namespace core
 			for (PatternPtr usage : usage_patterns)
 			{
 				int32_t pattern_start = 0;
-				success = usage->matches(pattern_start, input, dict);
+				success = usage->matches(pattern_start, input, vm);
 				
 				// too many arguments specified
 				if (success && input_length != pattern_start)
@@ -908,14 +899,14 @@ namespace core
 					break;
 				}
 				
-				dict.clear();
+				vm.clear();
 			}
 			
 			// insert default option values for the items not in the dict
 			for (PatternPtr option : options_registry)
 			{
 				Option* o = option->cast<Option>();
-				if (dict.find(o->get_name()) == dict.end())
+				if (vm.find(o->get_name()) == vm.end())
 				{
 					std::string option_name;
 					if (!o->get_name().empty())
@@ -931,16 +922,17 @@ namespace core
 					{
 						option_value = "false";
 					}
-					dict[option_name] = option_value;
+					vm[option_name] = option_value;
 				}
 			}
 			
 			if (!success)
 			{
 				print_docstring();
+				return false;
 			}
 			
-			return dict;
+			return success;
 		}
 	} // namespace argparse
 } // namespace core

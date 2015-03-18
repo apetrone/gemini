@@ -524,7 +524,8 @@ Options:
 			--version  Display the version number
 	)";
 	
-	core::argparse::VariableMap vm = parser.parse(test7, argc, argv, "alpha 1.0");
+	core::argparse::VariableMap vm;
+	parser.parse(test7, argc, argv, "alpha 1.0", vm);
 	for (core::argparse::VariableMap::iterator it = vm.begin(); it != vm.end(); ++it)
 	{
 		const core::argparse::VariableMapEntry& entry = (*it);
