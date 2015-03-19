@@ -287,7 +287,7 @@ Options:
 	core::argparse::ArgumentParser parser;
 	core::argparse::VariableMap vm;
 	
-	if (!parser.parse(docstring, argc, argv, vm, "alpha 1.0.0"))
+	if (!parser.parse(docstring, argc, argv, vm, "1.0.0-alpha"))
 	{
 		return -1;
 	}
