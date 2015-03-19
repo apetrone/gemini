@@ -281,6 +281,7 @@ Usage:
 Options:
 	-h, --help  Show this help screen
 	--version  Display the version number
+	--animation-only  Export only the animation from <input_path>
 	)";
 	
 	
