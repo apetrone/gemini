@@ -106,27 +106,6 @@ namespace gemini
 		jkeys["value"] = jvalue;
 	}
 
-
-	void JsonModelWriter::write_skeleton(const std::string& abs_base_path, datamodel::Skeleton* skeleton)
-	{
-		if (!skeleton)
-		{
-			return;
-		}
-		
-		std::string abs_file_path = abs_base_path + ".skeleton";
-		
-		xfile_t handle = xfile_open(abs_file_path.c_str(), XF_WRITE);
-		if (xfile_isopen(handle))
-		{
-			LOGV("writing skeleton '%s'\n", abs_file_path.c_str());
-			xfile_close(handle);
-		}
-		else
-		{
-			LOGE("Unable to open file for writing '%s'\n", abs_file_path.c_str());
-		}
-	}
 	
 	void JsonModelWriter::write_animations(const std::string& abs_base_path, datamodel::Animation** animations, uint32_t total_animations)
 	{
@@ -469,9 +448,6 @@ namespace gemini
 		{
 			LOGE("error writing to file %s\n", abs_model_file.c_str());
 		}
-		
-			
-		write_skeleton(abs_base_path, model->skeleton);
 
 		write_animations(abs_base_path, &model->animations[0], model->animations.size());
 		

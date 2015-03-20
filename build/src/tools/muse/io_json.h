@@ -46,9 +46,7 @@ namespace gemini
 		DECLARE_PLUGIN_CLASS(JsonModelWriter);
 		
 		bool write_rotations_as_quaternions;
-		
-		
-		void write_skeleton(const std::string& abs_base_path, datamodel::Skeleton* skeleton);
+
 		void write_animations(const std::string& abs_base_path, datamodel::Animation** animations, uint32_t total_animations);
 		
 	public:
