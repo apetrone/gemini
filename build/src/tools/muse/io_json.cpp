@@ -36,6 +36,8 @@
 
 using namespace core;
 
+using namespace gemini::datamodel;
+
 namespace gemini
 {
 	typedef glm::quat RotationOutputType;
@@ -107,22 +109,69 @@ namespace gemini
 	}
 
 	
-	void JsonModelWriter::write_animations(const std::string& abs_base_path, datamodel::Animation** animations, uint32_t total_animations)
+	void JsonModelWriter::write_animations(const std::string& abs_base_path, datamodel::Model* model)
 	{
+		size_t total_animations = model->animations.size();
 		if (!total_animations)
 		{
 			return;
 		}
-		
-		for (uint32_t index = 0; index < total_animations; ++index)
-		{
-			datamodel::Animation* animation = animations[index];
-			std::string abs_file_path = abs_base_path + ".animation";
 
+		// this should export a single animation per file.
+		
+		for (datamodel::Animation* animation : model->animations)
+		{
+			Json::Value janimation;
+			
+			janimation["name"] = animation->name.c_str();
+//			LOGV("animation: %s\n", animation->name.c_str());
+			
+			janimation["frames_per_second"] = animation->frames_per_second;
+
+			
+			Json::Value jnodes(Json::arrayValue);
+			for (NodeAnimation* data : animation->node_animations)
+			{
+				Json::Value jnode;
+				datamodel::Bone* bone = model->skeleton->find_bone_named(data->name);
+				
+				// animation present for bone that was not added to the skeleton
+				assert(bone != 0);
+				
+				if (bone)
+				{
+//					LOGV("bone: %s\n", bone->name.c_str());
+//					LOGV("# keys: %i %i %i\n", data->translation.keys.size(), data->rotation.keys.size(), data->scale.keys.size());
+					
+					Json::Value jscale;
+					gather_keys<glm::vec3, glm::vec3>(jscale, data->scale.keys);
+					
+					Json::Value jrotation;
+					gather_keys<glm::quat, glm::quat>(jrotation, data->rotation.keys);
+					
+					Json::Value jtranslation;
+					gather_keys<glm::vec3, glm::vec3>(jtranslation, data->translation.keys);
+					
+					jnode["name"] = bone->name.c_str();
+					jnode["scale"] = jscale;
+					jnode["rotation"] = jrotation;
+					jnode["translation"] = jtranslation;
+					jnodes.append(jnode);
+				}
+				
+			}
+			janimation["nodes"] = jnodes;
+
+			
+			Json::StyledWriter writer;
+			std::string buffer = writer.write(janimation);
+						
+			std::string abs_file_path = abs_base_path + ".animation";
 			LOGV("writing animation '%s'\n", abs_file_path.c_str());
 			xfile_t handle = xfile_open(abs_file_path.c_str(), XF_WRITE);
 			if (xfile_isopen(handle))
 			{
+				xfile_write(handle, &buffer[0], buffer.length(), 1);
 				xfile_close(handle);
 			}
 			else
@@ -131,8 +180,6 @@ namespace gemini
 			}
 		}
 	}
-	
-	
 	
 	JsonModelWriter::JsonModelWriter() : write_rotations_as_quaternions(RotationIsQuaternion<RotationOutputType>())
 	{
@@ -333,83 +380,40 @@ namespace gemini
 	{
 		Json::Value jroot;
 		Json::Value jnodes(Json::arrayValue);
-
-		// write out all nodes
-		for (auto child : model->root.children)
+		
+		if (model->export_flags == 0)
 		{
-			if (child->type == "skeleton")
-				continue;
-			append_node(child, jnodes);
+			LOGW("Instructed not to export anything. wat?\n");
+			assert(0);
+			return;
 		}
-		jroot["nodes"] = jnodes;
-		
+
 		Json::Value jmaterials(Json::arrayValue);
-		
-		// write out all materials
-		for (const auto& material : model->materials)
+		if (model->export_flags & Model::EXPORT_MATERIALS)
 		{
-			append_material(material, jmaterials);
+			// write out all materials
+			for (const auto& material : model->materials)
+			{
+				append_material(material, jmaterials);
+			}
 		}
 		jroot["materials"] = jmaterials;
-		
-		
-		Json::Value janimations(Json::arrayValue);
-		for (auto animation : model->animations)
+
+		if (model->export_flags & Model::EXPORT_MESHES)
 		{
-			Json::Value janimation;
-			
-			janimation["name"] = animation->name.c_str();
-			LOGV("animation: %s\n", animation->name.c_str());
-			
-			janimation["frames_per_second"] = animation->frames_per_second;
-			
-			Json::Value jnodes(Json::arrayValue);
-			for (auto data : animation->node_animations)
+			for (auto child : model->root.children)
 			{
-				Json::Value jnode;
-//				datamodel::Node* node = model->skeleton-.find_child_named(data->name);
-				
-				// Node animation present for node that was not added to the model
-//				assert(node != nullptr);
-
-
-
-				datamodel::Bone* bone = model->skeleton->find_bone_named(data->name);
-				
-				// animation present for bone that was not added to the skeleton
-				assert(bone != 0);
-				
-				if (bone)
-				{
-					LOGV("bone: %s\n", bone->name.c_str());
-					LOGV("# keys: %i %i %i\n", data->translation.keys.size(), data->rotation.keys.size(), data->scale.keys.size());
-
-					Json::Value jscale;
-					gather_keys<glm::vec3, glm::vec3>(jscale, data->scale.keys);
-
-					Json::Value jrotation;
-					gather_keys<glm::quat, glm::quat>(jrotation, data->rotation.keys);
-					
-					Json::Value jtranslation;
-					gather_keys<glm::vec3, glm::vec3>(jtranslation, data->translation.keys);
-			
-					jnode["name"] = bone->name.c_str();
-					jnode["scale"] = jscale;
-					jnode["rotation"] = jrotation;
-					jnode["translation"] = jtranslation;
-					jnodes.append(jnode);
-				}
+				if (child->type == "skeleton")
+					continue;
+				append_node(child, jnodes);
 			}
-			janimation["nodes"] = jnodes;
-			janimations.append(janimation);
 		}
-		
-		jroot["animations"] = janimations;
-		
+		jroot["nodes"] = jnodes;
+
 		
 		// write out the skeleton; if one exists
 		Json::Value jskeleton(Json::arrayValue);
-		if (model->skeleton)
+		if (model->skeleton && (model->export_flags & Model::EXPORT_SKELETON))
 		{
 			Json::Value bone_entry;
 			for (const datamodel::Bone* bone : model->skeleton->bones)
@@ -425,32 +429,36 @@ namespace gemini
 				bone_entry["inverse_bind_pose"] = inverse_bind_pose;
 				jskeleton.append(bone_entry);
 			}
+		}
+		jroot["skeleton"] = jskeleton;
+
 		
-			jroot["skeleton"] = jskeleton;
+		if (model->export_flags & (Model::EXPORT_MESHES | Model::EXPORT_MATERIALS | Model::EXPORT_SKELETON))
+		{
+			Json::StyledWriter writer;
+			
+			std::string buffer = writer.write(jroot);
+			
+			std::string abs_model_file = abs_base_path;
+			abs_model_file.append(".model");
+			
+			xfile_t out = xfile_open(abs_model_file.c_str(), XF_WRITE);
+			LOGV("writing model: '%s'\n", abs_model_file.c_str());
+			if (xfile_isopen(out))
+			{
+				xfile_write(out, &buffer[0], buffer.length(), 1);
+				xfile_close(out);
+			}
+			else
+			{
+				LOGE("error writing to file %s\n", abs_model_file.c_str());
+			}
 		}
 
 		
-		Json::StyledWriter writer;
-		
-		std::string buffer = writer.write(jroot);
-		
-		std::string abs_model_file = abs_base_path;
-		abs_model_file.append(".model");
-		
-		xfile_t out = xfile_open(abs_model_file.c_str(), XF_WRITE);
-		LOGV("writing model: '%s'\n", abs_model_file.c_str());
-		if (xfile_isopen(out))
+		if (!model->animations.empty() && (model->export_flags & Model::EXPORT_ANIMATIONS))
 		{
-			xfile_write(out, &buffer[0], buffer.length(), 1);
-			xfile_close(out);
+			write_animations(abs_base_path, model);
 		}
-		else
-		{
-			LOGE("error writing to file %s\n", abs_model_file.c_str());
-		}
-
-		write_animations(abs_base_path, &model->animations[0], model->animations.size());
-		
-		
 	} // write
 } // namespace gemini

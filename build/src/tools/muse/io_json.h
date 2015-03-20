@@ -47,7 +47,7 @@ namespace gemini
 		
 		bool write_rotations_as_quaternions;
 
-		void write_animations(const std::string& abs_base_path, datamodel::Animation** animations, uint32_t total_animations);
+		void write_animations(const std::string& abs_base_path, datamodel::Model* model);
 		
 	public:
 		JsonModelWriter();	

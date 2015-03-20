@@ -513,9 +513,9 @@ namespace gemini
 					scaling = local_transform.GetS();
 					rotation = local_transform.GetR();
 					translation = local_transform.GetT();
-					LOGV("s: %g %g %g\n", scaling[0], scaling[1], scaling[2]);
-					LOGV("r: %g %g %g\n", rotation[0], rotation[1], rotation[2]);
-					LOGV("t: %g %g %g\n", translation[0], translation[1], translation[2]);
+//					LOGV("s: %g %g %g\n", scaling[0], scaling[1], scaling[2]);
+//					LOGV("r: %g %g %g\n", rotation[0], rotation[1], rotation[2]);
+//					LOGV("t: %g %g %g\n", translation[0], translation[1], translation[2]);
 				}
 
 

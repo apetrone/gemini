@@ -103,7 +103,7 @@ namespace gemini
 			// and false for skeletal meshes.
 			bake_transforms = false;
 			
-			animation_only = true;
+			animation_only = false;
 		}
 	};
 
@@ -237,6 +237,13 @@ namespace gemini
 			{
 				extensions::bake_node_transforms(model);
 			}
+			
+			if (options.animation_only)
+			{
+				model.remove_export_flag(datamodel::Model::EXPORT_MATERIALS);
+				model.remove_export_flag(datamodel::Model::EXPORT_MESHES);
+				model.remove_export_flag(datamodel::Model::EXPORT_SKELETON);
+			}
 
 			// calculate mass_center_offsets for all meshes
 			for (auto& child : model.root.children)
@@ -287,13 +294,20 @@ Options:
 	const std::string input_path = vm["input_path"];
 	const std::string output_root = vm["output_asset_root"];
 	
+	ToolOptions options;
+	if (vm.find("--animation-only") != vm.end())
+	{
+		const std::string animation_only = vm["--animation-only"];
+		
+		options.animation_only = animation_only == "true";
+	}
 	
 	
 	tools::startup();
 	
 	tools::register_types();
 	
-	ToolOptions options;
+	
 	uint64_t start_ticks = platform::instance()->get_time_microseconds();
 
 	// determine our input and output filenames

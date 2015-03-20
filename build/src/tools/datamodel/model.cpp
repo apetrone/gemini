@@ -31,7 +31,7 @@ namespace gemini
 	{
 		Model::Model() : skeleton(0)
 		{
-			
+			export_flags = EXPORT_ANIMATIONS | EXPORT_MATERIALS | EXPORT_MESHES | EXPORT_SKELETON;
 		}
 	
 		Model::~Model()
