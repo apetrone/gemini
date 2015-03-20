@@ -189,12 +189,6 @@ namespace gemini
 			ext.reader = 0;
 			ext.writer = JsonModelWriter::plugin_create();
 			register_extension<datamodel::Model>("model", ext);
-			
-//			ext.writer = JsonSkeletonWriter::plugin_create();
-//			register_extension<datamodel::Skeleton>("skeleton", ext);
-//			
-//			ext.writer = JsonAnimationWriter::plugin_create();
-//			register_extension<datamodel::Animation>("animation", ext);
 		}
 
 		platform::Result convert_model(const ToolOptions& options, StackString<MAX_PATH_SIZE>& input_path, StackString<MAX_PATH_SIZE>& output_path)
