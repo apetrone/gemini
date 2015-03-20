@@ -86,6 +86,10 @@
 
 	#define PLATFORM_NAME "windows"
 	#define PLATFORM_WINDOWS 1
+#elif __ANDROID__ // needs to be above __linux__, since android defines it also.
+	#define PLATFORM_NAME "android"
+	#define PLATFORM_ANDROID 1
+	#define PLATFORM_IS_MOBILE 1
 #elif __linux__
 	#if RASPBERRYPI
 		// specifically built for RaspberryPi
@@ -110,10 +114,6 @@
 		#define PLATFORM_NAME "macosx"
 		#define PLATFORM_MACOSX 1
 	#endif
-#elif __ANDROID__
-	#define PLATFORM_NAME "android"
-	#define PLATFORM_ANDROID 1
-	#define PLATFORM_IS_MOBILE 1
 #else
 	#error Unknown platform!
 #endif
