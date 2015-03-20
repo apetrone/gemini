@@ -300,7 +300,7 @@ namespace gemini
 	}
 
 
-	void JsonModelWriter::write(datamodel::Model* model, util::DataStream& source)
+	void JsonModelWriter::write(const std::string& abs_base_path, datamodel::Model* model, util::DataStream& source)
 	{
 		Json::Value jroot;
 		Json::Value jnodes(Json::arrayValue);

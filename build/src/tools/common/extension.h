@@ -79,7 +79,12 @@ namespace gemini
 			Writer() {}
 			virtual ~Writer() {}
 			
-			virtual void write(Type* model, core::util::DataStream& data) = 0;
+			
+			// abs_base_path: The absolute base path filename where the writer
+			// should output a target asset. Usually, the writer will append
+			// a file extension onto this base path and then open this file
+			// for writing.
+			virtual void write(const std::string& abs_base_path, Type* model, core::util::DataStream& data) = 0;
 		};
 		
 		// generic 'extension' data; subject to change

@@ -52,6 +52,6 @@ namespace gemini
 		void append_material(const datamodel::Material& node, Json::Value& jroot);
 		void append_node(datamodel::Node* node, Json::Value& jnodes);
 
-		virtual void write(datamodel::Model* root, core::util::DataStream& source);
+		virtual void write(const std::string& abs_base_path, datamodel::Model* root, core::util::DataStream& source);
 	};
 } // namespace gemini
