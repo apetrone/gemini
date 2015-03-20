@@ -133,7 +133,11 @@ namespace core
 
 						// erase this item
 						it = patterns.erase(it);
-						--pattern_start;
+						
+						if (pattern_start > 0)
+						{
+							--pattern_start;
+						}
 						return true;
 					}
 				}
@@ -874,12 +878,6 @@ namespace core
 			{
 				int32_t pattern_start = 0;
 				success = usage->matches(pattern_start, input, vm);
-				
-				// too many arguments specified
-				if (success && input_length != pattern_start)
-				{
-					fprintf(stdout, "ArgumentParser: ignoring unrecognized arguments\n");
-				}
 				
 				if (success)
 				{
