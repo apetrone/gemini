@@ -37,6 +37,8 @@ namespace gemini
 		struct Node;
 		struct Model;
 		struct Material;
+		struct Skeleton;
+		struct Animation;
 	} // namespace datamodel
 
 	class JsonModelWriter : public tools::Writer<datamodel::Model>
@@ -45,6 +47,10 @@ namespace gemini
 		
 		bool write_rotations_as_quaternions;
 		
+		
+		void write_skeleton(const std::string& abs_base_path, datamodel::Skeleton* skeleton);
+		void write_animations(const std::string& abs_base_path, datamodel::Animation** animations, uint32_t total_animations);
+		
 	public:
 		JsonModelWriter();	
 	
@@ -52,6 +58,6 @@ namespace gemini
 		void append_material(const datamodel::Material& node, Json::Value& jroot);
 		void append_node(datamodel::Node* node, Json::Value& jnodes);
 
-		virtual void write(const std::string& abs_base_path, datamodel::Model* root, core::util::DataStream& source);
+		virtual void write(const std::string& abs_base_path, datamodel::Model* root);
 	};
 } // namespace gemini

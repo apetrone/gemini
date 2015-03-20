@@ -26,6 +26,7 @@
 #include <core/typedefs.h>
 
 #include <core/logging.h>
+#include <core/xfile.h>
 
 #include "io_json.h"
 
@@ -45,10 +46,119 @@ namespace gemini
 	template <>
 	bool RotationIsQuaternion<glm::quat>() { return true; }
 	
+	
+	template <class Type>
+	void jsonify_value(Json::Value& jvalue, const Type& value);
+
+	template <>
+	void jsonify_value(Json::Value& jvalue, const glm::vec3& vector)
+	{
+		Json::Value v;
+		v.append(vector.x);
+		v.append(vector.y);
+		v.append(vector.z);
+		
+		jvalue.append(v);
+	}
+
+	template <>
+	void jsonify_value(Json::Value& jvalue, const glm::quat& quat)
+	{
+		Json::Value q;
+		q.append(quat.x);
+		q.append(quat.y);
+		q.append(quat.z);
+		q.append(quat.w);
+		
+		jvalue.append(q);
+	}
+	
+	template <class Type, class OutType>
+	OutType adapter(const Type& input)
+	{
+		return input;
+	}
+	
+	template <>
+	glm::quat adapter<glm::vec3, glm::quat>(const glm::vec3& input)
+	{
+		// convert from degrees to radians
+		glm::vec3 rads(
+			mathlib::degrees_to_radians(input.x),
+			mathlib::degrees_to_radians(input.y),
+			mathlib::degrees_to_radians(input.z)
+		);
+		return glm::quat(rads);
+	}
+
+	template <class Type, class OutType>
+	void gather_keys(Json::Value& jkeys, std::vector<datamodel::Keyframe<OutType>* >& keys)
+	{
+		Json::Value jtime(Json::arrayValue);
+		Json::Value jvalue(Json::arrayValue);
+		for (auto key : keys)
+		{
+			jtime.append(key->time_seconds);
+			jsonify_value(jvalue, adapter<Type, OutType>(key->value));
+		}
+		
+		jkeys["time"] = jtime;
+		jkeys["value"] = jvalue;
+	}
+
+
+	void JsonModelWriter::write_skeleton(const std::string& abs_base_path, datamodel::Skeleton* skeleton)
+	{
+		if (!skeleton)
+		{
+			return;
+		}
+		
+		std::string abs_file_path = abs_base_path + ".skeleton";
+		
+		xfile_t handle = xfile_open(abs_file_path.c_str(), XF_WRITE);
+		if (xfile_isopen(handle))
+		{
+			LOGV("writing skeleton '%s'\n", abs_file_path.c_str());
+			xfile_close(handle);
+		}
+		else
+		{
+			LOGE("Unable to open file for writing '%s'\n", abs_file_path.c_str());
+		}
+	}
+	
+	void JsonModelWriter::write_animations(const std::string& abs_base_path, datamodel::Animation** animations, uint32_t total_animations)
+	{
+		if (!total_animations)
+		{
+			return;
+		}
+		
+		for (uint32_t index = 0; index < total_animations; ++index)
+		{
+			datamodel::Animation* animation = animations[index];
+			std::string abs_file_path = abs_base_path + ".animation";
+
+			LOGV("writing animation '%s'\n", abs_file_path.c_str());
+			xfile_t handle = xfile_open(abs_file_path.c_str(), XF_WRITE);
+			if (xfile_isopen(handle))
+			{
+				xfile_close(handle);
+			}
+			else
+			{
+				LOGE("Unable to open file for writing '%s'\n", abs_file_path.c_str());
+			}
+		}
+	}
+	
+	
+	
 	JsonModelWriter::JsonModelWriter() : write_rotations_as_quaternions(RotationIsQuaternion<RotationOutputType>())
 	{
 	}
-
+	
 	void JsonModelWriter::jsonify_matrix(Json::Value& array, glm::mat4& matrix)
 	{
 		array.append(matrix[0].x);
@@ -71,21 +181,21 @@ namespace gemini
 		array.append(matrix[2].w);
 		array.append(matrix[3].w);
 	}
-
+	
 	void JsonModelWriter::append_material(const datamodel::Material& material, Json::Value& jmaterials)
 	{
 		Json::Value jmaterial;
-
+		
 		jmaterial["name"] = material.name.c_str();
 		jmaterial["id"] = material.id;
 		
 		jmaterials.append(jmaterial);
 	}
-
+	
 	void JsonModelWriter::append_node(datamodel::Node* node, Json::Value& jnodes)
 	{
 		Json::Value jnode;
-			
+		
 		jnode["name"] = node->name.c_str();
 		jnode["type"] = node->type.c_str();
 		
@@ -206,7 +316,7 @@ namespace gemini
 				// at a max of MAX_SUPPORTED_BONE_INFLUENCES.
 				Json::Value weight_array(Json::arrayValue);
 				datamodel::WeightList& weightlist = node->mesh->weights[index_id];
-							
+				
 				for (size_t influence = 0; influence < datamodel::MAX_SUPPORTED_BONE_INFLUENCES; ++influence)
 				{
 					datamodel::Weight& weight = weightlist.weights[influence];
@@ -218,7 +328,7 @@ namespace gemini
 						weight_array.append(weightpair);
 					}
 				}
-
+				
 				blend_weights.append(weight_array);
 			}
 			
@@ -231,7 +341,7 @@ namespace gemini
 			mass_center_offset.append(node->mesh->mass_center_offset.y);
 			mass_center_offset.append(node->mesh->mass_center_offset.z);
 			mesh_data["mass_center_offset"] = mass_center_offset;
-
+			
 			jnode["mesh"] = mesh_data;
 		}
 		
@@ -240,67 +350,7 @@ namespace gemini
 	}
 
 
-	template <class Type>
-	void jsonify_value(Json::Value& jvalue, const Type& value);
-
-	template <>
-	void jsonify_value(Json::Value& jvalue, const glm::vec3& vector)
-	{
-		Json::Value v;
-		v.append(vector.x);
-		v.append(vector.y);
-		v.append(vector.z);
-		
-		jvalue.append(v);
-	}
-
-	template <>
-	void jsonify_value(Json::Value& jvalue, const glm::quat& quat)
-	{
-		Json::Value q;
-		q.append(quat.x);
-		q.append(quat.y);
-		q.append(quat.z);
-		q.append(quat.w);
-		
-		jvalue.append(q);
-	}
-	
-	template <class Type, class OutType>
-	OutType adapter(const Type& input)
-	{
-		return input;
-	}
-	
-	template <>
-	glm::quat adapter<glm::vec3, glm::quat>(const glm::vec3& input)
-	{
-		// convert from degrees to radians
-		glm::vec3 rads(
-			mathlib::degrees_to_radians(input.x),
-			mathlib::degrees_to_radians(input.y),
-			mathlib::degrees_to_radians(input.z)
-		);
-		return glm::quat(rads);
-	}
-
-	template <class Type, class OutType>
-	void gather_keys(Json::Value& jkeys, std::vector<datamodel::Keyframe<OutType>* >& keys)
-	{
-		Json::Value jtime(Json::arrayValue);
-		Json::Value jvalue(Json::arrayValue);
-		for (auto key : keys)
-		{
-			jtime.append(key->time_seconds);
-			jsonify_value(jvalue, adapter<Type, OutType>(key->value));
-		}
-		
-		jkeys["time"] = jtime;
-		jkeys["value"] = jvalue;
-	}
-
-
-	void JsonModelWriter::write(const std::string& abs_base_path, datamodel::Model* model, util::DataStream& source)
+	void JsonModelWriter::write(const std::string& abs_base_path, datamodel::Model* model)
 	{
 		Json::Value jroot;
 		Json::Value jnodes(Json::arrayValue);
@@ -404,6 +454,27 @@ namespace gemini
 		Json::StyledWriter writer;
 		
 		std::string buffer = writer.write(jroot);
-		source.write(buffer.data(), buffer.size());
+		
+		std::string abs_model_file = abs_base_path;
+		abs_model_file.append(".model");
+		
+		xfile_t out = xfile_open(abs_model_file.c_str(), XF_WRITE);
+		LOGV("writing model: '%s'\n", abs_model_file.c_str());
+		if (xfile_isopen(out))
+		{
+			xfile_write(out, &buffer[0], buffer.length(), 1);
+			xfile_close(out);
+		}
+		else
+		{
+			LOGE("error writing to file %s\n", abs_model_file.c_str());
+		}
+		
+			
+		write_skeleton(abs_base_path, model->skeleton);
+
+		write_animations(abs_base_path, &model->animations[0], model->animations.size());
+		
+		
 	} // write
 } // namespace gemini

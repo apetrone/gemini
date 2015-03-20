@@ -210,10 +210,12 @@ namespace gemini
 				LOGE("no reader found for extension: %s\n", ext.c_str());
 				return platform::Result(platform::Result::Failure, "Unable to read format");
 			}
+			
+
 					
 			// verify we can write the format
 			ext = output_path.extension();
-			const Extension<datamodel::Model> writer_extension = find_entry_for_extension<datamodel::Model>(ext);
+			const Extension<datamodel::Model> writer_extension = find_entry_for_extension<datamodel::Model>("model");
 			tools::Writer<datamodel::Model>* writer = writer_extension.writer;
 			if (!writer)
 			{
@@ -246,25 +248,7 @@ namespace gemini
 			}
 			
 
-			util::ResizableMemoryStream rs;
-			writer->write(output_path(), &model, rs);
-
-			rs.rewind();
-			
-			// TODO: ensure the destination path exists?
-
-			xfile_t out = xfile_open(output_path(), XF_WRITE);
-			LOGV("writing destination file: %s\n", output_path());
-			if (xfile_isopen(out))
-			{
-				xfile_write(out, rs.get_data(), rs.get_data_size(), 1);
-				xfile_close(out);
-			}
-			else
-			{
-				LOGE("error writing to file %s\n", output_path());
-				LOGE("does the path exist?\n");
-			}
+			writer->write(output_path(), &model);
 
 			return platform::Result(platform::Result::Success);
 		}
@@ -321,7 +305,7 @@ Options:
 	StackString<MAX_PATH_SIZE> output_filename = output_root.c_str();
 	output_filename.normalize();
 	output_filename.strip_trailing(PATH_SEPARATOR).append(PATH_SEPARATOR_STRING);
-	output_filename = output_filename.append(input_path.c_str()).remove_extension().append(".model");
+	output_filename = output_filename.append(input_path.c_str()).remove_extension();
 
 	// perform the conversion -- right now, we always assume it's a scene/model
 	platform::Result result = tools::convert_model(options, input_filename, output_filename);
