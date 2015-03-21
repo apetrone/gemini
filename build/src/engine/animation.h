@@ -29,8 +29,15 @@
 #include <core/fixedarray.h>
 #include <core/stackstring.h>
 
+
+
 namespace gemini
 {
+	namespace assets
+	{
+		struct Mesh;
+	}
+	
 	namespace animation
 	{
 		struct Keyframe
@@ -135,7 +142,7 @@ namespace gemini
 		void shutdown();
 		void update(float delta_seconds);
 
-		SequenceId load_sequence(const char* name);
+		SequenceId load_sequence(const char* name, assets::Mesh* mesh);
 		SequenceId find_sequence(const char* name);
 		Sequence* get_sequence_by_index(SequenceId index);
 		

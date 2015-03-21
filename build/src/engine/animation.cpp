@@ -29,8 +29,13 @@
 #include <core/mathlib.h>
 #include <core/dictionary.h>
 #include <core/logging.h>
+#include <core/configloader.h>
+
+#include <assets/asset_mesh.h>
 
 #include <vector>
+
+using namespace gemini::assets;
 
 namespace gemini
 {
@@ -273,6 +278,19 @@ namespace gemini
 			InstanceArray _instances;
 			
 			
+			
+			core::util::ConfigLoadStatus load_animation_from_json(const Json::Value& root, void* data)
+			{
+				Sequence* sequence = static_cast<Sequence*>(sequence);
+				
+				
+				
+				
+			
+				return core::util::ConfigLoad_Success;
+			}
+			
+			
 			Sequence* load_sequence_from_file(const char* name)
 			{
 				if (_sequences_by_name.has_key(name))
@@ -282,122 +300,19 @@ namespace gemini
 					return data;
 				}
 				
-				// TODO: do file loading
+				
 				Sequence* sequence = CREATE(Sequence);
-				sequence->index = _sequences.size();
-				
-				// load the data into the sequence
-				sequence->AnimationSet.allocate(2);
-				sequence->AnimationSet[0].allocate(6);
-				sequence->AnimationSet[1].allocate(6);
-				KeyframeList& tx = sequence->AnimationSet[0][0];
-				tx.allocate(2);
-				tx.set_key(0, 0.0f, 0.0f);
-				tx.set_key(1, 1.0f, 0.0f);
-				tx.duration_seconds = 1.0f;
-				
-				KeyframeList& ty = sequence->AnimationSet[0][1];
-				ty.allocate(2);
-				ty.set_key(0, 0.0f, 0.0f);
-				ty.set_key(1, 1.0f, 0.0f);
-				ty.duration_seconds = 1.0f;
-				
-				KeyframeList& tz = sequence->AnimationSet[0][2];
-				tz.allocate(2);
-				tz.set_key(0, 0.0f, 0.0f);
-				tz.set_key(1, 1.0f, 0.0f);
-				tz.duration_seconds = 1.0f;
-				
-				
-				KeyframeList& rx = sequence->AnimationSet[0][3];
-//				rx.allocate(2);
-//				rx.set_key(0, 0.0f, 0.0f);
-//				rx.set_key(1, 60.0f, mathlib::degrees_to_radians(360.0f));
-//				rx.duration_seconds = 60.0f;
-				
-//				KeyframeList& ry = sequence->AnimationSet[0][4];
-//				ry.allocate(2);
-//				ry.set_key(0, 0.0f, 0.0f);
-//				ry.set_key(1, 3.0f, mathlib::degrees_to_radians(45.0f));
-//				ry.duration_seconds = 3.0f;
-//				
-//				KeyframeList& rz = sequence->AnimationSet[0][5];
-//				rz.allocate(2);
-//				rz.set_key(0, 0.0f, 0.0f);
-//				rz.set_key(1, 1.0f, 0.0f);
-//				rz.duration_seconds = 1.0f;
-				
-				
-				
-				// bone 1
+				if (core::util::ConfigLoad_Success == core::util::json_load_with_callback(name, load_animation_from_json, sequence, true))
 				{
-					KeyframeList& tx = sequence->AnimationSet[1][0];
-					tx.allocate(2);
-					tx.set_key(0, 0.0f, 0.0f);
-					tx.set_key(1, 1.0f, 0.0f);
-					tx.duration_seconds = 1.0f;
-					
-					KeyframeList& ty = sequence->AnimationSet[1][1];
-					ty.allocate(2);
-					ty.set_key(0, 0.0f, 0.0f);
-					ty.set_key(1, 1.0f, 0.0f);
-					ty.duration_seconds = 1.0f;
-					
-					KeyframeList& tz = sequence->AnimationSet[1][2];
-					tz.allocate(2);
-					tz.set_key(0, 0.0f, 0.0f);
-					tz.set_key(1, 1.0f, 0.0f);
-					tz.duration_seconds = 1.0f;
-					
-					KeyframeList& rx = sequence->AnimationSet[1][3];
-					rx.allocate(2);
-					rx.set_key(0, 0.0f, 0.0f);
-					rx.set_key(1, 1.0f, mathlib::degrees_to_radians(360.0f));
-					rx.duration_seconds = 1.0f;
-					
-//					KeyframeList& ry = sequence->AnimationSet[1][4];
-//					ry.allocate(2);
-//					ry.set_key(0, 0.0f, 0.0f);
-//					ry.set_key(1, 1.0f, mathlib::degrees_to_radians(0.0f));
-//					ry.duration_seconds = 1.0f;
-//					
-//					KeyframeList& rz = sequence->AnimationSet[1][5];
-//					rz.allocate(2);
-//					rz.set_key(0, 0.0f, 0.0f);
-//					rz.set_key(1, 1.0f, 0.0f);
-//					rz.duration_seconds = 1.0f;
+					_sequences_by_name.insert(name, sequence);
+					_sequences.push_back(sequence);
 				}
-				
-				
-				sequence->name = "animations/idle";
-				_sequences.push_back(sequence);
-				_sequences_by_name.insert("animations/idle", sequence);
-				
+				else
 				{
-					Sequence* s = CREATE(Sequence);
-					s->index = _sequences.size();
-					s->name = "animations/walk";
-					_sequences.push_back(s);
-					_sequences_by_name.insert("animations/walk", s);
-					
-					s->AnimationSet.allocate(2);
-					s->AnimationSet[0].allocate(3);
-					s->AnimationSet[1].allocate(3);
-					
-					{
-						KeyframeList& ty = s->AnimationSet[0][1];
-						ty.allocate(2);
-						ty.duration_seconds = 1.0f;
-						ty.set_key(0, 0.0f, 0.0f);
-						ty.set_key(1, 1.0f, 5.0f);
-					}
-					
-					
+					DESTROY(Sequence, sequence);
 				}
-				
-				Sequence* data;
-				_sequences_by_name.get(name, data);
-				return data;
+			
+				return sequence;
 			} // load_sequence_from_file
 		}
 		
@@ -436,11 +351,16 @@ namespace gemini
 		}
 
 		
-		SequenceId load_sequence(const char* name)
+		SequenceId load_sequence(const char* name, Mesh* mesh)
 		{
 			Sequence* sequence = detail::load_sequence_from_file(name);
-			AnimatedInstance* instance = create_sequence_instance(sequence->index);
-			return instance->index;
+			if (sequence)
+			{
+				AnimatedInstance* instance = create_sequence_instance(sequence->index);
+				return instance->index;				
+			}
+
+			return -1;
 		}
 		
 		SequenceId find_sequence(const char* name)
