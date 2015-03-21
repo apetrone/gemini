@@ -30,6 +30,7 @@
 #include <core/dictionary.h>
 #include <core/logging.h>
 #include <core/configloader.h>
+#include <core/stackstring.h>
 
 #include <assets/asset_mesh.h>
 
@@ -302,7 +303,9 @@ namespace gemini
 				
 				
 				Sequence* sequence = CREATE(Sequence);
-				if (core::util::ConfigLoad_Success == core::util::json_load_with_callback(name, load_animation_from_json, sequence, true))
+				core::StackString<MAX_PATH_SIZE> filepath = name;
+				filepath.append(".animation");
+				if (core::util::ConfigLoad_Success == core::util::json_load_with_callback(filepath(), load_animation_from_json, sequence, true))
 				{
 					_sequences_by_name.insert(name, sequence);
 					_sequences.push_back(sequence);

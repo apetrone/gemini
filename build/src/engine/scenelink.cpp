@@ -195,7 +195,7 @@ namespace gemini
 									block.material_id = geometry_data.material_id;
 									block.shader_id = geometry_data.shader_id;
 									block.node_transforms = model_instance->get_bone_transforms();
-									block.total_transforms = mesh->animation.total_bones;
+									block.total_transforms = mesh->skeleton.size();
 									queue->insert(block);
 								}
 								

@@ -756,8 +756,15 @@ class ModelInterface : public gemini::IModelInterface
 		virtual int32_t add_animation(const char* name)
 		{
 			animation::SequenceId id = animation::load_sequence(name, mesh);
-			animations.push_back(id);
-			LOGV("[engine] added animation %s to index: %i\n", name, animations.size()-1);
+			if (id > -1)
+			{
+				animations.push_back(id);
+				LOGV("[engine] added animation %s to index: %i\n", name, animations.size()-1);
+			}
+			else
+			{
+				LOGW("Unable to load sequence %s\n", name);
+			}
 			return id;
 		}
 		
