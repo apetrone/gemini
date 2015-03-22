@@ -342,6 +342,7 @@ namespace gemini
 			}
 		}
 		
+#if 0
 		template <class Type>
 		void read_channel(KeyChannel<Type>& channel, const Json::Value& animation_channel)
 		{
@@ -395,6 +396,7 @@ namespace gemini
 				from_json(channel.keys[key], value_data);
 			}
 		}
+#endif
 		
 		core::util::ConfigLoadStatus load_json_model(const Json::Value& root, void* data)
 		{
@@ -514,6 +516,7 @@ namespace gemini
 			
 			
 			// read animations
+#if 0
 			Json::Value animations = root["animations"];
 			if (!animations.isNull() && total_bones)
 			{
@@ -607,6 +610,7 @@ namespace gemini
 				}
 				
 			}
+#endif
 			
 			return core::util::ConfigLoad_Success;
 		}

@@ -33,10 +33,13 @@
 #include <core/stackstring.h>
 
 #include <assets/asset_mesh.h>
+#include "animation.h"
 
 #include <vector>
 
 using namespace gemini::assets;
+
+using gemini::animation::Keyframe;
 
 namespace gemini
 {
@@ -278,21 +281,167 @@ namespace gemini
 			SequenceArray _sequences;
 			InstanceArray _instances;
 			
+			struct AnimationSequenceLoadData
+			{
+				Sequence* sequence;
+				Mesh* mesh;
+			};
 			
+			static bool validate_node(const Json::Value& node, const char* error_message)
+			{
+				if (node.isNull())
+				{
+					LOGW("node is null: '%s'\n", error_message);
+					return false;
+				}
+				
+				return true;
+			}
 			
+			template <class Type>
+			void from_json(Type& output, const Json::Value& input);
+			
+			template <>
+			void from_json(glm::vec3& output, const Json::Value& input)
+			{
+				output = glm::vec3(input[0].asFloat(), input[1].asFloat(), input[2].asFloat());
+			}
+			
+			template <>
+			void from_json(glm::quat& output, const Json::Value& input)
+			{
+				output = glm::quat(input[3].asFloat(), input[0].asFloat(), input[1].asFloat(), input[2].asFloat());
+			}
+
+
 			core::util::ConfigLoadStatus load_animation_from_json(const Json::Value& root, void* data)
 			{
-				Sequence* sequence = static_cast<Sequence*>(sequence);
+				AnimationSequenceLoadData* load_data = static_cast<AnimationSequenceLoadData*>(data);
+				Mesh* mesh = load_data->mesh;
+				Sequence* sequence = load_data->sequence;
 				
+				core::util::ConfigLoadStatus result = core::util::ConfigLoad_Failure;
 				
+				if (mesh->skeleton.empty())
+				{
+					LOGW("Tried to attach an animation to a non-animated model!\n");
+					return result;
+				}
 				
+				if (root.isNull())
+				{
+					return result;
+				}
 				
-			
+				const Json::Value& bones_array = root["nodes"];
+				if (!validate_node(bones_array, "bones"))
+				{
+					return result;
+				}
+				
+				assert(bones_array.size() == mesh->skeleton.size());
+				
+				if (bones_array.size() != mesh->skeleton.size())
+				{
+					LOGV("# animated bones does not match model's skeleton!\n");
+					return result;
+				}
+				
+				const Json::Value& frames_per_second = root["frames_per_second"];
+				if (!validate_node(frames_per_second, "frames_per_second"))
+				{
+					return result;
+				}
+				
+				const Json::Value& animation_name = root["name"];
+				if (!validate_node(animation_name, "name"))
+				{
+					return result;
+				}
+				
+				std::string animation_title = animation_name.asString();
+				LOGV("animation: \"%s\"\n", animation_title.c_str());
+				
+				int32_t fps_rate = frames_per_second.asInt();
+				sequence->frame_delay_seconds = (1.0f/(float)fps_rate);
+
+				// 1. allocate enough space for each bone
+				sequence->AnimationSet.allocate(bones_array.size());
+
+				Json::ValueIterator node_iter = bones_array.begin();
+				size_t node_index = 0;
+				for (; node_iter != bones_array.end(); ++node_iter)
+				{
+					const Json::Value& jnode = (*node_iter);
+					std::string node_name = jnode["name"].asString().c_str();
+
+					const Json::Value& scale_keys = jnode["scale"];
+					const Json::Value& rotation_keys = jnode["rotation"];
+					const Json::Value& translation_keys = jnode["translation"];
+					assert(!scale_keys.isNull() && !rotation_keys.isNull() && !translation_keys.isNull());
+					
+
+										
+					Joint* joint = mesh->find_bone_named(node_name.c_str());
+					assert(joint != 0);
+					
+					LOGV("reading keyframes for bone \"%s\", joint->index = %i\n", joint->name(), joint->index);
+					
+					core::FixedArray<KeyframeList>& kfl = sequence->AnimationSet[joint->index];
+					kfl.allocate(3);
+
+					
+					const Json::Value& tr_values = translation_keys["value"];
+					const Json::Value& tr_times = translation_keys["time"];
+					
+					assert(!tr_values.isNull() && !tr_times.isNull());
+					
+					// In Json, there are EQUAL entries for each scale/rotation/translation tracks.
+					// This MAY NOT be like this in other formats -- so revisit this later.
+					int total_keys = tr_values.size();
+					
+					KeyframeList& tx = kfl[0];
+					tx.allocate(total_keys);
+					KeyframeList& ty = kfl[1];
+					ty.allocate(total_keys);
+					KeyframeList& tz = kfl[2];
+					tz.allocate(total_keys);
+					
+					for (unsigned int index = 0; index < tr_values.size(); ++index)
+					{
+						const Json::Value& value = tr_values[index];
+						const Json::Value& time = tr_times[index];
+						
+						float x = value[0].asFloat();
+						float y = value[1].asFloat();
+						float z = value[2].asFloat();
+						
+						float t = time.asFloat();
+						
+						tx.set_key(index, t, x);
+						ty.set_key(index, t, y);
+						tz.set_key(index, t, z);
+					}
+					
+					
+					
+//					read_channel(mesh->animation.scale[joint->index], jnode["scale"]);
+//					read_channel(mesh->animation.rotation[joint->index], jnode["rotation"]);
+//					read_channel(mesh->animation.translation[joint->index], jnode["translation"]);
+//					
+//					read_channel(mesh->animation.track_scale[joint->index], jnode["scale"]);
+//					read_channel(mesh->animation.track_rotation[joint->index], jnode["rotation"]);
+//					read_channel(mesh->animation.track_translate[joint->index], jnode["translation"]);
+
+					
+					++node_index;
+				}
+
 				return core::util::ConfigLoad_Success;
 			}
 			
 			
-			Sequence* load_sequence_from_file(const char* name)
+			Sequence* load_sequence_from_file(const char* name, Mesh* mesh)
 			{
 				if (_sequences_by_name.has_key(name))
 				{
@@ -305,7 +454,10 @@ namespace gemini
 				Sequence* sequence = CREATE(Sequence);
 				core::StackString<MAX_PATH_SIZE> filepath = name;
 				filepath.append(".animation");
-				if (core::util::ConfigLoad_Success == core::util::json_load_with_callback(filepath(), load_animation_from_json, sequence, true))
+				AnimationSequenceLoadData data;
+				data.mesh = mesh;
+				data.sequence = sequence;
+				if (core::util::ConfigLoad_Success == core::util::json_load_with_callback(filepath(), load_animation_from_json, &data, true))
 				{
 					_sequences_by_name.insert(name, sequence);
 					_sequences.push_back(sequence);
@@ -356,7 +508,7 @@ namespace gemini
 		
 		SequenceId load_sequence(const char* name, Mesh* mesh)
 		{
-			Sequence* sequence = detail::load_sequence_from_file(name);
+			Sequence* sequence = detail::load_sequence_from_file(name, mesh);
 			if (sequence)
 			{
 				AnimatedInstance* instance = create_sequence_instance(sequence->index);
