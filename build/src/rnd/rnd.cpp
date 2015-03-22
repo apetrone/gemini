@@ -357,218 +357,72 @@ void test_rendering()
 #endif
 }
 
-/*
-#include <core/dictionary.h>
 
-void test_hash()
-{
-	core::Dictionary<int> d;
-	
-	d.insert("adam", 30);
-	d.insert("what", 32);
-	
-	if (d.has_key("what"))
-	{
-		LOGV("dictionary has key\n");
-	}
-	else
-	{
-		LOGV("dictionary doesn't have key!\n");
-	}
-
-	int value = 0;
-	d.get("adam", value);
-	d.get("what", value);
-}
-*/
+#if defined(PLATFORM_POSIX)
+	#include <unistd.h>
+#endif
 
 
-void test_args(int argc, char** argv)
-{
-	// Options can be specified in any order.
-	
-	// long option
-	// single letter option
-	
-	// command, positional, optional elements, argument
-	// export <position> [--first] FILE
-	
-	// [command --option <argument>] == [command] [--option] [<argument>]
-	
-	// | means mutually exclusive
-	// ( ) groups elements
-	
-	// [options] (shorthand for all options) OR [-alh]
-	
-	// after [--] denotes following arguments are positional
-	
-	// [-] used to denote a program will take input from stdin as opposed to a file
-	// Usage: my_program [-| <file>...]
-	
-	/*
-		// anything that starts with a dash is documentation for the option
-		Options:
-			-- verbose  # GOOD
-			-o FILE		# GOOD
-			
-		Other:  --bad	# BAD
-	*/
-	
-	// [default: 2.95]
-	
-	// ellipses (allows additional arguments)
-	
-//	IEEE Std 1003.1
-
-	core::argparse::ArgumentParser parser;
-	
-	// test1: usage not explicitly defined (error)
-	const char* test1 = R"(
-	tcp [<host>] [--force] [--timeout=<seconds>]
-	serial <port> [--baud=<rate>] [--timeout=<seconds>]
-	-h | --help | --version
-	)";
-	
-	// test2: explicit usage and option sections
-	const char* test2 = R"(
-Usage:
-	tcp <host> <port> [--baud=9600] [--timeout=<seconds>]
-	serial <port> [--baud=9600] [--timeout=<seconds>]
-	
-Options:
-	-h, --help  Display this help string
-	--version   Show the program version
-	)";
-
-	// test3: added arguments section
-	const char* test3 = R"(
-Usage: arguments_example.py [-vqrh] [FILE] ...
-	arguments_example.py (--left | --right) CORRECTION FILE
-	Process FILE and optionally apply correction to either left-hand side or
-	right-hand side.
-Arguments:
-	FILE        optional input file
-	CORRECTION  correction angle, needs FILE, --left or --right to be present
-Options:
-	-h --help
-	-v       verbose mode
-	-q       quiet mode
-	-r       make report
-	--left   use left-hand side
-	--right  use right-hand side
-	)";
-	
-	// test4: naval fate example
-	const char* test4 = R"(
-Usage:
-	naval_fate.py ship new <name>...
-	naval_fate.py ship <name> move <x> <y> [--speed=<kn>]
-	naval_fate.py ship shoot <x> <y>
-	naval_fate.py mine (set|remove) <x> <y> [--moored|--drifting]
-	naval_fate.py -h | --help
-	naval_fate.py --version
-Options:
-	-h --help     Show this screen.
-	--version     Show version.
-	--speed=<kn>  Speed in knots [default: 10].
-	--moored      Moored (anchored) mine.
-	--drifting    Drifting mine.
-	)";
-	
-	// test5: odd even example
-	const char* test5 = R"(
-Usage: odd_even_example.py [-h | --help] (ODD EVEN)...
-	Example, try:
-	odd_even_example.py 1 2 3 4
-Options:
-	-h, --help
-	)";
-	
-	// test6: many options
-	const char* test6 = R"(
-Usage:
-	options_example.py [-hvqrf NAME] [--exclude=PATTERNS]
-	[--select=ERRORS | --ignore=ERRORS] [--show-source]
-	[--statistics] [--count] [--benchmark] PATH...
-	options_example.py (--doctest | --testsuite=DIR)
-	options_example.py --version
-Arguments:
-	PATH  destination path
-Options:
-	-h --help            show this help message and exit
-	--version            show version and exit
-	-v --verbose         print status messages
-	-q --quiet           report only file names
-	-r --repeat          show all occurrences of the same error
-	--exclude=PATTERNS   exclude files or directories which match these comma
-	separated patterns [default: .svn,CVS,.bzr,.hg,.git]
-	-f NAME --file=NAME  when parsing directories, only check filenames matching
-	these comma separated patterns [default: *.py]
-	--select=ERRORS      select errors and warnings (e.g. E,W6)
-	--ignore=ERRORS      skip errors and warnings (e.g. E4,W)
-	--show-source        show source code for each error
-		--statistics         count errors and warnings
-		--count              print total number of errors and warnings to standard
-		error and set exit code to 1 if total is not null
-			--benchmark          measure processing speed
-			--testsuite=DIR      run regression tests from dir
-			--doctest            run doctest on myself
-	)";
-	
-	const char* test7 = R"(
-		Usage:
-			export [--animation-only] <source_asset_path> <asset_path> <output_asset_path>
-	
-		Options:
-			-h, --help  Show this help screen
-			--version  Display the version number
-	)";
-	
-	core::argparse::VariableMap vm;
-	parser.parse(test7, argc, argv, "alpha 1.0", vm);
-	for (core::argparse::VariableMap::iterator it = vm.begin(); it != vm.end(); ++it)
-	{
-		const core::argparse::VariableMapEntry& entry = (*it);
-		LOGV("'%s' -> '%s'\n", entry.first.c_str(), entry.second.c_str());
-	}
+#if defined(PLATFORM_APPLE)
+	#include <sys/sysctl.h> // for top level identifiers, second level kernel and hw identifiers, user level identifiers
+	#include <sys/gmon.h> // for third level profiling identifiers
+	#include <mach/vm_param.h> // second level virtual memory identifiers
+	#include <mach/host_info.h>
+	#include <mach/kern_return.h>
+	#include <mach/mach_host.h>
+#elif defined(PLATFORM_LINUX)
+	#include <sys/utsname.h>
+	#include <sys/sysinfo.h>
+#endif
 //
-//	if (vm.has_key("name"))
-//	{
-//		std::string value;
-//		vm.get("username", value);
-//		fprintf(stdout, "name is: %s\n", value.c_str());
-//	}
+//int64_t MemoryUsage()
+//{
+//    task_basic_info         info;
+//    kern_return_t           rval = 0;
+//    mach_port_t             task = mach_task_self();
+//    mach_msg_type_number_t  tcnt = TASK_BASIC_INFO_COUNT;
+//    task_info_t             tptr = (task_info_t) &info;
+//    
+//    memset(&info, 0, sizeof(info));
+//    
+//    rval = task_info(task, TASK_BASIC_INFO, tptr, &tcnt);
+//    if (!(rval == KERN_SUCCESS)) return 0;
+//    
+//    return info.resident_size;
+//}
+
+void test_sys(int argc, char**argv)
+{
+	int page_size = sysconf(_SC_PAGE_SIZE);
+	int num_cores = sysconf(_SC_NPROCESSORS_CONF);
+	
+	fprintf(stdout, "page_size: %i bytes\n", page_size);
+	fprintf(stdout, "cores: %i\n", num_cores);
+	
+#if defined(PLATFORM_WINDOWS)
+	
+#elif defined(PLATFORM_ANDROID) || defined(PLATFORM_LINUX)
+	struct sysinfo si;
+	sysinfo(&si);
+#elif defined(PLATFORM_APPLE)
+
+#endif
 }
 
-#include <memory>
+
 
 void test_main(int argc, char** argv)
 {
 	platform::startup();
 	core::startup();
 //	test_rendering();
-	//	test_hash();
-	test_args(argc, argv);
+	test_sys(argc, argv);
 	
 	core::shutdown();
 	platform::shutdown();
 }
 
 
-struct Test
-{
-	int count;
-	
-	Test(int c) : count(c)
-	{
-		fprintf(stdout, "Test(%i)\n", c);
-	}
-	
-	~Test()
-	{
-		fprintf(stdout, "~Test()\n");
-	}
-};
 
 int main(int argc, char** argv)
 {

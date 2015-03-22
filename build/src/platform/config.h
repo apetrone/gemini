@@ -90,6 +90,7 @@
 	#define PLATFORM_NAME "android"
 	#define PLATFORM_ANDROID 1
 	#define PLATFORM_IS_MOBILE 1
+	#define PLATFORM_POSIX 1
 #elif __linux__
 	#if RASPBERRYPI
 		// specifically built for RaspberryPi
@@ -101,6 +102,7 @@
 	#endif
 
 	#define PLATFORM_LINUX 1
+	#define PLATFORM_POSIX 1
 #elif __APPLE__
 	#include <TargetConditionals.h>
 
@@ -114,6 +116,9 @@
 		#define PLATFORM_NAME "macosx"
 		#define PLATFORM_MACOSX 1
 	#endif
+
+	#define PLATFORM_POSIX 1
+//	#define PLATFORM_BSD 1
 #else
 	#error Unknown platform!
 #endif

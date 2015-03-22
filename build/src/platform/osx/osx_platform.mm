@@ -43,6 +43,19 @@ namespace platform
 	Result osx_startup()
 	{
 		pool = [[NSAutoreleasePool alloc] init];
+//		
+//		NSProcessInfo* processInfo = [NSProcessInfo processInfo];
+//		
+//		const int MB = (1024*1024);
+//		const int GB = MB*1024;
+//		NSLog(@"physical memory: %lluMB", processInfo.physicalMemory/MB);
+//		
+//		NSLog(@"%@", processInfo.operatingSystemName);
+//		NSLog(@"%@", processInfo.operatingSystemVersionString);
+//		NSTimeInterval uptime = processInfo.systemUptime;
+//
+//		NSLog(@"uptime: %f", uptime);
+		
 		return Result(Result::Success);
 	}
 	
