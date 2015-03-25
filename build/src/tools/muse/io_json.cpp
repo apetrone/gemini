@@ -40,7 +40,7 @@ using namespace gemini::datamodel;
 
 namespace gemini
 {
-	typedef glm::quat RotationOutputType;
+	typedef glm::vec3 RotationOutputType;
 	
 	template <class T>
 	bool RotationIsQuaternion() { return false; }
@@ -147,7 +147,7 @@ namespace gemini
 					gather_keys<glm::vec3, glm::vec3>(jscale, data->scale.keys);
 					
 					Json::Value jrotation;
-					gather_keys<glm::quat, glm::quat>(jrotation, data->rotation.keys);
+					gather_keys<glm::vec3, glm::vec3>(jrotation, data->rotation.keys);
 					
 					Json::Value jtranslation;
 					gather_keys<glm::vec3, glm::vec3>(jtranslation, data->translation.keys);

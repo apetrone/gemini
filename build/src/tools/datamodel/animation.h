@@ -77,7 +77,7 @@ namespace gemini
 			String name;
 			
 			Channel<glm::vec3> scale;
-			Channel<glm::quat> rotation;
+			Channel<glm::vec3> rotation;
 			Channel<glm::vec3> translation;
 		};
 

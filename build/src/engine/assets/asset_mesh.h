@@ -65,6 +65,7 @@ namespace gemini
 		}; // Geometry
 		
 
+#if 0
 		// TEMP struct to test the whole shebang.
 		struct AnimationData
 		{
@@ -102,6 +103,7 @@ namespace gemini
 			
 			void get_pose(glm::vec3* positions, glm::quat* orientations, float animation_time_seconds);
 		};
+#endif
 		
 		const int MAX_VERTEX_WEIGHTS = 4;
 		
@@ -187,7 +189,7 @@ namespace gemini
 			void prepare_geometry();
 			
 			// For now, we only have room for a single animation -- so make it worthwhile.
-			AnimationData animation;
+//			AnimationData animation;
 
 			glm::mat4 node_transform;
 			
@@ -198,7 +200,7 @@ namespace gemini
 		}; // Mesh
 		
 		// EXPERIMENTAL
-		void read_keys_object(AnimationData& anim, Bone* bone, Json::Value& jkeys);
+//		void read_keys_object(AnimationData& anim, Bone* bone, Json::Value& jkeys);
 		
 		AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, const AssetParameters & parameters );
 		void mesh_construct_extension( core::StackString<MAX_PATH_SIZE> & extension );

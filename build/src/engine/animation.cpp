@@ -336,6 +336,7 @@ namespace gemini
 				const Json::Value& bones_array = root["nodes"];
 				if (!validate_node(bones_array, "bones"))
 				{
+					LOGW("No bones!\n");
 					return result;
 				}
 				
@@ -358,6 +359,9 @@ namespace gemini
 				{
 					return result;
 				}
+				
+				LOGV("TODO: load total animation duration!\n");
+				sequence->duration_seconds = 2.0f;
 				
 				std::string animation_title = animation_name.asString();
 				LOGV("animation: \"%s\"\n", animation_title.c_str());
@@ -388,42 +392,83 @@ namespace gemini
 					LOGV("reading keyframes for bone \"%s\", joint->index = %i\n", joint->name(), joint->index);
 					
 					core::FixedArray<KeyframeList>& kfl = sequence->AnimationSet[joint->index];
-					kfl.allocate(3);
+					kfl.allocate(6);
 
-					
-					const Json::Value& tr_values = translation_keys["value"];
-					const Json::Value& tr_times = translation_keys["time"];
-					
-					assert(!tr_values.isNull() && !tr_times.isNull());
-					
-					// In Json, there are EQUAL entries for each scale/rotation/translation tracks.
-					// This MAY NOT be like this in other formats -- so revisit this later.
-					int total_keys = tr_values.size();
-					
-					KeyframeList& tx = kfl[0];
-					tx.allocate(total_keys);
-					KeyframeList& ty = kfl[1];
-					ty.allocate(total_keys);
-					KeyframeList& tz = kfl[2];
-					tz.allocate(total_keys);
-					
-					for (unsigned int index = 0; index < tr_values.size(); ++index)
+					// translation
 					{
-						const Json::Value& value = tr_values[index];
-						const Json::Value& time = tr_times[index];
+						LOGV("translation keyframes\n");
+						const Json::Value& tr_values = translation_keys["value"];
+						const Json::Value& tr_times = translation_keys["time"];
 						
-						float x = value[0].asFloat();
-						float y = value[1].asFloat();
-						float z = value[2].asFloat();
+						assert(!tr_values.isNull() && !tr_times.isNull());
 						
-						float t = time.asFloat();
+						// In Json, there are EQUAL entries for each scale/rotation/translation tracks.
+						// This MAY NOT be like this in other formats -- so revisit this later.
+						int total_keys = tr_values.size();
 						
-						tx.set_key(index, t, x);
-						ty.set_key(index, t, y);
-						tz.set_key(index, t, z);
+						KeyframeList& tx = kfl[0];
+						tx.allocate(total_keys); tx.duration_seconds = 2.0f;
+						KeyframeList& ty = kfl[1];
+						ty.allocate(total_keys); ty.duration_seconds = 2.0f;
+						KeyframeList& tz = kfl[2];
+						tz.allocate(total_keys); tz.duration_seconds = 2.0f;
+						
+						for (unsigned int index = 0; index < tr_values.size(); ++index)
+						{
+							const Json::Value& value = tr_values[index];
+							const Json::Value& time = tr_times[index];
+							
+							float x = value[0].asFloat();
+							float y = value[1].asFloat();
+							float z = value[2].asFloat();
+							
+							float t = time.asFloat();
+							
+							tx.set_key(index, t, x);
+							ty.set_key(index, t, y);
+							tz.set_key(index, t, z);
+							LOGV("t=%2.2f, %g %g %g\n", t, x, y, z);
+						}
 					}
 					
-					
+					// rotation
+					{
+						LOGV("rotation keyframes\n");
+						const Json::Value& values = rotation_keys["value"];
+						const Json::Value& times = rotation_keys["time"];
+						
+						assert(!values.isNull() && !times.isNull());
+						
+						// In Json, there are EQUAL entries for each scale/rotation/translation tracks.
+						// This MAY NOT be like this in other formats -- so revisit this later.
+						int total_keys = values.size();
+						
+						KeyframeList& rx = kfl[3];
+						rx.allocate(total_keys); rx.duration_seconds = 2.0f;
+						KeyframeList& ry = kfl[4];
+						ry.allocate(total_keys); ry.duration_seconds = 2.0f;
+						KeyframeList& rz = kfl[5];
+						rz.allocate(total_keys); rz.duration_seconds = 2.0f;
+//						KeyframeList& rw = kfl[6];
+//						rw.allocate(total_keys); rw.duration_seconds = 2.0f;
+						
+						for (unsigned int index = 0; index < values.size(); ++index)
+						{
+							const Json::Value& value = values[index];
+							const Json::Value& time = times[index];
+							
+							float x = value[0].asFloat();
+							float y = value[1].asFloat();
+							float z = value[2].asFloat();
+							
+							float t = time.asFloat();
+							
+							rx.set_key(index, t, mathlib::degrees_to_radians(x));
+							ry.set_key(index, t, mathlib::degrees_to_radians(y));
+							rz.set_key(index, t, mathlib::degrees_to_radians(z));
+							LOGV("t=%2.2f, %g %g %g\n", t, x, y, z);
+						}
+					}
 					
 //					read_channel(mesh->animation.scale[joint->index], jnode["scale"]);
 //					read_channel(mesh->animation.rotation[joint->index], jnode["rotation"]);

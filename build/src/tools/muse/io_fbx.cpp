@@ -517,10 +517,16 @@ namespace gemini
 //					LOGV("r: %g %g %g\n", rotation[0], rotation[1], rotation[2]);
 //					LOGV("t: %g %g %g\n", translation[0], translation[1], translation[2]);
 				}
+				else
+				{
+					scaling = global_transform.GetS();
+					rotation = global_transform.GetR();
+					translation = global_transform.GetT();
+				}
 
 
 				glm::vec3 key_scaling;
-				glm::quat key_rotation;
+				glm::vec3 key_rotation;
 				glm::vec3 key_translation;
 
 				from_fbx(key_scaling, scaling);
@@ -771,9 +777,9 @@ namespace gemini
 			const FbxDouble3& local_scale = local_transform.GetS();
 			const FbxDouble3& local_rotation = local_transform.GetR();
 			const FbxDouble3& local_translation = local_transform.GetT();
-//			LOGV("ls: %g %g %g\n", local_scale[0], local_scale[1], local_scale[2]);
-//			LOGV("lr: %g %g %g\n", local_rotation[0], local_rotation[1], local_rotation[2]);
-//			LOGV("lt: %g %g %g\n", local_translation[0], local_translation[1], local_translation[2]);
+			LOGV("ls: %g %g %g\n", local_scale[0], local_scale[1], local_scale[2]);
+			LOGV("lr: %g %g %g\n", local_rotation[0], local_rotation[1], local_rotation[2]);
+			LOGV("lt: %g %g %g\n", local_translation[0], local_translation[1], local_translation[2]);
 
 			from_fbx(node->scale, local_scale);
 			

@@ -89,14 +89,14 @@ namespace gemini
 		};
 		
 		
-		void AnimationData::get_pose(glm::vec3 *positions, glm::quat *rotations, float animation_time_seconds)
-		{
-			for (uint32_t index = 0; index < total_bones; ++index)
-			{
-				positions[index] = track_translate[index].value_at_time(animation_time_seconds);
-				rotations[index] = track_rotation[index].value_at_time(animation_time_seconds);
-			}
-		}
+//		void AnimationData::get_pose(glm::vec3 *positions, glm::quat *rotations, float animation_time_seconds)
+//		{
+//			for (uint32_t index = 0; index < total_bones; ++index)
+//			{
+//				positions[index] = track_translate[index].value_at_time(animation_time_seconds);
+//				rotations[index] = track_rotation[index].value_at_time(animation_time_seconds);
+//			}
+//		}
 		
 		void traverse_nodes(MeshLoaderState& state, const Json::Value& node, MaterialByIdContainer& materials, const bool is_world)
 		{

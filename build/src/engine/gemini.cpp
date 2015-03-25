@@ -538,7 +538,7 @@ class ModelInterface : public gemini::IModelInterface
 		glm::mat4 transform;
 		
 		glm::mat4* bone_transforms;
-		
+		glm::mat4* local_transforms;
 		
 		Channel<glm::vec3> scale_channel;
 		Channel<glm::quat> rotation_channel;
@@ -556,6 +556,7 @@ class ModelInterface : public gemini::IModelInterface
 		mesh_asset_index(0),
 		mesh(0),
 		bone_transforms(0),
+		local_transforms(0),
 		scale_channel(scale),
 		rotation_channel(rotation),
 		translation_channel(translation)
@@ -575,7 +576,8 @@ class ModelInterface : public gemini::IModelInterface
 			// does this have an animation?
 			if (!mesh->skeleton.empty())
 			{
-				bone_transforms = new glm::mat4[mesh->animation.total_bones];
+				bone_transforms = new glm::mat4[mesh->skeleton.size()];
+				local_transforms = new glm::mat4[mesh->skeleton.size()];
 				//				for (size_t index = 0; index < mesh->animation.total_bones; ++index)
 				//				{
 				//					scale_channel.set_data_source(&mesh->animation.scale[index], mesh->animation.frame_delay_seconds);
@@ -613,6 +615,13 @@ class ModelInterface : public gemini::IModelInterface
 			if (bone_transforms)
 			{
 				delete [] bone_transforms;
+				bone_transforms = 0;
+			}
+			
+			if (local_transforms)
+			{
+				delete [] local_transforms;
+				local_transforms = 0;
 			}
 		}
 		
@@ -644,7 +653,7 @@ class ModelInterface : public gemini::IModelInterface
 		
 		virtual void get_animation_pose(int32_t index, glm::vec3* positions, glm::quat* rotations, float t)
 		{
-#if 1
+#if 0
 			if (mesh->skeleton.empty())
 			{
 				return;
@@ -655,6 +664,7 @@ class ModelInterface : public gemini::IModelInterface
 
 			animation::SequenceId instance_index = animations[index];
 			animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
+
 			size_t node_index = 0;
 			for (core::FixedArray<animation::Channel>& node : instance->ChannelSet)
 			{
@@ -673,7 +683,11 @@ class ModelInterface : public gemini::IModelInterface
 					
 					// pitch, yaw, roll (in radians)
 					rot = glm::quat(glm::vec3(rx(), ry(), rz()));
+					
+//					LOGV("%g %g %g\n", rot.x, rot.y, rot.z);					
 				}
+				
+
 				
 //				for (animation::Channel& channel : node)
 //				{
@@ -693,11 +707,6 @@ class ModelInterface : public gemini::IModelInterface
 				return;
 			}
 			
-			if (mesh->animation.total_bones == 0)
-			{
-				return;
-			}
-			
 			// You've hit the upper bounds for skeletal bones for a single
 			// model. Congrats.
 			assert(mesh->skeleton.size() < MAX_BONES);
@@ -705,11 +714,11 @@ class ModelInterface : public gemini::IModelInterface
 			const glm::mat4& tx = this->get_local_transform();
 			
 			// recalculate
-			for (size_t index = 0; index < mesh->animation.total_bones; ++index)
+			for (size_t index = 0; index < mesh->skeleton.size(); ++index)
 			{
 				assets::Joint* joint = &mesh->skeleton[index];
 				glm::mat4& global_pose = bone_transforms[index];
-				glm::mat4& saved_pose = mesh->animation.transforms[index];
+				glm::mat4& saved_pose = local_transforms[index];
 				
 				glm::mat4 local_scale;
 				glm::mat4 local_rotation = glm::toMat4(rotations[index]);
@@ -719,7 +728,7 @@ class ModelInterface : public gemini::IModelInterface
 				
 				if (joint->parent_index > -1)
 				{
-					const glm::mat4& parent_transform = mesh->animation.transforms[joint->parent_index];
+					const glm::mat4& parent_transform = local_transforms[joint->parent_index];
 					saved_pose = parent_transform * local_pose;
 				}
 				else
