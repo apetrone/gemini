@@ -859,9 +859,11 @@ namespace gemini
 		
 		// bind the texture
 		texture->bind();
+		gl.CheckError("bind texture");
 		
 		// setup parameters
 		texture->set_parameters(image);
+		gl.CheckError("texture set parameters");
 		
 		
 		GLvoid* pixels = 0;
@@ -870,23 +872,32 @@ namespace gemini
 			pixels = (GLvoid*)&image.pixels[0];
 		}
 		
+		// TODO@APP: This needs to be re-visited because there's a state problem
+		// when you create a cubemap (which succeeds) and then later try to
+		// create a normal 2d texture. (that catches a glerror in bind).
+		// This tells me, there's a gl error created somewhere after this ordeal.
+		// Likely in the render target stuff!
 		if (image.type == image::TEX_2D)
 		{
 			// upload image and generate mipmaps
 			gl.TexImage2D(texture->texture_type, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, pixels);
+			gl.CheckError("teximage2d");
 		}
 		else if (image.type == image::TEX_CUBE)
 		{
 			for (uint8_t index = 0; index < 6; ++index)
 			{
 				gl.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+index, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, pixels);
+				gl.CheckError("teximage2d (cube)");
 			}
 		}
 		
 		gl.GenerateMipmap(texture->texture_type);
+		gl.CheckError("generate mipmap");
 		
 		// unbind
 		texture->unbind();
+		gl.CheckError("unbind texture");
 
 		return texture;
 	}

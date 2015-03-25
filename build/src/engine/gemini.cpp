@@ -1007,27 +1007,27 @@ public:
 	{
 		renderer::IRenderDriver* driver = renderer::driver();
 		
-		image::Image image;
-		image.type = image::TEX_CUBE;
-		image.width = 128;
-		image.height = 128;
-		
-		cubemap_texture = driver->texture_create(image);
-		
-		
+//		image::Image image;
+//		image.type = image::TEX_CUBE;
+//		image.width = 128;
+//		image.height = 128;
+//		
+//		cubemap_texture = driver->texture_create(image);
 		
 		
-		cubemap = driver->render_target_create(image.width, image.height);
-		driver->render_target_set_attachment(cubemap, renderer::RenderTarget::COLOR, 0, cubemap_texture);
+		
+		
+//		cubemap = driver->render_target_create(image.width, image.height);
+//		driver->render_target_set_attachment(cubemap, renderer::RenderTarget::COLOR, 0, cubemap_texture);
 	}
 	
 	void shutdown()
 	{
 		renderer::IRenderDriver* driver = renderer::driver();
-		driver->render_target_destroy(cubemap);
+//		driver->render_target_destroy(cubemap);
 		
 		
-		driver->texture_destroy(cubemap_texture);
+//		driver->texture_destroy(cubemap_texture);
 	}
 	
 	void test_rendercubemap()
