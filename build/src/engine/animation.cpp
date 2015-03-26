@@ -502,8 +502,10 @@ namespace gemini
 				AnimationSequenceLoadData data;
 				data.mesh = mesh;
 				data.sequence = sequence;
+				sequence->name = name;
 				if (core::util::ConfigLoad_Success == core::util::json_load_with_callback(filepath(), load_animation_from_json, &data, true))
 				{
+					sequence->index= _sequences.size();
 					_sequences_by_name.insert(name, sequence);
 					_sequences.push_back(sequence);
 				}

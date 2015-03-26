@@ -752,10 +752,9 @@ class ModelInterface : public gemini::IModelInterface
 				animation::Sequence* sequence = animation::get_sequence_by_index(id);
 				if (0 == core::str::case_insensitive_compare(name, sequence->name(), 0))
 				{
-					index++;
+					return sequence->index;
 					break;
 				}
-				++index;
 			}
 			
 			assert(index > -1);
