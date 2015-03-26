@@ -869,10 +869,32 @@ namespace core
 				return false;
 			}
 			
+			
+			
+			// insert default option values for the items not in the dict
+			for (PatternPtr option : options_registry)
+			{
+				Option* o = option->cast<Option>();
+				std::string option_name;
+				if (!o->get_name().empty())
+				{
+					option_name = o->get_name();
+				}
+				else if (!o->longname.empty())
+				{
+					option_name = o->longname;
+				}
+				std::string option_value = o->get_value();
+				if (o->get_value().empty() && o->total_arguments == 0)
+				{
+					option_value = "false";
+				}
+				vm[option_name] = option_value;
+			}
+			
 			PatternWrapper input(input_patterns, nullptr);
 			
 			size_t input_length = input.size();
-			
 			bool success = false;
 			for (PatternPtr usage : usage_patterns)
 			{
@@ -886,30 +908,7 @@ namespace core
 				
 				vm.clear();
 			}
-			
-			// insert default option values for the items not in the dict
-			for (PatternPtr option : options_registry)
-			{
-				Option* o = option->cast<Option>();
-				if (vm.find(o->get_name()) == vm.end())
-				{
-					std::string option_name;
-					if (!o->get_name().empty())
-					{
-						option_name = o->get_name();
-					}
-					else if (!o->longname.empty())
-					{
-						option_name = o->longname;
-					}
-					std::string option_value = o->get_value();
-					if (o->get_value().empty() && o->total_arguments == 0)
-					{
-						option_value = "false";
-					}
-					vm[option_name] = option_value;
-				}
-			}
+
 			
 			if (!success)
 			{
