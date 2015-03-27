@@ -360,8 +360,14 @@ namespace gemini
 					return result;
 				}
 				
-				LOGV("TODO: load total animation duration!\n");
-				sequence->duration_seconds = 2.0f;
+				
+				const Json::Value& duration_seconds = root["duration_seconds"];
+				if (!validate_node(duration_seconds, "duration_seconds"))
+				{
+					return result;
+				}
+				
+				sequence->duration_seconds = duration_seconds.asFloat();
 				
 				std::string animation_title = animation_name.asString();
 				LOGV("animation: \"%s\"\n", animation_title.c_str());

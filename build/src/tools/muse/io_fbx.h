@@ -73,6 +73,7 @@ namespace gemini
 		
 		WeightSlotVector slots;
 		NodeDataVector nodedata;
+		float frames_per_second;
 	};
 	
 	class AutodeskFbxReader : public tools::Reader<datamodel::Model>

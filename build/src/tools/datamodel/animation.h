@@ -94,6 +94,9 @@ namespace gemini
 			String name;
 			uint16_t frames_per_second;
 			
+			// total animation length in seconds
+			float duration_seconds;
+			
 			Animation();
 			~Animation();
 			

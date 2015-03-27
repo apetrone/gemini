@@ -127,6 +127,7 @@ namespace gemini
 //			LOGV("animation: %s\n", animation->name.c_str());
 			
 			janimation["frames_per_second"] = animation->frames_per_second;
+			janimation["duration_seconds"] = animation->duration_seconds;
 
 			
 			Json::Value jnodes(Json::arrayValue);

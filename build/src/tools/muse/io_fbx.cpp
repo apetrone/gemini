@@ -478,6 +478,8 @@ namespace gemini
 
 			datamodel::NodeAnimation* data = animation.data_with_name(node_name);
 			
+			animation.frames_per_second = state.frames_per_second;
+			
 			// we shouldn't run into the event where we're adding multiple animation data
 			// to the same node name
 			assert(!data);
@@ -485,6 +487,8 @@ namespace gemini
 			{
 				data = animation.add_node_data(node_name);
 			}
+
+			animation.duration_seconds = end.GetFrameCount(time_mode)/state.frames_per_second;
 			
 			for (FbxLongLong local_time = start.GetFrameCount(time_mode); local_time <= end.GetFrameCount(time_mode); ++local_time)
 			{
@@ -821,6 +825,33 @@ namespace gemini
 		internal::_manager->Destroy();
 	}
 
+	float fps_from_timemode(FbxTime::EMode mode)
+	{
+		switch(mode)
+		{
+			case FbxTime::eFrames120: return 120;
+			case FbxTime::eFrames100: return 100;
+			case FbxTime::eFrames60: return 60;
+			case FbxTime::eFrames50: return 50;
+			case FbxTime::eFrames48: return 48;
+			case FbxTime::eFrames30: // fall through
+			case FbxTime::eFrames30Drop: // fall through
+			case FbxTime::eNTSCDropFrame: // fall through
+			case FbxTime::eNTSCFullFrame: return 30;
+			case FbxTime::ePAL: return 25;
+			case FbxTime::eFrames24: return 24;
+			case FbxTime::eFrames1000: return 0.0f;
+			case FbxTime::eFilmFullFrame: return 24;
+			case FbxTime::eCustom: assert(0); // not implemented!
+			case FbxTime::eFrames96: return 96;
+			case FbxTime::eFrames72: return 72;
+			case FbxTime::eFrames59dot94: return 60;
+			default: break;
+		}
+	
+		return 0.0f;
+	}
+
 	void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_source)
 	{
 		const char* path = (const char*)data_source.get_data();
@@ -875,6 +906,8 @@ namespace gemini
 		
 		FbxTime::EMode time_mode = scene->GetGlobalSettings().GetTimeMode();
 		LOGV("\ttime mode = %s\n", FbxGetTimeModeName(time_mode));
+		
+		extension_state.frames_per_second = fps_from_timemode(time_mode);
 		
 		// this will ONLY modify the first layer of node transforms in the scene
 		// also, I bet the DCC tool has to export this with the correct up-axis

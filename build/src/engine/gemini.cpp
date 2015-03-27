@@ -490,7 +490,6 @@ void EntityManager::add(IEngineEntity* entity)
 
 void EntityManager::remove(IEngineEntity* entity)
 {
-	LOGV("TODO: implement entity removal\n");
 	for(size_t i = 0; i < MAX_ENTITIES; ++i)
 	{
 		gemini::IEngineEntity* e = entity_list[i];
