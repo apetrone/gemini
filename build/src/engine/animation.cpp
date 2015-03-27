@@ -383,9 +383,7 @@ namespace gemini
 					const Json::Value& rotation_keys = jnode["rotation"];
 					const Json::Value& translation_keys = jnode["translation"];
 					assert(!scale_keys.isNull() && !rotation_keys.isNull() && !translation_keys.isNull());
-					
 
-										
 					Joint* joint = mesh->find_bone_named(node_name.c_str());
 					assert(joint != 0);
 					
@@ -396,7 +394,7 @@ namespace gemini
 
 					// translation
 					{
-						LOGV("translation keyframes\n");
+//						LOGV("translation keyframes\n");
 						const Json::Value& tr_values = translation_keys["value"];
 						const Json::Value& tr_times = translation_keys["time"];
 						
@@ -427,13 +425,13 @@ namespace gemini
 							tx.set_key(index, t, x);
 							ty.set_key(index, t, y);
 							tz.set_key(index, t, z);
-							LOGV("t=%2.2f, %g %g %g\n", t, x, y, z);
+//							LOGV("t=%2.2f, %g %g %g\n", t, x, y, z);
 						}
 					}
 					
 					// rotation
 					{
-						LOGV("rotation keyframes\n");
+//						LOGV("rotation keyframes\n");
 						const Json::Value& values = rotation_keys["value"];
 						const Json::Value& times = rotation_keys["time"];
 						
@@ -466,7 +464,7 @@ namespace gemini
 							rx.set_key(index, t, mathlib::degrees_to_radians(x));
 							ry.set_key(index, t, mathlib::degrees_to_radians(y));
 							rz.set_key(index, t, mathlib::degrees_to_radians(z));
-							LOGV("t=%2.2f, %g %g %g\n", t, x, y, z);
+//							LOGV("t=%2.2f, %g %g %g\n", t, x, y, z);
 						}
 					}
 					
