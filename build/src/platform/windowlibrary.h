@@ -31,6 +31,8 @@ namespace kernel
 
 namespace platform
 {
+	struct NativeWindow {};
+	
 	struct IWindowLibrary
 	{
 	public:
@@ -38,9 +40,11 @@ namespace platform
 		
 		virtual void startup(kernel::Parameters& parameters) = 0;
 		virtual void shutdown() = 0;
-		virtual void create_window(kernel::Parameters& parameters) = 0;
+		virtual NativeWindow* create_window(kernel::Parameters& parameters) = 0;
+		virtual void destroy_window(NativeWindow* window) = 0;
 		virtual void process_events() = 0;
-		virtual void swap_buffers() = 0;
+		virtual void activate_window(NativeWindow* window) = 0;
+		virtual void swap_buffers(NativeWindow* window) = 0;
 		
 		// cursor control
 		virtual void capture_mouse(bool capture) = 0;

@@ -29,14 +29,14 @@
 
 #include <SDL.h>
 #include <map>
+#include <vector>
 
 namespace platform
 {
+	struct SDLWindow;
 	struct SDLWindowLibrary : public platform::IWindowLibrary
 	{
 		// SDL related items
-		SDL_Window* window;
-		SDL_GLContext context;
 		SDL_Rect* display_rects;
 		uint8_t total_displays;
 		uint8_t total_controllers;
@@ -44,7 +44,7 @@ namespace platform
 		SDLToButtonKeyMap key_map;
 		input::MouseButton mouse_map[input::MOUSE_COUNT];
 		SDL_GameController* controllers[input::MAX_JOYSTICKS];
-		
+		std::vector<SDLWindow*> windows;
 		
 		SDLWindowLibrary();
 		
@@ -54,9 +54,11 @@ namespace platform
 		void setup_joysticks();
 		
 		virtual void shutdown();
-		virtual void create_window(kernel::Parameters& parameters);
+		virtual NativeWindow* create_window(kernel::Parameters& parameters);
+		virtual void destroy_window(NativeWindow* window);
 		virtual void process_events();
-		virtual void swap_buffers();
+		virtual void activate_window(NativeWindow* window);
+		virtual void swap_buffers(NativeWindow* window);
 		virtual void capture_mouse(bool capture);
 		virtual void warp_mouse(int x, int y);
 		virtual void get_mouse(int& x, int& y);

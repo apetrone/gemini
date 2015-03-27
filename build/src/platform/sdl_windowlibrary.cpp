@@ -33,9 +33,17 @@ using namespace input;
 
 namespace platform
 {
+	struct SDLWindow : public NativeWindow
+	{
+		SDL_Window* window;
+		SDL_GLContext context;
+		
+		SDLWindow() : window(0)
+		{
+		}
+	};
+
 	SDLWindowLibrary::SDLWindowLibrary() :
-	window(0),
-	context(0),
 	display_rects(0),
 	total_displays(0),
 	total_controllers(0)
@@ -275,14 +283,14 @@ namespace platform
 		key_map.clear();
 		
 		
-		SDL_GL_DeleteContext(context);
-		SDL_DestroyWindow(window);
 		SDL_Quit();
 	} // shutdown
 	
 	
-	void SDLWindowLibrary::create_window(kernel::Parameters& parameters)
+	NativeWindow* SDLWindowLibrary::create_window(kernel::Parameters& parameters)
 	{
+		SDLWindow* sdlw = 0;
+		
 		int window_width, window_height;
 		int render_width, render_height;
 		
@@ -310,34 +318,36 @@ namespace platform
 				window_flags |= SDL_WINDOW_RESIZABLE;
 			}
 			
-			window = SDL_CreateWindow(
+			sdlw = CREATE(SDLWindow);
+			
+			sdlw->window = SDL_CreateWindow(
 									  parameters.window_title, 0, 0,
 									  parameters.window_width, parameters.window_height,
 									  window_flags);
 			
-			if (!window)
+			if (!sdlw->window)
 			{
 				fprintf(stderr, "Failed to create SDL window: %s\n", SDL_GetError());
 			}
 			
 			// move the window to the correct display
-			SDL_SetWindowPosition(window, display_rects[parameters.target_display].x, display_rects[parameters.target_display].y);
+			SDL_SetWindowPosition(sdlw->window, display_rects[parameters.target_display].x, display_rects[parameters.target_display].y);
 			
-			context = SDL_GL_CreateContext(window);
-			if (!context)
+			sdlw->context = SDL_GL_CreateContext(sdlw->window);
+			if (!sdlw->context)
 			{
 				fprintf(stderr, "Failed to create SDL GL context: %s\n", SDL_GetError());
 			}
 			
 			// try to set our window size; it might still be smaller than requested.
-			SDL_SetWindowSize(window, parameters.window_width, parameters.window_height);
+			SDL_SetWindowSize(sdlw->window, parameters.window_width, parameters.window_height);
 			
 			// center our window
-			SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+			SDL_SetWindowPosition(sdlw->window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 			
 			// fetch the window size and renderable size
-			SDL_GetWindowSize(window, &window_width, &window_height);
-			SDL_GL_GetDrawableSize(window, &render_width, &render_height);
+			SDL_GetWindowSize(sdlw->window, &window_width, &window_height);
+			SDL_GL_GetDrawableSize(sdlw->window, &render_width, &render_height);
 			
 			// hide the mouse cursor
 			show_mouse(false);
@@ -358,7 +368,40 @@ namespace platform
 				fprintf(stdout, "render resolution %i x %i\n", render_width, render_height);
 			}
 		}
+		
+		if (sdlw)
+		{
+			windows.push_back(sdlw);
+		}
+		return sdlw;
 	} // create_window
+	
+	void SDLWindowLibrary::destroy_window(platform::NativeWindow* window)
+	{
+		SDLWindow* sdlw = static_cast<SDLWindow*>(window);
+		if (sdlw)
+		{
+			if (sdlw->context)
+			{
+				SDL_GL_DeleteContext(sdlw->context);
+			}
+			
+			if (sdlw->window)
+			{
+				SDL_DestroyWindow(sdlw->window);
+			}
+			
+			for (auto it = windows.begin(); it != windows.end(); ++it)
+			{
+				if (sdlw == (*it))
+				{
+					windows.erase(it);
+					DESTROY(SDLWindow, sdlw);
+					break;
+				}
+			}
+		}
+	}
 	
 	void controller_axis_event(SDL_ControllerDeviceEvent& device, SDL_ControllerAxisEvent& axis)
 	{
@@ -561,9 +604,15 @@ namespace platform
 		}
 	} // process_events
 	
-	void SDLWindowLibrary::swap_buffers()
+	void SDLWindowLibrary::activate_window(NativeWindow* window)
 	{
-		SDL_GL_SwapWindow(window);
+		// ...
+	}
+	
+	void SDLWindowLibrary::swap_buffers(NativeWindow* window)
+	{
+		SDLWindow* sdlw = static_cast<SDLWindow*>(window);
+		SDL_GL_SwapWindow(sdlw->window);
 	}
 	
 	void SDLWindowLibrary::capture_mouse(bool capture)
@@ -574,8 +623,11 @@ namespace platform
 	
 	void SDLWindowLibrary::warp_mouse(int x, int y)
 	{
+		assert(!windows.empty());
+		SDLWindow* sdlw = windows[0];
+		
 		SDL_EventState(SDL_MOUSEMOTION, SDL_IGNORE);
-		SDL_WarpMouseInWindow(window, x, y);
+		SDL_WarpMouseInWindow(sdlw->window, x, y);
 		SDL_EventState(SDL_MOUSEMOTION, SDL_ENABLE);
 	}
 	

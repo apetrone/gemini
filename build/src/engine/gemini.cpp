@@ -1104,6 +1104,7 @@ private:
 	bool draw_physics_debug;
 	
 	platform::IWindowLibrary* window_interface;
+	platform::NativeWindow* main_window;
 		
 	// Kernel State variables
 	double accumulator;
@@ -1575,7 +1576,7 @@ public:
 		}
 		
 		// create the window
-		window_interface->create_window(kernel::parameters());
+		main_window = window_interface->create_window(kernel::parameters());
 
 		// initialize rendering subsystems
 		{
@@ -1752,6 +1753,8 @@ public:
 	
 	void post_tick()
 	{
+		window_interface->activate_window(main_window);
+		
 		if (graph)
 		{
 			graph->record_value(kernel::parameters().framedelta_raw_msec, 0);
@@ -1861,7 +1864,7 @@ public:
 		// as the rift sdk performs buffer swaps during end frame.
 		if (kernel::parameters().swap_buffers)
 		{
-			window_interface->swap_buffers();
+			window_interface->swap_buffers(main_window);
 		}
 	}
 	
@@ -1910,6 +1913,9 @@ public:
 		audio::shutdown();
 		renderer::shutdown();
 		core::shutdown();
+	
+		window_interface->destroy_window(main_window);
+		main_window = 0;
 	
 		window_interface->shutdown();
 		platform::destroy_window_library();
