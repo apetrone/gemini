@@ -399,8 +399,10 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/osx/osx_platform.h",
 
 		"src/platform/posix/posix_dynamiclibrary.*",
-		"src/platform/posix/posix_timer.*",
-		"src/platform/posix/posix_filesystem.*"
+		"src/platform/posix/posix_filesystem.*",
+
+		"src/platform/time/osx_timer.cpp",
+		"src/platform/time/posix_datetime.cpp"
 	]
 
 	macosx.includes += [

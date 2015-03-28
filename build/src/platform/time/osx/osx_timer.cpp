@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -22,37 +22,42 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
+#include "platform_internal.h"
 
-#include "platform.h"
+#include <mach/mach_time.h>
 
-#include "posix/posix_timer.h"
-
-using platform::Result;
-using platform::IPlatformInterface;
-using platform::DynamicLibrary;
-using platform::DynamicLibrarySymbol;
-
-//using platform::TimerHandle;
-using platform::DateTime;
-
-class OSXPlatformInterface : public IPlatformInterface
+namespace platform
 {
-	platform::PosixTimer timer;
+	static double _time_scale = 0;
+	static uint64_t _time_start = 0;
 
+	Result timer_startup()
+	{
+		_time_start = mach_absolute_time();
+		mach_timebase_info_data_t timebase;
+		if (mach_timebase_info(&timebase) == KERN_SUCCESS)
+		{
+			// convert the timescale to return microseconds
+			_time_scale = timebase.numer/timebase.denom / 1e3;
+			return Result(Result::Success);
+		}
+		else
+		{
+			return Result(Result::Failure, "Failed fetching timebase!");
+		}
+	}
 
-public:
-	virtual Result startup();
-	virtual void shutdown();
+	void timer_shutdown()
+	{
+	}
+
+	uint64_t microseconds()
+	{
+		return (mach_absolute_time() - _time_start) * _time_scale;
+	}
 	
-	virtual Result get_program_directory(char* path, size_t size);
-	virtual Result make_directory(const char* path);
-	
-	virtual DynamicLibrary* open_dynamiclibrary(const char* library_path);
-	virtual void close_dynamiclibrary(DynamicLibrary* library);
-	virtual DynamicLibrarySymbol find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name);
-	virtual const char* get_dynamiclibrary_extension() const;
-
-//	virtual uint64_t get_time_microseconds();
-	virtual void get_current_datetime(DateTime& datetime);
-};
+	void datetime(DateTime& datetime)
+	{
+		posix_datetime(datetime);
+	}
+} // namespace platform

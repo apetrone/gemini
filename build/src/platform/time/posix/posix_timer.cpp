@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -22,37 +22,52 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
 
-#include "platform.h"
+#include "platform_internal.h"
 
-#include "posix/posix_timer.h"
+#include <sys/time.h>
+#include <time.h>
 
-using platform::Result;
-using platform::IPlatformInterface;
-using platform::DynamicLibrary;
-using platform::DynamicLibrarySymbol;
-
-//using platform::TimerHandle;
-using platform::DateTime;
-
-class OSXPlatformInterface : public IPlatformInterface
+namespace platform
 {
-	platform::PosixTimer timer;
-
-
-public:
-	virtual Result startup();
-	virtual void shutdown();
+	// Check for and use a monotonic clock, if one exists.
+	// Fallback to gettimeofday.
+	// Per Doug Coleman and Thomas Habets
+	// http://code-factor.blogspot.com/2009/11/monotonic-timers.html
+	// https://blog.habets.se/2010/09/gettimeofday-should-never-be-used-to-measure-time
 	
-	virtual Result get_program_directory(char* path, size_t size);
-	virtual Result make_directory(const char* path);
+	static bool _has_monotonic = false;
+	Result timer_startup()
+	{
+		// determine if this kernel has a monotonic clock
+		struct timespec ts;
+		_has_monotonic = (clock_gettime(CLOCK_MONOTONIC, &ts) != 0);
 	
-	virtual DynamicLibrary* open_dynamiclibrary(const char* library_path);
-	virtual void close_dynamiclibrary(DynamicLibrary* library);
-	virtual DynamicLibrarySymbol find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name);
-	virtual const char* get_dynamiclibrary_extension() const;
-
-//	virtual uint64_t get_time_microseconds();
-	virtual void get_current_datetime(DateTime& datetime);
-};
+		return Result(Result::Success);
+	}
+	
+	void timer_shutdown()
+	{
+	}
+	
+	uint64_t microseconds()
+	{
+		if (_has_monotonic)
+		{
+			struct timespec ts;
+			clock_gettime(CLOCK_MONOTONIC, &ts);
+			return (ts.tv_sec*1000000 + ts.tv_nsec*0.001f);
+		}
+		else // fall back to gettimeofday
+		{
+			struct timeval now;
+			gettimeofday(&now, 0);
+			return (now.tv_sec*1000000 + now.tv_usec);
+		}
+	}
+	
+	void datetime(DateTime& datetime)
+	{
+		posix_datetime(datetime);
+	}
+} // namespace platform

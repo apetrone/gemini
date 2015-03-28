@@ -27,6 +27,10 @@
 #include <assert.h>
 #include "kernel.h"
 
+
+#include "platform_internal.h"
+
+
 #if TARGET_OS_MAC
 	#include "osx/osx_platform.h"
 #endif
@@ -89,11 +93,16 @@ namespace platform
 		assert(_instance != 0);
 		result = _instance->startup();
 		
+		
+		result = timer_startup();
+		
 		return result;
 	}
 	
 	void shutdown()
 	{
+		timer_shutdown();
+	
 		_instance->shutdown();
 		DESTROY(IPlatformInterface, _instance);
 		

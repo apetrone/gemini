@@ -1478,7 +1478,7 @@ public:
 		kernel::Parameters& params = kernel::parameters();
 	
 		// initialize timer
-		last_time = platform::instance()->get_time_microseconds();
+		last_time = platform::microseconds();
 
 #if defined(PLATFORM_MOBILE)
 #else
@@ -1697,7 +1697,7 @@ public:
 		
 		// TODO: post_application_startup
 		
-		uint64_t current_time = platform::instance()->get_time_microseconds();
+		uint64_t current_time = platform::microseconds();
 		LOGV("startup in %2.2fms\n", (current_time-last_time)*.001f);
 		last_time = current_time;
 		
@@ -1708,7 +1708,7 @@ public:
 	
 	void update()
 	{
-		uint64_t current_time = platform::instance()->get_time_microseconds();
+		uint64_t current_time = platform::microseconds();
 		kernel::Parameters& params = kernel::parameters();
 		
 		// calculate delta ticks in miliseconds

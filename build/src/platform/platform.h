@@ -214,7 +214,7 @@ namespace platform
 		/// @desc Fetches the current time in microseconds
 		/// @returns The current time in microseconds since the platform was
 		/// instantiated.
-		virtual uint64_t get_time_microseconds() = 0;
+//		virtual uint64_t get_time_microseconds() = 0;
 		
 		/// @desc Create and return a handle to a platform timer.
 		/// @returns Handle to a platform timer or 0 on failure.
@@ -232,4 +232,13 @@ namespace platform
 	};
 
 	IPlatformInterface* instance();
+	
+	
+	
+	
+	
+	uint64_t microseconds();
+	void datetime(DateTime& datetime);
+	
+	
 } // namespace platform

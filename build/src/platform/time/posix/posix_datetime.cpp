@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -22,37 +22,29 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
 
-#include "platform.h"
+#include "platform_internal.h"
 
-#include "posix/posix_timer.h"
+#include <sys/time.h>
+#include <time.h>
 
-using platform::Result;
-using platform::IPlatformInterface;
-using platform::DynamicLibrary;
-using platform::DynamicLibrarySymbol;
-
-//using platform::TimerHandle;
-using platform::DateTime;
-
-class OSXPlatformInterface : public IPlatformInterface
+namespace platform
 {
-	platform::PosixTimer timer;
-
-
-public:
-	virtual Result startup();
-	virtual void shutdown();
-	
-	virtual Result get_program_directory(char* path, size_t size);
-	virtual Result make_directory(const char* path);
-	
-	virtual DynamicLibrary* open_dynamiclibrary(const char* library_path);
-	virtual void close_dynamiclibrary(DynamicLibrary* library);
-	virtual DynamicLibrarySymbol find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name);
-	virtual const char* get_dynamiclibrary_extension() const;
-
-//	virtual uint64_t get_time_microseconds();
-	virtual void get_current_datetime(DateTime& datetime);
-};
+	void posix_datetime(DateTime& datetime)
+	{
+		// this code is from cplusplus.com
+		struct tm* timeinfo;
+		time_t rawtime;
+		
+		time(&rawtime);
+		timeinfo = localtime(&rawtime);
+		datetime.year = timeinfo->tm_year + 1900;
+		datetime.day = timeinfo->tm_mday;
+		datetime.month = timeinfo->tm_mon + 1;
+		datetime.dayOfWeek = timeinfo->tm_wday; // 0-6, since Sunday
+		datetime.hour = timeinfo->tm_hour; // tm_hour is 24-hour format
+		datetime.minute = timeinfo->tm_min;
+		datetime.second = timeinfo->tm_sec;
+		//tm_isdst > 0 if Daylight Savings Time is in effect
+	}
+} // namespace platform

@@ -81,10 +81,10 @@ const char* OSXPlatformInterface::get_dynamiclibrary_extension() const
 	return ".dylib";
 }
 
-uint64_t OSXPlatformInterface::get_time_microseconds()
-{
-	return timer.get_microseconds();
-}
+//uint64_t OSXPlatformInterface::get_time_microseconds()
+//{
+//	return timer.get_microseconds();
+//}
 
 void OSXPlatformInterface::get_current_datetime(DateTime& datetime)
 {
