@@ -10,6 +10,7 @@
 //		* Redistributions in binary form must reproduce the above copyright notice,
 //		this list of conditions and the following disclaimer in the documentation
 //		and/or other materials provided with the distribution.
+
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -21,37 +22,43 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
 
-#include "config.h"
+#include "mem.h"
+#include "platform_internal.h"
 
-#include "platform.h"
+#define WIN32_LEAN_AND_MEAN 1
+#define NOMINMAX
+#include <windows.h>
 
 namespace platform
 {
-	// timer interface
-	Result timer_startup();
-	void timer_shutdown();
+	struct Win32DynamicLibrary : public DynamicLibrary
+	{
+		HMODULE handle;
+	};
 	
-	// os
-	Result os_startup();
-	int os_run_application(int argc, const char** argv);
-	void os_shutdown();	
-
-	// cross distro/system functions that could be shared
+	DynamicLibrary* dylib_open(const char* library_path)
+	{
+		Win32DynamicLibrary* library = CREATE(Win32DynamicLibrary);
+		library->handle = LoadLibraryA(library_path);
+		return library;
+	}
 	
-#if PLATFORM_APPLE || PLATFORM_LINUX
-
-	// filesystem
-	Result posix_make_directory(const char* path);
-
+	void dylib_close(DynamicLibrary* library)
+	{
+		Win32DynamicLibrary* instance = static_cast<Win32DynamicLibrary*>(library);
+		FreeLibrary(instance->handle);
+		DESTROY(Win32DynamicLibrary, instance);
+	}
 	
-	// dylib
-	DynamicLibrary* posix_dylib_open(const char* library_path);
-	void posix_dylib_close(DynamicLibrary* library);
-	DynamicLibrarySymbol posix_dylib_find(DynamicLibrary* library, const char* symbol_name);	
+	DynamicLibrarySymbol dylib_find(DynamicLibrary* library, const char* symbol_name)
+	{
+		Win32DynamicLibrary* instance = static_cast<Win32DynamicLibrary*>(library);
+		return GetProcAddress(instance->handle, (LPSTR)symbol_name);
+	}
 	
-	// time
-	void posix_datetime(DateTime& datetime);
-#endif
+	const char* dylib_extension()
+	{
+		return ".dll";
+	}
 } // namespace platform

@@ -161,21 +161,6 @@ namespace platform
 		unsigned short milliseconds;
 	};
 	
-	class IPlatformInterface
-	{
-	public:
-		virtual ~IPlatformInterface() {}
-		
-		//
-		// GENERAL
-		//
-		
-		virtual Result startup() = 0;
-		virtual void shutdown() = 0;
-	};
-
-	IPlatformInterface* instance();
-	
 	
 	// ---------------------------------------------------------------------
 	// dynamic library

@@ -10,6 +10,7 @@
 //		* Redistributions in binary form must reproduce the above copyright notice,
 //		this list of conditions and the following disclaimer in the documentation
 //		and/or other materials provided with the distribution.
+
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -21,37 +22,49 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
 
-#include "config.h"
+#include "platform_internal.h"
 
-#include "platform.h"
+#define WIN32_LEAN_AND_MEAN 1
+#define NOMINMAX
+#include <windows.h>
 
 namespace platform
 {
-	// timer interface
-	Result timer_startup();
-	void timer_shutdown();
-	
-	// os
-	Result os_startup();
-	int os_run_application(int argc, const char** argv);
-	void os_shutdown();	
+	static LARGE_INTEGER _frequency;
 
-	// cross distro/system functions that could be shared
+	Result timer_startup()
+	{
+		// cache off the frequency for later timer use.
+		QueryPerformanceFrequency(&_frequency);
 	
-#if PLATFORM_APPLE || PLATFORM_LINUX
+		return Result(Result::Success);
+	}
+	
+	void timer_shutdown()
+	{
+	}
+	
+	uint64_t microseconds()
+	{
+		LARGE_INTEGER now;
+		QueryPerformanceCounter(&now);
 
-	// filesystem
-	Result posix_make_directory(const char* path);
-
+		return ((now.QuadPart) / (double)_frequency.QuadPart) * 1000000;
+	}
 	
-	// dylib
-	DynamicLibrary* posix_dylib_open(const char* library_path);
-	void posix_dylib_close(DynamicLibrary* library);
-	DynamicLibrarySymbol posix_dylib_find(DynamicLibrary* library, const char* symbol_name);	
-	
-	// time
-	void posix_datetime(DateTime& datetime);
-#endif
+	void datetime(DateTime& datetime)
+	{
+		SYSTEMTIME st;
+		GetLocalTime(&st);
+		
+		datetime.day = st.wDay;
+		datetime.dayOfWeek = st.wDayOfWeek;
+		datetime.hour = st.wHour;
+		datetime.milliseconds = st.wMilliseconds;
+		datetime.minute = st.wMinute;
+		datetime.month = st.wMonth;
+		datetime.second = st.wSecond;
+		datetime.year = st.wYear;
+	}
 } // namespace platform

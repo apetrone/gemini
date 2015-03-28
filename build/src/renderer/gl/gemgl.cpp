@@ -129,7 +129,7 @@ namespace gemini
 
 		LOGV("Loading gl driver \"%s\"...\n", lib_name);
 
-		gl_interface.library = platform::instance()->open_dynamiclibrary(lib_name);
+		gl_interface.library = platform::dylib_open(lib_name);
 		if (gl_interface.library == 0)
 		{
 			LOGV("Could not load gl driver: \"%s\"\n", lib_name);
@@ -511,7 +511,7 @@ namespace gemini
 #if PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_ANDROID
 		if (!ptr)
 		{
-			ptr = platform::instance()->find_dynamiclibrary_symbol(gl_interface.library, name);
+			ptr = platform::dylib_find(gl_interface.library, name);
 		}
 #endif
 
@@ -531,7 +531,7 @@ namespace gemini
 	void gemgl_shutdown( gemgl_interface_t & gl_interface  )
 	{
 #if PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_ANDROID
-		platform::instance()->close_dynamiclibrary(gl_interface.library);
+		platform::dylib_close(gl_interface.library);
 #elif PLATFORM_APPLE
 		gemgl_osx_shutdown();
 #endif

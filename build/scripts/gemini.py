@@ -444,7 +444,17 @@ def get_libplatform(arguments, target_platform):
 
 	windows = libplatform.layout(platform="windows")
 	windows.sources += [
-		"src/platform/windows/*.*"
+		# dylib
+		"src/platform/dylib/windows/win32_dylib.cpp",
+
+		# filesystem
+		"src/platform/filesystem/windows/win32_filesystem.cpp",
+
+		# os
+		"src/platform/os/windows/win32_os.cpp",
+
+		# time
+		"src/platform/time/windows/win32_time.cpp"
 	]
 
 	return libplatform

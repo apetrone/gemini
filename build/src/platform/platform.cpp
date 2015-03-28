@@ -32,8 +32,8 @@
 
 
 #if PLATFORM_WINDOWS
-	#include <windows.h>
-	#include <direct.h> // for _mkdir
+	//#include <windows.h>
+	//#include <direct.h> // for _mkdir
 #elif PLATFORM_LINUX
 	#include <sys/sysinfo.h>
 	//#include <errno.h>
@@ -58,12 +58,6 @@
 
 namespace platform
 {
-	IPlatformInterface* _instance = 0;
-	IPlatformInterface* instance()
-	{
-		return _instance;
-	}
-	
 	MainParameters _mainparameters;
 
 	Result startup()

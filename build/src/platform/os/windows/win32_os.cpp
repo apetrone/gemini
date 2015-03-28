@@ -10,6 +10,7 @@
 //		* Redistributions in binary form must reproduce the above copyright notice,
 //		this list of conditions and the following disclaimer in the documentation
 //		and/or other materials provided with the distribution.
+
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -21,37 +22,34 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
 
-#include "config.h"
+#include "platform_internal.h"
 
-#include "platform.h"
+#define WIN32_LEAN_AND_MEAN 1
+#define NOMINMAX
+#include <windows.h>
 
 namespace platform
 {
-	// timer interface
-	Result timer_startup();
-	void timer_shutdown();
-	
-	// os
-	Result os_startup();
-	int os_run_application(int argc, const char** argv);
-	void os_shutdown();	
+	static unsigned int _previous_error_mode;
 
-	// cross distro/system functions that could be shared
-	
-#if PLATFORM_APPLE || PLATFORM_LINUX
+	Result os_startup()
+	{
+		// prevent error dialogs from hanging the process.
+		// these errors are forwarded to calling process.
+		_previous_error_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
 
-	// filesystem
-	Result posix_make_directory(const char* path);
-
+		return Result(Result::Success);
+	}
 	
-	// dylib
-	DynamicLibrary* posix_dylib_open(const char* library_path);
-	void posix_dylib_close(DynamicLibrary* library);
-	DynamicLibrarySymbol posix_dylib_find(DynamicLibrary* library, const char* symbol_name);	
+	void os_shutdown()
+	{
+		// restore the error mode
+		SetErrorMode(_previous_error_mode);		
+	}
 	
-	// time
-	void posix_datetime(DateTime& datetime);
-#endif
+	int os_run_application(int argc, const char** argv)
+	{
+		return 0;
+	}
 } // namespace platform

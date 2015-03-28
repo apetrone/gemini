@@ -10,6 +10,7 @@
 //		* Redistributions in binary form must reproduce the above copyright notice,
 //		this list of conditions and the following disclaimer in the documentation
 //		and/or other materials provided with the distribution.
+
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -21,37 +22,55 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
 
-#include "config.h"
+#include "platform_internal.h"
 
-#include "platform.h"
+#define WIN32_LEAN_AND_MEAN 1
+#define NOMINMAX
+#include <windows.h>
+
+#include <direct.h> // for _mkdir
+#include <string.h> // for strrchr
 
 namespace platform
 {
-	// timer interface
-	Result timer_startup();
-	void timer_shutdown();
-	
-	// os
-	Result os_startup();
-	int os_run_application(int argc, const char** argv);
-	void os_shutdown();	
+	Result get_program_directory(char* path, size_t path_size)
+	{
+		Result error(Result::Success);
+		
+		int result = 0;
+		char* sep;
+		result = GetModuleFileNameA(GetModuleHandleA(0), path, path_size);
+		if (result == 0)
+		{
+			error.status = platform::Result::Failure;
+			error.message = "GetModuleFileNameA failed!";
+		}
+		
+		if (result != 0)
+		{
+			sep = strrchr(path, PATH_SEPARATOR);
+			
+			if (sep)
+			{
+				*sep = '\0';
+			}
+		}
+		return error;
+	}
 
-	// cross distro/system functions that could be shared
-	
-#if PLATFORM_APPLE || PLATFORM_LINUX
-
-	// filesystem
-	Result posix_make_directory(const char* path);
-
-	
-	// dylib
-	DynamicLibrary* posix_dylib_open(const char* library_path);
-	void posix_dylib_close(DynamicLibrary* library);
-	DynamicLibrarySymbol posix_dylib_find(DynamicLibrary* library, const char* symbol_name);	
-	
-	// time
-	void posix_datetime(DateTime& datetime);
-#endif
+	Result make_directory(const char* path)
+	{
+		Result result(Result::Success);
+		int status_code = 0;
+		
+		status_code = _mkdir(path);
+		if (status_code == -1)
+		{
+			// TODO: print out the errno
+			result = Result(Result::Failure, "_mkdir failed!");
+		}
+		
+		return result;
+	}
 } // namespace platform
