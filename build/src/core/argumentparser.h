@@ -45,7 +45,7 @@ namespace core
 		//   except for:
 		
 		//	 I'm requiring upper case for 'Usage' and 'Options'.
-		//   There is no support for your program name at the beginning of usage
+		//   There is no support for your program name at the beginning of usage.
 
 		struct TokenInfo;
 		struct Pattern;
@@ -333,6 +333,10 @@ namespace core
 			virtual Type get_type() const { return PT_BranchPattern; }
 		};
 		
+		// ---------------------------------------------------------------------
+		// Required
+		// ---------------------------------------------------------------------
+
 		struct Required : public BranchPattern
 		{
 			Required(const PatternList& child_list) : BranchPattern(child_list)
@@ -344,6 +348,10 @@ namespace core
 			virtual const char* get_classname() const { return "Required"; }
 		};
 		
+		// ---------------------------------------------------------------------
+		// Optional
+		// ---------------------------------------------------------------------
+
 		struct Optional : public BranchPattern
 		{
 			Optional(const PatternList& child_list) : BranchPattern(child_list)
@@ -363,11 +371,19 @@ namespace core
 			virtual const char* get_classname() const { return "Optional"; }
 		};
 		
+		// ---------------------------------------------------------------------
+		// OneOrMore
+		// ---------------------------------------------------------------------
+
 		struct OneOrMore : public BranchPattern
 		{
 			virtual const char* get_classname() const { return "OneOrMore"; }
 		};
 		
+		// ---------------------------------------------------------------------
+		// Either
+		// ---------------------------------------------------------------------
+
 		struct Either : public BranchPattern
 		{
 			Pattern* left;
@@ -375,8 +391,6 @@ namespace core
 			
 			virtual const char* get_classname() const { return "Either"; }
 		};
-		
-		
 		
 		// ---------------------------------------------------------------------
 		// ArgumentParser
@@ -398,51 +412,50 @@ namespace core
 		
 		
 			State state;
-		
-		public:
 			const char* docstring;
 			std::vector<PatternPtr> usage_patterns;
 			PatternList options_registry;
-			
-			ArgumentParser();
-			~ArgumentParser();
-			
-			
+
 			void parse_patterns_from_tokens(PatternList& patterns, TokenWrapper& tokens);
-			
+
 			PatternPtr find_option(PatternList& patterns,
-								const std::string& shortname,
-								const std::string& longname,
-								int& found_options);
-			
+				const std::string& shortname,
+				const std::string& longname,
+				int& found_options);
+
 			void parse_long(PatternList& results, TokenWrapper& tokens, PatternList& options);
 			void parse_short(PatternList& results, TokenWrapper& tokens, PatternList& options);
-			
 			void parse_atom(TokenWrapper& tokens, PatternList& results);
-			
 			void parse_sequence(TokenWrapper& tokens, PatternList& results);
-			
 			void parse_expr(TokenWrapper& tokens, PatternList& results);
-			
-			
 			void parse_usage(const std::string& formal_usage, const char* help_string);
-			
-			
+
+
 			std::string get_section_regex(const std::string& name);
 			std::vector<std::string> split(const std::string& input, const std::string& substring);
 			std::string trim_left(const std::string& input, const std::string& chars = "\t ");
 			std::vector<std::string> find_section(const char* docstring, const std::string& section_name, bool& section_was_found);
-			
-			
+
 			void parse_options(std::vector<std::string> lines);
-			
 			void parse_usage(std::vector<std::string> lines);
-			
 			bool check_extra(bool enable_automatic_help, const char* version_string, PatternList& patterns);
-			void print_docstring() const;
-			bool parse(const char* docstring, int argc, char** argv, VariableMap& vm, const char* version_string = "");
-			
+
 			void set_error(const char* format, ...) {};
+
+			/// @desc Split a space-delimited string up into argc/argv
+			std::vector<std::string> split_commandline(const char* commandline);
+		public:
+
+			
+			ArgumentParser();
+			~ArgumentParser();
+
+			void print_docstring() const;
+
+			std::vector<std::string> split_tokens(int argc, char** argv);
+			std::vector<std::string> split_tokens(const char* commandline);
+
+			bool parse(const char* docstring, std::vector<std::string> tokens, VariableMap& vm, const char* version_string = "");
 		}; // ArgumentParser
 		
 		

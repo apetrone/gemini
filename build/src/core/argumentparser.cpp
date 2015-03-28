@@ -822,14 +822,45 @@ namespace core
 			
 			return false;
 		}
-		
+
+
 		void ArgumentParser::print_docstring() const
 		{
 			// print out the doc string
 			fprintf(stdout, "%s\n", docstring);
 		}
+
+		std::vector<std::string> ArgumentParser::split_tokens(int argc, char** argv)
+		{
+			std::vector<std::string> tokens;
+			for (int index = 0; index < argc; ++index)
+			{
+				tokens.push_back(argv[index]);
+			}
+
+			return tokens;
+		}
+
+		std::vector<std::string> ArgumentParser::split_tokens(const char* commandline)
+		{
+			std::string source_commandline(commandline);
+			std::regex rgx("(-*[\\\\:/a-zA-Z-]+)|(\"[\\\\:/a-zA-Z ]+\")");
+			std::sregex_token_iterator iter(source_commandline.begin(),
+				source_commandline.end(),
+				rgx,
+				1);
+			std::sregex_token_iterator end;
+
+			std::vector<std::string> tokens;
+			for (; iter != end; ++iter)
+			{
+				tokens.push_back((*iter).str());
+			}
+
+			return tokens;
+		}
 			
-		bool ArgumentParser::parse(const char* docstring, int argc, char** argv, VariableMap& vm, const char* version_string)
+		bool ArgumentParser::parse(const char* docstring, std::vector<std::string> tokens, VariableMap& vm, const char* version_string)
 		{
 			this->docstring = docstring;
 			bool found_options = false;
@@ -848,14 +879,14 @@ namespace core
 			
 			
 			// build our token list
-			TokenList tokens;
-			for (int i = 1; i < argc; ++i)
+			TokenList tokenlist;
+			for (const std::string& token : tokens)
 			{
-				tokens.push_back(argv[i]);
+				tokenlist.push_back(token);
 			}
 			
 			// create a wrapper pass this on
-			TokenWrapper tokenwrapper(tokens, std::string(""));
+			TokenWrapper tokenwrapper(tokenlist, std::string(""));
 			
 			PatternList input_patterns;
 			parse_patterns_from_tokens(input_patterns, tokenwrapper);

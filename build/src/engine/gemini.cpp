@@ -31,6 +31,7 @@
 #include <core/logging.h>
 #include <core/filesystem.h>
 #include <core/configloader.h>
+#include <core/argumentparser.h>
 
 #include <renderer/renderer.h>
 #include <renderer/renderstream.h>
@@ -1459,18 +1460,33 @@ public:
 	virtual kernel::Error startup()
 	{
 		// parse command line values
+		std::vector<std::string> arguments;
+		core::argparse::ArgumentParser parser;
 		const platform::MainParameters& mainparams = platform::get_mainparameters();
 #if defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE)
-		const char* arg;
-		for(int i = 0; i < mainparams.argc; ++i)
-		{
-			arg = mainparams.argv[i];
-			if (String(arg) == "--game")
-			{
-				game_path = mainparams.argv[i+1];
-			}
-		}
+		arguments = parser.split_tokens(mainparams.argc, mainparams.argv);
+#elif defined(PLATFORM_WINDOWS)
+		arguments = parser.split_tokens(mainparams.commandline);
+#else
+	#error Not implemented on this platform!
 #endif
+
+		core::argparse::VariableMap vm;
+		const char* docstring = R"(
+Usage:
+	--game=<game_path>
+	
+Options:
+	-h, --help  Show this help screen
+	--version  Display the version number
+	--game=<game_path>  The game path to load content from
+	)";
+
+		if (parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
+		{
+			std::string path = vm["--game"];
+			game_path = path.c_str();
+		}
 
 		const char FONT_SHADER[] = "shaders/fontshader";
 		const char DEBUG_FONT[] = "fonts/debug";
