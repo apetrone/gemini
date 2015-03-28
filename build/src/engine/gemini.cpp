@@ -1659,9 +1659,9 @@ public:
 		
 		// TOOD: load game library
 		StackString<MAX_PATH_SIZE> game_library_path = ::core::filesystem::content_directory();
-		const char* dynamiclibrary_extension = platform::instance()->get_dynamiclibrary_extension();
+		const char* dynamiclibrary_extension = platform::dylib_extension();
 		game_library_path.append(PATH_SEPARATOR_STRING).append("bin").append(PATH_SEPARATOR_STRING).append("game").append(dynamiclibrary_extension);
-		gamelib = platform::instance()->open_dynamiclibrary(game_library_path());
+		gamelib = platform::dylib_open(game_library_path());
 		if (!gamelib)
 		{
 			LOGV("unable to open game: \"%s\"\n", game_library_path());
@@ -1673,8 +1673,8 @@ public:
 			
 			// link the engine interface
 			
-			connect_engine_fn connect_engine = (connect_engine_fn)platform::instance()->find_dynamiclibrary_symbol(gamelib, "connect_engine");
-			disconnect_engine = (disconnect_engine_fn)platform::instance()->find_dynamiclibrary_symbol(gamelib, "disconnect_engine");
+			connect_engine_fn connect_engine = (connect_engine_fn)platform::dylib_find(gamelib, "connect_engine");
+			disconnect_engine = (disconnect_engine_fn)platform::dylib_find(gamelib, "disconnect_engine");
 			if (connect_engine)
 			{
 				game_interface = connect_engine(gemini::engine::api::instance());
@@ -1892,7 +1892,7 @@ public:
 			disconnect_engine();
 		}
 		
-		platform::instance()->close_dynamiclibrary(gamelib);
+		platform::dylib_close(gamelib);
 		
 		// shutdown gui
 		DESTROY(GUIStyle, gui_style);

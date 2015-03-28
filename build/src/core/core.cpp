@@ -89,7 +89,7 @@ namespace core
 
 #if !PLATFORM_IS_MOBILE
 			platform::DateTime dt;
-			platform::instance()->get_current_datetime(dt);
+			platform::datetime(dt);
 			
 			char datetime_string[ GEMINI_DATETIME_STRING_MAX ];
 			str::sprintf(datetime_string, GEMINI_DATETIME_STRING_MAX, "%02d-%02d-%04d-%02d-%02d-%02d.log",

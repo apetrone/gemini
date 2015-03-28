@@ -24,41 +24,27 @@
 // -------------------------------------------------------------
 
 #include "mem.h"
-#include "posix_timer.h"
-
-#include <assert.h>
-
-#include <sys/time.h>
-#include <time.h>
+#include "platform_internal.h"
 
 namespace platform
-{	
-	void PosixTimer::reset()
+{
+	DynamicLibrary* dylib_open(const char* library_path)
 	{
+		return posix_dylib_open(library_path);
 	}
 	
-	uint64_t PosixTimer::get_microseconds()
+	void dylib_close(DynamicLibrary* library)
 	{
-		struct timeval now;
-		gettimeofday(&now, 0);
-		return (now.tv_sec*1000000 + now.tv_usec);
+		posix_dylib_close(library);
 	}
 	
-	void posix_get_date_time(DateTime& datetime)
+	DynamicLibrarySymbol dylib_find(DynamicLibrary* library, const char* symbol_name)
 	{
-		// this code is from cplusplus.com
-		struct tm* timeinfo;
-		time_t rawtime;
-		
-		time(&rawtime);
-		timeinfo = localtime(&rawtime);
-		datetime.year = timeinfo->tm_year + 1900;
-		datetime.day = timeinfo->tm_mday;
-		datetime.month = timeinfo->tm_mon + 1;
-		datetime.dayOfWeek = timeinfo->tm_wday; // 0-6, since Sunday
-		datetime.hour = timeinfo->tm_hour; // tm_hour is 24-hour format
-		datetime.minute = timeinfo->tm_min;
-		datetime.second = timeinfo->tm_sec;
-		//tm_isdst > 0 if Daylight Savings Time is in effect
+		return posix_dylib_find(library, symbol_name);
+	}
+	
+	const char* dylib_extension()
+	{
+		return ".so";
 	}
 } // namespace platform

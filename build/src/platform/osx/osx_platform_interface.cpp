@@ -26,8 +26,6 @@
 #include "osx_platform.h"
 
 // we can use some posix-compatible functions
-#include "posix/posix_dynamiclibrary.h"
-#include "posix/posix_timer.h"
 #include "posix/posix_filesystem.h"
 
 #include <TargetConditionals.h>
@@ -42,7 +40,6 @@ using namespace platform;
 
 Result OSXPlatformInterface::startup()
 {
-	timer.reset();
 	return osx_startup();
 }
 
@@ -59,34 +56,4 @@ Result OSXPlatformInterface::get_program_directory(char* path, size_t size)
 Result OSXPlatformInterface::make_directory(const char* path)
 {
 	return posix_make_directory(path);
-}
-
-DynamicLibrary* OSXPlatformInterface::open_dynamiclibrary(const char* library_path)
-{
-	return posix_dynamiclibrary_open(library_path);
-}
-
-void OSXPlatformInterface::close_dynamiclibrary(DynamicLibrary* library)
-{
-	posix_dynamiclibrary_close(library);
-}
-
-DynamicLibrarySymbol OSXPlatformInterface::find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name)
-{
-	return posix_dynamiclibrary_find(library, symbol_name);
-}
-
-const char* OSXPlatformInterface::get_dynamiclibrary_extension() const
-{
-	return ".dylib";
-}
-
-//uint64_t OSXPlatformInterface::get_time_microseconds()
-//{
-//	return timer.get_microseconds();
-//}
-
-void OSXPlatformInterface::get_current_datetime(DateTime& datetime)
-{
-	return posix_get_date_time(datetime);
 }

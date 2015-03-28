@@ -22,13 +22,29 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
 
-#include "platform.h"
+#include "mem.h"
+#include "platform_internal.h"
 
 namespace platform
 {
-	DynamicLibrary* posix_dynamiclibrary_open(const char* library_path);
-	void posix_dynamiclibrary_close(DynamicLibrary* library);	
-	DynamicLibrarySymbol posix_dynamiclibrary_find(DynamicLibrary* library, const char* symbol_name);
+	DynamicLibrary* dylib_open(const char* library_path)
+	{
+		return posix_dylib_open(library_path);
+	}
+	
+	void dylib_close(DynamicLibrary* library)
+	{
+		posix_dylib_close(library);
+	}
+	
+	DynamicLibrarySymbol dylib_find(DynamicLibrary* library, const char* symbol_name)
+	{
+		return posix_dylib_find(library, symbol_name);
+	}
+	
+	const char* dylib_extension()
+	{
+		return ".dylib";
+	}
 } // namespace platform

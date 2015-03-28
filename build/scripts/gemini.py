@@ -401,6 +401,11 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/posix/posix_dynamiclibrary.*",
 		"src/platform/posix/posix_filesystem.*",
 
+		# dylib
+		"src/platform/dylib/osx/osx_dylib.cpp",
+		"src/platform/dylib/posix/posix_dlopen.cpp",
+
+		# time
 		"src/platform/time/osx_timer.cpp",
 		"src/platform/time/posix_datetime.cpp"
 	]
@@ -414,8 +419,15 @@ def get_libplatform(arguments, target_platform):
 	linux.sources += [
 		"src/platform/posix/posix_platform_interface.*",
 		"src/platform/posix/posix_dynamiclibrary.*",
-		"src/platform/posix/posix_timer.*",
-		"src/platform/posix/posix_filesystem.*"
+		"src/platform/posix/posix_filesystem.*",
+
+		# dylib
+		"src/platform/dylib/posix/posix_dylib.cpp",
+		"src/platform/dylib/posix/posix_dlopen.cpp",
+
+		# time
+		"src/platform/time/posix/posix_datetime.cpp",
+		"src/platform/time/posix/posix_timer.cpp"
 	]
 
 	linux.cflags += [

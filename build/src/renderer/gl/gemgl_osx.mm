@@ -40,6 +40,9 @@ namespace gemini
 			return 0;
 		}
 		
+		// following The Get Rule
+		CFRetain(gemgl_bundle);
+		
 		return 1;
 	} // gemgl_osx_startup
 		

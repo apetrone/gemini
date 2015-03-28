@@ -22,19 +22,45 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
 
-#include "platform.h"
+#include "mem.h"
+#include "platform_internal.h"
+
+#include <dlfcn.h>
 
 namespace platform
 {
-	struct PosixTimer
+	struct PosixDynamicLibrary : public DynamicLibrary
 	{
-	public:
-
-		void reset();
-		uint64_t get_microseconds();
+		void* handle;
 	};
 
-	void posix_get_date_time(DateTime& datetime);
+	DynamicLibrary* posix_dylib_open(const char* library_path)
+	{
+		void* handle = dlopen(library_path, RTLD_LAZY);
+		if (!handle)
+		{
+			fprintf(stderr, "%s", dlerror());
+			return 0;
+		}
+		
+		PosixDynamicLibrary* lib = CREATE(PosixDynamicLibrary);
+		lib->handle = handle;
+		return lib;
+	}
+	
+	void posix_dylib_close(DynamicLibrary* library)
+	{
+		PosixDynamicLibrary* lib = static_cast<PosixDynamicLibrary*>(library);
+		dlclose(lib->handle);
+		
+		DESTROY(PosixDynamicLibrary, lib);
+	}
+	
+	DynamicLibrarySymbol posix_dylib_find(DynamicLibrary* library, const char* symbol_name)
+	{
+		PosixDynamicLibrary* lib = static_cast<PosixDynamicLibrary*>(library);
+		return dlsym(lib->handle, symbol_name);
+	}
+	
 } // namespace platform

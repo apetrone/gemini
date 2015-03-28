@@ -145,7 +145,6 @@ namespace platform
 	
 	struct DynamicLibrary
 	{
-		virtual ~DynamicLibrary() {}
 	};
 
 	typedef void* DynamicLibrarySymbol;
@@ -186,59 +185,42 @@ namespace platform
 		
 		/// @desc Make directory on disk
 		virtual Result make_directory(const char* path) = 0;
-		
-		//
-		// DYNAMIC LIBRARY HANDLING
-		//
-		
-		/// @desc load a dynamic library at library_path
-		/// @returns A pointer to a DynamicLibrary object on success; 0 on failure
-		virtual DynamicLibrary* open_dynamiclibrary(const char* library_path) = 0;
-		
-		/// @desc close a library handle
-		virtual void close_dynamiclibrary(DynamicLibrary* library) = 0;
-		
-		/// @desc Load a symbol from the dynamic library
-		/// @returns 0 on failure, 1 on success
-		virtual DynamicLibrarySymbol find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name) = 0;
-		
-		/// @desc Returns the extension on this platform for a dynamiclibrary.
-		/// @returns ".dylib", ".so", or ".dll" for Mac/Linux/Windows.
-		/// NOTE: This MUST return the period character if required by the platform!
-		virtual const char* get_dynamiclibrary_extension() const = 0;
-
-		//
-		// TIMERS
-		//
-		
-		/// @desc Fetches the current time in microseconds
-		/// @returns The current time in microseconds since the platform was
-		/// instantiated.
-//		virtual uint64_t get_time_microseconds() = 0;
-		
-		/// @desc Create and return a handle to a platform timer.
-		/// @returns Handle to a platform timer or 0 on failure.
-//		virtual TimerHandle* create_timer() = 0;
-		
-		/// @desc Destroys a previously created timer.
-//		virtual void destroy_timer(TimerHandle* timer) = 0;
-		
-		/// @desc Queries the timer for the current time
-		/// @returns The current time as a double in miliseconds
-//		virtual double get_timer_msec(TimerHandle* timer) = 0;
-		
-		/// @desc Populates the DateTime struct with the system's current date and time
-		virtual void get_current_datetime(DateTime& datetime) = 0;
 	};
 
 	IPlatformInterface* instance();
 	
 	
 	
+	// ---------------------------------------------------------------------
+	// time operations
+	// ---------------------------------------------------------------------
 	
-	
+	/// @desc Fetches the current time in microseconds
+	/// @returns The current time in microseconds since the application started
 	uint64_t microseconds();
+	
+	/// @desc Populates the DateTime struct with the system's current date and time
 	void datetime(DateTime& datetime);
+	
+	// ---------------------------------------------------------------------
+	// dynamic library operations
+	// ---------------------------------------------------------------------
+
+	/// @desc load a dynamic library at library_path
+	/// @returns A pointer to a DynamicLibrary object on success; 0 on failure
+	DynamicLibrary* dylib_open(const char* library_path);
+	
+	/// @desc close a library handle
+	void dylib_close(DynamicLibrary* library);
+	
+	/// @desc Tries to load a symbol from a dynamic library
+	/// @returns A valid pointer to the symbol or null on failure
+	DynamicLibrarySymbol dylib_find(DynamicLibrary* library, const char* symbol_name);
+	
+	/// @desc Returns the extension on this platform for a dynamiclibrary.
+	/// @returns ".dylib", ".so", or ".dll" for Mac/Linux/Windows.
+	/// NOTE: This MUST return the period character if required by the platform!
+	const char* dylib_extension();
 	
 	
 } // namespace platform

@@ -97,32 +97,3 @@ Result PosixPlatformInterface::make_directory(const char* path)
 	return posix_make_directory(path);
 }
 
-DynamicLibrary* PosixPlatformInterface::open_dynamiclibrary(const char* library_path)
-{
-	return posix_dynamiclibrary_open(library_path);
-}
-
-void PosixPlatformInterface::close_dynamiclibrary(DynamicLibrary* library)
-{
-	posix_dynamiclibrary_close(library);
-}
-
-DynamicLibrarySymbol PosixPlatformInterface::find_dynamiclibrary_symbol(DynamicLibrary* library, const char* symbol_name)
-{
-	return posix_dynamiclibrary_find(library, symbol_name);
-}
-
-const char* PosixPlatformInterface::get_dynamiclibrary_extension() const
-{
-	return ".so";
-}
-
-uint64_t PosixPlatformInterface::get_time_microseconds()
-{
-	return timer.get_microseconds();
-}
-
-void PosixPlatformInterface::get_current_datetime(DateTime& datetime)
-{
-	posix_get_date_time(datetime);
-}
