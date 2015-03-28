@@ -935,9 +935,7 @@ namespace gemini
 		gl.PixelStorei(GL_UNPACK_SKIP_ROWS, rect.top);
 
 		assert(rect.left >= 0);
-		assert(rect.left + rect.width() <= gltexture->width);
 		assert(rect.top >= 0);
-		assert(rect.top + rect.height() <= gltexture->height);
 		
 		GLvoid* pixels = 0;
 		if (!image.pixels.empty())

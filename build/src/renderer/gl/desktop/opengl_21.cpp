@@ -879,9 +879,7 @@ namespace gemini
 		gl.PixelStorei(GL_UNPACK_SKIP_ROWS, rect.top);
 
 		assert(rect.left >= 0);
-		assert(rect.left + rect.width() <= gltexture->width);
 		assert(rect.top >= 0);
-		assert(rect.top + rect.height() <= gltexture->height);
 		
 		gl.TexSubImage2D(gltexture->texture_type, 0, rect.left, rect.top, rect.right, rect.bottom, internal_format, GL_UNSIGNED_BYTE, (GLvoid*)&image.pixels[0]);
 		gl.CheckError("TexSubImage2D");

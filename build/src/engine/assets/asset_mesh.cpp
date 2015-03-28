@@ -195,7 +195,7 @@ namespace gemini
 				}
 				
 				// read uv sets
-				for (int set_id = 0; set_id < uv_sets.size(); ++set_id)
+				for (Json::Value::ArrayIndex set_id = 0; set_id < uv_sets.size(); ++set_id)
 				{
 					geo->uvs[set_id].allocate(vertex_array.size());
 					assert(vertex_array.size() == geo->vertices.size());

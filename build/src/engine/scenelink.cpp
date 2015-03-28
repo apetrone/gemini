@@ -120,7 +120,7 @@ namespace gemini
 		{
 			queue->clear();
 
-			for (int i = 0; i < max_entities; ++i)
+			for (uint32_t i = 0; i < max_entities; ++i)
 			{
 				gemini::IEngineEntity* e = entity_list[i];
 				

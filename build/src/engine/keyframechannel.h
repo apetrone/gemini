@@ -311,7 +311,7 @@ namespace gemini
 			
 			// find the index of the sample, roughly matching with t
 			//		int index = (t * ((float)_total_samples-1));
-			int index = (t / frame_delay);
+			unsigned int index = (t / frame_delay);
 			
 			// calculate the start time of the frame at index
 			float start_time = (index * frame_delay);
