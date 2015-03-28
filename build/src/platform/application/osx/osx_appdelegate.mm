@@ -24,8 +24,8 @@
 // -------------------------------------------------------------
 #import "osx_appdelegate.h"
 
-#import <platform/platform.h>
-#import <platform/kernel.h>
+#import "platform.h"
+#import "kernel.h"
 
 static bool has_started = false;
 
@@ -81,7 +81,7 @@ static bool has_started = false;
 			
 		platform::startup();
 		
-		NSArray* arguments = [[NSProcessInfo processInfo] arguments];
+		//NSArray* arguments = [[NSProcessInfo processInfo] arguments];
 		
 		// On Mac, the window created is actually larger than requested
 		// to account for the added height of the title bar.

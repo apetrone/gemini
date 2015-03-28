@@ -98,12 +98,12 @@ def setup_common_variables(arguments, target_platform, product):
 
 def setup_common_application(product):
 	macosx = product.layout(platform="macosx")
-
+	
 	macosx.sources += [
-		"src/platform/osx/osx_appdelegate.mm",
-		"src/platform/osx/osx_appdelegate.h",
-		"src/platform/osx/osx_application.mm",
-		"src/platform/osx/osx_application.h"
+		"src/platform/application/osx/osx_appdelegate.mm",
+		"src/platform/application/osx/osx_appdelegate.h",
+		"src/platform/application/osx/osx_application.mm",
+		"src/platform/application/osx/osx_application.h"
 	]
 
 def setup_datamodel(product):

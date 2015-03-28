@@ -32,7 +32,6 @@
 	#import <Foundation/Foundation.h>
 #endif
 
-
 namespace platform
 {
 	NSAutoreleasePool* pool;
