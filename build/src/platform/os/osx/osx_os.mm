@@ -22,15 +22,48 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
 
-#include "platform.h" // for platform::Result
+#include "platform.h"
+
+#if TARGET_OS_MAC && !TARGET_OS_IPHONE
+	#import <Cocoa/Cocoa.h>
+	#import <AppKit/AppKit.h>
+#else
+	#import <Foundation/Foundation.h>
+#endif
+
 
 namespace platform
 {
-	Result osx_startup();
-	void osx_shutdown();
-	int osx_run_application(int argc, const char* argv[]);
+	NSAutoreleasePool* pool;
 	
-	Result osx_program_directory(char * path, size_t size);
+	Result os_startup()
+	{
+		pool = [[NSAutoreleasePool alloc] init];
+//		
+//		NSProcessInfo* processInfo = [NSProcessInfo processInfo];
+//		
+//		const int MB = (1024*1024);
+//		const int GB = MB*1024;
+//		NSLog(@"physical memory: %lluMB", processInfo.physicalMemory/MB);
+//		
+//		NSLog(@"%@", processInfo.operatingSystemName);
+//		NSLog(@"%@", processInfo.operatingSystemVersionString);
+//		NSTimeInterval uptime = processInfo.systemUptime;
+//
+//		NSLog(@"uptime: %f", uptime);
+		
+		return Result(Result::Success);
+	}
+	
+	void os_shutdown()
+	{
+		[pool release];
+		pool = 0;
+	}
+	
+	int os_run_application(int argc, const char** argv)
+	{
+		return ::NSApplicationMain(argc, argv);
+	}
 } // namespace platform

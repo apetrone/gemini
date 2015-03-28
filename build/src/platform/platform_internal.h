@@ -48,6 +48,12 @@ namespace platform
 	DynamicLibrarySymbol posix_dylib_find(DynamicLibrary* library, const char* symbol_name);
 	
 	
+	// os
+	Result os_startup();
+	int os_run_application(int argc, const char** argv);
+	void os_shutdown();
+	
+	
 	// time
 	void posix_datetime(DateTime& datetime);
 #endif

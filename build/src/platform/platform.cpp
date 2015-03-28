@@ -31,10 +31,6 @@
 #include "platform_internal.h"
 
 
-#if TARGET_OS_MAC
-	#include "osx/osx_platform.h"
-#endif
-
 #if PLATFORM_WINDOWS
 	#include <windows.h>
 	#include <direct.h> // for _mkdir
@@ -58,19 +54,6 @@
 
 #include <string.h> // for strrchr
 
-#if PLATFORM_LINUX || PLATFORM_ANDROID
-	#include "posix/posix_platform_interface.h"
-	typedef PosixPlatformInterface PlatformInterface;
-#elif PLATFORM_APPLE
-	#include "osx/osx_platform_interface.h"
-	typedef OSXPlatformInterface PlatformInterface;
-#elif PLATFORM_WINDOWS
-	#include "windows/win32_platform_interface.h"
-	typedef Win32PlatformInterface PlatformInterface;
-
-#else
-	#error Platform not implemented!
-#endif
 
 
 namespace platform
@@ -85,16 +68,21 @@ namespace platform
 
 	Result startup()
 	{
+		Result result(Result::Success);
+			
 		memory::startup();
 		
-		Result result(Result::Success);
-		_instance = CREATE(PlatformInterface);
-
-		assert(_instance != 0);
-		result = _instance->startup();
-		
+		result = os_startup();
+		if (result.failed())
+		{
+			fprintf(stdout, "os_startup failed: '%s'\n", result.message);
+		}
 		
 		result = timer_startup();
+		if (result.failed())
+		{
+			fprintf(stdout, "timer_startup failed: '%s'\n", result.message);
+		}
 		
 		return result;
 	}
@@ -102,9 +90,7 @@ namespace platform
 	void shutdown()
 	{
 		timer_shutdown();
-	
-		_instance->shutdown();
-		DESTROY(IPlatformInterface, _instance);
+		os_shutdown();
 		
 		memory::shutdown();
 	}
@@ -162,7 +148,7 @@ namespace platform
 		
 		
 #if defined(PLATFORM_APPLE)
-		return_code = osx_run_application(_mainparameters.argc, (const char**)_mainparameters.argv);
+		return_code = os_run_application(_mainparameters.argc, (const char**)_mainparameters.argv);
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
 		return_code = run_application();
 #else

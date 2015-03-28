@@ -375,6 +375,7 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/mem_stl_allocator.h",
 		"src/platform/platform.cpp",
 		"src/platform/platform.h",
+		"src/platform/platform_internal.h",
 		"src/platform/input.cpp",
 		"src/platform/input.h",
 		"src/platform/windowlibrary.cpp",
@@ -393,25 +394,20 @@ def get_libplatform(arguments, target_platform):
 
 	macosx = libplatform.layout(platform="macosx")
 	macosx.sources += [
-		"src/platform/osx/osx_platform_interface.cpp",
-		"src/platform/osx/osx_platform_interface.h",
-		"src/platform/osx/osx_platform.mm",
-		"src/platform/osx/osx_platform.h",
-
-		"src/platform/posix/posix_dynamiclibrary.*",
-		"src/platform/posix/posix_filesystem.*",
-
 		# dylib
 		"src/platform/dylib/osx/osx_dylib.cpp",
 		"src/platform/dylib/posix/posix_dlopen.cpp",
 
 		# filesystem
-		"src/platform/dylib/osx/osx_filesystem.mm",
-		"src/platform/filesystem/posix_filesystem_common.cpp",
+		"src/platform/filesystem/osx/osx_filesystem.mm",
+		"src/platform/filesystem/posix/posix_filesystem_common.cpp",
+
+		# os
+		"src/platform/os/osx/osx_os.mm",
 
 		# time
-		"src/platform/time/osx_timer.cpp",
-		"src/platform/time/posix_datetime.cpp"
+		"src/platform/time/osx/osx_timer.cpp",
+		"src/platform/time/posix/posix_datetime.cpp"
 	]
 
 	macosx.includes += [
@@ -421,17 +417,16 @@ def get_libplatform(arguments, target_platform):
 
 	linux = libplatform.layout(platform="linux")
 	linux.sources += [
-		"src/platform/posix/posix_platform_interface.*",
-		"src/platform/posix/posix_dynamiclibrary.*",
-		"src/platform/posix/posix_filesystem.*",
-
 		# dylib
 		"src/platform/dylib/posix/posix_dylib.cpp",
 		"src/platform/dylib/posix/posix_dlopen.cpp",
 
 		# filesystem
-		"src/platform/filesystem/posix_filesystem.cpp",
-		"src/platform/filesystem/posix_filesystem_common.cpp",
+		"src/platform/filesystem/posix/posix_filesystem.cpp",
+		"src/platform/filesystem/posix/posix_filesystem_common.cpp",
+
+		# os
+		"src/platform/os/posix/posix_os.cpp",
 
 		# time
 		"src/platform/time/posix/posix_datetime.cpp",
