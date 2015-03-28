@@ -185,11 +185,6 @@ namespace platform
 		return _mainparameters;
 	}
 	
-	Result program_directory(char* path, size_t size)
-	{
-		return _instance->get_program_directory(path, size);
-	}
-	
 	namespace path
 	{
 		void normalize(char* path)
@@ -205,12 +200,6 @@ namespace platform
 				++path;
 			}
 		} // normalize
-		
-		
-		Result make_directory(const char* path)
-		{
-			return _instance->make_directory(path);
-		} // make_directory
 		
 
 		void make_directories(const char* normalized_path)
@@ -232,7 +221,7 @@ namespace platform
 				if (*path == PATH_SEPARATOR)
 				{
 					strncpy(directory, normalized_path, (path+1)-normalized_path);
-					platform::instance()->make_directory( directory );
+					platform::make_directory(directory);
 				}
 				
 				++path;

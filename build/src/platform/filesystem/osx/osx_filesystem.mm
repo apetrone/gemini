@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -22,22 +22,35 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
 
-#include "platform.h"
+#include "platform_internal.h"
 
+#if TARGET_OS_MAC && !TARGET_OS_IPHONE
+	#import <Cocoa/Cocoa.h>
+	#import <AppKit/AppKit.h>
+#else
+	#import <Foundation/Foundation.h>
+#endif
 
-using platform::Result;
-using platform::IPlatformInterface;
-using platform::DynamicLibrary;
-using platform::DynamicLibrarySymbol;
-
-//using platform::TimerHandle;
-using platform::DateTime;
-
-class OSXPlatformInterface : public IPlatformInterface
+namespace platform
 {
-public:
-	virtual Result startup();
-	virtual void shutdown();
-};
+	Result get_program_directory(char* path, size_t path_size)
+	{
+		Result result(Result::Success);
+		NSString * bundle_path = [[NSBundle mainBundle] bundlePath];
+		if (bundle_path)
+		{
+			[bundle_path getCString:path maxLength:path_size encoding:NSUTF8StringEncoding];
+		}
+		else
+		{
+			result = Result(Result::Failure, "Unable mainBundle reference is invalid!");
+		}
+		return result;
+	}
+	
+	Result make_directory(const char* path)
+	{
+		return posix_make_directory(path);
+	}
+} // namespace platform

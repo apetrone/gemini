@@ -405,6 +405,10 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/dylib/osx/osx_dylib.cpp",
 		"src/platform/dylib/posix/posix_dlopen.cpp",
 
+		# filesystem
+		"src/platform/dylib/osx/osx_filesystem.mm",
+		"src/platform/filesystem/posix_filesystem_common.cpp",
+
 		# time
 		"src/platform/time/osx_timer.cpp",
 		"src/platform/time/posix_datetime.cpp"
@@ -424,6 +428,10 @@ def get_libplatform(arguments, target_platform):
 		# dylib
 		"src/platform/dylib/posix/posix_dylib.cpp",
 		"src/platform/dylib/posix/posix_dlopen.cpp",
+
+		# filesystem
+		"src/platform/filesystem/posix_filesystem.cpp",
+		"src/platform/filesystem/posix_filesystem_common.cpp",
 
 		# time
 		"src/platform/time/posix/posix_datetime.cpp",

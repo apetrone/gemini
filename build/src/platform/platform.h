@@ -172,40 +172,15 @@ namespace platform
 		
 		virtual Result startup() = 0;
 		virtual void shutdown() = 0;
-		
-		//
-		// PATHS
-		//
-		
-		/// @desc Returns the directory where the active binary resides:
-		/// on Linux and Windows platforms, it returns the folder where the binary exists
-		/// on MacOS X when run as a command line tool, it returns the folder where the binary exists (similar to Linux and Windows)
-		/// on MacOS X / iPhoneOS (for Bundles), it returns the root bundle path (.app)
-		virtual Result get_program_directory(char* path, size_t size) = 0;
-		
-		/// @desc Make directory on disk
-		virtual Result make_directory(const char* path) = 0;
 	};
 
 	IPlatformInterface* instance();
 	
 	
-	
 	// ---------------------------------------------------------------------
-	// time operations
+	// dynamic library
 	// ---------------------------------------------------------------------
 	
-	/// @desc Fetches the current time in microseconds
-	/// @returns The current time in microseconds since the application started
-	uint64_t microseconds();
-	
-	/// @desc Populates the DateTime struct with the system's current date and time
-	void datetime(DateTime& datetime);
-	
-	// ---------------------------------------------------------------------
-	// dynamic library operations
-	// ---------------------------------------------------------------------
-
 	/// @desc load a dynamic library at library_path
 	/// @returns A pointer to a DynamicLibrary object on success; 0 on failure
 	DynamicLibrary* dylib_open(const char* library_path);
@@ -222,5 +197,29 @@ namespace platform
 	/// NOTE: This MUST return the period character if required by the platform!
 	const char* dylib_extension();
 	
+	// ---------------------------------------------------------------------
+	// filesystem
+	// ---------------------------------------------------------------------
 	
+	/// @desc Returns the directory where the active binary resides:
+	/// on Linux and Windows platforms, it returns the folder where the binary exists
+	/// on MacOS X when run as a command line tool, it returns the folder where the binary exists (similar to Linux and Windows)
+	/// on MacOS X / iPhoneOS (for Bundles), it returns the root bundle path (.app)
+	Result get_program_directory(char* path, size_t path_size);
+	
+	/// @desc Make directory on disk
+	Result make_directory(const char* path);
+	
+	// ---------------------------------------------------------------------
+	// time
+	// ---------------------------------------------------------------------
+	
+	/// @desc Fetches the current time in microseconds
+	/// @returns The current time in microseconds since the application started
+	uint64_t microseconds();
+	
+	/// @desc Populates the DateTime struct with the system's current date and time
+	void datetime(DateTime& datetime);
+
+
 } // namespace platform

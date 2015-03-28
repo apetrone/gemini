@@ -23,8 +23,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
-#include "mem.h"
-#include "posix_filesystem.h"
+#include "platform_internal.h"
 
 #include <sys/stat.h>
 

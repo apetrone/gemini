@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -10,7 +10,6 @@
 //		* Redistributions in binary form must reproduce the above copyright notice,
 //		this list of conditions and the following disclaimer in the documentation
 //		and/or other materials provided with the distribution.
-
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 // AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 // IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -24,20 +23,32 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "config.h"
+
 #include "platform.h"
 
-
-using platform::Result;
-using platform::IPlatformInterface;
-using platform::DynamicLibrary;
-using platform::DynamicLibrarySymbol;
-
-//using platform::TimerHandle;
-using platform::DateTime;
-
-class OSXPlatformInterface : public IPlatformInterface
+namespace platform
 {
-public:
-	virtual Result startup();
-	virtual void shutdown();
-};
+	// timer interface
+	Result timer_startup();
+	void timer_shutdown();
+	
+	
+	// cross distro/system functions that could be shared
+	
+#if PLATFORM_APPLE || PLATFORM_LINUX
+
+	// filesystem
+	Result posix_make_directory(const char* path);
+
+	
+	// dylib
+	DynamicLibrary* posix_dylib_open(const char* library_path);
+	void posix_dylib_close(DynamicLibrary* library);
+	DynamicLibrarySymbol posix_dylib_find(DynamicLibrary* library, const char* symbol_name);
+	
+	
+	// time
+	void posix_datetime(DateTime& datetime);
+#endif
+} // namespace platform

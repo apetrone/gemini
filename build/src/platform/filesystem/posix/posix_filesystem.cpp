@@ -22,11 +22,64 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
 
-#include "platform.h"
+#include "platform_internal.h"
+
+#include <string.h> // for strrchr
+
+//#include <sys/sysinfo.h>
+//#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h> // for snprintf
+#include <stdlib.h> // for abort
+#include <unistd.h> // for readlink, getpid
 
 namespace platform
 {
-	Result posix_make_directory(const char* path);
+	Result get_program_directory(char* path, size_t path_size)
+	{
+		Result error(Result::Success);
+		
+		int result = 0;
+		char* sep;
+		{
+			// http://www.flipcode.com/archives/Path_To_Executable_On_Linux.shtml
+			char linkname[64] = {0};
+			pid_t pid = getpid();
+			
+			if (snprintf(linkname, sizeof(linkname), "/proc/%i/exe", pid) < 0)
+			{
+				abort();
+			}
+			
+			result = readlink(linkname, path, path_size);
+			if (result == -1)
+			{
+				error.status = Result::Failure;
+				error.message = "readlink failed";
+			}
+			else
+			{
+				path[result] = 0;
+			}
+		}
+		
+		if (result != 0)
+		{
+			sep = strrchr(path, PATH_SEPARATOR);
+			
+			if (sep)
+			{
+				*sep = '\0';
+			}
+		}
+		
+		return error;
+	}
+
+	Result make_directory(const char* path)
+	{
+		return posix_make_directory(path);
+	}
 } // namespace platform

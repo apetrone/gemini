@@ -25,16 +25,7 @@
 #include "osx_platform_interface.h"
 #include "osx_platform.h"
 
-// we can use some posix-compatible functions
-#include "posix/posix_filesystem.h"
 
-#include <TargetConditionals.h>
-
-#if TARGET_OS_MAC
-	#include <CoreGraphics/CoreGraphics.h>
-#else
-	#error Not implemented on this platform
-#endif
 
 using namespace platform;
 
@@ -46,14 +37,4 @@ Result OSXPlatformInterface::startup()
 void OSXPlatformInterface::shutdown()
 {
 	osx_shutdown();
-}
-
-Result OSXPlatformInterface::get_program_directory(char* path, size_t size)
-{
-	return osx_program_directory(path, size);
-}
-
-Result OSXPlatformInterface::make_directory(const char* path)
-{
-	return posix_make_directory(path);
 }
