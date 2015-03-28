@@ -179,7 +179,7 @@ namespace gemini
 				for( unsigned int i = 0; i < AUDIO_MAX_SOURCES; ++i )
 				{
 					source = &_sources[ i ];
-					if ( source->flags & SF_PLAYING )
+					if ( source->_decoder != 0 )
 					{
 						source->_decoder->close();
 						_audio_driver->clean_source( source );

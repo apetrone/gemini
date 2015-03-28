@@ -349,6 +349,12 @@ namespace gemini
 		{
 			ALint queued = -1;
 			
+			
+			if (!source->has_buffers)
+			{
+				return;
+			}
+			
 			// if it's currently playing, stop this emitter
 			alSourceStop( source->source_id );
 			check_al_error( "OpenAL::clean_source - alSourceStop" );
@@ -358,7 +364,7 @@ namespace gemini
 			
 			alSourceUnqueueBuffers( source->source_id, queued, source->buffers );
 			check_al_error( "OpenAL::clean_source - alSourceUnqueueBuffers" );
-			
+
 			
 			// check to see if the buffers are indeed buffers
 			if ( !alIsBuffer( source->buffers[0] ) )
