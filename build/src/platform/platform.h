@@ -37,6 +37,7 @@
 #if PLATFORM_WINDOWS
 	// see if we still need these here...
 	#define WIN32_LEAN_AND_MEAN 1
+	#define NOMINMAX
 	#include <windows.h>
 	#define MAX_PATH_SIZE 260
 	#define PATH_SEPARATOR '\\'

@@ -294,6 +294,9 @@ namespace platform
 		int window_width, window_height;
 		int render_width, render_height;
 		
+		// Please provide a title to the window being created!
+		assert(parameters.window_title != 0);
+		
 		if (kernel::instance()->is_active())
 		{
 			assert( parameters.window_width != 0 || parameters.window_height != 0 );
@@ -606,7 +609,8 @@ namespace platform
 	
 	void SDLWindowLibrary::activate_window(NativeWindow* window)
 	{
-		// ...
+		SDLWindow* sdlw = static_cast<SDLWindow*>(window);
+		SDL_GL_MakeCurrent(sdlw->window, sdlw->context);
 	}
 	
 	void SDLWindowLibrary::swap_buffers(NativeWindow* window)

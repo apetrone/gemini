@@ -70,9 +70,10 @@ namespace kernel
 		const char* error_message;
 		const char* window_title;
 		
-		// kDevice constants above describe the current system
+		// device constants above describe the current system
 		KernelDeviceFlags device_flags;
 		
+		// time state
 		double step_interval_seconds;
 		float step_alpha;
 		float framedelta_filtered_msec;
@@ -90,9 +91,6 @@ namespace kernel
 		// dimensions of the rendering area in pixels
 		unsigned short render_width;
 		unsigned short render_height;
-		unsigned short prev_width;
-		unsigned short prev_height;
-		unsigned char event_type;
 		
 		// need to take this into account when calculating screen coordinates
 		unsigned short titlebar_height;

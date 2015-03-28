@@ -1105,6 +1105,7 @@ private:
 	
 	platform::IWindowLibrary* window_interface;
 	platform::NativeWindow* main_window;
+	platform::NativeWindow* alt_window;
 		
 	// Kernel State variables
 	double accumulator;
@@ -1577,6 +1578,15 @@ public:
 		
 		// create the window
 		main_window = window_interface->create_window(kernel::parameters());
+		
+//		kernel::Parameters altp;
+//		altp.window_width = 800;
+//		altp.window_height = 600;
+//		altp.window_title = "Test Window";
+//		alt_window = window_interface->create_window(altp);
+		
+		
+		window_interface->activate_window(main_window);
 
 		// initialize rendering subsystems
 		{
@@ -1865,6 +1875,7 @@ public:
 		if (kernel::parameters().swap_buffers)
 		{
 			window_interface->swap_buffers(main_window);
+//			window_interface->swap_buffers(alt_window);
 		}
 	}
 	
@@ -1914,6 +1925,7 @@ public:
 		renderer::shutdown();
 		core::shutdown();
 	
+//		window_interface->destroy_window(alt_window);
 		window_interface->destroy_window(main_window);
 		main_window = 0;
 	
