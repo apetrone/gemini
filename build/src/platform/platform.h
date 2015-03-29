@@ -247,8 +247,7 @@ namespace platform
 	void thread_setup(void* data);
 	
 	/// @desc Wait for a thread to complete.
-	/// @returns 0 if the thread timed out
-	/// Otherwise, returns 1 if it exited normally.
+	/// @returns 0 on success; non-zero on failure (abnormal thread termination)
 	int thread_join(Thread& thread);
 	
 	/// @desc Allows the calling thread to sleep

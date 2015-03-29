@@ -29,29 +29,58 @@
 
 namespace platform
 {
+	unsigned int __stdcall windows_thread_entry(void* data)
+	{
+		Thread* thread_data = static_cast<Thread*>(data);
+		thread_data->thread_id = thread_id();
+
+		thread_data->entry(thread_data->userdata);
+		
+		return 0;
+	}
+
 	Result thread_create(Thread& thread, ThreadEntry entry, void* data)
 	{
-		return posix_thread_create(thread, entry, data);
+		HANDLE thread_handle = CreateThread(0, 0, windows_thread_entry, &thread, 0, &thread.thread_id);
+		if (thread_handle)
+		{
+			thread.handle = thread_handle;
+			thread.state = THREAD_STATE_ACTIVE;
+		}
 	}
 	
 	int thread_join(Thread& thread)
 	{
-		return posix_thread_join(thread);
+		int result = 0;
+		
+		// NOTE:
+		// * MsgWait continues the MessagePump in case this thread created any Windows.
+		// * MsgWaitForMultipleObjectsEx( 1, &hThread, milliseconds, QS_ALLEVENTS, 0 );
+		if (WaitForSingleObject(thread.handle, INFINITE) != WAIT_OBJECT_0)
+		{
+			TerminateThread(thread.handle, 0);
+			result = 1;
+		}
+		
+		CloseHandle(thread.handle);
+		thread.state = THREAD_STATE_INACTIVE;
+		return result;
 	}
 	
 	void thread_sleep(int milliseconds)
 	{
-		posix_thread_sleep(milliseconds);
+		Sleep(milliseconds);
 	}
 	
 	void thread_detach(Thread& thread)
 	{
-		posix_thread_detach(thread);
+		CloseHandle(thread.handle);
+		thread.state = THREAD_STATE_INACTIVE;
 	}
 
 	ThreadId thread_id()
 	{
-		return posix_thread_id();
+		return GetCurrentThreadId();
 	}
 	
 } // namespace platform

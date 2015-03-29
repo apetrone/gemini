@@ -104,8 +104,8 @@ namespace platform
 	
 	void posix_thread_detach(Thread& thread)
 	{
-		
 		pthread_cancel(thread.handle);
+		thread.state = THREAD_STATE_INACTIVE;
 	}
 
 	ThreadId posix_thread_id()
