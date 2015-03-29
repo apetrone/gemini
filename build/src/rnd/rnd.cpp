@@ -420,11 +420,16 @@ void run_logic(void* thread_data)
 
 void test_sys(int argc, char**argv)
 {
+	int num_cores = 1;
+
+#if defined(PLATFORM_POSIX)
 	int page_size = sysconf(_SC_PAGE_SIZE);
-	int num_cores = sysconf(_SC_NPROCESSORS_CONF);
-	
+	num_cores = sysconf(_SC_NPROCESSORS_CONF);
 	fprintf(stdout, "page_size: %i bytes\n", page_size);
 	fprintf(stdout, "cores: %i\n", num_cores);
+#endif
+
+
 	
 	platform::Thread threads[4];
 	TestData test_data;
