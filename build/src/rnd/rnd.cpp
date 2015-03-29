@@ -391,6 +391,33 @@ void test_rendering()
 //    return info.resident_size;
 //}
 
+
+#include <platform/platform.h>
+
+
+
+struct TestData
+{
+	unsigned int value;
+	
+	TestData() : value(0)
+	{
+	}
+};
+
+
+
+void run_logic(void* thread_data)
+{
+	TestData* td = static_cast<TestData*>(thread_data);
+	++td->value;
+	
+	fprintf(stdout, "test data value: %u\n", td->value);
+}
+
+
+
+
 void test_sys(int argc, char**argv)
 {
 	int page_size = sysconf(_SC_PAGE_SIZE);
@@ -398,6 +425,22 @@ void test_sys(int argc, char**argv)
 	
 	fprintf(stdout, "page_size: %i bytes\n", page_size);
 	fprintf(stdout, "cores: %i\n", num_cores);
+	
+	platform::Thread threads[4];
+	TestData test_data;
+	
+	for (uint32_t c = 0; c < num_cores; ++c)
+	{
+		platform::thread_create(threads[c], run_logic, &test_data);
+		fprintf(stdout, "starting thread for core: %i, thread_id: %zu\n", c, threads[c].thread_id);
+	}
+	
+	
+	for (uint32_t c = 0; c < num_cores; ++c)
+	{
+		fprintf(stdout, "waiting on thread thread: %i\n", c);
+		platform::thread_join(threads[c]);
+	}
 	
 #if defined(PLATFORM_WINDOWS)
 	
