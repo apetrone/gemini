@@ -79,6 +79,20 @@ namespace kernel
 	class IKernel;
 }
 
+
+
+// thread types
+
+#if defined(PLATFORM_WINDOWS)
+	#include "thread/windows/windows_thread.h"
+#elif defined(PLATFORM_POSIX)
+	#include "thread/posix/posix_thread.h"
+#else
+	#error Not implemented on this platform
+#endif
+
+
+
 namespace platform
 {
 #if PLATFORM_WINDOWS
@@ -108,6 +122,31 @@ namespace platform
 #else
 	#error Unknown platform!
 #endif
+
+
+
+
+
+
+
+	enum ThreadStatus
+	{
+		THREAD_STATE_INACTIVE,
+		THREAD_STATE_ACTIVE,
+		THREAD_STATE_SUSPENDED
+	};
+	
+	typedef void (*ThreadEntry)(void*);
+
+	struct Thread
+	{
+		ThreadStatus state;
+		ThreadId thread_id;
+		ThreadHandle handle;
+		ThreadEntry entry;
+		void* userdata;
+	};
+	
 
 	struct Result
 	{
@@ -194,6 +233,41 @@ namespace platform
 	
 	/// @desc Make directory on disk
 	Result make_directory(const char* path);
+	
+	
+	// ---------------------------------------------------------------------
+	// thread
+	// ---------------------------------------------------------------------
+
+	/// @desc Creates a thread with entry point
+	Result thread_create(Thread& thread, ThreadEntry entry, void* data);
+	
+	/// @desc Should be called upon thread entry.
+	///       This sets up signals, thread names, thread id and states.
+	void thread_setup(void* data);
+	
+	/// @desc Wait for a thread to complete.
+	/// @returns 0 if the thread timed out
+	/// Otherwise, returns 1 if it exited normally.
+	int thread_join(Thread& thread);
+	
+	/// @desc Allows the calling thread to sleep
+	void thread_sleep(int milliseconds);
+	
+	/// @desc
+	void thread_detach(Thread& thread);
+	
+	
+	/// @desc Get the calling thread's id
+	/// @returns The calling thread's platform designated id
+	ThreadId thread_id();
+	
+	
+	
+	void mutex_create();
+	void mutex_destroy();
+	void mutex_lock();
+	void mutex_unlock();
 	
 	// ---------------------------------------------------------------------
 	// time
