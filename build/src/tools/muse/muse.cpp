@@ -279,7 +279,9 @@ Options:
 	core::argparse::ArgumentParser parser;
 	core::argparse::VariableMap vm;
 	
-	if (!parser.parse(docstring, argc, argv, vm, "1.0.0-alpha"))
+	std::vector<std::string> arguments = parser.split_tokens(argc, argv);
+	
+	if (!parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
 	{
 		return -1;
 	}
@@ -302,7 +304,7 @@ Options:
 	tools::register_types();
 	
 	
-	uint64_t start_ticks = platform::instance()->get_time_microseconds();
+	uint64_t start_ticks = platform::microseconds();
 
 	// determine our input and output filenames
 	StackString<MAX_PATH_SIZE> input_filename = asset_root.c_str();
@@ -322,7 +324,7 @@ Options:
 		LOGV("conversion failed: %s\n", result.message);
 	}
 
-	float duration = (platform::instance()->get_time_microseconds() - start_ticks);
+	float duration = (platform::microseconds() - start_ticks);
 	LOGV("processed in %2.2f milliseconds\n", duration*.001f);
 	
 	tools::shutdown();

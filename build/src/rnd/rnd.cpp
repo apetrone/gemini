@@ -317,11 +317,11 @@ void test_rendering()
 	LOGV("GL_VENDOR: %s\n", glGetString(GL_VENDOR));
 
 	ApplicationState state;
-	uint64_t last_ticks = platform::instance()->get_time_microseconds();
+	uint64_t last_ticks = platform::microseconds();
 	
 	while(run)
 	{
-		uint64_t current_ticks = platform::instance()->get_time_microseconds();
+		uint64_t current_ticks = platform::microseconds();
 		
 		state.framedelta_msec = (current_ticks - last_ticks) * 0.001f;
 		last_ticks = current_ticks;

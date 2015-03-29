@@ -51,7 +51,7 @@ namespace gemini
 
 			// setup root path
 			StackString<MAX_PATH_SIZE> root_path;
-			platform::Result result = platform::instance()->get_program_directory(&root_path[0], root_path.max_size());
+			platform::Result result = platform::get_program_directory(&root_path[0], root_path.max_size());
 			core::filesystem::root_directory(&root_path[0], root_path.max_size());
 
 			StackString<MAX_PATH_SIZE> content_path;
