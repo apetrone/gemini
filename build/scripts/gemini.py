@@ -405,6 +405,11 @@ def get_libplatform(arguments, target_platform):
 		# os
 		"src/platform/os/osx/osx_os.mm",
 
+		# thread
+		"src/platform/thread/osx/osx_thread.cpp",
+		"src/platform/thread/posix/posix_thread_common.cpp",
+		"src/platform/thread/posix/posix_thread.h",
+		
 		# time
 		"src/platform/time/osx/osx_timer.cpp",
 		"src/platform/time/posix/posix_datetime.cpp"
@@ -427,6 +432,11 @@ def get_libplatform(arguments, target_platform):
 
 		# os
 		"src/platform/os/posix/posix_os.cpp",
+
+		# thread
+		"src/platform/thread/posix/posix_thread.cpp",
+		"src/platform/thread/posix/posix_thread_common.cpp",
+		"src/platform/thread/posix/posix_thread.h",
 
 		# time
 		"src/platform/time/posix/posix_datetime.cpp",
@@ -452,6 +462,10 @@ def get_libplatform(arguments, target_platform):
 
 		# os
 		"src/platform/os/windows/win32_os.cpp",
+
+		# thread
+		"src/platform/thread/windows/win32_thread.cpp",
+		"src/platform/thread/windows/windows_thread.h",
 
 		# time
 		"src/platform/time/windows/win32_time.cpp"
