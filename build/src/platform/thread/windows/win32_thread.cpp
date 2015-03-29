@@ -29,7 +29,7 @@
 
 namespace platform
 {
-	unsigned int __stdcall windows_thread_entry(void* data)
+	DWORD __stdcall windows_thread_entry(LPVOID data)
 	{
 		Thread* thread_data = static_cast<Thread*>(data);
 		thread_data->thread_id = thread_id();
@@ -46,7 +46,10 @@ namespace platform
 		{
 			thread.handle = thread_handle;
 			thread.state = THREAD_STATE_ACTIVE;
+			return Result(Result::Success);
 		}
+
+		return Result(Result::Failure, "Unable to create thread!");
 	}
 	
 	int thread_join(Thread& thread)

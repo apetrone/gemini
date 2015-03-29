@@ -81,6 +81,19 @@ namespace kernel
 
 
 
+
+namespace platform
+{
+	enum ThreadStatus
+	{
+		THREAD_STATE_INACTIVE,
+		THREAD_STATE_ACTIVE,
+		THREAD_STATE_SUSPENDED
+	};
+
+	typedef void(*ThreadEntry)(void*);
+} // namespace platform
+
 // thread types
 
 #if defined(PLATFORM_WINDOWS)
@@ -129,14 +142,7 @@ namespace platform
 
 
 
-	enum ThreadStatus
-	{
-		THREAD_STATE_INACTIVE,
-		THREAD_STATE_ACTIVE,
-		THREAD_STATE_SUSPENDED
-	};
-	
-	typedef void (*ThreadEntry)(void*);
+
 
 	struct Thread
 	{

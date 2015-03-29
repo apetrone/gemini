@@ -29,15 +29,6 @@
 
 namespace platform
 {
-	typedef unsigned int ThreadReturnType;
-	typedef ThreadReturnType (__stdcall *ThreadEntry)(void*);
-	#define PLATFORM_THREAD platform::ThreadReturnType __stdcall
 	typedef HANDLE ThreadHandle;
-	
-	struct thread_t
-	{
-		ThreadState state;
-		unsigned int thread_id;
-		HANDLE handle;
-	};
+	typedef DWORD ThreadId;
 } // namespace platform
