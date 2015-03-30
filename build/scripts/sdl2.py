@@ -98,7 +98,7 @@ def check_X11(arguments, product, target_platform, vars):
 		logging.info("find_library %s...%s (%s)" % (library, "FOUND" if libs[library] else "NOT FOUND", library_path))
 
 	x_includedir = target_platform.find_include_path("X11/Xlib.h")
-	product.includes += [x_includedir]
+	#product.includes += [x_includedir]
 
 	vars["HAVE_XCURSOR_H"] = target_platform.check_include_exists("X11/Xcursor/Xcursor.h")
 	vars["HAVE_XINERAMA_H"] = target_platform.check_include_exists("X11/extensions/Xinerama.h")
