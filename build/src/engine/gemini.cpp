@@ -1485,7 +1485,7 @@ Options:
 		if (parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
 		{
 			std::string path = vm["--game"];
-			game_path = path.c_str();
+			game_path = core::str::make_absolute_path(path).c_str();
 		}
 
 		const char FONT_SHADER[] = "shaders/fontshader";

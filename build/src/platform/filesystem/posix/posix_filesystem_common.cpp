@@ -27,6 +27,8 @@
 
 #include <sys/stat.h>
 
+#include <stdlib.h> // for getenv
+
 namespace platform
 {
 	Result posix_make_directory(const char* path)
@@ -45,4 +47,13 @@ namespace platform
 		return result;
 	} // posix_make_directory
 	
+	const char* posix_get_environment_variable(const char* name)
+	{
+		return getenv(name);
+	} // posix_get_environment_variable
+	
+	const char* posix_get_user_directory()
+	{
+		return posix_get_environment_variable("HOME");
+	} // posix_get_user_directory
 } // namespace platform

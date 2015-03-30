@@ -51,5 +51,11 @@ namespace core
 		char* ncat(char* destination, const char* source, size_t destination_size);
 		int case_insensitive_compare(const char* s1, const char* s2, size_t count);
 		const char* strstr(const char* s1, const char* s2);
+		
+		// this accepts a path entered by the user (possibly on the commandline)
+		// and returns an expanded absolute path for use.
+		// this should take into account leading tilde (~), which denotes the
+		// special $(HOME) environment variable.
+		std::string make_absolute_path(const std::string& path);
 	} // namespace str
 } // namespace core

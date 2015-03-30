@@ -240,6 +240,15 @@ namespace platform
 	/// @desc Make directory on disk
 	Result make_directory(const char* path);
 	
+	/// @desc Returns the value of the environment variable passed in
+	/// or NULL, if it was not set
+	const char* get_environment_variable(const char* name);
+	
+	/// @desc Returns the current user's directory;
+	/// @returns The $(HOME) environment variable in Linux or %HOMEPATH% on Windows
+	const char* get_user_directory();
+
+	
 	
 	// ---------------------------------------------------------------------
 	// thread
