@@ -29,6 +29,8 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include <platform/platform.h>
+
 namespace core
 {
 	namespace str
@@ -161,5 +163,25 @@ namespace core
 		{
 			return ::strstr(s1, s2);
 		} // strstr
+		
+		
+		
+		
+		std::string make_absolute_path(const std::string& path)
+		{
+			std::string output;
+			
+			if (path[0] == '~')
+			{
+				output = platform::get_user_directory();
+				output += path.substr(1, std::string::npos);
+			}
+				
+			
+			return output;
+		}
+			
+		
+		
 	} // namespace str
 } // namespace core

@@ -99,7 +99,7 @@ namespace platform
 
 #if defined(PLATFORM_WINDOWS)
 		// set title bar height, debugdraw uses this as an offset for text.
-		kernel::parameters().titlebar_height = GetSystemMetrics(SM_CYCAPTION);
+//		kernel::parameters().titlebar_height = GetSystemMetrics(SM_CYCAPTION);
 #endif
 
 		// attempt kernel startup, mostly initializing core systems

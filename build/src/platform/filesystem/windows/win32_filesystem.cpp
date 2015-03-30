@@ -34,6 +34,9 @@
 
 namespace platform
 {
+	const unsigned int STATIC_BUFFER_SIZE = 8192;
+	static char _static_buffer[STATIC_BUFFER_SIZE] = {0};
+
 	Result get_program_directory(char* path, size_t path_size)
 	{
 		Result error(Result::Success);
@@ -72,5 +75,17 @@ namespace platform
 		}
 		
 		return result;
+	}
+
+	const char* get_environment_variable(const char* name)
+	{
+		memset(_static_buffer, 0, STATIC_BUFFER_SIZE);
+		GetEnvironmentVariableA(name, _static_buffer, STATIC_BUFFER_SIZE);
+		return _static_buffer;
+	}
+
+	const char* get_user_directory()
+	{
+		return get_environment_variable("%HOMEPATH%");
 	}
 } // namespace platform

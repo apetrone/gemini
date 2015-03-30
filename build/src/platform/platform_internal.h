@@ -44,7 +44,8 @@ namespace platform
 
 	// filesystem
 	Result posix_make_directory(const char* path);
-
+	const char* posix_get_user_directory();;
+	const char* posix_get_environment_variable(const char* name);
 	
 	// dylib
 	DynamicLibrary* posix_dylib_open(const char* library_path);

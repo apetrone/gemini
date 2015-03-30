@@ -68,7 +68,6 @@ namespace kernel
 	struct Parameters
 	{
 		const char* error_message;
-		const char* window_title;
 		
 		// device constants above describe the current system
 		KernelDeviceFlags device_flags;
@@ -80,20 +79,6 @@ namespace kernel
 		float framedelta_filtered_seconds;
 		float framedelta_raw_msec;
 		
-		// dimensions of the actual window in pixels
-		unsigned short window_width;
-		unsigned short window_height;
-		
-		// in windowed modes, this is the target display the window
-		// will be transferred to
-		unsigned short target_display;
-		
-		// dimensions of the rendering area in pixels
-		unsigned short render_width;
-		unsigned short render_height;
-		
-		// need to take this into account when calculating screen coordinates
-		unsigned short titlebar_height;
 		
 		// the current tick (physics step)
 		uint64_t current_tick;
@@ -118,10 +103,6 @@ namespace kernel
 		// has a valid window
 		bool has_window;
 		
-		// set to true to create a fullscreen window
-		bool use_fullscreen;
-
-
 		Parameters();
 	}; // Params
 	
