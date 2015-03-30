@@ -246,12 +246,13 @@ def setup_driver(product):
 	
 	mac_release = product.layout(platform="macosx", configuration="release")
 
-def get_tools(target_platform, libplatform, libcore):
+def get_tools(libplatform, libcore, librenderer, **kwargs):
 	#
 	#
 	#
 	tools = []
 
+	target_platform = kwargs.get("target_platform")
 	
 	#
 	# muse: asset conversion tool
@@ -300,6 +301,9 @@ def get_tools(target_platform, libplatform, libcore):
 	setup_driver(muse)
 	setup_common_tool(muse)
 	tools.append(muse)
+
+	kraken = get_kraken(arguments, libplatform, libcore, librenderer, **kwargs)
+	tools.append(kraken)
 
 	return tools
 
@@ -624,10 +628,18 @@ def arguments(parser):
 	parser.add_argument("--with-civet", dest="with_civet", action="store_true", help="Build with CivetServer", default=True)
 	parser.add_argument("--no-civet", dest="with_civet", action="store_false", help="Build without CivetServer")
 
-	parser.add_argument("--with-oculusvr", dest="with_oculusvr", action="store_true", help="Build with OculusVR support", default=True)
-	parser.add_argument("--no-oculusvr", dest="with_oculusvr", action="store_false", help="Build without OculusVR support")
+	parser.add_argument("--with-oculusvr", dest="with_oculusvr", action="store_true", help="Build with OculusVR support", default=False)
+	parser.add_argument("--with-tools", dest="with_tools", action="store_true", help="Build with support for tools", default=False)
 
 def products(arguments, **kwargs):
+
+	# warn about SDKs...
+	if arguments.with_oculusvr or arguments.with_tools:
+		logging.warn("Generating projects for products which require private SDKs...")
+		logging.warn("Please be sure you've run build/scripts/sync_sdks.py!")
+		if not os.path.exists(os.path.join("build", SDKS_FOLDER)):
+			raise Exception("SDKs folder is missing!")
+
 	# global params will be inherited by all dependent products
 	global_params = kwargs.get("global_params")
 
@@ -664,8 +676,11 @@ def products(arguments, **kwargs):
 	librenderer = get_librenderer(arguments, target_platform)
 	librenderer.dependencies += [libcore, libplatform, Dependency(file="glm.py")]
 
-	tools = get_tools(target_platform, libplatform, libcore)
-
+	tools = []
+	if arguments.with_tools:
+		tools = get_tools(libplatform, libcore, librenderer, **kwargs)
+	else:
+		logging.warn("Compiling WITHOUT tools...")
 
 
 
@@ -813,9 +828,6 @@ def products(arguments, **kwargs):
 
 
 	rnd = get_rnd(arguments, libplatform, libcore, librenderer, **kwargs)
-
-	kraken = get_kraken(arguments, libplatform, libcore, librenderer, **kwargs)
-	tools.append(kraken)
 
 	return [librenderer, libcore, libplatform] + [gemini] + tools + [rnd]
 
