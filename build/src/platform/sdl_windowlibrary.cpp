@@ -287,7 +287,7 @@ namespace platform
 	} // shutdown
 	
 	
-	NativeWindow* SDLWindowLibrary::create_window(kernel::Parameters& parameters)
+	NativeWindow* SDLWindowLibrary::create_window(const WindowParameters& parameters)
 	{
 		SDLWindow* sdlw = 0;
 		
@@ -312,7 +312,7 @@ namespace platform
 			uint32_t window_flags = 0;
 			window_flags |= SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
 			
-			if (parameters.use_fullscreen)
+			if (parameters.enable_fullscreen)
 			{
 				window_flags |= SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS;
 			}
@@ -355,21 +355,24 @@ namespace platform
 			// hide the mouse cursor
 			show_mouse(false);
 			
-			parameters.window_width = window_width;
-			parameters.window_height = window_height;
-			parameters.render_width = render_width;
-			parameters.render_height = render_height;
+			sdlw->window_width = window_width;
+			sdlw->window_height = window_height;
+			sdlw->render_width = render_width;
+			sdlw->render_height = render_height;
+			sdlw->enable_fullscreen = parameters.enable_fullscreen;
+			sdlw->target_display = parameters.target_display;
+			sdlw->window_title = parameters.window_title;
 			
-			if ( render_width > window_width && render_height > window_height )
-			{
-				fprintf(stdout, "Retina display detected. Render Resolution is (%i x %i)\n", render_width, render_height );
-				parameters.device_flags |= kernel::DeviceSupportsRetinaDisplay;
-			}
-			else
-			{
+//			if ( render_width > window_width && render_height > window_height )
+//			{
+//				fprintf(stdout, "Retina display detected. Render Resolution is (%i x %i)\n", render_width, render_height );
+//				parameters.device_flags |= kernel::DeviceSupportsRetinaDisplay;
+//			}
+//			else
+//			{
 				fprintf(stdout, "window resolution %i x %i\n", window_width, window_height);
 				fprintf(stdout, "render resolution %i x %i\n", render_width, render_height);
-			}
+//			}
 		}
 		
 		if (sdlw)

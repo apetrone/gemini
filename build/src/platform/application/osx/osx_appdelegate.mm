@@ -88,7 +88,7 @@ static bool has_started = false;
 		// Unfortunately, the OpenGL drawable surface contains the area
 		// used by the title bar, so we have to use that in our screen-space
 		// calculations.
-		kernel::parameters().titlebar_height = [self calculate_titlebar_height];
+//		kernel::parameters().titlebar_height = [self calculate_titlebar_height];
 		
 		kernel::startup();
 

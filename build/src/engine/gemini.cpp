@@ -62,7 +62,7 @@
 #include "hotloading.h"
 #include "vr.h"
 
-
+#include <platform/windowlibrary.h>
 
 
 
@@ -248,8 +248,8 @@ class SceneRenderMethod
 {
 public:
 	virtual ~SceneRenderMethod() {}
-	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
-	virtual void render_viewmodel(gemini::IEngineEntity* entity, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
+	virtual void render_view(gemini::IEngineEntity** entity_list, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
+	virtual void render_viewmodel(gemini::IEngineEntity* entity, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
 	
 	virtual void render_gui() = 0;
 };
@@ -264,7 +264,7 @@ class VRRenderMethod : public SceneRenderMethod
 public:
 	VRRenderMethod(vr::HeadMountedDevice* in_device, renderer::SceneLink& in_link) : device(in_device), scenelink(in_link) {}
 	
-	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles)
+	virtual void render_view(gemini::IEngineEntity** entity_list, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles)
 	{
 		assert( device != nullptr );
 		
@@ -282,7 +282,7 @@ public:
 		
 		Camera camera;
 		camera.type = Camera::FIRST_PERSON;
-		camera.perspective(50.0f, params.render_width, params.render_height, 0.01f, 8192.0f);
+		camera.perspective(50.0f, window->render_width, window->render_height, 0.01f, 8192.0f);
 		camera.set_absolute_position(origin);
 		camera.eye_position = origin;
 		camera.view = glm::vec3(0, 0, -1);
@@ -378,7 +378,7 @@ public:
 		device->end_frame(driver);
 	}
 	
-	virtual void render_viewmodel(gemini::IEngineEntity* entity, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles)
+	virtual void render_viewmodel(gemini::IEngineEntity* entity, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles)
 	{
 		
 	}
@@ -400,14 +400,14 @@ public:
 	DefaultRenderMethod(renderer::SceneLink& in_link) : scenelink(in_link) {};
 	
 	
-	virtual void render_view(gemini::IEngineEntity** entity_list, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles)
+	virtual void render_view(gemini::IEngineEntity** entity_list, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles)
 	{
 		RenderStream rs;
 		rs.add_cullmode(renderer::CullMode::CULLMODE_BACK);
 		rs.add_state(renderer::STATE_DEPTH_WRITE, 1);
 		//		rs.add_state(renderer::STATE_BACKFACE_CULLING, 0);
 		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
-		rs.add_viewport( 0, 0, params.render_width, params.render_height );
+		rs.add_viewport( 0, 0, window->render_width, window->render_height );
 		rs.add_clearcolor( 0.0, 0.0, 0.0, 1.0f );
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
 		rs.run_commands();
@@ -415,7 +415,7 @@ public:
 		Camera camera;
 		camera.type = Camera::FIRST_PERSON;
 		
-		camera.perspective(50.0f, params.render_width, params.render_height, 0.01f, 8192.0f);
+		camera.perspective(50.0f, window->render_width, window->render_height, 0.01f, 8192.0f);
 		
 		camera.set_absolute_position(origin);
 		camera.eye_position = origin;
@@ -426,10 +426,10 @@ public:
 		
 		render_scene_from_camera(entity_list, camera, scenelink);
 		
-		debugdraw::render(camera.matCam, camera.matProj, 0, 0, params.render_width, params.render_height);
+		debugdraw::render(camera.matCam, camera.matProj, 0, 0, window->render_width, window->render_height);
 	}
 	
-	virtual void render_viewmodel(gemini::IEngineEntity* entity, const kernel::Parameters& params, const glm::vec3& origin, const glm::vec2& view_angles)
+	virtual void render_viewmodel(gemini::IEngineEntity* entity, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles)
 	{
 		RenderStream rs;
 		rs.add_cullmode(renderer::CullMode::CULLMODE_BACK);
@@ -442,7 +442,7 @@ public:
 		Camera camera;
 		camera.type = Camera::FIRST_PERSON;
 		
-		camera.perspective(35.0f, params.render_width, params.render_height, 0.01f, 32.0f);
+		camera.perspective(35.0f, window->render_width, window->render_height, 0.01f, 32.0f);
 		
 		camera.set_absolute_position(glm::vec3(-1.0f, 0.6f, 2.5f));
 		camera.eye_position = origin;
@@ -915,6 +915,8 @@ class EngineInterface : public IEngineInterface
 	SceneRenderMethod* render_method;
 	Camera* camera;
 	
+	platform::NativeWindow* main_window;
+
 public:
 	
 	EngineInterface(
@@ -923,13 +925,15 @@ public:
 					gemini::physics::IPhysicsInterface* pi,
 					IExperimental* ei,
 					SceneRenderMethod* rm,
-					Camera* cam) :
+					Camera* cam,
+					platform::NativeWindow* window) :
 	entity_manager(em),
 	model_interface(mi),
 	physics_interface(pi),
 	experimental_interface(ei),
 	render_method(rm),
-	camera(cam)
+	camera(cam),
+	main_window(window)
 	{
 	}
 	
@@ -959,7 +963,7 @@ public:
 		// TODO: need to validate this origin/orientation is allowed.
 		// otherwise, client could ask us to render from anyone's POV.
 		EntityManager* em = static_cast<EntityManager*>(engine::api::instance()->entities());
-		render_method->render_view(em->get_entity_list(), kernel::parameters(), origin, view_angles);
+		render_method->render_view(em->get_entity_list(), main_window, origin, view_angles);
 	}
 	
 	virtual void render_gui()
@@ -969,7 +973,7 @@ public:
 	
 	virtual void render_viewmodel(IEngineEntity* entity, const glm::vec3& origin, const glm::vec2& view_angles)
 	{
-		render_method->render_viewmodel(entity, kernel::parameters(), origin, view_angles);
+		render_method->render_viewmodel(entity, main_window, origin, view_angles);
 	}
 	
 	virtual void get_view_angles(glm::vec2& view_angles)
@@ -1011,7 +1015,7 @@ public:
 	
 	
 	
-	void setup_rendering(const kernel::Parameters& params)
+	void setup_rendering(uint32_t width, uint32_t height)
 	{
 		renderer::IRenderDriver* driver = renderer::driver();
 		
@@ -1085,7 +1089,7 @@ public:
 	}
 };
 
-#include <platform/windowlibrary.h>
+
 
 
 
@@ -1168,11 +1172,11 @@ private:
 	}
 	
 	
-	void center_mouse(const kernel::Parameters& params)
+	void center_mouse(platform::NativeWindow* window)
 	{
 		if (has_focus && !in_gui)
 		{
-			window_interface->warp_mouse(params.window_width/2, params.window_height/2);
+			window_interface->warp_mouse(window->window_width/2, window->window_height/2);
 		}
 	}
 	
@@ -1214,11 +1218,11 @@ public:
 		{
 			if (event.key == input::KEY_ESCAPE)
 			{
-#if 0
+#if 1
 				in_gui = !in_gui;
 				if (!in_gui)
 				{
-					center_mouse(kernel::parameters());
+					center_mouse(main_window);
 					audio::play(menu_hide);
 				}
 				else
@@ -1365,9 +1369,9 @@ public:
 		//		}
 	}
 	
-	void setup_gui(const kernel::Parameters& params)
+	void setup_gui(uint32_t width, uint32_t height)
 	{
-		compositor = new gui::Compositor(params.render_width, params.render_height);
+		compositor = new gui::Compositor(width, height);
 		_compositor = compositor;
 		
 		gui_renderer = CREATE(GUIRenderer);
@@ -1377,7 +1381,7 @@ public:
 		compositor->set_style(gui_style);
 		
 		root = new gui::Panel(compositor);
-		root->set_bounds(0, 0, params.render_width, params.render_height);
+		root->set_bounds(0, 0, main_window->render_width, main_window->render_height);
 		root->set_background_color(gui::Color(0, 0, 0, 192));
 		root->set_visible(in_gui);
 		compositor->add_child(root);
@@ -1390,8 +1394,8 @@ public:
 		uint32_t button_spacing = 10;
 		uint32_t total_buttons = 2;
 		uint32_t vertical_offset = 0;
-		uint32_t origin_x = (params.render_width/2.0f) - (button_width/2.0f);
-		uint32_t origin_y = (params.render_height/2.0f) - ((button_height*total_buttons)/2.0f);
+		uint32_t origin_x = (width/2.0f) - (button_width/2.0f);
+		uint32_t origin_y = (height/2.0f) - ((button_height*total_buttons)/2.0f);
 		
 		
 		
@@ -1439,7 +1443,7 @@ public:
 		//		compositor->add_child(root);
 		
 		graph = new gui::Graph(root);
-		graph->set_bounds(params.render_width-250, 0, 250, 250);
+		graph->set_bounds(width-250, 0, 250, 250);
 		graph->set_font(compositor, "fonts/debug");
 		graph->set_background_color(gui::Color(10, 10, 10, 210));
 		graph->set_foreground_color(gui::Color(255, 255, 255, 255));
@@ -1453,7 +1457,7 @@ public:
 		gui_listener.set_hover_sound(audio::create_sound("sounds/8b_select1"));
 		gui_listener.set_game_interface(game_interface);
 		gui_listener.set_root(root);
-		gui_listener.setup_rendering(params);
+		gui_listener.setup_rendering(main_window->render_width, main_window->render_height);
 		compositor->set_listener(&gui_listener);
 	}
 	
@@ -1552,10 +1556,12 @@ Options:
 		
 		params.step_interval_seconds = (1.0f/(float)config.physics_tick_rate);
 		
+		platform::WindowParameters window_params;
+		
 		// TODO: we should load these from a config; for now just set them.
-		params.window_width = config.window_width;
-		params.window_height = config.window_height;
-		params.window_title = "gemini";
+		window_params.window_width = config.window_width;
+		window_params.window_height = config.window_height;
+		window_params.window_title = "gemini";
 		
 		// needs to happen here if we want to rely on vr::total_devices
 		vr::startup();
@@ -1582,24 +1588,26 @@ Options:
 					// target the rift.
 					if (config.vr_require_headset)
 					{
-						params.target_display = 2;
+						window_params.target_display = 2;
 					}
 #endif
 					params.use_vsync = true;
-					params.window_width = (uint16_t)width;
-					params.window_height = (uint16_t)height;
+					window_params.window_width = (uint16_t)width;
+					window_params.window_height = (uint16_t)height;
 				}
 			}
 		}
 		
 		// create the window
-		main_window = window_interface->create_window(kernel::parameters());
 		
-//		kernel::Parameters altp;
-//		altp.window_width = 800;
-//		altp.window_height = 600;
-//		altp.window_title = "Test Window";
-//		alt_window = window_interface->create_window(altp);
+		main_window = window_interface->create_window(window_params);
+		
+		alt_window = 0;
+//		window_params = platform::WindowParameters();
+//		window_params.window_width = 800;
+//		window_params.window_height = 600;
+//		window_params.window_title = "Test Window";
+//		alt_window = window_interface->create_window(window_params);
 		
 		
 		window_interface->activate_window(main_window);
@@ -1618,7 +1626,7 @@ Options:
 			
 			assets::Shader* fontshader = assets::shaders()->load_from_path(FONT_SHADER);
 			assert(fontshader != 0);
-			font::startup(fontshader->program, params.render_width, params.render_height);
+			font::startup(fontshader->program, main_window->render_width, main_window->render_height);
 			
 			assets::Shader* debugshader = assets::shaders()->load_from_path(DEBUG_SHADER);
 			assets::Font* debugfont = assets::fonts()->load_from_path(DEBUG_FONT);
@@ -1641,7 +1649,7 @@ Options:
 		// TODO: call the old Application startup function here.
 		if (device && config.vr_render)
 		{
-			vr::setup_rendering(device, params.render_width, params.render_height);
+			vr::setup_rendering(device, main_window->render_width, main_window->render_height);
 			// TODO: instance render method for VR
 			render_method = CREATE(VRRenderMethod, device, *scenelink);
 		}
@@ -1668,7 +1676,8 @@ Options:
 			physics::api::instance(),
 			&experimental,
 			render_method,
-			&main_camera
+			&main_camera,
+			main_window
 		);
 		gemini::engine::api::set_instance(engine_interface);
 		window_interface->show_mouse(in_gui);
@@ -1704,7 +1713,7 @@ Options:
 			game_interface->startup();
 		}
 
-		setup_gui(kernel::parameters());
+		setup_gui(main_window->render_width, main_window->render_height);
 
 		// for debugging
 		game_interface->level_load();
@@ -1819,8 +1828,8 @@ Options:
 			int mouse[2];
 			window_interface->get_mouse(mouse[0], mouse[1]);
 			
-			int half_width = kernel::parameters().window_width/2;
-			int half_height = kernel::parameters().window_height/2;
+			int half_width = main_window->window_width/2;
+			int half_height = main_window->window_height/2;
 			
 			// capture the state of the mouse
 			int mdx, mdy;
@@ -1835,7 +1844,7 @@ Options:
 			command.angles[1] = main_camera.yaw;
 			
 			
-			center_mouse(kernel::parameters());
+			center_mouse(main_window);
 			
 			if (game_interface)
 			{
@@ -1891,7 +1900,11 @@ Options:
 		if (kernel::parameters().swap_buffers)
 		{
 			window_interface->swap_buffers(main_window);
-//			window_interface->swap_buffers(alt_window);
+			
+			if (alt_window)
+			{
+				window_interface->swap_buffers(alt_window);
+			}
 		}
 	}
 	
@@ -1941,7 +1954,11 @@ Options:
 		renderer::shutdown();
 		core::shutdown();
 	
-//		window_interface->destroy_window(alt_window);
+		if (alt_window)
+		{
+			window_interface->destroy_window(alt_window);
+		}
+		
 		window_interface->destroy_window(main_window);
 		main_window = 0;
 	

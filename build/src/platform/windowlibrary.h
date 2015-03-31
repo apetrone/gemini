@@ -31,7 +31,45 @@ namespace kernel
 
 namespace platform
 {
-	struct NativeWindow {};
+	struct WindowParameters
+	{
+		// in windowed modes, this is the target display the window
+		// will be transferred to
+		uint32_t target_display;
+		
+		// dimensions of the actual window in pixels
+		uint32_t window_width;
+		uint32_t window_height;
+		
+		// dimensions of the rendering area in pixels
+		uint32_t render_width;
+		uint32_t render_height;
+		
+		// need to take this into account when calculating screen coordinates
+		uint32_t titlebar_height;
+		
+		// set to true to create a fullscreen window
+		bool enable_fullscreen;
+		
+		// utf8-encoded window title
+		const char* window_title;
+		
+		WindowParameters() :
+			target_display(0),
+			window_width(1),
+			window_height(1),
+			render_width(0),
+			render_height(1),
+			titlebar_height(0),
+			enable_fullscreen(false),
+			window_title(0)
+		{
+		}
+	};
+	
+	struct NativeWindow : public WindowParameters
+	{
+	};
 	
 	struct IWindowLibrary
 	{
@@ -40,7 +78,7 @@ namespace platform
 		
 		virtual void startup(kernel::Parameters& parameters) = 0;
 		virtual void shutdown() = 0;
-		virtual NativeWindow* create_window(kernel::Parameters& parameters) = 0;
+		virtual NativeWindow* create_window(const WindowParameters& parameters) = 0;
 		virtual void destroy_window(NativeWindow* window) = 0;
 		virtual void process_events() = 0;
 		virtual void activate_window(NativeWindow* window) = 0;

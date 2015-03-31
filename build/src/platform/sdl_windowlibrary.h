@@ -54,7 +54,7 @@ namespace platform
 		void setup_joysticks();
 		
 		virtual void shutdown();
-		virtual NativeWindow* create_window(kernel::Parameters& parameters);
+		virtual NativeWindow* create_window(const WindowParameters& parameters);
 		virtual void destroy_window(NativeWindow* window);
 		virtual void process_events();
 		virtual void activate_window(NativeWindow* window);

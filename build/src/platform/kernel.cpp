@@ -83,18 +83,13 @@ namespace kernel
 	{
 		error_message = 0;
 		device_flags = 0;
-		window_width = 0;
-		window_height = 0;
 		step_alpha = 0;
 		step_interval_seconds = 0;
-		use_fullscreen = false;
 		use_vsync = true;
-		target_display = 0;
 		
 		// we should default to swapping buffers ourself
 		swap_buffers = 1;
-		
-		titlebar_height = 0;
+
 		current_tick = 0;
 		current_frame = 0;
 	}
@@ -219,7 +214,6 @@ namespace gemini
 			// we should default to swapping buffers ourself
 			swap_buffers = 1;
 
-			titlebar_height = 0;
 			current_tick = 0;
 			current_frame = 0;
 		}
