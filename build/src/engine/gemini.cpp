@@ -396,8 +396,14 @@ public:
 class DefaultRenderMethod : public SceneRenderMethod
 {
 	renderer::SceneLink& scenelink;
+	platform::IWindowLibrary* window_library;
+	
 public:
-	DefaultRenderMethod(renderer::SceneLink& in_link) : scenelink(in_link) {};
+	DefaultRenderMethod(renderer::SceneLink& in_link, platform::IWindowLibrary* wl) :
+		scenelink(in_link),
+		window_library(wl)
+	{
+	}
 	
 	
 	virtual void render_view(gemini::IEngineEntity** entity_list, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles)
@@ -424,6 +430,7 @@ public:
 		camera.yaw = view_angles.y;
 		camera.update_view();
 		
+		window_library->activate_window(window);
 		render_scene_from_camera(entity_list, camera, scenelink);
 		
 		debugdraw::render(camera.matCam, camera.matProj, 0, 0, window->render_width, window->render_height);
@@ -1603,13 +1610,14 @@ Options:
 		main_window = window_interface->create_window(window_params);
 		
 		alt_window = 0;
-//		window_params = platform::WindowParameters();
-//		window_params.window_width = 800;
-//		window_params.window_height = 600;
-//		window_params.window_title = "Test Window";
-//		alt_window = window_interface->create_window(window_params);
+		window_params = platform::WindowParameters();
+		window_params.window_width = 800;
+		window_params.window_height = 600;
+		window_params.window_title = "Test Window";
+		window_params.target_display = 1;
+		alt_window = window_interface->create_window(window_params);
 		
-		
+		window_interface->focus_window(main_window);
 		window_interface->activate_window(main_window);
 
 		// initialize rendering subsystems
@@ -1656,14 +1664,11 @@ Options:
 		else
 		{
 			// TODO: instance render method for default
-			render_method = CREATE(DefaultRenderMethod, *scenelink);
+			render_method = CREATE(DefaultRenderMethod, *scenelink, window_interface);
 		}
-		
-
-//		animation::SequenceId seq = animation::load_sequence("models/bones9.animation");
-//		animation::AnimatedInstance* i0 = animation::create_sequence_instance(seq);
 
 
+		// load menu sounds
 		menu_show = audio::create_sound("sounds/menu_show3");
 		menu_hide = audio::create_sound("sounds/menu_hide");
 		

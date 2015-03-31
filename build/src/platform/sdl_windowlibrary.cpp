@@ -622,6 +622,12 @@ namespace platform
 		SDL_GL_SwapWindow(sdlw->window);
 	}
 	
+	void SDLWindowLibrary::focus_window(NativeWindow* window)
+	{
+		SDLWindow* sdlw = static_cast<SDLWindow*>(window);
+		SDL_RaiseWindow(sdlw->window);
+	}
+	
 	void SDLWindowLibrary::capture_mouse(bool capture)
 	{
 		SDL_bool is_enabled = capture ? SDL_TRUE : SDL_FALSE;

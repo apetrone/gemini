@@ -83,6 +83,7 @@ namespace platform
 		virtual void process_events() = 0;
 		virtual void activate_window(NativeWindow* window) = 0;
 		virtual void swap_buffers(NativeWindow* window) = 0;
+		virtual void focus_window(NativeWindow* window) = 0;
 		
 		// cursor control
 		virtual void capture_mouse(bool capture) = 0;

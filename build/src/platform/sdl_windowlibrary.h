@@ -59,6 +59,9 @@ namespace platform
 		virtual void process_events();
 		virtual void activate_window(NativeWindow* window);
 		virtual void swap_buffers(NativeWindow* window);
+		virtual void focus_window(NativeWindow* window);
+		
+		
 		virtual void capture_mouse(bool capture);
 		virtual void warp_mouse(int x, int y);
 		virtual void get_mouse(int& x, int& y);
