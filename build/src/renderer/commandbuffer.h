@@ -33,11 +33,18 @@ namespace gemini
 	{
 		struct CommandBuffer
 		{
+			// graphics state
 			void set_pipeline_state(const PipelineState* state) {}
-			void draw_vertexbuffer(const VertexBuffer* buffer) {}
+			void set_viewport() {}
+			void set_cullmode() {}
+			void set_face_winding() {}
+			void set_blending() {}
+			void set_depth_stencil_state() {}
+			void set_scissor_rect() {}
 			
-			// execute commands on the GPU
-			void commit() {}
+			
+			void draw_primitives(unsigned int start, unsigned int count) {}
+			void draw_indexed_primitives() {}
 		};
 	} // namespace renderer
 } // namespace gemini

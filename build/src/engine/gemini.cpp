@@ -32,6 +32,7 @@
 #include <core/filesystem.h>
 #include <core/configloader.h>
 #include <core/argumentparser.h>
+#include <core/mathlib.h>
 
 #include <renderer/renderer.h>
 #include <renderer/renderstream.h>
@@ -429,8 +430,7 @@ public:
 		camera.pitch = view_angles.x;
 		camera.yaw = view_angles.y;
 		camera.update_view();
-		
-		window_library->activate_window(window);
+
 		render_scene_from_camera(entity_list, camera, scenelink);
 		
 		debugdraw::render(camera.matCam, camera.matProj, 0, 0, window->render_width, window->render_height);
@@ -1118,6 +1118,9 @@ private:
 	platform::IWindowLibrary* window_interface;
 	platform::NativeWindow* main_window;
 	platform::NativeWindow* alt_window;
+	
+	renderer::Texture* gui_texture;
+	renderer::RenderTarget* gui_render_target;
 		
 	// Kernel State variables
 	double accumulator;
@@ -1154,6 +1157,8 @@ private:
 	// audio
 	audio::SoundHandle menu_show;
 	audio::SoundHandle menu_hide;
+	
+	renderer::VertexStream alt_vs;
 	
 private:
 	bool load_config(Settings& config)
@@ -1610,6 +1615,7 @@ Options:
 		main_window = window_interface->create_window(window_params);
 		
 		alt_window = 0;
+		
 		window_params = platform::WindowParameters();
 		window_params.window_width = 800;
 		window_params.window_height = 600;
@@ -1617,8 +1623,11 @@ Options:
 		window_params.target_display = 1;
 		alt_window = window_interface->create_window(window_params);
 		
-		window_interface->focus_window(main_window);
+				
+		
 		window_interface->activate_window(main_window);
+		window_interface->focus_window(main_window);
+		
 
 		// initialize rendering subsystems
 		{
@@ -1642,6 +1651,61 @@ Options:
 			assert(debugfont != 0);
 			debugdraw::startup(config.debugdraw_max_primitives, debugshader->program, debugfont->handle);
 		}
+		
+		renderer::IRenderDriver* driver = renderer::driver();
+//		driver->render
+		
+		struct TempVertex
+		{
+			glm::vec2 pos;
+			glm::vec2 uv;
+			Color color;
+		};
+		
+		window_interface->activate_window(alt_window);
+		window_interface->focus_window(alt_window);
+		
+		alt_vs.desc.add(renderer::VD_FLOAT2);
+		alt_vs.desc.add(renderer::VD_FLOAT2);
+		alt_vs.desc.add(renderer::VD_UNSIGNED_BYTE4);
+		
+		alt_vs.create(6, 10, renderer::DRAW_INDEXED_TRIANGLES);
+		
+		if (alt_vs.has_room(4, 6))
+		{
+			TempVertex* v = (TempVertex*)alt_vs.request(4);
+			float cx = (alt_window->render_width/2.0f);
+			float cy = (alt_window->render_height/2.0f);
+			
+			const float RECT_SIZE = 150.0f;
+			
+			
+			v[0].pos = glm::vec2(cx-RECT_SIZE, cy-RECT_SIZE); v[0].uv = glm::vec2(0,1); v[0].color = Color(255, 0, 255, 255);
+			v[1].pos = glm::vec2(cx-RECT_SIZE, cy+RECT_SIZE); v[1].uv = glm::vec2(0,0); v[1].color = Color(0, 0, 255, 255);
+			v[2].pos = glm::vec2(cx+RECT_SIZE, cy+RECT_SIZE); v[2].uv = glm::vec2(1,0); v[2].color = Color(255, 0, 0, 255);
+			v[3].pos = glm::vec2(cx+RECT_SIZE, cy-RECT_SIZE); v[3].uv = glm::vec2(1,1); v[3].color = Color(0, 255, 0, 255);
+			
+			renderer::IndexType indices[] = {0, 1, 2, 2, 3, 0};
+			alt_vs.append_indices(indices, 6);
+			alt_vs.update();
+		}
+		
+		window_interface->activate_window(main_window);
+		window_interface->focus_window(main_window);
+		
+		
+		// create the render target and texture for the gui
+		image::Image image;
+		image.width = 512;
+		image.height = 512;
+		image.channels = 3;
+		gui_texture = renderer::driver()->texture_create(image);
+		
+		gui_render_target = renderer::driver()->render_target_create(image.width, image.height);
+		renderer::driver()->render_target_set_attachment(gui_render_target, renderer::RenderTarget::COLOR, 0, gui_texture);
+		renderer::driver()->render_target_set_attachment(gui_render_target, renderer::RenderTarget::DEPTHSTENCIL, 0, 0);
+		
+		
 		
 		// initialize main subsystems
 		audio::startup();
@@ -1899,17 +1963,57 @@ Options:
 //			device->test(xform);
 //			debugdraw::axes(xform, 2.0f, 0.1f);
 //		}
+
+
 	
 		// TODO: this needs to be controlled somehow
 		// as the rift sdk performs buffer swaps during end frame.
 		if (kernel::parameters().swap_buffers)
 		{
 			window_interface->swap_buffers(main_window);
+
+
+		}
+		
+		// do drawing for the alt window
+		if (alt_window)
+		{
+			window_interface->activate_window(alt_window);
+			renderer::CommandBuffer buffer;
+
+#if 0
+			render::Device* device = render::create_device();
+//			renderer::CommandBuffer buffer;
+//			buffer.viewport(0, 0, alt_window->render_width, alt_window->render_height);
+//			buffer.clear_color(Color(255, 255, 255, 255));
+//
+//			device->execute(buffer);
+#endif
+
+
+			RenderStream rs;
+			rs.add_viewport(0, 0, alt_window->render_width, alt_window->render_height);
+			rs.add_clear(renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER);
+			rs.add_clearcolor(0.1f, 0.1f, 0.1f, 1.0f);
 			
-			if (alt_window)
-			{
-				window_interface->swap_buffers(alt_window);
-			}
+			glm::mat4 modelview;
+			glm::mat4 projection = glm::ortho(0.0f, (float)alt_window->render_width, 0.0f, (float)alt_window->render_height, -1.0f, 1.0f);
+
+			assets::Shader* shader = assets::shaders()->load_from_path("shaders/fontshader");
+			rs.add_shader(shader->program);
+			
+			rs.add_uniform_matrix4(shader->program->get_uniform_location("modelview_matrix"), &modelview);
+			rs.add_uniform_matrix4(shader->program->get_uniform_location("projection_matrix"), &projection);
+			assets::Texture* def = assets::textures()->load_from_path("textures/notexture");
+			rs.add_sampler2d(shader->program->get_uniform_location("diffusemap"), 0, def->texture);
+			
+			rs.add_draw_call(alt_vs.vertexbuffer);
+			
+			rs.run_commands();
+			
+			// do rendering...
+			
+			window_interface->swap_buffers(alt_window);
 		}
 	}
 	
@@ -1946,6 +2050,17 @@ Options:
 		}
 		vr::shutdown();
 		
+		
+		
+		renderer::driver()->render_target_destroy(gui_render_target);
+		renderer::driver()->texture_destroy(gui_texture);
+
+		if (alt_window)
+		{
+			window_interface->activate_window(alt_window);
+			alt_vs.destroy();
+			window_interface->destroy_window(alt_window);
+		}
 
 		// shutdown subsystems
 		hotloading::shutdown();
@@ -1959,11 +2074,9 @@ Options:
 		renderer::shutdown();
 		core::shutdown();
 	
-		if (alt_window)
-		{
-			window_interface->destroy_window(alt_window);
-		}
+
 		
+		window_interface->activate_window(main_window);
 		window_interface->destroy_window(main_window);
 		main_window = 0;
 	
