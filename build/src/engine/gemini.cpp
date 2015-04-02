@@ -1616,12 +1616,12 @@ Options:
 		
 		alt_window = 0;
 		
-		window_params = platform::WindowParameters();
-		window_params.window_width = 800;
-		window_params.window_height = 600;
-		window_params.window_title = "Test Window";
-		window_params.target_display = 1;
-		alt_window = window_interface->create_window(window_params);
+//		window_params = platform::WindowParameters();
+//		window_params.window_width = 800;
+//		window_params.window_height = 600;
+//		window_params.window_title = "Test Window";
+//		window_params.target_display = 1;
+//		alt_window = window_interface->create_window(window_params);
 		
 				
 		
@@ -1662,35 +1662,38 @@ Options:
 			glm::vec2 uv;
 		};
 		
-		window_interface->activate_window(alt_window);
-		window_interface->focus_window(alt_window);
-		
-		alt_vs.desc.add(renderer::VD_FLOAT2);
-		alt_vs.desc.add(renderer::VD_UNSIGNED_BYTE4);
-		alt_vs.desc.add(renderer::VD_FLOAT2);
-
-		
-		alt_vs.create(6, 10, renderer::DRAW_INDEXED_TRIANGLES);
-		
-		if (alt_vs.has_room(4, 6))
+		if (alt_window)
 		{
-			TempVertex* v = (TempVertex*)alt_vs.request(4);
-			float cx = (alt_window->render_width/2.0f);
-			float cy = (alt_window->render_height/2.0f);
+			window_interface->activate_window(alt_window);
+			window_interface->focus_window(alt_window);
 			
-			const float RECT_SIZE = 150.0f;
+			alt_vs.desc.add(renderer::VD_FLOAT2);
+			alt_vs.desc.add(renderer::VD_UNSIGNED_BYTE4);
+			alt_vs.desc.add(renderer::VD_FLOAT2);
+
 			
+			alt_vs.create(6, 10, renderer::DRAW_INDEXED_TRIANGLES);
 			
-			// this is intentionally inverted along the y
-			// so that texture renderered appears correctly.
-			v[0].pos = glm::vec2(cx-RECT_SIZE, cy-RECT_SIZE); v[0].uv = glm::vec2(0,0); v[0].color = Color(255, 255, 255, 255);
-			v[1].pos = glm::vec2(cx-RECT_SIZE, cy+RECT_SIZE); v[1].uv = glm::vec2(0,1); v[1].color = Color(255, 255, 255, 255);
-			v[2].pos = glm::vec2(cx+RECT_SIZE, cy+RECT_SIZE); v[2].uv = glm::vec2(1,1); v[2].color = Color(255, 255, 255, 255);
-			v[3].pos = glm::vec2(cx+RECT_SIZE, cy-RECT_SIZE); v[3].uv = glm::vec2(1,0); v[3].color = Color(255, 255, 255, 255);
-			
-			renderer::IndexType indices[] = {0, 1, 2, 2, 3, 0};
-			alt_vs.append_indices(indices, 6);
-			alt_vs.update();
+			if (alt_vs.has_room(4, 6))
+			{
+				TempVertex* v = (TempVertex*)alt_vs.request(4);
+				float cx = (alt_window->render_width/2.0f);
+				float cy = (alt_window->render_height/2.0f);
+				
+				const float RECT_SIZE = 150.0f;
+				
+				
+				// this is intentionally inverted along the y
+				// so that texture renderered appears correctly.
+				v[0].pos = glm::vec2(cx-RECT_SIZE, cy-RECT_SIZE); v[0].uv = glm::vec2(0,0); v[0].color = Color(255, 255, 255, 255);
+				v[1].pos = glm::vec2(cx-RECT_SIZE, cy+RECT_SIZE); v[1].uv = glm::vec2(0,1); v[1].color = Color(255, 255, 255, 255);
+				v[2].pos = glm::vec2(cx+RECT_SIZE, cy+RECT_SIZE); v[2].uv = glm::vec2(1,1); v[2].color = Color(255, 255, 255, 255);
+				v[3].pos = glm::vec2(cx+RECT_SIZE, cy-RECT_SIZE); v[3].uv = glm::vec2(1,0); v[3].color = Color(255, 255, 255, 255);
+				
+				renderer::IndexType indices[] = {0, 1, 2, 2, 3, 0};
+				alt_vs.append_indices(indices, 6);
+				alt_vs.update();
+			}
 		}
 		
 		window_interface->activate_window(main_window);
