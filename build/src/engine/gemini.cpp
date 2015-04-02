@@ -1658,16 +1658,17 @@ Options:
 		struct TempVertex
 		{
 			glm::vec2 pos;
-			glm::vec2 uv;
 			Color color;
+			glm::vec2 uv;
 		};
 		
 		window_interface->activate_window(alt_window);
 		window_interface->focus_window(alt_window);
 		
 		alt_vs.desc.add(renderer::VD_FLOAT2);
-		alt_vs.desc.add(renderer::VD_FLOAT2);
 		alt_vs.desc.add(renderer::VD_UNSIGNED_BYTE4);
+		alt_vs.desc.add(renderer::VD_FLOAT2);
+
 		
 		alt_vs.create(6, 10, renderer::DRAW_INDEXED_TRIANGLES);
 		
@@ -1680,10 +1681,12 @@ Options:
 			const float RECT_SIZE = 150.0f;
 			
 			
-			v[0].pos = glm::vec2(cx-RECT_SIZE, cy-RECT_SIZE); v[0].uv = glm::vec2(0,1); v[0].color = Color(255, 0, 255, 255);
-			v[1].pos = glm::vec2(cx-RECT_SIZE, cy+RECT_SIZE); v[1].uv = glm::vec2(0,0); v[1].color = Color(0, 0, 255, 255);
-			v[2].pos = glm::vec2(cx+RECT_SIZE, cy+RECT_SIZE); v[2].uv = glm::vec2(1,0); v[2].color = Color(255, 0, 0, 255);
-			v[3].pos = glm::vec2(cx+RECT_SIZE, cy-RECT_SIZE); v[3].uv = glm::vec2(1,1); v[3].color = Color(0, 255, 0, 255);
+			// this is intentionally inverted along the y
+			// so that texture renderered appears correctly.
+			v[0].pos = glm::vec2(cx-RECT_SIZE, cy-RECT_SIZE); v[0].uv = glm::vec2(0,0); v[0].color = Color(255, 255, 255, 255);
+			v[1].pos = glm::vec2(cx-RECT_SIZE, cy+RECT_SIZE); v[1].uv = glm::vec2(0,1); v[1].color = Color(255, 255, 255, 255);
+			v[2].pos = glm::vec2(cx+RECT_SIZE, cy+RECT_SIZE); v[2].uv = glm::vec2(1,1); v[2].color = Color(255, 255, 255, 255);
+			v[3].pos = glm::vec2(cx+RECT_SIZE, cy-RECT_SIZE); v[3].uv = glm::vec2(1,0); v[3].color = Color(255, 255, 255, 255);
 			
 			renderer::IndexType indices[] = {0, 1, 2, 2, 3, 0};
 			alt_vs.append_indices(indices, 6);
@@ -1991,21 +1994,48 @@ Options:
 #endif
 
 
+			renderer::IRenderDriver* device = renderer::driver();
+			
+			{
+				
+				RenderStream rs;
+				rs.add_viewport(0, 0, gui_texture->width, gui_texture->height);
+				rs.add_clearcolor(0.0f, 0.0f, 0.0f, 1.0f);
+				rs.add_clear(renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER);
+
+				
+				device->render_target_activate(gui_render_target);
+				
+				rs.run_commands();
+				
+				
+				_compositor->render();
+				
+				
+				device->render_target_deactivate(gui_render_target);
+			}
+
+
+
+
+
 			RenderStream rs;
 			rs.add_viewport(0, 0, alt_window->render_width, alt_window->render_height);
-			rs.add_clear(renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER);
 			rs.add_clearcolor(0.1f, 0.1f, 0.1f, 1.0f);
+			rs.add_clear(renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER);
+			
 			
 			glm::mat4 modelview;
 			glm::mat4 projection = glm::ortho(0.0f, (float)alt_window->render_width, 0.0f, (float)alt_window->render_height, -1.0f, 1.0f);
 
-			assets::Shader* shader = assets::shaders()->load_from_path("shaders/fontshader");
+			assets::Shader* shader = assets::shaders()->load_from_path("shaders/gui");
 			rs.add_shader(shader->program);
 			
 			rs.add_uniform_matrix4(shader->program->get_uniform_location("modelview_matrix"), &modelview);
 			rs.add_uniform_matrix4(shader->program->get_uniform_location("projection_matrix"), &projection);
+			rs.add_uniform1i(shader->program->get_uniform_location("enable_sampler"), 1);
 			assets::Texture* def = assets::textures()->load_from_path("textures/notexture");
-			rs.add_sampler2d(shader->program->get_uniform_location("diffusemap"), 0, def->texture);
+			rs.add_sampler2d(shader->program->get_uniform_location("diffusemap"), 0, gui_texture);
 			
 			rs.add_draw_call(alt_vs.vertexbuffer);
 			
