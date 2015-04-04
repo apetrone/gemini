@@ -47,6 +47,7 @@ namespace gemini
 //		virtual void get_geometry_data(unsigned int index, GeometryInstanceData& geometry_data) const = 0;
 
 		virtual glm::mat4* get_bone_transforms() const = 0;
+		virtual glm::mat4* get_debug_bone_transforms() const = 0;
 		
 		virtual void set_animation_enabled(int32_t index, bool enabled) = 0;
 		

@@ -34,7 +34,7 @@
 #include <assets/asset_shader.h>
 #include <assets/asset_material.h>
 
-
+#include <sdk/debugdraw_api.h>
 #include <sdk/engine_api.h>
 #include <sdk/iengineentity.h>
 #include <sdk/model_api.h>
@@ -89,6 +89,12 @@ namespace gemini
 					// lovely, Android. There's a big in Adreno where indexing into Uniform Matrices is wonky.
 					// The solution is to index like a vec4.
 					rs.add_uniform_matrix4(shader->program->get_uniform_location("node_transforms"), block.node_transforms, block.total_transforms);
+					
+					
+					for (size_t i = 0; i < block.total_transforms; ++i)
+					{
+						debugdraw::instance()->axes(block.debug_bone_transforms[i], 0.25f, 0.0f);
+					}
 				}
 				else
 				{
@@ -195,6 +201,7 @@ namespace gemini
 									block.material_id = geometry_data.material_id;
 									block.shader_id = geometry_data.shader_id;
 									block.node_transforms = model_instance->get_bone_transforms();
+									block.debug_bone_transforms = model_instance->get_debug_bone_transforms();
 									block.total_transforms = mesh->skeleton.size();
 									queue->insert(block);
 								}

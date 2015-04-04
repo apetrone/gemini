@@ -61,16 +61,21 @@ namespace gemini
 			unsigned int shader_id;
 			
 			glm::mat4* node_transforms;
-			uint8_t total_transforms;
+			glm::mat4* debug_bone_transforms;
+			uint32_t total_transforms;
 			
 			RenderBlock(RenderKey _key = 0, RenderObject* _object = 0) :
-				key(_key), object(_object)
+				key(_key),
+				object(_object),
+				object_matrix(0),
+				
+				material_id(0),
+				shader_id(0),
+				
+				node_transforms(0),
+				debug_bone_transforms(0),
+				total_transforms(0)
 			{
-				object_matrix = 0;
-				node_transforms = 0;
-				total_transforms = 0;
-				material_id = 0;
-				shader_id = 0;
 			}
 				
 			RenderBlock& operator= (const RenderBlock& other)
