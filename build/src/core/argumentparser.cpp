@@ -833,7 +833,7 @@ namespace core
 		std::vector<std::string> ArgumentParser::split_tokens(int argc, char** argv)
 		{
 			std::vector<std::string> tokens;
-			for (int index = 0; index < argc; ++index)
+			for (int index = 1; index < argc; ++index)
 			{
 				tokens.push_back(argv[index]);
 			}
