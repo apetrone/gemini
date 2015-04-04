@@ -181,7 +181,54 @@ namespace core
 			return output;
 		}
 			
+		std::vector<std::string> split(const std::string& input, const std::string& substring)
+		{
+			std::vector<std::string> elements;
+			
+			std::string::size_type pos = 0, last = 0;
+			
+			using value_type = std::vector<std::string>::value_type;
+			using size_type = std::vector<std::string>::size_type;
+			
+			bool end_of_string = false;
+			while(true)
+			{
+				// locate the substring
+				pos = input.find(substring, last);
+				if (pos == std::string::npos)
+				{
+					pos = input.length();
+					end_of_string = true;
+				}
+				
+				if (pos != last)
+				{
+					elements.push_back(value_type(input.data()+last, (size_type)pos-last));
+				}
+				
+				if (end_of_string)
+				{
+					break;
+				}
+				
+				last = pos+1;
+			}
+			
+			return elements;
+		}
 		
+		std::string trim_left(const std::string& input, const std::string& chars)
+		{
+			std::string out;
+			
+			std::size_t start = input.find_first_not_of(chars);
+			if (start != std::string::npos)
+			{
+				out = input.substr(start);
+			}
+			
+			return out;
+		}
 		
 	} // namespace str
 } // namespace core

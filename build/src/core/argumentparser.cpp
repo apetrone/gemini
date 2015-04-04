@@ -28,6 +28,8 @@
 
 #include "argumentparser.h"
 
+#include <core/str.h>
+
 #include <regex>
 
 namespace core
@@ -398,7 +400,7 @@ namespace core
 			
 			assert(token[0] == '-');
 			
-			std::string left = trim_left(token, "-");
+			std::string left = core::str::trim_left(token, "-");
 
 
 			size_t total_size = left.length();
@@ -587,56 +589,7 @@ namespace core
 			
 			return regex;
 		}
-		
-		std::vector<std::string> ArgumentParser::split(const std::string& input, const std::string& substring)
-		{
-			std::vector<std::string> elements;
-			
-			std::string::size_type pos = 0, last = 0;
-			
-			using value_type = std::vector<std::string>::value_type;
-			using size_type = std::vector<std::string>::size_type;
-			
-			bool end_of_string = false;
-			while(true)
-			{
-				// locate the substring
-				pos = input.find(substring, last);
-				if (pos == std::string::npos)
-				{
-					pos = input.length();
-					end_of_string = true;
-				}
-				
-				if (pos != last)
-				{
-					elements.push_back(value_type(input.data()+last, (size_type)pos-last));
-				}
-				
-				if (end_of_string)
-				{
-					break;
-				}
-				
-				last = pos+1;
-			}
-			
-			return elements;
-		}
-		
-		std::string ArgumentParser::trim_left(const std::string& input, const std::string& chars)
-		{
-			std::string out;
-			
-			std::size_t start = input.find_first_not_of(chars);
-			if (start != std::string::npos)
-			{
-				out = input.substr(start);
-			}
-			
-			return out;
-		}
-		
+
 		std::vector<std::string> ArgumentParser::find_section(const char* docstring, const std::string& section_name, bool& section_was_found)
 		{
 			section_was_found = false;
@@ -660,10 +613,10 @@ namespace core
 				}
 				
 				// split section at newlines and trim leading whitespace
-				std::vector<std::string> lines = split(match, "\n");
+				std::vector<std::string> lines = core::str::split(match, "\n");
 				for (std::string& line : lines)
 				{
-					std::string fixed_line = trim_left(line);
+					std::string fixed_line = core::str::trim_left(line);
 					if (!fixed_line.empty())
 					{
 						output.push_back(fixed_line);
@@ -681,7 +634,7 @@ namespace core
 			{
 				// the raw option line may also have a help string associated with it
 				// so we need to split the string properly
-				std::vector<std::string> items = split(raw_option_line, "  ");
+				std::vector<std::string> items = core::str::split(raw_option_line, "  ");
 				
 				std::string specifier;
 				std::string description;
@@ -713,7 +666,7 @@ namespace core
 				std::string value;
 				int argument_count = 0;
 				
-				std::vector<std::string> elements = split(specifier, " ");
+				std::vector<std::string> elements = core::str::split(specifier, " ");
 				for (const std::string& item : elements)
 				{
 					if (starts_with("--", item))
@@ -777,7 +730,7 @@ namespace core
 				// the above regex_replace will introduce a space when
 				// options are specified first. Obviously, this is bad.
 				// so we trim any whitespace before tokenizing it.
-				str = trim_left(str);
+				str = core::str::trim_left(str);
 				
 				// next, we tokenize the expanded string and insert these
 				// into a vector.
