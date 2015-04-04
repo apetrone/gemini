@@ -341,4 +341,290 @@ namespace core
 		} // get
 
 	}; // Dictionary
+	
+	template <class K, class T>
+	class OpenAddressingHash
+	{
+	private:
+		const float MAX_LOAD_FACTOR = 0.7f;
+		typedef uint32_t HashType;
+		const HashType REMOVED_SLOT = UINT32_MAX;
+		
+		
+		struct Bucket
+		{
+			HashType hash;
+			T value;
+			K key;
+			
+			Bucket() : hash(0)
+			{
+			}
+		};
+		
+		Bucket* table;
+		uint32_t table_size;
+		uint32_t used_items;
+		uint32_t growth_factor;
+		
+		
+		int32_t find_bucket(int32_t hash, int32_t& bucket_index, bool inserting = false) const
+		{
+			// use linear probing to find the bucket
+			int32_t current_index = (hash % table_size);
+			for( ; ; )
+			{
+				bucket_index = (current_index++ % table_size);
+				if (table[bucket_index].hash == 0)
+				{
+					return -1;
+				}
+
+				if ((table[bucket_index].hash == hash) ||
+					(inserting && (table[bucket_index].hash == REMOVED_SLOT))) // this bucket has been removed, so we can use it
+				{
+					return bucket_index;
+				}
+			}
+			
+			// should never reach here!
+			assert(0);
+			return -1;
+		}
+		
+		int32_t find_first_occupied(int32_t starting_position) const
+		{
+			int32_t current_index = starting_position;
+			int32_t max_iterations = table_size-1;
+			while(max_iterations > 0)
+			{
+				int32_t bucket_index = current_index % table_size;
+				Bucket* bucket = &table[bucket_index];
+				if (bucket->hash != 0 && bucket->hash != REMOVED_SLOT)
+				{
+					return bucket_index;
+				}
+				
+				++current_index;
+				--max_iterations;
+			}
+			
+			return -1;
+		}
+		
+		inline HashType get_hash(const K& key) const
+		{
+			return core::util::hash32(key);
+		}
+		
+		void repopulate(size_t new_size)
+		{
+			table_size = new_size;
+			
+			Bucket* old_table = table;
+			
+			table = new Bucket[table_size];
+			size_t total_items = used_items;
+			
+			// straight up copying is much faster than re-inserting
+			for (size_t i = 0; i < total_items; ++i)
+			{
+				table[i] = old_table[i];
+			}
+			
+			// free the old table
+			delete [] old_table;
+		}
+		
+		Bucket* find_or_create_bucket(const K& key)
+		{
+			HashType hash = get_hash(key);
+			int32_t bucket_index;
+			int32_t index = find_bucket(hash, bucket_index);
+			Bucket* bucket = 0;
+			
+			if (index != -1)
+			{
+				return &table[index];
+			}
+			else
+			{
+				if (bucket_index != -1)
+				{
+					used_items++;
+					table[bucket_index].key = key;
+					table[bucket_index].hash = hash;
+					bucket = &table[bucket_index];
+				}
+				else
+				{
+					// not sure what happened
+					assert(0);
+				}
+			}
+			
+			if ((used_items/(float)table_size) > MAX_LOAD_FACTOR)
+			{
+				// if we hit this point; we need to resize the table
+				repopulate(table_size*growth_factor);
+			}
+			
+			if (bucket)
+			{
+				return bucket;
+			}
+		
+			
+			return find_or_create_bucket(key);
+		}
+		
+		
+	public:
+	
+		OpenAddressingHash(size_t initial_size = 16, uint32_t growth_factor = 2) :
+			table(nullptr),
+			table_size(initial_size),
+			used_items(0),
+			growth_factor(growth_factor)
+		{
+			table = new Bucket[table_size];
+		}
+		
+		~OpenAddressingHash()
+		{
+			delete [] table;
+			table = 0;
+		}
+		
+		
+		bool has_key(const K& key) const
+		{
+			HashType hash = get_hash(key);
+			int32_t bucket_index = (hash % table_size);
+			int32_t index = find_bucket(hash);
+			
+			return (index != -1);
+		}
+		
+		
+
+		void add(const K& key, const T& value)
+		{
+			Bucket* bucket = find_or_create_bucket(key);
+			bucket->value = value;
+		}
+		
+		void remove(const K& key)
+		{
+			HashType hash = get_hash(key);
+			int32_t bucket_index = (hash % table_size);
+			int32_t index = find_bucket(hash);
+			if (index != -1)
+			{
+				table[index].hash = REMOVED_SLOT;
+				--used_items;
+			}
+		}
+		
+		// get value or insert if not found
+		T& operator[](const K& key)
+		{
+			Bucket* bucket = find_or_create_bucket(key);
+			return bucket->value;
+		}
+		
+		
+//		T& operator[](int index)
+//		{
+//			return table[index].value;
+//		}
+//		
+//		const T& operator[](int index) const
+//		{
+//			return table[index].value;
+//		}
+
+		size_t size() const
+		{
+			return used_items;
+		}
+		
+		size_t capacity() const
+		{
+			return table_size;
+		}
+
+		class Iterator
+		{
+		private:
+			OpenAddressingHash<K, T>::Bucket* table;
+			size_t index;
+			size_t table_size;
+			
+		public:
+			Iterator(OpenAddressingHash<K, T>::Bucket* table, size_t index, size_t table_size) :
+				table(table),
+				index(index),
+				table_size(table_size)
+			{
+			}
+			
+			Iterator& operator=(const Iterator& other)
+			{
+				this->index = other.index;
+				return *this;
+			}
+			
+			bool operator==(const Iterator& other) const
+			{
+				return (index == other.index);
+			}
+			
+			bool operator!=(const Iterator& other) const
+			{
+				return !(*this == other);
+			}
+			
+			const Iterator& operator++()
+			{
+				while(index < table_size)
+				{
+					OpenAddressingHash<K, T>::Bucket* bucket = &table[++index];
+					if (bucket->hash != 0)
+						return *this;
+				}
+				return *this;
+			}
+			
+			T& operator*()
+			{
+				return table[index].value;
+			}
+
+			const K& key() const
+			{
+				return table[index].key;
+			}
+			
+			const T& value() const
+			{
+				return table[index].value;
+			}
+		}; // class Iterator
+		
+		Iterator begin() const
+		{
+			return Iterator(table, find_first_occupied(0), table_size);
+		}
+		
+		Iterator end() const
+		{
+			return Iterator(table, table_size, table_size);
+		}
+	}; // class OpenAddressingHash
+	
+	
+	
+	
+	
 } // namespace core

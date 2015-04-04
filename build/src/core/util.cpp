@@ -50,5 +50,13 @@ namespace core
 		{
 			return (float)rand() / RAND_MAX * (max - min) + min;
 		} // random_range
+		
+		
+		
+		template <>
+		uint32_t hash32(const std::string& s)
+		{
+			return hash_32bit(&s[0], s.length(), 0);
+		}
 	}; // mamespace util
 } // namespace core
