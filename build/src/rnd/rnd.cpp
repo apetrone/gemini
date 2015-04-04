@@ -455,6 +455,72 @@ void test_sys(int argc, char**argv)
 #elif defined(PLATFORM_APPLE)
 
 #endif
+
+	size_t buffer_size = 0;
+	char* stringlist = core::filesystem::file_to_buffer("/Users/apetrone/Downloads/wordlist", 0, &buffer_size, false);
+	
+	std::vector<std::string> lines = core::str::split(stringlist, "\n");
+
+	DEALLOC(stringlist);
+
+	{
+		typedef core::OpenAddressingHash<std::string, int> HashTable;
+		HashTable hash(32768, 8);
+		uint64_t start = platform::microseconds();
+		for (unsigned int i = 0; i < lines.size(); ++i)
+		{
+			hash.add(lines[i], i);
+		}
+		uint64_t end = platform::microseconds();
+		float delta = (end-start);
+		
+		LOGV("total items: %i\n", hash.size());
+		LOGV("capacity: %i\n", hash.capacity());
+		LOGV("[OpenAddressingHash]: time taken: %2.2fms\n", delta*.001f);
+		// initial implementation: 75069ms, 69903 items
+		// second try: ~33000ms, no longer re-inserting on repopulate; just copy;
+		// third try: ~5000ms: when searching, bail if we find bucket->hash == 0, resize factor of 8x
+		// fourth try: 264ms, repopulate when we exceed the load factor of 70%
+		// fifth try: 103-111.70ms, fixed an error where it would call find_or_create_bucket recursively. only call find_bucket once
+		// sixth try: 24.97ms, added the ability to tweak growth factor; about 10% of the time is the std::string allocator.
+	}
+
+//	{
+//		typedef core::Dictionary<int, 4096> HashTable;
+//		HashTable hash;
+//		uint64_t start = platform::microseconds();
+//		for (unsigned int i = 0; i < lines.size(); ++i)
+//		{
+//			hash.insert(lines[i].c_str(), i);
+////			hash.add(lines[i], i);
+//		}
+//		uint64_t end = platform::microseconds();
+//		float delta = (end-start);
+//		
+//		LOGV("[Dictionary]: time taken: %2.2fms\n", delta*.001f);
+//	}
+	
+//	{
+//		typedef std::map<std::string, int> Map;
+//		Map hash;
+//		uint64_t start = platform::microseconds();
+//		for (unsigned int i = 0; i < lines.size(); ++i)
+//		{
+//			hash.insert(Map::value_type(lines[i], i));
+//		}
+//		uint64_t end = platform::microseconds();
+//		float delta = (end-start);
+//		
+//		LOGV("[std::map] time taken: %2.2fms\n", delta*.001f);
+//	}
+	
+
+//	LOGV("total items: %i\n", hash.size());
+//	LOGV("capacity: %i\n", hash.capacity());
+//	for (HashTable::Iterator it = hash.begin(); it != hash.end(); ++it)
+//	{
+//		LOGV("'%s' -> %i\n", it.key().c_str(), it.value());
+//	}
 }
 
 

@@ -57,5 +57,9 @@ namespace core
 
 		// return a float within the range: min, max, inclusive
 		float random_range( float min, float max );
+		
+		
+		template <class T>
+		uint32_t hash32(const T& data);
 	} // namespace util
 } // namespace core
