@@ -546,6 +546,7 @@ class ModelInterface : public gemini::IModelInterface
 		
 		glm::mat4* bone_transforms;
 		glm::mat4* local_transforms;
+		glm::mat4* debug_bone_transforms;
 		
 		Channel<glm::vec3> scale_channel;
 		Channel<glm::quat> rotation_channel;
@@ -564,6 +565,7 @@ class ModelInterface : public gemini::IModelInterface
 		mesh(0),
 		bone_transforms(0),
 		local_transforms(0),
+		debug_bone_transforms(0),
 		scale_channel(scale),
 		rotation_channel(rotation),
 		translation_channel(translation)
@@ -585,6 +587,7 @@ class ModelInterface : public gemini::IModelInterface
 			{
 				bone_transforms = new glm::mat4[mesh->skeleton.size()];
 				local_transforms = new glm::mat4[mesh->skeleton.size()];
+				debug_bone_transforms = new glm::mat4[mesh->skeleton.size()];
 				//				for (size_t index = 0; index < mesh->animation.total_bones; ++index)
 				//				{
 				//					scale_channel.set_data_source(&mesh->animation.scale[index], mesh->animation.frame_delay_seconds);
@@ -630,6 +633,12 @@ class ModelInterface : public gemini::IModelInterface
 				delete [] local_transforms;
 				local_transforms = 0;
 			}
+			
+			if (debug_bone_transforms)
+			{
+				delete [] debug_bone_transforms;
+				debug_bone_transforms = 0;
+			}
 		}
 		
 		virtual unsigned int asset_index() const { return mesh_asset_index; }
@@ -647,7 +656,8 @@ class ModelInterface : public gemini::IModelInterface
 		//		}
 		
 		virtual glm::mat4* get_bone_transforms() const { return bone_transforms; }
-		
+		virtual glm::mat4* get_debug_bone_transforms() const { return debug_bone_transforms; }
+
 		virtual void set_animation_enabled(int32_t index, bool enabled)
 		{
 			animation::SequenceId global_instance_index = animations[index];
@@ -727,6 +737,7 @@ class ModelInterface : public gemini::IModelInterface
 				assets::Joint* joint = &mesh->skeleton[index];
 				glm::mat4& global_pose = bone_transforms[index];
 				glm::mat4& saved_pose = local_transforms[index];
+				glm::mat4& debug_bone_transform = debug_bone_transforms[index];
 				
 				glm::mat4 local_scale;
 				glm::mat4 local_rotation = glm::toMat4(rotations[index]);
@@ -747,8 +758,9 @@ class ModelInterface : public gemini::IModelInterface
 				global_pose = saved_pose * joint->inverse_bind_matrix;
 				
 				
-				glm::mat4 bone_world_transform = tx * (saved_pose);
-//				debugdraw::axes(bone_world_transform, 0.25f);
+				
+				debug_bone_transform = tx * (saved_pose);
+//				debugdraw::axes(debug_bone_transform, 0.25f);
 			}
 		}
 		
