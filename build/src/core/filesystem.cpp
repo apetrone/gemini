@@ -233,7 +233,7 @@ namespace core
 				return 0;
 			}
 			
-			if (!filesystem::file_exists(filename, true))
+			if (!filesystem::file_exists(filename, path_is_relative))
 			{
 				LOGE("File does not exist! \"%s\"\n", filename);
 				return 0;
