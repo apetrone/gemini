@@ -650,7 +650,8 @@ class ModelInterface : public gemini::IModelInterface
 		
 		virtual void set_animation_enabled(int32_t index, bool enabled)
 		{
-			animation::AnimatedInstance* instance = animation::get_instance_by_index(index);
+			animation::SequenceId global_instance_index = animations[index];
+			animation::AnimatedInstance* instance = animation::get_instance_by_index(global_instance_index);
 			assert(instance != 0);
 			if (instance)
 			{
@@ -747,25 +748,26 @@ class ModelInterface : public gemini::IModelInterface
 				
 				
 				glm::mat4 bone_world_transform = tx * (saved_pose);
-				debugdraw::axes(bone_world_transform, 0.25f);
+//				debugdraw::axes(bone_world_transform, 0.25f);
 			}
 		}
 		
 		virtual int32_t get_animation_index(const char* name)
 		{
-			int32_t index = -1;
+			size_t index = 0;
 			for (auto& id : animations)
 			{
-				animation::Sequence* sequence = animation::get_sequence_by_index(id);
+				animation::AnimatedInstance* instance = animation::get_instance_by_index(id);
+				animation::Sequence* sequence = animation::get_sequence_by_index(instance->sequence_index);
 				if (0 == core::str::case_insensitive_compare(name, sequence->name(), 0))
 				{
-					return sequence->index;
+					return index;
 					break;
 				}
+				++index;
 			}
 			
-			assert(index > -1);
-			return index;
+			return -1;
 		}
 		
 		virtual int32_t add_animation(const char* name)
@@ -775,12 +777,13 @@ class ModelInterface : public gemini::IModelInterface
 			{
 				animations.push_back(id);
 				LOGV("[engine] added animation %s to index: %i\n", name, animations.size()-1);
+				return animations.size()-1;
 			}
 			else
 			{
 				LOGW("Unable to load sequence %s\n", name);
+				return -1;
 			}
-			return id;
 		}
 		
 		virtual int32_t get_total_animations() const
@@ -1941,7 +1944,7 @@ Options:
 			debugdraw::text(x, y+36, core::str::format("active_camera->right = %.2g %.2g %.2g", main_camera.side.x, main_camera.side.y, main_camera.side.z), Color(255, 0, 0));
 		}
 		debugdraw::text(x, y+48, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_raw_msec), Color(255, 255, 255));
-		debugdraw::text(x, y+60, core::str::format("# allocations = %i, total %i Kbytes\n", platform::memory::allocator().active_allocations(), platform::memory::allocator().active_bytes()/1024), Color(64, 102, 192));
+		debugdraw::text(x, y+60, core::str::format("# allocations = %i, total %2.2f MB\n", platform::memory::allocator().active_allocations(), platform::memory::allocator().active_bytes()/(float)(1024*1024)), Color(64, 102, 192));
 		
 		
 		if (draw_physics_debug)
