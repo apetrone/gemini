@@ -432,8 +432,7 @@ namespace core
 
 
 			std::string get_section_regex(const std::string& name);
-			std::vector<std::string> split(const std::string& input, const std::string& substring);
-			std::string trim_left(const std::string& input, const std::string& chars = "\t ");
+
 			std::vector<std::string> find_section(const char* docstring, const std::string& section_name, bool& section_was_found);
 
 			void parse_options(std::vector<std::string> lines);

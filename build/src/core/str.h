@@ -26,6 +26,7 @@
 
 #include <platform/mem.h>
 #include <string>
+#include <vector>
 
 typedef std::basic_string<char, std::char_traits<char>, CustomPlatformAllocator<char> > String;
 
@@ -57,5 +58,9 @@ namespace core
 		// this should take into account leading tilde (~), which denotes the
 		// special $(HOME) environment variable.
 		std::string make_absolute_path(const std::string& path);
+		
+		
+		std::vector<std::string> split(const std::string& input, const std::string& substring);
+		std::string trim_left(const std::string& input, const std::string& chars = "\t ");
 	} // namespace str
 } // namespace core
