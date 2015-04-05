@@ -583,40 +583,13 @@ class ModelInterface : public gemini::IModelInterface
 			assert(mesh != 0);
 			
 			// does this have an animation?
-			if (!mesh->skeleton.empty())
+			if (mesh->has_skeletal_animation)
 			{
-				bone_transforms = new glm::mat4[mesh->skeleton.size()];
-				local_transforms = new glm::mat4[mesh->skeleton.size()];
-				debug_bone_transforms = new glm::mat4[mesh->skeleton.size()];
-				//				for (size_t index = 0; index < mesh->animation.total_bones; ++index)
-				//				{
-				//					scale_channel.set_data_source(&mesh->animation.scale[index], mesh->animation.frame_delay_seconds);
-				//					rotation_channel.set_data_source(&mesh->animation.rotation[index], mesh->animation.frame_delay_seconds);
-				//					translation_channel.set_data_source(&mesh->animation.translation[index], mesh->animation.frame_delay_seconds);
-				//				}
-				//				animated_node->scale_channel.set_data_source(&mesh->animation.scale[node_index], mesh->animation.frame_delay_seconds);
-				//				animated_node->rotation_channel.set_data_source(&mesh->animation.rotation[node_index], mesh->animation.frame_delay_seconds);
-				//				animated_node->translation_channel.set_data_source(&mesh->animation.translation[node_index], mesh->animation.frame_delay_seconds);
-				
-				
-#if 0
-				for (size_t index = 0; index < mesh->animation.total_keys; ++index)
-				{
-					assets::Joint* joint = &mesh->skeleton[index];
-					glm::mat4& transform = bone_transforms[index];
-					transform = glm::translate(glm::mat4(1.0f), mesh->animation.translation[index].keys[0]);
-					
-					if (joint->parent_index > -1)
-					{
-						transform = bone_transforms[joint->parent_index] * transform;
-					}
-					
-					transform = transform * joint->inverse_bind_matrix;
-				}
-#endif
-				//				glm::mat4& b0 = bone_transforms[0];
-				//				b0 = glm::rotate(glm::mat4(1.0f), mathlib::degrees_to_radians(45), glm::vec3(0.0f, 1.0f, 0.0f));
-				//				b0 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
+//				bone_transforms = new glm::mat4[mesh->skeleton.size()];
+//				local_transforms = new glm::mat4[mesh->skeleton.size()];
+//				debug_bone_transforms = new glm::mat4[mesh->skeleton.size()];
+
+				// TODO: we need to create a group of these for EACH geometry in this mesh.
 			}
 		}
 		

@@ -77,8 +77,7 @@ namespace gemini
 			// set this geometry up for rendering
 			void render_setup();
 
-			// the bindpose skeleton for this mesh
-			core::FixedArray<Joint> skeleton;
+			core::FixedArray<glm::mat4> bind_poses;
 		}; // Geometry
 		
 		
@@ -92,6 +91,9 @@ namespace gemini
 			
 			// if this is true, it needs to be re-uploaded to the gpu
 			bool is_dirty;
+			
+			// true when any geometry has a skeleton loaded
+			bool has_skeletal_animation;
 			
 			// offset to the center of mass
 			glm::vec3 mass_center_offset;
