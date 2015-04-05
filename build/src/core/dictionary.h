@@ -564,6 +564,11 @@ namespace core
 		{
 			return table_size;
 		}
+		
+		bool empty() const
+		{
+			return (used_items == 0);
+		}
 
 		class Iterator
 		{
