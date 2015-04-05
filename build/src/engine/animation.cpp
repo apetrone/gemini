@@ -270,14 +270,15 @@ namespace gemini
 		//
 		// animation system stuff
 		//
-		
+		typedef core::HashSet<std::string, Sequence*> SequenceHash;
+		SequenceHash* _sequences_by_name;
 		namespace detail
 		{
-			typedef core::Dictionary<Sequence*> SequenceHash;
+			
 			typedef std::vector<Sequence*> SequenceArray;
 			typedef std::vector<AnimatedInstance*> InstanceArray;
 			
-			SequenceHash _sequences_by_name;
+
 			SequenceArray _sequences;
 			InstanceArray _instances;
 			
@@ -492,10 +493,10 @@ namespace gemini
 			
 			Sequence* load_sequence_from_file(const char* name, Mesh* mesh)
 			{
-				if (_sequences_by_name.has_key(name))
+				if (_sequences_by_name->has_key(name))
 				{
 					Sequence* data = 0;
-					_sequences_by_name.get(name, data);
+					data = _sequences_by_name->get(name);
 					return data;
 				}
 				
@@ -510,7 +511,7 @@ namespace gemini
 				if (core::util::ConfigLoad_Success == core::util::json_load_with_callback(filepath(), load_animation_from_json, &data, true))
 				{
 					sequence->index= _sequences.size();
-					_sequences_by_name.insert(name, sequence);
+					_sequences_by_name->insert(SequenceHash::value_type(name, sequence));
 					_sequences.push_back(sequence);
 				}
 				else
@@ -525,6 +526,7 @@ namespace gemini
 		
 		void startup()
 		{
+			_sequences_by_name = CREATE(SequenceHash);
 		}
 		
 		void shutdown()
@@ -541,7 +543,7 @@ namespace gemini
 			}
 			detail::_instances.clear();
 			
-			detail::_sequences_by_name.clear();
+			DESTROY(SequenceHash, _sequences_by_name);
 		}
 		
 		
@@ -571,16 +573,16 @@ namespace gemini
 		
 		SequenceId find_sequence(const char* name)
 		{
-			if (detail::_sequences_by_name.has_key(name))
+			if (_sequences_by_name->has_key(name))
 			{
 				Sequence* data = 0;
-				detail::_sequences_by_name.get(name, data);
+				data = _sequences_by_name->get(name);
 				return data->index;
 			}
 			
 			return -1;
 		}
-		
+		 
 		Sequence* get_sequence_by_index(SequenceId index)
 		{
 			assert(index < detail::_sequences.size());

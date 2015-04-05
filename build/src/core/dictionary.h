@@ -343,7 +343,7 @@ namespace core
 	}; // Dictionary
 	
 	template <class K, class T>
-	class OpenAddressingHash
+	class HashSet
 	{
 	private:
 		const float MAX_LOAD_FACTOR = 0.7f;
@@ -423,7 +423,7 @@ namespace core
 			
 			Bucket* old_table = table;
 			
-			table = new Bucket[table_size];
+			table = allocate(table_size);
 			size_t total_items = used_items;
 			
 			// straight up copying is much faster than re-inserting
@@ -433,7 +433,7 @@ namespace core
 			}
 			
 			// free the old table
-			delete [] old_table;
+			deallocate(old_table, total_items);
 		}
 		
 		Bucket* find_or_create_bucket(const K& key)
@@ -478,40 +478,47 @@ namespace core
 			return find_or_create_bucket(key);
 		}
 		
+		Bucket* allocate(uint32_t elements)
+		{
+			return CREATE_ARRAY(Bucket, elements);
+		}
 		
+		
+		void deallocate(Bucket* pointer, size_t elements)
+		{
+			DESTROY_ARRAY(Bucket, pointer, elements);
+		}
+
 	public:
+		typedef std::pair<K, T> value_type;
 	
-		OpenAddressingHash(size_t initial_size = 16, uint32_t growth_factor = 2) :
+	
+		HashSet(size_t initial_size = 16, uint32_t growth_factor = 2) :
 			table(nullptr),
 			table_size(initial_size),
 			used_items(0),
 			growth_factor(growth_factor)
 		{
-			table = new Bucket[table_size];
+			table = allocate(table_size);
 		}
 		
-		~OpenAddressingHash()
+		~HashSet()
 		{
-			delete [] table;
-			table = 0;
+			deallocate(table, table_size);
 		}
 		
 		
 		bool has_key(const K& key) const
 		{
 			HashType hash = get_hash(key);
-			int32_t bucket_index = (hash % table_size);
-			int32_t index = find_bucket(hash);
-			
-			return (index != -1);
+			int32_t bucket_index;
+			return (find_bucket(hash, bucket_index, true) != -1);
 		}
 		
-		
-
-		void add(const K& key, const T& value)
+		void insert(const value_type& vt)
 		{
-			Bucket* bucket = find_or_create_bucket(key);
-			bucket->value = value;
+			Bucket* bucket = find_or_create_bucket(vt.first);
+			bucket->value = vt.second;
 		}
 		
 		void remove(const K& key)
@@ -526,23 +533,27 @@ namespace core
 			}
 		}
 		
-		// get value or insert if not found
-		T& operator[](const K& key)
+		void clear()
+		{
+			// no need to deallocate the memory, but at least reset the hashes
+			used_items = 0;
+			for (size_t index = 0; index < table_size; ++index)
+			{
+				table[index].hash = 0;
+			}
+		}
+		
+		T& get(const K& key)
 		{
 			Bucket* bucket = find_or_create_bucket(key);
 			return bucket->value;
 		}
 		
-		
-//		T& operator[](int index)
-//		{
-//			return table[index].value;
-//		}
-//		
-//		const T& operator[](int index) const
-//		{
-//			return table[index].value;
-//		}
+		// get value or insert if not found
+		T& operator[](const K& key)
+		{
+			return get(key);
+		}
 
 		size_t size() const
 		{
@@ -557,12 +568,12 @@ namespace core
 		class Iterator
 		{
 		private:
-			OpenAddressingHash<K, T>::Bucket* table;
+			HashSet<K, T>::Bucket* table;
 			size_t index;
 			size_t table_size;
 			
 		public:
-			Iterator(OpenAddressingHash<K, T>::Bucket* table, size_t index, size_t table_size) :
+			Iterator(HashSet<K, T>::Bucket* table, size_t index, size_t table_size) :
 				table(table),
 				index(index),
 				table_size(table_size)
@@ -589,7 +600,7 @@ namespace core
 			{
 				while(index < table_size)
 				{
-					OpenAddressingHash<K, T>::Bucket* bucket = &table[++index];
+					HashSet<K, T>::Bucket* bucket = &table[++index];
 					if (bucket->hash != 0)
 						return *this;
 				}
