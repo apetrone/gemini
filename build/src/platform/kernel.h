@@ -53,14 +53,6 @@ namespace kernel
 		DeviceSupportsRetinaDisplay 	= (1 << 3), // set if this device supports retina
 		DeviceAndroid					= (1 << 4), // Android-based device
 	};
-
-	// status codes for config and startup return values
-	enum ApplicationResult
-	{
-		Application_Failure = 0,
-		Application_Success = 1,
-		Application_NoWindow = -1
-	};
 	
 	typedef unsigned char KernelDeviceFlags;
 
@@ -108,7 +100,6 @@ namespace kernel
 	
 	Parameters& parameters();
 
-//		class IApplication;
 	class IKernel
 	{
 	public:
@@ -118,71 +109,22 @@ namespace kernel
 		virtual void set_active(bool isactive) = 0;
 
 		virtual void resolution_changed(int width, int height) = 0;
-		
-//			virtual kernel::Parameters& parameters() = 0;
 
 		// called first thing during setup; useful for initializing libraries
 		virtual Error startup() = 0;
-		
-		// invoked after kernel startup finishes
-//			virtual void post_startup() = 0;
 
-		// these tick functions wrap the application's tick call
-//			virtual void pre_application_tick() = 0;
-//			virtual void post_application_tick() = 0;
 		virtual void tick() = 0;
-		
-		// called after the IApplication's config() call returns successfully
-//			virtual void post_application_config(ApplicationResult result) = 0;
-//			virtual void post_application_startup(ApplicationResult result) = 0;
-		
-//			virtual void pre_shutdown() = 0;
 		
 		// called right before control returns to the main entry point
 		virtual void shutdown() = 0;
-		
-		
-		// until these are moved to the platform module:
-		// TODO: This feels like it doesn't fit here, move it.
-//		virtual void capture_mouse( bool capture ) = 0;
-//		virtual void warp_mouse(int x, int y) = 0;
-//		virtual void get_mouse_position(int& x, int& y) = 0;
-//		virtual void show_mouse(bool show) = 0;
+
 	};
 
-//		class IApplication
-//		{
-//		public:
-//			virtual ~IApplication() {}
-//			
-//			virtual ApplicationResult config(kernel::Parameters& params) = 0;
-//			virtual ApplicationResult startup(kernel::Parameters& params) = 0;
-//			virtual void step(kernel::Parameters& params) = 0;
-//			virtual void tick(kernel::Parameters& params) = 0; // called every frame
-//			virtual void shutdown(kernel::Parameters& params) = 0;
-//		};
-	
-//		typedef IApplication* (*ApplicationCreator)();
-//		struct Registrar
-//		{
-//			Registrar(const char* name, ApplicationCreator fn);
-//		};
-	
-	//
-	// kernel registration / search
-	#define DECLARE_APPLICATION( className ) \
-		public: static IApplication * create() { return CREATE(className); }\
-		public: virtual const char * classname() { return #className; }
-	
-	#define IMPLEMENT_APPLICATION( className ) \
-		kernel::Registrar kr_##className( #className, className::create )
-	
 	// call this on application startup
 	Error startup();
 	
 	// call this when the application will be terminated
 	void shutdown();
-//		void update();
 
 	// call this when the resolution of the window or device has changed
 	void resolution_changed(int width, int height);
@@ -192,10 +134,8 @@ namespace kernel
 	
 	int run_application();
 
-
 	IKernel* instance();
 	void set_instance(IKernel* instance);
-
 	
 	// this is used by the kernel to dispatch events to the IApplication's event listeners
 	template <class Type>
