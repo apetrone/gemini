@@ -41,7 +41,6 @@ namespace gemini
 			int32_t index;
 			int32_t parent;
 			String name;
-			glm::mat4 inverse_bind_pose;
 			
 			uint8_t total_blendweights;
 			

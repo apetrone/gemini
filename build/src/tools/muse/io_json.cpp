@@ -369,6 +369,31 @@ namespace gemini
 			mass_center_offset.append(node->mesh->mass_center_offset.z);
 			mesh_data["mass_center_offset"] = mass_center_offset;
 			
+
+			// write out the skeleton; if one exists
+			Json::Value jskeleton(Json::arrayValue);
+			if (!node->mesh->bindpose.empty())
+			{
+				Json::Value bone_entry;
+				for (const datamodel::BoneLinkData link : node->mesh->bindpose)
+				{
+					bone_entry["name"] = link.bone_name.c_str();
+					bone_entry["parent"] = link.parent;
+					Json::Value inverse_bind_pose;
+					const float* data = (const float*)glm::value_ptr(link.inverse_bind_pose);
+					for (size_t i = 0; i < 16; ++i)
+					{
+						inverse_bind_pose.append(data[i]);
+					}
+					bone_entry["inverse_bind_pose"] = inverse_bind_pose;
+					jskeleton.append(bone_entry);
+				}
+			}
+			mesh_data["skeleton"] = jskeleton;
+			
+			
+			
+			
 			jnode["mesh"] = mesh_data;
 		}
 		
@@ -410,28 +435,6 @@ namespace gemini
 			}
 		}
 		jroot["nodes"] = jnodes;
-
-		
-		// write out the skeleton; if one exists
-		Json::Value jskeleton(Json::arrayValue);
-		if (model->skeleton && (model->export_flags & Model::EXPORT_SKELETON))
-		{
-			Json::Value bone_entry;
-			for (const datamodel::Bone* bone : model->skeleton->bones)
-			{
-				bone_entry["name"] = bone->name.c_str();
-				bone_entry["parent"] = bone->parent;
-				Json::Value inverse_bind_pose;
-				const float* data = (const float*)glm::value_ptr(bone->inverse_bind_pose);
-				for (size_t i = 0; i < 16; ++i)
-				{
-					inverse_bind_pose.append(data[i]);
-				}
-				bone_entry["inverse_bind_pose"] = inverse_bind_pose;
-				jskeleton.append(bone_entry);
-			}
-		}
-		jroot["skeleton"] = jskeleton;
 
 		
 		if (model->export_flags & (Model::EXPORT_MESHES | Model::EXPORT_MATERIALS | Model::EXPORT_SKELETON))

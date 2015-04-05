@@ -29,6 +29,8 @@
 #include "datamodel/model.h"
 #include <fbxsdk.h>
 
+#include <core/dictionary.h>
+
 namespace gemini
 {
 
@@ -58,8 +60,23 @@ namespace gemini
 	typedef std::vector<NodeData> NodeDataVector;
 
 
+	struct BoneData
+	{
+		String name;
+		glm::mat4 inverse_bind_pose;
+	};
+
+	typedef core::HashSet<std::string, BoneData> BoneDataHashSet;
+
 	struct AutodeskFbxExtensionState
 	{
+		struct MeshData
+		{
+			std::string name;
+			WeightSlotVector weight_slots;
+			BoneDataHashSet bones;
+		};
+	
 		datamodel::Model* model;
 		
 		// used by the reader to convert to correct units
@@ -70,10 +87,21 @@ namespace gemini
 		
 		
 		std::vector<FbxNode*> skeletal_nodes;
-		
-		WeightSlotVector slots;
+
+		typedef core::HashSet<std::string, MeshData*> MeshDataHashSet;
+		MeshDataHashSet meshdata;
+
 		NodeDataVector nodedata;
 		float frames_per_second;
+		
+		
+		~AutodeskFbxExtensionState()
+		{
+			for (MeshData* data : meshdata)
+			{
+				DESTROY(MeshData, data);
+			}
+		}
 	};
 	
 	class AutodeskFbxReader : public tools::Reader<datamodel::Model>

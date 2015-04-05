@@ -265,6 +265,23 @@ namespace gemini
 		fbxmesh->GenerateNormals();
 		fbxmesh->GenerateTangentsData();
 		
+		mesh->name = node->GetName();
+		LOGV("loading mesh: '%s', %p\n", node->GetName(), mesh);
+		
+		
+		AutodeskFbxExtensionState::MeshData* mesh_data = 0;
+		if (state.meshdata.has_key(mesh->name))
+		{
+			mesh_data = state.meshdata[mesh->name];
+		}
+		else
+		{
+			mesh_data = CREATE(AutodeskFbxExtensionState::MeshData);
+			mesh_data->name = mesh->name;
+			state.meshdata[mesh->name] = mesh_data;
+		}
+
+		
 		int total_deformers = fbxmesh->GetDeformerCount();
 	//	LOGV("%stotal_deformers: %i\n", state.indent(), total_deformers);
 		
@@ -382,15 +399,15 @@ namespace gemini
 				}
 				
 				
-				
-
-				if (!state.slots.empty())
+				WeightSlotVector* slots = &mesh_data->weight_slots;
+				if (!slots->empty())
 				{
+
 					datamodel::WeightList& weightlist = mesh->weights[vertex_index];
 					state.indent.push();
 					// copy weights
 
-					for (WeightReference& weight_ref : state.slots[index].weights)
+					for (WeightReference& weight_ref : (*slots)[index].weights)
 					{
 	//					LOGV("%sbone = %i, weight = %2.2f\n", state.indent.indent(), weight_ref.datamodel_bone_index, weight_ref.value);
 						
@@ -413,6 +430,24 @@ namespace gemini
 				++local_index;
 			}
 		}
+		
+		
+		// copy bone data
+		if (!mesh_data->bones.empty())
+		{
+			mesh->bindpose.allocate(mesh_data->bones.size());
+			
+			size_t index = 0;
+			for (auto& bd : mesh_data->bones)
+			{
+				datamodel::BoneLinkData& link_data = mesh->bindpose[index++];
+				datamodel::Bone* bone = state.model->skeleton->find_bone_named(bd.name);
+				link_data.bone_name = bd.name;
+				link_data.inverse_bind_pose = bd.inverse_bind_pose;
+				link_data.parent = bone->parent;
+			}
+		}
+		
 
 	//	LOGV("%svertex_index: %i\n", state.indent(), vertex_index);
 		DESTROY_ARRAY(Vertex, vertices, mesh->indices.size());
@@ -579,6 +614,21 @@ namespace gemini
 			
 			FbxAMatrix geometry_transform(translation, rotation, scale);
 			
+			AutodeskFbxExtensionState::MeshData* mesh_data = 0;
+			if (state.meshdata.has_key(fbxnode->GetName()))
+			{
+				mesh_data = state.meshdata[fbxnode->GetName()];
+			}
+			else
+			{
+				mesh_data = CREATE(AutodeskFbxExtensionState::MeshData);
+				mesh_data->name = fbxnode->GetName();
+				state.meshdata[fbxnode->GetName()] = mesh_data;
+			}
+			
+			WeightSlotVector *slots = &mesh_data->weight_slots;
+
+			
 			// This makes the assumption that there will ONLY ever be a single mesh
 			// linked to a single skeleton.
 			for(int deformer_index = 0; deformer_index < total_deformers; ++deformer_index)
@@ -590,7 +640,7 @@ namespace gemini
 					FbxSkin* skin = reinterpret_cast<FbxSkin*>(deformer);
 
 					LOGV("resizing vector to %i control points (indices)\n", fbxmesh->GetControlPointsCount());
-					state.slots.resize(fbxmesh->GetControlPointsCount());
+					slots->resize(fbxmesh->GetControlPointsCount());
 					
 
 					int total_clusters = skin->GetClusterCount();
@@ -609,6 +659,9 @@ namespace gemini
 						FbxCluster* cluster = skin->GetCluster(cluster_index);
 						LOGV("cluster: %i, joint name: %s\n", cluster_index, cluster->GetLink()->GetName());
 						datamodel::Bone* bone = state.model->skeleton->find_bone_named(cluster->GetLink()->GetName());
+						BoneData& bonedata = mesh_data->bones[cluster->GetLink()->GetName()];
+						bonedata.name = cluster->GetLink()->GetName();
+						
 						assert(bone != 0);
 						
 						FbxAMatrix transform_matrix;
@@ -619,9 +672,10 @@ namespace gemini
 
 						cluster->GetTransformMatrix(transform_matrix);
 						cluster->GetTransformLinkMatrix(link_matrix);
-						
+
 						inverse_bindpose_matrix = link_matrix.Inverse() * transform_matrix * geometry_transform;
-						from_fbx(bone->inverse_bind_pose, inverse_bindpose_matrix);
+						from_fbx(bonedata.inverse_bind_pose, inverse_bindpose_matrix);
+						
 						
 						int total_control_points = cluster->GetControlPointIndicesCount();
 						int* indices = cluster->GetControlPointIndices();
@@ -634,31 +688,8 @@ namespace gemini
 							WeightReference ref;
 							ref.datamodel_bone_index = bone->index;
 							ref.value = control_point_weights[control_point_index];
-							state.slots[indices[control_point_index]].weights.push_back(ref);
+							(*slots)[indices[control_point_index]].weights.push_back(ref);
 							bone->total_blendweights++;
-						}
-						
-//						if (bone->index > 0)
-//						{
-//							while(bone->total_blendweights < datamodel::MAX_SUPPORTED_BONE_INFLUENCES)
-//							{
-//								WeightReference ref;
-//								ref.datamodel_bone_index = bone->index;
-//								ref.value = 0.0f;
-//								state.slots[control_point_index].weights.push_back(ref);
-//								bone->total_blendweights++;
-//							}
-//						}
-					}
-					
-					
-					for(int i = 0; i < fbxmesh->GetControlPointsCount(); ++i)
-					{
-						size_t total_weights = state.slots[i].weights.size();
-//						LOGV("%i; total influences: %i\n", i, total_weights);
-						for (WeightReference& w : state.slots[i].weights)
-						{
-//							LOGV("\tbone: %i, weight: %2.2f\n", w.datamodel_bone_index, w.value);
 						}
 					}
 				}
