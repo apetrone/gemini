@@ -89,12 +89,6 @@ namespace gemini
 					// lovely, Android. There's a big in Adreno where indexing into Uniform Matrices is wonky.
 					// The solution is to index like a vec4.
 					rs.add_uniform_matrix4(shader->program->get_uniform_location("node_transforms"), block.node_transforms, block.total_transforms);
-					
-					
-					for (size_t i = 0; i < block.total_transforms; ++i)
-					{
-						debugdraw::instance()->axes(block.debug_bone_transforms[i], 0.25f, 0.0f);
-					}
 				}
 				else
 				{
@@ -172,11 +166,6 @@ namespace gemini
 									
 									// TODO: compute render key
 									RenderKey key = 0;
-
-									GeometryInstanceData geometry_data;
-	//								model_instance->get_geometry_data(geometry_index, geometry_data);
-									geometry_data.material_id = geometry->material_id;
-									geometry_data.shader_id = geometry->shader_id;
 									
 									// setup render block
 									RenderBlock block(key, geometry);
@@ -198,12 +187,21 @@ namespace gemini
 									model_instance->set_local_transform(transform);
 									
 									block.object_matrix = &model_instance->get_local_transform();
-									block.material_id = geometry_data.material_id;
-									block.shader_id = geometry_data.shader_id;
-									block.node_transforms = model_instance->get_bone_transforms();
-									block.debug_bone_transforms = model_instance->get_debug_bone_transforms();
-									block.total_transforms = mesh->skeleton.size();
+									block.material_id = geometry->material_id;
+									block.shader_id = geometry->shader_id;
+									block.node_transforms = model_instance->get_bone_transforms(geometry_index);
+									block.total_transforms = model_instance->get_total_transforms();
+										
 									queue->insert(block);
+								}
+
+
+								// draw bone transforms as axes
+								// TODO: this should be moved elsewhere or turned into a special debug render block?
+								const glm::mat4* debug_skeletal_pose = model_instance->get_debug_bone_transforms();
+								for (size_t i = 0; i < model_instance->get_total_transforms(); ++i)
+								{
+									debugdraw::instance()->axes(debug_skeletal_pose[i], 0.25f, 0.0f);
 								}
 								
 							}

@@ -323,7 +323,7 @@ namespace gemini
 				
 				core::util::ConfigLoadStatus result = core::util::ConfigLoad_Failure;
 				
-				if (mesh->skeleton.empty())
+				if (!mesh->has_skeletal_animation)
 				{
 					LOGW("Tried to attach an animation to a non-animated model!\n");
 					return result;

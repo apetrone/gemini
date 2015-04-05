@@ -101,7 +101,7 @@ namespace gemini
 				Json::Value uv_sets = mesh_root["uv_sets"];
 				Json::Value vertex_colors = mesh_root["vertex_colors"];
 				const Json::Value& blend_weights = mesh_root["blend_weights"];
-				const Json::Value& skeleton = mesh_root["skeleton"];
+				const Json::Value& bind_pose = mesh_root["bind_pose"];
 				
 				// setup materials
 				assets::Material* default_material = assets::materials()->get_default();
@@ -132,7 +132,7 @@ namespace gemini
 				{
 					shader_path = "shaders/world";
 				}
-				else if (!state.mesh->skeleton.empty())
+				else if (!bind_pose.empty())
 				{
 					shader_path = "shaders/animation";
 				}
@@ -204,9 +204,30 @@ namespace gemini
 				}
 
 				
-				if (!skeleton.isNull())
+				if (!bind_pose.isNull())
 				{
-					LOGV("TODO: Implement loading skeleton from geometry\n");
+					// allocate enough bones
+					geo->bind_poses.allocate(bind_pose.size());
+					
+					Json::ValueIterator it = bind_pose.begin();
+					for (; it != bind_pose.end(); ++it)
+					{
+						const Json::Value& skeleton_entry = (*it);
+						const Json::Value& name = skeleton_entry["name"];
+						
+						const std::string& bone_name = name.asString();
+						Joint* joint = state.mesh->find_bone_named(bone_name.c_str());
+						assert(joint != 0);
+						
+						size_t bone_index = joint->index;
+						LOGV("reading bind_pose for '%s' -> %i\n", bone_name.c_str(), bone_index);
+						const Json::Value& inverse_bind_pose = skeleton_entry["inverse_bind_pose"];
+						assert(!inverse_bind_pose.isNull());
+						
+						geo->bind_poses[bone_index] = assets::json_to_mat4(inverse_bind_pose);
+					}
+					
+					state.mesh->has_skeletal_animation = true;
 				}
 
 				// read all blend weights and indices
@@ -345,6 +366,9 @@ namespace gemini
 
 
 			// load skeleton, if one exists
+			// this will only construct the hierarchy -- which should be consistent
+			// for a single model file.
+			// I can't forsee needing multiple skeletons in the same model just yet.
 			Json::Value skeleton = root["skeleton"];
 			if (!skeleton.isNull())
 			{
@@ -359,7 +383,6 @@ namespace gemini
 					const Json::Value& skeleton_entry = (*it);
 					const Json::Value& name = skeleton_entry["name"];
 					const Json::Value& parent = skeleton_entry["parent"];
-					const Json::Value& matrix = skeleton_entry["inverse_bind_pose"];
 					
 					Joint& joint = mesh->skeleton[bone_index];
 					joint.index = bone_index;
@@ -373,11 +396,7 @@ namespace gemini
 					{
 						joint.parent_index = parent.asInt();
 					}
-					
-					if (!matrix.isNull())
-					{
-						joint.inverse_bind_matrix = assets::json_to_mat4(matrix);
-					}
+
 					LOGV("read joint: %s, parent: %i, index: %i\n", joint.name(), joint.parent_index, joint.index);
 				}
 			}
@@ -501,6 +520,7 @@ namespace gemini
 		Mesh::Mesh()
 		{
 			is_dirty = true;
+			has_skeletal_animation = false;
 		} // Mesh
 		
 		Mesh::~Mesh()
