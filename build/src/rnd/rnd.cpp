@@ -464,19 +464,19 @@ void test_sys(int argc, char**argv)
 	DEALLOC(stringlist);
 
 	{
-		typedef core::OpenAddressingHash<std::string, int> HashTable;
+		typedef core::HashSet<std::string, int> HashTable;
 		HashTable hash(32768, 8);
 		uint64_t start = platform::microseconds();
 		for (unsigned int i = 0; i < lines.size(); ++i)
 		{
-			hash.add(lines[i], i);
+			hash.insert(HashTable::value_type(lines[i], i));
 		}
 		uint64_t end = platform::microseconds();
 		float delta = (end-start);
 		
 		LOGV("total items: %i\n", hash.size());
 		LOGV("capacity: %i\n", hash.capacity());
-		LOGV("[OpenAddressingHash]: time taken: %2.2fms\n", delta*.001f);
+		LOGV("[HashSet]: time taken: %2.2fms\n", delta*.001f);
 		// initial implementation: 75069ms, 69903 items
 		// second try: ~33000ms, no longer re-inserting on repopulate; just copy;
 		// third try: ~5000ms: when searching, bail if we find bucket->hash == 0, resize factor of 8x
@@ -492,7 +492,6 @@ void test_sys(int argc, char**argv)
 //		for (unsigned int i = 0; i < lines.size(); ++i)
 //		{
 //			hash.insert(lines[i].c_str(), i);
-////			hash.add(lines[i], i);
 //		}
 //		uint64_t end = platform::microseconds();
 //		float delta = (end-start);
