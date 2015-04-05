@@ -37,8 +37,6 @@
 #include "keyframechannel.h"
 #include "animation.h"
 
-//#include "scene_graph.h"
-
 #include <json/json.h>
 
 namespace gemini
@@ -47,6 +45,25 @@ namespace gemini
 	{
 		// -------------------------------------------------------------
 		// Mesh
+		
+		const int MAX_VERTEX_WEIGHTS = 4;
+		
+		struct Joint
+		{
+			// -1 == no parent
+			int32_t parent_index;
+			int32_t index;
+			core::StackString<128> name;
+			
+			Joint()
+			{
+				parent_index = -1;
+				index = -1;
+			}
+			
+			// model space to bone space
+			glm::mat4 inverse_bind_matrix;
+		};
 		
 		struct Geometry : public gemini::renderer::Geometry
 		{
@@ -59,119 +76,19 @@ namespace gemini
 			
 			// set this geometry up for rendering
 			void render_setup();
-			
-	//		FixedArray<glm::vec3> untransformed_vertices;
-			core::FixedArray<glm::vec3> physics_vertices;
+
+			// the bindpose skeleton for this mesh
+			core::FixedArray<Joint> skeleton;
 		}; // Geometry
 		
-
-#if 0
-		// TEMP struct to test the whole shebang.
-		struct AnimationData
-		{
-			core::FixedArray< KeyframeData<glm::vec3> > scale;
-			core::FixedArray< KeyframeData<glm::quat> > rotation;
-			core::FixedArray< KeyframeData<glm::vec3> > translation;
-
-			core::FixedArray< KeyChannel<glm::vec3> > track_scale;
-			core::FixedArray< KeyChannel<glm::quat> > track_rotation;
-			core::FixedArray< KeyChannel<glm::vec3> > track_translate;
-
-			core::FixedArray< glm::mat4 > transforms;
-			
-			// name to index map is the best I can do for now.
-			typedef std::map<std::string, size_t> NodeToIndexContainer;
-			NodeToIndexContainer node_id_by_name;
-
-			// duration of the full animation, in seconds
-			float duration_seconds;
-			
-			float frames_per_second;
-			float frame_delay_seconds; // 1.0f / frames_per_second
-			
-			// total frames in this animation
-			uint32_t total_bones;
-			uint32_t total_frames;
-//			uint32_t total_keys;
-			
-			AnimationData() :
-			frames_per_second(0.0f),
-			frame_delay_seconds(0.0f),
-			total_bones(0),
-			total_frames(0)
-			{}
-			
-			void get_pose(glm::vec3* positions, glm::quat* orientations, float animation_time_seconds);
-		};
-#endif
-		
-		const int MAX_VERTEX_WEIGHTS = 4;
-		
-		struct Bone
-		{
-			Bone()
-			{
-				parent_index = -1;
-				index = -1;
-			}
-			~Bone() {}
-			
-			// name of this bone
-			String name;
-			
-			// local to bone space (vertex to bone)
-			glm::mat4 inverse_bind_matrix;
-			
-			// from bone space to local space
-			glm::mat4 bind_matrix;
-			
-			
-			glm::mat4 local_transform;
-			glm::mat4 world_transform;
-			
-			// -1: No parent
-			int32_t parent_index;
-			
-			int32_t index;
-		};
-		
-		
-		struct Joint
-		{
-			int8_t parent_index;
-			int8_t index;
-			core::StackString<128> name;
-			
-			Joint()
-			{
-				parent_index = -1;
-				index = -1;
-			}
-			
-			// model space to bone space
-			glm::mat4 inverse_bind_matrix;
-			
-			// from bone space back to model space
-			glm::mat4 bind_matrix;
-		};
-
-		typedef int8_t BoneIndex;
 		
 		struct Mesh : public Asset
 		{
 			core::FixedArray<Geometry> geometry;
 			core::FixedArray<Geometry> geometry_vn;
-			core::FixedArray<Bone> bones;
 			glm::mat4 world_matrix;
 					
 			core::StackString<MAX_PATH_SIZE> path;
-			
-//			scenegraph::Node* scene_root;
-			
-			
-			
-			
-			unsigned short total_bones;
 			
 			// if this is true, it needs to be re-uploaded to the gpu
 			bool is_dirty;
@@ -187,9 +104,6 @@ namespace gemini
 			
 			// prepare all geometry
 			void prepare_geometry();
-			
-			// For now, we only have room for a single animation -- so make it worthwhile.
-//			AnimationData animation;
 
 			glm::mat4 node_transform;
 			
@@ -198,9 +112,6 @@ namespace gemini
 			// bind pose skeleton
 			core::FixedArray<Joint> skeleton;
 		}; // Mesh
-		
-		// EXPERIMENTAL
-//		void read_keys_object(AnimationData& anim, Bone* bone, Json::Value& jkeys);
 		
 		AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, const AssetParameters & parameters );
 		void mesh_construct_extension( core::StackString<MAX_PATH_SIZE> & extension );

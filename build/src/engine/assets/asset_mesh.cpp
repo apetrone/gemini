@@ -30,8 +30,6 @@
 #include "assets/asset_material.h"
 #include "renderer/renderer.h"
 
-//#include "skeletalnode.h"
-
 using namespace gemini::renderer;
 
 namespace gemini
@@ -83,26 +81,14 @@ namespace gemini
 		{
 			size_t current_geometry;
 			Mesh* mesh;
-			BoneIndex parent;
 			
-			MeshLoaderState(Mesh* input) : current_geometry(0), mesh(input), parent(-1) {}
+			MeshLoaderState(Mesh* input) : current_geometry(0), mesh(input) {}
 		};
 		
-		
-//		void AnimationData::get_pose(glm::vec3 *positions, glm::quat *rotations, float animation_time_seconds)
-//		{
-//			for (uint32_t index = 0; index < total_bones; ++index)
-//			{
-//				positions[index] = track_translate[index].value_at_time(animation_time_seconds);
-//				rotations[index] = track_rotation[index].value_at_time(animation_time_seconds);
-//			}
-//		}
 		
 		void traverse_nodes(MeshLoaderState& state, const Json::Value& node, MaterialByIdContainer& materials, const bool is_world)
 		{
 			std::string node_type = node["type"].asString();
-//			scenegraph::Node* node_root = nullptr;
-			
 			if (node_type == "mesh")
 			{
 			
@@ -115,6 +101,7 @@ namespace gemini
 				Json::Value uv_sets = mesh_root["uv_sets"];
 				Json::Value vertex_colors = mesh_root["vertex_colors"];
 				const Json::Value& blend_weights = mesh_root["blend_weights"];
+				const Json::Value& skeleton = mesh_root["skeleton"];
 				
 				// setup materials
 				assets::Material* default_material = assets::materials()->get_default();
@@ -216,6 +203,12 @@ namespace gemini
 					assert(blend_weights.size() == geo->vertex_count);
 				}
 
+				
+				if (!skeleton.isNull())
+				{
+					LOGV("TODO: Implement loading skeleton from geometry\n");
+				}
+
 				// read all blend weights and indices
 				Json::ValueIterator it = blend_weights.begin();
 				for (int weight_id = 0; it != blend_weights.end(); ++it, ++weight_id)
@@ -262,45 +255,12 @@ namespace gemini
 					state.mesh->mass_center_offset = glm::vec3(center_mass_offset[0].asFloat(), center_mass_offset[1].asFloat(), center_mass_offset[2].asFloat());
 				}
 			}
-//			else if (node_type == "skeleton")
-//			{
-//				LOGV("create skeleton\n");
-////				node_root = CREATE(scenegraph::AnimatedNode);
-//
-//				// insert the new joint
-//				BoneIndex parent_index = state.parent;
-//				Joint& joint = state.mesh->skeleton[++state.parent];
-//				joint.parent_index = parent_index;
-//				joint.index = state.parent;
-//				
-//				
-//				const Json::Value& skeleton_root = node["name"];
-//				joint.name = skeleton_root.asString().c_str();
-//				LOGV("read joint: %s, parent: %i, index: %i\n", joint.name(), joint.parent_index, joint.index);
-//			}
 			else
 			{
 				LOGV("create group node\n");
-//				node_root = CREATE(scenegraph::AnimatedNode);
+
 			}
-			
-//			assert(node_root != nullptr);
 
-//			node_root->name = node["name"].asString().c_str();
-
-			const Json::Value& scaling = node["scaling"];
-			const Json::Value& rotation = node["rotation"];
-			const Json::Value& translation = node["translation"];
-			assert(!scaling.isNull() && !rotation.isNull() && !translation.isNull());
-
-
-//			from_json(node_root->local_scale, scaling);
-//			from_json(node_root->local_rotation, rotation);
-//			from_json(node_root->local_position, translation);
-	//		LOGV("scale: %g %g %g\n", node_root->local_scale.x, node_root->local_scale.y, node_root->local_scale.z);
-	//		LOGV("rotation: %g %g %g %g\n", node_root->local_rotation.x, node_root->local_rotation.y, node_root->local_rotation.z, node_root->local_rotation.w);
-	//		LOGV("translation: %g %g %g\n", node_root->local_position.x, node_root->local_position.y, node_root->local_position.z);
-		
 			const Json::Value& children = node["children"];
 			if (!children.isNull())
 			{
@@ -312,7 +272,7 @@ namespace gemini
 			}
 		}
 		
-		void count_nodes(const Json::Value& node, size_t& total_nodes, size_t& total_meshes, size_t& total_bones)
+		void count_nodes(const Json::Value& node, size_t& total_nodes, size_t& total_meshes)
 		{
 			assert(!node["name"].isNull());
 			assert(!node["type"].isNull());
@@ -326,10 +286,6 @@ namespace gemini
 			{
 				++total_meshes;
 			}
-//			else if (node_type == "skeleton")
-//			{
-//				++total_bones;
-//			}
 			
 			const Json::Value& children = node["children"];
 			if (!children.isNull())
@@ -337,66 +293,10 @@ namespace gemini
 				Json::ValueIterator child_iter = children.begin();
 				for (; child_iter != children.end(); ++child_iter)
 				{
-					count_nodes((*child_iter), total_nodes, total_meshes, total_bones);
+					count_nodes((*child_iter), total_nodes, total_meshes);
 				}
 			}
 		}
-		
-#if 0
-		template <class Type>
-		void read_channel(KeyChannel<Type>& channel, const Json::Value& animation_channel)
-		{
-			if (animation_channel.isNull())
-			{
-				return;
-			}
-			const Json::Value& times = animation_channel["time"];
-			const Json::Value& values = animation_channel["value"];
-			
-			if ((times.isNull() || values.isNull()) || (times.empty() && values.empty()))
-			{
-				return;
-			}
-			
-			assert(times.size() == values.size());
-			channel.keys.allocate(times.size());
-			
-			// Cannot use size_t because jsoncpp raises an 'ambiguous type' error.
-			for (int index = 0; index < channel.keys.size(); ++index)
-			{
-				const Json::Value& time_data = times[index];
-				const Json::Value& value_data = values[index];
-				
-				Keyframe<Type>& keyframe = channel.keys[index];
-				keyframe.seconds = time_data.asFloat();
-				from_json(keyframe.value, value_data);
-			}
-		}
-			
-		template <class Type>
-		void read_channel(KeyframeData<Type>& channel, const Json::Value& animation_channel)
-		{
-			const Json::Value& times = animation_channel["time"];
-			const Json::Value& values = animation_channel["value"];
-
-			assert(!times.empty());
-			assert(!values.empty());
-			
-			assert(times.size() == values.size());
-			
-			channel.time.allocate(times.size());
-			channel.keys.allocate(values.size());
-			
-			for (int key = 0; key < times.size(); ++key)
-			{
-				const Json::Value& time_data = times[key];
-				channel.time[key] = time_data.asFloat();
-				
-				const Json::Value& value_data = values[key];
-				from_json(channel.keys[key], value_data);
-			}
-		}
-#endif
 		
 		core::util::ConfigLoadStatus load_json_model(const Json::Value& root, void* data)
 		{
@@ -413,9 +313,6 @@ namespace gemini
 				LOGE("Could not load the default material!\n");
 				return core::util::ConfigLoad_Failure;
 			}
-			
-//			mesh->scene_root = CREATE(scenegraph::Node);
-//			mesh->scene_root->name = mesh->path();
 			
 			// n-meshes
 			// skeleton (should this be separate?)
@@ -445,17 +342,14 @@ namespace gemini
 			
 			size_t total_nodes = 0;
 			size_t total_meshes = 0;
-			size_t total_bones = 0;
 
 
 			// load skeleton, if one exists
 			Json::Value skeleton = root["skeleton"];
 			if (!skeleton.isNull())
 			{
-				total_bones = skeleton.size();
-				
 				// allocate enough bones
-				mesh->skeleton.allocate(total_bones);
+				mesh->skeleton.allocate(skeleton.size());
 				
 				size_t bone_index = 0;
 				
@@ -483,7 +377,6 @@ namespace gemini
 					if (!matrix.isNull())
 					{
 						joint.inverse_bind_matrix = assets::json_to_mat4(matrix);
-						joint.bind_matrix = glm::inverse(joint.inverse_bind_matrix);
 					}
 					LOGV("read joint: %s, parent: %i, index: %i\n", joint.name(), joint.parent_index, joint.index);
 				}
@@ -495,11 +388,11 @@ namespace gemini
 			for (; node_iter != node_root.end(); ++node_iter)
 			{
 				Json::Value node = (*node_iter);
-				count_nodes(node, total_nodes, total_meshes, total_bones);
+				count_nodes(node, total_nodes, total_meshes);
 			}
 			
 			// allocate nodes
-			LOGV("nodes: %i, meshes: %i, bones: %i\n", total_nodes, total_meshes, total_bones);
+			LOGV("nodes: %i, meshes: %i\n", total_nodes, total_meshes);
 			mesh->geometry.allocate(total_meshes);
 			
 
@@ -514,103 +407,6 @@ namespace gemini
 				traverse_nodes(state, node, materials_by_id, is_world);
 			}
 			
-			
-			// read animations
-#if 0
-			Json::Value animations = root["animations"];
-			if (!animations.isNull() && total_bones)
-			{
-				LOGV("model has %i animation(s); reading them...\n", animations.size());
-				
-				mesh->animation.total_bones = total_bones;
-				mesh->animation.transforms.allocate(total_bones);
-				
-				mesh->animation.scale.allocate(total_bones);
-				mesh->animation.rotation.allocate(total_bones);
-				mesh->animation.translation.allocate(total_bones);
-				
-				mesh->animation.track_scale.allocate(total_bones);
-				mesh->animation.track_rotation.allocate(total_bones);
-				mesh->animation.track_translate.allocate(total_bones);
-				
-				Json::ValueIterator iter = animations.begin();
-				for (; iter != animations.end(); ++iter)
-				{
-					Json::Value animation = (*iter);
-					
-					// assume one animation for now.
-					mesh->animation.frames_per_second = animation["frames_per_second"].asInt();
-					mesh->animation.frame_delay_seconds = (1.0f / (float)mesh->animation.frames_per_second);
-					
-					LOGV("animation: \"%s\"\n", animation["name"].asString().c_str());
-
-					const Json::Value& nodes_array = animation["nodes"];
-					assert(!nodes_array.isNull());
-					Json::ValueIterator node_iter = nodes_array.begin();
-					size_t node_index = 0;
-					for (; node_iter != nodes_array.end(); ++node_iter)
-					{
-						const Json::Value& jnode = (*node_iter);
-	//					StackString<128> node_name = jnode["name"].asString().c_str();
-						std::string node_name = jnode["name"].asString().c_str();
-//						scenegraph::Node* node = mesh->scene_root->find_child_named(node_name.c_str());
-						
-
-						
-//						if (!node)
-//						{
-//							LOGV("ignoring node: %s\n", node_name.c_str());
-//							continue;
-//						}
-//						else
-//						{
-//							LOGV("found node: %s\n", node_name.c_str());
-//						}
-	//					assert(node != nullptr);
-
-//						assert(node->has_attributes(scenegraph::ANIMATED));
-						
-						const Json::Value& scale_keys = jnode["scale"];
-						const Json::Value& rotation_keys = jnode["rotation"];
-						const Json::Value& translation_keys = jnode["translation"];
-						assert(!scale_keys.isNull() && !rotation_keys.isNull() && !translation_keys.isNull());
-
-						// TODO: read into an animation
-						
-						
-						Joint* joint = mesh->find_bone_named(node_name.c_str());
-						assert(joint != 0);
-						
-						LOGV("reading keyframes for bone \"%s\", joint->index = %i\n", joint->name(), joint->index);
-						
-						
-						read_channel(mesh->animation.scale[joint->index], jnode["scale"]);
-						read_channel(mesh->animation.rotation[joint->index], jnode["rotation"]);
-						read_channel(mesh->animation.translation[joint->index], jnode["translation"]);
-						
-						read_channel(mesh->animation.track_scale[joint->index], jnode["scale"]);
-						read_channel(mesh->animation.track_rotation[joint->index], jnode["rotation"]);
-						read_channel(mesh->animation.track_translate[joint->index], jnode["translation"]);
-						
-//						scenegraph::AnimatedNode* animated_node = static_cast<scenegraph::AnimatedNode*>(node);
-//						assert(animated_node != nullptr);
-//						if (animated_node)
-//						{
-//							read_channel(mesh->animation.scale[node_index], jnode["scale"]);
-//							read_channel(mesh->animation.rotation[node_index], jnode["rotation"]);
-//							read_channel(mesh->animation.translation[node_index], jnode["translation"]);
-//
-//							animated_node->scale_channel.set_data_source(&mesh->animation.scale[node_index], mesh->animation.frame_delay_seconds);
-//							animated_node->rotation_channel.set_data_source(&mesh->animation.rotation[node_index], mesh->animation.frame_delay_seconds);
-//							animated_node->translation_channel.set_data_source(&mesh->animation.translation[node_index], mesh->animation.frame_delay_seconds);
-//						}
-						
-						++node_index;
-					}
-				}
-				
-			}
-#endif
 			
 			return core::util::ConfigLoad_Success;
 		}
@@ -699,36 +495,17 @@ namespace gemini
 			{
 				renderer::driver()->vertexbuffer_upload_geometry( this->vertexbuffer, /*descriptor, */ this );
 			}
-			//		vertexstream.create( this->vertex_count, this->index_count, renderer::BUFFER_STATIC );
-			//		this->vertexbuffer = renderer::driver()->vertexbuffer_create( descriptor, this->draw_type, renderer::BUFFER_STATIC, descriptor.calculate_vertex_stride(), this->vertex_count, this->index_count );
 		}
-		
-		
-		//AnimationData::Frame::Frame()
-	//		rotation{{rotation_value.x}, {rotation_value.y}, {rotation_value.z}, {rotation_value.w}},
-	//		translation{{position_value.x}, {position_value.y}, {position_value.z}}
-		//{
-		
-		//}
+
 
 		Mesh::Mesh()
 		{
-//			scene_root = 0;
-			total_bones = 0;
 			is_dirty = true;
 		} // Mesh
 		
 		Mesh::~Mesh()
 		{
-//			DESTROY(Node, scene_root);
 		}
-
-		
-	//	void Mesh::alloc( unsigned int num_geometry )
-	//	{
-	//		total_geometry = num_geometry;
-	//		//		geometry = CREATE_ARRAY( Geometry,  num_geometry );
-	//	} // alloc
 		
 		void Mesh::release()
 		{
