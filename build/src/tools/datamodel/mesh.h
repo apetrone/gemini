@@ -65,6 +65,13 @@ namespace gemini
 		};
 		
 		
+		struct BoneLinkData
+		{
+			String bone_name;
+			glm::mat4 inverse_bind_pose;
+			int32_t parent;
+		};
+		
 		struct Mesh
 		{
 			core::FixedArray<glm::vec4> blend_indices;
@@ -74,9 +81,11 @@ namespace gemini
 			core::FixedArray<glm::vec4> vertex_colors;
 			core::FixedArray< core::FixedArray<glm::vec2> > uvs;
 			core::FixedArray<WeightList> weights;
+			core::FixedArray<BoneLinkData> bindpose;
 			core::FixedArray<uint32_t> indices;
 			MaterialId material;
 			glm::vec3 mass_center_offset;
+			std::string name;
 
 			Mesh()
 			{
