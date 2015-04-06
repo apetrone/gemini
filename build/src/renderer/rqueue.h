@@ -61,7 +61,6 @@ namespace gemini
 			unsigned int shader_id;
 			
 			glm::mat4* node_transforms;
-			glm::mat4* debug_bone_transforms;
 			uint32_t total_transforms;
 			
 			RenderBlock(RenderKey _key = 0, RenderObject* _object = 0) :
@@ -73,7 +72,6 @@ namespace gemini
 				shader_id(0),
 				
 				node_transforms(0),
-				debug_bone_transforms(0),
 				total_transforms(0)
 			{
 			}

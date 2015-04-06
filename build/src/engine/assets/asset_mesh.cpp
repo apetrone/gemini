@@ -209,24 +209,25 @@ namespace gemini
 					// allocate enough bones
 					geo->bind_poses.allocate(bind_pose.size());
 					
-					size_t bone_index = 0;
-					
 					Json::ValueIterator it = bind_pose.begin();
-					for (; it != bind_pose.end(); ++it, ++bone_index)
+					for (; it != bind_pose.end(); ++it)
 					{
 						const Json::Value& skeleton_entry = (*it);
 						const Json::Value& name = skeleton_entry["name"];
 						
 						const std::string& bone_name = name.asString();
-						LOGV("reading bind_pose for '%s'\n", bone_name.c_str());
+						Joint* joint = state.mesh->find_bone_named(bone_name.c_str());
+						assert(joint != 0);
 						
-//						const Json::Value& parent = skeleton_entry["parent"];
+						size_t bone_index = joint->index;
+						LOGV("reading bind_pose for '%s' -> %i\n", bone_name.c_str(), bone_index);
 						const Json::Value& inverse_bind_pose = skeleton_entry["inverse_bind_pose"];
 						assert(!inverse_bind_pose.isNull());
 						
-						glm::mat4& bind_pose = geo->bind_poses[bone_index];
-						bind_pose = assets::json_to_mat4(inverse_bind_pose);
+						geo->bind_poses[bone_index] = assets::json_to_mat4(inverse_bind_pose);
 					}
+					
+					state.mesh->has_skeletal_animation = true;
 				}
 
 				// read all blend weights and indices

@@ -60,9 +60,6 @@ namespace gemini
 				parent_index = -1;
 				index = -1;
 			}
-			
-			// model space to bone space
-			glm::mat4 inverse_bind_matrix;
 		};
 		
 		struct Geometry : public gemini::renderer::Geometry
@@ -77,6 +74,7 @@ namespace gemini
 			// set this geometry up for rendering
 			void render_setup();
 
+			// model space to bone space transforms
 			core::FixedArray<glm::mat4> bind_poses;
 		}; // Geometry
 		
