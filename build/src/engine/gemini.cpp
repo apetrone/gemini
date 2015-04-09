@@ -1414,15 +1414,15 @@ public:
 		//		compositor->add_child(root);
 		
 		graph = new gui::Graph(root);
-		graph->set_bounds(width-250, 0, 250, 250);
+		graph->set_bounds(width-250, 0, 250, 100);
 		graph->set_font(compositor, "fonts/debug");
 		graph->set_background_color(gui::Color(10, 10, 10, 210));
 		graph->set_foreground_color(gui::Color(255, 255, 255, 255));
 		graph->create_samples(100, 1);
 		graph->configure_channel(0, gui::Color(255, 0, 0, 255));
-		graph->set_range(-10.0f, 30.0f);
+		graph->set_range(0.0f, 33.3f);
 		root->add_child(graph);
-		graph->enable_baseline(true, 16.0f, gui::Color(255, 0, 255, 255));
+		graph->enable_baseline(true, 16.6f, gui::Color(255, 0, 255, 255));
 		
 		// setup the listener
 		gui_listener.set_hover_sound(audio::create_sound("sounds/8b_select1"));
