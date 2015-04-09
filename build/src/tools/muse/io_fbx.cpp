@@ -606,6 +606,10 @@ namespace gemini
 			FbxMesh* fbxmesh = fbxnode->GetMesh();
 			assert(fbxmesh != 0);
 			
+			// If you hit this, there is NO skeleton found and we're trying to read
+			// blendweights.
+			assert(state.model->skeleton);
+			
 			int total_deformers = fbxmesh->GetDeformerCount();
 						
 			FbxVector4 scale = fbxnode->GetGeometricScaling(FbxNode::eSourcePivot);
@@ -1007,16 +1011,21 @@ namespace gemini
 			// 1. build skeleton
 			for (int index = 0; index < fbxroot->GetChildCount(); ++index)
 			{
-				FbxNode* node = fbxroot->GetChild(index);;
-				FbxNodeAttribute::EType node_attribute_type = node->GetNodeAttribute()->GetAttributeType();
-				if (node_attribute_type == FbxNodeAttribute::eSkeleton)
+				FbxNode* node = fbxroot->GetChild(index);
+				// Nodes exported by blender do not have
+				// a proper NodeAttribute when using FBX 7.4 binary.
+				if (node->GetNodeAttribute())
 				{
-					// If you hit this assert, there's another skeleton at the root level.
-					// At the moment, only a single skeleton is supported.
-					assert(extension_state.model->skeleton == 0);
-					
-					extension_state.model->skeleton = CREATE(datamodel::Skeleton);
-					process_skeleton(extension_state, -1, node);
+					FbxNodeAttribute::EType node_attribute_type = node->GetNodeAttribute()->GetAttributeType();
+					if (node_attribute_type == FbxNodeAttribute::eSkeleton)
+					{
+						// If you hit this assert, there's another skeleton at the root level.
+						// At the moment, only a single skeleton is supported.
+						assert(extension_state.model->skeleton == 0);
+						
+						extension_state.model->skeleton = CREATE(datamodel::Skeleton);
+						process_skeleton(extension_state, -1, node);
+					}
 				}
 			}
 			
@@ -1038,7 +1047,9 @@ namespace gemini
 			int total_animation_stacks = scene->GetSrcObjectCount<FbxAnimStack>();
 			LOGV("animation stacks: %i\n", total_animation_stacks);
 			
-			// if we need to implement more than one animation... do that now.
+			// If we need to implement more than one animation... do that now.
+			// Interestingly enough, the FBX 6.1 ASCII format exports 2 stacks
+			// for ... reasons.
 			assert(total_animation_stacks <= 1);
 			
 			for (int stack = 0; stack < total_animation_stacks; ++stack)
