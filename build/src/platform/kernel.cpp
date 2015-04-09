@@ -585,20 +585,6 @@ namespace gemini
 			}
 		} // update
 
-		void tick()
-		{
-			update();
-			
-			audio::update();
-			input::update();
-			animation::update(_parameters.framedelta_filtered_msec*.001f);
-			_kernel->pre_tick();
-			hotloading::tick();			
-			_active_application->tick( _parameters );
-			_kernel->post_tick();
-			_parameters.current_frame++;
-		} // tick
-		
 		void assign_listener_for_eventtype( kernel::EventType event_type, void * listener )
 		{
 			_internal::_event_hooks.events[ event_type ] = listener;
