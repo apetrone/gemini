@@ -176,7 +176,10 @@ namespace core
 				output = platform::get_user_directory();
 				output += path.substr(1, std::string::npos);
 			}
-				
+			else
+			{
+				output = path;
+			}
 			
 			return output;
 		}
