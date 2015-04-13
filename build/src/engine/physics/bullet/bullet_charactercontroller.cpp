@@ -30,7 +30,6 @@
 #include "physics/bullet/bullet_charactercontroller.h"
 
 #include <core/mathlib.h>
-#include "camera.h"
 
 #include "debugdraw.h"
 
