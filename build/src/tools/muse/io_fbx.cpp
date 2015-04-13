@@ -601,14 +601,14 @@ namespace gemini
 
 	static void process_blendweights(AutodeskFbxExtensionState& state, FbxNode* fbxnode)
 	{
+		// If you hit this, there is NO skeleton found and we're trying to read
+		// blendweights.
+		assert(state.model->skeleton);
+		
 		if (fbxnode->GetMesh())
 		{
 			FbxMesh* fbxmesh = fbxnode->GetMesh();
 			assert(fbxmesh != 0);
-			
-			// If you hit this, there is NO skeleton found and we're trying to read
-			// blendweights.
-			assert(state.model->skeleton);
 			
 			int total_deformers = fbxmesh->GetDeformerCount();
 						
@@ -1032,9 +1032,12 @@ namespace gemini
 			// now process all weights
 			// This must be done after hierarchy traversal to ensure all the bones
 			// have been created.
-			for (int index = 0; index < fbxroot->GetChildCount(); ++index)
+			if (extension_state.model->skeleton)
 			{
-				process_blendweights(extension_state, fbxroot->GetChild(index));
+				for (int index = 0; index < fbxroot->GetChildCount(); ++index)
+				{
+					process_blendweights(extension_state, fbxroot->GetChild(index));
+				}
 			}
 			
 			// 3. read geometry
@@ -1052,18 +1055,21 @@ namespace gemini
 			// for ... reasons.
 			assert(total_animation_stacks <= 1);
 			
-			for (int stack = 0; stack < total_animation_stacks; ++stack)
-			{
-				FbxAnimStack* anim_stack = scene->GetSrcObject<FbxAnimStack>(stack);
-				FbxString stack_name = anim_stack->GetName();
-				LOGV("stack: %s\n", stack_name.Buffer());
-				FbxTakeInfo* take = scene->GetTakeInfo(stack_name);
-				
-				datamodel::Animation* animation = model->add_animation(stack_name.Buffer());
-				LOGV("reading data for animation \"%s\"\n", animation->name.c_str());
-				
-	//			fbxroot->ConvertPivotAnimationRecursive(anim_stack, FbxNode::eDestinationPivot, 30.0);
-				populate_animations(extension_state, fbxroot, take, time_mode, *animation);
+			if (extension_state.model->skeleton)
+			{			
+				for (int stack = 0; stack < total_animation_stacks; ++stack)
+				{
+					FbxAnimStack* anim_stack = scene->GetSrcObject<FbxAnimStack>(stack);
+					FbxString stack_name = anim_stack->GetName();
+					LOGV("stack: %s\n", stack_name.Buffer());
+					FbxTakeInfo* take = scene->GetTakeInfo(stack_name);
+					
+					datamodel::Animation* animation = model->add_animation(stack_name.Buffer());
+					LOGV("reading data for animation \"%s\"\n", animation->name.c_str());
+					
+		//			fbxroot->ConvertPivotAnimationRecursive(anim_stack, FbxNode::eDestinationPivot, 30.0);
+					populate_animations(extension_state, fbxroot, take, time_mode, *animation);
+				}
 			}
 		}
 	}
