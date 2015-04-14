@@ -84,6 +84,9 @@ namespace gemini
 		virtual void render_viewmodel(IEngineEntity* entity, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
 		
 		virtual void get_view_angles(glm::vec2& view_angles) = 0;
+		
+		// center the cursor in the main window (if applicable on this platform)
+		virtual void center_cursor() = 0;
 	};
 	
 	namespace engine
