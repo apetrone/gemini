@@ -870,6 +870,34 @@ public:
 	}
 };
 
+// this should eventually be moved entirely to the game library;
+// for now, as we refactor, it will be here.
+struct TransitionalGameState
+{
+	// are we in the gui?
+	bool in_gui;
+	
+	// does the game window have focus?
+	bool has_focus;
+	
+	TransitionalGameState() :
+		in_gui(false),
+		has_focus(true)
+	{
+	}
+};
+
+
+static TransitionalGameState _gamestate;
+
+void center_mouse(platform::IWindowLibrary* window_interface, platform::NativeWindow* window)
+{
+	if (_gamestate.has_focus && !_gamestate.in_gui)
+	{
+		window_interface->warp_mouse(window->window_width/2, window->window_height/2);
+	}
+}
+
 
 class EngineInterface : public IEngineInterface
 {
@@ -882,7 +910,8 @@ class EngineInterface : public IEngineInterface
 	Camera* camera;
 	
 	platform::NativeWindow* main_window;
-
+	platform::IWindowLibrary* window_interface;
+	
 public:
 	
 	EngineInterface(
@@ -892,14 +921,16 @@ public:
 					IExperimental* ei,
 					SceneRenderMethod* rm,
 					Camera* cam,
-					platform::NativeWindow* window) :
+					platform::NativeWindow* window,
+					platform::IWindowLibrary* window_interface) :
 	entity_manager(em),
 	model_interface(mi),
 	physics_interface(pi),
 	experimental_interface(ei),
 	render_method(rm),
 	camera(cam),
-	main_window(window)
+	main_window(window),
+	window_interface(window_interface)
 	{
 	}
 	
@@ -949,6 +980,11 @@ public:
 			view_angles.x = camera->pitch;
 			view_angles.y = camera->yaw;
 		}
+	}
+	
+	virtual void center_cursor()
+	{
+		center_mouse(window_interface, main_window);
 	}
 };
 
@@ -1070,8 +1106,6 @@ private:
 	// kernel stuff
 	bool active;
 	StackString<MAX_PATH_SIZE> game_path;
-	bool has_focus;
-	bool in_gui;
 	bool draw_physics_debug;
 	
 	platform::IWindowLibrary* window_interface;
@@ -1142,14 +1176,7 @@ private:
 		
 	}
 	
-	
-	void center_mouse(platform::NativeWindow* window)
-	{
-		if (has_focus && !in_gui)
-		{
-			window_interface->warp_mouse(window->window_width/2, window->window_height/2);
-		}
-	}
+
 	
 public:
 	EngineKernel() :
@@ -1158,9 +1185,7 @@ public:
 		last_time(0),
 		engine_interface(0),
 		game_interface(0),
-		has_focus(true),
-		in_gui(false),
-		gui_listener(in_gui),
+		gui_listener(_gamestate.in_gui),
 		render_method(0),
 		draw_physics_debug(false)
 	{
@@ -1190,10 +1215,10 @@ public:
 			if (event.key == input::KEY_ESCAPE)
 			{
 #if 1
-				in_gui = !in_gui;
-				if (!in_gui)
+				_gamestate.in_gui = !_gamestate.in_gui;
+				if (!_gamestate.in_gui)
 				{
-					center_mouse(main_window);
+					center_mouse(window_interface, main_window);
 					audio::play(menu_hide);
 				}
 				else
@@ -1201,9 +1226,9 @@ public:
 					audio::play(menu_show);
 				}
 				
-				window_interface->show_mouse(in_gui);
+				window_interface->show_mouse(_gamestate.in_gui);
 				
-				root->set_visible(in_gui);
+				root->set_visible(_gamestate.in_gui);
 #else
 				set_active(false);
 
@@ -1236,7 +1261,7 @@ public:
 		}
 		
 		
-		if (in_gui && compositor)
+		if (_gamestate.in_gui && compositor)
 		{
 			compositor->key_event(event.key, event.is_down, 0);
 		}
@@ -1244,7 +1269,7 @@ public:
 	
 	virtual void event(kernel::MouseEvent& event)
 	{
-		if (in_gui)
+		if (_gamestate.in_gui)
 		{
 			gui::CursorButton::Type input_to_gui[] = {
 				gui::CursorButton::Left,
@@ -1307,12 +1332,12 @@ public:
 		if (event.subtype == kernel::WindowLostFocus)
 		{
 			//			kernel::instance()->show_mouse(true);
-			has_focus = false;
+			_gamestate.has_focus = false;
 		}
 		else if (event.subtype == kernel::WindowGainFocus)
 		{
 			//			kernel::instance()->show_mouse(false);
-			has_focus = true;
+			_gamestate.has_focus = true;
 		}
 	}
 	
@@ -1354,7 +1379,7 @@ public:
 		root = new gui::Panel(compositor);
 		root->set_bounds(0, 0, main_window->render_width, main_window->render_height);
 		root->set_background_color(gui::Color(0, 0, 0, 192));
-		root->set_visible(in_gui);
+		root->set_visible(_gamestate.in_gui);
 		compositor->add_child(root);
 		
 		gui::Color button_background(128, 128, 128, 255);
@@ -1711,10 +1736,11 @@ Options:
 			&experimental,
 			render_method,
 			&main_camera,
-			main_window
+			main_window,
+			window_interface
 		);
 		gemini::engine::api::set_instance(engine_interface);
-		window_interface->show_mouse(in_gui);
+		window_interface->show_mouse(_gamestate.in_gui);
 		
 		// TOOD: load game library
 		StackString<MAX_PATH_SIZE> game_library_path = ::core::filesystem::content_directory();
@@ -1834,7 +1860,7 @@ Options:
 			compositor->update(kernel::parameters().framedelta_raw_msec);
 		}
 		
-		if (!in_gui)
+		if (!_gamestate.in_gui)
 		{
 			UserCommand command;
 			
@@ -1878,7 +1904,7 @@ Options:
 			command.angles[1] = main_camera.yaw;
 			
 			
-			center_mouse(main_window);
+			
 			
 			if (game_interface)
 			{
@@ -1920,6 +1946,8 @@ Options:
 			);
 			
 			game_interface->client_frame(framedelta_seconds, kernel::parameters().step_alpha);
+			
+
 		}
 		
 //		if (device)
