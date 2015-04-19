@@ -42,9 +42,6 @@
 #include "LinearMath/btDefaultMotionState.h"
 
 
-// for CharacterController
-#include "input.h"
-
 #include "bullet_common.h"
 
 namespace gemini
