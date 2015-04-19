@@ -173,5 +173,10 @@ namespace platform
 		{
 			return *_allocator;
 		} // allocator
+		
+		void set_allocator(IAllocator* allocator)
+		{
+			_allocator = allocator;
+		} // set_allocator
 	} // namespace memory
 } // namespace platform

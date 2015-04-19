@@ -986,6 +986,11 @@ public:
 	{
 		center_mouse(window_interface, main_window);
 	}
+	
+	virtual platform::memory::IAllocator* allocator()
+	{
+		return &platform::memory::allocator();
+	}
 };
 
 
