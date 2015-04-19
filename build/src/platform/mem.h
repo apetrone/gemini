@@ -71,6 +71,8 @@ namespace platform
 		
 		// instance of the active allocator
 		IAllocator & allocator();
+		
+		void set_allocator(IAllocator* allocator);
 
 		// helper function for creating arrays from a contiguous block of memory
 		// and then calling placement new on each one
