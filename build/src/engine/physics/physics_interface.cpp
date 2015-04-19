@@ -53,8 +53,6 @@ using gemini::physics::RaycastInfo;
 
 using namespace core;
 
-#include "input.h"
-
 namespace gemini
 {
 	namespace physics
@@ -77,7 +75,8 @@ namespace gemini
 						glm::vec3 cam_dir, cam_right;
 						mathlib::basis_vectors_from_pitch_yaw(view_angles.x, view_angles.y, cam_right, cam_dir);
 						
-						const float QUOTIENT = (1.0f/input::AxisValueMaximum);
+//						const float QUOTIENT = (1.0f/input::AxisValueMaximum);
+						const float QUOTIENT = 1.0f;
 						
 						if (character)
 						{
