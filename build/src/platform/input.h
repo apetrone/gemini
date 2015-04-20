@@ -29,7 +29,16 @@
 
 namespace input
 {
-	// this matches xwl key codes
+	const unsigned int MAX_INPUTSTATE_TOUCHES = 10;
+	
+	const uint8_t MAX_JOYSTICK_BUTTONS = 16;
+	const uint8_t MAX_JOYSTICK_AXES = 6;
+	const uint8_t MAX_JOYSTICKS = 8;
+	
+	
+	const int16_t AxisValueMinimum = SHRT_MIN;
+	const int16_t AxisValueMaximum = SHRT_MAX;
+	
 	enum Button
 	{
 		KEY_INVALID,
@@ -195,15 +204,7 @@ namespace input
 		KEYMOD_SHIFT = 2,
 		KEYMOD_CONTROL = 4,
 	};
-		
-	#define MAX_INPUTSTATE_KEYS 320
-	#define MAX_INPUTSTATE_BUTTONS 8
-	#define MAX_INPUTSTATE_TOUCHES 10
-	#define TOTAL_INPUTSTATE_KEYS (MAX_INPUTSTATE_KEYS+MAX_INPUTSTATE_BUTTONS)
 
-	const uint8_t MAX_JOYSTICK_BUTTONS = 16;
-	const uint8_t MAX_JOYSTICK_AXES = 6;
-	const uint8_t MAX_JOYSTICKS = 8;
 	
 	// This is a similar pattern to that found in Quake. I find it very logical to determining input state.
 	enum ButtonStateFlags
@@ -233,9 +234,7 @@ namespace input
 		// returns whether or not the button was just released
 		bool was_released() const;
 	}; // ButtonState
-	
-	const int16_t AxisValueMinimum = SHRT_MIN;
-	const int16_t AxisValueMaximum = SHRT_MAX;
+
 	
 	struct AxisState
 	{
@@ -381,9 +380,6 @@ namespace input
 	void shutdown( void );
 	void update( void );
 
-	void buttonEvent( int button, int isDown );
-	void handleEvent( ButtonState * b, int isDown );
-	
 	const char* mouse_button_name( MouseButton button );
 
 }; // namespace input

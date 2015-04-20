@@ -76,7 +76,7 @@ namespace gemini
 						mathlib::basis_vectors_from_pitch_yaw(view_angles.x, view_angles.y, cam_right, cam_dir);
 						
 //						const float QUOTIENT = (1.0f/input::AxisValueMaximum);
-						const float QUOTIENT = 1.0f;
+						const float QUOTIENT = (1.0f/(float)SHRT_MAX);
 						
 						if (character)
 						{
