@@ -33,6 +33,7 @@
 #include <core/configloader.h>
 #include <core/argumentparser.h>
 #include <core/mathlib.h>
+#include <core/fixedsizequeue.h>
 
 #include <renderer/renderer.h>
 #include <renderer/renderstream.h>
@@ -842,14 +843,14 @@ public:
 	
 	virtual void get_player_command(uint8_t index, physics::MovementCommand& command)
 	{
+//		command.left += input::state()->keyboard().is_down(input::KEY_A) * input::AxisValueMaximum;
+//		command.right += input::state()->keyboard().is_down(input::KEY_D) * input::AxisValueMaximum;
+//		command.forward += input::state()->keyboard().is_down(input::KEY_W) * input::AxisValueMaximum;
+//		command.back += input::state()->keyboard().is_down(input::KEY_S) * input::AxisValueMaximum;
+		
+#if 0
 		// add the inputs and then normalize
 		input::JoystickInput& joystick = input::state()->joystick(0);
-		
-		command.left += input::state()->keyboard().is_down(input::KEY_A) * input::AxisValueMaximum;
-		command.right += input::state()->keyboard().is_down(input::KEY_D) * input::AxisValueMaximum;
-		command.forward += input::state()->keyboard().is_down(input::KEY_W) * input::AxisValueMaximum;
-		command.back += input::state()->keyboard().is_down(input::KEY_S) * input::AxisValueMaximum;
-		
 		if (joystick.axes[0].value < 0)
 		{
 			command.left += (joystick.axes[0].value/(float)input::AxisValueMinimum) * input::AxisValueMaximum;
@@ -867,6 +868,7 @@ public:
 		{
 			command.back += (joystick.axes[1].value/(float)input::AxisValueMaximum) * input::AxisValueMaximum;
 		}
+#endif
 	}
 };
 
@@ -1124,6 +1126,8 @@ private:
 	double accumulator;
 	uint64_t last_time;
 	
+	core::FixedSizeQueue<gemini::GameMessage, 64>* event_queue;
+	
 	// rendering
 	renderer::SceneLink* scenelink;
 	SceneRenderMethod* render_method;
@@ -1215,6 +1219,15 @@ public:
 	
 	virtual void event( kernel::KeyboardEvent & event )
 	{
+//		input::state()->keyboard().inject_key_event(event.key, event.is_down);
+		
+		GameMessage game_message;
+		game_message.type = GameMessage::KeyboardEvent;
+		game_message.button = event.key;
+		game_message.params[0] = event.is_down;
+		event_queue->push_back(game_message);
+	
+	
 		if (event.is_down)
 		{
 			if (event.key == input::KEY_ESCAPE)
@@ -1274,6 +1287,33 @@ public:
 	
 	virtual void event(kernel::MouseEvent& event)
 	{
+		GameMessage game_message;
+		switch (event.subtype)
+		{
+			case kernel::MouseButton:
+				game_message.type = GameMessage::MouseEvent;
+				game_message.button = event.button;
+				game_message.params[0] = event.is_down;
+				break;
+				
+			case kernel::MouseMoved:
+				game_message.type = GameMessage::MouseMove;
+				game_message.params[0] = event.mx;
+				game_message.params[1] = event.my;
+				break;
+				
+			case kernel::MouseWheelMoved:
+				game_message.type = GameMessage::MouseMove;
+				game_message.params[0] = event.wheel_direction;
+				break;
+				
+			default: break;
+		}
+		
+		
+		event_queue->push_back(game_message);
+
+	
 		if (_gamestate.in_gui)
 		{
 			gui::CursorButton::Type input_to_gui[] = {
@@ -1464,6 +1504,8 @@ public:
 	
 	virtual kernel::Error startup()
 	{
+		event_queue = new core::FixedSizeQueue<GameMessage, 64>;
+	
 		// parse command line values
 		std::vector<std::string> arguments;
 		core::argparse::ArgumentParser parser;
@@ -1838,15 +1880,19 @@ Options:
 
 	virtual void tick()
 	{
+		// 1. handle input; generate events?
+		// 2. on frame duties:
+		//	- pump event
+		
+		
 		update();
+		
+		window_interface->process_events();
+		input::update();
 	
 		audio::update();
-		input::update();
 		animation::update(kernel::parameters().framedelta_filtered_seconds);
-		window_interface->process_events();
-		
 		hotloading::tick();
-		// TODO: application -> tick
 		post_tick();
 		kernel::parameters().current_frame++;
 	}
@@ -1865,31 +1911,38 @@ Options:
 			compositor->update(kernel::parameters().framedelta_raw_msec);
 		}
 		
+		debugdraw::text(200, 200, core::str::format("queued_events: %i\n", event_queue->size()), Color(255, 255, 255));
+		
+		
+		int mouse[2];
+		window_interface->get_mouse(mouse[0], mouse[1]);
+		int half_width = main_window->window_width/2;
+		int half_height = main_window->window_height/2;
+		
+		// capture the state of the mouse
+		int mdx, mdy;
+		mdx = (mouse[0] - half_width);
+		mdy = (mouse[1] - half_height);
+		if (mdx != 0 || mdy != 0)
+		{
+			GameMessage game_message;
+			game_message.type = GameMessage::MouseMove;
+			game_message.params[0] = mdx;
+			game_message.params[1] = mdy;
+			event_queue->push_back(game_message);
+		}
+		
+		while(!event_queue->empty())
+		{
+			GameMessage game_message = event_queue->pop();
+			game_interface->server_process_message(game_message);
+		}
+
+		
 		if (!_gamestate.in_gui)
 		{
-			UserCommand command;
-			
-			// attempt to sample input here -- may need to be moved.
-			bool left = input::state()->keyboard().is_down(input::KEY_A);
-			bool right = input::state()->keyboard().is_down(input::KEY_D);
-			bool forward = input::state()->keyboard().is_down(input::KEY_W);
-			bool back = input::state()->keyboard().is_down(input::KEY_S);
-			
-			command.set_button(0, left);
-			command.set_button(1, right);
-			command.set_button(2, forward);
-			command.set_button(3, back);
-			
-			command.set_button(5, input::state()->keyboard().is_down(input::KEY_E));
-			command.set_button(6, input::state()->keyboard().is_down(input::KEY_SPACE));
-			command.set_button(7, input::state()->keyboard().is_down(input::KEY_LALT) || input::state()->keyboard().is_down(input::KEY_RALT));
-			
-			command.set_button(8, input::state()->mouse().is_down(input::MOUSE_LEFT));
-			command.set_button(9, input::state()->mouse().is_down(input::MOUSE_MIDDLE));
-			command.set_button(10, input::state()->mouse().is_down(input::MOUSE_RIGHT));
-			
-			command.set_button(11, input::state()->keyboard().is_down(input::KEY_G));
-			
+#if 0
+	
 			int mouse[2];
 			window_interface->get_mouse(mouse[0], mouse[1]);
 			
@@ -1919,6 +1972,7 @@ Options:
 				//			game_interface->physics_update(params.step_interval_seconds);
 				//			background_source = audio::play(background, 1);
 			}
+#endif
 		}
 
 		int x = 10;
@@ -1942,6 +1996,9 @@ Options:
 	
 		if (game_interface)
 		{
+			// 1. game_interface->run_frame(framedelta_seconds);
+			// 2. game_interface->draw_frame();
+			
 			float framedelta_seconds = kernel::parameters().framedelta_raw_msec*0.001f;
 			
 			game_interface->server_frame(
@@ -1951,8 +2008,6 @@ Options:
 			);
 			
 			game_interface->client_frame(framedelta_seconds, kernel::parameters().step_alpha);
-			
-
 		}
 		
 //		if (device)
@@ -2099,7 +2154,8 @@ Options:
 		renderer::shutdown();
 		core::shutdown();
 	
-
+		delete event_queue;
+		event_queue = 0;
 		
 		window_interface->activate_window(main_window);
 		window_interface->destroy_window(main_window);

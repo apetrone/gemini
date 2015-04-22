@@ -26,9 +26,46 @@
 
 #include <stdint.h>
 
+#include <platform/input.h>
+
 namespace gemini
 {
 	struct UserCommand;
+
+	
+	struct GameMessage
+	{
+		enum Type
+		{
+			KeyboardEvent = 1, // 1
+			// button: keycode
+			// params[0]: is_down
+			
+			MouseEvent    = 8,   // 8
+			// button: mouse button
+			// params[0]: is_down
+
+			MouseMove     = 24,  // 16
+			// params[0]: rel mouse x
+			// params[1]: rel mouse y
+			
+			MouseWheel    = 40, // 32
+			// params[0]: wheel delta
+		};
+		
+		uint32_t type;
+		
+		uint32_t button;
+		int32_t params[4];
+		
+		GameMessage() :
+			type(0),
+			button(0)
+		{
+			params[0] = params[1] = params[2] = params[3] = 0;
+		}
+	};
+	
 
 	// Describes the interface exposed to the engine from the game.
 	class IGameInterface
@@ -45,12 +82,12 @@ namespace gemini
 		// called on level change
 		virtual void level_load() = 0;
 		
-		// called before physics update to process latest input
-		virtual void process_commands(uint8_t player_index, UserCommand* commands, uint8_t total_commands) = 0;
-		
 		// called each tick of the engine
 		virtual void server_frame(uint64_t current_ticks, float framedelta_seconds, float step_alpha) = 0;
 		virtual void client_frame(float framedelta_seconds, float step_alpha) = 0;
+		
+		// called on the server: process an incoming message
+		virtual void server_process_message(const GameMessage& message) = 0;
 	}; // GameInterface
 	
 	

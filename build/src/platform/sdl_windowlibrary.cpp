@@ -455,7 +455,6 @@ namespace platform
 					kernel::KeyboardEvent ev;
 					ev.is_down = (event.type == SDL_KEYDOWN);
 					ev.key = button;
-					input::state()->keyboard().inject_key_event(button, ev.is_down);
 					kernel::event_dispatch(ev);
 					break;
 				}
@@ -467,7 +466,6 @@ namespace platform
 					ev.subtype = kernel::MouseButton;
 					ev.button = mouse_map[event.button.button];
 					ev.is_down = (event.type == SDL_MOUSEBUTTONDOWN);
-					input::state()->mouse().inject_mouse_button((input::MouseButton)ev.button, ev.is_down);
 					kernel::event_dispatch(ev);
 					break;
 				}
@@ -480,7 +478,6 @@ namespace platform
 					ev.dy = event.motion.yrel;
 					ev.mx = event.motion.x;
 					ev.my = event.motion.y;
-					input::state()->mouse().inject_mouse_move(ev.mx, ev.my);
 					kernel::event_dispatch(ev);
 					break;
 				}
