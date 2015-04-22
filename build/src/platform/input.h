@@ -248,7 +248,7 @@ namespace input
 		virtual ~InputDevice() {}
 		
 		virtual void reset() = 0;
-		virtual void update( float delta_msec ) = 0;
+		virtual void update() = 0;
 	}; // InputDevice
 	
 	class KeyboardInput : public InputDevice
@@ -257,14 +257,15 @@ namespace input
 		
 	public:
 		virtual void reset();
-		virtual void update( float delta_msec );
+		virtual void update();
 		
 		void inject_key_event(int key, bool is_down);
 	
+		inline const ButtonState& get_key(input::Button key) { return keys[key]; }
 	
 		// Accessors
-		bool is_down( input::Button key );
-		bool was_released( input::Button key );
+//		bool is_down( input::Button key );
+//		bool was_released( input::Button key );
 	}; // KeyboardInput
 
 	
@@ -272,16 +273,17 @@ namespace input
 	{
 		ButtonState buttons[ MOUSE_COUNT ];
 		
-		// multiple values equate to [0] previous, [1] current
-		// thus: deltax = mousex[1] - mousex[0];
-		int mousex[2];
-		int mousey[2];
-		int mousedelta[2];
+		// absolute mouse position in window coordinates
+		int window_coords[2];
+		
+		// relative mouse delta
+		int delta[2];
+		
 		int wheel_direction;
 		
 	public:
 		virtual void reset();
-		virtual void update( float delta_msec );
+		virtual void update();
 		
 		void inject_mouse_move( int absolute_x, int absolute_y );
 		void inject_mouse_button( MouseButton button_id, bool is_down );
@@ -291,9 +293,6 @@ namespace input
 		// Accessors
 		bool is_down( MouseButton button );
 		bool was_released( MouseButton button );
-		
-		// retrieve the mouse position from last update
-		void last_mouse_position( int & x, int & y );
 		
 		// retrieve the current mouse position
 		void mouse_position( int & x, int & y );
@@ -320,7 +319,7 @@ namespace input
 		
 	public:
 		virtual void reset();
-		virtual void update( float delta_msec );
+		virtual void update();
 		
 		void touch_began( int touchid, int x, int y );
 		void touch_drag( int touchid, int x, int y );
@@ -347,35 +346,10 @@ namespace input
 		AxisState axes[MAX_JOYSTICK_AXES];
 		
 		virtual void reset();
-		virtual void update( float delta_msec );
+		virtual void update();
 	}; // JoystickInput
-	
-	// This is a facade interface which holds the current input state
-	class InputState
-	{
-		KeyboardInput keyboard_input;
-		MouseInput mouse_input;
-		TouchInput touch_input;
-		
-		JoystickInput joystick_input[MAX_JOYSTICKS];
-		uint8_t joysticks_connected;
-		
-	public:
 
-		InputState() : joysticks_connected(0) {}
-		~InputState() {}
 
-		inline KeyboardInput & keyboard() { return keyboard_input; }
-		inline MouseInput & mouse() { return mouse_input; }
-		inline TouchInput & touch() { return touch_input; }
-		inline JoystickInput& joystick(uint8_t index) { return joystick_input[index]; }
-		void connect_joystick(uint8_t index) { joystick_input[index].flags |= JoystickInput::Connected; ++joysticks_connected; }
-		void disconnect_joystick(uint8_t index) { joystick_input[index].flags &= ~JoystickInput::Connected; --joysticks_connected; }
-		
-		uint8_t total_joysticks_connected() const { return joysticks_connected; }
-	}; // InputState
-	
-	InputState * state( void );
 	void startup( void );
 	void shutdown( void );
 	void update( void );

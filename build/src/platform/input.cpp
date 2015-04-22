@@ -29,14 +29,6 @@
 
 namespace input
 {
-	unsigned int * _input_mapping_table = 0;
-	
-	InputState _input_state;
-	InputState * state( void )
-	{
-		return &_input_state;
-	}
-	
 	void ButtonState::press_release( bool is_down )
 	{
 		if ( is_down )
@@ -107,8 +99,8 @@ namespace input
 	
 	void startup( void )
 	{
-		_input_state.keyboard().reset();
-		_input_state.mouse().reset();
+//		_input_state.keyboard().reset();
+//		_input_state.mouse().reset();
 	}
 	
 	void shutdown( void )
@@ -118,8 +110,10 @@ namespace input
 	
 	void update( void )
 	{
-		_input_state.keyboard().update( 0 );
-		_input_state.mouse().update( 0 );
+//		_input_state.keyboard().update( 0 );
+//		_input_state.mouse().update( 0 );
+		
+#if 0
 		for (uint8_t j = 0; j < MAX_JOYSTICKS; ++j)
 		{
 			JoystickInput& joystick = _input_state.joystick(j);
@@ -128,6 +122,7 @@ namespace input
 				joystick.update(0);
 			}
 		}
+#endif
 	}
 
 	//
@@ -138,7 +133,7 @@ namespace input
 		memset(&keys, 0, sizeof(ButtonState) * KEY_COUNT);
 	} // reset
 	
-	void KeyboardInput::update( float delta_msec )
+	void KeyboardInput::update()
 	{
 		for( unsigned int i = 0; i < KEY_COUNT; ++i )
 		{
@@ -154,21 +149,21 @@ namespace input
 		b->press_release(is_down);
 	} // inject_key_event
 	
-	bool KeyboardInput::is_down(input::Button key)
-	{
-		ButtonState* b;
-		assert( key < KEY_COUNT );
-		b = &keys[ key ];
-		return b->is_down();
-	} // is_down
-	
-	bool KeyboardInput::was_released(input::Button key )
-	{
-		ButtonState* b;
-		assert( key < KEY_COUNT );		
-		b = &keys[ key ];
-		return b->was_released();
-	} // was_released
+//	bool KeyboardInput::is_down(input::Button key)
+//	{
+//		ButtonState* b;
+//		assert( key < KEY_COUNT );
+//		b = &keys[ key ];
+//		return b->is_down();
+//	} // is_down
+//	
+//	bool KeyboardInput::was_released(input::Button key )
+//	{
+//		ButtonState* b;
+//		assert( key < KEY_COUNT );		
+//		b = &keys[ key ];
+//		return b->was_released();
+//	} // was_released
 	
 	//
 	// MouseInput
@@ -176,29 +171,28 @@ namespace input
 	void MouseInput::reset()
 	{
 		memset(&buttons, 0, sizeof(ButtonState) * MOUSE_COUNT);
+		window_coords[0] = window_coords[1] = 0;
+		delta[0] = delta[1] = 0;
 	} // reset
 	
-	void MouseInput::update( float delta_msec )
+	void MouseInput::update()
 	{
 		for( unsigned int i = 0; i < MOUSE_COUNT; ++i )
 		{
 			buttons[ MOUSE_LEFT+i ].update();
 		}
-		
-		mousedelta[0] = mousex[1] - mousex[0];
-		mousedelta[1] = mousey[1] - mousey[0];
-		mousex[0] = mousex[1];
-		mousey[0] = mousey[1];
+
+		delta[0] = delta[1] = 0;
 	} // update
 	
 	
-	void MouseInput::inject_mouse_move( int absolute_x, int absolute_y )
+	void MouseInput::inject_mouse_move(int absolute_x, int absolute_y)
 	{
-		mousex[0] = mousex[1];
-		mousex[1] = absolute_x;
+		delta[0] = absolute_x - window_coords[0];
+		window_coords[0] = absolute_x;
 		
-		mousey[0] = mousey[1];
-		mousey[1] = absolute_y;
+		delta[1] = absolute_y - window_coords[1];
+		window_coords[1] = absolute_y;
 	} // inject_mouse_move
 	
 	void MouseInput::inject_mouse_button( MouseButton button, bool is_down )
@@ -225,22 +219,16 @@ namespace input
 		return buttons[button].was_released();
 	} // was_released
 	
-	void MouseInput::last_mouse_position( int & x, int & y )
-	{
-		x = mousex[0];
-		y = mousey[0];
-	} // last_mouse_position
-	
 	void MouseInput::mouse_position( int & x, int & y )
 	{
-		x = mousex[1];
-		y = mousey[1];
+		x = window_coords[1];
+		y = window_coords[1];
 	} // mouse_position
 	
 	void MouseInput::mouse_delta(int &dx, int &dy)
 	{
-		dx = mousedelta[0];
-		dy = mousedelta[1];
+		dx = delta[0];
+		dy = delta[1];
 	}
 
 	//
@@ -250,7 +238,7 @@ namespace input
 		
 	} // reset
 	
-	void TouchInput::update( float delta_msec )
+	void TouchInput::update()
 	{
 		
 	} // update
@@ -265,7 +253,7 @@ namespace input
 		flags = 0;
 	}
 	
-	void JoystickInput::update(float delta_msec)
+	void JoystickInput::update()
 	{
 		for(uint8_t i = 0; i < MAX_JOYSTICK_BUTTONS; ++i)
 		{
