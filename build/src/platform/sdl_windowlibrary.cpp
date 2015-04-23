@@ -31,6 +31,8 @@
 
 using namespace input;
 
+#define SDL_ENABLE_GAMEPAD 0
+
 namespace platform
 {
 	struct SDLWindow : public NativeWindow
@@ -203,6 +205,7 @@ namespace platform
 	
 	void SDLWindowLibrary::setup_joysticks()
 	{
+#if SDL_ENABLE_GAMEPAD
 		// add game controller db
 //		size_t length = 0;
 //		char* buffer = core::filesystem::file_to_buffer("conf/gamecontrollerdb.conf", 0, &length);
@@ -260,12 +263,14 @@ namespace platform
 				fprintf(stderr, "GameController at index %i, is not a compatible controller.\n", i);
 			}
 		}
+#endif
 	}
 	
 	void SDLWindowLibrary::shutdown()
 	{
 		DESTROY_ARRAY(SDL_Rect, display_rects, total_displays);
 		
+#if SDL_ENABLE_GAMEPAD
 		// close all controllers
 		for (uint8_t i = 0; i < total_controllers; ++i)
 		{
@@ -279,7 +284,8 @@ namespace platform
 				controllers[i] = 0;
 			}
 		}
-		
+#endif
+
 		key_map.clear();
 		
 		
@@ -437,7 +443,7 @@ namespace platform
 					
 				case SDL_TEXTINPUT:
 				{
-					//					LOGV("TODO: add unicode support from SDL: %s\n", event.text.text);
+//					LOGV("TODO: add unicode support from SDL: %s\n", event.text.text);
 					break;
 				}
 					
@@ -487,11 +493,10 @@ namespace platform
 					kernel::MouseEvent ev;
 					ev.subtype = kernel::MouseWheelMoved;
 					ev.wheel_direction = event.wheel.y;
-					input::state()->mouse().inject_mouse_wheel(ev.wheel_direction);
 					kernel::event_dispatch(ev);
 					break;
 				}
-					
+#if SDL_ENABLE_GAMEPAD
 				case SDL_CONTROLLERAXISMOTION:
 				{
 					input::JoystickInput& joystick = input::state()->joystick(event.cdevice.which);
@@ -581,7 +586,7 @@ namespace platform
 					kernel::event_dispatch(ev);
 					break;
 				}
-					
+#endif
 					// handle window events
 				case SDL_WINDOWEVENT:
 				{
