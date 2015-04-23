@@ -167,6 +167,7 @@ namespace gemini
 			}
 			
 			// lerp the value
+			*value = core::lerp(prev_value, next_value, alpha);
 			
 			// determine if we should advance the keyframe index
 			if (local_time_seconds >= next_time)
@@ -473,16 +474,7 @@ namespace gemini
 //							LOGV("t=%2.2f, %g %g %g\n", t, x, y, z);
 						}
 					}
-					
-//					read_channel(mesh->animation.scale[joint->index], jnode["scale"]);
-//					read_channel(mesh->animation.rotation[joint->index], jnode["rotation"]);
-//					read_channel(mesh->animation.translation[joint->index], jnode["translation"]);
-//					
-//					read_channel(mesh->animation.track_scale[joint->index], jnode["scale"]);
-//					read_channel(mesh->animation.track_rotation[joint->index], jnode["rotation"]);
-//					read_channel(mesh->animation.track_translate[joint->index], jnode["translation"]);
 
-					
 					++node_index;
 				}
 

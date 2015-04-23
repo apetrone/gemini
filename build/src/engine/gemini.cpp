@@ -1921,10 +1921,7 @@ Options:
 		{
 			compositor->update(kernel::parameters().framedelta_raw_msec);
 		}
-		
-		debugdraw::text(200, 200, core::str::format("queued_events: %i\n", event_queue->size()), Color(255, 255, 255));
-		
-		
+
 		
 		if (!_gamestate.in_gui)
 		{
