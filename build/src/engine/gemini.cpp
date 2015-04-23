@@ -1177,12 +1177,52 @@ private:
 	
 	void open_gamelibrary()
 	{
-		
+		// load game library
+		StackString<MAX_PATH_SIZE> game_library_path = ::core::filesystem::content_directory();
+		const char* dynamiclibrary_extension = platform::dylib_extension();
+		game_library_path.append(PATH_SEPARATOR_STRING).append("bin").append(PATH_SEPARATOR_STRING).append("game").append(dynamiclibrary_extension);
+		gamelib = platform::dylib_open(game_library_path());
+		if (!gamelib)
+		{
+			LOGV("unable to open game: \"%s\"\n", game_library_path());
+			assert(0);
+		}
+		else
+		{
+			LOGV("opened game library!\n");
+			
+			// link the engine interface
+			
+			connect_engine_fn connect_engine = (connect_engine_fn)platform::dylib_find(gamelib, "connect_engine");
+			disconnect_engine = (disconnect_engine_fn)platform::dylib_find(gamelib, "disconnect_engine");
+			if (connect_engine)
+			{
+				game_interface = connect_engine(gemini::engine::api::instance());
+			}
+			if (!game_interface)
+			{
+				LOGE("Unable to connect engine to game library\n");
+				assert(game_interface != 0);
+			}
+			
+			game_interface->startup();
+		}
 	}
 	
 	void close_gamelibrary()
 	{
+		// shutdown game
+		if (game_interface)
+		{
+			game_interface->shutdown();
+		}
 		
+		if (disconnect_engine)
+		{
+			disconnect_engine();
+		}
+		
+		platform::dylib_close(gamelib);
 	}
 	
 
@@ -1789,37 +1829,8 @@ Options:
 		gemini::engine::api::set_instance(engine_interface);
 		window_interface->show_mouse(_gamestate.in_gui);
 		
-		// TOOD: load game library
-		StackString<MAX_PATH_SIZE> game_library_path = ::core::filesystem::content_directory();
-		const char* dynamiclibrary_extension = platform::dylib_extension();
-		game_library_path.append(PATH_SEPARATOR_STRING).append("bin").append(PATH_SEPARATOR_STRING).append("game").append(dynamiclibrary_extension);
-		gamelib = platform::dylib_open(game_library_path());
-		if (!gamelib)
-		{
-			LOGV("unable to open game: \"%s\"\n", game_library_path());
-			assert(0);
-		}
-		else
-		{
-			LOGV("opened game library!\n");
-			
-			// link the engine interface
-			
-			connect_engine_fn connect_engine = (connect_engine_fn)platform::dylib_find(gamelib, "connect_engine");
-			disconnect_engine = (disconnect_engine_fn)platform::dylib_find(gamelib, "disconnect_engine");
-			if (connect_engine)
-			{
-				game_interface = connect_engine(gemini::engine::api::instance());
-			}
-			if (!game_interface)
-			{
-				LOGE("Unable to connect engine to game library\n");
-				assert(game_interface != 0);
-			}
-			
-			game_interface->startup();
-		}
-
+		open_gamelibrary();
+		
 		setup_gui(main_window->render_width, main_window->render_height);
 
 		// for debugging
@@ -2068,18 +2079,7 @@ Options:
 	
 	virtual void shutdown()
 	{
-		// shutdown game
-		if (game_interface)
-		{
-			game_interface->shutdown();
-		}
-		
-		if (disconnect_engine)
-		{
-			disconnect_engine();
-		}
-		
-		platform::dylib_close(gamelib);
+		close_gamelibrary();
 		
 		// shutdown gui
 		DESTROY(GUIStyle, gui_style);
