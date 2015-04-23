@@ -1914,38 +1914,11 @@ Options:
 		debugdraw::text(200, 200, core::str::format("queued_events: %i\n", event_queue->size()), Color(255, 255, 255));
 		
 		
-		int mouse[2];
-		window_interface->get_mouse(mouse[0], mouse[1]);
-		int half_width = main_window->window_width/2;
-		int half_height = main_window->window_height/2;
-		
-		// capture the state of the mouse
-		int mdx, mdy;
-		mdx = (mouse[0] - half_width);
-		mdy = (mouse[1] - half_height);
-		if (mdx != 0 || mdy != 0)
-		{
-			GameMessage game_message;
-			game_message.type = GameMessage::MouseMove;
-			game_message.params[0] = mdx;
-			game_message.params[1] = mdy;
-			event_queue->push_back(game_message);
-		}
-		
-		while(!event_queue->empty())
-		{
-			GameMessage game_message = event_queue->pop();
-			game_interface->server_process_message(game_message);
-		}
-
 		
 		if (!_gamestate.in_gui)
 		{
-#if 0
-	
 			int mouse[2];
 			window_interface->get_mouse(mouse[0], mouse[1]);
-			
 			int half_width = main_window->window_width/2;
 			int half_height = main_window->window_height/2;
 			
@@ -1955,25 +1928,21 @@ Options:
 			mdy = (mouse[1] - half_height);
 			if (mdx != 0 || mdy != 0)
 			{
-				main_camera.move_view(mdx, mdy);
+				GameMessage game_message;
+				game_message.type = GameMessage::MouseDelta;
+				game_message.params[0] = mdx;
+				game_message.params[1] = mdy;
+				event_queue->push_back(game_message);
 			}
-			
-			command.angles[0] = main_camera.pitch;
-			command.angles[1] = main_camera.yaw;
-			
-			
-			
-			
-			if (game_interface)
-			{
-				// loop through all players and process inputs
-				game_interface->process_commands(0, &command, 1);
-				
-				//			game_interface->physics_update(params.step_interval_seconds);
-				//			background_source = audio::play(background, 1);
-			}
-#endif
 		}
+
+		
+		while(!event_queue->empty())
+		{
+			GameMessage game_message = event_queue->pop();
+			game_interface->server_process_message(game_message);
+		}
+
 
 		int x = 10;
 		int y = 10;

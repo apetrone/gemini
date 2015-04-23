@@ -188,12 +188,21 @@ namespace input
 	
 	void MouseInput::inject_mouse_move(int absolute_x, int absolute_y)
 	{
-		delta[0] = absolute_x - window_coords[0];
+//		delta[0] = absolute_x - window_coords[0];
 		window_coords[0] = absolute_x;
 		
-		delta[1] = absolute_y - window_coords[1];
+//		delta[1] = absolute_y - window_coords[1];
 		window_coords[1] = absolute_y;
 	} // inject_mouse_move
+	
+	void MouseInput::inject_mouse_delta(int delta_x, int delta_y)
+	{
+		delta[0] = delta_x;
+//		window_coords[0] += delta_x;
+		
+		delta[1] = delta_y;
+//		window_coords[1] += delta_y;
+	} // inject_mouse_delta
 	
 	void MouseInput::inject_mouse_button( MouseButton button, bool is_down )
 	{

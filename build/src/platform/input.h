@@ -285,7 +285,8 @@ namespace input
 		virtual void reset();
 		virtual void update();
 		
-		void inject_mouse_move( int absolute_x, int absolute_y );
+		void inject_mouse_move(int absolute_x, int absolute_y);
+		void inject_mouse_delta(int delta_x, int delta_y);
 		void inject_mouse_button( MouseButton button_id, bool is_down );
 		void inject_mouse_wheel( int direction );
 		
