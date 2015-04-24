@@ -419,12 +419,13 @@ namespace core
 		
 		void repopulate(size_t new_size)
 		{
-			table_size = new_size;
-			
 			Bucket* old_table = table;
 			
+
+			size_t total_items = table_size;							
+			table_size = new_size;
 			table = allocate(table_size);
-			size_t total_items = used_items;
+
 			
 			// straight up copying is much faster than re-inserting
 			for (size_t i = 0; i < total_items; ++i)
@@ -438,6 +439,14 @@ namespace core
 		
 		Bucket* find_or_create_bucket(const K& key)
 		{
+			// check for repopulate first as this simplifies insertion
+			// when the table exceeds the load factor
+			if ((used_items/(float)table_size) > MAX_LOAD_FACTOR)
+			{
+				// if we hit this point; we need to resize the table
+				repopulate(table_size*growth_factor);
+			}
+		
 			HashType hash = get_hash(key);
 			int32_t bucket_index;
 			int32_t index = find_bucket(hash, bucket_index);
@@ -452,9 +461,9 @@ namespace core
 				if (bucket_index != -1)
 				{
 					used_items++;
-					table[bucket_index].key = key;
-					table[bucket_index].hash = hash;
 					bucket = &table[bucket_index];
+					bucket->key = key;
+					bucket->hash = hash;
 				}
 				else
 				{
@@ -462,19 +471,13 @@ namespace core
 					assert(0);
 				}
 			}
-			
-			if ((used_items/(float)table_size) > MAX_LOAD_FACTOR)
-			{
-				// if we hit this point; we need to resize the table
-				repopulate(table_size*growth_factor);
-			}
+
 			
 			if (bucket)
 			{
 				return bucket;
 			}
-		
-			
+
 			return find_or_create_bucket(key);
 		}
 		
