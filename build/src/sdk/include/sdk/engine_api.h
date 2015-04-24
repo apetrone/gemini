@@ -49,6 +49,8 @@ namespace gemini
 {
 	class IEntityManager;
 	class IModelInterface;
+	
+	struct View;
 
 	
 	namespace physics
@@ -79,7 +81,7 @@ namespace gemini
 		virtual void* allocate(size_t bytes) = 0;
 		virtual void deallocate(void* pointer) = 0;
 		
-		virtual void render_view(const glm::vec3& origin, const glm::vec2& view_angles) = 0;
+		virtual void render_view(const View& view) = 0;
 		virtual void render_gui() = 0;
 		
 		
@@ -90,7 +92,7 @@ namespace gemini
 		// render a viewmodel (no depth testing; different fov)
 		virtual void render_viewmodel(IEngineEntity* entity, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
 		
-		virtual void get_view_angles(glm::vec2& view_angles) = 0;
+		virtual void get_render_resolution(uint32_t& render_width, uint32_t& render_height) = 0;
 		
 		// center the cursor in the main window (if applicable on this platform)
 		virtual void center_cursor() = 0;

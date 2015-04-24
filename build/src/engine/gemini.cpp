@@ -52,7 +52,7 @@
 #include <sdk/physics_api.h>
 
 #include "input.h"
-#include "camera.h"
+
 #include "debugdraw.h"
 #include "assets/asset_font.h"
 #include "assets/asset_shader.h"
@@ -205,16 +205,15 @@ public:
 
 
 
-void render_scene_from_camera(gemini::IEngineEntity** entity_list, Camera& camera, renderer::SceneLink& scenelink)
+void render_scene_from_camera(gemini::IEngineEntity** entity_list, View& view, renderer::SceneLink& scenelink)
 {
 	// setup constant buffer
-	glm::vec3 light_position;
-	light_position = camera.pos + -camera.view + glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 light_position = view.eye_position;
 	renderer::ConstantBuffer cb;
-	cb.modelview_matrix = &camera.matCam;
-	cb.projection_matrix = &camera.matProj;
-	cb.viewer_direction = &camera.view;
-	cb.viewer_position = &camera.eye_position;
+	cb.modelview_matrix = &view.modelview;
+	cb.projection_matrix = &view.projection;
+	cb.viewer_direction = &view.view_direction;
+	cb.viewer_position = &view.eye_position;
 	cb.light_position = &light_position;
 	
 	// use the entity list to render
@@ -224,17 +223,15 @@ void render_scene_from_camera(gemini::IEngineEntity** entity_list, Camera& camer
 	scenelink.draw(cb);
 }
 
-void render_entity_from_camera(gemini::IEngineEntity* entity, Camera& camera, renderer::SceneLink& scenelink)
+void render_entity_from_camera(gemini::IEngineEntity* entity, View& view, renderer::SceneLink& scenelink)
 {
 	// setup constant buffer
-	glm::vec3 light_position;
-	light_position = camera.pos + -camera.view + glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 light_position = view.eye_position;
 	renderer::ConstantBuffer cb;
-	
-	cb.modelview_matrix = &camera.matCam;
-	cb.projection_matrix = &camera.matProj;
-	cb.viewer_direction = &camera.view;
-	cb.viewer_position = &camera.eye_position;
+	cb.modelview_matrix = &view.modelview;
+	cb.projection_matrix = &view.projection;
+	cb.viewer_direction = &view.view_direction;
+	cb.viewer_position = &view.eye_position;
 	cb.light_position = &light_position;
 	
 	scenelink.clear();
@@ -250,7 +247,7 @@ class SceneRenderMethod
 {
 public:
 	virtual ~SceneRenderMethod() {}
-	virtual void render_view(gemini::IEngineEntity** entity_list, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
+	virtual void render_view(gemini::IEngineEntity** entity_list, platform::NativeWindow* window, const View& view) = 0;
 	virtual void render_viewmodel(gemini::IEngineEntity* entity, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
 	
 	virtual void render_gui() = 0;
@@ -266,8 +263,9 @@ class VRRenderMethod : public SceneRenderMethod
 public:
 	VRRenderMethod(vr::HeadMountedDevice* in_device, renderer::SceneLink& in_link) : device(in_device), scenelink(in_link) {}
 	
-	virtual void render_view(gemini::IEngineEntity** entity_list, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles)
+	virtual void render_view(gemini::IEngineEntity** entity_list, platform::NativeWindow* window, const View& view)
 	{
+#if 0
 		assert( device != nullptr );
 		
 		renderer::IRenderDriver * driver = renderer::driver();
@@ -281,16 +279,16 @@ public:
 		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
 		rs.run_commands();
 		rs.rewind();
-		
-		Camera camera;
-		camera.type = Camera::FIRST_PERSON;
-		camera.perspective(50.0f, window->render_width, window->render_height, 0.01f, 8192.0f);
-		camera.set_absolute_position(origin);
-		camera.eye_position = origin;
-		camera.view = glm::vec3(0, 0, -1);
-		camera.pitch = view_angles.x;
-		camera.yaw = view_angles.y;
-		camera.update_view();
+//		
+////		Camera camera;
+////		camera.type = Camera::FIRST_PERSON;
+////		camera.perspective(50.0f, window->render_width, window->render_height, 0.01f, 8192.0f);
+////		camera.set_absolute_position(origin);
+////		camera.eye_position = origin;
+////		camera.view = glm::vec3(0, 0, -1);
+////		camera.pitch = view_angles.x;
+////		camera.yaw = view_angles.y;
+////		camera.update_view();
 		
 		
 		glm::vec3 old_camera_position = camera.pos;
@@ -378,6 +376,7 @@ public:
 		camera.pos = old_camera_position;
 		
 		device->end_frame(driver);
+#endif
 	}
 	
 	virtual void render_viewmodel(gemini::IEngineEntity* entity, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles)
@@ -408,7 +407,7 @@ public:
 	}
 	
 	
-	virtual void render_view(gemini::IEngineEntity** entity_list, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles)
+	virtual void render_view(gemini::IEngineEntity** entity_list, platform::NativeWindow* window, const View& view)
 	{
 		RenderStream rs;
 		rs.add_cullmode(renderer::CullMode::CULLMODE_BACK);
@@ -419,22 +418,14 @@ public:
 		rs.add_clearcolor( 0.0, 0.0, 0.0, 1.0f );
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
 		rs.run_commands();
-		
-		Camera camera;
-		camera.type = Camera::FIRST_PERSON;
-		
-		camera.perspective(50.0f, window->render_width, window->render_height, 0.01f, 8192.0f);
-		
-		camera.set_absolute_position(origin);
-		camera.eye_position = origin;
-		camera.view = glm::vec3(0, 0, -1);
-		camera.pitch = view_angles.x;
-		camera.yaw = view_angles.y;
-		camera.update_view();
 
-		render_scene_from_camera(entity_list, camera, scenelink);
+		View newview = view;
+		newview.width = window->render_width;
+		newview.height = window->render_height;
+
+		render_scene_from_camera(entity_list, newview, scenelink);
 		
-		debugdraw::render(camera.matCam, camera.matProj, 0, 0, window->render_width, window->render_height);
+		debugdraw::render(view.modelview, view.projection, 0, 0, view.width, view.height);
 	}
 	
 	virtual void render_viewmodel(gemini::IEngineEntity* entity, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles)
@@ -447,19 +438,19 @@ public:
 		rs.add_clear( renderer::CLEAR_DEPTH_BUFFER );
 		rs.run_commands();
 		
-		Camera camera;
-		camera.type = Camera::FIRST_PERSON;
-		
-		camera.perspective(35.0f, window->render_width, window->render_height, 0.01f, 32.0f);
-		
-		camera.set_absolute_position(glm::vec3(-1.0f, 0.6f, 2.5f));
-		camera.eye_position = origin;
-		camera.view = glm::vec3(0, 0, -1);
-		camera.pitch = 0;
-		camera.yaw = 0;
-		camera.update_view();
-		
-		render_entity_from_camera(entity, camera, scenelink);
+//		Camera camera;
+//		camera.type = Camera::FIRST_PERSON;
+//		
+//		camera.perspective(35.0f, window->render_width, window->render_height, 0.01f, 32.0f);
+//		
+//		camera.set_absolute_position(glm::vec3(-1.0f, 0.6f, 2.5f));
+//		camera.eye_position = origin;
+//		camera.view = glm::vec3(0, 0, -1);
+//		camera.pitch = 0;
+//		camera.yaw = 0;
+//		camera.update_view();
+//		
+//		render_entity_from_camera(entity, camera, scenelink);
 	}
 	
 	virtual void render_gui()
@@ -909,7 +900,6 @@ class EngineInterface : public IEngineInterface
 	IExperimental* experimental_interface;
 	
 	SceneRenderMethod* render_method;
-	Camera* camera;
 	
 	platform::NativeWindow* main_window;
 	platform::IWindowLibrary* window_interface;
@@ -922,7 +912,6 @@ public:
 					gemini::physics::IPhysicsInterface* pi,
 					IExperimental* ei,
 					SceneRenderMethod* rm,
-					Camera* cam,
 					platform::NativeWindow* window,
 					platform::IWindowLibrary* window_interface) :
 	entity_manager(em),
@@ -930,7 +919,6 @@ public:
 	physics_interface(pi),
 	experimental_interface(ei),
 	render_method(rm),
-	camera(cam),
 	main_window(window),
 	window_interface(window_interface)
 	{
@@ -957,12 +945,12 @@ public:
 		platform::memory::allocator().deallocate(pointer);
 	}
 	
-	virtual void render_view(const glm::vec3& origin, const glm::vec2& view_angles)
+	virtual void render_view(const View& view)
 	{
 		// TODO: need to validate this origin/orientation is allowed.
 		// otherwise, client could ask us to render from anyone's POV.
 		EntityManager* em = static_cast<EntityManager*>(engine::api::instance()->entities());
-		render_method->render_view(em->get_entity_list(), main_window, origin, view_angles);
+		render_method->render_view(em->get_entity_list(), main_window, view);
 	}
 	
 	virtual void render_gui()
@@ -974,14 +962,12 @@ public:
 	{
 		render_method->render_viewmodel(entity, main_window, origin, view_angles);
 	}
-	
-	virtual void get_view_angles(glm::vec2& view_angles)
+
+	virtual void get_render_resolution(uint32_t& render_width, uint32_t& render_height)
 	{
-		if (camera)
-		{
-			view_angles.x = camera->pitch;
-			view_angles.y = camera->yaw;
-		}
+		assert(main_window);
+		render_width = main_window->render_width;
+		render_height = main_window->render_height;
 	}
 	
 	virtual void center_cursor()
@@ -1099,9 +1085,6 @@ public:
 };
 
 
-
-
-
 class EngineKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -1131,7 +1114,6 @@ private:
 	// rendering
 	renderer::SceneLink* scenelink;
 	SceneRenderMethod* render_method;
-	Camera main_camera;
 	
 	// game library
 	platform::DynamicLibrary* gamelib;
@@ -1161,7 +1143,7 @@ private:
 	audio::SoundHandle menu_hide;
 	
 	renderer::VertexStream alt_vs;
-	
+
 private:
 	bool load_config(Settings& config)
 	{
@@ -1822,7 +1804,6 @@ Options:
 			physics::api::instance(),
 			&experimental,
 			render_method,
-			&main_camera,
 			main_window,
 			window_interface
 		);
@@ -1956,13 +1937,15 @@ Options:
 		int y = 10;
 		{
 
-			debugdraw::text(x, y, core::str::format("active_camera->pos = %.2g %.2g %.2g", main_camera.pos.x, main_camera.pos.y, main_camera.pos.z), Color(255, 255, 255));
-			debugdraw::text(x, y+12, core::str::format("eye_position = %.2g %.2g %.2g", main_camera.eye_position.x, main_camera.eye_position.y, main_camera.eye_position.z), Color(255, 0, 255));
-			debugdraw::text(x, y+24, core::str::format("active_camera->view = %.2g %.2g %.2g", main_camera.view.x, main_camera.view.y, main_camera.view.z), Color(128, 128, 255));
-			debugdraw::text(x, y+36, core::str::format("active_camera->right = %.2g %.2g %.2g", main_camera.side.x, main_camera.side.y, main_camera.side.z), Color(255, 0, 0));
+//			debugdraw::text(x, y, core::str::format("active_camera->pos = %.2g %.2g %.2g", main_camera.pos.x, main_camera.pos.y, main_camera.pos.z), Color(255, 255, 255));
+//			debugdraw::text(x, y+12, core::str::format("eye_position = %.2g %.2g %.2g", main_camera.eye_position.x, main_camera.eye_position.y, main_camera.eye_position.z), Color(255, 0, 255));
+//			debugdraw::text(x, y+24, core::str::format("active_camera->view = %.2g %.2g %.2g", main_camera.view.x, main_camera.view.y, main_camera.view.z), Color(128, 128, 255));
+//			debugdraw::text(x, y+36, core::str::format("active_camera->right = %.2g %.2g %.2g", main_camera.side.x, main_camera.side.y, main_camera.side.z), Color(255, 0, 0));
 		}
-		debugdraw::text(x, y+48, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_raw_msec), Color(255, 255, 255));
-		debugdraw::text(x, y+60, core::str::format("# allocations = %i, total %2.2f MB\n", platform::memory::allocator().active_allocations(), platform::memory::allocator().active_bytes()/(float)(1024*1024)), Color(64, 102, 192));
+		debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_raw_msec), Color(255, 255, 255));
+		y += 12;
+		debugdraw::text(x, y, core::str::format("# allocations = %i, total %2.2f MB\n", platform::memory::allocator().active_allocations(), platform::memory::allocator().active_bytes()/(float)(1024*1024)), Color(64, 102, 192));
+		y += 12;
 		
 		
 		if (draw_physics_debug)

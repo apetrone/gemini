@@ -32,4 +32,21 @@ namespace gemini
 	typedef uint8_t PlayerIndex;
 	
 	const uint16_t MAX_ENTITIES = 2048;
+	
+	// call this 'View' for now, but I don't like it just being called 'View'
+	struct View
+	{
+		// render dimensions of this view
+		uint32_t width;
+		uint32_t height;
+	
+		glm::mat4 modelview;
+		glm::mat4 projection;
+		
+		// the eye position in world coordinates
+		glm::vec3 eye_position;
+		
+		// a normalized view vector from the eye_position
+		glm::vec3 view_direction;
+	};
 } // namespace gemini
