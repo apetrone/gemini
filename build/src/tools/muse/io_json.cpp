@@ -226,35 +226,6 @@ namespace gemini
 		jnode["name"] = node->name.c_str();
 		jnode["type"] = node->type.c_str();
 		
-		Json::Value jscale;
-		jscale.append(node->scale.x);
-		jscale.append(node->scale.y);
-		jscale.append(node->scale.z);
-		jnode["scaling"] = jscale;
-		
-		Json::Value jrotation;
-		if (write_rotations_as_quaternions)
-		{
-			glm::quat q = glm::quat(node->rotation);
-			jrotation.append(q.x);
-			jrotation.append(q.y);
-			jrotation.append(q.z);
-			jrotation.append(q.w);
-		}
-		else
-		{
-			jrotation.append(node->rotation.x);
-			jrotation.append(node->rotation.y);
-			jrotation.append(node->rotation.z);
-		}
-		jnode["rotation"] = jrotation;
-		
-		Json::Value jtranslation;
-		jtranslation.append(node->translation.x);
-		jtranslation.append(node->translation.y);
-		jtranslation.append(node->translation.z);
-		jnode["translation"] = jtranslation;
-		
 		Json::Value child_nodes(Json::arrayValue);
 		for (auto child : node->children)
 		{
