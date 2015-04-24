@@ -86,9 +86,6 @@ namespace gemini
 
 		// flip UVs vertically
 		bool flip_vertically;
-
-		// bake transforms from hierarchy into geometry
-		bool bake_transforms;
 		
 		// export the animation only
 		bool animation_only;
@@ -98,10 +95,6 @@ namespace gemini
 			// some sane defaults?
 			compress_animation = false;
 			flip_vertically = false;
-			
-			// this should be true for static meshes
-			// and false for skeletal meshes.
-			bake_transforms = false;
 			
 			animation_only = false;
 		}
@@ -119,7 +112,7 @@ namespace gemini
 
 		void bake_geometry_transform(datamodel::Node* node, glm::mat4& parent_transform)
 		{
-			LOGV("node: %s\n", node->name.c_str());
+//			LOGV("node: %s\n", node->name.c_str());
 			
 			// local transform is from this node
 			glm::mat4 local_transform;
@@ -142,7 +135,7 @@ namespace gemini
 				assert(node->mesh != 0);
 				if (node->mesh)
 				{
-					LOGV("applying transform to mesh '%s'\n", node->name.c_str());
+//					LOGV("applying transform to mesh '%s'\n", node->name.c_str());
 					for(size_t v = 0; v < node->mesh->vertices.size(); ++v)
 					{
 						glm::vec3& vertex = node->mesh->vertices[v];
@@ -167,9 +160,7 @@ namespace gemini
 			{
 				bake_geometry_transform(child, transform);
 			}
-			
-			
-			
+
 			return result;
 		}
 	} // namespace extensions
@@ -226,8 +217,8 @@ namespace gemini
 			
 			// TODO: add modifier to flip UVs vertically
 			
-			// bake transforms into geometry nodes
-			if (options.bake_transforms)
+			// bake transforms into geometry nodes (only for static meshes)
+			if (!model.skeleton)
 			{
 				extensions::bake_node_transforms(model);
 			}
