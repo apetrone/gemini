@@ -140,7 +140,12 @@ namespace platform
 				for (; it != allocated_blocks.end(); ++it)
 				{
 					MemoryHeader* block = (*it);
-					fprintf(stdout, "[memory-leak] [file=%s] [line=%i] [size=%lu] [alloc_num=%lu]\n", block->file, block->line, (unsigned long)block->alloc_size, (unsigned long)block->alloc_num);
+					fprintf(stdout, "[memory-leak] [addr=%p] [file=%s] [line=%i] [size=%lu] [alloc_num=%lu]\n",
+						(((char*)block)+MemoryHeaderSize),
+						block->file,
+						block->line,
+						(unsigned long)block->alloc_size,
+						(unsigned long)block->alloc_num);
 				}
 			}
 				
