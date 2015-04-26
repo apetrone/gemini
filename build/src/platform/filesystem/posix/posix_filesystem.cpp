@@ -82,4 +82,9 @@ namespace platform
 	{
 		return posix_make_directory(path);
 	}
+
+	const char* get_user_directory()
+	{
+		return posix_get_user_directory();
+	}
 } // namespace platform

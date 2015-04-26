@@ -24,6 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <stdint.h> // for types
+
 namespace kernel
 {
 	struct Parameters;
