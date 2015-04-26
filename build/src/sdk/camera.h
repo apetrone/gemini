@@ -83,46 +83,11 @@ struct Camera
 		FIRST_PERSON,
 		TARGET
 	};
-	
-	// camera variables
-	real yaw, pitch;
-	glm::vec3 pos;
-	
-	glm::mat4 matProj;
-	glm::mat4 matCam;
-
-	// components as matrices
-	glm::mat4 inverse_rotation;
-	glm::mat4 inverse_translation;
-	
-	// final inverted world matrix
-	glm::mat4 inverse_world_transform;
-	
-	// directional vectors
-	glm::vec3 view;
-	glm::vec3 side;
-	
-	glm::vec3 target_lookatOffset;
-	glm::vec3 eye_position;
-	
-	CameraType type;
-	
-	//
-	// options
-	real move_speed;
-	real sensitivity;
-	bool invert_y_axis;
-	bool is_ortho;
-	float aspect_ratio;
-	float fovy;
-	
-	float near_clip;
-	float far_clip;
-	
+		
 	Camera(CameraType _type = FIRST_PERSON);
 	
 	// sets world position of the camera
-	void set_absolute_position( const glm::vec3 & position );
+
 	void invert_yaxis( bool invert ) { invert_y_axis = invert; }
 	
 	// called when the mouse moves to update the view
@@ -144,4 +109,56 @@ struct Camera
 	
 	const glm::mat4& get_inverse_world_transform() const { return inverse_world_transform; }
 	const glm::mat4& get_inverse_rotation() const { return inverse_rotation; }
+	
+	
+	void set_yaw(real y) { yaw = y; }
+	void set_pitch(real p) { pitch = p; }
+	void set_position(const glm::vec3& position);
+	const glm::vec3& get_position() const { return pos; }
+		
+	void set_view(const glm::vec3& view_direction) { view = view_direction; }
+	void set_type(const CameraType cameratype) { type = cameratype; }
+	void set_target_offset(const glm::vec3& in_target_offset) { target_offset = in_target_offset; }
+	
+	const glm::mat4& get_modelview() const { return modelview; }
+	const glm::mat4& get_projection() const { return projection; }
+	const glm::vec3& get_view() const { return view; }
+	const glm::vec3& get_eye_position() const { return eye_position; }
+	
+private:
+	// camera variables
+	real yaw;
+	real pitch;
+	glm::vec3 pos;
+	
+	glm::mat4 projection;
+	glm::mat4 modelview;
+	
+	// components as matrices
+	glm::mat4 inverse_rotation;
+	glm::mat4 inverse_translation;
+	
+	// final inverted world matrix
+	glm::mat4 inverse_world_transform;
+	
+	// directional vectors
+	glm::vec3 view;
+	glm::vec3 side;
+	
+	glm::vec3 target_offset;
+	glm::vec3 eye_position;
+	
+	CameraType type;
+	
+	//
+	// options
+	real move_speed;
+	real sensitivity;
+	bool invert_y_axis;
+	bool is_ortho;
+	float aspect_ratio;
+	float fovy;
+	
+	float near_clip;
+	float far_clip;
 }; // Camera

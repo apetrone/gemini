@@ -139,10 +139,9 @@ void Camera::update_view()
 	{
 		glm::vec3 target = world_pos + view;
 		inverse_rotation = glm::lookAt(glm::vec3(), view, up);
-		matCam = glm::lookAt(world_pos, target, up );
+		modelview = glm::lookAt(world_pos, target, up );
 		eye_position = world_pos;
-		
-		inverse_world_transform = matCam;
+		inverse_world_transform = modelview;
 	}
 	else if ( type == TARGET )
 	{
@@ -158,7 +157,7 @@ void Camera::update_view()
 		inverse_rotation = glm::lookAt( glm::vec3(), view, up );
 		
 		
-		glm::vec3 pivot_point = target_lookatOffset;
+		glm::vec3 pivot_point = target_offset;
 		
 		// setup pivot, and inverse pivot matrices
 		inv_pivot = glm::translate( glm::mat4(1.0), -pivot_point );
@@ -166,26 +165,30 @@ void Camera::update_view()
 
 		
 		// add an arbitrary viewing offset
-		inv_position = target_position + target_lookatOffset;
+		inv_position = target_position + target_offset;
 
 		inv_translation = glm::translate( inv_translation, -inv_position );
 		
 		// target camera with position + orientation
-		matCam = inv_pivot * inverse_rotation * pivot * inv_translation;
+		modelview = inv_pivot * inverse_rotation * pivot * inv_translation;
 		
 		// now calculate eye pos
-		eye_position = view * target_lookatOffset.z;
+		eye_position = view * target_offset.z;
 		
 		// eye is Cam -> Target; so invert it. It now becomes a vector from the origin to the eye position
 		eye_position = -eye_position + target_position;
 		
-		inverse_world_transform = matCam;
+		inverse_world_transform = modelview;
 	}
 }
 
-void Camera::set_absolute_position( const glm::vec3 & position )
+void Camera::set_position(const glm::vec3& position)
 {
 	pos = position;
+	if (type == Camera::FIRST_PERSON)
+	{
+		eye_position = position;
+	}
 	update_view();
 }
 
@@ -199,7 +202,7 @@ void Camera::perspective( real fovy, int32_t width, int32_t height, real nearz, 
 	this->aspect_ratio = (float)(width/(float)height);
 	this->near_clip = nearz;
 	this->far_clip = farz;
-	matProj = glm::perspective(glm::radians(fovy), (width/(float)height), nearz, farz );
+	projection = glm::perspective(glm::radians(fovy), (width/(float)height), nearz, farz );
 	is_ortho = false;
 }
 
@@ -208,6 +211,6 @@ void Camera::ortho( real left, real right, real bottom, real top, real nearz, re
 	this->near_clip = nearz;
 	this->far_clip = farz;
 	this->aspect_ratio = 1.0f;
-	matProj = glm::ortho( left, right, bottom, top, nearz, farz );
+	projection = glm::ortho( left, right, bottom, top, nearz, farz );
 	is_ortho = true;
 }
