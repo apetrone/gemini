@@ -523,6 +523,139 @@ void test_sys(int argc, char**argv)
 }
 
 
+void test_renderer()
+{
+#if 0
+	Gamification has already seeped into parenting.
+	"if you go to sleep, I'll give you fifty points back"
+
+	- pick rendering api (varies between platforms)
+	- pick window api (varies between desktop and embedded devices; might also be X11, Wayland, Mir, or an embedded specific (dispmanx))
+	- input api should be fairly consistent, but this also depends on the desktop environment.
+	-- On Linux, it may use X11 or it may use raw input, or a library like udev.
+	-- might be safer to just pick one for input
+
+
+
+
+
+	Desktops:
+	- native egl?, os-specific (wgl, glX, cocoa)
+	- opengl, vulkan, d3d12, mantle, metal
+
+	RaspberryPi:
+	- native egl
+	- glesv2
+
+	iPhone:
+	- native egl?, os-specific
+	- glesv2, glesv3, metal
+
+	Android:
+	- java egl interop
+	- glesv2, glesv3, opengl 4+
+
+
+	- platform render interop
+	-- mac: NSOpenGLView-subclassed view and NSWindow-subclassed window
+	--- provides keyboard and mouse messages as well as focus change notifications
+
+	- create render context
+	- destroy render context
+	- activate render context
+	- swap buffers (os, api-specific)
+	- fetch symbol (os-specific)
+	- get render pixel format (I believe this was used to abstract this call on Linux)
+
+
+	
+	- Window Interface Needs to provide:
+	-- function to create window with attribs:
+		- window x, y
+		- window width, height
+		- fullscreen
+		- disable resizing
+		- icons (win32)
+		-- render depth size
+		-- render color size
+		-- render alpha size
+		-- render stencil size
+		-- render multisampling
+
+	- create window
+	- destroy window
+	- get window size
+	- get window render size
+	- get screen count
+	- get screen size (for screen index)
+
+	- need a util function to create a dummy window (when OpenGL is used; sigh)
+
+	- dispatch input messages / notifications
+	- post window creation (X11 usest this to create input context)
+	- pre window destruction (X11 uses this destroy input context)
+	
+
+#endif
+
+
+
+#if 0
+	renderer backend customizable
+	-- this basically needs to be able to interpret the command queue (during generation)
+	-- and then execution
+
+
+	- create a render device
+	-- create a platform window with rendering context
+
+	- setup the pipeline and command queue
+
+	renderer::device_parameters params;
+
+	// select a device type
+	params.type = renderer::device_parameters::DIRECTFB;
+	params.type = renderer::device_parameters::DIRECT3D12;
+	params.type = renderer::device_parameters::OPENGL;	
+	params.type = renderer::device_parameters::OPENGLES2;	
+	params.type = renderer::device_parameters::OPENGLES3;	
+	params.type = renderer::device_parameters::VULKAN;
+
+	// set options (may or may not be available for all device types)
+	params.vsync = true;
+	params.doublebuffer = true;
+	params.depth_size = 24;
+	
+	// OpenGL-specific
+	params.major_version = 3;
+	params.minor_version = 2;
+	params.share_context = true;
+
+	renderer::render_device* device = renderer::create_device(params);
+	platform::window* main_window = platform::create_window(xyz, device);
+	
+	// setup other graphics state here, (defer until later)
+	// pipeline
+
+	renderer::command_queue* cqueue = device->create_command_queue();	
+
+	cqueue->clear_color(0, 0, 0, 0);
+	cqueue->clear();
+
+
+	// poll + dispatch events for window
+	device->activate_context(main_window->get_render_context());
+
+	// send this buffer to the gpu
+	device->execute_queue(cqueue);
+
+	device->swap_buffers(main_window->get_render_context());
+
+	
+#endif
+
+}
+
 
 void test_main(int argc, char** argv)
 {
