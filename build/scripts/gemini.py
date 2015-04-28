@@ -203,6 +203,9 @@ def setup_common_libs(arguments, product):
 		]
 
 	linux = product.layout(platform="linux")
+	linux.cflags += [
+		"-Wpedantic"
+	]
 	linux.links += [
 		"pthread",
 		"dl",
