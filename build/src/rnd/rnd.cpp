@@ -605,31 +605,11 @@ void test_renderer()
 	-- this basically needs to be able to interpret the command queue (during generation)
 	-- and then execution
 
-
 	- create a render device
 	-- create a platform window with rendering context
 
 	- setup the pipeline and command queue
 
-	renderer::device_parameters params;
-
-	// select a device type
-	params.type = renderer::device_parameters::DIRECTFB;
-	params.type = renderer::device_parameters::DIRECT3D12;
-	params.type = renderer::device_parameters::OPENGL;	
-	params.type = renderer::device_parameters::OPENGLES2;	
-	params.type = renderer::device_parameters::OPENGLES3;	
-	params.type = renderer::device_parameters::VULKAN;
-
-	// set options (may or may not be available for all device types)
-	params.vsync = true;
-	params.doublebuffer = true;
-	params.depth_size = 24;
-	
-	// OpenGL-specific
-	params.major_version = 3;
-	params.minor_version = 2;
-	params.share_context = true;
 
 	renderer::render_device* device = renderer::create_device(params);
 	platform::window* main_window = platform::create_window(xyz, device);
@@ -650,9 +630,43 @@ void test_renderer()
 	device->execute_queue(cqueue);
 
 	device->swap_buffers(main_window->get_render_context());
-
-	
 #endif
+
+	core::HashSet<std::string, std::string> params;
+
+	// select a device type
+	params["renderer"] = "directfb";
+	params["renderer"] = "direct3d12";
+	params["renderer"] = "opengl";
+	params["renderer"] = "opengles2";
+	params["renderer"] = "opengles3";
+	params["renderer"] = "vulkan";
+
+	// set options (may or may not be available for all device types)
+	params["vsync"] = "true";
+	params["double_buffer"] = "true";
+	params["depth_size"] = "24";
+
+	// OpenGL-specific
+	params["major_version"] = "3";
+	params["minor_version"] = "2";
+	params["share_context"] = "true";
+
+
+
+// A question of organization arises when you think about needing to maintain
+// software and then extend it to support additional platforms that may come out.
+// There's a certain balance between, say, a major library like Scaleform,
+// and a smaller, nimble library, like fmod, or something from RAD Game Tools.
+// The latter code bases could be ported to a new platform with relative ease.
+// While, Scaleform felt like a large undertaking to traverse through the source code and 
+// get all the preprocessor bits sorted out.
+
+// registration methods (for a factory)
+// - include ALL the classes and manually add them
+// - abuse static initialization to register the classes
+
+
 
 }
 
@@ -662,7 +676,10 @@ void test_main(int argc, char** argv)
 	platform::startup();
 	core::startup();
 //	test_rendering();
-	test_sys(argc, argv);
+//	test_sys(argc, argv);
+
+
+	test_renderer();	
 	
 	core::shutdown();
 	platform::shutdown();
