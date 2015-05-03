@@ -248,7 +248,26 @@ namespace platform
 	/// @returns The $(HOME) environment variable in Linux or %HOMEPATH% on Windows
 	const char* get_user_directory();
 
+	// ---------------------------------------------------------------------
+	// serial
+	// ---------------------------------------------------------------------
 	
+	struct Serial
+	{
+	};
+	
+	Serial* serial_open(const char* device, uint32_t baud_rate);
+	void serial_close(Serial* serial);
+	
+	/// @desc Read bytes to buffer from serial device
+	/// @param total_bytes The maximum number of bytes to read into buffer
+	/// @returns Total bytes read
+	int serial_read(Serial* serial, void* buffer, int total_bytes);
+	
+	/// @desc Write bytes from buffer to serial device
+	/// @param total_bytes The maximum number of bytes to write from the buffer
+	/// @returns Total bytes read
+	int serial_write(Serial* serial, const void* buffer, int total_bytes);
 	
 	// ---------------------------------------------------------------------
 	// thread
