@@ -396,7 +396,7 @@ namespace core
 		{
 			int32_t current_index = starting_position;
 			int32_t max_iterations = table_size-1;
-			while(max_iterations > 0)
+			while(max_iterations > -1)
 			{
 				int32_t bucket_index = current_index % table_size;
 				Bucket* bucket = &table[bucket_index];
@@ -633,7 +633,13 @@ namespace core
 		
 		Iterator begin() const
 		{
-			return Iterator(table, find_first_occupied(0), table_size);
+			// if the hash set is empty; we have no valid iterator.
+			int32_t index = find_first_occupied(0);
+			if (index == -1)
+			{
+				index = table_size;
+			}
+			return Iterator(table, index, table_size);
 		}
 		
 		Iterator end() const
