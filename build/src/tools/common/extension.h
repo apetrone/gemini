@@ -68,7 +68,7 @@ namespace gemini
 			Reader() {}
 			virtual ~Reader() {}
 			
-			virtual void read(Type* model, core::util::DataStream& data) = 0;
+			virtual bool read(Type* model, core::util::DataStream& data) = 0;
 		};
 		
 		// interface for writer extensions
@@ -84,7 +84,7 @@ namespace gemini
 			// should output a target asset. Usually, the writer will append
 			// a file extension onto this base path and then open this file
 			// for writing.
-			virtual void write(const std::string& abs_base_path, Type* model) = 0;
+			virtual bool write(const std::string& abs_base_path, Type* model) = 0;
 		};
 		
 		// generic 'extension' data; subject to change

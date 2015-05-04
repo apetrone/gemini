@@ -887,7 +887,7 @@ namespace gemini
 		return 0.0f;
 	}
 
-	void AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_source)
+	bool AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_source)
 	{
 		const char* path = (const char*)data_source.get_data();
 		
@@ -906,7 +906,7 @@ namespace gemini
 		{
 			LOGE("initialize exporter failed\n");
 			LOGE("%s\n", importer->GetStatus().GetErrorString());
-			return;
+			return false;
 		}
 		
 		// query and print out the detected file version
@@ -1072,5 +1072,7 @@ namespace gemini
 				}
 			}
 		}
+		
+		return true;
 	}
 } // namespace gemini

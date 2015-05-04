@@ -210,7 +210,11 @@ namespace gemini
 			
 			util::MemoryStream mds;
 			mds.data = (uint8_t*)input_path();
-			reader->read(&model, mds);
+			if (!reader->read(&model, mds))
+			{
+				LOGV("Error reading file '%s'\n", input_path());
+				return platform::Result(platform::Result::Failure, "Error reading input file");
+			}
 			
 			// TODO: compress animation keys
 			// This should eliminate duplicate values by merging them into a single key.
