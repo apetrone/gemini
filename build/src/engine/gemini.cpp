@@ -67,6 +67,55 @@
 #include <platform/windowlibrary.h>
 
 
+typedef core::FixedSizeQueue<gemini::GameMessage, 64> EventQueueType;
+
+struct DataInput
+{
+	bool execute;
+	
+	glm::quat orientation;
+	platform::Serial* device;
+	platform::Thread thread_data;
+	EventQueueType* event_queue;
+};
+
+void data_thread(void* context)
+{
+	DataInput* block = static_cast<DataInput*>(context);
+	
+	LOGV("entering data thread\n");
+	
+	uint64_t last_recv = 0;
+	while(block->execute)
+	{
+		const uint32_t PACKET_SIZE = 128;
+		uint8_t buffer[ PACKET_SIZE ];
+		if (platform::serial_read(block->device, buffer, PACKET_SIZE) == PACKET_SIZE)
+		{
+			uint64_t current = platform::microseconds();
+			float delta_milliseconds = (current - last_recv)*0.001f;
+			
+			last_recv = current;
+			
+			glm::quat* q = static_cast<glm::quat*>((void*)&buffer);
+			block->orientation = *q;
+//			LOGV("%2.2f, %2.2f, %2.2f, %2.2f\n", q->x, q->y, q->z, q->w);
+			
+			{
+				// push a new event for the latest orientation
+				gemini::GameMessage orientation_message;
+				orientation_message.type = gemini::GameMessage::Orientation;
+				glm::quat flipped(q->w, q->x, -q->z, -q->y);
+				glm::quat y = glm::quat(glm::vec3(0, mathlib::degrees_to_radians(180), 0));
+				orientation_message.orientation = glm::inverse(y * flipped);
+				block->event_queue->push_back(orientation_message);
+			}
+		}
+	}
+	
+	LOGV("exiting data thread\n");
+}
+
 
 using namespace core;
 using namespace gemini; // for renderer
@@ -1109,7 +1158,7 @@ private:
 	double accumulator;
 	uint64_t last_time;
 	
-	core::FixedSizeQueue<gemini::GameMessage, 64>* event_queue;
+	EventQueueType* event_queue;
 	
 	// rendering
 	renderer::SceneLink* scenelink;
@@ -1143,6 +1192,8 @@ private:
 	audio::SoundHandle menu_hide;
 	
 	renderer::VertexStream alt_vs;
+
+	DataInput data_input;
 
 private:
 	bool load_config(Settings& config)
@@ -1621,6 +1672,30 @@ Options:
 		
 		params.step_interval_seconds = (1.0f/(float)config.physics_tick_rate);
 		
+		
+		// load the input table
+//		InputRenameMe irm;
+//		irm.load_input_table("conf/input.conf");
+		
+		
+		const char* serial_device = "/dev/cu.usbmodem582211";
+		data_input.device = platform::serial_open(serial_device, 1000000);
+		if (!data_input.device)
+		{
+			LOGW("Unable to open serial device at '%s'\n", serial_device);
+		}
+		
+		data_input.execute = true;
+		data_input.event_queue = event_queue;
+		
+		
+		if (data_input.device)
+		{
+			// fire up a thread
+			platform::thread_create(data_input.thread_data, data_thread, &data_input);
+		}
+		
+		
 		platform::WindowParameters window_params;
 		
 		// TODO: we should load these from a config; for now just set them.
@@ -2059,6 +2134,16 @@ Options:
 	
 	virtual void shutdown()
 	{
+		// shutdown data input thread
+		if (data_input.device)
+		{
+			data_input.execute = false;
+			LOGV("waiting for data input thread to finish...\n");
+			platform::thread_join(data_input.thread_data);
+			platform::serial_close(data_input.device);
+		}
+	
+	
 		close_gamelibrary();
 		
 		// shutdown gui
