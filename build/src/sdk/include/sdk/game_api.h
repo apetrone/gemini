@@ -45,22 +45,30 @@ namespace gemini
 			// button: mouse button
 			// params[0]: is_down
 
-			MouseMove     = 24,  // 16
+			MouseMove     = MouseEvent | 16,
 			// params[0]: abs mouse x
 			// params[1]: abs mouse y
 			
-			MouseDelta	  = 40, // 32
+			MouseDelta	  = MouseEvent | 32,
 			// params[0]: rel mouse x
 			// params[1]: rel mouse y
 			
-			MouseWheel    = 72, // 64
+			MouseWheel    = MouseEvent | 64,
 			// params[0]: wheel delta
+			
+			
+			Orientation	  = 512
+			// params[0]: quat.x
+			// params[1]: quat.y
+			// params[2]: quat.z
+			// params[3]: quat.w
 		};
 		
 		uint32_t type;
 		
 		uint32_t button;
 		int32_t params[4];
+		glm::quat orientation;
 		
 		GameMessage() :
 			type(0),
