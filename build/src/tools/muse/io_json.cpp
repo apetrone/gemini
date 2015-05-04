@@ -375,7 +375,7 @@ namespace gemini
 	}
 
 
-	void JsonModelWriter::write(const std::string& abs_base_path, datamodel::Model* model)
+	bool JsonModelWriter::write(const std::string& abs_base_path, datamodel::Model* model)
 	{
 		Json::Value jroot;
 		Json::Value jnodes(Json::arrayValue);
@@ -384,7 +384,7 @@ namespace gemini
 		{
 			LOGW("Instructed not to export anything. wat?\n");
 			assert(0);
-			return;
+			return false;
 		}
 
 		Json::Value jmaterials(Json::arrayValue);
@@ -451,5 +451,7 @@ namespace gemini
 		{
 			write_animations(abs_base_path, model);
 		}
+		
+		return true;
 	} // write
 } // namespace gemini
