@@ -886,6 +886,36 @@ namespace gemini
 	
 		return 0.0f;
 	}
+	
+	bool AutodeskFbxReader::find_skeleton(FbxNode* node)
+	{
+		// Nodes exported by blender do not have
+		// a proper NodeAttribute when using FBX 7.4 binary.
+		if (node->GetNodeAttribute())
+		{
+			FbxNodeAttribute::EType node_attribute_type = node->GetNodeAttribute()->GetAttributeType();
+			if (node_attribute_type == FbxNodeAttribute::eSkeleton)
+			{
+				// If you hit this assert, there's another skeleton at the root level.
+				// At the moment, only a single skeleton is supported.
+				assert(extension_state.model->skeleton == 0);
+				
+				extension_state.model->skeleton = CREATE(datamodel::Skeleton);
+				process_skeleton(extension_state, -1, node);
+				return true;
+			}
+		}
+	
+		for (int index = 0; index < node->GetChildCount(); ++index)
+		{
+			if (find_skeleton(node->GetChild(index)))
+			{
+				break;
+			}
+		}
+		
+		return false;
+	}
 
 	bool AutodeskFbxReader::read(datamodel::Model* model, util::DataStream& data_source)
 	{
@@ -1009,25 +1039,7 @@ namespace gemini
 			// and we need to have blendweights when reading in the geometry.
 			
 			// 1. build skeleton
-			for (int index = 0; index < fbxroot->GetChildCount(); ++index)
-			{
-				FbxNode* node = fbxroot->GetChild(index);
-				// Nodes exported by blender do not have
-				// a proper NodeAttribute when using FBX 7.4 binary.
-				if (node->GetNodeAttribute())
-				{
-					FbxNodeAttribute::EType node_attribute_type = node->GetNodeAttribute()->GetAttributeType();
-					if (node_attribute_type == FbxNodeAttribute::eSkeleton)
-					{
-						// If you hit this assert, there's another skeleton at the root level.
-						// At the moment, only a single skeleton is supported.
-						assert(extension_state.model->skeleton == 0);
-						
-						extension_state.model->skeleton = CREATE(datamodel::Skeleton);
-						process_skeleton(extension_state, -1, node);
-					}
-				}
-			}
+			find_skeleton(fbxroot);
 			
 			// now process all weights
 			// This must be done after hierarchy traversal to ensure all the bones

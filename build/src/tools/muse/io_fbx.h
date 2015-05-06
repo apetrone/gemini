@@ -109,6 +109,8 @@ namespace gemini
 		DECLARE_PLUGIN_CLASS(AutodeskFbxReader);
 		
 		AutodeskFbxExtensionState extension_state;
+
+		bool find_skeleton(FbxNode* root);
 		
 	public:
 		AutodeskFbxReader();
