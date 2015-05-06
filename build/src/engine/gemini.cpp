@@ -680,11 +680,9 @@ class ModelInterface : public gemini::IModelInterface
 					const animation::Channel& rx = node[3];
 					const animation::Channel& ry = node[4];
 					const animation::Channel& rz = node[5];
+					const animation::Channel& rw = node[6];
 					
-					// pitch, yaw, roll (in radians)
-					rot = glm::quat(glm::vec3(rx(), ry(), rz()));
-					
-//					LOGV("%g %g %g\n", rot.x, rot.y, rot.z);					
+					rot = glm::quat(rw(), rx(), ry(), rz());
 				}
 
 				
