@@ -66,23 +66,14 @@ namespace gemini
 
 
 
-	template <class Type>
-	void from_fbx(Type& output, const FbxVector4& input);
-
-	template <>
 	void from_fbx(glm::vec3& output, const FbxVector4& input)
 	{
 		output = glm::vec3(input[0], input[1], input[2]);
 	}
-
-	template <>
-	void from_fbx(glm::quat& output, const FbxVector4& input)
+	
+	void from_fbx(glm::quat& output, const FbxQuaternion& input)
 	{
-		// convert these to radians
-		float x = mathlib::degrees_to_radians(input[0]);
-		float y = mathlib::degrees_to_radians(input[1]);
-		float z = mathlib::degrees_to_radians(input[2]);
-		output = glm::quat(glm::vec3(x, y, z));
+		output = glm::quat(input[3], input[0], input[1], input[2]);
 	}
 
 	
@@ -525,6 +516,8 @@ namespace gemini
 
 			animation.duration_seconds = end.GetFrameCount(time_mode)/state.frames_per_second;
 			
+			FbxQuaternion last_rotation;
+			
 			for (FbxLongLong local_time = start.GetFrameCount(time_mode); local_time <= end.GetFrameCount(time_mode); ++local_time)
 			{
 				FbxTime current_time;
@@ -539,8 +532,9 @@ namespace gemini
 	
 				FbxAMatrix transform = global_transform;
 				FbxVector4 scaling = fbxnode->EvaluateLocalScaling(current_time);
-				FbxVector4 rotation = fbxnode->EvaluateLocalRotation(current_time);
 				FbxVector4 translation = fbxnode->EvaluateLocalTranslation(current_time);
+				
+				FbxQuaternion rotation;
 				
 				if (bone->parent != -1)
 				{
@@ -550,22 +544,31 @@ namespace gemini
 					FbxAMatrix parent_global_transform = parent->EvaluateGlobalTransform(current_time);
 					FbxAMatrix local_transform = parent_global_transform.Inverse() * global_transform;
 					scaling = local_transform.GetS();
-					rotation = local_transform.GetR();
 					translation = local_transform.GetT();
-//					LOGV("s: %g %g %g\n", scaling[0], scaling[1], scaling[2]);
-//					LOGV("r: %g %g %g\n", rotation[0], rotation[1], rotation[2]);
-//					LOGV("t: %g %g %g\n", translation[0], translation[1], translation[2]);
+					rotation = local_transform.GetQ();
 				}
 				else
 				{
 					scaling = global_transform.GetS();
-					rotation = global_transform.GetR();
 					translation = global_transform.GetT();
+					rotation = global_transform.GetQ();
 				}
+				
+				// We need to check if the quaternion sign has flipped
+				// otherwise we'll end up with rapid opposite rotations in the animation.
+				if (last_rotation.DotProduct(rotation) < 0)
+				{
+					rotation = -rotation;
+				}
+				last_rotation = rotation;
 
+
+//				LOGV("s: %g %g %g\n", scaling[0], scaling[1], scaling[2]);
+//				LOGV("r: %2.2f, %2.2f, %2.2f, %2.2f\n", rotation[3], rotation[0], rotation[1], rotation[2]);
+//				LOGV("t: %g %g %g\n", translation[0], translation[1], translation[2]);
 
 				glm::vec3 key_scaling;
-				glm::vec3 key_rotation;
+				glm::quat key_rotation;
 				glm::vec3 key_translation;
 
 				from_fbx(key_scaling, scaling);
@@ -814,11 +817,11 @@ namespace gemini
 
 			FbxAMatrix& local_transform = fbxnode->EvaluateLocalTransform();
 			const FbxDouble3& local_scale = local_transform.GetS();
-			const FbxDouble3& local_rotation = local_transform.GetR();
+			const FbxQuaternion& local_rotation = local_transform.GetQ();
 			const FbxDouble3& local_translation = local_transform.GetT();
-			LOGV("ls: %g %g %g\n", local_scale[0], local_scale[1], local_scale[2]);
-			LOGV("lr: %g %g %g\n", local_rotation[0], local_rotation[1], local_rotation[2]);
-			LOGV("lt: %g %g %g\n", local_translation[0], local_translation[1], local_translation[2]);
+//			LOGV("ls: %g %g %g\n", local_scale[0], local_scale[1], local_scale[2]);
+//			LOGV("lr: %g %g %g\n", local_rotation[0], local_rotation[1], local_rotation[2]);
+//			LOGV("lt: %g %g %g\n", local_translation[0], local_translation[1], local_translation[2]);
 
 			from_fbx(node->scale, local_scale);
 			

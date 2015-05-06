@@ -44,8 +44,6 @@ namespace gemini
 	class JsonModelWriter : public tools::Writer<datamodel::Model>
 	{
 		DECLARE_PLUGIN_CLASS(JsonModelWriter);
-		
-		bool write_rotations_as_quaternions;
 
 		void write_animations(const std::string& abs_base_path, datamodel::Model* model);
 		
