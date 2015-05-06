@@ -397,7 +397,7 @@ namespace gemini
 					LOGV("reading keyframes for bone \"%s\", joint->index = %i\n", joint->name(), joint->index);
 					
 					core::FixedArray<KeyframeList>& kfl = sequence->AnimationSet[joint->index];
-					kfl.allocate(6);
+					kfl.allocate(7);
 
 					// translation
 					{
@@ -454,8 +454,8 @@ namespace gemini
 						ry.allocate(total_keys); ry.duration_seconds = 2.0f;
 						KeyframeList& rz = kfl[5];
 						rz.allocate(total_keys); rz.duration_seconds = 2.0f;
-//						KeyframeList& rw = kfl[6];
-//						rw.allocate(total_keys); rw.duration_seconds = 2.0f;
+						KeyframeList& rw = kfl[6];
+						rw.allocate(total_keys); rw.duration_seconds = 2.0f;
 						
 						for (unsigned int index = 0; index < values.size(); ++index)
 						{
@@ -465,13 +465,15 @@ namespace gemini
 							float x = value[0].asFloat();
 							float y = value[1].asFloat();
 							float z = value[2].asFloat();
+							float w = value[3].asFloat();
 							
 							float t = time.asFloat();
 							
-							rx.set_key(index, t, mathlib::degrees_to_radians(x));
-							ry.set_key(index, t, mathlib::degrees_to_radians(y));
-							rz.set_key(index, t, mathlib::degrees_to_radians(z));
-//							LOGV("t=%2.2f, %g %g %g\n", t, x, y, z);
+							rx.set_key(index, t, x);
+							ry.set_key(index, t, y);
+							rz.set_key(index, t, z);
+							rw.set_key(index, t, w);
+//							LOGV("t=%2.2f, %g %g %g %g\n", t, x, y, z, w);
 						}
 					}
 
