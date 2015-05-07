@@ -91,121 +91,6 @@ void test_function()
 
 
 
-#include <stdio.h>
-#include <string.h>
-#include <fcntl.h>
-#include <errno.h>
-
-
-#if defined(__linux__) || defined(__APPLE__)
-	#include <unistd.h>
-	#include <termios.h>
-#elif defined(WIN32)
-	//#error Not implemented on this platform!
-#endif
-#if 0
-class SerialPort
-{
-public:
-
-	SerialPort() : socket(-1) {}
-	~SerialPort() { close(); }
-
-	bool open(const char* serial_port, uint32_t baud_rate = 9600);
-	void close();
-	
-	void readline(std::string& buffer);
-	
-	int read(void* buffer, int total_bytes);
-	int write(const void* buffer, int total_bytes);
-	
-private:
-	void baud_rate(uint32_t baud_rate);
-	
-private:
-	int32_t socket;
-};
-
-
-bool SerialPort::open(const char* serial_port, uint32_t baud)
-{
-	socket = ::open(serial_port, O_RDWR | O_NOCTTY | O_NDELAY);
-	if (socket == -1)
-	{
-		LOGE("Unable to open serial port %s\n", serial_port);
-		return false;
-	}
-
-	// clear file status
-	fcntl(socket, F_SETFL, 0);
-	
-	// set baud rate
-	baud_rate(baud);
-
-	return true;
-}
-
-void SerialPort::close()
-{
-	if (socket != -1)
-	{
-		::close(socket);
-	}
-}
-
-void SerialPort::readline(std::string& buffer)
-{
-	std::string b;
-	char last = 0;
-	bool co = true;
-	while (co)
-	{
-		char c = 0;
-		read(&c, 1);
-
-		// found newline
-		if (c == '\n' && last == '\r')
-		{
-			LOGV("read: %s\n", b.c_str());
-			b.clear();
-			last = 0;
-		}
-		else if (c != '\r')
-		{
-			b += c;
-		}
-
-		last = c;
-	}
-}
-
-int SerialPort::read(void* buffer, int total_bytes)
-{
-	return ::read(socket, buffer, total_bytes);
-}
-
-int SerialPort::write(const void* buffer, int total_bytes)
-{
-	return ::write(socket, buffer, total_bytes);
-}
-
-void SerialPort::baud_rate(uint32_t baud_rate)
-{
-	// setup the baud rate
-	struct termios options;
-	tcgetattr(socket, &options);
-	
-	cfsetispeed(&options, baud_rate);
-	cfsetospeed(&options, baud_rate);
-	
-	// enable receiver and set local mode
-	options.c_cflag |= (CLOCAL | CREAD);
-	
-	// set new options
-	tcsetattr(socket, TCSANOW, &options);
-}
-#endif
-
 struct ApplicationState
 {
 	float accumulator;
@@ -395,7 +280,156 @@ void test_rendering()
 #include <platform/platform.h>
 
 
+size_t test_align(size_t bytes, uint32_t alignment)
+{
+	return (bytes + (alignment-1)) & ~(alignment-1);
+}
 
+void* operator new(size_t bytes) throw(std::bad_alloc)
+{
+	return malloc(bytes);
+}
+
+void operator delete(void* ptr) throw()
+{
+	free(ptr);
+}
+
+
+
+int main(int argc, char** argv)
+{
+	platform::startup();
+	core::startup();
+
+	
+	core::shutdown();
+	platform::shutdown();
+
+	return 0;
+}
+
+
+// input planning
+#if 0
+
+struct BaseClass
+{
+	int xyzw;
+	
+	BaseClass()
+	{
+		LOGV("BaseClass constructor\n");
+	}
+	
+	virtual ~BaseClass()
+	{
+		LOGV("BaseClass destructor\n");
+	}
+};
+
+struct DerivedClass : public BaseClass
+{
+	int mytest;
+	
+	DerivedClass()
+	{
+		LOGV("DerivedClass constructor\n");
+	}
+	
+	virtual ~DerivedClass()
+	{
+		LOGV("DerivedClass destructor\n");
+	}
+	
+	void move_left(float value)
+	{
+		LOGV("move left: %g\n", value);
+	}
+	
+	void move_right(float value)
+	{
+		LOGV("move right: %g\n", value);
+	}
+};
+
+
+typedef std::function<void (float)> AxisCallback;
+
+struct InputManager
+{
+	core::HashSet<std::string, AxisCallback> mapping;
+	
+	
+	template<class F, class C>
+	void bind_axis(const char* name, F&& x, C&& inst)
+	{
+		AxisCallback callback = std::bind(x, inst, std::placeholders::_1);
+		bind_axis_name(name, callback);
+	}
+	
+	void bind_axis_name(const char* name, AxisCallback callback)
+	{
+		mapping[std::string(name)] = callback;
+	}
+	
+	void dispatch(const char* name, float value)
+	{
+		if (mapping.has_key(name))
+		{
+			AxisCallback callback = mapping.get(name);
+			callback(value);
+		}
+	}
+};
+
+
+//	InputManager im;
+//
+//	DerivedClass dc;
+//
+//	im.bind_axis("move_left", &DerivedClass::move_left, &dc);
+//	im.bind_axis("move_right", &DerivedClass::move_right, &dc);
+//
+//	AxisCallback cp = std::bind(&DerivedClass::move_left, &dc, std::placeholders::_1);
+//	cp(25.0f);
+//
+//	AxisCallback moveright = std::bind(&DerivedClass::move_right, &dc, std::placeholders::_1);
+//	moveright(12.0f);
+//
+//	im.dispatch("move_left", 21.72f);
+//	im.dispatch("move_right", 4928.0f);
+#endif
+
+// FixedQueue test
+#if 0
+core::FixedSizeQueue<int, 4> q;
+LOGV("is queue empty?: %s\n", q.empty() ? "YES":"NO");
+
+q.push_back(210);
+q.push_back(12);
+q.push_back(23222);
+q.push_back(33324);
+
+// this should fail
+assert(false == q.push_back(999));
+
+LOGV("total items: %i\n", q.size());
+
+LOGV("is queue empty?: %s\n", q.empty() ? "YES":"NO");
+while (!q.empty())
+{
+	int i = q.pop();
+	LOGV("item: %i\n", i);
+}
+
+// This should cause an assert.
+q.pop();
+#endif
+
+
+// thread test
+#if 0
 struct TestData
 {
 	unsigned int value;
@@ -415,21 +449,20 @@ void run_logic(void* thread_data)
 	fprintf(stdout, "test data value: %u\n", td->value);
 }
 
-
-
-
-void test_sys(int argc, char**argv)
+void test_threads()
 {
 	int num_cores = 1;
-
+	
 #if defined(PLATFORM_POSIX)
 	int page_size = sysconf(_SC_PAGE_SIZE);
 	num_cores = sysconf(_SC_NPROCESSORS_CONF);
 	fprintf(stdout, "page_size: %i bytes\n", page_size);
 	fprintf(stdout, "cores: %i\n", num_cores);
 #endif
-
-
+	
+	
+	assert(num_cores > 0);
+	
 	
 	platform::Thread threads[4];
 	TestData test_data;
@@ -446,251 +479,5 @@ void test_sys(int argc, char**argv)
 		fprintf(stdout, "waiting on thread thread: %i\n", c);
 		platform::thread_join(threads[c]);
 	}
-	
-#if defined(PLATFORM_WINDOWS)
-	
-#elif defined(PLATFORM_ANDROID) || defined(PLATFORM_LINUX)
-	struct sysinfo si;
-	sysinfo(&si);
-#elif defined(PLATFORM_APPLE)
-
+}
 #endif
-
-	size_t buffer_size = 0;
-	char* stringlist = core::filesystem::file_to_buffer("/Users/apetrone/Downloads/wordlist", 0, &buffer_size, false);
-	
-	std::vector<std::string> lines = core::str::split(stringlist, "\n");
-
-	DEALLOC(stringlist);
-
-	{
-		typedef core::HashSet<std::string, int> HashTable;
-		HashTable hash(32768, 8);
-		uint64_t start = platform::microseconds();
-		for (unsigned int i = 0; i < lines.size(); ++i)
-		{
-			hash.insert(HashTable::value_type(lines[i], i));
-		}
-		uint64_t end = platform::microseconds();
-		float delta = (end-start);
-		
-		LOGV("total items: %i\n", hash.size());
-		LOGV("capacity: %i\n", hash.capacity());
-		LOGV("[HashSet]: time taken: %2.2fms\n", delta*.001f);
-		// initial implementation: 75069ms, 69903 items
-		// second try: ~33000ms, no longer re-inserting on repopulate; just copy;
-		// third try: ~5000ms: when searching, bail if we find bucket->hash == 0, resize factor of 8x
-		// fourth try: 264ms, repopulate when we exceed the load factor of 70%
-		// fifth try: 103-111.70ms, fixed an error where it would call find_or_create_bucket recursively. only call find_bucket once
-		// sixth try: 24.97ms, added the ability to tweak growth factor; about 10% of the time is the std::string allocator.
-	}
-
-//	{
-//		typedef core::Dictionary<int, 4096> HashTable;
-//		HashTable hash;
-//		uint64_t start = platform::microseconds();
-//		for (unsigned int i = 0; i < lines.size(); ++i)
-//		{
-//			hash.insert(lines[i].c_str(), i);
-//		}
-//		uint64_t end = platform::microseconds();
-//		float delta = (end-start);
-//		
-//		LOGV("[Dictionary]: time taken: %2.2fms\n", delta*.001f);
-//	}
-	
-//	{
-//		typedef std::map<std::string, int> Map;
-//		Map hash;
-//		uint64_t start = platform::microseconds();
-//		for (unsigned int i = 0; i < lines.size(); ++i)
-//		{
-//			hash.insert(Map::value_type(lines[i], i));
-//		}
-//		uint64_t end = platform::microseconds();
-//		float delta = (end-start);
-//		
-//		LOGV("[std::map] time taken: %2.2fms\n", delta*.001f);
-//	}
-	
-
-//	LOGV("total items: %i\n", hash.size());
-//	LOGV("capacity: %i\n", hash.capacity());
-//	for (HashTable::Iterator it = hash.begin(); it != hash.end(); ++it)
-//	{
-//		LOGV("'%s' -> %i\n", it.key().c_str(), it.value());
-//	}
-}
-
-
-void test_renderer()
-{
-#if 0
-	Gamification has already seeped into parenting.
-	"if you go to sleep, I'll give you fifty points back"
-
-	- pick rendering api (varies between platforms)
-	- pick window api (varies between desktop and embedded devices; might also be X11, Wayland, Mir, or an embedded specific (dispmanx))
-	- input api should be fairly consistent, but this also depends on the desktop environment.
-	-- On Linux, it may use X11 or it may use raw input, or a library like udev.
-	-- might be safer to just pick one for input
-
-
-
-
-
-	Desktops:
-	- native egl?, os-specific (wgl, glX, cocoa)
-	- opengl, vulkan, d3d12, mantle, metal
-
-	RaspberryPi:
-	- native egl
-	- glesv2
-
-	iPhone:
-	- native egl?, os-specific
-	- glesv2, glesv3, metal
-
-	Android:
-	- java egl interop
-	- glesv2, glesv3, opengl 4+
-
-
-	- platform render interop
-	-- mac: NSOpenGLView-subclassed view and NSWindow-subclassed window
-	--- provides keyboard and mouse messages as well as focus change notifications
-
-	- create render context
-	- destroy render context
-	- activate render context
-	- swap buffers (os, api-specific)
-	- fetch symbol (os-specific)
-	- get render pixel format (I believe this was used to abstract this call on Linux)
-
-
-	
-	- Window Interface Needs to provide:
-	-- function to create window with attribs:
-		- window x, y
-		- window width, height
-		- fullscreen
-		- disable resizing
-		- icons (win32)
-		-- render depth size
-		-- render color size
-		-- render alpha size
-		-- render stencil size
-		-- render multisampling
-
-	- create window
-	- destroy window
-	- get window size
-	- get window render size
-	- get screen count
-	- get screen size (for screen index)
-
-	- need a util function to create a dummy window (when OpenGL is used; sigh)
-
-	- dispatch input messages / notifications
-	- post window creation (X11 usest this to create input context)
-	- pre window destruction (X11 uses this destroy input context)
-	
-
-#endif
-
-
-
-#if 0
-	renderer backend customizable
-	-- this basically needs to be able to interpret the command queue (during generation)
-	-- and then execution
-
-	- create a render device
-	-- create a platform window with rendering context
-
-	- setup the pipeline and command queue
-
-
-	renderer::render_device* device = renderer::create_device(params);
-	platform::window* main_window = platform::create_window(xyz, device);
-	
-	// setup other graphics state here, (defer until later)
-	// pipeline
-
-	renderer::command_queue* cqueue = device->create_command_queue();	
-
-	cqueue->clear_color(0, 0, 0, 0);
-	cqueue->clear();
-
-
-	// poll + dispatch events for window
-	device->activate_context(main_window->get_render_context());
-
-	// send this buffer to the gpu
-	device->execute_queue(cqueue);
-
-	device->swap_buffers(main_window->get_render_context());
-#endif
-
-	core::HashSet<std::string, std::string> params;
-
-	// select a device type
-	params["renderer"] = "directfb";
-	params["renderer"] = "direct3d12";
-	params["renderer"] = "opengl";
-	params["renderer"] = "opengles2";
-	params["renderer"] = "opengles3";
-	params["renderer"] = "vulkan";
-
-	// set options (may or may not be available for all device types)
-	params["vsync"] = "true";
-	params["double_buffer"] = "true";
-	params["depth_size"] = "24";
-
-	// OpenGL-specific
-	params["major_version"] = "3";
-	params["minor_version"] = "2";
-	params["share_context"] = "true";
-
-
-
-// A question of organization arises when you think about needing to maintain
-// software and then extend it to support additional platforms that may come out.
-// There's a certain balance between, say, a major library like Scaleform,
-// and a smaller, nimble library, like fmod, or something from RAD Game Tools.
-// The latter code bases could be ported to a new platform with relative ease.
-// While, Scaleform felt like a large undertaking to traverse through the source code and 
-// get all the preprocessor bits sorted out.
-
-// registration methods (for a factory)
-// - include ALL the classes and manually add them
-// - abuse static initialization to register the classes
-
-
-
-}
-
-
-void test_main(int argc, char** argv)
-{
-	platform::startup();
-	core::startup();
-//	test_rendering();
-//	test_sys(argc, argv);
-
-
-	test_renderer();	
-	
-	core::shutdown();
-	platform::shutdown();
-}
-
-
-
-int main(int argc, char** argv)
-{
-	test_main(argc, argv);
-
-
-	return 0;
-}
