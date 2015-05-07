@@ -198,12 +198,13 @@ namespace gemini
 
 								// draw bone transforms as axes
 								// TODO: this should be moved elsewhere or turned into a special debug render block?
+#if 0
 								const glm::mat4* debug_skeletal_pose = model_instance->get_debug_bone_transforms();
 								for (size_t i = 0; i < model_instance->get_total_transforms(); ++i)
 								{
-									debugdraw::instance()->axes(debug_skeletal_pose[i], 0.25f, 0.0f);
+									debugdraw::instance()->axes(debug_skeletal_pose[i], 0.05f, 0.0f);
 								}
-								
+#endif
 							}
 						}
 					}
