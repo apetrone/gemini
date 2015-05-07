@@ -35,7 +35,7 @@ namespace platform
 		/// Custom STL allocator class for debugging / memory tracking
 		template<class _Ty>
 		class DebugAllocator
-		{	// generic DebugAllocator for objects of class _Ty
+		{
 		public:
 			typedef _Ty				value_type;
 			typedef _Ty*				pointer;
@@ -45,85 +45,82 @@ namespace platform
 			typedef std::size_t		size_type;
 			typedef std::ptrdiff_t		difference_type;
 			
+			// convert an DebugAllocator<_Ty> to an DebugAllocator <U>
 			template<class U>
 			struct rebind
-			{	// convert an DebugAllocator<_Ty> to an DebugAllocator <U>
+			{
 				typedef DebugAllocator<U> other;
 			};
 			
+			// return address of mutable _Val
 			pointer address(reference value) const
-			{	// return address of mutable _Val
+			{
 				return (&value);
 			}
 			
+			// return address of nonmutable _Val
 			const_pointer address(const_reference value) const
-			{	// return address of nonmutable _Val
+			{
 				return (&value);
 			}
 			
+			// construct default DebugAllocator (do nothing)
 			DebugAllocator() throw()
-			{	// construct default DebugAllocator (do nothing)
+			{
 			}
 			
+			// construct by copying (do nothing)
 			DebugAllocator(const DebugAllocator<_Ty>&) throw()
-			{	// construct by copying (do nothing)
+			{
 			}
 			
+			// construct from a related DebugAllocator (do nothing)
 			template<class U>
 			DebugAllocator(const DebugAllocator<U>&) throw()
-			{	// construct from a related DebugAllocator (do nothing)
+			{
 			}
 			
 			~DebugAllocator() throw()
 			{
 			}
 			
+			// assign from a related DebugAllocator (do nothing)
 			template<class _Other>
 			DebugAllocator<_Ty>& operator=(const DebugAllocator<_Other>&)
-			{	// assign from a related DebugAllocator (do nothing)
+			{
 				return (*this);
 			}
-					
+			
+			// deallocate object at _Ptr, ignore size
 			void deallocate(pointer _Ptr, size_type)
-			{	// deallocate object at _Ptr, ignore size
-	//			DESTROY( _Ty, _Ptr );
+			{
 				DEALLOC( _Ptr );
-	//			::operator delete(_Ptr);
 			}
 			
+			// allocate array of _Count elements
 			pointer allocate(size_type _Count, const void * hint = 0)
-			{	// allocate array of _Count elements
-	//			return CREATE_ARRAY( _Ty, _Count );
-
+			{
 				return (pointer)ALLOC( _Count * sizeof(_Ty) );
 			}
-			/*
-			 pointer allocate(size_type _Count, const void * = 0)
-			 {	// allocate array of _Count elements, ignore hint
-			 pointer ret = (pointer)(::operator new(_Count*sizeof(_Ty)));
-			 
-			 //
-			 return ret;
-			 //return (allocate(_Count));
-			 }*/
-			
+
+			// construct object at _Ptr with value _Val
 			void construct(pointer _Ptr, const _Ty& _Val)
-			{	// construct object at _Ptr with value _Val
-				new((void*)_Ptr)_Ty(_Val);
+			{
+				new ((void*)_Ptr) _Ty(_Val);
 			}
 			
+			// destroy object at _Ptr
 			void destroy(pointer _Ptr)
-			{	// destroy object at _Ptr
-				//_DESTRUCTOR(_Ty, _Ptr);
+			{
 				_Ptr->~_Ty();
 			}
 			
+			// return max number of elements that can be allocated
+			// use parentheses around std:: ... ::max function to avoid macro expansion (some headers define max as a macro, ugh annoying.)
 			size_type max_size() const throw()
-			{	// return max number of elements that can be allocated
-				// use parentheses around std:: ... ::max function to avoid macro expansion (some headers define max as a macro, ugh annoying.)
+			{
 				return (std::numeric_limits<std::size_t>::max)() / sizeof(_Ty);
 			}
-			
 		};
 		
 		template <class T1, class T2>
