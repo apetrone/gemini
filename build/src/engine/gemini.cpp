@@ -1669,14 +1669,9 @@ Options:
 		load_config(config);
 		
 		params.step_interval_seconds = (1.0f/(float)config.physics_tick_rate);
+				
 		
-		
-		// load the input table
-//		InputRenameMe irm;
-//		irm.load_input_table("conf/input.conf");
-		
-		
-		const char* serial_device = "/dev/cu.usbmodem582211";
+		const char* serial_device = "/dev/cu.usbmodem582211"; // config["input_serial_device"];
 		data_input.device = platform::serial_open(serial_device, 1000000);
 		if (!data_input.device)
 		{
@@ -2006,8 +2001,8 @@ Options:
 		}
 
 
-		int x = 10;
-		int y = 10;
+		int x = 250;
+		int y = 0;
 		{
 
 //			debugdraw::text(x, y, core::str::format("active_camera->pos = %.2g %.2g %.2g", main_camera.pos.x, main_camera.pos.y, main_camera.pos.z), Color(255, 255, 255));
@@ -2223,3 +2218,50 @@ PLATFORM_MAIN
 	return_code = platform::run_application(new EngineKernel());
 	return return_code;
 }
+
+
+
+
+
+#if 0
+class InputRenameMe
+{
+public:
+	
+	static util::ConfigLoadStatus load_input(const Json::Value& root, void* context)
+	{
+		InputRenameMe* in = static_cast<InputRenameMe*>(context);
+		
+		const Json::Value& axes_root = root["axes"];
+		if (!axes_root.isNull())
+		{
+			LOGV("load the axes table\n");
+			Json::ValueIterator iter = axes_root.begin();
+			for (; iter != axes_root.end(); ++iter)
+			{
+				const Json::Value& axis_name = iter.key();
+				const Json::Value& axis_table = (*iter);
+				
+				LOGV("axis name: %s\n", axis_name.asString().c_str());
+				LOGV("input sources: %i\n", axis_table.size());
+			}
+		}
+		
+		
+		
+		return util::ConfigLoad_Success;
+	}
+	
+	void load_input_table(const char* path)
+	{
+		util::json_load_with_callback(path, InputRenameMe::load_input, this, true);
+	}
+};
+
+
+// load the input table
+//		InputRenameMe irm;
+//		irm.load_input_table("conf/input.conf");
+
+
+#endif
