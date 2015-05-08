@@ -24,10 +24,10 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "color.h"
+
 #include <core/typedefs.h>
 #include <core/fixedarray.h>
-
-#include "color.h"
 
 namespace gemini
 {

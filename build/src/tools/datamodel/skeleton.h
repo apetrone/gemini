@@ -26,11 +26,10 @@
 
 #include <platform/mem.h>
 #include <core/str.h> // for String
+#include <core/mathlib.h>
 
 #include <string>
 #include <vector>
-
-#include <core/mathlib.h>
 
 namespace gemini
 {

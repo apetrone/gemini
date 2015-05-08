@@ -23,13 +23,13 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
+#include "mem.h"
+#include "platform_internal.h"
+
 #include <unistd.h> // for close()
 #include <termios.h>
 #include <fcntl.h>
 #include <assert.h>
-
-#include "mem.h"
-#include "platform_internal.h"
 
 namespace platform
 {

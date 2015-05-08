@@ -24,8 +24,10 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/typedefs.h>
 #include "interpolation.h"
+
+#include <core/typedefs.h>
+
 
 //#ifdef RGB
 //#undef RGB

@@ -22,17 +22,15 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include <core/typedefs.h>
-#include <core/logging.h>
-
 #include "opengl_core32.h"
-
 #include "image.h"
 
+#include <renderer/renderstream.h>
+
+#include <core/typedefs.h>
+#include <core/logging.h>
 #include <core/mathlib.h>
 #include <core/datastream.h>
-
-#include <renderer/renderstream.h>
 
 namespace gemini
 {

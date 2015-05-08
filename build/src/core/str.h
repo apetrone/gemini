@@ -25,6 +25,7 @@
 #pragma once
 
 #include <platform/mem.h>
+
 #include <string>
 #include <vector>
 

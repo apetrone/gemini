@@ -23,17 +23,17 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
-#include <fbxsdk.h>
-#include <fbxsdk/utils/fbxgeometryconverter.h>
-
-#include <core/stackstring.h>
-#include <core/logging.h>
-
 #include "io_fbx.h"
 #include "common.h"
 #include "datamodel/mesh.h"
 #include "datamodel/material.h"
 #include "datamodel/animation.h"
+
+#include <core/stackstring.h>
+#include <core/logging.h>
+
+#include <fbxsdk.h>
+#include <fbxsdk/utils/fbxgeometryconverter.h>
 
 // http://gamedev.stackexchange.com/questions/59419/c-fbx-animation-importer-using-the-fbx-sdk
 

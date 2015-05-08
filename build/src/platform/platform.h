@@ -24,15 +24,16 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <stdio.h> // for size_t
-
 #include "config.h"
+
+
 
 #if PLATFORM_APPLE
 	#include <TargetConditionals.h>
 #endif
 
 #include <stdint.h>
+#include <stdio.h> // for size_t
 
 #if PLATFORM_WINDOWS
 	// see if we still need these here...

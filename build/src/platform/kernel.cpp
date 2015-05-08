@@ -23,8 +23,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
-
 #include "kernel.h"
+
 #include <string.h>
 
 namespace kernel

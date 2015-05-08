@@ -69,10 +69,10 @@
 	#define LIBRARY_SDK_CEXPORT
 #endif
 
+#include "mem.h"
 
 // prefer the C99 types
 #include <stdint.h>
 
-//#include <platform/config.h>
 #include <assert.h>
-#include "mem.h"
+

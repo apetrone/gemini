@@ -24,19 +24,15 @@
 // -------------------------------------------------------------
 #pragma once
 
-//#include <platform/mem.h>
-//#include <core/mathlib.h>
-#include <vector>
-//#include <string>
-
-#include <core/str.h>
-
-#include <core/typedefs.h>
-
 #include "datamodel/material.h"
 #include "datamodel/node.h"
 #include "datamodel/skeleton.h"
 #include "datamodel/animation.h"
+
+#include <core/str.h>
+#include <core/typedefs.h>
+
+#include <vector>
 
 namespace gemini
 {

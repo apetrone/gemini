@@ -25,13 +25,7 @@
 #include "renderer.h"
 #include "shaderconfig.h"
 
-#include <core/typedefs.h>
-#include <core/logging.h>
-
 #include "gemgl.h"
-
-#include <core/configloader.h>
-
 #include "gl/opengl_common.h"
 
 // compile-time selection of these classes starts here.
@@ -46,6 +40,10 @@
 	#include "gl/desktop/opengl_core32.h"
 	#include "gl/desktop/opengl_21.h"
 #endif
+
+#include <core/typedefs.h>
+#include <core/logging.h>
+#include <core/configloader.h>
 
 namespace gemini
 {

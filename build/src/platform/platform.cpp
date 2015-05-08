@@ -24,12 +24,10 @@
 // -------------------------------------------------------------
 #include "platform.h"
 #include "mem.h"
-#include <assert.h>
 #include "kernel.h"
-
-
 #include "platform_internal.h"
 
+#include <assert.h>
 
 #if PLATFORM_WINDOWS
 	//#include <windows.h>

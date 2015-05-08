@@ -27,9 +27,10 @@
 #include "common/extension.h"
 #include "common.h"
 #include "datamodel/model.h"
-#include <fbxsdk.h>
 
 #include <core/dictionary.h>
+
+#include <fbxsdk.h>
 
 namespace gemini
 {

@@ -22,17 +22,16 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include <stdio.h> // for printf
-#include <sys/stat.h> // for fs::FileExists
-
-#include <core/typedefs.h>
-#include <platform/platform.h>
+#include "filesystem.h"
 #include "xfile.h"
 
-#include "filesystem.h"
-
+#include <platform/platform.h>
+#include <core/typedefs.h>
 #include <core/logging.h>
 #include <core/str.h>
+
+#include <stdio.h> // for printf
+#include <sys/stat.h> // for fs::FileExists
 
 namespace core
 {

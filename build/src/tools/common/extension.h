@@ -24,11 +24,11 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <string>
-#include <map>
-
 #include <core/datastream.h>
 #include <core/str.h>
+
+#include <string>
+#include <map>
 
 namespace gemini
 {

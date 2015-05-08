@@ -24,10 +24,10 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <string>
-
 #include <core/mathlib.h>
 #include <core/str.h>
+
+#include <string>
 
 namespace gemini
 {

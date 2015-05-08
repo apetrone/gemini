@@ -28,6 +28,7 @@
 #include <platform/mem.h>
 #include <core/mathlib.h>
 #include <core/str.h>
+
 #include <vector>
 
 namespace gemini

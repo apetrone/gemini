@@ -24,9 +24,10 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <platform/mem.h>
+
 #include <assert.h>
 
-#include <platform/mem.h>
 
 namespace core
 {

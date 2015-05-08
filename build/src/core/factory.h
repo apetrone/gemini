@@ -24,11 +24,10 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <vector>
-
 #include <platform/mem.h>
-
 #include <core/str.h>
+
+#include <vector>
 
 #define DECLARE_FACTORY_CLASS( class_name, abstract_class )\
 	public:\

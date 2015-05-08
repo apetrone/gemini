@@ -32,8 +32,6 @@
 #include <map>
 #include <string>
 
-//#include "datamodel/node.h"
-
 namespace gemini
 {
 	namespace datamodel

@@ -23,8 +23,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #pragma once
-#include <core/typedefs.h>
+
 #include "renderer.h"
+#include <core/typedefs.h>
 
 namespace gemini
 {

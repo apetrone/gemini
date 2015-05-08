@@ -23,11 +23,11 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
+#include "configloader.h"
+
 #include <platform/mem.h>
 #include <core/filesystem.h>
 #include <core/logging.h>
-
-#include "configloader.h"
 
 namespace core
 {

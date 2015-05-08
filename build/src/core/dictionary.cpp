@@ -23,12 +23,12 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
+#include "dictionary.h"
+
 #include <core/typedefs.h>
 #include <core/logging.h>
 #include <core/str.h>
 #include <core/mathlib.h>
-
-#include "dictionary.h"
 
 namespace core
 {

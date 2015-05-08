@@ -24,20 +24,17 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/typedefs.h>
-#include <platform/mem_stl_allocator.h>
 
+#include "image.h"
+#include "shaderprogram.h"
+#include "vertexbuffer.h"
+
+#include <platform/mem_stl_allocator.h>
+#include <core/typedefs.h>
 #include <core/fixedarray.h>
 #include <core/stackstring.h>
 #include <core/mathlib.h> // for glm
 #include <core/datastream.h>
-
-#include "image.h"
-
-#include "shaderprogram.h"
-
-#include "vertexbuffer.h"
-
 #include <core/str.h>
 
 namespace gemini

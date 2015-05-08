@@ -24,11 +24,11 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <vector>
+#include "datastream.h"
 
 #include <core/typedefs.h>
 
-#include "datastream.h"
+#include <vector>
 
 namespace core
 {

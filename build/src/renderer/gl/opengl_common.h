@@ -24,16 +24,15 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <stack>
-#include <string>
+#include "renderer.h"
+#include "gemgl.h" // for GLObject
 
 #include <core/stackstring.h>
 
-#include "renderer.h"
+#include <stack>
+#include <string>
 
 #define FAIL_IF_GLERROR( error ) if ( error != GL_NO_ERROR ) { return false; }
-
-#include "gemgl.h" // for GLObject
 
 namespace gemini
 {

@@ -24,9 +24,6 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <stdint.h>
-//#include <core/typedefs.h>
-//#include mem.h"
 #include "kernel_events.h"
 
 namespace kernel

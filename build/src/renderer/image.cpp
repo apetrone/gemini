@@ -22,12 +22,12 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+#include "image.h"
+#include "renderer.h"
+
 #include <core/typedefs.h>
 #include <core/filesystem.h>
 #include <core/logging.h>
-
-#include "image.h"
-#include "renderer.h"
 
 #define STBI_HEADER_FILE_ONLY 1
 #define STBI_NO_STDIO 1

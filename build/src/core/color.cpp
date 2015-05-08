@@ -23,9 +23,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
-#include <core/typedefs.h>
-
 #include "color.h"
+
+#include <core/typedefs.h>
 
 // unsigned char rgba[3];
 // unsigned int mycolor = RGBToUInt( 255, 128, 75 );

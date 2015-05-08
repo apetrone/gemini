@@ -24,12 +24,13 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "texture.h"
+
 #include <core/mathlib.h>
 #include <platform/mem_stl_allocator.h>
+
 #include <vector>
 #include <string>
-
-#include "texture.h"
 
 namespace gemini
 {
