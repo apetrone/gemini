@@ -85,17 +85,13 @@ void data_thread(void* context)
 	
 	LOGV("entering data thread\n");
 	
-	uint64_t last_recv = 0;
 	while(block->execute)
 	{
 		const uint32_t PACKET_SIZE = 128;
 		uint8_t buffer[ PACKET_SIZE ];
 		if (platform::serial_read(block->device, buffer, PACKET_SIZE) == PACKET_SIZE)
 		{
-			uint64_t current = platform::microseconds();
-			float delta_milliseconds = (current - last_recv)*0.001f;
-			
-			last_recv = current;
+			uint64_t current = platform::microseconds();			
 			
 			glm::quat* q = static_cast<glm::quat*>((void*)&buffer);
 			block->orientation = *q;
@@ -1059,7 +1055,7 @@ public:
 	
 	void setup_rendering(uint32_t width, uint32_t height)
 	{
-		renderer::IRenderDriver* driver = renderer::driver();
+//		renderer::IRenderDriver* driver = renderer::driver();
 		
 //		image::Image image;
 //		image.type = image::TEX_CUBE;
@@ -1077,7 +1073,7 @@ public:
 	
 	void shutdown()
 	{
-		renderer::IRenderDriver* driver = renderer::driver();
+//		renderer::IRenderDriver* driver = renderer::driver();
 //		driver->render_target_destroy(cubemap);
 		
 		
@@ -1539,7 +1535,7 @@ public:
 		quit->set_hover_color(button_hover);
 		quit->set_userdata((void*)1);
 		root->add_child(quit);
-		origin_y += (button_height+button_spacing);
+		//origin_y += (button_height+button_spacing);
 		
 		
 		//		gui::Panel* root = new gui::Panel(compositor);
@@ -1773,7 +1769,7 @@ Options:
 			debugdraw::startup(config.debugdraw_max_primitives, debugshader->program, debugfont->handle);
 		}
 		
-		renderer::IRenderDriver* driver = renderer::driver();
+//		renderer::IRenderDriver* driver = renderer::driver();
 //		driver->render
 		
 		struct TempVertex
@@ -2013,7 +2009,7 @@ Options:
 		debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_raw_msec), Color(255, 255, 255));
 		y += 12;
 		debugdraw::text(x, y, core::str::format("# allocations = %i, total %2.2f MB\n", platform::memory::allocator().active_allocations(), platform::memory::allocator().active_bytes()/(float)(1024*1024)), Color(64, 102, 192));
-		y += 12;
+//		y += 12;
 		
 		
 		if (draw_physics_debug)
@@ -2112,7 +2108,6 @@ Options:
 			rs.add_uniform_matrix4(shader->program->get_uniform_location("modelview_matrix"), &modelview);
 			rs.add_uniform_matrix4(shader->program->get_uniform_location("projection_matrix"), &projection);
 			rs.add_uniform1i(shader->program->get_uniform_location("enable_sampler"), 1);
-			assets::Texture* def = assets::textures()->load_from_path("textures/notexture");
 			rs.add_sampler2d(shader->program->get_uniform_location("diffusemap"), 0, gui_texture);
 			
 			rs.add_draw_call(alt_vs.vertexbuffer);

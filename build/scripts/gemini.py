@@ -246,6 +246,12 @@ def setup_driver(product):
 	mac_debug = product.layout(platform="macosx", configuration="debug")
 	mac_debug.driver.gcc_optimization_level="0"
 	mac_debug.driver.debug_information_format="dwarf-with-dsym"
+
+	mac_debug.cflags += [
+		"-Wall",
+		"-Wmost",
+		"-Weverything"
+	]
 	
 	mac_release = product.layout(platform="macosx", configuration="release")
 
@@ -412,6 +418,9 @@ def get_libplatform(arguments, target_platform):
 		# os
 		"src/platform/os/osx/osx_os.mm",
 
+		# serial
+		"src/platform/serial/posix/posix_serial.cpp",
+
 		# thread
 		"src/platform/thread/osx/osx_thread.cpp",
 		"src/platform/thread/posix/posix_thread_common.cpp",
@@ -439,6 +448,9 @@ def get_libplatform(arguments, target_platform):
 
 		# os
 		"src/platform/os/posix/posix_os.cpp",
+
+		# serial
+		"src/platform/serial/posix/posix_serial.cpp",
 
 		# thread
 		"src/platform/thread/posix/posix_thread.cpp",
@@ -469,6 +481,9 @@ def get_libplatform(arguments, target_platform):
 
 		# os
 		"src/platform/os/windows/win32_os.cpp",
+
+		# serial
+		"src/platform/serial/win32/win32_serial.cpp",
 
 		# thread
 		"src/platform/thread/windows/win32_thread.cpp",
