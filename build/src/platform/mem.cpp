@@ -64,15 +64,15 @@ namespace platform
 		public:
 			SimpleAllocator() : num_active_bytes(0), num_active_allocations(0), num_total_allocations(0), num_total_bytes(0) {}
 			
-			virtual void * allocate( size_t bytes, const char * file, int line )
+			virtual void* allocate(size_t bytes, const char* file, int line)
 			{
-	//			size_t total_size = bytes+MemoryHeaderSize;
+//				size_t total_size = bytes+MemoryHeaderSize;
 
 				char * block = (char*)malloc( bytes+MemoryHeaderSize );
 				assert(block != 0);
 				if ( block )
 				{
-	//				fprintf( stdout, "+ %ld (%ld) bytes\n", (unsigned long)total_size, (unsigned long)bytes );
+//					fprintf( stdout, "+ %ld (%ld) bytes\n", (unsigned long)total_size, (unsigned long)bytes );
 				
 					// increment totals
 					num_active_bytes += bytes+MemoryHeaderSize;

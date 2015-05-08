@@ -196,7 +196,7 @@ namespace gemini
 		{
 			virtual bool handlePut(CivetServer* server, struct mg_connection* conn)
 			{
-				const struct mg_request_info* request = mg_get_request_info(conn);
+//				const struct mg_request_info* request = mg_get_request_info(conn);
 				String buf;
 				
 				buf.resize(1024);
@@ -235,7 +235,7 @@ namespace gemini
 			
 			virtual bool handlePut(CivetServer* server, struct mg_connection* conn)
 			{
-				const struct mg_request_info* request = mg_get_request_info(conn);
+//				const struct mg_request_info* request = mg_get_request_info(conn);
 				String buf;
 				
 				buf.resize(1024);

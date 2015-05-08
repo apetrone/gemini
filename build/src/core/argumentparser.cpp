@@ -224,7 +224,6 @@ namespace core
 			
 			// first, we build a list of the input tokens and categorize these
 			// into a series of patterns.
-			size_t total_tokens = tokens.size();
 			while (true)
 			{
 				const std::string& arg = tokens.current();
@@ -877,8 +876,7 @@ namespace core
 			}
 			
 			PatternWrapper input(input_patterns, nullptr);
-			
-			size_t input_length = input.size();
+
 			bool success = false;
 			for (PatternPtr usage : usage_patterns)
 			{
@@ -892,7 +890,6 @@ namespace core
 				
 				vm.clear();
 			}
-
 			
 			if (!success)
 			{
