@@ -22,11 +22,11 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include <core/typedefs.h>
-#include <core/logging.h>
-
 #include "vertexstream.h"
 #include "renderer.h"
+
+#include <core/typedefs.h>
+#include <core/logging.h>
 
 #include <string.h> // for memset
 #include <stdio.h> // for printf

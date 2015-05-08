@@ -24,9 +24,10 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "config.h"
+
 #include <string.h> // for size_t
 
-#include "config.h"
 
 #if PLATFORM_APPLE
 	#include <memory> // for malloc, free (on OSX)

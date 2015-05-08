@@ -24,10 +24,10 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/typedefs.h>
-
 #include "shaderprogram.h"
 #include "color.h"
+
+#include <core/typedefs.h>
 
 namespace gemini
 {

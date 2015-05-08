@@ -22,6 +22,14 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+#include "common.h"
+#include "common/extension.h"
+#include "datamodel/model.h"
+#include "datamodel/mesh.h"
+
+// include reader/writers
+#include "io_fbx.h"
+#include "io_json.h"
 
 #include <string>
 #include <stdio.h>
@@ -34,16 +42,6 @@
 #include <core/datastream.h>
 #include <core/logging.h>
 #include <core/argumentparser.h>
-
-#include "common.h"
-#include "common/extension.h"
-#include "datamodel/model.h"
-#include "datamodel/mesh.h"
-
-// include reader/writers
-#include "io_fbx.h"
-#include "io_json.h"
-
 
 // need to support:
 // static (non-animated) meshes

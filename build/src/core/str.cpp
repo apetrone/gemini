@@ -23,13 +23,13 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
-#include <platform/config.h>
 #include "str.h"
+
+#include <platform/config.h>
+#include <platform/platform.h>
 
 #include <string.h>
 #include <stdarg.h>
-
-#include <platform/platform.h>
 
 namespace core
 {

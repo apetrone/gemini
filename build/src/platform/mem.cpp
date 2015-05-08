@@ -22,13 +22,12 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include <stdio.h> // for stdout
-#include <list>
-
-#include <assert.h>
-
 #include "mem.h"
 #include "mem_stl_allocator.h"
+
+#include <stdio.h> // for stdout
+#include <list>
+#include <assert.h>
 
 namespace platform
 {

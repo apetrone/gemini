@@ -24,11 +24,12 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "common/extension.h"
+
 #include <core/mathlib.h>
 
 #include <json/json.h>
 
-#include "common/extension.h"
 
 namespace gemini
 {

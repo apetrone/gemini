@@ -23,13 +23,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "render_utilities.h"
-#include <core/logging.h>
-
-
-//#include "assets.h"
-
 #include "renderstream.h"
 #include "rqueue.h"
+#include <core/logging.h>
 
 namespace gemini
 {

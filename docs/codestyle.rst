@@ -186,14 +186,17 @@ Style Rules
 				// ...
 			}
 
+- Including headers should be in the following order.
 
-- Standard headers are always included first, using brackets. Third-party libraries are included next, using brackets as well. Local project includes are always in double-quotes.
+	a) local: using double-quotes
+	b) external: using brackets
+	c) system: using brackets
 
 	.. code-block:: c
 
+		#include "kernel.h"
+		#include <sdk/types.h>
 		#include <string>
-		#include <sdk/types.hpp>
-		#include "kernel.hpp"
 
 - Header names should not clash with standard headers.
 

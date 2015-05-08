@@ -22,12 +22,6 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include <core/typedefs.h>
-#include <platform/mem.h>
-#include <core/core.h>
-
-#include <core/logging.h>
-
 #include "common.h"
 
 #include "datamodel/model.h"
@@ -36,8 +30,12 @@
 
 #include "common/extension.h"
 
+#include <platform/mem.h>
 #include <core/filesystem.h>
 #include <core/stackstring.h>
+#include <core/typedefs.h>
+#include <core/core.h>
+#include <core/logging.h>
 
 using namespace core;
 

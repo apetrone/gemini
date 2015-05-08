@@ -24,10 +24,10 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "datamodel/material.h"
+
 #include <core/fixedarray.h>
 #include <core/mathlib.h>
-
-#include "datamodel/material.h"
 
 namespace gemini
 {

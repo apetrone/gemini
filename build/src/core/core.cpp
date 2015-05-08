@@ -22,15 +22,13 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include <core/typedefs.h>
-
+#include "typedefs.h"
 #include "core.h"
 #include "filesystem.h"
-
-#include <platform/platform.h>
-
 #include "logging.h"
 #include "logging_interface.h"
+
+#include <platform/platform.h>
 
 namespace core
 {

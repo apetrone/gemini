@@ -22,11 +22,6 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include <stdlib.h>
-
-#include <core/typedefs.h>
-#include <core/filesystem.h>
-#include <core/logging.h>
 
 #include "font.h"
 #include "renderer.h"
@@ -37,6 +32,12 @@
 #define FONTSTASH_IMPLEMENTATION
 #include "fontstash.h"
 
+#include <core/typedefs.h>
+#include <core/filesystem.h>
+#include <core/logging.h>
+
+
+#include <stdlib.h>
 
 namespace gemini
 {

@@ -24,8 +24,10 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/typedefs.h>
-#include <platform/platform.h>
+namespace platform
+{
+	struct Result;
+}
 
 namespace core
 {

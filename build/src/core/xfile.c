@@ -22,11 +22,13 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include <string.h> // for size_t
+
+#include "xfile.h"
 
 #include <platform/config.h>
 
-#include "xfile.h"
+
+#include <string.h> // for size_t
 
 #if PLATFORM_APPLE
 	#include <TargetConditionals.h>

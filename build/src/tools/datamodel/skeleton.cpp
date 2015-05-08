@@ -23,9 +23,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
-#include <assert.h>
-
 #include "datamodel/skeleton.h"
+
+#include <assert.h>
 
 namespace gemini
 {

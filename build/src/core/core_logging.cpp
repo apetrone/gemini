@@ -22,6 +22,11 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+
+#include "logging.h"
+
+#include <core/stackstring.h>
+
 #include <stdio.h> // for FILE, file functions
 
 #if __ANDROID__
@@ -33,8 +38,6 @@
 	#include <windows.h>
 #endif
 
-#include <core/stackstring.h>
-#include "logging.h"
 
 using namespace core::logging;
 

@@ -23,13 +23,13 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
-#include <assert.h>
-#include <stdio.h>
 
 #include "argumentparser.h"
 
 #include <core/str.h>
 
+#include <assert.h>
+#include <stdio.h>
 #include <regex>
 
 namespace core

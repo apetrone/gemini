@@ -24,6 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "renderer.h"
+
 #include <platform/config.h>
 #include <platform/platform.h>
 
@@ -68,7 +70,7 @@
 #endif
 
 
-#include "renderer.h"
+
 
 
 #if !defined(GL_SAMPLER_1D)

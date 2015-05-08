@@ -23,15 +23,14 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
-#include <stdlib.h>
-
 #include <core/util.h>
-
 
 extern "C"
 {
 	#include <murmur3.h>
 };
+
+#include <stdlib.h>
 
 namespace core
 {

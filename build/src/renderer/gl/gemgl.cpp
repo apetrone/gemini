@@ -22,13 +22,13 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include <stdio.h> // for sscanf
-#include <string.h> // for strstr
-
 #include "gemgl.h"
 
 #include <core/typedefs.h>
 #include <core/logging.h>
+
+#include <stdio.h> // for sscanf
+#include <string.h> // for strstr
 
 namespace gemini
 {

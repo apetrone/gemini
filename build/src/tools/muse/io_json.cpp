@@ -22,17 +22,14 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-
-#include <core/typedefs.h>
-
-#include <core/logging.h>
-#include <core/xfile.h>
-
 #include "io_json.h"
-
 #include "datamodel/model.h"
 #include "datamodel/mesh.h"
 #include "datamodel/material.h"
+
+#include <core/typedefs.h>
+#include <core/logging.h>
+#include <core/xfile.h>
 
 using namespace core;
 

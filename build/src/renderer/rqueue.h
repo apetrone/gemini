@@ -24,13 +24,12 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <vector>
+#include "renderer.h"
 
 #include <core/typedefs.h>
 #include <platform/mem.h>
 
-
-#include "renderer.h"
+#include <vector>
 
 namespace gemini
 {
