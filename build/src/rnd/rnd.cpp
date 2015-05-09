@@ -1,13 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <functional>
-#include <vector>
-#include <algorithm>
-#include <thread>
-
-using namespace std;
-
 #include <platform/platform.h>
 
 #include <core/typedefs.h>
@@ -23,7 +13,14 @@ using namespace std;
 #include <json/json.h>
 
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <functional>
+#include <vector>
+#include <algorithm>
+#include <thread>
 
+using namespace std;
 
 #define USE_SDL2 1
 
@@ -496,14 +493,12 @@ struct DerivedClass : public BaseClass
 
 
 
-
+// memory allocator for different heaps? tags?
 
 void test_memory()
 {
 	std::vector< int, memory::CustomAllocator<int> > temp;
 	temp.push_back(30);
-	
-	
 	
 //	BaseClass* foo = new BaseClass();
 //	delete foo;
