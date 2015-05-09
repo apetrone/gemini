@@ -27,7 +27,7 @@
 #include "rqueue.h"
 #include <core/logging.h>
 
-namespace gemini
+namespace renderer
 {
 	namespace render_utilities
 	{
@@ -72,4 +72,4 @@ namespace gemini
 			}
 		} // strip_shader_version
 	} // mamespace render_utilities
-} // namespace gemini
+} // namespace renderer

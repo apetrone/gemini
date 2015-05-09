@@ -29,47 +29,45 @@
 
 #include <core/typedefs.h>
 
-namespace gemini
-{
-	namespace font
-	{
-		typedef int Handle;
-	}
-	
-	namespace renderer
-	{
-		struct Font
-		{
-			font::Handle handle;
-			uint16_t point_size;
-			
-			Font() : handle(-1), point_size(0) {}
-			virtual ~Font() {}
-			
-			inline bool is_valid() const { return (handle >= 0); }
-		}; // Font
-	} // namespace renderer
 
-	namespace font
+namespace font
+{
+	typedef int Handle;
+}
+
+namespace renderer
+{
+	struct Font
 	{
-		// provide the shader to use for rendering as well as the render width and height
-		// of the target buffer or viewport
-		void startup(renderer::ShaderProgram* fontshader, int width, int height);
-		void shutdown();
+		font::Handle handle;
+		uint16_t point_size;
 		
-		// draw string at (x, y) screen coordinates with the origin in the upper left of the screen
-		void draw_string(Handle handle, int x, int y, const char* utf8, const core::Color& color);
+		Font() : handle(-1), point_size(0) {}
+		virtual ~Font() {}
 		
-		// set the viewport size for the future draw calls
-		void set_viewport_size(int render_width, int render_height);
+		inline bool is_valid() const { return (handle >= 0); }
+	}; // Font
+} // namespace renderer
+
+namespace font
+{
+	// provide the shader to use for rendering as well as the render width and height
+	// of the target buffer or viewport
+	void startup(renderer::ShaderProgram* fontshader, int width, int height);
+	void shutdown();
 	
-		// query the height of the font in pixels
-		unsigned int measure_height(Handle handle, const char* utf8);
-		
-		// measure the width of the string in a given font in pixels
-		unsigned int measure_width(Handle handle, const char* utf8);
-		
-		// load font from memory with the desired point size
-		Handle load_font_from_memory(const void* data, unsigned int data_size, unsigned short point_size);
-	} // namespace font
-} // namespace gemini
+	// draw string at (x, y) screen coordinates with the origin in the upper left of the screen
+	void draw_string(Handle handle, int x, int y, const char* utf8, const core::Color& color);
+	
+	// set the viewport size for the future draw calls
+	void set_viewport_size(int render_width, int render_height);
+
+	// query the height of the font in pixels
+	unsigned int measure_height(Handle handle, const char* utf8);
+	
+	// measure the width of the string in a given font in pixels
+	unsigned int measure_width(Handle handle, const char* utf8);
+	
+	// load font from memory with the desired point size
+	Handle load_font_from_memory(const void* data, unsigned int data_size, unsigned short point_size);
+} // namespace font

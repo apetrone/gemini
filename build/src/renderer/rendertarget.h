@@ -24,23 +24,20 @@
 // -------------------------------------------------------------
 #pragma once
 
-namespace gemini
+namespace renderer
 {
-	namespace renderer
+	struct RenderTarget
 	{
-		struct RenderTarget
+		enum AttachmentType
 		{
-			enum AttachmentType
-			{
-				COLOR,
-				DEPTHSTENCIL
-			};
-			
-			uint16_t width;
-			uint16_t height;
-			
-			uint32_t color_texture_id;
-			uint32_t depth_texture_id;
-		}; // RenderTarget
-	} // namespace renderer
-} // namespace gemini
+			COLOR,
+			DEPTHSTENCIL
+		};
+		
+		uint16_t width;
+		uint16_t height;
+		
+		uint32_t color_texture_id;
+		uint32_t depth_texture_id;
+	}; // RenderTarget
+} // namespace renderer

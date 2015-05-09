@@ -24,20 +24,17 @@
 // -------------------------------------------------------------
 #pragma once
 
-namespace gemini
+namespace renderer
 {
-	namespace renderer
+	struct VertexBuffer
 	{
-		struct VertexBuffer
+		int vertex_count;
+		int index_count;
+		
+		VertexBuffer()
 		{
-			int vertex_count;
-			int index_count;
-			
-			VertexBuffer()
-			{
-				vertex_count = 0;
-				index_count = 0;
-			}
-		}; // VertexBuffer
-	} // namespace renderer
-} // namespace gemini
+			vertex_count = 0;
+			index_count = 0;
+		}
+	}; // VertexBuffer
+} // namespace renderer

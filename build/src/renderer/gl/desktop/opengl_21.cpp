@@ -33,7 +33,7 @@
 #include <core/datastream.h>
 
 
-namespace gemini
+namespace renderer
 {
 
 	// utility functions
@@ -1501,4 +1501,4 @@ namespace gemini
 	{
 
 	}
-} // namespace gemini
+} // namespace renderer

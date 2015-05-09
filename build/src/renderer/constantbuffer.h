@@ -26,20 +26,17 @@
 
 #include <core/mathlib.h>
 
-namespace gemini
+namespace renderer
 {
-	namespace renderer
+	struct ConstantBuffer
 	{
-		struct ConstantBuffer
-		{
-			const glm::mat4* modelview_matrix;
-			const glm::mat4* projection_matrix;
-			const glm::vec3* viewer_direction;
-			const glm::vec3* viewer_position;
-			const glm::vec3* light_position;
-			
-			ConstantBuffer();
-			virtual ~ConstantBuffer() {};
-		};
-	} // namespace renderer
-} // namespace gemini
+		const glm::mat4* modelview_matrix;
+		const glm::mat4* projection_matrix;
+		const glm::vec3* viewer_direction;
+		const glm::vec3* viewer_position;
+		const glm::vec3* light_position;
+		
+		ConstantBuffer();
+		virtual ~ConstantBuffer();
+	};
+} // namespace renderer

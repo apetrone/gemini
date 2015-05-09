@@ -30,7 +30,7 @@
 #include <stdio.h> // for sscanf
 #include <string.h> // for strstr
 
-namespace gemini
+namespace renderer
 {
 	gemgl_interface_t gl;
 
@@ -579,4 +579,4 @@ namespace gemini
 		
 		return found_extension;
 	} // gemgl_find_extension
-} // namespace gemini
+} // namespace renderer

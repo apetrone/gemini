@@ -29,7 +29,7 @@
 #include <core/typedefs.h>
 #include <core/datastream.h>
 
-namespace gemini
+namespace renderer
 {
 	const unsigned int MAX_RENDERER_STREAM_BYTES = 8192 * 8;
 	const unsigned int MAX_RENDERER_STREAM_COMMANDS = 2048 * 8;
@@ -71,4 +71,4 @@ namespace gemini
 		void add_draw_call( renderer::VertexBuffer * vertexbuffer );
 		void add_material( renderer::Material * material, renderer::ShaderProgram * shader );
 	}; // RenderStream
-} // namespace gemini
+} // namespace renderer

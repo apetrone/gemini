@@ -32,9 +32,8 @@
 #include <core/filesystem.h>
 #include <json/json.h>
 
-namespace gemini
+namespace renderer
 {
-
 	GLenum vertexbuffer_drawtype_to_gl_drawtype( renderer::VertexBufferDrawType type )
 	{
 		GLenum types[] = {
@@ -252,6 +251,6 @@ namespace gemini
 		}
 		LOGV(".. %s%s\n", prefix.c_str(), call.c_str());
 	}
-} // namespace gemini
+} // namespace renderer
 
 

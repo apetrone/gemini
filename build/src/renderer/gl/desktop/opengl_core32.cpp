@@ -32,7 +32,7 @@
 #include <core/mathlib.h>
 #include <core/datastream.h>
 
-namespace gemini
+namespace renderer
 {
 	// utility functions
 	static GLenum image_source_format( int num_channels )
@@ -1568,4 +1568,4 @@ namespace gemini
 
 	}
 
-} // namespace gemini
+} // namespace renderer

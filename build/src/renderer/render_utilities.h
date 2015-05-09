@@ -47,7 +47,7 @@ namespace gemini
 
 #include "renderer.h"
 
-namespace gemini
+namespace renderer
 {
 	namespace render_utilities
 	{
@@ -87,7 +87,7 @@ namespace gemini
 		// strip the version line from shader source
 		void strip_shader_version( char * buffer, core::StackString<32> & version );
 	} // namespace render_utilities
-} // namespace gemini
+} // namespace renderer
 
 
 

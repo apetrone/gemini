@@ -20,7 +20,7 @@
 
 #import <CoreFoundation/CoreFoundation.h>
 
-namespace gemini
+namespace renderer
 {
 	CFBundleRef gemgl_bundle = 0;
 		
@@ -63,4 +63,4 @@ namespace gemini
 		return symbol;
 	} // gemgl_native_findsymbol
 
-} // namespace gemini
+} // namespace renderer

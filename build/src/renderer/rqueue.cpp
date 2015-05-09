@@ -28,49 +28,44 @@
 
 #include <algorithm>
 
-
-
-namespace gemini
+namespace renderer
 {
-	namespace renderer
+	// this is a descending compare function used to traverse render commands
+	// where higher keys have priority
+	struct DescendingRenderBlockCompare
 	{
-		// this is a descending compare function used to traverse render commands
-		// where higher keys have priority
-		struct DescendingRenderBlockCompare
+		bool operator()(const RenderBlock& left, const RenderBlock& right)
 		{
-			bool operator()(const RenderBlock& left, const RenderBlock& right)
+			if ( left.key < right.key )
 			{
-				if ( left.key < right.key )
-				{
-					return 1;
-				}
-				else if ( left.key > right.key )
-				{
-					return -1;
-				}
-				
-				return 0;
+				return 1;
 			}
-		};
-
-		void RenderQueue::insert(const RenderBlock& block)
-		{
-			render_list.push_back(block);
+			else if ( left.key > right.key )
+			{
+				return -1;
+			}
+			
+			return 0;
 		}
+	};
 
-		void RenderQueue::sort()
-		{
-			std::sort(begin(render_list), end(render_list), DescendingRenderBlockCompare());
-		}
+	void RenderQueue::insert(const RenderBlock& block)
+	{
+		render_list.push_back(block);
+	}
 
-		void RenderQueue::clear()
-		{
-			render_list.clear();
-		}
+	void RenderQueue::sort()
+	{
+		std::sort(begin(render_list), end(render_list), DescendingRenderBlockCompare());
+	}
 
-		size_t RenderQueue::size() const
-		{
-			return render_list.size();
-		}
-	} // namespace renderer
-} // namespace gemini
+	void RenderQueue::clear()
+	{
+		render_list.clear();
+	}
+
+	size_t RenderQueue::size() const
+	{
+		return render_list.size();
+	}
+} // namespace renderer
