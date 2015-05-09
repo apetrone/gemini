@@ -147,6 +147,16 @@ namespace platform
 						(unsigned long)block->alloc_num);
 				}
 			}
+			
+			virtual void track_allocation(void* memory, size_t bytes, const char* file, int line)
+			{
+				
+			}
+			
+			virtual void untrack_allocation(void* memory)
+			{
+				
+			}
 				
 			virtual size_t active_bytes() const { return num_active_bytes; }
 			virtual size_t active_allocations() const { return num_active_allocations; }
