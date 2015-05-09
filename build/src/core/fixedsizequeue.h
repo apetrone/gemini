@@ -36,22 +36,19 @@ namespace core
 	{
 	private:
 	public:
-		Type* elements;
+		Type elements[MaxSize];
 		size_t total_elements;
 		size_t tail_index;
 		static Type default_value;
 		
 		FixedSizeQueue() :
-			elements(0),
 			total_elements(MaxSize),
 			tail_index(0)
 		{
-			elements = CREATE_ARRAY(Type, total_elements);
 		}
 		
 		~FixedSizeQueue()
 		{
-			DESTROY_ARRAY(Type, elements, total_elements);
 		}
 	
 		bool empty() const
