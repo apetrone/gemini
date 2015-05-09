@@ -57,6 +57,9 @@ namespace platform
 			virtual void * allocate( size_t bytes, const char * file, int line ) = 0;
 			virtual void deallocate( void * memory ) = 0;
 			virtual void print_report() = 0;
+			
+			virtual void track_allocation(void* memory, size_t bytes, const char* file, int line) = 0;
+			virtual void untrack_allocation(void* memory) = 0;
 
 			virtual size_t active_bytes() const = 0;
 			virtual size_t active_allocations() const = 0;
