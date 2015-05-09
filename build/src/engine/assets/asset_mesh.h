@@ -62,7 +62,7 @@ namespace gemini
 			}
 		};
 		
-		struct Geometry : public gemini::renderer::Geometry
+		struct Geometry : public ::renderer::Geometry
 		{
 			core::StackString<128> name;
 			unsigned int material_id;

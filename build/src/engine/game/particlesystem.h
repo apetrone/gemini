@@ -43,7 +43,7 @@ namespace gemini
 	struct Particle
 	{
 		core::Color color;
-		render_utilities::PhysicsState<glm::vec3> position;
+		::renderer::render_utilities::PhysicsState<glm::vec3> position;
 		glm::vec3 velocity;
 		
 		float life_remaining;
@@ -76,7 +76,7 @@ namespace gemini
 
 		
 		
-		render_utilities::PhysicsState<glm::vec3> world_position;
+		::renderer::render_utilities::PhysicsState<glm::vec3> world_position;
 		unsigned int num_particles_alive;
 		Particle * particle_list;
 		float next_spawn;

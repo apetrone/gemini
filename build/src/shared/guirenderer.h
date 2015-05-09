@@ -47,8 +47,8 @@ class GUIRenderer : public gui::Renderer
 	};
 	
 	gui::Compositor* compositor;
-	gemini::renderer::VertexStream stream;
-	gemini::renderer::VertexStream lines;
+	::renderer::VertexStream stream;
+	::renderer::VertexStream lines;
 	gemini::assets::Shader* shader;
 	
 	gemini::assets::Material * solid_color;
@@ -59,7 +59,7 @@ class GUIRenderer : public gui::Renderer
 	float current_depth;
 	
 private:
-	void render_buffer(gemini::renderer::VertexStream& stream, gemini::assets::Shader* shader, gemini::assets::Material* material);
+	void render_buffer(::renderer::VertexStream& stream, gemini::assets::Shader* shader, gemini::assets::Material* material);
 	
 	
 public:

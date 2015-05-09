@@ -38,7 +38,7 @@ namespace gemini
 		
 		struct Shader : public Asset
 		{
-			renderer::ShaderProgram* program;
+			::renderer::ShaderProgram* program;
 			
 			Shader() : program(nullptr) {}
 			virtual void release();

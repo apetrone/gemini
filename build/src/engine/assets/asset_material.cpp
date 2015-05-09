@@ -29,7 +29,7 @@
 #include "assets/asset_material.h"
 #include "renderer/renderer.h"
 
-using namespace gemini::renderer;
+using namespace renderer;
 
 namespace gemini
 {

@@ -59,8 +59,8 @@ namespace gemini
 			// I don't really see this changing.
 			virtual uint32_t total_eyes() const = 0;
 			
-			virtual void begin_frame(gemini::renderer::IRenderDriver* renderer) = 0;
-			virtual void end_frame(gemini::renderer::IRenderDriver* renderer) = 0;
+			virtual void begin_frame(::renderer::IRenderDriver* renderer) = 0;
+			virtual void end_frame(::renderer::IRenderDriver* renderer) = 0;
 
 			virtual void query_display_resolution(int32_t& width, int32_t& height) = 0;
 			virtual void get_eye_poses(EyePose poses[2], glm::mat4 projections[2]) = 0;
@@ -68,7 +68,7 @@ namespace gemini
 			virtual void dismiss_warning() = 0;
 			virtual void reset_head_pose() = 0;
 			
-			virtual gemini::renderer::RenderTarget* render_target() = 0;
+			virtual ::renderer::RenderTarget* render_target() = 0;
 			
 			
 			virtual void test(glm::mat4& xform) = 0;

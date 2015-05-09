@@ -38,7 +38,7 @@ namespace gemini
 	{
 		struct Shader;
 	
-		struct Material : public Asset, public renderer::Material
+		struct Material : public Asset, public ::renderer::Material
 		{
 			Shader* shader;
 

@@ -30,6 +30,8 @@
 #include "renderer/renderer.h"
 #include "assets/asset_shader.h"
 
+using namespace renderer;
+
 namespace gemini
 {
 	namespace assets
@@ -41,7 +43,7 @@ namespace gemini
 		{
 			if (program)
 			{
-				renderer::driver()->shaderprogram_destroy( program );
+				driver()->shaderprogram_destroy( program );
 			}
 		}
 
@@ -112,7 +114,7 @@ namespace gemini
 
 		AssetLoadStatus shader_load_callback(const char* path, Shader* shader, const AssetParameters& parameters)
 		{
-			renderer::create_shaderprogram_from_file(path, &shader->program);
+			create_shaderprogram_from_file(path, &shader->program);
 			if (!shader->program)
 			{
 				return AssetLoad_Failure;
