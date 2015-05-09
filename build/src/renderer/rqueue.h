@@ -31,77 +31,74 @@
 
 #include <vector>
 
-namespace gemini
+namespace renderer
 {
-	namespace renderer
+	typedef unsigned int RenderKey;
+
+	// This is used for sorting the texture/shader combination
+	struct RenderMaterial
 	{
-		typedef unsigned int RenderKey;
+		uint16_t texture;
+		uint16_t shader;
+	};
 
-		// This is used for sorting the texture/shader combination
-		struct RenderMaterial
-		{
-			uint16_t texture;
-			uint16_t shader;
-		};
+	// Contains necessary data needed in order to submit this to the renderer
+	typedef Geometry RenderObject;
 
-		// Contains necessary data needed in order to submit this to the renderer
-		typedef Geometry RenderObject;
-
-		// An item in a queue/list that contains a sorting key and a pointer to a RenderObject
-		// A RenderBlock is created for each renderable scene graph node.
-		struct RenderBlock
-		{
-			RenderKey key;
-			
-			RenderObject* object;
-			glm::mat4* object_matrix;
-			
-			unsigned int material_id;
-			unsigned int shader_id;
-			
-			glm::mat4* node_transforms;
-			uint32_t total_transforms;
-			
-			RenderBlock(RenderKey _key = 0, RenderObject* _object = 0) :
-				key(_key),
-				object(_object),
-				object_matrix(0),
-				
-				material_id(0),
-				shader_id(0),
-				
-				node_transforms(0),
-				total_transforms(0)
-			{
-			}
-				
-			RenderBlock& operator= (const RenderBlock& other)
-			{
-				key = other.key;
-				object = other.object;
-				
-				object_matrix = other.object_matrix;
-				node_transforms = other.node_transforms;
-				total_transforms = other.total_transforms;
-
-				return *this;
-			}
-		};
-
-		class RenderQueue
-		{
-		public:
-			typedef std::vector< RenderBlock, CustomPlatformAllocator<RenderBlock> > RenderList;
-			
-			RenderList render_list;
+	// An item in a queue/list that contains a sorting key and a pointer to a RenderObject
+	// A RenderBlock is created for each renderable scene graph node.
+	struct RenderBlock
+	{
+		RenderKey key;
 		
-			RenderQueue() {}
-			~RenderQueue() {}
+		RenderObject* object;
+		glm::mat4* object_matrix;
+		
+		unsigned int material_id;
+		unsigned int shader_id;
+		
+		glm::mat4* node_transforms;
+		uint32_t total_transforms;
+		
+		RenderBlock(RenderKey _key = 0, RenderObject* _object = 0) :
+			key(_key),
+			object(_object),
+			object_matrix(0),
+			
+			material_id(0),
+			shader_id(0),
+			
+			node_transforms(0),
+			total_transforms(0)
+		{
+		}
+			
+		RenderBlock& operator= (const RenderBlock& other)
+		{
+			key = other.key;
+			object = other.object;
+			
+			object_matrix = other.object_matrix;
+			node_transforms = other.node_transforms;
+			total_transforms = other.total_transforms;
 
-			void insert(const RenderBlock& block);
-			void sort();
-			void clear();
-			size_t size() const;
-		};
-	} // namespace renderer
-} // namespace gemini
+			return *this;
+		}
+	};
+
+	class RenderQueue
+	{
+	public:
+		typedef std::vector< RenderBlock, CustomPlatformAllocator<RenderBlock> > RenderList;
+		
+		RenderList render_list;
+	
+		RenderQueue() {}
+		~RenderQueue() {}
+
+		void insert(const RenderBlock& block);
+		void sort();
+		void clear();
+		size_t size() const;
+	};
+} // namespace renderer

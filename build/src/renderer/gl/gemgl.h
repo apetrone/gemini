@@ -95,7 +95,7 @@
 
 #define GEMGL_LINK( name, fn, type )	name = (type) gemgl_findsymbol( gl, fn );
 
-namespace gemini
+namespace renderer
 {
 	// ---------------------------------------
 
@@ -640,4 +640,4 @@ namespace gemini
 		void gemgl_osx_shutdown(void);
 		void * gemgl_native_findsymbol(const char* name);
 #endif
-} // namespace gemini
+} // namespace renderer

@@ -34,7 +34,7 @@
 
 #define FAIL_IF_GLERROR( error ) if ( error != GL_NO_ERROR ) { return false; }
 
-namespace gemini
+namespace renderer
 {
 	typedef GLenum (*get_internal_image_format)(unsigned int);
 
@@ -67,4 +67,4 @@ namespace gemini
 		GLFunctionLogger(const char* fn);
 		~GLFunctionLogger();
 	};
-} // namespace gemini
+} // namespace renderer

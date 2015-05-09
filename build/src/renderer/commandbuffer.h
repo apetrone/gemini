@@ -27,24 +27,21 @@
 #include "pipeline.h"
 #include "vertexbuffer.h"
 
-namespace gemini
+namespace renderer
 {
-	namespace renderer
+	struct CommandBuffer
 	{
-		struct CommandBuffer
-		{
-			// graphics state
-			void set_pipeline_state(const PipelineState* state) {}
-			void set_viewport() {}
-			void set_cullmode() {}
-			void set_face_winding() {}
-			void set_blending() {}
-			void set_depth_stencil_state() {}
-			void set_scissor_rect() {}
-			
-			
-			void draw_primitives(unsigned int start, unsigned int count) {}
-			void draw_indexed_primitives() {}
-		};
-	} // namespace renderer
-} // namespace gemini
+		// graphics state
+		void set_pipeline_state(const PipelineState* state) {}
+		void set_viewport() {}
+		void set_cullmode() {}
+		void set_face_winding() {}
+		void set_blending() {}
+		void set_depth_stencil_state() {}
+		void set_scissor_rect() {}
+		
+		
+		void draw_primitives(unsigned int start, unsigned int count) {}
+		void draw_indexed_primitives() {}
+	};
+} // namespace renderer

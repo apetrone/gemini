@@ -31,7 +31,7 @@
 #include <string.h> // for memset
 #include <stdio.h> // for printf
 
-namespace gemini
+namespace renderer
 {
 	RenderStream::RenderStream( unsigned int max_bytes, unsigned int max_commands )
 	{
@@ -209,4 +209,4 @@ namespace gemini
 		renderer::driver()->setup_material(material, shader, *this);
 	}
 
-} // namespace gemini
+} // namespace renderer

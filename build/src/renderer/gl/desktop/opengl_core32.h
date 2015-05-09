@@ -27,7 +27,7 @@
 #include "gemgl.h"
 #include "opengl_common.h"
 
-namespace gemini
+namespace renderer
 {
 	class GLCore32 : public renderer::IRenderDriver
 	{
@@ -99,4 +99,4 @@ namespace gemini
 		virtual renderer::PipelineState* pipelinestate_create(const renderer::PipelineDescriptor& desc);
 		virtual void pipelinestate_destroy(renderer::PipelineState* state);
 	}; // GLCore32
-} // namespace gemini
+} // namespace renderer
