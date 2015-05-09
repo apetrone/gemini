@@ -128,7 +128,7 @@ struct Settings
 	uint32_t window_width;
 	uint32_t window_height;
 	
-	renderer::RenderSettings render_settings;
+	::renderer::RenderSettings render_settings;
 	
 	Settings()
 	{
@@ -145,7 +145,7 @@ struct Settings
 
 static util::ConfigLoadStatus load_render_config(const Json::Value& root, void* data)
 {
-	renderer::RenderSettings* settings = static_cast<renderer::RenderSettings*>(data);
+	::renderer::RenderSettings* settings = static_cast<::renderer::RenderSettings*>(data);
 	
 	// TODO: there should be a better way to do this?
 	if (!root["gamma_correct"].isNull())
@@ -250,11 +250,11 @@ public:
 
 
 
-void render_scene_from_camera(gemini::IEngineEntity** entity_list, View& view, renderer::SceneLink& scenelink)
+void render_scene_from_camera(gemini::IEngineEntity** entity_list, View& view, SceneLink& scenelink)
 {
 	// setup constant buffer
 	glm::vec3 light_position = view.eye_position;
-	renderer::ConstantBuffer cb;
+	::renderer::ConstantBuffer cb;
 	cb.modelview_matrix = &view.modelview;
 	cb.projection_matrix = &view.projection;
 	cb.viewer_direction = &view.view_direction;
@@ -268,11 +268,11 @@ void render_scene_from_camera(gemini::IEngineEntity** entity_list, View& view, r
 	scenelink.draw(cb);
 }
 
-void render_entity_from_camera(gemini::IEngineEntity* entity, View& view, renderer::SceneLink& scenelink)
+void render_entity_from_camera(gemini::IEngineEntity* entity, View& view, SceneLink& scenelink)
 {
 	// setup constant buffer
 	glm::vec3 light_position = view.eye_position;
-	renderer::ConstantBuffer cb;
+	::renderer::ConstantBuffer cb;
 	cb.modelview_matrix = &view.modelview;
 	cb.projection_matrix = &view.projection;
 	cb.viewer_direction = &view.view_direction;
@@ -303,10 +303,10 @@ class VRRenderMethod : public SceneRenderMethod
 {
 	vr::HeadMountedDevice* device;
 	
-	renderer::SceneLink& scenelink;
+	SceneLink& scenelink;
 	
 public:
-	VRRenderMethod(vr::HeadMountedDevice* in_device, renderer::SceneLink& in_link) : device(in_device), scenelink(in_link) {}
+	VRRenderMethod(vr::HeadMountedDevice* in_device, SceneLink& in_link) : device(in_device), scenelink(in_link) {}
 	
 	virtual void render_view(gemini::IEngineEntity** entity_list, platform::NativeWindow* window, const View& view)
 	{
@@ -441,11 +441,11 @@ public:
 
 class DefaultRenderMethod : public SceneRenderMethod
 {
-	renderer::SceneLink& scenelink;
+	SceneLink& scenelink;
 	platform::IWindowLibrary* window_library;
 	
 public:
-	DefaultRenderMethod(renderer::SceneLink& in_link, platform::IWindowLibrary* wl) :
+	DefaultRenderMethod(SceneLink& in_link, platform::IWindowLibrary* wl) :
 		scenelink(in_link),
 		window_library(wl)
 	{
@@ -454,14 +454,14 @@ public:
 	
 	virtual void render_view(gemini::IEngineEntity** entity_list, platform::NativeWindow* window, const View& view)
 	{
-		RenderStream rs;
-		rs.add_cullmode(renderer::CullMode::CULLMODE_BACK);
-		rs.add_state(renderer::STATE_DEPTH_WRITE, 1);
+		::renderer::RenderStream rs;
+		rs.add_cullmode(::renderer::CullMode::CULLMODE_BACK);
+		rs.add_state(::renderer::STATE_DEPTH_WRITE, 1);
 		//		rs.add_state(renderer::STATE_BACKFACE_CULLING, 0);
-		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
+		rs.add_state(::renderer::STATE_DEPTH_TEST, 1);
 		rs.add_viewport( 0, 0, window->render_width, window->render_height );
 		rs.add_clearcolor( 0.0, 0.0, 0.0, 1.0f );
-		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
+		rs.add_clear(::renderer::CLEAR_COLOR_BUFFER | ::renderer::CLEAR_DEPTH_BUFFER );
 		rs.run_commands();
 
 		View newview = view;
@@ -475,12 +475,11 @@ public:
 	
 	virtual void render_viewmodel(gemini::IEngineEntity* entity, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles)
 	{
-		RenderStream rs;
-		rs.add_cullmode(renderer::CullMode::CULLMODE_BACK);
-		rs.add_state(renderer::STATE_BACKFACE_CULLING, 1);
-		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
-		
-		rs.add_clear( renderer::CLEAR_DEPTH_BUFFER );
+		::renderer::RenderStream rs;
+		rs.add_cullmode(::renderer::CullMode::CULLMODE_BACK);
+		rs.add_state(::renderer::STATE_BACKFACE_CULLING, 1);
+		rs.add_state(::renderer::STATE_DEPTH_TEST, 1);
+		rs.add_clear(::renderer::CLEAR_DEPTH_BUFFER );
 		rs.run_commands();
 		
 //		Camera camera;
@@ -1041,8 +1040,8 @@ private:
 	
 	
 	
-	renderer::RenderTarget* cubemap;
-	renderer::Texture* cubemap_texture;
+	::renderer::RenderTarget* cubemap;
+	::renderer::Texture* cubemap_texture;
 	
 public:
 	CustomListener(bool& in_gui) : is_in_gui(in_gui)
@@ -1145,8 +1144,8 @@ private:
 	platform::NativeWindow* main_window;
 	platform::NativeWindow* alt_window;
 	
-	renderer::Texture* gui_texture;
-	renderer::RenderTarget* gui_render_target;
+	::renderer::Texture* gui_texture;
+	::renderer::RenderTarget* gui_render_target;
 		
 	// Kernel State variables
 	double accumulator;
@@ -1155,7 +1154,7 @@ private:
 	EventQueueType* event_queue;
 	
 	// rendering
-	renderer::SceneLink* scenelink;
+	SceneLink* scenelink;
 	SceneRenderMethod* render_method;
 	
 	// game library
@@ -1185,7 +1184,7 @@ private:
 	audio::SoundHandle menu_show;
 	audio::SoundHandle menu_hide;
 	
-	renderer::VertexStream alt_vs;
+	::renderer::VertexStream alt_vs;
 
 	DataInput data_input;
 
@@ -1748,8 +1747,8 @@ Options:
 
 		// initialize rendering subsystems
 		{
-			scenelink = CREATE(renderer::SceneLink);
-			int render_result =	renderer::startup(renderer::Default, config.render_settings);
+			scenelink = CREATE(SceneLink);
+			int render_result =	::renderer::startup(::renderer::Default, config.render_settings);
 			if ( render_result == 0 )
 			{
 				LOGE("renderer initialization failed!\n");
@@ -1784,12 +1783,12 @@ Options:
 			window_interface->activate_window(alt_window);
 			window_interface->focus_window(alt_window);
 			
-			alt_vs.desc.add(renderer::VD_FLOAT2);
-			alt_vs.desc.add(renderer::VD_UNSIGNED_BYTE4);
-			alt_vs.desc.add(renderer::VD_FLOAT2);
+			alt_vs.desc.add(::renderer::VD_FLOAT2);
+			alt_vs.desc.add(::renderer::VD_UNSIGNED_BYTE4);
+			alt_vs.desc.add(::renderer::VD_FLOAT2);
 
 			
-			alt_vs.create(6, 10, renderer::DRAW_INDEXED_TRIANGLES);
+			alt_vs.create(6, 10, ::renderer::DRAW_INDEXED_TRIANGLES);
 			
 			if (alt_vs.has_room(4, 6))
 			{
@@ -1807,7 +1806,7 @@ Options:
 				v[2].pos = glm::vec2(cx+RECT_SIZE, cy+RECT_SIZE); v[2].uv = glm::vec2(1,1); v[2].color = Color(255, 255, 255, 255);
 				v[3].pos = glm::vec2(cx+RECT_SIZE, cy-RECT_SIZE); v[3].uv = glm::vec2(1,0); v[3].color = Color(255, 255, 255, 255);
 				
-				renderer::IndexType indices[] = {0, 1, 2, 2, 3, 0};
+				::renderer::IndexType indices[] = {0, 1, 2, 2, 3, 0};
 				alt_vs.append_indices(indices, 6);
 				alt_vs.update();
 			}
@@ -1822,11 +1821,11 @@ Options:
 		image.width = 512;
 		image.height = 512;
 		image.channels = 3;
-		gui_texture = renderer::driver()->texture_create(image);
+		gui_texture = ::renderer::driver()->texture_create(image);
 		
-		gui_render_target = renderer::driver()->render_target_create(image.width, image.height);
-		renderer::driver()->render_target_set_attachment(gui_render_target, renderer::RenderTarget::COLOR, 0, gui_texture);
-		renderer::driver()->render_target_set_attachment(gui_render_target, renderer::RenderTarget::DEPTHSTENCIL, 0, 0);
+		gui_render_target = ::renderer::driver()->render_target_create(image.width, image.height);
+		::renderer::driver()->render_target_set_attachment(gui_render_target, ::renderer::RenderTarget::COLOR, 0, gui_texture);
+		::renderer::driver()->render_target_set_attachment(gui_render_target, ::renderer::RenderTarget::DEPTHSTENCIL, 0, 0);
 		
 		
 		
@@ -2056,7 +2055,7 @@ Options:
 		if (alt_window)
 		{
 			window_interface->activate_window(alt_window);
-			renderer::CommandBuffer buffer;
+			::renderer::CommandBuffer buffer;
 
 #if 0
 			render::Device* device = render::create_device();
@@ -2068,14 +2067,14 @@ Options:
 #endif
 
 
-			renderer::IRenderDriver* device = renderer::driver();
+			::renderer::IRenderDriver* device = ::renderer::driver();
 			
 			{
 				
-				RenderStream rs;
+				::renderer::RenderStream rs;
 				rs.add_viewport(0, 0, gui_texture->width, gui_texture->height);
 				rs.add_clearcolor(0.0f, 0.0f, 0.0f, 1.0f);
-				rs.add_clear(renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER);
+				rs.add_clear(::renderer::CLEAR_COLOR_BUFFER | ::renderer::CLEAR_DEPTH_BUFFER);
 
 				
 				device->render_target_activate(gui_render_target);
@@ -2093,10 +2092,10 @@ Options:
 
 
 
-			RenderStream rs;
+			::renderer::RenderStream rs;
 			rs.add_viewport(0, 0, alt_window->render_width, alt_window->render_height);
 			rs.add_clearcolor(0.1f, 0.1f, 0.1f, 1.0f);
-			rs.add_clear(renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER);
+			rs.add_clear(::renderer::CLEAR_COLOR_BUFFER | ::renderer::CLEAR_DEPTH_BUFFER);
 			
 			
 			glm::mat4 modelview;
@@ -2154,8 +2153,8 @@ Options:
 		
 		
 		
-		renderer::driver()->render_target_destroy(gui_render_target);
-		renderer::driver()->texture_destroy(gui_texture);
+		::renderer::driver()->render_target_destroy(gui_render_target);
+		::renderer::driver()->texture_destroy(gui_texture);
 
 		if (alt_window)
 		{
@@ -2173,7 +2172,7 @@ Options:
 		assets::shutdown();
 		input::shutdown();
 		audio::shutdown();
-		renderer::shutdown();
+		::renderer::shutdown();
 		core::shutdown();
 	
 		delete event_queue;

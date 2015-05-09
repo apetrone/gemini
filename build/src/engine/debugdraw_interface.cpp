@@ -33,13 +33,14 @@
 #include <core/logging.h>
 
 using namespace gemini::debugdraw;
+using namespace renderer;
 
 namespace gemini
 {
 	const int MAX_CIRCLE_SIDES = 12;
 	const int TOTAL_CIRCLE_VERTICES = 2 * MAX_CIRCLE_SIDES;
 	
-	void flush_streams(RenderStream& rs, renderer::VertexStream* vs)
+	void flush_streams(RenderStream& rs, VertexStream* vs)
 	{
 		long offset;
 		rs.save_offset(offset);
@@ -51,9 +52,9 @@ namespace gemini
 	} // flush_streams
 
 	
-	typedef void (*buffer_primitive_fn)(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, renderer::VertexStream* vs);
+	typedef void (*buffer_primitive_fn)(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, VertexStream* vs);
 	
-	void buffer_box(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, renderer::VertexStream* vs)
+	void buffer_box(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, VertexStream* vs)
 	{
 		if ( !vs->has_room(24, 0) )
 		{

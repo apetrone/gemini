@@ -29,7 +29,7 @@ using core::Color;
 
 using namespace gemini;
 
-void GUIRenderer::render_buffer(renderer::VertexStream& stream, assets::Shader* shader, assets::Material* material)
+void GUIRenderer::render_buffer(::renderer::VertexStream& stream, assets::Shader* shader, assets::Material* material)
 {
 	stream.update();
 	
@@ -37,7 +37,7 @@ void GUIRenderer::render_buffer(renderer::VertexStream& stream, assets::Shader* 
 	glm::mat4 projection = glm::ortho( 0.0f, (float)compositor->width, (float)compositor->height, 0.0f, -0.1f, 256.0f );
 	glm::mat4 object_matrix;
 	
-	RenderStream rs;
+	::renderer::RenderStream rs;
 	rs.add_shader( shader->program );
 	rs.add_uniform_matrix4( shader->program->get_uniform_location("modelview_matrix"), &modelview );
 	rs.add_uniform_matrix4( shader->program->get_uniform_location("projection_matrix"), &projection );
@@ -74,15 +74,15 @@ void GUIRenderer::increment_depth()
 void GUIRenderer::startup(gui::Compositor* c)
 {
 	this->compositor = c;
-	stream.desc.add(renderer::VD_FLOAT3);
-	stream.desc.add(renderer::VD_FLOAT2);
-	stream.desc.add(renderer::VD_UNSIGNED_BYTE4);
-	stream.create(64, 64, renderer::DRAW_INDEXED_TRIANGLES);
+	stream.desc.add(::renderer::VD_FLOAT3);
+	stream.desc.add(::renderer::VD_FLOAT2);
+	stream.desc.add(::renderer::VD_UNSIGNED_BYTE4);
+	stream.create(64, 64, ::renderer::DRAW_INDEXED_TRIANGLES);
 	
-	lines.desc.add(renderer::VD_FLOAT3);
-	lines.desc.add(renderer::VD_FLOAT2);
-	lines.desc.add(renderer::VD_UNSIGNED_BYTE4);
-	lines.create(128, 0, renderer::DRAW_LINES);
+	lines.desc.add(::renderer::VD_FLOAT3);
+	lines.desc.add(::renderer::VD_FLOAT2);
+	lines.desc.add(::renderer::VD_UNSIGNED_BYTE4);
+	lines.create(128, 0, ::renderer::DRAW_LINES);
 	
 	// load shader
 	shader = assets::shaders()->load_from_path("shaders/gui");
@@ -91,14 +91,14 @@ void GUIRenderer::startup(gui::Compositor* c)
 	solid_color = assets::materials()->allocate_asset();
 	if (solid_color)
 	{
-		renderer::MaterialParameter parameter;
-		parameter.type = renderer::MP_VEC4;
+		::renderer::MaterialParameter parameter;
+		parameter.type = ::renderer::MP_VEC4;
 		parameter.name = "diffusecolor";
 		parameter.vector_value = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		solid_color->add_parameter(parameter);
 		
-		renderer::MaterialParameter enable_sampler;
-		enable_sampler.type = renderer::MP_INT;
+		::renderer::MaterialParameter enable_sampler;
+		enable_sampler.type = ::renderer::MP_INT;
 		enable_sampler.name = "enable_sampler";
 		enable_sampler.int_value = 0;
 		solid_color->add_parameter(enable_sampler);
@@ -109,14 +109,14 @@ void GUIRenderer::startup(gui::Compositor* c)
 	texture_map = assets::materials()->allocate_asset();
 	if (texture_map)
 	{
-		renderer::MaterialParameter parameter;
-		parameter.type = renderer::MP_SAMPLER_2D;
+		::renderer::MaterialParameter parameter;
+		parameter.type = ::renderer::MP_SAMPLER_2D;
 		parameter.name = "diffusemap";
 		parameter.int_value = assets::textures()->get_default()->Id();
 		texture_map->add_parameter(parameter);
 		
-		renderer::MaterialParameter enable_sampler;
-		enable_sampler.type = renderer::MP_INT;
+		::renderer::MaterialParameter enable_sampler;
+		enable_sampler.type = ::renderer::MP_INT;
 		enable_sampler.name = "enable_sampler";
 		enable_sampler.int_value = 1;
 		texture_map->add_parameter(enable_sampler);
@@ -131,23 +131,23 @@ void GUIRenderer::shutdown(gui::Compositor* c)
 
 void GUIRenderer::begin_frame(gui::Compositor* c)
 {
-	RenderStream rs;
+	::renderer::RenderStream rs;
 	
-	rs.add_state( renderer::STATE_BLEND, 1 );
-	rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
-	rs.add_state(renderer::STATE_DEPTH_TEST, 0);
-	rs.add_state(renderer::STATE_DEPTH_WRITE, 0);
+	rs.add_state(::renderer::STATE_BLEND, 1 );
+	rs.add_blendfunc(::renderer::BLEND_SRC_ALPHA, ::renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+	rs.add_state(::renderer::STATE_DEPTH_TEST, 0);
+	rs.add_state(::renderer::STATE_DEPTH_WRITE, 0);
 	
 	rs.run_commands();
 }
 
 void GUIRenderer::end_frame()
 {
-	RenderStream rs;
+	::renderer::RenderStream rs;
 	
-	rs.add_state( renderer::STATE_BLEND, 0 );
-	rs.add_state(renderer::STATE_DEPTH_TEST, 1);
-	rs.add_state(renderer::STATE_DEPTH_WRITE, 1);
+	rs.add_state(::renderer::STATE_BLEND, 0 );
+	rs.add_state(::renderer::STATE_DEPTH_TEST, 1);
+	rs.add_state(::renderer::STATE_DEPTH_WRITE, 1);
 	rs.run_commands();
 }
 
@@ -166,7 +166,7 @@ void GUIRenderer::draw_bounds(const gui::Bounds& bounds, const gui::Color& color
 	
 	stream.reset();
 	
-	RenderStream rs;
+	::renderer::RenderStream rs;
 	
 	if ( stream.has_room(4, 6) )
 	{
@@ -186,7 +186,7 @@ void GUIRenderer::draw_bounds(const gui::Bounds& bounds, const gui::Color& color
 		
 		//v[0].color = v[1].color = v[2].color = v[3].color = Color(rgba[0], rgba[1], rgba[2], rgba[3]);
 		
-		renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+		::renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
 		stream.append_indices( indices, 6 );
 	}
 	else
@@ -200,7 +200,7 @@ void GUIRenderer::draw_bounds(const gui::Bounds& bounds, const gui::Color& color
 void GUIRenderer::draw_textured_bounds(const gui::Bounds& bounds, const gui::TextureHandle& handle)
 {
 	stream.reset();
-	RenderStream rs;
+	::renderer::RenderStream rs;
 	assets::Texture * tex = assets::textures()->find_with_id( handle );
 	if ( !tex )
 	{
@@ -228,7 +228,7 @@ void GUIRenderer::draw_textured_bounds(const gui::Bounds& bounds, const gui::Tex
 		
 		v[0].color = v[1].color = v[2].color = v[3].color = Color(255, 255, 255, 255);
 		
-		renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
+		::renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
 		stream.append_indices( indices, 6 );
 	}
 	

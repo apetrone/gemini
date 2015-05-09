@@ -30,7 +30,7 @@
 #include "assets/asset_material.h"
 #include "renderer/renderer.h"
 
-using namespace gemini::renderer;
+using namespace renderer;
 
 namespace gemini
 {
@@ -143,7 +143,7 @@ namespace gemini
 				
 				assets::Shader* shader = assets::shaders()->load_from_path(shader_path.c_str());
 				geo->shader_id = shader->Id();
-				geo->draw_type = renderer::DRAW_INDEXED_TRIANGLES;
+				geo->draw_type = DRAW_INDEXED_TRIANGLES;
 				geo->name = node["name"].asString().c_str();
 				
 //				LOGV("assign material id %i to geometry: %s\n", geo->material_id, geo->name());
@@ -447,14 +447,14 @@ namespace gemini
 			index_count = 0;
 			attributes = 0;
 			vertexbuffer = 0;
-			draw_type = renderer::DRAW_TRIANGLES;
+			draw_type = DRAW_TRIANGLES;
 		}
 		
 		Geometry::~Geometry()
 		{
 			if ( this->vertexbuffer )
 			{
-				renderer::driver()->vertexbuffer_destroy( this->vertexbuffer );
+				driver()->vertexbuffer_destroy( this->vertexbuffer );
 			}
 		}
 		
@@ -511,12 +511,12 @@ namespace gemini
 			
 			if (!this->vertexbuffer)
 			{
-				this->vertexbuffer = renderer::driver()->vertexbuffer_from_geometry( descriptor, this );
+				this->vertexbuffer = driver()->vertexbuffer_from_geometry( descriptor, this );
 			}
 			
 			if ( !this->is_animated() )
 			{
-				renderer::driver()->vertexbuffer_upload_geometry( this->vertexbuffer, /*descriptor, */ this );
+				driver()->vertexbuffer_upload_geometry( this->vertexbuffer, /*descriptor, */ this );
 			}
 		}
 

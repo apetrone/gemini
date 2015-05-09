@@ -31,7 +31,7 @@
 #include <renderer/image.h>
 #include <renderer/renderer.h>
 
-using namespace gemini::renderer;
+using namespace renderer;
 
 namespace gemini
 {

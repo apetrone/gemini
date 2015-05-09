@@ -103,10 +103,11 @@ namespace gemini
 #include "assets/asset_emitter.h"
 #include "assets/asset_font.h"
 
+
 namespace gemini
 {
 	namespace assets
 	{
-		unsigned int find_parameter_mask( renderer::ShaderString & name );
+		unsigned int find_parameter_mask(::renderer::ShaderString& name);
 	} // namespace assets
 } // namespace gemini

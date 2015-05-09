@@ -31,19 +31,19 @@
 
 #include <sdk/debugdraw_api.h>
 
+namespace font
+{
+	typedef int Handle;
+}
+
+namespace renderer
+{
+	struct Font;
+	struct ShaderProgram;
+}
+
 namespace gemini
 {
-	namespace font
-	{
-		typedef int Handle;
-	}
-
-	namespace renderer
-	{
-		struct Font;
-		struct ShaderProgram;
-	}
-
 	namespace debugdraw
 	{
 		void startup(unsigned int max_primitives, renderer::ShaderProgram* program, const font::Handle& font);

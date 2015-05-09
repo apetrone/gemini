@@ -74,7 +74,7 @@ namespace gemini
 
 	class DebugDrawInterface : public gemini::IDebugDraw
 	{
-		renderer::VertexStream vertex_stream;
+		::renderer::VertexStream vertex_stream;
 		unsigned int next_primitive;
 		unsigned int max_primitives;
 		debugdraw::DebugPrimitive* primitive_list;

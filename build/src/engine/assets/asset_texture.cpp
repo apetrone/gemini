@@ -36,6 +36,8 @@
 
 #include "kernel.h" // for device_flags
 
+using namespace renderer;
+
 namespace gemini
 {
 	namespace assets
@@ -45,7 +47,7 @@ namespace gemini
 		
 		void Texture::release()
 		{
-			renderer::driver()->texture_destroy(this->texture);
+			driver()->texture_destroy(this->texture);
 		} // release
 
 		
@@ -122,12 +124,12 @@ namespace gemini
 			extension.append(ext);
 		} // texture_construct_extension
 
-		renderer::Texture* load_texture_from_file(const char* filename, const assets::TextureParameters& parameters, image::Image& image)
+		::renderer::Texture* load_texture_from_file(const char* filename, const assets::TextureParameters& parameters, image::Image& image)
 		{
 			size_t buffer_size = 0;
 			char * filedata;
 			
-			renderer::Texture* render_texture = nullptr;
+			::renderer::Texture* render_texture = nullptr;
 			
 			filedata = core::filesystem::file_to_buffer( filename, 0, &buffer_size );
 			
@@ -142,7 +144,7 @@ namespace gemini
 					image.pixels = pixels;
 					image.filter = parameters.filter_type;
 					
-					render_texture = renderer::driver()->texture_create(image);
+					render_texture = ::renderer::driver()->texture_create(image);
 					
 					LOGV( "Loaded texture \"%s\"; (%i x %i @ %ibpp)\n", filename, image.width, image.height, image.channels );
 					
