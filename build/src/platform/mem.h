@@ -117,6 +117,109 @@ namespace platform
 		#define CREATE_ARRAY(Type, num_elements, ...)		new Type[ num_elements ]
 		#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { delete [] pointer; pointer = 0;  }
 #endif
+
+		// GOALS: MEMORY REFACTOR
+		// * create/destroy arrays of non-POD types
+		// * create/destroy non-POD types
+		// * create aligned allocs (for physics)
+		// * tag or group allocations by category
+		// * allocation tracking
+		// * be able to pass arguments to the constructor
+		
+//		size_t test_align(size_t bytes, uint32_t alignment)
+//		{
+//			return (bytes + (alignment-1)) & ~(alignment-1);
+//		}
+		
+//		void* aligned_allocate(size_t size, size_t alignment)
+//		{
+//			void* out;
+//			int result = posix_memalign(&out, alignment, size);
+////			assert(result == 0);
+//			fprintf(stdout, "aligned_allocate [size=%zu, alignment=%zu]\n", size, alignment);
+//			return out;
+//		}
+//		
+//		void aligned_deallocate(void* pointer)
+//		{
+//			fprintf(stdout, "aligned_deallocate [pointer=%p]\n", pointer);
+//			free(pointer);
+//		}
+		
+//		void* allocate(size_t size)
+//		{
+//			return malloc(size);
+//		}
+//		
+//		void deallocate(void* pointer)
+//		{
+//			free(pointer);
+//		}
+		
+		
+		template <class _Type, class _Heap>
+		void delete_heap_pointer(_Type* pointer, _Heap& heap)
+		{
+			pointer->~_Type();
+			heap.deallocate(pointer);
+		}
+		
+#if 0
+		template <class _Type, class _Heap>
+		_Type* create_array(size_t elements, _Heap& heap, const char* filename, int line)
+		{
+			// store number of elements
+			
+			void* mem = heap.allocate((sizeof(_Type)*elements)+sizeof(size_t), filename, line);
+			size_t* block = reinterpret_cast<size_t*>(mem);
+			*block = elements;
+			
+			_Type* values = reinterpret_cast<_Type*>(block+1);
+			
+			for (size_t index = 0; index < elements; ++index)
+			{
+				new (&values[index]) _Type;
+			}
+			
+			return values;
+		}
+		
+		template <class _Type, class _Heap>
+		void destroy_array(_Type* pointer, _Heap& heap)
+		{
+			// fetch the number of elements
+			char* mem = reinterpret_cast<char*>(pointer);
+			size_t* block = reinterpret_cast<size_t*>(mem-sizeof(size_t));
+//			assert(*block > 0);
+			
+			// per the spec; we must delete the elements in reverse order
+			for (size_t index = *block; index > 0; --index)
+			{
+				pointer[index-1].~_Type();
+			}
+			
+			// deallocate the block
+			heap.deallocate(block);
+		}
+#endif
+		// This trick was taken from molecular matters.
+		// see: https://molecularmusings.wordpress.com/2011/07/07/memory-system-part-2/
+		template <class _Type>
+		struct TypeAndCount
+		{
+		};
+		
+		template <class _Type, size_t N>
+		struct TypeAndCount<_Type[N]>
+		{
+			typedef _Type Type;
+			static const size_t Count = N;
+		};
+		#define MEMORY_NEW(type, heap) new (heap.allocate(sizeof(type), __FILE__, __LINE__)) type
+		#define MEMORY_DELETE(pointer, heap) ::platform::memory::delete_heap_pointer(pointer, heap)
+				
+		#define MEMORY_NEW_ARRAY(type, heap) ::platform::memory::create_array< ::platform::memory::TypeAndCount<type>::Type >(::platform::memory::TypeAndCount<type>::Count, heap, __FILE__, __LINE__)
+		#define MEMORY_DELETE_ARRAY(pointer, heap) ::platform::memory::destroy_array(pointer, heap)
 	} // namespace memory
 } // namespace platform
 
