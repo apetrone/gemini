@@ -275,171 +275,9 @@ void test_rendering()
 
 
 #include <platform/platform.h>
+#include <platform/mem.h>
 
-
-size_t test_align(size_t bytes, uint32_t alignment)
-{
-	return (bytes + (alignment-1)) & ~(alignment-1);
-}
-
-namespace memory
-{
-	void* aligned_alloc(size_t size, size_t alignment)
-	{
-		void* out;
-		int result = posix_memalign(&out, alignment, size);
-		assert(result == 0);
-		fprintf(stdout, "aligned_alloc [size=%zu, alignment=%zu]\n", size, alignment);
-		return out;
-	}
-	
-	void aligned_dealloc(void* pointer)
-	{
-		fprintf(stdout, "aligned_dealloc [pointer=%p]\n", pointer);
-		free(pointer);
-	}
-	
-	void* alloc(size_t size)
-	{
-		fprintf(stdout, "alloc [size=%zu]\n", size);
-		return malloc(size);
-	}
-	
-	void dealloc(void* pointer)
-	{
-		fprintf(stdout, "dealloc [pointer=%p]\n", pointer);
-		free(pointer);
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	/// Custom STL allocator class for debugging / memory tracking
-	template<class _Ty>
-	class CustomAllocator
-	{
-	public:
-		typedef _Ty				value_type;
-		typedef _Ty*				pointer;
-		typedef const _Ty*			const_pointer;
-		typedef _Ty&				reference;
-		typedef const _Ty&			const_reference;
-		typedef std::size_t		size_type;
-		typedef std::ptrdiff_t		difference_type;
-		
-		// convert an CustomAllocator<_Ty> to an CustomAllocator <U>
-		template<class U>
-		struct rebind
-		{
-			typedef CustomAllocator<U> other;
-		};
-		
-		// return address of mutable _Val
-		pointer address(reference value) const
-		{
-			return (&value);
-		}
-		
-		// return address of nonmutable _Val
-		const_pointer address(const_reference value) const
-		{
-			return (&value);
-		}
-		
-		// construct default CustomAllocator (do nothing)
-		CustomAllocator() throw()
-		{
-		}
-		
-		// construct by copying (do nothing)
-		CustomAllocator(const CustomAllocator<_Ty>&) throw()
-		{
-		}
-		
-		// construct from a related CustomAllocator (do nothing)
-		template<class U>
-		CustomAllocator(const CustomAllocator<U>&) throw()
-		{
-		}
-		
-		~CustomAllocator() throw()
-		{
-		}
-		
-		// assign from a related CustomAllocator (do nothing)
-		template<class _Other>
-		CustomAllocator<_Ty>& operator=(const CustomAllocator<_Other>&)
-		{
-			return (*this);
-		}
-		
-		// deallocate object at _Ptr, ignore size
-		void deallocate(pointer _Ptr, size_type)
-		{
-			memory::dealloc(_Ptr);
-		}
-		
-		// allocate array of _Count elements
-		pointer allocate(size_type _Count, const void * hint = 0)
-		{
-			return (pointer)memory::alloc(_Count*sizeof(_Ty));
-		}
-		
-		// construct object at _Ptr with value _Val
-		void construct(pointer _Ptr, const _Ty& _Val)
-		{
-			new ((void*)_Ptr) _Ty(_Val);
-		}
-		
-		// destroy object at _Ptr
-		void destroy(pointer _Ptr)
-		{
-			_Ptr->~_Ty();
-		}
-		
-		// return max number of elements that can be allocated
-		// use parentheses around std:: ... ::max function to avoid macro expansion (some headers define max as a macro, ugh annoying.)
-		size_type max_size() const throw()
-		{
-			return (std::numeric_limits<std::size_t>::max)() / sizeof(_Ty);
-		}
-	};
-	
-	template <class T1, class T2>
-	bool operator== (const CustomAllocator<T1>&, const CustomAllocator<T2>&) throw()
-	{
-		return true;
-	}
-	
-	template <class T1, class T2>
-	bool operator!= (const CustomAllocator<T1>&, const CustomAllocator<T2>&) throw()
-	{
-		return true;
-	}
-	
-	
-	
-	
-} // namespace memory
-
-
-
-void* operator new(size_t size) throw(std::bad_alloc)
-{
-	return memory::alloc(size);
-}
-
-void operator delete(void* pointer) throw()
-{
-	memory::dealloc(pointer);
-}
-
+#include <platform/mem_heap.h>
 
 
 
@@ -465,7 +303,8 @@ struct DerivedClass : public BaseClass
 	glm::vec3 position;
 	glm::vec3 scale;
 	
-	DerivedClass()
+	DerivedClass(int i = 0) :
+		mytest(i)
 	{
 		LOGV("DerivedClass constructor\n");
 	}
@@ -487,28 +326,54 @@ struct DerivedClass : public BaseClass
 		glm::vec3 a(1, 0, 0);
 		glm::dot(a, position);
 	}
+	
+	void show_value()
+	{
+		LOGV("value is: %i\n", mytest);
+	}
 };
 
 
+using namespace platform::memory;
+TrackingHeap<SimpleAllocator> global_heap("global");
+TrackingHeap<SimpleAllocator> audio_heap("audio");
 
-
-
-// memory allocator for different heaps? tags?
 
 void test_memory()
 {
-	std::vector< int, memory::CustomAllocator<int> > temp;
-	temp.push_back(30);
+#if 0
+	int* p = MEMORY_NEW(int, global_heap);
+	MEMORY_DELETE(p, global_heap);
 	
-//	BaseClass* foo = new BaseClass();
-//	delete foo;
+	
+	DerivedClass* foo = MEMORY_NEW(DerivedClass, global_heap)(32);
+	BaseClass* baz = MEMORY_NEW(DerivedClass, global_heap);
+	
+	foo->do_work();
+	foo->show_value();
+	
+	
+	
+	
+	DerivedClass* classes = nullptr;
+	classes = MEMORY_NEW_ARRAY(DerivedClass[32], global_heap);
+	
+	MEMORY_DELETE(foo, global_heap);
+	MEMORY_DELETE(baz, global_heap);
 
-//	DerivedClass* bar = new DerivedClass();
-//	bar->do_work();
-//	delete bar;
-
-//	DerivedClass* baz = new DerivedClass[4];
-//	delete [] baz;
+	MEMORY_DELETE_ARRAY(classes, global_heap);
+	
+	
+	
+	
+	BaseClass* bar = MEMORY_NEW(DerivedClass, audio_heap);
+	
+	
+	bar->xyzw = 1234;
+	
+	
+	MEMORY_DELETE(bar, audio_heap);
+#endif
 }
 
 int main(int argc, char** argv)
@@ -517,6 +382,9 @@ int main(int argc, char** argv)
 	core::startup();
 
 	test_memory();
+
+	global_heap.report();
+	audio_heap.report();
 	
 	core::shutdown();
 	platform::shutdown();
