@@ -45,6 +45,7 @@ namespace platform
 
 		const size_t MemoryHeaderSize = sizeof(MemoryHeader);
 		IAllocator * _allocator = 0;
+		GlobalAllocator* _global_allocator = 0;
 		
 		class SimpleAllocator : public IAllocator
 		{
@@ -168,6 +169,10 @@ namespace platform
 		{
 			static SimpleAllocator simple_allocator;
 			_allocator = &simple_allocator;
+			
+			
+			static GlobalAllocator global_allocator;
+			_global_allocator = &global_allocator;
 		} // startup
 		
 		void shutdown()
@@ -192,5 +197,13 @@ namespace platform
 		{
 			_allocator = allocator;
 		} // set_allocator
+		
+		
+				
+		GlobalAllocator& global_allocator()
+		{
+			return *_global_allocator;
+		}
+		
 	} // namespace memory
 } // namespace platform

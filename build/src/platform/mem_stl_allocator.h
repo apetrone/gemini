@@ -94,13 +94,13 @@ namespace platform
 			// deallocate object at _Ptr, ignore size
 			void deallocate(pointer _Ptr, size_type)
 			{
-				DEALLOC( _Ptr );
+				global_allocator().deallocate(_Ptr);
 			}
 			
 			// allocate array of _Count elements
 			pointer allocate(size_type _Count, const void * hint = 0)
 			{
-				return (pointer)ALLOC( _Count * sizeof(_Ty) );
+				return (pointer)global_allocator().allocate(_Count*sizeof(_Ty), __FILE__, __LINE__);
 			}
 
 			// construct object at _Ptr with value _Val

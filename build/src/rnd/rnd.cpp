@@ -335,44 +335,46 @@ struct DerivedClass : public BaseClass
 
 
 using namespace platform::memory;
-TrackingHeap<SimpleAllocator> global_heap("global");
-TrackingHeap<SimpleAllocator> audio_heap("audio");
 
 
 void test_memory()
 {
 #if 0
-	int* p = MEMORY_NEW(int, global_heap);
-	MEMORY_DELETE(p, global_heap);
-	
-	
-	DerivedClass* foo = MEMORY_NEW(DerivedClass, global_heap)(32);
-	BaseClass* baz = MEMORY_NEW(DerivedClass, global_heap);
-	
-	foo->do_work();
-	foo->show_value();
-	
-	
-	
-	
-	DerivedClass* classes = nullptr;
-	classes = MEMORY_NEW_ARRAY(DerivedClass[32], global_heap);
-	
-	MEMORY_DELETE(foo, global_heap);
-	MEMORY_DELETE(baz, global_heap);
+	int* a = MEMORY_NEW(int, global_allocator());
+	BaseClass* foo = MEMORY_NEW(DerivedClass, global_allocator());
+	BaseClass* values = MEMORY_NEW_ARRAY(DerivedClass, 1024, global_allocator());
+	DerivedClass* derived = MEMORY_NEW_ARRAY(DerivedClass, 512, global_allocator());
 
-	MEMORY_DELETE_ARRAY(classes, global_heap);
+	uint64_t* sixyfours = MEMORY_NEW_ARRAY(uint64_t, 16384, global_allocator());
+	
+	MEMORY_DELETE(a, global_allocator());
+	MEMORY_DELETE(foo, global_allocator());
+	MEMORY_DELETE_ARRAY(values, global_allocator());
+	MEMORY_DELETE_ARRAY(sixyfours, global_allocator());
+	MEMORY_DELETE_ARRAY(derived, global_allocator());
+#endif
+
+
+
+	// stl allocator tests
 	
 	
-	
-	
-	BaseClass* bar = MEMORY_NEW(DerivedClass, audio_heap);
-	
-	
-	bar->xyzw = 1234;
-	
-	
-	MEMORY_DELETE(bar, audio_heap);
+	typedef std::basic_string<char, std::char_traits<char>, CustomPlatformAllocator<char> > CustomString;
+
+	CustomString abc = "hello there, how is it going; I hope everything is well";
+
+#if PLATFORM_MEMORY_TRACKING_ENABLED
+	fprintf(stdout, "Global bytes used: %zu\n", MemoryCategoryTracking<MemTagGlobal>::total_bytes_used);
+#endif
+
+
+
+#if 0
+	- NO inheritance/virtual functions
+	- be able to track stl allocations/specify an allocator for these: i.e. all string allocs from some pool
+	- tag/categorize allocations: all assets could use an allocator designed for that
+	- be able to ship off stats to an external tool
+	- coalesce different allocations
 #endif
 }
 
@@ -383,9 +385,6 @@ int main(int argc, char** argv)
 
 	test_memory();
 
-	global_heap.report();
-	audio_heap.report();
-	
 	core::shutdown();
 	platform::shutdown();
 

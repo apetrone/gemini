@@ -65,7 +65,7 @@
 #include "vr.h"
 
 #include <platform/windowlibrary.h>
-
+#include <platform/mem_heap.h>
 
 typedef core::FixedSizeQueue<gemini::GameMessage, 64> EventQueueType;
 
