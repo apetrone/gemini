@@ -27,7 +27,7 @@
 #include "config.h"
 
 #include <string.h> // for size_t
-
+#include <assert.h>
 
 #if PLATFORM_APPLE
 	#include <memory> // for malloc, free (on OSX)
@@ -125,6 +125,8 @@ namespace platform
 		// * tag or group allocations by category
 		// * allocation tracking
 		// * be able to pass arguments to the constructor
+		// * be able to use allocator across dylib bounds (for data structures)
+		// * be able to inject malloc/free style functions into third-party libraries
 		
 //		size_t test_align(size_t bytes, uint32_t alignment)
 //		{
@@ -145,36 +147,115 @@ namespace platform
 //			fprintf(stdout, "aligned_deallocate [pointer=%p]\n", pointer);
 //			free(pointer);
 //		}
-		
-//		void* allocate(size_t size)
-//		{
-//			return malloc(size);
-//		}
-//		
-//		void deallocate(void* pointer)
-//		{
-//			free(pointer);
-//		}
+
+		struct MemTagGlobal {};
 		
 		
-		template <class _Type, class _Heap>
-		void delete_heap_pointer(_Type* pointer, _Heap& heap)
+		
+#if PLATFORM_MEMORY_TRACKING_ENABLED
+		template <class T>
+		struct MemoryCategoryTracking
+		{
+			typedef MemoryCategoryTracking<T> this_type;
+			static size_t total_bytes_used;
+			
+			static void add_allocation(size_t size)
+			{
+				this_type::total_bytes_used += size;
+			}
+			
+			static void remove_allocation(size_t size)
+			{
+				this_type::total_bytes_used -= size;
+			}
+		};
+		
+		template <class T>
+		size_t MemoryCategoryTracking<T>::total_bytes_used = 0;
+#endif
+		
+		template <class A, class T>
+		struct Allocator
+		{
+#if PLATFORM_MEMORY_TRACKING_ENABLED
+			void tag_allocation(size_t size)
+			{
+				MemoryCategoryTracking<T>::add_allocation(size);
+			}
+			
+			void untag_allocation(size_t size)
+			{
+				MemoryCategoryTracking<T>::remove_allocation(size);
+			}
+#endif
+			
+			void* allocate(size_t size, const char* filename, int line)
+			{
+				assert(0);
+				return nullptr;
+			}
+			
+			void deallocate(void* pointer)
+			{
+				assert(0);
+			}
+		}; // Allocator
+		
+		
+		template <class T>
+		struct GlobalDebugAllocator : public Allocator< GlobalDebugAllocator<T>, T >
+		{
+			void* allocate(size_t size, const char* filename, int line)
+			{
+				void* pointer = malloc(size);
+				fprintf(stdout, "allocate: %p, %zu bytes, %s:%i\n", pointer, size, filename, line);
+#if PLATFORM_MEMORY_TRACKING_ENABLED
+				this->tag_allocation(size);
+#endif
+				
+				return pointer;
+			}
+			
+			void deallocate(void* pointer)
+			{
+#if PLATFORM_MEMORY_TRACKING_ENABLED
+				this->untag_allocation(0);
+#endif
+				fprintf(stdout, "deallocate: %p\n", pointer);
+				free(pointer);
+			}
+		}; // GlobalDebugAllocator
+
+
+
+		typedef GlobalDebugAllocator<MemTagGlobal> GlobalAllocator;
+
+
+		template <class _Type, class _Allocator>
+		void deallocate_pointer(_Type* pointer, _Allocator& allocator)
 		{
 			pointer->~_Type();
-			heap.deallocate(pointer);
+			allocator.deallocate(pointer);
 		}
 		
-#if 0
-		template <class _Type, class _Heap>
-		_Type* create_array(size_t elements, _Heap& heap, const char* filename, int line)
+		template <class _Type, class _Allocator>
+		_Type* allocate_array(size_t elements, _Allocator& allocator, const char* filename, int line)
 		{
 			// store number of elements
+			// and for Non-POD types; the size of the _Type.
 			
-			void* mem = heap.allocate((sizeof(_Type)*elements)+sizeof(size_t), filename, line);
+			size_t total_size = sizeof(_Type)*elements + (sizeof(size_t)+sizeof(size_t));
+			
+			void* mem = allocator.allocate(total_size, filename, line);
 			size_t* block = reinterpret_cast<size_t*>(mem);
 			*block = elements;
 			
-			_Type* values = reinterpret_cast<_Type*>(block+1);
+			block++;
+			*block = sizeof(_Type);
+			
+			block++;
+			
+			_Type* values = reinterpret_cast<_Type*>(block);
 			
 			for (size_t index = 0; index < elements; ++index)
 			{
@@ -184,42 +265,46 @@ namespace platform
 			return values;
 		}
 		
-		template <class _Type, class _Heap>
-		void destroy_array(_Type* pointer, _Heap& heap)
+		template <class _Type, class _Allocator>
+		void deallocate_array(_Type* pointer, _Allocator& allocator)
 		{
 			// fetch the number of elements
+			size_t* block = reinterpret_cast<size_t*>(pointer);
+			block--;
+			
+			size_t type_size = *block;
+			
+			// If you hit this assert; there is a double-delete on this pointer!
+			assert(type_size > 0);
+			*block = 0;
+						
+			block--;
+			size_t total_elements = *block;
+						
 			char* mem = reinterpret_cast<char*>(pointer);
-			size_t* block = reinterpret_cast<size_t*>(mem-sizeof(size_t));
-//			assert(*block > 0);
 			
 			// per the spec; we must delete the elements in reverse order
-			for (size_t index = *block; index > 0; --index)
+			for (size_t index = total_elements; index > 0; --index)
 			{
-				pointer[index-1].~_Type();
+				// for non-POD types, we have to make sure we offset
+				// into the array by the correct offset of the allocated type.
+				size_t offset = (index-1)*type_size;
+				_Type* p = reinterpret_cast<_Type*>(mem+offset);
+				p->~_Type();
 			}
 			
 			// deallocate the block
-			heap.deallocate(block);
+			allocator.deallocate(block);
 		}
-#endif
-		// This trick was taken from molecular matters.
-		// see: https://molecularmusings.wordpress.com/2011/07/07/memory-system-part-2/
-		template <class _Type>
-		struct TypeAndCount
-		{
-		};
 		
-		template <class _Type, size_t N>
-		struct TypeAndCount<_Type[N]>
-		{
-			typedef _Type Type;
-			static const size_t Count = N;
-		};
-		#define MEMORY_NEW(type, heap) new (heap.allocate(sizeof(type), __FILE__, __LINE__)) type
-		#define MEMORY_DELETE(pointer, heap) ::platform::memory::delete_heap_pointer(pointer, heap)
+		
+		GlobalAllocator& global_allocator();
+
+		#define MEMORY_NEW(type, allocator) new (allocator.allocate(sizeof(type), __FILE__, __LINE__)) type
+		#define MEMORY_DELETE(pointer, allocator) ::platform::memory::deallocate_pointer(pointer, allocator)
 				
-		#define MEMORY_NEW_ARRAY(type, heap) ::platform::memory::create_array< ::platform::memory::TypeAndCount<type>::Type >(::platform::memory::TypeAndCount<type>::Count, heap, __FILE__, __LINE__)
-		#define MEMORY_DELETE_ARRAY(pointer, heap) ::platform::memory::destroy_array(pointer, heap)
+		#define MEMORY_NEW_ARRAY(type, elements, allocator) ::platform::memory::allocate_array< type >(elements, allocator, __FILE__, __LINE__)
+		#define MEMORY_DELETE_ARRAY(pointer, allocator) ::platform::memory::deallocate_array(pointer, allocator)
 	} // namespace memory
 } // namespace platform
 
