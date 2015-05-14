@@ -2006,7 +2006,9 @@ Options:
 		}
 		debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_raw_msec), Color(255, 255, 255));
 		y += 12;
-//		debugdraw::text(x, y, core::str::format("# allocations = %i, total %2.2f MB\n", platform::memory::allocator().active_allocations(), platform::memory::allocator().active_bytes()/(float)(1024*1024)), Color(64, 102, 192));
+		debugdraw::text(x, y, core::str::format("# allocations = %i, total %2.2f MB\n",
+			platform::memory::MemoryCategoryTracking<platform::memory::MemTagGlobal>::active_allocations,
+			platform::memory::MemoryCategoryTracking<platform::memory::MemTagGlobal>::active_bytes/(float)(1024*1024)), Color(64, 102, 192));
 //		y += 12;
 		
 		
