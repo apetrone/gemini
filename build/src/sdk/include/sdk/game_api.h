@@ -95,7 +95,7 @@ namespace gemini
 		virtual void level_load() = 0;
 		
 		// called each tick of the engine
-		virtual void server_frame(uint64_t current_ticks, float framedelta_seconds, float step_alpha) = 0;
+		virtual void server_frame(uint64_t current_ticks, float framedelta_seconds, float step_interval_seconds, float step_alpha) = 0;
 		virtual void client_frame(float framedelta_seconds, float step_alpha) = 0;
 		
 		// called on the server: process an incoming message

@@ -2028,6 +2028,7 @@ Options:
 			game_interface->server_frame(
 				kernel::parameters().current_tick,
 				framedelta_seconds,
+				kernel::parameters().step_interval_seconds,
 				kernel::parameters().step_alpha
 			);
 			
