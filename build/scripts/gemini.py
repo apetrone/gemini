@@ -671,6 +671,10 @@ def products(arguments, **kwargs):
 	g_macosx.driver.macosx_deployment_target = "10.8"
 	g_macosx.driver.sdkroot = "macosx10.9"
 
+	# make visibility conformant
+	g_macosx.driver.gcc_inlines_are_private_extern = "NO"
+	g_macosx.driver.gcc_symbols_private_extern = "NO"
+
 	# make sure we get smybols for libs
 	debug_mac = global_params.layout(platform="macosx", configuration="debug")
 	debug_mac.driver.gcc_optimization_level = "0"
