@@ -374,6 +374,8 @@ class stb_vorbis_decoder : public gemini::audio::IAudioDecoder
 	int _src_data_length;
 	
 public:
+	stb_vorbis_decoder() : _stream(0) {}
+
 	virtual void reset();
 	virtual int decode( void * data, int data_length );
 	virtual int open( unsigned char * data, int data_length );

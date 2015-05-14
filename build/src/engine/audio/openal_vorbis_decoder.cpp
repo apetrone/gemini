@@ -32,6 +32,7 @@ void stb_vorbis_decoder::reset()
 {
 	_src_data = 0;
 	_src_data_length = 0;
+	
 }
 
 int stb_vorbis_decoder::decode( void * data, int data_length )
@@ -55,6 +56,8 @@ int stb_vorbis_decoder::decode( void * data, int data_length )
 
 int stb_vorbis_decoder::open( unsigned char * data, int data_length )
 {
+	close();
+
 	reset();
 	_src_data = data;
 	_src_data_length = data_length;
@@ -79,7 +82,8 @@ int stb_vorbis_decoder::open( unsigned char * data, int data_length )
 
 void stb_vorbis_decoder::close()
 {
-	stb_vorbis_close( _stream );
+	if (_stream)
+		stb_vorbis_close( _stream );
 }
 
 int stb_vorbis_decoder::channels()
