@@ -32,7 +32,7 @@
 #include <OpenGL/gl3.h>
 #endif
 
-using namespace gemini;
+using namespace renderer;
 
 RenderWindow::RenderWindow(
         const QGLFormat& format,
