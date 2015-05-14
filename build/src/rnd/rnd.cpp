@@ -277,9 +277,6 @@ void test_rendering()
 #include <platform/platform.h>
 #include <platform/mem.h>
 
-#include <platform/mem_heap.h>
-
-
 
 struct BaseClass
 {
