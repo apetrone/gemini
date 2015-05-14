@@ -83,7 +83,7 @@ namespace platform
 				if (size > this_type::largest_allocation)
 					this_type::largest_allocation = size;
 					
-				if (size < this_type::smallest_allocation)
+				if (size < this_type::smallest_allocation || (this_type::smallest_allocation == 0))
 					this_type::smallest_allocation = size;
 					
 				if (this_type::active_bytes > this_type::high_watermark)
