@@ -34,7 +34,7 @@ namespace gemini
 		void startup(unsigned int max_primitives, renderer::ShaderProgram* program, const font::Handle& handle)
 		{
 			// create an instance for the api
-			DebugDrawInterface* debugdraw_instance = CREATE(DebugDrawInterface);
+			DebugDrawInterface* debugdraw_instance = MEMORY_NEW(DebugDrawInterface, platform::memory::global_allocator());
 			debugdraw::instance = debugdraw_instance;
 			debugdraw_instance->startup(max_primitives, program, handle);
 		} // startup
@@ -47,7 +47,7 @@ namespace gemini
 			debugdraw_interface->shutdown();
 			
 			IDebugDraw* debugdraw_instance = debugdraw::instance();
-			DESTROY(IDebugDraw, debugdraw_instance);
+			MEMORY_DELETE(debugdraw_instance, platform::memory::global_allocator());
 			debugdraw::instance = 0;
 		} // shutdown
 		

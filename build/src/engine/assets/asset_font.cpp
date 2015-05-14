@@ -49,7 +49,7 @@ namespace gemini
 		{
 			if ( font_data != 0 )
 			{
-				DEALLOC( this->font_data );
+				MEMORY_DEALLOC(this->font_data, platform::memory::global_allocator());
 				this->font_size = 0;
 			}
 		} // release

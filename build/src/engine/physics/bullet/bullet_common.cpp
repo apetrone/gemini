@@ -185,7 +185,7 @@ namespace gemini
 				//btAlignedAllocSetCustom( bullet2_custom_alloc, bullet2_custom_free );
 				
 				// instance and set the debug renderer
-				debug_renderer = CREATE(bullet::DebugPhysicsRenderer);
+				debug_renderer = MEMORY_NEW(bullet::DebugPhysicsRenderer, platform::memory::global_allocator());
 				dynamics_world->setDebugDrawer(debug_renderer);
 			}
 			
@@ -194,7 +194,7 @@ namespace gemini
 				// remove all constraints from objects
 				for (int i = constraints.size()-1; i >= 0; --i)
 				{
-					DESTROY(BulletConstraint, constraints[i]);
+					MEMORY_DELETE(constraints[i], platform::memory::global_allocator());
 				}
 				constraints.clear();
 				
@@ -225,7 +225,7 @@ namespace gemini
 				}
 				
 				dynamics_world->setDebugDrawer(0);
-				DESTROY(DebugPhysicsRenderer, debug_renderer);
+				MEMORY_DELETE(debug_renderer, platform::memory::global_allocator());
 				
 				//delete dynamics world
 				delete dynamics_world;

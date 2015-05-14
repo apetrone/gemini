@@ -94,7 +94,7 @@ namespace core
 		{
 			if (elements && total_elements > 0)
 			{
-				DESTROY_ARRAY(Type, elements, total_elements);
+				MEMORY_DELETE_ARRAY(elements, platform::memory::global_allocator());
 				total_elements = 0;
 			}
 		} // clear
@@ -106,7 +106,7 @@ namespace core
 			if (element_total > 0)
 			{
 				// allocate space for the pointers
-				elements = CREATE_ARRAY(Type, total_elements);
+				elements = MEMORY_NEW_ARRAY(Type, total_elements, platform::memory::global_allocator());
 
 				// optionally, zero the new memory
 				if (zero_memory)

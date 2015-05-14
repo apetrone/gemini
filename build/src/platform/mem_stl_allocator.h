@@ -31,19 +31,18 @@ namespace platform
 {
 	namespace memory
 	{
-		
 		/// Custom STL allocator class for debugging / memory tracking
 		template<class _Ty>
 		class DebugAllocator
 		{
 		public:
 			typedef _Ty				value_type;
-			typedef _Ty*				pointer;
-			typedef const _Ty*			const_pointer;
-			typedef _Ty&				reference;
-			typedef const _Ty&			const_reference;
+			typedef _Ty*			pointer;
+			typedef const _Ty*		const_pointer;
+			typedef _Ty&			reference;
+			typedef const _Ty&		const_reference;
 			typedef std::size_t		size_type;
-			typedef std::ptrdiff_t		difference_type;
+			typedef std::ptrdiff_t	difference_type;
 			
 			// convert an DebugAllocator<_Ty> to an DebugAllocator <U>
 			template<class U>

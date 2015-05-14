@@ -60,12 +60,12 @@ namespace gemini
 		void KeyframeList::allocate(size_t key_count)
 		{
 			total_keys = key_count;
-			keys = CREATE_ARRAY(Keyframe, total_keys);
+			keys = MEMORY_NEW_ARRAY(Keyframe, total_keys, platform::memory::global_allocator());
 		}
 		
 		void KeyframeList::deallocate()
 		{
-			DESTROY_ARRAY(Keyframe, keys, total_keys);
+			MEMORY_DELETE_ARRAY(keys, platform::memory::global_allocator());
 			total_keys = 0;
 		}
 		
@@ -494,7 +494,7 @@ namespace gemini
 				}
 				
 				
-				Sequence* sequence = CREATE(Sequence);
+				Sequence* sequence = MEMORY_NEW(Sequence, platform::memory::global_allocator());
 				core::StackString<MAX_PATH_SIZE> filepath = name;
 				filepath.append(".animation");
 				AnimationSequenceLoadData data;
@@ -509,7 +509,7 @@ namespace gemini
 				}
 				else
 				{
-					DESTROY(Sequence, sequence);
+					MEMORY_DELETE(sequence, platform::memory::global_allocator());
 				}
 			
 				return sequence;
@@ -519,14 +519,14 @@ namespace gemini
 		
 		void startup()
 		{
-			_sequences_by_name = CREATE(SequenceHash);
+			_sequences_by_name = MEMORY_NEW(SequenceHash, platform::memory::global_allocator());
 		}
 		
 		void shutdown()
 		{
 			for (Sequence* sequence : detail::_sequences)
 			{
-				DESTROY(Sequence, sequence);
+				MEMORY_DELETE(sequence, platform::memory::global_allocator());
 			}
 			detail::_sequences.clear();
 			
@@ -536,7 +536,7 @@ namespace gemini
 			}
 			detail::_instances.clear();
 			
-			DESTROY(SequenceHash, _sequences_by_name);
+			MEMORY_DELETE(_sequences_by_name, platform::memory::global_allocator());
 		}
 		
 		
@@ -585,7 +585,7 @@ namespace gemini
 		AnimatedInstance* create_sequence_instance(SequenceId index)
 		{
 			Sequence* source = get_sequence_by_index(index);
-			AnimatedInstance* instance = CREATE(AnimatedInstance);
+			AnimatedInstance* instance = MEMORY_NEW(AnimatedInstance, platform::memory::global_allocator());
 			instance->initialize(source);
 		
 			instance->index = detail::_instances.size();
@@ -596,7 +596,7 @@ namespace gemini
 		
 		void destroy_sequence_instance(AnimatedInstance* instance)
 		{
-			DESTROY(AnimatedInstance, instance);
+			MEMORY_DELETE(instance, platform::memory::global_allocator());
 		}
 		
 		AnimatedInstance* get_instance_by_index(SequenceId index)

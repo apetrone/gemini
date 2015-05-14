@@ -65,7 +65,7 @@ namespace platform
 		total_displays = SDL_GetNumVideoDisplays();
 		fprintf(stdout, "Found %i total displays.\n", total_displays);
 		
-		display_rects = CREATE_ARRAY(SDL_Rect, total_displays);
+		display_rects = MEMORY_NEW_ARRAY(SDL_Rect, total_displays, platform::memory::global_allocator());
 		for (int index = 0; index < total_displays; ++index)
 		{
 			SDL_DisplayMode current;
@@ -268,7 +268,7 @@ namespace platform
 	
 	void SDLWindowLibrary::shutdown()
 	{
-		DESTROY_ARRAY(SDL_Rect, display_rects, total_displays);
+		MEMORY_DELETE_ARRAY(display_rects, platform::memory::global_allocator());
 		
 #if SDL_ENABLE_GAMEPAD
 		// close all controllers
@@ -328,7 +328,7 @@ namespace platform
 				window_flags |= SDL_WINDOW_RESIZABLE;
 			}
 			
-			sdlw = CREATE(SDLWindow);
+			sdlw = MEMORY_NEW(SDLWindow, platform::memory::global_allocator());
 			
 			sdlw->window = SDL_CreateWindow(
 									  parameters.window_title, 0, 0,
@@ -409,7 +409,7 @@ namespace platform
 				if (sdlw == (*it))
 				{
 					windows.erase(it);
-					DESTROY(SDLWindow, sdlw);
+					MEMORY_DELETE(sdlw, platform::memory::global_allocator());
 					break;
 				}
 			}

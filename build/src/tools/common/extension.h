@@ -56,7 +56,7 @@ namespace gemini
 		};
 		
 	#define DECLARE_PLUGIN_CLASS(classname) \
-		public: static classname* plugin_create() { return CREATE(classname); }
+		public: static classname* plugin_create() { return MEMORY_NEW(classname, platform::memory::global_allocator()); }
 
 
 
@@ -125,12 +125,12 @@ namespace gemini
 				Extension<Type>& ext = data.second;
 				if (ext.reader)
 				{
-					DESTROY(Reader<Type>, ext.reader);
+					MEMORY_DELETE(ext.reader, platform::memory::global_allocator());
 				}
 				
 				if (ext.writer)
 				{
-					DESTROY(Writer<Type>, ext.writer);
+					MEMORY_DELETE(ext.writer, platform::memory::global_allocator());
 				}
 			}
 		}

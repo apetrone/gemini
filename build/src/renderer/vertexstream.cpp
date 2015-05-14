@@ -54,7 +54,7 @@ namespace renderer
 	{
 		total_vertices = max_vertices;
 		total_indices = 0;
-		vertices = (VertexType*)ALLOC(vertex_stride*total_vertices);
+		vertices = (VertexType*)MEMORY_ALLOC(vertex_stride*total_vertices, platform::memory::global_allocator());
 		last_vertex = 0;
 		last_index = 0;
 		highest_index = 0;
@@ -62,7 +62,7 @@ namespace renderer
 
 		if ( max_indices > 0 )
 		{
-			indices = (IndexType*)ALLOC( sizeof(IndexType) * max_indices );
+			indices = (IndexType*)MEMORY_ALLOC(sizeof(IndexType)*max_indices, platform::memory::global_allocator());
 			total_indices = max_indices;
 		}
 	} // alloc
@@ -86,13 +86,13 @@ namespace renderer
 	{
 		if ( vertices )
 		{
-			DEALLOC(vertices);
+			MEMORY_DEALLOC(vertices, platform::memory::global_allocator());
 			vertices = 0;
 		}
 
 		if ( indices )
 		{
-			DEALLOC(indices);
+			MEMORY_DEALLOC(indices, platform::memory::global_allocator());
 			indices = 0;
 		}
 	} // dealloc

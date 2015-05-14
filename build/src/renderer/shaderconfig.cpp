@@ -229,7 +229,7 @@ namespace renderer
 					LOGE( "Error compiling shader!\n" );
 				}
 				
-				DEALLOC(buffer);
+				MEMORY_DEALLOC(buffer, platform::memory::global_allocator());
 			}
 			
 			return shader_object;

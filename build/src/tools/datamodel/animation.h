@@ -55,7 +55,7 @@ namespace gemini
 			std::vector< KeyframeType* > keys;
 			KeyframeType* add_key(float seconds, const Type& val)
 			{
-				KeyframeType* key = CREATE(KeyframeType, seconds, val);
+				KeyframeType* key = MEMORY_NEW(KeyframeType, platform::memory::global_allocator()) (seconds, val);
 				keys.push_back(key);
 				return key;
 			}
@@ -64,7 +64,7 @@ namespace gemini
 			{
 				for (auto key : keys)
 				{
-					DESTROY(KeyframeType, key);
+					MEMORY_DELETE(key, platform::memory::global_allocator());
 				}
 			}
 		};

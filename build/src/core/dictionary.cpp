@@ -80,12 +80,12 @@ namespace core
 		virtual void destroy()
 		{
 			using glm::vec3;
-			DESTROY( vec3, vector );
+			MEMORY_DELETE(vector, platform::memory::global_allocator());
 		}
 		
 		virtual void create( const void * data )
 		{
-			vector = CREATE(glm::vec3);
+			MEMORY_NEW(glm::vec3, platform::memory::global_allocator());
 			
 			update( data );
 		}
@@ -136,7 +136,7 @@ namespace core
 		{
 			this->policy->destroy();
 			
-			DESTROY(PolicyBase, this->policy);
+			MEMORY_DELETE(this->policy, platform::memory::global_allocator());
 			this->policy = 0;
 		}
 	}

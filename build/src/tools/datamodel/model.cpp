@@ -38,18 +38,18 @@ namespace gemini
 		{
 			for (auto animation : animations)
 			{
-				DESTROY(Animation, animation);
+				MEMORY_DELETE(animation, platform::memory::global_allocator());
 			}
 			
 			if (skeleton)
 			{
-				DESTROY(Skeleton, skeleton);
+				MEMORY_DELETE(skeleton, platform::memory::global_allocator());
 			}
 		}
 		
 		Animation* Model::add_animation(const String& name)
 		{
-			Animation* animation = CREATE(Animation);
+			Animation* animation = MEMORY_NEW(Animation, platform::memory::global_allocator());
 			animation->name = name;
 			animations.push_back(animation);
 			return animation;

@@ -47,7 +47,7 @@ namespace core
 	{
 		void operator()(_Type * p)
 		{
-			DESTROY(_Type, p);
+			MEMORY_DELETE(p, platform::memory::global_allocator());
 		}
 	}; // DestroyPointer
 

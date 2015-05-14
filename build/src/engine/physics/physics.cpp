@@ -54,17 +54,17 @@ namespace gemini
 	{		
 		void * bullet2_custom_alloc( size_t size )
 		{
-			return ALLOC( size );
+			return MEMORY_ALLOC(size, platform::memory::global_allocator());
 		}
 		
 		void bullet2_custom_free( void * memblock )
 		{
-			DEALLOC( memblock );
+			MEMORY_DEALLOC(memblock, platform::memory::global_allocator());
 		}
 		
 		void startup()
 		{
-			IPhysicsInterface* physics_interface = CREATE(PhysicsInterface);
+			IPhysicsInterface* physics_interface = MEMORY_NEW(PhysicsInterface, platform::memory::global_allocator());
 			api::set_instance(physics_interface);
 		
 			bullet::startup();
@@ -79,7 +79,7 @@ namespace gemini
 			bullet::shutdown();
 			
 			IPhysicsInterface* physics_interface = api::instance();
-			DESTROY(IPhysicsInterface, physics_interface);
+			MEMORY_DELETE(physics_interface, platform::memory::global_allocator());
 		} // shutdown
 		
 		
