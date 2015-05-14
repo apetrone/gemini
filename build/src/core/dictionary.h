@@ -84,7 +84,7 @@ namespace core
 	#define IMPLEMENT_POLICY( classname, name )\
 		PolicyBase * name##_create()\
 		{\
-			return CREATE(classname);\
+			return MEMORY_NEW(classname, platform::memory::global_allocator());\
 		}
 
 	#define MAKE_POLICY( name )\
@@ -119,7 +119,7 @@ namespace core
 			DataType target_type = keyvalues_typemap<Type>::get_type();
 			if ( this->policy && this->policy->type() != target_type )
 			{
-				DESTROY(PolicyBase, this->policy);
+				MEMORY_DELETE(this->policy, platform::memory::global_allocator());
 			}
 			
 			policy = KeyValues::policy_for_type(target_type)();
@@ -156,12 +156,12 @@ namespace core
 			
 			static Bucket* create()
 			{
-				return CREATE(Bucket);
+				return MEMORY_NEW(Bucket, platform::memory::global_allocator());
 			}
 			
 			static void destroy(Bucket* bucket)
 			{
-				DESTROY(Bucket, bucket);
+				MEMORY_DELETE(bucket, platform::memory::global_allocator());
 			}
 			
 			
@@ -175,7 +175,7 @@ namespace core
 			{
 				if (key)
 				{
-					platform::memory::allocator().deallocate(key);
+					MEMORY_DEALLOC(key, platform::memory::global_allocator());
 					key = 0;
 				}
 				
@@ -210,11 +210,11 @@ namespace core
 			{
 				if (key != 0)
 				{
-					platform::memory::allocator().deallocate(key);
+					MEMORY_DEALLOC(key, platform::memory::global_allocator());
 				}
 				
 				size_t key_length = core::str::len(newkey);
-				this->key = (char*)platform::memory::allocator().allocate(key_length+1, __FILE__, __LINE__);
+				this->key = (char*)MEMORY_ALLOC(key_length+1, platform::memory::global_allocator());
 				this->key[key_length] = 0;
 				core::str::copy(this->key, newkey, key_length);
 			}
@@ -483,13 +483,13 @@ namespace core
 		
 		Bucket* allocate(uint32_t elements)
 		{
-			return CREATE_ARRAY(Bucket, elements);
+			return MEMORY_NEW_ARRAY(Bucket, elements, platform::memory::global_allocator());
 		}
 		
 		
 		void deallocate(Bucket* pointer, size_t elements)
 		{
-			DESTROY_ARRAY(Bucket, pointer, elements);
+			MEMORY_DELETE_ARRAY(pointer, platform::memory::global_allocator());
 		}
 
 	public:

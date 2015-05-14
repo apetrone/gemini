@@ -65,7 +65,7 @@ namespace core
 			if ( buffer )
 			{
 				is_success = parse_json_string_with_callback( buffer, buffer_size, callback, context );
-				DEALLOC(buffer);
+				MEMORY_DEALLOC(buffer, platform::memory::global_allocator());
 			}
 			else
 			{

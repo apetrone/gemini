@@ -40,23 +40,16 @@ namespace gemini
 		
 		Node::~Node()
 		{
-	//		NodeVector::iterator it = children.begin();
-	//		for( ; it != children.end(); ++it)
-	//		{
-	//			Node* node = (*it);
-	//			DESTROY(Node, node);
-	//		}
-			
 			for (auto& child : children)
 			{
-				DESTROY(Node, child);
+				MEMORY_DELETE(child, platform::memory::global_allocator());
 			}
 			
 			children.clear();
 			
 			if (mesh)
 			{
-				DESTROY(Mesh, mesh);
+				MEMORY_DELETE(mesh, platform::memory::global_allocator());
 			}
 		}
 		

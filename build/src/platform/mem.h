@@ -28,6 +28,7 @@
 
 #include <string.h> // for size_t
 #include <assert.h>
+#include <list>
 
 #if PLATFORM_APPLE
 	#include <memory> // for malloc, free (on OSX)
@@ -45,139 +46,106 @@
 // set this to 0 to enable normal new/delete and malloc/free to narrow down problems
 #define USE_DEBUG_ALLOCATOR 1
 
+#define PLATFORM_MEMORY_TRACKING_ENABLED 1
+
 namespace platform
 {
 	namespace memory
 	{
-		class IAllocator
-		{
-		public:
-			virtual ~IAllocator() {}
-			
-			virtual void * allocate( size_t bytes, const char * file, int line ) = 0;
-			virtual void deallocate( void * memory ) = 0;
-			virtual void print_report() = 0;
-			
-			virtual void track_allocation(void* memory, size_t bytes, const char* file, int line) = 0;
-			virtual void untrack_allocation(void* memory) = 0;
-
-			virtual size_t active_bytes() const = 0;
-			virtual size_t active_allocations() const = 0;
-			virtual size_t total_allocations() const = 0;
-			virtual size_t total_bytes() const = 0;
-		}; // IAllocator
-		
-		// initialize memory handling
-		void startup();
-		
-		// shutdown services and optionally perform any metrics, leak detection, etc
-		void shutdown();
-		
-		// instance of the active allocator
-		IAllocator & allocator();
-		
-		void set_allocator(IAllocator* allocator);
-
-		// helper function for creating arrays from a contiguous block of memory
-		// and then calling placement new on each one
-		template <class Type>
-		Type* create_array(size_t num_elements, const char* file, int line)
-		{
-			Type* block = (Type*)memory::allocator().allocate(sizeof(Type)*num_elements, file, line);
-			for (size_t i = 0; i < num_elements; ++i)
-			{
-				new (&block[i]) Type;
-			}
-
-			return block;
-		}
-
-#if USE_DEBUG_ALLOCATOR
-		// raw memory alloc/dealloc
-		#define ALLOC(byte_count)	platform::memory::allocator().allocate(byte_count, __FILE__, __LINE__)
-		#define DEALLOC(pointer) { platform::memory::allocator().deallocate(pointer); pointer = 0; }
-		
-		// helper macros for alloc and dealloc on classes and structures
-		#define CREATE(Type, ...)	new (platform::memory::allocator().allocate(sizeof(Type), __FILE__, __LINE__)) Type(__VA_ARGS__)
-		#define DESTROY(Type, pointer) { if (pointer) { pointer->~Type(); platform::memory::allocator().deallocate(pointer); pointer = 0; } }
-		
-		// NOTES:
-		// 1. This only works if the Type has a default constructor
-		// 2. In order to work around the ridiculous "standard" of placement new in 5.3.4.12,
-		//	  This allocates a contiguous block of memory and then calls placement new on each element.
-		#define CREATE_ARRAY(Type, num_elements) platform::memory::create_array<Type>(num_elements, __FILE__, __LINE__)
-		#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { for( size_t i = 0; i < num_elements; ++i ) { (&pointer[i])->~Type(); } platform::memory::allocator().deallocate(pointer); pointer = 0;  }
-#else
-		#define ALLOC(byte_count)	malloc(byte_count)
-		#define DEALLOC(pointer) { free(pointer); pointer = 0; }
-
-		#define CREATE(Type, ...)	new Type(__VA_ARGS__)
-		#define DESTROY(Type, pointer) { delete pointer; pointer = 0; }
-
-		#define CREATE_ARRAY(Type, num_elements, ...)		new Type[ num_elements ]
-		#define DESTROY_ARRAY(Type, pointer, num_elements) if ( pointer ) { delete [] pointer; pointer = 0;  }
-#endif
-
-		// GOALS: MEMORY REFACTOR
-		// * create/destroy arrays of non-POD types
-		// * create/destroy non-POD types
-		// * create aligned allocs (for physics)
-		// * tag or group allocations by category
-		// * allocation tracking
-		// * be able to pass arguments to the constructor
-		// * be able to use allocator across dylib bounds (for data structures)
-		// * be able to inject malloc/free style functions into third-party libraries
-		
-//		size_t test_align(size_t bytes, uint32_t alignment)
-//		{
-//			return (bytes + (alignment-1)) & ~(alignment-1);
-//		}
-		
-//		void* aligned_allocate(size_t size, size_t alignment)
-//		{
-//			void* out;
-//			int result = posix_memalign(&out, alignment, size);
-////			assert(result == 0);
-//			fprintf(stdout, "aligned_allocate [size=%zu, alignment=%zu]\n", size, alignment);
-//			return out;
-//		}
-//		
-//		void aligned_deallocate(void* pointer)
-//		{
-//			fprintf(stdout, "aligned_deallocate [pointer=%p]\n", pointer);
-//			free(pointer);
-//		}
-
 		struct MemTagGlobal {};
 		
-		
-		
-#if PLATFORM_MEMORY_TRACKING_ENABLED
+
 		template <class T>
 		struct MemoryCategoryTracking
 		{
 			typedef MemoryCategoryTracking<T> this_type;
-			static size_t total_bytes_used;
+
+			// lifetime values
+			static size_t total_allocations;
+			static size_t total_bytes;
 			
+			// active values
+			static size_t active_allocations;
+			static size_t active_bytes;
+			
+			static size_t high_watermark;
+			static size_t smallest_allocation;
+			static size_t largest_allocation;
+						
 			static void add_allocation(size_t size)
 			{
-				this_type::total_bytes_used += size;
+				this_type::total_allocations++;
+				this_type::total_bytes += size;
+				
+				this_type::active_allocations++;
+				this_type::active_bytes += size;
+				
+				if (size > this_type::largest_allocation)
+					this_type::largest_allocation = size;
+					
+				if (size < this_type::smallest_allocation)
+					this_type::smallest_allocation = size;
+					
+				if (this_type::active_bytes > this_type::high_watermark)
+					this_type::high_watermark = this_type::active_bytes;
 			}
 			
 			static void remove_allocation(size_t size)
 			{
-				this_type::total_bytes_used -= size;
+				this_type::total_bytes -= size;
+				
+				this_type::active_allocations--;
+				this_type::active_bytes -= size;
+			}
+			
+			// print out a general report
+			static void report(const char* name)
+			{
+				// could use %zu on C99, but fallback to %lu and casts for C89.
+				fprintf(stdout, "[memory-tracking] '%s' total_allocations = %lu, total_bytes = %lu\n", name,
+					(unsigned long)this_type::total_allocations,
+					(unsigned long)this_type::total_bytes);
+					
+				fprintf(stdout, "[memory-tracking] '%s' active_allocations = %lu, active_bytes = %lu, high_watermark = %lu\n", name,
+					(unsigned long)this_type::active_allocations,
+					(unsigned long)this_type::active_bytes,
+					(unsigned long)this_type::high_watermark);
+					
+				fprintf(stdout, "[memory-tracking] '%s' smallest_allocation = %lu, largest_allocation = %lu\n", name,
+					(unsigned long)this_type::smallest_allocation,
+					(unsigned long)this_type::largest_allocation);
+					
+				// if you hit this, there may be a memory leak!
+				assert(this_type::active_allocations == 0 && this_type::active_bytes == 0);
 			}
 		};
 		
 		template <class T>
-		size_t MemoryCategoryTracking<T>::total_bytes_used = 0;
-#endif
+		size_t MemoryCategoryTracking<T>::total_allocations = 0;
+		
+		template <class T>
+		size_t MemoryCategoryTracking<T>::total_bytes = 0;
+		
+		template <class T>
+		size_t MemoryCategoryTracking<T>::active_allocations = 0;
+		
+		template <class T>
+		size_t MemoryCategoryTracking<T>::active_bytes = 0;
+		
+		template <class T>
+		size_t MemoryCategoryTracking<T>::high_watermark = 0;
+		
+		template <class T>
+		size_t MemoryCategoryTracking<T>::smallest_allocation = 0;
+		
+		template <class T>
+		size_t MemoryCategoryTracking<T>::largest_allocation = 0;
+
 		
 		template <class A, class T>
 		struct Allocator
 		{
-#if PLATFORM_MEMORY_TRACKING_ENABLED
+
 			void tag_allocation(size_t size)
 			{
 				MemoryCategoryTracking<T>::add_allocation(size);
@@ -187,7 +155,6 @@ namespace platform
 			{
 				MemoryCategoryTracking<T>::remove_allocation(size);
 			}
-#endif
 			
 			void* allocate(size_t size, const char* filename, int line)
 			{
@@ -203,26 +170,89 @@ namespace platform
 		
 		
 		template <class T>
-		struct GlobalDebugAllocator : public Allocator< GlobalDebugAllocator<T>, T >
+		class GlobalDebugAllocator : public Allocator< GlobalDebugAllocator<T>, T >
 		{
-			void* allocate(size_t size, const char* filename, int line)
+#pragma pack(push, 4)
+			struct MemoryHeader
 			{
-				void* pointer = malloc(size);
-				fprintf(stdout, "allocate: %p, %zu bytes, %s:%i\n", pointer, size, filename, line);
-#if PLATFORM_MEMORY_TRACKING_ENABLED
-				this->tag_allocation(size);
-#endif
+				size_t allocation_size;
+				size_t allocation_index;
+				size_t alignment;
+				const char* filename;
+				int line;
+			};
+#pragma pack(pop)
+
+			typedef std::list<MemoryHeader*> MemoryBlockList;
+			MemoryBlockList allocated_blocks;
+
+		public:
+			void* allocate(size_t requested_size, const char* filename, int line)
+			{
+				size_t total_size = (requested_size + sizeof(MemoryHeader));
+				MemoryHeader* header = (MemoryHeader*)malloc(total_size);
+				assert(header);
 				
-				return pointer;
+				fprintf(stdout, "allocate: %p, %zu bytes, %s:%i\n", header+1, requested_size, filename, line);
+				
+				header->allocation_size = requested_size;
+				header->allocation_index = 0;
+				header->alignment = sizeof(void*); // default alignment for now
+				header->filename = filename;
+				header->line = line;
+				
+				allocated_blocks.push_back(header);
+
+				this->tag_allocation(requested_size);
+				
+				return (header+1);
 			}
 			
+			// deallocates are VERY slow because we hunt the entire block list
+			// to remove.
 			void deallocate(void* pointer)
 			{
-#if PLATFORM_MEMORY_TRACKING_ENABLED
-				this->untag_allocation(0);
-#endif
+				// it is entirely legal to delete on a null pointer,
+				// but we don't need to do anything.
+				if (!pointer)
+				{
+					return;
+				}
+			
+				MemoryHeader* header = static_cast<MemoryHeader*>(pointer);
+				header--;
+				assert(header);
+				
+				// remove from allocated block list
+				typename MemoryBlockList::iterator it = allocated_blocks.begin();
+				for (; it != allocated_blocks.end(); ++it)
+				{
+					if (*it == header)
+					{
+						allocated_blocks.erase(it);
+						break;
+					}
+				}
+
+				this->untag_allocation(header->allocation_size);
+
 				fprintf(stdout, "deallocate: %p\n", pointer);
-				free(pointer);
+				free(header);
+			}
+			
+			void print_leaks()
+			{
+				typename MemoryBlockList::iterator it = allocated_blocks.begin();
+				for (; it != allocated_blocks.end(); ++it)
+				{
+					MemoryHeader* block = (*it);
+					fprintf(stdout, "[memory-leak] [addr=%p] [file=%s] [line=%i] [size=%lu] [alloc_num=%lu]\n",
+							(((char*)block)+sizeof(MemoryHeader)),
+							block->filename,
+							block->line,
+							(unsigned long)block->allocation_size,
+							(unsigned long)block->allocation_index);
+				}
 			}
 		}; // GlobalDebugAllocator
 
@@ -234,12 +264,16 @@ namespace platform
 		template <class _Type, class _Allocator>
 		void deallocate_pointer(_Type* pointer, _Allocator& allocator)
 		{
-			pointer->~_Type();
-			allocator.deallocate(pointer);
+			// it's legal to delete a NULL pointer; just don't do anything.
+			if (pointer)
+			{
+				pointer->~_Type();
+				allocator.deallocate(pointer);
+			}
 		}
 		
 		template <class _Type, class _Allocator>
-		_Type* allocate_array(size_t elements, _Allocator& allocator, const char* filename, int line)
+		_Type* construct_array(size_t elements, _Allocator& allocator, const char* filename, int line)
 		{
 			// store number of elements
 			// and for Non-POD types; the size of the _Type.
@@ -266,7 +300,7 @@ namespace platform
 		}
 		
 		template <class _Type, class _Allocator>
-		void deallocate_array(_Type* pointer, _Allocator& allocator)
+		void destruct_array(_Type* pointer, _Allocator& allocator)
 		{
 			// fetch the number of elements
 			size_t* block = reinterpret_cast<size_t*>(pointer);
@@ -298,13 +332,24 @@ namespace platform
 		}
 		
 		
+
+		// initialize memory handling
+		void startup();
+		
+		// shutdown services and optionally perform any metrics, leak detection, etc
+		void shutdown();
+		
 		GlobalAllocator& global_allocator();
+		void set_allocator(GlobalAllocator* allocator);
+
+		#define MEMORY_ALLOC(size, allocator) allocator.allocate(size, __FILE__, __LINE__)
+		#define MEMORY_DEALLOC(pointer, allocator) allocator.deallocate(pointer)
 
 		#define MEMORY_NEW(type, allocator) new (allocator.allocate(sizeof(type), __FILE__, __LINE__)) type
-		#define MEMORY_DELETE(pointer, allocator) ::platform::memory::deallocate_pointer(pointer, allocator)
+		#define MEMORY_DELETE(pointer, allocator) ::platform::memory::deallocate_pointer(pointer, allocator), pointer = 0
 				
-		#define MEMORY_NEW_ARRAY(type, elements, allocator) ::platform::memory::allocate_array< type >(elements, allocator, __FILE__, __LINE__)
-		#define MEMORY_DELETE_ARRAY(pointer, allocator) ::platform::memory::deallocate_array(pointer, allocator)
+		#define MEMORY_NEW_ARRAY(type, elements, allocator) ::platform::memory::construct_array< type >(elements, allocator, __FILE__, __LINE__)
+		#define MEMORY_DELETE_ARRAY(pointer, allocator) ::platform::memory::destruct_array(pointer, allocator), pointer = 0
 	} // namespace memory
 } // namespace platform
 

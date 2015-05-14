@@ -172,13 +172,13 @@ namespace gemini
 			// purge collision shapes
 			for (auto& shape : collision_shapes)
 			{
-				DESTROY(ICollisionShape, shape);
+				MEMORY_DELETE(shape, platform::memory::global_allocator());
 			}
 		}
 		
 		physics::ICollisionObject* PhysicsInterface::create_physics_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation, ObjectProperties& properties)
 		{
-			BulletRigidBody* rigidbody = CREATE(BulletRigidBody);
+			BulletRigidBody* rigidbody = MEMORY_NEW(BulletRigidBody, platform::memory::global_allocator());
 			
 			btScalar mass(properties.mass_kg);
 			btVector3 local_inertia(0.0f, 0.0f, 0.0f);
@@ -250,12 +250,12 @@ namespace gemini
 			bool dynamic_body = (mass != 0.0f);
 			if (!dynamic_body)
 			{
-				static_body = CREATE(BulletStaticBody);
+				static_body = MEMORY_NEW(BulletStaticBody, platform::memory::global_allocator());
 				object = static_body;
 			}
 			else
 			{
-				rb = CREATE(BulletRigidBody);
+				rb = MEMORY_NEW(BulletRigidBody, platform::memory::global_allocator());
 				object = rb;
 			}
 			
@@ -342,7 +342,7 @@ namespace gemini
 		
 		physics::ICollisionObject* PhysicsInterface::create_character_object(ICollisionShape* shape)
 		{
-			BulletCollisionObject* collision_object = CREATE(BulletCollisionObject);
+			BulletCollisionObject* collision_object = MEMORY_NEW(BulletCollisionObject, platform::memory::global_allocator());
 			
 			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
 			ghost->setUserPointer(collision_object);
@@ -372,7 +372,7 @@ namespace gemini
 		
 		physics::ICollisionObject* PhysicsInterface::create_trigger_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation)
 		{
-			BulletCollisionObject* collision_object = CREATE(BulletCollisionObject);
+			BulletCollisionObject* collision_object = MEMORY_NEW(BulletCollisionObject, platform::memory::global_allocator());
 			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
 			ghost->setUserPointer(collision_object);
 			collision_object->set_collision_object(ghost);
@@ -398,7 +398,7 @@ namespace gemini
 		
 		physics::ICollisionShape* PhysicsInterface::create_capsule(float radius_meters, float height_meters)
 		{
-			BulletCollisionShape* collision_shape = CREATE(BulletCollisionShape);
+			BulletCollisionShape* collision_shape = MEMORY_NEW(BulletCollisionShape, platform::memory::global_allocator());
 			collision_shapes.push_back(collision_shape);
 						
 			btCollisionShape* capsule = new btCapsuleShape(radius_meters, height_meters);
@@ -409,7 +409,7 @@ namespace gemini
 		
 		physics::ICollisionShape* PhysicsInterface::create_box(const glm::vec3& dimensions)
 		{
-			BulletCollisionShape* collision_shape = CREATE(BulletCollisionShape);
+			BulletCollisionShape* collision_shape = MEMORY_NEW(BulletCollisionShape, platform::memory::global_allocator());
 			collision_shapes.push_back(collision_shape);
 			
 			btVector3 half_extents(dimensions.x*0.5f, dimensions.y*0.5f, dimensions.z*0.5f);
@@ -430,20 +430,20 @@ namespace gemini
 		
 		void PhysicsInterface::destroy_object(ICollisionObject* object)
 		{
-			DESTROY(ICollisionObject, object);
+			MEMORY_DELETE(object, platform::memory::global_allocator());
 		} // destroy_object
 
 
 		IPlayerController* PhysicsInterface::create_player_controller(ICollisionObject* object)
 		{
-			IPlayerController* controller = CREATE(BulletPlayerController);
+			IPlayerController* controller = MEMORY_NEW(BulletPlayerController, platform::memory::global_allocator());
 			controller->set_controlled_object(object);
 			return controller;
 		}
 		
 		void PhysicsInterface::destroy_player_controller(IPlayerController* controller)
 		{
-			DESTROY(IPlayerController, controller);
+			MEMORY_DELETE(controller, platform::memory::global_allocator());
 		}
 		
 		void PhysicsInterface::step_simulation(float framedelta_seconds)

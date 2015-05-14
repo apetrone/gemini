@@ -156,7 +156,7 @@ namespace gemini
 					LOGE( "Unable to load image %s\n", filename );
 				}
 				
-				DEALLOC(filedata);
+				MEMORY_DEALLOC(filedata, platform::memory::global_allocator());
 				return render_texture;
 			}
 			else

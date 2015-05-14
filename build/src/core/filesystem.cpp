@@ -256,7 +256,7 @@ namespace core
 				*buffer_length = file_size;
 				if (!buffer)
 				{
-					buffer = (char*)ALLOC( (*buffer_length)+1 );
+					buffer = (char*)MEMORY_ALLOC((*buffer_length)+1, platform::memory::global_allocator());
 					memset(buffer, 0, (*buffer_length)+1);
 				}
 				
@@ -295,7 +295,7 @@ namespace core
 				*buffer_length = file_size;
 				if (!buffer)
 				{
-					buffer = (char*)ALLOC( (*buffer_length)+1 );
+					buffer = (char*)MEMORY_ALLOC((*buffer_length)+1, platform::memory::global_allocator());
 					memset(buffer, 0, (*buffer_length)+1);
 				}
 				

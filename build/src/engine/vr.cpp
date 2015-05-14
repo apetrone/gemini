@@ -232,7 +232,7 @@ namespace gemini
 				LOGW("Failed to configure tracking!\n");
 			}
 			
-			OculusRift* rift = CREATE(OculusRift);
+			OculusRift* rift = MEMORY_NEW(OculusRift, platform::memory::global_allocator());
 			rift->hmd = hmd;
 			
 			return rift;
@@ -256,7 +256,7 @@ namespace gemini
 			}
 			ovrHmd_Destroy(rift->hmd);
 			
-			DESTROY(OculusRift, rift);
+			MEMORY_DELETE(rift, platform::memory::global_allocator());
 	#else
 	#endif
 		}

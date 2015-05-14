@@ -160,7 +160,7 @@ namespace image
 		int scanline_size = width*components;
 		int dst = 0;
 		unsigned char* copy;
-		copy = (unsigned char*)ALLOC((width*height*components));
+		copy = (unsigned char*)MEMORY_ALLOC((width*height*components), platform::memory::global_allocator());
 		memcpy(copy, pixels, (width*height*components));
 		
 		for(int h = 0; h < height; ++h)
@@ -169,7 +169,7 @@ namespace image
 			memcpy(&pixels[ (h*scanline_size) ], &copy[ (dst*scanline_size) ], scanline_size);
 		}
 		
-		DEALLOC(copy);
+		MEMORY_DEALLOC(copy, platform::memory::global_allocator());
 	} // flip_image_vertically
 
 

@@ -111,7 +111,7 @@ namespace gemini
 				{
 					_sources[i].flags = 0;
 					_sources[i].has_buffers = 0;
-					_sources[i]._decoder = CREATE(AudioDecoderType);
+					_sources[i]._decoder = MEMORY_NEW(AudioDecoderType, platform::memory::global_allocator());
 				}
 			}
 			
@@ -185,7 +185,7 @@ namespace gemini
 						_audio_driver->clean_source( source );
 					}
 					
-					DESTROY(IAudioDecoder, source->_decoder);
+					MEMORY_DELETE(source->_decoder, platform::memory::global_allocator());
 					source->_decoder = 0;
 				}
 				
@@ -195,7 +195,7 @@ namespace gemini
 					sound = &_sounds[ i ];
 					if ( sound->is_used )
 					{
-						DEALLOC(sound->data);
+						MEMORY_DEALLOC(sound->data, platform::memory::global_allocator());
 						sound->data = 0;
 						sound->data_size = 0;
 					}
@@ -274,7 +274,7 @@ namespace gemini
 			typedef core::Factory<IAudioDriver> AudioDriverFactory;
 			AudioDriverFactory factory;
 			
-			audio::instance = CREATE(AudioInterface);
+			audio::instance = MEMORY_NEW(AudioInterface, platform::memory::global_allocator());
 			
 			factory.register_class( DRIVER_CREATOR, DRIVER_NAME );
 
@@ -308,12 +308,12 @@ namespace gemini
 			
 			if ( _audio_driver )
 			{
-				DESTROY( IAudioDriver, _audio_driver );
+				MEMORY_DELETE(_audio_driver, platform::memory::global_allocator());
 				_audio_driver = 0;
 			}
 			
 			IAudioInterface* interface = audio::instance();
-			DESTROY(IAudioInterface, interface);
+			MEMORY_DELETE(interface, platform::memory::global_allocator());
 			audio::instance = 0;
 		} // shutdown
 		

@@ -45,7 +45,7 @@ namespace platform
 	{
 		if (!detail::windowlibrary)
 		{
-			detail::windowlibrary = CREATE(WindowLibrary);
+			detail::windowlibrary = MEMORY_NEW(WindowLibrary, platform::memory::global_allocator());
 		}
 		
 		return detail::windowlibrary;
@@ -53,6 +53,6 @@ namespace platform
 	
 	void destroy_window_library()
 	{
-		DESTROY(IWindowLibrary, detail::windowlibrary);
+		MEMORY_DELETE(detail::windowlibrary, platform::memory::global_allocator());
 	}
 } // namespace platform

@@ -58,7 +58,7 @@ namespace gemini
 
 	void ParticleEmitter::init()
 	{
-		particle_list = CREATE_ARRAY(Particle, this->emitter_config->max_particles);
+		particle_list = MEMORY_NEW_ARRAY(Particle, this->emitter_config->max_particles, platform::memory::global_allocator());
 
 		this->next_spawn = 0;
 		this->num_particles_alive = this->emitter_config->max_particles;
@@ -133,7 +133,7 @@ namespace gemini
 	{
 		if (this->emitter_config && this->particle_list)
 		{
-			DESTROY_ARRAY(Particle, particle_list, this->emitter_config->max_particles);
+			MEMORY_DELETE_ARRAY(particle_list, platform::memory::global_allocator());
 		}
 	} // purge
 
@@ -184,7 +184,7 @@ namespace gemini
 		for( ; iter != emitters.end(); ++iter)
 		{
 			ParticleEmitter* emitter = (*iter);
-			DESTROY(ParticleEmitter, emitter);
+			MEMORY_DELETE(emitter, platform::memory::global_allocator());
 		}
 		
 		emitters.clear();
@@ -202,7 +202,7 @@ namespace gemini
 
 	ParticleEmitter* ParticleSystem::add_emitter()
 	{
-		ParticleEmitter* emitter = CREATE(ParticleEmitter);
+		ParticleEmitter* emitter = MEMORY_NEW(ParticleEmitter, platform::memory::global_allocator());
 		this->emitters.push_back(emitter);
 		return emitter;
 	} // add_emitter
@@ -215,7 +215,7 @@ namespace gemini
 		{
 			if (emitter == (*iter))
 			{
-				DESTROY(ParticleEmitter, emitter);
+				MEMORY_DELETE(emitter, platform::memory::global_allocator());
 				emitters.erase(iter);
 				break;
 			}

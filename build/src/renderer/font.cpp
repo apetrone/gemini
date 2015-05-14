@@ -217,7 +217,7 @@ namespace font
 		{
 			// delete internal font stash context and data
 			fonsDeleteInternal(font->context);
-			DESTROY(FontData, font);
+			MEMORY_DELETE(font, platform::memory::global_allocator());
 		}
 	} // shutdown
 	
@@ -303,7 +303,7 @@ namespace font
 	
 	Handle load_font_from_memory(const void* data, unsigned int data_size, unsigned short point_size)
 	{
-		internal::FontData* font = CREATE(internal::FontData);
+		internal::FontData* font = MEMORY_NEW(internal::FontData, platform::memory::global_allocator());
 		
 		Handle handle = internal::_font_data.size();
 		internal::_font_data.push_back(font);

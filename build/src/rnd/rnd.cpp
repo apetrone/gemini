@@ -363,11 +363,6 @@ void test_memory()
 
 	CustomString abc = "hello there, how is it going; I hope everything is well";
 
-#if PLATFORM_MEMORY_TRACKING_ENABLED
-	fprintf(stdout, "Global bytes used: %zu\n", MemoryCategoryTracking<MemTagGlobal>::total_bytes_used);
-#endif
-
-
 
 #if 0
 	- NO inheritance/virtual functions

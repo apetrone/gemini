@@ -341,14 +341,14 @@ namespace gemini
 				0
 			};
 			
-			_internal::server = CREATE(CivetServer, options, &cb);
+			_internal::server = MEMORY_NEW(CivetServer, platform::memory::global_allocator()) (options, &cb);
 			_internal::server->addHandler("/json", new JsonConfigHandler());
 			_internal::server->addHandler("/reload", new AssetHotloadHandler(_internal::reload_queue));
 		}
 
 		void shutdown()
 		{
-			DESTROY(CivetServer, _internal::server);
+			MEMORY_DELETE(_internal::server, platform::memory::global_allocator());
 		}
 		
 		void tick()

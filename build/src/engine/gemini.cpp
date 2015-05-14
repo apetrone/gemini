@@ -65,7 +65,6 @@
 #include "vr.h"
 
 #include <platform/windowlibrary.h>
-#include <platform/mem_heap.h>
 
 typedef core::FixedSizeQueue<gemini::GameMessage, 64> EventQueueType;
 
@@ -933,6 +932,7 @@ void center_mouse(platform::IWindowLibrary* window_interface, platform::NativeWi
 	}
 }
 
+struct MemoryTagGame {};
 
 class EngineInterface : public IEngineInterface
 {
@@ -946,6 +946,7 @@ class EngineInterface : public IEngineInterface
 	platform::NativeWindow* main_window;
 	platform::IWindowLibrary* window_interface;
 	
+	platform::memory::GlobalDebugAllocator<MemoryTagGame> game_allocator;
 public:
 	
 	EngineInterface(
@@ -977,14 +978,14 @@ public:
 	virtual gemini::IDebugDraw* debugdraw() { return debugdraw::instance(); }
 	virtual gemini::IAudioInterface* audio() { return gemini::audio::instance(); }
 	
-	virtual void* allocate(size_t bytes)
+	virtual void* allocate(size_t size)
 	{
-		return platform::memory::allocator().allocate(bytes, __FILE__, __LINE__);
+		return game_allocator.allocate(size, __FILE__, __LINE__);
 	}
 	
 	virtual void deallocate(void* pointer)
 	{
-		platform::memory::allocator().deallocate(pointer);
+		game_allocator.deallocate(pointer);
 	}
 	
 	virtual void render_view(const View& view)
@@ -998,6 +999,11 @@ public:
 	virtual void render_gui()
 	{
 		render_method->render_gui();
+	}
+	
+	virtual platform::memory::GlobalAllocator* allocator()
+	{
+		return &platform::memory::global_allocator();
 	}
 	
 	virtual void render_viewmodel(IEngineEntity* entity, const glm::vec3& origin, const glm::vec2& view_angles)
@@ -1015,11 +1021,6 @@ public:
 	virtual void center_cursor()
 	{
 		center_mouse(window_interface, main_window);
-	}
-	
-	virtual platform::memory::IAllocator* allocator()
-	{
-		return &platform::memory::allocator();
 	}
 };
 
@@ -1481,10 +1482,10 @@ public:
 		compositor = new gui::Compositor(width, height);
 		_compositor = compositor;
 		
-		gui_renderer = CREATE(GUIRenderer);
+		gui_renderer = MEMORY_NEW(GUIRenderer, platform::memory::global_allocator());
 		compositor->set_renderer(gui_renderer);
 		
-		gui_style = CREATE(GUIStyle);
+		gui_style = MEMORY_NEW(GUIStyle, platform::memory::global_allocator());
 		compositor->set_style(gui_style);
 		
 		root = new gui::Panel(compositor);
@@ -1738,16 +1739,14 @@ Options:
 //		window_params.window_title = "Test Window";
 //		window_params.target_display = 1;
 //		alt_window = window_interface->create_window(window_params);
-		
-				
-		
+
 		window_interface->activate_window(main_window);
 		window_interface->focus_window(main_window);
 		
 
 		// initialize rendering subsystems
 		{
-			scenelink = CREATE(SceneLink);
+			scenelink = MEMORY_NEW(SceneLink, platform::memory::global_allocator());
 			int render_result =	::renderer::startup(::renderer::Default, config.render_settings);
 			if ( render_result == 0 )
 			{
@@ -1845,12 +1844,12 @@ Options:
 		{
 			vr::setup_rendering(device, main_window->render_width, main_window->render_height);
 			// TODO: instance render method for VR
-			render_method = CREATE(VRRenderMethod, device, *scenelink);
+			render_method = MEMORY_NEW(VRRenderMethod, platform::memory::global_allocator()) (device, *scenelink);
 		}
 		else
 		{
 			// TODO: instance render method for default
-			render_method = CREATE(DefaultRenderMethod, *scenelink, window_interface);
+			render_method = MEMORY_NEW(DefaultRenderMethod, platform::memory::global_allocator()) (*scenelink, window_interface);
 		}
 
 
@@ -1861,8 +1860,8 @@ Options:
 		// TODO: setup gui
 		
 		// TODO: setup interfaces
-		engine_interface = CREATE(EngineInterface,
-			&entity_manager,
+		engine_interface = MEMORY_NEW(EngineInterface, platform::memory::global_allocator())
+			(&entity_manager,
 			&model_interface,
 			physics::api::instance(),
 			&experimental,
@@ -2007,7 +2006,7 @@ Options:
 		}
 		debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_raw_msec), Color(255, 255, 255));
 		y += 12;
-		debugdraw::text(x, y, core::str::format("# allocations = %i, total %2.2f MB\n", platform::memory::allocator().active_allocations(), platform::memory::allocator().active_bytes()/(float)(1024*1024)), Color(64, 102, 192));
+//		debugdraw::text(x, y, core::str::format("# allocations = %i, total %2.2f MB\n", platform::memory::allocator().active_allocations(), platform::memory::allocator().active_bytes()/(float)(1024*1024)), Color(64, 102, 192));
 //		y += 12;
 		
 		
@@ -2134,15 +2133,15 @@ Options:
 		close_gamelibrary();
 		
 		// shutdown gui
-		DESTROY(GUIStyle, gui_style);
-		DESTROY(GUIRenderer, gui_renderer);
+		MEMORY_DELETE(gui_style, platform::memory::global_allocator());
+		MEMORY_DELETE(gui_renderer, platform::memory::global_allocator());
 		gui_listener.shutdown();
 		delete compositor;
 		compositor = 0;
 		_compositor = 0;
 		
 		// shutdown scene render method
-		DESTROY(SceneRenderMethod, render_method);
+		MEMORY_DELETE(render_method, platform::memory::global_allocator());
 		
 		// shutdown vr
 		if (device)
@@ -2185,8 +2184,10 @@ Options:
 		window_interface->shutdown();
 		platform::destroy_window_library();
 		
-		DESTROY(IEngineInterface, engine_interface);
-		DESTROY(SceneLink, scenelink);
+		MEMORY_DELETE(engine_interface, platform::memory::global_allocator());
+		MEMORY_DELETE(scenelink, platform::memory::global_allocator());
+		
+		platform::memory::MemoryCategoryTracking<MemoryTagGame>::report("game");
 	}
 };
 

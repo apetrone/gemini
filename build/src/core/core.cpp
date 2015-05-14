@@ -134,7 +134,7 @@ namespace core
 		platform::Result result(platform::Result::Success);
 		
 		// create an instance of the log system
-		core::logging::ILog* log_system = CREATE(core::logging::LogInterface);
+		core::logging::ILog* log_system = MEMORY_NEW(core::logging::LogInterface, platform::memory::global_allocator());
 		core::log::set_instance(log_system);
 
 		// add logs
@@ -159,7 +159,7 @@ namespace core
 		core::log::instance()->shutdown();
 		
 		core::logging::ILog* log_system = core::log::instance();
-		DESTROY(ILog, log_system);
+		MEMORY_DELETE(log_system, platform::memory::global_allocator());
 	} // shutdown
 
 } // namespace core

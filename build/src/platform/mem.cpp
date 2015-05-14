@@ -33,177 +33,28 @@ namespace platform
 {
 	namespace memory
 	{
-	#pragma pack(push, 4)
-		struct MemoryHeader
-		{
-			size_t alloc_size;
-			size_t alloc_num;
-			const char * file;
-			int line;
-		};
-	#pragma pack(pop)
-
-		const size_t MemoryHeaderSize = sizeof(MemoryHeader);
-		IAllocator * _allocator = 0;
 		GlobalAllocator* _global_allocator = 0;
-		
-		class SimpleAllocator : public IAllocator
-		{
-			/*
-				What follows are the following known limitations / drawbacks to this allocator:
-					- Multiple inheritance is not supported. Using public virtual will cause
-						an implicit conversion which is offset and therefore breaks the internal tracking of the allocator.
-			*/
-			size_t num_active_bytes;
-			size_t num_active_allocations;
-			size_t num_total_allocations;
-			size_t num_total_bytes;
-			
-			typedef std::list<MemoryHeader*> MemoryBlockList;
-			MemoryBlockList allocated_blocks;
-			
-		public:
-			SimpleAllocator() : num_active_bytes(0), num_active_allocations(0), num_total_allocations(0), num_total_bytes(0) {}
-			
-			virtual void* allocate(size_t bytes, const char* file, int line)
-			{
-//				size_t total_size = bytes+MemoryHeaderSize;
-
-				char * block = (char*)malloc( bytes+MemoryHeaderSize );
-				assert(block != 0);
-				if ( block )
-				{
-//					fprintf( stdout, "+ %ld (%ld) bytes\n", (unsigned long)total_size, (unsigned long)bytes );
-				
-					// increment totals
-					num_active_bytes += bytes+MemoryHeaderSize;
-					++num_total_allocations;
-					num_total_bytes += bytes+MemoryHeaderSize;
-					++num_active_allocations;
-					
-					// set the leading bytes of the block to the allocation size
-					MemoryHeader * mheader = (MemoryHeader*)block;
-					mheader->alloc_size = bytes;
-					mheader->alloc_num = num_total_allocations-1;
-					mheader->file = file;
-					mheader->line = line;
-					
-					allocated_blocks.push_back(mheader);
-
-					// advance the block pointer
-					block += MemoryHeaderSize;
-	//				fprintf(stdout, "memory_header = %p, block = %p\n", mheader, block);
-				}
-				else
-				{
-					// oh noes, out of memory error!
-					assert( 0 );
-				}
-							
-				return block;
-			} // allocate
-			
-			virtual void deallocate( void * memory )
-			{
-				// it is entirely legal to delete on a null pointer,
-				// but we don't need to do anything.
-				if ( memory )
-				{
-					// get a header to the block pointer
-					char * block = ((char*)memory) - MemoryHeaderSize;
-					MemoryHeader * mheader = (MemoryHeader*)block;
-					
-					// remove from allocated block list
-					// find and remove
-					MemoryBlockList::iterator it = allocated_blocks.begin();
-					for (; it != allocated_blocks.end(); ++it)
-					{
-						if (*it == mheader)
-						{
-							allocated_blocks.erase(it);
-							break;
-						}
-					}
-
-
-					// subtract allocations and sizes
-					num_active_bytes -= (mheader->alloc_size + MemoryHeaderSize);
-					--num_active_allocations;
-					
-					free( block );
-				}
-			} // deallocate
-			
-			virtual void print_report()
-			{
-				MemoryBlockList::iterator it = allocated_blocks.begin();
-				for (; it != allocated_blocks.end(); ++it)
-				{
-					MemoryHeader* block = (*it);
-					fprintf(stdout, "[memory-leak] [addr=%p] [file=%s] [line=%i] [size=%lu] [alloc_num=%lu]\n",
-						(((char*)block)+MemoryHeaderSize),
-						block->file,
-						block->line,
-						(unsigned long)block->alloc_size,
-						(unsigned long)block->alloc_num);
-				}
-			}
-			
-			virtual void track_allocation(void* memory, size_t bytes, const char* file, int line)
-			{
-				
-			}
-			
-			virtual void untrack_allocation(void* memory)
-			{
-				
-			}
-				
-			virtual size_t active_bytes() const { return num_active_bytes; }
-			virtual size_t active_allocations() const { return num_active_allocations; }
-			virtual size_t total_allocations() const { return num_total_allocations; }
-			virtual size_t total_bytes() const { return num_total_bytes; }
-		}; // SimpleAllocator
 		
 		void startup()
 		{
-			static SimpleAllocator simple_allocator;
-			_allocator = &simple_allocator;
-			
-			
 			static GlobalAllocator global_allocator;
 			_global_allocator = &global_allocator;
 		} // startup
 		
 		void shutdown()
 		{
-			// could use %zu on C99, but fallback to %lu and casts for C89.
-			fprintf(stdout, "[memory-status] total_allocations = %lu, total_bytes = %lu\n", (unsigned long)_allocator->total_allocations(), (unsigned long)_allocator->total_bytes());
-			fprintf(stdout, "[memory-status] active_allocations = %lu, active_bytes = %lu\n", (unsigned long)_allocator->active_allocations(), (unsigned long)_allocator->active_bytes());
-			
-			_allocator->print_report();
-			
-			// if you hit this, there may be a memory leak!
-			assert( _allocator->active_allocations() == 0 && _allocator->active_bytes() == 0 );
-			_allocator = 0;
+			global_allocator().print_leaks();
+			MemoryCategoryTracking<MemTagGlobal>::report("global");
 		} // shutdown
 		
-		IAllocator & allocator()
-		{
-			return *_allocator;
-		} // allocator
-		
-		void set_allocator(IAllocator* allocator)
-		{
-			_allocator = allocator;
-		} // set_allocator
-		
-		
-				
 		GlobalAllocator& global_allocator()
 		{
 			return *_global_allocator;
 		}
 		
+		void set_allocator(GlobalAllocator* allocator)
+		{
+			_global_allocator = allocator;
+		} // set_allocator
 	} // namespace memory
 } // namespace platform

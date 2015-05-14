@@ -31,7 +31,7 @@
 
 #define DECLARE_FACTORY_CLASS( class_name, abstract_class )\
 	public:\
-		static abstract_class* creator() { return CREATE(class_name); }\
+		static abstract_class* creator() { return MEMORY_NEW(class_name, platform::memory::global_allocator()); }\
 		static const char* get_classname() { return #class_name; }
 
 namespace core

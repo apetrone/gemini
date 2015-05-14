@@ -103,7 +103,7 @@ namespace gemini
 //				bullet::get_world()->addConstraint(joint);
 //				joint->setDbgDrawSize(btScalar(5.0f));
 //				
-//				BulletConstraint* constraint = CREATE(BulletConstraint, joint);
+//				BulletConstraint* constraint = MEMORY_NEW(BulletConstraint, platform::memory::global_allocator()) (joint);
 //				first->add_constraint(constraint);
 //				second->add_constraint(constraint);
 			}

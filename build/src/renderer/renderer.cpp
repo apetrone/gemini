@@ -82,19 +82,19 @@ namespace renderer
 			if (config.major_version == 3 && config.minor_version == 2)
 			{
 				// use core32
-				_render_driver = CREATE(GLCore32);
+				_render_driver = MEMORY_NEW(GLCore32, platform::memory::global_allocator());
 			}
 			else // fallback to 2.1
 			{
 				// TODO: if at least 2.1 is NOT supported,
 				// this has to fail hard.
-				_render_driver = CREATE(GL21);
+				_render_driver = MEMORY_NEW(GL21, platform::memory::global_allocator());
 			}
 #else
 			// TODO: load GLES
 			if (config.major_version == 2)
 			{
-				_render_driver = CREATE(GLESv2);
+				_render_driver = MEMORY_NEW(GLESv2, platform::memory::global_allocator());
 			}
 #endif
 
@@ -121,7 +121,7 @@ namespace renderer
 	
 		if ( _render_driver )
 		{
-			DESTROY(IRenderDriver, _render_driver);
+			MEMORY_DELETE(_render_driver, platform::memory::global_allocator());
 		}
 		
 		gemgl_shutdown(gl);		

@@ -40,7 +40,8 @@ namespace gemini
 		void read_string_array( ShaderString ** array, unsigned int & num_items, Json::Value & root )
 		{
 			num_items = root.size();
-			*array = CREATE_ARRAY( ShaderString, num_items );
+			*array = MEMORY_NEW_ARRAY(ShaderString, num_items, platform::memory::global_allocator());
+			
 			Json::ValueIterator it = root.begin();
 			Json::ValueIterator end = root.end();
 			
@@ -128,12 +129,12 @@ namespace gemini
 		void startup()
 		{
 			// 2. allocate asset libraries
-			_textures = CREATE(TextureAssetLibrary, texture_load_callback, texture_construct_extension);
-			_meshes = CREATE(MeshAssetLibrary, mesh_load_callback, mesh_construct_extension);
-			_materials = CREATE(MaterialAssetLibrary, material_load_callback, material_construct_extension);
-			_emitters = CREATE(EmitterConfigAssetLibrary, emitterconfig_load_callback, emitterconfig_construct_extension);
-			_fonts = CREATE(FontAssetLibrary, font_load_callback, font_construct_extension);
-			_shaders = CREATE(ShaderAssetLibrary, shader_load_callback, shader_construct_extension);
+			_textures = MEMORY_NEW(TextureAssetLibrary, platform::memory::global_allocator()) (texture_load_callback, texture_construct_extension);
+			_meshes = MEMORY_NEW(MeshAssetLibrary, platform::memory::global_allocator()) (mesh_load_callback, mesh_construct_extension);
+			_materials = MEMORY_NEW(MaterialAssetLibrary, platform::memory::global_allocator()) (material_load_callback, material_construct_extension);
+			_emitters = MEMORY_NEW(EmitterConfigAssetLibrary, platform::memory::global_allocator()) (emitterconfig_load_callback, emitterconfig_construct_extension);
+			_fonts = MEMORY_NEW(FontAssetLibrary, platform::memory::global_allocator()) (font_load_callback, font_construct_extension);
+			_shaders = MEMORY_NEW(ShaderAssetLibrary, platform::memory::global_allocator()) (shader_load_callback, shader_construct_extension);
 
 			load_default_texture_and_material();
 		} // startup
@@ -141,12 +142,12 @@ namespace gemini
 		void shutdown()
 		{
 			// 4. Delete asset library
-			DESTROY(TextureAssetLibrary, _textures);
-			DESTROY(MeshAssetLibrary, _meshes);
-			DESTROY(MaterialAssetLibrary, _materials);
-			DESTROY(EmitterConfigAssetLibrary, _emitters);
-			DESTROY(FontAssetLibrary, _fonts);
-			DESTROY(ShaderAssetLibrary, _shaders);
+			MEMORY_DELETE(_textures, platform::memory::global_allocator());
+			MEMORY_DELETE(_meshes, platform::memory::global_allocator());
+			MEMORY_DELETE(_materials, platform::memory::global_allocator());
+			MEMORY_DELETE(_emitters, platform::memory::global_allocator());
+			MEMORY_DELETE(_fonts, platform::memory::global_allocator());
+			MEMORY_DELETE(_shaders, platform::memory::global_allocator());
 		} // shutdown
 
 		void append_asset_extension( AssetType type, core::StackString<MAX_PATH_SIZE> & path )

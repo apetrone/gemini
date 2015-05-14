@@ -58,7 +58,7 @@ namespace gemini
 
 			// create default material
 			// TODO: move this to a better location one day
-			datamodel::Material* material = CREATE(datamodel::Material);
+			datamodel::Material* material = MEMORY_NEW(datamodel::Material, platform::memory::global_allocator());
 			datamodel::set_default_material(material);
 
 			core::startup();
@@ -71,7 +71,7 @@ namespace gemini
 
 			// TODO: move this to a better location one day.
 			datamodel::Material* material = &datamodel::get_default_material();
-			DESTROY(Material, material);
+			MEMORY_DELETE(material, platform::memory::global_allocator());
 			datamodel::set_default_material(0);
 			
 			core::shutdown();

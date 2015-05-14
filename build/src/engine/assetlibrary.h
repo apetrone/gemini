@@ -73,8 +73,8 @@ namespace gemini
 				release_and_purge();
 			}
 		
-			AssetClass * allocate_asset() { return CREATE(AssetClass); }
-			void deallocate_asset( AssetClass * asset ) { DESTROY(AssetClass, asset); }
+			AssetClass * allocate_asset() { return MEMORY_NEW(AssetClass, platform::memory::global_allocator()); }
+			void deallocate_asset( AssetClass * asset ) { MEMORY_DELETE(asset, platform::memory::global_allocator()); }
 			unsigned int total_asset_count() const { return total_assets; }
 			
 			void for_each( AssetIterator iterator, void * userdata )
