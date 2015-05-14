@@ -29,7 +29,7 @@
 
 #include <renderer/renderer.h>
 
-using namespace gemini;
+using namespace renderer;
 
 ApplicationContext::ApplicationContext() :
     log_instance(QSharedPointer<LogService>(new LogService())),
