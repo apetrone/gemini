@@ -57,116 +57,6 @@ namespace gemini
 {
 	namespace physics
 	{
-		namespace bullet
-		{
-			class BulletPlayerController : public IPlayerController
-			{
-				ICollisionObject* target;
-				KinematicCharacter* character;
-				
-				// view angles in degrees
-				glm::vec2 view_angles;
-				
-			private:
-				void move_player(KinematicCharacter* character, const MovementCommand& command)
-				{
-					if (character)
-					{
-						glm::vec3 cam_dir, cam_right;
-						mathlib::basis_vectors_from_pitch_yaw(view_angles.x, view_angles.y, cam_right, cam_dir);
-						
-//						const float QUOTIENT = (1.0f/input::AxisValueMaximum);
-						const float QUOTIENT = (1.0f/(float)SHRT_MAX);
-						
-						if (character)
-						{
-							character->set_view_direction(btVector3(cam_right.x, cam_right.y, cam_right.z), btVector3(cam_dir.x, cam_dir.y, cam_dir.z));
-							btVector3 movement((command.left * -QUOTIENT + command.right * QUOTIENT), 0.0f, -(command.forward * QUOTIENT + command.back * -QUOTIENT));
-							character->set_movement(movement);
-						}
-					}
-				}
-				
-				void orient_player(KinematicCharacter* character)
-				{
-					// rotate physics body based on camera yaw
-//					btTransform worldTrans = character->getGhostObject()->getWorldTransform();
-//					LOGV("TODO: get angles from camera\n");
-//					btQuaternion rotation(btVector3(0,1,0), mathlib::degrees_to_radians(-camera->yaw));
-//					worldTrans.setRotation(rotation);
-
-//					character->getGhostObject()->setWorldTransform(worldTrans);
-
-					// sync the camera to the ghost object
-//					const btTransform& transform = character->get_ghost()->getWorldTransform();
-//					btVector3 origin = transform.getOrigin();
-//					origin += btVector3(0, .9, 0);
-				}
-
-			public:
-				BulletPlayerController() : target(0), character(0)
-				{
-				}
-				
-				virtual ~BulletPlayerController()
-				{
-					set_controlled_object(0);
-				}
-				
-				virtual void set_controlled_object(ICollisionObject* collision_object)
-				{
-					target = collision_object;
-					
-					if (collision_object != 0)
-					{
-						// TODO: handle hot swapping of controlled object
-						assert(character == 0);
-						
-						BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(collision_object);
-						character = new KinematicCharacter((btPairCachingGhostObject*)bullet_object->get_collision_object(), (btConvexShape*)bullet_object->get_collision_shape());
-						bullet::get_world()->addAction(character);
-					}
-					else
-					{
-						bullet::get_world()->removeAction(character);
-						delete character;
-					}
-				}
-				
-				virtual ICollisionObject* get_controlled_object() const
-				{
-					return target;
-				}
-				
-				virtual void simulate(float delta_seconds)
-				{
-					assert(0); // not needed if character is added to world's actions.
-					if (character)
-					{
-						character->updateAction(bullet::get_world(), delta_seconds);
-					}
-				}
-				
-				virtual void apply_movement_command(const MovementCommand& command)
-				{
-					if (character)
-					{
-						move_player(character, command);
-//						orient_player(character);
-					}
-				}
-				
-				virtual void set_view_angles(const glm::vec2& view_angles_degrees)
-				{
-					view_angles = view_angles_degrees;
-				}
-			};
-		}
-
-
-
-
-
 		PhysicsInterface::~PhysicsInterface()
 		{
 			// purge collision shapes
@@ -432,19 +322,6 @@ namespace gemini
 		{
 			MEMORY_DELETE(object, platform::memory::global_allocator());
 		} // destroy_object
-
-
-		IPlayerController* PhysicsInterface::create_player_controller(ICollisionObject* object)
-		{
-			IPlayerController* controller = MEMORY_NEW(BulletPlayerController, platform::memory::global_allocator());
-			controller->set_controlled_object(object);
-			return controller;
-		}
-		
-		void PhysicsInterface::destroy_player_controller(IPlayerController* controller)
-		{
-			MEMORY_DELETE(controller, platform::memory::global_allocator());
-		}
 		
 		void PhysicsInterface::step_simulation(float framedelta_seconds)
 		{
@@ -491,11 +368,15 @@ namespace gemini
 		SweepTestResult PhysicsInterface::sweep(ICollisionObject* source_object, ICollisionShape* shape_object, const glm::vec3& start, const glm::vec3& end, float angle_threshold)
 		{
 			SweepTestResult result;
-			
 
-			btGhostObject* ghost = reinterpret_cast<btGhostObject*>(source_object);
-			btConvexShape* shape = reinterpret_cast<btConvexShape*>(shape_object);
+			BulletCollisionObject* bullet_object = static_cast<BulletCollisionObject*>(source_object);
+			btGhostObject* ghost = (btGhostObject*)bullet_object->get_collision_object();
+			assert(ghost != nullptr);
 			
+			BulletCollisionShape* bullet_shape = static_cast<BulletCollisionShape*>(shape_object);
+			btCollisionShape* shape = bullet_shape->get_shape();
+			btConvexShape* convex_shape = static_cast<btConvexShape*>(shape);
+			assert(convex_shape != nullptr);
 			
 			btTransform source;
 			btTransform destination;
@@ -508,7 +389,7 @@ namespace gemini
 			callback.m_collisionFilterGroup = ghost->getBroadphaseHandle()->m_collisionFilterGroup;
 			callback.m_collisionFilterMask = ghost->getBroadphaseHandle()->m_collisionFilterMask;
 			
-			ghost->convexSweepTest(shape, source, destination, callback, bullet::get_world()->getDispatchInfo().m_allowedCcdPenetration);
+			ghost->convexSweepTest(convex_shape, source, destination, callback, bullet::get_world()->getDispatchInfo().m_allowedCcdPenetration);
 			
 //			if (callback.hasHit())
 //			{

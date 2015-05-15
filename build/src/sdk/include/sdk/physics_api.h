@@ -35,27 +35,9 @@ namespace gemini
 	{
 		class ICollisionShape;
 		class ICollisionObject;
-	
 
-		
 		struct MovementCommand;
-	
-		
-		class IPlayerController
-		{
-		public:
-			virtual ~IPlayerController() {};
-						
-			virtual void set_controlled_object(ICollisionObject* collision_object) = 0;
-			virtual ICollisionObject* get_controlled_object() const = 0;
-			
-			virtual void simulate(float delta_seconds) = 0;
-			virtual void apply_movement_command(const physics::MovementCommand& command) = 0;
-			
-			// set view angles in degrees
-			virtual void set_view_angles(const glm::vec2& view_angles) = 0;
-		}; // PlayerController
-		
+
 		struct SurfaceProperties
 		{
 			
@@ -122,10 +104,6 @@ namespace gemini
 			virtual physics::ICollisionShape* create_box(const glm::vec3& dimensions) = 0;
 			
 			virtual void destroy_object(ICollisionObject* object) = 0;
-			
-			
-			virtual IPlayerController* create_player_controller(ICollisionObject* object) = 0;
-			virtual void destroy_player_controller(IPlayerController* object) = 0;
 			
 			virtual void step_simulation(float framedelta_seconds) = 0;
 			
