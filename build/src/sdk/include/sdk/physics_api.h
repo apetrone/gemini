@@ -84,7 +84,20 @@ namespace gemini
 			}
 		};
 		
-		
+		struct SweepTestResult
+		{
+			glm::vec3 hit_normal_world;
+			glm::vec3 hit_point_world;
+			float closest_hit_fraction;
+			uint32_t hit_count;
+			
+			
+			uint32_t hit_items() { return hit_count; }
+			
+			SweepTestResult() : closest_hit_fraction(0.0f), hit_count(0)
+			{
+			}
+		};
 		
 		class IPhysicsInterface
 		{
@@ -117,6 +130,7 @@ namespace gemini
 			virtual void step_simulation(float framedelta_seconds) = 0;
 			
 			virtual RaycastInfo raycast(ICollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance) = 0;
+			virtual SweepTestResult sweep(ICollisionObject* source_object, ICollisionShape* shape, const glm::vec3& start, const glm::vec3& end, float angle_threshold = 0.0f) = 0;
 		};
 
 		

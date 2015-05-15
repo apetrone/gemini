@@ -44,6 +44,8 @@
 
 #include "bullet_common.h"
 
+#include <sdk/physics_api.h>
+
 namespace gemini
 {
 	namespace physics
