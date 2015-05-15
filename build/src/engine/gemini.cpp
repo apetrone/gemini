@@ -880,27 +880,7 @@ public:
 //		command.forward += input::state()->keyboard().is_down(input::KEY_W) * input::AxisValueMaximum;
 //		command.back += input::state()->keyboard().is_down(input::KEY_S) * input::AxisValueMaximum;
 		
-#if 0
-		// add the inputs and then normalize
-		input::JoystickInput& joystick = input::state()->joystick(0);
-		if (joystick.axes[0].value < 0)
-		{
-			command.left += (joystick.axes[0].value/(float)input::AxisValueMinimum) * input::AxisValueMaximum;
-		}
-		if (joystick.axes[0].value > 0)
-		{
-			command.right += (joystick.axes[0].value/(float)input::AxisValueMaximum) * input::AxisValueMaximum;
-		}
-		
-		if (joystick.axes[1].value < 0)
-		{
-			command.forward += (joystick.axes[1].value/(float)input::AxisValueMinimum) * input::AxisValueMaximum;
-		}
-		if (joystick.axes[1].value > 0)
-		{
-			command.back += (joystick.axes[1].value/(float)input::AxisValueMaximum) * input::AxisValueMaximum;
-		}
-#endif
+
 	}
 };
 
@@ -1985,6 +1965,28 @@ Options:
 				game_message.params[1] = mdy;
 				event_queue->push_back(game_message);
 			}
+			
+#if 0
+			// add the inputs and then normalize
+			input::JoystickInput& joystick = input::state()->joystick(0);
+			if (joystick.axes[0].value < 0)
+			{
+				command.left += (joystick.axes[0].value/(float)input::AxisValueMinimum) * input::AxisValueMaximum;
+			}
+			if (joystick.axes[0].value > 0)
+			{
+				command.right += (joystick.axes[0].value/(float)input::AxisValueMaximum) * input::AxisValueMaximum;
+			}
+			
+			if (joystick.axes[1].value < 0)
+			{
+				command.forward += (joystick.axes[1].value/(float)input::AxisValueMinimum) * input::AxisValueMaximum;
+			}
+			if (joystick.axes[1].value > 0)
+			{
+				command.back += (joystick.axes[1].value/(float)input::AxisValueMaximum) * input::AxisValueMaximum;
+			}
+#endif
 		}
 
 		
