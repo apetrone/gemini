@@ -41,8 +41,6 @@
 #include <sdk/model_api.h>
 #include <sdk/physics_api.h>
 
-#include "bullet/bullet_charactercontroller.h"
-
 #include "physics_common.h"
 
 #include "kernel.h"
