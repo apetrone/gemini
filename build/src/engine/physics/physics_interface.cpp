@@ -486,5 +486,51 @@ namespace gemini
 
 			return info;
 		}
+		
+		
+		SweepTestResult PhysicsInterface::sweep(ICollisionObject* source_object, ICollisionShape* shape_object, const glm::vec3& start, const glm::vec3& end, float angle_threshold)
+		{
+			SweepTestResult result;
+			
+
+			btGhostObject* ghost = reinterpret_cast<btGhostObject*>(source_object);
+			btConvexShape* shape = reinterpret_cast<btConvexShape*>(shape_object);
+			
+			
+			btTransform source;
+			btTransform destination;
+			source.setIdentity();
+			destination.setIdentity();
+			source.setOrigin(fromglm(start));
+			destination.setOrigin(fromglm(end));
+			
+			ClosestNotMeConvexResultCallback callback(ghost, btVector3(0, 1.0f, 0), angle_threshold);
+			callback.m_collisionFilterGroup = ghost->getBroadphaseHandle()->m_collisionFilterGroup;
+			callback.m_collisionFilterMask = ghost->getBroadphaseHandle()->m_collisionFilterMask;
+			
+			ghost->convexSweepTest(shape, source, destination, callback, bullet::get_world()->getDispatchInfo().m_allowedCcdPenetration);
+			
+//			if (callback.hasHit())
+//			{
+//				btVector3 normal = callback.m_hitNormalWorld.normalize();
+//				//				debugdraw::sphere(toglm(callback.m_hitPointWorld), Color(255, 0, 0), 0.005f, 2.0f);
+//				//				debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+normal*0.1f), Color(0, 255, 255), 2.0f);
+//			}
+			
+//			return callback.hasHit();
+			
+			if (callback.hasHit())
+			{
+				result.hit_count = 1;
+				result.closest_hit_fraction = callback.m_closestHitFraction;
+				result.hit_normal_world = toglm(callback.m_hitNormalWorld);
+				result.hit_point_world = toglm(callback.m_hitPointWorld);
+			}
+			
+			
+			return result;
+		}
+		
+		
 	} // namespace physics
 } // namespace gemini
