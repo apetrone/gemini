@@ -32,8 +32,6 @@
 #include <core/color.h>
 #include "debugdraw.h"
 
-#include "bullet/bullet_charactercontroller.h"
-
 #include "assets/asset_mesh.h"
 
 
