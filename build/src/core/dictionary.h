@@ -575,13 +575,15 @@ namespace core
 
 		class Iterator
 		{
+			typedef HashSet<K, T> container_type;
+
 		private:
-			HashSet<K, T>::Bucket* table;
+			typename container_type::Bucket* table;
 			size_t index;
 			size_t table_size;
 			
 		public:
-			Iterator(HashSet<K, T>::Bucket* table, size_t index, size_t table_size) :
+			Iterator(typename container_type::Bucket* table, size_t index, size_t table_size) :
 				table(table),
 				index(index),
 				table_size(table_size)
@@ -608,7 +610,7 @@ namespace core
 			{
 				while(index < table_size)
 				{
-					HashSet<K, T>::Bucket* bucket = &table[++index];
+					container_type::Bucket* bucket = &table[++index];
 					if (bucket->hash != 0)
 						return *this;
 				}
