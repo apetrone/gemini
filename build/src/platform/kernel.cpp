@@ -26,9 +26,15 @@
 #include "kernel.h"
 
 #include <string.h>
+#include <limits.h>
 
 namespace kernel
 {
+	float GameControllerEvent::normalized_value() const
+	{
+		return (joystick_value/(float)SHRT_MAX);
+	}
+
 	namespace detail
 	{
 		IKernel* kernel_instance = 0;

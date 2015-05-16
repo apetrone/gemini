@@ -1435,26 +1435,26 @@ public:
 	
 	virtual void event(kernel::GameControllerEvent& event)
 	{
-		//		if (event.subtype == kernel::JoystickConnected)
-		//		{
-		//			LOGV("gamepad [%i] connected\n", event.gamepad_id);
-		//		}
-		//		else if (event.subtype == kernel::JoystickDisconnected)
-		//		{
-		//			LOGV("gamepad [%i] disconnected\n", event.gamepad_id);
-		//		}
-		//		else if (event.subtype == kernel::JoystickButton)
-		//		{
-		//			LOGV("gamepad [%i] button: %i, is_down: %i\n", event.gamepad_id, event.button, event.is_down);
-		//		}
-		//		else if (event.subtype == kernel::JoystickAxisMoved)
-		//		{
-		//			LOGV("gamepad [%i] joystick: %i, value: %i\n", event.gamepad_id, event.joystick_id, event.joystick_value);
-		//		}
-		//		else
-		//		{
-		//			LOGV("gamepad [%i] controller event received: %i\n", event.gamepad_id, event.subtype);
-		//		}
+		if (event.subtype == kernel::JoystickConnected)
+		{
+			LOGV("gamepad [%i] connected\n", event.gamepad_id);
+		}
+		else if (event.subtype == kernel::JoystickDisconnected)
+		{
+			LOGV("gamepad [%i] disconnected\n", event.gamepad_id);
+		}
+		else if (event.subtype == kernel::JoystickButton)
+		{
+			LOGV("gamepad [%i] button: %i, is_down: %i\n", event.gamepad_id, event.button, event.is_down);
+		}
+		else if (event.subtype == kernel::JoystickAxisMoved)
+		{
+			LOGV("gamepad [%i] joystick: %i, value: %i (%2.2f)\n", event.gamepad_id, event.joystick_id, event.joystick_value, event.normalized_value());
+		}
+		else
+		{
+			LOGV("gamepad [%i] controller event received: %i\n", event.gamepad_id, event.subtype);
+		}
 	}
 	
 	void setup_gui(uint32_t width, uint32_t height)
