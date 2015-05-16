@@ -143,12 +143,13 @@ namespace kernel
 	struct GameControllerEvent : public Event<GameController>
 	{
 		int button;
+		int16_t joystick_value;
+		uint8_t gamepad_id;
+		uint8_t joystick_id;
 		bool is_down;
 		
-		int gamepad_id;
 		
-		uint8_t joystick_id;
-		int16_t joystick_value;
+		float normalized_value() const;
 	}; // GameControllerEvent
 	
 	void assign_listener_for_eventtype( kernel::EventType type, void * listener );

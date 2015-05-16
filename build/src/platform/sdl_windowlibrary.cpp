@@ -226,10 +226,6 @@ namespace platform
 		total_controllers = SDL_NumJoysticks();
 		for (uint8_t i = 0; i < total_controllers; ++i)
 		{
-			input::JoystickInput& js = input::state()->joystick(i);
-			input::state()->connect_joystick(i);
-			js.reset();
-			
 			controllers[i] = SDL_GameControllerOpen(i);
 			if (SDL_IsGameController(i))
 			{
@@ -238,18 +234,18 @@ namespace platform
 				
 				SDL_Joystick * joystick = SDL_GameControllerGetJoystick(controllers[i]);
 				SDL_JoystickID joystickID = SDL_JoystickInstanceID( joystick );
+#if 0
 				if (SDL_JoystickIsHaptic(joystick))
 				{
-					js.flags |= input::JoystickInput::HapticSupport;
+//					js.flags |= input::JoystickInput::HapticSupport;
 					fprintf(stdout, "Joystick is haptic!\n");
-					//			http://blog.5pmcasual.com/game-controller-api-in-sdl2.html
+//					http://blog.5pmcasual.com/game-controller-api-in-sdl2.html
 					SDL_Haptic * haptic = SDL_HapticOpenFromJoystick( joystick );
 					if (haptic)
 					{
 						SDL_HapticRumbleInit(haptic);
-						//				SDL_HapticRumblePlay(haptic, 1.0, 2000);
-						
-						//				SDL_Delay(2000);
+//						SDL_HapticRumblePlay(haptic, 1.0, 2000);
+//						SDL_Delay(2000);
 						SDL_HapticClose(haptic);
 					}
 					else
@@ -257,6 +253,7 @@ namespace platform
 						fprintf(stdout, "error opening haptic for joystickID: %i\n", joystickID);
 					}
 				}
+#endif
 			}
 			else
 			{
@@ -274,9 +271,6 @@ namespace platform
 		// close all controllers
 		for (uint8_t i = 0; i < total_controllers; ++i)
 		{
-			input::JoystickInput& js = input::state()->joystick(i);
-			input::state()->disconnect_joystick(i);
-			
 			SDL_GameController* controller = controllers[i];
 			if (controller)
 			{
@@ -416,17 +410,6 @@ namespace platform
 		}
 	}
 	
-	void controller_axis_event(SDL_ControllerDeviceEvent& device, SDL_ControllerAxisEvent& axis)
-	{
-		fprintf(stdout, "Axis Motion: %i, %i, %i, %i\n", device.which, axis.which, axis.axis, axis.value);
-	}
-	
-	void controller_button_event(SDL_ControllerDeviceEvent& device, SDL_ControllerButtonEvent& button)
-	{
-		bool is_down = (button.state == SDL_PRESSED);
-		fprintf(stdout, "Button %s: %i, %i, %i\n", (is_down ? "Yes" : "No"), device.which, button.button, button.state);
-	}
-	
 	void SDLWindowLibrary::process_events()
 	{
 		SDL_Event event;
@@ -499,50 +482,27 @@ namespace platform
 #if SDL_ENABLE_GAMEPAD
 				case SDL_CONTROLLERAXISMOTION:
 				{
-					input::JoystickInput& joystick = input::state()->joystick(event.cdevice.which);
-					input::AxisState& axis = joystick.axes[event.caxis.axis];
-					axis.value = event.caxis.value;
-					axis.normalized_value = (event.caxis.value/(float)SHRT_MAX);
-					
 					// check for values outside the deadzone
-					if (event.caxis.value > 3200 || event.caxis.value < -3200)
-					{
+//					if (event.caxis.value > 3200 || event.caxis.value < -3200)
+//					{
+//						fprintf(stdout, "axis motion, gamepad_id: %i\n", event.cdevice.which);
 						kernel::GameControllerEvent ev;
 						ev.gamepad_id = event.cdevice.which;
 						ev.subtype = kernel::JoystickAxisMoved;
 						ev.joystick_id = event.caxis.axis;
 						ev.joystick_value = event.caxis.value;
 						kernel::event_dispatch(ev);
-					}
-					else
-					{
-						axis.value = 0;
-						axis.normalized_value = 0;
-					}
+//					}
 					break;
 				}
 					
 				case SDL_CONTROLLERBUTTONDOWN:
-				{
-					controller_button_event(event.cdevice, event.cbutton);
-					
-					kernel::GameControllerEvent ev;
-					ev.gamepad_id = event.cdevice.which;
-					ev.subtype = kernel::JoystickButton;
-					ev.is_down = true;
-					ev.button = event.cbutton.button;
-					kernel::event_dispatch(ev);
-					break;
-				}
-					
 				case SDL_CONTROLLERBUTTONUP:
 				{
-					controller_button_event(event.cdevice, event.cbutton);
-					
 					kernel::GameControllerEvent ev;
 					ev.gamepad_id = event.cdevice.which;
 					ev.subtype = kernel::JoystickButton;
-					ev.is_down = false;
+					ev.is_down = event.type == SDL_CONTROLLERBUTTONDOWN ? true : false;
 					ev.button = event.cbutton.button;
 					kernel::event_dispatch(ev);
 					break;
@@ -551,35 +511,41 @@ namespace platform
 				case SDL_CONTROLLERDEVICEADDED:
 				{
 					// event 'which' member
-					// describes an index into the list of active devices; NOT joystick id.
-					fprintf(stdout, "Device Added: %i\n", event.cdevice.which);
-					
-					input::JoystickInput& js = input::state()->joystick(event.cdevice.which);
-					js.reset();
-					input::state()->connect_joystick(event.cdevice.which);
-					
-					
-					controllers[event.cdevice.which] = SDL_GameControllerOpen(event.cdevice.which);
-//					SDL_Joystick * joystick = SDL_GameControllerGetJoystick(controllers[event.cdevice.which]);
-					
-					
-					kernel::GameControllerEvent ev;
-					ev.gamepad_id = event.cdevice.which;
-					ev.subtype = kernel::JoystickConnected;
-					kernel::event_dispatch(ev);
+					// describes an index into the list of active devices; NOT necessarily a joystick id.
+					if (SDL_IsGameController(event.cdevice.which))
+					{
+						SDL_GameController* gamepad = SDL_GameControllerOpen(event.cdevice.which);
+						if (gamepad)
+						{
+							SDL_Joystick* joystick = SDL_GameControllerGetJoystick(gamepad);
+							int instance_id = SDL_JoystickInstanceID(joystick);
+							assert(instance_id != -1);
+							
+							// map it
+							controllers[event.cdevice.which] = gamepad;
+							
+							fprintf(stdout, "joystick instance id: %i\n", instance_id);
+							
+							kernel::GameControllerEvent ev;
+							ev.gamepad_id = event.cdevice.which;
+							ev.subtype = kernel::JoystickConnected;
+							kernel::event_dispatch(ev);
+						}
+					}
+					else
+					{
+						fprintf(stdout, "device %i is NOT a game controller!\n", event.cdevice.which);
+					}
+										
+
 					break;
 				}
 					
 				case SDL_CONTROLLERDEVICEREMOVED:
 				{
-					fprintf(stdout, "Device Removed: %i\n", event.cdevice.which);
-					
-					input::state()->disconnect_joystick(event.cdevice.which);
-					
 					SDL_GameControllerClose(controllers[event.cdevice.which]);
 					controllers[event.cdevice.which] = 0;
-					
-					
+										
 					kernel::GameControllerEvent ev;
 					ev.gamepad_id = event.cdevice.which;
 					ev.subtype = kernel::JoystickDisconnected;
