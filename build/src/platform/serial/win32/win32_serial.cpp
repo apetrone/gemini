@@ -26,39 +26,28 @@
 #include "mem.h"
 #include "platform_internal.h"
 
-#define WIN32_LEAN_AND_MEAN 1
-#define NOMINMAX
-#include <windows.h>
+#include <assert.h>
 
+// TODO@APP: Implement me: https://msdn.microsoft.com/en-us/library/ms810467.aspx
 namespace platform
 {
-	struct Win32DynamicLibrary : public DynamicLibrary
+	Serial* serial_open(const char* device, uint32_t baud_rate)
 	{
-		HMODULE handle;
-	};
-	
-	DynamicLibrary* dylib_open(const char* library_path)
-	{
-		Win32DynamicLibrary* library = MEMORY_NEW(Win32DynamicLibrary, platform::memory::global_allocator());
-		library->handle = LoadLibraryA(library_path);
-		return library;
+		return nullptr;
 	}
 	
-	void dylib_close(DynamicLibrary* library)
+	void serial_close(Serial* serial)
 	{
-		Win32DynamicLibrary* instance = static_cast<Win32DynamicLibrary*>(library);
-		FreeLibrary(instance->handle);
-		MEMORY_DELETE(instance, platform::memory::global_allocator());
 	}
 	
-	DynamicLibrarySymbol dylib_find(DynamicLibrary* library, const char* symbol_name)
+	int serial_read(Serial* serial, void* buffer, int total_bytes)
 	{
-		Win32DynamicLibrary* instance = static_cast<Win32DynamicLibrary*>(library);
-		return GetProcAddress(instance->handle, (LPSTR)symbol_name);
+		return 0;
 	}
 	
-	const char* dylib_extension()
+	int serial_write(Serial* serial, const void* buffer, int total_bytes)
 	{
-		return ".dll";
+		return 0;
 	}
-} // namespace platform
+	
+}; // namespace platform

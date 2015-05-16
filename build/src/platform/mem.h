@@ -193,7 +193,7 @@ namespace platform
 				MemoryHeader* header = (MemoryHeader*)malloc(total_size);
 				assert(header);
 				
-				fprintf(stdout, "allocate: %p, %zu bytes, %s:%i\n", header+1, requested_size, filename, line);
+				fprintf(stdout, "allocate: %p, %lu bytes, %s:%i\n", header+1, (unsigned long)requested_size, filename, line);
 				
 				header->allocation_size = requested_size;
 				header->allocation_index = 0;
