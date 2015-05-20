@@ -100,7 +100,7 @@ namespace gemini
 		{
 			for (MeshData* data : meshdata)
 			{
-				DESTROY(MeshData, data);
+				MEMORY_DELETE(data, platform::memory::global_allocator());
 			}
 		}
 	};

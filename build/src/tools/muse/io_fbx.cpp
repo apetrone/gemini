@@ -267,7 +267,7 @@ namespace gemini
 		}
 		else
 		{
-			mesh_data = CREATE(AutodeskFbxExtensionState::MeshData);
+			mesh_data = MEMORY_NEW(AutodeskFbxExtensionState::MeshData, platform::memory::global_allocator());
 			mesh_data->name = mesh->name;
 			state.meshdata[mesh->name] = mesh_data;
 		}
@@ -288,7 +288,7 @@ namespace gemini
 		mesh->normals.allocate(total_indices);
 	//	LOGV("%s# indices: %i\n", state.indent(), total_indices);
 		
-		datamodel::Vertex* vertices = CREATE_ARRAY(datamodel::Vertex, total_indices);
+		datamodel::Vertex* vertices = MEMORY_NEW_ARRAY(datamodel::Vertex, total_indices, platform::memory::global_allocator());
 		size_t vertex_index = 0;
 		size_t local_index = 0;
 		
@@ -441,7 +441,7 @@ namespace gemini
 		
 
 	//	LOGV("%svertex_index: %i\n", state.indent(), vertex_index);
-		DESTROY_ARRAY(Vertex, vertices, mesh->indices.size());
+		MEMORY_DELETE_ARRAY(vertices, platform::memory::global_allocator());
 	}
 	
 
@@ -628,7 +628,7 @@ namespace gemini
 			}
 			else
 			{
-				mesh_data = CREATE(AutodeskFbxExtensionState::MeshData);
+				mesh_data = MEMORY_NEW(AutodeskFbxExtensionState::MeshData, platform::memory::global_allocator());
 				mesh_data->name = fbxnode->GetName();
 				state.meshdata[fbxnode->GetName()] = mesh_data;
 			}
@@ -777,7 +777,7 @@ namespace gemini
 //			LOGV("Node inherit type: %s\n", inherit_type());
 		
 			// create a new node
-			datamodel::Node* node = CREATE(datamodel::Node);
+			datamodel::Node* node = MEMORY_NEW(datamodel::Node, platform::memory::global_allocator());
 			root->add_child(node);
 			
 			node->name = fbxnode->GetName();
@@ -794,7 +794,7 @@ namespace gemini
 			node->type = type_from_node(fbxnode);
 			if (node_attribute_type == FbxNodeAttribute::eMesh)
 			{
-				node->mesh = CREATE(datamodel::Mesh);
+				node->mesh = MEMORY_NEW(datamodel::Mesh, platform::memory::global_allocator());
 				// populate mesh from fbxnode
 				state.indent.push();
 				load_mesh(state, fbxnode, node->mesh);
@@ -903,7 +903,7 @@ namespace gemini
 				// At the moment, only a single skeleton is supported.
 				assert(extension_state.model->skeleton == 0);
 				
-				extension_state.model->skeleton = CREATE(datamodel::Skeleton);
+				extension_state.model->skeleton = MEMORY_NEW(datamodel::Skeleton, platform::memory::global_allocator());
 				process_skeleton(extension_state, -1, node);
 				return true;
 			}
