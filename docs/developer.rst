@@ -24,3 +24,7 @@ Removing a git submodule:
 
 
 
+Source Code Organization:
+
+- 'platform': platform abstraction layer
+- 'core': a collection of modules which builds upon platform
