@@ -27,7 +27,7 @@
 #include "shaderprogram.h"
 #include "color.h"
 
-#include <core/typedefs.h>
+#include <platform/typedefs.h>
 
 
 namespace font

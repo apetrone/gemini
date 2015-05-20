@@ -23,9 +23,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
-#include <core/typedefs.h>
+#include <platform/typedefs.h>
 #include <core/mathlib.h>
-#include <core/threadsafequeue.h>
+#include <platform/lib/threadsafequeue.h>
 #include <core/stackstring.h>
 
 #include <json/json.h>
@@ -37,6 +37,7 @@
 #include "civetweb.h"
 #include "CivetServer.h"
 
+using namespace adt;
 using namespace core;
 
 
@@ -188,7 +189,7 @@ namespace gemini
 		namespace _internal
 		{
 			CivetServer* server = nullptr;
-			core::ThreadSafeQueue<String> reload_queue;
+			ThreadSafeQueue<String> reload_queue;
 		}
 		
 
@@ -226,11 +227,11 @@ namespace gemini
 		
 		class AssetHotloadHandler : public CivetHandler
 		{
-			core::ThreadSafeQueue<String>& queue;
+			ThreadSafeQueue<String>& queue;
 			
 		public:
 			
-			AssetHotloadHandler(core::ThreadSafeQueue<String>& command_queue) : queue(command_queue)
+			AssetHotloadHandler(ThreadSafeQueue<String>& command_queue) : queue(command_queue)
 			{}
 			
 			virtual bool handlePut(CivetServer* server, struct mg_connection* conn)

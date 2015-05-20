@@ -30,7 +30,7 @@
 #include "vertexbuffer.h"
 
 #include <platform/mem_stl_allocator.h>
-#include <core/typedefs.h>
+#include <platform/typedefs.h>
 #include <platform/lib/fixedarray.h>
 #include <core/stackstring.h>
 #include <core/mathlib.h> // for glm

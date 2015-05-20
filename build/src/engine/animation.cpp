@@ -25,9 +25,10 @@
 #include "animation.h"
 #include <platform/mem.h>
 
+#include <platform/lib/dictionary.h>
+
 #include <core/interpolation.h>
 #include <core/mathlib.h>
-#include <core/dictionary.h>
 #include <core/logging.h>
 #include <core/configloader.h>
 #include <core/stackstring.h>
@@ -272,7 +273,7 @@ namespace gemini
 		//
 		// animation system stuff
 		//
-		typedef core::HashSet<std::string, Sequence*> SequenceHash;
+		typedef adt::HashSet<std::string, Sequence*> SequenceHash;
 		SequenceHash* _sequences_by_name;
 		namespace detail
 		{

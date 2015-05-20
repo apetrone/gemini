@@ -28,9 +28,8 @@
 #include <core/color.h>
 #include <core/util.h>
 
-namespace core
+namespace adt
 {
-
 	enum DataType
 	{
 		DATA_INVALID = 0,
@@ -43,9 +42,6 @@ namespace core
 
 		DATA_MAX
 	};
-
-
-
 
 
 	class PolicyBase
@@ -648,10 +644,5 @@ namespace core
 		{
 			return Iterator(table, table_size, table_size);
 		}
-	}; // class OpenAddressingHash
-	
-	
-	
-	
-	
-} // namespace core
+	}; // class HashSet
+} // namespace adt

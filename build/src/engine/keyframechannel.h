@@ -24,12 +24,12 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/typedefs.h>
 #include <platform/lib/fixedarray.h>
 #include <core/logging.h>
 
 #include <renderer/render_utilities.h>
 
+#include <platform/typedefs.h>
 
 namespace gemini
 {

@@ -25,7 +25,7 @@
 
 #include "color.h"
 
-#include <core/typedefs.h>
+#include <platform/typedefs.h>
 
 // unsigned char rgba[3];
 // unsigned int mycolor = RGBToUInt( 255, 128, 75 );

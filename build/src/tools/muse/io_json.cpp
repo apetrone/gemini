@@ -27,7 +27,8 @@
 #include "datamodel/mesh.h"
 #include "datamodel/material.h"
 
-#include <core/typedefs.h>
+#include <platform/typedefs.h>
+
 #include <core/logging.h>
 #include <core/xfile.h>
 

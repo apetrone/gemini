@@ -26,7 +26,7 @@
 
 #include "color.h"
 
-#include <core/typedefs.h>
+#include <platform/typedefs.h>
 #include <platform/lib/fixedarray.h>
 
 namespace renderer

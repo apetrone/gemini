@@ -22,8 +22,6 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include <core/typedefs.h>
-
 
 #include "physics_interface.h"
 
@@ -36,14 +34,15 @@
 
 #include "assets/asset_mesh.h"
 
+#include "physics_common.h"
+
+#include "kernel.h"
 
 #include <sdk/engine_api.h>
 #include <sdk/model_api.h>
 #include <sdk/physics_api.h>
 
-#include "physics_common.h"
-
-#include "kernel.h"
+#include <platform/typedefs.h>
 
 using namespace gemini;
 using namespace gemini::physics::bullet;

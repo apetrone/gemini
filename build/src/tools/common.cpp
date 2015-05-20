@@ -30,10 +30,10 @@
 
 #include "common/extension.h"
 
-#include <platform/mem.h>
+#include <platform/typedefs.h>
+
 #include <core/filesystem.h>
 #include <core/stackstring.h>
-#include <core/typedefs.h>
 #include <core/core.h>
 #include <core/logging.h>
 

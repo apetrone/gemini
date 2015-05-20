@@ -25,6 +25,7 @@
 
 #include <platform/platform.h>
 #include <platform/kernel.h>
+#include <platform/lib/fixedsizequeue.h>
 
 #include <core/core.h>
 #include <core/str.h>
@@ -33,7 +34,6 @@
 #include <core/configloader.h>
 #include <core/argumentparser.h>
 #include <core/mathlib.h>
-#include <core/fixedsizequeue.h>
 
 #include <renderer/renderer.h>
 #include <renderer/renderstream.h>
@@ -66,7 +66,7 @@
 
 #include <platform/windowlibrary.h>
 
-typedef core::FixedSizeQueue<gemini::GameMessage, 64> EventQueueType;
+typedef adt::FixedSizeQueue<gemini::GameMessage, 64> EventQueueType;
 
 struct DataInput
 {
@@ -1551,7 +1551,7 @@ public:
 	
 	virtual kernel::Error startup()
 	{
-		event_queue = new core::FixedSizeQueue<GameMessage, 64>;
+		event_queue = new adt::FixedSizeQueue<GameMessage, 64>;
 	
 		// parse command line values
 		std::vector<std::string> arguments;

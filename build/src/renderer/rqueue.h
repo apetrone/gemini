@@ -26,7 +26,7 @@
 
 #include "renderer.h"
 
-#include <core/typedefs.h>
+#include <platform/typedefs.h>
 #include <platform/mem.h>
 
 #include <vector>

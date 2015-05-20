@@ -1,13 +1,15 @@
+#include <platform/lib/fixedarray.h>
+#include <platform/lib/dictionary.h>
 #include <platform/platform.h>
+#include <platform/typedefs.h>
 
-#include <core/typedefs.h>
 #include <core/core.h>
 #include <core/filesystem.h>
 #include <core/logging.h>
 #include <core/stackstring.h>
-#include <platform/lib/fixedarray.h>
+
 #include <core/interpolation.h>
-#include <core/dictionary.h>
+
 #include <core/argumentparser.h>
 
 #include <json/json.h>

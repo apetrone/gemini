@@ -28,7 +28,7 @@
 
 #include <assert.h>
 
-namespace core
+namespace adt
 {
 	// This is an implementation of a FIFO queue
 	template <class Type, int MaxSize>
@@ -83,4 +83,4 @@ namespace core
 			return item;
 		}
 	};
-} // namespace core
+} // namespace adt
