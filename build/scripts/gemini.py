@@ -493,6 +493,11 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/time/windows/win32_time.cpp"
 	]
 
+	# template library
+	libplatform.sources += [
+		"src/platform/adt/*.h"
+	]
+
 	return libplatform
 
 def get_libcore(arguments, target_platform):

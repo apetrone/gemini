@@ -33,7 +33,7 @@
 #include "assets.h"
 #include "renderer/renderer.h"
 
-#include <platform/lib/fixedarray.h>
+#include <platform/adt/fixedarray.h>
 #include "keyframechannel.h"
 #include "animation.h"
 

@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <platform/lib/fixedarray.h>
+#include <platform/adt/fixedarray.h>
 #include <core/stackstring.h>
 
 #include <platform/typedefs.h>
