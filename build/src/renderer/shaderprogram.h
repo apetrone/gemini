@@ -25,7 +25,7 @@
 #pragma once
 
 #include <core/stackstring.h>
-#include <platform/lib/fixedarray.h>
+#include <platform/adt/fixedarray.h>
 
 #include <string>
 #include <utility> // for std::pair

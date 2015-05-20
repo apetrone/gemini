@@ -25,7 +25,7 @@
 
 #include <platform/typedefs.h>
 #include <core/mathlib.h>
-#include <platform/lib/threadsafequeue.h>
+#include <platform/adt/threadsafequeue.h>
 #include <core/stackstring.h>
 
 #include <json/json.h>

@@ -25,7 +25,7 @@
 #include "animation.h"
 #include <platform/mem.h>
 
-#include <platform/lib/dictionary.h>
+#include <platform/adt/dictionary.h>
 
 #include <core/interpolation.h>
 #include <core/mathlib.h>

@@ -25,7 +25,7 @@
 
 #include <platform/platform.h>
 #include <platform/kernel.h>
-#include <platform/lib/fixedsizequeue.h>
+#include <platform/adt/fixedsizequeue.h>
 
 #include <core/core.h>
 #include <core/str.h>
