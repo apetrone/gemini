@@ -24,10 +24,10 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/typedefs.h>
-#include <core/mathlib.h>
-
 #include "renderer/renderer.h"
+
+#include <core/mathlib.h>
+#include <platform/typedefs.h>
 
 namespace gemini
 {

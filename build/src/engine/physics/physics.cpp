@@ -24,7 +24,6 @@
 // -------------------------------------------------------------
 #include <vector>
 
-#include <core/typedefs.h>
 //#include <core/logging.h>
 #include "physics.h"
 #include <btBulletDynamicsCommon.h>
@@ -45,6 +44,8 @@ const float PHYSICS_PLAYER_HALF_HEIGHT = 0.91f; // .91 == 6 ft tall
 
 
 #include "physics_interface.h"
+
+#include <platform/typedefs.h>
 
 namespace gemini
 {

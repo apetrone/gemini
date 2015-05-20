@@ -25,7 +25,7 @@
 #include "vertexstream.h"
 #include "renderer.h"
 
-#include <core/typedefs.h>
+#include <platform/typedefs.h>
 #include <core/logging.h>
 
 #include <string.h> // for memset

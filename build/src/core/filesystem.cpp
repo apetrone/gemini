@@ -26,7 +26,7 @@
 #include "xfile.h"
 
 #include <platform/platform.h>
-#include <core/typedefs.h>
+#include <platform/typedefs.h>
 #include <core/logging.h>
 #include <core/str.h>
 

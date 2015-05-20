@@ -23,9 +23,10 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
-#include <core/typedefs.h>
 #include <core/mathlib.h>
 #include <core/logging.h>
+
+#include <platform/typedefs.h>
 
 #include "vr.h"
 

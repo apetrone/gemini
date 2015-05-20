@@ -25,7 +25,7 @@
 #include "image.h"
 #include "renderer.h"
 
-#include <core/typedefs.h>
+#include <platform/typedefs.h>
 #include <core/filesystem.h>
 #include <core/logging.h>
 

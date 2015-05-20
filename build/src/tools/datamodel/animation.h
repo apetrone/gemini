@@ -24,7 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/typedefs.h>
+#include <platform/typedefs.h>
+
 #include <core/mathlib.h>
 #include <core/str.h>
 

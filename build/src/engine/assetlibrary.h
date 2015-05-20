@@ -27,8 +27,9 @@
 #include <map>
 #include <list>
 
-#include <core/typedefs.h>
 #include <core/logging.h>
+
+#include <platform/typedefs.h>
 
 #include "assets.h"
 

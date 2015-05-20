@@ -26,7 +26,7 @@
 
 #include "datastream.h"
 
-#include <core/typedefs.h>
+#include <platform/typedefs.h>
 
 #include <vector>
 

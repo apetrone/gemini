@@ -29,7 +29,7 @@
 #include <mutex>
 #include <condition_variable>
 
-namespace core
+namespace adt
 {
 	template <class Type>
 	class ThreadSafeQueue
@@ -68,4 +68,4 @@ namespace core
 			return total_size;
 		}
 	}; // ThreadSafeQueue
-} // namespace core
+} // namespace adt
