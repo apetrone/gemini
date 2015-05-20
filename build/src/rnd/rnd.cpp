@@ -1,5 +1,4 @@
 #include <platform/adt/fixedarray.h>
-#include <platform/adt/dictionary.h>
 #include <platform/platform.h>
 #include <platform/typedefs.h>
 

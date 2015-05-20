@@ -28,7 +28,7 @@
 #include "common.h"
 #include "datamodel/model.h"
 
-#include <platform/adt/dictionary.h>
+#include <platform/adt/hashset.h>
 
 #include <fbxsdk.h>
 

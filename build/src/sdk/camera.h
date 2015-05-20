@@ -24,10 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-
-#include <core/typedefs.h>
 #include <core/mathlib.h>
-
+#include <platform/typedefs.h>
 
 // REFERENCE LINKS
 

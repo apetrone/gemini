@@ -24,8 +24,9 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/typedefs.h>
 #include <platform/mem.h>
+
+#include <platform/typedefs.h>
 
 #include "entity.h"
 
