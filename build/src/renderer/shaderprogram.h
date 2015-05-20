@@ -25,7 +25,7 @@
 #pragma once
 
 #include <core/stackstring.h>
-#include <core/fixedarray.h>
+#include <platform/lib/fixedarray.h>
 
 #include <string>
 #include <utility> // for std::pair
@@ -57,8 +57,8 @@ namespace renderer
 	{
 		core::StackString<64> frag_data_location;
 		
-		core::FixedArray<ShaderKeyValuePair> uniforms;
-		core::FixedArray<ShaderKeyValuePair> attributes;
+		platform::FixedArray<ShaderKeyValuePair> uniforms;
+		platform::FixedArray<ShaderKeyValuePair> attributes;
 		
 		unsigned int object;
 		

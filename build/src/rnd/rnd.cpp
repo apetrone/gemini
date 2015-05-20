@@ -5,7 +5,7 @@
 #include <core/filesystem.h>
 #include <core/logging.h>
 #include <core/stackstring.h>
-#include <core/fixedarray.h>
+#include <platform/lib/fixedarray.h>
 #include <core/interpolation.h>
 #include <core/dictionary.h>
 #include <core/argumentparser.h>

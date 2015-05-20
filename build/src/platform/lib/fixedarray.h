@@ -28,8 +28,7 @@
 
 #include <assert.h>
 
-
-namespace core
+namespace platform
 {
 	template <class Type>
 	class FixedArray
@@ -128,4 +127,4 @@ namespace core
 			return elements[index];
 		} // operator[] const
 	}; // class FixedArray
-} // namespace core
+} // namespace platform

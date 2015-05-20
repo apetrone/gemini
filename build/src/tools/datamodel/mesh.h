@@ -26,7 +26,7 @@
 
 #include "datamodel/material.h"
 
-#include <core/fixedarray.h>
+#include <platform/lib/fixedarray.h>
 #include <core/mathlib.h>
 
 namespace gemini
@@ -74,15 +74,15 @@ namespace gemini
 		
 		struct Mesh
 		{
-			core::FixedArray<glm::vec4> blend_indices;
-			core::FixedArray<glm::vec4> blend_weights;
-			core::FixedArray<glm::vec3> vertices;
-			core::FixedArray<glm::vec3> normals;
-			core::FixedArray<glm::vec4> vertex_colors;
-			core::FixedArray< core::FixedArray<glm::vec2> > uvs;
-			core::FixedArray<WeightList> weights;
-			core::FixedArray<BoneLinkData> bindpose;
-			core::FixedArray<uint32_t> indices;
+			platform::FixedArray<glm::vec4> blend_indices;
+			platform::FixedArray<glm::vec4> blend_weights;
+			platform::FixedArray<glm::vec3> vertices;
+			platform::FixedArray<glm::vec3> normals;
+			platform::FixedArray<glm::vec4> vertex_colors;
+			platform::FixedArray< platform::FixedArray<glm::vec2> > uvs;
+			platform::FixedArray<WeightList> weights;
+			platform::FixedArray<BoneLinkData> bindpose;
+			platform::FixedArray<uint32_t> indices;
 			MaterialId material;
 			glm::vec3 mass_center_offset;
 			std::string name;

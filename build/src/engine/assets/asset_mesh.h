@@ -33,7 +33,7 @@
 #include "assets.h"
 #include "renderer/renderer.h"
 
-#include <core/fixedarray.h>
+#include <platform/lib/fixedarray.h>
 #include "keyframechannel.h"
 #include "animation.h"
 
@@ -75,14 +75,14 @@ namespace gemini
 			void render_setup();
 
 			// model space to bone space transforms
-			core::FixedArray<glm::mat4> bind_poses;
+			platform::FixedArray<glm::mat4> bind_poses;
 		}; // Geometry
 		
 		
 		struct Mesh : public Asset
 		{
-			core::FixedArray<Geometry> geometry;
-			core::FixedArray<Geometry> geometry_vn;
+			platform::FixedArray<Geometry> geometry;
+			platform::FixedArray<Geometry> geometry_vn;
 			glm::mat4 world_matrix;
 					
 			core::StackString<MAX_PATH_SIZE> path;
@@ -110,7 +110,7 @@ namespace gemini
 			Joint* find_bone_named(const char* name);
 			
 			// bind pose skeleton
-			core::FixedArray<Joint> skeleton;
+			platform::FixedArray<Joint> skeleton;
 		}; // Mesh
 		
 		AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, const AssetParameters & parameters );

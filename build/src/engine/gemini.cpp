@@ -111,7 +111,7 @@ void data_thread(void* context)
 	LOGV("exiting data thread\n");
 }
 
-
+using namespace platform;
 using namespace core;
 using namespace gemini; // for renderer
 using namespace input;
@@ -658,7 +658,7 @@ class ModelInterface : public gemini::IModelInterface
 			animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
 
 			size_t bone_index = 0;
-			for (core::FixedArray<animation::Channel>& node : instance->ChannelSet)
+			for (FixedArray<animation::Channel>& node : instance->ChannelSet)
 			{
 				assert(bone_index < MAX_BONES);
 				
