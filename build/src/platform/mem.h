@@ -146,15 +146,7 @@ namespace platform
 		struct Allocator
 		{
 
-			void tag_allocation(size_t size)
-			{
-				MemoryCategoryTracking<T>::add_allocation(size);
-			}
-			
-			void untag_allocation(size_t size)
-			{
-				MemoryCategoryTracking<T>::remove_allocation(size);
-			}
+
 			
 			void* allocate(size_t size, const char* filename, int line)
 			{
@@ -186,6 +178,17 @@ namespace platform
 			typedef std::list<MemoryHeader*> MemoryBlockList;
 			MemoryBlockList allocated_blocks;
 
+			void tag_allocation(size_t size)
+			{
+				MemoryCategoryTracking<T>::add_allocation(size);
+			}
+			
+			void untag_allocation(size_t size)
+			{
+				MemoryCategoryTracking<T>::remove_allocation(size);
+			}
+
+
 		public:
 			void* allocate(size_t requested_size, const char* filename, int line)
 			{
@@ -203,13 +206,13 @@ namespace platform
 				
 				allocated_blocks.push_back(header);
 
-				this->tag_allocation(requested_size);
+				tag_allocation(requested_size);
 				
 				return (header+1);
 			}
 			
 			// deallocates are VERY slow because we hunt the entire block list
-			// to remove.
+			// to remove. this could probably use a free list instead.
 			void deallocate(void* pointer)
 			{
 				// it is entirely legal to delete on a null pointer,
@@ -234,7 +237,7 @@ namespace platform
 					}
 				}
 
-				this->untag_allocation(header->allocation_size);
+				untag_allocation(header->allocation_size);
 
 				fprintf(stdout, "deallocate: %p\n", pointer);
 				free(header);
