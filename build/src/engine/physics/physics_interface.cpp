@@ -151,7 +151,7 @@ namespace gemini
 			{
 				assets::Geometry* geo = &mesh->geometry[ i ];
 				
-				core::FixedArray<glm::vec3>& vertices = geo->vertices;
+				platform::FixedArray<glm::vec3>& vertices = geo->vertices;
 				
 				btRigidBody* body = 0;
 				

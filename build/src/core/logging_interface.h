@@ -25,7 +25,7 @@
 #pragma once
 
 #include <core/logging.h>
-#include <core/fixedarray.h>
+#include <platform/lib/fixedarray.h>
 
 #define LOG_MAX_HANDLERS 4
 
@@ -35,7 +35,7 @@ namespace core
 	{
 		class LogInterface : public ILog
 		{
-			FixedArray<Handler> handlers;
+			::platform::FixedArray<Handler> handlers;
 			
 		public:
 			LogInterface();

@@ -27,7 +27,7 @@
 #include "color.h"
 
 #include <core/typedefs.h>
-#include <core/fixedarray.h>
+#include <platform/lib/fixedarray.h>
 
 namespace renderer
 {
@@ -81,7 +81,7 @@ namespace image
 		uint32_t channels;
 	
 		// can be raw pixel data, or compressed data, etc.
-		core::FixedArray<uint8_t> pixels;
+		platform::FixedArray<uint8_t> pixels;
 		
 		Image();
 	};

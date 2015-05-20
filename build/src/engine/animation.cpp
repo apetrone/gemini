@@ -41,6 +41,8 @@ using namespace gemini::assets;
 
 using gemini::animation::Keyframe;
 
+using namespace platform;
+
 namespace gemini
 {
 	namespace animation
@@ -396,7 +398,7 @@ namespace gemini
 					
 					LOGV("reading keyframes for bone \"%s\", joint->index = %i\n", joint->name(), joint->index);
 					
-					core::FixedArray<KeyframeList>& kfl = sequence->AnimationSet[joint->index];
+					FixedArray<KeyframeList>& kfl = sequence->AnimationSet[joint->index];
 					kfl.allocate(7);
 
 					// translation

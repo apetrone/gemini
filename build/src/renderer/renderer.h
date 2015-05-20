@@ -31,7 +31,7 @@
 
 #include <platform/mem_stl_allocator.h>
 #include <core/typedefs.h>
-#include <core/fixedarray.h>
+#include <platform/lib/fixedarray.h>
 #include <core/stackstring.h>
 #include <core/mathlib.h> // for glm
 #include <core/datastream.h>
@@ -247,13 +247,13 @@ namespace renderer
 			
 		// if vertex_count > 0 and these pointers are not null
 		// they will be vertex_count in length.
-		core::FixedArray<glm::vec3> vertices;
-		core::FixedArray<glm::vec3> normals;
-		core::FixedArray<core::Color> colors;
-		core::FixedArray< core::FixedArray<glm::vec2> > uvs;
-		core::FixedArray<glm::vec4> blend_indices;
-		core::FixedArray<glm::vec4> blend_weights;
-		core::FixedArray<renderer::IndexType> indices;
+		platform::FixedArray<glm::vec3> vertices;
+		platform::FixedArray<glm::vec3> normals;
+		platform::FixedArray<core::Color> colors;
+		platform::FixedArray< platform::FixedArray<glm::vec2> > uvs;
+		platform::FixedArray<glm::vec4> blend_indices;
+		platform::FixedArray<glm::vec4> blend_weights;
+		platform::FixedArray<renderer::IndexType> indices;
 		
 		renderer::VertexBuffer* vertexbuffer;
 		renderer::VertexBufferDrawType draw_type;

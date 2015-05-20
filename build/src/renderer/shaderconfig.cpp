@@ -246,7 +246,7 @@ namespace renderer
 			}
 			
 			// attach shader objects to program
-			core::FixedArray<renderer::ShaderObject> shader_objects;
+			platform::FixedArray<renderer::ShaderObject> shader_objects;
 			shader_objects.allocate(stages.size());
 			for (size_t i = 0; i < shader_objects.size(); ++i)
 			{
