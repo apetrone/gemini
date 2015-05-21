@@ -53,7 +53,20 @@ namespace gemini
 			ObjectProperties() : mass_kg(0.0f), restitution(0.25f), friction(0.75f) {}
 		}; // ObjectProperties
 	
-		
+		typedef int16_t MovementValue;
+		struct MovementCommand
+		{
+			unsigned int time;
+			MovementValue left;
+			MovementValue right;
+			MovementValue forward;
+			MovementValue back;
+			
+			MovementCommand()
+			{
+				memset(this, 0, sizeof(MovementCommand));
+			}
+		};
 		
 		
 		struct RaycastInfo

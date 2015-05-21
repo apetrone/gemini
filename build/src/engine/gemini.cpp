@@ -871,16 +871,38 @@ public:
 
 class Experimental : public gemini::IExperimental
 {
-public:
+	gui::Panel* root;
+	gui::Compositor* compositor;
 	
-	virtual void get_player_command(uint8_t index, physics::MovementCommand& command)
+public:
+	Experimental(gui::Panel* root) : root(root), compositor(0)
+	{
+	}
+
+
+	void set_root(gui::Panel* rootpanel)
+	{
+		root = rootpanel;
+	}
+	
+	void set_compositor(gui::Compositor* c)
+	{
+		compositor = c;
+	}
+	
+	virtual gui::Panel* root_panel() const
 	{
 //		command.left += input::state()->keyboard().is_down(input::KEY_A) * input::AxisValueMaximum;
 //		command.right += input::state()->keyboard().is_down(input::KEY_D) * input::AxisValueMaximum;
 //		command.forward += input::state()->keyboard().is_down(input::KEY_W) * input::AxisValueMaximum;
 //		command.back += input::state()->keyboard().is_down(input::KEY_S) * input::AxisValueMaximum;
 		
-
+		return root;
+	}
+	
+	virtual gui::Compositor* get_compositor() const
+	{
+		return compositor;
 	}
 };
 
@@ -895,7 +917,7 @@ struct TransitionalGameState
 	bool has_focus;
 	
 	TransitionalGameState() :
-		in_gui(false),
+		in_gui(true),
 		has_focus(true)
 	{
 	}
@@ -1240,6 +1262,7 @@ public:
 		accumulator(0.0f),
 		last_time(0),
 		engine_interface(0),
+		experimental(0),
 		game_interface(0),
 		gui_listener(_gamestate.in_gui),
 		render_method(0),
@@ -1469,66 +1492,15 @@ public:
 		compositor->set_style(gui_style);
 		
 		root = new gui::Panel(compositor);
+		
+		experimental.set_root(root);
+		experimental.set_compositor(compositor);
+		
 		root->set_bounds(0, 0, main_window->render_width, main_window->render_height);
-		root->set_background_color(gui::Color(0, 0, 0, 192));
-		root->set_visible(_gamestate.in_gui);
-		compositor->add_child(root);
-		
-		gui::Color button_background(128, 128, 128, 255);
-		gui::Color button_hover(255, 255, 128, 255);
-		
-		uint32_t button_width = 320;
-		uint32_t button_height = 50;
-		uint32_t button_spacing = 10;
-		uint32_t total_buttons = 2;
-		uint32_t vertical_offset = 0;
-		uint32_t origin_x = (width/2.0f) - (button_width/2.0f);
-		uint32_t origin_y = (height/2.0f) - ((button_height*total_buttons)/2.0f);
-		
-		
-		
-		newgame = new gui::Button(root);
-		newgame->set_bounds(origin_x, origin_y, button_width, button_height);
-		newgame->set_font(compositor, "fonts/default16");
-		newgame->set_text("New Game");
-		newgame->set_background_color(button_background);
-		newgame->set_hover_color(button_hover);
-		newgame->set_userdata((void*)2);
-		root->add_child(newgame);
-		origin_y += (button_height+button_spacing);
-		
-		test = new gui::Button(root);
-		test->set_bounds(origin_x, origin_y, button_width, button_height);
-		test->set_font(compositor, "fonts/default16");
-		test->set_text("[test] render cubemap");
-		test->set_background_color(button_background);
-		test->set_hover_color(button_hover);
-		test->set_userdata((void*)3);
-		root->add_child(test);
-		origin_y += (button_height+button_spacing);
-		
-		quit = new gui::Button(root);
-		quit->set_bounds(origin_x, origin_y, button_width, button_height);
-		quit->set_font(compositor, "fonts/default16");
-		quit->set_text("Quit Game");
-		quit->set_background_color(button_background);
-		quit->set_hover_color(button_hover);
-		quit->set_userdata((void*)1);
-		root->add_child(quit);
-		//origin_y += (button_height+button_spacing);
-		
-		
-		//		gui::Panel* root = new gui::Panel(compositor);
-		//		gui::Label* b = new gui::Label(compositor);
-		//		b->set_bounds(50, 50, 250, 250);
-		//		b->set_font(compositor, "fonts/default16");
-		//		b->set_text("hello");
-		//		compositor->add_child(b);
-		
-		
-		//		gui::Panel* root = new gui::Panel(compositor);
-		//		root->set_bounds(0, 0, 500, 500);
-		//		compositor->add_child(root);
+		root->set_background_color(gui::Color(0, 0, 0, 0));
+//		root->set_visible(_gamestate.in_gui);
+//		compositor->add_child(root);
+
 		
 		graph = new gui::Graph(root);
 		graph->set_bounds(width-250, 0, 250, 100);
@@ -1538,7 +1510,7 @@ public:
 		graph->create_samples(100, 1);
 		graph->configure_channel(0, gui::Color(255, 0, 0, 255));
 		graph->set_range(0.0f, 33.3f);
-		root->add_child(graph);
+//		root->add_child(graph);
 		graph->enable_baseline(true, 16.6f, gui::Color(255, 0, 255, 255));
 		
 		// setup the listener
@@ -1712,7 +1684,8 @@ Options:
 		main_window = window_interface->create_window(window_params);
 		
 		alt_window = 0;
-		
+
+		// uncomment this block to enable the alt window for gui diplay
 //		window_params = platform::WindowParameters();
 //		window_params.window_width = 800;
 //		window_params.window_height = 600;
@@ -1852,9 +1825,11 @@ Options:
 		gemini::engine::api::set_instance(engine_interface);
 		window_interface->show_mouse(_gamestate.in_gui);
 		
+		setup_gui(main_window->render_width, main_window->render_height);
+		
 		open_gamelibrary();
 		
-		setup_gui(main_window->render_width, main_window->render_height);
+
 
 		// for debugging
 		game_interface->level_load();
