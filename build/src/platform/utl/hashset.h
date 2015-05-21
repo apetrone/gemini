@@ -24,15 +24,12 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/util.h>
-
-template <class T>
-uint32_t hash_value(const T& v);
-
-template <class K, class T>
+template <class K, class T, class H = typename std::hash<K> >
 class HashSet
 {
 private:
+	typedef H hash_type;
+	
 	const float MAX_LOAD_FACTOR = 0.7f;
 	typedef uint32_t HashType;
 	const HashType REMOVED_SLOT = UINT32_MAX;
@@ -100,7 +97,7 @@ private:
 	
 	inline HashType get_hash(const K& key) const
 	{
-		return core::util::hash32(key);
+		return hash_type()(key);
 	}
 	
 	void repopulate(size_t new_size)
@@ -261,7 +258,7 @@ public:
 
 	class Iterator
 	{
-		typedef HashSet<K, T> container_type;
+		typedef HashSet<K, T, H> container_type;
 
 	private:
 		typename container_type::Bucket* table;
