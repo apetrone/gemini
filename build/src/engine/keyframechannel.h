@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <platform/adt/fixedarray.h>
+#include <fixedarray.h>
 #include <core/logging.h>
 
 #include <renderer/render_utilities.h>
@@ -36,8 +36,8 @@ namespace gemini
 	template <class Type>
 	struct KeyframeData
 	{
-		platform::FixedArray<Type> keys;
-		platform::FixedArray<float> time; // the time, in seconds, for this keyframe
+		FixedArray<Type> keys;
+		FixedArray<float> time; // the time, in seconds, for this keyframe
 	};
 	// -------------------------------------------------------------
 	template <class Type, class Interpolator=core::Interpolator<Type> >
@@ -342,7 +342,7 @@ namespace gemini
 	template <class Type>
 	struct KeyChannel
 	{
-		platform::FixedArray< Keyframe<Type> > keys;
+		FixedArray< Keyframe<Type> > keys;
 		float length_seconds;
 		
 		KeyChannel() :

@@ -398,7 +398,8 @@ def get_libplatform(arguments, target_platform):
 	]
 
 	libplatform.includes += [
-		"src/platform"
+		"src/platform",
+		"src/platform/utl"
 	]
 
 	libplatform.excludes += [
@@ -493,9 +494,9 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/time/windows/win32_time.cpp"
 	]
 
-	# template library
+	# utility template library
 	libplatform.sources += [
-		"src/platform/adt/*.h"
+		"src/platform/utl/*.h"
 	]
 
 	return libplatform

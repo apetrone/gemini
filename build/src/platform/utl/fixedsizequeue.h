@@ -28,59 +28,56 @@
 
 #include <assert.h>
 
-namespace adt
+// This is an implementation of a FIFO queue
+template <class Type, int MaxSize>
+class FixedSizeQueue
 {
-	// This is an implementation of a FIFO queue
-	template <class Type, int MaxSize>
-	class FixedSizeQueue
+private:
+public:
+	Type elements[MaxSize];
+	size_t total_elements;
+	size_t tail_index;
+	static Type default_value;
+	
+	FixedSizeQueue() :
+		total_elements(MaxSize),
+		tail_index(0)
 	{
-	private:
-	public:
-		Type elements[MaxSize];
-		size_t total_elements;
-		size_t tail_index;
-		static Type default_value;
-		
-		FixedSizeQueue() :
-			total_elements(MaxSize),
-			tail_index(0)
-		{
-		}
-		
-		~FixedSizeQueue()
-		{
-		}
+	}
 	
-		bool empty() const
-		{
-			return tail_index == 0;
-		}
-	
-		size_t size() const
-		{
-			return tail_index;
-		}
+	~FixedSizeQueue()
+	{
+	}
 
-		// An item onto the queue. This can fail if it's full.
-		bool push_back(const Type& item)
+	bool empty() const
+	{
+		return tail_index == 0;
+	}
+
+	size_t size() const
+	{
+		return tail_index;
+	}
+
+	// An item onto the queue. This can fail if it's full.
+	bool push_back(const Type& item)
+	{
+		if (tail_index != (total_elements-1))
 		{
-			if (tail_index != (total_elements-1))
-			{
-				elements[tail_index++] = item;
-				return true;
-			}
-			
-			return false;
+			elements[tail_index++] = item;
+			return true;
 		}
 		
-		Type pop()
-		{
-			// If you hit this, there are no items in the queue.
-			assert(tail_index > 0);
+		return false;
+	}
 	
-			Type item = elements[tail_index-1];
-			tail_index--;
-			return item;
-		}
-	};
-} // namespace adt
+	Type pop()
+	{
+		// If you hit this, there are no items in the queue.
+		assert(tail_index > 0);
+
+		Type item = elements[tail_index-1];
+		tail_index--;
+		return item;
+	}
+}; // FixedSizeQueue

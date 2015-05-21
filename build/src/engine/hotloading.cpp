@@ -25,7 +25,7 @@
 
 #include <platform/typedefs.h>
 #include <core/mathlib.h>
-#include <platform/adt/threadsafequeue.h>
+#include <threadsafequeue.h>
 #include <core/stackstring.h>
 
 #include <json/json.h>
@@ -37,7 +37,6 @@
 #include "civetweb.h"
 #include "CivetServer.h"
 
-using namespace adt;
 using namespace core;
 
 

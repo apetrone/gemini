@@ -25,7 +25,7 @@
 #include "animation.h"
 #include <platform/mem.h>
 
-#include <platform/adt/hashset.h>
+#include <hashset.h>
 
 #include <core/interpolation.h>
 #include <core/mathlib.h>
@@ -273,7 +273,7 @@ namespace gemini
 		//
 		// animation system stuff
 		//
-		typedef adt::HashSet<std::string, Sequence*> SequenceHash;
+		typedef HashSet<std::string, Sequence*> SequenceHash;
 		SequenceHash* _sequences_by_name;
 		namespace detail
 		{

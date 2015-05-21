@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #include "applicationcontext.h"
 
-#include <core/typedefs.h>
+#include <platform/typedefs.h>
 
 
 #include <renderer/renderer.h>

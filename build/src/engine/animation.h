@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <platform/adt/fixedarray.h>
+#include <fixedarray.h>
 #include <core/stackstring.h>
 
 #include <platform/typedefs.h>
@@ -100,7 +100,7 @@ namespace gemini
 		//
 	
 		typedef int32_t SequenceId;
-		typedef platform::FixedArray<KeyframeList> KeyframeListArray;
+		typedef FixedArray<KeyframeList> KeyframeListArray;
 		struct Sequence
 		{
 			// length of this sequence in seconds
@@ -110,7 +110,7 @@ namespace gemini
 			core::StackString<32> name;
 			SequenceId index;
 
-			platform::FixedArray<KeyframeListArray> AnimationSet;
+			FixedArray<KeyframeListArray> AnimationSet;
 		};
 	
 		
@@ -120,8 +120,8 @@ namespace gemini
 			SequenceId index;
 			float local_time_seconds;
 			SequenceId sequence_index;
-			platform::FixedArray< platform::FixedArray<float> > AnimationSet;
-			platform::FixedArray< platform::FixedArray<Channel> > ChannelSet;
+			FixedArray< FixedArray<float> > AnimationSet;
+			FixedArray< FixedArray<Channel> > ChannelSet;
 			bool enabled;
 						
 			
