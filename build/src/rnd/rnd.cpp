@@ -1,6 +1,8 @@
-#include <platform/adt/fixedarray.h>
+#include <fixedarray.h>
 #include <platform/platform.h>
 #include <platform/typedefs.h>
+
+
 
 #include <core/core.h>
 #include <core/filesystem.h>

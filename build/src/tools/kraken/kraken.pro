@@ -62,6 +62,7 @@ win32:LIBS += "renderer.lib"
 
 INCLUDEPATH += "../"
 INCLUDEPATH += "../../platform"
+INCLUDEPATH += "../../platform/utl"
 INCLUDEPATH += "../../core"
 INCLUDEPATH += "../../renderer"
 INCLUDEPATH += "../../sdk/"

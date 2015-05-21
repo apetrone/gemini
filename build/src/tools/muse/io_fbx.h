@@ -28,7 +28,7 @@
 #include "common.h"
 #include "datamodel/model.h"
 
-#include <platform/adt/hashset.h>
+#include <hashset.h>
 
 #include <fbxsdk.h>
 
@@ -67,7 +67,7 @@ namespace gemini
 		glm::mat4 inverse_bind_pose;
 	};
 
-	typedef adt::HashSet<std::string, BoneData> BoneDataHashSet;
+	typedef HashSet<std::string, BoneData> BoneDataHashSet;
 
 	struct AutodeskFbxExtensionState
 	{
@@ -89,7 +89,7 @@ namespace gemini
 		
 		std::vector<FbxNode*> skeletal_nodes;
 
-		typedef adt::HashSet<std::string, MeshData*> MeshDataHashSet;
+		typedef HashSet<std::string, MeshData*> MeshDataHashSet;
 		MeshDataHashSet meshdata;
 
 		NodeDataVector nodedata;
