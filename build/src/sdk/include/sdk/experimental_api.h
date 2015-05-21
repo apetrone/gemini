@@ -26,61 +26,19 @@
 
 #include <stdint.h>
 
+
+#include <nom/nom.hpp>
+
+
 namespace gemini
 {
-
-	
-	struct UserCommand
-	{
-		int sequence;
-		uint32_t buttonflags;
-		float angles[2]; // pitch, yaw
-		
-		UserCommand()
-		{
-			sequence = 0;
-			buttonflags = 0;
-			angles[0] = angles[1] = 0;
-		}
-		
-		void set_button(int index, bool is_down)
-		{
-			if (is_down)
-			{
-				buttonflags |= (1 << index);
-			}
-			else
-			{
-				buttonflags &= ~(1 << index);
-			}
-		}
-	};
-
-	namespace physics
-	{
-		typedef int16_t MovementValue;
-		struct MovementCommand
-		{
-			unsigned int time;
-			MovementValue left;
-			MovementValue right;
-			MovementValue forward;
-			MovementValue back;
-			
-			MovementCommand()
-			{
-				memset(this, 0, sizeof(MovementCommand));
-			}
-		};
-	}
-
 	class IExperimental
 	{
 	public:
 		virtual ~IExperimental() {}
-		
-		
-		
-		virtual void get_player_command(uint8_t index, physics::MovementCommand& command) = 0;
+
+
+		virtual gui::Panel* root_panel() const = 0;
+		virtual gui::Compositor* get_compositor() const = 0;
 	};
 } // namespace gemini

@@ -78,6 +78,32 @@ namespace gemini
 		}
 	};
 	
+	struct UserCommand
+	{
+		int sequence;
+		uint32_t buttonflags;
+		float angles[2]; // pitch, yaw
+		
+		UserCommand()
+		{
+			sequence = 0;
+			buttonflags = 0;
+			angles[0] = angles[1] = 0;
+		}
+		
+		void set_button(int index, bool is_down)
+		{
+			if (is_down)
+			{
+				buttonflags |= (1 << index);
+			}
+			else
+			{
+				buttonflags &= ~(1 << index);
+			}
+		}
+	};
+	
 
 	// Describes the interface exposed to the engine from the game.
 	class IGameInterface

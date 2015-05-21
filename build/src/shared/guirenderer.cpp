@@ -75,13 +75,14 @@ void GUIRenderer::startup(gui::Compositor* c)
 {
 	this->compositor = c;
 	stream.desc.add(::renderer::VD_FLOAT3);
-	stream.desc.add(::renderer::VD_FLOAT2);
 	stream.desc.add(::renderer::VD_UNSIGNED_BYTE4);
+	stream.desc.add(::renderer::VD_FLOAT2);
 	stream.create(64, 64, ::renderer::DRAW_INDEXED_TRIANGLES);
 	
 	lines.desc.add(::renderer::VD_FLOAT3);
-	lines.desc.add(::renderer::VD_FLOAT2);
 	lines.desc.add(::renderer::VD_UNSIGNED_BYTE4);
+	lines.desc.add(::renderer::VD_FLOAT2);
+
 	lines.create(128, 0, ::renderer::DRAW_LINES);
 	
 	// load shader
@@ -131,6 +132,8 @@ void GUIRenderer::shutdown(gui::Compositor* c)
 
 void GUIRenderer::begin_frame(gui::Compositor* c)
 {
+	current_depth = 0.0f;
+	
 	::renderer::RenderStream rs;
 	
 	rs.add_state(::renderer::STATE_BLEND, 1 );
