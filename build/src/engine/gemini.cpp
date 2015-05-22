@@ -906,35 +906,21 @@ public:
 	}
 };
 
-// this should eventually be moved entirely to the game library;
-// for now, as we refactor, it will be here.
-struct TransitionalGameState
-{
-	// are we in the gui?
-	bool in_gui;
-	
-	// does the game window have focus?
-	bool has_focus;
-	
-	TransitionalGameState() :
-		in_gui(true),
-		has_focus(true)
-	{
-	}
-};
-
-
-static TransitionalGameState _gamestate;
-
 void center_mouse(platform::IWindowLibrary* window_interface, platform::NativeWindow* window)
 {
-	if (_gamestate.has_focus && !_gamestate.in_gui)
-	{
-		window_interface->warp_mouse(window->window_width/2, window->window_height/2);
-	}
+	window_interface->warp_mouse(window->window_width/2, window->window_height/2);
 }
 
 struct MemoryTagGame {};
+
+
+struct SharedState
+{
+	bool has_focus;
+};
+
+
+static SharedState _sharedstate;
 
 class EngineInterface : public IEngineInterface
 {
@@ -1022,7 +1008,15 @@ public:
 	
 	virtual void center_cursor()
 	{
-		center_mouse(window_interface, main_window);
+		if (_sharedstate.has_focus)
+		{
+			center_mouse(window_interface, main_window);
+		}
+	}
+	
+	virtual void show_cursor(bool show)
+	{
+		window_interface->show_mouse(show);
 	}
 	
 	virtual void terminate_application()
@@ -1087,10 +1081,6 @@ private:
 	gui::Button* newgame;
 	gui::Button* test;
 	gui::Button* quit;
-	
-	// audio
-	audio::SoundHandle menu_show;
-	audio::SoundHandle menu_hide;
 	
 	::renderer::VertexStream alt_vs;
 
@@ -1204,29 +1194,7 @@ public:
 	
 		if (event.is_down)
 		{
-			if (event.key == input::KEY_ESCAPE)
-			{
-#if 1
-				_gamestate.in_gui = !_gamestate.in_gui;
-				if (!_gamestate.in_gui)
-				{
-					center_mouse(window_interface, main_window);
-					audio::play(menu_hide);
-				}
-				else
-				{
-					audio::play(menu_show);
-				}
-				
-				window_interface->show_mouse(_gamestate.in_gui);
-				
-				root->set_visible(_gamestate.in_gui);
-#else
-				set_active(false);
-
-#endif
-			}
-			else if (event.key == input::KEY_SPACE)
+			if (event.key == input::KEY_SPACE)
 			{
 				if (device)
 				{
@@ -1250,12 +1218,6 @@ public:
 				LOGV("level load\n");
 				game_interface->level_load();
 			}
-		}
-		
-		
-		if (_gamestate.in_gui && compositor)
-		{
-			compositor->key_event(event.key, event.is_down, 0);
 		}
 	}
 	
@@ -1284,79 +1246,18 @@ public:
 			default: break;
 		}
 		
-		
 		event_queue->push_back(game_message);
-
-	
-		if (_gamestate.in_gui)
-		{
-			gui::CursorButton::Type input_to_gui[] = {
-				gui::CursorButton::Left,
-				gui::CursorButton::Right,
-				gui::CursorButton::Middle,
-				gui::CursorButton::Mouse4,
-				gui::CursorButton::Mouse5
-			};
-			
-			gui::CursorButton::Type button;
-			
-			
-			switch( event.subtype )
-			{
-				case kernel::MouseMoved:
-				{
-					if ( compositor )
-					{
-						compositor->cursor_move_absolute( event.mx, event.my );
-					}
-					break;
-				}
-				case kernel::MouseButton:
-					
-					button = input_to_gui[ event.button ];
-					if ( event.is_down )
-					{
-						fprintf( stdout, "mouse button %i is pressed\n", event.button );
-					}
-					else
-					{
-						fprintf( stdout, "mouse button %i is released\n", event.button );
-					}
-					
-					if ( compositor )
-					{
-						compositor->cursor_button( button, event.is_down );
-					}
-					break;
-					
-				case kernel::MouseWheelMoved:
-					if ( event.wheel_direction > 0 )
-					{
-						fprintf( stdout, "mouse wheel toward screen\n" );
-					}
-					else
-					{
-						fprintf( stdout, "mouse wheel away from screen\n" );
-					}
-					break;
-				default:
-					fprintf( stdout, "mouse event received!\n" );
-					break;
-			}
-		}
 	}
 	
 	virtual void event( kernel::SystemEvent & event )
 	{
 		if (event.subtype == kernel::WindowLostFocus)
 		{
-			//			kernel::instance()->show_mouse(true);
-			_gamestate.has_focus = false;
+			_sharedstate.has_focus = false;
 		}
 		else if (event.subtype == kernel::WindowGainFocus)
 		{
-			//			kernel::instance()->show_mouse(false);
-			_gamestate.has_focus = true;
+			_sharedstate.has_focus = true;
 		}
 	}
 	
@@ -1699,15 +1600,8 @@ Options:
 			// TODO: instance render method for default
 			render_method = MEMORY_NEW(DefaultRenderMethod, platform::memory::global_allocator()) (*scenelink, window_interface);
 		}
-
-
-		// load menu sounds
-		menu_show = audio::create_sound("sounds/menu_show3");
-		menu_hide = audio::create_sound("sounds/menu_hide");
 		
-		// TODO: setup gui
-		
-		// TODO: setup interfaces
+		// setup interfaces
 		engine_interface = MEMORY_NEW(EngineInterface, platform::memory::global_allocator())
 			(&entity_manager,
 			&model_interface,
@@ -1718,13 +1612,11 @@ Options:
 			window_interface
 		);
 		gemini::engine::api::set_instance(engine_interface);
-		window_interface->show_mouse(_gamestate.in_gui);
+		window_interface->show_mouse(true);
 		
 		setup_gui(main_window->render_width, main_window->render_height);
 		
 		open_gamelibrary();
-		
-
 
 		// for debugging
 		game_interface->level_load();
@@ -1815,49 +1707,46 @@ Options:
 			compositor->update(kernel::parameters().framedelta_raw_msec);
 		}
 
+
+		int mouse[2];
+		window_interface->get_mouse(mouse[0], mouse[1]);
+		int half_width = main_window->window_width/2;
+		int half_height = main_window->window_height/2;
 		
-		if (!_gamestate.in_gui)
+		// capture the state of the mouse
+		int mdx, mdy;
+		mdx = (mouse[0] - half_width);
+		mdy = (mouse[1] - half_height);
+		if (mdx != 0 || mdy != 0)
 		{
-			int mouse[2];
-			window_interface->get_mouse(mouse[0], mouse[1]);
-			int half_width = main_window->window_width/2;
-			int half_height = main_window->window_height/2;
-			
-			// capture the state of the mouse
-			int mdx, mdy;
-			mdx = (mouse[0] - half_width);
-			mdy = (mouse[1] - half_height);
-			if (mdx != 0 || mdy != 0)
-			{
-				GameMessage game_message;
-				game_message.type = GameMessage::MouseDelta;
-				game_message.params[0] = mdx;
-				game_message.params[1] = mdy;
-				event_queue->push_back(game_message);
-			}
+			GameMessage game_message;
+			game_message.type = GameMessage::MouseDelta;
+			game_message.params[0] = mdx;
+			game_message.params[1] = mdy;
+			event_queue->push_back(game_message);
+		}
 			
 #if 0
-			// add the inputs and then normalize
-			input::JoystickInput& joystick = input::state()->joystick(0);
-			if (joystick.axes[0].value < 0)
-			{
-				command.left += (joystick.axes[0].value/(float)input::AxisValueMinimum) * input::AxisValueMaximum;
-			}
-			if (joystick.axes[0].value > 0)
-			{
-				command.right += (joystick.axes[0].value/(float)input::AxisValueMaximum) * input::AxisValueMaximum;
-			}
-			
-			if (joystick.axes[1].value < 0)
-			{
-				command.forward += (joystick.axes[1].value/(float)input::AxisValueMinimum) * input::AxisValueMaximum;
-			}
-			if (joystick.axes[1].value > 0)
-			{
-				command.back += (joystick.axes[1].value/(float)input::AxisValueMaximum) * input::AxisValueMaximum;
-			}
-#endif
+		// add the inputs and then normalize
+		input::JoystickInput& joystick = input::state()->joystick(0);
+		if (joystick.axes[0].value < 0)
+		{
+			command.left += (joystick.axes[0].value/(float)input::AxisValueMinimum) * input::AxisValueMaximum;
 		}
+		if (joystick.axes[0].value > 0)
+		{
+			command.right += (joystick.axes[0].value/(float)input::AxisValueMaximum) * input::AxisValueMaximum;
+		}
+		
+		if (joystick.axes[1].value < 0)
+		{
+			command.forward += (joystick.axes[1].value/(float)input::AxisValueMinimum) * input::AxisValueMaximum;
+		}
+		if (joystick.axes[1].value > 0)
+		{
+			command.back += (joystick.axes[1].value/(float)input::AxisValueMaximum) * input::AxisValueMaximum;
+		}
+#endif
 
 		
 		while(!event_queue->empty())
