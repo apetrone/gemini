@@ -1024,111 +1024,17 @@ public:
 	{
 		center_mouse(window_interface, main_window);
 	}
+	
+	virtual void terminate_application()
+	{
+		kernel::instance()->set_active(false);
+	}
 };
 
 
 
 typedef gemini::IGameInterface* (*connect_engine_fn)(gemini::IEngineInterface*);
 typedef void (*disconnect_engine_fn)();
-
-class CustomListener : public gui::Listener
-{
-private:
-	
-	audio::SoundHandle hover_sound;
-	IGameInterface* game_interface;
-	gui::Panel* root;
-	
-	bool& is_in_gui;
-	
-	
-	
-	::renderer::RenderTarget* cubemap;
-	::renderer::Texture* cubemap_texture;
-	
-public:
-	CustomListener(bool& in_gui) : is_in_gui(in_gui)
-	{
-		cubemap = 0;
-		cubemap_texture = 0;
-	}
-	
-	
-	
-	void setup_rendering(uint32_t width, uint32_t height)
-	{
-//		renderer::IRenderDriver* driver = renderer::driver();
-		
-//		image::Image image;
-//		image.type = image::TEX_CUBE;
-//		image.width = 128;
-//		image.height = 128;
-//		
-//		cubemap_texture = driver->texture_create(image);
-		
-		
-		
-		
-//		cubemap = driver->render_target_create(image.width, image.height);
-//		driver->render_target_set_attachment(cubemap, renderer::RenderTarget::COLOR, 0, cubemap_texture);
-	}
-	
-	void shutdown()
-	{
-//		renderer::IRenderDriver* driver = renderer::driver();
-//		driver->render_target_destroy(cubemap);
-		
-		
-//		driver->texture_destroy(cubemap_texture);
-	}
-	
-	void test_rendercubemap()
-	{
-		LOGV("rendering a cubemap...\n");
-	}
-	
-	void set_root(gui::Panel* root_panel) { root = root_panel; }
-	void set_game_interface(IGameInterface* game) { game_interface = game; }
-	void set_hover_sound(audio::SoundHandle handle) { hover_sound = handle; }
-	
-	virtual void focus_changed(gui::Panel* old_focus, gui::Panel* new_focus) {}
-	virtual void hot_changed(gui::Panel* old_hot, gui::Panel* new_hot)
-	{
-		size_t data = reinterpret_cast<size_t>(new_hot->get_userdata());
-		if (data > 0)
-		{
-			audio::play(hover_sound);
-		}
-	}
-	
-	virtual void handle_event(const gui::EventArgs& event)
-	{
-		LOGV("focus: %p\n", event.focus);
-		LOGV("hot: %p\n", event.hot);
-		LOGV("handle event: %i\n", event.type);
-		size_t data = reinterpret_cast<size_t>(event.focus->get_userdata());
-		if (event.focus->is_button())
-		{
-			switch(data)
-			{
-				case 1:
-					kernel::instance()->set_active(false);
-					break;
-				case 2:
-					// need to hide the root panel since we loaded a scene as well!
-					root->set_visible(false);
-					is_in_gui = false;
-					game_interface->level_load();
-					break;
-				case 3:
-					// DEBUG: test rendering a cubemap
-					test_rendercubemap();
-					break;
-			}
-		}
-	}
-};
-
 
 class EngineKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
@@ -1181,7 +1087,6 @@ private:
 	gui::Button* newgame;
 	gui::Button* test;
 	gui::Button* quit;
-	CustomListener gui_listener;
 	
 	// audio
 	audio::SoundHandle menu_show;
@@ -1264,7 +1169,6 @@ public:
 		engine_interface(0),
 		experimental(0),
 		game_interface(0),
-		gui_listener(_gamestate.in_gui),
 		render_method(0),
 		draw_physics_debug(false)
 	{
@@ -1498,10 +1402,8 @@ public:
 		
 		root->set_bounds(0, 0, main_window->render_width, main_window->render_height);
 		root->set_background_color(gui::Color(0, 0, 0, 0));
-//		root->set_visible(_gamestate.in_gui);
-//		compositor->add_child(root);
-
 		
+		// setup the framerate graph
 		graph = new gui::Graph(root);
 		graph->set_bounds(width-250, 0, 250, 100);
 		graph->set_font(compositor, "fonts/debug");
@@ -1510,15 +1412,8 @@ public:
 		graph->create_samples(100, 1);
 		graph->configure_channel(0, gui::Color(255, 0, 0, 255));
 		graph->set_range(0.0f, 33.3f);
-//		root->add_child(graph);
+
 		graph->enable_baseline(true, 16.6f, gui::Color(255, 0, 255, 255));
-		
-		// setup the listener
-		gui_listener.set_hover_sound(audio::create_sound("sounds/8b_select1"));
-		gui_listener.set_game_interface(game_interface);
-		gui_listener.set_root(root);
-		gui_listener.setup_rendering(main_window->render_width, main_window->render_height);
-		compositor->set_listener(&gui_listener);
 	}
 	
 	virtual kernel::Error startup()
@@ -2115,7 +2010,6 @@ Options:
 		// shutdown gui
 		MEMORY_DELETE(gui_style, platform::memory::global_allocator());
 		MEMORY_DELETE(gui_renderer, platform::memory::global_allocator());
-		gui_listener.shutdown();
 		delete compositor;
 		compositor = 0;
 		_compositor = 0;
