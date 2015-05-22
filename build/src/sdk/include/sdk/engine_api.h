@@ -90,6 +90,9 @@ namespace gemini
 		// center the cursor in the main window (if applicable on this platform)
 		virtual void center_cursor() = 0;
 		
+		// show or hide cursor
+		virtual void show_cursor(bool show) = 0;
+		
 		// on platforms where the user has control to kill
 		// the application, do so.
 		virtual void terminate_application() = 0;
