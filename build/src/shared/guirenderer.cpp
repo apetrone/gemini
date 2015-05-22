@@ -35,7 +35,6 @@ void GUIRenderer::render_buffer(::renderer::VertexStream& stream, assets::Shader
 	
 	glm::mat4 modelview;
 	glm::mat4 projection = glm::ortho( 0.0f, (float)compositor->width, (float)compositor->height, 0.0f, -0.1f, 256.0f );
-	glm::mat4 object_matrix;
 	
 	::renderer::RenderStream rs;
 	rs.add_shader( shader->program );
@@ -133,7 +132,6 @@ void GUIRenderer::shutdown(gui::Compositor* c)
 void GUIRenderer::begin_frame(gui::Compositor* c)
 {
 	current_depth = 0.0f;
-	
 	::renderer::RenderStream rs;
 	
 	rs.add_state(::renderer::STATE_BLEND, 1 );
@@ -196,7 +194,12 @@ void GUIRenderer::draw_bounds(const gui::Bounds& bounds, const gui::Color& color
 	{
 		LOGV( "buffer be full\n" );
 	}
+	rs.add_state(::renderer::STATE_BLEND, 1 );
+	rs.add_blendfunc(::renderer::BLEND_SRC_ALPHA, ::renderer::BLEND_ONE_MINUS_SRC_ALPHA );
+	rs.add_state(::renderer::STATE_DEPTH_TEST, 0);
+	rs.add_state(::renderer::STATE_DEPTH_WRITE, 0);
 	
+	rs.run_commands();
 	this->render_buffer(stream, shader, solid_color);
 }
 

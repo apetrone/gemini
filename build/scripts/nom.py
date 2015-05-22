@@ -8,7 +8,7 @@ def arguments(parser):
 def products(arguments, **kwargs):
 	target_platform = kwargs.get("target_platform", None)
 
-	nom = Product(name="nom", output=ProductType.StaticLibrary)
+	nom = Product(name="nom", output=ProductType.DynamicLibrary)
 	nom.root = "../dependencies/nom"
 	nom.project_root = "_projects"
 	nom.object_root = "${PROJECT_ROOT}/obj"
