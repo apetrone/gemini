@@ -71,6 +71,7 @@ namespace gemini
 			int	DebugPhysicsRenderer::getDebugMode() const
 			{
 				return (btIDebugDraw::DBG_DrawWireframe); // | btIDebugDraw::DBG_DrawAabb;
+//				return btIDebugDraw::DBG_MAX_DEBUG_DRAW_MODE;
 			}
 		} // namespace bullet
 	} // namespace physics
