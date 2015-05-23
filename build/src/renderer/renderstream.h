@@ -31,8 +31,8 @@
 
 namespace renderer
 {
-	const unsigned int MAX_RENDERER_STREAM_BYTES = 8192 * 8;
-	const unsigned int MAX_RENDERER_STREAM_COMMANDS = 2048 * 8;
+	const unsigned int MAX_RENDERER_STREAM_BYTES = 1024*1024;
+	const unsigned int MAX_RENDERER_STREAM_COMMANDS = 4096*4;
 
 	struct RenderState
 	{
