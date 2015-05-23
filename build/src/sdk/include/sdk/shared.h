@@ -31,7 +31,7 @@ namespace gemini
 {	
 	typedef uint8_t PlayerIndex;
 	
-	const uint16_t MAX_ENTITIES = 2048;
+	const uint16_t MAX_ENTITIES = 4096;
 	
 	// call this 'View' for now, but I don't like it just being called 'View'
 	struct View

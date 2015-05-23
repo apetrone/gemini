@@ -42,6 +42,8 @@ namespace gemini
 				return (Entity*)factory_class->create();
 			}
 
+			// If you hit this assert, the entity class hasn't been registered.
+			assert(0);
 			return (Entity*)0;
 		}
 	}
