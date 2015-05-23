@@ -103,6 +103,59 @@ namespace gemini
 			return rigidbody;
 		}
 		
+		btCompoundShape* compound_shape_from_geometry(assets::Mesh* mesh, bool is_dynamic, float mass)
+		{
+			bool use_quantized_bvh_tree = true;
+		
+			btCompoundShape* compound = new btCompoundShape();
+			
+			for( uint32_t index = 0; index < mesh->geometry.size(); ++index )
+			{
+				assets::Geometry* geo = &mesh->geometry[index];
+				FixedArray<glm::vec3>& vertices = geo->vertices;
+				
+				// this shape's transform
+				btTransform local_transform;
+				local_transform.setIdentity();
+
+				// setup shape for a dynamic object
+				if (is_dynamic)
+				{
+					// create a box for now. this needs to be replaced
+					btCollisionShape* shape = new btBoxShape(btVector3(0.5f, 0.5f, 0.5f));
+					btVector3 local_inertia(0, 0, 0);
+					
+					// calculate local intertia
+					shape->calculateLocalInertia(mass, local_inertia);
+					compound->addChildShape(local_transform, shape);
+				}
+				else
+				{
+					// NOTE: Triangle shapes can ONLY be static objects.
+					// TODO: look into an alternative with btGImpactMeshShape or
+					// btCompoundShape + convex decomposition.
+					// Could also use btConvexHullShape.
+				
+					// specify verts/indices from our meshdef
+					// NOTE: This does NOT make a copy of the data. Whatever you pass it
+					// must persist for the life of the shape.
+					btTriangleIndexVertexArray* triangle_vertex_array = new btTriangleIndexVertexArray(
+						geo->index_count/3,
+						(int*)&geo->indices[0],
+						sizeof(int)*3, geo->vertex_count,
+						(btScalar*)&vertices[0],
+						sizeof(glm::vec3)
+					);
+					
+					// use that to create a Bvh triangle mesh shape
+					// TODO: use a btConvexTriangleMeshShape ?
+					btBvhTriangleMeshShape* triangle_mesh = new btBvhTriangleMeshShape(triangle_vertex_array, use_quantized_bvh_tree);
+					compound->addChildShape(local_transform, triangle_mesh);
+				}
+			}
+						
+			return compound;
+		}
 
 		physics::ICollisionObject* PhysicsInterface::create_physics_model(int32_t model_index, ObjectProperties& properties)
 		{
@@ -146,83 +199,46 @@ namespace gemini
 				object = rb;
 			}
 			
-			for( uint32_t i = 0; i < mesh->geometry.size(); ++i )
+			
+			// create a compound shape and add geometries to it
+			
+			btCompoundShape* compound = compound_shape_from_geometry(mesh, dynamic_body, mass);
+			btRigidBody* body = 0;
+
+			// The rigid body world transform is the center of mass. This is at the origin.
+			btTransform xf;
+			xf.setIdentity();
+			
+			btMotionState* motion_state = new btDefaultMotionState(xf);
+			
+			btRigidBody::btRigidBodyConstructionInfo rigid_body_info(mass, motion_state, compound, local_inertia);
+			body = new btRigidBody(rigid_body_info);
+			
+			// now setup the body using the compound shape
+			if (dynamic_body)
 			{
-				assets::Geometry* geo = &mesh->geometry[ i ];
+				rb->set_collision_object(body);
+				rb->set_collision_shape(compound);
+				body->setUserPointer(rb);
 				
-				FixedArray<glm::vec3>& vertices = geo->vertices;
-				
-				btRigidBody* body = 0;
-				
-				// The rigid body world transform is the center of mass. This is at the origin.
-				btTransform xf;
-				xf.setIdentity();
-
-				const glm::vec3& mass_center_offset = mesh->mass_center_offset;
-//				xf.setOrigin(btVector3(mass_center_offset.x, mass_center_offset.y, mass_center_offset.z));
-				btMotionState* motion_state = new btDefaultMotionState(xf);
-//				CustomMotionState * motion_state = new CustomMotionState(xf, motion_interface, mesh->mass_center_offset);
-				btCollisionShape* shape = 0;
-				// NOTE: Triangle shapes can ONLY be static objects.
-				// TODO: look into an alternative with btGImpactMeshShape or
-				// btCompoundShape + convex decomposition.
-				// Could also use btConvexHullShape.
-				
-				btTransform local_transform;
-				local_transform.setIdentity();
-//				local_transform.setOrigin(btVector3(-mass_center_offset.x, -mass_center_offset.y, -mass_center_offset.z));
-				
-				if (dynamic_body)
-				{
-					shape = new btBoxShape(btVector3(0.5f, 0.5f, 0.5f));
-					
-					// calculate local intertia
-					shape->calculateLocalInertia(mass, local_inertia);
-					
-					btCompoundShape* compound = new btCompoundShape();
-
-					compound->addChildShape(local_transform, shape);
-
-					btRigidBody::btRigidBodyConstructionInfo rbInfo( mass, motion_state, compound, local_inertia );
-					body = new btRigidBody( rbInfo );
-					
-					rb->set_collision_object(body);
-					rb->set_collision_shape(compound);
-//					rb->set_mass_center_offset(mass_center_offset);
-					body->setUserPointer(rb);
-					
-					body->setRestitution(properties.restitution);
-					body->setFriction(properties.friction);
-					body->setCcdMotionThreshold(0.1f);
-					body->setCcdSweptSphereRadius(0.1f);
-				}
-				else
-				{
-					// specify verts/indices from our meshdef
-					// NOTE: This does NOT make a copy of the data. Whatever you pass it
-					// must persist for the life of the shape.
-					btTriangleIndexVertexArray * mesh = new btTriangleIndexVertexArray(geo->index_count/3, (int*)&geo->indices[0], sizeof(int)*3, geo->vertex_count, (btScalar*)&vertices[0], sizeof(glm::vec3));
-
-					
-					// use that to create a Bvh triangle mesh shape
-					btBvhTriangleMeshShape * shape_mesh = new btBvhTriangleMeshShape( mesh, use_quantized_bvh_tree );
-//					btConvexTriangleMeshShape* shape_mesh = new btConvexTriangleMeshShape(mesh);
-					
-					btRigidBody::btRigidBodyConstructionInfo rigid_body_info(0.0f, motion_state, shape_mesh, local_inertia );
-					body = new btRigidBody(rigid_body_info);
-					static_body->set_collision_object(body);
-					static_body->add_shape(shape_mesh);
-					
-					body->setUserPointer(static_body);
-					
-					int body_flags = body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT;
-					body->setCollisionFlags( body_flags );
-					body->setFriction(0.75f);
-					body->setWorldTransform(local_transform);
-				}
-				
-				bullet::get_world()->addRigidBody(body);
+				body->setRestitution(properties.restitution);
+				body->setFriction(properties.friction);
+				body->setCcdMotionThreshold(0.1f);
+				body->setCcdSweptSphereRadius(0.1f);
 			}
+			else
+			{
+				static_body->set_collision_object(body);
+				static_body->add_shape(compound);
+				
+				body->setUserPointer(static_body);
+				
+				int body_flags = body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT;
+				body->setCollisionFlags( body_flags );
+				body->setFriction(0.75f);
+			}
+
+			bullet::get_world()->addRigidBody(body);
 			
 			return object;
 		} // create_physics_model
