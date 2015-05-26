@@ -49,12 +49,13 @@ namespace core
 {
 	struct Color
 	{
-		unsigned char r, g, b, a;
-		
-		Color( unsigned char _r = 255, unsigned char _g = 255, unsigned char _b = 255, unsigned char _a = 255 );
 		static Color fromFloatPointer( const float * fl, int num_elements );
-		void set( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a = 255 );
+		static Color from_int(unsigned int color);
+		static Color from_ubyte(unsigned char* ubyte);
 		
+		unsigned char r, g, b, a;
+		Color( unsigned char _r = 255, unsigned char _g = 255, unsigned char _b = 255, unsigned char _a = 255 );
+		void set( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a = 255 );
 		uint32_t as_uint32() const;
 	}; // Color
 

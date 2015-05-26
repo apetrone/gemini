@@ -43,13 +43,7 @@ namespace core
 	{
 		return (f * 255.0f);
 	}
-
-
-	Color::Color( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a )
-	{
-		set( _r, _g, _b, _a );
-	}
-
+	
 	Color Color::fromFloatPointer( const float * fl, int num_elements )
 	{
 		Color c;
@@ -62,6 +56,26 @@ namespace core
 			c.set( f32Toub(fl[0]), f32Toub(fl[1]), f32Toub(fl[2]), 255 );
 		}
 		return c;
+	}
+	
+	Color Color::from_int(unsigned int color)
+	{
+		Color out;
+		out.a = ((color>>24) & 255);
+		out.b = ((color>>16) & 255);
+		out.g = ((color>>8) & 255);
+		out.r = (color & 255);
+		return out;
+	}
+	
+	Color Color::from_ubyte(unsigned char* ubyte)
+	{
+		return Color(ubyte[0], ubyte[1], ubyte[2], ubyte[3]);
+	}
+
+	Color::Color( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a )
+	{
+		set( _r, _g, _b, _a );
 	}
 
 	void Color::set( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a )
