@@ -63,6 +63,7 @@
 #include "physics/physics.h"
 #include "hotloading.h"
 #include "vr.h"
+#include "navigation.h"
 
 #include <platform/windowlibrary.h>
 
@@ -1042,6 +1043,7 @@ private:
 	bool active;
 	StackString<MAX_PATH_SIZE> game_path;
 	bool draw_physics_debug;
+	bool draw_navigation_debug;
 	
 	platform::IWindowLibrary* window_interface;
 	platform::NativeWindow* main_window;
@@ -1160,7 +1162,8 @@ public:
 		experimental(0),
 		game_interface(0),
 		render_method(0),
-		draw_physics_debug(false)
+		draw_physics_debug(false),
+		draw_navigation_debug(true)
 	{
 		game_path = "";
 		device = 0;
@@ -1212,6 +1215,11 @@ public:
 			{
 				draw_physics_debug = !draw_physics_debug;
 				LOGV("draw_physics_debug = %s\n", draw_physics_debug?"ON":"OFF");
+			}
+			else if (event.key == input::KEY_N)
+			{
+				draw_navigation_debug = !draw_navigation_debug;
+				LOGV("draw_navigation_debug = %s\n", draw_navigation_debug?"ON":"OFF");
 			}
 			else if (event.key == input::KEY_M)
 			{
@@ -1622,6 +1630,13 @@ Options:
 		game_interface->level_load();
 
 		
+		navigation::startup();
+
+
+
+		assets::Mesh* mesh = assets::meshes()->load_from_path("models/house0");
+		assets::Geometry* geom = &mesh->geometry[1];
+		navigation::create_from_geometry(geom->vertices, geom->indices);
 		
 		// TODO: post_application_startup
 		
@@ -1777,6 +1792,11 @@ Options:
 		{
 			physics::debug_draw();
 		}
+		
+		if (draw_navigation_debug)
+		{
+			navigation::debugdraw();
+		}
 	
 	
 		if (game_interface)
@@ -1893,6 +1913,7 @@ Options:
 			platform::serial_close(data_input.device);
 		}
 	
+		navigation::shutdown();
 	
 		close_gamelibrary();
 		

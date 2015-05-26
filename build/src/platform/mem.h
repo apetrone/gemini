@@ -92,8 +92,6 @@ namespace platform
 			
 			static void remove_allocation(size_t size)
 			{
-				this_type::total_bytes -= size;
-				
 				this_type::active_allocations--;
 				this_type::active_bytes -= size;
 			}
