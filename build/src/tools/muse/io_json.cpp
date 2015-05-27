@@ -362,8 +362,17 @@ namespace gemini
 			}
 			mesh_data["bind_pose"] = bind_pose;
 			
-			
-			
+			Json::Value bbox_mins(Json::arrayValue);
+			bbox_mins.append(node->mesh->mins.x);
+			bbox_mins.append(node->mesh->mins.y);
+			bbox_mins.append(node->mesh->mins.z);
+			jnode["mins"] = bbox_mins;
+
+			Json::Value bbox_maxs(Json::arrayValue);
+			bbox_maxs.append(node->mesh->maxs.x);
+			bbox_maxs.append(node->mesh->maxs.y);
+			bbox_maxs.append(node->mesh->maxs.z);
+			jnode["maxs"] = bbox_maxs;
 			
 			jnode["mesh"] = mesh_data;
 		}
