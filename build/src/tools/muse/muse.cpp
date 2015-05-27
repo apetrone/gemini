@@ -118,7 +118,6 @@ namespace gemini
 			
 			// reset transforms
 			node->translation = glm::vec3(0.0f, 0.0f, 0.0f);
-//			node->rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 			node->rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 			node->scale = glm::vec3(1.0f, 1.0f, 1.0f);
 			
@@ -160,6 +159,41 @@ namespace gemini
 			}
 
 			return result;
+		}
+		
+		void calculate_geometry_boundingbox(datamodel::Node* node)
+		{
+			if (node->type == "mesh")
+			{
+				assert(node->mesh);
+				if (node->mesh)
+				{
+					glm::vec3 mins(FLT_MAX, FLT_MAX, FLT_MAX);
+					glm::vec3 maxs(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+					for (size_t v = 0; v < node->mesh->vertices.size(); ++v)
+					{
+						const glm::vec3& vertex = node->mesh->vertices[v];
+						mins.x = glm::min(mins.x, vertex.x);
+						mins.y = glm::min(mins.y, vertex.y);
+						mins.z = glm::min(mins.z, vertex.z);
+						
+						maxs.x = glm::max(maxs.x, vertex.x);
+						maxs.y = glm::max(maxs.y, vertex.y);
+						maxs.z = glm::max(maxs.z, vertex.z);
+					}
+					
+					node->mesh->mins = mins;
+					node->mesh->maxs = maxs;
+				}
+			}
+		}
+		
+		void calculate_geometry_bounds(datamodel::Model& model)
+		{
+			for (auto& child : model.root.children)
+			{
+				calculate_geometry_boundingbox(child);
+			}
 		}
 	} // namespace extensions
 
@@ -223,6 +257,7 @@ namespace gemini
 			if (!model.skeleton)
 			{
 				extensions::bake_node_transforms(model);
+				extensions::calculate_geometry_bounds(model);
 			}
 			
 			if (options.animation_only)

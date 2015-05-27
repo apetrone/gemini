@@ -86,6 +86,10 @@ namespace gemini
 			MaterialId material;
 			glm::vec3 mass_center_offset;
 			std::string name;
+			
+			// mesh bounding box
+			glm::vec3 mins;
+			glm::vec3 maxs;
 
 			Mesh()
 			{

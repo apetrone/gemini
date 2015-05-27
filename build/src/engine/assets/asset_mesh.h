@@ -68,6 +68,9 @@ namespace gemini
 			unsigned int material_id;
 			unsigned int shader_id;
 			
+			glm::vec3 mins;
+			glm::vec3 maxs;
+			
 			Geometry();
 			~Geometry();
 			

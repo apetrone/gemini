@@ -93,6 +93,8 @@ namespace gemini
 			{
 			
 				Json::Value mesh_root = node["mesh"];
+				Json::Value bbox_mins = node["mins"];
+				Json::Value bbox_maxs = node["maxs"];
 				assert(!mesh_root.isNull());
 
 				Json::Value index_array = mesh_root["indices"];
@@ -277,7 +279,11 @@ namespace gemini
 				}
 
 
-				
+				if (!bbox_mins.isNull() && !bbox_maxs.isNull())
+				{
+					geo->mins = glm::vec3(bbox_mins[0].asFloat(), bbox_mins[1].asFloat(), bbox_mins[2].asFloat());
+					geo->maxs = glm::vec3(bbox_maxs[0].asFloat(), bbox_maxs[1].asFloat(), bbox_maxs[2].asFloat());
+				}
 				
 				// physics related settings
 				const Json::Value& center_mass_offset = mesh_root["mass_center_offset"];
