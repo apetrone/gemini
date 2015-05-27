@@ -1634,12 +1634,13 @@ Options:
 
 
 
-		assets::Mesh* mesh = assets::meshes()->load_from_path("models/house0");
-		assets::Geometry* geom = &mesh->geometry[1];
-		navigation::create_from_geometry(geom->vertices, geom->indices);
+		assets::Mesh* mesh = assets::meshes()->load_from_path("models/plane2");
+		assets::Geometry* geom = &mesh->geometry[0];
+		navigation::create_from_geometry(geom->vertices, geom->indices, geom->mins, geom->maxs);
 		
 		// TODO: post_application_startup
 		
+				
 		uint64_t current_time = platform::microseconds();
 		LOGV("startup in %2.2fms\n", (current_time-last_time)*.001f);
 		last_time = current_time;
