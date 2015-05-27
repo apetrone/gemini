@@ -44,6 +44,7 @@ namespace gemini
 			TYPE_AXES,
 			TYPE_SPHERE,
 			TYPE_TEXT,
+			TYPE_TRIANGLE,
 			
 			TYPE_COUNT
 		};
@@ -56,6 +57,7 @@ namespace gemini
 			float radius;
 			glm::vec3 start;
 			glm::vec3 end;
+			glm::vec3 alt;
 			core::Color color;
 			
 			// for text
@@ -75,6 +77,7 @@ namespace gemini
 	class DebugDrawInterface : public gemini::IDebugDraw
 	{
 		::renderer::VertexStream vertex_stream;
+		::renderer::VertexStream triangle_stream;
 		unsigned int next_primitive;
 		unsigned int max_primitives;
 		debugdraw::DebugPrimitive* primitive_list;
@@ -102,6 +105,7 @@ namespace gemini
 		virtual void line(const glm::vec3& start, const glm::vec3& end, const core::Color& color, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
 		virtual void sphere(const glm::vec3& center, const core::Color& color, float radius = 2.0, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
 		virtual void text(int x, int y, const char* string, const core::Color& color, float duration = 0);
+		virtual void triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const core::Color& color, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
 	}; // DebugDrawInterface
 	
 } // namespace gemini

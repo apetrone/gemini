@@ -111,5 +111,11 @@ namespace gemini
 			DebugDrawInterface* debugdraw_interface = static_cast<DebugDrawInterface*>(debugdraw::instance());
 			debugdraw_interface->text(x, y, string, color, duration);
 		} // text
+		
+		void triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const core::Color& color, float duration)
+		{
+			DebugDrawInterface* debugdraw_interface = static_cast<DebugDrawInterface*>(debugdraw::instance());
+			debugdraw_interface->triangle(v0, v1, v2, color, duration);
+		} // triangle
 	} // namespace debugdraw
 } // namespace gemini
