@@ -158,8 +158,11 @@ namespace gemini
 				geo->uvs.allocate(uv_sets.size());
 				geo->colors.allocate(vertex_colors.size());
 
-				geo->blend_weights.allocate(geo->vertex_count);
-				geo->blend_indices.allocate(geo->vertex_count);
+				if (!bind_pose.empty())
+				{
+					geo->blend_weights.allocate(geo->vertex_count);
+					geo->blend_indices.allocate(geo->vertex_count);
+				}
 
 				// read all indices
 				for (int i = 0; i < geo->indices.size(); ++i)
@@ -208,7 +211,7 @@ namespace gemini
 				}
 
 				
-				if (!bind_pose.isNull())
+				if (!bind_pose.isNull() && !bind_pose.empty())
 				{
 					// allocate enough bones
 					geo->bind_poses.allocate(bind_pose.size());
@@ -232,45 +235,48 @@ namespace gemini
 					}
 					
 					state.mesh->has_skeletal_animation = true;
-				}
-
-				// read all blend weights and indices
-				Json::ValueIterator it = blend_weights.begin();
-				for (int weight_id = 0; it != blend_weights.end(); ++it, ++weight_id)
-				{
-					const Json::Value& weight_pairs = (*it);
-//					LOGV("size: %i\n", weight_pairs.size());
 					
 					
-					int blend_index = 0;
-
-					int bone_indices[4] = {0, 0, 0, 0};
-					float bone_weights[4] = {0, 0, 0, 0};
-					
-					Json::ValueIterator pair = weight_pairs.begin();
-					for (; pair != weight_pairs.end(); ++pair, ++blend_index)
+					// read all blend weights and indices
+					it = blend_weights.begin();
+					for (int weight_id = 0; it != blend_weights.end(); ++it, ++weight_id)
 					{
-						const Json::Value& weightblock = (*pair);
-						const Json::Value& bone = weightblock["bone"];
-						const Json::Value& value = weightblock["value"];
-						
-						Joint* joint = state.mesh->find_bone_named(bone.asString().c_str());
-						assert(joint != 0);
-						
-						// TODO: get index of this bone
-//						LOGV("bone: %s, value: %2.2f\n", bone.asString().c_str(), value.asFloat());
+						const Json::Value& weight_pairs = (*it);
+						//					LOGV("size: %i\n", weight_pairs.size());
 						
 						
-						bone_indices[blend_index] = joint->index;
-						bone_weights[blend_index] = value.asFloat();
+						int blend_index = 0;
+						
+						int bone_indices[4] = {0, 0, 0, 0};
+						float bone_weights[4] = {0, 0, 0, 0};
+						
+						Json::ValueIterator pair = weight_pairs.begin();
+						for (; pair != weight_pairs.end(); ++pair, ++blend_index)
+						{
+							const Json::Value& weightblock = (*pair);
+							const Json::Value& bone = weightblock["bone"];
+							const Json::Value& value = weightblock["value"];
+							
+							Joint* joint = state.mesh->find_bone_named(bone.asString().c_str());
+							assert(joint != 0);
+							
+							// TODO: get index of this bone
+							//						LOGV("bone: %s, value: %2.2f\n", bone.asString().c_str(), value.asFloat());
+							
+							
+							bone_indices[blend_index] = joint->index;
+							bone_weights[blend_index] = value.asFloat();
+						}
+						
+						// assign these values to the blend_weights and blend_indices index
+						geo->blend_indices[weight_id] = glm::vec4(bone_indices[0], bone_indices[1], bone_indices[2], bone_indices[3]);
+						//					LOGV("indices: %g %g %g %g\n", geo->blend_indices[weight_id].x, geo->blend_indices[weight_id].y, geo->blend_indices[weight_id].z, geo->blend_indices[weight_id].w);
+						geo->blend_weights[weight_id] = glm::vec4(bone_weights[0], bone_weights[1], bone_weights[2], bone_weights[3]);
+						//					LOGV("weights: %g %g %g %g\n", geo->blend_weights[weight_id].x, geo->blend_weights[weight_id].y, geo->blend_weights[weight_id].z, geo->blend_weights[weight_id].w);
 					}
-					
-					// assign these values to the blend_weights and blend_indices index
-					geo->blend_indices[weight_id] = glm::vec4(bone_indices[0], bone_indices[1], bone_indices[2], bone_indices[3]);
-//					LOGV("indices: %g %g %g %g\n", geo->blend_indices[weight_id].x, geo->blend_indices[weight_id].y, geo->blend_indices[weight_id].z, geo->blend_indices[weight_id].w);
-					geo->blend_weights[weight_id] = glm::vec4(bone_weights[0], bone_weights[1], bone_weights[2], bone_weights[3]);
-//					LOGV("weights: %g %g %g %g\n", geo->blend_weights[weight_id].x, geo->blend_weights[weight_id].y, geo->blend_weights[weight_id].z, geo->blend_weights[weight_id].w);
 				}
+
+
 				
 				
 				// physics related settings
