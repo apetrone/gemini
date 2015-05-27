@@ -30,6 +30,7 @@
 #include <Recast.h>
 #include <Include/RecastDebugDraw.h>
 #include <Include/DebugDraw.h>
+#include <Include/RecastDump.h>
 
 #include <DetourAlloc.h> // so we can override the default allocator
 #include <DetourNavMesh.h>
@@ -69,6 +70,7 @@ namespace gemini
 		
 		static rcPolyMesh* poly_mesh = 0;
 		static rcPolyMeshDetail* detail_mesh = 0;
+		static rcContourSet* contour_set = 0;
 		static dtNavMesh* nav_mesh = 0;
 		static dtNavMeshQuery* nav_query = 0;
 		
@@ -114,11 +116,26 @@ namespace gemini
 			{
 				glm::vec3 position = glm::vec3(pos[0], pos[1], pos[2]);
 				Color c = Color::from_ubyte((unsigned char*)&color);
-				
-				if (primitive_state == DU_DRAW_POINTS)
+
+				switch(primitive_state)
 				{
-					debugdraw::point(position, c, 0.1f);
+					case DU_DRAW_POINTS:
+						debugdraw::point(position, c, 0.1f);
+						break;
+						
+					case DU_DRAW_TRIS:
+						vertices[vertex_offset] = position;
+						colors[vertex_offset] = c;
+						vertex_offset++;
+						
+						if (vertex_offset == 3)
+						{
+							debugdraw::triangle(vertices[0], vertices[1], vertices[2], c);
+							vertex_offset = 0;
+						}
+						break;
 				}
+
 			}
 			
 			virtual void vertex(const float x, const float y, const float z, unsigned int color) override
@@ -126,18 +143,32 @@ namespace gemini
 				glm::vec3 position = glm::vec3(x, y, z);
 				Color c = Color::from_ubyte((unsigned char*)&color);
 
-				if (primitive_state == DU_DRAW_LINES)
+				switch(primitive_state)
 				{
-					vertices[vertex_offset] = position;
-					colors[vertex_offset] = c;
-					vertex_offset++;
-					
-					// every second vertex we hit, draw a line
-					if (vertex_offset == 2)
-					{
-						debugdraw::line(vertices[0], vertices[1], c);
-						vertex_offset = 0;
-					}
+					case DU_DRAW_LINES:
+						vertices[vertex_offset] = position;
+						colors[vertex_offset] = c;
+						vertex_offset++;
+						
+						// every second vertex we hit, draw a line
+						if (vertex_offset == 2)
+						{
+							debugdraw::line(vertices[0], vertices[1], c);
+							vertex_offset = 0;
+						}
+						break;
+						
+					case DU_DRAW_TRIS:
+						vertices[vertex_offset] = position;
+						colors[vertex_offset] = c;
+						vertex_offset++;
+						
+						if (vertex_offset == 3)
+						{
+							debugdraw::triangle(vertices[0], vertices[1], vertices[2], c);
+							vertex_offset = 0;
+						}
+						break;
 				}
 			}
 			
@@ -162,18 +193,17 @@ namespace gemini
 		
 		
 		static NavigationDebugDraw debug_draw;
-		
-	
-		void test(const FixedArray<glm::vec3>&vertices, const FixedArray<uint32_t>& indices, const glm::vec3& mins, const glm::vec3& maxs)
+
+		void create_from_geometry(const FixedArray<glm::vec3>& vertices, const FixedArray<uint32_t>& indices, const glm::vec3& mins, const glm::vec3& maxs)
 		{
 			float agent_height = 2.0f;
 			float agent_radius = 0.6f;
 			float agent_max_climb = 0.9f;
 			float max_edge_length = 12.0f;
-
+			
 			float bounds_min[3] = {mins[0], mins[1], mins[2]};
 			float bounds_max[3] = {maxs[0], maxs[1], maxs[2]};
-
+			
 			const int total_vertices = vertices.size();
 			const int total_triangles = indices.size() / 3;
 			
@@ -186,7 +216,7 @@ namespace gemini
 			
 			rcConfig config;
 			memset(&config, 0, sizeof(rcConfig));
-
+			
 			config.cs = 0.3f; // cell size
 			config.ch = 0.2f; // cell height
 			config.walkableSlopeAngle = 45.0f;
@@ -197,7 +227,7 @@ namespace gemini
 			config.maxSimplificationError = 1.3f;
 			config.minRegionArea = static_cast<int>(rcSqr(8));
 			config.mergeRegionArea = static_cast<int>(rcSqr(20));
-			config.maxVertsPerPoly = 3;
+			config.maxVertsPerPoly = 6;
 			config.detailSampleDist = 6.0 * config.cs;
 			config.detailSampleMaxError = config.ch * 1.0f;
 			
@@ -205,9 +235,9 @@ namespace gemini
 			rcVcopy(config.bmin, bounds_min);
 			rcVcopy(config.bmax, bounds_max);
 			rcCalcGridSize(config.bmin, config.bmax, config.cs, &config.width, &config.height);
-
+			
 			// rasterize input polygon soup
-
+			
 			rcContext context;
 			context.resetTimers();
 			context.startTimer(RC_TIMER_TOTAL);
@@ -222,7 +252,8 @@ namespace gemini
 			
 			// allocate an array which can hold the max number of triangles you need to process
 			// across all meshes
-			unsigned char* triangle_areas = new unsigned char[total_triangles];
+			
+			unsigned char* triangle_areas =	MEMORY_NEW_ARRAY(unsigned char, total_triangles, platform::memory::global_allocator());
 			if (!triangle_areas)
 			{
 				LOGE("unable to allocate triangle areas\n");
@@ -232,9 +263,9 @@ namespace gemini
 			memset(triangle_areas, 0, total_triangles*sizeof(unsigned char));
 			rcMarkWalkableTriangles(&context, config.walkableSlopeAngle, (const float*)&vertices[0], total_vertices, (const int*)&indices[0], total_triangles, triangle_areas);
 			rcRasterizeTriangles(&context, (const float*)&vertices[0], total_vertices, (const int*)&indices[0], triangle_areas, total_triangles, *solid, config.walkableClimb);
-
+			
 			// at this point, we could delete triangle_areas
-			delete [] triangle_areas;
+			MEMORY_DELETE_ARRAY(triangle_areas, platform::memory::global_allocator());
 			triangle_areas = 0;
 			
 			// 3. filter walkable surfaces
@@ -285,7 +316,7 @@ namespace gemini
 			
 			
 			// trace and simplify region contours
-			rcContourSet* contour_set = rcAllocContourSet();
+			contour_set = rcAllocContourSet();
 			if (!contour_set)
 			{
 				LOGE("unable to create contour set\n");
@@ -308,6 +339,12 @@ namespace gemini
 				LOGE("Unable to build poly mesh\n");
 			}
 			
+			//			for (int index = 0; index < poly_mesh->maxpolys; ++index)
+			//			{
+			//				LOGV("flags: %i\n", poly_mesh->flags[index]);
+			//			}
+			//			assert(poly_mesh->nverts > 0);
+			
 			
 			// create detail mesh which allows access to approximate height on each polygon
 			detail_mesh = rcAllocPolyMeshDetail();
@@ -325,10 +362,25 @@ namespace gemini
 			
 			// free compact height field and contour set
 			rcFreeCompactHeightfield(chf);
-			rcFreeContourSet(contour_set);
+			
 			
 			// at this point the nav mesh is ready.
 			// access it via poly_mesh.
+			
+			for (int i = 0; i < poly_mesh->npolys; ++i)
+			{
+				if (poly_mesh->areas[i] == RC_WALKABLE_AREA)
+				{
+					poly_mesh->areas[i] = 1;
+					poly_mesh->flags[i] = 1;
+				}
+				else
+				{
+					poly_mesh->flags[i] = 0;
+				}
+			}
+			
+			
 			
 			// TODO: optionally, create detour data from the recast poly mesh
 			dtNavMeshCreateParams params;
@@ -353,6 +405,7 @@ namespace gemini
 			params.cs = config.cs;
 			params.ch = params.ch;
 			params.buildBvTree = true;
+			
 			
 			unsigned char* nav_data = 0;
 			int nav_data_size = 0;
@@ -389,38 +442,9 @@ namespace gemini
 			LOGV("finished generating navmesh: %2.2fms\n", timer_milliseconds);
 		}
 		
-		
-		void create_from_geometry(const FixedArray<glm::vec3>& vertices, const FixedArray<uint32_t>& indices)
-		{
-			FixedArray<glm::vec3> verts;
-			FixedArray<uint32_t> triangles;
-			
-			verts.allocate(18);
-			triangles.allocate(6);
-			
-			const float max_size = 24.0f;
-			
-			// this needs to be CW order
-			// to allow the normals calculation to work
-			verts[0] = glm::vec3(-max_size, 0, 0);
-			verts[1] = glm::vec3(-max_size, 0, max_size*2);
-			verts[2] = glm::vec3(max_size*2, 0, max_size*2);
-			verts[3] = glm::vec3(max_size*2, 0, max_size*2);
-			verts[4] = glm::vec3(max_size*2, 0, 0);
-			verts[5] = glm::vec3(-max_size, 0, 0);
-	
-			const int tris[] = {0, 1, 2, 3, 4, 5};
-			memcpy(&triangles[0], tris, sizeof(int)*triangles.size());
-
-			glm::vec3 mins(-max_size, 0, -max_size);
-			glm::vec3 maxs(max_size*2, max_size, max_size*2);
-
-//			test(verts, triangles, mins, maxs);
-			test(vertices, indices, mins, maxs);
-		}
-		
 		void startup()
 		{
+
 		}
 		
 		void shutdown()
@@ -428,6 +452,7 @@ namespace gemini
 			// free Recast data
 			rcFreePolyMeshDetail(detail_mesh);
 			rcFreePolyMesh(poly_mesh);
+			rcFreeContourSet(contour_set);
 			
 			// free Detour data
 			dtFreeNavMesh(nav_mesh);
@@ -438,8 +463,48 @@ namespace gemini
 		
 		void debugdraw()
 		{
-			duDebugDrawNavMesh(&debug_draw, *nav_mesh, DU_DRAWNAVMESH_OFFMESHCONS);
+			if (!nav_mesh || !poly_mesh)
+			{
+				return;
+			}
+			
+			unsigned char flags = DU_DRAWNAVMESH_OFFMESHCONS;
+//			unsigned char flags = DU_DRAWNAVMESH_COLOR_TILES;
+			duDebugDrawNavMesh(&debug_draw, *nav_mesh, flags);
 			duDebugDrawPolyMesh(&debug_draw, *poly_mesh);
+
+			dtPolyRef ref;
+			glm::vec3 center(0, 0.0f, 0);
+			glm::vec3 extents(4, 4, 4);
+			
+			dtQueryFilter filter;
+			dtStatus status = nav_query->findNearestPoly(glm::value_ptr(center), glm::value_ptr(extents), &filter, &ref, 0);
+			if (dtStatusFailed(status))
+			{
+				LOGV("nav query failed\n");
+				assert(0);
+			}
+			else
+			{
+				duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, ref, duRGBA(255, 0, 0, 128));
+			}
+
+//			{
+//				dtPolyRef polys[16];
+//				dtQueryFilter filter;
+//				filter.setIncludeFlags(0xffff);
+//				filter.setExcludeFlags(0);
+//				int polyCount = 0;
+//				float center[3] = {0, 0, 0};
+//				float extents[3] = {4, 4, 4};
+//				dtStatus status = nav_query->queryPolygons(center, extents, &filter, polys, &polyCount, 16);
+//				if (dtStatusSucceed(status))
+//				{
+//					LOGV("found %i polys\n", polyCount);
+//				}
+//			}
+			
+			
 //			duDebugDrawCompactHeightfieldRegions(&debug_draw, *compact_heightfield);
 //			duDebugDrawRawContours(&debug_draw, *contour_set, 0.25f);
 //			duDebugDrawContours(&debug_draw, *contour_set);
