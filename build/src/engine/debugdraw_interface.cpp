@@ -52,9 +52,9 @@ namespace gemini
 	} // flush_streams
 
 	
-	typedef void (*buffer_primitive_fn)(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, VertexStream* vs);
+	typedef void (*buffer_primitive_fn)(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, VertexStream* vs, VertexStream* tri);
 	
-	void buffer_box(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, VertexStream* vs)
+	void buffer_box(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, VertexStream* vs, VertexStream* tri)
 	{
 		if ( !vs->has_room(24, 0) )
 		{
@@ -107,7 +107,7 @@ namespace gemini
 		vertices[23].position = glm::vec3( mins[0], maxs[1], maxs[2] );
 	} // buffer_box
 	
-	void buffer_line(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, renderer::VertexStream* vs)
+	void buffer_line(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, renderer::VertexStream* vs, VertexStream* tri)
 	{
 		if ( !vs->has_room(2, 0) )
 		{
@@ -121,7 +121,7 @@ namespace gemini
 		vertices[1].position = primitive->end;
 	} // buffer_line
 	
-	void buffer_axes(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, renderer::VertexStream* vs)
+	void buffer_axes(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, renderer::VertexStream* vs, VertexStream* tri)
 	{
 		if ( !vs->has_room(6, 0) )
 		{
@@ -145,7 +145,7 @@ namespace gemini
 		vertices[4].color = vertices[5].color = core::Color( 0, 0, 255 );
 	} // buffer_axes
 	
-	void buffer_sphere(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, renderer::VertexStream* vs)
+	void buffer_sphere(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, renderer::VertexStream* vs, VertexStream* tri)
 	{
 		if ( !vs->has_room(TOTAL_CIRCLE_VERTICES*3, 0) )
 		{
@@ -183,13 +183,29 @@ namespace gemini
 		}
 	} // buffer_sphere
 	
-	void render_text(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, renderer::VertexStream* vs)
+	void render_text(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, renderer::VertexStream* vs, VertexStream* tri)
 	{
 		// This doesn't place the text into a buffer like the other primitives.
 		// however, it is deferred to make everything render in order.
 		
 		font::draw_string(interface->get_debug_font(), primitive->start.x, primitive->start.y, primitive->buffer.c_str(), primitive->color);
 	} // render_text
+	
+	
+	void buffer_triangle(DebugDrawInterface* interface, RenderStream& rs, DebugPrimitive* primitive, renderer::VertexStream* vs, VertexStream* tri)
+	{
+		if (!tri->has_room(3, 0))
+		{
+			flush_streams(rs, vs);
+		}
+		
+		DebugDrawVertex* vertices = (DebugDrawVertex*)tri->request(3);
+		vertices[0].position = primitive->start;
+		vertices[1].position = primitive->end;
+		vertices[2].position = primitive->alt;
+		vertices[0].color = vertices[1].color = vertices[2].color = primitive->color;
+		
+	} // buffer_triangle
 
 	DebugPrimitive::DebugPrimitive()
 	{
@@ -222,6 +238,10 @@ namespace gemini
 		vertex_stream.desc.add(renderer::VD_UNSIGNED_BYTE4);
 		vertex_stream.create(4 * max_primitives, 0, renderer::DRAW_LINES, renderer::BUFFER_DYNAMIC);
 		
+		triangle_stream.desc.add(renderer::VD_FLOAT3);
+		triangle_stream.desc.add(renderer::VD_UNSIGNED_BYTE4);
+		triangle_stream.create(4 * max_primitives, 0, renderer::DRAW_TRIANGLES, renderer::BUFFER_DYNAMIC);
+		
 		// the debug font we'll use
 		debug_font = font;
 		
@@ -236,6 +256,7 @@ namespace gemini
 		max_primitives = 0;
 		next_primitive = 0;
 		vertex_stream.destroy();
+		triangle_stream.destroy();
 	}
 	
 	void DebugDrawInterface::update(float delta_msec)
@@ -283,6 +304,7 @@ namespace gemini
 		renderer::VertexStream* vs = &vertex_stream;
 		
 		vs->reset();
+		triangle_stream.reset();
 		
 		buffer_primitive_fn buffer_primitive_table[] =
 		{
@@ -291,7 +313,8 @@ namespace gemini
 			buffer_line,
 			buffer_axes,
 			buffer_sphere,
-			render_text
+			render_text,
+			buffer_triangle
 		};
 		
 		for( unsigned int i = 0; i < max_primitives; ++i )
@@ -299,13 +322,17 @@ namespace gemini
 			primitive = &primitive_list[i];
 			if ( primitive->type != 0 )
 			{
-				buffer_primitive_table[ primitive->type ](this, rs, primitive, vs);
+				buffer_primitive_table[ primitive->type ](this, rs, primitive, vs, &triangle_stream);
 			}
 		}
 		
 		vs->update();
+		
+		triangle_stream.update();
+		
 		rs.add_draw_call( vs->vertexbuffer );
-		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
+		rs.add_draw_call( triangle_stream.vertexbuffer );
+		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );		
 		rs.run_commands();
 		
 		
@@ -505,6 +532,20 @@ namespace gemini
 			p->color = color;
 			p->timeleft = duration;
 			p->buffer = string;
+		}
+	}
+	
+	void DebugDrawInterface::triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const core::Color& color, float duration)
+	{
+		DebugPrimitive* p = request_primitive();
+		if (p)
+		{
+			p->type = TYPE_TRIANGLE;
+			p->start = v0;
+			p->end = v1;
+			p->color = color;
+			p->timeleft = duration;
+			p->alt = v2;
 		}
 	}
 } // namespace gemini

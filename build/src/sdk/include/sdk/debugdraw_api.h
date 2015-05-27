@@ -56,6 +56,9 @@ namespace gemini
 		
 		// text, in screen space coordinates; origin at the top left
 		virtual void text(int x, int y, const char* string, const core::Color& color, float duration = 0.0f) = 0;
+		
+		// draw a triangle
+		virtual void triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const core::Color& color, float duration = DEBUGDRAW_MIN_DURATION_MSEC) = 0;
 	};
 	
 	namespace debugdraw
