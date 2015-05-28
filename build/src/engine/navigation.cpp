@@ -471,7 +471,7 @@ namespace gemini
 //			unsigned char flags = DU_DRAWNAVMESH_OFFMESHCONS;
 //			unsigned char flags = DU_DRAWNAVMESH_COLOR_TILES;
 //			duDebugDrawNavMesh(&debug_draw, *nav_mesh, flags);
-//			duDebugDrawPolyMesh(&debug_draw, *poly_mesh);
+			duDebugDrawPolyMesh(&debug_draw, *poly_mesh);
 
 //			dtPolyRef ref;
 //			glm::vec3 center(0, 0.0f, 0);

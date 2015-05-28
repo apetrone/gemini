@@ -920,6 +920,13 @@ public:
 	{
 		navigation::debugdraw_path(path);
 	}
+	
+	virtual void navmesh_generate_from_model(const char* path)
+	{
+		assets::Mesh* mesh = assets::meshes()->load_from_path(path);
+		assets::Geometry* geom = &mesh->geometry[0];
+		navigation::create_from_geometry(geom->vertices, geom->indices, geom->mins, geom->maxs);
+	}
 };
 
 namespace gemini
@@ -1648,17 +1655,13 @@ Options:
 		
 		open_gamelibrary();
 
+		navigation::startup();
+
 		// for debugging
 		game_interface->level_load();
 
 		
-		navigation::startup();
 
-
-
-		assets::Mesh* mesh = assets::meshes()->load_from_path("models/plane2");
-		assets::Geometry* geom = &mesh->geometry[0];
-		navigation::create_from_geometry(geom->vertices, geom->indices, geom->mins, geom->maxs);
 		
 		// TODO: post_application_startup
 		
