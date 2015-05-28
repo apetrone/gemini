@@ -26,23 +26,19 @@
 
 #include <stdint.h>
 
-
-#include <nom/nom.hpp>
-#include "navigation_api.h"
-
 namespace gemini
 {
-	class IExperimental
+	const unsigned MAX_NAVMESH_PATH_LINKS = 16;
+	typedef unsigned int NavMeshPolyRef;
+	
+	
+	struct NavMeshPath
 	{
-	public:
-		virtual ~IExperimental();
-
-
-		virtual gui::Panel* root_panel() const = 0;
-		virtual gui::Compositor* get_compositor() const = 0;
+		NavMeshPolyRef start;
+		NavMeshPolyRef end;
 		
-		virtual void navmesh_find_poly(NavMeshPolyRef* poly, const glm::vec3& position, const glm::vec3& extents) = 0;
-		virtual void navmesh_find_path(NavMeshPath* path, const glm::vec3& start, const glm::vec3& end) = 0;
-		virtual void navmesh_draw_path(NavMeshPath* path) = 0;
+		NavMeshPolyRef links[MAX_NAVMESH_PATH_LINKS];
+		int link_count; // how many links are used along this path
+		glm::vec3 extents;
 	};
 } // namespace gemini
