@@ -27,6 +27,8 @@
 #include <utl/fixedarray.h>
 #include <core/mathlib.h>
 
+#include <sdk/navigation_api.h>
+
 namespace gemini
 {
 	namespace navigation
@@ -37,5 +39,9 @@ namespace gemini
 		void shutdown();
 		
 		void debugdraw();
+		
+		bool find_poly(NavMeshPolyRef* ref, const glm::vec3& position, const glm::vec3& extents);
+		void find_path(NavMeshPath* path, const glm::vec3& start, const glm::vec3& end);
+		void debugdraw_path(NavMeshPath* path);
 	}; // namespace navigation
 }; // namespace gemini

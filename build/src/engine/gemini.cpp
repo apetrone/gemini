@@ -905,7 +905,29 @@ public:
 	{
 		return compositor;
 	}
+	
+	virtual void navmesh_find_poly(gemini::NavMeshPolyRef* poly, const glm::vec3& position, const glm::vec3& extents)
+	{
+		navigation::find_poly(poly, position, extents);
+	}
+	
+	virtual void navmesh_find_path(NavMeshPath* path, const glm::vec3& start, const glm::vec3& end)
+	{
+		navigation::find_path(path, start, end);
+	}
+	
+	virtual void navmesh_draw_path(NavMeshPath* path)
+	{
+		navigation::debugdraw_path(path);
+	}
 };
+
+namespace gemini
+{
+	IExperimental::~IExperimental()
+	{
+	}
+}
 
 void center_mouse(platform::IWindowLibrary* window_interface, platform::NativeWindow* window)
 {

@@ -468,26 +468,26 @@ namespace gemini
 				return;
 			}
 			
-			unsigned char flags = DU_DRAWNAVMESH_OFFMESHCONS;
+//			unsigned char flags = DU_DRAWNAVMESH_OFFMESHCONS;
 //			unsigned char flags = DU_DRAWNAVMESH_COLOR_TILES;
-			duDebugDrawNavMesh(&debug_draw, *nav_mesh, flags);
-			duDebugDrawPolyMesh(&debug_draw, *poly_mesh);
+//			duDebugDrawNavMesh(&debug_draw, *nav_mesh, flags);
+//			duDebugDrawPolyMesh(&debug_draw, *poly_mesh);
 
-			dtPolyRef ref;
-			glm::vec3 center(0, 0.0f, 0);
-			glm::vec3 extents(4, 4, 4);
-			
-			dtQueryFilter filter;
-			dtStatus status = nav_query->findNearestPoly(glm::value_ptr(center), glm::value_ptr(extents), &filter, &ref, 0);
-			if (dtStatusFailed(status))
-			{
-				LOGV("nav query failed\n");
-				assert(0);
-			}
-			else
-			{
-				duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, ref, duRGBA(255, 0, 0, 128));
-			}
+//			dtPolyRef ref;
+//			glm::vec3 center(0, 0.0f, 0);
+//			glm::vec3 extents(4, 4, 4);
+//			
+//			dtQueryFilter filter;
+//			dtStatus status = nav_query->findNearestPoly(glm::value_ptr(center), glm::value_ptr(extents), &filter, &ref, 0);
+//			if (dtStatusFailed(status))
+//			{
+//				LOGV("nav query failed\n");
+//				assert(0);
+//			}
+//			else
+//			{
+//				duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, ref, duRGBA(255, 0, 0, 128));
+//			}
 
 //			{
 //				dtPolyRef polys[16];
@@ -501,13 +501,102 @@ namespace gemini
 //				if (dtStatusSucceed(status))
 //				{
 //					LOGV("found %i polys\n", polyCount);
+//					for (int poly = 0; poly < polyCount; ++poly)
+//					{
+//						duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, polys[poly], duRGBA(255, 255, 0, 128));
+//					}
 //				}
 //			}
 			
+			{
+//				dtStatus status;
+//				
+//				dtPolyRef start;
+//				dtPolyRef end;
+//				
+//				dtQueryFilter filter;
+//				float start_position[3] = {0, 0, 0};
+//				float extents[3] = {4.0f, 4.0f, 4.0f};
+//				nav_query->findNearestPoly(start_position, extents, &filter, &start, 0);
+//				
+//				float end_position[3] = {70, 0, 20};
+//				nav_query->findNearestPoly(end_position, extents, &filter, &end, 0);
+//			
+//				duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, start, duRGBA(255, 0, 0, 128));
+//				duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, end, duRGBA(0, 255, 0, 128));
+//			
+//				dtPolyRef polys[16];
+//				int path_count = 0;
+//				status = nav_query->findPath(start, end, start_position, end_position, &filter, polys, &path_count, 16);
+//				if (dtStatusSucceed(status))
+//				{
+//					for (int poly = 0; poly < path_count; ++poly)
+//					{
+//						duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, polys[poly], duRGBA(255, 255, 0, 128));
+//					}
+//				}
+			
+			
+//				dtPolyRef polys[16];
+//				dtQueryFilter filter;
+//				filter.setIncludeFlags(0xffff);
+//				filter.setExcludeFlags(0);
+//				int polyCount = 0;
+//				float center[3] = {0, 0, 0};
+//				float extents[3] = {4, 4, 4};
+//				dtStatus status = nav_query->queryPolygons(center, extents, &filter, polys, &polyCount, 16);
+//				if (dtStatusSucceed(status))
+//				{
+//					LOGV("found %i polys\n", polyCount);
+//					for (int poly = 0; poly < polyCount; ++poly)
+//					{
+//						duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, polys[poly], duRGBA(255, 255, 0, 128));
+//					}
+//				}
+			}
 			
 //			duDebugDrawCompactHeightfieldRegions(&debug_draw, *compact_heightfield);
 //			duDebugDrawRawContours(&debug_draw, *contour_set, 0.25f);
 //			duDebugDrawContours(&debug_draw, *contour_set);
+		}
+		
+		bool find_poly(NavMeshPolyRef* ref, const glm::vec3& position, const glm::vec3& extents)
+		{
+			const float* cen = glm::value_ptr(position);
+			const float* ext = glm::value_ptr(extents);
+			
+			float* nearest_point = 0;
+			dtQueryFilter filter;
+			nav_query->findNearestPoly(cen, ext, &filter, ref, nearest_point);
+			
+			return (nearest_point != 0);
+		}
+		
+		void find_path(NavMeshPath* path, const glm::vec3& start, const glm::vec3& end)
+		{
+			const float* start_position = glm::value_ptr(start);
+			const float* end_position = glm::value_ptr(end);
+			
+			NavMeshPolyRef start_poly = 0;
+			NavMeshPolyRef end_poly = 0;
+
+			find_poly(&start_poly, start, path->extents);
+			find_poly(&end_poly, end, path->extents);
+			
+			dtQueryFilter filter;
+			dtStatus status = nav_query->findPath(start_poly, end_poly, start_position, end_position, &filter, path->links, &path->link_count, MAX_NAVMESH_PATH_LINKS);
+			if (dtStatusFailed(status))
+			{
+				LOGW("nav_query failed to find path\n");
+			}
+		}
+		
+		void debugdraw_path(NavMeshPath* path)
+		{
+			for (int poly = 0; poly < path->link_count; ++poly)
+			{
+				duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, path->links[poly], duRGBA(255, 255, 0, 128));
+			}
 		}
 	} // namespace navigation
 }; // namespace gemini
