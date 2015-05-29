@@ -292,6 +292,8 @@ namespace gemini
 		RenderStream rs;
 		rs.add_viewport( x, y, viewport_width, viewport_height );
 		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
+		rs.add_state(renderer::STATE_BLEND, 1);
+		rs.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
 		
 		rs.add_shader(debug_shader);
 		rs.add_uniform_matrix4(debug_shader->get_uniform_location("modelview_matrix"), &modelview);
@@ -332,7 +334,8 @@ namespace gemini
 		
 		rs.add_draw_call( vs->vertexbuffer );
 		rs.add_draw_call( triangle_stream.vertexbuffer );
-		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );		
+		rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
+		rs.add_state(renderer::STATE_BLEND, 0);
 		rs.run_commands();
 		
 		
