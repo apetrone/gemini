@@ -43,5 +43,6 @@ namespace gemini
 		bool find_poly(NavMeshPolyRef* ref, const glm::vec3& position, const glm::vec3& extents);
 		void find_path(NavMeshPath* path, const glm::vec3& start, const glm::vec3& end);
 		void debugdraw_path(NavMeshPath* path);
+		void find_straight_path(NavMeshPath* path, glm::vec3* positions, uint32_t* total_positions);
 	}; // namespace navigation
 }; // namespace gemini
