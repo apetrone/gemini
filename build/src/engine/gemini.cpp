@@ -927,6 +927,11 @@ public:
 		assets::Geometry* geom = &mesh->geometry[0];
 		navigation::create_from_geometry(geom->vertices, geom->indices, geom->mins, geom->maxs);
 	}
+	
+	virtual void navmesh_find_straight_path(NavMeshPath* path, glm::vec3* positions, uint32_t* total_positions)
+	{
+		navigation::find_straight_path(path, positions, total_positions);
+	}
 };
 
 namespace gemini

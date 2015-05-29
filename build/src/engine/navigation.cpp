@@ -115,7 +115,7 @@ namespace gemini
 			virtual void vertex(const float* pos, unsigned int color) override
 			{
 				glm::vec3 position = glm::vec3(pos[0], pos[1], pos[2]);
-				Color c = Color::from_ubyte((unsigned char*)&color);
+				Color c = Color::from_int(color);
 
 				switch(primitive_state)
 				{
@@ -141,7 +141,7 @@ namespace gemini
 			virtual void vertex(const float x, const float y, const float z, unsigned int color) override
 			{
 				glm::vec3 position = glm::vec3(x, y, z);
-				Color c = Color::from_ubyte((unsigned char*)&color);
+				Color c = Color::from_int(color);
 
 				switch(primitive_state)
 				{
@@ -471,7 +471,7 @@ namespace gemini
 //			unsigned char flags = DU_DRAWNAVMESH_OFFMESHCONS;
 //			unsigned char flags = DU_DRAWNAVMESH_COLOR_TILES;
 //			duDebugDrawNavMesh(&debug_draw, *nav_mesh, flags);
-			duDebugDrawPolyMesh(&debug_draw, *poly_mesh);
+//			duDebugDrawPolyMesh(&debug_draw, *poly_mesh);
 
 //			dtPolyRef ref;
 //			glm::vec3 center(0, 0.0f, 0);
@@ -508,33 +508,61 @@ namespace gemini
 //				}
 //			}
 			
+			if (0)
 			{
-//				dtStatus status;
-//				
-//				dtPolyRef start;
-//				dtPolyRef end;
-//				
-//				dtQueryFilter filter;
-//				float start_position[3] = {0, 0, 0};
-//				float extents[3] = {4.0f, 4.0f, 4.0f};
-//				nav_query->findNearestPoly(start_position, extents, &filter, &start, 0);
-//				
-//				float end_position[3] = {70, 0, 20};
-//				nav_query->findNearestPoly(end_position, extents, &filter, &end, 0);
-//			
+				dtStatus status;
+				
+				dtPolyRef start;
+				dtPolyRef end;
+				
+				dtQueryFilter filter;
+				float start_position[3] = {10, 0, -8};
+				float extents[3] = {4.0f, 4.0f, 4.0f};
+				nav_query->findNearestPoly(start_position, extents, &filter, &start, 0);
+				
+				float end_position[3] = {-10, 0, 10};
+				nav_query->findNearestPoly(end_position, extents, &filter, &end, 0);
+			
 //				duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, start, duRGBA(255, 0, 0, 128));
 //				duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, end, duRGBA(0, 255, 0, 128));
-//			
-//				dtPolyRef polys[16];
-//				int path_count = 0;
-//				status = nav_query->findPath(start, end, start_position, end_position, &filter, polys, &path_count, 16);
-//				if (dtStatusSucceed(status))
-//				{
+			
+				dtPolyRef polys[16];
+				int path_count = 0;
+				status = nav_query->findPath(start, end, start_position, end_position, &filter, polys, &path_count, 16);
+				if (dtStatusSucceed(status))
+				{
+					const int MAX_POLYS = 128;
+					float straight[MAX_POLYS*3];
+					unsigned char straight_path_flags[MAX_POLYS];
+					dtPolyRef straight_path_refs[MAX_POLYS];
+					int straight_path_count = 0;
+					
+					status = nav_query->findStraightPath(
+						start_position,
+						end_position,
+						polys,
+						path_count,
+						straight,
+						straight_path_flags,
+						straight_path_refs,
+						&straight_path_count,
+						MAX_POLYS,
+						0);
+				
+					if (dtStatusSucceed(status))
+					{
+						for (int p = 0; p < straight_path_count; ++p)
+						{
+							float* v = &straight[p*3];
+							debugdraw::point(glm::vec3(v[0], v[1]+0.5f, v[2]), Color(0, 0, 255), 0.5f);
+						}
+					}
+				
 //					for (int poly = 0; poly < path_count; ++poly)
 //					{
-//						duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, polys[poly], duRGBA(255, 255, 0, 128));
+//						duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, polys[poly], duRGBA(255, 255, 0, 16));
 //					}
-//				}
+				}
 			
 			
 //				dtPolyRef polys[16];
@@ -576,6 +604,9 @@ namespace gemini
 		{
 			const float* start_position = glm::value_ptr(start);
 			const float* end_position = glm::value_ptr(end);
+
+			path->start_position = start;
+			path->end_position = end;
 			
 			NavMeshPolyRef start_poly = 0;
 			NavMeshPolyRef end_poly = 0;
@@ -596,6 +627,39 @@ namespace gemini
 			for (int poly = 0; poly < path->link_count; ++poly)
 			{
 				duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, path->links[poly], duRGBA(255, 255, 0, 128));
+			}
+		}
+		
+		void find_straight_path(NavMeshPath* path, glm::vec3* positions, uint32_t* total_positions)
+		{
+			float* waypoints = reinterpret_cast<float*>(&positions[0]);
+			unsigned char straight_path_flags[MAX_NAVMESH_POINTS];
+			dtPolyRef straight_path_refs[MAX_NAVMESH_POINTS];
+			int straight_path_count = 0;
+
+			dtStatus status = nav_query->findStraightPath(
+												glm::value_ptr(path->start_position),
+												glm::value_ptr(path->end_position),
+												path->links,
+												 path->link_count,
+												 waypoints,
+												 straight_path_flags,
+												 straight_path_refs,
+												 &straight_path_count,
+												 MAX_NAVMESH_POINTS,
+												 0);
+												
+			assert(straight_path_count >= 0);
+			*total_positions = straight_path_count;
+			
+			if (dtStatusSucceed(status))
+			{
+				for (int p = 0; p < straight_path_count; ++p)
+				{
+					float* v = &waypoints[p*3];
+					LOGV("path %i: %2.2f, %2.2f, %2.2f\n", p, v[0], v[1], v[2]);
+					debugdraw::point(glm::vec3(v[0], v[1]+0.5f, v[2]), Color(0, 0, 255), 0.5f, 4000.0f);
+				}
 			}
 		}
 	} // namespace navigation

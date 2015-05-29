@@ -45,5 +45,6 @@ namespace gemini
 		virtual void navmesh_find_path(NavMeshPath* path, const glm::vec3& start, const glm::vec3& end) = 0;
 		virtual void navmesh_draw_path(NavMeshPath* path) = 0;
 		virtual void navmesh_generate_from_model(const char* path) = 0;
+		virtual void navmesh_find_straight_path(NavMeshPath* path, glm::vec3* positions, uint32_t* total_positions) = 0;
 	};
 } // namespace gemini
