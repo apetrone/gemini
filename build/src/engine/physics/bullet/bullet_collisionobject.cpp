@@ -111,7 +111,7 @@ namespace gemini
 				}
 				else // fall back and grab immediate state of the body (not interpolated)
 				{
-					// static bodies have to use this; they don't have a motionstate.
+					// static and kinematic bodies have to use this; they don't have a motionstate.
 					world_transform = object->getWorldTransform();
 				}
 				
