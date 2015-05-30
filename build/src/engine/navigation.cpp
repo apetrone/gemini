@@ -444,7 +444,6 @@ namespace gemini
 		
 		void startup()
 		{
-
 		}
 		
 		void shutdown()
@@ -468,121 +467,11 @@ namespace gemini
 				return;
 			}
 			
-//			unsigned char flags = DU_DRAWNAVMESH_OFFMESHCONS;
+			unsigned char flags = DU_DRAWNAVMESH_OFFMESHCONS;
 //			unsigned char flags = DU_DRAWNAVMESH_COLOR_TILES;
-//			duDebugDrawNavMesh(&debug_draw, *nav_mesh, flags);
+			duDebugDrawNavMesh(&debug_draw, *nav_mesh, flags);
 //			duDebugDrawPolyMesh(&debug_draw, *poly_mesh);
 
-//			dtPolyRef ref;
-//			glm::vec3 center(0, 0.0f, 0);
-//			glm::vec3 extents(4, 4, 4);
-//			
-//			dtQueryFilter filter;
-//			dtStatus status = nav_query->findNearestPoly(glm::value_ptr(center), glm::value_ptr(extents), &filter, &ref, 0);
-//			if (dtStatusFailed(status))
-//			{
-//				LOGV("nav query failed\n");
-//				assert(0);
-//			}
-//			else
-//			{
-//				duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, ref, duRGBA(255, 0, 0, 128));
-//			}
-
-//			{
-//				dtPolyRef polys[16];
-//				dtQueryFilter filter;
-//				filter.setIncludeFlags(0xffff);
-//				filter.setExcludeFlags(0);
-//				int polyCount = 0;
-//				float center[3] = {0, 0, 0};
-//				float extents[3] = {4, 4, 4};
-//				dtStatus status = nav_query->queryPolygons(center, extents, &filter, polys, &polyCount, 16);
-//				if (dtStatusSucceed(status))
-//				{
-//					LOGV("found %i polys\n", polyCount);
-//					for (int poly = 0; poly < polyCount; ++poly)
-//					{
-//						duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, polys[poly], duRGBA(255, 255, 0, 128));
-//					}
-//				}
-//			}
-			
-			if (0)
-			{
-				dtStatus status;
-				
-				dtPolyRef start;
-				dtPolyRef end;
-				
-				dtQueryFilter filter;
-				float start_position[3] = {10, 0, -8};
-				float extents[3] = {4.0f, 4.0f, 4.0f};
-				nav_query->findNearestPoly(start_position, extents, &filter, &start, 0);
-				
-				float end_position[3] = {-10, 0, 10};
-				nav_query->findNearestPoly(end_position, extents, &filter, &end, 0);
-			
-//				duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, start, duRGBA(255, 0, 0, 128));
-//				duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, end, duRGBA(0, 255, 0, 128));
-			
-				dtPolyRef polys[16];
-				int path_count = 0;
-				status = nav_query->findPath(start, end, start_position, end_position, &filter, polys, &path_count, 16);
-				if (dtStatusSucceed(status))
-				{
-					const int MAX_POLYS = 128;
-					float straight[MAX_POLYS*3];
-					unsigned char straight_path_flags[MAX_POLYS];
-					dtPolyRef straight_path_refs[MAX_POLYS];
-					int straight_path_count = 0;
-					
-					status = nav_query->findStraightPath(
-						start_position,
-						end_position,
-						polys,
-						path_count,
-						straight,
-						straight_path_flags,
-						straight_path_refs,
-						&straight_path_count,
-						MAX_POLYS,
-						0);
-				
-					if (dtStatusSucceed(status))
-					{
-						for (int p = 0; p < straight_path_count; ++p)
-						{
-							float* v = &straight[p*3];
-							debugdraw::point(glm::vec3(v[0], v[1]+0.5f, v[2]), Color(0, 0, 255), 0.5f);
-						}
-					}
-				
-//					for (int poly = 0; poly < path_count; ++poly)
-//					{
-//						duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, polys[poly], duRGBA(255, 255, 0, 16));
-//					}
-				}
-			
-			
-//				dtPolyRef polys[16];
-//				dtQueryFilter filter;
-//				filter.setIncludeFlags(0xffff);
-//				filter.setExcludeFlags(0);
-//				int polyCount = 0;
-//				float center[3] = {0, 0, 0};
-//				float extents[3] = {4, 4, 4};
-//				dtStatus status = nav_query->queryPolygons(center, extents, &filter, polys, &polyCount, 16);
-//				if (dtStatusSucceed(status))
-//				{
-//					LOGV("found %i polys\n", polyCount);
-//					for (int poly = 0; poly < polyCount; ++poly)
-//					{
-//						duDebugDrawNavMeshPoly(&debug_draw, *nav_mesh, polys[poly], duRGBA(255, 255, 0, 128));
-//					}
-//				}
-			}
-			
 //			duDebugDrawCompactHeightfieldRegions(&debug_draw, *compact_heightfield);
 //			duDebugDrawRawContours(&debug_draw, *contour_set, 0.25f);
 //			duDebugDrawContours(&debug_draw, *contour_set);
@@ -651,16 +540,6 @@ namespace gemini
 												
 			assert(straight_path_count >= 0);
 			*total_positions = straight_path_count;
-			
-			if (dtStatusSucceed(status))
-			{
-				for (int p = 0; p < straight_path_count; ++p)
-				{
-					float* v = &waypoints[p*3];
-					LOGV("path %i: %2.2f, %2.2f, %2.2f\n", p, v[0], v[1], v[2]);
-					debugdraw::point(glm::vec3(v[0], v[1]+0.5f, v[2]), Color(0, 0, 255), 0.5f, 4000.0f);
-				}
-			}
 		}
 	} // namespace navigation
 }; // namespace gemini

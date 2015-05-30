@@ -373,12 +373,29 @@ void test_memory()
 #endif
 }
 
+void test_maths()
+{
+	glm::vec3 direction = glm::normalize(glm::vec3(1, 0, 1));
+	LOGV("direction: %2.2f, %2.2f, %2.2f\n", direction.x, direction.y, direction.z);
+	
+	float t = atan2(direction.z, direction.x);
+	LOGV("t = %2.2f\n", t);
+	
+	
+	// adjust
+	t -= mathlib::degrees_to_radians(90);
+	
+	LOGV("angle is: %2.2f\n", mathlib::radians_to_degrees(t));
+	
+}
+
 int main(int argc, char** argv)
 {
 	platform::startup();
 	core::startup();
 
-	test_memory();
+//	test_memory();
+	test_maths();
 
 	core::shutdown();
 	platform::shutdown();
@@ -556,5 +573,35 @@ void test_threads()
 		fprintf(stdout, "waiting on thread thread: %i\n", c);
 		platform::thread_join(threads[c]);
 	}
+}
+#endif
+
+
+#if 0
+void unit_test_color()
+{
+	unsigned int color1 = duRGBA(255, 0, 0, 0);
+	unsigned int color2 = duRGBA(0, 0, 255, 0);
+	unsigned int color3 = duRGBA(0, 0, 0, 255);
+	
+	
+	Color a = Color::from_int(color1);
+	Color b = Color::from_int(color2);
+	Color c = Color::from_int(color3);
+	
+	assert(a.r == 255);
+	assert(a.g == 0);
+	assert(a.b == 0);
+	assert(a.a == 0);
+	
+	assert(b.r == 0);
+	assert(b.g == 0);
+	assert(b.b == 255);
+	assert(b.a == 0);
+	
+	assert(c.r == 0);
+	assert(c.g == 0);
+	assert(c.b == 0);
+	assert(c.a == 255);
 }
 #endif
