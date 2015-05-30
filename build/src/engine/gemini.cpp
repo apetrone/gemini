@@ -1197,7 +1197,7 @@ public:
 		game_interface(0),
 		render_method(0),
 		draw_physics_debug(false),
-		draw_navigation_debug(true)
+		draw_navigation_debug(false)
 	{
 		game_path = "";
 		device = 0;
