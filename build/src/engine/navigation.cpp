@@ -253,7 +253,7 @@ namespace gemini
 			// allocate an array which can hold the max number of triangles you need to process
 			// across all meshes
 			
-			unsigned char* triangle_areas =	MEMORY_NEW_ARRAY(unsigned char, total_triangles, platform::memory::global_allocator());
+			unsigned char* triangle_areas =	MEMORY_NEW_ARRAY(unsigned char, total_triangles, nav_allocator);
 			if (!triangle_areas)
 			{
 				LOGE("unable to allocate triangle areas\n");
@@ -265,7 +265,7 @@ namespace gemini
 			rcRasterizeTriangles(&context, (const float*)&vertices[0], total_vertices, (const int*)&indices[0], triangle_areas, total_triangles, *solid, config.walkableClimb);
 			
 			// at this point, we could delete triangle_areas
-			MEMORY_DELETE_ARRAY(triangle_areas, platform::memory::global_allocator());
+			MEMORY_DELETE_ARRAY(triangle_areas, nav_allocator);
 			triangle_areas = 0;
 			
 			// 3. filter walkable surfaces
