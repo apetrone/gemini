@@ -29,6 +29,8 @@
 
 #include <stdlib.h> // for getenv
 
+#include <core/stackstring.h>
+
 namespace platform
 {
 	Result posix_make_directory(const char* path)
@@ -56,4 +58,21 @@ namespace platform
 	{
 		return posix_get_environment_variable("HOME");
 	} // posix_get_user_directory
+	
+	core::StackString<MAX_PATH_SIZE> posix_make_absolute_path(const char* path)
+	{
+		core::StackString<MAX_PATH_SIZE> output;
+		if (path[0] == '~')
+		{
+			core::StackString<MAX_PATH_SIZE> input_path = path;
+			output = platform::get_user_directory();
+			output.append(input_path.substring(1, MAX_PATH_SIZE));
+		}
+		else
+		{
+			output = path;
+		}
+		
+		return output;
+	}
 } // namespace platform

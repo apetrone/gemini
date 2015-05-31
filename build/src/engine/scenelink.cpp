@@ -24,8 +24,6 @@
 // -------------------------------------------------------------
 #include <algorithm>
 
-//#include <core/logging.h>
-
 #include "scenelink.h"
 
 #include <renderer/renderstream.h>

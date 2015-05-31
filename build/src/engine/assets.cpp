@@ -23,7 +23,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include <platform/mem.h>
-#include <core/configloader.h>
+#include <runtime/configloader.h>
 
 #include <platform/typedefs.h>
 

@@ -39,7 +39,7 @@ extern "C"
 {
 #endif
 
-#if (PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_APPLE || PLATFORM_ANDROID)
+#if defined(PLATFORM_WINDOWS) || defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE) || defined(PLATFORM_ANDROID)
 
 	#include <stdio.h>
 	

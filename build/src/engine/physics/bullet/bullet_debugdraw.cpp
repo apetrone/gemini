@@ -25,7 +25,7 @@
 
 #include "bullet_debugdraw.h"
 
-#include <core/logging.h>
+#include <runtime/logging.h>
 #include <core/color.h>
 #include "debugdraw.h"
 

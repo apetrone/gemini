@@ -30,7 +30,7 @@
 #include <renderer/renderstream.h>
 #include <renderer/font.h>
 
-#include <core/logging.h>
+#include <runtime/logging.h>
 
 using namespace gemini::debugdraw;
 using namespace renderer;

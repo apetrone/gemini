@@ -22,14 +22,15 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+#include <runtime/logging.h>
+#include <runtime/filesystem.h>
+
 #include <platform/typedefs.h>
-#include <core/logging.h>
 
 #include "renderer.h"
 #include "opengl_common.h"
 #include "render_utilities.h"
 
-#include <core/filesystem.h>
 #include <json/json.h>
 
 namespace renderer

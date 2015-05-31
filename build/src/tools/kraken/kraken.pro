@@ -50,9 +50,10 @@ DESTDIR = ../../../bin/debug_x86_64/
 
 
 unix:LIBS += "-L../../../lib/debug_x86_64"
-unix:LIBS += "-lplatform"
-unix:LIBS += "-lcore"
-unix:LIBS += "-lrenderer"
+macx:LIBS += "../../../lib/debug_x86_64/platform.dylib"
+macx:LIBS += "../../../lib/debug_x86_64/core.dylib"
+macx:LIBS += "../../../lib/debug_x86_64/renderer.dylib"
+macx:LIBS += "../../../lib/debug_x86_64/runtime.dylib"
 macx:LIBS += "-framework Cocoa"
 
 win32:LIBS += "../../../lib/debug_x86_64"

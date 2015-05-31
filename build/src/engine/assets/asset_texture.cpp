@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #include <core/stackstring.h>
 #include <platform/platform.h>
-#include <core/filesystem.h>
+#include <runtime/filesystem.h>
 #include <core/mathlib.h> // for glm
 
 #include <core/color.h>

@@ -24,7 +24,6 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <platform/platform.h>
 #include <core/str.h>
 
 #include <assert.h>
@@ -201,7 +200,7 @@ namespace core
 			return *this;
 		}
 		
-		void normalize(Type prefer = PATH_SEPARATOR)
+		void normalize(Type prefer)
 		{
 			for(unsigned int i = 0; i < _length; ++i)
 			{
@@ -341,5 +340,20 @@ namespace core
 			
 			return true;
 		} // startswith
+		
+		StackStringType substring(size_t start, size_t len = size)
+		{
+			StackStringType output;
+			if (len > (size-start))
+			{
+				len = size-start;
+			}
+		
+			memcpy(output._data, &_data[start], len);
+			output._length = len;
+			
+			return output;
+		} // substring
+		
 	}; // class StackString
 } // namespace core

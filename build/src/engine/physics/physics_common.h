@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/logging.h>
+#include <runtime/logging.h>
 
 // This _should_ only be included in files that have ALREADY
 // included Bullet. It's not meant to be included outright.

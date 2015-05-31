@@ -25,6 +25,8 @@
 
 #include "logging.h"
 
+#include <platform/platform.h>
+
 #include <core/stackstring.h>
 
 #include <stdio.h> // for FILE, file functions

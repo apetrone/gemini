@@ -42,8 +42,8 @@
 #endif
 
 #include <platform/typedefs.h>
-#include <core/logging.h>
-#include <core/configloader.h>
+#include <runtime/logging.h>
+#include <runtime/configloader.h>
 
 namespace renderer
 {

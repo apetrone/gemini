@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 
 #include <core/mathlib.h>
-#include <core/logging.h>
+#include <runtime/logging.h>
 
 #include <platform/typedefs.h>
 

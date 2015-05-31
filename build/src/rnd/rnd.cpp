@@ -2,15 +2,12 @@
 #include <platform/platform.h>
 #include <platform/typedefs.h>
 
+#include <runtime/core.h>
+#include <runtime/filesystem.h>
+#include <runtime/logging.h>
 
-
-#include <core/core.h>
-#include <core/filesystem.h>
-#include <core/logging.h>
 #include <core/stackstring.h>
-
 #include <core/interpolation.h>
-
 #include <core/argumentparser.h>
 
 #include <json/json.h>

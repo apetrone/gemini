@@ -27,7 +27,7 @@
 #include <map>
 #include <list>
 
-#include <core/logging.h>
+#include <runtime/logging.h>
 
 #include <platform/typedefs.h>
 

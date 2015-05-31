@@ -33,8 +33,8 @@
 #include "fontstash.h"
 
 #include <platform/typedefs.h>
-#include <core/filesystem.h>
-#include <core/logging.h>
+#include <runtime/filesystem.h>
+#include <runtime/logging.h>
 
 
 #include <stdlib.h>

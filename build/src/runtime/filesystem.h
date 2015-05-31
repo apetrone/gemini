@@ -25,6 +25,7 @@
 #pragma once
 
 #include <platform/typedefs.h>
+#include <platform/platform.h>
 
 #include <core/stackstring.h>
 

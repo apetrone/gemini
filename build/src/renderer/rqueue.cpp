@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #include "rqueue.h"
 
-#include <core/logging.h>
+#include <runtime/logging.h>
 
 #include <algorithm>
 

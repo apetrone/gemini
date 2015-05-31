@@ -24,7 +24,6 @@
 // -------------------------------------------------------------
 #include <vector>
 
-//#include <core/logging.h>
 #include "physics.h"
 #include <btBulletDynamicsCommon.h>
 #include "physics_common.h"

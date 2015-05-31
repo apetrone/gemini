@@ -177,7 +177,7 @@ def setup_common_libs(arguments, product):
 	product.includes += [
 		"src/engine",
 		"src/engine/audio",
-		"src/contrib",
+		"src/contrib/stb_vorbis.c",
 
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3")
 	]
@@ -243,6 +243,10 @@ def setup_driver(product):
 	#macosx.driver.macosx_deployment_target = "10.8"
 	#macosx.driver.sdkroot = "macosx10.9"
 
+	product.excludes += [
+		"*.DS_Store"
+	]
+
 	mac_debug = product.layout(platform="macosx", configuration="debug")
 	mac_debug.driver.gcc_optimization_level="0"
 	mac_debug.driver.debug_information_format="dwarf-with-dsym"
@@ -255,7 +259,13 @@ def setup_driver(product):
 	
 	mac_release = product.layout(platform="macosx", configuration="release")
 
-def get_tools(libplatform, libcore, librenderer, **kwargs):
+
+	linux = product.layout(platform="linux")
+	linux.cflags += [
+		"-fPIC"
+	]
+
+def get_tools(libruntime, librenderer, libplatform, libcore, **kwargs):
 	#
 	#
 	#
@@ -297,8 +307,9 @@ def get_tools(libplatform, libcore, librenderer, **kwargs):
 	muse = Product(name="muse", output=ProductType.Commandline)
 	muse.project_root = COMMON_PROJECT_ROOT
 	muse.dependencies.extend([
-		libcore,
+		libruntime,
 		libplatform,
+		libcore,
 		libfbx
 	])
 
@@ -311,19 +322,26 @@ def get_tools(libplatform, libcore, librenderer, **kwargs):
 	setup_common_tool(muse)
 	tools.append(muse)
 
-	kraken = get_kraken(arguments, libplatform, libcore, librenderer, **kwargs)
+	kraken = get_kraken(arguments, libruntime, libplatform, libcore, librenderer, **kwargs)
 	tools.append(kraken)
 
 	return tools
 
-def get_librenderer(arguments, target_platform):
-	librenderer = Product(name="renderer", output=ProductType.StaticLibrary)
+def get_librenderer(arguments, target_platform, libruntime):
+	librenderer = Product(name="renderer", output=ProductType.DynamicLibrary)
+	setup_driver(librenderer)
 	librenderer.project_root = COMMON_PROJECT_ROOT
 	librenderer.root = "../"
 	librenderer.sources += [
 		"src/renderer/*.*",
 		"src/renderer/gl/*.cpp",
-		"src/renderer/gl/*.h"
+		"src/renderer/gl/*.h",
+
+		"src/contrib/stb_image.c",
+		"src/contrib/stb_truetype.h",		
+
+		# include this almagamated version of jsoncpp until we replace it.
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")		
 	]
 
 	librenderer.defines += [
@@ -336,13 +354,13 @@ def get_librenderer(arguments, target_platform):
 		"src/renderer",
 		"src/renderer/gl",
 
-		os.path.join(DEPENDENCIES_FOLDER, "fontstash/src")		
+		os.path.join(DEPENDENCIES_FOLDER, "fontstash/src"),
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp")	
 	]
 
-	librenderer.excludes += [
-		"*.DS_Store"	
+	librenderer.dependencies += [
+		libruntime
 	]
-
 
 	if target_platform.get() in DESKTOP:
 		librenderer.sources += [
@@ -366,16 +384,16 @@ def get_librenderer(arguments, target_platform):
 		"src/renderer/gl/gemgl_osx.mm"
 	]
 
-
-	linux = librenderer.layout(platform="linux")
-	linux.cflags += [
-		"-fPIC"
+	macosx.links += [
+		"Cocoa.framework",
+		"OpenGL.framework"
 	]
 
 	return librenderer
 
 def get_libplatform(arguments, target_platform):
-	libplatform = Product(name="platform", output=ProductType.StaticLibrary)
+	libplatform = Product(name="platform", output=ProductType.DynamicLibrary)
+	setup_driver(libplatform)
 	libplatform.project_root = COMMON_PROJECT_ROOT
 	libplatform.root = "../"
 	libplatform.sources += [
@@ -400,10 +418,6 @@ def get_libplatform(arguments, target_platform):
 	libplatform.includes += [
 		"src/platform",
 		"src/platform/utl"
-	]
-
-	libplatform.excludes += [
-		"*.DS_Store"
 	]
 
 	macosx = libplatform.layout(platform="macosx")
@@ -436,6 +450,10 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/posix"
 	]
 
+	macosx.links += [
+		"Cocoa.framework"
+	]
+
 
 	linux = libplatform.layout(platform="linux")
 	linux.sources += [
@@ -461,10 +479,6 @@ def get_libplatform(arguments, target_platform):
 		# time
 		"src/platform/time/posix/posix_datetime.cpp",
 		"src/platform/time/posix/posix_timer.cpp"
-	]
-
-	linux.cflags += [
-		"-fPIC"
 	]
 
 	linux.includes += [
@@ -502,42 +516,56 @@ def get_libplatform(arguments, target_platform):
 	return libplatform
 
 def get_libcore(arguments, target_platform):
-	libcore = Product(name="core", output=ProductType.StaticLibrary)
+	libcore = Product(name="core", output=ProductType.DynamicLibrary)
+	setup_driver(libcore)
 	libcore.project_root = COMMON_PROJECT_ROOT
 	libcore.root = "../"
 	libcore.sources += [
 		"src/core/*.*",
 
-		# include this almagamated version of jsoncpp until we replace it.
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp"),
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c")
 	]
 
-	libcore.defines += [
-		"JSON_IS_AMALGAMATION"
-	]
 
 	libcore.includes += [
 		"src",
 		"src/core",
 
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3")
 	]
 
-	libcore.excludes += [
-		"*.DS_Store"
+	libcore.dependencies += [
+		Dependency(file="glm.py")
 	]
-
-	linux = libcore.layout(platform="linux")
-	linux.cflags += [
-		"-fPIC"
-	]	
 
 	return libcore
 
+def get_libruntime(arguments, target_platform):
+	libruntime = Product(name="runtime", output=ProductType.DynamicLibrary)
+	setup_driver(libruntime)
+	libruntime.project_root = COMMON_PROJECT_ROOT
+	libruntime.root = "../"
+	libruntime.sources += [
+		"src/runtime/*.c",
+		"src/runtime/*.cpp",
+		"src/runtime/*.h",
 
-def get_rnd(arguments, libplatform, libcore, librenderer, **kwargs):
+		# include this almagamated version of jsoncpp until we replace it.
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")		
+	]
+
+	libruntime.defines += [
+		"JSON_IS_AMALGAMATION"
+	]
+
+	libruntime.includes += [
+		"src/runtime",
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),		
+	]
+
+	return libruntime
+
+def get_rnd(arguments, links, **kwargs):
 	global_params = kwargs.get("global_params")
 	target_platform = kwargs.get("target_platform")
 
@@ -552,12 +580,8 @@ def get_rnd(arguments, libplatform, libcore, librenderer, **kwargs):
 	setup_driver(rnd)
 	setup_common_tool(rnd)
 
-	rnd.dependencies.extend([
-		libsdl,
-		libplatform,
-		libcore,
-		librenderer
-	])
+	rnd.dependencies.append(libsdl)
+	rnd.dependencies.extend(links)
 
 	rnd_macosx = rnd.layout(platform="macosx")
 	rnd_macosx.links += [
@@ -568,10 +592,6 @@ def get_rnd(arguments, libplatform, libcore, librenderer, **kwargs):
 	rnd_linux = rnd.layout(platform="linux")
 	rnd_linux.links += [
 		"GL"
-	]
-
-	rnd_linux.cflags += [
-		"-fPIC"
 	]
 
 	# Fix undefined reference for SysFreeString
@@ -591,7 +611,7 @@ def get_rnd(arguments, libplatform, libcore, librenderer, **kwargs):
 
 	return rnd
 
-def get_kraken(arguments, libplatform, libcore, librenderer, **kwargs):
+def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
 	global_params = kwargs.get("global_params")
 	target_platform = kwargs.get("target_platform")
 
@@ -636,10 +656,6 @@ def get_kraken(arguments, libplatform, libcore, librenderer, **kwargs):
 	linux.links += [
 		"GL"
 	]
-
-	linux.cflags += [
-		"-fPIC"
-	]		
 
 	return kraken
 
@@ -694,24 +710,25 @@ def products(arguments, **kwargs):
 
 	target_platform = kwargs.get("target_platform")
 
+	libcore = get_libcore(arguments, target_platform)
 
 	libplatform = get_libplatform(arguments, target_platform)
-	libplatform.dependencies += [libsdl]
+	libplatform.dependencies += [libsdl, libcore]
 
-	libcore = get_libcore(arguments, target_platform)
-	libcore.dependencies += [libplatform, Dependency(file="glm.py")]
+	libruntime = get_libruntime(arguments, target_platform)
+	libruntime.dependencies += [libcore, libplatform, Dependency(file="glm.py")]
 
-	librenderer = get_librenderer(arguments, target_platform)
+	librenderer = get_librenderer(arguments, target_platform, libruntime)
 	librenderer.dependencies += [libcore, libplatform, Dependency(file="glm.py")]
+
+	
+
 
 	tools = []
 	if arguments.with_tools:
-		tools = get_tools(libplatform, libcore, librenderer, **kwargs)
+		tools = get_tools(libruntime, librenderer, libplatform, libcore, **kwargs)
 	else:
 		logging.warn("Compiling WITHOUT tools...")
-
-
-
 
 	gemini = Product(name="gemini_desktop", output=ProductType.Application)
 	gemini.project_root = COMMON_PROJECT_ROOT
@@ -729,10 +746,11 @@ def products(arguments, **kwargs):
 	setup_gui(gemini)
 
 	gemini.dependencies += [
+		libruntime,
 		librenderer,
-		libcore,
 		libplatform,
 		libsdl,
+		libcore,
 		Dependency(file="sqrat.py"),
 		#Dependency(file="squirrel3.py", products=["squirrel", "sqstdlib"]),
 		Dependency(file="nom.py"),
@@ -855,7 +873,7 @@ def products(arguments, **kwargs):
 	]
 
 
-	rnd = get_rnd(arguments, libplatform, libcore, librenderer, **kwargs)
+	rnd = get_rnd(arguments, [libruntime, librenderer, libplatform, libcore], **kwargs)
 
-	return [librenderer, libcore, libplatform] + [gemini] + tools + [rnd]
+	return [librenderer, libruntime, libplatform, libcore] + [gemini] + tools + [rnd]
 

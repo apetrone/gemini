@@ -26,7 +26,7 @@
 #include "renderer.h"
 
 #include <platform/typedefs.h>
-#include <core/logging.h>
+#include <runtime/logging.h>
 
 #include <string.h> // for memset
 #include <stdio.h> // for printf
