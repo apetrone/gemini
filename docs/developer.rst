@@ -26,5 +26,8 @@ Removing a git submodule:
 
 Source Code Organization:
 
+- 'core': containers, utilities, memory management, math
 - 'platform': platform abstraction layer
-- 'core': a collection of modules which builds upon platform
+- 'runtime': assets, logging, filesystem services
+- 'renderer': a platform independent rendering layer
+
