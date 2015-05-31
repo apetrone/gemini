@@ -30,7 +30,9 @@
 #include "datamodel/animation.h"
 
 #include <core/stackstring.h>
-#include <core/logging.h>
+#include <runtime/logging.h>
+
+#include <platform/platform.h> // for MAX_PATH_SIZE
 
 #include <fbxsdk.h>
 #include <fbxsdk/utils/fbxgeometryconverter.h>

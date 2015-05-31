@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #include "audio.h"
 #include "openal.h"
-#include <core/logging.h>
+#include <runtime/logging.h>
 #include <assert.h>
 
 #if 0 // capture sample

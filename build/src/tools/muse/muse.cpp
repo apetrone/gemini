@@ -31,17 +31,18 @@
 #include "io_fbx.h"
 #include "io_json.h"
 
-#include <string>
-#include <stdio.h>
-#include <stdlib.h>
+#include <runtime/logging.h>
+#include <runtime/xfile.h>
 
 #include <platform/platform.h>
 
-#include <core/xfile.h>
 #include <core/stackstring.h>
 #include <core/datastream.h>
-#include <core/logging.h>
 #include <core/argumentparser.h>
+
+#include <string>
+#include <stdio.h>
+#include <stdlib.h>
 
 // need to support:
 // static (non-animated) meshes
@@ -336,12 +337,12 @@ Options:
 
 	// determine our input and output filenames
 	StackString<MAX_PATH_SIZE> input_filename = asset_root.c_str();
-	input_filename.normalize();
+	input_filename.normalize(PATH_SEPARATOR);
 	input_filename.strip_trailing(PATH_SEPARATOR).append(PATH_SEPARATOR_STRING);
 	input_filename.append(input_path.c_str());
 	
 	StackString<MAX_PATH_SIZE> output_filename = output_root.c_str();
-	output_filename.normalize();
+	output_filename.normalize(PATH_SEPARATOR);
 	output_filename.strip_trailing(PATH_SEPARATOR).append(PATH_SEPARATOR_STRING);
 	output_filename = output_filename.append(input_path.c_str()).remove_extension();
 

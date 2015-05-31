@@ -25,9 +25,11 @@
 #include "filesystem.h"
 #include "xfile.h"
 
+#include <runtime/logging.h>
+
 #include <platform/platform.h>
 #include <platform/typedefs.h>
-#include <core/logging.h>
+
 #include <core/str.h>
 
 #include <stdio.h> // for printf

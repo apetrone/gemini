@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #include "material.h"
 
-#include <core/logging.h>
+#include <runtime/logging.h>
 
 
 namespace renderer

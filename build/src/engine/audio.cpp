@@ -23,7 +23,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include <core/stackstring.h>
-#include <core/filesystem.h>
+#include <runtime/filesystem.h>
 
 #include <platform/typedefs.h>
 

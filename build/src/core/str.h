@@ -51,6 +51,8 @@ namespace core
 		size_t len(const char* str);
 		char* cat(char* destination, const char* source);
 		char* ncat(char* destination, const char* source, size_t destination_size);
+
+		// use count = 0 to mean: pick the smallest string
 		int case_insensitive_compare(const char* s1, const char* s2, size_t count);
 		const char* strstr(const char* s1, const char* s2);
 		

@@ -63,5 +63,10 @@ namespace platform
 	{
 		return posix_get_user_directory();
 	}
+	
+	core::StackString<MAX_PATH_SIZE> make_absolute_path(const char* path)
+	{
+		return posix_make_absolute_path(path);
+	}
 
 } // namespace platform

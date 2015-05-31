@@ -128,9 +128,7 @@ namespace core
 					return 0;
 				}
 			}
-			
-			// size_t is implemented as 'unsigned int' on some platforms (Windows...)
-			// use zero to mean: pick the smallest string
+
 			if (count == 0)
 			{
 				s1_len = 0;
@@ -163,26 +161,6 @@ namespace core
 		{
 			return ::strstr(s1, s2);
 		} // strstr
-		
-		
-		
-		
-		std::string make_absolute_path(const std::string& path)
-		{
-			std::string output;
-			
-			if (path[0] == '~')
-			{
-				output = platform::get_user_directory();
-				output += path.substr(1, std::string::npos);
-			}
-			else
-			{
-				output = path;
-			}
-			
-			return output;
-		}
 			
 		std::vector<std::string> split(const std::string& input, const std::string& substring)
 		{

@@ -27,10 +27,10 @@
 #include "datamodel/mesh.h"
 #include "datamodel/material.h"
 
-#include <platform/typedefs.h>
+#include <runtime/logging.h>
+#include <runtime/xfile.h>
 
-#include <core/logging.h>
-#include <core/xfile.h>
+#include <platform/typedefs.h>
 
 using namespace core;
 

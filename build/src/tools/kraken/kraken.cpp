@@ -29,7 +29,7 @@
 #include <platform/input.h>
 
 #include <core/core.h>
-#include <core/logging.h>
+#include <runtime/logging.h>
 
 
 

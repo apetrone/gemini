@@ -25,9 +25,10 @@
 #include "image.h"
 #include "renderer.h"
 
+#include <runtime/filesystem.h>
+#include <runtime/logging.h>
+
 #include <platform/typedefs.h>
-#include <core/filesystem.h>
-#include <core/logging.h>
 
 #define STBI_HEADER_FILE_ONLY 1
 #define STBI_NO_STDIO 1

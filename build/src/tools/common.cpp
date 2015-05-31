@@ -32,10 +32,11 @@
 
 #include <platform/typedefs.h>
 
-#include <core/filesystem.h>
+#include <runtime/filesystem.h>
+#include <runtime/core.h>
+#include <runtime/logging.h>
+
 #include <core/stackstring.h>
-#include <core/core.h>
-#include <core/logging.h>
 
 using namespace core;
 

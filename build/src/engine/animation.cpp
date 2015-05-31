@@ -23,18 +23,19 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "animation.h"
+
+#include <assets/asset_mesh.h>
+
 #include <platform/mem.h>
 
 #include <hashset.h>
 
+#include <runtime/logging.h>
+#include <runtime/configloader.h>
+
 #include <core/interpolation.h>
 #include <core/mathlib.h>
-#include <core/logging.h>
-#include <core/configloader.h>
 #include <core/stackstring.h>
-
-#include <assets/asset_mesh.h>
-#include "animation.h"
 
 #include <vector>
 

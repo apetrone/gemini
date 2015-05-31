@@ -32,6 +32,8 @@
 	#include <TargetConditionals.h>
 #endif
 
+#include <core/stackstring.h>
+
 #include <stdint.h>
 #include <stdio.h> // for size_t
 
@@ -248,6 +250,15 @@ namespace platform
 	/// @desc Returns the current user's directory;
 	/// @returns The $(HOME) environment variable in Linux or %HOMEPATH% on Windows
 	const char* get_user_directory();
+	
+	
+	// this accepts a path entered by the user (possibly on the commandline)
+	// and returns an expanded absolute path for use.
+	// This should expand environment variables.
+	// It should also account for leading tilde (~), which denotes the
+	// special $(HOME) environment variable on Linux systems.
+	core::StackString<MAX_PATH_SIZE> make_absolute_path(const char* path);
+	
 
 	// ---------------------------------------------------------------------
 	// serial

@@ -22,12 +22,12 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-
 #include "configloader.h"
 
+#include <runtime/filesystem.h>
+#include <runtime/logging.h>
+
 #include <platform/mem.h>
-#include <core/filesystem.h>
-#include <core/logging.h>
 
 namespace core
 {

@@ -27,7 +27,7 @@
 
 #include <renderer/renderstream.h>
 
-#include <core/logging.h>
+#include <runtime/logging.h>
 #include <core/mathlib.h>
 #include <core/datastream.h>
 

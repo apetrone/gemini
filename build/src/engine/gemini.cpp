@@ -27,11 +27,11 @@
 #include <platform/kernel.h>
 #include <fixedsizequeue.h>
 
-#include <core/core.h>
+#include <runtime/core.h>
 #include <core/str.h>
-#include <core/logging.h>
-#include <core/filesystem.h>
-#include <core/configloader.h>
+#include <runtime/logging.h>
+#include <runtime/filesystem.h>
+#include <runtime/configloader.h>
 #include <core/argumentparser.h>
 #include <core/mathlib.h>
 
@@ -1389,7 +1389,7 @@ Options:
 		if (parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
 		{
 			std::string path = vm["--game"];
-			game_path = core::str::make_absolute_path(path).c_str();
+			game_path = platform::make_absolute_path(path.c_str());
 		}
 
 		const char FONT_SHADER[] = "shaders/fontshader";
