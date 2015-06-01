@@ -34,19 +34,22 @@ struct UnitTestCategory
 	
 	~UnitTestCategory()
 	{
-		UnitTest* current = reverse_list();
-		while(current)
+		if (next)
 		{
-			if (current->failed)
+			UnitTest* current = reverse_list();
+			while(current)
 			{
-				fprintf(stdout, "FAILED '%s.%s' (line: %i)\n", name, current->name, current->line_number);
-				++failed_tests;
+				if (current->failed)
+				{
+					fprintf(stdout, "FAILED '%s.%s' (line: %i)\n", name, current->name, current->line_number);
+					++failed_tests;
+				}
+				else
+				{
+					fprintf(stdout, "PASSED '%s.%s'\n", name, current->name);
+				}
+				current = current->next;
 			}
-			else
-			{
-				fprintf(stdout, "PASSED '%s.%s'\n", name, current->name);
-			}
-			current = current->next;
 		}
 
 		uint32_t passed_tests = (total_tests-failed_tests);

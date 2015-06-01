@@ -1,17 +1,19 @@
 #include "unit_test.h"
-
 #include <core/argumentparser.h>
 #include <core/color.h>
+#include <core/datastream.h>
+
+
 #include <vector>
 #include <string>
 #include <assert.h>
 #include <stdio.h>
 
 using namespace core;
-
+using namespace core::util;
 
 // ---------------------------------------------------------------------
-// argument parser
+// ArgumentParser
 // ---------------------------------------------------------------------
 void test_argumentparser()
 {
@@ -66,9 +68,65 @@ void test_color()
 	TEST_VERIFY(ubyte_color == ubyte_test, from_ubyte);
 }
 
+
+// ---------------------------------------------------------------------
+// DataStream
+// ---------------------------------------------------------------------
+void test_datastream()
+{
+	{
+		TEST_CATEGORY(MemoryStream);
+		
+		const size_t DATA_SIZE = 256;
+		unsigned char data[ DATA_SIZE] = {0};
+		
+		MemoryStream ms;
+		ms.init((char*)data, DATA_SIZE );
+		
+		int test_values[2] = {32, 64};
+		float test_float = 3.2f;
+		void* test_pointer = &data[0];
+		uint64_t test_uint64 = UINT64_MAX;
+		
+		ms.write(test_values[0]);
+		ms.write(test_values[1]);
+		ms.write(test_float);
+		ms.write(test_pointer);
+		ms.write(test_uint64);
+				
+		ms.rewind();
+		
+		int out_values[2];
+		float out_float;
+		void* out_pointer = 0;
+		uint64_t out_uint64;
+		
+		ms.read(out_values[0]);
+		ms.read(out_values[1]);
+		ms.read(out_float);
+		ms.read(out_pointer);
+		ms.read(out_uint64);
+		
+		TEST_VERIFY((
+			out_values[0] == test_values[0] &&
+			out_values[1] == test_values[1] &&
+			out_float == test_float &&
+			out_pointer == test_pointer &&
+			out_uint64 == test_uint64
+			),
+			pod_read_write
+		);
+		
+		TEST_VERIFY(ms.get_data_size() == DATA_SIZE, get_data_size);
+		TEST_VERIFY(ms.get_data() == data, get_data);
+	}
+}
+
+
 int main(int, char**)
 {
 	test_argumentparser();
 	test_color();
+	test_datastream();
 	return 0;
 }
