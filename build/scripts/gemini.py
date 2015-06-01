@@ -406,8 +406,7 @@ def get_libplatform(arguments, target_platform):
 	]
 
 	libplatform.includes += [
-		"src/platform",
-		"src/platform/utl"
+		"src/platform"
 	]
 
 	macosx = libplatform.layout(platform="macosx")
@@ -502,11 +501,6 @@ def get_libplatform(arguments, target_platform):
 
 		# time
 		"src/platform/time/windows/win32_time.cpp"
-	]
-
-	# utility template library
-	libplatform.sources += [
-		"src/platform/utl/*.h"
 	]
 
 	return libplatform

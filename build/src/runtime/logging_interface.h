@@ -25,7 +25,7 @@
 #pragma once
 
 #include <runtime/logging.h>
-#include <fixedarray.h>
+#include <core/fixedarray.h>
 
 #define LOG_MAX_HANDLERS 4
 

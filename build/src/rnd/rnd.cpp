@@ -1,4 +1,3 @@
-#include <fixedarray.h>
 #include <platform/platform.h>
 #include <platform/typedefs.h>
 
@@ -6,6 +5,7 @@
 #include <runtime/filesystem.h>
 #include <runtime/logging.h>
 
+#include <core/fixedarray.h>
 #include <core/stackstring.h>
 #include <core/interpolation.h>
 #include <core/argumentparser.h>

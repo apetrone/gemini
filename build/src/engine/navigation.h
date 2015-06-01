@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <utl/fixedarray.h>
+#include <core/fixedarray.h>
 #include <core/mathlib.h>
 
 #include <sdk/navigation_api.h>

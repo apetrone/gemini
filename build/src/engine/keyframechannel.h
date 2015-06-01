@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <fixedarray.h>
+#include <core/fixedarray.h>
 #include <runtime/logging.h>
 
 #include <renderer/render_utilities.h>

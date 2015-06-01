@@ -26,7 +26,7 @@
 
 #include "datamodel/material.h"
 
-#include <fixedarray.h>
+#include <core/fixedarray.h>
 #include <core/mathlib.h>
 
 namespace gemini

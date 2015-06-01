@@ -31,7 +31,7 @@
 
 #include <platform/mem_stl_allocator.h>
 #include <platform/typedefs.h>
-#include <fixedarray.h>
+#include <core/fixedarray.h>
 #include <core/stackstring.h>
 #include <core/mathlib.h> // for glm
 #include <core/datastream.h>
