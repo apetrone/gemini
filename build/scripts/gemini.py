@@ -96,16 +96,6 @@ def setup_common_variables(arguments, target_platform, product):
 		"DEBUG"
 	]
 
-def setup_common_application(product):
-	macosx = product.layout(platform="macosx")
-	
-	macosx.sources += [
-		"src/platform/application/osx/osx_appdelegate.mm",
-		"src/platform/application/osx/osx_appdelegate.h",
-		"src/platform/application/osx/osx_application.mm",
-		"src/platform/application/osx/osx_application.h"
-	]
-
 def setup_datamodel(product):
 	product.sources += [
 		"src/tools/common.cpp",
@@ -422,6 +412,12 @@ def get_libplatform(arguments, target_platform):
 
 	macosx = libplatform.layout(platform="macosx")
 	macosx.sources += [
+		# application
+		"src/platform/application/osx/osx_appdelegate.mm",
+		"src/platform/application/osx/osx_appdelegate.h",
+		"src/platform/application/osx/osx_application.mm",
+		"src/platform/application/osx/osx_application.h",
+
 		# dylib
 		"src/platform/dylib/osx/osx_dylib.cpp",
 		"src/platform/dylib/posix/posix_dlopen.cpp",
@@ -643,7 +639,6 @@ def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwarg
 
 	setup_driver(kraken)
 	setup_common_tool(kraken)
-	setup_common_application(kraken)
 	setup_gui(kraken)
 
 	kraken.dependencies.extend([
@@ -757,7 +752,6 @@ def products(arguments, **kwargs):
 	gemini.object_root = "obj"
 
 	setup_common_libs(arguments, gemini)
-	setup_common_application(gemini)
 
 	gemini.sources += [
 		"src/engine/gemini.cpp"
