@@ -47,7 +47,7 @@
 
 namespace core
 {
-	struct Color
+	struct LIBRARY_EXPORT Color
 	{
 		static Color fromFloatPointer( const float * fl, int num_elements );
 		static Color from_int(unsigned int color);

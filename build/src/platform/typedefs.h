@@ -24,6 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <platform/config.h>
+
 //
 // Helpful Macros
 //
