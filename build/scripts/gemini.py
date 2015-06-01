@@ -611,6 +611,25 @@ def get_rnd(arguments, links, **kwargs):
 
 	return rnd
 
+def create_unit_test(name, links, source):
+	product = Product(name=name, output=ProductType.Commandline)	
+	product.project_root = COMMON_PROJECT_ROOT
+	product.root = "../"	
+	product.includes += [
+		"tests"
+	]
+	product.sources += [
+		"tests/unit_test.h",
+		source
+	]
+	product.dependencies.extend(links)
+	return product
+
+def get_unit_tests(arguments, links, **kwargs):
+	test_core = create_unit_test("test_core", links, "tests/src/test_core.cpp")
+
+	return [test_core]
+
 def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
 	global_params = kwargs.get("global_params")
 	target_platform = kwargs.get("target_platform")
@@ -670,6 +689,7 @@ def arguments(parser):
 
 	parser.add_argument("--with-oculusvr", dest="with_oculusvr", action="store_true", help="Build with OculusVR support", default=False)
 	parser.add_argument("--with-tools", dest="with_tools", action="store_true", help="Build with support for tools", default=False)
+	parser.add_argument("--with-tests", dest="with_tests", action="store_true", help="Build with support for unit tests", default=False)
 
 def products(arguments, **kwargs):
 
@@ -874,6 +894,9 @@ def products(arguments, **kwargs):
 
 
 	rnd = get_rnd(arguments, [libruntime, librenderer, libplatform, libcore], **kwargs)
+	tests = []
+	if arguments.with_tests:
+		tests = get_unit_tests(arguments, [libruntime, librenderer, libplatform, libcore, Dependency(file="glm.py")], **kwargs)
 
-	return [librenderer, libruntime, libplatform, libcore] + [gemini] + tools + [rnd]
+	return [librenderer, libruntime, libplatform, libcore] + [gemini] + tools + [rnd] + tests
 

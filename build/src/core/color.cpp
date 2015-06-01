@@ -90,4 +90,9 @@ namespace core
 	{
 		return (((a << 24) | (b << 16) | (g << 8) | r));
 	}
+	
+	bool Color::operator==(const Color& other) const
+	{
+		return (r == other.r) && (g == other.g) && (b == other.b) && (a == other.a);
+	}
 } // namespace core

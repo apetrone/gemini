@@ -57,6 +57,7 @@ namespace core
 		Color( unsigned char _r = 255, unsigned char _g = 255, unsigned char _b = 255, unsigned char _a = 255 );
 		void set( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a = 255 );
 		uint32_t as_uint32() const;
+		bool operator==(const Color& other) const;
 	}; // Color
 
 
