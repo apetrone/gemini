@@ -29,6 +29,8 @@ libsdl = Dependency(file="sdl2.py",
 	]
 )
 
+libnom = Dependency(file="nom.py")
+
 def setup_common_variables(arguments, target_platform, product):
 	product.sources += [
 		"src/engine/*.c*",
@@ -104,16 +106,6 @@ def setup_datamodel(product):
 		"src/tools/common/*.h",
 		"src/tools/datamodel/*.cpp",
 		"src/tools/datamodel/*.h"
-	]
-
-
-def setup_gui(product):
-	product.sources += [
-		"src/shared/guirenderer.h",
-		"src/shared/guirenderer.cpp",		
-	]
-	product.includes += [
-		"src/shared"
 	]
 
 def setup_common_tool(product):
@@ -317,70 +309,32 @@ def get_tools(libruntime, librenderer, libplatform, libcore, **kwargs):
 
 	return tools
 
-def get_librenderer(arguments, target_platform, libruntime):
-	librenderer = Product(name="renderer", output=ProductType.DynamicLibrary)
-	setup_driver(librenderer)
-	librenderer.project_root = COMMON_PROJECT_ROOT
-	librenderer.root = "../"
-	librenderer.sources += [
-		"src/renderer/*.*",
-		"src/renderer/gl/*.cpp",
-		"src/renderer/gl/*.h",
 
-		"src/contrib/stb_image.c",
-		"src/contrib/stb_truetype.h",		
+def get_libcore(arguments, target_platform):
+	libcore = Product(name="core", output=ProductType.DynamicLibrary)
+	setup_driver(libcore)
+	libcore.project_root = COMMON_PROJECT_ROOT
+	libcore.root = "../"
+	libcore.sources += [
+		"src/core/*.*",
 
-		# include this almagamated version of jsoncpp until we replace it.
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")		
+		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c")
 	]
 
-	librenderer.defines += [
-		"JSON_IS_AMALGAMATION"
+
+	libcore.includes += [
+		"src",
+		"src/core",
+
+		os.path.join(DEPENDENCIES_FOLDER, "murmur3")
 	]
 
-	librenderer.includes += [
-		"src/contrib",
-
-		"src/renderer",
-		"src/renderer/gl",
-
-		os.path.join(DEPENDENCIES_FOLDER, "fontstash/src"),
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp")	
+	libcore.dependencies += [
+		Dependency(file="glm.py")
 	]
 
-	librenderer.dependencies += [
-		libruntime
-	]
-
-	if target_platform.get() in DESKTOP:
-		librenderer.sources += [
-			"src/renderer/gl/desktop/*.cpp",
-			"src/renderer/gl/desktop/*.h"
-		]
-
-
-	if arguments.gles:
-		librenderer.sources += [
-			"src/renderer/gl/mobile/*.cpp",
-			"src/renderer/gl/mobile/*.h"			
-		]
-
-		librenderer.defines += [
-			"PLATFORM_USE_GLES2=1"
-		]
-
-	macosx = librenderer.layout(platform="macosx")
-	macosx.sources += [
-		"src/renderer/gl/gemgl_osx.mm"
-	]
-
-	macosx.links += [
-		"Cocoa.framework",
-		"OpenGL.framework"
-	]
-
-	return librenderer
-
+	return libcore
+	
 def get_libplatform(arguments, target_platform):
 	libplatform = Product(name="platform", output=ProductType.DynamicLibrary)
 	setup_driver(libplatform)
@@ -505,30 +459,71 @@ def get_libplatform(arguments, target_platform):
 
 	return libplatform
 
-def get_libcore(arguments, target_platform):
-	libcore = Product(name="core", output=ProductType.DynamicLibrary)
-	setup_driver(libcore)
-	libcore.project_root = COMMON_PROJECT_ROOT
-	libcore.root = "../"
-	libcore.sources += [
-		"src/core/*.*",
 
-		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c")
+
+def get_librenderer(arguments, target_platform, libruntime):
+	librenderer = Product(name="renderer", output=ProductType.DynamicLibrary)
+	setup_driver(librenderer)
+	librenderer.project_root = COMMON_PROJECT_ROOT
+	librenderer.root = "../"
+	librenderer.sources += [
+		"src/renderer/*.*",
+		"src/renderer/gl/*.cpp",
+		"src/renderer/gl/*.h",
+
+		"src/contrib/stb_image.c",
+		"src/contrib/stb_truetype.h",		
+
+		# include this almagamated version of jsoncpp until we replace it.
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")		
 	]
 
-
-	libcore.includes += [
-		"src",
-		"src/core",
-
-		os.path.join(DEPENDENCIES_FOLDER, "murmur3")
+	librenderer.defines += [
+		"JSON_IS_AMALGAMATION"
 	]
 
-	libcore.dependencies += [
-		Dependency(file="glm.py")
+	librenderer.includes += [
+		"src/contrib",
+
+		"src/renderer",
+		"src/renderer/gl",
+
+		os.path.join(DEPENDENCIES_FOLDER, "fontstash/src"),
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp")	
 	]
 
-	return libcore
+	librenderer.dependencies += [
+		libruntime
+	]
+
+	if target_platform.get() in DESKTOP:
+		librenderer.sources += [
+			"src/renderer/gl/desktop/*.cpp",
+			"src/renderer/gl/desktop/*.h"
+		]
+
+
+	if arguments.gles:
+		librenderer.sources += [
+			"src/renderer/gl/mobile/*.cpp",
+			"src/renderer/gl/mobile/*.h"			
+		]
+
+		librenderer.defines += [
+			"PLATFORM_USE_GLES2=1"
+		]
+
+	macosx = librenderer.layout(platform="macosx")
+	macosx.sources += [
+		"src/renderer/gl/gemgl_osx.mm"
+	]
+
+	macosx.links += [
+		"Cocoa.framework",
+		"OpenGL.framework"
+	]
+
+	return librenderer
 
 def get_libruntime(arguments, target_platform):
 	libruntime = Product(name="runtime", output=ProductType.DynamicLibrary)
@@ -552,6 +547,8 @@ def get_libruntime(arguments, target_platform):
 		"src/runtime",
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),		
 	]
+
+	libruntime.dependencies.append(libnom)
 
 	return libruntime
 
@@ -633,14 +630,13 @@ def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwarg
 
 	setup_driver(kraken)
 	setup_common_tool(kraken)
-	setup_gui(kraken)
 
 	kraken.dependencies.extend([
 		libsdl,
 		libplatform,
 		libcore,
 		librenderer,
-		Dependency(file="nom.py")
+		libnom
 	])
 
 	kraken.sources += [
@@ -751,8 +747,6 @@ def products(arguments, **kwargs):
 		"src/engine/gemini.cpp"
 	]
 
-	setup_gui(gemini)
-
 	gemini.dependencies += [
 		libruntime,
 		librenderer,
@@ -761,7 +755,7 @@ def products(arguments, **kwargs):
 		libcore,
 		Dependency(file="sqrat.py"),
 		#Dependency(file="squirrel3.py", products=["squirrel", "sqstdlib"]),
-		Dependency(file="nom.py"),
+		libnom,
 		Dependency(file="bullet2.py", products=["BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"])
 	]
 
