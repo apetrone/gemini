@@ -933,7 +933,12 @@ def get_config_variables(arguments, product, target_platform):
 			"winmm",
 			"imm32",
 			"version",
-			"kernel32"
+			"kernel32",
+			"ole32",
+			"user32",
+			"gdi32",
+			"shell32",
+			"oleaut32"
 		]
 
 		product.sources += [
@@ -962,10 +967,6 @@ def products(arguments, **kwargs):
 	generate_config = True
 
 	product_type = ProductType.DynamicLibrary
-
-	# temporarily use static lib on windows
-	if target_platform.matches("windows"):
-		product_type = ProductType.StaticLibrary
 
 	sdl2 = Product(name="SDL2", output=product_type)
 	sdl2.root = "../dependencies/SDL2"
