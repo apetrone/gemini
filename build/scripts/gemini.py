@@ -878,7 +878,10 @@ def products(arguments, **kwargs):
 	rnd = get_rnd(arguments, [libruntime, librenderer, libplatform, libcore], **kwargs)
 	tests = []
 	if arguments.with_tests:
-		tests = get_unit_tests(arguments, [libruntime, librenderer, libplatform, libcore, Dependency(file="glm.py")], **kwargs)
+		# Ugh, for now, we also link in libnom because the runtime requires it.
+		# I feel like pegasus should identify such dependencies and take care of it in the future.
+		# Though, for now, just link it in.
+		tests = get_unit_tests(arguments, [libruntime, librenderer, libplatform, libcore, Dependency(file="glm.py"), libnom], **kwargs)
 
 	return [librenderer, libruntime, libplatform, libcore] + [gemini] + tools + [rnd] + tests
 

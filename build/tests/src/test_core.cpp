@@ -26,7 +26,15 @@
 #include <core/argumentparser.h>
 #include <core/color.h>
 #include <core/datastream.h>
+#include <core/fixedarray.h>
+#include <core/fixedsizequeue.h>
+#include <core/hashset.h>
+#include <core/mathlib.h>
 
+#include <core/str.h>
+#include <core/stackstring.h>
+
+#include <platform/platform.h>
 
 #include <vector>
 #include <string>
@@ -147,10 +155,204 @@ void test_datastream()
 }
 
 
+// ---------------------------------------------------------------------
+// array
+// ---------------------------------------------------------------------
+void test_array()
+{
+	TEST_CATEGORY(array);
+	
+	FixedArray<int> int_array;
+	int_array.allocate(32);
+	TEST_VERIFY(int_array.size() == 32, size);
+	
+	int_array[15] = 0xbeef;
+	TEST_VERIFY(int_array[15] == 0xbeef, array_index);
+	
+	TEST_VERIFY(int_array.empty() == false, empty_when_not_empty);
+	
+	int_array.clear();
+	TEST_VERIFY(int_array.size() == 0, clear);
+	
+	int_array.empty();
+	TEST_VERIFY(int_array.empty() == true, empty_when_empty);
+	
+	
+	// test with a smaller size
+	int_array.allocate(2);
+	TEST_VERIFY(int_array.size() == 2, reallocate);
+	
+	int_array[0] = 128;
+	int_array[1] = 256;
+	
+
+	int values[2];
+	size_t index = 0;
+	for (auto& i : int_array)
+	{
+		values[index++] = i;
+	}
+	
+	TEST_VERIFY(values[0] == 128 && values[1] == 256, ranged_for_loop);
+}
+
+
+// ---------------------------------------------------------------------
+// FixedSizeQueue
+// ---------------------------------------------------------------------
+void test_fixedsizequeue()
+{
+	TEST_CATEGORY(FixedSizeQueue);
+	
+	FixedSizeQueue<int, 4> small_queue;
+	
+	small_queue.push_back(32);
+	small_queue.push_back(64);
+	small_queue.push_back(128);
+	small_queue.push_back(256);
+	
+	TEST_VERIFY(small_queue.size() == 4, size);
+	
+	TEST_VERIFY(small_queue.empty() == false, empty_when_not_empty);
+	
+	int value = small_queue.pop();
+	TEST_VERIFY(value == 256, lifo_pop);
+	
+	int values[3];
+	values[0] = small_queue.pop();
+	values[1] = small_queue.pop();
+	values[2] = small_queue.pop();
+	TEST_VERIFY(values[0] == 128 && values[1] == 64 && values[2] == 32, pop);
+	
+	TEST_VERIFY(small_queue.empty() == true, empty_when_empty);
+}
+
+
+// ---------------------------------------------------------------------
+// HashSet
+// ---------------------------------------------------------------------
+void test_hashset()
+{
+	TEST_CATEGORY(HashSet);
+	
+	HashSet<std::string, int> dict;
+	dict["first"] = 1;
+	TEST_VERIFY(dict.size() == 1, operator_insert);
+	dict["second"] = 2;
+	dict["third"] = 3;
+	dict["fourth"] = 4;
+	
+	TEST_VERIFY(dict.size() == 4, size);
+	
+	TEST_VERIFY(dict.has_key("third"), has_key);
+	
+	dict.insert(std::pair<std::string, int>("fifth", 5));
+	TEST_VERIFY(dict.size() == 5, insert);
+	
+	dict.clear();
+	TEST_VERIFY(dict.size() == 0, clear);
+	
+	
+	HashSet<std::string, void*> custom_capacity(4096);
+	TEST_VERIFY(custom_capacity.capacity() == 4096, capacity);
+	
+	
+	int second = dict.get("second");
+	TEST_VERIFY(second == 2, get);
+}
+
+
+// ---------------------------------------------------------------------
+// interpolation
+// ---------------------------------------------------------------------
+
+
+// ---------------------------------------------------------------------
+// mathlib
+// ---------------------------------------------------------------------
+void test_mathlib()
+{
+	TEST_CATEGORY(mathlib);
+	
+	float forty_five_degrees = 45.0f;
+	float forty_five_degrees_in_radians = 0.785398185f;
+	
+	
+	float temp = mathlib::degrees_to_radians(45);
+	TEST_VERIFY(temp == forty_five_degrees_in_radians, degrees_to_radians);
+	
+	temp = mathlib::radians_to_degrees(temp);
+	TEST_VERIFY(temp == 45, radians_to_degrees);
+}
+
+
+// ---------------------------------------------------------------------
+// StackString
+// ---------------------------------------------------------------------
+void test_stackstring()
+{
+	TEST_CATEGORY(StackString);
+	
+	StackString<128> s1;
+	
+	s1 = "name";
+	TEST_VERIFY(s1.size() == 4, size);
+	
+	s1.clear();
+	TEST_VERIFY(s1.size() == 0, clear);
+	
+	TEST_VERIFY(s1.is_empty(), is_empty);
+	
+	s1 = "/usr/bin/git";
+	char* last_slash = s1.find_last_slash();
+	TEST_VERIFY(*last_slash == '/' && last_slash == &s1[8], find_last_slash);
+	
+	StackString<128> base = s1.basename();
+	TEST_VERIFY(base == "git", basename);
+	
+	StackString<128> directory = s1.dirname();
+	TEST_VERIFY(directory == "/usr/bin", dirname);
+	
+	StackString<128> filename = "c:\\Users\\Administrator\\archive.zip";
+	StackString<128> ext = filename.extension();
+	TEST_VERIFY(ext == "zip", extension);
+
+	filename = "c:/abnormal/path\\mixed\\slashes/with\\archive.zip";
+	filename.normalize('\\');
+	
+	TEST_VERIFY(filename == "c:\\abnormal\\path\\mixed\\slashes\\with\\archive.zip", normalize);
+	
+	filename = "test";
+	filename.append("_one_two");
+	TEST_VERIFY(filename == "test_one_two", append);
+	
+	s1 = "whitespace sucks    ";
+	s1 = s1.strip_trailing(' ');
+	TEST_VERIFY(s1 == "whitespace sucks", strip_trailing);
+	
+	s1.replace("whitespace", "water");
+	s1.replace("sucks", "is delicious");
+	TEST_VERIFY(s1 == "water is delicious", replace);
+	
+	s1 = "orion gemini constellation";
+	TEST_VERIFY(s1.startswith("orion"), startswith);
+}
+
+
 int main(int, char**)
 {
+	platform::memory::startup();
+
 	test_argumentparser();
 	test_color();
 	test_datastream();
+	test_array();
+	test_fixedsizequeue();
+	test_hashset();
+	test_mathlib();
+	test_stackstring();
+	
+	platform::memory::shutdown();
+	
 	return 0;
 }
