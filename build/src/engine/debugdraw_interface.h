@@ -26,77 +26,11 @@
 
 #include <sdk/debugdraw_api.h>
 
-#include <string>
-
-#include <renderer/shaderprogram.h>
-#include <renderer/vertexstream.h>
-#include <renderer/font.h>
-
 namespace gemini
 {
-	namespace debugdraw
-	{
-		// if you modify this, you must also update the buffer_primitive_table.
-		enum
-		{
-			TYPE_BOX=1,
-			TYPE_LINE,
-			TYPE_AXES,
-			TYPE_SPHERE,
-			TYPE_TEXT,
-			TYPE_TRIANGLE,
-			
-			TYPE_COUNT
-		};
-		
-		struct DebugPrimitive
-		{
-			short type; // type of primitive
-			short flags;
-			float timeleft; // the time left until this object is no longer rendered
-			float radius;
-			glm::vec3 start;
-			glm::vec3 end;
-			glm::vec3 alt;
-			core::Color color;
-			
-			// for text
-			std::string buffer;
-			glm::mat4 transform;
-			
-			DebugPrimitive();
-		}; // DebugPrimitive
-		
-		struct DebugDrawVertex
-		{
-			glm::vec3 position;
-			core::Color color;
-		}; // DebugDrawVertex
-	} // namespace debugdraw
-
 	class DebugDrawInterface : public gemini::IDebugDraw
 	{
-		::renderer::VertexStream vertex_stream;
-		::renderer::VertexStream triangle_stream;
-		unsigned int next_primitive;
-		unsigned int max_primitives;
-		debugdraw::DebugPrimitive* primitive_list;
-		font::Handle debug_font;
-		renderer::ShaderProgram* debug_shader;
-	private:
-	
-		debugdraw::DebugPrimitive* request_primitive();
-	
 	public:
-		void startup(unsigned int max_primitives, renderer::ShaderProgram* program, const font::Handle& font);
-		void shutdown();
-		void update(float delta_msec);
-		
-		void render(const glm::mat4 & modelview, const glm::mat4 & projection, int x, int y, int viewport_width, int viewport_height);
-		void generate_circle(const glm::vec3 & origin, glm::vec3 * vertices, int num_sides, float radius, int plane);
-		
-		font::Handle get_debug_font() const { return debug_font; }
-		
 		// IDebugDraw interface
 		virtual void axes(const glm::mat4& transform, float axis_length, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
 		virtual void basis(const glm::vec3& origin, const glm::vec3& basis, float axis_length, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
@@ -107,5 +41,4 @@ namespace gemini
 		virtual void text(int x, int y, const char* string, const core::Color& color, float duration = 0);
 		virtual void triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const core::Color& color, float duration = DEBUGDRAW_MIN_DURATION_MSEC);
 	}; // DebugDrawInterface
-	
 } // namespace gemini

@@ -34,3 +34,6 @@
 [submodule "build/dependencies/bullet2"]
 	path = build/dependencies/bullet2
 	url = git://github.com/apetrone/bulletphysics.git
+[submodule "build/dependencies/recastnavigation"]
+	path = build/dependencies/recastnavigation
+	url = git://github.com/memononen/recastnavigation

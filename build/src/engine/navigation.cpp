@@ -28,17 +28,17 @@
 
 #include <RecastAlloc.h> // so we can override the default allocator
 #include <Recast.h>
-#include <Include/RecastDebugDraw.h>
-#include <Include/DebugDraw.h>
-#include <Include/RecastDump.h>
+#include <RecastDebugDraw.h>
+#include <DebugDraw.h>
+#include <RecastDump.h>
 
 #include <DetourAlloc.h> // so we can override the default allocator
 #include <DetourNavMesh.h>
 #include <DetourNavMeshQuery.h>
 #include <DetourNavMeshBuilder.h>
-#include <Include/DetourDebugDraw.h>
+#include <DetourDebugDraw.h>
 
-#include <debugdraw.h>
+#include <renderer/debugdraw.h>
 #include <core/color.h>
 
 #include <core/mathlib.h>
