@@ -62,7 +62,7 @@ public:
 	// An item onto the queue. This can fail if it's full.
 	bool push_back(const Type& item)
 	{
-		if (tail_index != (total_elements-1))
+		if (tail_index != total_elements)
 		{
 			elements[tail_index++] = item;
 			return true;

@@ -30,14 +30,14 @@
 
 namespace core
 {
-	template <unsigned int size, class Type=char>
+	template <unsigned int maximum_size, class Type=char>
 	struct StackString
 	{
 	private:
-		typedef StackString<size, Type> StackStringType;
+		typedef StackString<maximum_size, Type> StackStringType;
 		
 	public:
-		Type _data[ size ];
+		Type _data[maximum_size];
 		unsigned int _length;
 		
 		StackString( int flags = 0 )
@@ -59,7 +59,7 @@ namespace core
 		
 		unsigned int max_size() const
 		{
-			return size;
+			return maximum_size;
 		}
 		
 		void copy_data(const Type* source)
@@ -71,7 +71,7 @@ namespace core
 		
 		void clear()
 		{
-			memset( _data, 0, size );
+			memset(_data, 0, maximum_size);
 			_length = 0;
 		}
 		
@@ -80,9 +80,9 @@ namespace core
 			return _length == 0;
 		}
 		
-		unsigned int find_length()
+		size_t size()
 		{
-			_length = xstr_len( _data );
+			_length = str::len(_data);
 			return _length;
 		}
 		
@@ -215,7 +215,7 @@ namespace core
 		{
 			if (s)
 			{
-				if (_length + core::str::len(s) < size)
+				if (_length + core::str::len(s) < maximum_size)
 				{
 					core::str::cat(_data, s);
 					_length = core::str::len(_data);
@@ -245,7 +245,7 @@ namespace core
 		{
 			if (_length > 0)
 			{
-				if (_data[_length-1] == character)
+				while (_data[_length-1] == character)
 				{
 					_data[_length-1] = 0;
 					_length--;
@@ -259,23 +259,23 @@ namespace core
 		void lshift(int pos, int count)
 		{
 			char * src;
-			char temp[ size ];
-			memset( temp, 0, size );
-			memcpy( temp, _data, size );
+			char temp[ maximum_size ];
+			memset( temp, 0, maximum_size );
+			memcpy( temp, _data, maximum_size );
 			src = &temp[pos+count];
 			
-			memcpy( _data+pos, src, size-pos );
+			memcpy( _data+pos, src, maximum_size-pos );
 		}
 		
 		void shift(int pos, int count)
 		{
 			char * src;
-			char temp[ size ];
-			memset( temp, 0, size );
-			memcpy( temp, _data, size );
+			char temp[ maximum_size ];
+			memset( temp, 0, maximum_size );
+			memcpy( temp, _data, maximum_size );
 			src = &temp[pos];
 			
-			for( int i = pos; i < size; ++i )
+			for( int i = pos; i < maximum_size; ++i )
 			{
 				if( *src == '\0' )
 				{
@@ -297,8 +297,8 @@ namespace core
 		void replace(const Type* s1, const Type* s2)
 		{
 			// replacement can be larger, smaller or equal size
-			size_t srclen = xstr_len(s1);
-			size_t dstlen = xstr_len(s2);
+			size_t srclen = core::str::len(s1);
+			size_t dstlen = core::str::len(s2);
 			
 			char * p = _data;
 			while( (p = strstr( p, s1 )) )
@@ -341,12 +341,12 @@ namespace core
 			return true;
 		} // startswith
 		
-		StackStringType substring(size_t start, size_t len = size)
+		StackStringType substring(size_t start, size_t len = maximum_size)
 		{
 			StackStringType output;
-			if (len > (size-start))
+			if (len > (maximum_size-start))
 			{
-				len = size-start;
+				len = maximum_size-start;
 			}
 		
 			memcpy(output._data, &_data[start], len);
