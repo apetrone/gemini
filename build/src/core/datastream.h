@@ -34,7 +34,7 @@ namespace core
 {
 	namespace util
 	{
-		class DataStream
+		class LIBRARY_EXPORT DataStream
 		{
 		public:
 			virtual ~DataStream() {}
@@ -61,7 +61,7 @@ namespace core
 			virtual void flush() = 0;
 		};
 		
-		class MemoryStream : public DataStream
+		class LIBRARY_EXPORT MemoryStream : public DataStream
 		{
 		public:
 			uint8_t* data;
