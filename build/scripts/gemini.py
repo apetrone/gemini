@@ -30,6 +30,7 @@ libsdl = Dependency(file="sdl2.py",
 )
 
 libnom = Dependency(file="nom.py")
+librecastnavigation = Dependency(file="recastnavigation.py")
 
 def setup_common_variables(arguments, target_platform, product):
 	product.sources += [
@@ -726,6 +727,8 @@ def products(arguments, **kwargs):
 	librenderer = get_librenderer(arguments, target_platform, libruntime)
 	librenderer.dependencies += [libcore, libplatform, Dependency(file="glm.py")]
 
+	# don't add this until we clean up the shaderconfig dependency on libruntime
+	#libruntime.dependencies.append(librenderer)
 	
 
 
@@ -756,7 +759,8 @@ def products(arguments, **kwargs):
 		Dependency(file="sqrat.py"),
 		#Dependency(file="squirrel3.py", products=["squirrel", "sqstdlib"]),
 		libnom,
-		Dependency(file="bullet2.py", products=["BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"])
+		Dependency(file="bullet2.py", products=["BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"]),
+		librecastnavigation
 	]
 
 	if arguments.with_oculusvr:

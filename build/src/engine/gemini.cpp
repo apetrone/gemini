@@ -38,6 +38,7 @@
 #include <renderer/renderer.h>
 #include <renderer/renderstream.h>
 #include <renderer/constantbuffer.h>
+#include <renderer/debugdraw.h>
 
 // SDK
 #include <sdk/audio_api.h>
@@ -53,7 +54,7 @@
 
 #include "input.h"
 
-#include "debugdraw.h"
+
 #include "assets/asset_font.h"
 #include "assets/asset_shader.h"
 #include "assets/asset_mesh.h"
