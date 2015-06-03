@@ -32,6 +32,7 @@
 #define BTVECTOR3_TO_VEC3( v ) glm::vec3( v.x(), v.y(), v.z() )
 
 using namespace core;
+namespace debugdraw = ::renderer::debugdraw;
 
 namespace gemini
 {
