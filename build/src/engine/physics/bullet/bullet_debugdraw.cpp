@@ -41,13 +41,13 @@ namespace gemini
 		{
 			void DebugPhysicsRenderer::drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color )
 			{
-				Color c = Color::fromFloatPointer( &color[0], 3 );
+				Color c = Color::from_float_pointer( &color[0], 3 );
 				debugdraw::line( BTVECTOR3_TO_VEC3( from ), BTVECTOR3_TO_VEC3( to ), c, 0 );
 			}
 			
 			void DebugPhysicsRenderer::drawLine( const btVector3& from, const btVector3& to, const btVector3& fromColor, const btVector3& color )
 			{
-				Color c = Color::fromFloatPointer( &color[0], 3 );
+				Color c = Color::from_float_pointer( &color[0], 3 );
 				debugdraw::line( BTVECTOR3_TO_VEC3( from ), BTVECTOR3_TO_VEC3( to ), c, 0 );
 			}
 			

@@ -28,28 +28,11 @@
 
 #include <platform/typedefs.h>
 
-
-//#ifdef RGB
-//#undef RGB
-//#endif
-
-//#define RGBToUInt( r, g, b ) (((r&255)<<24) | ((g&255) <<16) | ((b&255)<<8) | 255)
-//#define UIntToRGB( i, c ) c[0] = ((i>>24)&255); c[1] = ((i>>16)&255); c[2] = ((i>>8)&255)
-//#define RGBAToUInt(r, g, b, a) ((r) | (g << 8) | (b << 16) | (a << 24))
-//#define PACK_RGBA( r, g, b, a ) ((a << 24) | (b << 16) | (g << 8) | r)
-//#define UNPACK_RGBA( i, c ) c[3] = ((i>>24)&255); c[2] = ((i>>16)&255); c[1] = ((i>>8)&255); c[0] = (i&255);
-
-
-
-// unsigned char rgba[3];
-// unsigned int mycolor = RGBToUInt( 255, 128, 75 );
-// UIntToRGB( mycolor, rgb );
-
 namespace core
 {
 	struct LIBRARY_EXPORT Color
 	{
-		static Color fromFloatPointer( const float * fl, int num_elements );
+		static Color from_float_pointer( const float * fl, int num_elements );
 		static Color from_int(unsigned int color);
 		static Color from_ubyte(unsigned char* ubyte);
 		
