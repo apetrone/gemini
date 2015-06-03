@@ -28,9 +28,7 @@
 #include <renderer/renderstream.h>
 #include <renderer/font.h>
 
-using namespace renderer;
-
-namespace gemini
+namespace renderer
 {
 	namespace debugdraw
 	{
@@ -600,4 +598,4 @@ namespace gemini
 		}
 
 	} // namespace debugdraw
-} // namespace gemini
+} // namespace renderer

@@ -25,6 +25,7 @@
 #include "debugdraw_interface.h"
 #include <renderer/debug_draw.h>
 
+
 namespace gemini
 {
 	IDebugDraw::~IDebugDraw()
@@ -33,41 +34,41 @@ namespace gemini
 	
 	void DebugDrawInterface::axes(const glm::mat4& transform, float axis_length, float duration)
 	{
-		debugdraw::axes(transform, axis_length, duration);
+		renderer::debugdraw::axes(transform, axis_length, duration);
 	} // axes
 	
 	void DebugDrawInterface::basis(const glm::vec3& origin, const glm::vec3& basis, float axis_length, float duration)
 	{
-		debugdraw::basis(origin, basis, axis_length, duration);
+		renderer::debugdraw::basis(origin, basis, axis_length, duration);
 	} // basis
 	
 	void DebugDrawInterface::box(const glm::vec3& mins, const glm::vec3& maxs, const core::Color& color, float duration)
 	{
-		debugdraw::box(mins, maxs, color, duration);
+		renderer::debugdraw::box(mins, maxs, color, duration);
 	} // box
 	
 	void DebugDrawInterface::point(const glm::vec3& pt, const core::Color& color, float size, float duration)
 	{
-		debugdraw::point(pt, color, size, duration);
+		renderer::debugdraw::point(pt, color, size, duration);
 	} // point
 	
 	void DebugDrawInterface::line(const glm::vec3& start, const glm::vec3& end, const core::Color& color, float duration)
 	{
-		debugdraw::line(start, end, color, duration);
+		renderer::debugdraw::line(start, end, color, duration);
 	} // line
 	
 	void DebugDrawInterface::sphere(const glm::vec3& center, const core::Color& color, float radius, float duration)
 	{
-		debugdraw::sphere(center, color, radius, duration);
+		renderer::debugdraw::sphere(center, color, radius, duration);
 	} // sphere
 		
 	void DebugDrawInterface::text(int x, int y, const char* string, const core::Color& color, float duration)
 	{
-		debugdraw::text(x, y, string, color, duration);
+		renderer::debugdraw::text(x, y, string, color, duration);
 	} // text
 	
 	void DebugDrawInterface::triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const core::Color& color, float duration)
 	{
-		debugdraw::triangle(v0, v1, v2, color, duration);
+		renderer::debugdraw::triangle(v0, v1, v2, color, duration);
 	} // triangle
 } // namespace gemini

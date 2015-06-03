@@ -45,6 +45,8 @@
 
 using core::Color;
 
+namespace debugdraw = ::renderer::debugdraw;
+
 namespace gemini
 {
 	namespace navigation

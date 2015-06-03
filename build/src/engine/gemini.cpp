@@ -407,7 +407,7 @@ public:
 			render_scene_from_camera(entity_list, camera, scenelink);
 			
 			// draw debug graphics
-			debugdraw::render(camera.matCam, camera.matProj, x, y, width, height);
+			::renderer::debugdraw::render(camera.matCam, camera.matProj, x, y, width, height);
 			
 			camera.matCam = old_matcam;
 			
@@ -471,7 +471,7 @@ public:
 
 		render_scene_from_camera(entity_list, newview, scenelink);
 		
-		debugdraw::render(view.modelview, view.projection, 0, 0, view.width, view.height);
+		::renderer::debugdraw::render(view.modelview, view.projection, 0, 0, view.width, view.height);
 	}
 	
 	virtual void render_viewmodel(gemini::IEngineEntity* entity, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles)
@@ -999,7 +999,7 @@ public:
 	virtual gemini::physics::IPhysicsInterface* physics() { return physics_interface; }
 	virtual IExperimental* experiment() { return experimental_interface; }
 	virtual core::logging::ILog* log() { return core::log::instance(); }
-	virtual gemini::IDebugDraw* debugdraw() { return debugdraw::instance(); }
+	virtual gemini::IDebugDraw* debugdraw() { return gemini::debugdraw::instance(); }
 	virtual gemini::IAudioInterface* audio() { return gemini::audio::instance(); }
 	
 	virtual void* allocate(size_t size)
@@ -1556,9 +1556,9 @@ Options:
 			assets::Font* debugfont = assets::fonts()->load_from_path(DEBUG_FONT);
 			assert(debugshader != 0);
 			assert(debugfont != 0);
-			debugdraw::startup(config.debugdraw_max_primitives, debugshader->program, debugfont->handle);
+			::renderer::debugdraw::startup(config.debugdraw_max_primitives, debugshader->program, debugfont->handle);
 			DebugDrawInterface* debug_draw = MEMORY_NEW(DebugDrawInterface, platform::memory::global_allocator());
-			debugdraw::instance = debug_draw;
+			gemini::debugdraw::instance = debug_draw;
 			
 		}
 		
@@ -1705,7 +1705,7 @@ Options:
 			// this is going to be incorrect unless this is placed in the step.
 			// additionally, these aren't interpolated: figure how to; for example,
 			// draw hit boxes for a moving player with this system.
-			debugdraw::update(params.step_interval_seconds);
+			::renderer::debugdraw::update(params.step_interval_seconds);
 			
 			// end step
 			
@@ -1815,9 +1815,9 @@ Options:
 //			debugdraw::text(x, y+24, core::str::format("active_camera->view = %.2g %.2g %.2g", main_camera.view.x, main_camera.view.y, main_camera.view.z), Color(128, 128, 255));
 //			debugdraw::text(x, y+36, core::str::format("active_camera->right = %.2g %.2g %.2g", main_camera.side.x, main_camera.side.y, main_camera.side.z), Color(255, 0, 0));
 		}
-		debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_raw_msec), Color(255, 255, 255));
+		::renderer::debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_raw_msec), Color(255, 255, 255));
 		y += 12;
-		debugdraw::text(x, y, core::str::format("# allocations = %i, total %2.2f MB\n",
+		::renderer::debugdraw::text(x, y, core::str::format("# allocations = %i, total %2.2f MB\n",
 			platform::memory::MemoryCategoryTracking<platform::memory::MemTagGlobal>::active_allocations,
 			platform::memory::MemoryCategoryTracking<platform::memory::MemTagGlobal>::active_bytes/(float)(1024*1024)), Color(64, 102, 192));
 //		y += 12;
@@ -1985,8 +1985,8 @@ Options:
 		hotloading::shutdown();
 		animation::shutdown();
 		gemini::physics::shutdown();
-		debugdraw::shutdown();
-		IDebugDraw* debug_draw = debugdraw::instance();
+		::renderer::debugdraw::shutdown();
+		IDebugDraw* debug_draw = gemini::debugdraw::instance();
 		MEMORY_DELETE(debug_draw, platform::memory::global_allocator());
 		font::shutdown();
 		assets::shutdown();
