@@ -83,6 +83,7 @@
 	#define NOPROXYSTUB
 	#define NOIMAGE
 	#define NOTAPE
+	#define NOMINMAX
 
 	#define PLATFORM_NAME "windows"
 	#define PLATFORM_WINDOWS 1
@@ -92,7 +93,7 @@
 	#define PLATFORM_IS_MOBILE 1
 	#define PLATFORM_POSIX 1
 #elif defined(__linux__)
-	#if RASPBERRYPI
+	#if defined(RASPBERRYPI)
 		// specifically built for RaspberryPi
 		#define PLATFORM_RASPBERRYPI 1
 		#define PLATFORM_NAME "raspberrypi"
@@ -103,7 +104,7 @@
 
 	#define PLATFORM_LINUX 1
 	#define PLATFORM_POSIX 1
-#elif __APPLE__
+#elif defined(__APPLE__)
 	#include <TargetConditionals.h>
 
 	#define PLATFORM_APPLE 1

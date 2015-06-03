@@ -27,33 +27,23 @@
 
 #include <platform/typedefs.h>
 
-// unsigned char rgba[3];
-// unsigned int mycolor = RGBToUInt( 255, 128, 75 );
-// UIntToRGB( mycolor, rgb );
-
 namespace core
 {
-
-	static inline float ubTof32( unsigned char c )
-	{
-		return float(( c / 255.0f ));
-	}
-
-	static inline unsigned int f32Toub( float f )
+	static inline unsigned char float_to_ubyte(float f)
 	{
 		return (f * 255.0f);
 	}
 	
-	Color Color::fromFloatPointer( const float * fl, int num_elements )
+	Color Color::from_float_pointer(const float* fl, int num_elements)
 	{
 		Color c;
-		if ( num_elements == 4 )
+		if (num_elements == 4)
 		{
-			c.set( f32Toub(fl[0]), f32Toub(fl[1]), f32Toub(fl[2]), f32Toub(fl[3]) );
+			c.set( float_to_ubyte(fl[0]), float_to_ubyte(fl[1]), float_to_ubyte(fl[2]), float_to_ubyte(fl[3]) );
 		}
 		else
 		{
-			c.set( f32Toub(fl[0]), f32Toub(fl[1]), f32Toub(fl[2]), 255 );
+			c.set( float_to_ubyte(fl[0]), float_to_ubyte(fl[1]), float_to_ubyte(fl[2]), 255 );
 		}
 		return c;
 	}
@@ -73,12 +63,12 @@ namespace core
 		return Color(ubyte[0], ubyte[1], ubyte[2], ubyte[3]);
 	}
 
-	Color::Color( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a )
+	Color::Color(unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a)
 	{
-		set( _r, _g, _b, _a );
+		set(_r, _g, _b, _a);
 	}
 
-	void Color::set( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a )
+	void Color::set(unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a)
 	{
 		r = _r;
 		g = _g;

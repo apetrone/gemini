@@ -30,40 +30,24 @@
 // Helpful Macros
 //
 
-/// make a string out of the input
-#define STRINGIZE( x ) STRINGIZE_A( x )
-#define STRINGIZE_A( x ) #x
-
-/// concat two params with a period inbetween
-#define CONCAT_PERIOD( x, y ) x "." y
-
 // This can be used to essentially remove macros by setting a macro's definition to this instead
 // Ex: #define MyMacro(x) NULL_MACRO
 #define NULL_MACRO (void(0))
 
-// Third Level of indirection for names based on line numbers, based on GameDev.net
-// daerid's code.
-// This code allows us to create a UNIQUE identifier based on the line number its on ex: line_var_identifier_97
-// Ex: type LINEVAR()
-
-#define LINEVAR() _LINEVAR( __LINE__ )
-#define _LINEVAR( line_num ) __LINEVAR( line_num )
-#define __LINEVAR( line_num ) line_var_identifier_ ## line_num
-
 //
 // Import / Export Macros
 //
-#if defined( PLATFORM_WINDOWS )
-	#define LIBRARY_EXPORT __declspec( dllexport )
-	#define LIBRARY_IMPORT __declspec( dllimport )
-	#define LIBRARY_CEXPORT extern "C" __declspec( dllexport )
+#if defined(PLATFORM_WINDOW)
+	#define LIBRARY_EXPORT __declspec(dllexport)
+	#define LIBRARY_IMPORT __declspec(dllimport)
+	#define LIBRARY_CEXPORT extern "C" __declspec(dllexport)
 #else
 	#define LIBRARY_EXPORT
 	#define LIBRARY_IMPORT
 	#define LIBRARY_CEXPORT extern "C"
 #endif
 
-#if defined ( LIBRARY_SDK )
+#if defined (LIBRARY_SDK)
 	#define	LIBRARY_SDK_EXPORT LIBRARY_EXPORT
 	#define LIBRARY_SDK_CEXPORT LIBRARY_CEXPORT
 #else

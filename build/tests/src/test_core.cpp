@@ -86,7 +86,7 @@ void test_color()
 	
 	Color temp;
 	float red_float[4] = {1.0f, 0.0f, 0.0f, 1.0f};
-	temp = Color::fromFloatPointer(red_float, 4);
+	temp = Color::from_float_pointer(red_float, 4);
 	TEST_VERIFY(temp == red, from_float_pointer);
 
 	uint32_t u32_color = red.as_uint32();
@@ -329,10 +329,6 @@ void test_stackstring()
 	s1 = "whitespace sucks    ";
 	s1 = s1.strip_trailing(' ');
 	TEST_VERIFY(s1 == "whitespace sucks", strip_trailing);
-	
-	s1.replace("whitespace", "water");
-	s1.replace("sucks", "is delicious");
-	TEST_VERIFY(s1 == "water is delicious", replace);
 	
 	s1 = "orion gemini constellation";
 	TEST_VERIFY(s1.startswith("orion"), startswith);

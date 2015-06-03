@@ -294,39 +294,6 @@ namespace core
 			}
 		}
 		
-		void replace(const Type* s1, const Type* s2)
-		{
-			// replacement can be larger, smaller or equal size
-			size_t srclen = core::str::len(s1);
-			size_t dstlen = core::str::len(s2);
-			
-			char * p = _data;
-			while( (p = strstr( p, s1 )) )
-			{
-				// equal size
-				if ( srclen == dstlen )
-				{
-					for( int i = 0; i < srclen; ++i )
-					{
-						memcpy( p, s2, dstlen );
-					}
-					p++;
-				}
-				else if ( srclen > dstlen )
-				{
-					lshift( (p-_data), (srclen-dstlen) );
-					memcpy( p, s2, srclen );
-					p++;
-				}
-				else if ( srclen < dstlen )
-				{
-					shift( (p-_data), (dstlen-srclen) );
-					memcpy( p, s2, dstlen );
-					p++;
-				}
-			}
-		} // replace
-		
 		bool startswith(const Type* s1) const
 		{
 			size_t string_length = core::str::len(s1);
