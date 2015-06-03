@@ -34,7 +34,7 @@ namespace gemini
 	class IDebugDraw
 	{
 	public:
-		virtual ~IDebugDraw() {};
+		virtual ~IDebugDraw();
 
 		// draw axes for a matrix4
 		virtual void axes(const glm::mat4& transform, float axis_length, float duration = DEBUGDRAW_MIN_DURATION_MSEC) = 0;

@@ -38,7 +38,7 @@
 #include <DetourNavMeshBuilder.h>
 #include <DetourDebugDraw.h>
 
-#include <renderer/debugdraw.h>
+#include <renderer/debug_draw.h>
 #include <core/color.h>
 
 #include <core/mathlib.h>

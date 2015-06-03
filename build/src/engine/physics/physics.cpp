@@ -28,7 +28,7 @@
 #include <btBulletDynamicsCommon.h>
 #include "physics_common.h"
 #include <core/color.h>
-#include <renderer/debugdraw.h>
+#include <renderer/debug_draw.h>
 
 #include "assets/asset_mesh.h"
 
