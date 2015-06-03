@@ -38,7 +38,7 @@
 #include <renderer/renderer.h>
 #include <renderer/renderstream.h>
 #include <renderer/constantbuffer.h>
-#include <renderer/debugdraw.h>
+#include <renderer/debug_draw.h>
 
 // SDK
 #include <sdk/audio_api.h>
@@ -54,7 +54,7 @@
 
 #include "input.h"
 
-
+#include "debugdraw_interface.h"
 #include "assets/asset_font.h"
 #include "assets/asset_shader.h"
 #include "assets/asset_mesh.h"
@@ -1557,6 +1557,9 @@ Options:
 			assert(debugshader != 0);
 			assert(debugfont != 0);
 			debugdraw::startup(config.debugdraw_max_primitives, debugshader->program, debugfont->handle);
+			DebugDrawInterface* debug_draw = MEMORY_NEW(DebugDrawInterface, platform::memory::global_allocator());
+			debugdraw::instance = debug_draw;
+			
 		}
 		
 //		renderer::IRenderDriver* driver = renderer::driver();
@@ -1983,6 +1986,8 @@ Options:
 		animation::shutdown();
 		gemini::physics::shutdown();
 		debugdraw::shutdown();
+		IDebugDraw* debug_draw = debugdraw::instance();
+		MEMORY_DELETE(debug_draw, platform::memory::global_allocator());
 		font::shutdown();
 		assets::shutdown();
 		input::shutdown();

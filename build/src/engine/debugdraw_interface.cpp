@@ -23,10 +23,14 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "debugdraw_interface.h"
-#include <renderer/debugdraw.h>
+#include <renderer/debug_draw.h>
 
 namespace gemini
 {
+	IDebugDraw::~IDebugDraw()
+	{
+	}
+	
 	void DebugDrawInterface::axes(const glm::mat4& transform, float axis_length, float duration)
 	{
 		debugdraw::axes(transform, axis_length, duration);
