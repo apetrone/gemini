@@ -33,6 +33,9 @@
 
 #include <core/str.h>
 #include <core/stackstring.h>
+#include <core/threadsafequeue.h>
+#include <core/util.h>
+
 
 #include <platform/platform.h>
 
@@ -215,6 +218,8 @@ void test_fixedsizequeue()
 	
 	TEST_VERIFY(small_queue.empty() == false, empty_when_not_empty);
 	
+	TEST_VERIFY(small_queue.push_back(123) == false, push_fails_when_full);
+	
 	int value = small_queue.pop();
 	TEST_VERIFY(value == 256, lifo_pop);
 	
@@ -335,6 +340,54 @@ void test_stackstring()
 }
 
 
+// ---------------------------------------------------------------------
+// str
+// ---------------------------------------------------------------------
+void test_str()
+{
+	TEST_CATEGORY(str);
+
+	int result = 0;
+		
+	const char static_buffer[] = "items: 30, value: 2.40";
+	char* output = str::format("items: %i, value: %2.2f", 30, 2.4f);
+
+	result = core::str::case_insensitive_compare(static_buffer, output, 0);
+	TEST_VERIFY(result == 0, format);
+	
+	char local[128] = {0};
+	result = core::str::sprintf(local, 128, "PAGE_SIZE: %llu\n", 4096);
+	TEST_VERIFY(result == 16, sprintf);
+	
+	memset(local, 0, 128);
+	core::str::copy(local, "PAGE_SIZE", 0);
+	TEST_VERIFY(core::str::case_insensitive_compare(local, "PAGE_SIZE", 0) == 0, copy);
+	
+	TEST_VERIFY(core::str::len(local) == 9, len);
+	
+	core::str::cat(local, " = 4096");
+	TEST_VERIFY(core::str::case_insensitive_compare(local, "PAGE_SIZE = 4096", 0) == 0, cat);
+	
+	char base[] = "string test number one";
+	result = core::str::case_insensitive_compare(base, "string test number one", 0);
+	TEST_VERIFY(result == 0, case_insensitive_compare);
+}
+
+
+// ---------------------------------------------------------------------
+// util
+// ---------------------------------------------------------------------
+void test_util()
+{
+	TEST_CATEGORY(util);
+	
+	TEST_VERIFY(0.0f <= util::random_range(0.0f, 1.0f) <= 1.0f, random_range0);
+	TEST_VERIFY(0.0f <= util::random_range(0.0f, 1.0f) <= 1.0f, random_range1);
+	TEST_VERIFY(0.0f <= util::random_range(0.0f, 1.0f) <= 1.0f, random_range2);
+	TEST_VERIFY(0.0f <= util::random_range(0.0f, 1.0f) <= 1.0f, random_range3);
+	TEST_VERIFY(0.0f <= util::random_range(0.0f, 1.0f) <= 1.0f, random_range4);
+}
+
 int main(int, char**)
 {
 	platform::memory::startup();
@@ -347,8 +400,19 @@ int main(int, char**)
 	test_hashset();
 	test_mathlib();
 	test_stackstring();
+	test_str();
+	test_util();
 	
 	platform::memory::shutdown();
 	
 	return 0;
 }
+
+#if 0
+#define TEST(name) void test_##name(UnitTestCategory& category)
+
+TEST(StackString)
+{
+	
+}
+#endif
