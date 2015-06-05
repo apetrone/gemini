@@ -140,10 +140,13 @@ namespace platform
 		size_t MemoryCategoryTracking<T>::largest_allocation = 0;
 
 		
-		template <class A, class T>
+		template <class A>
 		struct Allocator
 		{
-
+			A* implementation()
+			{
+				return static_cast<A*>(this);
+			}
 
 			
 			void* allocate(size_t size, const char* filename, int line)
@@ -159,8 +162,11 @@ namespace platform
 		}; // Allocator
 		
 		
+		
+		
+		
 		template <class T>
-		class GlobalDebugAllocator : public Allocator< GlobalDebugAllocator<T>, T >
+		class GlobalDebugAllocator : public Allocator< GlobalDebugAllocator<T> >
 		{
 #pragma pack(push, 4)
 			struct MemoryHeader
