@@ -24,6 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <platform/typedefs.h>
+
 #include <string>
 #include <vector>
 #include <memory>
@@ -445,15 +447,15 @@ namespace core
 		public:
 
 			
-			ArgumentParser();
-			~ArgumentParser();
+			LIBRARY_EXPORT ArgumentParser();
+			LIBRARY_EXPORT ~ArgumentParser();
 
-			void print_docstring() const;
+			LIBRARY_EXPORT void print_docstring() const;
 
-			std::vector<std::string> split_tokens(int argc, char** argv);
-			std::vector<std::string> split_tokens(const char* commandline);
+			LIBRARY_EXPORT std::vector<std::string> split_tokens(int argc, char** argv);
+			LIBRARY_EXPORT std::vector<std::string> split_tokens(const char* commandline);
 
-			bool parse(const char* docstring, std::vector<std::string> tokens, VariableMap& vm, const char* version_string = "");
+			LIBRARY_EXPORT bool parse(const char* docstring, std::vector<std::string> tokens, VariableMap& vm, const char* version_string = "");
 		}; // ArgumentParser
 		
 		
