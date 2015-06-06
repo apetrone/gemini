@@ -933,6 +933,11 @@ public:
 	{
 		navigation::find_straight_path(path, positions, total_positions);
 	}
+	
+	virtual glm::vec3 navmesh_find_random_location()
+	{
+		return navigation::find_random_location();
+	}
 };
 
 namespace gemini

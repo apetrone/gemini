@@ -42,6 +42,7 @@
 #include <core/color.h>
 
 #include <core/mathlib.h>
+#include <core/util.h>
 
 using core::Color;
 
@@ -542,6 +543,27 @@ namespace gemini
 												
 			assert(straight_path_count >= 0);
 			*total_positions = straight_path_count;
+		}
+		
+		float random_float()
+		{
+			return core::util::random_range(0.0f, 1.0f);
+		}
+		
+		glm::vec3 find_random_location()
+		{
+			glm::vec3 location;
+			dtQueryFilter filter;
+			dtPolyRef poly_ref;
+			float point[3];
+			
+			nav_query->findRandomPoint(&filter, random_float, &poly_ref, point);
+			location.x = point[0];
+			location.y = point[1];
+			location.z = point[2];
+			fprintf(stdout, "random point: %2.2f, %2.2f, %2.2f\n", location.x, location.y, location.z);
+			
+			return location;
 		}
 	} // namespace navigation
 }; // namespace gemini
