@@ -103,14 +103,14 @@ namespace core
 			size_t offset;
 			
 		public:
-			ResizableMemoryStream() : offset(0) {}
+			LIBRARY_EXPORT ResizableMemoryStream() : offset(0) {}
 			
-			virtual uint8_t* get_data() const;
-			virtual size_t get_data_size() const;
-			virtual size_t read(void* destination, size_t length);
-			virtual size_t write(const void* data, size_t length);
-			virtual void seek(size_t offset, bool is_absolute);
-			virtual void flush() {}
+			LIBRARY_EXPORT virtual uint8_t* get_data() const;
+			LIBRARY_EXPORT virtual size_t get_data_size() const;
+			LIBRARY_EXPORT virtual size_t read(void* destination, size_t length);
+			LIBRARY_EXPORT virtual size_t write(const void* data, size_t length);
+			LIBRARY_EXPORT virtual void seek(size_t offset, bool is_absolute);
+			LIBRARY_EXPORT virtual void flush() {}
 		};
 	} // namespace util
 } // namespace core

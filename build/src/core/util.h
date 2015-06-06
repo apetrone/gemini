@@ -24,6 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <platform/typedefs.h>
 #include <core/stackstring.h>
 
 namespace core
@@ -53,10 +54,10 @@ namespace core
 
 	namespace util
 	{
-		unsigned int hash_32bit( const void * data, int data_size, unsigned int seed );
+		LIBRARY_EXPORT unsigned int hash_32bit(const void * data, int data_size, unsigned int seed);
 
 		// return a float within the range: min, max, inclusive
-		float random_range( float min, float max );
+		LIBRARY_EXPORT float random_range(float min, float max);
 		
 		
 		template <class T>

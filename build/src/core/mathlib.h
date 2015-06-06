@@ -24,6 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <platform/typedefs.h>
+
 #if PLATFORM_WINDOWS
 #pragma warning( disable: 4305 ) // warning C4305: 'initializing' : truncation from 'double' to 'const aengine::real'
 #pragma warning( disable: 4244 ) //warning C4244: 'initializing' : conversion from 'double' to 'const aengine::real', possible loss of data
@@ -67,19 +69,19 @@ const real R2D_180PI = (180.0f/PI);
 
 namespace mathlib
 {
-	inline real degrees_to_radians(real degrees)
+	LIBRARY_EXPORT inline real degrees_to_radians(real degrees)
 	{
 		return degrees * D2R_PI180;
 	}
 
-	inline real radians_to_degrees(real radians)
+	LIBRARY_EXPORT inline real radians_to_degrees(real radians)
 	{
 		return radians * R2D_180PI;
 	}
 	
 	
 	// pitch and yaw are in degrees; internally converted to radians
-	void basis_vectors_from_pitch_yaw(float pitch, float yaw, glm::vec3& right, glm::vec3& view, bool invert_y_axis = true);
+	LIBRARY_EXPORT void basis_vectors_from_pitch_yaw(float pitch, float yaw, glm::vec3& right, glm::vec3& view, bool invert_y_axis = true);
 }
 
 #if 0

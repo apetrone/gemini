@@ -24,17 +24,17 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <platform/typedefs.h>
 #include <core/mathlib.h>
 
 namespace core
 {
 	template <class Type>
-	Type lerp( const Type & a, const Type & b, float t )
+	Type lerp(const Type & a, const Type & b, float t)
 	{
 		return glm::mix( a, b, t );
 	}
-
-
+	
 	// -------------------------------------------------------------
 	template <class Type>
 	struct Interpolator
@@ -107,7 +107,7 @@ namespace core
 
 
 	template <class Type>
-	Type slerp( const Type & a, const Type & b, float t )
+	Type slerp(const Type & a, const Type & b, float t)
 	{
 		return custom_slerp(a, b, t);
 		

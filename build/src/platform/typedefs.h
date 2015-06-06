@@ -37,7 +37,7 @@
 //
 // Import / Export Macros
 //
-#if defined(PLATFORM_WINDOW)
+#if defined(PLATFORM_WINDOWS)
 	#define LIBRARY_EXPORT __declspec(dllexport)
 	#define LIBRARY_IMPORT __declspec(dllimport)
 	#define LIBRARY_CEXPORT extern "C" __declspec(dllexport)
