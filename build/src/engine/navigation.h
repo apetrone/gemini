@@ -44,5 +44,6 @@ namespace gemini
 		void find_path(NavMeshPath* path, const glm::vec3& start, const glm::vec3& end);
 		void debugdraw_path(NavMeshPath* path);
 		void find_straight_path(NavMeshPath* path, glm::vec3* positions, uint32_t* total_positions);
+		glm::vec3 find_random_location();
 	}; // namespace navigation
 }; // namespace gemini
