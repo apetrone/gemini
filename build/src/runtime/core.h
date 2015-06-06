@@ -24,6 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <platform/typedefs.h>
+
 namespace platform
 {
 	struct Result;
@@ -31,6 +33,6 @@ namespace platform
 
 namespace core
 {
-	platform::Result startup();
-	void shutdown();
+	LIBRARY_EXPORT platform::Result startup();
+	LIBRARY_EXPORT void shutdown();
 } // namespace core

@@ -24,6 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <platform/typedefs.h>
+
 #include <stdint.h>
 
 namespace kernel
@@ -94,7 +96,7 @@ namespace kernel
 		EventSubType subtype;
 	}; // Event
 	
-	struct SystemEvent : public Event<System>
+	struct LIBRARY_EXPORT SystemEvent : public Event<System>
 	{
 		short window_width;
 		short window_height;
@@ -102,14 +104,14 @@ namespace kernel
 		short render_height;
 	}; // SystemEvent
 	
-	struct KeyboardEvent : public Event<Keyboard>
+	struct LIBRARY_EXPORT KeyboardEvent : public Event<Keyboard>
 	{
 		bool is_down;
 		int unicode;
 		int key;
 	}; // KeyboardEvent
 
-	struct MouseEvent : public Event<Mouse>
+	struct LIBRARY_EXPORT MouseEvent : public Event<Mouse>
 	{
 		bool is_down;
 		unsigned int button;
@@ -127,7 +129,7 @@ namespace kernel
 	}; // MouseEvent
 
 	
-	struct TouchEvent : public Event<Touch>
+	struct LIBRARY_EXPORT TouchEvent : public Event<Touch>
 	{
 		int id;
 		
@@ -140,7 +142,7 @@ namespace kernel
 		int y;
 	}; // TouchEvent
 	
-	struct GameControllerEvent : public Event<GameController>
+	struct LIBRARY_EXPORT GameControllerEvent : public Event<GameController>
 	{
 		int button;
 		int16_t joystick_value;
@@ -152,8 +154,8 @@ namespace kernel
 		float normalized_value() const;
 	}; // GameControllerEvent
 	
-	void assign_listener_for_eventtype( kernel::EventType type, void * listener );
-	void * find_listener_for_eventtype( kernel::EventType type );
+	LIBRARY_EXPORT void assign_listener_for_eventtype(kernel::EventType type, void * listener);
+	LIBRARY_EXPORT void* find_listener_for_eventtype(kernel::EventType type);
 	
 	//
 	// event support classes

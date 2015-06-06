@@ -113,7 +113,7 @@ namespace platform
 {
 #if PLATFORM_WINDOWS
 	#define PLATFORM_MAIN int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR commandline, int show)
-	struct MainParameters
+	struct LIBRARY_EXPORT MainParameters
 	{
 		char* commandline;
 	};
@@ -139,15 +139,7 @@ namespace platform
 	#error Unknown platform!
 #endif
 
-
-
-
-
-
-
-
-
-	struct Thread
+	struct LIBRARY_EXPORT Thread
 	{
 		ThreadStatus state;
 		ThreadId thread_id;
@@ -157,7 +149,7 @@ namespace platform
 	};
 	
 
-	struct Result
+	struct LIBRARY_EXPORT Result
 	{
 		enum ResultStatus
 		{
@@ -176,28 +168,28 @@ namespace platform
 	
 
 
-	Result startup();
-	void shutdown();
-	int run_application(kernel::IKernel* instance);
-	void set_mainparameters(const MainParameters& params);
-	const MainParameters& get_mainparameters();
+	LIBRARY_EXPORT Result startup();
+	LIBRARY_EXPORT void shutdown();
+	LIBRARY_EXPORT int run_application(kernel::IKernel* instance);
+	LIBRARY_EXPORT void set_mainparameters(const MainParameters& params);
+	LIBRARY_EXPORT const MainParameters& get_mainparameters();
 
 	namespace path
 	{
 		// normalize a path to the host platform's notation
-		void normalize(char* path);
+		LIBRARY_EXPORT void normalize(char* path);
 
 		// make all non-existent directories along a normalized_path
-		void make_directories(const char* normalized_path);
+		LIBRARY_EXPORT void make_directories(const char* normalized_path);
 	} // namespace path
 	
-	struct DynamicLibrary
+	struct LIBRARY_EXPORT DynamicLibrary
 	{
 	};
 
 	typedef void* DynamicLibrarySymbol;
 
-	struct DateTime
+	struct LIBRARY_EXPORT DateTime
 	{
 		unsigned short year;
 		unsigned short month; // 1-12
@@ -216,19 +208,19 @@ namespace platform
 	
 	/// @desc load a dynamic library at library_path
 	/// @returns A pointer to a DynamicLibrary object on success; 0 on failure
-	DynamicLibrary* dylib_open(const char* library_path);
+	LIBRARY_EXPORT DynamicLibrary* dylib_open(const char* library_path);
 	
 	/// @desc close a library handle
-	void dylib_close(DynamicLibrary* library);
+	LIBRARY_EXPORT void dylib_close(DynamicLibrary* library);
 	
 	/// @desc Tries to load a symbol from a dynamic library
 	/// @returns A valid pointer to the symbol or null on failure
-	DynamicLibrarySymbol dylib_find(DynamicLibrary* library, const char* symbol_name);
+	LIBRARY_EXPORT DynamicLibrarySymbol dylib_find(DynamicLibrary* library, const char* symbol_name);
 	
 	/// @desc Returns the extension on this platform for a dynamiclibrary.
 	/// @returns ".dylib", ".so", or ".dll" for Mac/Linux/Windows.
 	/// NOTE: This MUST return the period character if required by the platform!
-	const char* dylib_extension();
+	LIBRARY_EXPORT const char* dylib_extension();
 	
 	// ---------------------------------------------------------------------
 	// filesystem
@@ -238,18 +230,18 @@ namespace platform
 	/// on Linux and Windows platforms, it returns the folder where the binary exists
 	/// on MacOS X when run as a command line tool, it returns the folder where the binary exists (similar to Linux and Windows)
 	/// on MacOS X / iPhoneOS (for Bundles), it returns the root bundle path (.app)
-	Result get_program_directory(char* path, size_t path_size);
+	LIBRARY_EXPORT Result get_program_directory(char* path, size_t path_size);
 	
 	/// @desc Make directory on disk
-	Result make_directory(const char* path);
+	LIBRARY_EXPORT Result make_directory(const char* path);
 	
 	/// @desc Returns the value of the environment variable passed in
 	/// or NULL, if it was not set
-	const char* get_environment_variable(const char* name);
+	LIBRARY_EXPORT const char* get_environment_variable(const char* name);
 	
 	/// @desc Returns the current user's directory;
 	/// @returns The $(HOME) environment variable in Linux or %HOMEPATH% on Windows
-	const char* get_user_directory();
+	LIBRARY_EXPORT const char* get_user_directory();
 	
 	
 	// this accepts a path entered by the user (possibly on the commandline)
@@ -257,62 +249,62 @@ namespace platform
 	// This should expand environment variables.
 	// It should also account for leading tilde (~), which denotes the
 	// special $(HOME) environment variable on Linux systems.
-	core::StackString<MAX_PATH_SIZE> make_absolute_path(const char* path);
+	LIBRARY_EXPORT core::StackString<MAX_PATH_SIZE> make_absolute_path(const char* path);
 	
 
 	// ---------------------------------------------------------------------
 	// serial
 	// ---------------------------------------------------------------------
 	
-	struct Serial
+	struct LIBRARY_EXPORT Serial
 	{
 	};
 	
-	Serial* serial_open(const char* device, uint32_t baud_rate);
-	void serial_close(Serial* serial);
+	LIBRARY_EXPORT Serial* serial_open(const char* device, uint32_t baud_rate);
+	LIBRARY_EXPORT void serial_close(Serial* serial);
 	
 	/// @desc Read bytes to buffer from serial device
 	/// @param total_bytes The maximum number of bytes to read into buffer
 	/// @returns Total bytes read
-	int serial_read(Serial* serial, void* buffer, int total_bytes);
+	LIBRARY_EXPORT int serial_read(Serial* serial, void* buffer, int total_bytes);
 	
 	/// @desc Write bytes from buffer to serial device
 	/// @param total_bytes The maximum number of bytes to write from the buffer
 	/// @returns Total bytes read
-	int serial_write(Serial* serial, const void* buffer, int total_bytes);
+	LIBRARY_EXPORT int serial_write(Serial* serial, const void* buffer, int total_bytes);
 	
 	// ---------------------------------------------------------------------
 	// thread
 	// ---------------------------------------------------------------------
 
 	/// @desc Creates a thread with entry point
-	Result thread_create(Thread& thread, ThreadEntry entry, void* data);
+	LIBRARY_EXPORT Result thread_create(Thread& thread, ThreadEntry entry, void* data);
 	
 	/// @desc Should be called upon thread entry.
 	///       This sets up signals, thread names, thread id and states.
-	void thread_setup(void* data);
+	LIBRARY_EXPORT void thread_setup(void* data);
 	
 	/// @desc Wait for a thread to complete.
 	/// @returns 0 on success; non-zero on failure (abnormal thread termination)
-	int thread_join(Thread& thread);
+	LIBRARY_EXPORT int thread_join(Thread& thread);
 	
 	/// @desc Allows the calling thread to sleep
-	void thread_sleep(int milliseconds);
+	LIBRARY_EXPORT void thread_sleep(int milliseconds);
 	
 	/// @desc
-	void thread_detach(Thread& thread);
+	LIBRARY_EXPORT void thread_detach(Thread& thread);
 	
 	
 	/// @desc Get the calling thread's id
 	/// @returns The calling thread's platform designated id
-	ThreadId thread_id();
+	LIBRARY_EXPORT ThreadId thread_id();
 	
 	
 	
-	void mutex_create();
-	void mutex_destroy();
-	void mutex_lock();
-	void mutex_unlock();
+	LIBRARY_EXPORT void mutex_create();
+	LIBRARY_EXPORT void mutex_destroy();
+	LIBRARY_EXPORT void mutex_lock();
+	LIBRARY_EXPORT void mutex_unlock();
 	
 	// ---------------------------------------------------------------------
 	// time
@@ -320,10 +312,10 @@ namespace platform
 	
 	/// @desc Fetches the current time in microseconds
 	/// @returns The current time in microseconds since the application started
-	uint64_t microseconds();
+	LIBRARY_EXPORT uint64_t microseconds();
 	
 	/// @desc Populates the DateTime struct with the system's current date and time
-	void datetime(DateTime& datetime);
+	LIBRARY_EXPORT void datetime(DateTime& datetime);
 
 
 } // namespace platform

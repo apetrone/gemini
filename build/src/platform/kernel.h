@@ -25,6 +25,7 @@
 #pragma once
 
 #include "kernel_events.h"
+#include <platform/typedefs.h>
 
 namespace kernel
 {
@@ -54,7 +55,7 @@ namespace kernel
 	typedef unsigned char KernelDeviceFlags;
 
 	// parameters passed to callbacks
-	struct Parameters
+	struct LIBRARY_EXPORT Parameters
 	{
 		const char* error_message;
 		
@@ -95,9 +96,9 @@ namespace kernel
 		Parameters();
 	}; // Params
 	
-	Parameters& parameters();
+	LIBRARY_EXPORT Parameters& parameters();
 
-	class IKernel
+	class LIBRARY_EXPORT IKernel
 	{
 	public:
 		virtual ~IKernel() {}
@@ -118,21 +119,21 @@ namespace kernel
 	};
 
 	// call this on application startup
-	Error startup();
+	LIBRARY_EXPORT Error startup();
 	
 	// call this when the application will be terminated
-	void shutdown();
+	LIBRARY_EXPORT void shutdown();
 
 	// call this when the resolution of the window or device has changed
-	void resolution_changed(int width, int height);
+	LIBRARY_EXPORT void resolution_changed(int width, int height);
 	
 	// called once per frame, preferably in a loop
-	void tick();
+	LIBRARY_EXPORT void tick();
 	
-	int run_application();
+	LIBRARY_EXPORT int run_application();
 
-	IKernel* instance();
-	void set_instance(IKernel* instance);
+	LIBRARY_EXPORT IKernel* instance();
+	LIBRARY_EXPORT void set_instance(IKernel* instance);
 	
 	// this is used by the kernel to dispatch events to the IApplication's event listeners
 	template <class Type>

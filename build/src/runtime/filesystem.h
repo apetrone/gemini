@@ -39,7 +39,7 @@ namespace core
 
 	// FileSystem class is used to implement platform-level logic
 
-	class FileSystem
+	class LIBRARY_EXPORT FileSystem
 	{
 	public:
 		virtual ~FileSystem() {}
@@ -52,51 +52,51 @@ namespace core
 	
 	namespace filesystem
 	{
-		struct FileStats
+		struct LIBRARY_EXPORT FileStats
 		{
 			unsigned int last_modified_timestamp;
 		};
 	
-		FileSystem* instance();
+		LIBRARY_EXPORT FileSystem* instance();
 		
-		void startup();
-		void shutdown();
+		LIBRARY_EXPORT void startup();
+		LIBRARY_EXPORT void shutdown();
 		
 		// directory where the binary actually resides
 		// this may vary between operating systems as some
 		// will bundle their assets (MacOS X/iOS)
-		void root_directory(char* path, int size);
-		const char* root_directory();
+		LIBRARY_EXPORT void root_directory(char* path, int size);
+		LIBRARY_EXPORT const char* root_directory();
 		
 		// the content directory is where resources for this application can be found
-		void content_directory( const char* path );
-		const char * content_directory();
+		LIBRARY_EXPORT void content_directory(const char* path);
+		LIBRARY_EXPORT const char* content_directory();
 		
 		// return the platform content directory
-		void construct_content_directory(StackString<MAX_PATH_SIZE>& path);
+		LIBRARY_EXPORT void construct_content_directory(StackString<MAX_PATH_SIZE>& path);
 		
 		// Load a file into buffer. The pointer is returned.
 		// bufferLength will contain the size of the buffer
 		// if buffer is null, a new buffer is allocated and must be DEALLOC'd after use
 		// if buffer is not null, bufferLength should contain the size of the buffer which will not be exceeded.
-		char * file_to_buffer(const char* filename, char* buffer, size_t* buffer_length, bool path_is_relative=true);
+		LIBRARY_EXPORT char* file_to_buffer(const char* filename, char* buffer, size_t* buffer_length, bool path_is_relative = true);
 		
 		// read an audio file to memory
 		// this provides an abstraction between platforms; but likely needs to belong elsewhere?
-		void * audiofile_to_buffer(const char* filename, size_t& buffer_length);
+		void* audiofile_to_buffer(const char* filename, size_t& buffer_length);
 		
 		// accepts path as a string with len: MAX_PATH_SIZE (as defined in platform.h)
-		void absolute_path_from_relative(char* fullpath, const char* relativepath, const char* content_directory=0);
-		void relative_path_from_absolute(char* relative_path, const char* absolute_path, const char* content_directory=0);
+		LIBRARY_EXPORT void absolute_path_from_relative(char* fullpath, const char* relativepath, const char* content_directory = 0);
+		LIBRARY_EXPORT void relative_path_from_absolute(char* relative_path, const char* absolute_path, const char* content_directory = 0);
 		
-		void truncate_string_at_path(char* path, const char* substr);
+		LIBRARY_EXPORT void truncate_string_at_path(char* path, const char* substr);
 		
-		int read_file_stats(const char* fullpath, FileStats& file_stats);
+		LIBRARY_EXPORT int read_file_stats(const char* fullpath, FileStats& file_stats);
 		
-		bool file_exists(const char* path, bool path_is_relative=true);
+		LIBRARY_EXPORT bool file_exists(const char* path, bool path_is_relative = true);
 #if !PLATFORM_IS_MOBILE
 		
-		bool directory_exists(const char* path, bool path_is_relative=true);
+		LIBRARY_EXPORT bool directory_exists(const char* path, bool path_is_relative = true);
 #endif
 		
 #if PLATFORM_ANDROID

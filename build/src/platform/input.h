@@ -24,6 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <platform/typedefs.h>
+
 #include <stdint.h>
 #include <limits.h>
 
@@ -215,7 +217,7 @@ namespace input
 		Button_Impulse 	= 8,
 	};
 	
-	struct ButtonState
+	struct LIBRARY_EXPORT ButtonState
 	{
 		unsigned char state : 4;
 		
@@ -236,13 +238,13 @@ namespace input
 	}; // ButtonState
 
 	
-	struct AxisState
+	struct LIBRARY_EXPORT AxisState
 	{
 		int16_t value;
 		float normalized_value;
 	};
 	
-	class InputDevice
+	class LIBRARY_EXPORT InputDevice
 	{
 	public:
 		virtual ~InputDevice() {}
@@ -251,7 +253,7 @@ namespace input
 		virtual void update() = 0;
 	}; // InputDevice
 	
-	class KeyboardInput : public InputDevice
+	class LIBRARY_EXPORT KeyboardInput : public InputDevice
 	{
 		ButtonState keys[ KEY_COUNT ];
 		
@@ -269,7 +271,7 @@ namespace input
 	}; // KeyboardInput
 
 	
-	class MouseInput : public InputDevice
+	class LIBRARY_EXPORT MouseInput : public InputDevice
 	{
 		ButtonState buttons[ MOUSE_COUNT ];
 		
@@ -301,7 +303,7 @@ namespace input
 		void mouse_delta(int &dx, int &dy);
 	}; // MouseInput
 	
-	class TouchInput : public InputDevice
+	class LIBRARY_EXPORT TouchInput : public InputDevice
 	{
 		struct TouchState
 		{
@@ -332,7 +334,7 @@ namespace input
 	}; // TouchInput
 	
 
-	class JoystickInput : public InputDevice
+	class LIBRARY_EXPORT JoystickInput : public InputDevice
 	{
 	public:
 		enum Flags
@@ -351,10 +353,10 @@ namespace input
 	}; // JoystickInput
 
 
-	void startup( void );
-	void shutdown( void );
-	void update( void );
+	LIBRARY_EXPORT void startup(void);
+	LIBRARY_EXPORT void shutdown(void);
+	LIBRARY_EXPORT void update(void);
 
-	const char* mouse_button_name( MouseButton button );
+	LIBRARY_EXPORT const char* mouse_button_name(MouseButton button);
 
 }; // namespace input
