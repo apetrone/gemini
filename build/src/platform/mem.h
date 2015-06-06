@@ -24,6 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include "typedefs.h"
 #include "config.h"
 
 #include <string.h> // for size_t
@@ -341,13 +342,13 @@ namespace platform
 		
 
 		// initialize memory handling
-		void startup();
+		LIBRARY_EXPORT void startup();
 		
 		// shutdown services and optionally perform any metrics, leak detection, etc
-		void shutdown();
+		LIBRARY_EXPORT void shutdown();
 		
-		GlobalAllocator& global_allocator();
-		void set_allocator(GlobalAllocator* allocator);
+		LIBRARY_EXPORT GlobalAllocator& global_allocator();
+		LIBRARY_EXPORT void set_allocator(GlobalAllocator* allocator);
 
 		#define MEMORY_ALLOC(size, allocator) allocator.allocate(size, __FILE__, __LINE__)
 		#define MEMORY_DEALLOC(pointer, allocator) allocator.deallocate(pointer)
