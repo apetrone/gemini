@@ -67,6 +67,32 @@ namespace mathlib
 		view[2] = -cy * cp;
 		view = glm::normalize(view);
 	}
+	
+	
+	// Returns true if p0 is within radius units of p1
+	bool point_in_radius(const glm::vec3& p0, const glm::vec3& p1, float radius)
+	{
+	
+		/*
+		 float dx = p1[0] - p0[0];
+		 float dy = p1[1] - p0[1];
+		 float dz = p1[2] - p0[2];
+		 
+		 float len = sqrt( (dx*dx) + (dy*dy) + (dz*dz) );
+		 
+		 if ( len <= radius )
+		 return true;
+		 else
+		 return false;*/
+		
+		// Use this method to save a sqrt.
+		// http://www.gamedev.net/community/forums/topic.asp?topic_id=221071
+		glm::vec3 pt;
+		pt = p1 - p0;
+		float dot = glm::dot(pt, pt);
+		float r2 = (radius*radius);
+		return (dot < r2);
+	}
 }
 
 
@@ -111,39 +137,6 @@ void TriangleCentroid( const vec3 & a, const vec3 & b, const vec3 & c, vec3 & ce
 }
 
 
-// Returns true if p0 is within radius units of p1
-bool IsInRadius( const vec3 & p0, const vec3 & p1, float radius )
-{
-
-	/*
-	float dx = p1[0] - p0[0];
-	float dy = p1[1] - p0[1];
-	float dz = p1[2] - p0[2];
-
-	float len = sqrt( (dx*dx) + (dy*dy) + (dz*dz) );
-
-	if ( len <= radius )
-		return true;
-	else
-		return false;*/
-
-	// Use this method to save a sqrt.
-	// http://www.gamedev.net/community/forums/topic.asp?topic_id=221071
-	aengine::vec3 p;
-	aengine::vec3::sub( p1, p0, p );
-	float dot = aengine::vec3::dot(p, p);
-
-	float r2 = (radius*radius);
-
-	if ( dot < r2 )
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
 
 // Convert World Coordinates to Screen Coordinates
 // TODO: Allow specification of Depth Range
