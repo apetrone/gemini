@@ -82,6 +82,9 @@ namespace mathlib
 	
 	// pitch and yaw are in degrees; internally converted to radians
 	LIBRARY_EXPORT void basis_vectors_from_pitch_yaw(float pitch, float yaw, glm::vec3& right, glm::vec3& view, bool invert_y_axis = true);
+	
+	
+	LIBRARY_EXPORT bool point_in_radius(const glm::vec3& p0, const glm::vec3& p1, float radius = 3.0f);
 }
 
 #if 0
@@ -95,7 +98,7 @@ struct Segment
 //
 // math utility functions
 void TriangleCentroid( const vec3 & a, const vec3 & b, const vec3 & c, vec3 & center );
-bool IsInRadius( const vec3 & p0, const vec3 & p1, float radius = 3.0f );
+
 
 #if WORLD_TO_SCREEN_GL
 void WorldToScreenCoords( const vec3 & worldCoords, const mat4 & mv, const mat4 & proj, unsigned int vpWidth, unsigned int vpHeight, vec3 & screenCoords );
