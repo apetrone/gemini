@@ -308,6 +308,9 @@ def get_tools(libruntime, librenderer, libplatform, libcore, **kwargs):
 	kraken = get_kraken(arguments, libruntime, libplatform, libcore, librenderer, **kwargs)
 	tools.append(kraken)
 
+	orion = get_orion(arguments, libruntime, libplatform, libcore, librenderer, **kwargs)
+	tools.append(orion)
+
 	return tools
 
 
@@ -663,6 +666,52 @@ def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwarg
 	]
 
 	return kraken
+
+def get_orion(arguments, libruntime, libplatform, libcore, librenderer, **kwargs):
+	orion = Product(name="orion", output=ProductType.Application)
+	orion.project_root = COMMON_PROJECT_ROOT
+	orion.product_root = COMMON_PRODUCT_ROOT
+	orion.root = "../"
+
+	setup_driver(orion)
+	setup_common_tool(orion)
+
+	orion.dependencies.extend([
+		libsdl,
+		libplatform,
+		libcore,
+		librenderer,
+		libruntime,		
+		Dependency(file="nom.py")
+	])
+
+	orion.sources += [
+		"src/tools/orion/orion.cpp"	
+	]
+
+	macosx = orion.layout(platform="macosx")
+	macosx.links += [
+		"Cocoa.framework",
+		"OpenGL.framework"
+	]
+
+	# TODO: This path is relative to the *project*
+	macosx.driver.infoplist_file = "../src/tools/orion/resources/osx/Info.plist"
+	macosx.resources = [
+		"src/tools/orion/resources/osx/en.lproj/*.xib",
+		"src/tools/orion/resources/osx/en.lproj/*.strings"
+	]	
+
+	linux = orion.layout(platform="linux")
+	linux.links += [
+		"GL"
+	]
+
+	linux.cflags += [
+		"-fPIC"
+	]		
+
+	return orion
 
 def arguments(parser):
 	parser.add_argument("--with-gles", dest="gles", action="store_true", help="Build with GLES support", default=False)
