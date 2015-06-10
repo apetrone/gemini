@@ -201,6 +201,32 @@ namespace platform
 		unsigned short milliseconds;
 	};
 	
+	struct File
+	{
+		void* handle;
+		
+		File() : handle(nullptr)
+		{
+		}
+		
+		bool is_open() const
+		{
+			return (handle != nullptr);
+		}
+	};
+	
+	enum FileMode
+	{
+		FileMode_Read,
+		FileMode_Write
+	};
+	
+	enum FileSeek
+	{
+		FileSeek_Begin,
+		FileSeek_Relative,
+		FileSeek_End
+	};
 	
 	// ---------------------------------------------------------------------
 	// dynamic library
@@ -251,6 +277,21 @@ namespace platform
 	// special $(HOME) environment variable on Linux systems.
 	LIBRARY_EXPORT core::StackString<MAX_PATH_SIZE> make_absolute_path(const char* path);
 	
+	
+	LIBRARY_EXPORT platform::File fs_open(const char* path, FileMode mode = FileMode_Read);
+	LIBRARY_EXPORT void fs_close(platform::File file);
+	LIBRARY_EXPORT size_t fs_read(platform::File handle, void* destination, size_t size, size_t count);
+	LIBRARY_EXPORT size_t fs_write(platform::File handle, const void* source, size_t size, size_t count);
+	LIBRARY_EXPORT int32_t fs_seek(platform::File handle, long int offset, FileSeek origin);
+	LIBRARY_EXPORT long int fs_tell(platform::File handle);
+	LIBRARY_EXPORT bool fs_file_exists(const char* path);
+	LIBRARY_EXPORT bool fs_directory_exists(const char* path);
+	
+	/// @desc Construct this platform's content directory
+	/// @param content_path The default content directory for bundled assets
+	/// @param root_path The root path for this application (where the binary/executable resides)
+	/// @returns platform::Result
+	LIBRARY_EXPORT platform::Result fs_content_directory(core::StackString<MAX_PATH_SIZE>& content_path, const core::StackString<MAX_PATH_SIZE>& root_path);
 
 	// ---------------------------------------------------------------------
 	// serial

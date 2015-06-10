@@ -617,9 +617,11 @@ def create_unit_test(name, links, source):
 	return product
 
 def get_unit_tests(arguments, links, **kwargs):
-	test_core = create_unit_test("test_core", links, "tests/src/test_core.cpp")
-
-	return [test_core]
+	return [
+		create_unit_test("test_core", links, "tests/src/test_core.cpp"),
+		create_unit_test("test_platform", links, "tests/src/test_platform.cpp"),
+		create_unit_test("test_runtime", links, "tests/src/test_runtime.cpp")
+	]
 
 def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
 	global_params = kwargs.get("global_params")

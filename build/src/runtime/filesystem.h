@@ -28,53 +28,44 @@
 #include <platform/platform.h>
 
 #include <core/stackstring.h>
+#include <core/interface.h>
+
+namespace platform
+{
+	struct File;
+
+	enum FileMode;
+}
 
 namespace core
 {
-	struct File
-	{
-		const char* create_buffer_from_file() { return 0; }
-		void destroy_buffer(const char* buffer) { buffer = 0; }
-	};
-
-	// FileSystem class is used to implement platform-level logic
-
-	class LIBRARY_EXPORT FileSystem
-	{
-	public:
-		virtual ~FileSystem() {}
-	
-		virtual File* open(const char* path) = 0;
-		virtual void close(File* file) = 0;
-		
-		virtual bool file_exists(const char* path) = 0;
-	};
-	
 	namespace filesystem
 	{
-		struct LIBRARY_EXPORT FileStats
+		class LIBRARY_EXPORT IFileSystem
 		{
-			unsigned int last_modified_timestamp;
+		public:
+			virtual ~IFileSystem();
+			
+			virtual void startup() = 0;
+			virtual void shutdown() = 0;
+
+			virtual bool file_exists(const char* path, bool path_is_relative = true) const = 0;
+			virtual bool directory_exists(const char* path, bool path_is_relative = true) const = 0;
+			
+			// directory where the binary actually resides
+			// this may vary between operating systems as some
+			// will bundle their assets (MacOS X/iOS)
+			virtual void root_directory(const char* path) = 0;
+			virtual const char* root_directory() const = 0;
+			
+			// the content directory is where resources for this application can be found
+			virtual void content_directory(const char* path) = 0;
+			virtual const char* content_directory() const = 0;
+			
+			virtual void absolute_path_from_relative(StackString<MAX_PATH_SIZE>& fullpath, const char* relative_path) const = 0;
+			virtual void relative_path_from_absolute(StackString<MAX_PATH_SIZE>& relative_path, const char* absolute_path) const = 0;
 		};
 	
-		LIBRARY_EXPORT FileSystem* instance();
-		
-		LIBRARY_EXPORT void startup();
-		LIBRARY_EXPORT void shutdown();
-		
-		// directory where the binary actually resides
-		// this may vary between operating systems as some
-		// will bundle their assets (MacOS X/iOS)
-		LIBRARY_EXPORT void root_directory(char* path, int size);
-		LIBRARY_EXPORT const char* root_directory();
-		
-		// the content directory is where resources for this application can be found
-		LIBRARY_EXPORT void content_directory(const char* path);
-		LIBRARY_EXPORT const char* content_directory();
-		
-		// return the platform content directory
-		LIBRARY_EXPORT void construct_content_directory(StackString<MAX_PATH_SIZE>& path);
-		
 		// Load a file into buffer. The pointer is returned.
 		// bufferLength will contain the size of the buffer
 		// if buffer is null, a new buffer is allocated and must be DEALLOC'd after use
@@ -85,23 +76,12 @@ namespace core
 		// this provides an abstraction between platforms; but likely needs to belong elsewhere?
 		void* audiofile_to_buffer(const char* filename, size_t& buffer_length);
 		
-		// accepts path as a string with len: MAX_PATH_SIZE (as defined in platform.h)
-		LIBRARY_EXPORT void absolute_path_from_relative(char* fullpath, const char* relativepath, const char* content_directory = 0);
-		LIBRARY_EXPORT void relative_path_from_absolute(char* relative_path, const char* absolute_path, const char* content_directory = 0);
-		
 		LIBRARY_EXPORT void truncate_string_at_path(char* path, const char* substr);
 		
-		LIBRARY_EXPORT int read_file_stats(const char* fullpath, FileStats& file_stats);
-		
-		LIBRARY_EXPORT bool file_exists(const char* path, bool path_is_relative = true);
-#if !PLATFORM_IS_MOBILE
-		
-		LIBRARY_EXPORT bool directory_exists(const char* path, bool path_is_relative = true);
-#endif
-		
-#if PLATFORM_ANDROID
-		void set_asset_manager(AAssetManager* asset_manager);
-#endif
+//		LIBRARY_EXPORT int read_file_stats(const char* fullpath, FileStats& file_stats);
 	}
+	
+	
+	typedef Interface<filesystem::IFileSystem> fs;
 
 } // namespace core

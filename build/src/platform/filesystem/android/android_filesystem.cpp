@@ -25,45 +25,84 @@
 
 #include "platform_internal.h"
 
-#if TARGET_OS_MAC && !TARGET_OS_IPHONE
-	#import <Cocoa/Cocoa.h>
-	#import <AppKit/AppKit.h>
-#else
-	#import <Foundation/Foundation.h>
-#endif
+#include <string.h> // for strrchr
+
+//#include <sys/sysinfo.h>
+//#include <errno.h>
+// #include <sys/types.h>
+#include <sys/stat.h>
+// #include <stdio.h> // for snprintf
+// #include <stdlib.h> // for abort
+// #include <unistd.h> // for readlink, getpid
+
+#include <android/asset_manager.h>
 
 namespace platform
 {
+	static AAssetManager* _asset_manager = 0;
+	void set_asset_manager(AAssetManager* asset_manager)
+	{
+		_asset_manager = asset_manager;
+	}
+
+	AAssetManager* get_asset_manager()
+	{
+		return _asset_manager;
+	}
+
+
+
 	Result get_program_directory(char* path, size_t path_size)
 	{
-		Result result(Result::Success);
-		NSString * bundle_path = [[NSBundle mainBundle] bundlePath];
-		if (bundle_path)
+		Result error(Result::Success);
+		
+		int result = 0;
+		char* sep;
 		{
-			[bundle_path getCString:path maxLength:path_size encoding:NSUTF8StringEncoding];
+			// http://www.flipcode.com/archives/Path_To_Executable_On_Linux.shtml
+			char linkname[64] = {0};
+			pid_t pid = getpid();
+			
+			if (snprintf(linkname, sizeof(linkname), "/proc/%i/exe", pid) < 0)
+			{
+				abort();
+			}
+			
+			result = readlink(linkname, path, path_size);
+			if (result == -1)
+			{
+				error.status = Result::Failure;
+				error.message = "readlink failed";
+			}
+			else
+			{
+				path[result] = 0;
+			}
 		}
-		else
+		
+		if (result != 0)
 		{
-			result = Result(Result::Failure, "Unable mainBundle reference is invalid!");
+			sep = strrchr(path, PATH_SEPARATOR);
+			
+			if (sep)
+			{
+				*sep = '\0';
+			}
 		}
-		return result;
+		
+		return error;
 	}
-	
+
 	Result make_directory(const char* path)
 	{
 		return posix_make_directory(path);
 	}
-	
-	const char* get_environment_variable(const char* name)
-	{
-		return posix_get_environment_variable(name);
-	}
-	
+
 	const char* get_user_directory()
 	{
 		return posix_get_user_directory();
 	}
-	
+
 	core::StackString<MAX_PATH_SIZE> make_absolute_path(const char* path)
 	{
 		return posix_make_absolute_path(path);
@@ -71,17 +110,23 @@ namespace platform
 
 	platform::File fs_open(const char* path, FileMode mode)
 	{
-		return posix_fs_open(path, mode);
+		platform::File file;
+		AAsset* asset = AAssetManager_open(get_asset_manager(), path, AASSET_MODE_BUFFER);
+		file.handle = asset;
+
+		// file_size = AAsset_getLength(asset);
+
+		return file;
 	}
 	
 	void fs_close(platform::File file)
 	{
-		return posix_fs_close(file);
+		AAsset_close(static_cast<AAsset*>(file.handle));
 	}
 	
 	size_t fs_read(platform::File file, void* destination, size_t size, size_t count)
 	{
-		return posix_fs_read(file, destination, size, count);
+		AAsset_read(static_cast<AAsset*>(file.handle), destination, size);
 	}
 	
 	size_t fs_write(platform::File file, const void* source, size_t size, size_t count)
@@ -101,20 +146,26 @@ namespace platform
 	
 	bool fs_file_exists(const char* path)
 	{
-		return posix_fs_file_exists(path);
+		// assume a relative path is always passed
+		AAsset* asset = 0;
+		asset = AAssetManager_open(get_asset_manager(), path, AASSET_MODE_BUFFER);
+		if (asset)
+		{
+			AAsset_close(asset);
+			return 1;
+		}
+		
+		return 0;
 	}
 	
 	bool fs_directory_exists(const char* path)
 	{
 		return posix_fs_directory_exists(path);
 	}
-	
+
 	platform::Result fs_content_directory(core::StackString<MAX_PATH_SIZE>& content_path, const core::StackString<MAX_PATH_SIZE>& root_path)
 	{
-		// On Mac/iOS, the root directory points to the app bundle
-		content_path = root_path;
-		content_path.append(PATH_SEPARATOR_STRING);
-		content_path.append("Resources");
+		#error Not implemented on Android!
 		return platform::Result(platform::Result::Success);
-	}
+	}	
 } // namespace platform

@@ -32,7 +32,6 @@
 #include "io_json.h"
 
 #include <runtime/logging.h>
-#include <runtime/xfile.h>
 
 #include <platform/platform.h>
 

@@ -492,31 +492,6 @@ struct InputManager
 //	im.dispatch("move_right", 4928.0f);
 #endif
 
-// FixedQueue test
-#if 0
-core::FixedSizeQueue<int, 4> q;
-LOGV("is queue empty?: %s\n", q.empty() ? "YES":"NO");
-
-q.push_back(210);
-q.push_back(12);
-q.push_back(23222);
-q.push_back(33324);
-
-// this should fail
-assert(false == q.push_back(999));
-
-LOGV("total items: %i\n", q.size());
-
-LOGV("is queue empty?: %s\n", q.empty() ? "YES":"NO");
-while (!q.empty())
-{
-	int i = q.pop();
-	LOGV("item: %i\n", i);
-}
-
-// This should cause an assert.
-q.pop();
-#endif
 
 
 // thread test

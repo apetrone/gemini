@@ -155,8 +155,10 @@ namespace renderer
 				filename.append(".");
 				filename.append(name.c_str());
 				
+				core::filesystem::IFileSystem* fs = core::fs::instance();
+				
 				// verify the file exists
-				if (!core::filesystem::file_exists(filename()))
+				if (!fs->file_exists(filename()))
 				{
 					LOGE("\"%s\" does not exist!\n", filename());
 					return false;

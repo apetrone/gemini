@@ -53,6 +53,15 @@ namespace platform
 	void posix_dylib_close(DynamicLibrary* library);
 	DynamicLibrarySymbol posix_dylib_find(DynamicLibrary* library, const char* symbol_name);	
 	
+	// filesystem
+	platform::File posix_fs_open(const char* path, FileMode mode);
+	void posix_fs_close(platform::File file);
+	size_t posix_fs_read(platform::File handle, void* destination, size_t size, size_t count);
+	size_t posix_fs_write(platform::File handle, const void* source, size_t size, size_t count);
+	int32_t posix_fs_seek(platform::File handle, long int offset, FileSeek origin);
+	long int posix_fs_tell(platform::File handle);
+	bool posix_fs_file_exists(const char* path);
+	bool posix_fs_directory_exists(const char* path);
 	
 	// threads
 	Result posix_thread_create(Thread& thread, ThreadEntry entry, void* data);

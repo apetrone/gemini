@@ -234,11 +234,21 @@ public:
 		Bucket* bucket = find_or_create_bucket(key);
 		return bucket->value;
 	}
-	
+
 	// get value or insert if not found
 	T& operator[](const K& key)
 	{
 		return get(key);
+	}
+	
+	const T& operator[](const K& key) const
+	{
+		HashType hash = get_hash(key);
+		int32_t bucket_index;
+		int32_t index = find_bucket(hash, bucket_index, true);
+		assert(index != -1);
+		Bucket* bucket = &table[index];
+		return bucket->value;
 	}
 
 	size_t size() const

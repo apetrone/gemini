@@ -75,4 +75,72 @@ namespace platform
 		
 		return output;
 	}
+	
+	platform::File posix_fs_open(const char* path, FileMode mode)
+	{
+		platform::File file;
+		
+		assert(mode == FileMode_Read || mode == FileMode_Write);
+		
+		const char* mode_flags;
+		switch(mode)
+		{
+			case FileMode_Read: mode_flags = "rb"; break;
+			case FileMode_Write: mode_flags = "wb"; break;
+		}
+		
+		file.handle = fopen(path, mode_flags);
+		return file;
+	}
+	
+	void posix_fs_close(platform::File file)
+	{
+		fclose(static_cast<FILE*>(file.handle));
+	}
+	
+	size_t posix_fs_read(platform::File file, void* destination, size_t size, size_t count)
+	{
+		return fread(destination, size, count, static_cast<FILE*>(file.handle));
+	}
+	
+	size_t posix_fs_write(platform::File file, const void* source, size_t size, size_t count)
+	{
+		return fwrite(source, size, count, static_cast<FILE*>(file.handle));
+	}
+	
+	int32_t posix_fs_seek(platform::File file, long int offset, FileSeek origin)
+	{
+		int internal_origin = 0;
+		switch(origin)
+		{
+				// set position to absolute value of offset
+			case FileSeek_Begin: internal_origin = SEEK_SET; break;
+				
+				// set position to current position + offset
+			case FileSeek_Relative: internal_origin = SEEK_CUR; break;
+				
+				// set position to end of file
+			case FileSeek_End: internal_origin = SEEK_END; break;
+		}
+		return fseek((FILE*)file.handle, offset, internal_origin);
+	}
+	
+	long int posix_fs_tell(platform::File file)
+	{
+		return ftell(static_cast<FILE*>(file.handle));
+	}
+	
+	bool posix_fs_file_exists(const char* path)
+	{
+		struct stat info;
+		int result = stat(path, &info);
+		return (result == 0) && ((info.st_mode & S_IFMT) == S_IFREG);
+	}
+	
+	bool posix_fs_directory_exists(const char* path)
+	{
+		struct stat info;
+		int result = stat(path, &info);
+		return (result == 0) && ((info.st_mode & S_IFMT) == S_IFDIR);
+	}
 } // namespace platform
