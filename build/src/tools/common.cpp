@@ -51,18 +51,16 @@ namespace gemini
 			// setup root path
 			StackString<MAX_PATH_SIZE> root_path;
 			platform::Result result = platform::get_program_directory(&root_path[0], root_path.max_size());
-			core::filesystem::root_directory(&root_path[0], root_path.max_size());
 
 			StackString<MAX_PATH_SIZE> content_path;
-			core::filesystem::construct_content_directory(content_path);
-			core::filesystem::content_directory(content_path());
+			platform::fs_content_directory(content_path, root_path);
 
 			// create default material
 			// TODO: move this to a better location one day
 			datamodel::Material* material = MEMORY_NEW(datamodel::Material, platform::memory::global_allocator());
 			datamodel::set_default_material(material);
 
-			core::startup();
+			core::startup(content_path, root_path);
 		}
 		
 		void shutdown()

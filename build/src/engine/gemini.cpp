@@ -1143,8 +1143,10 @@ private:
 	
 	void open_gamelibrary()
 	{
+		core::filesystem::IFileSystem* fs = core::fs::instance();
+		
 		// load game library
-		StackString<MAX_PATH_SIZE> game_library_path = ::core::filesystem::content_directory();
+		StackString<MAX_PATH_SIZE> game_library_path = fs->content_directory();
 		const char* dynamiclibrary_extension = platform::dylib_extension();
 		game_library_path.append(PATH_SEPARATOR_STRING).append("bin").append(PATH_SEPARATOR_STRING).append("game").append(dynamiclibrary_extension);
 		gamelib = platform::dylib_open(game_library_path());
@@ -1417,16 +1419,12 @@ Options:
 		platform::Result result = platform::get_program_directory(&root_path[0], root_path.max_size());
 		assert(!result.failed());
 		
-		// set the startup directory: where the binary lives
-		core::filesystem::root_directory(&root_path[0], root_path.max_size());
-		
-		
 		// if no game is specified on the command line, construct the content path
 		// from the current root directory
 		StackString<MAX_PATH_SIZE> content_path;
 		if (game_path.is_empty())
 		{
-			core::filesystem::construct_content_directory(content_path);
+			platform::fs_content_directory(content_path, root_path);
 		}
 		else
 		{
@@ -1439,11 +1437,8 @@ Options:
 			content_path.append(PLATFORM_NAME);
 		}
 		
-		// set the content path
-		core::filesystem::content_directory(content_path());
-		
 		// startup duties; lower-level system init
-		result = core::startup();
+		result = core::startup(root_path, content_path);
 		if (result.failed())
 		{
 			fprintf(stderr, "Fatal error: %s\n", result.message);

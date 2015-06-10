@@ -24,6 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <core/util.h>
 #include <core/str.h>
 
 #include <assert.h>
@@ -37,6 +38,7 @@ namespace core
 		typedef StackString<maximum_size, Type> StackStringType;
 		
 	public:
+
 		Type _data[maximum_size];
 		unsigned int _length;
 		
@@ -236,7 +238,7 @@ namespace core
 			return *this;
 		}
 		
-		const Type *operator ()()
+		const Type *operator ()() const
 		{
 			return _data;
 		}

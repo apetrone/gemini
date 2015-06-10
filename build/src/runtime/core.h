@@ -25,6 +25,9 @@
 #pragma once
 
 #include <platform/typedefs.h>
+#include <platform/platform.h>
+
+#include <core/stackstring.h>
 
 namespace platform
 {
@@ -33,6 +36,9 @@ namespace platform
 
 namespace core
 {
-	LIBRARY_EXPORT platform::Result startup();
+	/// Start up the runtime services
+	/// @param root_path where the binary/executable resides
+	/// @paaram content_path where assets can be found
+	LIBRARY_EXPORT platform::Result startup(const StackString<MAX_PATH_SIZE>& root_path, const StackString<MAX_PATH_SIZE>& content_path);
 	LIBRARY_EXPORT void shutdown();
 } // namespace core

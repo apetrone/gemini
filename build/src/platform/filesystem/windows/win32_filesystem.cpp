@@ -88,4 +88,12 @@ namespace platform
 	{
 		return get_environment_variable("%HOMEPATH%");
 	}
+
+
+
+	platform::Result fs_content_directory(core::StackString<MAX_PATH_SIZE>& content_path, const core::StackString<MAX_PATH_SIZE>& root_path)
+	{
+		content_path = root_path;
+		return platform::Result(platform::Result::Success);
+	}	
 } // namespace platform

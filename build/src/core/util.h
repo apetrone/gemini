@@ -62,5 +62,14 @@ namespace core
 		
 		template <class T>
 		uint32_t hash32(const T& data);
+		
+		struct hash
+		{
+			template <class T>
+			uint32_t operator()(const T& value)
+			{
+				return hash32(value);
+			}
+		};
 	} // namespace util
 } // namespace core

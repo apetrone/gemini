@@ -28,9 +28,9 @@
 #include "datamodel/material.h"
 
 #include <runtime/logging.h>
-#include <runtime/xfile.h>
 
 #include <platform/typedefs.h>
+#include <platform/platform.h>
 
 using namespace core;
 
@@ -167,11 +167,11 @@ namespace gemini
 						
 			std::string abs_file_path = abs_base_path + ".animation";
 			LOGV("writing animation '%s'\n", abs_file_path.c_str());
-			xfile_t handle = xfile_open(abs_file_path.c_str(), XF_WRITE);
-			if (xfile_isopen(handle))
+			platform::File handle = platform::fs_open(abs_file_path.c_str(), platform::FileMode_Write);
+			if (handle.is_open())
 			{
-				xfile_write(handle, &buffer[0], buffer.length(), 1);
-				xfile_close(handle);
+				platform::fs_write(handle, &buffer[0], buffer.length(), 1);
+				platform::fs_close(handle);
 			}
 			else
 			{
@@ -440,17 +440,18 @@ namespace gemini
 			std::string abs_model_file = abs_base_path;
 			abs_model_file.append(".model");
 			
-			xfile_t out = xfile_open(abs_model_file.c_str(), XF_WRITE);
-			LOGV("writing model: '%s'\n", abs_model_file.c_str());
-			if (xfile_isopen(out))
+			platform::File handle = platform::fs_open(abs_model_file.c_str(), platform::FileMode_Write);
+			if (handle.is_open())
 			{
-				xfile_write(out, &buffer[0], buffer.length(), 1);
-				xfile_close(out);
+				platform::fs_write(handle, &buffer[0], buffer.length(), 1);
+				platform::fs_close(handle);
 			}
 			else
 			{
 				LOGE("error writing to file %s\n", abs_model_file.c_str());
 			}
+			
+
 		}
 
 		

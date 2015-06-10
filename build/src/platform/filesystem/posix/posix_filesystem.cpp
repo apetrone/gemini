@@ -92,4 +92,50 @@ namespace platform
 	{
 		return posix_make_absolute_path(path);
 	}
+
+	platform::File fs_open(const char* path, FileMode mode)
+	{
+		return posix_fs_open(path, mode);
+	}
+	
+	void fs_close(platform::File file)
+	{
+		return posix_fs_close(file);
+	}
+	
+	size_t fs_read(platform::File file, void* destination, size_t size, size_t count)
+	{
+		return posix_fs_read(file, destination, size, count);
+	}
+	
+	size_t fs_write(platform::File file, const void* source, size_t size, size_t count)
+	{
+		return posix_fs_write(file, source, size, count);
+	}
+	
+	int32_t fs_seek(platform::File file, long int offset, FileSeek origin)
+	{
+		return posix_fs_seek(file, offset, origin);
+	}
+	
+	long int fs_tell(platform::File file)
+	{
+		return posix_fs_tell(file);
+	}
+	
+	bool fs_file_exists(const char* path)
+	{
+		return posix_fs_file_exists(path);
+	}
+	
+	bool fs_directory_exists(const char* path)
+	{
+		return posix_fs_directory_exists(path);
+	}
+
+	platform::Result fs_content_directory(core::StackString<MAX_PATH_SIZE>& content_path, const core::StackString<MAX_PATH_SIZE>& root_path)
+	{
+		content_path = root_path;
+		return platform::Result(platform::Result::Success);
+	}
 } // namespace platform

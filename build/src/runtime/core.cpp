@@ -28,6 +28,8 @@
 #include "logging.h"
 #include "logging_interface.h"
 
+#include "filesystem_interface.h"
+
 #include <platform/platform.h>
 
 namespace core
@@ -89,13 +91,16 @@ namespace core
 			platform::DateTime dt;
 			platform::datetime(dt);
 			
+			
+			core::filesystem::IFileSystem* fs = core::fs::instance();
+			
 			char datetime_string[ GEMINI_DATETIME_STRING_MAX ];
 			str::sprintf(datetime_string, GEMINI_DATETIME_STRING_MAX, "%02d-%02d-%04d-%02d-%02d-%02d.log",
 						 dt.month, dt.day, dt.year, dt.hour, dt.minute, dt.second);
 			
 			char logdir[MAX_PATH_SIZE];
 			memset(logdir, 0, MAX_PATH_SIZE);
-			str::copy(logdir, filesystem::content_directory(), 0);
+			str::copy(logdir, fs->content_directory(), 0);
 			str::cat(logdir, "/" GEMINI_LOG_PATH "/");
 			platform::path::normalize(logdir);
 			
@@ -129,10 +134,19 @@ namespace core
 	} // namespace _internal
 
 	
-	platform::Result startup()
+	platform::Result startup(const StackString<MAX_PATH_SIZE>& root_path, const StackString<MAX_PATH_SIZE>& content_path)
 	{
 		platform::Result result(platform::Result::Success);
 		
+		
+		// create file system instance
+		core::filesystem::IFileSystem* filesystem = MEMORY_NEW(core::filesystem::FileSystemInterface, platform::memory::global_allocator());
+		core::fs::set_instance(filesystem);
+		
+		filesystem->root_directory(root_path());
+		filesystem->content_directory(content_path());
+		
+
 		// create an instance of the log system
 		core::logging::ILog* log_system = MEMORY_NEW(core::logging::LogInterface, platform::memory::global_allocator());
 		core::log::set_instance(log_system);
@@ -146,10 +160,11 @@ namespace core
 			fprintf(stderr, "Could not open one or more log handlers\n");
 			result = platform::Result(platform::Result::Warning, "Could not open one or more log handlers");
 		}
-		
+
+		LOGV("filesystem root_path = '%s'\n", filesystem->root_directory());
+		LOGV("filesystem content_path = '%s'\n", filesystem->content_directory());
 		LOGV("Logging system initialized.\n");
-		
-		LOGV("setting root to '%s', content: '%s'\n", filesystem::root_directory(), filesystem::content_directory());
+		LOGV("runtime startup complete.\n");
 		
 		return result;
 	} // startup
@@ -158,8 +173,15 @@ namespace core
 	{
 		core::log::instance()->shutdown();
 		
+		core::fs::instance()->shutdown();
+		
+		
+		
 		core::logging::ILog* log_system = core::log::instance();
 		MEMORY_DELETE(log_system, platform::memory::global_allocator());
+		
+		core::filesystem::IFileSystem* filesystem = core::fs::instance();
+		MEMORY_DELETE(filesystem, platform::memory::global_allocator());
 	} // shutdown
 
 } // namespace core
