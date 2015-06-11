@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2012- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -23,16 +23,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "filesystem_interface.h"
-//
-//#include <runtime/logging.h>
-//
-//#include <platform/platform.h>
-//#include <platform/typedefs.h>
-//
-//#include <core/str.h>
-//
-//#include <stdio.h> // for printf
-//#include <sys/stat.h> // for fs::FileExists
 
 namespace core
 {
