@@ -40,6 +40,37 @@ void test_dynamic_library()
 // ---------------------------------------------------------------------
 // filesystem
 // ---------------------------------------------------------------------
+void test_filesystem()
+{
+	TEST_CATEGORY(filesystem);
+
+	core::StackString<MAX_PATH_SIZE> filename;
+	platform::get_program_directory(&filename[0], filename.max_size());
+	filename.append(PATH_SEPARATOR_STRING);
+	filename.append("test.conf");
+
+	platform::File file = platform::fs_open(filename(), platform::FileMode_Write);
+	TEST_VERIFY(file.handle != 0, fs_open_for_write);
+	TEST_VERIFY(file.is_open(), file_is_open);
+
+	if (file.is_open())
+	{
+		const char buffer[] = "Hello, this is a test\n";
+		size_t bytes_written = platform::fs_write(file, buffer, 22, 1);
+		TEST_VERIFY(bytes_written == 22, fs_write);
+		platform::fs_close(file);
+	}
+
+	file = platform::fs_open(filename(), platform::FileMode_Read);
+	TEST_VERIFY(file.handle != 0, fs_open_for_read);
+	if (file.is_open())
+	{
+		core::StackString<32> buffer;
+		size_t bytes_read = platform::fs_read(file, &buffer[0], buffer.max_size(), 1);
+		TEST_VERIFY(bytes_read == 22, fs_read);
+		platform::fs_close(file);
+	}
+}
 
 // ---------------------------------------------------------------------
 // serial
@@ -62,6 +93,7 @@ int main(int, char**)
 	TEST_VERIFY(result.success(), platform_startup);
 
 	test_dynamic_library();
+	test_filesystem();
 	
 	platform::shutdown();
 	platform::memory::shutdown();

@@ -42,12 +42,9 @@ namespace core
 		Type _data[maximum_size];
 		unsigned int _length;
 		
-		StackString( int flags = 0 )
+		StackString()
 		{
-			if( flags == 0 )
-			{
-				clear();
-			}
+			clear();
 		}
 		
 		StackString(const Type * s)
