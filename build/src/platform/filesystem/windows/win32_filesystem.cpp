@@ -31,6 +31,7 @@
 
 #include <direct.h> // for _mkdir
 #include <string.h> // for strrchr
+#include <Shlwapi.h> // for PathFileExists
 
 namespace platform
 {
@@ -89,7 +90,87 @@ namespace platform
 		return get_environment_variable("%HOMEPATH%");
 	}
 
+	platform::File fs_open(const char* path, FileMode mode)
+	{
+		platform::File file;
+		DWORD desired_access = 0;
+		// allow subsequent open operations on a file to request READ access
+		DWORD share_mode = FILE_SHARE_READ;
+		DWORD creation_disposition = 0;
+		DWORD flags = FILE_ATTRIBUTE_NORMAL;
 
+		if (mode == FileMode_Read)
+		{
+			creation_disposition |= OPEN_EXISTING;
+			desired_access = GENERIC_READ;
+		}
+		else if (mode == FileMode_Write)
+		{
+			creation_disposition |= CREATE_ALWAYS;
+			desired_access = GENERIC_WRITE;
+		}
+
+		file.handle = CreateFileA(path, desired_access, share_mode, NULL, creation_disposition, flags, NULL);
+		assert(file.handle != INVALID_HANDLE_VALUE);
+
+		return file;
+	}
+
+	void fs_close(platform::File file)
+	{
+		assert(CloseHandle(file.handle));
+	}
+
+	size_t fs_read(platform::File file, void* destination, size_t size, size_t count)
+	{
+		OVERLAPPED* overlapped = NULL;
+		DWORD bytes_read = 0;
+		assert(ReadFile(file.handle, destination, size*count, &bytes_read, overlapped));
+
+		return bytes_read;
+	}
+
+	size_t fs_write(platform::File file, const void* source, size_t size, size_t count)
+	{
+		OVERLAPPED* overlapped = NULL;
+		DWORD bytes_written = 0;
+		assert(WriteFile(file.handle, source, size*count, &bytes_written, overlapped));
+		return bytes_written;
+	}
+
+	int32_t fs_seek(platform::File file, long int offset, FileSeek origin)
+	{
+		DWORD move_method;
+		switch (origin)
+		{
+			case FileSeek_Begin: move_method = FILE_BEGIN; break;
+			case FileSeek_Relative: move_method = FILE_CURRENT; break;
+			case FileSeek_End: move_method = FILE_END; break;
+			default:
+				// Unknown FileSeek enum
+				assert(0);
+		}
+
+		return SetFilePointer(file.handle, offset, NULL, move_method);
+	}
+
+	long int fs_tell(platform::File file)
+	{
+		// offset is 0, move from the current file position
+		// this essentially returns the current file pointer
+		// see: http://stackoverflow.com/questions/17707020/is-there-no-getfilepointerex-windows-api-function
+		return SetFilePointer(file.handle, 0, NULL, FILE_CURRENT);
+	}
+
+	bool fs_file_exists(const char* path)
+	{
+		return PathFileExistsA(path);
+	}
+
+	bool fs_directory_exists(const char* path)
+	{
+		return PathFileExistsA(path);
+	}
 
 	platform::Result fs_content_directory(core::StackString<MAX_PATH_SIZE>& content_path, const core::StackString<MAX_PATH_SIZE>& root_path)
 	{

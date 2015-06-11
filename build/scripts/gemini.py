@@ -461,6 +461,10 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/time/windows/win32_time.cpp"
 	]
 
+	windows.links += [
+		"Shlwapi"
+	]
+
 	return libplatform
 
 
