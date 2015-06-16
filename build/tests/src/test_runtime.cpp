@@ -37,6 +37,22 @@
 // ---------------------------------------------------------------------
 // filesystem
 // ---------------------------------------------------------------------
+void test_filesystem()
+{
+	TEST_CATEGORY(filesystem);
+	
+	core::filesystem::IFileSystem* fs = core::fs::instance();
+	TEST_VERIFY(fs != nullptr, filesystem_instance_exists);
+	
+//	platform::PathString content_path;
+//	content_path = fs->root_directory();
+//	content_path.append(PATH_SEPARATOR_STRING).append("builds").append(PATH_SEPARATOR_STRING).append(PLATFORM_NAME);
+//	fs->content_directory(content_path);
+	
+	
+//	platform::PathString absolute_path;
+//	TEST_VERIFY(fs->get_absolute_path_for_content(absolute_path, "conf/shaders.conf") == false, get_absolute_path_for_content_missing);
+}
 
 // ---------------------------------------------------------------------
 // configloader
@@ -47,7 +63,17 @@ int main(int, char**)
 	platform::memory::startup();
 	platform::Result result = platform::startup();
 	assert(result.success());
-		
+	
+	core::StackString<MAX_PATH_SIZE> root_path;
+	core::StackString<MAX_PATH_SIZE> content_path;
+	platform::get_program_directory(&root_path[0], root_path.max_size());
+	platform::fs_content_directory(content_path, root_path);
+	
+	core::startup(root_path, content_path, "test_runtime");
+	
+	test_filesystem();
+	
+	core::shutdown();
 	
 	platform::shutdown();
 	platform::memory::shutdown();
