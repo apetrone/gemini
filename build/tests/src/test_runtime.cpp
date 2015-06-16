@@ -64,12 +64,16 @@ int main(int, char**)
 	platform::Result result = platform::startup();
 	assert(result.success());
 	
-	core::StackString<MAX_PATH_SIZE> root_path;
-	core::StackString<MAX_PATH_SIZE> content_path;
+	platform::PathString root_path;
+	platform::PathString content_path;
 	platform::get_program_directory(&root_path[0], root_path.max_size());
 	platform::fs_content_directory(content_path, root_path);
 	
-	core::startup(root_path, content_path, "test_runtime");
+	platform::PathString application_path = platform::get_user_application_directory();
+	application_path.append(PATH_SEPARATOR_STRING);
+	application_path.append("net.arcfusion.test_runtime");
+	
+	core::startup(root_path, content_path, application_path);
 	
 	test_filesystem();
 	

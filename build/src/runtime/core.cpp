@@ -135,7 +135,7 @@ namespace core
 	} // namespace _internal
 
 	
-	platform::Result startup(const PathString& root_path, const PathString& content_path, const PathString& application_name)
+	platform::Result startup(const PathString& root_path, const PathString& content_path, const PathString& application_path)
 	{
 		platform::Result result(platform::Result::Success);
 		
@@ -146,13 +146,7 @@ namespace core
 		
 		filesystem->root_directory(root_path());
 		filesystem->content_directory(content_path);
-
-		PathString app_root = platform::get_user_application_directory();
-		app_root.append(PATH_SEPARATOR_STRING);
-		app_root.append("arcfusion.net");
-		app_root.append(PATH_SEPARATOR_STRING);
-		app_root.append(application_name);
-		filesystem->user_application_directory(app_root);
+		filesystem->user_application_directory(application_path);
 		
 		// create an instance of the log system
 		core::logging::ILog* log_system = MEMORY_NEW(core::logging::LogInterface, platform::memory::global_allocator());
