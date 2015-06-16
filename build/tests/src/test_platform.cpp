@@ -46,6 +46,9 @@ void test_filesystem()
 
 	core::StackString<MAX_PATH_SIZE> filename;
 	platform::get_program_directory(&filename[0], filename.max_size());
+	
+	TEST_VERIFY(platform::fs_directory_exists(filename()), fs_directory_exists);
+	
 	filename.append(PATH_SEPARATOR_STRING);
 	filename.append("test.conf");
 
@@ -66,7 +69,7 @@ void test_filesystem()
 	if (file.is_open())
 	{
 		core::StackString<32> buffer;
-		size_t bytes_read = platform::fs_read(file, &buffer[0], buffer.max_size(), 1);
+		size_t bytes_read = platform::fs_read(file, &buffer[0], 22, 1);
 		TEST_VERIFY(bytes_read == 22, fs_read);
 		platform::fs_close(file);
 	}
