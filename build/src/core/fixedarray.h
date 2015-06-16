@@ -44,6 +44,16 @@ private:
 	
 public:
 	
+	const Type* begin() const
+	{
+		return &elements[0];
+	}
+	
+	const Type* end() const
+	{
+		return &elements[total_elements];
+	}
+	
 	Type* begin()
 	{
 		return &elements[0];

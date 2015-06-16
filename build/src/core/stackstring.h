@@ -79,9 +79,8 @@ namespace core
 			return _length == 0;
 		}
 		
-		size_t size()
+		size_t size() const
 		{
-			_length = str::len(_data);
 			return _length;
 		}
 		
