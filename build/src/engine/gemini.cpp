@@ -1146,9 +1146,20 @@ private:
 		core::filesystem::IFileSystem* fs = core::fs::instance();
 		
 		// load game library
-		StackString<MAX_PATH_SIZE> game_library_path = fs->content_directory();
-		const char* dynamiclibrary_extension = platform::dylib_extension();
-		game_library_path.append(PATH_SEPARATOR_STRING).append("bin").append(PATH_SEPARATOR_STRING).append("game").append(dynamiclibrary_extension);
+		PathString game_library_path = fs->content_directory();
+		
+		PathString relative_library_path;
+		relative_library_path = "bin";
+		relative_library_path.append(PATH_SEPARATOR_STRING).append("game").append(platform::dylib_extension());
+//		fs->get_absolute_path_for_content(game_library_path, relative_library_path());
+		core::filesystem::absolute_path_from_relative(game_library_path, relative_library_path(), fs->content_directory());
+		
+		
+		
+		
+//		const char* dynamiclibrary_extension = platform::dylib_extension();
+//		game_library_path.append(PATH_SEPARATOR_STRING).append("bin").append(PATH_SEPARATOR_STRING).append("game").append(dynamiclibrary_extension);
+
 		gamelib = platform::dylib_open(game_library_path());
 		if (!gamelib)
 		{
@@ -1437,8 +1448,8 @@ Options:
 			content_path.append(PLATFORM_NAME);
 		}
 		
-		// startup duties; lower-level system init
-		result = core::startup(root_path, content_path);
+		// startup duties; lower-level system init		
+		result = core::startup(root_path, content_path, "gemini");
 		if (result.failed())
 		{
 			fprintf(stderr, "Fatal error: %s\n", result.message);

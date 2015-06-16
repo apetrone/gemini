@@ -24,6 +24,10 @@
 // -------------------------------------------------------------
 #include "filesystem_interface.h"
 
+#include <runtime/logging.h>
+
+using namespace platform;
+
 namespace core
 {
 	namespace filesystem
@@ -34,7 +38,6 @@ namespace core
 
 		void FileSystemInterface::startup()
 		{
-			
 		}
 		
 		void FileSystemInterface::shutdown()
@@ -44,10 +47,10 @@ namespace core
 		
 		bool FileSystemInterface::file_exists(const char* path, bool path_is_relative = true) const
 		{
-			StackString<MAX_PATH_SIZE> fullpath;
+			PathString fullpath;
 			if (path_is_relative)
 			{
-				absolute_path_from_relative(fullpath, path);
+				absolute_path_from_relative(fullpath, path, content_path);
 			}
 			else
 			{
@@ -60,10 +63,10 @@ namespace core
 		
 		bool FileSystemInterface::directory_exists(const char* path, bool path_is_relative = true) const
 		{
-			StackString<MAX_PATH_SIZE> fullpath;
+			PathString fullpath;
 			if (path_is_relative)
 			{
-				absolute_path_from_relative(fullpath, path);
+				absolute_path_from_relative(fullpath, path, content_path);
 			}
 			else
 			{
@@ -84,27 +87,83 @@ namespace core
 			return root_path();
 		}
 		
-		void FileSystemInterface::content_directory(const char* path)
+		void FileSystemInterface::content_directory(const PathString& content_root)
 		{
-			content_path = path;
+			content_path = content_root;
 		}
 		
-		const char* FileSystemInterface::content_directory() const
+		const PathString& FileSystemInterface::content_directory() const
 		{
-			return content_path();
+			return content_path;
 		}
 		
-		void FileSystemInterface::absolute_path_from_relative(StackString<MAX_PATH_SIZE>& fullpath, const char* relative_path) const
+		const PathString& FileSystemInterface::user_application_directory() const
 		{
-			fullpath = content_path;
-			fullpath.append(PATH_SEPARATOR_STRING);
-			fullpath.append(relative_path);
-			fullpath.normalize(PATH_SEPARATOR);
+			return user_application_path;
 		}
 		
-		void FileSystemInterface::relative_path_from_absolute(StackString<MAX_PATH_SIZE>& relative_path, const char* absolute_path) const
+		void FileSystemInterface::user_application_directory(const ::platform::PathString& application_directory)
 		{
+			user_application_path = application_directory;
+		}
+		
+		bool FileSystemInterface::virtual_file_exists(const char* relative_path) const
+		{
+			return file_exists(relative_path, true);
+		}
+		
+		bool FileSystemInterface::virtual_directory_exists(const char* relative_path) const
+		{
+			return directory_exists(relative_path, true);
+		}
+		
+		char* FileSystemInterface::virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length) const
+		{
+			size_t file_size;
 			
+			if (!buffer_length)
+			{
+				LOGE("ERROR: virtual_load_file called with INVALID value!\n");
+				return 0;
+			}
+						
+			StackString<MAX_PATH_SIZE> fullpath;
+			absolute_path_from_relative(fullpath, relative_path, content_directory());
+			if (!file_exists(fullpath(), false))
+			{
+				LOGE("File does not exist! \"%s\" (at \"%s\")\n", relative_path, fullpath());
+				return 0;
+			}
+
+			platform::File handle = platform::fs_open(fullpath(), platform::FileMode_Read);
+			if (handle.is_open())
+			{
+				// TODO: use 'get_length' to allow Android's Asset Manager?
+				platform::fs_seek(handle, 0, platform::FileSeek_End);
+				file_size = platform::fs_tell(handle);
+				platform::fs_seek(handle, 0, platform::FileSeek_Begin);
+				
+				if (buffer && *buffer_length > 0)
+				{
+					if (file_size > *buffer_length)
+					{
+						fprintf(stdout, "Request to read file size larger than buffer! (%ld > %lu)\n", file_size, (unsigned long)*buffer_length);
+						file_size = *buffer_length;
+					}
+				}
+				
+				*buffer_length = file_size;
+				if (!buffer)
+				{
+					buffer = (char*)MEMORY_ALLOC((*buffer_length)+1, platform::memory::global_allocator());
+					memset(buffer, 0, (*buffer_length)+1);
+				}
+				
+				platform::fs_read(handle, buffer, 1, file_size);
+				platform::fs_close(handle);
+			}
+			
+			return buffer;
 		}
 	} // namespace filesystem
 } // namespace core

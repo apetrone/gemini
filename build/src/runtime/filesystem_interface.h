@@ -27,14 +27,17 @@
 #include <platform/typedefs.h>
 #include "filesystem.h"
 
+#include <core/fixedarray.h>
+
 namespace core
 {
 	namespace filesystem
 	{
 		class FileSystemInterface : public IFileSystem
 		{
-			StackString<MAX_PATH_SIZE> root_path;
-			StackString<MAX_PATH_SIZE> content_path;
+			::platform::PathString root_path;
+			::platform::PathString user_application_path;
+			::platform::PathString content_path;
 		
 		public:
 			virtual ~FileSystemInterface();
@@ -48,11 +51,15 @@ namespace core
 			virtual void root_directory(const char* path);
 			virtual const char* root_directory() const;
 			
-			virtual void content_directory(const char* path);
-			virtual const char* content_directory() const;
+			virtual void content_directory(const ::platform::PathString& content);
+			virtual const ::platform::PathString& content_directory() const;
+
+			virtual const ::platform::PathString& user_application_directory() const;
+			virtual void user_application_directory(const ::platform::PathString& application_directory);
 			
-			virtual void absolute_path_from_relative(StackString<MAX_PATH_SIZE>& fullpath, const char* relative_path) const;
-			virtual void relative_path_from_absolute(StackString<MAX_PATH_SIZE>& relative_path, const char* absolute_path) const;
+			virtual bool virtual_file_exists(const char* relative_path) const;
+			virtual bool virtual_directory_exists(const char* relative_path) const;
+			virtual char* virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length) const;
 		};
 	} // namespace filesystem
 } // namespace core

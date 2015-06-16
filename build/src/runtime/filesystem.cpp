@@ -34,6 +34,8 @@
 #include <stdio.h> // for printf
 #include <sys/stat.h> // for fs::FileExists
 
+using platform::PathString;
+
 namespace core
 {
 	namespace filesystem
@@ -87,72 +89,32 @@ namespace core
 		} // truncate_string_at_path
 		
 		
-		char* file_to_buffer(const char* filename, char* buffer, size_t* buffer_length, bool path_is_relative)
+		void absolute_path_from_relative(PathString& fullpath, const char* relative_path, const PathString& content_path)
 		{
-			size_t file_size;
+			fullpath = content_path;
+			fullpath.append(PATH_SEPARATOR_STRING);
+			fullpath.append(relative_path);
+			fullpath.normalize(PATH_SEPARATOR);
+		}
+		
+		void relative_path_from_absolute(PathString& relative_path, const char* absolute_path, const PathString& content_path)
+		{
+			const char* basepath = core::str::strstr(absolute_path, content_path());
 			
-			if (!buffer_length)
+			if (basepath)
 			{
-				LOGE("ERROR: file_to_buffer called with INVALID value!\n");
-				return 0;
+				size_t content_length = content_path.size();
+				core::str::copy(&relative_path[0], (absolute_path+content_length+1), core::str::len(absolute_path) - content_length);
+				relative_path.normalize(PATH_SEPARATOR);
 			}
-			
-			IFileSystem* fs = core::fs::instance();
-			if (!fs->file_exists(filename, path_is_relative))
-			{
-				LOGE("File does not exist! \"%s\"\n", filename);
-				return 0;
-			}
-			
-			StackString<MAX_PATH_SIZE> fullpath;
-			if ( path_is_relative )
-			{
-				fs->absolute_path_from_relative(fullpath, filename);
-			}
-			else
-			{
-				fullpath = filename;
-				fullpath.normalize(PATH_SEPARATOR);
-			}
-			
-			
-			platform::File handle = platform::fs_open(fullpath(), platform::FileMode_Read);
-			if (handle.is_open())
-			{
-				// TODO: use 'get_length' to allow Android's Asset Manager?
-				platform::fs_seek(handle, 0, platform::FileSeek_End);
-				file_size = platform::fs_tell(handle);
-				platform::fs_seek(handle, 0, platform::FileSeek_Begin);
-				
-				if (buffer && *buffer_length > 0)
-				{
-					if (file_size > *buffer_length)
-					{
-						fprintf(stdout, "Request to read file size larger than buffer! (%ld > %lu)\n", file_size, (unsigned long)*buffer_length);
-						file_size = *buffer_length;
-					}
-				}
-				
-				*buffer_length = file_size;
-				if (!buffer)
-				{
-					buffer = (char*)MEMORY_ALLOC((*buffer_length)+1, platform::memory::global_allocator());
-					memset(buffer, 0, (*buffer_length)+1);
-				}
-				
-				platform::fs_read(handle, buffer, 1, file_size);
-				platform::fs_close(handle);
-			}
-
-			return buffer;
-		} // file_to_buffer
-
+		}
+		
 		void* audiofile_to_buffer(const char* filename, size_t& buffer_length)
 		{
 	#if PLATFORM_APPLE && PLATFORM_IS_MOBILE
 			return mobile_audio_file_to_buffer(filename, buffer_length);
 	#else
-			return file_to_buffer(filename, 0, &buffer_length);
+			return fs::instance()->virtual_load_file(filename, 0, &buffer_length);
 	#endif
 		} // audiofile_to_buffer
 
