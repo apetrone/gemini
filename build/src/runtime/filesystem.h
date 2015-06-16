@@ -49,6 +49,7 @@ namespace core
 			virtual void startup() = 0;
 			virtual void shutdown() = 0;
 
+			// general file system functions
 			virtual bool file_exists(const char* path, bool path_is_relative = true) const = 0;
 			virtual bool directory_exists(const char* path, bool path_is_relative = true) const = 0;
 			
@@ -58,20 +59,24 @@ namespace core
 			virtual void root_directory(const char* path) = 0;
 			virtual const char* root_directory() const = 0;
 			
-			// the content directory is where resources for this application can be found
-			virtual void content_directory(const char* path) = 0;
-			virtual const char* content_directory() const = 0;
+			virtual void content_directory(const ::platform::PathString& content) = 0;
+			virtual const ::platform::PathString& content_directory() const = 0;
 			
-			virtual void absolute_path_from_relative(StackString<MAX_PATH_SIZE>& fullpath, const char* relative_path) const = 0;
-			virtual void relative_path_from_absolute(StackString<MAX_PATH_SIZE>& relative_path, const char* absolute_path) const = 0;
+			// the user directory where this application's files are stored
+			virtual const ::platform::PathString& user_application_directory() const = 0;
+			virtual void user_application_directory(const ::platform::PathString& application_directory) = 0;
+			
+			// virtual file system functions
+			virtual bool virtual_file_exists(const char* relative_path) const = 0;
+			virtual bool virtual_directory_exists(const char* relative_path) const = 0;
+			
+			// Load a file into buffer. (synchronously)
+			// bufferLength will contain the size of the buffer
+			// if buffer is null, a new buffer is allocated and must be DEALLOC'd after use
+			// if buffer is not null, bufferLength should contain the size of the buffer which will not be exceeded.
+			virtual char* virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length) const = 0;
 		};
-	
-		// Load a file into buffer. The pointer is returned.
-		// bufferLength will contain the size of the buffer
-		// if buffer is null, a new buffer is allocated and must be DEALLOC'd after use
-		// if buffer is not null, bufferLength should contain the size of the buffer which will not be exceeded.
-		LIBRARY_EXPORT char* file_to_buffer(const char* filename, char* buffer, size_t* buffer_length, bool path_is_relative = true);
-		
+
 		// read an audio file to memory
 		// this provides an abstraction between platforms; but likely needs to belong elsewhere?
 		void* audiofile_to_buffer(const char* filename, size_t& buffer_length);
@@ -79,6 +84,10 @@ namespace core
 		LIBRARY_EXPORT void truncate_string_at_path(char* path, const char* substr);
 		
 //		LIBRARY_EXPORT int read_file_stats(const char* fullpath, FileStats& file_stats);
+
+		
+		void absolute_path_from_relative(::platform::PathString& fullpath, const char* relative_path, const ::platform::PathString& content_path);
+		void relative_path_from_absolute(::platform::PathString& relative_path, const char* absolute_path, const ::platform::PathString& content_path);
 	}
 	
 	

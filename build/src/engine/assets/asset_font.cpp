@@ -59,17 +59,17 @@ namespace gemini
 		char* load_font_from_file(const char* path, unsigned short point_size, font::Handle& font)
 		{
 			size_t font_data_size = 0;
-			char * font_data = 0;
-			font_data = core::filesystem::file_to_buffer( path, 0, &font_data_size );
+			char* font_data = 0;
+			font_data = core::fs::instance()->virtual_load_file(path, 0, &font_data_size);
 			
-			if ( font_data )
+			if (font_data)
 			{
-	//			LOGV( "font data size: %i bytes\n", font_data_size );
-				font = font::load_font_from_memory( font_data, font_data_size, point_size );
+//				LOGV( "font data size: %i bytes\n", font_data_size );
+				font = font::load_font_from_memory(font_data, font_data_size, point_size);
 			}
 			else
 			{
-				LOGE( "Unable to load font from file: '%s'\n", path );
+				LOGE("Unable to load font from file: '%s'\n", path);
 				return 0;
 			}
 			

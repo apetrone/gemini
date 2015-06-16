@@ -188,6 +188,7 @@ namespace platform
 	};
 
 	typedef void* DynamicLibrarySymbol;
+	typedef core::StackString<MAX_PATH_SIZE> PathString;
 
 	struct LIBRARY_EXPORT DateTime
 	{
@@ -268,6 +269,12 @@ namespace platform
 	/// @desc Returns the current user's directory;
 	/// @returns The $(HOME) environment variable in Linux or %HOMEPATH% on Windows
 	LIBRARY_EXPORT const char* get_user_directory();
+	
+	// long-term storage for applications
+	LIBRARY_EXPORT PathString get_user_application_directory();
+	
+	// temporary storage; can be wiped by the OS
+	LIBRARY_EXPORT PathString get_user_temp_directory();
 	
 	
 	// this accepts a path entered by the user (possibly on the commandline)

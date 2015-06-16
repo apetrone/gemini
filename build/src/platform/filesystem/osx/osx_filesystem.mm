@@ -37,7 +37,7 @@ namespace platform
 	Result get_program_directory(char* path, size_t path_size)
 	{
 		Result result(Result::Success);
-		NSString * bundle_path = [[NSBundle mainBundle] bundlePath];
+		NSString* bundle_path = [[NSBundle mainBundle] bundlePath];
 		if (bundle_path)
 		{
 			[bundle_path getCString:path maxLength:path_size encoding:NSUTF8StringEncoding];
@@ -62,6 +62,24 @@ namespace platform
 	const char* get_user_directory()
 	{
 		return posix_get_user_directory();
+	}
+	
+	PathString get_user_application_directory()
+	{
+		PathString user_application_root;
+		NSArray* directories = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
+		NSString* application_support_directory = [directories lastObject];
+		[application_support_directory getCString:&user_application_root[0] maxLength:user_application_root.max_size() encoding:NSUTF8StringEncoding];
+		return user_application_root;
+	}
+	
+	PathString get_user_temp_directory()
+	{
+		PathString user_temp_root;
+		NSArray* directories = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
+		NSString* user_temp_directory = [directories lastObject];
+		[user_temp_directory getCString:&user_temp_root[0] maxLength:user_temp_root.max_size() encoding:NSUTF8StringEncoding];
+		return user_temp_root;
 	}
 	
 	core::StackString<MAX_PATH_SIZE> make_absolute_path(const char* path)

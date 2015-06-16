@@ -32,6 +32,8 @@
 
 #include <platform/platform.h>
 
+using platform::PathString;
+
 namespace core
 {
 	namespace _internal
@@ -98,22 +100,21 @@ namespace core
 			str::sprintf(datetime_string, GEMINI_DATETIME_STRING_MAX, "%02d-%02d-%04d-%02d-%02d-%02d.log",
 						 dt.month, dt.day, dt.year, dt.hour, dt.minute, dt.second);
 			
-			char logdir[MAX_PATH_SIZE];
-			memset(logdir, 0, MAX_PATH_SIZE);
-			str::copy(logdir, fs->content_directory(), 0);
-			str::cat(logdir, "/" GEMINI_LOG_PATH "/");
-			platform::path::normalize(logdir);
+			platform::PathString log_directory;
+			log_directory = fs->user_application_directory();
+			log_directory.append(PATH_SEPARATOR_STRING).append(GEMINI_LOG_PATH).append(PATH_SEPARATOR_STRING);
+			log_directory.normalize(PATH_SEPARATOR);
 			
 			// make sure target folder is created
-			platform::path::make_directories( logdir );
+			platform::path::make_directories(log_directory());
 			
-			core::str::cat(logdir, datetime_string);
+			log_directory.append(datetime_string);
 			
 			logging::Handler filelogger;
 			filelogger.open = file_logger_open;
 			filelogger.close = file_logger_close;
 			filelogger.message = file_logger_message;
-			filelogger.userdata = logdir;
+			filelogger.userdata = (void*)log_directory();
 			log_system->add_handler(&filelogger);
 			
 			++total_log_handlers;
@@ -134,7 +135,7 @@ namespace core
 	} // namespace _internal
 
 	
-	platform::Result startup(const StackString<MAX_PATH_SIZE>& root_path, const StackString<MAX_PATH_SIZE>& content_path)
+	platform::Result startup(const PathString& root_path, const PathString& content_path, const PathString& application_name)
 	{
 		platform::Result result(platform::Result::Success);
 		
@@ -144,9 +145,15 @@ namespace core
 		core::fs::set_instance(filesystem);
 		
 		filesystem->root_directory(root_path());
-		filesystem->content_directory(content_path());
-		
+		filesystem->content_directory(content_path);
 
+		PathString app_root = platform::get_user_application_directory();
+		app_root.append(PATH_SEPARATOR_STRING);
+		app_root.append("arcfusion.net");
+		app_root.append(PATH_SEPARATOR_STRING);
+		app_root.append(application_name);
+		filesystem->user_application_directory(app_root);
+		
 		// create an instance of the log system
 		core::logging::ILog* log_system = MEMORY_NEW(core::logging::LogInterface, platform::memory::global_allocator());
 		core::log::set_instance(log_system);
@@ -162,7 +169,7 @@ namespace core
 		}
 
 		LOGV("filesystem root_path = '%s'\n", filesystem->root_directory());
-		LOGV("filesystem content_path = '%s'\n", filesystem->content_directory());
+		LOGV("filesystem content_path = '%s'\n", content_path());
 		LOGV("Logging system initialized.\n");
 		LOGV("runtime startup complete.\n");
 		

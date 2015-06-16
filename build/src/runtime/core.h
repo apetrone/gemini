@@ -39,6 +39,6 @@ namespace core
 	/// Start up the runtime services
 	/// @param root_path where the binary/executable resides
 	/// @paaram content_path where assets can be found
-	LIBRARY_EXPORT platform::Result startup(const StackString<MAX_PATH_SIZE>& root_path, const StackString<MAX_PATH_SIZE>& content_path);
+	LIBRARY_EXPORT platform::Result startup(const ::platform::PathString& root_path, const ::platform::PathString& content_path, const ::platform::PathString& application_name);
 	LIBRARY_EXPORT void shutdown();
 } // namespace core

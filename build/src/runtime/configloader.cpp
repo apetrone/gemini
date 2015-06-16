@@ -61,7 +61,7 @@ namespace core
 			bool is_success = false;
 
 			// load the file into a memory buffer
-			buffer = core::filesystem::file_to_buffer( filename, 0, &buffer_size, path_is_relative );
+			buffer = fs::instance()->virtual_load_file(filename, 0, &buffer_size);
 			if ( buffer )
 			{
 				is_success = parse_json_string_with_callback( buffer, buffer_size, callback, context );

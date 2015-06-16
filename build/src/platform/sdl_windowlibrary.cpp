@@ -208,6 +208,7 @@ namespace platform
 #if SDL_ENABLE_GAMEPAD
 		// add game controller db
 //		size_t length = 0;
+		// this won't compile; replace with virtual_load_file
 //		char* buffer = core::filesystem::file_to_buffer("conf/gamecontrollerdb.conf", 0, &length);
 //		int result = SDL_GameControllerAddMapping(buffer);
 //		DEALLOC(buffer);
