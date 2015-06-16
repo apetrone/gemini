@@ -1448,8 +1448,11 @@ Options:
 			content_path.append(PLATFORM_NAME);
 		}
 		
-		// startup duties; lower-level system init		
-		result = core::startup(root_path, content_path, "gemini");
+		// startup duties; lower-level system init
+		PathString application_path = platform::get_user_application_directory();
+		application_path.append(PATH_SEPARATOR_STRING);
+		application_path.append("net.arcfusion.gemini");
+		result = core::startup(root_path, content_path, application_path);
 		if (result.failed())
 		{
 			fprintf(stderr, "Fatal error: %s\n", result.message);
