@@ -368,6 +368,33 @@ void test_memory()
 	- be able to ship off stats to an external tool
 	- coalesce different allocations
 #endif
+
+
+#if 0
+	StackAllocator<int> sa(4096);
+	LinearAllocator<int> la;
+	
+	foo(sa);
+	
+	
+	foo(la);
+	
+	Array<int, LinearAllocator<int> > bar(la);
+	Array<int, StackAllocator<int> > baz(sa);
+	
+	baz.push_back(31);
+#endif
+
+
+#if 0
+	StackAllocator<int> sa(1024);
+	Heap things("scratch");
+	int* p = things.allocate(sa, 32);
+	things.deallocate(sa, p);
+#endif
+	
+	
+
 }
 
 void test_maths()
@@ -386,13 +413,283 @@ void test_maths()
 	
 }
 
+
+#define REFLECTION_BEGIN(class_name) static ClassProperty* reflection_fields(size_t& total_properties)\
+	{\
+		typedef class_name reflection_class_type;\
+		static ClassProperty properties[] = {
+
+#define REFLECTION_END() };\
+	static size_t property_count = sizeof(properties)/sizeof(ClassProperty);\
+	total_properties = property_count;\
+	return properties;\
+	}
+
+#define REFLECTION_PROPERTY(property) ClassProperty(#property, offsetof(reflection_class_type, property))
+
+
+
+template <class T>
+struct TypeInfo
+{
+
+};
+
+struct ClassProperty
+{
+	const char* name;
+
+	size_t offset;
+	
+	ClassProperty(const char* property_name, size_t property_offset) :
+		name(property_name),
+		offset(property_offset)
+	{
+	}
+};
+
+
+namespace serialization
+{
+	template <class T>
+	class Archive
+	{
+	public:
+		template <class X>
+		void serialize(X* object)
+		{
+			object->serialize(*this, 0);
+		}
+	};
+
+	
+	class TestArchive : public Archive<TestArchive>
+	{
+	public:
+		template <class T>
+		void serialize(T* object)
+		{
+			object->serialize(*this, 0);
+		}
+	};
+	
+	
+	template <>
+	void TestArchive::serialize(unsigned int* value)
+	{
+		fprintf(stdout, "serialize: unsigned int %p\n", value);
+	}
+	
+	template <>
+	void TestArchive::serialize(float* value)
+	{
+		fprintf(stdout, "serialize: float %p\n", value);
+	}
+}
+
+
+struct TestObject
+{
+	uint32_t type;
+	float weight;
+
+	REFLECTION_BEGIN(TestObject)
+			REFLECTION_PROPERTY(type),
+			REFLECTION_PROPERTY(weight)
+	REFLECTION_END()
+	
+	template <class Archive>
+	void serialize(Archive& a, size_t version)
+	{
+		a.serialize(&type);
+		a.serialize(&weight);
+	}
+};
+
+
+
+void test_serialization()
+{
+	TestObject object;
+	object.type = 30;
+
+	serialization::TestArchive a;
+	a.serialize(&object);
+}
+
+void test_reflection()
+{
+	size_t total_properties = 0;
+	ClassProperty* properties = 0;
+	
+	
+	properties = TestObject::reflection_fields(total_properties);
+	for (size_t index = 0; index < total_properties; ++index)
+	{
+		ClassProperty* p = &properties[index];
+		fprintf(stdout, "property: %zu, name: '%s', offset: %zu\n", index, p->name, p->offset);
+	}
+}
+
+
+template <class AllocatorType, class ValueType>
+struct Base
+{
+	typedef ValueType value_type;
+
+	AllocatorType* implementation()
+	{
+		return static_cast<AllocatorType*>(this);
+	}
+
+	ValueType* allocate(size_t size)
+	{
+		return (ValueType*)implementation()->allocate(size);
+	}
+	
+	void deallocate(ValueType* pointer)
+	{
+		implementation()->deallocate(pointer);
+	}
+};
+
+
+template <class Type>
+struct StackAllocator : public Base<StackAllocator<Type>, Type>
+{
+	StackAllocator(size_t max_size_bytes)
+	{
+		
+	}
+
+	Type* allocate(size_t size)
+	{
+		fprintf(stdout, "StackAllocator: allocate %zu bytes\n", size);
+		
+		return (Type*)malloc(size);
+	}
+	
+	void deallocate(Type* pointer)
+	{
+		fprintf(stdout, "StackAllocator: deallocate %p\n", pointer);
+		free(pointer);
+	}
+};
+
+template <class Type>
+struct LinearAllocator : public Base<LinearAllocator<Type>, Type>
+{
+	Type* allocate(size_t size)
+	{
+		fprintf(stdout, "LinearAllocator: allocate %zu bytes\n", size);
+		
+		return (Type*)malloc(size);
+	}
+	
+	void deallocate(Type* pointer)
+	{
+		fprintf(stdout, "LinearAllocator: deallocate %p\n", pointer);
+		free(pointer);
+	}
+};
+
+
+template <class T>
+struct MyLinearAllocator : public platform::memory::Allocator< MyLinearAllocator<T> >
+{
+
+};
+
+
+struct Heap
+{
+	char name[32];
+	
+	Heap(const char* heap_name)
+	{
+		core::str::copy(name, heap_name, 32);
+	}
+	
+	template <class T>
+	typename T::value_type* allocate(T& allocator, size_t size)
+	{
+		return allocator.allocate(size);
+	}
+	
+	template <class T>
+	void deallocate(T& allocator, typename T::value_type* pointer)
+	{
+		allocator.deallocate(pointer);
+	}
+};
+
+
+
+template <class Allocator>
+void foo(Allocator& a)
+{
+	int* p = a.allocate(4);
+
+	a.deallocate(p);
+}
+
+
+template <class T, class Allocator>
+class Array
+{
+	typedef T value_type;
+	typedef T* value_pointer;
+	typedef Allocator allocator_type;
+
+	value_pointer elements;
+	size_t total_elements;
+	allocator_type& allocator;
+	
+	
+	
+public:
+
+	Array(Allocator& a) :
+		allocator(a)
+	{
+		elements = nullptr;
+		total_elements = 0;
+	}
+	
+	
+	void push_back(const value_type& item)
+	{
+		value_pointer p = allocator.allocate(sizeof(T));
+		
+	}
+};
+
+struct Rectangle
+{
+	unsigned width;
+	unsigned height;
+};
+
+
 int main(int argc, char** argv)
 {
 	platform::startup();
-	core::startup();
+	
+	core::StackString<MAX_PATH_SIZE> root_path, content_path;
+	platform::get_program_directory(&root_path[0], root_path.max_size());
+	platform::fs_content_directory(content_path, root_path);
+	
+	platform::PathString application_path = platform::get_user_application_directory();
+	application_path.append(PATH_SEPARATOR_STRING);
+	application_path.append("net.arcfusion.rnd");
+	core::startup(root_path, content_path, application_path);
 
 //	test_memory();
-	test_maths();
+//	test_maths();
+//	test_coroutines();
+//	test_serialization();
+//	test_reflection();
+
 
 	core::shutdown();
 	platform::shutdown();
