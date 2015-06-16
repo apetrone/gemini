@@ -1184,6 +1184,11 @@ private:
 				assert(game_interface != 0);
 			}
 			
+			LOGV("game: %s\n", game_interface->game_window_title()());
+			LOGV("game_application_directory: %s\n", game_interface->game_application_directory()());
+			
+			
+			
 			game_interface->startup();
 		}
 	}
