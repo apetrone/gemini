@@ -100,12 +100,19 @@ namespace platform
 	
 	size_t posix_fs_read(platform::File file, void* destination, size_t size, size_t count)
 	{
-		return fread(destination, size, count, static_cast<FILE*>(file.handle));
+		size_t num_elements = fread(destination, size, count, static_cast<FILE*>(file.handle));
+		
+		// This assert is hit under these conditions:
+		//	- size*count > file size
+		assert(num_elements == count);
+		return num_elements*size;
 	}
 	
 	size_t posix_fs_write(platform::File file, const void* source, size_t size, size_t count)
 	{
-		return fwrite(source, size, count, static_cast<FILE*>(file.handle));
+		size_t num_elements = fwrite(source, size, count, static_cast<FILE*>(file.handle));
+		assert(count == num_elements);
+		return num_elements*size;
 	}
 	
 	int32_t posix_fs_seek(platform::File file, long int offset, FileSeek origin)
