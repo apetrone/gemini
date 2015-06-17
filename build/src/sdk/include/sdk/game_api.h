@@ -28,8 +28,6 @@
 
 #include <platform/input.h>
 
-#include <core/stackstring.h>
-
 namespace gemini
 {
 	struct UserCommand;
@@ -105,9 +103,6 @@ namespace gemini
 			}
 		}
 	};
-	
-
-	typedef core::StackString<128> GameString;
 
 	// Describes the interface exposed to the engine from the game.
 	class IGameInterface
@@ -130,12 +125,6 @@ namespace gemini
 		
 		// called on the server: process an incoming message
 		virtual void server_process_message(const GameMessage& message) = 0;
-		
-		// title for the game; used for window title
-		virtual GameString game_window_title() const = 0;
-		
-		// application directory (relative to platform's get_user_application_directory path)
-		virtual GameString game_application_directory() const = 0;
 	}; // GameInterface
 	
 	
