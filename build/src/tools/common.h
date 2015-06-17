@@ -68,7 +68,7 @@ namespace gemini
 			}
 		};
 			
-		void startup();
+		void startup(const char* application_name);
 		void shutdown();
 	} // namespace tools
 

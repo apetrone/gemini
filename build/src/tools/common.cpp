@@ -31,6 +31,7 @@
 #include "common/extension.h"
 
 #include <platform/typedefs.h>
+#include <platform/platform.h>
 
 #include <runtime/filesystem.h>
 #include <runtime/core.h>
@@ -39,28 +40,38 @@
 #include <core/stackstring.h>
 
 using namespace core;
+using platform::PathString;
 
 namespace gemini
 {
 	namespace tools
 	{
-		void startup()
+		void startup(const char* application_name)
 		{
 			platform::startup();
 
-			// setup root path
-			StackString<MAX_PATH_SIZE> root_path;
+//			// setup root path
+			PathString root_path;
 			platform::Result result = platform::get_program_directory(&root_path[0], root_path.max_size());
-
-			StackString<MAX_PATH_SIZE> content_path;
+//
+			PathString content_path;
 			platform::fs_content_directory(content_path, root_path);
-
-			// create default material
-			// TODO: move this to a better location one day
+//
+//			// create default material
+//			// TODO: move this to a better location one day
 			datamodel::Material* material = MEMORY_NEW(datamodel::Material, platform::memory::global_allocator());
 			datamodel::set_default_material(material);
 
-			core::startup(content_path, root_path);
+			// startup runtime
+			core::startup_filesystem();
+			core::filesystem::IFileSystem* filesystem = core::fs::instance();
+			filesystem->root_directory(root_path);
+			filesystem->content_directory(content_path);
+			
+			PathString application_directory = platform::get_user_application_directory(application_name);
+			filesystem->user_application_directory(application_directory);
+
+			core::startup_logging();
 		}
 		
 		void shutdown()
