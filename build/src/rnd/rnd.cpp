@@ -671,18 +671,11 @@ struct Rectangle
 };
 
 
+
+
 int main(int argc, char** argv)
 {
 	platform::startup();
-	
-	core::StackString<MAX_PATH_SIZE> root_path, content_path;
-	platform::get_program_directory(&root_path[0], root_path.max_size());
-	platform::fs_content_directory(content_path, root_path);
-	
-	platform::PathString application_path = platform::get_user_application_directory();
-	application_path.append(PATH_SEPARATOR_STRING);
-	application_path.append("net.arcfusion.rnd");
-	core::startup(root_path, content_path, application_path);
 
 //	test_memory();
 //	test_maths();
@@ -691,7 +684,8 @@ int main(int argc, char** argv)
 //	test_reflection();
 
 
-	core::shutdown();
+
+//	core::shutdown();
 	platform::shutdown();
 
 	return 0;

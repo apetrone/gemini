@@ -62,7 +62,7 @@ public:
 
 	virtual kernel::Error startup()
 	{
-		core::startup();
+		// TODO: initialize runtime (core::startup_filesystem, core::startup_logging)
 		window_interface = platform::create_window_library();
 		window_interface->startup(kernel::parameters());
 		

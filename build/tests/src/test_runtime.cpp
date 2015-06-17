@@ -69,11 +69,13 @@ int main(int, char**)
 	platform::get_program_directory(&root_path[0], root_path.max_size());
 	platform::fs_content_directory(content_path, root_path);
 	
-	platform::PathString application_path = platform::get_user_application_directory();
-	application_path.append(PATH_SEPARATOR_STRING);
-	application_path.append("net.arcfusion.test_runtime");
+	platform::PathString application_path = platform::get_user_application_directory("arcfusion.net/gemini/test_runtime");
+	core::startup_filesystem();
+	core::fs::instance()->root_directory(root_path);
+	core::fs::instance()->content_directory(content_path);
+	core::fs::instance()->user_application_directory(application_path);
 	
-	core::startup(root_path, content_path, application_path);
+	core::startup_logging();
 	
 	test_filesystem();
 	

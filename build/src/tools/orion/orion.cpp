@@ -151,10 +151,18 @@ public:
 
 	virtual kernel::Error startup()
 	{
-		core::StackString<MAX_PATH_SIZE> root_path, content_path;
+		platform::PathString root_path;
+		platform::PathString content_path;
 		platform::get_program_directory(&root_path[0], root_path.max_size());
 		platform::fs_content_directory(content_path, root_path);
-		core::startup(root_path, content_path);
+		
+		platform::PathString application_path = platform::get_user_application_directory("arcfusion.net/orion");
+		core::startup_filesystem();
+		core::fs::instance()->root_directory(root_path);
+		core::fs::instance()->content_directory(content_path);
+		core::fs::instance()->user_application_directory(application_path);
+		
+		core::startup_logging();
 		
 		// create a platform window
 		{

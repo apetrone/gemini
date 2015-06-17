@@ -64,11 +64,14 @@ namespace platform
 		return posix_get_user_directory();
 	}
 	
-	PathString get_user_application_directory()
+	PathString get_user_application_directory(const char* application_data_path)
 	{
 		PathString user_application_root;
 		NSArray* directories = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
 		NSString* application_support_directory = [directories lastObject];
+		
+		NSString* application_path = [NSString stringWithUTF8String:application_data_path];
+		application_support_directory = [application_support_directory stringByAppendingPathComponent: application_path];
 		[application_support_directory getCString:&user_application_root[0] maxLength:user_application_root.max_size() encoding:NSUTF8StringEncoding];
 		return user_application_root;
 	}

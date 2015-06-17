@@ -1485,9 +1485,7 @@ Options:
 		load_config(config);
 		
 		// the application path can be specified in the config (per-game basis)
-		PathString application_path = platform::get_user_application_directory();
-		application_path.append(PATH_SEPARATOR_STRING);
-		application_path.append(config.application_directory);
+		PathString application_path = platform::get_user_application_directory(config.application_directory.c_str());
 		filesystem->user_application_directory(application_path);
 		
 		// after the application path is set, we can startup the logging system
@@ -1505,7 +1503,7 @@ Options:
 		
 		LOGV("filesystem root_path = '%s'\n", filesystem->root_directory().c_str());
 		LOGV("filesystem content_path = '%s'\n", content_path.c_str());
-
+		LOGV("filesystem user_application_directory = '%s'\n", filesystem->user_application_directory().c_str());
 
 		
 		// create the window interface

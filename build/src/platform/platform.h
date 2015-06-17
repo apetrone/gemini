@@ -271,7 +271,7 @@ namespace platform
 	LIBRARY_EXPORT const char* get_user_directory();
 	
 	// long-term storage for applications
-	LIBRARY_EXPORT PathString get_user_application_directory();
+	LIBRARY_EXPORT PathString get_user_application_directory(const char* application_data_path);
 	
 	// temporary storage; can be wiped by the OS
 	LIBRARY_EXPORT PathString get_user_temp_directory();

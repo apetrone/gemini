@@ -327,7 +327,7 @@ Options:
 	}
 	
 	
-	tools::startup();
+	tools::startup("arcfusion.net/lynx");
 	
 	tools::register_types();
 	
