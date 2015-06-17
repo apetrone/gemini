@@ -92,6 +92,7 @@ namespace behavior
 		
 		BehaviorStatus tick(Entity* entity, BehaviorContext* context);
 		virtual void populate(BehaviorContext* context);
+		virtual const char* get_classname() const { return "Behavior"; }
 	};
 	
 	struct Condition : public Behavior
@@ -102,6 +103,16 @@ namespace behavior
 		Behavior(behavior_name),
 		next(&next_behavior)
 		{
+		}
+		
+		virtual void deactivate(Entity* entity, behavior::BehaviorContext* context)
+		{
+			if (next && next->is_active())
+			{
+				next->deactivate(entity, context);
+			}
+			
+			Behavior::deactivate(entity, context);
 		}
 		
 		virtual behavior::BehaviorStatus update(Entity* entity, BehaviorContext* context)
@@ -127,15 +138,7 @@ namespace behavior
 			context->pop(this);
 		}
 		
-		virtual void deactivate(Entity* entity, behavior::BehaviorContext* context)
-		{
-			if (next && next->is_active())
-			{
-				next->deactivate(entity, context);
-			}
-			
-			Behavior::deactivate(entity, context);
-		}
+		virtual const char* get_classname() const { return "Condition"; }
 	};
 	
 	
@@ -168,6 +171,8 @@ namespace behavior
 			}
 			context->pop(this);
 		}
+		
+		virtual const char* get_classname() const { return "Composite"; }
 	};
 	
 	// iterates over a fixed list of behaviors
@@ -226,6 +231,19 @@ namespace behavior
 			assert(0);
 			return Behavior_Invalid;
 		}
+		
+		virtual void deactivate(Entity* entity, BehaviorContext* context)
+		{
+			if (active_child != children.end())
+			{
+				Behavior* child = *active_child;
+				child->deactivate(entity, context);
+			}
+			
+			Behavior::deactivate(entity, context);
+		}
+		
+		virtual const char* get_classname() const { return "Sequence"; }
 	};
 	
 	// find the first behavior that succeeds
@@ -294,5 +312,18 @@ namespace behavior
 			assert(0);
 			return Behavior_Invalid;
 		}
+		
+		virtual void deactivate(Entity* entity, BehaviorContext* context)
+		{
+			if (active_child != children.end())
+			{
+				Behavior* child = *active_child;
+				child->deactivate(entity, context);
+			}
+			
+			Behavior::deactivate(entity, context);
+		}
+		
+		virtual const char* get_classname() const { return "Selector"; }
 	};
 } // namespace behavior
