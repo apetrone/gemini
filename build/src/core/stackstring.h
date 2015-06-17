@@ -239,6 +239,11 @@ namespace core
 			return _data;
 		}
 		
+		const char* c_str() const
+		{
+			return _data;
+		}
+		
 		StackStringType& strip_trailing(char character)
 		{
 			if (_length > 0)

@@ -128,6 +128,8 @@ struct Settings
 	
 	uint32_t window_width;
 	uint32_t window_height;
+	core::StackString<128> window_title;
+	platform::PathString application_directory;
 	
 	::renderer::RenderSettings render_settings;
 	
@@ -167,7 +169,6 @@ static util::ConfigLoadStatus settings_conf_loader( const Json::Value & root, vo
 		return util::ConfigLoad_Failure;
 	}
 	
-	LOGV( "loading settings...\n" );
 	const Json::Value& physics_tick_rate = root["physics_tick_rate"];
 	if (!physics_tick_rate.isNull())
 	{
@@ -208,6 +209,18 @@ static util::ConfigLoadStatus settings_conf_loader( const Json::Value & root, vo
 	if (!window_height.isNull())
 	{
 		cfg->window_height = window_height.asInt();
+	}
+	
+	const Json::Value& window_title = root["window_title"];
+	if (!window_title.isNull())
+	{
+		cfg->window_title = window_title.asString().c_str();
+	}
+	
+	const Json::Value& application_directory = root["application_directory"];
+	if (!application_directory.isNull())
+	{
+		cfg->application_directory = application_directory.asString().c_str();
 	}
 	
 	const Json::Value& renderer = root["renderer"];
@@ -1429,8 +1442,7 @@ Options:
 		kernel::parameters().device_flags |= kernel::DeviceDesktop;
 #endif
 
-		//
-		// setup our file system...
+		// runtime setup
 		StackString< MAX_PATH_SIZE > root_path;
 		platform::Result result = platform::get_program_directory(&root_path[0], root_path.max_size());
 		assert(!result.failed());
@@ -1454,26 +1466,52 @@ Options:
 		}
 		
 		// startup duties; lower-level system init
-		PathString application_path = platform::get_user_application_directory();
-		application_path.append(PATH_SEPARATOR_STRING);
-		application_path.append("net.arcfusion.gemini");
-		result = core::startup(root_path, content_path, application_path);
+		result = core::startup_filesystem();
 		if (result.failed())
 		{
-			fprintf(stderr, "Fatal error: %s\n", result.message);
+			fprintf(stdout, "Fatal error: %s\n", result.message);
 			core::shutdown();
 			return kernel::CoreFailed;
 		}
+		core::filesystem::IFileSystem* filesystem = core::fs::instance();
+		// the root path is the current binary path
+		filesystem->root_directory(root_path);
+		
+		// the content directory is where we'll find our assets
+		filesystem->content_directory(content_path);
+		
+		// load engine settings (from content path)
+		Settings config;
+		load_config(config);
+		
+		// the application path can be specified in the config (per-game basis)
+		PathString application_path = platform::get_user_application_directory();
+		application_path.append(PATH_SEPARATOR_STRING);
+		application_path.append(config.application_directory);
+		filesystem->user_application_directory(application_path);
+		
+		// after the application path is set, we can startup the logging system
+		// to ensure the files end up in the right location
+		result = core::startup_logging();
+		if (result.failed())
+		{
+			fprintf(stdout, "Fatal error: %s\n", result.message);
+			core::shutdown();
+			return kernel::CoreFailed;
+		}
+		
+		LOGV("Logging system initialized.\n");
+		
+		
+		LOGV("filesystem root_path = '%s'\n", filesystem->root_directory().c_str());
+		LOGV("filesystem content_path = '%s'\n", content_path.c_str());
+
+
 		
 		// create the window interface
 		window_interface = platform::create_window_library();
 		window_interface->startup(kernel::parameters());
 			
-		// load engine settings
-		// load boot config
-		Settings config;
-		load_config(config);
-		
 		params.step_interval_seconds = (1.0f/(float)config.physics_tick_rate);
 				
 		
@@ -1500,7 +1538,7 @@ Options:
 		// TODO: we should load these from a config; for now just set them.
 		window_params.window_width = config.window_width;
 		window_params.window_height = config.window_height;
-		window_params.window_title = "gemini";
+		window_params.window_title = config.window_title();
 		
 		// needs to happen here if we want to rely on vr::total_devices
 		vr::startup();

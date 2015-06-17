@@ -77,14 +77,14 @@ namespace core
 			return platform::fs_directory_exists(fullpath());
 		}
 		
-		void FileSystemInterface::root_directory(const char* path)
+		void FileSystemInterface::root_directory(const ::platform::PathString& root)
 		{
-			root_path = path;
+			root_path = root;
 		}
 		
-		const char* FileSystemInterface::root_directory() const
+		const ::platform::PathString& FileSystemInterface::root_directory() const
 		{
-			return root_path();
+			return root_path;
 		}
 		
 		void FileSystemInterface::content_directory(const PathString& content_root)

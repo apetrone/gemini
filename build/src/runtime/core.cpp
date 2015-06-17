@@ -133,25 +133,42 @@ namespace core
 			return total_log_handlers;
 		} // add_log_handlers
 	} // namespace _internal
-
 	
-	platform::Result startup(const PathString& root_path, const PathString& content_path, const PathString& application_path)
+	
+	platform::Result startup_filesystem()
 	{
 		platform::Result result(platform::Result::Success);
-		
 		
 		// create file system instance
 		core::filesystem::IFileSystem* filesystem = MEMORY_NEW(core::filesystem::FileSystemInterface, platform::memory::global_allocator());
 		core::fs::set_instance(filesystem);
 		
-		filesystem->root_directory(root_path());
-		filesystem->content_directory(content_path);
-		filesystem->user_application_directory(application_path);
+		if (!filesystem)
+		{
+			result.message = "Unable to create filesystem instance";
+			result.status = platform::Result::Failure;
+		}
+		
+		return result;
+	}
+	
+	platform::Result startup_logging()
+	{
+		platform::Result result(platform::Result::Success);
+		
+		if (!core::fs::instance())
+		{
+			result.message = "Filesystem instance is required for logging";
+			result.status = platform::Result::Failure;
+			return result;
+		}
+		
+		
 		
 		// create an instance of the log system
 		core::logging::ILog* log_system = MEMORY_NEW(core::logging::LogInterface, platform::memory::global_allocator());
 		core::log::set_instance(log_system);
-
+		
 		// add logs
 		uint32_t total_log_handlers = _internal::add_log_handlers(log_system);
 		
@@ -161,14 +178,9 @@ namespace core
 			fprintf(stderr, "Could not open one or more log handlers\n");
 			result = platform::Result(platform::Result::Warning, "Could not open one or more log handlers");
 		}
-
-		LOGV("filesystem root_path = '%s'\n", filesystem->root_directory());
-		LOGV("filesystem content_path = '%s'\n", content_path());
-		LOGV("Logging system initialized.\n");
-		LOGV("runtime startup complete.\n");
 		
 		return result;
-	} // startup
+	}
 	
 	void shutdown()
 	{

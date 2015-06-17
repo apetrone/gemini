@@ -56,8 +56,8 @@ namespace core
 			// directory where the binary actually resides
 			// this may vary between operating systems as some
 			// will bundle their assets (MacOS X/iOS)
-			virtual void root_directory(const char* path) = 0;
-			virtual const char* root_directory() const = 0;
+			virtual void root_directory(const ::platform::PathString& root_path) = 0;
+			virtual const ::platform::PathString& root_directory() const = 0;
 			
 			virtual void content_directory(const ::platform::PathString& content) = 0;
 			virtual const ::platform::PathString& content_directory() const = 0;
