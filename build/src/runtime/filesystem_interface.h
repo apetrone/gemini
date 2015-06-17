@@ -48,8 +48,8 @@ namespace core
 			virtual bool file_exists(const char* path, bool path_is_relative) const;
 			virtual bool directory_exists(const char* path, bool path_is_relative) const;
 			
-			virtual void root_directory(const char* path);
-			virtual const char* root_directory() const;
+			virtual void root_directory(const ::platform::PathString& root_path);
+			virtual const ::platform::PathString& root_directory() const;
 			
 			virtual void content_directory(const ::platform::PathString& content);
 			virtual const ::platform::PathString& content_directory() const;

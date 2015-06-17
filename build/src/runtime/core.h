@@ -36,9 +36,10 @@ namespace platform
 
 namespace core
 {
-	/// Start up the runtime services
-	/// @param root_path where the binary/executable resides
-	/// @paaram content_path where assets can be found
-	LIBRARY_EXPORT platform::Result startup(const ::platform::PathString& root_path, const ::platform::PathString& content_path, const ::platform::PathString& application_path);
+	// These have individual startup functions to allow flexibility
+	// in configuring the file system
+	LIBRARY_EXPORT platform::Result startup_filesystem();
+	LIBRARY_EXPORT platform::Result startup_logging();
+	
 	LIBRARY_EXPORT void shutdown();
 } // namespace core
