@@ -1782,8 +1782,6 @@ Options:
 		}
 	
 		navigation::shutdown();
-	
-		close_gamelibrary();
 		
 		// shutdown gui
 		MEMORY_DELETE(gui_style, platform::memory::global_allocator());
@@ -1791,6 +1789,10 @@ Options:
 		delete compositor;
 		compositor = 0;
 		_compositor = 0;
+		
+		// since the game can create gui elements, we need to shutdown
+		// the gui before shutting down the game library.
+		close_gamelibrary();
 		
 		// shutdown scene render method
 		MEMORY_DELETE(render_method, platform::memory::global_allocator());
