@@ -728,14 +728,13 @@ def arguments(parser):
 	parser.add_argument("--with-civet", dest="with_civet", action="store_true", help="Build with CivetServer", default=True)
 	parser.add_argument("--no-civet", dest="with_civet", action="store_false", help="Build without CivetServer")
 
-	parser.add_argument("--with-oculusvr", dest="with_oculusvr", action="store_true", help="Build with OculusVR support", default=False)
 	parser.add_argument("--with-tools", dest="with_tools", action="store_true", help="Build with support for tools", default=False)
 	parser.add_argument("--with-tests", dest="with_tests", action="store_true", help="Build with support for unit tests", default=False)
 
 def products(arguments, **kwargs):
 
 	# warn about SDKs...
-	if arguments.with_oculusvr or arguments.with_tools:
+	if arguments.with_tools:
 		logging.warn("Generating projects for products which require private SDKs...")
 		logging.warn("Please be sure you've run build/scripts/sync_sdks.py!")
 		if not os.path.exists(os.path.join("build", SDKS_FOLDER)):
@@ -817,20 +816,6 @@ def products(arguments, **kwargs):
 		Dependency(file="bullet2.py", products=["BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"]),
 		librecastnavigation
 	]
-
-	if arguments.with_oculusvr:
-		gemini.dependencies += [
-			Dependency(file="oculusvr.py")
-		]
-
-		gemini.defines += [
-			"GEMINI_WITH_OCULUSVR=1"
-		]
-
-	else:
-		gemini.excludes += [
-			"src/kernels/test_oculusvr.cpp"
-		]
 
 	# common sources
 	setup_common_variables(arguments, target_platform, gemini)

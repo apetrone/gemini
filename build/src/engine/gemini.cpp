@@ -63,7 +63,6 @@
 #include "animation.h"
 #include "physics/physics.h"
 #include "hotloading.h"
-#include "vr.h"
 #include "navigation.h"
 
 #include <platform/windowlibrary.h>
@@ -123,8 +122,6 @@ struct Settings
 	uint32_t physics_tick_rate;
 	int32_t debugdraw_max_primitives;
 	uint32_t enable_asset_reloading : 1;
-	uint32_t vr_render : 1; // render to the VR render target(s)
-	uint32_t vr_require_headset : 1; // don't render to VR unless a headset is attached
 	
 	uint32_t window_width;
 	uint32_t window_height;
@@ -139,8 +136,6 @@ struct Settings
 		physics_tick_rate = 60;
 		debugdraw_max_primitives = 2048;
 		enable_asset_reloading = 0;
-		vr_render = false;
-		vr_require_headset = false;
 		window_width = 1280;
 		window_height = 720;
 	}
@@ -185,18 +180,6 @@ static util::ConfigLoadStatus settings_conf_loader( const Json::Value & root, vo
 	if (!enable_asset_reloading.isNull())
 	{
 		cfg->enable_asset_reloading = enable_asset_reloading.asBool();
-	}
-	
-	const Json::Value& vr_render = root["vr_render"];
-	if (!vr_render.isNull())
-	{
-		cfg->vr_render = vr_render.asBool();
-	}
-	
-	const Json::Value& vr_require_headset = root["vr_require_headset"];
-	if (!vr_require_headset.isNull())
-	{
-		cfg->vr_require_headset = vr_require_headset.asBool();
 	}
 	
 	const Json::Value& window_width = root["window_width"];
@@ -312,145 +295,6 @@ public:
 	virtual void render_gui() = 0;
 };
 
-
-class VRRenderMethod : public SceneRenderMethod
-{
-	vr::HeadMountedDevice* device;
-	
-	SceneLink& scenelink;
-	
-public:
-	VRRenderMethod(vr::HeadMountedDevice* in_device, SceneLink& in_link) : device(in_device), scenelink(in_link) {}
-	
-	virtual void render_view(gemini::IEngineEntity** entity_list, platform::NativeWindow* window, const View& view)
-	{
-#if 0
-		assert( device != nullptr );
-		
-		renderer::IRenderDriver * driver = renderer::driver();
-		device->begin_frame(driver);
-		
-		renderer::RenderTarget* rt = device->render_target();
-		
-		RenderStream rs;
-		rs.add_clearcolor(0.0f, 0.5f, 0.5f, 1.0f);
-		rs.add_clear(renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER);
-		rs.add_state(renderer::STATE_DEPTH_TEST, 1);
-		rs.run_commands();
-		rs.rewind();
-//		
-////		Camera camera;
-////		camera.type = Camera::FIRST_PERSON;
-////		camera.perspective(50.0f, window->render_width, window->render_height, 0.01f, 8192.0f);
-////		camera.set_absolute_position(origin);
-////		camera.eye_position = origin;
-////		camera.view = glm::vec3(0, 0, -1);
-////		camera.pitch = view_angles.x;
-////		camera.yaw = view_angles.y;
-////		camera.update_view();
-		
-		
-		glm::vec3 old_camera_position = camera.pos;
-		glm::vec3 camera_position = camera.pos + glm::vec3(0, 1.6f, 0.0f);
-		vr::EyePose eye_poses[2];
-		glm::mat4 proj[2];
-		device->get_eye_poses(eye_poses, proj);
-		
-		
-		
-		for (uint32_t eye_index = 0; eye_index < 2; ++eye_index)
-		{
-			glm::mat4 old_matcam = camera.matCam;
-			vr::EyePose& eye_pose = eye_poses[eye_index];
-			
-			int x;
-			int y = 0;
-			int width, height;
-			
-			width = rt->width/2;
-			height = rt->height;
-			
-			if (eye_pose.is_left_eye())
-			{
-				x = 0;
-				y = 0;
-			}
-			else if (eye_pose.is_right_eye())
-			{
-				x = width;
-				y = 0;
-			}
-			
-			// setup camera matrix for this eye
-			
-			// rotation = character rotation * eye pose rotation
-			// translation = characer position + character rotation.rotate_vector(eye pose translation) // q(t) * V * q(t)^-1
-			
-			
-			glm::quat character_rotation;
-			glm::quat rotation = eye_pose.rotation;
-			glm::vec3 translation = eye_pose.offset + eye_pose.translation;
-			
-			glm::mat4 tr = glm::translate(glm::mat4(1.0f), translation);
-			glm::mat4 ro = glm::toMat4(rotation);
-			glm::mat4 final_rift = glm::inverse(tr * ro);
-			// TODO: the camera needs work because we need the base character rotation
-			// then we need to add the rift rotation
-			// then need to translate the character
-			// and finally add the rift translation to that.
-			
-			//			camera.matCam = final_rift; //camera.get_inverse_rotation() * glm::translate(glm::mat4(1.0), -camera.pos);
-			
-			
-			glm::mat4 character_transform = glm::translate(glm::mat4(1.0), camera_position) * glm::transpose(camera.get_inverse_rotation());
-			glm::mat4 head_transform = tr * ro;
-			
-			camera.matCam = glm::inverse(character_transform * head_transform);
-			
-			
-			camera.matProj = proj[eye_index];
-			//camera.pos = translation;
-			
-			rs.add_viewport(x, y, width, height);
-			
-			// render nodes
-			rs.run_commands();
-			rs.rewind();
-			
-			render_scene_from_camera(entity_list, camera, scenelink);
-			
-			// draw debug graphics
-			::renderer::debugdraw::render(camera.matCam, camera.matProj, x, y, width, height);
-			
-			camera.matCam = old_matcam;
-			
-			// TODO: this HAS to be drawn when the render target is active for the
-			// rift.
-			if (_compositor)
-			{
-				_compositor->render();
-			}
-		}
-		
-		camera.pos = old_camera_position;
-		
-		device->end_frame(driver);
-#endif
-	}
-	
-	virtual void render_viewmodel(gemini::IEngineEntity* entity, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles)
-	{
-		
-	}
-	
-	virtual void render_gui()
-	{
-		if (_compositor)
-		{
-			_compositor->render();
-		}
-	}
-};
 
 
 class DefaultRenderMethod : public SceneRenderMethod
@@ -1124,8 +968,6 @@ private:
 	IEngineInterface* engine_interface;
 	IGameInterface* game_interface;
 	
-	// VR stuff
-	vr::HeadMountedDevice* device;
 	
 	// GUI stuff
 	GUIRenderer* gui_renderer;
@@ -1232,7 +1074,6 @@ public:
 		draw_navigation_debug(false)
 	{
 		game_path = "";
-		device = 0;
 	}
 	
 	virtual ~EngineKernel()
@@ -1263,21 +1104,7 @@ public:
 	
 		if (event.is_down)
 		{
-			if (event.key == input::KEY_SPACE)
-			{
-				if (device)
-				{
-					device->dismiss_warning();
-				}
-			}
-			else if (event.key == input::KEY_TAB)
-			{
-				if (device)
-				{
-					device->reset_head_pose();
-				}
-			}
-			else if (event.key == input::KEY_P)
+			if (event.key == input::KEY_P)
 			{
 				draw_physics_debug = !draw_physics_debug;
 				LOGV("draw_physics_debug = %s\n", draw_physics_debug?"ON":"OFF");
@@ -1533,41 +1360,6 @@ Options:
 		window_params.window_height = config.window_height;
 		window_params.window_title = config.window_title();
 		
-		// needs to happen here if we want to rely on vr::total_devices
-		vr::startup();
-		
-		// TODO: do old application config; setup VR headset
-		if ((config.vr_require_headset && (vr::total_devices() > 0)) || (!config.vr_require_headset))
-		{
-			device = vr::create_device();
-			if (device)
-			{
-				int32_t width, height;
-				device->query_display_resolution(width, height);
-				
-				// required such that the kernel doesn't swap buffers
-				// as this is handled by the rift sdk.
-				params.swap_buffers = !config.vr_render;
-				
-				if (config.vr_render)
-				{
-//					params.use_fullscreen = 1;
-					
-					
-#if PLATFORM_MACOSX
-					// target the rift.
-					if (config.vr_require_headset)
-					{
-						window_params.target_display = 2;
-					}
-#endif
-					params.use_vsync = true;
-					window_params.window_width = (uint16_t)width;
-					window_params.window_height = (uint16_t)height;
-				}
-			}
-		}
-		
 		// create the window
 		
 		main_window = window_interface->create_window(window_params);
@@ -1684,18 +1476,9 @@ Options:
 			hotloading::startup();
 		}
 		
-		// TODO: call the old Application startup function here.
-		if (device && config.vr_render)
-		{
-			vr::setup_rendering(device, main_window->render_width, main_window->render_height);
-			// TODO: instance render method for VR
-			render_method = MEMORY_NEW(VRRenderMethod, platform::memory::global_allocator()) (device, *scenelink);
-		}
-		else
-		{
-			// TODO: instance render method for default
-			render_method = MEMORY_NEW(DefaultRenderMethod, platform::memory::global_allocator()) (*scenelink, window_interface);
-		}
+
+		// TODO: instance render method for default
+		render_method = MEMORY_NEW(DefaultRenderMethod, platform::memory::global_allocator()) (*scenelink, window_interface);
 		
 		// setup interfaces
 		engine_interface = MEMORY_NEW(EngineInterface, platform::memory::global_allocator())
@@ -2011,14 +1794,7 @@ Options:
 		
 		// shutdown scene render method
 		MEMORY_DELETE(render_method, platform::memory::global_allocator());
-		
-		// shutdown vr
-		if (device)
-		{
-			vr::destroy_device(device);
-		}
-		vr::shutdown();
-		
+	
 		
 		
 		::renderer::driver()->render_target_destroy(gui_render_target);

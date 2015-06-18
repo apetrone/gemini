@@ -77,7 +77,8 @@ namespace kernel
 		
 		// this is needed to allow normal rendering and Oculus Rift rendering.
 		// the Rift SDK will swap buffers itself, which causes flickering
-		// if we also do it.
+		// if we also do it. This defaults to true and shouldn't be
+		// modified unless your kernel has custom needs for buffer swap.
 		bool swap_buffers;
 				
 		// vertical sync
