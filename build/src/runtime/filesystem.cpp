@@ -36,6 +36,7 @@
 
 using platform::PathString;
 
+
 namespace core
 {
 	namespace filesystem
@@ -44,14 +45,16 @@ namespace core
 		IFileSystem::~IFileSystem()
 		{
 		}
-	
+
+
+		IMPLEMENT_INTERFACE(IFileSystem);
+
 #if PLATFORM_IS_MOBILE
 
 
 		void * mobile_audio_file_to_buffer( const char * filename, size_t & buffer_length );
 	
 #endif
-
 	} // namespace filesystem
 } // namespace core
 
@@ -114,7 +117,7 @@ namespace core
 	#if PLATFORM_APPLE && PLATFORM_IS_MOBILE
 			return mobile_audio_file_to_buffer(filename, buffer_length);
 	#else
-			return fs::instance()->virtual_load_file(filename, 0, &buffer_length);
+			return filesystem::instance()->virtual_load_file(filename, 0, &buffer_length);
 	#endif
 		} // audiofile_to_buffer
 

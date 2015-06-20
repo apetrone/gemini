@@ -31,28 +31,42 @@
 #include <assert.h>
 
 // ---------------------------------------------------------------------
-// logging
-// ---------------------------------------------------------------------
-
-// ---------------------------------------------------------------------
 // filesystem
 // ---------------------------------------------------------------------
 void test_filesystem()
 {
 	TEST_CATEGORY(filesystem);
-	
-	core::filesystem::IFileSystem* fs = core::fs::instance();
+
+	core::filesystem::IFileSystem* fs = core::filesystem::instance();
 	TEST_VERIFY(fs != nullptr, filesystem_instance_exists);
-	
-//	platform::PathString content_path;
-//	content_path = fs->root_directory();
-//	content_path.append(PATH_SEPARATOR_STRING).append("builds").append(PATH_SEPARATOR_STRING).append(PLATFORM_NAME);
-//	fs->content_directory(content_path);
-	
-	
-//	platform::PathString absolute_path;
-//	TEST_VERIFY(fs->get_absolute_path_for_content(absolute_path, "conf/shaders.conf") == false, get_absolute_path_for_content_missing);
+
+	//	platform::PathString content_path;
+	//	content_path = fs->root_directory();
+	//	content_path.append(PATH_SEPARATOR_STRING).append("builds").append(PATH_SEPARATOR_STRING).append(PLATFORM_NAME);
+	//	fs->content_directory(content_path);
+
+
+	//	platform::PathString absolute_path;
+	//	TEST_VERIFY(fs->get_absolute_path_for_content(absolute_path, "conf/shaders.conf") == false, get_absolute_path_for_content_missing);
 }
+
+// ---------------------------------------------------------------------
+// logging
+// ---------------------------------------------------------------------
+void test_logging()
+{
+	TEST_CATEGORY(logging);
+	TEST_VERIFY(core::logging::instance() != nullptr, log_instance_is_valid);
+
+	LOGV("This is a test of the logging system!\n");
+
+	LOGW("This is a warning\n");
+	LOGE("This is an error!\n");
+
+	LOGW("Warning, %i parameters missing!\n", 3);
+}
+
+
 
 // ---------------------------------------------------------------------
 // configloader
@@ -71,13 +85,14 @@ int main(int, char**)
 	
 	platform::PathString application_path = platform::get_user_application_directory("arcfusion.net/gemini/test_runtime");
 	core::startup_filesystem();
-	core::fs::instance()->root_directory(root_path);
-	core::fs::instance()->content_directory(content_path);
-	core::fs::instance()->user_application_directory(application_path);
+	core::filesystem::instance()->root_directory(root_path);
+	core::filesystem::instance()->content_directory(content_path);
+	core::filesystem::instance()->user_application_directory(application_path);
 	
 	core::startup_logging();
 	
 	test_filesystem();
+	test_logging();
 	
 	core::shutdown();
 	

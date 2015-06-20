@@ -860,7 +860,7 @@ public:
 	virtual IModelInterface* models() { return model_interface; }
 	virtual gemini::physics::IPhysicsInterface* physics() { return physics_interface; }
 	virtual IExperimental* experiment() { return experimental_interface; }
-	virtual core::logging::ILog* log() { return core::log::instance(); }
+	virtual core::logging::ILog* log() { return core::logging::instance(); }
 	virtual gemini::IDebugDraw* debugdraw() { return gemini::debugdraw::instance(); }
 	virtual gemini::IAudioInterface* audio() { return gemini::audio::instance(); }
 	
