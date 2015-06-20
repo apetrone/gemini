@@ -64,7 +64,7 @@ namespace gemini
 
 			// startup runtime
 			core::startup_filesystem();
-			core::filesystem::IFileSystem* filesystem = core::fs::instance();
+			core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
 			filesystem->root_directory(root_path);
 			filesystem->content_directory(content_path);
 			

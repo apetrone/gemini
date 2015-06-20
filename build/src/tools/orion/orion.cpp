@@ -158,9 +158,9 @@ public:
 		
 		platform::PathString application_path = platform::get_user_application_directory("arcfusion.net/orion");
 		core::startup_filesystem();
-		core::fs::instance()->root_directory(root_path);
-		core::fs::instance()->content_directory(content_path);
-		core::fs::instance()->user_application_directory(application_path);
+		core::filesystem::instance()->root_directory(root_path);
+		core::filesystem::instance()->content_directory(content_path);
+		core::filesystem::instance()->user_application_directory(application_path);
 		
 		core::startup_logging();
 		
@@ -216,7 +216,7 @@ public:
 		{
 			// gui layout
 
-			core::filesystem::IFileSystem* fs = core::fs::instance();
+			core::filesystem::IFileSystem* fs = core::filesystem::instance();
 			
 			platform::File handle = platform::fs_open("ui/main.ui", platform::FileMode_Read);
 			if (handle.is_open())

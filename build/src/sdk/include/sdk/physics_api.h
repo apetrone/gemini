@@ -26,8 +26,9 @@
 
 #include <stdint.h>
 #include <core/mathlib.h>
-
 #include <core/interface.h>
+
+#include <platform/typedefs.h>
 
 namespace gemini
 {
@@ -125,6 +126,6 @@ namespace gemini
 		};
 
 		
-		typedef core::Interface<IPhysicsInterface> api;
+		DECLARE_INTERFACE(IPhysicsInterface);
 	} // namespace physics
 } // namespace gemini

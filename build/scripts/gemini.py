@@ -560,6 +560,29 @@ def get_libruntime(arguments, target_platform):
 
 	return libruntime
 
+def get_sdk(arguments, links, **kwargs):
+	global_params = kwargs.get("global_params")
+	target_platform = kwargs.get("target_platform")
+
+	sdk = Product(name="sdk", output=ProductType.DynamicLibrary)
+	sdk.project_root = COMMON_PROJECT_ROOT
+	sdk.root = "../"
+	sdk.sources += [
+		"src/sdk/engine.cpp"
+	]
+	sdk.includes += [
+		"src/sdk/include"
+	]
+
+	setup_driver(sdk)
+	setup_common_tool(sdk)
+
+	sdk.dependencies.extend(links)
+
+	return sdk
+
+
+
 def get_rnd(arguments, links, **kwargs):
 	global_params = kwargs.get("global_params")
 	target_platform = kwargs.get("target_platform")
@@ -918,6 +941,8 @@ def products(arguments, **kwargs):
 		"resources/ios/en.lproj/*.*"
 	]
 
+	libsdk = get_sdk(arguments, [libruntime, librenderer, libplatform, libcore], **kwargs)
+	gemini.dependencies.append(libsdk)
 
 	rnd = get_rnd(arguments, [libruntime, librenderer, libplatform, libcore], **kwargs)
 	tests = []
@@ -927,5 +952,5 @@ def products(arguments, **kwargs):
 		# Though, for now, just link it in.
 		tests = get_unit_tests(arguments, [libruntime, librenderer, libplatform, libcore, Dependency(file="glm.py"), libnom], **kwargs)
 
-	return [librenderer, libruntime, libplatform, libcore] + [gemini] + tools + [rnd] + tests
+	return [librenderer, libruntime, libplatform, libcore] + [libsdk, gemini] + tools + [rnd] + tests
 

@@ -169,7 +169,7 @@ namespace gemini
 			btVector3 local_inertia(0, 0, 0);
 			
 			
-			IModelInstanceData* model_interface = engine::api::instance()->models()->get_instance_data(model_index);
+			IModelInstanceData* model_interface = engine::instance()->models()->get_instance_data(model_index);
 			assets::Mesh* mesh = assets::meshes()->find_with_id(model_interface->asset_index());
 			if (!mesh)
 			{
@@ -424,7 +424,5 @@ namespace gemini
 			
 			return result;
 		}
-		
-		
 	} // namespace physics
 } // namespace gemini

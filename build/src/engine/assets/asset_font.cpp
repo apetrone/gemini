@@ -60,7 +60,7 @@ namespace gemini
 		{
 			size_t font_data_size = 0;
 			char* font_data = 0;
-			font_data = core::fs::instance()->virtual_load_file(path, 0, &font_data_size);
+			font_data = core::filesystem::instance()->virtual_load_file(path, 0, &font_data_size);
 			
 			if (font_data)
 			{

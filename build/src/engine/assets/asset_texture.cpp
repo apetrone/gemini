@@ -130,7 +130,7 @@ namespace gemini
 			char * filedata;
 			
 			::renderer::Texture* render_texture = nullptr;
-			filedata = core::fs::instance()->virtual_load_file(filename, 0, &buffer_size);
+			filedata = core::filesystem::instance()->virtual_load_file(filename, 0, &buffer_size);
 			
 			if ( filedata )
 			{

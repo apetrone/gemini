@@ -63,7 +63,7 @@ namespace gemini
 		void startup()
 		{
 			IPhysicsInterface* physics_interface = MEMORY_NEW(PhysicsInterface, platform::memory::global_allocator());
-			api::set_instance(physics_interface);
+			set_instance(physics_interface);
 		
 			bullet::startup();
 		}
@@ -76,7 +76,7 @@ namespace gemini
 
 			bullet::shutdown();
 			
-			IPhysicsInterface* physics_interface = api::instance();
+			IPhysicsInterface* physics_interface = instance();
 			MEMORY_DELETE(physics_interface, platform::memory::global_allocator());
 		} // shutdown
 		
