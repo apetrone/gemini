@@ -87,7 +87,22 @@ namespace platform
 
 	const char* get_user_directory()
 	{
-		return get_environment_variable("%HOMEPATH%");
+		return get_environment_variable("HOMEPATH");
+	}
+
+	PathString get_user_application_directory(const char* application_data_path)
+	{
+		PathString result = get_environment_variable("LOCALAPPDATA");
+		result.append(PATH_SEPARATOR_STRING);
+		result.append(application_data_path);
+		result.normalize(PATH_SEPARATOR);
+		return result;
+	}
+
+	PathString get_user_temp_directory()
+	{
+		PathString result = get_environment_variable("TEMP");
+		return result;
 	}
 
 	platform::File fs_open(const char* path, FileMode mode)
