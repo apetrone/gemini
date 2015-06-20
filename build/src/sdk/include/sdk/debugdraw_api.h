@@ -24,6 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <platform/typedefs.h>
 #include <core/interface.h>
 #include <core/color.h>
 
@@ -63,7 +64,7 @@ namespace gemini
 	
 	namespace debugdraw
 	{
-		static core::Interface<IDebugDraw> instance;
+		DECLARE_INTERFACE(IDebugDraw);
 	} // namespace debugdraw
 	
 } // namespace gemini

@@ -265,17 +265,14 @@ namespace gemini
 			}
 		};
 
-
-
-
-
 		// interface
 		void startup()
 		{
 			typedef core::Factory<IAudioDriver> AudioDriverFactory;
 			AudioDriverFactory factory;
 			
-			audio::instance = MEMORY_NEW(AudioInterface, platform::memory::global_allocator());
+			IAudioInterface* audio_instance = MEMORY_NEW(AudioInterface, platform::memory::global_allocator());
+			audio::set_instance(audio_instance);
 			
 			factory.register_class( DRIVER_CREATOR, DRIVER_NAME );
 
@@ -315,7 +312,7 @@ namespace gemini
 			
 			IAudioInterface* interface = audio::instance();
 			MEMORY_DELETE(interface, platform::memory::global_allocator());
-			audio::instance = 0;
+			audio::set_instance(nullptr);
 		} // shutdown
 		
 		// update all sources

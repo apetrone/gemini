@@ -150,7 +150,7 @@ Entity::Entity() :
 	this->id = entity_list().count();
 	
 	entity_list().add( this );
-	engine::api::instance()->entities()->add(this);
+	engine::instance()->entities()->add(this);
 	LOGV( "Entity() - %p, %ld\n", this, (unsigned long)this->id );
 
 } // Entity
@@ -159,7 +159,7 @@ Entity::~Entity()
 {
 	LOGV( "~Entity() - %p, %ld\n", this, (unsigned long)this->id );
 	entity_list().remove( this );
-	engine::api::instance()->entities()->remove(this);
+	engine::instance()->entities()->remove(this);
 	
 	delete_collision_object();
 
@@ -264,12 +264,12 @@ void Entity::set_current_velocity_from_physics()
 //
 void* Entity::operator new(size_t bytes)
 {
-	return engine::api::instance()->allocate(bytes);
+	return engine::instance()->allocate(bytes);
 }
 
 void Entity::operator delete(void* memory)
 {
-	engine::api::instance()->deallocate(memory);
+	engine::instance()->deallocate(memory);
 }
 
 //
@@ -278,10 +278,10 @@ void Entity::operator delete(void* memory)
 
 ICollisionObject* Entity::physics_create_static()
 {
-	assert(engine::api::instance() && engine::api::instance()->physics());
+	assert(engine::instance() && engine::instance()->physics());
 	
 	physics::ObjectProperties properties;
-	return engine::api::instance()->physics()->create_physics_model(model_index, properties);
+	return engine::instance()->physics()->create_physics_model(model_index, properties);
 }
 
 
@@ -290,7 +290,7 @@ ICollisionObject* Entity::physics_create_static()
 
 ICollisionObject* Entity::physics_create_model()
 {
-	assert(engine::api::instance() && engine::api::instance()->physics());
+	assert(engine::instance() && engine::instance()->physics());
 	
 	// If you hit this assert, you need to set_model on this Entity before
 	// attempting to create a physics object from it.
@@ -300,7 +300,7 @@ ICollisionObject* Entity::physics_create_model()
 	properties.mass_kg = 10.0f;
 	properties.restitution = 0.5f;
 	properties.friction = 0.5f;
-	return engine::api::instance()->physics()->create_physics_model(model_index, properties);
+	return engine::instance()->physics()->create_physics_model(model_index, properties);
 }
 
 void Entity::set_physics_object(physics::ICollisionObject *object)
@@ -362,7 +362,7 @@ glm::vec3* Entity::get_position()
 void Entity::set_model(const char* path)
 {
 //	engine::instance()->models()->destroy_instance_data(model_index);
-	model_index = engine::api::instance()->models()->create_instance_data(path);
+	model_index = engine::instance()->models()->create_instance_data(path);
 //	LOGV("set model index: %i, for model: %s\n", model_index, path);
 }
 
@@ -370,7 +370,7 @@ void Entity::delete_collision_object()
 {
 	if (this->collision_object)
 	{
-		engine::api::instance()->physics()->destroy_object(this->collision_object);
+		engine::instance()->physics()->destroy_object(this->collision_object);
 		this->collision_object = 0;
 	}
 }

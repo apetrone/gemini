@@ -100,6 +100,6 @@ namespace gemini
 	
 	namespace engine
 	{
-		typedef core::Interface<IEngineInterface> api;
+		DECLARE_INTERFACE(IEngineInterface);
 	}
 } // namespace gemini

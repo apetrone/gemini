@@ -820,6 +820,7 @@ struct SharedState
 
 static SharedState _sharedstate;
 
+
 class EngineInterface : public IEngineInterface
 {
 	IEntityManager* entity_manager;
@@ -878,7 +879,7 @@ public:
 	{
 		// TODO: need to validate this origin/orientation is allowed.
 		// otherwise, client could ask us to render from anyone's POV.
-		EntityManager* em = static_cast<EntityManager*>(engine::api::instance()->entities());
+		EntityManager* em = static_cast<EntityManager*>(engine::instance()->entities());
 		render_method->render_view(em->get_entity_list(), main_window, view);
 	}
 	
@@ -998,7 +999,7 @@ private:
 	
 	void open_gamelibrary()
 	{
-		core::filesystem::IFileSystem* fs = core::fs::instance();
+		core::filesystem::IFileSystem* fs = core::filesystem::instance();
 		
 		// load game library
 		PathString game_library_path = fs->content_directory();
@@ -1031,7 +1032,7 @@ private:
 			disconnect_engine = (disconnect_engine_fn)platform::dylib_find(gamelib, "disconnect_engine");
 			if (connect_engine)
 			{
-				game_interface = connect_engine(gemini::engine::api::instance());
+				game_interface = connect_engine(gemini::engine::instance());
 			}
 			if (!game_interface)
 			{
@@ -1295,7 +1296,7 @@ Options:
 			core::shutdown();
 			return kernel::CoreFailed;
 		}
-		core::filesystem::IFileSystem* filesystem = core::fs::instance();
+		core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
 		// the root path is the current binary path
 		filesystem->root_directory(root_path);
 		
@@ -1400,7 +1401,7 @@ Options:
 			assert(debugfont != 0);
 			::renderer::debugdraw::startup(config.debugdraw_max_primitives, debugshader->program, debugfont->handle);
 			DebugDrawInterface* debug_draw = MEMORY_NEW(DebugDrawInterface, platform::memory::global_allocator());
-			gemini::debugdraw::instance = debug_draw;
+			gemini::debugdraw::set_instance(debug_draw);
 			
 		}
 		
@@ -1484,13 +1485,13 @@ Options:
 		engine_interface = MEMORY_NEW(EngineInterface, platform::memory::global_allocator())
 			(&entity_manager,
 			&model_interface,
-			physics::api::instance(),
+			physics::instance(),
 			&experimental,
 			render_method,
 			main_window,
 			window_interface
 		);
-		gemini::engine::api::set_instance(engine_interface);
+		gemini::engine::set_instance(engine_interface);
 		window_interface->show_mouse(true);
 		
 		setup_gui(main_window->render_width, main_window->render_height);
