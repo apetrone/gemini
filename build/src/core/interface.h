@@ -26,35 +26,20 @@
 
 namespace core
 {
-	template <class InterfaceType>
-	class Interface
-	{
-		static InterfaceType* _interface;
-	public:
-		
-		static InterfaceType* instance()
-		{
-			return _interface;
+
+// Explicit template instantiation would require us to do this in two separate steps as well.
+#define DECLARE_INTERFACE(type)\
+		LIBRARY_EXPORT type* instance();\
+		LIBRARY_EXPORT void set_instance(type* instance)
+
+#define IMPLEMENT_INTERFACE(type)\
+		type* _instance = 0;\
+		type* instance()\
+		{\
+			return _instance;\
+		}\
+		void set_instance(type* instance)\
+		{\
+			_instance = instance;\
 		}
-		
-		static void set_instance(InterfaceType* instance)
-		{
-			_interface = instance;
-		}
-		
-		// act like a functor
-		InterfaceType* operator()()
-		{
-			return Interface<InterfaceType>::_interface;
-		}
-		
-		// handle assignment from pointer type
-		void operator=(InterfaceType* const pointer)
-		{
-			_interface = pointer;
-		}
-	};
-	
-	template <class InterfaceType>
-	InterfaceType* Interface<InterfaceType>::_interface;
 } // namespace core

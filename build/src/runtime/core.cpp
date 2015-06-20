@@ -62,8 +62,9 @@ namespace core
 		void log_android_close(logging::Handler* handler);
 #endif
 				
-		uint32_t add_log_handlers(core::logging::ILog* log_system)
+		platform::Result initialize_log_handlers(core::logging::ILog* log_system)
 		{
+			platform::Result result(platform::Result::Success);
 			uint32_t total_log_handlers = 0;
 			
 
@@ -94,7 +95,7 @@ namespace core
 			platform::datetime(dt);
 			
 			
-			core::filesystem::IFileSystem* fs = core::fs::instance();
+			core::filesystem::IFileSystem* fs = core::filesystem::instance();
 			
 			char datetime_string[ GEMINI_DATETIME_STRING_MAX ];
 			str::sprintf(datetime_string, GEMINI_DATETIME_STRING_MAX, "%02d-%02d-%04d-%02d-%02d-%02d.log",
@@ -130,8 +131,15 @@ namespace core
 			++total_log_handlers;
 #endif
 
-			return total_log_handlers;
-		} // add_log_handlers
+			// startup the log system; open handlers
+			if (log_system->startup() < total_log_handlers)
+			{
+				fprintf(stderr, "Could not open one or more log handlers\n");
+				result = platform::Result(platform::Result::Warning, "Could not open one or more log handlers");
+			}
+
+			return result;
+		} // initialize_log_handlers
 	} // namespace _internal
 	
 	
@@ -141,8 +149,9 @@ namespace core
 		
 		// create file system instance
 		core::filesystem::IFileSystem* filesystem = MEMORY_NEW(core::filesystem::FileSystemInterface, platform::memory::global_allocator());
-		core::fs::set_instance(filesystem);
+		core::filesystem::set_instance(filesystem);
 		
+
 		if (!filesystem)
 		{
 			result.message = "Unable to create filesystem instance";
@@ -156,7 +165,7 @@ namespace core
 	{
 		platform::Result result(platform::Result::Success);
 		
-		if (!core::fs::instance())
+		if (!core::filesystem::instance())
 		{
 			result.message = "Filesystem instance is required for logging";
 			result.status = platform::Result::Failure;
@@ -167,33 +176,27 @@ namespace core
 		
 		// create an instance of the log system
 		core::logging::ILog* log_system = MEMORY_NEW(core::logging::LogInterface, platform::memory::global_allocator());
-		core::log::set_instance(log_system);
+		core::logging::set_instance(log_system);
 		
 		// add logs
-		uint32_t total_log_handlers = _internal::add_log_handlers(log_system);
+		result = _internal::initialize_log_handlers(log_system);
 		
-		// startup the log system; open handlers
-		if (log_system->startup() < total_log_handlers)
-		{
-			fprintf(stderr, "Could not open one or more log handlers\n");
-			result = platform::Result(platform::Result::Warning, "Could not open one or more log handlers");
-		}
-		
+
 		return result;
 	}
 	
 	void shutdown()
 	{
-		core::log::instance()->shutdown();
+		core::logging::instance()->shutdown();
 		
-		core::fs::instance()->shutdown();
+		core::filesystem::instance()->shutdown();
 		
 		
 		
-		core::logging::ILog* log_system = core::log::instance();
+		core::logging::ILog* log_system = core::logging::instance();
 		MEMORY_DELETE(log_system, platform::memory::global_allocator());
 		
-		core::filesystem::IFileSystem* filesystem = core::fs::instance();
+		core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
 		MEMORY_DELETE(filesystem, platform::memory::global_allocator());
 	} // shutdown
 

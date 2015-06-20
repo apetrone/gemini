@@ -77,6 +77,10 @@ namespace core
 			virtual char* virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length) const = 0;
 		};
 
+
+		DECLARE_INTERFACE(IFileSystem);
+
+
 		// read an audio file to memory
 		// this provides an abstraction between platforms; but likely needs to belong elsewhere?
 		void* audiofile_to_buffer(const char* filename, size_t& buffer_length);
@@ -91,6 +95,6 @@ namespace core
 	}
 	
 	
-	typedef Interface<filesystem::IFileSystem> fs;
+	
 
 } // namespace core

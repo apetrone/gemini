@@ -155,7 +155,7 @@ namespace renderer
 				filename.append(".");
 				filename.append(name.c_str());
 				
-				core::filesystem::IFileSystem* fs = core::fs::instance();
+				core::filesystem::IFileSystem* fs = core::filesystem::instance();
 				
 				// verify the file exists
 				if (!fs->file_exists(filename()))
@@ -203,7 +203,7 @@ namespace renderer
 			renderer::ShaderObject shader_object;
 			char* buffer;
 			size_t length = 0;
-			buffer = core::fs::instance()->virtual_load_file(shader_path, 0, &length);
+			buffer = core::filesystem::instance()->virtual_load_file(shader_path, 0, &length);
 			if ( buffer )
 			{
 				StackString<32> version;

@@ -128,4 +128,10 @@ namespace core
 		}
 #endif
 	} // namespace _internal
+
+
+	namespace logging
+	{
+		IMPLEMENT_INTERFACE(ILog);
+	} // namespace logging
 } // namespace core

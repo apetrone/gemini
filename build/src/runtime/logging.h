@@ -27,7 +27,7 @@
 #include <core/str.h>
 
 #define LOGV(message, ...) \
-	core::log::instance()->dispatch(\
+	core::logging::instance()->dispatch(\
 	core::logging::ILog::Verbose,\
 	core::str::format(message, ##__VA_ARGS__),\
 	__FUNCTION__,\
@@ -35,7 +35,7 @@
 	__LINE__)
 
 #define LOGW(message, ...) \
-	core::log::instance()->dispatch(\
+	core::logging::instance()->dispatch(\
 	core::logging::ILog::Warning,\
 	core::str::format(message, ##__VA_ARGS__),\
 	__FUNCTION__,\
@@ -43,7 +43,7 @@
 	__LINE__)
 
 #define LOGE(message, ...) \
-	core::log::instance()->dispatch(\
+	core::logging::instance()->dispatch(\
 	core::logging::ILog::Warning,\
 	core::str::format(message, ##__VA_ARGS__),\
 	__FUNCTION__,\
@@ -102,7 +102,7 @@ namespace core
 			/// @desc Shutdown the log handlers
 			virtual void shutdown() = 0;
 		}; // ILog
+
+		DECLARE_INTERFACE(ILog);
 	} // namespace logging
-	
-	typedef Interface<logging::ILog> log;
 } // namespace core
