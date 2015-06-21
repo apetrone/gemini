@@ -40,6 +40,7 @@ namespace gemini
 			KeyboardEvent = 1, // 1
 			// button: keycode
 			// params[0]: is_down
+			// params[1]: keyboard modifiers
 			
 			MouseEvent    = 8,   // 8
 			// button: mouse button
