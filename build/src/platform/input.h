@@ -200,11 +200,21 @@ namespace input
 	}; // enum GamepadButton
 	
 	// key mods
-	enum
+	enum Modifiers
 	{
-		KEYMOD_ALT = 1,
-		KEYMOD_SHIFT = 2,
-		KEYMOD_CONTROL = 4,
+		MOD_NONE,
+		
+		MOD_LEFT_CONTROL	= 1,
+		MOD_RIGHT_CONTROL	= 2,
+		MOD_CONTROL			= 3,
+		
+		MOD_LEFT_SHIFT		= 4,
+		MOD_RIGHT_SHIFT		= 8,
+		MOD_SHIFT			= 12,
+		
+		MOD_LEFT_ALT		= 16,
+		MOD_RIGHT_ALT		= 32,
+		MOD_ALT				= 48
 	};
 
 	

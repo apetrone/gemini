@@ -52,6 +52,8 @@ namespace platform
 		
 		void populate_input_map();
 		void setup_joysticks();
+
+		uint16_t convert_sdl_modifiers(SDL_Keymod modifiers);
 		
 		virtual void shutdown();
 		virtual NativeWindow* create_window(const WindowParameters& parameters);

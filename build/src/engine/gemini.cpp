@@ -1100,6 +1100,7 @@ public:
 		game_message.type = GameMessage::KeyboardEvent;
 		game_message.button = event.key;
 		game_message.params[0] = event.is_down;
+		game_message.params[1] = event.modifiers;
 		event_queue->push_back(game_message);
 	
 	

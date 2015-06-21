@@ -411,12 +411,50 @@ namespace platform
 		}
 	}
 	
+	uint16_t SDLWindowLibrary::convert_sdl_modifiers(SDL_Keymod mod)
+	{
+		uint16_t modifiers = MOD_NONE;
+	
+		if (mod & KMOD_LCTRL)
+		{
+			modifiers |= MOD_LEFT_CONTROL;
+		}
+		
+		if (mod & KMOD_RCTRL)
+		{
+			modifiers |= MOD_RIGHT_CONTROL;
+		}
+	
+		if (mod & KMOD_LSHIFT)
+		{
+			modifiers |= MOD_LEFT_SHIFT;
+		}
+		
+		if (mod & KMOD_RSHIFT)
+		{
+			modifiers |= MOD_RIGHT_SHIFT;
+		}
+		
+		if (mod & KMOD_LALT)
+		{
+			modifiers |= MOD_LEFT_ALT;
+		}
+		
+		if (mod & KMOD_RALT)
+		{
+			modifiers |= MOD_RIGHT_ALT;
+		}
+
+		return modifiers;
+	}
+	
 	void SDLWindowLibrary::process_events()
 	{
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
 		{
 			input::Button button;
+			uint16_t modifiers = 0;
 			
 			// dispatch event!
 			switch(event.type)
@@ -435,6 +473,7 @@ namespace platform
 				case SDL_KEYDOWN:
 				{
 					button = key_map[event.key.keysym.sym];
+					modifiers = convert_sdl_modifiers(SDL_GetModState());
 					
 					if (event.key.repeat)
 					{
@@ -445,6 +484,7 @@ namespace platform
 					kernel::KeyboardEvent ev;
 					ev.is_down = (event.type == SDL_KEYDOWN);
 					ev.key = button;
+					ev.modifiers = modifiers;
 					kernel::event_dispatch(ev);
 					break;
 				}

@@ -109,6 +109,7 @@ namespace kernel
 		bool is_down;
 		int unicode;
 		int key;
+		uint16_t modifiers;
 	}; // KeyboardEvent
 
 	struct LIBRARY_EXPORT MouseEvent : public Event<Mouse>
