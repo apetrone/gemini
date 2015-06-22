@@ -1214,7 +1214,7 @@ public:
 		graph->set_background_color(gui::Color(10, 10, 10, 210));
 		graph->set_foreground_color(gui::Color(255, 255, 255, 255));
 		graph->create_samples(100, 1);
-		graph->configure_channel(0, gui::Color(255, 0, 0, 255));
+		graph->configure_channel(0, gui::Color(0, 255, 0, 255));
 		graph->set_range(0.0f, 33.3f);
 
 		graph->enable_baseline(true, 16.6f, gui::Color(255, 0, 255, 255));
