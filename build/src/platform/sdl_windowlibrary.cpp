@@ -298,6 +298,9 @@ namespace platform
 		// Please provide a title to the window being created!
 		assert(parameters.window_title != 0);
 		
+		// A kernel instance is required to use the window library
+		assert(kernel::instance());
+		
 		if (kernel::instance()->is_active())
 		{
 			assert( parameters.window_width != 0 || parameters.window_height != 0 );
