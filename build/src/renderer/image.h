@@ -84,6 +84,8 @@ namespace image
 		FixedArray<uint8_t> pixels;
 		
 		Image();
+		void create(const uint32_t& image_width, const uint32_t& image_height, const uint32_t& total_channels);
+		void fill(const core::Color& color);
 	};
 	
 	const unsigned int ERROR_TEXTURE_WIDTH = 128;
