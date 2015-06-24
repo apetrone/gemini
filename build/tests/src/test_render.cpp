@@ -62,17 +62,45 @@ void test_vertexstream()
 	
 	TEST_VERIFY(1, sanity);
 	
-	
+	struct MyVertex
+	{
+		float position[3];
+	};
 	
 	VertexStream stream;
 	stream.desc.add(VD_FLOAT3);
 	
 	// reserve room for 6 vertices
-	stream.alloc(6, 0);
+	stream.create(6, 0, DRAW_TRIANGLES);
 	
 	TEST_VERIFY(stream.total_vertices == 6, alloc);
 	
-	stream.dealloc();
+	size_t stride = sizeof(float)*3;
+	size_t total_bytes = stride * 6;
+	TEST_VERIFY(stream.bytes_used() == total_bytes, bytes_used);
+
+	float pos[3] = {127.0f, 256.0f, 2048.0f};
+	MyVertex* vertex = (MyVertex*)stream.request(6);
+	memcpy(vertex[0].position, pos, sizeof(float)*3);
+	memcpy(vertex[1].position, pos, sizeof(float)*3);
+	memcpy(vertex[2].position, pos, sizeof(float)*3);
+	memcpy(vertex[3].position, pos, sizeof(float)*3);
+	memcpy(vertex[4].position, pos, sizeof(float)*3);
+	memcpy(vertex[5].position, pos, sizeof(float)*3);
+	
+	bool data_matches = true;
+	for (size_t index = 0; index < 6; ++index)
+	{
+		for (size_t v = 0; v < 3; ++v)
+		{
+			data_matches = data_matches && vertex[index].position[v] == pos[v];
+			if (!data_matches)
+				break;
+		}
+	}
+	TEST_VERIFY(data_matches, data_copy_test);
+	
+	stream.destroy();
 }
 
 
