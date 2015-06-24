@@ -70,7 +70,9 @@ namespace core
 			else
 			{
 				is_success = false;
-				LOGE( "ERROR loading %s\n", filename );
+				// Do we need this at this level? callee should handle this and
+				// report an error...
+//				fprintf(stderr, "ERROR loading %s\n", filename);
 			}
 			
 			return is_success;

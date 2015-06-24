@@ -24,8 +24,6 @@
 // -------------------------------------------------------------
 #include "filesystem_interface.h"
 
-#include <runtime/logging.h>
-
 using namespace platform;
 
 namespace core
@@ -123,7 +121,7 @@ namespace core
 			
 			if (!buffer_length)
 			{
-				LOGE("ERROR: virtual_load_file called with INVALID value!\n");
+				fprintf(stderr, "ERROR: virtual_load_file called with INVALID value!\n");
 				return 0;
 			}
 						
@@ -131,7 +129,7 @@ namespace core
 			absolute_path_from_relative(fullpath, relative_path, content_directory());
 			if (!file_exists(fullpath(), false))
 			{
-				LOGE("File does not exist! \"%s\" (at \"%s\")\n", relative_path, fullpath());
+				fprintf(stderr, "ERROR: File does not exist! \"%s\" (at \"%s\")\n", relative_path, fullpath());
 				return 0;
 			}
 
@@ -147,7 +145,7 @@ namespace core
 				{
 					if (file_size > *buffer_length)
 					{
-						fprintf(stdout, "Request to read file size larger than buffer! (%ld > %lu)\n", file_size, (unsigned long)*buffer_length);
+						fprintf(stderr, "Request to read file size larger than buffer! (%ld > %lu)\n", file_size, (unsigned long)*buffer_length);
 						file_size = *buffer_length;
 					}
 				}
