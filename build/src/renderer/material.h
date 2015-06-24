@@ -53,6 +53,14 @@ namespace renderer
 		glm::vec4 vector_value;
 		unsigned int texture_unit;
 		renderer::Texture* texture;
+		
+		
+		MaterialParameter() :
+			int_value(-1),
+			texture_unit(0),
+			texture(0)
+		{
+		}
 	}; // MaterialParameter
 
 	struct Material

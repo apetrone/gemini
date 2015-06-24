@@ -1188,8 +1188,21 @@ public:
 		}
 	}
 	
+	static void* gui_malloc_callback(size_t size)
+	{
+		return platform::memory::global_allocator().allocate(size, __FILE__, __LINE__);
+	}
+	
+	static void gui_free_callback(void* pointer)
+	{
+		platform::memory::global_allocator().deallocate(pointer);
+	}
+	
+	
 	void setup_gui(uint32_t width, uint32_t height)
 	{
+		gui::set_allocator(gui_malloc_callback, gui_free_callback);
+	
 		compositor = new gui::Compositor(width, height);
 		_compositor = compositor;
 		

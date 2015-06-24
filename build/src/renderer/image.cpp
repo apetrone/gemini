@@ -50,6 +50,28 @@ namespace image
 		channels = 3;
 	}
 	
+	void Image::create(const uint32_t& image_width, const uint32_t& image_height, const uint32_t& total_channels)
+	{
+		width = image_width;
+		height = image_height;
+		channels = total_channels;
+		
+		pixels.allocate(width * height * channels);
+	}
+	
+	void Image::fill(const core::Color& color)
+	{
+		uint8_t* pixel = &pixels[0];
+		for (size_t h = 0; h < height; ++h)
+		{
+			for (size_t w = 0; w < width; ++w)
+			{
+				memcpy(pixel, &color, channels);
+				pixel += channels;
+			}
+		}
+	}
+	
 	void generate_checker_pattern(Image& image, const Color & color1, const Color & color2)
 	{
 		// image dimensions must be specified
