@@ -40,15 +40,40 @@
 
 #include <assert.h>
 
+using namespace renderer;
+
 // ---------------------------------------------------------------------
 // vertexbuffer
 // ---------------------------------------------------------------------
-
+void test_vertexbuffer()
+{
+	TEST_CATEGORY(vertexbuffer);
+	
+	
+	TEST_VERIFY(1, sanity);
+}
 
 // ---------------------------------------------------------------------
 // vertexstream
 // ---------------------------------------------------------------------
-
+void test_vertexstream()
+{
+	TEST_CATEGORY(vertexstream);
+	
+	TEST_VERIFY(1, sanity);
+	
+	
+	
+	VertexStream stream;
+	stream.desc.add(VD_FLOAT3);
+	
+	// reserve room for 6 vertices
+	stream.alloc(6, 0);
+	
+	TEST_VERIFY(stream.total_vertices == 6, alloc);
+	
+	stream.dealloc();
+}
 
 
 // ---------------------------------------------------------------------
@@ -92,10 +117,6 @@ public:
 	
 	virtual kernel::Error startup()
 	{
-		platform::memory::startup();
-		platform::Result result = platform::startup();
-		assert(result.success());
-		
 		platform::PathString root_path;
 		platform::PathString content_path;
 		platform::get_program_directory(&root_path[0], root_path.max_size());
@@ -126,6 +147,19 @@ public:
 		window_library->focus_window(native_window);
 		window_library->show_mouse(true);
 	
+		// startup the renderer -- just so that it can be used by our classes.
+		// It will try to load conf/shaders.conf; but it can be ignored as
+		// I don't plan on actually rendering anything yet.
+		renderer::RenderSettings render_settings;
+		render_settings.gamma_correct = false;
+		renderer::startup(renderer::OpenGL, render_settings);
+	
+	
+		// run tests...
+		test_vertexbuffer();
+		test_vertexstream();
+	
+	
 		return kernel::NoError;
 	}
 	
@@ -133,11 +167,14 @@ public:
 	{
 		input::update();
 		window_library->process_events();
+		set_active(false);
 	}
 
 
 	virtual void shutdown()
 	{
+		renderer::shutdown();
+	
 		window_library->destroy_window(native_window);
 		window_library->shutdown();
 		platform::destroy_window_library();
@@ -145,8 +182,6 @@ public:
 		input::shutdown();
 		
 		core::shutdown();
-		platform::shutdown();
-		platform::memory::shutdown();
 	}
 };
 

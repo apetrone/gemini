@@ -990,7 +990,7 @@ private:
 		bool success = util::json_load_with_callback( "conf/settings.conf", settings_conf_loader, &config, true );
 		if ( !success )
 		{
-			LOGV("Unable to load settings.conf! Let's hope wise defaults were chosen...\n");
+			fprintf(stderr, "Unable to load settings.conf! Let's hope wise defaults were chosen...\n");
 		}
 		
 		return success;
@@ -1330,7 +1330,7 @@ Options:
 		result = core::startup_logging();
 		if (result.failed())
 		{
-			fprintf(stdout, "Fatal error: %s\n", result.message);
+			fprintf(stderr, "Fatal error: %s\n", result.message);
 			core::shutdown();
 			return kernel::CoreFailed;
 		}
