@@ -35,13 +35,15 @@ namespace renderer
 {
 	VertexStream::VertexStream()
 	{
+		_debug_flags = 1;
 		total_vertices = 0;
 		total_indices = 0;
-		vertices = 0;
 		last_vertex = 0;
 		last_index = 0;
 		highest_index = 0;
+		vertices = 0;
 		indices = 0;
+		vertex_stride = 0;
 		vertexbuffer = 0;
 	} // VertexStream
 	
@@ -52,6 +54,8 @@ namespace renderer
 
 	void VertexStream::alloc( IndexType max_vertices, IndexType max_indices )
 	{
+		assert(vertex_stride != 0);
+	
 		total_vertices = max_vertices;
 		total_indices = 0;
 		vertices = (VertexType*)MEMORY_ALLOC(vertex_stride*total_vertices, platform::memory::global_allocator());
