@@ -178,7 +178,7 @@ namespace render2
 	struct command
 	{
 		command_type type;
-		void* data;
+		void* data[2];
 		size_t params[4];
 	};
 
@@ -194,12 +194,13 @@ namespace render2
 			total_commands = 0;
 		}
 		
-		void draw(buffer* vertex_stream, size_t initial_offset, size_t total, size_t instance_index = 0, size_t index_count = 1)
+		void draw(buffer* vertex_stream, buffer* index_stream, size_t initial_offset, size_t total, size_t instance_index = 0, size_t index_count = 1)
 		{
 			command c;
 			memset(&c, 0, sizeof(command));
 			c.type = COMMAND_DRAW;
-			c.data = vertex_stream;
+			c.data[0] = vertex_stream;
+			c.data[1] = index_stream;
 			c.params[0] = initial_offset;
 			c.params[1] = total;
 			c.params[2] = instance_index;
@@ -212,7 +213,8 @@ namespace render2
 			command c;
 			memset(&c, 0, sizeof(command));
 			c.type = COMMAND_PIPELINE;
-			c.data = pipeline;
+			c.data[0] = pipeline;
+			c.data[1] = 0;
 			commands[total_commands++] = c;
 		}
 		
@@ -262,10 +264,10 @@ namespace render2
 		size_t max_size;
 		void* data;
 			
-		constant_buffer(size_t total_size) :
-			max_size(total_size)
+		constant_buffer(size_t total_size)
 		{
 			data = MEMORY_ALLOC(total_size, platform::memory::global_allocator());
+			max_size = total_size;
 		}
 		
 		~constant_buffer()
@@ -329,15 +331,61 @@ namespace render2
 		virtual void init(int backbuffer_width, int backbuffer_height) = 0;
 	};
 
+	static size_t type_to_bytes(const GLenum& type)
+	{
+		switch(type)
+		{
+			case GL_FLOAT_VEC2: return sizeof(GLfloat) * 2;
+			case GL_FLOAT_VEC3: return sizeof(GLfloat) * 3;
+			case GL_FLOAT_VEC4: return sizeof(GLfloat) * 4;
+			
+			case GL_FLOAT_MAT4: return sizeof(GLfloat) * 16;
+			
+			
+			default: break;
+		}
+		
+		
+		assert(0);
+		return 0;
+	}
 
-
-
+	const size_t MAX_ATTRIBUTE_NAME_LENGTH = 32;
+	struct shader_variable
+	{
+		GLint index;
+	
+		// byte-length of name
+		GLsizei length;
+		
+		// byte-length of the attribute value
+		GLint size;
+		
+		// attribute name (null-terminated string)
+		GLchar name[ MAX_ATTRIBUTE_NAME_LENGTH ];
+		
+		// data type of the attribute
+		GLenum type;
+		
+		// size (in bytes) of this type
+		GLint byte_size;
+		
+		void compute_size()
+		{
+			// compute byte size for this attribute
+			byte_size = (size * type_to_bytes(type));
+		}
+	};
+	
 	struct glhal : public device
 	{
+
+		
 		struct gl_shader : public shader
 		{
 			GLint id;
-			FixedArray<GLint> uniforms;
+			FixedArray<shader_variable> uniforms;
+			FixedArray<shader_variable> attributes;
 			
 			gl_shader()
 			{
@@ -393,37 +441,29 @@ namespace render2
 				
 				
 				
-				const size_t MAX_ATTRIBUTE_NAME_LENGTH = 32;
-				struct shader_variable
-				{
-					// byte-length of name
-					GLsizei length;
-					
-					// byte-length of the attribute value
-					GLint size;
-					
-					// attribute name (null-terminated string)
-					GLchar name[ MAX_ATTRIBUTE_NAME_LENGTH ];
-					
-					// data type of the attribute
-					GLenum type;
-				};
+				
+
 				
 				
 				// use introspection
 				{
 					GLint active_attributes = 0;
 					gl.GetProgramiv(id, GL_ACTIVE_ATTRIBUTES, &active_attributes);
+					
+					attributes.allocate(active_attributes);
 
 					for (size_t attribute_index = 0; attribute_index < active_attributes; ++attribute_index)
 					{
-						shader_variable attribute;
+						shader_variable& attribute = attributes[attribute_index];
+						attribute.index = attribute_index;
 						gl.GetActiveAttrib(id, attribute_index, MAX_ATTRIBUTE_NAME_LENGTH, &attribute.length, &attribute.size, &attribute.type, attribute.name);
 						LOGV("attribute: %i, name: %s, size: %i, type: %i\n",
 							 attribute_index,
 							 attribute.name,
 							 attribute.size,
 							 attribute.type);
+							
+						attribute.compute_size();
 					}
 				}
 				
@@ -437,7 +477,8 @@ namespace render2
 					
 					for (size_t uniform_index = 0; uniform_index < active_uniforms; ++uniform_index)
 					{
-						shader_variable uniform;
+						shader_variable& uniform = uniforms[uniform_index];
+						uniform.index = uniform_index;
 						gl.GetActiveUniform(id, uniform_index, MAX_ATTRIBUTE_NAME_LENGTH, &uniform.length, &uniform.size, &uniform.type, uniform.name);
 						LOGV("attribute: %i, name: %s, size: %i, type: %i\n",
 							 uniform_index,
@@ -445,7 +486,7 @@ namespace render2
 							 uniform.size,
 							 uniform.type);
 							 
-						uniforms[uniform_index] = uniform_index;
+						uniform.compute_size();
 					}
 				}
 				
@@ -542,7 +583,7 @@ namespace render2
 			
 		}
 		
-		void draw(buffer* data)
+		void draw(buffer* vertex_stream, buffer* index_stream, size_t initial_offset, size_t total, size_t instance_index, size_t index_count)
 		{
 			
 		}
@@ -565,8 +606,9 @@ namespace render2
 			// TODO: dispatch of various uniform types
 			for(size_t index = 0; index < shader->uniforms.size(); ++index)
 			{
-				gl.UniformMatrix4fv(shader->uniforms[index], 1, GL_FALSE, (GLfloat*)(buffer+offset));
-				offset += sizeof(glm::mat4);
+				shader_variable& uniform = shader->uniforms[index];
+				gl.UniformMatrix4fv(uniform.index, uniform.size, GL_FALSE, (GLfloat*)(buffer+offset));
+				offset += uniform.byte_size;
 			}
 		}
 		
@@ -603,29 +645,47 @@ namespace render2
 				
 				pipeline_state* current_pipeline = nullptr;
 				pipeline_state* last_pipeline = nullptr;
-				buffer* current_stream = nullptr;
+				buffer* vertex_stream = nullptr;
+				buffer* index_stream = nullptr;
 				
 				for (size_t index = 0; index < cq->total_commands; ++index)
 				{
 					command* command = &cq->commands[index];
 					if (command->type == COMMAND_DRAW)
 					{
-						current_stream = (buffer*)command->data;
-						if (current_stream->is_dirty())
+						vertex_stream = (buffer*)command->data[0];
+						index_stream = (buffer*)command->data[1];
+						if (vertex_stream->is_dirty())
 						{
-							update_stream(current_stream);
+							update_stream(vertex_stream);
 						}
 						
-						draw(current_stream);
+						if (index_stream && index_stream->is_dirty())
+						{
+							update_stream(index_stream);
+						}
+						
+						draw(vertex_stream,
+							index_stream,
+							command->params[0],
+							command->params[1],
+							command->params[2],
+							command->params[3]
+						);
 					}
 					else if (command->type == COMMAND_PIPELINE)
 					{
-						current_pipeline = (pipeline_state*)command->data;
+						current_pipeline = (pipeline_state*)command->data[0];
 						
 						if (current_pipeline != last_pipeline)
 						{
 							last_pipeline = current_pipeline;
-							deactivate_pipeline(last_pipeline);
+							
+							if (last_pipeline != 0)
+							{
+								deactivate_pipeline(last_pipeline);
+							}
+							
 							activate_pipeline(current_pipeline);
 						}
 					}
@@ -910,9 +970,9 @@ public:
 				render2::command_queue queue(&pass);
 				queue.begin(pipeline);
 //				queue.texture(tex0, 0);
-				queue.draw(triangle_stream, 0, 3);
-				queue.draw(triangle_stream, 3, 6);
-				queue.draw(triangle_stream, 12, 15);
+				queue.draw(triangle_stream, 0, 0, 3);
+				queue.draw(triangle_stream, 0, 3, 6);
+				queue.draw(triangle_stream, 0, 12, 15);
 				queue.end();
 				
 				device->queue_buffers(&queue, 1);
