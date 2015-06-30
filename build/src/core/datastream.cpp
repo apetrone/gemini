@@ -29,7 +29,7 @@ namespace core
 {
 	namespace util
 	{
-		void MemoryStream::init(char* buffer, size_t buffer_length)
+		void MemoryStream::init(void* buffer, size_t buffer_length)
 		{
 			data = (uint8_t*)buffer;
 			data_length = buffer_length;
