@@ -67,40 +67,39 @@ namespace render2
 		
 	};
 	
+	// 1. uploading all buffer data to GPU in one call
+	// 2. uploading a part of the buffer data to the GPU in one call
+	// 3. retrieving all or part of the buffer data via function to populate it
 	struct buffer
 	{
 		enum
 		{
 			BUFFER_IS_DIRTY = 1
 		};
-		
-		void* pointer;
+
 		uint32_t max_size;
 		uint32_t flags;
 		
 		buffer()
 		{
-			pointer = 0;
 			max_size = 0;
 			flags = 0;
 		}
 		
-		~buffer()
-		{
-			char* ptr = static_cast<char*>(pointer);
-			delete [] ptr;
-		}
+		virtual ~buffer() {}
 		
-		template <class T>
-		T* data()
-		{
-			return reinterpret_cast<T*>(pointer);
-		}
+		size_t max_size_bytes() const { return max_size; }
 		
 		bool is_dirty() const
 		{
 			return flags & BUFFER_IS_DIRTY;
 		}
+		
+		void clear_flag(uint32_t flag)
+		{
+			flags &= ~flag;
+		}
+		
 	};
 	
 	struct region
@@ -170,6 +169,8 @@ namespace render2
 	
 	enum command_type
 	{
+		COMMAND_SET_VERTEX_BUFFER,
+		COMMAND_SET_INDEX_BUFFER,
 		COMMAND_DRAW,
 		COMMAND_PIPELINE,
 		COMMAND_STATE
@@ -194,13 +195,29 @@ namespace render2
 			total_commands = 0;
 		}
 		
-		void draw(buffer* vertex_stream, buffer* index_stream, size_t initial_offset, size_t total, size_t instance_index = 0, size_t index_count = 1)
+		void vertex_buffer(buffer* buffer)
+		{
+			command c;
+			memset(&c, 0, sizeof(command));
+			c.type = COMMAND_SET_VERTEX_BUFFER;
+			c.data[0] = buffer;
+			commands[total_commands++] = c;
+		}
+		
+		void index_buffer(buffer* buffer)
+		{
+			command c;
+			memset(&c, 0, sizeof(command));
+			c.type = COMMAND_SET_INDEX_BUFFER;
+			c.data[0] = buffer;
+			commands[total_commands++] = c;
+		}
+		
+		void draw(size_t initial_offset, size_t total, size_t instance_index = 0, size_t index_count = 1)
 		{
 			command c;
 			memset(&c, 0, sizeof(command));
 			c.type = COMMAND_DRAW;
-			c.data[0] = vertex_stream;
-			c.data[1] = index_stream;
 			c.params[0] = initial_offset;
 			c.params[1] = total;
 			c.params[2] = instance_index;
@@ -228,25 +245,159 @@ namespace render2
 		
 	};
 	
-	enum VertexDescription
+	enum data_type
 	{
 		VD_FLOAT2 = 0,
 		VD_FLOAT3,
 		VD_FLOAT4,
 		VD_INT4,
+		VD_UNSIGNED_INT,
 		VD_UNSIGNED_BYTE3,
 		VD_UNSIGNED_BYTE4,
-		VD_UNSIGNED_INT,
 		VD_TOTAL
 	};
+	
+	const size_t MAX_VERTEX_DESCRIPTORS = 8;
 	
 	// describes the layout of the vertex stream
 	struct vertex_descriptor
 	{
-		void add(VertexDescription description) {}
+		unsigned char id;
+		unsigned char total_attributes;
+		data_type description[ MAX_VERTEX_DESCRIPTORS ];
 		
-		size_t stride() const { return sizeof(float)*7; }
-	};
+		static void startup();
+		static void map_type(uint32_t type, uint16_t size, uint16_t elements);
+		static uint16_t size_table[ VD_TOTAL ];
+		static uint16_t elements[ VD_TOTAL ];
+		
+		vertex_descriptor();
+		vertex_descriptor(const vertex_descriptor& other);
+		void add(const data_type& type);
+		const data_type& operator[](int index) const;
+		void reset();
+		size_t stride() const;
+		size_t size() const;
+		
+		const vertex_descriptor& operator= (const vertex_descriptor & other);
+	}; // vertex_descriptor
+	
+	
+	
+	
+	// VertexTypeDescriptor
+	uint16_t vertex_descriptor::size_table[ VD_TOTAL ] = {0};
+	uint16_t vertex_descriptor::elements[ VD_TOTAL ] = {0};
+	
+	void vertex_descriptor::startup()
+	{
+		// clear table
+		memset(vertex_descriptor::size_table, 0, sizeof(uint16_t)*VD_TOTAL);
+		memset(vertex_descriptor::elements, 0, sizeof(uint16_t)*VD_TOTAL);
+		
+		// populate table with vertex descriptor types
+		map_type(VD_FLOAT2, sizeof(float), 2);
+		map_type(VD_FLOAT3, sizeof(float), 3);
+		map_type(VD_FLOAT4, sizeof(float), 4);
+		
+		map_type(VD_INT4, sizeof(int), 4);
+		
+		map_type(VD_UNSIGNED_INT, sizeof(unsigned int), 1);
+		map_type(VD_UNSIGNED_BYTE3, sizeof(unsigned char), 3);
+		map_type(VD_UNSIGNED_BYTE4, sizeof(unsigned char), 4);
+				
+		// validate table
+		for (size_t i = 0; i < VD_TOTAL; ++i)
+		{
+			assert(vertex_descriptor::size_table[i] != 0);
+			assert(vertex_descriptor::elements[i] != 0);
+		}
+	}
+	
+	void vertex_descriptor::map_type(uint32_t type, uint16_t size, uint16_t elements)
+	{
+		vertex_descriptor::size_table[type] = size*elements;
+		vertex_descriptor::elements[type] = elements;
+	}
+	
+	vertex_descriptor::vertex_descriptor()
+	{
+		id = 0;
+		reset();
+		memset(description, 0, sizeof(data_type) * MAX_VERTEX_DESCRIPTORS);
+	}
+	
+	vertex_descriptor::vertex_descriptor(const vertex_descriptor& other)
+	{
+		*this = other;
+	}
+	
+	void vertex_descriptor::add(const data_type& desc)
+	{
+		description[ id ] = desc;
+		++id;
+		
+		if ( id >= MAX_VERTEX_DESCRIPTORS-1 )
+		{
+			printf( "Reached MAX_DESCRIPTORS. Resetting\n" );
+			id = 0;
+		}
+		
+		total_attributes = id;
+	} // add
+	
+	const data_type& vertex_descriptor::operator[](int index) const
+	{
+		return description[ index ];
+	} // operator[]
+	
+	void vertex_descriptor::reset()
+	{
+		if ( id > 0 )
+		{
+			total_attributes = id;
+		}
+		id = 0;
+	} // reset
+	
+	size_t vertex_descriptor::stride() const
+	{
+		size_t size = 0;
+		data_type type;
+		for(size_t index = 0; index < total_attributes; ++index)
+		{
+			type = description[index];
+			size += vertex_descriptor::size_table[ type ];
+		}
+		
+		return size;
+	} // stride
+	
+	size_t vertex_descriptor::size() const
+	{
+		return total_attributes;
+	} // size
+	
+	const vertex_descriptor& vertex_descriptor::operator= (const vertex_descriptor & other)
+	{
+		this->total_attributes = other.total_attributes;
+		this->id = other.id;
+		
+		for( unsigned int i = 0; i < VD_TOTAL; ++i )
+		{
+			this->size_table[i] = other.size_table[i];
+			this->elements[i] = other.elements[i];
+		}
+		
+		for( unsigned int id = 0; id < MAX_VERTEX_DESCRIPTORS; ++id )
+		{
+			this->description[id] = other.description[id];
+		}
+		
+		return *this;
+	} // operator=
+	
+	
 
 
 	const uint32_t kMaxPipelineAttachments = 2;
@@ -256,8 +407,6 @@ namespace render2
 		uint32_t attachments[ kMaxPipelineAttachments ];
 		vertex_descriptor vertex_description;
 	};
-
-
 
 	struct constant_buffer
 	{
@@ -297,14 +446,15 @@ namespace render2
 		constant_buffer* constants() { return cb; }
 	};
 	
-
+	// Most calls to the device should be executed synchronously. These are not
+	// deferred.
+	//
+	
+	
 	
 	struct device
 	{
 		virtual ~device() {}
-		
-		virtual void activate_pipeline(pipeline_state* state) = 0;
-		virtual void deactivate_pipeline(pipeline_state* state) = 0;
 		
 		virtual void queue_buffers(command_queue* const queues, size_t total_queues) = 0;
 		
@@ -313,8 +463,22 @@ namespace render2
 		
 		virtual render_target* default_render_target() = 0;
 		
-		virtual buffer* create_buffer(size_t size_bytes) = 0;
+		virtual buffer* create_vertex_buffer(size_t size_bytes) = 0;
+		virtual buffer* create_index_buffer(size_t size_bytes) = 0;
 		virtual void destroy_buffer(buffer* buffer) = 0;
+		
+		
+		// retrieves a pointer to buffer's data; locks it for write
+		virtual void* buffer_lock(buffer* buffer) = 0;
+		
+		// unlock a previously locked buffer
+		virtual void buffer_unlock(buffer* buffer) = 0;
+		
+		// upload data to a buffer (should not exceed buffer's max size)
+		virtual void buffer_upload(buffer* buffer, void* data, size_t data_size) = 0;
+//		virtual void buffer_upload(buffer* buffer, size_t offset, void* data, size_t data_size) = 0;
+		
+		
 		
 		virtual pipeline_state* create_pipeline(const pipeline_descriptor& descriptor) = 0;
 		virtual void destroy_pipeline(pipeline_state* pipeline) = 0;
@@ -353,7 +517,8 @@ namespace render2
 	const size_t MAX_ATTRIBUTE_NAME_LENGTH = 32;
 	struct shader_variable
 	{
-		GLint index;
+		// location of this variable
+		GLint location;
 	
 		// byte-length of name
 		GLsizei length;
@@ -379,8 +544,6 @@ namespace render2
 	
 	struct glhal : public device
 	{
-
-		
 		struct gl_shader : public shader
 		{
 			GLint id;
@@ -400,19 +563,22 @@ namespace render2
 				\
 				in vec4 in_position;\
 				in vec4 in_color;\
+				out vec4 vertex_color;\
 				\
 				void main()\
 				{\
-				gl_Position = (projection_matrix * modelview_matrix * in_position);\
+					gl_Position = (projection_matrix * modelview_matrix * in_position);\
+					vertex_color = in_color;\
 				}";
 				
 				const char* fragment_shader_source = "\
 				precision highp float;\
+				in vec4 vertex_color;\
 				out vec4 out_color;\
 				\
 				void main()\
 				{\
-					out_color = vec4(1.0, 0.0, 1.0, 1.0);\
+					out_color = vertex_color;\
 				}";
 				
 				bool result = false;
@@ -427,38 +593,48 @@ namespace render2
 				
 				// bind attributes
 				gl.BindFragDataLocation(id, 0, "out_color");
-//				gl.BindAttribLocation(id, 0, "in_position");
+				gl.CheckError("BindFragDataLocation");
 
 				// link and activate shader
 				gl.LinkProgram(id);
+				gl.CheckError("LinkProgram");
 				GLint is_linked = 0;
 				gl.GetProgramiv(id, GL_LINK_STATUS, &is_linked);
+				gl.CheckError("link and activate shader GetProgramiv");
+				
+				if (!is_linked)
+				{
+					dump_program_log();
+				}
+				
 				assert(is_linked == 1);
 				
 				
 				// activate program
 				gl.UseProgram(id);
-				
+				gl.CheckError("activate program UseProgram");
 				
 				
 				
 
 				
 				
-				// use introspection
+
 				{
 					GLint active_attributes = 0;
 					gl.GetProgramiv(id, GL_ACTIVE_ATTRIBUTES, &active_attributes);
+					gl.CheckError("inspect attributes GetProgramiv");
 					
 					attributes.allocate(active_attributes);
 
 					for (size_t attribute_index = 0; attribute_index < active_attributes; ++attribute_index)
 					{
 						shader_variable& attribute = attributes[attribute_index];
-						attribute.index = attribute_index;
 						gl.GetActiveAttrib(id, attribute_index, MAX_ATTRIBUTE_NAME_LENGTH, &attribute.length, &attribute.size, &attribute.type, attribute.name);
-						LOGV("attribute: %i, name: %s, size: %i, type: %i\n",
+						attribute.location = gl.GetAttribLocation(id, attribute.name);
+						LOGV("attribute: %i, location: %i, name: %s, size: %i, type: %i\n",
 							 attribute_index,
+							 attribute.location,
 							 attribute.name,
 							 attribute.size,
 							 attribute.type);
@@ -478,10 +654,11 @@ namespace render2
 					for (size_t uniform_index = 0; uniform_index < active_uniforms; ++uniform_index)
 					{
 						shader_variable& uniform = uniforms[uniform_index];
-						uniform.index = uniform_index;
 						gl.GetActiveUniform(id, uniform_index, MAX_ATTRIBUTE_NAME_LENGTH, &uniform.length, &uniform.size, &uniform.type, uniform.name);
-						LOGV("attribute: %i, name: %s, size: %i, type: %i\n",
+						uniform.location = gl.GetUniformLocation(id, uniform.name);
+						LOGV("attribute: %i, location: %i, name: %s, size: %i, type: %i\n",
 							 uniform_index,
+							 uniform.location,
 							 uniform.name,
 							 uniform.size,
 							 uniform.type);
@@ -521,17 +698,59 @@ namespace render2
 				};
 				
 				gl.ShaderSource(shader, 3, (GLchar**)shader_source, 0);
+				gl.CheckError("ShaderSource");
+				
 				gl.CompileShader(shader);
+				gl.CheckError("CompileShader");
+				
 				gl.GetShaderiv(shader, GL_COMPILE_STATUS, &is_compiled);
+				gl.CheckError("GetShaderiv");
+				
 				assert(is_compiled);
 				
 				return is_compiled;
+			}
+			
+			char* query_program_info_log(GLObject handle)
+			{
+				int log_length = 0;
+				char* logbuffer = 0;
+				gl.GetProgramiv(id, GL_INFO_LOG_LENGTH, &log_length);
+				if (log_length > 0)
+				{
+					logbuffer = (char*)MEMORY_ALLOC(log_length+1, platform::memory::global_allocator());
+					memset(logbuffer, 0, log_length);
+					
+					gl.GetProgramInfoLog(handle, log_length, &log_length, logbuffer);
+					if (log_length > 0)
+					{
+						return logbuffer;
+					}
+					else
+					{
+						MEMORY_DEALLOC(logbuffer, platform::memory::global_allocator());
+					}
+				}
+				
+				return 0;
+			} // query_program_info_log
+			
+			void dump_program_log()
+			{
+				char* logbuffer = query_program_info_log(id);
+				if (logbuffer)
+				{
+					LOGW("Program Info Log:\n");
+					LOGW("%s\n", logbuffer);
+					MEMORY_DEALLOC(logbuffer, platform::memory::global_allocator());
+				}
 			}
 		};
 	
 		struct gl_pipeline : public pipeline_state
 		{
 			gl_shader* program;
+			vertex_descriptor vertex_description;
 
 			gl_pipeline(const pipeline_descriptor& descriptor)
 			{
@@ -550,15 +769,105 @@ namespace render2
 			}
 		};
 		
+		
+		struct gl_buffer : public buffer
+		{
+			// vertex array object id (only used by vertex_buffers)
+			GLuint vao;
+			
+			// array, element buffer ids
+			GLuint vbo;
+			
+			GLenum type;
+			
+			gl_buffer(size_t size_bytes, GLenum buffer_type) :
+				type(buffer_type)
+			{
+				vbo = vao = 0;
+			
+				max_size = size_bytes;
+				
+				gl.GenBuffers(1, &vbo);
+				gl.CheckError("gl_buffer() - GenBuffers");
+				
+				bind();
+								
+				upload(0, max_size);
+				
+				unbind();
+			}
+			
+			~gl_buffer()
+			{
+				gl.DeleteBuffers(1, &vbo);
+				gl.CheckError("~gl_buffer() - DeleteBuffers");
+			}
+			
+			bool is_vao_valid() const { return vao != 0; }
+			
+			void bind()
+			{
+				gl.BindBuffer(type, vbo);
+				gl.CheckError("bind -> BindBuffer");
+			}
+			
+			void unbind()
+			{
+				gl.BindBuffer(type, 0);
+				gl.CheckError("unbind -> BindBuffer(0)");
+			}
+						
+			// upload data to the GPU
+			void upload(const void* data, size_t size_bytes)
+			{
+				assert(max_size >= size_bytes);
+				gl.BufferData(type, size_bytes, data, GL_STREAM_DRAW);
+				gl.CheckError("upload -> BufferData");
+			}
+			
+			void setup(const vertex_descriptor& descriptor)
+			{
+//				core::util::MemoryStream ms;
+//				ms.init(pointer, max_size);
+			}
+			
+			void create_vao()
+			{
+				gl.GenVertexArrays(1, &vao);
+				gl.CheckError("GenVertexArrays");
+			}
+			
+			void destroy_vao()
+			{
+				if (vao == 0)
+				{
+					return;
+				}
+					
+				gl.DeleteVertexArrays(1, &vao);
+				gl.CheckError("DeleteVertexArrays");
+			}
+			
+			void bind_vao()
+			{
+				gl.BindVertexArray(vao);
+				gl.CheckError("BindVertexArray");
+			}
+			
+			void unbind_vao()
+			{
+				gl.BindVertexArray(0);
+				gl.CheckError("BindVertexArray(0)");
+			}
+		};
+		
 	private:
 		render2::render_target default_target;
 		
 		command_queue* queue[4];
 		size_t current_queue;
 		
-		
-		
-		
+		gl_buffer* locked_buffer;
 		
 	public:
 		glhal()
@@ -576,29 +885,35 @@ namespace render2
 		{
 			memset(queue, 0, sizeof(command_queue*)*4);
 			current_queue = 0;
+			locked_buffer = 0;
 		}
-		
-		void update_stream(buffer* data)
+
+		void draw(
+			gl_pipeline* pipeline,
+			gl_buffer* vertex_stream,
+			size_t initial_offset,
+			size_t total,
+			size_t instance_index,
+			size_t index_count)
 		{
+			activate_pipeline(pipeline, vertex_stream);
 			
-		}
-		
-		void draw(buffer* vertex_stream, buffer* index_stream, size_t initial_offset, size_t total, size_t instance_index, size_t index_count)
-		{
+			vertex_stream->bind_vao();
+			gl.DrawArrays(GL_TRIANGLES, initial_offset, total);
+			vertex_stream->unbind_vao();
 			
+			deactivate_pipeline(pipeline);
 		}
 		
 		
 	public:
 		
-		virtual void activate_pipeline(pipeline_state* state)
+		void activate_pipeline(gl_pipeline* pipeline, gl_buffer* vertex_buffer)
 		{
-			LOGV("activate_pipeline %p\n", state);
-					
-			gl_pipeline* pipeline = static_cast<gl_pipeline*>(state);
 			gl_shader* shader = pipeline->program;
 			gl.UseProgram(shader->id);
-			
+			gl.CheckError("activate_pipeline - UseProgram");
+
 			// bind uniforms
 			size_t offset = 0;
 			char* buffer = (char*)pipeline->constants()->data;
@@ -607,18 +922,84 @@ namespace render2
 			for(size_t index = 0; index < shader->uniforms.size(); ++index)
 			{
 				shader_variable& uniform = shader->uniforms[index];
-				gl.UniformMatrix4fv(uniform.index, uniform.size, GL_FALSE, (GLfloat*)(buffer+offset));
+				gl.UniformMatrix4fv(uniform.location, uniform.size, GL_FALSE, (GLfloat*)(buffer+offset));
+				gl.CheckError("UniformMatrix4fv");
 				offset += uniform.byte_size;
+			}
+
+			// determine if the VAO for the vertex_buffer needs to be built
+			if (!vertex_buffer->is_vao_valid())
+			{
+				vertex_buffer->create_vao();
+				
+				vertex_buffer->bind_vao();
+				
+				// mapping tables (from data_type to opengl)
+				GLenum gl_type[] = {
+					GL_FLOAT,
+					GL_FLOAT,
+					GL_FLOAT,
+					GL_INT,
+					GL_UNSIGNED_INT,
+					GL_UNSIGNED_BYTE,
+					GL_UNSIGNED_BYTE
+				};
+				
+				GLenum gl_normalized[] = {
+					GL_FALSE,
+					GL_FALSE,
+					GL_FALSE,
+					GL_TRUE,
+					GL_TRUE,
+					GL_TRUE,
+					GL_TRUE
+				};
+				
+				size_t element_count;
+				size_t attribute_size;
+				size_t offset = 0;
+				
+				// If you hit this assert, the shader expects a different number of
+				// vertex attributes than the pipeline was configured for.
+				assert(pipeline->program->attributes.size() == pipeline->vertex_description.size());
+				
+				vertex_buffer->bind();
+				
+				pipeline->vertex_description.reset();
+				size_t vertex_stride = pipeline->vertex_description.stride();
+				for (size_t index = 0; index < pipeline->vertex_description.size(); ++index)
+				{
+					shader_variable& attribute = shader->attributes[index];
+					data_type type = pipeline->vertex_description[index];
+					attribute_size = vertex_descriptor::size_table[ type ];
+					element_count = vertex_descriptor::elements[ type ];
+					GLenum enum_type = GL_INVALID_ENUM;
+					
+					enum_type = gl_type[type];
+					
+					gl.EnableVertexAttribArray(index);
+					gl.CheckError( "EnableVertexAttribArray" );
+					
+					assert(enum_type != GL_INVALID_ENUM);
+					
+					assert(element_count >= 1 && element_count <= 4);
+					
+					gl.VertexAttribPointer(index, element_count, enum_type, gl_normalized[type], vertex_stride, (void*)offset);
+					gl.CheckError("VertexAttribPointer");
+					
+					offset += attribute_size;
+				}
+								
+				vertex_buffer->unbind_vao();
+				
+				vertex_buffer->unbind();
 			}
 		}
 		
-		virtual void deactivate_pipeline(pipeline_state* state)
+		void deactivate_pipeline(gl_pipeline* pipeline)
 		{
-			LOGV("deactivate_pipeline %p\n", state);
-			
-//			gl_pipeline* pipeline = static_cast<gl_pipeline*>(state);
-//			gl_shader* shader = pipeline->program;
 			gl.UseProgram(0);
+			gl.CheckError("UseProgram(0)");
 		}
 		
 		virtual void queue_buffers(command_queue* const queues, size_t total_queues)
@@ -630,6 +1011,9 @@ namespace render2
 		// submit queue command buffers to GPU
 		virtual void submit()
 		{
+			// If you hit this assert, there's a buffer locked for writing!
+			assert(locked_buffer == nullptr);
+		
 			for (size_t q = 0; q < current_queue; ++q)
 			{
 				command_queue* cq = queue[q];
@@ -638,58 +1022,37 @@ namespace render2
 				render_pass* pass = cq->pass;
 				
 				gl.ClearColor(pass->clear_color[0], pass->clear_color[1], pass->clear_color[2], pass->clear_color[3]);
+				gl.CheckError("ClearColor");
+				
 				gl.Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				
-				// TODO: execute commands
-				
-				
-				pipeline_state* current_pipeline = nullptr;
-				pipeline_state* last_pipeline = nullptr;
-				buffer* vertex_stream = nullptr;
-				buffer* index_stream = nullptr;
+				gl.CheckError("Clear");
+
+
+				gl_pipeline* current_pipeline = nullptr;
+				gl_pipeline* last_pipeline = nullptr;
+				gl_buffer* vertex_stream = nullptr;
+				gl_buffer* index_stream = nullptr;
 				
 				for (size_t index = 0; index < cq->total_commands; ++index)
 				{
 					command* command = &cq->commands[index];
 					if (command->type == COMMAND_DRAW)
 					{
-						vertex_stream = (buffer*)command->data[0];
-						index_stream = (buffer*)command->data[1];
-						if (vertex_stream->is_dirty())
-						{
-							update_stream(vertex_stream);
-						}
-						
-						if (index_stream && index_stream->is_dirty())
-						{
-							update_stream(index_stream);
-						}
-						
-						draw(vertex_stream,
-							index_stream,
-							command->params[0],
-							command->params[1],
-							command->params[2],
-							command->params[3]
-						);
+						draw(current_pipeline, vertex_stream, command->params[0], command->params[1], command->params[2], command->params[3]);
 					}
 					else if (command->type == COMMAND_PIPELINE)
 					{
-						current_pipeline = (pipeline_state*)command->data[0];
-						
-						if (current_pipeline != last_pipeline)
-						{
-							last_pipeline = current_pipeline;
-							
-							if (last_pipeline != 0)
-							{
-								deactivate_pipeline(last_pipeline);
-							}
-							
-							activate_pipeline(current_pipeline);
-						}
+						current_pipeline = static_cast<gl_pipeline*>(command->data[0]);
+						assert(current_pipeline != 0);
 					}
-					
+					else if (command->type == COMMAND_SET_VERTEX_BUFFER)
+					{
+						vertex_stream = static_cast<gl_buffer*>(command->data[0]);
+					}
+					else if (command->type == COMMAND_SET_INDEX_BUFFER)
+					{
+						index_stream = static_cast<gl_buffer*>(command->data[1]);
+					}
 				}
 			}
 		
@@ -702,13 +1065,14 @@ namespace render2
 			return &default_target;
 		}
 		
-		virtual buffer* create_buffer(size_t size_bytes)
+		virtual buffer* create_vertex_buffer(size_t size_bytes)
 		{
-			buffer* b = MEMORY_NEW(buffer, platform::memory::global_allocator());
-			b->pointer = new char[size_bytes];
-			b->max_size = size_bytes;
-			
-			return b;
+			return MEMORY_NEW(gl_buffer, platform::memory::global_allocator())(size_bytes, GL_ARRAY_BUFFER);
+		}
+		
+		virtual buffer* create_index_buffer(size_t size_bytes)
+		{
+			return MEMORY_NEW(gl_buffer, platform::memory::global_allocator())(size_bytes, GL_ELEMENT_ARRAY_BUFFER);
 		}
 		
 		virtual void destroy_buffer(buffer* buffer)
@@ -716,10 +1080,41 @@ namespace render2
 			MEMORY_DELETE(buffer, platform::memory::global_allocator());
 		}
 		
+		virtual void* buffer_lock(buffer* buffer)
+		{
+			gl_buffer* glb = static_cast<gl_buffer*>(buffer);
+			glb->bind();
+			void* pointer = gl.MapBuffer(glb->type, GL_WRITE_ONLY);
+			gl.CheckError("MapBuffer");
+			
+			locked_buffer = glb;
+			
+			return pointer;
+		}
+		
+		virtual void buffer_unlock(buffer* buffer)
+		{
+			gl_buffer* glb = static_cast<gl_buffer*>(buffer);
+			gl.UnmapBuffer(glb->type);
+			gl.CheckError("UnmapBuffer");
+			
+			glb->unbind();
+			
+			locked_buffer = nullptr;
+		}
+		
+		virtual void buffer_upload(buffer* buffer, void* data, size_t data_size)
+		{
+			gl_buffer* glb = static_cast<gl_buffer*>(buffer);
+			glb->bind();
+			glb->upload(data, data_size);
+			glb->unbind();
+		}
+		
 		virtual pipeline_state* create_pipeline(const pipeline_descriptor& descriptor)
 		{
 			gl_pipeline* pipeline = MEMORY_NEW(gl_pipeline, platform::memory::global_allocator())(descriptor);
-	
+			pipeline->vertex_description = descriptor.vertex_description;
 		
 			return pipeline;
 		}
@@ -809,7 +1204,15 @@ namespace render2
 
 
 
-
+struct experiment
+{
+	GLuint vao;
+	GLuint vertex_buffer;
+	GLuint index_buffer;
+	
+	void* memory;
+	size_t memory_size;
+};
 
 
 class EditorKernel : public kernel::IKernel,
@@ -823,9 +1226,32 @@ private:
 	render2::device* device;
 	
 	render2::buffer* triangle_stream;
+	render2::buffer* index_buffer;
 	render2::pipeline_state* pipeline;
 	
 	GLsync fence;
+	experiment temp;
+	
+	struct MyVertex
+	{
+		float position[3];
+		float color[4];
+		
+		void set_position(float x, float y, float z)
+		{
+			position[0] = x;
+			position[1] = y;
+			position[2] = z;
+		}
+		
+		void set_color(float red, float green, float blue, float alpha)
+		{
+			color[0] = red;
+			color[1] = green;
+			color[2] = blue;
+			color[3] = alpha;
+		}
+	};
 	
 public:
 	EditorKernel() :
@@ -877,7 +1303,14 @@ public:
 		{
 			renderer::RenderSettings render_settings;
 			render_settings.gamma_correct = true;
+						
 			renderer::startup(renderer::OpenGL, render_settings);
+			
+			// clear errors
+			gl.CheckError("before render startup");
+			
+			// need to setup the mapping tables!
+			render2::vertex_descriptor::startup();
 			
 			fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 		}
@@ -912,77 +1345,38 @@ public:
 			
 			device->init(800, 600);
 			
-			// setup debug draw (example)
-			if (1)
-			{
-				struct MyVertex
-				{
-					float position[3];
-					float color[4];
-					
-					void set_position(float x, float y, float z)
-					{
-						position[0] = x;
-						position[1] = y;
-						position[2] = z;
-					}
-					
-					void set_color(float red, float green, float blue, float alpha)
-					{
-						color[0] = red;
-						color[1] = green;
-						color[2] = blue;
-						color[3] = alpha;
-					}
-				};
 			
-				// setup shaders
-				render2::pipeline_descriptor desc;
-				desc.shader = device->create_shader("test");
-				desc.vertex_description.add(render2::VD_FLOAT3); // position
-				desc.vertex_description.add(render2::VD_FLOAT4); // color
-				pipeline = device->create_pipeline(desc);
-							
-				// populate buffer
-				assert(desc.vertex_description.stride() == sizeof(MyVertex));
 
-				size_t total_bytes = desc.vertex_description.stride() * 3;
-				triangle_stream = device->create_buffer(total_bytes);
-				MyVertex* vertex = triangle_stream->data<MyVertex>();
-				
-				vertex[0].set_position(0, 0, 0);
-				vertex[0].set_color(1.0f, 0.0f, 0.0f, 1.0f);
-				
-				vertex[1].set_position(0, 100, 0);
-				vertex[1].set_color(0.0f, 1.0f, 0.0f, 1.0f);
-				
-				vertex[2].set_position(100, 100, 0);
-				vertex[2].set_color(0.0f, 0.0f, 1.0f, 1.0f);
+			// setup shaders
+			render2::pipeline_descriptor desc;
+			desc.shader = device->create_shader("test");
+			desc.vertex_description.add(render2::VD_FLOAT3); // position
+			desc.vertex_description.add(render2::VD_FLOAT4); // color
+			pipeline = device->create_pipeline(desc);
+						
+			// populate buffer
+			assert(desc.vertex_description.stride() == sizeof(MyVertex));
 
-#if 0
-				// setup render target and clear color
-				render2::render_pass pass;
-				pass.target = device->default_render_target();
-				pass.color(0.0f, 0.0f, 1.0f, 1.0f);
-				
-//				render2::image tex0; // load this
-				
-				render2::command_queue queue(&pass);
-				queue.begin(pipeline);
-//				queue.texture(tex0, 0);
-				queue.draw(triangle_stream, 0, 0, 3);
-				queue.draw(triangle_stream, 0, 3, 6);
-				queue.draw(triangle_stream, 0, 12, 15);
-				queue.end();
-				
-				device->queue_buffers(&queue, 1);
-				
-				// buffers are queued; submit all buffers for drawing
-				
-				device->submit();
-#endif
-			}
+			size_t total_bytes = desc.vertex_description.stride() * 3;
+			triangle_stream = device->create_vertex_buffer(total_bytes);
+			MyVertex* vertex = reinterpret_cast<MyVertex*>(device->buffer_lock(triangle_stream));
 			
+			
+			vertex[0].set_position(0, 600, 0);
+			vertex[0].set_color(1.0f, 0.0f, 0.0f, 1.0f);
+			
+			vertex[1].set_position(800, 600, 0);
+			vertex[1].set_color(0.0f, 1.0f, 0.0f, 1.0f);
+			
+			vertex[2].set_position(400, 0, 0);
+			vertex[2].set_color(0.0f, 0.0f, 1.0f, 1.0f);
+
+			device->buffer_unlock(triangle_stream);
+			
+			
+			index_buffer = device->create_index_buffer(sizeof(uint16_t) * 3);
+			uint16_t indices[] = {0, 1, 2};
+			device->buffer_upload(index_buffer, indices, sizeof(uint16_t)*3);
 
 			
 			// load shaders from disk
@@ -1014,10 +1408,10 @@ public:
 			
 		}
 		
-		
-		
 		return kernel::NoError;
 	}
+	
+
 	
 	virtual void tick()
 	{
@@ -1041,25 +1435,22 @@ public:
 		
 		leconstants cb;
 		cb.modelview_matrix = glm::mat4(1.0f);
-		cb.projection_matrix = glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, 0.1f, 1.0f);
+		cb.projection_matrix = glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, -1.0f, 1.0f);
 		pipeline->constants()->assign(&cb, sizeof(leconstants));
-						
-		// clear the screen
-		{
-			render2::render_pass render_pass;
-			render_pass.target = device->default_render_target();
-			render_pass.color(value, value, value, 1.0f);
-			
-			render2::command_queue queue(&render_pass);
-			queue.begin(pipeline);
-			queue.draw(triangle_stream, 0, 0, 3);
-			queue.end();
-			
-			device->queue_buffers(&queue, 1);
-			device->submit();
-		}
 
-		
+
+		render2::render_pass render_pass;
+		render_pass.target = device->default_render_target();
+		render_pass.color(value, value, value, 1.0f);
+
+		render2::command_queue queue(&render_pass);
+		queue.begin(pipeline);
+		queue.vertex_buffer(triangle_stream);
+		queue.draw(0, 3);
+		queue.end();
+		device->queue_buffers(&queue, 1);
+		device->submit();
+
 //		glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, 2000);
 		
 		window_interface->swap_buffers(main_window);
@@ -1070,6 +1461,7 @@ public:
 		// shutdown the render device
 		
 		device->destroy_buffer(triangle_stream);
+		device->destroy_buffer(index_buffer);
 		device->destroy_pipeline(pipeline);
 		
 		
