@@ -71,7 +71,7 @@ namespace core
 			MemoryStream() : data(0), data_length(0), offset(0) {}
 			virtual ~MemoryStream() {}
 			
-			void init(char* buffer, size_t buffer_length);
+			void init(void* buffer, size_t buffer_length);
 			void rewind();
 			void clear();
 			size_t current_offset() const;
