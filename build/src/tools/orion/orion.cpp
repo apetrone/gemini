@@ -169,10 +169,11 @@ namespace render2
 	
 	enum command_type
 	{
-		COMMAND_SET_VERTEX_BUFFER,
-		COMMAND_SET_INDEX_BUFFER,
-		COMMAND_DRAW,
-		COMMAND_PIPELINE,
+		COMMAND_SET_VERTEX_BUFFER,	// change vertex buffer
+		COMMAND_DRAW,				// draw from vertex buffer
+		COMMAND_DRAW_INDEXED,		// draw from index buffer
+		COMMAND_PIPELINE,			// set the rendering pipeline
+		COMMAND_VIEWPORT,			// set viewport
 		COMMAND_STATE
 	};
 	
@@ -181,6 +182,11 @@ namespace render2
 		command_type type;
 		void* data[2];
 		size_t params[4];
+		
+		command()
+		{
+			memset(this, 0, sizeof(command));
+		}
 	};
 
 	struct command_queue
@@ -204,15 +210,6 @@ namespace render2
 			commands[total_commands++] = c;
 		}
 		
-		void index_buffer(buffer* buffer)
-		{
-			command c;
-			memset(&c, 0, sizeof(command));
-			c.type = COMMAND_SET_INDEX_BUFFER;
-			c.data[0] = buffer;
-			commands[total_commands++] = c;
-		}
-		
 		void draw(size_t initial_offset, size_t total, size_t instance_index = 0, size_t index_count = 1)
 		{
 			command c;
@@ -225,7 +222,20 @@ namespace render2
 			commands[total_commands++] = c;
 		}
 		
-		void begin(struct pipeline_state* pipeline)
+		void draw_indexed_primitives(buffer* index_buffer, size_t total)
+		{
+			command c;
+			memset(&c, 0, sizeof(command));
+			c.type = COMMAND_DRAW_INDEXED;
+			c.data[0] = index_buffer;
+			c.params[0] = total;
+			c.params[1] = 0;
+			c.params[2] = 0;
+			c.params[3] = 1;
+			commands[total_commands++] = c;
+		}
+		
+		void pipeline(struct pipeline_state* pipeline)
 		{
 			command c;
 			memset(&c, 0, sizeof(command));
@@ -235,9 +245,15 @@ namespace render2
 			commands[total_commands++] = c;
 		}
 		
-		void end()
+		void viewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 		{
-		
+			command c;
+			c.type = COMMAND_VIEWPORT;
+			c.params[0] = x;
+			c.params[1] = y;
+			c.params[2] = width;
+			c.params[3] = height;
+			commands[total_commands++] = c;
 		}
 		
 		
@@ -282,10 +298,7 @@ namespace render2
 		const vertex_descriptor& operator= (const vertex_descriptor & other);
 	}; // vertex_descriptor
 	
-	
-	
-	
-	// VertexTypeDescriptor
+
 	uint16_t vertex_descriptor::size_table[ VD_TOTAL ] = {0};
 	uint16_t vertex_descriptor::elements[ VD_TOTAL ] = {0};
 	
@@ -906,6 +919,27 @@ namespace render2
 		}
 		
 		
+		void draw_indexed(
+			gl_pipeline* pipeline,
+			gl_buffer* vertex_buffer,
+			gl_buffer* index_buffer,
+			size_t total)
+		{
+			activate_pipeline(pipeline, vertex_buffer);
+			
+			
+			vertex_buffer->bind_vao();
+			
+			index_buffer->bind();
+			gl.DrawElements(GL_TRIANGLES, total, GL_UNSIGNED_SHORT, 0);
+			index_buffer->unbind();
+			
+			vertex_buffer->unbind_vao();
+			
+			deactivate_pipeline(pipeline);
+		}
+		
+		
 	public:
 		
 		void activate_pipeline(gl_pipeline* pipeline, gl_buffer* vertex_buffer)
@@ -1040,6 +1074,11 @@ namespace render2
 					{
 						draw(current_pipeline, vertex_stream, command->params[0], command->params[1], command->params[2], command->params[3]);
 					}
+					else if (command->type == COMMAND_DRAW_INDEXED)
+					{
+						index_stream = static_cast<gl_buffer*>(command->data[0]);
+						draw_indexed(current_pipeline, vertex_stream, index_stream, command->params[0]);
+					}
 					else if (command->type == COMMAND_PIPELINE)
 					{
 						current_pipeline = static_cast<gl_pipeline*>(command->data[0]);
@@ -1049,9 +1088,10 @@ namespace render2
 					{
 						vertex_stream = static_cast<gl_buffer*>(command->data[0]);
 					}
-					else if (command->type == COMMAND_SET_INDEX_BUFFER)
+					else if (command->type == COMMAND_VIEWPORT)
 					{
-						index_stream = static_cast<gl_buffer*>(command->data[1]);
+						gl.Viewport(command->params[0], command->params[1], command->params[2], command->params[3]);
+						gl.CheckError("glViewport");
 					}
 				}
 			}
@@ -1201,20 +1241,6 @@ namespace render2
 		
 }
 
-
-
-
-struct experiment
-{
-	GLuint vao;
-	GLuint vertex_buffer;
-	GLuint index_buffer;
-	
-	void* memory;
-	size_t memory_size;
-};
-
-
 class EditorKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>
 {
@@ -1230,7 +1256,6 @@ private:
 	render2::pipeline_state* pipeline;
 	
 	GLsync fence;
-	experiment temp;
 	
 	struct MyVertex
 	{
@@ -1357,7 +1382,7 @@ public:
 			// populate buffer
 			assert(desc.vertex_description.stride() == sizeof(MyVertex));
 
-			size_t total_bytes = desc.vertex_description.stride() * 3;
+			size_t total_bytes = desc.vertex_description.stride() * 4;
 			triangle_stream = device->create_vertex_buffer(total_bytes);
 			MyVertex* vertex = reinterpret_cast<MyVertex*>(device->buffer_lock(triangle_stream));
 			
@@ -1370,6 +1395,9 @@ public:
 			
 			vertex[2].set_position(400, 0, 0);
 			vertex[2].set_color(0.0f, 0.0f, 1.0f, 1.0f);
+			
+			vertex[3].set_position(0, 0, 0);
+			vertex[3].set_color(0.0f, 1.0f, 1.0f, 1.0f);
 
 			device->buffer_unlock(triangle_stream);
 			
@@ -1444,10 +1472,11 @@ public:
 		render_pass.color(value, value, value, 1.0f);
 
 		render2::command_queue queue(&render_pass);
-		queue.begin(pipeline);
+		queue.pipeline(pipeline);
 		queue.vertex_buffer(triangle_stream);
+//		queue.draw_indexed_primitives(index_buffer, 3);
 		queue.draw(0, 3);
-		queue.end();
+		
 		device->queue_buffers(&queue, 1);
 		device->submit();
 
