@@ -305,8 +305,8 @@ def get_tools(libruntime, librenderer, libplatform, libcore, **kwargs):
 	setup_common_tool(muse)
 	tools.append(muse)
 
-	kraken = get_kraken(arguments, libruntime, libplatform, libcore, librenderer, **kwargs)
-	tools.append(kraken)
+	#kraken = get_kraken(arguments, libruntime, libplatform, libcore, librenderer, **kwargs)
+	#tools.append(kraken)
 
 	orion = get_orion(arguments, libruntime, libplatform, libcore, librenderer, **kwargs)
 	tools.append(orion)
