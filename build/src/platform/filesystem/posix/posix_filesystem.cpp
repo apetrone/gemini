@@ -88,6 +88,25 @@ namespace platform
 		return posix_get_user_directory();
 	}
 
+	PathString get_user_application_directory(const char* application_data_path)
+	{
+		PathString user_application_directory = "/var/lib";
+		user_application_directory.append(application_data_path);
+		return user_application_directory;
+	}
+
+	PathString get_user_temp_directory()
+	{
+		// '/tmp' directory must be available for programs that require
+		// temporary files. Programs must not assume that any files or
+		// directories in /tmp are preserved between invocations of the program.
+		// 
+		// /var/tmp directory is made available for programs that require
+		// temporary files or directories that are preserved between system
+		// reboots. Therefore, this is more presistent than data in /tmp.
+		return "/tmp";
+	}
+
 	core::StackString<MAX_PATH_SIZE> make_absolute_path(const char* path)
 	{
 		return posix_make_absolute_path(path);
