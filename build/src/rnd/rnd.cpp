@@ -9,6 +9,7 @@
 #include <core/stackstring.h>
 #include <core/interpolation.h>
 #include <core/argumentparser.h>
+#include <core/zonealloc.h>
 
 #include <json/json.h>
 
@@ -333,6 +334,36 @@ struct DerivedClass : public BaseClass
 
 using namespace platform::memory;
 
+namespace memtest
+{
+	struct LinearAllocator : public ::core::memory::Allocator<LinearAllocator>
+	{
+		void* data;
+		size_t data_size;
+		
+		LinearAllocator(::core::memory::Zone* zone, void* data, size_t max_size) :
+			::core::memory::Allocator<LinearAllocator>(zone)
+		{
+			
+		}
+		
+		void* allocate(size_t size, const char* filename, int line)
+		{
+			fprintf(stdout, "LinearAllocator [%s]: allocate %zu\n", zone->name(), size);
+			if (zone->add_allocation(size) == 0)
+			{
+				return  (void*)0xfeedface;
+			}
+			return 0;
+		}
+		
+		void deallocate(void* pointer)
+		{
+			fprintf(stdout, "LinearAllocator [%s]: deallocate %p\n", zone->name(), pointer);
+			zone->remove_allocation(4);
+		}
+	};
+}
 
 void test_memory()
 {
@@ -356,9 +387,9 @@ void test_memory()
 	// stl allocator tests
 	
 	
-	typedef std::basic_string<char, std::char_traits<char>, CustomPlatformAllocator<char> > CustomString;
+//	typedef std::basic_string<char, std::char_traits<char>, CustomPlatformAllocator<char> > CustomString;
 
-	CustomString abc = "hello there, how is it going; I hope everything is well";
+//	CustomString abc = "hello there, how is it going; I hope everything is well";
 
 
 #if 0
@@ -394,7 +425,42 @@ void test_memory()
 #endif
 	
 	
+#if 0
 
+		
+		
+	- ALLOCATORS
+		Allocators provide an interface between code and memory. Different
+		allocation strategies are provided by each new allocator type.
+		
+		Goals:
+		I. Allocators should work in tandem with the Zones
+		II. When practical, Allocators should accept an upper limit for size.
+			This allows greater control over the memory usage.
+			
+
+		Allocators should accept a few different policies for control and tuning.
+		For example, one such policy could be used to guard pages.
+		
+	- Tag all allocations inside a single 'Zone'
+	- Allow different allocators (zones can be shared among them)
+	- Provide means by which users can limit the zone? or allocator?
+#endif
+
+	core::memory::Zone z_platform("platform", 0);
+	
+	char data[8] = {0};
+	memtest::LinearAllocator la(&z_platform, (void*)data, 8);
+	
+	char data2[32];
+	memtest::LinearAllocator second(&z_platform, (void*)data2, 32);
+	
+	
+	char* c = (char*)MEMORY_ALLOC(32, second);
+	
+	
+	
+	MEMORY_DEALLOC(c, second);
 }
 
 void test_maths()
@@ -677,7 +743,7 @@ int main(int argc, char** argv)
 {
 	platform::startup();
 
-//	test_memory();
+	test_memory();
 //	test_maths();
 //	test_coroutines();
 //	test_serialization();
