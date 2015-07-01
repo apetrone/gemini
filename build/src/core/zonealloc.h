@@ -95,15 +95,24 @@ namespace core
 		// ---------------------------------------------------------------------
 		// allocator
 		// ---------------------------------------------------------------------
+		// Allocators provide an interface between code and memory. Different
+		// allocation strategies are provided by each new allocator type.
+		
+		// GOALS:
+		// I. Allocators should work in tandem with the Zones
+		// II. When practical, Allocators should accept an upper limit for size.
+		//     This allows greater control over the memory usage.
+		// III. Allocators should accept a few different policies for control and tuning.
+		//      Policies for tracking, or guarding memory can be specified.
 		template <class Type>
-		struct Allocator
+		struct allocator
 		{
 			Zone* zone;
-			Allocator(Zone* memory_zone)
+			allocator(Zone* memory_zone)
 			{
 				zone = memory_zone;
 			}
-		}; // struct Allocator
+		}; // struct allocator
 
 	} // namespace memory
 } // namespace core
