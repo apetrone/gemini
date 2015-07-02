@@ -32,7 +32,7 @@
 
 #include <renderer/vertexstream.h>
 #include <renderer/renderstream.h>
-
+#include <renderer/image.h>
 
 #include <assets/asset_shader.h>
 #include <assets/asset_material.h>
@@ -48,11 +48,14 @@ class GUIRenderer : public gui::Renderer
 	
 	gui::Compositor* compositor;
 	::renderer::VertexStream stream;
-	::renderer::VertexStream lines;
+//	::renderer::VertexStream lines;
 	gemini::assets::Shader* shader;
 	
-	gemini::assets::Material * solid_color;
+//	gemini::assets::Material * solid_color;
+
 	gemini::assets::Material * texture_map;
+	
+	gemini::assets::Texture* white_texture;
 	
 	unsigned int vertex_attribs;
 	
@@ -83,4 +86,8 @@ public:
 	virtual gui::FontResult font_create(const char* path, gui::FontHandle& handle);
 	virtual void font_destroy(const gui::FontHandle& handle);
 	virtual gui::FontResult font_measure_string(const gui::FontHandle& handle, const char* string, gui::Bounds& bounds);
-	virtual void font_draw(const gui::FontHandle& handle, const char* string, const gui::Bounds& bounds, const gui::Color& color);}; // GUIRenderer
+	virtual void font_draw(const gui::FontHandle& handle, const char* string, const gui::Bounds& bounds, const gui::Color& color);
+	virtual gui::FontResult font_fetch_texture(const gui::FontHandle& handle, gui::TextureHandle& texture);
+	virtual void draw_command_lists(gui::render::CommandList** command_lists, size_t total_lists);
+	
+}; // GUIRenderer

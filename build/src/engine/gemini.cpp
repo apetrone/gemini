@@ -1803,11 +1803,13 @@ Options:
 		navigation::shutdown();
 		
 		// shutdown gui
-		MEMORY_DELETE(gui_style, core::memory::global_allocator());
-		MEMORY_DELETE(gui_renderer, core::memory::global_allocator());
 		delete compositor;
 		compositor = 0;
 		_compositor = 0;
+		
+		MEMORY_DELETE(gui_style, core::memory::global_allocator());
+		MEMORY_DELETE(gui_renderer, core::memory::global_allocator());
+
 		
 		// since the game can create gui elements, we need to shutdown
 		// the gui before shutting down the game library.
