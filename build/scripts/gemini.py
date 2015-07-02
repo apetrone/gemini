@@ -320,7 +320,9 @@ def get_libcore(arguments, target_platform):
 	libcore.project_root = COMMON_PROJECT_ROOT
 	libcore.root = "../"
 	libcore.sources += [
-		"src/core/*.*",
+		"src/core/*.cpp",
+		"src/core/*.h",
+		"src/core/memory/*.h",		
 
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c")
 	]
@@ -349,9 +351,6 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/kernel.cpp",
 		"src/platform/kernel.h",
 		"src/platform/kernel_events.h",	
-		"src/platform/mem.cpp",
-		"src/platform/mem.h",
-		"src/platform/mem_stl_allocator.h",
 		"src/platform/platform.cpp",
 		"src/platform/platform.h",
 		"src/platform/platform_internal.h",
