@@ -237,7 +237,13 @@ def setup_driver(product):
 	mac_debug.cflags += [
 		"-Wall",
 		"-Wmost",
-		"-Weverything"
+		"-Weverything",
+		"-Wpedantic",
+		"-Wextra",
+		"-Wreorder",
+		"-Wunused-parameter",
+		"-Wunused",
+		"-Wsign-compare"
 	]
 	
 	mac_release = product.layout(platform="macosx", configuration="release")
@@ -245,7 +251,12 @@ def setup_driver(product):
 
 	linux = product.layout(platform="linux")
 	linux.cflags += [
-		"-fPIC"
+		"-Wall",
+		"-fPIC",
+		"-Wreorder",
+		"-Wunused-parameter",
+		"-Wunused",
+		"-Wsign-compare"		
 	]
 
 def get_tools(libruntime, librenderer, libplatform, libcore, **kwargs):
