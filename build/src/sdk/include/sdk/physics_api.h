@@ -28,7 +28,7 @@
 #include <core/mathlib.h>
 #include <core/interface.h>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 namespace gemini
 {

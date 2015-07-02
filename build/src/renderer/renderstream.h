@@ -26,7 +26,7 @@
 
 #include "renderer.h"
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <core/datastream.h>
 
 namespace renderer

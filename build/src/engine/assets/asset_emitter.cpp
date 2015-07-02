@@ -25,7 +25,7 @@
 #include <runtime/configloader.h>
 #include <core/stackstring.h>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 #include "assets.h"
 #include "assets/asset_emitter.h"

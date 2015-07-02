@@ -24,8 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <platform/typedefs.h>
-#include <platform/config.h>
+#include <core/typedefs.h>
+#include <core/config.h>
 
 #if PLATFORM_APPLE
 	#include <memory> // for malloc, free (on OSX)

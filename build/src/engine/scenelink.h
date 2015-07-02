@@ -26,7 +26,7 @@
 
 #include <core/mem.h>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 #include <renderer/renderer.h>
 #include <renderer/rqueue.h>

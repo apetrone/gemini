@@ -26,7 +26,7 @@
 
 #include "renderer.h"
 
-#include <platform/config.h>
+#include <core/config.h>
 #include <platform/platform.h>
 
 #if PLATFORM_WINDOWS

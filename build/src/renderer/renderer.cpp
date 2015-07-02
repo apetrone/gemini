@@ -41,7 +41,7 @@
 	#include "gl/desktop/opengl_21.h"
 #endif
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <runtime/logging.h>
 #include <runtime/configloader.h>
 

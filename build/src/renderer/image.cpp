@@ -28,7 +28,7 @@
 #include <runtime/filesystem.h>
 #include <runtime/logging.h>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 #define STBI_HEADER_FILE_ONLY 1
 #define STBI_NO_STDIO 1

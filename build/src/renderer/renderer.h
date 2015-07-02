@@ -29,7 +29,7 @@
 #include "shaderprogram.h"
 #include "vertexbuffer.h"
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <core/fixedarray.h>
 #include <core/stackstring.h>
 #include <core/mathlib.h> // for glm

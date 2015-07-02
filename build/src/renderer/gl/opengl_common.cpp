@@ -25,7 +25,7 @@
 #include <runtime/logging.h>
 #include <runtime/filesystem.h>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 #include "renderer.h"
 #include "opengl_common.h"

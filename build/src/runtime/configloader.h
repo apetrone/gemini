@@ -26,7 +26,7 @@
 
 #include <json/json.h>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 namespace core
 {
