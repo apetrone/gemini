@@ -22,15 +22,13 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include <core/stackstring.h>
-#include <runtime/filesystem.h>
-
-#include <core/typedefs.h>
-
 #include "audio.h"
 #include "assets.h"
-#include <core/factory.h>
 
+#include <core/factory.h>
+#include <core/typedefs.h>
+#include <core/stackstring.h>
+#include <runtime/filesystem.h>
 
 #include <sdk/audio_api.h>
 
