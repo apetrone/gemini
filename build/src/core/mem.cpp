@@ -24,6 +24,10 @@
 // -------------------------------------------------------------
 #include "mem.h"
 
+#ifndef memset
+	#include <string.h>
+#endif
+
 namespace core
 {
 	namespace memory

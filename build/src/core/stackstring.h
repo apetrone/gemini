@@ -27,6 +27,10 @@
 #include "util.h"
 #include "str.h"
 
+#ifndef memset
+	#include <string.h>
+#endif
+
 #include <assert.h>
 
 namespace core

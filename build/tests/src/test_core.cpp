@@ -396,11 +396,20 @@ void test_util()
 {
 	TEST_CATEGORY(util);
 	
-	TEST_VERIFY(0.0f <= util::random_range(0.0f, 1.0f) <= 1.0f, random_range0);
-	TEST_VERIFY(0.0f <= util::random_range(0.0f, 1.0f) <= 1.0f, random_range1);
-	TEST_VERIFY(0.0f <= util::random_range(0.0f, 1.0f) <= 1.0f, random_range2);
-	TEST_VERIFY(0.0f <= util::random_range(0.0f, 1.0f) <= 1.0f, random_range3);
-	TEST_VERIFY(0.0f <= util::random_range(0.0f, 1.0f) <= 1.0f, random_range4);
+	float value = util::random_range(0.0f, 1.0f);
+	TEST_VERIFY(0.0f <= value && value <= 1.0f, random_range0);
+	
+	value = util::random_range(0.0f, 1.0f);
+	TEST_VERIFY(0.0f <= value && value <= 1.0f, random_range1);
+	
+	value = util::random_range(0.0f, 1.0f);
+	TEST_VERIFY(0.0f <= value && value <= 1.0f, random_range2);
+	
+	value = util::random_range(0.0f, 1.0f);
+	TEST_VERIFY(0.0f <= value && value <= 1.0f, random_range3);
+	
+	value = util::random_range(0.0f, 1.0f);
+	TEST_VERIFY(0.0f <= value && value <= 1.0f, random_range4);
 }
 
 int main(int, char**)
