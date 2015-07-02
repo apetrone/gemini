@@ -25,8 +25,7 @@
 #include "camera.h"
 
 #include <core/mathlib.h>
-
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 // --------------------------------------------------------
 // Camera
