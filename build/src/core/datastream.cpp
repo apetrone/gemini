@@ -22,8 +22,11 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-
 #include "datastream.h"
+
+#ifndef memcpy
+	#include <string.h>
+#endif
 
 namespace core
 {
