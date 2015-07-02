@@ -25,7 +25,7 @@
 #include <core/stackstring.h>
 #include <runtime/filesystem.h>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 #include "audio.h"
 #include "assets.h"

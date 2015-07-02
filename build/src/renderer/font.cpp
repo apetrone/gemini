@@ -32,7 +32,7 @@
 #define FONTSTASH_IMPLEMENTATION
 #include "fontstash.h"
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <runtime/filesystem.h>
 #include <runtime/logging.h>
 

@@ -31,7 +31,7 @@
 #include <core/mathlib.h>
 #include <core/datastream.h>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 namespace renderer
 {

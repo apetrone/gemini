@@ -42,7 +42,7 @@
 #include <sdk/model_api.h>
 #include <sdk/physics_api.h>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 using namespace gemini;
 using namespace gemini::physics::bullet;

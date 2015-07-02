@@ -25,7 +25,7 @@
 #include <core/mem.h>
 #include <runtime/configloader.h>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 #include "assets.h"
 #include "kernel.h"

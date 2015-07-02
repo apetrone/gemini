@@ -44,7 +44,7 @@ const float PHYSICS_PLAYER_HALF_HEIGHT = 0.91f; // .91 == 6 ft tall
 
 #include "physics_interface.h"
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 namespace gemini
 {

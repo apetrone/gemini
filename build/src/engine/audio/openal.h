@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <platform/config.h>
+#include <core/config.h>
 
 #include <core/factory.h> // for DECLARE_FACTORY_CLASS
 

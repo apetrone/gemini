@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #include "gemgl.h"
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <runtime/logging.h>
 
 #include <stdio.h> // for sscanf

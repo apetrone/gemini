@@ -1,5 +1,5 @@
 #include <platform/platform.h>
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 #include <runtime/core.h>
 #include <runtime/filesystem.h>

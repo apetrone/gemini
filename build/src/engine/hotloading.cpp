@@ -23,7 +23,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <core/mathlib.h>
 #include <threadsafequeue.h>
 #include <core/stackstring.h>

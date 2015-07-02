@@ -29,7 +29,7 @@
 #include "datamodel/skeleton.h"
 #include "datamodel/animation.h"
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 #include <core/str.h>
 

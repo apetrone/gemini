@@ -30,7 +30,7 @@
 
 #include "common/extension.h"
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 #include <platform/platform.h>
 
 #include <runtime/filesystem.h>

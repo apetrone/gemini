@@ -27,7 +27,7 @@
 #include <runtime/logging.h>
 
 #include <platform/platform.h>
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 #include <core/str.h>
 

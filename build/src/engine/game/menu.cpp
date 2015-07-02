@@ -23,7 +23,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include <runtime/logging.h>
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 #include "menu.h"
 

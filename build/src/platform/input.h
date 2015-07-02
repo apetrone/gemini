@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 #include <stdint.h>
 #include <limits.h>

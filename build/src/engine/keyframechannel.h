@@ -29,7 +29,7 @@
 
 #include <renderer/render_utilities.h>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 namespace gemini
 {

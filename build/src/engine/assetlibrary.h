@@ -29,7 +29,7 @@
 
 #include <runtime/logging.h>
 
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 #include "assets.h"
 
