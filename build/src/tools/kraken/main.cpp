@@ -35,7 +35,7 @@ using namespace gemini;
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    tools::startup();
+    tools::startup("arcfusion.net/orion");
     ApplicationContext context;
 
     // load styles
