@@ -25,8 +25,7 @@
 #pragma once
 
 #include "datastream.h"
-
-#include <core/typedefs.h>
+#include "typedefs.h"
 
 #include <vector>
 

@@ -24,8 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/typedefs.h>
-#include <core/config.h>
+#include "typedefs.h"
+#include "config.h"
 
 #if PLATFORM_APPLE
 	#include <memory> // for malloc, free (on OSX)
@@ -134,8 +134,8 @@ namespace core
 		// ---------------------------------------------------------------------
 		// tracking policies
 		// ---------------------------------------------------------------------
-		#include <core/memory/simple_tracking_policy.h>
-		#include <core/memory/debug_tracking_policy.h>
+		#include "memory/simple_tracking_policy.h"
+		#include "memory/debug_tracking_policy.h"
 		
 		typedef simple_tracking_policy default_tracking_policy;
 
@@ -168,11 +168,11 @@ namespace core
 		
 		
 		// allocators
-		#include <core/memory/heap_allocator.h>
-//		#include <core/memory/linear_allocator.h>
-//		#include <core/memory/pool_allocator.h>
-//		#include <core/memory/stack_allocator.h>
-//		#include <core/memory/page_allocator.h>
+		#include "memory/heap_allocator.h"
+//		#include "memory/linear_allocator.h"
+//		#include "memory/pool_allocator.h"
+//		#include "memory/stack_allocator.h"
+//		#include "memory/page_allocator.h"
 
 		// ---------------------------------------------------------------------
 		// interface

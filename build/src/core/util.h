@@ -24,8 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/typedefs.h>
-#include <core/stackstring.h>
+#include "typedefs.h"
+#include "stackstring.h"
 
 namespace core
 {

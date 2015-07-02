@@ -24,8 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/typedefs.h>
-#include <core/mathlib.h>
+#include "typedefs.h"
+#include "mathlib.h"
 
 namespace core
 {

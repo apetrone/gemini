@@ -24,8 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/typedefs.h>
-#include <core/mem.h>
+#include "typedefs.h"
+#include "mem.h"
 
 #include <string>
 #include <vector>

@@ -25,8 +25,7 @@
 #pragma once
 
 #include "interpolation.h"
-
-#include <core/typedefs.h>
+#include "typedefs.h"
 
 namespace core
 {
