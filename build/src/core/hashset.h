@@ -117,7 +117,7 @@ private:
 		}
 		
 		// free the old table
-		deallocate(old_table, total_items);
+		deallocate(old_table);
 	}
 	
 	Bucket* find_or_create_bucket(const K& key)
@@ -170,7 +170,7 @@ private:
 	}
 	
 	
-	void deallocate(Bucket* pointer, size_t elements)
+	void deallocate(Bucket* pointer)
 	{
 		MEMORY_DELETE_ARRAY(pointer, core::memory::global_allocator());
 	}
@@ -190,7 +190,7 @@ public:
 	
 	~HashSet()
 	{
-		deallocate(table, table_size);
+		deallocate(table);
 	}
 	
 	

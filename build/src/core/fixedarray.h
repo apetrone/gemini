@@ -26,6 +26,10 @@
 
 #include "mem.h"
 
+#ifndef memset
+	#include <string.h>
+#endif
+
 #include <assert.h>
 
 template <class Type>

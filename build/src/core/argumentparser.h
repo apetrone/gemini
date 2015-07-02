@@ -208,9 +208,9 @@ namespace core
 			PatternList input;
 			
 			TokenInfo(std::vector<std::string>& input_arguments) :
-			arguments(input_arguments),
-			argument_index(0),
-			pattern_index(0)
+				argument_index(0),
+				pattern_index(0),
+				arguments(input_arguments)
 			{
 			}
 			

@@ -49,7 +49,7 @@ struct debug_tracking_policy
 	
 	/// Adjust the size of the allocation for this policy.
 	/// @returns the final size in bytes which should be allocated
-	size_t request_size(size_t requested_size, size_t alignment)
+	size_t request_size(size_t requested_size, size_t /*alignment*/)
 	{
 		return requested_size + sizeof(MemoryHeader);
 	}
@@ -66,7 +66,7 @@ struct debug_tracking_policy
 		MemoryHeader* header = reinterpret_cast<MemoryHeader*>(pointer);
 		header->allocation_size = requested_size;
 		header->allocation_index = 0;
-		header->alignment = sizeof(void*); // default alignment for now
+		header->alignment = alignment;
 		header->filename = filename;
 		header->line = line;
 		allocated_blocks.push_back(header);

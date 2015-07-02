@@ -28,12 +28,12 @@ struct simple_tracking_policy
 {
 	size_t last_size;
 	
-	size_t request_size(size_t requested_size, size_t alignment)
+	size_t request_size(size_t requested_size, size_t /*alignment*/)
 	{
 		return requested_size + sizeof(size_t);
 	}
 	
-	void* track_allocation(void* pointer, size_t requested_size, size_t alignment, const char* filename, int line)
+	void* track_allocation(void* pointer, size_t requested_size, size_t /*alignment*/, const char* /*filename*/, int /*line*/)
 	{
 		// store the allocation size in front of the pointer
 		size_t* allocation = static_cast<size_t*>(pointer);
