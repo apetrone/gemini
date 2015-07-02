@@ -28,7 +28,7 @@
 #include <core/interface.h>
 
 #include <core/mathlib.h>
-#include <platform/mem.h>
+#include <core/mem.h>
 
 namespace core
 {
@@ -78,7 +78,7 @@ namespace gemini
 		virtual void render_gui() = 0;
 		
 		
-		virtual platform::memory::GlobalAllocator* allocator() = 0;
+		virtual core::memory::global_allocator_type& allocator() = 0;
 		
 //		virtual void render_world(const glm::vec3& origin, const glm::vec2& view_angles) = 0;
 

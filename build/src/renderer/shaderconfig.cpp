@@ -42,7 +42,7 @@ namespace renderer
 			
 		Json::Value _shader_config;
 		
-		typedef std::vector< std::string, CustomPlatformAllocator<std::string> > StringVector;
+		typedef std::vector<std::string> StringVector;
 
 		util::ConfigLoadStatus shader_parameter_load_callback(const Json::Value& root, void* context)
 		{
@@ -232,7 +232,7 @@ namespace renderer
 					LOGE( "Error compiling shader!\n" );
 				}
 				
-				MEMORY_DEALLOC(buffer, platform::memory::global_allocator());
+				MEMORY_DEALLOC(buffer, core::memory::global_allocator());
 			}
 			
 			return shader_object;

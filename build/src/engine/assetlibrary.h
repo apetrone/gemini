@@ -46,7 +46,7 @@ namespace gemini
 			
 			typedef std::map<std::string, AssetClass*> AssetHashTable;
 			typedef typename AssetHashTable::iterator AssetHashTableIterator;
-			typedef std::list<AssetClass*, CustomPlatformAllocator<AssetClass*> > AssetList;
+			typedef std::list<AssetClass*> AssetList;
 			
 			unsigned int total_assets;
 			AssetLoadCallback load_callback;
@@ -74,8 +74,8 @@ namespace gemini
 				release_and_purge();
 			}
 		
-			AssetClass * allocate_asset() { return MEMORY_NEW(AssetClass, platform::memory::global_allocator()); }
-			void deallocate_asset( AssetClass * asset ) { MEMORY_DELETE(asset, platform::memory::global_allocator()); }
+			AssetClass * allocate_asset() { return MEMORY_NEW(AssetClass, core::memory::global_allocator()); }
+			void deallocate_asset( AssetClass * asset ) { MEMORY_DELETE(asset, core::memory::global_allocator()); }
 			unsigned int total_asset_count() const { return total_assets; }
 			
 			void for_each( AssetIterator iterator, void * userdata )

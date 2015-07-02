@@ -39,13 +39,13 @@ namespace gemini
 		{
 			for (Bone* bone : bones)
 			{
-				MEMORY_DELETE(bone, platform::memory::global_allocator());
+				MEMORY_DELETE(bone, core::memory::global_allocator());
 			}
 		}
 		
 		Bone* Skeleton::add_bone(int32_t parent_index, const String& name)
 		{
-			Bone* bone = MEMORY_NEW(Bone, platform::memory::global_allocator());
+			Bone* bone = MEMORY_NEW(Bone, core::memory::global_allocator());
 			bone->index = bones.size();
 			bone->parent = parent_index;
 			bone->name = name;

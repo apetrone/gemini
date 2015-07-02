@@ -42,14 +42,14 @@ namespace gemini
 		{
 			for (auto& child : children)
 			{
-				MEMORY_DELETE(child, platform::memory::global_allocator());
+				MEMORY_DELETE(child, core::memory::global_allocator());
 			}
 			
 			children.clear();
 			
 			if (mesh)
 			{
-				MEMORY_DELETE(mesh, platform::memory::global_allocator());
+				MEMORY_DELETE(mesh, core::memory::global_allocator());
 			}
 		}
 		

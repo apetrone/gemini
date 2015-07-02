@@ -259,7 +259,7 @@ namespace gemini
 		{
 			if ( samples )
 			{
-				MEMORY_DELETE_ARRAY(samples, platform::memory::global_allocator());
+				MEMORY_DELETE_ARRAY(samples, core::memory::global_allocator());
 				samples = 0;
 			}
 			
@@ -269,7 +269,7 @@ namespace gemini
 		void create( unsigned int max_samples, const Type * values, float framedelay, Type pre_infinity_value = Type(), Type post_infinity_value = Type() )
 		{
 			total_samples = max_samples;
-			samples = MEMORY_NEW_ARRAY(Type, total_samples, platform::memory::global_allocator());
+			samples = MEMORY_NEW_ARRAY(Type, total_samples, core::memory::global_allocator());
 			
 			
 			set_keys( values, total_samples );

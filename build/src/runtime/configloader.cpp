@@ -27,7 +27,7 @@
 #include <runtime/filesystem.h>
 #include <runtime/logging.h>
 
-#include <platform/mem.h>
+#include <core/mem.h>
 
 namespace core
 {
@@ -65,7 +65,7 @@ namespace core
 			if ( buffer )
 			{
 				is_success = parse_json_string_with_callback( buffer, buffer_size, callback, context );
-				MEMORY_DEALLOC(buffer, platform::memory::global_allocator());
+				MEMORY_DEALLOC(buffer, core::memory::global_allocator());
 			}
 			else
 			{

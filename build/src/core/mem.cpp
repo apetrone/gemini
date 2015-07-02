@@ -22,28 +22,55 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include <core/zonealloc.h>
+#include <core/mem.h>
 
 namespace core
 {
 	namespace memory
 	{
 		// ---------------------------------------------------------------------
+		// interface
+		// ---------------------------------------------------------------------
+		zone* _global_zone = nullptr;
+		global_allocator_type* _global_allocator = nullptr;
+		
+		void startup()
+		{
+			static zone global_memory_zone("global");
+			static global_allocator_type global_allocator_instance(&global_memory_zone);
+			_global_allocator = &global_allocator_instance;
+		}
+		
+		void shutdown()
+		{
+		}
+		
+		global_allocator_type& global_allocator()
+		{
+			return *_global_allocator;
+		}
+		
+		void global_allocator(global_allocator_type& allocator)
+		{
+			_global_allocator = &allocator;
+		}
+		
+		// ---------------------------------------------------------------------
 		// zone
 		// ---------------------------------------------------------------------
-		Zone::Zone(const char* zone_name, size_t max_budget_bytes)
+		zone::zone(const char* zone_name, size_t max_budget_bytes)
 		{
-			memset(this, 0, sizeof(Zone));
+			memset(this, 0, sizeof(zone));
 			this->zone_name = zone_name;
 			budget_bytes = max_budget_bytes;
 		}
 		
-		Zone::~Zone()
+		zone::~zone()
 		{
 			report();
 		}
 
-		int Zone::add_allocation(size_t size)
+		int zone::add_allocation(size_t size)
 		{
 			if (budget_bytes > 0 && (active_bytes + size) > budget_bytes)
 			{
@@ -69,7 +96,7 @@ namespace core
 			return 0;
 		}
 
-		void Zone::remove_allocation(size_t size)
+		void zone::remove_allocation(size_t size)
 		{
 			// Attempted to free something that wasn't allocated.
 			assert(active_allocations > 0 && active_bytes >= size);
@@ -78,20 +105,20 @@ namespace core
 			active_bytes -= size;
 		}
 		
-		void Zone::report()
+		void zone::report()
 		{
 			// could use %zu on C99, but fallback to %lu and casts for C89.
-			fprintf(stdout, "[zone: %s] total_allocations = %lu, total_bytes = %lu, budget_bytes = %lu\n", zone_name,
+			fprintf(stdout, "[zone: '%s'] total_allocations = %lu, total_bytes = %lu, budget_bytes = %lu\n", zone_name,
 					(unsigned long)total_allocations,
 					(unsigned long)total_bytes,
 					(unsigned long)budget_bytes);
 			
-			fprintf(stdout, "[zone: %s] active_allocations = %lu, active_bytes = %lu, high_watermark = %lu\n", zone_name,
+			fprintf(stdout, "[zone: '%s'] active_allocations = %lu, active_bytes = %lu, high_watermark = %lu\n", zone_name,
 					(unsigned long)active_allocations,
 					(unsigned long)active_bytes,
 					(unsigned long)high_watermark);
 			
-			fprintf(stdout, "[zone: %s] smallest_allocation = %lu, largest_allocation = %lu\n", zone_name,
+			fprintf(stdout, "[zone: '%s'] smallest_allocation = %lu, largest_allocation = %lu\n", zone_name,
 					(unsigned long)smallest_allocation,
 					(unsigned long)largest_allocation);
 			

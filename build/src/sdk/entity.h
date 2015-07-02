@@ -26,8 +26,7 @@
 
 #include <vector>
 
-#include <platform/mem.h>
-
+#include <core/mem.h>
 #include <core/str.h>
 #include <core/stackstring.h>
 //#include "physics/physics.h"

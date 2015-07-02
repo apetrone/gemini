@@ -23,9 +23,10 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "platform.h"
-#include "mem.h"
 #include "kernel.h"
 #include "platform_internal.h"
+
+#include <core/mem.h>
 
 #include <assert.h>
 
@@ -62,7 +63,7 @@ namespace platform
 	{
 		Result result(Result::Success);
 			
-		memory::startup();
+		core::memory::startup();
 		
 		result = os_startup();
 		if (result.failed())
@@ -84,7 +85,7 @@ namespace platform
 		timer_shutdown();
 		os_shutdown();
 		
-		memory::shutdown();
+		core::memory::shutdown();
 	}
 	
 	// This nastiness MUST be here, because on different platforms

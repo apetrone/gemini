@@ -22,7 +22,7 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include <platform/mem.h>
+#include <core/mem.h>
 #include <runtime/configloader.h>
 
 #include <platform/typedefs.h>
@@ -41,7 +41,7 @@ namespace gemini
 		void read_string_array( ShaderString ** array, unsigned int & num_items, Json::Value & root )
 		{
 			num_items = root.size();
-			*array = MEMORY_NEW_ARRAY(ShaderString, num_items, platform::memory::global_allocator());
+			*array = MEMORY_NEW_ARRAY(ShaderString, num_items, core::memory::global_allocator());
 			
 			Json::ValueIterator it = root.begin();
 			Json::ValueIterator end = root.end();
@@ -130,12 +130,12 @@ namespace gemini
 		void startup()
 		{
 			// 2. allocate asset libraries
-			_textures = MEMORY_NEW(TextureAssetLibrary, platform::memory::global_allocator()) (texture_load_callback, texture_construct_extension);
-			_meshes = MEMORY_NEW(MeshAssetLibrary, platform::memory::global_allocator()) (mesh_load_callback, mesh_construct_extension);
-			_materials = MEMORY_NEW(MaterialAssetLibrary, platform::memory::global_allocator()) (material_load_callback, material_construct_extension);
-			_emitters = MEMORY_NEW(EmitterConfigAssetLibrary, platform::memory::global_allocator()) (emitterconfig_load_callback, emitterconfig_construct_extension);
-			_fonts = MEMORY_NEW(FontAssetLibrary, platform::memory::global_allocator()) (font_load_callback, font_construct_extension);
-			_shaders = MEMORY_NEW(ShaderAssetLibrary, platform::memory::global_allocator()) (shader_load_callback, shader_construct_extension);
+			_textures = MEMORY_NEW(TextureAssetLibrary, core::memory::global_allocator()) (texture_load_callback, texture_construct_extension);
+			_meshes = MEMORY_NEW(MeshAssetLibrary, core::memory::global_allocator()) (mesh_load_callback, mesh_construct_extension);
+			_materials = MEMORY_NEW(MaterialAssetLibrary, core::memory::global_allocator()) (material_load_callback, material_construct_extension);
+			_emitters = MEMORY_NEW(EmitterConfigAssetLibrary, core::memory::global_allocator()) (emitterconfig_load_callback, emitterconfig_construct_extension);
+			_fonts = MEMORY_NEW(FontAssetLibrary, core::memory::global_allocator()) (font_load_callback, font_construct_extension);
+			_shaders = MEMORY_NEW(ShaderAssetLibrary, core::memory::global_allocator()) (shader_load_callback, shader_construct_extension);
 
 			load_default_texture_and_material();
 		} // startup
@@ -143,12 +143,12 @@ namespace gemini
 		void shutdown()
 		{
 			// 4. Delete asset library
-			MEMORY_DELETE(_textures, platform::memory::global_allocator());
-			MEMORY_DELETE(_meshes, platform::memory::global_allocator());
-			MEMORY_DELETE(_materials, platform::memory::global_allocator());
-			MEMORY_DELETE(_emitters, platform::memory::global_allocator());
-			MEMORY_DELETE(_fonts, platform::memory::global_allocator());
-			MEMORY_DELETE(_shaders, platform::memory::global_allocator());
+			MEMORY_DELETE(_textures, core::memory::global_allocator());
+			MEMORY_DELETE(_meshes, core::memory::global_allocator());
+			MEMORY_DELETE(_materials, core::memory::global_allocator());
+			MEMORY_DELETE(_emitters, core::memory::global_allocator());
+			MEMORY_DELETE(_fonts, core::memory::global_allocator());
+			MEMORY_DELETE(_shaders, core::memory::global_allocator());
 		} // shutdown
 
 		void append_asset_extension( AssetType type, core::StackString<MAX_PATH_SIZE> & path )

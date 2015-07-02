@@ -27,7 +27,6 @@
 #include "texture.h"
 
 #include <core/mathlib.h>
-#include <platform/mem_stl_allocator.h>
 
 #include <vector>
 #include <string>
@@ -73,7 +72,7 @@ namespace renderer
 		};
 		
 		std::string name;
-		std::vector< MaterialParameter, CustomPlatformAllocator<MaterialParameter> > parameters;
+		std::vector<MaterialParameter> parameters;
 		unsigned int flags;
 		unsigned int requirements; // used to lookup the correct shader permutation for this material
 		

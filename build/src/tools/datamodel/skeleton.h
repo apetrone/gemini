@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <platform/mem.h>
+#include <core/mem.h>
 #include <core/str.h> // for String
 #include <core/mathlib.h>
 

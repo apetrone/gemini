@@ -832,8 +832,10 @@ class EngineInterface : public IEngineInterface
 	
 	platform::NativeWindow* main_window;
 	platform::IWindowLibrary* window_interface;
-	
-	platform::memory::GlobalDebugAllocator<MemoryTagGame> game_allocator;
+
+	core::memory::zone game_memory_zone;
+	core::memory::global_allocator_type game_allocator;
+
 public:
 	
 	EngineInterface(
@@ -850,7 +852,9 @@ public:
 	experimental_interface(ei),
 	render_method(rm),
 	main_window(window),
-	window_interface(window_interface)
+	window_interface(window_interface),
+	game_memory_zone("game"),
+	game_allocator(&game_memory_zone)
 	{
 	}
 	
@@ -867,7 +871,7 @@ public:
 	
 	virtual void* allocate(size_t size)
 	{
-		return game_allocator.allocate(size, __FILE__, __LINE__);
+		return game_allocator.allocate(size, sizeof(void*), __FILE__, __LINE__);
 	}
 	
 	virtual void deallocate(void* pointer)
@@ -888,9 +892,9 @@ public:
 		render_method->render_gui();
 	}
 	
-	virtual platform::memory::GlobalAllocator* allocator()
+	virtual core::memory::global_allocator_type& allocator()
 	{
-		return &platform::memory::global_allocator();
+		return core::memory::global_allocator();
 	}
 	
 	virtual void render_viewmodel(IEngineEntity* entity, const glm::vec3& origin, const glm::vec2& view_angles)
@@ -1190,12 +1194,12 @@ public:
 	
 	static void* gui_malloc_callback(size_t size)
 	{
-		return platform::memory::global_allocator().allocate(size, __FILE__, __LINE__);
+		return core::memory::global_allocator().allocate(size, sizeof(void*), __FILE__, __LINE__);
 	}
 	
 	static void gui_free_callback(void* pointer)
 	{
-		platform::memory::global_allocator().deallocate(pointer);
+		core::memory::global_allocator().deallocate(pointer);
 	}
 	
 	
@@ -1206,10 +1210,10 @@ public:
 		compositor = new gui::Compositor(width, height);
 		_compositor = compositor;
 		
-		gui_renderer = MEMORY_NEW(GUIRenderer, platform::memory::global_allocator());
+		gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator());
 		compositor->set_renderer(gui_renderer);
 		
-		gui_style = MEMORY_NEW(GUIStyle, platform::memory::global_allocator());
+		gui_style = MEMORY_NEW(GUIStyle, core::memory::global_allocator());
 		compositor->set_style(gui_style);
 		
 		root = new gui::Panel(compositor);
@@ -1395,7 +1399,7 @@ Options:
 
 		// initialize rendering subsystems
 		{
-			scenelink = MEMORY_NEW(SceneLink, platform::memory::global_allocator());
+			scenelink = MEMORY_NEW(SceneLink, core::memory::global_allocator());
 			int render_result =	::renderer::startup(::renderer::Default, config.render_settings);
 			if ( render_result == 0 )
 			{
@@ -1414,7 +1418,7 @@ Options:
 			assert(debugshader != 0);
 			assert(debugfont != 0);
 			::renderer::debugdraw::startup(config.debugdraw_max_primitives, debugshader->program, debugfont->handle);
-			DebugDrawInterface* debug_draw = MEMORY_NEW(DebugDrawInterface, platform::memory::global_allocator());
+			DebugDrawInterface* debug_draw = MEMORY_NEW(DebugDrawInterface, core::memory::global_allocator());
 			gemini::debugdraw::set_instance(debug_draw);
 			
 		}
@@ -1493,10 +1497,10 @@ Options:
 		
 
 		// TODO: instance render method for default
-		render_method = MEMORY_NEW(DefaultRenderMethod, platform::memory::global_allocator()) (*scenelink, window_interface);
+		render_method = MEMORY_NEW(DefaultRenderMethod, core::memory::global_allocator()) (*scenelink, window_interface);
 		
 		// setup interfaces
-		engine_interface = MEMORY_NEW(EngineInterface, platform::memory::global_allocator())
+		engine_interface = MEMORY_NEW(EngineInterface, core::memory::global_allocator())
 			(&entity_manager,
 			&model_interface,
 			physics::instance(),
@@ -1666,8 +1670,8 @@ Options:
 		::renderer::debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_raw_msec), Color(255, 255, 255));
 		y += 12;
 		::renderer::debugdraw::text(x, y, core::str::format("# allocations = %i, total %2.2f MB\n",
-			platform::memory::MemoryCategoryTracking<platform::memory::MemTagGlobal>::active_allocations,
-			platform::memory::MemoryCategoryTracking<platform::memory::MemTagGlobal>::active_bytes/(float)(1024*1024)), Color(64, 102, 192));
+			core::memory::global_allocator().get_zone()->get_active_allocations(),
+			core::memory::global_allocator().get_zone()->get_active_bytes()/(float)(1024*1024)), Color(64, 102, 192));
 //		y += 12;
 		
 		
@@ -1799,8 +1803,8 @@ Options:
 		navigation::shutdown();
 		
 		// shutdown gui
-		MEMORY_DELETE(gui_style, platform::memory::global_allocator());
-		MEMORY_DELETE(gui_renderer, platform::memory::global_allocator());
+		MEMORY_DELETE(gui_style, core::memory::global_allocator());
+		MEMORY_DELETE(gui_renderer, core::memory::global_allocator());
 		delete compositor;
 		compositor = 0;
 		_compositor = 0;
@@ -1810,7 +1814,7 @@ Options:
 		close_gamelibrary();
 		
 		// shutdown scene render method
-		MEMORY_DELETE(render_method, platform::memory::global_allocator());
+		MEMORY_DELETE(render_method, core::memory::global_allocator());
 	
 		
 		
@@ -1830,7 +1834,7 @@ Options:
 		gemini::physics::shutdown();
 		::renderer::debugdraw::shutdown();
 		IDebugDraw* debug_draw = gemini::debugdraw::instance();
-		MEMORY_DELETE(debug_draw, platform::memory::global_allocator());
+		MEMORY_DELETE(debug_draw, core::memory::global_allocator());
 		font::shutdown();
 		assets::shutdown();
 		input::shutdown();
@@ -1848,10 +1852,8 @@ Options:
 		window_interface->shutdown();
 		platform::destroy_window_library();
 		
-		MEMORY_DELETE(engine_interface, platform::memory::global_allocator());
-		MEMORY_DELETE(scenelink, platform::memory::global_allocator());
-		
-		platform::memory::MemoryCategoryTracking<MemoryTagGame>::report("game");
+		MEMORY_DELETE(engine_interface, core::memory::global_allocator());
+		MEMORY_DELETE(scenelink, core::memory::global_allocator());
 	}
 };
 

@@ -166,13 +166,13 @@ private:
 	
 	Bucket* allocate(uint32_t elements)
 	{
-		return MEMORY_NEW_ARRAY(Bucket, elements, platform::memory::global_allocator());
+		return MEMORY_NEW_ARRAY(Bucket, elements, core::memory::global_allocator());
 	}
 	
 	
 	void deallocate(Bucket* pointer, size_t elements)
 	{
-		MEMORY_DELETE_ARRAY(pointer, platform::memory::global_allocator());
+		MEMORY_DELETE_ARRAY(pointer, core::memory::global_allocator());
 	}
 
 public:
