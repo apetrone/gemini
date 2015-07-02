@@ -24,8 +24,8 @@
 // -------------------------------------------------------------
 
 #include "str.h"
+#include "config.h"
 
-#include <core/config.h>
 #include <platform/platform.h>
 
 #include <string.h>

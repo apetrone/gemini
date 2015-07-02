@@ -24,8 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/util.h>
-#include <core/str.h>
+#include "util.h"
+#include "str.h"
 
 #include <assert.h>
 

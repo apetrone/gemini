@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/typedefs.h>
+#include "typedefs.h"
 
 #include <string>
 #include <vector>
