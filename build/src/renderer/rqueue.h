@@ -27,7 +27,7 @@
 #include "renderer.h"
 
 #include <platform/typedefs.h>
-#include <platform/mem.h>
+#include <core/mem.h>
 
 #include <vector>
 
@@ -89,7 +89,7 @@ namespace renderer
 	class RenderQueue
 	{
 	public:
-		typedef std::vector< RenderBlock, CustomPlatformAllocator<RenderBlock> > RenderList;
+		typedef std::vector<RenderBlock> RenderList;
 		
 		RenderList render_list;
 	

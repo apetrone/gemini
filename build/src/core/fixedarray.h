@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <platform/mem.h>
+#include <core/mem.h>
 
 #include <assert.h>
 
@@ -101,7 +101,7 @@ public:
 	{
 		if (elements && total_elements > 0)
 		{
-			MEMORY_DELETE_ARRAY(elements, platform::memory::global_allocator());
+			MEMORY_DELETE_ARRAY(elements, core::memory::global_allocator());
 			total_elements = 0;
 		}
 	} // clear
@@ -113,7 +113,7 @@ public:
 		if (element_total > 0)
 		{
 			// allocate space for the pointers
-			elements = MEMORY_NEW_ARRAY(Type, total_elements, platform::memory::global_allocator());
+			elements = MEMORY_NEW_ARRAY(Type, total_elements, core::memory::global_allocator());
 
 			// optionally, zero the new memory
 			if (zero_memory)

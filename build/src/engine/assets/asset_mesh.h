@@ -26,8 +26,7 @@
 
 #include <vector>
 
-#include <platform/mem.h>
-#include <platform/mem_stl_allocator.h>
+#include <core/mem.h>
 #include <core/stackstring.h>
 
 #include "assets.h"

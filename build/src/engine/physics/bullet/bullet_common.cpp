@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #include <vector>
 
-#include <platform/mem.h>
+#include <core/mem.h>
 #include <runtime/logging.h>
 
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
@@ -185,7 +185,7 @@ namespace gemini
 				//btAlignedAllocSetCustom( bullet2_custom_alloc, bullet2_custom_free );
 				
 				// instance and set the debug renderer
-				debug_renderer = MEMORY_NEW(bullet::DebugPhysicsRenderer, platform::memory::global_allocator());
+				debug_renderer = MEMORY_NEW(bullet::DebugPhysicsRenderer, core::memory::global_allocator());
 				dynamics_world->setDebugDrawer(debug_renderer);
 			}
 			
@@ -194,7 +194,7 @@ namespace gemini
 				// remove all constraints from objects
 				for (int i = constraints.size()-1; i >= 0; --i)
 				{
-					MEMORY_DELETE(constraints[i], platform::memory::global_allocator());
+					MEMORY_DELETE(constraints[i], core::memory::global_allocator());
 				}
 				constraints.clear();
 				
@@ -225,7 +225,7 @@ namespace gemini
 				}
 				
 				dynamics_world->setDebugDrawer(0);
-				MEMORY_DELETE(debug_renderer, platform::memory::global_allocator());
+				MEMORY_DELETE(debug_renderer, core::memory::global_allocator());
 				
 				//delete dynamics world
 				delete dynamics_world;

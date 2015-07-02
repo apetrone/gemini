@@ -31,6 +31,8 @@
 #include <core/hashset.h>
 #include <core/mathlib.h>
 
+#include <core/mem.h>
+
 #include <core/str.h>
 #include <core/stackstring.h>
 #include <core/threadsafequeue.h>
@@ -290,6 +292,19 @@ void test_mathlib()
 	TEST_VERIFY(temp == 45, radians_to_degrees);
 }
 
+// ---------------------------------------------------------------------
+// memory
+// ---------------------------------------------------------------------
+void test_memory()
+{
+	TEST_CATEGORY(memory);
+	core::memory::startup();
+	
+	
+	
+	core::memory::shutdown();
+	TEST_VERIFY(1, sanity);
+}
 
 // ---------------------------------------------------------------------
 // StackString
@@ -390,7 +405,7 @@ void test_util()
 
 int main(int, char**)
 {
-	platform::memory::startup();
+	core::memory::startup();
 
 	test_argumentparser();
 	test_color();
@@ -399,11 +414,12 @@ int main(int, char**)
 	test_fixedsizequeue();
 	test_hashset();
 	test_mathlib();
+	test_memory();
 	test_stackstring();
 	test_str();
 	test_util();
 	
-	platform::memory::shutdown();
+	core::memory::shutdown();
 	
 	return 0;
 }

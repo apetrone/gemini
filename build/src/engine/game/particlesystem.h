@@ -26,7 +26,7 @@
 
 #include <vector>
 
-#include <platform/mem.h>
+#include <core/mem.h>
 #include <core/util.h>
 
 #include <core/color.h>

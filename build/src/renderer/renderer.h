@@ -29,7 +29,6 @@
 #include "shaderprogram.h"
 #include "vertexbuffer.h"
 
-#include <platform/mem_stl_allocator.h>
 #include <platform/typedefs.h>
 #include <core/fixedarray.h>
 #include <core/stackstring.h>

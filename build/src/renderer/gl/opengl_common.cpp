@@ -86,7 +86,7 @@ namespace renderer
 		gl.GetShaderiv( handle, GL_INFO_LOG_LENGTH, &log_length );
 		if ( log_length > 0 )
 		{
-			logbuffer = (char*)MEMORY_ALLOC(log_length+1, platform::memory::global_allocator());
+			logbuffer = (char*)MEMORY_ALLOC(log_length+1, core::memory::global_allocator());
 			memset( logbuffer, 0, log_length );
 			
 			gl.GetShaderInfoLog( handle, log_length, &log_length, logbuffer );
@@ -96,7 +96,7 @@ namespace renderer
 			}
 			else
 			{
-				MEMORY_DEALLOC(logbuffer, platform::memory::global_allocator());
+				MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
 			}
 		}
 		
@@ -110,7 +110,7 @@ namespace renderer
 		gl.GetProgramiv( handle, GL_INFO_LOG_LENGTH, &log_length );
 		if ( log_length > 0 )
 		{
-			logbuffer = (char*)MEMORY_ALLOC(log_length+1, platform::memory::global_allocator());
+			logbuffer = (char*)MEMORY_ALLOC(log_length+1, core::memory::global_allocator());
 			memset( logbuffer, 0, log_length );
 			
 			gl.GetProgramInfoLog( handle, log_length, &log_length, logbuffer );
@@ -120,7 +120,7 @@ namespace renderer
 			}
 			else
 			{
-				MEMORY_DEALLOC(logbuffer, platform::memory::global_allocator());
+				MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
 			}
 		}
 		

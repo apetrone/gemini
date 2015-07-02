@@ -52,23 +52,22 @@ namespace gemini
 {
 	namespace navigation
 	{
-		struct MemoryTagNavigation {};
-		typedef platform::memory::GlobalDebugAllocator<MemoryTagNavigation> NavigationAllocator;
-		NavigationAllocator nav_allocator;
+		typedef core::memory::heap_allocator<core::memory::default_tracking_policy> NavigationAllocator;
+		NavigationAllocator* _nav_allocator;
 	
 		void* navigation_allocate(int size, rcAllocHint hint)
 		{
-			return MEMORY_ALLOC(size, nav_allocator);
+			return MEMORY_ALLOC(size, *_nav_allocator);
 		}
 		
 		void* navigation_allocate(int size, dtAllocHint hint)
 		{
-			return MEMORY_ALLOC(size, nav_allocator);
+			return MEMORY_ALLOC(size, *_nav_allocator);
 		}
 		
 		void navigation_deallocate(void* ptr)
 		{
-			MEMORY_DEALLOC(ptr, nav_allocator);
+			MEMORY_DEALLOC(ptr, *_nav_allocator);
 		}
 		
 		static rcPolyMesh* poly_mesh = 0;
@@ -256,7 +255,7 @@ namespace gemini
 			// allocate an array which can hold the max number of triangles you need to process
 			// across all meshes
 			
-			unsigned char* triangle_areas =	MEMORY_NEW_ARRAY(unsigned char, total_triangles, nav_allocator);
+			unsigned char* triangle_areas =	MEMORY_NEW_ARRAY(unsigned char, total_triangles, *_nav_allocator);
 			if (!triangle_areas)
 			{
 				LOGE("unable to allocate triangle areas\n");
@@ -268,7 +267,7 @@ namespace gemini
 			rcRasterizeTriangles(&context, (const float*)&vertices[0], total_vertices, (const int*)&indices[0], triangle_areas, total_triangles, *solid, config.walkableClimb);
 			
 			// at this point, we could delete triangle_areas
-			MEMORY_DELETE_ARRAY(triangle_areas, nav_allocator);
+			MEMORY_DELETE_ARRAY(triangle_areas, *_nav_allocator);
 			triangle_areas = 0;
 			
 			// 3. filter walkable surfaces
@@ -447,6 +446,8 @@ namespace gemini
 		
 		void startup()
 		{
+			core::memory::zone* nav_zone = MEMORY_NEW(core::memory::zone, core::memory::global_allocator())("navigation");
+			_nav_allocator = MEMORY_NEW(NavigationAllocator, core::memory::global_allocator())(nav_zone);
 		}
 		
 		void shutdown()
@@ -460,7 +461,11 @@ namespace gemini
 			dtFreeNavMesh(nav_mesh);
 			dtFreeNavMeshQuery(nav_query);
 			
-			platform::memory::MemoryCategoryTracking<MemoryTagNavigation>::report("navigation");
+			core::memory::zone* nav_zone = _nav_allocator->get_zone();
+			MEMORY_DELETE(_nav_allocator, core::memory::global_allocator());
+			_nav_allocator = nullptr;
+			
+			MEMORY_DELETE(nav_zone, core::memory::global_allocator());
 		}
 		
 		void debugdraw()

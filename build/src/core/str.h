@@ -25,13 +25,12 @@
 #pragma once
 
 #include <platform/typedefs.h>
-#include <platform/mem.h>
+#include <core/mem.h>
 
 #include <string>
 #include <vector>
 
-typedef std::basic_string<char, std::char_traits<char>, CustomPlatformAllocator<char> > String;
-
+typedef std::string String;
 
 namespace core
 {

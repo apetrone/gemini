@@ -427,7 +427,7 @@ namespace renderer
 	GL21::~GL21()
 	{
 		LOGV( "GL21 shutting down.\n" );
-		MEMORY_DELETE(default_render_target, platform::memory::global_allocator());
+		MEMORY_DELETE(default_render_target, core::memory::global_allocator());
 	}
 
 	void c_shader( core::util::MemoryStream & stream, GL21 & renderer )
@@ -744,7 +744,7 @@ namespace renderer
 
 	void GL21::create_default_render_target()
 	{
-		default_render_target = MEMORY_NEW(GL21RenderTarget, platform::memory::global_allocator());
+		default_render_target = MEMORY_NEW(GL21RenderTarget, core::memory::global_allocator());
 		default_render_target->color_texture_id = 0;
 		default_render_target->depth_texture_id = 0;
 		default_render_target->width = 0;
@@ -828,7 +828,7 @@ namespace renderer
 
 	renderer::Texture* GL21::texture_create(image::Image& image)
 	{
-		GL21Texture* texture = MEMORY_NEW(GL21Texture, platform::memory::global_allocator());
+		GL21Texture* texture = MEMORY_NEW(GL21Texture, core::memory::global_allocator());
 
 		GLenum source_format = image_source_format(image.channels);
 		GLenum internal_format = image_to_internal_format(image.flags);
@@ -857,7 +857,7 @@ namespace renderer
 	void GL21::texture_destroy(renderer::Texture* texture)
 	{
 		GL21Texture* gltexture = static_cast<GL21Texture*>(texture);
-		MEMORY_DELETE(gltexture, platform::memory::global_allocator());
+		MEMORY_DELETE(gltexture, core::memory::global_allocator());
 	}
 
 	void GL21::texture_update(renderer::Texture* texture, const image::Image& image, const mathlib::Recti& rect)
@@ -899,7 +899,7 @@ namespace renderer
 
 	renderer::VertexBuffer * GL21::vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices )
 	{
-		GL21VertexBuffer * stream = MEMORY_NEW(GL21VertexBuffer, platform::memory::global_allocator());
+		GL21VertexBuffer * stream = MEMORY_NEW(GL21VertexBuffer, core::memory::global_allocator());
 		assert( stream != 0 );
 		
 		// initial values for stream
@@ -931,7 +931,7 @@ namespace renderer
 		}
 		
 		
-		MEMORY_DELETE(stream, platform::memory::global_allocator());
+		MEMORY_DELETE(stream, core::memory::global_allocator());
 	} // vertexbuffer_destroy
 
 	void GL21::vertexbuffer_upload_data( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices )
@@ -996,7 +996,7 @@ namespace renderer
 
 	renderer::VertexBuffer * GL21::vertexbuffer_from_geometry( renderer::VertexDescriptor & descriptor, renderer::Geometry * geometry )
 	{
-		GL21VertexBuffer * stream = MEMORY_NEW(GL21VertexBuffer, platform::memory::global_allocator());
+		GL21VertexBuffer * stream = MEMORY_NEW(GL21VertexBuffer, core::memory::global_allocator());
 		assert( stream != 0 );
 			
 		renderer::VertexBufferBufferType buffer_type = renderer::BUFFER_STATIC;
@@ -1023,7 +1023,7 @@ namespace renderer
 		gl.CheckError( "BindVertexArray" );
 		
 		unsigned int data_size = geometry->vertex_count * stream->vertex_stride;
-		char* vertex_data = (char*)MEMORY_ALLOC(data_size, platform::memory::global_allocator());
+		char* vertex_data = (char*)MEMORY_ALLOC(data_size, core::memory::global_allocator());
 		core::util::MemoryStream ms;
 		ms.init( vertex_data, data_size );
 		
@@ -1075,7 +1075,7 @@ namespace renderer
 		
 		stream->upload_interleaved_data( vertex_data, geometry->vertex_count );
 		
-		MEMORY_DEALLOC(vertex_data, platform::memory::global_allocator());
+		MEMORY_DEALLOC(vertex_data, core::memory::global_allocator());
 		
 		if ( geometry->index_count > 0 )
 		{
@@ -1142,7 +1142,7 @@ namespace renderer
 			{
 				LOGW( "Shader Info Log:\n" );
 				LOGW( "%s\n", logbuffer );
-				MEMORY_DEALLOC(logbuffer, platform::memory::global_allocator());
+				MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
 			}
 			status = false;
 		}
@@ -1178,7 +1178,7 @@ namespace renderer
 
 	renderer::ShaderProgram* GL21::shaderprogram_create()
 	{
-		GL21ShaderProgram* program = MEMORY_NEW(GL21ShaderProgram, platform::memory::global_allocator());
+		GL21ShaderProgram* program = MEMORY_NEW(GL21ShaderProgram, core::memory::global_allocator());
 		program->object = gl.CreateProgram();
 		gl.CheckError( "CreateProgram" );
 		
@@ -1199,7 +1199,7 @@ namespace renderer
 			gl.CheckError( "DeleteProgram" );
 		}
 		
-		MEMORY_DELETE(program, platform::memory::global_allocator());
+		MEMORY_DELETE(program, core::memory::global_allocator());
 	}
 
 	void GL21::shaderprogram_attach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object )
@@ -1319,7 +1319,7 @@ namespace renderer
 			{
 				LOGW( "Program Info Log:\n" );
 				LOGW( "%s\n", logbuffer );
-				MEMORY_DEALLOC(logbuffer, platform::memory::global_allocator());
+				MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
 			}
 			
 	//		assert( link_status == 1 );
@@ -1366,7 +1366,7 @@ namespace renderer
 			{
 				LOGW( "Program Info Log:\n" );
 				LOGW( "%s\n", logbuffer );
-				MEMORY_DEALLOC(logbuffer, platform::memory::global_allocator());
+				MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
 			}
 			
 			assert( validate_status == 1 );
@@ -1400,7 +1400,7 @@ namespace renderer
 
 	renderer::RenderTarget* GL21::render_target_create(uint16_t width, uint16_t height)
 	{
-		GL21RenderTarget* rt = MEMORY_NEW(GL21RenderTarget, platform::memory::global_allocator());
+		GL21RenderTarget* rt = MEMORY_NEW(GL21RenderTarget, core::memory::global_allocator());
 		
 		rt->width = width;
 		rt->height = height;
@@ -1447,7 +1447,7 @@ namespace renderer
 		gl.DeleteFramebuffers(1, &rt->framebuffer);
 		gl.DeleteRenderbuffers(1, &rt->renderbuffer);
 		
-		MEMORY_DELETE(rt, platform::memory::global_allocator());
+		MEMORY_DELETE(rt, core::memory::global_allocator());
 	}
 
 	void GL21::render_target_activate(renderer::RenderTarget* rendertarget)

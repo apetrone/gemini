@@ -326,7 +326,7 @@ namespace renderer
 			next_primitive = 0;
 			debug_shader = 0;
 			max_primitives = in_max_primitives;
-			primitive_list = MEMORY_NEW_ARRAY(DebugPrimitive, max_primitives, platform::memory::global_allocator());
+			primitive_list = MEMORY_NEW_ARRAY(DebugPrimitive, max_primitives, core::memory::global_allocator());
 			
 			// cache the shader we'll use
 			
@@ -349,7 +349,7 @@ namespace renderer
 		
 		void shutdown()
 		{
-			MEMORY_DELETE_ARRAY(primitive_list, platform::memory::global_allocator());
+			MEMORY_DELETE_ARRAY(primitive_list, core::memory::global_allocator());
 			max_primitives = 0;
 			next_primitive = 0;
 			vertex_stream.destroy();

@@ -9,7 +9,7 @@
 #include <core/stackstring.h>
 #include <core/interpolation.h>
 #include <core/argumentparser.h>
-#include <core/zonealloc.h>
+#include <core/mem.h>
 
 #include <json/json.h>
 
@@ -276,7 +276,7 @@ void test_rendering()
 
 
 #include <platform/platform.h>
-#include <platform/mem.h>
+#include <core/mem.h>
 
 
 struct BaseClass
@@ -285,12 +285,12 @@ struct BaseClass
 	
 	BaseClass()
 	{
-		LOGV("BaseClass constructor\n");
+		fprintf(stdout, "BaseClass constructor\n");
 	}
 	
 	virtual ~BaseClass()
 	{
-		LOGV("BaseClass destructor\n");
+		fprintf(stdout, "BaseClass destructor\n");
 	}
 };
 
@@ -304,12 +304,12 @@ struct DerivedClass : public BaseClass
 	DerivedClass(int i = 0) :
 		mytest(i)
 	{
-		LOGV("DerivedClass constructor\n");
+		fprintf(stdout, "DerivedClass constructor\n");
 	}
 	
 	virtual ~DerivedClass()
 	{
-		LOGV("DerivedClass destructor\n");
+		fprintf(stdout, "DerivedClass destructor\n");
 	}
 	
 	void do_work()
@@ -327,176 +327,12 @@ struct DerivedClass : public BaseClass
 	
 	void show_value()
 	{
-		LOGV("value is: %i\n", mytest);
+		fprintf(stdout, "value is: %i\n", mytest);
 	}
 };
 
 
-using namespace platform::memory;
-
-namespace memtest
-{
-	struct no_tracking
-	{
-		size_t last_size;
-		
-		size_t request_size(size_t requested_size, size_t alignment)
-		{
-			last_size = requested_size;
-			return requested_size;
-		}
-		
-		void* untrack_allocation(void* pointer, size_t& allocation_size)
-		{
-			allocation_size = last_size;
-			return pointer;
-		}
-		
-		void* track_allocation(void* pointer, size_t requested_size, size_t alignment, const char* filename, int line)
-		{
-			return pointer;
-		}
-	};
-	
-	
-	struct debug_tracker
-	{
-#pragma pack(push, 4)
-		struct MemoryHeader
-		{
-			size_t allocation_size;
-			size_t allocation_index;
-			size_t alignment;
-			const char* filename;
-			int line;
-		};
-#pragma pack(pop)
-
-		typedef std::list<MemoryHeader*> MemoryBlockList;
-		MemoryBlockList allocated_blocks;
-		
-		~debug_tracker()
-		{
-			print_leaks();
-		}
-
-		/// Adjust the size of the allocation for this policy.
-		/// @returns the final size in bytes which should be allocated
-		size_t request_size(size_t requested_size, size_t alignment)
-		{
-			return requested_size + sizeof(MemoryHeader);
-		}
-		
-		/// Deallocates are VERY slow because we hunt the entire block list
-		/// to remove. this could probably use a free list instead.
-		/// @param allocation_size out param of this allocation's size in bytes
-		/// @returns The pointer passed into track_allocation (should match)
-		void* untrack_allocation(void* pointer, size_t& allocation_size)
-		{
-			MemoryHeader* header = static_cast<MemoryHeader*>(pointer);
-			header--;
-			assert(header);
-			
-			allocation_size = header->allocation_size;
-			
-			// remove from allocated block list
-			typename MemoryBlockList::iterator it = allocated_blocks.begin();
-			for (; it != allocated_blocks.end(); ++it)
-			{
-				if (*it == header)
-				{
-					allocated_blocks.erase(it);
-					break;
-				}
-			}
-			
-			return header;
-		}
-		
-		/// Track an allocation
-		/// @param pointer The pointer allocated
-		/// @param requested_size The size in bytes of this allocation
-		/// @param alignment The alignment of this allocation
-		/// @param filename A null terminated filename where this was allocated
-		/// @param line The line number of this allocation
-		void* track_allocation(void* pointer, size_t requested_size, size_t alignment, const char* filename, int line)
-		{
-			MemoryHeader* header = reinterpret_cast<MemoryHeader*>(pointer);
-			header->allocation_size = requested_size;
-			header->allocation_index = 0;
-			header->alignment = sizeof(void*); // default alignment for now
-			header->filename = filename;
-			header->line = line;
-			allocated_blocks.push_back(header);
-			return (header+1);
-		}
-		
-	private:
-		void print_leaks()
-		{
-			typename MemoryBlockList::iterator it = allocated_blocks.begin();
-			for (; it != allocated_blocks.end(); ++it)
-			{
-				MemoryHeader* block = (*it);
-				fprintf(stdout, "*** MEMORY LEAK [addr=%p] [file=%s] [line=%i] [size=%lu] [alloc_num=%lu]\n",
-						(((char*)block)+sizeof(MemoryHeader)),
-						block->filename,
-						block->line,
-						(unsigned long)block->allocation_size,
-						(unsigned long)block->allocation_index);
-			}
-		}
-	};
-
-	template <class tracking_policy = no_tracking>
-	struct linear_allocator : public ::core::memory::allocator< linear_allocator<tracking_policy> >
-	{
-		void* data;
-		size_t data_size;
-		typedef linear_allocator<tracking_policy> this_type;
-		typedef ::core::memory::allocator<this_type> dependent_name;
-		tracking_policy tracker;
-				
-		linear_allocator(::core::memory::Zone* zone, void* data, size_t max_size) :
-			dependent_name(zone)
-		{
-		}
-		
-		void* allocate(size_t size, size_t alignment, const char* filename, int line)
-		{
-			size = tracker.request_size(size, alignment);
-			
-			void* pointer = malloc(size);
-			
-			fprintf(stdout, "LinearAllocator [%s]: allocate: %p, %lu bytes, %s:%i\n", dependent_name::zone->name(), pointer, (unsigned long)size, filename, line);
-			
-			pointer = tracker.track_allocation(pointer, size, alignment, filename, line);
-			
-			if (dependent_name::zone->add_allocation(size) == 0)
-			{
-				return pointer;
-			}
-			return 0;
-		}
-		
-		void deallocate(void* pointer)
-		{
-			// it is entirely legal to call delete on a null pointer,
-			// but we don't need to do anything.
-			if (!pointer)
-			{
-				return;
-			}
-			
-			size_t allocation_size;
-			pointer = tracker.untrack_allocation(pointer, allocation_size);
-
-			fprintf(stdout, "LinearAllocator [%s]: deallocate %p\n", dependent_name::zone->name(), pointer);
-			dependent_name::zone->remove_allocation(allocation_size);
-			free(pointer);
-		}
-	};
-}
+using namespace core::memory;
 
 void test_memory()
 {
@@ -514,64 +350,6 @@ void test_memory()
 	MEMORY_DELETE_ARRAY(sixyfours, global_allocator());
 	MEMORY_DELETE_ARRAY(derived, global_allocator());
 #endif
-
-
-
-	// stl allocator tests
-	
-	
-//	typedef std::basic_string<char, std::char_traits<char>, CustomPlatformAllocator<char> > CustomString;
-
-//	CustomString abc = "hello there, how is it going; I hope everything is well";
-
-
-#if 0
-	- NO inheritance/virtual functions
-	- be able to track stl allocations/specify an allocator for these: i.e. all string allocs from some pool
-	- tag/categorize allocations: all assets could use an allocator designed for that
-	- be able to ship off stats to an external tool
-	- coalesce different allocations
-#endif
-
-
-#if 0
-	StackAllocator<int> sa(4096);
-	LinearAllocator<int> la;
-	
-	foo(sa);
-	
-	
-	foo(la);
-	
-	Array<int, LinearAllocator<int> > bar(la);
-	Array<int, StackAllocator<int> > baz(sa);
-	
-	baz.push_back(31);
-#endif
-
-
-#if 0
-	StackAllocator<int> sa(1024);
-	Heap things("scratch");
-	int* p = things.allocate(sa, 32);
-	things.deallocate(sa, p);
-#endif
-	
-	core::memory::Zone z_platform("platform", 0);
-	
-	char data[8] = {0};
-	memtest::linear_allocator<memtest::no_tracking> la(&z_platform, (void*)data, 8);
-	
-	char data2[32];
-	memtest::linear_allocator<memtest::debug_tracker> second(&z_platform, (void*)data2, 32);
-	
-	
-//	char* c = (char*)MEMORY_ALLOC(32, second);
-//	MEMORY_DEALLOC(c, second);
-
-	char* c = (char*)second.allocate(32, sizeof(void*), __FILE__, __LINE__);
-	
-//	second.deallocate(c);
 }
 
 void test_maths()
@@ -708,138 +486,6 @@ void test_reflection()
 	}
 }
 
-
-template <class AllocatorType, class ValueType>
-struct Base
-{
-	typedef ValueType value_type;
-
-	AllocatorType* implementation()
-	{
-		return static_cast<AllocatorType*>(this);
-	}
-
-	ValueType* allocate(size_t size)
-	{
-		return (ValueType*)implementation()->allocate(size);
-	}
-	
-	void deallocate(ValueType* pointer)
-	{
-		implementation()->deallocate(pointer);
-	}
-};
-
-
-template <class Type>
-struct StackAllocator : public Base<StackAllocator<Type>, Type>
-{
-	StackAllocator(size_t max_size_bytes)
-	{
-		
-	}
-
-	Type* allocate(size_t size)
-	{
-		fprintf(stdout, "StackAllocator: allocate %zu bytes\n", size);
-		
-		return (Type*)malloc(size);
-	}
-	
-	void deallocate(Type* pointer)
-	{
-		fprintf(stdout, "StackAllocator: deallocate %p\n", pointer);
-		free(pointer);
-	}
-};
-
-template <class Type>
-struct LinearAllocator : public Base<LinearAllocator<Type>, Type>
-{
-	Type* allocate(size_t size)
-	{
-		fprintf(stdout, "LinearAllocator: allocate %zu bytes\n", size);
-		
-		return (Type*)malloc(size);
-	}
-	
-	void deallocate(Type* pointer)
-	{
-		fprintf(stdout, "LinearAllocator: deallocate %p\n", pointer);
-		free(pointer);
-	}
-};
-
-
-template <class T>
-struct MyLinearAllocator : public platform::memory::Allocator< MyLinearAllocator<T> >
-{
-
-};
-
-
-struct Heap
-{
-	char name[32];
-	
-	Heap(const char* heap_name)
-	{
-		core::str::copy(name, heap_name, 32);
-	}
-	
-	template <class T>
-	typename T::value_type* allocate(T& allocator, size_t size)
-	{
-		return allocator.allocate(size);
-	}
-	
-	template <class T>
-	void deallocate(T& allocator, typename T::value_type* pointer)
-	{
-		allocator.deallocate(pointer);
-	}
-};
-
-
-
-template <class Allocator>
-void foo(Allocator& a)
-{
-	int* p = a.allocate(4);
-
-	a.deallocate(p);
-}
-
-
-template <class T, class Allocator>
-class Array
-{
-	typedef T value_type;
-	typedef T* value_pointer;
-	typedef Allocator allocator_type;
-
-	value_pointer elements;
-	size_t total_elements;
-	allocator_type& allocator;
-	
-	
-	
-public:
-
-	Array(Allocator& a) :
-		allocator(a)
-	{
-		elements = nullptr;
-		total_elements = 0;
-	}
-	
-	
-	void push_back(const value_type& item)
-	{
-		value_pointer p = allocator.allocate(sizeof(T));
-		
-	}
-};
 
 struct Rectangle
 {

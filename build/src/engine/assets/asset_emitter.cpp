@@ -144,24 +144,24 @@ namespace gemini
 	//			LOGV("total items: %i\n", frames.size());
 				if (citer.key().asString() == "color")
 				{
-					core::Color * colors = MEMORY_NEW_ARRAY(core::Color, frames.size(), platform::memory::global_allocator());
+					core::Color * colors = MEMORY_NEW_ARRAY(core::Color, frames.size(), core::memory::global_allocator());
 					read_channel_frames(colors, frames, color_value);
 					cfg->color_channel.create(frames.size(), colors, frame_delay_seconds.asFloat());
-					MEMORY_DELETE_ARRAY(colors, platform::memory::global_allocator());
+					MEMORY_DELETE_ARRAY(colors, core::memory::global_allocator());
 				}
 				else if(citer.key().asString() == "alpha")
 				{
-					float* data = MEMORY_NEW_ARRAY(float, frames.size(), platform::memory::global_allocator());
+					float* data = MEMORY_NEW_ARRAY(float, frames.size(), core::memory::global_allocator());
 					read_channel_frames(data, frames, float_value);
 					cfg->alpha_channel.create(frames.size(), data, frame_delay_seconds.asFloat());
-					MEMORY_DELETE_ARRAY(data, platform::memory::global_allocator());
+					MEMORY_DELETE_ARRAY(data, core::memory::global_allocator());
 				}
 				else if(citer.key().asString() == "size")
 				{
-					float * data = MEMORY_NEW_ARRAY(float, frames.size(), platform::memory::global_allocator());
+					float * data = MEMORY_NEW_ARRAY(float, frames.size(), core::memory::global_allocator());
 					read_channel_frames(data, frames, float_value);
 					cfg->size_channel.create(frames.size(), data, frame_delay_seconds.asFloat());
-					MEMORY_DELETE_ARRAY(data, platform::memory::global_allocator());
+					MEMORY_DELETE_ARRAY(data, core::memory::global_allocator());
 				}
 			}
 			

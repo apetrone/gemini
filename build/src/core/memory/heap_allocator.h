@@ -22,45 +22,51 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+#pragma once
 
-#include "mem.h"
-#include "platform_internal.h"
-
-#include <dlfcn.h>
-
-namespace platform
+template <class tracking_policy = default_tracking_policy>
+struct heap_allocator : public allocator< heap_allocator<tracking_policy> >
 {
-	struct PosixDynamicLibrary : public DynamicLibrary
+	typedef heap_allocator<tracking_policy> this_type;
+	typedef allocator<this_type> dependent_name;
+	tracking_policy tracker;
+	
+	heap_allocator(zone* memory_zone) :
+		dependent_name(memory_zone)
 	{
-		void* handle;
-	};
-
-	DynamicLibrary* posix_dylib_open(const char* library_path)
+	}
+	
+	void* allocate(size_t size, size_t alignment, const char* filename, int line)
 	{
-		void* handle = dlopen(library_path, RTLD_LAZY);
-		if (!handle)
+		size = tracker.request_size(size, alignment);
+		
+		void* pointer = malloc(size);
+		
+		fprintf(stdout, "HeapAllocator [%s]: allocate: %p, %lu bytes, %s:%i\n", dependent_name::memory_zone->name(), pointer, (unsigned long)size, filename, line);
+		
+		pointer = tracker.track_allocation(pointer, size, alignment, filename, line);
+		
+		if (dependent_name::memory_zone->add_allocation(size) == 0)
 		{
-			fprintf(stderr, "%s", dlerror());
-			return 0;
+			return pointer;
+		}
+		return 0;
+	}
+	
+	void deallocate(void* pointer)
+	{
+		// it is entirely legal to call delete on a null pointer,
+		// but we don't need to do anything.
+		if (!pointer)
+		{
+			return;
 		}
 		
-		PosixDynamicLibrary* lib = MEMORY_NEW(PosixDynamicLibrary, core::memory::global_allocator());
-		lib->handle = handle;
-		return lib;
-	}
-	
-	void posix_dylib_close(DynamicLibrary* library)
-	{
-		PosixDynamicLibrary* lib = static_cast<PosixDynamicLibrary*>(library);
-		dlclose(lib->handle);
+		size_t allocation_size;
+		pointer = tracker.untrack_allocation(pointer, allocation_size);
 		
-		MEMORY_DELETE(lib, core::memory::global_allocator());
+		fprintf(stdout, "HeapAllocator [%s]: deallocate %p\n", dependent_name::memory_zone->name(), pointer);
+		dependent_name::memory_zone->remove_allocation(allocation_size);
+		free(pointer);
 	}
-	
-	DynamicLibrarySymbol posix_dylib_find(DynamicLibrary* library, const char* symbol_name)
-	{
-		PosixDynamicLibrary* lib = static_cast<PosixDynamicLibrary*>(library);
-		return dlsym(lib->handle, symbol_name);
-	}
-	
-} // namespace platform
+};

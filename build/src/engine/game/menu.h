@@ -23,11 +23,11 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #pragma once
-#include <platform/mem.h>
+#include <core/mem.h>
 #include <vector>
 
 struct MenuItem;
-typedef std::vector<MenuItem*, CustomPlatformAllocator<MenuItem*> > MenuItemVector;
+typedef std::vector<MenuItem*> MenuItemVector;
 
 struct MenuItem
 {

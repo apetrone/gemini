@@ -148,7 +148,7 @@ namespace core
 		platform::Result result(platform::Result::Success);
 		
 		// create file system instance
-		core::filesystem::IFileSystem* filesystem = MEMORY_NEW(core::filesystem::FileSystemInterface, platform::memory::global_allocator());
+		core::filesystem::IFileSystem* filesystem = MEMORY_NEW(core::filesystem::FileSystemInterface, core::memory::global_allocator());
 		core::filesystem::set_instance(filesystem);
 		
 
@@ -175,7 +175,7 @@ namespace core
 		
 		
 		// create an instance of the log system
-		core::logging::ILog* log_system = MEMORY_NEW(core::logging::LogInterface, platform::memory::global_allocator());
+		core::logging::ILog* log_system = MEMORY_NEW(core::logging::LogInterface, core::memory::global_allocator());
 		core::logging::set_instance(log_system);
 		
 		// add logs
@@ -194,10 +194,10 @@ namespace core
 		
 		
 		core::logging::ILog* log_system = core::logging::instance();
-		MEMORY_DELETE(log_system, platform::memory::global_allocator());
+		MEMORY_DELETE(log_system, core::memory::global_allocator());
 		
 		core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
-		MEMORY_DELETE(filesystem, platform::memory::global_allocator());
+		MEMORY_DELETE(filesystem, core::memory::global_allocator());
 	} // shutdown
 
 } // namespace core

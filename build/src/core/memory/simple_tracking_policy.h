@@ -22,45 +22,34 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+#pragma once
 
-#include "mem.h"
-#include "platform_internal.h"
-
-#include <dlfcn.h>
-
-namespace platform
+struct simple_tracking_policy
 {
-	struct PosixDynamicLibrary : public DynamicLibrary
+	size_t last_size;
+	
+	size_t request_size(size_t requested_size, size_t alignment)
 	{
-		void* handle;
-	};
-
-	DynamicLibrary* posix_dylib_open(const char* library_path)
+		return requested_size + sizeof(size_t);
+	}
+	
+	void* track_allocation(void* pointer, size_t requested_size, size_t alignment, const char* filename, int line)
 	{
-		void* handle = dlopen(library_path, RTLD_LAZY);
-		if (!handle)
-		{
-			fprintf(stderr, "%s", dlerror());
-			return 0;
-		}
+		// store the allocation size in front of the pointer
+		size_t* allocation = static_cast<size_t*>(pointer);
+		*allocation = requested_size;
 		
-		PosixDynamicLibrary* lib = MEMORY_NEW(PosixDynamicLibrary, core::memory::global_allocator());
-		lib->handle = handle;
-		return lib;
+		// return the data
+		return allocation+1;
 	}
 	
-	void posix_dylib_close(DynamicLibrary* library)
+	void* untrack_allocation(void* pointer, size_t& allocation_size)
 	{
-		PosixDynamicLibrary* lib = static_cast<PosixDynamicLibrary*>(library);
-		dlclose(lib->handle);
+		// cast and move the pointer back to the front of the allocation
+		size_t* allocation = static_cast<size_t*>(pointer);
+		allocation--;
 		
-		MEMORY_DELETE(lib, core::memory::global_allocator());
+		allocation_size = *allocation;
+		return allocation;
 	}
-	
-	DynamicLibrarySymbol posix_dylib_find(DynamicLibrary* library, const char* symbol_name)
-	{
-		PosixDynamicLibrary* lib = static_cast<PosixDynamicLibrary*>(library);
-		return dlsym(lib->handle, symbol_name);
-	}
-	
-} // namespace platform
+}; // simple_tracking_policy

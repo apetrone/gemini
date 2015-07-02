@@ -40,7 +40,7 @@ namespace gemini
 		{
 			for (auto data : node_animations)
 			{
-				MEMORY_DELETE(data, platform::memory::global_allocator());
+				MEMORY_DELETE(data, core::memory::global_allocator());
 			}
 		}
 		
@@ -57,7 +57,7 @@ namespace gemini
 		
 		NodeAnimation* Animation::add_node_data(const String& node_name)
 		{
-			NodeAnimation* data = MEMORY_NEW(NodeAnimation, platform::memory::global_allocator());
+			NodeAnimation* data = MEMORY_NEW(NodeAnimation, core::memory::global_allocator());
 			data->name = node_name;
 			node_animations.push_back(data);
 			nodes_by_name.insert(NodeAnimationByNameContainer::value_type(node_name, data));

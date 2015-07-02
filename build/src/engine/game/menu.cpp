@@ -55,14 +55,14 @@ void MenuItem::purge()
 	for( ; it != end; ++it )
 	{
 		MenuItem * option = (*it);
-		MEMORY_DELETE(option, platform::memory::global_allocator());
+		MEMORY_DELETE(option, core::memory::global_allocator());
 	}
 	children.clear();
 } // purge
 
 MenuItem * MenuItem::add_child( const char * name )
 {
-	MenuItem * option = MEMORY_NEW(MenuItem, platform::memory::global_allocator());
+	MenuItem * option = MEMORY_NEW(MenuItem, core::memory::global_allocator());
 	option->name = name;
 	option->parent = this;
 	

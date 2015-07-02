@@ -23,7 +23,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
-#include <platform/mem.h>
+#include <core/mem.h>
 #include <runtime/logging.h>
 
 #include "bullet_rigidbody.h"
@@ -103,7 +103,7 @@ namespace gemini
 //				bullet::get_world()->addConstraint(joint);
 //				joint->setDbgDrawSize(btScalar(5.0f));
 //				
-//				BulletConstraint* constraint = MEMORY_NEW(BulletConstraint, platform::memory::global_allocator()) (joint);
+//				BulletConstraint* constraint = MEMORY_NEW(BulletConstraint, core::memory::global_allocator()) (joint);
 //				first->add_constraint(constraint);
 //				second->add_constraint(constraint);
 			}

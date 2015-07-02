@@ -428,13 +428,13 @@ namespace render2
 			
 		constant_buffer(size_t total_size)
 		{
-			data = MEMORY_ALLOC(total_size, platform::memory::global_allocator());
+			data = MEMORY_ALLOC(total_size, core::memory::global_allocator());
 			max_size = total_size;
 		}
 		
 		~constant_buffer()
 		{
-			MEMORY_DEALLOC(data, platform::memory::global_allocator());
+			MEMORY_DEALLOC(data, core::memory::global_allocator());
 			max_size = 0;
 		}
 		
@@ -731,7 +731,7 @@ namespace render2
 				gl.GetProgramiv(id, GL_INFO_LOG_LENGTH, &log_length);
 				if (log_length > 0)
 				{
-					logbuffer = (char*)MEMORY_ALLOC(log_length+1, platform::memory::global_allocator());
+					logbuffer = (char*)MEMORY_ALLOC(log_length+1, core::memory::global_allocator());
 					memset(logbuffer, 0, log_length);
 					
 					gl.GetProgramInfoLog(handle, log_length, &log_length, logbuffer);
@@ -741,7 +741,7 @@ namespace render2
 					}
 					else
 					{
-						MEMORY_DEALLOC(logbuffer, platform::memory::global_allocator());
+						MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
 					}
 				}
 				
@@ -755,7 +755,7 @@ namespace render2
 				{
 					LOGW("Program Info Log:\n");
 					LOGW("%s\n", logbuffer);
-					MEMORY_DEALLOC(logbuffer, platform::memory::global_allocator());
+					MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
 				}
 			}
 		};
@@ -772,13 +772,13 @@ namespace render2
 				// compute the size of the constant buffer we'll need
 				size_t total_bytes = sizeof(glm::mat4) * 2;
 				
-				this->cb = MEMORY_NEW(constant_buffer, platform::memory::global_allocator())(total_bytes);
+				this->cb = MEMORY_NEW(constant_buffer, core::memory::global_allocator())(total_bytes);
 			}
 			
 			
 			~gl_pipeline()
 			{
-				MEMORY_DELETE(this->cb, platform::memory::global_allocator());
+				MEMORY_DELETE(this->cb, core::memory::global_allocator());
 			}
 		};
 		
@@ -1107,17 +1107,17 @@ namespace render2
 		
 		virtual buffer* create_vertex_buffer(size_t size_bytes)
 		{
-			return MEMORY_NEW(gl_buffer, platform::memory::global_allocator())(size_bytes, GL_ARRAY_BUFFER);
+			return MEMORY_NEW(gl_buffer, core::memory::global_allocator())(size_bytes, GL_ARRAY_BUFFER);
 		}
 		
 		virtual buffer* create_index_buffer(size_t size_bytes)
 		{
-			return MEMORY_NEW(gl_buffer, platform::memory::global_allocator())(size_bytes, GL_ELEMENT_ARRAY_BUFFER);
+			return MEMORY_NEW(gl_buffer, core::memory::global_allocator())(size_bytes, GL_ELEMENT_ARRAY_BUFFER);
 		}
 		
 		virtual void destroy_buffer(buffer* buffer)
 		{
-			MEMORY_DELETE(buffer, platform::memory::global_allocator());
+			MEMORY_DELETE(buffer, core::memory::global_allocator());
 		}
 		
 		virtual void* buffer_lock(buffer* buffer)
@@ -1153,7 +1153,7 @@ namespace render2
 		
 		virtual pipeline_state* create_pipeline(const pipeline_descriptor& descriptor)
 		{
-			gl_pipeline* pipeline = MEMORY_NEW(gl_pipeline, platform::memory::global_allocator())(descriptor);
+			gl_pipeline* pipeline = MEMORY_NEW(gl_pipeline, core::memory::global_allocator())(descriptor);
 			pipeline->vertex_description = descriptor.vertex_description;
 		
 			return pipeline;
@@ -1164,7 +1164,7 @@ namespace render2
 			gl_pipeline* glp = static_cast<gl_pipeline*>(pipeline);
 			destroy_shader(glp->program);
 
-			MEMORY_DELETE(glp, platform::memory::global_allocator());
+			MEMORY_DELETE(glp, core::memory::global_allocator());
 		}
 		
 		virtual shader* create_shader(const char* name)

@@ -25,7 +25,7 @@
 #pragma once
 
 #include <platform/typedefs.h>
-#include <platform/mem.h>
+#include <core/mem.h>
 #include <core/mathlib.h>
 #include <core/str.h>
 
@@ -38,7 +38,7 @@ namespace gemini
 		struct Mesh;
 		struct Skeleton;
 
-		typedef std::vector<struct Node*, CustomPlatformAllocator<struct Node*>> NodeVector;
+		typedef std::vector<struct Node*> NodeVector;
 
 		
 		struct Node
