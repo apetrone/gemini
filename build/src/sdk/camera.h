@@ -25,7 +25,7 @@
 #pragma once
 
 #include <core/mathlib.h>
-#include <platform/typedefs.h>
+#include <core/typedefs.h>
 
 // REFERENCE LINKS
 

@@ -26,8 +26,7 @@
 
 #include <sdk/entity.h>
 
-#include <platform/typedefs.h>
-
+#include <core/typedefs.h>
 #include <core/mem.h>
 #include <core/stackstring.h>
 
