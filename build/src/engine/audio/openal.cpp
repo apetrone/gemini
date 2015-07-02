@@ -24,8 +24,14 @@
 // -------------------------------------------------------------
 #include "audio.h"
 #include "openal.h"
+
 #include <runtime/logging.h>
+
 #include <assert.h>
+
+#ifndef memset
+	#include <string.h>
+#endif
 
 #if 0 // capture sample
 	const uint8_t TOTAL_SAMPLES = 1024;
