@@ -106,15 +106,14 @@ namespace kernel
 	
 	struct LIBRARY_EXPORT KeyboardEvent : public Event<Keyboard>
 	{
-		bool is_down;
 		int unicode;
 		int key;
 		uint16_t modifiers;
+		bool is_down;
 	}; // KeyboardEvent
 
 	struct LIBRARY_EXPORT MouseEvent : public Event<Mouse>
 	{
-		bool is_down;
 		unsigned int button;
 		
 		// absolute mouse values
@@ -127,6 +126,7 @@ namespace kernel
 		
 		// < 0 is movement towards the user; > 0 is movement away toward the screen
 		short wheel_direction;
+		bool is_down;
 	}; // MouseEvent
 
 	

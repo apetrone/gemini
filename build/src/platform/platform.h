@@ -122,8 +122,8 @@ namespace platform
 	#define PLATFORM_MAIN int main(int argc, char** argv)
 	struct MainParameters
 	{
-		int argc;
 		char** argv;
+		int argc;
 	};
 #elif defined(PLATFORM_ANDROID)
 	// This requires: #include <android_native_app_glue.h>
@@ -141,11 +141,11 @@ namespace platform
 
 	struct LIBRARY_EXPORT Thread
 	{
-		ThreadStatus state;
 		ThreadId thread_id;
 		ThreadHandle handle;
 		ThreadEntry entry;
 		void* userdata;
+		ThreadStatus state;
 	};
 	
 
@@ -158,10 +158,10 @@ namespace platform
 			Warning = 1 			// unexpected result, will proceed
 		};
 		
-		ResultStatus status;
 		const char* message;
+		ResultStatus status;
 		
-		Result(ResultStatus result_status, const char* result_message = "") : status(result_status), message(result_message) {}
+		Result(ResultStatus result_status, const char* result_message = "") : message(result_message), status(result_status) {}
 		bool failed() const { return status == Failure; }
 		bool success() const { return status == Success; }
 	};

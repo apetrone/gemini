@@ -37,13 +37,19 @@ namespace platform
 {
 	struct SDLWindow : public NativeWindow
 	{
+		SDL_GLContext context;	
 		SDL_Window* window;
-		SDL_GLContext context;
 		
 		SDLWindow() : window(0)
 		{
 		}
+		
+		virtual ~SDLWindow();
 	};
+	
+	SDLWindow::~SDLWindow()
+	{
+	}
 
 	SDLWindowLibrary::SDLWindowLibrary() :
 	display_rects(0),

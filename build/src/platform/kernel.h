@@ -39,7 +39,7 @@ namespace kernel
 		ConfigFailed 		= -4,
 		StartupFailed 		= -5,
 		ApplicationFailure 	= -6,
-		RendererFailed 		= -7,
+		RendererFailed 		= -7
 	}; // Error
 
 	// Kernel flags for device details
@@ -49,7 +49,7 @@ namespace kernel
 		DeviceiPhone 					= (1 << 1), // set if this is an iPhone
 		DeviceiPad 						= (1 << 2), // set if this is an iPad
 		DeviceSupportsRetinaDisplay 	= (1 << 3), // set if this device supports retina
-		DeviceAndroid					= (1 << 4), // Android-based device
+		DeviceAndroid					= (1 << 4) // Android-based device
 	};
 	
 	typedef unsigned char KernelDeviceFlags;
@@ -102,7 +102,7 @@ namespace kernel
 	class LIBRARY_EXPORT IKernel
 	{
 	public:
-		virtual ~IKernel() {}
+		virtual ~IKernel();
 
 		virtual bool is_active() const = 0;
 		virtual void set_active(bool isactive) = 0;

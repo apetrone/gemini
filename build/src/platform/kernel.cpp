@@ -37,10 +37,6 @@ namespace kernel
 
 	namespace detail
 	{
-		IKernel* kernel_instance = 0;
-		Parameters parameters;
-		
-		
 		struct EventHooks
 		{
 			void* events[ kernel::EventTypeCount ];
@@ -53,7 +49,8 @@ namespace kernel
 		}
 		
 		EventHooks event_hooks;
-		
+		IKernel* kernel_instance = 0;
+		Parameters parameters;
 	} // namespace detail
 	
 	IKernel* instance()
@@ -98,6 +95,11 @@ namespace kernel
 
 		current_tick = 0;
 		current_frame = 0;
+	}
+
+	// prevent this from being emitted in every translation unit
+	IKernel::~IKernel()
+	{
 	}
 
 	
