@@ -112,7 +112,7 @@
 	#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
 		#define PLATFORM_NAME "iphoneos"
 		#define PLATFORM_IS_MOBILE 1
-		#define PLATFORM_IOS 1
+		#define PLATFORM_IPHONEOS 1
 	#else
 		#define PLATFORM_NAME "macosx"
 		#define PLATFORM_MACOSX 1
