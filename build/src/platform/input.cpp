@@ -98,6 +98,12 @@ namespace input
 		return (state == (Button_Impulse|Button_Released));
 	}
 	
+	// prevent vtable from being emitted in every
+	// translation unit
+	InputDevice::~InputDevice()
+	{
+	}
+	
 	void startup( void )
 	{
 //		_input_state.keyboard().reset();
@@ -282,9 +288,11 @@ namespace input
 			case MOUSE_MOUSE5: return "MOUSE_MOUSE5";
 			case MOUSE_MOUSE6: return "MOUSE_MOUSE6";
 			case MOUSE_MOUSE7: return "MOUSE_MOUSE7";
-			default: return "MOUSE_INVALID";
+			case MOUSE_COUNT: break;
 		}
+		
+		return "MOUSE_INVALID";
 	} // mouse_button_name
 	
 	
-}; // namespace input
+} // namespace input

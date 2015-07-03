@@ -237,7 +237,6 @@ def setup_driver(product):
 		"-Wreorder",
 		"-Wunused",
 		"-Wsign-compare",
-		"-Wextra-semi",
 
 		# disable C++98 compat since we're building with C++11
 		"-Wno-c++98-compat",
@@ -252,7 +251,7 @@ def setup_driver(product):
 	mac_debug.driver.debug_information_format="dwarf-with-dsym"
 
 	mac_debug.cflags += gcc_flags + [
-		"-Weverything",
+		"-Wextra-semi" # LLVM only		
 	]
 	
 	mac_release = product.layout(platform="macosx", configuration="release")

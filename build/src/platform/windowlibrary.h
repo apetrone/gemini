@@ -49,13 +49,13 @@ namespace platform
 		
 		// need to take this into account when calculating screen coordinates
 		uint32_t titlebar_height;
-		
-		// set to true to create a fullscreen window
-		bool enable_fullscreen;
-		
+
 		// utf8-encoded window title
 		const char* window_title;
 		
+		// set to true to create a fullscreen window
+		bool enable_fullscreen;
+				
 		WindowParameters() :
 			target_display(0),
 			window_width(1),
@@ -63,20 +63,23 @@ namespace platform
 			render_width(0),
 			render_height(1),
 			titlebar_height(0),
-			enable_fullscreen(false),
-			window_title(0)
+			window_title(0),
+			enable_fullscreen(false)
 		{
 		}
+		
+		virtual ~WindowParameters();
 	};
 	
 	struct NativeWindow : public WindowParameters
 	{
+		virtual ~NativeWindow();
 	};
 	
 	struct IWindowLibrary
 	{
 	public:
-		virtual ~IWindowLibrary() {}
+		virtual ~IWindowLibrary();
 		
 		virtual void startup(kernel::Parameters& parameters) = 0;
 		virtual void shutdown() = 0;

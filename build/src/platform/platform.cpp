@@ -30,10 +30,10 @@
 
 #include <assert.h>
 
-#if PLATFORM_WINDOWS
+#if defined(PLATFORM_WINDOWS)
 	//#include <windows.h>
 	//#include <direct.h> // for _mkdir
-#elif PLATFORM_LINUX
+#elif defined(PLATFORM_LINUX)
 	#include <sys/sysinfo.h>
 	//#include <errno.h>
 	#include <sys/types.h>
@@ -42,7 +42,7 @@
 	#include <stdlib.h> // for abort
 	#include <unistd.h> // for readlink, getpid
 
-#elif PLATFORM_APPLE
+#elif defined(PLATFORM_APPLE)
 	#include <stdio.h>
 	#include <sys/stat.h>
 	#include <sys/types.h>

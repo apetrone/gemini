@@ -224,7 +224,7 @@ namespace input
 		Button_IsDown 	= 1,
 		Button_Held 	= 2,
 		Button_Released = 4,
-		Button_Impulse 	= 8,
+		Button_Impulse 	= 8
 	};
 	
 	struct LIBRARY_EXPORT ButtonState
@@ -250,14 +250,14 @@ namespace input
 	
 	struct LIBRARY_EXPORT AxisState
 	{
-		int16_t value;
 		float normalized_value;
+		int16_t value;
 	};
 	
 	class LIBRARY_EXPORT InputDevice
 	{
 	public:
-		virtual ~InputDevice() {}
+		virtual ~InputDevice();
 		
 		virtual void reset() = 0;
 		virtual void update() = 0;
@@ -283,8 +283,6 @@ namespace input
 	
 	class LIBRARY_EXPORT MouseInput : public InputDevice
 	{
-		ButtonState buttons[ MOUSE_COUNT ];
-		
 		// absolute mouse position in window coordinates
 		int window_coords[2];
 		
@@ -292,6 +290,9 @@ namespace input
 		int delta[2];
 		
 		int wheel_direction;
+		
+		ButtonState buttons[ MOUSE_COUNT ];
+
 		
 	public:
 		virtual void reset();
@@ -319,7 +320,7 @@ namespace input
 		{
 			// (state & 1) -> isDown
 			// (state & 2) -> isDragging
-			unsigned char state;
+			unsigned int state;
 			float x;
 			float y;
 			
@@ -351,10 +352,10 @@ namespace input
 		{
 			Disconnected 	= 0, // joystick disconnected / not used
 			Connected 		= 1, // joystick is connected and enabled
-			HapticSupport 	= 2, // joystick has haptics support
+			HapticSupport 	= 2 // joystick has haptics support
 		};
 	
-		uint8_t flags;
+		uint32_t flags;
 		ButtonState buttons[MAX_JOYSTICK_BUTTONS];
 		AxisState axes[MAX_JOYSTICK_AXES];
 		
@@ -369,4 +370,4 @@ namespace input
 
 	LIBRARY_EXPORT const char* mouse_button_name(MouseButton button);
 
-}; // namespace input
+} // namespace input

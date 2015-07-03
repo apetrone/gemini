@@ -27,8 +27,8 @@
 #include "config.h"
 #include "windowlibrary.h"
 
-#if PLATFORM_IS_MOBILE
-#error Not supported!
+#if defined(PLATFORM_IS_MOBILE)
+	#error Not supported!
 #else
 	#include "sdl_windowlibrary.h"
 	typedef platform::SDLWindowLibrary WindowLibrary;
@@ -41,6 +41,19 @@ namespace platform
 		IWindowLibrary* windowlibrary = 0;
 	}
 	
+	// don't bloat my code up
+	WindowParameters::~WindowParameters()
+	{
+	}
+	
+	NativeWindow::~NativeWindow()
+	{
+	}
+	
+	IWindowLibrary::~IWindowLibrary()
+	{
+	}
+
 	IWindowLibrary* create_window_library()
 	{
 		if (!detail::windowlibrary)

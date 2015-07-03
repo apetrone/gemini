@@ -94,4 +94,4 @@ namespace platform
 		return ::write(device->socket, buffer, total_bytes);
 	}
 	
-}; // namespace platform
+} // namespace platform
