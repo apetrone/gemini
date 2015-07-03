@@ -239,12 +239,8 @@ def setup_driver(product):
 		"-Wsign-compare",
 
 		# enable this for a cleanup pass
-		"-Wno-unused-parameter",
-
-		# this is technically bad, but it's entrenched at present
-		"-Wno-gnu-zero-variadic-macro-arguments"
+		"-Wno-unused-parameter"
 	]
-
 
 	mac_debug = product.layout(platform="macosx", configuration="debug")
 	mac_debug.driver.gcc_optimization_level="0"
@@ -258,7 +254,10 @@ def setup_driver(product):
 
 		# disable C++98 compat since we're building with C++11
 		"-Wno-c++98-compat",
-		"-Wno-c++98-compat-pedantic"
+		"-Wno-c++98-compat-pedantic",
+
+		# this is technically bad, but it's entrenched at present
+		"-Wno-gnu-zero-variadic-macro-arguments"
 	]
 	
 	mac_release = product.layout(platform="macosx", configuration="release")
