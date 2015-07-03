@@ -30,10 +30,9 @@ namespace gemini
 	namespace datamodel
 	{
 		Animation::Animation() :
-			frames_per_second(30),
-			name("Unnamed Animation")
+			name("Unnamed Animation"),
+			frames_per_second(30)
 		{
-			
 		}
 		
 		Animation::~Animation()

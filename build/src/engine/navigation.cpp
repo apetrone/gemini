@@ -534,7 +534,7 @@ namespace gemini
 			dtPolyRef straight_path_refs[MAX_NAVMESH_POINTS];
 			int straight_path_count = 0;
 
-			dtStatus status = nav_query->findStraightPath(
+			/*dtStatus status = */nav_query->findStraightPath(
 												glm::value_ptr(path->start_position),
 												glm::value_ptr(path->end_position),
 												path->links,

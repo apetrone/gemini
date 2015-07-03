@@ -234,7 +234,7 @@ namespace renderer
 	{
 		GLFunctionLogger::call_stack.push(function);
 		std::string prefix = "";
-		for (int i = 0; i < GLFunctionLogger::call_stack.size(); ++i)
+		for (size_t i = 0; i < GLFunctionLogger::call_stack.size(); ++i)
 		{
 			prefix += "\t";
 		}
@@ -246,7 +246,7 @@ namespace renderer
 		const std::string& call = GLFunctionLogger::call_stack.top();
 		GLFunctionLogger::call_stack.pop();
 		std::string prefix = "";
-		for (int i = 0; i < GLFunctionLogger::call_stack.size(); ++i)
+		for (size_t i = 0; i < GLFunctionLogger::call_stack.size(); ++i)
 		{
 			prefix += "\t";
 		}

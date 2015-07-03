@@ -378,13 +378,7 @@ namespace renderer
 		}
 		
 		void render(const glm::mat4& modelview, const glm::mat4& projection, int x, int y, int viewport_width, int viewport_height)
-		{
-			
-			unsigned int attribs = 0;
-			//		renderer::ShaderString name;
-			//		name = "colors";
-			//		attribs |= assets::find_parameter_mask( name );
-			
+		{		
 			glm::mat4 object;
 			RenderStream rs;
 			rs.add_viewport( x, y, viewport_width, viewport_height );

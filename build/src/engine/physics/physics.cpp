@@ -32,11 +32,6 @@
 
 #include "assets/asset_mesh.h"
 
-
-
-const float PHYSICS_PLAYER_HALF_WIDTH = 0.25f; // .25 == 1.6 ft wide
-const float PHYSICS_PLAYER_HALF_HEIGHT = 0.91f; // .91 == 6 ft tall
-
 #include "physics/bullet/bullet_collisionobject.h"
 #include "physics/bullet/bullet_constraint.h"
 #include "physics/bullet/bullet_debugdraw.h"

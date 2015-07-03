@@ -91,7 +91,7 @@ namespace gemini
 			
 			AudioSource * find_unused_source()
 			{
-				for( int i = 0; i < AUDIO_MAX_SOURCES; ++i )
+				for (size_t i = 0; i < AUDIO_MAX_SOURCES; ++i)
 				{
 					if ( _sources[i].flags == 0 )
 					{
@@ -106,7 +106,7 @@ namespace gemini
 			
 			void init_sources()
 			{
-				for( unsigned int i = 0; i < AUDIO_MAX_SOURCES; ++i )
+				for (size_t i = 0; i < AUDIO_MAX_SOURCES; ++i)
 				{
 					_sources[i].flags = 0;
 					_sources[i].has_buffers = 0;
@@ -142,7 +142,7 @@ namespace gemini
 			
 			Sound * find_unused_sound()
 			{
-				for( int i = 0; i < AUDIO_MAX_SOUNDS; ++i )
+				for (size_t i = 0; i < AUDIO_MAX_SOUNDS; ++i)
 				{
 					if ( !_sounds[i].is_used )
 					{
@@ -155,7 +155,7 @@ namespace gemini
 
 			void init_sounds()
 			{
-				for( unsigned int i = 0; i < AUDIO_MAX_SOUNDS; ++i )
+				for(size_t i = 0; i < AUDIO_MAX_SOUNDS; ++i)
 				{
 					_sounds[i].is_used = 0;
 					_sounds[i].is_stream = 0;
@@ -323,7 +323,7 @@ namespace gemini
 			
 			AudioSource * source;
 			_internal::used_sources = 0;
-			for( int i = 0; i < AUDIO_MAX_SOURCES; ++i )
+			for (size_t i = 0; i < AUDIO_MAX_SOURCES; ++i)
 			{
 				source = &_internal::_sources[i];
 				if ( source->flags & SF_STOP )
@@ -381,7 +381,7 @@ namespace gemini
 			
 			AudioSource * source;
 			unsigned int total_sources = 0;
-			for( int i = 0; i < AUDIO_MAX_SOURCES; ++i )
+			for (size_t i = 0; i < AUDIO_MAX_SOURCES; ++i)
 			{
 				source = &_internal::_sources[i];
 				if ( source->flags & SF_PLAYING )

@@ -57,7 +57,6 @@ GUIRenderer::GUIRenderer() :
 compositor(0),
 shader(0),
 texture_map(0),
-vertex_attribs(0),
 current_depth(0.0f)
 {
 }
@@ -342,7 +341,6 @@ void GUIRenderer::draw_command_lists(gui::render::CommandList** command_lists, s
 //	if (stream.has_room(total_vertices, 0))
 	{
 //		LOGV("command_queues: %i, total_vertices: %i\n", total_lists, total_vertices);
-		size_t offset = 0;
 #if 0
 		VertexType* vertex = (VertexType*)stream.request(6);
 		{

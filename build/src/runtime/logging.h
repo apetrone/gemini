@@ -71,7 +71,7 @@ namespace core
 			// userdata
 			void * userdata;
 			
-			Handler() : message(0), open(0), close(0), userdata(0) {}
+			Handler() : open(0), close(0), message(0), userdata(0) {}
 		};
 	
 		class ILog
