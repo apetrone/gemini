@@ -88,18 +88,18 @@ namespace core
 		public:
 			virtual ~ILog() {}
 			
-			/// @desc Dispatches a message to all handlers
+			/// @brief Dispatches a message to all handlers
 			virtual void dispatch(ILog::MessageType type, const char* message, const char* function, const char* filename, int linenumber) = 0;
 			
-			/// @desc Add a log handler for dispatch
+			/// @brief Add a log handler for dispatch
 			/// @param handler Handler struct with pointers to functions
 			virtual void add_handler(Handler* handler) = 0;
 			
-			/// @desc Open the log handlers
+			/// @brief Open the log handlers
 			/// @returns The total number of successfully opened handlers
 			virtual uint32_t startup() = 0;
 			
-			/// @desc Shutdown the log handlers
+			/// @brief Shutdown the log handlers
 			virtual void shutdown() = 0;
 		}; // ILog
 

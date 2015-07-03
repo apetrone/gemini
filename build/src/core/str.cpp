@@ -150,10 +150,12 @@ namespace core
 				
 				count = s1_len;
 			}
-#if PLATFORM_LINUX || PLATFORM_APPLE || PLATFORM_ANDROID
+#if defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE) || defined(PLATFORM_ANDROID)
 			return ::strncasecmp(s1, s2, count);
-#else
+#elif defined(PLATFORM_WINDOWS)
 			return ::strnicmp(s1, s2, count);
+#else
+	#error Unknown platform
 #endif
 		} // case_insensitive_compare
 		

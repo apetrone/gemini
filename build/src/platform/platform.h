@@ -37,7 +37,7 @@
 #include <stdint.h>
 #include <stdio.h> // for size_t
 
-#if PLATFORM_WINDOWS
+#if defined(PLATFORM_WINDOWS)
 	// see if we still need these here...
 	#define WIN32_LEAN_AND_MEAN 1
 	#define NOMINMAX
@@ -48,7 +48,7 @@
 
 	#define PLATFORM_LIBRARY_EXPORT __declspec(dllexport)
 	#define PLATFORM_LIBRARY_IMPORT __declspec(dllimport)
-#elif PLATFORM_LINUX || PLATFORM_APPLE || PLATFORM_ANDROID
+#elif defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE) || defined(PLATFORM_ANDROID)
 	#include <limits.h>
 	#define MAX_PATH_SIZE PATH_MAX
 	#define PATH_SEPARATOR '/'
@@ -111,21 +111,21 @@ namespace platform
 
 namespace platform
 {
-#if PLATFORM_WINDOWS
+#if defined(PLATFORM_WINDOWS)
 	#define PLATFORM_MAIN int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR commandline, int show)
 	struct LIBRARY_EXPORT MainParameters
 	{
 		char* commandline;
 	};
 
-#elif PLATFORM_LINUX || PLATFORM_APPLE
+#elif defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE)
 	#define PLATFORM_MAIN int main(int argc, char** argv)
 	struct MainParameters
 	{
 		int argc;
 		char** argv;
 	};
-#elif PLATFORM_ANDROID
+#elif defined(PLATFORM_ANDROID)
 	// This requires: #include <android_native_app_glue.h>
 	#define PLATFORM_MAIN void android_main(struct android_app* state)
 	
@@ -233,18 +233,18 @@ namespace platform
 	// dynamic library
 	// ---------------------------------------------------------------------
 	
-	/// @desc load a dynamic library at library_path
+	/// @brief load a dynamic library at library_path
 	/// @returns A pointer to a DynamicLibrary object on success; 0 on failure
 	LIBRARY_EXPORT DynamicLibrary* dylib_open(const char* library_path);
 	
-	/// @desc close a library handle
+	/// @brief close a library handle
 	LIBRARY_EXPORT void dylib_close(DynamicLibrary* library);
 	
-	/// @desc Tries to load a symbol from a dynamic library
+	/// @brief Tries to load a symbol from a dynamic library
 	/// @returns A valid pointer to the symbol or null on failure
 	LIBRARY_EXPORT DynamicLibrarySymbol dylib_find(DynamicLibrary* library, const char* symbol_name);
 	
-	/// @desc Returns the extension on this platform for a dynamiclibrary.
+	/// @brief Returns the extension on this platform for a dynamiclibrary.
 	/// @returns ".dylib", ".so", or ".dll" for Mac/Linux/Windows.
 	/// NOTE: This MUST return the period character if required by the platform!
 	LIBRARY_EXPORT const char* dylib_extension();
@@ -253,20 +253,20 @@ namespace platform
 	// filesystem
 	// ---------------------------------------------------------------------
 	
-	/// @desc Returns the directory where the active binary resides:
+	/// @brief Returns the directory where the active binary resides:
 	/// on Linux and Windows platforms, it returns the folder where the binary exists
 	/// on MacOS X when run as a command line tool, it returns the folder where the binary exists (similar to Linux and Windows)
 	/// on MacOS X / iPhoneOS (for Bundles), it returns the root bundle path (.app)
 	LIBRARY_EXPORT Result get_program_directory(char* path, size_t path_size);
 	
-	/// @desc Make directory on disk
+	/// @brief Make directory on disk
 	LIBRARY_EXPORT Result make_directory(const char* path);
 	
-	/// @desc Returns the value of the environment variable passed in
+	/// @brief Returns the value of the environment variable passed in
 	/// or NULL, if it was not set
 	LIBRARY_EXPORT const char* get_environment_variable(const char* name);
 	
-	/// @desc Returns the current user's directory;
+	/// @brief Returns the current user's directory;
 	/// @returns The $(HOME) environment variable in Linux or %HOMEPATH% on Windows
 	LIBRARY_EXPORT const char* get_user_directory();
 	
@@ -294,7 +294,7 @@ namespace platform
 	LIBRARY_EXPORT bool fs_file_exists(const char* path);
 	LIBRARY_EXPORT bool fs_directory_exists(const char* path);
 	
-	/// @desc Construct this platform's content directory
+	/// @brief Construct this platform's content directory
 	/// @param content_path The default content directory for bundled assets
 	/// @param root_path The root path for this application (where the binary/executable resides)
 	/// @returns platform::Result
@@ -311,12 +311,12 @@ namespace platform
 	LIBRARY_EXPORT Serial* serial_open(const char* device, uint32_t baud_rate);
 	LIBRARY_EXPORT void serial_close(Serial* serial);
 	
-	/// @desc Read bytes to buffer from serial device
+	/// @brief Read bytes to buffer from serial device
 	/// @param total_bytes The maximum number of bytes to read into buffer
 	/// @returns Total bytes read
 	LIBRARY_EXPORT int serial_read(Serial* serial, void* buffer, int total_bytes);
 	
-	/// @desc Write bytes from buffer to serial device
+	/// @brief Write bytes from buffer to serial device
 	/// @param total_bytes The maximum number of bytes to write from the buffer
 	/// @returns Total bytes read
 	LIBRARY_EXPORT int serial_write(Serial* serial, const void* buffer, int total_bytes);
@@ -325,25 +325,25 @@ namespace platform
 	// thread
 	// ---------------------------------------------------------------------
 
-	/// @desc Creates a thread with entry point
+	/// @brief Creates a thread with entry point
 	LIBRARY_EXPORT Result thread_create(Thread& thread, ThreadEntry entry, void* data);
 	
-	/// @desc Should be called upon thread entry.
+	/// @brief Should be called upon thread entry.
 	///       This sets up signals, thread names, thread id and states.
 	LIBRARY_EXPORT void thread_setup(void* data);
 	
-	/// @desc Wait for a thread to complete.
+	/// @brief Wait for a thread to complete.
 	/// @returns 0 on success; non-zero on failure (abnormal thread termination)
 	LIBRARY_EXPORT int thread_join(Thread& thread);
 	
-	/// @desc Allows the calling thread to sleep
+	/// @brief Allows the calling thread to sleep
 	LIBRARY_EXPORT void thread_sleep(int milliseconds);
 	
-	/// @desc
+	/// @brief Detach the thread
 	LIBRARY_EXPORT void thread_detach(Thread& thread);
 	
 	
-	/// @desc Get the calling thread's id
+	/// @brief Get the calling thread's id
 	/// @returns The calling thread's platform designated id
 	LIBRARY_EXPORT ThreadId thread_id();
 	
@@ -358,12 +358,11 @@ namespace platform
 	// time
 	// ---------------------------------------------------------------------
 	
-	/// @desc Fetches the current time in microseconds
+	/// @brief Fetches the current time in microseconds
 	/// @returns The current time in microseconds since the application started
 	LIBRARY_EXPORT uint64_t microseconds();
 	
-	/// @desc Populates the DateTime struct with the system's current date and time
+	/// @brief Populates the DateTime struct with the system's current date and time
 	LIBRARY_EXPORT void datetime(DateTime& datetime);
-
 
 } // namespace platform

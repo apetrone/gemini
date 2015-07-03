@@ -32,6 +32,10 @@ namespace core
 {
 	namespace util
 	{
+		DataStream::~DataStream()
+		{
+		}
+	
 		void MemoryStream::init(void* buffer, size_t buffer_length)
 		{
 			data = (uint8_t*)buffer;

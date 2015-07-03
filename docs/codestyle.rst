@@ -224,3 +224,7 @@ Style Rules
 			model_api.h
 			iplayercontroller.h
 			physics_interface.h
+
+- Newlines at the end of header files (C++98 compliance).
+	This is a good habit, even though C++11 standards have removed this
+	restriction; it's useful when programming C.

@@ -230,33 +230,37 @@ def setup_driver(product):
 		"*.DS_Store"
 	]
 
+	gcc_flags = [
+		"-Wall",
+		"-Wpedantic",
+		"-Wextra",
+		"-Wreorder",
+		"-Wunused",
+		"-Wsign-compare",
+		"-Wextra-semi",
+
+		# disable C++98 compat since we're building with C++11
+		"-Wno-c++98-compat",
+
+		# enable this for a cleanup pass
+		"-Wno-unused-parameter"
+	]
+
+
 	mac_debug = product.layout(platform="macosx", configuration="debug")
 	mac_debug.driver.gcc_optimization_level="0"
 	mac_debug.driver.debug_information_format="dwarf-with-dsym"
 
-	mac_debug.cflags += [
-		"-Wall",
-		"-Wmost",
+	mac_debug.cflags += gcc_flags + [
 		"-Weverything",
-		"-Wpedantic",
-		"-Wextra",
-		"-Wreorder",
-		"-Wunused-parameter",
-		"-Wunused",
-		"-Wsign-compare"
 	]
 	
 	mac_release = product.layout(platform="macosx", configuration="release")
 
 
 	linux = product.layout(platform="linux")
-	linux.cflags += [
-		"-Wall",
+	linux.cflags += gcc_flags + [
 		"-fPIC",
-		"-Wreorder",
-		"-Wunused-parameter",
-		"-Wunused",
-		"-Wsign-compare"		
 	]
 
 def get_tools(libruntime, librenderer, libplatform, libcore, **kwargs):

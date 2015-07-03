@@ -78,7 +78,7 @@ namespace font
 
 		int font_create(void* userdata, int width, int height)
 		{
-			// @description this may be called multiple times, so delete existing textures
+			// @brief this may be called multiple times, so delete existing textures
 			// create a texture with the given width and height.
 			// @returns 1 on success, 0 on failure
 			
@@ -103,7 +103,7 @@ namespace font
 		
 		int font_resize(void* userdata, int width, int height)
 		{
-			// @description resize the texture;
+			// @brief resize the texture;
 			// explicit expand or resetting of the atlas texture.
 			// @returns 1 on success, 0 on failure
 			return font_create(userdata, width, height);
@@ -111,7 +111,7 @@ namespace font
 		
 		void font_update(void* userdata, int* rect, const unsigned char* pixels)
 		{
-			// @description update the texture
+			// @brief update the texture
 			renderer::IRenderDriver * driver = renderer::driver();
 			FontData* data = static_cast<FontData*>(userdata);
 			
@@ -130,7 +130,7 @@ namespace font
 		
 		void font_draw(void* userdata, const float* verts, const float* tcoords, const unsigned int* colors, int vertex_count)
 		{
-			// @description called when the font should be drawn
+			// @brief called when the font should be drawn
 			renderer::VertexStream & vs = internal::_vertexstream;
 			FontData* data = static_cast<FontData*>(userdata);
 			
@@ -181,7 +181,7 @@ namespace font
 		
 		void font_delete(void* userdata)
 		{
-			// @description called when the renderer should be deleted
+			// @brief called when the renderer should be deleted
 			FontData* data = static_cast<FontData*>(userdata);
 			renderer::IRenderDriver * driver = renderer::driver();
 			driver->texture_destroy(data->texture);
