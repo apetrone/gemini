@@ -128,6 +128,12 @@ namespace core
 				{
 				}
 				
+				Iterator(const Iterator& other) :
+					container(other.container),
+					index(other.index)
+				{
+				}
+				
 				bool operator!=(const Iterator& other)
 				{
 					return (index != other.index);
@@ -146,7 +152,6 @@ namespace core
 				
 				Iterator& operator=(const Iterator& other)
 				{
-					//this->container = other.container;
 					this->index = other.index;
 					return *this;
 				}
@@ -182,6 +187,7 @@ namespace core
 				PT_BranchPattern
 			};
 			
+			virtual ~Pattern();
 			
 			virtual bool is_leaf() const { return false; }
 			virtual bool is_branch() const { return false; }
@@ -259,7 +265,6 @@ namespace core
 		// ---------------------------------------------------------------------
 		// Argument
 		// ---------------------------------------------------------------------
-		
 		struct Argument : public LeafPattern
 		{
 			Argument(const std::string& input_name, const std::string& input_value);
@@ -271,12 +276,9 @@ namespace core
 			virtual std::string get_sanitized_name() const;
 		};
 		
-		
-		
 		// ---------------------------------------------------------------------
 		// Option
 		// ---------------------------------------------------------------------
-		
 		struct Option : public LeafPattern
 		{
 			std::string longname;
@@ -295,7 +297,6 @@ namespace core
 			
 			virtual const char* get_classname() const { return "Option"; }
 			virtual Type get_type() const { return PT_Option; }
-			
 			virtual bool single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
 		};
 		
@@ -345,7 +346,6 @@ namespace core
 			}
 			
 			virtual bool matches(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
-			
 			virtual const char* get_classname() const { return "Required"; }
 		};
 		
@@ -358,17 +358,8 @@ namespace core
 			Optional(const PatternList& child_list) : BranchPattern(child_list)
 			{
 			}
-			
-			
-			virtual bool matches(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
-			{
-				for (PatternPtr child : children)
-				{
-					child->matches(pattern_start, patterns, vars);
-				}
-				return true;
-			}
-			
+
+			virtual bool matches(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
 			virtual const char* get_classname() const { return "Optional"; }
 		};
 		
@@ -411,11 +402,11 @@ namespace core
 				ParsingInput	// parsing user input passed on commandline
 			};
 		
-		
-			State state;
-			const char* docstring;
+
 			std::vector<PatternPtr> usage_patterns;
 			PatternList options_registry;
+			const char* docstring;
+			State state;
 
 			void parse_patterns_from_tokens(PatternList& patterns, TokenWrapper& tokens);
 

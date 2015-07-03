@@ -53,7 +53,9 @@ namespace core
 		// Pattern
 		// ---------------------------------------------------------------------
 		
-		// ...
+		Pattern::~Pattern()
+		{
+		}
 		
 		// ---------------------------------------------------------------------
 		// Leaf Pattern
@@ -191,6 +193,18 @@ namespace core
 			}
 			
 			return matched;
+		}
+		
+		// ---------------------------------------------------------------------
+		// Optional
+		// ---------------------------------------------------------------------
+		bool Optional::matches(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
+		{
+			for (PatternPtr child : children)
+			{
+				child->matches(pattern_start, patterns, vars);
+			}
+			return true;
 		}
 		
 		// ---------------------------------------------------------------------
