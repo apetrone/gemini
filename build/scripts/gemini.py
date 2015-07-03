@@ -238,11 +238,11 @@ def setup_driver(product):
 		"-Wunused",
 		"-Wsign-compare",
 
-		# disable C++98 compat since we're building with C++11
-		"-Wno-c++98-compat",
-
 		# enable this for a cleanup pass
-		"-Wno-unused-parameter"
+		"-Wno-unused-parameter",
+
+		# this is technically bad, but it's entrenched at present
+		"-Wno-gnu-zero-variadic-macro-arguments"
 	]
 
 
@@ -251,7 +251,14 @@ def setup_driver(product):
 	mac_debug.driver.debug_information_format="dwarf-with-dsym"
 
 	mac_debug.cflags += gcc_flags + [
-		"-Wextra-semi" # LLVM only		
+
+		# This can be useful; however some third-party code uses macros
+		# where this starts to accumulate fast. I'm looking at you, Bullet.
+		"-Wno-extra-semi",
+
+		# disable C++98 compat since we're building with C++11
+		"-Wno-c++98-compat",
+		"-Wno-c++98-compat-pedantic"
 	]
 	
 	mac_release = product.layout(platform="macosx", configuration="release")

@@ -57,8 +57,6 @@ class GUIRenderer : public gui::Renderer
 	
 	gemini::assets::Texture* white_texture;
 	
-	unsigned int vertex_attribs;
-	
 	float current_depth;
 	
 private:

@@ -135,7 +135,7 @@ namespace renderer
 	int ShaderProgram::get_uniform_location( const char * name )
 	{
 //		LOGV( "# uniforms: %i\n", total_uniforms );
-		for( int i = 0; i < uniforms.size(); ++i )
+		for(size_t i = 0; i < uniforms.size(); ++i)
 		{
 			if (std::string(name) == uniforms[i].first)
 			{

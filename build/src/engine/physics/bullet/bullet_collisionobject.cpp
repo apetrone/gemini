@@ -39,9 +39,9 @@ namespace gemini
 				object(0),
 				shape(0),
 				ghost(0),
+				motion_state(0),
 				user_data(0),
-				callback(0),
-				motion_state(0)
+				callback(0)
 			{
 			}
 				
