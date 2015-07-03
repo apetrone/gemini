@@ -31,7 +31,6 @@
 
 #include <platform/platform.h>
 #include <platform/kernel.h>
-#include <platform/windowlibrary.h>
 #include <platform/input.h>
 
 #include <core/hashset.h>
@@ -48,6 +47,9 @@
 
 using namespace platform;
 using namespace renderer;
+
+// when enabled; uses the old method for creating windows
+#define USE_WINDOW_LIBRARY 0
 
 namespace render2
 {
@@ -1242,7 +1244,9 @@ namespace render2
 }
 
 class EditorKernel : public kernel::IKernel,
-public kernel::IEventListener<kernel::KeyboardEvent>
+public kernel::IEventListener<kernel::KeyboardEvent>,
+public kernel::IEventListener<kernel::MouseEvent>,
+public kernel::IEventListener<kernel::SystemEvent>
 {
 private:
 	bool active;
@@ -1290,9 +1294,40 @@ public:
 	virtual bool is_active() const { return active; }
 	virtual void set_active(bool isactive) { active = isactive; }
 	
-	virtual void resolution_changed(int width, int height)
+	virtual void event(kernel::SystemEvent& event)
 	{
-		LOGV("resolution_changed %i %i\n", width, height);
+		if (event.subtype == kernel::WindowGainFocus)
+		{
+			LOGV("window gained focus\n");
+		}
+		else if (event.subtype == kernel::WindowLostFocus)
+		{
+			LOGV("window lost focus\n");
+		}
+		else if (event.subtype == kernel::WindowResized)
+		{
+			LOGV("resolution_changed %i %i\n", event.render_width, event.render_height);
+		}
+	}
+	
+	virtual void event(kernel::MouseEvent& event)
+	{
+		if (event.subtype == kernel::MouseWheelMoved)
+		{
+			LOGV("wheel direction: %i\n", event.wheel_direction);
+		}
+		else if (event.subtype == kernel::MouseMoved)
+		{
+			LOGV("mouse moved: %i %i\n", event.mx, event.my);
+		}
+		else if (event.subtype == kernel::MouseButton)
+		{
+			LOGV("mouse button: %s, %i -> %s\n", event.is_down ? "Yes" : "No", event.button, input::mouse_button_name(event.button));
+		}
+		else
+		{
+			LOGV("mouse event: %i\n", event.subtype);
+		}
 	}
 
 	virtual kernel::Error startup()
@@ -1311,6 +1346,7 @@ public:
 		core::startup_logging();
 		
 		// create a platform window
+#if USE_WINDOW_LIBRARY
 		{
 			window_interface = platform::create_window_library();
 			window_interface->startup(kernel::parameters());
@@ -1323,7 +1359,37 @@ public:
 			main_window = window_interface->create_window(window_params);
 			window_interface->show_mouse(true);
 		}
-		
+#else
+		{
+			
+			//	uint32_t rcaps = platform::get_renderinterface_caps();
+			//	fprintf(stdout, "RenderBackends: %i\n", rcaps);
+
+			fprintf(stdout, "total screens: %zu\n", platform::window_screen_count());
+			
+			for (size_t screen = 0; screen < platform::window_screen_count(); ++screen)
+			{
+				int x;
+				int y;
+				int width;
+				int height;
+				
+				//		wp->screen_size(screen, width, height);
+				//		fprintf(stdout, "screen: %zu, resolution: %i x %i\n", screen, width, height);
+				
+				platform::window_screen_rect(screen, x, y, width, height);
+				fprintf(stdout, "screen rect: %zu, origin: %i, %i; resolution: %i x %i\n", screen, x, y, width, height);
+			}
+			
+			platform::WindowParameters params;
+			params.window_width = 800;
+			params.window_height = 600;
+			params.window_title = "orion";
+			params.target_display = 0;
+			main_window = platform::window_create(params);
+		}
+#endif
+
 		// old renderer initialize
 		{
 			renderer::RenderSettings render_settings;
@@ -1443,7 +1509,10 @@ public:
 	
 	virtual void tick()
 	{
-		window_interface->process_events();
+		if (window_interface)
+			window_interface->process_events();
+		else
+			platform::window_process_events();
 		
 				
 		static float value = 0.0f;
@@ -1477,12 +1546,24 @@ public:
 //		queue.draw_indexed_primitives(index_buffer, 3);
 		queue.draw(0, 3);
 		
+		
+		if (!window_interface)
+			platform::window_begin_rendering(main_window);
+		
+		
 		device->queue_buffers(&queue, 1);
 		device->submit();
+		
+		
+		if (!window_interface)
+			platform::window_end_rendering(main_window);
 
 //		glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, 2000);
 		
-		window_interface->swap_buffers(main_window);
+		if (window_interface)
+		{
+			window_interface->swap_buffers(main_window);
+		}
 	}
 	
 	virtual void shutdown()
@@ -1500,8 +1581,15 @@ public:
 		
 		renderer::shutdown();
 	
-		window_interface->destroy_window(main_window);
-		window_interface->shutdown();
+		if (window_interface)
+		{
+			window_interface->destroy_window(main_window);
+			window_interface->shutdown();
+		}
+		else
+		{
+			platform::window_destroy(main_window);
+		}
 		platform::destroy_window_library();
 		core::shutdown();
 	}
@@ -1513,11 +1601,13 @@ public:
 		{
 			set_active(false);
 		}
+		else
+		{
+			LOGV("key is_down: '%s', name: '%s', modifiers: %zu\n", event.is_down ? "Yes" : "No", input::key_name(event.key), event.modifiers);
+		}
 	}
-	
+
 };
-
-
 
 PLATFORM_MAIN
 {

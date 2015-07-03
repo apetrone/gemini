@@ -107,8 +107,6 @@ namespace kernel
 		virtual bool is_active() const = 0;
 		virtual void set_active(bool isactive) = 0;
 
-		virtual void resolution_changed(int width, int height) = 0;
-
 		// called first thing during setup; useful for initializing libraries
 		virtual Error startup() = 0;
 
@@ -124,9 +122,6 @@ namespace kernel
 	
 	// call this when the application will be terminated
 	LIBRARY_EXPORT void shutdown();
-
-	// call this when the resolution of the window or device has changed
-	LIBRARY_EXPORT void resolution_changed(int width, int height);
 	
 	// called once per frame, preferably in a loop
 	LIBRARY_EXPORT void tick();

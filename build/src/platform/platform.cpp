@@ -58,12 +58,32 @@
 namespace platform
 {
 	MainParameters _mainparameters;
+	static core::memory::zone* _zone;
+	
+	
+	// ---------------------------------------------------------------------
+	// internal platform stuff?
+	// ---------------------------------------------------------------------
+	
+	input_provider::~input_provider()
+	{
+	}
+
+	
+	core::memory::zone* get_memory_zone()
+	{
+		return _zone;
+	}
+
+
+
 
 	Result startup()
 	{
 		Result result(Result::Success);
 			
 		core::memory::startup();
+		_zone = MEMORY_NEW(core::memory::zone, core::memory::global_allocator())("platform");
 		
 		result = os_startup();
 		if (result.failed())
@@ -85,6 +105,7 @@ namespace platform
 		timer_shutdown();
 		os_shutdown();
 		
+		MEMORY_DELETE(_zone, core::memory::global_allocator());
 		core::memory::shutdown();
 	}
 	

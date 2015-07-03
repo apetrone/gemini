@@ -80,6 +80,7 @@
 namespace kernel
 {
 	class IKernel;
+	struct Parameters;
 }
 
 
@@ -364,5 +365,151 @@ namespace platform
 	
 	/// @brief Populates the DateTime struct with the system's current date and time
 	LIBRARY_EXPORT void datetime(DateTime& datetime);
+
+
+	// ---------------------------------------------------------------------
+	// windowsystem
+	// ---------------------------------------------------------------------
+	
+	
+	
+	struct WindowParameters
+	{
+		// in windowed modes, this is the target display the window
+		// will be transferred to
+		uint32_t target_display;
+		
+		// dimensions of the actual window in pixels
+		uint32_t window_width;
+		uint32_t window_height;
+		
+		uint32_t window_x;
+		uint32_t window_y;
+		
+		// dimensions of the rendering area in pixels
+		uint32_t render_width;
+		uint32_t render_height;
+		
+		// need to take this into account when calculating screen coordinates
+		uint32_t titlebar_height;
+		
+		// utf8-encoded window title
+		const char* window_title;
+		
+		// set to true to create a fullscreen window
+		bool enable_fullscreen;
+		
+		// allow the window to be resized
+		bool enable_resize;
+		
+		WindowParameters() :
+		target_display(0),
+		window_width(1),
+		window_height(1),
+		window_x(0),
+		window_y(0),
+		render_width(0),
+		render_height(1),
+		titlebar_height(0),
+		window_title(0),
+		enable_fullscreen(false),
+		enable_resize(true)
+		{
+		}
+		
+		virtual ~WindowParameters();
+	};
+	
+	struct NativeWindow : public WindowParameters
+	{
+		virtual ~NativeWindow();
+	};
+	
+	struct IWindowLibrary
+	{
+	public:
+		virtual ~IWindowLibrary();
+		
+		virtual void startup(kernel::Parameters& parameters) = 0;
+		virtual void shutdown() = 0;
+		virtual NativeWindow* create_window(const WindowParameters& parameters) = 0;
+		virtual void destroy_window(NativeWindow* window) = 0;
+		virtual void process_events() = 0;
+		virtual void activate_window(NativeWindow* window) = 0;
+		virtual void swap_buffers(NativeWindow* window) = 0;
+		virtual void focus_window(NativeWindow* window) = 0;
+		
+		// cursor control
+		virtual void capture_mouse(bool capture) = 0;
+		virtual void warp_mouse(int x, int y) = 0;
+		virtual void get_mouse(int& x, int& y) = 0;
+		virtual void show_mouse(bool show) = 0;
+	};
+	
+	IWindowLibrary* create_window_library();
+	void destroy_window_library();
+	
+	class input_provider
+	{
+	public:
+		virtual ~input_provider();
+	
+		// capture the mouse
+		virtual void capture_mouse(bool capture) = 0;
+		
+		// warp the mouse to a position
+		virtual void warp_mouse(int x, int y) = 0;
+		
+		// get the current mouse position
+		virtual void get_mouse(int& x, int& y) = 0;
+		
+		// toggle mouse visibility
+		virtual void show_mouse(bool show) = 0;
+	};
+	
+
+	NativeWindow* window_create(const WindowParameters& window_parameters);
+	void window_destroy(NativeWindow* window);
+	
+	// activate this window for rendering
+	void window_begin_rendering(NativeWindow* window);
+	
+	// post frame on this window
+	void window_end_rendering(NativeWindow* window);
+	
+	// process window provider events (for all windows)
+	void window_process_events();
+	
+	// return the window size in pixels
+	void window_size(NativeWindow* window, int& width, int& height);
+	
+	// return the renderable window surface in pixels
+	void window_render_size(NativeWindow* window, int& width, int& height);
+	
+	// total number of screens detected on this system
+	size_t window_screen_count();
+	
+	/// @brief get the specified screen's rect (origin, width, and height) in pixels
+	void window_screen_rect(size_t screen_index, int& x, int& y, int& width, int& height);
+	
+	// bring window to focus
+	void window_focus(NativeWindow* window);
+	
+	// should these be exposed? or internal?
+	enum RenderBackend
+	{
+		RenderBackend_None		= 0,
+		RenderBackend_OpenGL	= 1,
+		RenderBackend_OpenGLES	= 2
+	};
+	
+	enum InputBackend
+	{
+		InputBackend_Cocoa,
+		InputBackend_udev,
+		InputBackend_win32
+	};
+	
+	//LIBRARY_EXPORT bool supports_input_interface(const NativeInputInterface::Type& interface);
 
 } // namespace platform

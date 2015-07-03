@@ -24,49 +24,28 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "platform.h"
-#include "input.h"
+#include <core/config.h>
 
-#include <SDL.h>
-#include <map>
-#include <vector>
+#if defined(PLATFORM_MACOSX)
+	#import <Cocoa/Cocoa.h>
+	#import <Foundation/Foundation.h>
+#elif defined(PLATFORM_IPHONEOS)
+	#import <AppKit/AppKit.h>
+#else
+	#error Unknown Apple platform
+#endif
+
+#include "input.h"
 
 namespace platform
 {
-	struct SDLWindow;
-	struct SDLWindowLibrary : public platform::IWindowLibrary
+	namespace osx
 	{
-		// SDL related items
-		SDL_Rect* display_rects;
-		uint8_t total_displays;
-		uint8_t total_controllers;
-		typedef std::map<unsigned int, input::Button, std::less<unsigned int>> SDLToButtonKeyMap;
-		SDLToButtonKeyMap key_map;
-		input::MouseButton mouse_map[input::MOUSE_COUNT];
-		SDL_GameController* controllers[input::MAX_JOYSTICKS];
-		std::vector<SDLWindow*> windows;
+		void populate_keymap();
 		
-		SDLWindowLibrary();
+		input::Button convert_keycode(unsigned short mac_keycode);
 		
-		void startup(kernel::Parameters& parameters);
-		
-		void populate_input_map();
-		void setup_joysticks();
-
-		uint16_t convert_sdl_modifiers(SDL_Keymod modifiers);
-		
-		virtual void shutdown();
-		virtual NativeWindow* create_window(const WindowParameters& parameters);
-		virtual void destroy_window(NativeWindow* window);
-		virtual void process_events();
-		virtual void activate_window(NativeWindow* window);
-		virtual void swap_buffers(NativeWindow* window);
-		virtual void focus_window(NativeWindow* window);
-		
-		
-		virtual void capture_mouse(bool capture);
-		virtual void warp_mouse(int x, int y);
-		virtual void get_mouse(int& x, int& y);
-		virtual void show_mouse(bool show);
-	};
+		uint16_t keymod_state();
+		void keymod_state(uint16_t keymods);
+	}
 } // namespace platform

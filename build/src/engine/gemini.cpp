@@ -65,8 +65,6 @@
 #include "hotloading.h"
 #include "navigation.h"
 
-#include <platform/windowlibrary.h>
-
 typedef FixedSizeQueue<gemini::GameMessage, 64> EventQueueType;
 
 struct DataInput
@@ -1088,14 +1086,7 @@ public:
 	
 	virtual bool is_active() const { return active; }
 	virtual void set_active(bool isactive) { active = isactive; }
-	
-	virtual void resolution_changed(int width, int height) {}
-	
-	
-	
-	
-	
-	
+
 	virtual void event( kernel::KeyboardEvent & event )
 	{
 //		input::state()->keyboard().inject_key_event(event.key, event.is_down);

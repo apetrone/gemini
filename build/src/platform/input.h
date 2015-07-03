@@ -36,14 +36,14 @@ namespace input
 	const uint8_t MAX_JOYSTICK_BUTTONS = 16;
 	const uint8_t MAX_JOYSTICK_AXES = 6;
 	const uint8_t MAX_JOYSTICKS = 8;
-	
-	
+		
 	const int16_t AxisValueMinimum = SHRT_MIN;
 	const int16_t AxisValueMaximum = SHRT_MAX;
 	
 	enum Button
 	{
 		KEY_INVALID,
+		
 		KEY_A,
 		KEY_B,
 		KEY_C,
@@ -106,9 +106,12 @@ namespace input
 		KEY_NUMLOCK,
 		KEY_CAPSLOCK,
 		
-		// windows key / command key
-		KEY_LGUI,
-		
+		// windows key / command key (left/right variants)
+		KEY_LOSKEY,
+		KEY_ROSKEY,
+
+		KEY_FUNCTION,
+
 		// numeric keys
 		KEY_0,
 		KEY_1,
@@ -137,6 +140,11 @@ namespace input
 		KEY_F13,
 		KEY_F14,
 		KEY_F15,
+		KEY_F16,
+		KEY_F17,
+		KEY_F18,
+		KEY_F19,
+		KEY_F20,
 		
 		// directional keys
 		KEY_LEFT,
@@ -160,12 +168,17 @@ namespace input
 		KEY_NUMPAD_PLUSMINUS,
 		KEY_NUMPAD_MULTIPLY,
 		KEY_NUMPAD_DIVIDE,
-
+		KEY_NUMPAD_PERIOD,
+		KEY_NUMPAD_ENTER,
+		KEY_NUMPAD_EQUALS,
+		
 		KEY_COUNT
 	}; // enum Button
 	
 	enum MouseButton
 	{
+		MOUSE_INVALID,
+		
 		MOUSE_LEFT,
 		MOUSE_RIGHT,
 		MOUSE_MIDDLE,
@@ -181,7 +194,8 @@ namespace input
 	// Xbox 360 config.
 	enum GamepadButton
 	{
-		GAMEPAD_BUTTON_INVALID = -1,
+		GAMEPAD_BUTTON_INVALID,
+		
 		GAMEPAD_BUTTON_A,
 		GAMEPAD_BUTTON_B,
 		GAMEPAD_BUTTON_X,
@@ -196,7 +210,9 @@ namespace input
 		GAMEPAD_BUTTON_DPAD_UP,
 		GAMEPAD_BUTTON_DPAD_DOWN,
 		GAMEPAD_BUTTON_DPAD_LEFT,
-		GAMEPAD_BUTTON_DPAD_RIGHT
+		GAMEPAD_BUTTON_DPAD_RIGHT,
+		
+		GAMEPAD_BUTTON_COUNT
 	}; // enum GamepadButton
 	
 	// key mods
@@ -368,6 +384,8 @@ namespace input
 	LIBRARY_EXPORT void shutdown(void);
 	LIBRARY_EXPORT void update(void);
 
-	LIBRARY_EXPORT const char* mouse_button_name(MouseButton button);
+	LIBRARY_EXPORT const char* mouse_button_name(unsigned int button);
+	LIBRARY_EXPORT const char* key_name(unsigned int key);
+	LIBRARY_EXPORT const char* gamepad_name(unsigned int button);
 
 } // namespace input

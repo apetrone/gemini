@@ -22,7 +22,6 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-
 #include "input.h"
 
 #include <string.h>
@@ -131,6 +130,189 @@ namespace input
 		}
 #endif
 	}
+
+	const char* mouse_button_name(unsigned int value)
+	{
+		static const char* names[] = {
+			"MOUSE_INVALID",
+			"MOUSE_LEFT",
+			"MOUSE_RIGHT",
+			"MOUSE_MIDDLE",
+			"MOUSE_MOUSE4",
+			"MOUSE_MOUSE5",
+			"MOUSE_MOUSE6",
+			"MOUSE_MOUSE7"
+		};
+		
+		if (value < MOUSE_COUNT)
+		{
+			return names[value];
+		}
+		
+		return "MOUSE_INVALID";
+	} // mouse_button_name
+	
+	const char* key_name(unsigned int key)
+	{
+		static const char* names[] = {
+			"KEY_INVALID",
+			"KEY_A",
+			"KEY_B",
+			"KEY_C",
+			"KEY_D",
+			"KEY_E",
+			"KEY_F",
+			"KEY_G",
+			"KEY_H",
+			"KEY_I",
+			"KEY_J",
+			"KEY_K",
+			"KEY_L",
+			"KEY_M",
+			"KEY_N",
+			"KEY_O",
+			"KEY_P",
+			"KEY_Q",
+			"KEY_R",
+			"KEY_S",
+			"KEY_T",
+			"KEY_U",
+			"KEY_V",
+			"KEY_W",
+			"KEY_Y",
+			"KEY_X",
+			"KEY_Z",
+			"KEY_MENU",
+			"KEY_SEMICOLON",
+			"KEY_SLASH",
+			"KEY_BACKSLASH",
+			"KEY_EQUALS",
+			"KEY_MINUS",
+			"KEY_LBRACKET",
+			"KEY_RBRACKET",
+			"KEY_COMMA",
+			"KEY_PERIOD",
+			"KEY_QUOTE",
+			"KEY_TILDE",
+			"KEY_ESCAPE",
+			"KEY_SPACE",
+			"KEY_RETURN",
+			"KEY_BACKSPACE",
+			"KEY_TAB",
+			"KEY_PAGEUP",
+			"KEY_PAGEDN",
+			"KEY_END",
+			"KEY_HOME",
+			"KEY_INSERT",
+			"KEY_DELETE",
+			"KEY_PAUSE",
+			"KEY_LSHIFT",
+			"KEY_RSHIFT",
+			"KEY_LCONTROL",
+			"KEY_RCONTROL",
+			"KEY_LALT",
+			"KEY_RALT",
+			"KEY_NUMLOCK",
+			"KEY_CAPSLOCK",
+			"KEY_LOSKEY",
+			"KEY_ROSKEY",
+			"KEY_FUNCTION",
+			"KEY_0",
+			"KEY_1",
+			"KEY_2",
+			"KEY_3",
+			"KEY_4",
+			"KEY_5",
+			"KEY_6",
+			"KEY_7",
+			"KEY_8",
+			"KEY_9",
+			"KEY_F1",
+			"KEY_F2",
+			"KEY_F3",
+			"KEY_F4",
+			"KEY_F5",
+			"KEY_F6",
+			"KEY_F7",
+			"KEY_F8",
+			"KEY_F9",
+			"KEY_F10",
+			"KEY_F11",
+			"KEY_F12",
+			"KEY_F13",
+			"KEY_F14",
+			"KEY_F15",
+			"KEY_F16",
+			"KEY_F17",
+			"KEY_F18",
+			"KEY_F19",
+			"KEY_F20",
+			"KEY_LEFT",
+			"KEY_RIGHT",
+			"KEY_UP",
+			"KEY_DOWN",
+			"KEY_NUMPAD0",
+			"KEY_NUMPAD1",
+			"KEY_NUMPAD2",
+			"KEY_NUMPAD3",
+			"KEY_NUMPAD4",
+			"KEY_NUMPAD5",
+			"KEY_NUMPAD6",
+			"KEY_NUMPAD7",
+			"KEY_NUMPAD8",
+			"KEY_NUMPAD9",
+			"KEY_NUMPAD_PLUS",
+			"KEY_NUMPAD_MINUS",
+			"KEY_NUMPAD_PLUSMINUS",
+			"KEY_NUMPAD_MULTIPLY",
+			"KEY_NUMPAD_DIVIDE",
+			"KEY_NUMPAD_PERIOD",
+			"KEY_NUMPAD_ENTER",
+			"KEY_NUMPAD_EQUALS"
+		};
+		
+		if (key < KEY_COUNT)
+		{
+			return names[key];
+		}
+		
+		return "KEY_INVALID";
+	} // key_name
+	
+	
+	const char* gamepad_name(unsigned int value)
+	{
+		static const char* names[] = {
+			"GAMEPAD_BUTTON_INVALID",
+			"GAMEPAD_BUTTON_A",
+			"GAMEPAD_BUTTON_B",
+			"GAMEPAD_BUTTON_X",
+			"GAMEPAD_BUTTON_Y",
+			"GAMEPAD_BUTTON_BACK",
+			"GAMEPAD_BUTTON_GUIDE",
+			"GAMEPAD_BUTTON_START",
+			"GAMEPAD_BUTTON_LEFTSTICK",
+			"GAMEPAD_BUTTON_RIGHTSTICK",
+			"GAMEPAD_BUTTON_LEFTSHOULDER",
+			"GAMEPAD_BUTTON_RIGHTSHOULDER",
+			"GAMEPAD_BUTTON_DPAD_UP",
+			"GAMEPAD_BUTTON_DPAD_DOWN",
+			"GAMEPAD_BUTTON_DPAD_LEFT",
+			"GAMEPAD_BUTTON_DPAD_RIGHT",
+		};
+		
+		if (value < GAMEPAD_BUTTON_COUNT)
+		{
+			return names[value];
+		}
+		
+		return "GAMEPAD_BUTTON_INVALID";
+	} // gamepad_name
+	
+	// ---------------------------------------------------------------------
+	// devices
+	// ---------------------------------------------------------------------
+	
 
 	//
 	// KeyboardInput
@@ -276,23 +458,4 @@ namespace input
 			buttons[ i ].update();
 		}
 	}
-	
-	const char * mouse_button_name( MouseButton button )
-	{
-		switch(button)
-		{
-			case MOUSE_LEFT: return "MOUSE_LEFT";
-			case MOUSE_RIGHT: return "MOUSE_RIGHT";
-			case MOUSE_MIDDLE: return "MOUSE_MIDDLE";
-			case MOUSE_MOUSE4: return "MOUSE_MOUSE4";
-			case MOUSE_MOUSE5: return "MOUSE_MOUSE5";
-			case MOUSE_MOUSE6: return "MOUSE_MOUSE6";
-			case MOUSE_MOUSE7: return "MOUSE_MOUSE7";
-			case MOUSE_COUNT: break;
-		}
-		
-		return "MOUSE_INVALID";
-	} // mouse_button_name
-	
-	
 } // namespace input

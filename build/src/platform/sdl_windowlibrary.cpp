@@ -155,7 +155,7 @@ namespace platform
 		key_map[SDLK_RALT] = KEY_RALT;
 		key_map[SDLK_NUMLOCKCLEAR] = KEY_NUMLOCK;
 		key_map[SDLK_CAPSLOCK] = KEY_CAPSLOCK;
-		key_map[SDLK_LGUI] = KEY_LGUI;
+		key_map[SDLK_LGUI] = KEY_LOSKEY;
 		key_map[SDLK_0] = KEY_0;
 		key_map[SDLK_1] = KEY_1;
 		key_map[SDLK_2] = KEY_2;
