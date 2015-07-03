@@ -42,7 +42,7 @@
 	#define DRIVER_NAME "OpenAL"
 	#define DRIVER_CREATOR OpenAL::creator
 
-#elif PLATFORM_IOS
+#elif defined(PLATFORM_IPHONEOS)
 	#include "audio_extaudio_decoder.h"
 	#include "openal.h"
 	namespace gemini

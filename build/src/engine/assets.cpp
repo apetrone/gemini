@@ -154,7 +154,7 @@ namespace gemini
 		void append_asset_extension( AssetType type, core::StackString<MAX_PATH_SIZE> & path )
 		{
 			const char * extension = "";
-#if PLATFORM_APPLE && PLATFORM_IOS
+#if defined(PLATFORM_IPHONEOS)
 			kernel::KernelDeviceFlags device_flags = kernel::parameters().device_flags;
 #endif
 			
@@ -162,7 +162,7 @@ namespace gemini
 			{
 				case SoundAsset:
 				{
-#if PLATFORM_APPLE && PLATFORM_IOS
+#if defined(PLATFORM_IPHONEOS)
 					if ( (device_flags & kernel::DeviceiPad) || (device_flags & kernel::DeviceiPhone) )
 					{
 						extension = "caf";
