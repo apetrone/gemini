@@ -92,7 +92,7 @@ namespace core
 		
 		bool Argument::single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
 		{
-			for (int32_t index = pattern_start; index < patterns.items_length; ++index)
+			for (uint32_t index = pattern_start; index < patterns.items_length; ++index)
 			{
 				PatternPtr p = patterns.at(index);
 				if (p->get_type() == PT_Argument)
@@ -149,7 +149,7 @@ namespace core
 		// ---------------------------------------------------------------------
 		bool Command::single_match(int32_t& pattern_start, PatternWrapper &patterns, VariableMap &vars)
 		{
-			for (int32_t index = pattern_start; index < patterns.items_length; ++pattern_start)
+			for (uint32_t index = pattern_start; index < patterns.items_length; ++pattern_start)
 			{
 				PatternPtr p = patterns.at(index);
 				if (p->get_type() == PT_Argument)
@@ -213,11 +213,7 @@ namespace core
 		void ArgumentParser::parse_patterns_from_tokens(PatternList& patterns, TokenWrapper& tokens)
 		{
 			state = ParsingInput;
-		
-		
-			int argument_index = 0;
-			int pattern_index = 0;
-			
+
 			
 			// first, we build a list of the input tokens and categorize these
 			// into a series of patterns.

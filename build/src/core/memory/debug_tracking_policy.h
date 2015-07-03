@@ -86,7 +86,7 @@ struct debug_tracking_policy
 		allocation_size = header->allocation_size;
 		
 		// remove from allocated block list
-		typename MemoryBlockList::iterator it = allocated_blocks.begin();
+		MemoryBlockList::iterator it = allocated_blocks.begin();
 		for (; it != allocated_blocks.end(); ++it)
 		{
 			if (*it == header)
@@ -101,7 +101,7 @@ struct debug_tracking_policy
 private:
 	void print_leaks()
 	{
-		typename MemoryBlockList::iterator it = allocated_blocks.begin();
+		MemoryBlockList::iterator it = allocated_blocks.begin();
 		for (; it != allocated_blocks.end(); ++it)
 		{
 			MemoryHeader* block = (*it);

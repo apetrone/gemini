@@ -440,9 +440,9 @@ namespace core
 			void parse_usage(std::vector<std::string> lines);
 			bool check_extra(bool enable_automatic_help, const char* version_string, PatternList& patterns);
 
-			void set_error(const char* format, ...) {};
+			void set_error(const char* format, ...) {}
 
-			/// @desc Split a space-delimited string up into argc/argv
+			/// @brief Split a space-delimited string up into argc/argv
 			std::vector<std::string> split_commandline(const char* commandline);
 		public:
 

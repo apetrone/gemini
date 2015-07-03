@@ -36,7 +36,7 @@ namespace core
 		class LIBRARY_EXPORT DataStream
 		{
 		public:
-			virtual ~DataStream() {}
+			virtual ~DataStream();
 			
 			// fetch data pointer
 			virtual uint8_t* get_data() const = 0;

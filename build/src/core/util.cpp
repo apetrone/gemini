@@ -28,7 +28,7 @@
 extern "C"
 {
 	#include <murmur3.h>
-};
+}
 
 #include <stdlib.h>
 
@@ -62,5 +62,5 @@ namespace core
 		{
 			return hash_32bit(&s[0], s.max_size(), 0);
 		}
-	}; // mamespace util
+	} // namespace util
 } // namespace core

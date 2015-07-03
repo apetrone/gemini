@@ -26,9 +26,9 @@
 
 #include "typedefs.h"
 
-#if PLATFORM_WINDOWS
-#pragma warning( disable: 4305 ) // warning C4305: 'initializing' : truncation from 'double' to 'const aengine::real'
-#pragma warning( disable: 4244 ) //warning C4244: 'initializing' : conversion from 'double' to 'const aengine::real', possible loss of data
+#if defined(PLATFORM_WINDOWS)
+	#pragma warning( disable: 4305 ) // warning C4305: 'initializing' : truncation from 'double' to 'const aengine::real'
+	#pragma warning( disable: 4244 ) //warning C4244: 'initializing' : conversion from 'double' to 'const aengine::real', possible loss of data
 #endif
 
 
