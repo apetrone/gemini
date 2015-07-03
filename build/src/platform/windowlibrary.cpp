@@ -25,7 +25,8 @@
 
 #include "mem.h"
 #include "config.h"
-#include "windowlibrary.h"
+//#include "windowlibrary.h"
+#include "platform.h"
 
 #if defined(PLATFORM_IS_MOBILE)
 	#error Not supported!
@@ -34,12 +35,50 @@
 	typedef platform::SDLWindowLibrary WindowLibrary;
 #endif
 
+using namespace platform;
+
 namespace platform
 {
 	namespace detail
 	{
 		IWindowLibrary* windowlibrary = 0;
 	}
+	
+
+		
+		uint32_t get_renderinterface_caps()
+		{
+			uint32_t caps = 0;
+			
+#if defined(PLATFORM_SUPPORT_OPENGL)
+			caps |= RenderBackend_OpenGL;
+#elif defined(PLATFORM_SUPPORT_OPENGLES)
+			caps |= RenderBackend_OpenGLES;
+#else
+	#error Unknown or unsupported render system
+#endif
+			
+			return caps;
+		}
+		
+		
+
+	
+	
+	void startup_window_interface(
+		const platform::RenderBackend& render_interface,
+		const InputBackend& input_backend)
+	{
+		
+	}
+	
+	void shutdown_window_interface()
+	{
+		
+	}
+	
+	
+	
 	
 	// don't bloat my code up
 	WindowParameters::~WindowParameters()
@@ -67,5 +106,7 @@ namespace platform
 	void destroy_window_library()
 	{
 		MEMORY_DELETE(detail::windowlibrary, core::memory::global_allocator());
+		
+		shutdown_window_interface();
 	}
 } // namespace platform

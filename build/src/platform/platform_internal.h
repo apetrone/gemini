@@ -24,11 +24,14 @@
 #pragma once
 
 #include "config.h"
-
 #include "platform.h"
+#include <core/mem.h>
 
 namespace platform
 {
+	core::memory::zone* get_memory_zone();
+
+
 	// timer interface
 	Result timer_startup();
 	void timer_shutdown();
@@ -40,7 +43,7 @@ namespace platform
 
 	// cross distro/system functions that could be shared
 	
-#if PLATFORM_APPLE || PLATFORM_LINUX
+#if defined(PLATFORM_APPLE) || defined(PLATFORM_LINUX)
 
 	// filesystem
 	Result posix_make_directory(const char* path);

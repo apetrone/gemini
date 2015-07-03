@@ -26,8 +26,6 @@
 
 #include <core/typedefs.h>
 
-#include <stdint.h>
-
 namespace kernel
 {
 	//
@@ -96,12 +94,15 @@ namespace kernel
 		EventSubType subtype;
 	}; // Event
 	
+	// call this when the resolution of the window or device has changed
 	struct LIBRARY_EXPORT SystemEvent : public Event<System>
 	{
 		short window_width;
 		short window_height;
 		short render_width;
 		short render_height;
+		
+		// TODO: keep track of device orientation
 	}; // SystemEvent
 	
 	struct LIBRARY_EXPORT KeyboardEvent : public Event<Keyboard>

@@ -22,24 +22,14 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-
 #include "platform.h"
-
-#if TARGET_OS_MAC && !TARGET_OS_IPHONE
-	#import <Cocoa/Cocoa.h>
-	#import <AppKit/AppKit.h>
-#else
-	#import <Foundation/Foundation.h>
-#endif
+#include "osx_common.h"
 
 namespace platform
 {
-	NSAutoreleasePool* pool;
-	
 	Result os_startup()
 	{
-		pool = [[NSAutoreleasePool alloc] init];
-//		
+//
 //		NSProcessInfo* processInfo = [NSProcessInfo processInfo];
 //		
 //		const int MB = (1024*1024);
@@ -52,13 +42,14 @@ namespace platform
 //
 //		NSLog(@"uptime: %f", uptime);
 		
+		// populate the osx keymap
+		osx::populate_keymap();
+		
 		return Result(Result::Success);
 	}
 	
 	void os_shutdown()
 	{
-		[pool release];
-		pool = 0;
 	}
 	
 	int os_run_application(int argc, const char** argv)

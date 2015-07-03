@@ -29,7 +29,6 @@
 #include <runtime/filesystem.h>
 
 #include <platform/platform.h>
-#include <platform/windowlibrary.h>
 #include <platform/kernel.h>
 
 #include <renderer/renderer.h>
@@ -138,10 +137,6 @@ public:
 
 	virtual bool is_active() const { return active; }
 	virtual void set_active(bool isactive) { active = isactive; }
-	
-	virtual void resolution_changed(int width, int height)
-	{
-	}
 	
 	virtual kernel::Error startup()
 	{

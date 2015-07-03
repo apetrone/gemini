@@ -24,49 +24,15 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "platform.h"
-#include "input.h"
-
-#include <SDL.h>
-#include <map>
-#include <vector>
-
-namespace platform
+@interface cocoa_openglview : NSView
 {
-	struct SDLWindow;
-	struct SDLWindowLibrary : public platform::IWindowLibrary
-	{
-		// SDL related items
-		SDL_Rect* display_rects;
-		uint8_t total_displays;
-		uint8_t total_controllers;
-		typedef std::map<unsigned int, input::Button, std::less<unsigned int>> SDLToButtonKeyMap;
-		SDLToButtonKeyMap key_map;
-		input::MouseButton mouse_map[input::MOUSE_COUNT];
-		SDL_GameController* controllers[input::MAX_JOYSTICKS];
-		std::vector<SDLWindow*> windows;
-		
-		SDLWindowLibrary();
-		
-		void startup(kernel::Parameters& parameters);
-		
-		void populate_input_map();
-		void setup_joysticks();
+@public
+	NSOpenGLContext* _context;
+}
 
-		uint16_t convert_sdl_modifiers(SDL_Keymod modifiers);
-		
-		virtual void shutdown();
-		virtual NativeWindow* create_window(const WindowParameters& parameters);
-		virtual void destroy_window(NativeWindow* window);
-		virtual void process_events();
-		virtual void activate_window(NativeWindow* window);
-		virtual void swap_buffers(NativeWindow* window);
-		virtual void focus_window(NativeWindow* window);
-		
-		
-		virtual void capture_mouse(bool capture);
-		virtual void warp_mouse(int x, int y);
-		virtual void get_mouse(int& x, int& y);
-		virtual void show_mouse(bool show);
-	};
-} // namespace platform
+@property (nonatomic, retain) NSOpenGLContext* context;
+
+-(id)initWithFrame: (NSRect)frameRect;
+-(void) dealloc;
+-(BOOL) isOpaque;
+@end

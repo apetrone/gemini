@@ -367,7 +367,6 @@ def get_libplatform(arguments, target_platform):
 	libplatform.project_root = COMMON_PROJECT_ROOT
 	libplatform.root = "../"
 	libplatform.sources += [
-		"src/platform/config.h",
 		"src/platform/kernel.cpp",
 		"src/platform/kernel.h",
 		"src/platform/kernel_events.h",	
@@ -415,7 +414,14 @@ def get_libplatform(arguments, target_platform):
 		
 		# time
 		"src/platform/time/osx/osx_timer.cpp",
-		"src/platform/time/posix/posix_datetime.cpp"
+		"src/platform/time/posix/posix_datetime.cpp",
+
+		# window
+		"src/platform/window/osx/osx_windowbackend.mm",
+		"src/platform/window/osx/osx_openglview.mm",
+		"src/platform/window/osx/osx_openglview.h",
+		"src/platform/window/osx/osx_window.mm",
+		"src/platform/window/osx/osx_window.h"		
 	]
 
 	macosx.includes += [
@@ -424,6 +430,10 @@ def get_libplatform(arguments, target_platform):
 
 	macosx.links += [
 		"Cocoa.framework"
+	]
+
+	macosx.defines += [
+		"PLATFORM_SUPPORT_OPENGL=1"
 	]
 
 
@@ -456,6 +466,18 @@ def get_libplatform(arguments, target_platform):
 	linux.includes += [
 		"src/platform/posix"
 	]
+
+	# if GLES is explicitly defined or RaspberryPi is;
+	# we should support OpenGL ES
+	if arguments.gles or arguments.raspberrypi:
+		linux.defines += [
+			"PLATFORM_SUPPORT_OPENGLES=1"
+		]
+	else:
+		# Otherwise, just assume Linux can handle desktop GL
+		linux.defines += [
+			"PLATFORM_SUPPORT_OPENGL=1"
+		]
 
 
 	windows = libplatform.layout(platform="windows")

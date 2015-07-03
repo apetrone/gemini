@@ -33,9 +33,9 @@ static bool has_started = false;
 
 -(CGFloat)calculate_titlebar_height
 {
-	NSWindow *mainWindow = [[NSApplication sharedApplication] mainWindow];
+	NSWindow *main_window = [[NSApplication sharedApplication] mainWindow];
 	
-	NSRect frame = [mainWindow frame];
+	NSRect frame = [main_window frame];
 	NSRect content_rect = [NSWindow contentRectForFrameRect:frame styleMask:NSTitledWindowMask];
 	
 	return (frame.size.height - content_rect.size.height);
@@ -51,17 +51,13 @@ static bool has_started = false;
 	[[NSApplication sharedApplication] terminate:nil];
 }
 
-
-
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-//	NSLog( @"applicationDidFinishLaunching" );
 }
 
 -(void)applicationWillResignActive:(NSNotification *)notification
 {
-//	NSLog( @"applicationWillResignActive" );
-	if ( has_started )
+	if (has_started)
 	{
 		kernel::Event<kernel::System> event;
 		event.subtype = kernel::WindowLostFocus;
@@ -71,17 +67,11 @@ static bool has_started = false;
 
 -(void)applicationDidBecomeActive:(NSNotification *)notification
 {
-//	NSLog( @"applicationDidBecomeActive" );
-
-
-	
-	if ( !has_started )
+	if (!has_started)
 	{
 		has_started = true;
 			
 		platform::startup();
-		
-		//NSArray* arguments = [[NSProcessInfo processInfo] arguments];
 		
 		// On Mac, the window created is actually larger than requested
 		// to account for the added height of the title bar.
@@ -109,14 +99,28 @@ static bool has_started = false;
 -(void)applicationDidChangeScreenParameters:(NSNotification *)notification
 {
 	// detect GPU switching
-	NSLog( @"applicationdidChangeScreenParameters");
+//	NSLog( @"applicationdidChangeScreenParameters");
 }
 
 -(void)applicationWillTerminate:(NSNotification *)notification
 {
-//	NSLog( @"applicationWillTerminate" );
 	kernel::shutdown();
 	platform::shutdown();
 }
+
+
+
+// ---------------------------------------------------------------------
+// window events
+// ---------------------------------------------------------------------
+
+-(BOOL) windowShouldClose:(id)window
+{
+	// This may not be the best solution for now,
+	// but I'm not sure what that is. Send an event and say a window closed?
+	kernel::instance()->set_active(false);
+	return YES;
+}
+
 
 @end

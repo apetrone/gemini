@@ -117,12 +117,7 @@ namespace kernel
 	{
 		detail::kernel_instance->shutdown();
 	}
-	
-	void resolution_changed(int width, int height)
-	{
-		
-	}
-	
+
 	void tick()
 	{
 		detail::kernel_instance->tick();
