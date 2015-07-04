@@ -474,6 +474,18 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/time/posix/posix_timer.cpp"
 	]
 
+	# if we're building with X11 support
+	if arguments.with_x11:
+		linux.sources += [
+			"src/platform/window/linux/x11/*.cpp",
+			"src/platform/window/linux/x11/*.h"
+		]
+	elif arguments.with_egl:
+		linux.sources += [
+			"src/platform/window/linux/egl/*.cpp",
+			"src/platform/window/linux/egl/*.h"
+		]
+
 	linux.includes += [
 		"src/platform/posix"
 	]
@@ -689,7 +701,7 @@ def get_rnd(arguments, links, **kwargs):
 
 	return rnd
 
-def create_unit_test(name, links, source, output_type = ProductType.Commandline):
+def create_unit_test(name, dependencies, source, output_type = ProductType.Commandline):
 	product = Product(name=name, output=output_type)	
 	product.project_root = COMMON_PROJECT_ROOT
 	product.root = "../"	
@@ -701,7 +713,6 @@ def create_unit_test(name, links, source, output_type = ProductType.Commandline)
 		source
 	]
 
-
 	if output_type == ProductType.Application:
 		macosx = product.layout(platform="macosx")
 		base_path = "tests/src/%s" % name
@@ -711,15 +722,29 @@ def create_unit_test(name, links, source, output_type = ProductType.Commandline)
 			"%s/resources/osx/en.lproj/*.strings" % base_path
 		]
 
-	product.dependencies.extend(links)
+	product.dependencies.extend(dependencies)
+
+
+	linux = product.layout(platform="linux")
+	linux.links += [
+		"pthread",
+		"dl",
+		"GL"
+	]
+
+	# use current directory to resolve shared libraries
+	linux.linkflags += [
+		"-Wl,-rpath='$$$\ORIGIN'",
+	]
+
 	return product
 
-def get_unit_tests(arguments, links, **kwargs):
+def get_unit_tests(arguments, dependencies, **kwargs):
 	return [
-		create_unit_test("test_core", links, "tests/src/test_core.cpp"),
-		create_unit_test("test_platform", links, "tests/src/test_platform.cpp"),
-		create_unit_test("test_runtime", links, "tests/src/test_runtime.cpp"),
-		create_unit_test("test_render", links, "tests/src/test_render.cpp", ProductType.Application)
+		create_unit_test("test_core", dependencies, "tests/src/test_core.cpp"),
+		create_unit_test("test_platform", dependencies, "tests/src/test_platform.cpp"),
+		create_unit_test("test_runtime", dependencies, "tests/src/test_runtime.cpp"),
+		create_unit_test("test_render", dependencies, "tests/src/test_render.cpp", ProductType.Application)
 	]
 
 def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
@@ -834,6 +859,9 @@ def arguments(parser):
 
 	parser.add_argument("--with-civet", dest="with_civet", action="store_true", help="Build with CivetServer", default=True)
 	parser.add_argument("--no-civet", dest="with_civet", action="store_false", help="Build without CivetServer")
+
+	parser.add_argument("--with-x11", dest="with_x11", action="store_true", help="Build with X11 support", default=False)
+	parser.add_argument("--with-egl", dest="with_egl", action="store_true", help="Build with EGL support", default=False)
 
 	parser.add_argument("--with-tools", dest="with_tools", action="store_true", help="Build with support for tools", default=False)
 	parser.add_argument("--with-tests", dest="with_tests", action="store_true", help="Build with support for unit tests", default=False)
@@ -1001,7 +1029,11 @@ def products(arguments, **kwargs):
 				"PLATFORM_RASPBERRYPI=1"
 			]
 
+		if arguments.with_x11:
 			linux.links += ["X11"]
+
+		if arguments.with_egl:
+			linux.links += ["EGL"]
 
 		if arguments.gles:
 
