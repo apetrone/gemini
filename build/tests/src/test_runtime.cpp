@@ -127,7 +127,6 @@ void test_nom()
 
 int main(int, char**)
 {
-	core::memory::startup();
 	platform::Result result = platform::startup();
 	assert(result.success());
 	
@@ -153,6 +152,5 @@ int main(int, char**)
 	core::shutdown();
 	
 	platform::shutdown();
-	core::memory::shutdown();
 	return 0;
 }
