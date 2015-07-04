@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2015- Adam Petrone
+// Copyright (C) 2013- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -22,24 +22,22 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include "platform.h"
+#import "cocoa_application.h"
 
-#import "os/osx/osx_common.h"
-#import "osx_window.h"
+@implementation osx_application
 
-@implementation cocoa_window
-@synthesize instance;
-
-/* this is required when using the styleMask: NSBorderlessWindowMask */
-/* By default NSBorderlessWindowMask windows report that they cannot become the key (target of keyboard input) */
--(BOOL) canBecomeKeyWindow
+// Fix for Cocoa losing KeyUp messages when using the Command Key. By NateS.
+// http://stackoverflow.com/questions/4001565/missing-keyup-events-on-meaningful-key-combinations-e-g-select-till-beginning
+-(void) sendEvent:(NSEvent *)event
 {
-	return YES;
+	if ([event type] == NSKeyUp && ([event modifierFlags] & NSCommandKeyMask))
+	{
+		[[self keyWindow] sendEvent:event];
+	}
+	else
+	{
+		[super sendEvent:event];
+	}
 }
 
-/* By default NSBorderlessWindowMask windows report that they cannot become the main window without this override */
--(BOOL) canBecomeMainWindow
-{
-	return YES;
-}
 @end

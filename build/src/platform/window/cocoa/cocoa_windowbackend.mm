@@ -27,8 +27,8 @@
 
 #include "os/osx/osx_common.h"
 
-#import "osx_openglview.h"
-#import "osx_window.h"
+#import "cocoa_openglview.h"
+#import "cocoa_window.h"
 
 #include "kernel.h"
 #include "input.h"
