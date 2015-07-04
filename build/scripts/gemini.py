@@ -937,7 +937,6 @@ def products(arguments, **kwargs):
 	gemini.project_root = COMMON_PROJECT_ROOT
 	gemini.root = "../"
 	gemini.product_root = COMMON_PRODUCT_ROOT
-	gemini.object_root = "obj"
 
 	setup_common_libs(arguments, gemini)
 
