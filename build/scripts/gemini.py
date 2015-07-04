@@ -411,7 +411,6 @@ def get_libplatform(arguments, target_platform):
 
 		# os
 		"src/platform/os/osx/osx_os.mm",
-		"src/platform/os/osx/osx_common.h",
 
 		# serial
 		"src/platform/serial/posix/posix_serial.cpp",
@@ -426,6 +425,7 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/time/posix/posix_datetime.cpp",
 
 		# window
+		"src/platform/window/cocoa/cocoa_common.h",
 		"src/platform/window/cocoa/cocoa_windowbackend.mm",
 		"src/platform/window/cocoa/cocoa_openglview.mm",
 		"src/platform/window/cocoa/cocoa_openglview.h",
@@ -434,7 +434,9 @@ def get_libplatform(arguments, target_platform):
 	]
 
 	macosx.includes += [
-		"src/platform/posix"
+		"src/platform/posix",
+
+		"src/platform/window/cocoa"
 	]
 
 	macosx.links += [

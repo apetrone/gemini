@@ -24,23 +24,25 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/config.h>
+//#include <core/config.h>
 
-#if defined(PLATFORM_MACOSX)
-	#import <Cocoa/Cocoa.h>
-	#import <Foundation/Foundation.h>
-#elif defined(PLATFORM_IPHONEOS)
-	#import <AppKit/AppKit.h>
-#else
-	#error Unknown Apple platform
-#endif
+#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
 #include "input.h"
 
 namespace platform
 {
-	namespace osx
+	namespace cocoa
 	{
-
+		void populate_keymap();
+		
+		input::Button convert_keycode(unsigned short mac_keycode);
+		
+		uint16_t keymod_state();
+		void keymod_state(uint16_t keymods);
+		
+		void dispatch_mouse_moved_event(NSEvent* the_event);
+		uint16_t convert_cocoa_keymods(NSUInteger modifier_flags);
 	}
-} // namespace platform
+}
