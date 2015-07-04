@@ -522,4 +522,9 @@ namespace platform
 //
 //				fprintf(stdout, "refresh rate of screen %i is %i Hz\n", screen_index, refresh_rate);
 	}
+	
+	void window_focus(NativeWindow* window)
+	{
+
+	}
 } // namespace platform

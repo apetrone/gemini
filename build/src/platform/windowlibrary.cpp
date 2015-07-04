@@ -25,12 +25,12 @@
 
 #include "mem.h"
 #include "config.h"
-//#include "windowlibrary.h"
 #include "platform.h"
+#include "windowlibrary.h"
 
 #if defined(PLATFORM_IS_MOBILE)
 	#error Not supported!
-#else
+#elif defined(PLATFORM_SDL2_SUPPORT)
 	#include "sdl_windowlibrary.h"
 	typedef platform::SDLWindowLibrary WindowLibrary;
 #endif
@@ -44,51 +44,7 @@ namespace platform
 		IWindowLibrary* windowlibrary = 0;
 	}
 	
-
 		
-		uint32_t get_renderinterface_caps()
-		{
-			uint32_t caps = 0;
-			
-#if defined(PLATFORM_SUPPORT_OPENGL)
-			caps |= RenderBackend_OpenGL;
-#elif defined(PLATFORM_SUPPORT_OPENGLES)
-			caps |= RenderBackend_OpenGLES;
-#else
-	#error Unknown or unsupported render system
-#endif
-			
-			return caps;
-		}
-		
-		
-
-	
-	
-	void startup_window_interface(
-		const platform::RenderBackend& render_interface,
-		const InputBackend& input_backend)
-	{
-		
-	}
-	
-	void shutdown_window_interface()
-	{
-		
-	}
-	
-	
-	
-	
-	// don't bloat my code up
-	WindowParameters::~WindowParameters()
-	{
-	}
-	
-	NativeWindow::~NativeWindow()
-	{
-	}
-	
 	IWindowLibrary::~IWindowLibrary()
 	{
 	}
@@ -97,7 +53,9 @@ namespace platform
 	{
 		if (!detail::windowlibrary)
 		{
+#if defined(PLATFORM_SDL2_SUPPORT)
 			detail::windowlibrary = MEMORY_NEW(WindowLibrary, core::memory::global_allocator());
+#endif
 		}
 		
 		return detail::windowlibrary;
@@ -106,7 +64,5 @@ namespace platform
 	void destroy_window_library()
 	{
 		MEMORY_DELETE(detail::windowlibrary, core::memory::global_allocator());
-		
-		shutdown_window_interface();
 	}
 } // namespace platform

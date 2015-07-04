@@ -424,31 +424,7 @@ namespace platform
 	{
 		virtual ~NativeWindow();
 	};
-	
-	struct IWindowLibrary
-	{
-	public:
-		virtual ~IWindowLibrary();
 		
-		virtual void startup(kernel::Parameters& parameters) = 0;
-		virtual void shutdown() = 0;
-		virtual NativeWindow* create_window(const WindowParameters& parameters) = 0;
-		virtual void destroy_window(NativeWindow* window) = 0;
-		virtual void process_events() = 0;
-		virtual void activate_window(NativeWindow* window) = 0;
-		virtual void swap_buffers(NativeWindow* window) = 0;
-		virtual void focus_window(NativeWindow* window) = 0;
-		
-		// cursor control
-		virtual void capture_mouse(bool capture) = 0;
-		virtual void warp_mouse(int x, int y) = 0;
-		virtual void get_mouse(int& x, int& y) = 0;
-		virtual void show_mouse(bool show) = 0;
-	};
-	
-	IWindowLibrary* create_window_library();
-	void destroy_window_library();
-	
 	class input_provider
 	{
 	public:
