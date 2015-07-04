@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #include "platform.h"
 
-#import "os/osx/osx_common.h"
+#import "cocoa_common.h"
 #import "cocoa_window.h"
 
 @implementation cocoa_window
