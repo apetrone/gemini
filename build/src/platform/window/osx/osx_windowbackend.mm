@@ -36,7 +36,7 @@
 namespace platform
 {
 	namespace osx
-	{
+	{		
 		const unsigned int kMaxKeys = 132;
 		static input::Button key_map[ kMaxKeys ];
 		void populate_keymap()
@@ -188,6 +188,13 @@ namespace platform
 
 		struct cocoa_native_window : public NativeWindow
 		{
+			cocoa_native_window(const WindowDimensions& window_dimensions) :
+				NativeWindow(window_dimensions),
+				cw(nil),
+				context(nil)
+			{
+			}
+			
 			cocoa_window* cw;
 			NSOpenGLContext* context;
 		};
@@ -197,7 +204,7 @@ namespace platform
 			cocoa_window* window;
 			
 			// create a frame for the new window
-			NSRect frame = NSMakeRect(params.window_x, params.window_y, params.window_width, params.window_height);
+			NSRect frame = NSMakeRect(params.window.x, params.window.y, params.window.width, params.window.height);
 			
 			// get the screen frame where the window will be placed
 			NSRect screen_frame = [[[NSScreen screens] objectAtIndex:params.target_display] frame];
@@ -237,14 +244,12 @@ namespace platform
 			
 			id delegate = [NSApp delegate];
 			[window setDelegate: delegate];
-			
-			
-			
+
 			// try to center the window in the screen
 			{
 				NSPoint origin = NSMakePoint(
-											 screen_frame.origin.x + (screen_frame.size.width/2) - (params.window_width/2),
-											 screen_frame.origin.y + (screen_frame.size.height/2) - (params.window_height/2)
+											 screen_frame.origin.x + (screen_frame.size.width/2) - (params.window.width/2),
+											 screen_frame.origin.y + (screen_frame.size.height/2) - (params.window.height/2)
 											 );
 				[window center];
 				[window setFrameOrigin: origin];
@@ -409,10 +414,9 @@ namespace platform
 
 	NativeWindow* window_create(const WindowParameters& window_parameters)
 	{
-		// TODO: get an unused window handle
-		static cocoa_native_window ns;
+		cocoa_native_window* window = MEMORY_NEW(cocoa_native_window, get_platform_allocator())(window_parameters.window);
 		
-		platform::Result result = osx::create_window(&ns, window_parameters);
+		platform::Result result = osx::create_window(window, window_parameters);
 		if (result.failed())
 		{
 			fprintf(stdout, "create_window failed: %s\n", result.message);
@@ -420,17 +424,23 @@ namespace platform
 		}
 
 		// create a context for this window
-		create_context(&ns);
+		create_context(window);
 		
 		// activate the context
-		activate_context(&ns);
-			
-		return &ns;
+		activate_context(window);
+		
+		NSRect bounds = [[window->cw contentView] bounds];
+		bounds = [[window->cw contentView] convertRectToBacking: bounds];
+		
+		window->dimensions.render_width = bounds.size.width;
+		window->dimensions.render_height = bounds.size.height;
+		
+		return window;
 	}
 	
 	void window_destroy(NativeWindow* window)
 	{
-		
+		MEMORY_DELETE(window, get_platform_allocator());
 	}
 	
 	void window_begin_rendering(NativeWindow* window)
