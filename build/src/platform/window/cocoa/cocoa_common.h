@@ -24,8 +24,6 @@
 // -------------------------------------------------------------
 #pragma once
 
-//#include <core/config.h>
-
 #import <Cocoa/Cocoa.h>
 #import <Foundation/Foundation.h>
 

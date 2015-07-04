@@ -29,10 +29,8 @@
 #import "cocoa_window.h"
 
 #include "kernel.h"
-#include "input.h"
 
 using namespace platform::cocoa;
-
 
 @implementation cocoa_openglview
 
