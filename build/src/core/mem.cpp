@@ -44,6 +44,8 @@ namespace core
 			assert(_global_zone == nullptr && _global_allocator == nullptr);
 
 			static zone global_memory_zone("global");
+			_global_zone = &global_memory_zone;
+			
 			static global_allocator_type global_allocator_instance(&global_memory_zone);
 			_global_allocator = &global_allocator_instance;
 		}
