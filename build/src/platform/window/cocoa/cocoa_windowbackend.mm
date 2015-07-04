@@ -25,8 +25,7 @@
 #include "platform.h"
 #include "platform_internal.h"
 
-#include "os/osx/osx_common.h"
-
+#import "cocoa_common.h"
 #import "cocoa_openglview.h"
 #import "cocoa_window.h"
 
@@ -35,10 +34,11 @@
 
 namespace platform
 {
-	namespace osx
+	namespace cocoa
 	{		
 		const unsigned int kMaxKeys = 132;
 		static input::Button key_map[ kMaxKeys ];
+		static NSPoint _last_mouse;
 		void populate_keymap()
 		{
 			memset(&key_map, 0, kMaxKeys*sizeof(input::Button));
@@ -402,21 +402,124 @@ namespace platform
 			{
 				kernel::KeyboardEvent ev;
 				ev.is_down = ([event type] == NSKeyDown) ? true : false;
-				ev.key = osx::convert_keycode([event keyCode]);
-				ev.modifiers = osx::keymod_state();
+				ev.key = convert_keycode([event keyCode]);
+				ev.modifiers = keymod_state();
 				kernel::event_dispatch(ev);
 			}
 		}
 		
-	} // namespace osx
+		uint16_t convert_cocoa_keymods(NSUInteger modifier_flags)
+		{
+			uint16_t keymods = 0;
+			
+			if (modifier_flags & NX_DEVICELCTLKEYMASK)
+			{
+				keymods |= input::MOD_LEFT_CONTROL;
+			}
+			if (modifier_flags & NX_DEVICERCTLKEYMASK)
+			{
+				keymods |= input::MOD_RIGHT_CONTROL;
+			}
+			
+			if (modifier_flags & NX_DEVICELSHIFTKEYMASK)
+			{
+				keymods |= input::MOD_LEFT_SHIFT;
+			}
+			if (modifier_flags & NX_DEVICERSHIFTKEYMASK)
+			{
+				keymods |= input::MOD_RIGHT_SHIFT;
+			}
+			
+			if (modifier_flags & NX_DEVICELALTKEYMASK)
+			{
+				keymods |= input::MOD_LEFT_ALT;
+			}
+			if (modifier_flags & NX_DEVICERALTKEYMASK)
+			{
+				keymods |= input::MOD_RIGHT_ALT;
+			}
+			
+			return keymods;
+		}
+		
+		// This expects the current coordinates from (mouseLocation)
+		// as they're in screen coordinates.
+		NSPoint compute_mouse_delta(const NSPoint& current)
+		{
+			return NSMakePoint(
+				(current.x - _last_mouse.x),
+				(_last_mouse.y - current.y)
+			);
+		}
+		
+		void dispatch_mouse_moved_event(NSEvent* the_event)
+		{
+			cocoa_window* window = static_cast<cocoa_window*>([the_event window]);
+			
+			CGFloat title_bar_height;
+			CGFloat fixed_height;
+			
+			// convert mouse from window to view
+			NSPoint mouse_location = [[window contentView] convertPoint: [the_event locationInWindow] fromView:nil];
+			
+			// calculate title bar height of the window
+			NSRect frame = [window frame];
+			NSRect content_rect = [NSWindow contentRectForFrameRect:frame styleMask:NSTitledWindowMask];
+			title_bar_height = (frame.size.height - content_rect.size.height);
+			
+			// We subtract height from mouse location y to invert the y-axis; since
+			// NSPoint's origin is in the lower left corner.
+			// The fixed height is the window frame minus the title bar height
+			// and we also subtract 1.0 because convertPoint starts from a base of 1
+			// according to the Cocoa docs.
+			fixed_height = frame.size.height - title_bar_height - 1.0f;
+			
+			kernel::MouseEvent event;
+			event.subtype = kernel::MouseMoved;
+			event.mx = mouse_location.x;
+			event.my = fixed_height - mouse_location.y;
+			
+			// compute the delta using screen coordinates;
+			// which is what mouseLocation returns.
+			NSPoint delta = compute_mouse_delta([NSEvent mouseLocation]);
+			event.dx = (int)delta.x;
+			event.dy = (int)delta.y;
+			_last_mouse = [NSEvent mouseLocation];
+			
+			// don't dispatch any events outside of the window
+			if (event.mx >= 0 && event.my >= 0 && (event.mx <= frame.size.width) && (event.my <= fixed_height))
+			{
+				kernel::event_dispatch(event);
+				return;
+			}
+		}
+		
+		void track_mouse_location(const NSPoint& pt)
+		{
+			// track the mouse position at a global scope
+			// NS mouse coordinates have a lower left origin.
+			// CG mouse coordinates have an upper left origin.
+						
+			// compute deltas
+			// y axis is inverted on purpose to preserve 0,0 topleft.
+//			NSPoint delta = compute_mouse_delta(pt);
+			
+//			NSLog(@"mouse pos: %f %f [%f %f]", pt.x, pt.y, delta.x, delta.y);
+			
+//			_last_mouse = pt;
+
+			// TODO: Investigate generating custom events for mouse capture
+			// http://stackoverflow.com/questions/5840873/how-to-tell-the-difference-between-a-user-tapped-keyboard-event-and-a-generated
+		}
+	} // namespace cocoa
 	
-	using namespace osx;
+	using namespace platform::cocoa;
 
 	NativeWindow* window_create(const WindowParameters& window_parameters)
 	{
 		cocoa_native_window* window = MEMORY_NEW(cocoa_native_window, get_platform_allocator())(window_parameters.window);
 		
-		platform::Result result = osx::create_window(window, window_parameters);
+		platform::Result result = create_window(window, window_parameters);
 		if (result.failed())
 		{
 			fprintf(stdout, "create_window failed: %s\n", result.message);
@@ -485,6 +588,10 @@ namespace platform
 				case NSScrollWheel:
 					dispatch_mouse_event(event);
 					break;
+					
+//				case NSMouseMoved:
+//					track_mouse_location([NSEvent mouseLocation]);
+//					break;
 					
 				case NSKeyDown:
 				case NSKeyUp:

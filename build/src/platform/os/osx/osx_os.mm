@@ -23,7 +23,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "platform.h"
-#include "osx_common.h"
+#include "cocoa_common.h"
 
 namespace platform
 {
@@ -43,7 +43,7 @@ namespace platform
 //		NSLog(@"uptime: %f", uptime);
 		
 		// populate the osx keymap
-		osx::populate_keymap();
+		cocoa::populate_keymap();
 		
 		return Result(Result::Success);
 	}

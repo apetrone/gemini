@@ -1325,7 +1325,7 @@ public:
 		}
 		else if (event.subtype == kernel::MouseMoved)
 		{
-			LOGV("mouse moved: %i %i\n", event.mx, event.my);
+			LOGV("mouse moved: %i %i [%i %i]\n", event.mx, event.my, event.dx, event.dy);
 		}
 		else if (event.subtype == kernel::MouseButton)
 		{

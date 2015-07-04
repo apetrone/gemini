@@ -23,97 +23,20 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "platform.h"
-#include "os/osx/osx_common.h"
 
+#import "cocoa_common.h"
 #import "cocoa_openglview.h"
 #import "cocoa_window.h"
 
 #include "kernel.h"
 #include "input.h"
 
+using namespace platform::cocoa;
+
+
 @implementation cocoa_openglview
 
 @synthesize context = _context;
-
-
-// ---------------------------------------------------------------------
-// utils
-// ---------------------------------------------------------------------
-
-void dispatch_mouse_moved_event(NSEvent* the_event)
-{
-	cocoa_window* window = static_cast<cocoa_window*>([the_event window]);
-	
-	CGFloat title_bar_height;
-	CGFloat fixed_height;
-
-	// convert mouse from window to view
-	NSPoint mouse_location = [[window contentView] convertPoint: [the_event locationInWindow] fromView:nil];
-	
-	// calculate title bar height of the window
-	NSRect frame = [window frame];
-	NSRect content_rect = [NSWindow contentRectForFrameRect:frame styleMask:NSTitledWindowMask];
-	title_bar_height = (frame.size.height - content_rect.size.height);
-	
-	// We subtract height from mouse location y to invert the y-axis; since
-	// NSPoint's origin is in the lower left corner.
-	// The fixed height is the window frame minus the title bar height
-	// and we also subtract 1.0 because convertPoint starts from a base of 1
-	// according to the Cocoa docs.
-	fixed_height = frame.size.height - title_bar_height - 1.0f;
-	
-	kernel::MouseEvent event;
-	event.subtype = kernel::MouseMoved;
-	event.mx = mouse_location.x;
-	event.my = fixed_height - mouse_location.y;
-
-	// don't dispatch any events outside of the window
-	if (event.mx >= 0 && event.my >= 0 && (event.mx <= frame.size.width) && (event.my <= fixed_height))
-	{
-		kernel::event_dispatch(event);
-		return;
-	}
-}
-
-uint16_t convert_cocoa_keymods(NSUInteger modifier_flags)
-{
-	uint16_t keymods = 0;
-	
-	if (modifier_flags & NX_DEVICELCTLKEYMASK)
-	{
-		keymods |= input::MOD_LEFT_CONTROL;
-	}
-	if (modifier_flags & NX_DEVICERCTLKEYMASK)
-	{
-		keymods |= input::MOD_RIGHT_CONTROL;
-	}
-	
-	if (modifier_flags & NX_DEVICELSHIFTKEYMASK)
-	{
-		keymods |= input::MOD_LEFT_SHIFT;
-	}
-	if (modifier_flags & NX_DEVICERSHIFTKEYMASK)
-	{
-		keymods |= input::MOD_RIGHT_SHIFT;
-	}
-	
-	if (modifier_flags & NX_DEVICELALTKEYMASK)
-	{
-		keymods |= input::MOD_LEFT_ALT;
-	}
-	if (modifier_flags & NX_DEVICERALTKEYMASK)
-	{
-		keymods |= input::MOD_RIGHT_ALT;
-	}
-	
-	return keymods;
-}
-
-
-
-// ---------------------------------------------------------------------
-// openglview implementation
-// ---------------------------------------------------------------------
 
 -(id)initWithFrame:(NSRect)frameRect
 {
@@ -139,6 +62,7 @@ uint16_t convert_cocoa_keymods(NSUInteger modifier_flags)
 -(void)dealloc
 {
 	self.context = nil;
+	[super dealloc];
 }
 
 -(BOOL) isOpaque
@@ -204,17 +128,17 @@ uint16_t convert_cocoa_keymods(NSUInteger modifier_flags)
 
 -(void)flagsChanged:(NSEvent *)event
 {
-	uint16_t last_keymods = platform::osx::keymod_state();
+	uint16_t last_keymods = keymod_state();
 	uint16_t keymods = convert_cocoa_keymods([event modifierFlags]);
 
 	kernel::KeyboardEvent ev;
-	ev.key = platform::osx::convert_keycode([event keyCode]);
+	ev.key = convert_keycode([event keyCode]);
 	ev.is_down = (keymods > last_keymods);
 	ev.modifiers = keymods;
 	kernel::event_dispatch(ev);
 
 	// set the new keymod state
-	platform::osx::keymod_state(keymods);
+	keymod_state(keymods);
 
 	[super flagsChanged:event];
 }
