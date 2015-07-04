@@ -46,21 +46,29 @@ void dispatch_mouse_moved_event(NSEvent* the_event)
 	
 	CGFloat title_bar_height;
 	CGFloat fixed_height;
+
+	// convert mouse from window to view
+	NSPoint mouse_location = [[window contentView] convertPoint: [the_event locationInWindow] fromView:nil];
 	
-	NSPoint mouse_location = [[the_event window] mouseLocationOutsideOfEventStream];
+	// calculate title bar height of the window
+	NSRect frame = [window frame];
+	NSRect content_rect = [NSWindow contentRectForFrameRect:frame styleMask:NSTitledWindowMask];
+	title_bar_height = (frame.size.height - content_rect.size.height);
 	
-	// subtract the window height from the contentView height
-	// this will give us the size of the title bar
-	NSRect render_frame = [[window screen] convertRectToBacking: [window frame]];
-	title_bar_height = render_frame.size.height - render_frame.size.height;
-	fixed_height = render_frame.size.height - title_bar_height;
+	// We subtract height from mouse location y to invert the y-axis; since
+	// NSPoint's origin is in the lower left corner.
+	// The fixed height is the window frame minus the title bar height
+	// and we also subtract 1.0 because convertPoint starts from a base of 1
+	// according to the Cocoa docs.
+	fixed_height = frame.size.height - title_bar_height - 1.0f;
 	
 	kernel::MouseEvent event;
 	event.subtype = kernel::MouseMoved;
 	event.mx = mouse_location.x;
-	event.my = fixed_height - mouse_location.y; // top left is the origin, so we correct this here.
-	
-	if (event.mx >= 0 && event.my >= 0 && (event.mx <= render_frame.size.width) && (event.my <= fixed_height))
+	event.my = fixed_height - mouse_location.y;
+
+	// don't dispatch any events outside of the window
+	if (event.mx >= 0 && event.my >= 0 && (event.mx <= frame.size.width) && (event.my <= fixed_height))
 	{
 		kernel::event_dispatch(event);
 		return;
