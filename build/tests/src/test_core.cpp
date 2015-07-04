@@ -298,11 +298,7 @@ void test_mathlib()
 void test_memory()
 {
 	TEST_CATEGORY(memory);
-	core::memory::startup();
-	
-	
-	
-	core::memory::shutdown();
+
 	TEST_VERIFY(1, sanity);
 }
 

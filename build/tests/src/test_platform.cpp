@@ -90,8 +90,7 @@ void test_filesystem()
 int main(int, char**)
 {
 	TEST_CATEGORY(platform);
-	
-	core::memory::startup();
+
 	platform::Result result = platform::startup();
 	TEST_VERIFY(result.success(), platform_startup);
 
@@ -99,6 +98,5 @@ int main(int, char**)
 	test_filesystem();
 	
 	platform::shutdown();
-	core::memory::shutdown();
 	return 0;
 }
