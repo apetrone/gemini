@@ -33,49 +33,6 @@ namespace kernel
 
 namespace platform
 {
-	struct WindowParameters
-	{
-		// in windowed modes, this is the target display the window
-		// will be transferred to
-		uint32_t target_display;
-		
-		// dimensions of the actual window in pixels
-		uint32_t window_width;
-		uint32_t window_height;
-		
-		// dimensions of the rendering area in pixels
-		uint32_t render_width;
-		uint32_t render_height;
-		
-		// need to take this into account when calculating screen coordinates
-		uint32_t titlebar_height;
-
-		// utf8-encoded window title
-		const char* window_title;
-		
-		// set to true to create a fullscreen window
-		bool enable_fullscreen;
-				
-		WindowParameters() :
-			target_display(0),
-			window_width(1),
-			window_height(1),
-			render_width(0),
-			render_height(1),
-			titlebar_height(0),
-			window_title(0),
-			enable_fullscreen(false)
-		{
-		}
-		
-		virtual ~WindowParameters();
-	};
-	
-	struct NativeWindow : public WindowParameters
-	{
-		virtual ~NativeWindow();
-	};
-	
 	struct IWindowLibrary
 	{
 	public:
@@ -96,6 +53,7 @@ namespace platform
 		virtual void get_mouse(int& x, int& y) = 0;
 		virtual void show_mouse(bool show) = 0;
 	};
+	
 	
 	IWindowLibrary* create_window_library();
 	void destroy_window_library();

@@ -268,7 +268,7 @@ def setup_driver(product):
 		"-fPIC",
 	]
 
-def get_tools(libruntime, librenderer, libplatform, libcore, **kwargs):
+def get_tools(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
 	#
 	#
 	#
@@ -374,12 +374,20 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/platform.h",
 		"src/platform/platform_internal.h",
 		"src/platform/input.cpp",
-		"src/platform/input.h",
-		"src/platform/windowlibrary.cpp",
-		"src/platform/windowlibrary.h",
-		"src/platform/sdl_windowlibrary.cpp",
-		"src/platform/sdl_windowlibrary.h"
+		"src/platform/input.h"
 	]
+
+	if arguments.with_sdl:
+		libplatform.sources += [
+			"src/platform/windowlibrary.cpp",
+			"src/platform/windowlibrary.h",
+			"src/platform/sdl_windowlibrary.cpp",
+			"src/platform/sdl_windowlibrary.h"
+		]
+
+		libplatform.defines += [
+			"PLATFORM_SDL2_SUPPORT=1"
+		]
 
 	libplatform.includes += [
 		"src/platform"
@@ -642,7 +650,9 @@ def get_rnd(arguments, links, **kwargs):
 	setup_driver(rnd)
 	setup_common_tool(rnd)
 
-	rnd.dependencies.append(libsdl)
+	if arguments.with_sdl:
+		rnd.dependencies.append(libsdl)
+
 	rnd.dependencies.extend(links)
 
 	rnd_macosx = rnd.layout(platform="macosx")
@@ -720,8 +730,10 @@ def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwarg
 	setup_driver(kraken)
 	setup_common_tool(kraken)
 
+	if arguments.with_sdl:
+		kraken.dependencies.append(libsdl)
+
 	kraken.dependencies.extend([
-		libsdl,
 		libplatform,
 		libcore,
 		librenderer,
@@ -761,8 +773,10 @@ def get_orion(arguments, libruntime, libplatform, libcore, librenderer, **kwargs
 	setup_driver(orion)
 	setup_common_tool(orion)
 
+	if arguments.with_sdl:
+		orion.dependencies.append(libsdl)
+
 	orion.dependencies.extend([
-		libsdl,
 		libplatform,
 		libcore,
 		librenderer,
@@ -803,6 +817,8 @@ def arguments(parser):
 	parser.add_argument("--raspberrypi", dest="raspberrypi", action="store_true", help="Build for the RaspberryPi", default=False)
 	
 	parser.add_argument("--indextype", dest="index_type", choices=["uint", "ushort"], type=str, default="uint", help="Set the IndexBuffer type; defaults to uint")
+
+	parser.add_argument("--with-sdl", dest="with_sdl", action="store_true", help="Build with SDL2 support", default=False)
 
 	parser.add_argument("--with-civet", dest="with_civet", action="store_true", help="Build with CivetServer", default=True)
 	parser.add_argument("--no-civet", dest="with_civet", action="store_false", help="Build without CivetServer")
@@ -852,7 +868,9 @@ def products(arguments, **kwargs):
 	libcore = get_libcore(arguments, target_platform)
 
 	libplatform = get_libplatform(arguments, target_platform)
-	libplatform.dependencies += [libsdl, libcore]
+	if arguments.with_sdl:
+		libplatform.dependencies.append(libsdl)
+	libplatform.dependencies += [libcore]
 
 	libruntime = get_libruntime(arguments, target_platform)
 	libruntime.dependencies += [libcore, libplatform, Dependency(file="glm.py")]
@@ -867,7 +885,7 @@ def products(arguments, **kwargs):
 
 	tools = []
 	if arguments.with_tools:
-		tools = get_tools(libruntime, librenderer, libplatform, libcore, **kwargs)
+		tools = get_tools(arguments, libruntime, librenderer, libplatform, libcore, **kwargs)
 	else:
 		logging.warn("Compiling WITHOUT tools...")
 
@@ -886,8 +904,13 @@ def products(arguments, **kwargs):
 	gemini.dependencies += [
 		libruntime,
 		librenderer,
-		libplatform,
-		libsdl,
+		libplatform
+	]
+
+	if arguments.with_sdl:
+		gemini.dependencies.append(libsdl)
+
+	gemini.dependencies += [
 		libcore,
 		Dependency(file="sqrat.py"),
 		#Dependency(file="squirrel3.py", products=["squirrel", "sqstdlib"]),
@@ -1006,7 +1029,7 @@ def products(arguments, **kwargs):
 		# Ugh, for now, we also link in libnom because the runtime requires it.
 		# I feel like pegasus should identify such dependencies and take care of it in the future.
 		# Though, for now, just link it in.
-		tests = get_unit_tests(arguments, [libruntime, librenderer, libplatform, libcore, Dependency(file="glm.py"), libnom, libsdl], **kwargs)
+		tests = get_unit_tests(arguments, [libruntime, librenderer, libplatform, libcore, Dependency(file="glm.py"), libnom], **kwargs)
 
 	return [librenderer, libruntime, libplatform, libcore] + [libsdk, gemini] + tools + [rnd] + tests
 

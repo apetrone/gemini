@@ -111,7 +111,6 @@ class TestKernel : public kernel::IKernel,
 {
 	bool active;
 	platform::NativeWindow* native_window;
-	platform::IWindowLibrary* window_library;
 	
 public:
 	virtual void event(kernel::KeyboardEvent& event)
@@ -131,7 +130,6 @@ public:
 	TestKernel()
 	{
 		native_window = nullptr;
-		window_library = nullptr;
 		active = true;
 	}
 
@@ -155,21 +153,16 @@ public:
 		
 		
 		input::startup();
-		
+
 		// create a test window
-		window_library = platform::create_window_library();
-		window_library->startup(kernel::parameters());
-		
 		platform::WindowParameters params;
 		params.window_width = 512;
 		params.window_height = 512;
 		params.window_title = "test_render";
-		native_window = window_library->create_window(params);
-	
-		window_library->activate_window(native_window);
-		window_library->focus_window(native_window);
-		window_library->show_mouse(true);
-	
+		
+		native_window = platform::window_create(params);
+		platform::window_focus(native_window);
+		
 		// startup the renderer -- just so that it can be used by our classes.
 		// It will try to load conf/shaders.conf; but it can be ignored as
 		// I don't plan on actually rendering anything yet.
@@ -189,7 +182,7 @@ public:
 	virtual void tick()
 	{
 		input::update();
-		window_library->process_events();
+		platform::window_process_events();
 		set_active(false);
 	}
 
@@ -197,11 +190,9 @@ public:
 	virtual void shutdown()
 	{
 		renderer::shutdown();
-	
-		window_library->destroy_window(native_window);
-		window_library->shutdown();
-		platform::destroy_window_library();
-		
+
+		platform::window_destroy(native_window);
+
 		input::shutdown();
 		
 		core::shutdown();

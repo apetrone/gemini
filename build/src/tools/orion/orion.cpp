@@ -1250,7 +1250,9 @@ public kernel::IEventListener<kernel::SystemEvent>
 {
 private:
 	bool active;
+#if defined(PLATFORM_SDL2_SUPPORT)
 	platform::IWindowLibrary* window_interface;
+#endif
 	platform::NativeWindow* main_window;
 	
 	render2::device* device;
@@ -1284,8 +1286,10 @@ private:
 	
 public:
 	EditorKernel() :
-		active(true),
-		window_interface(0)
+		active(true)
+#if defined(PLATFORM_SDL2_SUPPORT)
+		, window_interface(0)
+#endif
 	{
 	}
 	
@@ -1509,10 +1513,12 @@ public:
 	
 	virtual void tick()
 	{
+#if defined(PLATFORM_SDL2_SUPPORT)
 		if (window_interface)
 			window_interface->process_events();
-		else
+#else
 			platform::window_process_events();
+#endif
 		
 				
 		static float value = 0.0f;
@@ -1546,24 +1552,27 @@ public:
 //		queue.draw_indexed_primitives(index_buffer, 3);
 		queue.draw(0, 3);
 		
-		
-		if (!window_interface)
-			platform::window_begin_rendering(main_window);
+#if !defined(PLATFORM_SDL2_SUPPORT)
+		platform::window_begin_rendering(main_window);
+#endif
 		
 		
 		device->queue_buffers(&queue, 1);
 		device->submit();
 		
 		
-		if (!window_interface)
-			platform::window_end_rendering(main_window);
+#if !defined(PLATFORM_SDL2_SUPPORT)
+		platform::window_end_rendering(main_window);
+#endif
 
 //		glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, 2000);
 		
+#if defined(PLATFORM_SDL2_SUPPORT)
 		if (window_interface)
 		{
 			window_interface->swap_buffers(main_window);
 		}
+#endif
 	}
 	
 	virtual void shutdown()
@@ -1580,17 +1589,17 @@ public:
 		glDeleteSync(fence);
 		
 		renderer::shutdown();
-	
+#if defined(PLATFORM_SDL2_SUPPORT)
 		if (window_interface)
 		{
 			window_interface->destroy_window(main_window);
 			window_interface->shutdown();
+			platform::destroy_window_library();
 		}
-		else
-		{
-			platform::window_destroy(main_window);
-		}
-		platform::destroy_window_library();
+#else
+		platform::window_destroy(main_window);
+#endif
+
 		core::shutdown();
 	}
 	

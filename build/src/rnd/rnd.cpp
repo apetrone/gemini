@@ -23,7 +23,7 @@
 
 using namespace std;
 
-#define USE_SDL2 1
+#define USE_SDL2 PLATFORM_SDL2_SUPPORT
 
 #if USE_SDL2
 	#include <SDL.h>

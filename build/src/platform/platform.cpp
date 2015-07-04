@@ -65,6 +65,15 @@ namespace platform
 	// internal platform stuff?
 	// ---------------------------------------------------------------------
 	
+	// don't bloat my code up
+	WindowParameters::~WindowParameters()
+	{
+	}
+	
+	NativeWindow::~NativeWindow()
+	{
+	}
+	
 	input_provider::~input_provider()
 	{
 	}
