@@ -40,6 +40,9 @@ namespace core
 		
 		void startup()
 		{
+			// If you hit this assert, there's a double memory startup
+			assert(_global_zone == nullptr && _global_allocator == nullptr);
+
 			static zone global_memory_zone("global");
 			static global_allocator_type global_allocator_instance(&global_memory_zone);
 			_global_allocator = &global_allocator_instance;
@@ -47,6 +50,12 @@ namespace core
 		
 		void shutdown()
 		{
+			// If you hit this assert, there's a double memory shutdown
+			assert(_global_zone && _global_allocator);
+
+			// sanity test; these are no longer valid!
+			_global_zone = nullptr;
+			_global_allocator = nullptr;
 		}
 		
 		global_allocator_type& global_allocator()
