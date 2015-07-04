@@ -44,15 +44,15 @@
 #include <nom/graph.hpp>
 #include <nom/button.hpp>
 
+// when defined; uses the old method for creating windows
+//#define USE_WINDOW_LIBRARY
+
 #if defined(PLATFORM_SDL2_SUPPORT)
 	#include <platform/windowlibrary.h>
 #endif
 
 using namespace platform;
 using namespace renderer;
-
-// when enabled; uses the old method for creating windows
-#define USE_WINDOW_LIBRARY 1
 
 namespace render2
 {
@@ -1253,7 +1253,7 @@ public kernel::IEventListener<kernel::SystemEvent>
 {
 private:
 	bool active;
-#if defined(PLATFORM_SDL2_SUPPORT)
+#if defined(USE_WINDOW_LIBRARY)
 	platform::IWindowLibrary* window_interface;
 #endif
 	platform::NativeWindow* main_window;
@@ -1290,7 +1290,7 @@ private:
 public:
 	EditorKernel() :
 		active(true)
-#if defined(PLATFORM_SDL2_SUPPORT)
+#if defined(USE_WINDOW_LIBRARY)
 		, window_interface(0)
 #endif
 	{
@@ -1516,7 +1516,7 @@ public:
 	
 	virtual void tick()
 	{
-#if defined(PLATFORM_SDL2_SUPPORT)
+#if defined(USE_WINDOW_LIBRARY)
 		if (window_interface)
 			window_interface->process_events();
 #else
@@ -1555,7 +1555,7 @@ public:
 //		queue.draw_indexed_primitives(index_buffer, 3);
 		queue.draw(0, 3);
 		
-#if !defined(PLATFORM_SDL2_SUPPORT)
+#if !defined(USE_WINDOW_LIBRARY)
 		platform::window_begin_rendering(main_window);
 #endif
 		
@@ -1564,13 +1564,13 @@ public:
 		device->submit();
 		
 		
-#if !defined(PLATFORM_SDL2_SUPPORT)
+#if !defined(USE_WINDOW_LIBRARY)
 		platform::window_end_rendering(main_window);
 #endif
 
 //		glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, 2000);
 		
-#if defined(PLATFORM_SDL2_SUPPORT)
+#if defined(USE_WINDOW_LIBRARY)
 		if (window_interface)
 		{
 			window_interface->swap_buffers(main_window);
@@ -1592,7 +1592,7 @@ public:
 		glDeleteSync(fence);
 		
 		renderer::shutdown();
-#if defined(PLATFORM_SDL2_SUPPORT)
+#if defined(USE_WINDOW_LIBRARY)
 		if (window_interface)
 		{
 			window_interface->destroy_window(main_window);

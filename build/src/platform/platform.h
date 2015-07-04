@@ -489,6 +489,9 @@ namespace platform
 	// bring window to focus
 	void window_focus(NativeWindow* window);
 	
+	// show or hide the mouse cursor
+	void window_show_cursor(bool enable);
+	
 	// should these be exposed? or internal?
 	enum RenderBackend
 	{

@@ -537,4 +537,12 @@ namespace platform
 	{
 
 	}
+	
+	void window_show_cursor(bool enable)
+	{
+		if (enable)
+			[NSCursor unhide];
+		else
+			[NSCursor hide];
+	}
 } // namespace platform
