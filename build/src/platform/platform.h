@@ -371,25 +371,38 @@ namespace platform
 	// windowsystem
 	// ---------------------------------------------------------------------
 	
-	
-	
-	struct WindowParameters
+	struct WindowDimensions
 	{
-		// in windowed modes, this is the target display the window
-		// will be transferred to
-		uint32_t target_display;
-		
+		uint32_t x;
+		uint32_t y;
+	
 		// dimensions of the actual window in pixels
-		uint32_t window_width;
-		uint32_t window_height;
-		
-		uint32_t window_x;
-		uint32_t window_y;
-		
+		uint32_t width;
+		uint32_t height;
+				
 		// dimensions of the rendering area in pixels
 		uint32_t render_width;
 		uint32_t render_height;
 		
+		WindowDimensions() :
+			x(0),
+			y(0),
+			width(1),
+			height(1),
+			render_width(0),
+			render_height(1)
+		{
+		}
+	};
+	
+	struct WindowParameters
+	{
+		WindowDimensions window;
+		
+		// in windowed modes, this is the target display the window
+		// will be transferred to
+		uint32_t target_display;
+
 		// need to take this into account when calculating screen coordinates
 		uint32_t titlebar_height;
 		
@@ -402,27 +415,32 @@ namespace platform
 		// allow the window to be resized
 		bool enable_resize;
 		
+		// wait for vertical sync
+		bool enable_vsync;
+		
 		WindowParameters() :
 		target_display(0),
-		window_width(1),
-		window_height(1),
-		window_x(0),
-		window_y(0),
-		render_width(0),
-		render_height(1),
 		titlebar_height(0),
 		window_title(0),
 		enable_fullscreen(false),
-		enable_resize(true)
+		enable_resize(true),
+		enable_vsync(true)
 		{
 		}
 		
 		virtual ~WindowParameters();
 	};
 	
-	struct NativeWindow : public WindowParameters
+	struct NativeWindow
 	{
 		virtual ~NativeWindow();
+		
+		NativeWindow(const WindowDimensions& window_dimensions) :
+			dimensions(window_dimensions)
+		{
+		}
+		
+		WindowDimensions dimensions;
 	};
 		
 	class input_provider

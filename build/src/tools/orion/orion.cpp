@@ -44,12 +44,15 @@
 #include <nom/graph.hpp>
 #include <nom/button.hpp>
 
+#if defined(PLATFORM_SDL2_SUPPORT)
+	#include <platform/windowlibrary.h>
+#endif
 
 using namespace platform;
 using namespace renderer;
 
 // when enabled; uses the old method for creating windows
-#define USE_WINDOW_LIBRARY 0
+#define USE_WINDOW_LIBRARY 1
 
 namespace render2
 {
@@ -1356,8 +1359,8 @@ public:
 			window_interface->startup(kernel::parameters());
 		
 			platform::WindowParameters window_params;
-			window_params.window_width = 800;
-			window_params.window_height = 600;
+			window_params.window.width = 800;
+			window_params.window.height = 600;
 			window_params.window_title = "orion";
 //			window_params.enable_fullscreen = true;
 			main_window = window_interface->create_window(window_params);
@@ -1386,8 +1389,8 @@ public:
 			}
 			
 			platform::WindowParameters params;
-			params.window_width = 800;
-			params.window_height = 600;
+			params.window.width = 800;
+			params.window.height = 600;
 			params.window_title = "orion";
 			params.target_display = 0;
 			main_window = platform::window_create(params);

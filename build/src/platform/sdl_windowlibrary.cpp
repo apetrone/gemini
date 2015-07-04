@@ -40,7 +40,9 @@ namespace platform
 		SDL_GLContext context;	
 		SDL_Window* window;
 		
-		SDLWindow() : window(0)
+		SDLWindow(const WindowDimensions& window_dimensions) : 
+			NativeWindow(window_dimensions),
+			window(0)
 		{
 		}
 		
@@ -309,7 +311,7 @@ namespace platform
 		
 		if (kernel::instance()->is_active())
 		{
-			assert( parameters.window_width != 0 || parameters.window_height != 0 );
+			assert( parameters.window.width != 0 || parameters.window.height != 0 );
 			
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
@@ -332,11 +334,11 @@ namespace platform
 				window_flags |= SDL_WINDOW_RESIZABLE;
 			}
 			
-			sdlw = MEMORY_NEW(SDLWindow, core::memory::global_allocator());
+			sdlw = MEMORY_NEW(SDLWindow, core::memory::global_allocator())(parameters.window);
 			
 			sdlw->window = SDL_CreateWindow(
 									  parameters.window_title, 0, 0,
-									  parameters.window_width, parameters.window_height,
+									  parameters.window.width, parameters.window.height,
 									  window_flags);
 			
 			if (!sdlw->window)
@@ -354,7 +356,7 @@ namespace platform
 			}
 			
 			// try to set our window size; it might still be smaller than requested.
-			SDL_SetWindowSize(sdlw->window, parameters.window_width, parameters.window_height);
+			SDL_SetWindowSize(sdlw->window, parameters.window.width, parameters.window.height);
 			
 			// center our window
 			SDL_SetWindowPosition(sdlw->window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
@@ -366,13 +368,10 @@ namespace platform
 			// hide the mouse cursor
 			show_mouse(false);
 			
-			sdlw->window_width = window_width;
-			sdlw->window_height = window_height;
-			sdlw->render_width = render_width;
-			sdlw->render_height = render_height;
-			sdlw->enable_fullscreen = parameters.enable_fullscreen;
-			sdlw->target_display = parameters.target_display;
-			sdlw->window_title = parameters.window_title;
+			sdlw->dimensions.width = window_width;
+			sdlw->dimensions.height = window_height;
+			sdlw->dimensions.render_width = render_width;
+			sdlw->dimensions.render_height = render_height;
 			
 //			if ( render_width > window_width && render_height > window_height )
 //			{

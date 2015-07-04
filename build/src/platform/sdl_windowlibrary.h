@@ -25,6 +25,7 @@
 #pragma once
 
 #include "platform.h"
+#include "windowlibrary.h"
 #include "input.h"
 
 #include <SDL.h>

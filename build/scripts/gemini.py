@@ -652,6 +652,9 @@ def get_rnd(arguments, links, **kwargs):
 
 	if arguments.with_sdl:
 		rnd.dependencies.append(libsdl)
+		rnd.defines += [
+			"PLATFORM_SDL2_SUPPORT=1"
+		]
 
 	rnd.dependencies.extend(links)
 
@@ -732,6 +735,9 @@ def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwarg
 
 	if arguments.with_sdl:
 		kraken.dependencies.append(libsdl)
+		kraken.defines += [
+			"PLATFORM_SDL2_SUPPORT=1"
+		]
 
 	kraken.dependencies.extend([
 		libplatform,
@@ -775,6 +781,9 @@ def get_orion(arguments, libruntime, libplatform, libcore, librenderer, **kwargs
 
 	if arguments.with_sdl:
 		orion.dependencies.append(libsdl)
+		orion.defines += [
+			"PLATFORM_SDL2_SUPPORT=1"
+		]
 
 	orion.dependencies.extend([
 		libplatform,
@@ -848,6 +857,10 @@ def products(arguments, **kwargs):
 	g_macosx.driver.macosx_deployment_target = "10.8"
 	g_macosx.driver.sdkroot = "macosx10.9"
 
+	# SDL2 doesn't build correctly with ARC enabled.
+	# if arguments.with_sdl:
+	g_macosx.driver.clang_enable_objc_arc = "NO"
+
 	# make visibility conformant
 	g_macosx.driver.gcc_inlines_are_private_extern = "NO"
 	g_macosx.driver.gcc_symbols_private_extern = "NO"
@@ -909,6 +922,9 @@ def products(arguments, **kwargs):
 
 	if arguments.with_sdl:
 		gemini.dependencies.append(libsdl)
+		gemini.defines += [
+			"PLATFORM_SDL2_SUPPORT=1"
+		]
 
 	gemini.dependencies += [
 		libcore,
