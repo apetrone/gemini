@@ -65,9 +65,9 @@ namespace gemini
 			return 0;
 		} // find_bone_named
 		
-		Bone* Skeleton::get_bone_at_index(int32_t index)
+		Bone* Skeleton::get_bone_at_index(uint32_t index)
 		{
-			assert(index > -1 && index < bones.size());
+			assert(index < bones.size());
 			return bones[index];
 		} // get_bone_at_index
 		
