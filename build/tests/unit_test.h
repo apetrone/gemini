@@ -87,7 +87,7 @@ struct UnitTestCategory
 	{
 		UnitTest* one = next;
 		UnitTest* two = next->next;
-		UnitTest* output = next;
+		UnitTest* output = nullptr;
 		
 		while(one->next)
 		{
