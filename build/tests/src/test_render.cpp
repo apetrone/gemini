@@ -156,8 +156,8 @@ public:
 
 		// create a test window
 		platform::WindowParameters params;
-		params.window_width = 512;
-		params.window_height = 512;
+		params.window.width = 512;
+		params.window.height = 512;
 		params.window_title = "test_render";
 		
 		native_window = platform::window_create(params);
