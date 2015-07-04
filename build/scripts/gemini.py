@@ -396,10 +396,10 @@ def get_libplatform(arguments, target_platform):
 	macosx = libplatform.layout(platform="macosx")
 	macosx.sources += [
 		# application
-		"src/platform/application/osx/osx_appdelegate.mm",
-		"src/platform/application/osx/osx_appdelegate.h",
-		"src/platform/application/osx/osx_application.mm",
-		"src/platform/application/osx/osx_application.h",
+		"src/platform/application/cocoa/cocoa_appdelegate.mm",
+		"src/platform/application/cocoa/cocoa_appdelegate.h",
+		"src/platform/application/cocoa/cocoa_application.mm",
+		"src/platform/application/cocoa/cocoa_application.h",
 
 		# dylib
 		"src/platform/dylib/osx/osx_dylib.cpp",
@@ -411,6 +411,7 @@ def get_libplatform(arguments, target_platform):
 
 		# os
 		"src/platform/os/osx/osx_os.mm",
+		"src/platform/os/osx/osx_common.h",
 
 		# serial
 		"src/platform/serial/posix/posix_serial.cpp",
@@ -425,11 +426,11 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/time/posix/posix_datetime.cpp",
 
 		# window
-		"src/platform/window/osx/osx_windowbackend.mm",
-		"src/platform/window/osx/osx_openglview.mm",
-		"src/platform/window/osx/osx_openglview.h",
-		"src/platform/window/osx/osx_window.mm",
-		"src/platform/window/osx/osx_window.h"		
+		"src/platform/window/cocoa/cocoa_windowbackend.mm",
+		"src/platform/window/cocoa/cocoa_openglview.mm",
+		"src/platform/window/cocoa/cocoa_openglview.h",
+		"src/platform/window/cocoa/cocoa_window.mm",
+		"src/platform/window/cocoa/cocoa_window.h"		
 	]
 
 	macosx.includes += [
