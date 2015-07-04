@@ -210,7 +210,6 @@ public:
 	void remove(const K& key)
 	{
 		HashType hash = get_hash(key);
-		int32_t bucket_index = (hash % table_size);
 		int32_t index = find_bucket(hash);
 		if (index != -1)
 		{
