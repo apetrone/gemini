@@ -93,9 +93,8 @@
 	#define PLATFORM_IS_MOBILE 1
 	#define PLATFORM_POSIX 1
 #elif defined(__linux__)
-	#if defined(RASPBERRYPI)
+	#if defined(PLATFORM_RASPBERRYPI)
 		// specifically built for RaspberryPi
-		#define PLATFORM_RASPBERRYPI 1
 		#define PLATFORM_NAME "raspberrypi"
 	#else
 		// generic flavor
