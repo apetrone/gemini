@@ -22,8 +22,6 @@ Removing a git submodule:
 		git submodule sync
 		git submodule update
 
-
-
 Source Code Organization:
 
 - 'core': containers, utilities, memory management, math
@@ -31,3 +29,10 @@ Source Code Organization:
 - 'runtime': assets, logging, filesystem services
 - 'renderer': a platform independent rendering layer
 
+
+
+
+Specialty Builds:
+
+- building on the Raspberry Pi:
+	required packages: openal
