@@ -22,18 +22,112 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include "platform.h"
+#include "platform_internal.h"
 #include "egl_backend.h"
+
+#include <EGL/egl.h>
+#include <assert.h>
 
 namespace platform
 {
+	struct egl_window : public NativeWindow
+	{
+		egl_window(const WindowDimensions& window_dimensions) : 
+			NativeWindow(window_dimensions)
+		{
+		}
+
+		EGLContext context;
+		EGLSurface surface;
+	};
+
+	static EGLDisplay _default_display = EGL_NO_DISPLAY;
+
+	void egl_backend_startup()
+	{
+		assert(_default_display != EGL_NO_DISPLAY);
+		_default_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+		assert(_default_display != EGL_NO_DISPLAY);
+
+		int major = 0;
+		int minor = 0;
+		EGLBoolean result = eglInitialize(_default_display, 0, 0);
+		assert(result != EGL_FALSE);
+
+		fprintf(stderr, "initialized EGL %i.%i\n", major, minor);
+
+		// eglBindAPI and EGL version required
+		// 1.2+: EGL_OPENGL_ES_API and EGL_OPENVG_API
+		// 1.4+: EGL_OPENGL_API
+#if defined(PLATFORM_OPENGLES_SUPPORT)
+		assert(major >= 1 && minor >= 2);
+		eglBindAPI(EGL_OPENGL_ES_API);
+#endif
+	}
+
+	void egl_backend_shutdown()
+	{
+		assert(_default_display != EGL_NO_DISPLAY);
+
+		eglMakeCurrent(_default_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+		eglTerminate(_default_display);
+		_default_display = EGL_NO_DISPLAY;
+	}
+
+
 	NativeWindow* window_create(const WindowParameters& window_parameters)
 	{
+		// prepare egl attributes
+		EGLint attribs[] = {
+#if defined(PLATFORM_OPENGLES_SUPPORT)
+			// OpenGL ES 1.0/1.1
+			// EGL_RENDERABLE_TYPE, EGL_OPENGL_ES_BIT,
+			
+			// OpenGL ES 2.0
+			EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+#endif
+
+			EGL_CONFIG_CAVEAT, EGL_DONT_CARE,
+
+			// depth size in bits
+			EGL_DEPTH_SIZE, window_parameters.depth_size,
+
+			// color buffer size (can specify up to 32)
+			EGL_BUFFER_SIZE, 24,
+
+			EGL_NONE
+		};
+
+
+		// EGLint context_attribs[] = {
+		// 	EGL_CONTEXT_CLIENT_VERSION, 2,
+		// 	EGL_NONE,
+		// };
+
+		EGLDisplay display = _default_display;
+
+		EGLConfig config;
+		EGLint total_configs;
+		EGLBoolean result = EGL_FALSE;
+
+		result = eglChooseConfig(display, attribs, &config, 1, &total_configs);
+		assert(result != EGL_FALSE);
+
+		// create an egl window to store more data
+		egl_window* window = MEMORY_NEW(egl_window, get_platform_allocator())(window_parameters.window);
+
+		// create the EGL context
+		window->context = eglCreateContext(display, config, EGL_NO_CONTEXT, 0);
+		assert(window->context != EGL_NO_CONTEXT);
+
+
 		return nullptr;
 	}
 
 	void window_destroy(NativeWindow* window)
 	{
+		egl_window* eglw = static_cast<egl_window*>(window);
+		MEMORY_DELETE(eglw, get_platform_allocator());
 	}
 	
 	void window_begin_rendering(NativeWindow* window)

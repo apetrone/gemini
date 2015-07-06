@@ -28,4 +28,6 @@
 
 namespace platform
 {
+	void egl_backend_startup();
+	void egl_backend_shutdown();
 } // namespace platform
