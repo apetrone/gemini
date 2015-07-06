@@ -43,13 +43,14 @@ namespace platform
 
 	Result os_startup()
 	{
+		linux_window_backend_startup();
 
 		return Result(Result::Success);
 	}
 	
 	void os_shutdown()
 	{
-
+		linux_window_backend_shutdown();
 	}
 	
 	int os_run_application(int argc, const char** argv)
