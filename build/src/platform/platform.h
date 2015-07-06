@@ -408,6 +408,9 @@ namespace platform
 		
 		// utf8-encoded window title
 		const char* window_title;
+
+		// depth size requested for this window in bits
+		uint8_t depth_size;
 		
 		// set to true to create a fullscreen window
 		bool enable_fullscreen;
