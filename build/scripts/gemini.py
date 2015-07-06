@@ -505,6 +505,18 @@ def get_libplatform(arguments, target_platform):
 			"/opt/vc/include/interface/vcos/pthreads",
 			"/opt/vc/include/interface/vmcs_host/linux"
 		]
+
+		linux.libdirs += [
+			"/opt/vc/lib"
+		]		
+		
+		linux.links += [
+			# Broadcom library
+			"bcm_host",
+
+			# VideoCore
+			"vcos"
+		]
 	else:
 		# Otherwise, just assume Linux can handle desktop GL
 		linux.defines += [
