@@ -366,8 +366,11 @@ void test_str()
 	result = core::str::case_insensitive_compare(static_buffer, output, 0);
 	TEST_VERIFY(result == 0, format);
 	
+	// llu is not recognized under 32-bit environments
 	char local[128] = {0};
-	result = core::str::sprintf(local, 128, "PAGE_SIZE: %llu\n", 4096);
+	result = core::str::sprintf(local, 128, "PAGE_SIZE: %i\n", 4096);
+	fprintf(stdout, "result: %s\n", local);
+	fprintf(stdout, "result is: %i\n", result);
 	TEST_VERIFY(result == 16, sprintf);
 	
 	memset(local, 0, 128);
