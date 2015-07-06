@@ -13,7 +13,6 @@ def products(arguments, **kwargs):
 	xwl = Product(name="xwl", output=ProductType.DynamicLibrary)
 	xwl.root = "../dependencies/xwl"
 	xwl.project_root = "_projects"
-	xwl.object_root = "${PROJECT_ROOT}/obj"
 
 
 	xwl.sources = [

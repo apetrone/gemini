@@ -8,7 +8,6 @@ def create_product(name, directory, target_platform):
 	product = Product(name=name, output=output_type)
 	product.root = "../dependencies/recastnavigation"
 	product.project_root = "_projects"
-	product.object_root = "${PROJECT_ROOT}/obj"
 	product.excludes = [
 		"*.DS_Store"
 	]

@@ -11,7 +11,6 @@ def products(arguments, **kwargs):
 	nom = Product(name="nom", output=ProductType.DynamicLibrary)
 	nom.root = "../dependencies/nom"
 	nom.project_root = "_projects"
-	nom.object_root = "${PROJECT_ROOT}/obj"
 
 
 	nom.sources = [

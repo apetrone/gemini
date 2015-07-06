@@ -9,7 +9,6 @@ class BuildSettings(object):
 	def populate(self, product):
 		product.root = "../dependencies/bullet3"
 		product.project_root = "_projects"
-		product.object_root = "${PROJECT_ROOT}/obj"
 
 		#
 		# macosx

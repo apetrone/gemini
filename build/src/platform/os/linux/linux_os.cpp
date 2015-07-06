@@ -22,23 +22,60 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-
 #include "platform_internal.h"
+
+#if defined(PLATFORM_RASPBERRYPI)
+	#include <bcm_host.h>
+
+	// PLATFORM_SUPPORT_EGL and PLATFORM_SUPPORT_OPENGLES must be defined
+	#if !(defined(PLATFORM_EGL_SUPPORT) || !defined(PLATFORM_OPENGLES_SUPPORT))
+		#error RaspberryPi requires EGL and OpenGL ES support!
+	#endif
+#endif
+
+
+#if defined(PLATFORM_EGL_SUPPORT)
+	#include "../window/linux/egl/egl_backend.h"
+#endif
 
 namespace platform
 {
 
 	Result os_startup()
 	{
+
 		return Result(Result::Success);
 	}
 	
 	void os_shutdown()
 	{
+
 	}
 	
 	int os_run_application(int argc, const char** argv)
 	{
 		return 0;
+	}
+
+
+	void linux_window_backend_startup()
+	{
+#if defined(PLATFORM_RASPBERRYPI)
+		// this must be called before we can issue any GPU commands
+		back_host_init();
+#endif
+
+
+
+#if defined(PLATFORM_EGL_SUPPORT)
+		egl_backend_startup();
+#endif
+	}
+
+	void linux_window_backend_shutdown()
+	{
+#if defined(PLATFORM_EGL_SUPPORT)
+		egl_backend_shutdown();
+#endif
 	}
 } // namespace platform
