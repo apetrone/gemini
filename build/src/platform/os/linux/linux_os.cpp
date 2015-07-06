@@ -23,6 +23,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "platform_internal.h"
+#include "linux_common.h"
 
 #if defined(PLATFORM_RASPBERRYPI)
 	#include <bcm_host.h>
@@ -35,7 +36,7 @@
 
 
 #if defined(PLATFORM_EGL_SUPPORT)
-	#include "../window/linux/egl/egl_backend.h"
+	#include "../../window/linux/egl/egl_backend.h"
 #endif
 
 namespace platform
@@ -63,7 +64,7 @@ namespace platform
 	{
 #if defined(PLATFORM_RASPBERRYPI)
 		// this must be called before we can issue any GPU commands
-		back_host_init();
+		bcm_host_init();
 #endif
 
 
