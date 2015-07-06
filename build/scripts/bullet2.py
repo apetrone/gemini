@@ -8,7 +8,6 @@ class BuildSettings(object):
 
 	def populate(self, product):
 		product.project_root = "_projects"
-		product.object_root = "${PROJECT_ROOT}/obj"
 
 		#
 		# macosx

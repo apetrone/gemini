@@ -426,11 +426,11 @@ def get_libplatform(arguments, target_platform):
 
 		# window
 		"src/platform/window/cocoa/cocoa_common.h",
-		"src/platform/window/cocoa/cocoa_windowbackend.mm",
+		"src/platform/window/cocoa/cocoa_backend.mm",
 		"src/platform/window/cocoa/cocoa_openglview.mm",
 		"src/platform/window/cocoa/cocoa_openglview.h",
 		"src/platform/window/cocoa/cocoa_window.mm",
-		"src/platform/window/cocoa/cocoa_window.h"		
+		"src/platform/window/cocoa/cocoa_window.h"
 	]
 
 	macosx.includes += [
@@ -444,7 +444,7 @@ def get_libplatform(arguments, target_platform):
 	]
 
 	macosx.defines += [
-		"PLATFORM_SUPPORT_OPENGL=1"
+		"PLATFORM_OPENGL_SUPPORT=1"
 	]
 
 
@@ -459,7 +459,8 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/filesystem/posix/posix_filesystem_common.cpp",
 
 		# os
-		"src/platform/os/posix/posix_os.cpp",
+		"src/platform/os/linux/linux_os.cpp",
+		"src/platform/os/linux/linux_common.h",
 
 		# serial
 		"src/platform/serial/posix/posix_serial.cpp",
@@ -487,19 +488,21 @@ def get_libplatform(arguments, target_platform):
 		]
 
 	linux.includes += [
-		"src/platform/posix"
+		"src/platform/os/linux"
 	]
 
 	# if GLES is explicitly defined or RaspberryPi is;
 	# we should support OpenGL ES
 	if arguments.gles or arguments.raspberrypi:
 		linux.defines += [
-			"PLATFORM_SUPPORT_OPENGLES=1"
+			"PLATFORM_RASPBERRYPI=1",
+			"PLATFORM_EGL_SUPPORT=1",		
+			"PLATFORM_OPENGLES_SUPPORT=1"
 		]
 	else:
 		# Otherwise, just assume Linux can handle desktop GL
 		linux.defines += [
-			"PLATFORM_SUPPORT_OPENGL=1"
+			"PLATFORM_OPENGL_SUPPORT=1"
 		]
 
 
@@ -701,7 +704,7 @@ def get_rnd(arguments, links, **kwargs):
 
 	return rnd
 
-def create_unit_test(name, dependencies, source, output_type = ProductType.Commandline):
+def create_unit_test(arguments, name, dependencies, source, output_type = ProductType.Commandline):
 	product = Product(name=name, output=output_type)	
 	product.project_root = COMMON_PROJECT_ROOT
 	product.root = "../"	
@@ -737,14 +740,20 @@ def create_unit_test(name, dependencies, source, output_type = ProductType.Comma
 		"-Wl,-rpath='$$$\ORIGIN'",
 	]
 
+	if arguments.raspberrypi:
+		linux.links += [
+			"EGL",
+			"GLESv2"
+		]
+
 	return product
 
 def get_unit_tests(arguments, dependencies, **kwargs):
 	return [
-		create_unit_test("test_core", dependencies, "tests/src/test_core.cpp"),
-		create_unit_test("test_platform", dependencies, "tests/src/test_platform.cpp"),
-		create_unit_test("test_runtime", dependencies, "tests/src/test_runtime.cpp"),
-		create_unit_test("test_render", dependencies, "tests/src/test_render.cpp", ProductType.Application)
+		create_unit_test(arguments, "test_core", dependencies, "tests/src/test_core.cpp"),
+		create_unit_test(arguments, "test_platform", dependencies, "tests/src/test_platform.cpp"),
+		create_unit_test(arguments, "test_runtime", dependencies, "tests/src/test_runtime.cpp"),
+		create_unit_test(arguments, "test_render", dependencies, "tests/src/test_render.cpp", ProductType.Application)
 	]
 
 def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
@@ -851,7 +860,7 @@ def get_orion(arguments, libruntime, libplatform, libcore, librenderer, **kwargs
 
 def arguments(parser):
 	parser.add_argument("--with-gles", dest="gles", action="store_true", help="Build with GLES support", default=False)
-	parser.add_argument("--raspberrypi", dest="raspberrypi", action="store_true", help="Build for the RaspberryPi", default=False)
+	parser.add_argument("--raspberrypi", dest="raspberrypi", action="store_true", help="Build for the RaspberryPi; implies EGL + OpenGLES", default=False)
 	
 	parser.add_argument("--indextype", dest="index_type", choices=["uint", "ushort"], type=str, default="uint", help="Set the IndexBuffer type; defaults to uint")
 
@@ -1025,7 +1034,9 @@ def products(arguments, **kwargs):
 
 		if arguments.raspberrypi:
 			linux.defines += [
-				"PLATFORM_RASPBERRYPI=1"
+				"PLATFORM_RASPBERRYPI=1",
+				"PLATFORM_EGL_SUPPORT=1",
+				"PLATFORM_OPENGLES_SUPPORT=1"
 			]
 
 		if arguments.with_x11:

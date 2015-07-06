@@ -7,7 +7,6 @@ def arguments(parser):
 
 def add_settings_to_product(target_platform, product):
 	product.project_root = "_projects"
-	product.object_root = "${PROJECT_ROOT}/obj"
 
 
 	#
