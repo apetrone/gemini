@@ -499,6 +499,12 @@ def get_libplatform(arguments, target_platform):
 			"PLATFORM_EGL_SUPPORT=1",		
 			"PLATFORM_OPENGLES_SUPPORT=1"
 		]
+
+		linux.includes += [
+			"/opt/vc/include",
+			"/opt/vc/include/interface/vcos/pthreads",
+			"/opt/vc/include/interface/vmcs_host/linux"
+		]
 	else:
 		# Otherwise, just assume Linux can handle desktop GL
 		linux.defines += [
@@ -741,6 +747,9 @@ def create_unit_test(arguments, name, dependencies, source, output_type = Produc
 	]
 
 	if arguments.raspberrypi:
+		linux.libdirs += [
+			"/opt/vc/lib"
+		]		
 		linux.links += [
 			"EGL",
 			"GLESv2"
