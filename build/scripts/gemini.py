@@ -475,21 +475,39 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/time/posix/posix_timer.cpp"
 	]
 
-	# if we're building with X11 support
-	if arguments.with_x11:
-		linux.sources += [
-			"src/platform/window/linux/x11/*.cpp",
-			"src/platform/window/linux/x11/*.h"
-		]
-	elif arguments.with_egl:
-		linux.sources += [
-			"src/platform/window/linux/egl/*.cpp",
-			"src/platform/window/linux/egl/*.h"
-		]
 
 	linux.includes += [
 		"src/platform/backend/linux"
 	]
+
+	#
+	# x11 support
+	if arguments.with_x11:
+		linux.sources += [
+			"src/platform/window/x11/*.cpp",
+			"src/platform/window/x11/*.h"
+		]
+		linux.sources += [
+			"src/platform/graphics/x11/*.cpp",
+			"src/platform/graphics/x11/*.h"			
+		]
+
+	# 
+	# egl support
+	if arguments.with_egl:
+		linux.sources += [
+			"src/platform/graphics/egl/*.cpp",
+			"src/platform/graphics/egl/*.h"
+		]
+
+	# 
+	# Raspberry Pi: Add support for DispmanX
+	if arguments.raspberrypi:
+		linux.sources += [
+			"src/platform/window/dispmanx/*.cpp",
+			"src/platform/window/dispmanx/*.h"			
+		]
+
 
 	# if GLES is explicitly defined or RaspberryPi is;
 	# we should support OpenGL ES

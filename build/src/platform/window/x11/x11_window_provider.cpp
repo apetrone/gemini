@@ -23,53 +23,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "platform.h"
-#include "x11_backend.h"
+#include "x11_window_provider.h"
 
 namespace platform
 {
-	NativeWindow* window_create(const WindowParameters& window_parameters)
-	{
-		return nullptr;
-	}
-
-	void window_destroy(NativeWindow* window)
-	{
-	}
-	
-	void window_begin_rendering(NativeWindow* window)
-	{	
-	}
-	
-	void window_end_rendering(NativeWindow* window)
-	{
-	}
-
-	void window_process_events()
-	{
-	}
-
-	void window_size(NativeWindow* window, int& width, int& height)
-	{
-	}
-	
-	void window_render_size(NativeWindow* window, int& width, int& height)
-	{
-	}
-	
-	size_t window_screen_count()
-	{
-		return 0;
-	}
-
-	void window_screen_rect(size_t screen_index, int& x, int& y, int& width, int& height)
-	{
-	}
-	
-	void window_focus(NativeWindow* window)
-	{
-	}
-	
-	void window_show_cursor(bool enable)
-	{
-	}
 } // namespace platform

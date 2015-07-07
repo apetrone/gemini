@@ -26,25 +26,43 @@
 #include "linux_backend.h"
 
 #if defined(PLATFORM_RASPBERRYPI)
-	#include <bcm_host.h>
+	#include <bcm_host.h> // for bcm_host_init
 
-	// PLATFORM_SUPPORT_EGL and PLATFORM_SUPPORT_OPENGLES must be defined
-	#if !(defined(PLATFORM_EGL_SUPPORT) || !defined(PLATFORM_OPENGLES_SUPPORT))
-		#error RaspberryPi requires EGL and OpenGL ES support!
-	#endif
-#endif
-
-
-#if defined(PLATFORM_EGL_SUPPORT)
-	#include "../../window/linux/egl/egl_backend.h"
+	#include "../../window/dispmanx/dispmanx_window_provider.h"
 #endif
 
 namespace platform
 {
 	namespace linux
 	{
+		window_provider::~window_provider()
+		{
+		}
+
+
 		static window_provider* _window_provider = nullptr;
+
+
+		// choose the best window provider
+		window_provider* create_window_provider()
+		{
+#if defined(PLATFORM_RASPBERRYPI)
+			typedef dispmanx_window_provider window_provider_type;
+#else
+			#error No window provider for this platform!
+#endif
+
+			return MEMORY_NEW(window_provider_type, platform::get_platform_allocator());
+		}
+
+		void destroy_window_provider(window_provider* provider)
+		{
+			MEMORY_DELETE(provider, platform::get_platform_allocator());
+		}
 	} // namespace linux
+
+
+	using namespace platform::linux;
 
 	Result backend_startup()
 	{
@@ -57,63 +75,22 @@ namespace platform
 		// Ultimately, we have to choose the best window provider
 		// either via build settings or at runtime.
 
-
 #if defined(PLATFORM_RASPBERRYPI)
-		fprintf(stdout, "RaspberryPi!\n");
+		fprintf(stdout, "[Raspberry Pi]!\n");
 
-		// this must be called before we can issue any GPU commands
+		// this must be called before we can issue any hardware commands
 		bcm_host_init();
+#endif
 
 
-		// get the display width/height
-		uint32_t display_width;
-		uint32_t display_height;
-
-		int success = graphics_get_display_size(0 /* LCD */, &display_width, &display_height);
-		if (success != 0)
+		assert(_window_provider == nullptr);
+		_window_provider = create_window_provider();
+		if (!_window_provider)
 		{
-			return Result(Result::Failure, "Failed to get display size!");
+			return Result(Result::Failure, "create_window_provider failed!");
 		}
 
-		fprintf(stdout, "display resolution: %i x %i\n", display_width, display_height);
-
-		// EGL_DISPMANX_WINDOW_T native_window;
-		DISPMANX_DISPLAY_HANDLE_T dispman_display;
-		DISPMANX_UPDATE_HANDLE_T dispman_update;		
-		DISPMANX_ELEMENT_HANDLE_T dispman_element;
-
-		VC_RECT_T dst_rect;
-		VC_RECT_T src_rect;
-		dst_rect.x = 0;
-		dst_rect.y = 0;
-		dst_rect.width = display_width;
-		dst_rect.height = display_height;
-
-		src_rect.x = 0;
-		src_rect.y = 0;
-		src_rect.width = display_width << 16;
-		src_rect.height = display_height << 16;
-
-		dispman_display = vc_dispmanx_display_open(0);
-		dispman_update = vc_dispmanx_update_start(0);
-
-		dispman_element = vc_dispmanx_element_add(dispman_update,
-			dispman_display, 0, &dst_rect, 0, &src_rect, 
-			DISPMANX_PROTECTION_NONE, 0 /*alpha*/, 0 /* clamp */,
-			(DISPMANX_TRANSFORM_T)0 /* transform*/
-		);
-
-		// native_window.element = dispman_element;
-		// native_window.width = display_width;
-		// native_window.height = display_height;
-		vc_dispmanx_update_submit_sync(dispman_update);
-#endif
-
-
-
-#if defined(PLATFORM_EGL_SUPPORT)
-		egl_backend_startup();
-#endif
+		_window_provider->startup();
 
 		return Result(Result::Success);
 	}
@@ -125,9 +102,10 @@ namespace platform
 
 	void backend_shutdown()
 	{
-#if defined(PLATFORM_EGL_SUPPORT)
-		egl_backend_shutdown();
-#endif
+		assert(_window_provider != nullptr);
+		_window_provider->shutdown();
+		destroy_window_provider(_window_provider);
+		_window_provider = nullptr;
 	}
 
 
@@ -135,4 +113,55 @@ namespace platform
 	{
 
 	}
+
+
+
+	NativeWindow* window_create(const WindowParameters& window_parameters)
+	{
+		return _window_provider->create(window_parameters);
+	}
+
+	void window_destroy(NativeWindow* window)
+	{
+		_window_provider->destroy(window);
+	}
+	
+	void window_begin_rendering(NativeWindow* window)
+	{
+	}
+	
+	void window_end_rendering(NativeWindow* window)
+	{
+	}
+
+	void window_process_events()
+	{
+	}
+
+	void window_size(NativeWindow* window, int& width, int& height)
+	{
+	}
+	
+	void window_render_size(NativeWindow* window, int& width, int& height)
+	{
+	}
+	
+	size_t window_screen_count()
+	{
+		return _window_provider->get_screen_count();
+	}
+
+	void window_screen_rect(size_t screen_index, int& x, int& y, int& width, int& height)
+	{
+	}
+	
+	void window_focus(NativeWindow* window)
+	{
+	}
+	
+	void window_show_cursor(bool enable)
+	{
+	}
+
+
 } // namespace platform
