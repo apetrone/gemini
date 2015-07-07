@@ -27,6 +27,16 @@
 
 namespace platform
 {
-	void linux_window_backend_startup();
-	void linux_window_backend_shutdown();
+	namespace linux
+	{
+		class window_provider
+		{
+		public:
+
+		};
+
+
+		window_provider* choose_window_provider();
+	} // namespace linux
+	
 } // namespace platform

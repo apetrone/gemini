@@ -99,6 +99,10 @@ void test_window()
 
 	platform::NativeWindow* window = platform::window_create(params);
 
+	platform::window_begin_rendering(window);
+	platform::dispatch_events();
+	platform::thread_sleep(1000);
+	platform::window_end_rendering(window);
 
 
 	platform::window_destroy(window);

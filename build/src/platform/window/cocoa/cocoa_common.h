@@ -34,6 +34,7 @@ namespace platform
 	namespace cocoa
 	{
 		void populate_keymap();
+		void process_event_loop();
 		
 		input::Button convert_keycode(unsigned short mac_keycode);
 		

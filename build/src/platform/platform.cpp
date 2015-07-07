@@ -99,7 +99,7 @@ namespace platform
 		_zone = MEMORY_NEW(core::memory::zone, core::memory::global_allocator())("platform");
 		_allocator = MEMORY_NEW(platform_allocator_type, core::memory::global_allocator())(_zone);
 		
-		result = os_startup();
+		result = backend_startup();
 		if (result.failed())
 		{
 			fprintf(stdout, "os_startup failed: '%s'\n", result.message);
@@ -117,7 +117,7 @@ namespace platform
 	void shutdown()
 	{
 		timer_shutdown();
-		os_shutdown();
+		backend_shutdown();
 		
 		MEMORY_DELETE(_allocator, core::memory::global_allocator());
 		MEMORY_DELETE(_zone, core::memory::global_allocator());
@@ -177,7 +177,7 @@ namespace platform
 		
 		
 #if defined(PLATFORM_APPLE)
-		return_code = os_run_application(_mainparameters.argc, (const char**)_mainparameters.argv);
+		return_code = backend_run_application(_mainparameters.argc, (const char**)_mainparameters.argv);
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
 		return_code = run_application();
 #else

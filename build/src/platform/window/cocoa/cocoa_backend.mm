@@ -511,6 +511,53 @@ namespace platform
 			// TODO: Investigate generating custom events for mouse capture
 			// http://stackoverflow.com/questions/5840873/how-to-tell-the-difference-between-a-user-tapped-keyboard-event-and-a-generated
 		}
+		
+		void process_event_loop()
+		{
+			while(true)
+			{
+				NSEvent* event = [NSApp
+								  nextEventMatchingMask:NSAnyEventMask
+								  untilDate:[NSDate distantPast]
+								  inMode:NSDefaultRunLoopMode
+								  dequeue:YES
+								  ];
+				
+				if (event == nil)
+				{
+					break;
+				}
+				
+				switch([event type])
+				{
+					case NSLeftMouseDown:
+					case NSLeftMouseUp:
+					case NSLeftMouseDragged:
+					case NSRightMouseDown:
+					case NSRightMouseUp:
+					case NSRightMouseDragged:
+					case NSOtherMouseDown:
+					case NSOtherMouseUp:
+					case NSOtherMouseDragged:
+					case NSScrollWheel:
+						dispatch_mouse_event(event);
+						break;
+						
+						//				case NSMouseMoved:
+						//					track_mouse_location([NSEvent mouseLocation]);
+						//					break;
+						
+					case NSKeyDown:
+					case NSKeyUp:
+						dispatch_key_event(event);
+						break;
+					default:
+						break;
+				}
+				
+				[NSApp sendEvent: event];
+			}
+		}
 	} // namespace cocoa
 	
 	using namespace platform::cocoa;
@@ -556,53 +603,6 @@ namespace platform
 	{
 		cocoa_native_window* nw = static_cast<cocoa_native_window*>(window);
 		swap_buffers(nw);
-	}
-
-	void window_process_events()
-	{
-		while(true)
-		{
-			NSEvent* event = [NSApp
-							  nextEventMatchingMask:NSAnyEventMask
-							  untilDate:[NSDate distantPast]
-							  inMode:NSDefaultRunLoopMode
-							  dequeue:YES
-							  ];
-							  
-			if (event == nil)
-			{
-				break;
-			}
-			
-			switch([event type])
-			{
-				case NSLeftMouseDown:
-				case NSLeftMouseUp:
-				case NSLeftMouseDragged:
-				case NSRightMouseDown:
-				case NSRightMouseUp:
-				case NSRightMouseDragged:
-				case NSOtherMouseDown:
-				case NSOtherMouseUp:
-				case NSOtherMouseDragged:
-				case NSScrollWheel:
-					dispatch_mouse_event(event);
-					break;
-					
-//				case NSMouseMoved:
-//					track_mouse_location([NSEvent mouseLocation]);
-//					break;
-					
-				case NSKeyDown:
-				case NSKeyUp:
-					dispatch_key_event(event);
-					break;
-				default:
-					break;
-			}
-
-			[NSApp sendEvent: event];
-		}
 	}
 
 	size_t window_screen_count()
