@@ -401,6 +401,9 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/application/cocoa/cocoa_application.mm",
 		"src/platform/application/cocoa/cocoa_application.h",
 
+		"src/platform/backend/osx/osx_backend.mm",
+		#"src/platform/backend/osx/osx_backend.h",
+
 		# dylib
 		"src/platform/dylib/osx/osx_dylib.cpp",
 		"src/platform/dylib/posix/posix_dlopen.cpp",
@@ -408,9 +411,6 @@ def get_libplatform(arguments, target_platform):
 		# filesystem
 		"src/platform/filesystem/osx/osx_filesystem.mm",
 		"src/platform/filesystem/posix/posix_filesystem_common.cpp",
-
-		# os
-		"src/platform/os/osx/osx_os.mm",
 
 		# serial
 		"src/platform/serial/posix/posix_serial.cpp",
@@ -435,7 +435,7 @@ def get_libplatform(arguments, target_platform):
 
 	macosx.includes += [
 		"src/platform/posix",
-
+		"src/platform/backend/osx",
 		"src/platform/window/cocoa"
 	]
 
@@ -450,6 +450,10 @@ def get_libplatform(arguments, target_platform):
 
 	linux = libplatform.layout(platform="linux")
 	linux.sources += [
+		# backend
+		"src/platform/backend/linux/linux_backend.cpp",
+		"src/platform/backend/linux/linux_backend.h",
+
 		# dylib
 		"src/platform/dylib/posix/posix_dylib.cpp",
 		"src/platform/dylib/posix/posix_dlopen.cpp",
@@ -457,10 +461,6 @@ def get_libplatform(arguments, target_platform):
 		# filesystem
 		"src/platform/filesystem/posix/posix_filesystem.cpp",
 		"src/platform/filesystem/posix/posix_filesystem_common.cpp",
-
-		# os
-		"src/platform/os/linux/linux_os.cpp",
-		"src/platform/os/linux/linux_common.h",
 
 		# serial
 		"src/platform/serial/posix/posix_serial.cpp",
@@ -488,7 +488,7 @@ def get_libplatform(arguments, target_platform):
 		]
 
 	linux.includes += [
-		"src/platform/os/linux"
+		"src/platform/backend/linux"
 	]
 
 	# if GLES is explicitly defined or RaspberryPi is;
