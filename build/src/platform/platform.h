@@ -81,9 +81,7 @@ namespace kernel
 {
 	class IKernel;
 	struct Parameters;
-}
-
-
+} // namespace kernel
 
 
 namespace platform
@@ -378,6 +376,22 @@ namespace platform
 	// windowsystem
 	// ---------------------------------------------------------------------
 	
+	struct Frame
+	{
+		uint32_t x;
+		uint32_t y;
+		uint32_t width;
+		uint32_t height;
+		
+		Frame() :
+			x(0),
+			y(0),
+			width(0),
+			height(0)
+		{
+		}
+	};
+
 	struct WindowDimensions
 	{
 		uint32_t x;

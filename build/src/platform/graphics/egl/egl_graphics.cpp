@@ -23,7 +23,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "platform_internal.h"
-#include "egl_backend.h"
+#include "egl_graphics.h"
 
 #include <EGL/egl.h>
 #include <assert.h>
@@ -82,7 +82,7 @@ namespace platform
 		_default_display = EGL_NO_DISPLAY;
 	}
 
-
+#if 0
 	NativeWindow* window_create(const WindowParameters& window_parameters)
 	{
 		// prepare egl attributes
@@ -137,41 +137,5 @@ namespace platform
 		egl_window* eglw = static_cast<egl_window*>(window);
 		MEMORY_DELETE(eglw, get_platform_allocator());
 	}
-	
-	void window_begin_rendering(NativeWindow* window)
-	{	
-	}
-	
-	void window_end_rendering(NativeWindow* window)
-	{
-	}
-
-	void window_process_events()
-	{
-	}
-
-	void window_size(NativeWindow* window, int& width, int& height)
-	{
-	}
-	
-	void window_render_size(NativeWindow* window, int& width, int& height)
-	{
-	}
-	
-	size_t window_screen_count()
-	{
-		return 0;
-	}
-
-	void window_screen_rect(size_t screen_index, int& x, int& y, int& width, int& height)
-	{
-	}
-	
-	void window_focus(NativeWindow* window)
-	{
-	}
-	
-	void window_show_cursor(bool enable)
-	{
-	}
+#endif
 } // namespace platform
