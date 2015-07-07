@@ -23,7 +23,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "platform_internal.h"
-#include "linux_common.h"
+#include "linux_backend.h"
 
 #if defined(PLATFORM_RASPBERRYPI)
 	#include <bcm_host.h>
