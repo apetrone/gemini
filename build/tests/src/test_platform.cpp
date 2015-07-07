@@ -87,6 +87,23 @@ void test_filesystem()
 // time
 // ---------------------------------------------------------------------
 
+// ---------------------------------------------------------------------
+// window
+// ---------------------------------------------------------------------
+void test_window()
+{
+	platform::WindowParameters params;
+	params.window_title = "none";
+	params.depth_size = 16;
+
+
+	platform::NativeWindow* window = platform::window_create(params);
+
+
+
+	platform::window_destroy(window);
+}
+
 int main(int, char**)
 {
 	TEST_CATEGORY(platform);
@@ -96,6 +113,7 @@ int main(int, char**)
 
 	test_dynamic_library();
 	test_filesystem();
+	test_window();
 	
 	platform::shutdown();
 	return 0;

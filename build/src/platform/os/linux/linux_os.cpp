@@ -63,8 +63,55 @@ namespace platform
 	void linux_window_backend_startup()
 	{
 #if defined(PLATFORM_RASPBERRYPI)
+		fprintf(stdout, "RaspberryPi!\n");
+
 		// this must be called before we can issue any GPU commands
 		bcm_host_init();
+
+
+		// get the display width/height
+		uint32_t display_width;
+		uint32_t display_height;
+
+		int success = graphics_get_display_size(0 /* LCD */, &display_width, &display_height);
+		if (success != 0)
+		{
+			fprintf(stderr, "Failed to get display size!\n");
+			return;
+		}
+
+		fprintf(stdout, "display resolution: %i x %i\n", display_width, display_height);
+
+		// EGL_DISPMANX_WINDOW_T native_window;
+		DISPMANX_DISPLAY_HANDLE_T dispman_display;
+		DISPMANX_UPDATE_HANDLE_T dispman_update;		
+		DISPMANX_ELEMENT_HANDLE_T dispman_element;
+
+		VC_RECT_T dst_rect;
+		VC_RECT_T src_rect;
+		dst_rect.x = 0;
+		dst_rect.y = 0;
+		dst_rect.width = display_width;
+		dst_rect.height = display_height;
+
+		src_rect.x = 0;
+		src_rect.y = 0;
+		src_rect.width = display_width << 16;
+		src_rect.height = display_height << 16;
+
+		dispman_display = vc_dispmanx_display_open(0);
+		dispman_update = vc_dispmanx_update_start(0);
+
+		dispman_element = vc_dispmanx_element_add(dispman_update,
+			dispman_display, 0, &dst_rect, 0, &src_rect, 
+			DISPMANX_PROTECTION_NONE, 0 /*alpha*/, 0 /* clamp */,
+			(DISPMANX_TRANSFORM_T)0 /* transform*/
+		);
+
+		// native_window.element = dispman_element;
+		// native_window.width = display_width;
+		// native_window.height = display_height;
+		vc_dispmanx_update_submit_sync(dispman_update);
 #endif
 
 

@@ -45,13 +45,13 @@ namespace platform
 
 	void egl_backend_startup()
 	{
-		assert(_default_display != EGL_NO_DISPLAY);
+		assert(_default_display == EGL_NO_DISPLAY);
 		_default_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 		assert(_default_display != EGL_NO_DISPLAY);
 
 		int major = 0;
 		int minor = 0;
-		EGLBoolean result = eglInitialize(_default_display, 0, 0);
+		EGLBoolean result = eglInitialize(_default_display, &major, &minor);
 		assert(result != EGL_FALSE);
 
 		fprintf(stderr, "initialized EGL %i.%i\n", major, minor);
@@ -121,7 +121,7 @@ namespace platform
 		assert(window->context != EGL_NO_CONTEXT);
 
 
-		return nullptr;
+		return window;
 	}
 
 	void window_destroy(NativeWindow* window)
