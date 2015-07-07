@@ -505,18 +505,6 @@ def get_libplatform(arguments, target_platform):
 			"/opt/vc/include/interface/vcos/pthreads",
 			"/opt/vc/include/interface/vmcs_host/linux"
 		]
-
-		linux.libdirs += [
-			"/opt/vc/lib"
-		]		
-		
-		linux.links += [
-			# Broadcom library
-			"bcm_host",
-
-			# VideoCore
-			"vcos"
-		]
 	else:
 		# Otherwise, just assume Linux can handle desktop GL
 		linux.defines += [
@@ -763,10 +751,16 @@ def create_unit_test(arguments, name, dependencies, source, output_type = Produc
 			"/opt/vc/lib"
 		]		
 		linux.links += [
+			# Broadcom
+			"bcm_host",
+			
+			# VideoCore
+			"vcos",
+
 			"EGL",
 			"GLESv2"
 		]
-
+		
 	return product
 
 def get_unit_tests(arguments, dependencies, **kwargs):
