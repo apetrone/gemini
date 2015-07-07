@@ -25,9 +25,10 @@
 #pragma once
 
 #include <core/config.h>
+#include "platform.h"
 
 namespace platform
 {
-	void egl_backend_startup();
+	Result egl_backend_startup();
 	void egl_backend_shutdown();
 } // namespace platform
