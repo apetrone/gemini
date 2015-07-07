@@ -41,27 +41,23 @@
 
 namespace platform
 {
+	namespace linux
+	{
+		static window_provider* _window_provider = nullptr;
+	} // namespace linux
 
-	Result os_startup()
+	Result backend_startup()
 	{
-		linux_window_backend_startup();
+		// On linux, the platform layer needs to be versatile.
+		// It is split into three main components I call 'providers':
+		// 1. Window: platform window management layer
+		// 2. Graphics: rendering context provider
+		// 3. Input: various input systems
 
-		return Result(Result::Success);
-	}
-	
-	void os_shutdown()
-	{
-		linux_window_backend_shutdown();
-	}
-	
-	int os_run_application(int argc, const char** argv)
-	{
-		return 0;
-	}
+		// Ultimately, we have to choose the best window provider
+		// either via build settings or at runtime.
 
 
-	void linux_window_backend_startup()
-	{
 #if defined(PLATFORM_RASPBERRYPI)
 		fprintf(stdout, "RaspberryPi!\n");
 
@@ -76,8 +72,7 @@ namespace platform
 		int success = graphics_get_display_size(0 /* LCD */, &display_width, &display_height);
 		if (success != 0)
 		{
-			fprintf(stderr, "Failed to get display size!\n");
-			return;
+			return Result(Result::Failure, "Failed to get display size!");
 		}
 
 		fprintf(stdout, "display resolution: %i x %i\n", display_width, display_height);
@@ -119,12 +114,25 @@ namespace platform
 #if defined(PLATFORM_EGL_SUPPORT)
 		egl_backend_startup();
 #endif
+
+		return Result(Result::Success);
+	}
+	
+	int backend_run_application(int argc, const char** argv)
+	{
+		return 0;
 	}
 
-	void linux_window_backend_shutdown()
+	void backend_shutdown()
 	{
 #if defined(PLATFORM_EGL_SUPPORT)
 		egl_backend_shutdown();
 #endif
+	}
+
+
+	void dispatch_events()
+	{
+
 	}
 } // namespace platform

@@ -27,7 +27,7 @@
 
 namespace platform
 {
-	Result os_startup()
+	Result backend_startup()
 	{
 //
 //		NSProcessInfo* processInfo = [NSProcessInfo processInfo];
@@ -48,12 +48,17 @@ namespace platform
 		return Result(Result::Success);
 	}
 	
-	void os_shutdown()
+	int backend_run_application(int argc, const char** argv)
+	{
+		return ::NSApplicationMain(argc, argv);
+	}
+	
+	void backend_shutdown()
 	{
 	}
 	
-	int os_run_application(int argc, const char** argv)
+	void dispatch_events()
 	{
-		return ::NSApplicationMain(argc, argv);
+		cocoa::process_event_loop();
 	}
 } // namespace platform

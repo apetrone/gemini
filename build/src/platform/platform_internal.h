@@ -33,16 +33,15 @@ namespace platform
 	typedef core::memory::heap_allocator<core::memory::default_tracking_policy> platform_allocator_type;
 	platform_allocator_type& get_platform_allocator();
 
+	// backend (low level platform interface)
+	Result backend_startup();
+	int backend_run_application(int argc, const char** argv);
+	void backend_shutdown();
 
 	// timer interface
 	Result timer_startup();
 	void timer_shutdown();
 	
-	// os
-	Result os_startup();
-	int os_run_application(int argc, const char** argv);
-	void os_shutdown();	
-
 	// cross distro/system functions that could be shared
 	
 #if defined(PLATFORM_APPLE) || defined(PLATFORM_LINUX)

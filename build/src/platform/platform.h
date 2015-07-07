@@ -168,9 +168,16 @@ namespace platform
 	};
 	
 
-
+	/// @brief Starts low level system services. Calls core::memory::startup.
 	LIBRARY_EXPORT Result startup();
+	
+	/// @brief Shutdown low level system services. Calls core::memory::shutdown.
 	LIBRARY_EXPORT void shutdown();
+	
+	/// @brief Call this once per frame in your application
+	/// To allow the system backend to perform tasks such as:
+	/// poll input devices, dispatch os events, etc
+	LIBRARY_EXPORT void dispatch_events();
 	LIBRARY_EXPORT int run_application(kernel::IKernel* instance);
 	LIBRARY_EXPORT void set_mainparameters(const MainParameters& params);
 	LIBRARY_EXPORT const MainParameters& get_mainparameters();
@@ -474,9 +481,6 @@ namespace platform
 	// post frame on this window
 	void window_end_rendering(NativeWindow* window);
 	
-	// process window provider events (for all windows)
-	void window_process_events();
-	
 	// return the window size in pixels
 	void window_size(NativeWindow* window, int& width, int& height);
 	
@@ -494,22 +498,5 @@ namespace platform
 	
 	// show or hide the mouse cursor
 	void window_show_cursor(bool enable);
-	
-	// should these be exposed? or internal?
-	enum RenderBackend
-	{
-		RenderBackend_None		= 0,
-		RenderBackend_OpenGL	= 1,
-		RenderBackend_OpenGLES	= 2
-	};
-	
-	enum InputBackend
-	{
-		InputBackend_Cocoa,
-		InputBackend_udev,
-		InputBackend_win32
-	};
-	
-	//LIBRARY_EXPORT bool supports_input_interface(const NativeInputInterface::Type& interface);
 
 } // namespace platform
