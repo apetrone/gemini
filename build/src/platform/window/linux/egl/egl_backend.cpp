@@ -43,18 +43,19 @@ namespace platform
 
 	static EGLDisplay _default_display = EGL_NO_DISPLAY;
 
-	void egl_backend_startup()
+	Result egl_backend_startup()
 	{
 		assert(_default_display == EGL_NO_DISPLAY);
+
 		_default_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 		assert(_default_display != EGL_NO_DISPLAY);
 
 		int major = 0;
 		int minor = 0;
-		EGLBoolean result = eglInitialize(_default_display, &major, &minor);
-		assert(result != EGL_FALSE);
+		EGLBoolean initialized = eglInitialize(_default_display, &major, &minor);
+		assert(initialized != EGL_FALSE);
 
-		fprintf(stderr, "initialized EGL %i.%i\n", major, minor);
+		fprintf(stderr, "EGL version is %i.%i\n", major, minor);
 
 		// eglBindAPI and EGL version required
 		// 1.2+: EGL_OPENGL_ES_API and EGL_OPENVG_API
@@ -62,7 +63,14 @@ namespace platform
 #if defined(PLATFORM_OPENGLES_SUPPORT)
 		assert(major >= 1 && minor >= 2);
 		eglBindAPI(EGL_OPENGL_ES_API);
+#elif defined(PLATFORM_OPENGL_SUPPORT)
+		assert(major >= 1 && minor >= 4);
+		eglBindAPI(EGL_OPENGL_API);
+#else
+		#error No compatible graphics provider
 #endif
+
+		return Result (Result::Success);
 	}
 
 	void egl_backend_shutdown()
