@@ -29,10 +29,9 @@
 
 namespace platform
 {
-	static EGLDisplay _default_display = EGL_NO_DISPLAY;
 	namespace linux
 	{
-		EGLint egl_check_error(const char* message)
+		static EGLint egl_check_error(const char* message)
 		{
 			EGLint error = eglGetError();
 			if (error != EGL_SUCCESS)
@@ -42,8 +41,10 @@ namespace platform
 
 			return error;
 		}
-		// #define EGL_CHECK_ERROR(message)
-		#define EGL_CHECK_ERROR(message) egl_check_error(message)		
+
+		#define EGL_CHECK_ERROR(message)
+		// #define EGL_CHECK_ERROR(message) egl_check_error(message)		
+
 		struct EGLData
 		{
 			EGLint visual;
@@ -51,16 +52,21 @@ namespace platform
 			EGLContext context;
 		};
 
+		EGLGraphicsProvider::EGLGraphicsProvider() :
+			display(EGL_NO_DISPLAY)
+		{
+		}
+
 		Result EGLGraphicsProvider::startup()
 		{
-			assert(_default_display == EGL_NO_DISPLAY);
+			assert(display == EGL_NO_DISPLAY);
 
-			_default_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-			assert(_default_display != EGL_NO_DISPLAY);
+			display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+			assert(display != EGL_NO_DISPLAY);
 
 			int major = 0;
 			int minor = 0;
-			EGLBoolean initialized = eglInitialize(_default_display, &major, &minor);
+			EGLBoolean initialized = eglInitialize(display, &major, &minor);
 			assert(initialized != EGL_FALSE);
 
 			fprintf(stderr, "EGL version is %i.%i\n", major, minor);
@@ -69,16 +75,16 @@ namespace platform
 
 			{
 				const char* eglstring;
-				eglstring = (const char*) eglQueryString(_default_display, EGL_VENDOR);
+				eglstring = (const char*) eglQueryString(display, EGL_VENDOR);
 				fprintf(stdout, "EGL_VENDOR: %s\n", eglstring);
 
-				eglstring = (const char*) eglQueryString(_default_display, EGL_VERSION);
+				eglstring = (const char*) eglQueryString(display, EGL_VERSION);
 				fprintf(stdout, "EGL_VERSION: %s\n", eglstring);
 
-				eglstring = (const char*) eglQueryString(_default_display, EGL_CLIENT_APIS);
+				eglstring = (const char*) eglQueryString(display, EGL_CLIENT_APIS);
 				fprintf(stdout, "EGL_CLIENT_APIS: %s\n", eglstring);
 
-				eglstring = (const char*) eglQueryString(_default_display, EGL_EXTENSIONS);
+				eglstring = (const char*) eglQueryString(display, EGL_EXTENSIONS);
 				fprintf(stdout, "EGL_EXTENSIONS: %s\n", eglstring);
 			}
 
@@ -102,12 +108,12 @@ namespace platform
 
 		void EGLGraphicsProvider::shutdown()
 		{
-			assert(_default_display != EGL_NO_DISPLAY);
+			assert(display != EGL_NO_DISPLAY);
 
-			eglMakeCurrent(_default_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-			eglTerminate(_default_display);
+			eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+			eglTerminate(display);
 
-			_default_display = EGL_NO_DISPLAY;
+			display = EGL_NO_DISPLAY;
 		}
 
 		void EGLGraphicsProvider::create_context(NativeWindow* window)
@@ -143,8 +149,6 @@ namespace platform
 				EGL_NONE
 			};
 
-
-			EGLDisplay display = _default_display;
 			EGLConfig config;
 			EGLint total_configs = 0;
 			EGLBoolean result = EGL_FALSE;
@@ -182,21 +186,21 @@ namespace platform
 		{
 			EGLData* window_data = reinterpret_cast<EGLData*>(window->graphics_data);
 			
-			eglMakeCurrent(_default_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+			eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 			EGL_CHECK_ERROR("eglMakeCurrent");
 
 			EGLBoolean result = EGL_FALSE;
-			result = eglDestroySurface(_default_display, window_data->surface);
+			result = eglDestroySurface(display, window_data->surface);
 			assert(result != EGL_FALSE);
 
-			result = eglDestroyContext(_default_display, window_data->context);
+			result = eglDestroyContext(display, window_data->context);
 			assert(result != EGL_FALSE);
 		}
 
 		void EGLGraphicsProvider::begin_rendering(NativeWindow* window)
 		{
 			EGLData* window_data = reinterpret_cast<EGLData*>(window->graphics_data);
-			EGLBoolean result = eglMakeCurrent(_default_display, window_data->surface, window_data->surface, window_data->context);
+			EGLBoolean result = eglMakeCurrent(display, window_data->surface, window_data->surface, window_data->context);
 			EGL_CHECK_ERROR("eglMakeCurrent");
 			if (result == EGL_FALSE)
 			{
@@ -207,13 +211,8 @@ namespace platform
 		void EGLGraphicsProvider::end_rendering(NativeWindow* window)
 		{
 			EGLData* window_data = reinterpret_cast<EGLData*>(window->graphics_data);
-			eglSwapBuffers(_default_display, window_data->surface);
+			eglSwapBuffers(display, window_data->surface);
 			EGL_CHECK_ERROR("eglSwapBuffers");
-		}
-
-		native_pixel_format EGLGraphicsProvider::get_pixel_format(const WindowParameters& window_parameters)
-		{
-			return -1;
 		}
 
 		void* EGLGraphicsProvider::get_symbol(const char* symbol_name)
