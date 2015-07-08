@@ -180,8 +180,8 @@ namespace platform
 		// pass the window to the graphics API
 		_graphics_provider->create_context(window);
 
-		// activate the context
-		_graphics_provider->begin_rendering(window);
+		// activate the context for newly created windows
+		_graphics_provider->activate_context(window);
 
 		return window;
 	}
@@ -196,12 +196,12 @@ namespace platform
 	
 	void window_begin_rendering(NativeWindow* window)
 	{
-		_graphics_provider->begin_rendering(window);
+		_graphics_provider->activate_context(window);
 	}
 	
 	void window_end_rendering(NativeWindow* window)
 	{
-		_graphics_provider->end_rendering(window);
+		_graphics_provider->swap_buffers(window);
 	}
 
 

@@ -197,7 +197,7 @@ namespace platform
 			assert(result != EGL_FALSE);
 		}
 
-		void EGLGraphicsProvider::begin_rendering(NativeWindow* window)
+		void EGLGraphicsProvider::activate_context(NativeWindow* window)
 		{
 			EGLData* window_data = reinterpret_cast<EGLData*>(window->graphics_data);
 			EGLBoolean result = eglMakeCurrent(display, window_data->surface, window_data->surface, window_data->context);
@@ -208,7 +208,7 @@ namespace platform
 			}
 		}
 
-		void EGLGraphicsProvider::end_rendering(NativeWindow* window)
+		void EGLGraphicsProvider::swap_buffers(NativeWindow* window)
 		{
 			EGLData* window_data = reinterpret_cast<EGLData*>(window->graphics_data);
 			eglSwapBuffers(display, window_data->surface);

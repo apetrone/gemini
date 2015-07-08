@@ -57,6 +57,11 @@ namespace platform
 			// OpenGL and variants
 			GraphicsProvider_OpenGL,
 			GraphicsProvider_OpenGLES,
+			GraphicsProvider_GLX,
+			GraphicsProvider_WGL,
+
+			// EGL
+			GraphicsProvider_EGL,
 
 			// Apple's Metal
 			GraphicsProvider_Metal,
@@ -93,8 +98,8 @@ namespace platform
 			virtual void shutdown() = 0;
 			virtual void create_context(NativeWindow* window) = 0;
 			virtual void destroy_context(NativeWindow* window) = 0;
-			virtual void begin_rendering(NativeWindow* window) = 0;
-			virtual void end_rendering(NativeWindow* window) = 0;
+			virtual void activate_context(NativeWindow* window) = 0;
+			virtual void swap_buffers(NativeWindow* window) = 0;
 			virtual void* get_symbol(const char* symbol_name) = 0;
 
 			/// @brief If the graphics provider needs to store custom
