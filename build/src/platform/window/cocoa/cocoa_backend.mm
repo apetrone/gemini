@@ -195,6 +195,11 @@ namespace platform
 			{
 			}
 			
+			virtual void* get_native_handle() const
+			{
+				return cw;
+			}
+			
 			CocoaWindow* cw;
 			NSOpenGLContext* context;
 		};
