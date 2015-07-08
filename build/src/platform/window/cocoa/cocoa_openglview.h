@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-@interface cocoa_openglview : NSView
+@interface CocoaOpenGLView : NSView
 {
 @public
 	NSOpenGLContext* _context;

@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-@interface cocoa_window : NSWindow
+@interface CocoaWindow : NSWindow
 {
 	platform::NativeWindow* instance;
 }

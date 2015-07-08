@@ -32,7 +32,7 @@
 
 using namespace platform::cocoa;
 
-@implementation cocoa_openglview
+@implementation CocoaOpenGLView
 
 @synthesize context = _context;
 
@@ -79,7 +79,7 @@ using namespace platform::cocoa;
 
 -(void) windowResized:(NSNotification*) notification
 {
-	cocoa_window* window = static_cast<cocoa_window*>([notification object]);
+	CocoaWindow* window = static_cast<CocoaWindow*>([notification object]);
 	NSRect frame = [[window contentView] frame];
 	
 	kernel::SystemEvent ev;
@@ -93,7 +93,7 @@ using namespace platform::cocoa;
 	ev.render_height = render_frame.size.height;
 	
 	// update the rendering context
-	cocoa_openglview* view = [window contentView];
+	CocoaOpenGLView* view = [window contentView];
 	[[view context] update];
 	
 	kernel::event_dispatch(ev);

@@ -27,7 +27,7 @@
 #import "cocoa_common.h"
 #import "cocoa_window.h"
 
-@implementation cocoa_window
+@implementation CocoaWindow
 @synthesize instance;
 
 /* this is required when using the styleMask: NSBorderlessWindowMask */

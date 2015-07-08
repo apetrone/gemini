@@ -195,13 +195,13 @@ namespace platform
 			{
 			}
 			
-			cocoa_window* cw;
+			CocoaWindow* cw;
 			NSOpenGLContext* context;
 		};
 
 		Result create_window(cocoa_native_window* native_window, const WindowParameters& params)
 		{
-			cocoa_window* window;
+			CocoaWindow* window;
 			
 			// create a frame for the new window
 			NSRect frame = NSMakeRect(params.window.x, params.window.y, params.window.width, params.window.height);
@@ -226,7 +226,7 @@ namespace platform
 			}
 			
 			// create a new window
-			window = [[cocoa_window alloc] initWithContentRect:frame styleMask:window_mask backing:NSBackingStoreBuffered defer:NO];
+			window = [[CocoaWindow alloc] initWithContentRect:frame styleMask:window_mask backing:NSBackingStoreBuffered defer:NO];
 			if (!window)
 			{
 				return platform::Result(platform::Result::Failure, "create window failed");
@@ -314,7 +314,7 @@ namespace platform
 			// ---------------------------------------------------------------------
 			
 			// create our custom view
-			cocoa_openglview* view = [[cocoa_openglview alloc] initWithFrame: [[window->cw contentView] frame]];
+			CocoaOpenGLView* view = [[CocoaOpenGLView alloc] initWithFrame: [[window->cw contentView] frame]];
 			[view setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 			
 			// set context of the view
@@ -454,7 +454,7 @@ namespace platform
 		
 		void dispatch_mouse_moved_event(NSEvent* the_event)
 		{
-			cocoa_window* window = static_cast<cocoa_window*>([the_event window]);
+			CocoaWindow* window = static_cast<CocoaWindow*>([the_event window]);
 			
 			CGFloat title_bar_height;
 			CGFloat fixed_height;
