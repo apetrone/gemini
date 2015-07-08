@@ -29,10 +29,10 @@ namespace platform
 {
 	namespace linux
 	{
-		class window_provider
+		class WindowProvider
 		{
 		public:
-			virtual ~window_provider();
+			virtual ~WindowProvider();
 
 			virtual Result startup() = 0;
 			virtual void shutdown() = 0;

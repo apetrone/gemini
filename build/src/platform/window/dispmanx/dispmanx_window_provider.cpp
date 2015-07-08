@@ -46,9 +46,9 @@ namespace platform
 {
 	namespace linux
 	{
-		struct dispmanx_window : public NativeWindow
+		struct DispManXWindow : public NativeWindow
 		{
-			dispmanx_window(const WindowDimensions& window_dimensions) :
+			DispManXWindow(const WindowDimensions& window_dimensions) :
 				NativeWindow(window_dimensions)
 			{				
 			}
@@ -56,21 +56,21 @@ namespace platform
 #if defined(PLATFORM_RASPBERRYPI)
 			EGL_DISPMANX_WINDOW_T native_window;
 #endif				
-		}; // struct dispmanx_window
+		}; // struct DispManXWindow
 
 
-		dispmanx_window_provider::dispmanx_window_provider() :
+		DispManXWindowProvider::DispManXWindowProvider() :
 			display_width(0),
 			display_height(0)
 		{
 		}
 
-		dispmanx_window_provider::~dispmanx_window_provider()
+		DispManXWindowProvider::~DispManXWindowProvider()
 		{
 		}
 
 
-		Result dispmanx_window_provider::startup()
+		Result DispManXWindowProvider::startup()
 		{
 #if defined(PLATFORM_RASPBERRYPI)
 			// get the display width/height
@@ -111,39 +111,39 @@ namespace platform
 			return Result(Result::Success);
 		}
 
-		void dispmanx_window_provider::shutdown()
+		void DispManXWindowProvider::shutdown()
 		{
 
 		}
 
-		NativeWindow* dispmanx_window_provider::create(const WindowParameters& parameters)
+		NativeWindow* DispManXWindowProvider::create(const WindowParameters& parameters)
 		{
-			dispmanx_window* window = MEMORY_NEW(dispmanx_window, platform::get_platform_allocator())(parameters.window);
+			DispManXWindow* window = MEMORY_NEW(DispManXWindow, platform::get_platform_allocator())(parameters.window);
 			window->native_window.width = parameters.window.width;
 			window->native_window.height = parameters.window.height;
 			window->native_window.element = dispman_element;
 			return window;
 		}
 
-		void dispmanx_window_provider::destroy(NativeWindow* window)
+		void DispManXWindowProvider::destroy(NativeWindow* window)
 		{
-			dispmanx_window* pointer = static_cast<dispmanx_window*>(window);
+			DispManXWindow* pointer = static_cast<DispManXWindow*>(window);
 			MEMORY_DELETE(pointer, platform::get_platform_allocator());
 		}
 
-		Frame dispmanx_window_provider::get_window_rect(NativeWindow* window) const
+		Frame DispManXWindowProvider::get_window_rect(NativeWindow* window) const
 		{
 			Frame frame;
 			return frame;
 		}
 
-		Frame dispmanx_window_provider::get_window_render_rect(NativeWindow* window) const
+		Frame DispManXWindowProvider::get_window_render_rect(NativeWindow* window) const
 		{
 			Frame frame;
 			return frame;
 		}
 
-		size_t dispmanx_window_provider::get_screen_count() const
+		size_t DispManXWindowProvider::get_screen_count() const
 		{
 #if defined(PLATFORM_RASPBERRYPI)
 			return 1;
@@ -153,7 +153,7 @@ namespace platform
 			return 0;
 		}
 
-		Frame dispmanx_window_provider::get_screen_rect(size_t screen_index) const
+		Frame DispManXWindowProvider::get_screen_rect(size_t screen_index) const
 		{
 			Frame frame;
 

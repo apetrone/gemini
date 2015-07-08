@@ -35,19 +35,19 @@ namespace platform
 {
 	namespace linux
 	{
-		window_provider::~window_provider()
+		WindowProvider::~WindowProvider()
 		{
 		}
 
 
-		static window_provider* _window_provider = nullptr;
+		static WindowProvider* _window_provider = nullptr;
 
 
 		// choose the best window provider
-		window_provider* create_window_provider()
+		WindowProvider* create_window_provider()
 		{
 #if defined(PLATFORM_RASPBERRYPI)
-			typedef dispmanx_window_provider window_provider_type;
+			typedef DispManXWindowProvider window_provider_type;
 #else
 			#error No window provider for this platform!
 #endif
@@ -55,7 +55,7 @@ namespace platform
 			return MEMORY_NEW(window_provider_type, platform::get_platform_allocator());
 		}
 
-		void destroy_window_provider(window_provider* provider)
+		void destroy_window_provider(WindowProvider* provider)
 		{
 			MEMORY_DELETE(provider, platform::get_platform_allocator());
 		}
