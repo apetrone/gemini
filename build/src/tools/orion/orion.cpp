@@ -1520,7 +1520,7 @@ public:
 		if (window_interface)
 			window_interface->process_events();
 #else
-			platform::window_process_events();
+		platform::dispatch_events();
 #endif
 		
 				
