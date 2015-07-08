@@ -851,7 +851,7 @@ class EngineInterface : public IEngineInterface
 	platform::IWindowLibrary* window_interface;
 #endif
 
-	core::memory::zone game_memory_zone;
+	core::memory::Zone game_memory_zone;
 	core::memory::global_allocator_type game_allocator;
 
 public:
@@ -1629,7 +1629,7 @@ Options:
 #if defined(PLATFORM_SDL2_SUPPORT)
 		window_interface->process_events();
 #else
-		platform::window_process_events();
+		platform::dispatch_events();
 #endif
 		input::update();
 	
