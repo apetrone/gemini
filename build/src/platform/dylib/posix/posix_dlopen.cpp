@@ -44,7 +44,7 @@ namespace platform
 			return 0;
 		}
 		
-		PosixDynamicLibrary* lib = MEMORY_NEW(PosixDynamicLibrary, core::memory::global_allocator());
+		PosixDynamicLibrary* lib = MEMORY_NEW(PosixDynamicLibrary, get_platform_allocator());
 		lib->handle = handle;
 		return lib;
 	}
@@ -54,7 +54,7 @@ namespace platform
 		PosixDynamicLibrary* lib = static_cast<PosixDynamicLibrary*>(library);
 		dlclose(lib->handle);
 		
-		MEMORY_DELETE(lib, core::memory::global_allocator());
+		MEMORY_DELETE(lib, get_platform_allocator());
 	}
 	
 	DynamicLibrarySymbol posix_dylib_find(DynamicLibrary* library, const char* symbol_name)

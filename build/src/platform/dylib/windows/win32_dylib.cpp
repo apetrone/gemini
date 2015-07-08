@@ -39,7 +39,7 @@ namespace platform
 	
 	DynamicLibrary* dylib_open(const char* library_path)
 	{
-		Win32DynamicLibrary* library = MEMORY_NEW(Win32DynamicLibrary, platform::memory::global_allocator());
+		Win32DynamicLibrary* library = MEMORY_NEW(Win32DynamicLibrary, get_platform_allocator());
 		library->handle = LoadLibraryA(library_path);
 		return library;
 	}
@@ -48,7 +48,7 @@ namespace platform
 	{
 		Win32DynamicLibrary* instance = static_cast<Win32DynamicLibrary*>(library);
 		FreeLibrary(instance->handle);
-		MEMORY_DELETE(instance, platform::memory::global_allocator());
+		MEMORY_DELETE(instance, get_platform_allocator());
 	}
 	
 	DynamicLibrarySymbol dylib_find(DynamicLibrary* library, const char* symbol_name)
