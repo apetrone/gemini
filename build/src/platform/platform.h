@@ -460,11 +460,18 @@ namespace platform
 		virtual ~NativeWindow();
 		
 		NativeWindow(const WindowDimensions& window_dimensions) :
-			dimensions(window_dimensions)
+			dimensions(window_dimensions),
+			graphics_data(0)
 		{
 		}
 		
+		/// @brief returns this platform's native window handle
+		virtual void* get_native_handle() const = 0;
+
 		WindowDimensions dimensions;
+
+		// data used by the graphics provider on this system
+		void* graphics_data;
 	};
 		
 	class input_provider

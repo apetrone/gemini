@@ -55,7 +55,12 @@ namespace platform
 
 #if defined(PLATFORM_RASPBERRYPI)
 			EGL_DISPMANX_WINDOW_T native_window;
-#endif				
+#endif		
+
+			virtual void* get_native_handle() const
+			{
+				return (void*)&native_window;
+			}
 		}; // struct DispManXWindow
 
 
@@ -73,17 +78,18 @@ namespace platform
 		Result DispManXWindowProvider::startup()
 		{
 #if defined(PLATFORM_RASPBERRYPI)
+			dispman_display = vc_dispmanx_display_open(0);
+
 			// get the display width/height
-			int success = graphics_get_display_size(0 /* LCD */, &display_width, &display_height);
-			if (success != 0)
+			DISPMANX_MODEINFO_T info;
+			int result = vc_dispmanx_display_get_info(dispman_display, &info);
+			if (result != 0)
 			{
 				return Result(Result::Failure, "Failed to get display size!");
 			}
 
-			fprintf(stdout, "display resolution: %i x %i\n", display_width, display_height);
-
-			dispman_display = vc_dispmanx_display_open(0);
-			dispman_update = vc_dispmanx_update_start(0);
+			display_width = info.width;
+			display_height = info.height;
 
 			// next, setup the dispman element which we need for the
 			// window surface.
@@ -93,15 +99,21 @@ namespace platform
 			dst_rect.y = 0;
 			dst_rect.width = display_width;
 			dst_rect.height = display_height;
-
 			src_rect.x = 0;
 			src_rect.y = 0;
 			src_rect.width = display_width << 16;
 			src_rect.height = display_height << 16;
 
+			// disable the alpha layer; fully opaque rendering
+			VC_DISPMANX_ALPHA_T alpha;
+			alpha.flags = DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS;
+			alpha.opacity = 255;
+			alpha.mask = 0;
+
+			dispman_update = vc_dispmanx_update_start(0);
 			dispman_element = vc_dispmanx_element_add(dispman_update,
 				dispman_display, 0, &dst_rect, 0, &src_rect, 
-				DISPMANX_PROTECTION_NONE, 0 /*alpha*/, 0 /* clamp */,
+				DISPMANX_PROTECTION_NONE, &alpha, 0 /* clamp */,
 				(DISPMANX_TRANSFORM_T)0 /* transform*/
 			);
 
@@ -113,14 +125,22 @@ namespace platform
 
 		void DispManXWindowProvider::shutdown()
 		{
+			int result = 0;
+			result = vc_dispmanx_element_remove(dispman_update, dispman_element);
+			assert(result == 0);
 
+			vc_dispmanx_update_submit_sync(dispman_update);
+			assert(result == 0);
+
+			vc_dispmanx_display_close(dispman_display);
+			assert(result == 0);
 		}
 
 		NativeWindow* DispManXWindowProvider::create(const WindowParameters& parameters)
 		{
 			DispManXWindow* window = MEMORY_NEW(DispManXWindow, platform::get_platform_allocator())(parameters.window);
-			window->native_window.width = parameters.window.width;
-			window->native_window.height = parameters.window.height;
+			window->native_window.width = display_width;
+			window->native_window.height = display_height;
 			window->native_window.element = dispman_element;
 			return window;
 		}
@@ -134,12 +154,20 @@ namespace platform
 		Frame DispManXWindowProvider::get_window_rect(NativeWindow* window) const
 		{
 			Frame frame;
+#if defined(PLATFORM_RASPBERRYPI)
+			frame.width = display_width;
+			frame.height = display_height;
+#endif			
 			return frame;
 		}
 
 		Frame DispManXWindowProvider::get_window_render_rect(NativeWindow* window) const
 		{
 			Frame frame;
+#if defined(PLATFORM_RASPBERRYPI)
+			frame.width = display_width;
+			frame.height = display_height;
+#endif			
 			return frame;
 		}
 
@@ -156,13 +184,11 @@ namespace platform
 		Frame DispManXWindowProvider::get_screen_rect(size_t screen_index) const
 		{
 			Frame frame;
-
 #if defined(PLATFORM_RASPBERRYPI)
 			assert(screen_index == 0);
 			frame.width = display_width;
 			frame.height = display_height;
 #endif
-			
 			return frame;
 		}		
 	} // namespace linux
