@@ -446,7 +446,7 @@ namespace gemini
 		
 		void startup()
 		{
-			core::memory::zone* nav_zone = MEMORY_NEW(core::memory::zone, core::memory::global_allocator())("navigation");
+			core::memory::Zone* nav_zone = MEMORY_NEW(core::memory::Zone, core::memory::global_allocator())("navigation");
 			_nav_allocator = MEMORY_NEW(navigation_allocator_type, core::memory::global_allocator())(nav_zone);
 		}
 		
@@ -461,7 +461,7 @@ namespace gemini
 			dtFreeNavMesh(nav_mesh);
 			dtFreeNavMeshQuery(nav_query);
 			
-			core::memory::zone* nav_zone = _nav_allocator->get_zone();
+			core::memory::Zone* nav_zone = _nav_allocator->get_zone();
 			MEMORY_DELETE(_nav_allocator, core::memory::global_allocator());
 			_nav_allocator = nullptr;
 			
