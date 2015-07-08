@@ -24,11 +24,27 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/config.h>
-#include "platform.h"
+#include "platform_internal.h"
+#include "linux_backend.h"
+
+#include <EGL/egl.h>
 
 namespace platform
 {
-	Result egl_backend_startup();
-	void egl_backend_shutdown();
+	namespace linux
+	{
+		class EGLGraphicsProvider : public GraphicsProvider
+		{
+		public:
+			virtual Result startup();
+			virtual void shutdown();
+			virtual void create_context(NativeWindow* window);
+			virtual void destroy_context(NativeWindow* window);
+			virtual void begin_rendering(NativeWindow* window);
+			virtual void end_rendering(NativeWindow* window);
+			virtual native_pixel_format get_pixel_format(const WindowParameters& window_parameters);
+			virtual void* get_symbol(const char* symbol_name);
+			virtual size_t get_graphics_data_size() const;
+		};
+	} // namespace linux
 } // namespace platform

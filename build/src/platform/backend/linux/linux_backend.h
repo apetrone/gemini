@@ -29,6 +29,46 @@ namespace platform
 {
 	namespace linux
 	{
+		enum WindowProviderType
+		{
+			// MacOS X
+			WindowProvider_Cocoa,
+
+			// iPhoneOS
+			WindowProvider_UIKit,
+
+			// Windows
+			WindowProvider_Win32,
+
+			// Linux, X11
+			WindowProvider_X11,
+			WindowProvider_Wayland,
+			WindowProvider_Mir,
+
+			// Linux, Raspberry Pi
+			WindowProvider_DispManX,
+
+			// Android
+			WindowProvider_Android
+		};
+
+		enum GraphicsProviderType
+		{
+			// OpenGL and variants
+			GraphicsProvider_OpenGL,
+			GraphicsProvider_OpenGLES,
+
+			// Apple's Metal
+			GraphicsProvider_Metal,
+
+			// Vulkan API
+			GraphicsProvider_Vulkan,
+
+			// Microsoft's Direct3D
+			GraphicsProvider_Direct3D_11,
+			GraphicsProvider_Direct3D_12
+		};
+
 		class WindowProvider
 		{
 		public:
@@ -42,6 +82,28 @@ namespace platform
 			virtual Frame get_window_render_rect(NativeWindow* window) const = 0;
 			virtual size_t get_screen_count() const = 0;
 			virtual Frame get_screen_rect(size_t screen_index) const = 0;
+		};
+
+		typedef int native_pixel_format;
+
+		class GraphicsProvider
+		{
+		public:
+			virtual ~GraphicsProvider();
+
+			virtual Result startup() = 0;
+			virtual void shutdown() = 0;
+			virtual void create_context(NativeWindow* window) = 0;
+			virtual void destroy_context(NativeWindow* window) = 0;
+			virtual void begin_rendering(NativeWindow* window) = 0;
+			virtual void end_rendering(NativeWindow* window) = 0;
+			virtual native_pixel_format get_pixel_format(const WindowParameters& window_parameters) = 0;
+			virtual void* get_symbol(const char* symbol_name) = 0;
+
+			/// @brief If the graphics provider needs to store custom
+			/// data on a per-window basis; return the size in bytes
+			/// which needs to be allocated.
+			virtual size_t get_graphics_data_size() const = 0;
 		};
 	} // namespace linux
 

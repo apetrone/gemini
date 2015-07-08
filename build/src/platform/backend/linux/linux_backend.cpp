@@ -31,6 +31,11 @@
 	#include "../../window/dispmanx/dispmanx_window_provider.h"
 #endif
 
+
+#if defined(PLATFORM_EGL_SUPPORT)
+	#include "../../graphics/egl/egl_graphics_provider.h"
+#endif
+
 namespace platform
 {
 	namespace linux
@@ -39,8 +44,12 @@ namespace platform
 		{
 		}
 
+		GraphicsProvider::~GraphicsProvider()
+		{
+		}
 
 		static WindowProvider* _window_provider = nullptr;
+		static GraphicsProvider* _graphics_provider = nullptr;
 
 
 		// choose the best window provider
@@ -52,12 +61,18 @@ namespace platform
 			#error No window provider for this platform!
 #endif
 
-			return MEMORY_NEW(window_provider_type, platform::get_platform_allocator());
+			return MEMORY_NEW(window_provider_type, get_platform_allocator());
 		}
 
-		void destroy_window_provider(WindowProvider* provider)
+		GraphicsProvider* create_graphics_provider()
 		{
-			MEMORY_DELETE(provider, platform::get_platform_allocator());
+#if defined(PLATFORM_RASPBERRYPI)
+			typedef EGLGraphicsProvider graphics_provider_type;
+#else
+			#error No graphics provider for this platform!
+#endif
+
+			return MEMORY_NEW(graphics_provider_type, get_platform_allocator());
 		}
 	} // namespace linux
 
@@ -82,7 +97,23 @@ namespace platform
 		bcm_host_init();
 #endif
 
+		//
+		// graphics provider
+		assert(_graphics_provider == nullptr);
+		_graphics_provider = create_graphics_provider();
+		if (!_graphics_provider)
+		{
+			return Result(Result::Failure, "create_graphics_provider failed!");
+		}
 
+		Result graphics_startup = _graphics_provider->startup();
+		if (graphics_startup.failed())
+		{
+			fprintf(stderr, "graphics_provider startup failed: %s\n", graphics_startup.message);
+			return graphics_startup;
+		}
+
+		// window provider
 		assert(_window_provider == nullptr);
 		_window_provider = create_window_provider();
 		if (!_window_provider)
@@ -90,7 +121,16 @@ namespace platform
 			return Result(Result::Failure, "create_window_provider failed!");
 		}
 
-		_window_provider->startup();
+		Result window_startup = _window_provider->startup();
+		if (window_startup.failed())
+		{
+			fprintf(stderr, "window_provider startup failed: %s\n", window_startup.message);
+			return window_startup;
+		}
+
+		//
+		// input provider
+		
 
 		return Result(Result::Success);
 	}
@@ -104,8 +144,16 @@ namespace platform
 	{
 		assert(_window_provider != nullptr);
 		_window_provider->shutdown();
-		destroy_window_provider(_window_provider);
+		MEMORY_DELETE(_window_provider, get_platform_allocator());
 		_window_provider = nullptr;
+
+		assert(_graphics_provider != nullptr);
+		_graphics_provider->shutdown();
+		MEMORY_DELETE(_graphics_provider, get_platform_allocator());
+
+#if defined(PLATFORM_RASPBERRYPI)
+		bcm_host_deinit();
+#endif		
 	}
 
 
@@ -118,25 +166,44 @@ namespace platform
 
 	NativeWindow* window_create(const WindowParameters& window_parameters)
 	{
-		return _window_provider->create(window_parameters);
+		NativeWindow* window = _window_provider->create(window_parameters);
+
+		size_t graphics_data_size = _graphics_provider->get_graphics_data_size();
+
+		if (graphics_data_size)
+		{
+			// alloc graphics data for this window
+			window->graphics_data = MEMORY_ALLOC(graphics_data_size, get_platform_allocator());
+		}
+
+
+		// pass the window to the graphics API
+		_graphics_provider->create_context(window);
+
+		// activate the context
+		_graphics_provider->begin_rendering(window);
+
+		return window;
 	}
 
 	void window_destroy(NativeWindow* window)
 	{
+		_graphics_provider->destroy_context(window);
+
+		MEMORY_DEALLOC(window->graphics_data, get_platform_allocator());
 		_window_provider->destroy(window);
 	}
 	
 	void window_begin_rendering(NativeWindow* window)
 	{
+		_graphics_provider->begin_rendering(window);
 	}
 	
 	void window_end_rendering(NativeWindow* window)
 	{
+		_graphics_provider->end_rendering(window);
 	}
 
-	void window_process_events()
-	{
-	}
 
 	void window_size(NativeWindow* window, int& width, int& height)
 	{
