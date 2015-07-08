@@ -84,8 +84,6 @@ namespace platform
 			virtual Frame get_screen_rect(size_t screen_index) const = 0;
 		};
 
-		typedef int native_pixel_format;
-
 		class GraphicsProvider
 		{
 		public:
@@ -97,7 +95,6 @@ namespace platform
 			virtual void destroy_context(NativeWindow* window) = 0;
 			virtual void begin_rendering(NativeWindow* window) = 0;
 			virtual void end_rendering(NativeWindow* window) = 0;
-			virtual native_pixel_format get_pixel_format(const WindowParameters& window_parameters) = 0;
 			virtual void* get_symbol(const char* symbol_name) = 0;
 
 			/// @brief If the graphics provider needs to store custom
