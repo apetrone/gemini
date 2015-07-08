@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #import "cocoa_application.h"
 
-@implementation osx_application
+@implementation CocoaApplication
 
 // Fix for Cocoa losing KeyUp messages when using the Command Key. By NateS.
 // http://stackoverflow.com/questions/4001565/missing-keyup-events-on-meaningful-key-combinations-e-g-select-till-beginning

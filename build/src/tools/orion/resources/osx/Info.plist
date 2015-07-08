@@ -33,6 +33,6 @@
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSPrincipalClass</key>
-	<string>osx_application</string>
+	<string>CocoaApplication</string>
 </dict>
 </plist>

@@ -24,6 +24,6 @@
 // -------------------------------------------------------------
 #import <Cocoa/Cocoa.h>
 
-@interface osx_application : NSApplication
+@interface CocoaApplication : NSApplication
 
 @end
