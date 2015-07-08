@@ -64,7 +64,7 @@ namespace platform
 			tcsetattr(socket, TCSANOW, &options);
 		}
 		
-		PosixSerial* serial = MEMORY_NEW(PosixSerial, core::memory::global_allocator());
+		PosixSerial* serial = MEMORY_NEW(PosixSerial, get_platform_allocator());
 		serial->socket = socket;
 		return serial;
 	}
@@ -76,7 +76,7 @@ namespace platform
 		{
 			::close(device->socket);
 		}
-		MEMORY_DELETE(device, core::memory::global_allocator());
+		MEMORY_DELETE(device, get_platform_allocator());
 	}
 	
 	
