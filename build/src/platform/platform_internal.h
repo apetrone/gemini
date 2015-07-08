@@ -29,8 +29,8 @@
 
 namespace platform
 {
-	core::memory::zone* get_memory_zone();
-	typedef core::memory::heap_allocator<core::memory::default_tracking_policy> platform_allocator_type;
+	core::memory::Zone* get_memory_zone();
+	typedef core::memory::HeapAllocator<core::memory::default_tracking_policy> platform_allocator_type;
 	platform_allocator_type& get_platform_allocator();
 
 	// backend (low level platform interface)

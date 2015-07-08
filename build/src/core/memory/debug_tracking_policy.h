@@ -26,7 +26,7 @@
 
 // The debug tracker keeps detailed records regarding allocations.
 // This can be used to help track down memory leaks.
-struct debug_tracking_policy
+struct DebugTrackingPolicy
 {
 #pragma pack(push, 4)
 	struct MemoryHeader
@@ -42,7 +42,7 @@ struct debug_tracking_policy
 	typedef std::list<MemoryHeader*> MemoryBlockList;
 	MemoryBlockList allocated_blocks;
 	
-	~debug_tracking_policy()
+	~DebugTrackingPolicy()
 	{
 		print_leaks();
 	}
@@ -113,4 +113,4 @@ private:
 					(unsigned long)block->allocation_index);
 		}
 	}
-}; // debug_tracking_policy
+}; // DebugTrackingPolicy

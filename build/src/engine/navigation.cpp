@@ -52,8 +52,8 @@ namespace gemini
 {
 	namespace navigation
 	{
-		typedef core::memory::heap_allocator<core::memory::default_tracking_policy> NavigationAllocator;
-		NavigationAllocator* _nav_allocator;
+		typedef core::memory::HeapAllocator<core::memory::default_tracking_policy> navigation_allocator_type;
+		navigation_allocator_type* _nav_allocator;
 	
 		void* navigation_allocate(int size, rcAllocHint hint)
 		{
@@ -447,7 +447,7 @@ namespace gemini
 		void startup()
 		{
 			core::memory::zone* nav_zone = MEMORY_NEW(core::memory::zone, core::memory::global_allocator())("navigation");
-			_nav_allocator = MEMORY_NEW(NavigationAllocator, core::memory::global_allocator())(nav_zone);
+			_nav_allocator = MEMORY_NEW(navigation_allocator_type, core::memory::global_allocator())(nav_zone);
 		}
 		
 		void shutdown()
