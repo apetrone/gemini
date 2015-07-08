@@ -35,11 +35,11 @@ namespace platform
 {
 	namespace linux
 	{
-		class dispmanx_window_provider : public window_provider
+		class DispManXWindowProvider : public WindowProvider
 		{
 		public:
-			dispmanx_window_provider();
-			virtual ~dispmanx_window_provider();
+			DispManXWindowProvider();
+			virtual ~DispManXWindowProvider();
 
 			virtual Result startup();
 			virtual void shutdown();
@@ -57,6 +57,6 @@ namespace platform
 			DISPMANX_DISPLAY_HANDLE_T dispman_display;
 			DISPMANX_UPDATE_HANDLE_T dispman_update;
 			DISPMANX_ELEMENT_HANDLE_T dispman_element;
-		};
+		}; // class DispManXWindowProvider
 	} // namespace linux
 } // namespace platform
