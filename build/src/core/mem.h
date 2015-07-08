@@ -78,7 +78,7 @@ namespace core
 		// I. Allow arbitrary zones to be created
 		// II. zones should be able to report statistics about usage
 		// III. zones can optionally take a maximum budget size. 0 == no budget
-		class zone
+		class Zone
 		{
 		private:
 			// lifetime values
@@ -103,8 +103,8 @@ namespace core
 			void report();
 			
 		public:
-			zone(const char* zone_name, size_t max_budget_bytes = 0);
-			~zone();
+			Zone(const char* zone_name, size_t max_budget_bytes = 0);
+			~Zone();
 			
 			/// The name of this zone
 			const char* name() const { return zone_name; }
@@ -128,7 +128,7 @@ namespace core
 			size_t get_smallest_allocation() const { return smallest_allocation; }
 			size_t get_largest_allocation() const { return largest_allocation; }
 			size_t get_budget_bytes() const { return budget_bytes; }
-		}; // class zone
+		}; // class Zone
 		
 		
 		// ---------------------------------------------------------------------
@@ -137,7 +137,7 @@ namespace core
 		#include "memory/simple_tracking_policy.h"
 		#include "memory/debug_tracking_policy.h"
 		
-		typedef simple_tracking_policy default_tracking_policy;
+		typedef SimpleTrackingPolicy default_tracking_policy;
 
 		// ---------------------------------------------------------------------
 		// allocator
@@ -152,15 +152,15 @@ namespace core
 		// III. Allocators should accept a few different policies for control and tuning.
 		//      Policies for tracking, or guarding memory can be specified.
 		template <class Type>
-		struct allocator
+		struct Allocator
 		{
-			zone* memory_zone;
-			allocator(zone* target_zone)
+			Zone* memory_zone;
+			Allocator(Zone* target_zone)
 			{
 				memory_zone = target_zone;
 			}
 			
-			zone* get_zone() const { return memory_zone; }
+			Zone* get_zone() const { return memory_zone; }
 		}; // struct allocator
 		
 		
@@ -180,7 +180,7 @@ namespace core
 		void startup();
 		void shutdown();
 		
-		typedef heap_allocator<default_tracking_policy> global_allocator_type;
+		typedef HeapAllocator<default_tracking_policy> global_allocator_type;
 		global_allocator_type& global_allocator();
 		void global_allocator(global_allocator_type& allocator);
 

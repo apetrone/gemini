@@ -25,13 +25,13 @@
 #pragma once
 
 template <class tracking_policy = default_tracking_policy>
-struct heap_allocator : public allocator< heap_allocator<tracking_policy> >
+struct HeapAllocator : public Allocator< HeapAllocator<tracking_policy> >
 {
-	typedef heap_allocator<tracking_policy> this_type;
-	typedef allocator<this_type> dependent_name;
+	typedef HeapAllocator<tracking_policy> this_type;
+	typedef Allocator<this_type> dependent_name;
 	tracking_policy tracker;
 	
-	heap_allocator(zone* memory_zone) :
+	HeapAllocator(Zone* memory_zone) :
 		dependent_name(memory_zone)
 	{
 	}

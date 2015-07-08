@@ -35,7 +35,7 @@ namespace core
 		// ---------------------------------------------------------------------
 		// interface
 		// ---------------------------------------------------------------------
-		zone* _global_zone = nullptr;
+		Zone* _global_zone = nullptr;
 		global_allocator_type* _global_allocator = nullptr;
 		
 		void startup()
@@ -43,7 +43,7 @@ namespace core
 			// If you hit this assert, there's a double memory startup
 			assert(_global_zone == nullptr && _global_allocator == nullptr);
 
-			static zone global_memory_zone("global");
+			static Zone global_memory_zone("global");
 			_global_zone = &global_memory_zone;
 			
 			static global_allocator_type global_allocator_instance(&global_memory_zone);
@@ -73,19 +73,19 @@ namespace core
 		// ---------------------------------------------------------------------
 		// zone
 		// ---------------------------------------------------------------------
-		zone::zone(const char* zone_name, size_t max_budget_bytes)
+		Zone::Zone(const char* zone_name, size_t max_budget_bytes)
 		{
-			memset(this, 0, sizeof(zone));
+			memset(this, 0, sizeof(Zone));
 			this->zone_name = zone_name;
 			budget_bytes = max_budget_bytes;
 		}
 		
-		zone::~zone()
+		Zone::~Zone()
 		{
 			report();
 		}
 
-		int zone::add_allocation(size_t size)
+		int Zone::add_allocation(size_t size)
 		{
 			if (budget_bytes > 0 && (active_bytes + size) > budget_bytes)
 			{
@@ -111,7 +111,7 @@ namespace core
 			return 0;
 		}
 
-		void zone::remove_allocation(size_t size)
+		void Zone::remove_allocation(size_t size)
 		{
 			// Attempted to free something that wasn't allocated.
 			assert(active_allocations > 0 && active_bytes >= size);
@@ -120,7 +120,7 @@ namespace core
 			active_bytes -= size;
 		}
 		
-		void zone::report()
+		void Zone::report()
 		{
 			// could use %zu on C99, but fallback to %lu and casts for C89.
 			fprintf(stdout, "[zone: '%s'] total_allocations = %lu, total_bytes = %lu, budget_bytes = %lu\n", zone_name,

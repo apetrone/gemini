@@ -105,11 +105,20 @@ Style Rules
 		int my_value = 3;
 
 
+- Pointer and Reference types should have the asterisk and ampersand next to the type:
+
+	.. code-block:: c
+
+		int value = 30;
+		int* pointer = nullptr;
+		int& ref = value;
+
+
 - Static or global names should be prefixed with an underscore:
 
 	.. code-block:: c
 
-		Kernel * _global_instance = 0;
+		Kernel* _global_instance = 0;
 
 
 - Function names are lower cased with underscores for spacing:
@@ -117,6 +126,13 @@ Style Rules
 	.. code-block:: c
 
 		_kernel->set_active( true );
+
+
+- Typedefs and POD types are lower-cased:
+
+	.. code-block:: c++
+
+		typedef CustomClass custom_class_type;
 
 
 - Namespace names are lower cased:
@@ -137,6 +153,15 @@ Style Rules
 		{
 			// ...
 		};
+
+
+- Files for classes should be the lower-cased and underscore versions:
+
+	.. code-block:: c++
+
+		class AnimationController {};
+		animation_controller.h
+		animation_controller.cpp
 
 
 - Only the following prefixes are added to classes:

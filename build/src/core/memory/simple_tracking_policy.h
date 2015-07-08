@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-struct simple_tracking_policy
+struct SimpleTrackingPolicy
 {
 	size_t last_size;
 	
@@ -52,4 +52,4 @@ struct simple_tracking_policy
 		allocation_size = *allocation;
 		return allocation;
 	}
-}; // simple_tracking_policy
+}; // SimpleTrackingPolicy
