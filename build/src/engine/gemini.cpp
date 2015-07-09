@@ -24,6 +24,7 @@
 // -------------------------------------------------------------
 
 #include <platform/platform.h>
+#include <platform/window.h>
 #include <platform/kernel.h>
 #include <fixedsizequeue.h>
 
@@ -291,8 +292,8 @@ class SceneRenderMethod
 {
 public:
 	virtual ~SceneRenderMethod() {}
-	virtual void render_view(gemini::IEngineEntity** entity_list, platform::NativeWindow* window, const View& view) = 0;
-	virtual void render_viewmodel(gemini::IEngineEntity* entity, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
+	virtual void render_view(gemini::IEngineEntity** entity_list, platform::window::NativeWindow* window, const View& view) = 0;
+	virtual void render_viewmodel(gemini::IEngineEntity* entity, platform::window::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
 	
 	virtual void render_gui() = 0;
 };
@@ -320,7 +321,7 @@ public:
 	}
 	
 	
-	virtual void render_view(gemini::IEngineEntity** entity_list, platform::NativeWindow* window, const View& view)
+	virtual void render_view(gemini::IEngineEntity** entity_list, platform::window::NativeWindow* window, const View& view)
 	{
 		::renderer::RenderStream rs;
 		rs.add_cullmode(::renderer::CullMode::CULLMODE_BACK);
@@ -341,7 +342,7 @@ public:
 		::renderer::debugdraw::render(view.modelview, view.projection, 0, 0, view.width, view.height);
 	}
 	
-	virtual void render_viewmodel(gemini::IEngineEntity* entity, platform::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles)
+	virtual void render_viewmodel(gemini::IEngineEntity* entity, platform::window::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles)
 	{
 		::renderer::RenderStream rs;
 		rs.add_cullmode(::renderer::CullMode::CULLMODE_BACK);
@@ -818,7 +819,7 @@ void center_mouse(
 #if defined(PLATFORM_SDL2_SUPPORT)
 	platform::IWindowLibrary* window_interface,
 #endif
-	platform::NativeWindow* window)
+	platform::window::NativeWindow* window)
 {
 #if defined(PLATFORM_SDL2_SUPPORT)
 	window_interface->warp_mouse(window->dimensions.width/2, window->dimensions.height/2);
@@ -846,7 +847,7 @@ class EngineInterface : public IEngineInterface
 	
 	SceneRenderMethod* render_method;
 	
-	platform::NativeWindow* main_window;
+	platform::window::NativeWindow* main_window;
 #if defined(PLATFORM_SDL2_SUPPORT)
 	platform::IWindowLibrary* window_interface;
 #endif
@@ -862,7 +863,7 @@ public:
 					gemini::physics::IPhysicsInterface* pi,
 					IExperimental* ei,
 					SceneRenderMethod* rm,
-					platform::NativeWindow* window
+					platform::window::NativeWindow* window
 #if defined(PLATFORM_SDL2_SUPPORT)
 					, platform::IWindowLibrary* window_interface
 #endif
@@ -979,8 +980,8 @@ private:
 #if defined(PLATFORM_SDL2_SUPPORT)
 	platform::IWindowLibrary* window_interface;
 #endif
-	platform::NativeWindow* main_window;
-	platform::NativeWindow* alt_window;
+	platform::window::NativeWindow* main_window;
+	platform::window::NativeWindow* alt_window;
 	
 	::renderer::Texture* gui_texture;
 	::renderer::RenderTarget* gui_render_target;
@@ -1394,7 +1395,10 @@ Options:
 		}
 		
 		
-		platform::WindowParameters window_params;
+		// initialize window subsystem
+		platform::window::startup(platform::window::RenderingBackend_Default);
+		
+		platform::window::Parameters window_params;
 		
 		// TODO: we should load these from a config; for now just set them.
 		window_params.window.width = config.window_width;
@@ -1408,8 +1412,8 @@ Options:
 		window_interface->activate_window(main_window);
 		window_interface->focus_window(main_window);
 #else
-		main_window = platform::window_create(window_params);
-		platform::window_focus(main_window);
+		main_window = platform::window::create(window_params);
+		platform::window::focus(main_window);
 #endif
 		
 		alt_window = 0;
@@ -1629,7 +1633,7 @@ Options:
 #if defined(PLATFORM_SDL2_SUPPORT)
 		window_interface->process_events();
 #else
-		platform::dispatch_events();
+		platform::window::dispatch_events();
 #endif
 		input::update();
 	
@@ -1645,7 +1649,7 @@ Options:
 #if defined(PLATFORM_SDL2_SUPPORT)
 		window_interface->activate_window(main_window);
 #else
-		platform::window_begin_rendering(main_window);
+		platform::window::begin_rendering(main_window);
 #endif
 		
 		if (graph)
@@ -1770,7 +1774,7 @@ Options:
 #if defined(PLATFORM_SDL2_SUPPORT)
 			window_interface->swap_buffers(main_window);
 #else
-			platform::window_end_rendering(main_window);
+			platform::window::end_rendering(main_window);
 #endif
 
 
@@ -1893,6 +1897,8 @@ Options:
 			window_interface->destroy_window(alt_window);
 #endif
 		}
+		
+		platform::window::shutdown();
 
 		// shutdown subsystems
 		hotloading::shutdown();
@@ -1915,7 +1921,7 @@ Options:
 		window_interface->activate_window(main_window);
 		window_interface->destroy_window(main_window);
 #else
-		platform::window_destroy(main_window);
+		platform::window::destroy(main_window);
 #endif
 		main_window = 0;
 	
