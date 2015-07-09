@@ -60,23 +60,6 @@ namespace platform
 	MainParameters _mainparameters;
 	static core::memory::Zone* _zone = nullptr;
 	static platform_allocator_type* _allocator = nullptr;
-	
-	// ---------------------------------------------------------------------
-	// internal platform stuff?
-	// ---------------------------------------------------------------------
-	
-	// don't bloat my code up
-	WindowParameters::~WindowParameters()
-	{
-	}
-	
-	NativeWindow::~NativeWindow()
-	{
-	}
-	
-	input_provider::~input_provider()
-	{
-	}
 
 	
 	core::memory::Zone* get_memory_zone()
@@ -128,7 +111,7 @@ namespace platform
 	// platform::startup is called at different times. This is done to allow
 	// startup and shutdown on the correct threads via certain platforms.
 #if defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
-	kernel::Error run_application()
+	kernel::Error backend_run_application()
 	{
 		platform::startup();
 
@@ -179,7 +162,7 @@ namespace platform
 #if defined(PLATFORM_APPLE)
 		return_code = backend_run_application(_mainparameters.argc, (const char**)_mainparameters.argv);
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
-		return_code = run_application();
+		return_code = backend_run_application();
 #else
 	#error Unknown platform!
 #endif

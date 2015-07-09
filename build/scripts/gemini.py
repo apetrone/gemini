@@ -374,7 +374,9 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/platform.h",
 		"src/platform/platform_internal.h",
 		"src/platform/input.cpp",
-		"src/platform/input.h"
+		"src/platform/input.h",
+		"src/platform/window.cpp",
+		"src/platform/window.h"
 	]
 
 	if arguments.with_sdl:
@@ -402,7 +404,6 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/application/cocoa/cocoa_application.h",
 
 		"src/platform/backend/osx/osx_backend.mm",
-		#"src/platform/backend/osx/osx_backend.h",
 
 		# dylib
 		"src/platform/dylib/osx/osx_dylib.cpp",
@@ -793,8 +794,8 @@ def get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, lib
 	return [
 		create_unit_test(arguments, "test_core", [libcore, libglm], "tests/src/test_core.cpp"),
 		create_unit_test(arguments, "test_platform", [libplatform, libcore, libglm], "tests/src/test_platform.cpp"),
-		create_unit_test(arguments, "test_runtime", [libruntime, libplatform, libcore], "tests/src/test_runtime.cpp"),
-		create_unit_test(arguments, "test_render", [libnom, libruntime, librenderer, libplatform, libcore], "tests/src/test_render.cpp", ProductType.Application)
+		create_unit_test(arguments, "test_runtime", [libruntime, libplatform, libcore, libglm], "tests/src/test_runtime.cpp"),
+		create_unit_test(arguments, "test_render", [libnom, libruntime, librenderer, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application)
 	]
 
 def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):

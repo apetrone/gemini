@@ -29,6 +29,7 @@
 #include <runtime/filesystem.h>
 
 #include <platform/platform.h>
+#include <platform/window.h>
 #include <platform/kernel.h>
 
 #include <renderer/renderer.h>
@@ -110,7 +111,7 @@ class TestKernel : public kernel::IKernel,
 	public kernel::IEventListener<kernel::KeyboardEvent>
 {
 	bool active;
-	platform::NativeWindow* native_window;
+	platform::window::NativeWindow* native_window;
 	
 public:
 	virtual void event(kernel::KeyboardEvent& event)
@@ -154,14 +155,16 @@ public:
 		
 		input::startup();
 
+		platform::window::startup(platform::window::RenderingBackend_Default);
+
 		// create a test window
-		platform::WindowParameters params;
+		platform::window::Parameters params;
 		params.window.width = 512;
 		params.window.height = 512;
 		params.window_title = "test_render";
 		
-		native_window = platform::window_create(params);
-		platform::window_focus(native_window);
+		native_window = platform::window::create(params);
+		platform::window::focus(native_window);
 		
 		// startup the renderer -- just so that it can be used by our classes.
 		// It will try to load conf/shaders.conf; but it can be ignored as
@@ -182,7 +185,7 @@ public:
 	virtual void tick()
 	{
 		input::update();
-		platform::window_process_events();
+		platform::window::dispatch_events();
 		set_active(false);
 	}
 
@@ -191,7 +194,8 @@ public:
 	{
 		renderer::shutdown();
 
-		platform::window_destroy(native_window);
+		platform::window::destroy(native_window);
+		platform::window::shutdown();
 
 		input::shutdown();
 		

@@ -30,7 +30,7 @@
 
 #include "kernel.h"
 
-using namespace platform::cocoa;
+using namespace platform::window::cocoa;
 
 @implementation CocoaOpenGLView
 

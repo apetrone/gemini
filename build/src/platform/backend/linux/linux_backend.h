@@ -27,53 +27,8 @@
 
 namespace platform
 {
-	namespace linux
+	namespace window
 	{
-		enum WindowProviderType
-		{
-			// MacOS X
-			WindowProvider_Cocoa,
-
-			// iPhoneOS
-			WindowProvider_UIKit,
-
-			// Windows
-			WindowProvider_Win32,
-
-			// Linux, X11
-			WindowProvider_X11,
-			WindowProvider_Wayland,
-			WindowProvider_Mir,
-
-			// Linux, Raspberry Pi
-			WindowProvider_DispManX,
-
-			// Android
-			WindowProvider_Android
-		};
-
-		enum GraphicsProviderType
-		{
-			// OpenGL and variants
-			GraphicsProvider_OpenGL,
-			GraphicsProvider_OpenGLES,
-			GraphicsProvider_GLX,
-			GraphicsProvider_WGL,
-
-			// EGL
-			GraphicsProvider_EGL,
-
-			// Apple's Metal
-			GraphicsProvider_Metal,
-
-			// Vulkan API
-			GraphicsProvider_Vulkan,
-
-			// Microsoft's Direct3D
-			GraphicsProvider_Direct3D_11,
-			GraphicsProvider_Direct3D_12
-		};
-
 		class WindowProvider
 		{
 		public:
@@ -81,12 +36,12 @@ namespace platform
 
 			virtual Result startup() = 0;
 			virtual void shutdown() = 0;
-			virtual NativeWindow* create(const WindowParameters& parameters) = 0;
-			virtual void destroy(NativeWindow* window) = 0;
-			virtual Frame get_window_rect(NativeWindow* window) const = 0;
-			virtual Frame get_window_render_rect(NativeWindow* window) const = 0;
+			virtual platform::window::NativeWindow* create(const platform::window::Parameters& parameters) = 0;
+			virtual void destroy(platform::window::NativeWindow* window) = 0;
+			virtual platform::window::Frame get_window_rect(platform::window::NativeWindow* window) const = 0;
+			virtual platform::window::Frame get_window_render_rect(platform::window::NativeWindow* window) const = 0;
 			virtual size_t get_screen_count() const = 0;
-			virtual Frame get_screen_rect(size_t screen_index) const = 0;
+			virtual platform::window::Frame get_screen_rect(size_t screen_index) const = 0;
 		};
 
 		class GraphicsProvider
@@ -96,10 +51,10 @@ namespace platform
 
 			virtual Result startup() = 0;
 			virtual void shutdown() = 0;
-			virtual void create_context(NativeWindow* window) = 0;
-			virtual void destroy_context(NativeWindow* window) = 0;
-			virtual void activate_context(NativeWindow* window) = 0;
-			virtual void swap_buffers(NativeWindow* window) = 0;
+			virtual void create_context(platform::window::NativeWindow* window) = 0;
+			virtual void destroy_context(platform::window::NativeWindow* window) = 0;
+			virtual void activate_context(platform::window::NativeWindow* window) = 0;
+			virtual void swap_buffers(platform::window::NativeWindow* window) = 0;
 			virtual void* get_symbol(const char* symbol_name) = 0;
 
 			/// @brief If the graphics provider needs to store custom
@@ -107,6 +62,6 @@ namespace platform
 			/// which needs to be allocated.
 			virtual size_t get_graphics_data_size() const = 0;
 		};
-	} // namespace linux
+	} // namespace window
 
 } // namespace platform

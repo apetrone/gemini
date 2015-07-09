@@ -26,10 +26,10 @@
 
 @interface CocoaWindow : NSWindow
 {
-	platform::NativeWindow* instance;
+	platform::window::NativeWindow* instance;
 }
 
-@property (nonatomic, assign) platform::NativeWindow* instance;
+@property (nonatomic, assign) platform::window::NativeWindow* instance;
 
 -(BOOL) canBecomeKeyWindow;
 -(BOOL) canBecomeMainWindow;

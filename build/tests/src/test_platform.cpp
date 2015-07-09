@@ -25,6 +25,11 @@
 #include "unit_test.h"
 
 #include <platform/platform.h>
+#include <platform/window.h>
+
+#if defined(PLATFORM_RASPBERRYPI)
+	#include <GLES2/gl2.h>
+#endif
 
 // ---------------------------------------------------------------------
 // dynamic library
@@ -92,20 +97,38 @@ void test_filesystem()
 // ---------------------------------------------------------------------
 void test_window()
 {
-	platform::WindowParameters params;
+	platform::window::Parameters params;
 	params.window_title = "none";
 	params.depth_size = 16;
 
 
-	platform::NativeWindow* window = platform::window_create(params);
+	fprintf(stdout, "-> creating window...\n");
+	platform::window::NativeWindow* window = platform::window::create(params);
 
-	platform::window_begin_rendering(window);
-	platform::dispatch_events();
-	platform::thread_sleep(1000);
-	platform::window_end_rendering(window);
+#if defined(PLATFORM_RASPBERRYPI)
+	fprintf(stdout, "GL_VENDOR: %s\n", glGetString(GL_VENDOR));
+	fprintf(stdout, "GL_RENDERER: %s\n", glGetString(GL_RENDERER));
+#endif
 
+	fprintf(stdout, "-> render to window and wait 1000 ms...\n");
+	// while(true)
+	{
+		platform::window::begin_rendering(window);
+		platform::window::dispatch_events();
+		
+#if defined(PLATFORM_RASPBERRYPI)
+		glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+#endif
 
-	platform::window_destroy(window);
+		platform::window::end_rendering(window);
+
+		platform::thread_sleep(1000);
+	}
+	
+
+	fprintf(stdout, "-> destroying window...\n");
+	platform::window::destroy(window);
 }
 
 int main(int, char**)
@@ -117,7 +140,12 @@ int main(int, char**)
 
 	test_dynamic_library();
 	test_filesystem();
+	
+	result = platform::window::startup(platform::window::RenderingBackend_Default);
+	TEST_VERIFY(result.success(), platform_window_startup);
+	
 	test_window();
+	platform::window::shutdown();
 	
 	platform::shutdown();
 	return 0;

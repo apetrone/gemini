@@ -31,7 +31,7 @@
 
 namespace platform
 {
-	namespace linux
+	namespace window
 	{
 		class EGLGraphicsProvider : public GraphicsProvider
 		{
@@ -50,5 +50,5 @@ namespace platform
 		private:
 			EGLDisplay display;			
 		};
-	} // namespace linux
+	} // namespace window
 } // namespace platform
