@@ -170,11 +170,16 @@ namespace platform
 		Result startup(RenderingBackend backend)
 		{
 #if defined(PLATFORM_RASPBERRYPI)
+			// force the backend
+			backend = RenderingBackend_OpenGLES2;
+
 			if (backend != RenderingBackend_OpenGLES2)
 			{
 				return Result(Result::Failure, "The only supported rendering backend is OpenGL ES 2");
 			}
 #else
+			// force OpenGL for now
+			backend = RenderingBackend_OpenGL;
 			if (backend != RenderingBackend_OpenGL)
 			{
 				return Result(Result::Failure, "Only the OpenGL rendering backend is supported");
