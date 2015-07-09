@@ -32,6 +32,14 @@ libsdl = Dependency(file="sdl2.py",
 libnom = Dependency(file="nom.py")
 librecastnavigation = Dependency(file="recastnavigation.py")
 
+def setup_common_defines(arguments, product):
+	linux = product.layout(platform="linux")
+
+	if arguments.raspberrypi:
+		linux.defines += [
+			"PLATFORM_RASPBERRYPI=1"
+		]
+
 def setup_common_variables(arguments, target_platform, product):
 	product.sources += [
 		"src/engine/*.c*",
@@ -752,6 +760,7 @@ def create_unit_test(arguments, name, dependencies, source, output_type = Produc
 
 	product.dependencies.extend(dependencies)
 
+	setup_common_defines(arguments, product)
 
 	linux = product.layout(platform="linux")
 	linux.links += [
