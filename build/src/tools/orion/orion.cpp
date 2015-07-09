@@ -30,6 +30,7 @@
 #include <runtime/logging.h>
 
 #include <platform/platform.h>
+#include <platform/window.h>
 #include <platform/kernel.h>
 #include <platform/input.h>
 
@@ -645,7 +646,7 @@ namespace render2
 					
 					attributes.allocate(active_attributes);
 
-					for (size_t attribute_index = 0; attribute_index < active_attributes; ++attribute_index)
+					for (GLint attribute_index = 0; attribute_index < active_attributes; ++attribute_index)
 					{
 						shader_variable& attribute = attributes[attribute_index];
 						gl.GetActiveAttrib(id, attribute_index, MAX_ATTRIBUTE_NAME_LENGTH, &attribute.length, &attribute.size, &attribute.type, attribute.name);
@@ -669,7 +670,7 @@ namespace render2
 					// allocate data for uniforms
 					uniforms.allocate(active_uniforms);
 					
-					for (size_t uniform_index = 0; uniform_index < active_uniforms; ++uniform_index)
+					for (GLint uniform_index = 0; uniform_index < active_uniforms; ++uniform_index)
 					{
 						shader_variable& uniform = uniforms[uniform_index];
 						gl.GetActiveUniform(id, uniform_index, MAX_ATTRIBUTE_NAME_LENGTH, &uniform.length, &uniform.size, &uniform.type, uniform.name);
@@ -1008,7 +1009,6 @@ namespace render2
 				size_t vertex_stride = pipeline->vertex_description.stride();
 				for (size_t index = 0; index < pipeline->vertex_description.size(); ++index)
 				{
-					shader_variable& attribute = shader->attributes[index];
 					data_type type = pipeline->vertex_description[index];
 					attribute_size = vertex_descriptor::size_table[ type ];
 					element_count = vertex_descriptor::elements[ type ];
@@ -1068,7 +1068,6 @@ namespace render2
 
 
 				gl_pipeline* current_pipeline = nullptr;
-				gl_pipeline* last_pipeline = nullptr;
 				gl_buffer* vertex_stream = nullptr;
 				gl_buffer* index_stream = nullptr;
 				
@@ -1256,7 +1255,7 @@ private:
 #if defined(USE_WINDOW_LIBRARY)
 	platform::IWindowLibrary* window_interface;
 #endif
-	platform::NativeWindow* main_window;
+	platform::window::NativeWindow* main_window;
 	
 	render2::device* device;
 	
@@ -1368,32 +1367,25 @@ public:
 		}
 #else
 		{
+			platform::window::startup(platform::window::RenderingBackend_Default);
 			
 			//	uint32_t rcaps = platform::get_renderinterface_caps();
 			//	fprintf(stdout, "RenderBackends: %i\n", rcaps);
 
-			fprintf(stdout, "total screens: %zu\n", platform::window_screen_count());
+			fprintf(stdout, "total screens: %zu\n", platform::window::screen_count());
 			
-			for (size_t screen = 0; screen < platform::window_screen_count(); ++screen)
+			for (size_t screen = 0; screen < platform::window::screen_count(); ++screen)
 			{
-				int x;
-				int y;
-				int width;
-				int height;
-				
-				//		wp->screen_size(screen, width, height);
-				//		fprintf(stdout, "screen: %zu, resolution: %i x %i\n", screen, width, height);
-				
-				platform::window_screen_rect(screen, x, y, width, height);
-				fprintf(stdout, "screen rect: %zu, origin: %i, %i; resolution: %i x %i\n", screen, x, y, width, height);
+				platform::window::Frame frame = platform::window::screen_frame(screen);
+				fprintf(stdout, "screen rect: %zu, origin: %i, %i; resolution: %i x %i\n", screen, frame.x, frame.y, frame.width, frame.height);
 			}
 			
-			platform::WindowParameters params;
+			platform::window::Parameters params;
 			params.window.width = 800;
 			params.window.height = 600;
 			params.window_title = "orion";
 			params.target_display = 0;
-			main_window = platform::window_create(params);
+			main_window = platform::window::create(params);
 		}
 #endif
 
@@ -1520,7 +1512,7 @@ public:
 		if (window_interface)
 			window_interface->process_events();
 #else
-		platform::dispatch_events();
+		platform::window::dispatch_events();
 #endif
 		
 				
@@ -1556,7 +1548,7 @@ public:
 		queue.draw(0, 3);
 		
 #if !defined(USE_WINDOW_LIBRARY)
-		platform::window_begin_rendering(main_window);
+		platform::window::begin_rendering(main_window);
 #endif
 		
 		
@@ -1565,7 +1557,7 @@ public:
 		
 		
 #if !defined(USE_WINDOW_LIBRARY)
-		platform::window_end_rendering(main_window);
+		platform::window::end_rendering(main_window);
 #endif
 
 //		glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, 2000);
@@ -1600,7 +1592,8 @@ public:
 			platform::destroy_window_library();
 		}
 #else
-		platform::window_destroy(main_window);
+		platform::window::destroy(main_window);
+		platform::window::shutdown();
 #endif
 
 		core::shutdown();

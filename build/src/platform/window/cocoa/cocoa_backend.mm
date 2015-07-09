@@ -569,6 +569,11 @@ namespace platform
 
 		Result startup(RenderingBackend backend)
 		{
+			if (backend == RenderingBackend_Default)
+			{
+				backend = RenderingBackend_OpenGL;
+			}
+		
 			if (backend != RenderingBackend_OpenGL)
 			{
 				return Result(Result::Failure, "The requested rendering backend is not supported");
