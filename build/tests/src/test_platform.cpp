@@ -29,6 +29,8 @@
 
 #if defined(PLATFORM_RASPBERRYPI)
 	#include <GLES2/gl2.h>
+
+	#define TEST_WINDOW_CREATION 1
 #endif
 
 // ---------------------------------------------------------------------
@@ -102,6 +104,17 @@ void test_window()
 	params.depth_size = 16;
 
 
+	size_t total_displays = platform::window::screen_count();
+	fprintf(stdout, "-> total screens: %lu\n", total_displays);
+	
+	for (size_t i = 0; i < total_displays; ++i)
+	{
+		platform::window::Frame frame = platform::window::screen_frame(i);
+		fprintf(stdout, "display %lu rect = %i, %i, %i x %i\n", i, frame.x, frame.y, frame.width, frame.height);
+	}
+
+
+#if defined(TEST_WINDOW_CREATION)
 	fprintf(stdout, "-> creating window...\n");
 	platform::window::NativeWindow* window = platform::window::create(params);
 
@@ -129,6 +142,8 @@ void test_window()
 
 	fprintf(stdout, "-> destroying window...\n");
 	platform::window::destroy(window);
+	
+#endif
 }
 
 int main(int, char**)

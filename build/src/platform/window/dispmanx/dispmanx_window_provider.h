@@ -45,10 +45,10 @@ namespace platform
 			virtual void shutdown();
 			virtual NativeWindow* create(const Parameters& parameters);
 			virtual void destroy(NativeWindow* window);
-			virtual Frame get_window_rect(NativeWindow* window) const;
-			virtual Frame get_window_render_rect(NativeWindow* window) const;
+			virtual Frame get_frame(NativeWindow* window) const;
+			virtual Frame get_render_frame(NativeWindow* window) const;
 			virtual size_t get_screen_count() const;
-			virtual Frame get_screen_rect(size_t screen_index) const;
+			virtual Frame get_screen_frame(size_t screen_index) const;
 
 		private:
 			uint32_t display_width;

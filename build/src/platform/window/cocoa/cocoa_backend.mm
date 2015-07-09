@@ -651,15 +651,16 @@ namespace platform
 			return [[NSScreen screens] count];
 		}
 		
-		void screen_rect(size_t screen_index, int& x, int& y, int& width, int& height)
+		Frame screen_frame(size_t screen_index)
 		{
 			NSScreen* screen = [[NSScreen screens] objectAtIndex:screen_index];
 			NSRect frame = [screen convertRectToBacking:[screen frame]];
-			x = frame.origin.x;
-			y = frame.origin.y;
-			width = frame.size.width;
-			height = frame.size.height;
-			
+			Frame out_frame;
+			out_frame.x = frame.origin.x;
+			out_frame.y = frame.origin.y;
+			out_frame.width = frame.size.width;
+			out_frame.height = frame.size.height;
+			return out_frame;
 			// this is DEPRECATED!
 			//				CFDictionaryRef mode_info;
 			//				int refresh_rate;
