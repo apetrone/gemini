@@ -105,15 +105,6 @@ Style Rules
 		int my_value = 3;
 
 
-- Pointer and Reference types should have the asterisk and ampersand next to the type:
-
-	.. code-block:: c
-
-		int value = 30;
-		int* pointer = nullptr;
-		int& ref = value;
-
-
 - Static or global names should be prefixed with an underscore:
 
 	.. code-block:: c
@@ -128,11 +119,11 @@ Style Rules
 		_kernel->set_active( true );
 
 
-- Typedefs and POD types are lower-cased:
+- Typedefs are lower-cased with an underscore 't' postfix:
 
 	.. code-block:: c++
 
-		typedef CustomClass custom_class_type;
+		typedef CustomClass custom_class_type_t;
 
 
 - Namespace names are lower cased:
@@ -145,7 +136,7 @@ Style Rules
 		};
 
 
-- Struct and class names are upper-cased:
+- Struct and class names are title-cased:
 
 	.. code-block:: c++
 
@@ -155,7 +146,7 @@ Style Rules
 		};
 
 
-- Files for classes should be the lower-cased and underscore versions:
+- Files for classes should be lower-cased and use underscores:
 
 	.. code-block:: c++
 
