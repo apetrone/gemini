@@ -151,7 +151,7 @@ namespace platform
 			MEMORY_DELETE(pointer, platform::get_platform_allocator());
 		}
 
-		Frame DispManXWindowProvider::get_window_rect(NativeWindow* window) const
+		Frame DispManXWindowProvider::get_frame(NativeWindow* window) const
 		{
 			Frame frame;
 #if defined(PLATFORM_RASPBERRYPI)
@@ -161,7 +161,7 @@ namespace platform
 			return frame;
 		}
 
-		Frame DispManXWindowProvider::get_window_render_rect(NativeWindow* window) const
+		Frame DispManXWindowProvider::get_render_frame(NativeWindow* window) const
 		{
 			Frame frame;
 #if defined(PLATFORM_RASPBERRYPI)
@@ -181,7 +181,7 @@ namespace platform
 			return 0;
 		}
 
-		Frame DispManXWindowProvider::get_screen_rect(size_t screen_index) const
+		Frame DispManXWindowProvider::get_screen_frame(size_t screen_index) const
 		{
 			Frame frame;
 #if defined(PLATFORM_RASPBERRYPI)

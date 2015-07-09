@@ -190,7 +190,7 @@ namespace platform
 
 		void dispatch_events()
 		{
-			
+
 		}
 
 		NativeWindow* create(const Parameters& window_parameters)
@@ -235,12 +235,12 @@ namespace platform
 
 		Frame get_frame(NativeWindow* window)
 		{
-			return _window_provider->get_window_rect(window);
+			return _window_provider->get_frame(window);
 		}
 		
 		Frame get_render_frame(NativeWindow* window)
 		{
-			return _window_provider->get_window_render_rect(window);
+			return _window_provider->get_render_frame(window);
 		}
 		
 		size_t screen_count()
@@ -248,8 +248,9 @@ namespace platform
 			return _window_provider->get_screen_count();
 		}
 
-		void screen_rect(size_t screen_index, int& x, int& y, int& width, int& height)
+		Frame screen_frame(size_t screen_index)
 		{
+			return _window_provider->get_screen_frame(screen_index);
 		}
 		
 		void focus(NativeWindow* window)

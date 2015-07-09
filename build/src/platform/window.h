@@ -195,7 +195,7 @@ namespace platform
 		LIBRARY_EXPORT size_t screen_count();
 		
 		/// @brief get the specified screen's rect (origin, width, and height) in pixels
-		LIBRARY_EXPORT void screen_rect(size_t screen_index, int& x, int& y, int& width, int& height);
+		LIBRARY_EXPORT Frame screen_frame(size_t screen_index);
 		
 		// bring window to focus
 		LIBRARY_EXPORT void focus(NativeWindow* window);

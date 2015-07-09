@@ -36,12 +36,12 @@ namespace platform
 
 			virtual Result startup() = 0;
 			virtual void shutdown() = 0;
-			virtual platform::window::NativeWindow* create(const platform::window::Parameters& parameters) = 0;
-			virtual void destroy(platform::window::NativeWindow* window) = 0;
-			virtual platform::window::Frame get_window_rect(platform::window::NativeWindow* window) const = 0;
-			virtual platform::window::Frame get_window_render_rect(platform::window::NativeWindow* window) const = 0;
+			virtual NativeWindow* create(const Parameters& parameters) = 0;
+			virtual void destroy(NativeWindow* window) = 0;
+			virtual Frame get_frame(NativeWindow* window) const = 0;
+			virtual Frame get_render_frame(NativeWindow* window) const = 0;
 			virtual size_t get_screen_count() const = 0;
-			virtual platform::window::Frame get_screen_rect(size_t screen_index) const = 0;
+			virtual Frame get_screen_frame(size_t screen_index) const = 0;
 		};
 
 		class GraphicsProvider
@@ -51,10 +51,10 @@ namespace platform
 
 			virtual Result startup() = 0;
 			virtual void shutdown() = 0;
-			virtual void create_context(platform::window::NativeWindow* window) = 0;
-			virtual void destroy_context(platform::window::NativeWindow* window) = 0;
-			virtual void activate_context(platform::window::NativeWindow* window) = 0;
-			virtual void swap_buffers(platform::window::NativeWindow* window) = 0;
+			virtual void create_context(NativeWindow* window) = 0;
+			virtual void destroy_context(NativeWindow* window) = 0;
+			virtual void activate_context(NativeWindow* window) = 0;
+			virtual void swap_buffers(NativeWindow* window) = 0;
 			virtual void* get_symbol(const char* symbol_name) = 0;
 
 			/// @brief If the graphics provider needs to store custom
