@@ -22,29 +22,29 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
 
-#import <Cocoa/Cocoa.h>
-#import <Foundation/Foundation.h>
+#include "platform_internal.h"
 
-#include "input.h"
 
 namespace platform
 {
 	namespace window
 	{
-		namespace cocoa
+		// ---------------------------------------------------------------------
+		// internal platform stuff?
+		// ---------------------------------------------------------------------
+		
+		// don't bloat my code up
+		Parameters::~Parameters()
 		{
-			void populate_keymap();
-			void process_event_loop();
-			
-			input::Button convert_keycode(unsigned short mac_keycode);
-			
-			uint16_t keymod_state();
-			void keymod_state(uint16_t keymods);
-			
-			void dispatch_mouse_moved_event(NSEvent* the_event);
-			uint16_t convert_cocoa_keymods(NSUInteger modifier_flags);
-		} // namespace cocoa
+		}
+		
+		NativeWindow::~NativeWindow()
+		{
+		}
+		
+		input_provider::~input_provider()
+		{
+		}
 	} // namespace window
 } // namespace platform

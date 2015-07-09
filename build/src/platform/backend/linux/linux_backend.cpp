@@ -36,18 +36,12 @@
 	#include "../../graphics/egl/egl_graphics_provider.h"
 #endif
 
+using namespace platform::window;
+
 namespace platform
 {
 	namespace linux
 	{
-		WindowProvider::~WindowProvider()
-		{
-		}
-
-		GraphicsProvider::~GraphicsProvider()
-		{
-		}
-
 		static WindowProvider* _window_provider = nullptr;
 		static GraphicsProvider* _graphics_provider = nullptr;
 
@@ -163,72 +157,107 @@ namespace platform
 	}
 
 
-
-	NativeWindow* window_create(const WindowParameters& window_parameters)
+	namespace window
 	{
-		NativeWindow* window = _window_provider->create(window_parameters);
-
-		size_t graphics_data_size = _graphics_provider->get_graphics_data_size();
-
-		if (graphics_data_size)
+		WindowProvider::~WindowProvider()
 		{
-			// alloc graphics data for this window
-			window->graphics_data = MEMORY_ALLOC(graphics_data_size, get_platform_allocator());
 		}
 
+		GraphicsProvider::~GraphicsProvider()
+		{
+		}
 
-		// pass the window to the graphics API
-		_graphics_provider->create_context(window);
+		Result startup(RenderingBackend backend)
+		{
+#if defined(PLATFORM_RASPBERRYPI)
+			if (backend != RenderingBackend_OpenGLES2)
+			{
+				return Result(Result::Failure, "The only supported rendering backend is OpenGL ES 2");
+			}
+#else
+			if (backend != RenderingBackend_OpenGL)
+			{
+				return Result(Result::Failure, "Only the OpenGL rendering backend is supported");
+			}
+#endif
+			return Result(Result::Success);
+		}
 
-		// activate the context for newly created windows
-		_graphics_provider->activate_context(window);
+		void shutdown()
+		{
 
-		return window;
-	}
+		}
 
-	void window_destroy(NativeWindow* window)
-	{
-		_graphics_provider->destroy_context(window);
+		void dispatch_events()
+		{
+			
+		}
 
-		MEMORY_DEALLOC(window->graphics_data, get_platform_allocator());
-		_window_provider->destroy(window);
-	}
-	
-	void window_begin_rendering(NativeWindow* window)
-	{
-		_graphics_provider->activate_context(window);
-	}
-	
-	void window_end_rendering(NativeWindow* window)
-	{
-		_graphics_provider->swap_buffers(window);
-	}
+		NativeWindow* create(const Parameters& window_parameters)
+		{
+			NativeWindow* window = _window_provider->create(window_parameters);
 
+			size_t graphics_data_size = _graphics_provider->get_graphics_data_size();
 
-	void window_size(NativeWindow* window, int& width, int& height)
-	{
-	}
-	
-	void window_render_size(NativeWindow* window, int& width, int& height)
-	{
-	}
-	
-	size_t window_screen_count()
-	{
-		return _window_provider->get_screen_count();
-	}
-
-	void window_screen_rect(size_t screen_index, int& x, int& y, int& width, int& height)
-	{
-	}
-	
-	void window_focus(NativeWindow* window)
-	{
-	}
-	
-	void window_show_cursor(bool enable)
-	{
-	}
+			if (graphics_data_size)
+			{
+				// alloc graphics data for this window
+				window->graphics_data = MEMORY_ALLOC(graphics_data_size, get_platform_allocator());
+			}
 
 
+			// pass the window to the graphics API
+			_graphics_provider->create_context(window);
+
+			// activate the context for newly created windows
+			_graphics_provider->activate_context(window);
+
+			return window;
+		}
+
+		void destroy(NativeWindow* window)
+		{
+			_graphics_provider->destroy_context(window);
+
+			MEMORY_DEALLOC(window->graphics_data, get_platform_allocator());
+			_window_provider->destroy(window);
+		}
+		
+		void begin_rendering(NativeWindow* window)
+		{
+			_graphics_provider->activate_context(window);
+		}
+		
+		void end_rendering(NativeWindow* window)
+		{
+			_graphics_provider->swap_buffers(window);
+		}
+
+		Frame get_frame(NativeWindow* window)
+		{
+			return _window_provider->get_window_rect(window);
+		}
+		
+		Frame get_render_frame(NativeWindow* window)
+		{
+			return _window_provider->get_window_render_rect(window);
+		}
+		
+		size_t screen_count()
+		{
+			return _window_provider->get_screen_count();
+		}
+
+		void screen_rect(size_t screen_index, int& x, int& y, int& width, int& height)
+		{
+		}
+		
+		void focus(NativeWindow* window)
+		{
+		}
+		
+		void show_cursor(bool enable)
+		{
+		}		
+	} // namespace window
 } // namespace platform

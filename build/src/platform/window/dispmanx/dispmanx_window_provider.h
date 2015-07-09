@@ -33,7 +33,7 @@
 
 namespace platform
 {
-	namespace linux
+	namespace window
 	{
 		class DispManXWindowProvider : public WindowProvider
 		{
@@ -43,7 +43,7 @@ namespace platform
 
 			virtual Result startup();
 			virtual void shutdown();
-			virtual NativeWindow* create(const WindowParameters& parameters);
+			virtual NativeWindow* create(const Parameters& parameters);
 			virtual void destroy(NativeWindow* window);
 			virtual Frame get_window_rect(NativeWindow* window) const;
 			virtual Frame get_window_render_rect(NativeWindow* window) const;
@@ -58,5 +58,5 @@ namespace platform
 			DISPMANX_UPDATE_HANDLE_T dispman_update;
 			DISPMANX_ELEMENT_HANDLE_T dispman_element;
 		}; // class DispManXWindowProvider
-	} // namespace linux
+	} // namespace window
 } // namespace platform

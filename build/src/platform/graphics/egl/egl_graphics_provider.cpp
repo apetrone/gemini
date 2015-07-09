@@ -29,7 +29,7 @@
 
 namespace platform
 {
-	namespace linux
+	namespace window
 	{
 		static EGLint egl_check_error(const char* message)
 		{
@@ -224,6 +224,6 @@ namespace platform
 		{
 			return sizeof(EGLData);
 		}
-	}
+	} // namespace window
 
 } // namespace platform

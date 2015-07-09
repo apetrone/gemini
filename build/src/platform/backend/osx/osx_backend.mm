@@ -41,10 +41,7 @@ namespace platform
 //		NSTimeInterval uptime = processInfo.systemUptime;
 //
 //		NSLog(@"uptime: %f", uptime);
-		
-		// populate the osx keymap
-		cocoa::populate_keymap();
-		
+
 		return Result(Result::Success);
 	}
 	
@@ -55,10 +52,5 @@ namespace platform
 	
 	void backend_shutdown()
 	{
-	}
-	
-	void dispatch_events()
-	{
-		cocoa::process_event_loop();
 	}
 } // namespace platform

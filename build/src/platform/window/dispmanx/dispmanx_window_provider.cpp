@@ -22,7 +22,7 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include "platform.h"
+#include "platform_internal.h"
 #include "linux_backend.h"
 #include "dispmanx_window_provider.h"
 
@@ -44,7 +44,7 @@
 
 namespace platform
 {
-	namespace linux
+	namespace window
 	{
 		struct DispManXWindow : public NativeWindow
 		{
@@ -136,7 +136,7 @@ namespace platform
 			assert(result == 0);
 		}
 
-		NativeWindow* DispManXWindowProvider::create(const WindowParameters& parameters)
+		NativeWindow* DispManXWindowProvider::create(const Parameters& parameters)
 		{
 			DispManXWindow* window = MEMORY_NEW(DispManXWindow, platform::get_platform_allocator())(parameters.window);
 			window->native_window.width = display_width;
@@ -191,5 +191,5 @@ namespace platform
 #endif
 			return frame;
 		}		
-	} // namespace linux
+	} // namespace window
 } // namespace platform
