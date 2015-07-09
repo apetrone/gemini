@@ -69,6 +69,7 @@ namespace core
 		{
 			clear();
 			_length = core::str::len(source);
+			assert(_length < maximum_size);
 			core::str::copy(_data, source, _length );
 		}
 		
