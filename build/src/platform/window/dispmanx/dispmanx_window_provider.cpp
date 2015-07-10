@@ -30,7 +30,7 @@
 	#include <bcm_host.h> // for graphics_get_display_size
 
 	// PLATFORM_SUPPORT_EGL and PLATFORM_SUPPORT_OPENGLES must be defined
-	#if !(defined(PLATFORM_EGL_SUPPORT) || !defined(PLATFORM_OPENGLES_SUPPORT))
+	#if !(defined(PLATFORM_EGL_SUPPORT) || !defined(PLATFORM_GLES2_SUPPORT))
 		#error RaspberryPi requires EGL and OpenGL ES support!
 	#endif
 

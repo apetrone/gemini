@@ -91,7 +91,7 @@ namespace platform
 			// eglBindAPI and EGL version required
 			// 1.2+: EGL_OPENGL_ES_API and EGL_OPENVG_API
 			// 1.4+: EGL_OPENGL_API
-#if defined(PLATFORM_OPENGLES_SUPPORT)
+#if defined(PLATFORM_GLES2_SUPPORT)
 			assert(major >= 1 && minor >= 2);
 			bind_result = eglBindAPI(EGL_OPENGL_ES_API);
 #elif defined(PLATFORM_OPENGL_SUPPORT)
@@ -127,7 +127,7 @@ namespace platform
 
 			// prepare egl attributes
 			EGLint attribs[] = {
-#if defined(PLATFORM_OPENGLES_SUPPORT)
+#if defined(PLATFORM_GLES2_SUPPORT)
 				// OpenGL ES 1.0/1.1
 				// EGL_RENDERABLE_TYPE, EGL_OPENGL_ES_BIT,
 				// EGL_CONFORMANT, EGL_OPENGL_ES_BIT,

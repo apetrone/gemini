@@ -121,10 +121,12 @@ namespace renderer
 
 #if PLATFORM_WINDOWS
 		lib_name = "OpenGL32.dll";
-#elif defined(PLATFORM_IS_RASPBERRYPI) || defined(PLATFORM_USE_GLES2)
+#elif defined(PLATFORM_RASPBERRYPI) || defined(PLATFORM_GLES2_SUPPORT)
 		lib_name = "libGLESv2.so";
 #elif PLATFORM_LINUX
 		lib_name = "libGL.so";
+#else
+	#error Unknown platform!
 #endif
 
 		LOGV("Loading gl driver \"%s\"...\n", lib_name);
@@ -496,7 +498,7 @@ namespace renderer
 		// check OS specific GL function first, then check the linked library
 #if PLATFORM_WINDOWS
 		ptr = wglGetProcAddress( name );
-#elif PLATFORM_IS_RASPBERRYPI
+#elif PLATFORM_RASPBERRYPI
 		// fall through
 #elif PLATFORM_LINUX
 		ptr = (void*)glXGetProcAddress( (const GLubyte*)name );

@@ -40,11 +40,13 @@ using namespace std;
 	#include <OpenGL/OpenGL.h>
 	#include <OpenGL/gl.h>
 #elif PLATFORM_LINUX
-	#if PLATFORM_USE_GLES2
+	#if PLATFORM_GLES2_SUPPORT
 		#include <GLES2/gl2.h>
-	#else
+	#elif PLATFORM_OPENGL_SUPPORT
 		#include <GL/gl.h>
 		#include <GL/glx.h>
+	#else
+		#error No valid renderer for this platform
 	#endif
 #else
 	#include <gl/GL.h>

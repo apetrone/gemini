@@ -1226,10 +1226,10 @@ namespace render2
 	device* create_device(const RenderParameters& params)
 	{
 		// determine the renderer
-		assert(params.has_key("renderer"));
+		assert(params.has_key("rendering_backend"));
 		
-		const param_string& renderer = params["renderer"];
-		LOGV("create renderer '%s'\n", renderer());
+		const param_string& renderer = params["rendering_backend"];
+		LOGV("create device for rendering_backend '%s'\n", renderer());
 	
 	
 		return new glhal();
@@ -1417,7 +1417,7 @@ public:
 			params["multisample"] = "4";
 
 			// set opengl specific options
-			params["renderer"] = "opengl";
+			params["rendering_backend"] = "opengl";
 			params["opengl.major"] = "3";
 			params["opengl.minor"] = "2";
 			params["opengl.profile"] = "core";
