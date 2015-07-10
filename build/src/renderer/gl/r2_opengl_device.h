@@ -118,8 +118,8 @@ namespace render2
 				}";
 				
 				bool result = false;
-				result = compile_shader(vert, vertex_shader_source, "", "#version 150 core");
-				result = compile_shader(frag, fragment_shader_source, "", "#version 150 core");
+				result = compile_shader(vert, vertex_shader_source, "", "#version 150 core\n");
+				result = compile_shader(frag, fragment_shader_source, "", "#version 150 core\n");
 				
 				
 				// attach shaders
