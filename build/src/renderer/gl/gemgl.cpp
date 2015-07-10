@@ -116,14 +116,18 @@ namespace renderer
 	int gemgl_startup(gemgl_interface_t& gl_interface)
 	{
 		// load the platform-specific GL library
-#if PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_ANDROID
+#if defined(PLATFORM_WINDOWS) || defined(PLATFORM_LINUX) || defined(PLATFORM_ANDROID)
 		const char* lib_name = "";
 
-#if PLATFORM_WINDOWS
+#if defined(PLATFORM_WINDOWS)
 		lib_name = "OpenGL32.dll";
 #elif defined(PLATFORM_RASPBERRYPI) || defined(PLATFORM_GLES2_SUPPORT)
+	#if defined(PLATFORM_RASPBERRYPI)
+		lib_name = "/opt/vc/lib/libGLESv2.so";
+	#else
 		lib_name = "libGLESv2.so";
-#elif PLATFORM_LINUX
+	#endif
+#elif defined(PLATFORM_LINUX)
 		lib_name = "libGL.so";
 #else
 	#error Unknown platform!
