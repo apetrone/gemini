@@ -90,7 +90,7 @@ namespace core
 			++total_log_handlers;
 #endif
 
-#if !PLATFORM_IS_MOBILE
+#if defined(PLATFORM_FILESYSTEM_SUPPORT)
 			platform::DateTime dt;
 			platform::datetime(dt);
 			
@@ -121,7 +121,7 @@ namespace core
 			++total_log_handlers;
 #endif
 			
-#if __ANDROID__
+#if defined(PLATFORM_ANDROID)
 			logging::Handler android_log;
 			android_log.open = log_android_open;
 			android_log.close = log_android_close;

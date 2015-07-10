@@ -25,9 +25,9 @@
 #pragma once
 
 // This file should define the following macros for each compiler:
-// PLATFORM_COMPILER - a string defining the compiler name
-// PLATFORM_COMPILER_VERSION - a string specifying the compiler version
-// PLATFORM_FANCY_FUNCTION - an alias to this compiler's pretty function macro
+// PLATFORM_COMPILER					a string defining the compiler name
+// PLATFORM_COMPILER_VERSION 			a string specifying the compiler version
+// PLATFORM_FANCY_FUNCTION 				an alias to this compiler's pretty function macro
 
 // setup compiler defines
 #if defined( __clang__ )
@@ -62,8 +62,10 @@
 	#error Unknown compiler!
 #endif
 
-// Define the following macros for this platform:
-// PLATFORM_NAME - a string describing the OS at compile time (win32, linux, macosx)
+// Define the following macros for each platform:
+// PLATFORM_NAME 						A string describing the OS at compile time (win32, linux, macosx)
+// PLATFORM_FILESYSTEM_SUPPORT			true if this platform can read/write to a physical filesystem
+
 #if (defined(_WIN32) || defined(_WIN64)) && defined(_MSC_VER)
 	#ifndef WIN32_LEAN_AND_MEAN
 		#define WIN32_LEAN_AND_MEAN 1
@@ -87,10 +89,11 @@
 
 	#define PLATFORM_NAME "windows"
 	#define PLATFORM_WINDOWS 1
+	#define PLATFORM_FILESYSTEM_SUPPORT 1
 #elif defined(__ANDROID__) // needs to be above __linux__, since android defines it also.
 	#define PLATFORM_NAME "android"
 	#define PLATFORM_ANDROID 1
-	#define PLATFORM_IS_MOBILE 1
+	#define PLATFORM_FILESYSTEM_SUPPORT 1
 	#define PLATFORM_POSIX 1
 #elif defined(__linux__)
 	#if defined(PLATFORM_RASPBERRYPI)
@@ -103,6 +106,7 @@
 
 	#define PLATFORM_LINUX 1
 	#define PLATFORM_POSIX 1
+	#define PLATFORM_FILESYSTEM_SUPPORT 1
 #elif defined(__APPLE__)
 	#include <TargetConditionals.h>
 
@@ -110,17 +114,23 @@
 
 	#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
 		#define PLATFORM_NAME "iphoneos"
-		#define PLATFORM_IS_MOBILE 1
 		#define PLATFORM_IPHONEOS 1
+		#define PLATFORM_FILESYSTEM_SUPPORT 0
 	#else
 		#define PLATFORM_NAME "macosx"
 		#define PLATFORM_MACOSX 1
+		#define PLATFORM_FILESYSTEM_SUPPORT 1
 	#endif
 
 	#define PLATFORM_POSIX 1
 //	#define PLATFORM_BSD 1
 #else
 	#error Unknown platform!
+#endif
+
+
+#if !defined(PLATFORM_FILESYSTEM_SUPPORT)
+	#error PLATFORM_FILESYSTEM_SUPPORT is not defined!
 #endif
 
 // disable some warnings

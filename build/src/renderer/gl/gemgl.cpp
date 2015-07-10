@@ -270,7 +270,7 @@ namespace renderer
 		GEMGL_LINK( gl.BlendColor, "glBlendColor", GEMGLFNBLENDCOLOR );
 		
 		// vertex array objects
-#if PLATFORM_IS_MOBILE // Android and iOS should have support for these.
+#if PLATFORM_GLES2_SUPPORT // Android and iOS should have support for these.
 		GEMGL_LINK( gl.GenVertexArrays, "glGenVertexArraysOES", GEMGLFNGENVERTEXARRAYS );		
 		GEMGL_LINK( gl.BindVertexArray, "glBindVertexArrayOES", GEMGLFNBINDVERTEXARRAY );
 		GEMGL_LINK( gl.DeleteVertexArrays, "glDeleteVertexArraysOES", GEMGLFNDELETEVERTEXARRAYS );

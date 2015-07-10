@@ -32,17 +32,7 @@
 
 #include <sdk/audio_api.h>
 
-#if !PLATFORM_IS_MOBILE
-	#include "openal.h"
-	#include "openal_vorbis_decoder.h"
-	namespace gemini
-	{
-		typedef stb_vorbis_decoder AudioDecoderType;
-	} // namespace gemini
-	#define DRIVER_NAME "OpenAL"
-	#define DRIVER_CREATOR OpenAL::creator
-
-#elif defined(PLATFORM_IPHONEOS)
+#if defined(PLATFORM_IPHONEOS)
 	#include "audio_extaudio_decoder.h"
 	#include "openal.h"
 	namespace gemini
@@ -51,8 +41,7 @@
 	} // namespace gemini
 	#define DRIVER_NAME "OpenAL"
 	#define DRIVER_CREATOR OpenAL::creator
-#elif PLATFORM_ANDROID
-
+#elif defined(PLATFORM_ANDROID)
 	#include "opensles.h"
 	#define DRIVER_NAME "OpenSLES"
 	#define DRIVER_CREATOR OpenSLES::creator
@@ -72,8 +61,17 @@
 		};
 		typedef AndroidDecoderNoop AudioDecoderType;
 	} // namespace gemini
+#elif defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS) || defined(PLATFORM_MACOSX)
+	#include "openal.h"
+	#include "openal_vorbis_decoder.h"
+	namespace gemini
+	{
+		typedef stb_vorbis_decoder AudioDecoderType;
+	} // namespace gemini
+	#define DRIVER_NAME "OpenAL"
+	#define DRIVER_CREATOR OpenAL::creator
 #else
-	#error Unknown platform!
+	#error Unknown platform or audio library!
 #endif
 
 namespace gemini
