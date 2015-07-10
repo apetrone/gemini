@@ -210,7 +210,7 @@ namespace renderer
 				render_utilities::strip_shader_version( buffer, version );
 				if ( version._length == 0 )
 				{
-	#if defined(PLATFORM_IS_MOBILE) || defined(PLATFORM_IS_RASPBERRYPI)
+	#if defined(PLATFORM_GLES2_SUPPORT)
 					version = "#version 100";
 	#else
 					version = "#version 150";

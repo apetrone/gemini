@@ -30,15 +30,14 @@
 
 // compile-time selection of these classes starts here.
 
-#if PLATFORM_USE_GLES2
+#if PLATFORM_GLES2_SUPPORT
 	// force use of OpenGL ES v2
 	#include "gl/mobile/opengl_glesv2.h"
-#elif PLATFORM_USE_GLES3
-	#error Not yet implemented.
-#else
-	// use OpenGL
+#elif PLATFORM_OPENGL_SUPPORT
 	#include "gl/desktop/opengl_core32.h"
 	#include "gl/desktop/opengl_21.h"
+#else
+	#error Unknown renderer for this platform!
 #endif
 
 #include <core/typedefs.h>
@@ -78,7 +77,7 @@ namespace renderer
 		// parse the GL_VERSION string and determine which renderer to use.
 		gemgl_parse_version(config.major_version, config.minor_version);
 
-#if !defined(PLATFORM_USE_GLES)
+#if defined(PLATFORM_OPENGL_SUPPORT)
 			if (config.major_version == 3 && config.minor_version == 2)
 			{
 				// use core32
@@ -90,7 +89,9 @@ namespace renderer
 				// this has to fail hard.
 //				_render_driver = MEMORY_NEW(GL21, core::memory::global_allocator());
 			}
-#else
+#endif
+
+#if defined(PLATFORM_GLES2_SUPPORT)
 			// TODO: load GLES
 			if (config.major_version == 2)
 			{

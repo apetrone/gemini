@@ -32,14 +32,6 @@ libsdl = Dependency(file="sdl2.py",
 libnom = Dependency(file="nom.py")
 librecastnavigation = Dependency(file="recastnavigation.py")
 
-def setup_common_defines(arguments, product):
-	linux = product.layout(platform="linux")
-
-	if arguments.raspberrypi:
-		linux.defines += [
-			"PLATFORM_RASPBERRYPI=1"
-		]
-
 def setup_common_variables(arguments, target_platform, product):
 	product.sources += [
 		"src/engine/*.c*",
@@ -228,7 +220,7 @@ def setup_common_libs(arguments, product):
 	# addressed to use utf8 internally.
 	windows.driver.characterset = "MultiByte"
 
-def setup_driver(product):
+def setup_driver(arguments, product):
 
 	#macosx = product.layout(platform="macosx")
 	#macosx.driver.macosx_deployment_target = "10.8"
@@ -237,6 +229,15 @@ def setup_driver(product):
 	product.excludes += [
 		"*.DS_Store"
 	]
+
+	if arguments.gles:
+		product.defines += [
+			"PLATFORM_GLES2_SUPPORT=1"
+		]
+	elif arguments.opengl:
+		product.defines += [
+			"PLATFORM_OPENGL_SUPPORT=1"
+		]
 
 	gcc_flags = [
 		"-Wall",
@@ -270,12 +271,18 @@ def setup_driver(product):
 	
 	mac_release = product.layout(platform="macosx", configuration="release")
 
-
 	linux = product.layout(platform="linux")
-	linux.cflags += gcc_flags + [
-		"-fPIC",
-	]
+	if arguments.raspberrypi:
+		linux.defines += [
+			"PLATFORM_RASPBERRYPI=1"
+		]		
+	if arguments.with_egl:
+		linux.defines += [
+			"PLATFORM_EGL_SUPPORT=1"
+		]
 
+	linux.cflags += gcc_flags
+	
 def get_tools(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
 	#
 	#
@@ -329,7 +336,7 @@ def get_tools(arguments, libruntime, librenderer, libplatform, libcore, **kwargs
 		"Cocoa.framework"	
 	]
 	muse.product_root = COMMON_PRODUCT_ROOT
-	setup_driver(muse)
+	setup_driver(arguments, muse)
 	setup_common_tool(muse)
 	tools.append(muse)
 
@@ -344,7 +351,7 @@ def get_tools(arguments, libruntime, librenderer, libplatform, libcore, **kwargs
 
 def get_libcore(arguments, target_platform):
 	libcore = Product(name="core", output=ProductType.DynamicLibrary)
-	setup_driver(libcore)
+	setup_driver(arguments, libcore)
 	libcore.project_root = COMMON_PROJECT_ROOT
 	libcore.root = "../"
 	libcore.sources += [
@@ -371,7 +378,7 @@ def get_libcore(arguments, target_platform):
 	
 def get_libplatform(arguments, target_platform):
 	libplatform = Product(name="platform", output=ProductType.DynamicLibrary)
-	setup_driver(libplatform)
+	setup_driver(arguments, libplatform)
 	libplatform.project_root = COMMON_PROJECT_ROOT
 	libplatform.root = "../"
 	libplatform.sources += [
@@ -510,32 +517,16 @@ def get_libplatform(arguments, target_platform):
 		]
 
 	# 
-	# Raspberry Pi: Add support for DispmanX
+	# Raspberry Pi: Add support for DispmanX, VideoCore
 	if arguments.raspberrypi:
 		linux.sources += [
 			"src/platform/window/dispmanx/*.cpp",
 			"src/platform/window/dispmanx/*.h"			
 		]
-
-
-	# if GLES is explicitly defined or RaspberryPi is;
-	# we should support OpenGL ES
-	if arguments.gles or arguments.raspberrypi:
-		linux.defines += [
-			"PLATFORM_RASPBERRYPI=1",
-			"PLATFORM_EGL_SUPPORT=1",		
-			"PLATFORM_OPENGLES_SUPPORT=1"
-		]
-
 		linux.includes += [
 			"/opt/vc/include",
 			"/opt/vc/include/interface/vcos/pthreads",
 			"/opt/vc/include/interface/vmcs_host/linux"
-		]
-	else:
-		# Otherwise, just assume Linux can handle desktop GL
-		linux.defines += [
-			"PLATFORM_OPENGL_SUPPORT=1"
 		]
 
 
@@ -571,7 +562,7 @@ def get_libplatform(arguments, target_platform):
 
 def get_librenderer(arguments, target_platform, libruntime):
 	librenderer = Product(name="renderer", output=ProductType.DynamicLibrary)
-	setup_driver(librenderer)
+	setup_driver(arguments, librenderer)
 	librenderer.project_root = COMMON_PROJECT_ROOT
 	librenderer.root = "../"
 	librenderer.sources += [
@@ -582,7 +573,7 @@ def get_librenderer(arguments, target_platform, libruntime):
 		"src/contrib/stb_image.c",
 		"src/contrib/stb_truetype.h",		
 
-		# include this almagamated version of jsoncpp until we replace it.
+		# include this amalgamated version of jsoncpp until we replace it.
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")		
 	]
 
@@ -604,22 +595,17 @@ def get_librenderer(arguments, target_platform, libruntime):
 		libruntime
 	]
 
-	if target_platform.get() in DESKTOP:
+	if arguments.opengl:
 		librenderer.sources += [
 			"src/renderer/gl/desktop/*.cpp",
 			"src/renderer/gl/desktop/*.h"
 		]
-
-
-	if arguments.gles:
+	elif arguments.gles:
 		librenderer.sources += [
 			"src/renderer/gl/mobile/*.cpp",
 			"src/renderer/gl/mobile/*.h"			
 		]
 
-		librenderer.defines += [
-			"PLATFORM_USE_GLES2=1"
-		]
 
 	macosx = librenderer.layout(platform="macosx")
 	macosx.sources += [
@@ -635,7 +621,7 @@ def get_librenderer(arguments, target_platform, libruntime):
 
 def get_libruntime(arguments, target_platform):
 	libruntime = Product(name="runtime", output=ProductType.DynamicLibrary)
-	setup_driver(libruntime)
+	setup_driver(arguments, libruntime)
 	libruntime.project_root = COMMON_PROJECT_ROOT
 	libruntime.root = "../"
 	libruntime.sources += [
@@ -643,7 +629,7 @@ def get_libruntime(arguments, target_platform):
 		"src/runtime/*.cpp",
 		"src/runtime/*.h",
 
-		# include this almagamated version of jsoncpp until we replace it.
+		# include this amalgamated version of jsoncpp until we replace it.
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")		
 	]
 
@@ -677,7 +663,7 @@ def get_sdk(arguments, links, **kwargs):
 		"src/sdk/include"
 	]
 
-	setup_driver(sdk)
+	setup_driver(arguments, sdk)
 	setup_common_tool(sdk)
 
 	sdk.dependencies.extend(links)
@@ -698,7 +684,7 @@ def get_rnd(arguments, links, **kwargs):
 	]
 	rnd.product_root = COMMON_PRODUCT_ROOT
 
-	setup_driver(rnd)
+	setup_driver(arguments, rnd)
 	setup_common_tool(rnd)
 
 	if arguments.with_sdl:
@@ -760,7 +746,7 @@ def create_unit_test(arguments, name, dependencies, source, output_type = Produc
 
 	product.dependencies.extend(dependencies)
 
-	setup_common_defines(arguments, product)
+	setup_driver(arguments, product)
 
 	linux = product.layout(platform="linux")
 	linux.links += [
@@ -818,7 +804,7 @@ def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwarg
 	#kraken.sources += [
 	#]
 
-	setup_driver(kraken)
+	setup_driver(arguments, kraken)
 	setup_common_tool(kraken)
 
 	if arguments.with_sdl:
@@ -864,7 +850,7 @@ def get_orion(arguments, libruntime, libplatform, libcore, librenderer, **kwargs
 	orion.product_root = COMMON_PRODUCT_ROOT
 	orion.root = "../"
 
-	setup_driver(orion)
+	setup_driver(arguments, orion)
 	setup_common_tool(orion)
 
 	if arguments.with_sdl:
@@ -903,15 +889,12 @@ def get_orion(arguments, libruntime, libplatform, libcore, librenderer, **kwargs
 		"GL"
 	]
 
-	linux.cflags += [
-		"-fPIC"
-	]		
-
 	return orion
 
 def arguments(parser):
 	parser.add_argument("--with-gles", dest="gles", action="store_true", help="Build with GLES support", default=False)
 	parser.add_argument("--raspberrypi", dest="raspberrypi", action="store_true", help="Build for the RaspberryPi; implies EGL + OpenGLES", default=False)
+	parser.add_argument("--with-opengl", dest="opengl", action="store_true", help="Build with support for full OpenGL; mutually exclusive with OpenGL ES", default=True)
 	
 	parser.add_argument("--indextype", dest="index_type", choices=["uint", "ushort"], type=str, default="uint", help="Set the IndexBuffer type; defaults to uint")
 
@@ -968,6 +951,22 @@ def products(arguments, **kwargs):
 
 
 	target_platform = kwargs.get("target_platform")
+
+	if arguments.raspberrypi:
+		if not arguments.gles:
+			arguments.gles = True
+
+		if not arguments.with_egl:
+			arguments.with_egl = True
+
+	if not arguments.gles:
+		arguments.opengl = True
+	elif arguments.gles:
+		arguments.opengl = False
+	else:
+		raise Exception("Unknown renderer!")
+
+	
 
 	libcore = get_libcore(arguments, target_platform)
 
@@ -1028,7 +1027,7 @@ def products(arguments, **kwargs):
 	# common sources
 	setup_common_variables(arguments, target_platform, gemini)
 
-	setup_driver(gemini)
+	setup_driver(arguments, gemini)
 
 	# more sources
 	gemini.sources += [
@@ -1082,13 +1081,6 @@ def products(arguments, **kwargs):
 		linux.links += [
 			"openal"
 		]
-
-		if arguments.raspberrypi:
-			linux.defines += [
-				"PLATFORM_RASPBERRYPI=1",
-				"PLATFORM_EGL_SUPPORT=1",
-				"PLATFORM_OPENGLES_SUPPORT=1"
-			]
 
 		if arguments.with_x11:
 			linux.links += ["X11"]

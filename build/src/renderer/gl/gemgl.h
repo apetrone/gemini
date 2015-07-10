@@ -40,11 +40,13 @@
 #elif PLATFORM_LINUX
 	#include <stdint.h>
 
-	#if PLATFORM_USE_GLES2
+	#if PLATFORM_GLES2_SUPPORT
 		#include <GLES2/gl2.h>
-	#else
+	#elif PLATFORM_OPENGL_SUPPORT
 		#include <GL/gl.h>
 		#include <GL/glx.h>
+	#else
+		#error Unknown renderer for this platform
 	#endif
 
 	#define GEMGLAPI *
@@ -89,7 +91,7 @@
 // print information regarding whether or not we correctly link opengl functions
 #define GEMGL_DEBUG_SYMBOLS 1
 
-#if (PLATFORM_APPLE && (TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE)) || PLATFORM_IS_RASPBERRYPI || PLATFORM_USE_GLES2
+#if (PLATFORM_APPLE && (TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE)) || defined(PLATFORM_GLES2_SUPPORT)
 	#define GEMGL_ENABLE_ES 1
 #endif
 
