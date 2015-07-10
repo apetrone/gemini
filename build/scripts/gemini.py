@@ -264,6 +264,7 @@ def setup_driver(arguments, product):
 	mac_release = product.layout(platform="macosx", configuration="release")
 
 	linux = product.layout(platform="linux")
+
 	if arguments.raspberrypi:
 		linux.defines += [
 			"PLATFORM_RASPBERRYPI=1"
@@ -274,6 +275,11 @@ def setup_driver(arguments, product):
 		]
 
 	linux.cflags += gcc_flags
+
+	linux_debug = product.layout(platform="linux", configuration="debug")
+	linux_debug.cflags += [
+		"-g"
+	]
 	
 def get_tools(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
 	#
@@ -782,9 +788,9 @@ def create_unit_test(arguments, name, dependencies, source, output_type = Produc
 def get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, libglm, libnom, **kwargs):
 	return [
 		create_unit_test(arguments, "test_core", [libcore, libglm], "tests/src/test_core.cpp"),
-		create_unit_test(arguments, "test_platform", [libplatform, libcore, libglm], "tests/src/test_platform.cpp"),
-		create_unit_test(arguments, "test_runtime", [libruntime, libplatform, libcore, libglm], "tests/src/test_runtime.cpp"),
-		create_unit_test(arguments, "test_render", [libnom, libruntime, librenderer, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application)
+		create_unit_test(arguments, "test_platform", [librenderer, libruntime, libnom, libplatform, libcore, libglm], "tests/src/test_platform.cpp"),
+		create_unit_test(arguments, "test_runtime", [libruntime, libnom, libplatform, libcore, libglm], "tests/src/test_runtime.cpp"),
+		create_unit_test(arguments, "test_render", [librenderer, libruntime, libnom, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application)
 	]
 
 def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
@@ -1125,7 +1131,7 @@ def products(arguments, **kwargs):
 		# Ugh, for now, we also link in libnom because the runtime requires it.
 		# I feel like pegasus should identify such dependencies and take care of it in the future.
 		# Though, for now, just link it in.
-		tests = get_unit_tests(arguments, libcore, libplatform, libruntime, librenderer, Dependency(file="glm.py"), libnom, **kwargs)
+		tests = get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, Dependency(file="glm.py"), libnom, **kwargs)
 
 	return [librenderer, libruntime, libplatform, libcore] + [libsdk, gemini] + tools + [rnd] + tests
 

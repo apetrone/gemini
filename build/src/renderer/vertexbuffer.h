@@ -38,3 +38,37 @@ namespace renderer
 		}
 	}; // VertexBuffer
 } // namespace renderer
+
+namespace render2
+{
+	// 1. uploading all buffer data to GPU in one call
+	// 2. uploading a part of the buffer data to the GPU in one call
+	// 3. retrieving all or part of the buffer data via function to populate it
+	class Buffer
+	{
+		enum
+		{
+			BUFFER_IS_DIRTY = 1
+		};
+		
+	public:
+		
+		Buffer() :
+		max_size(0),
+		flags(0)
+		{
+		}
+		
+		virtual ~Buffer() {}
+		void clear_flag(uint32_t flag);
+		
+	public:
+		
+		size_t max_size_bytes() const { return max_size; }
+		bool is_dirty() const { return flags & BUFFER_IS_DIRTY; }
+		
+	protected:
+		uint32_t max_size;
+		uint32_t flags;
+	};
+} // namespace render2
