@@ -567,8 +567,6 @@ def get_librenderer(arguments, target_platform, libruntime):
 	librenderer.root = "../"
 	librenderer.sources += [
 		"src/renderer/*.*",
-		"src/renderer/gl/*.cpp",
-		"src/renderer/gl/*.h",
 
 		"src/contrib/stb_image.c",
 		"src/contrib/stb_truetype.h",		
@@ -597,25 +595,29 @@ def get_librenderer(arguments, target_platform, libruntime):
 
 	if arguments.opengl:
 		librenderer.sources += [
+			"src/renderer/gl/*.cpp",
+			"src/renderer/gl/*.h",
 			"src/renderer/gl/desktop/*.cpp",
 			"src/renderer/gl/desktop/*.h"
 		]
 	elif arguments.gles:
 		librenderer.sources += [
+			"src/renderer/gl/*.cpp",
+			"src/renderer/gl/*.h",		
 			"src/renderer/gl/mobile/*.cpp",
 			"src/renderer/gl/mobile/*.h"			
 		]
 
-
 	macosx = librenderer.layout(platform="macosx")
-	macosx.sources += [
-		"src/renderer/gl/gemgl_osx.mm"
-	]
+	if arguments.opengl:
+		macosx.sources += [
+			"src/renderer/gl/gemgl_osx.mm"
+		]
 
-	macosx.links += [
-		"Cocoa.framework",
-		"OpenGL.framework"
-	]
+		macosx.links += [
+			"Cocoa.framework",
+			"OpenGL.framework"
+		]
 
 	return librenderer
 
