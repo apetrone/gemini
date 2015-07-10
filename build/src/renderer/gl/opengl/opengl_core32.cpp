@@ -808,7 +808,7 @@ namespace renderer
 
 		// setup shader parameters
 		renderer::MaterialParameter * parameter;
-		for( int p = 0; p < material->parameters.size(); ++p )
+		for( size_t p = 0; p < material->parameters.size(); ++p )
 		{
 			parameter = &material->parameters[ p ];
 			int renderstate = material_parameter_type_to_render_state( parameter->type );

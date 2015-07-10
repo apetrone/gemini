@@ -30,13 +30,6 @@
 #include <core/stackstring.h>
 #include <core/interface.h>
 
-namespace platform
-{
-	struct File;
-
-	enum FileMode;
-}
-
 namespace core
 {
 	namespace filesystem
