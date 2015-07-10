@@ -32,10 +32,10 @@
 
 #if PLATFORM_GLES2_SUPPORT
 	// force use of OpenGL ES v2
-	#include "gl/mobile/opengl_glesv2.h"
+	#include "gl/gles2/opengl_glesv2.h"
 #elif PLATFORM_OPENGL_SUPPORT
-	#include "gl/desktop/opengl_core32.h"
-	#include "gl/desktop/opengl_21.h"
+	#include "gl/opengl/opengl_core32.h"
+	#include "gl/opengl/opengl_21.h"
 #else
 	#error Unknown renderer for this platform!
 #endif
