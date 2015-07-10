@@ -285,10 +285,12 @@ namespace renderer
 		typedef GLboolean (GEMGLAPI GEMGLFNISRENDERBUFFER) ( GLuint renderbuffer );
 		typedef void (GEMGLAPI GEMGLFNGETRENDERBUFFERPARAMETERIV) ( GLenum target, GLenum pname, GLint * params );
 
+#if defined(PLATFORM_OPENGL_SUPPORT)
 		// ARB_timer_query
 		typedef void (GEMGLAPI GEMGLFNQUERYCOUNTER)(GLuint id, GLenum target);
 		typedef void (GEMGLAPI GEMGLFNGETQUERYOBJECTI64V)(GLuint id, GLenum pname, GLint64* params);
 		typedef void (GEMGLAPI GEMGLFNGETQUERYOBJECTUI64V)(GLuint id, GLenum pname, GLuint64* params);
+#endif
 
 		typedef void (GEMGLAPI GEMGLFNDRAWBUFFERS)(GLsizei n, const GLenum *bufs);
 
