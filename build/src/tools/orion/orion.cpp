@@ -267,7 +267,7 @@ namespace render2
 		
 	};
 	
-	enum data_type
+	enum vertex_data_type
 	{
 		VD_FLOAT2 = 0,
 		VD_FLOAT3,
@@ -286,7 +286,7 @@ namespace render2
 	{
 		unsigned char id;
 		unsigned char total_attributes;
-		data_type description[ MAX_VERTEX_DESCRIPTORS ];
+		vertex_data_type description[ MAX_VERTEX_DESCRIPTORS ];
 		
 		static void startup();
 		static void map_type(uint32_t type, uint16_t size, uint16_t elements);
@@ -295,8 +295,8 @@ namespace render2
 		
 		vertex_descriptor();
 		vertex_descriptor(const vertex_descriptor& other);
-		void add(const data_type& type);
-		const data_type& operator[](int index) const;
+		void add(const vertex_data_type& type);
+		const vertex_data_type& operator[](int index) const;
 		void reset();
 		size_t stride() const;
 		size_t size() const;
@@ -343,7 +343,7 @@ namespace render2
 	{
 		id = 0;
 		reset();
-		memset(description, 0, sizeof(data_type) * MAX_VERTEX_DESCRIPTORS);
+		memset(description, 0, sizeof(vertex_data_type) * MAX_VERTEX_DESCRIPTORS);
 	}
 	
 	vertex_descriptor::vertex_descriptor(const vertex_descriptor& other)
@@ -351,7 +351,7 @@ namespace render2
 		*this = other;
 	}
 	
-	void vertex_descriptor::add(const data_type& desc)
+	void vertex_descriptor::add(const vertex_data_type& desc)
 	{
 		description[ id ] = desc;
 		++id;
@@ -365,7 +365,7 @@ namespace render2
 		total_attributes = id;
 	} // add
 	
-	const data_type& vertex_descriptor::operator[](int index) const
+	const vertex_data_type& vertex_descriptor::operator[](int index) const
 	{
 		return description[ index ];
 	} // operator[]
@@ -382,7 +382,7 @@ namespace render2
 	size_t vertex_descriptor::stride() const
 	{
 		size_t size = 0;
-		data_type type;
+		vertex_data_type type;
 		for(size_t index = 0; index < total_attributes; ++index)
 		{
 			type = description[index];
@@ -1009,7 +1009,7 @@ namespace render2
 				size_t vertex_stride = pipeline->vertex_description.stride();
 				for (size_t index = 0; index < pipeline->vertex_description.size(); ++index)
 				{
-					data_type type = pipeline->vertex_description[index];
+					vertex_data_type type = pipeline->vertex_description[index];
 					attribute_size = vertex_descriptor::size_table[ type ];
 					element_count = vertex_descriptor::elements[ type ];
 					GLenum enum_type = GL_INVALID_ENUM;
