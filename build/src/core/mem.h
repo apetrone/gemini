@@ -137,7 +137,7 @@ namespace core
 		#include "memory/simple_tracking_policy.h"
 		#include "memory/debug_tracking_policy.h"
 		
-		typedef SimpleTrackingPolicy default_tracking_policy;
+		typedef SimpleTrackingPolicy DefaultTrackingPolicy;
 
 		// ---------------------------------------------------------------------
 		// allocator
@@ -180,9 +180,9 @@ namespace core
 		void startup();
 		void shutdown();
 		
-		typedef HeapAllocator<default_tracking_policy> global_allocator_type;
-		global_allocator_type& global_allocator();
-		void global_allocator(global_allocator_type& allocator);
+		typedef HeapAllocator<DefaultTrackingPolicy> GlobalAllocatorType;
+		GlobalAllocatorType& global_allocator();
+		void global_allocator(GlobalAllocatorType& allocator);
 
 		// ---------------------------------------------------------------------
 		// template functions

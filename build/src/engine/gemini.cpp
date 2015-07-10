@@ -853,7 +853,7 @@ class EngineInterface : public IEngineInterface
 #endif
 
 	core::memory::Zone game_memory_zone;
-	core::memory::global_allocator_type game_allocator;
+	core::memory::GlobalAllocatorType game_allocator;
 
 public:
 	
@@ -916,7 +916,7 @@ public:
 		render_method->render_gui();
 	}
 	
-	virtual core::memory::global_allocator_type& allocator()
+	virtual core::memory::GlobalAllocatorType& allocator()
 	{
 		return core::memory::global_allocator();
 	}

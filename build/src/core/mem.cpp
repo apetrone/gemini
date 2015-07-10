@@ -36,7 +36,7 @@ namespace core
 		// interface
 		// ---------------------------------------------------------------------
 		Zone* _global_zone = nullptr;
-		global_allocator_type* _global_allocator = nullptr;
+		GlobalAllocatorType* _global_allocator = nullptr;
 		
 		void startup()
 		{
@@ -46,7 +46,7 @@ namespace core
 			static Zone global_memory_zone("global");
 			_global_zone = &global_memory_zone;
 			
-			static global_allocator_type global_allocator_instance(&global_memory_zone);
+			static GlobalAllocatorType global_allocator_instance(&global_memory_zone);
 			_global_allocator = &global_allocator_instance;
 		}
 		
@@ -60,12 +60,12 @@ namespace core
 			_global_allocator = nullptr;
 		}
 		
-		global_allocator_type& global_allocator()
+		GlobalAllocatorType& global_allocator()
 		{
 			return *_global_allocator;
 		}
 		
-		void global_allocator(global_allocator_type& allocator)
+		void global_allocator(GlobalAllocatorType& allocator)
 		{
 			_global_allocator = &allocator;
 		}

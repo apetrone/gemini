@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-template <class tracking_policy = default_tracking_policy>
+template <class tracking_policy = DefaultTrackingPolicy>
 struct HeapAllocator : public Allocator< HeapAllocator<tracking_policy> >
 {
 	typedef HeapAllocator<tracking_policy> this_type;

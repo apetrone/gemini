@@ -119,13 +119,6 @@ Style Rules
 		_kernel->set_active( true );
 
 
-- Typedefs are lower-cased with an underscore 't' postfix:
-
-	.. code-block:: c++
-
-		typedef CustomClass custom_class_type_t;
-
-
 - Namespace names are lower cased:
 
 	.. code-block:: c++

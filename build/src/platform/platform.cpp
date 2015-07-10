@@ -59,7 +59,7 @@ namespace platform
 {
 	MainParameters _mainparameters;
 	static core::memory::Zone* _zone = nullptr;
-	static platform_allocator_type* _allocator = nullptr;
+	static PlatformAllocatorType* _allocator = nullptr;
 
 	
 	core::memory::Zone* get_memory_zone()
@@ -67,7 +67,7 @@ namespace platform
 		return _zone;
 	}
 
-	platform_allocator_type& get_platform_allocator()
+	PlatformAllocatorType& get_platform_allocator()
 	{
 		return *_allocator;
 	}
@@ -80,7 +80,7 @@ namespace platform
 			
 		core::memory::startup();
 		_zone = MEMORY_NEW(core::memory::Zone, core::memory::global_allocator())("platform");
-		_allocator = MEMORY_NEW(platform_allocator_type, core::memory::global_allocator())(_zone);
+		_allocator = MEMORY_NEW(PlatformAllocatorType, core::memory::global_allocator())(_zone);
 		
 		result = backend_startup();
 		if (result.failed())
