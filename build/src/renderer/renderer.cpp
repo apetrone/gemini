@@ -279,3 +279,215 @@ namespace renderer
 	} // operator=
 
 } // namespace renderer
+
+
+
+namespace render2
+{
+	// ---------------------------------------------------------------------
+	// Shader
+	// ---------------------------------------------------------------------
+	Shader::~Shader()
+	{
+	}
+
+	// ---------------------------------------------------------------------
+	// Image
+	// ---------------------------------------------------------------------
+	void Image::update_pixels(const Region& rect, size_t miplevel, void* bytes, size_t bytes_per_row)
+	{
+		
+	}
+
+	// ---------------------------------------------------------------------
+	// Pass
+	// ---------------------------------------------------------------------
+	void Pass::color(float red, float green, float blue, float alpha)
+	{
+		clear_color[0] = red;
+		clear_color[1] = green;
+		clear_color[2] = blue;
+		clear_color[3] = alpha;
+	}
+	
+	// ---------------------------------------------------------------------
+	// VertexDescriptor
+	// ---------------------------------------------------------------------
+	uint16_t VertexDescriptor::size_table[ VD_TOTAL ] = {0};
+	uint16_t VertexDescriptor::elements[ VD_TOTAL ] = {0};
+	
+	void VertexDescriptor::startup()
+	{
+		// clear table
+		memset(VertexDescriptor::size_table, 0, sizeof(uint16_t)*VD_TOTAL);
+		memset(VertexDescriptor::elements, 0, sizeof(uint16_t)*VD_TOTAL);
+		
+		// populate table with vertex descriptor types
+		map_type(VD_FLOAT2, sizeof(float), 2);
+		map_type(VD_FLOAT3, sizeof(float), 3);
+		map_type(VD_FLOAT4, sizeof(float), 4);
+		
+		map_type(VD_INT4, sizeof(int), 4);
+		
+		map_type(VD_UNSIGNED_INT, sizeof(unsigned int), 1);
+		map_type(VD_UNSIGNED_BYTE3, sizeof(unsigned char), 3);
+		map_type(VD_UNSIGNED_BYTE4, sizeof(unsigned char), 4);
+		
+		// validate table
+		for (size_t i = 0; i < VD_TOTAL; ++i)
+		{
+			assert(VertexDescriptor::size_table[i] != 0);
+			assert(VertexDescriptor::elements[i] != 0);
+		}
+	}
+	
+	void VertexDescriptor::map_type(uint32_t type, uint16_t size, uint16_t elements)
+	{
+		VertexDescriptor::size_table[type] = size*elements;
+		VertexDescriptor::elements[type] = elements;
+	}
+	
+	VertexDescriptor::VertexDescriptor()
+	{
+		id = 0;
+		reset();
+		memset(description, 0, sizeof(VertexDataType) * MAX_VERTEX_DESCRIPTORS);
+	}
+	
+	VertexDescriptor::VertexDescriptor(const VertexDescriptor& other)
+	{
+		*this = other;
+	}
+	
+	void VertexDescriptor::add(const VertexDataType& desc)
+	{
+		description[ id ] = desc;
+		++id;
+		
+		if ( id >= MAX_VERTEX_DESCRIPTORS-1 )
+		{
+			printf( "Reached MAX_DESCRIPTORS. Resetting\n" );
+			id = 0;
+		}
+		
+		total_attributes = id;
+	} // add
+	
+	const VertexDataType& VertexDescriptor::operator[](int index) const
+	{
+		return description[ index ];
+	} // operator[]
+	
+	void VertexDescriptor::reset()
+	{
+		if ( id > 0 )
+		{
+			total_attributes = id;
+		}
+		id = 0;
+	} // reset
+	
+	size_t VertexDescriptor::stride() const
+	{
+		size_t size = 0;
+		VertexDataType type;
+		for(size_t index = 0; index < total_attributes; ++index)
+		{
+			type = description[index];
+			size += VertexDescriptor::size_table[ type ];
+		}
+		
+		return size;
+	} // stride
+	
+	size_t VertexDescriptor::size() const
+	{
+		return total_attributes;
+	} // size
+	
+	const VertexDescriptor& VertexDescriptor::operator= (const VertexDescriptor & other)
+	{
+		this->total_attributes = other.total_attributes;
+		this->id = other.id;
+		
+		for( unsigned int i = 0; i < VD_TOTAL; ++i )
+		{
+			this->size_table[i] = other.size_table[i];
+			this->elements[i] = other.elements[i];
+		}
+		
+		for( unsigned int id = 0; id < MAX_VERTEX_DESCRIPTORS; ++id )
+		{
+			this->description[id] = other.description[id];
+		}
+		
+		return *this;
+	} // operator=
+	
+	
+	// ---------------------------------------------------------------------
+	// Pipeline
+	// ---------------------------------------------------------------------
+	
+	// ---------------------------------------------------------------------
+	// Command
+	// ---------------------------------------------------------------------
+	Command::Command(CommandType command_type,
+					 void* data0,
+					 void* data1,
+					 size_t param0,
+					 size_t param1,
+					 size_t param2,
+					 size_t param3)
+	{
+		memset(this, 0, sizeof(Command));
+		type = command_type;
+		data[0] = data0;
+		data[1] = data1;
+		params[0] = param0;
+		params[1] = param1;
+		params[2] = param2;
+		params[3] = param3;
+	}
+	
+	// ---------------------------------------------------------------------
+	// CommandQueue
+	// ---------------------------------------------------------------------
+	CommandQueue::CommandQueue(Pass* pass)
+	{
+		this->pass = pass;
+		total_commands = 0;
+	}
+	
+	void CommandQueue::add_command(const Command& command)
+	{
+		assert(total_commands < 32);
+		commands[total_commands++] = command;
+	}
+		
+	// ---------------------------------------------------------------------
+	// ConstantBuffer
+	// ---------------------------------------------------------------------
+	ConstantBuffer::ConstantBuffer(size_t total_size)
+	{
+		data = MEMORY_ALLOC(total_size, core::memory::global_allocator());
+		max_size = total_size;
+	}
+	
+	ConstantBuffer::~ConstantBuffer()
+	{
+		MEMORY_DEALLOC(data, core::memory::global_allocator());
+		max_size = 0;
+	}
+	
+	void ConstantBuffer::assign(const void* src, const size_t bytes)
+	{
+		assert(bytes <= max_size);
+		memcpy(data, src, bytes);
+	}
+	
+	// ---------------------------------------------------------------------
+	// Device
+	// ---------------------------------------------------------------------
+	Device::~Device() {}
+} // namespace render2

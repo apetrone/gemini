@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "renderer.h"
+#include <renderer/renderer.h>
 
 #include <core/config.h>
 #include <platform/platform.h>
