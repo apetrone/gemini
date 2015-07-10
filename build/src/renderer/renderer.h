@@ -138,17 +138,8 @@ namespace renderer
 	int startup( DriverType driver, const RenderSettings& settings );
 	void shutdown();
 
-	
-	
-#if PLATFORM_INDEX_TYPE == 2 // assuming OpenGL ES 2.0 (embedded or mobile platform)
-	typedef unsigned short IndexType;
-#elif PLATFORM_INDEX_TYPE == 1 || !defined(PLATFORM_INDEX_TYPE) // assume desktop environment
-	#if PLATFORM_IS_MOBILE
-		#error IndexType cannot be unsigned int on mobile!
-	#endif
-	typedef unsigned int IndexType;
-#endif
 
+	typedef unsigned short IndexType;
 	typedef unsigned char VertexType;
 	
 #define MAX_DESCRIPTORS 8

@@ -49,7 +49,7 @@ namespace core
 
 		IMPLEMENT_INTERFACE(IFileSystem);
 
-#if PLATFORM_IS_MOBILE
+#if defined(PLATFORM_IPHONEOS)
 
 
 		void * mobile_audio_file_to_buffer( const char * filename, size_t & buffer_length );
@@ -114,7 +114,7 @@ namespace core
 		
 		void* audiofile_to_buffer(const char* filename, size_t& buffer_length)
 		{
-	#if PLATFORM_APPLE && PLATFORM_IS_MOBILE
+	#if defined(PLATFORM_IPHONEOS)
 			return mobile_audio_file_to_buffer(filename, buffer_length);
 	#else
 			return filesystem::instance()->virtual_load_file(filename, 0, &buffer_length);
