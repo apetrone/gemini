@@ -86,7 +86,11 @@ namespace render2
 			
 			GLShader()
 			{
+				LOGV("creating an opengl program...\n");
+				assert(gl.CreateProgram);
 				id = gl.CreateProgram();
+
+				LOGV("creating opengl shaders...\n");
 				GLint vert = gl.CreateShader(GL_VERTEX_SHADER);
 				GLint frag = gl.CreateShader(GL_FRAGMENT_SHADER);
 				
@@ -115,8 +119,8 @@ namespace render2
 				}";
 				
 				bool result = false;
-				result = compile_shader(vert, vertex_shader_source, "", "#version 100");
-				result = compile_shader(frag, fragment_shader_source, "", "#version 100");
+				result = compile_shader(vert, vertex_shader_source, "", "#version 100\n");
+				result = compile_shader(frag, fragment_shader_source, "", "#version 100\n");
 				
 				
 				// attach shaders
@@ -142,12 +146,7 @@ namespace render2
 				// activate program
 				gl.UseProgram(id);
 				gl.CheckError("activate program UseProgram");
-				
-				
-				
-				
-				
-				
+
 				
 				{
 					GLint active_attributes = 0;
@@ -161,12 +160,12 @@ namespace render2
 						shader_variable& attribute = attributes[attribute_index];
 						gl.GetActiveAttrib(id, attribute_index, MAX_ATTRIBUTE_NAME_LENGTH, &attribute.length, &attribute.size, &attribute.type, attribute.name);
 						attribute.location = gl.GetAttribLocation(id, attribute.name);
-						// LOGV("attribute: %i, location: %i, name: %s, size: %i, type: %i\n",
-						// 	 attribute_index,
-						// 	 attribute.location,
-						// 	 attribute.name,
-						// 	 attribute.size,
-						// 	 attribute.type);
+						LOGV("attribute: %i, location: %i, name: %s, size: %i, type: %i\n",
+							 attribute_index,
+							 attribute.location,
+							 attribute.name,
+							 attribute.size,
+							 attribute.type);
 						
 						attribute.compute_size();
 					}
@@ -185,12 +184,12 @@ namespace render2
 						shader_variable& uniform = uniforms[uniform_index];
 						gl.GetActiveUniform(id, uniform_index, MAX_ATTRIBUTE_NAME_LENGTH, &uniform.length, &uniform.size, &uniform.type, uniform.name);
 						uniform.location = gl.GetUniformLocation(id, uniform.name);
-						// LOGV("attribute: %i, location: %i, name: %s, size: %i, type: %i\n",
-						// 	 uniform_index,
-						// 	 uniform.location,
-						// 	 uniform.name,
-						// 	 uniform.size,
-						// 	 uniform.type);
+						LOGV("attribute: %i, location: %i, name: %s, size: %i, type: %i\n",
+							 uniform_index,
+							 uniform.location,
+							 uniform.name,
+							 uniform.size,
+							 uniform.type);
 						
 						uniform.compute_size();
 					}
@@ -269,8 +268,8 @@ namespace render2
 				char* logbuffer = query_program_info_log(id);
 				if (logbuffer)
 				{
-					// LOGW("Program Info Log:\n");
-					// LOGW("%s\n", logbuffer);
+					LOGW("Program Info Log:\n");
+					LOGW("%s\n", logbuffer);
 					MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
 				}
 			}
