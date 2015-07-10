@@ -433,9 +433,11 @@ namespace renderer
 		GEMGL_LINK( gl.IsRenderbuffer, "glIsRenderbuffer", GEMGLFNISRENDERBUFFER );
 		GEMGL_LINK( gl.GetRenderbufferParameteriv, "glGetRenderbufferParameteriv", GEMGLFNGETRENDERBUFFERPARAMETERIV );	
 
+#if defined(PLATFORM_OPENGL_SUPPORT)
 		GEMGL_LINK( gl.QueryCounter, "glQueryCounter", GEMGLFNQUERYCOUNTER);
 		GEMGL_LINK( gl.GetQueryObjecti64v, "glGetQueryObjecti64v", GEMGLFNGETQUERYOBJECTI64V);
 		GEMGL_LINK( gl.GetQueryObjectui64v, "glGetQueryObjectui64v", GEMGLFNGETQUERYOBJECTUI64V);
+#endif
 		
 		GEMGL_LINK( gl.DrawBuffers, "glDrawBuffers", GEMGLFNDRAWBUFFERS);
 		
@@ -470,13 +472,12 @@ namespace renderer
 			LOGV( "GL_SHADING_LANGUAGE_VERSION: %s\n", gl.GetString(GL_SHADING_LANGUAGE_VERSION) );
 			gl.CheckError( "glGetString" );
 			
+#if defined(GL_NUM_EXTENSIONS) // not available for GLES2
 			GLint total_extensions = -1;
 			gl.GetIntegerv(GL_NUM_EXTENSIONS, &total_extensions);
 			
 	//		LOGV( "GL_EXTENSIONS: %s\n", gl.GetString(GL_EXTENSIONS) );
 	//		gl.CheckError( "glGetString" );
-
-
 
 			if (total_extensions)
 			{
@@ -486,6 +487,7 @@ namespace renderer
 					LOGV("[%i] - %s\n", i, gl.GetStringi(GL_EXTENSIONS, i));
 				}
 			}
+#endif
 		}
 
 		return 1;
