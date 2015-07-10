@@ -138,8 +138,14 @@ namespace renderer
 	int startup( DriverType driver, const RenderSettings& settings );
 	void shutdown();
 
-
+#if defined(PLATFORM_GLES2_SUPPORT)
 	typedef unsigned short IndexType;
+#elif defined(PLATFORM_OPENGL_SUPPORT)
+	typedef unsigned int IndexType;
+#else
+	#error Unknown renderer support!
+#endif
+
 	typedef unsigned char VertexType;
 	
 #define MAX_DESCRIPTORS 8
