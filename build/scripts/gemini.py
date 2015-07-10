@@ -83,14 +83,6 @@ def setup_common_variables(arguments, target_platform, product):
 
 	]
 
-	index_type_map = {
-		"uint" : "1",
-		"ushort" : "2"
-	}
-	product.defines += [
-		"PLATFORM_INDEX_TYPE=%s" % index_type_map[arguments.index_type]
-	]
-
 
 	debug = product.layout(configuration="debug")
 	release = product.layout(configuration="release")
@@ -897,8 +889,6 @@ def arguments(parser):
 	parser.add_argument("--with-gles", dest="gles", action="store_true", help="Build with GLES support", default=False)
 	parser.add_argument("--raspberrypi", dest="raspberrypi", action="store_true", help="Build for the RaspberryPi; implies EGL + OpenGLES", default=False)
 	parser.add_argument("--with-opengl", dest="opengl", action="store_true", help="Build with support for full OpenGL; mutually exclusive with OpenGL ES", default=True)
-	
-	parser.add_argument("--indextype", dest="index_type", choices=["uint", "ushort"], type=str, default="uint", help="Set the IndexBuffer type; defaults to uint")
 
 	parser.add_argument("--with-sdl", dest="with_sdl", action="store_true", help="Build with SDL2 support", default=False)
 
