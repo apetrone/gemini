@@ -597,15 +597,15 @@ def get_librenderer(arguments, target_platform, libruntime):
 		librenderer.sources += [
 			"src/renderer/gl/*.cpp",
 			"src/renderer/gl/*.h",
-			"src/renderer/gl/desktop/*.cpp",
-			"src/renderer/gl/desktop/*.h"
+			"src/renderer/gl/opengl/*.cpp",
+			"src/renderer/gl/opengl/*.h"
 		]
 	elif arguments.gles:
 		librenderer.sources += [
 			"src/renderer/gl/*.cpp",
 			"src/renderer/gl/*.h",		
-			"src/renderer/gl/mobile/*.cpp",
-			"src/renderer/gl/mobile/*.h"			
+			"src/renderer/gl/gles2/*.cpp",
+			"src/renderer/gl/gles2/*.h"
 		]
 
 	macosx = librenderer.layout(platform="macosx")
