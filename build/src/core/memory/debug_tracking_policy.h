@@ -41,6 +41,12 @@ struct DebugTrackingPolicy
 	
 	typedef std::list<MemoryHeader*> MemoryBlockList;
 	MemoryBlockList allocated_blocks;
+	size_t current_allocation;
+	
+	DebugTrackingPolicy() :
+		current_allocation(0)
+	{
+	}
 	
 	~DebugTrackingPolicy()
 	{
@@ -65,7 +71,7 @@ struct DebugTrackingPolicy
 	{
 		MemoryHeader* header = reinterpret_cast<MemoryHeader*>(pointer);
 		header->allocation_size = requested_size;
-		header->allocation_index = 0;
+		header->allocation_index = current_allocation++;
 		header->alignment = alignment;
 		header->filename = filename;
 		header->line = line;
