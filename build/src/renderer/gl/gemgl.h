@@ -95,7 +95,11 @@
 	#define GEMGL_ENABLE_ES 1
 #endif
 
-#define GEMGL_LINK( name, fn, type )	name = (type) gemgl_findsymbol( gl, fn );
+// sparkle party
+#define GEMGL_LINK( name, fn, type )	name = (type) gemgl_findsymbol( gl, fn )
+
+// hardcore party
+// #define GEMGL_LINK( name, fn, type )	name = (type) gemgl_findsymbol( gl, fn ) , assert(name != nullptr)
 
 namespace renderer
 {
