@@ -47,7 +47,7 @@ namespace platform
 	
 	// cross distro/system functions that could be shared
 	
-#if defined(PLATFORM_APPLE) || defined(PLATFORM_LINUX)
+#if defined(PLATFORM_APPLE) || defined(PLATFORM_LINUX) || defined(PLATFORM_ANDROID)
 
 	// filesystem
 	Result posix_make_directory(const char* path);
@@ -80,5 +80,9 @@ namespace platform
 	
 	// time
 	void posix_datetime(DateTime& datetime);
+#elif defined(PLATFORM_WINDOWS)
+	// windows is not fully posix compliant
+#else
+	#error Unknown platform!
 #endif
 } // namespace platform

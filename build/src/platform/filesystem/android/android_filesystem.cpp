@@ -33,7 +33,7 @@
 #include <sys/stat.h>
 // #include <stdio.h> // for snprintf
 // #include <stdlib.h> // for abort
-// #include <unistd.h> // for readlink, getpid
+ #include <unistd.h> // for readlink, getpid
 
 #include <android/asset_manager.h>
 
