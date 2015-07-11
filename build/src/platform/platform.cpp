@@ -145,6 +145,8 @@ namespace platform
 	} // main
 #elif defined(PLATFORM_APPLE)
 	// Handled through osx_run_application
+#elif defined(PLATFORM_ANDROID)
+	// Android won't go through this mechanism; since we rely upon the Java activity.
 #else
 	#error Unknown platform!
 #endif
@@ -163,6 +165,8 @@ namespace platform
 		return_code = backend_run_application(_mainparameters.argc, (const char**)_mainparameters.argv);
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
 		return_code = backend_run_application();
+#elif defined(PLATFORM_ANDROID)
+		// Android will use the Java activity; not launch from NativeActivity.
 #else
 	#error Unknown platform!
 #endif
