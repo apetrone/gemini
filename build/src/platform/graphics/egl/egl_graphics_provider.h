@@ -25,7 +25,7 @@
 #pragma once
 
 #include "platform_internal.h"
-#include "linux_backend.h"
+#include "graphics_provider.h"
 
 #include <EGL/egl.h>
 
