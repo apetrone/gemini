@@ -38,23 +38,32 @@ namespace platform
 	{
 		struct AndroidWindow : public NativeWindow
 		{
-			AndroidWindow(const WindowDimensions& window_dimensions) :
-				NativeWindow(window_dimensions)
+			AndroidWindow(const WindowDimensions& window_dimensions,
+				ANativeWindow* android_window) :
+				NativeWindow(window_dimensions),
+				native_window(android_window)
 			{				
 			}
 
 			ANativeWindow* native_window;
 
-			virtual void* get_native_handle() const
+			virtual void* get_native_handle() const override
 			{
-				return (void*)&native_window;
+				return native_window;
+			}
+
+			virtual void update_visual(int visual_id) override
+			{
+				// EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is
+				// guaranteed to be accepted by ANativeWindow_setBuffersGeometry().				
+				// As soon as we picked a EGLConfig, we can safely reconfigure the
+				// ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID.
+				ANativeWindow_setBuffersGeometry(native_window, 0, 0, visual_id);
 			}
 		}; // struct DispManXWindow
 
 
-		AndroidWindowProvider::AndroidWindowProvider() :
-			display_width(0),
-			display_height(0)
+		AndroidWindowProvider::AndroidWindowProvider()
 		{
 		}
 
@@ -65,7 +74,6 @@ namespace platform
 
 		Result AndroidWindowProvider::startup()
 		{
-
 			return Result(Result::Success);
 		}
 
@@ -75,7 +83,7 @@ namespace platform
 
 		NativeWindow* AndroidWindowProvider::create(const Parameters& parameters)
 		{
-			AndroidWindow* window = MEMORY_NEW(AndroidWindow, platform::get_platform_allocator())(parameters.window);
+			AndroidWindow* window = MEMORY_NEW(AndroidWindow, platform::get_platform_allocator())(parameters.window, get_android_window());
 			return window;
 		}
 
@@ -88,16 +96,16 @@ namespace platform
 		Frame AndroidWindowProvider::get_frame(NativeWindow* window) const
 		{
 			Frame frame;
-			frame.width = display_width;
-			frame.height = display_height;
+			frame.width = window->dimensions.width;
+			frame.height = window->dimensions.height;
 			return frame;
 		}
 
 		Frame AndroidWindowProvider::get_render_frame(NativeWindow* window) const
 		{
 			Frame frame;
-			frame.width = display_width;
-			frame.height = display_height;
+			frame.width = window->dimensions.width;
+			frame.height = window->dimensions.height;
 			return frame;
 		}
 
@@ -110,8 +118,8 @@ namespace platform
 		{
 			Frame frame;
 			assert(screen_index == 0);
-			frame.width = display_width;
-			frame.height = display_height;
+			frame.width = 0;
+			frame.height = 0;
 			return frame;
 		}		
 	} // namespace window

@@ -47,7 +47,6 @@ namespace platform
 
 		struct EGLData
 		{
-			EGLint visual;
 			EGLSurface surface;
 			EGLContext context;
 		};
@@ -158,20 +157,18 @@ namespace platform
 			assert(result != EGL_FALSE);
 
 			// cache the visual id
-			// needed by X11
-			result = eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &window_data->visual);
+			EGLint visual_id;
+			result = eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &visual_id);
 			assert(result != EGL_FALSE);
+
+			// update the underlying window's visual
+			window->update_visual(visual_id);
 
 			// create the EGL context
 			EGLint context_attribs[] = {
 				EGL_CONTEXT_CLIENT_VERSION, 2,
 				EGL_NONE,
 			};
-
-			EGLContext share_context = EGL_NO_CONTEXT;
-			window_data->context = eglCreateContext(display, config, share_context, context_attribs);
-			assert(window_data->context != EGL_NO_CONTEXT);
-			EGL_CHECK_ERROR("eglCreateContext");
 
 			window_data->surface = eglCreateWindowSurface(display, config, (EGLNativeWindowType)window->get_native_handle(), 0);
 			EGL_CHECK_ERROR("eglCreateWindowSurface");
@@ -180,6 +177,20 @@ namespace platform
 				fprintf(stderr, "eglCreateWindowSurface failed!\n");
 				return;
 			}
+
+			EGLContext share_context = EGL_NO_CONTEXT;
+			window_data->context = eglCreateContext(display, config, share_context, context_attribs);
+			assert(window_data->context != EGL_NO_CONTEXT);
+			EGL_CHECK_ERROR("eglCreateContext");
+
+			// update the window's dimensions via EGL
+			EGLint width;
+			EGLint height;
+			eglQuerySurface(display, window_data->surface, EGL_WIDTH, &width);
+			eglQuerySurface(display, window_data->surface, EGL_HEIGHT, &height);
+
+			window->dimensions.width = width;
+			window->dimensions.height = height;
 		}
 
 		void EGLGraphicsProvider::destroy_context(NativeWindow* window)

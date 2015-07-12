@@ -57,7 +57,7 @@ namespace platform
 			EGL_DISPMANX_WINDOW_T native_window;
 #endif		
 
-			virtual void* get_native_handle() const
+			virtual void* get_native_handle() const override
 			{
 				return (void*)&native_window;
 			}
