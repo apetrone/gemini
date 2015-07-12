@@ -43,7 +43,7 @@ namespace platform
 		{
 		}
 		
-		input_provider::~input_provider()
+		InputProvider::~InputProvider()
 		{
 		}
 	} // namespace window

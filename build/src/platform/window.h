@@ -130,16 +130,22 @@ namespace platform
 		
 		struct NativeWindow
 		{
-			virtual ~NativeWindow();
-			
 			NativeWindow(const WindowDimensions& window_dimensions) :
 				dimensions(window_dimensions),
 				graphics_data(0)
 			{
 			}
+
+			virtual ~NativeWindow();
 			
 			/// @brief returns this platform's native window handle
 			virtual void* get_native_handle() const = 0;
+
+			/// @brief Notification from the graphics provider
+			/// when the native visual id has been changed
+			virtual void update_visual(int visual)
+			{
+			}
 			
 			WindowDimensions dimensions;
 			
@@ -147,10 +153,10 @@ namespace platform
 			void* graphics_data;
 		};
 		
-		class input_provider
+		class InputProvider
 		{
 		public:
-			virtual ~input_provider();
+			virtual ~InputProvider();
 			
 			// capture the mouse
 			virtual void capture_mouse(bool capture) = 0;

@@ -46,10 +46,6 @@ namespace platform
 			virtual Frame get_render_frame(NativeWindow* window) const;
 			virtual size_t get_screen_count() const;
 			virtual Frame get_screen_frame(size_t screen_index) const;
-
-		private:
-			uint32_t display_width;
-			uint32_t display_height;
 		}; // class AndroidWindowProvider
 	} // namespace window
 } // namespace platform
