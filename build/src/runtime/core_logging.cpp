@@ -25,20 +25,26 @@
 
 #include "logging.h"
 
+#include <core/config.h>
+
 #include <platform/platform.h>
 
 #include <core/stackstring.h>
 
 #include <stdio.h> // for FILE, file functions
 
-#if __ANDROID__
-	#include <android/log.h>
-#endif
-
-#if _WIN32
+// TODO@APP replace this with a platform-independent API
+// for logging.
+#if defined(PLATFORM_WINDOWS)
 #define WIN32_LEAN_AND_MEAN 1
 	#include <windows.h>
 #endif
+
+#if defined(PLATFORM_ANDROID)
+	#include <android/log.h>
+#endif
+
+
 
 
 using namespace core::logging;
@@ -90,7 +96,7 @@ namespace core
 		{
 		}
 
-#if _WIN32
+#if defined(PLATFORM_WINDOWS)
 		void vs_message(Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
 		{
 	//		const char *message_types[] = { 0, "VERBOSE", "WARNING", " ERROR " };
@@ -110,15 +116,15 @@ namespace core
 		}	
 #endif
 		
-#if __ANDROID__
+#if defined(PLATFORM_ANDROID)
 		void log_android_message(Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
 		{
 			// this must match with the android_LogPriority enum in <android/log.h>
 			android_LogPriority message_types[] = {ANDROID_LOG_UNKNOWN, ANDROID_LOG_VERBOSE, ANDROID_LOG_WARN, ANDROID_LOG_ERROR};
-			__android_log_print(message_types[ type ], "gemini", message);
+			__android_log_print(message_types[ type ], "gemini", "%s", message);
 		}
 		
-		int log_android_open(Handle* handler)
+		int log_android_open(Handler* handler)
 		{
 			return 1;
 		}

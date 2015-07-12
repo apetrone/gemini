@@ -232,6 +232,8 @@ def setup_driver(arguments, product):
 		]
 
 	gcc_flags = [
+		# "-fno-exceptions",
+		"-fno-rtti",
 		"-Wall",
 		"-Wpedantic",
 		"-Wextra",
@@ -380,6 +382,8 @@ def get_libplatform(arguments, target_platform):
 	libplatform.project_root = COMMON_PROJECT_ROOT
 	libplatform.root = "../"
 	libplatform.sources += [
+		"src/platform/graphics_provider.cpp",
+		"src/platform/graphics_provider.h",
 		"src/platform/kernel.cpp",
 		"src/platform/kernel.h",
 		"src/platform/kernel_events.h",	
@@ -389,7 +393,9 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/input.cpp",
 		"src/platform/input.h",
 		"src/platform/window.cpp",
-		"src/platform/window.h"
+		"src/platform/window.h",
+		"src/platform/window_provider.cpp",
+		"src/platform/window_provider.h"
 	]
 
 	if arguments.with_sdl:

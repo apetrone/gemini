@@ -30,6 +30,7 @@
 
 #include "filesystem_interface.h"
 
+#include <core/config.h>
 #include <platform/platform.h>
 
 using platform::PathString;
@@ -50,13 +51,13 @@ namespace core
 		int stdout_open(logging::Handler* handler);
 		void stdout_close(logging::Handler* handler);
 		
-#if _WIN32
+#if defined(PLATFORM_WINDOWS)
 		void vs_message(logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type);
 		int vs_open(logging::Handler* handler);
 		void vs_close(logging::Handler* handler);
 #endif
 		
-#if __ANDROID__
+#if defined(PLATFORM_ANDROID)
 		void log_android_message(logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type);
 		int log_android_open(logging::Handler* handler);
 		void log_android_close(logging::Handler* handler);
@@ -80,7 +81,7 @@ namespace core
 			}
 
 			
-#if _WIN32
+#if defined(PLATFORM_WINDOWS)
 			logging::Handler msvc_logger;
 			msvc_logger.open = vs_open;
 			msvc_logger.close = vs_close;

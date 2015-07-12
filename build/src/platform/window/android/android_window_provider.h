@@ -25,21 +25,18 @@
 #pragma once
 
 #include <core/config.h>
+#include "android_backend.h"
 #include "window_provider.h"
-
-#if defined(PLATFORM_RASPBERRYPI)
-	#include <bcm_host.h> // for DISPMANX_* types
-#endif
 
 namespace platform
 {
 	namespace window
 	{
-		class DispManXWindowProvider : public WindowProvider
+		class AndroidWindowProvider : public WindowProvider
 		{
 		public:
-			DispManXWindowProvider();
-			virtual ~DispManXWindowProvider();
+			AndroidWindowProvider();
+			virtual ~AndroidWindowProvider();
 
 			virtual Result startup();
 			virtual void shutdown();
@@ -53,10 +50,6 @@ namespace platform
 		private:
 			uint32_t display_width;
 			uint32_t display_height;
-
-			DISPMANX_DISPLAY_HANDLE_T dispman_display;
-			DISPMANX_UPDATE_HANDLE_T dispman_update;
-			DISPMANX_ELEMENT_HANDLE_T dispman_element;
-		}; // class DispManXWindowProvider
+		}; // class AndroidWindowProvider
 	} // namespace window
 } // namespace platform

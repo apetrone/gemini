@@ -23,7 +23,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "platform_internal.h"
-#include "linux_backend.h"
+#include "window_provider.h"
+#include "graphics_provider.h"
 
 #if defined(PLATFORM_RASPBERRYPI)
 	#include <bcm_host.h> // for bcm_host_init
@@ -159,14 +160,6 @@ namespace platform
 
 	namespace window
 	{
-		WindowProvider::~WindowProvider()
-		{
-		}
-
-		GraphicsProvider::~GraphicsProvider()
-		{
-		}
-
 		Result startup(RenderingBackend backend)
 		{
 #if defined(PLATFORM_RASPBERRYPI)

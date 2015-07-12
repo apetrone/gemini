@@ -23,40 +23,26 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #pragma once
-
-#include <core/config.h>
-#include "window_provider.h"
-
-#if defined(PLATFORM_RASPBERRYPI)
-	#include <bcm_host.h> // for DISPMANX_* types
-#endif
+#include "platform_internal.h"
 
 namespace platform
 {
 	namespace window
 	{
-		class DispManXWindowProvider : public WindowProvider
+		class WindowProvider
 		{
 		public:
-			DispManXWindowProvider();
-			virtual ~DispManXWindowProvider();
+			virtual ~WindowProvider();
 
-			virtual Result startup();
-			virtual void shutdown();
-			virtual NativeWindow* create(const Parameters& parameters);
-			virtual void destroy(NativeWindow* window);
-			virtual Frame get_frame(NativeWindow* window) const;
-			virtual Frame get_render_frame(NativeWindow* window) const;
-			virtual size_t get_screen_count() const;
-			virtual Frame get_screen_frame(size_t screen_index) const;
-
-		private:
-			uint32_t display_width;
-			uint32_t display_height;
-
-			DISPMANX_DISPLAY_HANDLE_T dispman_display;
-			DISPMANX_UPDATE_HANDLE_T dispman_update;
-			DISPMANX_ELEMENT_HANDLE_T dispman_element;
-		}; // class DispManXWindowProvider
+			virtual Result startup() = 0;
+			virtual void shutdown() = 0;
+			virtual NativeWindow* create(const Parameters& parameters) = 0;
+			virtual void destroy(NativeWindow* window) = 0;
+			virtual Frame get_frame(NativeWindow* window) const = 0;
+			virtual Frame get_render_frame(NativeWindow* window) const = 0;
+			virtual size_t get_screen_count() const = 0;
+			virtual Frame get_screen_frame(size_t screen_index) const = 0;
+		};
 	} // namespace window
+
 } // namespace platform

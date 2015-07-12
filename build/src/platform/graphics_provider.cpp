@@ -22,41 +22,15 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
-
-#include <core/config.h>
-#include "window_provider.h"
-
-#if defined(PLATFORM_RASPBERRYPI)
-	#include <bcm_host.h> // for DISPMANX_* types
-#endif
+#include "graphics_provider.h"
 
 namespace platform
 {
 	namespace window
 	{
-		class DispManXWindowProvider : public WindowProvider
+		GraphicsProvider::~GraphicsProvider()
 		{
-		public:
-			DispManXWindowProvider();
-			virtual ~DispManXWindowProvider();
-
-			virtual Result startup();
-			virtual void shutdown();
-			virtual NativeWindow* create(const Parameters& parameters);
-			virtual void destroy(NativeWindow* window);
-			virtual Frame get_frame(NativeWindow* window) const;
-			virtual Frame get_render_frame(NativeWindow* window) const;
-			virtual size_t get_screen_count() const;
-			virtual Frame get_screen_frame(size_t screen_index) const;
-
-		private:
-			uint32_t display_width;
-			uint32_t display_height;
-
-			DISPMANX_DISPLAY_HANDLE_T dispman_display;
-			DISPMANX_UPDATE_HANDLE_T dispman_update;
-			DISPMANX_ELEMENT_HANDLE_T dispman_element;
-		}; // class DispManXWindowProvider
+		}
 	} // namespace window
+
 } // namespace platform

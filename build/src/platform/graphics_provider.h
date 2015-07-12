@@ -23,40 +23,30 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #pragma once
-
-#include <core/config.h>
-#include "window_provider.h"
-
-#if defined(PLATFORM_RASPBERRYPI)
-	#include <bcm_host.h> // for DISPMANX_* types
-#endif
+#include "platform_internal.h"
 
 namespace platform
 {
 	namespace window
 	{
-		class DispManXWindowProvider : public WindowProvider
+		class GraphicsProvider
 		{
 		public:
-			DispManXWindowProvider();
-			virtual ~DispManXWindowProvider();
+			virtual ~GraphicsProvider();
 
-			virtual Result startup();
-			virtual void shutdown();
-			virtual NativeWindow* create(const Parameters& parameters);
-			virtual void destroy(NativeWindow* window);
-			virtual Frame get_frame(NativeWindow* window) const;
-			virtual Frame get_render_frame(NativeWindow* window) const;
-			virtual size_t get_screen_count() const;
-			virtual Frame get_screen_frame(size_t screen_index) const;
+			virtual Result startup() = 0;
+			virtual void shutdown() = 0;
+			virtual void create_context(NativeWindow* window) = 0;
+			virtual void destroy_context(NativeWindow* window) = 0;
+			virtual void activate_context(NativeWindow* window) = 0;
+			virtual void swap_buffers(NativeWindow* window) = 0;
+			virtual void* get_symbol(const char* symbol_name) = 0;
 
-		private:
-			uint32_t display_width;
-			uint32_t display_height;
-
-			DISPMANX_DISPLAY_HANDLE_T dispman_display;
-			DISPMANX_UPDATE_HANDLE_T dispman_update;
-			DISPMANX_ELEMENT_HANDLE_T dispman_element;
-		}; // class DispManXWindowProvider
+			/// @brief If the graphics provider needs to store custom
+			/// data on a per-window basis; return the size in bytes
+			/// which needs to be allocated.
+			virtual size_t get_graphics_data_size() const = 0;
+		};
 	} // namespace window
+
 } // namespace platform
