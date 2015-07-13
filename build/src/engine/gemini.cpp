@@ -1937,27 +1937,9 @@ Options:
 
 PLATFORM_MAIN
 {
-	platform::MainParameters mainparameters;
-#if defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE)
-	mainparameters.argc = argc;
-	mainparameters.argv = argv;
-#elif defined(PLATFORM_WINDOWS)
-	mainparameters.commandline = commandline;
-#elif defined(PLATFORM_ANDROID)
-	// nothing to do.
-#else
-	#error TODO: Implement command line parsing on this platform!
-#endif
-
-	platform::set_mainparameters(mainparameters);
-
-	int return_code;
-	return_code = platform::run_application(new EngineKernel());
-	return return_code;
+	PLATFORM_IMPLEMENT_PARAMETERS();
+	PLATFORM_RETURN(platform::run_application(new EngineKernel()));
 }
-
-
-
 
 
 #if 0

@@ -472,7 +472,6 @@ public:
 
 PLATFORM_MAIN
 {
-	int return_code;
-	return_code = platform::run_application(new EditorKernel());
-	return return_code;
+	PLATFORM_IMPLEMENT_PARAMETERS();
+	PLATFORM_RETURN(platform::run_application(new EditorKernel()));
 }

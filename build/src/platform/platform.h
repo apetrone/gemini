@@ -56,6 +56,8 @@
 
 	#define PLATFORM_LIBRARY_EXPORT
 	#define PLATFORM_LIBRARY_IMPORT
+
+	struct android_app;
 #else
 	#error Unknown platform!
 #endif
@@ -106,34 +108,110 @@ namespace platform
 	#error Not implemented on this platform
 #endif
 
-
+namespace platform
+{
+	// This emulates the Android activity lifecycle, as it's the most complicated
+	// use case thus far.
+	enum class ApplicationEvent
+	{
+		//
+		// single life-cycle events
+		
+		// application started; global resource allocation
+		Startup,
+		
+		// application stopped; global resource deallocation
+		Shutdown,
+		
+		//
+		// these can be called multiple times
+		
+		// application is now 'visible' to user;
+		Visible,
+		
+		// application is no longer 'visible' to user
+		Hidden,
+		
+		//
+		// foreground / background events; triggered by device sleep
+		
+		// application resume; user inputs going to application
+		EnterForeground,
+		
+		// application paused: commit changes to persistent data; don't consume CPU
+		EnterBackground,
+	};
+} // namespace platform
 
 namespace platform
 {
+
+// This section sets up three different platform abstraction macros.
+// PLATFORM_RETURN					A platform specific return from main
+// PLATFORM_MAIN					The function signature for this platform's application main
+// PLATFORM_IMPLEMENT_PARAMETERS	A helper macro to setup application parameters
+
 #if defined(PLATFORM_WINDOWS)
-	#define PLATFORM_MAIN int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR commandline, int show)
 	struct LIBRARY_EXPORT MainParameters
 	{
 		char* commandline;
+		
+		MainParameters(char* commandline_string = nullptr) :
+			commandline(commandline_string)
+		{
+		}
 	};
+	
+	#define PLATFORM_RETURN(statement)\
+		return statement
+		
+	#define PLATFORM_MAIN\
+		 int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR commandline, int show)
+		 
+	#define PLATFORM_IMPLEMENT_PARAMETERS()\
+		platform::set_mainparameters(platform::MainParameters(commandline))
 
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_APPLE)
-	#define PLATFORM_MAIN int main(int argc, char** argv)
 	struct MainParameters
 	{
-		char** argv;
 		int argc;
+		char** argv;
+		
+		MainParameters(int total_arguments = 0, char** argument_params = nullptr) :
+			argc(total_arguments),
+			argv(argument_params)
+		{
+		}
 	};
-#elif defined(PLATFORM_ANDROID)
-	// This requires: #include <android_native_app_glue.h>
-	#define PLATFORM_MAIN void android_main(struct android_app* state)
 	
-	// nothing since exec() is called on Android processes;
-	// so they don't have command line arguments.
+	#define PLATFORM_RETURN(statement)\
+		return statement
+		
+	#define PLATFORM_MAIN\
+		int main(int argc, char** argv)
+		
+	#define PLATFORM_IMPLEMENT_PARAMETERS()\
+		platform::set_mainparameters(platform::MainParameters(argc, argv));
+
+#elif defined(PLATFORM_ANDROID)
 	struct MainParameters
 	{
-		// nothing
+		struct android_app* app;
+		
+		MainParameters(struct android_app* state = 0) :
+			app(state)
+		{
+		}
 	};
+	
+	#define PLATFORM_RETURN(statement)\
+		statement
+		
+	#define PLATFORM_MAIN\
+		void android_main(struct android_app* android_state)
+	
+	#define PLATFORM_IMPLEMENT_PARAMETERS()\
+		platform::set_mainparameters(platform::MainParameters(android_state));
 #else
 	#error Unknown platform!
 #endif

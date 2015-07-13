@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -26,6 +26,14 @@
 #include "graphics_provider.h"
 #include "../../window/android/android_window_provider.h"
 
+#include <android_native_app_glue.h>
+
+// #include <android/sensor.h>
+// #include <android/asset_manager.h>
+// 
+
+
+
 #include <android/log.h>
 
 #include <android/native_window_jni.h> // for ANativeWindow_fromSurface
@@ -35,101 +43,28 @@
 	#include "../../graphics/egl/egl_graphics_provider.h"
 #endif
 
-using namespace platform::window;
-
 #define NATIVE_LOG( fmt, ...) __android_log_print(ANDROID_LOG_DEBUG, "gemini", fmt, ##__VA_ARGS__)
 
-const char JNI_CLASS_PATH[] = "net/arcfusion/gemini/gemini_activity";
+#include <platform/platform.h>
+#include <platform/kernel.h>
+#include <core/mem.h>
 
-static ANativeWindow* _window = nullptr;
-
-void native_start(JNIEnv* env, jclass the_class)
+namespace detail
 {
-	NATIVE_LOG("native_start called\n");
-}
-
-void native_stop(JNIEnv* env, jclass the_class)
-{
-	NATIVE_LOG("native_stop called\n");
-}
-
-void native_pause(JNIEnv* env, jclass the_class)
-{
-	NATIVE_LOG("native_pause called\n");
-}
-
-void native_resume(JNIEnv* env, jclass the_class)
-{
-	NATIVE_LOG("native_resume called\n");
-}
-
-void native_destroy(JNIEnv* env, jclass the_class)
-{
-	NATIVE_LOG("native_destroy called\n");
-}
-
-void native_set_surface(JNIEnv* env, jclass the_class, jobject surface)
-{
-	NATIVE_LOG("native_set_surface called\n");
-	if (surface)
+	struct AndroidState
 	{
-		_window = ANativeWindow_fromSurface(env, surface);
-		NATIVE_LOG("fetch window from surface: %p\n", _window);
-	}
-	else
-	{
-		NATIVE_LOG("releasing the surface\n");
-		ANativeWindow_release(_window);
-	}
-}
+		android_app* app;
+		JavaVM* vm;
+		// ASensorManager* sensor_manager;
+		// ASensorEventQueue* sensor_event_queue;
+		
+	}; // AndroidState
 
-static JNINativeMethod method_table[] = {
-		{"native_start", "()V", (void*)native_start},
-		{"native_stop", "()V", (void*)native_stop},
-		{"native_pause", "()V", (void*)native_pause},
-		{"native_resume", "()V", (void*)native_resume},
-		{"native_destroy", "()V", (void*)native_destroy},
-		{"native_set_surface", "(Landroid/view/Surface;)V", (void*)native_set_surface},
-};
+	static AndroidState _state;
+} // namespace detail
 
-// The VM calls JNI_OnLoad when the native library is loaded (for example, through 
-// System.loadLibrary).
 
-jint JNI_OnLoad(JavaVM* vm, void* reserved)
-{
-	static bool _jni_loaded = false;
-	if (_jni_loaded)
-		return JNI_VERSION_1_6;
-
-	NATIVE_LOG("JNI_OnLoad called...\n");
-
-	JNIEnv* env;
-	if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK)
-	{
-		NATIVE_LOG("Unable to setup environment\n");
-		return -1;
-	}
-	else
-	{
-		NATIVE_LOG("Loading classes from '%s'\n", JNI_CLASS_PATH);
-		// this path must match the path to the .java class
-		jclass cl = env->FindClass(JNI_CLASS_PATH);
-		if (!cl)
-		{
-			NATIVE_LOG("Error registering JNI functions\n");
-			return -1;
-		}
-		else
-		{
-			env->RegisterNatives(cl, method_table, sizeof(method_table) / sizeof(method_table[0]));
-			env->DeleteLocalRef(cl);
-		}
-	}
-
-	_jni_loaded = true;
-	return JNI_VERSION_1_6;
-} // JNI_OnLoad
-
+using namespace platform::window;
 
 namespace platform
 {
@@ -196,8 +131,127 @@ namespace platform
 		return Result(Result::Success);
 	}
 	
-	int backend_run_application(int argc, const char** argv)
+	void android_handle_command(struct android_app* app, int32_t command)
 	{
+		// Fill this in with the function to process main app commands (APP_CMD_*)
+		
+		switch(command)
+		{
+			case APP_CMD_INPUT_CHANGED: break;
+
+			// The window is being shown
+			case APP_CMD_INIT_WINDOW:
+				NATIVE_LOG("APP_CMD_INIT_WINDOW\n");
+				break;
+
+			// The window is being hidden or closed
+			case APP_CMD_TERM_WINDOW:
+				NATIVE_LOG("APP_CMD_TERM_WINDOW\n");
+				break;
+
+			case APP_CMD_WINDOW_RESIZED: break;
+			case APP_CMD_WINDOW_REDRAW_NEEDED: break;
+			case APP_CMD_CONTENT_RECT_CHANGED: break;
+
+			// The app gains focus
+			case APP_CMD_GAINED_FOCUS:
+				NATIVE_LOG("APP_CMD_GAINED_FOCUS\n");
+				break;
+
+			// The app lost focus
+			case APP_CMD_LOST_FOCUS:
+				NATIVE_LOG("APP_CMD_LOST_FOCUS\n");
+				break;
+
+			case APP_CMD_CONFIG_CHANGED: break;
+			case APP_CMD_LOW_MEMORY: break;
+			case APP_CMD_START: break;
+			case APP_CMD_RESUME: break;
+
+			// The system has asked the application to save its state
+			case APP_CMD_SAVE_STATE:
+				NATIVE_LOG("APPCMD_SAVE_STATE\n");
+				break;
+
+			case APP_CMD_PAUSE: break;
+			case APP_CMD_STOP: break;
+			case APP_CMD_DESTROY: break;
+		}
+	}
+
+	static int32_t android_handle_input(struct android_app* app, AInputEvent* event)
+	{
+		// Fill this in with the function to process input events.  At this point
+		// the event has already been pre-dispatched, and it will be finished upon
+		// return.  Return 1 if you have handled the event, 0 for any default
+		// dispatching.
+		return 0;
+	}
+
+
+	// android_main runs in its own thread with its own event loop
+	// for receiving input events.
+	int backend_run_application(android_app* app)
+	{
+		// don't strip the native glue code
+		app_dummy();
+
+		detail::_state.app = app;
+		detail::_state.vm = app->activity->vm;
+
+		// setup the callbacks
+		app->onAppCmd = android_handle_command;
+		app->onInputEvent = android_handle_input;
+
+		platform::startup();
+
+		// attempt kernel startup
+		kernel::Error error = kernel::startup();
+		if (error != kernel::NoError)
+		{
+			NATIVE_LOG("Kernel startup failed with kernel code: %i\n", error);
+			kernel::shutdown();
+			return -1;
+		}
+
+		while(kernel::instance() && kernel::instance()->is_active())
+		{
+			// read all pending events
+			int ident;
+			int events;
+			struct android_poll_source* source;
+
+			int method = 0;
+			// -1: block and wait for new events
+			// 0: loop all events and then advance
+			
+			while((ident = ALooper_pollAll(method, nullptr, &events, (void**)&source)) >= 0)
+			{
+				if (source)
+				{
+					source->process(app, source);
+				}
+
+				if (app->destroyRequested != 0)
+				{
+					NATIVE_LOG("android state requested destroy!\n");
+					kernel::instance()->set_active(false);
+					break;
+				}
+			}	
+
+			// next frame
+			kernel::instance()->tick();
+		}
+
+		NATIVE_LOG("exiting the android application\n");
+
+		// cleanup kernel memory
+		kernel::shutdown();
+
+		// shutdown the platform
+		platform::shutdown();
+
 		return 0;
 	}
 
@@ -216,7 +270,6 @@ namespace platform
 
 	void dispatch_events()
 	{
-
 	}
 
 
@@ -315,7 +368,7 @@ namespace platform
 
 		ANativeWindow* get_android_window()
 		{
-			return _window;
+			return detail::_state.app->window;
 		}
 	} // namespace window
 } // namespace platform

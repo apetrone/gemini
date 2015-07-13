@@ -38,7 +38,9 @@ namespace platform
 
 	// backend (low level platform interface)
 	Result backend_startup();
-	int backend_run_application(int argc, const char** argv);
+
+
+
 	void backend_shutdown();
 
 	// timer interface
@@ -48,6 +50,12 @@ namespace platform
 	// cross distro/system functions that could be shared
 	
 #if defined(PLATFORM_APPLE) || defined(PLATFORM_LINUX) || defined(PLATFORM_ANDROID)
+
+#if defined(PLATFORM_APPLE) || defined(PLATFORM_LINUX)
+	int backend_run_application(int argc, const char** argv);
+#elif defined(PLATFORM_ANDROID)
+	int backend_run_application(struct android_app* app);
+#endif
 
 	// filesystem
 	Result posix_make_directory(const char* path);
