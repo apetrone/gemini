@@ -108,40 +108,6 @@ namespace platform
 	#error Not implemented on this platform
 #endif
 
-namespace platform
-{
-	// This emulates the Android activity lifecycle, as it's the most complicated
-	// use case thus far.
-	enum class ApplicationEvent
-	{
-		//
-		// single life-cycle events
-		
-		// application started; global resource allocation
-		Startup,
-		
-		// application stopped; global resource deallocation
-		Shutdown,
-		
-		//
-		// these can be called multiple times
-		
-		// application is now 'visible' to user;
-		Visible,
-		
-		// application is no longer 'visible' to user
-		Hidden,
-		
-		//
-		// foreground / background events; triggered by device sleep
-		
-		// application resume; user inputs going to application
-		EnterForeground,
-		
-		// application paused: commit changes to persistent data; don't consume CPU
-		EnterBackground,
-	};
-} // namespace platform
 
 namespace platform
 {
@@ -254,6 +220,19 @@ namespace platform
 	LIBRARY_EXPORT void set_mainparameters(const MainParameters& params);
 	LIBRARY_EXPORT const MainParameters& get_mainparameters();
 
+	/// @brief Low-level system specific function for debugging.
+	/// This should ONLY be used by the platform layer for diagnostics.
+	enum class LogMessageType
+	{
+		Info,
+		Warning,
+		Error
+	};
+	LIBRARY_EXPORT void log_message(LogMessageType type, const char* message);
+	
+	// This is a bit nasty in that it requires core::str
+	#define PLATFORM_LOG(type, message, ...) ::platform::log_message(type, ::core::str::format(message, ##__VA_ARGS__))
+	
 	namespace path
 	{
 		// normalize a path to the host platform's notation

@@ -22,7 +22,6 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-
 #include "mem.h"
 #include "platform_internal.h"
 
@@ -40,7 +39,7 @@ namespace platform
 		void* handle = dlopen(library_path, RTLD_LAZY);
 		if (!handle)
 		{
-			fprintf(stderr, "%s", dlerror());
+			PLATFORM_LOG(LogMessageType::Error, "dlopen failed: %s", dlerror());
 			return 0;
 		}
 		

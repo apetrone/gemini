@@ -32,8 +32,6 @@
 #include <android/log.h>
 #include <jni.h>
 
-#define NATIVE_LOG( fmt, ...) __android_log_print(ANDROID_LOG_DEBUG, "gemini", fmt, ##__VA_ARGS__)
-
 #include <platform/platform.h>
 #include <platform/kernel.h>
 #include <core/mem.h>
@@ -129,13 +127,12 @@ namespace platform
 
 			// The window is being shown
 			case APP_CMD_INIT_WINDOW:
-				NATIVE_LOG("APP_CMD_INIT_WINDOW\n");
+				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_INIT_WINDOW\n");
 				// attempt kernel startup
 				// kernel::Error error = ;
 				if (kernel::startup() != kernel::NoError)
 				{
-					// NATIVE_LOG("Kernel startup failed with kernel code: %i\n", error);
-					NATIVE_LOG("kernel startup failed. the end is nigh\n");
+					PLATFORM_LOG(LogMessageType::Info, "kernel startup failed. the end is nigh\n");
 					kernel::shutdown();
 					// return -1;
 				}
@@ -148,7 +145,7 @@ namespace platform
 
 			// The window is being hidden or closed
 			case APP_CMD_TERM_WINDOW:
-				NATIVE_LOG("APP_CMD_TERM_WINDOW\n");
+				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_TERM_WINDOW\n");
 				kernel::shutdown();
 				detail::_state.is_ticking = false;
 				break;
@@ -159,12 +156,12 @@ namespace platform
 
 			// The app gains focus
 			case APP_CMD_GAINED_FOCUS:
-				NATIVE_LOG("APP_CMD_GAINED_FOCUS\n");		
+				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_GAINED_FOCUS\n");		
 				break;
 
 			// The app lost focus
 			case APP_CMD_LOST_FOCUS:
-				NATIVE_LOG("APP_CMD_LOST_FOCUS\n");
+				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_LOST_FOCUS\n");
 				break;
 
 			case APP_CMD_CONFIG_CHANGED: break;
@@ -176,7 +173,7 @@ namespace platform
 
 			// The system has asked the application to save its state
 			case APP_CMD_SAVE_STATE:
-				NATIVE_LOG("APP_CMD_SAVE_STATE\n");
+				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_SAVE_STATE\n");
 				break;
 
 			case APP_CMD_PAUSE: 
@@ -235,7 +232,7 @@ namespace platform
 
 				if (app->destroyRequested != 0)
 				{
-					NATIVE_LOG("android state requested destroy!\n");
+					PLATFORM_LOG(LogMessageType::Info, "android state requested destroy!\n");
 					kernel::instance()->set_active(false);
 					detail::_state.is_running = false;
 					break;
@@ -249,7 +246,7 @@ namespace platform
 		}
 
 
-		NATIVE_LOG("exiting the android application\n");
+		PLATFORM_LOG(LogMessageType::Info, "exiting the android application\n");
 
 		// cleanup kernel memory
 		kernel::shutdown();
@@ -272,6 +269,16 @@ namespace platform
 		MEMORY_DELETE(_graphics_provider, get_platform_allocator());
 	}
 
+	void backend_log(platform::LogMessageType type, const char* message)
+	{
+		int log_message_to_android[] = {
+			ANDROID_LOG_VERBOSE,
+			ANDROID_LOG_WARN,
+			ANDROID_LOG_ERROR
+		};
+
+		__android_log_print(log_message_to_android[static_cast<int>(type)], "android_backend", "%s", message);
+	}
 
 	void dispatch_events()
 	{
@@ -373,6 +380,7 @@ namespace platform
 
 		ANativeWindow* get_android_window()
 		{
+			PLATFORM_LOG(LogMessageType::Info, "native_window: %p\n", detail::_state.app->window);
 			return detail::_state.app->window;
 		}
 	} // namespace window

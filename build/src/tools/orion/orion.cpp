@@ -224,16 +224,13 @@ public:
 #else
 		{
 			platform::window::startup(platform::window::RenderingBackend_Default);
-			
-			//	uint32_t rcaps = platform::get_renderinterface_caps();
-			//	fprintf(stdout, "RenderBackends: %i\n", rcaps);
 
-			fprintf(stdout, "total screens: %zu\n", platform::window::screen_count());
+			PLATFORM_LOG(LogMessageType::Info, "total screens: %zu\n", platform::window::screen_count());
 			
 			for (size_t screen = 0; screen < platform::window::screen_count(); ++screen)
 			{
 				platform::window::Frame frame = platform::window::screen_frame(screen);
-				fprintf(stdout, "screen rect: %zu, origin: %i, %i; resolution: %i x %i\n", screen, frame.x, frame.y, frame.width, frame.height);
+				PLATFORM_LOG(LogMessageType::Info, "screen rect: %zu, origin: %i, %i; resolution: %i x %i\n", screen, frame.x, frame.y, frame.width, frame.height);
 			}
 			
 			platform::window::Parameters params;

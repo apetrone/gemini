@@ -37,6 +37,8 @@
 	#include "../../graphics/egl/egl_graphics_provider.h"
 #endif
 
+#include <stdio.h> // for fprintf
+
 using namespace platform::window;
 
 namespace platform
@@ -150,6 +152,17 @@ namespace platform
 		bcm_host_deinit();
 #endif		
 	}
+
+	void backend_log(platform::LogMessageType type, const char* message)
+	{
+		FILE* log_message_to_pipe[] = {
+			stdout,
+			stdout,
+			stderr
+		};
+
+		fprintf(log_message_to_pipe[static_cast<int>(type)], message);
+	}	
 
 
 	void dispatch_events()
