@@ -24,24 +24,13 @@
 // -------------------------------------------------------------
 #include "android_backend.h"
 #include "graphics_provider.h"
+
 #include "../../window/android/android_window_provider.h"
+#include "../../graphics/egl/egl_graphics_provider.h"
 
 #include <android_native_app_glue.h>
-
-// #include <android/sensor.h>
-// #include <android/asset_manager.h>
-// 
-
-
-
 #include <android/log.h>
-
-#include <android/native_window_jni.h> // for ANativeWindow_fromSurface
 #include <jni.h>
-
-#if defined(PLATFORM_EGL_SUPPORT)
-	#include "../../graphics/egl/egl_graphics_provider.h"
-#endif
 
 #define NATIVE_LOG( fmt, ...) __android_log_print(ANDROID_LOG_DEBUG, "gemini", fmt, ##__VA_ARGS__)
 
@@ -55,9 +44,8 @@ namespace detail
 	{
 		android_app* app;
 		JavaVM* vm;
-		// ASensorManager* sensor_manager;
-		// ASensorEventQueue* sensor_event_queue;
-		
+		bool is_running; // application is running
+		bool is_ticking; // kernel should tick
 	}; // AndroidState
 
 	static AndroidState _state;
@@ -142,11 +130,27 @@ namespace platform
 			// The window is being shown
 			case APP_CMD_INIT_WINDOW:
 				NATIVE_LOG("APP_CMD_INIT_WINDOW\n");
+				// attempt kernel startup
+				// kernel::Error error = ;
+				if (kernel::startup() != kernel::NoError)
+				{
+					// NATIVE_LOG("Kernel startup failed with kernel code: %i\n", error);
+					NATIVE_LOG("kernel startup failed. the end is nigh\n");
+					kernel::shutdown();
+					// return -1;
+				}
+				else
+				{
+					detail::_state.is_ticking = true;
+				}
+
 				break;
 
 			// The window is being hidden or closed
 			case APP_CMD_TERM_WINDOW:
 				NATIVE_LOG("APP_CMD_TERM_WINDOW\n");
+				kernel::shutdown();
+				detail::_state.is_ticking = false;
 				break;
 
 			case APP_CMD_WINDOW_RESIZED: break;
@@ -155,7 +159,7 @@ namespace platform
 
 			// The app gains focus
 			case APP_CMD_GAINED_FOCUS:
-				NATIVE_LOG("APP_CMD_GAINED_FOCUS\n");
+				NATIVE_LOG("APP_CMD_GAINED_FOCUS\n");		
 				break;
 
 			// The app lost focus
@@ -166,14 +170,18 @@ namespace platform
 			case APP_CMD_CONFIG_CHANGED: break;
 			case APP_CMD_LOW_MEMORY: break;
 			case APP_CMD_START: break;
-			case APP_CMD_RESUME: break;
+			case APP_CMD_RESUME:
+				// should re-create EGL context
+				break;
 
 			// The system has asked the application to save its state
 			case APP_CMD_SAVE_STATE:
-				NATIVE_LOG("APPCMD_SAVE_STATE\n");
+				NATIVE_LOG("APP_CMD_SAVE_STATE\n");
 				break;
 
-			case APP_CMD_PAUSE: break;
+			case APP_CMD_PAUSE: 
+				// should destroy EGL context
+				break;
 			case APP_CMD_STOP: break;
 			case APP_CMD_DESTROY: break;
 		}
@@ -198,6 +206,8 @@ namespace platform
 
 		detail::_state.app = app;
 		detail::_state.vm = app->activity->vm;
+		detail::_state.is_running = true;
+		detail::_state.is_ticking = false;
 
 		// setup the callbacks
 		app->onAppCmd = android_handle_command;
@@ -205,16 +215,7 @@ namespace platform
 
 		platform::startup();
 
-		// attempt kernel startup
-		kernel::Error error = kernel::startup();
-		if (error != kernel::NoError)
-		{
-			NATIVE_LOG("Kernel startup failed with kernel code: %i\n", error);
-			kernel::shutdown();
-			return -1;
-		}
-
-		while(kernel::instance() && kernel::instance()->is_active())
+		while(detail::_state.is_running)
 		{
 			// read all pending events
 			int ident;
@@ -236,13 +237,17 @@ namespace platform
 				{
 					NATIVE_LOG("android state requested destroy!\n");
 					kernel::instance()->set_active(false);
+					detail::_state.is_running = false;
 					break;
 				}
-			}	
+			}
 
-			// next frame
-			kernel::instance()->tick();
+			if (kernel::instance() && kernel::instance()->is_active() && detail::_state.is_ticking)
+			{
+				kernel::instance()->tick();
+			}
 		}
+
 
 		NATIVE_LOG("exiting the android application\n");
 
