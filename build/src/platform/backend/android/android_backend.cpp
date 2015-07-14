@@ -211,6 +211,126 @@ namespace platform
 		app->onAppCmd = android_handle_command;
 		app->onInputEvent = android_handle_input;
 
+#if 0
+		// experiment with JNI!
+		JNIEnv* env;
+		JavaVM* vm = app->activity->vm;
+		jint attach_result = vm->AttachCurrentThread(&env, NULL);
+		assert(attach_result == 0);
+
+		// We need to get the class loader from our activity. The default FindClass loader
+		// is only a system class loader.
+
+
+		// fetch the native activity
+		jclass native_activity_class = env->FindClass("android/app/NativeActivity");
+		PLATFORM_LOG(LogMessageType::Info, "native_activity_class: %p", native_activity_class);
+
+		// fetch its class loader
+		jmethodID get_class_loader = env->GetMethodID(native_activity_class, "getClassLoader", "()Ljava/lang/ClassLoader;");
+		assert(get_class_loader);
+
+		jobject class_loader_instance = env->CallObjectMethod(app->activity->clazz, get_class_loader);
+		assert(class_loader_instance);
+
+		jclass class_loader = env->FindClass("java/lang/ClassLoader");
+		assert(class_loader);
+
+		jmethodID load_class = env->GetMethodID(class_loader, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+		assert(load_class);
+
+		// jmethodID context_method = env->GetMethodID(native_activity_class, "getApplicationContext", "()Landroid/content/Context;");
+		// assert(context_method);
+
+		// jobject context_object = env->CallObjectMethod(app->activity->class, context_method);
+		// assert(context_object);
+
+		jstring activity_class_name = env->NewStringUTF("net/arcfusion/gemini/gemini_activity");
+		jclass local_activity_class = (jclass)env->CallObjectMethod(class_loader_instance, load_class, activity_class_name);
+
+		env->DeleteLocalRef(activity_class_name);
+
+		// get the java call from the class
+		jmethodID java_call = env->GetMethodID(local_activity_class, "java_call", "()V");
+		assert(java_call);
+
+		// call it on the instance
+		env->CallVoidMethod(app->activity->clazz, java_call);
+
+		// fetch the Build.VERSION.SDK_INT value
+		{
+			jclass version = env->FindClass("android/os/Build$VERSION");
+			assert(version);
+
+			jfieldID field = env->GetStaticFieldID(version, "SDK_INT", "I");
+			assert(field);
+
+			jint sdkInt = env->GetStaticIntField(version, field);
+			PLATFORM_LOG(LogMessageType::Info, "version: %i", sdkInt);
+		}
+
+		{
+			jclass build_class = env->FindClass("android/os/Build");
+			assert(build_class);
+
+			const char* field_names[] = {
+				"BOARD",
+				"BOOTLOADER",
+				"BRAND",
+				"DEVICE",
+				"DISPLAY",
+				"FINGERPRINT",
+				"HARDWARE",
+				"HOST",
+				"MANUFACTURER",
+				"MODEL",
+				"PRODUCT",
+				"SERIAL"
+			};
+
+			for (size_t index = 0; index < 12; ++index)
+			{
+				jfieldID field = env->GetStaticFieldID(build_class, field_names[index], "Ljava/lang/String;");
+				assert(field);
+
+				jstring string_value = (jstring)env->GetStaticObjectField(build_class, field);
+				assert(string_value);
+				const char* native_string = env->GetStringUTFChars(string_value, 0);
+
+				PLATFORM_LOG(LogMessageType::Info, "%s -> %s\n", field_names[index], native_string);
+
+				env->ReleaseStringUTFChars(string_value, native_string);
+			}
+		}
+
+		{
+			jclass environment_class = env->FindClass("android/os/Environment");
+			assert(environment_class);
+
+			jmethodID method = env->GetStaticMethodID(environment_class, "getDataDirectory", "()Ljava/io/File;");
+			assert(method);
+
+			jobject file_instance = env->CallStaticObjectMethod(environment_class, method);
+			assert(file_instance);
+
+			jclass file_class = env->FindClass("java/io/File");
+			assert(file_class);
+
+			jmethodID get_absolute_path = env->GetMethodID(file_class, "getAbsolutePath", "()Ljava/lang/String;");
+			assert(get_absolute_path);
+
+			jstring result = (jstring)env->CallObjectMethod(file_instance, get_absolute_path);
+			assert(result);
+			const char* native_string = env->GetStringUTFChars(result, 0);
+
+			PLATFORM_LOG(LogMessageType::Info, "Environment.getDataDirectory().getAbsolutePath() -> %s\n", native_string);
+
+			env->ReleaseStringUTFChars(result, native_string);
+		}
+
+		vm->DetachCurrentThread();
+#endif
+
 		platform::startup();
 
 		while(detail::_state.is_running)
