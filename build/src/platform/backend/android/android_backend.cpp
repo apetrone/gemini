@@ -201,12 +201,13 @@ namespace platform
 		// don't strip the native glue code
 		app_dummy();
 
+		// setup the application state
 		detail::_state.app = app;
 		detail::_state.vm = app->activity->vm;
 		detail::_state.is_running = true;
 		detail::_state.is_ticking = false;
 
-		// setup the callbacks
+		// install handlers for commands and input events
 		app->onAppCmd = android_handle_command;
 		app->onInputEvent = android_handle_input;
 
