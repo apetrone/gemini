@@ -135,7 +135,7 @@ namespace core
 			// startup the log system; open handlers
 			if (log_system->startup() < total_log_handlers)
 			{
-				fprintf(stderr, "Could not open one or more log handlers\n");
+				PLATFORM_LOG(platform::LogMessageType::Warning, "Could not open one or more log handlers\n");
 				result = platform::Result(platform::Result::Warning, "Could not open one or more log handlers");
 			}
 

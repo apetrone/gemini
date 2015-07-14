@@ -22,9 +22,9 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include "platform.h"
-#include "kernel.h"
 #include "platform_internal.h"
+#include "kernel.h"
+
 
 #include <core/mem.h>
 
@@ -85,13 +85,13 @@ namespace platform
 		result = backend_startup();
 		if (result.failed())
 		{
-			fprintf(stdout, "os_startup failed: '%s'\n", result.message);
+			PLATFORM_LOG(LogMessageType::Error, "backend_startup failed: '%s'\n", result.message);
 		}
 		
 		result = timer_startup();
 		if (result.failed())
 		{
-			fprintf(stdout, "timer_startup failed: '%s'\n", result.message);
+			PLATFORM_LOG(LogMessageType::Error, "timer_startup failed: '%s'\n", result.message);
 		}
 		
 		return result;
@@ -124,7 +124,7 @@ namespace platform
 		kernel::Error error = kernel::startup();
 		if (error != kernel::NoError)
 		{
-			fprintf(stderr, "Kernel startup failed with kernel code: %i\n", error);
+			PLATFORM_LOG(LogMessageType::Error, "Kernel startup failed with kernel code: %i\n", error);
 			kernel::shutdown();
 			return kernel::StartupFailed;
 		}
@@ -231,4 +231,9 @@ namespace platform
 			}
 		} // make_directories
 	} // namespace path
+	
+	void log_message(LogMessageType type, const char* message)
+	{
+		backend_log(type, message);
+	}
 } // namespace platform

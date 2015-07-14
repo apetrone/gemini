@@ -220,7 +220,6 @@ namespace render2
 			
 			~GLShader()
 			{
-				fprintf(stdout, "clearing fixed arrays!\n");
 				uniforms.clear();
 				attributes.clear();
 				gl.DeleteProgram(id);

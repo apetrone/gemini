@@ -121,7 +121,7 @@ namespace core
 			
 			if (!buffer_length)
 			{
-				fprintf(stderr, "ERROR: virtual_load_file called with INVALID value!\n");
+				PLATFORM_LOG(LogMessageType::Error, "virtual_load_file called with INVALID value!\n");
 				return 0;
 			}
 						
@@ -129,7 +129,7 @@ namespace core
 			absolute_path_from_relative(fullpath, relative_path, content_directory());
 			if (!file_exists(fullpath(), false))
 			{
-				fprintf(stderr, "ERROR: File does not exist! \"%s\" (at \"%s\")\n", relative_path, fullpath());
+				PLATFORM_LOG(LogMessageType::Error, "File does not exist! \"%s\" (at \"%s\")\n", relative_path, fullpath());
 				return 0;
 			}
 
@@ -145,7 +145,11 @@ namespace core
 				{
 					if (file_size > *buffer_length)
 					{
-						fprintf(stderr, "Request to read file size larger than buffer! (%ld > %lu)\n", file_size, (unsigned long)*buffer_length);
+						PLATFORM_LOG(LogMessageType::Error,
+							"Request to read file size larger than buffer! (%lu > %lu)\n",
+							(unsigned long)file_size,
+							(unsigned long)*buffer_length
+						);
 						file_size = *buffer_length;
 					}
 				}

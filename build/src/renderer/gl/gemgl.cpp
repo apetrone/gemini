@@ -85,23 +85,13 @@ namespace renderer
 				return;
 			}
 
-#if GEMGL_ENABLE_ES
-			// sscanf isn't working in iOS 5 Simulator.
-			if( !strstr( (const char*)version, "OpenGL ES 2.0" ) )
+			// TODO@APP: This needs to be replaced with a better method of parsing
+			// the OpenGL version.
+			if ( sscanf( (const char*)version, "%i.%i", &major_version, &minor_version ) < 2 )
 			{
 				LOGE( "Error parsing OpenGL version\n" );
 				return;
 			}
-			major = 2;
-			minor = 0;
-#else
-			if ( sscanf( (const char*)version, "%d.%d", 
-	&major_version, &minor_version ) < 2 )
-			{
-				LOGE( "Error parsing OpenGL version\n" );
-				return;
-			}
-#endif
 		}
 		else
 		{

@@ -167,7 +167,7 @@ namespace platform
 			
 				if (button == 0)
 				{
-					fprintf(stderr, "UNKNOWN KEYCODE: %i\n", keycode);
+					PLATFORM_LOG(platform::LogMessageType::Info, "UNKNOWN KEYCODE: %i\n", keycode);
 					return input::Button::KEY_INVALID;
 				}
 				
@@ -603,7 +603,7 @@ namespace platform
 			platform::Result result = create_window(window, window_parameters);
 			if (result.failed())
 			{
-				fprintf(stdout, "create_window failed: %s\n", result.message);
+				PLATFORM_LOG(LogMessageType::Error, "create_window failed: %s\n", result.message);
 				return 0;
 			}
 
@@ -684,7 +684,7 @@ namespace platform
 			//					}
 			//				}
 			//
-			//				fprintf(stdout, "refresh rate of screen %i is %i Hz\n", screen_index, refresh_rate);
+			//				PLATFORM_LOG(LogMessageType::Info, "refresh rate of screen %i is %i Hz\n", screen_index, refresh_rate);
 		}
 		
 		void focus(NativeWindow* window)

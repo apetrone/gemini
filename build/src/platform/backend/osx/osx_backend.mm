@@ -22,7 +22,7 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include "platform.h"
+#include "platform_internal.h"
 #include "cocoa_common.h"
 
 namespace platform
@@ -52,5 +52,10 @@ namespace platform
 	
 	void backend_shutdown()
 	{
+	}
+	
+	void backend_log(LogMessageType, const char* message)
+	{
+		NSLog(@"%@", [NSString stringWithUTF8String:message]);
 	}
 } // namespace platform
