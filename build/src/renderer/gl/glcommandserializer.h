@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -22,51 +22,66 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+#pragma once
 
-#include "util.h"
+#include "commandbuffer.h"
 
-extern "C"
+#include <renderer/gl/gemgl.h>
+
+
+
+#include <core/typedefs.h>
+
+namespace render2
 {
-	#include <murmur3.h>
-}
-
-#include <stdlib.h>
-
-namespace core
-{
-	namespace util
+	class GLCommandSerializer : public CommandSerializer
 	{
-		uint32_t hash_32bit( const void * data, int data_size, unsigned int seed )
+	public:
+		GLCommandSerializer(CommandQueue& command_queue) :
+		queue(command_queue)
 		{
-			uint32_t hash = 0;
-			
-			MurmurHash3_x86_32(data, data_size, seed, &hash);
-			
-			return hash;
-		} // hash_32bit
-		
-		float random_range( float min, float max )
-		{
-			return (float)rand() / RAND_MAX * (max - min) + min;
-		} // random_range
-
-		
-		template <>
-		uint32_t hash32(const std::string& s)
-		{
-			return hash_32bit(&s[0], s.length(), 0);
 		}
 		
-		template <>
-		uint32_t hash32(const StackString<128>& s)
+		virtual void vertex_buffer(Buffer* buffer)
 		{
-			return hash_32bit(&s[0], s.max_size(), 0);
+			queue.add_command(
+							  Command(COMMAND_SET_VERTEX_BUFFER, buffer)
+							  );
 		}
 		
-		template <>
-		uint32_t hash32(const StackString<32>& s)
+		virtual void draw(size_t initial_offset, size_t total, size_t instance_index, size_t index_count)
 		{
-			return hash_32bit(&s[0], s.max_size(), 0);
+			queue.add_command(
+							  Command(COMMAND_DRAW, 0, 0, initial_offset, total, instance_index, index_count)
+							  );
 		}
-	} // namespace util
-} // namespace core
+		
+		virtual void draw_indexed_primitives(Buffer* index_buffer, size_t total)
+		{
+			queue.add_command(
+							  Command(COMMAND_DRAW_INDEXED, index_buffer, 0, total, 0, 0, 1)
+							  );
+		}
+		
+		virtual void pipeline(Pipeline* pipeline)
+		{
+			queue.add_command(
+							  Command(COMMAND_PIPELINE, pipeline)
+							  );
+		}
+		
+		virtual void viewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+		{
+			queue.add_command(
+							  Command(COMMAND_VIEWPORT, 0, 0, x, y, width, height)
+							  );
+		}
+		
+		virtual void texture(const Image& texture, uint32_t index)
+		{
+		}
+		
+	private:
+		CommandQueue& queue;
+	}; // GLCommandSerializer
+} // namespace render2

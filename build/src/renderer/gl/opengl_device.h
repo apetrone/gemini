@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2013- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -22,51 +22,10 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+//#include "renderer.h"
+#include "r2_opengl_device.h"
 
-#include "util.h"
-
-extern "C"
+namespace render2
 {
-	#include <murmur3.h>
-}
 
-#include <stdlib.h>
-
-namespace core
-{
-	namespace util
-	{
-		uint32_t hash_32bit( const void * data, int data_size, unsigned int seed )
-		{
-			uint32_t hash = 0;
-			
-			MurmurHash3_x86_32(data, data_size, seed, &hash);
-			
-			return hash;
-		} // hash_32bit
-		
-		float random_range( float min, float max )
-		{
-			return (float)rand() / RAND_MAX * (max - min) + min;
-		} // random_range
-
-		
-		template <>
-		uint32_t hash32(const std::string& s)
-		{
-			return hash_32bit(&s[0], s.length(), 0);
-		}
-		
-		template <>
-		uint32_t hash32(const StackString<128>& s)
-		{
-			return hash_32bit(&s[0], s.max_size(), 0);
-		}
-		
-		template <>
-		uint32_t hash32(const StackString<32>& s)
-		{
-			return hash_32bit(&s[0], s.max_size(), 0);
-		}
-	} // namespace util
-} // namespace core
+} // namespace render2
