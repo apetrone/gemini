@@ -33,13 +33,11 @@ namespace render2
 	
 	enum VertexDataType
 	{
-		VD_FLOAT2 = 0,
-		VD_FLOAT3,
-		VD_FLOAT4,
-		VD_INT4,
+		VD_FLOAT = 0,
+		VD_INT,
 		VD_UNSIGNED_INT,
-		VD_UNSIGNED_BYTE3,
-		VD_UNSIGNED_BYTE4,
+		VD_UNSIGNED_BYTE,
+				
 		VD_TOTAL
 	};
 	
@@ -58,14 +56,12 @@ namespace render2
 		InputDescription description[ MAX_VERTEX_DESCRIPTORS ];
 		
 		static void startup();
-		static void map_type(uint32_t type, uint16_t size, uint16_t elements);
 		static uint16_t size_table[ VD_TOTAL ];
-		static uint16_t elements[ VD_TOTAL ];
 		
 		VertexDescriptor();
 		VertexDescriptor(const VertexDescriptor& other);
 		void add(const char* name, const VertexDataType& type, size_t element_count);
-		const VertexDataType& operator[](int index) const;
+		const InputDescription& operator[](int index) const;
 		void reset();
 		size_t stride() const;
 		size_t size() const;

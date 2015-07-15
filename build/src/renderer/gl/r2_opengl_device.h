@@ -77,6 +77,26 @@ namespace render2
 			byte_size = (size * type_to_bytes(type));
 		}
 	};
+
+	struct VertexDataTypeToGL
+	{
+		GLenum type;
+		GLenum normalized;
+		uint32_t element_size;
+		
+		VertexDataTypeToGL(GLenum _type = GL_INVALID_ENUM, GLenum _normalized = GL_INVALID_ENUM, uint32_t _element_size = 0) :
+			type(_type),
+			normalized(_normalized),
+			element_size(_element_size)
+		{
+		}
+	};
+	
+#define VERTEXDATA_TO_GL(vdt, gl_type, gl_normalized, element_size) \
+	_vertex_data_to_gl[ vdt ] = VertexDataTypeToGL(gl_type, gl_normalized, element_size)
+	
+	VertexDataTypeToGL _vertex_data_to_gl[ VD_TOTAL ];
+	
 	
 	struct OpenGLDevice : public Device
 	{
@@ -86,9 +106,9 @@ namespace render2
 			FixedArray<shader_variable> uniforms;
 			FixedArray<shader_variable> attributes;
 			
-			GLint get_uniform_location(const char* name)
+			GLint get_attribute_location(const char* name)
 			{
-				return gl.GetUniformLocation(id, name);
+				return gl.GetAttribLocation(id, name);
 			}
 
 			GLShader()
@@ -303,6 +323,7 @@ namespace render2
 				GLsizei element_count;
 				GLenum normalized;
 				size_t offset;
+				size_t size;
 			};
 
 			size_t vertex_stride;
@@ -490,6 +511,13 @@ namespace render2
 		OpenGLDevice()
 		{
 			reset();
+			
+			// populate mapping table
+			VERTEXDATA_TO_GL(VD_FLOAT, GL_FLOAT, GL_FALSE, sizeof(float));
+			VERTEXDATA_TO_GL(VD_INT, GL_INT, GL_TRUE, sizeof(int));
+			VERTEXDATA_TO_GL(VD_UNSIGNED_INT, GL_UNSIGNED_INT, GL_TRUE, sizeof(unsigned int));
+			VERTEXDATA_TO_GL(VD_UNSIGNED_BYTE, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(unsigned char));
+			
 		}
 		
 		~OpenGLDevice()
@@ -571,63 +599,6 @@ namespace render2
 				vertex_buffer->create_vao();
 				
 				vertex_buffer->bind_vao();
-				
-#if 1
-				// mapping tables (from data_type to opengl)
-				GLenum gl_type[] = {
-					GL_FLOAT,
-					GL_FLOAT,
-					GL_FLOAT,
-					GL_INT,
-					GL_UNSIGNED_INT,
-					GL_UNSIGNED_BYTE,
-					GL_UNSIGNED_BYTE
-				};
-				
-				GLenum gl_normalized[] = {
-					GL_FALSE,
-					GL_FALSE,
-					GL_FALSE,
-					GL_TRUE,
-					GL_TRUE,
-					GL_TRUE,
-					GL_TRUE
-				};
-				
-				size_t element_count;
-				size_t attribute_size;
-				size_t offset = 0;
-				
-				// If you hit this assert, the shader expects a different number of
-				// vertex attributes than the pipeline was configured for.
-				assert(pipeline->program->attributes.size() == pipeline->vertex_description.size());
-				
-				vertex_buffer->bind();
-				
-				pipeline->vertex_description.reset();
-				size_t vertex_stride = pipeline->vertex_description.stride();
-				for (size_t index = 0; index < pipeline->vertex_description.size(); ++index)
-				{
-					VertexDataType type = pipeline->vertex_description[index];
-					attribute_size = VertexDescriptor::size_table[ type ];
-					element_count = VertexDescriptor::elements[ type ];
-					GLenum enum_type = GL_INVALID_ENUM;
-					
-					enum_type = gl_type[type];
-					
-					gl.EnableVertexAttribArray(index);
-					gl.CheckError( "EnableVertexAttribArray" );
-					
-					assert(enum_type != GL_INVALID_ENUM);
-					
-					assert(element_count >= 1 && element_count <= 4);
-					
-					gl.VertexAttribPointer(index, element_count, enum_type, gl_normalized[type], vertex_stride, (void*)offset);
-					gl.CheckError("VertexAttribPointer");
-					
-					offset += attribute_size;
-				}
-#else
 
 				vertex_buffer->bind();
 
@@ -636,6 +607,9 @@ namespace render2
 				{
 					GLInputLayout::Description& item = layout->items[index];
 					
+					assert(item.type != GL_INVALID_ENUM);
+					
+					assert(item.element_count >= 1 && item.element_count <= 4);
 
 					gl.EnableVertexAttribArray(index);
 					gl.CheckError("EnableVertexAttribArray");
@@ -643,9 +617,7 @@ namespace render2
 					gl.VertexAttribPointer(index, item.element_count, item.type, item.normalized, layout->vertex_stride, (void*)item.offset);
 					gl.CheckError("VertexAttribPointer");
 				}
-				
 
-#endif
 				vertex_buffer->unbind_vao();
 				
 				vertex_buffer->unbind();
@@ -771,30 +743,50 @@ namespace render2
 			glb->upload(data, data_size);
 			glb->unbind();
 		}
-		
+
 		virtual InputLayout* create_input_layout(const VertexDescriptor& descriptor, Shader* shader)
 		{
 			GLInputLayout* layout = MEMORY_NEW(GLInputLayout, core::memory::global_allocator());
-			
-			// TODO: for now, we just hard-code the data structure, but this should be made dynamic
-			GLInputLayout::Description in_position, in_color;
-
 			GLShader* gls = static_cast<GLShader*>(shader);
-			
-			in_position.location = gls->get_uniform_location("in_position");
-			in_position.type = GL_FLOAT;
-			in_position.normalized = GL_FALSE;
-			in_position.element_count = 3;
-			in_position.offset = 0;
 
-			in_color.location = gls->get_uniform_location("in_color");
-			in_color.type = GL_UNSIGNED_BYTE;
-			in_color.normalized = GL_TRUE;
-			in_color.element_count = 4;
-			in_color.offset = 3 * sizeof(GLfloat);
+			// invalid descriptor!
+			assert(descriptor.total_attributes > 0);
 
-			layout->dict["in_position"] = in_position;
-			layout->dict["in_color"] = in_color;
+			// descriptor doesn't match shader!
+			assert(descriptor.total_attributes == gls->attributes.size());
+
+			// allocate enough layout items to hold all the descriptors
+			layout->items.allocate(descriptor.total_attributes);
+
+			size_t current_offset = 0;
+
+			// We need to re-map the source data to the data reported by the
+			// driver. The attributes or uniforms may be re-arranged by the driver.
+			for (size_t index = 0; index < descriptor.total_attributes; ++index)
+			{
+				const VertexDescriptor::InputDescription& input = descriptor[index];
+				LOGV("input [%i], name = '%s', type = %i, count = %i\n", 
+					index,
+					input.name(),
+					input.type,
+					input.element_count
+					);
+
+				const VertexDataTypeToGL& gldata = _vertex_data_to_gl[input.type];
+
+				GLInputLayout::Description target;
+				target.location = gls->get_attribute_location(input.name());
+				target.type = gldata.type;
+				target.normalized = gldata.normalized;
+				target.element_count = input.element_count;
+				target.size = gldata.element_size * input.element_count;
+				target.offset = current_offset;
+
+				layout->items[target.location] = target;
+
+				// increment the offset pointer
+				current_offset += target.size;
+			}
 
 			layout->vertex_stride = descriptor.stride();
 
