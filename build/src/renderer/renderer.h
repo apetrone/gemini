@@ -490,6 +490,18 @@ namespace render2
 	typedef HashSet<param_string, param_string, core::util::hash> RenderParameters;
 
 	// ---------------------------------------------------------------------
+	// table of render parameters
+	// <variable>: [<options/type>]
+	// ---------------------------------------------------------------------
+	// vsync: ["on", "off"]
+	// depth_size: <uint32_t>
+	// multisample: <uint32_t>
+	// gamma_correct: ["true", "false"]
+	
+
+
+
+	// ---------------------------------------------------------------------
 	//
 	// ---------------------------------------------------------------------
 	
