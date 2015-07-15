@@ -25,79 +25,15 @@
 #pragma once
 
 #include <renderer/gl/gemgl.h>
+#include "r2_opengl_common.h"
 
+#include <runtime/logging.h>
 
 
 namespace render2
 {
 	using namespace renderer;
-	static size_t type_to_bytes(const GLenum& type)
-	{
-		switch(type)
-		{
-			case GL_FLOAT_VEC2: return sizeof(GLfloat) * 2;
-			case GL_FLOAT_VEC3: return sizeof(GLfloat) * 3;
-			case GL_FLOAT_VEC4: return sizeof(GLfloat) * 4;
-				
-			case GL_FLOAT_MAT4: return sizeof(GLfloat) * 16;
-				
-				
-			default: break;
-		}
-		
-		
-		assert(0);
-		return 0;
-	}
-	
-	const size_t MAX_ATTRIBUTE_NAME_LENGTH = 32;
-	struct shader_variable
-	{
-		// location of this variable
-		GLint location;
-		
-		// byte-length of name
-		GLsizei length;
-		
-		// byte-length of the attribute value
-		GLint size;
-		
-		// attribute name (null-terminated string)
-		GLchar name[ MAX_ATTRIBUTE_NAME_LENGTH ];
-		
-		// data type of the attribute
-		GLenum type;
-		
-		// size (in bytes) of this type
-		GLint byte_size;
-		
-		void compute_size()
-		{
-			// compute byte size for this attribute
-			byte_size = (size * type_to_bytes(type));
-		}
-	};
 
-	struct VertexDataTypeToGL
-	{
-		GLenum type;
-		GLenum normalized;
-		uint32_t element_size;
-		
-		VertexDataTypeToGL(GLenum _type = GL_INVALID_ENUM, GLenum _normalized = GL_INVALID_ENUM, uint32_t _element_size = 0) :
-			type(_type),
-			normalized(_normalized),
-			element_size(_element_size)
-		{
-		}
-	};
-	
-#define VERTEXDATA_TO_GL(vdt, gl_type, gl_normalized, element_size) \
-	_vertex_data_to_gl[ vdt ] = VertexDataTypeToGL(gl_type, gl_normalized, element_size)
-	
-	VertexDataTypeToGL _vertex_data_to_gl[ VD_TOTAL ];
-	
-	
 	struct OpenGLDevice : public Device
 	{
 		struct GLShader : public Shader
@@ -446,59 +382,6 @@ namespace render2
 			}
 		};
 		
-		class GLCommandSerializer : public CommandSerializer
-		{
-		public:
-			GLCommandSerializer(CommandQueue& command_queue) :
-			queue(command_queue)
-			{
-			}
-			
-			virtual void vertex_buffer(Buffer* buffer)
-			{
-				queue.add_command(
-								  Command(COMMAND_SET_VERTEX_BUFFER, buffer)
-								  );
-			}
-			
-			virtual void draw(size_t initial_offset, size_t total, size_t instance_index, size_t index_count)
-			{
-				queue.add_command(
-								  Command(COMMAND_DRAW, 0, 0, initial_offset, total, instance_index, index_count)
-								  );
-			}
-			
-			virtual void draw_indexed_primitives(Buffer* index_buffer, size_t total)
-			{
-				queue.add_command(
-								  Command(COMMAND_DRAW_INDEXED, index_buffer, 0, total, 0, 0, 1)
-								  );
-			}
-			
-			virtual void pipeline(Pipeline* pipeline)
-			{
-				queue.add_command(
-								  Command(COMMAND_PIPELINE, pipeline)
-								  );
-			}
-			
-			virtual void viewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
-			{
-				queue.add_command(
-								  Command(COMMAND_VIEWPORT, 0, 0, x, y, width, height)
-								  );
-			}
-			
-			virtual void texture(const Image& texture, uint32_t index)
-			{
-			}
-			
-		private:
-			CommandQueue& queue;
-		}; // GLCommandSerializer
-
-
-		
 	private:
 		render2::RenderTarget default_target;
 		
@@ -844,15 +727,7 @@ namespace render2
 			default_target.height = backbuffer_height;
 		}
 		
-		virtual CommandSerializer* create_serializer(CommandQueue& command_queue)
-		{
-			GLCommandSerializer* serializer = MEMORY_NEW(GLCommandSerializer, core::memory::global_allocator())(command_queue);
-			return serializer;
-		}
-		
-		virtual void destroy_serializer(CommandSerializer* serializer)
-		{
-			MEMORY_DELETE(serializer, core::memory::global_allocator());
-		}
+		virtual CommandSerializer* create_serializer(CommandQueue& command_queue);
+		virtual void destroy_serializer(CommandSerializer* serializer);
 	}; // OpenGLDevice
 } // namespace render2

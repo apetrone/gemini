@@ -25,56 +25,11 @@
 #pragma once
 
 #include <renderer/gl/gemgl.h>
+#include "r2_opengl_common.h"
 
 namespace render2
 {
 	using namespace renderer;
-	static size_t type_to_bytes(const GLenum& type)
-	{
-		switch(type)
-		{
-			case GL_FLOAT_VEC2: return sizeof(GLfloat) * 2;
-			case GL_FLOAT_VEC3: return sizeof(GLfloat) * 3;
-			case GL_FLOAT_VEC4: return sizeof(GLfloat) * 4;
-				
-			case GL_FLOAT_MAT4: return sizeof(GLfloat) * 16;
-				
-				
-			default: break;
-		}
-		
-		
-		assert(0);
-		return 0;
-	}
-	
-	const size_t MAX_ATTRIBUTE_NAME_LENGTH = 32;
-	struct shader_variable
-	{
-		// location of this variable
-		GLint location;
-		
-		// byte-length of name
-		GLsizei length;
-		
-		// byte-length of the attribute value
-		GLint size;
-		
-		// attribute name (null-terminated string)
-		GLchar name[ MAX_ATTRIBUTE_NAME_LENGTH ];
-		
-		// data type of the attribute
-		GLenum type;
-		
-		// size (in bytes) of this type
-		GLint byte_size;
-		
-		void compute_size()
-		{
-			// compute byte size for this attribute
-			byte_size = (size * type_to_bytes(type));
-		}
-	};
 	
 	struct GLES2Device : public Device
 	{
