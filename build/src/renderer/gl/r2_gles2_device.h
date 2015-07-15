@@ -33,242 +33,22 @@ namespace render2
 	
 	struct GLES2Device : public Device
 	{
-		struct GLShader : public Shader
-		{
-			GLint id;
-			FixedArray<shader_variable> uniforms;
-			FixedArray<shader_variable> attributes;
-			
-			GLShader()
-			{
-				LOGV("creating an opengl program...\n");
-				assert(gl.CreateProgram);
-				id = gl.CreateProgram();
-
-				LOGV("creating opengl shaders...\n");
-				GLint vert = gl.CreateShader(GL_VERTEX_SHADER);
-				GLint frag = gl.CreateShader(GL_FRAGMENT_SHADER);
-				
-				const char* vertex_shader_source = "\
-				precision lowp float;\
-				uniform mat4 modelview_matrix;\
-				uniform mat4 projection_matrix;\
-				\
-				attribute vec4 in_position;\
-				attribute vec4 in_color;\
-				varying vec4 vertex_color;\
-				\
-				void main()\
-				{\
-				gl_Position = (projection_matrix * modelview_matrix * in_position);\
-				vertex_color = in_color;\
-				}";
-				
-				const char* fragment_shader_source = "\
-				precision lowp float;\
-				varying vec4 vertex_color;\
-				\
-				void main()\
-				{\
-				gl_FragColor = vertex_color;\
-				}";
-				
-				bool result = false;
-				result = compile_shader(vert, vertex_shader_source, "", "#version 100\n");
-				result = compile_shader(frag, fragment_shader_source, "", "#version 100\n");
-				
-				
-				// attach shaders
-				gl.AttachShader(id, vert); gl.CheckError("AttachShader (vert)");
-				gl.AttachShader(id, frag); gl.CheckError("AttachShader (frag)");
-
-				
-				// link and activate shader
-				gl.LinkProgram(id);
-				gl.CheckError("LinkProgram");
-				GLint is_linked = 0;
-				gl.GetProgramiv(id, GL_LINK_STATUS, &is_linked);
-				gl.CheckError("link and activate shader GetProgramiv");
-				
-				if (!is_linked)
-				{
-					dump_program_log();
-				}
-				
-				assert(is_linked == 1);
-				
-				
-				// activate program
-				gl.UseProgram(id);
-				gl.CheckError("activate program UseProgram");
-
-				
-				{
-					GLint active_attributes = 0;
-					gl.GetProgramiv(id, GL_ACTIVE_ATTRIBUTES, &active_attributes);
-					gl.CheckError("inspect attributes GetProgramiv");
-					
-					attributes.allocate(active_attributes);
-					
-					for (GLint attribute_index = 0; attribute_index < active_attributes; ++attribute_index)
-					{
-						shader_variable& attribute = attributes[attribute_index];
-						gl.GetActiveAttrib(id, attribute_index, MAX_ATTRIBUTE_NAME_LENGTH, &attribute.length, &attribute.size, &attribute.type, attribute.name);
-						attribute.location = gl.GetAttribLocation(id, attribute.name);
-						LOGV("attribute: %i, location: %i, name: %s, size: %i, type: %i\n",
-							 attribute_index,
-							 attribute.location,
-							 attribute.name,
-							 attribute.size,
-							 attribute.type);
-						
-						attribute.compute_size();
-					}
-				}
-				
-				// cache uniform locations
-				{
-					GLint active_uniforms = 0;
-					gl.GetProgramiv(id, GL_ACTIVE_UNIFORMS, &active_uniforms);
-					
-					// allocate data for uniforms
-					uniforms.allocate(active_uniforms);
-					
-					for (GLint uniform_index = 0; uniform_index < active_uniforms; ++uniform_index)
-					{
-						shader_variable& uniform = uniforms[uniform_index];
-						gl.GetActiveUniform(id, uniform_index, MAX_ATTRIBUTE_NAME_LENGTH, &uniform.length, &uniform.size, &uniform.type, uniform.name);
-						uniform.location = gl.GetUniformLocation(id, uniform.name);
-						LOGV("attribute: %i, location: %i, name: %s, size: %i, type: %i\n",
-							 uniform_index,
-							 uniform.location,
-							 uniform.name,
-							 uniform.size,
-							 uniform.type);
-						
-						uniform.compute_size();
-					}
-				}
-				
-				
-				// deactivate
-				gl.UseProgram(0);
-				
-				
-				// detach shaders
-				gl.DetachShader(id, vert);
-				gl.DetachShader(id, frag);
-				
-				
-				// delete shaders
-				gl.DeleteShader(frag);
-				gl.DeleteShader(vert);
-			}
-			
-			~GLShader()
-			{
-				gl.DeleteProgram(id);
-			}
-			
-			
-			bool compile_shader(GLint shader, const char* source, const char* preprocessor_defines, const char* version)
-			{
-				GLint is_compiled = 0;
-				const char* shader_source[3] = {
-					version,
-					preprocessor_defines,
-					source
-				};
-				
-				gl.ShaderSource(shader, 3, (GLchar**)shader_source, 0);
-				gl.CheckError("ShaderSource");
-				
-				gl.CompileShader(shader);
-				gl.CheckError("CompileShader");
-				
-				gl.GetShaderiv(shader, GL_COMPILE_STATUS, &is_compiled);
-				gl.CheckError("GetShaderiv");
-				
-				assert(is_compiled);
-				
-				return is_compiled;
-			}
-			
-			char* query_program_info_log(GLObject handle)
-			{
-				int log_length = 0;
-				char* logbuffer = 0;
-				gl.GetProgramiv(id, GL_INFO_LOG_LENGTH, &log_length);
-				if (log_length > 0)
-				{
-					logbuffer = (char*)MEMORY_ALLOC(log_length+1, core::memory::global_allocator());
-					memset(logbuffer, 0, log_length);
-					
-					gl.GetProgramInfoLog(handle, log_length, &log_length, logbuffer);
-					if (log_length > 0)
-					{
-						return logbuffer;
-					}
-					else
-					{
-						MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
-					}
-				}
-				
-				return 0;
-			} // query_program_info_log
-			
-			void dump_program_log()
-			{
-				char* logbuffer = query_program_info_log(id);
-				if (logbuffer)
-				{
-					LOGW("Program Info Log:\n");
-					LOGW("%s\n", logbuffer);
-					MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
-				}
-			}
-		};
-		
-		struct GLPipeline : public Pipeline
-		{
-			GLShader* program;
-			VertexDescriptor vertex_description;
-			
-			GLPipeline(const PipelineDescriptor& descriptor)
-			{
-				program = (GLShader*)descriptor.shader;
-				
-				// compute the size of the constant buffer we'll need
-				size_t total_bytes = sizeof(glm::mat4) * 2;
-				
-				this->cb = MEMORY_NEW(ConstantBuffer, core::memory::global_allocator())(total_bytes);
-			}
-			
-			
-			~GLPipeline()
-			{
-				MEMORY_DELETE(this->cb, core::memory::global_allocator());
-			}
-		};
-		
-		
 		struct GLBuffer : public Buffer
 		{		
 			// array, element buffer ids
 			GLuint vbo;
-			
+			const void* buffer_data;
 			GLenum type;
 			
 			GLBuffer(size_t size_bytes, GLenum buffer_type) :
 			type(buffer_type)
 			{
 				vbo = 0;
-				
+				buffer_data = 0;
 				max_size = size_bytes;
 				
-				gl.GenBuffers(1, &vbo);
-				gl.CheckError("GLBuffer() - GenBuffers");
+				// gl.GenBuffers(1, &vbo);
+				// gl.CheckError("GLBuffer() - GenBuffers");
 				
 				bind();
 				
@@ -279,28 +59,29 @@ namespace render2
 			
 			~GLBuffer()
 			{
-				gl.DeleteBuffers(1, &vbo);
-				gl.CheckError("~GLBuffer() - DeleteBuffers");
+				// gl.DeleteBuffers(1, &vbo);
+				// gl.CheckError("~GLBuffer() - DeleteBuffers");
 			}
 						
 			void bind()
 			{
-				gl.BindBuffer(type, vbo);
-				gl.CheckError("bind -> BindBuffer");
+				// gl.BindBuffer(type, vbo);
+				// gl.CheckError("bind -> BindBuffer");
 			}
 			
 			void unbind()
 			{
-				gl.BindBuffer(type, 0);
-				gl.CheckError("unbind -> BindBuffer(0)");
+				// gl.BindBuffer(type, 0);
+				// gl.CheckError("unbind -> BindBuffer(0)");
 			}
 			
 			// upload data to the GPU
 			void upload(const void* data, size_t size_bytes)
 			{
 				assert(max_size >= size_bytes);
-				gl.BufferData(type, size_bytes, data, GL_STREAM_DRAW);
-				gl.CheckError("upload -> BufferData");
+				// gl.BufferData(type, size_bytes, 0, GL_STREAM_DRAW);
+				// gl.CheckError("upload -> BufferData");
+				buffer_data = data;
 			}
 			
 			void setup(const VertexDescriptor& descriptor)
@@ -308,58 +89,14 @@ namespace render2
 				//				core::util::MemoryStream ms;
 				//				ms.init(pointer, max_size);
 			}
+
+			const char* get_data()
+			{
+				return reinterpret_cast<const char*>(buffer_data);
+			}
 		};
 		
-		class GLCommandSerializer : public CommandSerializer
-		{
-		public:
-			GLCommandSerializer(CommandQueue& command_queue) :
-			queue(command_queue)
-			{
-			}
-			
-			virtual void vertex_buffer(Buffer* buffer)
-			{
-				queue.add_command(
-								  Command(COMMAND_SET_VERTEX_BUFFER, buffer)
-								  );
-			}
-			
-			virtual void draw(size_t initial_offset, size_t total, size_t instance_index, size_t index_count)
-			{
-				queue.add_command(
-								  Command(COMMAND_DRAW, 0, 0, initial_offset, total, instance_index, index_count)
-								  );
-			}
-			
-			virtual void draw_indexed_primitives(Buffer* index_buffer, size_t total)
-			{
-				queue.add_command(
-								  Command(COMMAND_DRAW_INDEXED, index_buffer, 0, total, 0, 0, 1)
-								  );
-			}
-			
-			virtual void pipeline(Pipeline* pipeline)
-			{
-				queue.add_command(
-								  Command(COMMAND_PIPELINE, pipeline)
-								  );
-			}
-			
-			virtual void viewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
-			{
-				queue.add_command(
-								  Command(COMMAND_VIEWPORT, 0, 0, x, y, width, height)
-								  );
-			}
-			
-			virtual void texture(const Image& texture, uint32_t index)
-			{
-			}
-			
-		private:
-			CommandQueue& queue;
-		};
+
 		
 	private:
 		render2::RenderTarget default_target;
@@ -373,6 +110,8 @@ namespace render2
 		GLES2Device()
 		{
 			reset();
+
+			populate_vertexdata_table();
 		}
 		
 		~GLES2Device()
@@ -390,17 +129,21 @@ namespace render2
 		
 		void draw(
 				  GLPipeline* pipeline,
-				  GLBuffer* vertex_stream,
+				  GLBuffer* vertex_buffer,
 				  size_t initial_offset,
 				  size_t total,
 				  size_t instance_index,
 				  size_t index_count)
 		{
-			activate_pipeline(pipeline, vertex_stream);
+			vertex_buffer->bind();
+			activate_pipeline(pipeline, vertex_buffer);
 
 			gl.DrawArrays(GL_TRIANGLES, initial_offset, total);
+			gl.CheckError("DrawArrays");
 			
 			deactivate_pipeline(pipeline);
+
+			vertex_buffer->unbind();
 		}
 		
 		
@@ -441,7 +184,7 @@ namespace render2
 				offset += uniform.byte_size;
 			}
 			
-
+#if 0
 			// mapping tables (from data_type to opengl)
 			GLenum gl_type[] = {
 				GL_FLOAT,
@@ -471,8 +214,6 @@ namespace render2
 			// vertex attributes than the pipeline was configured for.
 			assert(pipeline->program->attributes.size() == pipeline->vertex_description.size());
 			
-			vertex_buffer->bind();
-			
 			pipeline->vertex_description.reset();
 			size_t vertex_stride = pipeline->vertex_description.stride();
 			for (size_t index = 0; index < pipeline->vertex_description.size(); ++index)
@@ -491,13 +232,33 @@ namespace render2
 				
 				assert(element_count >= 1 && element_count <= 4);
 				
-				gl.VertexAttribPointer(index, element_count, enum_type, gl_normalized[type], vertex_stride, (void*)offset);
+				const char* data = vertex_buffer->get_data();
+
+				gl.VertexAttribPointer(index, element_count, enum_type, gl_normalized[type], vertex_stride, (void*)(data+offset));
 				gl.CheckError("VertexAttribPointer");
 				
 				offset += attribute_size;
 			}
-			
-			vertex_buffer->unbind();
+#else
+
+			GLInputLayout* layout = static_cast<GLInputLayout*>(pipeline->input_layout);
+			for (size_t index = 0; index < layout->items.size(); ++index)
+			{
+				GLInputLayout::Description& item = layout->items[index];
+				
+				assert(item.type != GL_INVALID_ENUM);
+				
+				assert(item.element_count >= 1 && item.element_count <= 4);
+
+				gl.EnableVertexAttribArray(index);
+				gl.CheckError("EnableVertexAttribArray");
+				
+				const char* data = vertex_buffer->get_data();
+
+				gl.VertexAttribPointer(index, item.element_count, item.type, item.normalized, layout->vertex_stride, (void*)(data+item.offset));
+				gl.CheckError("VertexAttribPointer");
+			}
+#endif
 		}
 		
 		void deactivate_pipeline(GLPipeline* pipeline)
@@ -623,19 +384,23 @@ namespace render2
 		
 		virtual InputLayout* create_input_layout(const VertexDescriptor& descriptor, Shader* shader)
 		{
-			return nullptr;
+			GLInputLayout* gllayout = MEMORY_NEW(GLInputLayout, core::memory::global_allocator());
+			GLShader* glshader = static_cast<GLShader*>(shader);
+
+			setup_input_layout(gllayout, descriptor, glshader);
+
+			return gllayout;
 		}
 
 		virtual void destroy_input_layout(InputLayout* layout)
 		{
-
+			MEMORY_DELETE(layout, core::memory::global_allocator());
 		}
 
 		virtual Pipeline* create_pipeline(const PipelineDescriptor& descriptor)
 		{
 			GLPipeline* pipeline = MEMORY_NEW(GLPipeline, core::memory::global_allocator())(descriptor);
-			pipeline->vertex_description = descriptor.vertex_description;
-			
+			setup_pipeline(pipeline, descriptor);
 			return pipeline;
 		}
 		
@@ -649,7 +414,39 @@ namespace render2
 		
 		virtual Shader* create_shader(const char* name)
 		{
-			return MEMORY_NEW(GLShader, core::memory::global_allocator());
+			GLShader* shader = MEMORY_NEW(GLShader, core::memory::global_allocator());
+
+			const char* vertex_shader_source = "\
+			precision lowp float;\
+			uniform mat4 projection_matrix;\
+			uniform mat4 modelview_matrix;\
+			\
+			attribute vec4 in_color;\
+			attribute vec4 in_position;\
+			varying vec4 vertex_color;\
+			\
+			void main()\
+			{\
+			gl_Position = (projection_matrix * modelview_matrix * in_position);\
+			vertex_color = in_color;\
+			}";
+			
+			const char* fragment_shader_source = "\
+			precision lowp float;\
+			varying vec4 vertex_color;\
+			\
+			void main()\
+			{\
+			gl_FragColor = vertex_color;\
+			}";
+
+			shader->build_from_source(
+				vertex_shader_source,
+				fragment_shader_source,
+				"",
+				"#version 100\n");
+
+			return shader;
 		}
 		
 		virtual void destroy_shader(Shader* shader)
@@ -673,15 +470,7 @@ namespace render2
 			default_target.height = backbuffer_height;
 		}
 		
-		virtual CommandSerializer* create_serializer(CommandQueue& command_queue)
-		{
-			GLCommandSerializer* serializer = MEMORY_NEW(GLCommandSerializer, core::memory::global_allocator())(command_queue);
-			return serializer;
-		}
-		
-		virtual void destroy_serializer(CommandSerializer* serializer)
-		{
-			MEMORY_DELETE(serializer, core::memory::global_allocator());
-		}
+		virtual CommandSerializer* create_serializer(CommandQueue& command_queue);
+		virtual void destroy_serializer(CommandSerializer* serializer);
 	}; // GLES2Device
 } // namespace render2
