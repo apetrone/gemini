@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2014- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -24,33 +24,52 @@
 // -------------------------------------------------------------
 #pragma once
 
-namespace renderer
-{
-	struct RenderTarget
-	{
-		enum AttachmentType
-		{
-			COLOR,
-			DEPTHSTENCIL
-		};
-		
-		uint16_t width;
-		uint16_t height;
-		
-		uint32_t color_texture_id;
-		uint32_t depth_texture_id;
-	}; // RenderTarget
-} // namespace renderer
-
+#include <core/stackstring.h>
+#include <core/typedefs.h>
 
 namespace render2
 {
-	// ---------------------------------------------------------------------
-	// RenderTarget
-	// ---------------------------------------------------------------------
-	struct RenderTarget
+	const size_t MAX_VERTEX_DESCRIPTORS = 8;
+	
+	enum VertexDataType
 	{
-		uint32_t width;
-		uint32_t height;
+		VD_FLOAT2 = 0,
+		VD_FLOAT3,
+		VD_FLOAT4,
+		VD_INT4,
+		VD_UNSIGNED_INT,
+		VD_UNSIGNED_BYTE3,
+		VD_UNSIGNED_BYTE4,
+		VD_TOTAL
 	};
+	
+	// describes the layout of the vertex stream
+	struct VertexDescriptor
+	{
+		struct InputDescription
+		{
+			core::StackString<32> name;
+			VertexDataType type;
+			size_t element_count;
+		};
+		
+		unsigned char id;
+		unsigned char total_attributes;
+		InputDescription description[ MAX_VERTEX_DESCRIPTORS ];
+		
+		static void startup();
+		static void map_type(uint32_t type, uint16_t size, uint16_t elements);
+		static uint16_t size_table[ VD_TOTAL ];
+		static uint16_t elements[ VD_TOTAL ];
+		
+		VertexDescriptor();
+		VertexDescriptor(const VertexDescriptor& other);
+		void add(const char* name, const VertexDataType& type, size_t element_count);
+		const VertexDataType& operator[](int index) const;
+		void reset();
+		size_t stride() const;
+		size_t size() const;
+		
+		const VertexDescriptor& operator= (const VertexDescriptor& other);
+	}; // VertexDescriptor
 } // namespace render2

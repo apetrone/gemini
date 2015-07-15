@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2014- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -24,32 +24,27 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "shaderprogram.h"
+//#include "shaderprogram.h"
 #include "constantbuffer.h"
-#include "rendertarget.h"
+//#include "rendertarget.h"
 
-namespace renderer
+namespace render2
 {
-	struct PipelineDescriptor
+	// ---------------------------------------------------------------------
+	// Pipeline
+	// ---------------------------------------------------------------------
+	// this will describe
+	// - the shaders to use
+	// - the vertex description
+	// - uniform
+	class Pipeline
 	{
-		ConstantBuffer* constant_buffer;
-		ShaderProgram* program;
-		RenderTarget* render_target;
+	public:
+		virtual ~Pipeline();
 		
-		bool depth_write_enabled;
-		bool stencil_write_enabled;
+		ConstantBuffer* constants() { return cb; }
 		
-		PipelineDescriptor() :
-		constant_buffer(0),
-		program(0),
-		render_target(0),
-		depth_write_enabled(true),
-		stencil_write_enabled(false)
-		{
-		}
+	protected:
+		ConstantBuffer* cb;
 	};
-	
-	struct PipelineState
-	{
-	};
-} // namespace renderer
+} // namespace render2

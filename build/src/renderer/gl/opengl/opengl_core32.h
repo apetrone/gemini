@@ -94,9 +94,6 @@ namespace renderer
 		virtual void render_target_activate(renderer::RenderTarget* rt);
 		virtual void render_target_deactivate(renderer::RenderTarget* rt);
 		virtual void render_target_set_attachment(renderer::RenderTarget* rt, renderer::RenderTarget::AttachmentType type, uint8_t index, renderer::Texture* texture);
-		
-		virtual renderer::RenderTarget* get_default_render_target() const;
-		virtual renderer::PipelineState* pipelinestate_create(const renderer::PipelineDescriptor& desc);
-		virtual void pipelinestate_destroy(renderer::PipelineState* state);
+
 	}; // GLCore32
 } // namespace renderer

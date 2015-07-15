@@ -359,10 +359,14 @@ namespace render2
 		*this = other;
 	}
 	
-	void VertexDescriptor::add(const VertexDataType& desc)
+	void VertexDescriptor::add(const char* name, const VertexDataType& type, size_t element_count)
 	{
-		description[ id ] = desc;
-		++id;
+		InputDescription descriptor;
+		descriptor.name = name;
+		descriptor.type = type;
+		descriptor.element_count = element_count;
+		
+		description[ id++ ] = descriptor;
 		
 		if ( id >= MAX_VERTEX_DESCRIPTORS-1 )
 		{
@@ -375,7 +379,7 @@ namespace render2
 	
 	const VertexDataType& VertexDescriptor::operator[](int index) const
 	{
-		return description[ index ];
+		return description[ index ].type;
 	} // operator[]
 	
 	void VertexDescriptor::reset()
@@ -393,7 +397,7 @@ namespace render2
 		VertexDataType type;
 		for(size_t index = 0; index < total_attributes; ++index)
 		{
-			type = description[index];
+			type = description[index].type;
 			size += VertexDescriptor::size_table[ type ];
 		}
 		
@@ -424,6 +428,12 @@ namespace render2
 		return *this;
 	} // operator=
 	
+	// ---------------------------------------------------------------------
+	// InputLayout
+	// ---------------------------------------------------------------------
+	InputLayout::~InputLayout()
+	{
+	}
 	
 	// ---------------------------------------------------------------------
 	// Pipeline
@@ -451,43 +461,40 @@ namespace render2
 	}
 	
 	// ---------------------------------------------------------------------
-	// CommandQueue
-	// ---------------------------------------------------------------------
-	CommandQueue::CommandQueue(Pass* pass)
-	{
-		this->pass = pass;
-		total_commands = 0;
-	}
-	
-	void CommandQueue::add_command(const Command& command)
-	{
-		assert(total_commands < 32);
-		commands[total_commands++] = command;
-	}
-		
-	// ---------------------------------------------------------------------
-	// ConstantBuffer
-	// ---------------------------------------------------------------------
-	ConstantBuffer::ConstantBuffer(size_t total_size)
-	{
-		data = MEMORY_ALLOC(total_size, core::memory::global_allocator());
-		max_size = total_size;
-	}
-	
-	ConstantBuffer::~ConstantBuffer()
-	{
-		MEMORY_DEALLOC(data, core::memory::global_allocator());
-		max_size = 0;
-	}
-	
-	void ConstantBuffer::assign(const void* src, const size_t bytes)
-	{
-		assert(bytes <= max_size);
-		memcpy(data, src, bytes);
-	}
-	
-	// ---------------------------------------------------------------------
 	// Device
 	// ---------------------------------------------------------------------
 	Device::~Device() {}
+} // namespace render2
+
+
+#if defined(PLATFORM_OPENGL_SUPPORT)
+	#include "gl/r2_opengl_device.h"
+#elif defined(PLATFORM_GLES2_SUPPORT)
+	#include "gl/r2_gles2_device.h"
+#else
+	#error Unknown renderer!
+#endif
+
+namespace render2
+{
+	Device* create_device(const RenderParameters& params)
+	{
+		// determine the renderer
+		assert(params.has_key("rendering_backend"));
+		
+		const param_string& renderer = params["rendering_backend"];
+		LOGV("create device for rendering_backend '%s'\n", renderer());
+		
+#if defined(PLATFORM_OPENGL_SUPPORT)
+		return MEMORY_NEW(OpenGLDevice, core::memory::global_allocator());
+#elif defined(PLATFORM_GLES2_SUPPORT)
+		return MEMORY_NEW(GLES2Device, core::memory::global_allocator());
+#endif
+		return nullptr;
+	}
+	
+	void destroy_device(Device* device)
+	{
+		MEMORY_DELETE(device, core::memory::global_allocator());
+	}
 } // namespace render2

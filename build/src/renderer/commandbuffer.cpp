@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2014- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -23,8 +23,19 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "commandbuffer.h"
+#include <assert.h>
 
-namespace renderer
+namespace render2
 {
-
-} // namespace renderer
+	CommandQueue::CommandQueue(Pass* pass)
+	{
+		this->pass = pass;
+		total_commands = 0;
+	}
+	
+	void CommandQueue::add_command(const Command& command)
+	{
+		assert(total_commands < 32);
+		commands[total_commands++] = command;
+	}
+} // namespace render2

@@ -35,6 +35,7 @@
 #include <core/mathlib.h> // for glm
 #include <core/datastream.h>
 #include <core/str.h>
+#include <core/hashset.h>
 
 namespace renderer
 {
@@ -368,12 +369,7 @@ namespace renderer
 		virtual void render_target_activate(renderer::RenderTarget* rt) = 0;
 		virtual void render_target_deactivate(renderer::RenderTarget* rt) = 0;
 		virtual void render_target_set_attachment(renderer::RenderTarget* rt, renderer::RenderTarget::AttachmentType type, uint8_t index, renderer::Texture* texture) = 0;
-		
-		
-		
-		virtual RenderTarget* get_default_render_target() const = 0;
-		virtual PipelineState* pipelinestate_create(const PipelineDescriptor& desc) = 0;
-		virtual void pipelinestate_destroy(PipelineState* state) = 0;
+
 	}; // IRenderDriver
 	typedef IRenderDriver * (*RenderDriverCreator)();
 	
@@ -381,19 +377,14 @@ namespace renderer
 	IRenderDriver * driver();
 } // namespace renderer
 
-
+#include "constantbuffer.h"
+#include "commandbuffer.h"
+#include "vertexdescriptor.h"
+#include "pipeline.h"
 
 namespace render2
 {
-	enum ClearFlags
-	{
-		ClearFlag_Invalid,
-		ClearFlag_ColorBuffer,
-		ClearFlag_DepthBuffer
-	};
-	
 
-	
 	struct Region
 	{
 		uint32_t x;
@@ -403,13 +394,7 @@ namespace render2
 	};
 	
 	
-	// ---------------------------------------------------------------------
-	// Shader
-	// ---------------------------------------------------------------------
-	struct Shader
-	{
-		virtual ~Shader();
-	};
+
 	
 //	struct TextureDescriptor
 //	{
@@ -438,14 +423,7 @@ namespace render2
 		void update_pixels(const Region& rect, size_t miplevel, void* bytes, size_t bytes_per_row);
 	};
 
-	// ---------------------------------------------------------------------
-	// RenderTarget
-	// ---------------------------------------------------------------------
-	struct RenderTarget
-	{
-		uint32_t width;
-		uint32_t height;
-	};
+
 	
 	// ---------------------------------------------------------------------
 	// Pass
@@ -458,49 +436,19 @@ namespace render2
 		// depth attachment
 		// stencil attachment
 		
-		RenderTarget* target;
+		struct RenderTarget* target;
 		float clear_color[4];
 	};
 	
-	// ---------------------------------------------------------------------
-	// VertexDescriptor
-	// ---------------------------------------------------------------------
-	enum VertexDataType
+
+	
+	
+	// This is an implementation-specific format which
+	// serves as a bridge between the Shader and VertexDescriptor.
+	struct InputLayout
 	{
-		VD_FLOAT2 = 0,
-		VD_FLOAT3,
-		VD_FLOAT4,
-		VD_INT4,
-		VD_UNSIGNED_INT,
-		VD_UNSIGNED_BYTE3,
-		VD_UNSIGNED_BYTE4,
-		VD_TOTAL
+		virtual ~InputLayout();
 	};
-	
-	const size_t MAX_VERTEX_DESCRIPTORS = 8;
-	
-	// describes the layout of the vertex stream
-	struct VertexDescriptor
-	{
-		unsigned char id;
-		unsigned char total_attributes;
-		VertexDataType description[ MAX_VERTEX_DESCRIPTORS ];
-		
-		static void startup();
-		static void map_type(uint32_t type, uint16_t size, uint16_t elements);
-		static uint16_t size_table[ VD_TOTAL ];
-		static uint16_t elements[ VD_TOTAL ];
-		
-		VertexDescriptor();
-		VertexDescriptor(const VertexDescriptor& other);
-		void add(const VertexDataType& type);
-		const VertexDataType& operator[](int index) const;
-		void reset();
-		size_t stride() const;
-		size_t size() const;
-		
-		const VertexDescriptor& operator= (const VertexDescriptor & other);
-	}; // VertexDescriptor
 	
 	// ---------------------------------------------------------------------
 	// PipelineDescriptor
@@ -511,54 +459,12 @@ namespace render2
 		Shader* shader;
 		uint32_t attachments[ MAX_PIPELINE_ATTACHMENTS ];
 		VertexDescriptor vertex_description;
+		InputLayout* input_layout;
 	};
-	
-	// ---------------------------------------------------------------------
-	// Command
-	// ---------------------------------------------------------------------
-	enum CommandType
-	{
-		COMMAND_INVALID,			// invalid command
-		COMMAND_SET_VERTEX_BUFFER,	// change vertex buffer
-		COMMAND_DRAW,				// draw from vertex buffer
-		COMMAND_DRAW_INDEXED,		// draw from index buffer
-		COMMAND_PIPELINE,			// set the rendering pipeline
-		COMMAND_VIEWPORT,			// set viewport
-		COMMAND_STATE
-	};
-	
-	struct Command
-	{
-		CommandType type;
-		void* data[2];
-		size_t params[4];
 		
-		Command(CommandType command_type = COMMAND_INVALID,
-			void* data0 = 0,
-			void* data1 = 0,
-			size_t param0 = 0,
-			size_t param1 = 0,
-			size_t param2 = 0,
-			size_t param3 = 0);
-	};
-	
-	// ---------------------------------------------------------------------
-	// CommandQueue
-	// ---------------------------------------------------------------------
-	struct CommandQueue
-	{
-		Pass* pass;
-		size_t total_commands;
-		Command commands[32];
-		
-		CommandQueue(Pass* pass);
-		void add_command(const Command& command);
-	};
-	
 	// ---------------------------------------------------------------------
 	// CommandSerializer
 	// ---------------------------------------------------------------------
-	class Pipeline;
 	struct CommandSerializer
 	{
 		virtual ~CommandSerializer() {}
@@ -570,89 +476,27 @@ namespace render2
 		virtual void viewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) = 0;
 		virtual void texture(const Image& texture, uint32_t index) = 0;
 	};
-	
-	// ---------------------------------------------------------------------
-	// ConstantBuffer
-	// ---------------------------------------------------------------------
-	class ConstantBuffer
-	{
-	public:
-		ConstantBuffer(size_t total_size);
-		~ConstantBuffer();
-		
-		void assign(const void* src, const size_t bytes);
-		void* get_data() { return data; }
-		
-	private:
-		size_t max_size;
-		void* data;
-	}; // ConstantBuffer
-	
-	
-	// ---------------------------------------------------------------------
-	// Pipeline
-	// ---------------------------------------------------------------------
-	// this will describe
-	// - the shaders to use
-	// - the vertex description
-	// - uniform
-	class Pipeline
-	{
-	public:
-		ConstantBuffer* constants() { return cb; }
-		
-	protected:
-		ConstantBuffer* cb;
-	};
-	
-	
-	// ---------------------------------------------------------------------
-	// Device
-	// ---------------------------------------------------------------------
-	// Most calls to the device should be executed synchronously. These are not
-	// deferred.
-	//
-	class Device
-	{
-	public:
-		virtual ~Device();
-		
-		virtual void queue_buffers(CommandQueue* const queues, size_t total_queues) = 0;
-		
-		// submit queue command buffers to GPU
-		virtual void submit() = 0;
-		
-		virtual RenderTarget* default_render_target() = 0;
-		
-		virtual Buffer* create_vertex_buffer(size_t size_bytes) = 0;
-		virtual Buffer* create_index_buffer(size_t size_bytes) = 0;
-		virtual void destroy_buffer(Buffer* buffer) = 0;
-		
-		
-		// retrieves a pointer to buffer's data; locks it for write
-		virtual void* buffer_lock(Buffer* buffer) = 0;
-		
-		// unlock a previously locked buffer
-		virtual void buffer_unlock(Buffer* buffer) = 0;
-		
-		// upload data to a buffer (should not exceed buffer's max size)
-		virtual void buffer_upload(Buffer* buffer, void* data, size_t data_size) = 0;
-		//		virtual void buffer_upload(Buffer* buffer, size_t offset, void* data, size_t data_size) = 0;
-		
-		
-		
-		virtual Pipeline* create_pipeline(const PipelineDescriptor& descriptor) = 0;
-		virtual void destroy_pipeline(Pipeline* pipeline) = 0;
-		
-		virtual Shader* create_shader(const char* name) = 0;
-		virtual void destroy_shader(Shader* shader) = 0;
-		
-		virtual void activate_render_target(const RenderTarget& rt) = 0;
-		virtual void deactivate_render_target(const RenderTarget& rt) = 0;
-		
-		virtual void init(int backbuffer_width, int backbuffer_height) = 0;
-		
-		virtual CommandSerializer* create_serializer(CommandQueue& command_queue) = 0;
-		virtual void destroy_serializer(CommandSerializer* serializer) = 0;
-	}; // class Device
 } // namespace render2
+
+
+#include "device.h"
+
+namespace render2
+{
+	// ---------------------------------------------------------------------
+	// types
+	// ---------------------------------------------------------------------
+	typedef core::StackString<128> param_string;
+	typedef HashSet<param_string, param_string, core::util::hash> RenderParameters;
+
+	// ---------------------------------------------------------------------
+	//
+	// ---------------------------------------------------------------------
+	
+	/// @brief Create a render device with the given parameters
+	Device* create_device(const RenderParameters& parameters);
+	
+	/// @brief Destroy an existing render device
+	void destroy_device(Device* device);
+} // namespace render2
+

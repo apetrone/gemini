@@ -666,6 +666,16 @@ namespace render2
 			glb->unbind();
 		}
 		
+		virtual InputLayout* create_input_layout(const VertexDescriptor& descriptor, Shader* shader)
+		{
+			return nullptr;
+		}
+
+		virtual void destroy_input_layout(InputLayout* layout)
+		{
+
+		}
+
 		virtual Pipeline* create_pipeline(const PipelineDescriptor& descriptor)
 		{
 			GLPipeline* pipeline = MEMORY_NEW(GLPipeline, core::memory::global_allocator())(descriptor);
