@@ -51,7 +51,7 @@ private:
 	uint32_t growth_factor;
 	
 	
-	int32_t find_bucket(int32_t hash, int32_t& bucket_index, bool inserting = false) const
+	int32_t find_bucket(HashType hash, int32_t& bucket_index, bool inserting = false) const
 	{
 		// use linear probing to find the bucket
 		int32_t current_index = (hash % table_size);
