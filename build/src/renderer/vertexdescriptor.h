@@ -55,15 +55,11 @@ namespace render2
 		unsigned char total_attributes;
 		InputDescription description[ MAX_VERTEX_DESCRIPTORS ];
 		
-		static void startup();
-		static uint16_t size_table[ VD_TOTAL ];
-		
 		VertexDescriptor();
 		VertexDescriptor(const VertexDescriptor& other);
 		void add(const char* name, const VertexDataType& type, size_t element_count);
 		const InputDescription& operator[](int index) const;
 		void reset();
-		size_t stride() const;
 		size_t size() const;
 		
 		const VertexDescriptor& operator= (const VertexDescriptor& other);
