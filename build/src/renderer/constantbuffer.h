@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2014- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -24,19 +24,21 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <core/mathlib.h>
+#include <core/typedefs.h>
 
-namespace renderer
+namespace render2
 {
-	struct ConstantBuffer
+	class ConstantBuffer
 	{
-		const glm::mat4* modelview_matrix;
-		const glm::mat4* projection_matrix;
-		const glm::vec3* viewer_direction;
-		const glm::vec3* viewer_position;
-		const glm::vec3* light_position;
+	public:
+		ConstantBuffer(size_t total_size);
+		~ConstantBuffer();
 		
-		ConstantBuffer();
-		virtual ~ConstantBuffer();
-	};
-} // namespace renderer
+		void assign(const void* src, const size_t bytes);
+		void* get_data() { return data; }
+		
+	private:
+		size_t max_size;
+		void* data;
+	}; // ConstantBuffer
+} // namespace render2

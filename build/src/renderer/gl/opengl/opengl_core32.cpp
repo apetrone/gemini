@@ -1553,19 +1553,4 @@ namespace renderer
 		}
 	}
 
-	RenderTarget* GLCore32::get_default_render_target() const
-	{
-		return default_render_target;
-	}
-
-	PipelineState* GLCore32::pipelinestate_create(const PipelineDescriptor& desc)
-	{
-		return nullptr;
-	}
-
-	void GLCore32::pipelinestate_destroy(PipelineState* state)
-	{
-
-	}
-
 } // namespace renderer

@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2014- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -24,24 +24,48 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "pipeline.h"
-#include "vertexbuffer.h"
+//#include "pipeline.h"
+//#include "vertexbuffer.h"
 
-namespace renderer
+#include <core/typedefs.h>
+
+namespace render2
 {
-	struct CommandBuffer
+	struct Pass;
+	
+	enum CommandType
 	{
-		// graphics state
-		void set_pipeline_state(const PipelineState* state) {}
-		void set_viewport() {}
-		void set_cullmode() {}
-		void set_face_winding() {}
-		void set_blending() {}
-		void set_depth_stencil_state() {}
-		void set_scissor_rect() {}
-		
-		
-		void draw_primitives(unsigned int start, unsigned int count) {}
-		void draw_indexed_primitives() {}
+		COMMAND_INVALID,			// invalid command
+		COMMAND_SET_VERTEX_BUFFER,	// change vertex buffer
+		COMMAND_DRAW,				// draw from vertex buffer
+		COMMAND_DRAW_INDEXED,		// draw from index buffer
+		COMMAND_PIPELINE,			// set the rendering pipeline
+		COMMAND_VIEWPORT,			// set viewport
+		COMMAND_STATE
 	};
-} // namespace renderer
+	
+	struct Command
+	{
+		CommandType type;
+		void* data[2];
+		size_t params[4];
+		
+		Command(CommandType command_type = COMMAND_INVALID,
+				void* data0 = 0,
+				void* data1 = 0,
+				size_t param0 = 0,
+				size_t param1 = 0,
+				size_t param2 = 0,
+				size_t param3 = 0);
+	};
+	
+	struct CommandQueue
+	{
+		Pass* pass;
+		size_t total_commands;
+		Command commands[32];
+		
+		CommandQueue(Pass* pass);
+		void add_command(const Command& command);
+	};
+} // namespace render2

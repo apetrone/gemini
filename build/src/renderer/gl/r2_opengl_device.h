@@ -86,6 +86,11 @@ namespace render2
 			FixedArray<shader_variable> uniforms;
 			FixedArray<shader_variable> attributes;
 			
+			GLint get_uniform_location(const char* name)
+			{
+				return gl.GetUniformLocation(id, name);
+			}
+
 			GLShader()
 			{
 				id = gl.CreateProgram();
@@ -285,10 +290,31 @@ namespace render2
 			}
 		};
 		
+		class GLInputLayout : public InputLayout
+		{
+		public:
+			
+			
+		//private:
+			struct Description
+			{
+				GLint location;
+				GLenum type;
+				GLsizei element_count;
+				GLenum normalized;
+				size_t offset;
+			};
+
+			size_t vertex_stride;
+			HashSet< core::StackString<32>, Description, core::util::hash> dict;
+			FixedArray<Description> items;
+		};
+		
 		struct GLPipeline : public Pipeline
 		{
 			GLShader* program;
 			VertexDescriptor vertex_description;
+			GLInputLayout* input_layout;
 			
 			GLPipeline(const PipelineDescriptor& descriptor)
 			{
@@ -448,7 +474,9 @@ namespace render2
 			
 		private:
 			CommandQueue& queue;
-		};
+		}; // GLCommandSerializer
+
+
 		
 	private:
 		render2::RenderTarget default_target;
@@ -544,6 +572,7 @@ namespace render2
 				
 				vertex_buffer->bind_vao();
 				
+#if 1
 				// mapping tables (from data_type to opengl)
 				GLenum gl_type[] = {
 					GL_FLOAT,
@@ -598,7 +627,25 @@ namespace render2
 					
 					offset += attribute_size;
 				}
+#else
+
+				vertex_buffer->bind();
+
+				GLInputLayout* layout = static_cast<GLInputLayout*>(pipeline->input_layout);
+				for (size_t index = 0; index < layout->items.size(); ++index)
+				{
+					GLInputLayout::Description& item = layout->items[index];
+					
+
+					gl.EnableVertexAttribArray(index);
+					gl.CheckError("EnableVertexAttribArray");
+					
+					gl.VertexAttribPointer(index, item.element_count, item.type, item.normalized, layout->vertex_stride, (void*)item.offset);
+					gl.CheckError("VertexAttribPointer");
+				}
 				
+
+#endif
 				vertex_buffer->unbind_vao();
 				
 				vertex_buffer->unbind();
@@ -725,10 +772,45 @@ namespace render2
 			glb->unbind();
 		}
 		
+		virtual InputLayout* create_input_layout(const VertexDescriptor& descriptor, Shader* shader)
+		{
+			GLInputLayout* layout = MEMORY_NEW(GLInputLayout, core::memory::global_allocator());
+			
+			// TODO: for now, we just hard-code the data structure, but this should be made dynamic
+			GLInputLayout::Description in_position, in_color;
+
+			GLShader* gls = static_cast<GLShader*>(shader);
+			
+			in_position.location = gls->get_uniform_location("in_position");
+			in_position.type = GL_FLOAT;
+			in_position.normalized = GL_FALSE;
+			in_position.element_count = 3;
+			in_position.offset = 0;
+
+			in_color.location = gls->get_uniform_location("in_color");
+			in_color.type = GL_UNSIGNED_BYTE;
+			in_color.normalized = GL_TRUE;
+			in_color.element_count = 4;
+			in_color.offset = 3 * sizeof(GLfloat);
+
+			layout->dict["in_position"] = in_position;
+			layout->dict["in_color"] = in_color;
+
+			layout->vertex_stride = descriptor.stride();
+
+			return layout;
+		}
+
+		virtual void destroy_input_layout(InputLayout* layout)
+		{
+			MEMORY_DELETE(layout, core::memory::global_allocator());
+		}
+
 		virtual Pipeline* create_pipeline(const PipelineDescriptor& descriptor)
 		{
 			GLPipeline* pipeline = MEMORY_NEW(GLPipeline, core::memory::global_allocator())(descriptor);
 			pipeline->vertex_description = descriptor.vertex_description;
+			pipeline->input_layout = static_cast<GLInputLayout*>(descriptor.input_layout);
 			
 			return pipeline;
 		}
@@ -737,6 +819,7 @@ namespace render2
 		{
 			GLPipeline* glp = static_cast<GLPipeline*>(pipeline);
 			destroy_shader(glp->program);
+			destroy_input_layout(glp->input_layout);
 			
 			MEMORY_DELETE(glp, core::memory::global_allocator());
 		}

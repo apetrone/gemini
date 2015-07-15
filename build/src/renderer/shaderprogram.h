@@ -80,3 +80,15 @@ namespace renderer
 	}; // ShaderErrorType
 
 } // namespace renderer
+
+
+namespace render2
+{
+	// ---------------------------------------------------------------------
+	// Shader
+	// ---------------------------------------------------------------------
+	struct Shader
+	{
+		virtual ~Shader();
+	};
+} // namespace render2

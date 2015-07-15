@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2014- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -22,20 +22,32 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+
 #include "constantbuffer.h"
 
-namespace renderer
+#include <core/mem.h>
+
+
+namespace render2
 {
-	ConstantBuffer::ConstantBuffer()
+	// ---------------------------------------------------------------------
+	// ConstantBuffer
+	// ---------------------------------------------------------------------
+	ConstantBuffer::ConstantBuffer(size_t total_size)
 	{
-		modelview_matrix = nullptr;
-		projection_matrix = nullptr;
-		viewer_direction = nullptr;
-		viewer_position = nullptr;
-		light_position = nullptr;
+		data = MEMORY_ALLOC(total_size, core::memory::global_allocator());
+		max_size = total_size;
 	}
 	
 	ConstantBuffer::~ConstantBuffer()
 	{
+		MEMORY_DEALLOC(data, core::memory::global_allocator());
+		max_size = 0;
 	}
-} // namespace renderer
+	
+	void ConstantBuffer::assign(const void* src, const size_t bytes)
+	{
+		assert(bytes <= max_size);
+		memcpy(data, src, bytes);
+	}
+} // namespace render2

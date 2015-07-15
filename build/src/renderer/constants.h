@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2014- Adam Petrone
+// Copyright (C) 2015- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -24,33 +24,14 @@
 // -------------------------------------------------------------
 #pragma once
 
-namespace renderer
-{
-	struct RenderTarget
-	{
-		enum AttachmentType
-		{
-			COLOR,
-			DEPTHSTENCIL
-		};
-		
-		uint16_t width;
-		uint16_t height;
-		
-		uint32_t color_texture_id;
-		uint32_t depth_texture_id;
-	}; // RenderTarget
-} // namespace renderer
-
+#include <core/typedefs.h>
 
 namespace render2
 {
-	// ---------------------------------------------------------------------
-	// RenderTarget
-	// ---------------------------------------------------------------------
-	struct RenderTarget
-	{
-		uint32_t width;
-		uint32_t height;
-	};
+//	enum ClearFlags
+//	{
+//		ClearFlag_Invalid,
+//		ClearFlag_ColorBuffer,
+//		ClearFlag_DepthBuffer
+//	};
 } // namespace render2

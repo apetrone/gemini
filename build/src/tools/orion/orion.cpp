@@ -24,6 +24,7 @@
 // -------------------------------------------------------------
 
 #include <renderer/debug_draw.h>
+#include <renderer/renderer.h>
 
 #include <runtime/core.h>
 #include <runtime/logging.h>
@@ -51,22 +52,12 @@
 	#include <platform/windowlibrary.h>
 #endif
 
-#if defined(PLATFORM_OPENGL_SUPPORT)
-	#include <renderer/gl/r2_opengl_device.h>
-#elif defined(PLATFORM_GLES2_SUPPORT)
-	#include <renderer/gl/r2_gles2_device.h>
-#else
-	#error Unknown renderer!
-#endif
 
 using namespace platform;
 using namespace renderer;
 
 namespace render2
 {
-	typedef core::StackString<128> param_string;
-	typedef HashSet<param_string, param_string, core::util::hash> RenderParameters;
-
 	template <class O, class I>
 	O convert(const I& input)
 	{
@@ -78,27 +69,6 @@ namespace render2
 	int convert(const param_string& s)
 	{
 		return atoi(s());
-	}
-	
-	Device* create_device(const RenderParameters& params)
-	{
-		// determine the renderer
-		assert(params.has_key("rendering_backend"));
-		
-		const param_string& renderer = params["rendering_backend"];
-		LOGV("create device for rendering_backend '%s'\n", renderer());
-	
-#if defined(PLATFORM_OPENGL_SUPPORT)
-		return MEMORY_NEW(OpenGLDevice, core::memory::global_allocator());
-#elif defined(PLATFORM_GLES2_SUPPORT)
-		return MEMORY_NEW(GLES2Device, core::memory::global_allocator());
-#endif
-		return nullptr;
-	}
-	
-	void destroy_device(Device* device)
-	{
-		MEMORY_DELETE(device, core::memory::global_allocator());
 	}
 }
 
@@ -119,7 +89,7 @@ private:
 	render2::Buffer* index_buffer;
 	render2::Pipeline* pipeline;
 	
-	GLsync fence;
+//	GLsync fence;
 	
 	struct MyVertex
 	{
@@ -250,12 +220,12 @@ public:
 			renderer::startup(renderer::OpenGL, render_settings);
 			
 			// clear errors
-			gl.CheckError("before render startup");
+//			gl.CheckError("before render startup");
 			
 			// need to setup the mapping tables!
 			render2::VertexDescriptor::startup();
 			
-			fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+//			fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 		}
 		
 		// initialize the renderer
@@ -291,8 +261,14 @@ public:
 			// setup shaders
 			render2::PipelineDescriptor desc;
 			desc.shader = device->create_shader("test");
-			desc.vertex_description.add(render2::VD_FLOAT3); // position
-			desc.vertex_description.add(render2::VD_FLOAT4); // color
+			
+			render2::VertexDescriptor& vertex_format = desc.vertex_description;
+			vertex_format.add("in_position", render2::VD_FLOAT3, 1);
+			vertex_format.add("in_color", render2::VD_FLOAT4, 1);
+			desc.input_layout = device->create_input_layout(vertex_format, desc.shader);
+
+			
+			
 			pipeline = device->create_pipeline(desc);
 						
 			// populate buffer
@@ -387,6 +363,7 @@ public:
 		cb.projection_matrix = glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, -1.0f, 1.0f);
 		pipeline->constants()->assign(&cb, sizeof(leconstants));
 
+		value = 0.0f;
 
 		render2::Pass render_pass;
 		render_pass.target = device->default_render_target();
@@ -434,7 +411,7 @@ public:
 		
 		destroy_device(device);
 		
-		glDeleteSync(fence);
+//		glDeleteSync(fence);
 		
 		renderer::shutdown();
 #if defined(USE_WINDOW_LIBRARY)
