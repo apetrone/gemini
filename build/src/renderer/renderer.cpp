@@ -313,27 +313,6 @@ namespace render2
 	// ---------------------------------------------------------------------
 	// VertexDescriptor
 	// ---------------------------------------------------------------------
-	uint16_t VertexDescriptor::size_table[ VD_TOTAL ] = {0};
-
-	
-	void VertexDescriptor::startup()
-	{
-		// clear table
-		memset(VertexDescriptor::size_table, 0, sizeof(uint16_t)*VD_TOTAL);
-
-		// populate table with vertex descriptor types
-		VertexDescriptor::size_table[VD_FLOAT] = sizeof(float);
-		VertexDescriptor::size_table[VD_INT] = sizeof(int);
-		VertexDescriptor::size_table[VD_UNSIGNED_INT] = sizeof(unsigned int);
-		VertexDescriptor::size_table[VD_UNSIGNED_BYTE] = sizeof(unsigned char);
-		
-		// validate table
-		for (size_t i = 0; i < VD_TOTAL; ++i)
-		{
-			assert(VertexDescriptor::size_table[i] != 0);
-		}
-	}
-	
 	VertexDescriptor::VertexDescriptor()
 	{
 		id = 0;
@@ -378,19 +357,6 @@ namespace render2
 		id = 0;
 	} // reset
 	
-	size_t VertexDescriptor::stride() const
-	{
-		size_t size = 0;
-		VertexDataType type;
-		for(size_t index = 0; index < total_attributes; ++index)
-		{
-			type = description[index].type;
-			size += VertexDescriptor::size_table[ type ] * description[index].element_count;
-		}
-		
-		return size;
-	} // stride
-	
 	size_t VertexDescriptor::size() const
 	{
 		return total_attributes;
@@ -400,11 +366,6 @@ namespace render2
 	{
 		this->total_attributes = other.total_attributes;
 		this->id = other.id;
-		
-		for( unsigned int i = 0; i < VD_TOTAL; ++i )
-		{
-			this->size_table[i] = other.size_table[i];
-		}
 		
 		for( unsigned int id = 0; id < MAX_VERTEX_DESCRIPTORS; ++id )
 		{

@@ -788,7 +788,7 @@ namespace render2
 				current_offset += target.size;
 			}
 
-			layout->vertex_stride = descriptor.stride();
+			layout->vertex_stride = current_offset;
 
 			return layout;
 		}

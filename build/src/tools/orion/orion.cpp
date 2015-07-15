@@ -221,10 +221,7 @@ public:
 			
 			// clear errors
 //			gl.CheckError("before render startup");
-			
-			// need to setup the mapping tables!
-			render2::VertexDescriptor::startup();
-			
+
 //			fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 		}
 		
@@ -263,21 +260,19 @@ public:
 			desc.shader = device->create_shader("test");
 			
 			render2::VertexDescriptor& vertex_format = desc.vertex_description;
-			vertex_format.add("in_position", render2::VD_FLOAT3, 1);
-			vertex_format.add("in_color", render2::VD_FLOAT4, 1);
+			vertex_format.add("in_position", render2::VD_FLOAT, 3);
+			vertex_format.add("in_color", render2::VD_FLOAT, 4);
 			desc.input_layout = device->create_input_layout(vertex_format, desc.shader);
 
 			
 			
 			pipeline = device->create_pipeline(desc);
-						
-			// populate buffer
-			assert(desc.vertex_description.stride() == sizeof(MyVertex));
 
-			size_t total_bytes = desc.vertex_description.stride() * 4;
+			size_t total_bytes = sizeof(MyVertex) * 4;
 			triangle_stream = device->create_vertex_buffer(total_bytes);
 			MyVertex* vertex = reinterpret_cast<MyVertex*>(device->buffer_lock(triangle_stream));
 			
+//			MyVertex vertex[4];
 			
 			vertex[0].set_position(0, 600, 0);
 			vertex[0].set_color(1.0f, 0.0f, 0.0f, 1.0f);
@@ -292,12 +287,17 @@ public:
 			vertex[3].set_color(0.0f, 1.0f, 1.0f, 1.0f);
 
 			device->buffer_unlock(triangle_stream);
-			
+
 			
 			index_buffer = device->create_index_buffer(sizeof(uint16_t) * 3);
 			uint16_t indices[] = {0, 1, 2};
 			device->buffer_upload(index_buffer, indices, sizeof(uint16_t)*3);
 
+			
+			
+
+			
+			
 			
 			// load shaders from disk
 			
