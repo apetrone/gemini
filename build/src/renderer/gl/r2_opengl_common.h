@@ -24,8 +24,9 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <renderer/gl/gemgl.h>
+#include "gemgl.h"
 
+#include <core/fixedarray.h>
 #include <core/typedefs.h>
 
 namespace render2
@@ -77,6 +78,52 @@ namespace render2
 		}
 	};
 
+	class GLInputLayout : public InputLayout
+	{
+	public:
+		struct Description
+		{
+			GLint location;
+			GLenum type;
+			GLsizei element_count;
+			GLenum normalized;
+			size_t offset;
+			size_t size;
+		};
+		
+		size_t vertex_stride;
+		FixedArray<Description> items;
+	}; // GLInputLayout
+		
+	struct GLShader : public Shader
+	{
+		GLShader();
+		virtual ~GLShader();
+				
+		bool compile_shader(GLint shader, const char* source, const char* preprocessor_defines, const char* version);
+		char* query_program_info_log(renderer::GLObject handle);
+		void dump_program_log();
+		
+		int build_from_source(const char *vertex_shader, const char *fragment_shader, const char* preprocessor, const char* version);
+		GLint get_attribute_location(const char* name);
+		GLint get_uniform_location(const char* name);
+		
+		GLint id;
+		FixedArray<shader_variable> uniforms;
+		FixedArray<shader_variable> attributes;
+	}; // GLShader
+
+	struct GLPipeline : public Pipeline
+	{
+		GLShader* program;
+		VertexDescriptor vertex_description;
+		GLInputLayout* input_layout;
+		
+		GLPipeline(const PipelineDescriptor& descriptor);
+		virtual ~GLPipeline();
+	}; // GLPipeline
+
+
 	struct VertexDataTypeToGL
 	{
 		GLenum type;
@@ -90,9 +137,9 @@ namespace render2
 		{
 		}
 	};
-	
-	#define VERTEXDATA_TO_GL(vdt, gl_type, gl_normalized, element_size) \
-		_vertex_data_to_gl[ vdt ] = VertexDataTypeToGL(gl_type, gl_normalized, element_size)
-		
-	extern VertexDataTypeToGL _vertex_data_to_gl[ VD_TOTAL ];
+
+	void setup_input_layout(GLInputLayout* layout, const VertexDescriptor& descriptor, GLShader* shader);
+	void setup_pipeline(GLPipeline* pipeline, const PipelineDescriptor& descriptor);
+	void populate_vertexdata_table();
+	VertexDataTypeToGL* get_vertexdata_table();
 } // namespace render2
