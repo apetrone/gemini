@@ -314,37 +314,24 @@ namespace render2
 	// VertexDescriptor
 	// ---------------------------------------------------------------------
 	uint16_t VertexDescriptor::size_table[ VD_TOTAL ] = {0};
-	uint16_t VertexDescriptor::elements[ VD_TOTAL ] = {0};
+
 	
 	void VertexDescriptor::startup()
 	{
 		// clear table
 		memset(VertexDescriptor::size_table, 0, sizeof(uint16_t)*VD_TOTAL);
-		memset(VertexDescriptor::elements, 0, sizeof(uint16_t)*VD_TOTAL);
-		
+
 		// populate table with vertex descriptor types
-		map_type(VD_FLOAT2, sizeof(float), 2);
-		map_type(VD_FLOAT3, sizeof(float), 3);
-		map_type(VD_FLOAT4, sizeof(float), 4);
-		
-		map_type(VD_INT4, sizeof(int), 4);
-		
-		map_type(VD_UNSIGNED_INT, sizeof(unsigned int), 1);
-		map_type(VD_UNSIGNED_BYTE3, sizeof(unsigned char), 3);
-		map_type(VD_UNSIGNED_BYTE4, sizeof(unsigned char), 4);
+		VertexDescriptor::size_table[VD_FLOAT] = sizeof(float);
+		VertexDescriptor::size_table[VD_INT] = sizeof(int);
+		VertexDescriptor::size_table[VD_UNSIGNED_INT] = sizeof(unsigned int);
+		VertexDescriptor::size_table[VD_UNSIGNED_BYTE] = sizeof(unsigned char);
 		
 		// validate table
 		for (size_t i = 0; i < VD_TOTAL; ++i)
 		{
 			assert(VertexDescriptor::size_table[i] != 0);
-			assert(VertexDescriptor::elements[i] != 0);
 		}
-	}
-	
-	void VertexDescriptor::map_type(uint32_t type, uint16_t size, uint16_t elements)
-	{
-		VertexDescriptor::size_table[type] = size*elements;
-		VertexDescriptor::elements[type] = elements;
 	}
 	
 	VertexDescriptor::VertexDescriptor()
@@ -377,9 +364,9 @@ namespace render2
 		total_attributes = id;
 	} // add
 	
-	const VertexDataType& VertexDescriptor::operator[](int index) const
+	const VertexDescriptor::InputDescription& VertexDescriptor::operator[](int index) const
 	{
-		return description[ index ].type;
+		return description[ index ];
 	} // operator[]
 	
 	void VertexDescriptor::reset()
@@ -398,7 +385,7 @@ namespace render2
 		for(size_t index = 0; index < total_attributes; ++index)
 		{
 			type = description[index].type;
-			size += VertexDescriptor::size_table[ type ];
+			size += VertexDescriptor::size_table[ type ] * description[index].element_count;
 		}
 		
 		return size;
@@ -417,7 +404,6 @@ namespace render2
 		for( unsigned int i = 0; i < VD_TOTAL; ++i )
 		{
 			this->size_table[i] = other.size_table[i];
-			this->elements[i] = other.elements[i];
 		}
 		
 		for( unsigned int id = 0; id < MAX_VERTEX_DESCRIPTORS; ++id )
