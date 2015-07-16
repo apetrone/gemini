@@ -604,14 +604,21 @@ def get_librenderer(arguments, target_platform, libruntime):
 			"src/renderer/gl/opengl/*.cpp",
 			"src/renderer/gl/opengl/*.h"
 		]
+		librenderer.excludes += [
+			"src/renderer/gl/opengl/opengl_21.*",
+		]
 	elif arguments.gles:
 		librenderer.sources += [
 			"src/renderer/gl/*.cpp",
 			"src/renderer/gl/*.h",		
+			# "src/renderer/gl/gles2/*.cpp",
+			# "src/renderer/gl/gles2/*.h"
 			"src/renderer/gl/gles2/*.cpp",
 			"src/renderer/gl/gles2/*.h"
 		]
-
+		librenderer.excludes += [
+			"src/renderer/gl/gles2/opengl_glesv2.*"
+		]
 	macosx = librenderer.layout(platform="macosx")
 	if arguments.opengl:
 		macosx.sources += [

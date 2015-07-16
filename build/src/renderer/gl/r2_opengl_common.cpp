@@ -303,7 +303,7 @@ namespace render2
 	{
 		pipeline->vertex_description = descriptor.vertex_description;
 		pipeline->input_layout = static_cast<GLInputLayout*>(descriptor.input_layout);
-		assert(pipeline->input_layout != 0);
+		assert(pipeline->input_layout != nullptr);
 	}
 
 	void populate_vertexdata_table()

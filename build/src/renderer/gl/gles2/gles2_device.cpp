@@ -22,32 +22,21 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+#include "r2_gles2_device.h"
 
-#include "constantbuffer.h"
-
-#include <core/mem.h>
-#include <string.h> // for memcpy
+#include "glcommandserializer.h"
+#include "commandbuffer.h"
 
 namespace render2
 {
-	// ---------------------------------------------------------------------
-	// ConstantBuffer
-	// ---------------------------------------------------------------------
-	ConstantBuffer::ConstantBuffer(size_t total_size)
+	CommandSerializer* GLES2Device::create_serializer(CommandQueue& command_queue)
 	{
-		data = MEMORY_ALLOC(total_size, core::memory::global_allocator());
-		max_size = total_size;
+		GLCommandSerializer* serializer = MEMORY_NEW(GLCommandSerializer, core::memory::global_allocator())(command_queue);
+		return serializer;
 	}
 	
-	ConstantBuffer::~ConstantBuffer()
+	void GLES2Device::destroy_serializer(CommandSerializer* serializer)
 	{
-		MEMORY_DEALLOC(data, core::memory::global_allocator());
-		max_size = 0;
-	}
-	
-	void ConstantBuffer::assign(const void* src, const size_t bytes)
-	{
-		assert(bytes <= max_size);
-		memcpy(data, src, bytes);
+		MEMORY_DELETE(serializer, core::memory::global_allocator());
 	}
 } // namespace render2
