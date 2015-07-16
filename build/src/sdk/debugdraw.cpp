@@ -28,6 +28,6 @@ namespace gemini
 {
 	namespace debugdraw
 	{
-		IMPLEMENT_INTERFACE(IDebugDraw);
+		IMPLEMENT_INTERFACE(IDebugDraw)
 	} // namespace debugdraw
 } // namespace gemini

@@ -28,6 +28,6 @@ namespace gemini
 {
 	namespace physics
 	{
-		IMPLEMENT_INTERFACE(IPhysicsInterface);
+		IMPLEMENT_INTERFACE(IPhysicsInterface)
 	} // namespace physics
 } // namespace gemini

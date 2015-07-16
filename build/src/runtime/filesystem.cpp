@@ -47,7 +47,7 @@ namespace core
 		}
 
 
-		IMPLEMENT_INTERFACE(IFileSystem);
+		IMPLEMENT_INTERFACE(IFileSystem)
 
 #if defined(PLATFORM_IPHONEOS)
 
