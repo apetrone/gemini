@@ -83,6 +83,11 @@ namespace platform
 		return posix_make_directory(path);
 	}
 
+	const char* get_environment_variable(const char* name)
+	{
+		return posix_get_environment_variable(name);
+	}
+
 	const char* get_user_directory()
 	{
 		return posix_get_user_directory();
