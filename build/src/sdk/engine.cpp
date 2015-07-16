@@ -28,6 +28,6 @@ namespace gemini
 {
 	namespace engine
 	{
-		IMPLEMENT_INTERFACE(IEngineInterface);
+		IMPLEMENT_INTERFACE(IEngineInterface)
 	} // namespace engine
 } // namespace gemini
