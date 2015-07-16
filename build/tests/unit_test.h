@@ -63,7 +63,7 @@ struct UnitTestCategory
 	{
 		if (next)
 		{
-			UnitTest* current = reverse_list();
+			UnitTest* current = reverse_list(next);
 			while(current)
 			{
 				if (current->failed)
@@ -83,18 +83,17 @@ struct UnitTestCategory
 		fprintf(stdout, "* %s: %u / %u (%2.2f%%) passed\n\n", name, passed_tests, total_tests, (passed_tests/(float)total_tests)*100.0f);
 	}
 	
-	UnitTest* reverse_list()
+	UnitTest* reverse_list(UnitTest* root)
 	{
-		UnitTest* one = next;
-		UnitTest* two = next->next;
 		UnitTest* output = nullptr;
-		
-		while(one->next)
+		while(root)
 		{
-			two = one->next;
-			one->next = one->next->next;
-			two->next = output;
-			output = two;
+			// we traverse the list starting at root
+			// and simultaneously build the new root with output.
+			UnitTest* next = root->next;
+			root->next = output;
+			output = root;
+			root = next;
 		}
 		
 		return output;
