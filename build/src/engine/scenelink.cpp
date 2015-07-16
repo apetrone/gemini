@@ -59,7 +59,7 @@ namespace gemini
 		queue->sort();
 	}
 	
-	void SceneLink::draw(::renderer::ConstantBuffer& constant_buffer)
+	void SceneLink::draw(glm::mat4* modelview_matrix, glm::mat4* projection_matrix)
 	{
 		::renderer::RenderStream rs;
 		
@@ -69,14 +69,11 @@ namespace gemini
 			assets::Shader* shader = assets::shaders()->find_with_id(block.shader_id);
 			assets::Material* material = assets::materials()->find_with_id(block.material_id);
 			
-			//render_utilities::queue_geometry(rs, block, constant_buffer, 0, 0);
-			
-			
 			
 			rs.add_shader(shader->program);
 			
-			rs.add_uniform_matrix4(shader->program->get_uniform_location("modelview_matrix"), constant_buffer.modelview_matrix);
-			rs.add_uniform_matrix4(shader->program->get_uniform_location("projection_matrix"), constant_buffer.projection_matrix);
+			rs.add_uniform_matrix4(shader->program->get_uniform_location("modelview_matrix"), modelview_matrix);
+			rs.add_uniform_matrix4(shader->program->get_uniform_location("projection_matrix"), projection_matrix);
 			rs.add_uniform_matrix4(shader->program->get_uniform_location("object_matrix"), block.object_matrix);
 			
 			if (block.total_transforms > 0)
@@ -88,6 +85,7 @@ namespace gemini
 			}
 			else
 			{
+#if 0
 				if (constant_buffer.viewer_direction)
 				{
 					rs.add_uniform3f(shader->program->get_uniform_location("viewer_direction"), constant_buffer.viewer_direction);
@@ -102,6 +100,7 @@ namespace gemini
 				{
 					rs.add_uniform3f(shader->program->get_uniform_location("light_position"), constant_buffer.light_position);
 				}
+#endif
 			}
 			
 			rs.add_material(material, shader->program);
@@ -112,7 +111,7 @@ namespace gemini
 		rs.run_commands();
 	}
 	
-	void SceneLink::queue_entities(::renderer::ConstantBuffer& constant_buffer, gemini::IEngineEntity** entity_list, uint32_t max_entities, uint32_t render_flags)
+	void SceneLink::queue_entities(gemini::IEngineEntity** entity_list, uint32_t max_entities, uint32_t render_flags)
 	{
 		queue->clear();
 

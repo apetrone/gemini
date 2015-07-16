@@ -252,38 +252,20 @@ public:
 
 void render_scene_from_camera(gemini::IEngineEntity** entity_list, View& view, SceneLink& scenelink)
 {
-	// setup constant buffer
-	glm::vec3 light_position = view.eye_position;
-	::renderer::ConstantBuffer cb;
-	cb.modelview_matrix = &view.modelview;
-	cb.projection_matrix = &view.projection;
-	cb.viewer_direction = &view.view_direction;
-	cb.viewer_position = &view.eye_position;
-	cb.light_position = &light_position;
-	
 	// use the entity list to render
 	scenelink.clear();
-	scenelink.queue_entities(cb, entity_list, MAX_ENTITIES, RENDER_VISIBLE);
+	scenelink.queue_entities(entity_list, MAX_ENTITIES, RENDER_VISIBLE);
 	scenelink.sort();
-	scenelink.draw(cb);
+	scenelink.draw(&view.modelview, &view.projection);
 }
 
 void render_entity_from_camera(gemini::IEngineEntity* entity, View& view, SceneLink& scenelink)
 {
-	// setup constant buffer
-	glm::vec3 light_position = view.eye_position;
-	::renderer::ConstantBuffer cb;
-	cb.modelview_matrix = &view.modelview;
-	cb.projection_matrix = &view.projection;
-	cb.viewer_direction = &view.view_direction;
-	cb.viewer_position = &view.eye_position;
-	cb.light_position = &light_position;
-	
 	scenelink.clear();
 	
-	scenelink.queue_entities(cb, &entity, 1, RENDER_VIEWMODEL);
+	scenelink.queue_entities(&entity, 1, RENDER_VIEWMODEL);
 	
-	scenelink.draw(cb);
+	scenelink.draw(&view.modelview, &view.projection);
 }
 
 
@@ -1786,17 +1768,6 @@ Options:
 #if defined(PLATFORM_SDL2_SUPPORT)
 			window_interface->activate_window(alt_window);
 #endif
-			::renderer::CommandBuffer buffer;
-
-#if 0
-			render::Device* device = render::create_device();
-//			renderer::CommandBuffer buffer;
-//			buffer.viewport(0, 0, alt_window->render_width, alt_window->render_height);
-//			buffer.clear_color(Color(255, 255, 255, 255));
-//
-//			device->execute(buffer);
-#endif
-
 
 			::renderer::IRenderDriver* device = ::renderer::driver();
 			
