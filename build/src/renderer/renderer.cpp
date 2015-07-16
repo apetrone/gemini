@@ -371,6 +371,8 @@ namespace render2
 		return MEMORY_NEW(OpenGLDevice, core::memory::global_allocator());
 #elif defined(PLATFORM_GLES2_SUPPORT)
 		return MEMORY_NEW(GLES2Device, core::memory::global_allocator());
+#else
+	#error Unknown renderer!
 #endif
 		return nullptr;
 	}
