@@ -322,7 +322,8 @@ namespace platform
 	LIBRARY_EXPORT Result make_directory(const char* path);
 	
 	/// @brief Returns the value of the environment variable passed in
-	/// or NULL, if it was not set
+	/// or NULL, if it was not set.
+	/// DO NOT include platform specific tokens: e.g. use 'HOME', not '$HOME'
 	LIBRARY_EXPORT const char* get_environment_variable(const char* name);
 	
 	/// @brief Returns the current user's directory;

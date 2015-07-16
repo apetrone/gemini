@@ -25,13 +25,6 @@
 #include "unit_test.h"
 
 #include <platform/platform.h>
-#include <platform/window.h>
-
-#if defined(PLATFORM_RASPBERRYPI)
-	#include <GLES2/gl2.h>
-
-	#define TEST_WINDOW_CREATION 1
-#endif
 
 // ---------------------------------------------------------------------
 // dynamic library
@@ -54,6 +47,8 @@ void test_filesystem()
 	core::StackString<MAX_PATH_SIZE> filename;
 	platform::get_program_directory(&filename[0], filename.max_size());
 	
+	// see if we can verify directories exist; otherwise, we cannot verify
+	// other functions
 	TEST_VERIFY(platform::fs_directory_exists(filename()), fs_directory_exists);
 	
 	filename.append(PATH_SEPARATOR_STRING);
@@ -80,11 +75,68 @@ void test_filesystem()
 		TEST_VERIFY(bytes_read == 22, fs_read);
 		platform::fs_close(file);
 	}
+	
+	
+	// test directories
+	{
+		platform::Result result(platform::Result::Success);
+		char program_directory[4096] = {0};
+		result = platform::get_program_directory(program_directory, 4096);
+		TEST_VERIFY(result.success(), get_program_directory);
+//		fprintf(stdout, "get_program_directory returned: '%s'\n", buffer);
+		
+		result = platform::make_directory("test_directory");
+		TEST_VERIFY(result.success(), make_directory);
+		
+		const char* user_home = nullptr;
+#if defined(PLATFORM_WINDOWS)
+		user_home = platform::get_environment_variable("%USERPROFILE%");
+#elif defined(PLATFORM_APPLE) || defined(PLATFORM_LINUX)
+		user_home = platform::get_environment_variable("HOME");
+#else
+	#error I do not know how to test this platform.
+#endif
+
+		TEST_VERIFY(user_home != nullptr, get_environment_variable);
+//		fprintf(stdout, "get_environment_variable [%%USERPROFILE%% / $HOME]: '%s'\n", user_home);
+		
+		
+		const char* user_directory = platform::get_user_directory();
+		TEST_VERIFY(user_directory != nullptr, get_user_directory);
+//		fprintf(stdout, "get_user_directory: '%s'\n", user_directory);
+
+
+		platform::PathString temp_directory = platform::get_user_temp_directory();
+		TEST_VERIFY(!temp_directory.is_empty(), get_user_temp_directory);
+	}
+	
 }
+
+// ---------------------------------------------------------------------
+// logging
+// ---------------------------------------------------------------------
+void test_logging()
+{
+	TEST_CATEGORY(logging);
+	
+	// This isn't something I know how to reliably test without installing
+	// some mock platform handler.
+	
+	platform::log_message(platform::LogMessageType::Info, "test info log message\n");
+	platform::log_message(platform::LogMessageType::Warning, "test warning log message\n");
+	platform::log_message(platform::LogMessageType::Error, "test error log message\n");
+	
+	TEST_VERIFY(true, logging_sanity);
+}
+
 
 // ---------------------------------------------------------------------
 // serial
 // ---------------------------------------------------------------------
+void test_serial()
+{
+	
+}
 
 // ---------------------------------------------------------------------
 // thread
@@ -93,57 +145,28 @@ void test_filesystem()
 // ---------------------------------------------------------------------
 // time
 // ---------------------------------------------------------------------
-
-// ---------------------------------------------------------------------
-// window
-// ---------------------------------------------------------------------
-void test_window()
+void test_datetime()
 {
-	platform::window::Parameters params;
-	params.window_title = "none";
-	params.depth_size = 16;
-
-
-	size_t total_displays = platform::window::screen_count();
-	fprintf(stdout, "-> total screens: %lu\n", total_displays);
+	TEST_CATEGORY(datetime);
 	
-	for (size_t i = 0; i < total_displays; ++i)
-	{
-		platform::window::Frame frame = platform::window::screen_frame(i);
-		fprintf(stdout, "display %lu rect = %i, %i, %i x %i\n", i, frame.x, frame.y, frame.width, frame.height);
-	}
-
-
-#if defined(TEST_WINDOW_CREATION)
-	fprintf(stdout, "-> creating window...\n");
-	platform::window::NativeWindow* window = platform::window::create(params);
-
-#if defined(PLATFORM_RASPBERRYPI)
-	fprintf(stdout, "GL_VENDOR: %s\n", glGetString(GL_VENDOR));
-	fprintf(stdout, "GL_RENDERER: %s\n", glGetString(GL_RENDERER));
-#endif
-
-	fprintf(stdout, "-> render to window and wait 1000 ms...\n");
-	// while(true)
-	{
-		platform::window::begin_rendering(window);
-		platform::window::dispatch_events();
-		
-#if defined(PLATFORM_RASPBERRYPI)
-		glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-#endif
-
-		platform::window::end_rendering(window);
-
-		platform::thread_sleep(1000);
-	}
+	platform::DateTime dt;
+	platform::datetime(dt);
 	
-
-	fprintf(stdout, "-> destroying window...\n");
-	platform::window::destroy(window);
+	bool maybe_valid = \
+		(dt.day != 0 ||
+		dt.dayOfWeek != 0 ||
+		dt.hour != 0 ||
+		dt.milliseconds != 0 ||
+		dt.minute != 0 ||
+		dt.month != 0 ||
+		dt.second != 0) &&
+	dt.year != 0;
 	
-#endif
+	// this isn't something I know how to reliably test. here goes nothing.
+	TEST_VERIFY(maybe_valid, datetime_sanity);
+	
+	uint64_t ms = platform::microseconds();
+	TEST_VERIFY(ms != 0, microseconds);
 }
 
 int main(int, char**)
@@ -155,13 +178,10 @@ int main(int, char**)
 
 	test_dynamic_library();
 	test_filesystem();
-	
-	result = platform::window::startup(platform::window::RenderingBackend_Default);
-	TEST_VERIFY(result.success(), platform_window_startup);
-	
-	test_window();
-	platform::window::shutdown();
-	
+	test_logging();
+	test_serial();
+	test_datetime();
+
 	platform::shutdown();
 	return 0;
 }
