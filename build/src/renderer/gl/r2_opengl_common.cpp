@@ -319,4 +319,22 @@ namespace render2
 	{
 		return _vertex_data_to_gl;
 	}
+	
+	int load_gl_symbols()
+	{
+		int result = gemgl_startup(gl);
+		if (result != 0)
+		{
+			PLATFORM_LOG(platform::LogMessageType::Error, "load of gl symbols failed!\n");
+			return 1;
+		}
+		
+		// parse the GL_VERSION string and determine which renderer to use.
+		gemgl_config config;
+		gemgl_parse_version(config.major_version, config.minor_version);
+		
+		gemgl_load_symbols(gl);
+		
+		return 0;
+	}
 } // namespace render2

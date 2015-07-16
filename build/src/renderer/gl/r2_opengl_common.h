@@ -142,4 +142,7 @@ namespace render2
 	void setup_pipeline(GLPipeline* pipeline, const PipelineDescriptor& descriptor);
 	void populate_vertexdata_table();
 	VertexDataTypeToGL* get_vertexdata_table();
+	
+	// returns 0 on success
+	int load_gl_symbols();
 } // namespace render2
