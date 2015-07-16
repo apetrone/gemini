@@ -30,12 +30,12 @@ namespace render2
 {
 	CommandSerializer* OpenGLDevice::create_serializer(CommandQueue& command_queue)
 	{
-		GLCommandSerializer* serializer = MEMORY_NEW(GLCommandSerializer, core::memory::global_allocator())(command_queue);
-		return serializer;
+		static GLCommandSerializer serializer(command_queue);
+		new (&serializer) GLCommandSerializer(command_queue);
+		return &serializer;
 	}
 	
 	void OpenGLDevice::destroy_serializer(CommandSerializer* serializer)
 	{
-		MEMORY_DELETE(serializer, core::memory::global_allocator());
 	}
 } // namespace render2
