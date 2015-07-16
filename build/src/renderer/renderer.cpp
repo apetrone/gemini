@@ -95,7 +95,8 @@ namespace renderer
 			// TODO: load GLES
 			if (config.major_version == 2)
 			{
-				_render_driver = MEMORY_NEW(GLESv2, core::memory::global_allocator());
+				_render_driver = nullptr;
+				// DISABLED! MEMORY_NEW(GLESv2, core::memory::global_allocator());
 			}
 #endif
 
