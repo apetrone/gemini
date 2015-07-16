@@ -32,7 +32,7 @@
 namespace renderer
 {
 	struct Texture;
-};
+}
 
 namespace image
 {

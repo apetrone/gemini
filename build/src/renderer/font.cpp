@@ -186,7 +186,7 @@ namespace font
 			renderer::IRenderDriver * driver = renderer::driver();
 			driver->texture_destroy(data->texture);
 		}
-	}; // namespace internal
+	} // namespace internal
 	
 	void startup(renderer::ShaderProgram* fontshader, int render_width, int render_height)
 	{

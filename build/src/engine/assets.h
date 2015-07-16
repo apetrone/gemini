@@ -91,7 +91,7 @@ namespace gemini
 	
 #define DECLARE_ASSET_LIBRARY_ACCESSOR( type, parameter_class, name )\
 	typedef AssetLibrary<type, parameter_class> type##AssetLibrary;\
-	type##AssetLibrary * name();
+	type##AssetLibrary * name()
 
 
 #include "assetlibrary.h"

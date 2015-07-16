@@ -85,18 +85,18 @@ namespace gemini
 			LOGV("Unable to find parameter mask for %s\n", name.c_str());
 			return 0;
 		} // find_parameter_mask
-	}; // namespace assets
+	} // namespace assets
 
 
 	namespace assets
 	{
 		// 1. Implement asset library
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(TextureAssetLibrary, textures);
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MeshAssetLibrary, meshes);
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MaterialAssetLibrary, materials);
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(EmitterConfigAssetLibrary, emitters);
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(FontAssetLibrary, fonts);
-		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(ShaderAssetLibrary, shaders);
+		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(TextureAssetLibrary, textures)
+		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MeshAssetLibrary, meshes)
+		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(MaterialAssetLibrary, materials)
+		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(EmitterConfigAssetLibrary, emitters)
+		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(FontAssetLibrary, fonts)
+		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(ShaderAssetLibrary, shaders)
 		
 		void load_default_texture_and_material()
 		{
