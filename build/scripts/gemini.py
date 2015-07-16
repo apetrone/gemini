@@ -282,6 +282,41 @@ def setup_driver(arguments, product):
 	linux_debug.cflags += [
 		"-g"
 	]
+
+	linux.links += [
+		"pthread",
+		"dl"
+	]
+
+	if product.output in [ProductType.Application, ProductType.Commandline]:
+		# use current directory to resolve shared libraries
+		linux.linkflags += [
+			"-Wl,-rpath='$$$\ORIGIN'",
+		]
+
+		if arguments.raspberrypi:
+			linux.libdirs += [
+				"/opt/vc/lib"
+			]		
+			linux.links += [
+				# Broadcom
+				"bcm_host",
+				
+				# VideoCore
+				"vcos",
+
+				"EGL",
+				"GLESv2"
+			]
+
+		if arguments.gles:
+			linux.links += [
+				"GLESv2"
+			]
+		else:
+			linux.links += [
+				"GL"		
+			]
 	
 def get_tools(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
 	#
@@ -760,41 +795,6 @@ def create_unit_test(arguments, name, dependencies, source, output_type = Produc
 	product.dependencies.extend(dependencies)
 
 	setup_driver(arguments, product)
-
-	linux = product.layout(platform="linux")
-	linux.links += [
-		"pthread",
-		"dl"
-	]
-
-	# use current directory to resolve shared libraries
-	linux.linkflags += [
-		"-Wl,-rpath='$$$\ORIGIN'",
-	]
-
-	if arguments.raspberrypi:
-		linux.libdirs += [
-			"/opt/vc/lib"
-		]		
-		linux.links += [
-			# Broadcom
-			"bcm_host",
-			
-			# VideoCore
-			"vcos",
-
-			"EGL",
-			"GLESv2"
-		]
-
-	if arguments.gles:
-		linux.links += [
-			"GLESv2"
-		]
-	else:
-		linux.links += [
-			"GL"		
-		]
 		
 	return product
 
