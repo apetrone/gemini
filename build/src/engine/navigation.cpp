@@ -571,4 +571,4 @@ namespace gemini
 			return location;
 		}
 	} // namespace navigation
-}; // namespace gemini
+} // namespace gemini

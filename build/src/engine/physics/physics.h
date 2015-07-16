@@ -51,5 +51,5 @@ namespace gemini
 		
 		void debug_draw();
 
-	}; // namespace physics
+	} // namespace physics
 } // namespace gemini

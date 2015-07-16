@@ -129,7 +129,7 @@ namespace renderer
 		gemgl_shutdown(gl);		
 	} // shutdown
 	
-}; // namespace renderer
+} // namespace renderer
 
 
 namespace renderer

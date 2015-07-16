@@ -29,20 +29,20 @@ namespace gemini
 	namespace assets
 	{
 		struct Geometry;
-	};
+	}
 
 	struct RenderStream;
 
 	namespace assets
 	{
 		struct Shader;
-	};
+	}
 
 	namespace renderer
 	{
 		struct RenderBlock;
 		struct ConstantBuffer;
-	};
+	}
 } // namespace gemini
 
 #include "renderer.h"
@@ -56,7 +56,7 @@ namespace renderer
 		namespace sprite
 		{
 			void calc_tile_uvs( float * uvs, unsigned int x, unsigned int y, unsigned int sprite_width, unsigned int sprite_height, unsigned int sheet_width, unsigned int sheet_height );
-		}; // sprite
+		} // sprite
 		
 		
 		template <class Type>

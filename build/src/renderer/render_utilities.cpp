@@ -54,7 +54,7 @@ namespace renderer
 				uvs[6] = (x+sprite_width) / (float)sheet_width;
 				uvs[7] = y / (float)sheet_height;
 			} // calc_tile_uvs
-		}; // sprite
+		} // namespace sprite
 		
 		void strip_shader_version(char* buffer, core::StackString<32>& version)
 		{

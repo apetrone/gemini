@@ -66,5 +66,5 @@ namespace gemini
 		void texture_construct_extension( core::StackString<MAX_PATH_SIZE> & extension );
 
 		DECLARE_ASSET_LIBRARY_ACCESSOR(Texture, TextureParameters, textures);
-	}; // namespace assets
+	} // namespace assets
 } // namespace gemini

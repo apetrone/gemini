@@ -236,6 +236,6 @@ namespace gemini
 			}
 			
 			btMotionState* BulletCollisionObject::get_motion_state() const  { return motion_state; }
-		}; // namespace bullet
+		} // namespace bullet
 	} // namespace physics
 } // namespace gemini

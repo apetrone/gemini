@@ -231,7 +231,7 @@ namespace gemini
 				
 				return sound->index;
 			} // init_sound
-		}; // namespace _internal
+		} // namespace _internal
 
 
 
