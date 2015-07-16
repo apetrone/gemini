@@ -141,6 +141,7 @@ namespace render2
 			reset();
 			
 			populate_vertexdata_table();
+			load_gl_symbols();
 		}
 		
 		~OpenGLDevice()
