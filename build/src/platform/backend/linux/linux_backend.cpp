@@ -78,57 +78,6 @@ namespace platform
 
 	Result backend_startup()
 	{
-		// On linux, the platform layer needs to be versatile.
-		// It is split into three main components I call 'providers':
-		// 1. Window: platform window management layer
-		// 2. Graphics: rendering context provider
-		// 3. Input: various input systems
-
-		// Ultimately, we have to choose the best window provider
-		// either via build settings or at runtime.
-
-#if defined(PLATFORM_RASPBERRYPI)
-		fprintf(stdout, "[Raspberry Pi]!\n");
-
-		// this must be called before we can issue any hardware commands
-		bcm_host_init();
-#endif
-
-		//
-		// graphics provider
-		assert(_graphics_provider == nullptr);
-		_graphics_provider = create_graphics_provider();
-		if (!_graphics_provider)
-		{
-			return Result(Result::Failure, "create_graphics_provider failed!");
-		}
-
-		Result graphics_startup = _graphics_provider->startup();
-		if (graphics_startup.failed())
-		{
-			fprintf(stderr, "graphics_provider startup failed: %s\n", graphics_startup.message);
-			return graphics_startup;
-		}
-
-		// window provider
-		assert(_window_provider == nullptr);
-		_window_provider = create_window_provider();
-		if (!_window_provider)
-		{
-			return Result(Result::Failure, "create_window_provider failed!");
-		}
-
-		Result window_startup = _window_provider->startup();
-		if (window_startup.failed())
-		{
-			fprintf(stderr, "window_provider startup failed: %s\n", window_startup.message);
-			return window_startup;
-		}
-
-		//
-		// input provider
-		
-
 		return Result(Result::Success);
 	}
 	
@@ -139,18 +88,6 @@ namespace platform
 
 	void backend_shutdown()
 	{
-		assert(_window_provider != nullptr);
-		_window_provider->shutdown();
-		MEMORY_DELETE(_window_provider, get_platform_allocator());
-		_window_provider = nullptr;
-
-		assert(_graphics_provider != nullptr);
-		_graphics_provider->shutdown();
-		MEMORY_DELETE(_graphics_provider, get_platform_allocator());
-
-#if defined(PLATFORM_RASPBERRYPI)
-		bcm_host_deinit();
-#endif		
 	}
 
 	void backend_log(platform::LogMessageType type, const char* message)
@@ -175,6 +112,58 @@ namespace platform
 	{
 		Result startup(RenderingBackend backend)
 		{
+			// On linux, the platform layer needs to be versatile.
+			// It is split into three main components I call 'providers':
+			// 1. Window: platform window management layer
+			// 2. Graphics: rendering context provider
+			// 3. Input: various input systems
+
+			// Ultimately, we have to choose the best window provider
+			// either via build settings or at runtime.
+
+#if defined(PLATFORM_RASPBERRYPI)
+			fprintf(stdout, "[Raspberry Pi]!\n");
+
+			// this must be called before we can issue any hardware commands
+			bcm_host_init();
+#endif
+
+			//
+			// graphics provider
+			assert(_graphics_provider == nullptr);
+			_graphics_provider = create_graphics_provider();
+			if (!_graphics_provider)
+			{
+				return Result(Result::Failure, "create_graphics_provider failed!");
+			}
+
+			Result graphics_startup = _graphics_provider->startup();
+			if (graphics_startup.failed())
+			{
+				fprintf(stderr, "graphics_provider startup failed: %s\n", graphics_startup.message);
+				return graphics_startup;
+			}
+
+			// window provider
+			assert(_window_provider == nullptr);
+			_window_provider = create_window_provider();
+			if (!_window_provider)
+			{
+				return Result(Result::Failure, "create_window_provider failed!");
+			}
+
+			Result window_startup = _window_provider->startup();
+			if (window_startup.failed())
+			{
+				fprintf(stderr, "window_provider startup failed: %s\n", window_startup.message);
+				return window_startup;
+			}
+
+			//
+			// input provider
+
+
+
 #if defined(PLATFORM_RASPBERRYPI)
 			// force the backend
 			backend = RenderingBackend_OpenGLES2;
@@ -196,7 +185,18 @@ namespace platform
 
 		void shutdown()
 		{
+			assert(_window_provider != nullptr);
+			_window_provider->shutdown();
+			MEMORY_DELETE(_window_provider, get_platform_allocator());
+			_window_provider = nullptr;
 
+			assert(_graphics_provider != nullptr);
+			_graphics_provider->shutdown();
+			MEMORY_DELETE(_graphics_provider, get_platform_allocator());
+
+#if defined(PLATFORM_RASPBERRYPI)
+			bcm_host_deinit();
+#endif		
 		}
 
 		void dispatch_events()
