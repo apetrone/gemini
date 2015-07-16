@@ -29,11 +29,13 @@
 
 #include <sdk/navigation_api.h>
 
+#include <renderer/renderer.h> // for renderer::IndexType
+
 namespace gemini
 {
 	namespace navigation
 	{
-		void create_from_geometry(const FixedArray<glm::vec3>& vertices, const FixedArray<uint32_t>& indices, const glm::vec3& mins, const glm::vec3& maxs);
+		void create_from_geometry(const FixedArray<glm::vec3>& vertices, const FixedArray<::renderer::IndexType>& indices, const glm::vec3& mins, const glm::vec3& maxs);
 		
 		void startup();
 		void shutdown();

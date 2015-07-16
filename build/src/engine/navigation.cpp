@@ -196,7 +196,7 @@ namespace gemini
 		
 		static NavigationDebugDraw debug_draw;
 
-		void create_from_geometry(const FixedArray<glm::vec3>& vertices, const FixedArray<uint32_t>& indices, const glm::vec3& mins, const glm::vec3& maxs)
+		void create_from_geometry(const FixedArray<glm::vec3>& vertices, const FixedArray<::renderer::IndexType>& indices, const glm::vec3& mins, const glm::vec3& maxs)
 		{
 			float agent_height = 2.0f;
 			float agent_radius = 0.6f;
