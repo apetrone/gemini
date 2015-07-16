@@ -49,8 +49,8 @@ namespace gemini
 		
 		void clear();
 		void sort();
-		void draw(::renderer::ConstantBuffer& constant_buffer);
+		void draw(glm::mat4* modelview_matrix, glm::mat4* projection_matrix);
 		
-		void queue_entities(::renderer::ConstantBuffer& constant_buffer, gemini::IEngineEntity** entity_list, uint32_t max_entities, uint32_t render_flags = 0);
+		void queue_entities(gemini::IEngineEntity** entity_list, uint32_t max_entities, uint32_t render_flags = 0);
 	};
 } // namespace gemini
