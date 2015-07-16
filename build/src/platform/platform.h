@@ -157,7 +157,7 @@ namespace platform
 		int main(int argc, char** argv)
 		
 	#define PLATFORM_IMPLEMENT_PARAMETERS()\
-		platform::set_mainparameters(platform::MainParameters(argc, argv));
+		platform::set_mainparameters(platform::MainParameters(argc, argv))
 
 #elif defined(PLATFORM_ANDROID)
 	struct MainParameters
@@ -177,7 +177,7 @@ namespace platform
 		void android_main(struct android_app* android_state)
 	
 	#define PLATFORM_IMPLEMENT_PARAMETERS()\
-		platform::set_mainparameters(platform::MainParameters(android_state));
+		platform::set_mainparameters(platform::MainParameters(android_state))
 #else
 	#error Unknown platform!
 #endif
