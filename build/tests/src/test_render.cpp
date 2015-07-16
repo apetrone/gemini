@@ -31,78 +31,15 @@
 #include <platform/platform.h>
 #include <platform/window.h>
 #include <platform/kernel.h>
+#include <platform/input.h>
 
 #include <renderer/renderer.h>
 #include <renderer/vertexbuffer.h>
 #include <renderer/vertexstream.h>
 
-#include <platform/input.h>
-
 #include <assert.h>
 
 using namespace renderer;
-
-// ---------------------------------------------------------------------
-// vertexbuffer
-// ---------------------------------------------------------------------
-void test_vertexbuffer()
-{
-	TEST_CATEGORY(vertexbuffer);
-	
-	
-	TEST_VERIFY(1, sanity);
-}
-
-// ---------------------------------------------------------------------
-// vertexstream
-// ---------------------------------------------------------------------
-void test_vertexstream()
-{
-	TEST_CATEGORY(vertexstream);
-	
-	TEST_VERIFY(1, sanity);
-	
-	struct MyVertex
-	{
-		float position[3];
-	};
-	
-	VertexStream stream;
-	stream.desc.add(VD_FLOAT3);
-	
-	// reserve room for 6 vertices
-	stream.create(6, 0, DRAW_TRIANGLES);
-	
-	TEST_VERIFY(stream.total_vertices == 6, alloc);
-	
-	size_t stride = sizeof(float)*3;
-	size_t total_bytes = stride * 6;
-	TEST_VERIFY(stream.bytes_used() == total_bytes, bytes_used);
-
-	float pos[3] = {127.0f, 256.0f, 2048.0f};
-	MyVertex* vertex = (MyVertex*)stream.request(6);
-	memcpy(vertex[0].position, pos, sizeof(float)*3);
-	memcpy(vertex[1].position, pos, sizeof(float)*3);
-	memcpy(vertex[2].position, pos, sizeof(float)*3);
-	memcpy(vertex[3].position, pos, sizeof(float)*3);
-	memcpy(vertex[4].position, pos, sizeof(float)*3);
-	memcpy(vertex[5].position, pos, sizeof(float)*3);
-	
-	bool data_matches = true;
-	for (size_t index = 0; index < 6; ++index)
-	{
-		for (size_t v = 0; v < 3; ++v)
-		{
-			data_matches = data_matches && vertex[index].position[v] == pos[v];
-			if (!data_matches)
-				break;
-		}
-	}
-	TEST_VERIFY(data_matches, data_copy_test);
-	
-	stream.destroy();
-}
-
 
 // ---------------------------------------------------------------------
 // TestKernel
@@ -157,6 +94,19 @@ public:
 
 		platform::window::startup(platform::window::RenderingBackend_Default);
 
+
+
+		size_t total_displays = platform::window::screen_count();
+		PLATFORM_LOG(platform::LogMessageType::Info, "-> total screens: %lu\n", total_displays);
+		
+		for (size_t i = 0; i < total_displays; ++i)
+		{
+			platform::window::Frame frame = platform::window::screen_frame(i);
+			PLATFORM_LOG(platform::LogMessageType::Info, "display %lu rect = %u, %u, %u x %u\n", (unsigned long)i, frame.x, frame.y, frame.width, frame.height);
+		}
+
+
+
 		// create a test window
 		platform::window::Parameters params;
 		params.window.width = 512;
@@ -164,34 +114,112 @@ public:
 		params.window_title = "test_render";
 		
 		native_window = platform::window::create(params);
-		platform::window::focus(native_window);
+		assert(native_window != nullptr);
 		
-		// startup the renderer -- just so that it can be used by our classes.
-		// It will try to load conf/shaders.conf; but it can be ignored as
-		// I don't plan on actually rendering anything yet.
-		renderer::RenderSettings render_settings;
-		render_settings.gamma_correct = false;
-		renderer::startup(renderer::OpenGL, render_settings);
-	
-	
-		// run tests...
-		test_vertexbuffer();
-		test_vertexstream();
-	
+		PLATFORM_LOG(platform::LogMessageType::Info, "window dimensions: %i %i\n", native_window->dimensions.width, native_window->dimensions.height);
+		
+		platform::window::focus(native_window);
+
+		// initialize render device
+		render2::RenderParameters render_parameters;
+		render_parameters["rendering_backend"] = "default";
+		render_parameters["gamma_correct"] = "true";
+		
+		device = render2::create_device(render_parameters);
+		assert(device != nullptr);
+		
+		
+		// setup the pipeline
+		render2::PipelineDescriptor desc;
+		desc.shader = device->create_shader("test");
+		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3); // position
+		desc.vertex_description.add("in_color", render2::VD_FLOAT, 4); // color
+		desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
+		pipeline = device->create_pipeline(desc);
+		
+		// create a vertex buffer and populate it with data
+		float width = (float)native_window->dimensions.width;
+		float height = (float)native_window->dimensions.height;
+		
+		// Draw a triangle on screen with the wide part of the base at the bottom
+		// of the screen.
+		size_t total_bytes = sizeof(MyVertex) * 4;
+		vertex_buffer = device->create_vertex_buffer(total_bytes);
+		assert(vertex_buffer != nullptr);
+		MyVertex vertices[4];
+		vertices[0].set_position(0, height, 0);
+		vertices[0].set_color(1.0f, 0.0f, 0.0f, 1.0f);
+		
+		vertices[1].set_position(width, height, 0);
+		vertices[1].set_color(0.0f, 1.0f, 0.0f, 1.0f);
+		
+		vertices[2].set_position(width/2, 0, 0);
+		vertices[2].set_color(0.0f, 0.0f, 1.0f, 1.0f);
+		
+		vertices[3].set_position(0, 0, 0);
+		vertices[3].set_color(0.0f, 1.0f, 1.0f, 1.0f);
+		
+		device->buffer_upload(vertex_buffer, vertices, total_bytes);
+
+
+		// setup constant buffer
+		// this needs to be much more flexible, but for testng it works.
+		ConstantData cd;
+		cd.modelview_matrix = glm::mat4(1.0f);
+		cd.projection_matrix = glm::ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
+		pipeline->constants()->assign(&cd, sizeof(ConstantData));
 	
 		return kernel::NoError;
 	}
 	
 	virtual void tick()
 	{
+		// update our input
 		input::update();
+
+		// dispatch all window events
 		platform::window::dispatch_events();
-		set_active(false);
+	
+		// sanity check
+		assert(device);
+		assert(pipeline);
+		assert(vertex_buffer);
+		
+		render2::Pass render_pass;
+		render_pass.target = device->default_render_target();
+		render_pass.color(0.0f, 0.0f, 0.0f, 1.0f);
+		
+		// create a command queue
+		render2::CommandQueue queue(&render_pass);
+		
+		// create a command serializer for the queue
+		render2::CommandSerializer* serializer = device->create_serializer(queue);
+		assert(serializer);
+		
+		// add commands to the queue
+		serializer->pipeline(pipeline);
+		serializer->viewport(0, 0, native_window->dimensions.width, native_window->dimensions.height);
+		serializer->vertex_buffer(vertex_buffer);
+//		serializer->draw_indexed_primitives(index_buffer, 3);
+		serializer->draw(0, 3);
+		device->destroy_serializer(serializer);
+		
+		// queue the buffer with our device
+		device->queue_buffers(&queue, 1);
+
+		// submit the queues to the GPU
+		platform::window::begin_rendering(native_window);
+		device->submit();
+		platform::window::end_rendering(native_window);
 	}
 
 
 	virtual void shutdown()
 	{
+		device->destroy_buffer(vertex_buffer);
+		device->destroy_pipeline(pipeline);
+		render2::destroy_device(device);
+	
 		renderer::shutdown();
 
 		platform::window::destroy(native_window);
@@ -201,13 +229,45 @@ public:
 		
 		core::shutdown();
 	}
+	
+	
+private:
+	struct MyVertex
+	{
+		float position[3];
+		float color[4];
+		
+		void set_position(float x, float y, float z)
+		{
+			position[0] = x;
+			position[1] = y;
+			position[2] = z;
+		}
+		
+		void set_color(float red, float green, float blue, float alpha)
+		{
+			color[0] = red;
+			color[1] = green;
+			color[2] = blue;
+			color[3] = alpha;
+		}
+	};
+	
+	struct ConstantData
+	{
+		glm::mat4 modelview_matrix;
+		glm::mat4 projection_matrix;
+	};
+	
+	render2::Device* device;
+	render2::Pipeline* pipeline;
+	render2::Buffer* vertex_buffer;
 };
 
 
-
-int main(int, char**)
+PLATFORM_MAIN
 {
-	platform::MainParameters mainparameters;
-	platform::set_mainparameters(mainparameters);
-	return platform::run_application(new TestKernel());
+	PLATFORM_IMPLEMENT_PARAMETERS();
+	
+	PLATFORM_RETURN(platform::run_application(new TestKernel()));
 }
