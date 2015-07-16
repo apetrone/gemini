@@ -192,7 +192,7 @@ namespace core
 		StackStringType& remove_extension()
 		{
 			const Type * p = extension();
-			if ( p > 0 )
+			if (p != nullptr)
 			{
 				size_t location = (p-_data-1);
 				
