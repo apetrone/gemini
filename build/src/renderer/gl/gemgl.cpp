@@ -481,7 +481,10 @@ namespace renderer
 					LOGV("[%i] - %s\n", i, gl.GetStringi(GL_EXTENSIONS, i));
 				}
 			}
+#elif defined(GL_EXTENSIONS)
+			LOGV("GL_EXTENSIONS: %s\n", gl.GetString(GL_EXTENSIONS));
 #endif
+
 		}
 
 		return 1;
