@@ -355,7 +355,6 @@ namespace platform
 				//
 				if (!state.egl_valid)
 				{
-					PLATFORM_LOG(LogMessageType::Info, "setup EGL objects\n");
 					// EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is
 					// guaranteed to be accepted by ANativeWindow_setBuffersGeometry().				
 					// As soon as we picked a EGLConfig, we can safely reconfigure the
@@ -410,8 +409,6 @@ namespace platform
 
 	void backend_shutdown()
 	{
-		PLATFORM_LOG(LogMessageType::Info, "backend_shutdown\n");
-
 		AndroidWindow* window = _window_provider->get_android_window();
 		_graphics_provider->destroy_context(window);
 
