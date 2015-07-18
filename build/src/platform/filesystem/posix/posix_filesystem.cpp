@@ -37,12 +37,10 @@
 
 namespace platform
 {
-	Result get_program_directory(char* path, size_t path_size)
+	PathString get_program_directory()
 	{
-		Result error(Result::Success);
-		
+		PathString output;
 		int result = 0;
-		char* sep;
 		{
 			// http://www.flipcode.com/archives/Path_To_Executable_On_Linux.shtml
 			char linkname[64] = {0};
@@ -53,29 +51,21 @@ namespace platform
 				abort();
 			}
 			
-			result = readlink(linkname, path, path_size);
+			result = readlink(linkname, &output[0], output.max_size());
 			if (result == -1)
 			{
-				error.status = Result::Failure;
-				error.message = "readlink failed";
-			}
-			else
-			{
-				path[result] = 0;
+				PLATFORM_LOG(LogMessageType::Error, "read link failed!");
+				return output;
 			}
 		}
 		
 		if (result != 0)
 		{
-			sep = strrchr(path, PATH_SEPARATOR);
-			
-			if (sep)
-			{
-				*sep = '\0';
-			}
+			output = output.substring(0, result);
+
 		}
-		
-		return error;
+
+		return output;
 	}
 
 	Result make_directory(const char* path)
@@ -88,7 +78,7 @@ namespace platform
 		return posix_get_environment_variable(name);
 	}
 
-	const char* get_user_directory()
+	PathString get_user_directory()
 	{
 		return posix_get_user_directory();
 	}

@@ -316,7 +316,7 @@ namespace platform
 	/// on Linux and Windows platforms, it returns the folder where the binary exists
 	/// on MacOS X when run as a command line tool, it returns the folder where the binary exists (similar to Linux and Windows)
 	/// on MacOS X / iPhoneOS (for Bundles), it returns the root bundle path (.app)
-	LIBRARY_EXPORT Result get_program_directory(char* path, size_t path_size);
+	LIBRARY_EXPORT PathString get_program_directory();
 	
 	/// @brief Make directory on disk
 	LIBRARY_EXPORT Result make_directory(const char* path);
@@ -328,7 +328,7 @@ namespace platform
 	
 	/// @brief Returns the current user's directory;
 	/// @returns The $(HOME) environment variable in Linux or %HOMEPATH% on Windows
-	LIBRARY_EXPORT const char* get_user_directory();
+	LIBRARY_EXPORT PathString get_user_directory();
 	
 	// long-term storage for applications
 	LIBRARY_EXPORT PathString get_user_application_directory(const char* application_data_path);

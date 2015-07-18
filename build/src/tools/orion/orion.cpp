@@ -165,8 +165,7 @@ public:
 	virtual kernel::Error startup()
 	{
 		platform::PathString root_path;
-		platform::PathString content_path;
-		platform::get_program_directory(&root_path[0], root_path.max_size());
+		platform::PathString content_path = platform::get_program_directory();
 		platform::fs_content_directory(content_path, root_path);
 		
 		platform::PathString application_path = platform::get_user_application_directory("arcfusion.net/orion");
