@@ -176,7 +176,6 @@ namespace platform
 
 		void EGLGraphicsProvider::create_context(NativeWindow* window)
 		{
-			PLATFORM_LOG(LogMessageType::Info, "create_context");
 			EGLData* window_data = egldata_from(window);
 			assert(window_data);
 
@@ -217,7 +216,6 @@ namespace platform
 			result = eglGetConfigAttrib(display, window_data->config, EGL_NATIVE_VISUAL_ID, &visual_id);
 			assert(result != EGL_FALSE);
 
-			PLATFORM_LOG(LogMessageType::Info, "config chosen: %p, visual: %i\n", window_data->config, visual_id);
 #if EGL_PLATFORM_DEBUG
 			egl_print_config(display, window_data->config);
 #endif
@@ -239,7 +237,6 @@ namespace platform
 
 		void EGLGraphicsProvider::destroy_context(NativeWindow* window)
 		{
-			PLATFORM_LOG(LogMessageType::Info, "destroy_context");
 			EGLData* window_data = egldata_from(window);
 			if (window_data->context != EGL_NO_CONTEXT)
 			{
@@ -275,7 +272,6 @@ namespace platform
 
 		void EGLGraphicsProvider::create_surface(NativeWindow* window)
 		{
-			PLATFORM_LOG(LogMessageType::Info, "create_surface");
 			EGLData* window_data = egldata_from(window);
 
 			EGLint surface_attributes[] = {
@@ -304,7 +300,6 @@ namespace platform
 
 		void EGLGraphicsProvider::destroy_surface(NativeWindow* window)
 		{
-			PLATFORM_LOG(LogMessageType::Info, "destroy_surface");
 			EGLData* window_data = egldata_from(window);
 			if (window_data->surface != EGL_NO_SURFACE)
 			{
