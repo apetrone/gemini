@@ -175,7 +175,7 @@ namespace platform
 		statement
 		
 	#define PLATFORM_MAIN\
-		void android_main(struct android_app* android_state)
+		extern "C" void android_main(struct android_app* android_state)
 	
 	#define PLATFORM_IMPLEMENT_PARAMETERS()\
 		platform::set_mainparameters(platform::MainParameters(android_state))
