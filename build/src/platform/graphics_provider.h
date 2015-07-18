@@ -36,9 +36,19 @@ namespace platform
 
 			virtual Result startup() = 0;
 			virtual void shutdown() = 0;
+
+			// lifetime management for a context
 			virtual void create_context(NativeWindow* window) = 0;
 			virtual void destroy_context(NativeWindow* window) = 0;
-			virtual void activate_context(NativeWindow* window) = 0;
+
+			// state control for the context
+			virtual void attach_context(NativeWindow* window) = 0;
+			virtual void detach_context(NativeWindow* window) = 0;
+
+			// lifetime management for a renderable surface
+			virtual void create_surface(NativeWindow* window) = 0;
+			virtual void destroy_surface(NativeWindow* window) = 0;
+
 			virtual void swap_buffers(NativeWindow* window) = 0;
 			virtual void* get_symbol(const char* symbol_name) = 0;
 

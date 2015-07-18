@@ -27,26 +27,80 @@
 
 #include <assert.h>
 
+#define PLATFORM_DEBUG_EGL 0
+
+#if PLATFORM_DEBUG_EGL
+	#define EGL_CHECK_ERROR(message) egl_check_error(message)
+#else
+	#define EGL_CHECK_ERROR(message)
+#endif
+
 namespace platform
 {
 	namespace window
 	{
-		static EGLint egl_check_error(const char* message)
+#if PLATFORM_DEBUG_EGL
+		EGLint egl_check_error(const char* message)
 		{
 			EGLint error = eglGetError();
 			if (error != EGL_SUCCESS)
 			{
-				fprintf(stderr, "ERROR on '%s' eglGetError returned %i\n", message, error);
+				PLATFORM_LOG(LogMessageType::Error, "ERROR on '%s' eglGetError returned %i\n", message, error);
 			}
 
 			return error;
 		}
 
-		#define EGL_CHECK_ERROR(message)
-		// #define EGL_CHECK_ERROR(message) egl_check_error(message)		
+		#define PRINT_ATTRIB(attrib)\
+			result = eglGetConfigAttrib(display, config, attrib, &value);\
+			assert(result == EGL_TRUE);\
+			PLATFORM_LOG(LogMessageType::Info, "%s: %i\n", #attrib, value)
+
+		void egl_print_config(EGLDisplay display, EGLConfig config)
+		{
+			EGLBoolean result = EGL_FALSE;
+			EGLint value;
+
+			PRINT_ATTRIB(EGL_ALPHA_SIZE);
+			PRINT_ATTRIB(EGL_ALPHA_MASK_SIZE);
+			PRINT_ATTRIB(EGL_BIND_TO_TEXTURE_RGB);
+			PRINT_ATTRIB(EGL_BIND_TO_TEXTURE_RGBA);
+			PRINT_ATTRIB(EGL_BLUE_SIZE);
+			PRINT_ATTRIB(EGL_BUFFER_SIZE);
+			PRINT_ATTRIB(EGL_COLOR_BUFFER_TYPE);
+			PRINT_ATTRIB(EGL_CONFIG_CAVEAT);
+			PRINT_ATTRIB(EGL_CONFIG_ID);
+			PRINT_ATTRIB(EGL_CONFORMANT);
+			PRINT_ATTRIB(EGL_DEPTH_SIZE);
+			PRINT_ATTRIB(EGL_GREEN_SIZE);
+			PRINT_ATTRIB(EGL_LEVEL);
+			PRINT_ATTRIB(EGL_LUMINANCE_SIZE);
+			PRINT_ATTRIB(EGL_MAX_PBUFFER_WIDTH);
+			PRINT_ATTRIB(EGL_MAX_PBUFFER_HEIGHT);
+			PRINT_ATTRIB(EGL_MAX_PBUFFER_PIXELS);
+			PRINT_ATTRIB(EGL_MAX_SWAP_INTERVAL);
+			PRINT_ATTRIB(EGL_MIN_SWAP_INTERVAL);
+			PRINT_ATTRIB(EGL_NATIVE_RENDERABLE);
+			PRINT_ATTRIB(EGL_NATIVE_VISUAL_ID);
+			PRINT_ATTRIB(EGL_NATIVE_VISUAL_TYPE);
+			PRINT_ATTRIB(EGL_RED_SIZE);
+			PRINT_ATTRIB(EGL_RENDERABLE_TYPE);
+			PRINT_ATTRIB(EGL_SAMPLE_BUFFERS);
+			PRINT_ATTRIB(EGL_SAMPLES);
+			PRINT_ATTRIB(EGL_STENCIL_SIZE);
+			PRINT_ATTRIB(EGL_SURFACE_TYPE);
+			PRINT_ATTRIB(EGL_TRANSPARENT_TYPE);
+			PRINT_ATTRIB(EGL_TRANSPARENT_RED_VALUE);
+			PRINT_ATTRIB(EGL_TRANSPARENT_GREEN_VALUE);
+			PRINT_ATTRIB(EGL_TRANSPARENT_BLUE_VALUE);
+		}
+
+		#undef PRINT_ATTRIB
+#endif
 
 		struct EGLData
 		{
+			EGLConfig config;
 			EGLSurface surface;
 			EGLContext context;
 		};
@@ -68,25 +122,28 @@ namespace platform
 			EGLBoolean initialized = eglInitialize(display, &major, &minor);
 			assert(initialized != EGL_FALSE);
 
-			fprintf(stderr, "EGL version is %i.%i\n", major, minor);
-
 			EGLBoolean bind_result = EGL_FALSE;
 
+#if PLATFORM_DEBUG_EGL
 			{
 				const char* eglstring;
 				eglstring = (const char*) eglQueryString(display, EGL_VENDOR);
-				fprintf(stdout, "EGL_VENDOR: %s\n", eglstring);
+				PLATFORM_LOG(LogMessageType::Info, "EGL_VENDOR: %s\n", eglstring);
 
 				eglstring = (const char*) eglQueryString(display, EGL_VERSION);
-				fprintf(stdout, "EGL_VERSION: %s\n", eglstring);
-
-				eglstring = (const char*) eglQueryString(display, EGL_CLIENT_APIS);
-				fprintf(stdout, "EGL_CLIENT_APIS: %s\n", eglstring);
+				PLATFORM_LOG(LogMessageType::Info, "EGL_VERSION: %s\n", eglstring);
 
 				eglstring = (const char*) eglQueryString(display, EGL_EXTENSIONS);
-				fprintf(stdout, "EGL_EXTENSIONS: %s\n", eglstring);
-			}
+				PLATFORM_LOG(LogMessageType::Info, "EGL_EXTENSIONS: %s\n", eglstring);
 
+				if (major >= 1 && minor >= 2)
+				{
+					eglstring = (const char*) eglQueryString(display, EGL_CLIENT_APIS);
+					PLATFORM_LOG(LogMessageType::Info, "EGL_CLIENT_APIS: %s\n", eglstring);					
+				}
+			}
+#endif
+			
 			// eglBindAPI and EGL version required
 			// 1.2+: EGL_OPENGL_ES_API and EGL_OPENVG_API
 			// 1.4+: EGL_OPENGL_API
@@ -109,20 +166,19 @@ namespace platform
 		{
 			assert(display != EGL_NO_DISPLAY);
 
-			eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+			detach_context(nullptr);
+
 			eglTerminate(display);
+			EGL_CHECK_ERROR("eglTerminate");
 
 			display = EGL_NO_DISPLAY;
 		}
 
 		void EGLGraphicsProvider::create_context(NativeWindow* window)
 		{
-			EGLData* window_data = reinterpret_cast<EGLData*>(window->graphics_data);
+			PLATFORM_LOG(LogMessageType::Info, "create_context");
+			EGLData* window_data = egldata_from(window);
 			assert(window_data);
-
-			memset(window_data, 0, sizeof(EGLData));
-			window_data->context = EGL_NO_CONTEXT;
-			window_data->surface = EGL_NO_SURFACE;
 
 			// prepare egl attributes
 			EGLint attribs[] = {
@@ -148,18 +204,23 @@ namespace platform
 				EGL_NONE
 			};
 
-			EGLConfig config;
 			EGLint total_configs = 0;
 			EGLBoolean result = EGL_FALSE;
 
 			// choose one config based on the attributes
-			result = eglChooseConfig(display, attribs, &config, 1, &total_configs);
+			result = eglChooseConfig(display, attribs, &window_data->config, 1, &total_configs);
 			assert(result != EGL_FALSE);
+
 
 			// cache the visual id
 			EGLint visual_id;
-			result = eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &visual_id);
+			result = eglGetConfigAttrib(display, window_data->config, EGL_NATIVE_VISUAL_ID, &visual_id);
 			assert(result != EGL_FALSE);
+
+			PLATFORM_LOG(LogMessageType::Info, "config chosen: %p, visual: %i\n", window_data->config, visual_id);
+#if EGL_PLATFORM_DEBUG
+			egl_print_config(display, window_data->config);
+#endif
 
 			// update the underlying window's visual
 			window->update_visual(visual_id);
@@ -170,18 +231,66 @@ namespace platform
 				EGL_NONE,
 			};
 
-			window_data->surface = eglCreateWindowSurface(display, config, (EGLNativeWindowType)window->get_native_handle(), 0);
-			EGL_CHECK_ERROR("eglCreateWindowSurface");
-			if (window_data->surface == EGL_NO_SURFACE)
-			{
-				fprintf(stderr, "eglCreateWindowSurface failed!\n");
-				return;
-			}
-
 			EGLContext share_context = EGL_NO_CONTEXT;
-			window_data->context = eglCreateContext(display, config, share_context, context_attribs);
+			window_data->context = eglCreateContext(display, window_data->config, share_context, context_attribs);
 			assert(window_data->context != EGL_NO_CONTEXT);
 			EGL_CHECK_ERROR("eglCreateContext");
+		}
+
+		void EGLGraphicsProvider::destroy_context(NativeWindow* window)
+		{
+			PLATFORM_LOG(LogMessageType::Info, "destroy_context");
+			EGLData* window_data = egldata_from(window);
+			if (window_data->context != EGL_NO_CONTEXT)
+			{
+				detach_context(window);
+
+				destroy_surface(window);
+
+				EGLBoolean result = eglDestroyContext(display, window_data->context);
+				assert(result != EGL_FALSE);
+				window_data->context = nullptr;
+			}
+		}
+
+		void EGLGraphicsProvider::attach_context(NativeWindow* window)
+		{
+			EGLData* window_data = egldata_from(window);
+			assert(window_data->surface != EGL_NO_SURFACE);
+			assert(window_data->context != EGL_NO_CONTEXT);
+
+			EGLBoolean result = eglMakeCurrent(display, window_data->surface, window_data->surface, window_data->context);
+			EGL_CHECK_ERROR("eglMakeCurrent");
+			if (result == EGL_FALSE)
+			{
+				PLATFORM_LOG(LogMessageType::Info, "eglMakeCurrent failed to activate context\n");
+			}
+		}
+
+		void EGLGraphicsProvider::detach_context(NativeWindow* window)
+		{
+			eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+			EGL_CHECK_ERROR("eglMakeCurrent (null)");
+		}
+
+		void EGLGraphicsProvider::create_surface(NativeWindow* window)
+		{
+			PLATFORM_LOG(LogMessageType::Info, "create_surface");
+			EGLData* window_data = egldata_from(window);
+
+			EGLint surface_attributes[] = {
+				EGL_RENDER_BUFFER, EGL_BACK_BUFFER,
+				EGL_NONE
+			};
+
+			window_data->surface = eglCreateWindowSurface(display, window_data->config, (EGLNativeWindowType)window->get_native_handle(), surface_attributes);
+			EGL_CHECK_ERROR("eglCreateWindowSurface");
+
+			if (window_data->surface == EGL_NO_SURFACE)
+			{
+				PLATFORM_LOG(LogMessageType::Info, "eglCreateWindowSurface failed!\n");
+				return;
+			}
 
 			// update the window's dimensions via EGL
 			EGLint width;
@@ -193,47 +302,41 @@ namespace platform
 			window->dimensions.height = height;
 		}
 
-		void EGLGraphicsProvider::destroy_context(NativeWindow* window)
+		void EGLGraphicsProvider::destroy_surface(NativeWindow* window)
 		{
-			EGLData* window_data = reinterpret_cast<EGLData*>(window->graphics_data);
-			
-			eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-			EGL_CHECK_ERROR("eglMakeCurrent");
-
-			EGLBoolean result = EGL_FALSE;
-			result = eglDestroySurface(display, window_data->surface);
-			assert(result != EGL_FALSE);
-
-			result = eglDestroyContext(display, window_data->context);
-			assert(result != EGL_FALSE);
-		}
-
-		void EGLGraphicsProvider::activate_context(NativeWindow* window)
-		{
-			EGLData* window_data = reinterpret_cast<EGLData*>(window->graphics_data);
-			EGLBoolean result = eglMakeCurrent(display, window_data->surface, window_data->surface, window_data->context);
-			EGL_CHECK_ERROR("eglMakeCurrent");
-			if (result == EGL_FALSE)
+			PLATFORM_LOG(LogMessageType::Info, "destroy_surface");
+			EGLData* window_data = egldata_from(window);
+			if (window_data->surface != EGL_NO_SURFACE)
 			{
-				fprintf(stderr, "eglMakeCurrent failed to activate context\n");
+				EGLBoolean result = EGL_FALSE;
+				result = eglDestroySurface(display, window_data->surface);
+				assert(result != EGL_FALSE);
+
+				window_data->surface = EGL_NO_SURFACE;
 			}
 		}
 
 		void EGLGraphicsProvider::swap_buffers(NativeWindow* window)
 		{
-			EGLData* window_data = reinterpret_cast<EGLData*>(window->graphics_data);
+			EGLData* window_data = egldata_from(window);
 			eglSwapBuffers(display, window_data->surface);
 			EGL_CHECK_ERROR("eglSwapBuffers");
 		}
 
 		void* EGLGraphicsProvider::get_symbol(const char* symbol_name)
 		{
-			return 0;
+			return nullptr;
 		}
 
 		size_t EGLGraphicsProvider::get_graphics_data_size() const
 		{
 			return sizeof(EGLData);
+		}
+
+		EGLData* EGLGraphicsProvider::egldata_from(NativeWindow* window)
+		{
+			assert(window != nullptr);
+			return reinterpret_cast<EGLData*>(window->graphics_data);
 		}
 	} // namespace window
 

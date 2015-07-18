@@ -33,19 +33,31 @@ namespace platform
 {
 	namespace window
 	{
+		struct EGLData;
+
 		class EGLGraphicsProvider : public GraphicsProvider
 		{
 		public:
 			EGLGraphicsProvider();
 
-			virtual Result startup();
-			virtual void shutdown();
-			virtual void create_context(NativeWindow* window);
-			virtual void destroy_context(NativeWindow* window);
-			virtual void activate_context(NativeWindow* window);
-			virtual void swap_buffers(NativeWindow* window);
-			virtual void* get_symbol(const char* symbol_name);
-			virtual size_t get_graphics_data_size() const;
+			virtual Result startup() override;
+			virtual void shutdown() override;
+
+			virtual void create_context(NativeWindow* window) override;
+			virtual void destroy_context(NativeWindow* window) override;
+
+			virtual void attach_context(NativeWindow* window) override;
+			virtual void detach_context(NativeWindow* window) override;
+
+			virtual void create_surface(NativeWindow* window) override;
+			virtual void destroy_surface(NativeWindow* window) override;
+
+			virtual void swap_buffers(NativeWindow* window) override;
+			virtual void* get_symbol(const char* symbol_name) override;
+			virtual size_t get_graphics_data_size() const override;
+
+		private:
+			EGLData* egldata_from(NativeWindow* window);
 
 		private:
 			EGLDisplay display;			

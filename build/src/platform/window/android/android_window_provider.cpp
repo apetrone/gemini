@@ -36,41 +36,41 @@ namespace platform
 {
 	namespace window
 	{
-		struct AndroidWindow : public NativeWindow
-		{
-			AndroidWindow(const WindowDimensions& window_dimensions,
-				ANativeWindow* android_window) :
-				NativeWindow(window_dimensions),
-				native_window(android_window)
-			{				
-			}
-
-			ANativeWindow* native_window;
-
-			virtual void* get_native_handle() const override
-			{
-				return native_window;
-			}
-
-			virtual void update_visual(int visual_id) override
-			{
-				// EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is
-				// guaranteed to be accepted by ANativeWindow_setBuffersGeometry().				
-				// As soon as we picked a EGLConfig, we can safely reconfigure the
-				// ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID.
-				ANativeWindow_setBuffersGeometry(native_window, 0, 0, visual_id);
-			}
-		}; // struct DispManXWindow
-
-
-		AndroidWindowProvider::AndroidWindowProvider()
+		AndroidWindow::AndroidWindow(const WindowDimensions& window_dimensions,
+			ANativeWindow* android_window) :
+			NativeWindow(window_dimensions),
+			native_window(android_window)
 		{
 		}
+
+		void* AndroidWindow::get_native_handle() const
+		{
+			return native_window;
+		}
+
+		void AndroidWindow::set_native_handle(ANativeWindow* window)
+		{
+			native_window = window;
+		}
+
+		void AndroidWindow::update_visual(int visual_id)
+		{
+			// We need to cache this here because this is updated when
+			// the context is updated. Which, in Android, is before we have
+			// a valid Android window created.
+			visual = visual_id;
+		}
+
+
+		AndroidWindowProvider::AndroidWindowProvider() :
+			main_window(WindowDimensions(), nullptr)
+		{
+		}
+
 
 		AndroidWindowProvider::~AndroidWindowProvider()
 		{
 		}
-
 
 		Result AndroidWindowProvider::startup()
 		{
@@ -83,14 +83,11 @@ namespace platform
 
 		NativeWindow* AndroidWindowProvider::create(const Parameters& parameters)
 		{
-			AndroidWindow* window = MEMORY_NEW(AndroidWindow, platform::get_platform_allocator())(parameters.window, get_android_window());
-			return window;
+			return &main_window;
 		}
 
 		void AndroidWindowProvider::destroy(NativeWindow* window)
 		{
-			AndroidWindow* pointer = static_cast<AndroidWindow*>(window);
-			MEMORY_DELETE(pointer, platform::get_platform_allocator());
 		}
 
 		Frame AndroidWindowProvider::get_frame(NativeWindow* window) const
@@ -121,6 +118,21 @@ namespace platform
 			frame.width = 0;
 			frame.height = 0;
 			return frame;
-		}		
+		}
+
+		ANativeWindow* AndroidWindowProvider::get_native_window() const
+		{
+			return static_cast<ANativeWindow*>(main_window.get_native_handle());
+		}
+
+		void AndroidWindowProvider::set_native_window(ANativeWindow* window)
+		{
+			main_window.set_native_handle(window);
+		}
+
+		AndroidWindow* AndroidWindowProvider::get_android_window()
+		{
+			return &main_window;
+		}
 	} // namespace window
 } // namespace platform
