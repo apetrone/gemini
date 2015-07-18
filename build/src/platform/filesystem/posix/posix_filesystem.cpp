@@ -147,9 +147,8 @@ namespace platform
 		return posix_fs_directory_exists(path);
 	}
 
-	platform::Result fs_content_directory(core::StackString<MAX_PATH_SIZE>& content_path, const core::StackString<MAX_PATH_SIZE>& root_path)
+	PathString fs_content_directory()
 	{
-		content_path = root_path;
-		return platform::Result(platform::Result::Success);
+		return get_program_directory();
 	}
 } // namespace platform
