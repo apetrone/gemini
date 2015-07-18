@@ -166,15 +166,14 @@ namespace platform
 		
 		return 0;
 	}
-	
+
 	bool fs_directory_exists(const char* path)
 	{
 		return posix_fs_directory_exists(path);
 	}
 
-	platform::Result fs_content_directory(core::StackString<MAX_PATH_SIZE>& content_path, const core::StackString<MAX_PATH_SIZE>& root_path)
+	PathString fs_content_directory()
 	{
-		content_path = android::obb_path();
-		return platform::Result(platform::Result::Success);
-	}	
+		return android::obb_path();
+	}
 } // namespace platform

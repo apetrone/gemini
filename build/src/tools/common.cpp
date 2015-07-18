@@ -52,9 +52,7 @@ namespace gemini
 
 //			// setup root path
 			PathString root_path = platform::get_program_directory();
-//
-			PathString content_path;
-			platform::fs_content_directory(content_path, root_path);
+			PathString content_path = platform::fs_content_directory();
 //
 //			// create default material
 //			// TODO: move this to a better location one day

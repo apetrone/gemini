@@ -353,10 +353,8 @@ namespace platform
 	LIBRARY_EXPORT bool fs_directory_exists(const char* path);
 	
 	/// @brief Construct this platform's content directory
-	/// @param content_path The default content directory for bundled assets
-	/// @param root_path The root path for this application (where the binary/executable resides)
-	/// @returns platform::Result
-	LIBRARY_EXPORT platform::Result fs_content_directory(core::StackString<MAX_PATH_SIZE>& content_path, const core::StackString<MAX_PATH_SIZE>& root_path);
+	/// @returns A string pointing to the absolute path for content on this platform
+	LIBRARY_EXPORT PathString fs_content_directory();
 
 	// ---------------------------------------------------------------------
 	// serial

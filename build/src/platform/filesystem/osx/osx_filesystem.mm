@@ -121,12 +121,12 @@ namespace platform
 		return posix_fs_directory_exists(path);
 	}
 	
-	platform::Result fs_content_directory(core::StackString<MAX_PATH_SIZE>& content_path, const core::StackString<MAX_PATH_SIZE>& root_path)
+	PathString fs_content_directory()
 	{
 		// On Mac/iOS, the root directory points to the app bundle
-		content_path = root_path;
+		PathString content_path = get_program_directory();
 		content_path.append(PATH_SEPARATOR_STRING);
 		content_path.append("Resources");
-		return platform::Result(platform::Result::Success);
+		return content_path;
 	}
 } // namespace platform

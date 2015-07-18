@@ -1288,16 +1288,14 @@ Options:
 #endif
 
 		// runtime setup
-		StackString< MAX_PATH_SIZE > root_path;
-		platform::Result result = platform::get_program_directory(&root_path[0], root_path.max_size());
-		assert(!result.failed());
+		PathString root_path = platform::get_program_directory();
 		
 		// if no game is specified on the command line, construct the content path
 		// from the current root directory
 		StackString<MAX_PATH_SIZE> content_path;
 		if (game_path.is_empty())
 		{
-			platform::fs_content_directory(content_path, root_path);
+			content_path = platform::fs_content_directory();
 		}
 		else
 		{
@@ -1311,7 +1309,7 @@ Options:
 		}
 		
 		// startup duties; lower-level system init
-		result = core::startup_filesystem();
+		platform::Result result = core::startup_filesystem();
 		if (result.failed())
 		{
 			PLATFORM_LOG(LogMessageType::Error, "Fatal error: %s\n", result.message);
