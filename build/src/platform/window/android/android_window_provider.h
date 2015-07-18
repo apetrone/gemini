@@ -28,24 +28,46 @@
 #include "android_backend.h"
 #include "window_provider.h"
 
+struct ANativeWindow;
+
 namespace platform
 {
 	namespace window
 	{
+		struct AndroidWindow : public NativeWindow
+		{
+			AndroidWindow(const WindowDimensions& window_dimensions, ANativeWindow* android_window);
+			virtual void* get_native_handle() const override;
+			virtual void update_visual(int visual_id) override;
+
+			void set_native_handle(ANativeWindow* window);
+
+			int visual;
+			ANativeWindow* native_window;
+		}; // struct AndroidWindow
+
 		class AndroidWindowProvider : public WindowProvider
 		{
 		public:
 			AndroidWindowProvider();
 			virtual ~AndroidWindowProvider();
 
-			virtual Result startup();
-			virtual void shutdown();
-			virtual NativeWindow* create(const Parameters& parameters);
-			virtual void destroy(NativeWindow* window);
-			virtual Frame get_frame(NativeWindow* window) const;
-			virtual Frame get_render_frame(NativeWindow* window) const;
-			virtual size_t get_screen_count() const;
-			virtual Frame get_screen_frame(size_t screen_index) const;
+			virtual Result startup() override;
+			virtual void shutdown() override;
+			virtual NativeWindow* create(const Parameters& parameters) override;
+			virtual void destroy(NativeWindow* window) override;
+			virtual Frame get_frame(NativeWindow* window) const override;
+			virtual Frame get_render_frame(NativeWindow* window) const override;
+			virtual size_t get_screen_count() const override;
+			virtual Frame get_screen_frame(size_t screen_index) const override;
+
+			ANativeWindow* get_native_window() const;
+			void set_native_window(ANativeWindow* window);
+
+			AndroidWindow* get_android_window();
+
+		private:
+			AndroidWindow main_window;
 		}; // class AndroidWindowProvider
 	} // namespace window
 } // namespace platform

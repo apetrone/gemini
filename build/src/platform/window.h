@@ -132,7 +132,7 @@ namespace platform
 		{
 			NativeWindow(const WindowDimensions& window_dimensions) :
 				dimensions(window_dimensions),
-				graphics_data(0)
+				graphics_data(nullptr)
 			{
 			}
 

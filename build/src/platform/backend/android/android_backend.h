@@ -31,9 +31,7 @@ namespace platform
 {
 	namespace window
 	{
-		// The window is created when the surface is updated.
-		// May be null.
-		ANativeWindow* get_android_window();
+
 	} // namespace window
 
 } // namespace platform

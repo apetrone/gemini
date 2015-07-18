@@ -220,14 +220,18 @@ namespace platform
 			// pass the window to the graphics API
 			_graphics_provider->create_context(window);
 
+			_graphics_provider->create_surface(window);
+
 			// activate the context for newly created windows
-			_graphics_provider->activate_context(window);
+			_graphics_provider->attach_context(window);
 
 			return window;
 		}
 
 		void destroy(NativeWindow* window)
 		{
+			_graphics_provider->detach_context(window);
+			_graphics_provider->destroy_surface(window);
 			_graphics_provider->destroy_context(window);
 
 			MEMORY_DEALLOC(window->graphics_data, get_platform_allocator());
@@ -236,7 +240,7 @@ namespace platform
 		
 		void begin_rendering(NativeWindow* window)
 		{
-			_graphics_provider->activate_context(window);
+			_graphics_provider->attach_context(window);
 		}
 		
 		void end_rendering(NativeWindow* window)
