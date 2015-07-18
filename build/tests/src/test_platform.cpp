@@ -44,8 +44,7 @@ void test_filesystem()
 {
 	TEST_CATEGORY(filesystem);
 
-	core::StackString<MAX_PATH_SIZE> filename;
-	platform::get_program_directory(&filename[0], filename.max_size());
+	platform::PathString filename = platform::get_program_directory();
 	
 	// see if we can verify directories exist; otherwise, we cannot verify
 	// other functions
@@ -80,10 +79,8 @@ void test_filesystem()
 	// test directories
 	{
 		platform::Result result(platform::Result::Success);
-		char program_directory[4096] = {0};
-		result = platform::get_program_directory(program_directory, 4096);
-		TEST_VERIFY(result.success(), get_program_directory);
-//		fprintf(stdout, "get_program_directory returned: '%s'\n", buffer);
+		platform::PathString program_directory = platform::get_program_directory();
+		TEST_VERIFY(!program_directory.is_empty(), get_program_directory);
 		
 		result = platform::make_directory("test_directory");
 		TEST_VERIFY(result.success(), make_directory);
@@ -101,8 +98,8 @@ void test_filesystem()
 //		fprintf(stdout, "get_environment_variable [%%USERPROFILE%% / $HOME]: '%s'\n", user_home);
 		
 		
-		const char* user_directory = platform::get_user_directory();
-		TEST_VERIFY(user_directory != nullptr, get_user_directory);
+		platform::PathString user_directory = platform::get_user_directory();
+		TEST_VERIFY(!user_directory.is_empty(), get_user_directory);
 //		fprintf(stdout, "get_user_directory: '%s'\n", user_directory);
 
 

@@ -76,18 +76,22 @@ public:
 	
 	virtual kernel::Error startup()
 	{
-		platform::PathString root_path;
+		platform::PathString root_path = platform::get_program_directory();
 		platform::PathString content_path;
-		platform::get_program_directory(&root_path[0], root_path.max_size());
+		
 		platform::fs_content_directory(content_path, root_path);
 		
-		platform::PathString application_path = platform::get_user_application_directory("arcfusion.net/gemini/test_render");
+		platform::PathString user_application_path = platform::get_user_application_directory("arcfusion.net/gemini/test_render");
 		core::startup_filesystem();
 		core::filesystem::instance()->root_directory(root_path);
 		core::filesystem::instance()->content_directory(content_path);
-		core::filesystem::instance()->user_application_directory(application_path);
+		core::filesystem::instance()->user_application_directory(user_application_path);
 		
 		core::startup_logging();
+		
+		LOGV("root_path: %s\n", root_path());
+		LOGV("content_path: %s\n", content_path());
+		LOGV("user_application_path: %s\n", user_application_path());
 		
 		
 		input::startup();
@@ -263,7 +267,6 @@ private:
 	render2::Pipeline* pipeline;
 	render2::Buffer* vertex_buffer;
 };
-
 
 PLATFORM_MAIN
 {
