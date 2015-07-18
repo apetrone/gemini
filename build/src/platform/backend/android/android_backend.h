@@ -29,9 +29,10 @@
 
 namespace platform
 {
-	namespace window
+	namespace android
 	{
-
-	} // namespace window
-
+		const char* internal_data_path();
+		const char* external_data_path();
+		const char* obb_path();
+	} // namespace android
 } // namespace platform

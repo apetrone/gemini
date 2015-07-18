@@ -36,6 +36,7 @@
  #include <unistd.h> // for readlink, getpid
 
 #include <android/asset_manager.h>
+#include "android_backend.h"
 
 namespace platform
 {
@@ -173,7 +174,7 @@ namespace platform
 
 	platform::Result fs_content_directory(core::StackString<MAX_PATH_SIZE>& content_path, const core::StackString<MAX_PATH_SIZE>& root_path)
 	{
-		#error Not implemented on Android!
+		content_path = android::obb_path();
 		return platform::Result(platform::Result::Success);
 	}	
 } // namespace platform
