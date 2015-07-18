@@ -68,7 +68,7 @@ namespace core
 		void copy_data(const Type* source)
 		{
 			clear();
-			_length = core::str::len(source);
+			recompute_size(source);
 			assert(_length < maximum_size);
 			core::str::copy(_data, source, _length );
 		}
@@ -87,6 +87,11 @@ namespace core
 		size_t size() const
 		{
 			return _length;
+		}
+		
+		void recompute_size(const Type* source)
+		{
+			_length = core::str::len(source);
 		}
 		
 		void operator= (const Type * data)
@@ -132,7 +137,7 @@ namespace core
 			return _data[ index ];
 		}
 
-		Type * find_last_slash() const
+		Type* find_last_slash() const
 		{
 			// check backslash and forward slash
 			Type * pos = strrchr( (Type*)_data, '\\' ); // look for backward slash
@@ -239,7 +244,7 @@ namespace core
 			return *this;
 		}
 		
-		const Type *operator ()() const
+		const Type* operator ()() const
 		{
 			return _data;
 		}
