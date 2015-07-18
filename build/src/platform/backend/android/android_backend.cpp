@@ -83,6 +83,7 @@ namespace platform
 {
 	namespace android
 	{
+		static detail::AndroidState* _state;
 		static AndroidWindowProvider* _window_provider = nullptr;
 		static EGLGraphicsProvider* _graphics_provider = nullptr;
 
@@ -177,14 +178,14 @@ namespace platform
 			// The window is being shown
 			case APP_CMD_INIT_WINDOW:
 
-				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_INIT_WINDOW\n");
+				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_INIT_WINDOW\n");
 				state->surface_ready = true;
 				_window_provider->set_native_window(app->window);
 				break;
 
 			// The window is being hidden or closed
 			case APP_CMD_TERM_WINDOW:
-				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_TERM_WINDOW\n");
+				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_TERM_WINDOW\n");
 				
 				_graphics_provider->detach_context(window);
 				_graphics_provider->destroy_surface(window);
@@ -195,7 +196,7 @@ namespace platform
 				break;
 
 			case APP_CMD_WINDOW_RESIZED: 
-				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_WINDOW_RESIZED\n");
+				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_WINDOW_RESIZED\n");
 				break;
 
 			case APP_CMD_WINDOW_REDRAW_NEEDED:
@@ -206,7 +207,7 @@ namespace platform
 
 			// The app gains focus
 			case APP_CMD_GAINED_FOCUS:
-				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_GAINED_FOCUS\n");
+				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_GAINED_FOCUS\n");
 				// we have a valid window; keep the screen on
 				flags = AWINDOW_FLAG_KEEP_SCREEN_ON;
 				// AWINDOW_FLAG_FULLSCREEN does not hide the soft buttons.
@@ -217,45 +218,45 @@ namespace platform
 
 			// The app lost focus
 			case APP_CMD_LOST_FOCUS:
-				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_LOST_FOCUS\n");
+				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_LOST_FOCUS\n");
 				state->has_focus = false;
 				break;
 
 			case APP_CMD_CONFIG_CHANGED: 
-				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_CONFIG_CHANGED\n");
+				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_CONFIG_CHANGED\n");
 				break;
 
 			case APP_CMD_LOW_MEMORY: 
-				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_LOW_MEMORY\n");
+				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_LOW_MEMORY\n");
 				break;
 
 			case APP_CMD_START: 
-				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_START\n");
+				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_START\n");
 				break;
 
 			case APP_CMD_RESUME:
 				// should re-create EGL context
-				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_RESUME\n");
+				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_RESUME\n");
 				state->is_resumed = true;
 				break;
 
 			// The system has asked the application to save its state
 			case APP_CMD_SAVE_STATE:
-				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_SAVE_STATE\n");
+				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_SAVE_STATE\n");
 				break;
 
 			case APP_CMD_PAUSE: 
 				// should destroy EGL context
-				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_PAUSE\n");
+				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_PAUSE\n");
 				state->is_resumed = false;
 				break;
 
 			case APP_CMD_STOP: 
-				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_STOP\n");
+				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_STOP\n");
 				break;
 
 			case APP_CMD_DESTROY: 
-				PLATFORM_LOG(LogMessageType::Info, "APP_CMD_DESTROY\n");
+				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_DESTROY\n");
 				break;
 		}
 	}
@@ -292,6 +293,7 @@ namespace platform
 
 		detail::AndroidState state;
 		app->userData = &state;
+		_state = &state;
 
 		// setup the application state
 		state.app = app;
@@ -300,137 +302,13 @@ namespace platform
 		// install handlers for commands and input events
 		app->onAppCmd = android_handle_command;
 		app->onInputEvent = android_handle_input;
-
 		
-		platform::startup();
-
-#if 0
-		// experiment with JNI!
-		JNIEnv* env;
-		JavaVM* vm = app->activity->vm;
-		jint attach_result = vm->AttachCurrentThread(&env, NULL);
-		assert(attach_result == 0);
-
-		// We need to get the class loader from our activity. The default FindClass loader
-		// is only a system class loader.
-
-
-		// fetch the native activity
-		jclass native_activity_class = env->FindClass("android/app/NativeActivity");
-		PLATFORM_LOG(LogMessageType::Info, "native_activity_class: %p", native_activity_class);
-
-		// fetch its class loader
-		jmethodID get_class_loader = env->GetMethodID(native_activity_class, "getClassLoader", "()Ljava/lang/ClassLoader;");
-		assert(get_class_loader);
-
-		jobject class_loader_instance = env->CallObjectMethod(app->activity->clazz, get_class_loader);
-		assert(class_loader_instance);
-
-		jclass class_loader = env->FindClass("java/lang/ClassLoader");
-		assert(class_loader);
-
-		jmethodID load_class = env->GetMethodID(class_loader, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
-		assert(load_class);
-
-		// jmethodID context_method = env->GetMethodID(native_activity_class, "getApplicationContext", "()Landroid/content/Context;");
-		// assert(context_method);
-
-		// jobject context_object = env->CallObjectMethod(app->activity->class, context_method);
-		// assert(context_object);
-
-		jstring activity_class_name = env->NewStringUTF("net/arcfusion/gemini/gemini_activity");
-		jclass local_activity_class = (jclass)env->CallObjectMethod(class_loader_instance, load_class, activity_class_name);
-
-		env->DeleteLocalRef(activity_class_name);
-
-		// get the java call from the class
-		jmethodID java_call = env->GetMethodID(local_activity_class, "java_call", "()V");
-		assert(java_call);
-
-		// call it on the instance
-		env->CallVoidMethod(app->activity->clazz, java_call);
-
-#if 1
-		// fetch the Build.VERSION.SDK_INT value
-		{
-			jclass version = env->FindClass("android/os/Build$VERSION");
-			assert(version);
-
-			jfieldID field = env->GetStaticFieldID(version, "SDK_INT", "I");
-			assert(field);
-
-			jint sdkInt = env->GetStaticIntField(version, field);
-			PLATFORM_LOG(LogMessageType::Info, "version: %i", sdkInt);
-		}
-
-		{
-			jclass build_class = env->FindClass("android/os/Build");
-			assert(build_class);
-
-			const char* field_names[] = {
-				"BOARD",
-				"BOOTLOADER",
-				"BRAND",
-				"DEVICE",
-				"DISPLAY",
-				"FINGERPRINT",
-				"HARDWARE",
-				"HOST",
-				"MANUFACTURER",
-				"MODEL",
-				"PRODUCT",
-				"SERIAL"
-			};
-
-			for (size_t index = 0; index < 12; ++index)
-			{
-				jfieldID field = env->GetStaticFieldID(build_class, field_names[index], "Ljava/lang/String;");
-				assert(field);
-
-				jstring string_value = (jstring)env->GetStaticObjectField(build_class, field);
-				assert(string_value);
-				const char* native_string = env->GetStringUTFChars(string_value, 0);
-
-				PLATFORM_LOG(LogMessageType::Info, "%s -> %s\n", field_names[index], native_string);
-
-				env->ReleaseStringUTFChars(string_value, native_string);
-			}
-		}
-
-		{
-			jclass environment_class = env->FindClass("android/os/Environment");
-			assert(environment_class);
-
-			jmethodID method = env->GetStaticMethodID(environment_class, "getDataDirectory", "()Ljava/io/File;");
-			assert(method);
-
-			jobject file_instance = env->CallStaticObjectMethod(environment_class, method);
-			assert(file_instance);
-
-			jclass file_class = env->FindClass("java/io/File");
-			assert(file_class);
-
-			jmethodID get_absolute_path = env->GetMethodID(file_class, "getAbsolutePath", "()Ljava/lang/String;");
-			assert(get_absolute_path);
-
-			jstring result = (jstring)env->CallObjectMethod(file_instance, get_absolute_path);
-			assert(result);
-			const char* native_string = env->GetStringUTFChars(result, 0);
-
-			PLATFORM_LOG(LogMessageType::Info, "Environment.getDataDirectory().getAbsolutePath() -> %s\n", native_string);
-
-			env->ReleaseStringUTFChars(result, native_string);
-		}
-#endif
-		vm->DetachCurrentThread();
-#endif
-
-		
+		platform::startup();		
 
 		PLATFORM_LOG(LogMessageType::Info, "__ANDROID_API__ is %i\n", __ANDROID_API__);
-		PLATFORM_LOG(LogMessageType::Info, "internalDataPath: %s\n", app->activity->internalDataPath);
-		PLATFORM_LOG(LogMessageType::Info, "externalDataPath: %s\n", app->activity->externalDataPath);
-		PLATFORM_LOG(LogMessageType::Info, "obbPath: %s\n", app->activity->obbPath);
+		PLATFORM_LOG(LogMessageType::Info, "internalDataPath: %s\n", android::internal_data_path());
+		PLATFORM_LOG(LogMessageType::Info, "externalDataPath: %s\n", android::external_data_path());
+		PLATFORM_LOG(LogMessageType::Info, "obbPath: %s\n", android::obb_path());
 
 		AndroidWindow* window = _window_provider->get_android_window();
 
@@ -638,4 +516,23 @@ namespace platform
 		{
 		}
 	} // namespace window
+
+	namespace android
+	{
+		const char* internal_data_path()
+		{
+			return _state->app->activity->internalDataPath;
+		}
+
+		const char* external_data_path()
+		{
+			return _state->app->activity->externalDataPath;
+		}
+
+		const char* obb_path()
+		{
+			return _state->app->activity->obbPath;
+		}
+	} // namespace android
+
 } // namespace platform
