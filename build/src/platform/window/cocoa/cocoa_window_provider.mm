@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #include "platform_internal.h"
 
-#import "cocoa_common.h"
+#import "cocoa_window_provider.h"
 #import "cocoa_openglview.h"
 #import "cocoa_window.h"
 

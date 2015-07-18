@@ -22,24 +22,20 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+#pragma once
+
 #include "platform_internal.h"
 
-#import "cocoa_window_provider.h"
-#import "cocoa_window.h"
+#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
-@implementation CocoaWindow
-@synthesize instance;
-
-/* this is required when using the styleMask: NSBorderlessWindowMask */
-/* By default NSBorderlessWindowMask windows report that they cannot become the key (target of keyboard input) */
--(BOOL) canBecomeKeyWindow
+namespace platform
 {
-	return YES;
-}
-
-/* By default NSBorderlessWindowMask windows report that they cannot become the main window without this override */
--(BOOL) canBecomeMainWindow
-{
-	return YES;
-}
-@end
+	namespace cocoa
+	{
+		// convert from NSString to PathString
+		PathString to_string(NSString* source);
+		
+		// convert from PathString to NSString?
+	} // namespace cocoa
+} // namespace platform
