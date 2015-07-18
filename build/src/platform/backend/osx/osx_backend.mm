@@ -27,6 +27,27 @@
 
 namespace platform
 {
+	namespace cocoa
+	{
+		// ---------------------------------------------------------------------
+		// utilities
+		// ---------------------------------------------------------------------
+		PathString to_string(NSString* string)
+		{
+			PathString output;
+			
+			// NSUInteger length = [string length];
+			// assuming PathString can be resized...
+		
+			[string getCString:&output[0] maxLength:output.max_size() encoding:NSUTF8StringEncoding];
+			output.recompute_size(&output[0]);
+			return output;
+		}
+	}
+
+	// ---------------------------------------------------------------------
+	// backend
+	// ---------------------------------------------------------------------
 	Result backend_startup()
 	{
 //

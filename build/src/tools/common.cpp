@@ -51,9 +51,7 @@ namespace gemini
 			platform::startup();
 
 //			// setup root path
-			PathString root_path;
-			platform::Result result = platform::get_program_directory(&root_path[0], root_path.max_size());
-			assert(result.success());
+			PathString root_path = platform::get_program_directory();
 //
 			PathString content_path;
 			platform::fs_content_directory(content_path, root_path);

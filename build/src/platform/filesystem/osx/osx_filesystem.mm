@@ -32,21 +32,16 @@
 	#import <Foundation/Foundation.h>
 #endif
 
+#include "cocoa_common.h"
+
 namespace platform
 {
-	Result get_program_directory(char* path, size_t path_size)
+	PathString get_program_directory()
 	{
 		Result result(Result::Success);
 		NSString* bundle_path = [[NSBundle mainBundle] bundlePath];
-		if (bundle_path)
-		{
-			[bundle_path getCString:path maxLength:path_size encoding:NSUTF8StringEncoding];
-		}
-		else
-		{
-			result = Result(Result::Failure, "Unable mainBundle reference is invalid!");
-		}
-		return result;
+		assert(bundle_path);
+		return cocoa::to_string(bundle_path);
 	}
 	
 	Result make_directory(const char* path)
@@ -59,30 +54,26 @@ namespace platform
 		return posix_get_environment_variable(name);
 	}
 	
-	const char* get_user_directory()
+	PathString get_user_directory()
 	{
 		return posix_get_user_directory();
 	}
 	
 	PathString get_user_application_directory(const char* application_data_path)
 	{
-		PathString user_application_root;
 		NSArray* directories = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
 		NSString* application_support_directory = [directories lastObject];
 		
 		NSString* application_path = [NSString stringWithUTF8String:application_data_path];
 		application_support_directory = [application_support_directory stringByAppendingPathComponent: application_path];
-		[application_support_directory getCString:&user_application_root[0] maxLength:user_application_root.max_size() encoding:NSUTF8StringEncoding];
-		return user_application_root;
+		return cocoa::to_string(application_support_directory);
 	}
 	
 	PathString get_user_temp_directory()
 	{
-		PathString user_temp_root;
 		NSArray* directories = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
 		NSString* user_temp_directory = [directories lastObject];
-		[user_temp_directory getCString:&user_temp_root[0] maxLength:user_temp_root.max_size() encoding:NSUTF8StringEncoding];
-		return user_temp_root;
+		return cocoa::to_string(user_temp_directory);
 	}
 	
 	core::StackString<MAX_PATH_SIZE> make_absolute_path(const char* path)
