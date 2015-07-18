@@ -62,8 +62,9 @@
 	#error Unknown platform!
 #endif
 
-
-
+	
+// This is a bit nasty in that it requires core::str
+#define PLATFORM_LOG(type, message, ...) ::platform::log_message(type, ::core::str::format(message, ##__VA_ARGS__))
 
 #ifdef Success
 	#undef Success
@@ -229,9 +230,6 @@ namespace platform
 		Error
 	};
 	LIBRARY_EXPORT void log_message(LogMessageType type, const char* message);
-	
-	// This is a bit nasty in that it requires core::str
-	#define PLATFORM_LOG(type, message, ...) ::platform::log_message(type, ::core::str::format(message, ##__VA_ARGS__))
 	
 	namespace path
 	{
