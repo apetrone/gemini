@@ -143,6 +143,8 @@ public:
 		float width = (float)native_window->dimensions.width;
 		float height = (float)native_window->dimensions.height;
 		
+		device->init(native_window->dimensions.width, native_window->dimensions.height);
+		
 		// Draw a triangle on screen with the wide part of the base at the bottom
 		// of the screen.
 		size_t total_bytes = sizeof(MyVertex) * 4;
@@ -200,7 +202,7 @@ public:
 		
 		// add commands to the queue
 		serializer->pipeline(pipeline);
-		serializer->viewport(0, 0, native_window->dimensions.width, native_window->dimensions.height);
+//		serializer->viewport(0, 0, native_window->dimensions.width, native_window->dimensions.height);
 		serializer->vertex_buffer(vertex_buffer);
 //		serializer->draw_indexed_primitives(index_buffer, 3);
 		serializer->draw(0, 3);
