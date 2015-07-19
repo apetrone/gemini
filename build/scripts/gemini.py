@@ -275,6 +275,10 @@ def setup_driver(arguments, product):
 		linux.defines += [
 			"PLATFORM_EGL_SUPPORT=1"
 		]
+	if arguments.with_x11:
+		linux.defines += [
+			"PLATFORM_X11_SUPPORT=1"
+		]
 
 	linux.cflags += gcc_flags
 

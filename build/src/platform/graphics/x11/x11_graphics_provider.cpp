@@ -22,29 +22,71 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
+#include "platform_internal.h"
+#include "x11_graphics_provider.h"
 
-#include <core/config.h>
-#include "window_provider.h"
+#include <assert.h>
+
+#define PLATFORM_DEBUG_X11 0
 
 namespace platform
 {
 	namespace window
 	{
-		class X11WindowProvider : public WindowProvider
+		struct X11Data
 		{
-		public:
-			X11WindowProvider();
-			virtual ~X11WindowProvider() override;
+		};
 
-			virtual Result startup() override;
-			virtual void shutdown() override;
-			virtual NativeWindow* create(const Parameters& parameters) override;
-			virtual void destroy(NativeWindow* window) override;
-			virtual Frame get_frame(NativeWindow* window) const override;
-			virtual Frame get_render_frame(NativeWindow* window) const override;
-			virtual size_t get_screen_count() const override;
-			virtual Frame get_screen_frame(size_t screen_index) const override;
-		}; // class X11WindowProvider
+		X11GraphicsProvider::X11GraphicsProvider()
+		{
+		}
+
+		Result X11GraphicsProvider::startup()
+		{
+			return Result(Result::Success);
+		}
+
+		void X11GraphicsProvider::shutdown()
+		{
+		}
+
+		void X11GraphicsProvider::create_context(NativeWindow* window)
+		{
+		}
+
+		void X11GraphicsProvider::destroy_context(NativeWindow* window)
+		{
+		}
+
+		void X11GraphicsProvider::attach_context(NativeWindow* window)
+		{
+		}
+
+		void X11GraphicsProvider::detach_context(NativeWindow* window)
+		{
+		}
+
+		void X11GraphicsProvider::create_surface(NativeWindow* window)
+		{
+		}
+
+		void X11GraphicsProvider::destroy_surface(NativeWindow* window)
+		{
+		}
+
+		void X11GraphicsProvider::swap_buffers(NativeWindow* window)
+		{
+		}
+
+		void* X11GraphicsProvider::get_symbol(const char* symbol_name)
+		{
+			return nullptr;
+		}
+
+		size_t X11GraphicsProvider::get_graphics_data_size() const
+		{
+			return sizeof(int);
+		}
 	} // namespace window
+
 } // namespace platform

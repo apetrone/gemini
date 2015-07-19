@@ -33,8 +33,14 @@
 #endif
 
 
+
 #if defined(PLATFORM_EGL_SUPPORT)
 	#include "../../graphics/egl/egl_graphics_provider.h"
+#endif
+
+#if defined(PLATFORM_X11_SUPPORT)
+	#include "../../window/x11/x11_window_provider.h"
+	#include "../../graphics/x11/x11_graphics_provider.h"
 #endif
 
 #include <stdio.h> // for fprintf
@@ -54,6 +60,8 @@ namespace platform
 		{
 #if defined(PLATFORM_RASPBERRYPI)
 			typedef DispManXWindowProvider window_provider_type;
+#elif defined(PLATFORM_X11_SUPPORT)
+			typedef X11WindowProvider window_provider_type;
 #else
 			#error No window provider for this platform!
 #endif
@@ -65,6 +73,8 @@ namespace platform
 		{
 #if defined(PLATFORM_RASPBERRYPI)
 			typedef EGLGraphicsProvider graphics_provider_type;
+#elif defined(PLATFORM_X11_SUPPORT)
+			typedef X11GraphicsProvider graphics_provider_type;
 #else
 			#error No graphics provider for this platform!
 #endif
@@ -277,3 +287,4 @@ namespace platform
 		}		
 	} // namespace window
 } // namespace platform
+

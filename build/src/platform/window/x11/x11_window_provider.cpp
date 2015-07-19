@@ -22,9 +22,75 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include "platform.h"
+#include "platform_internal.h"
+#include "linux_backend.h"
 #include "x11_window_provider.h"
+
 
 namespace platform
 {
+	namespace window
+	{
+		struct X11Window : public NativeWindow
+		{
+			X11Window(const WindowDimensions& window_dimensions) :
+				NativeWindow(window_dimensions)
+			{				
+			}
+			virtual void* get_native_handle() const override
+			{
+				return nullptr;
+			}
+		}; // struct X11Window
+
+
+		X11WindowProvider::X11WindowProvider()
+		{
+		}
+
+		X11WindowProvider::~X11WindowProvider()
+		{
+		}
+
+		Result X11WindowProvider::startup()
+		{
+			return Result(Result::Success);
+		}
+
+		void X11WindowProvider::shutdown()
+		{
+		}
+
+		NativeWindow* X11WindowProvider::create(const Parameters& parameters)
+		{
+			return nullptr;
+		}
+
+		void X11WindowProvider::destroy(NativeWindow* window)
+		{
+		}
+
+		Frame X11WindowProvider::get_frame(NativeWindow* window) const
+		{
+			Frame frame;
+			return frame;
+		}
+
+		Frame X11WindowProvider::get_render_frame(NativeWindow* window) const
+		{
+			Frame frame;
+			return frame;
+		}
+
+		size_t X11WindowProvider::get_screen_count() const
+		{
+			return 0;
+		}
+
+		Frame X11WindowProvider::get_screen_frame(size_t screen_index) const
+		{
+			Frame frame;
+			return frame;
+		}		
+	} // namespace window
 } // namespace platform
