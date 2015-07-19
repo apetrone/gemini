@@ -755,7 +755,8 @@ def get_rnd(arguments, links, **kwargs):
 
 	rnd_linux = rnd.layout(platform="linux")
 	rnd_linux.links += [
-		"GL"
+		"GL",
+		"udev"
 	]
 
 	# Fix undefined reference for SysFreeString
