@@ -96,20 +96,16 @@ namespace platform
 	
 	PathString get_user_application_directory(const char* application_data_path)
 	{
-		// http://android.stackexchange.com/questions/47924/where-android-apps-store-data
-		PathString user_application_root;
-
-		// this is temporary!
-		user_application_root = "/sdcard/Android/data/net.arcfusion.gemini";
-
-		return user_application_root;
+		return android::internal_data_path();
 	}
 	
 	PathString get_user_temp_directory()
 	{
-		PathString user_temp_root = "/sdcard/android/data/local/net.arcfusion.gemini";
-		
-		return user_temp_root;
+		PathString temp_path = android::internal_data_path();
+		temp_path = temp_path.dirname();
+		temp_path.append(PATH_SEPARATOR_STRING);
+		temp_path.append("cache");
+		return temp_path;
 	}
 
 	core::StackString<MAX_PATH_SIZE> make_absolute_path(const char* path)

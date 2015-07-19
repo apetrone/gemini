@@ -170,6 +170,11 @@ namespace platform
 		uint32_t flags = 0;
 		detail::AndroidState* state = static_cast<detail::AndroidState*>(app->userData);
 		AndroidWindow* window = _window_provider->get_android_window();
+
+		// int32_t width, height;
+		// width = ANativeWindow_getWidth(app->window);
+		// height = ANativeWindow_getHeight(app->window);
+		// PLATFORM_LOG(LogMessageType::Info, "%i x %i\n", width, height);
 		switch(command)
 		{
 			case APP_CMD_INPUT_CHANGED: 
@@ -177,7 +182,6 @@ namespace platform
 
 			// The window is being shown
 			case APP_CMD_INIT_WINDOW:
-
 				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_INIT_WINDOW\n");
 				state->surface_ready = true;
 				_window_provider->set_native_window(app->window);
@@ -186,7 +190,6 @@ namespace platform
 			// The window is being hidden or closed
 			case APP_CMD_TERM_WINDOW:
 				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_TERM_WINDOW\n");
-				
 				_graphics_provider->detach_context(window);
 				_graphics_provider->destroy_surface(window);
 				_window_provider->set_native_window(nullptr);
@@ -200,9 +203,11 @@ namespace platform
 				break;
 
 			case APP_CMD_WINDOW_REDRAW_NEEDED:
+				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_WINDOW_REDRAW_NEEDED\n");
 				break;
 
 			case APP_CMD_CONTENT_RECT_CHANGED: 
+				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_CONTENT_RECT_CHANGED\n");
 				break;
 
 			// The app gains focus
@@ -377,6 +382,11 @@ namespace platform
 				{
 					kernel::startup();
 					state.kernel_started = true;
+
+					// We defer the tick for this frame because the system JUST
+					// initialized. Likely, Android will kill our window and re-create it
+					// so don't even bother attempting to render this frame.
+					continue;
 				}
 
 				if (kernel::instance())

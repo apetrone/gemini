@@ -113,10 +113,11 @@ namespace platform
 
 		Frame AndroidWindowProvider::get_screen_frame(size_t screen_index) const
 		{
-			Frame frame;
+			// No support for multiple screens
 			assert(screen_index == 0);
-			frame.width = 0;
-			frame.height = 0;
+			Frame frame;
+			frame.width = main_window.dimensions.width;
+			frame.height = main_window.dimensions.height;
 			return frame;
 		}
 
