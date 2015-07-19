@@ -40,6 +40,11 @@ namespace platform
 			const unsigned int kMaxKeys = 132;
 			static input::Button key_map[ kMaxKeys ];
 			static NSPoint _last_mouse;
+			
+			// We keep this so we can share GL contexts with all subsequent
+			// windows created.
+			static NSOpenGLContext* _share_context = nil;
+			
 			void populate_keymap()
 			{
 				memset(&key_map, 0, kMaxKeys*sizeof(input::Button));
@@ -307,7 +312,12 @@ namespace platform
 				assert(format != nil);
 				
 				
-				window->context = [[NSOpenGLContext alloc] initWithFormat: format shareContext: nil];
+				window->context = [[NSOpenGLContext alloc] initWithFormat: format shareContext: _share_context];
+				
+				if (_share_context == nil)
+				{
+					_share_context = window->context;
+				}
 				
 				GLint opacity = 1; // 1: opaque; 0: transparent
 				GLint wait_for_vsync = 1; // 1: on, 0: off
@@ -564,6 +574,12 @@ namespace platform
 					[NSApp sendEvent: event];
 				}
 			}
+			
+			
+			cocoa_native_window* from(NativeWindow* window)
+			{
+				return static_cast<cocoa_native_window*>(window);
+			}
 		} // namespace cocoa
 	
 
@@ -629,14 +645,14 @@ namespace platform
 	
 		void begin_rendering(NativeWindow* window)
 		{
-			cocoa::cocoa_native_window* nw = static_cast<cocoa::cocoa_native_window*>(window);
-			activate_context(nw);
+			cocoa::cocoa_native_window* cocoawindow = cocoa::from(window);
+			activate_context(cocoawindow);
 		}
 		
 		void end_rendering(NativeWindow* window)
 		{
-			cocoa::cocoa_native_window* nw = static_cast<cocoa::cocoa_native_window*>(window);
-			swap_buffers(nw);
+			cocoa::cocoa_native_window* cocoawindow = cocoa::from(window);
+			swap_buffers(cocoawindow);
 		}
 		
 		Frame get_frame(NativeWindow* window)
@@ -689,7 +705,8 @@ namespace platform
 		
 		void focus(NativeWindow* window)
 		{
-			
+			cocoa::cocoa_native_window* cocoawindow = cocoa::from(window);
+			[cocoawindow->cw makeKeyAndOrderFront:nil];
 		}
 		
 		void show_cursor(bool enable)
