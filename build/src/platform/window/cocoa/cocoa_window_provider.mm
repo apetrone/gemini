@@ -335,9 +335,7 @@ namespace platform
 				
 				// set context of the view
 				[view setContext: window->context];
-				
-				[window->context makeCurrentContext];
-				
+
 				// use the highest possible resolution on 'Retina' screens
 				[view setWantsBestResolutionOpenGLSurface: YES];
 				
@@ -351,9 +349,14 @@ namespace platform
 			}
 			
 			
-			void activate_context(cocoa_native_window* window)
+			void attach_cocoa_context(cocoa_native_window* window)
 			{
 				[window->context makeCurrentContext];
+			}
+			
+			void detach_cocoa_context(cocoa_native_window* window)
+			{
+				[NSOpenGLContext clearCurrentContext];
 			}
 			
 			void swap_buffers(cocoa_native_window* window)
@@ -627,7 +630,7 @@ namespace platform
 			create_context(window);
 			
 			// activate the context
-			activate_context(window);
+			attach_cocoa_context(window);
 			
 			NSRect bounds = [[window->cw contentView] bounds];
 			bounds = [[window->cw contentView] convertRectToBacking: bounds];
@@ -643,13 +646,19 @@ namespace platform
 			MEMORY_DELETE(window, get_platform_allocator());
 		}
 	
-		void begin_rendering(NativeWindow* window)
+		void activate_context(NativeWindow* window)
 		{
 			cocoa::cocoa_native_window* cocoawindow = cocoa::from(window);
-			activate_context(cocoawindow);
+			attach_cocoa_context(cocoawindow);
+		}
+	
+		void deactivate_context(NativeWindow* window)
+		{
+			// Don't need a window pointer since GL just has a global context
+			cocoa::detach_cocoa_context(nullptr);
 		}
 		
-		void end_rendering(NativeWindow* window)
+		void swap_buffers(NativeWindow* window)
 		{
 			cocoa::cocoa_native_window* cocoawindow = cocoa::from(window);
 			swap_buffers(cocoawindow);
@@ -715,6 +724,18 @@ namespace platform
 				[NSCursor unhide];
 			else
 				[NSCursor hide];
+		}
+		
+		// set the cursor (absolute screen coordinates)
+		void set_cursor(int x, int y)
+		{
+			
+		}
+		
+		// get the cursor (absolute screen coordinates
+		void get_cursor(int& x, int& y)
+		{
+			
 		}
 	} // namespace window
 } // namespace platform

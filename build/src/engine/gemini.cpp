@@ -1629,7 +1629,7 @@ Options:
 #if defined(PLATFORM_SDL2_SUPPORT)
 		window_interface->activate_window(main_window);
 #else
-		platform::window::begin_rendering(main_window);
+		platform::window::activate_context(main_window);
 #endif
 		
 		if (graph)
@@ -1754,7 +1754,7 @@ Options:
 #if defined(PLATFORM_SDL2_SUPPORT)
 			window_interface->swap_buffers(main_window);
 #else
-			platform::window::end_rendering(main_window);
+			platform::window::swap_buffers(main_window);
 #endif
 
 
