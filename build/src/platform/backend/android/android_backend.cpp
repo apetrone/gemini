@@ -485,12 +485,17 @@ namespace platform
 		{
 		}
 		
-		void begin_rendering(NativeWindow* window)
+		void activate_context(NativeWindow* window)
 		{
 			_graphics_provider->attach_context(window);
 		}
+
+		void deactivate_context(NativeWindow* window)
+		{
+			_graphics_provider->detach_context(window);
+		}
 		
-		void end_rendering(NativeWindow* window)
+		void swap_buffers(NativeWindow* window)
 		{
 			_graphics_provider->swap_buffers(window);
 		}
@@ -522,6 +527,18 @@ namespace platform
 		void show_cursor(bool enable)
 		{
 		}
+
+		// set the cursor (absolute screen coordinates)
+		void set_cursor(int x, int y)
+		{
+			
+		}
+		
+		// get the cursor (absolute screen coordinates
+		void get_cursor(int& x, int& y)
+		{
+			
+		}		
 	} // namespace window
 
 	namespace android

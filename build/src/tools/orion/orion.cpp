@@ -376,7 +376,7 @@ public:
 		serializer->draw(0, 3);
 		
 #if !defined(USE_WINDOW_LIBRARY)
-		platform::window::begin_rendering(main_window);
+		platform::window::activate_context(main_window);
 #endif
 				
 		device->queue_buffers(&queue, 1);
@@ -385,7 +385,7 @@ public:
 		device->destroy_serializer(serializer);
 		
 #if !defined(USE_WINDOW_LIBRARY)
-		platform::window::end_rendering(main_window);
+		platform::window::swap_buffers(main_window);
 #endif
 
 //		glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, 2000);

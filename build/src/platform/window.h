@@ -186,10 +186,13 @@ namespace platform
 		LIBRARY_EXPORT void destroy(NativeWindow* window);
 		
 		// activate this window for rendering
-		LIBRARY_EXPORT void begin_rendering(NativeWindow* window);
+		LIBRARY_EXPORT void activate_context(NativeWindow* window);
 		
-		// post frame on this window
-		LIBRARY_EXPORT void end_rendering(NativeWindow* window);
+		// deactivate this window for rendering
+		LIBRARY_EXPORT void deactivate_context(NativeWindow* window);
+		
+		// swap buffers on this window
+		LIBRARY_EXPORT void swap_buffers(NativeWindow* window);
 		
 		// return the window size in pixels
 		LIBRARY_EXPORT Frame get_frame(NativeWindow* window);
@@ -208,5 +211,11 @@ namespace platform
 		
 		// show or hide the mouse cursor
 		LIBRARY_EXPORT void show_cursor(bool enable);
+		
+		// set the cursor (absolute screen coordinates)
+		LIBRARY_EXPORT void set_cursor(int x, int y);
+		
+		// get the cursor (absolute screen coordinates
+		LIBRARY_EXPORT void get_cursor(int& x, int& y);
 	} // namespace window
 } // namespace platform
