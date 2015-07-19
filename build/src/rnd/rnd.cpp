@@ -484,7 +484,10 @@ void test_reflection()
 	for (size_t index = 0; index < total_properties; ++index)
 	{
 		ClassProperty* p = &properties[index];
-		fprintf(stdout, "property: %zu, name: '%s', offset: %zu\n", index, p->name, p->offset);
+		fprintf(stdout, "property: %zu, name: '%s', offset: %zu\n", 
+			index, 
+			p->name, 
+			p->offset);
 	}
 }
 
@@ -496,19 +499,120 @@ struct Rectangle
 };
 
 
+#include <platform/platform.h>
 
+
+#if defined(PLATFORM_LINUX)
+
+//#include <linux/input.h>
+//#include <libevdev/libevdev.h>
+#include <fcntl.h>
+
+
+#include <libudev.h>
+
+void test_udev(const char* subsystem)
+{
+	using namespace platform;
+	struct udev* lib;
+	struct udev_enumerate* enumerate;
+	struct udev_list_entry* devices;
+	struct udev_list_entry* entry;
+	struct udev_device* dev;
+
+	// create
+	lib = udev_new();
+	if (!lib)
+	{
+		fprintf(stderr, "cannot create the udev lib\n");
+		return;
+	}
+
+	// create a list of devices in the 'hidraw' subsystem
+	enumerate = udev_enumerate_new(lib);
+	udev_enumerate_add_match_subsystem(enumerate, subsystem);
+	udev_enumerate_scan_devices(enumerate);
+	devices = udev_enumerate_get_list_entry(enumerate);
+
+	udev_list_entry_foreach(entry, devices)
+	{
+		const char* path;
+		// get the filename of the /sys entry for the device
+		// and create a udev_device object representing it.
+
+		path = udev_list_entry_get_name(entry);
+		PLATFORM_LOG(LogMessageType::Info, "entry name: %s\n",
+			path);
+
+		dev = udev_device_new_from_syspath(lib, path);
+		if (!dev)
+			continue;
+		// usb_device_get_devnode() returns the path to the device node
+		// in /dev/
+		PLATFORM_LOG(LogMessageType::Info, "Device Node Path: %s\n",
+			udev_device_get_devnode(dev));
+
+
+		// The device pointed to by dev contains info about the hidraw
+		// device. In order to get info about the device, get the
+		// parent usb device with the subsystem/devtype pair of
+		// "usb"/"usb_device". This will be several levels up the
+		// tree, but the function will find it.
+		dev = udev_device_get_parent_with_subsystem_devtype(
+			dev,
+			"usb",
+			"usb_device");
+
+		if (!dev)
+		{
+			PLATFORM_LOG(LogMessageType::Info, 
+				"Unable to find parent usb device\n");
+			return;
+		}
+
+		// from here, call get_sysattr_value for each file in the
+		// device's /sys entry. The strings passed into these
+		// functions (idProduct, idVendor, serial, etc.) correspond
+		// directly to the files in the directory representing the
+		// usb device. Note that USB strings are Unicode, UCS2
+		// encoded, but the strings returned from
+		// udev_device_get_sysattr_value are UTF-8 encoded.
+		PLATFORM_LOG(LogMessageType::Info, "VID/PID: %s %s\n",
+			udev_device_get_sysattr_value(dev, "idVendor"),
+			udev_device_get_sysattr_value(dev, "idProduct"));
+
+		PLATFORM_LOG(LogMessageType::Info, "%s\n %s\n",
+			udev_device_get_sysattr_value(dev, "manufacturer"),
+			udev_device_get_sysattr_value(dev, "product"));
+
+		PLATFORM_LOG(LogMessageType::Info, "%s\n",
+			udev_device_get_sysattr_value(dev, "serial"));
+
+		udev_device_unref(dev);
+	}
+	udev_enumerate_unref(enumerate);
+	udev_unref(lib);
+}
+#endif
 
 int main(int argc, char** argv)
 {
 	platform::startup();
 
-	test_memory();
+//	test_memory();
 //	test_maths();
 //	test_coroutines();
 //	test_serialization();
 //	test_reflection();
 
-
+#if defined(PLATFORM_LINUX)
+	if (argc == 2)
+	{
+		PLATFORM_LOG(platform::LogMessageType::Info,
+			"Subsystem filter: %s\n", argv[1]);
+		test_udev(argv[1]);
+	}
+#endif
 
 //	core::shutdown();
 	platform::shutdown();
@@ -693,3 +797,4 @@ void unit_test_color()
 	assert(c.a == 255);
 }
 #endif
+
