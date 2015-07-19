@@ -69,7 +69,7 @@ namespace core
 		{
 			clear();
 			recompute_size(source);
-			assert(_length < maximum_size);
+			assert(_length < maximum_size-1);
 			core::str::copy(_data, source, _length );
 		}
 		
@@ -186,7 +186,7 @@ namespace core
 		
 		const Type* extension() const
 		{
-			Type * p = strrchr( (Type*)_data, '.' );
+			Type* p = strrchr( (Type*)_data, '.' );
 			if ( !p )
 			{
 				return _data;
@@ -196,7 +196,7 @@ namespace core
 		
 		StackStringType& remove_extension()
 		{
-			const Type * p = extension();
+			const Type* p = extension();
 			if (p != nullptr)
 			{
 				size_t location = (p-_data-1);
