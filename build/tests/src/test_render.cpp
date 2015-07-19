@@ -79,6 +79,7 @@ public:
 		platform::PathString root_path = platform::get_program_directory();
 		platform::PathString content_path = platform::fs_content_directory();
 		platform::PathString user_application_path = platform::get_user_application_directory("arcfusion.net/gemini/test_render");
+//		platform::PathString temp_path = platform::get_user_temp_directory(); // adding this line breaks Android. Yes, you read that correctly.
 		core::startup_filesystem();
 		core::filesystem::instance()->root_directory(root_path);
 		core::filesystem::instance()->content_directory(content_path);
@@ -89,7 +90,7 @@ public:
 		LOGV("root_path: %s\n", root_path());
 		LOGV("content_path: %s\n", content_path());
 		LOGV("user_application_path: %s\n", user_application_path());
-		
+//		LOGV("temp_path: %s\n", temp_path());
 		
 		input::startup();
 
