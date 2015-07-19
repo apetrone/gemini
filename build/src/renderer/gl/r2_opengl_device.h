@@ -273,11 +273,16 @@ namespace render2
 				// setup pass
 				Pass* pass = cq->pass;
 				
+				assert(pass->target->width > 0 && pass->target->height > 0);
+				gl.Viewport(0, 0, pass->target->width, pass->target->height);
+				
 				gl.ClearColor(pass->clear_color[0], pass->clear_color[1], pass->clear_color[2], pass->clear_color[3]);
 				gl.CheckError("ClearColor");
 				
 				gl.Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 				gl.CheckError("Clear");
+				
+				
 				
 				
 				GLPipeline* current_pipeline = nullptr;
@@ -305,11 +310,11 @@ namespace render2
 					{
 						vertex_stream = static_cast<GLBuffer*>(command->data[0]);
 					}
-					else if (command->type == COMMAND_VIEWPORT)
-					{
-						gl.Viewport(command->params[0], command->params[1], command->params[2], command->params[3]);
-						gl.CheckError("glViewport");
-					}
+//					else if (command->type == COMMAND_VIEWPORT)
+//					{
+//						gl.Viewport(command->params[0], command->params[1], command->params[2], command->params[3]);
+//						gl.CheckError("glViewport");
+//					}
 				}
 			}
 			

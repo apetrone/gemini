@@ -185,63 +185,6 @@ namespace render2
 				offset += uniform.byte_size;
 			}
 			
-#if 0
-			// mapping tables (from data_type to opengl)
-			GLenum gl_type[] = {
-				GL_FLOAT,
-				GL_FLOAT,
-				GL_FLOAT,
-				GL_INT,
-				GL_UNSIGNED_INT,
-				GL_UNSIGNED_BYTE,
-				GL_UNSIGNED_BYTE
-			};
-			
-			GLenum gl_normalized[] = {
-				GL_FALSE,
-				GL_FALSE,
-				GL_FALSE,
-				GL_TRUE,
-				GL_TRUE,
-				GL_TRUE,
-				GL_TRUE
-			};
-			
-			size_t element_count;
-			size_t attribute_size;
-			offset = 0;
-			
-			// If you hit this assert, the shader expects a different number of
-			// vertex attributes than the pipeline was configured for.
-			assert(pipeline->program->attributes.size() == pipeline->vertex_description.size());
-			
-			pipeline->vertex_description.reset();
-			size_t vertex_stride = pipeline->vertex_description.stride();
-			for (size_t index = 0; index < pipeline->vertex_description.size(); ++index)
-			{
-				VertexDataType type = pipeline->vertex_description[index];
-				attribute_size = VertexDescriptor::size_table[ type ];
-				element_count = VertexDescriptor::elements[ type ];
-				GLenum enum_type = GL_INVALID_ENUM;
-				
-				enum_type = gl_type[type];
-				
-				gl.EnableVertexAttribArray(index);
-				gl.CheckError( "EnableVertexAttribArray" );
-				
-				assert(enum_type != GL_INVALID_ENUM);
-				
-				assert(element_count >= 1 && element_count <= 4);
-				
-				const char* data = vertex_buffer->get_data();
-
-				gl.VertexAttribPointer(index, element_count, enum_type, gl_normalized[type], vertex_stride, (void*)(data+offset));
-				gl.CheckError("VertexAttribPointer");
-				
-				offset += attribute_size;
-			}
-#else
-
 			GLInputLayout* layout = static_cast<GLInputLayout*>(pipeline->input_layout);
 			for (size_t index = 0; index < layout->items.size(); ++index)
 			{
@@ -259,7 +202,6 @@ namespace render2
 				gl.VertexAttribPointer(index, item.element_count, item.type, item.normalized, layout->vertex_stride, (void*)(data+item.offset));
 				gl.CheckError("VertexAttribPointer");
 			}
-#endif
 		}
 		
 		void deactivate_pipeline(GLPipeline* pipeline)
@@ -286,6 +228,9 @@ namespace render2
 				
 				// setup pass
 				Pass* pass = cq->pass;
+				
+				assert(pass->target->width > 0 && pass->target->height > 0);
+				gl.Viewport(0, 0, pass->target->width, pass->target->height);
 				
 				gl.ClearColor(pass->clear_color[0], pass->clear_color[1], pass->clear_color[2], pass->clear_color[3]);
 				gl.CheckError("ClearColor");
@@ -319,11 +264,11 @@ namespace render2
 					{
 						vertex_stream = static_cast<GLBuffer*>(command->data[0]);
 					}
-					else if (command->type == COMMAND_VIEWPORT)
-					{
-						gl.Viewport(command->params[0], command->params[1], command->params[2], command->params[3]);
-						gl.CheckError("glViewport");
-					}
+//					else if (command->type == COMMAND_VIEWPORT)
+//					{
+//						gl.Viewport(command->params[0], command->params[1], command->params[2], command->params[3]);
+//						gl.CheckError("glViewport");
+//					}
 				}
 			}
 			
