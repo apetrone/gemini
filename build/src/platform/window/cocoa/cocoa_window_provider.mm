@@ -217,9 +217,6 @@ namespace platform
 				// create a frame for the new window
 				NSRect frame = NSMakeRect(params.frame.x, params.frame.y, params.frame.width, params.frame.height);
 				
-				// get the screen frame where the window will be placed
-				NSRect screen_frame = [[[NSScreen screens] objectAtIndex:params.target_display] frame];
-				
 				// determine the window mask based on parameters
 				NSUInteger window_mask = 0;
 				if (params.enable_fullscreen)
@@ -256,11 +253,7 @@ namespace platform
 				id delegate = [NSApp delegate];
 				[window setDelegate: delegate];
 
-				NSPoint origin = NSMakePoint(
-											 screen_frame.origin.x + params.frame.x,
-											 screen_frame.origin.y + params.frame.y
-											 );
-				[window center];
+				NSPoint origin = NSMakePoint(params.frame.x, params.frame.y);
 				[window setFrameOrigin: origin];
 				
 				if (params.enable_fullscreen)
@@ -658,34 +651,21 @@ namespace platform
 		Frame get_frame(NativeWindow* window)
 		{
 			cocoa::cocoa_native_window* cocoa_window = cocoa::from(window);
-			NSScreen* screen = [cocoa_window->cw screen];
-			NSRect bounds = [[cocoa_window->cw contentView] bounds];
-			bounds = [[cocoa_window->cw contentView] bounds];
+			NSRect bounds = [[cocoa_window->cw contentView] frame];
+			bounds = [cocoa_window->cw convertRectToScreen: bounds];
 
-			// invert the Y axis taking into account the screen & window height
 			Frame frame;
 			frame.x = bounds.origin.x;
-			frame.y = [screen frame].size.height - bounds.origin.y - bounds.size.height;
+			frame.y = bounds.origin.y;
 			frame.width = bounds.size.width;
 			frame.height = bounds.size.height;
-			
 			return frame;
 		}
 
 		Frame get_render_frame(NativeWindow* window)
 		{
-			cocoa::cocoa_native_window* cocoa_window = cocoa::from(window);
-			NSScreen* screen = [cocoa_window->cw screen];
-			NSRect bounds = [[cocoa_window->cw contentView] bounds];
-			bounds = [[cocoa_window->cw contentView] convertRectToBacking: bounds];
-			
-			// invert the Y axis taking into account the screen & window height
-			Frame frame;
-			frame.x = bounds.origin.x;
-			frame.y = [screen frame].size.height - bounds.origin.y - bounds.size.height;
-			frame.width = bounds.size.width;
-			frame.height = bounds.size.height;
-			return frame;
+			// Until I can test this on a retina display...
+			return get_frame(window);
 		}
 		
 		size_t screen_count()

@@ -148,8 +148,7 @@ public:
 		
 		platform::window::focus(native_window);
 		
-		params.target_display = 1;
-		params.frame = platform::window::centered_window_frame(0, 1024, 768);
+		params.frame = platform::window::centered_window_frame(1, 1024, 768);
 		params.window_title = "other_window";
 		other_window = platform::window::create(params);
 		assert(other_window != nullptr);
@@ -158,10 +157,13 @@ public:
 		
 		platform::window::Frame wf = platform::window::get_frame(other_window);
 		
+		LOGV("frame: %2.2f, %2.2f, %2.2f x %2.2f\n", wf.x, wf.y, wf.width, wf.height);
+		
 		// try to center the mouse cursor in the window
 		center.x = (wf.width/2.0f + wf.x);
 		center.y = (wf.height/2.0f + wf.y);
 
+		LOGV("center: %2.2f, %2.2f\n", center.x, center.y);
 		platform::window::set_cursor(center.x, center.y);
 
 		// initialize render device
@@ -171,8 +173,7 @@ public:
 		
 		device = render2::create_device(render_parameters);
 		assert(device != nullptr);
-		
-		
+
 		window_frame = platform::window::get_frame(native_window);
 		
 		// setup the pipeline
@@ -217,7 +218,7 @@ public:
 		cd.projection_matrix = glm::ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
 		pipeline->constants()->assign(&cd, sizeof(ConstantData));
 		
-		platform::window::show_cursor(true);
+//		platform::window::show_cursor(true);
 
 		return kernel::NoError;
 	}

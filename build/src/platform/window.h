@@ -69,14 +69,11 @@ namespace platform
 		
 		struct Parameters
 		{
-			// This is the window's LOCAL frame dimensions used to
+			// This is the window's frame dimensions used to
 			// create and position the new window.
-			// The origin is relative to the target_display.
+			// It is in screen coordinates -- so if you want the window on
+			// another display, you must calculate appropriately.
 			Frame frame;
-			
-			// in windowed modes, this is the target display the window
-			// will be transferred to.
-			uint32_t target_display;
 			
 			// need to take this into account when calculating screen coordinates
 			uint32_t titlebar_height;
@@ -97,7 +94,6 @@ namespace platform
 			bool enable_vsync;
 			
 			Parameters() :
-				target_display(0),
 				titlebar_height(0),
 				window_title(0),
 				enable_fullscreen(false),
