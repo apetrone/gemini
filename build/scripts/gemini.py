@@ -810,7 +810,8 @@ def get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, lib
 		create_unit_test(arguments, "test_core", [libcore, libglm], "tests/src/test_core.cpp"),
 		create_unit_test(arguments, "test_platform", [librenderer, libruntime, libnom, libplatform, libcore, libglm], "tests/src/test_platform.cpp"),
 		create_unit_test(arguments, "test_runtime", [libruntime, libnom, libplatform, libcore, libglm], "tests/src/test_runtime.cpp"),
-		create_unit_test(arguments, "test_render", [librenderer, libruntime, libnom, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application)
+		create_unit_test(arguments, "test_render", [librenderer, libruntime, libnom, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
+		create_unit_test(arguments, "test_nom", [librenderer, libruntime, libnom, libplatform, libcore, libglm], "tests/src/test_nom.cpp", ProductType.Application)
 	]
 
 def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
