@@ -419,5 +419,11 @@ namespace render2
 		
 		virtual CommandSerializer* create_serializer(CommandQueue& command_queue);
 		virtual void destroy_serializer(CommandSerializer* serializer);
+		
+		virtual void backbuffer_resized(int backbuffer_width, int backbuffer_height)
+		{
+			default_target.width = backbuffer_width;
+			default_target.height = backbuffer_height;
+		}
 	}; // GLES2Device
 } // namespace render2
