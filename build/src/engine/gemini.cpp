@@ -310,14 +310,14 @@ public:
 		rs.add_state(::renderer::STATE_DEPTH_WRITE, 1);
 		//		rs.add_state(renderer::STATE_BACKFACE_CULLING, 0);
 		rs.add_state(::renderer::STATE_DEPTH_TEST, 1);
-		rs.add_viewport( 0, 0, window->dimensions.render_width, window->dimensions.render_height );
 		rs.add_clearcolor( 0.0, 0.0, 0.0, 1.0f );
 		rs.add_clear(::renderer::CLEAR_COLOR_BUFFER | ::renderer::CLEAR_DEPTH_BUFFER );
 		rs.run_commands();
 
 		View newview = view;
-		newview.width = window->dimensions.render_width;
-		newview.height = window->dimensions.render_height;
+		platform::window::Frame frame = platform::window::get_render_frame(window);
+		newview.width = frame.width;
+		newview.height = frame.height;
 
 		render_scene_from_camera(entity_list, newview, scenelink);
 		
@@ -806,6 +806,13 @@ void center_mouse(
 #if defined(PLATFORM_SDL2_SUPPORT)
 	window_interface->warp_mouse(window->dimensions.width/2, window->dimensions.height/2);
 #endif
+
+	platform::window::Frame frame = platform::window::get_render_frame(window);
+	float x;
+	float y;
+	x = frame.x + (frame.width/2.0f);
+	y = frame.y + (frame.height / 2.0f);
+	platform::window::set_cursor(x, y);
 }
 
 struct MemoryTagGame {};
@@ -911,8 +918,9 @@ public:
 	virtual void get_render_resolution(uint32_t& render_width, uint32_t& render_height)
 	{
 		assert(main_window);
-		render_width = main_window->dimensions.render_width;
-		render_height = main_window->dimensions.render_height;
+		platform::window::Frame frame = platform::window::get_render_frame(main_window);
+		render_width = frame.width;
+		render_height = frame.height;
 	}
 	
 	virtual void center_cursor()
@@ -1225,7 +1233,8 @@ public:
 		experimental.set_root(root);
 		experimental.set_compositor(compositor);
 		
-		root->set_bounds(0, 0, main_window->dimensions.render_width, main_window->dimensions.render_height);
+		platform::window::Frame frame = platform::window::get_render_frame(main_window);
+		root->set_bounds(0, 0, frame.width, frame.height);
 		root->set_background_color(gui::Color(0, 0, 0, 0));
 		
 		// setup the framerate graph
@@ -1381,8 +1390,7 @@ Options:
 		platform::window::Parameters window_params;
 		
 		// TODO: we should load these from a config; for now just set them.
-		window_params.window.width = config.window_width;
-		window_params.window.height = config.window_height;
+		window_params.frame = platform::window::centered_window_frame(0, config.window_width, config.window_height);
 		window_params.window_title = config.window_title();
 		
 		// create the window
@@ -1423,7 +1431,9 @@ Options:
 			
 			assets::Shader* fontshader = assets::shaders()->load_from_path(FONT_SHADER);
 			assert(fontshader != 0);
-			font::startup(fontshader->program, main_window->dimensions.render_width, main_window->dimensions.render_height);
+			
+			platform::window::Frame frame = platform::window::get_render_frame(main_window);
+			font::startup(fontshader->program, frame.width, frame.height);
 			
 			assets::Shader* debugshader = assets::shaders()->load_from_path(DEBUG_SHADER);
 			assets::Font* debugfont = assets::fonts()->load_from_path(DEBUG_FONT);
@@ -1459,12 +1469,14 @@ Options:
 			
 			alt_vs.create(6, 10, ::renderer::DRAW_INDEXED_TRIANGLES);
 			
+			platform::window::Frame frame = platform::window::get_render_frame(alt_window);
+			float cx = frame.width / 2.0f;
+			float cy = frame.height / 2.0f;
+			
 			if (alt_vs.has_room(4, 6))
 			{
 				TempVertex* v = (TempVertex*)alt_vs.request(4);
-				float cx = (alt_window->dimensions.render_width/2.0f);
-				float cy = (alt_window->dimensions.render_height/2.0f);
-				
+			
 				const float RECT_SIZE = 150.0f;
 				
 				
@@ -1538,7 +1550,8 @@ Options:
 		window_interface->show_mouse(true);
 #endif
 		
-		setup_gui(main_window->dimensions.render_width, main_window->dimensions.render_height);
+		platform::window::Frame frame = platform::window::get_render_frame(main_window);
+		setup_gui(frame.width, frame.height);
 		
 		open_gamelibrary();
 
@@ -1647,8 +1660,9 @@ Options:
 #if defined(PLATFORM_SDL2_SUPPORT)
 		window_interface->get_mouse(mouse[0], mouse[1]);
 #endif
-		int half_width = main_window->dimensions.width/2;
-		int half_height = main_window->dimensions.height/2;
+		platform::window::Frame frame = platform::window::get_render_frame(main_window);
+		int half_width = frame.width/2;
+		int half_height = frame.height/2;
 		
 		// capture the state of the mouse
 		int mdx, mdy;
@@ -1791,15 +1805,16 @@ Options:
 
 
 
-
+			platform::window::Frame frame = platform::window::get_render_frame(alt_window);
 			::renderer::RenderStream rs;
-			rs.add_viewport(0, 0, alt_window->dimensions.render_width, alt_window->dimensions.render_height);
+			rs.add_viewport(0, 0, frame.width, frame.height);
 			rs.add_clearcolor(0.1f, 0.1f, 0.1f, 1.0f);
 			rs.add_clear(::renderer::CLEAR_COLOR_BUFFER | ::renderer::CLEAR_DEPTH_BUFFER);
 			
 			
 			glm::mat4 modelview;
-			glm::mat4 projection = glm::ortho(0.0f, (float)alt_window->dimensions.render_width, 0.0f, (float)alt_window->dimensions.render_height, -1.0f, 1.0f);
+			
+			glm::mat4 projection = glm::ortho(0.0f, (float)frame.width, 0.0f, (float)frame.height, -1.0f, 1.0f);
 
 			assets::Shader* shader = assets::shaders()->load_from_path("shaders/gui");
 			rs.add_shader(shader->program);
