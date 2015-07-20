@@ -1,0 +1,58 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:1.2.3'
+    }
+}
+
+apply plugin: 'com.android.application'
+
+def get_ndk_root()
+{
+	Properties props = new Properties()
+	props.load(project.rootProject.file("local.properties").newDataInputStream())
+	def ndk_root = props.getProperty("ndk.dir", null)
+	if (ndk_root == null)
+		throw new GradleException("NDK location not found! ndk.dir must be set in local.properties")
+	return ndk_root
+}
+
+def get_ndk_build_command() {
+	def ndkbuild = get_ndk_root() + "/ndk-build"
+	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+		ndkbuild += ".cmd"
+	}
+	return ndkbuild
+}
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion "20.0.0"
+
+    sourceSets.main {
+    	// disable automatic ndk-build
+    	jniLibs.srcDir 'src/main/libs'
+    	jni.srcDirs = []
+    }
+
+
+    task ndk_build(type: Exec) {
+    	commandLine get_ndk_build_command(), '-C', file('src/main').absolutePath
+    }
+
+    tasks.withType(JavaCompile) {
+    	compileTask -> compileTask.dependsOn ndk_build
+    }
+
+    task clean_native(type: Exec) {
+    	workingDir file('src/main')
+    	commandLine get_ndk_build_command(), 'clean'
+    }
+
+    clean.dependsOn clean_native
+}
