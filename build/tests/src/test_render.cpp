@@ -45,10 +45,14 @@ using namespace renderer;
 // TestKernel
 // ---------------------------------------------------------------------
 class TestKernel : public kernel::IKernel,
-	public kernel::IEventListener<kernel::KeyboardEvent>
+	public kernel::IEventListener<kernel::KeyboardEvent>,
+	public kernel::IEventListener<kernel::MouseEvent>,
+	public kernel::IEventListener<kernel::SystemEvent>
 {
 	bool active;
 	platform::window::NativeWindow* native_window;
+	platform::window::NativeWindow* other_window;
+	glm::vec2 center;
 	
 public:
 	virtual void event(kernel::KeyboardEvent& event)
@@ -59,10 +63,33 @@ public:
 			{
 				kernel::instance()->set_active(false);
 			}
+			else if (event.key == input::KEY_SPACE)
+			{
+				platform::window::set_cursor(center.x, center.y);
+			}
 		}
 	}
 	
+	virtual void event(kernel::MouseEvent& event)
+	{
+//		LOGV("mouse move: %i %i %i\n", event.subtype, event.mx, event.my);
+	}
 	
+	virtual void event(kernel::SystemEvent& event)
+	{
+		switch(event.subtype)
+		{
+			case kernel::WindowResized:
+				LOGV("window resized: %i x %i\n", event.render_width, event.render_height);
+				if (device)
+				{
+					device->backbuffer_resized(event.render_width, event.render_height);
+				}
+				break;
+			default:
+				break;
+		}
+	}
 public:
 
 	TestKernel()
@@ -111,16 +138,31 @@ public:
 
 		// create a test window
 		platform::window::Parameters params;
-		params.window.width = 512;
-		params.window.height = 512;
+		params.frame = platform::window::centered_window_frame(0, 512, 512);
 		params.window_title = "test_render";
 		
 		native_window = platform::window::create(params);
 		assert(native_window != nullptr);
-		
-		PLATFORM_LOG(platform::LogMessageType::Info, "window dimensions: %i %i\n", native_window->dimensions.width, native_window->dimensions.height);
+		platform::window::Frame window_frame = platform::window::get_frame(native_window);
+		PLATFORM_LOG(platform::LogMessageType::Info, "window dimensions: %i %i\n", window_frame.width, window_frame.height);
 		
 		platform::window::focus(native_window);
+		
+		params.target_display = 1;
+		params.frame = platform::window::centered_window_frame(0, 1024, 768);
+		params.window_title = "other_window";
+		other_window = platform::window::create(params);
+		assert(other_window != nullptr);
+		window_frame = platform::window::get_frame(other_window);
+		PLATFORM_LOG(platform::LogMessageType::Info, "other window dimensions: %i %i\n", window_frame.width, window_frame.height);
+		
+		platform::window::Frame wf = platform::window::get_frame(other_window);
+		
+		// try to center the mouse cursor in the window
+		center.x = (wf.width/2.0f + wf.x);
+		center.y = (wf.height/2.0f + wf.y);
+
+		platform::window::set_cursor(center.x, center.y);
 
 		// initialize render device
 		render2::RenderParameters render_parameters;
@@ -131,6 +173,8 @@ public:
 		assert(device != nullptr);
 		
 		
+		window_frame = platform::window::get_frame(native_window);
+		
 		// setup the pipeline
 		render2::PipelineDescriptor desc;
 		desc.shader = device->create_shader("test");
@@ -140,10 +184,10 @@ public:
 		pipeline = device->create_pipeline(desc);
 		
 		// create a vertex buffer and populate it with data
-		float width = (float)native_window->dimensions.width;
-		float height = (float)native_window->dimensions.height;
+		float width = (float)window_frame.width;
+		float height = (float)window_frame.height;
 		
-		device->init(native_window->dimensions.width, native_window->dimensions.height);
+		device->init(window_frame.width, window_frame.height);
 		
 		// Draw a triangle on screen with the wide part of the base at the bottom
 		// of the screen.
@@ -172,7 +216,9 @@ public:
 		cd.modelview_matrix = glm::mat4(1.0f);
 		cd.projection_matrix = glm::ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
 		pipeline->constants()->assign(&cd, sizeof(ConstantData));
-	
+		
+		platform::window::show_cursor(true);
+
 		return kernel::NoError;
 	}
 	
@@ -212,9 +258,24 @@ public:
 		device->queue_buffers(&queue, 1);
 
 		// submit the queues to the GPU
-		platform::window::begin_rendering(native_window);
+		platform::window::activate_context(native_window);
 		device->submit();
-		platform::window::end_rendering(native_window);
+		platform::window::swap_buffers(native_window);
+		
+		
+		float cx = 0, cy = 0;
+		
+		platform::window::get_cursor(cx, cy);
+		glm::vec2 delta(center.x-cx, center.y-cy);
+//		LOGV("current pos: %2.2f %2.2f\n", delta.x, delta.y);
+		
+		// center mouse in window
+		if (glm::length(delta) != 0.0f)
+		{
+			
+		}
+		
+		// hide/show mouse
 	}
 
 
@@ -227,6 +288,7 @@ public:
 		renderer::shutdown();
 
 		platform::window::destroy(native_window);
+		platform::window::destroy(other_window);
 		platform::window::shutdown();
 
 		input::shutdown();
