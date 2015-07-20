@@ -1411,7 +1411,6 @@ Options:
 //		window_params.window_width = 800;
 //		window_params.window_height = 600;
 //		window_params.window_title = "Test Window";
-//		window_params.target_display = 1;
 //		alt_window = window_interface->create_window(window_params);
 
 
