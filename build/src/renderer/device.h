@@ -97,5 +97,9 @@ namespace render2
 		
 		// submit queued command buffers to GPU
 		virtual void submit() = 0;
+		
+		// handle backbuffer resize
+		virtual void backbuffer_resized(int backbuffer_width, int backbuffer_height) = 0;
+		
 	}; // class Device
 } // namespace render2
