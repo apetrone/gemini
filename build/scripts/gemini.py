@@ -461,7 +461,9 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/application/cocoa/cocoa_application.mm",
 		"src/platform/application/cocoa/cocoa_application.h",
 
+		# backend
 		"src/platform/backend/osx/osx_backend.mm",
+		"src/platform/backend/osx/cocoa_common.h",
 
 		# dylib
 		"src/platform/dylib/osx/osx_dylib.cpp",
@@ -484,8 +486,8 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/time/posix/posix_datetime.cpp",
 
 		# window
-		"src/platform/window/cocoa/cocoa_common.h",
-		"src/platform/window/cocoa/cocoa_backend.mm",
+		"src/platform/window/cocoa/cocoa_window_provider.mm",
+		"src/platform/window/cocoa/cocoa_window_provider.h",
 		"src/platform/window/cocoa/cocoa_openglview.mm",
 		"src/platform/window/cocoa/cocoa_openglview.h",
 		"src/platform/window/cocoa/cocoa_window.mm",
