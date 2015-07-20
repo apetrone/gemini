@@ -33,48 +33,12 @@
 	#if !(defined(PLATFORM_EGL_SUPPORT) || !defined(PLATFORM_GLES2_SUPPORT))
 		#error RaspberryPi requires EGL and OpenGL ES support!
 	#endif
-
-	// needed for EGL_DISPMANX_NATIVE_WINDOW_T
-	#if defined(PLATFORM_EGL_SUPPORT)
-		#include <EGL/egl.h>
-	#else
-		#error PLATFORM_EGL_SUPPORT not defined. Raspberry Pi build requires EGL support!
-	#endif
 #endif
 
 namespace platform
 {
 	namespace window
 	{
-		struct DispManXWindow : public NativeWindow
-		{
-			DispManXWindow(const WindowDimensions& window_dimensions) :
-				NativeWindow(window_dimensions)
-			{				
-			}
-
-#if defined(PLATFORM_RASPBERRYPI)
-			EGL_DISPMANX_WINDOW_T native_window;
-#endif		
-
-			virtual void* get_native_handle() const override
-			{
-				return (void*)&native_window;
-			}
-		}; // struct DispManXWindow
-
-
-		DispManXWindowProvider::DispManXWindowProvider() :
-			display_width(0),
-			display_height(0)
-		{
-		}
-
-		DispManXWindowProvider::~DispManXWindowProvider()
-		{
-		}
-
-
 		Result DispManXWindowProvider::startup()
 		{
 #if defined(PLATFORM_RASPBERRYPI)
@@ -88,8 +52,8 @@ namespace platform
 				return Result(Result::Failure, "Failed to get display size!");
 			}
 
-			display_width = info.width;
-			display_height = info.height;
+			main_window.width = info.width;
+			main_window.height = info.height;
 
 			// next, setup the dispman element which we need for the
 			// window surface.
@@ -97,12 +61,12 @@ namespace platform
 			VC_RECT_T src_rect;
 			dst_rect.x = 0;
 			dst_rect.y = 0;
-			dst_rect.width = display_width;
-			dst_rect.height = display_height;
+			dst_rect.width = main_window.width;
+			dst_rect.height = main_window.height;
 			src_rect.x = 0;
 			src_rect.y = 0;
-			src_rect.width = display_width << 16;
-			src_rect.height = display_height << 16;
+			src_rect.width = main_window.width << 16;
+			src_rect.height = main_window.height << 16;
 
 			// disable the alpha layer; fully opaque rendering
 			VC_DISPMANX_ALPHA_T alpha;
@@ -118,6 +82,10 @@ namespace platform
 			);
 
 			vc_dispmanx_update_submit_sync(dispman_update);
+
+			main_window.native_window.width = main_window.width;
+			main_window.native_window.height = main_window.height;
+			main_window.native_window.element = dispman_element;
 #endif
 
 			return Result(Result::Success);
@@ -138,25 +106,19 @@ namespace platform
 
 		NativeWindow* DispManXWindowProvider::create(const Parameters& parameters)
 		{
-			DispManXWindow* window = MEMORY_NEW(DispManXWindow, platform::get_platform_allocator())(parameters.window);
-			window->native_window.width = display_width;
-			window->native_window.height = display_height;
-			window->native_window.element = dispman_element;
-			return window;
+			return &main_window;
 		}
 
 		void DispManXWindowProvider::destroy(NativeWindow* window)
 		{
-			DispManXWindow* pointer = static_cast<DispManXWindow*>(window);
-			MEMORY_DELETE(pointer, platform::get_platform_allocator());
 		}
 
 		Frame DispManXWindowProvider::get_frame(NativeWindow* window) const
 		{
 			Frame frame;
 #if defined(PLATFORM_RASPBERRYPI)
-			frame.width = display_width;
-			frame.height = display_height;
+			frame.width = main_window.width;
+			frame.height = main_window.height;
 #endif			
 			return frame;
 		}
@@ -165,8 +127,8 @@ namespace platform
 		{
 			Frame frame;
 #if defined(PLATFORM_RASPBERRYPI)
-			frame.width = display_width;
-			frame.height = display_height;
+			frame.width = main_window.width;
+			frame.height = main_window.height;
 #endif			
 			return frame;
 		}
@@ -186,8 +148,8 @@ namespace platform
 			Frame frame;
 #if defined(PLATFORM_RASPBERRYPI)
 			assert(screen_index == 0);
-			frame.width = display_width;
-			frame.height = display_height;
+			frame.width = main_window.width;
+			frame.height = main_window.height;
 #endif
 			return frame;
 		}		

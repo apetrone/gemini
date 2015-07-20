@@ -291,14 +291,12 @@ namespace platform
 		{
 		}		
 
-		// set the cursor (absolute screen coordinates)
-		void set_cursor(int x, int y)
+		void set_cursor(float x, float y)
 		{
 			
 		}
 		
-		// get the cursor (absolute screen coordinates
-		void get_cursor(int& x, int& y)
+		void get_cursor(float& x, float& y)
 		{
 			
 		}		

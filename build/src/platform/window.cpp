@@ -33,6 +33,20 @@ namespace platform
 		// ---------------------------------------------------------------------
 		// internal platform stuff?
 		// ---------------------------------------------------------------------
+		Frame centered_window_frame(size_t screen_index, size_t width, size_t height)
+		{
+			Frame frame;
+			Frame screen_rect = screen_frame(screen_index);
+			
+			// center the window in the screen
+			frame.x = screen_rect.x + (screen_rect.width/2) - width/2;
+			frame.y = screen_rect.y + (screen_rect.height/2) - height/2;
+			frame.width = width;
+			frame.height = height;
+			
+			return frame;
+		}
+				
 		
 		// don't bloat my code up
 		Parameters::~Parameters()

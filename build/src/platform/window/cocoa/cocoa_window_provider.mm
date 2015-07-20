@@ -194,8 +194,8 @@ namespace platform
 
 			struct cocoa_native_window : public NativeWindow
 			{
-				cocoa_native_window(const WindowDimensions& window_dimensions) :
-					NativeWindow(window_dimensions),
+				cocoa_native_window(const Parameters& parameters) :
+					NativeWindow(),
 					cw(nil),
 					context(nil)
 				{
@@ -215,7 +215,7 @@ namespace platform
 				CocoaWindow* window;
 				
 				// create a frame for the new window
-				NSRect frame = NSMakeRect(params.window.x, params.window.y, params.window.width, params.window.height);
+				NSRect frame = NSMakeRect(params.frame.x, params.frame.y, params.frame.width, params.frame.height);
 				
 				// get the screen frame where the window will be placed
 				NSRect screen_frame = [[[NSScreen screens] objectAtIndex:params.target_display] frame];
@@ -247,7 +247,7 @@ namespace platform
 				window.instance = native_window;
 				native_window->cw = window;
 				
-				[window setBackgroundColor:[NSColor redColor]];
+				[window setBackgroundColor:[NSColor whiteColor]];
 				[window makeKeyAndOrderFront: nil];
 				[window setTitle: [NSString stringWithUTF8String: params.window_title]];
 				[window setAcceptsMouseMovedEvents: YES];
@@ -256,15 +256,12 @@ namespace platform
 				id delegate = [NSApp delegate];
 				[window setDelegate: delegate];
 
-				// try to center the window in the screen
-				{
-					NSPoint origin = NSMakePoint(
-												 screen_frame.origin.x + (screen_frame.size.width/2) - (params.window.width/2),
-												 screen_frame.origin.y + (screen_frame.size.height/2) - (params.window.height/2)
-												 );
-					[window center];
-					[window setFrameOrigin: origin];
-				}
+				NSPoint origin = NSMakePoint(
+											 screen_frame.origin.x + params.frame.x,
+											 screen_frame.origin.y + params.frame.y
+											 );
+				[window center];
+				[window setFrameOrigin: origin];
 				
 				if (params.enable_fullscreen)
 				{
@@ -617,7 +614,7 @@ namespace platform
 
 		NativeWindow* create(const Parameters& window_parameters)
 		{
-			cocoa::cocoa_native_window* window = MEMORY_NEW(cocoa::cocoa_native_window, get_platform_allocator())(window_parameters.window);
+			cocoa::cocoa_native_window* window = MEMORY_NEW(cocoa::cocoa_native_window, get_platform_allocator())(window_parameters);
 			
 			platform::Result result = create_window(window, window_parameters);
 			if (result.failed())
@@ -631,13 +628,7 @@ namespace platform
 			
 			// activate the context
 			attach_cocoa_context(window);
-			
-			NSRect bounds = [[window->cw contentView] bounds];
-			bounds = [[window->cw contentView] convertRectToBacking: bounds];
-			
-			window->dimensions.render_width = bounds.size.width;
-			window->dimensions.render_height = bounds.size.height;
-			
+						
 			return window;
 		}
 		
@@ -666,13 +657,34 @@ namespace platform
 		
 		Frame get_frame(NativeWindow* window)
 		{
+			cocoa::cocoa_native_window* cocoa_window = cocoa::from(window);
+			NSScreen* screen = [cocoa_window->cw screen];
+			NSRect bounds = [[cocoa_window->cw contentView] bounds];
+			bounds = [[cocoa_window->cw contentView] bounds];
+
+			// invert the Y axis taking into account the screen & window height
 			Frame frame;
+			frame.x = bounds.origin.x;
+			frame.y = [screen frame].size.height - bounds.origin.y - bounds.size.height;
+			frame.width = bounds.size.width;
+			frame.height = bounds.size.height;
+			
 			return frame;
 		}
 
 		Frame get_render_frame(NativeWindow* window)
 		{
+			cocoa::cocoa_native_window* cocoa_window = cocoa::from(window);
+			NSScreen* screen = [cocoa_window->cw screen];
+			NSRect bounds = [[cocoa_window->cw contentView] bounds];
+			bounds = [[cocoa_window->cw contentView] convertRectToBacking: bounds];
+			
+			// invert the Y axis taking into account the screen & window height
 			Frame frame;
+			frame.x = bounds.origin.x;
+			frame.y = [screen frame].size.height - bounds.origin.y - bounds.size.height;
+			frame.width = bounds.size.width;
+			frame.height = bounds.size.height;
 			return frame;
 		}
 		
@@ -720,6 +732,9 @@ namespace platform
 		
 		void show_cursor(bool enable)
 		{
+			// https://developer.apple.com/library/mac/documentation/Cocoa/Reference/ApplicationKit/Classes/NSCursor_Class/
+			// Each call to hide cursor must have a corresponding unhide call.
+		
 			if (enable)
 				[NSCursor unhide];
 			else
@@ -727,15 +742,44 @@ namespace platform
 		}
 		
 		// set the cursor (absolute screen coordinates)
-		void set_cursor(int x, int y)
+		void set_cursor(float x, float y)
 		{
+			CGDirectDisplayID display = 0;
+			CGPoint point;
 			
+			// this point will have the origin in the upper left.
+			point.x = x;
+			point.y = y;
+			
+			// As per the documentation, this won't generate any mouse movement
+			// events.
+			CGDisplayMoveCursorToPoint(display, point);
 		}
 		
 		// get the cursor (absolute screen coordinates
-		void get_cursor(int& x, int& y)
+		void get_cursor(float& x, float& y)
 		{
+			// mouseLocation returns the current mouse position in screen
+			// coordinates. However, we must flip the Y-axis because
+			// the origin is in the lower-left. Ours is the upper left.
+			NSPoint current = [NSEvent mouseLocation];
+			x = current.x;
+			y = current.y;
 			
+			NSUInteger index = 0;
+			for(NSScreen* screen in [NSScreen screens])
+			{
+				if (NSMouseInRect(current, [screen frame], NO))
+				{
+					y = [screen frame].size.height - y;
+					return;
+					break;
+				}
+				
+				++index;
+			}
+			
+			PLATFORM_LOG(LogMessageType::Warning, "Could not find screen for mouse location [%2.2f, %2.2f]\n", x, y);
 		}
 	} // namespace window
 } // namespace platform

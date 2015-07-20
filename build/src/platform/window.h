@@ -51,10 +51,12 @@ namespace platform
 
 		struct Frame
 		{
-			uint32_t x;
-			uint32_t y;
-			uint32_t width;
-			uint32_t height;
+			// origin is in the upper left
+			// lower right is (x+width, y+height)
+			float x;
+			float y;
+			float width;
+			float height;
 			
 			Frame() :
 				x(0),
@@ -65,36 +67,15 @@ namespace platform
 			}
 		};
 		
-		struct WindowDimensions
-		{
-			uint32_t x;
-			uint32_t y;
-			
-			// dimensions of the actual window in pixels
-			uint32_t width;
-			uint32_t height;
-			
-			// dimensions of the rendering area in pixels
-			uint32_t render_width;
-			uint32_t render_height;
-			
-			WindowDimensions() :
-				x(0),
-				y(0),
-				width(1),
-				height(1),
-				render_width(0),
-				render_height(1)
-			{
-			}
-		};
-		
 		struct Parameters
 		{
-			WindowDimensions window;
+			// This is the window's LOCAL frame dimensions used to
+			// create and position the new window.
+			// The origin is relative to the target_display.
+			Frame frame;
 			
 			// in windowed modes, this is the target display the window
-			// will be transferred to
+			// will be transferred to.
 			uint32_t target_display;
 			
 			// need to take this into account when calculating screen coordinates
@@ -130,8 +111,7 @@ namespace platform
 		
 		struct NativeWindow
 		{
-			NativeWindow(const WindowDimensions& window_dimensions) :
-				dimensions(window_dimensions),
+			NativeWindow() :
 				graphics_data(nullptr)
 			{
 			}
@@ -143,11 +123,10 @@ namespace platform
 
 			/// @brief Notification from the graphics provider
 			/// when the native visual id has been changed
-			virtual void update_visual(int visual)
-			{
-			}
-			
-			WindowDimensions dimensions;
+			virtual void update_visual(int visual) {}
+
+			/// @brief An update to this window's dimensions happened
+			virtual void update_size(int width, int height) {}
 			
 			// data used by the graphics provider on this system
 			void* graphics_data;
@@ -170,6 +149,10 @@ namespace platform
 			// toggle mouse visibility
 			virtual void show_mouse(bool show) = 0;
 		};
+		
+		
+		// given a screen and target window dimensions, return a centered frame
+		LIBRARY_EXPORT Frame centered_window_frame(size_t screen_index, size_t width, size_t height);
 		
 		/// @brief startup the window backend
 		/// @returns Result Success or Failure with a message
@@ -194,7 +177,7 @@ namespace platform
 		// swap buffers on this window
 		LIBRARY_EXPORT void swap_buffers(NativeWindow* window);
 		
-		// return the window size in pixels
+		// return the window size in screen coordinates
 		LIBRARY_EXPORT Frame get_frame(NativeWindow* window);
 		
 		// return the renderable window surface in pixels
@@ -212,10 +195,10 @@ namespace platform
 		// show or hide the mouse cursor
 		LIBRARY_EXPORT void show_cursor(bool enable);
 		
-		// set the cursor (absolute screen coordinates)
-		LIBRARY_EXPORT void set_cursor(int x, int y);
+		// set the cursor position in screen coordinates
+		LIBRARY_EXPORT void set_cursor(float x, float y);
 		
-		// get the cursor (absolute screen coordinates
-		LIBRARY_EXPORT void get_cursor(int& x, int& y);
+		// get the cursor position in screen coordinates
+		LIBRARY_EXPORT void get_cursor(float& x, float& y);
 	} // namespace window
 } // namespace platform

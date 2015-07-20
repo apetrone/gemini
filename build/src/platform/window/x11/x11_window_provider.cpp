@@ -33,10 +33,6 @@ namespace platform
 	{
 		struct X11Window : public NativeWindow
 		{
-			X11Window(const WindowDimensions& window_dimensions) :
-				NativeWindow(window_dimensions)
-			{				
-			}
 			virtual void* get_native_handle() const override
 			{
 				return nullptr;
