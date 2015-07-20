@@ -148,23 +148,26 @@ public:
 		
 		platform::window::focus(native_window);
 		
-		params.frame = platform::window::centered_window_frame(1, 1024, 768);
-		params.window_title = "other_window";
-		other_window = platform::window::create(params);
-		assert(other_window != nullptr);
-		window_frame = platform::window::get_frame(other_window);
-		PLATFORM_LOG(platform::LogMessageType::Info, "other window dimensions: %i %i\n", window_frame.width, window_frame.height);
-		
-		platform::window::Frame wf = platform::window::get_frame(other_window);
-		
-		LOGV("frame: %2.2f, %2.2f, %2.2f x %2.2f\n", wf.x, wf.y, wf.width, wf.height);
-		
-		// try to center the mouse cursor in the window
-		center.x = (wf.width/2.0f + wf.x);
-		center.y = (wf.height/2.0f + wf.y);
+		if (platform::window::screen_count() > 1)
+		{	
+			params.frame = platform::window::centered_window_frame(1, 1024, 768);
+			params.window_title = "other_window";
+			other_window = platform::window::create(params);
+			assert(other_window != nullptr);
+			window_frame = platform::window::get_frame(other_window);
+			PLATFORM_LOG(platform::LogMessageType::Info, "other window dimensions: %i %i\n", window_frame.width, window_frame.height);
+			
+			platform::window::Frame wf = platform::window::get_frame(other_window);
+			
+			LOGV("frame: %2.2f, %2.2f, %2.2f x %2.2f\n", wf.x, wf.y, wf.width, wf.height);
+			
+			// try to center the mouse cursor in the window
+			center.x = (wf.width/2.0f + wf.x);
+			center.y = (wf.height/2.0f + wf.y);
 
-		LOGV("center: %2.2f, %2.2f\n", center.x, center.y);
-		platform::window::set_cursor(center.x, center.y);
+			LOGV("center: %2.2f, %2.2f\n", center.x, center.y);
+			platform::window::set_cursor(center.x, center.y);
+		}
 
 		// initialize render device
 		render2::RenderParameters render_parameters;
