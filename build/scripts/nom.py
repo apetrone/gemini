@@ -37,12 +37,6 @@ def products(arguments, **kwargs):
 	#
 	# macosx
 	#
-	macosx = nom.layout(platform="macosx")
-	macosx.links += [
-		"Cocoa.framework",
-		"OpenGL.framework"
-	]
-
 	macosx_debug = nom.layout(platform="macosx", configuration="debug")
 	macosx_debug.driver.gcc_optimization_level = "0"
 	macosx_debug.driver.gcc_generate_debugging_symbols = "YES"
@@ -55,12 +49,6 @@ def products(arguments, **kwargs):
 	#
 	# linux
 	#
-	linux = nom.layout(platform="linux")
-	linux.links = [
-		"X11",
-		"GL"
-	]
-
 	linux_debug = nom.layout(configuration="debug", platform="linux")
 	linux_debug.cflags = [
 		"-g",
@@ -76,10 +64,6 @@ def products(arguments, **kwargs):
 	windows = nom.layout(platform="windows")
 	windows.defines += [
 		"UNICODE"
-	]
-
-	windows.links = [
-		"opengl32"
 	]
 
 	return [nom]
