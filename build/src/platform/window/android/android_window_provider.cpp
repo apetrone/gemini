@@ -36,10 +36,10 @@ namespace platform
 {
 	namespace window
 	{
-		AndroidWindow::AndroidWindow(const WindowDimensions& window_dimensions,
-			ANativeWindow* android_window) :
-			NativeWindow(window_dimensions),
-			native_window(android_window)
+		AndroidWindow::AndroidWindow(ANativeWindow* android_window) :
+			native_window(android_window),
+			width(0),
+			height(0)
 		{
 		}
 
@@ -61,9 +61,15 @@ namespace platform
 			visual = visual_id;
 		}
 
+		void AndroidWindow::update_size(int width, int height)
+		{
+			this->width = width;
+			this->height = height;
+		}
+
 
 		AndroidWindowProvider::AndroidWindowProvider() :
-			main_window(WindowDimensions(), nullptr)
+			main_window(nullptr)
 		{
 		}
 
@@ -93,16 +99,20 @@ namespace platform
 		Frame AndroidWindowProvider::get_frame(NativeWindow* window) const
 		{
 			Frame frame;
-			frame.width = window->dimensions.width;
-			frame.height = window->dimensions.height;
+			frame.x = 0;
+			frame.y = 0;
+			frame.width = get_android_window()->width;
+			frame.height = get_android_window()->height;
 			return frame;
 		}
 
 		Frame AndroidWindowProvider::get_render_frame(NativeWindow* window) const
 		{
 			Frame frame;
-			frame.width = window->dimensions.width;
-			frame.height = window->dimensions.height;
+			frame.x = 0;
+			frame.y = 0;
+			frame.width = get_android_window()->width;
+			frame.height = get_android_window()->height;
 			return frame;
 		}
 
@@ -116,8 +126,10 @@ namespace platform
 			// No support for multiple screens
 			assert(screen_index == 0);
 			Frame frame;
-			frame.width = main_window.dimensions.width;
-			frame.height = main_window.dimensions.height;
+			frame.x = 0;
+			frame.y = 0;
+			frame.width = get_android_window()->width;
+			frame.height = get_android_window()->height;
 			return frame;
 		}
 
@@ -132,6 +144,11 @@ namespace platform
 		}
 
 		AndroidWindow* AndroidWindowProvider::get_android_window()
+		{
+			return &main_window;
+		}
+
+		const AndroidWindow* AndroidWindowProvider::get_android_window() const
 		{
 			return &main_window;
 		}

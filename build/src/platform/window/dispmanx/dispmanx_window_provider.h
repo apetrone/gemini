@@ -31,16 +31,40 @@
 	#include <bcm_host.h> // for DISPMANX_* types
 #endif
 
+// needed for EGL_DISPMANX_NATIVE_WINDOW_T
+#if defined(PLATFORM_EGL_SUPPORT)
+	#include <EGL/egl.h>
+#else
+	#error PLATFORM_EGL_SUPPORT not defined. Raspberry Pi build requires EGL support!
+#endif
+
 namespace platform
 {
 	namespace window
 	{
+		struct DispManXWindow : public NativeWindow
+		{
+			virtual void* get_native_handle() const override
+			{
+				return (void*)&native_window;
+			}
+
+			virtual void update_size(int width, int height)
+			{
+				this->width = width;
+				this->height = height;
+			}
+
+#if defined(PLATFORM_RASPBERRYPI)
+			EGL_DISPMANX_WINDOW_T native_window;
+#endif		
+			int32_t width;
+			int32_t height;			
+		}; // struct DispManXWindow
+
 		class DispManXWindowProvider : public WindowProvider
 		{
 		public:
-			DispManXWindowProvider();
-			virtual ~DispManXWindowProvider();
-
 			virtual Result startup();
 			virtual void shutdown();
 			virtual NativeWindow* create(const Parameters& parameters);
@@ -51,12 +75,11 @@ namespace platform
 			virtual Frame get_screen_frame(size_t screen_index) const;
 
 		private:
-			uint32_t display_width;
-			uint32_t display_height;
-
 			DISPMANX_DISPLAY_HANDLE_T dispman_display;
 			DISPMANX_UPDATE_HANDLE_T dispman_update;
 			DISPMANX_ELEMENT_HANDLE_T dispman_element;
+
+			DispManXWindow main_window;
 		}; // class DispManXWindowProvider
 	} // namespace window
 } // namespace platform

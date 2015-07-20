@@ -36,14 +36,17 @@ namespace platform
 	{
 		struct AndroidWindow : public NativeWindow
 		{
-			AndroidWindow(const WindowDimensions& window_dimensions, ANativeWindow* android_window);
+			AndroidWindow(ANativeWindow* android_window);
 			virtual void* get_native_handle() const override;
 			virtual void update_visual(int visual_id) override;
+			virtual void update_size(int width, int height) override;
 
 			void set_native_handle(ANativeWindow* window);
 
 			int visual;
 			ANativeWindow* native_window;
+			int32_t width;
+			int32_t height;
 		}; // struct AndroidWindow
 
 		class AndroidWindowProvider : public WindowProvider
@@ -65,6 +68,7 @@ namespace platform
 			void set_native_window(ANativeWindow* window);
 
 			AndroidWindow* get_android_window();
+			const AndroidWindow* get_android_window() const;
 
 		private:
 			AndroidWindow main_window;

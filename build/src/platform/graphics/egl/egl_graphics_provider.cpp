@@ -294,8 +294,7 @@ namespace platform
 			eglQuerySurface(display, window_data->surface, EGL_WIDTH, &width);
 			eglQuerySurface(display, window_data->surface, EGL_HEIGHT, &height);
 
-			window->dimensions.width = width;
-			window->dimensions.height = height;
+			window->update_size(width, height);
 		}
 
 		void EGLGraphicsProvider::destroy_surface(NativeWindow* window)
