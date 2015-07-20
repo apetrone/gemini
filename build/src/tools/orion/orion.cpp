@@ -202,8 +202,7 @@ public:
 			}
 			
 			platform::window::Parameters params;
-			params.window.width = 800;
-			params.window.height = 600;
+			params.frame = platform::window::centered_window_frame(0, 800, 600);
 			params.window_title = "orion";
 			params.target_display = 0;
 			main_window = platform::window::create(params);
