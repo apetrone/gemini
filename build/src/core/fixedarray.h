@@ -139,3 +139,30 @@ public:
 		return elements[index];
 	} // operator[] const
 }; // FixedArray
+
+
+template <class T, size_t MaxSize>
+struct CircularBuffer
+{
+	typedef T value_type;
+	typedef FixedArray<value_type> container_type;
+	container_type container;
+	size_t index;
+	
+	CircularBuffer()
+	{
+		container.allocate(MaxSize);
+		reset();
+	}
+	
+	void reset()
+	{
+		index = 0;
+	}
+	
+	T& next()
+	{
+		index = index % MaxSize;
+		return container[index++];
+	}
+}; // CircularBuffer
