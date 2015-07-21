@@ -275,15 +275,35 @@ namespace render2
 				
 				assert(pass->target->width > 0 && pass->target->height > 0);
 				gl.Viewport(0, 0, pass->target->width, pass->target->height);
-				
-				gl.ClearColor(pass->clear_color[0], pass->clear_color[1], pass->clear_color[2], pass->clear_color[3]);
-				gl.CheckError("ClearColor");
-				
-				gl.Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				gl.CheckError("Clear");
-				
-				
-				
+
+				GLuint clear_flags = 0;
+
+				if (pass->clear_color)
+				{
+					clear_flags |= GL_COLOR_BUFFER_BIT;
+					gl.ClearColor(pass->target_color[0], pass->target_color[1], pass->target_color[2], pass->target_color[3]);
+					gl.CheckError("ClearColor");
+				}
+
+				if (pass->clear_depth)
+				{
+					clear_flags |= GL_DEPTH_BUFFER_BIT;
+					gl.ClearDepth(1.0f);
+					gl.CheckError("ClearDepth");
+				}
+
+				if (pass->clear_stencil)
+				{
+					clear_flags |= GL_STENCIL_BUFFER_BIT;
+					gl.ClearStencil(0.0f);
+					gl.CheckError("ClearStencil");
+				}
+
+				if (clear_flags != 0)
+				{
+					gl.Clear(clear_flags);
+					gl.CheckError("Clear");
+				}
 				
 				GLPipeline* current_pipeline = nullptr;
 				GLBuffer* vertex_stream = nullptr;
