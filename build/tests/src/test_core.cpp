@@ -270,6 +270,27 @@ void test_hashset()
 
 
 // ---------------------------------------------------------------------
+// CircularBuffer
+// ---------------------------------------------------------------------
+void test_circularbuffer()
+{
+	TEST_CATEGORY(CircularBuffer);
+	
+	CircularBuffer<int, 3> cb;
+	int& a = cb.next();
+	a = 30;
+	
+	int& b = cb.next();
+	b = 60;
+	
+	int& c = cb.next();
+	c = 90;
+	
+	int d = cb.next();
+	TEST_VERIFY(d == a, circular_buffer);
+}
+
+// ---------------------------------------------------------------------
 // interpolation
 // ---------------------------------------------------------------------
 
@@ -281,8 +302,8 @@ void test_mathlib()
 {
 	TEST_CATEGORY(mathlib);
 	
-	float forty_five_degrees = 45.0f;
-	float forty_five_degrees_in_radians = 0.785398185f;
+	const float forty_five_degrees = 45.0f;
+	const float forty_five_degrees_in_radians = 0.785398185f;
 	
 	
 	float temp = mathlib::degrees_to_radians(45);
@@ -421,6 +442,7 @@ int main(int, char**)
 	test_array();
 	test_fixedsizequeue();
 	test_hashset();
+	test_circularbuffer();
 	test_mathlib();
 	test_memory();
 	test_stackstring();
