@@ -111,6 +111,8 @@ namespace renderer
 		typedef void (GEMGLAPI GEMGLFNVIEWPORT) ( GLint x, GLint y, GLsizei width, GLsizei height );
 		typedef void (GEMGLAPI GEMGLFNDRAWARRAYS) ( GLenum mode, GLint first, GLsizei count );
 		typedef void (GEMGLAPI GEMGLFNDRAWELEMENTS) ( GLenum mode, GLsizei count, GLenum type, GLvoid* indices );
+		typedef void (GEMGLAPI GEMGLFNCLEARSTENCIL) (GLint stencil);
+		typedef void (GEMGLAPI GEMGLFNCLEARDEPTH) (GLclampf depth);
 		typedef void (GEMGLAPI GEMGLFNCLEARCOLOR) ( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha );
 		typedef void (GEMGLAPI GEMGLFNCLEAR) ( GLbitfield mask );
 		typedef void (GEMGLAPI GEMGLFNPOINTSIZE) ( GLfloat size );
@@ -305,6 +307,8 @@ namespace renderer
 #if GEMGL_ENABLE_ES
 			GEMGLFNVIEWPORT Viewport;
 			GEMGLFNDEPTHRANGEF DepthRange;
+			GEMGLFNCLEARSTENCIL ClearStencil;
+			GEMGLFNCLEARDEPTH ClearDepth;
 			GEMGLFNCLEARCOLOR ClearColor;
 			GEMGLFNCLEAR Clear;
 			GEMGLFNDRAWARRAYS DrawArrays;
@@ -449,6 +453,8 @@ namespace renderer
 			GEMGLFNDEPTHRANGE DepthRange;
 			GEMGLFNDRAWARRAYS DrawArrays;
 			GEMGLFNDRAWELEMENTS DrawElements;
+			GEMGLFNCLEARSTENCIL ClearStencil;
+			GEMGLFNCLEARDEPTH ClearDepth;
 			GEMGLFNCLEARCOLOR ClearColor;
 			GEMGLFNCLEAR Clear;
 			GEMGLFNPOINTSIZE PointSize;

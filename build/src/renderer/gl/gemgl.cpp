@@ -147,6 +147,8 @@ namespace renderer
 #if GEMGL_ENABLE_ES
 		GEMGL_LINK( gl.Viewport, "glViewport", GEMGLFNVIEWPORT );
 		GEMGL_LINK( gl.DepthRange, "glDepthRangef", GEMGLFNDEPTHRANGEF );
+		GEMGL_LINK( gl.ClearStencil, "glClearStencil", GEMGLFNCLEARSTENCIL );
+		GEMGL_LINK( gl.ClearDepth, "glClearDepth", GEMGLFNCLEARDEPTH );
 		GEMGL_LINK( gl.ClearColor, "glClearColor", GEMGLFNCLEARCOLOR );
 		GEMGL_LINK( gl.Clear, "glClear", GEMGLFNCLEAR );
 		GEMGL_LINK( gl.DrawArrays, "glDrawArrays", GEMGLFNDRAWARRAYS );
@@ -285,6 +287,8 @@ namespace renderer
 #else // Desktop OpenGL
 		GEMGL_LINK( gl.Viewport, "glViewport", GEMGLFNVIEWPORT );
 		GEMGL_LINK( gl.DepthRange, "glDepthRange", GEMGLFNDEPTHRANGE );
+		GEMGL_LINK( gl.ClearStencil, "glClearStencil", GEMGLFNCLEARSTENCIL );
+		GEMGL_LINK( gl.ClearDepth, "glClearDepth", GEMGLFNCLEARDEPTH );
 		GEMGL_LINK( gl.ClearColor, "glClearColor", GEMGLFNCLEARCOLOR );
 		GEMGL_LINK( gl.Clear, "glClear", GEMGLFNCLEAR );		
 		GEMGL_LINK( gl.DrawArrays, "glDrawArrays", GEMGLFNDRAWARRAYS );

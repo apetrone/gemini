@@ -430,6 +430,14 @@ namespace render2
 	// ---------------------------------------------------------------------
 	struct Pass
 	{
+		Pass() :
+			target(nullptr),
+			clear_color(false),
+			clear_depth(false),
+			clear_stencil(false)
+		{
+		}
+		
 		void color(float red, float green, float blue, float alpha);
 
 		// color attachments (4)
@@ -437,7 +445,11 @@ namespace render2
 		// stencil attachment
 		
 		struct RenderTarget* target;
-		float clear_color[4];
+		float target_color[4];
+		
+		bool clear_color;
+		bool clear_depth;
+		bool clear_stencil;
 	};
 	
 

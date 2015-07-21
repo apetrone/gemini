@@ -305,10 +305,10 @@ namespace render2
 	// ---------------------------------------------------------------------
 	void Pass::color(float red, float green, float blue, float alpha)
 	{
-		clear_color[0] = red;
-		clear_color[1] = green;
-		clear_color[2] = blue;
-		clear_color[3] = alpha;
+		target_color[0] = red;
+		target_color[1] = green;
+		target_color[2] = blue;
+		target_color[3] = alpha;
 	}
 
 	// ---------------------------------------------------------------------
