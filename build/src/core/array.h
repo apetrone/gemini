@@ -54,7 +54,7 @@ private:
 	{
 		if (capacity > max_capacity)
 		{
-			value_pointer expanded_data = allocate(max_capacity);
+			value_pointer expanded_data = allocate(capacity);
 			if (data)
 			{
 				memcpy(expanded_data, data, sizeof(value_type) * total_elements);
@@ -135,6 +135,8 @@ public:
 	}
 	
 	// resizes the container to contain count elements
+	// unlike std::vector, we aren't going to remove + destroy elements
+	// if count < total_elements.
 	void resize(size_t count, const value_type& default_value)
 	{
 		grow(count);
