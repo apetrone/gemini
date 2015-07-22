@@ -23,7 +23,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "unit_test.h"
+
 #include <core/argumentparser.h>
+#include <core/array.h>
 #include <core/color.h>
 #include <core/datastream.h>
 #include <core/fixedarray.h>
@@ -79,6 +81,70 @@ Options:
 	
 }
 
+
+// ---------------------------------------------------------------------
+// Array
+// ---------------------------------------------------------------------
+void test_array()
+{
+	TEST_CATEGORY(Array);
+	
+	Array<int> a;
+	
+	TEST_VERIFY(a.empty(), is_empty);
+	TEST_VERIFY(a.size() == 0, size_empty);
+	
+	a.push_back(0);
+	TEST_VERIFY(a.size() == 1, size_after_adding_one);
+	
+	
+	for (size_t i = 0; i < 14; ++i)
+	{
+		a.push_back(i+1);
+	}
+	
+	TEST_VERIFY(a.size() == 15, size_after_adding_14);
+
+	TEST_VERIFY(a[10] == 10, array_index);
+	
+	// push a 16th element (should be OK)
+	a.push_back(16);
+	
+	// push a 17th element (should force a growth)
+	a.push_back(17);
+	TEST_VERIFY(a.size() == 17, size_after_growth);
+	
+	// verify the n-th element
+	TEST_VERIFY(a[10] == 10, array_index_after_growth);
+	
+	TEST_VERIFY(true, sanity);
+	
+	
+	
+	
+	// now try with a custom type to make sure the ctor/dtor
+	// are called.
+	static size_t _local_counter = 0;
+	struct CustomType
+	{
+		CustomType()
+		{
+			_local_counter++;
+		}
+		
+		~CustomType()
+		{
+			--_local_counter;
+		}
+	};
+	
+	{
+		Array<CustomType> b(4);
+		TEST_VERIFY(_local_counter == 4, constructor_called_n_times);
+	}
+	
+	TEST_VERIFY(_local_counter == 0, destructor_called_n_times);
+}
 
 // ---------------------------------------------------------------------
 // Color
@@ -161,11 +227,11 @@ void test_datastream()
 
 
 // ---------------------------------------------------------------------
-// array
+// FixedArray
 // ---------------------------------------------------------------------
-void test_array()
+void test_fixedarray()
 {
-	TEST_CATEGORY(array);
+	TEST_CATEGORY(FixedArray);
 	
 	FixedArray<int> int_array;
 	int_array.allocate(32);
@@ -437,9 +503,10 @@ int main(int, char**)
 	core::memory::startup();
 
 	test_argumentparser();
+	test_array();
 	test_color();
 	test_datastream();
-	test_array();
+	test_fixedarray();
 	test_fixedsizequeue();
 	test_hashset();
 	test_circularbuffer();
