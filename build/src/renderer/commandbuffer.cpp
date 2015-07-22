@@ -27,15 +27,18 @@
 
 namespace render2
 {
-	CommandQueue::CommandQueue(Pass* pass)
+	CommandQueue::CommandQueue(const Pass& pass)
 	{
 		this->pass = pass;
-		total_commands = 0;
 	}
 	
 	void CommandQueue::add_command(const Command& command)
 	{
-		assert(total_commands < 32);
-		commands[total_commands++] = command;
+		commands.push_back(command);
+	}
+	
+	void CommandQueue::reset()
+	{
+		commands.resize(0);
 	}
 } // namespace render2

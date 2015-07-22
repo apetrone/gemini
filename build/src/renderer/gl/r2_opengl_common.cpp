@@ -228,7 +228,10 @@ namespace render2
 	// ---------------------------------------------------------------------
 	// GLPipeline
 	// ---------------------------------------------------------------------
-	GLPipeline::GLPipeline(const PipelineDescriptor& descriptor)
+	GLPipeline::GLPipeline(const PipelineDescriptor& descriptor) :
+		enable_blending(false),
+		blend_source(GL_ONE),
+		blend_destination(GL_ZERO)
 	{
 		program = (GLShader*)descriptor.shader;
 		
@@ -304,6 +307,10 @@ namespace render2
 		pipeline->vertex_description = descriptor.vertex_description;
 		pipeline->input_layout = static_cast<GLInputLayout*>(descriptor.input_layout);
 		assert(pipeline->input_layout != nullptr);
+		
+		pipeline->enable_blending = descriptor.enable_blending;
+		pipeline->blend_source = convert_blendstate(descriptor.blend_source);
+		pipeline->blend_destination = convert_blendstate(descriptor.blend_destination);
 	}
 
 	void populate_vertexdata_table()
@@ -336,5 +343,39 @@ namespace render2
 		gemgl_load_symbols(gl);
 		
 		return 0;
+	}
+	
+	GLenum convert_blendstate(BlendOp op)
+	{
+		// for now, if we use another blend state; hard crash!
+		GLenum blend_table[] = {
+			GL_ZERO,
+			GL_ONE,
+			
+			GL_SRC_ALPHA,
+			GL_ONE_MINUS_SRC_ALPHA,
+			
+//			GL_SRC_COLOR,
+//			GL_ONE_MINUS_SRC_COLOR,
+//			GL_DST_COLOR,
+//			GL_ONE_MINUS_DST_COLOR,
+//			GL_SRC_ALPHA,
+//			GL_ONE_MINUS_SRC_ALPHA,
+//			GL_ONE_MINUS_DST_ALPHA,
+//			GL_CONSTANT_COLOR,
+//			GL_ONE_MINUS_CONSTANT_COLOR,
+//			GL_CONSTANT_ALPHA,
+//			GL_ONE_MINUS_CONSTANT_ALPHA,
+//			GL_SRC_ALPHA_SATURATE,
+			
+#if 0 // OpenGL 4.x +
+			GL_SRC1_COLOR,
+			GL_ONE_MINUS_SRC1_COLOR,
+			GL_SRC1_ALPHA,
+			GL_ONE_MINUS_SRC1_ALPHA
+#endif
+		};
+		
+		return blend_table[static_cast<size_t>(op)];
 	}
 } // namespace render2

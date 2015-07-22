@@ -84,16 +84,20 @@ namespace render2
 		virtual void init(int backbuffer_width, int backbuffer_height) = 0;
 		
 		// ---------------------------------------------------------------------
-		// commandserializer
+		// command serializer
 		// ---------------------------------------------------------------------
-		virtual CommandSerializer* create_serializer(CommandQueue& command_queue) = 0;
+		virtual CommandSerializer* create_serializer(CommandQueue* command_queue) = 0;
 		virtual void destroy_serializer(CommandSerializer* serializer) = 0;
+		
+		
+		virtual CommandQueue* create_queue(const Pass& render_pass) = 0;
+		
 		
 		// ---------------------------------------------------------------------
 		// command buffers / submission
 		// ---------------------------------------------------------------------
 		// queue command buffers to be executed (by submit)
-		virtual void queue_buffers(CommandQueue* const queues, size_t total_queues) = 0;
+		virtual void queue_buffers(CommandQueue* queues, size_t total_queues) = 0;
 		
 		// submit queued command buffers to GPU
 		virtual void submit() = 0;
