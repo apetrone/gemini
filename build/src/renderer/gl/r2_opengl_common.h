@@ -119,6 +119,10 @@ namespace render2
 		VertexDescriptor vertex_description;
 		GLInputLayout* input_layout;
 		
+		bool enable_blending;
+		GLenum blend_source;
+		GLenum blend_destination;
+		
 		GLPipeline(const PipelineDescriptor& descriptor);
 		virtual ~GLPipeline();
 	}; // GLPipeline
@@ -145,4 +149,6 @@ namespace render2
 	
 	// returns 0 on success
 	int load_gl_symbols();
+	
+	GLenum convert_blendstate(BlendOp op);
 } // namespace render2

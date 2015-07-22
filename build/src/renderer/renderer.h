@@ -377,14 +377,11 @@ namespace renderer
 	IRenderDriver * driver();
 } // namespace renderer
 
-#include "constantbuffer.h"
-#include "commandbuffer.h"
-#include "vertexdescriptor.h"
-#include "pipeline.h"
+
 
 namespace render2
 {
-
+	
 	struct Region
 	{
 		uint32_t x;
@@ -394,20 +391,20 @@ namespace render2
 	};
 	
 	
-
 	
-//	struct TextureDescriptor
-//	{
-//		uint32_t min_filter;
-//		uint32_t mag_filter;
-//		uint32_t s_address_mode;
-//		uint32_t t_address_mode;
-//	};
 	
-//	struct Texture
-//	{
-//	};
-
+	//	struct TextureDescriptor
+	//	{
+	//		uint32_t min_filter;
+	//		uint32_t mag_filter;
+	//		uint32_t s_address_mode;
+	//		uint32_t t_address_mode;
+	//	};
+	
+	//	struct Texture
+	//	{
+	//	};
+	
 	// ---------------------------------------------------------------------
 	// Image
 	// ---------------------------------------------------------------------
@@ -422,38 +419,6 @@ namespace render2
 		
 		void update_pixels(const Region& rect, size_t miplevel, void* bytes, size_t bytes_per_row);
 	};
-
-
-	
-	// ---------------------------------------------------------------------
-	// Pass
-	// ---------------------------------------------------------------------
-	struct Pass
-	{
-		Pass() :
-			target(nullptr),
-			clear_color(false),
-			clear_depth(false),
-			clear_stencil(false)
-		{
-		}
-		
-		void color(float red, float green, float blue, float alpha);
-
-		// color attachments (4)
-		// depth attachment
-		// stencil attachment
-		
-		struct RenderTarget* target;
-		float target_color[4];
-		
-		bool clear_color;
-		bool clear_depth;
-		bool clear_stencil;
-	};
-	
-
-	
 	
 	// This is an implementation-specific format which
 	// serves as a bridge between the Shader and VertexDescriptor.
@@ -462,18 +427,48 @@ namespace render2
 		virtual ~InputLayout();
 	};
 	
+
+} // namespace render2
+
+#include "constantbuffer.h"
+#include "commandbuffer.h"
+#include "vertexdescriptor.h"
+#include "pipeline.h"
+
+namespace render2
+{
+	enum class BlendOp
+	{
+		Zero,
+		One,
+
+		SourceAlpha,
+		OneMinusSourceAlpha
+	};
+
 	// ---------------------------------------------------------------------
 	// PipelineDescriptor
 	// ---------------------------------------------------------------------
 	const uint32_t MAX_PIPELINE_ATTACHMENTS = 2;
 	struct PipelineDescriptor
 	{
+		PipelineDescriptor() :
+			enable_blending(false),
+			blend_source(BlendOp::One),
+			blend_destination(BlendOp::One)
+		{
+		}
+	
 		Shader* shader;
 		uint32_t attachments[ MAX_PIPELINE_ATTACHMENTS ];
 		VertexDescriptor vertex_description;
 		InputLayout* input_layout;
-	};
 		
+		bool enable_blending;
+		BlendOp blend_source;
+		BlendOp blend_destination;
+	};
+	
 	// ---------------------------------------------------------------------
 	// CommandSerializer
 	// ---------------------------------------------------------------------

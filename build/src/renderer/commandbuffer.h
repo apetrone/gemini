@@ -28,11 +28,11 @@
 //#include "vertexbuffer.h"
 
 #include <core/typedefs.h>
+#include <core/array.h>
+
 
 namespace render2
 {
-	struct Pass;
-	
 	enum CommandType
 	{
 		COMMAND_INVALID,			// invalid command
@@ -59,13 +59,41 @@ namespace render2
 				size_t param3 = 0);
 	};
 	
+	// ---------------------------------------------------------------------
+	// Pass
+	// ---------------------------------------------------------------------
+	struct Pass
+	{
+		Pass() :
+			target(nullptr),
+			clear_color(false),
+			clear_depth(false),
+			clear_stencil(false)
+		{
+			color(0, 0, 0, 0);
+		}
+		
+		void color(float red, float green, float blue, float alpha);
+		
+		// color attachments (4)
+		// depth attachment
+		// stencil attachment
+		
+		struct RenderTarget* target;
+		float target_color[4];
+		
+		bool clear_color;
+		bool clear_depth;
+		bool clear_stencil;
+	};
+	
 	struct CommandQueue
 	{
-		Pass* pass;
-		size_t total_commands;
-		Command commands[32];
+		Pass pass;
+		Array<Command> commands;
 		
-		CommandQueue(Pass* pass);
+		CommandQueue(const Pass& pass = Pass());
 		void add_command(const Command& command);
+		void reset();
 	};
 } // namespace render2

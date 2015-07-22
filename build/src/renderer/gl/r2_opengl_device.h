@@ -29,6 +29,7 @@
 
 #include <runtime/logging.h>
 
+#include <core/array.h>
 
 namespace render2
 {
@@ -127,14 +128,6 @@ namespace render2
 			}
 		};
 		
-	private:
-		render2::RenderTarget default_target;
-		
-		CommandQueue* queue[4];
-		size_t current_queue;
-		
-		GLBuffer* locked_buffer;
-		
 	public:
 		OpenGLDevice()
 		{
@@ -152,8 +145,6 @@ namespace render2
 	private:
 		void reset()
 		{
-			memset(queue, 0, sizeof(CommandQueue*)*4);
-			current_queue = 0;
 			locked_buffer = 0;
 		}
 		
@@ -246,19 +237,28 @@ namespace render2
 				
 				vertex_buffer->unbind();
 			}
+			
+			
+			// see if we need to enable blending
+			if (pipeline->enable_blending)
+			{
+				gl.Enable(GL_BLEND);
+				gl.BlendFunc(pipeline->blend_source, pipeline->blend_destination);
+			}
 		}
 		
 		void deactivate_pipeline(GLPipeline* pipeline)
 		{
 			gl.UseProgram(0);
 			gl.CheckError("UseProgram(0)");
+			
+			if (pipeline->enable_blending)
+			{
+				gl.Disable(GL_BLEND);
+			}
 		}
 		
-		virtual void queue_buffers(CommandQueue* const queues, size_t total_queues)
-		{
-			for (size_t index = 0; index < total_queues; ++index)
-				queue[current_queue++] = &queues[index];
-		}
+
 		
 		// submit queue command buffers to GPU
 		virtual void submit()
@@ -266,12 +266,10 @@ namespace render2
 			// If you hit this assert, there's a buffer locked for writing!
 			assert(locked_buffer == nullptr);
 			
-			for (size_t q = 0; q < current_queue; ++q)
+			for (CommandQueue* cq : queued_buffers)
 			{
-				CommandQueue* cq = queue[q];
-				
 				// setup pass
-				Pass* pass = cq->pass;
+				const Pass* pass = &cq->pass;
 				
 				assert(pass->target->width > 0 && pass->target->height > 0);
 				gl.Viewport(0, 0, pass->target->width, pass->target->height);
@@ -309,9 +307,9 @@ namespace render2
 				GLBuffer* vertex_stream = nullptr;
 				GLBuffer* index_stream = nullptr;
 				
-				for (size_t index = 0; index < cq->total_commands; ++index)
+				for (size_t index = 0; index < cq->commands.size(); ++index)
 				{
-					Command* command = &cq->commands[index];
+					const Command* command = &cq->commands[index];
 					if (command->type == COMMAND_DRAW)
 					{
 						draw(current_pipeline, vertex_stream, command->params[0], command->params[1], command->params[2], command->params[3]);
@@ -336,16 +334,19 @@ namespace render2
 //						gl.CheckError("glViewport");
 //					}
 				}
+				
+				cq->reset();
 			}
 			
 			
 			reset();
+			
+			queued_buffers.resize(0);
 		}
 		
-		virtual RenderTarget* default_render_target()
-		{
-			return &default_target;
-		}
+		// ---------------------------------------------------------------------
+		// vertex / index buffers
+		// ---------------------------------------------------------------------
 		
 		virtual Buffer* create_vertex_buffer(size_t size_bytes)
 		{
@@ -393,6 +394,9 @@ namespace render2
 			glb->unbind();
 		}
 
+		// ---------------------------------------------------------------------
+		// input layout
+		// ---------------------------------------------------------------------
 		virtual InputLayout* create_input_layout(const VertexDescriptor& descriptor, Shader* shader)
 		{
 			GLInputLayout* gllayout = MEMORY_NEW(GLInputLayout, core::memory::global_allocator());
@@ -407,7 +411,10 @@ namespace render2
 		{
 			MEMORY_DELETE(layout, core::memory::global_allocator());
 		}
-
+		
+		// ---------------------------------------------------------------------
+		// pipeline
+		// ---------------------------------------------------------------------
 		virtual Pipeline* create_pipeline(const PipelineDescriptor& descriptor)
 		{
 			GLPipeline* pipeline = MEMORY_NEW(GLPipeline, core::memory::global_allocator())(descriptor);
@@ -424,6 +431,9 @@ namespace render2
 			MEMORY_DELETE(glp, core::memory::global_allocator());
 		}
 		
+		// ---------------------------------------------------------------------
+		// shader
+		// ---------------------------------------------------------------------
 		virtual Shader* create_shader(const char* name)
 		{
 			GLShader* shader = MEMORY_NEW(GLShader, core::memory::global_allocator());
@@ -468,29 +478,44 @@ namespace render2
 			MEMORY_DELETE(shader, core::memory::global_allocator());
 		}
 		
-		virtual void activate_render_target(const RenderTarget& rt)
-		{
-			
-		}
+		// ---------------------------------------------------------------------
+		// render target
+		// ---------------------------------------------------------------------
 		
-		virtual void deactivate_render_target(const RenderTarget& rt)
-		{
-			
-		}
+		virtual void activate_render_target(const RenderTarget& rt);
+		virtual void deactivate_render_target(const RenderTarget& rt);
+		virtual RenderTarget* default_render_target();
 		
-		virtual void init(int backbuffer_width, int backbuffer_height)
-		{
-			default_target.width = backbuffer_width;
-			default_target.height = backbuffer_height;
-		}
+		// ---------------------------------------------------------------------
+		// initialization
+		// ---------------------------------------------------------------------
+		virtual void init(int backbuffer_width, int backbuffer_height);
 		
-		virtual CommandSerializer* create_serializer(CommandQueue& command_queue);
+		// ---------------------------------------------------------------------
+		// command serializer
+		// ---------------------------------------------------------------------
+		virtual CommandSerializer* create_serializer(CommandQueue* command_queue);
 		virtual void destroy_serializer(CommandSerializer* serializer);
 		
-		virtual void backbuffer_resized(int backbuffer_width, int backbuffer_height)
-		{
-			default_target.width = backbuffer_width;
-			default_target.height = backbuffer_height;
-		}
+		virtual CommandQueue* create_queue(const Pass& render_pass);
+		
+		// ---------------------------------------------------------------------
+		// command buffers / submission
+		// ---------------------------------------------------------------------
+		virtual void queue_buffers(CommandQueue* queues, size_t total_queues);
+		virtual void backbuffer_resized(int backbuffer_width, int backbuffer_height);
+		
+		
+		
+	private:
+		render2::RenderTarget default_target;
+		
+		// rotating list of command queues
+		CircularBuffer<CommandQueue, 4> queue;
+		
+		// the list of buffers queued this frame
+		Array<CommandQueue*> queued_buffers;
+		
+		GLBuffer* locked_buffer;
 	}; // OpenGLDevice
 } // namespace render2
