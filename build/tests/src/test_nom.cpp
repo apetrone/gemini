@@ -59,28 +59,67 @@ static void gui_free_callback(void* pointer)
 	core::memory::global_allocator().deallocate(pointer);
 }
 
+struct MyVertex
+{
+	float position[3];
+	float color[4];
+	
+	void set_position(float x, float y, float z)
+	{
+		position[0] = x;
+		position[1] = y;
+		position[2] = z;
+	}
+	
+	void set_color(float red, float green, float blue, float alpha)
+	{
+		color[0] = red;
+		color[1] = green;
+		color[2] = blue;
+		color[3] = alpha;
+	}
+};
+
+struct ConstantData
+{
+	glm::mat4 modelview_matrix;
+	glm::mat4 projection_matrix;
+};
+
 namespace experimental
 {
 	class GUIRenderer : public gui::Renderer
 	{
 		struct VertexType
 		{
-			glm::vec3 position;
+			float position[3];
+//			float color[4];
+//			glm::vec3 position;
 			core::Color color;
-			glm::vec2 uv;
+//			glm::vec2 uv;
+
+			void set_position(float x, float y, float z)
+			{
+				position[0] = x;
+				position[1] = y;
+				position[2] = z;
+			}
 		};
 		
 		gui::Compositor* compositor;
 		float current_depth;
-		
+
 	//private:
 	//	void render_buffer(::renderer::VertexStream& stream, gemini::assets::Shader* shader, gemini::assets::Material* material);
-		
+
+		render2::Device* device;
+		render2::Buffer* vertex_buffer;
+		render2::Pipeline* pipeline;
 		
 	public:
-		GUIRenderer();
-		
-		virtual ~GUIRenderer();
+
+		void set_device(render2::Device* device) { this->device = device; }
+
 		virtual void increment_depth();
 		
 		virtual void startup(gui::Compositor* c);
@@ -103,7 +142,6 @@ namespace experimental
 		virtual void draw_command_lists(gui::render::CommandList** command_lists, size_t total_lists);
 		
 	}; // GUIRenderer
-		
 	
 	void GUIRenderer::increment_depth()
 	{
@@ -113,6 +151,21 @@ namespace experimental
 	void GUIRenderer::startup(gui::Compositor* compositor)
 	{
 		this->compositor = compositor;
+		
+		
+		this->vertex_buffer = device->create_vertex_buffer(1024*sizeof(VertexType));
+		
+		
+		render2::PipelineDescriptor desc;
+		desc.shader = device->create_shader("test");
+		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3);
+		desc.vertex_description.add("in_color", render2::VD_UNSIGNED_BYTE, 4);
+		desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
+		desc.enable_blending = true;
+		desc.blend_source = render2::BlendOp::SourceAlpha;
+		desc.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
+		pipeline = device->create_pipeline(desc);
+		
 //		// generate the white texture we'll use for solid colors
 //		white_texture = assets::textures()->allocate_asset();
 //		white_texture->image.create(4, 4, 3);
@@ -152,6 +205,8 @@ namespace experimental
 	
 	void GUIRenderer::shutdown(gui::Compositor* c)
 	{
+		device->destroy_buffer(vertex_buffer);
+		device->destroy_pipeline(pipeline);
 	}
 	
 	void GUIRenderer::begin_frame(gui::Compositor* c)
@@ -178,17 +233,9 @@ namespace experimental
 	}
 	
 	
-	void GUIRenderer::draw_bounds(const gui::Bounds& bounds, const gui::Color& color)
-	{
-	}
-	
-	void GUIRenderer::draw_textured_bounds(const gui::Bounds& bounds, const gui::TextureHandle& handle)
-	{
-	}
-	
-	void GUIRenderer::draw_line(const gui::Point& start, const gui::Point& end, const gui::Color& color)
-	{
-	}
+	void GUIRenderer::draw_bounds(const gui::Bounds& bounds, const gui::Color& color) {}
+	void GUIRenderer::draw_textured_bounds(const gui::Bounds& bounds, const gui::TextureHandle& handle) {}
+	void GUIRenderer::draw_line(const gui::Point& start, const gui::Point& end, const gui::Color& color) {}
 	
 	gui::TextureResult GUIRenderer::texture_create(const char* path, gui::TextureHandle& handle)
 	{
@@ -273,7 +320,17 @@ namespace experimental
 			total_vertices += command_lists[index]->vertex_buffer.size();
 		}
 
-#if 0
+		// temp limit
+		assert(total_vertices < 1024);
+		
+		
+		ConstantData cd;
+		cd.modelview_matrix = glm::mat4(1.0f);
+		cd.projection_matrix = glm::ortho(0.0f, (float)this->compositor->width, (float)this->compositor->height, 0.0f, -1.0f, 1.0f);
+		pipeline->constants()->assign(&cd, sizeof(ConstantData));
+		
+		VertexType vertices[1024];
+		size_t vertex_index = 0;
 		for (size_t index = 0; index < total_lists; ++index)
 		{
 			gui::render::CommandList* commandlist = command_lists[index];
@@ -283,24 +340,47 @@ namespace experimental
 			//				LOGV("command: %i\n", commandlist->commands[command_id].id);
 			//			}
 			
+			// loop through all vertices in this list
 			for (size_t v = 0; v < commandlist->vertex_buffer.size(); ++v)
 			{
 				gui::render::Vertex* gv = &commandlist->vertex_buffer[v];
-				vertex[v].position.x = gv->x;
-				vertex[v].position.y = gv->y;
-				core::Color c = core::Color(gv->color.r(), gv->color.g(), gv->color.b(), gv->color.a());
-				vertex[v].color = c;
 				
-				vertex[v].uv.x = gv->uv[0];
-				vertex[v].uv.y = gv->uv[1];
+				
+				VertexType& vt = vertices[vertex_index];
+				vt.set_position(gv->x, gv->y, 0);
+				vt.color = core::Color(gv->color.r(), gv->color.g(), gv->color.b(), gv->color.a());
+				
+				
+				++vertex_index;
 			}
 			
+//				gui::render::Vertex* gv = &commandlist->vertex_buffer[v];
+//				vertex[v].position.x = gv->x;
+//				vertex[v].position.y = gv->y;
+//				core::Color c = core::Color(gv->color.r(), gv->color.g(), gv->color.b(), gv->color.a());
+//				vertex[v].color = c;
+//				
+//				vertex[v].uv.x = gv->uv[0];
+//				vertex[v].uv.y = gv->uv[1];
+//			}
+
+			device->buffer_upload(vertex_buffer, vertices, sizeof(VertexType)*total_vertices);
 			
+			render2::Pass pass;
+			pass.target = device->default_render_target();
+
+			render2::CommandQueue* queue = device->create_queue(pass);
+			render2::CommandSerializer* serializer = device->create_serializer(queue);
+
+			serializer->pipeline(pipeline);
+			serializer->vertex_buffer(vertex_buffer);
+			serializer->draw(0, total_vertices);
+
+			device->queue_buffers(queue, 1);
 			
-			
+			device->destroy_serializer(serializer);
 			//offset += commandlist->vertex_buffer.size();
 		}
-#endif
 	}
 } // namespace experimental
 
@@ -315,6 +395,9 @@ class TestNom : public kernel::IKernel,
 	bool active;
 	platform::window::NativeWindow* native_window;
 	gui::Compositor* compositor;
+	gui::Panel* root;
+	gui::Graph* graph;
+	experimental::GUIRenderer renderer;
 	
 public:
 	virtual void event(kernel::KeyboardEvent& event)
@@ -353,6 +436,8 @@ public:
 	{
 		native_window = nullptr;
 		active = true;
+		root = nullptr;
+		graph = nullptr;
 	}
 
 	virtual bool is_active() const { return active; }
@@ -362,6 +447,27 @@ public:
 	{
 		gui::set_allocator(gui_malloc_callback, gui_free_callback);
 		compositor = new gui::Compositor(width, height);
+		
+		root = new gui::Panel(compositor);
+		platform::window::Frame frame = platform::window::get_render_frame(native_window);
+	
+		renderer.set_device(device);
+		compositor->set_renderer(&renderer);
+		
+		root->set_bounds(0, 0, frame.width, frame.height);
+		root->set_background_color(gui::Color(255, 0, 255, 0));
+		
+		// setup the framerate graph
+		graph = new gui::Graph(root);
+		graph->set_bounds(width-250, 0, 250, 100);
+		graph->set_font(compositor, "fonts/debug");
+		graph->set_background_color(gui::Color(60, 60, 60, 255));
+		graph->set_foreground_color(gui::Color(255, 255, 255, 255));
+		graph->create_samples(100, 1);
+		graph->configure_channel(0, gui::Color(0, 255, 0, 255));
+		graph->set_range(0.0f, 33.3f);
+
+		graph->enable_baseline(true, 16.6f, gui::Color(255, 0, 255, 255));
 	}
 	
 	virtual kernel::Error startup()
@@ -463,31 +569,90 @@ public:
 		cd.projection_matrix = glm::ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
 		pipeline->constants()->assign(&cd, sizeof(ConstantData));
 
-
+		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
 		setup_gui(window_frame.width, window_frame.height);
 
 		return kernel::NoError;
 	}
 	
+	void update()
+	{
+		static uint64_t last_time = 0;
+		static float accumulator = 0;
+		
+		uint64_t current_time = platform::microseconds();
+		kernel::Parameters& params = kernel::parameters();
+		
+		// calculate delta ticks in miliseconds
+		params.framedelta_raw_msec = (current_time - last_time)*0.001f;
+		// cache the value in seconds
+		params.framedelta_filtered_seconds = params.framedelta_raw_msec*0.001f;
+		last_time = current_time;
+		
+		// update accumulator
+		accumulator += params.framedelta_filtered_seconds;
+		
+		while(accumulator >= params.step_interval_seconds)
+		{
+			// subtract the interval from the accumulator
+			accumulator -= params.step_interval_seconds;
+			
+			// increment tick counter
+			params.current_tick++;
+		}
+		
+		params.step_alpha = accumulator / params.step_interval_seconds;
+		if ( params.step_alpha >= 1.0f )
+		{
+			params.step_alpha -= 1.0f;
+		}
+	}
+	
 	virtual void tick()
 	{
+		update();
+		
 		// update our input
 		input::update();
 
 		// dispatch all window events
 		platform::window::dispatch_events();
+		
+		// update the gui
+		compositor->update(kernel::parameters().framedelta_filtered_seconds);
 	
 		// sanity check
 		assert(device);
 		assert(pipeline);
 		assert(vertex_buffer);
 		
+		static float rot = 0.0f;
+		
+		rot += 10.f*kernel::parameters().framedelta_filtered_seconds;
+		
+		graph->z_rotation = mathlib::degrees_to_radians(rot);
+		
+		if (rot > 360)
+			rot -= 360.0f;
+		
+		// submit the queues to the GPU
+		platform::window::activate_context(native_window);
+		
+		if (graph)
+		{
+			graph->record_value(kernel::parameters().framedelta_raw_msec, 0);
+		}
+
+
+#if 1
 		render2::Pass render_pass;
 		render_pass.target = device->default_render_target();
 		render_pass.color(0.0f, 0.0f, 0.0f, 1.0f);
+		render_pass.clear_color = true;
+		render_pass.clear_depth = true;
 		
 		// create a command queue
-		render2::CommandQueue queue(&render_pass);
+		render2::CommandQueue* queue = device->create_queue(render_pass);
 		
 		// create a command serializer for the queue
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
@@ -502,11 +667,14 @@ public:
 		device->destroy_serializer(serializer);
 		
 		// queue the buffer with our device
-		device->queue_buffers(&queue, 1);
+		device->queue_buffers(queue, 1);
 
-		// submit the queues to the GPU
-		platform::window::activate_context(native_window);
+
+		compositor->render();
+#endif
+
 		device->submit();
+
 		platform::window::swap_buffers(native_window);
 	}
 
@@ -531,33 +699,6 @@ public:
 	
 	
 private:
-	struct MyVertex
-	{
-		float position[3];
-		float color[4];
-		
-		void set_position(float x, float y, float z)
-		{
-			position[0] = x;
-			position[1] = y;
-			position[2] = z;
-		}
-		
-		void set_color(float red, float green, float blue, float alpha)
-		{
-			color[0] = red;
-			color[1] = green;
-			color[2] = blue;
-			color[3] = alpha;
-		}
-	};
-	
-	struct ConstantData
-	{
-		glm::mat4 modelview_matrix;
-		glm::mat4 projection_matrix;
-	};
-	
 	render2::Device* device;
 	render2::Pipeline* pipeline;
 	render2::Buffer* vertex_buffer;
