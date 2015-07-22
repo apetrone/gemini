@@ -165,4 +165,24 @@ struct CircularBuffer
 		index = index % MaxSize;
 		return container[index++];
 	}
+	
+	T& get_item(size_t item_index)
+	{
+		return container[item_index];
+	}
+	
+	T& operator[](size_t item_index)
+	{
+		return get_item(item_index);
+	}
+	
+	const T& operator[](size_t item_index) const
+	{
+		return get_item(item_index);
+	}
+	
+	size_t size() const
+	{
+		return MaxSize;
+	}
 }; // CircularBuffer
