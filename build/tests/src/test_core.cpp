@@ -117,9 +117,17 @@ void test_array()
 	// verify the n-th element
 	TEST_VERIFY(a[10] == 10, array_index_after_growth);
 	
-	TEST_VERIFY(true, sanity);
 	
 	
+	Array<const int> abc(6);
+	abc.push_back(30);
+	abc.push_back(60);
+	abc.push_back(90);
+	
+	// test const value iteration
+	for (const int& value : abc)
+	{
+	}
 	
 	
 	// now try with a custom type to make sure the ctor/dtor
