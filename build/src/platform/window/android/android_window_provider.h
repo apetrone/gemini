@@ -37,7 +37,7 @@ namespace platform
 		struct AndroidWindow : public NativeWindow
 		{
 			AndroidWindow(ANativeWindow* android_window);
-			virtual void* get_native_handle() const override;
+			virtual void* get_native_handle() override;
 			virtual void update_visual(int visual_id) override;
 			virtual void update_size(int width, int height) override;
 

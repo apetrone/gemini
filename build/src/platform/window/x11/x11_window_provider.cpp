@@ -36,10 +36,17 @@ namespace platform
 	{
 		struct X11Window : public NativeWindow
 		{
-			virtual void* get_native_handle() const override
+			X11Window() :
+				native_window(0)
 			{
-				return nullptr;
 			}
+
+			virtual void* get_native_handle() override
+			{
+				return &native_window;
+			}
+
+			Window native_window;
 		}; // struct X11Window
 
 
@@ -74,11 +81,16 @@ namespace platform
 
 		NativeWindow* X11WindowProvider::create(const Parameters& parameters)
 		{
-			return nullptr;
+			X11Window* window = MEMORY_NEW(X11Window, get_platform_allocator());
+			return window;
 		}
 
 		void X11WindowProvider::destroy(NativeWindow* window)
 		{
+			void* native_handle = window->get_native_handle();
+			Window* window_handle = static_cast<Window*>(native_handle);
+			XDestroyWindow(display, *window_handle);
+			MEMORY_DELETE(window, get_platform_allocator());
 		}
 
 		Frame X11WindowProvider::get_frame(NativeWindow* window) const

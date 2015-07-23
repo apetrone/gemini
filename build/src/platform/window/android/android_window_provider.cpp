@@ -43,7 +43,7 @@ namespace platform
 		{
 		}
 
-		void* AndroidWindow::get_native_handle() const
+		void* AndroidWindow::get_native_handle()
 		{
 			return native_window;
 		}

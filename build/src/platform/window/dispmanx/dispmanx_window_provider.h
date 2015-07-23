@@ -44,9 +44,9 @@ namespace platform
 	{
 		struct DispManXWindow : public NativeWindow
 		{
-			virtual void* get_native_handle() const override
+			virtual void* get_native_handle() override
 			{
-				return (void*)&native_window;
+				return &native_window;
 			}
 
 			virtual void update_size(int width, int height)
@@ -57,9 +57,9 @@ namespace platform
 
 #if defined(PLATFORM_RASPBERRYPI)
 			EGL_DISPMANX_WINDOW_T native_window;
-#endif		
+#endif
 			int32_t width;
-			int32_t height;			
+			int32_t height;
 		}; // struct DispManXWindow
 
 		class DispManXWindowProvider : public WindowProvider
