@@ -37,7 +37,8 @@ namespace platform
 		struct X11Window : public NativeWindow
 		{
 			X11Window() :
-				native_window(0)
+				native_window(0),
+				visual(nullptr)
 			{
 			}
 
@@ -46,7 +47,13 @@ namespace platform
 				return &native_window;
 			}
 
+			virtual void update_visual(int visual_id) override
+			{
+				// visual = visual_id;
+			}
+
 			Window native_window;
+			Visual* visual;
 		}; // struct X11Window
 
 
@@ -82,6 +89,35 @@ namespace platform
 		NativeWindow* X11WindowProvider::create(const Parameters& parameters)
 		{
 			X11Window* window = MEMORY_NEW(X11Window, get_platform_allocator());
+
+			if (!window->visual)
+			{
+				window->visual = DefaultVisual(display, DefaultScreen(display));
+			}
+
+			XSetWindowAttributes window_attributes;
+
+			window_attributes.event_mask = StructureNotifyMask;
+			window_attributes.colormap = XCreateColormap(
+				display,
+				RootWindow(display, DefaultScreen(display)),
+				window->visual,
+				AllocNone);
+
+			window->native_window = XCreateWindow(
+				display,
+				RootWindow(display, DefaultScreen(display)),
+				0, 0,
+				100, 100,
+				0,
+				16,
+				InputOutput,
+				window->visual,
+				CWColormap | CWEventMask,
+				&window_attributes);
+
+			XMapWindow(display, window->native_window);
+
 			return window;
 		}
 
