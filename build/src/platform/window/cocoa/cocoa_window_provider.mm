@@ -36,19 +36,19 @@ namespace platform
 	namespace window
 	{
 		namespace cocoa
-		{		
+		{
 			const unsigned int kMaxKeys = 132;
 			static input::Button key_map[ kMaxKeys ];
 			static NSPoint _last_mouse;
-			
+
 			// We keep this so we can share GL contexts with all subsequent
 			// windows created.
 			static NSOpenGLContext* _share_context = nil;
-			
+
 			void populate_keymap()
 			{
 				memset(&key_map, 0, kMaxKeys*sizeof(input::Button));
-				
+
 				// values taken from <HIToolbox/Events.h>
 				key_map[0x00] = input::KEY_A;
 				key_map[0x01] = input::KEY_S;
@@ -169,13 +169,13 @@ namespace platform
 			input::Button convert_keycode(unsigned short keycode)
 			{
 				input::Button button = key_map[keycode];
-			
+
 				if (button == 0)
 				{
 					PLATFORM_LOG(platform::LogMessageType::Info, "UNKNOWN KEYCODE: %i\n", keycode);
 					return input::Button::KEY_INVALID;
 				}
-				
+
 				return button;
 			}
 
@@ -186,7 +186,7 @@ namespace platform
 			{
 				return _keymod_state;
 			}
-			
+
 			void keymod_state(uint16_t keymods)
 			{
 				_keymod_state = keymods;
@@ -200,12 +200,12 @@ namespace platform
 					context(nil)
 				{
 				}
-				
+
 				virtual void* get_native_handle() const
 				{
 					return cw;
 				}
-				
+
 				CocoaWindow* cw;
 				NSOpenGLContext* context;
 			};
@@ -213,10 +213,10 @@ namespace platform
 			Result create_window(cocoa_native_window* native_window, const Parameters& params)
 			{
 				CocoaWindow* window;
-				
+
 				// create a frame for the new window
 				NSRect frame = NSMakeRect(params.frame.x, params.frame.y, params.frame.width, params.frame.height);
-				
+
 				// determine the window mask based on parameters
 				NSUInteger window_mask = 0;
 				if (params.enable_fullscreen)
@@ -227,41 +227,41 @@ namespace platform
 				{
 					window_mask = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
 				}
-				
+
 				if (!params.enable_resize)
 				{
 					window_mask &= ~NSResizableWindowMask;
 				}
-				
+
 				// create a new window
 				window = [[CocoaWindow alloc] initWithContentRect:frame styleMask:window_mask backing:NSBackingStoreBuffered defer:NO];
 				if (!window)
 				{
-					return platform::Result(platform::Result::Failure, "create window failed");
+					return platform::Result(platform::Result::failure("create window failed");
 				}
-				
+
 				// link the window to our handle
 				window.instance = native_window;
 				native_window->cw = window;
-				
+
 				[window setBackgroundColor:[NSColor whiteColor]];
 				[window makeKeyAndOrderFront: nil];
 				[window setTitle: [NSString stringWithUTF8String: params.window_title]];
 				[window setAcceptsMouseMovedEvents: YES];
 				[window setReleasedWhenClosed: YES];
-				
+
 				id delegate = [NSApp delegate];
 				[window setDelegate: delegate];
 
 				NSPoint origin = NSMakePoint(params.frame.x, params.frame.y);
 				[window setFrameOrigin: origin];
-				
+
 				if (params.enable_fullscreen)
 				{
 					[window setLevel: CGShieldingWindowLevel()];
 				}
-				
-				return platform::Result(platform::Result::Success);
+
+				return platform::Result;
 			}
 
 			void create_context(cocoa_native_window* window)
@@ -270,91 +270,91 @@ namespace platform
 				// setup the opengl context
 				// ---------------------------------------------------------------------
 				NSOpenGLPixelFormatAttribute attributes[16];
-				
+
 				// https://developer.apple.com/library/prerelease/mac/documentation/Cocoa/Reference/ApplicationKit/Classes/NSOpenGLPixelFormat_Class/index.html#//apple_ref/c/tdef/NSOpenGLPixelFormatAttribute
-				
+
 				size_t index = 0;
-				
+
 				attributes[index++] = NSOpenGLPFADepthSize;
 				attributes[index++] = 24;
-				
+
 				attributes[index++] = NSOpenGLPFAColorSize;
 				attributes[index++] = 24;
-				
+
 				attributes[index++] = NSOpenGLPFAOpenGLProfile;
 				attributes[index++] = NSOpenGLProfileVersion3_2Core;
-				
+
 	//			attributes[index++] = NSOpenGLPFAMultisample;
 	//			attributes[index++] = NSOpenGLPFASampleBuffers;
 	//			attributes[index++] = (NSOpenGLPixelFormatAttribute)1;
 	//
 	//			attributes[index++] = NSOpenGLPFASamples;
 	//			attributes[index++] = (NSOpenGLPixelFormatAttribute)16;
-				
+
 				attributes[index++] = NSOpenGLPFAAccelerated;
 				attributes[index++] = NSOpenGLPFADoubleBuffer;
-				
+
 				// terminate
 				attributes[index++] = nil;
-				
+
 				// TODO: add error handling
 				NSOpenGLPixelFormat* format = [[NSOpenGLPixelFormat alloc] initWithAttributes: attributes];
 				assert(format != nil);
-				
-				
+
+
 				window->context = [[NSOpenGLContext alloc] initWithFormat: format shareContext: _share_context];
-				
+
 				if (_share_context == nil)
 				{
 					_share_context = window->context;
 				}
-				
+
 				GLint opacity = 1; // 1: opaque; 0: transparent
 				GLint wait_for_vsync = 1; // 1: on, 0: off
-				
+
 				[window->context setValues:&opacity forParameter:NSOpenGLCPSurfaceOpacity];
 				[window->context setValues:&wait_for_vsync forParameter:NSOpenGLCPSwapInterval];
-				
+
 				// ---------------------------------------------------------------------
 				// setup NSOpenGLView
 				// ---------------------------------------------------------------------
-				
+
 				// create our custom view
 				CocoaOpenGLView* view = [[CocoaOpenGLView alloc] initWithFrame: [[window->cw contentView] frame]];
 				[view setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-				
+
 				// set context of the view
 				[view setContext: window->context];
 
 				// use the highest possible resolution on 'Retina' screens
 				[view setWantsBestResolutionOpenGLSurface: YES];
-				
+
 				// receive windowResized events
 				[[NSNotificationCenter defaultCenter] addObserver: view selector:@selector(windowResized:) name:NSWindowDidResizeNotification object:window->cw];
-				
+
 				// make the view this window's first responder and
 				// set it as the content view
 				[window->cw setContentView: view];
 				[window->cw makeFirstResponder: view];
 			}
-			
-			
+
+
 			void attach_cocoa_context(cocoa_native_window* window)
 			{
 				[window->context makeCurrentContext];
 			}
-			
+
 			void detach_cocoa_context(cocoa_native_window* window)
 			{
 				[NSOpenGLContext clearCurrentContext];
 			}
-			
+
 			void swap_buffers(cocoa_native_window* window)
 			{
 				[window->context flushBuffer];
 			}
-			
-			
+
+
 			void dispatch_mouse_event(NSEvent* event)
 			{
 				// ignore events outside of the client area
@@ -371,7 +371,7 @@ namespace platform
 					case NSRightMouseDragged:
 					case NSOtherMouseDragged:
 						return;
-				
+
 					case NSLeftMouseDown:
 						ev.button = input::MOUSE_LEFT;
 						ev.is_down = true;
@@ -384,7 +384,7 @@ namespace platform
 						ev.button = input::MOUSE_MIDDLE;
 						ev.is_down = true;
 						break;
-						
+
 					case NSLeftMouseUp:
 						ev.button = input::MOUSE_LEFT;
 						break;
@@ -400,10 +400,10 @@ namespace platform
 						ev.wheel_direction = ([event deltaY] > 0) ? 1 : -1;
 						break;
 				}
-			
+
 				kernel::event_dispatch(ev);
 			}
-			
+
 			void dispatch_key_event(NSEvent* event)
 			{
 				// ignore repeating characters
@@ -416,11 +416,11 @@ namespace platform
 					kernel::event_dispatch(ev);
 				}
 			}
-			
+
 			uint16_t convert_cocoa_keymods(NSUInteger modifier_flags)
 			{
 				uint16_t keymods = 0;
-				
+
 				if (modifier_flags & NX_DEVICELCTLKEYMASK)
 				{
 					keymods |= input::MOD_LEFT_CONTROL;
@@ -429,7 +429,7 @@ namespace platform
 				{
 					keymods |= input::MOD_RIGHT_CONTROL;
 				}
-				
+
 				if (modifier_flags & NX_DEVICELSHIFTKEYMASK)
 				{
 					keymods |= input::MOD_LEFT_SHIFT;
@@ -438,7 +438,7 @@ namespace platform
 				{
 					keymods |= input::MOD_RIGHT_SHIFT;
 				}
-				
+
 				if (modifier_flags & NX_DEVICELALTKEYMASK)
 				{
 					keymods |= input::MOD_LEFT_ALT;
@@ -447,10 +447,10 @@ namespace platform
 				{
 					keymods |= input::MOD_RIGHT_ALT;
 				}
-				
+
 				return keymods;
 			}
-			
+
 			// This expects the current coordinates from (mouseLocation)
 			// as they're in screen coordinates.
 			NSPoint compute_mouse_delta(const NSPoint& current)
@@ -460,41 +460,41 @@ namespace platform
 					(_last_mouse.y - current.y)
 				);
 			}
-			
+
 			void dispatch_mouse_moved_event(NSEvent* the_event)
 			{
 				CocoaWindow* window = static_cast<CocoaWindow*>([the_event window]);
-				
+
 				CGFloat title_bar_height;
 				CGFloat fixed_height;
-				
+
 				// convert mouse from window to view
 				NSPoint mouse_location = [[window contentView] convertPoint: [the_event locationInWindow] fromView:nil];
-				
+
 				// calculate title bar height of the window
 				NSRect frame = [window frame];
 				NSRect content_rect = [NSWindow contentRectForFrameRect:frame styleMask:NSTitledWindowMask];
 				title_bar_height = (frame.size.height - content_rect.size.height);
-				
+
 				// We subtract height from mouse location y to invert the y-axis; since
 				// NSPoint's origin is in the lower left corner.
 				// The fixed height is the window frame minus the title bar height
 				// and we also subtract 1.0 because convertPoint starts from a base of 1
 				// according to the Cocoa docs.
 				fixed_height = frame.size.height - title_bar_height - 1.0f;
-				
+
 				kernel::MouseEvent event;
 				event.subtype = kernel::MouseMoved;
 				event.mx = mouse_location.x;
 				event.my = fixed_height - mouse_location.y;
-				
+
 				// compute the delta using screen coordinates;
 				// which is what mouseLocation returns.
 				NSPoint delta = compute_mouse_delta([NSEvent mouseLocation]);
 				event.dx = (int)delta.x;
 				event.dy = (int)delta.y;
 				_last_mouse = [NSEvent mouseLocation];
-				
+
 				// don't dispatch any events outside of the window
 				if (event.mx >= 0 && event.my >= 0 && (event.mx <= frame.size.width) && (event.my <= fixed_height))
 				{
@@ -502,25 +502,25 @@ namespace platform
 					return;
 				}
 			}
-			
+
 			void track_mouse_location(const NSPoint& pt)
 			{
 				// track the mouse position at a global scope
 				// NS mouse coordinates have a lower left origin.
 				// CG mouse coordinates have an upper left origin.
-							
+
 				// compute deltas
 				// y axis is inverted on purpose to preserve 0,0 topleft.
 	//			NSPoint delta = compute_mouse_delta(pt);
-				
+
 	//			NSLog(@"mouse pos: %f %f [%f %f]", pt.x, pt.y, delta.x, delta.y);
-				
+
 	//			_last_mouse = pt;
 
 				// TODO: Investigate generating custom events for mouse capture
 				// http://stackoverflow.com/questions/5840873/how-to-tell-the-difference-between-a-user-tapped-keyboard-event-and-a-generated
 			}
-			
+
 			void process_event_loop()
 			{
 				while(true)
@@ -531,12 +531,12 @@ namespace platform
 									  inMode:NSDefaultRunLoopMode
 									  dequeue:YES
 									  ];
-					
+
 					if (event == nil)
 					{
 						break;
 					}
-					
+
 					switch([event type])
 					{
 						case NSLeftMouseDown:
@@ -551,11 +551,11 @@ namespace platform
 						case NSScrollWheel:
 							dispatch_mouse_event(event);
 							break;
-							
+
 							//				case NSMouseMoved:
 							//					track_mouse_location([NSEvent mouseLocation]);
 							//					break;
-							
+
 						case NSKeyDown:
 						case NSKeyUp:
 							dispatch_key_event(event);
@@ -563,18 +563,18 @@ namespace platform
 						default:
 							break;
 					}
-					
+
 					[NSApp sendEvent: event];
 				}
 			}
-			
-			
+
+
 			cocoa_native_window* from(NativeWindow* window)
 			{
 				return static_cast<cocoa_native_window*>(window);
 			}
 		} // namespace cocoa
-	
+
 
 		Result startup(RenderingBackend backend)
 		{
@@ -582,23 +582,23 @@ namespace platform
 			{
 				backend = RenderingBackend_OpenGL;
 			}
-		
+
 			if (backend != RenderingBackend_OpenGL)
 			{
-				return Result(Result::Failure, "The requested rendering backend is not supported");
+				return Result::failure("The requested rendering backend is not supported");
 			}
-			
+
 			// populate the osx keymap
 			cocoa::populate_keymap();
-			
-			return Result(Result::Success);
+
+			return Result::success();
 		}
-		
+
 		void shutdown()
 		{
-			
+
 		}
-		
+
 		void dispatch_events()
 		{
 			cocoa::process_event_loop();
@@ -608,7 +608,7 @@ namespace platform
 		NativeWindow* create(const Parameters& window_parameters)
 		{
 			cocoa::cocoa_native_window* window = MEMORY_NEW(cocoa::cocoa_native_window, get_platform_allocator())(window_parameters);
-			
+
 			platform::Result result = create_window(window, window_parameters);
 			if (result.failed())
 			{
@@ -618,36 +618,36 @@ namespace platform
 
 			// create a context for this window
 			create_context(window);
-			
+
 			// activate the context
 			attach_cocoa_context(window);
-						
+
 			return window;
 		}
-		
+
 		void destroy(NativeWindow* window)
 		{
 			MEMORY_DELETE(window, get_platform_allocator());
 		}
-	
+
 		void activate_context(NativeWindow* window)
 		{
 			cocoa::cocoa_native_window* cocoawindow = cocoa::from(window);
 			attach_cocoa_context(cocoawindow);
 		}
-	
+
 		void deactivate_context(NativeWindow* window)
 		{
 			// Don't need a window pointer since GL just has a global context
 			cocoa::detach_cocoa_context(nullptr);
 		}
-		
+
 		void swap_buffers(NativeWindow* window)
 		{
 			cocoa::cocoa_native_window* cocoawindow = cocoa::from(window);
 			swap_buffers(cocoawindow);
 		}
-		
+
 		Frame get_frame(NativeWindow* window)
 		{
 			cocoa::cocoa_native_window* cocoa_window = cocoa::from(window);
@@ -667,12 +667,12 @@ namespace platform
 			// Until I can test this on a retina display...
 			return get_frame(window);
 		}
-		
+
 		size_t screen_count()
 		{
 			return [[NSScreen screens] count];
 		}
-		
+
 		Frame screen_frame(size_t screen_index)
 		{
 			NSScreen* screen = [[NSScreen screens] objectAtIndex:screen_index];
@@ -703,39 +703,39 @@ namespace platform
 			//
 			//				PLATFORM_LOG(LogMessageType::Info, "refresh rate of screen %i is %i Hz\n", screen_index, refresh_rate);
 		}
-		
+
 		void focus(NativeWindow* window)
 		{
 			cocoa::cocoa_native_window* cocoawindow = cocoa::from(window);
 			[cocoawindow->cw makeKeyAndOrderFront:nil];
 		}
-		
+
 		void show_cursor(bool enable)
 		{
 			// https://developer.apple.com/library/mac/documentation/Cocoa/Reference/ApplicationKit/Classes/NSCursor_Class/
 			// Each call to hide cursor must have a corresponding unhide call.
-		
+
 			if (enable)
 				[NSCursor unhide];
 			else
 				[NSCursor hide];
 		}
-		
+
 		// set the cursor (absolute screen coordinates)
 		void set_cursor(float x, float y)
 		{
 			CGDirectDisplayID display = 0;
 			CGPoint point;
-			
+
 			// this point will have the origin in the upper left.
 			point.x = x;
 			point.y = y;
-			
+
 			// As per the documentation, this won't generate any mouse movement
 			// events.
 			CGDisplayMoveCursorToPoint(display, point);
 		}
-		
+
 		// get the cursor (absolute screen coordinates
 		void get_cursor(float& x, float& y)
 		{
@@ -745,7 +745,7 @@ namespace platform
 			NSPoint current = [NSEvent mouseLocation];
 			x = current.x;
 			y = current.y;
-			
+
 			NSUInteger index = 0;
 			for(NSScreen* screen in [NSScreen screens])
 			{
@@ -755,10 +755,10 @@ namespace platform
 					return;
 					break;
 				}
-				
+
 				++index;
 			}
-			
+
 			PLATFORM_LOG(LogMessageType::Warning, "Could not find screen for mouse location [%2.2f, %2.2f]\n", x, y);
 		}
 	} // namespace window

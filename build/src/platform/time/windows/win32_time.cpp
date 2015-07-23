@@ -37,14 +37,14 @@ namespace platform
 	{
 		// cache off the frequency for later timer use.
 		QueryPerformanceFrequency(&_frequency);
-	
-		return Result(Result::Success);
+
+		return Result::success();
 	}
-	
+
 	void timer_shutdown()
 	{
 	}
-	
+
 	uint64_t microseconds()
 	{
 		LARGE_INTEGER now;
@@ -52,12 +52,12 @@ namespace platform
 
 		return ((now.QuadPart) / (double)_frequency.QuadPart) * 1000000;
 	}
-	
+
 	void datetime(DateTime& datetime)
 	{
 		SYSTEMTIME st;
 		GetLocalTime(&st);
-		
+
 		datetime.day = st.wDay;
 		datetime.dayOfWeek = st.wDayOfWeek;
 		datetime.hour = st.wHour;

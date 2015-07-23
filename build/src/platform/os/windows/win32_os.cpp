@@ -39,15 +39,15 @@ namespace platform
 		// these errors are forwarded to calling process.
 		_previous_error_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
 
-		return Result(Result::Success);
+		return Result::success();
 	}
-	
+
 	void os_shutdown()
 	{
 		// restore the error mode
-		SetErrorMode(_previous_error_mode);		
+		SetErrorMode(_previous_error_mode);
 	}
-	
+
 	int os_run_application(int argc, const char** argv)
 	{
 		return 0;

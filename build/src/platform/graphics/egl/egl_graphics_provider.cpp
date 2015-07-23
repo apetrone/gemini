@@ -139,11 +139,11 @@ namespace platform
 				if (major >= 1 && minor >= 2)
 				{
 					eglstring = (const char*) eglQueryString(display, EGL_CLIENT_APIS);
-					PLATFORM_LOG(LogMessageType::Info, "EGL_CLIENT_APIS: %s\n", eglstring);					
+					PLATFORM_LOG(LogMessageType::Info, "EGL_CLIENT_APIS: %s\n", eglstring);
 				}
 			}
 #endif
-			
+
 			// eglBindAPI and EGL version required
 			// 1.2+: EGL_OPENGL_ES_API and EGL_OPENVG_API
 			// 1.4+: EGL_OPENGL_API
@@ -159,7 +159,7 @@ namespace platform
 			// eglBindAPI failed!
 			assert(bind_result != EGL_FALSE);
 
-			return Result(Result::Success);
+			return Result::success();
 		}
 
 		void EGLGraphicsProvider::shutdown()
@@ -185,7 +185,7 @@ namespace platform
 				// OpenGL ES 1.0/1.1
 				// EGL_RENDERABLE_TYPE, EGL_OPENGL_ES_BIT,
 				// EGL_CONFORMANT, EGL_OPENGL_ES_BIT,
-			
+
 				// OpenGL ES 2.0
 				EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
 				EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,

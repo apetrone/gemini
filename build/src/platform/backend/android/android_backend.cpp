@@ -113,7 +113,7 @@ namespace platform
 		_graphics_provider = create_graphics_provider();
 		if (!_graphics_provider)
 		{
-			return Result(Result::Failure, "create_graphics_provider failed!");
+			return Result::failure("create_graphics_provider failed!");
 		}
 
 		Result graphics_startup = _graphics_provider->startup();
@@ -128,7 +128,7 @@ namespace platform
 		_window_provider = create_window_provider();
 		if (!_window_provider)
 		{
-			return Result(Result::Failure, "create_window_provider failed!");
+			return Result::failure("create_window_provider failed!");
 		}
 
 		Result window_startup = _window_provider->startup();
@@ -160,13 +160,13 @@ namespace platform
 		// a valid window surface -- as we don't have one yet.
 		_graphics_provider->create_context(window);
 
-		return Result(Result::Success);
+		return Result::success();
 	}
-	
+
 	void android_handle_command(struct android_app* app, int32_t command)
 	{
 		// Fill this in with the function to process main app commands (APP_CMD_*)
-		
+
 		uint32_t flags = 0;
 		detail::AndroidState* state = static_cast<detail::AndroidState*>(app->userData);
 		AndroidWindow* window = _window_provider->get_android_window();
@@ -177,7 +177,7 @@ namespace platform
 		// PLATFORM_LOG(LogMessageType::Info, "%i x %i\n", width, height);
 		switch(command)
 		{
-			case APP_CMD_INPUT_CHANGED: 
+			case APP_CMD_INPUT_CHANGED:
 				break;
 
 			// The window is being shown
@@ -198,7 +198,7 @@ namespace platform
 				state->egl_valid = false;
 				break;
 
-			case APP_CMD_WINDOW_RESIZED: 
+			case APP_CMD_WINDOW_RESIZED:
 				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_WINDOW_RESIZED\n");
 				break;
 
@@ -206,7 +206,7 @@ namespace platform
 				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_WINDOW_REDRAW_NEEDED\n");
 				break;
 
-			case APP_CMD_CONTENT_RECT_CHANGED: 
+			case APP_CMD_CONTENT_RECT_CHANGED:
 				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_CONTENT_RECT_CHANGED\n");
 				break;
 
@@ -227,15 +227,15 @@ namespace platform
 				state->has_focus = false;
 				break;
 
-			case APP_CMD_CONFIG_CHANGED: 
+			case APP_CMD_CONFIG_CHANGED:
 				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_CONFIG_CHANGED\n");
 				break;
 
-			case APP_CMD_LOW_MEMORY: 
+			case APP_CMD_LOW_MEMORY:
 				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_LOW_MEMORY\n");
 				break;
 
-			case APP_CMD_START: 
+			case APP_CMD_START:
 				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_START\n");
 				break;
 
@@ -250,17 +250,17 @@ namespace platform
 				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_SAVE_STATE\n");
 				break;
 
-			case APP_CMD_PAUSE: 
+			case APP_CMD_PAUSE:
 				// should destroy EGL context
 				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_PAUSE\n");
 				state->is_resumed = false;
 				break;
 
-			case APP_CMD_STOP: 
+			case APP_CMD_STOP:
 				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_STOP\n");
 				break;
 
-			case APP_CMD_DESTROY: 
+			case APP_CMD_DESTROY:
 				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_DESTROY\n");
 				break;
 		}
@@ -273,7 +273,7 @@ namespace platform
 		// return.  Return 1 if you have handled the event, 0 for any default
 		// dispatching.
 		// int32_t event_type = AInputEvent_getType(event);
-		
+
 
 		// if (event_type == AINPUT_EVENT_TYPE_KEY)
 		// {
@@ -303,12 +303,12 @@ namespace platform
 		// setup the application state
 		state.app = app;
 		state.vm = app->activity->vm;
-		
+
 		// install handlers for commands and input events
 		app->onAppCmd = android_handle_command;
 		app->onInputEvent = android_handle_input;
-		
-		platform::startup();		
+
+		platform::startup();
 
 		PLATFORM_LOG(LogMessageType::Info, "__ANDROID_API__ is %i\n", __ANDROID_API__);
 		PLATFORM_LOG(LogMessageType::Info, "internalDataPath: %s\n", android::internal_data_path());
@@ -335,7 +335,7 @@ namespace platform
 			int method = 0;
 			// -1: block and wait for new events
 			// 0: loop all events and then advance
-			
+
 			while((ident = ALooper_pollAll(method, nullptr, &events, (void**)&source)) >= 0)
 			{
 				if (source)
@@ -356,12 +356,12 @@ namespace platform
 			if (can_tick)
 			{
 				// setup EGL objects
-				// 
+				//
 				//
 				if (!state.egl_valid)
 				{
 					// EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is
-					// guaranteed to be accepted by ANativeWindow_setBuffersGeometry().				
+					// guaranteed to be accepted by ANativeWindow_setBuffersGeometry().
 					// As soon as we picked a EGLConfig, we can safely reconfigure the
 					// ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID.
 					ANativeWindow_setBuffersGeometry(_window_provider->get_native_window(), 0, 0, window->visual);
@@ -460,10 +460,10 @@ namespace platform
 
 			if (backend != RenderingBackend_OpenGLES2)
 			{
-				return Result(Result::Failure, "The only supported rendering backend is OpenGL ES 2");
+				return Result::failure("The only supported rendering backend is OpenGL ES 2");
 			}
 
-			return Result(Result::Success);
+			return Result::success();
 		}
 
 		void shutdown()
@@ -484,7 +484,7 @@ namespace platform
 		void destroy(NativeWindow* window)
 		{
 		}
-		
+
 		void activate_context(NativeWindow* window)
 		{
 			_graphics_provider->attach_context(window);
@@ -494,7 +494,7 @@ namespace platform
 		{
 			_graphics_provider->detach_context(window);
 		}
-		
+
 		void swap_buffers(NativeWindow* window)
 		{
 			_graphics_provider->swap_buffers(window);
@@ -504,12 +504,12 @@ namespace platform
 		{
 			return _window_provider->get_frame(window);
 		}
-		
+
 		Frame get_render_frame(NativeWindow* window)
 		{
 			return _window_provider->get_render_frame(window);
 		}
-		
+
 		size_t screen_count()
 		{
 			return _window_provider->get_screen_count();
@@ -519,24 +519,24 @@ namespace platform
 		{
 			return _window_provider->get_screen_frame(screen_index);
 		}
-		
+
 		void focus(NativeWindow* window)
 		{
 		}
-		
+
 		void show_cursor(bool enable)
 		{
 		}
 
 		void set_cursor(float x, float y)
 		{
-			
+
 		}
-		
+
 		void get_cursor(float& x, float& y)
 		{
-			
-		}		
+
+		}
 	} // namespace window
 
 	namespace android

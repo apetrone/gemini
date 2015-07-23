@@ -59,9 +59,9 @@ namespace platform
 
 			if (!display)
 			{
-				return Result(Result::Failure, "Unable to open display 0");
+				return Result::failure("Unable to open display 0");
 			}
-			return Result(Result::Success);
+			return Result::success();
 		}
 
 		void X11WindowProvider::shutdown()

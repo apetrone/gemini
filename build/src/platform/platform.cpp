@@ -61,7 +61,7 @@ namespace platform
 	static core::memory::Zone* _zone = nullptr;
 	static PlatformAllocatorType* _allocator = nullptr;
 
-	
+
 	core::memory::Zone* get_memory_zone()
 	{
 		return _zone;
@@ -76,37 +76,37 @@ namespace platform
 
 	Result startup()
 	{
-		Result result(Result::Success);
-			
+		Result result;
+
 		core::memory::startup();
 		_zone = MEMORY_NEW(core::memory::Zone, core::memory::global_allocator())("platform");
 		_allocator = MEMORY_NEW(PlatformAllocatorType, core::memory::global_allocator())(_zone);
-		
+
 		result = backend_startup();
 		if (result.failed())
 		{
 			PLATFORM_LOG(LogMessageType::Error, "backend_startup failed: '%s'\n", result.message);
 		}
-		
+
 		result = timer_startup();
 		if (result.failed())
 		{
 			PLATFORM_LOG(LogMessageType::Error, "timer_startup failed: '%s'\n", result.message);
 		}
-		
+
 		return result;
 	}
-	
+
 	void shutdown()
 	{
 		timer_shutdown();
 		backend_shutdown();
-		
+
 		MEMORY_DELETE(_allocator, core::memory::global_allocator());
 		MEMORY_DELETE(_zone, core::memory::global_allocator());
 		core::memory::shutdown();
 	}
-	
+
 	// This nastiness MUST be here, because on different platforms
 	// platform::startup is called at different times. This is done to allow
 	// startup and shutdown on the correct threads via certain platforms.
@@ -136,11 +136,11 @@ namespace platform
 				kernel::instance()->tick();
 			}
 		}
-		
+
 		// cleanup kernel memory
 		kernel::shutdown();
 		platform::shutdown();
-		
+
 		return error;
 	} // main
 #elif defined(PLATFORM_APPLE)
@@ -150,17 +150,17 @@ namespace platform
 #else
 	#error Unknown platform!
 #endif
-	
-	
-	
-	
+
+
+
+
 	int run_application(kernel::IKernel* instance)
 	{
 		int return_code = -1;
 		kernel::set_instance(instance);
 		instance->set_active(true);
-		
-		
+
+
 #if defined(PLATFORM_APPLE)
 		return_code = backend_run_application(_mainparameters.argc, (const char**)_mainparameters.argv);
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
@@ -173,21 +173,21 @@ namespace platform
 #endif
 		// instance is owned by the platform
 		delete instance;
-		
+
 		return return_code;
 	}
-	
-	
+
+
 	void set_mainparameters(const MainParameters& params)
 	{
 		_mainparameters = params;
 	}
-	
+
 	const MainParameters& get_mainparameters()
 	{
 		return _mainparameters;
 	}
-	
+
 	namespace path
 	{
 		void normalize(char* path)
@@ -199,25 +199,25 @@ namespace platform
 					// conform to this platform's path separator
 					*path = PATH_SEPARATOR;
 				}
-				
+
 				++path;
 			}
 		} // normalize
-		
+
 
 		void make_directories(const char* normalized_path)
 		{
 			const char* path = normalized_path;
 			char directory[MAX_PATH_SIZE];
-			
+
 			// don't accept paths that are too short
 			if (strlen(normalized_path) < 2)
 			{
 				return;
 			}
-			
+
 			memset(directory, 0, MAX_PATH_SIZE);
-			
+
 			// loop through and call mkdir on each separate directory progressively
 			while(*path)
 			{
@@ -226,12 +226,12 @@ namespace platform
 					strncpy(directory, normalized_path, (path+1)-normalized_path);
 					platform::make_directory(directory);
 				}
-				
+
 				++path;
 			}
 		} // make_directories
 	} // namespace path
-	
+
 	void log_message(LogMessageType type, const char* message)
 	{
 		backend_log(type, message);

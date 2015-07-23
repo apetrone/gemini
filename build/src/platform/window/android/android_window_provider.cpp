@@ -26,7 +26,7 @@
 #include "android_window_provider.h"
 #include <android/native_window.h> // requires ndk r5 or higher
 // #include <android/native_window_jni.h>
-// 
+//
 // PLATFORM_SUPPORT_EGL and PLATFORM_SUPPORT_OPENGLES must be defined
 #if !(defined(PLATFORM_EGL_SUPPORT) || !defined(PLATFORM_GLES2_SUPPORT))
 	#error Android requires EGL and OpenGL ES support!
@@ -80,7 +80,7 @@ namespace platform
 
 		Result AndroidWindowProvider::startup()
 		{
-			return Result(Result::Success);
+			return Result::success();
 		}
 
 		void AndroidWindowProvider::shutdown()

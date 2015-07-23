@@ -35,7 +35,7 @@ namespace platform
 		thread_data->thread_id = thread_id();
 
 		thread_data->entry(thread_data->userdata);
-		
+
 		return 0;
 	}
 
@@ -46,16 +46,16 @@ namespace platform
 		{
 			thread.handle = thread_handle;
 			thread.state = THREAD_STATE_ACTIVE;
-			return Result(Result::Success);
+			return Result::success();
 		}
 
-		return Result(Result::Failure, "Unable to create thread!");
+		return Result::failure("Unable to create thread!");
 	}
-	
+
 	int thread_join(Thread& thread)
 	{
 		int result = 0;
-		
+
 		// NOTE:
 		// * MsgWait continues the MessagePump in case this thread created any Windows.
 		// * MsgWaitForMultipleObjectsEx( 1, &hThread, milliseconds, QS_ALLEVENTS, 0 );
@@ -64,17 +64,17 @@ namespace platform
 			TerminateThread(thread.handle, 0);
 			result = 1;
 		}
-		
+
 		CloseHandle(thread.handle);
 		thread.state = THREAD_STATE_INACTIVE;
 		return result;
 	}
-	
+
 	void thread_sleep(int milliseconds)
 	{
 		Sleep(milliseconds);
 	}
-	
+
 	void thread_detach(Thread& thread)
 	{
 		CloseHandle(thread.handle);
@@ -85,5 +85,5 @@ namespace platform
 	{
 		return GetCurrentThreadId();
 	}
-	
+
 } // namespace platform
