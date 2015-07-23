@@ -72,9 +72,7 @@ namespace render2
 	
 	CommandQueue* OpenGLDevice::create_queue(const Pass& render_pass)
 	{
-		CommandQueue* next_queue = &queue.next();
-		next_queue->pass = render_pass;
-		return next_queue;
+		return common_create_queue(render_pass, &queue.next());
 	}
 	
 	// ---------------------------------------------------------------------
@@ -82,16 +80,11 @@ namespace render2
 	// ---------------------------------------------------------------------
 	void OpenGLDevice::queue_buffers(CommandQueue* queue_list, size_t total_queues)
 	{
-		for (size_t index = 0; index < total_queues; ++index)
-		{
-			CommandQueue* q = &queue_list[index];
-			queued_buffers.push_back(q);
-		}
+		common_queue_buffers(queue_list, total_queues, queued_buffers);
 	}
 	
 	void OpenGLDevice::backbuffer_resized(int backbuffer_width, int backbuffer_height)
 	{
-		default_target.width = backbuffer_width;
-		default_target.height = backbuffer_height;
+		common_resize_backbuffer(backbuffer_width, backbuffer_height, &default_target);
 	}
 } // namespace render2

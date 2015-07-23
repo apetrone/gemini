@@ -242,9 +242,11 @@ public:
 		render2::Pass render_pass;
 		render_pass.target = device->default_render_target();
 		render_pass.color(0.0f, 0.0f, 0.0f, 1.0f);
+		render_pass.clear_color = true;
+		render_pass.clear_depth = true;
 		
 		// create a command queue
-		render2::CommandQueue queue(&render_pass);
+		render2::CommandQueue* queue = device->create_queue(render_pass);
 		
 		// create a command serializer for the queue
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
@@ -259,7 +261,7 @@ public:
 		device->destroy_serializer(serializer);
 		
 		// queue the buffer with our device
-		device->queue_buffers(&queue, 1);
+		device->queue_buffers(queue, 1);
 
 		// submit the queues to the GPU
 		platform::window::activate_context(native_window);

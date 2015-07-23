@@ -344,7 +344,12 @@ namespace render2
 		
 		return 0;
 	}
-	
+
+
+	// ---------------------------------------------------------------------
+	// common functions shared between devices
+	// ---------------------------------------------------------------------
+
 	GLenum convert_blendstate(BlendOp op)
 	{
 		// for now, if we use another blend state; hard crash!
@@ -377,5 +382,66 @@ namespace render2
 		};
 		
 		return blend_table[static_cast<size_t>(op)];
+	}
+
+	void common_queue_buffers(CommandQueue* queue_list, size_t total_queues, Array<CommandQueue*>& queued_buffers)
+	{
+		for (size_t index = 0; index < total_queues; ++index)
+		{
+			CommandQueue* q = &queue_list[index];
+			queued_buffers.push_back(q);
+		}
+	}
+
+	void common_resize_backbuffer(int width, int height, RenderTarget* target)
+	{
+		target->width = width;
+		target->height = height;
+	}
+
+	CommandQueue* common_create_queue(const Pass& render_pass, CommandQueue* next_queue)
+	{
+		assert(next_queue != nullptr);
+		next_queue->pass = render_pass;
+		return next_queue;
+	}
+
+	void common_pass_setup(const Pass* pass)
+	{
+		assert(pass->target->width > 0 && pass->target->height > 0);
+		gl.Viewport(0, 0, pass->target->width, pass->target->height);
+
+		GLuint clear_flags = 0;
+
+		if (pass->clear_color)
+		{
+			clear_flags |= GL_COLOR_BUFFER_BIT;
+			gl.ClearColor(pass->target_color[0], pass->target_color[1], pass->target_color[2], pass->target_color[3]);
+			gl.CheckError("ClearColor");
+		}
+
+#if PLATFORM_OPENGL_SUPPORT
+		if (pass->clear_depth)
+		{
+			clear_flags |= GL_DEPTH_BUFFER_BIT;
+			gl.ClearDepth(1.0f);
+			gl.CheckError("ClearDepth");
+		}
+#else
+#warning gl.ClearDepth needs support on ths platform
+#endif
+
+		if (pass->clear_stencil)
+		{
+			clear_flags |= GL_STENCIL_BUFFER_BIT;
+			gl.ClearStencil(0.0f);
+			gl.CheckError("ClearStencil");
+		}
+
+		if (clear_flags != 0)
+		{
+			gl.Clear(clear_flags);
+			gl.CheckError("Clear");
+		}
 	}
 } // namespace render2

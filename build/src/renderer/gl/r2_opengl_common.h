@@ -31,6 +31,8 @@
 
 namespace render2
 {
+	const size_t RENDERER_MAX_COMMAND_QUEUES = 4;
+
 	static size_t type_to_bytes(const GLenum& type)
 	{
 		switch(type)
@@ -151,4 +153,8 @@ namespace render2
 	int load_gl_symbols();
 	
 	GLenum convert_blendstate(BlendOp op);
+	void common_queue_buffers(CommandQueue* queue_list, size_t total_queues, Array<CommandQueue*>& queued_buffers);
+	void common_resize_backbuffer(int width, int height, RenderTarget* target);
+	CommandQueue* common_create_queue(const Pass& render_pass, CommandQueue* next_queue);
+	void common_pass_setup(const Pass* pass);
 } // namespace render2
