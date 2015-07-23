@@ -1,6 +1,7 @@
 import logging
-from pegasus.models import Product, ProductType
+from pegasus.models import Product, ProductType, Dependency
 
+libglm = Dependency(file="glm.py")
 
 def arguments(parser):
 	pass
@@ -12,6 +13,10 @@ def products(arguments, **kwargs):
 	nom.root = "../dependencies/nom"
 	nom.project_root = "_projects"
 
+	# for maths
+	nom.dependencies += [
+		libglm
+	]
 
 	nom.sources = [
 		"src/**.c*",

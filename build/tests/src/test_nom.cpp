@@ -128,16 +128,16 @@ namespace experimental
 		virtual void begin_frame(gui::Compositor* c);
 		virtual void end_frame();
 		
-		virtual void draw_bounds(const gui::Bounds& bounds, const gui::Color& color);
-		virtual void draw_textured_bounds(const gui::Bounds& bounds, const gui::TextureHandle& handle);
+		virtual void draw_bounds(const gui::Rect& bounds, const gui::Color& color);
+		virtual void draw_textured_bounds(const gui::Rect& bounds, const gui::TextureHandle& handle);
 		void draw_line(const gui::Point& start, const gui::Point& end, const gui::Color& color);
 		virtual gui::TextureResult texture_create(const char* path, gui::TextureHandle& handle);
 		virtual void texture_destroy(const gui::TextureHandle& handle);
 		virtual gui::TextureResult texture_info(const gui::TextureHandle& handle, uint32_t& width, uint32_t& height, uint8_t& channels);
 		virtual gui::FontResult font_create(const char* path, gui::FontHandle& handle);
 		virtual void font_destroy(const gui::FontHandle& handle);
-		virtual gui::FontResult font_measure_string(const gui::FontHandle& handle, const char* string, gui::Bounds& bounds);
-		virtual void font_draw(const gui::FontHandle& handle, const char* string, const gui::Bounds& bounds, const gui::Color& color);
+		virtual gui::FontResult font_measure_string(const gui::FontHandle& handle, const char* string, gui::Rect& bounds);
+		virtual void font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color);
 		virtual gui::FontResult font_fetch_texture(const gui::FontHandle& handle, gui::TextureHandle& texture);
 		virtual void draw_command_lists(gui::render::CommandList** command_lists, size_t total_lists);
 		
@@ -233,8 +233,8 @@ namespace experimental
 	}
 	
 	
-	void GUIRenderer::draw_bounds(const gui::Bounds& bounds, const gui::Color& color) {}
-	void GUIRenderer::draw_textured_bounds(const gui::Bounds& bounds, const gui::TextureHandle& handle) {}
+	void GUIRenderer::draw_bounds(const gui::Rect& bounds, const gui::Color& color) {}
+	void GUIRenderer::draw_textured_bounds(const gui::Rect& bounds, const gui::TextureHandle& handle) {}
 	void GUIRenderer::draw_line(const gui::Point& start, const gui::Point& end, const gui::Color& color) {}
 	
 	gui::TextureResult GUIRenderer::texture_create(const char* path, gui::TextureHandle& handle)
@@ -284,7 +284,7 @@ namespace experimental
 		// nothing really to do in our system
 	}
 	
-	gui::FontResult GUIRenderer::font_measure_string(const gui::FontHandle& handle, const char* string, gui::Bounds& bounds)
+	gui::FontResult GUIRenderer::font_measure_string(const gui::FontHandle& handle, const char* string, gui::Rect& bounds)
 	{
 //		assets::Font* font = assets::fonts()->find_with_id(handle);
 //		if (font)
@@ -298,7 +298,7 @@ namespace experimental
 		return gui::FontResult_Failed;
 	}
 	
-	void GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Bounds& bounds, const gui::Color& color)
+	void GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color)
 	{
 //		assets::Font* font = assets::fonts()->find_with_id(handle);
 //		if (font)
@@ -630,8 +630,8 @@ public:
 		
 		rot += 10.f*kernel::parameters().framedelta_filtered_seconds;
 		
-		graph->z_rotation = mathlib::degrees_to_radians(rot);
-		
+		graph->set_rotation(mathlib::degrees_to_radians(rot));
+
 		if (rot > 360)
 			rot -= 360.0f;
 		
