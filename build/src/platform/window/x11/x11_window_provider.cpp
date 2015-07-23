@@ -27,6 +27,9 @@
 #include "x11_window_provider.h"
 
 
+#include <X11/keysym.h>
+#include <X11/extensions/Xrandr.h>
+
 namespace platform
 {
 	namespace window
@@ -40,7 +43,8 @@ namespace platform
 		}; // struct X11Window
 
 
-		X11WindowProvider::X11WindowProvider()
+		X11WindowProvider::X11WindowProvider() :
+			display(0)
 		{
 		}
 
@@ -50,11 +54,22 @@ namespace platform
 
 		Result X11WindowProvider::startup()
 		{
+			// try to open the display
+			display = XOpenDisplay(0);
+
+			if (!display)
+			{
+				return Result(Result::Failure, "Unable to open display 0");
+			}
 			return Result(Result::Success);
 		}
 
 		void X11WindowProvider::shutdown()
 		{
+			if (display)
+			{
+				XCloseDisplay(display);
+			}
 		}
 
 		NativeWindow* X11WindowProvider::create(const Parameters& parameters)
@@ -87,6 +102,6 @@ namespace platform
 		{
 			Frame frame;
 			return frame;
-		}		
+		}
 	} // namespace window
 } // namespace platform

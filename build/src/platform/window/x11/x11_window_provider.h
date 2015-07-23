@@ -27,6 +27,8 @@
 #include <core/config.h>
 #include "window_provider.h"
 
+#include <X11/Xlib.h>
+
 namespace platform
 {
 	namespace window
@@ -45,6 +47,10 @@ namespace platform
 			virtual Frame get_render_frame(NativeWindow* window) const override;
 			virtual size_t get_screen_count() const override;
 			virtual Frame get_screen_frame(size_t screen_index) const override;
+
+		private:
+			Display* display;
+
 		}; // class X11WindowProvider
 	} // namespace window
 } // namespace platform
