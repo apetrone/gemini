@@ -84,16 +84,16 @@ namespace gemini
 
 		// flip UVs vertically
 		bool flip_vertically;
-		
+
 		// export the animation only
 		bool animation_only;
-		
+
 		ToolOptions()
 		{
 			// some sane defaults?
 			compress_animation = false;
 			flip_vertically = false;
-			
+
 			animation_only = false;
 		}
 	};
@@ -111,24 +111,24 @@ namespace gemini
 		void bake_geometry_transform(datamodel::Node* node, glm::mat4& parent_transform)
 		{
 //			LOGV("node: %s\n", node->name.c_str());
-			
+
 			// local transform is from this node
 			glm::mat4 local_transform;
 			compose_matrix(local_transform, node->translation, node->rotation, node->scale);
-			
+
 			// reset transforms
 			node->translation = glm::vec3(0.0f, 0.0f, 0.0f);
 			node->rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 			node->scale = glm::vec3(1.0f, 1.0f, 1.0f);
-			
+
 			// world transform is the accumulated parent transform of this node
 			// multiplied by this node's local transform
 			glm::mat4 world_transform = parent_transform * local_transform;
-			
+
 
 			if (node->type == "mesh")
 			{
-				
+
 				assert(node->mesh != 0);
 				if (node->mesh)
 				{
@@ -140,7 +140,7 @@ namespace gemini
 					}
 				}
 			}
-			
+
 			for (auto& child : node->children)
 			{
 				bake_geometry_transform(child, world_transform);
@@ -150,7 +150,7 @@ namespace gemini
 		int bake_node_transforms(datamodel::Model& model)
 		{
 			int result = 0;
-			
+
 			glm::mat4 transform;
 
 			for (auto& child : model.root.children)
@@ -160,7 +160,7 @@ namespace gemini
 
 			return result;
 		}
-		
+
 		void calculate_geometry_boundingbox(datamodel::Node* node)
 		{
 			if (node->type == "mesh")
@@ -176,18 +176,18 @@ namespace gemini
 						mins.x = glm::min(mins.x, vertex.x);
 						mins.y = glm::min(mins.y, vertex.y);
 						mins.z = glm::min(mins.z, vertex.z);
-						
+
 						maxs.x = glm::max(maxs.x, vertex.x);
 						maxs.y = glm::max(maxs.y, vertex.y);
 						maxs.z = glm::max(maxs.z, vertex.z);
 					}
-					
+
 					node->mesh->mins = mins;
 					node->mesh->maxs = maxs;
 				}
 			}
 		}
-		
+
 		void calculate_geometry_bounds(datamodel::Model& model)
 		{
 			for (auto& child : model.root.children)
@@ -205,10 +205,10 @@ namespace gemini
 			Extension<datamodel::Model> ext;
 			ext.reader = AutodeskFbxReader::plugin_create();
 			register_extension<datamodel::Model>("fbx", ext);
-			
+
 //			ext.reader = OpenGEXReader::plugin_create();
 //			register_extension<datamodel::Model>("ogex", ext);
-			
+
 			ext.reader = 0;
 			ext.writer = JsonModelWriter::plugin_create();
 			register_extension<datamodel::Model>("model", ext);
@@ -225,11 +225,11 @@ namespace gemini
 			if (!reader)
 			{
 				LOGE("no reader found for extension: %s\n", ext.c_str());
-				return platform::Result(platform::Result::Failure, "Unable to read format");
+				return platform::Result(platform::Result::failure("Unable to read format");
 			}
-			
 
-					
+
+
 			// verify we can write the format
 			ext = output_path.extension();
 			const Extension<datamodel::Model> writer_extension = find_entry_for_extension<datamodel::Model>("model");
@@ -237,29 +237,29 @@ namespace gemini
 			if (!writer)
 			{
 				LOGE("no writer found for extension: %s\n", ext.c_str());
-				return platform::Result(platform::Result::Failure, "Unable to write format");
+				return platform::Result(platform::Result::failure("Unable to write format");
 			}
-			
+
 			util::MemoryStream mds;
 			mds.data = (uint8_t*)input_path();
 			if (!reader->read(&model, mds))
 			{
 				LOGV("Error reading file '%s'\n", input_path());
-				return platform::Result(platform::Result::Failure, "Error reading input file");
+				return platform::Result(platform::Result::failure("Error reading input file");
 			}
-			
+
 			// TODO: compress animation keys
 			// This should eliminate duplicate values by merging them into a single key.
-			
+
 			// TODO: add modifier to flip UVs vertically
-			
+
 			// bake transforms into geometry nodes (only for static meshes)
 			if (!model.skeleton)
 			{
 				extensions::bake_node_transforms(model);
 				extensions::calculate_geometry_bounds(model);
 			}
-			
+
 			if (options.animation_only)
 			{
 				model.remove_export_flag(datamodel::Model::EXPORT_MATERIALS);
@@ -275,11 +275,11 @@ namespace gemini
 					child->mesh->mass_center_offset = child->translation - geometry::compute_center_of_mass(child->mesh);
 				}
 			}
-			
+
 
 			writer->write(output_path(), &model);
 
-			return platform::Result(platform::Result::Success);
+			return platform::Result::success();
 		}
 	} // namespace tools
 } // namespace gemini
@@ -292,46 +292,46 @@ int main(int argc, char** argv)
 	using namespace gemini;
 	using namespace core::argparse;
 
-	
+
 	const char* docstring = R"(
 Usage:
 	[--animation-only] <source_asset_root> <input_path> <output_asset_root>
-	
+
 Options:
 	-h, --help  Show this help screen
 	--version  Display the version number
 	--animation-only  Export only the animation from <input_path>
 	)";
-	
-	
+
+
 	core::argparse::ArgumentParser parser;
 	core::argparse::VariableMap vm;
-	
+
 	std::vector<std::string> arguments = parser.split_tokens(argc, argv);
-	
+
 	if (!parser.parse(docstring, arguments, vm, "1.0.0-alpha"))
 	{
 		return -1;
 	}
-	
+
 	const std::string asset_root = vm["source_asset_root"];
 	const std::string input_path = vm["input_path"];
 	const std::string output_root = vm["output_asset_root"];
-	
+
 	ToolOptions options;
 	if (vm.find("--animation-only") != vm.end())
 	{
 		const std::string animation_only = vm["--animation-only"];
-		
+
 		options.animation_only = animation_only == "true";
 	}
-	
-	
+
+
 	tools::startup("arcfusion.net/lynx");
-	
+
 	tools::register_types();
-	
-	
+
+
 	uint64_t start_ticks = platform::microseconds();
 
 	// determine our input and output filenames
@@ -339,7 +339,7 @@ Options:
 	input_filename.normalize(PATH_SEPARATOR);
 	input_filename.strip_trailing(PATH_SEPARATOR).append(PATH_SEPARATOR_STRING);
 	input_filename.append(input_path.c_str());
-	
+
 	StackString<MAX_PATH_SIZE> output_filename = output_root.c_str();
 	output_filename.normalize(PATH_SEPARATOR);
 	output_filename.strip_trailing(PATH_SEPARATOR).append(PATH_SEPARATOR_STRING);
@@ -354,7 +354,7 @@ Options:
 
 	float duration = (platform::microseconds() - start_ticks);
 	LOGV("processed in %2.2f milliseconds\n", duration*.001f);
-	
+
 	tools::shutdown();
 	return 0;
 }

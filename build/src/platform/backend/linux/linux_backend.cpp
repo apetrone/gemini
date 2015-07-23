@@ -88,9 +88,9 @@ namespace platform
 
 	Result backend_startup()
 	{
-		return Result(Result::Success);
+		return Result::success();
 	}
-	
+
 	int backend_run_application(int argc, const char** argv)
 	{
 		return 0;
@@ -109,7 +109,7 @@ namespace platform
 		};
 
 		fprintf(log_message_to_pipe[static_cast<int>(type)], message);
-	}	
+	}
 
 
 	void dispatch_events()
@@ -144,7 +144,7 @@ namespace platform
 			_graphics_provider = create_graphics_provider();
 			if (!_graphics_provider)
 			{
-				return Result(Result::Failure, "create_graphics_provider failed!");
+				return Result::failure("create_graphics_provider failed!");
 			}
 
 			Result graphics_startup = _graphics_provider->startup();
@@ -159,7 +159,7 @@ namespace platform
 			_window_provider = create_window_provider();
 			if (!_window_provider)
 			{
-				return Result(Result::Failure, "create_window_provider failed!");
+				return Result::failure("create_window_provider failed!");
 			}
 
 			Result window_startup = _window_provider->startup();
@@ -180,17 +180,17 @@ namespace platform
 
 			if (backend != RenderingBackend_OpenGLES2)
 			{
-				return Result(Result::Failure, "The only supported rendering backend is OpenGL ES 2");
+				return Result::failure("The only supported rendering backend is OpenGL ES 2");
 			}
 #else
 			// force OpenGL for now
 			backend = RenderingBackend_OpenGL;
 			if (backend != RenderingBackend_OpenGL)
 			{
-				return Result(Result::Failure, "Only the OpenGL rendering backend is supported");
+				return Result::failure("Only the OpenGL rendering backend is supported");
 			}
 #endif
-			return Result(Result::Success);
+			return Result::success();
 		}
 
 		void shutdown()
@@ -206,7 +206,7 @@ namespace platform
 
 #if defined(PLATFORM_RASPBERRYPI)
 			bcm_host_deinit();
-#endif		
+#endif
 		}
 
 		void dispatch_events()
@@ -247,12 +247,12 @@ namespace platform
 			MEMORY_DEALLOC(window->graphics_data, get_platform_allocator());
 			_window_provider->destroy(window);
 		}
-		
+
 		void activate_context(NativeWindow* window)
 		{
 			_graphics_provider->attach_context(window);
 		}
-		
+
 		void deactivate_context(NativeWindow* window)
 		{
 			_graphics_provider->detach_context(window);
@@ -267,12 +267,12 @@ namespace platform
 		{
 			return _window_provider->get_frame(window);
 		}
-		
+
 		Frame get_render_frame(NativeWindow* window)
 		{
 			return _window_provider->get_render_frame(window);
 		}
-		
+
 		size_t screen_count()
 		{
 			return _window_provider->get_screen_count();
@@ -282,24 +282,24 @@ namespace platform
 		{
 			return _window_provider->get_screen_frame(screen_index);
 		}
-		
+
 		void focus(NativeWindow* window)
 		{
 		}
-		
+
 		void show_cursor(bool enable)
 		{
-		}		
+		}
 
 		void set_cursor(float x, float y)
 		{
-			
+
 		}
-		
+
 		void get_cursor(float& x, float& y)
 		{
-			
-		}		
+
+		}
 	} // namespace window
 } // namespace platform
 

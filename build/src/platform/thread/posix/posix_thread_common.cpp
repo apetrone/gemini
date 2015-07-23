@@ -39,13 +39,13 @@ namespace platform
 		// TODO: determine how to get the thread id
 //		ThreadId tid = thread_id();
 //		memcpy(&thread_data->thread_id, &tid, std::min(sizeof(uint64_t), sizeof(ThreadId)));
-		
+
 #if defined(PTHREAD_CANCEL_ASYNCHRONOUS)
 		// allow this thread to be cancelled at anytime
 		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, 0);
 #endif
 		thread_data->entry(thread_data->userdata);
-		
+
 		return 0;
 	}
 
@@ -55,53 +55,53 @@ namespace platform
 		pthread_attr_t attrib;
 		if (pthread_attr_init(&attrib) != 0)
 		{
-			return Result(Result::Failure, "Unable to initialize pthread_attr_t");
+			return Result::failure("Unable to initialize pthread_attr_t");
 		}
-		
+
 		// We can start this in detached or joinable. detached threads will release
 		// their resources once they terminate, but cannot be synchronized.
 		// joinable threads must have pthread_join called on them to release resources,
 		// but this allows thread sync.
 		if (pthread_attr_setdetachstate(&attrib, PTHREAD_CREATE_JOINABLE) != 0)
 		{
-			return Result(Result::Failure, "Unable to set pthread attach state");
+			return Result::failure("Unable to set pthread attach state");
 		}
-	
+
 		thread.entry = entry;
 		thread.userdata = data;
-	
+
 		int result = pthread_create(&thread.handle, &attrib, posix_thread_entry, &thread);
 		if (result == 0)
 		{
 			thread.state = THREAD_STATE_ACTIVE;
-			return Result(Result::Success);
+			return Result::success();
 		}
 		else
 		{
 			thread.state = THREAD_STATE_INACTIVE;
-			return Result(Result::Failure, "Unable to create thread!");
+			return Result::failure("Unable to create thread!");
 		}
 	}
 
-	
+
 	int posix_thread_join(Thread& thread)
 	{
 		int result = pthread_join(thread.handle, 0);
-		
+
 		if (result == 0)
 		{
 			thread.state = THREAD_STATE_INACTIVE;
 			return 0;
 		}
-		
+
 		return 1;
 	}
-	
+
 	void posix_thread_sleep(int milliseconds)
 	{
 		usleep(milliseconds*1000);
 	}
-	
+
 	void posix_thread_detach(Thread& thread)
 	{
 		pthread_cancel(thread.handle);
@@ -112,5 +112,5 @@ namespace platform
 	{
 		return pthread_self();
 	}
-	
+
 } // namespace platform

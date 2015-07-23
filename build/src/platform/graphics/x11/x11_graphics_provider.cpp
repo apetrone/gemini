@@ -43,7 +43,7 @@ namespace platform
 
 		Result X11GraphicsProvider::startup()
 		{
-			return Result(Result::Success);
+			return Result::success();
 		}
 
 		void X11GraphicsProvider::shutdown()

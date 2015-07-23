@@ -35,10 +35,10 @@ namespace platform
 		PathString to_string(NSString* string)
 		{
 			PathString output;
-			
+
 			// NSUInteger length = [string length];
 			// assuming PathString can be resized...
-		
+
 			[string getCString:&output[0] maxLength:output.max_size() encoding:NSUTF8StringEncoding];
 			output.recompute_size(&output[0]);
 			return output;
@@ -52,29 +52,29 @@ namespace platform
 	{
 //
 //		NSProcessInfo* processInfo = [NSProcessInfo processInfo];
-//		
+//
 //		const int MB = (1024*1024);
 //		const int GB = MB*1024;
 //		NSLog(@"physical memory: %lluMB", processInfo.physicalMemory/MB);
-//		
+//
 //		NSLog(@"%@", processInfo.operatingSystemName);
 //		NSLog(@"%@", processInfo.operatingSystemVersionString);
 //		NSTimeInterval uptime = processInfo.systemUptime;
 //
 //		NSLog(@"uptime: %f", uptime);
 
-		return Result(Result::Success);
+		return Result::success();
 	}
-	
+
 	int backend_run_application(int argc, const char** argv)
 	{
 		return ::NSApplicationMain(argc, argv);
 	}
-	
+
 	void backend_shutdown()
 	{
 	}
-	
+
 	void backend_log(LogMessageType, const char* message)
 	{
 		NSLog(@"%@", [NSString stringWithUTF8String:message]);

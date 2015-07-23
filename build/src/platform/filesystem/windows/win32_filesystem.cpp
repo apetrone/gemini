@@ -40,21 +40,20 @@ namespace platform
 
 	Result get_program_directory(char* path, size_t path_size)
 	{
-		Result error(Result::Success);
-		
+		Result error;
+
 		int result = 0;
 		char* sep;
 		result = GetModuleFileNameA(GetModuleHandleA(0), path, path_size);
 		if (result == 0)
 		{
-			error.status = platform::Result::Failure;
-			error.message = "GetModuleFileNameA failed!";
+			error = Result::failure("GetModuleFilenameA failed!");
 		}
-		
+
 		if (result != 0)
 		{
 			sep = strrchr(path, PATH_SEPARATOR);
-			
+
 			if (sep)
 			{
 				*sep = '\0';
@@ -65,16 +64,16 @@ namespace platform
 
 	Result make_directory(const char* path)
 	{
-		Result result(Result::Success);
+		Result result;
 		int status_code = 0;
-		
+
 		status_code = _mkdir(path);
 		if (status_code == -1)
 		{
 			// TODO: print out the errno
-			result = Result(Result::Failure, "_mkdir failed!");
+			result = Result::failure("_mkdir failed!");
 		}
-		
+
 		return result;
 	}
 
@@ -190,6 +189,6 @@ namespace platform
 	platform::Result fs_content_directory(core::StackString<MAX_PATH_SIZE>& content_path, const core::StackString<MAX_PATH_SIZE>& root_path)
 	{
 		content_path = root_path;
-		return platform::Result(platform::Result::Success);
-	}	
+		return platform::Result;
+	}
 } // namespace platform

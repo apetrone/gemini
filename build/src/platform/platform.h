@@ -62,21 +62,9 @@
 	#error Unknown platform!
 #endif
 
-	
+
 // This is a bit nasty in that it requires core::str
 #define PLATFORM_LOG(type, message, ...) ::platform::log_message(type, ::core::str::format(message, ##__VA_ARGS__))
-
-#ifdef Success
-	#undef Success
-#endif
-
-#ifdef Failure
-	#undef Failure
-#endif
-
-#ifdef Warning
-	#undef Warning
-#endif
 
 // http://stackoverflow.com/questions/150355/programmatically-find-the-number-of-cores-on-a-machine
 
@@ -122,19 +110,19 @@ namespace platform
 	struct LIBRARY_EXPORT MainParameters
 	{
 		char* commandline;
-		
+
 		MainParameters(char* commandline_string = nullptr) :
 			commandline(commandline_string)
 		{
 		}
 	};
-	
+
 	#define PLATFORM_RETURN(statement)\
 		return statement
-		
+
 	#define PLATFORM_MAIN\
 		 int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR commandline, int show)
-		 
+
 	#define PLATFORM_IMPLEMENT_PARAMETERS()\
 		platform::set_mainparameters(platform::MainParameters(commandline))
 
@@ -143,20 +131,20 @@ namespace platform
 	{
 		int argc;
 		char** argv;
-		
+
 		MainParameters(int total_arguments = 0, char** argument_params = nullptr) :
 			argc(total_arguments),
 			argv(argument_params)
 		{
 		}
 	};
-	
+
 	#define PLATFORM_RETURN(statement)\
 		return statement
-		
+
 	#define PLATFORM_MAIN\
 		int main(int argc, char** argv)
-		
+
 	#define PLATFORM_IMPLEMENT_PARAMETERS()\
 		platform::set_mainparameters(platform::MainParameters(argc, argv))
 
@@ -164,19 +152,19 @@ namespace platform
 	struct MainParameters
 	{
 		struct android_app* app;
-		
+
 		MainParameters(struct android_app* state = 0) :
 			app(state)
 		{
 		}
 	};
-	
+
 	#define PLATFORM_RETURN(statement)\
 		statement
-		
+
 	#define PLATFORM_MAIN\
 		extern "C" void android_main(struct android_app* android_state)
-	
+
 	#define PLATFORM_IMPLEMENT_PARAMETERS()\
 		platform::set_mainparameters(platform::MainParameters(android_state))
 #else
@@ -191,32 +179,45 @@ namespace platform
 		void* userdata;
 		ThreadStatus state;
 	};
-	
+
 
 	struct LIBRARY_EXPORT Result
 	{
-		enum ResultStatus
-		{
-			Success,
-			Failure = 0xBADDAE, 	// non-recoverable error, bad day :(
-			Warning = 1 			// unexpected result, will proceed
-		};
-		
 		const char* message;
-		ResultStatus status;
-		
-		Result(ResultStatus result_status, const char* result_message = "") : message(result_message), status(result_status) {}
-		bool failed() const { return status == Failure; }
-		bool success() const { return status == Success; }
+		int status;
+
+		Result(int result_status = 0, const char* result_message = "") :
+			message(result_message),
+			status(result_status)
+		{
+		}
+
+		inline bool succeeded() const { return status == 0; }
+		inline bool failed() const { return status != 0; }
+
+		inline static Result success()
+		{
+			return Result(0);
+		}
+
+		inline static Result failure(const char* result_message)
+		{
+			return Result(-1, result_message);
+		}
+
+		inline static Result warning(const char* result_message)
+		{
+			return Result(1, result_message);
+		}
 	};
-	
+
 
 	/// @brief Starts low level system services. Calls core::memory::startup.
 	LIBRARY_EXPORT Result startup();
-	
+
 	/// @brief Shutdown low level system services. Calls core::memory::shutdown.
 	LIBRARY_EXPORT void shutdown();
-	
+
 	LIBRARY_EXPORT int run_application(kernel::IKernel* instance);
 	LIBRARY_EXPORT void set_mainparameters(const MainParameters& params);
 	LIBRARY_EXPORT const MainParameters& get_mainparameters();
@@ -230,7 +231,7 @@ namespace platform
 		Error
 	};
 	LIBRARY_EXPORT void log_message(LogMessageType type, const char* message);
-	
+
 	namespace path
 	{
 		// normalize a path to the host platform's notation
@@ -239,7 +240,7 @@ namespace platform
 		// make all non-existent directories along a normalized_path
 		LIBRARY_EXPORT void make_directories(const char* normalized_path);
 	} // namespace path
-	
+
 	struct LIBRARY_EXPORT DynamicLibrary
 	{
 	};
@@ -258,91 +259,91 @@ namespace platform
 		unsigned short second;
 		unsigned short milliseconds;
 	};
-	
+
 	struct File
 	{
 		void* handle;
-		
+
 		File() : handle(nullptr)
 		{
 		}
-		
+
 		bool is_open() const
 		{
 			return (handle != nullptr);
 		}
 	};
-	
+
 	enum FileMode
 	{
 		FileMode_Read,
 		FileMode_Write
 	};
-	
+
 	enum FileSeek
 	{
 		FileSeek_Begin,
 		FileSeek_Relative,
 		FileSeek_End
 	};
-	
+
 	// ---------------------------------------------------------------------
 	// dynamic library
 	// ---------------------------------------------------------------------
-	
+
 	/// @brief load a dynamic library at library_path
 	/// @returns A pointer to a DynamicLibrary object on success; 0 on failure
 	LIBRARY_EXPORT DynamicLibrary* dylib_open(const char* library_path);
-	
+
 	/// @brief close a library handle
 	LIBRARY_EXPORT void dylib_close(DynamicLibrary* library);
-	
+
 	/// @brief Tries to load a symbol from a dynamic library
 	/// @returns A valid pointer to the symbol or null on failure
 	LIBRARY_EXPORT DynamicLibrarySymbol dylib_find(DynamicLibrary* library, const char* symbol_name);
-	
+
 	/// @brief Returns the extension on this platform for a dynamiclibrary.
 	/// @returns ".dylib", ".so", or ".dll" for Mac/Linux/Windows.
 	/// NOTE: This MUST return the period character if required by the platform!
 	LIBRARY_EXPORT const char* dylib_extension();
-	
+
 	// ---------------------------------------------------------------------
 	// filesystem
 	// ---------------------------------------------------------------------
-	
+
 	/// @brief Returns the directory where the active binary resides:
 	/// on Linux and Windows platforms, it returns the folder where the binary exists
 	/// on MacOS X when run as a command line tool, it returns the folder where the binary exists (similar to Linux and Windows)
 	/// on MacOS X / iPhoneOS (for Bundles), it returns the root bundle path (.app)
 	LIBRARY_EXPORT PathString get_program_directory();
-	
+
 	/// @brief Make directory on disk
 	LIBRARY_EXPORT Result make_directory(const char* path);
-	
+
 	/// @brief Returns the value of the environment variable passed in
 	/// or NULL, if it was not set.
 	/// DO NOT include platform specific tokens: e.g. use 'HOME', not '$HOME'
 	LIBRARY_EXPORT const char* get_environment_variable(const char* name);
-	
+
 	/// @brief Returns the current user's directory;
 	/// @returns The $(HOME) environment variable in Linux or %HOMEPATH% on Windows
 	LIBRARY_EXPORT PathString get_user_directory();
-	
+
 	// long-term storage for applications
 	LIBRARY_EXPORT PathString get_user_application_directory(const char* application_data_path);
-	
+
 	// temporary storage; can be wiped by the OS
 	LIBRARY_EXPORT PathString get_user_temp_directory();
-	
-	
+
+
 	// this accepts a path entered by the user (possibly on the commandline)
 	// and returns an expanded absolute path for use.
 	// This should expand environment variables.
 	// It should also account for leading tilde (~), which denotes the
 	// special $(HOME) environment variable on Linux systems.
 	LIBRARY_EXPORT core::StackString<MAX_PATH_SIZE> make_absolute_path(const char* path);
-	
-	
+
+
 	LIBRARY_EXPORT platform::File fs_open(const char* path, FileMode mode = FileMode_Read);
 	LIBRARY_EXPORT void fs_close(platform::File file);
 	LIBRARY_EXPORT size_t fs_read(platform::File handle, void* destination, size_t size, size_t count);
@@ -351,7 +352,7 @@ namespace platform
 	LIBRARY_EXPORT long int fs_tell(platform::File handle);
 	LIBRARY_EXPORT bool fs_file_exists(const char* path);
 	LIBRARY_EXPORT bool fs_directory_exists(const char* path);
-	
+
 	/// @brief Construct this platform's content directory
 	/// @returns A string pointing to the absolute path for content on this platform
 	LIBRARY_EXPORT PathString fs_content_directory();
@@ -359,65 +360,65 @@ namespace platform
 	// ---------------------------------------------------------------------
 	// serial
 	// ---------------------------------------------------------------------
-	
+
 	struct LIBRARY_EXPORT Serial
 	{
 	};
-	
+
 	LIBRARY_EXPORT Serial* serial_open(const char* device, uint32_t baud_rate);
 	LIBRARY_EXPORT void serial_close(Serial* serial);
-	
+
 	/// @brief Read bytes to buffer from serial device
 	/// @param total_bytes The maximum number of bytes to read into buffer
 	/// @returns Total bytes read
 	LIBRARY_EXPORT int serial_read(Serial* serial, void* buffer, int total_bytes);
-	
+
 	/// @brief Write bytes from buffer to serial device
 	/// @param total_bytes The maximum number of bytes to write from the buffer
 	/// @returns Total bytes read
 	LIBRARY_EXPORT int serial_write(Serial* serial, const void* buffer, int total_bytes);
-	
+
 	// ---------------------------------------------------------------------
 	// thread
 	// ---------------------------------------------------------------------
 
 	/// @brief Creates a thread with entry point
 	LIBRARY_EXPORT Result thread_create(Thread& thread, ThreadEntry entry, void* data);
-	
+
 	/// @brief Should be called upon thread entry.
 	///       This sets up signals, thread names, thread id and states.
 	LIBRARY_EXPORT void thread_setup(void* data);
-	
+
 	/// @brief Wait for a thread to complete.
 	/// @returns 0 on success; non-zero on failure (abnormal thread termination)
 	LIBRARY_EXPORT int thread_join(Thread& thread);
-	
+
 	/// @brief Allows the calling thread to sleep
 	LIBRARY_EXPORT void thread_sleep(int milliseconds);
-	
+
 	/// @brief Detach the thread
 	LIBRARY_EXPORT void thread_detach(Thread& thread);
-	
-	
+
+
 	/// @brief Get the calling thread's id
 	/// @returns The calling thread's platform designated id
 	LIBRARY_EXPORT ThreadId thread_id();
-	
-	
-	
+
+
+
 	LIBRARY_EXPORT void mutex_create();
 	LIBRARY_EXPORT void mutex_destroy();
 	LIBRARY_EXPORT void mutex_lock();
 	LIBRARY_EXPORT void mutex_unlock();
-	
+
 	// ---------------------------------------------------------------------
 	// time
 	// ---------------------------------------------------------------------
-	
+
 	/// @brief Fetches the current time in microseconds
 	/// @returns The current time in microseconds since the application started
 	LIBRARY_EXPORT uint64_t microseconds();
-	
+
 	/// @brief Populates the DateTime struct with the system's current date and time
 	LIBRARY_EXPORT void datetime(DateTime& datetime);
 } // namespace platform

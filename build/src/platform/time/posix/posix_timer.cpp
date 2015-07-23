@@ -35,21 +35,21 @@ namespace platform
 	// Per Doug Coleman and Thomas Habets
 	// http://code-factor.blogspot.com/2009/11/monotonic-timers.html
 	// https://blog.habets.se/2010/09/gettimeofday-should-never-be-used-to-measure-time
-	
+
 	static bool _has_monotonic = false;
 	Result timer_startup()
 	{
 		// determine if this kernel has a monotonic clock
 		struct timespec ts;
 		_has_monotonic = (clock_gettime(CLOCK_MONOTONIC, &ts) != 0);
-	
-		return Result(Result::Success);
+
+		return Result::success();
 	}
-	
+
 	void timer_shutdown()
 	{
 	}
-	
+
 	uint64_t microseconds()
 	{
 		if (_has_monotonic)
@@ -65,7 +65,7 @@ namespace platform
 			return (now.tv_sec*1000000 + now.tv_usec);
 		}
 	}
-	
+
 	void datetime(DateTime& datetime)
 	{
 		posix_datetime(datetime);

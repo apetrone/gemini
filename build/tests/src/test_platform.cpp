@@ -45,11 +45,11 @@ void test_filesystem()
 	TEST_CATEGORY(filesystem);
 
 	platform::PathString filename = platform::get_program_directory();
-	
+
 	// see if we can verify directories exist; otherwise, we cannot verify
 	// other functions
 	TEST_VERIFY(platform::fs_directory_exists(filename()), fs_directory_exists);
-	
+
 	filename.append(PATH_SEPARATOR_STRING);
 	filename.append("test.conf");
 
@@ -74,17 +74,17 @@ void test_filesystem()
 		TEST_VERIFY(bytes_read == 22, fs_read);
 		platform::fs_close(file);
 	}
-	
-	
+
+
 	// test directories
 	{
-		platform::Result result(platform::Result::Success);
+		platform::Result result;
 		platform::PathString program_directory = platform::get_program_directory();
 		TEST_VERIFY(!program_directory.is_empty(), get_program_directory);
-		
+
 		result = platform::make_directory("test_directory");
-		TEST_VERIFY(result.success(), make_directory);
-		
+		TEST_VERIFY(result.succeeded(), make_directory);
+
 		const char* user_home = nullptr;
 #if defined(PLATFORM_WINDOWS)
 		user_home = platform::get_environment_variable("%USERPROFILE%");
@@ -96,8 +96,8 @@ void test_filesystem()
 
 		TEST_VERIFY(user_home != nullptr, get_environment_variable);
 //		fprintf(stdout, "get_environment_variable [%%USERPROFILE%% / $HOME]: '%s'\n", user_home);
-		
-		
+
+
 		platform::PathString user_directory = platform::get_user_directory();
 		TEST_VERIFY(!user_directory.is_empty(), get_user_directory);
 //		fprintf(stdout, "get_user_directory: '%s'\n", user_directory);
@@ -106,7 +106,7 @@ void test_filesystem()
 		platform::PathString temp_directory = platform::get_user_temp_directory();
 		TEST_VERIFY(!temp_directory.is_empty(), get_user_temp_directory);
 	}
-	
+
 }
 
 // ---------------------------------------------------------------------
@@ -115,14 +115,14 @@ void test_filesystem()
 void test_logging()
 {
 	TEST_CATEGORY(logging);
-	
+
 	// This isn't something I know how to reliably test without installing
 	// some mock platform handler.
-	
+
 	platform::log_message(platform::LogMessageType::Info, "test info log message\n");
 	platform::log_message(platform::LogMessageType::Warning, "test warning log message\n");
 	platform::log_message(platform::LogMessageType::Error, "test error log message\n");
-	
+
 	TEST_VERIFY(true, logging_sanity);
 }
 
@@ -132,7 +132,7 @@ void test_logging()
 // ---------------------------------------------------------------------
 void test_serial()
 {
-	
+
 }
 
 // ---------------------------------------------------------------------
@@ -145,10 +145,10 @@ void test_serial()
 void test_datetime()
 {
 	TEST_CATEGORY(datetime);
-	
+
 	platform::DateTime dt;
 	platform::datetime(dt);
-	
+
 	bool maybe_valid = \
 		(dt.day != 0 ||
 		dt.dayOfWeek != 0 ||
@@ -158,10 +158,10 @@ void test_datetime()
 		dt.month != 0 ||
 		dt.second != 0) &&
 	dt.year != 0;
-	
+
 	// this isn't something I know how to reliably test. here goes nothing.
 	TEST_VERIFY(maybe_valid, datetime_sanity);
-	
+
 	uint64_t ms = platform::microseconds();
 	TEST_VERIFY(ms != 0, microseconds);
 }
@@ -171,7 +171,7 @@ int main(int, char**)
 	TEST_CATEGORY(platform);
 
 	platform::Result result = platform::startup();
-	TEST_VERIFY(result.success(), platform_startup);
+	TEST_VERIFY(result.succeeded(), platform_startup);
 
 	test_dynamic_library();
 	test_filesystem();

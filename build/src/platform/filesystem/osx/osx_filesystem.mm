@@ -38,44 +38,44 @@ namespace platform
 {
 	PathString get_program_directory()
 	{
-		Result result(Result::Success);
+		Result result;
 		NSString* bundle_path = [[NSBundle mainBundle] bundlePath];
 		assert(bundle_path);
 		return cocoa::to_string(bundle_path);
 	}
-	
+
 	Result make_directory(const char* path)
 	{
 		return posix_make_directory(path);
 	}
-	
+
 	const char* get_environment_variable(const char* name)
 	{
 		return posix_get_environment_variable(name);
 	}
-	
+
 	PathString get_user_directory()
 	{
 		return posix_get_user_directory();
 	}
-	
+
 	PathString get_user_application_directory(const char* application_data_path)
 	{
 		NSArray* directories = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
 		NSString* application_support_directory = [directories lastObject];
-		
+
 		NSString* application_path = [NSString stringWithUTF8String:application_data_path];
 		application_support_directory = [application_support_directory stringByAppendingPathComponent: application_path];
 		return cocoa::to_string(application_support_directory);
 	}
-	
+
 	PathString get_user_temp_directory()
 	{
 		NSArray* directories = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
 		NSString* user_temp_directory = [directories lastObject];
 		return cocoa::to_string(user_temp_directory);
 	}
-	
+
 	core::StackString<MAX_PATH_SIZE> make_absolute_path(const char* path)
 	{
 		return posix_make_absolute_path(path);
@@ -85,42 +85,42 @@ namespace platform
 	{
 		return posix_fs_open(path, mode);
 	}
-	
+
 	void fs_close(platform::File file)
 	{
 		return posix_fs_close(file);
 	}
-	
+
 	size_t fs_read(platform::File file, void* destination, size_t size, size_t count)
 	{
 		return posix_fs_read(file, destination, size, count);
 	}
-	
+
 	size_t fs_write(platform::File file, const void* source, size_t size, size_t count)
 	{
 		return posix_fs_write(file, source, size, count);
 	}
-	
+
 	int32_t fs_seek(platform::File file, long int offset, FileSeek origin)
 	{
 		return posix_fs_seek(file, offset, origin);
 	}
-	
+
 	long int fs_tell(platform::File file)
 	{
 		return posix_fs_tell(file);
 	}
-	
+
 	bool fs_file_exists(const char* path)
 	{
 		return posix_fs_file_exists(path);
 	}
-	
+
 	bool fs_directory_exists(const char* path)
 	{
 		return posix_fs_directory_exists(path);
 	}
-	
+
 	PathString fs_content_directory()
 	{
 		// On Mac/iOS, the root directory points to the app bundle

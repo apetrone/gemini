@@ -49,7 +49,7 @@ namespace platform
 			int result = vc_dispmanx_display_get_info(dispman_display, &info);
 			if (result != 0)
 			{
-				return Result(Result::Failure, "Failed to get display size!");
+				return Result::failure("Failed to get display size!");
 			}
 
 			main_window.width = info.width;
@@ -76,7 +76,7 @@ namespace platform
 
 			dispman_update = vc_dispmanx_update_start(0);
 			dispman_element = vc_dispmanx_element_add(dispman_update,
-				dispman_display, 0, &dst_rect, 0, &src_rect, 
+				dispman_display, 0, &dst_rect, 0, &src_rect,
 				DISPMANX_PROTECTION_NONE, &alpha, 0 /* clamp */,
 				(DISPMANX_TRANSFORM_T)0 /* transform*/
 			);
@@ -88,7 +88,7 @@ namespace platform
 			main_window.native_window.element = dispman_element;
 #endif
 
-			return Result(Result::Success);
+			return Result::success();
 		}
 
 		void DispManXWindowProvider::shutdown()
@@ -119,7 +119,7 @@ namespace platform
 #if defined(PLATFORM_RASPBERRYPI)
 			frame.width = main_window.width;
 			frame.height = main_window.height;
-#endif			
+#endif
 			return frame;
 		}
 
@@ -129,7 +129,7 @@ namespace platform
 #if defined(PLATFORM_RASPBERRYPI)
 			frame.width = main_window.width;
 			frame.height = main_window.height;
-#endif			
+#endif
 			return frame;
 		}
 
@@ -152,6 +152,6 @@ namespace platform
 			frame.height = main_window.height;
 #endif
 			return frame;
-		}		
+		}
 	} // namespace window
 } // namespace platform

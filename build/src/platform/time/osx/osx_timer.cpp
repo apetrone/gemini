@@ -39,11 +39,11 @@ namespace platform
 		{
 			// convert the timescale to return microseconds
 			_time_scale = timebase.numer/timebase.denom / 1e3;
-			return Result(Result::Success);
+			return Result::success();
 		}
 		else
 		{
-			return Result(Result::Failure, "Failed fetching timebase!");
+			return Result::failure("Failed fetching timebase!");
 		}
 	}
 
@@ -55,7 +55,7 @@ namespace platform
 	{
 		return (mach_absolute_time() - _time_start) * _time_scale;
 	}
-	
+
 	void datetime(DateTime& datetime)
 	{
 		posix_datetime(datetime);
