@@ -139,18 +139,17 @@ void test_array()
 		{
 			_local_counter++;
 		}
-		
+
 		~CustomType()
 		{
 			--_local_counter;
 		}
 	};
-	
-	{
-		Array<CustomType> b(4);
-		TEST_VERIFY(_local_counter == 4, constructor_called_n_times);
-	}
-	
+
+	Array<CustomType> b(4);
+	TEST_VERIFY(_local_counter == 4, constructor_called_n_times);
+	b.clear();
+
 	TEST_VERIFY(_local_counter == 0, destructor_called_n_times);
 }
 

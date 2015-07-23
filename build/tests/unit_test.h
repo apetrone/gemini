@@ -28,42 +28,47 @@
 #include <stdio.h>
 #include <stdint.h>
 
+// This system needs to be replaced with something a little
+// more robust. This cannot handle tests within scope properly
+// and causes an infinite loop because the linked list will be
+// created with two identical addresses in this case.
+
 struct UnitTest
 {
 	const char* name;
 	int line_number;
 	UnitTest* next;
 	bool failed;
-	
+
 	UnitTest(const char* test_name, int line, bool failed) :
 		name(test_name),
 		line_number(line),
-		failed(failed)
+		failed(failed),
+		next(nullptr)
 	{
 	}
 };
-
 
 struct UnitTestCategory
 {
 	const char* name;
 	uint32_t failed_tests;
 	uint32_t total_tests;
-	UnitTest* next;
-	
+	UnitTest* root;
+
 	UnitTestCategory(const char* suite_name) :
 		name(suite_name),
 		failed_tests(0),
 		total_tests(0),
-		next(nullptr)
+		root(nullptr)
 	{
 	}
-	
+
 	~UnitTestCategory()
 	{
-		if (next)
+		if (root)
 		{
-			UnitTest* current = reverse_list(next);
+			UnitTest* current = reverse_list(root);
 			while(current)
 			{
 				if (current->failed)
@@ -82,28 +87,30 @@ struct UnitTestCategory
 		uint32_t passed_tests = (total_tests-failed_tests);
 		fprintf(stdout, "* %s: %u / %u (%2.2f%%) passed\n\n", name, passed_tests, total_tests, (passed_tests/(float)total_tests)*100.0f);
 	}
-	
+
 	UnitTest* reverse_list(UnitTest* root)
 	{
 		UnitTest* output = nullptr;
-		while(root)
+		UnitTest* curr = root;
+		while(curr)
 		{
 			// we traverse the list starting at root
 			// and simultaneously build the new root with output.
-			UnitTest* next = root->next;
-			root->next = output;
-			output = root;
-			root = next;
+			UnitTest* next = curr->next;
+			curr->next = output;
+			output = curr;
+			curr = next;
 		}
-		
+
+
 		return output;
 	}
-	
+
 	void add_test(UnitTest* test)
 	{
 		++total_tests;
-		test->next = next;
-		next = test;
+		test->next = root;
+		root = test;
 	}
 };
 
