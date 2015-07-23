@@ -26,6 +26,10 @@
 
 #include <core/mem.h>
 
+#ifndef memcpy
+	#include <string.h> // for memcpy
+#endif
+
 template <class T>
 class Array
 {
