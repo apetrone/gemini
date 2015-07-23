@@ -455,7 +455,7 @@ namespace render2
 		PipelineDescriptor() :
 			enable_blending(false),
 			blend_source(BlendOp::One),
-			blend_destination(BlendOp::One)
+			blend_destination(BlendOp::Zero)
 		{
 		}
 	
