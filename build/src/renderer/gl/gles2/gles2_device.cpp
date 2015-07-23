@@ -29,14 +29,60 @@
 
 namespace render2
 {
-	CommandSerializer* GLES2Device::create_serializer(CommandQueue& command_queue)
+	// ---------------------------------------------------------------------
+	// render target
+	// ---------------------------------------------------------------------
+	void GLES2Device::activate_render_target(const RenderTarget& rt)
 	{
-		static GLCommandSerializer serializer(command_queue);
-		new (&serializer) GLCommandSerializer(command_queue);
+	}
+
+	void GLES2Device::deactivate_render_target(const RenderTarget& rt)
+	{
+	}
+
+	RenderTarget* GLES2Device::default_render_target()
+	{
+		return &default_target;
+	}
+
+	// ---------------------------------------------------------------------
+	// initialization
+	// ---------------------------------------------------------------------
+	void GLES2Device::init(int backbuffer_width, int backbuffer_height)
+	{
+		default_target.width = backbuffer_width;
+		default_target.height = backbuffer_height;
+	}
+
+	// ---------------------------------------------------------------------
+	// command serializer
+	// ---------------------------------------------------------------------
+	CommandSerializer* GLES2Device::create_serializer(CommandQueue* command_queue)
+	{
+		static GLCommandSerializer serializer(*command_queue);
+		new (&serializer) GLCommandSerializer(*command_queue);
 		return &serializer;
 	}
-	
+
 	void GLES2Device::destroy_serializer(CommandSerializer* serializer)
 	{
+	}
+
+	CommandQueue* GLES2Device::create_queue(const Pass& render_pass)
+	{
+		return common_create_queue(render_pass, &queue.next());
+	}
+
+	// ---------------------------------------------------------------------
+	// command buffers / submission
+	// ---------------------------------------------------------------------
+	void GLES2Device::queue_buffers(CommandQueue* queue_list, size_t total_queues)
+	{
+		common_queue_buffers(queue_list, total_queues, queued_buffers);
+	}
+
+	void GLES2Device::backbuffer_resized(int backbuffer_width, int backbuffer_height)
+	{
+		common_resize_backbuffer(backbuffer_width, backbuffer_height, &default_target);
 	}
 } // namespace render2
