@@ -45,12 +45,12 @@ namespace platform
 			// http://www.flipcode.com/archives/Path_To_Executable_On_Linux.shtml
 			char linkname[64] = {0};
 			pid_t pid = getpid();
-			
+
 			if (snprintf(linkname, sizeof(linkname), "/proc/%i/exe", pid) < 0)
 			{
 				abort();
 			}
-			
+
 			result = readlink(linkname, &output[0], output.max_size());
 			if (result == -1)
 			{
@@ -58,14 +58,14 @@ namespace platform
 				return output;
 			}
 		}
-		
+
 		if (result != 0)
 		{
 			output = output.substring(0, result);
 
 		}
 
-		return output;
+		return output.dirname();
 	}
 
 	Result make_directory(const char* path)
@@ -95,7 +95,7 @@ namespace platform
 		// '/tmp' directory must be available for programs that require
 		// temporary files. Programs must not assume that any files or
 		// directories in /tmp are preserved between invocations of the program.
-		// 
+		//
 		// /var/tmp directory is made available for programs that require
 		// temporary files or directories that are preserved between system
 		// reboots. Therefore, this is more presistent than data in /tmp.
@@ -111,37 +111,37 @@ namespace platform
 	{
 		return posix_fs_open(path, mode);
 	}
-	
+
 	void fs_close(platform::File file)
 	{
 		return posix_fs_close(file);
 	}
-	
+
 	size_t fs_read(platform::File file, void* destination, size_t size, size_t count)
 	{
 		return posix_fs_read(file, destination, size, count);
 	}
-	
+
 	size_t fs_write(platform::File file, const void* source, size_t size, size_t count)
 	{
 		return posix_fs_write(file, source, size, count);
 	}
-	
+
 	int32_t fs_seek(platform::File file, long int offset, FileSeek origin)
 	{
 		return posix_fs_seek(file, offset, origin);
 	}
-	
+
 	long int fs_tell(platform::File file)
 	{
 		return posix_fs_tell(file);
 	}
-	
+
 	bool fs_file_exists(const char* path)
 	{
 		return posix_fs_file_exists(path);
 	}
-	
+
 	bool fs_directory_exists(const char* path)
 	{
 		return posix_fs_directory_exists(path);

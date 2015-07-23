@@ -26,6 +26,8 @@
 
 #include <platform/platform.h>
 
+using namespace platform;
+
 // ---------------------------------------------------------------------
 // dynamic library
 // ---------------------------------------------------------------------
@@ -48,6 +50,7 @@ void test_filesystem()
 
 	// see if we can verify directories exist; otherwise, we cannot verify
 	// other functions
+	PLATFORM_LOG(LogMessageType::Info, "checking program directory exists: '%s'\n", filename());
 	TEST_VERIFY(platform::fs_directory_exists(filename()), fs_directory_exists);
 
 	filename.append(PATH_SEPARATOR_STRING);
@@ -57,55 +60,57 @@ void test_filesystem()
 	TEST_VERIFY(file.handle != 0, fs_open_for_write);
 	TEST_VERIFY(file.is_open(), file_is_open);
 
+	size_t bytes_written = 0;
 	if (file.is_open())
 	{
 		const char buffer[] = "Hello, this is a test\n";
-		size_t bytes_written = platform::fs_write(file, buffer, 22, 1);
-		TEST_VERIFY(bytes_written == 22, fs_write);
+		bytes_written = platform::fs_write(file, buffer, 22, 1);
 		platform::fs_close(file);
 	}
+	TEST_VERIFY(bytes_written == 22, fs_write);
 
 	file = platform::fs_open(filename(), platform::FileMode_Read);
 	TEST_VERIFY(file.handle != 0, fs_open_for_read);
+	size_t bytes_read = 0;
 	if (file.is_open())
 	{
 		core::StackString<32> buffer;
-		size_t bytes_read = platform::fs_read(file, &buffer[0], 22, 1);
-		TEST_VERIFY(bytes_read == 22, fs_read);
+		bytes_read = platform::fs_read(file, &buffer[0], 22, 1);
 		platform::fs_close(file);
 	}
+	TEST_VERIFY(bytes_read == 22, fs_read);
 
 
 	// test directories
-	{
-		platform::Result result;
-		platform::PathString program_directory = platform::get_program_directory();
-		TEST_VERIFY(!program_directory.is_empty(), get_program_directory);
+	platform::Result result;
+	platform::PathString program_directory = platform::get_program_directory();
+	TEST_VERIFY(!program_directory.is_empty(), get_program_directory);
 
-		result = platform::make_directory("test_directory");
-		TEST_VERIFY(result.succeeded(), make_directory);
+	// this currently fails on subsequent runs because the dirrectory
+	// is never removed.
+	result = platform::make_directory("test_directory");
+	TEST_VERIFY(result.succeeded(), make_directory);
 
-		const char* user_home = nullptr;
+	const char* user_home = nullptr;
 #if defined(PLATFORM_WINDOWS)
-		user_home = platform::get_environment_variable("%USERPROFILE%");
+	user_home = platform::get_environment_variable("%USERPROFILE%");
 #elif defined(PLATFORM_APPLE) || defined(PLATFORM_LINUX)
-		user_home = platform::get_environment_variable("HOME");
+	user_home = platform::get_environment_variable("HOME");
 #else
 	#error I do not know how to test this platform.
 #endif
 
-		TEST_VERIFY(user_home != nullptr, get_environment_variable);
-//		fprintf(stdout, "get_environment_variable [%%USERPROFILE%% / $HOME]: '%s'\n", user_home);
+	TEST_VERIFY(user_home != nullptr, get_environment_variable);
+//	fprintf(stdout, "get_environment_variable [%%USERPROFILE%% / $HOME]: '%s'\n", user_home);
 
 
-		platform::PathString user_directory = platform::get_user_directory();
-		TEST_VERIFY(!user_directory.is_empty(), get_user_directory);
-//		fprintf(stdout, "get_user_directory: '%s'\n", user_directory);
+	platform::PathString user_directory = platform::get_user_directory();
+	TEST_VERIFY(!user_directory.is_empty(), get_user_directory);
+//	fprintf(stdout, "get_user_directory: '%s'\n", user_directory);
 
 
-		platform::PathString temp_directory = platform::get_user_temp_directory();
-		TEST_VERIFY(!temp_directory.is_empty(), get_user_temp_directory);
-	}
+	platform::PathString temp_directory = platform::get_user_temp_directory();
+	TEST_VERIFY(!temp_directory.is_empty(), get_user_temp_directory);
 
 }
 
