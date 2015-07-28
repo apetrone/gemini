@@ -201,7 +201,7 @@ namespace platform
 				{
 				}
 
-				virtual void* get_native_handle() const
+				virtual void* get_native_handle() override
 				{
 					return cw;
 				}
@@ -237,7 +237,7 @@ namespace platform
 				window = [[CocoaWindow alloc] initWithContentRect:frame styleMask:window_mask backing:NSBackingStoreBuffered defer:NO];
 				if (!window)
 				{
-					return platform::Result(platform::Result::failure("create window failed");
+					return platform::Result::failure("create window failed");
 				}
 
 				// link the window to our handle
@@ -261,7 +261,7 @@ namespace platform
 					[window setLevel: CGShieldingWindowLevel()];
 				}
 
-				return platform::Result;
+				return platform::Result::success();
 			}
 
 			void create_context(cocoa_native_window* window)
