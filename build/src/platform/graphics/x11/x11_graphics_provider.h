@@ -31,6 +31,8 @@ namespace platform
 {
 	namespace window
 	{
+		class X11WindowProvider;
+
 		class X11GraphicsProvider : public GraphicsProvider
 		{
 		public:
@@ -53,6 +55,9 @@ namespace platform
 			virtual size_t get_graphics_data_size() const override;
 
 			virtual int choose_pixel_format(const Parameters& parameters) override;
+
+		private:
+			X11WindowProvider* window_provider;
 		};
 	} // namespace window
 } // namespace platform

@@ -44,16 +44,16 @@ namespace platform
 		{
 		}
 
-		Result X11GraphicsProvider::startup(WindowProvider* window_provider)
+		Result X11GraphicsProvider::startup(WindowProvider* wp)
 		{
+			window_provider = static_cast<X11WindowProvider*>(wp);
+			assert(window_provider != nullptr);
+
 			// see if we can get the major/minor version of GLX
 			int major;
 			int minor;
 
-			X11WindowProvider* wp = static_cast<X11WindowProvider*>(window_provider);
-			assert(wp != nullptr);
-
-			Display* display = wp->get_display();
+			Display* display = window_provider->get_display();
 			Bool result = glXQueryVersion(display, &major, &minor);
 			if (!result)
 			{
@@ -111,7 +111,29 @@ namespace platform
 
 		int X11GraphicsProvider::choose_pixel_format(const Parameters& parameters)
 		{
-			return -1;
+			int attributes[] = {
+				GLX_RGBA,
+				GLX_DOUBLEBUFFER,
+				GLX_STEREO, 0,
+				GLX_RED_SIZE, 8,
+				GLX_GREEN_SIZE, 8,
+				GLX_BLUE_SIZE, 8,
+				GLX_ALPHA_SIZE, 0,
+				GLX_DEPTH_SIZE, 0,
+				GLX_STENCIL_SIZE, 0,
+				0
+			};
+
+			XVisualInfo* visual = glXChooseVisual(
+				window_provider->get_display(),
+				DefaultScreen(window_provider->get_display()),
+				attributes
+				);
+
+			assert(visual);
+
+			// return the visual as the "pixel format"
+			return visual->visualid;
 		}
 	} // namespace window
 

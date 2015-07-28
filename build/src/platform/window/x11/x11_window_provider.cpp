@@ -121,6 +121,10 @@ namespace platform
 
 			XMapWindow(display, window->native_window);
 
+			// manually flush the output buffer
+			// happens as part of: XPending, XNextEvent, and XWindowEvent
+			XFlush(display);
+
 			return window;
 		}
 
@@ -146,7 +150,7 @@ namespace platform
 
 		size_t X11WindowProvider::get_screen_count() const
 		{
-			return 0;
+			return ScreenCount(display);
 		}
 
 		Frame X11WindowProvider::get_screen_frame(size_t screen_index) const
