@@ -43,9 +43,9 @@ struct UnitTest
 	UnitTest(const char* test_name, int line, bool failed) :
 		name(test_name),
 		line_number(line),
-		failed(failed),
-		next(nullptr)
+		failed(failed)
 	{
+		next = nullptr;
 	}
 };
 
