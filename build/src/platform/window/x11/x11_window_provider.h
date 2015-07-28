@@ -48,6 +48,9 @@ namespace platform
 			virtual size_t get_screen_count() const override;
 			virtual Frame get_screen_frame(size_t screen_index) const override;
 
+		public:
+			Display* get_display() const;
+
 		private:
 			Display* display;
 

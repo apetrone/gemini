@@ -97,6 +97,9 @@ namespace platform
 
 			XSetWindowAttributes window_attributes;
 
+			window_attributes.border_pixel = 0;
+			window_attributes.background_pixel = 0;
+
 			window_attributes.event_mask = StructureNotifyMask;
 			window_attributes.colormap = XCreateColormap(
 				display,
@@ -150,6 +153,11 @@ namespace platform
 		{
 			Frame frame;
 			return frame;
+		}
+
+		Display* X11WindowProvider::get_display() const
+		{
+			return display;
 		}
 	} // namespace window
 } // namespace platform

@@ -110,7 +110,7 @@ namespace platform
 		{
 		}
 
-		Result EGLGraphicsProvider::startup()
+		Result EGLGraphicsProvider::startup(WindowProvider* window_provider)
 		{
 			assert(display == EGL_NO_DISPLAY);
 
@@ -162,7 +162,7 @@ namespace platform
 			return Result::success();
 		}
 
-		void EGLGraphicsProvider::shutdown()
+		void EGLGraphicsProvider::shutdown(WindowProvider* window_provider)
 		{
 			assert(display != EGL_NO_DISPLAY);
 
@@ -325,6 +325,12 @@ namespace platform
 		size_t EGLGraphicsProvider::get_graphics_data_size() const
 		{
 			return sizeof(EGLData);
+		}
+
+		int EGLGraphicsProvider::choose_pixel_format(const Parameters& parameters)
+		{
+			// eh? Return the visual instead?
+			return -1;
 		}
 
 		EGLData* EGLGraphicsProvider::egldata_from(NativeWindow* window)

@@ -36,8 +36,8 @@ namespace platform
 		public:
 			X11GraphicsProvider();
 
-			virtual Result startup() override;
-			virtual void shutdown() override;
+			virtual Result startup(WindowProvider* window_provider) override;
+			virtual void shutdown(WindowProvider* window_provider) override;
 
 			virtual void create_context(NativeWindow* window) override;
 			virtual void destroy_context(NativeWindow* window) override;
@@ -50,7 +50,9 @@ namespace platform
 
 			virtual void swap_buffers(NativeWindow* window) override;
 			virtual void* get_symbol(const char* symbol_name) override;
-			virtual size_t get_graphics_data_size() const override;	
+			virtual size_t get_graphics_data_size() const override;
+
+			virtual int choose_pixel_format(const Parameters& parameters) override;
 		};
 	} // namespace window
 } // namespace platform
