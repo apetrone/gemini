@@ -24,6 +24,9 @@
 // -------------------------------------------------------------
 #include "platform_internal.h"
 #include "x11_graphics_provider.h"
+#include "window/x11/x11_window_provider.h"
+
+#include <GL/glx.h>
 
 #include <assert.h>
 
@@ -41,12 +44,30 @@ namespace platform
 		{
 		}
 
-		Result X11GraphicsProvider::startup()
+		Result X11GraphicsProvider::startup(WindowProvider* window_provider)
 		{
+			// see if we can get the major/minor version of GLX
+			int major;
+			int minor;
+
+			X11WindowProvider* wp = static_cast<X11WindowProvider*>(window_provider);
+			assert(wp != nullptr);
+
+			Display* display = wp->get_display();
+			Bool result = glXQueryVersion(display, &major, &minor);
+			if (!result)
+			{
+				PLATFORM_LOG(LogMessageType::Warning, "Error fetching GLX version!\n");
+			}
+			else
+			{
+				PLATFORM_LOG(LogMessageType::Info, "GLX version: %d.%d\n", major, minor);
+			}
+
 			return Result::success();
 		}
 
-		void X11GraphicsProvider::shutdown()
+		void X11GraphicsProvider::shutdown(WindowProvider* window_provider)
 		{
 		}
 
@@ -86,6 +107,11 @@ namespace platform
 		size_t X11GraphicsProvider::get_graphics_data_size() const
 		{
 			return sizeof(int);
+		}
+
+		int X11GraphicsProvider::choose_pixel_format(const Parameters& parameters)
+		{
+			return -1;
 		}
 	} // namespace window
 

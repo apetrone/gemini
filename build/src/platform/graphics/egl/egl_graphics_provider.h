@@ -40,8 +40,8 @@ namespace platform
 		public:
 			EGLGraphicsProvider();
 
-			virtual Result startup() override;
-			virtual void shutdown() override;
+			virtual Result startup(WindowProvider* window_provider) override;
+			virtual void shutdown(WindowProvider* window_provider) override;
 
 			virtual void create_context(NativeWindow* window) override;
 			virtual void destroy_context(NativeWindow* window) override;
@@ -56,11 +56,13 @@ namespace platform
 			virtual void* get_symbol(const char* symbol_name) override;
 			virtual size_t get_graphics_data_size() const override;
 
+			virtual int choose_pixel_format(const Parameters& parameters) override;
+
 		private:
 			EGLData* egldata_from(NativeWindow* window);
 
 		private:
-			EGLDisplay display;			
+			EGLDisplay display;
 		};
 	} // namespace window
 } // namespace platform

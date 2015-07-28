@@ -107,22 +107,6 @@ namespace platform
 
 	Result backend_startup()
 	{
-		//
-		// graphics provider
-		assert(_graphics_provider == nullptr);
-		_graphics_provider = create_graphics_provider();
-		if (!_graphics_provider)
-		{
-			return Result::failure("create_graphics_provider failed!");
-		}
-
-		Result graphics_startup = _graphics_provider->startup();
-		if (graphics_startup.failed())
-		{
-			fprintf(stderr, "graphics_provider startup failed: %s\n", graphics_startup.message);
-			return graphics_startup;
-		}
-
 		// window provider
 		assert(_window_provider == nullptr);
 		_window_provider = create_window_provider();
@@ -139,7 +123,21 @@ namespace platform
 		}
 
 
+		//
+		// graphics provider
+		assert(_graphics_provider == nullptr);
+		_graphics_provider = create_graphics_provider();
+		if (!_graphics_provider)
+		{
+			return Result::failure("create_graphics_provider failed!");
+		}
 
+		Result graphics_startup = _graphics_provider->startup(_window_provider);
+		if (graphics_startup.failed())
+		{
+			fprintf(stderr, "graphics_provider startup failed: %s\n", graphics_startup.message);
+			return graphics_startup;
+		}
 
 
 		// Initialize the AndroidWindow here.
@@ -425,14 +423,14 @@ namespace platform
 		MEMORY_DEALLOC(window->graphics_data, get_platform_allocator());
 		_window_provider->destroy(window);
 
+		assert(_graphics_provider != nullptr);
+		_graphics_provider->shutdown(_window_provider);
+		MEMORY_DELETE(_graphics_provider, get_platform_allocator());
+
 		assert(_window_provider != nullptr);
 		_window_provider->shutdown();
 		MEMORY_DELETE(_window_provider, get_platform_allocator());
 		_window_provider = nullptr;
-
-		assert(_graphics_provider != nullptr);
-		_graphics_provider->shutdown();
-		MEMORY_DELETE(_graphics_provider, get_platform_allocator());
 	}
 
 	void backend_log(platform::LogMessageType type, const char* message)

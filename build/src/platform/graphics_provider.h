@@ -29,13 +29,15 @@ namespace platform
 {
 	namespace window
 	{
+		class WindowProvider;
+
 		class GraphicsProvider
 		{
 		public:
 			virtual ~GraphicsProvider();
 
-			virtual Result startup() = 0;
-			virtual void shutdown() = 0;
+			virtual Result startup(WindowProvider* window_provider) = 0;
+			virtual void shutdown(WindowProvider* window_provider) = 0;
 
 			// lifetime management for a context
 			virtual void create_context(NativeWindow* window) = 0;
@@ -56,6 +58,9 @@ namespace platform
 			/// data on a per-window basis; return the size in bytes
 			/// which needs to be allocated.
 			virtual size_t get_graphics_data_size() const = 0;
+
+			/// @brief Choose the best pixel format given window parameters
+			virtual int choose_pixel_format(const Parameters& parameters) = 0;
 		};
 	} // namespace window
 

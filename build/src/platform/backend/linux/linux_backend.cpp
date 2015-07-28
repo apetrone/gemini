@@ -138,22 +138,6 @@ namespace platform
 			bcm_host_init();
 #endif
 
-			//
-			// graphics provider
-			assert(_graphics_provider == nullptr);
-			_graphics_provider = create_graphics_provider();
-			if (!_graphics_provider)
-			{
-				return Result::failure("create_graphics_provider failed!");
-			}
-
-			Result graphics_startup = _graphics_provider->startup();
-			if (graphics_startup.failed())
-			{
-				fprintf(stderr, "graphics_provider startup failed: %s\n", graphics_startup.message);
-				return graphics_startup;
-			}
-
 			// window provider
 			assert(_window_provider == nullptr);
 			_window_provider = create_window_provider();
@@ -167,6 +151,22 @@ namespace platform
 			{
 				fprintf(stderr, "window_provider startup failed: %s\n", window_startup.message);
 				return window_startup;
+			}
+
+			//
+			// graphics provider
+			assert(_graphics_provider == nullptr);
+			_graphics_provider = create_graphics_provider();
+			if (!_graphics_provider)
+			{
+				return Result::failure("create_graphics_provider failed!");
+			}
+
+			Result graphics_startup = _graphics_provider->startup(_window_provider);
+			if (graphics_startup.failed())
+			{
+				fprintf(stderr, "graphics_provider startup failed: %s\n", graphics_startup.message);
+				return graphics_startup;
 			}
 
 			//
@@ -195,14 +195,14 @@ namespace platform
 
 		void shutdown()
 		{
+			assert(_graphics_provider != nullptr);
+			_graphics_provider->shutdown(_window_provider);
+			MEMORY_DELETE(_graphics_provider, get_platform_allocator());
+
 			assert(_window_provider != nullptr);
 			_window_provider->shutdown();
 			MEMORY_DELETE(_window_provider, get_platform_allocator());
 			_window_provider = nullptr;
-
-			assert(_graphics_provider != nullptr);
-			_graphics_provider->shutdown();
-			MEMORY_DELETE(_graphics_provider, get_platform_allocator());
 
 #if defined(PLATFORM_RASPBERRYPI)
 			bcm_host_deinit();
