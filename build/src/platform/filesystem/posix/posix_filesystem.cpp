@@ -86,6 +86,7 @@ namespace platform
 	PathString get_user_application_directory(const char* application_data_path)
 	{
 		PathString user_application_directory = "/var/lib";
+		user_application_directory.append(PATH_SEPARATOR_STRING);
 		user_application_directory.append(application_data_path);
 		return user_application_directory;
 	}
