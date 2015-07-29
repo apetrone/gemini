@@ -119,7 +119,7 @@ void test_array()
 	
 	
 	
-	Array<const int> abc(6);
+	Array<int> abc(6);
 	abc.push_back(30);
 	abc.push_back(60);
 	abc.push_back(90);
