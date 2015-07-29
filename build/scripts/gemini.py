@@ -280,6 +280,10 @@ def setup_driver(arguments, product):
 			"PLATFORM_X11_SUPPORT=1"
 		]
 
+		linux.links += [
+			"Xinerama"
+		]
+
 	linux.cflags += gcc_flags
 
 	linux_debug = product.layout(platform="linux", configuration="debug")

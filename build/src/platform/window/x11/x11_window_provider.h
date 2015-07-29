@@ -33,6 +33,28 @@ namespace platform
 {
 	namespace window
 	{
+		struct X11Window : public NativeWindow
+		{
+			X11Window() :
+				native_window(0),
+				visual(nullptr)
+			{
+			}
+
+			virtual void* get_native_handle() override
+			{
+				return &native_window;
+			}
+
+			virtual void update_visual(int visual_id) override
+			{
+				// visual = visual_id;
+			}
+
+			Window native_window;
+			Visual* visual;
+		}; // struct X11Window
+				
 		class X11WindowProvider : public WindowProvider
 		{
 		public:
@@ -41,7 +63,7 @@ namespace platform
 
 			virtual Result startup() override;
 			virtual void shutdown() override;
-			virtual NativeWindow* create(const Parameters& parameters, void* graphics_data) override;
+			virtual NativeWindow* create(const Parameters& parameters, void* native_visual) override;
 			virtual void destroy(NativeWindow* window) override;
 			virtual Frame get_frame(NativeWindow* window) const override;
 			virtual Frame get_render_frame(NativeWindow* window) const override;

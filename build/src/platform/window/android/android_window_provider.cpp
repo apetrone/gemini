@@ -87,7 +87,7 @@ namespace platform
 		{
 		}
 
-		NativeWindow* AndroidWindowProvider::create(const Parameters& parameters, void* graphics_data)
+		NativeWindow* AndroidWindowProvider::create(const Parameters& parameters, void* native_visual)
 		{
 			return &main_window;
 		}

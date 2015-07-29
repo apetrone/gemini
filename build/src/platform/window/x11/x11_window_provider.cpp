@@ -30,33 +30,14 @@
 #include <X11/keysym.h>
 #include <X11/extensions/Xrandr.h>
 
+// requires: libxinerama-dev (ubuntu)
+// see if we can replace this with XRandR
+#include <X11/extensions/Xinerama.h>
+
 namespace platform
 {
 	namespace window
 	{
-		struct X11Window : public NativeWindow
-		{
-			X11Window() :
-				native_window(0),
-				visual(nullptr)
-			{
-			}
-
-			virtual void* get_native_handle() override
-			{
-				return &native_window;
-			}
-
-			virtual void update_visual(int visual_id) override
-			{
-				// visual = visual_id;
-			}
-
-			Window native_window;
-			Visual* visual;
-		}; // struct X11Window
-
-
 		X11WindowProvider::X11WindowProvider() :
 			display(0)
 		{
@@ -86,10 +67,11 @@ namespace platform
 			}
 		}
 
-		NativeWindow* X11WindowProvider::create(const Parameters& parameters, void* graphics_data)
+		NativeWindow* X11WindowProvider::create(const Parameters& parameters, void* native_visual)
 		{
 			X11Window* window = MEMORY_NEW(X11Window, get_platform_allocator());
-			XVisualInfo* visual = static_cast<XVisualInfo*>(graphics_data);
+			Visual* visual = static_cast<Visual*>(native_visual);
+			assert(visual != nullptr);
 
 			XSetWindowAttributes window_attributes;
 
@@ -100,7 +82,7 @@ namespace platform
 			window_attributes.colormap = XCreateColormap(
 				display,
 				RootWindow(display, DefaultScreen(display)),
-				visual->visual,
+				visual,
 				AllocNone);
 
 			window->native_window = XCreateWindow(
@@ -111,9 +93,9 @@ namespace platform
 				parameters.frame.width,
 				parameters.frame.height,
 				0,
-				visual->depth,
+				CopyFromParent,
 				InputOutput,
-				visual->visual,
+				visual,
 				CWColormap | CWEventMask,
 				&window_attributes);
 
@@ -137,8 +119,34 @@ namespace platform
 		Frame X11WindowProvider::get_frame(NativeWindow* window) const
 		{
 			Frame frame;
+
+			Window root_window;
+			int x;
+			int y;
+			unsigned int width;
+			unsigned int height;
+			unsigned int border_width;
+			unsigned int depth;
+
+			void* native_handle = window->get_native_handle();
+			Window* window_handle = static_cast<Window*>(native_handle);
+
+			XGetGeometry(
+				display, 
+				*window_handle,
+				&root_window,
+				&x, &y,
+				&width, &height,
+				&border_width, &depth);
+
+			frame.x = static_cast<float>(x);			
+			frame.y = static_cast<float>(y);
+			frame.width = static_cast<float>(width);
+			frame.height = static_cast<float>(height);
+
 			return frame;
 		}
+
 
 		Frame X11WindowProvider::get_render_frame(NativeWindow* window) const
 		{
@@ -148,12 +156,43 @@ namespace platform
 
 		size_t X11WindowProvider::get_screen_count() const
 		{
+			int dummy[2];
+			if (XineramaQueryExtension(display, &dummy[0], &dummy[1]))
+			{
+				if (XineramaIsActive(display))
+				{
+					int total_screens = 0;
+					XineramaScreenInfo* screens = XineramaQueryScreens(display, &total_screens);
+					XFree(screens);
+					return total_screens;
+				}
+			}
 			return ScreenCount(display);
 		}
 
 		Frame X11WindowProvider::get_screen_frame(size_t screen_index) const
 		{
 			Frame frame;
+			int dummy[2];
+			if (XineramaQueryExtension(display, &dummy[0], &dummy[1]))
+			{
+				if (XineramaIsActive(display))
+				{
+					int total_screens = 0;
+					XineramaScreenInfo* screens = XineramaQueryScreens(display, &total_screens);
+					if (total_screens > 0)
+					{
+						XineramaScreenInfo& screen = screens[screen_index];
+						frame.x = screen.x_org;
+						frame.y = screen.y_org;
+						frame.width = screen.width;
+						frame.height = screen.height; 
+					}
+
+					XFree(screens);
+				}
+			}
+			
 			return frame;
 		}
 

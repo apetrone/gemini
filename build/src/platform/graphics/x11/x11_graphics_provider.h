@@ -27,6 +27,8 @@
 #include "platform_internal.h"
 #include "graphics_provider.h"
 
+#include <GL/glx.h>
+
 namespace platform
 {
 	namespace window
@@ -57,9 +59,11 @@ namespace platform
 			virtual int choose_pixel_format(const Parameters& parameters) override;
 
 			virtual void pre_window_creation(const Parameters& window_parameters, void* graphics_data) override;
+			virtual void* get_native_visual(void* graphics_data) override;
 			
 		private:
 			X11WindowProvider* window_provider;
+			GLXContext share_context;
 		};
 	} // namespace window
 } // namespace platform

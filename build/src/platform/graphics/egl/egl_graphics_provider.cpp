@@ -337,9 +337,11 @@ namespace platform
 		{
 			
 		}
-
-
-
+		
+		void* EGLGraphicsProvider::get_native_visual(void* graphics_data)
+		{
+			return nullptr;
+		}
 
 		EGLData* EGLGraphicsProvider::egldata_from(NativeWindow* window)
 		{
