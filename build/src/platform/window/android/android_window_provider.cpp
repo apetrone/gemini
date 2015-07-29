@@ -133,7 +133,7 @@ namespace platform
 			return frame;
 		}
 
-		ANativeWindow* AndroidWindowProvider::get_native_window() const
+		ANativeWindow* AndroidWindowProvider::get_native_window()
 		{
 			return static_cast<ANativeWindow*>(main_window.get_native_handle());
 		}
