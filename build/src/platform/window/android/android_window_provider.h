@@ -57,7 +57,7 @@ namespace platform
 
 			virtual Result startup() override;
 			virtual void shutdown() override;
-			virtual NativeWindow* create(const Parameters& parameters) override;
+			virtual NativeWindow* create(const Parameters& parameters, void* graphics_data) override;
 			virtual void destroy(NativeWindow* window) override;
 			virtual Frame get_frame(NativeWindow* window) const override;
 			virtual Frame get_render_frame(NativeWindow* window) const override;

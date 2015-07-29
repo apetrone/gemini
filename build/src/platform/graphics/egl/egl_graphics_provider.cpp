@@ -333,6 +333,14 @@ namespace platform
 			return -1;
 		}
 
+		void EGLGraphicsProvider::pre_window_creation(const Parameters& window_parameters, void* graphics_data)
+		{
+			
+		}
+
+
+
+
 		EGLData* EGLGraphicsProvider::egldata_from(NativeWindow* window)
 		{
 			assert(window != nullptr);

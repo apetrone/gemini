@@ -216,16 +216,23 @@ namespace platform
 
 		NativeWindow* create(const Parameters& window_parameters)
 		{
-			NativeWindow* window = _window_provider->create(window_parameters);
-
+			// allocate data for the graphics provider
 			size_t graphics_data_size = _graphics_provider->get_graphics_data_size();
+			void* graphics_data = nullptr;
 
 			if (graphics_data_size)
 			{
 				// alloc graphics data for this window
-				window->graphics_data = MEMORY_ALLOC(graphics_data_size, get_platform_allocator());
+				graphics_data = MEMORY_ALLOC(graphics_data_size, get_platform_allocator());
 			}
 
+			// have the graphics provider figure out what it may need prior
+			// to window creation.
+			_graphics_provider->pre_window_creation(window_parameters, graphics_data);
+
+			NativeWindow* window = _window_provider->create(window_parameters, graphics_data);
+
+			window->graphics_data = graphics_data;
 
 			// pass the window to the graphics API
 			_graphics_provider->create_context(window);

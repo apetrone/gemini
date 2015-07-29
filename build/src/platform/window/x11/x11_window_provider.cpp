@@ -86,14 +86,10 @@ namespace platform
 			}
 		}
 
-		NativeWindow* X11WindowProvider::create(const Parameters& parameters)
+		NativeWindow* X11WindowProvider::create(const Parameters& parameters, void* graphics_data)
 		{
 			X11Window* window = MEMORY_NEW(X11Window, get_platform_allocator());
-
-			if (!window->visual)
-			{
-				window->visual = DefaultVisual(display, DefaultScreen(display));
-			}
+			XVisualInfo* visual = static_cast<XVisualInfo*>(graphics_data);
 
 			XSetWindowAttributes window_attributes;
 
@@ -104,18 +100,20 @@ namespace platform
 			window_attributes.colormap = XCreateColormap(
 				display,
 				RootWindow(display, DefaultScreen(display)),
-				window->visual,
+				visual->visual,
 				AllocNone);
 
 			window->native_window = XCreateWindow(
 				display,
 				RootWindow(display, DefaultScreen(display)),
-				0, 0,
-				100, 100,
+				parameters.frame.x,
+				parameters.frame.y,
+				parameters.frame.width,
+				parameters.frame.height,
 				0,
-				16,
+				visual->depth,
 				InputOutput,
-				window->visual,
+				visual->visual,
 				CWColormap | CWEventMask,
 				&window_attributes);
 

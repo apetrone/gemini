@@ -106,22 +106,27 @@ namespace platform
 
 		size_t X11GraphicsProvider::get_graphics_data_size() const
 		{
-			return sizeof(int);
+			return sizeof(XVisualInfo*);
 		}
 
 		int X11GraphicsProvider::choose_pixel_format(const Parameters& parameters)
 		{
+			return 0;
+		}
+
+		void X11GraphicsProvider::pre_window_creation(const Parameters& window_parameters, void* graphics_data)
+		{
 			int attributes[] = {
 				GLX_RGBA,
 				GLX_DOUBLEBUFFER,
-				GLX_STEREO, 0,
+				// GLX_STEREO, 0,
 				GLX_RED_SIZE, 8,
 				GLX_GREEN_SIZE, 8,
 				GLX_BLUE_SIZE, 8,
-				GLX_ALPHA_SIZE, 0,
-				GLX_DEPTH_SIZE, 0,
-				GLX_STENCIL_SIZE, 0,
-				0
+				// GLX_ALPHA_SIZE, 0,
+				// GLX_DEPTH_SIZE, 0,
+				// GLX_STENCIL_SIZE, 0,
+				None
 			};
 
 			XVisualInfo* visual = glXChooseVisual(
@@ -133,8 +138,10 @@ namespace platform
 			assert(visual);
 
 			// return the visual as the "pixel format"
-			return visual->visualid;
+			// return visual->visualid;
+			memcpy(graphics_data, visual, get_graphics_data_size());
 		}
+
 	} // namespace window
 
 } // namespace platform
