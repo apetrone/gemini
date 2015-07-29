@@ -104,7 +104,7 @@ namespace platform
 			assert(result == 0);
 		}
 
-		NativeWindow* DispManXWindowProvider::create(const Parameters& parameters)
+		NativeWindow* DispManXWindowProvider::create(const Parameters& parameters, void* graphics_data)
 		{
 			return &main_window;
 		}

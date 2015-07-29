@@ -58,6 +58,8 @@ namespace platform
 
 			virtual int choose_pixel_format(const Parameters& parameters) override;
 
+			virtual void pre_window_creation(const Parameters& window_parameters, void* graphics_data) override;
+			
 		private:
 			EGLData* egldata_from(NativeWindow* window);
 

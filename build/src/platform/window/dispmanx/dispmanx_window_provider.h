@@ -67,7 +67,7 @@ namespace platform
 		public:
 			virtual Result startup();
 			virtual void shutdown();
-			virtual NativeWindow* create(const Parameters& parameters);
+			virtual NativeWindow* create(const Parameters& parameters, void* graphics_data);
 			virtual void destroy(NativeWindow* window);
 			virtual Frame get_frame(NativeWindow* window) const;
 			virtual Frame get_render_frame(NativeWindow* window) const;
