@@ -48,6 +48,7 @@ namespace render2
 		uniforms.clear();
 		attributes.clear();
 		gl.DeleteProgram(id);
+		gl.CheckError("DeleteProgram");
 	}
 	
 	
@@ -85,6 +86,8 @@ namespace render2
 			memset(logbuffer, 0, log_length);
 			
 			gl.GetProgramInfoLog(handle, log_length, &log_length, logbuffer);
+			gl.CheckError("GetProgramInfoLog");
+
 			if (log_length > 0)
 			{
 				return logbuffer;
@@ -112,8 +115,8 @@ namespace render2
 	int GLShader::build_from_source(const char *vertex_shader, const char *fragment_shader, const char* preprocessor, const char* version)
 	{
 		
-		GLint vert = gl.CreateShader(GL_VERTEX_SHADER);
-		GLint frag = gl.CreateShader(GL_FRAGMENT_SHADER);
+		GLint vert = gl.CreateShader(GL_VERTEX_SHADER); gl.CheckError("CreateShader");
+		GLint frag = gl.CreateShader(GL_FRAGMENT_SHADER); gl.CheckError("CreateShader");
 		
 		
 		bool result = false;
@@ -122,8 +125,8 @@ namespace render2
 		
 		
 		// attach shaders
-		gl.AttachShader(id, vert); gl.CheckError("AttachShader (vert)");
-		gl.AttachShader(id, frag); gl.CheckError("AttachShader (frag)");
+		gl.AttachShader(id, vert); gl.CheckError("AttachShader (vert)"); gl.CheckError("AttachShader");
+		gl.AttachShader(id, frag); gl.CheckError("AttachShader (frag)"); gl.CheckError("AttachShader");
 		
 #if defined(PLATFORM_OPENGL_SUPPORT)
 		// bind attributes
