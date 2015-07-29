@@ -26,8 +26,6 @@
 #include "x11_graphics_provider.h"
 #include "window/x11/x11_window_provider.h"
 
-#include <GL/glx.h>
-
 #include <assert.h>
 
 #define PLATFORM_DEBUG_X11 0
@@ -36,11 +34,32 @@ namespace platform
 {
 	namespace window
 	{
-		struct X11Data
+		#define GLX_CONTEXT_PROFILE_MASK_ARB 					0x9126
+		#define GLX_CONTEXT_CORE_PROFILE_BIT_ARB				0x00000001
+		#define GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB		0x00000002
+
+		typedef GLXContext (*GLXCREATECONTEXTATTRIBSARBPROC)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
+		GLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB = 0;
+
+
+		struct X11GraphicsData
 		{
+			XVisualInfo* vi;
+			GLXContext context;
+
+			X11GraphicsData() : 
+				vi(nullptr)
+			{		
+			}
 		};
 
-		X11GraphicsProvider::X11GraphicsProvider()
+		static X11GraphicsData* data_from(void* data)
+		{
+			return reinterpret_cast<X11GraphicsData*>(data);
+		}
+
+		X11GraphicsProvider::X11GraphicsProvider() :
+			share_context(nullptr)
 		{
 		}
 
@@ -64,6 +83,32 @@ namespace platform
 				PLATFORM_LOG(LogMessageType::Info, "GLX version: %d.%d\n", major, minor);
 			}
 
+
+			// We must create a temporary window to grab the GL context
+			Parameters params;
+			params.frame.width = 100;
+			params.frame.height = 100;
+			params.window_title = "temp";
+
+			NativeWindow* temporary_window = ::platform::window::create(params);
+
+			// We should have a valid GL context now -- let's try to fetch the 
+
+			PLATFORM_LOG(LogMessageType::Info, "fetching symbol\n");
+
+			const GLubyte context_attribs_arb[] = "glXCreateContextAttribsARB";
+			glXCreateContextAttribsARB = reinterpret_cast<GLXCREATECONTEXTATTRIBSARBPROC>(glXGetProcAddress(context_attribs_arb));
+
+			// failed, try without ARB?
+			if (!glXCreateContextAttribsARB)
+			{
+				PLATFORM_LOG(LogMessageType::Warning, "Unable to find symbol 'glXCreateContextAttribsARB'");
+				const GLubyte context_attribs[] = "glXCreateContextAttribs";
+				glXCreateContextAttribsARB = reinterpret_cast<GLXCREATECONTEXTATTRIBSARBPROC>(glXGetProcAddress(context_attribs));
+			}
+
+			::platform::window::destroy(temporary_window);
+
 			return Result::success();
 		}
 
@@ -73,18 +118,83 @@ namespace platform
 
 		void X11GraphicsProvider::create_context(NativeWindow* window)
 		{
+			X11GraphicsData* data = data_from(window->graphics_data);
+			if (glXCreateContextAttribsARB)
+			{
+				int attributes[] = {
+					// only consider double-buffered frame configurations
+					GLX_DOUBLEBUFFER, True,
+
+					// only frame buffer configurations that have associated X visuals
+					GLX_X_RENDERABLE, True,
+
+					GLX_RED_SIZE, 8,
+					GLX_GREEN_SIZE, 8,
+					GLX_BLUE_SIZE, 8,
+					// GLX_ALPHA_SIZE, 0,
+					// GLX_STENCIL_SIZE, 0,
+					None
+				};
+
+				// create the GLXFBConfig; added in GLX version 1.3
+				int total_elements = 0;
+				GLXFBConfig* config = glXChooseFBConfig(
+					window_provider->get_display(),
+					DefaultScreen(window_provider->get_display()),
+					attributes,
+					&total_elements
+				);
+
+
+				int context_attributes[] = {
+					GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
+					GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
+					GLX_CONTEXT_MINOR_VERSION_ARB, 2,
+					None
+				};
+
+				bool direct_rendering = true;
+				data->context = glXCreateContextAttribsARB(
+					window_provider->get_display(),
+					*config,
+					share_context,
+					direct_rendering,
+					context_attributes
+				);
+
+				if (!share_context)
+				{
+					share_context = data->context;
+				}
+
+				assert(glXIsDirect(window_provider->get_display(), data->context));
+			}
+			else // fallback and use glXCreateContext
+			{
+				data->context = glXCreateContext(window_provider->get_display(), data->vi, nullptr, GL_TRUE);
+			}
+
+			assert(data->context);
 		}
 
 		void X11GraphicsProvider::destroy_context(NativeWindow* window)
 		{
+			X11GraphicsData* data = data_from(window->graphics_data);
+			glXDestroyContext(window_provider->get_display(), data->context);
 		}
 
 		void X11GraphicsProvider::attach_context(NativeWindow* window)
 		{
+			X11GraphicsData* data = data_from(window->graphics_data);
+			void* native_handle = window->get_native_handle();
+			Window* window_handle = static_cast<Window*>(native_handle);
+
+			glXMakeCurrent(window_provider->get_display(), *window_handle, data->context);
 		}
 
 		void X11GraphicsProvider::detach_context(NativeWindow* window)
 		{
+			glXMakeCurrent(window_provider->get_display(), None, nullptr);
 		}
 
 		void X11GraphicsProvider::create_surface(NativeWindow* window)
@@ -97,6 +207,9 @@ namespace platform
 
 		void X11GraphicsProvider::swap_buffers(NativeWindow* window)
 		{
+			void* native_handle = window->get_native_handle();
+			Window* window_handle = static_cast<Window*>(native_handle);			
+			glXSwapBuffers(window_provider->get_display(), *window_handle);
 		}
 
 		void* X11GraphicsProvider::get_symbol(const char* symbol_name)
@@ -106,7 +219,7 @@ namespace platform
 
 		size_t X11GraphicsProvider::get_graphics_data_size() const
 		{
-			return sizeof(XVisualInfo*);
+			return sizeof(X11GraphicsData);
 		}
 
 		int X11GraphicsProvider::choose_pixel_format(const Parameters& parameters)
@@ -116,6 +229,8 @@ namespace platform
 
 		void X11GraphicsProvider::pre_window_creation(const Parameters& window_parameters, void* graphics_data)
 		{
+			X11GraphicsData* data = static_cast<X11GraphicsData*>(graphics_data);
+
 			int attributes[] = {
 				GLX_RGBA,
 				GLX_DOUBLEBUFFER,
@@ -124,22 +239,24 @@ namespace platform
 				GLX_GREEN_SIZE, 8,
 				GLX_BLUE_SIZE, 8,
 				// GLX_ALPHA_SIZE, 0,
-				// GLX_DEPTH_SIZE, 0,
+				GLX_DEPTH_SIZE, 24,
 				// GLX_STENCIL_SIZE, 0,
 				None
 			};
 
-			XVisualInfo* visual = glXChooseVisual(
+			data->vi = glXChooseVisual(
 				window_provider->get_display(),
 				DefaultScreen(window_provider->get_display()),
 				attributes
-				);
+			);
 
-			assert(visual);
+			assert(data->vi);
+		}
 
-			// return the visual as the "pixel format"
-			// return visual->visualid;
-			memcpy(graphics_data, visual, get_graphics_data_size());
+		void* X11GraphicsProvider::get_native_visual(void* graphics_data)
+		{
+			X11GraphicsData* data = data_from(graphics_data);
+			return data->vi->visual;
 		}
 
 	} // namespace window

@@ -41,6 +41,8 @@
 
 using namespace renderer;
 
+#define TEST_RENDER_GRAPHICS 1
+
 // ---------------------------------------------------------------------
 // TestKernel
 // ---------------------------------------------------------------------
@@ -131,7 +133,7 @@ public:
 		for (size_t i = 0; i < total_displays; ++i)
 		{
 			platform::window::Frame frame = platform::window::screen_frame(i);
-			PLATFORM_LOG(platform::LogMessageType::Info, "display %lu rect = %u, %u, %u x %u\n", (unsigned long)i, frame.x, frame.y, frame.width, frame.height);
+			PLATFORM_LOG(platform::LogMessageType::Info, "display %lu rect = %2.2f, %2.2f, %2.2f x %2.2f\n", (unsigned long)i, frame.x, frame.y, frame.width, frame.height);
 		}
 
 
@@ -144,7 +146,7 @@ public:
 		native_window = platform::window::create(params);
 		assert(native_window != nullptr);
 		platform::window::Frame window_frame = platform::window::get_frame(native_window);
-		PLATFORM_LOG(platform::LogMessageType::Info, "window dimensions: %i %i\n", window_frame.width, window_frame.height);
+		PLATFORM_LOG(platform::LogMessageType::Info, "window dimensions: %2.2f %2.2f\n", window_frame.width, window_frame.height);
 		
 		platform::window::focus(native_window);
 		
@@ -159,16 +161,17 @@ public:
 			
 			platform::window::Frame wf = platform::window::get_frame(other_window);
 			
-			LOGV("frame: %2.2f, %2.2f, %2.2f x %2.2f\n", wf.x, wf.y, wf.width, wf.height);
+			LOGV("other_window frame: %2.2f, %2.2f, %2.2f x %2.2f\n", wf.x, wf.y, wf.width, wf.height);
 			
 			// try to center the mouse cursor in the window
 			center.x = (wf.width/2.0f + wf.x);
 			center.y = (wf.height/2.0f + wf.y);
 
-			LOGV("center: %2.2f, %2.2f\n", center.x, center.y);
+			LOGV("other_window center: %2.2f, %2.2f\n", center.x, center.y);
 			platform::window::set_cursor(center.x, center.y);
 		}
 
+#if TEST_RENDER_GRAPHICS
 		// initialize render device
 		render2::RenderParameters render_parameters;
 		render_parameters["rendering_backend"] = "default";
@@ -222,7 +225,7 @@ public:
 		pipeline->constants()->assign(&cd, sizeof(ConstantData));
 		
 //		platform::window::show_cursor(true);
-
+#endif
 		return kernel::NoError;
 	}
 	
@@ -234,6 +237,7 @@ public:
 		// dispatch all window events
 		platform::window::dispatch_events();
 	
+#if TEST_RENDER_GRAPHICS
 		// sanity check
 		assert(device);
 		assert(pipeline);
@@ -280,19 +284,27 @@ public:
 		{
 			
 		}
-		
+
+		if (other_window)
+		{
+			platform::window::activate_context(other_window);
+			platform::window::swap_buffers(other_window);
+		}
+	#endif
 		// hide/show mouse
 	}
 
 
 	virtual void shutdown()
 	{
+#if TEST_RENDER_GRAPHICS
 		device->destroy_buffer(vertex_buffer);
 		device->destroy_pipeline(pipeline);
 		render2::destroy_device(device);
 	
 		renderer::shutdown();
-
+#endif
+		
 		platform::window::destroy(native_window);
 		platform::window::destroy(other_window);
 		platform::window::shutdown();

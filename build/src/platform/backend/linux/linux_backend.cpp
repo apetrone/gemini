@@ -230,13 +230,14 @@ namespace platform
 			// to window creation.
 			_graphics_provider->pre_window_creation(window_parameters, graphics_data);
 
-			NativeWindow* window = _window_provider->create(window_parameters, graphics_data);
-
+			// create the native window and assign the graphics data
+			NativeWindow* window = _window_provider->create(window_parameters, _graphics_provider->get_native_visual(graphics_data));
 			window->graphics_data = graphics_data;
 
-			// pass the window to the graphics API
+			// pass the window to the graphics API for context creation
 			_graphics_provider->create_context(window);
 
+			// another pass to create the 'surface'
 			_graphics_provider->create_surface(window);
 
 			// activate the context for newly created windows
