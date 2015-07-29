@@ -940,6 +940,9 @@ def products(arguments, **kwargs):
 	# global params will be inherited by all dependent products
 	global_params = kwargs.get("global_params")
 
+	#global_linux = global_params.layout(platform="linux")
+	#global_linux.driver.requires_stdlib="4.9.0"
+
 	g_macosx = global_params.layout(platform="macosx")
 
 	# use C++11
