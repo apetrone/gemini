@@ -64,7 +64,7 @@ namespace platform
 			virtual size_t get_screen_count() const override;
 			virtual Frame get_screen_frame(size_t screen_index) const override;
 
-			ANativeWindow* get_native_window() const;
+			ANativeWindow* get_native_window();
 			void set_native_window(ANativeWindow* window);
 
 			AndroidWindow* get_android_window();
