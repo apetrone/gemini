@@ -160,6 +160,8 @@ namespace render2
 
 			vertex_stream->bind_vao();
 			gl.DrawArrays(GL_TRIANGLES, initial_offset, total);
+			gl.CheckError("DrawArrays");
+
 			vertex_stream->unbind_vao();
 
 			deactivate_pipeline(pipeline);
@@ -179,6 +181,7 @@ namespace render2
 
 			index_buffer->bind();
 			gl.DrawElements(GL_TRIANGLES, total, GL_UNSIGNED_SHORT, 0);
+			gl.CheckError("DrawElements");
 			index_buffer->unbind();
 
 			vertex_buffer->unbind_vao();
@@ -243,7 +246,10 @@ namespace render2
 			if (pipeline->enable_blending)
 			{
 				gl.Enable(GL_BLEND);
+				gl.CheckError("Enable");
+
 				gl.BlendFunc(pipeline->blend_source, pipeline->blend_destination);
+				gl.CheckError("BlendFunc");
 			}
 		}
 
@@ -255,6 +261,7 @@ namespace render2
 			if (pipeline->enable_blending)
 			{
 				gl.Disable(GL_BLEND);
+				gl.CheckError("Disable");
 			}
 		}
 
