@@ -232,7 +232,7 @@ def setup_driver(arguments, product):
 		]
 
 	gcc_flags = [
-		# "-fno-exceptions",
+		"-fno-exceptions",
 		"-fno-rtti",
 		"-Wall",
 		"-Wpedantic",
