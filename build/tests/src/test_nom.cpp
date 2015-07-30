@@ -651,7 +651,7 @@ public:
 #if 1
 		render2::Pass render_pass;
 		render_pass.target = device->default_render_target();
-		render_pass.color(0.0f, 1.0f, 0.0f, 1.0f);
+		render_pass.color(0.0f, 0.0f, 0.0f, 1.0f);
 		render_pass.clear_color = true;
 		render_pass.clear_depth = true;
 
