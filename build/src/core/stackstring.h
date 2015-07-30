@@ -70,7 +70,7 @@ namespace core
 			clear();
 			recompute_size(source);
 			assert(_length < maximum_size-1);
-			core::str::copy(_data, source, _length );
+			core::str::copy(_data, source, _length+1);
 		}
 		
 		void clear()
