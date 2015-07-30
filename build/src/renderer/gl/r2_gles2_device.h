@@ -191,12 +191,28 @@ namespace render2
 				gl.VertexAttribPointer(index, item.element_count, item.type, item.normalized, layout->vertex_stride, (void*)(data+item.offset));
 				gl.CheckError("VertexAttribPointer");
 			}
+
+			// see if we need to enable blending
+			if (pipeline->enable_blending)
+			{
+				gl.Enable(GL_BLEND);
+				gl.CheckError("Enable");
+
+				gl.BlendFunc(pipeline->blend_source, pipeline->blend_destination);
+				gl.CheckError("BlendFunc");
+			}
 		}
 
 		void deactivate_pipeline(GLPipeline* pipeline)
 		{
 			gl.UseProgram(0);
 			gl.CheckError("UseProgram(0)");
+
+			if (pipeline->enable_blending)
+			{
+				gl.Disable(GL_BLEND);
+				gl.CheckError("Disable");
+			}
 		}
 
 		// submit queue command buffers to GPU
@@ -371,7 +387,6 @@ namespace render2
 		{
 			MEMORY_DELETE(shader, core::memory::global_allocator());
 		}
-
 
 		// ---------------------------------------------------------------------
 		// render target
