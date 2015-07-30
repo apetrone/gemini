@@ -128,7 +128,7 @@ void test_nom()
 int main(int, char**)
 {
 	platform::Result result = platform::startup();
-	assert(result.success());
+	assert(result.succeeded());
 	
 	platform::PathString root_path = platform::get_program_directory();
 	platform::PathString content_path = platform::fs_content_directory();
