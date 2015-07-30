@@ -197,8 +197,13 @@ namespace platform
 				// depth size in bits
 				EGL_DEPTH_SIZE, 16,
 
-				// color buffer size (can specify up to 32)
-				EGL_BUFFER_SIZE, 24,
+				// color sizes
+				EGL_RED_SIZE, 8,
+				EGL_GREEN_SIZE, 8,
+				EGL_BLUE_SIZE, 8,
+
+				// alpha size
+				EGL_ALPHA_SIZE, 8,
 
 				EGL_NONE
 			};
@@ -335,9 +340,9 @@ namespace platform
 
 		void EGLGraphicsProvider::pre_window_creation(const Parameters& window_parameters, void* graphics_data)
 		{
-			
+
 		}
-		
+
 		void* EGLGraphicsProvider::get_native_visual(void* graphics_data)
 		{
 			return nullptr;
