@@ -78,7 +78,7 @@ namespace core
 				if (p)
 				{
 					memset(buf, 0, MAX_PATH_SIZE);
-					str::copy(buf, path + len - (path+len-1-p), last-p);
+					str::copy(buf, path + len - (path+len-1-p), last-p+1);
 					
 					last = p-1;
 					*p = '\0';
@@ -107,7 +107,7 @@ namespace core
 			if (basepath)
 			{
 				size_t content_length = content_path.size();
-				core::str::copy(&relative_path[0], (absolute_path+content_length+1), core::str::len(absolute_path) - content_length);
+				core::str::copy(&relative_path[0], (absolute_path+content_length+1), core::str::len(absolute_path) - content_length+1);
 				relative_path.normalize(PATH_SEPARATOR);
 			}
 		}
