@@ -232,7 +232,8 @@ def setup_driver(arguments, product):
 		]
 
 	gcc_flags = [
-		"-fno-exceptions",
+		# We need exceptions for jsoncpp.
+		#"-fno-exceptions",
 		"-fno-rtti",
 		"-Wall",
 		"-Wpedantic",
