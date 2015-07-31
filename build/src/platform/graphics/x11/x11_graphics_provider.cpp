@@ -42,6 +42,8 @@ namespace platform
 		GLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB = 0;
 
 
+		const size_t WINDOW_MAX_ATTRIBUTES = 24;
+
 		struct X11GraphicsData
 		{
 			XVisualInfo* vi;
@@ -121,20 +123,8 @@ namespace platform
 			X11GraphicsData* data = data_from(window->graphics_data);
 			if (glXCreateContextAttribsARB)
 			{
-				int attributes[] = {
-					// only consider double-buffered frame configurations
-					GLX_DOUBLEBUFFER, True,
-
-					// only frame buffer configurations that have associated X visuals
-					GLX_X_RENDERABLE, True,
-
-					GLX_RED_SIZE, 8,
-					GLX_GREEN_SIZE, 8,
-					GLX_BLUE_SIZE, 8,
-					// GLX_ALPHA_SIZE, 0,
-					// GLX_STENCIL_SIZE, 0,
-					None
-				};
+				int attributes[WINDOW_MAX_ATTRIBUTES];
+				attributes_from_backbuffer(attributes, WINDOW_MAX_ATTRIBUTES, window->backbuffer);
 
 				// create the GLXFBConfig; added in GLX version 1.3
 				int total_elements = 0;
@@ -222,41 +212,67 @@ namespace platform
 			return sizeof(X11GraphicsData);
 		}
 
-		int X11GraphicsProvider::choose_pixel_format(const Parameters& parameters)
-		{
-			return 0;
-		}
-
 		void X11GraphicsProvider::pre_window_creation(const Parameters& window_parameters, void* graphics_data)
 		{
 			X11GraphicsData* data = static_cast<X11GraphicsData*>(graphics_data);
 
-			int attributes[] = {
-				GLX_RGBA,
-				GLX_DOUBLEBUFFER,
-				// GLX_STEREO, 0,
-				GLX_RED_SIZE, 8,
-				GLX_GREEN_SIZE, 8,
-				GLX_BLUE_SIZE, 8,
-				// GLX_ALPHA_SIZE, 0,
-				GLX_DEPTH_SIZE, 24,
-				// GLX_STENCIL_SIZE, 0,
-				None
-			};
+			int attributes[WINDOW_MAX_ATTRIBUTES];
+			attributes_from_backbuffer(attributes, WINDOW_MAX_ATTRIBUTES, window_parameters.backbuffer);
 
-			data->vi = glXChooseVisual(
+			// create the GLXFBConfig; added in GLX version 1.3
+			int total_elements = 0;
+			GLXFBConfig* config = glXChooseFBConfig(
 				window_provider->get_display(),
 				DefaultScreen(window_provider->get_display()),
-				attributes
+				attributes,
+				&total_elements
 			);
 
-			assert(data->vi);
+			assert(config != nullptr);
+
+			data->vi = glXGetVisualFromFBConfig(
+				window_provider->get_display(), 
+				*config
+			);
 		}
 
 		void* X11GraphicsProvider::get_native_visual(void* graphics_data)
 		{
 			X11GraphicsData* data = data_from(graphics_data);
 			return data->vi->visual;
+		}
+
+
+		void X11GraphicsProvider::attributes_from_backbuffer(int* attributes, size_t total_attributes, const BackbufferConfig& backbuffer)
+		{
+			size_t index = 0;
+
+			// only consider double-buffered frame configurations
+			attributes[index++] = GLX_DOUBLEBUFFER;
+			attributes[index++] = True;
+
+			// only frame buffer configurations that have associated X visuals
+			attributes[index++] = GLX_X_RENDERABLE;
+			attributes[index++] = True;
+
+			// setup the back buffer for the window
+			attributes[index++] = GLX_RED_SIZE;
+			attributes[index++] = backbuffer.red_size;
+			attributes[index++] = GLX_GREEN_SIZE;
+			attributes[index++] = backbuffer.green_size;
+			attributes[index++] = GLX_BLUE_SIZE;
+			attributes[index++] = backbuffer.blue_size;
+			attributes[index++] = GLX_ALPHA_SIZE;
+			attributes[index++] = backbuffer.alpha_size;
+			attributes[index++] = GLX_DEPTH_SIZE;
+			attributes[index++] = backbuffer.depth_size;
+			attributes[index++] = GLX_STENCIL_SIZE;
+			attributes[index++] = backbuffer.stencil_size;
+
+			attributes[index++] = None;
+
+			// overflow
+			assert(index < total_attributes);
 		}
 
 	} // namespace window

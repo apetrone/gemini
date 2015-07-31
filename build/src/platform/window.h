@@ -67,6 +67,31 @@ namespace platform
 			}
 		};
 
+		struct BackbufferConfig
+		{
+			// rgba sizes for the backbuffer
+			uint8_t red_size;
+			uint8_t green_size;
+			uint8_t blue_size;
+			uint8_t alpha_size;
+
+			// depth size requested for this window in bits
+			uint8_t depth_size;
+
+			// stencil size
+			uint8_t stencil_size;
+
+			BackbufferConfig() : 
+				red_size(8),
+				green_size(8),
+				blue_size(8),
+				alpha_size(8),
+				depth_size(24),
+				stencil_size(0)
+			{				
+			}
+		};
+
 		struct Parameters
 		{
 			// This is the window's frame dimensions used to
@@ -81,8 +106,7 @@ namespace platform
 			// utf8-encoded window title
 			const char* window_title;
 
-			// depth size requested for this window in bits
-			uint8_t depth_size;
+			BackbufferConfig backbuffer;
 
 			// set to true to create a fullscreen window
 			bool enable_fullscreen;
@@ -126,6 +150,8 @@ namespace platform
 
 			// data used by the graphics provider on this system
 			void* graphics_data;
+			
+			BackbufferConfig backbuffer;
 		};
 
 		class InputProvider
