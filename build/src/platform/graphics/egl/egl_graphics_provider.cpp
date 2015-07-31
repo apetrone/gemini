@@ -179,6 +179,8 @@ namespace platform
 			EGLData* window_data = egldata_from(window);
 			assert(window_data);
 
+			const BackbufferConfig& backbuffer = window->backbuffer;
+
 			// prepare egl attributes
 			EGLint attribs[] = {
 #if defined(PLATFORM_GLES2_SUPPORT)
@@ -191,19 +193,20 @@ namespace platform
 				EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
 #endif
 
-
 				EGL_CONFIG_CAVEAT, EGL_NONE,
 
-				// depth size in bits
-				EGL_DEPTH_SIZE, 16,
-
 				// color sizes
-				EGL_RED_SIZE, 8,
-				EGL_GREEN_SIZE, 8,
-				EGL_BLUE_SIZE, 8,
+				EGL_RED_SIZE, backbuffer.red_size,
+				EGL_GREEN_SIZE, backbuffer.green_size,
+				EGL_BLUE_SIZE, backbuffer.blue_size,
 
 				// alpha size
-				EGL_ALPHA_SIZE, 8,
+				EGL_ALPHA_SIZE, backbuffer.alpha_size,
+
+				// depth size in bits
+				EGL_DEPTH_SIZE, backbuffer.depth_size,
+
+				EGL_STENCIL_SIZE, backbuffer.stencil_size,
 
 				EGL_NONE
 			};
