@@ -585,16 +585,21 @@ public:
 
 	void update()
 	{
-		static uint64_t last_time = 0;
-		static float accumulator = 0;
-
 		uint64_t current_time = platform::microseconds();
 		kernel::Parameters& params = kernel::parameters();
 
+		// need to initialize this to current_time otherwise the initial
+		// delta could be very large; which leads to an infinite loop
+		// when processing the accumulator.
+		static uint64_t last_time = current_time;
+		static float accumulator = 0;
+
 		// calculate delta ticks in miliseconds
 		params.framedelta_raw_msec = (current_time - last_time)*0.001f;
+
 		// cache the value in seconds
 		params.framedelta_filtered_seconds = params.framedelta_raw_msec*0.001f;
+
 		last_time = current_time;
 
 		// update accumulator
