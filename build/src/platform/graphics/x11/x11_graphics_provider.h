@@ -56,12 +56,13 @@ namespace platform
 			virtual void* get_symbol(const char* symbol_name) override;
 			virtual size_t get_graphics_data_size() const override;
 
-			virtual int choose_pixel_format(const Parameters& parameters) override;
-
 			virtual void pre_window_creation(const Parameters& window_parameters, void* graphics_data) override;
 			virtual void* get_native_visual(void* graphics_data) override;
 			
 		private:
+
+			void attributes_from_backbuffer(int* attributes, size_t total_attributes, const BackbufferConfig& backbuffer);
+
 			X11WindowProvider* window_provider;
 			GLXContext share_context;
 		};

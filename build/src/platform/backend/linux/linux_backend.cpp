@@ -234,6 +234,9 @@ namespace platform
 			NativeWindow* window = _window_provider->create(window_parameters, _graphics_provider->get_native_visual(graphics_data));
 			window->graphics_data = graphics_data;
 
+
+			window->backbuffer = window_parameters.backbuffer;
+
 			// pass the window to the graphics API for context creation
 			_graphics_provider->create_context(window);
 
