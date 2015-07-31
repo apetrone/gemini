@@ -332,12 +332,6 @@ namespace platform
 			return sizeof(EGLData);
 		}
 
-		int EGLGraphicsProvider::choose_pixel_format(const Parameters& parameters)
-		{
-			// eh? Return the visual instead?
-			return -1;
-		}
-
 		void EGLGraphicsProvider::pre_window_creation(const Parameters& window_parameters, void* graphics_data)
 		{
 
