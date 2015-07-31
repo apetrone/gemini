@@ -169,6 +169,16 @@ void test_datetime()
 
 	uint64_t ms = platform::microseconds();
 	TEST_VERIFY(ms != 0, microseconds);
+
+	PLATFORM_LOG(platform::LogMessageType::Info, "waiting three seconds...\n");
+
+	uint64_t last = ms;
+	while((last - ms) < 3000000)
+	{
+		last = platform::microseconds();
+	}
+
+	PLATFORM_LOG(platform::LogMessageType::Info, "three seconds have passed!\n");
 }
 
 int main(int, char**)
