@@ -59,9 +59,6 @@ namespace platform
 			/// which needs to be allocated.
 			virtual size_t get_graphics_data_size() const = 0;
 
-			/// @brief Choose the best pixel format given window parameters
-			virtual int choose_pixel_format(const Parameters& parameters) = 0;
-
 			virtual void pre_window_creation(const Parameters& window_parameters, void* graphics_data) = 0;
 
 			virtual void* get_native_visual(void* graphics_data) = 0;
