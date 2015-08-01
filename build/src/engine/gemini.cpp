@@ -236,13 +236,13 @@ class GUIStyle : public gui::Style
 {
 public:
 	
-	virtual void draw_bounds(gui::Renderer* renderer, const gui::Bounds& bounds, const gui::Color& color)
+	virtual void draw_bounds(gui::Renderer* renderer, const gui::Rect& bounds, const gui::Color& color)
 	{
 		renderer->draw_bounds(bounds, color);
 	}
 	
 	
-	virtual void draw_font(gui::Renderer* renderer, const gui::FontHandle& handle, const char* string, const gui::Bounds& bounds, const gui::Color& color)
+	virtual void draw_font(gui::Renderer* renderer, const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color)
 	{
 		renderer->font_draw(handle, string, bounds, color);
 	}
