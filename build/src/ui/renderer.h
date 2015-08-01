@@ -30,6 +30,7 @@
 
 #include "ui/ui.h"
 #include "ui/utils.h"
+#include <core/array.h>
 
 namespace gui
 {
@@ -57,8 +58,8 @@ namespace gui
 		const size_t MAX_COMMANDS = 128;
 		struct CommandList
 		{
-			array<Command> commands;
-			array<Vertex> vertex_buffer;
+			Array<Command> commands;
+			Array<Vertex> vertex_buffer;
 			
 			
 			Vertex* write_pointer;
