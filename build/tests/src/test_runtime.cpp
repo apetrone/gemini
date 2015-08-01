@@ -74,56 +74,6 @@ void test_logging()
 
 
 
-// ---------------------------------------------------------------------
-// nom
-// ---------------------------------------------------------------------
-#include <nom/nom.hpp>
-void test_nom()
-{
-	TEST_CATEGORY(nom);
-	
-	gui::array<int> a;
-	
-	size_t s = a.size();
-	TEST_VERIFY(s == 0, size_empty);
-	
-	a.push_back(30);
-	a.push_back(64);
-	a.push_back(128);
-	a.push_back(256);
-	TEST_VERIFY(a.size() == 4, push_back_four_elements);
-	
-	
-	TEST_VERIFY(a.back() == 256, back);
-	
-	a.clear();
-	TEST_VERIFY(a.size() == 0, clear);
-	
-	a.resize(4);
-	a[0] = 1;
-	a[1] = 2;
-	a[2] = 3;
-	a[3] = 4;
-	TEST_VERIFY(a.size() == 4, resize_four);
-	
-
-	for (auto& value : a)
-	{
-		fprintf(stdout, "item: %i\n", value);
-	}
-	
-	a.resize(8);
-	TEST_VERIFY(a.size() == 8, resize_eight);
-	
-	a.clear();
-
-	
-	for(size_t index = 0; index < a.size(); ++index)
-	{
-		fprintf(stdout, "i: %zu -> %i\n", index, a[index]);
-	}
-}
-
 
 int main(int, char**)
 {
@@ -142,10 +92,7 @@ int main(int, char**)
 	
 	test_filesystem();
 	test_logging();
-	
-	
-	test_nom();
-	
+
 	core::shutdown();
 	
 	platform::shutdown();
