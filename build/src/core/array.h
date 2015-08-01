@@ -81,14 +81,14 @@ public:
 		
 	public:
 		iterator(const container_type& container, size_t index) :
-		container(container),
-		index(index)
+			container(container),
+			index(index)
 		{
 		}
 		
 		iterator(const iterator& other) :
-		container(other.container),
-		index(other.index)
+			container(other.container),
+			index(other.index)
 		{
 		}
 		
