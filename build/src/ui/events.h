@@ -44,7 +44,7 @@ namespace gui
 			Mouse4,
 			Mouse5,
 		};
-	};
+	}
 	
 	
 	
