@@ -41,8 +41,9 @@ namespace render2
 	GLShader::GLShader()
 	{
 		id = gl.CreateProgram();
+		gl.CheckError("CreateProgram");
 	}
-	
+
 	GLShader::~GLShader()
 	{
 		uniforms.clear();
@@ -50,8 +51,8 @@ namespace render2
 		gl.DeleteProgram(id);
 		gl.CheckError("DeleteProgram");
 	}
-	
-	
+
+
 	bool GLShader::compile_shader(GLint shader, const char* source, const char* preprocessor_defines, const char* version)
 	{
 		GLint is_compiled = 0;
@@ -60,21 +61,21 @@ namespace render2
 			preprocessor_defines,
 			source
 		};
-		
+
 		gl.ShaderSource(shader, 3, (GLchar**)shader_source, 0);
 		gl.CheckError("ShaderSource");
-		
+
 		gl.CompileShader(shader);
 		gl.CheckError("CompileShader");
-		
+
 		gl.GetShaderiv(shader, GL_COMPILE_STATUS, &is_compiled);
 		gl.CheckError("GetShaderiv");
-		
+
 		assert(is_compiled);
-		
+
 		return is_compiled;
 	} // compile_shader
-	
+
 	char* GLShader::query_program_info_log(GLObject handle)
 	{
 		int log_length = 0;
@@ -84,7 +85,7 @@ namespace render2
 		{
 			logbuffer = (char*)MEMORY_ALLOC(log_length+1, core::memory::global_allocator());
 			memset(logbuffer, 0, log_length);
-			
+
 			gl.GetProgramInfoLog(handle, log_length, &log_length, logbuffer);
 			gl.CheckError("GetProgramInfoLog");
 
@@ -97,10 +98,10 @@ namespace render2
 				MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
 			}
 		}
-		
+
 		return 0;
 	} // query_program_info_log
-	
+
 	void GLShader::dump_program_log()
 	{
 		char* logbuffer = query_program_info_log(id);
@@ -111,55 +112,55 @@ namespace render2
 			MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
 		}
 	} // dump_program_log
-	
+
 	int GLShader::build_from_source(const char *vertex_shader, const char *fragment_shader, const char* preprocessor, const char* version)
 	{
 		GLint vert = gl.CreateShader(GL_VERTEX_SHADER); gl.CheckError("CreateShader");
 		GLint frag = gl.CreateShader(GL_FRAGMENT_SHADER); gl.CheckError("CreateShader");
-		
-		
+
+
 		bool result = false;
 		result = compile_shader(vert, vertex_shader, preprocessor, version);
 		result = compile_shader(frag, fragment_shader, preprocessor, version);
-		
-		
+
+
 		// attach shaders
 		gl.AttachShader(id, vert); gl.CheckError("AttachShader (vert)"); gl.CheckError("AttachShader");
 		gl.AttachShader(id, frag); gl.CheckError("AttachShader (frag)"); gl.CheckError("AttachShader");
-		
+
 #if defined(PLATFORM_OPENGL_SUPPORT)
 		// bind attributes
 		gl.BindFragDataLocation(id, 0, "out_color");
 		gl.CheckError("BindFragDataLocation");
 #endif
-		
+
 		// link and activate shader
 		gl.LinkProgram(id);
 		gl.CheckError("LinkProgram");
 		GLint is_linked = 0;
 		gl.GetProgramiv(id, GL_LINK_STATUS, &is_linked);
 		gl.CheckError("link and activate shader GetProgramiv");
-		
+
 		if (!is_linked)
 		{
 			dump_program_log();
 		}
-		
+
 		assert(is_linked == 1);
-		
-		
+
+
 		// activate program
 		gl.UseProgram(id);
 		gl.CheckError("activate program UseProgram");
 
-		
+
 		{
 			GLint active_attributes = 0;
 			gl.GetProgramiv(id, GL_ACTIVE_ATTRIBUTES, &active_attributes);
 			gl.CheckError("inspect attributes GetProgramiv");
-			
+
 			attributes.allocate(active_attributes);
-			
+
 			for (GLint attribute_index = 0; attribute_index < active_attributes; ++attribute_index)
 			{
 				shader_variable& attribute = attributes[attribute_index];
@@ -171,19 +172,19 @@ namespace render2
 					 attribute.name,
 					 attribute.size,
 					 attribute.type);
-				
+
 				attribute.compute_size();
 			}
 		}
-		
+
 		// cache uniform locations
 		{
 			GLint active_uniforms = 0;
 			gl.GetProgramiv(id, GL_ACTIVE_UNIFORMS, &active_uniforms);
-			
+
 			// allocate data for uniforms
 			uniforms.allocate(active_uniforms);
-			
+
 			for (GLint uniform_index = 0; uniform_index < active_uniforms; ++uniform_index)
 			{
 				shader_variable& uniform = uniforms[uniform_index];
@@ -195,38 +196,38 @@ namespace render2
 					 uniform.name,
 					 uniform.size,
 					 uniform.type);
-				
+
 				uniform.compute_size();
 			}
 		}
-		
-		
+
+
 		// deactivate
 		gl.UseProgram(0);
-		
-		
+
+
 		// detach shaders
 		gl.DetachShader(id, vert);
 		gl.DetachShader(id, frag);
-		
-		
+
+
 		// delete shaders
 		gl.DeleteShader(frag);
 		gl.DeleteShader(vert);
-		
+
 		return 0;
 	}
-	
+
 	GLint GLShader::get_attribute_location(const char* name)
 	{
 		return gl.GetAttribLocation(id, name);
 	}
-	
+
 	GLint GLShader::get_uniform_location(const char* name)
 	{
 		return gl.GetUniformLocation(id, name);
 	}
-	
+
 	// ---------------------------------------------------------------------
 	// GLPipeline
 	// ---------------------------------------------------------------------
@@ -236,19 +237,19 @@ namespace render2
 		blend_destination(GL_ZERO)
 	{
 		program = (GLShader*)descriptor.shader;
-		
+
 		// compute the size of the constant buffer we'll need
 		size_t total_bytes = sizeof(glm::mat4) * 2;
-		
+
 		this->cb = MEMORY_NEW(ConstantBuffer, core::memory::global_allocator())(total_bytes);
 	}
-	
+
 	GLPipeline::~GLPipeline()
 	{
 		MEMORY_DELETE(this->cb, core::memory::global_allocator());
 	}
-	
-	
+
+
 	// ---------------------------------------------------------------------
 	// implementation
 	// ---------------------------------------------------------------------
@@ -264,15 +265,15 @@ namespace render2
 	{
 		// invalid descriptor!
 		assert(descriptor.total_attributes > 0);
-		
+
 		// descriptor doesn't match shader!
 		assert(descriptor.total_attributes == shader->attributes.size());
-		
+
 		// allocate enough layout items to hold all the descriptors
 		layout->items.allocate(descriptor.total_attributes);
-		
+
 		size_t current_offset = 0;
-		
+
 		// We need to re-map the source data to the data reported by the
 		// driver. The attributes or uniforms may be re-arranged by the driver.
 		for (size_t index = 0; index < descriptor.total_attributes; ++index)
@@ -284,9 +285,9 @@ namespace render2
 				 input.type,
 				 input.element_count
 				 );
-			
+
 			const VertexDataTypeToGL& gldata = get_vertexdata_table()[input.type];
-			
+
 			GLInputLayout::Description target;
 			target.location = shader->get_attribute_location(input.name());
 			target.type = gldata.type;
@@ -294,13 +295,13 @@ namespace render2
 			target.element_count = input.element_count;
 			target.size = gldata.element_size * input.element_count;
 			target.offset = current_offset;
-			
+
 			layout->items[target.location] = target;
-			
+
 			// increment the offset pointer
 			current_offset += target.size;
 		}
-		
+
 		layout->vertex_stride = current_offset;
 	}
 
@@ -309,7 +310,7 @@ namespace render2
 		pipeline->vertex_description = descriptor.vertex_description;
 		pipeline->input_layout = static_cast<GLInputLayout*>(descriptor.input_layout);
 		assert(pipeline->input_layout != nullptr);
-		
+
 		pipeline->enable_blending = descriptor.enable_blending;
 		pipeline->blend_source = convert_blendstate(descriptor.blend_source);
 		pipeline->blend_destination = convert_blendstate(descriptor.blend_destination);
@@ -323,12 +324,12 @@ namespace render2
 		VERTEXDATA_TO_GL(VD_UNSIGNED_INT, GL_UNSIGNED_INT, GL_TRUE, sizeof(unsigned int));
 		VERTEXDATA_TO_GL(VD_UNSIGNED_BYTE, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(unsigned char));
 	}
-	
+
 	VertexDataTypeToGL* get_vertexdata_table()
 	{
 		return _vertex_data_to_gl;
 	}
-	
+
 	int load_gl_symbols()
 	{
 		int result = gemgl_startup(gl);
@@ -337,13 +338,13 @@ namespace render2
 			PLATFORM_LOG(platform::LogMessageType::Error, "load of gl symbols failed!\n");
 			return 1;
 		}
-		
+
 		// parse the GL_VERSION string and determine which renderer to use.
 		gemgl_config config;
 		gemgl_parse_version(config.major_version, config.minor_version);
-		
+
 		gemgl_load_symbols(gl);
-		
+
 		return 0;
 	}
 
@@ -358,10 +359,10 @@ namespace render2
 		GLenum blend_table[] = {
 			GL_ZERO,
 			GL_ONE,
-			
+
 			GL_SRC_ALPHA,
 			GL_ONE_MINUS_SRC_ALPHA,
-			
+
 //			GL_SRC_COLOR,
 //			GL_ONE_MINUS_SRC_COLOR,
 //			GL_DST_COLOR,
@@ -374,7 +375,7 @@ namespace render2
 //			GL_CONSTANT_ALPHA,
 //			GL_ONE_MINUS_CONSTANT_ALPHA,
 //			GL_SRC_ALPHA_SATURATE,
-			
+
 #if 0 // OpenGL 4.x +
 			GL_SRC1_COLOR,
 			GL_ONE_MINUS_SRC1_COLOR,
@@ -382,7 +383,7 @@ namespace render2
 			GL_ONE_MINUS_SRC1_ALPHA
 #endif
 		};
-		
+
 		return blend_table[static_cast<size_t>(op)];
 	}
 
