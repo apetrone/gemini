@@ -64,7 +64,7 @@ namespace renderer
 				GEMGL_LOG( "%s: %i\n", errorMessage, e );
 			}
 		}
-		
+
 		return e;
 	} // gemgl_check_error
 
@@ -89,8 +89,11 @@ namespace renderer
 			// the OpenGL version.
 			if ( sscanf( (const char*)version, "%i.%i", &major_version, &minor_version ) < 2 )
 			{
-				LOGE( "Error parsing OpenGL version\n" );
-				return;
+				if (sscanf((const char*)version, "OpenGL ES %i.%i", &major_version, &minor_version) < 2)
+				{
+					LOGE( "Error parsing OpenGL version\n" );
+					return;
+				}
 			}
 		}
 		else
@@ -100,6 +103,7 @@ namespace renderer
 
 		major = (short)major_version;
 		minor = (short)minor_version;
+		LOGV("GL version detected: %i.%i\n", major_version, minor_version);
 	} // gemgl_parse_version
 
 
@@ -161,7 +165,7 @@ namespace renderer
 		GEMGL_LINK( gl.PolygonOffset, "glPolygonOffset", GEMGLFNPOLYGONOFFSET );
 		GEMGL_LINK( gl.PixelStorei, "glPixelStorei", GEMGLFNPIXELSTOREI );
 		GEMGL_LINK( gl.DepthMask, "glDepthMask", GEMGLFNDEPTHMASK );
-		
+
 		// textures
 		GEMGL_LINK( gl.TexParameterf, "glTexParameterf", GEMGLFNTEXPARAMETERF );
 		GEMGL_LINK( gl.TexParameterfv, "glTexParameterfv", GEMGLFNTEXPARAMETERFV );
@@ -169,13 +173,13 @@ namespace renderer
 		GEMGL_LINK( gl.TexParameteriv, "glTexParameteriv", GEMGLFNTEXPARAMETERIV );
 		GEMGL_LINK( gl.ActiveTexture, "glActiveTexture", GEMGLFNACTIVETEXTURE );
 		GEMGL_LINK( gl.TexSubImage2D, "glTexSubImage2D", GEMGLFNTEXSUBIMAGE2D );
-		GEMGL_LINK( gl.GenerateMipmap, "glGenerateMipmap", GEMGLFNGENERATEMIPMAP );		
+		GEMGL_LINK( gl.GenerateMipmap, "glGenerateMipmap", GEMGLFNGENERATEMIPMAP );
 		GEMGL_LINK( gl.TexImage2D, "glTexImage2D", GEMGLFNTEXIMAGE2D );
 		GEMGL_LINK( gl.BindTexture, "glBindTexture", GEMGLFNBINDTEXTURE );
 		GEMGL_LINK( gl.DeleteTextures, "glDeleteTextures", GEMGLFNDELETETEXTURES );
 		GEMGL_LINK( gl.GenTextures, "glGenTextures", GEMGLFNGENTEXTURES );
 		GEMGL_LINK( gl.IsTexture, "glIsTexture", GEMGLFNISTEXTURE );
-		
+
 		// attribs
 		GEMGL_LINK( gl.VertexAttribPointer, "glVertexAttribPointer", GEMGLFNVERTEXATTRIBPOINTER );
 		GEMGL_LINK( gl.EnableVertexAttribArray, "glEnableVertexAttribArray", GEMGLFNENABLEVERTEXATTRIBARRAY );
@@ -188,7 +192,7 @@ namespace renderer
 		GEMGL_LINK( gl.VertexAttrib2fv, "glVertexAttrib2fv", GEMGLFNVERTEXATTRIB2FV );
 		GEMGL_LINK( gl.VertexAttrib3fv, "glVertexAttrib3fv", GEMGLFNVERTEXATTRIB3FV );
 		GEMGL_LINK( gl.VertexAttrib4fv, "glVertexAttrib4fv", GEMGLFNVERTEXATTRIB4FV );
-		
+
 		// SHADERS AND PROGRAMS
 		// shader objects
 		GEMGL_LINK( gl.CreateShader, "glCreateShader", GEMGLFNCREATESHADER );
@@ -196,10 +200,10 @@ namespace renderer
 		GEMGL_LINK( gl.CompileShader, "glCompileShader", GEMGLFNCOMPILESHADER );
 		GEMGL_LINK( gl.ReleaseShaderCompiler, "glReleaseShaderCompiler", GEMGLFNRELEASESHADERCOMPILER );
 		GEMGL_LINK( gl.DeleteShader, "glDeleteShader", GEMGLFNDELETESHADER );
-		
+
 		// loading shader binaries
 		GEMGL_LINK( gl.ShaderBinary, "glShaderBinary", GEMGLFNSHADERBINARY );
-		
+
 		// program objects
 		GEMGL_LINK( gl.CreateProgram, "glCreateProgram", GEMGLFNCREATEPROGRAM );
 		GEMGL_LINK( gl.AttachShader, "glAttachShader", GEMGLFNATTACHSHADER );
@@ -209,12 +213,12 @@ namespace renderer
 		GEMGL_LINK( gl.DeleteProgram, "glDeleteProgram", GEMGLFNDELETEPROGRAM );
 
 		// SHADER VARIABLES
-		
+
 		// vertex attributes
 		GEMGL_LINK( gl.GetActiveAttrib, "glGetActiveAttrib", GEMGLFNGETACTIVEATTRIB );
 		GEMGL_LINK( gl.GetAttribLocation, "glGetAttribLocation", GEMGLFNGETATTRIBLOCATION );
 		GEMGL_LINK( gl.BindAttribLocation, "glBindAttribLocation", GEMGLFNBINDATTRIBLOCATION );
-		
+
 		// uniform variables
 		GEMGL_LINK( gl.GetUniformLocation, "glGetUniformLocation", GEMGLFNGETUNIFORMLOCATION );
 		GEMGL_LINK( gl.GetActiveUniform, "glGetActiveUniform", GEMGLFNGETACTIVEUNIFORM );
@@ -238,10 +242,10 @@ namespace renderer
 		GEMGL_LINK( gl.UniformMatrix2fv, "glUniformMatrix2fv", GEMGLFNUNIFORMMATRIX2FV );
 		GEMGL_LINK( gl.UniformMatrix3fv, "glUniformMatrix3fv", GEMGLFNUNIFORMMATRIX3FV );
 		GEMGL_LINK( gl.UniformMatrix4fv, "glUniformMatrix4fv", GEMGLFNUNIFORMMATRIX4FV );
-		
+
 		// shader execution
 		GEMGL_LINK( gl.ValidateProgram, "glValidateProgram", GEMGLFNVALIDATEPROGRAM );
-		
+
 		// SHADER QUERIES
 		// shader queries
 		GEMGL_LINK( gl.IsShader, "glIsShader", GEMGLFNISSHADER );
@@ -249,25 +253,25 @@ namespace renderer
 		GEMGL_LINK( gl.GetAttachedShaders, "glGetAttachedShaders", GEMGLFNGETATTACHEDSHADERS );
 		GEMGL_LINK( gl.GetShaderInfoLog, "glGetShaderInfoLog", GEMGLFNGETSHADERINFOLOG );
 		//GEMGL_LINK( gl.GetShaderSource, "glGetShaderSource", GEMGLFNGETSHADERSOURCE );
-		
+
 		// program queries
 		GEMGL_LINK( gl.IsProgram, "glIsProgram", GEMGLFNISPROGRAM );
 		GEMGL_LINK( gl.GetProgramiv, "glGetProgramiv", GEMGLFNGETPROGRAMIV );
 		GEMGL_LINK( gl.GetProgramInfoLog, "glGetProgramInfoLog", GEMGLFNGETPROGRAMINFOLOG );
-		
+
 
 		// PER-FRAGMENT OPERATIONS
 		// blending
-		
-		GEMGL_LINK( gl.BlendEquation, "glBlendEquation", GEMGLFNBLENDEQUATION );	
+
+		GEMGL_LINK( gl.BlendEquation, "glBlendEquation", GEMGLFNBLENDEQUATION );
 		GEMGL_LINK( gl.BlendEquationSeparate, "glBlendEquationSeparate", GEMGLFNBLENDEQUATIONSEPARATE );
 		GEMGL_LINK( gl.BlendFuncSeparate, "glBlendFuncSeparate", GEMGLFNBLENDFUNCSEPARATE );
 		GEMGL_LINK( gl.BlendFunc, "glBlendFunc", GEMGLFNBLENDFUNC );
 		GEMGL_LINK( gl.BlendColor, "glBlendColor", GEMGLFNBLENDCOLOR );
-		
+
 		// vertex array objects
 #if PLATFORM_GLES2_SUPPORT // Android and iOS should have support for these.
-		GEMGL_LINK( gl.GenVertexArrays, "glGenVertexArraysOES", GEMGLFNGENVERTEXARRAYS );		
+		GEMGL_LINK( gl.GenVertexArrays, "glGenVertexArraysOES", GEMGLFNGENVERTEXARRAYS );
 		GEMGL_LINK( gl.BindVertexArray, "glBindVertexArrayOES", GEMGLFNBINDVERTEXARRAY );
 		GEMGL_LINK( gl.DeleteVertexArrays, "glDeleteVertexArraysOES", GEMGLFNDELETEVERTEXARRAYS );
 		GEMGL_LINK( gl.IsVertexArray, "glIsVertexArrayOES", GEMGLFNISVERTEXARRAY );
@@ -282,7 +286,7 @@ namespace renderer
 		GEMGL_LINK( gl.BufferSubData, "glBufferSubData", GEMGLFNBUFFERSUBDATA );
 		GEMGL_LINK( gl.GetBufferParameteriv, "glGetBufferParameteriv", GEMGLFNGETBUFFERPARAMETERIV );
 
-		
+
 
 #else // Desktop OpenGL
 		GEMGL_LINK( gl.Viewport, "glViewport", GEMGLFNVIEWPORT );
@@ -290,7 +294,7 @@ namespace renderer
 		GEMGL_LINK( gl.ClearStencil, "glClearStencil", GEMGLFNCLEARSTENCIL );
 		GEMGL_LINK( gl.ClearDepth, "glClearDepth", GEMGLFNCLEARDEPTH );
 		GEMGL_LINK( gl.ClearColor, "glClearColor", GEMGLFNCLEARCOLOR );
-		GEMGL_LINK( gl.Clear, "glClear", GEMGLFNCLEAR );		
+		GEMGL_LINK( gl.Clear, "glClear", GEMGLFNCLEAR );
 		GEMGL_LINK( gl.DrawArrays, "glDrawArrays", GEMGLFNDRAWARRAYS );
 		GEMGL_LINK( gl.DrawElements, "glDrawElements", GEMGLFNDRAWELEMENTS );
 		GEMGL_LINK( gl.PointSize, "glPointSize", GEMGLFNPOINTSIZE );
@@ -337,13 +341,13 @@ namespace renderer
 		GEMGL_LINK( gl.IsProgram, "glIsProgram", GEMGLFNISPROGRAM );
 		GEMGL_LINK( gl.GetProgramiv, "glGetProgramiv", GEMGLFNGETPROGRAMIV );
 		GEMGL_LINK( gl.GetAttachedShaders, "glGetAttachedShaders", GEMGLFNGETATTACHEDSHADERS );
-		
+
 		// attrib
 		GEMGL_LINK( gl.GetActiveAttrib, "glGetActiveAttrib", GEMGLFNGETACTIVEATTRIB );
 		GEMGL_LINK( gl.GetAttribLocation, "glGetAttribLocation", GEMGLFNGETATTRIBLOCATION );
 		GEMGL_LINK( gl.BindAttribLocation, "glBindAttribLocation", GEMGLFNBINDATTRIBLOCATION );
 		GEMGL_LINK( gl.BindFragDataLocation, "glBindFragDataLocation", GEMGLFNBINDFRAGDATALOCATION );
-		
+
 		// uniforms
 		GEMGL_LINK( gl.GetUniformLocation, "glGetUniformLocation", GEMGLFNGETUNIFORMLOCATION );
 		GEMGL_LINK( gl.GetUniformBlockIndex, "glGetUniformBlockIndex", GEMGLFNGETUNIFORMBLOCKINDEX );
@@ -353,7 +357,7 @@ namespace renderer
 		GEMGL_LINK( gl.GetActiveUniformName, "glGetActiveUniformName", GEMGLFNGETACTIVEUNIFORMNAME );
 		GEMGL_LINK( gl.GetActiveUniform, "glGetActiveUniform", GEMGLFNGETACTIVEUNIFORM );
 		GEMGL_LINK( gl.GetActiveUniformsiv, "glGetActiveUniformsiv", GEMGLFNGETACTIVEUNIFORMSIV );
-		
+
 		// vertex array objects
 		GEMGL_LINK( gl.BindVertexArray, "glBindVertexArray", GEMGLFNBINDVERTEXARRAY );
 		GEMGL_LINK( gl.DeleteVertexArrays, "glDeleteVertexArrays", GEMGLFNDELETEVERTEXARRAYS );
@@ -399,11 +403,11 @@ namespace renderer
 		GEMGL_LINK( gl.UniformMatrix3fv, "glUniformMatrix3fv", GEMGLFNUNIFORMMATRIX3FV );
 		GEMGL_LINK( gl.UniformMatrix4fv, "glUniformMatrix4fv", GEMGLFNUNIFORMMATRIX4FV );
 
-		
+
 		// PER-FRAGMENT OPERATIONS
 		// blending
-		
-		GEMGL_LINK( gl.BlendEquation, "glBlendEquation", GEMGLFNBLENDEQUATION );	
+
+		GEMGL_LINK( gl.BlendEquation, "glBlendEquation", GEMGLFNBLENDEQUATION );
 		GEMGL_LINK( gl.BlendEquationSeparate, "glBlendEquationSeparate", GEMGLFNBLENDEQUATIONSEPARATE );
 		GEMGL_LINK( gl.BlendFuncSeparate, "glBlendFuncSeparate", GEMGLFNBLENDFUNCSEPARATE );
 		GEMGL_LINK( gl.BlendFunc, "glBlendFunc", GEMGLFNBLENDFUNC );
@@ -427,18 +431,18 @@ namespace renderer
 		GEMGL_LINK( gl.IsFramebuffer, "glIsFramebuffer", GEMGLFNISFRAMEBUFFER );
 
 		GEMGL_LINK( gl.GetFramebufferAttachmentParameteriv, "glGetFramebufferAttachmentParameteriv", GEMGLFNGETFRAMEBUFFERATTACHMENTPARAMETERIV );
-		
+
 		GEMGL_LINK( gl.IsRenderbuffer, "glIsRenderbuffer", GEMGLFNISRENDERBUFFER );
-		GEMGL_LINK( gl.GetRenderbufferParameteriv, "glGetRenderbufferParameteriv", GEMGLFNGETRENDERBUFFERPARAMETERIV );	
+		GEMGL_LINK( gl.GetRenderbufferParameteriv, "glGetRenderbufferParameteriv", GEMGLFNGETRENDERBUFFERPARAMETERIV );
 
 #if defined(PLATFORM_OPENGL_SUPPORT)
 		GEMGL_LINK( gl.QueryCounter, "glQueryCounter", GEMGLFNQUERYCOUNTER);
 		GEMGL_LINK( gl.GetQueryObjecti64v, "glGetQueryObjecti64v", GEMGLFNGETQUERYOBJECTI64V);
 		GEMGL_LINK( gl.GetQueryObjectui64v, "glGetQueryObjectui64v", GEMGLFNGETQUERYOBJECTUI64V);
 #endif
-		
+
 		GEMGL_LINK( gl.DrawBuffers, "glDrawBuffers", GEMGLFNDRAWBUFFERS);
-		
+
 #if PLATFORM_WINDOWS
 		GEMGL_LINK( gl.SwapInterval, "wglSwapIntervalEXT", GEMGLSWAPINTERVAL );
 #endif
@@ -460,24 +464,26 @@ namespace renderer
 		{
 			LOGV( "GL_VENDOR: %s\n", gl.GetString(GL_VENDOR) );
 			gl.CheckError( "glGetString" );
-			
+
 			LOGV( "GL_RENDERER: %s\n", gl.GetString(GL_RENDERER) );
 			gl.CheckError( "glGetString" );
-			
+
 			LOGV( "GL_VERSION: %s\n", gl.GetString(GL_VERSION) );
 			gl.CheckError( "glGetString" );
-			
+
 			LOGV( "GL_SHADING_LANGUAGE_VERSION: %s\n", gl.GetString(GL_SHADING_LANGUAGE_VERSION) );
 			gl.CheckError( "glGetString" );
-			
+
+// only supported in GL 3.0+
 #if defined(GL_NUM_EXTENSIONS) // not available for GLES2
 			GLint total_extensions = -1;
 			gl.GetIntegerv(GL_NUM_EXTENSIONS, &total_extensions);
-			
+			gl.CheckError("GetIntegerv");
+
 	//		LOGV( "GL_EXTENSIONS: %s\n", gl.GetString(GL_EXTENSIONS) );
 	//		gl.CheckError( "glGetString" );
 
-			if (total_extensions)
+			if (total_extensions > 0)
 			{
 				LOGV("GL_EXTENSIONS: (%i)\n", total_extensions);
 				for (int i = 0; i < total_extensions; ++i)
@@ -485,9 +491,12 @@ namespace renderer
 					LOGV("[%i] - %s\n", i, gl.GetStringi(GL_EXTENSIONS, i));
 				}
 			}
-#elif defined(GL_EXTENSIONS)
-			LOGV("GL_EXTENSIONS: %s\n", gl.GetString(GL_EXTENSIONS));
 #endif
+
+			if (total_extensions == -1)
+			{
+				LOGV("GL_EXTENSIONS: %s\n", gl.GetString(GL_EXTENSIONS));
+			}
 
 		}
 
@@ -563,15 +572,15 @@ namespace renderer
 			case GL_FLOAT_MAT4			: return "GL_FLOAT_MAT4"; break;
 			case GL_SAMPLER_2D			: return "GL_SAMPLER_2D"; break;
 			case GL_SAMPLER_CUBE		: return "GL_SAMPLER_CUBE"; break;
-				
+
 #if !TARGET_OS_IPHONE && !defined(PLATFORM_ANDROID)
-			case GL_SAMPLER_1D			: return "GL_SAMPLER_1D"; break;					
-			case GL_SAMPLER_3D			: return "GL_SAMPLER_3D"; break;					
+			case GL_SAMPLER_1D			: return "GL_SAMPLER_1D"; break;
+			case GL_SAMPLER_3D			: return "GL_SAMPLER_3D"; break;
 			case GL_SAMPLER_1D_SHADOW	: return "GL_SAMPLER_1D_SHADOW"; break;
 			case GL_SAMPLER_2D_SHADOW	: return "GL_SAMPLER_2D_SHADOW"; break;
 #endif
 		}
-		
+
 		return "Unknown type!";
 	} // gemgl_uniform_to_string
 
@@ -581,7 +590,7 @@ namespace renderer
 		bool found_extension = false;
 		const GLubyte* extension_string = gl.GetString(GL_EXTENSIONS);
 		found_extension = (core::str::strstr((const char*)extension_string, extension) != 0);
-		
+
 		return found_extension;
 	} // gemgl_find_extension
 } // namespace renderer

@@ -41,6 +41,14 @@ namespace platform
 		typedef GLXContext (*GLXCREATECONTEXTATTRIBSARBPROC)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 		GLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB = 0;
 
+		int _global_error_code = 0;
+
+		int error_handler(Display* display, XErrorEvent* event)
+		{
+			PLATFORM_LOG(platform::LogMessageType::Error, "XErrorEvent->error_code: %i\n", event->error_code);
+			_global_error_code = event->error_code;
+			return 0;
+		}
 
 		const size_t WINDOW_MAX_ATTRIBUTES = 24;
 
@@ -49,9 +57,9 @@ namespace platform
 			XVisualInfo* vi;
 			GLXContext context;
 
-			X11GraphicsData() : 
+			X11GraphicsData() :
 				vi(nullptr)
-			{		
+			{
 			}
 		};
 
@@ -67,6 +75,8 @@ namespace platform
 
 		Result X11GraphicsProvider::startup(WindowProvider* wp)
 		{
+			XSetErrorHandler(error_handler);
+
 			window_provider = static_cast<X11WindowProvider*>(wp);
 			assert(window_provider != nullptr);
 
@@ -94,7 +104,7 @@ namespace platform
 
 			NativeWindow* temporary_window = ::platform::window::create(params);
 
-			// We should have a valid GL context now -- let's try to fetch the 
+			// We should have a valid GL context now -- let's try to fetch the
 
 			PLATFORM_LOG(LogMessageType::Info, "fetching symbol\n");
 
@@ -152,6 +162,25 @@ namespace platform
 					context_attributes
 				);
 
+				// fall back to compatibility mode
+				if (_global_error_code != 0)
+				{
+					_global_error_code = 0;
+					context_attributes[1] = GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
+					context_attributes[2] = None;
+					data->context = glXCreateContextAttribsARB(
+						window_provider->get_display(),
+						*config,
+						share_context,
+						direct_rendering,
+						context_attributes
+					);
+
+					// We can't even get a 2.1 context!
+					assert(data->context != nullptr);
+				}
+
+
 				if (!share_context)
 				{
 					share_context = data->context;
@@ -198,7 +227,7 @@ namespace platform
 		void X11GraphicsProvider::swap_buffers(NativeWindow* window)
 		{
 			void* native_handle = window->get_native_handle();
-			Window* window_handle = static_cast<Window*>(native_handle);			
+			Window* window_handle = static_cast<Window*>(native_handle);
 			glXSwapBuffers(window_provider->get_display(), *window_handle);
 		}
 
@@ -231,7 +260,7 @@ namespace platform
 			assert(config != nullptr);
 
 			data->vi = glXGetVisualFromFBConfig(
-				window_provider->get_display(), 
+				window_provider->get_display(),
 				*config
 			);
 		}
