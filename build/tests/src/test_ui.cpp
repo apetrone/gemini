@@ -516,7 +516,7 @@ public:
 		// create a test window
 		platform::window::Parameters params;
 		params.frame = platform::window::centered_window_frame(0, 1280, 720);
-		params.window_title = "test_nom";
+		params.window_title = "test_ui";
 
 		native_window = platform::window::create(params);
 		assert(native_window != nullptr);
