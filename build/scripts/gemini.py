@@ -14,7 +14,7 @@ COMMON_PROJECT_ROOT = "_projects"
 # TODO:
 	# windows:
 	# - platform needs user32.lib
-	# 
+	#
 
 
 # dependencies
@@ -29,7 +29,7 @@ libsdl = Dependency(file="sdl2.py",
 	]
 )
 
-libnom = Dependency(file="nom.py")
+libglm = Dependency(file="glm.py")
 librecastnavigation = Dependency(file="recastnavigation.py")
 
 def setup_common_variables(arguments, target_platform, product):
@@ -124,7 +124,7 @@ def setup_common_tool(product):
 	]
 
 	product.dependencies += [
-		Dependency(file="glm.py")
+		libglm
 	]
 
 	linux = product.layout(platform="linux")
@@ -159,7 +159,7 @@ def setup_common_libs(arguments, product):
 
 
 	product.dependencies += [
-		Dependency(file="glm.py")
+		libglm
 	]
 
 	if arguments.with_civet:
@@ -169,7 +169,7 @@ def setup_common_libs(arguments, product):
 
 		product.sources += [
 			os.path.join(DEPENDENCIES_FOLDER, "civetweb/src/CivetServer.cpp"),
-			os.path.join(DEPENDENCIES_FOLDER, "civetweb/src/civetweb.c"),			
+			os.path.join(DEPENDENCIES_FOLDER, "civetweb/src/civetweb.c"),
 			os.path.join(DEPENDENCIES_FOLDER, "civetweb/include/*.h")
 		]
 
@@ -194,16 +194,16 @@ def setup_common_libs(arguments, product):
 
 	windows = product.layout(platform="windows")
 	windows.includes += [
-		os.path.join(SDKS_FOLDER, "openal-1.1", "include")	
+		os.path.join(SDKS_FOLDER, "openal-1.1", "include")
 	]
 
 	win32 = product.layout(platform="windows", architecture="x86")
-	win32.libdirs += [ 
+	win32.libdirs += [
 		os.path.join(SDKS_FOLDER, "openal-1.1", "libs/Win32")
 	]
 
 	win64 = product.layout(platform="windows", architecture="x86_64")
-	win64.libdirs += [ 
+	win64.libdirs += [
 		os.path.join(SDKS_FOLDER, "openal-1.1", "libs/Win64")
 	]
 
@@ -263,7 +263,7 @@ def setup_driver(arguments, product):
 		# this is technically bad, but it's entrenched at present
 		"-Wno-gnu-zero-variadic-macro-arguments"
 	]
-	
+
 	mac_release = product.layout(platform="macosx", configuration="release")
 
 	linux = product.layout(platform="linux")
@@ -271,7 +271,7 @@ def setup_driver(arguments, product):
 	if arguments.raspberrypi:
 		linux.defines += [
 			"PLATFORM_RASPBERRYPI=1"
-		]		
+		]
 	if arguments.with_egl:
 		linux.defines += [
 			"PLATFORM_EGL_SUPPORT=1"
@@ -306,11 +306,11 @@ def setup_driver(arguments, product):
 		if arguments.raspberrypi:
 			linux.libdirs += [
 				"/opt/vc/lib"
-			]		
+			]
 			linux.links += [
 				# Broadcom
 				"bcm_host",
-				
+
 				# VideoCore
 				"vcos",
 
@@ -324,17 +324,17 @@ def setup_driver(arguments, product):
 			]
 		else:
 			linux.links += [
-				"GL"		
+				"GL"
 			]
-	
-def get_tools(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
+
+def get_tools(arguments, libui, libruntime, librenderer, libplatform, libcore, **kwargs):
 	#
 	#
 	#
 	tools = []
 
 	target_platform = kwargs.get("target_platform")
-	
+
 	#
 	# muse: asset conversion tool
 	#
@@ -377,7 +377,7 @@ def get_tools(arguments, libruntime, librenderer, libplatform, libcore, **kwargs
 
 	macosx = muse.layout(platform="macosx")
 	macosx.links += [
-		"Cocoa.framework"	
+		"Cocoa.framework"
 	]
 	muse.product_root = COMMON_PRODUCT_ROOT
 	setup_driver(arguments, muse)
@@ -387,7 +387,7 @@ def get_tools(arguments, libruntime, librenderer, libplatform, libcore, **kwargs
 	#kraken = get_kraken(arguments, libruntime, libplatform, libcore, librenderer, **kwargs)
 	#tools.append(kraken)
 
-	orion = get_orion(arguments, libruntime, libplatform, libcore, librenderer, **kwargs)
+	orion = get_orion(arguments, libui, libruntime, libplatform, libcore, librenderer, **kwargs)
 	tools.append(orion)
 
 	return tools
@@ -401,7 +401,7 @@ def get_libcore(arguments, target_platform):
 	libcore.sources += [
 		"src/core/*.cpp",
 		"src/core/*.h",
-		"src/core/memory/*.h",		
+		"src/core/memory/*.h",
 
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c")
 	]
@@ -419,7 +419,7 @@ def get_libcore(arguments, target_platform):
 	]
 
 	return libcore
-	
+
 def get_libplatform(arguments, target_platform):
 	libplatform = Product(name="platform", output=ProductType.DynamicLibrary)
 	setup_driver(arguments, libplatform)
@@ -430,7 +430,7 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/graphics_provider.h",
 		"src/platform/kernel.cpp",
 		"src/platform/kernel.h",
-		"src/platform/kernel_events.h",	
+		"src/platform/kernel_events.h",
 		"src/platform/platform.cpp",
 		"src/platform/platform.h",
 		"src/platform/platform_internal.h",
@@ -485,7 +485,7 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/thread/osx/osx_thread.cpp",
 		"src/platform/thread/posix/posix_thread_common.cpp",
 		"src/platform/thread/posix/posix_thread.h",
-		
+
 		# time
 		"src/platform/time/osx/osx_timer.cpp",
 		"src/platform/time/posix/posix_datetime.cpp",
@@ -555,10 +555,10 @@ def get_libplatform(arguments, target_platform):
 		]
 		linux.sources += [
 			"src/platform/graphics/x11/*.cpp",
-			"src/platform/graphics/x11/*.h"			
+			"src/platform/graphics/x11/*.h"
 		]
 
-	# 
+	#
 	# egl support
 	if arguments.with_egl:
 		linux.sources += [
@@ -566,12 +566,12 @@ def get_libplatform(arguments, target_platform):
 			"src/platform/graphics/egl/*.h"
 		]
 
-	# 
+	#
 	# Raspberry Pi: Add support for DispmanX, VideoCore
 	if arguments.raspberrypi:
 		linux.sources += [
 			"src/platform/window/dispmanx/*.cpp",
-			"src/platform/window/dispmanx/*.h"			
+			"src/platform/window/dispmanx/*.h"
 		]
 		linux.includes += [
 			"/opt/vc/include",
@@ -619,10 +619,10 @@ def get_librenderer(arguments, target_platform, libruntime):
 		"src/renderer/*.*",
 
 		"src/contrib/stb_image.c",
-		"src/contrib/stb_truetype.h",		
+		"src/contrib/stb_truetype.h",
 
 		# include this amalgamated version of jsoncpp until we replace it.
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")		
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")
 	]
 
 	librenderer.defines += [
@@ -636,7 +636,7 @@ def get_librenderer(arguments, target_platform, libruntime):
 		"src/renderer/gl",
 
 		os.path.join(DEPENDENCIES_FOLDER, "fontstash/src"),
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp")	
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp")
 	]
 
 	librenderer.dependencies += [
@@ -656,7 +656,7 @@ def get_librenderer(arguments, target_platform, libruntime):
 	elif arguments.gles:
 		librenderer.sources += [
 			"src/renderer/gl/*.cpp",
-			"src/renderer/gl/*.h",		
+			"src/renderer/gl/*.h",
 			# "src/renderer/gl/gles2/*.cpp",
 			# "src/renderer/gl/gles2/*.h"
 			"src/renderer/gl/gles2/*.cpp",
@@ -678,7 +678,7 @@ def get_librenderer(arguments, target_platform, libruntime):
 
 	return librenderer
 
-def get_libruntime(arguments, target_platform):
+def get_libruntime(arguments, target_platform, libui):
 	libruntime = Product(name="runtime", output=ProductType.DynamicLibrary)
 	setup_driver(arguments, libruntime)
 	libruntime.project_root = COMMON_PROJECT_ROOT
@@ -689,7 +689,7 @@ def get_libruntime(arguments, target_platform):
 		"src/runtime/*.h",
 
 		# include this amalgamated version of jsoncpp until we replace it.
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")		
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")
 	]
 
 	libruntime.defines += [
@@ -698,10 +698,10 @@ def get_libruntime(arguments, target_platform):
 
 	libruntime.includes += [
 		"src/runtime",
-		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),		
+		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),
 	]
 
-	libruntime.dependencies.append(libnom)
+	libruntime.dependencies.append(libui)
 
 	return libruntime
 
@@ -729,7 +729,69 @@ def get_sdk(arguments, links, **kwargs):
 
 	return sdk
 
+def get_libui(arguments, **kwargs):
+	target_platform = kwargs.get("target_platform", None)
 
+	ui = Product(name="ui", output=ProductType.DynamicLibrary)
+	setup_driver(arguments, ui)
+	ui.root = "../"
+	ui.project_root = COMMON_PROJECT_ROOT
+
+
+	# for maths
+	ui.dependencies += [
+		libglm
+	]
+
+	ui.sources = [
+		"src/ui/**.c*",
+		"src/ui/**.h"
+	]
+
+	ui.includes = [
+		"src"
+	]
+
+	debug = ui.layout(configuration="debug")
+	debug.defines = [
+		"DEBUG"
+	]
+	release = ui.layout(configuration="release")
+
+
+	#
+	# macosx
+	#
+	macosx_debug = ui.layout(platform="macosx", configuration="debug")
+	macosx_debug.driver.gcc_optimization_level = "0"
+	macosx_debug.driver.gcc_generate_debugging_symbols = "YES"
+	macosx_debug.driver.debug_information_format = "dwarf-with-dsym"
+
+	macosx_release = ui.layout(platform="macosx", configuration="release")
+	macosx_release.driver.gcc_optimization_level = "2"
+	macosx_release.driver.gcc_generate_debugging_symbols = "NO"
+
+	#
+	# linux
+	#
+	linux_debug = ui.layout(configuration="debug", platform="linux")
+	linux_debug.cflags = [
+		"-g",
+		"-Wall",
+		"-O0"
+	]
+
+	linux_release = ui.layout(configuration="release", platform="linux")
+	linux_release.cflags = [
+		"-O2"
+	]
+
+	windows = ui.layout(platform="windows")
+	windows.defines += [
+		"UNICODE"
+	]
+
+	return ui
 
 def get_rnd(arguments, links, **kwargs):
 	global_params = kwargs.get("global_params")
@@ -784,9 +846,9 @@ def get_rnd(arguments, links, **kwargs):
 	return rnd
 
 def create_unit_test(arguments, name, dependencies, source, output_type = ProductType.Commandline):
-	product = Product(name=name, output=output_type)	
+	product = Product(name=name, output=output_type)
 	product.project_root = COMMON_PROJECT_ROOT
-	product.root = "../"	
+	product.root = "../"
 	product.includes += [
 		"tests"
 	]
@@ -807,16 +869,16 @@ def create_unit_test(arguments, name, dependencies, source, output_type = Produc
 	product.dependencies.extend(dependencies)
 
 	setup_driver(arguments, product)
-		
+
 	return product
 
-def get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, libglm, libnom, **kwargs):
+def get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, libglm, libui, **kwargs):
 	return [
 		create_unit_test(arguments, "test_core", [libcore, libglm], "tests/src/test_core.cpp"),
-		create_unit_test(arguments, "test_platform", [librenderer, libruntime, libnom, libplatform, libcore, libglm], "tests/src/test_platform.cpp"),
-		create_unit_test(arguments, "test_runtime", [libruntime, libnom, libplatform, libcore, libglm], "tests/src/test_runtime.cpp"),
-		create_unit_test(arguments, "test_render", [librenderer, libruntime, libnom, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
-		create_unit_test(arguments, "test_nom", [librenderer, libruntime, libnom, libplatform, libcore, libglm], "tests/src/test_nom.cpp", ProductType.Application)
+		create_unit_test(arguments, "test_platform", [librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_platform.cpp"),
+		create_unit_test(arguments, "test_runtime", [libruntime, libui, libplatform, libcore, libglm], "tests/src/test_runtime.cpp"),
+		create_unit_test(arguments, "test_render", [librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
+		create_unit_test(arguments, "test_ui", [librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application)
 	]
 
 def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
@@ -843,11 +905,11 @@ def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwarg
 		libplatform,
 		libcore,
 		librenderer,
-		libnom
+		libui
 	])
 
 	kraken.sources += [
-		"src/tools/kraken/kraken.cpp"	
+		"src/tools/kraken/kraken.cpp"
 	]
 
 	macosx = kraken.layout(platform="macosx")
@@ -861,7 +923,7 @@ def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwarg
 	macosx.resources = [
 		"src/tools/kraken/resources/osx/en.lproj/*.xib",
 		"src/tools/kraken/resources/osx/en.lproj/*.strings"
-	]	
+	]
 
 	linux = kraken.layout(platform="linux")
 	linux.links += [
@@ -870,7 +932,7 @@ def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwarg
 
 	return kraken
 
-def get_orion(arguments, libruntime, libplatform, libcore, librenderer, **kwargs):
+def get_orion(arguments, libui, libruntime, libplatform, libcore, librenderer, **kwargs):
 	orion = Product(name="orion", output=ProductType.Application)
 	orion.project_root = COMMON_PROJECT_ROOT
 	orion.product_root = COMMON_PRODUCT_ROOT
@@ -889,12 +951,12 @@ def get_orion(arguments, libruntime, libplatform, libcore, librenderer, **kwargs
 		libplatform,
 		libcore,
 		librenderer,
-		libruntime,		
-		Dependency(file="nom.py")
+		libruntime,
+		libui
 	])
 
 	orion.sources += [
-		"src/tools/orion/orion.cpp"	
+		"src/tools/orion/orion.cpp"
 	]
 
 	macosx = orion.layout(platform="macosx")
@@ -908,7 +970,7 @@ def get_orion(arguments, libruntime, libplatform, libcore, librenderer, **kwargs
 	macosx.resources = [
 		"src/tools/orion/resources/osx/en.lproj/*.xib",
 		"src/tools/orion/resources/osx/en.lproj/*.strings"
-	]	
+	]
 
 	linux = orion.layout(platform="linux")
 	linux.links += [
@@ -993,7 +1055,7 @@ def products(arguments, **kwargs):
 	else:
 		raise Exception("Unknown renderer!")
 
-	
+
 
 	libcore = get_libcore(arguments, target_platform)
 
@@ -1002,7 +1064,9 @@ def products(arguments, **kwargs):
 		libplatform.dependencies.append(libsdl)
 	libplatform.dependencies += [libcore]
 
-	libruntime = get_libruntime(arguments, target_platform)
+	libui = get_libui(arguments, **kwargs)
+
+	libruntime = get_libruntime(arguments, target_platform, libui)
 	libruntime.dependencies += [libcore, libplatform, Dependency(file="glm.py")]
 
 	librenderer = get_librenderer(arguments, target_platform, libruntime)
@@ -1010,12 +1074,12 @@ def products(arguments, **kwargs):
 
 	# don't add this until we clean up the shaderconfig dependency on libruntime
 	#libruntime.dependencies.append(librenderer)
-	
+
 
 
 	tools = []
 	if arguments.with_tools:
-		tools = get_tools(arguments, libruntime, librenderer, libplatform, libcore, **kwargs)
+		tools = get_tools(arguments, libui, libruntime, librenderer, libplatform, libcore, **kwargs)
 	else:
 		logging.warn("Compiling WITHOUT tools...")
 
@@ -1046,7 +1110,7 @@ def products(arguments, **kwargs):
 		libcore,
 		Dependency(file="sqrat.py"),
 		#Dependency(file="squirrel3.py", products=["squirrel", "sqstdlib"]),
-		libnom,
+		libui,
 		Dependency(file="bullet2.py", products=["BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"]),
 		librecastnavigation
 	]
@@ -1072,12 +1136,12 @@ def products(arguments, **kwargs):
 
 		"src/engine/kernels/test_bullet2.cpp",
 		"src/engine/kernels/test_mobile.cpp",
-		"src/engine/kernels/test_nom.cpp"
+		"src/engine/kernels/test_ui.cpp"
 	]
 
 
 
-	
+
 
 	if target_platform.get() in DESKTOP:
 		gemini.sources += [
@@ -1119,7 +1183,7 @@ def products(arguments, **kwargs):
 
 			linux.defines += [
 				"PLATFORM_USE_GLES=1"
-			]			
+			]
 		else:
 			linux.links += ["GL"]
 
@@ -1136,7 +1200,7 @@ def products(arguments, **kwargs):
 			"ole32",
 			"user32"
 		]
-		
+
 	iphoneos = gemini.layout(platform="iphoneos")
 	# iphoneos.prebuild_commands += [
 	# 	"python %s -c ../assets/ios.conf -y" % (BLACKSMITH_PATH)
@@ -1157,10 +1221,10 @@ def products(arguments, **kwargs):
 	rnd = get_rnd(arguments, [libruntime, librenderer, libplatform, libcore], **kwargs)
 	tests = []
 	if arguments.with_tests:
-		# Ugh, for now, we also link in libnom because the runtime requires it.
+		# Ugh, for now, we also link in libui because the runtime requires it.
 		# I feel like pegasus should identify such dependencies and take care of it in the future.
 		# Though, for now, just link it in.
-		tests = get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, Dependency(file="glm.py"), libnom, **kwargs)
+		tests = get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, Dependency(file="glm.py"), libui, **kwargs)
 
-	return [librenderer, libruntime, libplatform, libcore] + [libsdk, gemini] + tools + [rnd] + tests
+	return [libui, librenderer, libruntime, libplatform, libcore] + [libsdk, gemini] + tools + [rnd] + tests
 

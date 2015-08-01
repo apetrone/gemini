@@ -220,10 +220,10 @@ static util::ConfigLoadStatus settings_conf_loader( const Json::Value & root, vo
 }
 
 
-#include <nom/nom.hpp>
-#include <nom/compositor.hpp>
-#include <nom/graph.hpp>
-#include <nom/button.hpp>
+#include <ui/ui.h>
+#include <ui/compositor.h>
+#include <ui/graph.h>
+#include <ui/button.h>
 
 #include "guirenderer.h"
 

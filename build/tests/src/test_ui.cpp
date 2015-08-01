@@ -37,10 +37,10 @@
 #include <renderer/vertexbuffer.h>
 #include <renderer/vertexstream.h>
 
-#include <nom/nom.hpp>
-#include <nom/compositor.hpp>
-#include <nom/graph.hpp>
-#include <nom/button.hpp>
+#include <ui/ui.h>
+#include <ui/compositor.h>
+#include <ui/graph.h>
+#include <ui/button.h>
 
 #include <assert.h>
 
@@ -393,9 +393,9 @@ namespace experimental
 } // namespace experimental
 
 // ---------------------------------------------------------------------
-// TestNom
+// TestUi
 // ---------------------------------------------------------------------
-class TestNom : public kernel::IKernel,
+class TestUi : public kernel::IKernel,
 	public kernel::IEventListener<kernel::KeyboardEvent>,
 	public kernel::IEventListener<kernel::MouseEvent>,
 	public kernel::IEventListener<kernel::SystemEvent>
@@ -440,7 +440,7 @@ public:
 	}
 public:
 
-	TestNom()
+	TestUi()
 	{
 		native_window = nullptr;
 		active = true;
@@ -716,5 +716,5 @@ private:
 PLATFORM_MAIN
 {
 	PLATFORM_IMPLEMENT_PARAMETERS();
-	PLATFORM_RETURN(platform::run_application(new TestNom()));
+	PLATFORM_RETURN(platform::run_application(new TestUi()));
 }

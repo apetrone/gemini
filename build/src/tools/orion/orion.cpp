@@ -40,10 +40,10 @@
 
 #include <runtime/filesystem.h>
 
-#include <nom/nom.hpp>
-#include <nom/compositor.hpp>
-#include <nom/graph.hpp>
-#include <nom/button.hpp>
+#include <ui/ui.h>
+#include <ui/compositor.h>
+#include <ui/graph.h>
+#include <ui/button.h>
 
 // when defined; uses the old method for creating windows
 //#define USE_WINDOW_LIBRARY
@@ -365,7 +365,7 @@ public:
 		render_pass.target = device->default_render_target();
 		render_pass.color(value, value, value, 1.0f);
 
-		render2::CommandQueue queue(&render_pass);
+		render2::CommandQueue* queue = device->create_queue(render_pass);
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
 		
 		serializer->pipeline(pipeline);
@@ -377,7 +377,7 @@ public:
 		platform::window::activate_context(main_window);
 #endif
 				
-		device->queue_buffers(&queue, 1);
+		device->queue_buffers(queue, 1);
 		device->submit();
 				
 		device->destroy_serializer(serializer);

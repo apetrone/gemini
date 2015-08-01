@@ -27,8 +27,8 @@
 #include <core/mathlib.h>
 #include <core/color.h>
 
-#include <nom/nom.hpp>
-#include <nom/compositor.hpp>
+#include <ui/ui.h>
+#include <ui/compositor.h>
 
 #include <renderer/vertexstream.h>
 #include <renderer/renderstream.h>
