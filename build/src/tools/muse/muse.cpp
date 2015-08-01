@@ -225,7 +225,7 @@ namespace gemini
 			if (!reader)
 			{
 				LOGE("no reader found for extension: %s\n", ext.c_str());
-				return platform::Result(platform::Result::failure("Unable to read format");
+				return platform::Result::failure("Unable to read format");
 			}
 
 
@@ -237,7 +237,7 @@ namespace gemini
 			if (!writer)
 			{
 				LOGE("no writer found for extension: %s\n", ext.c_str());
-				return platform::Result(platform::Result::failure("Unable to write format");
+				return platform::Result::failure("Unable to write format");
 			}
 
 			util::MemoryStream mds;
@@ -245,7 +245,7 @@ namespace gemini
 			if (!reader->read(&model, mds))
 			{
 				LOGV("Error reading file '%s'\n", input_path());
-				return platform::Result(platform::Result::failure("Error reading input file");
+				return platform::Result::failure("Error reading input file");
 			}
 
 			// TODO: compress animation keys
