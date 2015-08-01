@@ -139,7 +139,7 @@ void GUIRenderer::end_frame()
 }
 
 
-void GUIRenderer::draw_bounds(const gui::Bounds& bounds, const gui::Color& color)
+void GUIRenderer::draw_bounds(const gui::Rect& bounds, const gui::Color& color)
 {
 //	//		gui::Size size = bounds.size;
 //	//		glm::vec3 start = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );
@@ -189,7 +189,7 @@ void GUIRenderer::draw_bounds(const gui::Bounds& bounds, const gui::Color& color
 //	this->render_buffer(stream, shader, solid_color);
 }
 
-void GUIRenderer::draw_textured_bounds(const gui::Bounds& bounds, const gui::TextureHandle& handle)
+void GUIRenderer::draw_textured_bounds(const gui::Rect& bounds, const gui::TextureHandle& handle)
 {
 //	stream.reset();
 //	::renderer::RenderStream rs;
@@ -294,7 +294,7 @@ void GUIRenderer::font_destroy(const gui::FontHandle& handle)
 	// nothing really to do in our system
 }
 
-gui::FontResult GUIRenderer::font_measure_string(const gui::FontHandle& handle, const char* string, gui::Bounds& bounds)
+gui::FontResult GUIRenderer::font_measure_string(const gui::FontHandle& handle, const char* string, gui::Rect& bounds)
 {
 	assets::Font* font = assets::fonts()->find_with_id(handle);
 	if (font)
@@ -308,7 +308,7 @@ gui::FontResult GUIRenderer::font_measure_string(const gui::FontHandle& handle, 
 	return gui::FontResult_Failed;
 }
 
-void GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Bounds& bounds, const gui::Color& color)
+void GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color)
 {
 	assets::Font* font = assets::fonts()->find_with_id(handle);
 	if (font)

@@ -75,16 +75,16 @@ public:
 	virtual void begin_frame(gui::Compositor* c);
 	virtual void end_frame();
 	
-	virtual void draw_bounds(const gui::Bounds& bounds, const gui::Color& color);
-	virtual void draw_textured_bounds(const gui::Bounds& bounds, const gui::TextureHandle& handle);
+	virtual void draw_bounds(const gui::Rect& bounds, const gui::Color& color);
+	virtual void draw_textured_bounds(const gui::Rect& bounds, const gui::TextureHandle& handle);
 	void draw_line(const gui::Point& start, const gui::Point& end, const gui::Color& color);
 	virtual gui::TextureResult texture_create(const char* path, gui::TextureHandle& handle);
 	virtual void texture_destroy(const gui::TextureHandle& handle);
 	virtual gui::TextureResult texture_info(const gui::TextureHandle& handle, uint32_t& width, uint32_t& height, uint8_t& channels);
 	virtual gui::FontResult font_create(const char* path, gui::FontHandle& handle);
 	virtual void font_destroy(const gui::FontHandle& handle);
-	virtual gui::FontResult font_measure_string(const gui::FontHandle& handle, const char* string, gui::Bounds& bounds);
-	virtual void font_draw(const gui::FontHandle& handle, const char* string, const gui::Bounds& bounds, const gui::Color& color);
+	virtual gui::FontResult font_measure_string(const gui::FontHandle& handle, const char* string, gui::Rect& bounds);
+	virtual void font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color);
 	virtual gui::FontResult font_fetch_texture(const gui::FontHandle& handle, gui::TextureHandle& texture);
 	virtual void draw_command_lists(gui::render::CommandList** command_lists, size_t total_lists);
 	
