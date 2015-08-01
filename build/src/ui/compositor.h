@@ -59,7 +59,7 @@ namespace gui
 		
 		TimeState timestate;
 
-		array<render::CommandList*> command_stream;
+		Array<render::CommandList*> command_stream;
 		
 		LIBRARY_EXPORT Compositor(ScreenInt width, ScreenInt height);
 		LIBRARY_EXPORT virtual ~Compositor();

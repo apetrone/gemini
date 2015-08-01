@@ -729,9 +729,7 @@ def get_sdk(arguments, links, **kwargs):
 
 	return sdk
 
-def get_libui(arguments, **kwargs):
-	target_platform = kwargs.get("target_platform", None)
-
+def get_libui(arguments, target_platform, libcore):
 	ui = Product(name="ui", output=ProductType.DynamicLibrary)
 	setup_driver(arguments, ui)
 	ui.root = "../"
@@ -740,6 +738,7 @@ def get_libui(arguments, **kwargs):
 
 	# for maths
 	ui.dependencies += [
+		libcore,
 		libglm
 	]
 
@@ -1064,7 +1063,7 @@ def products(arguments, **kwargs):
 		libplatform.dependencies.append(libsdl)
 	libplatform.dependencies += [libcore]
 
-	libui = get_libui(arguments, **kwargs)
+	libui = get_libui(arguments, target_platform, libcore)
 
 	libruntime = get_libruntime(arguments, target_platform, libui)
 	libruntime.dependencies += [libcore, libplatform, Dependency(file="glm.py")]
