@@ -48,7 +48,7 @@ namespace gui
 	void LIBRARY_EXPORT set_allocator(gui_malloc malloc_fn, gui_free free_fn);
 	
 	typedef float real;
-};
+}
 
 #include "ui/utils.h"
 #include "ui/events.h"
