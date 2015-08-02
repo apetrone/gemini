@@ -3,6 +3,10 @@ import logging
 
 from pegasus.models import Product, ProductType, Dependency
 
+
+# GCC 4.3+ needs -std=c++0x
+# GCC 4.7+ supports -std=c++11
+
 DEPENDENCIES_FOLDER = "dependencies"
 SDKS_FOLDER = os.path.join(DEPENDENCIES_FOLDER, "sdks")
 
