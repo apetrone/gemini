@@ -462,7 +462,7 @@ void test_str()
 
 	// llu is not recognized under 32-bit environments
 	char local[128] = {0};
-	result = core::str::sprintf(local, 128, "PAGE_SIZE: %i\n", 4096);
+	result = core::str::sprintf(local, 128, "test_of_sprintf: %i\n", 4096);
 	fprintf(stdout, "result: %s\n", local);
 	fprintf(stdout, "result is: %i\n", result);
 	TEST_VERIFY(result == 16, sprintf);
