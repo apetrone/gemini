@@ -45,13 +45,6 @@
 #include <ui/graph.h>
 #include <ui/button.h>
 
-// when defined; uses the old method for creating windows
-//#define USE_WINDOW_LIBRARY
-
-#if defined(PLATFORM_SDL2_SUPPORT)
-	#include <platform/windowlibrary.h>
-#endif
-
 
 using namespace platform;
 using namespace renderer;
@@ -79,9 +72,6 @@ public kernel::IEventListener<kernel::SystemEvent>
 {
 private:
 	bool active;
-#if defined(USE_WINDOW_LIBRARY)
-	platform::IWindowLibrary* window_interface;
-#endif
 	platform::window::NativeWindow* main_window;
 	
 	render2::Device* device;
@@ -115,9 +105,6 @@ private:
 public:
 	EditorKernel() :
 		active(true)
-#if defined(USE_WINDOW_LIBRARY)
-		, window_interface(0)
-#endif
 	{
 	}
 	
@@ -176,20 +163,6 @@ public:
 		core::startup_logging();
 		
 		// create a platform window
-#if USE_WINDOW_LIBRARY
-		{
-			window_interface = platform::create_window_library();
-			window_interface->startup(kernel::parameters());
-		
-			platform::WindowParameters window_params;
-			window_params.window.width = 800;
-			window_params.window.height = 600;
-			window_params.window_title = "orion";
-//			window_params.enable_fullscreen = true;
-			main_window = window_interface->create_window(window_params);
-			window_interface->show_mouse(true);
-		}
-#else
 		{
 			platform::window::startup(platform::window::RenderingBackend_Default);
 
@@ -206,7 +179,6 @@ public:
 			params.window_title = "orion";
 			main_window = platform::window::create(params);
 		}
-#endif
 
 		// old renderer initialize
 		{
@@ -331,13 +303,7 @@ public:
 	
 	virtual void tick()
 	{
-#if defined(USE_WINDOW_LIBRARY)
-		if (window_interface)
-			window_interface->process_events();
-#else
 		platform::window::dispatch_events();
-#endif
-		
 				
 		static float value = 0.0f;
 		static float multiplifer = 1.0f;
@@ -373,27 +339,16 @@ public:
 //		serializer->draw_indexed_primitives(index_buffer, 3);
 		serializer->draw(0, 3);
 		
-#if !defined(USE_WINDOW_LIBRARY)
 		platform::window::activate_context(main_window);
-#endif
 				
 		device->queue_buffers(queue, 1);
 		device->submit();
 				
 		device->destroy_serializer(serializer);
 		
-#if !defined(USE_WINDOW_LIBRARY)
 		platform::window::swap_buffers(main_window);
-#endif
 
 //		glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, 2000);
-		
-#if defined(USE_WINDOW_LIBRARY)
-		if (window_interface)
-		{
-			window_interface->swap_buffers(main_window);
-		}
-#endif
 	}
 	
 	
@@ -410,17 +365,9 @@ public:
 //		glDeleteSync(fence);
 		
 		renderer::shutdown();
-#if defined(USE_WINDOW_LIBRARY)
-		if (window_interface)
-		{
-			window_interface->destroy_window(main_window);
-			window_interface->shutdown();
-			platform::destroy_window_library();
-		}
-#else
+
 		platform::window::destroy(main_window);
 		platform::window::shutdown();
-#endif
 
 		core::shutdown();
 	}
