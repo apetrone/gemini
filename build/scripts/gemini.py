@@ -22,16 +22,6 @@ COMMON_PROJECT_ROOT = "_projects"
 
 
 # dependencies
-libsdl = Dependency(file="sdl2.py",
-		arguments=[
-		"--with-audio=0",
-		"--with-render=0",
-		#"--with-filesystem=0",
-		#"--with-file=0", required on MacOSX.
-		"--with-cpuinfo=0",
-		#"--with-power=0"
-	]
-)
 
 libglm = Dependency(file="glm.py")
 librecastnavigation = Dependency(file="recastnavigation.py")
@@ -446,18 +436,6 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/window_provider.h"
 	]
 
-	if arguments.with_sdl:
-		libplatform.sources += [
-			"src/platform/windowlibrary.cpp",
-			"src/platform/windowlibrary.h",
-			"src/platform/sdl_windowlibrary.cpp",
-			"src/platform/sdl_windowlibrary.h"
-		]
-
-		libplatform.defines += [
-			"PLATFORM_SDL2_SUPPORT=1"
-		]
-
 	libplatform.includes += [
 		"src/platform"
 	]
@@ -811,12 +789,6 @@ def get_rnd(arguments, links, **kwargs):
 	setup_driver(arguments, rnd)
 	setup_common_tool(rnd)
 
-	if arguments.with_sdl:
-		rnd.dependencies.append(libsdl)
-		rnd.defines += [
-			"PLATFORM_SDL2_SUPPORT=1"
-		]
-
 	rnd.dependencies.extend(links)
 
 	rnd_macosx = rnd.layout(platform="macosx")
@@ -898,12 +870,6 @@ def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwarg
 	setup_driver(arguments, kraken)
 	setup_common_tool(kraken)
 
-	if arguments.with_sdl:
-		kraken.dependencies.append(libsdl)
-		kraken.defines += [
-			"PLATFORM_SDL2_SUPPORT=1"
-		]
-
 	kraken.dependencies.extend([
 		libplatform,
 		libcore,
@@ -944,12 +910,6 @@ def get_orion(arguments, libui, libruntime, libplatform, libcore, librenderer, *
 	setup_driver(arguments, orion)
 	setup_common_tool(orion)
 
-	if arguments.with_sdl:
-		orion.dependencies.append(libsdl)
-		orion.defines += [
-			"PLATFORM_SDL2_SUPPORT=1"
-		]
-
 	orion.dependencies.extend([
 		libplatform,
 		libcore,
@@ -987,8 +947,6 @@ def arguments(parser):
 	parser.add_argument("--raspberrypi", dest="raspberrypi", action="store_true", help="Build for the RaspberryPi; implies EGL + OpenGLES", default=False)
 	parser.add_argument("--with-opengl", dest="opengl", action="store_true", help="Build with support for full OpenGL; mutually exclusive with OpenGL ES", default=True)
 
-	parser.add_argument("--with-sdl", dest="with_sdl", action="store_true", help="Build with SDL2 support", default=False)
-
 	parser.add_argument("--with-civet", dest="with_civet", action="store_true", help="Build with CivetServer", default=True)
 	parser.add_argument("--no-civet", dest="with_civet", action="store_false", help="Build without CivetServer")
 
@@ -1023,9 +981,7 @@ def products(arguments, **kwargs):
 	g_macosx.driver.macosx_deployment_target = "10.8"
 	g_macosx.driver.sdkroot = "macosx10.9"
 
-	# SDL2 doesn't build correctly with ARC enabled.
-	# if arguments.with_sdl:
-	g_macosx.driver.clang_enable_objc_arc = "NO"
+	g_macosx.driver.clang_enable_objc_arc = "YES"
 
 	# make visibility conformant
 	g_macosx.driver.gcc_inlines_are_private_extern = "NO"
@@ -1102,12 +1058,6 @@ def products(arguments, **kwargs):
 		librenderer,
 		libplatform
 	]
-
-	if arguments.with_sdl:
-		gemini.dependencies.append(libsdl)
-		gemini.defines += [
-			"PLATFORM_SDL2_SUPPORT=1"
-		]
 
 	gemini.dependencies += [
 		libcore,
