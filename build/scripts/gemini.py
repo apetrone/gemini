@@ -1019,8 +1019,6 @@ def products(arguments, **kwargs):
 	libcore = get_libcore(arguments, target_platform)
 
 	libplatform = get_libplatform(arguments, target_platform)
-	if arguments.with_sdl:
-		libplatform.dependencies.append(libsdl)
 	libplatform.dependencies += [libcore]
 
 	libui = get_libui(arguments, target_platform, libcore)
