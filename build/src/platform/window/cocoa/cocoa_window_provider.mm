@@ -203,7 +203,7 @@ namespace platform
 
 				virtual void* get_native_handle() override
 				{
-					return cw;
+					return (__bridge void*)cw;
 				}
 
 				CocoaWindow* cw;
