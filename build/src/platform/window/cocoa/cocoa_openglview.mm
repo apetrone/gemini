@@ -60,7 +60,6 @@ using namespace platform::window::cocoa;
 -(void)dealloc
 {
 	self.context = nil;
-	[super dealloc];
 }
 
 -(BOOL) isOpaque
