@@ -120,3 +120,33 @@ struct UnitTestCategory
 #define TEST_VERIFY(condition, name)\
 	UnitTest name##test(#name, __LINE__, !(condition));\
 	_category.add_test(&name##test)
+
+
+#define TEST(name)\
+	void test_##name##_execute(UnitTestCategory&);\
+	static UnitTest test_##name(#name, test_##name##_execute);\
+	test_##name##_execute(UnitTestCategory& _category)
+
+#define TEST_ASSERT(condition, name)\
+	if (!(condition))\
+	{\
+		fprintf(stdout, "'%s' FAILED (line = %i)\n", name, __LINE__);\
+	}
+
+#if 0
+USAGE:
+
+TEST(name)
+{
+	int array[30];
+
+	for (int i = 0; i < 30; ++i)
+	{
+		TEST_ASSERT(i == array[i], "array assignment");
+	}
+
+}
+
+
+
+#endif
