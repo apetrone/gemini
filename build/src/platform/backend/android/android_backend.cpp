@@ -39,6 +39,8 @@
 #include <android/api-level.h>
 #include <android/input.h>
 
+#include <unistd.h>
+
 #ifndef __ANDROID_API__
 	#error __ANDROID_API__ was not found!
 #endif
@@ -555,4 +557,14 @@ namespace platform
 		}
 	} // namespace android
 
+
+	size_t system_pagesize()
+	{
+		return sysconf(_SC_PAGESIZE);
+	}
+
+	size_t system_processor_count()
+	{
+		return sysconf(_SC_NPROCESSORS_ONLN);
+	}
 } // namespace platform

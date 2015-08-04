@@ -141,6 +141,24 @@ void test_serial()
 }
 
 // ---------------------------------------------------------------------
+// system
+// ---------------------------------------------------------------------
+void test_system()
+{
+	TEST_CATEGORY(system);
+
+	size_t page_size = platform::system_pagesize();
+
+	PLATFORM_LOG(platform::LogMessageType::Info, "page size: %i bytes\n", page_size);
+	TEST_VERIFY(page_size > 0, page_size);
+
+
+	size_t total_processors = platform::system_processor_count();
+	PLATFORM_LOG(platform::LogMessageType::Info, "total processors: %i\n", total_processors);
+	TEST_VERIFY(total_processors >= 1, system_processor_count);
+}
+
+// ---------------------------------------------------------------------
 // thread
 // ---------------------------------------------------------------------
 
@@ -192,6 +210,7 @@ int main(int, char**)
 	test_filesystem();
 	test_logging();
 	test_serial();
+	test_system();
 	test_datetime();
 
 	platform::shutdown();
