@@ -474,9 +474,10 @@ namespace renderer
 			LOGV( "GL_SHADING_LANGUAGE_VERSION: %s\n", gl.GetString(GL_SHADING_LANGUAGE_VERSION) );
 			gl.CheckError( "glGetString" );
 
+			GLint total_extensions = -1;
 // only supported in GL 3.0+
 #if defined(GL_NUM_EXTENSIONS) // not available for GLES2
-			GLint total_extensions = -1;
+
 			gl.GetIntegerv(GL_NUM_EXTENSIONS, &total_extensions);
 			gl.CheckError("GetIntegerv");
 
