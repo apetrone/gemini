@@ -26,6 +26,8 @@
 #include "window_provider.h"
 #include "graphics_provider.h"
 
+#include <unistd.h>
+
 #if defined(PLATFORM_RASPBERRYPI)
 	#include <bcm_host.h> // for bcm_host_init
 
@@ -312,5 +314,17 @@ namespace platform
 
 		}
 	} // namespace window
+
+
+	size_t system_pagesize()
+	{
+		return sysconf(_SC_PAGESIZE);
+	}
+
+	size_t system_processor_count()
+	{
+		return sysconf(_SC_NPROCESSORS_ONLN);
+	}
+
 } // namespace platform
 

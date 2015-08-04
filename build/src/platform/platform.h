@@ -379,6 +379,16 @@ namespace platform
 	LIBRARY_EXPORT int serial_write(Serial* serial, const void* buffer, int total_bytes);
 
 	// ---------------------------------------------------------------------
+	// system
+	// ---------------------------------------------------------------------
+
+	/// @brief Return the platform's pagesize in bytes
+	size_t system_pagesize();
+
+	/// @brief Return the number of physical CPUs in the system
+	size_t system_processor_count();
+
+	// ---------------------------------------------------------------------
 	// thread
 	// ---------------------------------------------------------------------
 

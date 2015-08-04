@@ -25,6 +25,8 @@
 #include "platform_internal.h"
 #include "cocoa_common.h"
 
+#include <unistd.h>
+
 namespace platform
 {
 	namespace cocoa
@@ -79,4 +81,21 @@ namespace platform
 	{
 		NSLog(@"%@", [NSString stringWithUTF8String:message]);
 	}
+
+
+
+
+	// ---------------------------------------------------------------------
+	// system
+	// ---------------------------------------------------------------------
+	size_t system_pagesize()
+	{
+		return getpagesize();
+	}
+
+	size_t system_processor_count()
+	{
+		return [[NSProcessInfo processInfo] processorCount];
+	}
+
 } // namespace platform
