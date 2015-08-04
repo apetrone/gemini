@@ -595,15 +595,15 @@ public:
 		static float accumulator = 0;
 
 		// calculate delta ticks in miliseconds
-		params.framedelta_raw_msec = (current_time - last_time)*0.001f;
+		params.framedelta_milliseconds = (current_time - last_time)*0.001f;
 
 		// cache the value in seconds
-		params.framedelta_filtered_seconds = params.framedelta_raw_msec*0.001f;
+		params.framedelta_seconds = params.framedelta_milliseconds*0.001f;
 
 		last_time = current_time;
 
 		// update accumulator
-		accumulator += params.framedelta_filtered_seconds;
+		accumulator += params.framedelta_seconds;
 
 		while(accumulator >= params.step_interval_seconds)
 		{
@@ -633,7 +633,7 @@ public:
 
 		if (graph)
 		{
-			graph->record_value(kernel::parameters().framedelta_raw_msec, 0);
+			graph->record_value(kernel::parameters().framedelta_milliseconds, 0);
 		}
 
 		// sanity check
@@ -643,7 +643,7 @@ public:
 
 		static float rot = 0.0f;
 
-		rot += 10.f*kernel::parameters().framedelta_filtered_seconds;
+		rot += 10.f*kernel::parameters().framedelta_seconds;
 
 		graph->set_rotation(mathlib::degrees_to_radians(rot));
 
@@ -651,7 +651,7 @@ public:
 			rot -= 360.0f;
 
 		// update the gui
-		compositor->update(kernel::parameters().framedelta_filtered_seconds);
+		compositor->update(kernel::parameters().framedelta_seconds);
 
 #if 1
 		render2::Pass render_pass;

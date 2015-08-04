@@ -65,9 +65,8 @@ namespace kernel
 		// time state
 		double step_interval_seconds;
 		float step_alpha;
-		float framedelta_filtered_msec;
-		float framedelta_filtered_seconds;
-		float framedelta_raw_msec;
+		float framedelta_seconds;
+		float framedelta_milliseconds;
 		
 		
 		// the current tick (physics step)

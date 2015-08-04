@@ -1580,13 +1580,13 @@ Options:
 		kernel::Parameters& params = kernel::parameters();
 		
 		// calculate delta ticks in miliseconds
-		params.framedelta_raw_msec = (current_time - last_time)*0.001f;
+		params.framedelta_milliseconds = (current_time - last_time)*0.001f;
 		// cache the value in seconds
-		params.framedelta_filtered_seconds = params.framedelta_raw_msec*0.001f;
+		params.framedelta_seconds = params.framedelta_milliseconds*0.001f;
 		last_time = current_time;
 		
 		// update accumulator
-		accumulator += params.framedelta_filtered_seconds;
+		accumulator += params.framedelta_seconds;
 		
 		while(accumulator >= params.step_interval_seconds)
 		{
@@ -1630,7 +1630,7 @@ Options:
 		input::update();
 	
 		audio::update();
-		animation::update(kernel::parameters().framedelta_filtered_seconds);
+		animation::update(kernel::parameters().framedelta_seconds);
 		hotloading::tick();
 		post_tick();
 		kernel::parameters().current_frame++;
@@ -1646,12 +1646,12 @@ Options:
 		
 		if (graph)
 		{
-			graph->record_value(kernel::parameters().framedelta_raw_msec, 0);
+			graph->record_value(kernel::parameters().framedelta_milliseconds, 0);
 		}
 		
 		if (compositor)
 		{
-			compositor->update(kernel::parameters().framedelta_raw_msec);
+			compositor->update(kernel::parameters().framedelta_milliseconds);
 		}
 
 
@@ -1715,7 +1715,7 @@ Options:
 //			debugdraw::text(x, y+24, core::str::format("active_camera->view = %.2g %.2g %.2g", main_camera.view.x, main_camera.view.y, main_camera.view.z), Color(128, 128, 255));
 //			debugdraw::text(x, y+36, core::str::format("active_camera->right = %.2g %.2g %.2g", main_camera.side.x, main_camera.side.y, main_camera.side.z), Color(255, 0, 0));
 		}
-		::renderer::debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_raw_msec), Color(255, 255, 255));
+		::renderer::debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_milliseconds), Color(255, 255, 255));
 		y += 12;
 		::renderer::debugdraw::text(x, y, core::str::format("# allocations = %i, total %2.2f MB\n",
 			core::memory::global_allocator().get_zone()->get_active_allocations(),
@@ -1738,17 +1738,14 @@ Options:
 		{
 			// 1. game_interface->run_frame(framedelta_seconds);
 			// 2. game_interface->draw_frame();
-			
-			float framedelta_seconds = kernel::parameters().framedelta_raw_msec*0.001f;
-			
 			game_interface->server_frame(
 				kernel::parameters().current_tick,
-				framedelta_seconds,
+				kernel::parameters().framedelta_seconds,
 				kernel::parameters().step_interval_seconds,
 				kernel::parameters().step_alpha
 			);
 			
-			game_interface->client_frame(framedelta_seconds, kernel::parameters().step_alpha);
+			game_interface->client_frame(kernel::parameters().framedelta_seconds, kernel::parameters().step_alpha);
 		}
 		
 //		if (device)
