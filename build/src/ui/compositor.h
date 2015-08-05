@@ -93,7 +93,6 @@ namespace gui
 		LIBRARY_EXPORT virtual void remove_child(Panel* panel);
 		
 		// events
-		LIBRARY_EXPORT void cursor_move_relative(ScreenInt dx, ScreenInt dy);
 		LIBRARY_EXPORT void cursor_move_absolute(ScreenInt x, ScreenInt y);
 		LIBRARY_EXPORT void cursor_button(CursorButton::Type button, bool is_down);
 		LIBRARY_EXPORT void cursor_scroll(uint16_t direction);

@@ -205,11 +205,6 @@ namespace gui
 		}
 	} // remove_child
 	
-	void Compositor::cursor_move_relative( ScreenInt dx, ScreenInt dy )
-	{
-		
-	} // cursor_move_relative
-	
 	void Compositor::cursor_move_absolute( ScreenInt x, ScreenInt y )
 	{
 		ScreenInt dx = (x - last_cursor.x);

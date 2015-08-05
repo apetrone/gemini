@@ -793,9 +793,6 @@ void center_mouse(platform::window::NativeWindow* window)
 	platform::window::set_cursor(x, y);
 }
 
-struct MemoryTagGame {};
-
-
 struct SharedState
 {
 	bool has_focus;
