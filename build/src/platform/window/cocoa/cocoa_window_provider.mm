@@ -733,7 +733,13 @@ namespace platform
 
 			// As per the documentation, this won't generate any mouse movement
 			// events.
+
+			// Disassociate before the move and re-associate the cursor after.
+			// This is very important, otherwise delta mouse values won't be
+			// correctly generated!
+			CGAssociateMouseAndMouseCursorPosition(false);
 			CGDisplayMoveCursorToPoint(display, point);
+			CGAssociateMouseAndMouseCursorPosition(true);
 		}
 
 		// get the cursor (absolute screen coordinates
