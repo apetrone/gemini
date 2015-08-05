@@ -421,6 +421,21 @@ public:
 
 	virtual void event(kernel::MouseEvent& event)
 	{
+		if (event.subtype == kernel::MouseMoved)
+		{
+			compositor->cursor_move_absolute(event.mx, event.my);
+		}
+		else if (event.subtype == kernel::MouseButton)
+		{
+			gui::CursorButton::Type input_to_gui[] = {
+				gui::CursorButton::Left,
+				gui::CursorButton::Right,
+				gui::CursorButton::Middle,
+				gui::CursorButton::Mouse4,
+				gui::CursorButton::Mouse5
+			};
+			compositor->cursor_button(input_to_gui[event.button], event.is_down);
+		}
 	}
 
 	virtual void event(kernel::SystemEvent& event)
