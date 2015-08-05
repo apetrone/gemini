@@ -66,10 +66,6 @@
 #include "hotloading.h"
 #include "navigation.h"
 
-#if defined(PLATFORM_SDL2_SUPPORT)
-	#include <platform/windowlibrary.h>
-#endif
-
 typedef FixedSizeQueue<gemini::GameMessage, 64> EventQueueType;
 
 struct DataInput
@@ -285,20 +281,10 @@ public:
 class DefaultRenderMethod : public SceneRenderMethod
 {
 	SceneLink& scenelink;
-#if defined(PLATFORM_SDL2_SUPPORT)
-	platform::IWindowLibrary* window_library;
-#endif
+
 public:
-	DefaultRenderMethod(
-		SceneLink& in_link
-#if defined(PLATFORM_SDL2_SUPPORT)
-		, platform::IWindowLibrary* wl
-#endif
-		) :
+	DefaultRenderMethod(SceneLink& in_link) :
 		scenelink(in_link)
-#if defined(PLATFORM_SDL2_SUPPORT)
-		, window_library(wl)
-#endif
 	{
 	}
 	
@@ -797,21 +783,13 @@ namespace gemini
 	}
 }
 
-void center_mouse(
-#if defined(PLATFORM_SDL2_SUPPORT)
-	platform::IWindowLibrary* window_interface,
-#endif
-	platform::window::NativeWindow* window)
+void center_mouse(platform::window::NativeWindow* window)
 {
-#if defined(PLATFORM_SDL2_SUPPORT)
-	window_interface->warp_mouse(window->dimensions.width/2, window->dimensions.height/2);
-#endif
-
 	platform::window::Frame frame = platform::window::get_render_frame(window);
 	float x;
 	float y;
 	x = frame.x + (frame.width/2.0f);
-	y = frame.y + (frame.height / 2.0f);
+	y = frame.y + (frame.height/2.0f);
 	platform::window::set_cursor(x, y);
 }
 
@@ -821,6 +799,11 @@ struct MemoryTagGame {};
 struct SharedState
 {
 	bool has_focus;
+
+	SharedState() :
+		has_focus(true)
+	{
+	}
 };
 
 
@@ -837,10 +820,6 @@ class EngineInterface : public IEngineInterface
 	SceneRenderMethod* render_method;
 	
 	platform::window::NativeWindow* main_window;
-#if defined(PLATFORM_SDL2_SUPPORT)
-	platform::IWindowLibrary* window_interface;
-#endif
-
 	core::memory::Zone game_memory_zone;
 	core::memory::GlobalAllocatorType game_allocator;
 
@@ -853,21 +832,15 @@ public:
 					IExperimental* ei,
 					SceneRenderMethod* rm,
 					platform::window::NativeWindow* window
-#if defined(PLATFORM_SDL2_SUPPORT)
-					, platform::IWindowLibrary* window_interface
-#endif
 					) :
-	entity_manager(em),
-	model_interface(mi),
-	physics_interface(pi),
-	experimental_interface(ei),
-	render_method(rm),
-	main_window(window),
-#if defined(PLATFORM_SDL2_SUPPORT)
-	window_interface(window_interface),
-#endif
-	game_memory_zone("game"),
-	game_allocator(&game_memory_zone)
+		entity_manager(em),
+		model_interface(mi),
+		physics_interface(pi),
+		experimental_interface(ei),
+		render_method(rm),
+		main_window(window),
+		game_memory_zone("game"),
+		game_allocator(&game_memory_zone)
 	{
 	}
 	
@@ -927,19 +900,13 @@ public:
 	{
 		if (_sharedstate.has_focus)
 		{
-			center_mouse(
-#if defined(PLATFORM_SDL2_SUPPORT)
-				window_interface,
-#endif
-				main_window);
+			center_mouse(main_window);
 		}
 	}
 	
 	virtual void show_cursor(bool show)
 	{
-#if defined(PLATFORM_SDL2_SUPPORT)
-		window_interface->show_mouse(show);
-#endif
+		platform::window::show_cursor(show);
 	}
 	
 	virtual void terminate_application()
@@ -966,10 +933,7 @@ private:
 	StackString<MAX_PATH_SIZE> game_path;
 	bool draw_physics_debug;
 	bool draw_navigation_debug;
-	
-#if defined(PLATFORM_SDL2_SUPPORT)
-	platform::IWindowLibrary* window_interface;
-#endif
+
 	platform::window::NativeWindow* main_window;
 	platform::window::NativeWindow* alt_window;
 	
@@ -1357,12 +1321,6 @@ Options:
 		LOGV("filesystem content_path = '%s'\n", content_path.c_str());
 		LOGV("filesystem user_application_directory = '%s'\n", filesystem->user_application_directory().c_str());
 
-#if defined(PLATFORM_SDL2_SUPPORT)
-		// create the window interface
-		window_interface = platform::create_window_library();
-		window_interface->startup(kernel::parameters());
-#endif
-			
 		params.step_interval_seconds = (1.0f/(float)config.physics_tick_rate);
 				
 		
@@ -1394,16 +1352,9 @@ Options:
 		window_params.window_title = config.window_title();
 		
 		// create the window
-		
-#if defined(PLATFORM_SDL2_SUPPORT)
-		main_window = window_interface->create_window(window_params);
-		window_interface->activate_window(main_window);
-		window_interface->focus_window(main_window);
-#else
 		main_window = platform::window::create(window_params);
 		platform::window::focus(main_window);
-#endif
-		
+
 		alt_window = 0;
 
 		// uncomment this block to enable the alt window for gui diplay
@@ -1456,11 +1407,6 @@ Options:
 		
 		if (alt_window)
 		{
-#if defined(PLATFORM_SDL2_SUPPORT)
-			window_interface->activate_window(alt_window);
-			window_interface->focus_window(alt_window);
-#endif
-			
 			alt_vs.desc.add(::renderer::VD_FLOAT2);
 			alt_vs.desc.add(::renderer::VD_UNSIGNED_BYTE4);
 			alt_vs.desc.add(::renderer::VD_FLOAT2);
@@ -1491,12 +1437,7 @@ Options:
 				alt_vs.update();
 			}
 		}
-		
-#if defined(PLATFORM_SDL2_SUPPORT)
-		window_interface->activate_window(main_window);
-		window_interface->focus_window(main_window);
-#endif
-		
+
 		
 		// create the render target and texture for the gui
 		image::Image image;
@@ -1524,11 +1465,7 @@ Options:
 		
 
 		// TODO: instance render method for default
-		render_method = MEMORY_NEW(DefaultRenderMethod, core::memory::global_allocator()) (*scenelink
-#if defined(PLATFORM_SDL2_SUPPORT)
-		, window_interface
-#endif
-		);
+		render_method = MEMORY_NEW(DefaultRenderMethod, core::memory::global_allocator()) (*scenelink);
 		
 		// setup interfaces
 		engine_interface = MEMORY_NEW(EngineInterface, core::memory::global_allocator())
@@ -1538,17 +1475,10 @@ Options:
 			&experimental,
 			render_method,
 			main_window
-			
-#if defined(PLATFORM_SDL2_SUPPORT)
-			, window_interface
-#endif
 		);
 		gemini::engine::set_instance(engine_interface);
-		
-#if defined(PLATFORM_SDL2_SUPPORT)
-		window_interface->show_mouse(true);
-#endif
-		
+		platform::window::show_cursor(true);
+
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
 		setup_gui(frame.width, frame.height);
 		
@@ -1622,11 +1552,9 @@ Options:
 		
 		
 		update();
-#if defined(PLATFORM_SDL2_SUPPORT)
-		window_interface->process_events();
-#else
+
 		platform::window::dispatch_events();
-#endif
+
 		input::update();
 	
 		audio::update();
@@ -1638,11 +1566,8 @@ Options:
 	
 	void post_tick()
 	{
-#if defined(PLATFORM_SDL2_SUPPORT)
-		window_interface->activate_window(main_window);
-#else
 		platform::window::activate_context(main_window);
-#endif
+
 		
 		if (graph)
 		{
@@ -1655,14 +1580,13 @@ Options:
 		}
 
 
-		int mouse[2];
-#if defined(PLATFORM_SDL2_SUPPORT)
-		window_interface->get_mouse(mouse[0], mouse[1]);
-#endif
+		float mouse[2];
+		platform::window::get_cursor(mouse[0], mouse[1]);
+
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
-		int half_width = frame.width/2;
-		int half_height = frame.height/2;
-		
+		float half_width = frame.x + frame.width/2;
+		float half_height = frame.y + frame.height/2;
+
 		// capture the state of the mouse
 		int mdx, mdy;
 		mdx = (mouse[0] - half_width);
@@ -1761,22 +1685,12 @@ Options:
 		// as the rift sdk performs buffer swaps during end frame.
 		if (kernel::parameters().swap_buffers)
 		{
-#if defined(PLATFORM_SDL2_SUPPORT)
-			window_interface->swap_buffers(main_window);
-#else
 			platform::window::swap_buffers(main_window);
-#endif
-
-
 		}
 		
 		// do drawing for the alt window
 		if (alt_window)
 		{
-#if defined(PLATFORM_SDL2_SUPPORT)
-			window_interface->activate_window(alt_window);
-#endif
-
 			::renderer::IRenderDriver* device = ::renderer::driver();
 			
 			{
@@ -1823,12 +1737,6 @@ Options:
 			rs.add_draw_call(alt_vs.vertexbuffer);
 			
 			rs.run_commands();
-			
-			// do rendering...
-			
-#if defined(PLATFORM_SDL2_SUPPORT)
-			window_interface->swap_buffers(alt_window);
-#endif
 		}
 	}
 	
@@ -1868,14 +1776,7 @@ Options:
 
 		if (alt_window)
 		{
-#if defined(PLATFORM_SDL2_SUPPORT)
-			window_interface->activate_window(alt_window);
-#endif
 			alt_vs.destroy();
-			
-#if defined(PLATFORM_SDL2_SUPPORT)
-			window_interface->destroy_window(alt_window);
-#endif
 		}
 		
 		platform::window::shutdown();
@@ -1896,20 +1797,11 @@ Options:
 	
 		delete event_queue;
 		event_queue = 0;
-		
-#if defined(PLATFORM_SDL2_SUPPORT)
-		window_interface->activate_window(main_window);
-		window_interface->destroy_window(main_window);
-#else
+
 		platform::window::destroy(main_window);
-#endif
+
 		main_window = 0;
-	
-#if defined(PLATFORM_SDL2_SUPPORT)
-		window_interface->shutdown();
-		platform::destroy_window_library();
-#endif
-		
+
 		MEMORY_DELETE(engine_interface, core::memory::global_allocator());
 		MEMORY_DELETE(scenelink, core::memory::global_allocator());
 	}
