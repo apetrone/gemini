@@ -297,15 +297,7 @@ namespace gui
 	}
 
 
-	template <size_t T>
-	void transform_geometry(InterpolatedGeometry<T>& geometry, const glm::mat2& transform)
-	{
-		for (size_t index = 0; index < T; ++index)
-		{
-			geometry[index] = geometry[index] * transform;
-		}
-	}
-
+	void transform_geometry(glm::vec2* geometry, size_t total_vertices, const glm::mat2& transform);
 
 	// generate a 2D rotation matrix
 	glm::mat2 rotation_matrix(const float z_radians);

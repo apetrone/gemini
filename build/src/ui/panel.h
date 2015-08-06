@@ -47,13 +47,9 @@ namespace gui
 
 	struct TimeState
 	{
-		float alpha;
-		float accumulator;
 		float delta_seconds;
 
 		TimeState() :
-			alpha(0.0f),
-			accumulator(0.0f),
 			delta_seconds(0.0f)
 		{
 		}
@@ -156,6 +152,6 @@ namespace gui
 		glm::vec2 scale;
 		real z_rotation;
 
-		InterpolatedGeometry<4> geometry;
+		glm::vec2 geometry[4];
 	}; // class Panel
 } // namespace gui

@@ -129,6 +129,14 @@ namespace gui
 	// ---------------------------------------------------------------------
 	// math utils
 	// ---------------------------------------------------------------------
+	void transform_geometry(glm::vec2* geometry, size_t total_vertices, const glm::mat2& transform)
+	{
+		for (size_t index = 0; index < total_vertices; ++index)
+		{
+			geometry[index] = geometry[index] * transform;
+		}
+	}
+
 	glm::mat2 rotation_matrix(const float radians)
 	{
 		return glm::mat2(
