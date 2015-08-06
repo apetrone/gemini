@@ -73,26 +73,12 @@ namespace gui
 	
 	void Compositor::update(float delta_seconds)
 	{
-		timestate.accumulator += delta_seconds;
-		
-		while (timestate.accumulator >= update_interval_seconds)
+		timestate.delta_seconds = delta_seconds;
+		for(PanelVector::reverse_iterator it = zsorted.rbegin(); it != zsorted.rend(); ++it)
 		{
-			// decrement the accumulator
-			timestate.accumulator -= update_interval_seconds;
-
-			// update the alpha
-			timestate.alpha = (timestate.accumulator / update_interval_seconds);
-
-			// TODO: clamp alpha to interval between [0, 1]
-			
-			for(PanelVector::reverse_iterator it = zsorted.rbegin(); it != zsorted.rend(); ++it)
-			{
-				Panel* panel = (*it);
-				panel->update(this, timestate);
-			}
+			Panel* panel = (*it);
+			panel->update(this, timestate);
 		}
-
-
 
 		process_events();
 		

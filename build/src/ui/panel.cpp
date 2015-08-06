@@ -181,8 +181,6 @@ namespace gui
 		// center in local space
 		center += bounds.origin;
 
-		geometry.snapshot();
-
 		// calculate the bounds (local coordinates)
 		geometry[0] = bounds.origin;
 		geometry[1] = bounds.origin + Point(0, sz.height);
@@ -202,7 +200,7 @@ namespace gui
 			local_transform = rotation_matrix(z_rotation) * scale_matrix(scale);
 		}
 
-		transform_geometry(geometry, local_transform);
+		transform_geometry(geometry, 4, local_transform);
 
 //		// transform back to the panel's position
 		geometry[0] += center;
@@ -210,8 +208,6 @@ namespace gui
 		geometry[2] += center;
 		geometry[3] += center;
 
-		// lerp from last position to current position using timestate alpha
-		geometry.lerp(timestate.alpha);
 
 		for(PanelVector::iterator it = children.begin(); it != children.end(); ++it)
 		{
@@ -225,10 +221,10 @@ namespace gui
 		
 		render_commands.reset();
 		render_commands.add_rectangle(
-			geometry.final[0],
-			geometry.final[1],
-			geometry.final[2],
-			geometry.final[3],
+			geometry[0],
+			geometry[1],
+			geometry[2],
+			geometry[3],
 			0,
 			background_color);
 		
@@ -237,10 +233,10 @@ namespace gui
 		{
 //			renderer->draw_textured_bounds(frame, this->background);
 			render_commands.add_rectangle(
-				geometry.final[0],
-				geometry.final[1],
-				geometry.final[2],
-				geometry.final[3],
+				geometry[0],
+				geometry[1],
+				geometry[2],
+				geometry[3],
 				this->background,
 				gui::Color(255, 255, 255, 255)
 			);
