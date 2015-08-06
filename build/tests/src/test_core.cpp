@@ -128,8 +128,25 @@ void test_array()
 	for (const int& value : abc)
 	{
 	}
+
+	abc.erase(60);
+
+	TEST_VERIFY(abc.size() == 2, size_after_erase);
+	for (const int& value : abc)
+	{
+		fprintf(stdout, "value: %i\n", value);
+	}
 	
-	
+
+	// test iterators
+	Array<int>::iterator iter = abc.begin();
+	iter++;
+	++iter;
+
+	Array<int>::reverse_iterator riter = abc.rbegin();
+	riter++;
+	++riter;
+
 	// now try with a custom type to make sure the ctor/dtor
 	// are called.
 	static size_t _local_counter = 0;

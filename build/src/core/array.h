@@ -76,11 +76,11 @@ public:
 		typedef Array<value_type> container_type;
 		
 	private:
-		const container_type& container;
+		const container_type* container;
 		size_t index;
 		
 	public:
-		iterator(const container_type& container, size_t index) :
+		iterator(const container_type* container = nullptr, size_t index = 0) :
 			container(container),
 			index(index)
 		{
@@ -92,7 +92,7 @@ public:
 		{
 		}
 		
-		iterator& operator= (const iterator& other) const
+		iterator& operator= (const iterator& other)
 		{
 			this->index = other.index;
 			this->container = other.container;
@@ -114,13 +114,74 @@ public:
 			index++;
 			return *this;
 		}
-		
+
+		const iterator& operator++(int)
+		{
+			return (*this)++;
+		}
+
 		const value_type& operator* () const
 		{
-			return container[index];
+			return (*container)[index];
 		}
 	};
-	
+
+	class reverse_iterator
+	{
+		typedef Array<value_type> container_type;
+
+	private:
+		const container_type* container;
+		size_t index;
+
+	public:
+		reverse_iterator(const container_type* container = nullptr, size_t index = 0) :
+			container(container),
+			index(index)
+		{
+		}
+
+		reverse_iterator(const reverse_iterator& other) :
+			container(other.container),
+			index(other.index)
+		{
+		}
+
+		reverse_iterator& operator= (const reverse_iterator& other)
+		{
+			this->index = other.index;
+			this->container = other.container;
+			return *this;
+		}
+
+		bool operator== (const reverse_iterator& other) const
+		{
+			return (index == other.index);
+		}
+
+		bool operator!= (const reverse_iterator& other) const
+		{
+			return !(*this == other);
+		}
+
+		const reverse_iterator& operator++()
+		{
+			index--;
+			return *this;
+		}
+
+		const reverse_iterator& operator++(int)
+		{
+			return (*this)--;
+		}
+
+		const value_type& operator* () const
+		{
+			return (*container)[index];
+		}
+	};
+
+
 	Array(size_t capacity = 16)
 	{
 		data = allocate(capacity);
@@ -181,7 +242,32 @@ public:
 		total_elements = 0;
 	}
 	
-	
+
+	void erase(const value_type& element)
+	{
+		if (empty())
+		{
+			return;
+		}
+
+		for (size_t index = total_elements; index > 0; --index)
+		{
+			if (data[index-1] == element)
+			{
+				value_pointer item = &data[index-1];
+				item->~value_type();
+
+				--total_elements;
+
+				// shift elements
+				for (size_t i = 0; i < total_elements; ++i)
+				{
+					data[(index-1) + i] = data[index+i];
+				}
+			}
+		}
+	}
+
 	size_t size() const
 	{
 		return total_elements;
@@ -210,11 +296,21 @@ public:
 	
 	iterator begin() const
 	{
-		return iterator(*this, 0);
+		return iterator(this, 0);
 	}
 	
 	iterator end() const
 	{
-		return iterator(*this, total_elements);
+		return iterator(this, total_elements);
+	}
+
+	reverse_iterator rbegin() const
+	{
+		return reverse_iterator(this, total_elements);
+	}
+
+	reverse_iterator rend() const
+	{
+		return reverse_iterator(this, 0);
 	}
 }; // Array
