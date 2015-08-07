@@ -34,6 +34,7 @@ namespace gui
 	{
 		enum Type
 		{
+			None,
 			Left,
 			Right,
 			Middle,
