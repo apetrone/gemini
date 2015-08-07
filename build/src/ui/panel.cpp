@@ -40,7 +40,7 @@ namespace gui
 
 	Panel::Panel( Panel * parent )
 	{
-		fprintf( stdout, "Panel %p created\n", this );
+		fprintf(stdout, "Panel %p created\n", this);
 		this->z_rotation = 0.0;
 		scale[0] = 1;
 		scale[1] = 1;
@@ -71,10 +71,9 @@ namespace gui
 			gui::_gfree( panel );
 		}
 
-		
 		children.clear();
 		
-		fprintf( stdout, "~Panel %p -> '%s'\n", this, "Unknown" /*this->name.c_str()*/ );
+		fprintf(stdout, "~Panel %p -> '%s'\n", this, "Unknown");
 	} // ~Panel
 	
 	void Panel::set_bounds(const ScreenInt x, const ScreenInt y, const DimensionType width, const DimensionType height )
@@ -199,12 +198,11 @@ namespace gui
 
 		transform_geometry(geometry, 4, local_transform);
 
-//		// transform back to the panel's position
+		// transform back to the panel's position
 		geometry[0] += center;
 		geometry[1] += center;
 		geometry[2] += center;
 		geometry[3] += center;
-
 
 		for(PanelVector::iterator it = children.begin(); it != children.end(); ++it)
 		{
@@ -214,8 +212,6 @@ namespace gui
 
 	void Panel::render(Rect& frame, Compositor* compositor, Renderer* renderer, Style* style)
 	{
-//		renderer->draw_bounds(frame, background_color);
-		
 		render_commands.reset();
 		render_commands.add_rectangle(
 			geometry[0],
@@ -225,8 +221,7 @@ namespace gui
 			0,
 			background_color);
 		
-
-		if ( this->background != 0 )
+		if (this->background != 0)
 		{
 //			renderer->draw_textured_bounds(frame, this->background);
 			render_commands.add_rectangle(
@@ -241,7 +236,7 @@ namespace gui
 		
 		compositor->queue_commandlist(&render_commands);
 		
-		for( PanelVector::iterator it = children.begin(); it != children.end(); ++it )
+		for(PanelVector::iterator it = children.begin(); it != children.end(); ++it)
 		{
 			Panel* child = (*it);
 			if (child->is_visible())
@@ -251,11 +246,11 @@ namespace gui
 		}
 	} // render
 	
-	void Panel::set_background_image( Compositor * compositor, const char * path )
+	void Panel::set_background_image(Compositor* compositor, const char* path)
 	{
-		if ( compositor && compositor->renderer )
+		if (compositor && compositor->renderer)
 		{
-			compositor->renderer->texture_create( path, this->background );
+			compositor->renderer->texture_create(path, this->background);
 		}
 	} // set_background_image
 	

@@ -491,6 +491,35 @@ public:
 		graph->set_range(0.0f, 33.3f);
 
 		graph->enable_baseline(true, 16.6f, gui::Color(255, 0, 255, 255));
+
+
+		gui::Color button_background(128, 128, 128, 255);
+		gui::Color button_hover(255, 255, 128, 255);
+
+		uint32_t button_width = 320;
+		uint32_t button_height = 50;
+		uint32_t button_spacing = 10;
+		const size_t total_buttons = 2;
+//		uint32_t vertical_offset = 0;
+		uint32_t origin_x = (compositor->width/2.0f) - (button_width/2.0f);
+		uint32_t origin_y = (compositor->height/2.0f) - ((button_height*total_buttons)/2.0f);
+
+		const char* captions[total_buttons] = {
+			"New Game",
+			"Test Button"
+		};
+
+		for (size_t index = 0; index < total_buttons; ++index)
+		{
+			gui::Button* newgame = new gui::Button(root);
+			newgame->set_bounds(origin_x, origin_y, button_width, button_height);
+			newgame->set_font(compositor, "fonts/default16");
+			newgame->set_text(captions[index]);
+			newgame->set_background_color(button_background);
+			newgame->set_hover_color(button_hover);
+			newgame->set_userdata((void*)2);
+			origin_y += button_height + button_spacing;
+		}
 	}
 
 	virtual kernel::Error startup()
@@ -660,7 +689,7 @@ public:
 
 		rot += 10.f*kernel::parameters().framedelta_seconds;
 
-		graph->set_rotation(mathlib::degrees_to_radians(rot));
+//		graph->set_rotation(mathlib::degrees_to_radians(rot));
 
 		if (rot > 360)
 			rot -= 360.0f;
