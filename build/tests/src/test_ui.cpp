@@ -428,6 +428,7 @@ public:
 		else if (event.subtype == kernel::MouseButton)
 		{
 			gui::CursorButton::Type input_to_gui[] = {
+				gui::CursorButton::None,
 				gui::CursorButton::Left,
 				gui::CursorButton::Right,
 				gui::CursorButton::Middle,
