@@ -29,6 +29,11 @@
 // PLATFORM_COMPILER_VERSION 			a string specifying the compiler version
 // PLATFORM_FANCY_FUNCTION 				an alias to this compiler's pretty function macro
 
+// Bringing back these utility macros
+#define STRINGIZE(x) STRINGIZE_THIS(x)
+#define STRINGIZE_THIS(x) #x
+#define CONCAT_PERIOD(x, y) x "." y
+
 // setup compiler defines
 #if defined( __clang__ )
 	#define PLATFORM_COMPILER "clang"
