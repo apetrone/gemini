@@ -115,9 +115,11 @@ public:
 			return *this;
 		}
 
-		const iterator& operator++(int)
+		iterator operator++(int)
 		{
-			return (*this)++;
+			iterator out(*this);
+			++out.index;
+			return *this;
 		}
 
 		const value_type& operator* () const
@@ -170,9 +172,11 @@ public:
 			return *this;
 		}
 
-		const reverse_iterator& operator++(int)
+		reverse_iterator operator++(int)
 		{
-			return (*this)--;
+			reverse_iterator out(*this);
+			--out.index;
+			return *this;
 		}
 
 		const value_type& operator* () const
