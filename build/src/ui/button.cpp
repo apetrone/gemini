@@ -101,9 +101,7 @@ namespace gui
 			0,
 			color
 		);
-		
-//		compositor->get_style()->draw_bounds(renderer, frame, color);
-		
+
 		gui::Rect bounds = frame;
 		
 		//		bounds.origin.x += 10;
@@ -113,7 +111,7 @@ namespace gui
 		
 		render_commands.add_font(font_handle, this->text.c_str(), bounds, 0, foreground_color);
 		
-//		compositor->queue_commandlist(&render_commands);
+		compositor->queue_commandlist(&render_commands);
 	}
 	
 } // namespace gui
