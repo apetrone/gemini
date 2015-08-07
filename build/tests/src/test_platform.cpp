@@ -206,6 +206,10 @@ int main(int, char**)
 	platform::Result result = platform::startup();
 	TEST_VERIFY(result.succeeded(), platform_startup);
 
+
+	PLATFORM_LOG(platform::LogMessageType::Info, "PLATFORM_NAME: %s\n", PLATFORM_NAME);
+	PLATFORM_LOG(platform::LogMessageType::Info, "PLATFORM_COMPILER: %s, version: %s\n", PLATFORM_COMPILER, PLATFORM_COMPILER_VERSION);
+
 	test_dynamic_library();
 	test_filesystem();
 	test_logging();
