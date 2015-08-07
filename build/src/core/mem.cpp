@@ -140,5 +140,32 @@ namespace core
 			// if you hit this, there may be a memory leak!
 			assert(active_allocations == 0 && active_bytes == 0);
 		}
+
+		void* aligned_malloc(size_t bytes, size_t alignment)
+		{
+#if defined(PLATFORM_POSIX)
+			void* mem;
+			if (0 == posix_memalign(&mem, alignment, bytes))
+			{
+				return mem;
+			}
+#elif defined(PLATFORM_WINDOWS)
+			return _aligned_malloc(bytes, alignment);
+#else
+	#error aligned_malloc not defined for this platform!
+#endif
+			return nullptr;
+		}
+
+		void aligned_free(void* pointer)
+		{
+#if defined(PLATFORM_POSIX)
+			free(pointer);
+#elif defined(PLATFORM_WINDOWS)
+			_aligned_free(pointer);
+#else
+	#error aligned_free not defined for this platform!
+#endif
+		}
 	} // namespace memory
 } // namespace core

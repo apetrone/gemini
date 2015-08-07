@@ -130,7 +130,14 @@ namespace core
 			size_t get_budget_bytes() const { return budget_bytes; }
 		}; // class Zone
 		
-		
+
+		// ---------------------------------------------------------------------
+		// utility functions
+		// ---------------------------------------------------------------------
+		void* aligned_malloc(size_t bytes, size_t alignment);
+		void aligned_free(void* pointer);
+
+
 		// ---------------------------------------------------------------------
 		// tracking policies
 		// ---------------------------------------------------------------------
