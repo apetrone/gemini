@@ -219,11 +219,29 @@ namespace gui
 					if ( last_hot )
 					{
 						// mouse exit
+						EventArgs args(this, Event_CursorExit);
+						args.cursor = cursor;
+						args.hot = last_hot;
+						args.focus = get_focus();
+						args.capture = get_capture();
+						args.delta.x = dx;
+						args.delta.y = dy;
+						args.local = cursor - last_hot->bounds.origin;
+						last_hot->handle_event(args);
 					}
 					
 					if ( hot )
 					{
 						// mouse enter
+						EventArgs args(this, Event_CursorEnter);
+						args.cursor = cursor;
+						args.hot = hot;
+						args.focus = get_focus();
+						args.capture = get_capture();
+						args.delta.x = dx;
+						args.delta.y = dy;
+						args.local = cursor - hot->bounds.origin;
+						hot->handle_event(args);
 					}
 				}
 			}
