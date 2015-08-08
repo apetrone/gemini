@@ -327,6 +327,13 @@ namespace gui
 				args.local = last_cursor - args.focus->bounds.origin;
 				args.focus->handle_event( args );
 			}
+
+			if (get_capture())
+			{
+				args.type = Event_CursorExit;
+				args.capture = nullptr;
+				get_capture()->handle_event(args);
+			}
 		
 			this->set_capture(0);
 		}
