@@ -33,23 +33,24 @@ namespace platform
 {
 	static unsigned int _previous_error_mode;
 
-	Result os_startup()
+	Result backend_startup()
 	{
 		// prevent error dialogs from hanging the process.
 		// these errors are forwarded to calling process.
 		_previous_error_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
 
 		return Result::success();
-	}
+	} // backend_startup
 
-	void os_shutdown()
+	void backend_shutdown()
 	{
 		// restore the error mode
 		SetErrorMode(_previous_error_mode);
-	}
+	} // backend_shutdown
 
-	int os_run_application(int argc, const char** argv)
+	void backend_log(platform::LogMessageType type, const char* message)
 	{
-		return 0;
-	}
+		// honey badger don't care about LogMessageType
+		OutputDebugStringA(message);
+	} // backend_log
 } // namespace platform
