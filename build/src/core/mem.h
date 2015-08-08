@@ -78,7 +78,7 @@ namespace core
 		// I. Allow arbitrary zones to be created
 		// II. zones should be able to report statistics about usage
 		// III. zones can optionally take a maximum budget size. 0 == no budget
-		class Zone
+		class LIBRARY_EXPORT Zone
 		{
 		private:
 			// lifetime values
@@ -134,8 +134,8 @@ namespace core
 		// ---------------------------------------------------------------------
 		// utility functions
 		// ---------------------------------------------------------------------
-		void* aligned_malloc(size_t bytes, size_t alignment);
-		void aligned_free(void* pointer);
+		LIBRARY_EXPORT void* aligned_malloc(size_t bytes, size_t alignment);
+		LIBRARY_EXPORT void aligned_free(void* pointer);
 
 
 		// ---------------------------------------------------------------------
@@ -184,12 +184,12 @@ namespace core
 		// ---------------------------------------------------------------------
 		// interface
 		// ---------------------------------------------------------------------
-		void startup();
-		void shutdown();
+		LIBRARY_EXPORT void startup();
+		LIBRARY_EXPORT void shutdown();
 		
 		typedef HeapAllocator<DefaultTrackingPolicy> GlobalAllocatorType;
-		GlobalAllocatorType& global_allocator();
-		void global_allocator(GlobalAllocatorType& allocator);
+		LIBRARY_EXPORT GlobalAllocatorType& global_allocator();
+		LIBRARY_EXPORT void global_allocator(GlobalAllocatorType& allocator);
 
 		// ---------------------------------------------------------------------
 		// template functions
