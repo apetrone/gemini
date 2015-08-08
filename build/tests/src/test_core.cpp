@@ -414,6 +414,265 @@ void test_memory()
 }
 
 // ---------------------------------------------------------------------
+// Serialization
+// ---------------------------------------------------------------------
+
+#include <type_traits>
+
+
+namespace traits
+{
+	template <class T>
+	constexpr bool is_pod(T)
+	{
+		return std::is_pod<T>::value;
+	}
+
+
+	template <class T>
+	constexpr bool is_polymorphic(T)
+	{
+		return std::is_polymorphic<T>::value;
+	}
+
+
+}
+
+
+
+
+template <class T>
+class Archive
+{
+public:
+
+	template <class V>
+	Archive& operator<<(V& value)
+	{
+		loading = false;
+		instance()->Save(*instance(), value);
+		return *this;
+	}
+
+	template <class V>
+	Archive& operator>>(V& value)
+	{
+		loading = true;
+		instance()->Load(*instance(), value);
+		return *this;
+	}
+
+	bool is_loading() const { return loading; }
+
+private:
+	T* instance()
+	{
+		return static_cast<T*>(this);
+	}
+
+private:
+	bool loading;
+};
+
+#define REFLECTION_BEGIN(class_name) static ClassProperty* reflection_fields(size_t& total_properties)\
+{\
+typedef class_name reflection_class_type;\
+static ClassProperty properties[] = {
+
+#define REFLECTION_END() };\
+static size_t property_count = sizeof(properties)/sizeof(ClassProperty);\
+total_properties = property_count;\
+return properties;\
+}
+
+#define REFLECTION_PROPERTY(property) ClassProperty(#property, offsetof(reflection_class_type, property))
+
+struct ClassProperty
+{
+	const char* name;
+	size_t offset;
+
+	ClassProperty(
+		const char* property_name,
+		size_t property_offset) :
+		name(property_name),
+		offset(property_offset)
+	{
+	}
+};
+
+struct TestArchive : public Archive<TestArchive>
+{
+	int val;
+	float fl_value;
+
+	TestArchive()
+	{
+		val = -1;
+	}
+
+	template <class Archive, class T>
+	void Save(Archive& ar, T& value)
+	{
+		fprintf(stdout, "should save something\n");
+		value.serialize(ar, 1);
+	}
+
+	template <class Archive, class T>
+	void Load(Archive& ar, T& value)
+	{
+		fprintf(stdout, "should load something\n");
+		value.serialize(ar, 1);
+	}
+
+
+	// ---------------------------------------------------------------------
+	// write
+	// ---------------------------------------------------------------------
+
+	template <class Archive, class T>
+	TestArchive& write(Archive& ar, const ClassProperty& prop, T& value)
+	{
+		// nothing defined to handle this type
+		assert(0);
+		return *this;
+	}
+
+
+	template <class Archive>
+	TestArchive& write(Archive& ar, const ClassProperty& prop, int& value)
+	{
+		val = value;
+		return *this;
+	}
+
+	template <class Archive>
+	TestArchive& write(Archive& ar, const ClassProperty& prop, float& value)
+	{
+		fl_value = value;
+		return *this;
+	}
+
+	// ---------------------------------------------------------------------
+	// read
+	// ---------------------------------------------------------------------
+
+	template <class Archive, class T>
+	TestArchive& read(Archive& ar, const ClassProperty& prop, T& value)
+	{
+		// nothing defined to handle this type
+		assert(0);
+		return *this;
+	}
+
+	template <class Archive>
+	TestArchive& read(Archive& ar, const ClassProperty& prop, int& value)
+	{
+		value = val;
+		return *this;
+	}
+	
+	template <class Archive>
+	TestArchive& read(Archive& ar, const ClassProperty& prop, float& value)
+	{
+		value = fl_value;
+		return *this;
+	}
+
+
+	template <class T>
+	TestArchive& route(const ClassProperty& property, T& value)
+	{
+		fprintf(stdout, "name: %s\n", property.name);
+		fprintf(stdout, "offset: %zu\n", property.offset);
+		fprintf(stdout, "ptr: %p\n", &value);
+
+		if (is_loading())
+		{
+			read(*this, property, value);
+		}
+		else
+		{
+			write(*this, property, value);
+		}
+
+		return *this;
+	}
+};
+
+
+struct Test
+{
+	int value;
+	float precision;
+
+	template <class Archive>
+	void serialize(Archive& ar, const size_t version)
+	{
+		fprintf(stdout, "serialize for test: %zu\n", offsetof(Test, value));
+
+		ar.route(ClassProperty("value", offsetof(Test, value)), value);
+		ar.route(ClassProperty("precision", offsetof(Test, precision)), precision);
+	}
+
+//	REFLECTION_BEGIN(Test)
+//		REFLECTION_PROPERTY(value)
+//	REFLECTION_END()
+};
+
+struct Test2
+{
+	int value;
+
+	template <class Archive>
+	void serialize(Archive& ar, const size_t version)
+	{
+		fprintf(stdout, "serialize for test2 \n");
+	}
+};
+
+
+
+// ---------------------------------------------------------------------
+// If
+// ---------------------------------------------------------------------
+template <bool condition, typename T, typename F>
+struct If;
+
+template <typename T, typename F>
+struct If<true, T, F>
+{
+	typedef T value;
+};
+
+template <typename T, typename F>
+struct If<false, T, F>
+{
+	typedef F value;
+};
+
+
+
+void test_serialization()
+{
+	TestArchive a;
+
+	Test test;
+	test.value = 32;
+	test.precision = 8.231f;
+
+	a << test;
+
+
+	Test temp;
+	a >> temp;
+
+//	assert(test.value == temp.value);
+	int z = 723;
+
+}
+
+// ---------------------------------------------------------------------
 // StackString
 // ---------------------------------------------------------------------
 void test_stackstring()
