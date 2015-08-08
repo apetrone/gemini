@@ -84,7 +84,7 @@ namespace platform
 		return _static_buffer;
 	}
 
-	const char* get_user_directory()
+	PathString get_user_directory()
 	{
 		return get_environment_variable("HOMEPATH");
 	}
@@ -189,6 +189,6 @@ namespace platform
 	platform::Result fs_content_directory(core::StackString<MAX_PATH_SIZE>& content_path, const core::StackString<MAX_PATH_SIZE>& root_path)
 	{
 		content_path = root_path;
-		return platform::Result;
+		return platform::Result::success();
 	}
 } // namespace platform
