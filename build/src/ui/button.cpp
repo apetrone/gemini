@@ -33,6 +33,9 @@ namespace gui
 	Button::Button(Panel * parent) : Label(parent)
 	{
 		on_click = 0;
+		pressed_color = gui::Color(255, 0, 0);
+
+		state = 0;
 	} // Button
 	
 	Button::~Button()
@@ -47,6 +50,8 @@ namespace gui
 			if ( args.cursor_button == CursorButton::Left )
 			{
 				args.compositor->set_focus( this );
+				current_color = pressed_color;
+				state = 1;
 			}
 		}
 		else if ( args.type == Event_CursorButtonReleased )
@@ -55,10 +60,21 @@ namespace gui
 			{
 				if ( args.compositor->get_hot() == this )
 				{
+					current_color = hover_color;
+
 					EventArgs message = args;
 					message.type = Event_Click;
 					args.compositor->queue_event(message);
+					state = 0;
 				}
+			}
+		}
+		else if (args.type == Event_CursorExit)
+		{
+			if (args.capture != this)
+			{
+				current_color = background_color;
+				state = 0;
 			}
 		}
 	} // handle_event
@@ -71,6 +87,11 @@ namespace gui
 		gui::Rect bounds;
 		get_screen_bounds(bounds);
 		
+
+		if (state == 0)
+		{
+			current_color = background_color;
+		}
 
 		gui::Rect font_dims;
 		compositor->renderer->font_measure_string(font_handle, this->text.c_str(), font_dims);
@@ -85,12 +106,10 @@ namespace gui
 	void Button::render(Rect& frame, Compositor* compositor, Renderer* renderer, Style* style)
 	{
 		render_commands.reset();
-		
-		gui::Color color = background_color;
-		
-		if (compositor->get_hot() == this)
+
+		if (compositor->get_hot() == this && state == 0)
 		{
-			color = hover_color;
+			current_color = hover_color;
 		}
 		
 		render_commands.add_rectangle(
@@ -99,7 +118,7 @@ namespace gui
 			geometry[2],
 			geometry[3],
 			0,
-			color
+			current_color
 		);
 
 		gui::Rect bounds = frame;
