@@ -439,6 +439,7 @@ namespace gui
 	
 	void Compositor::process_events()
 	{
+		next_message = 0;
 		if (listener == 0)
 		{
 			// no one to listen to our events!
@@ -454,7 +455,6 @@ namespace gui
 				event.type = Invalid;
 			}
 		}
-		next_message = 0;
 	}
 	
 	void Compositor::queue_commandlist(render::CommandList* const commandlist)
