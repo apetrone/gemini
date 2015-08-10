@@ -484,7 +484,7 @@ namespace render2
 	// types
 	// ---------------------------------------------------------------------
 	typedef core::StackString<128> param_string;
-	typedef HashSet<param_string, param_string, core::util::hash> RenderParameters;
+	typedef HashSet<param_string, param_string> RenderParameters;
 
 	// ---------------------------------------------------------------------
 	// table of render parameters
