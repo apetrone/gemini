@@ -200,16 +200,16 @@ namespace gui
 			last_cursor.y = y;
 			
 			// reset hot and try to find a new one
-			this->hot = 0;
+			this->hot = get_capture();
 			
 			Point cursor( x, y );
 
 			if ( !hot )
 			{
-				hot = find_panel_at_point( cursor );
+				hot = find_panel_at_point(cursor);
 				
 				// if hot changed
-				if ( hot != last_hot )
+				if (hot != last_hot)
 				{
 					if (hot && listener)
 					{
@@ -246,7 +246,7 @@ namespace gui
 				}
 			}
 			
-			if ( get_capture() )
+			if (get_capture())
 			{
 				Panel * target = get_capture();
 				
@@ -265,7 +265,7 @@ namespace gui
 				}
 				// mouse move
 			}
-			else if ( hot )
+			else if (hot)
 			{
 				EventArgs args( this, Event_CursorMove );
 				args.cursor = cursor;
@@ -365,9 +365,13 @@ namespace gui
 	} // key_event
 	
 	
-	void Compositor::resize( ScreenInt width, ScreenInt height )
+	void Compositor::resize(ScreenInt width, ScreenInt height)
 	{
-		
+		this->width = width;
+		this->height = height;
+
+		// TODO: dispatch to any panels that need to layout
+		// children again
 	} // resize
 	
 	Panel * Compositor::find_panel_at_point( const Point & point )
