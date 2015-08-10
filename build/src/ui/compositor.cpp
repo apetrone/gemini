@@ -187,97 +187,105 @@ namespace gui
 			}
 		}
 	} // remove_child
-	
+
+	void Compositor::find_new_hot(ScreenInt dx, ScreenInt dy)
+	{
+		Panel* last_hot = this->hot;
+
+		// reset hot and try to find a new one
+		this->hot = nullptr;
+
+		Point cursor(last_cursor.x, last_cursor.y);
+		Panel* newhot = find_panel_at_point(cursor);
+
+		if (newhot && !get_capture())
+		{
+			hot = newhot;
+
+			// if hot changed
+			if (hot != last_hot)
+			{
+				if (hot && listener)
+				{
+					listener->hot_changed(last_hot, hot);
+				}
+
+				if ( last_hot )
+				{
+					// mouse exit
+					EventArgs args(this, Event_CursorExit);
+					args.cursor = cursor;
+					args.hot = last_hot;
+					args.focus = get_focus();
+					args.capture = get_capture();
+					args.delta.x = dx;
+					args.delta.y = dy;
+					args.local = cursor - last_hot->bounds.origin;
+					last_hot->handle_event(args);
+				}
+
+				if ( hot )
+				{
+					// mouse enter
+					EventArgs args(this, Event_CursorEnter);
+					args.cursor = cursor;
+					args.hot = hot;
+					args.focus = get_focus();
+					args.capture = get_capture();
+					args.delta.x = dx;
+					args.delta.y = dy;
+					args.local = cursor - hot->bounds.origin;
+					hot->handle_event(args);
+				}
+			}
+
+		}
+
+		if (get_capture())
+		{
+			Panel * target = get_capture();
+
+			EventArgs args( this, Event_CursorDrag );
+			args.cursor = cursor;
+			args.hot = focus;
+			args.focus = get_focus();
+			args.capture = get_capture();
+			args.delta.x = dx;
+			args.delta.y = dy;
+			args.local = cursor - focus->bounds.origin;
+
+			if ( target )
+			{
+				target->handle_event( args );
+			}
+			// mouse move
+		}
+		else if (hot)
+		{
+			EventArgs args( this, Event_CursorMove );
+			args.cursor = cursor;
+			args.hot = hot;
+			args.focus = get_focus();
+			args.capture = get_capture();
+			args.delta.x = dx;
+			args.delta.y = dy;
+			args.local = cursor - hot->bounds.origin;
+
+			hot->handle_event( args );
+		}
+	}
+
 	void Compositor::cursor_move_absolute( ScreenInt x, ScreenInt y )
 	{
 		ScreenInt dx = (x - last_cursor.x);
 		ScreenInt dy = (y - last_cursor.y);
-		
-		Panel * last_hot = this->hot;
-		if ( dx != 0 || dy != 0 )
+
+		if (dx != 0 || dy != 0)
 		{
 			last_cursor.x = x;
 			last_cursor.y = y;
-			
-			// reset hot and try to find a new one
-			this->hot = get_capture();
-			
-			Point cursor( x, y );
 
-			if ( !hot )
-			{
-				hot = find_panel_at_point(cursor);
-				
-				// if hot changed
-				if (hot != last_hot)
-				{
-					if (hot && listener)
-					{
-						listener->hot_changed(last_hot, hot);
-					}
-					
-					if ( last_hot )
-					{
-						// mouse exit
-						EventArgs args(this, Event_CursorExit);
-						args.cursor = cursor;
-						args.hot = last_hot;
-						args.focus = get_focus();
-						args.capture = get_capture();
-						args.delta.x = dx;
-						args.delta.y = dy;
-						args.local = cursor - last_hot->bounds.origin;
-						last_hot->handle_event(args);
-					}
-					
-					if ( hot )
-					{
-						// mouse enter
-						EventArgs args(this, Event_CursorEnter);
-						args.cursor = cursor;
-						args.hot = hot;
-						args.focus = get_focus();
-						args.capture = get_capture();
-						args.delta.x = dx;
-						args.delta.y = dy;
-						args.local = cursor - hot->bounds.origin;
-						hot->handle_event(args);
-					}
-				}
-			}
-			
-			if (get_capture())
-			{
-				Panel * target = get_capture();
-				
-				EventArgs args( this, Event_CursorDrag );
-				args.cursor = cursor;
-				args.hot = focus;
-				args.focus = get_focus();
-				args.capture = get_capture();
-				args.delta.x = dx;
-				args.delta.y = dy;
-				args.local = cursor - focus->bounds.origin;
-
-				if ( target )
-				{
-					target->handle_event( args );
-				}
-				// mouse move
-			}
-			else if (hot)
-			{
-				EventArgs args( this, Event_CursorMove );
-				args.cursor = cursor;
-				args.hot = hot;
-				args.focus = get_focus();
-				args.capture = get_capture();
-				args.delta.x = dx;
-				args.delta.y = dy;
-				args.local = cursor - hot->bounds.origin;
-				
-				hot->handle_event( args );
-			}
+			find_new_hot(dx, dy);
 		} // any mouse delta movement
 	} // cursor_move_absolute
 	
@@ -336,6 +344,7 @@ namespace gui
 			}
 		
 			this->set_capture(0);
+			find_new_hot(0, 0);
 		}
 	} // cursor_button
 	

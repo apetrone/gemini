@@ -88,6 +88,7 @@ namespace gui
 		
 		LIBRARY_EXPORT virtual void add_child(Panel* panel);
 		LIBRARY_EXPORT virtual void remove_child(Panel* panel);
+
 		
 		// events
 		LIBRARY_EXPORT void cursor_move_absolute(ScreenInt x, ScreenInt y);
@@ -105,6 +106,9 @@ namespace gui
 		LIBRARY_EXPORT virtual void process_events();
 		
 		LIBRARY_EXPORT virtual void queue_commandlist(render::CommandList* const commandlist);
+
+	private:
+		void find_new_hot(ScreenInt dx, ScreenInt dy);
 	}; // struct Compositor
 	
 } // namespace gui
