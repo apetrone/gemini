@@ -25,20 +25,20 @@
 #pragma once
 
 #include <core/typedefs.h>
+#include <core/hashset.h>
+#include <core/stackstring.h>
+#include <core/util.h>
 
 namespace render2
 {
 	class ConstantBuffer
 	{
 	public:
-		ConstantBuffer(size_t total_size);
-		~ConstantBuffer();
-		
-		void assign(const void* src, const size_t bytes);
-		void* get_data() { return data; }
-		
+		void set(const char* name, void* data);
+		void* get(const char* name);
+
 	private:
-		size_t max_size;
-		void* data;
+		typedef HashSet<::core::StackString<32>, void*> hashset_type;
+		hashset_type constant_map;
 	}; // ConstantBuffer
 } // namespace render2

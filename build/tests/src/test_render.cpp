@@ -58,6 +58,10 @@ class TestKernel : public kernel::IKernel,
 
 	float countdown;
 
+	glm::mat4 modelview_matrix;
+	glm::mat4 projection_matrix;
+	unsigned int diffuse;
+
 public:
 	virtual void event(kernel::KeyboardEvent& event)
 	{
@@ -233,18 +237,16 @@ public:
 		generate_textured_triangle(1, tv, glm::vec2(width, height), glm::vec2(width/2, height/2));
 		device->buffer_upload(textured_buffer, tv, total_bytes);
 
-
-
-
 		// setup constant buffer
-		// this needs to be much more flexible, but for testing it works.
-		ConstantData cd;
-		cd.modelview_matrix = glm::mat4(1.0f);
-		cd.projection_matrix = glm::ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
-		cd.texture_unit = 0;
-		pipeline->constants()->assign(&cd, 128);
-		texture_pipeline->constants()->assign(&cd, sizeof(ConstantData));
+		modelview_matrix = glm::mat4(1.0f);
+		projection_matrix = glm::ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
+		diffuse = 0;
+		pipeline->constants().set("modelview_matrix", &modelview_matrix);
+		pipeline->constants().set("projection_matrix", &projection_matrix);
 
+		texture_pipeline->constants().set("modelview_matrix", &modelview_matrix);
+		texture_pipeline->constants().set("projection_matrix", &projection_matrix);
+		texture_pipeline->constants().set("diffuse", &diffuse);
 //		platform::window::show_cursor(true);
 #endif
 

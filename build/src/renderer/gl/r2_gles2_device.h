@@ -162,7 +162,7 @@ namespace render2
 			gl.CheckError("activate_pipeline - UseProgram");
 
 			// bind uniforms
-			common_setup_uniforms(shader, (unsigned char*)pipeline->constants()->get_data());
+			common_setup_uniforms(shader, pipeline->constants());
 
 			GLInputLayout* layout = static_cast<GLInputLayout*>(pipeline->input_layout);
 			for (size_t index = 0; index < layout->items.size(); ++index)

@@ -3,8 +3,8 @@ precision lowp float;
 uniform mat4 projection_matrix;
 uniform mat4 modelview_matrix;
 
-attribute vec4 in_color;
 attribute vec4 in_position;
+attribute vec4 in_color;
 
 varying vec4 vertex_color;
 
