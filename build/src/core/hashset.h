@@ -24,7 +24,9 @@
 // -------------------------------------------------------------
 #pragma once
 
-template <class K, class T, class H = typename std::hash<K> >
+#include <core/util.h>
+
+template <class K, class T, class H = typename core::util::hash<K> >
 class HashSet
 {
 private:

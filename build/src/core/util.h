@@ -26,9 +26,13 @@
 
 #include "typedefs.h"
 #include "stackstring.h"
+#include <string>
 
 namespace core
 {
+	template <unsigned int C, class T>
+	struct StackString;
+
 	template <class Type>
 	struct RangedValue
 	{
@@ -58,17 +62,31 @@ namespace core
 
 		// return a float within the range: min, max, inclusive
 		LIBRARY_EXPORT float random_range(float min, float max);
-		
-		
+
 		template <class T>
-		uint32_t hash32(const T& data);
-		
 		struct hash
 		{
-			template <class T>
 			uint32_t operator()(const T& value)
 			{
-				return hash32(value);
+				return hash_32bit(&value, sizeof(T), 0);
+			}
+		};
+
+		template <>
+		struct hash<std::string>
+		{
+			uint32_t operator()(const std::string& s)
+			{
+				return hash_32bit(&s[0], s.length(), 0);
+			}
+		};
+
+		template <size_t C>
+		struct hash<StackString<C, char>>
+		{
+			uint32_t operator()(const StackString<C, char>& s)
+			{
+				return hash_32bit(&s[0], s.size(), 0);
 			}
 		};
 	} // namespace util
