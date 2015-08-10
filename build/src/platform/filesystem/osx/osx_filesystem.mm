@@ -126,6 +126,8 @@ namespace platform
 		// On Mac/iOS, the root directory points to the app bundle
 		PathString content_path = get_program_directory();
 		content_path.append(PATH_SEPARATOR_STRING);
+		content_path.append("Contents");
+		content_path.append(PATH_SEPARATOR_STRING);
 		content_path.append("Resources");
 		return content_path;
 	}
