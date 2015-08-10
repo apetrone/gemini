@@ -283,16 +283,10 @@ namespace render2
 		blend_destination(GL_ZERO)
 	{
 		program = (GLShader*)descriptor.shader;
-
-		// compute the size of the constant buffer we'll need
-		size_t total_bytes = sizeof(glm::mat4) * 2 + sizeof(GLuint);
-
-		this->cb = MEMORY_NEW(ConstantBuffer, core::memory::global_allocator())(total_bytes);
 	}
 
 	GLPipeline::~GLPipeline()
 	{
-		MEMORY_DELETE(this->cb, core::memory::global_allocator());
 	}
 
 
@@ -781,7 +775,7 @@ namespace render2
 	}
 
 
-	void common_setup_uniforms(GLShader* shader, unsigned char* constant_buffer)
+	void common_setup_uniforms(GLShader* shader, ConstantBuffer& constants)
 	{
 		size_t offset = 0;
 
@@ -789,16 +783,27 @@ namespace render2
 		for(size_t index = 0; index < shader->uniforms.size(); ++index)
 		{
 			shader_variable& uniform = shader->uniforms[index];
+			void* data = constants.get(uniform.name);
+
+			if (!data)
+			{
+				LOGW("Missing uniform data for '%s'\n", uniform.name);
+				assert(0);
+			}
+
 			switch(uniform.type)
 			{
 				case GL_FLOAT_MAT4:
-					gl.UniformMatrix4fv(uniform.location, uniform.size, GL_FALSE, (GLfloat*)(constant_buffer+offset));
+					gl.UniformMatrix4fv(uniform.location, uniform.size, GL_FALSE, (GLfloat*)data);
 					gl.CheckError("UniformMatrix4fv");
 					break;
 				case GL_SAMPLER_2D:
-					gl.Uniform1i(uniform.location, 0);
+				{
+					GLuint* sampler = static_cast<GLuint*>(data);
+					gl.Uniform1i(uniform.location, (*sampler));
 					gl.CheckError("Uniform1i");
 					break;
+				}
 
 				default:
 					// If you hit this assert, there's a discrepancy between this function

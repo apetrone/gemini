@@ -110,9 +110,6 @@ namespace experimental
 		gui::Compositor* compositor;
 		float current_depth;
 
-	//private:
-	//	void render_buffer(::renderer::VertexStream& stream, gemini::assets::Shader* shader, gemini::assets::Material* material);
-
 		render2::Device* device;
 		render2::Buffer* vertex_buffer;
 		render2::Pipeline* pipeline;
@@ -630,6 +627,7 @@ public:
 
 	void update()
 	{
+		assert(kernel::parameters().step_interval_seconds != 0.0f);
 		uint64_t current_time = platform::microseconds();
 		kernel::Parameters& params = kernel::parameters();
 

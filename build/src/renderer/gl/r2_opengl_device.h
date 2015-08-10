@@ -199,7 +199,7 @@ namespace render2
 			gl.CheckError("activate_pipeline - UseProgram");
 
 			// bind uniforms
-			common_setup_uniforms(shader, (unsigned char*)pipeline->constants()->get_data());
+			common_setup_uniforms(shader, pipeline->constants());
 
 			// determine if the VAO for the vertex_buffer needs to be built
 			if (!vertex_buffer->is_vao_valid())

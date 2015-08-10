@@ -33,21 +33,13 @@ namespace render2
 	// ---------------------------------------------------------------------
 	// ConstantBuffer
 	// ---------------------------------------------------------------------
-	ConstantBuffer::ConstantBuffer(size_t total_size)
+	void ConstantBuffer::set(const char* name, void* data)
 	{
-		data = MEMORY_ALLOC(total_size, core::memory::global_allocator());
-		max_size = total_size;
+		constant_map[name] = data;
 	}
-	
-	ConstantBuffer::~ConstantBuffer()
+
+	void* ConstantBuffer::get(const char* name)
 	{
-		MEMORY_DEALLOC(data, core::memory::global_allocator());
-		max_size = 0;
-	}
-	
-	void ConstantBuffer::assign(const void* src, const size_t bytes)
-	{
-		assert(bytes <= max_size);
-		memcpy(data, src, bytes);
+		return constant_map[name];
 	}
 } // namespace render2

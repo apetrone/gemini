@@ -185,5 +185,5 @@ namespace render2
 	GLTexture* common_create_texture(const Image& image);
 	void common_destroy_texture(Texture* texture);
 
-	void common_setup_uniforms(GLShader* shader, unsigned char* constant_buffer);
+	void common_setup_uniforms(GLShader* shader, ConstantBuffer& constants);
 } // namespace render2
