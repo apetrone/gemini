@@ -25,6 +25,7 @@
 #include "r2_opengl_common.h"
 #include "gemgl.h"
 #include <runtime/logging.h>
+#include <runtime/filesystem.h>
 
 using namespace renderer;
 
@@ -62,6 +63,8 @@ namespace render2
 			source
 		};
 
+		assert(gl.IsShader(shader));
+
 		gl.ShaderSource(shader, 3, (GLchar**)shader_source, 0);
 		gl.CheckError("ShaderSource");
 
@@ -71,47 +74,90 @@ namespace render2
 		gl.GetShaderiv(shader, GL_COMPILE_STATUS, &is_compiled);
 		gl.CheckError("GetShaderiv");
 
+
+		if (!is_compiled)
+		{
+			query_shader_info_log(shader);
+		}
+
 		assert(is_compiled);
 
 		return is_compiled;
 	} // compile_shader
 
-	char* GLShader::query_program_info_log(GLObject handle)
+	void GLShader::query_program_info_log(GLObject handle)
 	{
 		int log_length = 0;
 		char* logbuffer = 0;
+
+		char buffer[128] = {0};
+
 		gl.GetProgramiv(id, GL_INFO_LOG_LENGTH, &log_length);
+		if (log_length == 0)
+		{
+			log_length = 128;
+			logbuffer = buffer;
+		}
+		else
+		{
+		logbuffer = (char*)MEMORY_ALLOC(log_length+1, core::memory::global_allocator());
+		}
+
+		memset(logbuffer, 0, log_length);
+
+		gl.GetProgramInfoLog(handle, log_length, &log_length, logbuffer);
+		gl.CheckError("GetProgramInfoLog");
+
 		if (log_length > 0)
 		{
-			logbuffer = (char*)MEMORY_ALLOC(log_length+1, core::memory::global_allocator());
-			memset(logbuffer, 0, log_length);
-
-			gl.GetProgramInfoLog(handle, log_length, &log_length, logbuffer);
-			gl.CheckError("GetProgramInfoLog");
-
-			if (log_length > 0)
-			{
-				return logbuffer;
-			}
-			else
-			{
-				MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
-			}
+			LOGW("program info log:\n");
+			LOGW("%s\n", logbuffer);
 		}
-
-		return 0;
-	} // query_program_info_log
-
-	void GLShader::dump_program_log()
-	{
-		char* logbuffer = query_program_info_log(id);
-		if (logbuffer)
+		else
 		{
-			//					LOGW("Program Info Log:\n");
-			//					LOGW("%s\n", logbuffer);
 			MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
 		}
-	} // dump_program_log
+
+	} // query_program_info_log
+
+
+	void GLShader::query_shader_info_log(GLObject handle)
+	{
+		GLint log_length = 0;
+		char* logbuffer = 0;
+
+		// due to log_length returning 0 even when there's data;
+		// this will be used as a fallback
+		char buffer[128] = {0};
+
+		gl.GetShaderiv(id, GL_INFO_LOG_LENGTH, &log_length);
+		if (log_length == 0)
+		{
+			log_length = 128;
+			logbuffer = buffer;
+		}
+		else
+		{
+			logbuffer = (char*)MEMORY_ALLOC(log_length+1, core::memory::global_allocator());
+		}
+
+
+		memset(logbuffer, 0, log_length);
+
+		gl.GetShaderInfoLog(handle, log_length, &log_length, logbuffer);
+		gl.CheckError("GetShaderInfoLog");
+
+		if (log_length > 0)
+		{
+			LOGW("shader info log:\n");
+			LOGW("%s\n", logbuffer);
+		}
+
+		if (logbuffer != buffer)
+		{
+			MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
+		}
+	} // query_shader_info_log
 
 	int GLShader::build_from_source(const char *vertex_shader, const char *fragment_shader, const char* preprocessor, const char* version)
 	{
@@ -143,7 +189,7 @@ namespace render2
 
 		if (!is_linked)
 		{
-			dump_program_log();
+			query_program_info_log(id);
 		}
 
 		assert(is_linked == 1);
@@ -190,7 +236,7 @@ namespace render2
 				shader_variable& uniform = uniforms[uniform_index];
 				gl.GetActiveUniform(id, uniform_index, MAX_ATTRIBUTE_NAME_LENGTH, &uniform.length, &uniform.size, &uniform.type, uniform.name);
 				uniform.location = gl.GetUniformLocation(id, uniform.name);
-				LOGV("attribute: %i, location: %i, name: %s, size: %i, type: %i\n",
+				LOGV("uniform: %i, location: %i, name: %s, size: %i, type: %i\n",
 					 uniform_index,
 					 uniform.location,
 					 uniform.name,
@@ -239,7 +285,7 @@ namespace render2
 		program = (GLShader*)descriptor.shader;
 
 		// compute the size of the constant buffer we'll need
-		size_t total_bytes = sizeof(glm::mat4) * 2;
+		size_t total_bytes = sizeof(glm::mat4) * 2 + sizeof(GLuint);
 
 		this->cb = MEMORY_NEW(ConstantBuffer, core::memory::global_allocator())(total_bytes);
 	}
@@ -249,6 +295,110 @@ namespace render2
 		MEMORY_DELETE(this->cb, core::memory::global_allocator());
 	}
 
+
+	// ---------------------------------------------------------------------
+	// GLTexture
+	// ---------------------------------------------------------------------
+	GLTexture::GLTexture(const Image& image) :
+		texture_id(0),
+		texture_type(0),
+		unpack_alignment(4),
+		width(0),
+		height(0)
+	{
+		// set GL internal texture type based on the image
+		texture_type = texture_type_from_image(image);
+
+		glGenTextures(1, &texture_id);
+		gl.CheckError("GenTextures");
+
+		if (image.channels == 1 || image.flags & image::F_ALPHA)
+		{
+			unpack_alignment = 1;
+		}
+		else
+		{
+			unpack_alignment = 4;
+		}
+	}
+
+	GLTexture::~GLTexture()
+	{
+		glDeleteTextures(1, &texture_id);
+		gl.CheckError("DeleteTextures");
+	}
+
+	void GLTexture::bind(bool activate)
+	{
+		GLuint id = activate ? texture_id : 0;
+		gl.BindTexture(texture_type, id);
+		gl.CheckError("BindTexture");
+	}
+
+	void GLTexture::unbind()
+	{
+		bind(false);
+	}
+
+	void GLTexture::set_parameters(const Image& image)
+	{
+		// set texture wrapping
+		GLenum wrap_type = GL_REPEAT;
+
+		if (image.flags & image::F_CLAMP)
+		{
+			wrap_type = GL_CLAMP_TO_EDGE;
+		}
+
+		// if we're using GLES2 and the texture isn't a power of two
+		// we must use GL_CLAMP_TO_EDGE; otherwise textures will be black.
+
+// not available in GLES2
+#if defined(PLATFORM_OPENGL_SUPPORT)
+		else if (image.flags & image::F_CLAMP_BORDER)
+		{
+			wrap_type = GL_CLAMP_TO_BORDER;
+
+			float border[] = {1, 1, 1, 1};
+			glTexParameterfv(texture_type, GL_TEXTURE_BORDER_COLOR, border);
+		}
+#endif
+
+//		gl.TexParameteri(texture_type, GL_TEXTURE_BASE_LEVEL, 0);
+//		gl.TexParameteri(texture_type, GL_TEXTURE_MAX_LEVEL, 0);
+
+		gl.TexParameteri(texture_type, GL_TEXTURE_WRAP_S, wrap_type);
+		gl.TexParameteri(texture_type, GL_TEXTURE_WRAP_T, wrap_type);
+
+
+
+
+		// set filter type
+		GLenum min_filter = GL_NEAREST;
+		GLenum mag_filter = GL_NEAREST;
+
+		if (image.filter == image::FILTER_LINEAR)
+		{
+			min_filter = GL_LINEAR_MIPMAP_NEAREST;
+			mag_filter = GL_NEAREST;
+		}
+		else if (image.filter == image::FILTER_LINEAR_MIPMAP)
+		{
+			min_filter = GL_LINEAR_MIPMAP_LINEAR;
+			mag_filter = GL_LINEAR;
+		}
+
+		// set filtering
+		gl.TexParameteri(texture_type, GL_TEXTURE_MIN_FILTER, min_filter);
+		gl.TexParameteri(texture_type, GL_TEXTURE_MAG_FILTER, mag_filter);
+
+
+//		gl.TexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4 );
+		width = image.width;
+		height = image.height;
+
+
+	}
 
 	// ---------------------------------------------------------------------
 	// implementation
@@ -431,7 +581,7 @@ namespace render2
 			gl.CheckError("ClearDepth");
 		}
 #else
-#warning gl.ClearDepth needs support on ths platform
+#warning gl.ClearDepth needs support on this platform
 #endif
 
 		if (pass->clear_stencil)
@@ -445,6 +595,219 @@ namespace render2
 		{
 			gl.Clear(clear_flags);
 			gl.CheckError("Clear");
+		}
+	}
+
+	GLShader* common_create_shader(const char* subfolder, const char* name, GLShader* reuse_shader, const char* preprocessor, const char* version)
+	{
+		// I haven't re-implemented hot loading of shaders; do that if you
+		// hit this assert :)
+		assert(reuse_shader == nullptr);
+
+		// the path to shaders resembles this:
+		// 'shaders/<GLSL version>/<name>.[vert|frag]'
+
+		size_t buffer_length = 0;
+
+		core::StackString<64> vertex_shader_path = "shaders";
+		vertex_shader_path.append(PATH_SEPARATOR_STRING);
+		vertex_shader_path.append(subfolder);
+		vertex_shader_path.append(PATH_SEPARATOR_STRING);
+		vertex_shader_path.append(name);
+		vertex_shader_path.append(".vert");
+
+		char* vertex_shader_source = core::filesystem::instance()->virtual_load_file(vertex_shader_path(), 0, &buffer_length);
+		assert(vertex_shader_source != 0);
+
+		core::StackString<64> fragment_shader_path = "shaders";
+		fragment_shader_path.append(PATH_SEPARATOR_STRING);
+		fragment_shader_path.append(subfolder);
+		fragment_shader_path.append(PATH_SEPARATOR_STRING);
+		fragment_shader_path.append(name);
+		fragment_shader_path.append(".frag");
+		char* fragment_shader_source = core::filesystem::instance()->virtual_load_file(fragment_shader_path(), 0, &buffer_length);
+		assert(fragment_shader_source != 0);
+
+		GLShader* shader = MEMORY_NEW(GLShader, core::memory::global_allocator());
+		shader->build_from_source(
+		  vertex_shader_source,
+		  fragment_shader_source,
+		  preprocessor,
+		  version
+		);
+
+		MEMORY_DEALLOC(vertex_shader_source, core::memory::global_allocator());
+		MEMORY_DEALLOC(fragment_shader_source, core::memory::global_allocator());
+
+		return shader;
+	}
+
+
+
+	// ---------------------------------------------------------------------
+	// image
+	// ---------------------------------------------------------------------
+	// utility functions
+	GLenum image_to_source_format(const Image& image)
+	{
+		uint32_t num_channels = image.channels;
+
+		if ( num_channels == 3 )
+		{
+			return GL_RGB;
+		}
+		else if ( num_channels == 4 )
+		{
+			return GL_RGBA;
+		}
+		else if ( num_channels == 1 )
+		{
+		// GL_ALPHA is available pre GL 3.2
+		// and in GLES 2.
+#if defined(PLATFORM_GLES2_SUPPORT)
+			return GL_ALPHA;
+#else
+			return GL_RED;
+#endif
+		}
+
+		return GL_RGBA;
+	} // image_source_format
+
+	GLenum image_to_internal_format(const Image& image)
+	{
+		uint32_t image_flags = image.flags;
+		//GLenum internalFormat = GL_SRGB8;
+		if (image_flags & image::F_ALPHA)
+		{
+			// GL_ALPHA is available pre GL 3.2
+			// and in GLES 2.
+#if defined(PLATFORM_GLES2_SUPPORT)
+			return GL_ALPHA;
+#else
+			return GL_RED;
+#endif
+		}
+
+		if (image.channels == 3)
+		{
+			return GL_RGB;
+		}
+		else if (image.channels == 4)
+		{
+			return GL_RGBA;
+		}
+
+		// Unknown internal storage format
+		assert(0);
+		return GL_INVALID_ENUM;
+	} // image_to_internal_format
+
+	GLenum texture_type_from_image(const Image& image)
+	{
+		if (image.type == image::TEX_2D)
+		{
+			return GL_TEXTURE_2D;
+		}
+		else if (image.type == image::TEX_CUBE)
+		{
+			return GL_TEXTURE_CUBE_MAP;
+		}
+		else
+		{
+			// if you reach this assert, this class cannot deal with the image
+			// type you specified.
+			assert(0);
+		}
+
+		return GL_INVALID_ENUM;
+	} // texture_type_from_image
+
+	GLTexture* common_create_texture(const Image& image)
+	{
+		GLenum source_format = image_to_source_format(image);
+		GLenum internal_format = image_to_internal_format(image);
+
+		GLTexture* texture = MEMORY_NEW(GLTexture, core::memory::global_allocator())(image);
+
+#if defined(PLATFORM_GLES2_SUPPORT)
+		// GL_INVALID_OPERATION is generated if <source_format> does not match <internal_format>
+		assert(source_format == internal_format);
+#endif
+
+		texture->bind();
+		texture->set_parameters(image);
+
+
+		GLvoid* pixels = nullptr;
+		if (!image.pixels.empty())
+		{
+			pixels = (GLvoid*)&image.pixels[0];
+		}
+
+
+		// TODO@APP: This needs to be re-visited because there's a state problem
+		// when you create a cubemap (which succeeds) and then later try to
+		// create a normal 2d texture. (that catches a glerror in bind).
+		// This tells me there's a gl error created somewhere after this ordeal.
+		// Likely in the render target stuff!
+		if (image.type == image::TEX_2D)
+		{
+			// upload image and generate mipmaps
+			gl.TexImage2D(texture->texture_type, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, pixels);
+			gl.CheckError("teximage2d");
+		}
+		else if (image.type == image::TEX_CUBE)
+		{
+			for (uint8_t index = 0; index < 6; ++index)
+			{
+				gl.TexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+index, 0, internal_format, image.width, image.height, 0, source_format, GL_UNSIGNED_BYTE, pixels);
+				gl.CheckError("teximage2d (cube)");
+			}
+		}
+
+		gl.GenerateMipmap(texture->texture_type);
+		gl.CheckError("generate mipmap");
+
+		texture->unbind();
+
+		return texture;
+	}
+
+	void common_destroy_texture(Texture* tex)
+	{
+		GLTexture* texture = static_cast<GLTexture*>(tex);
+		MEMORY_DELETE(texture, core::memory::global_allocator());
+	}
+
+
+	void common_setup_uniforms(GLShader* shader, unsigned char* constant_buffer)
+	{
+		size_t offset = 0;
+
+		// TODO: dispatch of various uniform types
+		for(size_t index = 0; index < shader->uniforms.size(); ++index)
+		{
+			shader_variable& uniform = shader->uniforms[index];
+			switch(uniform.type)
+			{
+				case GL_FLOAT_MAT4:
+					gl.UniformMatrix4fv(uniform.location, uniform.size, GL_FALSE, (GLfloat*)(constant_buffer+offset));
+					gl.CheckError("UniformMatrix4fv");
+					break;
+				case GL_SAMPLER_2D:
+					gl.Uniform1i(uniform.location, 0);
+					gl.CheckError("Uniform1i");
+					break;
+
+				default:
+					// If you hit this assert, there's a discrepancy between this function
+					// and the 'type_to_bytes' function -- where by an unhandled
+					// uniform type was hit to cause this assert.
+					assert(0);
+				break;
+			}
+			offset += uniform.byte_size;
 		}
 	}
 } // namespace render2

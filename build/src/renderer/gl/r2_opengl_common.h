@@ -42,7 +42,7 @@ namespace render2
 			case GL_FLOAT_VEC4: return sizeof(GLfloat) * 4;
 				
 			case GL_FLOAT_MAT4: return sizeof(GLfloat) * 16;
-				
+			case GL_SAMPLER_2D: return sizeof(GLuint);
 				
 			default: break;
 		}
@@ -103,8 +103,8 @@ namespace render2
 		virtual ~GLShader();
 				
 		bool compile_shader(GLint shader, const char* source, const char* preprocessor_defines, const char* version);
-		char* query_program_info_log(renderer::GLObject handle);
-		void dump_program_log();
+		void query_program_info_log(renderer::GLObject handle);
+		void query_shader_info_log(renderer::GLObject handle);
 		
 		int build_from_source(const char *vertex_shader, const char *fragment_shader, const char* preprocessor, const char* version);
 		GLint get_attribute_location(const char* name);
@@ -129,6 +129,24 @@ namespace render2
 		virtual ~GLPipeline();
 	}; // GLPipeline
 
+	struct GLTexture : public Texture
+	{
+		GLTexture(const Image& image);
+		virtual ~GLTexture();
+
+		void bind(bool activate = true);
+		void unbind();
+
+		void set_parameters(const Image& image);
+
+		GLuint texture_id;
+		GLenum texture_type;
+		uint8_t unpack_alignment;
+
+		// texture dimensions
+		uint32_t width;
+		uint32_t height;
+	}; // GLTexture
 
 	struct VertexDataTypeToGL
 	{
@@ -157,4 +175,15 @@ namespace render2
 	void common_resize_backbuffer(int width, int height, RenderTarget* target);
 	CommandQueue* common_create_queue(const Pass& render_pass, CommandQueue* next_queue);
 	void common_pass_setup(const Pass* pass);
+
+	GLShader* common_create_shader(const char* subfolder, const char* name, GLShader* reuse_shader, const char* preprocessor, const char* version);
+
+	// for use with glTexImage
+	GLenum image_to_source_format(const Image& image);
+	GLenum image_to_internal_format(const Image& image);
+	GLenum texture_type_from_image(const Image& image);
+	GLTexture* common_create_texture(const Image& image);
+	void common_destroy_texture(Texture* texture);
+
+	void common_setup_uniforms(GLShader* shader, unsigned char* constant_buffer);
 } // namespace render2

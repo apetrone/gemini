@@ -77,8 +77,11 @@ namespace render2
 							  );
 		}
 		
-		virtual void texture(const Image& texture, uint32_t index)
+		virtual void texture(Texture* texture, uint32_t index)
 		{
+			queue.add_command(
+							Command(COMMAND_TEXTURE, texture, 0, index, 0)
+							  );
 		}
 		
 	private:

@@ -162,17 +162,7 @@ namespace render2
 			gl.CheckError("activate_pipeline - UseProgram");
 
 			// bind uniforms
-			size_t offset = 0;
-			char* buffer = (char*)pipeline->constants()->get_data();
-
-			// TODO: dispatch of various uniform types
-			for(size_t index = 0; index < shader->uniforms.size(); ++index)
-			{
-				shader_variable& uniform = shader->uniforms[index];
-				gl.UniformMatrix4fv(uniform.location, uniform.size, GL_FALSE, (GLfloat*)(buffer+offset));
-				gl.CheckError("UniformMatrix4fv");
-				offset += uniform.byte_size;
-			}
+			common_setup_uniforms(shader, (unsigned char*)pipeline->constants()->get_data());
 
 			GLInputLayout* layout = static_cast<GLInputLayout*>(pipeline->input_layout);
 			for (size_t index = 0; index < layout->items.size(); ++index)
@@ -230,6 +220,7 @@ namespace render2
 				GLPipeline* current_pipeline = nullptr;
 				GLBuffer* vertex_stream = nullptr;
 				GLBuffer* index_stream = nullptr;
+				GLTexture* texture = nullptr;
 
 				for (size_t index = 0; index < cq->commands.size(); ++index)
 				{
@@ -257,9 +248,31 @@ namespace render2
 //						gl.Viewport(command->params[0], command->params[1], command->params[2], command->params[3]);
 //						gl.CheckError("glViewport");
 //					}
+					else if (command->type == COMMAND_TEXTURE)
+					{
+						if (texture)
+						{
+							texture->unbind();
+						}
+
+						texture = static_cast<GLTexture*>(command->data[0]);
+						gl.ActiveTexture(GL_TEXTURE0+command->params[0]);
+						gl.CheckError("ActiveTexture");
+						texture->bind();
+
+						assert(gl.IsTexture(texture->texture_id));
+					}
+					else
+					{
+						assert(0);
+					}
 				}
 
 				cq->reset();
+				if (texture)
+				{
+					texture->unbind();
+				}
 			}
 
 
@@ -346,42 +359,7 @@ namespace render2
 			MEMORY_DELETE(glp, core::memory::global_allocator());
 		}
 
-		virtual Shader* create_shader(const char* name)
-		{
-			GLShader* shader = MEMORY_NEW(GLShader, core::memory::global_allocator());
-
-			const char* vertex_shader_source = "\
-			precision lowp float;\
-			uniform mat4 projection_matrix;\
-			uniform mat4 modelview_matrix;\
-			\
-			attribute vec4 in_color;\
-			attribute vec4 in_position;\
-			varying vec4 vertex_color;\
-			\
-			void main()\
-			{\
-			gl_Position = (projection_matrix * modelview_matrix * in_position);\
-			vertex_color = in_color;\
-			}";
-
-			const char* fragment_shader_source = "\
-			precision lowp float;\
-			varying vec4 vertex_color;\
-			\
-			void main()\
-			{\
-			gl_FragColor = vertex_color;\
-			}";
-
-			shader->build_from_source(
-				vertex_shader_source,
-				fragment_shader_source,
-				"",
-				"#version 100\n");
-
-			return shader;
-		}
+		virtual Shader* create_shader(const char* name, Shader* reuse_shader);
 
 		virtual void destroy_shader(Shader* shader)
 		{
@@ -414,6 +392,12 @@ namespace render2
 		virtual void queue_buffers(CommandQueue* queues, size_t total_queues);
 		virtual void backbuffer_resized(int backbuffer_width, int backbuffer_height);
 
+		// ---------------------------------------------------------------------
+		// texture
+		// ---------------------------------------------------------------------
+		virtual Texture* create_texture(const Image& image);
+		virtual void update_texture(Texture* texture, const Image& image);
+		virtual void destroy_texture(Texture* texture);
 
 	private:
 		render2::RenderTarget default_target;

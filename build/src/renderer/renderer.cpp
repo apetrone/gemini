@@ -293,14 +293,6 @@ namespace render2
 	}
 
 	// ---------------------------------------------------------------------
-	// Image
-	// ---------------------------------------------------------------------
-	void Image::update_pixels(const Region& rect, size_t miplevel, void* bytes, size_t bytes_per_row)
-	{
-		
-	}
-
-	// ---------------------------------------------------------------------
 	// Pass
 	// ---------------------------------------------------------------------
 	void Pass::color(float red, float green, float blue, float alpha)

@@ -56,6 +56,8 @@ class TestKernel : public kernel::IKernel,
 	platform::window::NativeWindow* other_window;
 	glm::vec2 center;
 
+	float countdown;
+
 public:
 	virtual void event(kernel::KeyboardEvent& event)
 	{
@@ -136,7 +138,8 @@ public:
 			PLATFORM_LOG(platform::LogMessageType::Info, "display %lu rect = %2.2f, %2.2f, %2.2f x %2.2f\n", (unsigned long)i, frame.x, frame.y, frame.width, frame.height);
 		}
 
-
+		// automaticaly shutdown after 3 seconds
+		countdown = 3.0f;
 
 		// create a test window
 		platform::window::Parameters params;
@@ -150,7 +153,7 @@ public:
 
 		platform::window::focus(native_window);
 
-		if (platform::window::screen_count() > 1)
+		if (0 && platform::window::screen_count() > 1)
 		{
 			params.frame = platform::window::centered_window_frame(1, 1024, 768);
 			params.window_title = "other_window";
@@ -184,7 +187,7 @@ public:
 
 		// setup the pipeline
 		render2::PipelineDescriptor desc;
-		desc.shader = device->create_shader("test");
+		desc.shader = device->create_shader("vertexcolor");
 		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3); // position
 		desc.vertex_description.add("in_color", render2::VD_FLOAT, 4); // color
 		desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
@@ -198,23 +201,39 @@ public:
 
 		// Draw a triangle on screen with the wide part of the base at the bottom
 		// of the screen.
-		size_t total_bytes = sizeof(MyVertex) * 4;
+		size_t total_bytes = sizeof(MyVertex) * 6;
 		vertex_buffer = device->create_vertex_buffer(total_bytes);
 		assert(vertex_buffer != nullptr);
-		MyVertex vertices[4];
-		vertices[0].set_position(0, height, 0);
-		vertices[0].set_color(1.0f, 0.0f, 0.0f, 1.0f);
+		MyVertex vertices[6];
 
-		vertices[1].set_position(width, height, 0);
-		vertices[1].set_color(0.0f, 1.0f, 0.0f, 1.0f);
 
-		vertices[2].set_position(width/2, 0, 0);
-		vertices[2].set_color(0.0f, 0.0f, 1.0f, 1.0f);
 
-		vertices[3].set_position(0, 0, 0);
-		vertices[3].set_color(0.0f, 1.0f, 1.0f, 1.0f);
-
+		generate_triangle(0, vertices, glm::vec2(width, height), glm::vec2(0, 0));
+		generate_triangle(1, vertices, glm::vec2(width, height), glm::vec2(width/2, 0));
+//		generate_triangle(0, glm::vec2(0, 0));
+//		generate_triangle(0, glm::vec2(0, 0));
 		device->buffer_upload(vertex_buffer, vertices, total_bytes);
+
+
+		// setup texture pipeline
+		render2::PipelineDescriptor td;
+		td.shader = device->create_shader("vertexcolortexture");
+		td.vertex_description.add("in_position", render2::VD_FLOAT, 3);
+		td.vertex_description.add("in_color", render2::VD_FLOAT, 4);
+		td.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
+		td.input_layout = device->create_input_layout(td.vertex_description, td.shader);
+		texture_pipeline = device->create_pipeline(td);
+
+
+		// setup texture vertex buffer
+		total_bytes = sizeof(TexturedVertex) * 6;
+		textured_buffer = device->create_vertex_buffer(total_bytes);
+		TexturedVertex tv[6];
+		generate_textured_triangle(0, tv, glm::vec2(width, height), glm::vec2(0, height/2));
+		generate_textured_triangle(1, tv, glm::vec2(width, height), glm::vec2(width/2, height/2));
+		device->buffer_upload(textured_buffer, tv, total_bytes);
+
+
 
 
 		// setup constant buffer
@@ -222,15 +241,94 @@ public:
 		ConstantData cd;
 		cd.modelview_matrix = glm::mat4(1.0f);
 		cd.projection_matrix = glm::ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
-		pipeline->constants()->assign(&cd, sizeof(ConstantData));
+		cd.texture_unit = 0;
+		pipeline->constants()->assign(&cd, 128);
+		texture_pipeline->constants()->assign(&cd, sizeof(ConstantData));
 
 //		platform::window::show_cursor(true);
 #endif
+
+
+
+
+		// ---------------------------------------------------------------------
+		// texture creation
+		// ---------------------------------------------------------------------
+		// generate a textre
+		image::Image checker_pattern;
+		checker_pattern.width = 32;
+		checker_pattern.height = 32;
+		checker_pattern.channels = 3;
+		image::generate_checker_pattern(checker_pattern, core::Color(255, 0, 255), core::Color(0, 255, 0));
+		checker = device->create_texture(checker_pattern);
+		assert(checker);
+
+		// load a texture from file
+		size_t buffer_size = 0;
+		char* buffer_data;
+		buffer_data = core::filesystem::instance()->virtual_load_file("textures/notexture.png", 0, &buffer_size);
+		assert(buffer_data);
+		image::Image image = image::load_from_memory((unsigned char*)buffer_data, buffer_size);
+		LOGV("loaded image: %i x %i, @ %i\n", image.width, image.height, image.channels);
+		image.filter = image::FILTER_NONE;
+		notexture = device->create_texture(image);
+		assert(notexture);
+		MEMORY_DEALLOC(buffer_data, core::memory::global_allocator());
+
+		// load a compressed texture?
+
+		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
+
 		return kernel::NoError;
+	}
+
+	void update()
+	{
+		assert(kernel::parameters().step_interval_seconds != 0.0f);
+		uint64_t current_time = platform::microseconds();
+		kernel::Parameters& params = kernel::parameters();
+
+		// need to initialize this to current_time otherwise the initial
+		// delta could be very large; which leads to an infinite loop
+		// when processing the accumulator.
+		static uint64_t last_time = current_time;
+		static float accumulator = 0;
+
+		// calculate delta ticks in miliseconds
+		params.framedelta_milliseconds = (current_time - last_time)*0.001f;
+
+		// cache the value in seconds
+		params.framedelta_seconds = params.framedelta_milliseconds*0.001f;
+
+		last_time = current_time;
+
+		// update accumulator
+		accumulator += params.framedelta_seconds;
+
+		while(accumulator >= params.step_interval_seconds)
+		{
+			// subtract the interval from the accumulator
+			accumulator -= params.step_interval_seconds;
+
+			// increment tick counter
+			params.current_tick++;
+		}
+
+		params.step_alpha = accumulator / params.step_interval_seconds;
+		if ( params.step_alpha >= 1.0f )
+		{
+			params.step_alpha -= 1.0f;
+		}
 	}
 
 	virtual void tick()
 	{
+		update();
+		countdown -= kernel::parameters().step_interval_seconds;
+
+		if (countdown <= 0)
+			kernel::instance()->set_active(false);
+
 		// update our input
 		input::update();
 
@@ -258,14 +356,24 @@ public:
 
 		// add commands to the queue
 		serializer->pipeline(pipeline);
-//		serializer->viewport(0, 0, native_window->dimensions.width, native_window->dimensions.height);
 		serializer->vertex_buffer(vertex_buffer);
 //		serializer->draw_indexed_primitives(index_buffer, 3);
+		serializer->draw(0, 6);
+
+		// draw textured triangles
+		serializer->pipeline(texture_pipeline);
+		serializer->vertex_buffer(textured_buffer);
+		serializer->texture(checker, 0);
 		serializer->draw(0, 3);
-		device->destroy_serializer(serializer);
+		serializer->texture(notexture, 0);
+		serializer->draw(3, 6);
 
 		// queue the buffer with our device
+		device->destroy_serializer(serializer);
 		device->queue_buffers(queue, 1);
+
+
+
 
 		// submit the queues to the GPU
 		platform::window::activate_context(native_window);
@@ -298,6 +406,14 @@ public:
 	virtual void shutdown()
 	{
 #if TEST_RENDER_GRAPHICS
+		if (checker)
+		{
+			device->destroy_texture(checker);
+			device->destroy_texture(notexture);
+			device->destroy_buffer(textured_buffer);
+			device->destroy_pipeline(texture_pipeline);
+		}
+
 		device->destroy_buffer(vertex_buffer);
 		device->destroy_pipeline(pipeline);
 		render2::destroy_device(device);
@@ -340,15 +456,63 @@ private:
 		}
 	};
 
+
+	struct TexturedVertex : public MyVertex
+	{
+		float uv[2];
+
+		void set_uv(float u, float v)
+		{
+			uv[0] = u;
+			uv[1] = v;
+		}
+	};
+
+	void generate_triangle(size_t index, MyVertex* source, const glm::vec2& dimensions, const glm::vec2& offset)
+	{
+		MyVertex* vertices = (source+(index*3));
+		vertices[0].set_position(offset.x, (dimensions.y/2)+offset.y, 0);
+		vertices[0].set_color(1.0f, 0.0f, 0.0f, 1.0f);
+
+		vertices[1].set_position((dimensions.x/2)+offset.x, (dimensions.y/2)+offset.y, 0);
+		vertices[1].set_color(0.0f, 1.0f, 0.0f, 1.0f);
+
+		vertices[2].set_position((dimensions.x/4)+offset.x, offset.y, 0);
+		vertices[2].set_color(0.0f, 0.0f, 1.0f, 1.0f);
+	}
+
+	void generate_textured_triangle(size_t index, TexturedVertex* source, const glm::vec2& dimensions, const glm::vec2& offset)
+	{
+		TexturedVertex* vertices = (source+(index*3));
+		vertices[0].set_position(offset.x, (dimensions.y/2)+offset.y, 0);
+		vertices[0].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[0].set_uv(0.0f, 1.0f);
+
+		vertices[1].set_position((dimensions.x/2)+offset.x, (dimensions.y/2)+offset.y, 0);
+		vertices[1].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[1].set_uv(1.0f, 1.0f);
+
+		vertices[2].set_position((dimensions.x/4)+offset.x, offset.y, 0);
+		vertices[2].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[2].set_uv(0.5f, 0.0f);
+	}
+
 	struct ConstantData
 	{
 		glm::mat4 modelview_matrix;
 		glm::mat4 projection_matrix;
+		unsigned int texture_unit;
 	};
 
 	render2::Device* device;
 	render2::Pipeline* pipeline;
 	render2::Buffer* vertex_buffer;
+
+	render2::Pipeline* texture_pipeline;
+	render2::Buffer* textured_buffer;
+
+	render2::Texture* checker;
+	render2::Texture* notexture;
 };
 
 PLATFORM_MAIN

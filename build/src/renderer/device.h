@@ -24,6 +24,11 @@
 // -------------------------------------------------------------
 #pragma once
 
+namespace image
+{
+	struct Image;
+}
+
 namespace render2
 {
 	// ---------------------------------------------------------------------
@@ -68,7 +73,11 @@ namespace render2
 		// ---------------------------------------------------------------------
 		// shader
 		// ---------------------------------------------------------------------
-		virtual Shader* create_shader(const char* name) = 0;
+		/// @brief Create a new shader
+		/// @param name Public name of the shader
+		/// @param reuse_shader If non-NULL, reload name into this shader
+		/// @returns A valid shader created from the name parameter
+		virtual Shader* create_shader(const char* name, Shader* reuse_shader = nullptr) = 0;
 		virtual void destroy_shader(Shader* shader) = 0;
 		
 		// ---------------------------------------------------------------------
@@ -104,6 +113,13 @@ namespace render2
 		
 		// handle backbuffer resize
 		virtual void backbuffer_resized(int backbuffer_width, int backbuffer_height) = 0;
-		
+
+		// ---------------------------------------------------------------------
+		// texture
+		// ---------------------------------------------------------------------
+		virtual Texture* create_texture(const Image& image) = 0;
+		virtual void update_texture(Texture* texture, const Image& image) = 0;
+		virtual void destroy_texture(Texture* texture) = 0;
+
 	}; // class Device
 } // namespace render2

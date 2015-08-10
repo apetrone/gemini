@@ -208,7 +208,28 @@ namespace image
 		return texture;
 
 	} // load_default_texture
-	
+
+	Image load_from_memory(unsigned char* data, unsigned int data_size)
+	{
+		Image image;
+		int width;
+		int height;
+		int channels;
+
+		unsigned char* pixels = stbi_load_from_memory(data, data_size, &width, &height, &channels, 0);
+
+		image.width = width;
+		image.height = height;
+		image.channels = channels;
+
+		// pixels returned by stbi are uncompressed; so do a raw alloc and copy.
+		size_t pixels_size = image.width * image.height * image.channels;
+		image.pixels.allocate(pixels_size);
+		memcpy(&image.pixels[0], pixels, pixels_size);
+
+		return image;
+	}
+
 	unsigned char* load_image_from_memory(unsigned char* data, unsigned int data_size, unsigned int* width, unsigned int* height, unsigned int* channels)
 	{
 		unsigned char* pixels = 0;
