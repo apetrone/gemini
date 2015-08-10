@@ -25,6 +25,7 @@
 #include "opengl_device.h"
 #include "glcommandserializer.h"
 #include "commandbuffer.h"
+#include "r2_opengl_common.h"
 
 namespace render2
 {
@@ -86,5 +87,34 @@ namespace render2
 	void OpenGLDevice::backbuffer_resized(int backbuffer_width, int backbuffer_height)
 	{
 		common_resize_backbuffer(backbuffer_width, backbuffer_height, &default_target);
+	}
+
+
+
+	// ---------------------------------------------------------------------
+	// texture
+	// ---------------------------------------------------------------------
+	Texture* OpenGLDevice::create_texture(const Image& image)
+	{
+		return common_create_texture(image);
+	}
+
+	void OpenGLDevice::update_texture(Texture* tex, const Image& image)
+	{
+//		GLTexture* texture = static_cast<GLTexture*>(tex);
+
+	}
+
+	void OpenGLDevice::destroy_texture(Texture* tex)
+	{
+		common_destroy_texture(tex);
+	}
+
+	// ---------------------------------------------------------------------
+	// shader
+	// ---------------------------------------------------------------------
+	Shader* OpenGLDevice::create_shader(const char* name, Shader* reuse_shader)
+	{
+		return common_create_shader("150", name, static_cast<GLShader*>(reuse_shader), "", "#version 150 core\n");
 	}
 } // namespace render2

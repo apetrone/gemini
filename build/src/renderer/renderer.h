@@ -400,24 +400,12 @@ namespace render2
 	//		uint32_t s_address_mode;
 	//		uint32_t t_address_mode;
 	//	};
-	
-	//	struct Texture
-	//	{
-	//	};
-	
+
 	// ---------------------------------------------------------------------
-	// Image
+	// Texture: data uploaded to the GPU
 	// ---------------------------------------------------------------------
-	struct Image
+	struct Texture
 	{
-		// color components
-		// ordering
-		// component size
-		// presence or absence of compression
-		uint32_t mip_level;
-		uint32_t pixel_format;
-		
-		void update_pixels(const Region& rect, size_t miplevel, void* bytes, size_t bytes_per_row);
 	};
 	
 	// This is an implementation-specific format which
@@ -445,6 +433,8 @@ namespace render2
 		SourceAlpha,
 		OneMinusSourceAlpha
 	};
+
+	typedef image::Image Image;
 
 	// ---------------------------------------------------------------------
 	// PipelineDescriptor
@@ -481,7 +471,7 @@ namespace render2
 		virtual void draw_indexed_primitives(Buffer* index_buffer, size_t total) = 0;
 		virtual void pipeline(Pipeline* pipeline) = 0;
 		virtual void viewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) = 0;
-		virtual void texture(const Image& texture, uint32_t index) = 0;
+		virtual void texture(Texture* texture, uint32_t index) = 0;
 	};
 } // namespace render2
 
@@ -513,9 +503,9 @@ namespace render2
 	// ---------------------------------------------------------------------
 	
 	/// @brief Create a render device with the given parameters
-	Device* create_device(const RenderParameters& parameters);
+	LIBRARY_EXPORT Device* create_device(const RenderParameters& parameters);
 	
 	/// @brief Destroy an existing render device
-	void destroy_device(Device* device);
+	LIBRARY_EXPORT void destroy_device(Device* device);
 } // namespace render2
 

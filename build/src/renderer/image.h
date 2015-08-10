@@ -57,7 +57,7 @@ namespace image
 		F_ALPHA = 4,
 		F_WRAP = 8,				// wrap out of bounds UV coords
 		F_CLAMP = 16,			// clamp out of bounds UV coords,
-		F_CLAMP_BORDER = 32,
+		F_CLAMP_BORDER = 32,	// requires GL_ARB_texture_border_clamp
 		F_CUBEMAP = 64,			// load this texture as a cubemap
 	}; // ImageFlags
 	
@@ -67,7 +67,25 @@ namespace image
 		FILTER_LINEAR,				// linear
 		FILTER_LINEAR_MIPMAP,		// linear, with mipmapping
 	};
-	
+
+
+	// ---------------------------------------------------------------------
+	// Image
+	// ---------------------------------------------------------------------
+#if 0
+	struct Image
+	{
+		// color components
+		// ordering
+		// component size
+		// presence or absence of compression
+		uint32_t mip_level;
+		uint32_t pixel_format;
+
+		void update_pixels(const Region& rect, size_t miplevel, void* bytes, size_t bytes_per_row);
+	};
+#endif
+
 	struct Image
 	{
 		ImageType type;
@@ -104,6 +122,7 @@ namespace image
 //	bool LoadCubemap( const char ** filenames, unsigned int & texID, unsigned int flags, unsigned int * out_width = 0, unsigned int * out_height = 0 );
 //	unsigned char * AllocImageFromFile( const char * filename, unsigned int * width, unsigned int * height, unsigned int * format, bool path_is_relative=true );
 
+	Image load_from_memory(unsigned char* data, unsigned int data_size);
 	unsigned char * load_image_from_memory( unsigned char * data, unsigned int dataSize, unsigned int * width, unsigned int * height, unsigned int * channels );
 //	void save_image_to_file( const char * filename, unsigned int width, unsigned int height, unsigned int channels, unsigned char * pixels, int imageType );
 	void free_image( unsigned char * pixels );

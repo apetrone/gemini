@@ -41,6 +41,7 @@ namespace render2
 		COMMAND_DRAW_INDEXED,		// draw from index buffer
 		COMMAND_PIPELINE,			// set the rendering pipeline
 		COMMAND_VIEWPORT,			// set viewport
+		COMMAND_TEXTURE,			// set a texture
 		COMMAND_STATE
 	};
 	

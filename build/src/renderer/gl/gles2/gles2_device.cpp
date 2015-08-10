@@ -85,4 +85,30 @@ namespace render2
 	{
 		common_resize_backbuffer(backbuffer_width, backbuffer_height, &default_target);
 	}
+
+	// ---------------------------------------------------------------------
+	// shader
+	// ---------------------------------------------------------------------
+	Shader* GLES2Device::create_shader(const char* name, Shader* reuse_shader)
+	{
+		return common_create_shader("100", name, static_cast<GLShader*>(reuse_shader), "\n", "#version 100\n");
+	}
+
+	// ---------------------------------------------------------------------
+	// texture
+	// ---------------------------------------------------------------------
+	Texture* GLES2Device::create_texture(const Image& image)
+	{
+		return common_create_texture(image);
+	}
+
+	void GLES2Device::update_texture(Texture* texture, const Image& image)
+	{
+
+	}
+
+	void GLES2Device::destroy_texture(Texture* texture)
+	{
+		common_destroy_texture(texture);
+	}
 } // namespace render2
