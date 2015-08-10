@@ -114,6 +114,10 @@ namespace experimental
 		render2::Buffer* vertex_buffer;
 		render2::Pipeline* pipeline;
 
+		glm::mat4 modelview_matrix;
+		glm::mat4 projection_matrix;
+		unsigned int diffuse_texture;
+
 	public:
 
 		void set_device(render2::Device* device) { this->device = device; }
@@ -155,7 +159,7 @@ namespace experimental
 
 
 		render2::PipelineDescriptor desc;
-		desc.shader = device->create_shader("test");
+		desc.shader = device->create_shader("vertexcolor");
 		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3);
 		desc.vertex_description.add("in_color", render2::VD_UNSIGNED_BYTE, 4);
 		desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
@@ -321,11 +325,10 @@ namespace experimental
 		// temp limit
 		assert(total_vertices < MAX_VERTICES);
 
-
-		ConstantData cd;
-		cd.modelview_matrix = glm::mat4(1.0f);
-		cd.projection_matrix = glm::ortho(0.0f, (float)this->compositor->width, (float)this->compositor->height, 0.0f, -1.0f, 1.0f);
-		pipeline->constants()->assign(&cd, sizeof(ConstantData));
+		modelview_matrix = glm::mat4(1.0f);
+		projection_matrix = glm::ortho(0.0f, (float)this->compositor->width, (float)this->compositor->height, 0.0f, -1.0f, 1.0f);
+		pipeline->constants().set("modelview_matrix", &modelview_matrix);
+		pipeline->constants().set("projection_matrix", &projection_matrix);
 
 		assert(total_lists > 0);
 
@@ -403,6 +406,9 @@ class TestUi : public kernel::IKernel,
 	gui::Panel* root;
 	gui::Graph* graph;
 	experimental::GUIRenderer renderer;
+
+	glm::mat4 modelview_matrix;
+	glm::mat4 projection_matrix;
 
 public:
 	virtual void event(kernel::KeyboardEvent& event)
@@ -579,7 +585,7 @@ public:
 
 		// setup the pipeline
 		render2::PipelineDescriptor desc;
-		desc.shader = device->create_shader("test");
+		desc.shader = device->create_shader("vertexcolor");
 		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3); // position
 		desc.vertex_description.add("in_color", render2::VD_FLOAT, 4); // color
 		desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
@@ -613,11 +619,11 @@ public:
 
 
 		// setup constant buffer
-		// this needs to be much more flexible, but for testng it works.
-		ConstantData cd;
-		cd.modelview_matrix = glm::mat4(1.0f);
-		cd.projection_matrix = glm::ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
-		pipeline->constants()->assign(&cd, sizeof(ConstantData));
+		modelview_matrix = glm::mat4(1.0f);
+		projection_matrix = glm::ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
+
+		pipeline->constants().set("modelview_matrix", &modelview_matrix);
+		pipeline->constants().set("projection_matrix", &projection_matrix);
 
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
 		setup_gui(window_frame.width, window_frame.height);
