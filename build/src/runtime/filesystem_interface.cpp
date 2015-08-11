@@ -23,6 +23,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "filesystem_interface.h"
+#include "array.h"
 
 using namespace platform;
 
@@ -166,6 +167,35 @@ namespace core
 			}
 			
 			return buffer;
-		}
+		} // virtual load file
+
+		void FileSystemInterface::virtual_load_file(Array<unsigned char>& buffer, const char* relative_path) const
+		{
+			PathString fullpath;
+			absolute_path_from_relative(fullpath, relative_path, content_directory());
+			if (!file_exists(fullpath(), false))
+			{
+				PLATFORM_LOG(LogMessageType::Error, "File does not exist! \"%s\" (at \"%s\")\n", relative_path, fullpath());
+				return;
+			}
+
+			platform::File handle = platform::fs_open(fullpath(), platform::FileMode_Read);
+			if (handle.is_open())
+			{
+				// TODO: use 'get_length' to allow Android's Asset Manager?
+				size_t file_size;
+				platform::fs_seek(handle, 0, platform::FileSeek_End);
+				file_size = platform::fs_tell(handle);
+				platform::fs_seek(handle, 0, platform::FileSeek_Begin);
+
+				if (file_size > 0)
+				{
+					buffer.resize(file_size+1, 0);
+				}
+
+				platform::fs_read(handle, &buffer[0], 1, file_size);
+				platform::fs_close(handle);
+			}
+		} // virtual_load_file
 	} // namespace filesystem
 } // namespace core

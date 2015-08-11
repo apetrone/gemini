@@ -601,8 +601,6 @@ namespace render2
 		// the path to shaders resembles this:
 		// 'shaders/<GLSL version>/<name>.[vert|frag]'
 
-		size_t buffer_length = 0;
-
 		core::StackString<64> vertex_shader_path = "shaders";
 		vertex_shader_path.append(PATH_SEPARATOR_STRING);
 		vertex_shader_path.append(subfolder);
@@ -610,8 +608,9 @@ namespace render2
 		vertex_shader_path.append(name);
 		vertex_shader_path.append(".vert");
 
-		char* vertex_shader_source = core::filesystem::instance()->virtual_load_file(vertex_shader_path(), 0, &buffer_length);
-		assert(vertex_shader_source != 0);
+		Array<unsigned char> vertex_shader_source;
+		core::filesystem::instance()->virtual_load_file(vertex_shader_source, vertex_shader_path());
+		assert(!vertex_shader_source.empty());
 
 		core::StackString<64> fragment_shader_path = "shaders";
 		fragment_shader_path.append(PATH_SEPARATOR_STRING);
@@ -619,19 +618,18 @@ namespace render2
 		fragment_shader_path.append(PATH_SEPARATOR_STRING);
 		fragment_shader_path.append(name);
 		fragment_shader_path.append(".frag");
-		char* fragment_shader_source = core::filesystem::instance()->virtual_load_file(fragment_shader_path(), 0, &buffer_length);
-		assert(fragment_shader_source != 0);
+
+		Array<unsigned char> fragment_shader_source;
+		core::filesystem::instance()->virtual_load_file(fragment_shader_source, fragment_shader_path());
+		assert(!fragment_shader_source.empty());
 
 		GLShader* shader = MEMORY_NEW(GLShader, core::memory::global_allocator());
 		shader->build_from_source(
-		  vertex_shader_source,
-		  fragment_shader_source,
+		  (char*)&vertex_shader_source[0],
+		  (char*)&fragment_shader_source[0],
 		  preprocessor,
 		  version
 		);
-
-		MEMORY_DEALLOC(vertex_shader_source, core::memory::global_allocator());
-		MEMORY_DEALLOC(fragment_shader_source, core::memory::global_allocator());
 
 		return shader;
 	}
