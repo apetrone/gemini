@@ -30,6 +30,9 @@
 #include <core/stackstring.h>
 #include <core/interface.h>
 
+template <class T>
+class Array;
+
 namespace core
 {
 	namespace filesystem
@@ -68,6 +71,8 @@ namespace core
 			// if buffer is null, a new buffer is allocated and must be DEALLOC'd after use
 			// if buffer is not null, bufferLength should contain the size of the buffer which will not be exceeded.
 			virtual char* virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length) const = 0;
+
+			virtual void virtual_load_file(Array<unsigned char>& buffer, const char* relative_path) const = 0;
 		};
 
 

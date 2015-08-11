@@ -36,6 +36,8 @@
 #include <renderer/renderer.h>
 #include <renderer/vertexbuffer.h>
 #include <renderer/vertexstream.h>
+#include <renderer/font.h>
+
 
 #include <assert.h>
 
@@ -256,7 +258,7 @@ public:
 		// ---------------------------------------------------------------------
 		// texture creation
 		// ---------------------------------------------------------------------
-		// generate a textre
+		// generate a texture
 		image::Image checker_pattern;
 		checker_pattern.width = 32;
 		checker_pattern.height = 32;
@@ -266,16 +268,14 @@ public:
 		assert(checker);
 
 		// load a texture from file
-		size_t buffer_size = 0;
-		char* buffer_data;
-		buffer_data = core::filesystem::instance()->virtual_load_file("textures/notexture.png", 0, &buffer_size);
-		assert(buffer_data);
-		image::Image image = image::load_from_memory((unsigned char*)buffer_data, buffer_size);
+		Array<unsigned char> buffer;
+		core::filesystem::instance()->virtual_load_file(buffer, "textures/notexture.png");
+		assert(!buffer.empty());
+		image::Image image = image::load_from_memory(&buffer[0], buffer.size());
 		LOGV("loaded image: %i x %i, @ %i\n", image.width, image.height, image.channels);
 		image.filter = image::FILTER_NONE;
 		notexture = device->create_texture(image);
 		assert(notexture);
-		MEMORY_DEALLOC(buffer_data, core::memory::global_allocator());
 
 		// load a compressed texture?
 

@@ -46,10 +46,13 @@
 #include <vector>
 #include <string>
 #include <assert.h>
-#include <stdio.h>
+
 
 using namespace core;
 using namespace core::util;
+
+
+
 
 // ---------------------------------------------------------------------
 // ArgumentParser
@@ -168,6 +171,17 @@ void test_array()
 	b.clear();
 
 	TEST_VERIFY(_local_counter == 0, destructor_called_n_times);
+
+
+	Array<int> rd;
+	rd.push_back(30);
+	rd.push_back(60);
+	rd.push_back(90);
+	rd.resize(4, 0);
+
+	TEST_VERIFY(rd[0] == 30, resize_default_keep_existing);
+	TEST_VERIFY(rd[3] == 0, resize_default_set);
+	// test resize with default value
 }
 
 // ---------------------------------------------------------------------

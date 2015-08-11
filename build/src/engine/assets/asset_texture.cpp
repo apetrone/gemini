@@ -126,16 +126,14 @@ namespace gemini
 
 		::renderer::Texture* load_texture_from_file(const char* filename, const assets::TextureParameters& parameters, image::Image& image)
 		{
-			size_t buffer_size = 0;
-			char * filedata;
-			
+			Array<unsigned char> buffer;
 			::renderer::Texture* render_texture = nullptr;
-			filedata = core::filesystem::instance()->virtual_load_file(filename, 0, &buffer_size);
+			core::filesystem::instance()->virtual_load_file(buffer, filename);
 			
-			if ( filedata )
+			if (!buffer.empty())
 			{
-				unsigned char * pixels = image::load_image_from_memory((unsigned char*)filedata, buffer_size, &image.width, &image.height, &image.channels );
-				if ( pixels )
+				unsigned char* pixels = image::load_image_from_memory(&buffer[0], buffer.size(), &image.width, &image.height, &image.channels);
+				if (pixels)
 				{
 	//				may need to actually flip the image vertically here
 	//				flip_image_vertically( width, height, components, pixels );
@@ -145,22 +143,21 @@ namespace gemini
 					
 					render_texture = ::renderer::driver()->texture_create(image);
 					
-					LOGV( "Loaded texture \"%s\"; (%i x %i @ %ibpp)\n", filename, image.width, image.height, image.channels );
+					LOGV("Loaded texture \"%s\"; (%i x %i @ %ibpp)\n", filename, image.width, image.height, image.channels);
 					
-					image::free_image( pixels );
+					image::free_image(pixels);
 					image.pixels = 0;
 				}
 				else
 				{
-					LOGE( "Unable to load image %s\n", filename );
+					LOGE("Unable to load image %s\n", filename);
 				}
-				
-				MEMORY_DEALLOC(filedata, core::memory::global_allocator());
+
 				return render_texture;
 			}
 			else
 			{
-				LOGE( "Couldn't load file: %s\n", filename );
+				LOGE("Couldn't load file: %s\n", filename);
 				return nullptr;
 			}
 			
