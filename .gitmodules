@@ -31,3 +31,6 @@
 [submodule "build/dependencies/recastnavigation"]
 	path = build/dependencies/recastnavigation
 	url = git://github.com/memononen/recastnavigation
+[submodule "build/dependencies/stb"]
+	path = build/dependencies/stb
+	url = git://github.com/nothings/stb
