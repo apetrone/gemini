@@ -32,7 +32,8 @@
 
 #define STBI_HEADER_FILE_ONLY 1
 #define STBI_NO_STDIO 1
-#include "stb_image.c"
+#define STB_IMAGE_IMPLEMENTATION 1
+#include "stb_image.h"
 
 using namespace core;
 
