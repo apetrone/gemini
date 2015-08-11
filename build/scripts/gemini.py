@@ -53,7 +53,6 @@ def setup_common_variables(arguments, target_platform, product):
 	product.excludes = [
 		"src/engine/.DS_Store",
 		"src/engine/assets/.DS_Store",
-		"src/engine/contrib/.DS_Store",
 		"src/engine/game/.DS_Store",
 		#"src/engine/entry.cpp",
 
@@ -146,7 +145,8 @@ def setup_common_libs(arguments, product):
 	product.includes += [
 		"src/engine",
 		"src/engine/audio",
-		"src/contrib/stb_vorbis.c",
+
+		os.path.join(DEPENDENCIES_FOLDER, "stb"),
 
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3")
 	]
@@ -600,8 +600,8 @@ def get_librenderer(arguments, target_platform, libruntime):
 	librenderer.sources += [
 		"src/renderer/*.*",
 
-		"src/contrib/stb_image.c",
-		"src/contrib/stb_truetype.h",
+		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_image.h"),
+		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_truetype.h"),
 
 		# include this amalgamated version of jsoncpp until we replace it.
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")
@@ -612,11 +612,10 @@ def get_librenderer(arguments, target_platform, libruntime):
 	]
 
 	librenderer.includes += [
-		"src/contrib",
-
 		"src/renderer",
 		"src/renderer/gl",
 
+		os.path.join(DEPENDENCIES_FOLDER, "stb"),
 		os.path.join(DEPENDENCIES_FOLDER, "fontstash/src"),
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp")
 	]
@@ -1077,7 +1076,10 @@ def products(arguments, **kwargs):
 		"src/engine/audio/openal.*",
 		"src/engine/assets/*.*",
 		"src/engine/game/**.*",
-		"src/contrib/*",
+
+		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_image.h"),
+		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_freetype.h"),
+		os.path.join(DEPENDENCIES_FOLDER, "stb", "stb_vorbis.c")
 	]
 
 	gemini.excludes += [
