@@ -78,7 +78,10 @@ private:
 	render2::Buffer* triangle_stream;
 	render2::Buffer* index_buffer;
 	render2::Pipeline* pipeline;
-	
+
+	glm::mat4 modelview_matrix;
+	glm::mat4 projection_matrix;
+
 //	GLsync fence;
 	
 	struct MyVertex
@@ -225,7 +228,7 @@ public:
 
 			// setup shaders
 			render2::PipelineDescriptor desc;
-			desc.shader = device->create_shader("test");
+			desc.shader = device->create_shader("vertexcolor");
 			
 			render2::VertexDescriptor& vertex_format = desc.vertex_description;
 			vertex_format.add("in_position", render2::VD_FLOAT, 3);
@@ -313,23 +316,18 @@ public:
 		if (value == 0.0f || value == 1.0f)
 			multiplifer *= -1;
 		
-		
-		struct leconstants
-		{
-			glm::mat4 modelview_matrix;
-			glm::mat4 projection_matrix;
-		};
-		
-		leconstants cb;
-		cb.modelview_matrix = glm::mat4(1.0f);
-		cb.projection_matrix = glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, -1.0f, 1.0f);
-		pipeline->constants()->assign(&cb, sizeof(leconstants));
+
+		modelview_matrix = glm::mat4(1.0f);
+		projection_matrix = glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, -1.0f, 1.0f);
+		pipeline->constants().set("modelview_matrix", &modelview_matrix);
+		pipeline->constants().set("projection_matrix", &projection_matrix);
 
 		value = 0.0f;
 
 		render2::Pass render_pass;
 		render_pass.target = device->default_render_target();
 		render_pass.color(value, value, value, 1.0f);
+		render_pass.clear_color = true;
 
 		render2::CommandQueue* queue = device->create_queue(render_pass);
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
