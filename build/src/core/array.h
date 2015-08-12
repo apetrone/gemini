@@ -188,7 +188,12 @@ public:
 
 	Array(size_t capacity = 16)
 	{
-		data = allocate(capacity);
+		data = nullptr;
+		if (capacity > 0)
+		{
+			data = allocate(capacity);
+		}
+
 		total_elements = 0;
 		max_capacity = capacity;
 	}
@@ -227,22 +232,26 @@ public:
 		// could also use a ratio to detect 70% full
 		if (total_elements >= max_capacity)
 		{
+			if (max_capacity == 0)
+				max_capacity = 8;
+				
 			grow(max_capacity * 2);
 		}
 		
 		data[total_elements++] = item;
 	}
 	
-	
-	void clear()
+	// reset capacity and total elements
+	// optionally purges allocated data
+	void clear(bool purge = true)
 	{
-		if (data)
+		if (data && purge)
 		{
 			deallocate(data);
 			data = 0;
+			max_capacity = 0;
 		}
 		
-		max_capacity = 0;
 		total_elements = 0;
 	}
 	
