@@ -25,6 +25,7 @@
 
 #include <renderer/debug_draw.h>
 #include <renderer/renderer.h>
+#include <renderer/font.h>
 
 #include <runtime/core.h>
 #include <runtime/logging.h>
@@ -82,6 +83,7 @@ private:
 	glm::mat4 modelview_matrix;
 	glm::mat4 projection_matrix;
 
+	render2::font::Handle font;
 //	GLsync fence;
 	
 	struct MyVertex
@@ -239,8 +241,10 @@ public:
 			
 			pipeline = device->create_pipeline(desc);
 
-			size_t total_bytes = sizeof(MyVertex) * 4;
+			size_t total_bytes = sizeof(MyVertex) * 128;
 			triangle_stream = device->create_vertex_buffer(total_bytes);
+
+#if 0
 			MyVertex* vertex = reinterpret_cast<MyVertex*>(device->buffer_lock(triangle_stream));
 			
 //			MyVertex vertex[4];
@@ -258,7 +262,7 @@ public:
 			vertex[3].set_color(0.0f, 1.0f, 1.0f, 1.0f);
 
 			device->buffer_unlock(triangle_stream);
-
+#endif
 			
 			index_buffer = device->create_index_buffer(sizeof(uint16_t) * 3);
 			uint16_t indices[] = {0, 1, 2};
@@ -279,6 +283,11 @@ public:
 //			fs->add_virtual_path("editor/assets");
 		}
 
+		render2::font::startup();
+
+		Array<unsigned char> data;
+		core::filesystem::instance()->virtual_load_file(data, "fonts/nokiafc22.ttf");
+		font = render2::font::load_from_memory(&data[0], data.size(), 12);
 		
 		// load the gui
 		{
@@ -298,7 +307,9 @@ public:
 			}
 			
 		}
-		
+
+		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
+
 		return kernel::NoError;
 	}
 	
@@ -333,15 +344,53 @@ public:
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
 		
 		serializer->pipeline(pipeline);
-		serializer->vertex_buffer(triangle_stream);
+//		serializer->vertex_buffer(triangle_stream);
 //		serializer->draw_indexed_primitives(index_buffer, 3);
-		serializer->draw(0, 3);
-		
+//		serializer->draw(0, 3);
+
 		platform::window::activate_context(main_window);
-				
-		device->queue_buffers(queue, 1);
-		device->submit();
-				
+
+
+
+		Array<render2::font::FontVertex> fontvertices;
+		if (font.is_valid())
+		{
+
+			glm::mat2 transform(1.0f);
+//			const float radians = mathlib::degrees_to_radians(-45);
+//			transform = glm::mat2(
+//							 cos(radians), -sin(radians),
+//							 sin(radians), cos(radians)
+//							 );
+
+			render2::font::draw_string(font, fontvertices, transform, "Hello World", core::Color(255, 255, 255));
+
+			// copy
+			MyVertex* v = (MyVertex*)device->buffer_lock(triangle_stream);
+
+			size_t index = 0;
+			for (auto& vertex : fontvertices)
+			{
+				v->position[0] = vertex.position.x;
+				v->position[1] = vertex.position.y;
+				v->color[0] = vertex.color.r/255.0f;
+				v->color[1] = vertex.color.g/255.0f;
+				v->color[2] = vertex.color.b/255.0f;
+				v->color[3] = vertex.color.a/255.0f;
+				++v;
+				++index;
+			}
+
+			device->buffer_unlock(triangle_stream);
+
+			serializer->vertex_buffer(triangle_stream);
+			serializer->draw(0, fontvertices.size());
+
+
+
+			device->queue_buffers(queue, 1);
+			device->submit();
+		}
 		device->destroy_serializer(serializer);
 		
 		platform::window::swap_buffers(main_window);
@@ -352,6 +401,8 @@ public:
 	
 	virtual void shutdown()
 	{
+		render2::font::shutdown();
+
 		// shutdown the render device
 		device->destroy_buffer(triangle_stream);
 		device->destroy_buffer(index_buffer);

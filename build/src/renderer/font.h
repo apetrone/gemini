@@ -71,3 +71,75 @@ namespace font
 	// load font from memory with the desired point size
 	Handle load_font_from_memory(const void* data, unsigned int data_size, unsigned short point_size);
 } // namespace font
+
+
+template <class T>
+class Array;
+
+namespace render2
+{
+	namespace font
+	{
+		// the font system can handle two types of fonts:
+		// - classic bitmap fonts
+		// - signed distance field fonts
+		enum Type
+		{
+			FONT_TYPE_INVALID,
+			FONT_TYPE_BITMAP,	// standard bitmap font
+			FONT_TYPE_SDF		// signed distance field font
+		};
+
+		struct FontVertex
+		{
+			glm::vec2 position;
+			glm::vec2 uv;
+			core::Color color;
+		};
+
+		struct Handle
+		{
+			int ref;
+
+			Handle() :
+				ref(-1)
+			{
+			}
+
+			bool is_valid() const;
+
+			unsigned int point_size() const
+			{
+				return 0; //return get_point_size(*this);
+			}
+		};
+
+
+		// setup resources the font library might need
+		void startup();
+
+		// cleanup any used resources
+		void shutdown();
+
+		// load font from memory with the desired point size
+		Handle load_from_memory(const void* data, unsigned int data_size, unsigned int point_size, Type target_type = FONT_TYPE_BITMAP);
+
+		// return the point size for the font
+		unsigned int get_point_size(Handle handle);
+
+		// measure the width of the string in a given font in pixels
+		unsigned int measure_width(Handle handle, const char* utf8);
+
+		// query the height of the font in pixels
+		unsigned int measure_height(Handle handle, const char* utf8);
+
+		// populate vertices with the transformed vertices for drawing a string to the screen
+		void draw_string(Handle handle, Array<FontVertex>& vertices, const glm::mat2& transform, const char* utf8, const core::Color& color);
+		
+	} // namespace font
+} // namespace render2
+
+
+
+
+

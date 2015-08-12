@@ -25,6 +25,7 @@ COMMON_PROJECT_ROOT = "_projects"
 
 libglm = Dependency(file="glm.py")
 librecastnavigation = Dependency(file="recastnavigation.py")
+libfreetype = Dependency(file="freetype.py")
 
 def setup_common_variables(arguments, target_platform, product):
 	product.sources += [
@@ -621,7 +622,8 @@ def get_librenderer(arguments, target_platform, libruntime):
 	]
 
 	librenderer.dependencies += [
-		libruntime
+		libruntime,
+		libfreetype
 	]
 
 	if arguments.opengl:
@@ -837,7 +839,8 @@ def create_unit_test(arguments, name, dependencies, source, output_type = Produc
 		macosx.driver.infoplist_file = "../%s/resources/osx/Info.plist" % base_path
 		macosx.resources = [
 			"%s/resources/osx/en.lproj/*.xib" % base_path,
-			"%s/resources/osx/en.lproj/*.strings" % base_path
+			"%s/resources/osx/en.lproj/*.strings" % base_path,
+			"%s/resources/shaders" % base_path
 		]
 
 	product.dependencies.extend(dependencies)
