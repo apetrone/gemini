@@ -33,6 +33,8 @@
 #include "fontstash.h"
 
 #include <core/typedefs.h>
+#include <core/str.h>
+
 #include <runtime/filesystem.h>
 #include <runtime/logging.h>
 
@@ -345,3 +347,382 @@ namespace font
 		return handle;
 	} // load_font_from_memory
 } // namespace font
+
+
+
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
+namespace render2
+{
+	namespace font
+	{
+		// internal data
+		struct FontData
+		{
+			enum Flags
+			{
+				DISABLE_AA	// disable AA when rendering the gylph (useful on monospaced fonts)
+			};
+
+			Type type;
+			unsigned int point_size;
+			size_t flags;
+			FT_Face face;
+			void* data;
+			size_t data_size;
+
+			FontData() :
+				type(FONT_TYPE_INVALID),
+				point_size(0),
+				flags(0),
+				face(nullptr),
+				data(nullptr),
+				data_size(0)
+			{
+			}
+		};
+
+
+		namespace detail
+		{
+			FT_Library _ftlibrary;
+			Array<FontData> _fonts(0);
+		} // namespace detail
+
+		bool Handle::is_valid() const
+		{
+			size_t reference = static_cast<size_t>(ref);
+			return (detail::_fonts.size() > reference) && (ref != -1);
+		}
+
+
+
+
+		// ---------------------------------------------------------------------
+		// implementation
+		// ---------------------------------------------------------------------
+		struct GlyphData
+		{
+			size_t advancex;
+			size_t advancey;
+			size_t left;
+			size_t top;
+			size_t width;
+			size_t height;
+			size_t hbearingx;
+			size_t hbearingy;
+			size_t vbearingx;
+			size_t vbearingy;
+
+			GlyphData()
+			{
+				memset(this, 0, sizeof(GlyphData));
+			}
+		};
+
+		void get_gylph_info(FT_Face face, int codepoint, GlyphData& glyphdata)
+		{
+			FT_UInt glyph_index = FT_Get_Char_Index(face, codepoint);
+			FT_Int32 flags = 0;
+			FT_Error error = FT_Err_Ok;
+
+			assert(glyph_index != 0);
+
+			// invalid glyphs will have an index of 0
+			if (glyph_index == 0)
+			{
+				LOGW("Invalid glyph %i -> %c\n", codepoint, codepoint);
+				return;
+			}
+
+			flags = FT_LOAD_FORCE_AUTOHINT;
+
+			error = FT_Load_Glyph(face, glyph_index, flags);
+			assert(error == FT_Err_Ok);
+			if (error)
+			{
+				LOGW("Error while loading character %i, glyph: %i\n", codepoint, glyph_index);
+				return;
+			}
+
+			glyphdata.left = face->glyph->bitmap_left;
+			glyphdata.top = face->glyph->bitmap_top;
+
+			// these are expressed in 26.6 units; hence the division by 64.
+			glyphdata.advancex = face->glyph->advance.x >> 6;
+			glyphdata.advancey = face->glyph->advance.y >> 6;
+			glyphdata.hbearingx = face->glyph->metrics.horiBearingX >> 6;
+			glyphdata.hbearingy = face->glyph->metrics.horiBearingY >> 6;
+			glyphdata.width = face->glyph->metrics.width >> 6;
+			glyphdata.height = face->glyph->metrics.height >> 6;
+			glyphdata.vbearingx = face->glyph->metrics.vertBearingX >> 6;
+			glyphdata.vbearingy = face->glyph->metrics.vertBearingY >> 6;
+		}
+
+
+		void load_character_info(FT_Face face, FontData& font)
+		{
+			size_t failures = 0;
+			size_t char_start = 32;
+			size_t num_chars = 127;
+			size_t character;
+			const size_t MAX_CHARS = 95;
+
+			FT_UInt glyph_index;
+			FT_Int32 flags;
+			FT_Bitmap* bitmap;
+			FT_Error error = FT_Err_Ok;
+
+
+			for (character = char_start; character < num_chars; ++character)
+			{
+				// TODO lookup codepoint and get the character index?
+				glyph_index = FT_Get_Char_Index(face, character);
+
+				// invalid glyphs will have an index of 0
+				if (glyph_index == 0)
+				{
+					LOGW("Invalid glyph %i -> %c\n", character, character);
+					continue;
+				}
+
+				if ((character - char_start) > MAX_CHARS)
+				{
+					LOGW("Out of bounds character\n");
+					continue;
+				}
+
+				flags = FT_LOAD_FORCE_AUTOHINT;
+
+				error = FT_Load_Glyph(face, glyph_index, flags);
+				if (error)
+				{
+					LOGW("Error while loading character %i, glyph: %i\n", character, glyph_index);
+					continue;
+				}
+
+//				if (face->glyph->format != FT_GLYPH_FORMAT_BITMAP)
+//				{
+//					FT_Render_Mode render_mode = FT_RENDER_MODE_NORMAL;
+//					if (font.flags & FontData::DISABLE_AA)
+//					{
+//						render_mode = FT_RENDER_MODE_MONO;
+//					}
+//
+//					error = FT_Render_Glyph(face->glyph, render_mode);
+//					if (error)
+//					{
+//						LOGW("Error while rendering glyph!\n");
+//					}
+//				}
+
+//				bitmap = &face->glyph->bitmap;
+//				FT_Int bitmap_top = face->glyph->bitmap_top;
+//				FT_Int bitmap_left = face->glyph->bitmap_left;
+
+			}
+
+
+		}
+
+
+
+		void startup()
+		{
+			FT_Error error = FT_Init_FreeType(&detail::_ftlibrary);
+			if (error)
+			{
+				LOGE("Could not initialize FreeType library!\n");
+			}
+
+			FT_Int major, minor, patch;
+			FT_Library_Version(detail::_ftlibrary, &major, &minor, &patch);
+			LOGV("initialized FreeType %i.%i.%i\n", major, minor, patch);
+		}
+
+		void shutdown()
+		{
+			for (auto& data : detail::_fonts)
+			{
+				FT_Done_Face(data.face);
+				MEMORY_DEALLOC(data.data, core::memory::global_allocator());
+			}
+			detail::_fonts.clear();
+
+
+			if (FT_Done_FreeType(detail::_ftlibrary))
+			{
+				LOGE("Failed to shutdown FreeType library!\n");
+			}
+		}
+
+		Handle load_from_memory(const void* data, unsigned int data_size, unsigned int point_size, Type target_type)
+		{
+			Handle handle;
+			FT_Error error = FT_Err_Ok;
+
+			FontData font;
+			// font needs a copy of the data so long as FT_Face is loaded.
+			// so make a local copy and store it.
+			font.data = MEMORY_ALLOC(data_size, core::memory::global_allocator());
+			font.data_size = data_size;
+			memcpy(font.data, data, data_size);
+
+			// try to parse the font data
+			FT_Face face = nullptr;
+			error = FT_New_Memory_Face(detail::_ftlibrary, (const FT_Byte*)font.data, font.data_size, 0, &face);
+			assert(error == FT_Err_Ok);
+			if (error == FT_Err_Unknown_File_Format)
+			{
+				LOGE("Invalid ttf format!\n");
+				return handle;
+			}
+			else if (error != FT_Err_Ok)
+			{
+				LOGE("Could not read font file\n");
+				return handle;
+			}
+
+
+			// next try to set the font character size
+			// TODO: device resolution should be scaled on retina screens
+			error = FT_Set_Char_Size(face, (point_size << 6), (point_size << 6), 72, 72);
+			assert(error == FT_Err_Ok);
+
+			if (error != FT_Err_Ok)
+			{
+				LOGW("Error while setting the character size!\n");
+			}
+
+			if (FT_HAS_KERNING(face))
+			{
+				LOGV("font has kerning!\n");
+			}
+
+
+
+			handle.ref = detail::_fonts.size();
+			font.type = FONT_TYPE_BITMAP;
+			font.face = face;
+			detail::_fonts.push_back(font);
+
+//			FT_UInt glyph_index;
+//			FT_ULong char_code = FT_Get_First_Char(face, &glyph_index);
+//			LOGV("first char code is: %zu, glyph_index: %zu\n", char_code, glyph_index);
+//
+//			while(char_code != 0 && glyph_index != 0)
+//			{
+//				LOGV("char code is: %zu, glyph_index: %zu\n", char_code, glyph_index);
+//				char_code = FT_Get_Next_Char(face, char_code, &glyph_index);
+//			}
+//
+//			glyph_index = FT_Get_Char_Index(face, 72);
+
+//			load_character_info(face, font);
+
+			return handle;
+		}
+
+		unsigned int get_point_size(Handle handle)
+		{
+			return 0;
+		}
+
+		unsigned int measure_width(Handle handle, const char* utf8)
+		{
+			return 0;
+		}
+
+		unsigned int measure_height(Handle handle, const char* utf8)
+		{
+			return 0;
+		}
+
+
+
+
+
+
+
+
+		void draw_string(Handle handle, Array<FontVertex>& vertices, const glm::mat2& transform, const char* utf8, const core::Color& color)
+		{
+//			vertices.resize(3);
+//
+//			vertices[0].position = glm::vec2(0, 600);
+//			vertices[0].color = core::Color(255, 0, 0);
+//
+//			vertices[1].position = glm::vec2(800, 600);
+//			vertices[1].color = core::Color(0, 255, 0);
+//
+//			vertices[2].position = glm::vec2(400, 0);
+//			vertices[2].color = core::Color(0, 0, 255);
+
+			// font handle is invalid; nothing to do
+			if (!handle.is_valid())
+				return;
+
+			FontData& data = detail::_fonts[handle.ref];
+
+			glm::vec2 pen;
+			glm::vec2 offset;
+
+			FontVertex* vertex;
+
+			// this is treated as ANSI for now.
+			size_t length = core::str::len(utf8);
+
+			// we need length * 2 triangles
+			vertices.resize(length*6);
+
+			for (size_t index = 0; index < length; ++index)
+			{
+				GlyphData gd;
+				get_gylph_info(data.face, utf8[index], gd);
+
+				offset.x = gd.left - gd.hbearingx;
+				offset.y = -gd.top + gd.vbearingy;
+
+				vertex = &vertices[index * 6];
+				// build this in counter-clockwise order
+				{
+					glm::vec2 pos = offset+pen;
+
+					// lower left
+					vertex->position = transform * pos + glm::vec2(0, gd.height);
+					vertex->color = color;
+					vertex++;
+
+					// lower right
+					vertex->position = transform * pos + glm::vec2(gd.width, gd.height);
+					vertex->color = color;
+					vertex++;
+
+					// upper right
+					vertex->position = transform * pos + glm::vec2(gd.width, 0);
+					vertex->color = color;
+					vertex++;
+
+					vertex->position = transform * pos + glm::vec2(gd.width, 0);
+					vertex->color = color;
+					vertex++;
+
+					// upper left
+					vertex->position = transform * pos;
+					vertex->color = color;
+					vertex++;
+
+					// lower left
+					vertex->position = transform * pos + glm::vec2(0, gd.height);
+					vertex->color = color;
+					vertex++;
+				}
+
+				pen.x += (-gd.left + gd.advancex);
+			}
+		}
+
+	} // namespace font
+} // namespace render2
