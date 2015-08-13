@@ -766,6 +766,64 @@ namespace render2
 		return texture;
 	}
 
+
+	void common_update_texture(GLTexture* texture, const Image& image, const mathlib::Recti& rect)
+	{
+		// In ES 2 implementations; we can use GL_EXT_unpack_subimage for GL_UNPACK_ROW_LENGTH
+		// If that isn't available; the new image has to be uploaded one row at a time.
+
+		assert(rect.width() > 0 || rect.height() > 0);
+
+		GLenum internal_format = image_to_internal_format(image);
+
+		texture->bind();
+
+
+#if 0
+		// store old items (should be cached by the hal)
+		GLint row_length;
+		GLint skip_pixels;
+		GLint skip_rows;
+		gl.GetIntegerv(GL_UNPACK_ROW_LENGTH, &row_length);
+		gl.GetIntegerv(GL_UNPACK_SKIP_PIXELS, &skip_pixels);
+		gl.GetIntegerv(GL_UNPACK_SKIP_ROWS, &skip_rows);
+#endif
+
+		// per the spec; 1, 2, 4, or 8 are valid values
+		assert(texture->unpack_alignment == 1 || texture->unpack_alignment == 2 || texture->unpack_alignment == 4 || texture->unpack_alignment == 8);
+
+		// set alignment for this operation
+		gl.PixelStorei(GL_UNPACK_ALIGNMENT, texture->unpack_alignment);
+
+#if 0
+		gl.PixelStorei(GL_UNPACK_ROW_LENGTH, image.width);
+		gl.PixelStorei(GL_UNPACK_SKIP_PIXELS, rect.left);
+		gl.PixelStorei(GL_UNPACK_SKIP_ROWS, rect.top);
+#endif
+
+		assert(rect.left >= 0);
+		assert(rect.top >= 0);
+
+		GLvoid* pixels = 0;
+		if (!image.pixels.empty())
+		{
+			pixels = (GLvoid*)&image.pixels[0];
+		}
+
+		GLint mip_level = 0;
+		gl.TexSubImage2D(texture->texture_type, mip_level, rect.left, rect.top, rect.right, rect.bottom, internal_format, GL_UNSIGNED_BYTE, pixels);
+		gl.CheckError("TexSubImage2D");
+
+		texture->unbind();
+
+#if 0
+		// restore these parameters
+		gl.PixelStorei(GL_UNPACK_ROW_LENGTH, row_length);
+		gl.PixelStorei(GL_UNPACK_SKIP_PIXELS, skip_pixels);
+		gl.PixelStorei(GL_UNPACK_SKIP_ROWS, skip_rows);
+#endif
+	}
+
 	void common_destroy_texture(Texture* tex)
 	{
 		GLTexture* texture = static_cast<GLTexture*>(tex);
