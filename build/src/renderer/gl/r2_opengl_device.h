@@ -458,7 +458,7 @@ namespace render2
 		// texture
 		// ---------------------------------------------------------------------
 		virtual Texture* create_texture(const Image& image);
-		virtual void update_texture(Texture* texture, const Image& image);
+		virtual void update_texture(Texture* texture, const Image& image, const mathlib::Recti& rect);
 		virtual void destroy_texture(Texture* texture);
 
 	private:
