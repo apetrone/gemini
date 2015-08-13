@@ -361,27 +361,23 @@ namespace render2
 		// internal data
 		struct FontData
 		{
-			enum Flags
-			{
-				DISABLE_AA	// disable AA when rendering the gylph (useful on monospaced fonts)
-			};
-
 			Type type;
 			unsigned int point_size;
-			size_t flags;
 			FT_Face face;
 			void* data;
 			size_t data_size;
+			render2::Texture* texture;
 
 			FontData() :
 				type(FONT_TYPE_INVALID),
 				point_size(0),
-				flags(0),
 				face(nullptr),
 				data(nullptr),
-				data_size(0)
+				data_size(0),
+				texture(nullptr)
 			{
 			}
+
 		};
 
 
@@ -389,6 +385,7 @@ namespace render2
 		{
 			FT_Library _ftlibrary;
 			Array<FontData> _fonts(0);
+			render2::Device* _device = nullptr;
 		} // namespace detail
 
 		bool Handle::is_valid() const
@@ -529,7 +526,7 @@ namespace render2
 
 
 
-		void startup()
+		void startup(render2::Device* device)
 		{
 			FT_Error error = FT_Init_FreeType(&detail::_ftlibrary);
 			if (error)
@@ -540,6 +537,8 @@ namespace render2
 			FT_Int major, minor, patch;
 			FT_Library_Version(detail::_ftlibrary, &major, &minor, &patch);
 			LOGV("initialized FreeType %i.%i.%i\n", major, minor, patch);
+
+			detail::_device = device;
 		}
 
 		void shutdown()
@@ -547,7 +546,13 @@ namespace render2
 			for (auto& data : detail::_fonts)
 			{
 				FT_Done_Face(data.face);
+
 				MEMORY_DEALLOC(data.data, core::memory::global_allocator());
+
+				if (data.texture)
+				{
+					detail::_device->destroy_texture(data.texture);
+				}
 			}
 			detail::_fonts.clear();
 
@@ -602,11 +607,31 @@ namespace render2
 			}
 
 
-
 			handle.ref = detail::_fonts.size();
 			font.type = FONT_TYPE_BITMAP;
 			font.face = face;
+
+			render2::Image image;
+			image.filter = image::FILTER_NONE;
+			image.flags = image::F_RGB;
+			image.width = 512;
+			image.height = 512;
+			image.channels = 3;
+			image::generate_checker_pattern(image, core::Color(255, 0, 255), core::Color(0, 255, 0));
+			font.texture = detail::_device->create_texture(image);
 			detail::_fonts.push_back(font);
+
+
+//			mathlib::Recti rect(0, 384, 128, 128);
+//			render2::Image image2;
+//			image2.filter = image::FILTER_NONE;
+//			image2.flags = image::F_RGB;
+//			image2.width = 128;
+//			image2.height = 128;
+//			image2.channels = 3;
+//			image::generate_checker_pattern(image2, core::Color(255, 0, 0), core::Color(0, 0, 255));
+//			detail::_device->update_texture(font.texture, image2, rect);
+
 
 //			FT_UInt glyph_index;
 //			FT_ULong char_code = FT_Get_First_Char(face, &glyph_index);
@@ -617,8 +642,76 @@ namespace render2
 //				LOGV("char code is: %zu, glyph_index: %zu\n", char_code, glyph_index);
 //				char_code = FT_Get_Next_Char(face, char_code, &glyph_index);
 //			}
-//
-//			glyph_index = FT_Get_Char_Index(face, 72);
+
+
+
+			// get the glyph index
+			FT_ULong glyph_index = FT_Get_Char_Index(face, 'W');
+
+			// load the glyph
+			FT_Load_Glyph(face, glyph_index, FT_LOAD_FORCE_AUTOHINT);
+
+			// render the glyph
+			if (face->glyph->format != FT_GLYPH_FORMAT_BITMAP)
+			{
+				FT_Render_Mode render_mode = FT_RENDER_MODE_NORMAL;
+				error = FT_Render_Glyph(face->glyph, render_mode);
+				if (error)
+				{
+					LOGW("Error while rendering glyph!\n");
+				}
+			}
+
+			FT_Bitmap* bitmap = &face->glyph->bitmap;
+
+			LOGV("rows: %i\n", bitmap->rows);
+			LOGV("width: %i\n", bitmap->width);
+
+			// number of bytes including padding of one bitmap row.
+			// positive when the bitmap has a 'down' flow and negative
+			// when the bitmap has an 'up' flow.
+			LOGV("pitch: %i\n", bitmap->pitch);
+
+			assert(FT_PIXEL_MODE_GRAY == bitmap->pixel_mode);
+
+			render2::Image img;
+			img.width = bitmap->width;
+			img.height = bitmap->rows;
+			img.channels = 3;
+			img.create(bitmap->width, bitmap->rows, 3);
+
+			struct rgb_t
+			{
+				unsigned char r, g, b;
+			};
+
+			rgb_t* pixel = (rgb_t*)&img.pixels[0];
+//			for (size_t p = 0; p < img.height; ++p)
+//			{
+//				for (size_t w = 0; w < img.width; ++w)
+//				{
+//					unsigned char* x = (unsigned char*)&bitmap->buffer[(p*bitmap->pitch) + w];
+//					pixel->r = *x;
+//					pixel->g = *x;
+//					pixel->b = *x;
+//					++pixel;
+//				}
+//			}
+
+			for (size_t p = 0; p < img.height; ++p)
+			{
+				for (size_t w = 0; w < img.width; ++w)
+				{
+					unsigned char* x = (unsigned char*)&bitmap->buffer[((img.height-p)*bitmap->pitch) + w];
+					pixel->r = *x;
+					pixel->g = *x;
+					pixel->b = *x;
+					++pixel;
+				}
+			}
+
+			mathlib::Recti rect(0, 0, bitmap->width, bitmap->rows);
+			detail::_device->update_texture(font.texture, img, rect);
 
 //			load_character_info(face, font);
 
@@ -724,5 +817,14 @@ namespace render2
 			}
 		}
 
+		render2::Texture* get_font_texture(Handle handle)
+		{
+			if (handle.is_valid())
+			{
+				FontData& data = detail::_fonts[handle.ref];
+				return data.texture;
+			}
+			return nullptr;
+		}
 	} // namespace font
 } // namespace render2

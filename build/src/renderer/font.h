@@ -49,11 +49,20 @@ namespace renderer
 	}; // Font
 } // namespace renderer
 
+namespace render2
+{
+	class Device;
+	struct Texture;
+}
+
 namespace font
 {
 	// provide the shader to use for rendering as well as the render width and height
 	// of the target buffer or viewport
 	void startup(renderer::ShaderProgram* fontshader, int width, int height);
+
+	// must shut this down BEFORE the renderer; otherwise it cannot
+	// allocate resources and will crash because it stores a pointer to the device.
 	void shutdown();
 	
 	// draw string at (x, y) screen coordinates with the origin in the upper left of the screen
@@ -116,7 +125,7 @@ namespace render2
 
 
 		// setup resources the font library might need
-		void startup();
+		void startup(render2::Device* device);
 
 		// cleanup any used resources
 		void shutdown();
@@ -135,7 +144,8 @@ namespace render2
 
 		// populate vertices with the transformed vertices for drawing a string to the screen
 		void draw_string(Handle handle, Array<FontVertex>& vertices, const glm::mat2& transform, const char* utf8, const core::Color& color);
-		
+
+		render2::Texture* get_font_texture(Handle handle);
 	} // namespace font
 } // namespace render2
 

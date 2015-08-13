@@ -76,9 +76,10 @@ private:
 	platform::window::NativeWindow* main_window;
 	
 	render2::Device* device;
-	render2::Buffer* triangle_stream;
-	render2::Buffer* index_buffer;
+	render2::Buffer* vertex_buffers[2];
+
 	render2::Pipeline* pipeline;
+	render2::Pipeline* texture_pipeline;
 
 	glm::mat4 modelview_matrix;
 	glm::mat4 projection_matrix;
@@ -106,7 +107,18 @@ private:
 			color[3] = alpha;
 		}
 	};
-	
+
+	struct TexturedVertex : public MyVertex
+	{
+		float uv[2];
+
+		void set_uv(float u, float v)
+		{
+			uv[0] = u;
+			uv[1] = v;
+		}
+	};
+
 public:
 	EditorKernel() :
 		active(true)
@@ -176,7 +188,7 @@ public:
 			for (size_t screen = 0; screen < platform::window::screen_count(); ++screen)
 			{
 				platform::window::Frame frame = platform::window::screen_frame(screen);
-				PLATFORM_LOG(LogMessageType::Info, "screen rect: %zu, origin: %i, %i; resolution: %i x %i\n", screen, frame.x, frame.y, frame.width, frame.height);
+				PLATFORM_LOG(LogMessageType::Info, "screen rect: %zu, origin: %2.2f, %2.2f; resolution: %2.2f x %2.2f\n", screen, frame.x, frame.y, frame.width, frame.height);
 			}
 			
 			platform::window::Parameters params;
@@ -187,11 +199,11 @@ public:
 
 		// old renderer initialize
 		{
-			renderer::RenderSettings render_settings;
-			render_settings.gamma_correct = true;
-						
-			renderer::startup(renderer::OpenGL, render_settings);
-			
+//			renderer::RenderSettings render_settings;
+//			render_settings.gamma_correct = true;
+
+//			renderer::startup(renderer::OpenGL, render_settings);
+
 			// clear errors
 //			gl.CheckError("before render startup");
 
@@ -231,21 +243,35 @@ public:
 			// setup shaders
 			render2::PipelineDescriptor desc;
 			desc.shader = device->create_shader("vertexcolor");
-			
 			render2::VertexDescriptor& vertex_format = desc.vertex_description;
 			vertex_format.add("in_position", render2::VD_FLOAT, 3);
 			vertex_format.add("in_color", render2::VD_FLOAT, 4);
 			desc.input_layout = device->create_input_layout(vertex_format, desc.shader);
-
-			
-			
 			pipeline = device->create_pipeline(desc);
 
-			size_t total_bytes = sizeof(MyVertex) * 128;
-			triangle_stream = device->create_vertex_buffer(total_bytes);
 
-#if 0
-			MyVertex* vertex = reinterpret_cast<MyVertex*>(device->buffer_lock(triangle_stream));
+			// create the texture pipeline
+			texture_pipeline = nullptr;
+			if (1)
+			{
+				render2::PipelineDescriptor desc;
+				desc.shader = device->create_shader("vertexcolortexture");
+				desc.vertex_description.add("in_position", render2::VD_FLOAT, 3);
+				desc.vertex_description.add("in_color", render2::VD_FLOAT, 4);
+				desc.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
+				desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
+//				desc.enable_blending = true;
+//				desc.blend_source = render2::BlendOp::SourceAlpha;
+//				desc.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
+				texture_pipeline = device->create_pipeline(desc);
+			}
+
+			size_t total_bytes = sizeof(MyVertex) * 1024;
+			vertex_buffers[0] = device->create_vertex_buffer(total_bytes);
+			vertex_buffers[1] = device->create_vertex_buffer(sizeof(render2::font::FontVertex)*4096);
+
+#if 1
+			MyVertex* vertex = reinterpret_cast<MyVertex*>(device->buffer_lock(vertex_buffers[0]));
 			
 //			MyVertex vertex[4];
 			
@@ -261,20 +287,41 @@ public:
 			vertex[3].set_position(0, 0, 0);
 			vertex[3].set_color(0.0f, 1.0f, 1.0f, 1.0f);
 
-			device->buffer_unlock(triangle_stream);
+			device->buffer_unlock(vertex_buffers[0]);
 #endif
-			
-			index_buffer = device->create_index_buffer(sizeof(uint16_t) * 3);
-			uint16_t indices[] = {0, 1, 2};
-			device->buffer_upload(index_buffer, indices, sizeof(uint16_t)*3);
 
-			
-			
+#if 1
+			{
+				const size_t width = 256;
+				const size_t height = 256;
+				glm::vec2 offset(128, 256);
 
-			
-			
-			
-			// load shaders from disk
+				TexturedVertex quad[6];
+				quad[0].set_position(offset.x, offset.y+height, 0);
+				quad[0].set_color(1, 1, 1, 1);
+				quad[0].set_uv(0, 0);
+
+				quad[1].set_position(offset.x+width, offset.y+height, 0);
+				quad[1].set_color(1, 1, 1, 1);
+				quad[1].set_uv(1, 0);
+
+				quad[2].set_position(offset.x+width, offset.y, 0);
+				quad[2].set_color(1, 1, 1, 1);
+				quad[2].set_uv(1, 1);
+
+				quad[3] = quad[2];
+
+				quad[4].set_position(offset.x, offset.y, 0);
+				quad[4].set_color(1, 1, 1, 1);
+				quad[4].set_uv(0, 1);
+
+				quad[5].set_position(offset.x, offset.y+height, 0);
+				quad[5].set_color(1, 1, 1, 1);
+				quad[5].set_uv(0, 0);
+
+				device->buffer_upload(vertex_buffers[1], &quad[0], sizeof(TexturedVertex)*6);
+			}
+#endif
 			
 		}
 		
@@ -283,12 +330,13 @@ public:
 //			fs->add_virtual_path("editor/assets");
 		}
 
-		render2::font::startup();
+		render2::font::startup(device);
 
 		Array<unsigned char> data;
 		core::filesystem::instance()->virtual_load_file(data, "fonts/nokiafc22.ttf");
-		font = render2::font::load_from_memory(&data[0], data.size(), 12);
-		
+		font = render2::font::load_from_memory(&data[0], data.size(), 32);
+
+#if 0
 		// load the gui
 		{
 			// gui layout
@@ -307,7 +355,7 @@ public:
 			}
 			
 		}
-
+#endif
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
 
 		return kernel::NoError;
@@ -344,14 +392,13 @@ public:
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
 		
 		serializer->pipeline(pipeline);
-//		serializer->vertex_buffer(triangle_stream);
-//		serializer->draw_indexed_primitives(index_buffer, 3);
-//		serializer->draw(0, 3);
+		serializer->vertex_buffer(vertex_buffers[0]);
+		serializer->draw(0, 3);
 
 		platform::window::activate_context(main_window);
 
 
-
+#if 1
 		Array<render2::font::FontVertex> fontvertices;
 		if (font.is_valid())
 		{
@@ -366,7 +413,8 @@ public:
 			render2::font::draw_string(font, fontvertices, transform, "Hello World", core::Color(255, 255, 255));
 
 			// copy
-			MyVertex* v = (MyVertex*)device->buffer_lock(triangle_stream);
+			MyVertex* v = (MyVertex*)device->buffer_lock(vertex_buffers[0]);
+			v+=3;
 
 			size_t index = 0;
 			for (auto& vertex : fontvertices)
@@ -381,17 +429,51 @@ public:
 				++index;
 			}
 
-			device->buffer_unlock(triangle_stream);
+			device->buffer_unlock(vertex_buffers[0]);
 
-			serializer->vertex_buffer(triangle_stream);
-			serializer->draw(0, fontvertices.size());
+			serializer->vertex_buffer(vertex_buffers[0]);
+			serializer->draw(3, fontvertices.size());
 
 
 
-			device->queue_buffers(queue, 1);
-			device->submit();
+
+
 		}
+
+#endif
+
+		device->queue_buffers(queue, 1);
 		device->destroy_serializer(serializer);
+
+		// draw a test quad with the font
+#if 1
+		uint32_t sampler = 0;
+		{
+			modelview_matrix = glm::mat4(1.0f);
+			projection_matrix = glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, -1.0f, 1.0f);
+			texture_pipeline->constants().set("modelview_matrix", &modelview_matrix);
+			texture_pipeline->constants().set("projection_matrix", &projection_matrix);
+			texture_pipeline->constants().set("diffuse", &sampler);
+
+			render2::Pass render_pass;
+			render_pass.target = device->default_render_target();
+			render_pass.clear_color = false;
+
+			render2::CommandQueue* queue = device->create_queue(render_pass);
+			render2::CommandSerializer* serializer = device->create_serializer(queue);
+			serializer->pipeline(texture_pipeline);
+			serializer->vertex_buffer(vertex_buffers[1]);
+			serializer->texture(render2::font::get_font_texture(font), 0);
+			serializer->draw(0, 6);
+			device->queue_buffers(queue, 1);
+			device->destroy_serializer(serializer);
+		}
+#endif
+
+		device->submit();
+
+
+
 		
 		platform::window::swap_buffers(main_window);
 
@@ -404,16 +486,21 @@ public:
 		render2::font::shutdown();
 
 		// shutdown the render device
-		device->destroy_buffer(triangle_stream);
-		device->destroy_buffer(index_buffer);
+		device->destroy_buffer(vertex_buffers[0]);
+
+		if (vertex_buffers[1])
+			device->destroy_buffer(vertex_buffers[1]);
+
 		device->destroy_pipeline(pipeline);
-		
+
+		if (texture_pipeline)
+			device->destroy_pipeline(texture_pipeline);
 		
 		destroy_device(device);
 		
 //		glDeleteSync(fence);
 		
-		renderer::shutdown();
+//		renderer::shutdown();
 
 		platform::window::destroy(main_window);
 		platform::window::shutdown();
