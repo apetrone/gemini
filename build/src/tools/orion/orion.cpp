@@ -260,9 +260,9 @@ public:
 				desc.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 				desc.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
 				desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
-//				desc.enable_blending = true;
-//				desc.blend_source = render2::BlendOp::SourceAlpha;
-//				desc.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
+				desc.enable_blending = true;
+				desc.blend_source = render2::BlendOp::SourceAlpha;
+				desc.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
 				texture_pipeline = device->create_pipeline(desc);
 			}
 
@@ -381,7 +381,12 @@ public:
 		pipeline->constants().set("modelview_matrix", &modelview_matrix);
 		pipeline->constants().set("projection_matrix", &projection_matrix);
 
-		value = 0.0f;
+		uint32_t sampler = 0;
+		texture_pipeline->constants().set("modelview_matrix", &modelview_matrix);
+		texture_pipeline->constants().set("projection_matrix", &projection_matrix);
+		texture_pipeline->constants().set("diffuse", &sampler);
+
+		value = 0.25f;
 
 		render2::Pass render_pass;
 		render_pass.target = device->default_render_target();
@@ -394,9 +399,29 @@ public:
 		serializer->pipeline(pipeline);
 		serializer->vertex_buffer(vertex_buffers[0]);
 		serializer->draw(0, 3);
+		device->queue_buffers(queue, 1);
+		device->destroy_serializer(serializer);
 
 		platform::window::activate_context(main_window);
 
+
+		// draw a test quad with the font
+#if 1
+		{
+			render2::Pass render_pass;
+			render_pass.target = device->default_render_target();
+			render_pass.clear_color = false;
+
+			render2::CommandQueue* queue = device->create_queue(render_pass);
+			render2::CommandSerializer* serializer = device->create_serializer(queue);
+			serializer->pipeline(texture_pipeline);
+			serializer->vertex_buffer(vertex_buffers[1]);
+			serializer->texture(render2::font::get_font_texture(font), 0);
+			serializer->draw(0, 6);
+			device->queue_buffers(queue, 1);
+			device->destroy_serializer(serializer);
+		}
+#endif
 
 #if 1
 		Array<render2::font::FontVertex> fontvertices;
@@ -410,7 +435,7 @@ public:
 //							 sin(radians), cos(radians)
 //							 );
 
-			render2::font::draw_string(font, fontvertices, transform, "Hello World", core::Color(255, 255, 255));
+			render2::font::draw_string(font, fontvertices, transform, "Hello World", core::Color(255, 128, 255));
 
 			// copy
 			MyVertex* v = (MyVertex*)device->buffer_lock(vertex_buffers[0]);
@@ -431,50 +456,24 @@ public:
 
 			device->buffer_unlock(vertex_buffers[0]);
 
-			serializer->vertex_buffer(vertex_buffers[0]);
-			serializer->draw(3, fontvertices.size());
-
-
-
-
-
-		}
-
-#endif
-
-		device->queue_buffers(queue, 1);
-		device->destroy_serializer(serializer);
-
-		// draw a test quad with the font
-#if 1
-		uint32_t sampler = 0;
-		{
-			modelview_matrix = glm::mat4(1.0f);
-			projection_matrix = glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, -1.0f, 1.0f);
-			texture_pipeline->constants().set("modelview_matrix", &modelview_matrix);
-			texture_pipeline->constants().set("projection_matrix", &projection_matrix);
-			texture_pipeline->constants().set("diffuse", &sampler);
-
 			render2::Pass render_pass;
 			render_pass.target = device->default_render_target();
+			render_pass.color(value, value, value, 1.0f);
 			render_pass.clear_color = false;
 
 			render2::CommandQueue* queue = device->create_queue(render_pass);
 			render2::CommandSerializer* serializer = device->create_serializer(queue);
-			serializer->pipeline(texture_pipeline);
-			serializer->vertex_buffer(vertex_buffers[1]);
-			serializer->texture(render2::font::get_font_texture(font), 0);
-			serializer->draw(0, 6);
+			serializer->pipeline(pipeline);
+			serializer->vertex_buffer(vertex_buffers[0]);
+			serializer->draw(3, fontvertices.size());
 			device->queue_buffers(queue, 1);
 			device->destroy_serializer(serializer);
 		}
+
 #endif
 
 		device->submit();
 
-
-
-		
 		platform::window::swap_buffers(main_window);
 
 //		glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, 2000);

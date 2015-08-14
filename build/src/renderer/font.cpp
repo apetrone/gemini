@@ -786,30 +786,36 @@ namespace render2
 					// lower left
 					vertex->position = transform * pos + glm::vec2(0, gd.height);
 					vertex->color = color;
+					vertex->uv = glm::vec2(0, 0);
 					vertex++;
 
 					// lower right
 					vertex->position = transform * pos + glm::vec2(gd.width, gd.height);
 					vertex->color = color;
+					vertex->uv = glm::vec2(1, 0);
 					vertex++;
 
 					// upper right
 					vertex->position = transform * pos + glm::vec2(gd.width, 0);
 					vertex->color = color;
+					vertex->uv = glm::vec2(1, 1);
 					vertex++;
 
 					vertex->position = transform * pos + glm::vec2(gd.width, 0);
 					vertex->color = color;
+					vertex->uv = glm::vec2(1, 1);
 					vertex++;
 
 					// upper left
 					vertex->position = transform * pos;
 					vertex->color = color;
+					vertex->uv = glm::vec2(0, 1);
 					vertex++;
 
 					// lower left
 					vertex->position = transform * pos + glm::vec2(0, gd.height);
 					vertex->color = color;
+					vertex->uv = glm::vec2(0, 0);
 					vertex++;
 				}
 
