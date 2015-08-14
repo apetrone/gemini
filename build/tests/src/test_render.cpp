@@ -64,6 +64,8 @@ class TestKernel : public kernel::IKernel,
 	glm::mat4 projection_matrix;
 	unsigned int diffuse;
 
+	render2::font::Handle handle;
+
 public:
 	virtual void event(kernel::KeyboardEvent& event)
 	{
@@ -279,6 +281,20 @@ public:
 
 		// load a compressed texture?
 
+
+
+
+		// ---------------------------------------------------------------------
+		// font
+		// ---------------------------------------------------------------------
+		render2::font::startup(device);
+
+		Array<unsigned char> fontdata;
+		core::filesystem::instance()->virtual_load_file(fontdata, "fonts/nokiafc22.ttf");
+		handle = render2::font::load_from_memory(&fontdata[0], fontdata.size(), 16);
+
+		
+
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
 
 		return kernel::NoError;
@@ -367,7 +383,7 @@ public:
 		serializer->vertex_buffer(textured_buffer);
 		serializer->texture(checker, 0);
 		serializer->draw(0, 3);
-		serializer->texture(notexture, 0);
+		serializer->texture(render2::font::get_font_texture(handle), 0);
 		serializer->draw(3, 6);
 
 		// queue the buffer with our device
@@ -407,6 +423,8 @@ public:
 
 	virtual void shutdown()
 	{
+		render2::font::shutdown();
+
 #if TEST_RENDER_GRAPHICS
 		if (checker)
 		{
@@ -422,6 +440,8 @@ public:
 
 		renderer::shutdown();
 #endif
+
+
 
 		platform::window::destroy(native_window);
 		if (other_window)

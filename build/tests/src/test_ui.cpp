@@ -452,6 +452,9 @@ public:
 				{
 					device->backbuffer_resized(event.render_width, event.render_height);
 				}
+
+				compositor->resize(event.render_width, event.render_height);
+
 				break;
 			default:
 				break;
@@ -503,14 +506,16 @@ public:
 		uint32_t button_width = 320;
 		uint32_t button_height = 50;
 		uint32_t button_spacing = 10;
-		const size_t total_buttons = 2;
+		const size_t total_buttons = 4;
 //		uint32_t vertical_offset = 0;
 		uint32_t origin_x = (compositor->width/2.0f) - (button_width/2.0f);
 		uint32_t origin_y = (compositor->height/2.0f) - ((button_height*total_buttons)/2.0f);
 
 		const char* captions[total_buttons] = {
 			"New Game",
-			"Test Button"
+			"Test Button",
+			"Test Two",
+			"Test Three"
 		};
 
 		for (size_t index = 0; index < total_buttons; ++index)

@@ -809,6 +809,7 @@ int main(int, char**)
 	test_circularbuffer();
 	test_mathlib();
 	test_memory();
+	test_serialization();
 	test_stackstring();
 	test_str();
 	test_util();
