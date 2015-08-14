@@ -772,7 +772,8 @@ namespace render2
 		// In ES 2 implementations; we can use GL_EXT_unpack_subimage for GL_UNPACK_ROW_LENGTH
 		// If that isn't available; the new image has to be uploaded one row at a time.
 
-		assert(rect.width() > 0 || rect.height() > 0);
+		//assert(rect.width() > 0 || rect.height() > 0);
+		assert(rect.right > 0 && rect.bottom > 0);
 
 		GLenum internal_format = image_to_internal_format(image);
 
