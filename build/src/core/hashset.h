@@ -105,19 +105,22 @@ private:
 	void repopulate(size_t new_size)
 	{
 		Bucket* old_table = table;
-		
 
-		size_t total_items = table_size;							
+		size_t total_items = table_size;
 		table_size = new_size;
 		table = allocate(table_size);
 
-		
-		// straight up copying is much faster than re-inserting
+		// reset used item count as we need to re-insert them.
+		used_items = 0;
+
+		// if these are NOT re-inserted into the new hash; then
+		// they won't be resolved correctly.
 		for (size_t i = 0; i < total_items; ++i)
 		{
-			table[i] = old_table[i];
+			if (old_table[i].hash != 0)
+				insert(value_type(old_table[i].key, old_table[i].value));
 		}
-		
+
 		// free the old table
 		deallocate(old_table);
 	}
