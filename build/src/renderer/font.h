@@ -102,8 +102,8 @@ namespace render2
 		struct FontVertex
 		{
 			glm::vec2 position;
-			glm::vec2 uv;
 			core::Color color;
+			glm::vec2 uv;
 		};
 
 		struct Handle

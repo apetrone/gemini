@@ -352,6 +352,7 @@ namespace render2
 
 		virtual void* buffer_lock(Buffer* buffer)
 		{
+			assert(locked_buffer == nullptr);
 			GLBuffer* glb = static_cast<GLBuffer*>(buffer);
 			glb->bind();
 			void* pointer = gl.MapBuffer(glb->type, GL_WRITE_ONLY);

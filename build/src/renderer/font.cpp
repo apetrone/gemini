@@ -354,6 +354,10 @@ namespace font
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+
+#define STB_RECT_PACK_IMPLEMENTATION
+#include "stb_rect_pack.h"
+
 namespace render2
 {
 	namespace font
@@ -367,6 +371,14 @@ namespace render2
 			void* data;
 			size_t data_size;
 			render2::Texture* texture;
+			stbrp_context rp_context;
+			stbrp_node rp_nodes[512];
+
+			// array of rects
+			Array<stbrp_rect> rp_rects;
+
+			// map codepoint to rect index
+			HashSet<uint32_t, size_t> glyph_cache;
 
 			FontData() :
 				type(FONT_TYPE_INVALID),
@@ -384,7 +396,7 @@ namespace render2
 		namespace detail
 		{
 			FT_Library _ftlibrary;
-			Array<FontData> _fonts(0);
+			Array<FontData*> _fonts(0);
 			render2::Device* _device = nullptr;
 		} // namespace detail
 
@@ -545,14 +557,18 @@ namespace render2
 		{
 			for (auto& data : detail::_fonts)
 			{
-				FT_Done_Face(data.face);
+				FT_Done_Face(data->face);
 
-				MEMORY_DEALLOC(data.data, core::memory::global_allocator());
+				MEMORY_DEALLOC(data->data, core::memory::global_allocator());
 
-				if (data.texture)
+				if (data->texture)
 				{
-					detail::_device->destroy_texture(data.texture);
+					detail::_device->destroy_texture(data->texture);
 				}
+
+				data->rp_rects.clear();
+
+				MEMORY_DELETE(data, core::memory::global_allocator());
 			}
 			detail::_fonts.clear();
 
@@ -563,21 +579,163 @@ namespace render2
 			}
 		}
 
+		void compute_uvs_for_rect(FontData* font, const stbrp_rect& rect, glm::vec2* uvs)
+		{
+			//
+			// compute uvs
+			const float TEXTURE_WIDTH = 512.0f;
+			const float TEXTURE_HEIGHT = 512.0f;
+
+			// lower left
+			uvs[0] = glm::vec2(
+							   (rect.x / TEXTURE_WIDTH),
+							   (rect.y / TEXTURE_HEIGHT)
+							   );
+
+			// lower right
+			uvs[1] = glm::vec2(
+							   ((rect.x + rect.w) / TEXTURE_WIDTH),
+							   (rect.y / TEXTURE_HEIGHT)
+							   );
+
+			// upper right
+			uvs[2] = glm::vec2(
+							   ((rect.x + rect.w) / TEXTURE_WIDTH),
+							   ((rect.y + rect.h) / TEXTURE_HEIGHT)
+							   );
+
+			// upper left
+			uvs[3] = glm::vec2(
+							   (rect.x / TEXTURE_WIDTH),
+							   ((rect.y + rect.h) / TEXTURE_HEIGHT)
+							   );
+		}
+
+		int uvs_for_codepoint(FontData* font, uint32_t codepoint, glm::vec2* uvs)
+		{
+			assert(font);
+
+			// we don't handle 'space' characters.
+			assert(codepoint > 0);
+
+			// see if the codepoint is in the cache
+			if (font->glyph_cache.has_key(codepoint))
+			{
+				size_t rect_index = font->glyph_cache[codepoint];
+				const stbrp_rect& rect = font->rp_rects[rect_index];
+				assert(rect.was_packed);
+
+				compute_uvs_for_rect(font, rect, uvs);
+//				LOGV("codepoint: %c found in cache\n", codepoint);
+				return 0;
+			}
+
+			// get the glyph index
+			FT_ULong glyph_index = FT_Get_Char_Index(font->face, codepoint);
+
+			// load the glyph
+			FT_Load_Glyph(font->face, glyph_index, FT_LOAD_FORCE_AUTOHINT);
+
+			// render the glyph
+			if (font->face->glyph->format != FT_GLYPH_FORMAT_BITMAP)
+			{
+				FT_Render_Mode render_mode = FT_RENDER_MODE_NORMAL;
+				FT_Error error = FT_Render_Glyph(font->face->glyph, render_mode);
+				if (error)
+				{
+					LOGW("Error while rendering glyph!\n");
+				}
+			}
+
+			FT_Bitmap* bitmap = &font->face->glyph->bitmap;
+
+			//	LOGV("rows: %i\n", bitmap->rows);
+			//	LOGV("width: %i\n", bitmap->width);
+
+			// number of bytes including padding of one bitmap row.
+			// positive when the bitmap has a 'down' flow and negative
+			// when the bitmap has an 'up' flow.
+			//	LOGV("pitch: %i\n", bitmap->pitch);
+
+			// bitmap's dimensions are valid
+			assert(bitmap->rows > 0 && bitmap->width > 0 && bitmap->pitch > 0);
+
+			// bitmap is 8-bit grayscale
+			assert(FT_PIXEL_MODE_GRAY == bitmap->pixel_mode);
+
+			render2::Image img;
+			img.width = bitmap->width;
+			img.height = bitmap->rows;
+			img.channels = 3;
+			img.create(bitmap->width, bitmap->rows, 3);
+
+			struct rgb_t
+			{
+				unsigned char r, g, b;
+			};
+
+			// flip the image vertically
+			rgb_t* pixel = (rgb_t*)&img.pixels[0];
+			for (size_t p = 0; p < img.height; ++p)
+			{
+				for (size_t w = 0; w < img.width; ++w)
+				{
+					unsigned char* x = (unsigned char*)&bitmap->buffer[((img.height-p)*bitmap->pitch) + w];
+					pixel->r = *x;
+					pixel->g = *x;
+					pixel->b = *x;
+					++pixel;
+				}
+			}
+
+			// insert the glyph into our cache
+			stbrp_rect newrect;
+			newrect.w = bitmap->width;
+			newrect.h = bitmap->rows;
+			size_t new_index = font->rp_rects.size();
+			font->rp_rects.push_back(newrect);
+
+
+			// pack the rect in the font atlas (or not)
+			stbrp_pack_rects(&font->rp_context, &font->rp_rects[0], font->rp_rects.size());
+
+			newrect = font->rp_rects.back();
+			if (newrect.was_packed)
+			{
+				font->glyph_cache[codepoint] = new_index;
+
+				// the rect was packed; so update the textre
+				mathlib::Recti rect(newrect.x, newrect.y, bitmap->width, bitmap->rows);
+				detail::_device->update_texture(font->texture, img, rect);
+
+				LOGV("inserted codepoint %i into glyph_cache\n", codepoint);
+				compute_uvs_for_rect(font, newrect, uvs);
+				return 0;
+			}
+			else
+			{
+				// I dunno.
+				LOGW("Unable to pack codepoint: %i\n", codepoint);
+				font->rp_rects.pop_back();
+				return 1;
+			}
+		}
+
 		Handle load_from_memory(const void* data, unsigned int data_size, unsigned int point_size, Type target_type)
 		{
 			Handle handle;
 			FT_Error error = FT_Err_Ok;
 
-			FontData font;
+			FontData* font = MEMORY_NEW(FontData, core::memory::global_allocator());
 			// font needs a copy of the data so long as FT_Face is loaded.
 			// so make a local copy and store it.
-			font.data = MEMORY_ALLOC(data_size, core::memory::global_allocator());
-			font.data_size = data_size;
-			memcpy(font.data, data, data_size);
+			font->data = MEMORY_ALLOC(data_size, core::memory::global_allocator());
+			font->data_size = data_size;
+			memcpy(font->data, data, data_size);
 
 			// try to parse the font data
 			FT_Face face = nullptr;
-			error = FT_New_Memory_Face(detail::_ftlibrary, (const FT_Byte*)font.data, font.data_size, 0, &face);
+			error = FT_New_Memory_Face(detail::_ftlibrary, (const FT_Byte*)font->data, font->data_size, 0, &face);
 			assert(error == FT_Err_Ok);
 			if (error == FT_Err_Unknown_File_Format)
 			{
@@ -608,8 +766,9 @@ namespace render2
 
 
 			handle.ref = detail::_fonts.size();
-			font.type = FONT_TYPE_BITMAP;
-			font.face = face;
+			font->type = FONT_TYPE_BITMAP;
+			font->face = face;
+			stbrp_init_target(&font->rp_context, 512, 512, font->rp_nodes, 512);
 
 			render2::Image image;
 			image.filter = image::FILTER_NONE;
@@ -618,7 +777,7 @@ namespace render2
 			image.height = 512;
 			image.channels = 3;
 			image::generate_checker_pattern(image, core::Color(255, 0, 255), core::Color(0, 255, 0));
-			font.texture = detail::_device->create_texture(image);
+			font->texture = detail::_device->create_texture(image);
 			detail::_fonts.push_back(font);
 
 
@@ -644,74 +803,15 @@ namespace render2
 //			}
 
 
-
-			// get the glyph index
-			FT_ULong glyph_index = FT_Get_Char_Index(face, 'W');
-
-			// load the glyph
-			FT_Load_Glyph(face, glyph_index, FT_LOAD_FORCE_AUTOHINT);
-
-			// render the glyph
-			if (face->glyph->format != FT_GLYPH_FORMAT_BITMAP)
-			{
-				FT_Render_Mode render_mode = FT_RENDER_MODE_NORMAL;
-				error = FT_Render_Glyph(face->glyph, render_mode);
-				if (error)
-				{
-					LOGW("Error while rendering glyph!\n");
-				}
-			}
-
-			FT_Bitmap* bitmap = &face->glyph->bitmap;
-
-			LOGV("rows: %i\n", bitmap->rows);
-			LOGV("width: %i\n", bitmap->width);
-
-			// number of bytes including padding of one bitmap row.
-			// positive when the bitmap has a 'down' flow and negative
-			// when the bitmap has an 'up' flow.
-			LOGV("pitch: %i\n", bitmap->pitch);
-
-			assert(FT_PIXEL_MODE_GRAY == bitmap->pixel_mode);
-
-			render2::Image img;
-			img.width = bitmap->width;
-			img.height = bitmap->rows;
-			img.channels = 3;
-			img.create(bitmap->width, bitmap->rows, 3);
-
-			struct rgb_t
-			{
-				unsigned char r, g, b;
-			};
-
-			rgb_t* pixel = (rgb_t*)&img.pixels[0];
-//			for (size_t p = 0; p < img.height; ++p)
+//			char name[] = "Adamwashere.Ihopealliswellintheworld";
+//
+//			for (size_t x = 0; x < 35; ++x)
 //			{
-//				for (size_t w = 0; w < img.width; ++w)
-//				{
-//					unsigned char* x = (unsigned char*)&bitmap->buffer[(p*bitmap->pitch) + w];
-//					pixel->r = *x;
-//					pixel->g = *x;
-//					pixel->b = *x;
-//					++pixel;
-//				}
+//				uint32_t codepoint = name[x];
+//				glm::vec2 uvs[4];
+//
+//				uvs_for_codepoint(font, codepoint, uvs);
 //			}
-
-			for (size_t p = 0; p < img.height; ++p)
-			{
-				for (size_t w = 0; w < img.width; ++w)
-				{
-					unsigned char* x = (unsigned char*)&bitmap->buffer[((img.height-p)*bitmap->pitch) + w];
-					pixel->r = *x;
-					pixel->g = *x;
-					pixel->b = *x;
-					++pixel;
-				}
-			}
-
-			mathlib::Recti rect(0, 0, bitmap->width, bitmap->rows);
-			detail::_device->update_texture(font.texture, img, rect);
 
 //			load_character_info(face, font);
 
@@ -757,7 +857,7 @@ namespace render2
 			if (!handle.is_valid())
 				return;
 
-			FontData& data = detail::_fonts[handle.ref];
+			FontData* data = detail::_fonts[handle.ref];
 
 			glm::vec2 pen;
 			glm::vec2 offset;
@@ -772,11 +872,18 @@ namespace render2
 
 			for (size_t index = 0; index < length; ++index)
 			{
+				uint32_t codepoint = utf8[index];
+
 				GlyphData gd;
-				get_gylph_info(data.face, utf8[index], gd);
+				get_gylph_info(data->face, codepoint, gd);
 
 				offset.x = gd.left - gd.hbearingx;
 				offset.y = -gd.top + gd.vbearingy;
+
+
+				glm::vec2 uvs[4];
+				if (codepoint != 32)
+					uvs_for_codepoint(data, codepoint, uvs);
 
 				vertex = &vertices[index * 6];
 				// build this in counter-clockwise order
@@ -786,30 +893,30 @@ namespace render2
 					// lower left
 					vertex->position = transform * pos + glm::vec2(0, gd.height);
 					vertex->color = color;
-					vertex->uv = glm::vec2(0, 0);
+					vertex->uv = uvs[0];
 					vertex++;
 
 					// lower right
 					vertex->position = transform * pos + glm::vec2(gd.width, gd.height);
 					vertex->color = color;
-					vertex->uv = glm::vec2(1, 0);
+					vertex->uv = uvs[1];
 					vertex++;
 
 					// upper right
 					vertex->position = transform * pos + glm::vec2(gd.width, 0);
 					vertex->color = color;
-					vertex->uv = glm::vec2(1, 1);
+					vertex->uv = uvs[2];
 					vertex++;
 
 					vertex->position = transform * pos + glm::vec2(gd.width, 0);
 					vertex->color = color;
-					vertex->uv = glm::vec2(1, 1);
+					vertex->uv = uvs[2];
 					vertex++;
 
 					// upper left
 					vertex->position = transform * pos;
 					vertex->color = color;
-					vertex->uv = glm::vec2(0, 1);
+					vertex->uv = uvs[3];
 					vertex++;
 
 					// lower left
@@ -827,8 +934,8 @@ namespace render2
 		{
 			if (handle.is_valid())
 			{
-				FontData& data = detail::_fonts[handle.ref];
-				return data.texture;
+				FontData* data = detail::_fonts[handle.ref];
+				return data->texture;
 			}
 			return nullptr;
 		}

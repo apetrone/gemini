@@ -166,6 +166,38 @@ public:
 		}
 	}
 
+	void populate_textured_buffer()
+	{
+		const size_t width = 256;
+		const size_t height = 256;
+		glm::vec2 offset(128, 256);
+
+		TexturedVertex quad[6];
+		quad[0].set_position(offset.x, offset.y+height, 0);
+		quad[0].set_color(1, 1, 1, 1);
+		quad[0].set_uv(0, 0);
+
+		quad[1].set_position(offset.x+width, offset.y+height, 0);
+		quad[1].set_color(1, 1, 1, 1);
+		quad[1].set_uv(1, 0);
+
+		quad[2].set_position(offset.x+width, offset.y, 0);
+		quad[2].set_color(1, 1, 1, 1);
+		quad[2].set_uv(1, 1);
+
+		quad[3] = quad[2];
+
+		quad[4].set_position(offset.x, offset.y, 0);
+		quad[4].set_color(1, 1, 1, 1);
+		quad[4].set_uv(0, 1);
+
+		quad[5].set_position(offset.x, offset.y+height, 0);
+		quad[5].set_color(1, 1, 1, 1);
+		quad[5].set_uv(0, 0);
+
+		device->buffer_upload(vertex_buffers[1], &quad[0], sizeof(TexturedVertex)*6);
+	}
+
 	virtual kernel::Error startup()
 	{
 		platform::PathString root_path = platform::get_program_directory();
@@ -266,7 +298,7 @@ public:
 				texture_pipeline = device->create_pipeline(desc);
 			}
 
-			size_t total_bytes = sizeof(MyVertex) * 1024;
+			size_t total_bytes = sizeof(MyVertex) * 6;
 			vertex_buffers[0] = device->create_vertex_buffer(total_bytes);
 			vertex_buffers[1] = device->create_vertex_buffer(sizeof(render2::font::FontVertex)*4096);
 
@@ -290,39 +322,9 @@ public:
 			device->buffer_unlock(vertex_buffers[0]);
 #endif
 
-#if 1
-			{
-				const size_t width = 256;
-				const size_t height = 256;
-				glm::vec2 offset(128, 256);
 
-				TexturedVertex quad[6];
-				quad[0].set_position(offset.x, offset.y+height, 0);
-				quad[0].set_color(1, 1, 1, 1);
-				quad[0].set_uv(0, 0);
+//			populate_textured_buffer();
 
-				quad[1].set_position(offset.x+width, offset.y+height, 0);
-				quad[1].set_color(1, 1, 1, 1);
-				quad[1].set_uv(1, 0);
-
-				quad[2].set_position(offset.x+width, offset.y, 0);
-				quad[2].set_color(1, 1, 1, 1);
-				quad[2].set_uv(1, 1);
-
-				quad[3] = quad[2];
-
-				quad[4].set_position(offset.x, offset.y, 0);
-				quad[4].set_color(1, 1, 1, 1);
-				quad[4].set_uv(0, 1);
-
-				quad[5].set_position(offset.x, offset.y+height, 0);
-				quad[5].set_color(1, 1, 1, 1);
-				quad[5].set_uv(0, 0);
-
-				device->buffer_upload(vertex_buffers[1], &quad[0], sizeof(TexturedVertex)*6);
-			}
-#endif
-			
 		}
 		
 		// setup editor assets / content paths
@@ -392,6 +394,7 @@ public:
 		render_pass.target = device->default_render_target();
 		render_pass.color(value, value, value, 1.0f);
 		render_pass.clear_color = true;
+		render_pass.clear_depth = true;
 
 		render2::CommandQueue* queue = device->create_queue(render_pass);
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
@@ -402,11 +405,10 @@ public:
 		device->queue_buffers(queue, 1);
 		device->destroy_serializer(serializer);
 
-		platform::window::activate_context(main_window);
 
 
 		// draw a test quad with the font
-#if 1
+#if 0
 		{
 			render2::Pass render_pass;
 			render_pass.target = device->default_render_target();
@@ -435,42 +437,57 @@ public:
 //							 sin(radians), cos(radians)
 //							 );
 
-			render2::font::draw_string(font, fontvertices, transform, "Hello World", core::Color(255, 128, 255));
+			render2::font::draw_string(font, fontvertices, transform, "A", core::Color(255, 128, 255));
 
-			// copy
-			MyVertex* v = (MyVertex*)device->buffer_lock(vertex_buffers[0]);
-			v+=3;
+
+#if 1
+//			// copy
+			TexturedVertex* v = (TexturedVertex*)device->buffer_lock(vertex_buffers[1]);
+//			v+=6;
 
 			size_t index = 0;
 			for (auto& vertex : fontvertices)
+//			for(index = 0; index < fontvertices.size(); ++index)
 			{
-				v->position[0] = vertex.position.x;
-				v->position[1] = vertex.position.y;
-				v->color[0] = vertex.color.r/255.0f;
-				v->color[1] = vertex.color.g/255.0f;
-				v->color[2] = vertex.color.b/255.0f;
-				v->color[3] = vertex.color.a/255.0f;
+//				auto& vertex = fontvertices[index];
+				v->set_position(vertex.position.x, vertex.position.y, 0);
+				v->set_color(
+					vertex.color.r/255.0f,
+					vertex.color.g/255.0f,
+					vertex.color.b/255.0f,
+				 	vertex.color.a/255.0f
+				);
+				v->set_uv(vertex.uv.x, vertex.uv.y);
 				++v;
-				++index;
 			}
 
-			device->buffer_unlock(vertex_buffers[0]);
+			device->buffer_unlock(vertex_buffers[1]);
+#else
+			populate_textured_buffer();
+#endif
+
+//
 
 			render2::Pass render_pass;
 			render_pass.target = device->default_render_target();
-			render_pass.color(value, value, value, 1.0f);
+			render_pass.color(0, 0, 0, 1.0f);
 			render_pass.clear_color = false;
 
 			render2::CommandQueue* queue = device->create_queue(render_pass);
 			render2::CommandSerializer* serializer = device->create_serializer(queue);
-			serializer->pipeline(pipeline);
-			serializer->vertex_buffer(vertex_buffers[0]);
-			serializer->draw(3, fontvertices.size());
+			serializer->pipeline(texture_pipeline);
+			serializer->vertex_buffer(vertex_buffers[1]);
+			serializer->texture(render2::font::get_font_texture(font), 0);
+			serializer->draw(0, fontvertices.size());
+//			serializer->draw(0, 6);
 			device->queue_buffers(queue, 1);
 			device->destroy_serializer(serializer);
 		}
 
 #endif
+
+
+		platform::window::activate_context(main_window);
 
 		device->submit();
 
