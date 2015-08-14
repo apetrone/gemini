@@ -134,6 +134,8 @@ void test_array()
 
 	abc.erase(60);
 
+	abc.pop_back();
+
 	TEST_VERIFY(abc.size() == 2, size_after_erase);
 	for (const int& value : abc)
 	{
@@ -367,9 +369,23 @@ void test_hashset()
 	HashSet<std::string, void*> custom_capacity(4096);
 	TEST_VERIFY(custom_capacity.capacity() == 4096, capacity);
 
-
 	int second = dict.get("second");
 	TEST_VERIFY(second == 2, get);
+
+
+	bool has_two = false;
+	HashSet<int, int> repop_test(5);
+	repop_test[0] = 0;
+	repop_test[1] = 1;
+	repop_test[2] = 2;
+	has_two = repop_test.has_key(2);
+	repop_test[3] = 3;
+	has_two = repop_test.has_key(2);
+	repop_test[4] = 4;
+	has_two = repop_test.has_key(2);
+
+
+
 }
 
 
