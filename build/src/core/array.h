@@ -76,11 +76,11 @@ public:
 		typedef Array<value_type> container_type;
 		
 	private:
-		const container_type* container;
+		container_type* container;
 		size_t index;
 		
 	public:
-		iterator(const container_type* container = nullptr, size_t index = 0) :
+		iterator(container_type* container = nullptr, size_t index = 0) :
 			container(container),
 			index(index)
 		{
@@ -122,7 +122,7 @@ public:
 			return *this;
 		}
 
-		const value_type& operator* () const
+		value_type& operator* ()
 		{
 			return (*container)[index];
 		}
@@ -240,7 +240,17 @@ public:
 		
 		data[total_elements++] = item;
 	}
-	
+
+	// pop the last element
+	value_type pop_back()
+	{
+		assert(total_elements > 0);
+
+		value_type item = data[total_elements-1];
+		--total_elements;
+		return item;
+	}
+
 	// reset capacity and total elements
 	// optionally purges allocated data
 	void clear(bool purge = true)
@@ -307,11 +317,21 @@ public:
 		return data[total_elements-1];
 	}
 	
-	iterator begin() const
+	iterator begin()
 	{
 		return iterator(this, 0);
 	}
 	
+	iterator end()
+	{
+		return iterator(this, total_elements);
+	}
+
+	iterator begin() const
+	{
+		return iterator(this, 0);
+	}
+
 	iterator end() const
 	{
 		return iterator(this, total_elements);
