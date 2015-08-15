@@ -368,7 +368,7 @@ namespace render2
 			stbrp_rect rect;
 		};
 
-		const size_t FONT_INITIAL_RECT_TOTAL = 256;
+		const size_t FONT_INITIAL_RECT_TOTAL = 512;
 
 		// internal data
 		struct FontData
@@ -403,6 +403,19 @@ namespace render2
 			{
 			}
 
+			stbrp_rect* get_glyph(int codepoint)
+			{
+				for (size_t index = 0; index < rp_rects.size(); ++index)
+				{
+					stbrp_rect& r = rp_rects[index];
+					if (codepoint == r.id)
+					{
+						return &r;
+					}
+				}
+
+				return nullptr;
+			}
 		};
 
 
@@ -644,10 +657,14 @@ namespace render2
 			// we don't handle 'space' characters.
 			assert(codepoint > 0);
 
+
+			stbrp_rect* rect = nullptr;
+			rect = font->get_glyph(codepoint);
 			// see if the codepoint is in the cache
-			if (font->glyph_cache.has_key(codepoint))
+			if (rect)
 			{
-				stbrp_rect* rect = font->glyph_cache[codepoint];
+//				stbrp_rect* rect = font->glyph_cache[codepoint];
+//				stbrp_rect* rect = &font->get_glyph(cache_index);
 				assert(rect->was_packed);
 
 				assert(static_cast<uint32_t>(rect->id) == codepoint);
@@ -729,8 +746,8 @@ namespace render2
 			if (newrect.was_packed)
 			{
 				font->rp_rects.push_back(newrect);
-				stbrp_rect* last_rect = &font->rp_rects.back();
-				font->glyph_cache[codepoint] = last_rect;
+//				stbrp_rect* last_rect = &font->rp_rects.back();
+//				font->glyph_cache[codepoint] = last_rect;
 
 				// the rect was packed; so update the textre
 				mathlib::Recti rect(newrect.x, newrect.y, newrect.w, newrect.h);

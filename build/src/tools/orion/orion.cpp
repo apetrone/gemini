@@ -172,7 +172,7 @@ public:
 		const size_t height = 256;
 		glm::vec2 offset(128, 256);
 
-		TexturedVertex quad[6];
+		TexturedVertex* quad = (TexturedVertex*)device->buffer_lock(vertex_buffers[1]);
 		quad[0].set_position(offset.x, offset.y+height, 0);
 		quad[0].set_color(1, 1, 1, 1);
 		quad[0].set_uv(0, 0);
@@ -195,7 +195,8 @@ public:
 		quad[5].set_color(1, 1, 1, 1);
 		quad[5].set_uv(0, 0);
 
-		device->buffer_upload(vertex_buffers[1], &quad[0], sizeof(TexturedVertex)*6);
+//		device->buffer_upload(vertex_buffers[1], &quad[0], sizeof(TexturedVertex)*6);
+		device->buffer_unlock(vertex_buffers[1]);
 	}
 
 	virtual kernel::Error startup()
@@ -456,10 +457,14 @@ public:
 			serializer->texture(render2::font::get_font_texture(font), 0);
 
 
-#if 0
+
+
+			populate_textured_buffer();
+			serializer->draw(0, 6);
+
 			//			// copy
 			TexturedVertex* v = (TexturedVertex*)device->buffer_lock(vertex_buffers[1]);
-			//			v+=6;
+			v+=6;
 
 			size_t index = 0;
 			for (auto& vertex : fontvertices)
@@ -482,11 +487,7 @@ public:
 			}
 
 			device->buffer_unlock(vertex_buffers[1]);
-			serializer->draw(0, fontvertices.size());			
-#else
-			populate_textured_buffer();
-			serializer->draw(0, 6);			
-#endif
+			serializer->draw(6, fontvertices.size());
 
 
 
