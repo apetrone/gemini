@@ -460,7 +460,11 @@ namespace render2
 			FT_Int32 flags = 0;
 			FT_Error error = FT_Err_Ok;
 
-			assert(glyph_index != 0);
+			// glyph doesn't exist in the font; need to display blank rect?
+			if (glyph_index == 0)
+			{
+				return;
+			}
 
 			// invalid glyphs will have an index of 0
 			if (glyph_index == 0)
