@@ -97,7 +97,10 @@ namespace image
 		
 		// bytes per pixel
 		uint32_t channels;
-	
+
+		// rows are aligned to this value
+		uint32_t alignment;
+
 		// can be raw pixel data, or compressed data, etc.
 		FixedArray<uint8_t> pixels;
 		
