@@ -794,7 +794,7 @@ namespace render2
 		assert(texture->unpack_alignment == 1 || texture->unpack_alignment == 2 || texture->unpack_alignment == 4 || texture->unpack_alignment == 8);
 
 		// set alignment for this operation
-		gl.PixelStorei(GL_UNPACK_ALIGNMENT, texture->unpack_alignment);
+		gl.PixelStorei(GL_UNPACK_ALIGNMENT, image.alignment);
 
 #if 0
 		gl.PixelStorei(GL_UNPACK_ROW_LENGTH, image.width);

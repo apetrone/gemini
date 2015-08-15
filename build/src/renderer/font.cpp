@@ -385,11 +385,8 @@ namespace render2
 			// array of rects
 			Array<stbrp_rect> rp_rects;
 
-			// map codepoint to rect
-			HashSet<uint32_t, stbrp_rect*> glyph_cache;
-
 			int has_kerning;
-			int line_height;
+			float line_height;
 
 			FontData() :
 				type(FONT_TYPE_INVALID),
@@ -663,8 +660,6 @@ namespace render2
 			// see if the codepoint is in the cache
 			if (rect)
 			{
-//				stbrp_rect* rect = font->glyph_cache[codepoint];
-//				stbrp_rect* rect = &font->get_glyph(cache_index);
 				assert(rect->was_packed);
 
 				assert(static_cast<uint32_t>(rect->id) == codepoint);
@@ -693,13 +688,13 @@ namespace render2
 
 			FT_Bitmap* bitmap = &font->face->glyph->bitmap;
 
-			//	LOGV("rows: %i\n", bitmap->rows);
-			//	LOGV("width: %i\n", bitmap->width);
+//			LOGV("rows: %i\n", bitmap->rows);
+//			LOGV("width: %i\n", bitmap->width);
 
 			// number of bytes including padding of one bitmap row.
 			// positive when the bitmap has a 'down' flow and negative
 			// when the bitmap has an 'up' flow.
-			//	LOGV("pitch: %i\n", bitmap->pitch);
+//			LOGV("pitch: %i\n", bitmap->pitch);
 
 			// bitmap's dimensions are valid
 			assert(bitmap->rows > 0 && bitmap->width > 0 && bitmap->pitch > 0);
@@ -712,6 +707,7 @@ namespace render2
 			img.height = bitmap->rows;
 			img.channels = 3;
 			img.create(bitmap->width, bitmap->rows, 3);
+			img.alignment = 1; // tightly packed
 
 			struct rgb_t
 			{
@@ -746,14 +742,12 @@ namespace render2
 			if (newrect.was_packed)
 			{
 				font->rp_rects.push_back(newrect);
-//				stbrp_rect* last_rect = &font->rp_rects.back();
-//				font->glyph_cache[codepoint] = last_rect;
 
 				// the rect was packed; so update the textre
 				mathlib::Recti rect(newrect.x, newrect.y, newrect.w, newrect.h);
 				detail::_device->update_texture(font->texture, img, rect);
 
-				LOGV("inserted codepoint %i into glyph_cache; %i total\n", codepoint, font->rp_rects.size());
+//				LOGV("inserted codepoint %i into glyph_cache; %i total\n", codepoint, font->rp_rects.size());
 				compute_uvs_for_rect(font, newrect, uvs);
 				return 0;
 			}
@@ -772,6 +766,7 @@ namespace render2
 			FT_Error error = FT_Err_Ok;
 
 			FontData* font = MEMORY_NEW(FontData, core::memory::global_allocator());
+
 			// font needs a copy of the data so long as FT_Face is loaded.
 			// so make a local copy and store it.
 			font->data = MEMORY_ALLOC(data_size, core::memory::global_allocator());
@@ -821,46 +816,13 @@ namespace render2
 			detail::_fonts.push_back(font);
 
 			font->line_height = (font->face->ascender - font->face->descender) >> 6;
-			LOGV("font line height = %i\n", font->line_height);
+			LOGV("font line height = %2.2f\n", font->line_height);
 
 			font->has_kerning = FT_HAS_KERNING(face);
 			if (font->has_kerning)
 			{
 				LOGV("font has kerning!\n");
 			}
-//			mathlib::Recti rect(0, 384, 128, 128);
-//			render2::Image image2;
-//			image2.filter = image::FILTER_NONE;
-//			image2.flags = image::F_RGB;
-//			image2.width = 128;
-//			image2.height = 128;
-//			image2.channels = 3;
-//			image::generate_checker_pattern(image2, core::Color(255, 0, 0), core::Color(0, 0, 255));
-//			detail::_device->update_texture(font.texture, image2, rect);
-
-
-//			FT_UInt glyph_index;
-//			FT_ULong char_code = FT_Get_First_Char(face, &glyph_index);
-//			LOGV("first char code is: %zu, glyph_index: %zu\n", char_code, glyph_index);
-//
-//			while(char_code != 0 && glyph_index != 0)
-//			{
-//				LOGV("char code is: %zu, glyph_index: %zu\n", char_code, glyph_index);
-//				char_code = FT_Get_Next_Char(face, char_code, &glyph_index);
-//			}
-
-
-//			char name[] = "Adamwashere.Ihopealliswellintheworld";
-//
-//			for (size_t x = 0; x < 35; ++x)
-//			{
-//				uint32_t codepoint = name[x];
-//				glm::vec2 uvs[4];
-//
-//				uvs_for_codepoint(font, codepoint, uvs);
-//			}
-
-//			load_character_info(face, font);
 
 			return handle;
 		}
@@ -889,17 +851,6 @@ namespace render2
 
 		void draw_string(Handle handle, Array<FontVertex>& vertices, const glm::mat2& transform, const char* utf8, const core::Color& color)
 		{
-//			vertices.resize(3);
-//
-//			vertices[0].position = glm::vec2(0, 600);
-//			vertices[0].color = core::Color(255, 0, 0);
-//
-//			vertices[1].position = glm::vec2(800, 600);
-//			vertices[1].color = core::Color(0, 255, 0);
-//
-//			vertices[2].position = glm::vec2(400, 0);
-//			vertices[2].color = core::Color(0, 0, 255);
-
 			// font handle is invalid; nothing to do
 			if (!handle.is_valid())
 				return;

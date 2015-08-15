@@ -438,12 +438,9 @@ public:
 //							 sin(radians), cos(radians)
 //							 );
 
-			render2::font::draw_string(font, fontvertices, transform, "The quick brown fox jumps over the lazy dog", core::Color(255, 128, 255));
-
-
-
-
-//
+			const char buffer[] = "The quick brown fox jumps over the lazy dog";
+//			const char buffer[] = "The";
+			render2::font::draw_string(font, fontvertices, transform, buffer, core::Color(255, 128, 255));
 
 			render2::Pass render_pass;
 			render_pass.target = device->default_render_target();
@@ -462,18 +459,14 @@ public:
 			populate_textured_buffer();
 			serializer->draw(0, 6);
 
-			//			// copy
 			TexturedVertex* v = (TexturedVertex*)device->buffer_lock(vertex_buffers[1]);
 			v+=6;
 
 			size_t index = 0;
 			for (auto& vertex : fontvertices)
-				//			for(index = 0; index < fontvertices.size(); ++index)
 			{
-				//				auto& vertex = fontvertices[index];
-				//				vertex.position += glm::vec2(index*2.0f, index*2.0f);
-				//				LOGV("[%i] pos [%2.2f, %2.2f]\n", index, vertex.position.x, vertex.position.y);
-				//				LOGV("[%i] uv [%2.2f, %2.2f]\n", index, vertex.uv.x, vertex.uv.y);
+//				LOGV("[%i] pos [%2.2f, %2.2f]\n", index, vertex.position.x, vertex.position.y);
+//				LOGV("[%i] uv [%2.2f, %2.2f]\n", index, vertex.uv.x, vertex.uv.y);
 				v->set_position(vertex.position.x, vertex.position.y, 0);
 				v->set_color(
 							 vertex.color.r/255.0f,

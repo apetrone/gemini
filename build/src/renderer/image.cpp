@@ -49,6 +49,7 @@ namespace image
 		height = 0;
 		
 		channels = 3;
+		alignment = 4;
 	}
 	
 	void Image::create(const uint32_t& image_width, const uint32_t& image_height, const uint32_t& total_channels)
