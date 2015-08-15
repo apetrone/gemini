@@ -437,34 +437,10 @@ public:
 //							 sin(radians), cos(radians)
 //							 );
 
-			render2::font::draw_string(font, fontvertices, transform, "A", core::Color(255, 128, 255));
+			render2::font::draw_string(font, fontvertices, transform, "The quick brown fox jumps over the lazy dog", core::Color(255, 128, 255));
 
 
-#if 1
-//			// copy
-			TexturedVertex* v = (TexturedVertex*)device->buffer_lock(vertex_buffers[1]);
-//			v+=6;
 
-			size_t index = 0;
-			for (auto& vertex : fontvertices)
-//			for(index = 0; index < fontvertices.size(); ++index)
-			{
-//				auto& vertex = fontvertices[index];
-				v->set_position(vertex.position.x, vertex.position.y, 0);
-				v->set_color(
-					vertex.color.r/255.0f,
-					vertex.color.g/255.0f,
-					vertex.color.b/255.0f,
-				 	vertex.color.a/255.0f
-				);
-				v->set_uv(vertex.uv.x, vertex.uv.y);
-				++v;
-			}
-
-			device->buffer_unlock(vertex_buffers[1]);
-#else
-			populate_textured_buffer();
-#endif
 
 //
 
@@ -478,8 +454,42 @@ public:
 			serializer->pipeline(texture_pipeline);
 			serializer->vertex_buffer(vertex_buffers[1]);
 			serializer->texture(render2::font::get_font_texture(font), 0);
-			serializer->draw(0, fontvertices.size());
-//			serializer->draw(0, 6);
+
+
+#if 0
+			//			// copy
+			TexturedVertex* v = (TexturedVertex*)device->buffer_lock(vertex_buffers[1]);
+			//			v+=6;
+
+			size_t index = 0;
+			for (auto& vertex : fontvertices)
+				//			for(index = 0; index < fontvertices.size(); ++index)
+			{
+				//				auto& vertex = fontvertices[index];
+				//				vertex.position += glm::vec2(index*2.0f, index*2.0f);
+				//				LOGV("[%i] pos [%2.2f, %2.2f]\n", index, vertex.position.x, vertex.position.y);
+				//				LOGV("[%i] uv [%2.2f, %2.2f]\n", index, vertex.uv.x, vertex.uv.y);
+				v->set_position(vertex.position.x, vertex.position.y, 0);
+				v->set_color(
+							 vertex.color.r/255.0f,
+							 vertex.color.g/255.0f,
+							 vertex.color.b/255.0f,
+							 vertex.color.a/255.0f
+							 );
+				v->set_uv(vertex.uv.x, vertex.uv.y);
+				++v;
+				++index;
+			}
+
+			device->buffer_unlock(vertex_buffers[1]);
+			serializer->draw(0, fontvertices.size());			
+#else
+			populate_textured_buffer();
+			serializer->draw(0, 6);			
+#endif
+
+
+
 			device->queue_buffers(queue, 1);
 			device->destroy_serializer(serializer);
 		}

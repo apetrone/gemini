@@ -362,6 +362,14 @@ namespace render2
 {
 	namespace font
 	{
+		struct Glyph
+		{
+			uint32_t codepoint;
+			stbrp_rect rect;
+		};
+
+		const size_t FONT_INITIAL_RECT_TOTAL = 256;
+
 		// internal data
 		struct FontData
 		{
@@ -372,13 +380,16 @@ namespace render2
 			size_t data_size;
 			render2::Texture* texture;
 			stbrp_context rp_context;
-			stbrp_node rp_nodes[512];
+			stbrp_node rp_nodes[FONT_INITIAL_RECT_TOTAL];
 
 			// array of rects
 			Array<stbrp_rect> rp_rects;
 
-			// map codepoint to rect index
-			HashSet<uint32_t, size_t> glyph_cache;
+			// map codepoint to rect
+			HashSet<uint32_t, stbrp_rect*> glyph_cache;
+
+			int has_kerning;
+			int line_height;
 
 			FontData() :
 				type(FONT_TYPE_INVALID),
@@ -386,7 +397,9 @@ namespace render2
 				face(nullptr),
 				data(nullptr),
 				data_size(0),
-				texture(nullptr)
+				texture(nullptr),
+				has_kerning(0),
+				line_height(0)
 			{
 			}
 
@@ -462,12 +475,25 @@ namespace render2
 			// these are expressed in 26.6 units; hence the division by 64.
 			glyphdata.advancex = face->glyph->advance.x >> 6;
 			glyphdata.advancey = face->glyph->advance.y >> 6;
-			glyphdata.hbearingx = face->glyph->metrics.horiBearingX >> 6;
-			glyphdata.hbearingy = face->glyph->metrics.horiBearingY >> 6;
+
+			size_t hadvance = face->glyph->metrics.horiAdvance >> 6;
+			assert(glyphdata.advancex == hadvance);
+
+			if (FT_HAS_HORIZONTAL(face))
+			{
+				glyphdata.hbearingx = face->glyph->metrics.horiBearingX >> 6;
+				glyphdata.hbearingy = face->glyph->metrics.horiBearingY >> 6;
+			}
+
 			glyphdata.width = face->glyph->metrics.width >> 6;
 			glyphdata.height = face->glyph->metrics.height >> 6;
-			glyphdata.vbearingx = face->glyph->metrics.vertBearingX >> 6;
-			glyphdata.vbearingy = face->glyph->metrics.vertBearingY >> 6;
+
+			if (FT_HAS_VERTICAL(face))
+			{
+				glyphdata.vbearingx = face->glyph->metrics.vertBearingX >> 6;
+				glyphdata.vbearingy = face->glyph->metrics.vertBearingY >> 6;
+			}
+
 		}
 
 
@@ -621,11 +647,12 @@ namespace render2
 			// see if the codepoint is in the cache
 			if (font->glyph_cache.has_key(codepoint))
 			{
-				size_t rect_index = font->glyph_cache[codepoint];
-				const stbrp_rect& rect = font->rp_rects[rect_index];
-				assert(rect.was_packed);
+				stbrp_rect* rect = font->glyph_cache[codepoint];
+				assert(rect->was_packed);
 
-				compute_uvs_for_rect(font, rect, uvs);
+				assert(static_cast<uint32_t>(rect->id) == codepoint);
+
+				compute_uvs_for_rect(font, *rect, uvs);
 //				LOGV("codepoint: %c found in cache\n", codepoint);
 				return 0;
 			}
@@ -690,25 +717,26 @@ namespace render2
 
 			// insert the glyph into our cache
 			stbrp_rect newrect;
+			newrect.id = codepoint;
+			newrect.x = 0;
+			newrect.y = 0;
 			newrect.w = bitmap->width;
 			newrect.h = bitmap->rows;
-			size_t new_index = font->rp_rects.size();
-			font->rp_rects.push_back(newrect);
-
 
 			// pack the rect in the font atlas (or not)
-			stbrp_pack_rects(&font->rp_context, &font->rp_rects[0], font->rp_rects.size());
+			stbrp_pack_rects(&font->rp_context, &newrect, 1);
 
-			newrect = font->rp_rects.back();
 			if (newrect.was_packed)
 			{
-				font->glyph_cache[codepoint] = new_index;
+				font->rp_rects.push_back(newrect);
+				stbrp_rect* last_rect = &font->rp_rects.back();
+				font->glyph_cache[codepoint] = last_rect;
 
 				// the rect was packed; so update the textre
-				mathlib::Recti rect(newrect.x, newrect.y, bitmap->width, bitmap->rows);
+				mathlib::Recti rect(newrect.x, newrect.y, newrect.w, newrect.h);
 				detail::_device->update_texture(font->texture, img, rect);
 
-				LOGV("inserted codepoint %i into glyph_cache\n", codepoint);
+				LOGV("inserted codepoint %i into glyph_cache; %i total\n", codepoint, font->rp_rects.size());
 				compute_uvs_for_rect(font, newrect, uvs);
 				return 0;
 			}
@@ -759,16 +787,11 @@ namespace render2
 				LOGW("Error while setting the character size!\n");
 			}
 
-			if (FT_HAS_KERNING(face))
-			{
-				LOGV("font has kerning!\n");
-			}
-
 
 			handle.ref = detail::_fonts.size();
 			font->type = FONT_TYPE_BITMAP;
 			font->face = face;
-			stbrp_init_target(&font->rp_context, 512, 512, font->rp_nodes, 512);
+			stbrp_init_target(&font->rp_context, 512, 512, font->rp_nodes, FONT_INITIAL_RECT_TOTAL);
 
 			render2::Image image;
 			image.filter = image::FILTER_NONE;
@@ -780,7 +803,14 @@ namespace render2
 			font->texture = detail::_device->create_texture(image);
 			detail::_fonts.push_back(font);
 
+			font->line_height = (font->face->ascender - font->face->descender) >> 6;
+			LOGV("font line height = %i\n", font->line_height);
 
+			font->has_kerning = FT_HAS_KERNING(face);
+			if (font->has_kerning)
+			{
+				LOGV("font has kerning!\n");
+			}
 //			mathlib::Recti rect(0, 384, 128, 128);
 //			render2::Image image2;
 //			image2.filter = image::FILTER_NONE;
@@ -870,6 +900,8 @@ namespace render2
 			// we need length * 2 triangles
 			vertices.resize(length*6);
 
+			uint32_t previous_codepoint = 0;
+
 			for (size_t index = 0; index < length; ++index)
 			{
 				uint32_t codepoint = utf8[index];
@@ -877,12 +909,29 @@ namespace render2
 				GlyphData gd;
 				get_gylph_info(data->face, codepoint, gd);
 
-				offset.x = gd.left - gd.hbearingx;
-				offset.y = -gd.top + gd.vbearingy;
+				offset.x = 0;
+//				offset.y = gd.top + (gd.hbearingy);
+				offset.y = data->line_height - gd.hbearingy;
+				//offset.x = gd.left - gd.hbearingx;
+				//offset.y = -gd.top + gd.vbearingy;
+//				offset.y = -gd.top + (gd.height - gd.hbearingy);
+				//offset.y = gd.hbearingy;
+
+//				LOGV("top: %i, hbearingy: %i\n", gd.top, gd.hbearingy);
+
+				if (previous_codepoint != 0 && data->has_kerning)
+				{
+					FT_Vector kerning_delta;
+					FT_Get_Kerning(data->face, previous_codepoint, codepoint, FT_KERNING_DEFAULT, &kerning_delta);
+
+					pen.x += kerning_delta.x >> 6;
+				}
+
+
 
 
 				glm::vec2 uvs[4];
-				if (codepoint != 32)
+				if (codepoint > 32)
 					uvs_for_codepoint(data, codepoint, uvs);
 
 				vertex = &vertices[index * 6];
@@ -891,42 +940,44 @@ namespace render2
 					glm::vec2 pos = offset+pen;
 
 					// lower left
-					vertex->position = transform * pos + glm::vec2(0, gd.height);
+					vertex->position = pos + glm::vec2(0, gd.height);
 					vertex->color = color;
 					vertex->uv = uvs[0];
 					vertex++;
 
 					// lower right
-					vertex->position = transform * pos + glm::vec2(gd.width, gd.height);
+					vertex->position = pos + glm::vec2(gd.width, gd.height);
 					vertex->color = color;
 					vertex->uv = uvs[1];
 					vertex++;
 
 					// upper right
-					vertex->position = transform * pos + glm::vec2(gd.width, 0);
+					vertex->position = pos + glm::vec2(gd.width, 0);
 					vertex->color = color;
 					vertex->uv = uvs[2];
 					vertex++;
 
-					vertex->position = transform * pos + glm::vec2(gd.width, 0);
+					vertex->position = pos + glm::vec2(gd.width, 0);
 					vertex->color = color;
 					vertex->uv = uvs[2];
 					vertex++;
 
 					// upper left
-					vertex->position = transform * pos;
+					vertex->position = pos;
 					vertex->color = color;
 					vertex->uv = uvs[3];
 					vertex++;
 
 					// lower left
-					vertex->position = transform * pos + glm::vec2(0, gd.height);
+					vertex->position = pos + glm::vec2(0, gd.height);
 					vertex->color = color;
-					vertex->uv = glm::vec2(0, 0);
+					vertex->uv = uvs[0];
 					vertex++;
 				}
 
-				pen.x += (-gd.left + gd.advancex);
+				pen.x += gd.advancex;
+
+				previous_codepoint = codepoint;
 			}
 		}
 
