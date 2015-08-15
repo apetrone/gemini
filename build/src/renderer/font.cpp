@@ -368,7 +368,8 @@ namespace render2
 			stbrp_rect rect;
 		};
 
-		const size_t FONT_INITIAL_RECT_TOTAL = 512;
+		const size_t FONT_INITIAL_RECT_TOTAL = 256;
+		const size_t FONT_ATLAS_RESOLUTION = 256;
 
 		// internal data
 		struct FontData
@@ -623,8 +624,8 @@ namespace render2
 		{
 			//
 			// compute uvs
-			const float TEXTURE_WIDTH = 512.0f;
-			const float TEXTURE_HEIGHT = 512.0f;
+			const float TEXTURE_WIDTH = (float)FONT_ATLAS_RESOLUTION;
+			const float TEXTURE_HEIGHT = (float)FONT_ATLAS_RESOLUTION;
 
 			// lower left
 			uvs[0] = glm::vec2(
@@ -807,13 +808,13 @@ namespace render2
 			handle.ref = detail::_fonts.size();
 			font->type = FONT_TYPE_BITMAP;
 			font->face = face;
-			stbrp_init_target(&font->rp_context, 512, 512, font->rp_nodes, FONT_INITIAL_RECT_TOTAL);
+			stbrp_init_target(&font->rp_context, FONT_ATLAS_RESOLUTION, FONT_ATLAS_RESOLUTION, font->rp_nodes, FONT_INITIAL_RECT_TOTAL);
 
 			render2::Image image;
 			image.filter = image::FILTER_NONE;
 			image.flags = image::F_RGB;
-			image.width = 512;
-			image.height = 512;
+			image.width = FONT_ATLAS_RESOLUTION;
+			image.height = FONT_ATLAS_RESOLUTION;
 			image.channels = 3;
 			image::generate_checker_pattern(image, core::Color(255, 0, 255), core::Color(0, 255, 0));
 			font->texture = detail::_device->create_texture(image);
