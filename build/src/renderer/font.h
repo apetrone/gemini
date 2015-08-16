@@ -130,17 +130,11 @@ namespace render2
 		// cleanup any used resources
 		void shutdown();
 
-		// load font from memory with the desired point size
-		Handle load_from_memory(const void* data, unsigned int data_size, unsigned int point_size, Type target_type = FONT_TYPE_BITMAP);
+		// load font from memory with the desired pixel size
+		Handle load_from_memory(const void* data, unsigned int data_size, unsigned int pixel_size, Type target_type = FONT_TYPE_BITMAP);
 
 		// return the point size for the font
 		unsigned int get_point_size(Handle handle);
-
-		// measure the width of the string in a given font in pixels
-//		unsigned int measure_width(Handle handle, const char* utf8);
-
-		// query the height of the font in pixels
-//		unsigned int measure_height(Handle handle, const char* utf8);
 
 		// fetch metrics for a single glyph; if available (return == 0)
 		int get_glyph_metrics(Handle handle, uint32_t codepoint, glm::vec2& mins, glm::vec2& maxs, int* advance);
@@ -149,7 +143,7 @@ namespace render2
 		int get_string_metrics(Handle handle, const char* utf8, glm::vec2& mins, glm::vec2& maxs);
 
 		// populate vertices with the transformed vertices for drawing a string to the screen
-		void draw_string(Handle handle, Array<FontVertex>& vertices, const glm::mat2& transform, const char* utf8, const core::Color& color);
+		void draw_string(Handle handle, Array<FontVertex>& vertices, const char* utf8, const core::Color& color);
 
 		render2::Texture* get_font_texture(Handle handle);
 	} // namespace font

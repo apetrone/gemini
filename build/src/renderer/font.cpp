@@ -349,11 +349,8 @@ namespace font
 } // namespace font
 
 
-
-
 #include <ft2build.h>
 #include FT_FREETYPE_H
-
 
 #define STB_RECT_PACK_IMPLEMENTATION
 #include "stb_rect_pack.h"
@@ -389,6 +386,7 @@ namespace render2
 			int has_kerning;
 			int is_fixed_width;
 			float line_height;
+			int border;
 
 			FontData() :
 				type(FONT_TYPE_INVALID),
@@ -399,7 +397,8 @@ namespace render2
 				texture(nullptr),
 				has_kerning(0),
 				is_fixed_width(0),
-				line_height(0)
+				line_height(0),
+				border(0)
 			{
 			}
 
@@ -440,14 +439,14 @@ namespace render2
 		// ---------------------------------------------------------------------
 		struct GlyphData
 		{
-			size_t advancex;
-			size_t advancey;
-			size_t width;
-			size_t height;
-			size_t hbearingx;
-			size_t hbearingy;
-			size_t vbearingx;
-			size_t vbearingy;
+			int advancex;
+			int advancey;
+			int width;
+			int height;
+			int hbearingx;
+			int hbearingy;
+			int vbearingx;
+			int vbearingy;
 			FT_UInt index;
 
 			GlyphData()
@@ -459,15 +458,9 @@ namespace render2
 		void get_gylph_info(FT_Face face, int codepoint, GlyphData& glyphdata)
 		{
 			FT_UInt glyph_index = FT_Get_Char_Index(face, codepoint);
-			FT_Int32 flags = 0;
 			FT_Error error = FT_Err_Ok;
 
 			// glyph doesn't exist in the font; need to display blank rect?
-			if (glyph_index == 0)
-			{
-				return;
-			}
-
 			// invalid glyphs will have an index of 0
 			if (glyph_index == 0)
 			{
@@ -475,9 +468,7 @@ namespace render2
 				return;
 			}
 
-			flags = FT_LOAD_FORCE_AUTOHINT;
-
-			error = FT_Load_Glyph(face, glyph_index, flags);
+			error = FT_Load_Glyph(face, glyph_index, FT_LOAD_RENDER);
 			assert(error == FT_Err_Ok);
 			if (error)
 			{
@@ -491,7 +482,7 @@ namespace render2
 			glyphdata.advancex = face->glyph->advance.x >> 6;
 			glyphdata.advancey = face->glyph->advance.y >> 6;
 
-			size_t hadvance = face->glyph->metrics.horiAdvance >> 6;
+			int hadvance = face->glyph->metrics.horiAdvance >> 6;
 			assert(glyphdata.advancex == hadvance);
 
 			if (FT_HAS_HORIZONTAL(face))
@@ -502,6 +493,9 @@ namespace render2
 
 			glyphdata.width = face->glyph->metrics.width >> 6;
 			glyphdata.height = face->glyph->metrics.height >> 6;
+
+			assert((int)glyphdata.width == face->glyph->bitmap.width);
+			assert((int)glyphdata.height == face->glyph->bitmap.rows);
 
 			if (FT_HAS_VERTICAL(face))
 			{
@@ -558,7 +552,7 @@ namespace render2
 			const float TEXTURE_WIDTH = (float)FONT_ATLAS_RESOLUTION;
 			const float TEXTURE_HEIGHT = (float)FONT_ATLAS_RESOLUTION;
 
-			int border = 0;
+			int border = font->border;
 
 			// lower left
 			uvs[0] = glm::vec2(
@@ -592,18 +586,18 @@ namespace render2
 			// we don't handle 'space' characters.
 			assert(codepoint > 0);
 
-
 			stbrp_rect* rect = nullptr;
 			rect = font->get_glyph(codepoint);
 			// see if the codepoint is in the cache
 			if (rect)
 			{
+				// the rect wasn't packed in our atlas
 				assert(rect->was_packed);
 
+				// the rect isn't associated with the requested code point
 				assert(static_cast<uint32_t>(rect->id) == codepoint);
 
 				compute_uvs_for_rect(font, *rect, uvs);
-//				LOGV("codepoint: %c found in cache\n", codepoint);
 				return 0;
 			}
 
@@ -613,26 +607,11 @@ namespace render2
 			// load the glyph
 			FT_Load_Glyph(font->face, glyph_index, FT_LOAD_RENDER);
 
-			// render the glyph
-//			if (font->face->glyph->format != FT_GLYPH_FORMAT_BITMAP)
-//			{
-//				FT_Render_Mode render_mode = FT_RENDER_MODE_NORMAL;
-//				FT_Error error = FT_Render_Glyph(font->face->glyph, render_mode);
-//				if (error)
-//				{
-//					LOGW("Error while rendering glyph!\n");
-//				}
-//			}
-
 			FT_Bitmap* bitmap = &font->face->glyph->bitmap;
 
-//			LOGV("rows: %i\n", bitmap->rows);
-//			LOGV("width: %i\n", bitmap->width);
-
-			// number of bytes including padding of one bitmap row.
-			// positive when the bitmap has a 'down' flow and negative
-			// when the bitmap has an 'up' flow.
-//			LOGV("pitch: %i\n", bitmap->pitch);
+			// the pitch is the number of bytes including padding of one bitmap
+			// row. It is positive when the bitmap has a 'down' flow and
+			// negative when the bitmap has an 'up' flow.
 
 			// bitmap's dimensions are valid
 			assert(bitmap->rows > 0 && bitmap->width > 0 && bitmap->pitch > 0);
@@ -640,44 +619,16 @@ namespace render2
 			// bitmap is 8-bit grayscale
 			assert(FT_PIXEL_MODE_GRAY == bitmap->pixel_mode);
 
-			const size_t border_size = 2;
-
+			font->border = 2;
 			render2::Image img;
-			img.width = bitmap->width + (2 * border_size);
-			img.height = bitmap->rows + (2 * border_size);
+			img.width = bitmap->width + (2 * font->border);
+			img.height = bitmap->rows + (2 * font->border);
 			img.channels = 3;
 			img.create(img.width, img.height, 3);
 			img.alignment = 1; // tightly packed
-			img.fill(core::Color(0, 0, 0));
+			img.fill(core::Color(0, 255, 0));
 
-			struct rgb_t
-			{
-				unsigned char r, g, b;
-			};
-
-			// flip the image vertically
-			rgb_t* pixel = (rgb_t*)&img.pixels[0];
-			for (size_t p = 0; p < img.height; ++p)
-			{
-				for (size_t w = 0; w < img.width; ++w)
-				{
-					if (p < border_size || p >= (img.height-border_size) || w < border_size || w >= (img.width-border_size))
-					{
-						pixel->r = 0;
-						pixel->g = 0;
-						pixel->b = 0;
-					}
-					else
-					{
-						size_t index = (img.height - p - border_size);
-						unsigned char* x = (unsigned char*)&bitmap->buffer[(index*bitmap->pitch) + (w-border_size)];
-						pixel->r = *x;
-						pixel->g = *x;
-						pixel->b = *x;
-					}
-					++pixel;
-				}
-			}
+			img.copy(bitmap->buffer, bitmap->width, bitmap->rows, bitmap->pitch, font->border);
 
 			// insert the glyph into our cache
 			stbrp_rect newrect;
@@ -697,7 +648,6 @@ namespace render2
 				// the rect was packed; so update the texture
 				detail::_device->update_texture(font->texture, img, glm::vec2(newrect.x, newrect.y), glm::vec2(newrect.w, newrect.h));
 
-//				LOGV("inserted codepoint %i into glyph_cache; %i total\n", codepoint, font->rp_rects.size());
 				compute_uvs_for_rect(font, newrect, uvs);
 				return 0;
 			}
@@ -709,7 +659,7 @@ namespace render2
 			}
 		}
 
-		Handle load_from_memory(const void* data, unsigned int data_size, unsigned int point_size, Type target_type)
+		Handle load_from_memory(const void* data, unsigned int data_size, unsigned int pixel_size, Type target_type)
 		{
 			Handle handle;
 			FT_Error error = FT_Err_Ok;
@@ -737,67 +687,39 @@ namespace render2
 				return handle;
 			}
 
-
-
-
-
-			// next try to set the font character size
-			// TODO: device resolution should be scaled on retina screens
-			error = FT_Set_Char_Size(face, 0, (point_size << 6), 96, 96);
-			assert(error == FT_Err_Ok);
-
+			// try to set the pixel size of characters
+			error = FT_Set_Pixel_Sizes(face, 0, pixel_size);
 			if (error != FT_Err_Ok)
 			{
 				LOGW("Error while setting the character size!\n");
+				assert(0);
 			}
-
-
 
 
 			handle.ref = detail::_fonts.size();
 			font->type = FONT_TYPE_BITMAP;
 			font->face = face;
 
-
+			// cache line height and other flags
 			font->line_height = (font->face->ascender - font->face->descender) >> 6;
-			LOGV("font line height = %2.2f\n", font->line_height);
-
-			LOGV("face_flags = %i\n", face->face_flags);
-
-			font->is_fixed_width = face->face_flags & FT_FACE_FLAG_FIXED_WIDTH;
-			LOGV("font is fixed width: %s\n", font->is_fixed_width ? "YES" : "NO");
-
+			font->is_fixed_width = FT_HAS_FIXED_SIZES(face);
 			font->has_kerning = FT_HAS_KERNING(face);
-			if (font->has_kerning)
-			{
-				LOGV("font has kerning!\n");
-			}
 
-
-
-
+			// initialize the rect packing context
 			stbrp_init_target(&font->rp_context, FONT_ATLAS_RESOLUTION, FONT_ATLAS_RESOLUTION, font->rp_nodes, FONT_INITIAL_RECT_TOTAL);
 
 			render2::Image image;
 			image.filter = image::FILTER_NONE;
-			image.flags = image::F_RGB;
+			image.flags = image::F_RGB | image::F_CLAMP;
 			image.width = FONT_ATLAS_RESOLUTION;
 			image.height = FONT_ATLAS_RESOLUTION;
 			image.channels = 3;
-			image::generate_checker_pattern(image, core::Color(255, 0, 255), core::Color(0, 255, 0));
+
+//			image::generate_checker_pattern(image, core::Color(255, 0, 255), core::Color(0, 255, 0));
+			image.create(image.width, image.height, image.channels);
+			image.fill(core::Color(255, 0, 255));
 			font->texture = detail::_device->create_texture(image);
 			detail::_fonts.push_back(font);
-
-
-//			LOGV("total available sizes: %i\n", font->face->num_fixed_sizes);
-//			for (int s = 0; s < font->face->num_fixed_sizes; ++s)
-//			{
-//				FT_Bitmap_Size* size = &font->face->available_sizes[s];
-//				LOGV("[%i] w: %i, h: %i, size: %i %i | ppem: %i %i\n", s, size->width, size->height, size->size >> 6, size->x_ppem >> 6, size->y_ppem >> 6);
-//			}
-
-
-
 
 			return handle;
 		}
@@ -819,7 +741,7 @@ namespace render2
 
 
 
-		void draw_string(Handle handle, Array<FontVertex>& vertices, const glm::mat2& transform, const char* utf8, const core::Color& color)
+		void draw_string(Handle handle, Array<FontVertex>& vertices, const char* utf8, const core::Color& color)
 		{
 			// font handle is invalid; nothing to do
 			if (!handle.is_valid())
@@ -827,7 +749,7 @@ namespace render2
 
 			FontData* data = detail::_fonts[handle.ref];
 
-			glm::ivec2 pen(0.0f, 0.0f);
+			glm::vec2 pen(0.0f, 0.0f);
 
 
 			FontVertex* vertex;
@@ -836,7 +758,7 @@ namespace render2
 			size_t length = core::str::len(utf8);
 
 			// we need length * 2 triangles
-			vertices.resize(length*6);
+			vertices.resize(length * 6);
 
 			uint32_t previous_codepoint = 0;
 
@@ -847,9 +769,7 @@ namespace render2
 				GlyphData gd;
 				get_gylph_info(data->face, codepoint, gd);
 
-				glm::ivec2 offset(0, data->line_height - gd.hbearingy);
-
-//				LOGV("top: %i, hbearingy: %i\n", gd.top, gd.hbearingy);
+				glm::vec2 offset(gd.hbearingx, -gd.hbearingy);
 
 				if (previous_codepoint != 0 && data->has_kerning)
 				{
@@ -859,53 +779,50 @@ namespace render2
 					pen.x += kerning_delta.x >> 6;
 				}
 
-
-
-
 				glm::vec2 uvs[4];
 				if (codepoint > 32)
 					uvs_for_codepoint(data, codepoint, uvs);
 
+				// build the rects in counter-clockwise order
 				vertex = &vertices[index * 6];
-				// build this in counter-clockwise order
-				{
-					glm::vec2 pos = offset + pen;
 
-					// lower left
-					vertex->position = pos + glm::vec2(0, gd.height);
-					vertex->color = color;
-					vertex->uv = uvs[0];
-					vertex++;
+				glm::vec2 pos = offset + pen;
 
-					// lower right
-					vertex->position = pos + glm::vec2(gd.width, gd.height);
-					vertex->color = color;
-					vertex->uv = uvs[1];
-					vertex++;
+				// lower left
+				vertex->position = pos + glm::vec2(0, gd.height);
+				vertex->color = color;
+				vertex->uv = uvs[0];
+				vertex++;
 
-					// upper right
-					vertex->position = pos + glm::vec2(gd.width, 0);
-					vertex->color = color;
-					vertex->uv = uvs[2];
-					vertex++;
+				// lower right
+				vertex->position = pos + glm::vec2(gd.width, gd.height);
+				vertex->color = color;
+				vertex->uv = uvs[1];
+				vertex++;
 
-					vertex->position = pos + glm::vec2(gd.width, 0);
-					vertex->color = color;
-					vertex->uv = uvs[2];
-					vertex++;
+				// upper right
+				vertex->position = pos + glm::vec2(gd.width, 0);
+				vertex->color = color;
+				vertex->uv = uvs[2];
+				vertex++;
 
-					// upper left
-					vertex->position = pos;
-					vertex->color = color;
-					vertex->uv = uvs[3];
-					vertex++;
+				vertex->position = pos + glm::vec2(gd.width, 0);
+				vertex->color = color;
+				vertex->uv = uvs[2];
+				vertex++;
 
-					// lower left
-					vertex->position = pos + glm::vec2(0, gd.height);
-					vertex->color = color;
-					vertex->uv = uvs[0];
-					vertex++;
-				}
+				// upper left
+				vertex->position = pos;
+				vertex->color = color;
+				vertex->uv = uvs[3];
+				vertex++;
+
+				// lower left
+				vertex->position = pos + glm::vec2(0, gd.height);
+				vertex->color = color;
+				vertex->uv = uvs[0];
+				vertex++;
+
 
 				pen.x += gd.advancex;
 				previous_codepoint = gd.index;
