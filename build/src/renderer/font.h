@@ -137,10 +137,16 @@ namespace render2
 		unsigned int get_point_size(Handle handle);
 
 		// measure the width of the string in a given font in pixels
-		unsigned int measure_width(Handle handle, const char* utf8);
+//		unsigned int measure_width(Handle handle, const char* utf8);
 
 		// query the height of the font in pixels
-		unsigned int measure_height(Handle handle, const char* utf8);
+//		unsigned int measure_height(Handle handle, const char* utf8);
+
+		// fetch metrics for a single glyph; if available (return == 0)
+		int get_glyph_metrics(Handle handle, uint32_t codepoint, glm::vec2& mins, glm::vec2& maxs, int* advance);
+
+		// fetch metrics for a string
+		int get_string_metrics(Handle handle, const char* utf8, glm::vec2& mins, glm::vec2& maxs);
 
 		// populate vertices with the transformed vertices for drawing a string to the screen
 		void draw_string(Handle handle, Array<FontVertex>& vertices, const glm::mat2& transform, const char* utf8, const core::Color& color);

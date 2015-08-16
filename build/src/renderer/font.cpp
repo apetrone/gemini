@@ -387,6 +387,7 @@ namespace render2
 			Array<stbrp_rect> rp_rects;
 
 			int has_kerning;
+			int is_fixed_width;
 			float line_height;
 
 			FontData() :
@@ -397,6 +398,7 @@ namespace render2
 				data_size(0),
 				texture(nullptr),
 				has_kerning(0),
+				is_fixed_width(0),
 				line_height(0)
 			{
 			}
@@ -473,7 +475,7 @@ namespace render2
 				return;
 			}
 
-			flags = FT_LOAD_FORCE_AUTOHINT | FT_LOAD_RENDER;
+			flags = FT_LOAD_FORCE_AUTOHINT;
 
 			error = FT_Load_Glyph(face, glyph_index, flags);
 			assert(error == FT_Err_Ok);
@@ -556,28 +558,30 @@ namespace render2
 			const float TEXTURE_WIDTH = (float)FONT_ATLAS_RESOLUTION;
 			const float TEXTURE_HEIGHT = (float)FONT_ATLAS_RESOLUTION;
 
+			int border = 0;
+
 			// lower left
 			uvs[0] = glm::vec2(
-							   (rect.x / TEXTURE_WIDTH),
-							   (rect.y / TEXTURE_HEIGHT)
+							   ((rect.x + border) / TEXTURE_WIDTH),
+							   ((rect.y + border) / TEXTURE_HEIGHT)
 							   );
 
 			// lower right
 			uvs[1] = glm::vec2(
-							   ((rect.x + rect.w) / TEXTURE_WIDTH),
-							   (rect.y / TEXTURE_HEIGHT)
+							   ((rect.x + rect.w - border) / TEXTURE_WIDTH),
+							   ((rect.y + border) / TEXTURE_HEIGHT)
 							   );
 
 			// upper right
 			uvs[2] = glm::vec2(
-							   ((rect.x + rect.w) / TEXTURE_WIDTH),
-							   ((rect.y + rect.h) / TEXTURE_HEIGHT)
+							   ((rect.x + rect.w - border) / TEXTURE_WIDTH),
+							   ((rect.y + rect.h - border) / TEXTURE_HEIGHT)
 							   );
 
 			// upper left
 			uvs[3] = glm::vec2(
-							   (rect.x / TEXTURE_WIDTH),
-							   ((rect.y + rect.h) / TEXTURE_HEIGHT)
+							   ((rect.x + border) / TEXTURE_WIDTH),
+							   ((rect.y + rect.h - border) / TEXTURE_HEIGHT)
 							   );
 		}
 
@@ -607,18 +611,18 @@ namespace render2
 			FT_ULong glyph_index = FT_Get_Char_Index(font->face, codepoint);
 
 			// load the glyph
-			FT_Load_Glyph(font->face, glyph_index, FT_LOAD_FORCE_AUTOHINT);
+			FT_Load_Glyph(font->face, glyph_index, FT_LOAD_RENDER);
 
 			// render the glyph
-			if (font->face->glyph->format != FT_GLYPH_FORMAT_BITMAP)
-			{
-				FT_Render_Mode render_mode = FT_RENDER_MODE_NORMAL;
-				FT_Error error = FT_Render_Glyph(font->face->glyph, render_mode);
-				if (error)
-				{
-					LOGW("Error while rendering glyph!\n");
-				}
-			}
+//			if (font->face->glyph->format != FT_GLYPH_FORMAT_BITMAP)
+//			{
+//				FT_Render_Mode render_mode = FT_RENDER_MODE_NORMAL;
+//				FT_Error error = FT_Render_Glyph(font->face->glyph, render_mode);
+//				if (error)
+//				{
+//					LOGW("Error while rendering glyph!\n");
+//				}
+//			}
 
 			FT_Bitmap* bitmap = &font->face->glyph->bitmap;
 
@@ -639,8 +643,8 @@ namespace render2
 			const size_t border_size = 2;
 
 			render2::Image img;
-			img.width = bitmap->width+2*border_size;
-			img.height = bitmap->rows-1+2*border_size;
+			img.width = bitmap->width + (2 * border_size);
+			img.height = bitmap->rows + (2 * border_size);
 			img.channels = 3;
 			img.create(img.width, img.height, 3);
 			img.alignment = 1; // tightly packed
@@ -734,9 +738,12 @@ namespace render2
 			}
 
 
+
+
+
 			// next try to set the font character size
 			// TODO: device resolution should be scaled on retina screens
-			error = FT_Set_Char_Size(face, (point_size << 6), (point_size << 6), 72, 72);
+			error = FT_Set_Char_Size(face, 0, (point_size << 6), 96, 96);
 			assert(error == FT_Err_Ok);
 
 			if (error != FT_Err_Ok)
@@ -745,9 +752,30 @@ namespace render2
 			}
 
 
+
+
 			handle.ref = detail::_fonts.size();
 			font->type = FONT_TYPE_BITMAP;
 			font->face = face;
+
+
+			font->line_height = (font->face->ascender - font->face->descender) >> 6;
+			LOGV("font line height = %2.2f\n", font->line_height);
+
+			LOGV("face_flags = %i\n", face->face_flags);
+
+			font->is_fixed_width = face->face_flags & FT_FACE_FLAG_FIXED_WIDTH;
+			LOGV("font is fixed width: %s\n", font->is_fixed_width ? "YES" : "NO");
+
+			font->has_kerning = FT_HAS_KERNING(face);
+			if (font->has_kerning)
+			{
+				LOGV("font has kerning!\n");
+			}
+
+
+
+
 			stbrp_init_target(&font->rp_context, FONT_ATLAS_RESOLUTION, FONT_ATLAS_RESOLUTION, font->rp_nodes, FONT_INITIAL_RECT_TOTAL);
 
 			render2::Image image;
@@ -760,14 +788,16 @@ namespace render2
 			font->texture = detail::_device->create_texture(image);
 			detail::_fonts.push_back(font);
 
-			font->line_height = (font->face->ascender - font->face->descender) >> 6;
-			LOGV("font line height = %2.2f\n", font->line_height);
 
-			font->has_kerning = FT_HAS_KERNING(face);
-			if (font->has_kerning)
-			{
-				LOGV("font has kerning!\n");
-			}
+//			LOGV("total available sizes: %i\n", font->face->num_fixed_sizes);
+//			for (int s = 0; s < font->face->num_fixed_sizes; ++s)
+//			{
+//				FT_Bitmap_Size* size = &font->face->available_sizes[s];
+//				LOGV("[%i] w: %i, h: %i, size: %i %i | ppem: %i %i\n", s, size->width, size->height, size->size >> 6, size->x_ppem >> 6, size->y_ppem >> 6);
+//			}
+
+
+
 
 			return handle;
 		}
@@ -777,20 +807,15 @@ namespace render2
 			return 0;
 		}
 
-		unsigned int measure_width(Handle handle, const char* utf8)
+		int get_glyph_metrics(Handle handle, uint32_t codepoint, glm::vec2& mins, glm::vec2& maxs, int* advance)
 		{
 			return 0;
 		}
 
-		unsigned int measure_height(Handle handle, const char* utf8)
+		int get_string_metrics(Handle handle, const char* utf8, glm::vec2& mins, glm::vec2& maxs)
 		{
 			return 0;
 		}
-
-
-
-
-
 
 
 
@@ -802,8 +827,8 @@ namespace render2
 
 			FontData* data = detail::_fonts[handle.ref];
 
-			glm::vec2 pen;
-			glm::vec2 offset;
+			glm::ivec2 pen(0.0f, 0.0f);
+
 
 			FontVertex* vertex;
 
@@ -822,13 +847,7 @@ namespace render2
 				GlyphData gd;
 				get_gylph_info(data->face, codepoint, gd);
 
-				offset.x = 0;
-//				offset.y = gd.top + (gd.hbearingy);
-				offset.y = data->line_height - gd.hbearingy;
-				//offset.x = gd.left - gd.hbearingx;
-				//offset.y = -gd.top + gd.vbearingy;
-//				offset.y = -gd.top + (gd.height - gd.hbearingy);
-				//offset.y = gd.hbearingy;
+				glm::ivec2 offset(0, data->line_height - gd.hbearingy);
 
 //				LOGV("top: %i, hbearingy: %i\n", gd.top, gd.hbearingy);
 
@@ -850,7 +869,7 @@ namespace render2
 				vertex = &vertices[index * 6];
 				// build this in counter-clockwise order
 				{
-					glm::vec2 pos = offset+pen;
+					glm::vec2 pos = offset + pen;
 
 					// lower left
 					vertex->position = pos + glm::vec2(0, gd.height);
@@ -889,7 +908,6 @@ namespace render2
 				}
 
 				pen.x += gd.advancex;
-
 				previous_codepoint = gd.index;
 			}
 		}
