@@ -748,9 +748,8 @@ namespace render2
 			{
 				font->rp_rects.push_back(newrect);
 
-				// the rect was packed; so update the textre
-				mathlib::Recti rect(newrect.x, newrect.y, newrect.w, newrect.h);
-				detail::_device->update_texture(font->texture, img, rect);
+				// the rect was packed; so update the texture
+				detail::_device->update_texture(font->texture, img, glm::vec2(newrect.x, newrect.y), glm::vec2(newrect.w, newrect.h));
 
 //				LOGV("inserted codepoint %i into glyph_cache; %i total\n", codepoint, font->rp_rects.size());
 				compute_uvs_for_rect(font, newrect, uvs);

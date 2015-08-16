@@ -118,7 +118,7 @@ namespace render2
 		// texture
 		// ---------------------------------------------------------------------
 		virtual Texture* create_texture(const Image& image) = 0;
-		virtual void update_texture(Texture* texture, const Image& image, const mathlib::Recti& rect) = 0;
+		virtual void update_texture(Texture* texture, const Image& image, const glm::vec2& origin, const glm::vec2& dimensions) = 0;
 		virtual void destroy_texture(Texture* texture) = 0;
 
 	}; // class Device

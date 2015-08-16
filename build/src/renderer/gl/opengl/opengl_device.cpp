@@ -99,10 +99,10 @@ namespace render2
 		return common_create_texture(image);
 	}
 
-	void OpenGLDevice::update_texture(Texture* tex, const Image& image, const mathlib::Recti& rect)
+	void OpenGLDevice::update_texture(Texture* tex, const Image& image, const glm::vec2& origin, const glm::vec2& dimensions)
 	{
 		GLTexture* texture = static_cast<GLTexture*>(tex);
-		common_update_texture(texture, image, rect);
+		common_update_texture(texture, image, origin, dimensions);
 	}
 
 	void OpenGLDevice::destroy_texture(Texture* tex)
