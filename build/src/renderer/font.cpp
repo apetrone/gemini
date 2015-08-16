@@ -446,6 +446,7 @@ namespace render2
 			size_t hbearingy;
 			size_t vbearingx;
 			size_t vbearingy;
+			FT_UInt index;
 
 			GlyphData()
 			{
@@ -481,6 +482,8 @@ namespace render2
 				LOGW("Error while loading character %i, glyph: %i\n", codepoint, glyph_index);
 				return;
 			}
+
+			glyphdata.index = glyph_index;
 
 			// these are expressed in 26.6 units; hence the division by 64.
 			glyphdata.advancex = face->glyph->advance.x >> 6;
@@ -633,12 +636,15 @@ namespace render2
 			// bitmap is 8-bit grayscale
 			assert(FT_PIXEL_MODE_GRAY == bitmap->pixel_mode);
 
+			const size_t border_size = 2;
+
 			render2::Image img;
-			img.width = bitmap->width;
-			img.height = bitmap->rows;
+			img.width = bitmap->width+2*border_size;
+			img.height = bitmap->rows-1+2*border_size;
 			img.channels = 3;
-			img.create(bitmap->width, bitmap->rows, 3);
+			img.create(img.width, img.height, 3);
 			img.alignment = 1; // tightly packed
+			img.fill(core::Color(0, 0, 0));
 
 			struct rgb_t
 			{
@@ -651,10 +657,20 @@ namespace render2
 			{
 				for (size_t w = 0; w < img.width; ++w)
 				{
-					unsigned char* x = (unsigned char*)&bitmap->buffer[((img.height-p)*bitmap->pitch) + w];
-					pixel->r = *x;
-					pixel->g = *x;
-					pixel->b = *x;
+					if (p < border_size || p >= (img.height-border_size) || w < border_size || w >= (img.width-border_size))
+					{
+						pixel->r = 0;
+						pixel->g = 0;
+						pixel->b = 0;
+					}
+					else
+					{
+						size_t index = (img.height - p - border_size);
+						unsigned char* x = (unsigned char*)&bitmap->buffer[(index*bitmap->pitch) + (w-border_size)];
+						pixel->r = *x;
+						pixel->g = *x;
+						pixel->b = *x;
+					}
 					++pixel;
 				}
 			}
@@ -664,8 +680,8 @@ namespace render2
 			newrect.id = codepoint;
 			newrect.x = 0;
 			newrect.y = 0;
-			newrect.w = bitmap->width;
-			newrect.h = bitmap->rows;
+			newrect.w = img.width;
+			newrect.h = img.height;
 
 			// pack the rect in the font atlas (or not)
 			stbrp_pack_rects(&font->rp_context, &newrect, 1);
@@ -819,7 +835,7 @@ namespace render2
 				if (previous_codepoint != 0 && data->has_kerning)
 				{
 					FT_Vector kerning_delta;
-					FT_Get_Kerning(data->face, previous_codepoint, codepoint, FT_KERNING_DEFAULT, &kerning_delta);
+					FT_Get_Kerning(data->face, previous_codepoint, gd.index, FT_KERNING_DEFAULT, &kerning_delta);
 
 					pen.x += kerning_delta.x >> 6;
 				}
@@ -874,7 +890,7 @@ namespace render2
 
 				pen.x += gd.advancex;
 
-				previous_codepoint = codepoint;
+				previous_codepoint = gd.index;
 			}
 		}
 
