@@ -440,8 +440,6 @@ namespace render2
 		{
 			size_t advancex;
 			size_t advancey;
-			size_t left;
-			size_t top;
 			size_t width;
 			size_t height;
 			size_t hbearingx;
@@ -474,7 +472,7 @@ namespace render2
 				return;
 			}
 
-			flags = FT_LOAD_FORCE_AUTOHINT;
+			flags = FT_LOAD_FORCE_AUTOHINT | FT_LOAD_RENDER;
 
 			error = FT_Load_Glyph(face, glyph_index, flags);
 			assert(error == FT_Err_Ok);
@@ -483,9 +481,6 @@ namespace render2
 				LOGW("Error while loading character %i, glyph: %i\n", codepoint, glyph_index);
 				return;
 			}
-
-			glyphdata.left = face->glyph->bitmap_left;
-			glyphdata.top = face->glyph->bitmap_top;
 
 			// these are expressed in 26.6 units; hence the division by 64.
 			glyphdata.advancex = face->glyph->advance.x >> 6;
@@ -508,76 +503,7 @@ namespace render2
 				glyphdata.vbearingx = face->glyph->metrics.vertBearingX >> 6;
 				glyphdata.vbearingy = face->glyph->metrics.vertBearingY >> 6;
 			}
-
 		}
-
-
-		void load_character_info(FT_Face face, FontData& font)
-		{
-			size_t failures = 0;
-			size_t char_start = 32;
-			size_t num_chars = 127;
-			size_t character;
-			const size_t MAX_CHARS = 95;
-
-			FT_UInt glyph_index;
-			FT_Int32 flags;
-			FT_Bitmap* bitmap;
-			FT_Error error = FT_Err_Ok;
-
-
-			for (character = char_start; character < num_chars; ++character)
-			{
-				// TODO lookup codepoint and get the character index?
-				glyph_index = FT_Get_Char_Index(face, character);
-
-				// invalid glyphs will have an index of 0
-				if (glyph_index == 0)
-				{
-					LOGW("Invalid glyph %i -> %c\n", character, character);
-					continue;
-				}
-
-				if ((character - char_start) > MAX_CHARS)
-				{
-					LOGW("Out of bounds character\n");
-					continue;
-				}
-
-				flags = FT_LOAD_FORCE_AUTOHINT;
-
-				error = FT_Load_Glyph(face, glyph_index, flags);
-				if (error)
-				{
-					LOGW("Error while loading character %i, glyph: %i\n", character, glyph_index);
-					continue;
-				}
-
-//				if (face->glyph->format != FT_GLYPH_FORMAT_BITMAP)
-//				{
-//					FT_Render_Mode render_mode = FT_RENDER_MODE_NORMAL;
-//					if (font.flags & FontData::DISABLE_AA)
-//					{
-//						render_mode = FT_RENDER_MODE_MONO;
-//					}
-//
-//					error = FT_Render_Glyph(face->glyph, render_mode);
-//					if (error)
-//					{
-//						LOGW("Error while rendering glyph!\n");
-//					}
-//				}
-
-//				bitmap = &face->glyph->bitmap;
-//				FT_Int bitmap_top = face->glyph->bitmap_top;
-//				FT_Int bitmap_left = face->glyph->bitmap_left;
-
-			}
-
-
-		}
-
-
 
 		void startup(render2::Device* device)
 		{
@@ -759,7 +685,6 @@ namespace render2
 			{
 				// I dunno.
 				LOGW("Unable to pack codepoint: %i\n", codepoint);
-				font->rp_rects.pop_back();
 				return 1;
 			}
 		}
