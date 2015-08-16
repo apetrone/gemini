@@ -170,7 +170,7 @@ public:
 	{
 		const size_t width = 256;
 		const size_t height = 256;
-		glm::vec2 offset(128, 256);
+		glm::vec2 offset(64, 128);
 
 		TexturedVertex* quad = (TexturedVertex*)device->buffer_lock(vertex_buffers[1]);
 		quad[0].set_position(offset.x, offset.y+height, 0);
@@ -426,7 +426,6 @@ public:
 		}
 #endif
 
-#if 1
 		Array<render2::font::FontVertex> fontvertices;
 		if (font.is_valid())
 		{
@@ -439,8 +438,7 @@ public:
 //							 );
 
 			const char buffer[] = "The quick brown fox jumps over the lazy dog";
-//			const char buffer[] = "The";
-			render2::font::draw_string(font, fontvertices, transform, buffer, core::Color(255, 128, 255));
+			render2::font::draw_string(font, fontvertices, buffer, core::Color(255, 128, 255));
 
 			render2::Pass render_pass;
 			render_pass.target = device->default_render_target();
@@ -454,20 +452,20 @@ public:
 			serializer->texture(render2::font::get_font_texture(font), 0);
 
 
-
-
 			populate_textured_buffer();
 			serializer->draw(0, 6);
 
 			TexturedVertex* v = (TexturedVertex*)device->buffer_lock(vertex_buffers[1]);
 			v+=6;
 
+			glm::vec2 baseline(64.0f, 120.0f);
+
 			size_t index = 0;
 			for (auto& vertex : fontvertices)
 			{
 //				LOGV("[%i] pos [%2.2f, %2.2f]\n", index, vertex.position.x, vertex.position.y);
 //				LOGV("[%i] uv [%2.2f, %2.2f]\n", index, vertex.uv.x, vertex.uv.y);
-				v->set_position(vertex.position.x, vertex.position.y, 0);
+				v->set_position(vertex.position.x + baseline.x, vertex.position.y + baseline.y, 0);
 				v->set_color(
 							 vertex.color.r/255.0f,
 							 vertex.color.g/255.0f,
@@ -487,8 +485,6 @@ public:
 			device->queue_buffers(queue, 1);
 			device->destroy_serializer(serializer);
 		}
-
-#endif
 
 
 		platform::window::activate_context(main_window);
