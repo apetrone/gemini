@@ -102,9 +102,9 @@ namespace render2
 		return common_create_texture(image);
 	}
 
-	void GLES2Device::update_texture(Texture* texture, const Image& image, const mathlib::Recti& rect)
+	void GLES2Device::update_texture(Texture* texture, const Image& image, const glm::vec2& origin, const glm::vec2& dimensions)
 	{
-		common_update_texture(static_cast<GLTexture*>(texture), image, rect);
+		common_update_texture(static_cast<GLTexture*>(texture), image, origin, dimensions);
 	}
 
 	void GLES2Device::destroy_texture(Texture* texture)

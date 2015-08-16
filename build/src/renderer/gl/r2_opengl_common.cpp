@@ -767,18 +767,21 @@ namespace render2
 	}
 
 
-	void common_update_texture(GLTexture* texture, const Image& image, const mathlib::Recti& rect)
+	void common_update_texture(GLTexture* texture, const Image& image, const glm::vec2& origin, const glm::vec2& dimensions)
 	{
 		// In ES 2 implementations; we can use GL_EXT_unpack_subimage for GL_UNPACK_ROW_LENGTH
 		// If that isn't available; the new image has to be uploaded one row at a time.
 
-		//assert(rect.width() > 0 || rect.height() > 0);
-		assert(rect.right > 0 && rect.bottom > 0);
+		// origin should be non-zero and positive
+		assert(origin.x >= 0);
+		assert(origin.y >= 0);
+
+		// dimensions should be positive
+		assert(dimensions.x > 0 && dimensions.y > 0);
 
 		GLenum internal_format = image_to_internal_format(image);
 
 		texture->bind();
-
 
 #if 0
 		// store old items (should be cached by the hal)
@@ -802,8 +805,7 @@ namespace render2
 		gl.PixelStorei(GL_UNPACK_SKIP_ROWS, rect.top);
 #endif
 
-		assert(rect.left >= 0);
-		assert(rect.top >= 0);
+
 
 		GLvoid* pixels = 0;
 		if (!image.pixels.empty())
@@ -812,7 +814,7 @@ namespace render2
 		}
 
 		GLint mip_level = 0;
-		gl.TexSubImage2D(texture->texture_type, mip_level, rect.left, rect.top, rect.right, rect.bottom, internal_format, GL_UNSIGNED_BYTE, pixels);
+		gl.TexSubImage2D(texture->texture_type, mip_level, origin.x, origin.y, dimensions.x, dimensions.y, internal_format, GL_UNSIGNED_BYTE, pixels);
 		gl.CheckError("TexSubImage2D");
 
 		texture->unbind();
