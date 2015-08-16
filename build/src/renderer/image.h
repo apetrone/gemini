@@ -58,7 +58,8 @@ namespace image
 		F_WRAP = 8,				// wrap out of bounds UV coords
 		F_CLAMP = 16,			// clamp out of bounds UV coords,
 		F_CLAMP_BORDER = 32,	// requires GL_ARB_texture_border_clamp
-		F_CUBEMAP = 64,			// load this texture as a cubemap
+		F_CUBEMAP = 64,			// load this texture as a cubemap,
+		F_NO_MIPMAPS = 128,		// image should not have mipmaps
 	}; // ImageFlags
 	
 	enum FilterType
@@ -107,6 +108,9 @@ namespace image
 		Image();
 		void create(const uint32_t& image_width, const uint32_t& image_height, const uint32_t& total_channels);
 		void fill(const core::Color& color);
+
+		// copy an image from a target buffer
+		void copy(const uint8_t* pixels, const uint32_t& width, const uint32_t& height, const uint32_t& pitch, uint32_t border = 0);
 	};
 	
 	const unsigned int ERROR_TEXTURE_WIDTH = 128;

@@ -73,7 +73,43 @@ namespace image
 			}
 		}
 	}
-	
+
+	void set_pixel(uint8_t* pixel, uint8_t r, uint8_t g, uint8_t b)
+	{
+		pixel[0] = r;
+		pixel[1] = g;
+		pixel[2] = b;
+	}
+
+	void Image::copy(const uint8_t* buffer, const uint32_t& width, const uint32_t& height, const uint32_t& pitch, uint32_t border)
+	{
+		// It is assumed, that if border > 0; then this Image's
+		// dimensions are already set to include that border.
+
+		int channels = 3;
+
+		// this must already be allocated -- allocate here?
+		assert(!this->pixels.empty());
+
+		unsigned char* img;
+
+		// if you hit either of these asserts, the source buffer is larger than
+		// this image's buffer. We cannot copy into this without losing data.
+		assert((width + (2*border)) <= this->width);
+		assert((height + (2*border)) <= this->height);
+
+		size_t local_pitch = (this->width * channels);
+		for (size_t h = 0; h < height; ++h)
+		{
+			for (size_t w = 0; w < width; ++w)
+			{
+				img = &pixels[((h + border) * local_pitch + ((w + border) * channels))];
+				unsigned char* x = (unsigned char*)&buffer[ ((height-1 - h) * pitch) + (w) ];
+				set_pixel(img, *x, *x, *x);
+			}
+		}
+	}
+
 	void generate_checker_pattern(Image& image, const Color & color1, const Color & color2)
 	{
 		// image dimensions must be specified

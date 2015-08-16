@@ -758,8 +758,12 @@ namespace render2
 			}
 		}
 
-		gl.GenerateMipmap(texture->texture_type);
-		gl.CheckError("generate mipmap");
+		// generate mipmaps if the image allows us to
+		if (!(image.flags & image::F_NO_MIPMAPS))
+		{
+			gl.GenerateMipmap(texture->texture_type);
+			gl.CheckError("generate mipmap");
+		}
 
 		texture->unbind();
 
