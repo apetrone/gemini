@@ -74,19 +74,13 @@ namespace image
 		}
 	}
 
-	void set_pixel(uint8_t* pixel, uint8_t r, uint8_t g, uint8_t b)
-	{
-		pixel[0] = r;
-		pixel[1] = g;
-		pixel[2] = b;
-	}
-
 	void Image::copy(const uint8_t* buffer, const uint32_t& width, const uint32_t& height, const uint32_t& pitch, uint32_t border)
 	{
 		// It is assumed, that if border > 0; then this Image's
 		// dimensions are already set to include that border.
 
-		int channels = 3;
+		// It is also assumed that the source buffer and destination buffer match
+		// channels.
 
 		// this must already be allocated -- allocate here?
 		assert(!this->pixels.empty());
@@ -105,7 +99,7 @@ namespace image
 			{
 				img = &pixels[((h + border) * local_pitch + ((w + border) * channels))];
 				unsigned char* x = (unsigned char*)&buffer[ ((height-1 - h) * pitch) + (w) ];
-				set_pixel(img, *x, *x, *x);
+				memcpy(img, x, channels);
 			}
 		}
 	}

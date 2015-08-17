@@ -621,12 +621,13 @@ namespace render2
 
 			font->border = 2;
 			render2::Image img;
+			img.flags = image::F_ALPHA;
 			img.width = bitmap->width + (2 * font->border);
 			img.height = bitmap->rows + (2 * font->border);
-			img.channels = 3;
-			img.create(img.width, img.height, 3);
+			img.channels = 1;
+			img.create(img.width, img.height, 1);
 			img.alignment = 1; // tightly packed
-			img.fill(core::Color(0, 255, 0));
+			img.fill(core::Color(255, 0, 255));
 
 			img.copy(bitmap->buffer, bitmap->width, bitmap->rows, bitmap->pitch, font->border);
 
@@ -710,12 +711,11 @@ namespace render2
 
 			render2::Image image;
 			image.filter = image::FILTER_NONE;
-			image.flags = image::F_RGB | image::F_CLAMP;
+			image.flags = image::F_ALPHA | image::F_CLAMP;
 			image.width = FONT_ATLAS_RESOLUTION;
 			image.height = FONT_ATLAS_RESOLUTION;
-			image.channels = 3;
+			image.channels = 1;
 
-//			image::generate_checker_pattern(image, core::Color(255, 0, 255), core::Color(0, 255, 0));
 			image.create(image.width, image.height, image.channels);
 			image.fill(core::Color(255, 0, 255));
 			font->texture = detail::_device->create_texture(image);
@@ -822,7 +822,6 @@ namespace render2
 				vertex->color = color;
 				vertex->uv = uvs[0];
 				vertex++;
-
 
 				pen.x += gd.advancex;
 				previous_codepoint = gd.index;

@@ -145,6 +145,7 @@ namespace render2
 		// populate vertices with the transformed vertices for drawing a string to the screen
 		void draw_string(Handle handle, Array<FontVertex>& vertices, const char* utf8, const core::Color& color);
 
+		// retrieve the font texture used by a font
 		render2::Texture* get_font_texture(Handle handle);
 	} // namespace font
 } // namespace render2
