@@ -736,6 +736,38 @@ namespace render2
 
 		int get_string_metrics(Handle handle, const char* utf8, glm::vec2& mins, glm::vec2& maxs)
 		{
+			if (!handle.is_valid())
+				return -1;
+
+			FontData* font = detail::_fonts[handle.ref];
+			glm::vec2 pen;
+			size_t length = core::str::len(utf8);
+			uint32_t previous_codepoint = 0;
+
+
+			mins = glm::vec2(0.0f);
+			maxs = glm::vec2(0.0f);
+
+			for (size_t index = 0; index < length; ++index)
+			{
+				uint32_t codepoint = utf8[index];
+				GlyphData gd;
+				get_gylph_info(font->face, codepoint, gd);
+
+				if (previous_codepoint != 0 && font->has_kerning)
+				{
+					FT_Vector kerning_delta;
+					FT_Get_Kerning(font->face, previous_codepoint, gd.index, FT_KERNING_DEFAULT, &kerning_delta);
+
+					pen.x += kerning_delta.x >> 6;
+				}
+
+				pen.x += gd.advancex;
+				previous_codepoint = gd.index;
+			}
+
+			maxs = pen;
+
 			return 0;
 		}
 
