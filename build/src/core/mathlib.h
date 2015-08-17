@@ -182,7 +182,11 @@ namespace mathlib
 			
 			return false;
 		}
-		
+
+		bool is_null() const
+		{
+			return (width() == 0 && height() == 0);
+		}
 	}; // Rect
 
 	typedef Rect<float> Rectf;
