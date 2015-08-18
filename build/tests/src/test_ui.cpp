@@ -80,39 +80,50 @@ struct MyVertex
 	}
 };
 
-struct ConstantData
-{
-	glm::mat4 modelview_matrix;
-	glm::mat4 projection_matrix;
-};
 
 namespace experimental
 {
+	struct GUIVertex
+	{
+		glm::vec2 position;
+		float color[4];
+		glm::vec2 uv;
+
+		void set_position(float x, float y)
+		{
+			position.x = x;
+			position.y = y;
+		}
+
+		void set_color(float red, float green, float blue, float alpha)
+		{
+			assert(red >= 0.0f && red <= 1.0f);
+			assert(green >= 0.0f && green <= 1.0f);
+			assert(blue >= 0.0f && blue <= 1.0f);
+			assert(alpha >= 0.0f && alpha <= 1.0f);
+			color[0] = red;
+			color[1] = green;
+			color[2] = blue;
+			color[3] = alpha;
+		}
+
+		void set_uv(float u, float v)
+		{
+			uv[0] = u;
+			uv[1] = v;
+		}
+	};
+
 	const size_t MAX_VERTICES = 64;
 	class GUIRenderer : public gui::Renderer
 	{
-		struct VertexType
-		{
-			float position[3];
-//			float color[4];
-//			glm::vec3 position;
-			core::Color color;
-//			glm::vec2 uv;
-
-			void set_position(float x, float y, float z)
-			{
-				position[0] = x;
-				position[1] = y;
-				position[2] = z;
-			}
-		};
-
 		gui::Compositor* compositor;
 		float current_depth;
 
 		render2::Device* device;
 		render2::Buffer* vertex_buffer;
 		render2::Pipeline* pipeline;
+		render2::Texture* white_texture;
 
 		glm::mat4 modelview_matrix;
 		glm::mat4 projection_matrix;
@@ -154,19 +165,27 @@ namespace experimental
 	{
 		this->compositor = compositor;
 
-
-		this->vertex_buffer = device->create_vertex_buffer(MAX_VERTICES*sizeof(VertexType));
-
+		this->vertex_buffer = device->create_vertex_buffer(MAX_VERTICES*sizeof(GUIVertex));
 
 		render2::PipelineDescriptor desc;
 		desc.shader = device->create_shader("gui");
-		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3);
-		desc.vertex_description.add("in_color", render2::VD_UNSIGNED_BYTE, 4);
+		desc.vertex_description.add("in_position", render2::VD_FLOAT, 2);
+		desc.vertex_description.add("in_color", render2::VD_FLOAT, 4);
+		desc.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
 		desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
 		desc.enable_blending = true;
 		desc.blend_source = render2::BlendOp::SourceAlpha;
 		desc.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
 		pipeline = device->create_pipeline(desc);
+
+
+		render2::Image white_image;
+		white_image.create(4, 4, 3);
+		white_image.filter = image::FILTER_NONE;
+		white_image.flags = image::F_CLAMP_BORDER;
+		white_image.fill(core::Color(255, 255, 255));
+		white_texture = device->create_texture(white_image);
+
 
 //		// generate the white texture we'll use for solid colors
 //		white_texture = assets::textures()->allocate_asset();
@@ -207,6 +226,7 @@ namespace experimental
 
 	void GUIRenderer::shutdown(gui::Compositor* c)
 	{
+		device->destroy_texture(white_texture);
 		device->destroy_buffer(vertex_buffer);
 		device->destroy_pipeline(pipeline);
 	}
@@ -325,44 +345,41 @@ namespace experimental
 		// temp limit
 		assert(total_vertices < MAX_VERTICES);
 		projection_matrix = glm::ortho(0.0f, (float)this->compositor->width, (float)this->compositor->height, 0.0f, -1.0f, 1.0f);
+
+
+//		device->buffer_resize(vertex_buffer, sizeof(GUIVertex) * total_vertices);
+
+		diffuse_texture = 0;
 		pipeline->constants().set("projection_matrix", &projection_matrix);
+		pipeline->constants().set("diffuse", &diffuse_texture);
 
 		assert(total_lists > 0);
 
-		VertexType vertices[MAX_VERTICES];
+		GUIVertex vertices[MAX_VERTICES];
 		size_t vertex_index = 0;
 		for (size_t index = 0; index < total_lists; ++index)
 		{
 			gui::render::CommandList* commandlist = command_lists[index];
 
-			//			for (size_t command_id = 0; command_id < commandlist->commands.size(); ++command_id)
-			//			{
-			//				LOGV("command: %i\n", commandlist->commands[command_id].id);
-			//			}
+//			for (size_t command_id = 0; command_id < commandlist->commands.size(); ++command_id)
+//			{
+//				LOGV("command: %i\n", commandlist->commands[command_id].id);
+//			}
 
 			// loop through all vertices in this list
 			for (size_t v = 0; v < commandlist->vertex_buffer.size(); ++v)
 			{
 				gui::render::Vertex* gv = &commandlist->vertex_buffer[v];
 
-
-				VertexType& vt = vertices[vertex_index];
-				vt.set_position(gv->x, gv->y, 0);
-				vt.color = core::Color(gv->color.r(), gv->color.g(), gv->color.b(), gv->color.a());
-
+				GUIVertex& vt = vertices[vertex_index];
+				vt.set_position(gv->x, gv->y);
+				vt.set_color(gv->color.r()/255.0f, gv->color.g()/255.0f, gv->color.b()/255.0f, gv->color.a()/255.0f);
+				vt.set_uv(gv->uv[0], gv->uv[1]);
 
 				++vertex_index;
 			}
 
-//				gui::render::Vertex* gv = &commandlist->vertex_buffer[v];
-//				vertex[v].position.x = gv->x;
-//				vertex[v].position.y = gv->y;
-//				core::Color c = core::Color(gv->color.r(), gv->color.g(), gv->color.b(), gv->color.a());
-//				vertex[v].color = c;
-//
-//				vertex[v].uv.x = gv->uv[0];
-//				vertex[v].uv.y = gv->uv[1];
-//			}
+
 
 
 
@@ -377,6 +394,7 @@ namespace experimental
 
 			serializer->pipeline(pipeline);
 			serializer->vertex_buffer(vertex_buffer);
+			serializer->texture(white_texture, 0);
 			serializer->draw(0, total_vertices);
 
 			device->queue_buffers(queue, 1);
@@ -385,7 +403,7 @@ namespace experimental
 			//offset += commandlist->vertex_buffer.size();
 		}
 
-		device->buffer_upload(vertex_buffer, vertices, sizeof(VertexType)*total_vertices);
+		device->buffer_upload(vertex_buffer, vertices, sizeof(GUIVertex)*total_vertices);
 	}
 } // namespace experimental
 
