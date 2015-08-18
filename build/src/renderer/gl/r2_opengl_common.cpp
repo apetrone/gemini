@@ -851,6 +851,8 @@ namespace render2
 			if (!data)
 			{
 				LOGW("Missing uniform data for '%s'\n", uniform.name);
+				// If you hit this assert the uniform named above wasn't given
+				// a value prior to rendering.
 				assert(0);
 			}
 

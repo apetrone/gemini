@@ -431,14 +431,21 @@ public:
 		{
 
 			glm::mat2 transform(1.0f);
-//			const float radians = mathlib::degrees_to_radians(-45);
-//			transform = glm::mat2(
-//							 cos(radians), -sin(radians),
-//							 sin(radians), cos(radians)
-//							 );
+			const float radians = mathlib::degrees_to_radians(-45);
+			transform = glm::mat2(
+							 cos(radians), -sin(radians),
+							 sin(radians), cos(radians)
+							 );
 
 			const char buffer[] = "The quick brown fox jumps over the lazy dog";
-			render2::font::draw_string(font, fontvertices, buffer, core::Color(255, 128, 255));
+
+
+			render2::font::draw_string(font, fontvertices, buffer, core::Color(0, 255, 255, 255));
+
+
+			glm::vec2 minres, maxres;
+			render2::font::get_string_metrics(font, buffer, minres, maxres);
+
 
 			render2::Pass render_pass;
 			render_pass.target = device->default_render_target();
@@ -458,13 +465,52 @@ public:
 			TexturedVertex* v = (TexturedVertex*)device->buffer_lock(vertex_buffers[1]);
 			v+=6;
 
-			glm::vec2 baseline(64.0f, 120.0f);
+//			glm::vec2 baseline(64.0f, 120.0f);
+			glm::vec2 baseline(800/2.0f - maxres.x/2.0f, 120.0f);
 
+			// draw background highlight
+#if 0
+			baseline.y -= maxres.y;
+
+			v->set_position(baseline.x, baseline.y+maxres.y, 0);
+			v->set_color(0, 0, 0, 1);
+			v->set_uv(0, 0);
+			++v;
+
+			v->set_position(baseline.x+maxres.x, baseline.y+maxres.y, 0);
+			v->set_color(0, 0, 0, 1);
+			v->set_uv(1, 0);
+			++v;
+
+			v->set_position(baseline.x+maxres.x, baseline.y, 0);
+			v->set_color(0, 0, 0, 1);
+			v->set_uv(1, 1);
+			++v;
+
+			v->set_position(baseline.x+maxres.x, baseline.y, 0);
+			v->set_color(0, 0, 0, 1);
+			v->set_uv(1, 1);
+			++v;
+
+			v->set_position(baseline.x, baseline.y, 0);
+			v->set_color(0, 0, 0, 1);
+			v->set_uv(0, 1);
+			++v;
+
+			v->set_position(baseline.x, baseline.y+maxres.y, 0);
+			v->set_color(0, 0, 0, 1);
+			v->set_uv(0, 0);
+			++v;
+
+			baseline.y += maxres.y;
+#endif
+			
 			size_t index = 0;
 			for (auto& vertex : fontvertices)
 			{
 //				LOGV("[%i] pos [%2.2f, %2.2f]\n", index, vertex.position.x, vertex.position.y);
 //				LOGV("[%i] uv [%2.2f, %2.2f]\n", index, vertex.uv.x, vertex.uv.y);
+//				vertex.position = transform * vertex.position;
 				v->set_position(vertex.position.x + baseline.x, vertex.position.y + baseline.y, 0);
 				v->set_color(
 							 vertex.color.r/255.0f,
@@ -477,8 +523,11 @@ public:
 				++index;
 			}
 
+			serializer->draw(6, fontvertices.size() + 6);
+
 			device->buffer_unlock(vertex_buffers[1]);
-			serializer->draw(6, fontvertices.size());
+
+
 
 
 
