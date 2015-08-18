@@ -159,7 +159,7 @@ namespace experimental
 
 
 		render2::PipelineDescriptor desc;
-		desc.shader = device->create_shader("vertexcolor");
+		desc.shader = device->create_shader("gui");
 		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3);
 		desc.vertex_description.add("in_color", render2::VD_UNSIGNED_BYTE, 4);
 		desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
@@ -324,10 +324,7 @@ namespace experimental
 
 		// temp limit
 		assert(total_vertices < MAX_VERTICES);
-
-		modelview_matrix = glm::mat4(1.0f);
 		projection_matrix = glm::ortho(0.0f, (float)this->compositor->width, (float)this->compositor->height, 0.0f, -1.0f, 1.0f);
-		pipeline->constants().set("modelview_matrix", &modelview_matrix);
 		pipeline->constants().set("projection_matrix", &projection_matrix);
 
 		assert(total_lists > 0);
