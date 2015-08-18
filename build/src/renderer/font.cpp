@@ -619,6 +619,9 @@ namespace render2
 			// bitmap is 8-bit grayscale
 			assert(FT_PIXEL_MODE_GRAY == bitmap->pixel_mode);
 
+			// There is currently no support for paletted bitmaps
+			assert(bitmap->palette == nullptr);
+
 			font->border = 2;
 			render2::Image img;
 			img.flags = image::F_ALPHA;
@@ -748,11 +751,16 @@ namespace render2
 			mins = glm::vec2(0.0f);
 			maxs = glm::vec2(0.0f);
 
+			float largest = 0;
+
 			for (size_t index = 0; index < length; ++index)
 			{
 				uint32_t codepoint = utf8[index];
 				GlyphData gd;
 				get_gylph_info(font->face, codepoint, gd);
+
+				if (gd.height > largest)
+					largest = gd.height;
 
 				if (previous_codepoint != 0 && font->has_kerning)
 				{
@@ -767,6 +775,7 @@ namespace render2
 			}
 
 			maxs = pen;
+			maxs.y = largest;
 
 			return 0;
 		}
