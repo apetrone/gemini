@@ -402,6 +402,31 @@ namespace render2
 		_vertex_data_to_gl[ vdt ] = VertexDataTypeToGL(gl_type, gl_normalized, element_size)
 
 
+	void convert_type(GLenum attribute_type, VertexDataType& type, size_t& elements)
+	{
+		switch(attribute_type)
+		{
+			case GL_FLOAT_VEC2:
+				type = VD_FLOAT;
+				elements = 2;
+				break;
+
+			case GL_FLOAT_VEC3:
+				type = VD_FLOAT;
+				elements = 3;
+				break;
+
+			case GL_FLOAT_VEC4:
+				type = VD_FLOAT;
+				elements = 4;
+				break;
+
+			// unhandled type!
+			default:
+				assert(0);
+		}
+	}
+
 	// ---------------------------------------------------------------------
 	// functions
 	// ---------------------------------------------------------------------
@@ -431,6 +456,16 @@ namespace render2
 				 );
 
 			const VertexDataTypeToGL& gldata = get_vertexdata_table()[input.type];
+
+			// perform a bit of verification with types and element counts
+			VertexDataType expected_type;
+			size_t expected_elements;
+			convert_type(shader->attributes[index].type, expected_type, expected_elements);
+
+			// Types should match; otherwise byte offsets will be incorrect.
+			// Element counts can vary slightly if the input type isn't larger
+			// than the shader.
+			assert(input.type == expected_type && input.element_count <= expected_elements);
 
 			GLInputLayout::Description target;
 			target.location = shader->get_attribute_location(input.name());
