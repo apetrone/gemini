@@ -343,7 +343,7 @@ namespace render2
 
 
 #if defined(PLATFORM_OPENGL_SUPPORT)
-	#include "gl/r2_opengl_device.h"
+	#include "gl/opengl/opengl_device.h"
 #elif defined(PLATFORM_GLES2_SUPPORT)
 	#include "gl/r2_gles2_device.h"
 #else
