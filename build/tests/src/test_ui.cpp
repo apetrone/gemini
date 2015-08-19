@@ -36,6 +36,7 @@
 #include <renderer/renderer.h>
 #include <renderer/vertexbuffer.h>
 #include <renderer/vertexstream.h>
+#include <renderer/font.h>
 
 #include <ui/ui.h>
 #include <ui/compositor.h>
@@ -114,7 +115,7 @@ namespace experimental
 		}
 	};
 
-	const size_t MAX_VERTICES = 64;
+	const size_t MAX_VERTICES = 4096;
 	class GUIRenderer : public gui::Renderer
 	{
 		gui::Compositor* compositor;
@@ -361,11 +362,6 @@ namespace experimental
 		{
 			gui::render::CommandList* commandlist = command_lists[index];
 
-//			for (size_t command_id = 0; command_id < commandlist->commands.size(); ++command_id)
-//			{
-//				LOGV("command: %i\n", commandlist->commands[command_id].id);
-//			}
-
 			// loop through all vertices in this list
 			for (size_t v = 0; v < commandlist->vertex_buffer.size(); ++v)
 			{
@@ -379,10 +375,7 @@ namespace experimental
 				++vertex_index;
 			}
 
-
-
-
-
+			// setup the pass and queue the draw
 			render2::Pass pass;
 			pass.target = device->default_render_target();
 			pass.color(1.0f, 0.0f, 0.0f, 1.0f);
@@ -400,7 +393,6 @@ namespace experimental
 			device->queue_buffers(queue, 1);
 
 			device->destroy_serializer(serializer);
-			//offset += commandlist->vertex_buffer.size();
 		}
 
 		device->buffer_upload(vertex_buffer, vertices, sizeof(GUIVertex)*total_vertices);
@@ -511,8 +503,13 @@ public:
 		graph->create_samples(100, 1);
 		graph->configure_channel(0, gui::Color(0, 255, 0, 255));
 		graph->set_range(0.0f, 33.3f);
-
 		graph->enable_baseline(true, 16.6f, gui::Color(255, 0, 255, 255));
+
+
+//		gui::Panel* panel = new gui::Panel(root);
+//		panel->set_bounds(width-250, 0, 250, 100);
+//		panel->set_background_color(gui::Color(60, 60, 60, 255));
+
 
 
 		gui::Color button_background(128, 128, 128, 255);
@@ -646,6 +643,12 @@ public:
 		pipeline->constants().set("projection_matrix", &projection_matrix);
 
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
+
+
+		// initialize fonts
+		render2::font::startup(device);
+
+		// initialize gui
 		setup_gui(window_frame.width, window_frame.height);
 
 		return kernel::NoError;
@@ -759,13 +762,15 @@ public:
 
 	virtual void shutdown()
 	{
+		// shutdown/destroy the gui
 		delete compositor;
+
+		// shutdown the fonts
+		render2::font::shutdown();
 
 		device->destroy_buffer(vertex_buffer);
 		device->destroy_pipeline(pipeline);
 		render2::destroy_device(device);
-
-		renderer::shutdown();
 
 		platform::window::destroy(native_window);
 		platform::window::shutdown();

@@ -31,7 +31,7 @@
 
 namespace render2
 {
-	const size_t RENDERER_MAX_COMMAND_QUEUES = 16;
+	const size_t RENDERER_MAX_COMMAND_QUEUES = 256;
 
 	static size_t type_to_bytes(const GLenum& type)
 	{
