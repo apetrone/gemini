@@ -68,13 +68,12 @@ namespace gui
 			LIBRARY_EXPORT void pop_clip_rect();
 			
 			LIBRARY_EXPORT void add_drawcall();
-//			LIBRARY_EXPORT void add_line(const Point& p0, const Point& p1, const gui::Color& color);
 			
 			// primitive functions
 			LIBRARY_EXPORT void primitive_reserve(size_t count);
 			LIBRARY_EXPORT void primitive_quad(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gui::Color& color);
 			
-			LIBRARY_EXPORT void add_line(const Point& start, const Point& end, const gui::Color& color);
+			LIBRARY_EXPORT void add_line(const Point& start, const Point& end, const gui::Color& color, float thickness = 1.0f);
 			LIBRARY_EXPORT void add_rectangle(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gui::Color& color);
 			LIBRARY_EXPORT void add_font(const FontHandle& font, const char* utf8, const Rect& bounds, const TextureHandle& texture, const gui::Color& color);
 		};

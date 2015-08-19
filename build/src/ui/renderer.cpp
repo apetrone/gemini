@@ -117,13 +117,29 @@ namespace gui { namespace render {
 		write_pointer[5].uv[1] = 0;
 	}
 	
-	void CommandList::add_line(const Point& start, const Point& end, const gui::Color& color)
+	void CommandList::add_line(const Point& start, const Point& end, const gui::Color& color, float thickness)
 	{
-//		add_drawcall();
-//		primitive_reserve(6);
-//		Command& command = commands.back();
-//		command.id = 2;
-//		command.texture = 0;
+		Point corners[4];
+
+		// use the cross product to find a perpendicular axis
+		// to the line
+		glm::vec3 zaxis(0.0f, 0.0f, 1.0f);
+		glm::vec3 direction = glm::vec3(end.x - start.x, end.y - start.y, 0.0f);
+		glm::vec3 normalized_direction = glm::normalize(direction);
+
+		glm::vec3 perpendicular_axis = glm::cross(zaxis, normalized_direction);
+		glm::vec3 reflected_axis = -glm::reflect(glm::normalize(perpendicular_axis), normalized_direction);
+		glm::vec2 axis(perpendicular_axis.x, perpendicular_axis.y);
+		glm::vec2 raxis(reflected_axis.x, reflected_axis.y);
+
+		const float half_thickness = (thickness * 0.5f);
+
+		corners[0] = start + (raxis * half_thickness);
+		corners[1] = start + (axis * half_thickness);
+		corners[2] = end + (axis * half_thickness);
+		corners[3] = end + (raxis * half_thickness);
+
+		primitive_quad(corners[0], corners[1], corners[2], corners[3], TextureHandle(), color);
 	}
 	
 	void CommandList::add_rectangle(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gui::Color& color)

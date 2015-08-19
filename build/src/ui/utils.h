@@ -36,6 +36,7 @@
 #include <glm/vec2.hpp>
 #include <glm/mat2x2.hpp>
 #include <glm/common.hpp> // for mix
+#include <glm/gtx/quaternion.hpp>
 
 namespace gui
 {
