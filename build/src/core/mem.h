@@ -175,6 +175,7 @@ namespace core
 		
 		
 		// allocators
+		#include "memory/system_allocator.h"
 		#include "memory/heap_allocator.h"
 //		#include "memory/linear_allocator.h"
 //		#include "memory/pool_allocator.h"
@@ -186,7 +187,11 @@ namespace core
 		// ---------------------------------------------------------------------
 		LIBRARY_EXPORT void startup();
 		LIBRARY_EXPORT void shutdown();
-		
+
+
+		typedef SystemAllocator<DefaultTrackingPolicy> SystemAllocatorType;
+		LIBRARY_EXPORT SystemAllocatorType& system_allocator();
+
 		typedef HeapAllocator<DefaultTrackingPolicy> GlobalAllocatorType;
 		LIBRARY_EXPORT GlobalAllocatorType& global_allocator();
 		LIBRARY_EXPORT void global_allocator(GlobalAllocatorType& allocator);

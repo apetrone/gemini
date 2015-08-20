@@ -59,7 +59,13 @@ namespace core
 			_global_zone = nullptr;
 			_global_allocator = nullptr;
 		}
-		
+
+		SystemAllocatorType& system_allocator()
+		{
+			static SystemAllocatorType _system_allocator;
+			return _system_allocator;
+		}
+
 		GlobalAllocatorType& global_allocator()
 		{
 			return *_global_allocator;
