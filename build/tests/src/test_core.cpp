@@ -385,7 +385,13 @@ void test_hashset()
 	has_two = repop_test.has_key(2);
 
 
+	// test using another allocator
+	HashSet<int, int, core::util::hash<int>, core::memory::GlobalAllocatorType> test(32, 2, core::memory::global_allocator());
 
+	test.insert(HashSet<int, int>::value_type(30, 72));
+
+	int z = test[30];
+	TEST_VERIFY(z == 72, hash_with_global_allocator);
 }
 
 

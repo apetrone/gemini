@@ -25,17 +25,19 @@
 #pragma once
 
 #include <core/util.h>
+#include <core/mem.h>
 
-template <class K, class T, class H = typename core::util::hash<K> >
+template <class K, class T, class H = typename core::util::hash<K>, class Allocator = core::memory::SystemAllocatorType >
 class HashSet
 {
 private:
 	typedef H hash_type;
+	typedef Allocator allocator_type;
 	
 	const float MAX_LOAD_FACTOR = 0.7f;
 	typedef uint32_t HashType;
 	const HashType REMOVED_SLOT = UINT32_MAX;
-	
+
 	struct Bucket
 	{
 		HashType hash;
@@ -51,8 +53,8 @@ private:
 	uint32_t table_size;
 	uint32_t used_items;
 	uint32_t growth_factor;
-	
-	
+	allocator_type& allocator;
+
 	int32_t find_bucket(HashType hash, int32_t& bucket_index, bool inserting = false) const
 	{
 		// use linear probing to find the bucket
@@ -171,24 +173,25 @@ private:
 	
 	Bucket* allocate(uint32_t elements)
 	{
-		return MEMORY_NEW_ARRAY(Bucket, elements, core::memory::global_allocator());
+		return MEMORY_NEW_ARRAY(Bucket, elements, allocator);
 	}
 	
 	
 	void deallocate(Bucket* pointer)
 	{
-		MEMORY_DELETE_ARRAY(pointer, core::memory::global_allocator());
+		MEMORY_DELETE_ARRAY(pointer, allocator);
 	}
 
 public:
 	typedef std::pair<K, T> value_type;
 
 
-	HashSet(size_t initial_size = 16, uint32_t growth_factor = 2) :
+	HashSet(size_t initial_size = 16, uint32_t growth_factor = 2, Allocator& allocator_instance = core::memory::system_allocator()) :
 		table(nullptr),
 		table_size(initial_size),
 		used_items(0),
-		growth_factor(growth_factor)
+		growth_factor(growth_factor),
+		allocator(allocator_instance)
 	{
 		table = allocate(table_size);
 	}
@@ -272,7 +275,7 @@ public:
 
 	class Iterator
 	{
-		typedef HashSet<K, T, H> container_type;
+		typedef HashSet<K, T, H, Allocator> container_type;
 
 	private:
 		typename container_type::Bucket* table;
