@@ -497,8 +497,83 @@ return properties;\
 
 #define REFLECTION_PROPERTY(property) ClassProperty(#property, offsetof(reflection_class_type, property))
 
+#include <core/reflection.h>
+using namespace reflection;
 
 
+
+
+
+
+template <typename T>
+class TD;
+
+template <typename T>
+void foo(T& param)
+{
+	TD<T> t_type;
+	TD<decltype(param)> param_type;
+}
+
+// ---------------------------------------------------------------------
+// If
+// ---------------------------------------------------------------------
+template <bool condition, typename T, typename F>
+struct If;
+
+template <typename T, typename F>
+struct If<true, T, F>
+{
+	typedef T value;
+};
+
+template <typename T, typename F>
+struct If<false, T, F>
+{
+	typedef F value;
+};
+
+struct SerializerUnknown
+{
+	template <class Archive, class T>
+	static void serialize(Archive& ar, T& value)
+	{
+		assert(0);
+		fprintf(stdout, "serialize unknown\n");
+	}
+};
+
+struct SerializerClass
+{
+	template <class Archive, class T>
+	static void serialize(Archive& ar, T& value)
+	{
+		fprintf(stdout, "serialize class\n");
+		size_t version = 1;
+		value.serialize(ar, version);
+//		foo(value);
+	}
+};
+
+struct SerializerPOD
+{
+	template <class Archive, class T>
+	static void serialize(Archive& ar, T& value)
+	{
+		fprintf(stdout, "serialize pod\n");
+		ar.save(ar, value);
+	}
+};
+
+//struct SerializerProperty
+//{
+//	template <class Archive, class T>
+//	static void serialize(Archive& ar, ClassProperty<T>& property)
+//	{
+//		fprintf(stdout, "serialize property '%s', address: %p\n", property.name, property.address);
+//		ar & static_cast<T&>(*property.address);
+//	}
+//};
 
 template <class Archive>
 class Writer
@@ -511,14 +586,30 @@ public:
 	Boolean<false> is_loading;
 
 	template <class T>
+	void choose_category_serializer(T& value)
+	{
+		typedef typename \
+			If<get_type_category<T>() == TypeInfo_POD,
+				SerializerPOD,
+			typename \
+				If<get_type_category<T>() == TypeInfo_Class,
+					SerializerClass,
+				SerializerUnknown>
+			::value>
+		::value serializer;
+
+		serializer::template serialize<Archive, T>(*instance(), value);
+	}
+
+	template <class T>
 	Archive& operator<<(T& value)
 	{
-		instance()->save(*instance(), value);
+		instance()->choose_category_serializer(value);
 		return *instance();
 	}
 
 	template <class T>
-	Archive& operator& (const T& value)
+	Archive& operator& (T& value)
 	{
 		return *instance() << value;
 	}
@@ -528,9 +619,6 @@ public:
 		return static_cast<Archive*>(this);
 	}
 };
-
-#include <core/reflection.h>
-using namespace reflection;
 
 struct TestArchive : public Writer<TestArchive>
 {
@@ -567,37 +655,38 @@ struct TestArchive : public Writer<TestArchive>
 	}
 
 	template <class Archive>
-	void save(Archive& ar, const int& value)
+	void save(Archive& ar, int& value)
 	{
 		val = value;
 	}
 
 	template <class Archive>
-	void save(Archive& ar, const float& value)
+	void save(Archive& ar, float& value)
 	{
 		fl_value = value;
 	}
 
 	template <class Archive>
-	void save(Archive& ar, const bool& value)
+	void save(Archive& ar, bool& value)
 	{
 		val = value;
+	}
+
+	template <class Archive>
+	void save(Archive& ar, char& value)
+	{
+
 	}
 };
 
 
 
-
-template <typename T>
-class TD;
-
-template <typename T>
-void foo(T& param)
-{
-	TD<T> t_type;
-	TD<decltype(param)> param_type;
-}
-
+TYPEINFO_REGISTER_TYPE_CATEGORY(int, TypeInfo_POD);
+TYPEINFO_REGISTER_TYPE_CATEGORY(float, TypeInfo_POD);
+TYPEINFO_REGISTER_TYPE_CATEGORY(char, TypeInfo_POD);
+TYPEINFO_REGISTER_TYPE_CATEGORY(bool, TypeInfo_POD);
+TYPEINFO_REGISTER_TYPE_CATEGORY(unsigned char, TypeInfo_POD);
+TYPEINFO_REGISTER_TYPE_CATEGORY(size_t, TypeInfo_POD);
 
 struct Test
 {
@@ -611,14 +700,16 @@ struct Test
 	{
 //		fprintf(stdout, "serialize for test: %zu\n", offsetof(Test, value));
 
-		ar & TYPEINFO_PROPERTY(value);
-		ar & TYPEINFO_PROPERTY(precision);
+		ar & value;
+		ar & precision;
+//		ar & TYPEINFO_PROPERTY(value);
+//		ar & TYPEINFO_PROPERTY(precision);
 	}
 };
 
 TYPEINFO_REGISTER_TYPE_NAME(Test, Test);
 TYPEINFO_REGISTER_TYPE_INFO(Test);
-
+TYPEINFO_REGISTER_TYPE_CATEGORY(Test, TypeInfo_Class);
 
 struct Test2 : public Test
 {
@@ -631,14 +722,15 @@ struct Test2 : public Test
 	{
 		fprintf(stdout, "serialize for test2 \n");
 
-		ar & TYPEINFO_PROPERTY(test2_value);
+//		ar & TYPEINFO_PROPERTY(test2_value);
+		ar & test2_value;
 	}
 };
 
 TYPEINFO_REGISTER_TYPE_NAME(Test2, Test2);
 TYPEINFO_REGISTER_TYPE_INFO(Test2);
 TYPEINFO_REGISTER_TYPE_BASE(Test2, Test);
-
+TYPEINFO_REGISTER_TYPE_CATEGORY(Test2, TypeInfo_Class);
 
 struct Test3 : public Test2
 {
@@ -650,7 +742,8 @@ struct Test3 : public Test2
 	void serialize(Archive& ar, const size_t version)
 	{
 		fprintf(stdout, "serialize for test3\n");
-		ar & TYPEINFO_PROPERTY(test3_value);
+//		ar & TYPEINFO_PROPERTY(test3_value);
+		ar & test3_value;
 	}
 }; // Test3
 
@@ -658,23 +751,6 @@ TYPEINFO_REGISTER_TYPE_NAME(Test3, Test3);
 TYPEINFO_REGISTER_TYPE_INFO(Test3);
 TYPEINFO_REGISTER_TYPE_BASE(Test3, Test2);
 
-// ---------------------------------------------------------------------
-// If
-// ---------------------------------------------------------------------
-template <bool condition, typename T, typename F>
-struct If;
-
-template <typename T, typename F>
-struct If<true, T, F>
-{
-	typedef T value;
-};
-
-template <typename T, typename F>
-struct If<false, T, F>
-{
-	typedef F value;
-};
 
 
 
@@ -686,11 +762,23 @@ void test_serialization()
 	test.value = 32;
 	test.precision = 8.231f;
 
+//	writer << test;
+
+//	int value = 30;
+//	writer << value;
+//
+//	float fl_value = 3.0f;
+//	writer << fl_value;
+//
+//	char c = 'a';
+//	writer << c;
+
 	writer << test;
 
 //	Test temp;
 //	a >> temp;
 
+#if 0
 	// get type info using a static type
 	const reflection::TypeInfo* typeinfo = reflection::get_type_info<Test>();
 	fprintf(stdout, "type is: '%s'\n", typeinfo->type_identifier());
@@ -726,7 +814,7 @@ void test_serialization()
 		fprintf(stdout, "-> %s\n", curr->type_identifier());
 		curr = curr->get_base_type();
 	}
-
+#endif
 }
 
 // ---------------------------------------------------------------------

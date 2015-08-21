@@ -69,19 +69,50 @@ namespace reflection
 		}\
 	}
 
+#define TYPEINFO_REGISTER_TYPE_CATEGORY(T, C)\
+	namespace reflection\
+	{\
+		template <>\
+		constexpr reflection::TypeInfoCategory get_type_category<T>()\
+		{\
+			return reflection::C;\
+		}\
+	}
+
 #define TYPEINFO_PROPERTY(T)\
 	reflection::make_class_property(#T, &T)
 
 	// ---------------------------------------------------------------------
 	// TypeInfo
 	// ---------------------------------------------------------------------
+
+	enum TypeInfoCategory
+	{
+		TypeInfo_Invalid,
+		TypeInfo_POD,
+		TypeInfo_Class
+	};
+
 	class TypeInfo
 	{
 	public:
+		// string type identifier for this type
 		virtual const char* type_identifier() const = 0;
+
+		// verify this type is the same as other
 		virtual bool is_same_type(const TypeInfo* other) const = 0;
+
+		// verify this type is the same as a named identifier
 		virtual bool is_same_type(const char* identifier) const = 0;
+
+		// base (derived from) type; or nullptr
 		virtual const TypeInfo* get_base_type() const = 0;
+
+		// returns the TypeInfoCategory enum
+		virtual TypeInfoCategory get_category() const = 0;
+
+		// returns the size of the type
+		virtual size_t get_size() const = 0;
 	};
 
 	template <class T>
@@ -100,6 +131,12 @@ namespace reflection
 	const TypeInfo* get_base_type()
 	{
 		return nullptr;
+	}
+
+	template <class T>
+	constexpr TypeInfoCategory get_type_category()
+	{
+		return TypeInfo_Invalid;
 	}
 
 	template <class T>
@@ -124,6 +161,16 @@ namespace reflection
 		virtual const TypeInfo* get_base_type() const
 		{
 			return reflection::get_base_type<T>();
+		}
+
+		virtual TypeInfoCategory get_category() const
+		{
+			return reflection::get_type_category<T>();
+		}
+
+		virtual size_t get_size() const
+		{
+			return sizeof(T);
 		}
 	};
 
@@ -222,6 +269,4 @@ namespace reflection
 	{
 		return reflection::ClassProperty<T>(name, value);
 	}
-
-
 } // namespace reflection
