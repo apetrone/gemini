@@ -475,40 +475,14 @@ namespace traits
 }
 
 
-
-
-template <class T>
-class Archive
+template <bool C>
+struct Boolean
 {
-public:
-
-	template <class V>
-	Archive& operator<<(V& value)
-	{
-		loading = false;
-		instance()->Save(*instance(), value);
-		return *this;
-	}
-
-	template <class V>
-	Archive& operator>>(V& value)
-	{
-		loading = true;
-		instance()->Load(*instance(), value);
-		return *this;
-	}
-
-	bool is_loading() const { return loading; }
-
-private:
-	T* instance()
-	{
-		return static_cast<T*>(this);
-	}
-
-private:
-	bool loading;
+	static const bool value = C;
+	typedef bool value_type;
+	constexpr operator bool() const { return value; }
 };
+
 
 #define REFLECTION_BEGIN(class_name) static ClassProperty* reflection_fields(size_t& total_properties)\
 {\
@@ -523,21 +497,42 @@ return properties;\
 
 #define REFLECTION_PROPERTY(property) ClassProperty(#property, offsetof(reflection_class_type, property))
 
-struct ClassProperty
-{
-	const char* name;
-	size_t offset;
 
-	ClassProperty(
-		const char* property_name,
-		size_t property_offset) :
-		name(property_name),
-		offset(property_offset)
+
+
+template <class Archive>
+class Writer
+{
+protected:
+	Writer() {};
+
+public:
+	Boolean<true> is_saving;
+	Boolean<false> is_loading;
+
+	template <class T>
+	Archive& operator<<(T& value)
 	{
+		instance()->save(*instance(), value);
+		return *instance();
+	}
+
+	template <class T>
+	Archive& operator& (const T& value)
+	{
+		return *instance() << value;
+	}
+
+	Archive* instance()
+	{
+		return static_cast<Archive*>(this);
 	}
 };
 
-struct TestArchive : public Archive<TestArchive>
+#include <core/reflection.h>
+using namespace reflection;
+
+struct TestArchive : public Writer<TestArchive>
 {
 	int val;
 	float fl_value;
@@ -547,127 +542,121 @@ struct TestArchive : public Archive<TestArchive>
 		val = -1;
 	}
 
+
+
 	template <class Archive, class T>
-	void Save(Archive& ar, T& value)
+	void save(Archive& ar, const ClassProperty<T>& property)
+	{
+//		fprintf(stdout, "serialize property '%s', offset: %zu, address: %p\n", property.name, property.offset, property.address);
+		fprintf(stdout, "serialize property '%s', address: %p\n", property.name, property.address);
+		ar & static_cast<T&>(*property.address);
+	}
+
+	template <class Archive, class T>
+	void save(Archive& ar, T& value)
 	{
 		fprintf(stdout, "should save something\n");
 		value.serialize(ar, 1);
 	}
 
 	template <class Archive, class T>
-	void Load(Archive& ar, T& value)
+	void save(Archive& ar, const T& value)
 	{
-		fprintf(stdout, "should load something\n");
-		value.serialize(ar, 1);
-	}
-
-
-	// ---------------------------------------------------------------------
-	// write
-	// ---------------------------------------------------------------------
-
-	template <class Archive, class T>
-	TestArchive& write(Archive& ar, const ClassProperty& prop, T& value)
-	{
-		// nothing defined to handle this type
+		// Couldn't deduce the type.
 		assert(0);
-		return *this;
 	}
-
 
 	template <class Archive>
-	TestArchive& write(Archive& ar, const ClassProperty& prop, int& value)
+	void save(Archive& ar, const int& value)
 	{
 		val = value;
-		return *this;
 	}
 
 	template <class Archive>
-	TestArchive& write(Archive& ar, const ClassProperty& prop, float& value)
+	void save(Archive& ar, const float& value)
 	{
 		fl_value = value;
-		return *this;
-	}
-
-	// ---------------------------------------------------------------------
-	// read
-	// ---------------------------------------------------------------------
-
-	template <class Archive, class T>
-	TestArchive& read(Archive& ar, const ClassProperty& prop, T& value)
-	{
-		// nothing defined to handle this type
-		assert(0);
-		return *this;
 	}
 
 	template <class Archive>
-	TestArchive& read(Archive& ar, const ClassProperty& prop, int& value)
+	void save(Archive& ar, const bool& value)
 	{
-		value = val;
-		return *this;
-	}
-	
-	template <class Archive>
-	TestArchive& read(Archive& ar, const ClassProperty& prop, float& value)
-	{
-		value = fl_value;
-		return *this;
-	}
-
-
-	template <class T>
-	TestArchive& route(const ClassProperty& property, T& value)
-	{
-		fprintf(stdout, "name: %s\n", property.name);
-		fprintf(stdout, "offset: %zu\n", property.offset);
-		fprintf(stdout, "ptr: %p\n", &value);
-
-		if (is_loading())
-		{
-			read(*this, property, value);
-		}
-		else
-		{
-			write(*this, property, value);
-		}
-
-		return *this;
+		val = value;
 	}
 };
 
 
+
+
+template <typename T>
+class TD;
+
+template <typename T>
+void foo(T& param)
+{
+	TD<T> t_type;
+	TD<decltype(param)> param_type;
+}
+
+
 struct Test
 {
+	TYPEINFO_DECLARE_CLASS(Test);
+
 	int value;
 	float precision;
 
 	template <class Archive>
 	void serialize(Archive& ar, const size_t version)
 	{
-		fprintf(stdout, "serialize for test: %zu\n", offsetof(Test, value));
+//		fprintf(stdout, "serialize for test: %zu\n", offsetof(Test, value));
 
-		ar.route(ClassProperty("value", offsetof(Test, value)), value);
-		ar.route(ClassProperty("precision", offsetof(Test, precision)), precision);
+		ar & TYPEINFO_PROPERTY(value);
+		ar & TYPEINFO_PROPERTY(precision);
 	}
-
-//	REFLECTION_BEGIN(Test)
-//		REFLECTION_PROPERTY(value)
-//	REFLECTION_END()
 };
 
-struct Test2
+TYPEINFO_REGISTER_TYPE_NAME(Test, Test);
+TYPEINFO_REGISTER_TYPE_INFO(Test);
+
+
+struct Test2 : public Test
 {
-	int value;
+	TYPEINFO_DECLARE_CLASS(Test2);
+
+	int test2_value;
 
 	template <class Archive>
 	void serialize(Archive& ar, const size_t version)
 	{
 		fprintf(stdout, "serialize for test2 \n");
+
+		ar & TYPEINFO_PROPERTY(test2_value);
 	}
 };
 
+TYPEINFO_REGISTER_TYPE_NAME(Test2, Test2);
+TYPEINFO_REGISTER_TYPE_INFO(Test2);
+TYPEINFO_REGISTER_TYPE_BASE(Test2, Test);
 
+
+struct Test3 : public Test2
+{
+	TYPEINFO_DECLARE_CLASS(Test3);
+
+	int test3_value;
+
+	template <class Archive>
+	void serialize(Archive& ar, const size_t version)
+	{
+		fprintf(stdout, "serialize for test3\n");
+		ar & TYPEINFO_PROPERTY(test3_value);
+	}
+}; // Test3
+
+TYPEINFO_REGISTER_TYPE_NAME(Test3, Test3);
+TYPEINFO_REGISTER_TYPE_INFO(Test3);
+TYPEINFO_REGISTER_TYPE_BASE(Test3, Test2);
 
 // ---------------------------------------------------------------------
 // If
@@ -691,20 +680,52 @@ struct If<false, T, F>
 
 void test_serialization()
 {
-	TestArchive a;
+	TestArchive writer;
 
 	Test test;
 	test.value = 32;
 	test.precision = 8.231f;
 
-	a << test;
+	writer << test;
+
+//	Test temp;
+//	a >> temp;
+
+	// get type info using a static type
+	const reflection::TypeInfo* typeinfo = reflection::get_type_info<Test>();
+	fprintf(stdout, "type is: '%s'\n", typeinfo->type_identifier());
+	assert(typeinfo->is_same_type(typeinfo));
+	assert(typeinfo->is_same_type("Test"));
+
+	// get the type info using the qualified class name
+	const reflection::TypeInfo* ti = reflection::TypeRegistry::const_instance().get_type_info("Test");
+	assert(ti == typeinfo);
+
+	// get the type info using the instance
+	const reflection::TypeInfo* typeinfos = test.get_type_info();
+	assert(typeinfos == ti);
 
 
-	Test temp;
-	a >> temp;
+	// try a derived class
+	const reflection::TypeInfo* t2i = reflection::get_type_info<Test2>();
+	fprintf(stdout, "t2i is '%s'\n", t2i->type_identifier());
 
-//	assert(test.value == temp.value);
-	int z = 723;
+	const reflection::TypeInfo* baseclass = t2i->get_base_type();
+	assert(baseclass == typeinfo);
+
+	// try test3
+	Test3 test3;
+	const reflection::TypeInfo* t3i = test3.get_type_info();
+	assert(t3i);
+	assert(t3i->get_base_type() == t2i);
+
+	// try to walk the hierarchy
+	const reflection::TypeInfo* curr = t3i;
+	while(curr)
+	{
+		fprintf(stdout, "-> %s\n", curr->type_identifier());
+		curr = curr->get_base_type();
+	}
 
 }
 
