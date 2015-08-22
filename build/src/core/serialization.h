@@ -127,6 +127,52 @@ struct SerializerPOD
 //};
 
 
+
+struct CustomSerializerPOD
+{
+	template <class Archive, class T>
+	static void read(Archive& ar, T& value)
+	{
+		fprintf(stdout, "read POD!\n");
+	}
+
+	template <class Archive, class T>
+	static void write(Archive& ar, T& value)
+	{
+		fprintf(stdout, "write POD!\n");
+	}
+};
+
+struct CustomSerializer
+{
+	template <class Archive, class T>
+	static void read(Archive& ar, T& value)
+	{
+		fprintf(stdout, "read!\n");
+	}
+
+	template <class Archive, class T>
+	static void write(Archive& ar, T& value)
+	{
+		fprintf(stdout, "write!\n");
+	}
+};
+
+// It would be nice if this logic wasn't tied to a specific read or write operation
+// to avoid duplication of the logic.
+template <class Archive, class T>
+void choose_serializer(Archive& ar, T& value)
+{
+	typedef typename \
+		If<reflection::get_type_category<T>() == reflection::TypeInfo_POD,
+			CustomSerializerPOD,
+		CustomSerializer>::value serializer;
+
+	serializer::template read<Archive, T>(ar, value);
+}
+
+
+
 template <class Archive>
 class Writer
 {
@@ -191,16 +237,25 @@ public:
 	Boolean<false> is_saving;
 	Boolean<true> is_loading;
 
+
 	template <class T>
-	Archive& operator<<(T& value)
+	Archive& operator>>(T& value)
 	{
+		choose_serializer(*instance(), value);
 		return *instance();
 	}
 
 	template <class T>
 	Archive& operator& (T& value)
 	{
-		return *instance() << value;
+		return *instance() >> value;
+	}
+
+	template <class T>
+	Archive& operator>>(const reflection::ClassProperty<T>& property)
+	{
+		instance()->read_property(property);
+		return *instance();
 	}
 
 	Archive* instance()
@@ -210,7 +265,16 @@ public:
 };
 
 
-
+struct TestReader : public Reader<TestReader>
+{
+	template <class T>
+	void read_property(const reflection::ClassProperty<T>& property)
+	{
+		fprintf(stdout, "READ property '%s', address: %p\n", property.name, property.address);
+		T& value = static_cast<T&>(*property.address);
+		(*instance()) & value;
+	}
+};
 
 
 
@@ -271,7 +335,6 @@ struct TestArchive : public Writer<TestArchive>
 		T& value = static_cast<T&>(*property.address);
 		(*instance()) & value;
 	}
-
 };
 
 

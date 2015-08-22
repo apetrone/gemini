@@ -556,6 +556,7 @@ void test_serialization()
 	// as I go.
 
 	TestArchive writer;
+	TestReader reader;
 
 	Test test;
 	test.value = 32;
@@ -575,7 +576,8 @@ void test_serialization()
 //	writer << test;
 
 
-
+	int blah = 72;
+	reader >> make_class_property("blah", &blah);
 
 //	int value;
 //	writer << ClassProperty<int>("test", &value);
@@ -748,6 +750,29 @@ void test_util()
 
 #include <stack>
 
+
+class CustomJSONAllocator : public rapidjson::CrtAllocator
+{
+public:
+    static const bool kNeedFree = true;
+    void* Malloc(size_t size) { 
+        if (size) //  behavior of malloc(0) is implementation defined.
+            return std::malloc(size);
+        else
+            return NULL; // standardize to returning NULL.
+    }
+    void* Realloc(void* originalPtr, size_t originalSize, size_t newSize) {
+        (void)originalSize;
+        if (newSize == 0) {
+            std::free(originalPtr);
+            return NULL;
+        }
+        return std::realloc(originalPtr, newSize);
+    }
+    static void Free(void *ptr) { std::free(ptr); }
+};
+
+
 class JsonWriter : public Writer<JsonWriter>
 {
 private:
@@ -797,6 +822,39 @@ public:
 		return value;
 	}
 
+	template <class Archive>
+	rapidjson::Value get_value(Archive& ar, const ClassProperty<float>& property, float& input)
+	{
+		rapidjson::Value value(rapidjson::kNumberType);
+		value.SetInt(input);
+		return value;
+	}
+
+	template <class Archive>
+	rapidjson::Value get_value(Archive& ar, const ClassProperty<unsigned long>& property, unsigned long& input)
+	{
+		rapidjson::Value value(rapidjson::kNumberType);
+		value.SetInt64(input);
+		return value;
+	}
+
+	template <class Archive>
+	rapidjson::Value get_value(Archive& ar, const ClassProperty<bool>& property, bool& input)
+	{
+		rapidjson::Value value;
+		value.SetBool(input);
+		return value;
+	}
+
+	template <class Archive>
+	rapidjson::Value get_value(Archive& ar, const ClassProperty<const char*>& property, const char* input)
+	{
+		rapidjson::Value value;
+//		value.SetBool(input);
+		assert(0);
+		return value;
+	}
+
 	template <class T>
 	void save_property(const ClassProperty<T>& property, T& input)
 	{
@@ -807,7 +865,7 @@ public:
 	template <class T>
 	void write_property(const ClassProperty<T>& property)
 	{
-		fprintf(stdout, "serialize property '%s', address: %p\n", property.name, property.address);
+		fprintf(stdout, "WRITE property '%s', address: %p\n", property.name, property.address);
 		T& value = static_cast<T&>(*property.address);
 		instance()->save_property<T>(property, value);
 	}
@@ -854,10 +912,20 @@ void test_rapidjson()
 
 	JsonWriter jw;
 	int value = 30;
-
 	int temp = 75;
-	jw << make_class_property("value", &value);
-	jw << make_class_property("temp", &temp);
+	float precision = 7.25f;
+	size_t size = 0xffffffff;
+	size_t max_size = 0xffffffffffffffff;
+	bool nope = false;
+	const char name[] = "adam";
+
+//	jw << make_class_property("value", &value);
+//	jw << make_class_property("temp", &temp);
+//	jw << make_class_property("precision", &precision);
+//	jw << make_class_property("size", &size);
+//	jw << make_class_property("max_size", &max_size);
+//	jw << make_class_property("nope", &nope);
+	jw << make_class_property("name", &name);
 
 	jw.generate_document();
 	fprintf(stdout, "buffer: %s\n", jw.get_string());
