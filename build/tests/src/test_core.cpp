@@ -576,8 +576,8 @@ void test_serialization()
 //	writer << test;
 
 
-	int blah = 72;
-	reader >> make_class_property("blah", &blah);
+//	int blah = 72;
+//	reader >> make_class_property("blah", blah);
 
 //	int value;
 //	writer << ClassProperty<int>("test", &value);
@@ -805,7 +805,7 @@ public:
 	}
 
 	template <class Archive, class T>
-	rapidjson::Value get_value(Archive& ar, const ClassProperty<T>& property, T& input)
+	rapidjson::Value get_value(Archive& ar, const ClassProperty<T>& property)
 	{
 		rapidjson::Value value;
 
@@ -815,77 +815,73 @@ public:
 	}
 
 	template <class Archive>
-	rapidjson::Value get_value(Archive& ar, const ClassProperty<int>& property, int& input)
+	rapidjson::Value get_value(Archive& ar, const ClassProperty<int>& property)
 	{
 		rapidjson::Value value(rapidjson::kNumberType);
-		value.SetInt(input);
+		value.SetInt(property.ref);
 		return value;
 	}
 
 	template <class Archive>
-	rapidjson::Value get_value(Archive& ar, const ClassProperty<float>& property, float& input)
+	rapidjson::Value get_value(Archive& ar, const ClassProperty<float>& property)
 	{
 		rapidjson::Value value(rapidjson::kNumberType);
-		value.SetInt(input);
+		value.SetInt(property.ref);
 		return value;
 	}
 
 	template <class Archive>
-	rapidjson::Value get_value(Archive& ar, const ClassProperty<unsigned long>& property, unsigned long& input)
+	rapidjson::Value get_value(Archive& ar, const ClassProperty<unsigned long>& property)
 	{
 		rapidjson::Value value(rapidjson::kNumberType);
-		value.SetInt64(input);
+		value.SetInt64(property.ref);
 		return value;
 	}
 
 	template <class Archive>
-	rapidjson::Value get_value(Archive& ar, const ClassProperty<bool>& property, bool& input)
+	rapidjson::Value get_value(Archive& ar, const ClassProperty<bool>& property)
 	{
 		rapidjson::Value value;
-		value.SetBool(input);
+		value.SetBool(property.ref);
 		return value;
 	}
 
 	template <class Archive>
-	rapidjson::Value get_value(Archive& ar, const ClassProperty<const char*>& property, const char* input)
+	rapidjson::Value get_value(Archive& ar, const ClassProperty<const char*>& property)
 	{
 		rapidjson::Value value;
-//		value.SetBool(input);
-		assert(0);
+		value.SetString(property.ref, core::str::len(property.ref));
 		return value;
 	}
 
 	template <class T>
-	void save_property(const ClassProperty<T>& property, T& input)
+	void save_property(const ClassProperty<T>& property)
 	{
-		rapidjson::Value val = get_value(*instance(), property, input);
+		rapidjson::Value val = get_value(*instance(), property);
 		doc.AddMember(rapidjson::StringRef(property.name), val, doc.GetAllocator());
 	}
 
 	template <class T>
 	void write_property(const ClassProperty<T>& property)
 	{
-		fprintf(stdout, "WRITE property '%s', address: %p\n", property.name, property.address);
-		T& value = static_cast<T&>(*property.address);
-		instance()->save_property<T>(property, value);
+		fprintf(stdout, "WRITE property '%s', address: %p\n", property.name, &property.ref);
+		instance()->save_property<T>(property);
 	}
 };
 
-
-
 void test_rapidjson()
 {
-	const char* json = R"(
-		{
-			"name": "adam",
-			"value": 3.25
-		}
-	)";
+//	const char* json = R"(
+//		{
+//			"name": "adam",
+//			"value": 3.25
+//		}
+//	)";
 
 	using namespace rapidjson;
 
 	Document doc;
-	Document::AllocatorType& allocator = doc.GetAllocator();
+//	Document::AllocatorType& allocator = doc.GetAllocator();
 
 
 //	doc.Parse(json);
@@ -919,13 +915,13 @@ void test_rapidjson()
 	bool nope = false;
 	const char name[] = "adam";
 
-//	jw << make_class_property("value", &value);
-//	jw << make_class_property("temp", &temp);
-//	jw << make_class_property("precision", &precision);
-//	jw << make_class_property("size", &size);
-//	jw << make_class_property("max_size", &max_size);
-//	jw << make_class_property("nope", &nope);
-	jw << make_class_property("name", &name);
+	jw << make_class_property("value", value);
+	jw << make_class_property("temp", temp);
+	jw << make_class_property("precision", precision);
+	jw << make_class_property("size", size);
+	jw << make_class_property("max_size", max_size);
+	jw << make_class_property("nope", nope);
+	jw << make_class_property("name", name);
 
 	jw.generate_document();
 	fprintf(stdout, "buffer: %s\n", jw.get_string());

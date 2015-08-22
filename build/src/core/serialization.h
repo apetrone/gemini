@@ -270,9 +270,8 @@ struct TestReader : public Reader<TestReader>
 	template <class T>
 	void read_property(const reflection::ClassProperty<T>& property)
 	{
-		fprintf(stdout, "READ property '%s', address: %p\n", property.name, property.address);
-		T& value = static_cast<T&>(*property.address);
-		(*instance()) & value;
+		fprintf(stdout, "READ property '%s', address: %p\n", property.name, &property.ref);
+		(*instance()) & property.ref;
 	}
 };
 
