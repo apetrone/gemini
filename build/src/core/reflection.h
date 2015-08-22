@@ -80,7 +80,7 @@ namespace reflection
 	}
 
 #define TYPEINFO_PROPERTY(T)\
-	reflection::make_class_property(#T, &T)
+	reflection::make_class_property(#T, T)
 
 	// ---------------------------------------------------------------------
 	// TypeInfo
@@ -253,21 +253,38 @@ namespace reflection
 	struct ClassProperty
 	{
 		const char* name;
-		T* address;
+		T& ref;
 
-		ClassProperty(
-					  const char* property_name,
-					  T* value) :
+		ClassProperty(const char* property_name, T& value) :
 			name(property_name),
-			address(value)
+			ref(value)
+		{
+		}
+	};
+
+	template <>
+	struct ClassProperty<const char*>
+	{
+		const char* name;
+		const char* ref;
+
+		ClassProperty(const char* property_name, const char* value) :
+			name(property_name),
+			ref(value)
 		{
 		}
 	};
 
 	template <class T>
-	const reflection::ClassProperty<T> make_class_property(const char* name, T* value)
+	const reflection::ClassProperty<T> make_class_property(const char* name, T value)
 	{
 		return reflection::ClassProperty<T>(name, value);
+	}
+
+	template <>
+	const reflection::ClassProperty<const char*> make_class_property(const char* name, const char* value)
+	{
+		return reflection::ClassProperty<const char*>(name, value);
 	}
 
 	// ---------------------------------------------------------------------
