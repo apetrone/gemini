@@ -546,6 +546,15 @@ TYPEINFO_REGISTER_TYPE_BASE(Test3, Test2);
 
 void test_serialization()
 {
+	// The impetus behind writing serialization has to do with the UI code
+	// I would like to define a layout in JSON and then read that back in
+	// to create the interface panels.
+
+	// There's a bit of a learning curve, but it's healthy.
+	// I will start simple to begin with and serialize POD types first.
+	// Then, I'll move on and create data structures and try to clean up
+	// as I go.
+
 	TestArchive writer;
 
 	Test test;
