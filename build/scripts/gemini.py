@@ -26,6 +26,7 @@ COMMON_PROJECT_ROOT = "_projects"
 libglm = Dependency(file="glm.py")
 librecastnavigation = Dependency(file="recastnavigation.py")
 libfreetype = Dependency(file="freetype.py")
+rapidjson = Dependency(file="rapidjson.py")
 
 def setup_common_variables(arguments, target_platform, product):
 	product.sources += [
@@ -410,7 +411,8 @@ def get_libcore(arguments, target_platform):
 	]
 
 	libcore.dependencies += [
-		Dependency(file="glm.py")
+		Dependency(file="glm.py"),
+		rapidjson
 	]
 
 	return libcore
@@ -851,11 +853,11 @@ def create_unit_test(arguments, name, dependencies, source, output_type = Produc
 
 def get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, libglm, libui, **kwargs):
 	return [
-		create_unit_test(arguments, "test_core", [libcore, libglm], "tests/src/test_core.cpp"),
-		create_unit_test(arguments, "test_platform", [librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_platform.cpp"),
-		create_unit_test(arguments, "test_runtime", [libruntime, libui, libplatform, libcore, libglm], "tests/src/test_runtime.cpp"),
-		create_unit_test(arguments, "test_render", [librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
-		create_unit_test(arguments, "test_ui", [librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application)
+		create_unit_test(arguments, "test_core", [rapidjson, libcore, libglm], "tests/src/test_core.cpp"),
+		create_unit_test(arguments, "test_platform", [rapidjson, librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_platform.cpp"),
+		create_unit_test(arguments, "test_runtime", [rapidjson, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_runtime.cpp"),
+		create_unit_test(arguments, "test_render", [rapidjson, libfreetype, librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
+		create_unit_test(arguments, "test_ui", [rapidjson, libfreetype, librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application)
 	]
 
 def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
@@ -913,11 +915,12 @@ def get_orion(arguments, libui, libruntime, libplatform, libcore, librenderer, *
 	setup_common_tool(orion)
 
 	orion.dependencies.extend([
-		libplatform,
-		libcore,
-		librenderer,
+		libfreetype,
+		libui,
 		libruntime,
-		libui
+		librenderer,
+		libplatform,
+		libcore
 	])
 
 	orion.sources += [

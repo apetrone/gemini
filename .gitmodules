@@ -34,3 +34,6 @@
 [submodule "build/dependencies/stb"]
 	path = build/dependencies/stb
 	url = git://github.com/nothings/stb
+[submodule "build/dependencies/rapidjson"]
+	path = build/dependencies/rapidjson
+	url = https://github.com/miloyip/rapidjson
