@@ -575,11 +575,12 @@ struct SerializerPOD
 //	}
 //};
 
+
 template <class Archive>
 class Writer
 {
 protected:
-	Writer() {};
+	Writer() {}
 
 public:
 	Boolean<true> is_saving;
@@ -614,11 +615,54 @@ public:
 		return *instance() << value;
 	}
 
+
+	template <class T>
+	Archive& operator<<(const ClassProperty<T>& property)
+	{
+		instance()->write_property(property);
+		return *instance();
+	}
+
 	Archive* instance()
 	{
 		return static_cast<Archive*>(this);
 	}
 };
+
+
+template <class Archive>
+class Reader
+{
+protected:
+	Reader() {}
+
+public:
+	Boolean<false> is_saving;
+	Boolean<true> is_loading;
+
+	template <class T>
+	Archive& operator<<(T& value)
+	{
+		return *instance();
+	}
+
+	template <class T>
+	Archive& operator& (T& value)
+	{
+		return *instance() << value;
+	}
+
+	Archive* instance()
+	{
+		return static_cast<Archive*>(this);
+	}
+};
+
+
+
+
+
+
 
 struct TestArchive : public Writer<TestArchive>
 {
@@ -630,15 +674,6 @@ struct TestArchive : public Writer<TestArchive>
 		val = -1;
 	}
 
-
-
-	template <class Archive, class T>
-	void save(Archive& ar, const ClassProperty<T>& property)
-	{
-//		fprintf(stdout, "serialize property '%s', offset: %zu, address: %p\n", property.name, property.offset, property.address);
-		fprintf(stdout, "serialize property '%s', address: %p\n", property.name, property.address);
-		ar & static_cast<T&>(*property.address);
-	}
 
 	template <class Archive, class T>
 	void save(Archive& ar, T& value)
@@ -677,6 +712,15 @@ struct TestArchive : public Writer<TestArchive>
 	{
 
 	}
+
+	template <class T>
+	void write_property(const ClassProperty<T>& property)
+	{
+		fprintf(stdout, "serialize property '%s', address: %p\n", property.name, property.address);
+		T& value = static_cast<T&>(*property.address);
+		(*instance()) & value;
+	}
+
 };
 
 
@@ -699,10 +743,7 @@ struct Test
 	void serialize(Archive& ar, const size_t version)
 	{
 //		fprintf(stdout, "serialize for test: %zu\n", offsetof(Test, value));
-
-		ar & value;
-		ar & precision;
-//		ar & TYPEINFO_PROPERTY(value);
+		ar & TYPEINFO_PROPERTY(value);
 //		ar & TYPEINFO_PROPERTY(precision);
 	}
 };
@@ -753,6 +794,24 @@ TYPEINFO_REGISTER_TYPE_BASE(Test3, Test2);
 
 
 
+template <class T>
+struct TypeConstructor
+{
+	static T* Construct()
+	{
+		return new T();
+	}
+};
+
+template <class T>
+struct TypeDestructor
+{
+	static void Destruct(T*& pointer)
+	{
+		delete pointer;
+		pointer = 0;
+	}
+};
 
 void test_serialization()
 {
@@ -773,7 +832,13 @@ void test_serialization()
 //	char c = 'a';
 //	writer << c;
 
-	writer << test;
+//	writer << test;
+
+
+
+
+//	int value;
+//	writer << ClassProperty<int>("test", &value);
 
 //	Test temp;
 //	a >> temp;
@@ -815,7 +880,17 @@ void test_serialization()
 		curr = curr->get_base_type();
 	}
 #endif
+
+
+
+
+//	int* p = TypeConstructor<int>::Construct();
+//	*p = 72;
+
+//	TypeDestructor<int>::Destruct(p);
 }
+
+
 
 // ---------------------------------------------------------------------
 // StackString
@@ -924,6 +999,139 @@ void test_util()
 
 	value = util::random_range(0.0f, 1.0f);
 	TEST_VERIFY(0.0f <= value && value <= 1.0f, random_range4);
+}
+
+#include <rapidjson/document.h>
+#include <rapidjson/writer.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/prettywriter.h>
+
+#include <stack>
+
+class JsonWriter : public Writer<JsonWriter>
+{
+private:
+	rapidjson::Document doc;
+	rapidjson::StringBuffer buffer;
+
+	std::stack<rapidjson::Value> object_stack;
+public:
+
+	JsonWriter()
+	{
+		doc.SetObject();
+	}
+
+	~JsonWriter()
+	{
+		generate_document();
+	}
+
+	void generate_document()
+	{
+		buffer.Clear();
+		rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+		doc.Accept(writer);
+	}
+
+	const char* get_string()
+	{
+		return buffer.GetString();
+	}
+
+	template <class Archive, class T>
+	rapidjson::Value get_value(Archive& ar, const ClassProperty<T>& property, T& input)
+	{
+		rapidjson::Value value;
+
+		assert(0);
+
+		return value;
+	}
+
+	template <class Archive>
+	rapidjson::Value get_value(Archive& ar, const ClassProperty<int>& property, int& input)
+	{
+		rapidjson::Value value(rapidjson::kNumberType);
+		value.SetInt(input);
+		return value;
+	}
+
+	template <class T>
+	void save_property(const ClassProperty<T>& property, T& input)
+	{
+		rapidjson::Value val = get_value(*instance(), property, input);
+		doc.AddMember(rapidjson::StringRef(property.name), val, doc.GetAllocator());
+	}
+
+	template <class T>
+	void write_property(const ClassProperty<T>& property)
+	{
+		fprintf(stdout, "serialize property '%s', address: %p\n", property.name, property.address);
+		T& value = static_cast<T&>(*property.address);
+		instance()->save_property<T>(property, value);
+	}
+};
+
+
+
+void test_rapidjson()
+{
+	const char* json = R"(
+		{
+			"name": "adam",
+			"value": 3.25
+		}
+	)";
+
+	using namespace rapidjson;
+
+	Document doc;
+	Document::AllocatorType& allocator = doc.GetAllocator();
+
+
+//	doc.Parse(json);
+//	assert(!doc.HasParseError());
+//
+//	if (doc.HasMember("groups"))
+//	{
+//		Value& name = doc["groups"];
+//		assert(!name.IsNull());
+//	}
+
+//	doc.SetObject();
+//	Value value;
+//	value.SetInt(30);
+//	doc.AddMember("value", value, allocator);
+//	StringBuffer buffer;
+//	WriterType writer(buffer);
+//	doc.Accept(writer);
+//	fprintf(stdout, "%s\n", buffer.GetString());
+
+
+
+
+
+	JsonWriter jw;
+	int value = 30;
+
+	int temp = 75;
+	jw << make_class_property("value", &value);
+	jw << make_class_property("temp", &temp);
+
+	jw.generate_document();
+	fprintf(stdout, "buffer: %s\n", jw.get_string());
+
+//	Value obj(kArrayType);
+//	doc.AddMember("groups", obj, allocator);
+
+#if 0
+	typedef rapidjson::Writer<StringBuffer> WriterType;
+#else
+	typedef rapidjson::PrettyWriter<StringBuffer> WriterType;
+#endif
+
+
 }
 
 int main(int, char**)

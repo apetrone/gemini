@@ -265,7 +265,7 @@ namespace reflection
 	};
 
 	template <class T>
-	reflection::ClassProperty<T> make_class_property(const char* name, T* value)
+	const reflection::ClassProperty<T> make_class_property(const char* name, T* value)
 	{
 		return reflection::ClassProperty<T>(name, value);
 	}
