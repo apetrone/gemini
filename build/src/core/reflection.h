@@ -269,4 +269,27 @@ namespace reflection
 	{
 		return reflection::ClassProperty<T>(name, value);
 	}
+
+	// ---------------------------------------------------------------------
+	// TypeConstructor / TypeDestructor
+	// ---------------------------------------------------------------------
+
+	template <class T>
+	struct TypeConstructor
+	{
+		static T* Construct()
+		{
+			return new T();
+		}
+	};
+
+	template <class T>
+	struct TypeDestructor
+	{
+		static void Destruct(T*& pointer)
+		{
+			delete pointer;
+			pointer = 0;
+		}
+	};
 } // namespace reflection
