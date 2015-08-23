@@ -808,9 +808,7 @@ public:
 	rapidjson::Value get_value(Archive& ar, const ClassProperty<T>& property)
 	{
 		rapidjson::Value value;
-
 		assert(0);
-
 		return value;
 	}
 
@@ -854,6 +852,28 @@ public:
 		return value;
 	}
 
+	template <class Archive>
+	rapidjson::Value get_value(Archive& ar, const ClassProperty<char*>& property)
+	{
+		rapidjson::Value value;
+		value.SetString(property.ref, core::str::len(property.ref));
+		return value;
+	}
+
+	template <class Archive, class T>
+	rapidjson::Value get_value(Archive& ar, const ClassProperty< Array<T> >& property)
+	{
+		rapidjson::Value value;
+
+		size_t array_size = property.ref.size();
+		ar & make_class_property("size", array_size);
+
+		for (auto& item : property.ref)
+			ar << item;
+
+		return value;
+	}
+
 	template <class T>
 	void save_property(const ClassProperty<T>& property)
 	{
@@ -866,6 +886,64 @@ public:
 	{
 		fprintf(stdout, "WRITE property '%s', address: %p\n", property.name, &property.ref);
 		instance()->save_property<T>(property);
+	}
+
+
+
+
+
+	template <class Archive, class T>
+	void save(Archive& ar, T value)
+	{
+		fprintf(stdout, "should save something\n");
+		value.serialize(ar, 1);
+	}
+
+	template <class Archive, class T>
+	void save(Archive& ar, const T& value)
+	{
+		// Couldn't deduce the type.
+		assert(0);
+	}
+
+	template <class Archive>
+	void save(Archive& ar, int& value)
+	{
+		rapidjson::Value val;
+		val.SetInt(value);
+		doc.AddMember("value", val, doc.GetAllocator());
+	}
+
+	template <class Archive>
+	void save(Archive& ar, float& value)
+	{
+//		fl_value = value;
+	}
+
+	template <class Archive>
+	void save(Archive& ar, bool& value)
+	{
+//		val = value;
+	}
+
+	template <class Archive>
+	void save(Archive& ar, char& value)
+	{
+
+	}
+
+	template <class Archive>
+	void save(Archive& ar, char* value)
+	{
+		save(ar, (const char*)value);
+	}
+
+	template <class Archive>
+	void save(Archive& ar, const char* value)
+	{
+		rapidjson::Value v;
+		v.SetString(value, core::str::len(value));
+		doc.AddMember("value", v, doc.GetAllocator());
 	}
 };
 
@@ -914,17 +992,31 @@ void test_rapidjson()
 	size_t max_size = 0xffffffffffffffff;
 	bool nope = false;
 	const char name[] = "adam";
+	char* pepper = new char[12];
+	memset(pepper, 0, 12);
+	strcpy(pepper, "pepper");
 
-	jw << make_class_property("value", value);
-	jw << make_class_property("temp", temp);
-	jw << make_class_property("precision", precision);
-	jw << make_class_property("size", size);
-	jw << make_class_property("max_size", max_size);
-	jw << make_class_property("nope", nope);
-	jw << make_class_property("name", name);
+
+	Array<int> arr;
+	arr.push_back(12);
+
+	jw << value;
+	jw << name;
+	jw << pepper;
+//	jw << make_class_property("value", value);
+//	jw << make_class_property("temp", temp);
+//	jw << make_class_property("precision", precision);
+//	jw << make_class_property("size", size);
+//	jw << make_class_property("max_size", max_size);
+//	jw << make_class_property("nope", nope);
+//	jw << make_class_property("name", name);
+//	jw << make_class_property("pepper", pepper);
+//	jw << make_class_property("values", arr);
 
 	jw.generate_document();
 	fprintf(stdout, "buffer: %s\n", jw.get_string());
+
+	delete [] pepper;
 
 //	Value obj(kArrayType);
 //	doc.AddMember("groups", obj, allocator);
