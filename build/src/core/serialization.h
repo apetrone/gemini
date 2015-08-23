@@ -87,7 +87,7 @@ struct If<false, T, F>
 struct SerializerUnknown
 {
 	template <class Archive, class T>
-	static void serialize(Archive& ar, T& value)
+	static void serialize(Archive& ar, T value)
 	{
 		assert(0);
 		fprintf(stdout, "serialize unknown\n");
@@ -184,7 +184,7 @@ public:
 	Boolean<false> is_loading;
 
 	template <class T>
-	void choose_category_serializer(T& value)
+	void choose_category_serializer(T value)
 	{
 		typedef typename \
 			If<reflection::get_type_category<T>() == reflection::TypeInfo_POD,
@@ -344,7 +344,8 @@ TYPEINFO_REGISTER_TYPE_CATEGORY(char, TypeInfo_POD);
 TYPEINFO_REGISTER_TYPE_CATEGORY(bool, TypeInfo_POD);
 TYPEINFO_REGISTER_TYPE_CATEGORY(unsigned char, TypeInfo_POD);
 TYPEINFO_REGISTER_TYPE_CATEGORY(size_t, TypeInfo_POD);
-
+TYPEINFO_REGISTER_TYPE_CATEGORY(char*, TypeInfo_POD);
+TYPEINFO_REGISTER_TYPE_CATEGORY(const char*, TypeInfo_POD);
 
 
 //namespace serialization
