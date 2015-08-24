@@ -945,7 +945,176 @@ public:
 		v.SetString(value, core::str::len(value));
 		doc.AddMember("value", v, doc.GetAllocator());
 	}
+
+	template <class Archive>
+	void save(Archive& ar, size_t& value)
+	{
+		rapidjson::Value val;
+		val.SetInt64(value);
+		doc.AddMember("value", val, doc.GetAllocator());
+	}
 };
+
+
+// declaration
+template <class T, class... P0toN>
+struct is_one_of;
+
+// case when no matches due to empty list
+template <class T>
+struct is_one_of<T> : std::false_type {};
+
+// case which matches the first item
+template <class T, class... P1toN>
+struct is_one_of<T, T, P1toN...> : std::true_type {};
+
+// specialization which recognizes mismatch; calls recursively
+template <class T, class P0, class... P1toN>
+struct is_one_of<T, P0, P1toN...> : is_one_of<T, P1toN...> {};
+
+// usage: 
+//	bool istype = is_one_of<int, float, size_t, double, int>::value;
+
+
+class JsonReader : public Reader<JsonReader>
+{
+public:
+
+	rapidjson::Document doc;
+
+	JsonReader(const char* json)
+	{
+		doc.Parse(json);
+		assert(!doc.HasParseError());
+	}
+
+
+
+	template <class T>
+	void read_property(const reflection::ClassProperty<T>& property)
+	{
+		fprintf(stdout, "READ property '%s', address: %p\n", property.name, &property.ref);
+		(*instance()) & property.ref;
+	}
+
+
+
+
+
+
+
+
+	template <class Archive, class T>
+	void save(Archive& ar, T value)
+	{
+		fprintf(stdout, "should save something\n");
+		value.serialize(ar, 1);
+	}
+
+	template <class Archive, class T>
+	void save(Archive& ar, const T& value)
+	{
+		// Couldn't deduce the type.
+		assert(0);
+	}
+
+	template <class Archive>
+	void save(Archive& ar, int& value)
+	{
+//		rapidjson::Value val;
+//		val.SetInt(value);
+//		doc.AddMember("value", val, doc.GetAllocator());
+		if (doc.HasMember("value"))
+		{
+			rapidjson::Value& v = doc["value"];
+			assert(v.IsInt());
+			value = v.GetInt();
+		}
+	}
+
+	template <class Archive>
+	void save(Archive& ar, float& value)
+	{
+//		fl_value = value;
+	}
+
+	template <class Archive>
+	void save(Archive& ar, bool& value)
+	{
+//		val = value;
+	}
+
+	template <class Archive>
+	void save(Archive& ar, char& value)
+	{
+
+	}
+
+	template <class Archive>
+	void save(Archive& ar, char* value)
+	{
+		save(ar, (const char*)value);
+	}
+
+	template <class Archive>
+	void save(Archive& ar, const char* value)
+	{
+//		rapidjson::Value v;
+//		v.SetString(value, core::str::len(value));
+//		doc.AddMember("value", v, doc.GetAllocator());
+	}
+
+	template <class Archive>
+	void save(Archive& ar, size_t& value)
+	{
+	}
+
+
+};
+
+//#define MYCUSTOMCLASS_EXTERNAL_SERIALIZER
+
+struct MyCustomClass
+{
+	TYPEINFO_DECLARE_CLASS(MyCustomClass);
+
+	int temperature;
+
+
+#ifndef MYCUSTOMCLASS_EXTERNAL_SERIALIZER
+	template <class Archive>
+	void serialize(Archive& ar, size_t version)
+	{
+		fprintf(stdout, "MyCustomClass.serialize\n");
+	}
+#endif
+};
+
+TYPEINFO_REGISTER_TYPE_INFO(MyCustomClass);
+TYPEINFO_REGISTER_TYPE_CATEGORY(MyCustomClass, TypeInfo_Class);
+
+#ifdef MYCUSTOMCLASS_EXTERNAL_SERIALIZER
+template <class Archive>
+void serialize(Archive& ar, MyCustomClass& value)
+{
+	fprintf(stdout, "serialize MyCustomClass (external)\n");
+}
+
+template <>
+struct SerializerTypeSelector<MyCustomClass>
+{
+	static constexpr SerializerType value = SerializerTypeExternal;
+};
+
+template <>
+struct SerializerTypeSelector<MyCustomClass*>
+{
+	static constexpr SerializerType value = SerializerTypeExternal;
+};
+#endif
+
+
+
 
 void test_rapidjson()
 {
@@ -955,6 +1124,9 @@ void test_rapidjson()
 //			"value": 3.25
 //		}
 //	)";
+
+
+
 
 	using namespace rapidjson;
 
@@ -982,7 +1154,9 @@ void test_rapidjson()
 
 
 
-
+	int integer = 42;
+	float vals[] = {0.0f, 1.2f, 3.2f, 25.452f};
+	MyCustomClass klass;
 
 	JsonWriter jw;
 	int value = 30;
