@@ -27,6 +27,10 @@
 #include "typedefs.h"
 #include "mem.h"
 
+
+#include <type_traits>
+
+
 namespace reflection
 {
 	// ---------------------------------------------------------------------
@@ -81,6 +85,31 @@ namespace reflection
 
 #define TYPEINFO_PROPERTY(T)\
 	reflection::make_class_property(#T, T)
+
+
+namespace traits
+{
+	template <class T>
+	constexpr bool is_pod(T)
+	{
+		return std::is_pod<T>::value;
+	}
+
+
+	template <class T>
+	constexpr bool is_polymorphic(T)
+	{
+		return std::is_polymorphic<T>::value;
+	}
+
+	template <class T>
+	constexpr bool is_pointer(T)
+	{
+		return std::is_pointer<T>::value;
+	}
+}
+
+
 
 	// ---------------------------------------------------------------------
 	// TypeInfo

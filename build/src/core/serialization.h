@@ -33,27 +33,6 @@
 // Serialization
 // ---------------------------------------------------------------------
 
-#include <type_traits>
-
-
-namespace traits
-{
-	template <class T>
-	constexpr bool is_pod(T)
-	{
-		return std::is_pod<T>::value;
-	}
-
-
-	template <class T>
-	constexpr bool is_polymorphic(T)
-	{
-		return std::is_polymorphic<T>::value;
-	}
-
-
-}
-
 
 template <bool C>
 struct Boolean
@@ -66,10 +45,28 @@ struct Boolean
 
 
 
+//template <bool b>
+//using bool_constant = std::integral_constant<bool, b>;
+
+
+// Taking a note from cereal; I want to support internal and external serializers
+enum SerializerType
+{
+	SerializerTypeUnknown,
+	SerializerTypeInternal,
+	SerializerTypeExternal
+};
+
+
+// It would also be very flexible if we could support a single 'serialize'
+// function or a separate load/save pair. Cereal also supports this.
+
 // ---------------------------------------------------------------------
 // If
 // ---------------------------------------------------------------------
-template <bool condition, typename T, typename F>
+// We could also use std::conditional; but I like Walter E. Brown's naming
+// better, so I've re-created it here.
+template <bool, typename, typename>
 struct If;
 
 template <typename T, typename F>
@@ -84,6 +81,16 @@ struct If<false, T, F>
 	typedef F value;
 };
 
+
+template <class T>
+struct SerializerTypeSelector
+{
+	static constexpr SerializerType value = SerializerTypeInternal;
+};
+
+
+
+
 struct SerializerUnknown
 {
 	template <class Archive, class T>
@@ -97,7 +104,7 @@ struct SerializerUnknown
 struct SerializerClass
 {
 	template <class Archive, class T>
-	static void serialize(Archive& ar, T& value)
+	static void serialize(Archive& ar, T value)
 	{
 		fprintf(stdout, "serialize class\n");
 		size_t version = 1;
@@ -113,6 +120,15 @@ struct SerializerPOD
 	{
 		fprintf(stdout, "serialize pod\n");
 		ar.save(ar, value);
+	}
+};
+
+struct SerializeCString
+{
+	template <class Archive>
+	static void serialize(Archive& ar, const char* value)
+	{
+		fprintf(stdout, "serialize cstring\n");
 	}
 };
 
@@ -158,20 +174,143 @@ struct CustomSerializer
 	}
 };
 
-// It would be nice if this logic wasn't tied to a specific read or write operation
-// to avoid duplication of the logic.
-template <class Archive, class T>
-void choose_serializer(Archive& ar, T& value)
+template <class Archive, class T, size_t N>
+void choose_category_serializer(Archive& ar, T(&value)[N])
 {
-	typedef typename \
-		If<reflection::get_type_category<T>() == reflection::TypeInfo_POD,
-			CustomSerializerPOD,
-		CustomSerializer>::value serializer;
-
-	serializer::template read<Archive, T>(ar, value);
+	fprintf(stdout, "wtf\n");
+	assert(0);
 }
 
 
+template <class Archive, class T>
+void choose_category_serializer(Archive& ar, T value)
+{
+	typedef typename \
+		If<reflection::get_type_category<T>() == reflection::TypeInfo_POD,
+			SerializerPOD,
+		typename \
+			If<reflection::get_type_category<T>() == reflection::TypeInfo_Class,
+				SerializerClass,
+			SerializerUnknown>
+		::value>
+	::value serializer;
+
+	serializer::template serialize<Archive, T>(ar, value);
+}
+
+
+struct SerializeRouterPointer
+{
+	template <class Archive, class T>
+	static void choose_serializer(Archive& ar, T value)
+	{
+		fprintf(stdout, "choose serialize for a pointer\n");
+	}
+};
+
+
+struct SerializeRouterNonPointer
+{
+	template <class Archive, class T>
+	static void choose_serializer(Archive& ar, T value)
+	{
+		fprintf(stdout, "choose a serializer for a non-pointer\n");
+		choose_category_serializer(ar, value);
+	}
+};
+
+
+
+struct SerializeInternalPointer
+{
+	template <class Archive, class T>
+	static void route(Archive& ar, T* value)
+	{
+		value->serialize(ar, 1);
+	}
+};
+
+struct SerializeInternalReference
+{
+	template <class Archive, class T>
+	static void route(Archive& ar, T value)
+	{
+		SerializeInternalPointer::template route<Archive, T>(ar, &value);
+	}
+};
+
+
+
+
+struct SerializeExternalPointer
+{
+	template <class Archive, class T>
+	static void route(Archive& ar, T* value)
+	{
+		serialize(ar, *value);
+	}
+};
+
+struct SerializeExternalReference
+{
+	template <class Archive, class T>
+	static void route(Archive& ar, T value)
+	{
+		SerializeExternalPointer::template route<Archive, T>(ar, &value);
+	}
+};
+
+
+struct SerializerTypeRouterInternal
+{
+	template <class Archive, class T>
+	static void route_type(Archive& ar, T value)
+	{
+		fprintf(stdout, "serialize internal\n");
+		typedef typename If<std::is_pointer<T>::value,
+			SerializeInternalPointer,
+		SerializeInternalReference>::value RouterTest;
+
+		RouterTest::template route(ar, value);
+	}
+};
+
+struct SerializerTypeRouterExternal
+{
+	template <class Archive, class T>
+	static void route_type(Archive& ar, T value)
+	{
+		fprintf(stdout, "serialize external\n");
+		typedef typename If<std::is_pointer<T>::value,
+			SerializeExternalPointer,
+		SerializeExternalReference>::value RouterTest;
+
+		RouterTest::template route(ar, value);
+	}
+};
+
+
+
+template <class Archive, class T>
+void route_serializer(Archive& ar, T value)
+{
+//	typedef typename \
+//		If<std::is_pointer<T>::value,
+//			SerializeRouterPointer,
+//	SerializeRouterNonPointer>::value router;
+//
+//	router::template choose_serializer<Archive, T>(ar, value);
+
+
+	typedef typename \
+		If<SerializerTypeSelector<T>::value == SerializerTypeInternal,
+			SerializerTypeRouterInternal,
+			SerializerTypeRouterExternal
+		>::value type_selector;
+
+
+	type_selector::route_type(ar, value);
+}
 
 template <class Archive>
 class Writer
@@ -184,30 +323,37 @@ public:
 	Boolean<false> is_loading;
 
 	template <class T>
-	void choose_category_serializer(T value)
+	Archive& operator<<(const T* value)
 	{
-		typedef typename \
-			If<reflection::get_type_category<T>() == reflection::TypeInfo_POD,
-				SerializerPOD,
-			typename \
-				If<reflection::get_type_category<T>() == reflection::TypeInfo_Class,
-					SerializerClass,
-				SerializerUnknown>
-			::value>
-		::value serializer;
+		route_serializer(*instance(), value);
+		return *instance();
+	}
 
-		serializer::template serialize<Archive, T>(*instance(), value);
+	template <class T>
+	Archive& operator<<(const T& value)
+	{
+		assert(0);
+		choose_category_serializer(*instance(), value);
+		return *instance();
 	}
 
 	template <class T>
 	Archive& operator<<(T& value)
 	{
-		instance()->choose_category_serializer(value);
+		route_serializer(*instance(), value);
 		return *instance();
 	}
 
 	template <class T>
-	Archive& operator& (T& value)
+	Archive& operator<<(T* value)
+	{
+		route_serializer(*instance(), value);
+		return *instance();
+	}
+
+
+	template <class T>
+	Archive& operator& (T value)
 	{
 		return *instance() << value;
 	}
@@ -241,7 +387,7 @@ public:
 	template <class T>
 	Archive& operator>>(T& value)
 	{
-		choose_serializer(*instance(), value);
+		choose_category_serializer(*instance(), value);
 		return *instance();
 	}
 
@@ -335,7 +481,6 @@ struct TestArchive : public Writer<TestArchive>
 		(*instance()) & value;
 	}
 };
-
 
 
 TYPEINFO_REGISTER_TYPE_CATEGORY(int, TypeInfo_POD);
