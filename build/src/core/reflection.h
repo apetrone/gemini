@@ -54,6 +54,38 @@ namespace reflection
 				return #N;\
 			}\
 		};\
+		template <>\
+		struct TypeIdentifier<T&>\
+		{\
+			static const char* get_type_identifier()\
+			{\
+				return #N"&";\
+			}\
+		};\
+		template <>\
+		struct TypeIdentifier<T*>\
+		{\
+			static const char* get_type_identifier()\
+			{\
+				return #N"*";\
+			}\
+		};\
+		template <>\
+		struct TypeIdentifier<const T*>\
+		{\
+			static const char* get_type_identifier()\
+			{\
+				return "const "#N"*";\
+			}\
+		};\
+		template <>\
+		struct TypeIdentifier<const T&>\
+		{\
+			static const char* get_type_identifier()\
+			{\
+				return "const "#N"&";\
+			}\
+		};\
 	}
 
 #define TYPEINFO_REGISTER_TYPE_INFO(T)\
@@ -77,10 +109,10 @@ namespace reflection
 	namespace reflection\
 	{\
 		template <>\
-		constexpr reflection::TypeInfoCategory get_type_category<T>()\
+		struct TypeCategory<T>\
 		{\
-			return reflection::C;\
-		}\
+			static const TypeInfoCategory value = reflection::C;\
+		};\
 	}
 
 #define TYPEINFO_PROPERTY(T)\
@@ -90,23 +122,16 @@ namespace reflection
 namespace traits
 {
 	template <class T>
-	constexpr bool is_pod(T)
-	{
-		return std::is_pod<T>::value;
-	}
-
+	using is_pod = std::is_pod<T>;
 
 	template <class T>
-	constexpr bool is_polymorphic(T)
-	{
-		return std::is_polymorphic<T>::value;
-	}
+	using is_polymorphic = std::is_polymorphic<T>;
 
 	template <class T>
-	constexpr bool is_pointer(T)
-	{
-		return std::is_pointer<T>::value;
-	}
+	using is_pointer = std::is_pointer<T>;
+
+	template <class T>
+	using is_class = std::is_class<T>;
 }
 
 
@@ -163,10 +188,10 @@ namespace traits
 	}
 
 	template <class T>
-	constexpr TypeInfoCategory get_type_category()
+	struct TypeCategory
 	{
-		return TypeInfo_Invalid;
-	}
+		static const TypeInfoCategory value = TypeInfo_Invalid;
+	};
 
 	template <class T>
 	class TypeInfoInstance : public TypeInfo
@@ -194,7 +219,7 @@ namespace traits
 
 		virtual TypeInfoCategory get_category() const
 		{
-			return reflection::get_type_category<T>();
+			return reflection::TypeCategory<T>::value;
 		}
 
 		virtual size_t get_size() const
@@ -339,3 +364,16 @@ namespace traits
 		}
 	};
 } // namespace reflection
+
+
+TYPEINFO_REGISTER_TYPE_NAME(char, char);
+TYPEINFO_REGISTER_TYPE_NAME(unsigned char, unsigned char);
+
+TYPEINFO_REGISTER_TYPE_NAME(short, short);
+TYPEINFO_REGISTER_TYPE_NAME(unsigned short, unsigned short);
+
+TYPEINFO_REGISTER_TYPE_NAME(int, int);
+TYPEINFO_REGISTER_TYPE_NAME(unsigned int, unsigned int);
+
+TYPEINFO_REGISTER_TYPE_NAME(float, float);
+TYPEINFO_REGISTER_TYPE_NAME(double, double);

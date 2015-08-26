@@ -555,9 +555,6 @@ void test_serialization()
 	// Then, I'll move on and create data structures and try to clean up
 	// as I go.
 
-	TestArchive writer;
-	TestReader reader;
-
 	Test test;
 	test.value = 32;
 	test.precision = 8.231f;
@@ -779,7 +776,7 @@ private:
 	rapidjson::Document doc;
 	rapidjson::StringBuffer buffer;
 
-	std::stack<rapidjson::Value> object_stack;
+	std::stack<rapidjson::Value*> object_stack;
 public:
 
 	JsonWriter()
@@ -807,15 +804,13 @@ public:
 	template <class Archive, class T>
 	rapidjson::Value get_value(Archive& ar, const ClassProperty<T>& property)
 	{
-		rapidjson::Value value;
 		assert(0);
-		return value;
 	}
 
 	template <class Archive>
 	rapidjson::Value get_value(Archive& ar, const ClassProperty<int>& property)
 	{
-		rapidjson::Value value(rapidjson::kNumberType);
+		rapidjson::Value value;
 		value.SetInt(property.ref);
 		return value;
 	}
@@ -823,15 +818,23 @@ public:
 	template <class Archive>
 	rapidjson::Value get_value(Archive& ar, const ClassProperty<float>& property)
 	{
-		rapidjson::Value value(rapidjson::kNumberType);
-		value.SetInt(property.ref);
+		rapidjson::Value value;
+		value.SetDouble(property.ref);
+		return value;
+	}
+
+	template <class Archive>
+	rapidjson::Value get_value(Archive& ar, const ClassProperty<double>& property)
+	{
+		rapidjson::Value value;
+		value.SetDouble(property.ref);
 		return value;
 	}
 
 	template <class Archive>
 	rapidjson::Value get_value(Archive& ar, const ClassProperty<unsigned long>& property)
 	{
-		rapidjson::Value value(rapidjson::kNumberType);
+		rapidjson::Value value;
 		value.SetInt64(property.ref);
 		return value;
 	}
@@ -864,7 +867,6 @@ public:
 	rapidjson::Value get_value(Archive& ar, const ClassProperty< Array<T> >& property)
 	{
 		rapidjson::Value value;
-
 		size_t array_size = property.ref.size();
 		ar & make_class_property("size", array_size);
 
@@ -877,8 +879,11 @@ public:
 	template <class T>
 	void save_property(const ClassProperty<T>& property)
 	{
-		rapidjson::Value val = get_value(*instance(), property);
-		doc.AddMember(rapidjson::StringRef(property.name), val, doc.GetAllocator());
+		rapidjson::Value* value = object_stack.top();
+		assert(value->IsObject());
+		
+		rapidjson::Value prop = get_value(*instance(), property);
+		value->AddMember(rapidjson::StringRef(property.name), prop, doc.GetAllocator());
 	}
 
 	template <class T>
@@ -888,9 +893,52 @@ public:
 		instance()->save_property<T>(property);
 	}
 
+	void begin_object()
+	{
+		rapidjson::Value* value = new rapidjson::Value(rapidjson::kObjectType);
+		value->SetObject();
+		object_stack.push(value);
+	}
+
+	void end_object()
+	{
+		object_stack.pop();
+	}
 
 
+	template <class T>
+	void begin_property(const ClassProperty<T>& property)
+	{
+		fprintf(stdout, "BEGIN property '%s', address: %p\n", property.name, &property.ref);
+	}
 
+	template <class T>
+	void end_property(const ClassProperty<T>& property)
+	{
+		fprintf(stdout, "END property '%s', address: %p\n", property.name, &property.ref);
+	}
+
+	template <class Archive, class T>
+	void begin_class(Archive& ar, T& value)
+	{
+		const reflection::TypeInfo* info = value.get_type_info();
+
+		begin_object();
+		rapidjson::Value* node = object_stack.top();
+		assert(node->IsObject());
+
+		fprintf(stdout, "begin class: %s\n", info->type_identifier());
+	}
+
+	template <class Archive, class T>
+	void end_class(Archive& ar, T& value)
+	{
+		fprintf(stdout, "end class\n");
+
+		rapidjson::Value* node = object_stack.top();
+		doc.AddMember("object", *node, doc.GetAllocator());
+		end_object();
+	}
 
 	template <class Archive, class T>
 	void save(Archive& ar, T value)
@@ -907,7 +955,7 @@ public:
 	}
 
 	template <class Archive>
-	void save(Archive& ar, int& value)
+	void save(Archive& ar, const int& value)
 	{
 		rapidjson::Value val;
 		val.SetInt(value);
@@ -915,27 +963,21 @@ public:
 	}
 
 	template <class Archive>
-	void save(Archive& ar, float& value)
+	void save(Archive& ar, const float& value)
 	{
 //		fl_value = value;
 	}
 
 	template <class Archive>
-	void save(Archive& ar, bool& value)
+	void save(Archive& ar, const bool& value)
 	{
 //		val = value;
 	}
 
 	template <class Archive>
-	void save(Archive& ar, char& value)
+	void save(Archive& ar, const char& value)
 	{
 
-	}
-
-	template <class Archive>
-	void save(Archive& ar, char* value)
-	{
-		save(ar, (const char*)value);
 	}
 
 	template <class Archive>
@@ -947,7 +989,7 @@ public:
 	}
 
 	template <class Archive>
-	void save(Archive& ar, size_t& value)
+	void save(Archive& ar, const size_t& value)
 	{
 		rapidjson::Value val;
 		val.SetInt64(value);
@@ -1076,28 +1118,51 @@ public:
 
 struct MyCustomClass
 {
+	MyCustomClass() :
+		temperature(0),
+		x(0.0f),
+		y(0.0f),
+		z(0.0f)
+	{
+	}
+
 	TYPEINFO_DECLARE_CLASS(MyCustomClass);
 
 	int temperature;
-
+	float x, y, z;
+	glm::vec3 pos;
 
 #ifndef MYCUSTOMCLASS_EXTERNAL_SERIALIZER
 	template <class Archive>
 	void serialize(Archive& ar, size_t version)
 	{
 		fprintf(stdout, "MyCustomClass.serialize\n");
+		ar << make_class_property("temperature", temperature);
+		ar << TYPEINFO_PROPERTY(x);
+		ar << TYPEINFO_PROPERTY(y);
+		ar << TYPEINFO_PROPERTY(z);
+//		ar << TYPEINFO_PROPERTY(pos);
 	}
 #endif
 };
 
-TYPEINFO_REGISTER_TYPE_INFO(MyCustomClass);
-TYPEINFO_REGISTER_TYPE_CATEGORY(MyCustomClass, TypeInfo_Class);
+#define SERIALIZATION_REGISTER_TYPE(T)\
+	TYPEINFO_REGISTER_TYPE_INFO(T);\
+	TYPEINFO_REGISTER_TYPE_CATEGORY(T, TypeInfo_Class);\
+	TYPEINFO_REGISTER_TYPE_NAME(T, T)
+
+//TYPEINFO_REGISTER_TYPE_INFO(MyCustomClass);
+//TYPEINFO_REGISTER_TYPE_CATEGORY(MyCustomClass, TypeInfo_Class);
+//TYPEINFO_REGISTER_TYPE_NAME(MyCustomClass, MyCustomClass);
+SERIALIZATION_REGISTER_TYPE(MyCustomClass);
+
 
 #ifdef MYCUSTOMCLASS_EXTERNAL_SERIALIZER
 template <class Archive>
 void serialize(Archive& ar, MyCustomClass& value)
 {
 	fprintf(stdout, "serialize MyCustomClass (external)\n");
+	ar & TYPEINFO_PROPERTY(temperature);
 }
 
 template <>
@@ -1114,6 +1179,21 @@ struct SerializerTypeSelector<MyCustomClass*>
 #endif
 
 
+template <class T>
+void dunk(T && head)
+{
+	// prologue
+	fprintf(stdout, "type: %s\n", reflection::TypeIdentifier<T>::get_type_identifier());
+		// serialize (head)
+	// epilogue
+}
+
+template <class T, class ... Types>
+void dunk(T && head, Types && ... tail)
+{
+	dunk(head);
+	dunk(tail ... );
+}
 
 
 void test_rapidjson()
@@ -1125,8 +1205,10 @@ void test_rapidjson()
 //		}
 //	)";
 
-
-
+//	const int a = 30;
+//	float* b;
+//	char c;
+//	dunk(a, b, c);
 
 	using namespace rapidjson;
 
@@ -1154,7 +1236,7 @@ void test_rapidjson()
 
 
 
-	int integer = 42;
+	int integer = 123;
 	float vals[] = {0.0f, 1.2f, 3.2f, 25.452f};
 	MyCustomClass klass;
 
@@ -1170,13 +1252,33 @@ void test_rapidjson()
 	memset(pepper, 0, 12);
 	strcpy(pepper, "pepper");
 
+	int listo[4] = {0, 1, 2, 3};
 
 	Array<int> arr;
 	arr.push_back(12);
 
-	jw << value;
-	jw << name;
-	jw << pepper;
+
+
+	klass.temperature = 42;
+	klass.x = 32.725f;
+	klass.y = 71.112f;
+	klass.z = 1.05f;
+
+//	jw << integer;
+//	jw << vals;
+	jw << klass;
+//	jw << &klass;
+//	jw << listo;
+//	jw << value;
+//	jw << temp;
+//	jw << precision;
+//	jw << size;
+//	jw << max_size;
+//	jw << nope;
+//	jw << name;
+//	jw << pepper;
+
+
 //	jw << make_class_property("value", value);
 //	jw << make_class_property("temp", temp);
 //	jw << make_class_property("precision", precision);
@@ -1187,10 +1289,36 @@ void test_rapidjson()
 //	jw << make_class_property("pepper", pepper);
 //	jw << make_class_property("values", arr);
 
+
+
+
+
+
+
+
+
+
+
+
+
 	jw.generate_document();
-	fprintf(stdout, "buffer: %s\n", jw.get_string());
+	const char* json = jw.get_string();
+	fprintf(stdout, "buffer: %s\n", json);
 
 	delete [] pepper;
+
+
+//	JsonReader reader(json);
+//
+//	value = -1;
+//
+//	reader >> value;
+
+
+
+
+
+
 
 //	Value obj(kArrayType);
 //	doc.AddMember("groups", obj, allocator);
@@ -1208,20 +1336,22 @@ int main(int, char**)
 {
 	core::memory::startup();
 
-	test_argumentparser();
-	test_array();
-	test_color();
-	test_datastream();
-	test_fixedarray();
-	test_fixedsizequeue();
-	test_hashset();
-	test_circularbuffer();
-	test_mathlib();
-	test_memory();
-	test_serialization();
-	test_stackstring();
-	test_str();
-	test_util();
+//	test_argumentparser();
+//	test_array();
+//	test_color();
+//	test_datastream();
+//	test_fixedarray();
+//	test_fixedsizequeue();
+//	test_hashset();
+//	test_circularbuffer();
+//	test_mathlib();
+//	test_memory();
+//	test_serialization();
+//	test_stackstring();
+//	test_str();
+//	test_util();
+
+	test_rapidjson();
 
 	core::memory::shutdown();
 
