@@ -43,9 +43,77 @@
 #include <ui/graph.h>
 #include <ui/button.h>
 
+
+
+#include <core/threadsafequeue.h>
+
+
 #include <assert.h>
 
 using namespace renderer;
+
+#define USE_SERIAL 1
+
+#if USE_SERIAL
+platform::Serial* _serial_device = nullptr;
+platform::Thread _thread_data;
+
+
+int poll_data = 1;
+
+struct nunchuck_packet
+{
+	int8_t joyx;
+	int8_t joyy;
+	int8_t cbutton;
+	int8_t zbutton;
+
+	bool is_null() const
+	{
+		return (joyx == 0 && joyy == 0 && cbutton == 0 && zbutton == 0);
+	}
+
+//	void clamp()
+//	{
+//		float temp = joyx;
+//		joyx = glm::clamp(temp, -127.0f, 127.0f);
+//
+//		temp = joyy;
+//		joyy = glm::clamp(temp, -127.0f, 127.0f);
+//	}
+};
+
+ThreadSafeQueue<nunchuck_packet> _message_queue;
+
+
+void data_thread(void* context)
+{
+	fprintf(stdout, "data_thread enter\n");
+
+
+
+	while (poll_data)
+	{
+		const size_t PACKET_SIZE = 4*128;
+		uint8_t buffer[PACKET_SIZE];
+		memset(buffer, 0, sizeof(PACKET_SIZE));
+
+		int bytes_read = platform::serial_read(_serial_device, buffer, PACKET_SIZE);
+//		fprintf(stdout, "bytes_read = %i\n", bytes_read);
+		if (bytes_read >= 4)
+		{
+			nunchuck_packet* packet = reinterpret_cast<nunchuck_packet*>(buffer);
+//			fprintf(stdout, "-> %i %i %i %i\n", packet->joyx, packet->joyy, packet->cbutton, packet->zbutton);
+			_message_queue.enqueue(*packet);
+		}
+	}
+	fprintf(stdout, "data_thread exit\n");
+}
+
+
+#endif
+
+
 
 // ---------------------------------------------------------------------
 // gui
@@ -399,6 +467,147 @@ namespace experimental
 	}
 } // namespace experimental
 
+
+
+class ControllerTestPanel : public gui::Panel
+{
+
+	glm::vec2 mins;
+	glm::vec2 maxs;
+
+	glm::vec2 last;
+
+
+	int flags;
+public:
+	ControllerTestPanel(gui::Panel* root) : gui::Panel(root)
+	{
+		mins = glm::vec2(-127, -127);
+		maxs = glm::vec2(127, 127);
+
+		last.x = 0;
+		last.y = 0;
+
+		flags = 0;
+	}
+
+
+	void set_x(float value)
+	{
+		last.x = value;
+	}
+
+	void set_y(float value)
+	{
+		last.y = value;
+	}
+
+
+	void set_cbutton(int value)
+	{
+		if (value)
+		{
+			flags |= 2;
+		}
+		else
+		{
+			flags &= ~2;
+		}
+	}
+
+	void set_zbutton(int value)
+	{
+		if (value)
+		{
+			flags |= 1;
+		}
+		else
+		{
+			flags &= ~1;
+		}
+	}
+
+	virtual bool can_move() const { return true; }
+
+	virtual void update(gui::Compositor* compositor, const gui::TimeState& timestate)
+	{
+
+
+
+
+		gui::Panel::update(compositor, timestate);
+	}
+
+
+	virtual void render(gui::Rect& frame, gui::Compositor* compositor, gui::Renderer* renderer, gui::Style* style)
+	{
+		render_commands.reset();
+		render_commands.add_rectangle(
+			geometry[0],
+			geometry[1],
+			geometry[2],
+			geometry[3],
+			0,
+			background_color);
+
+
+		glm::vec2 framesize(frame.width(), frame.height());
+		glm::vec2 center = geometry[0] + (framesize / 2.0f);
+		glm::vec2 start = center;
+		glm::vec2 end = center + last;
+
+		// draw the joystick vector
+		render_commands.add_line(start, end, gui::Color(255, 0, 0), 3.0f);
+
+
+
+
+		// render the outline
+		gui::Color color(0, 0, 0);
+
+
+		gui::Color c_down(0, 255, 255);
+		gui::Color z_down(255, 128, 0);
+
+		if (flags & 2)
+			color = c_down;
+		else if (flags & 1)
+			color = z_down;
+
+		render_commands.add_line(geometry[0], gui::Point(geometry[0].x+frame.width(), geometry[0].y), color, 4.0f);
+		render_commands.add_line(gui::Point(geometry[0].x+frame.width(), geometry[0].y), geometry[0] + framesize, color, 4.0f);
+
+//
+//		if (this->background != 0)
+//		{
+////			renderer->draw_textured_bounds(frame, this->background);
+//			render_commands.add_rectangle(
+//				geometry[0],
+//				geometry[1],
+//				geometry[2],
+//				geometry[3],
+//				this->background,
+//				gui::Color(255, 255, 255, 255)
+//			);
+//		}
+//
+		compositor->queue_commandlist(&render_commands);
+//
+//		for(PanelVector::iterator it = children.begin(); it != children.end(); ++it)
+//		{
+//			Panel* child = (*it);
+//			if (child->is_visible())
+//			{
+//				child->render(child->bounds, compositor, renderer, style);
+//			}
+//		}
+
+//		gui::Panel::render(frame, compositor, renderer, style);
+	} // render
+};
+
+
+
 // ---------------------------------------------------------------------
 // TestUi
 // ---------------------------------------------------------------------
@@ -413,6 +622,7 @@ class TestUi : public kernel::IKernel,
 	gui::Panel* root;
 	gui::Graph* graph;
 	experimental::GUIRenderer renderer;
+	ControllerTestPanel* ctp;
 
 	glm::mat4 modelview_matrix;
 	glm::mat4 projection_matrix;
@@ -506,6 +716,10 @@ public:
 		graph->enable_baseline(true, 16.6f, gui::Color(255, 0, 255, 255));
 
 
+		ctp = new ControllerTestPanel(root);
+		ctp->set_bounds(0, 0, 300, 300);
+		ctp->set_background_color(gui::Color(80, 80, 80));
+
 //		gui::Panel* panel = new gui::Panel(root);
 //		panel->set_bounds(width-250, 0, 250, 100);
 //		panel->set_background_color(gui::Color(60, 60, 60, 255));
@@ -565,7 +779,20 @@ public:
 
 		platform::window::startup(platform::window::RenderingBackend_Default);
 
+#if USE_SERIAL
+		const char* serial_device = "/dev/cu.usbmodem1d151311";
+		const size_t baud = 57600;
+		_serial_device = platform::serial_open(serial_device, baud);
+		if (!_serial_device)
+		{
+			LOGW("unable to open serial device\n");
+		}
+		else
+		{
+			platform::thread_create(_thread_data, data_thread, 0);
+		}
 
+#endif
 
 		size_t total_displays = platform::window::screen_count();
 		PLATFORM_LOG(platform::LogMessageType::Info, "-> total screens: %lu\n", total_displays);
@@ -722,6 +949,21 @@ public:
 		if (rot > 360)
 			rot -= 360.0f;
 
+
+#if USE_SERIAL
+		// process the queue
+		while(_message_queue.size() > 0)
+		{
+			nunchuck_packet packet = _message_queue.dequeue();
+			fprintf(stdout, "<- %i %i %i %i\n", packet.joyx, packet.joyy, packet.cbutton, packet.zbutton);
+			ctp->set_x(packet.joyx);
+			ctp->set_y(-packet.joyy);
+			ctp->set_cbutton(packet.cbutton);
+			ctp->set_zbutton(packet.zbutton);
+		}
+#endif
+
+
 		// update the gui
 		compositor->update(kernel::parameters().framedelta_seconds);
 
@@ -762,6 +1004,16 @@ public:
 
 	virtual void shutdown()
 	{
+		poll_data = 0;
+		platform::thread_join(_thread_data);
+
+		if (_serial_device)
+		{
+			platform::serial_close(_serial_device);
+		}
+
+
+
 		// shutdown/destroy the gui
 		delete compositor;
 
