@@ -329,17 +329,23 @@ namespace traits
 		}
 	};
 
+//	template <class T>
+//	const reflection::ClassProperty<T> make_class_property(const char* name, T value)
+//	{
+//		return reflection::ClassProperty<T>(name, value);
+//	}
+
 	template <class T>
-	const reflection::ClassProperty<T> make_class_property(const char* name, T value)
+	const reflection::ClassProperty<T> make_class_property(const char* name, const T& value)
 	{
-		return reflection::ClassProperty<T>(name, value);
+		return reflection::ClassProperty<T>(name, const_cast<T&>(value));
 	}
 
-	template <>
-	const reflection::ClassProperty<const char*> make_class_property(const char* name, const char* value)
-	{
-		return reflection::ClassProperty<const char*>(name, value);
-	}
+//	template <>
+//	const reflection::ClassProperty<const char*> make_class_property(const char* name, const char* value)
+//	{
+//		return reflection::ClassProperty<const char*>(name, value);
+//	}
 
 	// ---------------------------------------------------------------------
 	// TypeConstructor / TypeDestructor

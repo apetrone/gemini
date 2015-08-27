@@ -102,6 +102,12 @@ struct SerializerTypeSelector
 	static constexpr SerializerType value = SerializerTypeInternal;
 };
 
+#define SERIALIZATION_REGISTER_TYPE_EXTERNAL(T)\
+		template <>\
+		struct SerializerTypeSelector<T>\
+		{\
+			static constexpr SerializerType value = SerializerTypeExternal;\
+		};\
 
 
 
@@ -368,12 +374,12 @@ public:
 	Boolean<true> is_saving;
 	Boolean<false> is_loading;
 
-	template <class T>
-	Archive& operator<<(const T* value)
-	{
-		route_serializer(*instance(), value);
-		return *instance();
-	}
+//	template <class T>
+//	Archive& operator<<(const T* value)
+//	{
+//		route_serializer(*instance(), const_cast<T*>(value));
+//		return *instance();
+//	}
 
 	template <class T>
 	Archive& operator<<(const T& value)
@@ -409,7 +415,7 @@ public:
 	Archive& operator<<(const reflection::ClassProperty<T>& property)
 	{
 		instance()->begin_property(property);
-		instance()->write_property(property);
+		route_serializer(*instance(), const_cast<T&>(property.ref));
 		instance()->end_property(property);
 		return *instance();
 	}
