@@ -782,15 +782,23 @@ public:
 	JsonWriter()
 	{
 		doc.SetObject();
+		begin_object();
 	}
 
 	~JsonWriter()
 	{
-		generate_document();
 	}
 
 	void generate_document()
 	{
+		rapidjson::Value* object = object_stack.top();
+		size_t stacksize = object_stack.size();
+		fprintf(stdout, "stack size final: %zu\n", stacksize);
+		assert(object_stack.size() == 1);
+		doc.AddMember("object", *object, doc.GetAllocator());
+		end_object();
+
+
 		buffer.Clear();
 		rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
 		doc.Accept(writer);
@@ -801,80 +809,6 @@ public:
 		return buffer.GetString();
 	}
 
-	template <class Archive, class T>
-	rapidjson::Value get_value(Archive& ar, const ClassProperty<T>& property)
-	{
-		assert(0);
-	}
-
-	template <class Archive>
-	rapidjson::Value get_value(Archive& ar, const ClassProperty<int>& property)
-	{
-		rapidjson::Value value;
-		value.SetInt(property.ref);
-		return value;
-	}
-
-	template <class Archive>
-	rapidjson::Value get_value(Archive& ar, const ClassProperty<float>& property)
-	{
-		rapidjson::Value value;
-		value.SetDouble(property.ref);
-		return value;
-	}
-
-	template <class Archive>
-	rapidjson::Value get_value(Archive& ar, const ClassProperty<double>& property)
-	{
-		rapidjson::Value value;
-		value.SetDouble(property.ref);
-		return value;
-	}
-
-	template <class Archive>
-	rapidjson::Value get_value(Archive& ar, const ClassProperty<unsigned long>& property)
-	{
-		rapidjson::Value value;
-		value.SetInt64(property.ref);
-		return value;
-	}
-
-	template <class Archive>
-	rapidjson::Value get_value(Archive& ar, const ClassProperty<bool>& property)
-	{
-		rapidjson::Value value;
-		value.SetBool(property.ref);
-		return value;
-	}
-
-	template <class Archive>
-	rapidjson::Value get_value(Archive& ar, const ClassProperty<const char*>& property)
-	{
-		rapidjson::Value value;
-		value.SetString(property.ref, core::str::len(property.ref));
-		return value;
-	}
-
-	template <class Archive>
-	rapidjson::Value get_value(Archive& ar, const ClassProperty<char*>& property)
-	{
-		rapidjson::Value value;
-		value.SetString(property.ref, core::str::len(property.ref));
-		return value;
-	}
-
-	template <class Archive, class T>
-	rapidjson::Value get_value(Archive& ar, const ClassProperty< Array<T> >& property)
-	{
-		rapidjson::Value value;
-		size_t array_size = property.ref.size();
-		ar & make_class_property("size", array_size);
-
-		for (auto& item : property.ref)
-			ar << item;
-
-		return value;
-	}
 
 	template <class T>
 	void save_property(const ClassProperty<T>& property)
@@ -886,23 +820,25 @@ public:
 		value->AddMember(rapidjson::StringRef(property.name), prop, doc.GetAllocator());
 	}
 
-	template <class T>
-	void write_property(const ClassProperty<T>& property)
-	{
-		fprintf(stdout, "WRITE property '%s', address: %p\n", property.name, &property.ref);
-		instance()->save_property<T>(property);
-	}
-
-	void begin_object()
+	rapidjson::Value* begin_object()
 	{
 		rapidjson::Value* value = new rapidjson::Value(rapidjson::kObjectType);
-		value->SetObject();
 		object_stack.push(value);
+		size_t stacksize = object_stack.size();
+		fprintf(stdout, "begin_object: %zu\n", stacksize);
+		return value;
+	}
+
+	rapidjson::Value* get_top()
+	{
+		return object_stack.top();
 	}
 
 	void end_object()
 	{
 		object_stack.pop();
+		size_t stacksize = object_stack.size();
+		fprintf(stdout, "end_object: %zu\n", stacksize);
 	}
 
 
@@ -910,34 +846,52 @@ public:
 	void begin_property(const ClassProperty<T>& property)
 	{
 		fprintf(stdout, "BEGIN property '%s', address: %p\n", property.name, &property.ref);
+		rapidjson::Value* nextprop = begin_object();
+
+		const reflection::TypeInfoCategory category = reflection::TypeCategory<T>::value;
+		assert(category != reflection::TypeInfo_Invalid);
+
+		if (category == reflection::TypeInfo_Class)
+		{
+			fprintf(stdout, "-> subobject!\n");
+			nextprop->SetObject();
+		}
 	}
 
 	template <class T>
 	void end_property(const ClassProperty<T>& property)
 	{
 		fprintf(stdout, "END property '%s', address: %p\n", property.name, &property.ref);
+		rapidjson::Value* value = object_stack.top();
+		end_object();
+
+		rapidjson::Value* root = object_stack.top();
+		assert(root != &doc);
+
+		root->AddMember(rapidjson::StringRef(property.name), *value, doc.GetAllocator());
 	}
 
 	template <class Archive, class T>
 	void begin_class(Archive& ar, T& value)
 	{
-		const reflection::TypeInfo* info = value.get_type_info();
-
-		begin_object();
-		rapidjson::Value* node = object_stack.top();
-		assert(node->IsObject());
+//		const reflection::TypeInfo* info = value.get_type_info();
+		const reflection::TypeInfo* info = reflection::get_type_info<T>();
+		assert(info);
 
 		fprintf(stdout, "begin class: %s\n", info->type_identifier());
+
+		rapidjson::Value* node = get_top();
+		node->SetObject();
+		assert(node->IsObject());
 	}
 
 	template <class Archive, class T>
 	void end_class(Archive& ar, T& value)
 	{
-		fprintf(stdout, "end class\n");
+		const reflection::TypeInfo* info = reflection::get_type_info<T>();
+		assert(info);
 
-		rapidjson::Value* node = object_stack.top();
-		doc.AddMember("object", *node, doc.GetAllocator());
-		end_object();
+		fprintf(stdout, "end class: %s\n", info->type_identifier());
 	}
 
 	template <class Archive, class T>
@@ -957,43 +911,71 @@ public:
 	template <class Archive>
 	void save(Archive& ar, const int& value)
 	{
-		rapidjson::Value val;
-		val.SetInt(value);
-		doc.AddMember("value", val, doc.GetAllocator());
+		rapidjson::Value* prop = object_stack.top();
+		assert(value);
+		prop->SetInt(value);
 	}
 
 	template <class Archive>
 	void save(Archive& ar, const float& value)
 	{
-//		fl_value = value;
+		rapidjson::Value* prop = object_stack.top();
+		assert(prop);
+		prop->SetDouble(value);
+	}
+
+	template <class Archive>
+	void save (Archive& ar, const double& value)
+	{
+		rapidjson::Value* prop = object_stack.top();
+		assert(prop);
+		prop->SetDouble(value);
+	}
+
+	template <class Archive>
+	void save(Archive& ar, const unsigned long& value)
+	{
+		rapidjson::Value* prop = object_stack.top();
+		assert(prop);
+		prop->SetUint64(value);
+	}
+
+	template <class Archive>
+	void save(Archive& ar, const long& value)
+	{
+		rapidjson::Value* prop = object_stack.top();
+		assert(prop);
+		prop->SetInt64(value);
 	}
 
 	template <class Archive>
 	void save(Archive& ar, const bool& value)
 	{
-//		val = value;
-	}
-
-	template <class Archive>
-	void save(Archive& ar, const char& value)
-	{
-
+		rapidjson::Value* prop = object_stack.top();
+		assert(prop);
+		prop->SetBool(value);
 	}
 
 	template <class Archive>
 	void save(Archive& ar, const char* value)
 	{
-		rapidjson::Value v;
-		v.SetString(value, core::str::len(value));
-		doc.AddMember("value", v, doc.GetAllocator());
+		rapidjson::Value* prop = object_stack.top();
+		assert(prop);
+		prop->SetString(value, core::str::len(value));
 	}
 
-	template <class Archive>
-	void save(Archive& ar, const size_t& value)
+	template <class Archive, class T>
+	void save(Archive& ar, const Array<T>& value)
 	{
-		rapidjson::Value val;
-		val.SetInt64(value);
-		doc.AddMember("value", val, doc.GetAllocator());
+		assert(0);
+//		rapidjson::Value value;
+//		size_t array_size = property.ref.size();
+//		ar & make_class_property("size", array_size);
+//
+//		for (auto& item : property.ref)
+//			ar << item;
+//
+//		return value;
 	}
 };
 
@@ -1119,17 +1101,13 @@ public:
 struct MyCustomClass
 {
 	MyCustomClass() :
-		temperature(0),
-		x(0.0f),
-		y(0.0f),
-		z(0.0f)
+		temperature(0)
 	{
 	}
 
 	TYPEINFO_DECLARE_CLASS(MyCustomClass);
 
 	int temperature;
-	float x, y, z;
 	glm::vec3 pos;
 
 #ifndef MYCUSTOMCLASS_EXTERNAL_SERIALIZER
@@ -1137,11 +1115,8 @@ struct MyCustomClass
 	void serialize(Archive& ar, size_t version)
 	{
 		fprintf(stdout, "MyCustomClass.serialize\n");
-		ar << make_class_property("temperature", temperature);
-		ar << TYPEINFO_PROPERTY(x);
-		ar << TYPEINFO_PROPERTY(y);
-		ar << TYPEINFO_PROPERTY(z);
-//		ar << TYPEINFO_PROPERTY(pos);
+		ar << TYPEINFO_PROPERTY(temperature);
+		ar << TYPEINFO_PROPERTY(pos);
 	}
 #endif
 };
@@ -1151,9 +1126,6 @@ struct MyCustomClass
 	TYPEINFO_REGISTER_TYPE_CATEGORY(T, TypeInfo_Class);\
 	TYPEINFO_REGISTER_TYPE_NAME(T, T)
 
-//TYPEINFO_REGISTER_TYPE_INFO(MyCustomClass);
-//TYPEINFO_REGISTER_TYPE_CATEGORY(MyCustomClass, TypeInfo_Class);
-//TYPEINFO_REGISTER_TYPE_NAME(MyCustomClass, MyCustomClass);
 SERIALIZATION_REGISTER_TYPE(MyCustomClass);
 
 
@@ -1195,6 +1167,27 @@ void dunk(T && head, Types && ... tail)
 	dunk(tail ... );
 }
 
+
+
+
+//TYPEINFO_REGISTER_TYPE_INFO(glm::vec3);
+//TYPEINFO_REGISTER_TYPE_CATEGORY(MyCustomClass, TypeInfo_Class);
+//TYPEINFO_REGISTER_TYPE_NAME(MyCustomClass, MyCustomClass);
+
+
+SERIALIZATION_REGISTER_TYPE_EXTERNAL(glm::vec3);
+TYPEINFO_REGISTER_TYPE_NAME(glm::vec3, glm::vec3);
+TYPEINFO_REGISTER_TYPE_CATEGORY(glm::vec3, TypeInfo_Class);
+
+template <class Archive>
+void serialize(Archive& ar, const glm::vec3& value)
+{
+	fprintf(stdout, "serialize glm::vec3 (external)\n");
+	ar << make_class_property("x", value.x);
+	ar << make_class_property("y", value.y);
+	ar << make_class_property("z", value.z);
+//	ar & TYPEINFO_PROPERTY(temperature);
+}
 
 void test_rapidjson()
 {
@@ -1260,9 +1253,6 @@ void test_rapidjson()
 
 
 	klass.temperature = 42;
-	klass.x = 32.725f;
-	klass.y = 71.112f;
-	klass.z = 1.05f;
 
 //	jw << integer;
 //	jw << vals;
