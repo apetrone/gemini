@@ -89,6 +89,7 @@ namespace gui
 		}
 		
 		command_stream.resize(0);
+		vertex_buffer.resize(0);
 		
 		this->renderer->begin_frame( this );
 		
@@ -97,11 +98,13 @@ namespace gui
 			Panel * panel = (*it);
 			if (panel->is_visible())
 			{
+				panel->begin_render_frame(this);
 				panel->render(panel->bounds, this, this->renderer, get_style());
+				panel->end_render_frame(this);
 			}
 		}
 		
-		this->renderer->draw_command_lists(&command_stream[0], command_stream.size());
+		this->renderer->draw_command_lists(&command_stream[0], vertex_buffer, command_stream.size());
 		
 		this->renderer->end_frame();
 	} // render

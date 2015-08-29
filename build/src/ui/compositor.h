@@ -32,10 +32,19 @@ namespace gui
 	class Style;
 	class Renderer;
 	class Listener;
+
+	namespace render
+	{
+		struct Vertex;
+		struct CommandList;
+	}
 		
 	class Compositor : public Panel
 	{
 	public:
+
+		friend class render::CommandList;
+
 		ScreenInt width;
 		ScreenInt height;
 		Panel* focus;
@@ -57,7 +66,7 @@ namespace gui
 		TimeState timestate;
 
 		Array<render::CommandList*> command_stream;
-		
+
 		LIBRARY_EXPORT Compositor(ScreenInt width, ScreenInt height);
 		LIBRARY_EXPORT virtual ~Compositor();
 		
@@ -80,6 +89,7 @@ namespace gui
 		LIBRARY_EXPORT void set_capture(Panel* panel) { this->capture = panel; }
 		
 		LIBRARY_EXPORT void set_renderer(Renderer* renderer);
+		LIBRARY_EXPORT Renderer* get_renderer() const { return renderer; }
 		LIBRARY_EXPORT void set_style(Style* style);
 		LIBRARY_EXPORT Style* get_style() const;
 		
@@ -89,7 +99,6 @@ namespace gui
 		LIBRARY_EXPORT virtual void add_child(Panel* panel);
 		LIBRARY_EXPORT virtual void remove_child(Panel* panel);
 
-		
 		// events
 		LIBRARY_EXPORT void cursor_move_absolute(ScreenInt x, ScreenInt y);
 		LIBRARY_EXPORT void cursor_button(CursorButton::Type button, bool is_down);
@@ -109,6 +118,9 @@ namespace gui
 
 	private:
 		void find_new_hot(ScreenInt dx, ScreenInt dy);
+
+		Array<render::Vertex> vertex_buffer;
+		Array<render::Vertex>* get_vertex_buffer() { return &vertex_buffer; }
 	}; // struct Compositor
 	
 } // namespace gui

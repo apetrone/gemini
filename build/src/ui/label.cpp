@@ -39,13 +39,12 @@ namespace gui
 	
 	void Label::render(Rect& frame, Compositor* compositor, Renderer* renderer, Style* style)
 	{
-		render_commands.reset();
 		render_commands.add_rectangle(
 			geometry[0],
 			geometry[1],
 			geometry[2],
 			geometry[3],
-			0,
+			render::WhiteTexture,
 			background_color
 		);
 		
@@ -57,7 +56,6 @@ namespace gui
 		
 //		renderer->font_draw(font_handle, this->text.c_str(), bounds, foreground_color);
 //		render_commands.add_font(font_handle, this->text.c_str(), bounds, 0, foreground_color);
-		compositor->queue_commandlist(&render_commands);
 	}
 		
 	void Label::set_font(Compositor* compositor, const char* path)

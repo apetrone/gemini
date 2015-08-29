@@ -67,6 +67,7 @@ struct nunchuck_packet
 	int8_t joyy;
 	int8_t cbutton;
 	int8_t zbutton;
+	int8_t eop[2];
 
 	bool is_null() const
 	{
@@ -221,7 +222,7 @@ namespace experimental
 		virtual gui::FontResult font_measure_string(const gui::FontHandle& handle, const char* string, gui::Rect& bounds);
 		virtual void font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color);
 		virtual gui::FontResult font_fetch_texture(const gui::FontHandle& handle, gui::TextureHandle& texture);
-		virtual void draw_command_lists(gui::render::CommandList** command_lists, size_t total_lists);
+		virtual void draw_command_lists(gui::render::CommandList** command_lists, Array<gui::render::Vertex>& vertex_buffer, size_t total_lists);
 
 	}; // GUIRenderer
 
@@ -359,6 +360,12 @@ namespace experimental
 
 	gui::FontResult GUIRenderer::font_create(const char* path, gui::FontHandle& handle)
 	{
+		Array<unsigned char> fontdata;
+		core::filesystem::instance()->virtual_load_file(fontdata, path);
+		render2::font::Handle fonthandle = render2::font::load_from_memory(&fontdata[0], fontdata.size(), 8);
+		assert(fonthandle.is_valid());
+		handle = gui::FontHandle(fonthandle);
+
 //		assets::Font* font = assets::fonts()->load_from_path((char*)path);
 //		if (font == 0)
 //		{
@@ -373,6 +380,9 @@ namespace experimental
 	void GUIRenderer::font_destroy(const gui::FontHandle& handle)
 	{
 		// nothing really to do in our system
+		render2::font::Handle fonthandle(handle);
+		// TODO: implement this
+//		render2::font::destroy_font(fonthandle);
 	}
 
 	gui::FontResult GUIRenderer::font_measure_string(const gui::FontHandle& handle, const char* string, gui::Rect& bounds)
@@ -385,6 +395,10 @@ namespace experimental
 //			bounds.set(0, 0, width, height);
 //			return gui::FontResult_Success;
 //		}
+
+		// TODO: implement this for fonts
+		bounds.set(0, 0, 12, 12);
+		return gui::FontResult_Success;
 
 		return gui::FontResult_Failed;
 	}
@@ -403,18 +417,13 @@ namespace experimental
 		return gui::FontResult_Failed;
 	}
 
-	void GUIRenderer::draw_command_lists(gui::render::CommandList** command_lists, size_t total_lists)
+	void GUIRenderer::draw_command_lists(gui::render::CommandList** command_lists, Array<gui::render::Vertex>& vertex_buffer, size_t total_lists)
 	{
-		size_t total_vertices = 0;
-		for (size_t index = 0; index < total_lists; index++)
-		{
-			total_vertices += command_lists[index]->vertex_buffer.size();
-		}
+		size_t total_vertices = vertex_buffer.size();
 
 		// temp limit
 		assert(total_vertices < MAX_VERTICES);
 		projection_matrix = glm::ortho(0.0f, (float)this->compositor->width, (float)this->compositor->height, 0.0f, -1.0f, 1.0f);
-
 
 //		device->buffer_resize(vertex_buffer, sizeof(GUIVertex) * total_vertices);
 
@@ -426,22 +435,26 @@ namespace experimental
 
 		GUIVertex vertices[MAX_VERTICES];
 		size_t vertex_index = 0;
+		// loop through all vertices in the source vertex_buffer
+		// and convert them to our buffer
+		for (size_t index = 0; index < total_vertices; ++index)
+		{
+			gui::render::Vertex* gv = &vertex_buffer[index];
+
+			GUIVertex& vt = vertices[vertex_index];
+			vt.set_position(gv->x, gv->y);
+			vt.set_color(gv->color.r()/255.0f, gv->color.g()/255.0f, gv->color.b()/255.0f, gv->color.a()/255.0f);
+			vt.set_uv(gv->uv[0], gv->uv[1]);
+
+			++vertex_index;
+		}
+
+		device->buffer_upload(this->vertex_buffer, vertices, sizeof(GUIVertex)*total_vertices);
+
+		size_t command_index = 0;
 		for (size_t index = 0; index < total_lists; ++index)
 		{
 			gui::render::CommandList* commandlist = command_lists[index];
-
-			// loop through all vertices in this list
-			for (size_t v = 0; v < commandlist->vertex_buffer.size(); ++v)
-			{
-				gui::render::Vertex* gv = &commandlist->vertex_buffer[v];
-
-				GUIVertex& vt = vertices[vertex_index];
-				vt.set_position(gv->x, gv->y);
-				vt.set_color(gv->color.r()/255.0f, gv->color.g()/255.0f, gv->color.b()/255.0f, gv->color.a()/255.0f);
-				vt.set_uv(gv->uv[0], gv->uv[1]);
-
-				++vertex_index;
-			}
 
 			// setup the pass and queue the draw
 			render2::Pass pass;
@@ -452,18 +465,25 @@ namespace experimental
 
 			render2::CommandQueue* queue = device->create_queue(pass);
 			render2::CommandSerializer* serializer = device->create_serializer(queue);
-
 			serializer->pipeline(pipeline);
-			serializer->vertex_buffer(vertex_buffer);
-			serializer->texture(white_texture, 0);
-			serializer->draw(0, total_vertices);
+			serializer->vertex_buffer(this->vertex_buffer);
 
+			for (gui::render::Command& command : commandlist->commands)
+			{
+				if (!command.texture.is_valid())
+				{
+					serializer->texture(white_texture, 0);
+				}
+				serializer->draw(command.vertex_offset, command.vertex_count);
+				++command_index;
+			}
 			device->queue_buffers(queue, 1);
 
 			device->destroy_serializer(serializer);
+
 		}
 
-		device->buffer_upload(vertex_buffer, vertices, sizeof(GUIVertex)*total_vertices);
+
 	}
 } // namespace experimental
 
@@ -547,7 +567,7 @@ public:
 			geometry[1],
 			geometry[2],
 			geometry[3],
-			0,
+			gui::render::WhiteTexture,
 			background_color);
 
 
@@ -707,7 +727,7 @@ public:
 		// setup the framerate graph
 		graph = new gui::Graph(root);
 		graph->set_bounds(width-250, 0, 250, 100);
-		graph->set_font(compositor, "fonts/debug");
+		graph->set_font(compositor, "fonts/nokiafc22.ttf");
 		graph->set_background_color(gui::Color(60, 60, 60, 255));
 		graph->set_foreground_color(gui::Color(255, 255, 255, 255));
 		graph->create_samples(100, 1);
@@ -715,10 +735,12 @@ public:
 		graph->set_range(0.0f, 33.3f);
 		graph->enable_baseline(true, 16.6f, gui::Color(255, 0, 255, 255));
 
-
-		ctp = new ControllerTestPanel(root);
-		ctp->set_bounds(0, 0, 300, 300);
-		ctp->set_background_color(gui::Color(80, 80, 80));
+		if (_serial_device)
+		{
+			ctp = new ControllerTestPanel(root);
+			ctp->set_bounds(0, 0, 300, 300);
+			ctp->set_background_color(gui::Color(80, 80, 80));
+		}
 
 //		gui::Panel* panel = new gui::Panel(root);
 //		panel->set_bounds(width-250, 0, 250, 100);
@@ -748,7 +770,7 @@ public:
 		{
 			gui::Button* newgame = new gui::Button(root);
 			newgame->set_bounds(origin_x, origin_y, button_width, button_height);
-			newgame->set_font(compositor, "fonts/default16");
+			newgame->set_font(compositor, "fonts/nokiafc22.ttf");
 			newgame->set_text(captions[index]);
 			newgame->set_background_color(button_background);
 			newgame->set_hover_color(button_hover);
@@ -951,15 +973,18 @@ public:
 
 
 #if USE_SERIAL
-		// process the queue
-		while(_message_queue.size() > 0)
+		if (ctp)
 		{
-			nunchuck_packet packet = _message_queue.dequeue();
-			fprintf(stdout, "<- %i %i %i %i\n", packet.joyx, packet.joyy, packet.cbutton, packet.zbutton);
-			ctp->set_x(packet.joyx);
-			ctp->set_y(-packet.joyy);
-			ctp->set_cbutton(packet.cbutton);
-			ctp->set_zbutton(packet.zbutton);
+			// process the queue
+			while(_message_queue.size() > 0)
+			{
+				nunchuck_packet packet = _message_queue.dequeue();
+				fprintf(stdout, "<- %i %i %i %i\n", packet.joyx, packet.joyy, packet.cbutton, packet.zbutton);
+				ctp->set_x(packet.joyx);
+				ctp->set_y(-packet.joyy);
+				ctp->set_cbutton(packet.cbutton);
+				ctp->set_zbutton(packet.zbutton);
+			}
 		}
 #endif
 

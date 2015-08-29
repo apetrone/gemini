@@ -193,15 +193,12 @@ namespace gui
 	
 	void Graph::render(Rect& frame, Compositor* compositor, Renderer* renderer, Style* style)
 	{
-		render_commands.reset();
-		
-		
 		render_commands.add_rectangle(
 			geometry[0],
 			geometry[1],
 			geometry[2],
 			geometry[3],
-			0,
+			render::WhiteTexture,
 			background_color
 		);
 		
@@ -221,8 +218,7 @@ namespace gui
 			// draw a line
 			Point start(frame.origin.x, baseline_y+y+height);
 			Point end(frame.origin.x+frame.size.width, baseline_y+y+height);
-			
-//			renderer->draw_line(start, end, baseline_color);
+
 			render_commands.add_line(start, end, baseline_color);
 		}
 
@@ -267,7 +263,6 @@ namespace gui
 				if ( i > 0 )
 				{
 					Point current( cx, outvalue );
-//					renderer->draw_line(last_point[current_channel], current, color);
 					render_commands.add_line(last_point[current_channel], current, color);
 					last_point[ current_channel ] = current;
 
@@ -277,10 +272,6 @@ namespace gui
 					last_point[ current_channel ].x = cx;
 					last_point[ current_channel ].y = outvalue;
 				}
-
-				// draw a single line for a point of data
-				// TODO:
-//				r->DrawLine(Point(cx, yoffset+y+height), Point(cx, outvalue), color, color );
 
 				cx += dx;
 				sample_id += sample_delta;
@@ -316,8 +307,6 @@ namespace gui
 
 		// TODO: draw an outline
 //		DrawOutline(r, corners, gui::Color(0,0,0) );
-
-		compositor->queue_commandlist(&render_commands);
 	}
 
 } // namespace gui

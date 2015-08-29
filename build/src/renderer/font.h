@@ -110,8 +110,8 @@ namespace render2
 		{
 			int ref;
 
-			Handle() :
-				ref(-1)
+			Handle(int reference = -1) :
+				ref(reference)
 			{
 			}
 
@@ -120,6 +120,11 @@ namespace render2
 			unsigned int point_size() const
 			{
 				return 0; //return get_point_size(*this);
+			}
+
+			operator int() const
+			{
+				return ref;
 			}
 		};
 

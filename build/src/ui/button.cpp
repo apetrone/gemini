@@ -105,8 +105,6 @@ namespace gui
 	
 	void Button::render(Rect& frame, Compositor* compositor, Renderer* renderer, Style* style)
 	{
-		render_commands.reset();
-
 		if (compositor->get_hot() == this && state == 0)
 		{
 			current_color = hover_color;
@@ -117,7 +115,7 @@ namespace gui
 			geometry[1],
 			geometry[2],
 			geometry[3],
-			0,
+			render::WhiteTexture,
 			current_color
 		);
 
@@ -129,8 +127,6 @@ namespace gui
 //		compositor->get_style()->draw_font(renderer, font_handle, this->text.c_str(), bounds, foreground_color);
 		
 		render_commands.add_font(font_handle, this->text.c_str(), bounds, 0, foreground_color);
-		
-		compositor->queue_commandlist(&render_commands);
 	}
 	
 } // namespace gui

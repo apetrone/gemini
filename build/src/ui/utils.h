@@ -224,16 +224,47 @@ namespace gui
 		KeyState();
 	}; // KeyState
 	
-		
-	typedef uint32_t TextureHandle;
+
+	struct TextureResource {};
+	struct FontResource {};
+
+
+	template <class T>
+	struct ResourceHandle
+	{
+		int ref;
+
+		ResourceHandle(int reference = -1) :
+			ref(reference)
+		{
+		}
+
+		bool is_valid() const
+		{
+			return (ref != -1);
+		}
+
+		operator int() const
+		{
+			return ref;
+		}
+	};
+
+
+	typedef ResourceHandle<TextureResource> TextureHandle;
+	typedef ResourceHandle<FontResource> FontHandle;
+
+	namespace render
+	{
+		extern TextureHandle WhiteTexture;
+	} // namespace render
+
 	enum TextureResult
 	{
 		TextureResult_Success = 0,
 		TextureResult_Failed = 1,
-		
 	}; // TextureResult
-	
-	typedef uint32_t FontHandle;
+
 	enum FontResult
 	{
 		FontResult_Success = 0,
