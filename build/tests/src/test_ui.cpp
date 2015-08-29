@@ -67,7 +67,7 @@ struct nunchuck_packet
 	int8_t joyy;
 	int8_t cbutton;
 	int8_t zbutton;
-	int8_t eop[2];
+//	int8_t eop[2];
 
 	bool is_null() const
 	{
@@ -100,8 +100,8 @@ void data_thread(void* context)
 		memset(buffer, 0, sizeof(PACKET_SIZE));
 
 		int bytes_read = platform::serial_read(_serial_device, buffer, PACKET_SIZE);
-//		fprintf(stdout, "bytes_read = %i\n", bytes_read);
-		if (bytes_read >= 4)
+		fprintf(stdout, "bytes_read = %i\n", bytes_read);
+		if ((size_t)bytes_read >= sizeof(nunchuck_packet))
 		{
 			nunchuck_packet* packet = reinterpret_cast<nunchuck_packet*>(buffer);
 //			fprintf(stdout, "-> %i %i %i %i\n", packet->joyx, packet->joyy, packet->cbutton, packet->zbutton);
@@ -979,7 +979,7 @@ public:
 			while(_message_queue.size() > 0)
 			{
 				nunchuck_packet packet = _message_queue.dequeue();
-				fprintf(stdout, "<- %i %i %i %i\n", packet.joyx, packet.joyy, packet.cbutton, packet.zbutton);
+//				fprintf(stdout, "<- %i %i %i %i\n", packet.joyx, packet.joyy, packet.cbutton, packet.zbutton);
 				ctp->set_x(packet.joyx);
 				ctp->set_y(-packet.joyy);
 				ctp->set_cbutton(packet.cbutton);
