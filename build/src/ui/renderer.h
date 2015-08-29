@@ -30,6 +30,8 @@
 
 namespace gui
 {
+	class Compositor;
+
 	// the rendering logic is modeled after ocornut's imgui library;
 	// and also after what I've done in gemini with the
 	// renderstream/vertexbuffer/vertexstream.
@@ -45,9 +47,9 @@ namespace gui
 
 		struct Command
 		{
+			size_t vertex_offset;
 			size_t vertex_count;
 			Rect clip_rect;
-			uint32_t id;
 			TextureHandle texture;
 		};
 		
@@ -55,13 +57,16 @@ namespace gui
 		struct CommandList
 		{
 			Array<Command> commands;
-			Array<Vertex> vertex_buffer;
-			
-			
+			Array<Vertex>* vertex_buffer;
+
+			CommandList();
 			Vertex* write_pointer;
 			
 			LIBRARY_EXPORT void reset();
 			LIBRARY_EXPORT void clear();
+
+			LIBRARY_EXPORT void begin(Compositor* compositor);
+			LIBRARY_EXPORT void end(Compositor* compositor);
 			
 			
 			LIBRARY_EXPORT void push_clip_rect(const Rect& clip_rect);
@@ -160,7 +165,7 @@ namespace gui
 		// ---------------------------------------------------------------------
 		// command list drawing
 		// ---------------------------------------------------------------------
-		virtual void draw_command_lists(render::CommandList** command_lists, size_t total_lists) = 0;
+		virtual void draw_command_lists(render::CommandList** command_lists, Array<gui::render::Vertex>& vertex_buffer, size_t total_lists) = 0;
 	
 	
 	

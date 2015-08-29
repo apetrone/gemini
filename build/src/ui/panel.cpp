@@ -45,7 +45,6 @@ namespace gui
 		scale[0] = 1;
 		scale[1] = 1;
 		this->z_depth = 0;
-		this->background = 0;
 		this->parent = parent;
 		this->userdata = 0;
 		this->visible = true;
@@ -212,16 +211,15 @@ namespace gui
 
 	void Panel::render(Rect& frame, Compositor* compositor, Renderer* renderer, Style* style)
 	{
-		render_commands.reset();
 		render_commands.add_rectangle(
 			geometry[0],
 			geometry[1],
 			geometry[2],
 			geometry[3],
-			0,
+			render::WhiteTexture,
 			background_color);
 		
-		if (this->background != 0)
+		if (this->background.is_valid())
 		{
 //			renderer->draw_textured_bounds(frame, this->background);
 			render_commands.add_rectangle(
@@ -233,15 +231,15 @@ namespace gui
 				gui::Color(255, 255, 255, 255)
 			);
 		}
-		
-		compositor->queue_commandlist(&render_commands);
-		
+
 		for(PanelVector::iterator it = children.begin(); it != children.end(); ++it)
 		{
 			Panel* child = (*it);
 			if (child->is_visible())
 			{
+				child->begin_render_frame(compositor);
 				child->render(child->bounds, compositor, renderer, style);
+				child->end_render_frame(compositor);
 			}
 		}
 	} // render
@@ -250,7 +248,7 @@ namespace gui
 	{
 		if (compositor && compositor->renderer)
 		{
-			compositor->renderer->texture_create(path, this->background);
+			compositor->renderer->texture_create(path, background);
 		}
 	} // set_background_image
 	
@@ -317,5 +315,18 @@ namespace gui
 	{
 		this->scale = scale;
 		flags |= Flag_TransformIsDirty;
+	}
+
+	// ---------------------------------------------------------------------
+	// render utils
+	// ---------------------------------------------------------------------
+	void Panel::begin_render_frame(Compositor* compositor)
+	{
+		render_commands.begin(compositor);
+	}
+
+	void Panel::end_render_frame(Compositor* compositor)
+	{
+		render_commands.end(compositor);
 	}
 } // namespace gui

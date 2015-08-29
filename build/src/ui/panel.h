@@ -138,6 +138,12 @@ namespace gui
 		LIBRARY_EXPORT void set_rotation(const float radians);
 		LIBRARY_EXPORT void set_scale(const glm::vec2& scale);
 
+		// ---------------------------------------------------------------------
+		// render utils
+		// ---------------------------------------------------------------------
+		LIBRARY_EXPORT void begin_render_frame(Compositor* compositor);
+		LIBRARY_EXPORT void end_render_frame(Compositor* compositor);
+
 	protected:
 		// Panels will transform through the following spaces:
 		// Local (or bounds)
