@@ -84,14 +84,37 @@ struct nunchuck_packet
 //	}
 };
 
-ThreadSafeQueue<nunchuck_packet> _message_queue;
+const uint16_t SPEKTRUM_HEADER_VALUE = 0xbead;
+const uint16_t SPEKTRUM_FOOTER_VALUE = 0xfeff;
+
+struct spektrum_packet_t
+{
+	uint16_t header;
+	int16_t channel[6];
+	uint16_t footer;
+
+	spektrum_packet_t()
+	{
+		memset(this, 0, sizeof(spektrum_packet_t));
+        header = SPEKTRUM_HEADER_VALUE;
+        footer = SPEKTRUM_FOOTER_VALUE;
+	}
+
+	bool is_valid() const
+	{
+		return (header == SPEKTRUM_HEADER_VALUE) && (footer == SPEKTRUM_FOOTER_VALUE);
+	}
+};
+
+ThreadSafeQueue<spektrum_packet_t> _message_queue;
 
 
 void data_thread(void* context)
 {
 	fprintf(stdout, "data_thread enter\n");
 
-
+#if 0
+	// nunchuck packet
 
 	while (poll_data)
 	{
@@ -108,6 +131,42 @@ void data_thread(void* context)
 			_message_queue.enqueue(*packet);
 		}
 	}
+#else
+	const size_t PACKET_SIZE = 4096;
+	uint8_t buffer[PACKET_SIZE];
+	core::util::MemoryStream ms;
+
+	ms.init(buffer, PACKET_SIZE);
+
+	fprintf(stdout, "waiting for valid packet...\n");
+
+	// spektrum packet
+	while (poll_data)
+	{
+		unsigned char temp[4096];
+
+		int bytes_read = platform::serial_read(_serial_device, temp, 4096);
+		if (ms.current_offset() < 4094)
+			ms.write(temp, bytes_read);
+
+		const size_t PACKET_LENGTH = sizeof(spektrum_packet_t);
+		if (ms.current_offset() >= PACKET_LENGTH)
+		{
+			for (size_t index = 0; index < ms.current_offset(); ++index)
+			{
+				spektrum_packet_t* packet = reinterpret_cast<spektrum_packet_t*>(buffer+index);
+				if (packet->is_valid())
+				{
+					_message_queue.enqueue(*packet);
+					ms.rewind();
+					ms.clear();
+					break;
+				}
+			}
+		}
+	}
+
+#endif
 	fprintf(stdout, "data_thread exit\n");
 }
 
@@ -802,8 +861,9 @@ public:
 		platform::window::startup(platform::window::RenderingBackend_Default);
 
 #if USE_SERIAL
-		const char* serial_device = "/dev/cu.usbmodem1d151311";
-		const size_t baud = 57600;
+//		const char* serial_device = "/dev/cu.usbmodem1d151311";
+		const char* serial_device = "/dev/cu.usbserial-AH02QPX7";
+		const size_t baud = 9600;
 		_serial_device = platform::serial_open(serial_device, baud);
 		if (!_serial_device)
 		{
@@ -978,12 +1038,20 @@ public:
 			// process the queue
 			while(_message_queue.size() > 0)
 			{
+#if 0
+// nunchuck_packet
 				nunchuck_packet packet = _message_queue.dequeue();
 //				fprintf(stdout, "<- %i %i %i %i\n", packet.joyx, packet.joyy, packet.cbutton, packet.zbutton);
 				ctp->set_x(packet.joyx);
 				ctp->set_y(-packet.joyy);
 				ctp->set_cbutton(packet.cbutton);
 				ctp->set_zbutton(packet.zbutton);
+#else
+// spektrum packet
+				spektrum_packet_t packet = _message_queue.dequeue();
+				fprintf(stdout, "<- %i %i %i %i %i %i\n", packet.channel[0], packet.channel[1], packet.channel[2], packet.channel[3], packet.channel[4], packet.channel[5]);
+#endif
+
 			}
 		}
 #endif
