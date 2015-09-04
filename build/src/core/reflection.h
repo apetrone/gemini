@@ -113,6 +113,11 @@ namespace reflection
 		{\
 			static const TypeInfoCategory value = reflection::C;\
 		};\
+		template <>\
+		struct TypeCategory<T&>\
+		{\
+			static const TypeInfoCategory value = reflection::C;\
+		};\
 	}
 
 #define TYPEINFO_PROPERTY(T)\
@@ -143,8 +148,9 @@ namespace traits
 	enum TypeInfoCategory
 	{
 		TypeInfo_Invalid,
-		TypeInfo_POD,
-		TypeInfo_Class
+		TypeInfo_POD,		// is POD type
+		TypeInfo_Class,		// is a class (with internal or external serializer)
+		TypeInfo_Property	// is a class property
 	};
 
 	class TypeInfo
@@ -327,6 +333,18 @@ namespace traits
 			ref(value)
 		{
 		}
+	};
+
+	template <class T>
+	struct TypeCategory< const ClassProperty<T> >
+	{
+		static const TypeInfoCategory value = TypeInfo_Property;
+	};
+
+	template <class T>
+	struct TypeCategory< ClassProperty<T> >
+	{
+		static const TypeInfoCategory value = TypeInfo_Property;
 	};
 
 //	template <class T>

@@ -108,6 +108,11 @@ struct SerializerTypeSelector
 		{\
 			static constexpr SerializerType value = SerializerTypeExternal;\
 		};\
+		template <>\
+		struct SerializerTypeSelector<T&>\
+		{\
+			static constexpr SerializerType value = SerializerTypeExternal;\
+		};\
 
 
 
@@ -244,7 +249,14 @@ struct SerializeRouterNonPointer
 struct SerializeInternalPointer
 {
 	template <class Archive, class T>
-	static void route(Archive& ar, T* value)
+	static void route(Archive& ar, T&& value)
+	{
+		fprintf(stdout, "SerializeInternalPointer\n");
+		value.serialize(ar, 1);
+	}
+
+	template <class Archive, class T>
+	static void route(Archive& ar, T*&& value)
 	{
 		fprintf(stdout, "SerializeInternalPointer\n");
 		value->serialize(ar, 1);
@@ -254,10 +266,10 @@ struct SerializeInternalPointer
 struct SerializeInternalReference
 {
 	template <class Archive, class T>
-	static void route(Archive& ar, T& value)
+	static void route(Archive& ar, T&& value)
 	{
 		fprintf(stdout, "SerializeInternalReference\n");
-		SerializeInternalPointer::template route<Archive, T>(ar, &value);
+		SerializeInternalPointer::template route<Archive, T>(ar, std::forward<T>(value));
 	}
 };
 
@@ -266,6 +278,13 @@ struct SerializeInternalReference
 
 struct SerializeExternalPointer
 {
+	template <class Archive, class T>
+	static void route(Archive& ar, T&& value)
+	{
+		fprintf(stdout, "SerializeExternalPointer\n");
+		serialize(ar, value);
+	}
+
 	template <class Archive, class T>
 	static void route(Archive& ar, T* value)
 	{
@@ -277,10 +296,10 @@ struct SerializeExternalPointer
 struct SerializeExternalReference
 {
 	template <class Archive, class T>
-	static void route(Archive& ar, T& value)
+	static void route(Archive& ar, T&& value)
 	{
 		fprintf(stdout, "SerializeExternalReference\n");
-		SerializeExternalPointer::template route<Archive, T>(ar, &value);
+		SerializeExternalPointer::template route<Archive, T>(ar, value);
 	}
 };
 
@@ -288,21 +307,21 @@ struct SerializeExternalReference
 struct SerializerTypeRouterInternal
 {
 	template <class Archive, class T>
-	static void route_type(Archive& ar, T& value)
+	static void route_type(Archive& ar, T&& value)
 	{
 		fprintf(stdout, "SerializerTypeRouterInternal\n");
 		typedef typename If<reflection::traits::is_pointer<T>::value,
 			SerializeInternalPointer,
 		SerializeInternalReference>::value RouterTest;
 
-		RouterTest::template route(ar, value);
+		RouterTest::template route(ar, std::forward<T>(value));
 	}
 };
 
 struct SerializerTypeRouterExternal
 {
 	template <class Archive, class T>
-	static void route_type(Archive& ar, T& value)
+	static void route_type(Archive& ar, T&& value)
 	{
 		fprintf(stdout, "SerializerTypeRouterExternal\n");
 		typedef typename If<reflection::traits::is_pointer<T>::value,
@@ -318,7 +337,7 @@ struct SerializerTypeRouterExternal
 struct SerializeRoutePOD
 {
 	template <class Archive, class T>
-	static void route(Archive& ar, T& value)
+	static void route(Archive& ar, T&& value)
 	{
 		fprintf(stdout, "SerializeRoutePOD\n");
 
@@ -330,7 +349,7 @@ struct SerializeRoutePOD
 struct SerializeRouteClass
 {
 	template <class Archive, class T>
-	static void route(Archive& ar, T& value)
+	static void route(Archive& ar, T&& value)
 	{
 		fprintf(stdout, "SerializeRouteClass\n");
 
@@ -341,27 +360,46 @@ struct SerializeRouteClass
 			>::value type_selector;
 
 		ar.begin_class(ar, value);
-		type_selector::route_type(ar, value);
+		type_selector::route_type(ar, std::forward<T>(value));
 		ar.end_class(ar, value);
 	}
 };
 
+struct SerializeRouteProperty
+{
+	template <class Archive, class T>
+	static void route(Archive& ar, T&& property)
+	{
+		fprintf(stdout, "serialize property!\n");
+
+		ar.begin_property(property);
+		route_serializer(ar, property.ref);
+		ar.end_property(property);
+
+
+	}
+};
+
 template <class Archive, class T>
-void route_serializer(Archive& ar, T& value)
+void route_serializer(Archive& ar, T&& value)
 {
 	using namespace reflection::traits;
 
 	fprintf(stdout, "route_serializer\n");
 
 	// Determine if T is a POD-type
-	typedef typename \
+	typedef typename\
 		If<reflection::TypeCategory<T>::value == reflection::TypeInfo_POD,
 			SerializeRoutePOD,
 		// else
-			SerializeRouteClass
+			typename\
+			If<reflection::TypeCategory<T>::value == reflection::TypeInfo_Property,
+				SerializeRouteProperty,
+			// else
+				SerializeRouteClass>::value
 		>::value route_selector;
 
-	route_selector::route(ar, value);
+	route_selector::route(ar, std::forward<T>(value));
 }
 
 template <class Archive>
@@ -374,49 +412,11 @@ public:
 	Boolean<true> is_saving;
 	Boolean<false> is_loading;
 
-//	template <class T>
-//	Archive& operator<<(const T* value)
-//	{
-//		route_serializer(*instance(), const_cast<T*>(value));
-//		return *instance();
-//	}
-
+	// perfect forwarding
 	template <class T>
-	Archive& operator<<(const T& value)
+	Archive& operator<<(T&& value)
 	{
-		route_serializer(*instance(), const_cast<T&>(value));
-		return *instance();
-	}
-
-//	template <class T>
-//	Archive& operator<<(T& value)
-//	{
-//		route_serializer(*instance(), value);
-//		return *instance();
-//	}
-//
-//	template <class T>
-//	Archive& operator<<(T* value)
-//	{
-//		route_serializer(*instance(), value);
-//		return *instance();
-//	}
-
-
-//	template <class T>
-//	Archive& operator& (T value)
-//	{
-//		return *instance() << value;
-//	}
-
-
-
-	template <class T>
-	Archive& operator<<(const reflection::ClassProperty<T>& property)
-	{
-		instance()->begin_property(property);
-		route_serializer(*instance(), const_cast<T&>(property.ref));
-		instance()->end_property(property);
+		route_serializer(*instance(), std::forward<T>(value));
 		return *instance();
 	}
 

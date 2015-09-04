@@ -1134,7 +1134,8 @@ template <class Archive>
 void serialize(Archive& ar, MyCustomClass& value)
 {
 	fprintf(stdout, "serialize MyCustomClass (external)\n");
-	ar & TYPEINFO_PROPERTY(temperature);
+	ar << value.temperature;
+	ar << value.pos;
 }
 
 template <>
@@ -1145,6 +1146,12 @@ struct SerializerTypeSelector<MyCustomClass>
 
 template <>
 struct SerializerTypeSelector<MyCustomClass*>
+{
+	static constexpr SerializerType value = SerializerTypeExternal;
+};
+
+template <>
+struct SerializerTypeSelector<MyCustomClass&>
 {
 	static constexpr SerializerType value = SerializerTypeExternal;
 };
@@ -1253,6 +1260,12 @@ void test_rapidjson()
 
 
 	klass.temperature = 42;
+	klass.pos = glm::vec3(3.2f, 1.25f, 7.0f);
+
+	static_assert(
+		reflection::TypeCategory<reflection::ClassProperty<int>>::value == reflection::TypeInfo_Property,
+		"bah"
+	);
 
 //	jw << integer;
 //	jw << vals;
@@ -1280,17 +1293,6 @@ void test_rapidjson()
 //	jw << make_class_property("values", arr);
 
 
-
-
-
-
-
-
-
-
-
-
-
 	jw.generate_document();
 	const char* json = jw.get_string();
 	fprintf(stdout, "buffer: %s\n", json);
@@ -1308,7 +1310,9 @@ void test_rapidjson()
 
 
 
-
+//	MyCustomClass output;
+//	JsonReader reader(json);
+//	reader >> output;
 
 //	Value obj(kArrayType);
 //	doc.AddMember("groups", obj, allocator);
