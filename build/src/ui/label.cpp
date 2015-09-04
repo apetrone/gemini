@@ -50,12 +50,9 @@ namespace gui
 		
 		gui::Rect bounds = frame;
 		
-//		bounds.origin.x += 10;
-//		bounds.origin.y += 15;
-//		bounds.origin = text_origin;
-		
-//		renderer->font_draw(font_handle, this->text.c_str(), bounds, foreground_color);
-//		render_commands.add_font(font_handle, this->text.c_str(), bounds, 0, foreground_color);
+		bounds.origin.x += 10;
+		bounds.origin.y += 15;
+		render_commands.add_font(font_handle, this->text.c_str(), bounds, foreground_color);
 	}
 		
 	void Label::set_font(Compositor* compositor, const char* path)

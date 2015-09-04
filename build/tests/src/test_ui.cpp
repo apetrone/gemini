@@ -135,7 +135,11 @@ namespace experimental
 		glm::mat4 projection_matrix;
 		unsigned int diffuse_texture;
 
+		Array<render2::Texture*> textures;
+
 	public:
+
+		GUIRenderer() : textures(0) {}
 
 		void set_device(render2::Device* device) { this->device = device; }
 
@@ -156,7 +160,9 @@ namespace experimental
 		virtual gui::FontResult font_create(const char* path, gui::FontHandle& handle);
 		virtual void font_destroy(const gui::FontHandle& handle);
 		virtual gui::FontResult font_measure_string(const gui::FontHandle& handle, const char* string, gui::Rect& bounds);
-		virtual void font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color);
+		virtual size_t font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color, gui::render::Vertex* buffer, size_t buffer_size);
+		virtual size_t font_count_vertices(const gui::FontHandle& handle, const char* string);
+		virtual gui::TextureHandle font_get_texture(const gui::FontHandle& handle);
 		virtual gui::FontResult font_fetch_texture(const gui::FontHandle& handle, gui::TextureHandle& texture);
 		virtual void draw_command_lists(gui::render::CommandList** command_lists, Array<gui::render::Vertex>& vertex_buffer, size_t total_lists);
 
@@ -191,6 +197,7 @@ namespace experimental
 		white_image.flags = image::F_CLAMP_BORDER;
 		white_image.fill(core::Color(255, 255, 255));
 		white_texture = device->create_texture(white_image);
+		textures.push_back(white_texture);
 
 
 //		// generate the white texture we'll use for solid colors
@@ -232,6 +239,8 @@ namespace experimental
 
 	void GUIRenderer::shutdown(gui::Compositor* c)
 	{
+		textures.clear();
+
 		device->destroy_texture(white_texture);
 		device->destroy_buffer(vertex_buffer);
 		device->destroy_pipeline(pipeline);
@@ -302,6 +311,7 @@ namespace experimental
 		assert(fonthandle.is_valid());
 		handle = gui::FontHandle(fonthandle);
 
+		textures.push_back(render2::font::get_font_texture(fonthandle));
 //		assets::Font* font = assets::fonts()->load_from_path((char*)path);
 //		if (font == 0)
 //		{
@@ -339,13 +349,47 @@ namespace experimental
 		return gui::FontResult_Failed;
 	}
 
-	void GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color)
+	size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color, gui::render::Vertex* buffer, size_t buffer_size)
 	{
 //		assets::Font* font = assets::fonts()->find_with_id(handle);
 //		if (font)
 //		{
 //			font::draw_string(font->handle, bounds.origin.x, bounds.origin.y, string, Color(color.r(), color.g(), color.b(), color.a()));
 //		}
+		Array<render2::font::FontVertex> vertices;
+		render2::font::Handle font_handle(handle);
+		render2::font::draw_string(font_handle, vertices, string, core::Color(255, 0, 0));
+
+		// todo: this seems counter-intuitive
+		// copy back to the buffer
+		for (size_t index = 0; index < vertices.size(); ++index)
+		{
+			render2::font::FontVertex& v = vertices[index];
+			gui::render::Vertex& out = buffer[index];
+			out.x = v.position.x + bounds.origin.x;
+			out.y = v.position.y + bounds.origin.y;
+			out.uv[0] = v.uv.x;
+			out.uv[1] = v.uv.y;
+			out.color = color;
+		}
+
+		return vertices.size();
+	}
+
+	size_t GUIRenderer::font_count_vertices(const gui::FontHandle& handle, const char* string)
+	{
+		return core::str::len(string) * 6;
+	}
+
+	gui::TextureHandle GUIRenderer::font_get_texture(const gui::FontHandle& handle)
+	{
+		render2::font::Handle font_handle(handle);
+		render2::Texture* texture = render2::font::get_font_texture(font_handle);
+		assert(texture);
+
+
+		gui::TextureHandle th(1);
+		return th;
 	}
 
 	gui::FontResult GUIRenderer::font_fetch_texture(const gui::FontHandle &handle, gui::TextureHandle &texture)
@@ -408,7 +452,15 @@ namespace experimental
 			{
 				if (!command.texture.is_valid())
 				{
+					// no valid texture; use default white
 					serializer->texture(white_texture, 0);
+				}
+				else
+				{
+					// valid texture; look it up
+					size_t index = command.texture;
+					render2::Texture* texture_pointer = textures[index];
+					serializer->texture(texture_pointer, 0);
 				}
 				serializer->draw(command.vertex_offset, command.vertex_count);
 				++command_index;
@@ -545,6 +597,7 @@ class TestUi : public kernel::IKernel,
 	gui::Compositor* compositor;
 	gui::Panel* root;
 	gui::Graph* graph;
+	gui::Label* label;
 	experimental::GUIRenderer renderer;
 	ControllerTestPanel* ctp;
 

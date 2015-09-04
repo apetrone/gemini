@@ -37,7 +37,7 @@ namespace gui
 		Rect bounds;
 		bounds.origin = pt;
 //		renderer->font_draw(font_handle, string_value, bounds, color);
-		render_commands.add_font(font_handle, string_value, bounds, 0, color);
+		render_commands.add_font(font_handle, string_value, bounds, color);
 	}
 
 
