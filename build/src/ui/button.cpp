@@ -126,7 +126,7 @@ namespace gui
 		bounds.origin = text_origin;
 //		compositor->get_style()->draw_font(renderer, font_handle, this->text.c_str(), bounds, foreground_color);
 		
-		render_commands.add_font(font_handle, this->text.c_str(), bounds, 0, foreground_color);
+		render_commands.add_font(font_handle, this->text.c_str(), bounds, foreground_color);
 	}
 	
 } // namespace gui

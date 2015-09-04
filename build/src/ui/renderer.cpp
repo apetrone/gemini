@@ -50,6 +50,7 @@ namespace render
 	void CommandList::begin(Compositor* compositor)
 	{
 		vertex_buffer = compositor->get_vertex_buffer();
+		renderer = compositor->get_renderer();
 		reset();
 	}
 
@@ -57,6 +58,7 @@ namespace render
 	{
 		compositor->queue_commandlist(this);
 		vertex_buffer = nullptr;
+		renderer = nullptr;
 	}
 
 	void CommandList::push_clip_rect(const Rect& clip_rect)
@@ -172,8 +174,20 @@ namespace render
 		primitive_quad(p0, p1, p2, p3, texture, color);
 	}
 	
-	void CommandList::add_font(const FontHandle& font, const char* utf8, const Rect& bounds, const TextureHandle& texture, const gui::Color& color)
+	void CommandList::add_font(const FontHandle& font, const char* utf8, const Rect& bounds, const gui::Color& color)
 	{
+		add_drawcall();
+
+		const size_t max_vertices = 1024;
+
+		size_t required_primitives = renderer->font_count_vertices(font, utf8);
+		primitive_reserve(required_primitives);
+
+		TextureHandle texture = renderer->font_get_texture(font);
+		commands.back().texture = texture;
+		size_t vertices_drawn = renderer->font_draw(font, utf8, bounds, color, write_pointer, max_vertices);
+
+
 //		add_drawcall();
 //		primitive_reserve(6);
 //		Command& command = commands.back();

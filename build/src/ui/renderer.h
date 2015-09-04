@@ -58,6 +58,7 @@ namespace gui
 		{
 			Array<Command> commands;
 			Array<Vertex>* vertex_buffer;
+			class Renderer* renderer;
 
 			CommandList();
 			Vertex* write_pointer;
@@ -80,7 +81,7 @@ namespace gui
 			
 			LIBRARY_EXPORT void add_line(const Point& start, const Point& end, const gui::Color& color, float thickness = 1.0f);
 			LIBRARY_EXPORT void add_rectangle(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gui::Color& color);
-			LIBRARY_EXPORT void add_font(const FontHandle& font, const char* utf8, const Rect& bounds, const TextureHandle& texture, const gui::Color& color);
+			LIBRARY_EXPORT void add_font(const FontHandle& font, const char* utf8, const Rect& bounds, const gui::Color& color);
 		};
 	}
 	
@@ -189,10 +190,12 @@ namespace gui
 		/// @param string utf-8 encoded string
 		/// @param bounds Bounding rectangle to draw within
 		/// @param color PACK_RGBA'd color value
-		virtual void font_draw(const FontHandle& handle, const char* string, const gui::Rect& bounds, const Color& color) = 0;
-		
-		
+//		virtual void font_draw(const FontHandle& handle, const char* string, const gui::Rect& bounds, const Color& color) = 0;
+		/// @returns Total vertices written to buffer
+		virtual size_t font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color, gui::render::Vertex* buffer, size_t buffer_size) = 0;
 
+		virtual size_t font_count_vertices(const gui::FontHandle& handle, const char* string) = 0;
+		virtual TextureHandle font_get_texture(const gui::FontHandle& handle) = 0;
 	}; // Renderer
 	
 } // namespace gui
