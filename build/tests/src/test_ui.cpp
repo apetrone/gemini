@@ -52,129 +52,6 @@
 
 using namespace renderer;
 
-#define USE_SERIAL 1
-
-#if USE_SERIAL
-platform::Serial* _serial_device = nullptr;
-platform::Thread _thread_data;
-
-
-int poll_data = 1;
-
-struct nunchuck_packet
-{
-	int8_t joyx;
-	int8_t joyy;
-	int8_t cbutton;
-	int8_t zbutton;
-//	int8_t eop[2];
-
-	bool is_null() const
-	{
-		return (joyx == 0 && joyy == 0 && cbutton == 0 && zbutton == 0);
-	}
-
-//	void clamp()
-//	{
-//		float temp = joyx;
-//		joyx = glm::clamp(temp, -127.0f, 127.0f);
-//
-//		temp = joyy;
-//		joyy = glm::clamp(temp, -127.0f, 127.0f);
-//	}
-};
-
-const uint16_t SPEKTRUM_HEADER_VALUE = 0xbead;
-const uint16_t SPEKTRUM_FOOTER_VALUE = 0xfeff;
-
-struct spektrum_packet_t
-{
-	uint16_t header;
-	int16_t channel[6];
-	uint16_t footer;
-
-	spektrum_packet_t()
-	{
-		memset(this, 0, sizeof(spektrum_packet_t));
-        header = SPEKTRUM_HEADER_VALUE;
-        footer = SPEKTRUM_FOOTER_VALUE;
-	}
-
-	bool is_valid() const
-	{
-		return (header == SPEKTRUM_HEADER_VALUE) && (footer == SPEKTRUM_FOOTER_VALUE);
-	}
-};
-
-ThreadSafeQueue<spektrum_packet_t> _message_queue;
-
-
-void data_thread(void* context)
-{
-	fprintf(stdout, "data_thread enter\n");
-
-#if 0
-	// nunchuck packet
-
-	while (poll_data)
-	{
-		const size_t PACKET_SIZE = 4*128;
-		uint8_t buffer[PACKET_SIZE];
-		memset(buffer, 0, sizeof(PACKET_SIZE));
-
-		int bytes_read = platform::serial_read(_serial_device, buffer, PACKET_SIZE);
-		fprintf(stdout, "bytes_read = %i\n", bytes_read);
-		if ((size_t)bytes_read >= sizeof(nunchuck_packet))
-		{
-			nunchuck_packet* packet = reinterpret_cast<nunchuck_packet*>(buffer);
-//			fprintf(stdout, "-> %i %i %i %i\n", packet->joyx, packet->joyy, packet->cbutton, packet->zbutton);
-			_message_queue.enqueue(*packet);
-		}
-	}
-#else
-	const size_t PACKET_SIZE = 4096;
-	uint8_t buffer[PACKET_SIZE];
-	core::util::MemoryStream ms;
-
-	ms.init(buffer, PACKET_SIZE);
-
-	fprintf(stdout, "waiting for valid packet...\n");
-
-	// spektrum packet
-	while (poll_data)
-	{
-		unsigned char temp[4096];
-
-		int bytes_read = platform::serial_read(_serial_device, temp, 4096);
-		if (ms.current_offset() < 4094)
-			ms.write(temp, bytes_read);
-
-		const size_t PACKET_LENGTH = sizeof(spektrum_packet_t);
-		if (ms.current_offset() >= PACKET_LENGTH)
-		{
-			for (size_t index = 0; index < ms.current_offset(); ++index)
-			{
-				spektrum_packet_t* packet = reinterpret_cast<spektrum_packet_t*>(buffer+index);
-				if (packet->is_valid())
-				{
-					_message_queue.enqueue(*packet);
-					ms.rewind();
-					ms.clear();
-					break;
-				}
-			}
-		}
-	}
-
-#endif
-	fprintf(stdout, "data_thread exit\n");
-}
-
-
-#endif
-
-
-
 // ---------------------------------------------------------------------
 // gui
 // ---------------------------------------------------------------------
@@ -550,12 +427,10 @@ namespace experimental
 
 class ControllerTestPanel : public gui::Panel
 {
-
 	glm::vec2 mins;
 	glm::vec2 maxs;
 
 	glm::vec2 last;
-
 
 	int flags;
 public:
@@ -581,42 +456,12 @@ public:
 		last.y = value;
 	}
 
-
-	void set_cbutton(int value)
-	{
-		if (value)
-		{
-			flags |= 2;
-		}
-		else
-		{
-			flags &= ~2;
-		}
-	}
-
-	void set_zbutton(int value)
-	{
-		if (value)
-		{
-			flags |= 1;
-		}
-		else
-		{
-			flags &= ~1;
-		}
-	}
-
 	virtual bool can_move() const { return true; }
 
 	virtual void update(gui::Compositor* compositor, const gui::TimeState& timestate)
 	{
-
-
-
-
 		gui::Panel::update(compositor, timestate);
 	}
-
 
 	virtual void render(gui::Rect& frame, gui::Compositor* compositor, gui::Renderer* renderer, gui::Style* style)
 	{
@@ -794,12 +639,9 @@ public:
 		graph->set_range(0.0f, 33.3f);
 		graph->enable_baseline(true, 16.6f, gui::Color(255, 0, 255, 255));
 
-		if (_serial_device)
-		{
-			ctp = new ControllerTestPanel(root);
-			ctp->set_bounds(0, 0, 300, 300);
-			ctp->set_background_color(gui::Color(80, 80, 80));
-		}
+		ctp = new ControllerTestPanel(root);
+		ctp->set_bounds(0, 0, 300, 300);
+		ctp->set_background_color(gui::Color(80, 80, 80));
 
 //		gui::Panel* panel = new gui::Panel(root);
 //		panel->set_bounds(width-250, 0, 250, 100);
@@ -859,22 +701,6 @@ public:
 		input::startup();
 
 		platform::window::startup(platform::window::RenderingBackend_Default);
-
-#if USE_SERIAL
-//		const char* serial_device = "/dev/cu.usbmodem1d151311";
-		const char* serial_device = "/dev/cu.usbserial-AH02QPX7";
-		const size_t baud = 9600;
-		_serial_device = platform::serial_open(serial_device, baud);
-		if (!_serial_device)
-		{
-			LOGW("unable to open serial device\n");
-		}
-		else
-		{
-			platform::thread_create(_thread_data, data_thread, 0);
-		}
-
-#endif
 
 		size_t total_displays = platform::window::screen_count();
 		PLATFORM_LOG(platform::LogMessageType::Info, "-> total screens: %lu\n", total_displays);
@@ -1031,32 +857,6 @@ public:
 		if (rot > 360)
 			rot -= 360.0f;
 
-
-#if USE_SERIAL
-		if (ctp)
-		{
-			// process the queue
-			while(_message_queue.size() > 0)
-			{
-#if 0
-// nunchuck_packet
-				nunchuck_packet packet = _message_queue.dequeue();
-//				fprintf(stdout, "<- %i %i %i %i\n", packet.joyx, packet.joyy, packet.cbutton, packet.zbutton);
-				ctp->set_x(packet.joyx);
-				ctp->set_y(-packet.joyy);
-				ctp->set_cbutton(packet.cbutton);
-				ctp->set_zbutton(packet.zbutton);
-#else
-// spektrum packet
-				spektrum_packet_t packet = _message_queue.dequeue();
-				fprintf(stdout, "<- %i %i %i %i %i %i\n", packet.channel[0], packet.channel[1], packet.channel[2], packet.channel[3], packet.channel[4], packet.channel[5]);
-#endif
-
-			}
-		}
-#endif
-
-
 		// update the gui
 		compositor->update(kernel::parameters().framedelta_seconds);
 
@@ -1097,16 +897,6 @@ public:
 
 	virtual void shutdown()
 	{
-		poll_data = 0;
-		platform::thread_join(_thread_data);
-
-		if (_serial_device)
-		{
-			platform::serial_close(_serial_device);
-		}
-
-
-
 		// shutdown/destroy the gui
 		delete compositor;
 
