@@ -460,7 +460,8 @@ namespace render2
 			// perform a bit of verification with types and element counts
 			VertexDataType expected_type;
 			size_t expected_elements;
-			convert_type(shader->attributes[index].type, expected_type, expected_elements);
+			GLint location = shader->get_attribute_location(input.name());
+			convert_type(shader->attributes[location].type, expected_type, expected_elements);
 
 			// Types should match; otherwise byte offsets will be incorrect.
 			// Element counts can vary slightly if the input type isn't larger
@@ -468,7 +469,7 @@ namespace render2
 			assert(input.type == expected_type && input.element_count <= expected_elements);
 
 			GLInputLayout::Description target;
-			target.location = shader->get_attribute_location(input.name());
+			target.location = location;
 			target.type = gldata.type;
 			target.normalized = gldata.normalized;
 			target.element_count = input.element_count;
