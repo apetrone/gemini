@@ -47,5 +47,8 @@ namespace gui
 		_gmalloc = malloc_fn;
 		_gfree = free_fn;
 	}
-	
+
+	ResourceCache::~ResourceCache()
+	{
+	}
 } // namespace gui

@@ -49,19 +49,17 @@ namespace gui
 		);
 		
 		gui::Rect bounds = frame;
-		
-		bounds.origin.x += 10;
-		bounds.origin.y += 15;
+
+		size_t height;
+		renderer->font_metrics(font_handle, height);
+
+		bounds.origin.y += height;
 		render_commands.add_font(font_handle, this->text.c_str(), bounds, foreground_color);
 	}
 		
-	void Label::set_font(Compositor* compositor, const char* path)
+	void Label::set_font(const FontHandle& handle)
 	{
-		gui::FontResult result = compositor->renderer->font_create(path, font_handle);
-		if (result != gui::FontResult_Success)
-		{
-			// error loading font
-		}
+		font_handle = handle;
 	}
 	
 	void Label::set_text(const std::string& text)

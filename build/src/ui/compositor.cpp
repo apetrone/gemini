@@ -37,11 +37,13 @@ namespace gui
 		}
 	}; // ZSort_Panel_Descending
 
-	Compositor::Compositor( ScreenInt w, ScreenInt h ) : Panel(0)
+	Compositor::Compositor(ScreenInt w, ScreenInt h, ResourceCache* cache, Renderer* renderer) :
+		Panel(0),
+		width(w),
+		height(h),
+		resource_cache(cache),
+		renderer(renderer)
 	{
-		this->width = w;
-		this->height = h;
-		this->renderer = 0;
 		this->aspect_ratio = width / (float)height;
 
 		this->last_cursor = Point(0, 0);
@@ -58,6 +60,8 @@ namespace gui
 		
 		update_interval_seconds = (1.0f/20.0f); // 20 times per second
 		next_message = 0;
+
+		renderer->startup(this);
 	} // Compositor
 	
 	Compositor::~Compositor()
@@ -104,18 +108,12 @@ namespace gui
 			}
 		}
 		
-		this->renderer->draw_command_lists(&command_stream[0], vertex_buffer, command_stream.size());
+		this->renderer->draw_command_lists(&command_stream[0], command_stream.size(), vertex_buffer);
 		
 		this->renderer->end_frame();
 	} // render
 	
-	
-	void Compositor::set_renderer(Renderer* renderer)
-	{
-		this->renderer = renderer;
-		this->renderer->startup( this );
-	} // set_renderer
-	
+
 	void Compositor::set_style(Style* style)
 	{
 		this->style = style;
