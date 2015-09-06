@@ -61,9 +61,7 @@ namespace gui
 		
 		background_color = Color(0, 0, 0, 255);
 		foreground_color = Color(255, 255, 255, 255);
-		
-		font_height = 10;
-		
+
 		show_baseline = false;
 	}
 	
@@ -291,13 +289,13 @@ namespace gui
 		
 		
 		// draw text
-		Point left_margin( frame.origin.x + 2, frame.origin.y+10-font_height );
+		Point left_margin(frame.origin.x + 2, frame.origin.y);
 
 		draw_float(renderer, range_max, left_margin, foreground_color);
 
 		if (show_baseline)
 		{
-			left_margin.y = baseline_y+y+height;
+			left_margin.y = baseline_y + y + height - (font_height/2.0f);
 			draw_float(renderer, baseline_value, left_margin, foreground_color);
 		}
 

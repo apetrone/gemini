@@ -102,7 +102,7 @@ namespace gui
 		// We need floor to snap to pixel boundaries; not fractional pixels;
 		// which would introduce artifacts.
 		text_origin.x = glm::floor(bounds.origin.x + (bounds.width() / 2.0f) - (font_dims.width()/2.0f));
-		text_origin.y = glm::floor(bounds.origin.y + (bounds.height() / 2.0f) - ((font_dims.height()-font_height)/2.0f));
+		text_origin.y = glm::floor(bounds.origin.y + (bounds.height() / 2.0f) - (font_dims.height()/2.0f) + font_height);
 	} // update
 	
 	void Button::render(Rect& frame, Compositor* compositor, Renderer* renderer, Style* style)
@@ -122,12 +122,7 @@ namespace gui
 		);
 
 		gui::Rect bounds = frame;
-		
-		//		bounds.origin.x += 10;
-		//		bounds.origin.y += 15;
 		bounds.origin = text_origin;
-//		compositor->get_style()->draw_font(renderer, font_handle, this->text.c_str(), bounds, foreground_color);
-		
 		render_commands.add_font(font_handle, this->text.c_str(), bounds, foreground_color);
 	}
 	
