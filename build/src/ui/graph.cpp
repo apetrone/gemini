@@ -36,7 +36,6 @@ namespace gui
 		sprintf(string_value, "%2.2f", value);
 		Rect bounds;
 		bounds.origin = pt + glm::vec2(0, font_height);
-//		renderer->font_draw(font_handle, string_value, bounds, color);
 		render_commands.add_font(font_handle, string_value, bounds, color);
 	}
 
@@ -209,9 +208,6 @@ namespace gui
 			render::WhiteTexture,
 			background_color
 		);
-		
-		
-//		style->draw_bounds(renderer, frame, background_color);
 
 		float dx = (float)frame.size.width / (float)total_samples;
 		float y = frame.origin.y;
@@ -219,7 +215,6 @@ namespace gui
 		float vertical_scale = range_max - range_min;
 		float yoffset = (range_min / vertical_scale) * height;
 		float baseline_y = ((range_min-baseline_value) / vertical_scale) * height;
-
 
 		if (show_baseline)
 		{
@@ -242,7 +237,7 @@ namespace gui
 			unsigned int sample_id = current_sample[ current_channel ];
 			Color* colors = &channel_colors[ ChannelTotal * current_channel ];
 			
-			for( int i = 0; i < total_samples; ++i )
+			for(uint32_t i = 0; i < total_samples; ++i)
 			{
 				Color color = colors[ ChannelColor ];
 				float sample_value = values[ (current_channel * total_samples) + ((sample_id) % total_samples) ];
@@ -265,9 +260,7 @@ namespace gui
 
 				float sample_y = (sample_value / vertical_scale);
 				float outvalue = yoffset+y+height-(sample_y*height);
-				
 
-				//printf( "out=%g, sample_value=%g, sample_y=%g\n", outvalue, sample_value, sample_y );
 				if ( i > 0 )
 				{
 					Point current( cx, outvalue );
@@ -302,19 +295,6 @@ namespace gui
 
 		left_margin.y = y + height - font_height;
 		draw_float(renderer, range_min, left_margin, foreground_color);
-		
-#if 0
-		// draw font in the upper left corner
-		if ( mLabel.length() > 0 )
-		{
-			// draw the string
-			r->DrawFont( Point(corners[0].x+2, corners[0].y+10), mLabel.c_str(), mForeColor );
-		}
-#endif
-		// TODO: render the max, min
-
-		// TODO: draw an outline
-//		DrawOutline(r, corners, gui::Color(0,0,0) );
 	}
 
 } // namespace gui
