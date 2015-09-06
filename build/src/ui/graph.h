@@ -82,7 +82,7 @@ namespace gui
 		LIBRARY_EXPORT void record_value(float value, uint32_t channel_index);
 		LIBRARY_EXPORT void set_range(float min_range, float max_range);
 			
-		LIBRARY_EXPORT void set_font(Compositor* compositor, const char* path);
+		LIBRARY_EXPORT void set_font(const FontHandle& handle);
 		LIBRARY_EXPORT virtual void set_background_color(const Color& color);
 		LIBRARY_EXPORT virtual void set_foreground_color(const Color& color);
 		

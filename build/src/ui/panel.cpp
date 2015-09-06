@@ -246,10 +246,12 @@ namespace gui
 	
 	void Panel::set_background_image(Compositor* compositor, const char* path)
 	{
-		if (compositor && compositor->renderer)
-		{
-			compositor->renderer->texture_create(path, background);
-		}
+		// This needs to be updated to use the new ResourceCache
+		assert(0);
+//		if (compositor && compositor->get_renderer())
+//		{
+//			compositor->renderer->texture_create(path, background);
+//		}
 	} // set_background_image
 	
 	

@@ -52,7 +52,7 @@ namespace gui
 		Panel* capture;
 		PanelVector zsorted;
 		Style* style;
-		Renderer* renderer;
+
 		Point last_cursor;
 		size_t next_z_depth;
 		float aspect_ratio;
@@ -67,7 +67,7 @@ namespace gui
 
 		Array<render::CommandList*> command_stream;
 
-		LIBRARY_EXPORT Compositor(ScreenInt width, ScreenInt height);
+		LIBRARY_EXPORT Compositor(ScreenInt width, ScreenInt height, ResourceCache* cache, Renderer* renderer);
 		LIBRARY_EXPORT virtual ~Compositor();
 		
 		/// @desc Update the children given delta seconds.
@@ -88,7 +88,6 @@ namespace gui
 		LIBRARY_EXPORT Panel* get_capture() { return this->capture; }
 		LIBRARY_EXPORT void set_capture(Panel* panel) { this->capture = panel; }
 		
-		LIBRARY_EXPORT void set_renderer(Renderer* renderer);
 		LIBRARY_EXPORT Renderer* get_renderer() const { return renderer; }
 		LIBRARY_EXPORT void set_style(Style* style);
 		LIBRARY_EXPORT Style* get_style() const;
@@ -98,6 +97,8 @@ namespace gui
 		
 		LIBRARY_EXPORT virtual void add_child(Panel* panel);
 		LIBRARY_EXPORT virtual void remove_child(Panel* panel);
+
+		LIBRARY_EXPORT ResourceCache* get_resource_cache() const { return resource_cache; }
 
 		// events
 		LIBRARY_EXPORT void cursor_move_absolute(ScreenInt x, ScreenInt y);
@@ -121,6 +122,9 @@ namespace gui
 
 		Array<render::Vertex> vertex_buffer;
 		Array<render::Vertex>* get_vertex_buffer() { return &vertex_buffer; }
+
+		ResourceCache* resource_cache;
+		Renderer* renderer;
 	}; // struct Compositor
 	
 } // namespace gui

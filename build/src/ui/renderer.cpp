@@ -50,7 +50,7 @@ namespace render
 	void CommandList::begin(Compositor* compositor)
 	{
 		vertex_buffer = compositor->get_vertex_buffer();
-		renderer = compositor->get_renderer();
+		this->compositor = compositor;
 		reset();
 	}
 
@@ -58,7 +58,7 @@ namespace render
 	{
 		compositor->queue_commandlist(this);
 		vertex_buffer = nullptr;
-		renderer = nullptr;
+		compositor = nullptr;
 	}
 
 	void CommandList::push_clip_rect(const Rect& clip_rect)
@@ -74,6 +74,7 @@ namespace render
 	void CommandList::add_drawcall()
 	{
 		Command command;
+		command.type = CommandType_Generic;
 		command.vertex_offset = 0;
 		command.vertex_count = 0;
 		command.clip_rect = Rect(0, 0, 0, 0);
@@ -180,19 +181,16 @@ namespace render
 
 		const size_t max_vertices = 1024;
 
-		size_t required_primitives = renderer->font_count_vertices(font, utf8);
+		size_t required_primitives = compositor->get_renderer()->font_count_vertices(font, utf8);
 		primitive_reserve(required_primitives);
 
-		TextureHandle texture = renderer->font_get_texture(font);
-		commands.back().texture = texture;
-		size_t vertices_drawn = renderer->font_draw(font, utf8, bounds, color, write_pointer, max_vertices);
-
-
-//		add_drawcall();
-//		primitive_reserve(6);
-//		Command& command = commands.back();
-//		command.id = 2;
-//		command.texture = texture;
+//		fprintf(stdout, "font prims: %i\n", required_primitives);
+		TextureHandle texture = compositor->get_resource_cache()->texture_for_font(font);
+		Command& command = commands.back();
+		command.texture = texture;
+		command.type = CommandType_Font;
+		size_t vertices_drawn = compositor->get_renderer()->font_draw(font, utf8, bounds, color, write_pointer, max_vertices);
+		assert(vertices_drawn > 0);
 	}
 } // namespace render
 } // namespace gui

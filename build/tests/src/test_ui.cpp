@@ -86,6 +86,125 @@ struct MyVertex
 	}
 };
 
+class StandaloneResourceCache : public gui::ResourceCache
+{
+	typedef HashSet<render2::Texture*, gui::TextureHandle> TextureToHandleSet;
+	TextureToHandleSet handle_by_texture;
+
+	Array<render2::Texture*> textures;
+
+
+	typedef HashSet<const char*, gui::FontHandle> FontByPathSet;
+	FontByPathSet font_handle_by_path;
+
+public:
+	StandaloneResourceCache();
+	void clear();
+
+	virtual gui::FontHandle create_font(const char* filename, size_t pixel_size);
+	virtual void destroy_font(const gui::FontHandle& handle);
+	virtual gui::TextureHandle texture_for_font(const gui::FontHandle& handle);
+	virtual gui::TextureHandle create_texture(const char* filename);
+	virtual void destroy_texture(const gui::TextureHandle& handle);
+
+
+public:
+	int track_texture(render2::Texture* texture);
+//	void untrack_texture(render2::Texture* texture);
+
+	gui::TextureHandle texture_to_handle(render2::Texture* texture);
+	render2::Texture* handle_to_texture(const gui::TextureHandle& handle);
+};
+
+StandaloneResourceCache::StandaloneResourceCache() :
+	textures(0)
+{
+
+}
+
+void StandaloneResourceCache::clear()
+{
+	for (FontByPathSet::Iterator it = font_handle_by_path.begin(); it != font_handle_by_path.end(); ++it)
+	{
+		const gui::FontHandle& handle = it.value();
+		render2::font::Handle fonthandle(handle);
+	}
+
+	textures.clear();
+
+	handle_by_texture.clear();
+	font_handle_by_path.clear();
+}
+
+gui::FontHandle StandaloneResourceCache::create_font(const char* filename, size_t pixel_size)
+{
+	Array<unsigned char> fontdata;
+	core::filesystem::instance()->virtual_load_file(fontdata, filename);
+	render2::font::Handle fonthandle = render2::font::load_from_memory(&fontdata[0], fontdata.size(), pixel_size);
+	assert(fonthandle.is_valid());
+
+	gui::FontHandle handle(fonthandle);
+
+	// we need to track the texture for looking during rendering
+	render2::Texture* texture = render2::font::get_font_texture(fonthandle);
+	track_texture(texture);
+
+	return handle;
+}
+
+void StandaloneResourceCache::destroy_font(const gui::FontHandle& handle)
+{
+	assert(0);
+}
+
+gui::TextureHandle StandaloneResourceCache::texture_for_font(const gui::FontHandle& handle)
+{
+	render2::Texture* texture = render2::font::get_font_texture(render2::font::Handle(handle));
+	if (handle_by_texture.has_key(texture))
+	{
+		return handle_by_texture[texture];
+	}
+
+	return gui::TextureHandle();
+}
+
+gui::TextureHandle StandaloneResourceCache::create_texture(const char* filename)
+{
+	gui::TextureHandle handle;
+	assert(0);
+	return handle;
+}
+
+int StandaloneResourceCache::track_texture(render2::Texture *texture)
+{
+	assert(!handle_by_texture.has_key(texture));
+
+
+	int ref = static_cast<int>(textures.size());
+	textures.push_back(texture);
+	handle_by_texture[texture] = ref;
+
+	return ref;
+}
+
+void StandaloneResourceCache::destroy_texture(const gui::TextureHandle& handle)
+{
+	assert(0);
+}
+
+gui::TextureHandle StandaloneResourceCache::texture_to_handle(render2::Texture* texture)
+{
+	assert(handle_by_texture.has_key(texture));
+	gui::TextureHandle handle = handle_by_texture[texture];
+	return handle;
+}
+
+render2::Texture* StandaloneResourceCache::handle_to_texture(const gui::TextureHandle& handle)
+{
+	assert(handle.is_valid());
+	int index = handle;
+	return textures[index];
+}
 
 namespace experimental
 {
@@ -128,18 +247,20 @@ namespace experimental
 
 		render2::Device* device;
 		render2::Buffer* vertex_buffer;
-		render2::Pipeline* pipeline;
+		render2::Pipeline* gui_pipeline;
+		render2::Pipeline* font_pipeline;
 		render2::Texture* white_texture;
 
 		glm::mat4 modelview_matrix;
 		glm::mat4 projection_matrix;
 		unsigned int diffuse_texture;
 
-		Array<render2::Texture*> textures;
-
+		StandaloneResourceCache& resource_cache;
 	public:
 
-		GUIRenderer() : textures(0) {}
+		GUIRenderer(StandaloneResourceCache& cache) :
+			resource_cache(cache)
+		{}
 
 		void set_device(render2::Device* device) { this->device = device; }
 
@@ -160,11 +281,12 @@ namespace experimental
 		virtual gui::FontResult font_create(const char* path, gui::FontHandle& handle);
 		virtual void font_destroy(const gui::FontHandle& handle);
 		virtual gui::FontResult font_measure_string(const gui::FontHandle& handle, const char* string, gui::Rect& bounds);
+		virtual void font_metrics(const gui::FontHandle& handle, size_t& height);
 		virtual size_t font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color, gui::render::Vertex* buffer, size_t buffer_size);
 		virtual size_t font_count_vertices(const gui::FontHandle& handle, const char* string);
 		virtual gui::TextureHandle font_get_texture(const gui::FontHandle& handle);
 		virtual gui::FontResult font_fetch_texture(const gui::FontHandle& handle, gui::TextureHandle& texture);
-		virtual void draw_command_lists(gui::render::CommandList** command_lists, Array<gui::render::Vertex>& vertex_buffer, size_t total_lists);
+		virtual void draw_command_lists(gui::render::CommandList** command_lists, size_t total_lists, Array<gui::render::Vertex>& vertex_buffer);
 
 	}; // GUIRenderer
 
@@ -179,6 +301,7 @@ namespace experimental
 
 		this->vertex_buffer = device->create_vertex_buffer(MAX_VERTICES*sizeof(GUIVertex));
 
+		// standard gui pipeline
 		render2::PipelineDescriptor desc;
 		desc.shader = device->create_shader("gui");
 		desc.vertex_description.add("in_position", render2::VD_FLOAT, 2);
@@ -188,8 +311,20 @@ namespace experimental
 		desc.enable_blending = true;
 		desc.blend_source = render2::BlendOp::SourceAlpha;
 		desc.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
-		pipeline = device->create_pipeline(desc);
+		gui_pipeline = device->create_pipeline(desc);
 
+
+		// font pipeline
+		render2::PipelineDescriptor fontdesc;
+		fontdesc.shader = device->create_shader("font");
+		fontdesc.vertex_description.add("in_position", render2::VD_FLOAT, 2);
+		fontdesc.vertex_description.add("in_color", render2::VD_FLOAT, 4);
+		fontdesc.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
+		fontdesc.input_layout = device->create_input_layout(fontdesc.vertex_description, fontdesc.shader);
+		fontdesc.enable_blending = true;
+		fontdesc.blend_source = render2::BlendOp::SourceAlpha;
+		fontdesc.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
+		font_pipeline = device->create_pipeline(fontdesc);
 
 		render2::Image white_image;
 		white_image.create(4, 4, 3);
@@ -197,8 +332,6 @@ namespace experimental
 		white_image.flags = image::F_CLAMP_BORDER;
 		white_image.fill(core::Color(255, 255, 255));
 		white_texture = device->create_texture(white_image);
-		textures.push_back(white_texture);
-
 
 //		// generate the white texture we'll use for solid colors
 //		white_texture = assets::textures()->allocate_asset();
@@ -239,11 +372,10 @@ namespace experimental
 
 	void GUIRenderer::shutdown(gui::Compositor* c)
 	{
-		textures.clear();
-
 		device->destroy_texture(white_texture);
 		device->destroy_buffer(vertex_buffer);
-		device->destroy_pipeline(pipeline);
+		device->destroy_pipeline(gui_pipeline);
+		device->destroy_pipeline(font_pipeline);
 	}
 
 	void GUIRenderer::begin_frame(gui::Compositor* c)
@@ -307,19 +439,9 @@ namespace experimental
 	{
 		Array<unsigned char> fontdata;
 		core::filesystem::instance()->virtual_load_file(fontdata, path);
-		render2::font::Handle fonthandle = render2::font::load_from_memory(&fontdata[0], fontdata.size(), 8);
+		render2::font::Handle fonthandle = render2::font::load_from_memory(&fontdata[0], fontdata.size(), 16);
 		assert(fonthandle.is_valid());
 		handle = gui::FontHandle(fonthandle);
-
-		textures.push_back(render2::font::get_font_texture(fonthandle));
-//		assets::Font* font = assets::fonts()->load_from_path((char*)path);
-//		if (font == 0)
-//		{
-//			return gui::FontResult_Failed;
-//		}
-//
-//		handle = font->Id();
-
 		return gui::FontResult_Success;
 	}
 
@@ -333,32 +455,26 @@ namespace experimental
 
 	gui::FontResult GUIRenderer::font_measure_string(const gui::FontHandle& handle, const char* string, gui::Rect& bounds)
 	{
-//		assets::Font* font = assets::fonts()->find_with_id(handle);
-//		if (font)
-//		{
-//			unsigned int width = font::measure_width(font->handle, string);
-//			unsigned int height = font::measure_height(font->handle, string);
-//			bounds.set(0, 0, width, height);
-//			return gui::FontResult_Success;
-//		}
+		glm::vec2 bounds_min, bounds_max;
+		render2::font::get_string_metrics(render2::font::Handle(handle), string, bounds_min, bounds_max);
 
-		// TODO: implement this for fonts
-		bounds.set(0, 0, 12, 12);
+		bounds.set(bounds_min.x, bounds_min.y, bounds_max.x, bounds_max.y);
 		return gui::FontResult_Success;
+	}
 
-		return gui::FontResult_Failed;
+	void GUIRenderer::font_metrics(const gui::FontHandle& handle, size_t& height)
+	{
+		render2::font::Metrics metrics;
+		render2::font::get_font_metrics(render2::font::Handle(handle), metrics);
+
+		height = metrics.height;
 	}
 
 	size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color, gui::render::Vertex* buffer, size_t buffer_size)
 	{
-//		assets::Font* font = assets::fonts()->find_with_id(handle);
-//		if (font)
-//		{
-//			font::draw_string(font->handle, bounds.origin.x, bounds.origin.y, string, Color(color.r(), color.g(), color.b(), color.a()));
-//		}
 		Array<render2::font::FontVertex> vertices;
 		render2::font::Handle font_handle(handle);
-		render2::font::draw_string(font_handle, vertices, string, core::Color(255, 0, 0));
+		render2::font::draw_string(font_handle, vertices, string, core::Color(color.r(), color.g(), color.b(), color.a()));
 
 		// todo: this seems counter-intuitive
 		// copy back to the buffer
@@ -397,7 +513,7 @@ namespace experimental
 		return gui::FontResult_Failed;
 	}
 
-	void GUIRenderer::draw_command_lists(gui::render::CommandList** command_lists, Array<gui::render::Vertex>& vertex_buffer, size_t total_lists)
+	void GUIRenderer::draw_command_lists(gui::render::CommandList** command_lists, size_t total_lists, Array<gui::render::Vertex>& vertex_buffer)
 	{
 		size_t total_vertices = vertex_buffer.size();
 
@@ -408,25 +524,26 @@ namespace experimental
 //		device->buffer_resize(vertex_buffer, sizeof(GUIVertex) * total_vertices);
 
 		diffuse_texture = 0;
-		pipeline->constants().set("projection_matrix", &projection_matrix);
-		pipeline->constants().set("diffuse", &diffuse_texture);
+		gui_pipeline->constants().set("projection_matrix", &projection_matrix);
+		gui_pipeline->constants().set("diffuse", &diffuse_texture);
+
+		font_pipeline->constants().set("projection_matrix", &projection_matrix);
+		font_pipeline->constants().set("diffuse", &diffuse_texture);
 
 		assert(total_lists > 0);
 
 		GUIVertex vertices[MAX_VERTICES];
-		size_t vertex_index = 0;
+		memset(vertices, 0, sizeof(GUIVertex)*MAX_VERTICES);
+
 		// loop through all vertices in the source vertex_buffer
 		// and convert them to our buffer
 		for (size_t index = 0; index < total_vertices; ++index)
 		{
 			gui::render::Vertex* gv = &vertex_buffer[index];
-
-			GUIVertex& vt = vertices[vertex_index];
+			GUIVertex& vt = vertices[index];
 			vt.set_position(gv->x, gv->y);
 			vt.set_color(gv->color.r()/255.0f, gv->color.g()/255.0f, gv->color.b()/255.0f, gv->color.a()/255.0f);
 			vt.set_uv(gv->uv[0], gv->uv[1]);
-
-			++vertex_index;
 		}
 
 		device->buffer_upload(this->vertex_buffer, vertices, sizeof(GUIVertex)*total_vertices);
@@ -436,20 +553,39 @@ namespace experimental
 		{
 			gui::render::CommandList* commandlist = command_lists[index];
 
+
 			// setup the pass and queue the draw
 			render2::Pass pass;
 			pass.target = device->default_render_target();
-			pass.color(1.0f, 0.0f, 0.0f, 1.0f);
 			pass.clear_color = false;
 			pass.clear_depth = false;
 
 			render2::CommandQueue* queue = device->create_queue(pass);
 			render2::CommandSerializer* serializer = device->create_serializer(queue);
-			serializer->pipeline(pipeline);
+
 			serializer->vertex_buffer(this->vertex_buffer);
 
 			for (gui::render::Command& command : commandlist->commands)
 			{
+				render2::Pipeline* pipeline;
+				render2::Texture* texture_pointer = white_texture;
+
+				if (command.type == gui::render::CommandType_Generic)
+				{
+					pipeline = gui_pipeline;
+				}
+				else if (command.type == gui::render::CommandType_Font)
+				{
+					pipeline = font_pipeline;
+				}
+				else
+				{
+					// Unable to render this command type
+					assert(0);
+				}
+
+				serializer->pipeline(pipeline);
+
 				if (!command.texture.is_valid())
 				{
 					// no valid texture; use default white
@@ -458,13 +594,13 @@ namespace experimental
 				else
 				{
 					// valid texture; look it up
-					size_t index = command.texture;
-					render2::Texture* texture_pointer = textures[index];
+					texture_pointer = resource_cache.handle_to_texture(command.texture);
 					serializer->texture(texture_pointer, 0);
 				}
 				serializer->draw(command.vertex_offset, command.vertex_count);
 				++command_index;
 			}
+
 			device->queue_buffers(queue, 1);
 
 			device->destroy_serializer(serializer);
@@ -599,6 +735,7 @@ class TestUi : public kernel::IKernel,
 	gui::Graph* graph;
 	gui::Label* label;
 	experimental::GUIRenderer renderer;
+	StandaloneResourceCache resource_cache;
 	ControllerTestPanel* ctp;
 
 	glm::mat4 modelview_matrix;
@@ -656,7 +793,8 @@ public:
 	}
 public:
 
-	TestUi()
+	TestUi() :
+		renderer(resource_cache)
 	{
 		native_window = nullptr;
 		active = true;
@@ -669,22 +807,33 @@ public:
 
 	void setup_gui(int width, int height)
 	{
+		renderer.set_device(device);
+
 		gui::set_allocator(gui_malloc_callback, gui_free_callback);
-		compositor = new gui::Compositor(width, height);
+		compositor = new gui::Compositor(width, height, &resource_cache, &renderer);
 
 		root = new gui::Panel(compositor);
 		platform::window::Frame frame = platform::window::get_render_frame(native_window);
 
-		renderer.set_device(device);
-		compositor->set_renderer(&renderer);
+
 
 		root->set_bounds(0, 0, frame.width, frame.height);
-		root->set_background_color(gui::Color(255, 0, 255, 0));
+		root->set_background_color(gui::Color(255, 255, 255, 0));
+
+//		gui::FontHandle dev_font = resource_cache.create_font("fonts/nokiafc22.ttf", 8);
+//		gui::FontHandle dev_font = resource_cache.create_font("fonts/04B_08.ttf", 8);
+//		gui::FontHandle dev_font = resource_cache.create_font("fonts/Arial Unicode.ttf", 16);
+//		gui::FontHandle dev_font = resource_cache.create_font("fonts/Cantarell-Regular.ttf", 16);
+		gui::FontHandle dev_font = resource_cache.create_font("fonts/7x5.ttf", 8);
+
+
+
+		assert(dev_font.is_valid());
 
 		// setup the framerate graph
 		graph = new gui::Graph(root);
 		graph->set_bounds(width-250, 0, 250, 100);
-		graph->set_font(compositor, "fonts/nokiafc22.ttf");
+		graph->set_font(dev_font);
 		graph->set_background_color(gui::Color(60, 60, 60, 255));
 		graph->set_foreground_color(gui::Color(255, 255, 255, 255));
 		graph->create_samples(100, 1);
@@ -692,16 +841,31 @@ public:
 		graph->set_range(0.0f, 33.3f);
 		graph->enable_baseline(true, 16.6f, gui::Color(255, 0, 255, 255));
 
-		ctp = new ControllerTestPanel(root);
-		ctp->set_bounds(0, 0, 300, 300);
-		ctp->set_background_color(gui::Color(80, 80, 80));
+		label = new gui::Label(root);
+		label->set_background_color(gui::Color(32, 32, 32));
+		label->set_foreground_color(gui::Color(0, 255, 0));
+		label->set_bounds(50, 75, 100, 100);
+		label->set_font(dev_font);
+		label->set_text("AB");
+
+		{
+			gui::Label* label = new gui::Label(root);
+			label->set_background_color(gui::Color(0, 32, 0));
+			label->set_foreground_color(gui::Color(255, 0, 0));
+			label->set_bounds(150, 175, 100, 100);
+			label->set_font(dev_font);
+			label->set_text("B");
+		}
+//		ctp = new ControllerTestPanel(root);
+//		ctp->set_bounds(0, 0, 300, 300);
+//		ctp->set_background_color(gui::Color(80, 80, 80));
 
 //		gui::Panel* panel = new gui::Panel(root);
 //		panel->set_bounds(width-250, 0, 250, 100);
 //		panel->set_background_color(gui::Color(60, 60, 60, 255));
 
 
-
+#if 1
 		gui::Color button_background(128, 128, 128, 255);
 		gui::Color button_hover(255, 255, 128, 255);
 
@@ -724,13 +888,14 @@ public:
 		{
 			gui::Button* newgame = new gui::Button(root);
 			newgame->set_bounds(origin_x, origin_y, button_width, button_height);
-			newgame->set_font(compositor, "fonts/nokiafc22.ttf");
+			newgame->set_font(dev_font);
 			newgame->set_text(captions[index]);
 			newgame->set_background_color(button_background);
 			newgame->set_hover_color(button_hover);
 			newgame->set_userdata((void*)2);
 			origin_y += button_height + button_spacing;
 		}
+#endif
 	}
 
 	virtual kernel::Error startup()
@@ -952,6 +1117,8 @@ public:
 	{
 		// shutdown/destroy the gui
 		delete compositor;
+
+		resource_cache.clear();
 
 		// shutdown the fonts
 		render2::font::shutdown();

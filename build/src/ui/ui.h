@@ -46,6 +46,65 @@ namespace gui
 	void LIBRARY_EXPORT set_allocator(gui_malloc malloc_fn, gui_free free_fn);
 	
 	typedef float real;
+
+
+	struct TextureResource {};
+	struct FontResource {};
+
+
+	template <class T>
+	struct ResourceHandle
+	{
+		int ref;
+
+		ResourceHandle(int reference = -1) :
+			ref(reference)
+		{
+		}
+
+		bool is_valid() const
+		{
+			return (ref != -1);
+		}
+
+		operator int() const
+		{
+			return ref;
+		}
+	};
+
+
+	typedef ResourceHandle<TextureResource> TextureHandle;
+	typedef ResourceHandle<FontResource> FontHandle;
+
+	enum TextureResult
+	{
+		TextureResult_Success = 0,
+		TextureResult_Failed = 1,
+	}; // TextureResult
+
+	enum FontResult
+	{
+		FontResult_Success = 0,
+		FontResult_Failed = 1,
+	}; // FontResult
+
+	class ResourceCache
+	{
+	public:
+		virtual ~ResourceCache();
+
+		virtual FontHandle create_font(const char* filename, size_t pixel_size) = 0;
+
+		// destroy a font
+		virtual void destroy_font(const FontHandle& handle) = 0;
+
+		// return the texture used by this font
+		virtual TextureHandle texture_for_font(const FontHandle& handle) = 0;
+
+		virtual TextureHandle create_texture(const char* filename) = 0;
+		virtual void destroy_texture(const TextureHandle& handle) = 0;
+	};
 }
 
 #include "ui/utils.h"

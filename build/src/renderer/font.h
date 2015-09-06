@@ -106,6 +106,11 @@ namespace render2
 			glm::vec2 uv;
 		};
 
+		struct Metrics
+		{
+			size_t height;
+		};
+
 		struct Handle
 		{
 			int ref;
@@ -140,6 +145,9 @@ namespace render2
 
 		// return the point size for the font
 		unsigned int get_point_size(Handle handle);
+
+		// retrieve metrics for this font
+		void get_font_metrics(Handle handle, Metrics& out_metrics);
 
 		// fetch metrics for a single glyph; if available (return == 0)
 		int get_glyph_metrics(Handle handle, uint32_t codepoint, glm::vec2& mins, glm::vec2& maxs, int* advance);

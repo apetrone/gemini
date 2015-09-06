@@ -732,6 +732,21 @@ namespace render2
 			return 0;
 		}
 
+		void get_font_metrics(Handle handle, Metrics& out_metrics)
+		{
+			if (!handle.is_valid())
+			{
+				return;
+			}
+
+			FontData* font = detail::_fonts[handle.ref];
+			FT_Size_Metrics& sm = font->face->size->metrics;
+			out_metrics.height = sm.height >> 6;
+			size_t ascender = sm.ascender >> 6;
+			size_t descender = sm.descender >> 6;
+//			fprintf(stdout, "height = %i, ascender = %i, descender = %i (pixels)\n", out_metrics.height, ascender, descender);
+		}
+
 		int get_glyph_metrics(Handle handle, uint32_t codepoint, glm::vec2& mins, glm::vec2& maxs, int* advance)
 		{
 			return 0;
@@ -740,7 +755,9 @@ namespace render2
 		int get_string_metrics(Handle handle, const char* utf8, glm::vec2& mins, glm::vec2& maxs)
 		{
 			if (!handle.is_valid())
+			{
 				return -1;
+			}
 
 			FontData* font = detail::_fonts[handle.ref];
 			glm::vec2 pen;
@@ -791,7 +808,6 @@ namespace render2
 			FontData* data = detail::_fonts[handle.ref];
 
 			glm::vec2 pen(0.0f, 0.0f);
-
 
 			FontVertex* vertex;
 

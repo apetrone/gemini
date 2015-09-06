@@ -45,10 +45,17 @@ namespace gui
 			float uv[2];
 		};
 
+		enum CommandType
+		{
+			CommandType_Generic,	// generic gui rendering command
+			CommandType_Font		// font drawing command
+		};
+
 		struct Command
 		{
 			size_t vertex_offset;
-			size_t vertex_count;
+			uint16_t vertex_count;
+			uint16_t type;
 			Rect clip_rect;
 			TextureHandle texture;
 		};
@@ -58,7 +65,7 @@ namespace gui
 		{
 			Array<Command> commands;
 			Array<Vertex>* vertex_buffer;
-			class Renderer* renderer;
+			Compositor* compositor;
 
 			CommandList();
 			Vertex* write_pointer;
@@ -144,29 +151,30 @@ namespace gui
 		/// @param path utf-8 encoded path
 		/// @param handle Output font handle
 		/// @return FontResult error code
-		virtual FontResult font_create( const char * path, FontHandle & handle ) = 0;
-		
+//		virtual FontResult font_create( const char * path, FontHandle & handle ) = 0;
+
 		/// Release a font
 		/// @param handle FontHandle obtained from font_create
-		virtual void font_destroy( const FontHandle & handle ) = 0;
-		
+//		virtual void font_destroy( const FontHandle & handle ) = 0;
+
 		/// Calculate bounds for a string
 		/// @param handle FontHandle to use for this operation
 		/// @param string utf-8 encoded string to measure
 		/// @param bounds Output bounds of string
 		virtual FontResult font_measure_string(const FontHandle& handle, const char* string, gui::Rect& bounds) = 0;
-		
-		
+
+		virtual void font_metrics(const gui::FontHandle& handle, size_t& height) = 0;
+
 		/// Fetch the texture handle used by handle
 		/// @param handle FontHandle used to fetch texture from
 		/// @param texture Texture handle associated with this font
 		/// @return FontResult
-		virtual FontResult font_fetch_texture(const FontHandle& handle, TextureHandle& texture) = 0;
-		
+//		virtual FontResult font_fetch_texture(const FontHandle& handle, TextureHandle& texture) = 0;
+
 		// ---------------------------------------------------------------------
 		// command list drawing
 		// ---------------------------------------------------------------------
-		virtual void draw_command_lists(render::CommandList** command_lists, Array<gui::render::Vertex>& vertex_buffer, size_t total_lists) = 0;
+		virtual void draw_command_lists(render::CommandList** command_lists, size_t total_lists, Array<gui::render::Vertex>& vertex_buffer) = 0;
 	
 	
 	
@@ -195,7 +203,7 @@ namespace gui
 		virtual size_t font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color, gui::render::Vertex* buffer, size_t buffer_size) = 0;
 
 		virtual size_t font_count_vertices(const gui::FontHandle& handle, const char* string) = 0;
-		virtual TextureHandle font_get_texture(const gui::FontHandle& handle) = 0;
+//		virtual TextureHandle font_get_texture(const gui::FontHandle& handle) = 0;
 	}; // Renderer
 	
 } // namespace gui

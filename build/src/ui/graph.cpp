@@ -35,7 +35,7 @@ namespace gui
 		char string_value[16] = {0};
 		sprintf(string_value, "%2.2f", value);
 		Rect bounds;
-		bounds.origin = pt;
+		bounds.origin = pt + glm::vec2(0, font_height);
 //		renderer->font_draw(font_handle, string_value, bounds, color);
 		render_commands.add_font(font_handle, string_value, bounds, color);
 	}
@@ -168,17 +168,27 @@ namespace gui
 		range_max = max_range;
 	}
 	
-	void Graph::set_font(Compositor* compositor, const char* path)
+	void Graph::set_font(const FontHandle& handle)
 	{
-		gui::FontResult result = compositor->renderer->font_create(path, font_handle);
-		if (result != gui::FontResult_Success)
+		font_handle = handle;
+		if (!font_handle.is_valid())
 		{
 			// error loading font
 		}
-		
-		Rect dims;
-		compositor->renderer->font_measure_string(font_handle, "0123456789", dims);
-		font_height = dims.size.height;
+
+		Panel* curr = parent;
+		while(curr->parent)
+		{
+			curr = curr->parent;
+		}
+
+		assert(curr);
+		Compositor* compositor = static_cast<Compositor*>(curr);
+		assert(compositor);
+
+		size_t height = 0;
+		compositor->get_renderer()->font_metrics(font_handle, height);
+		font_height = static_cast<float>(height);
 	}
 	
 	void Graph::set_background_color(const Color& color)

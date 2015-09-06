@@ -203,8 +203,8 @@ namespace gui
 	{
 		virtual ~InputState() {}
 		
-		virtual bool IsMouseDown( int index ) = 0;
-		virtual bool IsMouseHeld( int index ) = 0;
+		virtual bool is_mouse_down(int index) = 0;
+		virtual bool is_mouse_held(int index) = 0;
 	};
 	
 	// -------------------------------------------------------------------------------------------------------------
@@ -217,66 +217,18 @@ namespace gui
 		// (state & 8) -> impulse flag; if set, isDown or released happened this update		
 		unsigned char state : 4;
 		
-		bool isDown() const { return (state & 1) > 0; }
-		bool wasDown() const { return (state & 2) > 0; }
+		bool is_down() const { return (state & 1) > 0; }
+		bool was_down() const { return (state & 2) > 0; }
 		
-		void Clear();
+		void clear();
 		KeyState();
 	}; // KeyState
 	
-
-	struct TextureResource {};
-	struct FontResource {};
-
-
-	template <class T>
-	struct ResourceHandle
-	{
-		int ref;
-
-		ResourceHandle(int reference = -1) :
-			ref(reference)
-		{
-		}
-
-		bool is_valid() const
-		{
-			return (ref != -1);
-		}
-
-		operator int() const
-		{
-			return ref;
-		}
-	};
-
-
-	typedef ResourceHandle<TextureResource> TextureHandle;
-	typedef ResourceHandle<FontResource> FontHandle;
-
 	namespace render
 	{
 		extern TextureHandle WhiteTexture;
 	} // namespace render
 
-	enum TextureResult
-	{
-		TextureResult_Success = 0,
-		TextureResult_Failed = 1,
-	}; // TextureResult
-
-	enum FontResult
-	{
-		FontResult_Success = 0,
-		FontResult_Failed = 1,
-	}; // FontResult
-	
-//	class IRenderer;
-//	struct Panel;
-//	void DrawOutline( IRenderer * r, Point corners[8], const gui::Color & color );
-//	void DrawFloat( IRenderer * r, float value, const Point & p, const gui::Color & color );
-//	void CalculatePanelCorners( Panel * panel, Point corners[8] );
-	
 #ifdef byte
 #undef byte
 #endif
@@ -291,10 +243,10 @@ namespace gui
 		
 		Color(byte red = 0, byte green = 0, byte blue = 0, byte alpha = 255);
 		
-		byte r() const { return rgba[0]; }
-		byte g() const { return rgba[1]; }
-		byte b() const { return rgba[2]; }
-		byte a() const { return rgba[3]; }
+		inline byte r() const { return rgba[0]; }
+		inline byte g() const { return rgba[1]; }
+		inline byte b() const { return rgba[2]; }
+		inline byte a() const { return rgba[3]; }
 	};
 
 	// ---------------------------------------------------------------------
