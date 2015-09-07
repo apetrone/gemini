@@ -51,9 +51,15 @@ namespace gui
 		gui::Rect bounds = frame;
 
 		size_t height;
-		renderer->font_metrics(font_handle, height);
+		int ascender, descender;
+		renderer->font_metrics(font_handle, height, ascender, descender);
 
-		bounds.origin.y += height;
+		Rect text_bounds;
+		renderer->font_measure_string(font_handle, text.c_str(), text_bounds);
+
+		float font_height = (ascender + descender);
+
+		bounds.origin.y += glm::max(font_height, text_bounds.height());
 		render_commands.add_font(font_handle, this->text.c_str(), bounds, foreground_color);
 	}
 		

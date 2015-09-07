@@ -108,7 +108,10 @@ namespace render2
 
 		struct Metrics
 		{
+			// scaled font metrics in pixels
 			size_t height;
+			int32_t ascender;
+			int32_t descender;
 		};
 
 		struct Handle

@@ -163,7 +163,7 @@ namespace gui
 		/// @param bounds Output bounds of string
 		virtual FontResult font_measure_string(const FontHandle& handle, const char* string, gui::Rect& bounds) = 0;
 
-		virtual void font_metrics(const gui::FontHandle& handle, size_t& height) = 0;
+		virtual void font_metrics(const gui::FontHandle& handle, size_t& height, int& ascender, int& descender) = 0;
 
 		/// Fetch the texture handle used by handle
 		/// @param handle FontHandle used to fetch texture from
