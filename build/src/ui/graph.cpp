@@ -35,7 +35,11 @@ namespace gui
 		char string_value[16] = {0};
 		sprintf(string_value, "%2.2f", value);
 		Rect bounds;
-		bounds.origin = pt + glm::vec2(0, font_height);
+
+		Rect string_bounds;
+		renderer->font_measure_string(font_handle, string_value, string_bounds);
+
+		bounds.origin = pt + glm::vec2(0, glm::max(font_height, string_bounds.height()));
 		render_commands.add_font(font_handle, string_value, bounds, color);
 	}
 
@@ -183,9 +187,11 @@ namespace gui
 		Compositor* compositor = static_cast<Compositor*>(curr);
 		assert(compositor);
 
-		size_t height = 0;
-		compositor->get_renderer()->font_metrics(font_handle, height);
-		font_height = static_cast<float>(height);
+		size_t height;
+		int ascender;
+		int descender;
+		compositor->get_renderer()->font_metrics(font_handle, height, ascender, descender);
+		font_height = static_cast<float>(ascender + descender);
 	}
 	
 	void Graph::set_background_color(const Color& color)

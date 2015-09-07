@@ -281,7 +281,7 @@ namespace experimental
 		virtual gui::FontResult font_create(const char* path, gui::FontHandle& handle);
 		virtual void font_destroy(const gui::FontHandle& handle);
 		virtual gui::FontResult font_measure_string(const gui::FontHandle& handle, const char* string, gui::Rect& bounds);
-		virtual void font_metrics(const gui::FontHandle& handle, size_t& height);
+		virtual void font_metrics(const gui::FontHandle& handle, size_t& height, int& ascender, int& descender);
 		virtual size_t font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color, gui::render::Vertex* buffer, size_t buffer_size);
 		virtual size_t font_count_vertices(const gui::FontHandle& handle, const char* string);
 		virtual gui::TextureHandle font_get_texture(const gui::FontHandle& handle);
@@ -462,12 +462,14 @@ namespace experimental
 		return gui::FontResult_Success;
 	}
 
-	void GUIRenderer::font_metrics(const gui::FontHandle& handle, size_t& height)
+	void GUIRenderer::font_metrics(const gui::FontHandle& handle, size_t& height, int& ascender, int& descender)
 	{
 		render2::font::Metrics metrics;
 		render2::font::get_font_metrics(render2::font::Handle(handle), metrics);
 
 		height = metrics.height;
+		ascender = metrics.ascender;
+		descender = metrics.descender;
 	}
 
 	size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color, gui::render::Vertex* buffer, size_t buffer_size)

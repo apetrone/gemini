@@ -478,6 +478,14 @@ namespace render2
 
 			glyphdata.index = glyph_index;
 
+
+//			FT_BBox cbox;
+//			FT_Glyph current;
+//			FT_Get_Glyph(face->glyph, &current);
+//			FT_Glyph_Get_CBox(current, FT_GLYPH_BBOX_PIXELS, &cbox);
+//			FT_Done_Glyph(current);
+
+
 			// these are expressed in 26.6 units; hence the division by 64.
 			glyphdata.advancex = face->glyph->advance.x >> 6;
 			glyphdata.advancey = face->glyph->advance.y >> 6;
@@ -742,9 +750,9 @@ namespace render2
 			FontData* font = detail::_fonts[handle.ref];
 			FT_Size_Metrics& sm = font->face->size->metrics;
 			out_metrics.height = sm.height >> 6;
-			size_t ascender = sm.ascender >> 6;
-			size_t descender = sm.descender >> 6;
-//			fprintf(stdout, "height = %i, ascender = %i, descender = %i (pixels)\n", out_metrics.height, ascender, descender);
+			out_metrics.ascender = sm.ascender >> 6;
+			out_metrics.descender = sm.descender >> 6;
+//			fprintf(stdout, "height = %i, ascender = %i, descender = %i (pixels)\n", out_metrics.height, out_metrics.ascender, out_metrics.descender);
 		}
 
 		int get_glyph_metrics(Handle handle, uint32_t codepoint, glm::vec2& mins, glm::vec2& maxs, int* advance)
@@ -818,7 +826,6 @@ namespace render2
 			vertices.resize(length * 6);
 
 			uint32_t previous_codepoint = 0;
-
 			for (size_t index = 0; index < length; ++index)
 			{
 				uint32_t codepoint = utf8[index];

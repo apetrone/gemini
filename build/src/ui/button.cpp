@@ -97,12 +97,14 @@ namespace gui
 		compositor->get_renderer()->font_measure_string(font_handle, this->text.c_str(), font_dims);
 
 		size_t font_height;
-		compositor->get_renderer()->font_metrics(font_handle, font_height);
+		int ascender, descender;
+		compositor->get_renderer()->font_metrics(font_handle, font_height, ascender, descender);
+		font_height = (ascender + descender);
 
 		// We need floor to snap to pixel boundaries; not fractional pixels;
 		// which would introduce artifacts.
 		text_origin.x = glm::floor(bounds.origin.x + (bounds.width() / 2.0f) - (font_dims.width()/2.0f));
-		text_origin.y = glm::floor(bounds.origin.y + (bounds.height() / 2.0f) - (font_dims.height()/2.0f) + font_height);
+		text_origin.y = glm::floor(bounds.origin.y + (bounds.height() / 2.0f) - (font_dims.height()/2.0f) + glm::max((float)font_height, font_dims.height()));
 	} // update
 	
 	void Button::render(Rect& frame, Compositor* compositor, Renderer* renderer, Style* style)
