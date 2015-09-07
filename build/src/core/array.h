@@ -186,7 +186,7 @@ public:
 	};
 
 
-	Array(size_t capacity = 16)
+	Array(size_t capacity = 0)
 	{
 		data = nullptr;
 		if (capacity > 0)

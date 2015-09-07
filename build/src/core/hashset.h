@@ -331,6 +331,11 @@ public:
 		{
 			return table[index].value;
 		}
+
+		T& value()
+		{
+			return table[index].value;
+		}
 	}; // class Iterator
 	
 	Iterator begin() const
