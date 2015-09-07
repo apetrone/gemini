@@ -34,6 +34,102 @@
 #include <renderer/renderstream.h>
 #include <renderer/image.h>
 
+
+
+
+
+// Aa common resource cache interface that can be used by the engine and tools/tests
+// as needed.
+
+class CommonResourceCache : public gui::ResourceCache
+{
+public:
+	virtual void clear() {}
+
+
+protected:
+	virtual int track_texture(render2::Texture* texture)
+	{
+		return -1;
+	}
+//	void untrack_texture(render2::Texture* texture);
+
+public:
+	virtual gui::TextureHandle texture_to_handle(render2::Texture* texture)
+	{
+		return -1;
+	}
+
+	virtual render2::Texture* handle_to_texture(const gui::TextureHandle& handle)
+	{
+		return nullptr;
+	}
+};
+
+namespace render2
+{
+	class Device;
+	class Buffer;
+	class Pipeline;
+	struct Texture;
+}
+
+
+
+class GUIRenderer : public gui::Renderer
+{
+	gui::Compositor* compositor;
+	float current_depth;
+
+	render2::Device* device;
+	render2::Buffer* vertex_buffer;
+	render2::Pipeline* gui_pipeline;
+	render2::Pipeline* font_pipeline;
+	render2::Texture* white_texture;
+
+	glm::mat4 modelview_matrix;
+	glm::mat4 projection_matrix;
+	unsigned int diffuse_texture;
+
+	CommonResourceCache& resource_cache;
+public:
+
+	GUIRenderer(CommonResourceCache& cache) :
+		resource_cache(cache)
+	{}
+
+	void set_device(render2::Device* device) { this->device = device; }
+
+	virtual void increment_depth();
+
+	virtual void startup(gui::Compositor* c);
+	virtual void shutdown(gui::Compositor* c);
+
+	virtual void begin_frame(gui::Compositor* c);
+	virtual void end_frame();
+
+	virtual void draw_bounds(const gui::Rect& bounds, const gui::Color& color);
+	virtual void draw_textured_bounds(const gui::Rect& bounds, const gui::TextureHandle& handle);
+	void draw_line(const gui::Point& start, const gui::Point& end, const gui::Color& color);
+	virtual gui::TextureResult texture_create(const char* path, gui::TextureHandle& handle);
+	virtual void texture_destroy(const gui::TextureHandle& handle);
+	virtual gui::TextureResult texture_info(const gui::TextureHandle& handle, uint32_t& width, uint32_t& height, uint8_t& channels);
+	virtual gui::FontResult font_create(const char* path, gui::FontHandle& handle);
+	virtual void font_destroy(const gui::FontHandle& handle);
+	virtual gui::FontResult font_measure_string(const gui::FontHandle& handle, const char* string, gui::Rect& bounds);
+	virtual void font_metrics(const gui::FontHandle& handle, size_t& height, int& ascender, int& descender);
+	virtual size_t font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color, gui::render::Vertex* buffer, size_t buffer_size);
+	virtual size_t font_count_vertices(const gui::FontHandle& handle, const char* string);
+	virtual gui::TextureHandle font_get_texture(const gui::FontHandle& handle);
+	virtual gui::FontResult font_fetch_texture(const gui::FontHandle& handle, gui::TextureHandle& texture);
+	virtual void draw_command_lists(gui::render::CommandList** command_lists, size_t total_lists, Array<gui::render::Vertex>& vertex_buffer);
+}; // GUIRenderer
+
+
+
+
+
+#if 0
 #include <assets/asset_shader.h>
 #include <assets/asset_material.h>
 
@@ -89,3 +185,5 @@ public:
 	virtual void draw_command_lists(gui::render::CommandList** command_lists, size_t total_lists);
 	
 }; // GUIRenderer
+
+#endif
