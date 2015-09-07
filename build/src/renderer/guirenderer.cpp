@@ -73,6 +73,7 @@ void GUIRenderer::increment_depth()
 void GUIRenderer::startup(gui::Compositor* compositor)
 {
 	this->compositor = compositor;
+	vertices.resize(MAX_VERTICES);
 
 	this->vertex_buffer = device->create_vertex_buffer(MAX_VERTICES*sizeof(GUIVertex));
 
@@ -115,6 +116,8 @@ void GUIRenderer::shutdown(gui::Compositor* c)
 	device->destroy_buffer(vertex_buffer);
 	device->destroy_pipeline(gui_pipeline);
 	device->destroy_pipeline(font_pipeline);
+	
+	vertices.clear();
 }
 
 void GUIRenderer::begin_frame(gui::Compositor* c)
@@ -213,7 +216,7 @@ void GUIRenderer::font_metrics(const gui::FontHandle& handle, size_t& height, in
 
 size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color, gui::render::Vertex* buffer, size_t buffer_size)
 {
-	Array<render2::font::FontVertex> vertices;
+	vertices.resize(0);
 	render2::font::Handle font_handle(handle);
 	render2::font::draw_string(font_handle, vertices, string, core::Color(color.r(), color.g(), color.b(), color.a()));
 

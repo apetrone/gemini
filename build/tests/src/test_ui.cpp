@@ -96,7 +96,9 @@ class StandaloneResourceCache : public CommonResourceCache
 
 	Array<render2::Texture*> textures;
 
-	typedef HashSet<const char*, gui::FontHandle> FontByPathSet;
+	typedef Array<gui::FontHandle> FontHandleArray;
+
+	typedef HashSet<const char*, FontHandleArray> FontByPathSet;
 	FontByPathSet font_handle_by_path;
 
 public:
@@ -126,8 +128,8 @@ void StandaloneResourceCache::clear()
 {
 	for (FontByPathSet::Iterator it = font_handle_by_path.begin(); it != font_handle_by_path.end(); ++it)
 	{
-		const gui::FontHandle& handle = it.value();
-		render2::font::Handle fonthandle(handle);
+		Array<gui::FontHandle>& items = it.value();
+		items.clear();
 	}
 
 	textures.clear();
@@ -138,9 +140,21 @@ void StandaloneResourceCache::clear()
 
 gui::FontHandle StandaloneResourceCache::create_font(const char* filename, size_t pixel_size)
 {
+	// This has to intelligently check to see if we've
+	// already loaded a font by matching
+	// both the filename and the requested pixel_size.
 	if (font_handle_by_path.has_key(filename))
 	{
-		return font_handle_by_path[filename];
+		Array<gui::FontHandle>& items = font_handle_by_path[filename];
+
+		for (auto& handle : items)
+		{
+			render2::font::Handle font_handle(handle);
+			if (render2::font::get_pixel_size(font_handle) == pixel_size)
+			{
+				return handle;
+			}
+		}
 	}
 
 	Array<unsigned char> fontdata;
@@ -154,7 +168,9 @@ gui::FontHandle StandaloneResourceCache::create_font(const char* filename, size_
 	render2::Texture* texture = render2::font::get_font_texture(fonthandle);
 	track_texture(texture);
 
-	font_handle_by_path[filename] = handle;
+	// insert the new handle into the array
+	Array<gui::FontHandle>& items = font_handle_by_path[filename];
+	items.push_back(handle);
 
 	return handle;
 }
@@ -429,11 +445,13 @@ public:
 //		gui::FontHandle dev_font = resource_cache.create_font("fonts/Cantarell-Regular.ttf", 16);
 //		gui::FontHandle dev_font = resource_cache.create_font("fonts/7x5.ttf", 8);
 
-		const char dev_font[] = "fonts/04B_08.ttf";
+//		const char dev_font[] = "fonts/04B_08.ttf";
+		const char dev_font[] = "fonts/nokiafc22.ttf";
 		const char menu_font[] = "fonts/Arial Unicode.ttf";
 
 
 		// setup the framerate graph
+#if 1
 		graph = new gui::Graph(root);
 		graph->set_bounds(width-250, 0, 250, 100);
 		graph->set_font(dev_font, 8);
@@ -443,7 +461,9 @@ public:
 		graph->configure_channel(0, gui::Color(0, 255, 0, 255));
 		graph->set_range(0.0f, 33.3f);
 		graph->enable_baseline(true, 16.6f, gui::Color(255, 0, 255, 255));
+#endif
 
+#if 1
 		label = new gui::Label(root);
 		label->set_background_color(gui::Color(32, 32, 32));
 		label->set_foreground_color(gui::Color(0, 255, 0));
@@ -459,6 +479,8 @@ public:
 			label->set_font(dev_font, 8);
 			label->set_text("This is another label");
 		}
+
+#endif
 //		ctp = new ControllerTestPanel(root);
 //		ctp->set_bounds(0, 0, 300, 300);
 //		ctp->set_background_color(gui::Color(80, 80, 80));
@@ -672,6 +694,13 @@ public:
 		static float rot = 0.0f;
 
 		rot += 10.f*kernel::parameters().framedelta_seconds;
+
+		if (label)
+		{
+			core::memory::Zone* zone = core::memory::global_allocator().memory_zone;
+			label->set_text(core::str::format("total_bytes: %i, total_allocations: %i", zone->get_total_bytes(), zone->get_total_allocations()));
+		}
+
 
 //		graph->set_rotation(mathlib::degrees_to_radians(rot));
 
