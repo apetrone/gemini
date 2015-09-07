@@ -54,8 +54,7 @@ namespace gui
 		
 		this->next_z_depth = 0;
 		this->listener = 0;
-		
-		this->style = 0;
+
 		this->key_modifiers = 0;
 		
 		update_interval_seconds = (1.0f/20.0f); // 20 times per second
@@ -103,7 +102,7 @@ namespace gui
 			if (panel->is_visible())
 			{
 				panel->begin_render_frame(this);
-				panel->render(panel->bounds, this, this->renderer, get_style());
+				panel->render(panel->bounds, this, this->renderer);
 				panel->end_render_frame(this);
 			}
 		}
@@ -112,17 +111,7 @@ namespace gui
 		
 		this->renderer->end_frame();
 	} // render
-	
 
-	void Compositor::set_style(Style* style)
-	{
-		this->style = style;
-	} // set_style
-	
-	Style* Compositor::get_style() const
-	{
-		return this->style;
-	} // get_style
 	
 	void Compositor::send_to_front(Panel* panel)
 	{

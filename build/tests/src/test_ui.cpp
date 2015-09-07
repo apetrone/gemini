@@ -138,6 +138,11 @@ void StandaloneResourceCache::clear()
 
 gui::FontHandle StandaloneResourceCache::create_font(const char* filename, size_t pixel_size)
 {
+	if (font_handle_by_path.has_key(filename))
+	{
+		return font_handle_by_path[filename];
+	}
+
 	Array<unsigned char> fontdata;
 	core::filesystem::instance()->virtual_load_file(fontdata, filename);
 	render2::font::Handle fonthandle = render2::font::load_from_memory(&fontdata[0], fontdata.size(), pixel_size);
@@ -148,6 +153,8 @@ gui::FontHandle StandaloneResourceCache::create_font(const char* filename, size_
 	// we need to track the texture for looking during rendering
 	render2::Texture* texture = render2::font::get_font_texture(fonthandle);
 	track_texture(texture);
+
+	font_handle_by_path[filename] = handle;
 
 	return handle;
 }
@@ -247,7 +254,7 @@ public:
 		gui::Panel::update(compositor, timestate);
 	}
 
-	virtual void render(gui::Rect& frame, gui::Compositor* compositor, gui::Renderer* renderer, gui::Style* style)
+	virtual void render(gui::Rect& frame, gui::Compositor* compositor, gui::Renderer* renderer)
 	{
 		render_commands.reset();
 		render_commands.add_rectangle(
@@ -417,19 +424,19 @@ public:
 		root->set_background_color(gui::Color(255, 255, 255, 0));
 
 //		gui::FontHandle dev_font = resource_cache.create_font("fonts/nokiafc22.ttf", 8);
-		gui::FontHandle dev_font = resource_cache.create_font("fonts/04B_08.ttf", 8);
-		gui::FontHandle menu_font = resource_cache.create_font("fonts/Arial Unicode.ttf", 24);
+//		gui::FontHandle dev_font = resource_cache.create_font("fonts/04B_08.ttf", 8);
+//		gui::FontHandle menu_font = resource_cache.create_font("fonts/Arial Unicode.ttf", 24);
 //		gui::FontHandle dev_font = resource_cache.create_font("fonts/Cantarell-Regular.ttf", 16);
 //		gui::FontHandle dev_font = resource_cache.create_font("fonts/7x5.ttf", 8);
 
+		const char dev_font[] = "fonts/04B_08.ttf";
+		const char menu_font[] = "fonts/Arial Unicode.ttf";
 
-
-		assert(dev_font.is_valid());
 
 		// setup the framerate graph
 		graph = new gui::Graph(root);
 		graph->set_bounds(width-250, 0, 250, 100);
-		graph->set_font(dev_font);
+		graph->set_font(dev_font, 8);
 		graph->set_background_color(gui::Color(60, 60, 60, 255));
 		graph->set_foreground_color(gui::Color(255, 255, 255, 255));
 		graph->create_samples(100, 1);
@@ -441,7 +448,7 @@ public:
 		label->set_background_color(gui::Color(32, 32, 32));
 		label->set_foreground_color(gui::Color(0, 255, 0));
 		label->set_bounds(50, 75, 110, 40);
-		label->set_font(dev_font);
+		label->set_font(dev_font, 8);
 		label->set_text("This is a label");
 
 		{
@@ -449,7 +456,7 @@ public:
 			label->set_background_color(gui::Color(32, 32, 32));
 			label->set_foreground_color(gui::Color(255, 0, 0));
 			label->set_bounds(50, 115, 110, 40);
-			label->set_font(dev_font);
+			label->set_font(dev_font, 8);
 			label->set_text("This is another label");
 		}
 //		ctp = new ControllerTestPanel(root);
@@ -484,7 +491,7 @@ public:
 		{
 			gui::Button* newgame = new gui::Button(root);
 			newgame->set_bounds(origin_x, origin_y, button_width, button_height);
-			newgame->set_font(menu_font);
+			newgame->set_font(menu_font, 24);
 			newgame->set_text(captions[index]);
 			newgame->set_background_color(button_background);
 			newgame->set_hover_color(button_hover);

@@ -226,26 +226,6 @@ static util::ConfigLoadStatus settings_conf_loader( const Json::Value & root, vo
 // this is required at the moment because our render method needs it!
 gui::Compositor* _compositor = 0;
 
-
-
-class GUIStyle : public gui::Style
-{
-public:
-	
-	virtual void draw_bounds(gui::Renderer* renderer, const gui::Rect& bounds, const gui::Color& color)
-	{
-		renderer->draw_bounds(bounds, color);
-	}
-	
-	
-	virtual void draw_font(gui::Renderer* renderer, const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color)
-	{
-		renderer->font_draw(handle, string, bounds, color);
-	}
-};
-
-
-
 void render_scene_from_camera(gemini::IEngineEntity** entity_list, View& view, SceneLink& scenelink)
 {
 	// use the entity list to render
@@ -959,7 +939,6 @@ private:
 	
 	// GUI stuff
 	GUIRenderer* gui_renderer;
-	GUIStyle* gui_style;
 	gui::Compositor* compositor;
 	gui::Graph* graph;
 	gui::Panel* root;
@@ -1179,16 +1158,16 @@ public:
 	void setup_gui(uint32_t width, uint32_t height)
 	{
 		gui::set_allocator(gui_malloc_callback, gui_free_callback);
-	
-		compositor = new gui::Compositor(width, height);
+
+		CommonResourceCache* resource_cache = nullptr;
+
+		gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator())(*resource_cache);
+
+		compositor = new gui::Compositor(width, height, resource_cache, gui_renderer);
 		_compositor = compositor;
 		
-		gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator());
-		compositor->set_renderer(gui_renderer);
-		
-		gui_style = MEMORY_NEW(GUIStyle, core::memory::global_allocator());
-		compositor->set_style(gui_style);
-		
+
+
 		root = new gui::Panel(compositor);
 		
 		experimental.set_root(root);
@@ -1201,7 +1180,7 @@ public:
 		// setup the framerate graph
 		graph = new gui::Graph(root);
 		graph->set_bounds(width-250, 0, 250, 100);
-		graph->set_font(compositor, "fonts/debug");
+		graph->set_font("fonts/debug", 8);
 		graph->set_background_color(gui::Color(10, 10, 10, 210));
 		graph->set_foreground_color(gui::Color(255, 255, 255, 255));
 		graph->create_samples(100, 1);

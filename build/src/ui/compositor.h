@@ -29,7 +29,6 @@
 
 namespace gui
 {
-	class Style;
 	class Renderer;
 	class Listener;
 
@@ -51,7 +50,6 @@ namespace gui
 		Panel* hot;
 		Panel* capture;
 		PanelVector zsorted;
-		Style* style;
 
 		Point last_cursor;
 		size_t next_z_depth;
@@ -89,9 +87,7 @@ namespace gui
 		LIBRARY_EXPORT void set_capture(Panel* panel) { this->capture = panel; }
 		
 		LIBRARY_EXPORT Renderer* get_renderer() const { return renderer; }
-		LIBRARY_EXPORT void set_style(Style* style);
-		LIBRARY_EXPORT Style* get_style() const;
-		
+
 		LIBRARY_EXPORT void send_to_front(Panel* panel);
 		LIBRARY_EXPORT void sort_zorder(Panel* panel);
 		
