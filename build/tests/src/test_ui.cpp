@@ -823,10 +823,10 @@ public:
 		root->set_background_color(gui::Color(255, 255, 255, 0));
 
 //		gui::FontHandle dev_font = resource_cache.create_font("fonts/nokiafc22.ttf", 8);
-//		gui::FontHandle dev_font = resource_cache.create_font("fonts/04B_08.ttf", 8);
-//		gui::FontHandle dev_font = resource_cache.create_font("fonts/Arial Unicode.ttf", 16);
+		gui::FontHandle dev_font = resource_cache.create_font("fonts/04B_08.ttf", 8);
+		gui::FontHandle menu_font = resource_cache.create_font("fonts/Arial Unicode.ttf", 24);
 //		gui::FontHandle dev_font = resource_cache.create_font("fonts/Cantarell-Regular.ttf", 16);
-		gui::FontHandle dev_font = resource_cache.create_font("fonts/7x5.ttf", 8);
+//		gui::FontHandle dev_font = resource_cache.create_font("fonts/7x5.ttf", 8);
 
 
 
@@ -846,17 +846,17 @@ public:
 		label = new gui::Label(root);
 		label->set_background_color(gui::Color(32, 32, 32));
 		label->set_foreground_color(gui::Color(0, 255, 0));
-		label->set_bounds(50, 75, 100, 100);
+		label->set_bounds(50, 75, 110, 40);
 		label->set_font(dev_font);
-		label->set_text("AB");
+		label->set_text("This is a label");
 
 		{
 			gui::Label* label = new gui::Label(root);
-			label->set_background_color(gui::Color(0, 32, 0));
+			label->set_background_color(gui::Color(32, 32, 32));
 			label->set_foreground_color(gui::Color(255, 0, 0));
-			label->set_bounds(150, 175, 100, 100);
+			label->set_bounds(50, 115, 110, 40);
 			label->set_font(dev_font);
-			label->set_text("B");
+			label->set_text("This is another label");
 		}
 //		ctp = new ControllerTestPanel(root);
 //		ctp->set_bounds(0, 0, 300, 300);
@@ -890,7 +890,7 @@ public:
 		{
 			gui::Button* newgame = new gui::Button(root);
 			newgame->set_bounds(origin_x, origin_y, button_width, button_height);
-			newgame->set_font(dev_font);
+			newgame->set_font(menu_font);
 			newgame->set_text(captions[index]);
 			newgame->set_background_color(button_background);
 			newgame->set_hover_color(button_hover);
