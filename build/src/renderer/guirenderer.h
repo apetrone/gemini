@@ -34,7 +34,7 @@
 #include <renderer/renderstream.h>
 #include <renderer/image.h>
 
-
+#include <renderer/font.h>
 
 
 
@@ -92,6 +92,7 @@ class GUIRenderer : public gui::Renderer
 	unsigned int diffuse_texture;
 
 	CommonResourceCache& resource_cache;
+	Array<render2::font::FontVertex> vertices;
 public:
 
 	GUIRenderer(CommonResourceCache& cache) :
