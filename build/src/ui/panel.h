@@ -144,6 +144,14 @@ namespace gui
 		LIBRARY_EXPORT void begin_render_frame(Compositor* compositor);
 		LIBRARY_EXPORT void end_render_frame(Compositor* compositor);
 
+
+		// ---------------------------------------------------------------------
+		// other utils
+		// ---------------------------------------------------------------------
+		// traverse the hierarchy and find the parent compositor
+		LIBRARY_EXPORT Compositor* get_compositor();
+
+
 	protected:
 		// Panels will transform through the following spaces:
 		// Local (or bounds)

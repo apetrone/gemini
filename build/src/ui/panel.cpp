@@ -331,4 +331,18 @@ namespace gui
 	{
 		render_commands.end(compositor);
 	}
+
+	// ---------------------------------------------------------------------
+	// other utils
+	// ---------------------------------------------------------------------
+	Compositor* Panel::get_compositor()
+	{
+		Panel* panel = parent;
+		while(panel->parent)
+			panel = panel->parent;
+
+		assert(panel);
+		return static_cast<Compositor*>(panel);
+	}
+
 } // namespace gui
