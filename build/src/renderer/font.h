@@ -146,6 +146,9 @@ namespace render2
 		// load font from memory with the desired pixel size
 		Handle load_from_memory(const void* data, unsigned int data_size, unsigned int pixel_size, Type target_type = FONT_TYPE_BITMAP);
 
+		// called to purge memory used by handle's font
+		void destroy_font(Handle& handle);
+
 		// return the point size for the font
 		unsigned int get_point_size(Handle handle);
 

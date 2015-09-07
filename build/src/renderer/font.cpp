@@ -423,6 +423,23 @@ namespace render2
 			FT_Library _ftlibrary;
 			Array<FontData*> _fonts(0);
 			render2::Device* _device = nullptr;
+
+			void delete_font_data(FontData* data)
+			{
+				FT_Done_Face(data->face);
+
+				MEMORY_DEALLOC(data->data, core::memory::global_allocator());
+
+				if (data->texture)
+				{
+					detail::_device->destroy_texture(data->texture);
+				}
+
+				data->rp_rects.clear();
+
+				MEMORY_DELETE(data, core::memory::global_allocator());
+			}
+
 		} // namespace detail
 
 		bool Handle::is_valid() const
@@ -531,18 +548,7 @@ namespace render2
 		{
 			for (auto& data : detail::_fonts)
 			{
-				FT_Done_Face(data->face);
-
-				MEMORY_DEALLOC(data->data, core::memory::global_allocator());
-
-				if (data->texture)
-				{
-					detail::_device->destroy_texture(data->texture);
-				}
-
-				data->rp_rects.clear();
-
-				MEMORY_DELETE(data, core::memory::global_allocator());
+				detail::delete_font_data(data);
 			}
 			detail::_fonts.clear();
 
@@ -733,6 +739,15 @@ namespace render2
 			detail::_fonts.push_back(font);
 
 			return handle;
+		}
+
+		void destroy_font(Handle& handle)
+		{
+			FontData* font = detail::_fonts[handle.ref];
+			detail::delete_font_data(font);
+
+			// invalidate the handle
+			handle.ref = -1;
 		}
 
 		unsigned int get_point_size(Handle handle)

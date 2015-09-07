@@ -854,7 +854,7 @@ def create_unit_test(arguments, name, dependencies, source, output_type = Produc
 def get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, libglm, libui, **kwargs):
 	return [
 		create_unit_test(arguments, "test_core", [rapidjson, libcore, libglm], "tests/src/test_core.cpp"),
-		create_unit_test(arguments, "test_platform", [rapidjson, librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_platform.cpp"),
+		create_unit_test(arguments, "test_platform", [libplatform, libcore, libglm], "tests/src/test_platform.cpp"),
 		create_unit_test(arguments, "test_runtime", [rapidjson, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_runtime.cpp"),
 		create_unit_test(arguments, "test_render", [rapidjson, libfreetype, librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
 		create_unit_test(arguments, "test_ui", [rapidjson, libfreetype, librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application)
@@ -1032,7 +1032,7 @@ def products(arguments, **kwargs):
 	libruntime.dependencies += [libcore, libplatform, Dependency(file="glm.py")]
 
 	librenderer = get_librenderer(arguments, target_platform, libruntime)
-	librenderer.dependencies += [libcore, libplatform, Dependency(file="glm.py")]
+	librenderer.dependencies += [libui, libcore, libplatform, Dependency(file="glm.py")]
 
 	# don't add this until we clean up the shaderconfig dependency on libruntime
 	#libruntime.dependencies.append(librenderer)
@@ -1059,6 +1059,7 @@ def products(arguments, **kwargs):
 	gemini.dependencies += [
 		libruntime,
 		librenderer,
+		libfreetype,
 		libplatform
 	]
 
