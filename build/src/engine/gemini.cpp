@@ -1733,8 +1733,7 @@ Options:
 		delete compositor;
 		compositor = 0;
 		_compositor = 0;
-		
-		MEMORY_DELETE(gui_style, core::memory::global_allocator());
+
 		MEMORY_DELETE(gui_renderer, core::memory::global_allocator());
 
 		
