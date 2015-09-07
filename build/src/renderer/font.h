@@ -150,7 +150,7 @@ namespace render2
 		void destroy_font(Handle& handle);
 
 		// return the point size for the font
-		unsigned int get_point_size(Handle handle);
+		unsigned int get_pixel_size(Handle handle);
 
 		// retrieve metrics for this font
 		void get_font_metrics(Handle handle, Metrics& out_metrics);

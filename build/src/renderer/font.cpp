@@ -372,7 +372,7 @@ namespace render2
 		struct FontData
 		{
 			Type type;
-			unsigned int point_size;
+			unsigned int pixel_size;
 			FT_Face face;
 			void* data;
 			size_t data_size;
@@ -390,7 +390,7 @@ namespace render2
 
 			FontData() :
 				type(FONT_TYPE_INVALID),
-				point_size(0),
+				pixel_size(0),
 				face(nullptr),
 				data(nullptr),
 				data_size(0),
@@ -688,6 +688,7 @@ namespace render2
 			// so make a local copy and store it.
 			font->data = MEMORY_ALLOC(data_size, core::memory::global_allocator());
 			font->data_size = data_size;
+			font->pixel_size = pixel_size;
 			memcpy(font->data, data, data_size);
 
 			// try to parse the font data
@@ -750,9 +751,10 @@ namespace render2
 			handle.ref = -1;
 		}
 
-		unsigned int get_point_size(Handle handle)
+		unsigned int get_pixel_size(Handle handle)
 		{
-			return 0;
+			FontData* font = detail::_fonts[handle.ref];
+			return font->pixel_size;
 		}
 
 		void get_font_metrics(Handle handle, Metrics& out_metrics)
