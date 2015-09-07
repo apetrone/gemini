@@ -82,12 +82,12 @@ namespace gui
 		LIBRARY_EXPORT void record_value(float value, uint32_t channel_index);
 		LIBRARY_EXPORT void set_range(float min_range, float max_range);
 			
-		LIBRARY_EXPORT void set_font(const FontHandle& handle);
+		LIBRARY_EXPORT void set_font(const char* filename, size_t pixel_size);
 		LIBRARY_EXPORT virtual void set_background_color(const Color& color);
 		LIBRARY_EXPORT virtual void set_foreground_color(const Color& color);
 		
 		// Panel overrides
-		LIBRARY_EXPORT virtual void render(Rect& frame, Compositor* compositor, Renderer* renderer, Style* style);
+		LIBRARY_EXPORT virtual void render(Rect& frame, Compositor* compositor, Renderer* renderer);
 
 		LIBRARY_EXPORT virtual bool can_move() const { return true; }
 	}; // Graph

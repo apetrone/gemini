@@ -107,7 +107,7 @@ namespace gui
 		text_origin.y = glm::floor(bounds.origin.y + (bounds.height() / 2.0f) - (font_dims.height()/2.0f) + glm::max((float)font_height, font_dims.height()));
 	} // update
 	
-	void Button::render(Rect& frame, Compositor* compositor, Renderer* renderer, Style* style)
+	void Button::render(Rect& frame, Compositor* compositor, Renderer* renderer)
 	{
 		if (compositor->get_hot() == this && state == 0)
 		{

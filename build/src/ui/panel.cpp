@@ -209,7 +209,7 @@ namespace gui
 		}
 	} // update
 
-	void Panel::render(Rect& frame, Compositor* compositor, Renderer* renderer, Style* style)
+	void Panel::render(Rect& frame, Compositor* compositor, Renderer* renderer)
 	{
 		render_commands.add_rectangle(
 			geometry[0],
@@ -238,7 +238,7 @@ namespace gui
 			if (child->is_visible())
 			{
 				child->begin_render_frame(compositor);
-				child->render(child->bounds, compositor, renderer, style);
+				child->render(child->bounds, compositor, renderer);
 				child->end_render_frame(compositor);
 			}
 		}

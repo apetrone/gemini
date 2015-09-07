@@ -37,7 +37,7 @@ namespace gui
 		Panel::update(compositor, timestate);
 	} // update
 	
-	void Label::render(Rect& frame, Compositor* compositor, Renderer* renderer, Style* style)
+	void Label::render(Rect& frame, Compositor* compositor, Renderer* renderer)
 	{
 		render_commands.add_rectangle(
 			geometry[0],
@@ -63,9 +63,10 @@ namespace gui
 		render_commands.add_font(font_handle, this->text.c_str(), bounds, foreground_color);
 	}
 		
-	void Label::set_font(const FontHandle& handle)
+	void Label::set_font(const char* filename, size_t pixel_size)
 	{
-		font_handle = handle;
+		Compositor* compositor = get_compositor();
+		font_handle = compositor->get_resource_cache()->create_font(filename, pixel_size);
 	}
 	
 	void Label::set_text(const std::string& text)

@@ -38,7 +38,7 @@ namespace gui
 	class Renderer;
 	class EventArgs;
 	class Panel;
-	class Style;
+
 	typedef std::vector<Panel*> PanelVector;
 
 	struct TimeState
@@ -102,7 +102,7 @@ namespace gui
 		LIBRARY_EXPORT virtual void remove_child(Panel* panel);
 		LIBRARY_EXPORT virtual void handle_event(EventArgs& args);
 		LIBRARY_EXPORT virtual void update(Compositor* compositor, const TimeState& timestate);
-		LIBRARY_EXPORT virtual void render(Rect& frame, Compositor* compositor, Renderer* renderer, Style* style);
+		LIBRARY_EXPORT virtual void render(Rect& frame, Compositor* compositor, Renderer* renderer);
 		LIBRARY_EXPORT virtual void set_background_image(Compositor* compositor, const char* path);
 		LIBRARY_EXPORT virtual void set_background_color(const Color& color);
 		LIBRARY_EXPORT virtual void set_foreground_color(const Color& color);

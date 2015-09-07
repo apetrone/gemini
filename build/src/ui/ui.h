@@ -110,4 +110,3 @@ namespace gui
 #include "ui/utils.h"
 #include "ui/events.h"
 #include "ui/renderer.h"
-#include "ui/style.h"

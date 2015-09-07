@@ -169,16 +169,11 @@ namespace gui
 		range_max = max_range;
 	}
 	
-	void Graph::set_font(const FontHandle& handle)
+	void Graph::set_font(const char* filename, size_t pixel_size)
 	{
-		font_handle = handle;
-		if (!font_handle.is_valid())
-		{
-			// error loading font
-		}
-
 		Compositor* compositor = get_compositor();
-//		compositor->get_resource_cache()->create_font(filename, pixel_size);
+		font_handle = compositor->get_resource_cache()->create_font(filename, pixel_size);
+		assert(font_handle.is_valid());
 
 		size_t height;
 		int ascender;
@@ -197,7 +192,7 @@ namespace gui
 		foreground_color = color;
 	}
 	
-	void Graph::render(Rect& frame, Compositor* compositor, Renderer* renderer, Style* style)
+	void Graph::render(Rect& frame, Compositor* compositor, Renderer* renderer)
 	{
 		render_commands.add_rectangle(
 			geometry[0],
