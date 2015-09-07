@@ -177,15 +177,8 @@ namespace gui
 			// error loading font
 		}
 
-		Panel* curr = parent;
-		while(curr->parent)
-		{
-			curr = curr->parent;
-		}
-
-		assert(curr);
-		Compositor* compositor = static_cast<Compositor*>(curr);
-		assert(compositor);
+		Compositor* compositor = get_compositor();
+//		compositor->get_resource_cache()->create_font(filename, pixel_size);
 
 		size_t height;
 		int ascender;
