@@ -63,7 +63,7 @@ namespace gui
 		
 		TimeState timestate;
 
-		Array<render::CommandList*> command_stream;
+		render::CommandList command_list;
 
 		LIBRARY_EXPORT Compositor(ScreenInt width, ScreenInt height, ResourceCache* cache, Renderer* renderer);
 		LIBRARY_EXPORT virtual ~Compositor();
@@ -110,8 +110,6 @@ namespace gui
 		LIBRARY_EXPORT virtual void set_listener(Listener* listener);
 		LIBRARY_EXPORT virtual void queue_event(const EventArgs& args);
 		LIBRARY_EXPORT virtual void process_events();
-		
-		LIBRARY_EXPORT virtual void queue_commandlist(render::CommandList* const commandlist);
 
 	private:
 		void find_new_hot(ScreenInt dx, ScreenInt dy);

@@ -69,7 +69,7 @@ namespace gui
 		};
 		
 	private:
-		void draw_float(Renderer* renderer, float value, const Point& pt, const gui::Color& color);
+		void draw_float(Renderer* renderer, float value, const Point& pt, const gui::Color& color, gui::render::CommandList& render_commands);
 		
 	public:
 		LIBRARY_EXPORT Graph(Panel* parent);
@@ -87,7 +87,7 @@ namespace gui
 		LIBRARY_EXPORT virtual void set_foreground_color(const Color& color);
 		
 		// Panel overrides
-		LIBRARY_EXPORT virtual void render(Rect& frame, Compositor* compositor, Renderer* renderer);
+		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
 
 		LIBRARY_EXPORT virtual bool can_move() const { return true; }
 	}; // Graph

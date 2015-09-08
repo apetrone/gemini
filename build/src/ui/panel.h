@@ -75,10 +75,6 @@ namespace gui
 
 			Flag_TransformIsDirty	= 16
 		};
-	
-		render::CommandList render_commands;
-	
-
 
 		size_t z_depth;
 		TextureHandle background;
@@ -102,7 +98,7 @@ namespace gui
 		LIBRARY_EXPORT virtual void remove_child(Panel* panel);
 		LIBRARY_EXPORT virtual void handle_event(EventArgs& args);
 		LIBRARY_EXPORT virtual void update(Compositor* compositor, const TimeState& timestate);
-		LIBRARY_EXPORT virtual void render(Rect& frame, Compositor* compositor, Renderer* renderer);
+		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
 		LIBRARY_EXPORT virtual void set_background_image(Compositor* compositor, const char* path);
 		LIBRARY_EXPORT virtual void set_background_color(const Color& color);
 		LIBRARY_EXPORT virtual void set_foreground_color(const Color& color);
@@ -137,13 +133,6 @@ namespace gui
 		// ---------------------------------------------------------------------
 		LIBRARY_EXPORT void set_rotation(const float radians);
 		LIBRARY_EXPORT void set_scale(const glm::vec2& scale);
-
-		// ---------------------------------------------------------------------
-		// render utils
-		// ---------------------------------------------------------------------
-		LIBRARY_EXPORT void begin_render_frame(Compositor* compositor);
-		LIBRARY_EXPORT void end_render_frame(Compositor* compositor);
-
 
 		// ---------------------------------------------------------------------
 		// other utils

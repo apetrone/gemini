@@ -144,10 +144,6 @@ void GUIRenderer::end_frame()
 }
 
 
-void GUIRenderer::draw_bounds(const gui::Rect& bounds, const gui::Color& color) {}
-void GUIRenderer::draw_textured_bounds(const gui::Rect& bounds, const gui::TextureHandle& handle) {}
-void GUIRenderer::draw_line(const gui::Point& start, const gui::Point& end, const gui::Color& color) {}
-
 gui::TextureResult GUIRenderer::texture_create(const char* path, gui::TextureHandle& handle)
 {
 //		assets::Texture * tex = assets::textures()->load_from_path((char*)path);
@@ -257,7 +253,7 @@ gui::FontResult GUIRenderer::font_fetch_texture(const gui::FontHandle &handle, g
 	return gui::FontResult_Failed;
 }
 
-void GUIRenderer::draw_command_lists(gui::render::CommandList** command_lists, size_t total_lists, Array<gui::render::Vertex>& vertex_buffer)
+void GUIRenderer::draw_commands(gui::render::CommandList* command_list, Array<gui::render::Vertex>& vertex_buffer)
 {
 	size_t total_vertices = vertex_buffer.size();
 
@@ -273,8 +269,6 @@ void GUIRenderer::draw_command_lists(gui::render::CommandList** command_lists, s
 
 	font_pipeline->constants().set("projection_matrix", &projection_matrix);
 	font_pipeline->constants().set("diffuse", &diffuse_texture);
-
-	assert(total_lists > 0);
 
 	GUIVertex vertices[MAX_VERTICES];
 	memset(vertices, 0, sizeof(GUIVertex)*MAX_VERTICES);
@@ -292,64 +286,57 @@ void GUIRenderer::draw_command_lists(gui::render::CommandList** command_lists, s
 
 	device->buffer_upload(this->vertex_buffer, vertices, sizeof(GUIVertex)*total_vertices);
 
-	size_t command_index = 0;
-	for (size_t index = 0; index < total_lists; ++index)
+
+	// setup the pass and queue the draw
+	render2::Pass pass;
+	pass.target = device->default_render_target();
+	pass.clear_color = false;
+	pass.clear_depth = false;
+
+	render2::CommandQueue* queue = device->create_queue(pass);
+	render2::CommandSerializer* serializer = device->create_serializer(queue);
+
+	serializer->vertex_buffer(this->vertex_buffer);
+
+	for (gui::render::Command& command : command_list->commands)
 	{
-		gui::render::CommandList* commandlist = command_lists[index];
+		render2::Pipeline* pipeline;
+		render2::Texture* texture_pointer = white_texture;
 
-
-		// setup the pass and queue the draw
-		render2::Pass pass;
-		pass.target = device->default_render_target();
-		pass.clear_color = false;
-		pass.clear_depth = false;
-
-		render2::CommandQueue* queue = device->create_queue(pass);
-		render2::CommandSerializer* serializer = device->create_serializer(queue);
-
-		serializer->vertex_buffer(this->vertex_buffer);
-
-		for (gui::render::Command& command : commandlist->commands)
+		if (command.type == gui::render::CommandType_Generic)
 		{
-			render2::Pipeline* pipeline;
-			render2::Texture* texture_pointer = white_texture;
-
-			if (command.type == gui::render::CommandType_Generic)
-			{
-				pipeline = gui_pipeline;
-			}
-			else if (command.type == gui::render::CommandType_Font)
-			{
-				pipeline = font_pipeline;
-			}
-			else
-			{
-				// Unable to render this command type
-				assert(0);
-			}
-
-			serializer->pipeline(pipeline);
-
-			if (!command.texture.is_valid())
-			{
-				// no valid texture; use default white
-				serializer->texture(white_texture, 0);
-			}
-			else
-			{
-				// valid texture; look it up
-				texture_pointer = resource_cache.handle_to_texture(command.texture);
-				serializer->texture(texture_pointer, 0);
-			}
-			serializer->draw(command.vertex_offset, command.vertex_count);
-			++command_index;
+			pipeline = gui_pipeline;
+		}
+		else if (command.type == gui::render::CommandType_Font)
+		{
+			pipeline = font_pipeline;
+		}
+		else
+		{
+			// Unable to render this command type
+			assert(0);
 		}
 
-		device->queue_buffers(queue, 1);
+		serializer->pipeline(pipeline);
 
-		device->destroy_serializer(serializer);
-
+		if (!command.texture.is_valid())
+		{
+			// no valid texture; use default white
+			serializer->texture(white_texture, 0);
+		}
+		else
+		{
+			// valid texture; look it up
+			texture_pointer = resource_cache.handle_to_texture(command.texture);
+			serializer->texture(texture_pointer, 0);
+		}
+		serializer->draw(command.vertex_offset, command.vertex_count);
 	}
+
+	device->queue_buffers(queue, 1);
+
+	device->destroy_serializer(serializer);
+
 }
 
 
@@ -465,114 +452,6 @@ void GUIRenderer::end_frame()
 	rs.run_commands();
 }
 
-
-void GUIRenderer::draw_bounds(const gui::Rect& bounds, const gui::Color& color)
-{
-//	//		gui::Size size = bounds.size;
-//	//		glm::vec3 start = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );
-//	//		glm::vec3 end = start + glm::vec3( size.width, size.height, 0.0f );
-//	//		debugdraw::line( start, end, Color( 255, 0, 255 ) );
-//	//		debugdraw::point( glm::vec3( bounds.origin.x + size.width, bounds.origin.y + size.height, 0.0f ), Color(255, 255, 255) );
-//	
-//	float div = 1.0f/255.0f;
-//	solid_color->parameters[0].vector_value = glm::vec4( (color.r() * div), (color.g() * div), (color.b() * div), (color.a() * div) );
-//	//		debugdraw::box( start, end, Color(rgba[0], rgba[1], rgba[2], rgba[3]), 0.0f );
-//	
-//	stream.reset();
-//	
-//	::renderer::RenderStream rs;
-//	
-//	if ( stream.has_room(4, 6) )
-//	{
-//		VertexType* v = (VertexType*)stream.request(4);
-//		
-//		gui::Size size = bounds.size;
-//		v[0].position = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );
-//		v[1].position = v[0].position + glm::vec3( 0.0f, size.height, 0.0f );
-//		v[2].position = v[0].position + glm::vec3( size.width, size.height, 0.0f );
-//		v[3].position = v[0].position + glm::vec3( size.width, 0.0f, 0.0f );
-//		
-//		// lower left corner is the origin in OpenGL
-//		v[0].uv = glm::vec2(0, 0);
-//		v[1].uv = glm::vec2(0, 1);
-//		v[2].uv = glm::vec2(1, 1);
-//		v[3].uv = glm::vec2(1, 0);
-//		
-//		//v[0].color = v[1].color = v[2].color = v[3].color = Color(rgba[0], rgba[1], rgba[2], rgba[3]);
-//		
-//		::renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
-//		stream.append_indices( indices, 6 );
-//	}
-//	else
-//	{
-//		LOGV( "buffer be full\n" );
-//	}
-//	rs.add_state(::renderer::STATE_BLEND, 1 );
-//	rs.add_blendfunc(::renderer::BLEND_SRC_ALPHA, ::renderer::BLEND_ONE_MINUS_SRC_ALPHA );
-//	rs.add_state(::renderer::STATE_DEPTH_TEST, 0);
-//	rs.add_state(::renderer::STATE_DEPTH_WRITE, 0);
-//	
-//	rs.run_commands();
-//	this->render_buffer(stream, shader, solid_color);
-}
-
-void GUIRenderer::draw_textured_bounds(const gui::Rect& bounds, const gui::TextureHandle& handle)
-{
-//	stream.reset();
-//	::renderer::RenderStream rs;
-//	assets::Texture * tex = assets::textures()->find_with_id( handle );
-//	if ( !tex )
-//	{
-//		return;
-//	}
-//	
-//	texture_map->parameters[0].int_value = handle;
-//	texture_map->parameters[0].texture_unit = 0;
-//	
-//	if (stream.has_room(4, 6))
-//	{
-//		VertexType* v = (VertexType*)stream.request(4);
-//		
-//		gui::Size size = bounds.size;
-//		v[0].position = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );
-//		v[1].position = v[0].position + glm::vec3( 0.0f, size.height, 0.0f );
-//		v[2].position = v[0].position + glm::vec3( size.width, size.height, 0.0f );
-//		v[3].position = v[0].position + glm::vec3( size.width, 0.0f, 0.0f );
-//		
-//		// lower left corner is the origin in OpenGL
-//		v[0].uv = glm::vec2(0, 0);
-//		v[1].uv = glm::vec2(0, 1);
-//		v[2].uv = glm::vec2(1, 1);
-//		v[3].uv = glm::vec2(1, 0);
-//		
-//		v[0].color = v[1].color = v[2].color = v[3].color = Color(255, 255, 255, 255);
-//		
-//		::renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
-//		stream.append_indices( indices, 6 );
-//	}
-//	
-//	this->render_buffer(stream, shader, texture_map);
-}
-
-void GUIRenderer::draw_line(const gui::Point& start, const gui::Point& end, const gui::Color& color)
-{
-//	lines.reset();
-//	
-//	float div = 1.0f/255.0f;
-//	solid_color->parameters[0].vector_value = glm::vec4( (color.r() * div), (color.g() * div), (color.b() * div), (color.a() * div) );
-//	
-//	
-//	if (lines.has_room(2, 0))
-//	{
-//		VertexType* v = (VertexType*)lines.request(2);
-//		
-//		v[0].position = glm::vec3(start.x, start.y, 0.0f);
-//		v[1].position = glm::vec3(end.x, end.y, 0.0f);
-//		//			v[0].color = v[1].color = Color(255, 255, 255, 255);
-//	}
-//	
-//	this->render_buffer(lines, shader, solid_color);
-}
 
 gui::TextureResult GUIRenderer::texture_create(const char* path, gui::TextureHandle& handle)
 {

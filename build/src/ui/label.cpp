@@ -37,7 +37,7 @@ namespace gui
 		Panel::update(compositor, timestate);
 	} // update
 	
-	void Label::render(Rect& frame, Compositor* compositor, Renderer* renderer)
+	void Label::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
 	{
 		render_commands.add_rectangle(
 			geometry[0],
@@ -48,7 +48,7 @@ namespace gui
 			background_color
 		);
 		
-		gui::Rect bounds = frame;
+		gui::Rect draw_bounds = bounds;
 
 		size_t height;
 		int ascender, descender;
@@ -59,8 +59,8 @@ namespace gui
 
 		float font_height = (ascender + descender);
 
-		bounds.origin.y += glm::max(font_height, text_bounds.height());
-		render_commands.add_font(font_handle, this->text.c_str(), bounds, foreground_color);
+		draw_bounds.origin.y += glm::max(font_height, text_bounds.height());
+		render_commands.add_font(font_handle, this->text.c_str(), draw_bounds, foreground_color);
 	}
 		
 	void Label::set_font(const char* filename, size_t pixel_size)

@@ -40,7 +40,6 @@ namespace gui
 
 	Panel::Panel( Panel * parent )
 	{
-		fprintf(stdout, "Panel %p created\n", this);
 		this->z_rotation = 0.0;
 		scale[0] = 1;
 		scale[1] = 1;
@@ -71,8 +70,6 @@ namespace gui
 		}
 
 		children.clear();
-		
-		fprintf(stdout, "~Panel %p -> '%s'\n", this, "Unknown");
 	} // ~Panel
 	
 	void Panel::set_bounds(const ScreenInt x, const ScreenInt y, const DimensionType width, const DimensionType height )
@@ -209,7 +206,7 @@ namespace gui
 		}
 	} // update
 
-	void Panel::render(Rect& frame, Compositor* compositor, Renderer* renderer)
+	void Panel::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
 	{
 		render_commands.add_rectangle(
 			geometry[0],
@@ -237,9 +234,7 @@ namespace gui
 			Panel* child = (*it);
 			if (child->is_visible())
 			{
-				child->begin_render_frame(compositor);
-				child->render(child->bounds, compositor, renderer);
-				child->end_render_frame(compositor);
+				child->render(compositor, renderer, render_commands);
 			}
 		}
 	} // render
@@ -320,25 +315,12 @@ namespace gui
 	}
 
 	// ---------------------------------------------------------------------
-	// render utils
-	// ---------------------------------------------------------------------
-	void Panel::begin_render_frame(Compositor* compositor)
-	{
-		render_commands.begin(compositor);
-	}
-
-	void Panel::end_render_frame(Compositor* compositor)
-	{
-		render_commands.end(compositor);
-	}
-
-	// ---------------------------------------------------------------------
 	// other utils
 	// ---------------------------------------------------------------------
 	Compositor* Panel::get_compositor()
 	{
 		Panel* panel = parent;
-		while(panel->parent)
+		while(parent && panel->parent)
 			panel = panel->parent;
 
 		assert(panel);

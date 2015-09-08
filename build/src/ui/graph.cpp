@@ -30,7 +30,7 @@
 
 namespace gui
 {
-	void Graph::draw_float(Renderer* renderer, float value, const Point& pt, const gui::Color& color)
+	void Graph::draw_float(Renderer* renderer, float value, const Point& pt, const gui::Color& color, gui::render::CommandList& render_commands)
 	{
 		char string_value[16] = {0};
 		sprintf(string_value, "%2.2f", value);
@@ -192,7 +192,7 @@ namespace gui
 		foreground_color = color;
 	}
 	
-	void Graph::render(Rect& frame, Compositor* compositor, Renderer* renderer)
+	void Graph::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
 	{
 		render_commands.add_rectangle(
 			geometry[0],
@@ -203,6 +203,7 @@ namespace gui
 			background_color
 		);
 
+		const Rect& frame = bounds;
 		float dx = (float)frame.size.width / (float)total_samples;
 		float y = frame.origin.y;
 		float height = frame.size.height;
@@ -278,17 +279,17 @@ namespace gui
 		// draw text
 		Point left_margin(frame.origin.x + 2, frame.origin.y);
 
-		draw_float(renderer, range_max, left_margin, foreground_color);
+		draw_float(renderer, range_max, left_margin, foreground_color, render_commands);
 
 		if (show_baseline)
 		{
 			left_margin.y = baseline_y + y + height - (font_height/2.0f);
-			draw_float(renderer, baseline_value, left_margin, foreground_color);
+			draw_float(renderer, baseline_value, left_margin, foreground_color, render_commands);
 		}
 
 
 		left_margin.y = y + height - font_height;
-		draw_float(renderer, range_min, left_margin, foreground_color);
+		draw_float(renderer, range_min, left_margin, foreground_color, render_commands);
 	}
 
 } // namespace gui

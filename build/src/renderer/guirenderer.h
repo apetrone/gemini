@@ -109,9 +109,6 @@ public:
 	virtual void begin_frame(gui::Compositor* c);
 	virtual void end_frame();
 
-	virtual void draw_bounds(const gui::Rect& bounds, const gui::Color& color);
-	virtual void draw_textured_bounds(const gui::Rect& bounds, const gui::TextureHandle& handle);
-	void draw_line(const gui::Point& start, const gui::Point& end, const gui::Color& color);
 	virtual gui::TextureResult texture_create(const char* path, gui::TextureHandle& handle);
 	virtual void texture_destroy(const gui::TextureHandle& handle);
 	virtual gui::TextureResult texture_info(const gui::TextureHandle& handle, uint32_t& width, uint32_t& height, uint8_t& channels);
@@ -123,7 +120,7 @@ public:
 	virtual size_t font_count_vertices(const gui::FontHandle& handle, const char* string);
 	virtual gui::TextureHandle font_get_texture(const gui::FontHandle& handle);
 	virtual gui::FontResult font_fetch_texture(const gui::FontHandle& handle, gui::TextureHandle& texture);
-	virtual void draw_command_lists(gui::render::CommandList** command_lists, size_t total_lists, Array<gui::render::Vertex>& vertex_buffer);
+	virtual void draw_commands(gui::render::CommandList* command_list, Array<gui::render::Vertex>& vertex_buffer);
 }; // GUIRenderer
 
 

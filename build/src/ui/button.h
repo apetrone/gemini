@@ -52,7 +52,7 @@ namespace gui
 		LIBRARY_EXPORT virtual void handle_event(EventArgs& args);
 		
 		LIBRARY_EXPORT virtual void update(Compositor* compositor, const TimeState& timestate) override;
-		LIBRARY_EXPORT virtual void render(Rect& frame, Compositor* compositor, Renderer* renderer);
+		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
 		
 		LIBRARY_EXPORT virtual bool is_button() const { return true; }
 		
