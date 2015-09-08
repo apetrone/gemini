@@ -41,6 +41,7 @@ namespace gui
 		Panel(0),
 		width(w),
 		height(h),
+		command_list(this, &vertex_buffer),
 		resource_cache(cache),
 		renderer(renderer)
 	{
@@ -90,8 +91,8 @@ namespace gui
 		{
 			return;
 		}
-		
-		command_stream.resize(0);
+
+		command_list.reset();
 		vertex_buffer.resize(0);
 		
 		this->renderer->begin_frame( this );
@@ -101,14 +102,12 @@ namespace gui
 			Panel * panel = (*it);
 			if (panel->is_visible())
 			{
-				panel->begin_render_frame(this);
-				panel->render(panel->bounds, this, this->renderer);
-				panel->end_render_frame(this);
+				panel->render(this, this->renderer, command_list);
 			}
 		}
 		
-		this->renderer->draw_command_lists(&command_stream[0], command_stream.size(), vertex_buffer);
-		
+		this->renderer->draw_commands(&command_list, vertex_buffer);
+
 		this->renderer->end_frame();
 	} // render
 
@@ -459,10 +458,4 @@ namespace gui
 			}
 		}
 	}
-	
-	void Compositor::queue_commandlist(render::CommandList* const commandlist)
-	{
-		command_stream.push_back(commandlist);
-	}
-	
 } // namespace gui

@@ -30,8 +30,9 @@ namespace gui
 
 namespace render
 {
-	CommandList::CommandList() :
-		vertex_buffer(nullptr)
+	CommandList::CommandList(Compositor* compositor_instance, Array<Vertex>* buffer) :
+		compositor(compositor_instance),
+		vertex_buffer(buffer)
 	{
 	}
 
@@ -45,20 +46,6 @@ namespace render
 	{
 		commands.clear();
 		write_pointer = nullptr;
-	}
-
-	void CommandList::begin(Compositor* compositor)
-	{
-		vertex_buffer = compositor->get_vertex_buffer();
-		this->compositor = compositor;
-		reset();
-	}
-
-	void CommandList::end(Compositor* compositor)
-	{
-		compositor->queue_commandlist(this);
-		vertex_buffer = nullptr;
-		compositor = nullptr;
 	}
 
 	void CommandList::push_clip_rect(const Rect& clip_rect)

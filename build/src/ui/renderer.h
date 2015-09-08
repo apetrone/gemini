@@ -59,7 +59,7 @@ namespace gui
 			Rect clip_rect;
 			TextureHandle texture;
 		};
-		
+
 		const size_t MAX_COMMANDS = 128;
 		struct CommandList
 		{
@@ -67,16 +67,12 @@ namespace gui
 			Array<Vertex>* vertex_buffer;
 			Compositor* compositor;
 
-			CommandList();
+			CommandList(Compositor* compositor_instance, Array<Vertex>* buffer);
 			Vertex* write_pointer;
 			
 			LIBRARY_EXPORT void reset();
 			LIBRARY_EXPORT void clear();
 
-			LIBRARY_EXPORT void begin(Compositor* compositor);
-			LIBRARY_EXPORT void end(Compositor* compositor);
-			
-			
 			LIBRARY_EXPORT void push_clip_rect(const Rect& clip_rect);
 			LIBRARY_EXPORT void pop_clip_rect();
 			
@@ -146,16 +142,6 @@ namespace gui
 		// ---------------------------------------------------------------------
 		// fonts
 		// ---------------------------------------------------------------------
-		
-		/// Create a font via a path and set the handle
-		/// @param path utf-8 encoded path
-		/// @param handle Output font handle
-		/// @return FontResult error code
-//		virtual FontResult font_create( const char * path, FontHandle & handle ) = 0;
-
-		/// Release a font
-		/// @param handle FontHandle obtained from font_create
-//		virtual void font_destroy( const FontHandle & handle ) = 0;
 
 		/// Calculate bounds for a string
 		/// @param handle FontHandle to use for this operation
@@ -165,45 +151,20 @@ namespace gui
 
 		virtual void font_metrics(const gui::FontHandle& handle, size_t& height, int& ascender, int& descender) = 0;
 
-		/// Fetch the texture handle used by handle
-		/// @param handle FontHandle used to fetch texture from
-		/// @param texture Texture handle associated with this font
-		/// @return FontResult
-//		virtual FontResult font_fetch_texture(const FontHandle& handle, TextureHandle& texture) = 0;
-
 		// ---------------------------------------------------------------------
 		// command list drawing
 		// ---------------------------------------------------------------------
-		virtual void draw_command_lists(render::CommandList** command_lists, size_t total_lists, Array<gui::render::Vertex>& vertex_buffer) = 0;
-	
-	
-	
-	
-	
-	
-	
-		/// draw_bounds is experimental
-		virtual void draw_bounds( const Rect & bounds, const Color& color) = 0;
-		
-		/// Draw bounds with a texture
-		/// @param bounds Rectangle bounds
-		/// @param handle TextureHandle to use as texture
-		virtual void draw_textured_bounds( const Rect & bounds, const TextureHandle & handle ) = 0;
-		virtual void draw_line(const Point& start, const Point& end, const Color& color) = 0;
+		virtual void draw_commands(render::CommandList* command_list, Array<gui::render::Vertex>& vertex_buffer) = 0;
 
-		
-		
 		/// Render a font
 		/// @param handle FontHandle to use for this operation
-		/// @param string utf-8 encoded string
 		/// @param bounds Bounding rectangle to draw within
 		/// @param color PACK_RGBA'd color value
-//		virtual void font_draw(const FontHandle& handle, const char* string, const gui::Rect& bounds, const Color& color) = 0;
-		/// @returns Total vertices written to buffer
 		virtual size_t font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color, gui::render::Vertex* buffer, size_t buffer_size) = 0;
 
+		/// @param string utf-8 encoded string
+		/// @returns Total vertices needed to draw the string
 		virtual size_t font_count_vertices(const gui::FontHandle& handle, const char* string) = 0;
-//		virtual TextureHandle font_get_texture(const gui::FontHandle& handle) = 0;
 	}; // Renderer
 	
 } // namespace gui

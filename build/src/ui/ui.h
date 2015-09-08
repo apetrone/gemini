@@ -99,7 +99,10 @@ namespace gui
 		// destroy a font
 		virtual void destroy_font(const FontHandle& handle) = 0;
 
-		// return the texture used by this font
+		/// Fetch the texture handle used by handle
+		/// @param handle FontHandle used to fetch texture from
+		/// @param texture Texture handle associated with this font
+		/// @return the texture used by this font
 		virtual TextureHandle texture_for_font(const FontHandle& handle) = 0;
 
 		virtual TextureHandle create_texture(const char* filename) = 0;

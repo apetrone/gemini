@@ -107,7 +107,7 @@ namespace gui
 		text_origin.y = glm::floor(bounds.origin.y + (bounds.height() / 2.0f) - (font_dims.height()/2.0f) + glm::max((float)font_height, font_dims.height()));
 	} // update
 	
-	void Button::render(Rect& frame, Compositor* compositor, Renderer* renderer)
+	void Button::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
 	{
 		if (compositor->get_hot() == this && state == 0)
 		{
@@ -123,9 +123,9 @@ namespace gui
 			current_color
 		);
 
-		gui::Rect bounds = frame;
-		bounds.origin = text_origin;
-		render_commands.add_font(font_handle, this->text.c_str(), bounds, foreground_color);
+		gui::Rect draw_bounds = bounds;
+		draw_bounds.origin = text_origin;
+		render_commands.add_font(font_handle, this->text.c_str(), draw_bounds, foreground_color);
 	}
 	
 } // namespace gui

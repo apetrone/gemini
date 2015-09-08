@@ -270,7 +270,7 @@ public:
 		gui::Panel::update(compositor, timestate);
 	}
 
-	virtual void render(gui::Rect& frame, gui::Compositor* compositor, gui::Renderer* renderer)
+	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
 	{
 		render_commands.reset();
 		render_commands.add_rectangle(
@@ -281,7 +281,7 @@ public:
 			gui::render::WhiteTexture,
 			background_color);
 
-
+		gui::Rect frame = bounds;
 		glm::vec2 framesize(frame.width(), frame.height());
 		glm::vec2 center = geometry[0] + (framesize / 2.0f);
 		glm::vec2 start = center;
@@ -289,9 +289,6 @@ public:
 
 		// draw the joystick vector
 		render_commands.add_line(start, end, gui::Color(255, 0, 0), 3.0f);
-
-
-
 
 		// render the outline
 		gui::Color color(0, 0, 0);
@@ -322,14 +319,13 @@ public:
 //			);
 //		}
 //
-		compositor->queue_commandlist(&render_commands);
 //
 //		for(PanelVector::iterator it = children.begin(); it != children.end(); ++it)
 //		{
 //			Panel* child = (*it);
 //			if (child->is_visible())
 //			{
-//				child->render(child->bounds, compositor, renderer, style);
+//				child->render(compositor, renderer, style);
 //			}
 //		}
 
