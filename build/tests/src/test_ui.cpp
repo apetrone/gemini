@@ -232,6 +232,214 @@ render2::Texture* StandaloneResourceCache::handle_to_texture(const gui::TextureH
 }
 
 
+
+class TabControl : public gui::Panel
+{
+	struct TabData
+	{
+		size_t index;
+		std::string label;
+		gui::Panel* panel;
+		gui::Rect rect;
+		uint32_t is_highlighted;
+
+
+		TabData(const std::string& display_name = "", gui::Panel* tab_panel = nullptr) :
+			index(0),
+			label(display_name),
+			panel(tab_panel),
+			is_highlighted(0)
+		{
+		}
+	};
+
+	Array<TabData> tabs;
+	size_t current_tab;
+	TabData* active_tab;
+	TabData* hot_tab;
+
+	// the size of a tab's clickable region
+	gui::Size tab_size;
+
+	gui::FontHandle font;
+
+public:
+	TabControl(gui::Panel* root);
+
+	virtual bool can_move() const { return true; }
+	virtual void update(gui::Compositor* compositor, const gui::TimeState& timestate) override;
+	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
+	virtual void handle_event(gui::EventArgs& args) override;
+
+	void add_tab(size_t index, const std::string& name, gui::Panel* panel);
+	void remove_tab(size_t index);
+	void show_tab(size_t index);
+
+	size_t get_current_tab() const { return current_tab+1; }
+
+};
+
+TabControl::TabControl(gui::Panel* root) :
+	gui::Panel(root),
+	active_tab(nullptr),
+	hot_tab(nullptr)
+{
+	tab_size.width = 40;
+	tab_size.height = 20;
+
+	font = get_compositor()->get_resource_cache()->create_font("fonts/nokiafc22.ttf", 8);
+}
+
+void TabControl::add_tab(size_t index, const std::string& name, gui::Panel* panel)
+{
+	current_tab = tabs.size();
+
+	TabData tab(name, panel);
+	tab.index = current_tab;
+	tab.rect.set(current_tab * tab_size.width, 0, tab_size.width, tab_size.height);
+
+	tabs.push_back(tab);
+	show_tab(current_tab);
+
+	panel->parent = this;
+
+	panel->set_bounds(0, tab_size.height, panel->get_size().width, panel->get_size().height);
+}
+
+void TabControl::remove_tab(size_t index)
+{
+}
+
+void TabControl::show_tab(size_t index)
+{
+	current_tab = index;
+	active_tab = &tabs[current_tab];
+}
+
+void TabControl::update(gui::Compositor* compositor, const gui::TimeState& timestate)
+{
+	if (active_tab)
+	{
+		active_tab->panel->update(compositor, timestate);
+	}
+
+	gui::Panel::update(compositor, timestate);
+}
+
+void TabControl::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
+{
+	// draw the tab background
+	render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], -1, gui::Color(128, 128, 128));
+
+	const gui::Size& sz = tab_size;
+
+	// draw all tab buttons
+	for (size_t index = 0; index < tabs.size(); ++index)
+	{
+		TabData& tab_data = tabs[index];
+
+		glm::vec2 corners[4];
+		glm::vec2 origin = bounds.origin;
+		origin.x += (index * tab_size.width);
+		corners[0] = origin;
+		corners[1] = origin + glm::vec2(0, sz.height);
+		corners[2] = origin + glm::vec2(sz.width, sz.height);
+		corners[3] = origin + glm::vec2(sz.width, 0);
+
+		gui::Color base_color(64, 64, 64);
+		gui::Color tab_color = base_color;
+		gui::Color text_color = gui::Color(0, 0, 0);
+
+		if (tab_data.is_highlighted)
+		{
+			tab_color = gui::Color(64, 128, 128);
+		}
+		else if (&tab_data == active_tab)
+		{
+			tab_color = gui::Color(96, 96, 96);
+			text_color = gui::Color(255, 255, 255);
+		}
+
+		// draw the tab rectangle
+		render_commands.add_rectangle(corners[0], corners[1], corners[2], corners[3], -1, tab_color);
+
+		gui::Rect font_bounds;
+
+		size_t height;
+		int ascender, descender;
+		renderer->font_metrics(font, height, ascender, descender);
+		font_bounds.set(corners[0].x, corners[2].y - (ascender + descender), corners[2].x, corners[2].y);
+
+		// draw the tab label
+		render_commands.add_font(font, tab_data.label.c_str(), font_bounds, text_color);
+	}
+
+	if (active_tab)
+	{
+		gui::Panel* panel = active_tab->panel;
+		panel->render(compositor, renderer, render_commands);
+	}
+}
+
+void TabControl::handle_event(gui::EventArgs& args)
+{
+	if (args.type == gui::Event_CursorMove)
+	{
+		hot_tab = nullptr;
+
+		// see if the cursor is over one of the tabs
+		for (TabData& tab_data : tabs)
+		{
+			// cursor is in screen coords; so we need to translate it to tab rect coords
+			gui::Point pt = args.cursor - bounds.origin;
+
+
+			if (tab_data.rect.is_point_inside(pt))
+			{
+				tab_data.is_highlighted = 1;
+				hot_tab = &tab_data;
+			}
+			else
+			{
+				tab_data.is_highlighted = 0;
+			}
+		}
+	}
+	else if (args.type == gui::Event_CursorExit)
+	{
+		for (TabData& tab_data : tabs)
+		{
+			tab_data.is_highlighted = 0;
+		}
+
+		hot_tab = nullptr;
+	}
+	else if (args.type == gui::Event_CursorButtonReleased)
+	{
+		hot_tab = nullptr;
+
+		// see if the cursor is over one of the tabs
+		for (TabData& tab_data : tabs)
+		{
+			// cursor is in screen coords; so we need to translate it to tab rect coords
+			gui::Point pt = args.cursor - bounds.origin;
+
+			if (tab_data.rect.is_point_inside(pt))
+			{
+				hot_tab = &tab_data;
+				break;
+			}
+		}
+
+		if (hot_tab)
+		{
+			show_tab(hot_tab->index);
+		}
+	}
+
+	//Panel::handle_event(args);
+}
+
 class ControllerTestPanel : public gui::Panel
 {
 	glm::vec2 mins;
@@ -459,21 +667,25 @@ public:
 		graph->enable_baseline(true, 16.6f, gui::Color(255, 0, 255, 255));
 #endif
 
-#if 1
-		label = new gui::Label(root);
+		TabControl* tab = new TabControl(root);
+		tab->set_bounds(10, 10, 250, 250);
+
+		label = new gui::Label(tab);
 		label->set_background_color(gui::Color(32, 32, 32));
 		label->set_foreground_color(gui::Color(0, 255, 0));
 		label->set_bounds(50, 75, 110, 40);
 		label->set_font(dev_font, 8);
 		label->set_text("This is a label");
-
+		tab->add_tab(0, "test", label);
+#if 1
 		{
-			gui::Label* label = new gui::Label(root);
+			gui::Label* label = new gui::Label(tab);
 			label->set_background_color(gui::Color(32, 32, 32));
 			label->set_foreground_color(gui::Color(255, 0, 0));
 			label->set_bounds(50, 115, 110, 40);
 			label->set_font(dev_font, 8);
 			label->set_text("This is another label");
+			tab->add_tab(1, "test2", label);
 		}
 
 #endif
