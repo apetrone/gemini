@@ -141,6 +141,9 @@ namespace gui
 		LIBRARY_EXPORT Compositor* get_compositor();
 
 
+		LIBRARY_EXPORT const Point& get_origin() const { return origin; }
+		LIBRARY_EXPORT const Size& get_size() const { return size; }
+
 	protected:
 		// Panels will transform through the following spaces:
 		// Local (or bounds)
