@@ -59,6 +59,7 @@ namespace image
 		channels = total_channels;
 		
 		pixels.allocate(width * height * channels);
+		alignment = channels;
 	}
 	
 	void Image::fill(const core::Color& color)
