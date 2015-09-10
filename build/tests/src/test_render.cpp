@@ -260,6 +260,7 @@ public:
 		// ---------------------------------------------------------------------
 		// texture creation
 		// ---------------------------------------------------------------------
+		LOGV("generating textures...\n");
 		// generate a texture
 		image::Image checker_pattern;
 		checker_pattern.width = 32;
@@ -268,6 +269,8 @@ public:
 		image::generate_checker_pattern(checker_pattern, core::Color(255, 0, 255), core::Color(0, 255, 0));
 		checker = device->create_texture(checker_pattern);
 		assert(checker);
+		LOGV("created checker_pattern texture procedurally\n");
+
 
 		// load a texture from file
 		Array<unsigned char> buffer;
@@ -278,11 +281,15 @@ public:
 		image.filter = image::FILTER_NONE;
 		notexture = device->create_texture(image);
 		assert(notexture);
+		LOGV("loaded notexture.png successfully\n");
 
 		// load a compressed texture?
 
-
-
+//		image::Image test_pattern;
+//		test_pattern.create(32, 32, 1);
+//		test_pattern.fill(core::Color(255, 0, 0));
+//		checker = device->create_texture(test_pattern);
+//		assert(checker);
 
 		// ---------------------------------------------------------------------
 		// font
@@ -372,6 +379,9 @@ public:
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
 		assert(serializer);
 
+		//
+		// TRIANGLE 1 & 2
+
 		// add commands to the queue
 		serializer->pipeline(pipeline);
 		serializer->vertex_buffer(vertex_buffer);
@@ -381,9 +391,14 @@ public:
 		// draw textured triangles
 		serializer->pipeline(texture_pipeline);
 		serializer->vertex_buffer(textured_buffer);
+
+		//
+		// TRIANGLE 3
 		serializer->texture(checker, 0);
 		serializer->draw(0, 3);
-		serializer->texture(render2::font::get_font_texture(handle), 0);
+
+		// TRIANGLE 4
+		serializer->texture(notexture, 0);
 		serializer->draw(3, 6);
 
 		// queue the buffer with our device
