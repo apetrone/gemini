@@ -688,7 +688,7 @@ namespace render2
 		{
 			return GL_RGBA;
 		}
-		else if ( num_channels == 1 )
+		else if ((num_channels == 1) || (image.flags & image::F_ALPHA))
 		{
 		// GL_ALPHA is available pre GL 3.2
 		// and in GLES 2.
@@ -699,14 +699,22 @@ namespace render2
 #endif
 		}
 
+		assert(0);
 		return GL_RGBA;
 	} // image_source_format
 
 	GLenum image_to_internal_format(const Image& image)
 	{
-		uint32_t image_flags = image.flags;
 		//GLenum internalFormat = GL_SRGB8;
-		if (image_flags & image::F_ALPHA)
+		if (image.channels == 3)
+		{
+			return GL_RGB;
+		}
+		else if (image.channels == 4)
+		{
+			return GL_RGBA;
+		}
+		else if ((image.channels == 1) || (image.flags & image::F_ALPHA))
 		{
 			// GL_ALPHA is available pre GL 3.2
 			// and in GLES 2.
@@ -717,17 +725,8 @@ namespace render2
 #endif
 		}
 
-		if (image.channels == 3)
-		{
-			return GL_RGB;
-		}
-		else if (image.channels == 4)
-		{
-			return GL_RGBA;
-		}
-
 		// Unknown internal storage format
-		assert(0);
+		assert(!"Unknown internal storage format");
 		return GL_INVALID_ENUM;
 	} // image_to_internal_format
 

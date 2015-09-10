@@ -730,11 +730,8 @@ namespace render2
 			render2::Image image;
 			image.filter = image::FILTER_NONE;
 			image.flags = image::F_ALPHA | image::F_CLAMP;
-			image.width = FONT_ATLAS_RESOLUTION;
-			image.height = FONT_ATLAS_RESOLUTION;
-			image.channels = 1;
 
-			image.create(image.width, image.height, image.channels);
+			image.create(FONT_ATLAS_RESOLUTION, FONT_ATLAS_RESOLUTION, 1);
 			image.fill(core::Color(255, 0, 255));
 			font->texture = detail::_device->create_texture(image);
 			detail::_fonts.push_back(font);
@@ -916,6 +913,9 @@ namespace render2
 				FontData* data = detail::_fonts[handle.ref];
 				return data->texture;
 			}
+
+			// Unable to get the font texture for handle!
+			assert(0);
 			return nullptr;
 		}
 	} // namespace font
