@@ -46,25 +46,47 @@ using namespace renderer;
 #define TEST_RENDER_GRAPHICS 1
 
 // ---------------------------------------------------------------------
-// TestKernel
+// TestRender
 // ---------------------------------------------------------------------
-class TestKernel : public kernel::IKernel,
+class TestRender : public kernel::IKernel,
 	public kernel::IEventListener<kernel::KeyboardEvent>,
 	public kernel::IEventListener<kernel::MouseEvent>,
 	public kernel::IEventListener<kernel::SystemEvent>
 {
-	bool active;
-	platform::window::NativeWindow* native_window;
-	platform::window::NativeWindow* other_window;
-	glm::vec2 center;
+	struct ConstantData
+	{
+		glm::mat4 modelview_matrix;
+		glm::mat4 projection_matrix;
+		unsigned int texture_unit;
+	};
 
-	float countdown;
+	struct TestRenderState
+	{
+		glm::mat4 modelview_matrix;
+		glm::mat4 projection_matrix;
+		unsigned int diffuse;
 
-	glm::mat4 modelview_matrix;
-	glm::mat4 projection_matrix;
-	unsigned int diffuse;
+		render2::font::Handle handle;
+		platform::window::NativeWindow* native_window;
+		platform::window::NativeWindow* other_window;
 
-	render2::font::Handle handle;
+		render2::Device* device;
+
+		render2::Pipeline* pipeline; // pipeline for untextured geometry
+		render2::Pipeline* texture_pipeline; // pipeline for textured geometry
+		render2::Pipeline* font_pipeline; // pipeline for font rendering
+
+		render2::Buffer* vertex_buffer;
+		render2::Buffer* textured_buffer;
+		render2::Buffer* font_buffer;
+
+		render2::Texture* checker;
+		render2::Texture* notexture;
+
+		size_t total_font_vertices;
+	};
+
+	typedef void (*test_state_callback)(TestRenderState& state);
 
 public:
 	virtual void event(kernel::KeyboardEvent& event)
@@ -93,9 +115,9 @@ public:
 		{
 			case kernel::WindowResized:
 				LOGV("window resized: %i x %i\n", event.render_width, event.render_height);
-				if (device)
+				if (state.device)
 				{
-					device->backbuffer_resized(event.render_width, event.render_height);
+					state.device->backbuffer_resized(event.render_width, event.render_height);
 				}
 				break;
 			default:
@@ -104,9 +126,71 @@ public:
 	}
 public:
 
-	TestKernel()
+	static void render_stage1(TestRenderState& state)
 	{
-		native_window = nullptr;
+		// sanity check
+		assert(state.device);
+		assert(state.pipeline);
+		assert(state.vertex_buffer);
+
+		render2::Pass render_pass;
+		render_pass.target = state.device->default_render_target();
+		render_pass.color(0.0f, 0.0f, 0.0f, 1.0f);
+		render_pass.clear_color = true;
+		render_pass.clear_depth = true;
+
+		// create a command queue
+		render2::CommandQueue* queue = state.device->create_queue(render_pass);
+
+		// create a command serializer for the queue
+		render2::CommandSerializer* serializer = state.device->create_serializer(queue);
+		assert(serializer);
+
+		// color-based triangle
+		serializer->pipeline(state.pipeline);
+		serializer->vertex_buffer(state.vertex_buffer);
+//		serializer->draw_indexed_primitives(index_buffer, 3);
+		serializer->draw(0, 3);
+
+		// procedurally-generated textured triangle
+		serializer->pipeline(state.texture_pipeline);
+		serializer->vertex_buffer(state.textured_buffer);
+		serializer->texture(state.checker, 0);
+		serializer->draw(0, 3);
+
+		// quad; texture loaded from disk (notexture.png)
+		serializer->texture(state.notexture, 0);
+		serializer->draw(3, 6);
+
+		// quad; font texture
+//		serializer->texture(render2::font::get_font_texture(state.handle), 0);
+//		serializer->draw(9, 6);
+
+		serializer->pipeline(state.font_pipeline);
+		serializer->vertex_buffer(state.font_buffer);
+		serializer->texture(render2::font::get_font_texture(state.handle), 0);
+		serializer->draw(0, state.total_font_vertices);
+
+		// queue the buffer with our device
+		state.device->destroy_serializer(serializer);
+		state.device->queue_buffers(queue, 1);
+
+		// submit the queues to the GPU
+		platform::window::activate_context(state.native_window);
+		state.device->submit();
+		platform::window::swap_buffers(state.native_window);
+
+		if (state.other_window)
+		{
+			platform::window::activate_context(state.other_window);
+			platform::window::swap_buffers(state.other_window);
+		}
+	}
+
+
+	TestRender()
+	{
+		state.native_window = nullptr;
 		active = true;
 	}
 
@@ -154,23 +238,23 @@ public:
 		params.frame = platform::window::centered_window_frame(0, 512, 512);
 		params.window_title = "test_render";
 
-		native_window = platform::window::create(params);
-		assert(native_window != nullptr);
-		platform::window::Frame window_frame = platform::window::get_frame(native_window);
+		state.native_window = platform::window::create(params);
+		assert(state.native_window != nullptr);
+		platform::window::Frame window_frame = platform::window::get_frame(state.native_window);
 		PLATFORM_LOG(platform::LogMessageType::Info, "window dimensions: %2.2f %2.2f\n", window_frame.width, window_frame.height);
 
-		platform::window::focus(native_window);
+		platform::window::focus(state.native_window);
 
 		if (0 && platform::window::screen_count() > 1)
 		{
 			params.frame = platform::window::centered_window_frame(1, 1024, 768);
 			params.window_title = "other_window";
-			other_window = platform::window::create(params);
-			assert(other_window != nullptr);
-			window_frame = platform::window::get_frame(other_window);
+			state.other_window = platform::window::create(params);
+			assert(state.other_window != nullptr);
+			window_frame = platform::window::get_frame(state.other_window);
 			PLATFORM_LOG(platform::LogMessageType::Info, "other window dimensions: %i %i\n", window_frame.width, window_frame.height);
 
-			platform::window::Frame wf = platform::window::get_frame(other_window);
+			platform::window::Frame wf = platform::window::get_frame(state.other_window);
 
 			LOGV("other_window frame: %2.2f, %2.2f, %2.2f x %2.2f\n", wf.x, wf.y, wf.width, wf.height);
 
@@ -188,67 +272,82 @@ public:
 		render_parameters["rendering_backend"] = "default";
 		render_parameters["gamma_correct"] = "true";
 
-		device = render2::create_device(render_parameters);
-		assert(device != nullptr);
+		state.device = render2::create_device(render_parameters);
+		assert(state.device != nullptr);
 
-		window_frame = platform::window::get_frame(native_window);
+		window_frame = platform::window::get_frame(state.native_window);
 
 		// setup the pipeline
 		render2::PipelineDescriptor desc;
-		desc.shader = device->create_shader("vertexcolor");
+		desc.shader = state.device->create_shader("vertexcolor");
 		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3); // position
 		desc.vertex_description.add("in_color", render2::VD_FLOAT, 4); // color
-		desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
-		pipeline = device->create_pipeline(desc);
+		desc.input_layout = state.device->create_input_layout(desc.vertex_description, desc.shader);
+		state.pipeline = state.device->create_pipeline(desc);
 
 		// create a vertex buffer and populate it with data
 		float width = (float)window_frame.width;
 		float height = (float)window_frame.height;
 
-		device->init(window_frame.width, window_frame.height);
+		state.device->init(window_frame.width, window_frame.height);
 
 		// Draw a triangle on screen with the wide part of the base at the bottom
 		// of the screen.
 		size_t total_bytes = sizeof(MyVertex) * 3;
-		vertex_buffer = device->create_vertex_buffer(total_bytes);
-		assert(vertex_buffer != nullptr);
+		state.vertex_buffer = state.device->create_vertex_buffer(total_bytes);
+		assert(state.vertex_buffer != nullptr);
 		MyVertex vertices[3];
 
 		generate_triangle(0, vertices, glm::vec2(width, height), glm::vec2(0, 0));
-		device->buffer_upload(vertex_buffer, vertices, total_bytes);
+		state.device->buffer_upload(state.vertex_buffer, vertices, total_bytes);
 
 
 		// setup texture pipeline
 		render2::PipelineDescriptor td;
-		td.shader = device->create_shader("vertexcolortexture");
+		td.shader = state.device->create_shader("vertexcolortexture");
 		td.vertex_description.add("in_position", render2::VD_FLOAT, 3);
 		td.vertex_description.add("in_color", render2::VD_FLOAT, 4);
 		td.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
-		td.input_layout = device->create_input_layout(td.vertex_description, td.shader);
-		texture_pipeline = device->create_pipeline(td);
+		td.input_layout = state.device->create_input_layout(td.vertex_description, td.shader);
+		state.texture_pipeline = state.device->create_pipeline(td);
 
+		// setup font pipeline
+		render2::PipelineDescriptor fd;
+		fd.shader = state.device->create_shader("font");
+		fd.vertex_description.add("in_position", render2::VD_FLOAT, 2);
+		fd.vertex_description.add("in_color", render2::VD_FLOAT, 4);
+		fd.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
+		fd.input_layout = state.device->create_input_layout(td.vertex_description, fd.shader);
+		state.font_pipeline = state.device->create_pipeline(fd);
 
 		// setup texture vertex buffer
 		const size_t TOTAL_TEXTURED_VERTICES = 15;
 		total_bytes = sizeof(TexturedVertex) * TOTAL_TEXTURED_VERTICES;
-		textured_buffer = device->create_vertex_buffer(total_bytes);
+		state.textured_buffer = state.device->create_vertex_buffer(total_bytes);
 		TexturedVertex tv[ TOTAL_TEXTURED_VERTICES ];
 		generate_textured_triangle(0, tv, glm::vec2(width, height), glm::vec2(width/2, 0));
 		generate_textured_quad(3, tv, glm::vec2(width, height), glm::vec2(0, height/2));
 		generate_textured_quad(9, tv, glm::vec2(width, height), glm::vec2(width/2, height/2));
-		device->buffer_upload(textured_buffer, tv, total_bytes);
+		state.device->buffer_upload(state.textured_buffer, tv, total_bytes);
 
 		// setup constant buffer
-		modelview_matrix = glm::mat4(1.0f);
-		projection_matrix = glm::ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
-		diffuse = 0;
-		pipeline->constants().set("modelview_matrix", &modelview_matrix);
-		pipeline->constants().set("projection_matrix", &projection_matrix);
+		state.modelview_matrix = glm::mat4(1.0f);
+		state.projection_matrix = glm::ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
+		state.diffuse = 0;
+		state.pipeline->constants().set("modelview_matrix", &state.modelview_matrix);
+		state.pipeline->constants().set("projection_matrix", &state.projection_matrix);
 
-		texture_pipeline->constants().set("modelview_matrix", &modelview_matrix);
-		texture_pipeline->constants().set("projection_matrix", &projection_matrix);
-		texture_pipeline->constants().set("diffuse", &diffuse);
+		state.texture_pipeline->constants().set("modelview_matrix", &state.modelview_matrix);
+		state.texture_pipeline->constants().set("projection_matrix", &state.projection_matrix);
+		state.texture_pipeline->constants().set("diffuse", &state.diffuse);
+
+		state.font_pipeline->constants().set("modelview_matrix", &state.modelview_matrix);
+		state.font_pipeline->constants().set("projection_matrix", &state.projection_matrix);
+		state.font_pipeline->constants().set("diffuse", &state.diffuse);
+
 //		platform::window::show_cursor(true);
+		const size_t TOTAL_FONT_VERTICES = 1024;
+		state.font_buffer = state.device->create_vertex_buffer(sizeof(TexturedVertex) * TOTAL_FONT_VERTICES);
 #endif
 
 
@@ -264,8 +363,8 @@ public:
 		checker_pattern.height = 32;
 		checker_pattern.channels = 3;
 		image::generate_checker_pattern(checker_pattern, core::Color(255, 0, 255), core::Color(0, 255, 0));
-		checker = device->create_texture(checker_pattern);
-		assert(checker);
+		state.checker = state.device->create_texture(checker_pattern);
+		assert(state.checker);
 		LOGV("created checker_pattern texture procedurally\n");
 
 
@@ -276,8 +375,8 @@ public:
 		image::Image image = image::load_from_memory(&buffer[0], buffer.size());
 		LOGV("loaded image: %i x %i, @ %i\n", image.width, image.height, image.channels);
 		image.filter = image::FILTER_NONE;
-		notexture = device->create_texture(image);
-		assert(notexture);
+		state.notexture = state.device->create_texture(image);
+		assert(state.notexture);
 		LOGV("loaded notexture.png successfully\n");
 
 		// load a compressed texture?
@@ -291,16 +390,48 @@ public:
 		// ---------------------------------------------------------------------
 		// font
 		// ---------------------------------------------------------------------
-		render2::font::startup(device);
+		render2::font::startup(state.device);
 
 		Array<unsigned char> fontdata;
 		core::filesystem::instance()->virtual_load_file(fontdata, "fonts/nokiafc22.ttf");
-		handle = render2::font::load_from_memory(&fontdata[0], fontdata.size(), 16);
+		state.handle = render2::font::load_from_memory(&fontdata[0], fontdata.size(), 8);
 
+		Array<render2::font::FontVertex> temp_vertices;
+		render2::font::draw_string(state.handle, temp_vertices, "The quick brown fox jumps over the lazy dog.", core::Color(255, 255, 255));
+
+		render2::font::Metrics metrics;
+		render2::font::get_font_metrics(state.handle, metrics);
+
+		float offset[2] = {window_frame.width/2, window_frame.height/2 + metrics.max_height};
+
+		state.total_font_vertices = temp_vertices.size();
+		TexturedVertex tvf[TOTAL_FONT_VERTICES];
+		for (size_t index = 0; index < temp_vertices.size(); ++index)
+		{
+			TexturedVertex* tv = &tvf[index];
+			render2::font::FontVertex* fv = &temp_vertices[index];
+			tv->position[0] = fv->position.x + offset[0];
+			tv->position[1] = fv->position.y + offset[1];
+			tv->position[2] = 0;
+			tv->color[0] = fv->color.r / 255.0f;
+			tv->color[1] = fv->color.b / 255.0f;
+			tv->color[2] = fv->color.g / 255.0f;
+			tv->color[3] = fv->color.a / 255.0f;
+			tv->uv[0] = fv->uv.x;
+			tv->uv[1] = fv->uv.y;
+		}
+		state.device->buffer_upload(state.font_buffer, &tvf, sizeof(TexturedVertex)*TOTAL_FONT_VERTICES);
+
+
+		// hit this assert if we couldn't load the font
+		assert(state.handle.is_valid());
 		
 
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
 
+		render_callbacks.push_back(render_stage1);
+
+		test_state = 0;
 		return kernel::NoError;
 	}
 
@@ -349,7 +480,13 @@ public:
 		countdown -= kernel::parameters().step_interval_seconds;
 
 		if (countdown <= 0)
-			kernel::instance()->set_active(false);
+		{
+			++test_state;
+			if (test_state >= render_callbacks.size())
+			{
+				kernel::instance()->set_active(false);
+			}
+		}
 
 		// update our input
 		input::update();
@@ -357,77 +494,13 @@ public:
 		// dispatch all window events
 		platform::window::dispatch_events();
 
-#if TEST_RENDER_GRAPHICS
-		// sanity check
-		assert(device);
-		assert(pipeline);
-		assert(vertex_buffer);
-
-		render2::Pass render_pass;
-		render_pass.target = device->default_render_target();
-		render_pass.color(0.0f, 0.0f, 0.0f, 1.0f);
-		render_pass.clear_color = true;
-		render_pass.clear_depth = true;
-
-		// create a command queue
-		render2::CommandQueue* queue = device->create_queue(render_pass);
-
-		// create a command serializer for the queue
-		render2::CommandSerializer* serializer = device->create_serializer(queue);
-		assert(serializer);
-
-		// color-based triangle
-		serializer->pipeline(pipeline);
-		serializer->vertex_buffer(vertex_buffer);
-//		serializer->draw_indexed_primitives(index_buffer, 3);
-		serializer->draw(0, 3);
-
-		// procedurally-generated textured triangle
-		serializer->pipeline(texture_pipeline);
-		serializer->vertex_buffer(textured_buffer);
-		serializer->texture(checker, 0);
-		serializer->draw(0, 3);
-
-		// quad; texture loaded from disk (notexture.png)
-		serializer->texture(notexture, 0);
-		serializer->draw(3, 9);
-
-		// quad; font textre
-		serializer->texture(render2::font::get_font_texture(handle), 0);
-		serializer->draw(9, 15);
-
-		// queue the buffer with our device
-		device->destroy_serializer(serializer);
-		device->queue_buffers(queue, 1);
-
-
-
-
-		// submit the queues to the GPU
-		platform::window::activate_context(native_window);
-		device->submit();
-		platform::window::swap_buffers(native_window);
-
-
-		float cx = 0, cy = 0;
-
-		platform::window::get_cursor(cx, cy);
-		glm::vec2 delta(center.x-cx, center.y-cy);
-//		LOGV("current pos: %2.2f %2.2f\n", delta.x, delta.y);
-
-		// center mouse in window
-		if (glm::length(delta) != 0.0f)
+		test_state_callback render_callback = nullptr;
+		if (!render_callbacks.empty() && test_state < render_callbacks.size())
 		{
-
+			render_callback = render_callbacks[test_state];
+			if (render_callback)
+				render_callback(state);
 		}
-
-		if (other_window)
-		{
-			platform::window::activate_context(other_window);
-			platform::window::swap_buffers(other_window);
-		}
-	#endif
-		// hide/show mouse
 	}
 
 
@@ -436,27 +509,32 @@ public:
 		render2::font::shutdown();
 
 #if TEST_RENDER_GRAPHICS
-		if (checker)
+		if (state.checker)
 		{
-			device->destroy_texture(checker);
-			device->destroy_texture(notexture);
-			device->destroy_buffer(textured_buffer);
-			device->destroy_pipeline(texture_pipeline);
+			state.device->destroy_texture(state.checker);
 		}
 
-		device->destroy_buffer(vertex_buffer);
-		device->destroy_pipeline(pipeline);
-		render2::destroy_device(device);
+		state.device->destroy_texture(state.notexture);
+
+		state.device->destroy_pipeline(state.pipeline);
+		state.device->destroy_pipeline(state.texture_pipeline);
+		state.device->destroy_pipeline(state.font_pipeline);
+
+		state.device->destroy_buffer(state.vertex_buffer);
+		state.device->destroy_buffer(state.textured_buffer);
+		state.device->destroy_buffer(state.font_buffer);
+
+		render2::destroy_device(state.device);
 
 		renderer::shutdown();
 #endif
 
+		render_callbacks.clear();
 
-
-		platform::window::destroy(native_window);
-		if (other_window)
+		platform::window::destroy(state.native_window);
+		if (state.other_window)
 		{
-			platform::window::destroy(other_window);
+			platform::window::destroy(state.other_window);
 		}
 		platform::window::shutdown();
 
@@ -566,27 +644,19 @@ private:
 		vertices[5].set_uv(0.0f, 1.0f);
 	}
 
-	struct ConstantData
-	{
-		glm::mat4 modelview_matrix;
-		glm::mat4 projection_matrix;
-		unsigned int texture_unit;
-	};
 
-	render2::Device* device;
-	render2::Pipeline* pipeline;
-	render2::Buffer* vertex_buffer;
+	size_t test_state;
+	float countdown;
+	glm::vec2 center;
 
-	render2::Pipeline* texture_pipeline;
-	render2::Buffer* textured_buffer;
-
-	render2::Texture* checker;
-	render2::Texture* notexture;
+	Array<test_state_callback> render_callbacks;
+	TestRenderState state;
+	bool active;
 };
 
 PLATFORM_MAIN
 {
 	PLATFORM_IMPLEMENT_PARAMETERS();
 
-	PLATFORM_RETURN(platform::run_application(new TestKernel()));
+	PLATFORM_RETURN(platform::run_application(new TestRender()));
 }

@@ -766,6 +766,7 @@ namespace render2
 			out_metrics.height = sm.height >> 6;
 			out_metrics.ascender = sm.ascender >> 6;
 			out_metrics.descender = sm.descender >> 6;
+			out_metrics.max_height = glm::max((int)out_metrics.height, (out_metrics.ascender - out_metrics.descender));
 //			fprintf(stdout, "height = %i, ascender = %i, descender = %i (pixels)\n", out_metrics.height, out_metrics.ascender, out_metrics.descender);
 		}
 

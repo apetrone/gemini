@@ -112,6 +112,7 @@ namespace render2
 			size_t height;
 			int32_t ascender;
 			int32_t descender;
+			int32_t max_height;
 		};
 
 		struct Handle
