@@ -209,17 +209,12 @@ public:
 
 		// Draw a triangle on screen with the wide part of the base at the bottom
 		// of the screen.
-		size_t total_bytes = sizeof(MyVertex) * 6;
+		size_t total_bytes = sizeof(MyVertex) * 3;
 		vertex_buffer = device->create_vertex_buffer(total_bytes);
 		assert(vertex_buffer != nullptr);
-		MyVertex vertices[6];
-
-
+		MyVertex vertices[3];
 
 		generate_triangle(0, vertices, glm::vec2(width, height), glm::vec2(0, 0));
-		generate_triangle(1, vertices, glm::vec2(width, height), glm::vec2(width/2, 0));
-//		generate_triangle(0, glm::vec2(0, 0));
-//		generate_triangle(0, glm::vec2(0, 0));
 		device->buffer_upload(vertex_buffer, vertices, total_bytes);
 
 
@@ -234,11 +229,13 @@ public:
 
 
 		// setup texture vertex buffer
-		total_bytes = sizeof(TexturedVertex) * 6;
+		const size_t TOTAL_TEXTURED_VERTICES = 15;
+		total_bytes = sizeof(TexturedVertex) * TOTAL_TEXTURED_VERTICES;
 		textured_buffer = device->create_vertex_buffer(total_bytes);
-		TexturedVertex tv[6];
-		generate_textured_triangle(0, tv, glm::vec2(width, height), glm::vec2(0, height/2));
-		generate_textured_triangle(1, tv, glm::vec2(width, height), glm::vec2(width/2, height/2));
+		TexturedVertex tv[ TOTAL_TEXTURED_VERTICES ];
+		generate_textured_triangle(0, tv, glm::vec2(width, height), glm::vec2(width/2, 0));
+		generate_textured_quad(3, tv, glm::vec2(width, height), glm::vec2(0, height/2));
+		generate_textured_quad(9, tv, glm::vec2(width, height), glm::vec2(width/2, height/2));
 		device->buffer_upload(textured_buffer, tv, total_bytes);
 
 		// setup constant buffer
@@ -379,27 +376,25 @@ public:
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
 		assert(serializer);
 
-		//
-		// TRIANGLE 1 & 2
-
-		// add commands to the queue
+		// color-based triangle
 		serializer->pipeline(pipeline);
 		serializer->vertex_buffer(vertex_buffer);
 //		serializer->draw_indexed_primitives(index_buffer, 3);
-		serializer->draw(0, 6);
+		serializer->draw(0, 3);
 
-		// draw textured triangles
+		// procedurally-generated textured triangle
 		serializer->pipeline(texture_pipeline);
 		serializer->vertex_buffer(textured_buffer);
-
-		//
-		// TRIANGLE 3
 		serializer->texture(checker, 0);
 		serializer->draw(0, 3);
 
-		// TRIANGLE 4
+		// quad; texture loaded from disk (notexture.png)
 		serializer->texture(notexture, 0);
-		serializer->draw(3, 6);
+		serializer->draw(3, 9);
+
+		// quad; font textre
+		serializer->texture(render2::font::get_font_texture(handle), 0);
+		serializer->draw(9, 15);
 
 		// queue the buffer with our device
 		device->destroy_serializer(serializer);
@@ -505,9 +500,11 @@ private:
 		}
 	};
 
+
+	// counter clock wise
 	void generate_triangle(size_t index, MyVertex* source, const glm::vec2& dimensions, const glm::vec2& offset)
 	{
-		MyVertex* vertices = (source+(index*3));
+		MyVertex* vertices = (source+index);
 		vertices[0].set_position(offset.x, (dimensions.y/2)+offset.y, 0);
 		vertices[0].set_color(1.0f, 0.0f, 0.0f, 1.0f);
 
@@ -520,7 +517,7 @@ private:
 
 	void generate_textured_triangle(size_t index, TexturedVertex* source, const glm::vec2& dimensions, const glm::vec2& offset)
 	{
-		TexturedVertex* vertices = (source+(index*3));
+		TexturedVertex* vertices = (source+index);
 		vertices[0].set_position(offset.x, (dimensions.y/2)+offset.y, 0);
 		vertices[0].set_color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[0].set_uv(0.0f, 1.0f);
@@ -532,6 +529,41 @@ private:
 		vertices[2].set_position((dimensions.x/4)+offset.x, offset.y, 0);
 		vertices[2].set_color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[2].set_uv(0.5f, 0.0f);
+	}
+
+	void generate_textured_quad(size_t index, TexturedVertex* source, const glm::vec2& dimensions, const glm::vec2& offset)
+	{
+		TexturedVertex* vertices = (source+index);
+
+		// lower left
+		vertices[0].set_position(offset.x, (dimensions.y/2)+offset.y, 0);
+		vertices[0].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[0].set_uv(0.0f, 1.0f);
+
+		// lower right
+		vertices[1].set_position((dimensions.x/2)+offset.x, (dimensions.y/2)+offset.y, 0);
+		vertices[1].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[1].set_uv(1.0f, 1.0f);
+
+		// upper right
+		vertices[2].set_position((dimensions.x/2)+offset.x, offset.y, 0);
+		vertices[2].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[2].set_uv(1.0f, 0.0f);
+
+		// (and upper right again on the second triangle)
+		vertices[3].set_position((dimensions.x/2)+offset.x, offset.y, 0);
+		vertices[3].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[3].set_uv(1.0f, 0.0f);
+
+		// upper left
+		vertices[4].set_position(offset.x, offset.y, 0);
+		vertices[4].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[4].set_uv(0.0f, 0.0f);
+
+		// lower left
+		vertices[5].set_position(offset.x, (dimensions.y/2)+offset.y, 0);
+		vertices[5].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[5].set_uv(0.0f, 1.0f);
 	}
 
 	struct ConstantData
