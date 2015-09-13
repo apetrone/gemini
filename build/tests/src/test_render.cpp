@@ -393,8 +393,8 @@ public:
 		render2::font::startup(state.device);
 
 		Array<unsigned char> fontdata;
-		core::filesystem::instance()->virtual_load_file(fontdata, "fonts/nokiafc22.ttf");
-		state.handle = render2::font::load_from_memory(&fontdata[0], fontdata.size(), 8);
+		core::filesystem::instance()->virtual_load_file(fontdata, "fonts/debug.ttf");
+		state.handle = render2::font::load_from_memory(&fontdata[0], fontdata.size(), 16);
 
 		Array<render2::font::FontVertex> temp_vertices;
 		render2::font::draw_string(state.handle, temp_vertices, "The quick brown fox jumps over the lazy dog.", core::Color(255, 255, 255));

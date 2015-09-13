@@ -838,11 +838,15 @@ def create_unit_test(arguments, name, dependencies, source, output_type = Produc
 	if output_type == ProductType.Application:
 		macosx = product.layout(platform="macosx")
 		base_path = "tests/src/%s" % name
-		macosx.driver.infoplist_file = "../%s/resources/osx/Info.plist" % base_path
+		resource_path = "tests/resources"
+		macosx.driver.infoplist_file = "../%s/osx/Info.plist" % base_path
 		macosx.resources = [
-			"%s/resources/osx/en.lproj/*.xib" % base_path,
-			"%s/resources/osx/en.lproj/*.strings" % base_path,
-			"%s/resources/shaders" % base_path
+			"%s/osx/en.lproj/*.xib" % base_path,
+			"%s/osx/en.lproj/*.strings" % base_path,
+			"%s/osx/media.xcassets/" % base_path,
+			"%s/fonts/" % resource_path,
+			"%s/shaders/" % resource_path,
+			"%s/textures/" % resource_path
 		]
 
 	product.dependencies.extend(dependencies)

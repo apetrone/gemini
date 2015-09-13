@@ -287,7 +287,7 @@ TabControl::TabControl(gui::Panel* root) :
 	tab_size.width = 40;
 	tab_size.height = 20;
 
-	font = get_compositor()->get_resource_cache()->create_font("fonts/nokiafc22.ttf", 8);
+	font = get_compositor()->get_resource_cache()->create_font("fonts/debug.ttf", 16);
 }
 
 void TabControl::add_tab(size_t index, const std::string& name, gui::Panel* panel)
@@ -643,22 +643,18 @@ public:
 		root->set_bounds(0, 0, frame.width, frame.height);
 		root->set_background_color(gui::Color(255, 255, 255, 0));
 
-//		gui::FontHandle dev_font = resource_cache.create_font("fonts/nokiafc22.ttf", 8);
-//		gui::FontHandle dev_font = resource_cache.create_font("fonts/04B_08.ttf", 8);
-//		gui::FontHandle menu_font = resource_cache.create_font("fonts/Arial Unicode.ttf", 24);
-//		gui::FontHandle dev_font = resource_cache.create_font("fonts/Cantarell-Regular.ttf", 16);
-//		gui::FontHandle dev_font = resource_cache.create_font("fonts/7x5.ttf", 8);
-
 //		const char dev_font[] = "fonts/04B_08.ttf";
-		const char dev_font[] = "fonts/nokiafc22.ttf";
-		const char menu_font[] = "fonts/Arial Unicode.ttf";
+		const char dev_font[] = "fonts/debug.ttf";
+		const char menu_font[] = "fonts/debug.ttf";
 
+		const size_t dev_font_size = 16;
+		const size_t menu_font_size = 48;
 
 		// setup the framerate graph
 #if 1
 		graph = new gui::Graph(root);
 		graph->set_bounds(width-250, 0, 250, 100);
-		graph->set_font(dev_font, 8);
+		graph->set_font(dev_font, dev_font_size);
 		graph->set_background_color(gui::Color(60, 60, 60, 255));
 		graph->set_foreground_color(gui::Color(255, 255, 255, 255));
 		graph->create_samples(100, 1);
@@ -674,8 +670,8 @@ public:
 		label->set_background_color(gui::Color(32, 32, 32));
 		label->set_foreground_color(gui::Color(0, 255, 0));
 		label->set_bounds(50, 75, 110, 40);
-		label->set_font(dev_font, 8);
-		label->set_text("This is a label");
+		label->set_font(dev_font, dev_font_size);
+		label->set_text("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 		tab->add_tab(0, "test", label);
 #if 1
 		{
@@ -683,8 +679,8 @@ public:
 			label->set_background_color(gui::Color(32, 32, 32));
 			label->set_foreground_color(gui::Color(255, 0, 0));
 			label->set_bounds(50, 115, 110, 40);
-			label->set_font(dev_font, 8);
-			label->set_text("This is another label");
+			label->set_font(dev_font, dev_font_size);
+			label->set_text("ABCDEFGHIJKLMNOPQRSTUVWXYZ adam 0123456789");
 			tab->add_tab(1, "test2", label);
 		}
 
@@ -721,7 +717,7 @@ public:
 		{
 			gui::Button* newgame = new gui::Button(root);
 			newgame->set_bounds(origin_x, origin_y, button_width, button_height);
-			newgame->set_font(menu_font, 24);
+			newgame->set_font(menu_font, menu_font_size);
 			newgame->set_text(captions[index]);
 			newgame->set_background_color(button_background);
 			newgame->set_hover_color(button_hover);
