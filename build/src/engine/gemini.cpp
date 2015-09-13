@@ -40,6 +40,7 @@
 #include <renderer/renderstream.h>
 #include <renderer/constantbuffer.h>
 #include <renderer/debug_draw.h>
+#include <renderer/standaloneresourcecache.h>
 
 // SDK
 #include <sdk/audio_api.h>
@@ -244,84 +245,6 @@ void render_entity_from_camera(gemini::IEngineEntity* entity, View& view, SceneL
 	scenelink.draw(&view.modelview, &view.projection);
 }
 
-
-
-class SceneRenderMethod
-{
-public:
-	virtual ~SceneRenderMethod() {}
-	virtual void render_view(gemini::IEngineEntity** entity_list, platform::window::NativeWindow* window, const View& view) = 0;
-	virtual void render_viewmodel(gemini::IEngineEntity* entity, platform::window::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
-	
-	virtual void render_gui() = 0;
-};
-
-
-
-class DefaultRenderMethod : public SceneRenderMethod
-{
-	SceneLink& scenelink;
-
-public:
-	DefaultRenderMethod(SceneLink& in_link) :
-		scenelink(in_link)
-	{
-	}
-	
-	
-	virtual void render_view(gemini::IEngineEntity** entity_list, platform::window::NativeWindow* window, const View& view)
-	{
-		::renderer::RenderStream rs;
-		rs.add_cullmode(::renderer::CullMode::CULLMODE_BACK);
-		rs.add_state(::renderer::STATE_DEPTH_WRITE, 1);
-		//		rs.add_state(renderer::STATE_BACKFACE_CULLING, 0);
-		rs.add_state(::renderer::STATE_DEPTH_TEST, 1);
-		rs.add_clearcolor( 0.0, 0.0, 0.0, 1.0f );
-		rs.add_clear(::renderer::CLEAR_COLOR_BUFFER | ::renderer::CLEAR_DEPTH_BUFFER );
-		rs.run_commands();
-
-		View newview = view;
-		platform::window::Frame frame = platform::window::get_render_frame(window);
-		newview.width = frame.width;
-		newview.height = frame.height;
-
-		render_scene_from_camera(entity_list, newview, scenelink);
-		
-		::renderer::debugdraw::render(view.modelview, view.projection, 0, 0, view.width, view.height);
-	}
-	
-	virtual void render_viewmodel(gemini::IEngineEntity* entity, platform::window::NativeWindow* window, const glm::vec3& origin, const glm::vec2& view_angles)
-	{
-		::renderer::RenderStream rs;
-		rs.add_cullmode(::renderer::CullMode::CULLMODE_BACK);
-		rs.add_state(::renderer::STATE_BACKFACE_CULLING, 1);
-		rs.add_state(::renderer::STATE_DEPTH_TEST, 1);
-		rs.add_clear(::renderer::CLEAR_DEPTH_BUFFER );
-		rs.run_commands();
-		
-//		Camera camera;
-//		camera.type = Camera::FIRST_PERSON;
-//		
-//		camera.perspective(35.0f, window->render_width, window->render_height, 0.01f, 32.0f);
-//		
-//		camera.set_absolute_position(glm::vec3(-1.0f, 0.6f, 2.5f));
-//		camera.eye_position = origin;
-//		camera.view = glm::vec3(0, 0, -1);
-//		camera.pitch = 0;
-//		camera.yaw = 0;
-//		camera.update_view();
-//		
-//		render_entity_from_camera(entity, camera, scenelink);
-	}
-	
-	virtual void render_gui()
-	{
-		if (_compositor)
-		{
-			_compositor->render();
-		}
-	}
-};
 
 class EntityManager : public IEntityManager
 {
@@ -793,12 +716,11 @@ class EngineInterface : public IEngineInterface
 	IModelInterface* model_interface;
 	gemini::physics::IPhysicsInterface* physics_interface;
 	IExperimental* experimental_interface;
-	
-	SceneRenderMethod* render_method;
-	
+
 	platform::window::NativeWindow* main_window;
 	core::memory::Zone game_memory_zone;
 	core::memory::GlobalAllocatorType game_allocator;
+	SceneLink& scenelink;
 
 public:
 	
@@ -807,14 +729,14 @@ public:
 					IModelInterface* mi,
 					gemini::physics::IPhysicsInterface* pi,
 					IExperimental* ei,
-					SceneRenderMethod* rm,
+					SceneLink& scene_link,
 					platform::window::NativeWindow* window
 					) :
 		entity_manager(em),
 		model_interface(mi),
 		physics_interface(pi),
 		experimental_interface(ei),
-		render_method(rm),
+		scenelink(scene_link),
 		main_window(window),
 		game_memory_zone("game"),
 		game_allocator(&game_memory_zone)
@@ -841,18 +763,43 @@ public:
 	{
 		game_allocator.deallocate(pointer);
 	}
-	
+
 	virtual void render_view(const View& view)
 	{
 		// TODO: need to validate this origin/orientation is allowed.
 		// otherwise, client could ask us to render from anyone's POV.
 		EntityManager* em = static_cast<EntityManager*>(engine::instance()->entities());
-		render_method->render_view(em->get_entity_list(), main_window, view);
+
+		gemini::IEngineEntity** entity_list = em->get_entity_list();
+
+
+		::renderer::RenderStream rs;
+//		rs.add_cullmode(::renderer::CullMode::CULLMODE_BACK);
+		rs.add_state(::renderer::STATE_DEPTH_WRITE, 1);
+		//		rs.add_state(renderer::STATE_BACKFACE_CULLING, 0);
+		rs.add_state(::renderer::STATE_DEPTH_TEST, 1);
+		rs.add_clearcolor( 0.0, 0.0, 0.0, 1.0f );
+		rs.add_clear(::renderer::CLEAR_COLOR_BUFFER | ::renderer::CLEAR_DEPTH_BUFFER );
+//		rs.run_commands();
+
+		View newview = view;
+		platform::window::Frame frame = platform::window::get_render_frame(main_window);
+		newview.width = frame.width;
+		newview.height = frame.height;
+
+//		render_scene_from_camera(entity_list, newview, scenelink);
+
+//		::renderer::debugdraw::render(view.modelview, view.projection, 0, 0, view.width, view.height);
+
+
 	}
 	
 	virtual void render_gui()
 	{
-		render_method->render_gui();
+		if (_compositor)
+		{
+			_compositor->render();
+		}
 	}
 	
 	virtual core::memory::GlobalAllocatorType& allocator()
@@ -862,7 +809,27 @@ public:
 	
 	virtual void render_viewmodel(IEngineEntity* entity, const glm::vec3& origin, const glm::vec2& view_angles)
 	{
-		render_method->render_viewmodel(entity, main_window, origin, view_angles);
+//		render_method->render_viewmodel(entity, main_window, origin, view_angles);
+		::renderer::RenderStream rs;
+		rs.add_cullmode(::renderer::CullMode::CULLMODE_BACK);
+		rs.add_state(::renderer::STATE_BACKFACE_CULLING, 1);
+		rs.add_state(::renderer::STATE_DEPTH_TEST, 1);
+		rs.add_clear(::renderer::CLEAR_DEPTH_BUFFER );
+		rs.run_commands();
+		
+//		Camera camera;
+//		camera.type = Camera::FIRST_PERSON;
+//		
+//		camera.perspective(35.0f, window->render_width, window->render_height, 0.01f, 32.0f);
+//		
+//		camera.set_absolute_position(glm::vec3(-1.0f, 0.6f, 2.5f));
+//		camera.eye_position = origin;
+//		camera.view = glm::vec3(0, 0, -1);
+//		camera.pitch = 0;
+//		camera.yaw = 0;
+//		camera.update_view();
+//		
+//		render_entity_from_camera(entity, camera, scenelink);
 	}
 
 	virtual void get_render_resolution(uint32_t& render_width, uint32_t& render_height)
@@ -921,7 +888,6 @@ private:
 	
 	// rendering
 	SceneLink* scenelink;
-	SceneRenderMethod* render_method;
 	render2::Device* device;
 	
 	// game library
@@ -943,6 +909,7 @@ private:
 	::renderer::VertexStream alt_vs;
 
 	DataInput data_input;
+	::renderer::StandaloneResourceCache resource_cache;
 
 private:
 	bool load_config(Settings& config)
@@ -1029,7 +996,6 @@ public:
 		draw_navigation_debug(false),
 		accumulator(0.0f),
 		last_time(0),
-		render_method(0),
 		experimental(0),
 		engine_interface(0),
 		game_interface(0)
@@ -1156,12 +1122,10 @@ public:
 	{
 		gui::set_allocator(gui_malloc_callback, gui_free_callback);
 
-		CommonResourceCache* resource_cache = nullptr;
-
-		gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator())(*resource_cache);
+		gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator())(resource_cache);
 		gui_renderer->set_device(device);
 
-		compositor = new gui::Compositor(width, height, resource_cache, gui_renderer);
+		compositor = new gui::Compositor(width, height, &resource_cache, gui_renderer);
 		_compositor = compositor;
 		
 
@@ -1178,7 +1142,7 @@ public:
 		// setup the framerate graph
 		graph = new gui::Graph(root);
 		graph->set_bounds(width-250, 0, 250, 100);
-		graph->set_font("fonts/debug", 16);
+		graph->set_font("fonts/debug.ttf", 16);
 		graph->set_background_color(gui::Color(10, 10, 10, 210));
 		graph->set_foreground_color(gui::Color(255, 255, 255, 255));
 		graph->create_samples(100, 1);
@@ -1361,7 +1325,7 @@ Options:
 			render_params["opengl.share_context"] = "true";
 
 			device = render2::create_device(render_params);
-
+			device->init(config.window_width, config.window_height);
 
 			assets::startup();
 			
@@ -1378,7 +1342,9 @@ Options:
 			::renderer::debugdraw::startup(config.debugdraw_max_primitives, debugshader->program, debugfont->handle);
 			DebugDrawInterface* debug_draw = MEMORY_NEW(DebugDrawInterface, core::memory::global_allocator());
 			gemini::debugdraw::set_instance(debug_draw);
-			
+
+
+			render2::font::startup(device);
 		}
 		
 //		renderer::IRenderDriver* driver = renderer::driver();
@@ -1401,10 +1367,7 @@ Options:
 		{
 			hotloading::startup();
 		}
-		
 
-		// TODO: instance render method for default
-		render_method = MEMORY_NEW(DefaultRenderMethod, core::memory::global_allocator()) (*scenelink);
 		
 		// setup interfaces
 		engine_interface = MEMORY_NEW(EngineInterface, core::memory::global_allocator())
@@ -1412,16 +1375,14 @@ Options:
 			&model_interface,
 			physics::instance(),
 			&experimental,
-			render_method,
+			*scenelink,
 			main_window
 		);
 		gemini::engine::set_instance(engine_interface);
 		platform::window::show_cursor(true);
 
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
-
-
-		//setup_gui(frame.width, frame.height);
+		setup_gui(device, frame.width, frame.height);
 		
 		open_gamelibrary();
 
@@ -1518,6 +1479,7 @@ Options:
 		if (compositor)
 		{
 			compositor->update(kernel::parameters().framedelta_milliseconds);
+			compositor->process_events();
 		}
 
 
@@ -1585,8 +1547,8 @@ Options:
 		::renderer::debugdraw::text(x, y, core::str::format("# allocations = %i, total %2.2f MB\n",
 			core::memory::global_allocator().get_zone()->get_active_allocations(),
 			core::memory::global_allocator().get_zone()->get_active_bytes()/(float)(1024*1024)), Color(64, 102, 192));
-//		y += 12;
-		
+		y += 12;
+
 		
 		if (draw_physics_debug)
 		{
@@ -1597,7 +1559,7 @@ Options:
 		{
 			navigation::debugdraw();
 		}
-	
+
 	
 		if (game_interface)
 		{
@@ -1612,7 +1574,7 @@ Options:
 			
 			game_interface->client_frame(kernel::parameters().framedelta_seconds, kernel::parameters().step_alpha);
 		}
-		
+
 //		if (device)
 //		{
 //			glm::mat4 xform;
@@ -1623,19 +1585,19 @@ Options:
 
 
 		// starting to migrate towards render2
-		render2::Pass pass;
-		pass.target = device->default_render_target();
-		pass.color(1.0f, 0.0f, 0.0f, 1.0f);
-		pass.clear_color = true;
-		pass.clear_depth = true;
+//		render2::Pass pass;
+//		pass.target = device->default_render_target();
+//		pass.color(1.0f, 0.0f, 0.0f, 1.0f);
+//		pass.clear_color = true;
+//		pass.clear_depth = true;
+//
+//		render2::CommandQueue* queue = device->create_queue(pass);
+//		render2::CommandSerializer* serializer = device->create_serializer(queue);
+//		assert(serializer);
 
-		render2::CommandQueue* queue = device->create_queue(pass);
-		render2::CommandSerializer* serializer = device->create_serializer(queue);
-		assert(serializer);
+		compositor->render();
 
-//		compositor->render();
-
-
+		device->submit();
 	
 		// TODO: this needs to be controlled somehow
 		// as the rift sdk performs buffer swaps during end frame.
@@ -1669,9 +1631,12 @@ Options:
 		// since the game can create gui elements, we need to shutdown
 		// the gui before shutting down the game library.
 		close_gamelibrary();
-		
-		// shutdown scene render method
-		MEMORY_DELETE(render_method, core::memory::global_allocator());
+
+		// we need to explicitly shut this down so it cleans up before
+		// our memory detects any leaks.
+		resource_cache.clear();
+
+		render2::font::shutdown();
 
 		platform::window::shutdown();
 
