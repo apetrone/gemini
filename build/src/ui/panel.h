@@ -58,9 +58,7 @@ namespace gui
 		Point origin;
 		Size size;
 		friend class Compositor;
-		
 
-		
 	public:
 		// memory overrides
 		void* operator new(size_t bytes);
