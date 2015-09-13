@@ -912,11 +912,7 @@ private:
 	bool draw_navigation_debug;
 
 	platform::window::NativeWindow* main_window;
-	platform::window::NativeWindow* alt_window;
-	
-	::renderer::Texture* gui_texture;
-	::renderer::RenderTarget* gui_render_target;
-		
+
 	// Kernel State variables
 	double accumulator;
 	uint64_t last_time;
@@ -926,6 +922,7 @@ private:
 	// rendering
 	SceneLink* scenelink;
 	SceneRenderMethod* render_method;
+	render2::Device* device;
 	
 	// game library
 	platform::DynamicLibrary* gamelib;
@@ -1155,13 +1152,14 @@ public:
 	}
 	
 	
-	void setup_gui(uint32_t width, uint32_t height)
+	void setup_gui(render2::Device* device, uint32_t width, uint32_t height)
 	{
 		gui::set_allocator(gui_malloc_callback, gui_free_callback);
 
 		CommonResourceCache* resource_cache = nullptr;
 
 		gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator())(*resource_cache);
+		gui_renderer->set_device(device);
 
 		compositor = new gui::Compositor(width, height, resource_cache, gui_renderer);
 		_compositor = compositor;
@@ -1180,7 +1178,7 @@ public:
 		// setup the framerate graph
 		graph = new gui::Graph(root);
 		graph->set_bounds(width-250, 0, 250, 100);
-		graph->set_font("fonts/debug", 8);
+		graph->set_font("fonts/debug", 16);
 		graph->set_background_color(gui::Color(10, 10, 10, 210));
 		graph->set_foreground_color(gui::Color(255, 255, 255, 255));
 		graph->create_samples(100, 1);
@@ -1304,10 +1302,15 @@ Options:
 		data_input.device = platform::serial_open(serial_device, 1000000);
 		if (!data_input.device)
 		{
+			data_input.execute = false;
 			LOGW("Unable to open serial device at '%s'\n", serial_device);
 		}
+		else
+		{
+			data_input.execute = true;
+		}
 		
-		data_input.execute = true;
+
 		data_input.event_queue = event_queue;
 		
 		
@@ -1331,17 +1334,6 @@ Options:
 		main_window = platform::window::create(window_params);
 		platform::window::focus(main_window);
 
-		alt_window = 0;
-
-		// uncomment this block to enable the alt window for gui diplay
-//		window_params = platform::WindowParameters();
-//		window_params.window_width = 800;
-//		window_params.window_height = 600;
-//		window_params.window_title = "Test Window";
-//		alt_window = window_interface->create_window(window_params);
-
-
-		
 
 		// initialize rendering subsystems
 		{
@@ -1352,7 +1344,25 @@ Options:
 				LOGE("renderer initialization failed!\n");
 				return kernel::RendererFailed;
 			}
-			
+
+
+			render2::RenderParameters render_params;
+			// set some options
+			render_params["vsync"] = "true";
+			render_params["double_buffer"] = "true";
+			render_params["depth_size"] = "24";
+			render_params["multisample"] = "4";
+
+			// set opengl specific options
+			render_params["rendering_backend"] = "opengl";
+			render_params["opengl.major"] = "3";
+			render_params["opengl.minor"] = "2";
+			render_params["opengl.profile"] = "core";
+			render_params["opengl.share_context"] = "true";
+
+			device = render2::create_device(render_params);
+
+
 			assets::startup();
 			
 			assets::Shader* fontshader = assets::shaders()->load_from_path(FONT_SHADER);
@@ -1380,53 +1390,6 @@ Options:
 			Color color;
 			glm::vec2 uv;
 		};
-		
-		if (alt_window)
-		{
-			alt_vs.desc.add(::renderer::VD_FLOAT2);
-			alt_vs.desc.add(::renderer::VD_UNSIGNED_BYTE4);
-			alt_vs.desc.add(::renderer::VD_FLOAT2);
-
-			
-			alt_vs.create(6, 10, ::renderer::DRAW_INDEXED_TRIANGLES);
-			
-			platform::window::Frame frame = platform::window::get_render_frame(alt_window);
-			float cx = frame.width / 2.0f;
-			float cy = frame.height / 2.0f;
-			
-			if (alt_vs.has_room(4, 6))
-			{
-				TempVertex* v = (TempVertex*)alt_vs.request(4);
-			
-				const float RECT_SIZE = 150.0f;
-				
-				
-				// this is intentionally inverted along the y
-				// so that texture renderered appears correctly.
-				v[0].pos = glm::vec2(cx-RECT_SIZE, cy-RECT_SIZE); v[0].uv = glm::vec2(0,0); v[0].color = Color(255, 255, 255, 255);
-				v[1].pos = glm::vec2(cx-RECT_SIZE, cy+RECT_SIZE); v[1].uv = glm::vec2(0,1); v[1].color = Color(255, 255, 255, 255);
-				v[2].pos = glm::vec2(cx+RECT_SIZE, cy+RECT_SIZE); v[2].uv = glm::vec2(1,1); v[2].color = Color(255, 255, 255, 255);
-				v[3].pos = glm::vec2(cx+RECT_SIZE, cy-RECT_SIZE); v[3].uv = glm::vec2(1,0); v[3].color = Color(255, 255, 255, 255);
-				
-				::renderer::IndexType indices[] = {0, 1, 2, 2, 3, 0};
-				alt_vs.append_indices(indices, 6);
-				alt_vs.update();
-			}
-		}
-
-		
-		// create the render target and texture for the gui
-		image::Image image;
-		image.width = 512;
-		image.height = 512;
-		image.channels = 3;
-		gui_texture = ::renderer::driver()->texture_create(image);
-		
-		gui_render_target = ::renderer::driver()->render_target_create(image.width, image.height);
-		::renderer::driver()->render_target_set_attachment(gui_render_target, ::renderer::RenderTarget::COLOR, 0, gui_texture);
-		::renderer::driver()->render_target_set_attachment(gui_render_target, ::renderer::RenderTarget::DEPTHSTENCIL, 0, 0);
-		
-		
 		
 		// initialize main subsystems
 		audio::startup();
@@ -1456,7 +1419,9 @@ Options:
 		platform::window::show_cursor(true);
 
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
-		setup_gui(frame.width, frame.height);
+
+
+		//setup_gui(frame.width, frame.height);
 		
 		open_gamelibrary();
 
@@ -1656,63 +1621,27 @@ Options:
 //		}
 
 
+
+		// starting to migrate towards render2
+		render2::Pass pass;
+		pass.target = device->default_render_target();
+		pass.color(1.0f, 0.0f, 0.0f, 1.0f);
+		pass.clear_color = true;
+		pass.clear_depth = true;
+
+		render2::CommandQueue* queue = device->create_queue(pass);
+		render2::CommandSerializer* serializer = device->create_serializer(queue);
+		assert(serializer);
+
+//		compositor->render();
+
+
 	
 		// TODO: this needs to be controlled somehow
 		// as the rift sdk performs buffer swaps during end frame.
 		if (kernel::parameters().swap_buffers)
 		{
 			platform::window::swap_buffers(main_window);
-		}
-		
-		// do drawing for the alt window
-		if (alt_window)
-		{
-			::renderer::IRenderDriver* device = ::renderer::driver();
-			
-			{
-				
-				::renderer::RenderStream rs;
-				rs.add_viewport(0, 0, gui_texture->width, gui_texture->height);
-				rs.add_clearcolor(0.0f, 0.0f, 0.0f, 1.0f);
-				rs.add_clear(::renderer::CLEAR_COLOR_BUFFER | ::renderer::CLEAR_DEPTH_BUFFER);
-
-				
-				device->render_target_activate(gui_render_target);
-				
-				rs.run_commands();
-				
-				
-				_compositor->render();
-				
-				
-				device->render_target_deactivate(gui_render_target);
-			}
-
-
-
-
-			platform::window::Frame frame = platform::window::get_render_frame(alt_window);
-			::renderer::RenderStream rs;
-			rs.add_viewport(0, 0, frame.width, frame.height);
-			rs.add_clearcolor(0.1f, 0.1f, 0.1f, 1.0f);
-			rs.add_clear(::renderer::CLEAR_COLOR_BUFFER | ::renderer::CLEAR_DEPTH_BUFFER);
-			
-			
-			glm::mat4 modelview;
-			
-			glm::mat4 projection = glm::ortho(0.0f, (float)frame.width, 0.0f, (float)frame.height, -1.0f, 1.0f);
-
-			assets::Shader* shader = assets::shaders()->load_from_path("shaders/gui");
-			rs.add_shader(shader->program);
-			
-			rs.add_uniform_matrix4(shader->program->get_uniform_location("modelview_matrix"), &modelview);
-			rs.add_uniform_matrix4(shader->program->get_uniform_location("projection_matrix"), &projection);
-			rs.add_uniform1i(shader->program->get_uniform_location("enable_sampler"), 1);
-			rs.add_sampler2d(shader->program->get_uniform_location("diffusemap"), 0, gui_texture);
-			
-			rs.add_draw_call(alt_vs.vertexbuffer);
-			
-			rs.run_commands();
 		}
 	}
 	
@@ -1743,17 +1672,7 @@ Options:
 		
 		// shutdown scene render method
 		MEMORY_DELETE(render_method, core::memory::global_allocator());
-	
-		
-		
-		::renderer::driver()->render_target_destroy(gui_render_target);
-		::renderer::driver()->texture_destroy(gui_texture);
 
-		if (alt_window)
-		{
-			alt_vs.destroy();
-		}
-		
 		platform::window::shutdown();
 
 		// shutdown subsystems
@@ -1768,6 +1687,9 @@ Options:
 		input::shutdown();
 		audio::shutdown();
 		::renderer::shutdown();
+
+		render2::destroy_device(device);
+
 		core::shutdown();
 	
 		delete event_queue;
@@ -1829,5 +1751,55 @@ public:
 //		InputRenameMe irm;
 //		irm.load_input_table("conf/input.conf");
 
+
+#endif
+
+
+
+#if 0
+		// create the render target and texture for the gui
+		image::Image image;
+		image.width = 512;
+		image.height = 512;
+		image.channels = 3;
+		gui_texture = ::renderer::driver()->texture_create(image);
+		
+		gui_render_target = ::renderer::driver()->render_target_create(image.width, image.height);
+		::renderer::driver()->render_target_set_attachment(gui_render_target, ::renderer::RenderTarget::COLOR, 0, gui_texture);
+		::renderer::driver()->render_target_set_attachment(gui_render_target, ::renderer::RenderTarget::DEPTHSTENCIL, 0, 0);
+
+
+		if (alt_window)
+		{
+			alt_vs.desc.add(::renderer::VD_FLOAT2);
+			alt_vs.desc.add(::renderer::VD_UNSIGNED_BYTE4);
+			alt_vs.desc.add(::renderer::VD_FLOAT2);
+
+			
+			alt_vs.create(6, 10, ::renderer::DRAW_INDEXED_TRIANGLES);
+			
+			platform::window::Frame frame = platform::window::get_render_frame(alt_window);
+			float cx = frame.width / 2.0f;
+			float cy = frame.height / 2.0f;
+			
+			if (alt_vs.has_room(4, 6))
+			{
+				TempVertex* v = (TempVertex*)alt_vs.request(4);
+			
+				const float RECT_SIZE = 150.0f;
+				
+
+				// this is intentionally inverted along the y
+				// so that texture renderered appears correctly.
+				v[0].pos = glm::vec2(cx-RECT_SIZE, cy-RECT_SIZE); v[0].uv = glm::vec2(0,0); v[0].color = Color(255, 255, 255, 255);
+				v[1].pos = glm::vec2(cx-RECT_SIZE, cy+RECT_SIZE); v[1].uv = glm::vec2(0,1); v[1].color = Color(255, 255, 255, 255);
+				v[2].pos = glm::vec2(cx+RECT_SIZE, cy+RECT_SIZE); v[2].uv = glm::vec2(1,1); v[2].color = Color(255, 255, 255, 255);
+				v[3].pos = glm::vec2(cx+RECT_SIZE, cy-RECT_SIZE); v[3].uv = glm::vec2(1,0); v[3].color = Color(255, 255, 255, 255);
+				
+				::renderer::IndexType indices[] = {0, 1, 2, 2, 3, 0};
+				alt_vs.append_indices(indices, 6);
+				alt_vs.update();
+			}
+		}
 
 #endif

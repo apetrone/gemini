@@ -60,7 +60,6 @@ namespace gui
 			TextureHandle texture;
 		};
 
-		const size_t MAX_COMMANDS = 128;
 		struct CommandList
 		{
 			Array<Command> commands;
