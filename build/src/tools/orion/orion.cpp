@@ -336,8 +336,8 @@ public:
 		render2::font::startup(device);
 
 		Array<unsigned char> data;
-		core::filesystem::instance()->virtual_load_file(data, "fonts/nokiafc22.ttf");
-		font = render2::font::load_from_memory(&data[0], data.size(), 32);
+		core::filesystem::instance()->virtual_load_file(data, "fonts/debug.ttf");
+		font = render2::font::load_from_memory(&data[0], data.size(), 16);
 
 #if 0
 		// load the gui
