@@ -57,9 +57,11 @@ namespace gui
 		this->listener = 0;
 
 		this->key_modifiers = 0;
-		
-		update_interval_seconds = (1.0f/20.0f); // 20 times per second
+
 		next_message = 0;
+
+		// We cannot start without a valid resource cache
+		assert(cache);
 
 		renderer->startup(this);
 	} // Compositor
@@ -181,16 +183,12 @@ namespace gui
 	{
 		Panel* last_hot = this->hot;
 
-		// reset hot and try to find a new one
-		this->hot = nullptr;
-
 		Point cursor(last_cursor.x, last_cursor.y);
 		Panel* newhot = find_panel_at_point(cursor);
-
+		hot = newhot;
+		
 		if (newhot && !get_capture())
 		{
-			hot = newhot;
-
 			// if hot changed
 			if (hot != last_hot)
 			{
@@ -227,12 +225,11 @@ namespace gui
 					hot->handle_event(args);
 				}
 			}
-
 		}
 
 		if (get_capture())
 		{
-			Panel * target = get_capture();
+			Panel* target = get_capture();
 
 			EventArgs args( this, Event_CursorDrag );
 			args.cursor = cursor;
@@ -317,6 +314,7 @@ namespace gui
 			args.hot = get_hot();
 			args.capture = get_capture();
 			args.cursor_button = button;
+			assert(button != CursorButton::None);
 			args.cursor = last_cursor;
 			
 			if ( args.focus )

@@ -55,8 +55,7 @@ namespace gui
 		size_t next_z_depth;
 		float aspect_ratio;
 		Listener* listener;
-		float update_interval_seconds;
-		
+	
 		EventArgs queue[16];
 		uint16_t next_message;
 		uint32_t key_modifiers;
