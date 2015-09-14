@@ -69,7 +69,8 @@ namespace render2
 			target(nullptr),
 			clear_color(false),
 			clear_depth(false),
-			clear_stencil(false)
+			clear_stencil(false),
+			depth_test(true)
 		{
 			color(0, 0, 0, 0);
 		}
@@ -82,10 +83,12 @@ namespace render2
 		
 		struct RenderTarget* target;
 		float target_color[4];
-		
+
+		// TODO: turn these into flags!
 		bool clear_color;
 		bool clear_depth;
 		bool clear_stencil;
+		bool depth_test;
 	};
 	
 	struct CommandQueue
