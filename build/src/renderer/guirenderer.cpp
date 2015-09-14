@@ -292,6 +292,7 @@ void GUIRenderer::draw_commands(gui::render::CommandList* command_list, Array<gu
 	pass.target = device->default_render_target();
 	pass.clear_color = false;
 	pass.clear_depth = false;
+	pass.depth_test = false;
 
 	render2::CommandQueue* queue = device->create_queue(pass);
 	render2::CommandSerializer* serializer = device->create_serializer(queue);
@@ -336,13 +337,7 @@ void GUIRenderer::draw_commands(gui::render::CommandList* command_list, Array<gu
 	device->queue_buffers(queue, 1);
 
 	device->destroy_serializer(serializer);
-
 }
-
-
-
-
-
 
 
 #if 0

@@ -626,6 +626,15 @@ namespace render2
 			gl.Clear(clear_flags);
 			gl.CheckError("Clear");
 		}
+
+		if (pass->depth_test)
+		{
+			gl.Enable(GL_DEPTH_TEST);
+		}
+		else
+		{
+			gl.Disable(GL_DEPTH_TEST);
+		}
 	}
 
 	GLShader* common_create_shader(const char* subfolder, const char* name, GLShader* reuse_shader, const char* preprocessor, const char* version)
