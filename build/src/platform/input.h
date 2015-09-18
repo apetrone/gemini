@@ -387,5 +387,4 @@ namespace input
 	LIBRARY_EXPORT const char* mouse_button_name(unsigned int button);
 	LIBRARY_EXPORT const char* key_name(unsigned int key);
 	LIBRARY_EXPORT const char* gamepad_name(unsigned int button);
-
 } // namespace input
