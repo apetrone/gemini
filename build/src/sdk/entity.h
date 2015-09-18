@@ -43,7 +43,7 @@
 	typedef entity_class BaseClass;
 
 #define LINK_ENTITY_TO_CLASS(entity_class, classname)\
-	static EntityFactoryClass<entity_class> classname(#classname)
+	static ::gemini::EntityFactoryClass<entity_class> classname(#classname)
 
 
 //typedef std::vector< struct Entity*, GeminiAllocator<struct Entity*> > EntityVector;

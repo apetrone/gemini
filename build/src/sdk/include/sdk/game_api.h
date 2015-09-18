@@ -25,8 +25,13 @@
 #pragma once
 
 #include <stdint.h>
-
+#include <core/mathlib.h>
 #include <platform/input.h>
+
+namespace input
+{
+	class InputState;
+}
 
 namespace gemini
 {
