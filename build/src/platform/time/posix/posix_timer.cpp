@@ -36,12 +36,35 @@ namespace platform
 	// http://code-factor.blogspot.com/2009/11/monotonic-timers.html
 	// https://blog.habets.se/2010/09/gettimeofday-should-never-be-used-to-measure-time
 
-	static bool _has_monotonic = false;
+	typedef uint64_t (*get_microseconds)();
+	static get_microseconds = nullptr;
+
+	static uint64_t get_microseconds_monotonic()
+	{
+		struct timespec ts;
+		clock_gettime(CLOCK_MONOTONIC, &ts);
+		return (ts.tv_sec*1000000 + ts.tv_nsec*0.001f);
+	}
+
+	static uint64_t get_microseconds_gettimeofday()
+	{
+		struct timeval now;
+		gettimeofday(&now, 0);
+		return (now.tv_sec*1000000 + now.tv_usec);
+	}
+
 	Result timer_startup()
 	{
 		// determine if this kernel has a monotonic clock
 		struct timespec ts;
-		_has_monotonic = (clock_gettime(CLOCK_MONOTONIC, &ts) != 0);
+		bool has_monotonic = (clock_gettime(CLOCK_MONOTONIC, &ts) != 0);
+
+		get_microseconds = get_microseconds_gettimeofday;
+
+		if (has_monotonic)
+		{
+			get_microseconds = get_microseconds_monotonic;
+		}
 
 		return Result::success();
 	}
@@ -52,18 +75,7 @@ namespace platform
 
 	uint64_t microseconds()
 	{
-		if (_has_monotonic)
-		{
-			struct timespec ts;
-			clock_gettime(CLOCK_MONOTONIC, &ts);
-			return (ts.tv_sec*1000000 + ts.tv_nsec*0.001f);
-		}
-		else // fall back to gettimeofday
-		{
-			struct timeval now;
-			gettimeofday(&now, 0);
-			return (now.tv_sec*1000000 + now.tv_usec);
-		}
+		return get_microseconds();
 	}
 
 	void datetime(DateTime& datetime)
