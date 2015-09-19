@@ -37,8 +37,9 @@ namespace platform
 		mach_timebase_info_data_t timebase;
 		if (mach_timebase_info(&timebase) == KERN_SUCCESS)
 		{
-			// convert the timescale to return microseconds
-			_time_scale = timebase.numer/timebase.denom / 1e3;
+			// timebase is in nanoseconds
+			// make the time_scale in microseconds
+			_time_scale = timebase.numer / (timebase.denom * 1000.0);
 			return Result::success();
 		}
 		else
