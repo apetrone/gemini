@@ -37,6 +37,9 @@ namespace render2
 	{
 		switch(type)
 		{
+			case GL_INT: return sizeof(int);
+			case GL_UNSIGNED_INT: return sizeof(unsigned int);
+
 			case GL_FLOAT_VEC2: return sizeof(GLfloat) * 2;
 			case GL_FLOAT_VEC3: return sizeof(GLfloat) * 3;
 			case GL_FLOAT_VEC4: return sizeof(GLfloat) * 4;
