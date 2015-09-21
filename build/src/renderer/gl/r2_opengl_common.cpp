@@ -902,6 +902,15 @@ namespace render2
 
 			switch(uniform.type)
 			{
+				case GL_INT:
+				case GL_UNSIGNED_INT:
+				{
+					GLuint* value = static_cast<GLuint*>(data);
+					gl.Uniform1i(uniform.location, (*value));
+					gl.CheckError("Uniform1i");
+					break;
+				}
+
 				case GL_FLOAT_MAT4:
 					gl.UniformMatrix4fv(uniform.location, uniform.size, GL_FALSE, (GLfloat*)data);
 					gl.CheckError("UniformMatrix4fv");
