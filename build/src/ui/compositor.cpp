@@ -186,7 +186,7 @@ namespace gui
 		Point cursor(last_cursor.x, last_cursor.y);
 		Panel* newhot = find_panel_at_point(cursor);
 		hot = newhot;
-		
+
 		if (newhot && !get_capture())
 		{
 			// if hot changed

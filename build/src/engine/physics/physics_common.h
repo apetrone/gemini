@@ -137,7 +137,7 @@ namespace gemini
 					return btScalar(1.0);
 				}
 				
-				return ClosestConvexResultCallback::addSingleResult (convexResult, normalInWorldSpace);
+				return ClosestConvexResultCallback::addSingleResult(convexResult, normalInWorldSpace);
 			}
 		protected:
 			btCollisionObject* m_me;

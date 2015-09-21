@@ -46,5 +46,17 @@ namespace gemini
 			assert(0);
 			return (Entity*)0;
 		}
+
+		void clamp_rotation(float& value)
+		{
+			if (value > 360)
+			{
+				value -= 360;
+			}
+			else if (value < -360)
+			{
+				value += 360;
+			}
+		}
 	}
 }

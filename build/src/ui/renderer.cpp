@@ -31,8 +31,8 @@ namespace gui
 namespace render
 {
 	CommandList::CommandList(Compositor* compositor_instance, Array<Vertex>* buffer) :
-		compositor(compositor_instance),
-		vertex_buffer(buffer)
+		vertex_buffer(buffer),
+		compositor(compositor_instance)
 	{
 	}
 
