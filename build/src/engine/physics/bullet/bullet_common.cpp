@@ -51,6 +51,7 @@ namespace gemini
 				
 				virtual btBroadphasePair* addOverlappingPair(btBroadphaseProxy* proxy0, btBroadphaseProxy* proxy1)
 				{
+					// this is called for kinematic, rigid, and static bodies
 					btCollisionObject* colObj0 = (btCollisionObject*) proxy0->m_clientObject;
 					btCollisionObject* colObj1 = (btCollisionObject*) proxy1->m_clientObject;
 					btGhostObject* ghost0 = btGhostObject::upcast(colObj0);
