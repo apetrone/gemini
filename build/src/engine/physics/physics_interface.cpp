@@ -210,10 +210,17 @@ namespace gemini
 			
 			btRigidBody::btRigidBodyConstructionInfo rigid_body_info(mass, motion_state, compound, local_inertia);
 			body = new btRigidBody(rigid_body_info);
-			
+
+			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
+			ghost->setUserPointer(object);
+			ghost->setCollisionShape(compound);
+			ghost->setCollisionFlags(btCollisionObject::CF_NO_CONTACT_RESPONSE);
+			bullet::get_world()->addCollisionObject(ghost, btBroadphaseProxy::SensorTrigger, btBroadphaseProxy::CharacterFilter);
+
 			// now setup the body using the compound shape
 			if (dynamic_body)
 			{
+				rb->set_collision_ghost(ghost);
 				rb->set_collision_object(body);
 				rb->set_collision_shape(compound);
 				body->setUserPointer(rb);
@@ -225,6 +232,7 @@ namespace gemini
 			}
 			else
 			{
+				static_body->set_collision_ghost(ghost);
 				static_body->set_collision_object(body);
 				static_body->add_shape(compound);
 				
@@ -234,6 +242,8 @@ namespace gemini
 				body->setCollisionFlags( body_flags );
 				body->setFriction(0.75f);
 			}
+
+
 
 			bullet::get_world()->addRigidBody(body);
 			
@@ -276,9 +286,10 @@ namespace gemini
 			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
 			ghost->setUserPointer(collision_object);
 			collision_object->set_collision_object(ghost);
-			
+
 			BulletCollisionShape* bullet_shape = static_cast<BulletCollisionShape*>(shape);
 			assert(bullet_shape != 0);
+			collision_object->set_collision_shape(bullet_shape->get_shape());
 			
 			int flags = btCollisionObject::CF_NO_CONTACT_RESPONSE | GHOST_OBJECT | STATIC_OBJECT;
 			ghost->setCollisionShape(bullet_shape->get_shape());
@@ -416,6 +427,9 @@ namespace gemini
 				result.closest_hit_fraction = callback.m_closestHitFraction;
 				result.hit_normal_world = toglm(callback.m_hitNormalWorld);
 				result.hit_point_world = toglm(callback.m_hitPointWorld);
+
+				BulletCollisionObject* collision_object = static_cast<BulletCollisionObject*>(callback.m_hitCollisionObject->getUserPointer());
+				result.hit_object = collision_object;
 			}
 			
 			

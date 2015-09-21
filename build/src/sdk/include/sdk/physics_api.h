@@ -86,11 +86,15 @@ namespace gemini
 			glm::vec3 hit_point_world;
 			float closest_hit_fraction;
 			uint32_t hit_count;
+			ICollisionObject* hit_object;
 			
 			
 			uint32_t hit_items() { return hit_count; }
 			
-			SweepTestResult() : closest_hit_fraction(0.0f), hit_count(0)
+			SweepTestResult() :
+				closest_hit_fraction(0.0f),
+				hit_count(0),
+				hit_object(nullptr)
 			{
 			}
 		};

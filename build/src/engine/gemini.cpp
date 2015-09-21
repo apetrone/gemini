@@ -236,14 +236,14 @@ void render_scene_from_camera(gemini::IEngineEntity** entity_list, View& view, S
 	scenelink.draw(&view.modelview, &view.projection);
 }
 
-void render_entity_from_camera(gemini::IEngineEntity* entity, View& view, SceneLink& scenelink)
-{
-	scenelink.clear();
-	
-	scenelink.queue_entities(&entity, 1, RENDER_VIEWMODEL);
-	
-	scenelink.draw(&view.modelview, &view.projection);
-}
+//void render_entity_from_camera(gemini::IEngineEntity* entity, View& view, SceneLink& scenelink)
+//{
+//	scenelink.clear();
+//	
+//	scenelink.queue_entities(&entity, 1, RENDER_VIEWMODEL);
+//	
+//	scenelink.draw(&view.modelview, &view.projection);
+//}
 
 
 class EntityManager : public IEntityManager
@@ -774,24 +774,22 @@ public:
 
 
 		::renderer::RenderStream rs;
-//		rs.add_cullmode(::renderer::CullMode::CULLMODE_BACK);
-		rs.add_state(::renderer::STATE_DEPTH_WRITE, 1);
-		//		rs.add_state(renderer::STATE_BACKFACE_CULLING, 0);
+		rs.add_cullmode(::renderer::CullMode::CULLMODE_BACK);
+//		rs.add_state(::renderer::STATE_DEPTH_WRITE, 1);
+		rs.add_state(::renderer::STATE_BACKFACE_CULLING, 1);
 		rs.add_state(::renderer::STATE_DEPTH_TEST, 1);
 		rs.add_clearcolor( 0.0, 0.0, 0.0, 1.0f );
 		rs.add_clear(::renderer::CLEAR_COLOR_BUFFER | ::renderer::CLEAR_DEPTH_BUFFER );
-//		rs.run_commands();
+		rs.run_commands();
 
 		View newview = view;
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
 		newview.width = frame.width;
 		newview.height = frame.height;
 
-//		render_scene_from_camera(entity_list, newview, scenelink);
+		render_scene_from_camera(entity_list, newview, scenelink);
 
-//		::renderer::debugdraw::render(view.modelview, view.projection, 0, 0, view.width, view.height);
-
-
+		::renderer::debugdraw::render(view.modelview, view.projection, 0, 0, view.width, view.height);
 	}
 	
 	virtual void render_gui()
@@ -1260,8 +1258,7 @@ Options:
 		LOGV("filesystem user_application_directory = '%s'\n", filesystem->user_application_directory().c_str());
 
 		params.step_interval_seconds = (1.0f/(float)config.physics_tick_rate);
-				
-		
+
 		const char* serial_device = "/dev/cu.usbmodem582211"; // config["input_serial_device"];
 		data_input.device = platform::serial_open(serial_device, 1000000);
 		if (!data_input.device)
@@ -1458,7 +1455,7 @@ Options:
 		platform::window::dispatch_events();
 
 		input::update();
-	
+
 		audio::update();
 		animation::update(kernel::parameters().framedelta_seconds);
 		hotloading::tick();
@@ -1594,8 +1591,6 @@ Options:
 //		render2::CommandQueue* queue = device->create_queue(pass);
 //		render2::CommandSerializer* serializer = device->create_serializer(queue);
 //		assert(serializer);
-
-		compositor->render();
 
 		device->submit();
 	

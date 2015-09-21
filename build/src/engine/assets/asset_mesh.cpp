@@ -124,11 +124,14 @@ namespace gemini
 							material_name.append("_world");
 						}
 						Material* material = assets::materials()->load_from_path(material_name.c_str());
-						
-						// I'm asserting when the world material could not be found
-						// because this monstrosity needs to be replaced.
-						assert(default_material->Id() != material->Id());
-						geo->material_id = material->Id();
+
+						if (material)
+						{
+							// I'm asserting when the world material could not be found
+							// because this monstrosity needs to be replaced.
+//							assert(default_material->Id() != material->Id());
+							geo->material_id = material->Id();
+						}
 					}
 				}
 				

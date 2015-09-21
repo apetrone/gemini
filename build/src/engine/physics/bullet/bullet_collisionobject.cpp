@@ -96,6 +96,11 @@ namespace gemini
 				assert(object != nullptr);
 				btTransform transform = bullet::position_and_orientation_to_transform(position, orientation);
 				object->setWorldTransform(transform);
+
+				if (ghost)
+				{
+					ghost->setWorldTransform(transform);
+				}
 			}
 			
 			void BulletCollisionObject::get_world_transform(glm::vec3& out_position, glm::quat& out_orientation)
