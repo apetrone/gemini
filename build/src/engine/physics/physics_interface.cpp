@@ -291,10 +291,10 @@ namespace gemini
 			assert(bullet_shape != 0);
 			collision_object->set_collision_shape(bullet_shape->get_shape());
 			
-			int flags = btCollisionObject::CF_NO_CONTACT_RESPONSE | GHOST_OBJECT | STATIC_OBJECT;
+			int flags = ghost->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE;
 			ghost->setCollisionShape(bullet_shape->get_shape());
 			ghost->setCollisionFlags(flags);
-			
+
 			btTransform tr;
 			tr.setIdentity();
 			tr.setOrigin(btVector3(position.x, position.y, position.z));
@@ -309,6 +309,9 @@ namespace gemini
 		
 		physics::ICollisionShape* PhysicsInterface::create_capsule(float radius_meters, float height_meters)
 		{
+			assert(radius_meters >= FLT_EPSILON);
+			assert(height_meters >= FLT_EPSILON);
+
 			BulletCollisionShape* collision_shape = MEMORY_NEW(BulletCollisionShape, core::memory::global_allocator());
 			collision_shapes.push_back(collision_shape);
 						
@@ -320,15 +323,18 @@ namespace gemini
 		
 		physics::ICollisionShape* PhysicsInterface::create_box(const glm::vec3& dimensions)
 		{
+			assert(dimensions.x >= FLT_EPSILON);
+			assert(dimensions.y >= FLT_EPSILON);
+			assert(dimensions.z >= FLT_EPSILON);
+
 			BulletCollisionShape* collision_shape = MEMORY_NEW(BulletCollisionShape, core::memory::global_allocator());
 			collision_shapes.push_back(collision_shape);
 			
 			btVector3 half_extents(dimensions.x*0.5f, dimensions.y*0.5f, dimensions.z*0.5f);
 			
 //			btCompoundShape* compound = new btCompoundShape();
-			btCollisionShape* box = new btBoxShape(half_extents);
-
-			collision_shape->set_shape(box);
+			btCollisionShape* shape = new btBoxShape(half_extents);
+			collision_shape->set_shape(shape);
 			
 //			btTransform local_transform;
 //			local_transform.setIdentity();
