@@ -14,7 +14,7 @@ referencing documentation. The following rules are used in various capacities
 to communicate the desired result.
 
 - Loops
-	Use meaningful variable names: i, iter, index, to indicate interation.	
+	Use meaningful variable names: i, iter, index, to indicate interation.
 	The tuples i,j,k or x,y,z may be substituted where multiple variables are needed in nested conditions.
 
 - Preprocessor Macros
@@ -72,33 +72,35 @@ Style Rules
 		}
 
 		my_function( 3, 0 )
-	
+
 
 	And this is the new way:
 
 	.. code-block:: c
-	
+
 		void my_function(int a, int b)
 		{
 			// ...
 		}
 
 		my_function(3, 0)
-	
+
 	Pointer and reference types should not have a space between the identifier and specifier.
 	Additionally, these should be located next to the type, not the variable.
 	This should be consistent between normal variable declarations and function signatures.
 
 	.. code-block:: c
-		
+
 		void my_function(int* a, int* b);
 		// ...
 		int* my_value = &x;
 
 	A space separating parameters is expected (as is the case in normal writing).
 
+	This makes parameters easier to read.
 
-- Variable names (including member variables) are lower-cased with underscores: 
+
+- Variable names (including member variables) are lower-cased with underscores:
 
 	.. code-block:: c
 
@@ -116,14 +118,14 @@ Style Rules
 
 	.. code-block:: c
 
-		_kernel->set_active( true );
+		kernel::instance()->set_active(true);
 
 
 - Namespace names are lower cased:
 
 	.. code-block:: c++
 
-		namespace core 
+		namespace core
 		{
 			// ...
 		};
@@ -133,11 +135,12 @@ Style Rules
 
 	.. code-block:: c++
 
-		class AnimationController 
+		class AnimationController
 		{
 			// ...
 		};
 
+	This helps distinguish class and struct names from pod and system/os types.
 
 - Files for classes should be lower-cased and use underscores:
 
@@ -147,10 +150,13 @@ Style Rules
 		animation_controller.h
 		animation_controller.cpp
 
+	This makes porting code to other platforms easy. It also encourages the use
+	of including lower case filenames which makes this work across filesystems regardless
+	of case sensitivity.
 
 - Only the following prefixes are added to classes:
 
-	a) Interface/Abstract classes are prefixed with the letter I.
+	a) [This should be removed] Interface/Abstract classes are prefixed with the letter I.
 		The concrete implementation of this interface can merely drop the I.
 
 		.. code-block:: c
@@ -198,7 +204,7 @@ Style Rules
 - Including headers should be in the following order.
 
 	a) local: using double-quotes
-	b) external: using brackets
+	b) external/third-party: using brackets
 	c) system: using brackets
 
 	.. code-block:: c
@@ -209,16 +215,18 @@ Style Rules
 
 - Header names should not clash with standard headers.
 
-- Template type names are title cased. 
-	Unlike the STL, these should be moderately descriptive.
+- Template type names should be kept simple, but representative of their purpose
 
 	.. code-block:: c++
 
-		template <class KeyType, class ValueType>
+		template <class K, class V>
 		class HashTable
 		{
 			// ...
 		};
+
+It keeps code straight forward to read, but also lets you know which types are
+template variables.
 
 - Files should be all lower-cased characters.
 	This eases the transition across platforms.
