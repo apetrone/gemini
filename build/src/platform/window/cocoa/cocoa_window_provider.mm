@@ -41,6 +41,11 @@ namespace platform
 			static input::Button key_map[ kMaxKeys ];
 			static NSPoint _last_mouse;
 
+			// We need to keep track of the mouse visibliity
+			// because the calls to hide/show cursor MUST match on
+			// OS X!
+			static bool _cursor_visibility = true;
+
 			// We keep this so we can share GL contexts with all subsequent
 			// windows created.
 			static NSOpenGLContext* _share_context = nil;
@@ -715,10 +720,15 @@ namespace platform
 			// https://developer.apple.com/library/mac/documentation/Cocoa/Reference/ApplicationKit/Classes/NSCursor_Class/
 			// Each call to hide cursor must have a corresponding unhide call.
 
-			if (enable)
-				[NSCursor unhide];
-			else
-				[NSCursor hide];
+			if (::platform::window::cocoa::_cursor_visibility != enable)
+			{
+				::platform::window::cocoa::_cursor_visibility = enable;
+				
+				if (enable)
+					[NSCursor unhide];
+				else
+					[NSCursor hide];
+			}
 		}
 
 		// set the cursor (absolute screen coordinates)

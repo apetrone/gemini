@@ -722,10 +722,6 @@ class EngineInterface : public IEngineInterface
 	core::memory::GlobalAllocatorType game_allocator;
 	SceneLink& scenelink;
 
-	// internally keep track of this because
-	// the calls to show/hide must match on osx (move this to platform)
-	bool mouse_cursor_visibility;
-
 public:
 	
 	EngineInterface(
@@ -743,8 +739,7 @@ public:
 		scenelink(scene_link),
 		main_window(window),
 		game_memory_zone("game"),
-		game_allocator(&game_memory_zone),
-		mouse_cursor_visibility(true)
+		game_allocator(&game_memory_zone)
 	{
 	}
 	
@@ -853,11 +848,7 @@ public:
 	
 	virtual void show_cursor(bool show)
 	{
-		if (show != mouse_cursor_visibility)
-		{
-			mouse_cursor_visibility = show;
-			platform::window::show_cursor(show);
-		}
+		platform::window::show_cursor(show);
 	}
 	
 	virtual void terminate_application()
