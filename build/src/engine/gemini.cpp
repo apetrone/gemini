@@ -764,7 +764,7 @@ public:
 		game_allocator.deallocate(pointer);
 	}
 
-	virtual void render_view(const View& view)
+	virtual void render_view(const View& view, const core::Color& clear_color)
 	{
 		// TODO: need to validate this origin/orientation is allowed.
 		// otherwise, client could ask us to render from anyone's POV.
@@ -778,7 +778,7 @@ public:
 //		rs.add_state(::renderer::STATE_DEPTH_WRITE, 1);
 		rs.add_state(::renderer::STATE_BACKFACE_CULLING, 1);
 		rs.add_state(::renderer::STATE_DEPTH_TEST, 1);
-		rs.add_clearcolor( 0.0, 0.0, 0.0, 1.0f );
+		rs.add_clearcolor((clear_color.r/255.0f), (clear_color.g/255.0f), (clear_color.b/255.0f), 1.0f);
 		rs.add_clear(::renderer::CLEAR_COLOR_BUFFER | ::renderer::CLEAR_DEPTH_BUFFER );
 		rs.run_commands();
 

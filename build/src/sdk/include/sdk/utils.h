@@ -93,6 +93,6 @@ namespace gemini
 	{
 		Entity* create_entity_by_classname(const char* classname);
 
-		void clamp_rotation(float& value);
+		float clamp_rotation(float value);
 	} // namespace util
 } // namespace gemini

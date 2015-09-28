@@ -36,6 +36,8 @@ namespace core
 	{
 		class ILog;
 	}
+
+	struct Color;
 }
 
 namespace gemini
@@ -74,7 +76,7 @@ namespace gemini
 		virtual void* allocate(size_t bytes) = 0;
 		virtual void deallocate(void* pointer) = 0;
 		
-		virtual void render_view(const View& view) = 0;
+		virtual void render_view(const View& view, const core::Color& clear_color) = 0;
 		virtual void render_gui() = 0;
 		
 		
