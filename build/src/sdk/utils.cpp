@@ -47,7 +47,7 @@ namespace gemini
 			return (Entity*)0;
 		}
 
-		void clamp_rotation(float& value)
+		float clamp_rotation(float value)
 		{
 			if (value > 360)
 			{
@@ -57,6 +57,8 @@ namespace gemini
 			{
 				value += 360;
 			}
+
+			return value;
 		}
 	}
 }
