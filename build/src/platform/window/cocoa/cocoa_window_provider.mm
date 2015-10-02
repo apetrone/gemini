@@ -478,7 +478,7 @@ namespace platform
 
 				// calculate title bar height of the window
 				NSRect frame = [window frame];
-				NSRect content_rect = [NSWindow contentRectForFrameRect:frame styleMask:NSTitledWindowMask];
+				NSRect content_rect = [NSWindow contentRectForFrameRect:frame styleMask:[window styleMask]];
 				title_bar_height = (frame.size.height - content_rect.size.height);
 
 				// We subtract height from mouse location y to invert the y-axis; since
