@@ -776,6 +776,7 @@ public:
 		render_pass.color(0.0f, 0.0f, 0.0f, 1.0f);
 		render_pass.clear_color = true;
 		render_pass.clear_depth = true;
+		render_pass.depth_test = false;
 
 		// create a command queue
 		render2::CommandQueue* queue = device->create_queue(render_pass);

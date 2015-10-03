@@ -396,6 +396,7 @@ public:
 		render_pass.color(value, value, value, 1.0f);
 		render_pass.clear_color = true;
 		render_pass.clear_depth = true;
+		render_pass.depth_test = false;
 
 		render2::CommandQueue* queue = device->create_queue(render_pass);
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
