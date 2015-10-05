@@ -301,10 +301,7 @@ namespace input
 	{
 		// absolute mouse position in window coordinates
 		int window_coords[2];
-		
-		// relative mouse delta
-		int delta[2];
-		
+
 		int wheel_direction;
 		
 		ButtonState buttons[ MOUSE_COUNT ];
@@ -315,19 +312,16 @@ namespace input
 		virtual void update();
 		
 		void inject_mouse_move(int absolute_x, int absolute_y);
-		void inject_mouse_delta(int delta_x, int delta_y);
 		void inject_mouse_button( MouseButton button_id, bool is_down );
 		void inject_mouse_wheel( int direction );
 		
 		//
 		// Accessors
-		bool is_down( MouseButton button );
-		bool was_released( MouseButton button );
+		bool is_down(MouseButton button);
+		bool was_released(MouseButton button);
 		
-		// retrieve the current mouse position
-		void mouse_position( int & x, int & y );
-		
-		void mouse_delta(int &dx, int &dy);
+		// retrieve the current mouse position in screen coordinates
+		void mouse_position(int& x, int& y);
 	}; // MouseInput
 	
 	class LIBRARY_EXPORT TouchInput : public InputDevice
@@ -383,6 +377,8 @@ namespace input
 	LIBRARY_EXPORT void startup(void);
 	LIBRARY_EXPORT void shutdown(void);
 	LIBRARY_EXPORT void update(void);
+	LIBRARY_EXPORT void begin_frame(void);
+	LIBRARY_EXPORT void end_frame(void);
 
 	LIBRARY_EXPORT const char* mouse_button_name(unsigned int button);
 	LIBRARY_EXPORT const char* key_name(unsigned int key);

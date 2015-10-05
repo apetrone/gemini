@@ -230,13 +230,14 @@ namespace platform
 				}
 				else
 				{
-					window_mask = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
+					window_mask = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask;
+					if (params.enable_resize)
+					{
+						window_mask |= NSResizableWindowMask;
+					}
 				}
 
-				if (!params.enable_resize)
-				{
-					window_mask &= ~NSResizableWindowMask;
-				}
+
 
 				// create a new window
 				window = [[CocoaWindow alloc] initWithContentRect:frame styleMask:window_mask backing:NSBackingStoreBuffered defer:NO];
@@ -486,25 +487,17 @@ namespace platform
 				// The fixed height is the window frame minus the title bar height
 				// and we also subtract 1.0 because convertPoint starts from a base of 1
 				// according to the Cocoa docs.
-				fixed_height = frame.size.height - title_bar_height - 1.0f;
+				fixed_height = frame.size.height - title_bar_height;
 
 				kernel::MouseEvent event;
 				event.subtype = kernel::MouseMoved;
 				event.mx = mouse_location.x;
 				event.my = fixed_height - mouse_location.y;
 
-				// compute the delta using screen coordinates;
-				// which is what mouseLocation returns.
-				NSPoint delta = compute_mouse_delta([NSEvent mouseLocation]);
-				event.dx = (int)delta.x;
-				event.dy = (int)delta.y;
-				_last_mouse = [NSEvent mouseLocation];
-
 				// don't dispatch any events outside of the window
 				if (event.mx >= 0 && event.my >= 0 && (event.mx <= frame.size.width) && (event.my <= fixed_height))
 				{
 					kernel::event_dispatch(event);
-					return;
 				}
 			}
 
@@ -740,6 +733,8 @@ namespace platform
 			// this point will have the origin in the upper left.
 			point.x = x;
 			point.y = y;
+
+			cocoa::_last_mouse = NSMakePoint(x, y);
 
 			// As per the documentation, this won't generate any mouse movement
 			// events.
