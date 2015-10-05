@@ -103,18 +103,18 @@ namespace input
 	{
 	}
 	
-	void startup( void )
+	void startup(void)
 	{
 //		_input_state.keyboard().reset();
 //		_input_state.mouse().reset();
 	}
 	
-	void shutdown( void )
+	void shutdown(void)
 	{
 		
 	}
 	
-	void update( void )
+	void update(void)
 	{
 //		_input_state.keyboard().update( 0 );
 //		_input_state.mouse().update( 0 );
@@ -129,6 +129,16 @@ namespace input
 			}
 		}
 #endif
+	}
+
+	void begin_frame(void)
+	{
+		fprintf(stdout, "begin_frame\n");
+	}
+
+	void end_frame(void)
+	{
+		fprintf(stdout, "end_frame\n");
 	}
 
 	const char* mouse_button_name(unsigned int value)
@@ -361,7 +371,6 @@ namespace input
 	{
 		memset(&buttons, 0, sizeof(ButtonState) * MOUSE_COUNT);
 		window_coords[0] = window_coords[1] = 0;
-		delta[0] = delta[1] = 0;
 	} // reset
 	
 	void MouseInput::update()
@@ -370,64 +379,46 @@ namespace input
 		{
 			buttons[ MOUSE_LEFT+i ].update();
 		}
-
-		delta[0] = delta[1] = 0;
 	} // update
 	
 	
 	void MouseInput::inject_mouse_move(int absolute_x, int absolute_y)
 	{
-//		delta[0] = absolute_x - window_coords[0];
 		window_coords[0] = absolute_x;
-		
-//		delta[1] = absolute_y - window_coords[1];
 		window_coords[1] = absolute_y;
+
+//		fprintf(stdout, "inject move: %i %i\n", absolute_x, absolute_y);
 	} // inject_mouse_move
 	
-	void MouseInput::inject_mouse_delta(int delta_x, int delta_y)
-	{
-		delta[0] = delta_x;
-//		window_coords[0] += delta_x;
-		
-		delta[1] = delta_y;
-//		window_coords[1] += delta_y;
-	} // inject_mouse_delta
-	
-	void MouseInput::inject_mouse_button( MouseButton button, bool is_down )
+	void MouseInput::inject_mouse_button(MouseButton button, bool is_down)
 	{
 		assert( button < MOUSE_COUNT && button >= 0 );
 		buttons[ button ].press_release( is_down );
 	} // inject_mouse_button
 	
-	void MouseInput::inject_mouse_wheel( int direction )
+	void MouseInput::inject_mouse_wheel(int direction)
 	{
 		wheel_direction = direction;
 	} // inject_mouse_wheel
 	
-	bool MouseInput::is_down( input::MouseButton button )
+	bool MouseInput::is_down(MouseButton button)
 	{
 		assert( button < MOUSE_COUNT && button >= 0 );
 		return buttons[ button ].is_down();
 	} // is_down
 	
-	bool MouseInput::was_released( input::MouseButton button )
+	bool MouseInput::was_released(MouseButton button)
 	{
 		assert( button < MOUSE_COUNT && button >= 0 );
 		// WAS down and NOT down now
 		return buttons[button].was_released();
 	} // was_released
 	
-	void MouseInput::mouse_position( int & x, int & y )
+	void MouseInput::mouse_position(int& x, int& y)
 	{
-		x = window_coords[1];
+		x = window_coords[0];
 		y = window_coords[1];
 	} // mouse_position
-	
-	void MouseInput::mouse_delta(int &dx, int &dy)
-	{
-		dx = delta[0];
-		dy = delta[1];
-	}
 
 	//
 	// TouchInput
