@@ -225,7 +225,18 @@ public:
 			}
 			
 			platform::window::Parameters params;
-			params.frame = platform::window::centered_window_frame(0, 800, 600);
+
+			bool enable_fullscreen = false;
+			if (enable_fullscreen)
+			{
+				params.enable_fullscreen = enable_fullscreen;
+				params.frame = platform::window::screen_frame(0);
+			}
+			else
+			{
+				params.frame = platform::window::centered_window_frame(0, 800, 600);
+			}
+
 			params.window_title = "orion";
 			main_window = platform::window::create(params);
 		}
@@ -270,8 +281,9 @@ public:
 			
 			
 			device = create_device(params);
-			
-			device->init(800, 600);
+
+			platform::window::Frame window_frame = platform::window::get_frame(main_window);
+			device->init(window_frame.width, window_frame.height);
 
 			// setup shaders
 			render2::PipelineDescriptor desc;
@@ -308,13 +320,13 @@ public:
 			
 //			MyVertex vertex[4];
 			
-			vertex[0].set_position(0, 600, 0);
+			vertex[0].set_position(0, window_frame.height, 0);
 			vertex[0].set_color(1.0f, 0.0f, 0.0f, 1.0f);
 			
-			vertex[1].set_position(800, 600, 0);
+			vertex[1].set_position(window_frame.width, window_frame.height, 0);
 			vertex[1].set_color(0.0f, 1.0f, 0.0f, 1.0f);
 			
-			vertex[2].set_position(400, 0, 0);
+			vertex[2].set_position(window_frame.width/2.0f, 0, 0);
 			vertex[2].set_color(0.0f, 0.0f, 1.0f, 1.0f);
 			
 			vertex[3].set_position(0, 0, 0);
@@ -379,8 +391,10 @@ public:
 			multiplifer *= -1;
 		
 
+		platform::window::Frame window_frame = platform::window::get_frame(main_window);
+
 		modelview_matrix = glm::mat4(1.0f);
-		projection_matrix = glm::ortho(0.0f, 800.0f, 600.0f, 0.0f, -1.0f, 1.0f);
+		projection_matrix = glm::ortho(0.0f, window_frame.width, window_frame.height, 0.0f, -1.0f, 1.0f);
 		pipeline->constants().set("modelview_matrix", &modelview_matrix);
 		pipeline->constants().set("projection_matrix", &projection_matrix);
 
@@ -467,7 +481,7 @@ public:
 			v+=6;
 
 //			glm::vec2 baseline(64.0f, 120.0f);
-			glm::vec2 baseline(800/2.0f - maxres.x/2.0f, 120.0f);
+			glm::vec2 baseline(window_frame.width/2.0f - maxres.x/2.0f, 120.0f);
 
 			// draw background highlight
 #if 0
