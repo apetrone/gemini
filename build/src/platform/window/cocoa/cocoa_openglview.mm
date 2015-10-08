@@ -40,7 +40,9 @@ using namespace platform::window::cocoa;
 {
 	self = [super initWithFrame: frameRect];
 	if (self == nil)
+	{
 		return nil;
+	}
 	
 	return self;
 }

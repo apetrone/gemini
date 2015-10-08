@@ -135,10 +135,10 @@ namespace kernel
 	void event_dispatch( Type & event )
 	{
 		EventType event_type = Type::event_type;
-		IEventListener<Type> * event_listener = (IEventListener<Type>*)find_listener_for_eventtype(event_type);
-		if ( event_listener )
+		IEventListener<Type>* event_listener = (IEventListener<Type>*)find_listener_for_eventtype(event_type);
+		if (event_listener)
 		{
-			event_listener->event( event );
+			event_listener->event(event);
 		}
 	} // event_dispatch
 } // namespace kernel
