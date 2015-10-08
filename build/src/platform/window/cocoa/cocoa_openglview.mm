@@ -59,6 +59,12 @@ using namespace platform::window::cocoa;
 	[self.context makeCurrentContext];
 }
 
+-(BOOL)canBecomeKeyView
+{
+	return YES;
+}
+
+
 -(void)dealloc
 {
 	self.context = nil;
@@ -72,6 +78,11 @@ using namespace platform::window::cocoa;
 -(BOOL) acceptsFirstResponder
 {
 	return YES;
+}
+
+-(BOOL)resignFirstResponder
+{
+	return NO;
 }
 
 // ---------------------------------------------------------------------
@@ -118,11 +129,6 @@ using namespace platform::window::cocoa;
 -(void) otherMouseDragged:(NSEvent *) event
 {
 	dispatch_mouse_moved_event(event);
-}
-
--(BOOL)resignFirstResponder
-{
-	return NO;
 }
 
 -(void)flagsChanged:(NSEvent *)event

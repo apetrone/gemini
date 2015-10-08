@@ -128,6 +128,17 @@ namespace kernel
 		// < 0 is movement towards the user; > 0 is movement away toward the screen
 		short wheel_direction;
 		bool is_down;
+
+		MouseEvent() :
+			button(0),
+			mx(0),
+			my(0),
+			dx(0),
+			dy(0),
+			wheel_direction(0),
+			is_down(false)
+		{
+		}
 	}; // MouseEvent
 
 	
