@@ -270,25 +270,33 @@ namespace platform
 				return platform::Result::success();
 			}
 
-			void create_context(cocoa_native_window* window)
+			void create_context(cocoa_native_window* window, const Parameters& window_parameters)
 			{
 				// ---------------------------------------------------------------------
 				// setup the opengl context
 				// ---------------------------------------------------------------------
-				NSOpenGLPixelFormatAttribute attributes[16];
+				NSOpenGLPixelFormatAttribute attributes[18];
 
 				// https://developer.apple.com/library/prerelease/mac/documentation/Cocoa/Reference/ApplicationKit/Classes/NSOpenGLPixelFormat_Class/index.html#//apple_ref/c/tdef/NSOpenGLPixelFormatAttribute
 
 				size_t index = 0;
 
 				attributes[index++] = NSOpenGLPFADepthSize;
-				attributes[index++] = 24;
+				attributes[index++] = window_parameters.backbuffer.depth_size;
+
+				size_t color_size = \
+					window_parameters.backbuffer.red_size +
+					window_parameters.backbuffer.green_size +
+					window_parameters.backbuffer.blue_size;
 
 				attributes[index++] = NSOpenGLPFAColorSize;
-				attributes[index++] = 24;
+				attributes[index++] = color_size;
 
 				attributes[index++] = NSOpenGLPFAOpenGLProfile;
 				attributes[index++] = NSOpenGLProfileVersion3_2Core;
+
+				attributes[index++] = NSOpenGLPFAStencilSize;
+				attributes[index++] = window_parameters.backbuffer.stencil_size;
 
 	//			attributes[index++] = NSOpenGLPFAMultisample;
 	//			attributes[index++] = NSOpenGLPFASampleBuffers;
@@ -316,7 +324,7 @@ namespace platform
 				}
 
 				GLint opacity = 1; // 1: opaque; 0: transparent
-				GLint wait_for_vsync = 1; // 1: on, 0: off
+				GLint wait_for_vsync = window_parameters.enable_vsync; // 1: on, 0: off
 
 				[window->context setValues:&opacity forParameter:NSOpenGLCPSurfaceOpacity];
 				[window->context setValues:&wait_for_vsync forParameter:NSOpenGLCPSwapInterval];
@@ -615,7 +623,7 @@ namespace platform
 			}
 
 			// create a context for this window
-			create_context(window);
+			create_context(window, window_parameters);
 
 			// activate the context
 			attach_cocoa_context(window);

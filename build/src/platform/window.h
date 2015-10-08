@@ -81,6 +81,8 @@ namespace platform
 			// stencil size
 			uint8_t stencil_size;
 
+			uint8_t opacity;
+
 			BackbufferConfig() : 
 				red_size(8),
 				green_size(8),
