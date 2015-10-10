@@ -309,7 +309,7 @@ namespace platform
 				attributes[index++] = NSOpenGLPFADoubleBuffer;
 
 				// terminate
-				attributes[index++] = nil;
+				attributes[index++] = 0;
 
 				// TODO: add error handling
 				NSOpenGLPixelFormat* format = [[NSOpenGLPixelFormat alloc] initWithAttributes: attributes];
