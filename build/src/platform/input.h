@@ -301,6 +301,7 @@ namespace input
 	{
 		// absolute mouse position in window coordinates
 		int window_coords[2];
+		int cursor_delta[2];
 
 		int wheel_direction;
 		
@@ -312,6 +313,7 @@ namespace input
 		virtual void update();
 		
 		void inject_mouse_move(int absolute_x, int absolute_y);
+		void inject_mouse_delta(int dx, int dy);
 		void inject_mouse_button( MouseButton button_id, bool is_down );
 		void inject_mouse_wheel( int direction );
 		
@@ -322,6 +324,12 @@ namespace input
 		
 		// retrieve the current mouse position in screen coordinates
 		void mouse_position(int& x, int& y);
+
+		void mouse_delta(int& dx, int& dy);
+		void reset_delta()
+		{
+			cursor_delta[0] = cursor_delta[1] = 0;
+		}
 	}; // MouseInput
 	
 	class LIBRARY_EXPORT TouchInput : public InputDevice

@@ -70,6 +70,7 @@ namespace kernel
 
 		MouseButton,
 		MouseMoved,
+		MouseDelta,
 		MouseWheelMoved,
 		
 		TouchBegin,
