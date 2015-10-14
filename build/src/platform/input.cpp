@@ -389,6 +389,12 @@ namespace input
 
 //		fprintf(stdout, "inject move: %i %i\n", absolute_x, absolute_y);
 	} // inject_mouse_move
+
+	void MouseInput::inject_mouse_delta(int dx, int dy)
+	{
+		cursor_delta[0] += dx;
+		cursor_delta[1] += dy;
+	}
 	
 	void MouseInput::inject_mouse_button(MouseButton button, bool is_down)
 	{
@@ -419,6 +425,12 @@ namespace input
 		x = window_coords[0];
 		y = window_coords[1];
 	} // mouse_position
+
+	void MouseInput::mouse_delta(int& dx, int& dy)
+	{
+		dx = cursor_delta[0];
+		dy = cursor_delta[1];
+	} // mouse_delta
 
 	//
 	// TouchInput

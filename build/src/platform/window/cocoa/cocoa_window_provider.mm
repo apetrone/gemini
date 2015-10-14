@@ -40,6 +40,9 @@ namespace platform
 			const unsigned int kMaxKeys = 132;
 			static input::Button key_map[ kMaxKeys ];
 			static NSPoint _last_mouse;
+			static bool _is_mouse_relative = false;
+			static bool _ignore_next = false;
+			static NSWindow* _key_window = nil;
 
 			// We need to keep track of the mouse visibliity
 			// because the calls to hide/show cursor MUST match on
@@ -373,7 +376,21 @@ namespace platform
 			{
 				// ignore events outside of the client area
 				if (!NSPointInRect([event locationInWindow], [[[event window] contentView] frame]))
+				{
+					NSLog(@"mouse event outside window; re-centering in key");
+//					NSRect bounds = [[cocoa::_key_window contentView] frame];
+//					bounds = [cocoa::_key_window convertRectToScreen: bounds];
+//					NSPoint window_center = NSMakePoint(
+//						bounds.origin.x + (bounds.size.width / 2.0),
+//						bounds.origin.y + (bounds.size.height / 2.0)
+//								);
+//					CGWarpMouseCursorPosition(window_center);
+//					cocoa::_last_mouse = window_center;
+//					cocoa::_ignore_next = true;
+//					CGAssociateMouseAndMouseCursorPosition(true);
+//					CGAssociateMouseAndMouseCursorPosition(false);
 					return;
+				}
 
 				kernel::MouseEvent ev;
 				ev.is_down = false;
@@ -384,8 +401,35 @@ namespace platform
 					case NSLeftMouseDragged:
 					case NSRightMouseDragged:
 					case NSOtherMouseDragged:
-						return;
+					case NSMouseMoved:
+					{
+						ev.subtype = kernel::MouseMoved;
+						ev.mx = 0;
+						ev.my = 0;
+						if (cocoa::_is_mouse_relative)
+						{
+							ev.subtype = kernel::MouseDelta;
+							if (cocoa::_ignore_next)
+							{
+								cocoa::_ignore_next = false;
+								return;
+							}
+							NSPoint mouse = cocoa::_last_mouse;
 
+							mouse.x = [event deltaX];
+							mouse.y = [event deltaY];
+							ev.dx = static_cast<int>(mouse.x);
+							ev.dy = static_cast<int>(mouse.y);
+							cocoa::_last_mouse = mouse;
+
+//							NSLog(@"mouse delta: %2.2f %2.2f [event_window: %@] [key_window: %@]", [event deltaX], [event deltaY], [event window], cocoa::_key_window);
+
+
+
+
+							break;
+						}
+					}
 					case NSLeftMouseDown:
 						ev.button = input::MOUSE_LEFT;
 						ev.is_down = true;
@@ -479,11 +523,17 @@ namespace platform
 			{
 				CocoaWindow* window = static_cast<CocoaWindow*>([the_event window]);
 
-				CGFloat title_bar_height;
-				CGFloat fixed_height;
-
 				// convert mouse from window to view
 				NSPoint mouse_location = [[window contentView] convertPoint: [the_event locationInWindow] fromView:nil];
+				if (mouse_location.x == cocoa::_last_mouse.x && mouse_location.y == cocoa::_last_mouse.y)
+				{
+					return;
+				}
+
+				cocoa::_last_mouse = mouse_location;
+
+				CGFloat title_bar_height;
+				CGFloat fixed_height;
 
 				// calculate title bar height of the window
 				NSRect frame = [window frame];
@@ -495,7 +545,7 @@ namespace platform
 				// The fixed height is the window frame minus the title bar height
 				// and we also subtract 1.0 because convertPoint starts from a base of 1
 				// according to the Cocoa docs.
-				fixed_height = frame.size.height - title_bar_height;
+				fixed_height = frame.size.height - title_bar_height - 1;
 
 				kernel::MouseEvent event;
 				event.subtype = kernel::MouseMoved;
@@ -527,14 +577,35 @@ namespace platform
 				// http://stackoverflow.com/questions/5840873/how-to-tell-the-difference-between-a-user-tapped-keyboard-event-and-a-generated
 			}
 
+			void dispatch_mouse_delta(const NSPoint& mouse)
+			{
+				kernel::MouseEvent event;
+				event.subtype = kernel::MouseDelta;
+				event.dx = mouse.x;
+				event.dy = mouse.y;
+				NSLog(@"process delta: %2.2f %2.2f", mouse.x, mouse.y);
+				kernel::event_dispatch(event);
+			}
+
+			static NSPoint zombo;
 			void process_event_loop()
 			{
+//				NSLog(@"----new frame----");
+//				NSPoint mouse = [NSEvent mouseLocation];
+//				NSLog(@"mouse: %2.2f, %2.2f", mouse.x, mouse.y);
+//
+//				CGFloat deltaX = (mouse.x - zombo.x);
+//				CGFloat deltaY = (mouse.y - zombo.y);
+//
+//				zombo = mouse;
+//				NSLog(@"delta: %2.2f, %2.2f", deltaX, deltaY);
+
 				while(true)
 				{
 					NSEvent* event = [NSApp
 									  nextEventMatchingMask:NSAnyEventMask
 									  untilDate:[NSDate distantPast]
-									  inMode:NSDefaultRunLoopMode
+									  inMode:NSEventTrackingRunLoopMode
 									  dequeue:YES
 									  ];
 
@@ -545,6 +616,7 @@ namespace platform
 
 					switch([event type])
 					{
+						case NSMouseMoved:
 						case NSLeftMouseDown:
 						case NSLeftMouseUp:
 						case NSLeftMouseDragged:
@@ -557,10 +629,6 @@ namespace platform
 						case NSScrollWheel:
 							dispatch_mouse_event(event);
 							break;
-
-							//				case NSMouseMoved:
-							//					track_mouse_location([NSEvent mouseLocation]);
-							//					break;
 
 						case NSKeyDown:
 						case NSKeyUp:
@@ -726,9 +794,13 @@ namespace platform
 				::platform::window::cocoa::_cursor_visibility = enable;
 				
 				if (enable)
+				{
 					[NSCursor unhide];
+				}
 				else
+				{
 					[NSCursor hide];
+				}
 			}
 		}
 
@@ -753,6 +825,7 @@ namespace platform
 			CGAssociateMouseAndMouseCursorPosition(false);
 			CGDisplayMoveCursorToPoint(display, point);
 			CGAssociateMouseAndMouseCursorPosition(true);
+			CGAssociateMouseAndMouseCursorPosition(!cocoa::_is_mouse_relative);
 		}
 
 		// get the cursor (absolute screen coordinates
@@ -763,7 +836,7 @@ namespace platform
 			// the origin is in the lower-left. Ours is the upper left.
 			NSPoint current = [NSEvent mouseLocation];
 			x = current.x;
-			y = current.y;
+			y = current.y-1;
 
 			NSUInteger index = 0;
 			for(NSScreen* screen in [NSScreen screens])
@@ -780,5 +853,28 @@ namespace platform
 
 			PLATFORM_LOG(LogMessageType::Warning, "Could not find screen for mouse location [%2.2f, %2.2f]\n", x, y);
 		}
+
+		void set_relative_mouse_mode(bool enable)
+		{
+			cocoa::_last_mouse = [NSEvent mouseLocation];
+			CGAssociateMouseAndMouseCursorPosition(!enable);
+
+			cocoa::_is_mouse_relative = enable;
+			cocoa::_ignore_next = true;
+
+			// we must store the key_window in order to
+			// constrain the mouse movement to a rect.
+
+			if (enable)
+			{
+				cocoa::_key_window = [[NSApplication sharedApplication] keyWindow];
+			}
+			else
+			{
+				cocoa::_key_window = nil;
+			}
+		}
+
+
 	} // namespace window
 } // namespace platform
