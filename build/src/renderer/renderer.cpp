@@ -78,7 +78,7 @@ namespace renderer
 		gemgl_parse_version(config.major_version, config.minor_version);
 
 #if defined(PLATFORM_OPENGL_SUPPORT)
-			if (config.major_version == 3 && config.minor_version == 2)
+			if (config.major_version == 3 && config.minor_version >= 2)
 			{
 				// use core32
 				_render_driver = MEMORY_NEW(GLCore32, core::memory::global_allocator());
