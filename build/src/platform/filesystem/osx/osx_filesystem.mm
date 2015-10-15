@@ -41,7 +41,7 @@ namespace platform
 		Result result;
 		NSString* bundle_path = [[NSBundle mainBundle] bundlePath];
 		assert(bundle_path);
-		return cocoa::to_string(bundle_path);
+		return cocoa::nsstring_to_stackstring<PathString>(bundle_path);
 	}
 
 	Result make_directory(const char* path)
@@ -66,14 +66,14 @@ namespace platform
 
 		NSString* application_path = [NSString stringWithUTF8String:application_data_path];
 		application_support_directory = [application_support_directory stringByAppendingPathComponent: application_path];
-		return cocoa::to_string(application_support_directory);
+		return cocoa::nsstring_to_stackstring<PathString>(application_support_directory);
 	}
 
 	PathString get_user_temp_directory()
 	{
 		NSArray* directories = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
 		NSString* user_temp_directory = [directories lastObject];
-		return cocoa::to_string(user_temp_directory);
+		return cocoa::nsstring_to_stackstring<PathString>(user_temp_directory);
 	}
 
 	core::StackString<MAX_PATH_SIZE> make_absolute_path(const char* path)

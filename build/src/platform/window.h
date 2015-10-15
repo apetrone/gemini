@@ -226,7 +226,6 @@ namespace platform
 		LIBRARY_EXPORT void get_cursor(float& x, float& y);
 
 		// if enabled, the OS will generate delta mouse movement events
-		//
 		LIBRARY_EXPORT void set_relative_mouse_mode(bool enable);
 	} // namespace window
 } // namespace platform

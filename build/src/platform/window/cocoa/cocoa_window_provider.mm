@@ -39,15 +39,33 @@ namespace platform
 		{
 			const unsigned int kMaxKeys = 132;
 			static input::Button key_map[ kMaxKeys ];
-			static NSPoint _last_mouse;
-			static bool _is_mouse_relative = false;
-			static bool _ignore_next = false;
-			static NSWindow* _key_window = nil;
 
-			// We need to keep track of the mouse visibliity
-			// because the calls to hide/show cursor MUST match on
-			// OS X!
-			static bool _cursor_visibility = true;
+			struct CocoaState
+			{
+				// used to generate mouse deltas
+				NSPoint last_mouse;
+
+				// If we're generating relative mouse events
+				bool is_in_relative_mouse_mode;
+
+				// This is a nasty hack due to the way disassociation works
+				// and the resulting NSEvent deltas work.
+				// When we disassociate the mouse cursor, the very next
+				// NSEvent has a rather large deltaX/Y -- which we need to ignore
+				// to prevent the cursor from jumping..
+				// Remove this hack if we determine how to solve that.
+				bool ignore_next_event;
+
+				// We need to keep track of the mouse visibliity
+				// because the calls to hide/show cursor MUST match on
+				// OS X!
+				bool is_cursor_visible = true;
+			};
+
+			static CocoaState _state;
+
+
+
 
 			// We keep this so we can share GL contexts with all subsequent
 			// windows created.
@@ -378,17 +396,6 @@ namespace platform
 				if (!NSPointInRect([event locationInWindow], [[[event window] contentView] frame]))
 				{
 					NSLog(@"mouse event outside window; re-centering in key");
-//					NSRect bounds = [[cocoa::_key_window contentView] frame];
-//					bounds = [cocoa::_key_window convertRectToScreen: bounds];
-//					NSPoint window_center = NSMakePoint(
-//						bounds.origin.x + (bounds.size.width / 2.0),
-//						bounds.origin.y + (bounds.size.height / 2.0)
-//								);
-//					CGWarpMouseCursorPosition(window_center);
-//					cocoa::_last_mouse = window_center;
-//					cocoa::_ignore_next = true;
-//					CGAssociateMouseAndMouseCursorPosition(true);
-//					CGAssociateMouseAndMouseCursorPosition(false);
 					return;
 				}
 
@@ -406,27 +413,21 @@ namespace platform
 						ev.subtype = kernel::MouseMoved;
 						ev.mx = 0;
 						ev.my = 0;
-						if (cocoa::_is_mouse_relative)
+						if (cocoa::_state.is_in_relative_mouse_mode)
 						{
 							ev.subtype = kernel::MouseDelta;
-							if (cocoa::_ignore_next)
+							if (cocoa::_state.ignore_next_event)
 							{
-								cocoa::_ignore_next = false;
+								cocoa::_state.ignore_next_event = false;
 								return;
 							}
-							NSPoint mouse = cocoa::_last_mouse;
+							NSPoint mouse = cocoa::_state.last_mouse;
 
 							mouse.x = [event deltaX];
 							mouse.y = [event deltaY];
 							ev.dx = static_cast<int>(mouse.x);
 							ev.dy = static_cast<int>(mouse.y);
-							cocoa::_last_mouse = mouse;
-
-//							NSLog(@"mouse delta: %2.2f %2.2f [event_window: %@] [key_window: %@]", [event deltaX], [event deltaY], [event window], cocoa::_key_window);
-
-
-
-
+							cocoa::_state.last_mouse = mouse;
 							break;
 						}
 					}
@@ -514,8 +515,8 @@ namespace platform
 			NSPoint compute_mouse_delta(const NSPoint& current)
 			{
 				return NSMakePoint(
-					(current.x - _last_mouse.x),
-					(_last_mouse.y - current.y)
+				   (current.x - cocoa::_state.last_mouse.x),
+				   (cocoa::_state.last_mouse.y - current.y)
 				);
 			}
 
@@ -525,12 +526,13 @@ namespace platform
 
 				// convert mouse from window to view
 				NSPoint mouse_location = [[window contentView] convertPoint: [the_event locationInWindow] fromView:nil];
-				if (mouse_location.x == cocoa::_last_mouse.x && mouse_location.y == cocoa::_last_mouse.y)
+				if (mouse_location.x == cocoa::_state.last_mouse.x &&
+					mouse_location.y == cocoa::_state.last_mouse.y)
 				{
 					return;
 				}
 
-				cocoa::_last_mouse = mouse_location;
+				cocoa::_state.last_mouse = mouse_location;
 
 				CGFloat title_bar_height;
 				CGFloat fixed_height;
@@ -587,62 +589,6 @@ namespace platform
 				kernel::event_dispatch(event);
 			}
 
-			static NSPoint zombo;
-			void process_event_loop()
-			{
-//				NSLog(@"----new frame----");
-//				NSPoint mouse = [NSEvent mouseLocation];
-//				NSLog(@"mouse: %2.2f, %2.2f", mouse.x, mouse.y);
-//
-//				CGFloat deltaX = (mouse.x - zombo.x);
-//				CGFloat deltaY = (mouse.y - zombo.y);
-//
-//				zombo = mouse;
-//				NSLog(@"delta: %2.2f, %2.2f", deltaX, deltaY);
-
-				while(true)
-				{
-					NSEvent* event = [NSApp
-									  nextEventMatchingMask:NSAnyEventMask
-									  untilDate:[NSDate distantPast]
-									  inMode:NSEventTrackingRunLoopMode
-									  dequeue:YES
-									  ];
-
-					if (event == nil)
-					{
-						break;
-					}
-
-					switch([event type])
-					{
-						case NSMouseMoved:
-						case NSLeftMouseDown:
-						case NSLeftMouseUp:
-						case NSLeftMouseDragged:
-						case NSRightMouseDown:
-						case NSRightMouseUp:
-						case NSRightMouseDragged:
-						case NSOtherMouseDown:
-						case NSOtherMouseUp:
-						case NSOtherMouseDragged:
-						case NSScrollWheel:
-							dispatch_mouse_event(event);
-							break;
-
-						case NSKeyDown:
-						case NSKeyUp:
-							dispatch_key_event(event);
-							break;
-						default:
-							break;
-					}
-
-					[NSApp sendEvent: event];
-				}
-			}
-
-
 			cocoa_native_window* from(NativeWindow* window)
 			{
 				return static_cast<cocoa_native_window*>(window);
@@ -675,7 +621,46 @@ namespace platform
 
 		void dispatch_events()
 		{
-			cocoa::process_event_loop();
+			while(true)
+			{
+				NSEvent* event = [NSApp
+								  nextEventMatchingMask:NSAnyEventMask
+								  untilDate:[NSDate distantPast]
+								  inMode:NSEventTrackingRunLoopMode
+								  dequeue:YES
+								  ];
+
+				if (event == nil)
+				{
+					break;
+				}
+
+				switch([event type])
+				{
+					case NSMouseMoved:
+					case NSLeftMouseDown:
+					case NSLeftMouseUp:
+					case NSLeftMouseDragged:
+					case NSRightMouseDown:
+					case NSRightMouseUp:
+					case NSRightMouseDragged:
+					case NSOtherMouseDown:
+					case NSOtherMouseUp:
+					case NSOtherMouseDragged:
+					case NSScrollWheel:
+						cocoa::dispatch_mouse_event(event);
+						break;
+
+					case NSKeyDown:
+					case NSKeyUp:
+						cocoa::dispatch_key_event(event);
+						break;
+					default:
+						break;
+				}
+
+				[NSApp sendEvent: event];
+			}
 		}
 
 
@@ -789,9 +774,9 @@ namespace platform
 			// https://developer.apple.com/library/mac/documentation/Cocoa/Reference/ApplicationKit/Classes/NSCursor_Class/
 			// Each call to hide cursor must have a corresponding unhide call.
 
-			if (::platform::window::cocoa::_cursor_visibility != enable)
+			if (cocoa::_state.is_cursor_visible != enable)
 			{
-				::platform::window::cocoa::_cursor_visibility = enable;
+				cocoa::_state.is_cursor_visible = enable;
 				
 				if (enable)
 				{
@@ -814,7 +799,7 @@ namespace platform
 			point.x = x;
 			point.y = y;
 
-			cocoa::_last_mouse = NSMakePoint(x, y);
+			cocoa::_state.last_mouse = NSMakePoint(x, y);
 
 			// As per the documentation, this won't generate any mouse movement
 			// events.
@@ -825,7 +810,7 @@ namespace platform
 			CGAssociateMouseAndMouseCursorPosition(false);
 			CGDisplayMoveCursorToPoint(display, point);
 			CGAssociateMouseAndMouseCursorPosition(true);
-			CGAssociateMouseAndMouseCursorPosition(!cocoa::_is_mouse_relative);
+			CGAssociateMouseAndMouseCursorPosition(!cocoa::_state.is_in_relative_mouse_mode);
 		}
 
 		// get the cursor (absolute screen coordinates
@@ -856,22 +841,32 @@ namespace platform
 
 		void set_relative_mouse_mode(bool enable)
 		{
-			cocoa::_last_mouse = [NSEvent mouseLocation];
+			cocoa::_state.last_mouse = [NSEvent mouseLocation];
 			CGAssociateMouseAndMouseCursorPosition(!enable);
 
-			cocoa::_is_mouse_relative = enable;
-			cocoa::_ignore_next = true;
+			cocoa::_state.is_in_relative_mouse_mode = enable;
+			cocoa::_state.ignore_next_event = true;
 
 			// we must store the key_window in order to
 			// constrain the mouse movement to a rect.
-
 			if (enable)
 			{
-				cocoa::_key_window = [[NSApplication sharedApplication] keyWindow];
-			}
-			else
-			{
-				cocoa::_key_window = nil;
+				// if we are entering relative mode,
+				// we must center the cursor inside the key window.
+				NSWindow* key_window = [[NSApplication sharedApplication] keyWindow];
+				assert(key_window);
+
+				NSRect bounds = [[key_window contentView] frame];
+				bounds = [key_window convertRectToScreen: bounds];
+				NSPoint window_center = NSMakePoint(
+					bounds.origin.x + (bounds.size.width / 2.0),
+					bounds.origin.y + (bounds.size.height / 2.0)
+							);
+				CGWarpMouseCursorPosition(window_center);
+				cocoa::_state.last_mouse = window_center;
+				cocoa::_state.ignore_next_event = true;
+				CGAssociateMouseAndMouseCursorPosition(true);
+				CGAssociateMouseAndMouseCursorPosition(false);
 			}
 		}
 
