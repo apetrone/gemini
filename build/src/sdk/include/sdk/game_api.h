@@ -54,7 +54,11 @@ namespace gemini
 			MouseMove     = MouseEvent | 16,
 			// params[0]: abs mouse x
 			// params[1]: abs mouse y
-			
+
+			MouseDelta	  = MouseEvent | 32,
+			// params[0]: delta mouse x
+			// params[1]: delta mouse y
+
 			MouseWheel    = MouseEvent | 64,
 			// params[0]: wheel delta
 			

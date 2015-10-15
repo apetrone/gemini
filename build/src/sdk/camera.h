@@ -122,6 +122,9 @@ struct Camera
 	const glm::mat4& get_projection() const { return projection; }
 	const glm::vec3& get_view() const { return view; }
 	const glm::vec3& get_eye_position() const { return eye_position; }
+
+	float get_yaw() const { return yaw; }
+	float get_pitch() const { return pitch; }
 	
 private:
 	// camera variables
