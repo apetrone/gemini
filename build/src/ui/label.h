@@ -43,10 +43,10 @@ namespace gui
 		LIBRARY_EXPORT Label(Panel* parent);
 		
 		LIBRARY_EXPORT virtual void update(Compositor* compositor, const TimeState& timestate) override;
-		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
+		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands) override;
 		LIBRARY_EXPORT virtual void set_font(const char* filename, size_t pixel_size);
 		LIBRARY_EXPORT virtual void set_text(const std::string& text);
-		LIBRARY_EXPORT virtual bool can_move() const { return true; }
-		LIBRARY_EXPORT virtual bool is_label() const { return true; }
+		LIBRARY_EXPORT virtual bool can_move() const override { return true; }
+		LIBRARY_EXPORT virtual bool is_label() const override { return true; }
 	}; // Label
 } // namespace gui
