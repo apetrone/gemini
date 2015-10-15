@@ -94,10 +94,16 @@ namespace gemini
 		
 		// show or hide cursor
 		virtual void show_cursor(bool show) = 0;
+
+		virtual void set_cursor(int x, int y) = 0;
+		virtual void get_cursor(int& x, int& y) = 0;
 		
 		// on platforms where the user has control to kill
 		// the application, do so.
 		virtual void terminate_application() = 0;
+
+
+		virtual void set_relative_mouse_mode(bool enable) = 0;
 	};
 	
 	namespace engine
