@@ -35,7 +35,18 @@ namespace platform
 	{
 		// convert from NSString to PathString
 		PathString to_string(NSString* source);
-		
-		// convert from PathString to NSString?
+
+		template <class T>
+		T nsstring_to_stackstring(NSString* input)
+		{
+			T output;
+			[input getCString:&output[0] maxLength:output.max_size() encoding:NSUTF8StringEncoding];
+
+			// we need output's size to be recomputed; otherwise it will
+			// think it is empty.
+			output.recompute_size(&output[0]);
+
+			return output;
+		}
 	} // namespace cocoa
 } // namespace platform
