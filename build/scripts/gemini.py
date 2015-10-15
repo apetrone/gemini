@@ -988,7 +988,7 @@ def products(arguments, **kwargs):
 	# use LLVM C++ standard library with C++11 support
 	g_macosx.driver.clang_cxx_library = "libc++"
 	g_macosx.driver.macosx_deployment_target = "10.8"
-	g_macosx.driver.sdkroot = "macosx10.9"
+	g_macosx.driver.sdkroot = ""
 
 	g_macosx.driver.clang_enable_objc_arc = "YES"
 
