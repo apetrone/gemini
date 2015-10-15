@@ -385,8 +385,6 @@ namespace input
 	LIBRARY_EXPORT void startup(void);
 	LIBRARY_EXPORT void shutdown(void);
 	LIBRARY_EXPORT void update(void);
-	LIBRARY_EXPORT void begin_frame(void);
-	LIBRARY_EXPORT void end_frame(void);
 
 	LIBRARY_EXPORT const char* mouse_button_name(unsigned int button);
 	LIBRARY_EXPORT const char* key_name(unsigned int key);
