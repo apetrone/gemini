@@ -46,6 +46,9 @@ namespace gui
 		renderer(renderer)
 	{
 		this->aspect_ratio = width / (float)height;
+		size.width = width;
+		size.height = height;
+		set_bounds(0, 0, width, height);
 
 		this->last_cursor = Point(0, 0);
 		

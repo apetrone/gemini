@@ -79,6 +79,12 @@ namespace gui
 		size.width = width;
 		size.height = height;
 	} // set_bounds
+
+	void Panel::set_bounds(const Rect& bounds)
+	{
+		origin = bounds.origin;
+		size = bounds.size;
+	}
 	
 	const Rect& Panel::get_bounds() const
 	{
