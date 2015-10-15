@@ -147,7 +147,7 @@ void test_system()
 {
 	TEST_CATEGORY(system);
 
-	size_t page_size = platform::system_pagesize();
+	size_t page_size = platform::system_pagesize_bytes();
 
 	PLATFORM_LOG(platform::LogMessageType::Info, "page size: %i bytes\n", page_size);
 	TEST_VERIFY(page_size > 0, page_size);
