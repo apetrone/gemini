@@ -67,7 +67,7 @@
 #include "hotloading.h"
 #include "navigation.h"
 
-typedef FixedSizeQueue<gemini::GameMessage, 64> EventQueueType;
+typedef Array<gemini::GameMessage> EventQueueType;
 
 struct DataInput
 {
@@ -750,16 +750,6 @@ namespace gemini
 	}
 }
 
-void center_mouse(platform::window::NativeWindow* window)
-{
-	platform::window::Frame frame = platform::window::get_render_frame(window);
-	float x;
-	float y;
-	x = frame.x + (frame.width/2.0f);
-	y = frame.y + (frame.height/2.0f);
-	platform::window::set_cursor(x, y);
-}
-
 struct SharedState
 {
 	bool has_focus;
@@ -906,7 +896,11 @@ public:
 	{
 		if (_sharedstate.has_focus)
 		{
-			center_mouse(main_window);
+			platform::window::Frame frame = platform::window::get_render_frame(main_window);
+			platform::window::set_cursor(
+				frame.x + (frame.width/2.0f),
+				frame.y + (frame.height/2.0f)
+			);
 		}
 	}
 	
@@ -914,10 +908,29 @@ public:
 	{
 		platform::window::show_cursor(show);
 	}
-	
+
+	virtual void set_cursor(int x, int y)
+	{
+		platform::window::set_cursor(x, y);
+	}
+
+	virtual void get_cursor(int& x, int& y)
+	{
+		float fx, fy;
+		platform::window::get_cursor(fx, fy);
+		x = static_cast<int>(fx);
+		y = static_cast<int>(fy);
+	}
+
 	virtual void terminate_application()
 	{
 		kernel::instance()->set_active(false);
+	}
+
+	virtual void set_relative_mouse_mode(bool enable) override
+	{
+		platform::window::set_relative_mouse_mode(enable);
+		center_cursor();
 	}
 };
 
@@ -1082,9 +1095,9 @@ public:
 		game_message.button = event.key;
 		game_message.params[0] = event.is_down;
 		game_message.params[1] = event.modifiers;
+
 		event_queue->push_back(game_message);
-	
-	
+
 		if (event.is_down)
 		{
 			if (event.key == input::KEY_P)
@@ -1121,13 +1134,21 @@ public:
 				game_message.params[0] = event.mx;
 				game_message.params[1] = event.my;
 				break;
-				
+
+			case kernel::MouseDelta:
+				game_message.type = GameMessage::MouseDelta;
+				game_message.params[0] = event.dx;
+				game_message.params[1] = event.dy;
+				break;
+
 			case kernel::MouseWheelMoved:
 				game_message.type = GameMessage::MouseMove;
 				game_message.params[0] = event.wheel_direction;
 				break;
 				
-			default: break;
+			default:
+				assert(0);
+				break;
 		}
 		
 		event_queue->push_back(game_message);
@@ -1216,7 +1237,7 @@ public:
 	
 	virtual kernel::Error startup()
 	{
-		event_queue = new FixedSizeQueue<GameMessage, 64>;
+		event_queue = new Array<GameMessage>(64);
 	
 		// parse command line values
 		std::vector<std::string> arguments;
@@ -1315,8 +1336,7 @@ Options:
 		}
 		
 		LOGV("Logging system initialized.\n");
-		
-		
+
 		LOGV("filesystem root_path = '%s'\n", filesystem->root_directory().c_str());
 		LOGV("filesystem content_path = '%s'\n", content_path.c_str());
 		LOGV("filesystem user_application_directory = '%s'\n", filesystem->user_application_directory().c_str());
@@ -1350,11 +1370,25 @@ Options:
 		platform::window::startup(platform::window::RenderingBackend_Default);
 		
 		platform::window::Parameters window_params;
-		
+
+
+
+
+		platform::window::Frame screen_frame = platform::window::screen_frame(0);
+		window_params.enable_fullscreen = 1;
+		window_params.enable_vsync = 1;
+
 		// TODO: we should load these from a config; for now just set them.
 		window_params.frame = platform::window::centered_window_frame(0, config.window_width, config.window_height);
 		window_params.window_title = config.window_title();
-		
+
+		if (window_params.enable_fullscreen)
+		{
+			config.window_width = screen_frame.width;
+			config.window_height = screen_frame.height;
+			window_params.frame = screen_frame;
+		}
+
 		// create the window
 		main_window = platform::window::create(window_params);
 		platform::window::focus(main_window);
@@ -1474,6 +1508,7 @@ Options:
 		
 		// calculate delta ticks in miliseconds
 		params.framedelta_milliseconds = (current_time - last_time)*0.001f;
+
 		// cache the value in seconds
 		params.framedelta_seconds = params.framedelta_milliseconds*0.001f;
 		last_time = current_time;
@@ -1509,17 +1544,17 @@ Options:
 
 	virtual void tick()
 	{
+		platform::window::dispatch_events();
+
 		// 1. handle input; generate events?
 		// 2. on frame duties:
 		//	- pump event
-		
-		
+
+
 		update();
 
-		platform::window::dispatch_events();
 
 		input::update();
-
 		audio::update();
 		animation::update(kernel::parameters().framedelta_seconds);
 		hotloading::tick();
@@ -1543,27 +1578,6 @@ Options:
 			compositor->process_events();
 		}
 
-
-		float mouse[2];
-		platform::window::get_cursor(mouse[0], mouse[1]);
-
-		platform::window::Frame frame = platform::window::get_render_frame(main_window);
-		float half_width = frame.x + frame.width/2;
-		float half_height = frame.y + frame.height/2;
-
-		// capture the state of the mouse
-		int mdx, mdy;
-		mdx = (mouse[0] - half_width);
-		mdy = (mouse[1] - half_height);
-		if (mdx != 0 || mdy != 0)
-		{
-			GameMessage game_message;
-			game_message.type = GameMessage::MouseDelta;
-			game_message.params[0] = mdx;
-			game_message.params[1] = mdy;
-			event_queue->push_back(game_message);
-		}
-			
 #if 0
 		// add the inputs and then normalize
 		input::JoystickInput& joystick = input::state()->joystick(0);
@@ -1586,12 +1600,11 @@ Options:
 		}
 #endif
 
-		
-		while(!event_queue->empty())
+		for (GameMessage& message : *event_queue)
 		{
-			GameMessage game_message = event_queue->pop();
-			game_interface->server_process_message(game_message);
+			game_interface->server_process_message(message);
 		}
+		event_queue->resize(0);
 
 
 		int x = 250;

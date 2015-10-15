@@ -869,7 +869,5 @@ namespace platform
 				CGAssociateMouseAndMouseCursorPosition(false);
 			}
 		}
-
-
 	} // namespace window
 } // namespace platform
