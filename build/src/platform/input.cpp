@@ -131,16 +131,6 @@ namespace input
 #endif
 	}
 
-	void begin_frame(void)
-	{
-		fprintf(stdout, "begin_frame\n");
-	}
-
-	void end_frame(void)
-	{
-		fprintf(stdout, "end_frame\n");
-	}
-
 	const char* mouse_button_name(unsigned int value)
 	{
 		static const char* names[] = {
