@@ -229,10 +229,10 @@ namespace platform
 		// show or hide the mouse cursor
 		LIBRARY_EXPORT void show_cursor(bool enable);
 
-		// set the cursor position in screen coordinates
+		// set the cursor position in screen coordinates (origin is top left)
 		LIBRARY_EXPORT void set_cursor(float x, float y);
 
-		// get the cursor position in screen coordinates
+		// get the cursor position in screen coordinates (origin is top left)
 		LIBRARY_EXPORT void get_cursor(float& x, float& y);
 
 		// if enabled, the OS will generate delta mouse movement events

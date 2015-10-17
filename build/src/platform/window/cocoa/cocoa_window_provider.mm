@@ -390,12 +390,39 @@ namespace platform
 			}
 
 
+			void center_cursor_inside_key_window()
+			{
+				NSWindow* key_window = [[NSApplication sharedApplication] keyWindow];
+				if (key_window)
+				{
+					NSRect bounds = [[key_window contentView] frame];
+					bounds = [key_window convertRectToScreen: bounds];
+
+					// y needs to be flipped
+					NSScreen* screen = [key_window screen];
+					NSRect screen_frame = [screen frame];
+
+					NSPoint window_center = NSMakePoint(
+						bounds.origin.x + (bounds.size.width / 2.0),
+						screen_frame.size.height - (bounds.origin.y + (bounds.size.height / 2.0))
+								);
+					NSLog(@"center_cursor: %2.2f, %2.2f", window_center.x, window_center.y);
+					CGWarpMouseCursorPosition(window_center);
+					cocoa::_state.last_mouse = window_center;
+					cocoa::_state.ignore_next_event = true;
+					CGAssociateMouseAndMouseCursorPosition(true);
+					CGAssociateMouseAndMouseCursorPosition(false);
+
+					[key_window makeKeyAndOrderFront:nil];
+					[key_window makeMainWindow];
+				}
+			}
+
 			void dispatch_mouse_event(NSEvent* event)
 			{
-				// ignore events outside of the client area
-				if (!NSPointInRect([event locationInWindow], [[[event window] contentView] frame]))
+				// ignore events outside of the client area when not in relative mouse mode
+				if (!_state.is_in_relative_mouse_mode && !NSPointInRect([event locationInWindow], [[[event window] contentView] frame]))
 				{
-					NSLog(@"mouse event outside window; re-centering in key");
 					return;
 				}
 
@@ -561,31 +588,12 @@ namespace platform
 				}
 			}
 
-			void track_mouse_location(const NSPoint& pt)
-			{
-				// track the mouse position at a global scope
-				// NS mouse coordinates have a lower left origin.
-				// CG mouse coordinates have an upper left origin.
-
-				// compute deltas
-				// y axis is inverted on purpose to preserve 0,0 topleft.
-	//			NSPoint delta = compute_mouse_delta(pt);
-
-	//			NSLog(@"mouse pos: %f %f [%f %f]", pt.x, pt.y, delta.x, delta.y);
-
-	//			_last_mouse = pt;
-
-				// TODO: Investigate generating custom events for mouse capture
-				// http://stackoverflow.com/questions/5840873/how-to-tell-the-difference-between-a-user-tapped-keyboard-event-and-a-generated
-			}
-
 			void dispatch_mouse_delta(const NSPoint& mouse)
 			{
 				kernel::MouseEvent event;
 				event.subtype = kernel::MouseDelta;
 				event.dx = mouse.x;
 				event.dy = mouse.y;
-				NSLog(@"process delta: %2.2f %2.2f", mouse.x, mouse.y);
 				kernel::event_dispatch(event);
 			}
 
@@ -681,6 +689,9 @@ namespace platform
 			// activate the context
 			attach_cocoa_context(window);
 
+			// make this window main
+			[window->cw makeMainWindow];
+
 			return window;
 		}
 
@@ -710,14 +721,25 @@ namespace platform
 		Frame get_frame(NativeWindow* window)
 		{
 			cocoa::cocoa_native_window* cocoa_window = cocoa::from(window);
-			NSRect bounds = [[cocoa_window->cw contentView] frame];
-			bounds = [cocoa_window->cw convertRectToScreen: bounds];
 
+			// grab the window's frame rectangle in screen coordinates (includes titlebar)
+			NSRect window_frame = [cocoa_window->cw frame];
+			NSScreen* screen = [cocoa_window->cw screen];
+			NSRect screen_frame = [screen visibleFrame];
+
+			// the window's screen space origin is in the lower left
+			// of the window's rect.
+			// We accomodate for this by:
+			// - subtracting the height of the window frame
+			// - flipping the y coordinate (such that the origin is in the top left)
+			// - adding the visible screen rect y origin to this (take the menu bar in account)
 			Frame frame;
-			frame.x = bounds.origin.x;
-			frame.y = bounds.origin.y;
-			frame.width = bounds.size.width;
-			frame.height = bounds.size.height;
+			frame.x = window_frame.origin.x;
+
+			CGFloat top_left_y = (screen_frame.size.height - window_frame.origin.y - window_frame.size.height);
+			frame.y = screen_frame.origin.y + top_left_y;
+			frame.width = window_frame.size.width;
+			frame.height = window_frame.size.height;
 			return frame;
 		}
 
@@ -742,25 +764,6 @@ namespace platform
 			out_frame.width = frame.size.width;
 			out_frame.height = frame.size.height;
 			return out_frame;
-			// this is DEPRECATED!
-			//				CFDictionaryRef mode_info;
-			//				int refresh_rate;
-			//				mode_info = CGDisplayCurrentMode(screen_index);
-			//				if (mode_info)
-			//				{
-			//					CFNumberRef value = (CFNumberRef)CFDictionaryGetValue(mode_info, kCGDisplayRefreshRate);
-			//					if (value)
-			//					{
-			//						CFNumberGetValue(value, kCFNumberIntType, &refresh_rate);
-			//						if (refresh_rate == 0)
-			//						{
-			//							// this is an LCD screen
-			//							refresh_rate = 60;
-			//						}
-			//					}
-			//				}
-			//
-			//				PLATFORM_LOG(LogMessageType::Info, "refresh rate of screen %i is %i Hz\n", screen_index, refresh_rate);
 		}
 
 		void focus(NativeWindow* window)
@@ -795,11 +798,14 @@ namespace platform
 			CGDirectDisplayID display = 0;
 			CGPoint point;
 
-			// this point will have the origin in the upper left.
+			// this point should have the origin in the upper left.
 			point.x = x;
 			point.y = y;
 
-			cocoa::_state.last_mouse = NSMakePoint(x, y);
+			NSScreen* screen = [[[NSApplication sharedApplication] mainWindow] screen];
+			assert([[NSApplication sharedApplication] mainWindow]);
+			NSRect frame = [screen frame];
+			cocoa::_state.last_mouse = NSMakePoint(x, frame.size.height - y);
 
 			// As per the documentation, this won't generate any mouse movement
 			// events.
@@ -853,20 +859,7 @@ namespace platform
 			{
 				// if we are entering relative mode,
 				// we must center the cursor inside the key window.
-				NSWindow* key_window = [[NSApplication sharedApplication] keyWindow];
-				assert(key_window);
-
-				NSRect bounds = [[key_window contentView] frame];
-				bounds = [key_window convertRectToScreen: bounds];
-				NSPoint window_center = NSMakePoint(
-					bounds.origin.x + (bounds.size.width / 2.0),
-					bounds.origin.y + (bounds.size.height / 2.0)
-							);
-				CGWarpMouseCursorPosition(window_center);
-				cocoa::_state.last_mouse = window_center;
-				cocoa::_state.ignore_next_event = true;
-				CGAssociateMouseAndMouseCursorPosition(true);
-				CGAssociateMouseAndMouseCursorPosition(false);
+				cocoa::center_cursor_inside_key_window();
 			}
 		}
 	} // namespace window
