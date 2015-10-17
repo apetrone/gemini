@@ -22,67 +22,14 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-
-#include "platform_internal.h"
-
-#define WIN32_LEAN_AND_MEAN 1
-#include <windows.h>
+#pragma once
 
 namespace platform
 {
-	static unsigned int _previous_error_mode;
-
-	Result backend_startup()
+	namespace window
 	{
-		// prevent error dialogs from hanging the process.
-		// these errors are forwarded to calling process.
-		_previous_error_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-
-		return Result::success();
-	} // backend_startup
-
-	void backend_shutdown()
-	{
-		// restore the error mode
-		SetErrorMode(_previous_error_mode);
-	} // backend_shutdown
-
-	void backend_log(platform::LogMessageType type, const char* message)
-	{
-		// honey badger don't care about LogMessageType
-		OutputDebugStringA(message);
-	} // backend_log
-
-
-
-
-
-	// system
-	size_t system_pagesize_bytes()
-	{
-		SYSTEM_INFO system_info;
-		GetSystemInfo(&system_info);
-		return system_info.dwPageSize;
-	} // system_pagesize_bytes
-
-	size_t system_processor_count()
-	{
-		// docs mention use of 'GetLogicalProcessorInformation',
-		// but I don't understand the difference.
-		SYSTEM_INFO system_info;
-		GetSystemInfo(&system_info);
-		return system_info.dwNumberOfProcessors;
-	} // system_processor_count
-
-	double system_uptime_seconds()
-	{
-		return 0.0;
-	} // system_uptime_seconds
-
-	core::StackString<64> system_version_string()
-	{
-		core::StackString<64> version = "Windows";
-		return version;
-	} // system_version_string
-
+		namespace win32
+		{
+		} // namespace win32
+	} // namespace window
 } // namespace platform
