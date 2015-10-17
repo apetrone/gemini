@@ -257,7 +257,10 @@ def setup_driver(arguments, product):
 		"-Wno-c++98-compat-pedantic",
 
 		# this is technically bad, but it's entrenched at present
-		"-Wno-gnu-zero-variadic-macro-arguments"
+		"-Wno-gnu-zero-variadic-macro-arguments",
+
+		# print full template backtrace
+		"-ftemplate-backtrace-limit=0"
 	]
 
 	mac_release = product.layout(platform="macosx", configuration="release")
