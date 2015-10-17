@@ -53,7 +53,6 @@ namespace gui
 
 		Point last_cursor;
 		size_t next_z_depth;
-		float aspect_ratio;
 		Listener* listener;
 	
 		EventArgs queue[16];
