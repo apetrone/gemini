@@ -1164,6 +1164,15 @@ public:
 		{
 			_sharedstate.has_focus = true;
 		}
+		else if (event.subtype == kernel::WindowResized)
+		{
+			platform::window::Frame frame = platform::window::get_render_frame(main_window);
+
+			assert(device);
+			device->backbuffer_resized(frame.width, frame.height);
+
+			compositor->resize(frame.width, frame.height);
+		}
 	}
 	
 	virtual void event(kernel::GameControllerEvent& event)
