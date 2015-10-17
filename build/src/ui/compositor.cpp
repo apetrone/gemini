@@ -45,7 +45,6 @@ namespace gui
 		resource_cache(cache),
 		renderer(renderer)
 	{
-		this->aspect_ratio = width / (float)height;
 		size.width = width;
 		size.height = height;
 		set_bounds(0, 0, width, height);
@@ -368,9 +367,6 @@ namespace gui
 	{
 		this->width = width;
 		this->height = height;
-
-		// TODO: dispatch to any panels that need to layout
-		// children again
 	} // resize
 	
 	Panel * Compositor::find_panel_at_point( const Point & point )
