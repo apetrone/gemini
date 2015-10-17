@@ -523,7 +523,7 @@ def get_libplatform(arguments, target_platform):
 
 		# time
 		"src/platform/time/posix/posix_datetime.cpp",
-		"src/platform/time/posix/posix_timer.cpp"
+		"src/platform/time/posix/posix_timer.cpp",
 	]
 
 
@@ -567,14 +567,14 @@ def get_libplatform(arguments, target_platform):
 
 	windows = libplatform.layout(platform="windows")
 	windows.sources += [
+		# backend
+		"src/platform/backend/windows/win32_backend.cpp",
+
 		# dylib
 		"src/platform/dylib/windows/win32_dylib.cpp",
 
 		# filesystem
 		"src/platform/filesystem/windows/win32_filesystem.cpp",
-
-		# os
-		"src/platform/os/windows/win32_os.cpp",
 
 		# serial
 		"src/platform/serial/win32/win32_serial.cpp",
@@ -584,11 +584,18 @@ def get_libplatform(arguments, target_platform):
 		"src/platform/thread/windows/windows_thread.h",
 
 		# time
-		"src/platform/time/windows/win32_time.cpp"
+		"src/platform/time/windows/win32_time.cpp",
+
+		# window
+		"src/platform/window/win32/win32_window.cpp",
+		"src/platform/window/win32/win32_window.h",
+		"src/platform/window/win32/win32_window_provider.cpp",
+		"src/platform/window/win32/win32_window_provider.h"
 	]
 
 	windows.links += [
-		"Shlwapi"
+		"Shlwapi",
+		"user32"
 	]
 
 	return libplatform

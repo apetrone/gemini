@@ -383,16 +383,16 @@ namespace platform
 	// ---------------------------------------------------------------------
 
 	/// @brief Return the platform's pagesize in bytes
-	size_t system_pagesize_bytes();
+	LIBRARY_EXPORT size_t system_pagesize_bytes();
 
 	/// @brief Return the number of physical CPUs in the system
-	size_t system_processor_count();
+	LIBRARY_EXPORT size_t system_processor_count();
 
 	/// @brief Return the system's uptime (time since boot) in seconds
-	double system_uptime_seconds();
+	LIBRARY_EXPORT double system_uptime_seconds();
 
 	/// @brief Return a human readable version string for logging
-	core::StackString<64> system_version_string();
+	LIBRARY_EXPORT core::StackString<64> system_version_string();
 
 	// ---------------------------------------------------------------------
 	// thread

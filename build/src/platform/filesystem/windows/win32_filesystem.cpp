@@ -38,28 +38,33 @@ namespace platform
 	const unsigned int STATIC_BUFFER_SIZE = 8192;
 	static char _static_buffer[STATIC_BUFFER_SIZE] = {0};
 
-	Result get_program_directory(char* path, size_t path_size)
+	PathString get_program_directory()
 	{
+		PathString directory;
+
 		Result error;
 
 		int result = 0;
 		char* sep;
-		result = GetModuleFileNameA(GetModuleHandleA(0), path, path_size);
-		if (result == 0)
-		{
-			error = Result::failure("GetModuleFilenameA failed!");
-		}
+		result = GetModuleFileNameA(GetModuleHandleA(0), &directory[0], directory.max_size());
 
+		// GetModuleFilenameA failed!
+		assert(result != 0);
+
+		char* path = directory();
 		if (result != 0)
 		{
 			sep = strrchr(path, PATH_SEPARATOR);
 
 			if (sep)
 			{
-				*sep = '\0';
+				size_t index = (sep - path);
+				directory[index] = '\0';
+				directory.recompute_size();
 			}
 		}
-		return error;
+		
+		return directory;
 	}
 
 	Result make_directory(const char* path)

@@ -24,7 +24,11 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <core/typedefs.h>
+#include "platform.h" // for Result
+
 #include <stdint.h> // for types
+
 
 namespace kernel
 {
@@ -174,9 +178,15 @@ namespace platform
 			virtual void show_mouse(bool show) = 0;
 		};
 
+		// common utility functions?
 
 		// given a screen and target window dimensions, return a centered frame
 		LIBRARY_EXPORT Frame centered_window_frame(size_t screen_index, size_t width, size_t height);
+
+
+
+
+		// The following functions need to be define per platform implementation.
 
 		/// @brief startup the window backend
 		/// @returns Result Success or Failure with a message

@@ -1330,20 +1330,20 @@ int main(int, char**)
 {
 	core::memory::startup();
 
-//	test_argumentparser();
-//	test_array();
-//	test_color();
-//	test_datastream();
-//	test_fixedarray();
-//	test_fixedsizequeue();
-//	test_hashset();
-//	test_circularbuffer();
-//	test_mathlib();
-//	test_memory();
-//	test_serialization();
-//	test_stackstring();
-//	test_str();
-//	test_util();
+	test_argumentparser();
+	test_array();
+	test_color();
+	test_datastream();
+	test_fixedarray();
+	test_fixedsizequeue();
+	test_hashset();
+	test_circularbuffer();
+	test_mathlib();
+	test_memory();
+	test_serialization();
+	test_stackstring();
+	test_str();
+	test_util();
 
 	test_rapidjson();
 

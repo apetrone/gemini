@@ -89,8 +89,12 @@ namespace core
 			return _length;
 		}
 		
-		void recompute_size(const Type* source)
+		void recompute_size(const Type* source = nullptr)
 		{
+			if (!source)
+			{
+				source = _data;
+			}
 			_length = core::str::len(source);
 		}
 		
@@ -245,6 +249,11 @@ namespace core
 		}
 		
 		const Type* operator ()() const
+		{
+			return _data;
+		}
+
+		Type* operator()()
 		{
 			return _data;
 		}
