@@ -406,7 +406,6 @@ namespace platform
 						bounds.origin.x + (bounds.size.width / 2.0),
 						screen_frame.size.height - (bounds.origin.y + (bounds.size.height / 2.0))
 								);
-					NSLog(@"center_cursor: %2.2f, %2.2f", window_center.x, window_center.y);
 					CGWarpMouseCursorPosition(window_center);
 					cocoa::_state.last_mouse = window_center;
 					cocoa::_state.ignore_next_event = true;
