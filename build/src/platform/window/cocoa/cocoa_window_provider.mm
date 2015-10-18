@@ -723,6 +723,9 @@ namespace platform
 
 			// grab the window's frame rectangle in screen coordinates (includes titlebar)
 			NSRect window_frame = [cocoa_window->cw frame];
+
+			// convert the frame to a content rect (usable size)
+			NSRect content_frame = [cocoa_window->cw contentRectForFrameRect:window_frame];
 			NSScreen* screen = [cocoa_window->cw screen];
 			NSRect screen_frame = [screen visibleFrame];
 
@@ -737,8 +740,8 @@ namespace platform
 
 			CGFloat top_left_y = (screen_frame.size.height - window_frame.origin.y - window_frame.size.height);
 			frame.y = screen_frame.origin.y + top_left_y;
-			frame.width = window_frame.size.width;
-			frame.height = window_frame.size.height;
+			frame.width = content_frame.size.width;
+			frame.height = content_frame.size.height;
 			return frame;
 		}
 
