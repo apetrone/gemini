@@ -58,21 +58,27 @@ static void entity_collision_callback(CollisionEventType type, ICollisionObject*
 	
 	Entity* ent0 = static_cast<Entity*>(first->get_user_data());
 	Entity* ent1 = static_cast<Entity*>(second->get_user_data());
-	
+
+
+	glm::vec3 normal;
+
 	if (ent0 && ent1)
 	{
 		if (type == Collision_Began)
 		{
-			ent0->collision_began(ent1);
+			normal = glm::normalize(ent0->get_position() - ent1->get_position());
+			ent0->collision_began(ent1, normal);
 //			ent1->collision_began(ent0);
 		}
 		else if (type == Collision_Ended)
 		{
-			ent0->collision_ended(ent1);
+			normal = glm::normalize(ent0->get_position() - ent1->get_position());
+			ent0->collision_ended(ent1, normal);
 //			ent1->collision_ended(ent0);
 		}
 	}
 }
+
 
 void entity_startup()
 {
@@ -215,11 +221,11 @@ void Entity::remove_collision()
 	this->flags |= EF_DELETE_PHYSICS;
 }
 
-void Entity::collision_began(Entity* other)
+void Entity::collision_began(Entity* other, const glm::vec3& normal)
 {
 }
 
-void Entity::collision_ended(Entity* other)
+void Entity::collision_ended(Entity* other, const glm::vec3& normal)
 {
 }
 
@@ -311,13 +317,12 @@ void Entity::set_physics_object(physics::ICollisionObject *object)
 	this->collision_object->set_collision_callback(entity_collision_callback);
 }
 
-void Entity::set_position(glm::vec3 *new_position)
+void Entity::set_position(const glm::vec3& new_position)
 {
-	position = *new_position;
-	
+	position = new_position;
 	if (collision_object)
 	{
-		collision_object->set_world_transform(*new_position, orientation);
+		collision_object->set_world_transform(position, orientation);
 	}
 }
 
@@ -354,9 +359,9 @@ void Entity::set_parent(Entity *other)
 //	}
 }
 
-glm::vec3* Entity::get_position()
+const glm::vec3& Entity::get_position() const
 {
-	return &position;
+	return position;
 }
 
 void Entity::set_model(const char* path)

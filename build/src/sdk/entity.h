@@ -113,8 +113,8 @@ public:
 	virtual void remove();
 	virtual void remove_collision();
 	
-	virtual void collision_began(Entity* other);
-	virtual void collision_ended(Entity* other);
+	virtual void collision_began(Entity* other, const glm::vec3& normal);
+	virtual void collision_ended(Entity* other, const glm::vec3& normal);
 	
 	// Use is called on this entity
 	virtual void use(Entity* user);
@@ -145,8 +145,8 @@ public:
 	
 public:
 	// ACCESSORS
-	void set_position(glm::vec3* new_position);
-	glm::vec3* get_position();
+	void set_position(const glm::vec3& new_position);
+	const glm::vec3& get_position() const;
 	
 public:
 	
