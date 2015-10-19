@@ -59,6 +59,10 @@
 		#define PLATFORM_COMPILER_VERSION STRINGIZE(16.0) // Visual Studio 2010
 	#elif _MSC_VER == 1700
 		#define PLATFORM_COMPILER_VERSION STRINGIZE(17.0) // Visual Studio 2012
+	#elif _MSC_VER == 1800
+		#define PLATFORM_COMPILER_VERSION STRINGIZE(18.0) // Visual Studio 2013
+	#elif _MSC_VER == 1900
+		#define PLATFORM_COMPILER_VERSION STRINGIZE(19.0) // Visual Studio 2015
 	#else
 		#define PLATFORM_COMPILER_VERSION "Unknown version of msvc"
 	#endif
