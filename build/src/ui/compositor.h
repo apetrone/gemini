@@ -41,9 +41,6 @@ namespace gui
 	class Compositor : public Panel
 	{
 	public:
-
-		friend class render::CommandList;
-
 		ScreenInt width;
 		ScreenInt height;
 		Panel* focus;
