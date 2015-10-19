@@ -355,6 +355,7 @@ namespace platform
 
 	/// @brief Construct this platform's content directory
 	/// @returns A string pointing to the absolute path for content on this platform
+	/// example: On Mac/iOS/TVOS <AppBundle>/Content/Resources directory is the 'content' directory.
 	LIBRARY_EXPORT PathString fs_content_directory();
 
 	// ---------------------------------------------------------------------
