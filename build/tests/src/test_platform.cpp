@@ -81,12 +81,15 @@ void test_filesystem()
 	TEST_VERIFY(bytes_read == 22, fs_read);
 
 
+	platform::PathString content_directory = platform::fs_content_directory();
+	TEST_VERIFY(!content_directory.is_empty(), fs_content_directory);
+
 	// test directories
 	platform::Result result;
 	platform::PathString program_directory = platform::get_program_directory();
 	TEST_VERIFY(!program_directory.is_empty(), get_program_directory);
 
-	// this currently fails on subsequent runs because the dirrectory
+	// this currently fails on subsequent runs because the directory
 	// is never removed.
 	result = platform::make_directory("test_directory");
 	TEST_VERIFY(result.succeeded(), make_directory);
@@ -111,7 +114,6 @@ void test_filesystem()
 
 	platform::PathString temp_directory = platform::get_user_temp_directory();
 	TEST_VERIFY(!temp_directory.is_empty(), get_user_temp_directory);
-
 }
 
 // ---------------------------------------------------------------------
