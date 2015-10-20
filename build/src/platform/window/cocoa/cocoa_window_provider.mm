@@ -283,6 +283,9 @@ namespace platform
 				NSPoint origin = NSMakePoint(params.frame.x, params.frame.y);
 				[window setFrameOrigin: origin];
 
+				// http://fredandrandall.com/blog/2011/09/08/how-to-make-your-app-open-in-full-screen-on-lion/
+				//	[window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
+				//	[window toggleFullScreen:nil];
 				if (params.enable_fullscreen)
 				{
 					[window setLevel: CGShieldingWindowLevel()];

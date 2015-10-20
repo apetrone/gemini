@@ -72,19 +72,8 @@ static bool has_started = false;
 		has_started = true;
 			
 		platform::startup();
-		
-		// On Mac, the window created is actually larger than requested
-		// to account for the added height of the title bar.
-		// Unfortunately, the OpenGL drawable surface contains the area
-		// used by the title bar, so we have to use that in our screen-space
-		// calculations.
-//		kernel::parameters().titlebar_height = [self calculate_titlebar_height];
-		
-		kernel::startup();
 
-// http://fredandrandall.com/blog/2011/09/08/how-to-make-your-app-open-in-full-screen-on-lion/
-//	[window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
-//	[window toggleFullScreen:nil];
+		kernel::startup();
 
 		[self performSelectorOnMainThread:@selector(run_kernel) withObject:self waitUntilDone:NO];
 	}
