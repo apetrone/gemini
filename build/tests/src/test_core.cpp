@@ -136,7 +136,7 @@ void test_array()
 
 	abc.pop_back();
 
-	TEST_VERIFY(abc.size() == 2, size_after_erase);
+	TEST_VERIFY(abc.size() == 1, size_after_erase);
 	for (const int& value : abc)
 	{
 		fprintf(stdout, "value: %i\n", value);

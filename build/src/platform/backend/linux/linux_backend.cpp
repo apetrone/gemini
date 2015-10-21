@@ -27,6 +27,8 @@
 #include "graphics_provider.h"
 
 #include <unistd.h>
+#include <sys/sysinfo.h>
+#include <sys/utsname.h>
 
 #if defined(PLATFORM_RASPBERRYPI)
 	#include <bcm_host.h> // for bcm_host_init
@@ -313,10 +315,15 @@ namespace platform
 		{
 
 		}
+
+		void set_relative_mouse_mode(bool enable)
+		{
+
+		}
 	} // namespace window
 
 
-	size_t system_pagesize()
+	size_t system_pagesize_bytes()
 	{
 		return sysconf(_SC_PAGESIZE);
 	}
@@ -324,6 +331,26 @@ namespace platform
 	size_t system_processor_count()
 	{
 		return sysconf(_SC_NPROCESSORS_ONLN);
+	}
+
+	double system_uptime_seconds()
+	{
+		// kernel 2.6+ compatible
+		struct sysinfo system_info;
+		assert(0 == sysinfo(&system_info));
+		return system_info.uptime;
+	}
+
+	core::StackString<64> system_version_string()
+	{
+		struct utsname name;
+		assert(0 == uname(&name));
+
+		core::StackString<64> version = name.sysname;
+		version.append(" ");
+		version.append(name.release);
+
+		return version;
 	}
 
 } // namespace platform

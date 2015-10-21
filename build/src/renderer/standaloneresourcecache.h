@@ -34,7 +34,7 @@
 namespace render2
 {
 	struct Texture;
-};
+}
 
 namespace renderer
 {

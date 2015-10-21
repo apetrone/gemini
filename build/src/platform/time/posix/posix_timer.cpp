@@ -36,8 +36,8 @@ namespace platform
 	// http://code-factor.blogspot.com/2009/11/monotonic-timers.html
 	// https://blog.habets.se/2010/09/gettimeofday-should-never-be-used-to-measure-time
 
-	typedef uint64_t (*get_microseconds)();
-	static get_microseconds = nullptr;
+	typedef uint64_t (*get_microseconds_func)();
+	static get_microseconds_func get_microseconds = nullptr;
 
 	static uint64_t get_microseconds_monotonic()
 	{
