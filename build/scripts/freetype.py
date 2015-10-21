@@ -45,6 +45,7 @@ def products(arguments, **kwargs):
 		"src/type1/type1.c",
 		"src/cid/type1cid.c",
 		"src/type42/type42.c",
+		"src/winfonts/winfnt.c",
 
 		"include/ft2build.h",
 		"include/freetype/config/ftconfig.h",
@@ -77,8 +78,7 @@ def products(arguments, **kwargs):
 	#
 	macosx = freetype.layout(platform="macosx")
 	macosx.sources += [
-		"src/base/ftdebug.c",
-		"src/winfonts/winfnt.c",
+		"src/base/ftdebug.c"
 	]
 	macosx.includes += [
 		"builds/ansi",
@@ -95,17 +95,20 @@ def products(arguments, **kwargs):
 		"src/base/ftdebug.c"
 	]
 	linux.includes += [
-		"builds/unix"
+		"builds/unix",
+		"config"
 	]
 	linux.defines += [
 		"FT_CONFIG_CONFIG_H=\"<ftconfig.h>\"",
 		"FT_CONFIG_MODULES_H=\"<freetype/config/ftmodule.h>\""
 	]
 
+	if target_platform.matches("linux"):
+		freetype.copy_config("include/freetype/config/ftconfig.h", "builds/unix/ftconfig.h")
+
 	windows = freetype.layout(platform="windows")
 	windows.sources += [
 			"builds/win32/ftdebug.c",
-			"src/winfonts/winfnt.c",
 			"src/base/ftwinfnt.c",
 	]
 	windows.defines += [
@@ -114,7 +117,6 @@ def products(arguments, **kwargs):
 		"_CRT_SECURE_NO_WARNINGS",
 		"_CRT_SECURE_NO_DEPRECATE"
 	]
-
 
 	return [freetype]
 
