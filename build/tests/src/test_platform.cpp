@@ -154,10 +154,17 @@ void test_system()
 	PLATFORM_LOG(platform::LogMessageType::Info, "page size: %i bytes\n", page_size);
 	TEST_VERIFY(page_size > 0, page_size);
 
-
 	size_t total_processors = platform::system_processor_count();
 	PLATFORM_LOG(platform::LogMessageType::Info, "total processors: %i\n", total_processors);
 	TEST_VERIFY(total_processors >= 1, system_processor_count);
+
+	size_t uptime_seconds = platform::system_uptime_seconds();
+	PLATFORM_LOG(platform::LogMessageType::Info, "system_uptime_seconds: %i\n", uptime_seconds);
+	TEST_VERIFY(uptime_seconds > 0, system_uptime_seconds);
+
+	core::StackString<64> version = platform::system_version_string();
+	PLATFORM_LOG(platform::LogMessageType::Info, "system_version_string: %s\n", version());
+	TEST_VERIFY(!version.is_empty(), system_version_string);
 }
 
 // ---------------------------------------------------------------------
