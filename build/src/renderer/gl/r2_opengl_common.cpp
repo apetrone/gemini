@@ -29,6 +29,9 @@
 
 using namespace renderer;
 
+// Enable this to perform extra debug checks when setting up input layouts.
+#define VERIFY_VERTEX_DATA_MATCHES_SHADER_DATA 1
+
 namespace render2
 {
 	// ---------------------------------------------------------------------
@@ -423,6 +426,7 @@ namespace render2
 
 			// unhandled type!
 			default:
+				LOGE("Unhandled attribute type!: %i\n", attribute_type);
 				assert(0);
 		}
 	}
@@ -457,16 +461,34 @@ namespace render2
 
 			const VertexDataTypeToGL& gldata = get_vertexdata_table()[input.type];
 
-			// perform a bit of verification with types and element counts
+#if defined(VERIFY_VERTEX_DATA_MATCHES_SHADER_DATA)
+			// perform verification with types and element counts
 			VertexDataType expected_type;
-			size_t expected_elements;
+			size_t expected_elements = 0;
 			GLint location = shader->get_attribute_location(input.name());
-			convert_type(shader->attributes[location].type, expected_type, expected_elements);
+			assert(location >= 0);
+
+			// We need to iterate over the attributes list and find the
+			// one corresponding to this location.
+			size_t attribute_index = 0;
+			for (attribute_index = 0; attribute_index < shader->attributes.size(); ++attribute_index)
+			{
+				shader_variable& variable = shader->attributes[attribute_index];
+				if (variable.location == location)
+					break;
+			}
+
+			// If you hit this, we haven't found the matching attribute
+			assert(index < shader->attributes.size());
+
+			// extract the gl data for attribute types
+			convert_type(shader->attributes[attribute_index].type, expected_type, expected_elements);
 
 			// Types should match; otherwise byte offsets will be incorrect.
-			// Element counts can vary slightly if the input type isn't larger
-			// than the shader.
+			// Element counts can vary slightly if the input element size
+			// is less than or equal to the shader's type.
 			assert(input.type == expected_type && input.element_count <= expected_elements);
+#endif
 
 			GLInputLayout::Description target;
 			target.location = location;
