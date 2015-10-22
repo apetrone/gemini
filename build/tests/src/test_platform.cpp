@@ -29,36 +29,44 @@
 using namespace platform;
 
 // ---------------------------------------------------------------------
+// platform
+// ---------------------------------------------------------------------
+UNITTEST(platform)
+{
+	platform::Result result = platform::startup();
+	TEST_ASSERT(result.succeeded(), platform_startup);
+
+	PLATFORM_LOG(platform::LogMessageType::Info, "PLATFORM_NAME: %s\n", PLATFORM_NAME);
+	PLATFORM_LOG(platform::LogMessageType::Info, "PLATFORM_COMPILER: %s, version: %s\n", PLATFORM_COMPILER, PLATFORM_COMPILER_VERSION);
+}
+
+// ---------------------------------------------------------------------
 // dynamic library
 // ---------------------------------------------------------------------
-void test_dynamic_library()
+UNITTEST(dynamic_library)
 {
-	TEST_CATEGORY(dynamic_library);
-
 	const char* library_extension = platform::dylib_extension();
-	TEST_VERIFY(library_extension, dylib_extension);
+	TEST_ASSERT(library_extension, dylib_extension);
 }
 
 // ---------------------------------------------------------------------
 // filesystem
 // ---------------------------------------------------------------------
-void test_filesystem()
+UNITTEST(filesystem)
 {
-	TEST_CATEGORY(filesystem);
-
 	platform::PathString filename = platform::get_program_directory();
 
 	// see if we can verify directories exist; otherwise, we cannot verify
 	// other functions
 	PLATFORM_LOG(LogMessageType::Info, "checking program directory exists: '%s'\n", filename());
-	TEST_VERIFY(platform::fs_directory_exists(filename()), fs_directory_exists);
+	TEST_ASSERT(platform::fs_directory_exists(filename()), fs_directory_exists);
 
 	filename.append(PATH_SEPARATOR_STRING);
 	filename.append("test.conf");
 
 	platform::File file = platform::fs_open(filename(), platform::FileMode_Write);
-	TEST_VERIFY(file.handle != 0, fs_open_for_write);
-	TEST_VERIFY(file.is_open(), file_is_open);
+	TEST_ASSERT(file.handle != 0, fs_open_for_write);
+	TEST_ASSERT(file.is_open(), file_is_open);
 
 	size_t bytes_written = 0;
 	if (file.is_open())
@@ -67,10 +75,10 @@ void test_filesystem()
 		bytes_written = platform::fs_write(file, buffer, 22, 1);
 		platform::fs_close(file);
 	}
-	TEST_VERIFY(bytes_written == 22, fs_write);
+	TEST_ASSERT(bytes_written == 22, fs_write);
 
 	file = platform::fs_open(filename(), platform::FileMode_Read);
-	TEST_VERIFY(file.handle != 0, fs_open_for_read);
+	TEST_ASSERT(file.handle != 0, fs_open_for_read);
 	size_t bytes_read = 0;
 	if (file.is_open())
 	{
@@ -78,21 +86,21 @@ void test_filesystem()
 		bytes_read = platform::fs_read(file, &buffer[0], 22, 1);
 		platform::fs_close(file);
 	}
-	TEST_VERIFY(bytes_read == 22, fs_read);
+	TEST_ASSERT(bytes_read == 22, fs_read);
 
 
 	platform::PathString content_directory = platform::fs_content_directory();
-	TEST_VERIFY(!content_directory.is_empty(), fs_content_directory);
+	TEST_ASSERT(!content_directory.is_empty(), fs_content_directory);
 
 	// test directories
 	platform::Result result;
 	platform::PathString program_directory = platform::get_program_directory();
-	TEST_VERIFY(!program_directory.is_empty(), get_program_directory);
+	TEST_ASSERT(!program_directory.is_empty(), get_program_directory);
 
 	// this currently fails on subsequent runs because the directory
 	// is never removed.
 	result = platform::make_directory("test_directory");
-	TEST_VERIFY(result.succeeded(), make_directory);
+	TEST_ASSERT(result.succeeded(), make_directory);
 
 	const char* user_home = nullptr;
 #if defined(PLATFORM_WINDOWS)
@@ -103,26 +111,24 @@ void test_filesystem()
 	#error I do not know how to test this platform.
 #endif
 
-	TEST_VERIFY(user_home != nullptr, get_environment_variable);
+	TEST_ASSERT(user_home != nullptr, get_environment_variable);
 //	fprintf(stdout, "get_environment_variable [%%USERPROFILE%% / $HOME]: '%s'\n", user_home);
 
 
 	platform::PathString user_directory = platform::get_user_directory();
-	TEST_VERIFY(!user_directory.is_empty(), get_user_directory);
+	TEST_ASSERT(!user_directory.is_empty(), get_user_directory);
 //	fprintf(stdout, "get_user_directory: '%s'\n", user_directory);
 
 
 	platform::PathString temp_directory = platform::get_user_temp_directory();
-	TEST_VERIFY(!temp_directory.is_empty(), get_user_temp_directory);
+	TEST_ASSERT(!temp_directory.is_empty(), get_user_temp_directory);
 }
 
 // ---------------------------------------------------------------------
 // logging
 // ---------------------------------------------------------------------
-void test_logging()
+UNITTEST(logging)
 {
-	TEST_CATEGORY(logging);
-
 	// This isn't something I know how to reliably test without installing
 	// some mock platform handler.
 
@@ -130,14 +136,14 @@ void test_logging()
 	platform::log_message(platform::LogMessageType::Warning, "test warning log message\n");
 	platform::log_message(platform::LogMessageType::Error, "test error log message\n");
 
-	TEST_VERIFY(true, logging_sanity);
+	TEST_ASSERT(true, logging_sanity);
 }
 
 
 // ---------------------------------------------------------------------
 // serial
 // ---------------------------------------------------------------------
-void test_serial()
+UNITTEST(serial)
 {
 
 }
@@ -145,39 +151,38 @@ void test_serial()
 // ---------------------------------------------------------------------
 // system
 // ---------------------------------------------------------------------
-void test_system()
+UNITTEST(system)
 {
-	TEST_CATEGORY(system);
-
 	size_t page_size = platform::system_pagesize_bytes();
 
 	PLATFORM_LOG(platform::LogMessageType::Info, "page size: %i bytes\n", page_size);
-	TEST_VERIFY(page_size > 0, page_size);
+	TEST_ASSERT(page_size > 0, page_size);
 
 	size_t total_processors = platform::system_processor_count();
 	PLATFORM_LOG(platform::LogMessageType::Info, "total processors: %i\n", total_processors);
-	TEST_VERIFY(total_processors >= 1, system_processor_count);
+	TEST_ASSERT(total_processors >= 1, system_processor_count);
 
 	size_t uptime_seconds = platform::system_uptime_seconds();
 	PLATFORM_LOG(platform::LogMessageType::Info, "system_uptime_seconds: %i\n", uptime_seconds);
-	TEST_VERIFY(uptime_seconds > 0, system_uptime_seconds);
+	TEST_ASSERT(uptime_seconds > 0, system_uptime_seconds);
 
 	core::StackString<64> version = platform::system_version_string();
 	PLATFORM_LOG(platform::LogMessageType::Info, "system_version_string: %s\n", version());
-	TEST_VERIFY(!version.is_empty(), system_version_string);
+	TEST_ASSERT(!version.is_empty(), system_version_string);
 }
 
 // ---------------------------------------------------------------------
 // thread
 // ---------------------------------------------------------------------
+UNITTEST(thread)
+{
+}
 
 // ---------------------------------------------------------------------
 // time
 // ---------------------------------------------------------------------
-void test_datetime()
+UNITTEST(datetime)
 {
-	TEST_CATEGORY(datetime);
-
 	platform::DateTime dt;
 	platform::datetime(dt);
 
@@ -192,10 +197,10 @@ void test_datetime()
 	dt.year != 0;
 
 	// this isn't something I know how to reliably test. here goes nothing.
-	TEST_VERIFY(maybe_valid, datetime_sanity);
+	TEST_ASSERT(maybe_valid, datetime_sanity);
 
 	uint64_t ms = platform::microseconds();
-	TEST_VERIFY(ms != 0, microseconds);
+	TEST_ASSERT(ms != 0, microseconds);
 
 	PLATFORM_LOG(platform::LogMessageType::Info, "waiting three seconds...\n");
 
@@ -208,24 +213,14 @@ void test_datetime()
 	PLATFORM_LOG(platform::LogMessageType::Info, "three seconds have passed!\n");
 }
 
+
+
 int main(int, char**)
 {
-	TEST_CATEGORY(platform);
+	unittest::UnitTest::execute();
 
-	platform::Result result = platform::startup();
-	TEST_VERIFY(result.succeeded(), platform_startup);
-
-
-	PLATFORM_LOG(platform::LogMessageType::Info, "PLATFORM_NAME: %s\n", PLATFORM_NAME);
-	PLATFORM_LOG(platform::LogMessageType::Info, "PLATFORM_COMPILER: %s, version: %s\n", PLATFORM_COMPILER, PLATFORM_COMPILER_VERSION);
-
-	test_dynamic_library();
-	test_filesystem();
-	test_logging();
-	test_serial();
-	test_system();
-	test_datetime();
-
+	// the matching 'startup' to this is in the platform unit test.
 	platform::shutdown();
+
 	return 0;
 }

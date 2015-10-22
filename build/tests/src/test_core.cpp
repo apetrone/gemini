@@ -57,10 +57,8 @@ using namespace core::util;
 // ---------------------------------------------------------------------
 // ArgumentParser
 // ---------------------------------------------------------------------
-void test_argumentparser()
+UNITTEST(ArgumentParser)
 {
-	TEST_CATEGORY(ArgumentParser);
-
 	const char* docstring = R"(
 Usage:
 	--test=<path>
@@ -80,7 +78,7 @@ Options:
 
 	std::string path = vm["--test"];
 
-	TEST_VERIFY(path == "target_path", single_argument);
+	TEST_ASSERT(path == "target_path", single_argument);
 
 }
 
@@ -88,17 +86,16 @@ Options:
 // ---------------------------------------------------------------------
 // Array
 // ---------------------------------------------------------------------
-void test_array()
+UNITTEST(Array)
 {
-	TEST_CATEGORY(Array);
 
 	Array<int> a;
 
-	TEST_VERIFY(a.empty(), is_empty);
-	TEST_VERIFY(a.size() == 0, size_empty);
+	TEST_ASSERT(a.empty(), is_empty);
+	TEST_ASSERT(a.size() == 0, size_empty);
 
 	a.push_back(0);
-	TEST_VERIFY(a.size() == 1, size_after_adding_one);
+	TEST_ASSERT(a.size() == 1, size_after_adding_one);
 
 
 	for (size_t i = 0; i < 14; ++i)
@@ -106,19 +103,19 @@ void test_array()
 		a.push_back(i+1);
 	}
 
-	TEST_VERIFY(a.size() == 15, size_after_adding_14);
+	TEST_ASSERT(a.size() == 15, size_after_adding_14);
 
-	TEST_VERIFY(a[10] == 10, array_index);
+	TEST_ASSERT(a[10] == 10, array_index);
 
 	// push a 16th element (should be OK)
 	a.push_back(16);
 
 	// push a 17th element (should force a growth)
 	a.push_back(17);
-	TEST_VERIFY(a.size() == 17, size_after_growth);
+	TEST_ASSERT(a.size() == 17, size_after_growth);
 
 	// verify the n-th element
-	TEST_VERIFY(a[10] == 10, array_index_after_growth);
+	TEST_ASSERT(a[10] == 10, array_index_after_growth);
 	
 	
 	
@@ -136,10 +133,9 @@ void test_array()
 
 	abc.pop_back();
 
-	TEST_VERIFY(abc.size() == 1, size_after_erase);
+	TEST_ASSERT(abc.size() == 1, size_after_erase);
 	for (const int& value : abc)
 	{
-		fprintf(stdout, "value: %i\n", value);
 	}
 	
 
@@ -169,10 +165,10 @@ void test_array()
 	};
 
 	Array<CustomType> b(4);
-	TEST_VERIFY(_local_counter == 4, constructor_called_n_times);
+	TEST_ASSERT(_local_counter == 4, constructor_called_n_times);
 	b.clear();
 
-	TEST_VERIFY(_local_counter == 0, destructor_called_n_times);
+	TEST_ASSERT(_local_counter == 0, destructor_called_n_times);
 
 
 	Array<int> rd;
@@ -181,45 +177,41 @@ void test_array()
 	rd.push_back(90);
 	rd.resize(4, 0);
 
-	TEST_VERIFY(rd[0] == 30, resize_default_keep_existing);
-	TEST_VERIFY(rd[3] == 0, resize_default_set);
+	TEST_ASSERT(rd[0] == 30, resize_default_keep_existing);
+	TEST_ASSERT(rd[3] == 0, resize_default_set);
 	// test resize with default value
 }
 
 // ---------------------------------------------------------------------
 // Color
 // ---------------------------------------------------------------------
-void test_color()
+UNITTEST(Color)
 {
-	TEST_CATEGORY(Color);
-
 	Color red(255, 0, 0, 255);
 
 	Color temp;
 	float red_float[4] = {1.0f, 0.0f, 0.0f, 1.0f};
 	temp = Color::from_float_pointer(red_float, 4);
-	TEST_VERIFY(temp == red, from_float_pointer);
+	TEST_ASSERT(temp == red, from_float_pointer);
 
 	uint32_t u32_color = red.as_uint32();
 	Color int_color = Color::from_int(u32_color);
-	TEST_VERIFY(int_color == red, from_int);
+	TEST_ASSERT(int_color == red, from_int);
 
 	Color ubyte_test(0, 128, 255, 32);
 	unsigned char ubyte[] = {0, 128, 255, 32};
 	Color ubyte_color = Color::from_ubyte(ubyte);
 
-	TEST_VERIFY(ubyte_color == ubyte_test, from_ubyte);
+	TEST_ASSERT(ubyte_color == ubyte_test, from_ubyte);
 }
 
 
 // ---------------------------------------------------------------------
 // DataStream
 // ---------------------------------------------------------------------
-void test_datastream()
+UNITTEST(DataStream)
 {
 	{
-		TEST_CATEGORY(MemoryStream);
-
 		const size_t DATA_SIZE = 256;
 		unsigned char data[ DATA_SIZE] = {0};
 
@@ -250,7 +242,7 @@ void test_datastream()
 		ms.read(out_pointer);
 		ms.read(out_uint64);
 
-		TEST_VERIFY((
+		TEST_ASSERT((
 			out_values[0] == test_values[0] &&
 			out_values[1] == test_values[1] &&
 			out_float == test_float &&
@@ -260,8 +252,8 @@ void test_datastream()
 			pod_read_write
 		);
 
-		TEST_VERIFY(ms.get_data_size() == DATA_SIZE, get_data_size);
-		TEST_VERIFY(ms.get_data() == data, get_data);
+		TEST_ASSERT(ms.get_data_size() == DATA_SIZE, get_data_size);
+		TEST_ASSERT(ms.get_data() == data, get_data);
 	}
 }
 
@@ -269,29 +261,27 @@ void test_datastream()
 // ---------------------------------------------------------------------
 // FixedArray
 // ---------------------------------------------------------------------
-void test_fixedarray()
+UNITTEST(FixedArray)
 {
-	TEST_CATEGORY(FixedArray);
-
 	FixedArray<int> int_array;
 	int_array.allocate(32);
-	TEST_VERIFY(int_array.size() == 32, size);
+	TEST_ASSERT(int_array.size() == 32, size);
 
 	int_array[15] = 0xbeef;
-	TEST_VERIFY(int_array[15] == 0xbeef, array_index);
+	TEST_ASSERT(int_array[15] == 0xbeef, array_index);
 
-	TEST_VERIFY(int_array.empty() == false, empty_when_not_empty);
+	TEST_ASSERT(int_array.empty() == false, empty_when_not_empty);
 
 	int_array.clear();
-	TEST_VERIFY(int_array.size() == 0, clear);
+	TEST_ASSERT(int_array.size() == 0, clear);
 
 	int_array.empty();
-	TEST_VERIFY(int_array.empty() == true, empty_when_empty);
+	TEST_ASSERT(int_array.empty() == true, empty_when_empty);
 
 
 	// test with a smaller size
 	int_array.allocate(2);
-	TEST_VERIFY(int_array.size() == 2, reallocate);
+	TEST_ASSERT(int_array.size() == 2, reallocate);
 
 	int_array[0] = 128;
 	int_array[1] = 256;
@@ -304,17 +294,15 @@ void test_fixedarray()
 		values[index++] = i;
 	}
 
-	TEST_VERIFY(values[0] == 128 && values[1] == 256, ranged_for_loop);
+	TEST_ASSERT(values[0] == 128 && values[1] == 256, ranged_for_loop);
 }
 
 
 // ---------------------------------------------------------------------
 // FixedSizeQueue
 // ---------------------------------------------------------------------
-void test_fixedsizequeue()
+UNITTEST(FixedSizeQueue)
 {
-	TEST_CATEGORY(FixedSizeQueue);
-
 	FixedSizeQueue<int, 4> small_queue;
 
 	small_queue.push_back(32);
@@ -322,55 +310,53 @@ void test_fixedsizequeue()
 	small_queue.push_back(128);
 	small_queue.push_back(256);
 
-	TEST_VERIFY(small_queue.size() == 4, size);
+	TEST_ASSERT(small_queue.size() == 4, size);
 
-	TEST_VERIFY(small_queue.empty() == false, empty_when_not_empty);
+	TEST_ASSERT(small_queue.empty() == false, empty_when_not_empty);
 
-	TEST_VERIFY(small_queue.push_back(123) == false, push_fails_when_full);
+	TEST_ASSERT(small_queue.push_back(123) == false, push_fails_when_full);
 
 	int value = small_queue.pop();
-	TEST_VERIFY(value == 256, lifo_pop);
+	TEST_ASSERT(value == 256, lifo_pop);
 
 	int values[3];
 	values[0] = small_queue.pop();
 	values[1] = small_queue.pop();
 	values[2] = small_queue.pop();
-	TEST_VERIFY(values[0] == 128 && values[1] == 64 && values[2] == 32, pop);
+	TEST_ASSERT(values[0] == 128 && values[1] == 64 && values[2] == 32, pop);
 
-	TEST_VERIFY(small_queue.empty() == true, empty_when_empty);
+	TEST_ASSERT(small_queue.empty() == true, empty_when_empty);
 }
 
 
 // ---------------------------------------------------------------------
 // HashSet
 // ---------------------------------------------------------------------
-void test_hashset()
+UNITTEST(HashSet)
 {
-	TEST_CATEGORY(HashSet);
-
 	HashSet<std::string, int> dict;
 	dict["first"] = 1;
-	TEST_VERIFY(dict.size() == 1, operator_insert);
+	TEST_ASSERT(dict.size() == 1, operator_insert);
 	dict["second"] = 2;
 	dict["third"] = 3;
 	dict["fourth"] = 4;
 
-	TEST_VERIFY(dict.size() == 4, size);
+	TEST_ASSERT(dict.size() == 4, size);
 
-	TEST_VERIFY(dict.has_key("third"), has_key);
+	TEST_ASSERT(dict.has_key("third"), has_key);
 
 	dict.insert(std::pair<std::string, int>("fifth", 5));
-	TEST_VERIFY(dict.size() == 5, insert);
+	TEST_ASSERT(dict.size() == 5, insert);
 
 	dict.clear();
-	TEST_VERIFY(dict.size() == 0, clear);
+	TEST_ASSERT(dict.size() == 0, clear);
 
 
 	HashSet<std::string, void*> custom_capacity(4096);
-	TEST_VERIFY(custom_capacity.capacity() == 4096, capacity);
+	TEST_ASSERT(custom_capacity.capacity() == 4096, capacity);
 
 	int second = dict.get("second");
-	TEST_VERIFY(second == 2, get);
+	TEST_ASSERT(second == 2, get);
 
 
 	bool has_two = false;
@@ -391,17 +377,15 @@ void test_hashset()
 	test.insert(HashSet<int, int>::value_type(30, 72));
 
 	int z = test[30];
-	TEST_VERIFY(z == 72, hash_with_global_allocator);
+	TEST_ASSERT(z == 72, hash_with_global_allocator);
 }
 
 
 // ---------------------------------------------------------------------
 // CircularBuffer
 // ---------------------------------------------------------------------
-void test_circularbuffer()
+UNITTEST(CircularBuffer)
 {
-	TEST_CATEGORY(CircularBuffer);
-
 	CircularBuffer<int, 3> cb;
 	int& a = cb.next();
 	a = 30;
@@ -413,7 +397,7 @@ void test_circularbuffer()
 	c = 90;
 
 	int d = cb.next();
-	TEST_VERIFY(d == a, circular_buffer);
+	TEST_ASSERT(d == a, circular_buffer);
 }
 
 // ---------------------------------------------------------------------
@@ -424,29 +408,25 @@ void test_circularbuffer()
 // ---------------------------------------------------------------------
 // mathlib
 // ---------------------------------------------------------------------
-void test_mathlib()
+UNITTEST(mathlib)
 {
-	TEST_CATEGORY(mathlib);
-
 	const float forty_five_degrees = 45.0f;
 	const float forty_five_degrees_in_radians = 0.785398185f;
 
 
 	float temp = mathlib::degrees_to_radians(45);
-	TEST_VERIFY(temp == forty_five_degrees_in_radians, degrees_to_radians);
+	TEST_ASSERT(temp == forty_five_degrees_in_radians, degrees_to_radians);
 
 	temp = mathlib::radians_to_degrees(temp);
-	TEST_VERIFY(temp == 45, radians_to_degrees);
+	TEST_ASSERT(temp == 45, radians_to_degrees);
 }
 
 // ---------------------------------------------------------------------
 // memory
 // ---------------------------------------------------------------------
-void test_memory()
+UNITTEST(memory)
 {
-	TEST_CATEGORY(memory);
-
-	TEST_VERIFY(1, sanity);
+	TEST_ASSERT(1, sanity);
 }
 
 
@@ -544,7 +524,7 @@ TYPEINFO_REGISTER_TYPE_INFO(Test3);
 TYPEINFO_REGISTER_TYPE_BASE(Test3, Test2);
 
 
-void test_serialization()
+UNITTEST(Serialization)
 {
 	// The impetus behind writing serialization has to do with the UI code
 	// I would like to define a layout in JSON and then read that back in
@@ -634,115 +614,107 @@ void test_serialization()
 // ---------------------------------------------------------------------
 // StackString
 // ---------------------------------------------------------------------
-void test_stackstring()
+UNITTEST(stackstring)
 {
-	TEST_CATEGORY(StackString);
-
 	StackString<128> s1;
 
 	s1 = "name";
-	TEST_VERIFY(s1.size() == 4, size);
+	TEST_ASSERT(s1.size() == 4, size);
 
 	s1.clear();
-	TEST_VERIFY(s1.size() == 0, clear);
+	TEST_ASSERT(s1.size() == 0, clear);
 
-	TEST_VERIFY(s1.is_empty(), is_empty);
+	TEST_ASSERT(s1.is_empty(), is_empty);
 
 	s1 = "/usr/bin/git";
 	char* last_slash = s1.find_last_slash();
-	TEST_VERIFY(*last_slash == '/' && last_slash == &s1[8], find_last_slash);
+	TEST_ASSERT(*last_slash == '/' && last_slash == &s1[8], find_last_slash);
 
 	StackString<128> base = s1.basename();
-	TEST_VERIFY(base == "git", basename);
+	TEST_ASSERT(base == "git", basename);
 
 	StackString<128> directory = s1.dirname();
-	TEST_VERIFY(directory == "/usr/bin", dirname);
+	TEST_ASSERT(directory == "/usr/bin", dirname);
 
 	StackString<128> filename = "c:\\Users\\Administrator\\archive.zip";
 	StackString<128> ext = filename.extension();
-	TEST_VERIFY(ext == "zip", extension);
+	TEST_ASSERT(ext == "zip", extension);
 
 	filename = "c:/abnormal/path\\mixed\\slashes/with\\archive.zip";
 	filename.normalize('\\');
 
-	TEST_VERIFY(filename == "c:\\abnormal\\path\\mixed\\slashes\\with\\archive.zip", normalize);
+	TEST_ASSERT(filename == "c:\\abnormal\\path\\mixed\\slashes\\with\\archive.zip", normalize);
 
 	filename = "test";
 	filename.append("_one_two");
-	TEST_VERIFY(filename == "test_one_two", append);
+	TEST_ASSERT(filename == "test_one_two", append);
 
 	s1 = "whitespace sucks    ";
 	s1 = s1.strip_trailing(' ');
-	TEST_VERIFY(s1 == "whitespace sucks", strip_trailing);
+	TEST_ASSERT(s1 == "whitespace sucks", strip_trailing);
 
 	s1 = "orion gemini constellation";
-	TEST_VERIFY(s1.startswith("orion"), startswith);
+	TEST_ASSERT(s1.startswith("orion"), startswith);
 }
 
 
 // ---------------------------------------------------------------------
 // str
 // ---------------------------------------------------------------------
-void test_str()
+UNITTEST(str)
 {
-	TEST_CATEGORY(str);
-
 	int result = 0;
 
 	const char static_buffer[] = "items: 30, value: 2.40";
 	char* output = str::format("items: %i, value: %2.2f", 30, 2.4f);
 
 	result = core::str::case_insensitive_compare(static_buffer, output, 0);
-	TEST_VERIFY(result == 0, format);
+	TEST_ASSERT(result == 0, format);
 
 	// llu is not recognized under 32-bit environments
 	char local[128] = {0};
 	result = core::str::sprintf(local, 128, "test_of_sprintf: %i\n", 4096);
-	fprintf(stdout, "result: %s\n", local);
-	fprintf(stdout, "result is: %i\n", result);
 
 	// should be a total of 22 characters:
 	// 17 up to the first argument
 	// 4 for the integral
 	// 1 for \n
-	TEST_VERIFY(result == 22, sprintf);
+	TEST_ASSERT(result == 22, sprintf);
 
 	memset(local, 0, 128);
 	core::str::copy(local, "PAGE_SIZE", 0);
-	TEST_VERIFY(core::str::case_insensitive_compare(local, "PAGE_SIZE", 0) == 0, copy);
+	TEST_ASSERT(core::str::case_insensitive_compare(local, "PAGE_SIZE", 0) == 0, copy);
 
-	TEST_VERIFY(core::str::len(local) == 9, len);
+	TEST_ASSERT(core::str::len(local) == 9, len);
 
 	core::str::cat(local, " = 4096");
-	TEST_VERIFY(core::str::case_insensitive_compare(local, "PAGE_SIZE = 4096", 0) == 0, cat);
+	TEST_ASSERT(core::str::case_insensitive_compare(local, "PAGE_SIZE = 4096", 0) == 0, cat);
 
 	char base[] = "string test number one";
 	result = core::str::case_insensitive_compare(base, "string test number one", 0);
-	TEST_VERIFY(result == 0, case_insensitive_compare);
+	TEST_ASSERT(result == 0, case_insensitive_compare);
 }
 
 
 // ---------------------------------------------------------------------
 // util
 // ---------------------------------------------------------------------
-void test_util()
+UNITTEST(util)
 {
-	TEST_CATEGORY(util);
-
 	float value = util::random_range(0.0f, 1.0f);
-	TEST_VERIFY(0.0f <= value && value <= 1.0f, random_range0);
+	TEST_ASSERT(0.0f <= value && value <= 1.0f, random_range0);
 
 	value = util::random_range(0.0f, 1.0f);
-	TEST_VERIFY(0.0f <= value && value <= 1.0f, random_range1);
+	TEST_ASSERT(0.0f <= value && value <= 1.0f, random_range1);
 
 	value = util::random_range(0.0f, 1.0f);
-	TEST_VERIFY(0.0f <= value && value <= 1.0f, random_range2);
+	TEST_ASSERT(0.0f <= value && value <= 1.0f, random_range2);
 
 	value = util::random_range(0.0f, 1.0f);
-	TEST_VERIFY(0.0f <= value && value <= 1.0f, random_range3);
+	TEST_ASSERT(0.0f <= value && value <= 1.0f, random_range3);
 
 	value = util::random_range(0.0f, 1.0f);
-	TEST_VERIFY(0.0f <= value && value <= 1.0f, random_range4);
+	TEST_ASSERT(0.0f <= value && value <= 1.0f, random_range4);
 }
 
 #include <rapidjson/document.h>
@@ -1335,22 +1307,7 @@ int main(int, char**)
 {
 	core::memory::startup();
 
-	test_argumentparser();
-	test_array();
-	test_color();
-	test_datastream();
-	test_fixedarray();
-	test_fixedsizequeue();
-	test_hashset();
-	test_circularbuffer();
-	test_mathlib();
-	test_memory();
-	test_serialization();
-	test_stackstring();
-	test_str();
-	test_util();
-
-	test_rapidjson();
+	unittest::UnitTest::execute();
 
 	core::memory::shutdown();
 
@@ -1358,9 +1315,9 @@ int main(int, char**)
 }
 
 #if 0
-#define TEST(name) void test_##name(UnitTestCategory& category)
+#define UNITTEST(name) void test_##name(UnitTestCategory& category)
 
-TEST(StackString)
+UNITTEST(StackString)
 {
 
 }
