@@ -33,12 +33,10 @@
 // ---------------------------------------------------------------------
 // filesystem
 // ---------------------------------------------------------------------
-void test_filesystem()
+UNITTEST(filesystem)
 {
-	TEST_CATEGORY(filesystem);
-
 	core::filesystem::IFileSystem* fs = core::filesystem::instance();
-	TEST_VERIFY(fs != nullptr, filesystem_instance_exists);
+	TEST_ASSERT(fs != nullptr, filesystem_instance_exists);
 
 	//	platform::PathString content_path;
 	//	content_path = fs->root_directory();
@@ -47,16 +45,15 @@ void test_filesystem()
 
 
 	//	platform::PathString absolute_path;
-	//	TEST_VERIFY(fs->get_absolute_path_for_content(absolute_path, "conf/shaders.conf") == false, get_absolute_path_for_content_missing);
+	//	TEST_ASSERT(fs->get_absolute_path_for_content(absolute_path, "conf/shaders.conf") == false, get_absolute_path_for_content_missing);
 }
 
 // ---------------------------------------------------------------------
 // logging
 // ---------------------------------------------------------------------
-void test_logging()
+UNITTEST(logging)
 {
-	TEST_CATEGORY(logging);
-	TEST_VERIFY(core::logging::instance() != nullptr, log_instance_is_valid);
+	TEST_ASSERT(core::logging::instance() != nullptr, log_instance_is_valid);
 
 	LOGV("This is a test of the logging system!\n");
 
@@ -72,9 +69,6 @@ void test_logging()
 // configloader
 // ---------------------------------------------------------------------
 
-
-
-
 int main(int, char**)
 {
 	platform::Result result = platform::startup();
@@ -89,9 +83,8 @@ int main(int, char**)
 	core::filesystem::instance()->user_application_directory(application_path);
 	
 	core::startup_logging();
-	
-	test_filesystem();
-	test_logging();
+
+	unittest::UnitTest::execute();
 
 	core::shutdown();
 	

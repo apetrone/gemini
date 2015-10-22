@@ -28,115 +28,22 @@
 #include <stdio.h>
 #include <stdint.h>
 
-// This system needs to be replaced with something a little
-// more robust. This cannot handle tests within scope properly
-// and causes an infinite loop because the linked list will be
-// created with two identical addresses in this case.
-
-struct UnitTest
-{
-	const char* name;
-	int line_number;
-	UnitTest* next;
-	bool failed;
-
-	UnitTest(const char* test_name, int line, bool failed) :
-		name(test_name),
-		line_number(line),
-		failed(failed)
-	{
-		next = nullptr;
-	}
-};
-
-struct UnitTestCategory
-{
-	const char* name;
-	uint32_t failed_tests;
-	uint32_t total_tests;
-	UnitTest* root;
-
-	UnitTestCategory(const char* suite_name) :
-		name(suite_name),
-		failed_tests(0),
-		total_tests(0),
-		root(nullptr)
-	{
-	}
-
-	~UnitTestCategory()
-	{
-		if (root)
-		{
-			UnitTest* current = reverse_list(root);
-			while(current)
-			{
-				if (current->failed)
-				{
-					fprintf(stdout, "FAILED '%s.%s' (line: %i)\n", name, current->name, current->line_number);
-					++failed_tests;
-				}
-				else
-				{
-					fprintf(stdout, "PASSED '%s.%s'\n", name, current->name);
-				}
-				current = current->next;
-			}
-		}
-
-		uint32_t passed_tests = (total_tests-failed_tests);
-		fprintf(stdout, "* %s: %u / %u (%2.2f%%) passed\n\n", name, passed_tests, total_tests, (passed_tests/(float)total_tests)*100.0f);
-	}
-
-	UnitTest* reverse_list(UnitTest* root)
-	{
-		UnitTest* output = nullptr;
-		UnitTest* curr = root;
-		while(curr)
-		{
-			// we traverse the list starting at root
-			// and simultaneously build the new root with output.
-			UnitTest* next = curr->next;
-			curr->next = output;
-			output = curr;
-			curr = next;
-		}
-
-
-		return output;
-	}
-
-	void add_test(UnitTest* test)
-	{
-		++total_tests;
-		test->next = root;
-		root = test;
-	}
-};
-
-
-#define TEST_CATEGORY(name) UnitTestCategory _category(#name);
-
-#define TEST_VERIFY(condition, name)\
-	UnitTest name##test(#name, __LINE__, !(condition));\
-	_category.add_test(&name##test)
-
-
-#define TEST(name)\
-	void test_##name##_execute(UnitTestCategory&);\
-	static UnitTest test_##name(#name, test_##name##_execute);\
-	test_##name##_execute(UnitTestCategory& _category)
+#define UNITTEST(name)\
+	void test_##name##_execute();\
+	static unittest::UnitTest test_##name(#name, test_##name##_execute);\
+	void test_##name##_execute()
 
 #define TEST_ASSERT(condition, name)\
 	if (!(condition))\
 	{\
-		fprintf(stdout, "'%s' FAILED (line = %i)\n", name, __LINE__);\
+		fprintf(stdout, "'%s' FAILED (line = %i)\n", #name, __LINE__);\
+		unittest::UnitTest::increment_failures();\
 	}
 
 #if 0
 USAGE:
 
-TEST(name)
+UNITTEST(name)
 {
 	int array[30];
 
@@ -147,6 +54,86 @@ TEST(name)
 
 }
 
-
+int main(int argc, char** argv)
+{
+	unittest::UnitTest::execute();
+	return 0;
+}
 
 #endif
+
+namespace unittest
+{
+	typedef void (*unit_test_function)();
+
+	struct UnitTest
+	{
+		// per unit-test values
+		const char* name;
+		UnitTest* next;
+		unit_test_function function;
+
+		static UnitTest* root;
+		static size_t failures;
+
+		UnitTest(const char* test_name, unit_test_function test_function) :
+			name(test_name),
+			function(test_function)
+		{
+			// insert itself into the list
+			next = UnitTest::root;
+			UnitTest::root = this;
+		}
+
+		// run this test
+		void run()
+		{
+			fprintf(stdout, "unit test '%s'...\n", name);
+			function();
+		}
+
+		// iterate over and execute all unit tests
+		static void execute()
+		{
+			UnitTest::failures = 0;
+
+			if (UnitTest::root)
+			{
+				UnitTest* test = UnitTest::reverse_list(UnitTest::root);
+				while(test)
+				{
+					test->run();
+					test = test->next;
+				}
+			}
+
+			fprintf(stdout, "total failures: %zu\n", UnitTest::failures);
+		}
+
+		static void increment_failures()
+		{
+			UnitTest::failures++;
+		}
+
+	private:
+		static UnitTest* reverse_list(UnitTest* root)
+		{
+			UnitTest* output = nullptr;
+			UnitTest* curr = root;
+			while(curr)
+			{
+				// we traverse the list starting at root
+				// and simultaneously build the new root with output.
+				UnitTest* next = curr->next;
+				curr->next = output;
+				output = curr;
+				curr = next;
+			}
+
+			return output;
+		}
+	};
+
+	UnitTest* UnitTest::root = nullptr;
+	size_t UnitTest::failures = 0;
+} // namespace unittest
