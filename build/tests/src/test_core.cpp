@@ -700,7 +700,12 @@ void test_str()
 	result = core::str::sprintf(local, 128, "test_of_sprintf: %i\n", 4096);
 	fprintf(stdout, "result: %s\n", local);
 	fprintf(stdout, "result is: %i\n", result);
-	TEST_VERIFY(result == 16, sprintf);
+
+	// should be a total of 22 characters:
+	// 17 up to the first argument
+	// 4 for the integral
+	// 1 for \n
+	TEST_VERIFY(result == 22, sprintf);
 
 	memset(local, 0, 128);
 	core::str::copy(local, "PAGE_SIZE", 0);
