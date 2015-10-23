@@ -51,7 +51,7 @@
 using namespace gemini;
 using namespace gemini::physics;
 
-static void entity_collision_callback(CollisionEventType type, ICollisionObject* first, ICollisionObject* second)
+void entity_collision_callback(CollisionEventType type, ICollisionObject* first, ICollisionObject* second)
 {
 	assert(first != 0);
 	assert(second != 0);
@@ -64,17 +64,14 @@ static void entity_collision_callback(CollisionEventType type, ICollisionObject*
 
 	if (ent0 && ent1)
 	{
+		normal = glm::normalize(ent1->get_position() - ent0->get_position());
 		if (type == Collision_Began)
 		{
-			normal = glm::normalize(ent0->get_position() - ent1->get_position());
 			ent0->collision_began(ent1, normal);
-//			ent1->collision_began(ent0);
 		}
 		else if (type == Collision_Ended)
 		{
-			normal = glm::normalize(ent0->get_position() - ent1->get_position());
 			ent0->collision_ended(ent1, normal);
-//			ent1->collision_ended(ent0);
 		}
 	}
 }
@@ -107,7 +104,7 @@ void entity_deferred_delete( bool only_deferred )
 		if (ent->flags & Entity::EF_DELETE_PHYSICS)
 		{
 			ent->flags &= ~Entity::EF_DELETE_PHYSICS;
-			ent->delete_collision_object();
+			ent->remove_colliders();
 		}
 
 		++it;
@@ -120,7 +117,7 @@ void entity_update_physics()
 	{
 		if (!(entity->flags & Entity::EF_DELETE_PHYSICS))
 		{
-			entity->set_current_transform_from_physics();
+			entity->set_current_transform_from_physics(0);
 		}
 	}
 }
@@ -148,7 +145,6 @@ void entity_shutdown()
 
 Entity::Entity() :
 	flags(0),
-	collision_object(0),
 //	motion_interface(0),
 	model_index(-1),
 	local_time(0)
@@ -167,8 +163,7 @@ Entity::~Entity()
 	entity_list().remove( this );
 	engine::instance()->entities()->remove(this);
 	
-	delete_collision_object();
-
+	remove_colliders();
 } // ~Entity
 
 
@@ -203,7 +198,7 @@ void Entity::pre_tick()
 
 void Entity::post_tick()
 {
-	set_current_transform_from_physics();
+	set_current_transform_from_physics(0);
 }
 
 void Entity::update(float delta_seconds, float alpha)
@@ -235,34 +230,61 @@ void Entity::use(Entity *user)
 
 void Entity::set_physics_from_current_transform()
 {
-	if (collision_object)
+	for (size_t index = 0; index < colliders.size(); ++index)
 	{
-		collision_object->set_world_transform(position, orientation);
+		physics::ICollisionObject* collider = colliders[index];
+		collider->set_world_transform(position+collider_offsets[index], orientation);
 	}
 }
 
-void Entity::set_current_transform_from_physics()
+void Entity::set_current_transform_from_physics(size_t collider_index)
 {
-	if (this->collision_object)
+	assert(colliders.empty() || !colliders.empty() && (collider_index >= 0 && collider_index < colliders.size()));
+
+	if (!colliders.empty())
 	{
-		collision_object->get_world_transform(position, orientation);
+		physics::ICollisionObject* collider = colliders[collider_index];
+		collider->get_world_transform(position, orientation);
 	}
 }
 
 void Entity::set_physics_from_current_velocity()
 {
-	if (collision_object)
+	for (size_t index = 0; index < colliders.size(); ++index)
 	{
-		collision_object->set_linear_velocity(velocity);
+		physics::ICollisionObject* collider = colliders[index];
+		collider->set_linear_velocity(velocity);
 	}
 }
 
 void Entity::set_current_velocity_from_physics()
 {
-	if (collision_object)
+	for (size_t index = 0; index < colliders.size(); ++index)
 	{
-		collision_object->get_linear_velocity(velocity);
+		physics::ICollisionObject* collider = colliders[index];
+		collider->get_linear_velocity(velocity);
 	}
+}
+
+void Entity::add_collider(physics::ICollisionObject* collider, const glm::vec3& offset)
+{
+	assert(collider != nullptr);
+
+	collider->set_user_data(this);
+	collider->set_collision_callback(entity_collision_callback);
+
+	colliders.push_back(collider);
+	collider_offsets.push_back(offset);
+}
+
+void Entity::remove_colliders()
+{
+	for (size_t index = 0; index < colliders.size(); ++index)
+	{
+		physics::ICollisionObject* collider = colliders[index];
+		engine::instance()->physics()->destroy_object(collider);
+	}
+	colliders.clear();
 }
 
 //
@@ -309,37 +331,28 @@ ICollisionObject* Entity::physics_create_model()
 	return engine::instance()->physics()->create_physics_model(model_index, properties);
 }
 
-void Entity::set_physics_object(physics::ICollisionObject *object)
-{
-	assert(object != 0);
-	object->set_user_data(this);
-	this->collision_object = object;
-	this->collision_object->set_collision_callback(entity_collision_callback);
-}
-
 void Entity::set_position(const glm::vec3& new_position)
 {
 	position = new_position;
-	if (collision_object)
-	{
-		collision_object->set_world_transform(position, orientation);
-	}
+	set_physics_from_current_transform();
 }
 
 
 void Entity::apply_impulse(const glm::vec3& impulse, const glm::vec3& local_position)
 {
-	if (this->collision_object)
+	for (size_t index = 0; index < colliders.size(); ++index)
 	{
-		this->collision_object->apply_impulse(impulse, local_position);
+		physics::ICollisionObject* collider = colliders[index];
+		collider->apply_impulse(impulse, local_position);
 	}
 }
 
 void Entity::apply_central_impulse(const glm::vec3& impulse)
 {
-	if (this->collision_object)
+	for (size_t index = 0; index < colliders.size(); ++index)
 	{
-		this->collision_object->apply_central_impulse(impulse);
+		physics::ICollisionObject* collider = colliders[index];
+		collider->apply_central_impulse(impulse);
 	}
 }
 
@@ -369,13 +382,4 @@ void Entity::set_model(const char* path)
 //	engine::instance()->models()->destroy_instance_data(model_index);
 	model_index = engine::instance()->models()->create_instance_data(path);
 //	LOGV("set model index: %i, for model: %s\n", model_index, path);
-}
-
-void Entity::delete_collision_object()
-{
-	if (this->collision_object)
-	{
-		engine::instance()->physics()->destroy_object(this->collision_object);
-		this->collision_object = 0;
-	}
 }

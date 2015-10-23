@@ -103,13 +103,7 @@ namespace gemini
 		{
 		public:
 			virtual ~IPhysicsInterface() {};
-			
-			
-//			virtual physics::ICollisionObject* create_static_object(
-//				ICollisionShape* shape,
-//				const glm::vec3& mass_center_offset = glm::vec3(0, 0, 0)
-//			) = 0;
-			
+
 			virtual physics::ICollisionObject* create_physics_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation, ObjectProperties& properties) = 0;
 			virtual physics::ICollisionObject* create_physics_model(int32_t model_index, ObjectProperties& properties) = 0;
 			virtual physics::ICollisionObject* create_character_object(ICollisionShape* shape) = 0;
