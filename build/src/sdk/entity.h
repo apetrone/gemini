@@ -29,10 +29,13 @@
 #include <core/mem.h>
 #include <core/str.h>
 #include <core/stackstring.h>
+#include <core/array.h>
+
 //#include "physics/physics.h"
 
 #include <sdk/iengineentity.h>
 #include <sdk/utils.h>
+#include <sdk/physics_rigidbody.h>
 
 #define DECLARE_ENTITY(entity_class, base_class)\
 	typedef entity_class ThisClass;\
@@ -64,6 +67,7 @@ namespace gemini
 
 typedef core::StackString<128> EntityName;
 
+void entity_collision_callback(gemini::physics::CollisionEventType type, gemini::physics::ICollisionObject* first, gemini::physics::ICollisionObject* second);
 
 class Entity : public gemini::IEngineEntity
 {
@@ -112,7 +116,8 @@ public:
 	
 	virtual void remove();
 	virtual void remove_collision();
-	
+
+	// the normal vector points from this entity to other.
 	virtual void collision_began(Entity* other, const glm::vec3& normal);
 	virtual void collision_ended(Entity* other, const glm::vec3& normal);
 	
@@ -128,15 +133,16 @@ public:
 	
 	// Set the entity's transform (position/orientation) from the associated
 	// physics object, if one is set.
-	virtual void set_current_transform_from_physics();
+	virtual void set_current_transform_from_physics(size_t collider_index);
 	
 	// update physics velocity from our own
 	virtual void set_physics_from_current_velocity();
 	
 	virtual void set_current_velocity_from_physics();
-	
-	void delete_collision_object();
-	
+
+	virtual void add_collider(gemini::physics::ICollisionObject* collider, const glm::vec3& offset);
+	virtual void remove_colliders();
+
 public:
 	// memory overloads
 	void* operator new(size_t bytes);
@@ -169,12 +175,7 @@ public:
 	
 	// create a trigger
 //	physics::ICollisionObject* physics_create_trigger(const glm::vec3& local_center, const glm::vec3& mins, const glm::vec3& maxs);
-	
-	
-	void set_physics_object(gemini::physics::ICollisionObject* object);
-	
-	
-	
+
 	
 	// get/set functions for script interop
 	const EntityName& get_name() { return this->name; }
@@ -186,12 +187,13 @@ public:
 	void apply_central_impulse(const glm::vec3& force);
 	void set_mass(float mass);
 	void set_parent(Entity* other);
-	
-	// perhaps move these into a unified interface?
-	gemini::physics::ICollisionObject* collision_object;
-		
+
 	// functions for this script object
 	void set_model(const char* path);
+
+
+	Array<gemini::physics::ICollisionObject*> colliders;
+	Array<glm::vec3> collider_offsets;
 }; // Entity
 
 
