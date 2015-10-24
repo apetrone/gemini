@@ -29,9 +29,9 @@
 #include <stdint.h>
 
 #define UNITTEST(name)\
-	void test_##name##_execute();\
-	static unittest::UnitTest test_##name(#name, test_##name##_execute);\
-	void test_##name##_execute()
+	void _unittest_##name##_execute();\
+	static unittest::UnitTest _unittest_##name(#name, _unittest_##name##_execute);\
+	void _unittest_##name##_execute()
 
 #define TEST_ASSERT(condition, name)\
 	if (!(condition))\

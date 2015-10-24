@@ -400,11 +400,8 @@ namespace platform
 	// ---------------------------------------------------------------------
 
 	/// @brief Creates a thread with entry point
+	/// 	   This sets up signals, thread names, thread id and states.
 	LIBRARY_EXPORT Result thread_create(Thread& thread, ThreadEntry entry, void* data);
-
-	/// @brief Should be called upon thread entry.
-	///       This sets up signals, thread names, thread id and states.
-	LIBRARY_EXPORT void thread_setup(void* data);
 
 	/// @brief Wait for a thread to complete.
 	/// @returns 0 on success; non-zero on failure (abnormal thread termination)
