@@ -90,4 +90,70 @@ namespace core
 			}
 		};
 	} // namespace util
+
+
+	template <class Iterator>
+	void swap(const Iterator& a, Iterator& b)
+	{
+		b.swap(a);
+	}
+
+	// Quick Sort
+	// base case: O(n log n)
+	// worst case: O(n^2)
+	// in-place operation
+	struct quicksort
+	{
+		template <class Iterator>
+		void operator()(Iterator start, Iterator end)
+		{
+			sort(start, end);
+		}
+
+		template <class Iterator>
+		void sort(const Iterator& start, const Iterator& end)
+		{
+			if (start < end)
+			{
+				Iterator pivot = partition(start, end);
+
+				// sort left block
+				sort(start, pivot);
+
+				// sort right block
+				sort(pivot+1, end);
+			}
+		}
+
+		template <class Iterator>
+		Iterator partition(const Iterator& start, const Iterator& end)
+		{
+			// partition the list based on a pivot (last element in this case)
+			// move all elements <= pivot to the left of the pivot
+			// move all elements > pivot to the right
+			Iterator pivot = (end-1);
+			Iterator iter_swap = start;
+
+			// swap elements
+			for (Iterator current = start; current != pivot; ++current)
+			{
+				if (*current <= *pivot)
+				{
+					swap(current, iter_swap);
+					++iter_swap;
+				}
+			}
+
+			swap(iter_swap, pivot);
+
+			return iter_swap;
+		}
+	};
+
+	template <typename Algorithm, class Iterator>
+	void sort(Iterator start, Iterator end)
+	{
+		Algorithm()(start, end);
+	}
+
 } // namespace core
