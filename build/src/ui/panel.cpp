@@ -46,10 +46,10 @@ namespace gui
 		this->z_depth = 0;
 		this->parent = parent;
 		this->userdata = 0;
-		this->visible = true;
 		this->background_color = Color(255, 255, 255, 255);
 		this->foreground_color = Color(0, 0, 0, 255);
 		this->flags = (Flag_CursorEnabled | Flag_TransformIsDirty);
+		set_visible(true);
 		
 		if (parent)
 		{
@@ -279,6 +279,14 @@ namespace gui
 	void Panel::set_visible(bool is_visible)
 	{
 		this->visible = is_visible;
+		if (is_visible)
+		{
+			flags |= Flag_IsVisible;
+		}
+		else
+		{
+			flags &= ~Flag_IsVisible;
+		}
 	} // set_visible
 	
 	bool Panel::is_visible() const
