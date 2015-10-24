@@ -82,13 +82,11 @@ Options:
 
 }
 
-
 // ---------------------------------------------------------------------
 // Array
 // ---------------------------------------------------------------------
 UNITTEST(Array)
 {
-
 	Array<int> a;
 
 	TEST_ASSERT(a.empty(), is_empty);
@@ -170,7 +168,7 @@ UNITTEST(Array)
 
 	TEST_ASSERT(_local_counter == 0, destructor_called_n_times);
 
-
+	// test resize with default value
 	Array<int> rd;
 	rd.push_back(30);
 	rd.push_back(60);
@@ -179,7 +177,25 @@ UNITTEST(Array)
 
 	TEST_ASSERT(rd[0] == 30, resize_default_keep_existing);
 	TEST_ASSERT(rd[3] == 0, resize_default_set);
-	// test resize with default value
+
+
+	// test qsort
+	Array<int> values;
+	values.push_back(7);
+	values.push_back(2);
+	values.push_back(1);
+	values.push_back(6);
+	values.push_back(8);
+	values.push_back(5);
+	values.push_back(3);
+	values.push_back(4);
+	core::sort<core::quicksort>(values.begin(), values.end());
+
+	int sorted_list[] = {1, 2, 3, 4, 5, 6, 7, 8};
+	for (size_t index = 0; index < values.size(); ++index)
+	{
+		TEST_ASSERT(values[index] == sorted_list[index], quicksort);
+	}
 }
 
 // ---------------------------------------------------------------------

@@ -73,13 +73,9 @@ public:
 	
 	class iterator
 	{
-		typedef Array<value_type> container_type;
-		
-	private:
-		container_type* container;
-		size_t index;
-		
 	public:
+		typedef Array<value_type> container_type;
+
 		iterator(container_type* container = nullptr, size_t index = 0) :
 			container(container),
 			index(index)
@@ -119,13 +115,50 @@ public:
 		{
 			iterator out(*this);
 			++out.index;
-			return *this;
+			return out;
 		}
 
 		value_type& operator* ()
 		{
 			return (*container)[index];
 		}
+
+		iterator operator+(int advance) const
+		{
+			iterator out(*this);
+			out.index = (index + advance);
+			return out;
+		}
+
+		size_t operator-(const iterator& other) const
+		{
+			assert(index >= other.index);
+			return (index - other.index);
+		}
+
+		iterator operator-(const int& decrement) const
+		{
+			iterator out(*this);
+			out.index = index - decrement;
+			return out;
+		}
+
+		bool operator< (const iterator& other) const
+		{
+			return (index < other.index);
+		}
+
+		void swap(const iterator& other)
+		{
+			if (index != other.index)
+			{
+				container->swap(index, other.index);
+			}
+		}
+
+	private:
+		container_type* container;
+		size_t index;
 	};
 
 	class reverse_iterator
@@ -202,7 +235,14 @@ public:
 	{
 		clear();
 	}
-	
+
+	void swap(size_t index, size_t other)
+	{
+		value_type temp = data[index];
+		data[index] = data[other];
+		data[other] = temp;
+	}
+
 	void resize(size_t count)
 	{
 		resize(count, value_type());
