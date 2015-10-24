@@ -186,7 +186,7 @@ namespace gui
 		Panel* last_hot = this->hot;
 
 		Point cursor(last_cursor.x, last_cursor.y);
-		Panel* newhot = find_panel_at_point(cursor);
+		Panel* newhot = find_panel_at_point(cursor, Panel::Flag_CursorEnabled | Panel::Flag_IsVisible);
 		hot = newhot;
 
 		if (newhot && !get_capture())
@@ -292,7 +292,7 @@ namespace gui
 			args.cursor_button = button;
 			args.cursor = last_cursor;
 			
-			Panel * panel = get_hot();
+			Panel* panel = get_hot();
 			
 			if ( panel )
 			{
@@ -369,45 +369,42 @@ namespace gui
 		this->height = height;
 	} // resize
 	
-	Panel * Compositor::find_panel_at_point( const Point & point )
+	Panel* Compositor::find_panel_at_point(const Point& point, uint32_t flags)
 	{
-		Panel * panel = 0;
-		Panel * closest_panel = 0;
+		Panel* panel = 0;
+		Panel* closest_panel = 0;
 		
 		// reset hot and try to find a new one
 		this->hot = 0;
 
-		for( PanelVector::iterator it = zsorted.begin(); it != zsorted.end(); ++it )
+		for(PanelVector::iterator it = zsorted.begin(); it != zsorted.end(); ++it)
 		{
 			panel = (*it);
-			if (panel->has_flags(Panel::Flag_CursorEnabled) && panel->hit_test_local(point))
-//			if ( panel->bounds.is_point_inside( point ) )
+			if (panel->has_flags(flags) && panel->hit_test_local(point))
 			{
 				closest_panel = panel;
-				return find_deepest_panel_point( panel, point );
+				return find_deepest_panel_point(panel, point, flags);
 			}
 		}
-		
+
 		return closest_panel;
 	} // find_panel_at_point
 	
-	Panel * Compositor::find_deepest_panel_point( Panel * root, const gui::Point & point )
+	Panel* Compositor::find_deepest_panel_point(Panel* root, const gui::Point& point, uint32_t flags)
 	{
-		if ( !root )
+		if (!root)
 		{
 			return 0;
 		}
-		if (root->has_flags(Panel::Flag_CursorEnabled) && root->hit_test_local(point))
-//		if ( root->bounds.is_point_inside( point ) )
+		if (root->has_flags(flags) && root->hit_test_local(point))
 		{
-			Panel * cpanel = 0;
-			for ( PanelVector::iterator child = root->children.begin(); child != root->children.end(); ++child )
+			Panel* cpanel = 0;
+			for (PanelVector::iterator child = root->children.begin(); child != root->children.end(); ++child)
 			{
 				cpanel = (*child);
-				if (cpanel->has_flags(Panel::Flag_CursorEnabled) && cpanel->hit_test_local(point))
-//				if ( cpanel->bounds.is_point_inside( point ) )
+				if (cpanel->has_flags(flags) && cpanel->hit_test_local(point))
 				{
-					return find_deepest_panel_point( cpanel, point );
+					return find_deepest_panel_point(cpanel, point, flags);
 				}
 			}
 			

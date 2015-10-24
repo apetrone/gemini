@@ -99,8 +99,8 @@ namespace gui
 		
 		LIBRARY_EXPORT void resize(ScreenInt width, ScreenInt height);
 		
-		LIBRARY_EXPORT Panel* find_panel_at_point(const Point& point);
-		LIBRARY_EXPORT Panel* find_deepest_panel_point(Panel* root, const Point& point);
+		LIBRARY_EXPORT Panel* find_panel_at_point(const Point& point, uint32_t flags);
+		LIBRARY_EXPORT Panel* find_deepest_panel_point(Panel* root, const Point& point, uint32_t flags);
 		
 		LIBRARY_EXPORT virtual void set_listener(Listener* listener);
 		LIBRARY_EXPORT virtual void queue_event(const EventArgs& args);

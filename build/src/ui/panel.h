@@ -70,6 +70,7 @@ namespace gui
 		{
 			Flag_None,
 			Flag_CursorEnabled		= 1, // if this can receive cursor input
+			Flag_IsVisible			= 2,
 
 			Flag_TransformIsDirty	= 16
 		};
@@ -124,7 +125,7 @@ namespace gui
 		LIBRARY_EXPORT virtual bool is_label() const { return false; }
 		LIBRARY_EXPORT virtual bool is_button() const { return false; }
 		
-		LIBRARY_EXPORT virtual bool has_flags(const uint32_t& flags) { return this->flags & flags; }
+		LIBRARY_EXPORT virtual bool has_flags(const uint32_t& flags) { return (this->flags & flags) == flags; }
 
 
 		// ---------------------------------------------------------------------
