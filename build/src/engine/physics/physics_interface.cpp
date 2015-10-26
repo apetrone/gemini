@@ -344,7 +344,17 @@ namespace gemini
 			
 			return collision_shape;
 		}
-		
+
+		physics::ICollisionShape* PhysicsInterface::create_cylinder(float radius_meters, float height_meters)
+		{
+			BulletCollisionShape* collision_shape = MEMORY_NEW(BulletCollisionShape, core::memory::global_allocator());
+			collision_shapes.push_back(collision_shape);
+			btVector3 half_extents(radius_meters*0.5f, height_meters*0.5f, radius_meters*0.5f);
+			btCollisionShape* shape = new btCylinderShape(half_extents);
+			collision_shape->set_shape(shape);
+			return collision_shape;
+		}
+
 		void PhysicsInterface::destroy_object(ICollisionObject* object)
 		{
 			MEMORY_DELETE(object, core::memory::global_allocator());
