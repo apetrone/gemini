@@ -31,8 +31,6 @@
 #include <core/stackstring.h>
 #include <core/array.h>
 
-//#include "physics/physics.h"
-
 #include <sdk/iengineentity.h>
 #include <sdk/utils.h>
 #include <sdk/physics_rigidbody.h>
@@ -49,7 +47,6 @@
 	static ::gemini::EntityFactoryClass<entity_class> classname(#classname)
 
 
-//typedef std::vector< struct Entity*, GeminiAllocator<struct Entity*> > EntityVector;
 
 class Entity;
 
@@ -65,7 +62,27 @@ namespace gemini
 }
 
 
+
 typedef core::StackString<128> EntityName;
+
+// we have to have a better spot to put this, right?
+struct EntityCollisionData
+{
+	// the type of collision
+	gemini::physics::CollisionEventType type;
+
+	// the collider from this entity
+	gemini::physics::ICollisionObject* collider;
+
+	// the other collider
+	gemini::physics::ICollisionObject* other_collider;
+
+	// the entity associated with the other collider
+	class Entity* other_entity;
+
+	// the collision normal; points from first_entity to second_entity
+	glm::vec3 normal;
+};
 
 void entity_collision_callback(gemini::physics::CollisionEventType type, gemini::physics::ICollisionObject* first, gemini::physics::ICollisionObject* second);
 
@@ -118,8 +135,8 @@ public:
 	virtual void remove_collision();
 
 	// the normal vector points from this entity to other.
-	virtual void collision_began(Entity* other, const glm::vec3& normal);
-	virtual void collision_ended(Entity* other, const glm::vec3& normal);
+	virtual void collision_began(const EntityCollisionData& collision_data);
+	virtual void collision_ended(const EntityCollisionData& collision_data);
 	
 	// Use is called on this entity
 	virtual void use(Entity* user);

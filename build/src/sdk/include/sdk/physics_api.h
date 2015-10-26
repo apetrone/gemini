@@ -114,6 +114,7 @@ namespace gemini
 			// need to be explicitly deleted.
 			virtual physics::ICollisionShape* create_capsule(float radius_meters, float height_meters) = 0;
 			virtual physics::ICollisionShape* create_box(const glm::vec3& dimensions) = 0;
+			virtual physics::ICollisionShape* create_cylinder(float radius_meters, float height_meters) = 0;
 			
 			virtual void destroy_object(ICollisionObject* object) = 0;
 			

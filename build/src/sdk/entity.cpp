@@ -59,19 +59,22 @@ void entity_collision_callback(CollisionEventType type, ICollisionObject* first,
 	Entity* ent0 = static_cast<Entity*>(first->get_user_data());
 	Entity* ent1 = static_cast<Entity*>(second->get_user_data());
 
-
-	glm::vec3 normal;
-
 	if (ent0 && ent1)
 	{
-		normal = glm::normalize(ent1->get_position() - ent0->get_position());
+		EntityCollisionData collision_data;
+		collision_data.type = type;
+		collision_data.collider = first;
+		collision_data.other_collider = second;
+		collision_data.other_entity = ent1;
+		collision_data.normal = glm::normalize(ent1->get_position() - ent0->get_position());
+
 		if (type == Collision_Began)
 		{
-			ent0->collision_began(ent1, normal);
+			ent0->collision_began(collision_data);
 		}
 		else if (type == Collision_Ended)
 		{
-			ent0->collision_ended(ent1, normal);
+			ent0->collision_ended(collision_data);
 		}
 	}
 }
@@ -216,11 +219,11 @@ void Entity::remove_collision()
 	this->flags |= EF_DELETE_PHYSICS;
 }
 
-void Entity::collision_began(Entity* other, const glm::vec3& normal)
+void Entity::collision_began(const EntityCollisionData& collision_data)
 {
 }
 
-void Entity::collision_ended(Entity* other, const glm::vec3& normal)
+void Entity::collision_ended(const EntityCollisionData& collision_data)
 {
 }
 
