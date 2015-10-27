@@ -400,6 +400,130 @@ public:
 
 
 // ---------------------------------------------------------------------
+// Slider
+// ---------------------------------------------------------------------
+namespace gui
+{
+
+	static const float kLeftMargin = 4;
+	static const float kRightMargin = 4;
+
+class Slider : public gui::Panel
+{
+public:
+	Slider(Panel* parent);
+
+	LIBRARY_EXPORT virtual void handle_event(gui::EventArgs& args) override;
+		
+	LIBRARY_EXPORT virtual void update(gui::Compositor* compositor, const gui::TimeState& timestate) override;
+	LIBRARY_EXPORT virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands);
+
+	LIBRARY_EXPORT virtual void set_value(float new_value) { current_value = new_value; }
+	LIBRARY_EXPORT virtual float get_value() const { return current_value; }
+
+protected:
+
+	Point get_left_edge();
+	Point get_right_edge();
+
+	//
+	float current_value;
+
+	Panel* drag_handle;
+};
+
+Slider::Slider(Panel* parent) :
+	Panel(parent),
+	current_value(0.0f),
+	drag_handle(nullptr)
+{
+	drag_handle = new Panel(this);
+	drag_handle->set_background_color(gui::Color(0, 255, 255));
+	drag_handle->flags &= ~Flag_CursorEnabled;
+//	drag_handle->flags |= Flag_CanMove;
+
+	drag_handle->set_origin(0, 0);
+}
+
+
+void Slider::handle_event(gui::EventArgs &args)
+{
+	if (args.type == gui::Event_CursorDrag || args.type == gui::Event_CursorButtonPressed)
+	{
+		float next_value = args.local.x;
+		next_value = glm::clamp(next_value, kLeftMargin, bounds.width()-kRightMargin);
+		current_value = (next_value / (float)bounds.width());
+
+		// TODO: dispatch event value changed
+	}
+	else if (args.type == gui::Event_KeyButtonReleased)
+	{
+		// TODO: handle home/end + various other keys
+	}
+}
+
+void Slider::update(gui::Compositor* compositor, const gui::TimeState& timestate)
+{
+	Point left_edge = get_left_edge();
+	Point right_edge = get_right_edge();
+
+	float xvalue = (right_edge.x - left_edge.x) * current_value;
+
+	Size size = get_size();
+
+	const float HANDLE_HEIGHT_DIMENSION = 0.6f;
+	drag_handle->set_dimensions(0.05f, HANDLE_HEIGHT_DIMENSION);
+	float handle_height = (size.height - (HANDLE_HEIGHT_DIMENSION * size.height)) / 2.0f;
+
+	drag_handle->set_origin(xvalue, handle_height);
+
+	Panel::update(compositor, timestate);
+}
+
+void Slider::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
+{
+	render_commands.add_rectangle(
+		geometry[0],
+		geometry[1],
+		geometry[2],
+		geometry[3],
+		render::WhiteTexture,
+		background_color);
+
+	Point left_edge = get_left_edge();
+	Point right_edge = get_right_edge();
+	render_commands.add_line(left_edge, right_edge, foreground_color);
+
+	Panel::render_children(compositor, renderer, render_commands);
+
+
+
+
+}
+
+Point Slider::get_left_edge()
+{
+	float vertical_center = (geometry[1].y - geometry[0].y) / 2.0f;
+	Point left_edge = geometry[0];
+	left_edge.x += kLeftMargin;
+	left_edge.y += vertical_center;
+	return left_edge;
+}
+
+Point Slider::get_right_edge()
+{
+	float vertical_center = (geometry[1].y - geometry[0].y) / 2.0f;
+	Point right_edge = geometry[2];
+	right_edge.x -= kRightMargin;
+	right_edge.y -= vertical_center;
+	return right_edge;
+}
+
+} // namespace gui
+
+
+
+// ---------------------------------------------------------------------
 // TestUi
 // ---------------------------------------------------------------------
 class TestUi : public kernel::IKernel,
@@ -413,6 +537,7 @@ class TestUi : public kernel::IKernel,
 	gui::Panel* root;
 	gui::Graph* graph;
 	gui::Label* label;
+	gui::Slider* slider;
 	GUIRenderer renderer;
 	StandaloneResourceCache resource_cache;
 	ControllerTestPanel* ctp;
@@ -448,6 +573,15 @@ public:
 				gui::CursorButton::Mouse4,
 				gui::CursorButton::Mouse5
 			};
+
+			if (event.is_down)
+			{
+				platform::window::set_mouse_tracking(true);
+			}
+			else
+			{
+				platform::window::set_mouse_tracking(false);
+			}
 			compositor->cursor_button(input_to_gui[event.button], event.is_down);
 		}
 	}
@@ -569,18 +703,34 @@ public:
 			"Test Three"
 		};
 
+		gui::Button* buttons[total_buttons] = {nullptr};
+
 		for (size_t index = 0; index < total_buttons; ++index)
 		{
-			gui::Button* newgame = new gui::Button(root);
-			newgame->set_bounds(origin_x, origin_y, button_width, button_height);
-			newgame->set_font(menu_font, menu_font_size);
-			newgame->set_text(captions[index]);
-			newgame->set_background_color(button_background);
-			newgame->set_hover_color(button_hover);
-			newgame->set_userdata((void*)2);
+			gui::Button* button = new gui::Button(root);
+			button->set_bounds(origin_x, origin_y, button_width, button_height);
+			button->set_font(menu_font, menu_font_size);
+			button->set_text(captions[index]);
+			button->set_background_color(button_background);
+			button->set_hover_color(button_hover);
+			button->set_userdata((void*)2);
+
 			origin_y += button_height + button_spacing;
+			buttons[index] = button;
 		}
+
+
+		buttons[0]->set_visible(false);
+		LOGV("button %p is not visible\n", buttons[0]);
 #endif
+
+
+
+		slider = new gui::Slider(root);
+		slider->set_bounds(20, 300, 200, 40);
+		slider->set_background_color(gui::Color(60, 60, 60, 255));
+		slider->set_foreground_color(gui::Color(255, 255, 255, 255));
+		slider->set_value(0.0f);
 	}
 
 	virtual kernel::Error startup()
@@ -768,7 +918,7 @@ public:
 			rot -= 360.0f;
 
 		// update the gui
-		compositor->update(kernel::parameters().framedelta_seconds);
+		compositor->tick(kernel::parameters().framedelta_seconds);
 
 #if 1
 		render2::Pass render_pass;
@@ -797,7 +947,7 @@ public:
 		device->queue_buffers(queue, 1);
 
 
-		compositor->render();
+		compositor->draw();
 #endif
 
 		platform::window::activate_context(native_window);

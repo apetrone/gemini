@@ -54,9 +54,17 @@ namespace gui
 	class Panel
 	{
 	protected:
-		Rect bounds;
+
 		Point origin;
 		Size size;
+
+		// normalized panel dimensions [0,1] as a percentage
+		// of the parent's dimensions.
+		Point dimensions;
+
+		// screen-space (dynamically computed; transient) bounds
+		Rect bounds;
+
 		friend class Compositor;
 
 	public:
@@ -71,6 +79,7 @@ namespace gui
 			Flag_None,
 			Flag_CursorEnabled		= 1, // if this can receive cursor input
 			Flag_IsVisible			= 2,
+			Flag_CanMove			= 4,
 
 			Flag_TransformIsDirty	= 16
 		};
@@ -91,7 +100,9 @@ namespace gui
 
 		LIBRARY_EXPORT virtual void set_bounds(const ScreenInt x, const ScreenInt y, const DimensionType width, const DimensionType height);
 		LIBRARY_EXPORT virtual void set_bounds(const Rect& bounds);
-		LIBRARY_EXPORT virtual const Rect& get_bounds() const;
+
+		LIBRARY_EXPORT virtual void set_dimensions(float x, float y);
+		LIBRARY_EXPORT virtual void set_origin(float x, float y);
 		LIBRARY_EXPORT virtual void get_screen_bounds(Rect& bounds);
 		LIBRARY_EXPORT virtual void calculate_screen_bounds(Compositor* compositor);
 		LIBRARY_EXPORT virtual void add_child(Panel* panel);
@@ -99,6 +110,7 @@ namespace gui
 		LIBRARY_EXPORT virtual void handle_event(EventArgs& args);
 		LIBRARY_EXPORT virtual void update(Compositor* compositor, const TimeState& timestate);
 		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
+		LIBRARY_EXPORT virtual void render_children(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
 		LIBRARY_EXPORT virtual void set_background_image(Compositor* compositor, const char* path);
 		LIBRARY_EXPORT virtual void set_background_color(const Color& color);
 		LIBRARY_EXPORT virtual void set_foreground_color(const Color& color);
@@ -119,13 +131,13 @@ namespace gui
 		LIBRARY_EXPORT virtual bool can_send_to_front() const { return false; }
 		
 		// determine if this panel can be moved (drag via cursor)
-		LIBRARY_EXPORT virtual bool can_move() const { return false; }
+		LIBRARY_EXPORT virtual bool can_move() const { return has_flags(Flag_CanMove); }
 		
 		// use this until we get a better system inplace for type checks / registration
 		LIBRARY_EXPORT virtual bool is_label() const { return false; }
 		LIBRARY_EXPORT virtual bool is_button() const { return false; }
 		
-		LIBRARY_EXPORT virtual bool has_flags(const uint32_t& flags) { return (this->flags & flags) == flags; }
+		LIBRARY_EXPORT virtual bool has_flags(const uint32_t& flags) const { return (this->flags & flags) == flags; }
 
 
 		// ---------------------------------------------------------------------

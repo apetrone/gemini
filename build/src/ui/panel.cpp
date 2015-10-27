@@ -85,11 +85,23 @@ namespace gui
 		origin = bounds.origin;
 		size = bounds.size;
 	}
-	
-	const Rect& Panel::get_bounds() const
+
+	void Panel::set_dimensions(float x, float y)
 	{
-		return bounds;
-	} // get_bounds
+		dimensions.x = x;
+		dimensions.y = y;
+
+		assert(parent);
+
+		size.width = (x * parent->size.width);
+		size.height = (y * parent->size.height);
+	}
+
+	void Panel::set_origin(float x, float y)
+	{
+		origin.x = x;
+		origin.y = y;
+	}
 	
 	void Panel::get_screen_bounds(Rect& bounds)
 	{
@@ -163,7 +175,12 @@ namespace gui
 		{
 			if ( args.cursor_button == gui::CursorButton::Middle )
 			{
-				fprintf(stdout, "bounds = {%2.2f, %2.2f, %g, %g}\n", bounds.origin.x, bounds.origin.y, bounds.size.width, bounds.size.height);
+				fprintf(stdout, "bounds = {%2.2f, %2.2f, %g, %g}\n",
+					bounds.origin.x,
+					bounds.origin.y,
+					bounds.size.width,
+					bounds.size.height
+				);
 			}
 		}
 	} // handle_event
@@ -235,6 +252,11 @@ namespace gui
 			);
 		}
 
+		render_children(compositor, renderer, render_commands);
+	} // render
+
+	void Panel::render_children(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
+	{
 		for(PanelVector::iterator it = children.begin(); it != children.end(); ++it)
 		{
 			Panel* child = (*it);
@@ -243,7 +265,7 @@ namespace gui
 				child->render(compositor, renderer, render_commands);
 			}
 		}
-	} // render
+	} // render_children
 	
 	void Panel::set_background_image(Compositor* compositor, const char* path)
 	{
@@ -310,6 +332,7 @@ namespace gui
 
 	bool Panel::hit_test_local(const Point& local_point) const
 	{
+//		fprintf(stdout, "local: %2.2f, %2.2f\n", local_point.x, local_point.y);
 		return bounds.is_point_inside(local_point);
 	}
 
