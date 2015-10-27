@@ -237,5 +237,9 @@ namespace platform
 
 		// if enabled, the OS will generate delta mouse movement events
 		LIBRARY_EXPORT void set_relative_mouse_mode(bool enable);
+
+		// if enabled, mouse events generated outside of window bounds will be dispatched
+		// default: off
+		LIBRARY_EXPORT void set_mouse_tracking(bool enable);
 	} // namespace window
 } // namespace platform

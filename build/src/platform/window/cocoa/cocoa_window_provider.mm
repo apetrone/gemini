@@ -60,6 +60,9 @@ namespace platform
 				// because the calls to hide/show cursor MUST match on
 				// OS X!
 				bool is_cursor_visible = true;
+
+				// mouse tracking enables events outside the window to be sent when enabled
+				bool is_tracking_mouse = false;
 			};
 
 			static CocoaState _state;
@@ -444,7 +447,7 @@ namespace platform
 			void dispatch_mouse_event(NSEvent* event)
 			{
 				// ignore events outside of the client area when not in relative mouse mode
-				if (!_state.is_in_relative_mouse_mode && !NSPointInRect([event locationInWindow], [[[event window] contentView] frame]))
+				if (!_state.is_tracking_mouse && !_state.is_in_relative_mouse_mode && !NSPointInRect([event locationInWindow], [[[event window] contentView] frame]))
 				{
 					return;
 				}
@@ -866,5 +869,11 @@ namespace platform
 				cocoa::center_cursor_inside_key_window();
 			}
 		}
+
+		void set_mouse_tracking(bool enable)
+		{
+			cocoa::_state.is_tracking_mouse = enable;
+		}
+
 	} // namespace window
 } // namespace platform
