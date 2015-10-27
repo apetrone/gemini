@@ -96,7 +96,7 @@ namespace gui
 		Panel* capture; // captured panel
 		//		Panel* sender;
 		
-		Point cursor;	// absolute (window) coordinates
+		Point cursor;	// compositor coordinates
 		Point delta;	// delta coordinates
 		Point local;	// local panel coordinates
 		

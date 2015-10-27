@@ -76,7 +76,7 @@ namespace gui
 		}
 	} // ~Compositor
 	
-	void Compositor::update(float delta_seconds)
+	void Compositor::tick(float delta_seconds)
 	{
 		timestate.delta_seconds = delta_seconds;
 		for(PanelVector::reverse_iterator it = zsorted.rbegin(); it != zsorted.rend(); ++it)
@@ -89,7 +89,7 @@ namespace gui
 		
 	} // update
 	
-	void Compositor::render()
+	void Compositor::draw()
 	{
 		if ( this->renderer == 0 )
 		{
@@ -113,7 +113,7 @@ namespace gui
 		this->renderer->draw_commands(&command_list, vertex_buffer);
 
 		this->renderer->end_frame();
-	} // render
+	} // draw
 
 	
 	void Compositor::send_to_front(Panel* panel)
@@ -186,7 +186,7 @@ namespace gui
 		Panel* last_hot = this->hot;
 
 		Point cursor(last_cursor.x, last_cursor.y);
-		Panel* newhot = find_panel_at_point(cursor, Panel::Flag_CursorEnabled | Panel::Flag_IsVisible);
+		Panel* newhot = find_panel_at_location(cursor, Panel::Flag_CursorEnabled | Panel::Flag_IsVisible);
 		hot = newhot;
 
 		if (newhot && !get_capture())
@@ -281,10 +281,6 @@ namespace gui
 	{
 		if ( is_down )
 		{
-//			Panel * panel = find_panel_at_point( cursor );
-
-
-			
 			EventArgs args( this, Event_CursorButtonPressed );
 			args.focus = get_focus();
 			args.hot = get_hot();
@@ -309,8 +305,6 @@ namespace gui
 		}
 		else
 		{
-//			Panel * panel = find_panel_at_point( cursor );
-
 			EventArgs args( this, Event_CursorButtonReleased );
 			args.focus = get_focus();
 			args.hot = get_hot();
@@ -369,7 +363,7 @@ namespace gui
 		this->height = height;
 	} // resize
 	
-	Panel* Compositor::find_panel_at_point(const Point& point, uint32_t flags)
+	Panel* Compositor::find_panel_at_location(const Point& location, uint32_t flags)
 	{
 		Panel* panel = 0;
 		Panel* closest_panel = 0;
@@ -380,31 +374,31 @@ namespace gui
 		for(PanelVector::iterator it = zsorted.begin(); it != zsorted.end(); ++it)
 		{
 			panel = (*it);
-			if (panel->has_flags(flags) && panel->hit_test_local(point))
+			if (panel->has_flags(flags) && panel->hit_test_local(location))
 			{
 				closest_panel = panel;
-				return find_deepest_panel_point(panel, point, flags);
+				return find_deepest_panel_at_location(panel, location, flags);
 			}
 		}
 
 		return closest_panel;
 	} // find_panel_at_point
 	
-	Panel* Compositor::find_deepest_panel_point(Panel* root, const gui::Point& point, uint32_t flags)
+	Panel* Compositor::find_deepest_panel_at_location(Panel* root, const gui::Point& location, uint32_t flags)
 	{
 		if (!root)
 		{
 			return 0;
 		}
-		if (root->has_flags(flags) && root->hit_test_local(point))
+		if (root->has_flags(flags) && root->hit_test_local(location))
 		{
 			Panel* cpanel = 0;
 			for (PanelVector::iterator child = root->children.begin(); child != root->children.end(); ++child)
 			{
 				cpanel = (*child);
-				if (cpanel->has_flags(flags) && cpanel->hit_test_local(point))
+				if (cpanel->has_flags(flags) && cpanel->hit_test_local(location))
 				{
-					return find_deepest_panel_point(cpanel, point, flags);
+					return find_deepest_panel_at_location(cpanel, location, flags);
 				}
 			}
 			
