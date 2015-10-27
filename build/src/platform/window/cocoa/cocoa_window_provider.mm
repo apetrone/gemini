@@ -420,6 +420,27 @@ namespace platform
 				}
 			}
 
+
+			// Convert an NS mouse-Y location (based in the lower left)
+			// to one based in the upper left.
+			// This has to take the content rect of the window into account.
+			CGFloat convert_nsmousey_to_platformy(NSWindow* window, CGFloat location_y)
+			{
+				NSRect frame = [window frame];
+				NSRect content_rect = [NSWindow contentRectForFrameRect:frame styleMask:[window styleMask]];
+
+				CGFloat title_bar_height = (frame.size.height - content_rect.size.height);
+
+				// We subtract height from mouse location y to invert the y-axis; since
+				// NSPoint's origin is in the lower left corner.
+				// The fixed height is the window frame minus the title bar height
+				// and we also subtract 1.0 because convertPoint starts from a base of 1
+				// according to the Cocoa docs.
+				CGFloat fixed_height = frame.size.height - title_bar_height - 1.0;
+
+				return (fixed_height - location_y);
+			}
+
 			void dispatch_mouse_event(NSEvent* event)
 			{
 				// ignore events outside of the client area when not in relative mouse mode
@@ -450,14 +471,24 @@ namespace platform
 								cocoa::_state.ignore_next_event = false;
 								return;
 							}
-							NSPoint mouse = cocoa::_state.last_mouse;
 
+							NSPoint mouse;
 							mouse.x = [event deltaX];
 							mouse.y = [event deltaY];
 							ev.dx = static_cast<int>(mouse.x);
 							ev.dy = static_cast<int>(mouse.y);
-							cocoa::_state.last_mouse = mouse;
+							cocoa::_state.last_mouse = [NSEvent mouseLocation];
 							break;
+						}
+						else
+						{
+							NSPoint location = [event locationInWindow];
+							NSPoint mouse_location = location;
+							ev.mx = location.x;
+							ev.my = convert_nsmousey_to_platformy([event window], location.y);
+							ev.dx = (location.x - cocoa::_state.last_mouse.x);
+							ev.dy = (mouse_location.y - cocoa::_state.last_mouse.y);
+							cocoa::_state.last_mouse = mouse_location;
 						}
 					}
 					case NSLeftMouseDown:
@@ -539,16 +570,6 @@ namespace platform
 				return keymods;
 			}
 
-			// This expects the current coordinates from (mouseLocation)
-			// as they're in screen coordinates.
-			NSPoint compute_mouse_delta(const NSPoint& current)
-			{
-				return NSMakePoint(
-				   (current.x - cocoa::_state.last_mouse.x),
-				   (cocoa::_state.last_mouse.y - current.y)
-				);
-			}
-
 			void dispatch_mouse_moved_event(NSEvent* the_event)
 			{
 				CocoaWindow* window = static_cast<CocoaWindow*>([the_event window]);
@@ -563,40 +584,18 @@ namespace platform
 
 				cocoa::_state.last_mouse = mouse_location;
 
-				CGFloat title_bar_height;
-				CGFloat fixed_height;
-
-				// calculate title bar height of the window
-				NSRect frame = [window frame];
-				NSRect content_rect = [NSWindow contentRectForFrameRect:frame styleMask:[window styleMask]];
-				title_bar_height = (frame.size.height - content_rect.size.height);
-
-				// We subtract height from mouse location y to invert the y-axis; since
-				// NSPoint's origin is in the lower left corner.
-				// The fixed height is the window frame minus the title bar height
-				// and we also subtract 1.0 because convertPoint starts from a base of 1
-				// according to the Cocoa docs.
-				fixed_height = frame.size.height - title_bar_height - 1;
-
 				kernel::MouseEvent event;
 				event.subtype = kernel::MouseMoved;
 				event.mx = mouse_location.x;
-				event.my = fixed_height - mouse_location.y;
+				event.my = convert_nsmousey_to_platformy(window, mouse_location.y);
 
-				// don't dispatch any events outside of the window
-				if (event.mx >= 0 && event.my >= 0 && (event.mx <= frame.size.width) && (event.my <= fixed_height))
-				{
-					kernel::event_dispatch(event);
-				}
-			}
 
-			void dispatch_mouse_delta(const NSPoint& mouse)
-			{
-				kernel::MouseEvent event;
-				event.subtype = kernel::MouseDelta;
-				event.dx = mouse.x;
-				event.dy = mouse.y;
-				kernel::event_dispatch(event);
+
+//				// don't dispatch any events outside of the window
+//				if (event.mx >= 0 && event.my >= 0 && (event.mx <= frame.size.width) && (event.my <= fixed_height))
+//				{
+//					kernel::event_dispatch(event);
+//				}
 			}
 
 			cocoa_native_window* from(NativeWindow* window)
