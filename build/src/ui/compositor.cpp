@@ -374,7 +374,10 @@ namespace gui
 		for(PanelVector::iterator it = zsorted.begin(); it != zsorted.end(); ++it)
 		{
 			panel = (*it);
-			if (panel->has_flags(flags) && panel->hit_test_local(location))
+
+			// convert compositor coordinates to local panel coordinates
+			Point local_coords = location - panel->get_origin();
+			if (panel->has_flags(flags) && panel->hit_test_local(local_coords))
 			{
 				closest_panel = panel;
 				return find_deepest_panel_at_location(panel, location, flags);
@@ -390,22 +393,20 @@ namespace gui
 		{
 			return 0;
 		}
-		if (root->has_flags(flags) && root->hit_test_local(location))
+
+		Panel* cpanel = 0;
+		for (PanelVector::iterator child = root->children.begin(); child != root->children.end(); ++child)
 		{
-			Panel* cpanel = 0;
-			for (PanelVector::iterator child = root->children.begin(); child != root->children.end(); ++child)
+			cpanel = (*child);
+			// convert parent coordinates to local panel coordinates
+			Point local_child_coords = location - cpanel->get_origin();
+			if (cpanel->has_flags(flags) && cpanel->hit_test_local(local_child_coords))
 			{
-				cpanel = (*child);
-				if (cpanel->has_flags(flags) && cpanel->hit_test_local(location))
-				{
-					return find_deepest_panel_at_location(cpanel, location, flags);
-				}
+				return find_deepest_panel_at_location(cpanel, location, flags);
 			}
-			
-			return root;
 		}
-		
-		return 0;
+
+		return root;
 	} // find_deepest_panel_point
 
 	void Compositor::set_listener(Listener *listener)

@@ -315,7 +315,7 @@ namespace gui
 	{
 		return this->visible;
 	} // is_visible
-	
+
 //	Point Panel::local_to_world(const Point& local) const
 //	{
 //		Point world;
@@ -332,8 +332,11 @@ namespace gui
 
 	bool Panel::hit_test_local(const Point& local_point) const
 	{
-//		fprintf(stdout, "local: %2.2f, %2.2f\n", local_point.x, local_point.y);
-		return bounds.is_point_inside(local_point);
+		// Don't use 'bounds' here because those are
+		// parent-space bounds.
+		// Setup local bounds here with origin (0, 0).
+		Rect local_bounds(Point(0.0f), bounds.size);
+		return local_bounds.is_point_inside(local_point);
 	}
 
 	// ---------------------------------------------------------------------
