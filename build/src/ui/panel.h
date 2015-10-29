@@ -53,20 +53,6 @@ namespace gui
 
 	class Panel
 	{
-	protected:
-
-		Point origin;
-		Size size;
-
-		// normalized panel dimensions [0,1] as a percentage
-		// of the parent's dimensions.
-		Point dimensions;
-
-		// screen-space (dynamically computed; transient) bounds
-		Rect bounds;
-
-		friend class Compositor;
-
 	public:
 		// memory overrides
 		void* operator new(size_t bytes);
@@ -157,13 +143,33 @@ namespace gui
 		LIBRARY_EXPORT const Size& get_size() const { return size; }
 
 	protected:
+
+		// origin local to the parent
+		Point origin;
+
+		// size expressed in actual pixels (computed during an update)
+		Size size;
+
+		// normalized panel dimensions [0,1] as a percentage
+		// of the parent's dimensions.
+		Point dimensions;
+
+		// screen-space (dynamically computed; transient) bounds
+		Rect bounds;
+
+		friend class Compositor;
+
 		// Panels will transform through the following spaces:
 		// Local (or bounds)
 		// Compositor (essentially world-space)
 		// Screen
 
 		glm::mat2 local_transform;
+
+		// local scaling factor applied on top of initial dimensions
 		glm::vec2 scale;
+
+		// local rotation applied to panel
 		real z_rotation;
 
 		glm::vec2 geometry[4];
