@@ -460,6 +460,18 @@ void Slider::handle_event(gui::EventArgs &args)
 	{
 		// TODO: handle home/end + various other keys
 	}
+	else if (args.type == gui::Event_CursorMove)
+	{
+		Point pt = args.local - drag_handle->get_origin();
+		if (drag_handle->hit_test_local(pt))
+		{
+			drag_handle->set_background_color(gui::Color(255, 0, 0));
+		}
+		else
+		{
+			drag_handle->set_background_color(gui::Color(0, 255, 0));
+		}
+	}
 }
 
 void Slider::update(gui::Compositor* compositor, const gui::TimeState& timestate)
@@ -628,8 +640,6 @@ public:
 		root = new gui::Panel(compositor);
 		platform::window::Frame frame = platform::window::get_render_frame(native_window);
 
-
-
 		root->set_bounds(0, 0, frame.width, frame.height);
 		root->set_background_color(gui::Color(255, 255, 255, 0));
 
@@ -653,6 +663,8 @@ public:
 		graph->enable_baseline(true, 16.6f, gui::Color(255, 0, 255, 255));
 #endif
 
+		// test tab panel
+#if 1
 		TabControl* tab = new TabControl(root);
 		tab->set_bounds(10, 10, 250, 250);
 
@@ -663,7 +675,7 @@ public:
 		label->set_font(dev_font, dev_font_size);
 		label->set_text("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 		tab->add_tab(0, "test", label);
-#if 1
+
 		{
 			gui::Label* label = new gui::Label(tab);
 			label->set_background_color(gui::Color(32, 32, 32));
@@ -684,6 +696,7 @@ public:
 //		panel->set_background_color(gui::Color(60, 60, 60, 255));
 
 
+		// test buttons
 #if 1
 		gui::Color button_background(128, 128, 128, 255);
 		gui::Color button_hover(255, 255, 128, 255);
@@ -724,13 +737,14 @@ public:
 		LOGV("button %p is not visible\n", buttons[0]);
 #endif
 
-
-
+		// test slider
+#if 1
 		slider = new gui::Slider(root);
 		slider->set_bounds(20, 300, 200, 40);
 		slider->set_background_color(gui::Color(60, 60, 60, 255));
 		slider->set_foreground_color(gui::Color(255, 255, 255, 255));
 		slider->set_value(0.0f);
+#endif
 	}
 
 	virtual kernel::Error startup()
