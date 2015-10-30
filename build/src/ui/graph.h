@@ -49,7 +49,6 @@ namespace gui
 		gui::Color baseline_color;
 		float baseline_value;
 		
-		uint32_t flags;
 		uint32_t total_samples;
 		uint32_t total_channels;
 		uint32_t* current_sample;
@@ -88,7 +87,5 @@ namespace gui
 		
 		// Panel overrides
 		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
-
-		LIBRARY_EXPORT virtual bool can_move() const { return true; }
 	}; // Graph
 } // namespace gui
