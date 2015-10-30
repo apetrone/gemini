@@ -57,7 +57,7 @@ namespace gui
 		
 		baseline_value = 0.0f;
 		
-		flags = 0;
+		flags |= Flag_CanMove;
 		total_samples = 0;
 		total_channels = 0;
 		current_sample = 0;

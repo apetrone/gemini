@@ -66,6 +66,8 @@ namespace gui
 		assert(cache);
 
 		renderer->startup(this);
+
+		set_name("compositor");
 	} // Compositor
 	
 	Compositor::~Compositor()
@@ -186,8 +188,13 @@ namespace gui
 		Panel* last_hot = this->hot;
 
 		Point cursor(last_cursor.x, last_cursor.y);
-		Panel* newhot = find_panel_at_location(cursor, Panel::Flag_CursorEnabled | Panel::Flag_IsVisible);
-		hot = newhot;
+		Panel* newhot = get_capture();
+
+		if (!get_capture())
+		{
+			newhot = find_panel_at_location(cursor, Panel::Flag_CursorEnabled | Panel::Flag_IsVisible);
+			hot = newhot;
+		}
 
 		if (newhot && !get_capture())
 		{
@@ -377,6 +384,8 @@ namespace gui
 
 			// convert compositor coordinates to local panel coordinates
 			Point local_coords = location - panel->get_origin();
+
+//			fprintf(stdout, "[%s] local_coords = %2.2f, %2.2f\n", panel->get_name(), local_coords.x, local_coords.y);
 			if (panel->has_flags(flags) && panel->hit_test_local(local_coords))
 			{
 				closest_panel = panel;
@@ -400,9 +409,10 @@ namespace gui
 			cpanel = (*child);
 			// convert parent coordinates to local panel coordinates
 			Point local_child_coords = location - cpanel->get_origin();
+//			fprintf(stdout, "[%s] local_child_coords = %2.2f, %2.2f\n", cpanel->get_name(), local_child_coords.x, local_child_coords.y);
 			if (cpanel->has_flags(flags) && cpanel->hit_test_local(local_child_coords))
 			{
-				return find_deepest_panel_at_location(cpanel, location, flags);
+				return find_deepest_panel_at_location(cpanel, local_child_coords, flags);
 			}
 		}
 

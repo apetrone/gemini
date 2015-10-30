@@ -72,12 +72,13 @@ namespace gui
 		children.clear();
 	} // ~Panel
 	
-	void Panel::set_bounds(const ScreenInt x, const ScreenInt y, const DimensionType width, const DimensionType height )
+	void Panel::set_bounds(const ScreenInt x, const ScreenInt y, const DimensionType width, const DimensionType height)
 	{
 		origin.x = x;
 		origin.y = y;
 		size.width = width;
 		size.height = height;
+//		flags |= Flag_BoundsAreDirty;
 	} // set_bounds
 
 	void Panel::set_bounds(const Rect& bounds)
@@ -163,24 +164,27 @@ namespace gui
 
 	void Panel::handle_event( EventArgs & args )
 	{
-		if ( args.type == Event_CursorDrag )
+		if (has_flags(Flag_CursorEnabled))
 		{
-			if (can_move())
+			if (args.type == Event_CursorDrag)
 			{
-				origin.x += args.delta.x;
-				origin.y += args.delta.y;
+				if (has_flags(Flag_CanMove))
+				{
+					origin.x += args.delta.x;
+					origin.y += args.delta.y;
+				}
 			}
-		}
-		else if ( args.type == Event_CursorButtonReleased )
-		{
-			if ( args.cursor_button == gui::CursorButton::Middle )
+			else if ( args.type == Event_CursorButtonReleased )
 			{
-				fprintf(stdout, "bounds = {%2.2f, %2.2f, %g, %g}\n",
-					bounds.origin.x,
-					bounds.origin.y,
-					bounds.size.width,
-					bounds.size.height
-				);
+				if ( args.cursor_button == gui::CursorButton::Middle )
+				{
+					fprintf(stdout, "bounds = {%2.2f, %2.2f, %g, %g}\n",
+						bounds.origin.x,
+						bounds.origin.y,
+						bounds.size.width,
+						bounds.size.height
+					);
+				}
 			}
 		}
 	} // handle_event

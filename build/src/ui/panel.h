@@ -27,6 +27,8 @@
 #include "ui/ui.h"
 #include "ui/utils.h"
 
+#include <core/stackstring.h>
+
 #include <stdint.h>
 #include <new> // for size_t
 #include <stddef.h>
@@ -88,7 +90,7 @@ namespace gui
 		LIBRARY_EXPORT virtual void set_bounds(const Rect& bounds);
 
 		LIBRARY_EXPORT virtual void set_dimensions(float x, float y);
-		LIBRARY_EXPORT virtual void set_origin(float x, float y);
+
 		LIBRARY_EXPORT virtual void get_screen_bounds(Rect& bounds);
 		LIBRARY_EXPORT virtual void calculate_screen_bounds(Compositor* compositor);
 		LIBRARY_EXPORT virtual void add_child(Panel* panel);
@@ -116,9 +118,6 @@ namespace gui
 		// determine if this panel can become the foreground window (if it can be the first Z-ordered window)
 		LIBRARY_EXPORT virtual bool can_send_to_front() const { return false; }
 		
-		// determine if this panel can be moved (drag via cursor)
-		LIBRARY_EXPORT virtual bool can_move() const { return has_flags(Flag_CanMove); }
-		
 		// use this until we get a better system inplace for type checks / registration
 		LIBRARY_EXPORT virtual bool is_label() const { return false; }
 		LIBRARY_EXPORT virtual bool is_button() const { return false; }
@@ -140,9 +139,16 @@ namespace gui
 
 
 		LIBRARY_EXPORT const Point& get_origin() const { return origin; }
+		LIBRARY_EXPORT virtual void set_origin(float x, float y);
+
 		LIBRARY_EXPORT const Size& get_size() const { return size; }
+		LIBRARY_EXPORT void set_size(const Size& new_size) { size = new_size; }
+
+		LIBRARY_EXPORT const char* get_name() { return debug_name(); }
+		LIBRARY_EXPORT void set_name(const char* name) { debug_name = name; }
 
 	protected:
+		core::StackString<64> debug_name;
 
 		// origin local to the parent
 		Point origin;
