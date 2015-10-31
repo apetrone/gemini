@@ -494,7 +494,8 @@ def get_libplatform(arguments, target_platform):
 	]
 
 	macosx.links += [
-		"Cocoa.framework"
+		"Cocoa.framework",
+		"IOKit.framework"
 	]
 
 	macosx.defines += [
