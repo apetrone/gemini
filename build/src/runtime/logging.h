@@ -44,7 +44,7 @@
 
 #define LOGE(message, ...) \
 	core::logging::instance()->dispatch(\
-	core::logging::ILog::Warning,\
+	core::logging::ILog::Error,\
 	core::str::format(message, ##__VA_ARGS__),\
 	__FUNCTION__,\
 	__FILE__,\
