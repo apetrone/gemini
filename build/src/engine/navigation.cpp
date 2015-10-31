@@ -440,7 +440,7 @@ namespace gemini
 			
 			context.stopTimer(RC_TIMER_TOTAL);
 			
-			float timer_milliseconds = context.getAccumulatedTime(RC_TIMER_TOTAL) / 1000.0f;
+			float timer_milliseconds = context.getAccumulatedTime(RC_TIMER_TOTAL) * MillisecondsPerSecond;
 			LOGV("finished generating navmesh: %2.2fms\n", timer_milliseconds);
 		}
 		

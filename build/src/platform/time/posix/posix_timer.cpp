@@ -43,14 +43,14 @@ namespace platform
 	{
 		struct timespec ts;
 		clock_gettime(CLOCK_MONOTONIC, &ts);
-		return (ts.tv_sec*1000000 + ts.tv_nsec*0.001f);
+		return ((ts.tv_sec * MicrosecondsPerSecond) + (ts.tv_nsec * MicrosecondsPerNanosecond));
 	}
 
 	static uint64_t get_microseconds_gettimeofday()
 	{
 		struct timeval now;
 		gettimeofday(&now, 0);
-		return (now.tv_sec*1000000 + now.tv_usec);
+		return ((now.tv_sec * MicrosecondsPerSecond) + now.tv_usec);
 	}
 
 	Result timer_startup()

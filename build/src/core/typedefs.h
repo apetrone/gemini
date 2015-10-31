@@ -55,6 +55,13 @@
 	#define LIBRARY_SDK_CEXPORT
 #endif
 
+
+const float SecondsPerMillisecond = 1.0e-3;
+const float MillisecondsPerSecond = 1.0e3;
+
+const float MicrosecondsPerSecond = 1.0e6;
+const float MicrosecondsPerNanosecond = 1.0e-3;
+
 #include "mem.h"
 
 // prefer the C99 types

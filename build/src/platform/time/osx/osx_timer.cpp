@@ -39,7 +39,7 @@ namespace platform
 		{
 			// timebase is in nanoseconds
 			// make the time_scale in microseconds
-			_time_scale = timebase.numer / (timebase.denom * 1000.0);
+			_time_scale = (timebase.numer / timebase.denom) * MicrosecondsPerNanosecond;
 			return Result::success();
 		}
 		else
