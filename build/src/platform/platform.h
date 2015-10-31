@@ -85,6 +85,8 @@ namespace platform
 	};
 
 	typedef void(*ThreadEntry)(void*);
+
+	const float SecondsPerMilliseconds = 1.0e-3;
 } // namespace platform
 
 // thread types
