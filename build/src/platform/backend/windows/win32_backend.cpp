@@ -76,7 +76,7 @@ namespace platform
 
 	double system_uptime_seconds()
 	{
-		return 0.0;
+		return GetTickCount64() * SecondsPerMilliseconds;
 	} // system_uptime_seconds
 
 	core::StackString<64> system_version_string()
