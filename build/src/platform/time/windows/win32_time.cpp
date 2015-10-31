@@ -49,8 +49,7 @@ namespace platform
 	{
 		LARGE_INTEGER now;
 		QueryPerformanceCounter(&now);
-
-		return ((now.QuadPart) / (double)_frequency.QuadPart) * 1000000;
+		return ((now.QuadPart) / (double)_frequency.QuadPart) * MicrosecondsPerSecond;
 	}
 
 	void datetime(DateTime& datetime)

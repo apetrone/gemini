@@ -81,7 +81,7 @@ namespace gemini
 		unsigned int pid = 0;
 		Particle * p = 0;
 		
-		float delta_msec = (delta_seconds * 1000.0f);
+		float delta_msec = (delta_seconds * MillisecondsPerSecond);
 		
 		if (!emitter_config)
 		{
