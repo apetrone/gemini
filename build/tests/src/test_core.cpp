@@ -1319,6 +1319,149 @@ void test_rapidjson()
 
 }
 
+
+template <class T>
+class delegate
+{
+public:
+
+	typedef void (*function)(T);
+
+	template <class C>
+	void connect(void (C::*function_ptr)(T), C* instance)
+	{
+		fprintf(stdout, "connect: (fn=%p, instance=%p)\n", function_ptr, instance);
+	}
+
+	template <class C>
+	void connect(void (C::*function_ptr) (T) const, C* instance)
+	{
+		fprintf(stdout, "connect: (fn=%p, instance=%p)\n", function_ptr, instance);
+	}
+
+	void connect(function function_ptr)
+	{
+		fprintf(stdout, "connect: (fn=%p)\n", function_ptr);
+	}
+
+	void invoke(T)
+	{
+		fprintf(stdout, "invoke\n");
+	}
+
+
+private:
+	struct delegate_data
+	{
+
+	};
+
+};
+
+template <class T>
+class event
+{
+	// list of delegate<event<T>>
+
+
+	Array< delegate<event<T>> > connections;
+};
+
+
+
+
+static void free_function(int param)
+{
+	fprintf(stdout, "free_function called with: %i\n", param);
+}
+
+class MyClass
+{
+public:
+	void member_function(int param)
+	{
+		fprintf(stdout, "member_function called with: %i\n", param);
+	}
+
+	void test_value(int param) const
+	{
+		fprintf(stdout, "test_value value is: %i, %i\n", value, param);
+	}
+
+	static void static_member_function(int param)
+	{
+		fprintf(stdout, "static_member_function called with: %i\n", param);
+	}
+
+private:
+	int value;
+};
+
+
+class AnotherClass
+{
+public:
+	void dispatch_test(int value)
+	{
+		fprintf(stdout, "dispatch_test: %i\n", value);
+	}
+
+private:
+	// whatever
+};
+
+
+
+
+template <class... Args>
+struct temp
+{
+	std::function<void (Args...)> xt;
+
+	void execute(Args... args)
+	{
+		xt(args...);
+	}
+};
+
+
+
+
+
+UNITTEST(delegate)
+{
+	// inspirations:
+	// boost::signals
+	// Don Clugston's Fast Delegate
+	// function and bind
+
+	// Requirements:
+	// - must handle arbitrary arguments or struct type
+	// - need to bind a member function pointer or free (static) function
+	// - should be able to support delayed invocation
+
+	temp<int> asf;
+
+	asf.xt = std::bind(&free_function, std::placeholders::_1);
+	asf.xt(30);
+
+	// So std::function and std::bind seem like logical choices here.
+	std::function<void (int)> callback;
+	callback = std::bind(&free_function, std::placeholders::_1);
+
+//	delegate<int> callback;
+//	MyClass instance;
+//	AnotherClass second_class;
+//
+//	callback.connect(free_function);
+//	callback.connect(&MyClass::member_function, &instance);
+//	callback.connect(&MyClass::test_value, &instance);
+//	callback.connect(&MyClass::static_member_function);
+//	callback.connect(&AnotherClass::dispatch_test, &second_class);
+//
+//	callback.invoke(30);
+}
+
 int main(int, char**)
 {
 	core::memory::startup();
