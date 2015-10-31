@@ -33,9 +33,7 @@ namespace platform
 	{
 		Thread* thread_data = static_cast<Thread*>(data);
 		thread_data->thread_id = thread_id();
-
 		thread_data->entry(thread_data->userdata);
-
 		return 0;
 	}
 
@@ -46,6 +44,7 @@ namespace platform
 		{
 			thread.handle = thread_handle;
 			thread.state = THREAD_STATE_ACTIVE;
+			thread.entry = entry;
 			return Result::success();
 		}
 
