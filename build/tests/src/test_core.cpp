@@ -1320,52 +1320,7 @@ void test_rapidjson()
 }
 
 
-template <class T>
-class delegate
-{
-public:
 
-	typedef void (*function)(T);
-
-	template <class C>
-	void connect(void (C::*function_ptr)(T), C* instance)
-	{
-		fprintf(stdout, "connect: (fn=%p, instance=%p)\n", function_ptr, instance);
-	}
-
-	template <class C>
-	void connect(void (C::*function_ptr) (T) const, C* instance)
-	{
-		fprintf(stdout, "connect: (fn=%p, instance=%p)\n", function_ptr, instance);
-	}
-
-	void connect(function function_ptr)
-	{
-		fprintf(stdout, "connect: (fn=%p)\n", function_ptr);
-	}
-
-	void invoke(T)
-	{
-		fprintf(stdout, "invoke\n");
-	}
-
-
-private:
-	struct delegate_data
-	{
-
-	};
-
-};
-
-template <class T>
-class event
-{
-	// list of delegate<event<T>>
-
-
-	Array< delegate<event<T>> > connections;
-};
 
 
 
@@ -1424,43 +1379,76 @@ struct temp
 	}
 };
 
+#if 0
+	// sidetracked with move constructors
+	Movable a("name");
+	fprintf(stdout, "value is: %s\n", a.data);
 
+	// move constructor
+	Movable x(std::move(a));
+	fprintf(stdout, "value is: %s\n", x.data);
+#endif
 
-
-
-UNITTEST(delegate)
+struct Movable
 {
-	// inspirations:
-	// boost::signals
-	// Don Clugston's Fast Delegate
-	// function and bind
+	int data_size;
+	char* data;
 
-	// Requirements:
-	// - must handle arbitrary arguments or struct type
-	// - need to bind a member function pointer or free (static) function
-	// - should be able to support delayed invocation
+	Movable(const char* input)
+	{
+		data_size = core::str::len(input);
+		data = new char[data_size+1];
+		data[data_size] = 0;
 
-	temp<int> asf;
+		core::str::copy(data, input, data_size);
+	}
 
-	asf.xt = std::bind(&free_function, std::placeholders::_1);
-	asf.xt(30);
+	~Movable()
+	{
+		data_size = 0;
+		delete [] data;
+		data = nullptr;
+	}
 
-	// So std::function and std::bind seem like logical choices here.
-	std::function<void (int)> callback;
-	callback = std::bind(&free_function, std::placeholders::_1);
+	// move constructor
+	Movable(Movable&& other)
+		: data_size(0)
+		, data(nullptr)
+	{
+		data_size = other.data_size;
+		data = other.data;
 
-//	delegate<int> callback;
-//	MyClass instance;
-//	AnotherClass second_class;
-//
-//	callback.connect(free_function);
-//	callback.connect(&MyClass::member_function, &instance);
-//	callback.connect(&MyClass::test_value, &instance);
-//	callback.connect(&MyClass::static_member_function);
-//	callback.connect(&AnotherClass::dispatch_test, &second_class);
-//
-//	callback.invoke(30);
-}
+		other.data_size = 0;
+		other.data = nullptr;
+	}
+
+	// move assignment operator
+	Movable& operator=(Movable&& other)
+	{
+		// 1. release any resources this owns
+		// 2. pilfer other's resources
+		// 3. reset other's to default
+		// 4. return *this
+
+		if (this != &other)
+		{
+			if (data)
+			{
+				delete [] data;
+				data_size = 0;
+				data = nullptr;
+			}
+
+			data_size = other.data_size;
+			data = other.data;
+
+			other.data_size = 0;
+			other.data = nullptr;
+		}
+
+		return *this;
+	}
+};
 
 int main(int, char**)
 {

@@ -850,7 +850,7 @@ public:
 	{
 		if (_compositor)
 		{
-			_compositor->render();
+			_compositor->draw();
 		}
 	}
 	
@@ -891,6 +891,7 @@ public:
 		render_width = frame.width;
 		render_height = frame.height;
 	}
+
 	
 	virtual void center_cursor()
 	{
@@ -1319,6 +1320,7 @@ Options:
 			core::shutdown();
 			return kernel::CoreFailed;
 		}
+
 		core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
 		// the root path is the current binary path
 		filesystem->root_directory(root_path);
@@ -1583,7 +1585,7 @@ Options:
 		
 		if (compositor)
 		{
-			compositor->update(kernel::parameters().framedelta_milliseconds);
+			compositor->tick(kernel::parameters().framedelta_milliseconds);
 			compositor->process_events();
 		}
 

@@ -31,12 +31,16 @@
 #include <string.h> // for memcpy
 
 #include <core/typedefs.h>
+#include <core/array.h>
 
 #define GLM_FORCE_RADIANS 1
 #include <glm/vec2.hpp>
 #include <glm/mat2x2.hpp>
 #include <glm/common.hpp> // for mix
 #include <glm/gtx/quaternion.hpp>
+
+
+#include <functional>
 
 namespace gui
 {
@@ -247,6 +251,107 @@ namespace gui
 		inline byte g() const { return rgba[1]; }
 		inline byte b() const { return rgba[2]; }
 		inline byte a() const { return rgba[3]; }
+	};
+
+	// ---------------------------------------------------------------------
+	// event handling / delegate
+	// ---------------------------------------------------------------------
+	template <class T>
+	class DelegateHandler
+	{
+		// inspirations:
+		// boost::signals
+		// Don Clugston's Fast Delegate
+		// function and bind
+
+		// Requirements:
+		// + must handle arbitrary arguments or struct type
+		// + need to bind a member function pointer or free (static) function
+		// - should be able to support delayed invocation
+		//	 This is possible, but not implemented at this time.
+
+		// std::function has deleted operator==; therefore
+		// we cannot implement a disconnect function as the backing
+		// store of delegate<T> is an std::function.
+	public:
+
+		// connect overloads
+		template <class C>
+		void connect(void (C::*function_ptr)(T), C* instance)
+		{
+			Delegate func;
+			func.set(function_ptr, instance);
+			connections.push_back(func);
+		}
+
+		template <class C>
+		void connect(void (C::*function_ptr)(T) const, C* instance)
+		{
+			Delegate func;
+			func.set(function_ptr, instance);
+			connections.push_back(func);
+		}
+
+		void connect(void (*function_ptr)(T))
+		{
+			Delegate func;
+			func.set(function_ptr);
+			connections.push_back(func);
+		}
+
+		// emit event to all connections
+		void operator()(T value) const
+		{
+			for (size_t index = 0; index < connections.size(); ++index)
+			{
+				const Delegate& connection = connections[index];
+				connection.invoke(value);
+			}
+		}
+
+		// remove all connections from this event
+		void clear_connections()
+		{
+			connections.clear();
+		}
+
+	private:
+		class Delegate
+		{
+		public:
+			template <class C>
+			void set(void (C::*function_ptr)(T), C* instance)
+			{
+				function_pointer = std::bind(function_ptr, instance, std::placeholders::_1);
+			}
+
+			template <class C>
+			void set(void (C::*function_ptr)(T) const, C* instance)
+			{
+				function_pointer = std::bind(function_ptr, instance, std::placeholders::_1);
+			}
+
+			void set(void (*function_ptr)(T))
+			{
+				function_pointer = std::bind(function_ptr, std::placeholders::_1);
+			}
+
+			void invoke(T value) const
+			{
+				assert(function_pointer != nullptr);
+				function_pointer(value);
+			}
+
+		private:
+			std::function<void (T)> function_pointer;
+		};
+
+		void remove_if_found(const Delegate& func)
+		{
+			connections.erase(func);
+		}
+
+		Array< Delegate > connections;
 	};
 
 	// ---------------------------------------------------------------------

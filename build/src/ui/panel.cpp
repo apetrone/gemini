@@ -31,14 +31,14 @@ namespace gui
 	void* Panel::operator new(size_t bytes)
 	{
 		return _gmalloc(bytes);
-	}
+	} // new
 	
 	void Panel::operator delete(void *memory)
 	{
 		_gfree(memory);
-	}
+	} // delete
 
-	Panel::Panel( Panel * parent )
+	Panel::Panel(Panel* parent)
 	{
 		this->z_rotation = 0.0;
 		scale[0] = 1;
@@ -62,11 +62,11 @@ namespace gui
 		PanelVector::iterator it, end;
 		it = children.begin();
 		end = children.end();
-		for( ; it != end; ++it )
+		for(; it != end; ++it)
 		{
-			Panel * panel = (*it);
+			Panel* panel = (*it);
 			panel->~Panel();
-			gui::_gfree( panel );
+			gui::_gfree(panel);
 		}
 
 		children.clear();
@@ -85,7 +85,7 @@ namespace gui
 	{
 		origin = bounds.origin;
 		size = bounds.size;
-	}
+	} // set_bounds
 
 	void Panel::set_dimensions(float x, float y)
 	{
@@ -96,13 +96,13 @@ namespace gui
 
 		size.width = (x * parent->size.width);
 		size.height = (y * parent->size.height);
-	}
+	} // set_dimensions
 
 	void Panel::set_origin(float x, float y)
 	{
 		origin.x = x;
 		origin.y = y;
-	}
+	} // set_origin
 	
 	void Panel::get_screen_bounds(Rect& bounds)
 	{
@@ -135,34 +135,33 @@ namespace gui
 		bounds.size = size;
 		bounds.origin = origin;
 		
-		if ( parent )
+		if (parent)
 		{
 			// add margins
 		}
 	} // calculate_screen_bounds
 	
-	void Panel::add_child( Panel * panel )
+	void Panel::add_child(Panel* panel)
 	{
-		children.push_back( panel );
+		children.push_back(panel);
 	} // add_child
 	
-	void Panel::remove_child( Panel * panel )
+	void Panel::remove_child(Panel* panel)
 	{
 		PanelVector::iterator it, end;
 		it = children.begin();
 		end = children.end();
-		for( ; it != end; ++it )
+		for(; it != end; ++it)
 		{
-			if ( (*it) == panel )
+			if ((*it) == panel)
 			{
-				children.erase( it );
+				children.erase(it);
 				break;
 			}
 		}
 	} // remove_child
-	
 
-	void Panel::handle_event( EventArgs & args )
+	void Panel::handle_event(EventArgs& args)
 	{
 		if (has_flags(Flag_CursorEnabled))
 		{
@@ -174,9 +173,9 @@ namespace gui
 					origin.y += args.delta.y;
 				}
 			}
-			else if ( args.type == Event_CursorButtonReleased )
+			else if (args.type == Event_CursorButtonReleased)
 			{
-				if ( args.cursor_button == gui::CursorButton::Middle )
+				if (args.cursor_button == gui::CursorButton::Middle)
 				{
 					fprintf(stdout, "bounds = {%2.2f, %2.2f, %g, %g}\n",
 						bounds.origin.x,
@@ -370,5 +369,4 @@ namespace gui
 		assert(panel);
 		return static_cast<Compositor*>(panel);
 	}
-
 } // namespace gui

@@ -123,11 +123,30 @@ public:
 
 	virtual void update(gui::Compositor* compositor, const gui::TimeState& timestate) override;
 	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
-	virtual void handle_event(gui::EventArgs& args) override;
 
 	void add_tab(size_t index, const std::string& name, gui::Panel* panel);
 	void remove_tab(size_t index);
 	void show_tab(size_t index);
+
+	void tab_clicked(gui::EventArgs& args)
+	{
+		TabButton* tab = nullptr;
+		size_t index = 0;
+		for (TabButton* current : tabs)
+		{
+			if (args.hot == current)
+			{
+				tab = current;
+				break;
+			}
+			++index;
+		}
+
+		if (tab)
+		{
+			show_tab(index);
+		}
+	}
 
 	size_t get_active_tab_index() const { return current_tab+1; }
 };
@@ -151,14 +170,7 @@ void TabControl::add_tab(size_t index, const std::string& name, gui::Panel* pane
 
 	TabButton* new_tab = new TabButton(this, name);
 	new_tab->set_panel(panel);
-
-	// TODO: figure out message passing?
-
-	// kind of a flash style
-	//new_tab->subscribe(gui::Event_Click, this);
-
-	// qt style
-	//connect(this, on_tab_click, new_tab, on_event_click);
+	new_tab->on_click.connect(&TabControl::tab_clicked, this);
 
 	// TODO: should get this from style
 	new_tab->set_font("fonts/debug.ttf", 16);
@@ -224,61 +236,6 @@ void TabControl::render(gui::Compositor* compositor, gui::Renderer* renderer, gu
 		gui::Panel* panel = active_tab->get_panel();
 		panel->render(compositor, renderer, render_commands);
 	}
-}
-
-void TabControl::handle_event(gui::EventArgs& args)
-{
-#if 0
-	if (args.type == gui::Event_CursorMove)
-	{
-		// see if the cursor is over one of the tabs
-		for (TabData& tab_data : tabs)
-		{
-			fprintf(stdout, "local: %2.2f, %2.2f\n", args.local.x, args.local.y);
-			if (tab_data.rect.is_point_inside(args.local))
-			{
-				tab_data.is_highlighted = 1;
-				hot_tab = &tab_data;
-			}
-			else
-			{
-				tab_data.is_highlighted = 0;
-			}
-		}
-	}
-	else if (args.type == gui::Event_CursorExit)
-	{
-		for (TabData& tab_data : tabs)
-		{
-			tab_data.is_highlighted = 0;
-		}
-
-		hot_tab = nullptr;
-	}
-	else if (args.type == gui::Event_CursorButtonReleased)
-	{
-		hot_tab = nullptr;
-
-		// see if the cursor is over one of the tabs
-		for (TabData& tab_data : tabs)
-		{
-			// cursor is in screen coords; so we need to translate it to tab rect coords
-			gui::Point pt = args.cursor - bounds.origin;
-
-			if (tab_data.rect.is_point_inside(pt))
-			{
-				hot_tab = &tab_data;
-				break;
-			}
-		}
-
-		if (hot_tab)
-		{
-			show_tab(hot_tab->index);
-		}
-	}
-#endif
-	Panel::handle_event(args);
 }
 
 class ControllerTestPanel : public gui::Panel
@@ -404,6 +361,8 @@ public:
 	LIBRARY_EXPORT virtual void set_value(float new_value) { current_value = new_value; }
 	LIBRARY_EXPORT virtual float get_value() const { return current_value; }
 
+	gui::DelegateHandler<float> on_value_changed;
+
 protected:
 
 	Point get_left_edge();
@@ -434,9 +393,13 @@ void Slider::handle_event(gui::EventArgs &args)
 	{
 		float next_value = args.local.x - 5;
 		next_value = glm::clamp(next_value, kLeftMargin, bounds.width()-kRightMargin);
+		float old_value = current_value;
 		current_value = (next_value / (float)bounds.width());
 
-		// TODO: dispatch event value changed
+		if (old_value != current_value)
+		{
+			on_value_changed(current_value);
+		}
 	}
 	else if (args.type == gui::Event_KeyButtonReleased)
 	{
