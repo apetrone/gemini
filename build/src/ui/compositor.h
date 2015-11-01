@@ -55,8 +55,6 @@ namespace gui
 		EventArgs queue[16];
 		uint16_t next_message;
 		uint32_t key_modifiers;
-		
-		TimeState timestate;
 
 		render::CommandList command_list;
 

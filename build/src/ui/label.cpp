@@ -31,12 +31,7 @@ namespace gui
 	Label::Label(Panel* parent) : Panel(parent)
 	{
 	}
-	
-	void Label::update(Compositor* compositor, const TimeState& timestate)
-	{
-		Panel::update(compositor, timestate);
-	} // update
-	
+
 	void Label::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
 	{
 		render_commands.add_rectangle(

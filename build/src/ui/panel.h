@@ -43,16 +43,6 @@ namespace gui
 
 	typedef std::vector<Panel*> PanelVector;
 
-	struct TimeState
-	{
-		float delta_seconds;
-
-		TimeState() :
-			delta_seconds(0.0f)
-		{
-		}
-	};
-
 	class Panel
 	{
 	public:
@@ -96,7 +86,7 @@ namespace gui
 		LIBRARY_EXPORT virtual void add_child(Panel* panel);
 		LIBRARY_EXPORT virtual void remove_child(Panel* panel);
 		LIBRARY_EXPORT virtual void handle_event(EventArgs& args);
-		LIBRARY_EXPORT virtual void update(Compositor* compositor, const TimeState& timestate);
+		LIBRARY_EXPORT virtual void update(Compositor* compositor, float delta_seconds);
 		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
 		LIBRARY_EXPORT virtual void render_children(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
 		LIBRARY_EXPORT virtual void set_background_image(Compositor* compositor, const char* path);
