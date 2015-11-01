@@ -30,9 +30,8 @@
 
 namespace gui
 {
-	Button::Button(Panel * parent) : Label(parent)
+	Button::Button(Panel* parent) : Label(parent)
 	{
-		on_click = 0;
 		pressed_color = gui::Color(255, 0, 0);
 
 		state = 0;
@@ -43,22 +42,22 @@ namespace gui
 		
 	} // ~Button
 	
-	void Button::handle_event( EventArgs & args )
+	void Button::handle_event(EventArgs& args)
 	{
-		if ( args.type == Event_CursorButtonPressed )
+		if (args.type == Event_CursorButtonPressed)
 		{
-			if ( args.cursor_button == CursorButton::Left )
+			if (args.cursor_button == CursorButton::Left)
 			{
-				args.compositor->set_focus( this );
+				args.compositor->set_focus(this);
 				current_color = pressed_color;
 				state = 1;
 			}
 		}
-		else if ( args.type == Event_CursorButtonReleased )
+		else if (args.type == Event_CursorButtonReleased)
 		{
-			if ( args.cursor_button == CursorButton::Left )
+			if (args.cursor_button == CursorButton::Left)
 			{
-				if ( args.compositor->get_hot() == this )
+				if (args.compositor->get_hot() == this )
 				{
 					current_color = hover_color;
 
@@ -66,6 +65,7 @@ namespace gui
 					message.type = Event_Click;
 					args.compositor->queue_event(message);
 					state = 0;
+					on_click(message);
 				}
 			}
 		}

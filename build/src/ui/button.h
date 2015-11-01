@@ -55,7 +55,7 @@ namespace gui
 		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
 		
 		LIBRARY_EXPORT virtual bool is_button() const { return true; }
-		
-		Callback<void, EventArgs &>* on_click;
+
+		DelegateHandler<EventArgs&> on_click;
 	}; // struct Button
 } // namespace gui

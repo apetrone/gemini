@@ -124,7 +124,6 @@ namespace gui
 		
 		LIBRARY_EXPORT virtual bool has_flags(const uint32_t& flags) const { return (this->flags & flags) == flags; }
 
-
 		// ---------------------------------------------------------------------
 		// transforms
 		// ---------------------------------------------------------------------
@@ -136,7 +135,6 @@ namespace gui
 		// ---------------------------------------------------------------------
 		// traverse the hierarchy and find the parent compositor
 		LIBRARY_EXPORT Compositor* get_compositor();
-
 
 		LIBRARY_EXPORT const Point& get_origin() const { return origin; }
 		LIBRARY_EXPORT virtual void set_origin(float x, float y);
