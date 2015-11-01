@@ -80,11 +80,10 @@ namespace gui
 	
 	void Compositor::tick(float delta_seconds)
 	{
-		timestate.delta_seconds = delta_seconds;
 		for(PanelVector::reverse_iterator it = zsorted.rbegin(); it != zsorted.rend(); ++it)
 		{
 			Panel* panel = (*it);
-			panel->update(this, timestate);
+			panel->update(this, delta_seconds);
 		}
 
 		process_events();

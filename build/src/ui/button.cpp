@@ -79,9 +79,9 @@ namespace gui
 		}
 	} // handle_event
 	
-	void Button::update(Compositor* compositor, const TimeState& timestate)
+	void Button::update(Compositor* compositor, float delta_seconds)
 	{
-		Label::update(compositor, timestate);
+		Label::update(compositor, delta_seconds);
 		
 		// TODO: calculate this when text changes?		
 		gui::Rect bounds;

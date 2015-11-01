@@ -121,7 +121,7 @@ class TabControl : public gui::Panel
 public:
 	TabControl(gui::Panel* root);
 
-	virtual void update(gui::Compositor* compositor, const gui::TimeState& timestate) override;
+	virtual void update(gui::Compositor* compositor, float delta_seconds) override;
 	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override;
 
 	void add_tab(size_t index, const std::string& name, gui::Panel* panel);
@@ -214,14 +214,14 @@ void TabControl::show_tab(size_t index)
 	}
 }
 
-void TabControl::update(gui::Compositor* compositor, const gui::TimeState& timestate)
+void TabControl::update(gui::Compositor* compositor, float delta_seconds)
 {
 	if (active_tab && active_tab->get_panel())
 	{
-		active_tab->get_panel()->update(compositor, timestate);
+		active_tab->get_panel()->update(compositor, delta_seconds);
 	}
 
-	gui::Panel::update(compositor, timestate);
+	gui::Panel::update(compositor, delta_seconds);
 }
 
 void TabControl::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
@@ -269,9 +269,9 @@ public:
 		last.y = value;
 	}
 
-	virtual void update(gui::Compositor* compositor, const gui::TimeState& timestate)
+	virtual void update(gui::Compositor* compositor, float delta_seconds)
 	{
-		gui::Panel::update(compositor, timestate);
+		gui::Panel::update(compositor, delta_seconds);
 	}
 
 	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
@@ -355,7 +355,7 @@ public:
 
 	LIBRARY_EXPORT virtual void handle_event(gui::EventArgs& args) override;
 		
-	LIBRARY_EXPORT virtual void update(gui::Compositor* compositor, const gui::TimeState& timestate) override;
+	LIBRARY_EXPORT virtual void update(gui::Compositor* compositor, float delta_seconds) override;
 	LIBRARY_EXPORT virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands);
 
 	LIBRARY_EXPORT virtual void set_value(float new_value) { current_value = new_value; }
@@ -423,7 +423,7 @@ void Slider::handle_event(gui::EventArgs &args)
 	}
 }
 
-void Slider::update(gui::Compositor* compositor, const gui::TimeState& timestate)
+void Slider::update(gui::Compositor* compositor, float delta_seconds)
 {
 	Point left_edge = get_left_edge();
 	Point right_edge = get_right_edge();
@@ -438,7 +438,7 @@ void Slider::update(gui::Compositor* compositor, const gui::TimeState& timestate
 
 	drag_handle->set_origin(xvalue, handle_height);
 
-	Panel::update(compositor, timestate);
+	Panel::update(compositor, delta_seconds);
 }
 
 void Slider::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)

@@ -188,7 +188,7 @@ namespace gui
 		}
 	} // handle_event
 
-	void Panel::update(Compositor* compositor, const TimeState& timestate)
+	void Panel::update(Compositor* compositor, float delta_seconds)
 	{
 		this->calculate_screen_bounds(compositor);
 		
@@ -228,7 +228,7 @@ namespace gui
 
 		for(PanelVector::iterator it = children.begin(); it != children.end(); ++it)
 		{
-			(*it)->update(compositor, timestate);
+			(*it)->update(compositor, delta_seconds);
 		}
 	} // update
 
