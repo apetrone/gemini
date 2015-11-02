@@ -372,12 +372,15 @@ protected:
 	float current_value;
 
 	Panel* drag_handle;
+
+	float drag_handle_width;
 };
 
-Slider::Slider(Panel* parent) :
-	Panel(parent),
-	current_value(0.0f),
-	drag_handle(nullptr)
+Slider::Slider(Panel* parent)
+	: Panel(parent)
+	, current_value(kLeftMargin)
+	, drag_handle(nullptr)
+	, drag_handle_width(0.0f)
 {
 	drag_handle = new Panel(this);
 	drag_handle->set_background_color(gui::Color(0, 255, 255));
@@ -391,10 +394,26 @@ void Slider::handle_event(gui::EventArgs &args)
 {
 	if (args.type == gui::Event_CursorDrag || args.type == gui::Event_CursorButtonPressed)
 	{
-		float next_value = args.local.x - 5;
-		next_value = glm::clamp(next_value, kLeftMargin, bounds.width()-kRightMargin);
+		// To find the 'current_value' of the slider, we work backwards by
+		// taking the input at args.local.x and computing the desired position
+		// for the drag handle.
+
+		// calculate usable width
+		Point left_edge = get_left_edge();
+		Point right_edge = get_right_edge();
+		float usable_width = (right_edge.x - left_edge.x);
+
+		// user clicked or dragged at input
+		float input = args.local.x;
+
+		// translate it back by half the handle width
+		float origin = (input - (drag_handle_width/2.0f));
+
+		// cache the previous value
 		float old_value = current_value;
-		current_value = (next_value / (float)bounds.width());
+
+		// compute the new value as it should be in our usable_width
+		current_value = glm::clamp(((origin - kLeftMargin) / usable_width), 0.0f, 1.0f);
 
 		if (old_value != current_value)
 		{
@@ -425,15 +444,23 @@ void Slider::handle_event(gui::EventArgs &args)
 
 void Slider::update(gui::Compositor* compositor, float delta_seconds)
 {
+	const float HANDLE_WIDTH_DIMENSION = 0.05f;
+	const float HANDLE_HEIGHT_DIMENSION = 0.6f;
+
+	// calculate the width of the drag handle
+	Rect screen_bounds;
+	get_screen_bounds(screen_bounds);
+	drag_handle_width = HANDLE_WIDTH_DIMENSION * screen_bounds.width();
+
 	Point left_edge = get_left_edge();
 	Point right_edge = get_right_edge();
 
-	float xvalue = (right_edge.x - left_edge.x) * current_value;
+	float usable_width = (right_edge.x - left_edge.x);
+	float xvalue = kLeftMargin + (usable_width * current_value);
 
 	Size size = get_size();
 
-	const float HANDLE_HEIGHT_DIMENSION = 0.6f;
-	drag_handle->set_dimensions(0.05f, HANDLE_HEIGHT_DIMENSION);
+	drag_handle->set_dimensions(HANDLE_WIDTH_DIMENSION, HANDLE_HEIGHT_DIMENSION);
 	float handle_height = (size.height - (HANDLE_HEIGHT_DIMENSION * size.height)) / 2.0f;
 
 	drag_handle->set_origin(xvalue, handle_height);
@@ -456,17 +483,13 @@ void Slider::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::r
 	render_commands.add_line(left_edge, right_edge, foreground_color);
 
 	Panel::render_children(compositor, renderer, render_commands);
-
-
-
-
 }
 
 Point Slider::get_left_edge()
 {
 	float vertical_center = (geometry[1].y - geometry[0].y) / 2.0f;
 	Point left_edge = geometry[0];
-	left_edge.x += kLeftMargin;
+	left_edge.x += kLeftMargin + (drag_handle_width/2.0f);
 	left_edge.y += vertical_center;
 	return left_edge;
 }
@@ -475,7 +498,7 @@ Point Slider::get_right_edge()
 {
 	float vertical_center = (geometry[1].y - geometry[0].y) / 2.0f;
 	Point right_edge = geometry[2];
-	right_edge.x -= kRightMargin;
+	right_edge.x -= (kRightMargin + (drag_handle_width/2.0f));
 	right_edge.y -= vertical_center;
 	return right_edge;
 }
@@ -499,6 +522,7 @@ class TestUi : public kernel::IKernel,
 	gui::Graph* graph;
 	gui::Label* label;
 	gui::Slider* slider;
+	gui::Label* slider_label;
 	GUIRenderer renderer;
 	StandaloneResourceCache resource_cache;
 	ControllerTestPanel* ctp;
@@ -578,6 +602,16 @@ public:
 
 	virtual bool is_active() const { return active; }
 	virtual void set_active(bool isactive) { active = isactive; }
+
+	void slider_value_changed(float new_value)
+	{
+		if (slider_label)
+		{
+			slider_label->set_text(
+				core::str::format("%2.2f", new_value)
+			);
+		}
+	}
 
 	void setup_gui(int width, int height)
 	{
@@ -700,6 +734,13 @@ public:
 		slider->set_background_color(gui::Color(60, 60, 60, 255));
 		slider->set_foreground_color(gui::Color(255, 255, 255, 255));
 		slider->set_value(0.0f);
+		slider->on_value_changed.connect(&TestUi::slider_value_changed, this);
+
+		// slider label to check value
+		slider_label = new gui::Label(root);
+		slider_label->set_bounds(230, 300, 40, 30);
+		slider_label->set_text("empty");
+		slider_label->set_font("fonts/debug.ttf", 16);
 #endif
 	}
 
