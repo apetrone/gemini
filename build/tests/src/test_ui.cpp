@@ -446,6 +446,11 @@ public:
 		}
 	}
 
+	void test_button_clicked(gui::EventArgs& args)
+	{
+		fprintf(stdout, "test_button_clicked\n");
+	}
+
 	void setup_gui(int width, int height)
 	{
 		renderer.set_device(device);
@@ -549,7 +554,7 @@ public:
 			button->set_text(captions[index]);
 			button->set_background_color(button_background);
 			button->set_hover_color(button_hover);
-			button->set_userdata((void*)2);
+			button->on_click.connect(&TestUi::test_button_clicked, this);
 
 			origin_y += button_height + button_spacing;
 			buttons[index] = button;

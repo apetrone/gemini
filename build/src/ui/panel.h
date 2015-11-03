@@ -92,8 +92,6 @@ namespace gui
 		LIBRARY_EXPORT virtual void set_background_image(Compositor* compositor, const char* path);
 		LIBRARY_EXPORT virtual void set_background_color(const Color& color);
 		LIBRARY_EXPORT virtual void set_foreground_color(const Color& color);
-		LIBRARY_EXPORT virtual void set_userdata(void* data);
-		LIBRARY_EXPORT virtual void* get_userdata() const;
 		LIBRARY_EXPORT virtual void set_visible(bool is_visible);
 		LIBRARY_EXPORT virtual bool is_visible() const;
 
