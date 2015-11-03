@@ -290,17 +290,7 @@ namespace gui
 	{
 		foreground_color = color;
 	}
-	
-	void Panel::set_userdata(void* data)
-	{
-		userdata = data;
-	} // set_userdata
-	
-	void* Panel::get_userdata() const
-	{
-		return userdata;
-	} // get_userdata
-	
+
 	void Panel::set_visible(bool is_visible)
 	{
 		this->visible = is_visible;
