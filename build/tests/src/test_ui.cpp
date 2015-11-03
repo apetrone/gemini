@@ -481,11 +481,11 @@ public:
 #endif
 
 		// test tab panel
-#if 1
+
 		TabControl* tab = new TabControl(root);
 		tab->set_bounds(10, 10, 250, 250);
 		tab->set_name("tab_panel");
-#if 1
+
 		label = new gui::Label(tab);
 		label->set_background_color(gui::Color(32, 32, 32));
 		label->set_foreground_color(gui::Color(0, 255, 0));
@@ -494,10 +494,10 @@ public:
 //		label->set_dimensions(1.0f, 1.0f);
 		label->set_font(dev_font, dev_font_size);
 		label->set_text("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-#endif
+
 		tab->add_tab(0, "test", label);
 
-#if 1
+
 		{
 			gui::Label* label = new gui::Label(tab);
 			label->set_background_color(gui::Color(32, 32, 32));
@@ -507,9 +507,9 @@ public:
 			label->set_text("ABCDEFGHIJKLMNOPQRSTUVWXYZ adam 0123456789");
 			tab->add_tab(1, "test2", label);
 		}
-#endif
 
-#endif
+
+
 //		ctp = new ControllerTestPanel(root);
 //		ctp->set_bounds(0, 0, 300, 300);
 //		ctp->set_background_color(gui::Color(80, 80, 80));
@@ -520,7 +520,7 @@ public:
 
 
 		// test buttons
-#if 1
+
 		gui::Color button_background(128, 128, 128, 255);
 		gui::Color button_hover(255, 255, 128, 255);
 
@@ -558,10 +558,10 @@ public:
 
 		buttons[0]->set_visible(false);
 		LOGV("button %p is not visible\n", buttons[0]);
-#endif
+
 
 		// test slider
-#if 1
+
 		// slider label to check value
 		slider_label = new gui::Label(root);
 		slider_label->set_bounds(230, 300, 40, 30);
@@ -576,7 +576,7 @@ public:
 		slider->set_foreground_color(gui::Color(255, 255, 255, 255));
 		slider->on_value_changed.connect(&TestUi::slider_value_changed, this);
 		slider->set_value(0.5f);
-#endif
+
 	}
 
 	virtual kernel::Error startup()
