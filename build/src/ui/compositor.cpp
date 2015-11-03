@@ -92,19 +92,16 @@ namespace gui
 	
 	void Compositor::draw()
 	{
-		if ( this->renderer == 0 )
-		{
-			return;
-		}
+		assert(renderer);
 
 		command_list.reset();
 		vertex_buffer.resize(0);
 		
-		this->renderer->begin_frame( this );
+		this->renderer->begin_frame(this);
 		
-		for( PanelVector::reverse_iterator it = zsorted.rbegin(); it != zsorted.rend(); ++it )
+		for(PanelVector::reverse_iterator it = zsorted.rbegin(); it != zsorted.rend(); ++it)
 		{
-			Panel * panel = (*it);
+			Panel* panel = (*it);
 			if (panel->is_visible())
 			{
 				panel->render(this, this->renderer, command_list);
