@@ -89,7 +89,7 @@ namespace gui
 		FontResult_Failed = 1,
 	}; // FontResult
 
-	class ResourceCache
+	class LIBRARY_EXPORT ResourceCache
 	{
 	public:
 		virtual ~ResourceCache();
@@ -108,7 +108,7 @@ namespace gui
 		virtual TextureHandle create_texture(const char* filename) = 0;
 		virtual void destroy_texture(const TextureHandle& handle) = 0;
 	};
-}
+} // namespace gui
 
 #include "ui/utils.h"
 #include "ui/events.h"

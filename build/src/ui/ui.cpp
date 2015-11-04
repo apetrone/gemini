@@ -29,14 +29,14 @@
 
 namespace gui
 {
-	void * default_gui_malloc( size_t bytes )
+	void* default_gui_malloc(size_t bytes)
 	{
 		return malloc(bytes);
 	} // default_gui_malloc
 	
-	void default_gui_free( void * p )
+	void default_gui_free(void* pointer)
 	{
-		free( p );
+		free(pointer);
 	} // default_gui_free
 
 	gui_malloc _gmalloc = default_gui_malloc;

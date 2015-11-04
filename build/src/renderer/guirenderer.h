@@ -46,7 +46,6 @@ class CommonResourceCache : public gui::ResourceCache
 public:
 	virtual void clear() {}
 
-
 protected:
 	virtual int track_texture(render2::Texture* texture)
 	{

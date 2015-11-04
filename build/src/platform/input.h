@@ -29,6 +29,20 @@
 #include <stdint.h>
 #include <limits.h>
 
+// Convert these to enum classes and then we
+// won't need this to cleanup after Windows.
+#if defined(MOD_CONTROL)
+#undef MOD_CONTROL
+#endif
+
+#if defined(MOD_SHIFT)
+#undef MOD_SHIFT
+#endif
+
+#if defined(MOD_ALT)
+#undef MOD_ALT
+#endif
+
 namespace input
 {
 	const unsigned int MAX_INPUTSTATE_TOUCHES = 10;
