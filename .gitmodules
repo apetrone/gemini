@@ -37,3 +37,6 @@
 [submodule "build/dependencies/rapidjson"]
 	path = build/dependencies/rapidjson
 	url = https://github.com/miloyip/rapidjson
+[submodule "build/dependencies/freetype2"]
+	path = build/dependencies/freetype2
+	url = git://github.com/apetrone/freetype2
