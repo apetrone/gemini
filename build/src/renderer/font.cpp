@@ -458,8 +458,8 @@ namespace render2
 		{
 			int advancex;
 			int advancey;
-			int width;
-			int height;
+			unsigned int width;
+			unsigned int height;
 			int hbearingx;
 			int hbearingy;
 			int vbearingx;
@@ -519,8 +519,8 @@ namespace render2
 			glyphdata.width = face->glyph->metrics.width >> 6;
 			glyphdata.height = face->glyph->metrics.height >> 6;
 
-			assert((int)glyphdata.width == face->glyph->bitmap.width);
-			assert((int)glyphdata.height == face->glyph->bitmap.rows);
+			assert(glyphdata.width == face->glyph->bitmap.width);
+			assert(glyphdata.height == face->glyph->bitmap.rows);
 
 			if (FT_HAS_VERTICAL(face))
 			{
