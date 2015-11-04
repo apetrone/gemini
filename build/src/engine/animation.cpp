@@ -221,9 +221,9 @@ namespace gemini
 			size_t index = 0;
 			for (const KeyframeListArray& array : sequence->AnimationSet)
 			{
-				AnimationSet[index].allocate(sequence->AnimationSet[index].size());
-				ChannelSet[index].allocate(sequence->AnimationSet[index].size());
-				for (size_t channel_index = 0; channel_index < sequence->AnimationSet[index].size(); ++channel_index)
+				AnimationSet[index].allocate(array.size());
+				ChannelSet[index].allocate(array.size());
+				for (size_t channel_index = 0; channel_index < array.size(); ++channel_index)
 				{
 					Channel& channel = ChannelSet[index][channel_index];
 					channel.set_keyframe_list(&sequence->AnimationSet[index][channel_index]);

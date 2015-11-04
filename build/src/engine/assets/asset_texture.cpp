@@ -51,14 +51,12 @@ namespace gemini
 		} // release
 
 		
-		AssetLoadStatus texture_load_callback(const char * path, Texture * texture, const TextureParameters& parameters)
+		AssetLoadStatus texture_load_callback(const char* path, Texture* texture, const TextureParameters& parameters)
 		{
-			unsigned int texture_id = 0;
 			unsigned int width = 0;
 			unsigned int height = 0;
 			bool load_result = 0;
-			unsigned int flags = 0;
-			
+
 			if ( !(parameters.flags & image::F_CUBEMAP) ) // load 2d texture
 			{
 				texture->texture = load_texture_from_file(path, parameters, texture->image);
@@ -82,11 +80,11 @@ namespace gemini
 				assert( 0 );
 			}
 			
-			if ( load_result )
+			if (load_result)
 			{
 				texture->image.flags = parameters.flags;
 				texture->image.width = width;
-				texture->image.height = width;
+				texture->image.height = height;
 				return assets::AssetLoad_Success;
 			}
 			

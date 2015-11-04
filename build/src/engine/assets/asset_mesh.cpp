@@ -170,13 +170,13 @@ namespace gemini
 				}
 
 				// read all indices
-				for (int i = 0; i < geo->indices.size(); ++i)
+				for (int i = 0; i < static_cast<int>(geo->indices.size()); ++i)
 				{
 					geo->indices[i] = index_array[i].asInt();
 				}
 				
 				// read vertices and normals
-				for (int v = 0; v < geo->vertices.size(); ++v)
+				for (int v = 0; v < static_cast<int>(geo->vertices.size()); ++v)
 				{
 					const Json::Value& vertex = vertex_array[v];
 					geo->vertices[v] = glm::vec3(vertex[0].asFloat(), vertex[1].asFloat(), vertex[2].asFloat());
@@ -187,7 +187,7 @@ namespace gemini
 				}
 
 				// read vertex colors
-				for (int v = 0; v < geo->colors.size(); ++v)
+				for (int v = 0; v < static_cast<int>(geo->colors.size()); ++v)
 				{
 					const Json::Value& vertex_color = vertex_colors[v];
 					geo->colors[v] = core::Color(255 * vertex_color[0].asFloat(), 255 * vertex_color[1].asFloat(), 255 * vertex_color[2].asFloat(), 255 * vertex_color[3].asFloat());
@@ -198,7 +198,7 @@ namespace gemini
 				{
 					geo->uvs[set_id].allocate(vertex_array.size());
 					assert(vertex_array.size() == geo->vertices.size());
-					for (int v = 0; v < geo->vertices.size(); ++v)
+					for (int v = 0; v < static_cast<int>(geo->vertices.size()); ++v)
 					{
 						const Json::Value& texcoord = uv_sets[set_id][v];
 						glm::vec2& uv = geo->uvs[set_id][v];
