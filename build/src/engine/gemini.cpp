@@ -790,10 +790,10 @@ public:
 		model_interface(mi),
 		physics_interface(pi),
 		experimental_interface(ei),
-		scenelink(scene_link),
 		main_window(window),
 		game_memory_zone("game"),
-		game_allocator(&game_memory_zone)
+		game_allocator(&game_memory_zone),
+		scenelink(scene_link)
 	{
 	}
 	
