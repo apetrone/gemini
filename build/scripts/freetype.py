@@ -5,7 +5,9 @@ from pegasus.models import Product, ProductType, Dependency
 def products(arguments, **kwargs):
 	target_platform = kwargs.get("target_platform")
 
-	freetype = Product(name="freetype", output=ProductType.DynamicLibrary)
+	output_type = ProductType.StaticLibrary if target_platform.matches("windows") else ProductType.DynamicLibrary
+
+	freetype = Product(name="freetype", output=output_type)
 	freetype.root = "../dependencies/freetype2"
 	freetype.project_root = "_projects"
 	freetype.sources += [	
@@ -117,7 +119,7 @@ def products(arguments, **kwargs):
 
 	windows = freetype.layout(platform="windows")
 	windows.sources += [
-			"builds/win32/ftdebug.c",
+			"src/base/ftdebug.c",
 			"src/base/ftwinfnt.c",
 	]
 	windows.defines += [
