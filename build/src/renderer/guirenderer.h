@@ -38,7 +38,7 @@
 
 
 
-// Aa common resource cache interface that can be used by the engine and tools/tests
+// A common resource cache interface that can be used by the engine and tools/tests
 // as needed.
 
 class CommonResourceCache : public gui::ResourceCache
