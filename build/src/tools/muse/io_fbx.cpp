@@ -670,7 +670,9 @@ namespace gemini
 						datamodel::Bone* bone = state.model->skeleton->find_bone_named(cluster->GetLink()->GetName());
 						BoneData& bonedata = mesh_data->bones[cluster->GetLink()->GetName()];
 						bonedata.name = cluster->GetLink()->GetName();
-						
+
+						// If you hit this, lookup failed for the cluster name.
+
 						assert(bone != 0);
 						
 						FbxAMatrix transform_matrix;
@@ -734,7 +736,7 @@ namespace gemini
 		{
 			datamodel::Bone* bone = state.model->skeleton->add_bone(parent_index, fbxnode->GetName());
 
-//			LOGV("%spopulate_skeleton: [parent_index=%i, index=%i, name=%s]\n", state.indent.indent(), parent_index, bone->index, fbxnode->GetName());
+//			LOGV("%sprocess_skeleton: [parent_index=%i, index=%i, name=%s]\n", state.indent.indent(), parent_index, bone->index, fbxnode->GetName());
 			parent_index = bone->index;
 			state.skeletal_nodes.push_back(fbxnode);
 		}
@@ -745,11 +747,6 @@ namespace gemini
 			process_skeleton(state, parent_index, fbxnode->GetChild(index));
 			state.indent.pop();
 		}
-	}
-	
-	static void process_geometry(AutodeskFbxExtensionState& state, datamodel::Node* root, FbxNode* fbxnode)
-	{
-		
 	}
 
 	static void populate_hierarchy(AutodeskFbxExtensionState& state, datamodel::Node* root, FbxNode* fbxnode)
@@ -903,20 +900,26 @@ namespace gemini
 			{
 				// If you hit this assert, there's another skeleton at the root level.
 				// At the moment, only a single skeleton is supported.
-				assert(extension_state.model->skeleton == 0);
-				
-				extension_state.model->skeleton = MEMORY_NEW(datamodel::Skeleton, core::memory::global_allocator());
+//				assert(extension_state.model->skeleton == 0);
+
+				if (!extension_state.model->skeleton)
+				{
+					extension_state.model->skeleton = MEMORY_NEW(datamodel::Skeleton, core::memory::global_allocator());
+				}
+
 				process_skeleton(extension_state, -1, node);
 				return true;
 			}
+//			else
+//			{
+//				LOGV("found node attribute type: %i\n", node_attribute_type);
+//			}
 		}
-	
+
+//		LOGV("find_skeleton: searching %i children...\n", node->GetChildCount());
 		for (int index = 0; index < node->GetChildCount(); ++index)
 		{
-			if (find_skeleton(node->GetChild(index)))
-			{
-				break;
-			}
+			find_skeleton(node->GetChild(index));
 		}
 		
 		return false;
