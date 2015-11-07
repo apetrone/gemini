@@ -26,6 +26,8 @@
 #include <renderer/debug_draw.h>
 #include <renderer/renderer.h>
 #include <renderer/font.h>
+#include <renderer/guirenderer.h>
+#include <renderer/standaloneresourcecache.h>
 
 #include <runtime/core.h>
 #include <runtime/logging.h>
@@ -86,42 +88,16 @@ private:
 
 	render2::font::Handle font;
 //	GLsync fence;
-	
-	struct MyVertex
-	{
-		float position[3];
-		float color[4];
-		
-		void set_position(float x, float y, float z)
-		{
-			position[0] = x;
-			position[1] = y;
-			position[2] = z;
-		}
-		
-		void set_color(float red, float green, float blue, float alpha)
-		{
-			color[0] = red;
-			color[1] = green;
-			color[2] = blue;
-			color[3] = alpha;
-		}
-	};
 
-	struct TexturedVertex : public MyVertex
-	{
-		float uv[2];
-
-		void set_uv(float u, float v)
-		{
-			uv[0] = u;
-			uv[1] = v;
-		}
-	};
+	gui::Compositor* compositor;
+	GUIRenderer* gui_renderer;
+	::renderer::StandaloneResourceCache resource_cache;
 
 public:
-	EditorKernel() :
-		active(true)
+	EditorKernel()
+		: active(true)
+		, compositor(nullptr)
+		, gui_renderer(nullptr)
 	{
 	}
 	
@@ -132,71 +108,48 @@ public:
 	
 	virtual void event(kernel::SystemEvent& event)
 	{
-		if (event.subtype == kernel::WindowGainFocus)
+//		if (event.subtype == kernel::WindowGainFocus)
+//		{
+//			LOGV("window gained focus\n");
+//		}
+//		else if (event.subtype == kernel::WindowLostFocus)
+//		{
+//			LOGV("window lost focus\n");
+//		}
+//		else if (event.subtype == kernel::WindowResized)
+//		{
+//			LOGV("resolution_changed %i %i\n", event.render_width, event.render_height);
+//		}
+
+		if (event.subtype == kernel::WindowResized)
 		{
-			LOGV("window gained focus\n");
-		}
-		else if (event.subtype == kernel::WindowLostFocus)
-		{
-			LOGV("window lost focus\n");
-		}
-		else if (event.subtype == kernel::WindowResized)
-		{
-			LOGV("resolution_changed %i %i\n", event.render_width, event.render_height);
+			platform::window::Frame frame = platform::window::get_render_frame(main_window);
+
+			assert(device);
+			device->backbuffer_resized(frame.width, frame.height);
+
+			compositor->resize(frame.width, frame.height);
 		}
 	}
 	
 	virtual void event(kernel::MouseEvent& event)
 	{
-		if (event.subtype == kernel::MouseWheelMoved)
-		{
-			LOGV("wheel direction: %i\n", event.wheel_direction);
-		}
-		else if (event.subtype == kernel::MouseMoved)
-		{
-			LOGV("mouse moved: %i %i [%i %i]\n", event.mx, event.my, event.dx, event.dy);
-		}
-		else if (event.subtype == kernel::MouseButton)
-		{
-			LOGV("mouse button: %s, %i -> %s\n", event.is_down ? "Yes" : "No", event.button, input::mouse_button_name(event.button));
-		}
-		else
-		{
-			LOGV("mouse event: %i\n", event.subtype);
-		}
-	}
-
-	void populate_textured_buffer()
-	{
-		const size_t width = 256;
-		const size_t height = 256;
-		glm::vec2 offset(64, 128);
-
-		TexturedVertex* quad = (TexturedVertex*)device->buffer_lock(vertex_buffers[1]);
-		quad[0].set_position(offset.x, offset.y+height, 0);
-		quad[0].set_color(1, 1, 1, 1);
-		quad[0].set_uv(0, 0);
-
-		quad[1].set_position(offset.x+width, offset.y+height, 0);
-		quad[1].set_color(1, 1, 1, 1);
-		quad[1].set_uv(1, 0);
-
-		quad[2].set_position(offset.x+width, offset.y, 0);
-		quad[2].set_color(1, 1, 1, 1);
-		quad[2].set_uv(1, 1);
-
-		quad[3] = quad[2];
-
-		quad[4].set_position(offset.x, offset.y, 0);
-		quad[4].set_color(1, 1, 1, 1);
-		quad[4].set_uv(0, 1);
-
-		quad[5].set_position(offset.x, offset.y+height, 0);
-		quad[5].set_color(1, 1, 1, 1);
-		quad[5].set_uv(0, 0);
-
-//		device->buffer_upload(vertex_buffers[1], &quad[0], sizeof(TexturedVertex)*6);
-		device->buffer_unlock(vertex_buffers[1]);
+//		if (event.subtype == kernel::MouseWheelMoved)
+//		{
+//			LOGV("wheel direction: %i\n", event.wheel_direction);
+//		}
+//		else if (event.subtype == kernel::MouseMoved)
+//		{
+//			LOGV("mouse moved: %i %i [%i %i]\n", event.mx, event.my, event.dx, event.dy);
+//		}
+//		else if (event.subtype == kernel::MouseButton)
+//		{
+//			LOGV("mouse button: %s, %i -> %s\n", event.is_down ? "Yes" : "No", event.button, input::mouse_button_name(event.button));
+//		}
+//		else
+//		{
+//			LOGV("mouse event: %i\n", event.subtype);
+//		}
 	}
 
 	virtual kernel::Error startup()
@@ -216,14 +169,6 @@ public:
 		{
 			platform::window::startup(platform::window::RenderingBackend_Default);
 
-			PLATFORM_LOG(LogMessageType::Info, "total screens: %zu\n", platform::window::screen_count());
-			
-			for (size_t screen = 0; screen < platform::window::screen_count(); ++screen)
-			{
-				platform::window::Frame frame = platform::window::screen_frame(screen);
-				PLATFORM_LOG(LogMessageType::Info, "screen rect: %zu, origin: %2.2f, %2.2f; resolution: %2.2f x %2.2f\n", screen, frame.x, frame.y, frame.width, frame.height);
-			}
-			
 			platform::window::Parameters params;
 
 			bool enable_fullscreen = false;
@@ -253,7 +198,9 @@ public:
 
 //			fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 		}
-		
+
+		platform::window::Frame window_frame;
+
 		// initialize the renderer
 		{
 			using namespace render2;
@@ -278,11 +225,10 @@ public:
 				const param_string& value = it.value();
 				LOGV("'%s' -> '%s'\n", key(), value());
 			}
-			
-			
+
 			device = create_device(params);
 
-			platform::window::Frame window_frame = platform::window::get_frame(main_window);
+			window_frame = platform::window::get_frame(main_window);
 			device->init(window_frame.width, window_frame.height);
 
 			// setup shaders
@@ -293,7 +239,6 @@ public:
 			vertex_format.add("in_color", render2::VD_FLOAT, 4);
 			desc.input_layout = device->create_input_layout(vertex_format, desc.shader);
 			pipeline = device->create_pipeline(desc);
-
 
 			// create the texture pipeline
 			texture_pipeline = nullptr;
@@ -310,30 +255,6 @@ public:
 				desc.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
 				texture_pipeline = device->create_pipeline(desc);
 			}
-
-			size_t total_bytes = sizeof(MyVertex) * 6;
-			vertex_buffers[0] = device->create_vertex_buffer(total_bytes);
-			vertex_buffers[1] = device->create_vertex_buffer(sizeof(render2::font::FontVertex)*4096);
-
-#if 1
-			MyVertex* vertex = reinterpret_cast<MyVertex*>(device->buffer_lock(vertex_buffers[0]));
-			
-//			MyVertex vertex[4];
-			
-			vertex[0].set_position(0, window_frame.height, 0);
-			vertex[0].set_color(1.0f, 0.0f, 0.0f, 1.0f);
-			
-			vertex[1].set_position(window_frame.width, window_frame.height, 0);
-			vertex[1].set_color(0.0f, 1.0f, 0.0f, 1.0f);
-			
-			vertex[2].set_position(window_frame.width/2.0f, 0, 0);
-			vertex[2].set_color(0.0f, 0.0f, 1.0f, 1.0f);
-			
-			vertex[3].set_position(0, 0, 0);
-			vertex[3].set_color(0.0f, 1.0f, 1.0f, 1.0f);
-
-			device->buffer_unlock(vertex_buffers[0]);
-#endif
 
 
 //			populate_textured_buffer();
@@ -370,6 +291,20 @@ public:
 			}
 			
 		}
+#else
+		{
+			// in lieu of the above working; manually setup the gui...
+			gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator())(resource_cache);
+			gui_renderer->set_device(device);
+
+			compositor = new gui::Compositor(window_frame.width, window_frame.height, &resource_cache, gui_renderer);
+
+
+			gui::Panel* root = new gui::Panel(compositor);
+			root->set_bounds(100, 100, 300, 400);
+			root->set_background_color(gui::Color(255, 0, 0, 255));
+			
+		}
 #endif
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
 
@@ -389,7 +324,12 @@ public:
 		value = glm::clamp(value, 0.0f, 1.0f);
 		if (value == 0.0f || value == 1.0f)
 			multiplifer *= -1;
-		
+
+		if (compositor)
+		{
+			compositor->tick(kernel::parameters().step_interval_seconds);
+			compositor->process_events();
+		}
 
 		platform::window::Frame window_frame = platform::window::get_frame(main_window);
 
@@ -403,7 +343,7 @@ public:
 		texture_pipeline->constants().set("projection_matrix", &projection_matrix);
 		texture_pipeline->constants().set("diffuse", &sampler);
 
-		value = 0.25f;
+		value = 0.15f;
 
 		render2::Pass render_pass;
 		render_pass.target = device->default_render_target();
@@ -416,11 +356,10 @@ public:
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
 		
 		serializer->pipeline(pipeline);
-		serializer->vertex_buffer(vertex_buffers[0]);
-		serializer->draw(0, 3);
+//		serializer->vertex_buffer(vertex_buffers[0]);
+//		serializer->draw(0, 3);
 		device->queue_buffers(queue, 1);
 		device->destroy_serializer(serializer);
-
 
 
 		// draw a test quad with the font
@@ -467,18 +406,18 @@ public:
 			render_pass.color(0, 0, 0, 1.0f);
 			render_pass.clear_color = false;
 
-			render2::CommandQueue* queue = device->create_queue(render_pass);
-			render2::CommandSerializer* serializer = device->create_serializer(queue);
-			serializer->pipeline(texture_pipeline);
-			serializer->vertex_buffer(vertex_buffers[1]);
-			serializer->texture(render2::font::get_font_texture(font), 0);
-
-
-			populate_textured_buffer();
-			serializer->draw(0, 6);
-
-			TexturedVertex* v = (TexturedVertex*)device->buffer_lock(vertex_buffers[1]);
-			v+=6;
+//			render2::CommandQueue* queue = device->create_queue(render_pass);
+//			render2::CommandSerializer* serializer = device->create_serializer(queue);
+//			serializer->pipeline(texture_pipeline);
+//			serializer->vertex_buffer(vertex_buffers[1]);
+//			serializer->texture(render2::font::get_font_texture(font), 0);
+//
+//
+//			populate_textured_buffer();
+//			serializer->draw(0, 6);
+//
+//			TexturedVertex* v = (TexturedVertex*)device->buffer_lock(vertex_buffers[1]);
+//			v+=6;
 
 //			glm::vec2 baseline(64.0f, 120.0f);
 			glm::vec2 baseline(window_frame.width/2.0f - maxres.x/2.0f, 120.0f);
@@ -520,30 +459,27 @@ public:
 			baseline.y += maxres.y;
 #endif
 			
-			size_t index = 0;
-			for (auto& vertex : fontvertices)
-			{
-//				LOGV("[%i] pos [%2.2f, %2.2f]\n", index, vertex.position.x, vertex.position.y);
-//				LOGV("[%i] uv [%2.2f, %2.2f]\n", index, vertex.uv.x, vertex.uv.y);
-//				vertex.position = transform * vertex.position;
-				v->set_position(vertex.position.x + baseline.x, vertex.position.y + baseline.y, 0);
-				v->set_color(
-							 vertex.color.r/255.0f,
-							 vertex.color.g/255.0f,
-							 vertex.color.b/255.0f,
-							 vertex.color.a/255.0f
-							 );
-				v->set_uv(vertex.uv.x, vertex.uv.y);
-				++v;
-				++index;
-			}
+//			size_t index = 0;
+//			for (auto& vertex : fontvertices)
+//			{
+////				LOGV("[%i] pos [%2.2f, %2.2f]\n", index, vertex.position.x, vertex.position.y);
+////				LOGV("[%i] uv [%2.2f, %2.2f]\n", index, vertex.uv.x, vertex.uv.y);
+////				vertex.position = transform * vertex.position;
+//				v->set_position(vertex.position.x + baseline.x, vertex.position.y + baseline.y, 0);
+//				v->set_color(
+//							 vertex.color.r/255.0f,
+//							 vertex.color.g/255.0f,
+//							 vertex.color.b/255.0f,
+//							 vertex.color.a/255.0f
+//							 );
+//				v->set_uv(vertex.uv.x, vertex.uv.y);
+//				++v;
+//				++index;
+//			}
 
-			serializer->draw(6, fontvertices.size() + 6);
+//			serializer->draw(6, fontvertices.size() + 6);
 
-			device->buffer_unlock(vertex_buffers[1]);
-
-
-
+//			device->buffer_unlock(vertex_buffers[1]);
 
 
 			device->queue_buffers(queue, 1);
@@ -553,7 +489,15 @@ public:
 
 		platform::window::activate_context(main_window);
 
+
+		if (compositor)
+		{
+			compositor->draw();
+		}
+
 		device->submit();
+
+
 
 		platform::window::swap_buffers(main_window);
 
@@ -563,6 +507,16 @@ public:
 	
 	virtual void shutdown()
 	{
+		// shutdown the gui
+		MEMORY_DELETE(gui_renderer, core::memory::global_allocator());
+
+		// compositor will cleanup children
+		delete compositor;
+
+		// explicitly clear the resource cache or else the allocator will
+		// detect leaks.
+		resource_cache.clear();
+
 		render2::font::shutdown();
 
 		// shutdown the render device

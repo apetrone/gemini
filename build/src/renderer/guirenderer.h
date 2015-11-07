@@ -94,8 +94,13 @@ class GUIRenderer : public gui::Renderer
 	Array<render2::font::FontVertex> vertices;
 public:
 
-	GUIRenderer(CommonResourceCache& cache) :
-		resource_cache(cache)
+	GUIRenderer(CommonResourceCache& cache)
+		: device(nullptr)
+		, vertex_buffer(nullptr)
+		, gui_pipeline(nullptr)
+		, font_pipeline(nullptr)
+		, white_texture(nullptr)
+		, resource_cache(cache)
 	{}
 
 	void set_device(render2::Device* device) { this->device = device; }
