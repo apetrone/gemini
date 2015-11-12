@@ -112,10 +112,25 @@ void GUIRenderer::startup(gui::Compositor* compositor)
 
 void GUIRenderer::shutdown(gui::Compositor* c)
 {
-	device->destroy_texture(white_texture);
-	device->destroy_buffer(vertex_buffer);
-	device->destroy_pipeline(gui_pipeline);
-	device->destroy_pipeline(font_pipeline);
+	if (white_texture)
+	{
+		device->destroy_texture(white_texture);
+	}
+
+	if (vertex_buffer)
+	{
+		device->destroy_buffer(vertex_buffer);
+	}
+
+	if (gui_pipeline)
+	{
+		device->destroy_pipeline(gui_pipeline);
+	}
+
+	if (font_pipeline)
+	{
+		device->destroy_pipeline(font_pipeline);
+	}
 	
 	vertices.clear();
 }

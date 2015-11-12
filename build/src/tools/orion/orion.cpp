@@ -68,6 +68,173 @@ namespace render2
 	}
 }
 
+
+namespace gui
+{
+	class Timeline : public Panel
+	{
+	public:
+		Timeline(Panel* parent)
+			: Panel(parent)
+			, left_margin(0)
+			, frame_width_pixels(0.0f)
+			, current_frame(0)
+		{
+			flags |= Flag_CursorEnabled;
+			set_name("Timeline");
+		}
+
+		gui::DelegateHandler<size_t> on_scrubber_changed;
+
+		virtual void handle_event(EventArgs& args) override
+		{
+			last_position = args.local;
+			if (args.type == Event_CursorDrag || args.type == Event_CursorButtonPressed)
+			{
+				// snap to the closest point
+				size_t last_frame = current_frame;
+
+				int next_frame = (((int)args.local.x) - 1) / frame_width_pixels;
+
+				if (next_frame < 0)
+					current_frame = 0;
+				else if (next_frame > (int)total_frames)
+					current_frame = total_frames;
+				else
+					current_frame = next_frame;
+
+				if ( current_frame <= 0 )
+				{
+					current_frame = 0;
+				}
+				else if ( current_frame > total_frames-1 )
+				{
+					current_frame = total_frames-1;
+				}
+
+				if (last_frame != current_frame)
+				{
+					on_scrubber_changed(current_frame);
+				}
+			}
+		}
+
+//		virtual void update(gui::Compositor* compositor, float delta_seconds) override;
+		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
+		{
+			// assuming a horizontal timeline
+			if (frame_width_pixels == 0)
+			{
+				// recompute the distance here
+				frame_width_pixels = (bounds.size.width / (float)total_frames);
+			}
+
+			assert(frame_width_pixels > 0);
+
+			// draw the background
+			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, gui::Color(64, 64, 64, 255));
+
+			// add a top rule line to separate this panel
+			render_commands.add_line(geometry[0], geometry[3], Color(0, 0, 0, 255), 1.0f);
+
+			Rect frame;
+			get_screen_bounds(frame);
+
+			float origin_x = frame.origin.x + left_margin;
+			float origin_y = frame.origin.y + 1.0f;
+
+			// center the individual frames
+			Rect block;
+			block.set(origin_x, origin_y, 1.0f, frame.size.height-2);
+
+			for (size_t index = 0; index < total_frames; ++index)
+			{
+				// draw frame ticks until we reach the end of the panel
+				if (block.origin.x + block.size.width >= (frame.origin.x + frame.size.width))
+				{
+					break;
+				}
+
+				Point points[4];
+				points[0].x = block.origin.x;
+				points[0].y = block.origin.y;
+
+				points[1].x = block.origin.x + block.size.width;
+				points[1].y = block.origin.y;
+
+				points[2].x = block.origin.x + block.size.width;
+				points[2].y = block.origin.y + block.size.height;
+
+				points[3].x = block.origin.x;
+				points[3].y = block.origin.y + block.size.height;
+
+				// draw each frame's area
+				render_commands.add_rectangle(points[0], points[1], points[2], points[3], gui::render::WhiteTexture, Color(96, 96, 96, 255));
+
+				block.origin.x += frame_width_pixels;
+			}
+
+			// draw the current frame as a highlighted region
+			Point region[4];
+
+			float offset = origin_x + (current_frame * frame_width_pixels);
+
+			region[0].x = offset;
+			region[0].y = origin_y;
+
+			region[1].x = offset + frame_width_pixels;
+			region[1].y = origin_y;
+
+			region[2].x = offset + frame_width_pixels;
+			region[2].y = origin_y + block.size.height;
+
+			region[3].x = offset;
+			region[3].y = origin_y + block.size.height;
+
+			Color scrubber_highlight(255, 128, 0, 32);
+			Color scrubber_outline(255, 128, 0, 192);
+
+			// draw the main highlight fill
+			render_commands.add_rectangle(region[0], region[1], region[2], region[3], gui::render::WhiteTexture, scrubber_highlight);
+
+			// draw the outline
+			render_commands.add_line(region[0], region[1], scrubber_outline);
+			render_commands.add_line(region[1], region[2], scrubber_outline);
+			render_commands.add_line(region[2], region[3], scrubber_outline);
+			render_commands.add_line(region[3], region[0], scrubber_outline);
+		}
+
+
+		void set_frame_range(int lower_frame_limit, int upper_frame_limit)
+		{
+			lower_limit = lower_frame_limit;
+			upper_limit = upper_frame_limit;
+
+			assert(upper_limit > lower_limit);
+			total_frames = (upper_limit - lower_limit);
+
+			// force a recalculate on the next render call
+			frame_width_pixels = 0;
+		}
+
+	private:
+		size_t left_margin;
+		size_t current_frame;
+		size_t total_frames;
+
+		// frame limits
+		int lower_limit;
+		int upper_limit;
+
+		// width of a clickable 'frame'
+		float frame_width_pixels;
+
+		Point last_position;
+	};
+}
+
+
+
 class EditorKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -134,6 +301,30 @@ public:
 	
 	virtual void event(kernel::MouseEvent& event)
 	{
+		if (compositor)
+		{
+			static gui::CursorButton::Type input_to_gui[] = {
+				gui::CursorButton::None,
+				gui::CursorButton::Left,
+				gui::CursorButton::Right,
+				gui::CursorButton::Middle,
+				gui::CursorButton::Mouse4,
+				gui::CursorButton::Mouse5
+			};
+
+			if (event.subtype == kernel::MouseMoved)
+			{
+				compositor->cursor_move_absolute(event.mx, event.my);
+			}
+			else if (event.subtype == kernel::MouseButton)
+			{
+				compositor->cursor_button(input_to_gui[event.button], event.is_down);
+			}
+			else if (event.subtype == kernel::MouseWheelMoved)
+			{
+				LOGV("wheel direction: %i\n", event.wheel_direction);
+			}
+		}
 //		if (event.subtype == kernel::MouseWheelMoved)
 //		{
 //			LOGV("wheel direction: %i\n", event.wheel_direction);
@@ -303,7 +494,11 @@ public:
 			gui::Panel* root = new gui::Panel(compositor);
 			root->set_bounds(100, 100, 300, 400);
 			root->set_background_color(gui::Color(255, 0, 0, 255));
-			
+
+			gui::Timeline* timeline = new gui::Timeline(compositor);
+			timeline->set_bounds(0, 550, 800, 50);
+
+			timeline->set_frame_range(0, 55);
 		}
 #endif
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
@@ -507,11 +702,11 @@ public:
 	
 	virtual void shutdown()
 	{
-		// shutdown the gui
-		MEMORY_DELETE(gui_renderer, core::memory::global_allocator());
-
 		// compositor will cleanup children
 		delete compositor;
+
+		// shutdown the gui
+		MEMORY_DELETE(gui_renderer, core::memory::global_allocator());
 
 		// explicitly clear the resource cache or else the allocator will
 		// detect leaks.

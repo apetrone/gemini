@@ -202,7 +202,7 @@ namespace gui
 					listener->hot_changed(last_hot, hot);
 				}
 
-				if ( last_hot )
+				if (last_hot)
 				{
 					// mouse exit
 					EventArgs args(this, Event_CursorExit);
@@ -216,7 +216,7 @@ namespace gui
 					last_hot->handle_event(args);
 				}
 
-				if ( hot )
+				if (hot)
 				{
 					// mouse enter
 					EventArgs args(this, Event_CursorEnter);
