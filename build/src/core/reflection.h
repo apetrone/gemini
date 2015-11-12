@@ -120,9 +120,18 @@ namespace reflection
 		};\
 	}
 
-#define TYPEINFO_PROPERTY(T)\
-	reflection::make_class_property(#T, T)
+#define TYPEINFO_OFFSET(I, M) ::reflection::find_member_offset(I, &I.M)
 
+#define TYPEINFO_PROPERTY(T)\
+	reflection::make_class_property(#T, T, TYPEINFO_OFFSET((*this), T))
+
+template <class T>
+size_t find_member_offset(const T& instance, const void* offset)
+{
+	return \
+		static_cast<const unsigned char*>(offset) -
+		static_cast<const unsigned char*>(static_cast<const void*>(&instance));
+}
 
 namespace traits
 {
@@ -314,10 +323,12 @@ namespace traits
 	{
 		const char* name;
 		T& ref;
+		size_t offset;
 
-		ClassProperty(const char* property_name, T& value) :
+		ClassProperty(const char* property_name, T& value, size_t offset) :
 			name(property_name),
-			ref(value)
+			ref(value),
+			offset(offset)
 		{
 		}
 	};
@@ -327,10 +338,12 @@ namespace traits
 	{
 		const char* name;
 		const char* ref;
+		size_t offset;
 
-		ClassProperty(const char* property_name, const char* value) :
+		ClassProperty(const char* property_name, const char* value, size_t offset) :
 			name(property_name),
-			ref(value)
+			ref(value),
+			offset(offset)
 		{
 		}
 	};
@@ -354,9 +367,9 @@ namespace traits
 //	}
 
 	template <class T>
-	const reflection::ClassProperty<T> make_class_property(const char* name, const T& value)
+	const reflection::ClassProperty<T> make_class_property(const char* name, const T& value, size_t offset)
 	{
-		return reflection::ClassProperty<T>(name, const_cast<T&>(value));
+		return reflection::ClassProperty<T>(name, const_cast<T&>(value), offset);
 	}
 
 //	template <>
