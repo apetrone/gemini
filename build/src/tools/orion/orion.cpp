@@ -77,8 +77,8 @@ namespace gui
 		Timeline(Panel* parent)
 			: Panel(parent)
 			, left_margin(0)
-			, frame_width_pixels(0.0f)
 			, current_frame(0)
+			, frame_width_pixels(0.0f)
 		{
 			flags |= Flag_CursorEnabled;
 			set_name("Timeline");
@@ -119,7 +119,6 @@ namespace gui
 			}
 		}
 
-//		virtual void update(gui::Compositor* compositor, float delta_seconds) override;
 		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
 		{
 			// assuming a horizontal timeline
@@ -129,6 +128,7 @@ namespace gui
 				frame_width_pixels = (bounds.size.width / (float)total_frames);
 			}
 
+			// should be updated before rendering
 			assert(frame_width_pixels > 0);
 
 			// draw the background
@@ -230,9 +230,65 @@ namespace gui
 		float frame_width_pixels;
 
 		Point last_position;
-	};
+	}; // Timeline
+
+
+	// This uses a render target to present data
+	class RenderableSurface : public gui::Panel
+	{
+	public:
+		RenderableSurface(Panel* parent)
+			: Panel(parent)
+			, target(nullptr)
+			, handle(render::WhiteTexture)
+		{
+			flags |= Flag_CursorEnabled | Flag_CanMove;
+			set_name("RenderableSurface");
+		}
+
+		void set_render_target(render2::RenderTarget* render_target) { target = render_target; }
+		render2::RenderTarget* get_render_target() const { return target; }
+
+		void set_texture_handle(int ref) { handle = ref; }
+
+		// invoked when the handler should render its content to the render
+		// target.
+		gui::DelegateHandler<render2::RenderTarget*> on_render_content;
+
+		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
+		{
+			on_render_content(target);
+
+			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], handle, gui::Color(255, 255, 255, 255));
+		}
+
+	private:
+		//
+		render2::RenderTarget* target;
+		int handle;
+	}; // RenderableSurface
 }
 
+struct MyVertex
+{
+	float position[3];
+	float color[4];
+
+	void set_position(float x, float y, float z)
+	{
+		position[0] = x;
+		position[1] = y;
+		position[2] = z;
+	}
+
+	void set_color(float red, float green, float blue, float alpha)
+	{
+		color[0] = red;
+		color[1] = green;
+		color[2] = blue;
+		color[3] = alpha;
+	}
+};
 
 
 class EditorKernel : public kernel::IKernel,
@@ -245,26 +301,31 @@ private:
 	platform::window::NativeWindow* main_window;
 	
 	render2::Device* device;
-	render2::Buffer* vertex_buffers[2];
+	render2::Buffer* vertex_buffer;
 
 	render2::Pipeline* pipeline;
-	render2::Pipeline* texture_pipeline;
 
 	glm::mat4 modelview_matrix;
 	glm::mat4 projection_matrix;
 
-	render2::font::Handle font;
 //	GLsync fence;
 
 	gui::Compositor* compositor;
 	GUIRenderer* gui_renderer;
 	::renderer::StandaloneResourceCache resource_cache;
+	render2::RenderTarget* render_target;
+	render2::Texture* texture;
+
+	float value;
 
 public:
 	EditorKernel()
 		: active(true)
 		, compositor(nullptr)
 		, gui_renderer(nullptr)
+		, render_target(nullptr)
+		, texture(nullptr)
+		, value(0.0f)
 	{
 	}
 	
@@ -275,19 +336,6 @@ public:
 	
 	virtual void event(kernel::SystemEvent& event)
 	{
-//		if (event.subtype == kernel::WindowGainFocus)
-//		{
-//			LOGV("window gained focus\n");
-//		}
-//		else if (event.subtype == kernel::WindowLostFocus)
-//		{
-//			LOGV("window lost focus\n");
-//		}
-//		else if (event.subtype == kernel::WindowResized)
-//		{
-//			LOGV("resolution_changed %i %i\n", event.render_width, event.render_height);
-//		}
-
 		if (event.subtype == kernel::WindowResized)
 		{
 			platform::window::Frame frame = platform::window::get_render_frame(main_window);
@@ -325,22 +373,31 @@ public:
 				LOGV("wheel direction: %i\n", event.wheel_direction);
 			}
 		}
-//		if (event.subtype == kernel::MouseWheelMoved)
-//		{
-//			LOGV("wheel direction: %i\n", event.wheel_direction);
-//		}
-//		else if (event.subtype == kernel::MouseMoved)
-//		{
-//			LOGV("mouse moved: %i %i [%i %i]\n", event.mx, event.my, event.dx, event.dy);
-//		}
-//		else if (event.subtype == kernel::MouseButton)
-//		{
-//			LOGV("mouse button: %s, %i -> %s\n", event.is_down ? "Yes" : "No", event.button, input::mouse_button_name(event.button));
-//		}
-//		else
-//		{
-//			LOGV("mouse event: %i\n", event.subtype);
-//		}
+	}
+
+	void timeline_scrubber_changed(size_t current_frame)
+	{
+		fprintf(stdout, "timeline: %i\n", current_frame);
+		value = (current_frame / 60.0f);
+	}
+
+	void render_main_content(render2::RenderTarget* render_target)
+	{
+		render2::Pass render_pass;
+		render_pass.color(0.0f, value, value, 1.0f);
+		render_pass.clear_color = true;
+		render_pass.clear_depth = true;
+		render_pass.depth_test = false;
+		render_pass.target = render_target;
+
+		render2::CommandQueue* queue = device->create_queue(render_pass);
+		render2::CommandSerializer* serializer = device->create_serializer(queue);
+
+		serializer->pipeline(pipeline);
+		serializer->vertex_buffer(vertex_buffer);
+		serializer->draw(0, 3);
+		device->queue_buffers(queue, 1);
+		device->destroy_serializer(serializer);
 	}
 
 	virtual kernel::Error startup()
@@ -431,37 +488,36 @@ public:
 			desc.input_layout = device->create_input_layout(vertex_format, desc.shader);
 			pipeline = device->create_pipeline(desc);
 
-			// create the texture pipeline
-			texture_pipeline = nullptr;
-			if (1)
-			{
-				render2::PipelineDescriptor desc;
-				desc.shader = device->create_shader("vertexcolortexture");
-				desc.vertex_description.add("in_position", render2::VD_FLOAT, 3);
-				desc.vertex_description.add("in_color", render2::VD_FLOAT, 4);
-				desc.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
-				desc.input_layout = device->create_input_layout(desc.vertex_description, desc.shader);
-				desc.enable_blending = true;
-				desc.blend_source = render2::BlendOp::SourceAlpha;
-				desc.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
-				texture_pipeline = device->create_pipeline(desc);
-			}
+			size_t total_bytes = sizeof(MyVertex) * 6;
+			vertex_buffer = device->create_vertex_buffer(total_bytes);
 
+#if 1
+			MyVertex* vertex = reinterpret_cast<MyVertex*>(device->buffer_lock(vertex_buffer));
 
-//			populate_textured_buffer();
+//			MyVertex vertex[4];
 
+			vertex[0].set_position(0, window_frame.height, 0);
+			vertex[0].set_color(1.0f, 0.0f, 0.0f, 1.0f);
+
+			vertex[1].set_position(window_frame.width, window_frame.height, 0);
+			vertex[1].set_color(0.0f, 1.0f, 0.0f, 1.0f);
+
+			vertex[2].set_position(window_frame.width/2.0f, 0, 0);
+			vertex[2].set_color(0.0f, 0.0f, 1.0f, 1.0f);
+
+			vertex[3].set_position(0, 0, 0);
+			vertex[3].set_color(0.0f, 1.0f, 1.0f, 1.0f);
+
+			device->buffer_unlock(vertex_buffer);
+#endif
 		}
-		
+
 		// setup editor assets / content paths
 		{
 //			fs->add_virtual_path("editor/assets");
 		}
 
 		render2::font::startup(device);
-
-		Array<unsigned char> data;
-		core::filesystem::instance()->virtual_load_file(data, "fonts/debug.ttf");
-		font = render2::font::load_from_memory(&data[0], data.size(), 16);
 
 #if 0
 		// load the gui
@@ -491,14 +547,33 @@ public:
 			compositor = new gui::Compositor(window_frame.width, window_frame.height, &resource_cache, gui_renderer);
 
 
-			gui::Panel* root = new gui::Panel(compositor);
-			root->set_bounds(100, 100, 300, 400);
-			root->set_background_color(gui::Color(255, 0, 0, 255));
+//			gui::Panel* root = new gui::Panel(compositor);
+//			root->set_bounds(100, 100, 300, 400);
+//			root->set_background_color(gui::Color(255, 0, 0, 255));
 
 			gui::Timeline* timeline = new gui::Timeline(compositor);
 			timeline->set_bounds(0, 550, 800, 50);
+			timeline->set_frame_range(0, 30);
+			timeline->on_scrubber_changed.connect(&EditorKernel::timeline_scrubber_changed, this);
 
-			timeline->set_frame_range(0, 55);
+
+			gui::RenderableSurface* surface = new gui::RenderableSurface(compositor);
+			surface->set_bounds(50, 50, 512, 512);
+			surface->on_render_content.connect(&EditorKernel::render_main_content, this);
+
+			image::Image checker_pattern;
+			checker_pattern.width = 512;
+			checker_pattern.height = 512;
+			checker_pattern.channels = 3;
+			image::generate_checker_pattern(checker_pattern, core::Color(255, 0, 255), core::Color(0, 255, 0));
+			texture = device->create_texture(checker_pattern);
+
+			int handle = resource_cache.track_texture(texture);
+
+			// TODO: sort out this interface!
+			render_target = device->create_render_target(texture);
+			surface->set_render_target(render_target);
+			surface->set_texture_handle(handle);
 		}
 #endif
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
@@ -533,11 +608,6 @@ public:
 		pipeline->constants().set("modelview_matrix", &modelview_matrix);
 		pipeline->constants().set("projection_matrix", &projection_matrix);
 
-		uint32_t sampler = 0;
-		texture_pipeline->constants().set("modelview_matrix", &modelview_matrix);
-		texture_pipeline->constants().set("projection_matrix", &projection_matrix);
-		texture_pipeline->constants().set("diffuse", &sampler);
-
 		value = 0.15f;
 
 		render2::Pass render_pass;
@@ -551,139 +621,12 @@ public:
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
 		
 		serializer->pipeline(pipeline);
-//		serializer->vertex_buffer(vertex_buffers[0]);
+//		serializer->vertex_buffer(vertex_buffer);
 //		serializer->draw(0, 3);
 		device->queue_buffers(queue, 1);
 		device->destroy_serializer(serializer);
 
-
-		// draw a test quad with the font
-#if 0
-		{
-			render2::Pass render_pass;
-			render_pass.target = device->default_render_target();
-			render_pass.clear_color = false;
-
-			render2::CommandQueue* queue = device->create_queue(render_pass);
-			render2::CommandSerializer* serializer = device->create_serializer(queue);
-			serializer->pipeline(texture_pipeline);
-			serializer->vertex_buffer(vertex_buffers[1]);
-			serializer->texture(render2::font::get_font_texture(font), 0);
-			serializer->draw(0, 6);
-			device->queue_buffers(queue, 1);
-			device->destroy_serializer(serializer);
-		}
-#endif
-
-		Array<render2::font::FontVertex> fontvertices;
-		if (font.is_valid())
-		{
-
-			glm::mat2 transform(1.0f);
-			const float radians = mathlib::degrees_to_radians(-45);
-			transform = glm::mat2(
-							 cos(radians), -sin(radians),
-							 sin(radians), cos(radians)
-							 );
-
-			const char buffer[] = "The quick brown fox jumps over the lazy dog";
-
-
-			render2::font::draw_string(font, fontvertices, buffer, core::Color(0, 255, 255, 255));
-
-
-			glm::vec2 minres, maxres;
-			render2::font::get_string_metrics(font, buffer, minres, maxres);
-
-
-			render2::Pass render_pass;
-			render_pass.target = device->default_render_target();
-			render_pass.color(0, 0, 0, 1.0f);
-			render_pass.clear_color = false;
-
-//			render2::CommandQueue* queue = device->create_queue(render_pass);
-//			render2::CommandSerializer* serializer = device->create_serializer(queue);
-//			serializer->pipeline(texture_pipeline);
-//			serializer->vertex_buffer(vertex_buffers[1]);
-//			serializer->texture(render2::font::get_font_texture(font), 0);
-//
-//
-//			populate_textured_buffer();
-//			serializer->draw(0, 6);
-//
-//			TexturedVertex* v = (TexturedVertex*)device->buffer_lock(vertex_buffers[1]);
-//			v+=6;
-
-//			glm::vec2 baseline(64.0f, 120.0f);
-			glm::vec2 baseline(window_frame.width/2.0f - maxres.x/2.0f, 120.0f);
-
-			// draw background highlight
-#if 0
-			baseline.y -= maxres.y;
-
-			v->set_position(baseline.x, baseline.y+maxres.y, 0);
-			v->set_color(0, 0, 0, 1);
-			v->set_uv(0, 0);
-			++v;
-
-			v->set_position(baseline.x+maxres.x, baseline.y+maxres.y, 0);
-			v->set_color(0, 0, 0, 1);
-			v->set_uv(1, 0);
-			++v;
-
-			v->set_position(baseline.x+maxres.x, baseline.y, 0);
-			v->set_color(0, 0, 0, 1);
-			v->set_uv(1, 1);
-			++v;
-
-			v->set_position(baseline.x+maxres.x, baseline.y, 0);
-			v->set_color(0, 0, 0, 1);
-			v->set_uv(1, 1);
-			++v;
-
-			v->set_position(baseline.x, baseline.y, 0);
-			v->set_color(0, 0, 0, 1);
-			v->set_uv(0, 1);
-			++v;
-
-			v->set_position(baseline.x, baseline.y+maxres.y, 0);
-			v->set_color(0, 0, 0, 1);
-			v->set_uv(0, 0);
-			++v;
-
-			baseline.y += maxres.y;
-#endif
-			
-//			size_t index = 0;
-//			for (auto& vertex : fontvertices)
-//			{
-////				LOGV("[%i] pos [%2.2f, %2.2f]\n", index, vertex.position.x, vertex.position.y);
-////				LOGV("[%i] uv [%2.2f, %2.2f]\n", index, vertex.uv.x, vertex.uv.y);
-////				vertex.position = transform * vertex.position;
-//				v->set_position(vertex.position.x + baseline.x, vertex.position.y + baseline.y, 0);
-//				v->set_color(
-//							 vertex.color.r/255.0f,
-//							 vertex.color.g/255.0f,
-//							 vertex.color.b/255.0f,
-//							 vertex.color.a/255.0f
-//							 );
-//				v->set_uv(vertex.uv.x, vertex.uv.y);
-//				++v;
-//				++index;
-//			}
-
-//			serializer->draw(6, fontvertices.size() + 6);
-
-//			device->buffer_unlock(vertex_buffers[1]);
-
-
-			device->queue_buffers(queue, 1);
-			device->destroy_serializer(serializer);
-		}
-
-
 		platform::window::activate_context(main_window);
-
 
 		if (compositor)
 		{
@@ -702,6 +645,9 @@ public:
 	
 	virtual void shutdown()
 	{
+		device->destroy_render_target(render_target);
+		device->destroy_texture(texture);
+
 		// compositor will cleanup children
 		delete compositor;
 
@@ -715,16 +661,10 @@ public:
 		render2::font::shutdown();
 
 		// shutdown the render device
-		device->destroy_buffer(vertex_buffers[0]);
-
-		if (vertex_buffers[1])
-			device->destroy_buffer(vertex_buffers[1]);
+		device->destroy_buffer(vertex_buffer);
 
 		device->destroy_pipeline(pipeline);
 
-		if (texture_pipeline)
-			device->destroy_pipeline(texture_pipeline);
-		
 		destroy_device(device);
 		
 //		glDeleteSync(fence);
