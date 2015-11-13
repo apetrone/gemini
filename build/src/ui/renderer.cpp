@@ -92,42 +92,42 @@ namespace render
 		command.texture = texture;
 
 		// origin is in the upper left, with Y+ towards the bottom of the screen
-		
+		// these are counter-clock wise
 		write_pointer[0].x = p0.x;
 		write_pointer[0].y = p0.y;
 		write_pointer[0].color = color;
 		write_pointer[0].uv[0] = 0;
-		write_pointer[0].uv[1] = 0;
+		write_pointer[0].uv[1] = 1;
 				
 		write_pointer[1].x = p1.x;
 		write_pointer[1].y = p1.y;
 		write_pointer[1].color = color;
 		write_pointer[1].uv[0] = 0;
-		write_pointer[1].uv[1] = 1;
+		write_pointer[1].uv[1] = 0;
 		
 		write_pointer[2].x = p2.x;
 		write_pointer[2].y = p2.y;
 		write_pointer[2].color = color;
 		write_pointer[2].uv[0] = 1;
-		write_pointer[2].uv[1] = 1;
+		write_pointer[2].uv[1] = 0;
 		
 		write_pointer[3].x = p2.x;
 		write_pointer[3].y = p2.y;
 		write_pointer[3].color = color;
 		write_pointer[3].uv[0] = 1;
-		write_pointer[3].uv[1] = 1;
+		write_pointer[3].uv[1] = 0;
 		
 		write_pointer[4].x = p3.x;
 		write_pointer[4].y = p3.y;
 		write_pointer[4].color = color;
 		write_pointer[4].uv[0] = 1;
-		write_pointer[4].uv[1] = 0;
+		write_pointer[4].uv[1] = 1;
 		
 		write_pointer[5].x = p0.x;
 		write_pointer[5].y = p0.y;
 		write_pointer[5].color = color;
 		write_pointer[5].uv[0] = 0;
-		write_pointer[5].uv[1] = 0;
+		write_pointer[5].uv[1] = 1;
 	}
 	
 	void CommandList::add_line(const Point& start, const Point& end, const gui::Color& color, float thickness)

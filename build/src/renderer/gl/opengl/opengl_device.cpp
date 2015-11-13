@@ -47,6 +47,16 @@ namespace render2
 		return &default_target;
 	}
 
+	RenderTarget* OpenGLDevice::create_render_target(Texture* texture)
+	{
+		return common_create_render_target(texture);
+	}
+
+	void OpenGLDevice::destroy_render_target(RenderTarget* target)
+	{
+		return common_destroy_render_target(target);
+	}
+
 	// ---------------------------------------------------------------------
 	// initialization
 	// ---------------------------------------------------------------------

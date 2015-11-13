@@ -397,6 +397,64 @@ namespace render2
 
 	}
 
+	GLRenderTarget::GLRenderTarget(uint32_t _width, uint32_t _height, bool _is_default)
+	{
+		width = _width;
+		height = _height;
+		framebuffer = 0;
+
+		if (!_is_default)
+		{
+			gl.GenFramebuffers(1, &framebuffer);
+		}
+	}
+
+	GLRenderTarget::~GLRenderTarget()
+	{
+		if (framebuffer > 0)
+		{
+			gl.DeleteFramebuffers(1, &framebuffer);
+		}
+	}
+
+	void GLRenderTarget::bind(bool activate)
+	{
+		GLuint fbo = activate ? framebuffer : 0;
+		gl.BindFramebuffer(GL_FRAMEBUFFER, fbo);
+	}
+
+	void GLRenderTarget::activate()
+	{
+		bind(true);
+	}
+
+	void GLRenderTarget::deactivate()
+	{
+		bind(false);
+	}
+
+	bool GLRenderTarget::is_complete() const
+	{
+		// the frame buffer MUST be bound when this is checked
+		GLenum status = gl.CheckFramebufferStatus(GL_FRAMEBUFFER);
+		gl.CheckError("CheckFramebufferStatus");
+		return (status == GL_FRAMEBUFFER_COMPLETE);
+	}
+
+	void GLRenderTarget::attach_texture(GLTexture* texture)
+	{
+		assert(texture != nullptr);
+
+		activate();
+
+		GLuint index = 0;
+		gl.FramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+index, texture->texture_type, texture->texture_id, 0);
+		gl.CheckError("FramebufferTexture2D");
+
+		assert(is_complete());
+
+		deactivate();
+	}
 	// ---------------------------------------------------------------------
 	// implementation
 	// ---------------------------------------------------------------------
@@ -587,6 +645,35 @@ namespace render2
 		};
 
 		return blend_table[static_cast<size_t>(op)];
+	}
+
+	RenderTarget* common_create_render_target(Texture* texture)
+	{
+		GLTexture* gltexture = static_cast<GLTexture*>(texture);
+
+		GLRenderTarget* rt = MEMORY_NEW(GLRenderTarget, core::memory::global_allocator())(gltexture->width, gltexture->height);
+
+		rt->attach_texture(gltexture);
+
+		return rt;
+	}
+
+	void common_destroy_render_target(RenderTarget* render_target)
+	{
+		GLRenderTarget* rt = static_cast<GLRenderTarget*>(render_target);
+		MEMORY_DELETE(rt, core::memory::global_allocator());
+	}
+
+	void common_push_render_target(RenderTarget* render_target)
+	{
+		GLRenderTarget* rt = static_cast<GLRenderTarget*>(render_target);
+		rt->activate();
+	}
+
+	void common_pop_render_target(RenderTarget* render_target)
+	{
+		GLRenderTarget* rt = static_cast<GLRenderTarget*>(render_target);
+		rt->deactivate();
 	}
 
 	void common_queue_buffers(CommandQueue* queue_list, size_t total_queues, Array<CommandQueue*>& queued_buffers)

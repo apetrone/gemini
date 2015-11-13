@@ -130,6 +130,7 @@ namespace render2
 
 	public:
 		OpenGLDevice()
+			: default_target(0, 0, true)
 		{
 			reset();
 
@@ -267,6 +268,9 @@ namespace render2
 			{
 				// setup pass
 				const Pass* pass = &cq->pass;
+
+				common_push_render_target(pass->target);
+
 				common_pass_setup(pass);
 
 				GLPipeline* current_pipeline = nullptr;
@@ -323,6 +327,8 @@ namespace render2
 				{
 					texture->unbind();
 				}
+
+				common_pop_render_target(pass->target);
 			}
 
 
@@ -435,6 +441,8 @@ namespace render2
 		virtual void activate_render_target(const RenderTarget& rt);
 		virtual void deactivate_render_target(const RenderTarget& rt);
 		virtual RenderTarget* default_render_target();
+		virtual RenderTarget* create_render_target(Texture* textre);
+		virtual void destroy_render_target(RenderTarget* target);
 
 		// ---------------------------------------------------------------------
 		// initialization
@@ -463,7 +471,7 @@ namespace render2
 		virtual void destroy_texture(Texture* texture);
 
 	private:
-		render2::RenderTarget default_target;
+		GLRenderTarget default_target;
 		
 		// rotating list of command queues
 		CircularBuffer<CommandQueue, RENDERER_MAX_COMMAND_QUEUES> queue;
