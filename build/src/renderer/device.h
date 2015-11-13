@@ -86,6 +86,8 @@ namespace render2
 		virtual void activate_render_target(const RenderTarget& rt) = 0;
 		virtual void deactivate_render_target(const RenderTarget& rt) = 0;
 		virtual RenderTarget* default_render_target() = 0;
+		virtual RenderTarget* create_render_target(Texture* texture) = 0;
+		virtual void destroy_render_target(RenderTarget* target) = 0;
 
 		// ---------------------------------------------------------------------
 		// initialization

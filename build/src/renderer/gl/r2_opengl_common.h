@@ -151,6 +151,22 @@ namespace render2
 		uint32_t height;
 	}; // GLTexture
 
+	struct GLRenderTarget : public RenderTarget
+	{
+		GLRenderTarget(uint32_t _width, uint32_t _height, bool _is_default = false);
+		virtual ~GLRenderTarget();
+
+		void bind(bool activate = true);
+		void activate();
+		void deactivate();
+		bool is_complete() const;
+		void attach_texture(GLTexture* texture);
+
+	private:
+		GLuint framebuffer;
+//		GLuint renderbuffer;
+	};	// GLRenderTarget
+
 	struct VertexDataTypeToGL
 	{
 		GLenum type;
@@ -174,6 +190,13 @@ namespace render2
 	int load_gl_symbols();
 	
 	GLenum convert_blendstate(BlendOp op);
+
+	RenderTarget* common_create_render_target(Texture* texture);
+	void common_destroy_render_target(RenderTarget* render_target);
+
+	void common_push_render_target(RenderTarget* render_target);
+	void common_pop_render_target(RenderTarget* render_target);
+
 	void common_queue_buffers(CommandQueue* queue_list, size_t total_queues, Array<CommandQueue*>& queued_buffers);
 	void common_resize_backbuffer(int width, int height, RenderTarget* target);
 	CommandQueue* common_create_queue(const Pass& render_pass, CommandQueue* next_queue);
