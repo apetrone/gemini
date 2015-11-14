@@ -506,6 +506,10 @@ class ModelInterface : public gemini::IModelInterface
 			// we must update the transforms for each geometry instance
 			for (const assets::Geometry& geo : mesh->geometry)
 			{
+				// If you hit this assert, one mesh in this model didn't have
+				// blend weights.
+				assert(!geo.bind_poses.empty());
+
 				size_t transform_index;
 				// recalculate
 				
@@ -1382,12 +1386,9 @@ Options:
 		
 		platform::window::Parameters window_params;
 
-
-
-
 		platform::window::Frame screen_frame = platform::window::screen_frame(0);
-		window_params.enable_fullscreen = 1;
-		window_params.enable_vsync = 1;
+		window_params.enable_fullscreen = false;
+		window_params.enable_vsync = true;
 
 		// TODO: we should load these from a config; for now just set them.
 		window_params.frame = platform::window::centered_window_frame(0, config.window_width, config.window_height);

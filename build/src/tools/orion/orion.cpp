@@ -378,7 +378,7 @@ public:
 	void timeline_scrubber_changed(size_t current_frame)
 	{
 		fprintf(stdout, "timeline: %i\n", current_frame);
-		value = (current_frame / 60.0f);
+		value = (current_frame / 30.0f);
 	}
 
 	void render_main_content(render2::RenderTarget* render_target)
@@ -558,7 +558,7 @@ public:
 
 
 			gui::RenderableSurface* surface = new gui::RenderableSurface(compositor);
-			surface->set_bounds(50, 50, 512, 512);
+			surface->set_bounds(0, 0, 512, 512);
 			surface->on_render_content.connect(&EditorKernel::render_main_content, this);
 
 			image::Image checker_pattern;
