@@ -110,13 +110,13 @@ namespace gemini
 			{
 				if (convexResult.m_hitCollisionObject == m_me)
 				{
-					LOGV("ignoring source ghost object\n");
+//					LOGV("ignoring source ghost object\n");
 					return btScalar(1.0);
 				}
 				
 				if (!convexResult.m_hitCollisionObject->hasContactResponse())
 				{
-					LOGV("ignoring object with no response\n");
+//					LOGV("ignoring object with no response\n");
 					return btScalar(1.0);
 				}
 				

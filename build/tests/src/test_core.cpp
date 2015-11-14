@@ -1179,13 +1179,21 @@ SERIALIZATION_REGISTER_TYPE_EXTERNAL(glm::vec3);
 TYPEINFO_REGISTER_TYPE_NAME(glm::vec3, glm::vec3);
 TYPEINFO_REGISTER_TYPE_CATEGORY(glm::vec3, TypeInfo_Class);
 
+
+
 template <class Archive>
 void serialize(Archive& ar, const glm::vec3& value)
 {
 	fprintf(stdout, "serialize glm::vec3 (external)\n");
-	ar << make_class_property("x", value.x);
-	ar << make_class_property("y", value.y);
-	ar << make_class_property("z", value.z);
+	ar << make_class_property("x", value.x, TYPEINFO_OFFSET(value, x));
+	ar << make_class_property("y", value.y, TYPEINFO_OFFSET(value, y));
+	ar << make_class_property("z", value.z, TYPEINFO_OFFSET(value, z));
+
+	fprintf(stdout, "value.x: %u\n", TYPEINFO_OFFSET(value, x));
+	fprintf(stdout, "value.y: %u\n", TYPEINFO_OFFSET(value, y));
+	fprintf(stdout, "value.z: %u\n", TYPEINFO_OFFSET(value, z));
+
+
 //	ar & TYPEINFO_PROPERTY(temperature);
 }
 
@@ -1450,11 +1458,60 @@ struct Movable
 	}
 };
 
+
+namespace reflection_test
+{
+	class Base
+	{
+	public:
+		void foo()
+		{
+			fprintf(stdout, "foo called\n");
+		}
+
+
+		template <class Archive>
+		void reflect_members(Archive& ar, size_t version)
+		{
+
+		}
+	private:
+
+		int private_impl;
+		size_t xyz;
+
+
+		int serializable_value;
+
+		/*
+
+		Reflection<int> serializable_value;
+		Reflection(int, serializable_value);
+		BEGIN_REFLECTION(Base)
+			REFLECTION(int, serializable_value)
+		END_REFLECTION()
+		
+		*/
+	};
+}
+
+
+void test_reflection()
+{
+	using namespace reflection_test;
+
+
+
+}
+
+
 int main(int, char**)
 {
 	core::memory::startup();
 
-	unittest::UnitTest::execute();
+//	unittest::UnitTest::execute();
+	//test_rapidjson();
+	test_reflection();
 
 	core::memory::shutdown();
 
