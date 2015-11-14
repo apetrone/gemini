@@ -63,7 +63,7 @@ namespace platform
 				directory.recompute_size();
 			}
 		}
-		
+
 		return directory;
 	}
 
@@ -159,7 +159,7 @@ namespace platform
 
 	int32_t fs_seek(platform::File file, long int offset, FileSeek origin)
 	{
-		DWORD move_method;
+		DWORD move_method = 0;
 		switch (origin)
 		{
 			case FileSeek_Begin: move_method = FILE_BEGIN; break;

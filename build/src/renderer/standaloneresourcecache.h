@@ -40,30 +40,25 @@ namespace renderer
 {
 	class StandaloneResourceCache : public CommonResourceCache
 	{
+	public:
+		LIBRARY_EXPORT StandaloneResourceCache();
+		LIBRARY_EXPORT virtual void clear() override;
+		LIBRARY_EXPORT virtual gui::FontHandle create_font(const char* filename, size_t pixel_size) override;
+		LIBRARY_EXPORT virtual void destroy_font(const gui::FontHandle& handle) override;
+		LIBRARY_EXPORT virtual gui::TextureHandle texture_for_font(const gui::FontHandle& handle) override;
+		LIBRARY_EXPORT virtual gui::TextureHandle create_texture(const char* filename) override;
+		LIBRARY_EXPORT virtual void destroy_texture(const gui::TextureHandle& handle) override;
+		LIBRARY_EXPORT virtual int track_texture(render2::Texture* texture) override;
+		LIBRARY_EXPORT virtual gui::TextureHandle texture_to_handle(render2::Texture* texture) override;
+		LIBRARY_EXPORT virtual render2::Texture* handle_to_texture(const gui::TextureHandle& handle) override;
+
+	private:
 		typedef HashSet<render2::Texture*, gui::TextureHandle> TextureToHandleSet;
-		TextureToHandleSet handle_by_texture;
-
-		Array<render2::Texture*> textures;
-
 		typedef Array<gui::FontHandle> FontHandleArray;
-
 		typedef HashSet<const char*, FontHandleArray> FontByPathSet;
+
+		TextureToHandleSet handle_by_texture;
+		Array<render2::Texture*> textures;
 		FontByPathSet font_handle_by_path;
-
-	public:
-		StandaloneResourceCache();
-
-		virtual void clear() override;
-
-		virtual gui::FontHandle create_font(const char* filename, size_t pixel_size) override;
-		virtual void destroy_font(const gui::FontHandle& handle) override;
-		virtual gui::TextureHandle texture_for_font(const gui::FontHandle& handle) override;
-		virtual gui::TextureHandle create_texture(const char* filename) override;
-		virtual void destroy_texture(const gui::TextureHandle& handle) override;
-
-	public:
-		virtual int track_texture(render2::Texture* texture) override;
-		virtual gui::TextureHandle texture_to_handle(render2::Texture* texture) override;
-		virtual render2::Texture* handle_to_texture(const gui::TextureHandle& handle) override;
 	};
 } // namespace renderer

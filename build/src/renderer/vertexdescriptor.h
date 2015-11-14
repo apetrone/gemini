@@ -30,17 +30,17 @@
 namespace render2
 {
 	const size_t MAX_VERTEX_DESCRIPTORS = 8;
-	
+
 	enum VertexDataType
 	{
 		VD_FLOAT = 0,
 		VD_INT,
 		VD_UNSIGNED_INT,
 		VD_UNSIGNED_BYTE,
-				
+
 		VD_TOTAL
 	};
-	
+
 	// describes the layout of the vertex stream
 	struct VertexDescriptor
 	{
@@ -50,18 +50,18 @@ namespace render2
 			VertexDataType type;
 			size_t element_count;
 		};
-		
+
 		unsigned char id;
 		unsigned char total_attributes;
 		InputDescription description[ MAX_VERTEX_DESCRIPTORS ];
-		
-		VertexDescriptor();
-		VertexDescriptor(const VertexDescriptor& other);
-		void add(const char* name, const VertexDataType& type, size_t element_count);
-		const InputDescription& operator[](int index) const;
-		void reset();
-		size_t size() const;
-		
-		const VertexDescriptor& operator= (const VertexDescriptor& other);
+
+		LIBRARY_EXPORT VertexDescriptor();
+		LIBRARY_EXPORT VertexDescriptor(const VertexDescriptor& other);
+		LIBRARY_EXPORT void add(const char* name, const VertexDataType& type, size_t element_count);
+		LIBRARY_EXPORT const InputDescription& operator[](int index) const;
+		LIBRARY_EXPORT void reset();
+		LIBRARY_EXPORT size_t size() const;
+
+		LIBRARY_EXPORT const VertexDescriptor& operator=(const VertexDescriptor& other);
 	}; // VertexDescriptor
 } // namespace render2

@@ -32,7 +32,7 @@ namespace gui
 {
 	class Compositor;
 	class Renderer;
-	
+
 	class Button : public Label
 	{
 	private:
@@ -43,17 +43,17 @@ namespace gui
 		uint32_t state;
 
 	public:
-		Button(Panel* parent);
-		virtual ~Button();
-		
+		LIBRARY_EXPORT Button(Panel* parent);
+		LIBRARY_EXPORT virtual ~Button();
+
 		LIBRARY_EXPORT virtual void set_hover_color(const gui::Color& hover) { hover_color = hover; }
 		LIBRARY_EXPORT virtual void set_pressed_color(const gui::Color& pressed) { pressed_color = pressed; }
 
 		LIBRARY_EXPORT virtual void handle_event(EventArgs& args);
-		
+
 		LIBRARY_EXPORT virtual void update(Compositor* compositor, float delta_seconds) override;
 		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
-		
+
 		LIBRARY_EXPORT virtual bool is_button() const { return true; }
 
 		DelegateHandler<EventArgs&> on_click;

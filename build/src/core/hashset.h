@@ -33,7 +33,7 @@ class HashSet
 private:
 	typedef H hash_type;
 	typedef Allocator allocator_type;
-	
+
 	const float MAX_LOAD_FACTOR = 0.7f;
 	typedef uint32_t HashType;
 	const HashType REMOVED_SLOT = UINT32_MAX;
@@ -43,12 +43,12 @@ private:
 		HashType hash;
 		T value;
 		K key;
-		
+
 		Bucket() : hash(0)
 		{
 		}
 	};
-	
+
 	Bucket* table;
 	uint32_t table_size;
 	uint32_t used_items;
@@ -73,12 +73,8 @@ private:
 				return bucket_index;
 			}
 		}
-		
-		// should never reach here!
-		assert(0);
-		return -1;
-	}
-	
+	} // find_bucket
+
 	int32_t find_first_occupied(int32_t starting_position) const
 	{
 		int32_t current_index = starting_position;
@@ -91,19 +87,19 @@ private:
 			{
 				return bucket_index;
 			}
-			
+
 			++current_index;
 			--max_iterations;
 		}
-		
+
 		return -1;
-	}
-	
+	} // find_first_occupied
+
 	inline HashType get_hash(const K& key) const
 	{
 		return hash_type()(key);
-	}
-	
+	} // get_hash
+
 	void repopulate(size_t new_size)
 	{
 		Bucket* old_table = table;
@@ -125,8 +121,8 @@ private:
 
 		// free the old table
 		deallocate(old_table);
-	}
-	
+	} // repopulate
+
 	Bucket* find_or_create_bucket(const K& key)
 	{
 		// check for repopulate first as this simplifies insertion
@@ -136,12 +132,12 @@ private:
 			// if we hit this point; we need to resize the table
 			repopulate(table_size*growth_factor);
 		}
-	
+
 		HashType hash = get_hash(key);
 		int32_t bucket_index;
 		int32_t index = find_bucket(hash, bucket_index);
 		Bucket* bucket = 0;
-		
+
 		if (index != -1)
 		{
 			return &table[index];
@@ -162,29 +158,26 @@ private:
 			}
 		}
 
-		
 		if (bucket)
 		{
 			return bucket;
 		}
 
 		return find_or_create_bucket(key);
-	}
-	
+	} // find_or_create_bucket
+
 	Bucket* allocate(uint32_t elements)
 	{
 		return MEMORY_NEW_ARRAY(Bucket, elements, allocator);
-	}
-	
-	
+	} // allocate
+
 	void deallocate(Bucket* pointer)
 	{
 		MEMORY_DELETE_ARRAY(pointer, allocator);
-	}
+	} // deallocate
 
 public:
 	typedef std::pair<K, T> value_type;
-
 
 	HashSet(size_t initial_size = 16, uint32_t growth_factor = 2, Allocator& allocator_instance = core::memory::system_allocator()) :
 		table(nullptr),
@@ -194,27 +187,26 @@ public:
 		allocator(allocator_instance)
 	{
 		table = allocate(table_size);
-	}
-	
+	} // HashSet
+
 	~HashSet()
 	{
 		deallocate(table);
-	}
-	
-	
+	} // ~HashSet
+
 	bool has_key(const K& key) const
 	{
 		HashType hash = get_hash(key);
 		int32_t bucket_index;
 		return (find_bucket(hash, bucket_index, true) != -1);
-	}
-	
+	} // has_key
+
 	void insert(const value_type& vt)
 	{
 		Bucket* bucket = find_or_create_bucket(vt.first);
 		bucket->value = vt.second;
-	}
-	
+	} // insert
+
 	void remove(const K& key)
 	{
 		HashType hash = get_hash(key);
@@ -224,8 +216,8 @@ public:
 			table[index].hash = REMOVED_SLOT;
 			--used_items;
 		}
-	}
-	
+	} // remove
+
 	void clear()
 	{
 		// no need to deallocate the memory, but at least reset the hashes
@@ -234,20 +226,20 @@ public:
 		{
 			table[index].hash = 0;
 		}
-	}
-	
+	} // clear
+
 	T& get(const K& key)
 	{
 		Bucket* bucket = find_or_create_bucket(key);
 		return bucket->value;
-	}
+	} // get
 
 	// get value or insert if not found
 	T& operator[](const K& key)
 	{
 		return get(key);
-	}
-	
+	} // operator[]
+
 	const T& operator[](const K& key) const
 	{
 		HashType hash = get_hash(key);
@@ -256,22 +248,22 @@ public:
 		assert(index != -1);
 		Bucket* bucket = &table[index];
 		return bucket->value;
-	}
+	} // operator[]
 
 	size_t size() const
 	{
 		return used_items;
-	}
-	
+	} // size
+
 	size_t capacity() const
 	{
 		return table_size;
-	}
-	
+	} // capacity
+
 	bool empty() const
 	{
 		return (used_items == 0);
-	}
+	} // empty
 
 	class Iterator
 	{
@@ -281,31 +273,31 @@ public:
 		typename container_type::Bucket* table;
 		size_t index;
 		size_t table_size;
-		
+
 	public:
 		Iterator(typename container_type::Bucket* table, size_t index, size_t table_size) :
 			table(table),
 			index(index),
 			table_size(table_size)
 		{
-		}
-		
+		} // Iterator
+
 		Iterator& operator=(const Iterator& other)
 		{
 			this->index = other.index;
 			return *this;
-		}
-		
+		} // operator=
+
 		bool operator==(const Iterator& other) const
 		{
 			return (index == other.index);
-		}
-		
+		} // operator ==
+
 		bool operator!=(const Iterator& other) const
 		{
 			return !(*this == other);
-		}
-		
+		} // operator !=
+
 		const Iterator& operator++()
 		{
 			while(index < table_size)
@@ -315,29 +307,29 @@ public:
 					return *this;
 			}
 			return *this;
-		}
-		
+		} // operator ++
+
 		T& operator*()
 		{
 			return table[index].value;
-		}
+		} // operator *
 
 		const K& key() const
 		{
 			return table[index].key;
-		}
-		
+		} // key
+
 		const T& value() const
 		{
 			return table[index].value;
-		}
+		} // value
 
 		T& value()
 		{
 			return table[index].value;
-		}
+		} // value
 	}; // class Iterator
-	
+
 	Iterator begin() const
 	{
 		// if the hash set is empty; we have no valid iterator.
@@ -347,10 +339,10 @@ public:
 			index = table_size;
 		}
 		return Iterator(table, index, table_size);
-	}
-	
+	} // begin
+
 	Iterator end() const
 	{
 		return Iterator(table, table_size, table_size);
-	}
+	} // end
 }; // HashSet

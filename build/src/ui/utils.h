@@ -145,10 +145,9 @@ namespace gui
 	{
 		DimensionType width, height;
 
-		Size( DimensionType _width = 0, DimensionType _height = 0 );
-
-		void set_width( DimensionType in_width );
-		DimensionType get_width() const;
+		LIBRARY_EXPORT Size(DimensionType _width = 0, DimensionType _height = 0);
+		LIBRARY_EXPORT void set_width(DimensionType in_width);
+		LIBRARY_EXPORT DimensionType get_width() const;
 	}; // Size
 
 	//

@@ -34,7 +34,7 @@ namespace core
 	{
 		return glm::mix( a, b, t );
 	}
-	
+
 	// -------------------------------------------------------------
 	template <class Type>
 	struct Interpolator
@@ -50,10 +50,10 @@ namespace core
 	{
 		glm::quat out;
 		glm::quat q2b;
-		
+
 		float sq1, sq2;
 		float cosom = q1[0] * q2[0] + q1[1] * q2[1] + q1[2] * q2[2] + q1[3] * q2[3];
-		
+
 		if( cosom < 0.0f)
 		{
 			cosom = -cosom;
@@ -67,14 +67,14 @@ namespace core
 			//QuaternionCopy(q2, q2b);
 			q2b = q2;
 		}
-		
+
 		if( (1.0f + cosom) > 1E-5)
 		{
 			if( (1.0f - cosom) > 1E-5)
 			{
 				float om = (float) acos(cosom);
 				float rsinom = (float)(1.0f / sin(om));
-				
+
 				sq1 = (float)sin( (1.0f - t) * om) * rsinom;
 				sq2 = (float)sin(t * om) * rsinom;
 			}
@@ -83,7 +83,7 @@ namespace core
 				sq1 = (float)(1.0f - t);
 				sq2 = t;
 			}
-			
+
 			out[3] = sq1 * q1[3] + sq2 * q2b[3];
 			out[0] = sq1 * q1[0] + sq2 * q2b[0];
 			out[1] = sq1 * q1[1] + sq2 * q2b[1];
@@ -91,17 +91,15 @@ namespace core
 		}
 		else
 		{
-			const float PI = (float)3.14159265358979323846f;
-			
-			sq1 = (float)sin( (1.0f - t) * 0.5f * PI);
-			sq2 = (float)sin(t * 0.5f * PI);
-			
+			sq1 = (float)sin( (1.0f - t) * 0.5f * mathlib::PI);
+			sq2 = (float)sin(t * 0.5f * mathlib::PI);
+
 			out[3] = sq1 * q1[3] + sq2 * q1[2];
 			out[0] = sq1 * q1[0] + sq2 * q1[1];
 			out[1] = sq1 * q1[1] + sq2 * q1[0];
 			out[2] = sq1 * q1[2] + sq2 * q1[3];
 		}
-		
+
 		return out;
 	}
 
@@ -110,11 +108,11 @@ namespace core
 	Type slerp(const Type & a, const Type & b, float t)
 	{
 		return custom_slerp(a, b, t);
-		
+
 		// glm::mix has a bug where if the angles of the quaternions are too close;
 		// they 'mix' to an invalid quaternion (NaN, NaN, NaN, NaN)
 		//return glm::mix( a, b, t );
-		
+
 		//	Groovounet: If you need a slerp that always take the short path, let me recommend to you to use shortMix.
 		//	return glm::shortMix(a, b, t);
 	}

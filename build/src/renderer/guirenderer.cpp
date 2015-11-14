@@ -70,12 +70,12 @@ void GUIRenderer::increment_depth()
 	current_depth += 1.0f;
 }
 
-void GUIRenderer::startup(gui::Compositor* compositor)
+void GUIRenderer::startup(gui::Compositor* target_compositor)
 {
-	this->compositor = compositor;
-	vertices.resize(MAX_VERTICES);
+	compositor = target_compositor;
+	vertex_cache.resize(MAX_VERTICES);
 
-	this->vertex_buffer = device->create_vertex_buffer(MAX_VERTICES*sizeof(GUIVertex));
+	vertex_buffer = device->create_vertex_buffer(MAX_VERTICES * sizeof(GUIVertex));
 
 	// standard gui pipeline
 	render2::PipelineDescriptor desc;
@@ -131,8 +131,8 @@ void GUIRenderer::shutdown(gui::Compositor* c)
 	{
 		device->destroy_pipeline(font_pipeline);
 	}
-	
-	vertices.clear();
+
+	vertex_cache.clear();
 }
 
 void GUIRenderer::begin_frame(gui::Compositor* c)
@@ -227,15 +227,15 @@ void GUIRenderer::font_metrics(const gui::FontHandle& handle, size_t& height, in
 
 size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color, gui::render::Vertex* buffer, size_t buffer_size)
 {
-	vertices.resize(0);
+	vertex_cache.resize(0);
 	render2::font::Handle font_handle(handle);
-	render2::font::draw_string(font_handle, vertices, string, core::Color(color.r(), color.g(), color.b(), color.a()));
+	render2::font::draw_string(font_handle, vertex_cache, string, core::Color(color.r(), color.g(), color.b(), color.a()));
 
 	// todo: this seems counter-intuitive
 	// copy back to the buffer
-	for (size_t index = 0; index < vertices.size(); ++index)
+	for (size_t index = 0; index < vertex_cache.size(); ++index)
 	{
-		render2::font::FontVertex& v = vertices[index];
+		render2::font::FontVertex& v = vertex_cache[index];
 		gui::render::Vertex& out = buffer[index];
 		out.x = v.position.x + bounds.origin.x;
 		out.y = v.position.y + bounds.origin.y;
@@ -244,7 +244,7 @@ size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string,
 		out.color = color;
 	}
 
-	return vertices.size();
+	return vertex_cache.size();
 }
 
 size_t GUIRenderer::font_count_vertices(const gui::FontHandle& handle, const char* string)
@@ -268,9 +268,9 @@ gui::FontResult GUIRenderer::font_fetch_texture(const gui::FontHandle &handle, g
 	return gui::FontResult_Failed;
 }
 
-void GUIRenderer::draw_commands(gui::render::CommandList* command_list, Array<gui::render::Vertex>& vertex_buffer)
+void GUIRenderer::draw_commands(gui::render::CommandList* command_list, Array<gui::render::Vertex>& vertex_array)
 {
-	size_t total_vertices = vertex_buffer.size();
+	size_t total_vertices = vertex_array.size();
 
 	// temp limit
 	assert(total_vertices < MAX_VERTICES);
@@ -286,21 +286,20 @@ void GUIRenderer::draw_commands(gui::render::CommandList* command_list, Array<gu
 	font_pipeline->constants().set("diffuse", &diffuse_texture);
 
 	GUIVertex vertices[MAX_VERTICES];
-	memset(vertices, 0, sizeof(GUIVertex)*MAX_VERTICES);
+	memset(vertices, 0, sizeof(GUIVertex) * MAX_VERTICES);
 
 	// loop through all vertices in the source vertex_buffer
 	// and convert them to our buffer
 	for (size_t index = 0; index < total_vertices; ++index)
 	{
-		gui::render::Vertex* gv = &vertex_buffer[index];
+		gui::render::Vertex* gv = &vertex_array[index];
 		GUIVertex& vt = vertices[index];
 		vt.set_position(gv->x, gv->y);
 		vt.set_color(gv->color.r()/255.0f, gv->color.g()/255.0f, gv->color.b()/255.0f, gv->color.a()/255.0f);
 		vt.set_uv(gv->uv[0], gv->uv[1]);
 	}
 
-	device->buffer_upload(this->vertex_buffer, vertices, sizeof(GUIVertex)*total_vertices);
-
+	device->buffer_upload(vertex_buffer, vertices, sizeof(GUIVertex) * total_vertices);
 
 	// setup the pass and queue the draw
 	render2::Pass pass;
@@ -312,11 +311,11 @@ void GUIRenderer::draw_commands(gui::render::CommandList* command_list, Array<gu
 	render2::CommandQueue* queue = device->create_queue(pass);
 	render2::CommandSerializer* serializer = device->create_serializer(queue);
 
-	serializer->vertex_buffer(this->vertex_buffer);
+	serializer->vertex_buffer(vertex_buffer);
 
 	for (gui::render::Command& command : command_list->commands)
 	{
-		render2::Pipeline* pipeline;
+		render2::Pipeline* pipeline = nullptr;
 		render2::Texture* texture_pointer = white_texture;
 
 		if (command.type == gui::render::CommandType_Generic)
@@ -359,19 +358,19 @@ void GUIRenderer::draw_commands(gui::render::CommandList* command_list, Array<gu
 void GUIRenderer::render_buffer(::renderer::VertexStream& stream, assets::Shader* shader, assets::Material* material)
 {
 	stream.update();
-	
+
 	glm::mat4 modelview;
 	glm::mat4 projection = glm::ortho( 0.0f, (float)compositor->width, (float)compositor->height, 0.0f, -0.1f, 256.0f );
-	
+
 	::renderer::RenderStream rs;
 	rs.add_shader( shader->program );
 	rs.add_uniform_matrix4( shader->program->get_uniform_location("modelview_matrix"), &modelview );
 	rs.add_uniform_matrix4( shader->program->get_uniform_location("projection_matrix"), &projection );
-	
+
 	rs.add_material( material, shader->program );
-	
+
 	rs.add_draw_call( stream.vertexbuffer );
-	
+
 	rs.run_commands();
 	stream.reset();
 }
@@ -407,17 +406,17 @@ void GUIRenderer::startup(gui::Compositor* c)
 	assets::textures()->take_ownership("gui/white_texture", white_texture);
 
 
-	
+
 
 	this->compositor = c;
 	stream.desc.add(::renderer::VD_FLOAT3);
 	stream.desc.add(::renderer::VD_UNSIGNED_BYTE4);
 	stream.desc.add(::renderer::VD_FLOAT2);
 	stream.create(64, 64, ::renderer::DRAW_TRIANGLES);
-	
+
 	// load shader
 	shader = assets::shaders()->load_from_path("shaders/gui");
-	
+
 	texture_map = assets::materials()->allocate_asset();
 	if (texture_map)
 	{
@@ -427,11 +426,11 @@ void GUIRenderer::startup(gui::Compositor* c)
 		parameter.texture_unit = assets::texture_unit_for_map("diffusemap");
 		parameter.texture = white_texture->texture;
 //		parameter.texture = assets::textures()->get_default()->texture;
-		
-		
+
+
 		texture_map->add_parameter(parameter);
 		assets::materials()->take_ownership("gui/texture_map", texture_map);
-		
+
 	}
 }
 
@@ -443,19 +442,19 @@ void GUIRenderer::begin_frame(gui::Compositor* c)
 {
 	current_depth = 0.0f;
 	::renderer::RenderStream rs;
-	
+
 	rs.add_state(::renderer::STATE_BLEND, 1 );
 	rs.add_blendfunc(::renderer::BLEND_SRC_ALPHA, ::renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 	rs.add_state(::renderer::STATE_DEPTH_TEST, 0);
 	rs.add_state(::renderer::STATE_DEPTH_WRITE, 0);
-	
+
 	rs.run_commands();
 }
 
 void GUIRenderer::end_frame()
 {
 	::renderer::RenderStream rs;
-	
+
 	rs.add_state(::renderer::STATE_BLEND, 0 );
 	rs.add_state(::renderer::STATE_DEPTH_TEST, 1);
 	rs.add_state(::renderer::STATE_DEPTH_WRITE, 1);
@@ -470,9 +469,9 @@ gui::TextureResult GUIRenderer::texture_create(const char* path, gui::TextureHan
 	{
 		return gui::TextureResult_Failed;
 	}
-	
+
 	handle = tex->Id();
-	
+
 	return gui::TextureResult_Success;
 }
 
@@ -488,7 +487,7 @@ gui::TextureResult GUIRenderer::texture_info(const gui::TextureHandle& handle, u
 	{
 		return gui::TextureResult_Failed;
 	}
-	
+
 	return gui::TextureResult_Success;
 }
 
@@ -499,9 +498,9 @@ gui::FontResult GUIRenderer::font_create(const char* path, gui::FontHandle& hand
 	{
 		return gui::FontResult_Failed;
 	}
-	
+
 	handle = font->Id();
-	
+
 	return gui::FontResult_Success;
 }
 
@@ -520,7 +519,7 @@ gui::FontResult GUIRenderer::font_measure_string(const gui::FontHandle& handle, 
 		bounds.set(0, 0, width, height);
 		return gui::FontResult_Success;
 	}
-	
+
 	return gui::FontResult_Failed;
 }
 
@@ -549,15 +548,15 @@ void GUIRenderer::draw_command_lists(gui::render::CommandList** command_lists, s
 	{
 		total_vertices += command_lists[index]->vertex_buffer.size();
 	}
-	
-	
+
+
 
 //	float div = 1.0f/255.0f;
 //	solid_color->parameters[0].vector_value = glm::vec4( (color.r() * div), (color.g() * div), (color.b() * div), (color.a() * div) );
 
 	stream.reset();
-	
-	
+
+
 //	if (stream.has_room(total_vertices, 0))
 	{
 //		LOGV("command_queues: %i, total_vertices: %i\n", total_lists, total_vertices);
@@ -573,17 +572,17 @@ void GUIRenderer::draw_command_lists(gui::render::CommandList** command_lists, s
 			vertex[1].position.y = 100;
 			vertex[1].color = core::Color(0, 255, 0);
 			vertex[1].uv = glm::vec2(1, 0);
-			
+
 			vertex[2].position.x = 100;
 			vertex[2].position.y = 0;
 			vertex[2].color = core::Color(0, 0, 255);
 			vertex[2].uv = glm::vec2(1, 1);
-			
+
 			vertex[3].position.x = 100;
 			vertex[3].position.y = 0;
 			vertex[3].color = core::Color(0, 0, 255);
 			vertex[3].uv = glm::vec2(1, 1);
-			
+
 			vertex[4].position.x = 0;
 			vertex[4].position.y = 0;
 			vertex[4].color = core::Color(255, 255, 255);
@@ -593,20 +592,20 @@ void GUIRenderer::draw_command_lists(gui::render::CommandList** command_lists, s
 			vertex[5].position.y = 100;
 			vertex[5].color = core::Color(255, 0, 0);
 			vertex[5].uv = glm::vec2(0, 0);
-			
+
 			stream.update();
 			glm::mat4 modelview;
 			glm::mat4 projection = glm::ortho( 0.0f, (float)compositor->width, (float)compositor->height, 0.0f, -0.1f, 256.0f );
-			
+
 			::renderer::RenderStream rs;
 			rs.add_shader( shader->program );
 			rs.add_uniform_matrix4( shader->program->get_uniform_location("modelview_matrix"), &modelview );
 			rs.add_uniform_matrix4( shader->program->get_uniform_location("projection_matrix"), &projection );
-			
+
 			rs.add_material(texture_map, shader->program);
-			
+
 			rs.add_draw_call(stream.vertexbuffer, 0, 3);
-			
+
 			rs.run_commands();
 		}
 #else
@@ -614,12 +613,12 @@ void GUIRenderer::draw_command_lists(gui::render::CommandList** command_lists, s
 		for (size_t index = 0; index < total_lists; ++index)
 		{
 			gui::render::CommandList* commandlist = command_lists[index];
-			
+
 //			for (size_t command_id = 0; command_id < commandlist->commands.size(); ++command_id)
 //			{
 //				LOGV("command: %i\n", commandlist->commands[command_id].id);
 //			}
-			
+
 			for (size_t v = 0; v < commandlist->vertex_buffer.size(); ++v)
 			{
 				gui::render::Vertex* gv = &commandlist->vertex_buffer[v];
@@ -627,34 +626,34 @@ void GUIRenderer::draw_command_lists(gui::render::CommandList** command_lists, s
 				vertex[v].position.y = gv->y;
 				core::Color c = core::Color(gv->color.r(), gv->color.g(), gv->color.b(), gv->color.a());
 				vertex[v].color = c;
-				
+
 				vertex[v].uv.x = gv->uv[0];
 				vertex[v].uv.y = gv->uv[1];
 			}
-			
 
 
-			
+
+
 			//offset += commandlist->vertex_buffer.size();
 		}
-		
+
 		stream.update();
 		if (stream.last_vertex > 0)
 		{
-			
-			
+
+
 			glm::mat4 modelview;
 			glm::mat4 projection = glm::ortho( 0.0f, (float)compositor->width, (float)compositor->height, 0.0f, -0.1f, 256.0f );
-			
+
 			::renderer::RenderStream rs;
 			rs.add_shader( shader->program );
 			rs.add_uniform_matrix4( shader->program->get_uniform_location("modelview_matrix"), &modelview );
 			rs.add_uniform_matrix4( shader->program->get_uniform_location("projection_matrix"), &projection );
-			
+
 			rs.add_material(texture_map, shader->program);
-			
+
 			rs.add_draw_call(stream.vertexbuffer);
-			
+
 			rs.run_commands();
 			stream.reset();
 		}
@@ -673,32 +672,32 @@ void GUIRenderer::draw_command_lists(gui::render::CommandList** command_lists, s
 //	{
 //		return;
 //	}
-//	
+//
 //	texture_map->parameters[0].int_value = handle;
 //	texture_map->parameters[0].texture_unit = 0;
-	
+
 //	if (stream.has_room(4, 6))
 //	{
 //		VertexType* v = (VertexType*)stream.request(4);
-//		
+//
 //		gui::Size size = bounds.size;
 //		v[0].position = glm::vec3( bounds.origin.x, bounds.origin.y, 0.0f );
 //		v[1].position = v[0].position + glm::vec3( 0.0f, size.height, 0.0f );
 //		v[2].position = v[0].position + glm::vec3( size.width, size.height, 0.0f );
 //		v[3].position = v[0].position + glm::vec3( size.width, 0.0f, 0.0f );
-//		
+//
 //		// lower left corner is the origin in OpenGL
 //		v[0].uv = glm::vec2(0, 0);
 //		v[1].uv = glm::vec2(0, 1);
 //		v[2].uv = glm::vec2(1, 1);
 //		v[3].uv = glm::vec2(1, 0);
-//		
+//
 //		v[0].color = v[1].color = v[2].color = v[3].color = Color(255, 255, 255, 255);
-//		
+//
 //		::renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
 //		stream.append_indices( indices, 6 );
 //	}
-//	
+//
 //	this->render_buffer(stream, shader, texture_map);
 }
 

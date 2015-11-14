@@ -56,11 +56,6 @@ typedef float real;
 //typedef double real;
 
 
-const real PI = 3.1415927f;
-const real D2R_PI180 = (PI/180.0f);
-const real R2D_180PI = (180.0f/PI);
-
-
 #define PRINT_MAT4(m) \
 	LOGV("%s:\n[%2.2f, %2.2f, %2.2f, %2.2f]\n[%2.2f, %2.2f, %2.2f, %2.2f]\n[%2.2f, %2.2f, %2.2f, %2.2f]\n[%2.2f, %2.2f, %2.2f, %2.2f]\n\n",\
 	#m,\
@@ -69,6 +64,10 @@ const real R2D_180PI = (180.0f/PI);
 
 namespace mathlib
 {
+	const real PI = (float)3.14159265358979323846f;
+	const real D2R_PI180 = (PI / 180.0f);
+	const real R2D_180PI = (180.0f / PI);
+
 	LIBRARY_EXPORT inline real degrees_to_radians(real degrees)
 	{
 		return degrees * D2R_PI180;
@@ -78,12 +77,12 @@ namespace mathlib
 	{
 		return radians * R2D_180PI;
 	}
-	
-	
+
+
 	// pitch and yaw are in degrees; internally converted to radians
 	LIBRARY_EXPORT void basis_vectors_from_pitch_yaw(float pitch, float yaw, glm::vec3& right, glm::vec3& view, bool invert_y_axis = true);
-	
-	
+
+
 	LIBRARY_EXPORT bool point_in_radius(const glm::vec3& p0, const glm::vec3& p1, float radius = 3.0f);
 }
 
@@ -134,14 +133,14 @@ namespace mathlib
 	struct Rect
 	{
 		_Type left, top, right, bottom;
-		
+
 		Rect() : left( _Type(0) ),
 				top( _Type(0) ),
 				right( _Type(0) ),
 				bottom( _Type(0) )
 		{
 		}
-		
+
 		Rect( _Type _left, _Type _top, _Type _right, _Type _bottom ) :
 				left(_left),
 				top(_top),
@@ -149,37 +148,37 @@ namespace mathlib
 				bottom(_bottom)
 		{
 		}
-		
+
 		_Type width() const
 		{
 			return ( right - left );
 		}
-		
+
 		_Type height() const
 		{
 			return ( bottom - top );
 		}
-		
+
 		Rect<_Type> operator- ( const Rect<_Type> & other ) const
 		{
 			return Rect<_Type> (left-other.left, top-other.top, right-other.top, bottom-other.bottom );
 		}
-		
+
 		Rect<_Type> operator- ( const Rect<_Type> & other )
 		{
 			return Rect<_Type> (left-other.left, top-other.top, right-other.top, bottom-other.bottom );
 		}
-		
+
 		Rect<_Type> operator+ ( const Rect<_Type> & other ) const
 		{
 			return Rect<_Type> (left+other.left, top+other.top, right+other.top, bottom+other.bottom );
 		}
-		
+
 		bool fits_inside( const Rect<_Type> & other ) const
 		{
 			if ( width() <= other.width() && height() <= other.height() )
 				return true;
-			
+
 			return false;
 		}
 
@@ -199,7 +198,7 @@ namespace mathlib
 		float right;
 		float top;
 		float bottom;
-		
+
 		bool overlaps( const AABB2 & other ) const;
 	}; // AABB2
 

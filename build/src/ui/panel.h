@@ -49,9 +49,9 @@ namespace gui
 		// memory overrides
 		void* operator new(size_t bytes);
 		void operator delete(void* memory);
-		
+
 	public:
-	
+
 		enum PanelFlags
 		{
 			Flag_None,
@@ -70,9 +70,9 @@ namespace gui
 		bool visible;
 		Color background_color;
 		Color foreground_color;
-		
+
 		uint32_t flags;
-		
+
 		LIBRARY_EXPORT Panel(Panel* parent);
 		LIBRARY_EXPORT virtual ~Panel();
 
@@ -105,12 +105,12 @@ namespace gui
 
 		// determine if this panel can become the foreground window (if it can be the first Z-ordered window)
 		LIBRARY_EXPORT virtual bool can_send_to_front() const { return false; }
-		
-		// use this until we get a better system inplace for type checks / registration
+
+		// use this until we get a better system in place for type checks / registration
 		LIBRARY_EXPORT virtual bool is_label() const { return false; }
 		LIBRARY_EXPORT virtual bool is_button() const { return false; }
-		
-		LIBRARY_EXPORT virtual bool has_flags(const uint32_t& flags) const { return (this->flags & flags) == flags; }
+
+		LIBRARY_EXPORT virtual bool has_flags(const uint32_t& test_flags) const { return (flags & test_flags) == test_flags; }
 
 		// ---------------------------------------------------------------------
 		// transforms

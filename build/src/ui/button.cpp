@@ -36,12 +36,12 @@ namespace gui
 
 		state = 0;
 	} // Button
-	
+
 	Button::~Button()
 	{
-		
+
 	} // ~Button
-	
+
 	void Button::handle_event(EventArgs& args)
 	{
 		if (args.type == Event_CursorButtonPressed)
@@ -78,15 +78,10 @@ namespace gui
 			}
 		}
 	} // handle_event
-	
+
 	void Button::update(Compositor* compositor, float delta_seconds)
 	{
 		Label::update(compositor, delta_seconds);
-		
-		// TODO: calculate this when text changes?		
-		gui::Rect bounds;
-		get_screen_bounds(bounds);
-		
 
 		if (state == 0)
 		{
@@ -106,14 +101,14 @@ namespace gui
 		text_origin.x = glm::floor(bounds.origin.x + (bounds.width() / 2.0f) - (font_dims.width()/2.0f));
 		text_origin.y = glm::floor(bounds.origin.y + (bounds.height() / 2.0f) - (font_dims.height()/2.0f) + glm::max((float)font_height, font_dims.height()));
 	} // update
-	
+
 	void Button::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
 	{
 		if (compositor->get_hot() == this && state == 0)
 		{
 			current_color = hover_color;
 		}
-		
+
 		render_commands.add_rectangle(
 			geometry[0],
 			geometry[1],
@@ -127,5 +122,5 @@ namespace gui
 		draw_bounds.origin = text_origin;
 		render_commands.add_font(font_handle, this->text.c_str(), draw_bounds, foreground_color);
 	}
-	
+
 } // namespace gui
