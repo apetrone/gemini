@@ -51,35 +51,35 @@ namespace kernel
 		DeviceSupportsRetinaDisplay 	= (1 << 3), // set if this device supports retina
 		DeviceAndroid					= (1 << 4) // Android-based device
 	};
-	
+
 	typedef unsigned char KernelDeviceFlags;
 
 	// parameters passed to callbacks
-	struct LIBRARY_EXPORT Parameters
+	struct Parameters
 	{
 		const char* error_message;
-		
+
 		// device constants above describe the current system
 		KernelDeviceFlags device_flags;
-		
+
 		// time state
 		double step_interval_seconds;
 		float step_alpha;
 		float framedelta_seconds;
 		float framedelta_milliseconds;
-		
-		
+
+
 		// the current tick (physics step)
 		uint64_t current_tick;
-		
+
 		uint64_t current_frame;
-		
+
 		// this is needed to allow normal rendering and Oculus Rift rendering.
 		// the Rift SDK will swap buffers itself, which causes flickering
 		// if we also do it. This defaults to true and shouldn't be
 		// modified unless your kernel has custom needs for buffer swap.
 		bool swap_buffers;
-				
+
 		// vertical sync
 		bool use_vsync;
 
@@ -89,47 +89,46 @@ namespace kernel
 		//
 		int argc;
 		char ** argv;
-		
+
 		// has a valid window
 		bool has_window;
-		
-		Parameters();
+
+		LIBRARY_EXPORT Parameters();
 	}; // Params
-	
+
 	LIBRARY_EXPORT Parameters& parameters();
 
-	class LIBRARY_EXPORT IKernel
+	class IKernel
 	{
 	public:
-		virtual ~IKernel();
+		LIBRARY_EXPORT virtual ~IKernel();
 
-		virtual bool is_active() const = 0;
-		virtual void set_active(bool isactive) = 0;
+		LIBRARY_EXPORT virtual bool is_active() const = 0;
+		LIBRARY_EXPORT virtual void set_active(bool isactive) = 0;
 
 		// called first thing during setup; useful for initializing libraries
-		virtual Error startup() = 0;
+		LIBRARY_EXPORT virtual Error startup() = 0;
 
-		virtual void tick() = 0;
-		
+		LIBRARY_EXPORT virtual void tick() = 0;
+
 		// called right before control returns to the main entry point
-		virtual void shutdown() = 0;
-
+		LIBRARY_EXPORT virtual void shutdown() = 0;
 	};
 
 	// call this on application startup
 	LIBRARY_EXPORT Error startup();
-	
+
 	// call this when the application will be terminated
 	LIBRARY_EXPORT void shutdown();
-	
+
 	// called once per frame, preferably in a loop
 	LIBRARY_EXPORT void tick();
-	
+
 	LIBRARY_EXPORT int run_application();
 
 	LIBRARY_EXPORT IKernel* instance();
 	LIBRARY_EXPORT void set_instance(IKernel* instance);
-	
+
 	// this is used by the kernel to dispatch events to the IApplication's event listeners
 	template <class Type>
 	void event_dispatch( Type & event )

@@ -596,12 +596,12 @@ namespace core
 			return regex;
 		}
 
-		std::vector<std::string> ArgumentParser::find_section(const char* docstring, const std::string& section_name, bool& section_was_found)
+		std::vector<std::string> ArgumentParser::find_section(const char* docstring_source, const std::string& section_name, bool& section_was_found)
 		{
 			section_was_found = false;
 			std::regex rgx(get_section_regex(section_name));
 			std::cmatch result;
-			std::regex_search(docstring, result, rgx);
+			std::regex_search(docstring_source, result, rgx);
 			
 			std::vector<std::string> output;
 			
@@ -819,9 +819,9 @@ namespace core
 			return tokens;
 		}
 			
-		bool ArgumentParser::parse(const char* docstring, std::vector<std::string> tokens, VariableMap& vm, const char* version_string)
+		bool ArgumentParser::parse(const char* docstring_source, std::vector<std::string> tokens, VariableMap& vm, const char* version_string)
 		{
-			this->docstring = docstring;
+			docstring = docstring_source;
 			bool found_options = false;
 			bool found_usage = false;
 			
