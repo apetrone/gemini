@@ -24,12 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
-//#include "pipeline.h"
-//#include "vertexbuffer.h"
-
 #include <core/typedefs.h>
 #include <core/array.h>
-
 
 namespace render2
 {
@@ -44,14 +40,14 @@ namespace render2
 		COMMAND_TEXTURE,			// set a texture
 		COMMAND_STATE
 	};
-	
+
 	struct Command
 	{
 		CommandType type;
 		void* data[2];
 		size_t params[4];
-		
-		Command(CommandType command_type = COMMAND_INVALID,
+
+		LIBRARY_EXPORT Command(CommandType command_type = COMMAND_INVALID,
 				void* data0 = 0,
 				void* data1 = 0,
 				size_t param0 = 0,
@@ -59,13 +55,13 @@ namespace render2
 				size_t param2 = 0,
 				size_t param3 = 0);
 	};
-	
+
 	// ---------------------------------------------------------------------
 	// Pass
 	// ---------------------------------------------------------------------
 	struct Pass
 	{
-		Pass() :
+		LIBRARY_EXPORT Pass() :
 			target(nullptr),
 			clear_color(false),
 			clear_depth(false),
@@ -74,13 +70,13 @@ namespace render2
 		{
 			color(0, 0, 0, 0);
 		}
-		
-		void color(float red, float green, float blue, float alpha);
-		
+
+		LIBRARY_EXPORT void color(float red, float green, float blue, float alpha);
+
 		// color attachments (4)
 		// depth attachment
 		// stencil attachment
-		
+
 		struct RenderTarget* target;
 		float target_color[4];
 
@@ -90,14 +86,14 @@ namespace render2
 		bool clear_stencil;
 		bool depth_test;
 	};
-	
+
 	struct CommandQueue
 	{
 		Pass pass;
 		Array<Command> commands;
-		
-		CommandQueue(const Pass& pass = Pass());
-		void add_command(const Command& command);
-		void reset();
+
+		LIBRARY_EXPORT CommandQueue(const Pass& pass = Pass());
+		LIBRARY_EXPORT void add_command(const Command& command);
+		LIBRARY_EXPORT void reset();
 	};
 } // namespace render2

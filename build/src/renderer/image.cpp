@@ -44,24 +44,24 @@ namespace image
 		type = image::TEX_2D;
 		filter = FILTER_NONE;
 		flags = 0;
-		
+
 		width = 0;
 		height = 0;
-		
+
 		channels = 3;
 		alignment = 4;
 	}
-	
+
 	void Image::create(const uint32_t& image_width, const uint32_t& image_height, const uint32_t& total_channels)
 	{
 		width = image_width;
 		height = image_height;
 		channels = total_channels;
-		
+
 		pixels.allocate(width * height * channels);
 		alignment = channels;
 	}
-	
+
 	void Image::fill(const core::Color& color)
 	{
 		uint8_t* pixel = &pixels[0];
@@ -75,7 +75,7 @@ namespace image
 		}
 	}
 
-	void Image::copy(const uint8_t* buffer, const uint32_t& width, const uint32_t& height, const uint32_t& pitch, uint32_t border)
+	void Image::copy(const uint8_t* buffer, const uint32_t& fill_width, const uint32_t& fill_height, const uint32_t& pitch, uint32_t border)
 	{
 		// It is assumed, that if border > 0; then this Image's
 		// dimensions are already set to include that border.
@@ -90,16 +90,16 @@ namespace image
 
 		// if you hit either of these asserts, the source buffer is larger than
 		// this image's buffer. We cannot copy into this without losing data.
-		assert((width + (2*border)) <= this->width);
-		assert((height + (2*border)) <= this->height);
+		assert((fill_width + (2*border)) <= width);
+		assert((fill_height + (2*border)) <= height);
 
-		size_t local_pitch = (this->width * channels);
-		for (size_t h = 0; h < height; ++h)
+		size_t local_pitch = (width * channels);
+		for (size_t h = 0; h < fill_height; ++h)
 		{
-			for (size_t w = 0; w < width; ++w)
+			for (size_t w = 0; w < fill_width; ++w)
 			{
 				img = &pixels[((h + border) * local_pitch + ((w + border) * channels))];
-				unsigned char* x = (unsigned char*)&buffer[ ((height-1 - h) * pitch) + (w) ];
+				unsigned char* x = (unsigned char*)&buffer[ ((fill_height -1 - h) * pitch) + (w) ];
 				memcpy(img, x, channels);
 			}
 		}
@@ -109,21 +109,21 @@ namespace image
 	{
 		// image dimensions must be specified
 		assert((image.width > 0) && (image.height > 0));
-		
+
 		// only generate 3 channel RGB image for now.
 		assert(image.channels == 3);
-		
-		
+
+
 		image.pixels.allocate(image.channels*image.width*image.height);
-		
+
 		// width/height should be power of two
 		uint32_t width_mask = (image.width >> 1) - 1;
 		uint32_t height_mask = (image.height >> 1) - 1;
-		
+
 		const Color * color = 0;
 		uint8_t* pixels = &image.pixels[0];
 		assert(pixels != 0);
-		
+
 		for(uint32_t y = 0; y < image.height; ++y)
 		{
 			for(uint32_t x = 0; x < image.width; ++x)
@@ -153,9 +153,9 @@ namespace image
 						color = &color1;
 					}
 				}
-				
+
 				memcpy(pixels, color, image.channels);
-				
+
 				pixels += image.channels;
 			}
 		}
@@ -167,9 +167,9 @@ namespace image
 		// width/height should be power of two
 		int width_mask = (width >> 1) - 1;
 		int height_mask = (height >> 1) - 1;
-		
+
 		const Color* color = 0;
-	
+
 		assert(pixels != 0);
 
 		for(int y = 0; y < height; ++y)
@@ -201,10 +201,10 @@ namespace image
 						color = &color1;
 					}
 				}
-				
+
 				// we want this to be an opaque texture, so we'll ignore the alpha channel
 				memcpy(pixels, color, 3);
-				
+
 				pixels += 3;
 			}
 		}
@@ -218,13 +218,13 @@ namespace image
 		unsigned char* copy;
 		copy = (unsigned char*)MEMORY_ALLOC((width*height*components), core::memory::global_allocator());
 		memcpy(copy, pixels, (width*height*components));
-		
+
 		for(int h = 0; h < height; ++h)
 		{
 			dst = (height-(h+1));
 			memcpy(&pixels[ (h*scanline_size) ], &copy[ (dst*scanline_size) ], scanline_size);
 		}
-		
+
 		MEMORY_DEALLOC(copy, core::memory::global_allocator());
 	} // flip_image_vertically
 
@@ -235,7 +235,7 @@ namespace image
 		image.height = ERROR_TEXTURE_HEIGHT;
 		image.channels = 3;
 		generate_checker_pattern(image, Color(0, 0, 0), Color(255, 0, 255));
-		
+
 		renderer::Texture* texture = renderer::driver()->texture_create(image);
 
 		return texture;
@@ -272,10 +272,10 @@ namespace image
 		*width = w;
 		*height = h;
 		*channels = c;
-		
+
 		return pixels;
 	} // load_image_from_memory
-	
+
 	void free_image(unsigned char* pixels)
 	{
 		// this was not allocated by our allocator (was done through stb_image)

@@ -62,7 +62,7 @@ namespace platform
 			float width;
 			float height;
 
-			Frame() :
+			LIBRARY_EXPORT Frame() :
 				x(0),
 				y(0),
 				width(0),
@@ -87,14 +87,14 @@ namespace platform
 
 			uint8_t opacity;
 
-			BackbufferConfig() : 
+			LIBRARY_EXPORT BackbufferConfig() :
 				red_size(8),
 				green_size(8),
 				blue_size(8),
 				alpha_size(8),
 				depth_size(24),
 				stencil_size(0)
-			{				
+			{
 			}
 		};
 
@@ -123,7 +123,7 @@ namespace platform
 			// wait for vertical sync
 			bool enable_vsync;
 
-			Parameters() :
+			LIBRARY_EXPORT Parameters() :
 				titlebar_height(0),
 				window_title(0),
 				enable_fullscreen(false),
@@ -132,50 +132,50 @@ namespace platform
 			{
 			}
 
-			virtual ~Parameters();
+			LIBRARY_EXPORT virtual ~Parameters();
 		};
 
 		struct NativeWindow
 		{
-			NativeWindow() :
+			LIBRARY_EXPORT NativeWindow() :
 				graphics_data(nullptr)
 			{
 			}
 
-			virtual ~NativeWindow();
+			LIBRARY_EXPORT virtual ~NativeWindow();
 
 			/// @brief returns this platform's native window handle
-			virtual void* get_native_handle() = 0;
+			LIBRARY_EXPORT virtual void* get_native_handle() = 0;
 
 			/// @brief Notification from the graphics provider
 			/// when the native visual id has been changed
-			virtual void update_visual(int visual) {}
+			LIBRARY_EXPORT virtual void update_visual(int visual) {}
 
 			/// @brief An update to this window's dimensions happened
-			virtual void update_size(int width, int height) {}
+			LIBRARY_EXPORT virtual void update_size(int width, int height) {}
 
 			// data used by the graphics provider on this system
 			void* graphics_data;
-			
+
 			BackbufferConfig backbuffer;
 		};
 
 		class InputProvider
 		{
 		public:
-			virtual ~InputProvider();
+			LIBRARY_EXPORT virtual ~InputProvider();
 
 			// capture the mouse
-			virtual void capture_mouse(bool capture) = 0;
+			LIBRARY_EXPORT virtual void capture_mouse(bool capture) = 0;
 
 			// warp the mouse to a position
-			virtual void warp_mouse(int x, int y) = 0;
+			LIBRARY_EXPORT virtual void warp_mouse(int x, int y) = 0;
 
 			// get the current mouse position
-			virtual void get_mouse(int& x, int& y) = 0;
+			LIBRARY_EXPORT virtual void get_mouse(int& x, int& y) = 0;
 
 			// toggle mouse visibility
-			virtual void show_mouse(bool show) = 0;
+			LIBRARY_EXPORT virtual void show_mouse(bool show) = 0;
 		};
 
 		// common utility functions?

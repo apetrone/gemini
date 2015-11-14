@@ -37,33 +37,33 @@ namespace gemini
 			mesh = nullptr;
 			flags = 0;
 		}
-		
+
 		Node::~Node()
 		{
 			for (auto& child : children)
 			{
 				MEMORY_DELETE(child, core::memory::global_allocator());
 			}
-			
+
 			children.clear();
-			
+
 			if (mesh)
 			{
 				MEMORY_DELETE(mesh, core::memory::global_allocator());
 			}
 		}
-		
+
 		void Node::add_child(Node* child)
 		{
 			if (child->parent)
 			{
 				child->parent->remove_child(child);
 			}
-			
+
 			child->parent = this;
 			children.push_back(child);
 		}
-		
+
 		void Node::remove_child(Node* child)
 		{
 			// find the child and detach from the old parent
@@ -76,23 +76,23 @@ namespace gemini
 				}
 			}
 		}
-		
-		Node* Node::find_child_named(const String& name)
+
+		Node* Node::find_child_named(const String& node_name)
 		{
-			if (this->name == name)
+			if (node_name == name)
 			{
 				return this;
 			}
 
 			for (auto& child : children)
 			{
-				Node* node = child->find_child_named(name);
+				Node* node = child->find_child_named(node_name);
 				if (node)
 				{
 					return node;
 				}
 			}
-			
+
 			return 0;
 		}
 	} // namespace datamodel

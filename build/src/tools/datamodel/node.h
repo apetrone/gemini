@@ -40,7 +40,6 @@ namespace gemini
 
 		typedef std::vector<struct Node*> NodeVector;
 
-		
 		struct Node
 		{
 			enum Flags
@@ -48,33 +47,33 @@ namespace gemini
 				None,
 				HasAnimations, // this node has animations
 			};
-			
+
 			uint32_t flags;
-			
+
 			String name;
 			String type;
-			
+
 			// local transform
 			glm::vec3 scale;
-			
+
 			// euler angles (yaw, pitch, roll)
 			glm::quat rotation;
 			glm::vec3 translation;
-			
+
 			// global transform
 			glm::mat4 absolute_world_transform;
 
 			Node* parent;
 			NodeVector children;
-			
+
 			Mesh* mesh;
-			
+
 			Node();
 			virtual ~Node();
 			void add_child(Node* child);
 			void remove_child(Node* child);
-			Node* find_child_named(const String& name);
-			
+			Node* find_child_named(const String& node_name);
+
 			bool has_animations() const { return (flags & HasAnimations) > 0; }
 		};
 	} // namespace datamodel

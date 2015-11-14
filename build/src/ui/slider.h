@@ -35,10 +35,10 @@ namespace gui
 	class Slider : public gui::Panel
 	{
 	public:
-		Slider(Panel* parent);
+		LIBRARY_EXPORT Slider(Panel* parent);
 
 		LIBRARY_EXPORT virtual void handle_event(gui::EventArgs& args) override;
-			
+
 		LIBRARY_EXPORT virtual void update(gui::Compositor* compositor, float delta_seconds) override;
 		LIBRARY_EXPORT virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands);
 

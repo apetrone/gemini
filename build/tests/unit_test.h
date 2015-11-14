@@ -116,10 +116,10 @@ namespace unittest
 		}
 
 	private:
-		static UnitTest* reverse_list(UnitTest* root)
+		static UnitTest* reverse_list(UnitTest* root_node)
 		{
 			UnitTest* output = nullptr;
-			UnitTest* curr = root;
+			UnitTest* curr = root_node;
 			while(curr)
 			{
 				// we traverse the list starting at root

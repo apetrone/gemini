@@ -93,17 +93,17 @@ namespace platform
 				RegisterClassEx(&window_class_info);
 			}
 
-			
+
 			DWORD window_style = WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
-			DWORD window_width;
-			DWORD window_height;
+			DWORD window_width = 0;
+			DWORD window_height = 0;
 
 			if (!window_parameters.enable_fullscreen)
 			{
 				RECT new_rect = {
-					0, 
 					0,
-					static_cast<LONG>(window_parameters.frame.width), 
+					0,
+					static_cast<LONG>(window_parameters.frame.width),
 					static_cast<LONG>(window_parameters.frame.height)
 				};
 
@@ -135,10 +135,10 @@ namespace platform
 
 			// ATI driver bug fix from irrlicht
 			MoveWindow(static_cast<HWND>(window->get_native_handle()),
-				client_rect.left, 
-				client_rect.top, 
-				client_rect.right, 
-				client_rect.bottom, 
+				client_rect.left,
+				client_rect.top,
+				client_rect.right,
+				client_rect.bottom,
 				TRUE);
 
 			return window;

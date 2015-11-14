@@ -325,11 +325,11 @@ public:
 		const size_t TOTAL_TEXTURED_VERTICES = 15;
 		total_bytes = sizeof(TexturedVertex) * TOTAL_TEXTURED_VERTICES;
 		state.textured_buffer = state.device->create_vertex_buffer(total_bytes);
-		TexturedVertex tv[ TOTAL_TEXTURED_VERTICES ];
-		generate_textured_triangle(0, tv, glm::vec2(width, height), glm::vec2(width/2, 0));
-		generate_textured_quad(3, tv, glm::vec2(width, height), glm::vec2(0, height/2));
-		generate_textured_quad(9, tv, glm::vec2(width, height), glm::vec2(width/2, height/2));
-		state.device->buffer_upload(state.textured_buffer, tv, total_bytes);
+		TexturedVertex texverts[ TOTAL_TEXTURED_VERTICES ];
+		generate_textured_triangle(0, texverts, glm::vec2(width, height), glm::vec2(width/2, 0));
+		generate_textured_quad(3, texverts, glm::vec2(width, height), glm::vec2(0, height/2));
+		generate_textured_quad(9, texverts, glm::vec2(width, height), glm::vec2(width/2, height/2));
+		state.device->buffer_upload(state.textured_buffer, texverts, total_bytes);
 
 		// setup constant buffer
 		state.modelview_matrix = glm::mat4(1.0f);
@@ -426,7 +426,7 @@ public:
 
 		// hit this assert if we couldn't load the font
 		assert(state.handle.is_valid());
-		
+
 
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
 

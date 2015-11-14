@@ -47,7 +47,7 @@
 namespace renderer
 {
 	IRenderDriver * _render_driver = 0;
-	
+
 	IRenderDriver * driver() { return _render_driver; }
 
 	void create_shaderprogram_from_file(const char* path, renderer::ShaderProgram** program)
@@ -59,7 +59,7 @@ namespace renderer
 	{
 		// setup vertex descriptor
 		VertexDescriptor::startup();
-	
+
 		// load the shader config data
 		shader_config::startup();
 
@@ -73,7 +73,7 @@ namespace renderer
 
 
 		gemgl_config config;
-		
+
 		// parse the GL_VERSION string and determine which renderer to use.
 		gemgl_parse_version(config.major_version, config.minor_version);
 
@@ -108,32 +108,32 @@ namespace renderer
 
 			// init render driver settings
 			_render_driver->init_with_settings(settings);
-			
+
 			_render_driver->create_default_render_target();
-			
+
 			return 1;
 		}
 
 		return 0;
 	} // startup
-	
+
 	void shutdown()
 	{
 		shader_config::shutdown();
-	
+
 		if ( _render_driver )
 		{
 			MEMORY_DELETE(_render_driver, core::memory::global_allocator());
 		}
-		
-		gemgl_shutdown(gl);		
+
+		gemgl_shutdown(gl);
 	} // shutdown
-	
+
 } // namespace renderer
 
 
 namespace renderer
-{	
+{
 	int ShaderProgram::get_uniform_location( const char * name )
 	{
 //		LOGV( "# uniforms: %i\n", total_uniforms );
@@ -145,11 +145,11 @@ namespace renderer
 				return uniforms[i].second;
 			}
 		}
-		
+
 		LOGW( "No uniform named %s (%i)\n", name, -1 );
 		return -1;
 	} // get_uniform_location
-	
+
 	void ShaderProgram::show_uniforms()
 	{
 		LOGV("uniforms:\n");
@@ -158,7 +158,7 @@ namespace renderer
 			LOGV("%s -> %i\n", uniforms[i].first.c_str(), uniforms[i].second);
 		}
 	}
-	
+
 	void ShaderProgram::show_attributes()
 	{
 		LOGV("attributes:\n");
@@ -171,69 +171,69 @@ namespace renderer
 
 namespace renderer
 {
-	
+
 	// VertexTypeDescriptor
-	uint16_t VertexDescriptor::size[ VD_TOTAL ] = {0};
+	uint16_t VertexDescriptor::size_in_bytes[ VD_TOTAL ] = {0};
 	uint16_t VertexDescriptor::elements[ VD_TOTAL ] = {0};
-	
+
 	void VertexDescriptor::startup()
 	{
 		// clear table
-		memset(VertexDescriptor::size, 0, sizeof(uint16_t)*VD_TOTAL);
+		memset(VertexDescriptor::size_in_bytes, 0, sizeof(uint16_t)*VD_TOTAL);
 		memset(VertexDescriptor::elements, 0, sizeof(uint16_t)*VD_TOTAL);
-		
+
 		// populate table with vertex descriptor types
 		map_type(VD_FLOAT2, sizeof(float), 2);
 		map_type(VD_FLOAT3, sizeof(float), 3);
 		map_type(VD_FLOAT4, sizeof(float), 4);
-		
+
 		map_type(VD_INT4, sizeof(int), 4);
-		
+
 		map_type(VD_UNSIGNED_BYTE3, sizeof(unsigned char), 3);
 		map_type(VD_UNSIGNED_BYTE4, sizeof(unsigned char), 4);
-		
+
 		map_type(VD_UNSIGNED_INT, sizeof(unsigned int), 1);
-		
+
 		// validate table
 		for (size_t i = 0; i < VD_TOTAL; ++i)
 		{
-			assert(VertexDescriptor::size[i] != 0);
+			assert(VertexDescriptor::size_in_bytes[i] != 0);
 			assert(VertexDescriptor::elements[i] != 0);
 		}
 	}
-	
-	void VertexDescriptor::map_type(uint32_t type, uint16_t size, uint16_t elements)
+
+	void VertexDescriptor::map_type(uint32_t type, uint16_t sizeof_type_bytes, uint16_t total_elements)
 	{
-		VertexDescriptor::size[type] = size*elements;
-		VertexDescriptor::elements[type] = elements;
+		VertexDescriptor::size_in_bytes[type] = sizeof_type_bytes * total_elements;
+		VertexDescriptor::elements[type] = total_elements;
 	}
-	
+
 	VertexDescriptor::VertexDescriptor()
 	{
 		id = 0;
 		reset();
 		memset( description, 0, sizeof(VertexDescriptorType) * MAX_DESCRIPTORS );
 	}
-	
+
 	void VertexDescriptor::add( VertexDescriptorType desc )
 	{
 		description[ id ] = desc;
 		++id;
-		
+
 		if ( id >= MAX_DESCRIPTORS-1 )
 		{
 			printf( "Reached MAX_DESCRIPTORS. Resetting\n" );
 			id = 0;
 		}
-		
+
 		attribs = id;
 	} // add
-	
+
 	VertexDescriptorType VertexDescriptor::get( int i )
 	{
 		return description[ i ];
 	} // get
-	
+
 	void VertexDescriptor::reset()
 	{
 		if ( id > 0 )
@@ -242,40 +242,34 @@ namespace renderer
 		}
 		id = 0;
 	} // reset
-	
+
 	unsigned int VertexDescriptor::calculate_vertex_stride()
 	{
-		unsigned int size = 0;
-		unsigned int attribSize = 0;
-		unsigned int descriptor;
-		
-		for( unsigned int i = 0; i < attribs; ++i )
+		unsigned int stride_bytes = 0;
+		for(unsigned int i = 0; i < attribs; ++i)
 		{
-			descriptor = description[i];
-			attribSize = VertexDescriptor::size[descriptor];
-						
-			size += attribSize;
+			stride_bytes += VertexDescriptor::size_in_bytes[ description[i] ];
 		}
-		
-		return size;
+
+		return stride_bytes;
 	} // calculate_vertex_stride
 
 	const VertexDescriptor & VertexDescriptor::operator= ( const VertexDescriptor & other )
 	{
 		this->attribs = other.attribs;
 		this->id = other.id;
-		
+
 		for( unsigned int i = 0; i < VD_TOTAL; ++i )
 		{
-			this->size[i] = other.size[i];
+			this->size_in_bytes[i] = other.size_in_bytes[i];
 			this->elements[i] = other.elements[i];
 		}
-		
+
 		for( unsigned int id = 0; id < MAX_DESCRIPTORS; ++id )
 		{
 			this->description[id] = other.description[id];
 		}
-	
+
 		return *this;
 	} // operator=
 
@@ -309,11 +303,11 @@ namespace render2
 	InputLayout::~InputLayout()
 	{
 	}
-	
+
 	// ---------------------------------------------------------------------
 	// Pipeline
 	// ---------------------------------------------------------------------
-	
+
 	// ---------------------------------------------------------------------
 	// Command
 	// ---------------------------------------------------------------------
@@ -334,7 +328,7 @@ namespace render2
 		params[2] = param2;
 		params[3] = param3;
 	}
-	
+
 	// ---------------------------------------------------------------------
 	// Device
 	// ---------------------------------------------------------------------
@@ -356,10 +350,10 @@ namespace render2
 	{
 		// determine the renderer
 		assert(params.has_key("rendering_backend"));
-		
+
 		const param_string& renderer = params["rendering_backend"];
 		LOGV("create device for rendering_backend '%s'\n", renderer());
-		
+
 #if defined(PLATFORM_OPENGL_SUPPORT)
 		return MEMORY_NEW(OpenGLDevice, core::memory::global_allocator());
 #elif defined(PLATFORM_GLES2_SUPPORT)
@@ -369,7 +363,7 @@ namespace render2
 #endif
 		return nullptr;
 	}
-	
+
 	void destroy_device(Device* device)
 	{
 		MEMORY_DELETE(device, core::memory::global_allocator());

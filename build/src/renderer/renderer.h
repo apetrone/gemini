@@ -48,8 +48,8 @@ namespace renderer
 		GLESv2,
 		GLESv3
 	}; // DriverType
-	
-	
+
+
 	enum DriverCommandType
 	{
 		DC_SHADER,
@@ -59,23 +59,23 @@ namespace renderer
 		DC_UNIFORM4f,
 		DC_UNIFORM_SAMPLER_2D,
 		DC_UNIFORM_SAMPLER_CUBE,
-		
+
 		DC_CLEAR,
 		DC_CLEARCOLOR,
 		DC_CLEARDEPTH,
 		DC_CULLMODE,
-		
+
 		DC_VIEWPORT,
-		
+
 		DC_DRAWCALL,
 		DC_SCISSOR,
 		DC_STATE,
 		DC_BLENDFUNC,
-		
+
 		DC_MAX
 	}; // DriverCommandType
-	
-	
+
+
 	enum DriverState
 	{
 		STATE_BACKFACE_CULLING,
@@ -83,13 +83,13 @@ namespace renderer
 		STATE_DEPTH_TEST,
 		STATE_DEPTH_WRITE,
 	}; // DriverState
-	
+
 	enum RenderClearFlags
 	{
 		CLEAR_COLOR_BUFFER = 0x00004000,
 		CLEAR_DEPTH_BUFFER = 0x00000100
 	};
-	
+
 	enum RenderBlendType
 	{
 		BLEND_ZERO,
@@ -109,35 +109,35 @@ namespace renderer
 		BLEND_SRC1_COLOR,
 		BLEND_ONE_MINUS_SRC1_COLOR,
 		BLEND_SRC1_ALPHA,
-		BLEND_ONE_MINUS_SRC1_ALPHA		
+		BLEND_ONE_MINUS_SRC1_ALPHA
 	}; // RenderBlendType
-	
+
 	enum CullMode
 	{
 		CULLMODE_FRONT,
 		CULLMODE_BACK,
 	}; // CullMode
-	
-	
-	
+
+
+
 	struct RenderSettings
 	{
 		// enable gamma correct rendering
 		bool gamma_correct;
-		
+
 		// try to establish some sane defaults
 		RenderSettings() :
 			gamma_correct(false)
 		{
 		}
-		
+
 	};
-	
-	
-	
+
+
+
 	// returns 0 on failure, 1 on success
-	int startup( DriverType driver, const RenderSettings& settings );
-	void shutdown();
+	LIBRARY_EXPORT int startup( DriverType driver, const RenderSettings& settings );
+	LIBRARY_EXPORT void shutdown();
 
 #if defined(PLATFORM_GLES2_SUPPORT)
 	typedef unsigned short IndexType;
@@ -148,10 +148,10 @@ namespace renderer
 #endif
 
 	typedef unsigned char VertexType;
-	
+
 #define MAX_DESCRIPTORS 8
 	typedef unsigned short VertexDescriptorType;
-	
+
 	// Any changes to this enum must also be handled in:
 	// 1. GL Core3.2 driver (static_setup)
 	// 2. VertexDescriptor::calculate_vertex_stride
@@ -168,7 +168,7 @@ namespace renderer
 		VD_UNSIGNED_INT,
 		VD_TOTAL
 	}; // Vertex Descriptor
-	
+
 
 	enum VertexBufferDrawType
 	{
@@ -176,72 +176,65 @@ namespace renderer
 		DRAW_INDEXED_TRIANGLES,
 		DRAW_LINES,
 		DRAW_POINTS,
-		
+
 		DRAW_LIMIT,
 	}; // VertexBufferDrawType
-	
+
 	enum VertexBufferBufferType
 	{
 		BUFFER_STATIC,
 		BUFFER_DYNAMIC,
 		BUFFER_STREAM,
-		
+
 		BUFFER_LIMIT,
 	}; // VertexBufferBufferType
-	
+
 	enum VertexBufferErrorType
 	{
-		VERTEX_BUFFER_ERROR_NONE = 0,
-		
+		VERTEX_BUFFER_ERROR_NONE = 0
 	}; // VertexBufferErrorType
-	
 
-	
 	struct VertexDescriptor
 	{
 		unsigned char id;
 		unsigned char attribs;
 		VertexDescriptorType description[ MAX_DESCRIPTORS ];
 
-		static void startup();
-		static void map_type(uint32_t type, uint16_t size, uint16_t elements);
-		static uint16_t size[ VD_TOTAL ];
+		LIBRARY_EXPORT static void startup();
+		LIBRARY_EXPORT static void map_type(uint32_t type, uint16_t sizeof_type_bytes, uint16_t total_elements);
+		static uint16_t size_in_bytes[ VD_TOTAL ];
 		static uint16_t elements[ VD_TOTAL ];
-		
-		VertexDescriptor();
-		void add( VertexDescriptorType desc );
-		
-		VertexDescriptorType get( int i );
-		void reset();
-		unsigned int calculate_vertex_stride();
-		
-		const VertexDescriptor & operator= ( const VertexDescriptor & other );
+
+		LIBRARY_EXPORT VertexDescriptor();
+		LIBRARY_EXPORT void add(VertexDescriptorType desc);
+
+		LIBRARY_EXPORT VertexDescriptorType get(int index);
+		LIBRARY_EXPORT void reset();
+		LIBRARY_EXPORT unsigned int calculate_vertex_stride();
+		LIBRARY_EXPORT const VertexDescriptor& operator= (const VertexDescriptor& other);
 	}; // VertexDescriptor
-	
-	
+
 	enum TextureFlags
 	{
 		TEXTURE_WRAP 			= (1 << 0),
 		TEXTURE_CLAMP 			= (1 << 1),
 		TEXTURE_MIP_NEAREST		= (1 << 2),
 		TEXTURE_MIP_LINEAR		= (1 << 3)
-	};
-	
+	}; // TextureFlags
+
 	struct BlendParameters
 	{
 		unsigned int source;
 		unsigned int destination;
 	}; // BlendParameters
-	
 
-	
 	struct Geometry
 	{
 		unsigned short attributes;
-			
+
 		unsigned int vertex_count;
 		unsigned int index_count;
-			
+
 		// if vertex_count > 0 and these pointers are not null
 		// they will be vertex_count in length.
 		FixedArray<glm::vec3> vertices;
@@ -251,14 +244,13 @@ namespace renderer
 		FixedArray<glm::vec4> blend_indices;
 		FixedArray<glm::vec4> blend_weights;
 		FixedArray<renderer::IndexType> indices;
-		
+
 		renderer::VertexBuffer* vertexbuffer;
 		renderer::VertexBufferDrawType draw_type;
-		
+
 		// return true if this object is animated
 		// i.e. requires dynamic updates in the renderer
-		bool is_animated() const { return 0; }
-		
+		LIBRARY_EXPORT bool is_animated() const { return 0; }
 	}; // Geometry
 } // namespace renderer
 
@@ -273,38 +265,36 @@ namespace renderer
 namespace renderer
 {
 	struct RenderStream;
-	
-	void create_shaderprogram_from_file(const char* path, renderer::ShaderProgram** program);
+
+	LIBRARY_EXPORT void create_shaderprogram_from_file(const char* path, renderer::ShaderProgram** program);
 }
 
 
 namespace renderer
 {
 	struct VertexStream;
-	
+
 	// This interface can be derived for each new platform
 	class RenderDevice
 	{
 	public:
 		virtual ~RenderDevice() {}
-		
-		
-		
+
 		// resource management
-		
+
 		// commands
 	};
-	
-	
+
+
 	// Renderer is a high-level interface for visuals. It doesn't know/care
 	// what the underlying API or devices are.
 	// Internally, it will direct calls to the device.
 	class Renderer
 	{
 	public:
-		virtual ~Renderer() {}
-		
-		virtual void apply_settings(const renderer::RenderSettings& settings) = 0;
+		LIBRARY_EXPORT virtual ~Renderer() {}
+
+		LIBRARY_EXPORT virtual void apply_settings(const renderer::RenderSettings& settings) = 0;
 	};
 
 	//
@@ -314,74 +304,70 @@ namespace renderer
 	class IRenderDriver
 	{
 	public:
-		virtual ~IRenderDriver() {}
-		virtual const char * description() = 0;
-		
-		
-		virtual void init_with_settings(const renderer::RenderSettings& settings) = 0;
-		virtual void create_default_render_target() = 0;
-		
+		LIBRARY_EXPORT virtual ~IRenderDriver() {}
+		LIBRARY_EXPORT virtual const char * description() = 0;
+
+
+		LIBRARY_EXPORT virtual void init_with_settings(const renderer::RenderSettings& settings) = 0;
+		LIBRARY_EXPORT virtual void create_default_render_target() = 0;
+
 		// these commands are called with the command and current memory stream
-		virtual void run_command( DriverCommandType command, core::util::MemoryStream & stream ) = 0;
-		virtual void post_command( DriverCommandType command, core::util::MemoryStream & stream ) = 0;
-		
-		virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, core::util::MemoryStream & stream ) = 0;
-		virtual void setup_material( renderer::Material* material, renderer::ShaderProgram* program, RenderStream& stream) = 0;
-		
+		LIBRARY_EXPORT virtual void run_command( DriverCommandType command, core::util::MemoryStream & stream ) = 0;
+		LIBRARY_EXPORT virtual void post_command( DriverCommandType command, core::util::MemoryStream & stream ) = 0;
+
+		LIBRARY_EXPORT virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, core::util::MemoryStream & stream ) = 0;
+		LIBRARY_EXPORT virtual void setup_material( renderer::Material* material, renderer::ShaderProgram* program, RenderStream& stream) = 0;
+
 		// texture
-		virtual renderer::Texture* texture_create(image::Image& image) = 0;
-		virtual void texture_update(renderer::Texture* texture, const image::Image& image, const mathlib::Recti& rect) = 0;
-		virtual void texture_destroy(renderer::Texture* texture) = 0;
-		
-		virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices ) = 0;
-		virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream ) = 0;
-		virtual void vertexbuffer_upload_data( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices ) = 0;
-		
-		
-		virtual renderer::VertexBuffer * vertexbuffer_from_geometry( renderer::VertexDescriptor & descriptor, renderer::Geometry * geometry ) = 0;
-		virtual void vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer::Geometry * geometry ) = 0;
-		
+		LIBRARY_EXPORT virtual renderer::Texture* texture_create(image::Image& image) = 0;
+		LIBRARY_EXPORT virtual void texture_update(renderer::Texture* texture, const image::Image& image, const mathlib::Recti& rect) = 0;
+		LIBRARY_EXPORT virtual void texture_destroy(renderer::Texture* texture) = 0;
+
+		LIBRARY_EXPORT virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, VertexBufferDrawType draw_type, VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices ) = 0;
+		LIBRARY_EXPORT virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream ) = 0;
+		LIBRARY_EXPORT virtual void vertexbuffer_upload_data( VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, VertexType * vertices, unsigned int index_count, IndexType * indices ) = 0;
+
+
+		LIBRARY_EXPORT virtual renderer::VertexBuffer * vertexbuffer_from_geometry( renderer::VertexDescriptor & descriptor, renderer::Geometry * geometry ) = 0;
+		LIBRARY_EXPORT virtual void vertexbuffer_upload_geometry( VertexBuffer * vertexbuffer, renderer::Geometry * geometry ) = 0;
+
 //		virtual void vertexbuffer_activate( renderer::VertexBuffer & parameters ) = 0;
 //		virtual void vertexbuffer_update( renderer::VertexBuffer & parameters ) = 0;
-		virtual void vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, unsigned int num_indices ) = 0;
-		virtual void vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned int num_vertices ) = 0;
+		LIBRARY_EXPORT virtual void vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, unsigned int num_indices ) = 0;
+		LIBRARY_EXPORT virtual void vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned int num_vertices ) = 0;
 //		virtual void vertexbuffer_deactivate( renderer::VertexBuffer & parameters ) = 0;
-		
-		
-		
-		virtual renderer::ShaderObject shaderobject_create( renderer::ShaderObjectType shader_type ) = 0;
-		virtual bool shaderobject_compile( renderer::ShaderObject shader_object, const char * shader_source, const char * preprocessor_defines, const char * version ) = 0;
-		virtual void shaderobject_destroy( renderer::ShaderObject shader_object ) = 0;
-		
-		virtual renderer::ShaderProgram* shaderprogram_create() = 0;
-		virtual void shaderprogram_destroy( renderer::ShaderProgram* program ) = 0;
-		virtual void shaderprogram_attach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object ) = 0;
-		virtual void shaderprogram_detach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object ) = 0;
-		virtual void shaderprogram_bind_attributes( renderer::ShaderProgram* shader_program ) = 0;
-		virtual void shaderprogram_bind_uniforms( renderer::ShaderProgram* shader_program ) = 0;
-		virtual void shaderprogram_bind_uniform_block(renderer::ShaderProgram* shader_program, const char* block_name) = 0;
-		virtual bool shaderprogram_link_and_validate( renderer::ShaderProgram* shader_program ) = 0;
-		virtual void shaderprogram_activate( renderer::ShaderProgram* shader_program ) = 0;
-		virtual void shaderprogram_deactivate( renderer::ShaderProgram* shader_program ) = 0;
 
-		virtual renderer::RenderTarget* render_target_create(uint16_t width, uint16_t height) = 0;
-		virtual void render_target_destroy(renderer::RenderTarget* rt) = 0;
-		virtual void render_target_activate(renderer::RenderTarget* rt) = 0;
-		virtual void render_target_deactivate(renderer::RenderTarget* rt) = 0;
-		virtual void render_target_set_attachment(renderer::RenderTarget* rt, renderer::RenderTarget::AttachmentType type, uint8_t index, renderer::Texture* texture) = 0;
+		LIBRARY_EXPORT virtual renderer::ShaderObject shaderobject_create( renderer::ShaderObjectType shader_type ) = 0;
+		LIBRARY_EXPORT virtual bool shaderobject_compile( renderer::ShaderObject shader_object, const char * shader_source, const char * preprocessor_defines, const char * version ) = 0;
+		LIBRARY_EXPORT virtual void shaderobject_destroy( renderer::ShaderObject shader_object ) = 0;
 
+		LIBRARY_EXPORT virtual renderer::ShaderProgram* shaderprogram_create() = 0;
+		LIBRARY_EXPORT virtual void shaderprogram_destroy( renderer::ShaderProgram* program ) = 0;
+		LIBRARY_EXPORT virtual void shaderprogram_attach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object ) = 0;
+		LIBRARY_EXPORT virtual void shaderprogram_detach( renderer::ShaderProgram* shader_program, renderer::ShaderObject shader_object ) = 0;
+		LIBRARY_EXPORT virtual void shaderprogram_bind_attributes( renderer::ShaderProgram* shader_program ) = 0;
+		LIBRARY_EXPORT virtual void shaderprogram_bind_uniforms( renderer::ShaderProgram* shader_program ) = 0;
+		LIBRARY_EXPORT virtual void shaderprogram_bind_uniform_block(renderer::ShaderProgram* shader_program, const char* block_name) = 0;
+		LIBRARY_EXPORT virtual bool shaderprogram_link_and_validate( renderer::ShaderProgram* shader_program ) = 0;
+		LIBRARY_EXPORT virtual void shaderprogram_activate( renderer::ShaderProgram* shader_program ) = 0;
+		LIBRARY_EXPORT virtual void shaderprogram_deactivate( renderer::ShaderProgram* shader_program ) = 0;
+
+		LIBRARY_EXPORT virtual renderer::RenderTarget* render_target_create(uint16_t width, uint16_t height) = 0;
+		LIBRARY_EXPORT virtual void render_target_destroy(renderer::RenderTarget* rt) = 0;
+		LIBRARY_EXPORT virtual void render_target_activate(renderer::RenderTarget* rt) = 0;
+		LIBRARY_EXPORT virtual void render_target_deactivate(renderer::RenderTarget* rt) = 0;
+		LIBRARY_EXPORT virtual void render_target_set_attachment(renderer::RenderTarget* rt, renderer::RenderTarget::AttachmentType type, uint8_t index, renderer::Texture* texture) = 0;
 	}; // IRenderDriver
-	typedef IRenderDriver * (*RenderDriverCreator)();
-	
-	
-	IRenderDriver * driver();
+
+	typedef IRenderDriver* (*RenderDriverCreator)();
+
+	LIBRARY_EXPORT IRenderDriver * driver();
 } // namespace renderer
 
 
 
 namespace render2
 {
-	
 	struct Region
 	{
 		uint32_t x;
@@ -389,10 +375,8 @@ namespace render2
 		uint32_t width;
 		uint32_t height;
 	};
-	
-	
-	
-	
+
+
 	//	struct TextureDescriptor
 	//	{
 	//		uint32_t min_filter;
@@ -407,15 +391,13 @@ namespace render2
 	struct Texture
 	{
 	};
-	
+
 	// This is an implementation-specific format which
 	// serves as a bridge between the Shader and VertexDescriptor.
 	struct InputLayout
 	{
 		virtual ~InputLayout();
 	};
-	
-
 } // namespace render2
 
 #include "constantbuffer.h"
@@ -442,39 +424,37 @@ namespace render2
 	const uint32_t MAX_PIPELINE_ATTACHMENTS = 2;
 	struct PipelineDescriptor
 	{
-		PipelineDescriptor() :
+		LIBRARY_EXPORT PipelineDescriptor() :
 			enable_blending(false),
 			blend_source(BlendOp::One),
 			blend_destination(BlendOp::Zero)
 		{
 		}
-	
+
 		Shader* shader;
 		uint32_t attachments[ MAX_PIPELINE_ATTACHMENTS ];
 		VertexDescriptor vertex_description;
 		InputLayout* input_layout;
-		
+
 		bool enable_blending;
 		BlendOp blend_source;
 		BlendOp blend_destination;
 	};
-	
+
 	// ---------------------------------------------------------------------
 	// CommandSerializer
 	// ---------------------------------------------------------------------
 	struct CommandSerializer
 	{
-		virtual ~CommandSerializer() {}
-		
-		virtual void vertex_buffer(Buffer* buffer) = 0;
-		virtual void draw(size_t initial_offset, size_t total, size_t instance_index = 0, size_t index_count = 1) = 0;
-		virtual void draw_indexed_primitives(Buffer* index_buffer, size_t total) = 0;
-		virtual void pipeline(Pipeline* pipeline) = 0;
-		virtual void viewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) = 0;
-		virtual void texture(Texture* texture, uint32_t index) = 0;
-	};
+		LIBRARY_EXPORT virtual ~CommandSerializer() {}
+		LIBRARY_EXPORT virtual void vertex_buffer(Buffer* buffer) = 0;
+		LIBRARY_EXPORT virtual void draw(size_t initial_offset, size_t total, size_t instance_index = 0, size_t index_count = 1) = 0;
+		LIBRARY_EXPORT virtual void draw_indexed_primitives(Buffer* index_buffer, size_t total) = 0;
+		LIBRARY_EXPORT virtual void pipeline(Pipeline* pipeline) = 0;
+		LIBRARY_EXPORT virtual void viewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) = 0;
+		LIBRARY_EXPORT virtual void texture(Texture* texture, uint32_t index) = 0;
+	}; // CommandSerializer
 } // namespace render2
-
 
 #include "device.h"
 
@@ -494,17 +474,14 @@ namespace render2
 	// depth_size: <uint32_t>
 	// multisample: <uint32_t>
 	// gamma_correct: ["true", "false"]
-	
-
-
 
 	// ---------------------------------------------------------------------
 	//
 	// ---------------------------------------------------------------------
-	
+
 	/// @brief Create a render device with the given parameters
 	LIBRARY_EXPORT Device* create_device(const RenderParameters& parameters);
-	
+
 	/// @brief Destroy an existing render device
 	LIBRARY_EXPORT void destroy_device(Device* device);
 } // namespace render2
