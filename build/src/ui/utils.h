@@ -53,25 +53,25 @@ namespace gui
 	typedef int16_t ScreenInt;
 
 	template <class EventArgsType, class ReturnVal = void>
-	class LIBRARY_EXPORT EventHandler
+	class EventHandler
 	{
 	public:
 		typedef ReturnVal ( *callback_type )( EventArgsType );
 
-		EventHandler()
+		LIBRARY_EXPORT EventHandler()
 		{
 			_handler = 0;
 		}
 
-		virtual ~EventHandler() {}
+		LIBRARY_EXPORT virtual ~EventHandler() {}
 
-		void operator = ( callback_type _fn )
+		LIBRARY_EXPORT void operator = ( callback_type _fn )
 		{
 			_handler = _fn;
 		}
 
 		// call a specific function with the args if specified, otherwise fires the event with given args
-		ReturnVal operator() ( EventArgsType args, callback_type _fn = 0 )
+		LIBRARY_EXPORT ReturnVal operator() ( EventArgsType args, callback_type _fn = 0 )
 		{
 			if ( _fn != 0 )
 			{
@@ -83,7 +83,6 @@ namespace gui
 				return _handler( args );
 			}
 		}
-
 
 	private:
 		callback_type _handler;
@@ -142,36 +141,36 @@ namespace gui
 
 	//
 	// Size
-	struct LIBRARY_EXPORT Size
+	struct Size
 	{
 		DimensionType width, height;
-		
+
 		Size( DimensionType _width = 0, DimensionType _height = 0 );
-		
+
 		void set_width( DimensionType in_width );
 		DimensionType get_width() const;
 	}; // Size
-	
+
 	//
 	// Point
 //	struct LIBRARY_EXPORT Point
 //	{
 //		ScreenInt x, y;
-//		
+//
 //		Point( ScreenInt _x = 0, ScreenInt _y = 0 );
 //		Point(const Point& other);
-//		
+//
 //		bool is_near_point( const Point & other, ScreenInt radius );
-//		
+//
 //		DimensionType get_x();
 //		void set_x( ScreenInt value );
 //		DimensionType get_y();
 //		void set_y( ScreenInt value );
-//		
-//		
+//
+//
 //		Point rotated(float rads);
 //		float length() const;
-//		
+//
 //		Point operator-( const Point &other ) const;
 //		Point operator+( const Point &other ) const;
 //		const Point& operator += (const Point& other);
@@ -180,37 +179,37 @@ namespace gui
 	//
 	// Rect
 	// this assumes an origin in the upper left hand corner and assumes bottom > top, right > left
-	struct LIBRARY_EXPORT Rect
+	struct Rect
 	{
 		Point origin;
 		Size size;
-		
-		Rect(const Point& _origin, const Size& _size);
-		Rect(DimensionType left = 0, DimensionType top = 0, DimensionType width = 0, DimensionType height = 0);
-		
-		Size& get_size();
-		Point& get_origin();
-		
-		void set(DimensionType x, DimensionType y, DimensionType width, DimensionType height);
-		DimensionType width() const;
-		DimensionType height() const;
-		
-		bool fits_inside(const Rect& other) const;
-		bool is_point_inside( const glm::vec2& pt) const;
-	}; // Rect
-	
 
-	
+		LIBRARY_EXPORT Rect(const Point& _origin, const Size& _size);
+		LIBRARY_EXPORT Rect(DimensionType left = 0, DimensionType top = 0, DimensionType width = 0, DimensionType height = 0);
+
+		LIBRARY_EXPORT Size& get_size();
+		LIBRARY_EXPORT Point& get_origin();
+
+		LIBRARY_EXPORT void set(DimensionType x, DimensionType y, DimensionType width, DimensionType height);
+		LIBRARY_EXPORT DimensionType width() const;
+		LIBRARY_EXPORT DimensionType height() const;
+
+		LIBRARY_EXPORT bool fits_inside(const Rect& other) const;
+		LIBRARY_EXPORT bool is_point_inside( const glm::vec2& pt) const;
+	}; // Rect
+
+
+
 	// -------------------------------------------------------------------------------------------------------------
-	
+
 	struct LIBRARY_EXPORT InputState
 	{
 		virtual ~InputState() {}
-		
+
 		virtual bool is_mouse_down(int index) = 0;
 		virtual bool is_mouse_held(int index) = 0;
 	};
-	
+
 	// -------------------------------------------------------------------------------------------------------------
 	struct LIBRARY_EXPORT KeyState
 	{
@@ -218,16 +217,16 @@ namespace gui
 		// (state & 1) -> isDown this update
 		// (state & 2) -> wasDown last update
 		// (state & 4) -> released this update
-		// (state & 8) -> impulse flag; if set, isDown or released happened this update		
+		// (state & 8) -> impulse flag; if set, isDown or released happened this update
 		unsigned char state : 4;
-		
+
 		bool is_down() const { return (state & 1) > 0; }
 		bool was_down() const { return (state & 2) > 0; }
-		
+
 		void clear();
 		KeyState();
 	}; // KeyState
-	
+
 	namespace render
 	{
 		extern TextureHandle WhiteTexture;
@@ -236,7 +235,7 @@ namespace gui
 #ifdef byte
 #undef byte
 #endif
-	
+
 #ifndef byte
 	typedef unsigned char byte;
 #endif
@@ -244,9 +243,9 @@ namespace gui
 	struct LIBRARY_EXPORT Color
 	{
 		byte rgba[4];
-		
+
 		Color(byte red = 0, byte green = 0, byte blue = 0, byte alpha = 255);
-		
+
 		inline byte r() const { return rgba[0]; }
 		inline byte g() const { return rgba[1]; }
 		inline byte b() const { return rgba[2]; }
@@ -362,7 +361,7 @@ namespace gui
 	{
 		return ::sin(value);
 	}
-	
+
 	template <class T>
 	T cos(const T value)
 	{

@@ -37,42 +37,42 @@ namespace core
 {
 	namespace filesystem
 	{
-		class LIBRARY_EXPORT IFileSystem
+		class IFileSystem
 		{
 		public:
-			virtual ~IFileSystem();
-			
-			virtual void startup() = 0;
-			virtual void shutdown() = 0;
+			LIBRARY_EXPORT virtual ~IFileSystem();
+
+			LIBRARY_EXPORT virtual void startup() = 0;
+			LIBRARY_EXPORT virtual void shutdown() = 0;
 
 			// general file system functions
-			virtual bool file_exists(const char* path, bool path_is_relative = true) const = 0;
-			virtual bool directory_exists(const char* path, bool path_is_relative = true) const = 0;
-			
+			LIBRARY_EXPORT virtual bool file_exists(const char* path, bool path_is_relative = true) const = 0;
+			LIBRARY_EXPORT virtual bool directory_exists(const char* path, bool path_is_relative = true) const = 0;
+
 			// directory where the binary actually resides
 			// this may vary between operating systems as some
 			// will bundle their assets (MacOS X/iOS)
-			virtual void root_directory(const ::platform::PathString& root_path) = 0;
-			virtual const ::platform::PathString& root_directory() const = 0;
-			
-			virtual void content_directory(const ::platform::PathString& content) = 0;
-			virtual const ::platform::PathString& content_directory() const = 0;
-			
+			LIBRARY_EXPORT virtual void root_directory(const ::platform::PathString& root_path) = 0;
+			LIBRARY_EXPORT virtual const ::platform::PathString& root_directory() const = 0;
+
+			LIBRARY_EXPORT virtual void content_directory(const ::platform::PathString& content) = 0;
+			LIBRARY_EXPORT virtual const ::platform::PathString& content_directory() const = 0;
+
 			// the user directory where this application's files are stored
-			virtual const ::platform::PathString& user_application_directory() const = 0;
-			virtual void user_application_directory(const ::platform::PathString& application_directory) = 0;
-			
+			LIBRARY_EXPORT virtual const ::platform::PathString& user_application_directory() const = 0;
+			LIBRARY_EXPORT virtual void user_application_directory(const ::platform::PathString& application_directory) = 0;
+
 			// virtual file system functions
-			virtual bool virtual_file_exists(const char* relative_path) const = 0;
-			virtual bool virtual_directory_exists(const char* relative_path) const = 0;
-			
+			LIBRARY_EXPORT virtual bool virtual_file_exists(const char* relative_path) const = 0;
+			LIBRARY_EXPORT virtual bool virtual_directory_exists(const char* relative_path) const = 0;
+
 			// Load a file into buffer. (synchronously)
 			// bufferLength will contain the size of the buffer
 			// if buffer is null, a new buffer is allocated and must be DEALLOC'd after use
 			// if buffer is not null, bufferLength should contain the size of the buffer which will not be exceeded.
-			virtual char* virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length) const = 0;
+			LIBRARY_EXPORT virtual char* virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length) const = 0;
 
-			virtual void virtual_load_file(Array<unsigned char>& buffer, const char* relative_path) const = 0;
+			LIBRARY_EXPORT virtual void virtual_load_file(Array<unsigned char>& buffer, const char* relative_path) const = 0;
 		};
 
 
@@ -82,17 +82,17 @@ namespace core
 		// read an audio file to memory
 		// this provides an abstraction between platforms; but likely needs to belong elsewhere?
 		void* audiofile_to_buffer(const char* filename, size_t& buffer_length);
-		
+
 		LIBRARY_EXPORT void truncate_string_at_path(char* path, const char* substr);
-		
+
 //		LIBRARY_EXPORT int read_file_stats(const char* fullpath, FileStats& file_stats);
 
-		
+
 		void absolute_path_from_relative(::platform::PathString& fullpath, const char* relative_path, const ::platform::PathString& content_path);
 		void relative_path_from_absolute(::platform::PathString& relative_path, const char* absolute_path, const ::platform::PathString& content_path);
 	}
-	
-	
-	
+
+
+
 
 } // namespace core

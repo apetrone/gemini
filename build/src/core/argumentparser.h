@@ -105,9 +105,9 @@ namespace core
 				return items[index++];
 			}
 			
-			T& at(size_t index) const
+			T& at(size_t requested_index) const
 			{
-				return const_cast<T&>(items[index]);
+				return const_cast<T&>(items[requested_index]);
 			}
 			
 			size_t size() const
@@ -425,7 +425,7 @@ namespace core
 
 			std::string get_section_regex(const std::string& name);
 
-			std::vector<std::string> find_section(const char* docstring, const std::string& section_name, bool& section_was_found);
+			std::vector<std::string> find_section(const char* docstring_source, const std::string& section_name, bool& section_was_found);
 
 			void parse_options(std::vector<std::string> lines);
 			void parse_usage(std::vector<std::string> lines);
@@ -446,7 +446,7 @@ namespace core
 			LIBRARY_EXPORT std::vector<std::string> split_tokens(int argc, char** argv);
 			LIBRARY_EXPORT std::vector<std::string> split_tokens(const char* commandline);
 
-			LIBRARY_EXPORT bool parse(const char* docstring, std::vector<std::string> tokens, VariableMap& vm, const char* version_string = "");
+			LIBRARY_EXPORT bool parse(const char* docstring_source, std::vector<std::string> tokens, VariableMap& vm, const char* version_string = "");
 		}; // ArgumentParser
 		
 		

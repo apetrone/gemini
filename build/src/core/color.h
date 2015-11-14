@@ -29,17 +29,18 @@
 
 namespace core
 {
-	struct LIBRARY_EXPORT Color
+	struct Color
 	{
-		static Color from_float_pointer( const float * fl, int num_elements );
+		static Color from_float_pointer(const float * fl, int num_elements);
 		static Color from_int(unsigned int color);
 		static Color from_ubyte(unsigned char* ubyte);
 		
 		unsigned char r, g, b, a;
-		Color( unsigned char _r = 255, unsigned char _g = 255, unsigned char _b = 255, unsigned char _a = 255 );
-		void set( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a = 255 );
-		uint32_t as_uint32() const;
-		bool operator==(const Color& other) const;
+		
+		LIBRARY_EXPORT Color(unsigned char _r = 255, unsigned char _g = 255, unsigned char _b = 255, unsigned char _a = 255);
+		LIBRARY_EXPORT void set(unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a = 255);
+		LIBRARY_EXPORT uint32_t as_uint32() const;
+		LIBRARY_EXPORT bool operator==(const Color& other) const;
 	}; // Color
 
 

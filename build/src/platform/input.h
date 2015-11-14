@@ -257,51 +257,51 @@ namespace input
 		Button_Impulse 	= 8
 	};
 	
-	struct LIBRARY_EXPORT ButtonState
+	struct ButtonState
 	{
 		unsigned char state : 4;
 		
 		// handle a press or release event
-		void press_release( bool is_down );
+		LIBRARY_EXPORT void press_release( bool is_down );
 		
 		// update this button state for this frame
-		void update();
+		LIBRARY_EXPORT void update();
 		
 		// returns whether the button is down or not this frame
-		bool is_down() const;
+		LIBRARY_EXPORT bool is_down() const;
 		
 		// returns whether or not the button was just pressed
-		bool was_pressed() const;
+		LIBRARY_EXPORT bool was_pressed() const;
 		
 		// returns whether or not the button was just released
-		bool was_released() const;
+		LIBRARY_EXPORT bool was_released() const;
 	}; // ButtonState
 
 	
-	struct LIBRARY_EXPORT AxisState
+	struct AxisState
 	{
 		float normalized_value;
 		int16_t value;
 	};
 	
-	class LIBRARY_EXPORT InputDevice
+	class InputDevice
 	{
 	public:
-		virtual ~InputDevice();
+		LIBRARY_EXPORT virtual ~InputDevice();
 		
-		virtual void reset() = 0;
-		virtual void update() = 0;
+		LIBRARY_EXPORT virtual void reset() = 0;
+		LIBRARY_EXPORT virtual void update() = 0;
 	}; // InputDevice
 	
-	class LIBRARY_EXPORT KeyboardInput : public InputDevice
+	class KeyboardInput : public InputDevice
 	{
 		ButtonState keys[ KEY_COUNT ];
 		
 	public:
-		virtual void reset();
-		virtual void update();
+		LIBRARY_EXPORT virtual void reset();
+		LIBRARY_EXPORT virtual void update();
 		
-		void inject_key_event(int key, bool is_down);
+		LIBRARY_EXPORT void inject_key_event(int key, bool is_down);
 	
 		inline const ButtonState& get_key(input::Button key) { return keys[key]; }
 	
@@ -311,7 +311,7 @@ namespace input
 	}; // KeyboardInput
 
 	
-	class LIBRARY_EXPORT MouseInput : public InputDevice
+	class MouseInput : public InputDevice
 	{
 		// absolute mouse position in window coordinates
 		int window_coords[2];
@@ -323,30 +323,30 @@ namespace input
 
 		
 	public:
-		virtual void reset();
-		virtual void update();
+		LIBRARY_EXPORT virtual void reset();
+		LIBRARY_EXPORT virtual void update();
 		
-		void inject_mouse_move(int absolute_x, int absolute_y);
-		void inject_mouse_delta(int dx, int dy);
-		void inject_mouse_button( MouseButton button_id, bool is_down );
-		void inject_mouse_wheel( int direction );
+		LIBRARY_EXPORT void inject_mouse_move(int absolute_x, int absolute_y);
+		LIBRARY_EXPORT void inject_mouse_delta(int dx, int dy);
+		LIBRARY_EXPORT void inject_mouse_button( MouseButton button_id, bool is_down );
+		LIBRARY_EXPORT void inject_mouse_wheel( int direction );
 		
 		//
 		// Accessors
-		bool is_down(MouseButton button);
-		bool was_released(MouseButton button);
+		LIBRARY_EXPORT bool is_down(MouseButton button);
+		LIBRARY_EXPORT bool was_released(MouseButton button);
 		
 		// retrieve the current mouse position in screen coordinates
-		void mouse_position(int& x, int& y);
+		LIBRARY_EXPORT void mouse_position(int& x, int& y);
 
-		void mouse_delta(int& dx, int& dy);
-		void reset_delta()
+		LIBRARY_EXPORT void mouse_delta(int& dx, int& dy);
+		LIBRARY_EXPORT void reset_delta()
 		{
 			cursor_delta[0] = cursor_delta[1] = 0;
 		}
 	}; // MouseInput
 	
-	class LIBRARY_EXPORT TouchInput : public InputDevice
+	class TouchInput : public InputDevice
 	{
 		struct TouchState
 		{
@@ -364,20 +364,20 @@ namespace input
 		TouchState touches[ MAX_INPUTSTATE_TOUCHES ];
 		
 	public:
-		virtual void reset();
-		virtual void update();
+		LIBRARY_EXPORT virtual void reset();
+		LIBRARY_EXPORT virtual void update();
 		
-		void touch_began( int touchid, int x, int y );
-		void touch_drag( int touchid, int x, int y );
+		LIBRARY_EXPORT void touch_began( int touchid, int x, int y );
+		LIBRARY_EXPORT void touch_drag( int touchid, int x, int y );
 		//	void touch_canceled( int touchid, int x, int y );
-		void touch_end( int touchid, int x, int y );
+		LIBRARY_EXPORT void touch_end( int touchid, int x, int y );
 		
 		// retrieve touch from index
-		void touch_at_index( TouchState & touch, int touch_id );
+		LIBRARY_EXPORT void touch_at_index( TouchState & touch, int touch_id );
 	}; // TouchInput
 	
 
-	class LIBRARY_EXPORT JoystickInput : public InputDevice
+	class JoystickInput : public InputDevice
 	{
 	public:
 		enum Flags
@@ -391,8 +391,8 @@ namespace input
 		ButtonState buttons[MAX_JOYSTICK_BUTTONS];
 		AxisState axes[MAX_JOYSTICK_AXES];
 		
-		virtual void reset();
-		virtual void update();
+		LIBRARY_EXPORT virtual void reset();
+		LIBRARY_EXPORT virtual void update();
 	}; // JoystickInput
 
 

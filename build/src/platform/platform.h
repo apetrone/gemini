@@ -107,11 +107,11 @@ namespace platform
 // PLATFORM_IMPLEMENT_PARAMETERS	A helper macro to setup application parameters
 
 #if defined(PLATFORM_WINDOWS)
-	struct LIBRARY_EXPORT MainParameters
+	struct MainParameters
 	{
 		char* commandline;
 
-		MainParameters(char* commandline_string = nullptr) :
+		LIBRARY_EXPORT MainParameters(char* commandline_string = nullptr) :
 			commandline(commandline_string)
 		{
 		}
@@ -171,7 +171,7 @@ namespace platform
 	#error Unknown platform!
 #endif
 
-	struct LIBRARY_EXPORT Thread
+	struct Thread
 	{
 		ThreadId thread_id;
 		ThreadHandle handle;
@@ -181,31 +181,31 @@ namespace platform
 	};
 
 
-	struct LIBRARY_EXPORT Result
+	struct Result
 	{
 		const char* message;
 		int status;
 
-		Result(int result_status = 0, const char* result_message = "") :
+		LIBRARY_EXPORT Result(int result_status = 0, const char* result_message = "") :
 			message(result_message),
 			status(result_status)
 		{
 		}
 
-		inline bool succeeded() const { return status == 0; }
-		inline bool failed() const { return status != 0; }
+		LIBRARY_EXPORT inline bool succeeded() const { return status == 0; }
+		LIBRARY_EXPORT inline bool failed() const { return status != 0; }
 
-		inline static Result success()
+		LIBRARY_EXPORT inline static Result success()
 		{
 			return Result(0);
 		}
 
-		inline static Result failure(const char* result_message)
+		LIBRARY_EXPORT inline static Result failure(const char* result_message)
 		{
 			return Result(-1, result_message);
 		}
 
-		inline static Result warning(const char* result_message)
+		LIBRARY_EXPORT inline static Result warning(const char* result_message)
 		{
 			return Result(1, result_message);
 		}
@@ -241,14 +241,14 @@ namespace platform
 		LIBRARY_EXPORT void make_directories(const char* normalized_path);
 	} // namespace path
 
-	struct LIBRARY_EXPORT DynamicLibrary
+	struct DynamicLibrary
 	{
 	};
 
 	typedef void* DynamicLibrarySymbol;
 	typedef core::StackString<MAX_PATH_SIZE> PathString;
 
-	struct LIBRARY_EXPORT DateTime
+	struct DateTime
 	{
 		unsigned short year;
 		unsigned short month; // 1-12
@@ -362,7 +362,7 @@ namespace platform
 	// serial
 	// ---------------------------------------------------------------------
 
-	struct LIBRARY_EXPORT Serial
+	struct Serial
 	{
 	};
 

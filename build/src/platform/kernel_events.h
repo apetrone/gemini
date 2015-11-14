@@ -36,29 +36,29 @@ namespace kernel
 	enum EventType
 	{
 		System,
-		
+
 		// common to desktop applications
 		Keyboard,
 		Mouse,
-		
+
 		// common to mobile
 		Accelerometer,
 		Gyroscope,
 		Touch,
-		
+
 		GameController,
-				
+
 		EventTypeCount
 	}; // EventType
-	
-	
+
+
 	// Buttons should be normalized: [0, 1]
 	// This allows digital buttons to be either 0 or 1
 	// and analog buttons (like Xbox triggers) be analog between 0 and 1.
-	
+
 	// Joystick Axes should be normalized in the range: [-1, 1]
-	
-	
+
+
 	// EventSubTypes do not need a separate event structure.
 	// These provide the specific event for which to extract
 	// information from the structure.
@@ -72,7 +72,7 @@ namespace kernel
 		MouseMoved,
 		MouseDelta,
 		MouseWheelMoved,
-		
+
 		TouchBegin,
 		TouchMoved,
 		TouchEnd,
@@ -82,31 +82,31 @@ namespace kernel
 		JoystickConnected,
 		JoystickDisconnected
 	}; // EventSubType
-	
+
 	//
 	// These are all events used by the kernel. Any new events that a kernel should
 	// support must be added here.
 	//
-	
+
 	template <EventType type>
 	struct Event
 	{
 		static const EventType event_type = type;
 		EventSubType subtype;
 	}; // Event
-	
+
 	// call this when the resolution of the window or device has changed
-	struct LIBRARY_EXPORT SystemEvent : public Event<System>
+	struct SystemEvent : public Event<System>
 	{
 		short window_width;
 		short window_height;
 		short render_width;
 		short render_height;
-		
+
 		// TODO: keep track of device orientation
 	}; // SystemEvent
-	
-	struct LIBRARY_EXPORT KeyboardEvent : public Event<Keyboard>
+
+	struct KeyboardEvent : public Event<Keyboard>
 	{
 		int unicode;
 		int key;
@@ -114,23 +114,23 @@ namespace kernel
 		bool is_down;
 	}; // KeyboardEvent
 
-	struct LIBRARY_EXPORT MouseEvent : public Event<Mouse>
+	struct MouseEvent : public Event<Mouse>
 	{
 		unsigned int button;
-		
+
 		// absolute mouse values
 		int mx;
 		int my;
-		
+
 		// delta mouse values
 		int dx;
 		int dy;
-		
+
 		// < 0 is movement towards the user; > 0 is movement away toward the screen
 		short wheel_direction;
 		bool is_down;
 
-		MouseEvent() :
+		LIBRARY_EXPORT MouseEvent() :
 			button(0),
 			mx(0),
 			my(0),
@@ -142,39 +142,39 @@ namespace kernel
 		}
 	}; // MouseEvent
 
-	
-	struct LIBRARY_EXPORT TouchEvent : public Event<Touch>
+
+	struct TouchEvent : public Event<Touch>
 	{
 		int id;
-		
+
 		// coordinates where the touch event began
 		int start_x;
 		int start_y;
-		
+
 		// current x/y for this touch
 		int x;
 		int y;
 	}; // TouchEvent
-	
-	struct LIBRARY_EXPORT GameControllerEvent : public Event<GameController>
+
+	struct GameControllerEvent : public Event<GameController>
 	{
 		int button;
 		int16_t joystick_value;
 		uint8_t gamepad_id;
 		uint8_t joystick_id;
 		bool is_down;
-		
-		
-		float normalized_value() const;
+
+
+		LIBRARY_EXPORT float normalized_value() const;
 	}; // GameControllerEvent
-	
+
 	LIBRARY_EXPORT void assign_listener_for_eventtype(kernel::EventType type, void * listener);
 	LIBRARY_EXPORT void* find_listener_for_eventtype(kernel::EventType type);
-	
+
 	//
 	// event support classes
 	//
-	
+
 	template <class Type>
 	class IEventListener
 	{
@@ -184,11 +184,11 @@ namespace kernel
 			EventType event_type = Type::event_type;
 			kernel::assign_listener_for_eventtype( event_type, this );
 		}
-		
+
 		virtual ~IEventListener() {}
-		
+
 		// called to handle an event of Type
 		virtual void event( Type & event ) = 0;
 	}; // IKernelEventListener
-	
+
 } // namespace kernel
