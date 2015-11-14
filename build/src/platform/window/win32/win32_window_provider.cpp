@@ -208,5 +208,6 @@ namespace platform
 		// if enabled, the OS will generate delta mouse movement events
 		void set_relative_mouse_mode(bool enable) {}
 
+		void set_mouse_tracking(bool enable) {}
 	} // namespace window
 } // namespace platform

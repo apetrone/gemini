@@ -47,8 +47,8 @@ namespace gui
 	{
 	public:
 		// memory overrides
-		void* operator new(size_t bytes);
-		void operator delete(void* memory);
+		LIBRARY_EXPORT void* operator new(size_t bytes);
+		LIBRARY_EXPORT void operator delete(void* memory);
 
 	public:
 
