@@ -71,6 +71,33 @@ namespace render2
 
 namespace gui
 {
+	class TimelineScrubber : public Panel
+	{
+	public:
+		TimelineScrubber(Panel* parent)
+			: Panel(parent)
+		{
+			flags |= Flag_CursorEnabled;
+			set_name("TimelineScrubber");
+		}
+
+		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
+		{
+			// TODO: we should get this from the style
+			Color scrubber_highlight(255, 128, 0, 32);
+			Color scrubber_outline(255, 128, 0, 192);
+
+			// draw the main highlight fill
+			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, scrubber_highlight);
+
+			// draw the outline
+			render_commands.add_line(geometry[0], geometry[1], scrubber_outline);
+			render_commands.add_line(geometry[1], geometry[2], scrubber_outline);
+			render_commands.add_line(geometry[2], geometry[3], scrubber_outline);
+			render_commands.add_line(geometry[3], geometry[0], scrubber_outline);
+		}
+	};
+
 	class Timeline : public Panel
 	{
 	public:
@@ -82,6 +109,9 @@ namespace gui
 		{
 			flags |= Flag_CursorEnabled;
 			set_name("Timeline");
+
+			scrubber = new TimelineScrubber(this);
+			scrubber->set_origin(0.0f, 0.0f);
 		}
 
 		gui::DelegateHandler<size_t> on_scrubber_changed;
@@ -117,10 +147,23 @@ namespace gui
 					on_scrubber_changed(current_frame);
 				}
 			}
-		}
+		} // handle_event
+
+		virtual void update(gui::Compositor* compositor, float delta_seconds) override
+		{
+			Point dimensions = scrubber->dimensions_from_pixels(Point(frame_width_pixels, bounds.size.height));
+
+			scrubber->set_dimensions(dimensions);
+			scrubber->set_origin((current_frame * frame_width_pixels), 0.0f);
+
+			Panel::update(compositor, delta_seconds);
+		} // update
 
 		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
 		{
+			// TODO: should get this from the style
+			const gui::Color frame_color(96, 96, 96, 255);
+
 			// assuming a horizontal timeline
 			if (frame_width_pixels == 0)
 			{
@@ -145,7 +188,7 @@ namespace gui
 
 			// center the individual frames
 			Rect block;
-			block.set(origin_x, origin_y, 1.0f, frame.size.height-2);
+			block.set(origin_x, origin_y, 1.0f, frame.size.height - 2.0f);
 
 			for (size_t index = 0; index < total_frames; ++index)
 			{
@@ -169,41 +212,13 @@ namespace gui
 				points[3].y = block.origin.y + block.size.height;
 
 				// draw each frame's area
-				render_commands.add_rectangle(points[0], points[1], points[2], points[3], gui::render::WhiteTexture, Color(96, 96, 96, 255));
+				render_commands.add_rectangle(points[0], points[1], points[2], points[3], gui::render::WhiteTexture, frame_color);
 
 				block.origin.x += frame_width_pixels;
 			}
 
-			// draw the current frame as a highlighted region
-			Point region[4];
-
-			float offset = origin_x + (current_frame * frame_width_pixels);
-
-			region[0].x = offset;
-			region[0].y = origin_y;
-
-			region[1].x = offset + frame_width_pixels;
-			region[1].y = origin_y;
-
-			region[2].x = offset + frame_width_pixels;
-			region[2].y = origin_y + block.size.height;
-
-			region[3].x = offset;
-			region[3].y = origin_y + block.size.height;
-
-			Color scrubber_highlight(255, 128, 0, 32);
-			Color scrubber_outline(255, 128, 0, 192);
-
-			// draw the main highlight fill
-			render_commands.add_rectangle(region[0], region[1], region[2], region[3], gui::render::WhiteTexture, scrubber_highlight);
-
-			// draw the outline
-			render_commands.add_line(region[0], region[1], scrubber_outline);
-			render_commands.add_line(region[1], region[2], scrubber_outline);
-			render_commands.add_line(region[2], region[3], scrubber_outline);
-			render_commands.add_line(region[3], region[0], scrubber_outline);
-		}
-
+			render_children(compositor, renderer, render_commands);
+		} // render
 
 		void set_frame_range(int lower_frame_limit, int upper_frame_limit)
 		{
@@ -215,7 +230,7 @@ namespace gui
 
 			// force a recalculate on the next render call
 			frame_width_pixels = 0;
-		}
+		} // set_frame_range
 
 	private:
 		size_t left_margin;
@@ -230,6 +245,8 @@ namespace gui
 		float frame_width_pixels;
 
 		Point last_position;
+
+		TimelineScrubber* scrubber;
 	}; // Timeline
 
 
@@ -248,12 +265,7 @@ namespace gui
 
 		void set_render_target(render2::RenderTarget* render_target) { target = render_target; }
 		render2::RenderTarget* get_render_target() const { return target; }
-
 		void set_texture_handle(int ref) { handle = ref; }
-
-		// invoked when the handler should render its content to the render
-		// target.
-		gui::DelegateHandler<render2::RenderTarget*> on_render_content;
 
 		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
 		{
@@ -261,6 +273,10 @@ namespace gui
 
 			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], handle, gui::Color(255, 255, 255, 255));
 		}
+
+		// invoked when the handler should render its content to the render
+		// target.
+		gui::DelegateHandler<render2::RenderTarget*> on_render_content;
 
 	private:
 		//
@@ -366,11 +382,19 @@ public:
 			}
 			else if (event.subtype == kernel::MouseButton)
 			{
+				if (event.is_down)
+				{
+					platform::window::set_mouse_tracking(true);
+				}
+				else
+				{
+					platform::window::set_mouse_tracking(false);
+				}
 				compositor->cursor_button(input_to_gui[event.button], event.is_down);
 			}
 			else if (event.subtype == kernel::MouseWheelMoved)
 			{
-				LOGV("wheel direction: %i\n", event.wheel_direction);
+				compositor->cursor_scroll(event.wheel_direction);
 			}
 		}
 	}

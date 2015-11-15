@@ -80,6 +80,7 @@ namespace gui
 		LIBRARY_EXPORT virtual void set_bounds(const Rect& bounds);
 
 		LIBRARY_EXPORT virtual void set_dimensions(float x, float y);
+		LIBRARY_EXPORT virtual void set_dimensions(const Point& dimensions);
 
 		LIBRARY_EXPORT virtual void get_screen_bounds(Rect& bounds);
 		LIBRARY_EXPORT virtual void calculate_screen_bounds(Compositor* compositor);
@@ -123,6 +124,9 @@ namespace gui
 		// ---------------------------------------------------------------------
 		// traverse the hierarchy and find the parent compositor
 		LIBRARY_EXPORT Compositor* get_compositor();
+
+		LIBRARY_EXPORT Point pixels_from_dimensions(const Point& dimensions) const;
+		LIBRARY_EXPORT Point dimensions_from_pixels(const Point& pixels) const;
 
 		LIBRARY_EXPORT const Point& get_origin() const { return origin; }
 		LIBRARY_EXPORT virtual void set_origin(float x, float y);

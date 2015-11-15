@@ -148,7 +148,7 @@ namespace gui
 		}
 		
 		
-		std::sort( zsorted.begin(), zsorted.end(), ZSort_Panel_Descending() );
+		std::sort(zsorted.begin(), zsorted.end(), ZSort_Panel_Descending());
 		
 	} // sort_zorder
 	
@@ -161,19 +161,19 @@ namespace gui
 		this->sort_zorder( panel );
 	} // add_child
 	
-	void Compositor::remove_child( Panel * panel )
+	void Compositor::remove_child(Panel* panel)
 	{
-		Panel::remove_child( panel );
+		Panel::remove_child(panel);
 		
 		PanelVector::iterator it, end;
 		it = zsorted.begin();
 		end = zsorted.end();
 		
-		for( ; it != end; ++it )
+		for(; it != end; ++it)
 		{
-			if ( (*it) == panel )
+			if ((*it) == panel)
 			{
-				zsorted.erase( it );
+				zsorted.erase(it);
 				break;
 			}
 		}
@@ -236,7 +236,7 @@ namespace gui
 		{
 			Panel* target = get_capture();
 
-			EventArgs args( this, Event_CursorDrag );
+			EventArgs args(this, Event_CursorDrag);
 			args.cursor = cursor;
 			args.hot = focus;
 			args.focus = get_focus();
@@ -245,15 +245,15 @@ namespace gui
 			args.delta.y = dy;
 			args.local = cursor - focus->bounds.origin;
 
-			if ( target )
+			if (target)
 			{
-				target->handle_event( args );
+				target->handle_event(args);
 			}
 			// mouse move
 		}
 		else if (hot)
 		{
-			EventArgs args( this, Event_CursorMove );
+			EventArgs args(this, Event_CursorMove);
 			args.cursor = cursor;
 			args.hot = hot;
 			args.focus = get_focus();
@@ -262,11 +262,11 @@ namespace gui
 			args.delta.y = dy;
 			args.local = cursor - hot->bounds.origin;
 
-			hot->handle_event( args );
+			hot->handle_event(args);
 		}
 	}
 
-	void Compositor::cursor_move_absolute( ScreenInt x, ScreenInt y )
+	void Compositor::cursor_move_absolute(ScreenInt x, ScreenInt y)
 	{
 		ScreenInt dx = (x - last_cursor.x);
 		ScreenInt dy = (y - last_cursor.y);
