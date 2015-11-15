@@ -94,8 +94,20 @@ namespace gui
 
 		assert(parent);
 
-		size.width = (x * parent->size.width);
-		size.height = (y * parent->size.height);
+		size.width = (dimensions.x * parent->size.width);
+		size.height = (dimensions.y * parent->size.height);
+//		flags |= Flag_BoundsAreDirty;
+	} // set_dimensions
+
+	void Panel::set_dimensions(const Point& new_dimensions)
+	{
+		dimensions = new_dimensions;
+
+		assert(parent);
+
+		size.width = (dimensions.x * parent->size.width);
+		size.height = (dimensions.y * parent->size.height);
+//		flags |= Flag_BoundsAreDirty;
 	} // set_dimensions
 
 	void Panel::set_origin(float x, float y)
@@ -358,5 +370,29 @@ namespace gui
 
 		assert(panel);
 		return static_cast<Compositor*>(panel);
+	}
+
+	Point Panel::pixels_from_dimensions(const Point& dimensions) const
+	{
+		Point pixels;
+
+		assert(parent);
+
+		pixels.x = (dimensions.x * parent->size.width);
+		pixels.y = (dimensions.y * parent->size.height);
+
+		return pixels;
+	}
+
+	Point Panel::dimensions_from_pixels(const Point& pixels) const
+	{
+		Point dimensions;
+
+		assert(parent);
+
+		dimensions.x = (pixels.x / parent->size.width);
+		dimensions.y = (pixels.y / parent->size.height);
+
+		return dimensions;
 	}
 } // namespace gui

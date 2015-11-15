@@ -41,10 +41,8 @@ namespace gui
 		drag_handle = new Panel(this);
 		drag_handle->set_background_color(gui::Color(0, 255, 255));
 		drag_handle->flags &= ~Flag_CursorEnabled;
-
 		drag_handle->set_origin(0, 0);
 	}
-
 
 	void Slider::handle_event(gui::EventArgs &args)
 	{
@@ -63,7 +61,7 @@ namespace gui
 			float input = args.local.x;
 
 			// translate it back by half the handle width
-			float origin = (input - (drag_handle_width/2.0f));
+			float origin = (input - (drag_handle_width / 2.0f));
 
 			// cache the previous value
 			float old_value = current_value;
