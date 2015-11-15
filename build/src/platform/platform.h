@@ -26,12 +26,11 @@
 
 #include "config.h"
 
-
-
 #if PLATFORM_APPLE
 	#include <TargetConditionals.h>
 #endif
 
+#include <core/array.h>
 #include <core/stackstring.h>
 
 #include <stdint.h>
@@ -435,4 +434,39 @@ namespace platform
 
 	/// @brief Populates the DateTime struct with the system's current date and time
 	LIBRARY_EXPORT void datetime(DateTime& datetime);
+
+
+	// ---------------------------------------------------------------------
+	// other platform stuff
+	// ---------------------------------------------------------------------
+	namespace OpenFlags
+	{
+		enum
+		{
+			ShowHiddenFiles 		= (1 << 0),	// show hidden files
+			AllowMultiselect		= (1 << 1),	// allow multiple selection
+			CanCreateDirectories	= (1 << 2),	// directories can be created through this dialog
+			CanChooseDirectories	= (1 << 3),	// directories can be selected
+			CanChooseFiles			= (1 << 4),	// files can be selected
+		};
+	} // namespace OpenFlags
+
+	LIBRARY_EXPORT Result show_open_dialog(const char* title, uint32_t open_flags, Array<PathString>& paths);
+
+
+	class Process
+	{
+	public:
+		virtual ~Process();
+	};
+
+	LIBRARY_EXPORT Process* process_create(
+		const char* executable_path,			// the path to the new process
+		const Array<PathString>& arguments,		// arguments as strings
+		const char* working_directory = nullptr	// startup working directory
+	);
+
+	LIBRARY_EXPORT void process_destroy(Process* process);
+	LIBRARY_EXPORT bool process_is_running(Process* process);
+
 } // namespace platform

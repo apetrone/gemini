@@ -108,6 +108,24 @@ namespace platform
 
 			// failure condition
 			return 0;
+		} // acquire_mouse_device
+
+
+		NSString* to_nsstring(const char* input)
+		{
+			return [NSString stringWithUTF8String:input];
+		}
+
+		NSArray* to_nsarray(Array<PathString>& values)
+		{
+			NSMutableArray* output = [[NSMutableArray alloc] init];
+
+			for (PathString& item : values)
+			{
+				[output addObject: to_nsstring(item())];
+			}
+
+			return output;
 		}
 	} // namespace cocoa
 
@@ -191,4 +209,195 @@ namespace platform
 			[[NSProcessInfo processInfo] operatingSystemVersionString]
 		);
 	}
+
+
+	// ---------------------------------------------------------------------
+	//
+	// ---------------------------------------------------------------------
+	Result show_open_dialog(const char* title, uint32_t open_flags, Array<PathString>& paths)
+	{
+		PathString data;
+		NSOpenPanel* panel 				= [NSOpenPanel openPanel];
+		panel.title 					= cocoa::to_nsstring(title);
+		panel.showsResizeIndicator 		= YES;
+		panel.showsHiddenFiles 			= (open_flags & OpenFlags::ShowHiddenFiles) ? YES : NO;
+		panel.canChooseDirectories 		= (open_flags & OpenFlags::CanChooseDirectories) ? YES : NO;
+		panel.canChooseFiles 			= (open_flags & OpenFlags::CanChooseFiles) ? YES : NO;
+		panel.canCreateDirectories 		= (open_flags & OpenFlags::CanCreateDirectories) ? YES : NO;
+		panel.allowsMultipleSelection 	= (open_flags & OpenFlags::AllowMultiselect) ? YES : NO;
+		//panel.allowedFileTypes = @[@"conf"];
+
+		NSInteger modal_result = [panel runModal];
+
+		if (modal_result == NSFileHandlingPanelOKButton)
+		{
+			NSURL* selection = panel.URLs[0];
+
+			// We don't yet support multiple paths
+			assert(panel.allowsMultipleSelection == NO);
+
+			PathString path = cocoa::nsstring_to_stackstring<PathString>([selection.path stringByResolvingSymlinksInPath]);
+			paths.push_back(path);
+
+			return Result::success();
+		}
+
+		return Result::failure("User cancelled dialog");
+	}
+
+
+
+	class CocoaProcess : public Process
+	{
+	public:
+		CocoaProcess(NSString* launch_path, NSArray* arguments, NSString* working_directory)
+		{
+			task_completed = false;
+
+			stdout_pipe = [[NSPipe alloc] init];
+			NSFileHandle* standard_output_handle = [stdout_pipe fileHandleForReading];
+
+			stderr_pipe = [[NSPipe alloc] init];
+			NSFileHandle* standard_error_handle = [stderr_pipe fileHandleForReading];
+
+			task = [[NSTask alloc] init];
+			[task setLaunchPath: launch_path];
+			[task setStandardOutput: stdout_pipe];
+			[task setStandardError: stderr_pipe];
+			[task setArguments: arguments];
+
+			if (working_directory)
+			{
+				[task setCurrentDirectoryPath: working_directory];
+			}
+
+			// notify when stdout has data
+			[[NSNotificationCenter defaultCenter]
+				addObserverForName:NSFileHandleDataAvailableNotification
+				object:standard_output_handle
+				queue:nil
+				usingBlock:^(NSNotification* notification) {
+					NSData* data = [standard_output_handle availableData];
+//					if (data && [data length])
+					{
+						on_stdout(data);
+					}
+
+					[standard_output_handle waitForDataInBackgroundAndNotify];
+				}];
+
+			// notify when stderr has data
+			[[NSNotificationCenter defaultCenter]
+				addObserverForName:NSFileHandleDataAvailableNotification
+				object:standard_error_handle
+				queue:nil
+				usingBlock:^(NSNotification* notification) {
+					NSData* data = [standard_error_handle availableData];
+//					if (data && [data length])
+					{
+						on_stderr(data);
+					}
+
+					[standard_error_handle waitForDataInBackgroundAndNotify];
+				}];
+
+			// notify when the task finishes
+			[[NSNotificationCenter defaultCenter]
+				addObserverForName:NSTaskDidTerminateNotification
+				object:task
+				queue:nil
+				usingBlock:^(NSNotification* notification) {
+					task_completed = true;
+				}];
+
+			dispatch_async(
+				dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0),
+			   ^{
+					[standard_output_handle waitForDataInBackgroundAndNotify];
+					[standard_error_handle waitForDataInBackgroundAndNotify];
+
+					@try
+					{
+						[task launch];
+						[task waitUntilExit];
+					}
+					@catch (NSException* exception)
+					{
+						assert(0);
+						@throw exception;
+					}
+			   });
+		}
+
+
+		void on_stdout(NSData* data)
+		{
+			NSString* output_string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+			NSLog(@"stdout: %@ [length: %lu]", output_string, (unsigned long)[data length]);
+		}
+
+		void on_stderr(NSData* data)
+		{
+			NSString* error_string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+			NSLog(@"stderr: %@ [length: %lu]", error_string, (unsigned long)[data length]);
+		}
+
+		void on_completed()
+		{
+			task_completed = true;
+		}
+
+		bool has_completed()
+		{
+			return task_completed;
+		}
+
+		void terminate()
+		{
+			[task terminate];
+		}
+
+	private:
+		NSTask* task;
+
+		NSPipe* stdout_pipe;
+		NSPipe* stderr_pipe;
+
+		bool task_completed;
+	};
+
+	Process* process_create(const char* executable_path, const Array<PathString>& arguments, const char* working_directory)
+	{
+		NSArray* argument_array = cocoa::to_nsarray(const_cast<Array<PathString>&>(arguments));
+
+		NSString* requested_working_directory = nil;
+		if (working_directory)
+		{
+			requested_working_directory = cocoa::to_nsstring(working_directory);
+		}
+
+		Process* proc = MEMORY_NEW(CocoaProcess, core::memory::global_allocator())(
+			cocoa::to_nsstring(executable_path),
+			argument_array,
+			requested_working_directory
+		);
+		return proc;
+	}
+
+	void process_destroy(Process* process)
+	{
+		CocoaProcess* instance = static_cast<CocoaProcess*>(process);
+		if (process_is_running(process))
+		{
+			instance->terminate();
+		}
+		MEMORY_DELETE(instance, core::memory::global_allocator());
+	}
+
+	bool process_is_running(Process* process)
+	{
+		CocoaProcess* instance = static_cast<CocoaProcess*>(process);
+		return !instance->has_completed();
+	}
+
 } // namespace platform

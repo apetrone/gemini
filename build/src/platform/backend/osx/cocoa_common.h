@@ -33,9 +33,6 @@ namespace platform
 {
 	namespace cocoa
 	{
-		// convert from NSString to PathString
-		PathString to_string(NSString* source);
-
 		template <class T>
 		T nsstring_to_stackstring(NSString* input)
 		{
@@ -48,5 +45,7 @@ namespace platform
 
 			return output;
 		}
+
+		NSString* to_nsstring(const char* input);
 	} // namespace cocoa
 } // namespace platform
