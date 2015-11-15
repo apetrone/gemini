@@ -72,6 +72,9 @@ namespace platform
 		return *_allocator;
 	}
 
+	Process::~Process()
+	{
+	}
 
 
 	Result startup()
