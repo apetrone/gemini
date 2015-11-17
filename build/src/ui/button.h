@@ -36,9 +36,9 @@ namespace gui
 	class Button : public Label
 	{
 	private:
-		gui::Color hover_color;
-		gui::Color pressed_color;
-		gui::Color current_color;
+		core::Color hover_color;
+		core::Color pressed_color;
+		core::Color current_color;
 
 		uint32_t state;
 
@@ -46,8 +46,8 @@ namespace gui
 		LIBRARY_EXPORT Button(Panel* parent);
 		LIBRARY_EXPORT virtual ~Button();
 
-		LIBRARY_EXPORT virtual void set_hover_color(const gui::Color& hover) { hover_color = hover; }
-		LIBRARY_EXPORT virtual void set_pressed_color(const gui::Color& pressed) { pressed_color = pressed; }
+		LIBRARY_EXPORT virtual void set_hover_color(const core::Color& hover) { hover_color = hover; }
+		LIBRARY_EXPORT virtual void set_pressed_color(const core::Color& pressed) { pressed_color = pressed; }
 
 		LIBRARY_EXPORT virtual void handle_event(EventArgs& args);
 

@@ -46,8 +46,8 @@ namespace gui
 		this->z_depth = 0;
 		this->parent = parent;
 		this->userdata = 0;
-		this->background_color = Color(255, 255, 255, 255);
-		this->foreground_color = Color(0, 0, 0, 255);
+		this->background_color = core::Color(255, 255, 255, 255);
+		this->foreground_color = core::Color(0, 0, 0, 255);
 		this->flags = (Flag_CursorEnabled | Flag_TransformIsDirty);
 		set_visible(true);
 
@@ -263,7 +263,7 @@ namespace gui
 				geometry[2],
 				geometry[3],
 				this->background,
-				gui::Color(255, 255, 255, 255)
+				core::Color(255, 255, 255, 255)
 			);
 		}
 
@@ -293,12 +293,12 @@ namespace gui
 	} // set_background_image
 
 
-	void Panel::set_background_color(const Color& color)
+	void Panel::set_background_color(const core::Color& color)
 	{
 		background_color = color;
 	}
 
-	void Panel::set_foreground_color(const Color& color)
+	void Panel::set_foreground_color(const core::Color& color)
 	{
 		foreground_color = color;
 	}

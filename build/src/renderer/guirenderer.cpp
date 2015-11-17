@@ -225,11 +225,11 @@ void GUIRenderer::font_metrics(const gui::FontHandle& handle, size_t& height, in
 	descender = metrics.descender;
 }
 
-size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color, gui::render::Vertex* buffer, size_t buffer_size)
+size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const core::Color& color, gui::render::Vertex* buffer, size_t buffer_size)
 {
 	vertex_cache.resize(0);
 	render2::font::Handle font_handle(handle);
-	render2::font::draw_string(font_handle, vertex_cache, string, core::Color(color.r(), color.g(), color.b(), color.a()));
+	render2::font::draw_string(font_handle, vertex_cache, string, core::Color(color.r, color.g, color.b, color.a));
 
 	// todo: this seems counter-intuitive
 	// copy back to the buffer
@@ -295,7 +295,7 @@ void GUIRenderer::draw_commands(gui::render::CommandList* command_list, Array<gu
 		gui::render::Vertex* gv = &vertex_array[index];
 		GUIVertex& vt = vertices[index];
 		vt.set_position(gv->x, gv->y);
-		vt.set_color(gv->color.r()/255.0f, gv->color.g()/255.0f, gv->color.b()/255.0f, gv->color.a()/255.0f);
+		vt.set_color(gv->color.r/255.0f, gv->color.g/255.0f, gv->color.b/255.0f, gv->color.a/255.0f);
 		vt.set_uv(gv->uv[0], gv->uv[1]);
 	}
 
@@ -523,7 +523,7 @@ gui::FontResult GUIRenderer::font_measure_string(const gui::FontHandle& handle, 
 	return gui::FontResult_Failed;
 }
 
-void GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gui::Color& color)
+void GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const core::Color& color)
 {
 	assets::Font* font = assets::fonts()->find_with_id(handle);
 	if (font)

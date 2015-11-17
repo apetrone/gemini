@@ -39,7 +39,7 @@ namespace gui
 		, drag_handle_width(0.0f)
 	{
 		drag_handle = new Panel(this);
-		drag_handle->set_background_color(gui::Color(0, 255, 255));
+		drag_handle->set_background_color(core::Color(0, 255, 255));
 		drag_handle->flags &= ~Flag_CursorEnabled;
 		drag_handle->set_origin(0, 0);
 	}
@@ -83,16 +83,16 @@ namespace gui
 			Point pt = args.local - drag_handle->get_origin();
 			if (drag_handle->hit_test_local(pt))
 			{
-				drag_handle->set_background_color(gui::Color(255, 0, 0));
+				drag_handle->set_background_color(core::Color(255, 0, 0));
 			}
 			else
 			{
-				drag_handle->set_background_color(gui::Color(0, 255, 0));
+				drag_handle->set_background_color(core::Color(0, 255, 0));
 			}
 		}
 		else if (args.type == gui::Event_CursorExit)
 		{
-			drag_handle->set_background_color(gui::Color(0, 255, 0));
+			drag_handle->set_background_color(core::Color(0, 255, 0));
 		}
 	}
 

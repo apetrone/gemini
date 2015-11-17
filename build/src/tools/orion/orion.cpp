@@ -84,8 +84,8 @@ namespace gui
 		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
 		{
 			// TODO: we should get this from the style
-			Color scrubber_highlight(255, 128, 0, 32);
-			Color scrubber_outline(255, 128, 0, 192);
+			core::Color scrubber_highlight(255, 128, 0, 32);
+			core::Color scrubber_outline(255, 128, 0, 192);
 
 			// draw the main highlight fill
 			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, scrubber_highlight);
@@ -162,7 +162,7 @@ namespace gui
 		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
 		{
 			// TODO: should get this from the style
-			const gui::Color frame_color(96, 96, 96, 255);
+			const core::Color frame_color(96, 96, 96, 255);
 
 			// assuming a horizontal timeline
 			if (frame_width_pixels == 0)
@@ -175,10 +175,10 @@ namespace gui
 			assert(frame_width_pixels > 0);
 
 			// draw the background
-			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, gui::Color(64, 64, 64, 255));
+			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, core::Color(64, 64, 64, 255));
 
 			// add a top rule line to separate this panel
-			render_commands.add_line(geometry[0], geometry[3], Color(0, 0, 0, 255), 1.0f);
+			render_commands.add_line(geometry[0], geometry[3], core::Color(0, 0, 0, 255), 1.0f);
 
 			Rect frame;
 			get_screen_bounds(frame);
@@ -271,7 +271,7 @@ namespace gui
 		{
 			on_render_content(target);
 
-			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], handle, gui::Color(255, 255, 255, 255));
+			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], handle, core::Color(255, 255, 255, 255));
 		}
 
 		// invoked when the handler should render its content to the render
@@ -573,7 +573,7 @@ public:
 
 //			gui::Panel* root = new gui::Panel(compositor);
 //			root->set_bounds(100, 100, 300, 400);
-//			root->set_background_color(gui::Color(255, 0, 0, 255));
+//			root->set_background_color(core::Color(255, 0, 0, 255));
 
 			gui::Timeline* timeline = new gui::Timeline(compositor);
 			timeline->set_bounds(0, 550, 800, 50);

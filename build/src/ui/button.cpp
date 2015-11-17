@@ -32,7 +32,7 @@ namespace gui
 {
 	Button::Button(Panel* parent) : Label(parent)
 	{
-		pressed_color = gui::Color(255, 0, 0);
+		pressed_color = core::Color(255, 0, 0);
 
 		state = 0;
 	} // Button
