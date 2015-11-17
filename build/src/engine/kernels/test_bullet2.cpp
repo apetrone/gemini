@@ -61,45 +61,45 @@ namespace physics
 	btOverlappingPairCache * pair_cache;
 	btAlignedObjectArray<btCollisionShape*> collision_shapes;
 	btBroadphaseInterface * broadphase;
-	
-	
+
+
 	void * bullet2_custom_alloc( size_t size )
 	{
 		return ALLOC( size );
 	}
-	
+
 	void bullet2_custom_free( void * memblock )
 	{
 		DEALLOC( memblock );
 	}
-	
+
 	void startup()
 	{
 		collision_config = new btDefaultCollisionConfiguration();
 		dispatcher = new btCollisionDispatcher( collision_config );
-		
+
 		btVector3 worldAabbMin(-1000,-1000,-1000);
 		btVector3 worldAabbMax(1000,1000,1000);
-		
+
 		constraint_solver = new btSequentialImpulseConstraintSolver();
-		
+
 		//		broadphase = new btDbvtBroadphase();
 		broadphase = new btAxisSweep3(worldAabbMin, worldAabbMax);
-		
+
 		pair_cache = broadphase->getOverlappingPairCache();
 		dynamics_world = new btDiscreteDynamicsWorld(dispatcher, (btBroadphaseInterface*)broadphase, constraint_solver, collision_config);
 		dynamics_world->setGravity( btVector3( 0, -10, 0 ) );
 		dynamics_world->getDispatchInfo().m_useConvexConservativeDistanceUtil = true;
 		dynamics_world->getDispatchInfo().m_convexConservativeDistanceThreshold = 0.01;
 		dynamics_world->getDispatchInfo().m_allowedCcdPenetration = 0.0;
-		
-		
+
+
 		//btAlignedAllocSetCustom( bullet2_custom_alloc, bullet2_custom_free );
-		
+
 		// instance and set the debug renderer
 		//		dynamics_world->setDebugDrawer(0);
 	}
-	
+
 	void shutdown()
 	{
 		//
@@ -116,7 +116,7 @@ namespace physics
 			dynamics_world->removeCollisionObject( obj );
 			delete obj;
 		}
-		
+
 		//delete collision shapes
 		for ( int j = 0; j < collision_shapes.size(); j++ )
 		{
@@ -124,32 +124,32 @@ namespace physics
 			collision_shapes[j] = 0;
 			delete shape;
 		}
-		
+
 		//delete dynamics world
 		delete dynamics_world;
-		
+
 		//delete solver
 		delete constraint_solver;
-		
+
 		//delete broadphase
 		//delete mPairCache;
 		delete broadphase;
-		
+
 		//delete dispatcher
 		delete dispatcher;
-		
+
 		// delete the collision configuration
 		delete collision_config;
-		
+
 		//next line is optional: it will be cleared by the destructor when the array goes out of scope
 		collision_shapes.clear();
 	} // shutdown
-	
-	
+
+
 	void step( float seconds )
 	{
 		assert( dynamics_world != 0 );
-		
+
 		dynamics_world->stepSimulation( seconds, 1, 1/60.0f );
 	} // step
 };
@@ -200,7 +200,7 @@ public:
 	DECLARE_APPLICATION( TestBullet2 );
 	assets::Mesh * plane_mesh;
 	Camera camera;
-	
+
 	virtual void event( kernel::KeyboardEvent & event )
 	{
 		if (event.is_down)
@@ -215,7 +215,7 @@ public:
 			}
 		}
 	}
-	
+
 	virtual void event( kernel::MouseEvent & event )
 	{
 //		switch( event.subtype )
@@ -226,7 +226,7 @@ public:
 //				{
 //					int lastx, lasty;
 //					input::state()->mouse().last_mouse_position( lastx, lasty );
-//					
+//
 //					camera.move_view( event.mx-lastx, event.my-lasty );
 //				}
 //                break;
@@ -234,10 +234,10 @@ public:
 //			default: break;
 //		}
 	}
-	
+
 	virtual void event( kernel::SystemEvent & event )
 	{
-		
+
 	}
 
 	virtual kernel::ApplicationResult config( kernel::Params & params )
@@ -251,8 +251,8 @@ public:
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 		physics::startup();
-		
-		
+
+
 		// load in the plane mesh
 		plane_mesh = assets::meshes()->load_from_path("models/construct");
 		if (plane_mesh)
@@ -276,30 +276,30 @@ public:
 		camera.yaw = -45;
 		camera.pitch = 30;
 		camera.update_view();
-	
+
 		RenderStream rs;
 		renderer::GeneralParameters gp;
-		
+
 		gp.camera_position = &camera.pos;
 		gp.modelview_matrix = &camera.matCam;
 		gp.projection_project = &camera.matProj;
-		
+
 		glm::mat4 ident;
 		gp.object_matrix = &ident;
-		
+
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
 		rs.add_viewport( 0, 0, params.render_width, params.render_height );
 		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
-	
+
 		for( unsigned short i = 0; i < plane_mesh->total_geometry; ++i )
 		{
 			render_utilities::stream_geometry( rs, &plane_mesh->geometry[i], gp );
 		}
 
-		
+
 		rs.run_commands();
 	}
-	
+
 	virtual void shutdown( kernel::Params & params )
 	{
 		physics::shutdown();

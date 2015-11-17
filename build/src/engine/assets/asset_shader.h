@@ -35,11 +35,11 @@ namespace gemini
 	{
 		// -------------------------------------------------------------
 		// Shader
-		
+
 		struct Shader : public Asset
 		{
 			::renderer::ShaderProgram* program;
-			
+
 			Shader() : program(nullptr) {}
 			virtual void release();
 		}; // Shader
@@ -48,6 +48,6 @@ namespace gemini
 		void shader_construct_extension(core::StackString<MAX_PATH_SIZE>& extension);
 
 		DECLARE_ASSET_LIBRARY_ACCESSOR(Shader, AssetParameters, shaders);
-		
+
 	} // namespace assets
 } // namespace gemini

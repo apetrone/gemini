@@ -44,7 +44,7 @@ namespace renderer
 			{
 				return -1;
 			}
-			
+
 			return 0;
 		}
 	};

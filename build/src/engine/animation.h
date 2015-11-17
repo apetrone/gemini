@@ -35,32 +35,32 @@ namespace gemini
 	{
 		struct Mesh;
 	}
-	
+
 	namespace animation
 	{
 		struct Keyframe
 		{
 			// absolute time for the keyframe
 			float seconds;
-			
+
 			// value at seconds
 			float value;
 		}; // Keyframe
-	
+
 		struct KeyframeList
 		{
 			Keyframe* keys;
 			uint32_t total_keys;
 			float duration_seconds;
-			
+
 			KeyframeList();
 			~KeyframeList();
-			
+
 			void allocate(size_t key_count);
 			void deallocate();
 			void set_key(const size_t index, const float seconds, const float value);
 		}; // KeyframeList
-	
+
 		// This contains a stateful representation of a KeyframeList.
 		// It only uses the keyframe list as a source of data.
 		class Channel
@@ -68,37 +68,37 @@ namespace gemini
 		private:
 			// source keyframe list
 			KeyframeList* keyframelist;
-			
+
 			// local time in seconds [0, keyframelist->duration_seconds]
 			float local_time_seconds;
-			
+
 			// current key frame index [0, keyframelist->total_keys-1]
 			uint32_t current_keyframe;
-			
+
 			// value by reference
 			float* value;
-			
+
 			// is this a loopable anim; if so, we ignore the last keyframe and wrap
 			// because keyframe[first] == keyframe[last]
 			bool wrap;
-			
+
 		public:
 			Channel(float* target = 0, bool should_wrap = true);
 			~Channel();
-			
+
 			void set_target(float* target);
 			void set_keyframe_list(KeyframeList* source_keyframe_list);
 			void advance(float delta_seconds);
 			void reset();
-			
+
 			float operator()() const;
 		}; // Channel
-	
-	
+
+
 		//
 		// supporting structures
 		//
-	
+
 		typedef int32_t SequenceId;
 		typedef FixedArray<KeyframeList> KeyframeListArray;
 		struct Sequence
@@ -106,15 +106,15 @@ namespace gemini
 			// length of this sequence in seconds
 			float duration_seconds;
 			float frame_delay_seconds;
-		
+
 			core::StackString<32> name;
 			SequenceId index;
 
 			FixedArray<KeyframeListArray> AnimationSet;
 		};
-	
-		
-		
+
+
+
 		struct AnimatedInstance
 		{
 			SequenceId index;
@@ -123,17 +123,17 @@ namespace gemini
 			FixedArray< FixedArray<float> > AnimationSet;
 			FixedArray< FixedArray<Channel> > ChannelSet;
 			bool enabled;
-						
-			
+
+
 			AnimatedInstance();
 			virtual ~AnimatedInstance() {}
-			
+
 			virtual void initialize(Sequence* sequence);
 			virtual void advance(float delta_seconds);
 			virtual bool is_playing() const { return enabled; }
 			virtual void reset_channels();
 		};
-	
+
 		//
 		// animation system
 		//
@@ -144,7 +144,7 @@ namespace gemini
 		SequenceId load_sequence(const char* name, assets::Mesh* mesh);
 		SequenceId find_sequence(const char* name);
 		Sequence* get_sequence_by_index(SequenceId index);
-		
+
 		AnimatedInstance* create_sequence_instance(SequenceId index);
 		void destroy_sequence_instance(AnimatedInstance* instance);
 		AnimatedInstance* get_instance_by_index(SequenceId index);

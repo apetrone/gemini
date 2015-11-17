@@ -29,14 +29,14 @@ namespace prism
 	struct ToolEnvironment
 	{
 		bool convert_zup_to_yup;
-		
+
 		aiMatrix4x4 coordinate_transform;
-		
+
 		ToolEnvironment()
 		{
 			convert_zup_to_yup = false;
 		}
-		
+
 		void print_settings()
 		{
 			LOGV("convert_zup_to_yup: %s\n", convert_zup_to_yup ? "true": "false");

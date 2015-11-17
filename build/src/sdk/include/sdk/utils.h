@@ -34,29 +34,29 @@ class Entity;
 namespace gemini
 {
 	// entity registration
-	
+
 	class IEngineEntity;
 
-	
+
 	class FactoryClass
 	{
 	public:
 		virtual ~FactoryClass() {};
-		
+
 		virtual IEngineEntity* create() = 0;
 	};
-	
+
 	class EntityFactoryRegistrar
 	{
 	public:
 		typedef std::map<std::string, FactoryClass*> FactoryFromClassMap;
 		FactoryFromClassMap dictionary;
-		
+
 		void register_class(const std::string& classname, FactoryClass* factory_class)
 		{
 			dictionary.insert(FactoryFromClassMap::value_type(classname, factory_class));
 		}
-		
+
 		FactoryClass* find_factory_by_name(const std::string& classname)
 		{
 			FactoryFromClassMap::iterator it = dictionary.find(classname);
@@ -64,31 +64,31 @@ namespace gemini
 			{
 				return (*it).second;
 			}
-			
+
 			return 0;
 		}
 	};
-	
+
 	EntityFactoryRegistrar& entity_factory_registrar();
-	
-	
-	
+
+
+
 	template <class Type>
 	class EntityFactoryClass : public FactoryClass
 	{
 	public:
-		
+
 		EntityFactoryClass(const char* classname)
 		{
 			entity_factory_registrar().register_class(classname, this);
 		}
-		
+
 		virtual IEngineEntity* create()
 		{
 			return new Type();
 		}
 	};
-	
+
 	namespace util
 	{
 		Entity* create_entity_by_classname(const char* classname);

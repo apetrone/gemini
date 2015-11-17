@@ -31,16 +31,16 @@ namespace gemini
 	const unsigned MAX_NAVMESH_PATH_LINKS = 16;
 	typedef unsigned int NavMeshPolyRef;
 	const unsigned MAX_NAVMESH_POINTS = 16;
-	
+
 	struct NavMeshPath
 	{
 		NavMeshPolyRef start;
 		NavMeshPolyRef end;
-		
+
 		NavMeshPolyRef links[MAX_NAVMESH_PATH_LINKS];
 		int link_count; // how many links are used along this path
 		glm::vec3 extents;
-		
+
 		glm::vec3 start_position;
 		glm::vec3 end_position;
 	};

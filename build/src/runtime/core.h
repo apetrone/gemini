@@ -40,6 +40,6 @@ namespace core
 	// in configuring the file system
 	LIBRARY_EXPORT platform::Result startup_filesystem();
 	LIBRARY_EXPORT platform::Result startup_logging();
-	
+
 	LIBRARY_EXPORT void shutdown();
 } // namespace core

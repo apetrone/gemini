@@ -40,7 +40,7 @@ namespace gemini
 	{
 		Font::Font()
 		{
-			font_size = 0;		
+			font_size = 0;
 			font_data = 0;
 			handle = 0;
 		}
@@ -53,15 +53,15 @@ namespace gemini
 				this->font_size = 0;
 			}
 		} // release
-		
-		
-		
+
+
+
 		char* load_font_from_file(const char* path, unsigned short point_size, font::Handle& font)
 		{
 			size_t font_data_size = 0;
 			char* font_data = 0;
 			font_data = core::filesystem::instance()->virtual_load_file(path, 0, &font_data_size);
-			
+
 			if (font_data)
 			{
 //				LOGV( "font data size: %i bytes\n", font_data_size );
@@ -72,12 +72,12 @@ namespace gemini
 				LOGE("Unable to load font from file: '%s'\n", path);
 				return 0;
 			}
-			
+
 			return font_data;
 		} // load_font_from_file
-		
-		
-		
+
+
+
 		core::util::ConfigLoadStatus load_font_from_file( const Json::Value & root, void * data )
 		{
 			Font* font = (Font*)data;
@@ -85,18 +85,18 @@ namespace gemini
 			{
 				return core::util::ConfigLoad_Failure;
 			}
-			
+
 			Json::Value point_size = root["point_size"];
 			Json::Value font_file = root["file"];
-			
+
 			font->font_size = point_size.asInt();
 			font->font_data = load_font_from_file(font_file.asString().c_str(), font->font_size, font->handle);
-			
+
 			if (kernel::parameters().device_flags & kernel::DeviceSupportsRetinaDisplay)
 			{
 				font->font_size = font->font_size * 2;
 			}
-			
+
 			if (font)
 			{
 				return core::util::ConfigLoad_Success;
@@ -108,14 +108,14 @@ namespace gemini
 		AssetLoadStatus font_load_callback( const char * path, Font * font, const AssetParameters & parameters )
 		{
 			if ( core::util::json_load_with_callback(path, load_font_from_file, font, true ) == core::util::ConfigLoad_Success )
-			{		
+			{
 				return AssetLoad_Success;
 			}
-			
+
 			return AssetLoad_Failure;
 		} // font_load_callback
-		
-		
+
+
 		void font_construct_extension( core::StackString<MAX_PATH_SIZE> & extension )
 		{
 			extension = ".conf";

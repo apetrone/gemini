@@ -62,7 +62,7 @@ namespace gemini
 
 		this->next_spawn = 0;
 		this->num_particles_alive = this->emitter_config->max_particles;
-		
+
 		Particle * p = 0;
 		for(int i = 0; i < this->emitter_config->max_particles; ++i)
 		{
@@ -80,14 +80,14 @@ namespace gemini
 	{
 		unsigned int pid = 0;
 		Particle * p = 0;
-		
+
 		float delta_msec = (delta_seconds * MillisecondsPerSecond);
-		
+
 		if (!emitter_config)
 		{
 			return;
 		}
-		
+
 		world_position.step(delta_seconds);
 
 		this->next_spawn -= delta_msec;
@@ -103,13 +103,13 @@ namespace gemini
 	//			LOGV( "particle_to_spawn: %i\n", particles_to_spawn );
 			}
 		}
-		
+
 		num_particles_alive = 0;
 		for(pid = 0; pid < this->emitter_config->max_particles; ++pid)
 		{
 			p = &particle_list[pid];
 			p->life_remaining -= delta_msec;
-			
+
 			if (p->life_remaining > 0.1)
 			{
 				float lifet = 1.0 - (p->life_remaining / p->life_total);
@@ -143,9 +143,9 @@ namespace gemini
 		if (emitter_config)
 		{
 			purge();
-			
+
 			this->emitter_config = emitter_config;
-			
+
 			init();
 		}
 	} // load_from_emitter_config
@@ -157,7 +157,7 @@ namespace gemini
 												   this->emitter_config->velocity.min[0], this->emitter_config->velocity.max[0]),
 								core::util::random_range(this->emitter_config->velocity.min[1], this->emitter_config->velocity.max[1]),
 								core::util::random_range(this->emitter_config->velocity.min[2], this->emitter_config->velocity.max[2]));
-		
+
 		p->position.snap(world_position.render);
 	//	LOGV( "p->position: %g, %g %g\n", p->position.render.x, p->position.render.y, p->position.render.z );
 		p->color = this->emitter_config->color_channel.get_value(0);
@@ -186,7 +186,7 @@ namespace gemini
 			ParticleEmitter* emitter = (*iter);
 			MEMORY_DELETE(emitter, core::memory::global_allocator());
 		}
-		
+
 		emitters.clear();
 	} // purge
 
@@ -210,7 +210,7 @@ namespace gemini
 	void ParticleSystem::remove_emitter(ParticleEmitter* emitter)
 	{
 		ParticleEmitterVector::iterator iter = emitters.begin();
-		
+
 		for( ; iter != emitters.end(); ++iter)
 		{
 			if (emitter == (*iter))

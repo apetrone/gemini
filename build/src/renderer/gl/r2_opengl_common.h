@@ -43,39 +43,39 @@ namespace render2
 			case GL_FLOAT_VEC2: return sizeof(GLfloat) * 2;
 			case GL_FLOAT_VEC3: return sizeof(GLfloat) * 3;
 			case GL_FLOAT_VEC4: return sizeof(GLfloat) * 4;
-				
+
 			case GL_FLOAT_MAT4: return sizeof(GLfloat) * 16;
 			case GL_SAMPLER_2D: return sizeof(GLuint);
-				
+
 			default: break;
 		}
-		
+
 		// If you reach this, you're missing an OpenGL type from the above switch
 		assert(0);
 		return 0;
 	}
-	
+
 	const size_t MAX_ATTRIBUTE_NAME_LENGTH = 32;
 	struct shader_variable
 	{
 		// location of this variable
 		GLint location;
-		
+
 		// byte-length of name
 		GLsizei length;
-		
+
 		// byte-length of the attribute value
 		GLint size;
-		
+
 		// attribute name (null-terminated string)
 		GLchar name[ MAX_ATTRIBUTE_NAME_LENGTH ];
-		
+
 		// data type of the attribute
 		GLenum type;
-		
+
 		// size (in bytes) of this type
 		GLint byte_size;
-		
+
 		void compute_size()
 		{
 			// compute byte size for this attribute
@@ -95,24 +95,24 @@ namespace render2
 			size_t offset;
 			size_t size;
 		};
-		
+
 		size_t vertex_stride;
 		FixedArray<Description> items;
 	}; // GLInputLayout
-		
+
 	struct GLShader : public Shader
 	{
 		GLShader();
 		virtual ~GLShader();
-				
+
 		bool compile_shader(GLint shader, const char* source, const char* preprocessor_defines, const char* version);
 		void query_program_info_log(renderer::GLObject handle);
 		void query_shader_info_log(renderer::GLObject handle);
-		
+
 		int build_from_source(const char *vertex_shader, const char *fragment_shader, const char* preprocessor, const char* version);
 		GLint get_attribute_location(const char* name);
 		GLint get_uniform_location(const char* name);
-		
+
 		GLint id;
 		FixedArray<shader_variable> uniforms;
 		FixedArray<shader_variable> attributes;
@@ -123,11 +123,11 @@ namespace render2
 		GLShader* program;
 		VertexDescriptor vertex_description;
 		GLInputLayout* input_layout;
-		
+
 		bool enable_blending;
 		GLenum blend_source;
 		GLenum blend_destination;
-		
+
 		GLPipeline(const PipelineDescriptor& descriptor);
 		virtual ~GLPipeline();
 	}; // GLPipeline
@@ -172,7 +172,7 @@ namespace render2
 		GLenum type;
 		GLenum normalized;
 		uint32_t element_size;
-		
+
 		VertexDataTypeToGL(GLenum _type = GL_INVALID_ENUM, GLenum _normalized = GL_INVALID_ENUM, uint32_t _element_size = 0) :
 			type(_type),
 			normalized(_normalized),
@@ -185,10 +185,10 @@ namespace render2
 	void setup_pipeline(GLPipeline* pipeline, const PipelineDescriptor& descriptor);
 	void populate_vertexdata_table();
 	VertexDataTypeToGL* get_vertexdata_table();
-	
+
 	// returns 0 on success
 	int load_gl_symbols();
-	
+
 	GLenum convert_blendstate(BlendOp op);
 
 	RenderTarget* common_create_render_target(Texture* texture);

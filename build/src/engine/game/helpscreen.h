@@ -32,13 +32,13 @@ struct HelpScreen : public IScreen
 {
 	virtual void on_show( kernel::IApplication * app );
 	virtual void on_hide( kernel::IApplication * app );
-	
+
 	virtual void on_draw( kernel::IApplication * app ) {}
 	virtual void on_update( kernel::IApplication * app ) {}
 	virtual void on_step( kernel::IApplication * app ) {}
-	
+
 	virtual const char * name() const { return "HelpScreen"; }
-	
+
 	virtual void on_event( kernel::KeyboardEvent & event, kernel::IApplication * app ) {}
 	virtual void on_event( kernel::MouseEvent & event, kernel::IApplication * app ) {}
 	virtual void on_event( kernel::TouchEvent & event, kernel::IApplication * app ) {}

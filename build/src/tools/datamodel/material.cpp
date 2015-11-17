@@ -44,13 +44,13 @@ namespace gemini
 			{
 				return get_default_material();
 			}
-			
+
 			// catch out of range ids
 			assert(materials.size() >= (uint32_t)id);
-			
+
 			return materials[ id ];
 		}
-		
+
 		Material& MaterialMap::find_with_name(const String& name)
 		{
 			auto it = materials_by_name.find(name);
@@ -58,7 +58,7 @@ namespace gemini
 			{
 				return it->second;
 			}
-			
+
 			return get_default_material();
 		}
 
@@ -69,15 +69,15 @@ namespace gemini
 			material.name = name;
 			materials.push_back(material);
 			materials_by_name.insert(MaterialContainer::value_type(name, material));
-			
+
 			return find_with_id(material.id);
 		}
-		
+
 		MaterialMap::MaterialVector::iterator MaterialMap::begin()
 		{
 			return materials.begin();
 		}
-		
+
 		MaterialMap::MaterialVector::iterator MaterialMap::end()
 		{
 			return materials.end();

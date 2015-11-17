@@ -46,14 +46,14 @@ namespace gemini
 		void EmitterConfig::release()
 		{
 		} // release
-		
-		
+
+
 		void color_value( Json::Value & value, core::Color & out )
 		{
 			std::string temp = value.asString();
-			
+
 			uint32_t colors[4] = { 255, 255, 255, 255 };
-			
+
 			// try RGBA
 			if (sscanf(temp.c_str(), "%i, %i, %i, %i", &colors[0], &colors[1], &colors[2], &colors[3]) < 4)
 			{
@@ -66,12 +66,12 @@ namespace gemini
 			out.b = colors[2];
 			out.a = colors[3];
 		}
-		
+
 		void float_value( Json::Value & value, float & out )
 		{
 			out = value.asFloat();
 		}
-		
+
 		template <class Type>
 		void read_channel_frames( Type * data, Json::Value & frames, void (*func_ptr)(Json::Value & value, Type & out) )
 		{
@@ -80,7 +80,7 @@ namespace gemini
 				func_ptr(frames[index], data[index]);
 			}
 		}
-		
+
 		core::util::ConfigLoadStatus load_emitter_from_file( const Json::Value & root, void * data )
 		{
 			EmitterConfig * cfg = (EmitterConfig*)data;
@@ -88,7 +88,7 @@ namespace gemini
 			{
 				return core::util::ConfigLoad_Failure;
 			}
-			
+
 			Json::Value max_particles = root["max_particles"];
 			Json::Value spawn_rate = root["spawn_rate"];
 			Json::Value spawn_delay_seconds = root["spawn_delay_seconds"];
@@ -97,9 +97,9 @@ namespace gemini
 			Json::Value velocity_min = root["velocity_min"];
 			Json::Value velocity_max = root["velocity_max"];
 			glm::vec3 vmin, vmax;
-					
+
 			Json::Value material = root["material"];
-			
+
 			if (max_particles.isNull() || spawn_rate.isNull() ||
 				spawn_delay_seconds.isNull() || life_min.isNull() ||
 				life_max.isNull() || velocity_min.isNull() ||
@@ -108,32 +108,32 @@ namespace gemini
 				LOGE("Missing one or more required parameters from emitter configuration. Aborting.\n");
 				return core::util::ConfigLoad_Failure;
 			}
-			
-			
+
+
 			cfg->max_particles = max_particles.asInt();
 			cfg->spawn_rate = spawn_rate.asInt();
 			cfg->spawn_delay_seconds = spawn_delay_seconds.asFloat();
 			cfg->life.set_range(life_min.asFloat(), life_max.asFloat());
-			
+
 			// parse and set velocity
 			{
 				std::string temp = velocity_min.asString();
 				sscanf(temp.c_str(), "%f,%f,%f", &vmin.x, &vmin.y, &vmin.z);
-				
+
 				temp = velocity_max.asString();
 				sscanf(temp.c_str(), "%f,%f,%f", &vmax.x, &vmax.y, &vmax.z);
 				cfg->velocity.set_range(vmin, vmax);
 			}
-			
+
 			assets::Material* emitter_material = assets::materials()->load_from_path(material.asString().c_str());
 			if ( emitter_material )
 			{
 				cfg->material_id = emitter_material->Id();
 			}
-			
+
 			// load channel data
 			Json::Value channels = root["channels"];
-			
+
 			Json::ValueIterator citer = channels.begin();
 			for( ; citer != channels.end(); ++citer )
 			{
@@ -164,7 +164,7 @@ namespace gemini
 					MEMORY_DELETE_ARRAY(data, core::memory::global_allocator());
 				}
 			}
-			
+
 
 			return core::util::ConfigLoad_Success;
 		} // load_emitter_from_file
@@ -175,11 +175,11 @@ namespace gemini
 			{
 				return AssetLoad_Success;
 			}
-			
+
 			return AssetLoad_Failure;
 		} // emitterconfig_load_callback
-		
-		
+
+
 		void emitterconfig_construct_extension( core::StackString<MAX_PATH_SIZE> & extension )
 		{
 			extension = ".conf";

@@ -81,43 +81,43 @@ struct Camera
 		FIRST_PERSON,
 		TARGET
 	};
-		
+
 	Camera(CameraType _type = FIRST_PERSON);
-	
+
 	// sets world position of the camera
 
 	void invert_yaxis( bool invert ) { invert_y_axis = invert; }
-	
+
 	// called when the mouse moves to update the view
 	void move_view( int32_t dx, int32_t dy );
-	
+
 	// position-based movement
 	void move_left( real dt );
 	void move_right( real dt );
 	void move_forward( real dt );
 	void move_backward( real dt );
 	void move_along_vector( const glm::vec3 & v, real dt );
-	
+
 	// internal functions
 	virtual void update_view();
-	
+
 	// projection type functions
 	void perspective( real fovy, int32_t width, int32_t height, real nearz, real farz );
 	void ortho( real left, real right, real bottom, real top, real nearz, real farz );
-	
+
 	const glm::mat4& get_inverse_world_transform() const { return inverse_world_transform; }
 	const glm::mat4& get_inverse_rotation() const { return inverse_rotation; }
-	
-	
+
+
 	void set_yaw(real y) { yaw = y; }
 	void set_pitch(real p) { pitch = p; }
 	void set_position(const glm::vec3& position);
 	const glm::vec3& get_position() const { return pos; }
-		
+
 	void set_view(const glm::vec3& view_direction) { view = view_direction; }
 	void set_type(const CameraType cameratype) { type = cameratype; }
 	void set_target_offset(const glm::vec3& in_target_offset) { target_offset = in_target_offset; }
-	
+
 	const glm::mat4& get_modelview() const { return modelview; }
 	const glm::mat4& get_projection() const { return projection; }
 	const glm::vec3& get_view() const { return view; }
@@ -125,32 +125,32 @@ struct Camera
 
 	float get_yaw() const { return yaw; }
 	float get_pitch() const { return pitch; }
-	
+
 private:
 	// camera variables
 	real yaw;
 	real pitch;
 	glm::vec3 pos;
-	
+
 	glm::mat4 projection;
 	glm::mat4 modelview;
-	
+
 	// components as matrices
 	glm::mat4 inverse_rotation;
 	glm::mat4 inverse_translation;
-	
+
 	// final inverted world matrix
 	glm::mat4 inverse_world_transform;
-	
+
 	// directional vectors
 	glm::vec3 view;
 	glm::vec3 side;
-	
+
 	glm::vec3 target_offset;
 	glm::vec3 eye_position;
-	
+
 	CameraType type;
-	
+
 	//
 	// options
 	real move_speed;
@@ -159,7 +159,7 @@ private:
 	bool is_ortho;
 	float aspect_ratio;
 	float fovy;
-	
+
 	float near_clip;
 	float far_clip;
 }; // Camera

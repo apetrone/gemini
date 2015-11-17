@@ -48,89 +48,89 @@ namespace gui
 	Graph::Graph(Panel* parent) : Panel(parent)
 	{
 		values = 0;
-		
+
 		range_min = -1;
 		range_max = -1;
-		
+
 		last_point = 0;
 		channel_colors = 0;
-		
+
 		baseline_value = 0.0f;
-		
+
 		flags |= Flag_CanMove;
 		total_samples = 0;
 		total_channels = 0;
 		current_sample = 0;
-		
+
 		background_color = Color(0, 0, 0, 255);
 		foreground_color = Color(255, 255, 255, 255);
 
 		show_baseline = false;
 	}
-	
+
 	Graph::~Graph()
 	{
 		// purge data
-		
+
 		if(values)
 		{
 			delete [] values;
 			values = 0;
 		}
-		
+
 		if (channel_colors)
 		{
 			delete [] channel_colors;
 			channel_colors = 0;
 		}
-		
+
 		if (current_sample)
 		{
 			delete [] current_sample;
 			current_sample = 0;
 		}
-		
+
 		if (last_point)
 		{
 			delete [] last_point;
 			last_point = 0;
 		}
 	}
-	
-	
+
+
 	void Graph::create_samples(uint32_t max_samples, uint32_t max_channels)
 	{
 		total_samples = max_samples;
 		total_channels = max_channels;
-		
+
 		// allocate 'current' pointers for each channel
 		current_sample = new uint32_t[max_channels];
 		memset(current_sample, 0, max_channels * sizeof(uint32_t));
-		
+
 		// allocate samples
 		values = new float[ max_samples * max_channels ];
 		memset(values, 0, sizeof(float) * (max_samples*max_channels));
-		
+
 		// allocate channel colors
 		channel_colors = new gui::Color[ max_channels * ChannelTotal ];
-		
+
 		last_point = new Point[ max_channels ];
 		memset(last_point, 0, sizeof(Point) * max_channels);
 	}
-	
+
 	void Graph::configure_channel(uint32_t channel_index, const gui::Color& color/*, const gui::Color& min_color, const gui::Color& max_color*/)
 	{
 		if (!channel_in_range(channel_index))
 		{
 			return;
 		}
-		
+
 		gui::Color* colors = &channel_colors[ChannelTotal*channel_index];
 		colors[ChannelColor] = color;
 //		colors[ChannelMin] = min_color;
 //		colors[ChannelMax] = max_color;
 	}
-	
+
 	void Graph::enable_baseline(bool enabled, float value, const gui::Color& color)
 	{
 		show_baseline = enabled;
@@ -140,35 +140,35 @@ namespace gui
 			baseline_color = color;
 		}
 	}
-	
+
 	bool Graph::channel_in_range(uint32_t channel_index) const
 	{
 		return (channel_index < total_channels);
 	}
-	
+
 	void Graph::record_value(float value, uint32_t channel_index)
 	{
 		if (!channel_in_range(channel_index))
 		{
 			return;
 		}
-		
-		
+
+
 		values[ (channel_index*total_samples) + current_sample[channel_index] ] = value;
 		++current_sample[channel_index];
-		
+
 		if (current_sample[channel_index] >= total_samples)
 		{
 			current_sample[channel_index] = 0;
 		}
 	}
-	
+
 	void Graph::set_range(float min_range, float max_range)
 	{
 		range_min = min_range;
 		range_max = max_range;
 	}
-	
+
 	void Graph::set_font(const char* filename, size_t pixel_size)
 	{
 		Compositor* compositor = get_compositor();
@@ -181,17 +181,17 @@ namespace gui
 		compositor->get_renderer()->font_metrics(font_handle, height, ascender, descender);
 		font_height = static_cast<float>(ascender + descender);
 	}
-	
+
 	void Graph::set_background_color(const Color& color)
 	{
 		background_color = color;
 	}
-	
+
 	void Graph::set_foreground_color(const Color& color)
 	{
 		foreground_color = color;
 	}
-	
+
 	void Graph::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
 	{
 		render_commands.add_rectangle(
@@ -224,24 +224,24 @@ namespace gui
 		{
 			// draw the most current information on the right
 			float cx = frame.origin.x;
-			
+
 			// left to right graph: (sample_delta=1, dx = -dx, cx = right)
 			// right to left: (sample_delta=-1, cx=left)
 			int sample_delta = 1;
-			
+
 			unsigned int sample_id = current_sample[ current_channel ];
 			Color* colors = &channel_colors[ ChannelTotal * current_channel ];
-			
+
 			for(uint32_t i = 0; i < total_samples; ++i)
 			{
 				Color color = colors[ ChannelColor ];
 				float sample_value = values[ (current_channel * total_samples) + ((sample_id) % total_samples) ];
-	
+
 				if ( sample_value < range_min )
 				{
 					sample_value = range_min;
 				}
-				
+
 				if ( sample_value < baseline_value )
 				{
 //					color = colors[ ChannelMin ];
@@ -251,7 +251,7 @@ namespace gui
 					sample_value = range_max;
 //					color = colors[ ChannelMax ];
 				}
-				
+
 
 				float sample_y = (sample_value / vertical_scale);
 				float outvalue = yoffset+y+height-(sample_y*height);
@@ -273,9 +273,9 @@ namespace gui
 				sample_id += sample_delta;
 			}
 		}
-		
-		
-		
+
+
+
 		// draw text
 		Point left_margin(frame.origin.x + 2, frame.origin.y);
 

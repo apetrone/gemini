@@ -58,7 +58,7 @@
 		CGPoint pt = [t locationInView: [self view]];
 		kernel::TouchEvent ev;
 		ev.subtype = kernel::TouchBegin;
-		ev.id = i;		
+		ev.id = i;
 		ev.x = (int)pt.x;
 		ev.y = (int)pt.y;
 		kernel::event_dispatch( ev );
@@ -69,12 +69,12 @@
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
-	//NSLog(@"touchesMoved");	
-	
+	//NSLog(@"touchesMoved");
+
 	for( int i = 0; i < [touches count]; ++i )
 	{
 		UITouch * t = [[touches allObjects] objectAtIndex: i];
-		CGPoint pt = [t locationInView: [self view]];		
+		CGPoint pt = [t locationInView: [self view]];
 		kernel::TouchEvent ev;
 		ev.subtype = kernel::TouchMoved;
 		ev.id = i;
@@ -90,10 +90,10 @@
 	for( int i = 0; i < [touches count]; ++i )
 	{
 		UITouch * t = [[touches allObjects] objectAtIndex: i];
-		CGPoint pt = [t locationInView: [self view]];		
+		CGPoint pt = [t locationInView: [self view]];
 		kernel::TouchEvent ev;
 		ev.subtype = kernel::TouchEnd;
-		ev.id = i;		
+		ev.id = i;
 		ev.x = (int)pt.x;
 		ev.y = (int)pt.y;
 		kernel::event_dispatch( ev );
@@ -105,26 +105,26 @@
 	NSLog( @"ViewController.m - viewDidLoad" );
 	// the default is 30FPS
 	self.preferredFramesPerSecond = 60;
-	
+
     [super viewDidLoad];
     self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
-	
+
 	// shared context
 	//self.context2 = [[EAGLContext alloc] initWIthAPI:kEAGLRenderingAPIOpenGLES2 sharegroup: [self.context sharegroup]];
-    
+
     GLKView *view = (GLKView *)self.view;
 
     view.context = self.context;
     view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
-	
+
 	// allow multiple touches; "By default, a view ignores all but the first touch during a multitouch sequence."
 	view.multipleTouchEnabled = YES;
-	
-	
+
+
 //	view.exclusiveTouch = YES;
-	
+
     [EAGLContext setCurrentContext:self.context];
-	
+
 	// ios6
 	// this is set on a per-view basis.
 //	[self setWantsBestResolutionOpenGLSurface: YES];
@@ -141,12 +141,12 @@
 } // viewDidLoad
 
 - (void)viewDidUnload
-{	
+{
 	NSLog( @"ViewController.m - viewDidUnload" );
     [super viewDidUnload];
-    
+
     [EAGLContext setCurrentContext:self.context];
-    
+
     if ([EAGLContext currentContext] == self.context) {
         [EAGLContext setCurrentContext:nil];
     }
@@ -170,7 +170,7 @@
 	{
 		return mobile_kernel->should_change_orientation( interfaceOrientation );
 	}
-	
+
 	return YES;
 } // shouldAutorotateToInterfaceOrientation
 

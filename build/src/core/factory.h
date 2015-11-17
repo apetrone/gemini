@@ -41,17 +41,17 @@ namespace core
 	{
 	public:
 		typedef Type * (*TypeCreator)();
-		
+
 		struct Record
 		{
 			TypeCreator creator;
 			const char * class_name;
 			unsigned int category_type;
 		};
-		
+
 		typedef std::vector<Record> RecordContainer;
 		RecordContainer records;
-		
+
 		//
 		// Register a class creator with this factory.
 		// It will associated by name, a create function.
@@ -64,7 +64,7 @@ namespace core
 			record.category_type = category;
 			records.push_back(record);
 		} // register a class
-		
+
 		//
 		// Find a class record by name or
 		// if category is specified, by category
@@ -79,7 +79,7 @@ namespace core
 					return &record;
 				}
 			}
-			
+
 			return 0;
 		} // find a class
 	}; // class Factory

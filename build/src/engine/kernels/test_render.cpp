@@ -54,10 +54,10 @@ public:
 	DECLARE_APPLICATION( TestRender );
 	Camera camera;
 	scenegraph::Node* root;
-	
+
 	size_t total_scene_nodes_visited;
 	renderer::SceneLink scenelink;
-	
+
 	glm::vec3 light_position;
 	float current_time;
 	scenegraph::Node* ground;
@@ -65,8 +65,8 @@ public:
 
 	renderer::RenderTarget* rt;
 
-	
-	
+
+
 	TestRender()
 	{
 //		camera.type = Camera::TARGET;
@@ -76,7 +76,7 @@ public:
 		advance_time = 1;
 		rt = 0;
 	}
-	
+
 	virtual void event( kernel::KeyboardEvent & event )
 	{
 		if (event.is_down)
@@ -103,7 +103,7 @@ public:
 			}
 		}
 	}
-	
+
 	virtual void event( kernel::MouseEvent & event )
 	{
 		switch( event.subtype )
@@ -114,7 +114,7 @@ public:
 				{
 					int lastx, lasty;
 					input::state()->mouse().last_mouse_position( lastx, lasty );
-					
+
 					camera.move_view( event.mx-lastx, event.my-lasty );
 				}
                 break;
@@ -122,10 +122,10 @@ public:
 			default: break;
 		}
 	}
-	
+
 	virtual void event( kernel::SystemEvent & event )
 	{
-		
+
 	}
 
 	virtual int visit(scenegraph::Node* node)
@@ -146,7 +146,7 @@ public:
 	{
 		root = CREATE(scenegraph::Node);
 		root->name = "scene_root";
-		
+
 //		scenegraph::MeshNode* skydome = 0;
 //		skydome = CREATE(scenegraph::MeshNode);
 //		assets::Material* colormat = assets::materials()->load_from_path("materials/skydome");
@@ -166,10 +166,10 @@ public:
 
 
 
-		
 
-		
-		
+
+
+
 //		assets::Texture* tex = assets::textures()->allocate_asset();
 //		tex->image.width = 512;
 //		tex->image.height = 512;
@@ -179,11 +179,11 @@ public:
 //
 //		tex->texture = renderer::driver()->texture_create(tex->image);
 //		rt = renderer::driver()->render_target_create(tex->image.width, tex->image.height);
-//		
+//
 //		renderer::driver()->render_target_set_attachment(rt, renderer::RenderTarget::COLOR, 0, tex->texture);
 
-		
-		
+
+
 //		assets::Material* mat = assets::materials()->allocate_asset();
 //		assets::Material::Parameter diffusemap;
 //		diffusemap.name = "diffusemap";
@@ -205,7 +205,7 @@ public:
 
 		camera.target_lookatOffset = glm::vec3(0, 0, 1);
 		camera.perspective( 50.0f, params.render_width, params.render_height, 0.1f, 32768.0f );
-		
+
 		// This is appropriate for drawing 3D models, but not sprites
 		camera.set_absolute_position( glm::vec3(1, 1, 1.0f) );
 		camera.yaw = -45;
@@ -221,7 +221,7 @@ public:
 		camera.move_right(input::state()->keyboard().is_down(input::KEY_D));
 		camera.move_forward(input::state()->keyboard().is_down(input::KEY_W));
 		camera.move_backward(input::state()->keyboard().is_down(input::KEY_S));
-		
+
 		camera.update_view();
 
 
@@ -229,7 +229,7 @@ public:
 		{
 			current_time += params.step_interval_seconds;
 		}
-		
+
 		const float dist = 9.0f;
 		float quotient = (current_time * (1.0f/2.0f));
 		light_position = glm::vec3(dist*cos(quotient), 3.0f, dist*sin(quotient));
@@ -241,7 +241,7 @@ public:
 
 		debugdraw::sphere(light_position, Color(255, 255, 255, 255), 0.5f, 0.0f);
 		debugdraw::axes(glm::mat4(1.0), 1.0f);
-		
+
 		debugdraw::text(10, 0, xstr_format("camera.pos = %.2g %.2g %.2g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255));
 		debugdraw::text(10, 12, xstr_format("eye_position = %.2g %.2g %.2g", camera.eye_position.x, camera.eye_position.y, camera.eye_position.z), Color(255, 0, 255));
 		debugdraw::text(10, 24, xstr_format("camera.view = %.2g %.2g %.2g", camera.view.x, camera.view.y, camera.view.z), Color(128, 128, 255));
@@ -263,35 +263,35 @@ public:
 //		}
 //		renderer::driver()->render_target_deactivate(rt);
 
-		
+
 		renderer::ConstantBuffer cb;
 		cb.modelview_matrix = &camera.matCam;
 		cb.projection_matrix = &camera.matProj;
 		cb.viewer_direction = &camera.view;
 		cb.viewer_position = &camera.eye_position;
 		cb.light_position = &light_position;
-	
+
 		RenderStream rs;
 		rs.add_viewport( 0, 0, params.render_width, params.render_height );
 		rs.add_clearcolor( 0.1, 0.1, 0.1, 1.0f );
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
-		
+
 		// render nodes
 		total_scene_nodes_visited = 0;
 		scenegraph::visit_nodes(root, this);
 		rs.run_commands();
 		scenelink.draw(root, cb);
-		
 
-		
 
-		
+
+
+
 //		BaseVar::render_values(10, 72);
 		{
 			debugdraw::render(camera.matCam, camera.matProj, 0, 0, params.render_width, params.render_height);
 		}
 	}
-	
+
 	virtual void shutdown( kernel::Params & params )
 	{
 		renderer::driver()->render_target_destroy(rt);

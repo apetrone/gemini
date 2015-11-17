@@ -44,20 +44,20 @@ namespace gemini
 {
 	class IEntityManager;
 	class IModelInterface;
-	
+
 	struct View;
 
-	
+
 	namespace physics
 	{
 		class IPhysicsInterface;
 	}
-	
+
 	class IDebugDraw;
 	class IAudioInterface;
 	class IExperimental;
 	class IEngineEntity;
-	
+
 	class IEngineInterface
 	{
 	public:
@@ -71,33 +71,33 @@ namespace gemini
 		virtual core::logging::ILog* log() = 0;
 		virtual IDebugDraw* debugdraw() = 0;
 		virtual IAudioInterface* audio() = 0;
-		
+
 		// memory hooks
 		virtual void* allocate(size_t bytes) = 0;
 		virtual void deallocate(void* pointer) = 0;
-		
+
 		virtual void render_view(const View& view, const core::Color& clear_color) = 0;
 		virtual void render_gui() = 0;
-		
-		
+
+
 		virtual core::memory::GlobalAllocatorType& allocator() = 0;
-		
+
 //		virtual void render_world(const glm::vec3& origin, const glm::vec2& view_angles) = 0;
 
 		// render a viewmodel (no depth testing; different fov)
 		virtual void render_viewmodel(IEngineEntity* entity, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
-		
+
 		virtual void get_render_resolution(uint32_t& render_width, uint32_t& render_height) = 0;
-		
+
 		// center the cursor in the main window (if applicable on this platform)
 		virtual void center_cursor() = 0;
-		
+
 		// show or hide cursor
 		virtual void show_cursor(bool show) = 0;
 
 		virtual void set_cursor(int x, int y) = 0;
 		virtual void get_cursor(int& x, int& y) = 0;
-		
+
 		// on platforms where the user has control to kill
 		// the application, do so.
 		virtual void terminate_application() = 0;
@@ -105,7 +105,7 @@ namespace gemini
 
 		virtual void set_relative_mouse_mode(bool enable) = 0;
 	};
-	
+
 	namespace engine
 	{
 		DECLARE_INTERFACE(IEngineInterface);

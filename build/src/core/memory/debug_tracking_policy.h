@@ -38,29 +38,29 @@ struct DebugTrackingPolicy
 		int line;
 	};
 #pragma pack(pop)
-	
+
 	typedef std::list<MemoryHeader*> MemoryBlockList;
 	MemoryBlockList allocated_blocks;
 	size_t current_allocation;
-	
+
 	DebugTrackingPolicy() :
 		current_allocation(0)
 	{
 	}
-	
+
 	~DebugTrackingPolicy()
 	{
 		print_leaks();
 	}
-	
+
 	/// Adjust the size of the allocation for this policy.
 	/// @returns the final size in bytes which should be allocated
 	size_t request_size(size_t requested_size, size_t /*alignment*/)
 	{
 		return requested_size + sizeof(MemoryHeader);
 	}
-	
-	
+
+
 	/// Track an allocation
 	/// @param pointer The pointer allocated
 	/// @param requested_size The size in bytes of this allocation
@@ -78,7 +78,7 @@ struct DebugTrackingPolicy
 		allocated_blocks.push_back(header);
 		return (header+1);
 	}
-	
+
 	/// Deallocates are VERY slow because we hunt the entire block list
 	/// to remove. this could probably use a free list instead.
 	/// @param allocation_size out param of this allocation's size in bytes
@@ -88,9 +88,9 @@ struct DebugTrackingPolicy
 		MemoryHeader* header = static_cast<MemoryHeader*>(pointer);
 		header--;
 		assert(header);
-		
+
 		allocation_size = header->allocation_size;
-		
+
 		// remove from allocated block list
 		MemoryBlockList::iterator it = allocated_blocks.begin();
 		for (; it != allocated_blocks.end(); ++it)
@@ -101,7 +101,7 @@ struct DebugTrackingPolicy
 				break;
 			}
 		}
-		
+
 		return header;
 	}
 private:

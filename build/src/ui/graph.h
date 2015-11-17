@@ -40,25 +40,25 @@ namespace gui
 	protected:
 		float* values;
 		bool show_baseline;
-		
+
 		int32_t range_min;
 		int32_t range_max;
-		
+
 		Point* last_point;
 		gui::Color* channel_colors;
 		gui::Color baseline_color;
 		float baseline_value;
-		
+
 		uint32_t total_samples;
 		uint32_t total_channels;
 		uint32_t* current_sample;
-		
+
 		FontHandle font_handle;
 		Color background_color;
 		Color foreground_color;
-		
+
 		float font_height;
-		
+
 		enum ChannelType
 		{
 			ChannelColor,
@@ -66,25 +66,25 @@ namespace gui
 			ChannelMax,
 			ChannelTotal
 		};
-		
+
 	private:
 		void draw_float(Renderer* renderer, float value, const Point& pt, const gui::Color& color, gui::render::CommandList& render_commands);
-		
+
 	public:
 		LIBRARY_EXPORT Graph(Panel* parent);
 		LIBRARY_EXPORT virtual ~Graph();
-		
+
 		LIBRARY_EXPORT void create_samples(uint32_t max_samples, uint32_t max_channels);
 		LIBRARY_EXPORT void configure_channel(uint32_t channel_index, const gui::Color& color/*, const gui::Color& min, const gui::Color& max*/);
 		LIBRARY_EXPORT void enable_baseline(bool enabled, float value = 0.0f, const gui::Color& color = gui::Color());
 		LIBRARY_EXPORT bool channel_in_range(uint32_t channel_index) const;
 		LIBRARY_EXPORT void record_value(float value, uint32_t channel_index);
 		LIBRARY_EXPORT void set_range(float min_range, float max_range);
-			
+
 		LIBRARY_EXPORT void set_font(const char* filename, size_t pixel_size);
 		LIBRARY_EXPORT virtual void set_background_color(const Color& color);
 		LIBRARY_EXPORT virtual void set_foreground_color(const Color& color);
-		
+
 		// Panel overrides
 		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
 	}; // Graph

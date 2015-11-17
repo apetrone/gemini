@@ -35,7 +35,7 @@ struct MenuItem
 	const char * name;
 	MenuItem * parent;
 	void * userdata;
-	
+
 	MenuItem();
 	~MenuItem();
 	MenuItem * child_at_index( unsigned int index );
@@ -49,7 +49,7 @@ class MenuNavigator
 {
 	MenuItem root;
 	MenuItem * current;
-	
+
 public:
 	MenuNavigator();
 	~MenuNavigator();
@@ -57,11 +57,11 @@ public:
 	MenuItem * root_menu();
 	MenuItem * current_menu();
 	void clear_items();
-	
+
 	// navigate back to parent
 	void navigate_back();
 	void navigate_to_child( unsigned int index );
-	
+
 	// child iteration
 	unsigned int child_count();
 	MenuItem * child_at_index( unsigned int i );

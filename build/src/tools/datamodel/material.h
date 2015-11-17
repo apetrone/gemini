@@ -52,16 +52,16 @@ namespace gemini
 			MaterialContainer materials_by_name;
 			MaterialVector materials;
 			MaterialId next_id;
-					
+
 		public:
 			MaterialMap();
 			virtual ~MaterialMap() {}
-			
+
 			Material& find_with_id(MaterialId id);
 			Material& find_with_name(const String& name);
 			Material& add_material(const String& name);
 			size_t size() const { return materials.size(); }
-		
+
 			MaterialVector::iterator begin();
 			MaterialVector::iterator end();
 			MaterialVector::const_iterator begin() const;

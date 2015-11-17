@@ -42,46 +42,46 @@ namespace kernel
 			void* events[ kernel::EventTypeCount ];
 			EventHooks();
 		};
-		
+
 		EventHooks::EventHooks()
 		{
 			memset(events, 0, sizeof(void*) * kernel::EventTypeCount );
 		}
-		
+
 		EventHooks event_hooks;
 		IKernel* kernel_instance = 0;
 		Parameters parameters;
 	} // namespace detail
-	
+
 	IKernel* instance()
 	{
 		return detail::kernel_instance;
 	} // instance
-	
+
 	void set_instance(IKernel* instance)
 	{
 		detail::kernel_instance = instance;
 	} // set_instance
-	
+
 	Parameters& parameters()
 	{
 		return detail::parameters;
 	} // parameters
-	
-	
-	
-	
+
+
+
+
 	void assign_listener_for_eventtype( kernel::EventType event_type, void * listener )
 	{
 		detail::event_hooks.events[ event_type ] = listener;
 	} // assign_listener_for_eventtype
-	
+
 	void * find_listener_for_eventtype( kernel::EventType event_type )
 	{
 		return detail::event_hooks.events[ event_type ];
 	} // find_listener_for_eventtype
-	
-	
+
+
 	Parameters::Parameters()
 	{
 		error_message = 0;
@@ -89,7 +89,7 @@ namespace kernel
 		step_alpha = 0;
 		step_interval_seconds = 0;
 		use_vsync = true;
-		
+
 		// we should default to swapping buffers ourself
 		swap_buffers = 1;
 
@@ -102,20 +102,20 @@ namespace kernel
 	{
 	}
 
-	
+
 	Error startup()
 	{
 		Error result = kernel::Error::NoError;
 
 		// The kernel instance must be set before calling kernel::startup!
 		assert(detail::kernel_instance != nullptr);
-		
+
 		// perform any startup duties here before we init the core
 		detail::kernel_instance->startup();
-		
+
 		return result;
 	} // startup
-	
+
 	void shutdown()
 	{
 		detail::kernel_instance->shutdown();
@@ -125,5 +125,5 @@ namespace kernel
 	{
 		detail::kernel_instance->tick();
 	}
-	
+
 } // namespace kernel

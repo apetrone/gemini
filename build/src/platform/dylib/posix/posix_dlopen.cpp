@@ -42,24 +42,24 @@ namespace platform
 			PLATFORM_LOG(LogMessageType::Error, "dlopen failed: %s", dlerror());
 			return 0;
 		}
-		
+
 		PosixDynamicLibrary* lib = MEMORY_NEW(PosixDynamicLibrary, get_platform_allocator());
 		lib->handle = handle;
 		return lib;
 	}
-	
+
 	void posix_dylib_close(DynamicLibrary* library)
 	{
 		PosixDynamicLibrary* lib = static_cast<PosixDynamicLibrary*>(library);
 		dlclose(lib->handle);
-		
+
 		MEMORY_DELETE(lib, get_platform_allocator());
 	}
-	
+
 	DynamicLibrarySymbol posix_dylib_find(DynamicLibrary* library, const char* symbol_name)
 	{
 		PosixDynamicLibrary* lib = static_cast<PosixDynamicLibrary*>(library);
 		return dlsym(lib->handle, symbol_name);
 	}
-	
+
 } // namespace platform

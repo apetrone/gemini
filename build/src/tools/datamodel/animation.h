@@ -42,13 +42,13 @@ namespace gemini
 		{
 			float time_seconds;
 			Type value;
-			
-			
+
+
 			Keyframe(float seconds, Type val) : time_seconds(seconds), value(val)
 			{
 			}
 		};
-		
+
 		template <class Type>
 		struct Channel
 		{
@@ -60,7 +60,7 @@ namespace gemini
 				keys.push_back(key);
 				return key;
 			}
-			
+
 			~Channel()
 			{
 				for (auto key : keys)
@@ -74,7 +74,7 @@ namespace gemini
 		{
 			// the name of the node corresponding to this data
 			String name;
-			
+
 			Channel<glm::vec3> scale;
 			Channel<glm::quat> rotation;
 			Channel<glm::vec3> translation;
@@ -84,21 +84,21 @@ namespace gemini
 		struct Animation
 		{
 			typedef std::map<String, NodeAnimation*> NodeAnimationByNameContainer;
-			
+
 			// keyframe/node data
 			std::vector< NodeAnimation* > node_animations;
 			NodeAnimationByNameContainer nodes_by_name;
-			
+
 			// this animations' data
 			String name;
 			uint16_t frames_per_second;
-			
+
 			// total animation length in seconds
 			float duration_seconds;
-			
+
 			Animation();
 			~Animation();
-			
+
 			NodeAnimation* data_with_name(const String& node_name);
 			NodeAnimation* add_node_data(const String& node_name);
 		};

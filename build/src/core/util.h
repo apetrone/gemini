@@ -38,7 +38,7 @@ namespace core
 	{
 		Type min;
 		Type max;
-		
+
 		void set_range( const Type & minimum, const Type & maximum )
 		{
 			this->min = minimum;

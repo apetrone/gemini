@@ -37,13 +37,13 @@ void iOSKernel::startup()
 	set_interface_orientation( [[UIApplication sharedApplication] statusBarOrientation] );
 
 	UIScreen * mainscreen = [UIScreen mainScreen];
-	
+
 	// setup device flags
 	if ( [mainscreen scale] > 1.0 )
 	{
 		parameters().device_flags |= (kernel::DeviceSupportsRetinaDisplay);
 	}
-	
+
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
 	{
 		parameters().device_flags |= kernel::DeviceiPhone;
@@ -52,16 +52,16 @@ void iOSKernel::startup()
 	{
 		parameters().device_flags |= kernel::DeviceiPad;
 	}
-	
+
 	LOGV( "startup orientations (Interface): %s, (Device): %s\n", UIInterfaceOrientationToString(last_orientation), UIDeviceOrientationToString([[UIDevice currentDevice] orientation]) );
-	
+
 	// hide the status bar
 	[[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationFade];
 } // startup
 
 void iOSKernel::register_services()
 {
-	
+
 } // register_services
 
 void iOSKernel::pre_tick()
@@ -78,14 +78,14 @@ void iOSKernel::post_application_config( kernel::ApplicationResult result )
 	UIScreenMode * screenmode = [mainscreen currentMode];
 	CGSize size = [screenmode size];
 	NSLog( @"device resolution: %g x %g", size.width, size.height );
-	
+
 	CGRect bounds = [mainscreen bounds];
-	
+
 	parameters().window_width = bounds.size.width;
 	parameters().window_height = bounds.size.height;
 	parameters().render_width = size.width;
 	parameters().render_height = size.height;
-	
+
 	// the orientation seems to be incorrect between launching the simulator and on the device.
 	// this makes it consistent by rotating the window coords when running in the simulator.
 #if	TARGET_IPHONE_SIMULATOR
@@ -103,7 +103,7 @@ void iOSKernel::shutdown()
 
 void iOSKernel::set_view_size( int width, int height )
 {
-	
+
 } // set_view_size
 
 void iOSKernel::set_interface_orientation( UIInterfaceOrientation current_orientation )
@@ -112,7 +112,7 @@ void iOSKernel::set_interface_orientation( UIInterfaceOrientation current_orient
 	// this swaps the width and height of the window to adjust for landscape <-> portrait changes
 	int previous_orientation_type = UIInterfaceOrientationIsLandscape(this->last_orientation);
 	int current_orientation_type = UIInterfaceOrientationIsLandscape(current_orientation);
-	
+
 	if ( previous_orientation_type != current_orientation_type )
 	{
 		LOGV( "[ORIENTATION CHANGE] %s -> %s\n", UIInterfaceOrientationToString(current_orientation),
@@ -129,7 +129,7 @@ BOOL iOSKernel::should_change_orientation( UIInterfaceOrientation orientation )
 	//kernelState.rotateMask |= (1 << UIInterfaceOrientationPortraitUpsideDown);
 	//kernelState.rotateMask |= (1 << UIInterfaceOrientationLandscapeLeft);
 	rotate_mask |= (1 << UIInterfaceOrientationLandscapeRight);
-	
+
 	return rotate_mask & (1 << orientation);
 } // should_change_orientation
 
@@ -143,7 +143,7 @@ void iOSKernel::rotate_window_coordinates()
 	int tmp = params.window_height;
 	params.window_height = params.window_width;
 	params.window_width = tmp;
-	
+
 	tmp = params.render_height;
 	params.render_height = params.render_width;
 	params.render_width = tmp;
@@ -159,8 +159,8 @@ void iOSKernel::will_resign_active()
 void iOSKernel::did_become_active()
 {
 	NSLog( @"did_become_active" );
-	// start generating orientation notifications	
-	[[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];	
+	// start generating orientation notifications
+	[[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
 }
 
 void iOSKernel::will_terminate()
@@ -183,7 +183,7 @@ const char * UIInterfaceOrientationToString( UIInterfaceOrientation orientation 
 		case UIInterfaceOrientationLandscapeLeft: return "UIInterfaceOrientationLandscapeLeft";
 		case UIInterfaceOrientationLandscapeRight: return "UIInterfaceOrientationLandscapeRight";
 	}
-	
+
 	return "Unknown";
 } // UIInterfaceOrientationToString
 
@@ -199,6 +199,6 @@ const char * UIDeviceOrientationToString( UIDeviceOrientation orientation )
 		case UIDeviceOrientationFaceUp: return "UIDeviceOrientationFaceUp";
 		case UIDeviceOrientationFaceDown: return "UIDeviceOrientationFaceDown";
 	}
-	
+
 	return "Unknown";
 } // UIDeviceOrientationToString

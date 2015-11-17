@@ -32,17 +32,17 @@ namespace platform
 	{
 		return posix_dylib_open(library_path);
 	}
-	
+
 	void dylib_close(DynamicLibrary* library)
 	{
 		posix_dylib_close(library);
 	}
-	
+
 	DynamicLibrarySymbol dylib_find(DynamicLibrary* library, const char* symbol_name)
 	{
 		return posix_dylib_find(library, symbol_name);
 	}
-	
+
 	const char* dylib_extension()
 	{
 		return ".so";

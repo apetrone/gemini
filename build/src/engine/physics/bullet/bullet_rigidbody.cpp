@@ -33,17 +33,17 @@
 namespace gemini
 {
 	namespace physics
-	{	
+	{
 		namespace bullet
 		{
 			BulletRigidBody::BulletRigidBody()
 			{
 			}
-			
+
 			BulletRigidBody::~BulletRigidBody()
 			{
 				remove_constraints();
-				
+
 				btRigidBody* body = get_bullet_body();
 
 				if (body)
@@ -52,14 +52,14 @@ namespace gemini
 					{
 						delete body->getMotionState();
 					}
-					
+
 					bullet::get_world()->removeCollisionObject(body);
 				}
 			}
 
 
 			btRigidBody* BulletRigidBody::get_bullet_body() const { return  btRigidBody::upcast(object); }
-			
+
 			void BulletRigidBody::apply_force(const glm::vec3& force, const glm::vec3& local_position)
 			{
 				btRigidBody* body = get_bullet_body();
@@ -69,7 +69,7 @@ namespace gemini
 					body->applyForce(btVector3(force.x, force.y, force.z), btVector3(local_position.x, local_position.y, local_position.z));
 				}
 			}
-			
+
 			void BulletRigidBody::apply_central_force(const glm::vec3& force)
 			{
 				btRigidBody* body = get_bullet_body();
@@ -79,7 +79,7 @@ namespace gemini
 					body->applyCentralForce(btVector3(force.x, force.y, force.z));
 				}
 			}
-			
+
 			void BulletRigidBody::set_mass(float mass)
 			{
 				btRigidBody* body = get_bullet_body();
@@ -92,17 +92,17 @@ namespace gemini
 					body->updateInertiaTensor();
 				}
 			}
-			
+
 			void BulletRigidBody::set_parent(ICollisionObject* first, ICollisionObject* second)
 			{
 				LOGV("TODO: implement set_parent\n");
 //				btRigidBody* rb0 = get_bullet_body();
 //				btRigidBody* rb1 = (static_cast<BulletRigidBody*>(second))->get_bullet_body();
-//				
+//
 //				btTypedConstraint* joint = new btPoint2PointConstraint(*rb0, *rb1, btVector3(0, 1, 0), btVector3(0, -1, 0));
 //				bullet::get_world()->addConstraint(joint);
 //				joint->setDbgDrawSize(btScalar(5.0f));
-//				
+//
 //				BulletConstraint* constraint = MEMORY_NEW(BulletConstraint, core::memory::global_allocator()) (joint);
 //				first->add_constraint(constraint);
 //				second->add_constraint(constraint);

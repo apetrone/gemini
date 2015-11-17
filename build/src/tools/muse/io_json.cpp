@@ -38,15 +38,15 @@ using namespace gemini::datamodel;
 
 namespace gemini
 {
-	
-	
+
+
 	template <class T>
 	bool RotationIsQuaternion() { return false; }
-	
+
 	template <>
 	bool RotationIsQuaternion<glm::quat>() { return true; }
-	
-	
+
+
 	template <class Type>
 	void jsonify_value(Json::Value& jvalue, const Type& value);
 
@@ -57,7 +57,7 @@ namespace gemini
 		v.append(vector.x);
 		v.append(vector.y);
 		v.append(vector.z);
-		
+
 		jvalue.append(v);
 	}
 
@@ -69,16 +69,16 @@ namespace gemini
 		q.append(quat.y);
 		q.append(quat.z);
 		q.append(quat.w);
-		
+
 		jvalue.append(q);
 	}
-	
+
 	template <class Type, class OutType>
 	OutType adapter(const Type& input)
 	{
 		return input;
 	}
-	
+
 	template <>
 	glm::quat adapter<glm::vec3, glm::quat>(const glm::vec3& input)
 	{
@@ -101,12 +101,12 @@ namespace gemini
 			jtime.append(key->time_seconds);
 			jsonify_value(jvalue, adapter<Type, OutType>(key->value));
 		}
-		
+
 		jkeys["time"] = jtime;
 		jkeys["value"] = jvalue;
 	}
 
-	
+
 	void JsonModelWriter::write_animations(const std::string& abs_base_path, datamodel::Model* model)
 	{
 		size_t total_animations = model->animations.size();
@@ -116,55 +116,55 @@ namespace gemini
 		}
 
 		// this should export a single animation per file.
-		
+
 		for (datamodel::Animation* animation : model->animations)
 		{
 			Json::Value janimation;
-			
+
 			janimation["name"] = animation->name.c_str();
 //			LOGV("animation: %s\n", animation->name.c_str());
-			
+
 			janimation["frames_per_second"] = animation->frames_per_second;
 			janimation["duration_seconds"] = animation->duration_seconds;
 
-			
+
 			Json::Value jnodes(Json::arrayValue);
 			for (NodeAnimation* data : animation->node_animations)
 			{
 				Json::Value jnode;
 				datamodel::Bone* bone = model->skeleton->find_bone_named(data->name);
-				
+
 				// animation present for bone that was not added to the skeleton
 				assert(bone != 0);
-				
+
 				if (bone)
 				{
 //					LOGV("bone: %s\n", bone->name.c_str());
 //					LOGV("# keys: %i %i %i\n", data->translation.keys.size(), data->rotation.keys.size(), data->scale.keys.size());
-					
+
 					Json::Value jscale;
 					gather_keys<glm::vec3, glm::vec3>(jscale, data->scale.keys);
-					
+
 					Json::Value jrotation;
 					gather_keys<glm::quat, glm::quat>(jrotation, data->rotation.keys);
-					
+
 					Json::Value jtranslation;
 					gather_keys<glm::vec3, glm::vec3>(jtranslation, data->translation.keys);
-					
+
 					jnode["name"] = bone->name.c_str();
 					jnode["scale"] = jscale;
 					jnode["rotation"] = jrotation;
 					jnode["translation"] = jtranslation;
 					jnodes.append(jnode);
 				}
-				
+
 			}
 			janimation["nodes"] = jnodes;
 
-			
+
 			Json::StyledWriter writer;
 			std::string buffer = writer.write(janimation);
-						
+
 			std::string abs_file_path = abs_base_path + ".animation";
 			LOGV("writing animation '%s'\n", abs_file_path.c_str());
 			platform::File handle = platform::fs_open(abs_file_path.c_str(), platform::FileMode_Write);
@@ -179,63 +179,63 @@ namespace gemini
 			}
 		}
 	}
-	
+
 	JsonModelWriter::JsonModelWriter()
 	{
 	}
-	
+
 	void JsonModelWriter::jsonify_matrix(Json::Value& array, glm::mat4& matrix)
 	{
 		array.append(matrix[0].x);
 		array.append(matrix[1].x);
 		array.append(matrix[2].x);
 		array.append(matrix[3].x);
-		
+
 		array.append(matrix[0].y);
 		array.append(matrix[1].y);
 		array.append(matrix[2].y);
 		array.append(matrix[3].y);
-		
+
 		array.append(matrix[0].z);
 		array.append(matrix[1].z);
 		array.append(matrix[2].z);
 		array.append(matrix[3].z);
-		
+
 		array.append(matrix[0].w);
 		array.append(matrix[1].w);
 		array.append(matrix[2].w);
 		array.append(matrix[3].w);
 	}
-	
+
 	void JsonModelWriter::append_material(const datamodel::Material& material, Json::Value& jmaterials)
 	{
 		Json::Value jmaterial;
-		
+
 		jmaterial["name"] = material.name.c_str();
 		jmaterial["id"] = material.id;
-		
+
 		jmaterials.append(jmaterial);
 	}
-	
+
 	void JsonModelWriter::append_node(datamodel::Node* node, Json::Value& jnodes)
 	{
 		Json::Value jnode;
-		
+
 		jnode["name"] = node->name.c_str();
 		jnode["type"] = node->type.c_str();
-		
+
 		Json::Value child_nodes(Json::arrayValue);
 		for (auto child : node->children)
 		{
 			append_node(child, child_nodes);
 		}
 		jnode["children"] = child_nodes;
-		
-		
+
+
 		if (node->mesh)
 		{
 			Json::Value mesh_data;
-			
+
 			// write vertices
 			Json::Value vertices(Json::arrayValue);
 			for (size_t vertex_id = 0; vertex_id < node->mesh->vertices.size(); ++vertex_id)
@@ -248,7 +248,7 @@ namespace gemini
 				vertices.append(jvertex);
 			}
 			mesh_data["vertices"] = vertices;
-			
+
 			// write indices
 			Json::Value indices(Json::arrayValue);
 			for (size_t index_id = 0; index_id < node->mesh->indices.size(); ++index_id)
@@ -256,7 +256,7 @@ namespace gemini
 				indices.append(node->mesh->indices[index_id]);
 			}
 			mesh_data["indices"] = indices;
-			
+
 			// write normals
 			Json::Value normals(Json::arrayValue);
 			for (size_t normal_id = 0; normal_id < node->mesh->normals.size(); ++normal_id)
@@ -269,7 +269,7 @@ namespace gemini
 				normals.append(jnormal);
 			}
 			mesh_data["normals"] = normals;
-			
+
 			// write vertex_colors
 			Json::Value vertex_colors(Json::arrayValue);
 			for (size_t color_id = 0; color_id < node->mesh->vertex_colors.size(); ++color_id)
@@ -283,8 +283,8 @@ namespace gemini
 				vertex_colors.append(jcolor);
 			}
 			mesh_data["vertex_colors"] = vertex_colors;
-			
-			
+
+
 			// write uvs
 			Json::Value uv_sets(Json::arrayValue);
 			for (size_t uv_set_id = 0; uv_set_id < node->mesh->uvs.size(); ++uv_set_id)
@@ -301,8 +301,8 @@ namespace gemini
 				uv_sets.append(juvs);
 			}
 			mesh_data["uv_sets"] = uv_sets;
-			
-			
+
+
 			// write blend weights
 			Json::Value blend_weights(Json::arrayValue);
 			for (size_t index_id = 0; index_id < node->mesh->indices.size(); ++index_id)
@@ -312,7 +312,7 @@ namespace gemini
 				// at a max of MAX_SUPPORTED_BONE_INFLUENCES.
 				Json::Value weight_array(Json::arrayValue);
 				datamodel::WeightList& weightlist = node->mesh->weights[index_id];
-				
+
 				for (size_t influence = 0; influence < datamodel::MAX_SUPPORTED_BONE_INFLUENCES; ++influence)
 				{
 					datamodel::Weight& weight = weightlist.weights[influence];
@@ -324,20 +324,20 @@ namespace gemini
 						weight_array.append(weightpair);
 					}
 				}
-				
+
 				blend_weights.append(weight_array);
 			}
-			
+
 			mesh_data["blend_weights"] = blend_weights;
-			
+
 			mesh_data["material_id"] = node->mesh->material;
-			
+
 			Json::Value mass_center_offset(Json::arrayValue);
 			mass_center_offset.append(node->mesh->mass_center_offset.x);
 			mass_center_offset.append(node->mesh->mass_center_offset.y);
 			mass_center_offset.append(node->mesh->mass_center_offset.z);
 			mesh_data["mass_center_offset"] = mass_center_offset;
-			
+
 
 			// write out the bind_pose data, if populated
 			Json::Value bind_pose(Json::arrayValue);
@@ -349,7 +349,7 @@ namespace gemini
 					// for debugging; leave these in.
 					bone_entry["name"] = link.bone_name.c_str();
 					bone_entry["parent"] = link.parent;
-					
+
 					Json::Value inverse_bind_pose;
 					const float* data = (const float*)glm::value_ptr(link.inverse_bind_pose);
 					for (size_t i = 0; i < 16; ++i)
@@ -361,7 +361,7 @@ namespace gemini
 				}
 			}
 			mesh_data["bind_pose"] = bind_pose;
-			
+
 			Json::Value bbox_mins(Json::arrayValue);
 			bbox_mins.append(node->mesh->mins.x);
 			bbox_mins.append(node->mesh->mins.y);
@@ -373,10 +373,10 @@ namespace gemini
 			bbox_maxs.append(node->mesh->maxs.y);
 			bbox_maxs.append(node->mesh->maxs.z);
 			jnode["maxs"] = bbox_maxs;
-			
+
 			jnode["mesh"] = mesh_data;
 		}
-		
+
 		// add this node
 		jnodes.append(jnode);
 	}
@@ -386,7 +386,7 @@ namespace gemini
 	{
 		Json::Value jroot;
 		Json::Value jnodes(Json::arrayValue);
-		
+
 		if (model->export_flags == 0)
 		{
 			LOGW("Instructed not to export anything. wat?\n");
@@ -430,16 +430,16 @@ namespace gemini
 		}
 		jroot["skeleton"] = jskeleton;
 
-		
+
 		if (model->export_flags & (Model::EXPORT_MESHES | Model::EXPORT_MATERIALS | Model::EXPORT_SKELETON))
 		{
 			Json::StyledWriter writer;
-			
+
 			std::string buffer = writer.write(jroot);
-			
+
 			std::string abs_model_file = abs_base_path;
 			abs_model_file.append(".model");
-			
+
 			platform::File handle = platform::fs_open(abs_model_file.c_str(), platform::FileMode_Write);
 			if (handle.is_open())
 			{
@@ -450,16 +450,16 @@ namespace gemini
 			{
 				LOGE("error writing to file %s\n", abs_model_file.c_str());
 			}
-			
+
 
 		}
 
-		
+
 		if (!model->animations.empty() && (model->export_flags & Model::EXPORT_ANIMATIONS))
 		{
 			write_animations(abs_base_path, model);
 		}
-		
+
 		return true;
 	} // write
 } // namespace gemini

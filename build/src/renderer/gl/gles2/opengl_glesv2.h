@@ -29,23 +29,23 @@
 class GLESv2 : public renderer::IRenderDriver
 {
 	DECLARE_FACTORY_CLASS( GLESv2, renderer::IRenderDriver );
-	
+
 public:
 	GLESv2();
 	~GLESv2();
-	
+
 	// should use VAOs?
 	bool has_oes_vertex_array_object;
-	
+
 	// should use VBOs?
 	bool has_vbo_support;
-	
+
 	virtual const char * description() { return "OpenGL ES 2.0"; }
-	
+
 	virtual void run_command( renderer::DriverCommandType command, MemoryStream & stream );
 	virtual void post_command( renderer::DriverCommandType command, MemoryStream & stream );
 	virtual void setup_drawcall( renderer::VertexBuffer * vertexbuffer, MemoryStream & stream );
-	
+
 	// texture
 	virtual bool upload_texture_2d( renderer::TextureParameters & parameters );
 	virtual bool generate_texture( renderer::TextureParameters & parameters );
@@ -57,19 +57,19 @@ public:
 	virtual renderer::VertexBuffer * vertexbuffer_create( renderer::VertexDescriptor & descriptor, renderer::VertexBufferDrawType draw_type, renderer::VertexBufferBufferType buffer_type, unsigned int vertex_size, unsigned int max_vertices, unsigned int max_indices );
 	virtual void vertexbuffer_destroy( renderer::VertexBuffer * stream );
 	virtual void vertexbuffer_upload_data( renderer::VertexBuffer * vertexbuffer, unsigned int vertex_stride, unsigned int vertex_count, renderer::VertexType * vertices, unsigned int index_count, renderer::IndexType * indices );
-	
+
 	virtual void vertexbuffer_draw_indices( renderer::VertexBuffer * vertexbuffer, unsigned int num_indices );
 	virtual void vertexbuffer_draw( renderer::VertexBuffer * vertexbuffer, unsigned int num_vertices );
-	
+
 	virtual renderer::VertexBuffer * vertexbuffer_from_geometry( renderer::VertexDescriptor & descriptor, renderer::Geometry * geometry );
 	virtual void vertexbuffer_upload_geometry( renderer::VertexBuffer * vertexbuffer, renderer::Geometry * geometry );
-	
+
 	// shaders
-	
+
 	virtual renderer::ShaderObject shaderobject_create( renderer::ShaderObjectType shader_type );
 	virtual bool shaderobject_compile( renderer::ShaderObject shader_object, const char * shader_source, const char * preprocessor_defines, const char * version );
 	virtual void shaderobject_destroy( renderer::ShaderObject shader_object );
-	
+
 	virtual renderer::ShaderProgram shaderprogram_create( renderer::ShaderParameters & parameters );
 	virtual void shaderprogram_destroy( renderer::ShaderProgram program );
 	virtual void shaderprogram_attach( renderer::ShaderProgram shader_program, renderer::ShaderObject shader_object );
@@ -79,5 +79,5 @@ public:
 	virtual bool shaderprogram_link_and_validate( renderer::ShaderProgram shader_program, renderer::ShaderParameters & parameters );
 	virtual void shaderprogram_activate( renderer::ShaderProgram shader_program );
 	virtual void shaderprogram_deactivate( renderer::ShaderProgram shader_program );
-	
+
 }; // GLESv2

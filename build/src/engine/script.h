@@ -37,12 +37,12 @@ namespace script
 	const int64_t MINIMUM_STACK_SIZE = 128;
 	void startup( int64_t stack_size = script::MINIMUM_STACK_SIZE );
 	void shutdown();
-	
+
 	const char * string_for_type( int sqtype );
 	void print_stack( HSQUIRRELVM vm );
-	
+
 	HSQUIRRELVM get_vm();
-	
+
 	template <class Type>
 	void get_variable( const SQChar * name, Type & value )
 	{
@@ -52,10 +52,10 @@ namespace script
 			value = obj.Cast<Type>();
 		}
 	} // get_variable
-	
+
 	// run a script file; returns true on success, false on failure/exception
 	bool execute_file( const char * filename );
-	
+
 	bool find_function( const SQChar* name, Sqrat::Function & function );
 	HSQOBJECT find_member( HSQOBJECT class_obj, const SQChar* name );
 	void check_result( SQRESULT result, const char * debug_string );

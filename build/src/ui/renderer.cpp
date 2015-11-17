@@ -50,14 +50,14 @@ namespace render
 
 	void CommandList::push_clip_rect(const Rect& clip_rect)
 	{
-		
+
 	}
-	
+
 	void CommandList::pop_clip_rect()
 	{
 
 	}
-	
+
 	void CommandList::add_drawcall()
 	{
 		Command command;
@@ -67,24 +67,24 @@ namespace render
 		command.clip_rect = Rect(0, 0, 0, 0);
 		commands.push_back(command);
 	}
-	
-	
+
+
 	// ---------------------------------------------------------------------
 	// primitives
 	// ---------------------------------------------------------------------
 	void CommandList::primitive_reserve(size_t count)
 	{
 		assert(vertex_buffer);
-		
+
 		size_t current_vertex_offset = vertex_buffer->size();
 		Command& command = commands.back();
 		command.vertex_offset = current_vertex_offset;
 		command.vertex_count = count;
-		
+
 		vertex_buffer->resize(current_vertex_offset + count);
 		write_pointer = &(*vertex_buffer)[current_vertex_offset];
 	}
-	
+
 	void CommandList::primitive_quad(const gui::Point &p0, const gui::Point &p1, const gui::Point &p2, const gui::Point &p3, const TextureHandle& texture, const gui::Color &color)
 	{
 		primitive_reserve(6);
@@ -98,38 +98,38 @@ namespace render
 		write_pointer[0].color = color;
 		write_pointer[0].uv[0] = 0;
 		write_pointer[0].uv[1] = 1;
-				
+
 		write_pointer[1].x = p1.x;
 		write_pointer[1].y = p1.y;
 		write_pointer[1].color = color;
 		write_pointer[1].uv[0] = 0;
 		write_pointer[1].uv[1] = 0;
-		
+
 		write_pointer[2].x = p2.x;
 		write_pointer[2].y = p2.y;
 		write_pointer[2].color = color;
 		write_pointer[2].uv[0] = 1;
 		write_pointer[2].uv[1] = 0;
-		
+
 		write_pointer[3].x = p2.x;
 		write_pointer[3].y = p2.y;
 		write_pointer[3].color = color;
 		write_pointer[3].uv[0] = 1;
 		write_pointer[3].uv[1] = 0;
-		
+
 		write_pointer[4].x = p3.x;
 		write_pointer[4].y = p3.y;
 		write_pointer[4].color = color;
 		write_pointer[4].uv[0] = 1;
 		write_pointer[4].uv[1] = 1;
-		
+
 		write_pointer[5].x = p0.x;
 		write_pointer[5].y = p0.y;
 		write_pointer[5].color = color;
 		write_pointer[5].uv[0] = 0;
 		write_pointer[5].uv[1] = 1;
 	}
-	
+
 	void CommandList::add_line(const Point& start, const Point& end, const gui::Color& color, float thickness)
 	{
 		Point corners[4];
@@ -155,13 +155,13 @@ namespace render
 		add_drawcall();
 		primitive_quad(corners[0], corners[1], corners[2], corners[3], TextureHandle(), color);
 	}
-	
+
 	void CommandList::add_rectangle(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gui::Color& color)
 	{
 		add_drawcall();
 		primitive_quad(p0, p1, p2, p3, texture, color);
 	}
-	
+
 	void CommandList::add_font(const FontHandle& font, const char* utf8, const Rect& bounds, const gui::Color& color)
 	{
 		add_drawcall();

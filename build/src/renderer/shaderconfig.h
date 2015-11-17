@@ -29,12 +29,12 @@
 namespace renderer
 {
 //	struct ShaderProgram;
-	
+
 	namespace shader_config
 	{
 		void startup();
 		void shutdown();
-		
+
 		void load_shaderprogram_from_file(const char* path, renderer::ShaderProgram** program);
 	}
 } // namespace renderer

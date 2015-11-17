@@ -36,7 +36,7 @@ class ExtAudioDecoder : public audio::IAudioDecoder
 	int _sampleRate;
 	int _numChannels;
 	int _currentOffset;
-	
+
 public:
 	ExtAudioDecoder();
 	~ExtAudioDecoder();

@@ -47,14 +47,14 @@ namespace gemini
 
 			public:
 				CustomMotionState(const glm::vec3& origin, const glm::quat& basis);
-				
+
 				void set_body_and_ghost(btRigidBody* body, btGhostObject* ghost);
 				btTransform compose_transform() const;
 
 				virtual ~CustomMotionState() {}
 
 				virtual void getWorldTransform(btTransform &world_transform) const;
-				
+
 				// world_transform will be the interpolated value
 				virtual void setWorldTransform(const btTransform &world_transform);
 			};

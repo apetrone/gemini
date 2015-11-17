@@ -44,15 +44,15 @@ WinLossScreen::WinLossScreen()
 {
 	menu_font = assets::fonts()->load_from_path( "fonts/default24" );
 	title_font = assets::fonts()->load_from_path( "fonts/default48" );
-	
+
 	MenuItem * root = menunav.root_menu();
 	MenuItem * item;
 	item = root->add_child("Play Again");
 	item->userdata = (void*)&MENU_PLAY_AGAIN;
-	
+
 	item = root->add_child("Quit");
 	item->userdata = (void*)&MENU_QUIT;
-	
+
 	current_menu = 0;
 }
 
@@ -81,13 +81,13 @@ void WinLossScreen::on_draw( kernel::IApplication * app )
 {
 	// draw title
 	float vx, vy;
-	
+
 	float width = font::measure_width(title_font, title);
 	float px = width/2.0;
 	float py = 0;
 
 	pixels_to_virtual_screen(px, py);
-	
+
 	vx = 0.5f - px;
 	vy = 0.16f;
 	virtual_screen_to_pixels(vx, vy);
@@ -105,7 +105,7 @@ void WinLossScreen::on_draw( kernel::IApplication * app )
 			{
 				StackString<128> text;
 				Color menu_color = Color(255,255,255);
-				
+
 				if ( current_menu == i )
 				{
 					menu_color = Color(255,0,0);
@@ -133,7 +133,7 @@ void WinLossScreen::on_update( kernel::IApplication * app ) {}
 
 void WinLossScreen::on_step( kernel::IApplication * app ) {}
 
-	
+
 const char * WinLossScreen::name() const
 {
 	return screen_name;
@@ -152,12 +152,12 @@ void WinLossScreen::on_event( kernel::KeyboardEvent & event, kernel::IApplicatio
 	{
 		return;
 	}
-	
+
 	bool is_up = (event.key == input::KEY_UP);
 	bool is_down = (event.key == input::KEY_DOWN);
 	bool is_arrow = is_up || is_down;
 	bool should_advance = (event.key == input::KEY_RETURN || event.key == input::KEY_SPACE);
-		
+
 	if ( (!is_arrow) && (event.key == input::KEY_ESCAPE) )
 	{
 //		skip_screen( app );
@@ -200,7 +200,7 @@ void WinLossScreen::on_event( kernel::KeyboardEvent & event, kernel::IApplicatio
 				current_menu = 0;
 			}
 		}
-		
+
 	}
 }
 

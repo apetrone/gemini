@@ -42,28 +42,28 @@ MenuScreen::MenuScreen()
 {
 	menu_font = assets::fonts()->load_from_path( "fonts/default24" );
 	title_font = assets::fonts()->load_from_path("fonts/default64" );
-	
+
 	MenuItem * root = menunav.root_menu();
 	MenuItem * item;
 	item = root->add_child("Play");
 	item->userdata = (void*)&MENU_PLAY;
-	
+
 	root->add_child("Options");
 
 	item = root->add_child("Quit");
 	item->userdata = (void*)&MENU_QUIT;
-	
+
 	current_menu = 0;
-	
+
 	mainmenu = assets::materials()->load_from_path("materials/mainmenu");
-	
-	
+
+
 	vs.reset();
 	vs.desc.add( renderer::VD_FLOAT3 );
 	vs.desc.add( renderer::VD_UNSIGNED_BYTE4 );
 	vs.desc.add( renderer::VD_FLOAT2 );
 	vs.create( 16, 24, renderer::DRAW_INDEXED_TRIANGLES );
-	
+
 	rc.stream = &vs;
 	rc.attribs = 5;
 }
@@ -87,12 +87,12 @@ void MenuScreen::on_draw( kernel::IApplication * app )
 	uvs[2].v = 1;
 	uvs[3].u = 0;
 	uvs[3].v = 1;
-	
+
 	rc.rs.rewind();
-	
+
 	kernel::Params & params = kernel::instance()->parameters();
 	rc.camera.ortho( 0.0f, (float)params.render_width, (float)params.render_height, 0.0f, -1.0f, 1.0f );
-	
+
 	rc.rs.add_blendfunc( renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA );
 	rc.rs.add_state( renderer::STATE_BLEND, 1 );
 
@@ -110,12 +110,12 @@ void MenuScreen::on_draw( kernel::IApplication * app )
 	vy = 0.395f;
 	virtual_screen_to_pixels(vx, vy);
 	rc.add_sprite_to_layer(0, vx, vy, 256, 256, Color(255,255,255), (float*)uvs);
-	
+
 	rc.render_stream( this->mainmenu );
 
 
 	// draw title
-	
+
 	vx = 0.083f;
 	vy = 0.16f;
 	virtual_screen_to_pixels(vx, vy);
@@ -133,7 +133,7 @@ void MenuScreen::on_draw( kernel::IApplication * app )
 			{
 				StackString<128> text;
 				Color menu_color = Color(255,255,255);
-				
+
 				if ( current_menu == i )
 				{
 					menu_color = Color(255,0,0);
@@ -161,7 +161,7 @@ void MenuScreen::on_update( kernel::IApplication * app ) {}
 
 void MenuScreen::on_step( kernel::IApplication * app ) {}
 
-	
+
 const char * MenuScreen::name() const
 {
 	return "MenuScreen";
@@ -180,12 +180,12 @@ void MenuScreen::on_event( kernel::KeyboardEvent & event, kernel::IApplication *
 	{
 		return;
 	}
-	
+
 	bool is_up = (event.key == input::KEY_UP);
 	bool is_down = (event.key == input::KEY_DOWN);
 	bool is_arrow = is_up || is_down;
 	bool should_advance = (event.key == input::KEY_RETURN || event.key == input::KEY_SPACE);
-		
+
 	if ( (!is_arrow) && (event.key == input::KEY_ESCAPE) )
 	{
 //		skip_screen( app );
@@ -228,7 +228,7 @@ void MenuScreen::on_event( kernel::KeyboardEvent & event, kernel::IApplication *
 				current_menu = 0;
 			}
 		}
-		
+
 	}
 }
 

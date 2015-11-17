@@ -38,13 +38,13 @@ public:
 	size_t total_elements;
 	size_t tail_index;
 	static Type default_value;
-	
+
 	FixedSizeQueue() :
 		total_elements(MaxSize),
 		tail_index(0)
 	{
 	}
-	
+
 	~FixedSizeQueue()
 	{
 	}
@@ -67,10 +67,10 @@ public:
 			elements[tail_index++] = item;
 			return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	Type pop()
 	{
 		// If you hit this, there are no items in the queue.

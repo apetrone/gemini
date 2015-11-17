@@ -42,15 +42,15 @@ namespace gemini
 	class SceneLink
 	{
 		::renderer::RenderQueue* queue;
-		
+
 	public:
 		SceneLink();
 		~SceneLink();
-		
+
 		void clear();
 		void sort();
 		void draw(glm::mat4* modelview_matrix, glm::mat4* projection_matrix);
-		
+
 		void queue_entities(gemini::IEngineEntity** entity_list, uint32_t max_entities, uint32_t render_flags = 0);
 	};
 } // namespace gemini

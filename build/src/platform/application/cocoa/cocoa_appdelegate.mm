@@ -34,10 +34,10 @@ static bool has_started = false;
 -(CGFloat)calculate_titlebar_height
 {
 	NSWindow *main_window = [[NSApplication sharedApplication] mainWindow];
-	
+
 	NSRect frame = [main_window frame];
 	NSRect content_rect = [NSWindow contentRectForFrameRect:frame styleMask:NSTitledWindowMask];
-	
+
 	return (frame.size.height - content_rect.size.height);
 }
 
@@ -70,7 +70,7 @@ static bool has_started = false;
 	if (!has_started)
 	{
 		has_started = true;
-			
+
 		platform::startup();
 
 		kernel::startup();

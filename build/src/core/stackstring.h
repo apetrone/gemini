@@ -40,17 +40,17 @@ namespace core
 	{
 	private:
 		typedef StackString<maximum_size, Type> StackStringType;
-		
+
 	public:
 
 		Type _data[maximum_size];
 		unsigned int _length;
-		
+
 		StackString()
 		{
 			clear();
 		}
-		
+
 		StackString(const Type * s)
 		{
 			clear();
@@ -59,12 +59,12 @@ namespace core
 				copy_data(s);
 			}
 		}
-		
+
 		unsigned int max_size() const
 		{
 			return maximum_size;
 		}
-		
+
 		void copy_data(const Type* source)
 		{
 			clear();
@@ -72,23 +72,23 @@ namespace core
 			assert(_length < maximum_size-1);
 			core::str::copy(_data, source, _length+1);
 		}
-		
+
 		void clear()
 		{
 			memset(_data, 0, maximum_size);
 			_length = 0;
 		}
-		
+
 		bool is_empty() const
 		{
 			return _length == 0;
 		}
-		
+
 		size_t size() const
 		{
 			return _length;
 		}
-		
+
 		void recompute_size(const Type* source = nullptr)
 		{
 			if (!source)
@@ -97,7 +97,7 @@ namespace core
 			}
 			_length = core::str::len(source);
 		}
-		
+
 		void operator= (const Type * data)
 		{
 			//printf( "data: %s\n", data );
@@ -106,7 +106,7 @@ namespace core
 				copy_data(data);
 			}
 		}
-		
+
 		bool operator== (const StackStringType& other) const
 		{
 			assert(_length != 0 && _data != nullptr);
@@ -114,7 +114,7 @@ namespace core
 			{
 				return false;
 			}
-			
+
 			const Type* data = other._data;
 			const Type* self = _data;
 			for (size_t i = 0; i < other._length; ++i)
@@ -123,14 +123,14 @@ namespace core
 				{
 					return false;
 				}
-				
+
 				++data;
 				++self;
 			}
-			
+
 			return true;
 		}
-		
+
 		const Type & operator[] ( int index ) const
 		{
 			return _data[ index ];
@@ -153,7 +153,7 @@ namespace core
 
 			return pos;
 		}
-		
+
 		StackStringType basename()
 		{
 			// return the basename of a filepath. (just the filename)
@@ -184,10 +184,10 @@ namespace core
 				out[ out._length ] = '\0';
 				return out;
 			}
-			
+
 			return *this;
 		}
-		
+
 		const Type* extension() const
 		{
 			Type* p = strrchr( (Type*)_data, '.' );
@@ -197,21 +197,21 @@ namespace core
 			}
 			return p+1;
 		}
-		
+
 		StackStringType& remove_extension()
 		{
 			const Type* p = extension();
 			if (p != nullptr)
 			{
 				size_t location = (p-_data-1);
-				
+
 				_data[location] = '\0';
 				_length = core::str::len(_data);
 			}
-			
+
 			return *this;
 		}
-		
+
 		void normalize(Type prefer)
 		{
 			for(unsigned int i = 0; i < _length; ++i)
@@ -222,7 +222,7 @@ namespace core
 				}
 			}
 		}
-		
+
 		StackStringType& append(const Type * s)
 		{
 			if (s)
@@ -237,17 +237,17 @@ namespace core
 					assert( 0 );
 				}
 			}
-			
+
 			return *this;
 		}
-		
+
 		StackStringType& append(const StackStringType& in)
 		{
 			*this = append(in._data);
-			
+
 			return *this;
 		}
-		
+
 		const Type* operator ()() const
 		{
 			return _data;
@@ -257,12 +257,12 @@ namespace core
 		{
 			return _data;
 		}
-		
+
 		const char* c_str() const
 		{
 			return _data;
 		}
-		
+
 		StackStringType& strip_trailing(char character)
 		{
 			if (_length > 0)
@@ -273,11 +273,11 @@ namespace core
 					_length--;
 				}
 			}
-			
+
 			return *this;
 		}
 
-		
+
 		void lshift(int pos, int count)
 		{
 			char * src;
@@ -285,10 +285,10 @@ namespace core
 			memset( temp, 0, maximum_size );
 			memcpy( temp, _data, maximum_size );
 			src = &temp[pos+count];
-			
+
 			memcpy( _data+pos, src, maximum_size-pos );
 		}
-		
+
 		void shift(int pos, int count)
 		{
 			char * src;
@@ -296,14 +296,14 @@ namespace core
 			memset( temp, 0, maximum_size );
 			memcpy( temp, _data, maximum_size );
 			src = &temp[pos];
-			
+
 			for( int i = pos; i < maximum_size; ++i )
 			{
 				if( *src == '\0' )
 				{
 					break;
 				}
-				
+
 				if( i < (pos+count) )
 				{
 					_data[ i ] = ' ';
@@ -315,7 +315,7 @@ namespace core
 				}
 			}
 		}
-		
+
 		bool startswith(const Type* s1) const
 		{
 			size_t string_length = core::str::len(s1);
@@ -326,10 +326,10 @@ namespace core
 					return false;
 				}
 			}
-			
+
 			return true;
 		} // startswith
-		
+
 		StackStringType substring(size_t start, size_t len = maximum_size)
 		{
 			StackStringType output;
@@ -337,12 +337,12 @@ namespace core
 			{
 				len = maximum_size-start;
 			}
-		
+
 			memcpy(output._data, &_data[start], len);
 			output._length = len;
-			
+
 			return output;
 		} // substring
-		
+
 	}; // class StackString
 } // namespace core

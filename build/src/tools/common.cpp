@@ -64,13 +64,13 @@ namespace gemini
 			core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
 			filesystem->root_directory(root_path);
 			filesystem->content_directory(content_path);
-			
+
 			PathString application_directory = platform::get_user_application_directory(application_name);
 			filesystem->user_application_directory(application_directory);
 
 			core::startup_logging();
 		}
-		
+
 		void shutdown()
 		{
 			purge_registry<datamodel::Model>();
@@ -80,7 +80,7 @@ namespace gemini
 			datamodel::Material* material = &datamodel::get_default_material();
 			MEMORY_DELETE(material, core::memory::global_allocator());
 			datamodel::set_default_material(0);
-			
+
 			core::shutdown();
 			platform::shutdown();
 		}

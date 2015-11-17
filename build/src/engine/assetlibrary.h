@@ -43,54 +43,54 @@ namespace gemini
 			typedef AssetLoadStatus (*AssetLoadCallback)( const char * path, AssetClass * asset, const AssetParameterClass & parameters );
 			typedef void (*AssetConstructExtension)( core::StackString<MAX_PATH_SIZE> & path );
 			typedef void (*AssetIterator)( AssetClass * asset, void * userdata );
-			
+
 			typedef std::map<std::string, AssetClass*> AssetHashTable;
 			typedef typename AssetHashTable::iterator AssetHashTableIterator;
 			typedef std::list<AssetClass*> AssetList;
-			
+
 			unsigned int total_assets;
 			AssetLoadCallback load_callback;
 			AssetConstructExtension construct_extension_callback;
 			AssetHashTable asset_by_name;
 			AssetList asset_list;
 			AssetClass * default_asset;
-			
+
 		public:
-			
+
 			AssetLibrary( AssetLoadCallback callback, AssetConstructExtension extension_callback )
 			{
 				load_callback = callback;
 				assert( load_callback != 0 );
-				
+
 				construct_extension_callback = extension_callback;
 				assert( construct_extension_callback != 0 );
-				
+
 				total_assets = 0;
 				default_asset = 0;
 			} // AssetLibrary
-			
+
 			~AssetLibrary()
 			{
 				release_and_purge();
 			}
-		
+
 			AssetClass * allocate_asset() { return MEMORY_NEW(AssetClass, core::memory::global_allocator()); }
 			void deallocate_asset( AssetClass * asset ) { MEMORY_DELETE(asset, core::memory::global_allocator()); }
 			unsigned int total_asset_count() const { return total_assets; }
-			
+
 			void for_each( AssetIterator iterator, void * userdata )
 			{
 				AssetClass * asset = 0;
 				typename AssetList::iterator it = asset_list.begin();
 				typename AssetList::iterator end = asset_list.end();
-				
+
 				for( ; it != end; ++it )
 				{
 					asset = (*it);
 					iterator( asset, userdata );
 				}
 			} // for_each
-		
+
 			// providing stubs for these functions
 			AssetLoadStatus load_with_callback( const char * path, AssetClass * asset, const AssetParameterClass & parameters )
 			{
@@ -98,15 +98,15 @@ namespace gemini
 				{
 					return AssetLoad_Failure;
 				}
-			
+
 				return load_callback( path, asset, parameters );
 			} // load_with_callback
-			
+
 			void construct_extension( core::StackString<MAX_PATH_SIZE> & extension )
 			{
 				construct_extension_callback(extension);
 			} // construct_extension
-			
+
 			void append_extension( core::StackString<MAX_PATH_SIZE> & path )
 			{
 				core::StackString<MAX_PATH_SIZE> extension;
@@ -124,13 +124,13 @@ namespace gemini
 				core::StackString<MAX_PATH_SIZE> fullpath = path;
 				int load_result = 0;
 				int asset_is_new = 0;
-				
+
 				// is this asset already loaded?
 				AssetHashTableIterator iter = asset_by_name.find(path);
 				if (iter != asset_by_name.end())
 				{
 					asset = iter->second;
-					
+
 					if (!ignore_cache)
 					{
 						// case 1
@@ -138,18 +138,18 @@ namespace gemini
 						return asset;
 					}
 				}
-				
+
 				// append the proper extension for this platform
 				this->append_extension(fullpath);
 
-				
+
 				if (!asset)
 				{
 					// case 3
 					asset = allocate_asset();
 					asset_is_new = 1;
 				}
-				
+
 				// case 2 && 3
 				load_result = load_with_callback(fullpath(), asset, parameters);
 				if (load_result != AssetLoad_Failure)
@@ -159,7 +159,7 @@ namespace gemini
 						core::StackString<MAX_PATH_SIZE> store_path = path;
 						take_ownership(store_path(), asset);
 					}
-					
+
 					LOGV("loaded asset \"%s\", asset_id = %i\n", fullpath(), asset->Id());
 					return asset;
 				}
@@ -171,11 +171,11 @@ namespace gemini
 					}
 					LOGV( "asset (%s) loading failed!\n", path );
 				}
-				
+
 				return default_asset;
 			} // load_from_path
-			
-			
+
+
 			// take ownership of this asset; should be managed by this class from here on
 			void take_ownership(const char* path, AssetClass * asset)
 			{
@@ -183,31 +183,31 @@ namespace gemini
 				{
 					asset->asset_id = total_assets++;
 					asset_list.push_back(asset);
-					
+
 					asset_by_name[path] = asset;
 				}
 			} // take_ownership
-			
+
 			AssetClass* find_with_path(const char* path)
 			{
 				AssetClass * asset = 0;
-				
+
 				AssetHashTableIterator iter = asset_by_name.find(path);
 				if (iter != asset_by_name.end())
 				{
 					asset = iter->second;
 					return asset;
 				}
-				
+
 				return 0;
 			} // find
-			
+
 			AssetClass * find_with_id( assets::AssetID id )
 			{
 				AssetClass * asset = 0;
 				typename AssetList::iterator it = asset_list.begin();
 				typename AssetList::iterator end = asset_list.end();
-				
+
 				for( ; it != end; ++it )
 				{
 					asset = (*it);
@@ -216,16 +216,16 @@ namespace gemini
 						return asset;
 					}
 				}
-				
+
 				return 0;
 			} // find_with_id
-			
+
 			// release and purge all assets
 			void release_and_purge()
 			{
 				typename AssetList::iterator it = asset_list.begin();
 				typename AssetList::iterator end = asset_list.end();
-				
+
 				AssetClass * asset;
 				for( ; it != end; ++it )
 				{
@@ -233,17 +233,17 @@ namespace gemini
 					asset->release();
 					deallocate_asset( asset );
 				}
-				
+
 				total_assets = 0;
 
 				asset_by_name.clear();
 			} // release_and_purge
-			
+
 			void set_default( AssetClass * asset )
 			{
 				default_asset = asset;
 			} // set_default
-			
+
 			AssetClass * get_default() const
 			{
 				return default_asset;

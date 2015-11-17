@@ -37,39 +37,39 @@ namespace core
 		{
 		public:
 			LIBRARY_EXPORT virtual ~DataStream();
-			
+
 			// fetch data pointer
 			LIBRARY_EXPORT virtual uint8_t* get_data() const = 0;
-			
+
 			// get data length; 0 if not known
 			LIBRARY_EXPORT virtual size_t get_data_size() const = 0;
-			
+
 			// read a number of bytes into the destination buffer
 			// returns the number of bytes read
 			LIBRARY_EXPORT virtual size_t read(void* destination, size_t length) = 0;
-			
+
 			// write data to the stream
 			// returns the number of bytes written
 			LIBRARY_EXPORT virtual size_t write(const void* data, size_t length) = 0;
-			
+
 			// seek to an offset location within the stream
 			// if is_absolute is false, the seek happens relative to the current position
 			LIBRARY_EXPORT virtual void seek(size_t offset, bool is_absolute) = 0;
-			
+
 			// flush the data stream
 			LIBRARY_EXPORT virtual void flush() = 0;
 		};
-		
+
 		class MemoryStream : public DataStream
 		{
 		public:
 			uint8_t* data;
 			size_t data_length;
 			size_t offset;
-			
+
 			LIBRARY_EXPORT MemoryStream() : data(0), data_length(0), offset(0) {}
 			LIBRARY_EXPORT virtual ~MemoryStream() {}
-			
+
 			LIBRARY_EXPORT void init(void* buffer, size_t buffer_length);
 			LIBRARY_EXPORT void rewind();
 			LIBRARY_EXPORT void clear();
@@ -80,13 +80,13 @@ namespace core
 			{
 				return write(&value, sizeof(Type));
 			}
-						
+
 			template <class Type>
 			LIBRARY_EXPORT int read(Type & destination)
 			{
 				return read(&destination, sizeof(Type));
 			}
-			
+
 			LIBRARY_EXPORT virtual uint8_t* get_data() const;
 			LIBRARY_EXPORT virtual size_t get_data_size() const;
 			LIBRARY_EXPORT virtual size_t read(void* destination, size_t length);
@@ -94,15 +94,15 @@ namespace core
 			LIBRARY_EXPORT virtual void seek(size_t offset, bool is_absolute);
 			LIBRARY_EXPORT virtual void flush() {}
 		};
-		
+
 		class ResizableMemoryStream : public MemoryStream
 		{
 			std::vector<char> data;
 			size_t offset;
-			
+
 		public:
 			LIBRARY_EXPORT ResizableMemoryStream() : offset(0) {}
-			
+
 			LIBRARY_EXPORT virtual uint8_t* get_data() const;
 			LIBRARY_EXPORT virtual size_t get_data_size() const;
 			LIBRARY_EXPORT virtual size_t read(void* destination, size_t length);

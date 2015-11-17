@@ -33,12 +33,12 @@ namespace core
 		{
 			handlers.allocate(LOG_MAX_HANDLERS);
 		}
-		
+
 		LogInterface::~LogInterface()
 		{
 			handlers.clear();
 		}
-	
+
 		void LogInterface::dispatch(ILog::MessageType type, const char *message, const char *function, const char* filename, int linenumber)
 		{
 			// dispatch message to all handlers
@@ -51,7 +51,7 @@ namespace core
 				}
 			}
 		}
-		
+
 		void LogInterface::add_handler(Handler *handler)
 		{
 			Handler* slot = 0;
@@ -64,7 +64,7 @@ namespace core
 				}
 				slot = 0;
 			}
-			
+
 			// if we found an open slot...
 			if (slot)
 			{
@@ -75,11 +75,11 @@ namespace core
 				// TODO: warn the user we've exceeded LOG_MAX_HANDLERS
 			}
 		}
-		
+
 		uint32_t LogInterface::startup()
-		{			
+		{
 			uint32_t total_handlers_opened = 0;
-		
+
 			// initialize all log handlers
 			for (size_t i = 0; i < handlers.size(); ++i)
 			{
@@ -93,12 +93,12 @@ namespace core
 					++total_handlers_opened;
 				}
 			}
-			
+
 			// TODO: create mutex
-						
+
 			return total_handlers_opened;
 		}
-		
+
 		void LogInterface::shutdown()
 		{
 			// close all log handlers
@@ -110,7 +110,7 @@ namespace core
 					handler->close(handler);
 				}
 			}
-			
+
 			// TODO: destroy mutex
 		}
 	} // namespace logging

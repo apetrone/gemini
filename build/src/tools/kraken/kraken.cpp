@@ -45,19 +45,19 @@ public kernel::IEventListener<kernel::KeyboardEvent>
 private:
 	bool active;
 	platform::IWindowLibrary* window_interface;
-	
+
 public:
 	EditorKernel() :
 		active(true),
 		window_interface(0)
 	{
 	}
-	
+
 	virtual ~EditorKernel() {}
-	
+
 	virtual bool is_active() const { return active; }
 	virtual void set_active(bool isactive) { active = isactive; }
-	
+
 	virtual void resolution_changed(int width, int height) {}
 
 	virtual kernel::Error startup()
@@ -65,32 +65,32 @@ public:
 		// TODO: initialize runtime (core::startup_filesystem, core::startup_logging)
 		window_interface = platform::create_window_library();
 		window_interface->startup(kernel::parameters());
-		
+
 		kernel::Parameters& params = kernel::parameters();
 		params.window_width = 1280;
 		params.window_height = 720;
 		params.window_title = "kraken";
-		
+
 		window_interface->create_window(kernel::parameters());
-		
+
 		return kernel::NoError;
 	}
-	
+
 	virtual void tick()
 	{
 		window_interface->process_events();
-		
+
 		window_interface->swap_buffers();
 	}
-	
+
 	virtual void shutdown()
 	{
 		window_interface->shutdown();
 		platform::destroy_window_library();
 		core::shutdown();
 	}
-	
-	
+
+
 	virtual void event(kernel::KeyboardEvent& event)
 	{
 		if (event.key == input::KEY_ESCAPE && event.is_down)
@@ -98,7 +98,7 @@ public:
 			set_active(false);
 		}
 	}
-	
+
 };
 
 

@@ -37,22 +37,22 @@ namespace gemini
 		{
 			size_t depth;
 			String buffer;
-			
+
 			IndentState() : depth(0)
 			{}
-			
+
 			void push()
 			{
 				++depth;
 				update();
 			}
-			
+
 			void pop()
 			{
 				--depth;
 				update();
 			}
-			
+
 			void update()
 			{
 				buffer.clear();
@@ -61,13 +61,13 @@ namespace gemini
 					buffer += "    ";
 				}
 			}
-			
+
 			const char* indent()
 			{
 				return buffer.c_str();
 			}
 		};
-			
+
 		void startup(const char* application_name);
 		void shutdown();
 	} // namespace tools

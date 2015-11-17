@@ -54,7 +54,7 @@ namespace platform
 			Window native_window;
 			Visual* visual;
 		}; // struct X11Window
-				
+
 		class X11WindowProvider : public WindowProvider
 		{
 		public:

@@ -44,13 +44,13 @@ namespace gemini
 	{
 		Texture::Texture() : texture(0) {}
 		Texture::~Texture() {}
-		
+
 		void Texture::release()
 		{
 			driver()->texture_destroy(this->texture);
 		} // release
 
-		
+
 		AssetLoadStatus texture_load_callback(const char* path, Texture* texture, const TextureParameters& parameters)
 		{
 			unsigned int width = 0;
@@ -75,11 +75,11 @@ namespace gemini
 					assets::textures()->append_extension( fullpath[i] );
 					names[i] = fullpath[i]();
 				}
-				
+
 				//			load_result = renderlib::LoadCubemap( names, texture_id, flags, &width, &height );
 				assert( 0 );
 			}
-			
+
 			if (load_result)
 			{
 				texture->image.flags = parameters.flags;
@@ -87,16 +87,16 @@ namespace gemini
 				texture->image.height = height;
 				return assets::AssetLoad_Success;
 			}
-			
+
 			return assets::AssetLoad_Failure;
 		} // texture_load_callback
-		
-		
+
+
 		void texture_construct_extension( core::StackString<MAX_PATH_SIZE> & extension )
 		{
 			kernel::KernelDeviceFlags device_flags = kernel::parameters().device_flags;
 			const char * ext = 0;
-			
+
 			if ( device_flags & kernel::DeviceDesktop || (device_flags & kernel::DeviceAndroid) )
 			{
 				// ...
@@ -112,7 +112,7 @@ namespace gemini
 				ext = "png";
 				extension.append( "-ipad" );
 			}
-			
+
 			if ( device_flags & kernel::DeviceSupportsRetinaDisplay )
 			{
 				extension.append( "@2x" );
@@ -127,7 +127,7 @@ namespace gemini
 			Array<unsigned char> buffer;
 			::renderer::Texture* render_texture = nullptr;
 			core::filesystem::instance()->virtual_load_file(buffer, filename);
-			
+
 			if (!buffer.empty())
 			{
 				unsigned char* pixels = image::load_image_from_memory(&buffer[0], buffer.size(), &image.width, &image.height, &image.channels);
@@ -138,11 +138,11 @@ namespace gemini
 
 					image.pixels = pixels;
 					image.filter = parameters.filter_type;
-					
+
 					render_texture = ::renderer::driver()->texture_create(image);
-					
+
 					LOGV("Loaded texture \"%s\"; (%i x %i @ %ibpp)\n", filename, image.width, image.height, image.channels);
-					
+
 					image::free_image(pixels);
 					image.pixels = 0;
 				}
@@ -158,7 +158,7 @@ namespace gemini
 				LOGE("Couldn't load file: %s\n", filename);
 				return nullptr;
 			}
-			
+
 			return nullptr;
 		} // load_texture_from_file
 

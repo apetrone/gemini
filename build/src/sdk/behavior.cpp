@@ -36,32 +36,32 @@ namespace behavior
 			case Behavior_Failed: return "failed"; break;
 			case Behavior_Running: return "running"; break;
 		}
-		
+
 		return "unknown";
 	}
-	
-		
+
+
 	Behavior::Behavior(const BehaviorName& behavior_name) :
 	name(behavior_name),
 	status(Behavior_Invalid)
 	{
 	}
-	
+
 	void Behavior::activate()
 	{
 	}
-	
+
 	void Behavior::deactivate(Entity* entity, behavior::BehaviorContext* context)
 	{
 		context->log(core::str::format("[%s] deactivate\n", name()));
 		status = Behavior_Invalid;
 	}
-	
+
 	bool Behavior::is_active() const
 	{
 		return (status != Behavior_Invalid) && (status != Behavior_Failed);
 	}
-	
+
 	BehaviorStatus Behavior::tick(Entity* entity, BehaviorContext* context)
 	{
 		if (status == Behavior_Invalid)
@@ -69,26 +69,26 @@ namespace behavior
 			context->log(core::str::format("[%s] status is '%s', activating\n", name(), behavior::name_from_status(status)));
 			activate();
 		}
-		
-		
+
+
 		BehaviorStatus return_status = update(entity, context);
 		context->log(core::str::format("[%s] updated, result is: '%s'\n", name(), behavior::name_from_status(return_status)));
-		
+
 		context->visit(this, return_status);
 		if (return_status != Behavior_Running)
 		{
 			context->log(core::str::format("[%s] status is '%s', deactivating\n", name(), behavior::name_from_status(status)));
 			deactivate(entity, context);
 		}
-		
+
 		return return_status;
 	}
-	
+
 	void Behavior::populate(BehaviorContext* context)
 	{
 		context->push(this);
 		context->populate(this);
 		context->pop(this);
 	}
-	
+
 } // namespace behavior

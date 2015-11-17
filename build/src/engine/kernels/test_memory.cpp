@@ -36,12 +36,12 @@
 struct Test
 {
 	size_t def;
-	
+
 	Test()
 	{
 		printf( "Test()\n" );
 	}
-	
+
 	~Test()
 	{
 		printf( "~Test()\n" );
@@ -51,7 +51,7 @@ struct Test
 struct BaseObject
 {
 	int type;
-	
+
 	BaseObject() : type(0)
 	{
 		LOGV("BaseObject\n");
@@ -67,12 +67,12 @@ struct BaseObject
 struct DerivedObject : public BaseObject
 {
 	int test;
-	
+
 	DerivedObject() : test(0)
 	{
 		LOGV("DerivedObject\n");
 	}
-	
+
 	~DerivedObject()
 	{
 		LOGV("~DerivedObject\n");
@@ -82,20 +82,20 @@ struct DerivedObject : public BaseObject
 struct PooledObject
 {
 	int test_data;
-	
+
 	void * operator new ( std::size_t count )
 	{
 		void * ptr = ALLOC( count );
 		LOGV( "alloc size: %i bytes -> %p\n", count, ptr );
 		return ptr;
 	}
-	
+
 	void * operator new ( std::size_t count, void * ptr )
 	{
 		LOGV( "alloc size: %i bytes -> %p\n", count, ptr );
 		return ptr;
 	}
-	
+
 	void operator delete( void * ptr )
 	{
 		LOGV( "dealloc pointer: %p\n", ptr );
@@ -108,8 +108,8 @@ struct DerivedPoolObject : public PooledObject
 {
 	float delta;
 	float x, y, z;
-	
-	
+
+
 };
 
 class TestMemory : public kernel::IApplication
@@ -127,15 +127,15 @@ public:
 #if 0
 		printf( "Memory Test: \n" );
 		Test * a = CREATE(Test);
-		
+
 		std::vector<int, GeminiAllocator<int> > int_vector;
 		int_vector.push_back( 30 );
 		int_vector.push_back( 16 );
 		int_vector.push_back( 31 );
-		
+
 		typedef std::map<int, int, std::less<int>, GeminiAllocator<int> > MyMap;
 		MyMap int_map;
-		
+
 		int_map.insert( MyMap::value_type( 30, 17 ) );
 		int_map.insert( MyMap::value_type( 16, 100) );
 		int_map.insert( MyMap::value_type( 300, 2 ) );
@@ -158,10 +158,10 @@ public:
 		DESTROY(Test, a);
 		printf( "activeAllocations: %zu, activeBytes: %zu\n", memory::allocator().active_allocations(), memory::allocator().active_bytes() );
 #endif
-		
+
 		PooledObject * p = new DerivedPoolObject();
-		
-		
+
+
 		delete p;
 
 		return kernel::Application_NoWindow;

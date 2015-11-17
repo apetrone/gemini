@@ -132,14 +132,14 @@ namespace platform
 			Window* window_handle = static_cast<Window*>(native_handle);
 
 			XGetGeometry(
-				display, 
+				display,
 				*window_handle,
 				&root_window,
 				&x, &y,
 				&width, &height,
 				&border_width, &depth);
 
-			frame.x = static_cast<float>(x);			
+			frame.x = static_cast<float>(x);
 			frame.y = static_cast<float>(y);
 			frame.width = static_cast<float>(width);
 			frame.height = static_cast<float>(height);
@@ -186,13 +186,13 @@ namespace platform
 						frame.x = screen.x_org;
 						frame.y = screen.y_org;
 						frame.width = screen.width;
-						frame.height = screen.height; 
+						frame.height = screen.height;
 					}
 
 					XFree(screens);
 				}
 			}
-			
+
 			return frame;
 		}
 

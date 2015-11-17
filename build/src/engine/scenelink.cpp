@@ -43,39 +43,39 @@ namespace gemini
 	{
 		queue = MEMORY_NEW(::renderer::RenderQueue, core::memory::global_allocator());
 	}
-	
+
 	SceneLink::~SceneLink()
 	{
 		MEMORY_DELETE(queue, core::memory::global_allocator());
 	}
-	
+
 	void SceneLink::clear()
 	{
 		queue->clear();
 	}
-	
+
 	void SceneLink::sort()
 	{
 		queue->sort();
 	}
-	
+
 	void SceneLink::draw(glm::mat4* modelview_matrix, glm::mat4* projection_matrix)
 	{
 		::renderer::RenderStream rs;
-		
+
 		// finally, draw from the queue
 		for(auto& block : queue->render_list)
 		{
 			assets::Shader* shader = assets::shaders()->find_with_id(block.shader_id);
 			assets::Material* material = assets::materials()->find_with_id(block.material_id);
-			
-			
+
+
 			rs.add_shader(shader->program);
-			
+
 			rs.add_uniform_matrix4(shader->program->get_uniform_location("modelview_matrix"), modelview_matrix);
 			rs.add_uniform_matrix4(shader->program->get_uniform_location("projection_matrix"), projection_matrix);
 			rs.add_uniform_matrix4(shader->program->get_uniform_location("object_matrix"), block.object_matrix);
-			
+
 			if (block.total_transforms > 0)
 			{
 				// http://gamedev.stackexchange.com/questions/77854/how-can-i-reliably-implement-gpu-skinning-in-android
@@ -90,27 +90,27 @@ namespace gemini
 				{
 					rs.add_uniform3f(shader->program->get_uniform_location("viewer_direction"), constant_buffer.viewer_direction);
 				}
-				
+
 				if (constant_buffer.viewer_position)
 				{
 					rs.add_uniform3f(shader->program->get_uniform_location("viewer_position"), constant_buffer.viewer_position);
 				}
-				
+
 				if (constant_buffer.light_position)
 				{
 					rs.add_uniform3f(shader->program->get_uniform_location("light_position"), constant_buffer.light_position);
 				}
 #endif
 			}
-			
+
 			rs.add_material(material, shader->program);
-			
+
 			rs.add_draw_call(block.object->vertexbuffer);
 		}
-		
+
 		rs.run_commands();
 	}
-	
+
 	void SceneLink::queue_entities(gemini::IEngineEntity** entity_list, uint32_t max_entities, uint32_t render_flags)
 	{
 		queue->clear();
@@ -118,25 +118,25 @@ namespace gemini
 		for (uint32_t i = 0; i < max_entities; ++i)
 		{
 			gemini::IEngineEntity* e = entity_list[i];
-			
+
 			// draw visible, non view model entities
 			if (!e)
 			{
 				continue;
 			}
-			
+
 			uint32_t eflags = e->get_render_flags();
-			
+
 
 			bool is_view_model = eflags & RENDER_VIEWMODEL;
 			bool is_world_model = !is_view_model;
 			bool is_visible = eflags & RENDER_VISIBLE;
-			
+
 			if (is_view_model && !(render_flags & RENDER_VIEWMODEL))
 			{
 				is_visible = false;
 			}
-			
+
 			if ((is_visible && is_view_model && !is_world_model) || (is_visible && is_world_model && !is_view_model))
 			{
 				int32_t model_index = e->get_model_index();
@@ -149,7 +149,7 @@ namespace gemini
 					if (model_instance)
 					{
 						// TODO: determine if this is a static or animated mesh.
-					
+
 //						LOGV("model_instance: %i\n", model_instance->asset_index());
 						assets::Mesh* mesh = assets::meshes()->find_with_id(model_instance->asset_index());
 						if (mesh)
@@ -158,35 +158,35 @@ namespace gemini
 							for (size_t geometry_index = 0; geometry_index < mesh->geometry.size(); ++geometry_index)
 							{
 								assets::Geometry* geometry = &mesh->geometry[geometry_index];
-								
+
 								// TODO: compute render key
 								::renderer::RenderKey key = 0;
-								
+
 								// setup render block
 								::renderer::RenderBlock block(key, geometry);
-								
+
 								// TODO: this should really happen in another step?
 								glm::mat4 transform;
 								glm::vec3 position;
 								glm::quat orientation;
-								
+
 								glm::vec3 physics_position;
-								
+
 								e->get_world_transform(physics_position, orientation);
 								e->get_render_position(position);
 
 								glm::mat4 rotation = glm::toMat4(orientation);
 								glm::mat4 translation = glm::translate(transform, position);
 								transform = translation*rotation;
-								
+
 								model_instance->set_local_transform(transform);
-								
+
 								block.object_matrix = &model_instance->get_local_transform();
 								block.material_id = geometry->material_id;
 								block.shader_id = geometry->shader_id;
 								block.node_transforms = model_instance->get_bone_transforms(geometry_index);
 								block.total_transforms = model_instance->get_total_transforms();
-									
+
 								queue->insert(block);
 							}
 
@@ -205,7 +205,7 @@ namespace gemini
 				}
 			}
 		}
-		
+
 		queue->sort();
 	}
 } // namespace gemini

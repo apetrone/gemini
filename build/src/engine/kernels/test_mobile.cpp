@@ -58,7 +58,7 @@ struct TestVertex
 	glm::vec3 pos;
 #if !SIMPLE_SHADER
 	renderer::UV uv;
-	Color color;	
+	Color color;
 #endif
 
 };
@@ -79,7 +79,7 @@ public:
 	assets::Shader shader;
 	glm::mat4 objectMatrix;
 	renderer::GeneralParameters gp;
-	
+
 
 	virtual void event( kernel::TouchEvent & event )
 	{
@@ -96,7 +96,7 @@ public:
 			fprintf( stdout, "Touch Event Ended at %i, %i\n", event.x, event.y );
 		}
 	}
-	
+
 	virtual void event( kernel::KeyboardEvent & event )
 	{
 		if (event.is_down)
@@ -107,7 +107,7 @@ public:
 			}
 		}
 	}
-	
+
 	virtual kernel::ApplicationResult config( kernel::Params & params )
 	{
 		params.window_width = 800;
@@ -115,7 +115,7 @@ public:
 		params.window_title = "TestMobile";
 		return kernel::Application_Success;
 	}
-	
+
 	void setup_vertex_data( TestVertex * vertices )
 	{
 		const int TEST3_OFFSET = 200;
@@ -126,7 +126,7 @@ public:
 		vertices[0].uv.u = 0;
 		vertices[0].uv.v = 0;
 #endif
-		
+
 		vertices[1].pos = glm::vec3(TEST3_OFFSET, TEST_SIZE, 0);
 
 #if !SIMPLE_SHADER
@@ -134,7 +134,7 @@ public:
 		vertices[1].uv.u = 0;
 		vertices[1].uv.v = 1;
 #endif
-		
+
 		vertices[2].pos = glm::vec3(TEST3_OFFSET+TEST_SIZE, TEST_SIZE, 0);
 
 #if !SIMPLE_SHADER
@@ -142,7 +142,7 @@ public:
 		vertices[2].uv.u = 1;
 		vertices[2].uv.v = 1;
 #endif
-		
+
 //		vertices[3].pos = glm::vec3(TEST3_OFFSET+TEST_SIZE, 0, 0);
 //
 //#if !SIMPLE_SHADER
@@ -154,7 +154,7 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
-#if FONT_TEST		
+#if FONT_TEST
 		LOGV( "loading fonts/nokiafc22.ttf...\n" );
 		test_font = assets::fonts()->load_from_path( "fonts/default16" );
 		LOGV( "test_font = %i\n", test_font );
@@ -167,7 +167,7 @@ public:
 		geo.vertices = CREATE_ARRAY( glm::vec3, 4 );
 		geo.colors = CREATE_ARRAY( Color, 4 );
 		geo.uvs = CREATE_ARRAY( renderer::UV, 4 );
-		
+
 #if DRAW_INDEXED
 		geo.index_count = 6;
 		geo.indices = CREATE_ARRAY( renderer::IndexType, 6 );
@@ -181,7 +181,7 @@ public:
 		const char * material_name = "materials/default";
 		geo.material_id = assets::materials()->load_from_path(material_name)->Id();
 		LOGV( "material_name = '%s', geo.material_id = %i\n", material_name, geo.material_id );
-		
+
 		glm::vec3 * vertices = geo.vertices;
 		Color * colors = geo.colors;
 		renderer::UV * uvs = geo.uvs;
@@ -189,23 +189,23 @@ public:
 		colors[0].set( 255, 255, 255 );
 		uvs[0].u = 0;
 		uvs[0].v = 0;
-		
+
 		vertices[1] = glm::vec3(0, TEST_SIZE, 0);
 		colors[1].set( 0, 0, 255, 64 );
 		uvs[1].u = 0;
 		uvs[1].v = 1;
-		
+
 		vertices[2] = glm::vec3(TEST_SIZE, TEST_SIZE, 0);
 		colors[2].set( 0, 255, 0, 127 );
 		uvs[2].u = 1;
 		uvs[2].v = 1;
-		
+
 //		vertices[3] = glm::vec3(TEST_SIZE, 0, 0);
 //		colors[3].set( 255, 0, 0 );
 //		uvs[3].u = 1;
 //		uvs[3].v = 0;
-		
-		
+
+
 #if DRAW_INDEXED
 		renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
 		memcpy( geo.indices, indices, sizeof(renderer::IndexType) * geo.index_count );
@@ -218,16 +218,16 @@ public:
 
 
 #if MODEL_TEST2
-		
+
 		vs.desc.add(renderer::VD_FLOAT3);
 #if !SIMPLE_SHADER
 		vs.desc.add(renderer::VD_FLOAT2);
 		vs.desc.add(renderer::VD_UNSIGNED_BYTE4);
 #endif
-		
+
 		vs.create( 32, 0, renderer::DRAW_TRIANGLES, renderer::BUFFER_STREAM );
 #endif
-	
+
 		shader.set_frag_data_location( "out_color" );
 #if !SIMPLE_SHADER
 		shader.alloc_uniforms( 3 );
@@ -240,7 +240,7 @@ public:
 #if !SIMPLE_SHADER
 		shader.uniforms[2].set_key( "diffusemap" );
 #endif
-		
+
 #if !SIMPLE_SHADER
 		shader.alloc_attributes( 3 );
 #else
@@ -252,65 +252,65 @@ public:
 		shader.attributes[1].set_key( "in_uv" ); shader.attributes[1].second = 1;
 		shader.attributes[2].set_key( "in_color" ); shader.attributes[2].second = 2;
 #endif
-		
-		
-		
+
+
+
 #if !SIMPLE_SHADER
 		assets::load_shader( "shaders/fontshader", &shader );
 #else
 		assets::load_shader( "shaders/simple", &shader );
 #endif
-			
+
 		return kernel::Application_Success;
 	}
-	
+
 	virtual void step( kernel::Params & params )
 	{
 	}
-	
-	
+
+
 	void model_test( Camera & camera, kernel::Params & params )
 	{
-#if MODEL_TEST	
-		
+#if MODEL_TEST
+
 		gp.global_params = 0;
 		gp.camera_position = &camera.pos;
 		gp.modelview_matrix = &camera.matCam;
 		gp.projection_project = &camera.matProj;
 		gp.object_matrix = &objectMatrix;
-		
+
 		render_utilities::stream_geometry(rs, &geo, gp);
 #endif
 	}
-	
+
 	void model_test2( Camera & camera, kernel::Params & params )
 	{
 #if MODEL_TEST2
 		TestVertex * vertices = (TestVertex*)vs.request(3);
 		setup_vertex_data( vertices );
-		
-		
+
+
 		vs.update();
-				
+
 		// activate shader
 		rs.add_shader( &shader );
-		
+
 		// setup uniforms
 		rs.add_uniform_matrix4( shader.get_uniform_location("modelview_matrix"), &camera.matCam );
 		rs.add_uniform_matrix4( shader.get_uniform_location("projection_matrix"), &camera.matProj );
-				
+
 #if !SIMPLE_SHADER
 		assets::Texture * tex = assets::load_texture("textures/default");
 		rs.add_sampler2d( shader.get_uniform_location("diffusemap"), 0, tex->texture_id );
 #endif
-		
+
 		// add draw call for vertexbuffer
 		rs.add_draw_call( vs.vertexbuffer );
 #endif
 
 		vs.reset();
 	} // model_test2
-		
+
 	void font_test( Camera & camera, kernel::Params & params )
 	{
 #if FONT_TEST
@@ -322,15 +322,15 @@ public:
 	{
 //		LOGV( "--------begin frame--------\n" );
 		rs.rewind();
-		
+
 		// setup global rendering state
 		rs.add_clearcolor( 0.0, 0.0, 0.0, 1.0f );
 		rs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
 		rs.add_viewport( 0, 0, (int)params.render_width, (int)params.render_height );
-		
-		
+
+
 		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
-		
+
 		Camera camera;
 //		camera.set_absolute_position( glm::vec3( 0, 1, 5 ) );
 		//camera.perspective( 60, params.render_width, params.render_height, 0.1f, 512.0f );
@@ -349,18 +349,18 @@ public:
 
 		model_test( camera, params );
 		model_test2( camera, params );
-		
+
 		// run all commands
 		rs.run_commands();
 
-		
+
 		font_test( camera, params );
 
 		vs.reset();
-		
+
 //		LOGV( "--------end frame--------\n" );
 	}
-	
+
 	virtual void shutdown( kernel::Params & params )
 	{
 #if MODEL_TEST2

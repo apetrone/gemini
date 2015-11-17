@@ -45,7 +45,7 @@ void Camera::move_view( int32_t dx, int32_t dy )
 {
 	yaw += (dx * sensitivity);
 	pitch += (dy * sensitivity);
-	
+
 	// clamp yaw and pitch values
 	if ( yaw > 360 )
 	{
@@ -55,7 +55,7 @@ void Camera::move_view( int32_t dx, int32_t dy )
 	{
 		yaw += 360;
 	}
-	
+
 	if ( pitch > 360 )
 	{
 		pitch -= 360;
@@ -72,7 +72,7 @@ void Camera::move_view( int32_t dx, int32_t dy )
 void Camera::move_along_vector( const glm::vec3 & v, real dt )
 {
 	pos = pos + (v * (move_speed*dt));
-	
+
 	update_view();
 }
 
@@ -89,11 +89,11 @@ void Camera::move_right( real dt )
 void Camera::move_forward( real dt )
 {
 	glm::vec3 v;
-	
+
 	if ( is_ortho )
 	{
 		v = glm::vec3( 0, 1, 0 );
-		
+
 		if ( invert_y_axis )
 		{
 			v[1] = -v[1];
@@ -103,18 +103,18 @@ void Camera::move_forward( real dt )
 	{
 		v = view;
 	}
-	
+
 	move_along_vector( v, dt );
 }
 
 void Camera::move_backward( real dt )
 {
 	glm::vec3 v;
-	
+
 	if ( is_ortho )
 	{
 		v = glm::vec3( 0, 1, 0 );
-		
+
 		if ( invert_y_axis )
 		{
 			v[1] = -v[1];
@@ -124,7 +124,7 @@ void Camera::move_backward( real dt )
 	{
 		v = view;
 	}
-	
+
 	move_along_vector( v, -dt );
 }
 
@@ -134,7 +134,7 @@ void Camera::update_view()
 	mathlib::basis_vectors_from_pitch_yaw(pitch, yaw, side, view/*, invert_y_axis*/);
 
 	glm::vec3 up( 0, 1, 0 );
-	
+
 	glm::vec3 world_pos = pos;
 	if ( type == FIRST_PERSON )
 	{
@@ -153,32 +153,32 @@ void Camera::update_view()
 		glm::vec3 inv_position;
 		glm::vec3 target_position = world_pos;
 		inv_position = target_position;
-		
+
 		// setup inverse rotation matrix for 'view' and 'up' vectors
 		inverse_rotation = glm::lookAt( glm::vec3(), view, up );
-		
-		
+
+
 		glm::vec3 pivot_point = target_offset;
-		
+
 		// setup pivot, and inverse pivot matrices
 		inv_pivot = glm::translate( glm::mat4(1.0), -pivot_point );
 		pivot = glm::translate( glm::mat4(1.0), pivot_point );
 
-		
+
 		// add an arbitrary viewing offset
 		inv_position = target_position + target_offset;
 
 		inv_translation = glm::translate( inv_translation, -inv_position );
-		
+
 		// target camera with position + orientation
 		modelview = inv_pivot * inverse_rotation * pivot * inv_translation;
-		
+
 		// now calculate eye pos
 		eye_position = view * target_offset.z;
-		
+
 		// eye is Cam -> Target; so invert it. It now becomes a vector from the origin to the eye position
 		eye_position = -eye_position + target_position;
-		
+
 		inverse_world_transform = modelview;
 	}
 }

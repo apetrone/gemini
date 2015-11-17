@@ -65,7 +65,7 @@ namespace gemini
 				Json::Value item = *it;
 				m[i] = item.asFloat();
 			}
-			
+
 			return glm::mat4(
 				m[0], m[1], m[2], m[3],
 				m[4], m[5], m[6], m[7],
@@ -76,22 +76,22 @@ namespace gemini
 
 		// -------------------------------------------------------------
 		// Mesh
-		
+
 		struct MeshLoaderState
 		{
 			size_t current_geometry;
 			Mesh* mesh;
-			
+
 			MeshLoaderState(Mesh* input) : current_geometry(0), mesh(input) {}
 		};
-		
-		
+
+
 		void traverse_nodes(MeshLoaderState& state, const Json::Value& node, MaterialByIdContainer& materials, const bool is_world)
 		{
 			std::string node_type = node["type"].asString();
 			if (node_type == "mesh")
 			{
-			
+
 				Json::Value mesh_root = node["mesh"];
 				Json::Value bbox_mins = node["mins"];
 				Json::Value bbox_maxs = node["maxs"];
@@ -104,13 +104,13 @@ namespace gemini
 				Json::Value vertex_colors = mesh_root["vertex_colors"];
 				const Json::Value& blend_weights = mesh_root["blend_weights"];
 				const Json::Value& bind_pose = mesh_root["bind_pose"];
-				
+
 				// setup materials
 				assets::Material* default_material = assets::materials()->get_default();
-				
+
 				assets::Geometry* geo = &state.mesh->geometry[state.current_geometry++];
 				geo->material_id = default_material->Id();
-				
+
 				Json::Value material_id = mesh_root["material_id"];
 				if (!material_id.isNull())
 				{
@@ -134,7 +134,7 @@ namespace gemini
 						}
 					}
 				}
-				
+
 				// TODO: Remove this hack in the rewrite
 				std::string shader_path = "shaders/objects";
 				if (is_world)
@@ -145,12 +145,12 @@ namespace gemini
 				{
 					shader_path = "shaders/animation";
 				}
-				
+
 				assets::Shader* shader = assets::shaders()->load_from_path(shader_path.c_str());
 				geo->shader_id = shader->Id();
 				geo->draw_type = DRAW_INDEXED_TRIANGLES;
 				geo->name = node["name"].asString().c_str();
-				
+
 //				LOGV("assign material id %i to geometry: %s\n", geo->material_id, geo->name());
 	//			LOGV("load geometry: %s\n", geo->name());
 
@@ -174,14 +174,14 @@ namespace gemini
 				{
 					geo->indices[i] = index_array[i].asInt();
 				}
-				
+
 				// read vertices and normals
 				for (int v = 0; v < static_cast<int>(geo->vertices.size()); ++v)
 				{
 					const Json::Value& vertex = vertex_array[v];
 					geo->vertices[v] = glm::vec3(vertex[0].asFloat(), vertex[1].asFloat(), vertex[2].asFloat());
 	//				LOGV("v: %i | %g %g %g\n", v, geo->vertices[v].x, geo->vertices[v].y, geo->vertices[v].z);
-					
+
 					const Json::Value& normal = normal_array[v];
 					geo->normals[v] = glm::vec3(normal[0].asFloat(), normal[1].asFloat(), normal[2].asFloat());
 				}
@@ -192,7 +192,7 @@ namespace gemini
 					const Json::Value& vertex_color = vertex_colors[v];
 					geo->colors[v] = core::Color(255 * vertex_color[0].asFloat(), 255 * vertex_color[1].asFloat(), 255 * vertex_color[2].asFloat(), 255 * vertex_color[3].asFloat());
 				}
-				
+
 				// read uv sets
 				for (Json::Value::ArrayIndex set_id = 0; set_id < uv_sets.size(); ++set_id)
 				{
@@ -207,7 +207,7 @@ namespace gemini
 						//LOGV("uv (set=%i) (vertex=%i) %g %g\n", set_id, v, uv.s, uv.t);
 					}
 				}
-				
+
 
 				if (!blend_weights.empty())
 				{
@@ -215,64 +215,64 @@ namespace gemini
 					assert(blend_weights.size() == geo->vertex_count);
 				}
 
-				
+
 				if (!bind_pose.isNull() && !bind_pose.empty())
 				{
 					// allocate enough bones
 					geo->bind_poses.allocate(bind_pose.size());
-					
+
 					Json::ValueIterator it = bind_pose.begin();
 					for (; it != bind_pose.end(); ++it)
 					{
 						const Json::Value& skeleton_entry = (*it);
 						const Json::Value& name = skeleton_entry["name"];
-						
+
 						const std::string& bone_name = name.asString();
 						Joint* joint = state.mesh->find_bone_named(bone_name.c_str());
 						assert(joint != 0);
-						
+
 						size_t bone_index = joint->index;
 						LOGV("reading bind_pose for '%s' -> %i\n", bone_name.c_str(), bone_index);
 						const Json::Value& inverse_bind_pose = skeleton_entry["inverse_bind_pose"];
 						assert(!inverse_bind_pose.isNull());
-						
+
 						geo->bind_poses[bone_index] = assets::json_to_mat4(inverse_bind_pose);
 					}
-					
+
 					state.mesh->has_skeletal_animation = true;
-					
-					
+
+
 					// read all blend weights and indices
 					it = blend_weights.begin();
 					for (int weight_id = 0; it != blend_weights.end(); ++it, ++weight_id)
 					{
 						const Json::Value& weight_pairs = (*it);
 						//					LOGV("size: %i\n", weight_pairs.size());
-						
-						
+
+
 						int blend_index = 0;
-						
+
 						int bone_indices[4] = {0, 0, 0, 0};
 						float bone_weights[4] = {0, 0, 0, 0};
-						
+
 						Json::ValueIterator pair = weight_pairs.begin();
 						for (; pair != weight_pairs.end(); ++pair, ++blend_index)
 						{
 							const Json::Value& weightblock = (*pair);
 							const Json::Value& bone = weightblock["bone"];
 							const Json::Value& value = weightblock["value"];
-							
+
 							Joint* joint = state.mesh->find_bone_named(bone.asString().c_str());
 							assert(joint != 0);
-							
+
 							// TODO: get index of this bone
 							//						LOGV("bone: %s, value: %2.2f\n", bone.asString().c_str(), value.asFloat());
-							
-							
+
+
 							bone_indices[blend_index] = joint->index;
 							bone_weights[blend_index] = value.asFloat();
 						}
-						
+
 						// assign these values to the blend_weights and blend_indices index
 						geo->blend_indices[weight_id] = glm::vec4(bone_indices[0], bone_indices[1], bone_indices[2], bone_indices[3]);
 						//					LOGV("indices: %g %g %g %g\n", geo->blend_indices[weight_id].x, geo->blend_indices[weight_id].y, geo->blend_indices[weight_id].z, geo->blend_indices[weight_id].w);
@@ -287,7 +287,7 @@ namespace gemini
 					geo->mins = glm::vec3(bbox_mins[0].asFloat(), bbox_mins[1].asFloat(), bbox_mins[2].asFloat());
 					geo->maxs = glm::vec3(bbox_maxs[0].asFloat(), bbox_maxs[1].asFloat(), bbox_maxs[2].asFloat());
 				}
-				
+
 				// physics related settings
 				const Json::Value& center_mass_offset = mesh_root["mass_center_offset"];
 				if (!center_mass_offset.isNull())
@@ -311,7 +311,7 @@ namespace gemini
 				}
 			}
 		}
-		
+
 		void count_nodes(const Json::Value& node, size_t& total_nodes, size_t& total_meshes)
 		{
 			assert(!node["name"].isNull());
@@ -320,13 +320,13 @@ namespace gemini
 	//		LOGV("node %s\n", node_name.c_str());
 
 			++total_nodes;
-			
+
 			std::string node_type = node["type"].asString();
 			if (node_type == "mesh")
 			{
 				++total_meshes;
 			}
-			
+
 			const Json::Value& children = node["children"];
 			if (!children.isNull())
 			{
@@ -337,7 +337,7 @@ namespace gemini
 				}
 			}
 		}
-		
+
 		core::util::ConfigLoadStatus load_json_model(const Json::Value& root, void* data)
 		{
 			Mesh* mesh = (Mesh*)data;
@@ -345,7 +345,7 @@ namespace gemini
 			// TODO: remove this hack for maps in the re-write.
 			core::StackString<MAX_PATH_SIZE> fullpath = mesh->path;
 			bool is_world = fullpath.startswith("maps");
-			
+
 			// make sure we can load the default material
 			assets::Material* default_mat = assets::materials()->load_from_path("materials/default");
 			if (!default_mat)
@@ -353,21 +353,21 @@ namespace gemini
 				LOGE("Could not load the default material!\n");
 				return core::util::ConfigLoad_Failure;
 			}
-			
+
 			// n-meshes
 			// skeleton (should this be separate?)
 			// animation (should be separate)
-			
+
 			// try to read all geometry
 			// first pass will examine nodes
-					
+
 			Json::Value node_root = root["nodes"];
-			
+
 			// The model has no nodes. What have you done?
 			assert(!node_root.isNull());
-			
+
 			MaterialByIdContainer materials_by_id;
-			
+
 			// read in materials
 			Json::Value materials = root["materials"];
 			if (!materials.isNull())
@@ -379,7 +379,7 @@ namespace gemini
 					materials_by_id.insert(MaterialByIdContainer::value_type(material["id"].asInt(), material["name"].asString()));
 				}
 			}
-			
+
 			size_t total_nodes = 0;
 			size_t total_meshes = 0;
 
@@ -393,24 +393,24 @@ namespace gemini
 			{
 				// allocate enough bones
 				mesh->skeleton.allocate(skeleton.size());
-				
+
 				size_t bone_index = 0;
-				
+
 				Json::ValueIterator it = skeleton.begin();
 				for (; it != skeleton.end(); ++it, ++bone_index)
 				{
 					const Json::Value& skeleton_entry = (*it);
 					const Json::Value& name = skeleton_entry["name"];
 					const Json::Value& parent = skeleton_entry["parent"];
-					
+
 					Joint& joint = mesh->skeleton[bone_index];
 					joint.index = bone_index;
-					
+
 					if (!name.isNull())
 					{
 						joint.name = name.asString().c_str();
 					}
-					
+
 					if (!parent.isNull())
 					{
 						joint.parent_index = parent.asInt();
@@ -419,7 +419,7 @@ namespace gemini
 					LOGV("read joint: %s, parent: %i, index: %i\n", joint.name(), joint.parent_index, joint.index);
 				}
 			}
-		
+
 
 			// iterate over all nodes and count how many there are, of each kind
 			Json::ValueIterator node_iter = node_root.begin();
@@ -428,15 +428,15 @@ namespace gemini
 				Json::Value node = (*node_iter);
 				count_nodes(node, total_nodes, total_meshes);
 			}
-			
+
 			// allocate nodes
 			LOGV("nodes: %i, meshes: %i\n", total_nodes, total_meshes);
 			mesh->geometry.allocate(total_meshes);
-			
 
-			
+
+
 			MeshLoaderState state(mesh);
-			
+
 			// traverse over hierarchy
 			node_iter = node_root.begin();
 			for (; node_iter != node_root.end(); ++node_iter)
@@ -444,17 +444,17 @@ namespace gemini
 				Json::Value node = (*node_iter);
 				traverse_nodes(state, node, materials_by_id, is_world);
 			}
-			
-			
+
+
 			return core::util::ConfigLoad_Success;
 		}
-		
-		
+
+
 		void mesh_construct_extension( core::StackString<MAX_PATH_SIZE> & extension )
 		{
 			extension = ".model";
 		} // mesh_construct_extension
-		
+
 		Geometry::Geometry()
 		{
 			material_id = 0;
@@ -464,7 +464,7 @@ namespace gemini
 			vertexbuffer = 0;
 			draw_type = DRAW_TRIANGLES;
 		}
-		
+
 		Geometry::~Geometry()
 		{
 			if ( this->vertexbuffer )
@@ -472,7 +472,7 @@ namespace gemini
 				driver()->vertexbuffer_destroy( this->vertexbuffer );
 			}
 		}
-		
+
 		void Geometry::render_setup()
 		{
 			VertexDescriptor descriptor;
@@ -482,53 +482,53 @@ namespace gemini
 			{
 				// always has at least a position
 				descriptor.add( VD_FLOAT3 );
-				
+
 				if ( !normals.empty() )
 				{
 					ShaderString normals = "normals";
 	//				attributes |= find_parameter_mask( normals );
 					descriptor.add( VD_FLOAT3 );
 				}
-				
+
 				if ( !colors.empty() )
 				{
 					ShaderString colors = "colors";
 	//				attributes |= find_parameter_mask( colors );
 					descriptor.add( VD_UNSIGNED_BYTE4 );
 				}
-				
+
 				if ( uvs.size() > 0 )
 				{
 					ShaderString uv0 = "uv0";
 	//				attributes |= find_parameter_mask( uv0 );
 					descriptor.add( VD_FLOAT2 );
 				}
-				
+
 				if ( uvs.size() > 1 )
 				{
 					ShaderString uv1 = "uv1";
 	//				attributes |= find_parameter_mask( uv1 );
 					descriptor.add( VD_FLOAT2 );
 				}
-				
+
 				if (!blend_indices.empty() && !blend_weights.empty())
 				{
 //					ShaderString hardware_skinning = "hardware_skinning";
 	//				attributes |= find_parameter_mask(hardware_skinning);
-					
+
 //					ShaderString node_transforms = "node_transforms";
 	//				attributes |= find_parameter_mask(node_transforms);
-					
+
 					descriptor.add(VD_FLOAT4);
 					descriptor.add(VD_FLOAT4);
 				}
 			}
-			
+
 			if (!this->vertexbuffer)
 			{
 				this->vertexbuffer = driver()->vertexbuffer_from_geometry( descriptor, this );
 			}
-			
+
 			if ( !this->is_animated() )
 			{
 				driver()->vertexbuffer_upload_geometry( this->vertexbuffer, /*descriptor, */ this );
@@ -541,15 +541,15 @@ namespace gemini
 			is_dirty = true;
 			has_skeletal_animation = false;
 		} // Mesh
-		
+
 		Mesh::~Mesh()
 		{
 		}
-		
+
 		void Mesh::release()
 		{
 		} // release
-		
+
 		void Mesh::prepare_geometry()
 		{
 			if (!is_dirty)
@@ -558,20 +558,20 @@ namespace gemini
 			}
 
 			assert(geometry.size() != 0);
-			
+
 			for( unsigned int geo_id = 0; geo_id < geometry.size(); ++geo_id )
 			{
 				assets::Geometry * g = &geometry[ geo_id ];
 				g->render_setup();
 			}
-			
+
 			is_dirty = false;
 		} // prepare_geometry
 
 		Joint* Mesh::find_bone_named(const char* name)
 		{
 			core::StackString<128> target_name(name);
-			
+
 			for (Joint& j : skeleton)
 			{
 				if (j.name == target_name)
@@ -589,9 +589,9 @@ namespace gemini
 			{
 				return AssetLoad_Success;
 			}
-			
+
 			return AssetLoad_Failure;
 		} // mesh_load_callback
-		
+
 	} // namespace assets
 } // namespace gemini

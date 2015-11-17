@@ -55,7 +55,7 @@ void LogoScreen::on_update( kernel::IApplication * app ) {}
 
 void LogoScreen::on_step( kernel::IApplication * app ) {}
 
-	
+
 const char * LogoScreen::name() const
 {
 	return "LogoScreen";

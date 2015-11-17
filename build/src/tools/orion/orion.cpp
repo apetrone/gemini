@@ -60,7 +60,7 @@ namespace render2
 		O a;
 		return a;
 	}
-	
+
 	template <>
 	int convert(const param_string& s)
 	{
@@ -315,7 +315,7 @@ public kernel::IEventListener<kernel::SystemEvent>
 private:
 	bool active;
 	platform::window::NativeWindow* main_window;
-	
+
 	render2::Device* device;
 	render2::Buffer* vertex_buffer;
 
@@ -344,12 +344,12 @@ public:
 		, value(0.0f)
 	{
 	}
-	
+
 	virtual ~EditorKernel() {}
-	
+
 	virtual bool is_active() const { return active; }
 	virtual void set_active(bool isactive) { active = isactive; }
-	
+
 	virtual void event(kernel::SystemEvent& event)
 	{
 		if (event.subtype == kernel::WindowResized)
@@ -362,7 +362,7 @@ public:
 			compositor->resize(frame.width, frame.height);
 		}
 	}
-	
+
 	virtual void event(kernel::MouseEvent& event)
 	{
 		if (compositor)
@@ -428,15 +428,15 @@ public:
 	{
 		platform::PathString root_path = platform::get_program_directory();
 		platform::PathString content_path = platform::fs_content_directory();
-		
+
 		platform::PathString application_path = platform::get_user_application_directory("arcfusion.net/orion");
 		core::startup_filesystem();
 		core::filesystem::instance()->root_directory(root_path);
 		core::filesystem::instance()->content_directory(content_path);
 		core::filesystem::instance()->user_application_directory(application_path);
-		
+
 		core::startup_logging();
-		
+
 		// create a platform window
 		{
 			platform::window::startup(platform::window::RenderingBackend_Default);
@@ -477,7 +477,7 @@ public:
 		{
 			using namespace render2;
 			RenderParameters params;
-			
+
 			// set some options
 			params["vsync"] = "true";
 			params["double_buffer"] = "true";
@@ -490,7 +490,7 @@ public:
 			params["opengl.minor"] = "2";
 			params["opengl.profile"] = "core";
 			params["opengl.share_context"] = "true";
-			
+
 			for (RenderParameters::Iterator it = params.begin(); it != params.end(); ++it)
 			{
 				const param_string& key = it.key();
@@ -549,18 +549,18 @@ public:
 			// gui layout
 
 			core::filesystem::IFileSystem* fs = core::filesystem::instance();
-			
+
 			platform::File handle = platform::fs_open("ui/main.ui", platform::FileMode_Read);
 			if (handle.is_open())
 			{
 //				core::DataStream* stream = fs->memory_from_file(handle);
-			
+
 				// create the gui elements from a file
 //				compositor->create_layout_from_memory(stream->get_data(), stream->get_data_size());
-			
+
 				platform::fs_close(handle);
 			}
-			
+
 		}
 #else
 		{
@@ -604,16 +604,16 @@ public:
 
 		return kernel::NoError;
 	}
-	
 
-	
+
+
 	virtual void tick()
 	{
 		platform::window::dispatch_events();
-				
+
 		static float value = 0.0f;
 		static float multiplifer = 1.0f;
-		
+
 		value += 0.01f * multiplifer;
 		value = glm::clamp(value, 0.0f, 1.0f);
 		if (value == 0.0f || value == 1.0f)
@@ -643,7 +643,7 @@ public:
 
 		render2::CommandQueue* queue = device->create_queue(render_pass);
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
-		
+
 		serializer->pipeline(pipeline);
 //		serializer->vertex_buffer(vertex_buffer);
 //		serializer->draw(0, 3);
@@ -665,8 +665,8 @@ public:
 
 //		glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, 2000);
 	}
-	
-	
+
+
 	virtual void shutdown()
 	{
 		device->destroy_render_target(render_target);
@@ -690,9 +690,9 @@ public:
 		device->destroy_pipeline(pipeline);
 
 		destroy_device(device);
-		
+
 //		glDeleteSync(fence);
-		
+
 //		renderer::shutdown();
 
 		platform::window::destroy(main_window);
@@ -700,8 +700,8 @@ public:
 
 		core::shutdown();
 	}
-	
-	
+
+
 	virtual void event(kernel::KeyboardEvent& event)
 	{
 		if (event.key == input::KEY_ESCAPE && event.is_down)

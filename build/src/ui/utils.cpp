@@ -40,12 +40,12 @@ namespace gui
 		width = _width;
 		height = _height;
 	}
-	
+
 	void Size::set_width(DimensionType in_width)
 	{
 		width = in_width;
 	}
-	
+
 	DimensionType Size::get_width() const
 	{
 		return width;
@@ -59,49 +59,49 @@ namespace gui
 		origin = _origin;
 		size = _size;
 	}
-	
+
 	Rect::Rect(DimensionType left, DimensionType top, DimensionType width, DimensionType height)
 	{
 		this->set(left, top, width, height);
 	}
-	
+
 	Size& Rect::get_size()
 	{
 		return this->size;
 	}
-	
+
 	Point& Rect::get_origin()
 	{
 		return this->origin;
 	}
-	
+
 	void Rect::set(DimensionType x, DimensionType y, DimensionType width, DimensionType height)
 	{
 		origin.x = x;
 		origin.y = y;
-		
+
 		size.width = width;
 		size.height = height;
 	}
-	
+
 	DimensionType Rect::width() const
 	{
 		return size.width;
 	}
-	
+
 	DimensionType Rect::height() const
 	{
 		return size.height;
 	}
-	
+
 	bool Rect::fits_inside(const Rect& other) const
 	{
 		if (this->width() <= other.width() && this->height() <= other.height())
 			return true;
-		
+
 		return false;
 	}
-	
+
 	bool Rect::is_point_inside(const Point& pt) const
 	{
 		if (origin.x > pt.x)
@@ -112,10 +112,10 @@ namespace gui
 			return false;
 		else if ((origin.y + size.height) < pt.y)
 			return false;
-		
+
 		return true;
 	}
-	
+
 	// ---------------------------------------------------------------------
 	// Color
 	// ---------------------------------------------------------------------

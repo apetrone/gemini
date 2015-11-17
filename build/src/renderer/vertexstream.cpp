@@ -46,7 +46,7 @@ namespace renderer
 		vertex_stride = 0;
 		vertexbuffer = 0;
 	} // VertexStream
-	
+
 	VertexStream::~VertexStream()
 	{
 		destroy();
@@ -55,7 +55,7 @@ namespace renderer
 	void VertexStream::alloc( IndexType max_vertices, IndexType max_indices )
 	{
 		assert(vertex_stride != 0);
-	
+
 		total_vertices = max_vertices;
 		total_indices = 0;
 		vertices = (VertexType*)MEMORY_ALLOC(vertex_stride*total_vertices, core::memory::global_allocator());
@@ -76,7 +76,7 @@ namespace renderer
 		last_vertex = 0;
 		last_index = 0;
 		highest_index = 0;
-		
+
 		// I'm not sure we WANT to reset the vertexbuffer each time
 		// we reset the stream -- in this fashion.
 		if (vertexbuffer)
@@ -136,19 +136,19 @@ namespace renderer
 
 		return vptr;
 	} // request
-	
+
 	VertexType * VertexStream::operator[](int index)
 	{
 		VertexType * vptr = 0;
-		
+
 		// requested a vertex that hasn't been accessed
 		if ( (unsigned int)index > last_vertex )
 		{
 			return 0;
 		}
-		
+
 		vptr = &vertices[ (vertex_stride * index) ];
-		
+
 		return vptr;
 	} // operator []
 
@@ -183,8 +183,8 @@ namespace renderer
 
 		highest_index++;
 	} // append_indices
-	
-	
+
+
 	// determine if this vertexstream has room
 	bool VertexStream::has_room( unsigned int num_vertices, unsigned int num_indices ) const
 	{
@@ -197,7 +197,7 @@ namespace renderer
 		{
 			return false;
 		}
-		
+
 		return true;
 	} // has_room
 
@@ -205,7 +205,7 @@ namespace renderer
 	{
 		vertex_stride = desc.calculate_vertex_stride();
 		reset();
-		
+
 		if ( desc.attribs == 0 )
 		{
 			LOGE( "VertexStream description NOT SET!\n" );
@@ -214,7 +214,7 @@ namespace renderer
 		//printf( "template_vertex_size = %i bytes <-> vertexStride = %i bytes\n", sizeof(VertexType), vertexStride );
 
 		alloc( max_vertices, max_indices );
-		
+
 		this->vertexbuffer = renderer::driver()->vertexbuffer_create(
 			this->desc,
 			draw_type,
@@ -234,7 +234,7 @@ namespace renderer
 			renderer::driver()->vertexbuffer_destroy( this->vertexbuffer );
 			this->vertexbuffer = 0;
 		}
-		
+
 	} // destroy
 
 	void VertexStream::update()
@@ -243,12 +243,12 @@ namespace renderer
 		{
 			last_vertex = total_vertices-1;
 		}
-		
+
 		if ( (total_indices > 0) && (last_index >= total_indices) )
 		{
 			last_index = total_indices-1;
 		}
-		
+
 		if ( last_vertex > 0 )
 		{
 			renderer::driver()->vertexbuffer_upload_data( this->vertexbuffer, this->vertex_stride, this->last_vertex, this->vertices, this->last_index, this->indices );
@@ -264,16 +264,16 @@ namespace renderer
 	{
 		renderer::driver()->vertexbuffer_draw( this->vertexbuffer, this->last_vertex );
 	} // draw
-	
+
 	void VertexStream::fill_data( VertexType * vertex_source, unsigned int vertex_count, IndexType * index_source, unsigned int index_count )
 	{
 		// if you hit this assert, more vertices were copied to the buffer than
 		// it holds and memory is corrupt now. nicely done.
 		assert( vertex_count + this->last_vertex < total_vertices );
-		
+
 		memcpy( this->vertices, vertex_source, this->vertex_stride * vertex_count );
 		this->last_vertex = vertex_count;
-				
+
 		if ( index_count > 0 )
 		{
 			memcpy( this->indices, index_source, sizeof(IndexType)*index_count );

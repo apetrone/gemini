@@ -35,19 +35,19 @@ namespace platform
 	{
 		return nullptr;
 	}
-	
+
 	void serial_close(Serial* serial)
 	{
 	}
-	
+
 	int serial_read(Serial* serial, void* buffer, int total_bytes)
 	{
 		return 0;
 	}
-	
+
 	int serial_write(Serial* serial, const void* buffer, int total_bytes)
 	{
 		return 0;
 	}
-	
+
 }; // namespace platform

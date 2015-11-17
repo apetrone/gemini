@@ -54,7 +54,7 @@ namespace gemini
 {
 	class EntityManager;
 	class GameInterface;
-	
+
 	namespace physics
 	{
 		class ICollisionObject;
@@ -90,7 +90,7 @@ class Entity : public gemini::IEngineEntity
 {
 public:
 	DECLARE_ENTITY_NO_BASE(Entity);
-	
+
 	enum Flags
 	{
 		EF_NONE = 0,
@@ -106,55 +106,55 @@ public:
 	glm::vec3 position;
 	glm::quat orientation;
 	glm::vec3 velocity;
-	
+
 	float local_time;
-	
+
 	Entity();
 	virtual ~Entity();
-	
+
 //	virtual void set_model_index(int32_t index);
 	virtual int32_t get_model_index() const;
-	
+
 	virtual uint32_t get_render_flags() const;
-	
+
 	virtual void get_world_transform(glm::vec3& position, glm::quat& orientation) const;
 	virtual void get_render_position(glm::vec3& out_position) const { out_position = position; }
 
 	// called after the constructor
 	virtual void spawn() {}
-	
+
 	// called after each entity has spawned
 	virtual void activate() {}
 
 	virtual void pre_tick();
 	virtual void post_tick();
-	
+
 	virtual void update(float delta_seconds, float alpha);
-	
+
 	virtual void remove();
 	virtual void remove_collision();
 
 	// the normal vector points from this entity to other.
 	virtual void collision_began(const EntityCollisionData& collision_data);
 	virtual void collision_ended(const EntityCollisionData& collision_data);
-	
+
 	// Use is called on this entity
 	virtual void use(Entity* user);
-	
+
 	virtual bool is_player() const { return false; }
-	
+
 	// Call this when you need to explicitly set the physics transform
 	// from the current entity's position and rotation. Normally, you don't
 	// need to use this; but the player controller makes use of it.
 	virtual void set_physics_from_current_transform();
-	
+
 	// Set the entity's transform (position/orientation) from the associated
 	// physics object, if one is set.
 	virtual void set_current_transform_from_physics(size_t collider_index);
-	
+
 	// update physics velocity from our own
 	virtual void set_physics_from_current_velocity();
-	
+
 	virtual void set_current_velocity_from_physics();
 
 	virtual void add_collider(gemini::physics::ICollisionObject* collider, const glm::vec3& offset);
@@ -164,15 +164,15 @@ public:
 	// memory overloads
 	void* operator new(size_t bytes);
 	void operator delete(void* memory);
-	
-	
+
+
 public:
 	// ACCESSORS
 	void set_position(const glm::vec3& new_position);
 	const glm::vec3& get_position() const;
-	
+
 public:
-	
+
 	//
 	// PHYSICS
 	//
@@ -180,20 +180,20 @@ public:
 	// create a static physics object using the model's collision model
 	// TODO: also expose a way to create a static box?
 	gemini::physics::ICollisionObject* physics_create_static();
-	
+
 //	physics::ICollisionObject* physics_create_sphere(const glm::vec3& local_center, float radius);
-	
+
 	// create a collision box to use for physics
 //	physics::ICollisionObject* physics_create_box(const glm::vec3& local_center, const glm::vec3& mins, const glm::vec3& maxs);
-	
+
 	// use the collision model associated with this entity's model to create
 	// a physics body.
 	gemini::physics::ICollisionObject* physics_create_model();
-	
+
 	// create a trigger
 //	physics::ICollisionObject* physics_create_trigger(const glm::vec3& local_center, const glm::vec3& mins, const glm::vec3& maxs);
 
-	
+
 	// get/set functions for script interop
 	const EntityName& get_name() { return this->name; }
 	void set_name( const EntityName& object_name ) { this->name = object_name; }

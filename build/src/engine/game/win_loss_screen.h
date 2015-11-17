@@ -36,14 +36,14 @@ struct WinLossScreen : public IScreen
 	MenuNavigator menunav;
 	int current_menu;
 	WinLossScreen();
-	
-	
+
+
 	const char * screen_name;
 	const char * title;
-	
+
 	void setup_loss_screen();
 	void setup_win_screen();
-	
+
 	virtual void on_show( kernel::IApplication * app );
 	virtual void on_hide( kernel::IApplication * app );
 	virtual void on_draw( kernel::IApplication * app );
@@ -51,12 +51,12 @@ struct WinLossScreen : public IScreen
 	virtual void on_step( kernel::IApplication * app );
 	virtual const char * name() const;
 
-	
+
 	// any event that happens during the logo screen triggers a skip to the next screen
 	virtual void on_event( kernel::KeyboardEvent & event, kernel::IApplication * app );
 	virtual void on_event( kernel::MouseEvent & event, kernel::IApplication * app );
 	virtual void on_event( kernel::TouchEvent & event, kernel::IApplication * app );
-	
-	
+
+
 	void skip_screen( kernel::IApplication * app );
 }; // WinLossScreen

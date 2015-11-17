@@ -27,7 +27,7 @@
 namespace gemini
 {
 	class IEngineEntity;
-	
+
 	class IEntityManager
 	{
 	public:

@@ -39,7 +39,7 @@ struct IScreen
 	virtual void on_update( kernel::IApplication * app ) = 0;
 	virtual void on_step( kernel::IApplication * app ) = 0;
 	virtual const char * name() const = 0;
-		
+
 	virtual void on_event( kernel::KeyboardEvent & event, kernel::IApplication * app ) = 0;
 	virtual void on_event( kernel::MouseEvent & event, kernel::IApplication * app ) = 0;
 	virtual void on_event( kernel::TouchEvent & event, kernel::IApplication * app ) = 0;
@@ -52,19 +52,19 @@ struct ScreenController
 	typedef std::vector<IScreen*> ScreenVector;
 	ScreenVector screens;
 	ScreenStack screen_stack;
-	
+
 	ScreenController();
 	~ScreenController();
-	
+
 	void add_screen( IScreen * screen );
 	IScreen * find_screen( const char * name ) const;
 	size_t count_screens() const;
-	
+
 	// set the new active screen with name;
 	IScreen * push_screen( const char * name, kernel::IApplication * app );
-	
+
 	// pop the screen on top of the stack
 	void pop_screen( kernel::IApplication * app );
-	
+
 	IScreen * active_screen();
 }; // ScreenController

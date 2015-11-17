@@ -31,9 +31,9 @@
 namespace gemini
 {
 	namespace physics
-	{	
+	{
 		namespace bullet
-		{			
+		{
 			class BulletRigidBody : public BulletCollisionObject, public RigidBody
 			{
 			public:
@@ -41,12 +41,12 @@ namespace gemini
 				virtual ~BulletRigidBody();
 
 				btRigidBody* get_bullet_body() const;
-				
+
 				virtual void apply_force(const glm::vec3& force, const glm::vec3& local_position);
 				virtual void apply_central_force(const glm::vec3& force);
 				virtual void set_mass(float mass);
 				virtual void set_parent(ICollisionObject* first, ICollisionObject* second);
-				
+
 			};
 		} // namespace bullet
 	} // namespace physics

@@ -41,21 +41,21 @@ namespace renderer
 				// upper left
 				uvs[0] = x / (float)sheet_width;
 				uvs[1] = y / (float)sheet_height;
-				
+
 				// lower left
 				uvs[2] = x / (float)sheet_width;
 				uvs[3] = (y+sprite_height) / (float)sheet_height;
-				
+
 				// lower right
 				uvs[4] = (x+sprite_width) / (float)sheet_width;
 				uvs[5] = (y+sprite_height) / (float)sheet_height;
-				
+
 				// upper right
 				uvs[6] = (x+sprite_width) / (float)sheet_width;
 				uvs[7] = y / (float)sheet_height;
 			} // calc_tile_uvs
 		} // namespace sprite
-		
+
 		void strip_shader_version(char* buffer, core::StackString<32>& version)
 		{
 			// remove preceding "#version" shader
@@ -65,7 +65,7 @@ namespace renderer
 				const char* end = pos;
 				while(*end != '\n')
 					++end;
-				
+
 				version._length = (end-pos);
 				memcpy(&version[0], &buffer[(pos-buffer)], version._length);
 				memset(&buffer[(pos-buffer)], ' ', (end-pos));

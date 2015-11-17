@@ -45,30 +45,30 @@ namespace platform
 		{
 			return 0;
 		}
-		
+
 		// clear file status
 		fcntl(socket, F_SETFL, 0);
-		
+
 		{
 			// setup the baud rate
 			struct termios options;
 			tcgetattr(socket, &options);
-			
+
 			cfsetispeed(&options, baud_rate);
 			cfsetospeed(&options, baud_rate);
-			
+
 			// enable receiver and set local mode
 			options.c_cflag |= (CLOCAL | CREAD);
-			
+
 			// set new options
 			tcsetattr(socket, TCSANOW, &options);
 		}
-		
+
 		PosixSerial* serial = MEMORY_NEW(PosixSerial, get_platform_allocator());
 		serial->socket = socket;
 		return serial;
 	}
-	
+
 	void serial_close(Serial* serial)
 	{
 		PosixSerial* device = static_cast<PosixSerial*>(serial);
@@ -78,20 +78,20 @@ namespace platform
 		}
 		MEMORY_DELETE(device, get_platform_allocator());
 	}
-	
-	
+
+
 	int serial_read(Serial* serial, void* buffer, int total_bytes)
 	{
 		PosixSerial* device = static_cast<PosixSerial*>(serial);
 		assert(device != 0);
 		return ::read(device->socket, buffer, total_bytes);
 	}
-	
+
 	int serial_write(Serial* serial, const void* buffer, int total_bytes)
 	{
 		PosixSerial* device = static_cast<PosixSerial*>(serial);
 		assert(device != 0);
 		return ::write(device->socket, buffer, total_bytes);
 	}
-	
+
 } // namespace platform

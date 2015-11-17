@@ -37,12 +37,12 @@ namespace platform
 		{
 			void populate_keymap();
 			void process_event_loop();
-			
+
 			input::Button convert_keycode(unsigned short mac_keycode);
-			
+
 			uint16_t keymod_state();
 			void keymod_state(uint16_t keymods);
-			
+
 			void dispatch_mouse_moved_event(NSEvent* the_event);
 			uint16_t convert_cocoa_keymods(NSUInteger modifier_flags);
 		} // namespace cocoa

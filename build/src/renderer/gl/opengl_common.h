@@ -63,7 +63,7 @@ namespace renderer
 	{
 		const char* function;
 		static std::stack<std::string> call_stack;
-		
+
 		GLFunctionLogger(const char* fn);
 		~GLFunctionLogger();
 	};

@@ -37,7 +37,7 @@ namespace gemini
 			STATIC_OBJECT = 1,
 			GHOST_OBJECT = 512
 		};
-	
+
 		///@todo Interact with dynamic objects,
 		///Ride kinematicly animated platforms properly
 		///More realistic (or maybe just a config option) falling
@@ -48,17 +48,17 @@ namespace gemini
 		{
 			bool ignore_ghosts;
 			bool ignore_static;
-			
+
 		public:
 			ClosestNotMeRayResultCallback (btCollisionObject* me, const btVector3& start, const btVector3& direction, bool ignore_ghost_objects = false, bool ignore_static_objects = false) :
 				btCollisionWorld::ClosestRayResultCallback(start, direction),
 				ignore_ghosts(ignore_ghost_objects),
 				ignore_static(ignore_static_objects)
-				
+
 			{
 				m_me = me;
 			}
-			
+
 			virtual bool needsCollision(btBroadphaseProxy* proxy) const
 			{
 				return true;
@@ -67,7 +67,7 @@ namespace gemini
 			virtual btScalar addSingleResult(btCollisionWorld::LocalRayResult& rayResult, bool normalInWorldSpace)
 			{
 //				LOGV("testing result\n");
-				
+
 				if (rayResult.m_collisionObject == m_me)
 				{
 //					LOGV("ignoring me\n");
@@ -76,25 +76,25 @@ namespace gemini
 
 				bool has_static = rayResult.m_collisionObject->getCollisionFlags() & STATIC_OBJECT;
 				bool has_ghost = rayResult.m_collisionObject->getCollisionFlags() & GHOST_OBJECT;
-				
+
 				if (ignore_ghosts && !rayResult.m_collisionObject->hasContactResponse() && has_ghost)
 				{
 //					LOGV("ignoring ghost\n");
 					return btScalar(1.0);
 				}
-				
+
 
 				if (ignore_static && has_static && !has_ghost)
 				{
 					return btScalar(1.0f);
 				}
-				
+
 				return ClosestRayResultCallback::addSingleResult (rayResult, normalInWorldSpace);
 			}
 		protected:
 			btCollisionObject* m_me;
 		};
-//		
+//
 		class ClosestNotMeConvexResultCallback : public btCollisionWorld::ClosestConvexResultCallback
 		{
 		public:
@@ -105,7 +105,7 @@ namespace gemini
 			, m_minSlopeDot(minSlopeDot)
 			{
 			}
-			
+
 			virtual btScalar addSingleResult(btCollisionWorld::LocalConvexResult& convexResult,bool normalInWorldSpace)
 			{
 				if (convexResult.m_hitCollisionObject == m_me)
@@ -113,13 +113,13 @@ namespace gemini
 //					LOGV("ignoring source ghost object\n");
 					return btScalar(1.0);
 				}
-				
+
 				if (!convexResult.m_hitCollisionObject->hasContactResponse())
 				{
 //					LOGV("ignoring object with no response\n");
 					return btScalar(1.0);
 				}
-				
+
 				btVector3 hitNormalWorld;
 				if (normalInWorldSpace)
 				{
@@ -130,13 +130,13 @@ namespace gemini
 					///need to transform normal into worldspace
 					hitNormalWorld = m_hitCollisionObject->getWorldTransform().getBasis()*convexResult.m_hitNormalLocal;
 				}
-				
+
 				btScalar dotUp = m_up.dot(hitNormalWorld);
 				if (fabs(dotUp) < m_minSlopeDot) {
 //					LOGV("ignoring hit with invalid slope\n");
 					return btScalar(1.0);
 				}
-				
+
 				return ClosestConvexResultCallback::addSingleResult(convexResult, normalInWorldSpace);
 			}
 		protected:

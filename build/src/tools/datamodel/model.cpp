@@ -33,20 +33,20 @@ namespace gemini
 		{
 			export_flags = EXPORT_ANIMATIONS | EXPORT_MATERIALS | EXPORT_MESHES | EXPORT_SKELETON;
 		}
-	
+
 		Model::~Model()
 		{
 			for (auto animation : animations)
 			{
 				MEMORY_DELETE(animation, core::memory::global_allocator());
 			}
-			
+
 			if (skeleton)
 			{
 				MEMORY_DELETE(skeleton, core::memory::global_allocator());
 			}
 		}
-		
+
 		Animation* Model::add_animation(const String& name)
 		{
 			Animation* animation = MEMORY_NEW(Animation, core::memory::global_allocator());

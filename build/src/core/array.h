@@ -36,23 +36,23 @@ class Array
 public:
 	typedef T value_type;
 	typedef T* value_pointer;
-	
+
 	value_pointer data;
 	size_t max_capacity;
 	size_t total_elements;
-	
-	
+
+
 private:
 	value_pointer allocate(size_t count)
 	{
 		return MEMORY_NEW_ARRAY(value_type, count, core::memory::global_allocator());
 	}
-	
+
 	void deallocate(value_pointer pointer)
 	{
 		MEMORY_DELETE_ARRAY(pointer, core::memory::global_allocator());
 	}
-	
+
 	// grow to capacity
 	void grow(size_t capacity)
 	{
@@ -64,13 +64,13 @@ private:
 				memcpy(expanded_data, data, sizeof(value_type) * total_elements);
 				deallocate(data);
 			}
-			
+
 			data = expanded_data;
 			max_capacity = capacity;
 		}
 	}
 public:
-	
+
 	class iterator
 	{
 	public:
@@ -81,30 +81,30 @@ public:
 			index(index)
 		{
 		}
-		
+
 		iterator(const iterator& other) :
 			container(other.container),
 			index(other.index)
 		{
 		}
-		
+
 		iterator& operator= (const iterator& other)
 		{
 			this->index = other.index;
 			this->container = other.container;
 			return *this;
 		}
-		
+
 		bool operator== (const iterator& other) const
 		{
 			return (index == other.index);
 		}
-		
+
 		bool operator!= (const iterator& other) const
 		{
 			return !(*this == other);
 		}
-		
+
 		const iterator& operator++()
 		{
 			index++;
@@ -230,7 +230,7 @@ public:
 		total_elements = 0;
 		max_capacity = capacity;
 	}
-	
+
 	~Array()
 	{
 		clear();
@@ -247,14 +247,14 @@ public:
 	{
 		resize(count, value_type());
 	}
-	
+
 	// resizes the container to contain count elements
 	// unlike std::vector, we aren't going to remove + destroy elements
 	// if count < total_elements.
 	void resize(size_t count, const value_type& default_value)
 	{
 		grow(count);
-		
+
 		if (count > total_elements)
 		{
 			size_t offset = total_elements;
@@ -263,7 +263,7 @@ public:
 				data[index] = default_value;
 			}
 		}
-		
+
 		total_elements = count;
 	}
 
@@ -274,10 +274,10 @@ public:
 		{
 			if (max_capacity == 0)
 				max_capacity = 8;
-				
+
 			grow(max_capacity * 2);
 		}
-		
+
 		data[total_elements++] = item;
 	}
 
@@ -301,10 +301,10 @@ public:
 			data = 0;
 			max_capacity = 0;
 		}
-		
+
 		total_elements = 0;
 	}
-	
+
 
 	void erase(const value_type& element)
 	{
@@ -335,33 +335,33 @@ public:
 	{
 		return total_elements;
 	}
-	
+
 	bool empty() const
 	{
 		return total_elements == 0;
 	}
-	
+
 	T& operator[](int index)
 	{
 		return data[index];
 	}
-	
+
 	const T& operator[](int index) const
 	{
 		return data[index];
 	}
-	
+
 	T& back()
 	{
 		assert(total_elements > 0);
 		return data[total_elements-1];
 	}
-	
+
 	iterator begin()
 	{
 		return iterator(this, 0);
 	}
-	
+
 	iterator end()
 	{
 		return iterator(this, total_elements);

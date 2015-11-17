@@ -37,7 +37,7 @@ public:
 	DECLARE_APPLICATION( HelloWorld );
 
 	virtual kernel::ApplicationResult config( kernel::Params & params )
-	{		
+	{
 		return kernel::Application_NoWindow;
 	}
 
@@ -54,7 +54,7 @@ public:
 	virtual void tick( kernel::Params & params )
 	{
 	}
-	
+
 	virtual void shutdown( kernel::Params & params )
 	{
 	}

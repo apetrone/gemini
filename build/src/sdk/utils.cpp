@@ -31,7 +31,7 @@ namespace gemini
 		static EntityFactoryRegistrar _registrar;
 		return _registrar;
 	}
-	
+
 	namespace util
 	{
 		Entity* create_entity_by_classname(const char* classname)

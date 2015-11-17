@@ -43,9 +43,9 @@ class TestWindow : public kernel::IApplication,
 public:
 	DECLARE_APPLICATION( TestWindow );
 
-	
+
 	audio::SoundHandle sound;
-	
+
 	virtual void event( KeyboardEvent & event )
 	{
         if ( event.is_down )
@@ -65,7 +65,7 @@ public:
 	virtual void event( MouseEvent & event )
 	{
 		const char * button_name;
-		
+
         switch( event.subtype )
         {
             case kernel::MouseMoved:
@@ -85,7 +85,7 @@ public:
                     fprintf( stdout, "mouse button %i (%s) is released\n", event.button, button_name );
                 }
                 break;
-                
+
             case kernel::MouseWheelMoved:
                 if ( event.wheel_direction > 0 )
                 {
@@ -110,26 +110,26 @@ public:
 			case kernel::WindowGainFocus:
 				fprintf( stdout, "window gained focus\n" );
 				break;
-				
+
 			case kernel::WindowLostFocus:
 				fprintf( stdout, "window lost focus\n" );
 				break;
-				
+
 			case kernel::WindowResized:
 				fprintf( stdout, "resize event: %i x %i\n", event.window_width, event.window_height );
 				break;
-				
+
 			default: break;
 		}
 
 	}
-	
+
 	virtual kernel::ApplicationResult config( kernel::Params & params )
 	{
 		params.window_width = 800;
 		params.window_height = 600;
 		params.window_title = "TestWindow";
-		
+
 		return kernel::Application_Success;
 	}
 
@@ -137,12 +137,12 @@ public:
 	{
 		sound = audio::create_sound( "sounds/powerup" );
 		audio::play( sound );
-		
-		
-		
+
+
+
 		return kernel::Application_Success;
 	}
-	
+
 	virtual void step( kernel::Params & params )
 	{
 	}
@@ -153,7 +153,7 @@ public:
 		util::MemoryStream ms;
 		char buffer[128] = {0};
 		ms.init( buffer, 128 );
-		
+
 		// viewport
 		ms.rewind();
 		ms.write( 0 );
@@ -162,7 +162,7 @@ public:
 		ms.write( params.window_width );
 		ms.rewind();
 		driver->run_command( renderer::DC_VIEWPORT, ms );
-		
+
 		// set clear color
 		ms.rewind();
 		ms.write( 0.5f );
@@ -171,7 +171,7 @@ public:
 		ms.write( 1.0f );
 		ms.rewind();
 		driver->run_command( renderer::DC_CLEARCOLOR, ms );
-		
+
 		// color_buffer_bit
 		ms.rewind();
 		ms.write( 0x00004000 );

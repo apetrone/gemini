@@ -181,7 +181,7 @@ namespace renderer
 		typedef void (GEMGLAPI GEMGLFNGETACTIVEATTRIB) ( GLObject program, GLuint index, GLsizei bufSize, GLsizei * length, GLint * size, GLenum * type, GLchar * name );
 		typedef GLint (GEMGLAPI GEMGLFNGETATTRIBLOCATION) ( GLObject program, const GLchar * name );
 		typedef void (GEMGLAPI GEMGLFNBINDATTRIBLOCATION) ( GLObject program, GLuint index, const GLchar* name );
-		
+
 		// uniforms
 		typedef GLint (GEMGLAPI GEMGLFNGETUNIFORMLOCATION) ( GLObject program, const GLchar* name );
 		typedef GLuint (GEMGLAPI GEMGLFNGETUNIFORMBLOCKINDEX) ( GLObject program, const GLchar * uniformBlockName );
@@ -191,8 +191,8 @@ namespace renderer
 		typedef void (GEMGLAPI GEMGLFNGETACTIVEUNIFORMNAME) ( GLObject program, GLuint uniformIndex, GLsizei bufSize, GLsizei * length, GLchar * uniformName );
 		typedef void (GEMGLAPI GEMGLFNGETACTIVEUNIFORM) ( GLObject program, GLuint index, GLsizei bufSize, GLsizei * length, GLint * size, GLenum * type, GLchar * name );
 		typedef void (GEMGLAPI GEMGLFNGETACTIVEUNIFORMSIV) ( GLObject program, GLsizei uniformCount, const GLuint * uniformIndices, GLenum pname, GLint * params );
-		
-		
+
+
 		typedef void (GEMGLAPI GEMGLFNBINDFRAGDATALOCATION) ( GLObject program, GLuint color, const GLchar* name );
 
 		typedef void (GEMGLAPI GEMGLFNBINDVERTEXARRAY) ( GLuint array );
@@ -214,7 +214,7 @@ namespace renderer
 
 		typedef void (GEMGLAPI GEMGLFNBINDBUFFER) ( GLenum target, GLuint buffer );
 		typedef void (GEMGLAPI GEMGLFNBINDBUFFERRANGE) ( GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size );
-		typedef void (GEMGLAPI GEMGLFNBINDBUFFERBASE) ( GLenum target, GLuint index, GLuint buffer );	
+		typedef void (GEMGLAPI GEMGLFNBINDBUFFERBASE) ( GLenum target, GLuint index, GLuint buffer );
 		typedef void (GEMGLAPI GEMGLFNDELETEBUFFERS) ( GLsizei n, const GLuint* buffers );
 		typedef void (GEMGLAPI GEMGLFNGENBUFFERS) ( GLsizei n, GLuint* buffers );
 		typedef GLboolean (GEMGLAPI GEMGLFNISBUFFER) ( GLuint buffer );
@@ -247,47 +247,47 @@ namespace renderer
 		typedef void (GEMGLAPI GEMGLFNUNIFORMMATRIX4FV) ( GLint location, GLsizei count, GLboolean transpose, GLfloat* value );
 
 		typedef void (GEMGLAPI GEMGLFNGENERATEMIPMAP) ( GLenum target );
-		
+
 		// blending
 		typedef void (GEMGLAPI GEMGLFNBLENDEQUATION) ( GLenum mode );
 		typedef void (GEMGLAPI GEMGLFNBLENDEQUATIONSEPARATE) ( GLenum modeRGB, GLenum modeAlpha );
 		typedef void (GEMGLAPI GEMGLFNBLENDFUNCSEPARATE) ( GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha );
 		typedef void (GEMGLAPI GEMGLFNBLENDFUNC) ( GLenum src, GLenum dst );
 		typedef void (GEMGLAPI GEMGLFNBLENDCOLOR) ( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha );
-		
+
 
 #if PLATFORM_WINDOWS
 		typedef int (GEMGLAPI GEMGLSWAPINTERVAL) (int interval);
 		typedef int (GEMGLAPI GEMGLGETSWAPINTERVAL) (void);
 #endif
 
-		
+
 
 		// frame buffers
 		typedef void (GEMGLAPI GEMGLFNBINDFRAMEBUFFER) ( GLenum target, GLuint framebuffer );
 		typedef void (GEMGLAPI GEMGLFNDELETEFRAMEBUFFERS) ( GLsizei, GLuint * framebuffers );
 		typedef void (GEMGLAPI GEMGLFNGENFRAMEBUFFERS) ( GLsizei n, GLuint * ids );
-		
+
 		// render buffers
 		typedef void (GEMGLAPI GEMGLFNBINDRENDERBUFFER) ( GLenum target, GLuint renderbuffer );
 		typedef void (GEMGLAPI GEMGLFNDELETERENDERBUFFERS) ( GLsizei n, GLuint * renderbuffers );
 		typedef void (GEMGLAPI GEMGLFNGENRENDERBUFFERS) ( GLsizei n, GLuint * renderbuffers );
 		typedef void (GEMGLAPI GEMGLFNRENDERBUFFERSTORAGEMULTISAMPLE) ( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height );
 		typedef void (GEMGLAPI GEMGLFNRENDERBUFFERSTORAGE) ( GLenum target, GLenum internalformat, GLsizei width, GLsizei height );
-		
+
 		// attaching texture images to a framebuffer
 		typedef void (GEMGLAPI GEMGLFNFRAMEBUFFERRENDERBUFFER) ( GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer );
 		typedef void (GEMGLAPI GEMGLFNFRAMEBUFFERTEXTURE) ( GLenum target, GLenum attachment, GLuint texture, GLint level );
 		typedef void (GEMGLAPI GEMGLFNFRAMEBUFFERTEXTURE3D) ( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level );
 		typedef void (GEMGLAPI GEMGLFNFRAMEBUFFERTEXTURE2D) ( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level );
 		typedef void (GEMGLAPI GEMGLFNFRAMEBUFFERTEXTURE1D) ( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level );
-		typedef void (GEMGLAPI GEMGLFNFRAMEBUFFERTEXTURELAYER) ( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer );	
-		
+		typedef void (GEMGLAPI GEMGLFNFRAMEBUFFERTEXTURELAYER) ( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer );
+
 		typedef GLenum (GEMGLAPI GEMGLFNCHECKFRAMEBUFFERSTATUS) ( GLenum target );
 		typedef GLboolean (GEMGLAPI GEMGLFNISFRAMEBUFFER) ( GLuint framebuffer );
-		
+
 		typedef void (GEMGLAPI GEMGLFNGETFRAMEBUFFERATTACHMENTPARAMETERIV) ( GLenum target, GLenum attachment, GLenum pname, GLint * params );
-		
+
 		typedef GLboolean (GEMGLAPI GEMGLFNISRENDERBUFFER) ( GLuint renderbuffer );
 		typedef void (GEMGLAPI GEMGLFNGETRENDERBUFFERPARAMETERIV) ( GLenum target, GLenum pname, GLint * params );
 
@@ -321,18 +321,18 @@ namespace renderer
 			GEMGLFNPOLYGONOFFSET PolygonOffset;
 			GEMGLFNPIXELSTOREI PixelStorei;
 			GEMGLFNDEPTHMASK DepthMask;
-			
+
 			// ReadPixels
 
 			// BUFFER OBJECTS
-			GEMGLFNBINDBUFFER BindBuffer;		
+			GEMGLFNBINDBUFFER BindBuffer;
 			GEMGLFNDELETEBUFFERS DeleteBuffers;
 			GEMGLFNGENBUFFERS GenBuffers;
 			GEMGLFNISBUFFER IsBuffer;
 			GEMGLFNBUFFERDATA BufferData;
 			GEMGLFNBUFFERSUBDATA BufferSubData;
 			GEMGLFNGETBUFFERPARAMETERIV GetBufferParameteriv;
-			
+
 			// textures
 			GEMGLFNACTIVETEXTURE ActiveTexture;
 			GEMGLFNTEXIMAGE2D TexImage2D;
@@ -351,12 +351,12 @@ namespace renderer
 			GEMGLFNDELETETEXTURES DeleteTextures;
 			GEMGLFNGENTEXTURES GenTextures;
 			GEMGLFNISTEXTURE IsTexture;
-			
-			
+
+
 			// attribs
 			GEMGLFNVERTEXATTRIBPOINTER VertexAttribPointer;
 			GEMGLFNENABLEVERTEXATTRIBARRAY EnableVertexAttribArray;
-			GEMGLFNDISABLEVERTEXATTRIBARRAY DisableVertexAttribArray;	
+			GEMGLFNDISABLEVERTEXATTRIBARRAY DisableVertexAttribArray;
 			GEMGLFNVERTEXATTRIB1F VertexAttrib1f;
 			GEMGLFNVERTEXATTRIB1F VertexAttrib2f;
 			GEMGLFNVERTEXATTRIB1F VertexAttrib3f;
@@ -365,7 +365,7 @@ namespace renderer
 			GEMGLFNVERTEXATTRIB1F VertexAttrib2fv;
 			GEMGLFNVERTEXATTRIB1F VertexAttrib3fv;
 			GEMGLFNVERTEXATTRIB1F VertexAttrib4fv;
-		
+
 			// SHADERS AND PROGRAMS
 			// shader objects
 			GEMGLFNCREATESHADER CreateShader;
@@ -373,11 +373,11 @@ namespace renderer
 			GEMGLFNCOMPILESHADER CompileShader;
 			GEMGLFNRELEASESHADERCOMPILER ReleaseShaderCompiler;
 			GEMGLFNDELETESHADER DeleteShader;
-			
+
 			// loading shader binaries
 			GEMGLFNSHADERBINARY ShaderBinary;
-			
-			// program objects		
+
+			// program objects
 			GEMGLFNCREATEPROGRAM CreateProgram;
 			GEMGLFNATTACHSHADER AttachShader;
 			GEMGLFNDETACHSHADER DetachShader;
@@ -389,12 +389,12 @@ namespace renderer
 			// vertex attributes
 			GEMGLFNGETACTIVEATTRIB GetActiveAttrib;
 			GEMGLFNGETATTRIBLOCATION GetAttribLocation;
-			GEMGLFNBINDATTRIBLOCATION BindAttribLocation;		
-			
+			GEMGLFNBINDATTRIBLOCATION BindAttribLocation;
+
 			// uniform variables
 			GEMGLFNGETUNIFORMLOCATION GetUniformLocation;
 			GEMGLFNGETACTIVEUNIFORM GetActiveUniform;
-			GEMGLFNGETACTIVEUNIFORMSIV GetActiveUniformsiv;		
+			GEMGLFNGETACTIVEUNIFORMSIV GetActiveUniformsiv;
 			GEMGLFNUNIFORM1F Uniform1f;
 			GEMGLFNUNIFORM2F Uniform2f;
 			GEMGLFNUNIFORM3F Uniform3f;
@@ -414,39 +414,39 @@ namespace renderer
 			GEMGLFNUNIFORMMATRIX2FV UniformMatrix2fv;
 			GEMGLFNUNIFORMMATRIX3FV UniformMatrix3fv;
 			GEMGLFNUNIFORMMATRIX4FV UniformMatrix4fv;
-			
+
 			// shader execution
 			GEMGLFNVALIDATEPROGRAM ValidateProgram;
-			
+
 			// shader queries
 			GEMGLFNISSHADER IsShader;
 			GEMGLFNGETSHADERIV GetShaderiv;
 			GEMGLFNGETATTACHEDSHADERS GetAttachedShaders;
 			GEMGLFNGETSHADERINFOLOG GetShaderInfoLog;
 			//GEMGLFNGETSHADERSOURCE GetShaderSource;
-			
+
 			// program queries
 			GEMGLFNISPROGRAM IsProgram;
 			GEMGLFNGETPROGRAMIV GetProgramiv;
 			GEMGLFNGETPROGRAMINFOLOG GetProgramInfoLog;
 
 			// PER-FRAGMENT OPERATIONS
-			
+
 			// blending
 			GEMGLFNBLENDEQUATION BlendEquation;
 			GEMGLFNBLENDEQUATIONSEPARATE BlendEquationSeparate;
 			GEMGLFNBLENDFUNCSEPARATE BlendFuncSeparate;
 			GEMGLFNBLENDFUNC BlendFunc;
 			GEMGLFNBLENDCOLOR BlendColor;
-			
+
 			// VERTEX ARRAY OBJECTS
 			GEMGLFNGENVERTEXARRAYS GenVertexArrays;
 			GEMGLFNBINDVERTEXARRAY BindVertexArray;
 			GEMGLFNDELETEVERTEXARRAYS DeleteVertexArrays;
 			GEMGLFNISVERTEXARRAY IsVertexArray;
 
-			
-			
+
+
 #else // Desktop OpenGL
 			//
 			GEMGLFNVIEWPORT Viewport;
@@ -465,7 +465,7 @@ namespace renderer
 			GEMGLFNDISABLE Disable;
 			GEMGLFNPIXELSTOREI PixelStorei;
 			GEMGLFNDEPTHMASK DepthMask;
-			
+
 			// textures
 			GEMGLFNTEXPARAMETERF TexParameterf;
 			GEMGLFNTEXPARAMETERFV TexParameterfv;
@@ -473,7 +473,7 @@ namespace renderer
 			GEMGLFNTEXPARAMETERIV TexParameteriv;
 			GEMGLFNTEXIMAGE1D TexImage1D;
 			GEMGLFNTEXIMAGE2D TexImage2D;
-			
+
 			GEMGLFNTEXSUBIMAGE2D TexSubImage2D;
 			GEMGLFNBINDTEXTURE BindTexture;
 			GEMGLFNDELETETEXTURES DeleteTextures;
@@ -499,7 +499,7 @@ namespace renderer
 			GEMGLFNGETPROGRAMINFOLOG GetProgramInfoLog;
 			// shader execution
 			GEMGLFNVALIDATEPROGRAM ValidateProgram;
-			
+
 			GEMGLFNISPROGRAM IsProgram;
 			GEMGLFNGETPROGRAMIV GetProgramiv;
 			GEMGLFNGETATTACHEDSHADERS GetAttachedShaders;
@@ -529,11 +529,11 @@ namespace renderer
 			GEMGLFNGETACTIVEUNIFORMNAME GetActiveUniformName;
 			GEMGLFNGETACTIVEUNIFORM GetActiveUniform;
 			GEMGLFNGETACTIVEUNIFORMSIV GetActiveUniformsiv;
-			
+
 			// buffers
 			GEMGLFNBINDBUFFER BindBuffer;
 			GEMGLFNBINDBUFFERRANGE BindBufferRange;
-			GEMGLFNBINDBUFFERBASE BindBufferBase;		
+			GEMGLFNBINDBUFFERBASE BindBufferBase;
 			GEMGLFNDELETEBUFFERS DeleteBuffers;
 			GEMGLFNGENBUFFERS GenBuffers;
 			GEMGLFNISBUFFER IsBuffer;
@@ -567,7 +567,7 @@ namespace renderer
 			GEMGLFNUNIFORMMATRIX4FV UniformMatrix4fv;
 
 			// PER-FRAGMENT OPERATIONS
-			
+
 			// blending
 			GEMGLFNBLENDEQUATION BlendEquation;
 			GEMGLFNBLENDEQUATIONSEPARATE BlendEquationSeparate;
@@ -580,39 +580,39 @@ namespace renderer
 			GEMGLGETSWAPINTERVAL GetSwapInterval;
 	#endif
 
-			
+
 			GEMGLFNBINDFRAMEBUFFER BindFramebuffer;
 			GEMGLFNDELETEFRAMEBUFFERS DeleteFramebuffers;
 			GEMGLFNGENFRAMEBUFFERS GenFramebuffers;
-			
+
 			GEMGLFNBINDRENDERBUFFER BindRenderbuffer;
 			GEMGLFNDELETERENDERBUFFERS DeleteRenderbuffers;
 			GEMGLFNGENRENDERBUFFERS GenRenderbuffers;
 			GEMGLFNRENDERBUFFERSTORAGEMULTISAMPLE RenderbufferStorageMultisample;
 			GEMGLFNRENDERBUFFERSTORAGE RenderbufferStorage;
-			
+
 			GEMGLFNFRAMEBUFFERRENDERBUFFER FramebufferRenderbuffer;
 			GEMGLFNFRAMEBUFFERTEXTURE FramebufferTexture;
 			GEMGLFNFRAMEBUFFERTEXTURE3D FramebufferTexture3D;
 			GEMGLFNFRAMEBUFFERTEXTURE2D FramebufferTexture2D;
 			GEMGLFNFRAMEBUFFERTEXTURE1D FramebufferTexture1D;
 			GEMGLFNFRAMEBUFFERTEXTURELAYER FramebufferTextureLayer;
-			
+
 			GEMGLFNCHECKFRAMEBUFFERSTATUS CheckFramebufferStatus;
 			GEMGLFNISFRAMEBUFFER IsFramebuffer;
-			
+
 			GEMGLFNGETFRAMEBUFFERATTACHMENTPARAMETERIV GetFramebufferAttachmentParameteriv;
-			
+
 			GEMGLFNISRENDERBUFFER IsRenderbuffer;
-			GEMGLFNGETRENDERBUFFERPARAMETERIV GetRenderbufferParameteriv;	
-			
+			GEMGLFNGETRENDERBUFFERPARAMETERIV GetRenderbufferParameteriv;
+
 			// ARB_timer_query
 			GEMGLFNQUERYCOUNTER QueryCounter;
 			GEMGLFNGETQUERYOBJECTI64V GetQueryObjecti64v;
 			GEMGLFNGETQUERYOBJECTUI64V GetQueryObjectui64v;
 
 			GEMGLFNDRAWBUFFERS DrawBuffers;
-			
+
 			// ARB_uniform_buffer_object
 
 #endif
@@ -632,7 +632,7 @@ namespace renderer
 		struct gemgl_config
 		{
 			renderer::DriverType type;
-			
+
 			short major_version;
 			short minor_version;
 		}; // gemgl_config
@@ -646,7 +646,7 @@ namespace renderer
 		void * gemgl_findsymbol(gemgl_interface_t& gl_interface, const char* symbol_name);
 		const char * gemgl_uniform_to_string(GLenum type);
 		bool gemgl_find_extension(const char * extension);
-		
+
 		void gemgl_parse_version(short& major, short& minor);
 
 #if PLATFORM_APPLE

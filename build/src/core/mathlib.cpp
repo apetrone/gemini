@@ -43,7 +43,7 @@ namespace mathlib
 	void basis_vectors_from_pitch_yaw(float pitch, float yaw, glm::vec3& right, glm::vec3& view, bool invert_y_axis)
 	{
 		float _pitch;
-		
+
 		if (invert_y_axis)
 		{
 			_pitch = mathlib::degrees_to_radians(-pitch);
@@ -52,39 +52,39 @@ namespace mathlib
 		{
 			_pitch = mathlib::degrees_to_radians(pitch);
 		}
-		
+
 		float _yaw = mathlib::degrees_to_radians(yaw);
-		
+
 		float sp = sin(_pitch);
 		float cp = cos(_pitch);
 		float sy = sin(_yaw);
 		float cy = cos(_yaw);
-		
+
 		right = glm::vec3( cy, 0, sy );
-		
+
 		view[0] = sy * cp;
 		view[1] = sp;
 		view[2] = -cy * cp;
 		view = glm::normalize(view);
 	}
-	
-	
+
+
 	// Returns true if p0 is within radius units of p1
 	bool point_in_radius(const glm::vec3& p0, const glm::vec3& p1, float radius)
 	{
-	
+
 		/*
 		 float dx = p1[0] - p0[0];
 		 float dy = p1[1] - p0[1];
 		 float dz = p1[2] - p0[2];
-		 
+
 		 float len = sqrt( (dx*dx) + (dy*dy) + (dz*dz) );
-		 
+
 		 if ( len <= radius )
 		 return true;
 		 else
 		 return false;*/
-		
+
 		// Use this method to save a sqrt.
 		// http://www.gamedev.net/community/forums/topic.asp?topic_id=221071
 		glm::vec3 pt;
@@ -110,7 +110,7 @@ namespace mathlib
 		{
 			return false;
 		}
-		
+
 		if ( this->bottom < other.top )
 		{
 			return false;
@@ -119,8 +119,8 @@ namespace mathlib
 		{
 			return false;
 		}
-		
-		
+
+
 		return true;
 	} // overlaps
 } // namespace mathlib

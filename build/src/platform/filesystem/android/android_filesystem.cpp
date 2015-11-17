@@ -61,12 +61,12 @@ namespace platform
 			// http://www.flipcode.com/archives/Path_To_Executable_On_Linux.shtml
 			char linkname[64] = {0};
 			pid_t pid = getpid();
-			
+
 			if (snprintf(linkname, sizeof(linkname), "/proc/%i/exe", pid) < 0)
 			{
 				abort();
 			}
-			
+
 			result = readlink(linkname, &output[0], output.max_size());
 			if (result == -1)
 			{
@@ -74,7 +74,7 @@ namespace platform
 				return output;
 			}
 		}
-		
+
 		if (result != 0)
 		{
 			output = output.substring(0, result);
@@ -93,12 +93,12 @@ namespace platform
 	{
 		return posix_get_user_directory();
 	}
-	
+
 	PathString get_user_application_directory(const char* application_data_path)
 	{
 		return android::internal_data_path();
 	}
-	
+
 	PathString get_user_temp_directory()
 	{
 		PathString temp_path = android::internal_data_path();
@@ -123,32 +123,32 @@ namespace platform
 
 		return file;
 	}
-	
+
 	void fs_close(platform::File file)
 	{
 		AAsset_close(static_cast<AAsset*>(file.handle));
 	}
-	
+
 	size_t fs_read(platform::File file, void* destination, size_t size, size_t count)
 	{
 		AAsset_read(static_cast<AAsset*>(file.handle), destination, size);
 	}
-	
+
 	size_t fs_write(platform::File file, const void* source, size_t size, size_t count)
 	{
 		return posix_fs_write(file, source, size, count);
 	}
-	
+
 	int32_t fs_seek(platform::File file, long int offset, FileSeek origin)
 	{
 		return posix_fs_seek(file, offset, origin);
 	}
-	
+
 	long int fs_tell(platform::File file)
 	{
 		return posix_fs_tell(file);
 	}
-	
+
 	bool fs_file_exists(const char* path)
 	{
 		// assume a relative path is always passed
@@ -159,7 +159,7 @@ namespace platform
 			AAsset_close(asset);
 			return 1;
 		}
-		
+
 		return 0;
 	}
 

@@ -47,18 +47,18 @@ struct EntityList
 	typedef std::list< Type* > Collection;
 
 	Collection objects;
-	
+
 	void add( Type * object )
 	{
 		this->objects.push_back( object );
 	} // add
-	
+
 	virtual void remove( Type * object )
 	{
 		for (typename Collection::iterator it = this->objects.begin(); it != this->objects.end(); ++it)
 		{
 			Type * obj = (*it);
-			
+
 			if ( obj == object )
 			{
 				//				LOGV( "removing from entity list\n" );
@@ -67,23 +67,23 @@ struct EntityList
 			}
 		}
 	} // remove
-	
+
 	void clear()
 	{
 		objects.clear();
 	} // clear
-	
+
 	void purge()
 	{
 		// create a local copy that won't be modified as we traverse it.
 		Collection objects = this->objects;
-	
+
 		for (typename Collection::iterator it = objects.begin(); it != objects.end(); ++it)
 		{
 			Entity * obj = (*it);
 			delete obj;
 		}
-		
+
 		clear();
 	} // purge
 
@@ -98,18 +98,18 @@ struct EntityList
 				return obj;
 			}
 		}
-		
+
 		return 0;
 	} // find_with_name
-	
-	
+
+
 	Type * object_at_index( size_t index )
 	{
 		assert(index <= this->count());
-		
+
 		return objects[ index ];
 	} // object_at_index
-	
+
 	size_t count() const
 	{
 		return objects.size();

@@ -28,14 +28,14 @@
 using namespace Sqrat;
 template<class C>
 class EntityAllocator {
-	
+
     static SQInteger setInstance(HSQUIRRELVM vm, C* instance)
     {
         sq_setinstanceup(vm, 1, instance);
         sq_setreleasehook(vm, 1, &Delete);
         return 0;
     }
-	
+
     template <class T, bool b>
     struct NewC
     {
@@ -45,7 +45,7 @@ class EntityAllocator {
 			p = new T();
         }
     };
-	
+
     template <class T>
     struct NewC<T, false>
     {
@@ -55,21 +55,21 @@ class EntityAllocator {
 			p = 0;
         }
     };
-	
+
 public:
     static SQInteger New(HSQUIRRELVM vm) {
         C* instance = NewC<C, is_default_constructible<C>::value >().p;
         setInstance(vm, instance);
         return 0;
     }
-	
+
     template <int count>
     static SQInteger iNew(HSQUIRRELVM vm) {
         return New(vm);
     }
-	
+
 	// following New functions are used only if constructors are bound via Ctor() in class
-	
+
     template <typename A1>
     static SQInteger iNew(HSQUIRRELVM vm) {
         Var<A1> a1(vm, 2);
@@ -229,20 +229,20 @@ public:
 									 a9.value
 									 ));
     }
-	
+
 public:
-	
+
     static SQInteger Copy(HSQUIRRELVM vm, SQInteger idx, const void* value) {
         C* instance = new C(*static_cast<const C*>(value));
         sq_setinstanceup(vm, idx, instance);
         sq_setreleasehook(vm, idx, &Delete);
         return 0;
     }
-	
+
     static SQInteger Delete(SQUserPointer ptr, SQInteger size) {
 		C * e = reinterpret_cast<C*>( ptr );
 		e->flags |= Entity::EF_DELETE_INSTANCE;
-		
+
 		// this is quite a hack to get the system working well during a shutdown
 		if ( !kernel::instance()->is_active() )
 		{
@@ -250,7 +250,7 @@ public:
 			//        delete instance;
 			delete e;
 		}
-		
+
         return 0;
     }
 }; // EntityAllocator

@@ -787,7 +787,7 @@ namespace platform
 			if (cocoa::_state.is_cursor_visible != enable)
 			{
 				cocoa::_state.is_cursor_visible = enable;
-				
+
 				if (enable)
 				{
 					[NSCursor unhide];

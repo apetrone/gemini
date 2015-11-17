@@ -52,42 +52,42 @@ namespace physics
 	struct PhysicsStep
 	{
 		uint32_t tick_count;
-		
+
 	};
-	
+
 	b2World * get_world();
 	b2World * create_world( const b2Vec2 & gravity );
 	void destroy_world( b2World * world );
-	
+
 	b2Body * create_body( b2World * world, b2BodyDef * body_def );
 	void destroy_body( b2World * world, b2Body * body );
-	
+
 	void step( float delta_seconds );
-	
+
 	void debug_draw( b2World * world );
-	
-	
+
+
 	class physics2d_debug_renderer : public b2Draw
 	{
 		/// Draw a closed polygon provided in CCW order.
 		virtual void DrawPolygon(const b2Vec2* vertices, int vertexCount, const b2Color& color);
-		
+
 		/// Draw a solid closed polygon provided in CCW order.
 		virtual void DrawSolidPolygon(const b2Vec2* vertices, int vertexCount, const b2Color& color);
-		
+
 		/// Draw a circle.
 		virtual void DrawCircle(const b2Vec2& center, float radius, const b2Color& color);
 		/// Draw a solid circle.
 		virtual void DrawSolidCircle(const b2Vec2& center, float radius, const b2Vec2& axis, const b2Color& color);
-		
+
 		/// Draw a line segment.
 		virtual void DrawSegment(const b2Vec2& p1, const b2Vec2& p2, const b2Color& color);
-		
+
 		/// Draw a transform. Choose your own length scale.
 		/// @param xf a transform.
 		virtual void DrawTransform(const b2Transform& xf);
 	};
-	
+
 	/// Draw a closed polygon provided in CCW order.
 	void physics2d_debug_renderer::DrawPolygon(const b2Vec2* vertices, int vertexCount, const b2Color& color)
 	{
@@ -100,21 +100,21 @@ namespace physics
 		for( v = 0; v < vertexCount; ++v )
 		{
 			vertex = &vertices[v];
-			
+
 			if ( last )
 			{
 				start = glm::vec3( int(METERS_TO_PIXELS( last->x )), int(METERS_TO_PIXELS( last->y )), 0 );
 			}
-			
+
 			end = glm::vec3( int(METERS_TO_PIXELS( vertex->x )), int(METERS_TO_PIXELS( vertex->y )), 0 );
-			
+
 			if ( last )
 			{
 				debugdraw::line( start, end, c, 0 );
 			}
 			last = vertex;
 		}
-		
+
 		// use the first vertex to close the loop
 		vertex = &vertices[0];
 		if ( last )
@@ -124,32 +124,32 @@ namespace physics
 			debugdraw::line( start, end, c, 0 );
 		}
 	}
-	
+
 	/// Draw a solid closed polygon provided in CCW order.
 	void physics2d_debug_renderer::DrawSolidPolygon(const b2Vec2* vertices, int vertexCount, const b2Color& color)
 	{
 //		LOGV( "DrawSolidPolygon\n" );
 	}
-	
+
 	/// Draw a circle.
 	void physics2d_debug_renderer::DrawCircle(const b2Vec2& center, float radius, const b2Color& color)
 	{
 		LOGV( "DrawCircle\n" );
 	}
-	
+
 	/// Draw a solid circle.
 	void physics2d_debug_renderer::DrawSolidCircle(const b2Vec2& center, float radius, const b2Vec2& axis, const b2Color& color)
 	{
 		LOGV( "DrawSolidCircle\n" );
 	}
-	
+
 	/// Draw a line segment.
 	void physics2d_debug_renderer::DrawSegment(const b2Vec2& p1, const b2Vec2& p2, const b2Color& color)
 	{
 		Color c( color.r );
 		debugdraw::line( glm::vec3(p1.x, p1.y, 0), glm::vec3(p2.x, p2.y, 0), c, 0 );
 	}
-	
+
 	/// Draw a transform. Choose your own length scale.
 	/// @param xf a transform.
 	void physics2d_debug_renderer::DrawTransform(const b2Transform& xf)
@@ -164,52 +164,52 @@ static b2Body * create_sprite_body( int width, int height, float x, float y, int
 	b2BodyDef body_def;
 	b2Body * body = 0;
 
-	
+
 	body_def.position.Set( PIXELS_TO_METER(x), PIXELS_TO_METER(y) );
 	body_def.fixedRotation = false;
 	body_def.allowSleep = true;
-	
+
 	// TODO: is this static?
 	body_def.type = b2_dynamicBody;
-	
+
 	body = physics::create_body( physics::get_world(), &body_def );
-	
+
 	if ( body )
 	{
 		b2FixtureDef fixture;
 		fixture.density = 1.0f;
 		fixture.restitution = 0.1f;
-		
+
 		// TODO: is this a sensor?
 		fixture.filter.categoryBits = category;
 		fixture.filter.maskBits = mask;
-		
+
 		b2PolygonShape body_shape;
 		body_shape.SetAsBox( PIXELS_TO_METER(width), PIXELS_TO_METER(height) );
 		fixture.shape = &body_shape;
 		body->CreateFixture( &fixture );
-		
+
 		// TODO: if needs fixed rotation
 //		body->SetFixedRotation( true );
 
-		
-	}
-	
-	
 
-	
+	}
+
+
+
+
 	return body;
 } // create_sprite_body
 
 namespace physics
 {
 	b2World * _world = 0;
-	
+
 	b2World * get_world()
 	{
 		return _world;
 	} // get_world
-	
+
 	b2World * create_world( const b2Vec2 & gravity )
 	{
 		if ( !_world )
@@ -217,10 +217,10 @@ namespace physics
 			_world = new b2World( gravity );
 			_world->SetAutoClearForces( false );
 		}
-		
+
 		return _world;
 	} // create_world
-	
+
 	void destroy_world()
 	{
 		if ( _world )
@@ -229,7 +229,7 @@ namespace physics
 			_world = 0;
 		}
 	} // destroy_world
-	
+
 	b2Body * create_body( b2World * world, b2BodyDef * body_def )
 	{
 		if ( world )
@@ -239,7 +239,7 @@ namespace physics
 
 		return 0;
 	} // create_body
-	
+
 	void destroy_body( b2World * world, b2Body * body )
 	{
 		if ( world )
@@ -247,12 +247,12 @@ namespace physics
 			world->DestroyBody( body );
 		}
 	} // destroy_body
-	
+
 	void step( float delta_seconds )
 	{
-		
+
 	} // step
-	
+
 	void debug_draw( b2World * world )
 	{
 		if ( world )
@@ -280,20 +280,20 @@ struct RenderGlobals
 	renderer::VertexStream sprite_stream;
 	RenderStream commands;
 	Camera camera;
-	
+
 	size_t rendered_entities;
 	unsigned int sprite_attribs;
-	
+
 	void setup()
 	{
 		// allocate sprite_stream
 		assets::ShaderString name("uv0");
 		sprite_attribs = 0;
 		sprite_attribs |= assets::find_parameter_mask( name );
-		
+
 		name = "colors";
 		sprite_attribs |= assets::find_parameter_mask( name );
-		
+
 		// setup the vertex stream
 		unsigned int max_vertices = (6 * 1024);
 		unsigned int max_indices = (6 * 256);
@@ -303,73 +303,73 @@ struct RenderGlobals
 		sprite_stream.desc.add( renderer::VD_FLOAT2 );
 		sprite_stream.create( max_vertices, max_indices, renderer::DRAW_INDEXED_TRIANGLES );
 	} // setup
-	
+
 	void render_stream( assets::Material * material, renderer::VertexStream & stream, Camera & camera )
 	{
 		assert( material != 0 );
-		
+
 		assets::Shader * shader = assets::find_compatible_shader( sprite_attribs + material->requirements );
-		
+
 		assert( shader !=0 );
 		commands.add_shader( shader );
-		
+
 		glm::mat4 object_matrix;
-		
+
 		commands.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
 		commands.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
 		commands.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
-		
+
 		commands.add_material( material, shader );
 		commands.add_draw_call( stream.vertexbuffer );
-		
+
 		commands.run_commands();
 		stream.reset();
 	} // render_stream
-	
-	
+
+
 	void render_emitter( ParticleEmitter * emitter, renderer::VertexStream & stream, Camera & camera )
 	{
 		if ( !emitter || (emitter && !emitter->emitter_config) )
 		{
 			return;
 		}
-		
+
 		renderer::IndexType indices[] = { 0, 1, 2, 2, 3, 0 };
 		glm::mat3 billboard = glm::transpose( glm::mat3(camera.matCam) );
-		
+
 		emitter->world_position.interpolate( kernel::instance()->parameters().step_alpha );
-		
+
 		assets::ShaderString name("uv0");
 		unsigned int test_attribs = assets::find_parameter_mask( name );
-		
+
 		name = "colors";
 		test_attribs |= assets::find_parameter_mask(name);
-		
+
 		assets::Material * material = 0;
 		assets::Shader * shader = 0;
-		
+
 		material = assets::materials()->find_with_id(emitter->emitter_config->material_id);
 		shader = assets::find_compatible_shader( material->requirements + test_attribs );
-		
+
 		glm::mat4 object_matrix;
-		
-		
-		
-		
+
+
+
+
 		commands.rewind();
 //		commands.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
 //		commands.add_state(renderer::STATE_BLEND, 1);
 		commands.add_shader( shader );
-		
+
 //		commands.add_state(renderer::STATE_DEPTH_TEST, 1);
 //		commands.add_state(renderer::STATE_DEPTH_WRITE, 0);
-		
+
 		commands.add_uniform_matrix4( shader->get_uniform_location("modelview_matrix"), &camera.matCam );
 		commands.add_uniform_matrix4( shader->get_uniform_location("projection_matrix"), &camera.matProj );
 		commands.add_uniform_matrix4( shader->get_uniform_location("object_matrix"), &object_matrix );
-		
+
 		commands.add_material( material, shader );
-		
+
 		for( unsigned int p = 0; p < emitter->emitter_config->max_particles; ++p )
 		{
 			Particle * particle = &emitter->particle_list[ p ];
@@ -385,49 +385,49 @@ struct RenderGlobals
 					commands.rewind();
 					stream.reset();
 				}
-				
+
 				SpriteVertexType * v = (SpriteVertexType*)stream.request(4);
 				glm::vec3 offset( particle->size, particle->size, 0 );
 				glm::vec3 temp;
-				
+
 				temp = (billboard * -offset) + particle->position.render;
 				v[0].x = temp.x;
 				v[0].y = temp.y;
 				v[0].z = temp.z;
-				
+
 				temp = (billboard * glm::vec3(offset[0], -offset[1], -offset[2])) + particle->position.render;
 				v[1].x = temp.x;
 				v[1].y = temp.y;
 				v[1].z = temp.z;
-				
+
 				temp = (billboard * offset) + particle->position.render;
 				v[2].x = temp.x;
 				v[2].y = temp.y;
 				v[2].z = temp.z;
-				
+
 				temp = (billboard * glm::vec3(-offset[0], offset[1], -offset[2])) + particle->position.render;
 				v[3].x = temp.x;
 				v[3].y = temp.y;
 				v[3].z = temp.z;
-				
+
 				v[0].color = v[1].color = v[2].color = v[3].color = particle->color;
-				
+
 				v[0].u = 0; v[0].v = 0;
 				v[1].u = 1; v[1].v = 0;
 				v[2].u = 1; v[2].v = 1;
 				v[3].u = 0; v[3].v = 1;
-				
+
 //				debugdraw::point(particle->position.render, Color(255,255,255), particle->size, 0.0f);
 				stream.append_indices( indices, 6 );
 			}
 		}
-		
+
 		if (stream.last_vertex > 0)
 		{
 			stream.update();
 			commands.add_draw_call( stream.vertexbuffer );
 		}
-		
+
 //		commands.add_state(renderer::STATE_BLEND, 0);
 //		commands.add_state(renderer::STATE_DEPTH_TEST, 0);
 //		commands.add_state(renderer::STATE_DEPTH_WRITE, 1);
@@ -458,28 +458,28 @@ struct Entity
 		EF_NONE = 0,
 		EF_DELETE_INSTANCE,	// remove this instance
 	};
-	
+
 	HSQOBJECT instance;
 	HSQOBJECT class_object;
-	
+
 	HSQOBJECT on_step;
 	HSQOBJECT on_tick;
-	
+
 	uint64_t id;
 	std::string name;
 	uint8_t type;
 	uint32_t flags;
-		
+
 	Entity();
 	virtual ~Entity();
-		
+
 	void step( float delta_seconds );
 	void tick();
-	
+
 	// bind functions for this object
 	void bind_functions();
 	virtual void remove();
-	
+
 	// get/set functions for script interop
 	const std::string & get_name() { return this->name; }
 	void set_name( const std::string & object_name ) { this->name = object_name; }
@@ -492,14 +492,14 @@ struct Entity
 using namespace Sqrat;
 template<class C>
 class EntityAllocator {
-	
+
     static SQInteger setInstance(HSQUIRRELVM vm, C* instance)
     {
         sq_setinstanceup(vm, 1, instance);
         sq_setreleasehook(vm, 1, &Delete);
         return 0;
     }
-	
+
     template <class T, bool b>
     struct NewC
     {
@@ -509,7 +509,7 @@ class EntityAllocator {
 			p = new T();
         }
     };
-	
+
     template <class T>
     struct NewC<T, false>
     {
@@ -519,21 +519,21 @@ class EntityAllocator {
 			p = 0;
         }
     };
-	
+
 public:
     static SQInteger New(HSQUIRRELVM vm) {
         C* instance = NewC<C, is_default_constructible<C>::value >().p;
         setInstance(vm, instance);
         return 0;
     }
-	
+
     template <int count>
     static SQInteger iNew(HSQUIRRELVM vm) {
         return New(vm);
     }
-	
+
 	// following New functions are used only if constructors are bound via Ctor() in class
-	
+
     template <typename A1>
     static SQInteger iNew(HSQUIRRELVM vm) {
         Var<A1> a1(vm, 2);
@@ -693,20 +693,20 @@ public:
 									 a9.value
 									 ));
     }
-	
+
 public:
-	
+
     static SQInteger Copy(HSQUIRRELVM vm, SQInteger idx, const void* value) {
         C* instance = new C(*static_cast<const C*>(value));
         sq_setinstanceup(vm, idx, instance);
         sq_setreleasehook(vm, idx, &Delete);
         return 0;
     }
-	
+
     static SQInteger Delete(SQUserPointer ptr, SQInteger size) {
 		C * e = reinterpret_cast<C*>( ptr );
 		e->flags |= Entity::EF_DELETE_INSTANCE;
-		
+
 		// this is quite a hack to get the system working well during a shutdown
 		if ( !kernel::instance()->is_active() )
 		{
@@ -729,13 +729,13 @@ struct EntityList
 	{
 		this->objects.push_back( object );
 	} // add
-	
+
 	virtual void remove( Type * object )
 	{
 		for (typename EntityVectorType::iterator it = this->objects.begin(); it != this->objects.end(); ++it )
 		{
 			Type * obj = (*it);
-			
+
 			if ( obj == object )
 			{
 //				LOGV( "removing from entity list\n" );
@@ -749,7 +749,7 @@ struct EntityList
 	{
 		objects.clear();
 	} // clear
-	
+
 	void purge()
 	{
 		for (typename EntityVectorType::iterator it = this->objects.begin(); it != this->objects.end(); ++it )
@@ -757,35 +757,35 @@ struct EntityList
 			Entity * obj = (*it);
 			delete obj;
 		}
-		
+
 		clear();
 	} // purge
-	
 
-	
+
+
 	Type * find_with_name( const std::string & name )
 	{
 		for (typename EntityVectorType::iterator it = this->objects.begin(); it != this->objects.end(); ++it )
 		{
 			Entity * obj = (*it);
-			
+
 			if ( name == obj->name )
 			{
 				return obj;
 			}
 		}
-		
+
 		return 0;
 	} // find_with_name
-	
-	
+
+
 	Type * object_at_index( size_t index )
 	{
 		assert(index <= this->count());
-		
+
 		return objects[ index ];
 	} // object_at_index
-	
+
 	size_t count() const
 	{
 		return objects.size();
@@ -807,7 +807,7 @@ Entity::Entity()
 	this->flags = 0;
 	entity_list<Entity>().add( this );
 //	LOGV( "Entity() - %p, %zu\n", this, this->id );
-	
+
 	sq_resetobject( &instance );
 	sq_resetobject( &class_object );
 
@@ -817,13 +817,13 @@ Entity::Entity()
 
 	res = sq_getclass( script::get_vm(), 1 );
 	script::check_result(res, "getclass" );
-	
+
 	res = sq_getstackobj( script::get_vm(), -1, &class_object );
 	script::check_result(res, "getstackobj");
-	
+
 	// pop the OT_CLASS
 	sq_poptop( script::get_vm() );
-	
+
 	this->bind_functions();
 } // Entity
 
@@ -839,13 +839,13 @@ void Entity::step( float delta_seconds )
 	{
 		return;
 	}
-	
+
 	SQRESULT res;
 	sq_pushobject( script::get_vm(), this->on_step );
 	sq_pushobject( script::get_vm(), this->instance );
 	sq_pushfloat( script::get_vm(), delta_seconds );
 	res = sq_call( script::get_vm(), 2, SQFalse, SQTrue );
-	
+
 	sq_pop( script::get_vm(), 1 );
 	if ( SQ_FAILED(res) )
 	{
@@ -865,7 +865,7 @@ void Entity::tick()
 	sq_pushobject( script::get_vm(), this->on_tick );
 	sq_pushobject( script::get_vm(), this->instance );
 	res = sq_call( script::get_vm(), 1, SQFalse, SQTrue );
-	
+
 	sq_pop( script::get_vm(), 1 );
 	if ( SQ_FAILED(res) )
 	{
@@ -902,10 +902,10 @@ struct ModelEntity : public Entity
 {
 	assets::Mesh * mesh;
 	glm::mat4 transform;
-	
+
 	ModelEntity();
 	virtual ~ModelEntity() {}
-	
+
 	void set_model( const char * path );
 	glm::mat4 get_transform() const { return this->transform; }
 	void set_transform( const glm::mat4 & tr ) { this->transform = tr; }
@@ -934,24 +934,24 @@ struct RenderableEntity : public Entity
 {
 	RenderableEntity * parent;
 	uint8_t layer;
-	
+
 	EntityList<RenderableEntity>::EntityVectorType children;
-	
-	
+
+
 	render_utilities::PhysicsState<glm::vec2> world_position;
 	glm::vec2 velocity;
 
-	
+
 	virtual glm::vec2 get_position() const { return this->world_position.current; }
 	virtual void set_position( const glm::vec2 & origin ) { this->world_position.current = origin; }
-	
+
 	virtual glm::vec2 get_velocity() const { return this->velocity; }
 	virtual void set_velocity( const glm::vec2 & velocity ) { this->velocity = velocity; }
-	
-	
+
+
 	RenderableEntity( RenderableEntity * parent );
 	virtual ~RenderableEntity();
-	
+
 //	virtual void native_step( float delta_seconds );
 //	virtual void native_tick();
 	virtual void render( RenderGlobals & rg );
@@ -962,7 +962,7 @@ RenderableEntity::RenderableEntity( RenderableEntity * parent )
 {
 	this->parent = parent;
 	this->layer = 0;
-	
+
 	if ( this->parent )
 	{
 //		LOGV( "adding child node\n" );
@@ -1021,7 +1021,7 @@ void RenderableEntity::native_tick()
 void RenderableEntity::render( RenderGlobals & rg )
 {
 	EntityList<RenderableEntity>::EntityVectorType::iterator it;
-	
+
 	for( it = children.begin(); it != children.end(); ++it )
 	{
 		RenderableEntity * re = (*it);
@@ -1040,14 +1040,14 @@ struct PhysicsEntity : public RenderableEntity
 	b2Body * physics_body;
 	unsigned int collision_group;
 	unsigned int collision_mask;
-	
+
 	PhysicsEntity( RenderableEntity * parent = 0 );
 	~PhysicsEntity();
-	
+
 	virtual glm::vec2 get_position() const
 	{
 		glm::vec2 position;
-		
+
 		if ( physics_body )
 		{
 			b2Vec2 pos = physics_body->GetPosition();
@@ -1058,10 +1058,10 @@ struct PhysicsEntity : public RenderableEntity
 		{
 			position = this->world_position.current;
 		}
-		
+
 		return position;
 	}
-	
+
 	virtual void set_position( const glm::vec2 & origin )
 	{
 		if ( physics_body )
@@ -1070,7 +1070,7 @@ struct PhysicsEntity : public RenderableEntity
 			//			LOGV( "set position: %g, %g\n", origin.x, origin.y );
 			position.x = PIXELS_TO_METER(origin.x);
 			position.y = PIXELS_TO_METER(origin.y);
-			
+
 			physics_body->SetTransform( position, 0 );
 			this->world_position.current = glm::vec2( position.x, position.y );
 		}
@@ -1079,7 +1079,7 @@ struct PhysicsEntity : public RenderableEntity
 			this->world_position.current = origin;
 		}
 	}
-	
+
 #if 0
 	virtual glm::vec2 get_velocity() const
 	{
@@ -1091,10 +1091,10 @@ struct PhysicsEntity : public RenderableEntity
 			velocity.y = METERS_TO_PIXELS( vel.y );
 			return velocity;
 		}
-		
+
 		return this->velocity;
 	} // get_velocity
-	
+
 	virtual void set_velocity( const glm::vec2 & velocity )
 	{
 		if ( physics_body )
@@ -1141,7 +1141,7 @@ class PhysicsEntityContactListener : public b2ContactListener
 		LOGV( "PreSolve\n" );
 		PhysicsEntity * a = (PhysicsEntity*)contact->GetFixtureA()->GetBody()->GetUserData();
 		PhysicsEntity * b = (PhysicsEntity*)contact->GetFixtureB()->GetBody()->GetUserData();
-		
+
 		if ( a && b )
 		{
 			LOGV( "contact between %p and %p\n", a, b );
@@ -1154,13 +1154,13 @@ class PhysicsEntityContactListener : public b2ContactListener
 		LOGV( "BeginContact\n" );
 		PhysicsEntity * a = (PhysicsEntity*)contact->GetFixtureA()->GetBody()->GetUserData();
 		PhysicsEntity * b = (PhysicsEntity*)contact->GetFixtureB()->GetBody()->GetUserData();
-		
+
 		if ( a && b )
 		{
 			LOGV( "contact between %p and %p\n", a, b );
 		}
 	}
-	
+
 	virtual void EndContact( b2Contact * contact )
 	{
 		LOGV( "EndContact\n" );
@@ -1173,10 +1173,10 @@ struct SpriteEntity : public PhysicsEntity
 	unsigned short current_animation;	// currently active animation
 	unsigned short current_frame;		// current frame of the animation
 	float animation_time;				// current time of the animation
-	
+
 	// this is the 'stateless' part of the animation that we reference
 	assets::SpriteConfig * sprite_config;
-	
+
 	unsigned int material_id;
 	unsigned short width;
 	unsigned short height;
@@ -1185,25 +1185,25 @@ struct SpriteEntity : public PhysicsEntity
 
 	Color color;
 	glm::vec2 scale;
-	
+
 	SpriteEntity( RenderableEntity * parent = 0 );
 	~SpriteEntity();
-	
+
 	virtual void native_step( float delta_seconds );
 	virtual void native_tick();
 	virtual void render( RenderGlobals & rg );
 
 	void set_color( unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a );
-	
+
 	void set_sprite( const char * path );
 	void play_animation( const char * name );
 	float get_width();
 	float get_height();
 
 	void add_sprite_to_layer( renderer::VertexStream & stream, unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords );
-	
 
-	
+
+
 }; // SpriteEntity
 
 
@@ -1256,7 +1256,7 @@ void SpriteEntity::render( RenderGlobals & rg )
 			rg.commands.rewind();
 		}
 	}
-	
+
 	RenderableEntity::render( rg );
 } // render
 
@@ -1269,7 +1269,7 @@ void SpriteEntity::set_sprite( const char * path )
 		this->height = this->sprite_config->height;
 		this->scale = this->sprite_config->scale;
 		this->material_id = this->sprite_config->material_id;
-		
+
 		b2BodyDef body_def;
 
 		collision_group = 2;
@@ -1292,7 +1292,7 @@ void SpriteEntity::play_animation( const char * name )
 {
 	current_frame = 0;
 	animation_time = 0;
-	
+
 	if ( this->sprite_config )
 	{
 		for( unsigned short i = 0; i < sprite_config->total_animations; ++i )
@@ -1305,7 +1305,7 @@ void SpriteEntity::play_animation( const char * name )
 			}
 		}
 	}
-	
+
 	LOGV( "unable to find animation: %s\n", name );
 } // play_animation
 
@@ -1338,13 +1338,13 @@ struct EmitterEntity : public RenderableEntity
 {
 	assets::EmitterConfig * emitter_config;
 	ParticleEmitter * emitter;
-	
+
 	EmitterEntity( RenderableEntity * parent = 0 );
 	virtual ~EmitterEntity();
 	virtual void native_step( float delta_seconds );
 	virtual void native_tick();
 	virtual void render( RenderGlobals & rg );
-	
+
 	void set_emitter( const char * path );
 };
 
@@ -1372,13 +1372,13 @@ void EmitterEntity::native_step( float delta_seconds )
 
 void EmitterEntity::native_tick()
 {
-	
+
 } // native_tick
 
 void EmitterEntity::render( RenderGlobals & rg )
 {
 	rg.render_emitter( this->emitter, rg.sprite_stream, rg.camera );
-	
+
 	RenderableEntity::render( rg );
 } // render
 
@@ -1394,57 +1394,57 @@ struct GameRules
 {
 	HSQOBJECT instance;
 	HSQOBJECT class_object;
-	
+
 	HSQOBJECT on_startup;
 	HSQOBJECT on_tick;
 	HSQOBJECT on_step;
-	
+
 	GameRules()
 	{
 		LOGV( "GameRules created.\n" );
-	
+
 		sq_resetobject( &instance );
 		sq_resetobject( &class_object );
-		
+
 		// Assumes the OT_INSTANCE is at position 1 in the stack
 		SQRESULT res = sq_getstackobj( script::get_vm(), 1, &instance );
 		script::check_result(res, "getstackobj");
-		
+
 		res = sq_getclass( script::get_vm(), 1 );
 		script::check_result(res, "getclass" );
-		
+
 		res = sq_getstackobj( script::get_vm(), -1, &class_object );
 		script::check_result(res, "getstackobj");
-		
+
 		// pop the OT_CLASS
 		sq_poptop( script::get_vm() );
-		
+
 		this->bind_functions();
 	}
-	
+
 	void bind_functions()
 	{
 		this->on_startup = script::find_member( this->class_object, "startup" );
 		this->on_tick = script::find_member( this->class_object, "tick" );
 		this->on_step = script::find_member( this->class_object, "step" );
 	}
-	
+
 	void native_startup() {}
 	void native_tick() {}
 	void native_step( float delta_seconds ) {}
-	
+
 	void startup()
 	{
 		if ( sq_isnull(this->on_startup) || sq_isnull(this->instance) )
 		{
 			return;
 		}
-		
+
 		SQRESULT res;
 		sq_pushobject( script::get_vm(), this->on_startup );
 		sq_pushobject( script::get_vm(), this->instance );
 		res = sq_call( script::get_vm(), 1, SQFalse, SQTrue );
-		
+
 		sq_pop( script::get_vm(), 1 );
 		if ( SQ_FAILED(res) )
 		{
@@ -1452,19 +1452,19 @@ struct GameRules
 			sq_pop( script::get_vm(), 1 );
 		}
 	}
-	
+
 	void tick()
 	{
 		if ( sq_isnull(this->on_tick) || sq_isnull(this->instance) )
 		{
 			return;
 		}
-		
+
 		SQRESULT res;
 		sq_pushobject( script::get_vm(), this->on_tick );
 		sq_pushobject( script::get_vm(), this->instance );
 		res = sq_call( script::get_vm(), 1, SQFalse, SQTrue );
-		
+
 		sq_pop( script::get_vm(), 1 );
 		if ( SQ_FAILED(res) )
 		{
@@ -1472,20 +1472,20 @@ struct GameRules
 			sq_pop( script::get_vm(), 1 );
 		}
 	}
-	
+
 	void step( float delta_seconds )
 	{
 		if ( sq_isnull(this->on_step) || sq_isnull(this->instance) )
 		{
 			return;
 		}
-		
+
 		SQRESULT res;
 		sq_pushobject( script::get_vm(), this->on_step );
 		sq_pushobject( script::get_vm(), this->instance );
 		sq_pushfloat( script::get_vm(), delta_seconds );
 		res = sq_call( script::get_vm(), 2, SQFalse, SQTrue );
-		
+
 		sq_pop( script::get_vm(), 1 );
 		if ( SQ_FAILED(res) )
 		{
@@ -1502,7 +1502,7 @@ struct Script_RenderInterface
 	{
 		return kernel::instance()->parameters().render_width;
 	}
-	
+
 	static uint32_t get_render_height()
 	{
 		return kernel::instance()->parameters().render_height;
@@ -1520,11 +1520,11 @@ public:
 	DECLARE_APPLICATION( ProjectHuckleberry );
 
 	RenderGlobals rg;
-	
+
 	b2World * world;
 	PhysicsEntityContactListener contact_listener;
 	physics::physics2d_debug_renderer debug_renderer;
-	
+
 	virtual void event( kernel::KeyboardEvent & event )
 	{
 		if (event.is_down)
@@ -1535,7 +1535,7 @@ public:
 			}
 		}
 	}
-	
+
 	virtual void event( kernel::MouseEvent & event )
 	{
 		switch( event.subtype )
@@ -1546,7 +1546,7 @@ public:
 				{
 					int lastx, lasty;
 					input::state()->mouse().last_mouse_position( lastx, lasty );
-					
+
 					rg.camera.move_view( event.mx-lastx, event.my-lasty );
 				}
                 break;
@@ -1554,7 +1554,7 @@ public:
 			default: break;
 		}
 	}
-	
+
 	virtual void event( kernel::SystemEvent & event )
 	{
 		if ( event.subtype == kernel::WindowGainFocus )
@@ -1564,18 +1564,18 @@ public:
 			sq_pushstring( script::get_vm(), "gamerules", -1 );
 			sq_deleteslot( script::get_vm(), -2, false );
 			sq_poptop( script::get_vm() );
-			
-		
+
+
 			// purge all entities
 			size_t num_ents = entity_list<Entity>().objects.size();
 			LOGV( "ents still alive: %i\n", num_ents );
-			
+
 			entity_list<Entity>().purge();
 			entity_list<RenderableEntity>().clear();
-			
+
 			// execute the script again
 			script::execute_file("scripts/project_huckleberry.nut");
-			
+
 			// call startup on the new instance of gamerules
 			{
 				Sqrat::RootTable root( script::get_vm() );
@@ -1592,7 +1592,7 @@ public:
 #endif
 		}
 	}
-	
+
 	virtual kernel::ApplicationResult config( kernel::Params & params )
 	{
 		params.window_width = 800;
@@ -1600,11 +1600,11 @@ public:
 		params.window_title = "ProjectHuckleberry";
 		return kernel::Application_Success;
 	}
-	
+
 	void setup_script()
 	{
 		Sqrat::RootTable root( script::get_vm() );
-		
+
 		// bind Entity to scripting language
 		Sqrat::Class<Entity, EntityAllocator<Entity> > entity( script::get_vm() );
 		entity.Func( "tick", &Entity::native_tick );
@@ -1612,28 +1612,28 @@ public:
 		entity.Var( "id", &Entity::id );
 		entity.Prop( "name", &Entity::get_name, &Entity::set_name );
 		entity.Func( "remove", &Entity::remove );
-		
+
 		root.Bind( "Entity", entity );
-		
-		
+
+
 		Sqrat::DerivedClass<ModelEntity, Entity, EntityAllocator<ModelEntity> > model( script::get_vm() );
 		model.Func( "set_model", &ModelEntity::set_model );
 		model.Prop( "transform", &ModelEntity::get_transform, &ModelEntity::set_transform );
 		root.Bind( "ModelEntity", model );
-		
+
 		Sqrat::DerivedClass<RenderableEntity, Entity, EntityAllocator<RenderableEntity> > renderable( script::get_vm() );
 		renderable.Ctor<RenderableEntity*>();
 		renderable.Var( "layer", &RenderableEntity::layer );
 		renderable.Prop( "position", &RenderableEntity::get_position, &RenderableEntity::set_position );
 		renderable.Prop( "velocity", &RenderableEntity::get_velocity, &RenderableEntity::set_velocity );
 		root.Bind( "RenderableEntity", renderable );
-		
+
 		Sqrat::DerivedClass<PhysicsEntity, RenderableEntity, EntityAllocator<PhysicsEntity> > phys( script::get_vm() );
 		phys.Ctor<RenderableEntity*>();
 		phys.Prop( "position", &PhysicsEntity::get_position, &PhysicsEntity::set_position );
 //		phys.Prop( "velocity", &PhysicsEntity::get_velocity, &PhysicsEntity::set_velocity );
 		root.Bind( "PhysicsEntity", phys );
-		
+
 		Sqrat::DerivedClass<SpriteEntity, RenderableEntity, EntityAllocator<SpriteEntity> > sprite( script::get_vm() );
 		sprite.Ctor<RenderableEntity*>();
 		sprite.Func( "set_sprite", &SpriteEntity::set_sprite );
@@ -1641,27 +1641,27 @@ public:
 		sprite.Func( "width", &SpriteEntity::get_width );
 		sprite.Func( "height", &SpriteEntity::get_height );
 		root.Bind( "SpriteEntity", sprite );
-		
+
 		Sqrat::DerivedClass<EmitterEntity, RenderableEntity, EntityAllocator<EmitterEntity> > emitter( script::get_vm() );
 		emitter.Ctor<RenderableEntity*>();
 		emitter.Func( "set_emitter", &EmitterEntity::set_emitter );
 		root.Bind( "EmitterEntity", emitter );
-		
+
 		Sqrat::Class<GameRules> gamerules( script::get_vm() );
 		gamerules.Func( "startup", &GameRules::native_startup );
 		gamerules.Func( "tick", &GameRules::native_tick );
 		gamerules.Func( "step", &GameRules::native_step );
 		root.Bind( "GameRules", gamerules );
-		
-		
+
+
 		Sqrat::Class<Script_RenderInterface> render( script::get_vm() );
 		render.StaticFunc( "width", &Script_RenderInterface::get_render_width );
 		render.StaticFunc( "height", &Script_RenderInterface::get_render_height );
 		root.Bind( "render", render );
-	
-	
+
+
 		script::execute_file("scripts/project_huckleberry.nut");
-		
+
 		{
 			Sqrat::Object gamerules = root.GetSlot( "gamerules" );
 			if ( !gamerules.IsNull() )
@@ -1674,7 +1674,7 @@ public:
 			}
 		}
 	}
-	
+
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 		// physics world setup
@@ -1682,35 +1682,35 @@ public:
 		world->SetContactListener( &contact_listener );
 		world->SetDebugDraw( &debug_renderer );
 		debug_renderer.SetFlags( b2Draw::e_aabbBit | b2Draw::e_centerOfMassBit | b2Draw::e_shapeBit );
-		
+
 		setup_script();
-		
-		
-		
 
 
-	
+
+
+
+
 		debugdraw::startup(1024);
-		
+
 		// This is appropriate for drawing 3D models, but not sprites
 //		camera.set_absolute_position( glm::vec3(8, 5, 8.0f) );
 //		camera.yaw = -45;
 //		camera.pitch = 30;
 //		camera.update_view();
-		
+
 		rg.setup();
-		
+
 
 		return kernel::Application_Success;
 	}
-	
+
 	virtual void step( kernel::Params & params )
 	{
 		float delta_seconds = params.framedelta_filtered_msec * .001;
 		debugdraw::update( params.framedelta_filtered_msec );
-		
+
 		rg.camera.move_speed = 10.0f;
-		
+
 		if ( input::state()->keyboard().is_down(input::KEY_W) )
 		{
 			rg.camera.move_forward( delta_seconds );
@@ -1719,7 +1719,7 @@ public:
 		{
 			rg.camera.move_backward( delta_seconds );
 		}
-		
+
 		if ( input::state()->keyboard().is_down(input::KEY_A) )
 		{
 			rg.camera.move_left( delta_seconds );
@@ -1728,13 +1728,13 @@ public:
 		{
 			rg.camera.move_right( delta_seconds );
 		}
-		
+
 		if ( world )
 		{
 			world->Step( params.step_interval_seconds, 2, 1 );
 			world->ClearForces();
 		}
-		
+
 		Sqrat::RootTable root( script::get_vm() );
 		Sqrat::Object gamerules = root.GetSlot( "gamerules" );
 		if ( !gamerules.IsNull() )
@@ -1745,7 +1745,7 @@ public:
 				gr->step( kernel::instance()->parameters().step_interval_seconds );
 			}
 		}
-		
+
 		// tick entities
 		EntityVector::iterator it =	entity_list<Entity>().objects.begin();
 		EntityVector::iterator end = entity_list<Entity>().objects.end();
@@ -1762,7 +1762,7 @@ public:
 			return left->layer > right->layer;
 		}
 	}; // sort_sprite_layer_descending
-	
+
 	void render_with_camera( Camera & camera, uint32_t render_width, uint32_t render_height )
 	{
 //		renderer::GeneralParameters gp;
@@ -1770,13 +1770,13 @@ public:
 //		gp.camera_position = &camera.pos;
 //		gp.modelview_matrix = &camera.matCam;
 //		gp.projection_project = &camera.matProj;
-		
+
 		RenderStream crs( 128, 64 );
-		
+
 		crs.add_viewport(0, 0, render_width, render_height);
 		crs.add_clearcolor(0.15f, 0.15f, 0.15f, 1.0f);
 		crs.add_clear( renderer::CLEAR_COLOR_BUFFER | renderer::CLEAR_DEPTH_BUFFER );
-		
+
 		crs.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
 		crs.add_state(renderer::STATE_BLEND, 1);
 		crs.add_state(renderer::STATE_DEPTH_TEST, 0);
@@ -1784,7 +1784,7 @@ public:
 
 //		rs.add_state(renderer::STATE_BACKFACE_CULLING, 1 );
 //		rs.add_cullmode( renderer::CULLMODE_BACK );
-		
+
 //		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 //		glDisable( GL_POLYGON_OFFSET_LINE );
 
@@ -1802,7 +1802,7 @@ public:
 				++rg.rendered_entities;
 			}
 		}
-		
+
 		//LOGV( "rendered_entities: %i\n", rg.rendered_entities );
 
 #if 0
@@ -1817,7 +1817,7 @@ public:
 				{
 					gp.object_matrix = &model->transform;
 					assert( model->mesh != 0 );
-					
+
 					for( unsigned short i = 0; i < model->mesh->total_geometry; ++i )
 					{
 						render_utilities::stream_geometry( rs, &model->mesh->geometry[i], gp );
@@ -1841,15 +1841,15 @@ public:
 		{
 			SceneNode * node = (*it);
 			assert( node->mesh != 0 );
-			
+
 			render_utilities::stream_geometry( rs, &node->mesh->geometry[0], gp );
 		}
-		
+
 		rs.run_commands();
 #endif
-	
+
 	} // render_with_camera
-	
+
 	void deferred_delete( bool only_deferred )
 	{
 		// trim entities flagged for removal
@@ -1867,7 +1867,7 @@ public:
 			}
 		}
 	}
-	
+
 	virtual void tick( kernel::Params & params )
 	{
 		Sqrat::RootTable root( script::get_vm() );
@@ -1880,7 +1880,7 @@ public:
 				gr->tick();
 			}
 		}
-	
+
 		// tick entities
 		EntityVector::iterator it =	entity_list<Entity>().objects.begin();
 		EntityVector::iterator end = entity_list<Entity>().objects.end();
@@ -1893,26 +1893,26 @@ public:
 				(*it)->tick();
 			}
 		}
-		
-		deferred_delete( true );
-		
 
-		
+		deferred_delete( true );
+
+
+
 		rg.camera.ortho( 0, params.render_width, params.render_height, 0, -0.1f, 128.0f );
 //		camera.perspective( 60.0f, params.render_width, params.render_height, 0.1f, 128.0f );
 
 		render_with_camera( rg.camera, params.render_width, params.render_height );
-	
+
 //		debugdraw::text( 25, 50, xstr_format("camera.position = %g %g %g", camera.pos.x, camera.pos.y, camera.pos.z), Color(255, 255, 255) );
 
 //		debugdraw::axes( glm::mat4(1.0), 1.0f );
 
 
 		physics::debug_draw( world );
-		
+
 		debugdraw::render( rg.camera.matCam, rg.camera.matProj, params.render_width, params.render_height );
 	}
-	
+
 	virtual void shutdown( kernel::Params & params )
 	{
 		physics::destroy_world();

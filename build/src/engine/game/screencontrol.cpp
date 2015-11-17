@@ -68,14 +68,14 @@ size_t ScreenController::count_screens() const
 	{
 		++total_screens;
 	}
-	
+
 	return total_screens;
 } // count_screens
 
 IScreen * ScreenController::push_screen( const char * name, kernel::IApplication * app )
 {
 	IScreen * current_screen = this->active_screen();
-	
+
 	// if the new screen wasn't found; report a warning
 	IScreen * screen = this->find_screen( name );
 	if ( !screen )
@@ -83,7 +83,7 @@ IScreen * ScreenController::push_screen( const char * name, kernel::IApplication
 		LOGW( "Unable to find screen named '%s'\n", name );
 		return current_screen;
 	}
-	
+
 	// new screen is valid and doesn't match current screen
 	if ( screen && screen != current_screen )
 	{
@@ -94,7 +94,7 @@ IScreen * ScreenController::push_screen( const char * name, kernel::IApplication
 		this->screen_stack.push( screen );
 		screen->on_show( app );
 	}
-	
+
 	return screen;
 } // push_screen
 
@@ -110,6 +110,6 @@ IScreen * ScreenController::active_screen()
 	{
 		return this->screen_stack.top();
 	}
-	
+
 	return 0;
 } // active_screen

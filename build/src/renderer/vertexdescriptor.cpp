@@ -34,35 +34,35 @@ namespace render2
 		reset();
 		memset(description, 0, sizeof(VertexDataType) * MAX_VERTEX_DESCRIPTORS);
 	}
-	
+
 	VertexDescriptor::VertexDescriptor(const VertexDescriptor& other)
 	{
 		*this = other;
 	}
-	
+
 	void VertexDescriptor::add(const char* name, const VertexDataType& type, size_t element_count)
 	{
 		InputDescription descriptor;
 		descriptor.name = name;
 		descriptor.type = type;
 		descriptor.element_count = element_count;
-		
+
 		description[ id++ ] = descriptor;
-		
+
 		if ( id >= MAX_VERTEX_DESCRIPTORS-1 )
 		{
 			printf( "Reached MAX_DESCRIPTORS. Resetting\n" );
 			id = 0;
 		}
-		
+
 		total_attributes = id;
 	} // add
-	
+
 	const VertexDescriptor::InputDescription& VertexDescriptor::operator[](int index) const
 	{
 		return description[ index ];
 	} // operator[]
-	
+
 	void VertexDescriptor::reset()
 	{
 		if ( id > 0 )
@@ -71,22 +71,22 @@ namespace render2
 		}
 		id = 0;
 	} // reset
-	
+
 	size_t VertexDescriptor::size() const
 	{
 		return total_attributes;
 	} // size
-	
+
 	const VertexDescriptor& VertexDescriptor::operator= (const VertexDescriptor & other)
 	{
 		this->total_attributes = other.total_attributes;
 		this->id = other.id;
-		
+
 		for( unsigned int id = 0; id < MAX_VERTEX_DESCRIPTORS; ++id )
 		{
 			this->description[id] = other.description[id];
 		}
-		
+
 		return *this;
 	} // operator=
 } // namespace render2

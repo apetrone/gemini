@@ -44,29 +44,29 @@ namespace gemini
 				callback(0)
 			{
 			}
-				
+
 			BulletCollisionObject::~BulletCollisionObject()
 			{
 				if (object)
 				{
 					remove_constraints();
-					
+
 					bullet::get_world()->removeCollisionObject(object);
 					delete object;
 					object = 0;
 				}
-				
+
 				if (ghost)
 				{
 					bullet::get_world()->removeCollisionObject(ghost);
 					delete ghost;
 					ghost = 0;
 				}
-				
+
 				shape = 0;
-				
-				
-				
+
+
+
 				// maybe the motion states are already deleted by bullet?
 //				if (motion_state)
 //				{
@@ -74,23 +74,23 @@ namespace gemini
 //					motion_state = 0;
 //				}
 			}
-				
-				
+
+
 			void BulletCollisionObject::set_user_data(void* userdata)
 			{
 				user_data = userdata;
 			}
-			
+
 			void* BulletCollisionObject::get_user_data() const
 			{
 				return user_data;
 			}
-			
+
 			void BulletCollisionObject::set_collision_callback(CollisionCallback collision_callback)
 			{
 				callback = collision_callback;
 			}
-			
+
 			void BulletCollisionObject::set_world_transform(const glm::vec3& position, const glm::quat& orientation)
 			{
 				assert(object != nullptr);
@@ -102,13 +102,13 @@ namespace gemini
 					ghost->setWorldTransform(transform);
 				}
 			}
-			
+
 			void BulletCollisionObject::get_world_transform(glm::vec3& out_position, glm::quat& out_orientation)
 			{
 				assert(object != 0);
-				
+
 				btTransform world_transform;
-				
+
 				if (motion_state)
 				{
 					// grab interpolated current transform
@@ -119,11 +119,11 @@ namespace gemini
 					// static and kinematic bodies have to use this; they don't have a motionstate.
 					world_transform = object->getWorldTransform();
 				}
-				
+
 				position_and_orientation_from_transform(out_position, out_orientation, world_transform);
 			}
-			
-			
+
+
 			void BulletCollisionObject::get_linear_velocity(glm::vec3& velocity)
 			{
 				btRigidBody* rigid_body = btRigidBody::upcast(object);
@@ -135,7 +135,7 @@ namespace gemini
 					velocity.z = in_velocity.z();
 				}
 			}
-			
+
 			void BulletCollisionObject::set_linear_velocity(const glm::vec3& velocity)
 			{
 				btRigidBody* rigid_body = btRigidBody::upcast(object);
@@ -144,8 +144,8 @@ namespace gemini
 					rigid_body->setLinearVelocity(btVector3(velocity.x, velocity.y, velocity.z));
 				}
 			}
-			
-			
+
+
 			void BulletCollisionObject::collision_began(ICollisionObject* other)
 			{
 				if (callback)
@@ -153,7 +153,7 @@ namespace gemini
 					callback(Collision_Began, this, other);
 				}
 			}
-			
+
 			void BulletCollisionObject::collision_ended(ICollisionObject* other)
 			{
 				if (callback)
@@ -161,10 +161,10 @@ namespace gemini
 					callback(Collision_Ended, this, other);
 				}
 			}
-			
+
 			// forces are given for the full second, but need to be re-applied each step.
 			// impulses are an instant change to velocity.
-			
+
 			void BulletCollisionObject::apply_impulse(const glm::vec3& impulse, const glm::vec3& local_position)
 			{
 				btRigidBody* rigid_body = btRigidBody::upcast(object);
@@ -174,7 +174,7 @@ namespace gemini
 					rigid_body->applyImpulse(btVector3(impulse.x, impulse.y, impulse.z), btVector3(local_position.x, local_position.y, local_position.z));
 				}
 			}
-			
+
 			void BulletCollisionObject::apply_central_impulse(const glm::vec3 &impulse)
 			{
 				btRigidBody* rigid_body = btRigidBody::upcast(object);
@@ -184,8 +184,8 @@ namespace gemini
 					rigid_body->applyCentralImpulse(btVector3(impulse.x, impulse.y, impulse.z));
 				}
 			}
-			
-			
+
+
 			void BulletCollisionObject::remove_constraints()
 			{
 	//				// need to remove constraints here...
@@ -197,49 +197,49 @@ namespace gemini
 	//					}
 	//				}
 			}
-			
-			
+
+
 			void BulletCollisionObject::set_collision_shape(btCollisionShape* collision_shape)
 			{
 				shape = collision_shape;
-				
+
 				btCollisionObject* collision_object = static_cast<btCollisionObject*>(object);
 				assert(collision_object != 0);
-				
+
 				// you cannot assign a collision shape until the body has been created
 				collision_object->setCollisionShape(collision_shape);
 			}
-			
+
 			btCollisionShape* BulletCollisionObject::get_collision_shape() const { return shape; }
-			
-			
-			
+
+
+
 			void BulletCollisionObject::set_collision_object(btCollisionObject* collision_object)
 			{
 				object = collision_object;
 			}
-			
+
 			btCollisionObject* BulletCollisionObject::get_collision_object() const { return object; }
-			
-			
-			
+
+
+
 			void BulletCollisionObject::set_collision_ghost(btGhostObject* collision_ghost)
 			{
 				ghost = collision_ghost;
 			}
-			
+
 			btGhostObject* BulletCollisionObject::get_collision_ghost() const { return ghost; }
-			
+
 	//		void BulletCollisionObject::set_mass_center_offset(const glm::vec3 &mass_center_offset)
 	//		{
 	//			this->mass_center_offset = mass_center_offset;
 	//		}
-			
+
 			void BulletCollisionObject::set_motion_state(btMotionState *motionstate)
 			{
 				motion_state = motionstate;
 			}
-			
+
 			btMotionState* BulletCollisionObject::get_motion_state() const  { return motion_state; }
 		} // namespace bullet
 	} // namespace physics

@@ -35,7 +35,7 @@ namespace platform
 		// this code is from cplusplus.com
 		struct tm* timeinfo;
 		time_t rawtime;
-		
+
 		time(&rawtime);
 		timeinfo = localtime(&rawtime);
 		datetime.year = timeinfo->tm_year + 1900;

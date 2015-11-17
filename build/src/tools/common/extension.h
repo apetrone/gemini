@@ -39,7 +39,7 @@ namespace gemini
 		class Plugin
 		{
 		public:
-		
+
 			struct Info
 			{
 				enum Flags
@@ -47,14 +47,14 @@ namespace gemini
 					None,
 					IsLoaded
 				};
-			
+
 				String path;
 				uint32_t flags;
 			};
-		
+
 			virtual ~Plugin() {}
 		};
-		
+
 	#define DECLARE_PLUGIN_CLASS(classname) \
 		public: static classname* plugin_create() { return MEMORY_NEW(classname, core::memory::global_allocator()); }
 
@@ -67,10 +67,10 @@ namespace gemini
 		public:
 			Reader() {}
 			virtual ~Reader() {}
-			
+
 			virtual bool read(Type* model, core::util::DataStream& data) = 0;
 		};
-		
+
 		// interface for writer extensions
 		template <class Type>
 		class Writer : public Plugin
@@ -78,44 +78,44 @@ namespace gemini
 		public:
 			Writer() {}
 			virtual ~Writer() {}
-			
-			
+
+
 			// abs_base_path: The absolute base path filename where the writer
 			// should output a target asset. Usually, the writer will append
 			// a file extension onto this base path and then open this file
 			// for writing.
 			virtual bool write(const std::string& abs_base_path, Type* model) = 0;
 		};
-		
+
 		// generic 'extension' data; subject to change
 		template <class Type>
 		struct Extension
 		{
 			Reader<Type>* reader;
 			Writer<Type>* writer;
-			
+
 			Extension() : reader(nullptr), writer(nullptr) {}
 		};
-		
+
 		// registry to keep track of extensions via file path extension
 		template <class Type>
 		struct ExtensionRegistry
 		{
 			typedef std::map<std::string, Extension<Type> > ExtensionMap;
-			
+
 			static ExtensionMap extensions;
 		};
-		
+
 		template <class Type>
 		typename ExtensionRegistry<Type>::ExtensionMap ExtensionRegistry<Type>::extensions;
-		
+
 		// map a file path extension to an extension datamodel type
 		template <class Type>
 		void register_extension(const std::string& extension, const Extension<Type> & ptr)
 		{
 			ExtensionRegistry<Type>::extensions.insert(std::pair<std::string, Extension<Type> >(extension, ptr));
 		}
-		
+
 		// purge a type registry
 		template <class Type>
 		void purge_registry()
@@ -127,14 +127,14 @@ namespace gemini
 				{
 					MEMORY_DELETE(ext.reader, core::memory::global_allocator());
 				}
-				
+
 				if (ext.writer)
 				{
 					MEMORY_DELETE(ext.writer, core::memory::global_allocator());
 				}
 			}
 		}
-		
+
 		// get the extension struct for a file path extension
 		template <class Type>
 		const Extension<Type> find_entry_for_extension(const std::string& target_extension)
@@ -142,13 +142,13 @@ namespace gemini
 			for (auto v : ExtensionRegistry<Type>::extensions)
 			{
 				const Extension<Type>& archiver_extension = v.second;
-				
+
 				if (target_extension == v.first)
 				{
 					return archiver_extension;
 				}
 			}
-			
+
 			return Extension<Type>();
 		}
 	} // namespace tools

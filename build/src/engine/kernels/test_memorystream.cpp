@@ -47,23 +47,23 @@ public:
 		char data[16] = {0};
 		s.init( data, 16 );
 		s.write( "abc", 3 );
-		
+
 		char out[ 4 ];
 		s.rewind();
 		s.read( out, 3 );
 		LOGV( "out: '%s', %i\n", out, s.current_offset() );
-		
-		
+
+
 		// okay, so the base functions read and write arbitrary data streams properly.
 		// how about these templatized functions?
 		int valueA = 1273;
-		int valueB = 0;		
+		int valueB = 0;
 		s.rewind();
 		s.write( valueA );
 		s.rewind();
 		s.read( valueB );
 		LOGV( "valueB: %i\n", valueB );
-		
+
 		s.rewind();
 		// hmm, what about floats?
 		float z = 884.2123;
@@ -82,7 +82,7 @@ public:
 		s.rewind();
 		s.read( p );
 		LOGV( "x = '%p', p = '%p'\n", x, p );
-		
+
 		return kernel::Application_NoWindow;
 	}
 

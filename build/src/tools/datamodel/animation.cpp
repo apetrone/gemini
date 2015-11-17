@@ -34,7 +34,7 @@ namespace gemini
 			frames_per_second(30)
 		{
 		}
-		
+
 		Animation::~Animation()
 		{
 			for (auto data : node_animations)
@@ -42,7 +42,7 @@ namespace gemini
 				MEMORY_DELETE(data, core::memory::global_allocator());
 			}
 		}
-		
+
 		NodeAnimation* Animation::data_with_name(const String& node_name)
 		{
 			auto it = nodes_by_name.find(node_name);
@@ -50,17 +50,17 @@ namespace gemini
 			{
 				return it->second;
 			}
-		
+
 			return nullptr;
 		}
-		
+
 		NodeAnimation* Animation::add_node_data(const String& node_name)
 		{
 			NodeAnimation* data = MEMORY_NEW(NodeAnimation, core::memory::global_allocator());
 			data->name = node_name;
 			node_animations.push_back(data);
 			nodes_by_name.insert(NodeAnimationByNameContainer::value_type(node_name, data));
-			
+
 			return data;
 		}
 	} // namespace datamodel

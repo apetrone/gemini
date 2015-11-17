@@ -41,14 +41,14 @@ namespace gemini
 			Channel<glm::vec3> scale_channel;
 			Channel<glm::quat> rotation_channel;
 			Channel<glm::vec3> translation_channel;
-			
+
 			AnimatedNode();
 			AnimatedNode(AnimatedNode& other);
-			
+
 			//void post_processing(assets::Mesh* mesh, int32_t node_index);
-			
+
 			virtual void update(float delta_seconds);
-			
+
 			virtual Node* clone() { return CREATE(AnimatedNode, *this); }
 		};
 
@@ -56,14 +56,14 @@ namespace gemini
 		{
 			uint16_t material_id;
 			uint16_t shader_id;
-			
+
 			renderer::Geometry* geometry;
 			//assets::Mesh* mesh;
-			
+
 			bool visible;
-			
+
 			RenderNode();
-			
+
 			virtual Node* clone() { return CREATE(RenderNode, *this); }
 		};
 
@@ -79,7 +79,7 @@ namespace gemini
 			void setup_skeleton();
 			virtual void update(float delta_seconds);
 			void update_skeleton();
-			
+
 			virtual Node* clone() { return CREATE(SkeletalNode, *this); }
 		};
 	} // namespace scenegraph

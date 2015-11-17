@@ -50,11 +50,11 @@ namespace gui
 		set_bounds(0, 0, width, height);
 
 		this->last_cursor = Point(0, 0);
-		
+
 		this->set_focus(0);
 		this->set_hot(0);
 		this->set_capture(0);
-		
+
 		this->next_z_depth = 0;
 		this->listener = 0;
 
@@ -69,7 +69,7 @@ namespace gui
 
 		set_name("compositor");
 	} // Compositor
-	
+
 	Compositor::~Compositor()
 	{
 		if ( this->renderer )
@@ -77,7 +77,7 @@ namespace gui
 			this->renderer->shutdown( this );
 		}
 	} // ~Compositor
-	
+
 	void Compositor::tick(float delta_seconds)
 	{
 		for(PanelVector::reverse_iterator it = zsorted.rbegin(); it != zsorted.rend(); ++it)
@@ -87,18 +87,18 @@ namespace gui
 		}
 
 		process_events();
-		
+
 	} // update
-	
+
 	void Compositor::draw()
 	{
 		assert(renderer);
 
 		command_list.reset();
 		vertex_buffer.resize(0);
-		
+
 		this->renderer->begin_frame(this);
-		
+
 		for(PanelVector::reverse_iterator it = zsorted.rbegin(); it != zsorted.rend(); ++it)
 		{
 			Panel* panel = (*it);
@@ -107,13 +107,13 @@ namespace gui
 				panel->render(this, this->renderer, command_list);
 			}
 		}
-		
+
 		this->renderer->draw_commands(&command_list, vertex_buffer);
 
 		this->renderer->end_frame();
 	} // draw
 
-	
+
 	void Compositor::send_to_front(Panel* panel)
 	{
 		if (panel && panel->can_send_to_front())
@@ -121,21 +121,21 @@ namespace gui
 			sort_zorder(panel);
 		}
 	} // send_to_front
-	
+
 	void Compositor::sort_zorder(Panel* panel)
 	{
 		if ( !panel )
 		{
 			return;
 		}
-		
+
 		size_t old_z = panel->z_depth;
-		
+
 		// search the zlist for the top window
 		for( PanelVector::iterator it = zsorted.begin(); it != zsorted.end(); ++it )
 		{
 			Panel * p = (*it);
-			
+
 			if ( p->z_depth == old_z )
 			{
 				p->z_depth = 0;
@@ -146,29 +146,29 @@ namespace gui
 				p->z_depth++;
 			}
 		}
-		
-		
+
+
 		std::sort(zsorted.begin(), zsorted.end(), ZSort_Panel_Descending());
-		
+
 	} // sort_zorder
-	
+
 	void Compositor::add_child( Panel * panel )
 	{
 		Panel::add_child( panel );
-		
+
 		zsorted.push_back( panel );
 		panel->z_depth = next_z_depth++;
 		this->sort_zorder( panel );
 	} // add_child
-	
+
 	void Compositor::remove_child(Panel* panel)
 	{
 		Panel::remove_child(panel);
-		
+
 		PanelVector::iterator it, end;
 		it = zsorted.begin();
 		end = zsorted.end();
-		
+
 		for(; it != end; ++it)
 		{
 			if ((*it) == panel)
@@ -279,7 +279,7 @@ namespace gui
 			find_new_hot(dx, dy);
 		} // any mouse delta movement
 	} // cursor_move_absolute
-	
+
 	void Compositor::cursor_button( CursorButton::Type button, bool is_down )
 	{
 		if ( is_down )
@@ -290,15 +290,15 @@ namespace gui
 			args.capture = get_capture();
 			args.cursor_button = button;
 			args.cursor = last_cursor;
-			
+
 			Panel* panel = get_hot();
-			
+
 			if ( panel )
 			{
 				args.local = last_cursor - panel->bounds.origin;
 				panel->handle_event( args );
 			}
-			
+
 			// capture
 			this->set_focus( panel );
 			this->set_hot( panel );
@@ -315,7 +315,7 @@ namespace gui
 			args.cursor_button = button;
 			assert(button != CursorButton::None);
 			args.cursor = last_cursor;
-			
+
 			if ( args.focus )
 			{
 				args.local = last_cursor - args.focus->bounds.origin;
@@ -328,28 +328,28 @@ namespace gui
 				args.capture = nullptr;
 				get_capture()->handle_event(args);
 			}
-		
+
 			this->set_capture(0);
 			find_new_hot(0, 0);
 		}
 	} // cursor_button
-	
+
 	void Compositor::cursor_scroll( uint16_t direction )
 	{
-		
+
 	} // cursor_scroll
-	
+
 	void Compositor::key_event(uint32_t unicode, bool is_down, uint32_t character, uint16_t modifiers)
 	{
 		key_modifiers = modifiers;
-		
+
 		EventArgs args(this, is_down ? Event_KeyButtonPressed : Event_KeyButtonReleased);
 		args.focus = get_focus();
 		args.hot = get_hot();
 		args.capture = get_capture();
 		args.cursor = last_cursor;
 		args.modifiers = key_modifiers;
-		
+
 		// key events are directed to the panel in focus
 		Panel* panel = args.focus;
 		if (panel)
@@ -358,19 +358,19 @@ namespace gui
 			panel->handle_event(args);
 		}
 	} // key_event
-	
-	
+
+
 	void Compositor::resize(ScreenInt width, ScreenInt height)
 	{
 		this->width = width;
 		this->height = height;
 	} // resize
-	
+
 	Panel* Compositor::find_panel_at_location(const Point& location, uint32_t flags)
 	{
 		Panel* panel = 0;
 		Panel* closest_panel = 0;
-		
+
 		// reset hot and try to find a new one
 		this->hot = 0;
 
@@ -391,7 +391,7 @@ namespace gui
 
 		return closest_panel;
 	} // find_panel_at_point
-	
+
 	Panel* Compositor::find_deepest_panel_at_location(Panel* root, const gui::Point& location, uint32_t flags)
 	{
 		if (!root)
@@ -419,7 +419,7 @@ namespace gui
 	{
 		this->listener = listener;
 	} // set_listener
-	
+
 	void Compositor::queue_event(const EventArgs& args)
 	{
 		if (next_message == 15)
@@ -427,13 +427,13 @@ namespace gui
 			fprintf(stderr, "Overflow event queue! Ignoring event\n");
 			return;
 		}
-		
+
 		queue[next_message] = args;
-		
-		
+
+
 		++next_message;
 	}
-	
+
 	void Compositor::process_events()
 	{
 		next_message = 0;
@@ -442,7 +442,7 @@ namespace gui
 			// no one to listen to our events!
 			return;
 		}
-		
+
 		for (uint16_t i = 0; i < 16; ++i)
 		{
 			EventArgs& event = queue[i];

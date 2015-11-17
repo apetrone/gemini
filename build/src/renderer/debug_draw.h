@@ -43,10 +43,10 @@ namespace renderer
 	{
 		void startup(unsigned int max_primitives, ShaderProgram* program, const font::Handle& font);
 		void shutdown();
-		
+
 		void update(float deltamsec);
 		void render(const glm::mat4& modelview, const glm::mat4& projection, int x, int y, int viewport_width, int viewport_height);
-		
+
 		void axes(const glm::mat4& transform, float axis_length, float duration = 0.0f);
 		void basis(const glm::vec3& origin, const glm::vec3& basis, float axis_length, float duration = 0.0f);
 		void box(const glm::vec3& mins, const glm::vec3& maxs, const core::Color& color, float duration = 0.0f);
@@ -55,6 +55,6 @@ namespace renderer
 		void sphere(const glm::vec3& center, const core::Color& color, float radius = 2.0, float duration = 0.0f);
 		void text(int x, int y, const char* string, const core::Color& color, float duration = 0.0f);
 		void triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const core::Color& color, float duration = 0.0f);
-		
+
 	} // namespace debugdraw
 } // namespace renderer

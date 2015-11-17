@@ -36,33 +36,33 @@ namespace gemini
 		{
 			BulletStaticBody::BulletStaticBody()
 			{
-				
+
 			}
-			
+
 			BulletStaticBody::~BulletStaticBody()
 			{
 				remove_constraints();
-				
+
 				btRigidBody* body = btRigidBody::upcast(object);
-				
+
 				if (body && body->getMotionState())
 				{
 					delete body->getMotionState();
 				}
 				bullet::get_world()->removeCollisionObject(body);
-				
+
 				for (int i = 0; i < shapes.size(); ++i)
 				{
 					delete shapes[i];
 				}
 				shapes.clear();
 			}
-			
+
 			void BulletStaticBody::add_shape(btCollisionShape* shape)
 			{
 				shapes.push_back(shape);
 			}
-			
+
 		} // namespace bullet
 	} // namespace physics
 } // namespace gemini

@@ -33,15 +33,15 @@ public:
 	bool active;
 	kernel::Params params;
 	int rotate_mask;
-	
+
 	UIInterfaceOrientation last_orientation;
-	
+
 public:
 	virtual ~iOSKernel() {}
 	virtual bool is_active() const { return active; }
 	virtual void set_active( bool isactive ) { active = isactive; }
 	virtual kernel::Params & parameters() { return params; }
-	
+
 	virtual void startup();
 	virtual void register_services();
 	virtual void pre_tick();
@@ -49,14 +49,14 @@ public:
 	virtual void post_application_config( kernel::ApplicationResult result );
 	virtual void post_application_startup( kernel::ApplicationResult result );
 	virtual void shutdown();
-	
+
 	// iOS specific calls
 	void set_view_size( int width, int height );
 	void set_interface_orientation( UIInterfaceOrientation orientation );
 	BOOL should_change_orientation( UIInterfaceOrientation orientation );
 	void device_orientation_changed( UIInterfaceOrientation orientation );
 	void rotate_window_coordinates();
-	
+
 	void will_resign_active();
 	void did_become_active();
 	void will_terminate();

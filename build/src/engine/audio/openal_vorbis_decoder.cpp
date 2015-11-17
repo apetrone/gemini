@@ -32,7 +32,7 @@ void stb_vorbis_decoder::reset()
 {
 	_src_data = 0;
 	_src_data_length = 0;
-	
+
 }
 
 int stb_vorbis_decoder::decode( void * data, int data_length )
@@ -50,7 +50,7 @@ int stb_vorbis_decoder::decode( void * data, int data_length )
 	{
 		bytes_read *= _info.channels * 2;
 	}
-	
+
 	return bytes_read;
 }
 
@@ -66,16 +66,16 @@ int stb_vorbis_decoder::open( unsigned char * data, int data_length )
 		LOGV( "data is INVALID\n" );
 		return 0;
 	}
-	
+
 	int error = 0;
 	_stream = stb_vorbis_open_memory( _src_data, _src_data_length, &error, 0 );
-	
+
 	if ( !_stream )
 	{
 		LOGV( "stb_vorbis_decoder::open failed with error: %i\n", error );
 		return 0;
 	}
-	
+
 	_info = stb_vorbis_get_info( _stream );
 	return 1;
 }
