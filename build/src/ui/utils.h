@@ -32,6 +32,7 @@
 
 #include <core/typedefs.h>
 #include <core/array.h>
+#include <core/color.h>
 
 #define GLM_FORCE_RADIANS 1
 #include <glm/vec2.hpp>
@@ -238,18 +239,6 @@ namespace gui
 #ifndef byte
 	typedef unsigned char byte;
 #endif
-
-	struct LIBRARY_EXPORT Color
-	{
-		byte rgba[4];
-
-		Color(byte red = 0, byte green = 0, byte blue = 0, byte alpha = 255);
-
-		inline byte r() const { return rgba[0]; }
-		inline byte g() const { return rgba[1]; }
-		inline byte b() const { return rgba[2]; }
-		inline byte a() const { return rgba[3]; }
-	};
 
 	// ---------------------------------------------------------------------
 	// event handling / delegate

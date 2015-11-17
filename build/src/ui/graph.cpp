@@ -30,7 +30,7 @@
 
 namespace gui
 {
-	void Graph::draw_float(Renderer* renderer, float value, const Point& pt, const gui::Color& color, gui::render::CommandList& render_commands)
+	void Graph::draw_float(Renderer* renderer, float value, const Point& pt, const core::Color& color, gui::render::CommandList& render_commands)
 	{
 		char string_value[16] = {0};
 		sprintf(string_value, "%2.2f", value);
@@ -62,8 +62,8 @@ namespace gui
 		total_channels = 0;
 		current_sample = 0;
 
-		background_color = Color(0, 0, 0, 255);
-		foreground_color = Color(255, 255, 255, 255);
+		background_color = core::Color(0, 0, 0, 255);
+		foreground_color = core::Color(255, 255, 255, 255);
 
 		show_baseline = false;
 	}
@@ -112,26 +112,26 @@ namespace gui
 		memset(values, 0, sizeof(float) * (max_samples*max_channels));
 
 		// allocate channel colors
-		channel_colors = new gui::Color[ max_channels * ChannelTotal ];
+		channel_colors = new core::Color[ max_channels * ChannelTotal ];
 
 		last_point = new Point[ max_channels ];
 		memset(last_point, 0, sizeof(Point) * max_channels);
 	}
 
-	void Graph::configure_channel(uint32_t channel_index, const gui::Color& color/*, const gui::Color& min_color, const gui::Color& max_color*/)
+	void Graph::configure_channel(uint32_t channel_index, const core::Color& color/*, const core::Color& min_color, const core::Color& max_color*/)
 	{
 		if (!channel_in_range(channel_index))
 		{
 			return;
 		}
 
-		gui::Color* colors = &channel_colors[ChannelTotal*channel_index];
+		core::Color* colors = &channel_colors[ChannelTotal*channel_index];
 		colors[ChannelColor] = color;
 //		colors[ChannelMin] = min_color;
 //		colors[ChannelMax] = max_color;
 	}
 
-	void Graph::enable_baseline(bool enabled, float value, const gui::Color& color)
+	void Graph::enable_baseline(bool enabled, float value, const core::Color& color)
 	{
 		show_baseline = enabled;
 		if (enabled)
@@ -182,12 +182,12 @@ namespace gui
 		font_height = static_cast<float>(ascender + descender);
 	}
 
-	void Graph::set_background_color(const Color& color)
+	void Graph::set_background_color(const core::Color& color)
 	{
 		background_color = color;
 	}
 
-	void Graph::set_foreground_color(const Color& color)
+	void Graph::set_foreground_color(const core::Color& color)
 	{
 		foreground_color = color;
 	}
@@ -230,11 +230,11 @@ namespace gui
 			int sample_delta = 1;
 
 			unsigned int sample_id = current_sample[ current_channel ];
-			Color* colors = &channel_colors[ ChannelTotal * current_channel ];
+			core::Color* colors = &channel_colors[ ChannelTotal * current_channel ];
 
 			for(uint32_t i = 0; i < total_samples; ++i)
 			{
-				Color color = colors[ ChannelColor ];
+				core::Color color = colors[ ChannelColor ];
 				float sample_value = values[ (current_channel * total_samples) + ((sample_id) % total_samples) ];
 
 				if ( sample_value < range_min )

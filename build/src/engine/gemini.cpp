@@ -1234,19 +1234,19 @@ public:
 
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
 		root->set_bounds(0, 0, frame.width, frame.height);
-		root->set_background_color(gui::Color(0, 0, 0, 0));
+		root->set_background_color(core::Color(0, 0, 0, 0));
 
 		// setup the framerate graph
 		graph = new gui::Graph(root);
 		graph->set_bounds(width-250, 0, 250, 100);
 		graph->set_font("fonts/debug.ttf", 16);
-		graph->set_background_color(gui::Color(10, 10, 10, 210));
-		graph->set_foreground_color(gui::Color(255, 255, 255, 255));
+		graph->set_background_color(core::Color(10, 10, 10, 210));
+		graph->set_foreground_color(core::Color(255, 255, 255, 255));
 		graph->create_samples(100, 1);
-		graph->configure_channel(0, gui::Color(0, 255, 0, 255));
+		graph->configure_channel(0, core::Color(0, 255, 0, 255));
 		graph->set_range(0.0f, 33.3f);
 
-		graph->enable_baseline(true, 16.6f, gui::Color(255, 0, 255, 255));
+		graph->enable_baseline(true, 16.6f, core::Color(255, 0, 255, 255));
 	}
 
 	virtual kernel::Error startup()
