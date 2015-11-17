@@ -259,7 +259,7 @@ namespace gui
 			, target(nullptr)
 			, handle(render::WhiteTexture)
 		{
-			flags |= Flag_CursorEnabled | Flag_CanMove;
+			flags |= Flag_CursorEnabled;
 			set_name("RenderableSurface");
 		}
 
@@ -306,6 +306,26 @@ struct MyVertex
 	}
 };
 
+class LogWindow : public gui::Panel
+{
+public:
+	LogWindow(Panel* parent)
+		: Panel(parent)
+	{
+		flags |= Flag_CanMove | Flag_CursorEnabled;
+	}
+
+	virtual void update(gui::Compositor* compositor, float delta_seconds) override
+	{
+		Panel::update(compositor, delta_seconds);
+	} // update
+
+	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
+	{
+		render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, core::Color(255, 255, 255, 255));
+	}
+};
+
 
 class EditorKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
@@ -327,10 +347,13 @@ private:
 //	GLsync fence;
 
 	gui::Compositor* compositor;
+	gui::Label* log_window;
 	GUIRenderer* gui_renderer;
 	::renderer::StandaloneResourceCache resource_cache;
 	render2::RenderTarget* render_target;
 	render2::Texture* texture;
+
+	platform::Process* process;
 
 	float value;
 
@@ -341,6 +364,7 @@ public:
 		, gui_renderer(nullptr)
 		, render_target(nullptr)
 		, texture(nullptr)
+		, process(nullptr)
 		, value(0.0f)
 	{
 	}
@@ -399,9 +423,38 @@ public:
 		}
 	}
 
+	void test_open_dialog()
+	{
+		Array<PathString> paths;
+		uint32_t flags = platform::OpenFlags::CanChooseDirectories;
+
+		if (platform::show_open_dialog("Choose Game Directory", flags, paths).succeeded())
+		{
+			fprintf(stdout, "target path is: %s\n", paths[0]());
+		}
+	}
+
+	void start_watching_assets(const char* project_path)
+	{
+		std::string asset_root = project_path;
+		asset_root.append(PATH_SEPARATOR_STRING);
+		asset_root.append("assets");
+
+		// launch the blacksmith tool
+		const std::string script_path = "tools/blacksmith/blacksmith.py";
+		const std::string config_path = "tools/conf/blacksmith/desktop_monitor.conf";
+
+
+		// close the process if it's already open
+	}
+
+	void stop_watching_assets()
+	{
+	}
+
+
 	void timeline_scrubber_changed(size_t current_frame)
 	{
-		fprintf(stdout, "timeline: %i\n", current_frame);
 		value = (current_frame / 30.0f);
 	}
 
@@ -418,9 +471,14 @@ public:
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
 
 		serializer->pipeline(pipeline);
-		serializer->vertex_buffer(vertex_buffer);
-		serializer->draw(0, 3);
-		device->queue_buffers(queue, 1);
+
+		const bool test_triangle = 1;
+		if (test_triangle)
+		{
+			serializer->vertex_buffer(vertex_buffer);
+			serializer->draw(0, 3);
+			device->queue_buffers(queue, 1);
+		}
 		device->destroy_serializer(serializer);
 	}
 
@@ -482,7 +540,7 @@ public:
 			params["vsync"] = "true";
 			params["double_buffer"] = "true";
 			params["depth_size"] = "24";
-			params["multisample"] = "4";
+//			params["multisample"] = "4";
 
 			// set opengl specific options
 			params["rendering_backend"] = "opengl";
@@ -490,13 +548,13 @@ public:
 			params["opengl.minor"] = "2";
 			params["opengl.profile"] = "core";
 			params["opengl.share_context"] = "true";
-
-			for (RenderParameters::Iterator it = params.begin(); it != params.end(); ++it)
-			{
-				const param_string& key = it.key();
-				const param_string& value = it.value();
-				LOGV("'%s' -> '%s'\n", key(), value());
-			}
+			
+//			for (RenderParameters::Iterator it = params.begin(); it != params.end(); ++it)
+//			{
+//				const param_string& key = it.key();
+//				const param_string& value = it.value();
+//				LOGV("'%s' -> '%s'\n", key(), value());
+//			}
 
 			device = create_device(params);
 
@@ -575,21 +633,22 @@ public:
 //			root->set_bounds(100, 100, 300, 400);
 //			root->set_background_color(core::Color(255, 0, 0, 255));
 
+#if 0
 			gui::Timeline* timeline = new gui::Timeline(compositor);
 			timeline->set_bounds(0, 550, 800, 50);
 			timeline->set_frame_range(0, 30);
 			timeline->on_scrubber_changed.connect(&EditorKernel::timeline_scrubber_changed, this);
+#endif
 
 
+#if 0
 			gui::RenderableSurface* surface = new gui::RenderableSurface(compositor);
 			surface->set_bounds(0, 0, 512, 512);
 			surface->on_render_content.connect(&EditorKernel::render_main_content, this);
 
 			image::Image checker_pattern;
-			checker_pattern.width = 512;
-			checker_pattern.height = 512;
-			checker_pattern.channels = 3;
-			image::generate_checker_pattern(checker_pattern, core::Color(255, 0, 255), core::Color(0, 255, 0));
+			checker_pattern.create(512, 512, 3);
+			checker_pattern.fill(core::Color(0, 25, 25));
 			texture = device->create_texture(checker_pattern);
 
 			int handle = resource_cache.track_texture(texture);
@@ -598,9 +657,35 @@ public:
 			render_target = device->create_render_target(texture);
 			surface->set_render_target(render_target);
 			surface->set_texture_handle(handle);
+#endif
+
+
+			log_window = new gui::Label(compositor);
+			log_window->set_origin(0.0f, 0.0f);
+			log_window->set_dimensions(1.0f, 0.25f);
+			log_window->set_font("fonts/debug.ttf", 16);
+
+
+			log_window->set_text("log initialized.");
+			// install a log handler
 		}
 #endif
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
+
+		// test some stuff
+		Array<PathString> arguments;
+#if 0
+		arguments.push_back("--version");
+		process = platform::process_create("/usr/bin/clang", arguments);
+#elif 0
+		// test blacksmith
+		arguments.push_back("/Users/apetrone/gemlin/tools/blacksmith/blacksmith.py");
+		arguments.push_back("-c");
+		arguments.push_back("/Users/apetrone/gemlin/tools/conf/blacksmith/desktop_monitor.conf");
+		arguments.push_back("-s");
+		arguments.push_back("/Users/apetrone/Documents/games/vrpowergrid/assets");
+		process = platform::process_create("/Users/apetrone/gemlin/tools/env/bin/python", arguments);
+#endif
 
 		return kernel::NoError;
 	}
@@ -669,6 +754,9 @@ public:
 
 	virtual void shutdown()
 	{
+		fprintf(stdout, "terminating process...\n");
+		platform::process_destroy(process);
+
 		device->destroy_render_target(render_target);
 		device->destroy_texture(texture);
 
