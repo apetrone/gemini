@@ -387,7 +387,7 @@ namespace platform
 	void process_destroy(Process* process)
 	{
 		CocoaProcess* instance = static_cast<CocoaProcess*>(process);
-		if (process_is_running(process))
+		if (process && process_is_running(process))
 		{
 			instance->terminate();
 		}

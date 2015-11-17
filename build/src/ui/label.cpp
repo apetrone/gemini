@@ -28,6 +28,9 @@
 
 namespace gui
 {
+	static const float LABEL_LEFT_MARGIN = 2;
+	static const float LABEL_TOP_MARGIN = 2;
+
 	Label::Label(Panel* parent) : Panel(parent)
 	{
 	}
@@ -43,6 +46,9 @@ namespace gui
 			background_color
 		);
 
+		if (text.empty())
+			return;
+
 		gui::Rect draw_bounds = bounds;
 
 		size_t height;
@@ -55,6 +61,7 @@ namespace gui
 		float font_height = (ascender + descender);
 
 		draw_bounds.origin.y += glm::max(font_height, text_bounds.height());
+		draw_bounds.origin += glm::vec2(LABEL_LEFT_MARGIN, LABEL_TOP_MARGIN);
 		render_commands.add_font(font_handle, this->text.c_str(), draw_bounds, foreground_color);
 	}
 
