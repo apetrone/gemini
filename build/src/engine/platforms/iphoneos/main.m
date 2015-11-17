@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 {
 	memory::startup();
 	kernel::parse_commandline(argc, argv);
-		
+
 	@autoreleasepool
 	{
 	    return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));

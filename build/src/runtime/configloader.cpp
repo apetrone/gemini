@@ -36,7 +36,7 @@ namespace core
 		bool parse_json_string_with_callback( const char * buffer, size_t buffer_length, JsonLoaderCallback callback, void * context )
 		{
 			bool is_success = false;
-			
+
 			Json::Value root;
 			Json::Reader reader;
 			ConfigLoadStatus status;
@@ -49,7 +49,7 @@ namespace core
 			{
 				LOGV( "json parsing failed: %s\n", reader.getFormattedErrorMessages().c_str() );
 			}
-			
+
 			return is_success && (status == ConfigLoad_Success);
 		} // parse_json_string_with_callback
 
@@ -74,7 +74,7 @@ namespace core
 				// report an error...
 //				fprintf(stderr, "ERROR loading %s\n", filename);
 			}
-			
+
 			return is_success;
 		} // json_load_with_callback
 	} // mamespace util

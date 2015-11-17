@@ -81,12 +81,12 @@ namespace gemini
 
 
 		IAudioDriver * _audio_driver = 0;
-		
+
 		namespace _internal
-		{		
+		{
 			int used_sources = 0;
 			AudioSource _sources[ AUDIO_MAX_SOURCES ];
-			
+
 			AudioSource * find_unused_source()
 			{
 				for (size_t i = 0; i < AUDIO_MAX_SOURCES; ++i)
@@ -97,11 +97,11 @@ namespace gemini
 						return &_sources[i];
 					}
 				}
-				
+
 				return 0;
 			} // find_unused_source
-			
-			
+
+
 			void init_sources()
 			{
 				for (size_t i = 0; i < AUDIO_MAX_SOURCES; ++i)
@@ -111,7 +111,7 @@ namespace gemini
 					_sources[i]._decoder = MEMORY_NEW(AudioDecoderType, core::memory::global_allocator());
 				}
 			}
-			
+
 			// -------------------------------------------------------------
 			typedef struct
 			{
@@ -120,24 +120,24 @@ namespace gemini
 				short index;
 				bool is_used;
 				bool is_stream;
-				
+
 				// for debug:
 				const char * filename;
 	//			unsigned int refcount;
 			} Sound;
 			Sound _sounds[ AUDIO_MAX_SOUNDS ];
 			unsigned int current_sound = 0;
-			
+
 			Sound * find_sound( SoundHandle handle )
 			{
 				if ( handle < AUDIO_MAX_SOUNDS )
 				{
 					return &_sounds[ handle ];
 				}
-				
+
 				return 0;
 			} // find_sound
-			
+
 			Sound * find_unused_sound()
 			{
 				for (size_t i = 0; i < AUDIO_MAX_SOUNDS; ++i)
@@ -147,7 +147,7 @@ namespace gemini
 						return &_sounds[i];
 					}
 				}
-				
+
 				return 0;
 			} // find_unused_sound
 
@@ -164,14 +164,14 @@ namespace gemini
 	//				_sounds[i].refcount = 0;
 				}
 			}
-			
+
 			void shutdown_sounds()
 			{
 				if ( !_audio_driver )
 				{
 					return;
 				}
-				
+
 				AudioSource * source;
 				for( unsigned int i = 0; i < AUDIO_MAX_SOURCES; ++i )
 				{
@@ -181,11 +181,11 @@ namespace gemini
 						source->_decoder->close();
 						_audio_driver->clean_source( source );
 					}
-					
+
 					MEMORY_DELETE(source->_decoder, core::memory::global_allocator());
 					source->_decoder = 0;
 				}
-				
+
 				Sound * sound;
 				for( unsigned int i = 0; i < AUDIO_MAX_SOUNDS; ++i )
 				{
@@ -198,8 +198,8 @@ namespace gemini
 					}
 				}
 			} // shutdown sounds
-			
-			
+
+
 			SoundHandle create_new_sound( const char * filename, bool is_stream )
 			{
 				Sound * sound = find_unused_sound();
@@ -208,27 +208,27 @@ namespace gemini
 					LOGE( "AUDIO_MAX_SOUNDS reached!\n" );
 					return 0;
 				}
-				
+
 				core::StackString<MAX_PATH_SIZE> path = filename;
 				core::StackString<MAX_PATH_SIZE> extension;
 				assets::append_asset_extension( assets::SoundAsset, path );
 	//			assets::sounds()->append_extension( path );
-				
+
 				sound->data = (unsigned char*)core::filesystem::audiofile_to_buffer( path(), sound->data_size );
 				if ( !sound->data )
 				{
 					LOGE( "audio::create_new_sound - could not open file %s\n", path() );
 					return 0;
 				}
-				
+
 				// we're now using the sound
 				sound->is_used = true;
 	//			sound->refcount = 0;
 				sound->filename = filename;
 				sound->is_stream = is_stream;
-				
+
 				LOGV( "audio::create_new_sound -> [data=%p,dataSize=%i,filename='%s']\n", sound->data, sound->data_size, sound->filename );
-				
+
 				return sound->index;
 			} // init_sound
 		} // namespace _internal
@@ -244,17 +244,17 @@ namespace gemini
 			{
 				return (gemini::AudioHandle)create_sound(path);
 			}
-			
+
 			virtual gemini::AudioSource play(AudioHandle handle, int num_repeats)
 			{
 				return gemini::audio::play((SoundHandle)handle, num_repeats);
 			}
-			
+
 			virtual void stop(gemini::AudioSource source)
 			{
 				gemini::audio::stop((SoundSource)source);
 			}
-			
+
 			virtual void stop_all_sounds()
 			{
 				audio::stop_all_sounds();
@@ -266,10 +266,10 @@ namespace gemini
 		{
 			typedef core::Factory<IAudioDriver> AudioDriverFactory;
 			AudioDriverFactory factory;
-			
+
 			IAudioInterface* audio_instance = MEMORY_NEW(AudioInterface, core::memory::global_allocator());
 			audio::set_instance(audio_instance);
-			
+
 			factory.register_class( DRIVER_CREATOR, DRIVER_NAME );
 
 			AudioDriverFactory::Record * record = factory.find_class( DRIVER_NAME );
@@ -281,9 +281,9 @@ namespace gemini
 					LOGE( "Unable to create instance of audio driver '%s'\n", record->class_name );
 					return;
 				}
-				
+
 				LOGV( "Initialized audio device: '%s'\n", record->class_name );
-				
+
 				_internal::init_sounds();
 				_internal::init_sources();
 			}
@@ -291,26 +291,26 @@ namespace gemini
 			{
 				LOGE( "Unable to find a suitable audio driver for this platform!\n" );
 			}
-			
+
 			return;
 		} // startup
-		
+
 		void shutdown()
 		{
 			stop_all_sounds();
 			_internal::shutdown_sounds();
-			
+
 			if ( _audio_driver )
 			{
 				MEMORY_DELETE(_audio_driver, core::memory::global_allocator());
 				_audio_driver = 0;
 			}
-			
+
 			IAudioInterface* interface = audio::instance();
 			MEMORY_DELETE(interface, core::memory::global_allocator());
 			audio::set_instance(nullptr);
 		} // shutdown
-		
+
 		// update all sources
 		void update()
 		{
@@ -318,7 +318,7 @@ namespace gemini
 			{
 				return;
 			}
-			
+
 			AudioSource * source;
 			_internal::used_sources = 0;
 			for (size_t i = 0; i < AUDIO_MAX_SOURCES; ++i)
@@ -336,7 +336,7 @@ namespace gemini
 				}
 			}
 		} // update
-		
+
 		// handle an event
 		void event( EventType type )
 		{
@@ -345,7 +345,7 @@ namespace gemini
 				_audio_driver->event( type );
 			}
 		} // event
-		
+
 		// stop all sounds
 		void stop_all_sounds()
 		{
@@ -353,7 +353,7 @@ namespace gemini
 			{
 				return;
 			}
-			
+
 			AudioSource * source;
 			unsigned int total_sources = 0;
 			for( unsigned int i = 0; i < AUDIO_MAX_SOURCES; ++i )
@@ -365,10 +365,10 @@ namespace gemini
 					++total_sources;
 				}
 			}
-			
+
 			LOGV( "Stopped %i sources.\n", total_sources );
 		} // stop_all_sounds
-		
+
 		// resume any previously playing sources
 		void resume()
 		{
@@ -376,7 +376,7 @@ namespace gemini
 			{
 				return;
 			}
-			
+
 			AudioSource * source;
 			unsigned int total_sources = 0;
 			for (size_t i = 0; i < AUDIO_MAX_SOURCES; ++i)
@@ -388,36 +388,36 @@ namespace gemini
 					++total_sources;
 				}
 			}
-			
+
 			LOGV( "Resumed %i sources\n", total_sources );
 		} // resume
-		
+
 		// return the number of sources currently being used
 		int count_used_sources()
 		{
 			return _internal::used_sources;
 		} // count_used_sources
-		
+
 		SoundHandle create_sound( const char * filename )
 		{
 			return _internal::create_new_sound( filename, false );
 		} // create_sound
-		
+
 		SoundHandle create_stream( const char * filename )
 		{
 			return _internal::create_new_sound( filename, true );
 		} // create_stream
-		
+
 		SoundSource play( SoundHandle handle, int num_repeats )
 		{
 			int source_id = -1;
-			
+
 			if ( !_audio_driver )
 			{
 				LOGE( "No valid audio driver found.\n" );
 				return source_id;
 			}
-			
+
 			// locate the sound via handle
 			_internal::Sound * sound = _internal::find_sound( handle );
 			if ( !sound || !sound->is_used )
@@ -425,7 +425,7 @@ namespace gemini
 				LOGE( "ERROR - Invalid sound handle\n" );
 				return 0;
 			}
-			
+
 			// try to allocate a new sound source
 			AudioSource * source = _internal::find_unused_source();
 			if ( !source )
@@ -433,7 +433,7 @@ namespace gemini
 				LOGE( "AUDIO_MAX_SOURCES reached! %i\n", AUDIO_MAX_SOURCES );
 				return source_id;
 			}
-			
+
 			if ( source->_decoder->open( (unsigned char*)sound->data, sound->data_size ) )
 			{
 				source->num_repeats = num_repeats;
@@ -452,10 +452,10 @@ namespace gemini
 
 			// tell the driver to play it
 			_audio_driver->play_source( source );
-			
+
 			return source_id;
 		} // play
-		
+
 		void stop( SoundSource source_id )
 		{
 			if (source_id < 0 || source_id > AUDIO_MAX_SOURCES )
@@ -463,7 +463,7 @@ namespace gemini
 				LOGW( "source_id out of range.\n" );
 				return;
 			}
-			
+
 			AudioSource * source = &_internal::_sources[ source_id ];
 			if ( source )
 			{

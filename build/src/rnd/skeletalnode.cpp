@@ -43,7 +43,7 @@ namespace gemini
 			type = ANIMATED;
 			attributes = ANIMATED;
 		}
-		
+
 		AnimatedNode::AnimatedNode(AnimatedNode& other) :
 			scale_channel(scale),
 			rotation_channel(rotation),
@@ -54,12 +54,12 @@ namespace gemini
 			{
 				scale_channel.set_data_source(other.scale_channel.get_data_source(), other.scale_channel.get_frame_delay());
 			}
-			
+
 			if (other.rotation_channel.get_data_source())
 			{
 				rotation_channel.set_data_source(other.rotation_channel.get_data_source(), other.rotation_channel.get_frame_delay());
 			}
-			
+
 			if (other.translation_channel.get_data_source())
 			{
 				translation_channel.set_data_source(other.translation_channel.get_data_source(), other.translation_channel.get_frame_delay());
@@ -93,16 +93,16 @@ namespace gemini
 				translation = local_position;
 				rotation = local_rotation;
 			}
-		
+
 			Node::update(delta_seconds);
 		}
-		
+
 		RenderNode::RenderNode() : visible(true)
 		{
 			type = RENDER;
 			attributes = ANIMATED;
 		}
-		
+
 		SkeletalNode::SkeletalNode()
 		{
 			type = scenegraph::SKELETON;
@@ -185,8 +185,8 @@ namespace gemini
 					tr = transforms[bone->parent_index] * node->local_to_world;
 					end = glm::vec3(glm::column(this->world_transform * this->local_to_world * tr, 3));
 				}
-				
-				
+
+
 				final_transforms[bone_index] = this->local_to_world * tr * bone->inverse_bind_matrix;
 
 	//			glm::mat4 center_bone = this->world_transform * this->local_to_world * tr;

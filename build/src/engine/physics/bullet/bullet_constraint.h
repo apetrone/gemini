@@ -37,13 +37,13 @@ namespace gemini
 			{
 			public:
 				btTypedConstraint* constraint;
-				
+
 				BulletConstraint(btTypedConstraint* bullet_constraint)
 				{
 					constraint = bullet_constraint;
 					bullet::add_constraint(this);
 				}
-				
+
 				virtual ~BulletConstraint()
 				{
 					if (constraint)
@@ -53,7 +53,7 @@ namespace gemini
 						constraint = 0;
 					}
 				}
-				
+
 				virtual void remove()
 				{
 					bullet::remove_constraint(this);

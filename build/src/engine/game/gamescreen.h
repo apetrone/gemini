@@ -65,12 +65,12 @@ struct GameScreen : public IScreen
 	unsigned int test_attribs;
 
 	assets::Material * player_mat;
-	
+
 	audio::SoundHandle player_fire, enemy_explode;
 	audio::SoundSource player_source;
 	short fire_delay;
 	short next_fire;
-	
+
 	// scrolling layer
 	unsigned int background_material_id;
 	unsigned short background_num_columns;
@@ -78,31 +78,31 @@ struct GameScreen : public IScreen
 	unsigned short background_num_rows;
 	RenameThisData * background_layers;
 	gemini::Recti cliprect;
-	
+
 	EventBasedMap event_based_map;
 	unsigned int current_event;
 	float current_gametime;
-	
 
-	
+
+
 	ParticleSystem psys;
-	
+
 	GameScreen();
 	~GameScreen();
-	
+
 	void render_layer( RenameThisData * layer );
-	
+
 	virtual void on_show( kernel::IApplication * app );
 	virtual void on_hide( kernel::IApplication * app );
 	virtual void on_draw( kernel::IApplication * app );
 	virtual void on_update( kernel::IApplication * app );
 	virtual void on_step( kernel::IApplication * app );
-	
+
 	virtual const char * name() const
 	{
 		return "GameScreen";
 	}
-	
+
 	virtual void on_event( kernel::KeyboardEvent & event, kernel::IApplication * app );
 	virtual void on_event( kernel::MouseEvent & event, kernel::IApplication * app ) {}
 	virtual void on_event( kernel::TouchEvent & event, kernel::IApplication * app ) {}

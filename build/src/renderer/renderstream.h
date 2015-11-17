@@ -46,12 +46,12 @@ namespace renderer
 		RenderState commands[ MAX_RENDERER_STREAM_COMMANDS ];
 		unsigned int num_commands;
 		core::util::MemoryStream stream;
-		
+
 		RenderStream( unsigned int max_bytes = MAX_RENDERER_STREAM_BYTES, unsigned int max_commands = MAX_RENDERER_STREAM_COMMANDS );
-		
+
 		void save_offset( long & offset );
 		void load_offset( long offset );
-		
+
 		void rewind();
 		RenderState * new_render_state();
 		void run_commands();
@@ -64,7 +64,7 @@ namespace renderer
 		void add_sampler2d( int uniform_location, int texture_unit, renderer::Texture* texture );
 		void add_state( renderer::DriverState state, int enable );
 		void add_blendfunc( renderer::RenderBlendType source, renderer::RenderBlendType destination );
-		void add_shader( renderer::ShaderProgram * shader );	
+		void add_shader( renderer::ShaderProgram * shader );
 		void add_uniform3f( int location, const glm::vec3 * data );
 		void add_uniform4f( int location, const glm::vec4 * data );
 		void add_uniform_matrix4( int location, const glm::mat4 * data, uint8_t count = 1 );

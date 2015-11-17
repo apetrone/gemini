@@ -38,7 +38,7 @@ namespace gemini
 	{
 		// -------------------------------------------------------------
 		// Shader
-		
+
 		void Shader::release()
 		{
 			if (program)
@@ -47,7 +47,7 @@ namespace gemini
 			}
 		}
 
-		
+
 
 	#if 0
 		AssetLoadStatus shader_load_callback(const char* path, Shader* shader, const AssetParameters& parameters)
@@ -61,25 +61,25 @@ namespace gemini
 			const Json::Value& uniform_block = _internal::shader_config["uniform_block"];
 			StringVector uniforms;
 			append_list_items(uniforms, uniform_block);
-			
+
 			// find the specific shader requested in the shader config
 			StackString<128> shader_path = path;
 			StackString<128> shader_name = shader_path.basename();
 			// We could actually use the dirname here in case someone requests
 			// a shader that doesn't reside in "shaders". Nah, unlikely.
-			
+
 			const Json::Value& shader_list = _internal::shader_config["shaders"];
-			
+
 			const Json::Value& shader_block = shader_list[ shader_name() ];
 			if (shader_block.isNull())
 			{
 				LOGV("unable to find the shader block named \"%s\"\n", shader_name());
 				return AssetLoad_Failure;
 			}
-			
+
 			append_list_items(attributes, shader_block["attributes"]);
 			append_list_items(uniforms, shader_block["uniforms"]);
-			
+
 			StringVector stages;
 			append_list_items(stages, shader_block["stages"]);
 
@@ -97,14 +97,14 @@ namespace gemini
 				preprocessor_defines += item;
 				preprocessor_defines += "\n";
 			}
-			
+
 			bool success = create_shader_program_from_file(path, stages, preprocessor_defines);
 			if (!success)
 			{
 				return AssetLoad_Failure;
 			}
-			
-			
+
+
 	//		shader->show_attributes();
 
 			return AssetLoad_Success;
@@ -119,7 +119,7 @@ namespace gemini
 			{
 				return AssetLoad_Failure;
 			}
-			
+
 			return AssetLoad_Success;
 		} // font_load_callback
 

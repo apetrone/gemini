@@ -35,7 +35,7 @@ namespace gemini
 	{
 		const int MAX_SUPPORTED_UV_CHANNELS = 2;
 		const int MAX_SUPPORTED_BONE_INFLUENCES = 4;
-		
+
 		struct Vertex
 		{
 			glm::vec3 position;
@@ -43,35 +43,35 @@ namespace gemini
 			glm::vec4 color;
 			glm::vec2 uv[MAX_SUPPORTED_UV_CHANNELS];
 		};
-		
+
 		struct Weight
 		{
 			String bone_name;
 			float value;
-			
+
 			Weight() : value(0.0f)
 			{
 			}
 		};
-		
+
 		struct WeightList
 		{
 			Weight weights[MAX_SUPPORTED_BONE_INFLUENCES];
 			uint8_t total_weights;
-			
+
 			WeightList() : total_weights(0)
 			{
 			}
 		};
-		
-		
+
+
 		struct BoneLinkData
 		{
 			String bone_name;
 			glm::mat4 inverse_bind_pose;
 			int32_t parent;
 		};
-		
+
 		struct Mesh
 		{
 			FixedArray<glm::vec4> blend_indices;
@@ -86,7 +86,7 @@ namespace gemini
 			MaterialId material;
 			glm::vec3 mass_center_offset;
 			std::string name;
-			
+
 			// mesh bounding box
 			glm::vec3 mins;
 			glm::vec3 maxs;

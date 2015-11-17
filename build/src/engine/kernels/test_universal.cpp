@@ -94,7 +94,7 @@ class TestUniversal : public kernel::IApplication,
 	int tdx;
 	int tdy;
 
-	
+
 public:
 	DECLARE_APPLICATION( TestUniversal );
 
@@ -102,13 +102,13 @@ public:
 	{
 		engine::startup();
 	}
-	
-	
+
+
 	~TestUniversal()
 	{
 		engine::shutdown();
 	}
-	
+
 	virtual void event( kernel::TouchEvent & event )
 	{
 		IScreen * screen = engine::engine()->screen_controller()->active_screen();
@@ -136,7 +136,7 @@ public:
 		}
 #endif
 	}
-	
+
 	virtual void event( KeyboardEvent & event )
 	{
 		IScreen * screen = engine::engine()->screen_controller()->active_screen();
@@ -144,12 +144,12 @@ public:
 		{
 			screen->on_event( event, this );
 		}
-		
+
 #if 0
         if ( event.is_down )
         {
             fprintf( stdout, "key %i pressed\n", event.key );
-			 
+
 			if ( event.key == input::KEY_Q )
 			{
 //				audio::stop( source );
@@ -178,7 +178,7 @@ public:
 				{
 					int lastx, lasty;
 					input::state()->mouse().last_mouse_position( lastx, lasty );
-					
+
 					camera.move_view( event.mx-lastx, event.my-lasty );
 				}
                 break;
@@ -193,7 +193,7 @@ public:
                     fprintf( stdout, "mouse button %i is released\n", event.button );
                 }
                 break;
-                
+
             case kernel::MouseWheelMoved:
                 if ( event.wheel_direction > 0 )
                 {
@@ -219,20 +219,20 @@ public:
 			case kernel::WindowGainFocus:
 				fprintf( stdout, "window gained focus\n" );
 				break;
-				
+
 			case kernel::WindowLostFocus:
 				fprintf( stdout, "window lost focus\n" );
 				break;
-				
+
 			case kernel::WindowResized:
 				fprintf( stdout, "resize event: %i x %i\n", event.window_width, event.window_height );
 				break;
-				
+
 			default: break;
 		}
 
 	}
-	
+
 	virtual kernel::ApplicationResult config( kernel::Params & params )
 	{
 		params.window_width = 720;
@@ -246,14 +246,14 @@ public:
 	{
 		LOGV( "Window dimensions: %i x %i, Render Viewport: %i x %i\n", params.window_width, params.window_height, params.render_width, params.render_height );
 		LOGV( "IndexType is %i bytes.\n", sizeof(renderer::IndexType) );
-		
+
 		LogoScreen * logo = CREATE(LogoScreen);
 //		HelpScreen * help = CREATE(HelpScreen);
 		GameScreen * game = CREATE(GameScreen);
 		MenuScreen * menu = CREATE(MenuScreen);
 		WinLossScreen * win = CREATE(WinLossScreen);
 		win->setup_win_screen();
-		
+
 		WinLossScreen * loss = CREATE(WinLossScreen);
 		loss->setup_loss_screen();
 
@@ -269,18 +269,18 @@ public:
 		engine::engine()->screen_controller()->push_screen( "GameScreen", this );
 //		engine::engine()->screen_controller()->push_screen( "MenuScreen", this );
 //		engine::engine()->screen_controller()->push_screen( "LogoScreen", this );
-		
+
 		// tests
 //		engine::engine()->screen_controller()->push_screen( "WinScreen", this );
 //		engine::engine()->screen_controller()->push_screen( "LossScreen", this );
-		
+
 
 		debugdraw::startup( 1024 );
 
 		return kernel::Application_Success;
 	}
 
-	
+
 	virtual void step( kernel::Params & params )
 	{
 		if (engine::engine()->screen_controller()->active_screen())
@@ -295,10 +295,10 @@ public:
 		{
 			engine::engine()->screen_controller()->active_screen()->on_update( this );
 		}
-	
+
 		debugdraw::update( params.framedelta_filtered_msec );
 		rs.rewind();
-		
+
 		// setup global rendering state
 		rs.add_clearcolor( 0.15, 0.10, 0.25, 1.0f );
 		rs.add_clear( 0x00004000 | 0x00000100 );
@@ -307,7 +307,7 @@ public:
 		rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
 		rs.run_commands();
 		rs.rewind();
-		
+
 		if ( engine::engine()->screen_controller()->active_screen() )
 		{
 			engine::engine()->screen_controller()->active_screen()->on_draw( this );

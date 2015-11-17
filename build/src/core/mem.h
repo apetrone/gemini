@@ -73,7 +73,7 @@ namespace core
 		// ---------------------------------------------------------------------
 		// zones (aka arenas, heaps, whatever) are a means of categorizing and
 		// tagging allocations.
-		
+
 		// GOALS:
 		// I. Allow arbitrary zones to be created
 		// II. zones should be able to report statistics about usage
@@ -84,41 +84,41 @@ namespace core
 			// lifetime values
 			size_t total_allocations;
 			size_t total_bytes;
-			
+
 			// active values
 			size_t active_allocations;
 			size_t active_bytes;
-			
+
 			size_t high_watermark;
 			size_t smallest_allocation;
 			size_t largest_allocation;
-			
+
 			// budgeted memory size
 			size_t budget_bytes;
-			
+
 			// zone name
 			const char* zone_name;
-			
+
 			/// Print out a general report of stats for this zone
 			void report();
-			
+
 		public:
 			LIBRARY_EXPORT Zone(const char* zone_name, size_t max_budget_bytes = 0);
 			LIBRARY_EXPORT ~Zone();
-			
+
 			/// The name of this zone
 			LIBRARY_EXPORT const char* name() const { return zone_name; }
-			
+
 			/// Track an allocation in this zone.
 			/// @param size The size of the allocation in bytes
 			/// @returns A value of 0 on success. Non-zero indicates failure.
 			LIBRARY_EXPORT int add_allocation(size_t size);
-			
+
 			/// Untrack an allocation in this zone
 			/// @param size The size of the allocation in bytes
 			LIBRARY_EXPORT void remove_allocation(size_t size);
-			
-			
+
+
 			// public accessors
 			LIBRARY_EXPORT size_t get_total_allocations() const { return total_allocations; }
 			LIBRARY_EXPORT size_t get_total_bytes() const { return total_bytes; }
@@ -129,7 +129,7 @@ namespace core
 			LIBRARY_EXPORT size_t get_largest_allocation() const { return largest_allocation; }
 			LIBRARY_EXPORT size_t get_budget_bytes() const { return budget_bytes; }
 		}; // class Zone
-		
+
 
 		// ---------------------------------------------------------------------
 		// utility functions
@@ -143,7 +143,7 @@ namespace core
 		// ---------------------------------------------------------------------
 		#include "memory/simple_tracking_policy.h"
 		#include "memory/debug_tracking_policy.h"
-		
+
 		typedef SimpleTrackingPolicy DefaultTrackingPolicy;
 
 		// ---------------------------------------------------------------------
@@ -151,7 +151,7 @@ namespace core
 		// ---------------------------------------------------------------------
 		// Allocators provide an interface between code and memory. Different
 		// allocation strategies are provided by each new allocator type.
-		
+
 		// GOALS:
 		// I. Allocators should work in tandem with the zones
 		// II. When practical, Allocators should accept an upper limit for size.
@@ -166,14 +166,14 @@ namespace core
 			{
 				memory_zone = target_zone;
 			}
-			
+
 			Zone* get_zone() const { return memory_zone; }
 		}; // struct allocator
-		
-		
-		
-		
-		
+
+
+
+
+
 		// allocators
 		#include "memory/system_allocator.h"
 		#include "memory/heap_allocator.h"
@@ -208,52 +208,52 @@ namespace core
 				allocator.deallocate(pointer);
 			}
 		}
-		
+
 		template <class _Type, class _Allocator>
 		_Type* construct_array(size_t elements, _Allocator& allocator, const char* filename, int line)
 		{
 			// store number of elements
 			// and for Non-POD types; the size of the _Type.
-			
+
 			size_t total_size = sizeof(_Type)*elements + (sizeof(size_t)+sizeof(size_t));
-			
+
 			void* mem = allocator.allocate(total_size, sizeof(void*), filename, line);
 			size_t* block = reinterpret_cast<size_t*>(mem);
 			*block = elements;
-			
+
 			block++;
 			*block = sizeof(_Type);
-			
+
 			block++;
-			
+
 			_Type* values = reinterpret_cast<_Type*>(block);
-			
+
 			for (size_t index = 0; index < elements; ++index)
 			{
 				new (&values[index]) _Type;
 			}
-			
+
 			return values;
 		}
-		
+
 		template <class _Type, class _Allocator>
 		void destruct_array(_Type* pointer, _Allocator& allocator)
 		{
 			// fetch the number of elements
 			size_t* block = reinterpret_cast<size_t*>(pointer);
 			block--;
-			
+
 			size_t type_size = *block;
-			
+
 			// If you hit this assert; there is a double-delete on this pointer!
 			assert(type_size > 0);
 			*block = 0;
-			
+
 			block--;
 			size_t total_elements = *block;
-			
+
 			char* mem = reinterpret_cast<char*>(pointer);
-			
+
 			// per the spec; we must delete the elements in reverse order
 			for (size_t index = total_elements; index > 0; --index)
 			{
@@ -263,7 +263,7 @@ namespace core
 				_Type* p = reinterpret_cast<_Type*>(mem+offset);
 				p->~_Type();
 			}
-			
+
 			// deallocate the block
 			allocator.deallocate(block);
 		}

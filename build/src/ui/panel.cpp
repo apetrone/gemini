@@ -32,7 +32,7 @@ namespace gui
 	{
 		return _gmalloc(bytes);
 	} // new
-	
+
 	void Panel::operator delete(void *memory)
 	{
 		_gfree(memory);
@@ -50,13 +50,13 @@ namespace gui
 		this->foreground_color = Color(0, 0, 0, 255);
 		this->flags = (Flag_CursorEnabled | Flag_TransformIsDirty);
 		set_visible(true);
-		
+
 		if (parent)
 		{
 			parent->add_child(this);
 		}
 	} // Panel
-	
+
 	Panel::~Panel()
 	{
 		PanelVector::iterator it, end;
@@ -71,7 +71,7 @@ namespace gui
 
 		children.clear();
 	} // ~Panel
-	
+
 	void Panel::set_bounds(const ScreenInt x, const ScreenInt y, const DimensionType width, const DimensionType height)
 	{
 		origin.x = x;
@@ -115,49 +115,49 @@ namespace gui
 		origin.x = x;
 		origin.y = y;
 	} // set_origin
-	
+
 	void Panel::get_screen_bounds(Rect& bounds)
 	{
 		bounds = this->bounds;
 	} // get_screen_bounds
-	
+
 	void Panel::calculate_screen_bounds(Compositor* compositor)
 	{
 		Panel* parent = this->parent;
-		
+
 		ScreenInt width = compositor->width;
 		ScreenInt height = compositor->height;
-		
+
 		Point origin = this->origin;
 		Size size = this->size;
-		
+
 		// use the parent size as the basis for scaling
 		if (parent != 0 && parent != compositor)
 		{
 			Size parent_size = parent->bounds.size;
 			width = parent_size.width;
 			height = parent_size.height;
-			
+
 			// add the origin offset of the parent
 			origin = origin + parent->bounds.origin;
 		}
-		
+
 		// TODO: modify offsets for anchors?
-		
+
 		bounds.size = size;
 		bounds.origin = origin;
-		
+
 		if (parent)
 		{
 			// add margins
 		}
 	} // calculate_screen_bounds
-	
+
 	void Panel::add_child(Panel* panel)
 	{
 		children.push_back(panel);
 	} // add_child
-	
+
 	void Panel::remove_child(Panel* panel)
 	{
 		PanelVector::iterator it, end;
@@ -203,11 +203,11 @@ namespace gui
 	void Panel::update(Compositor* compositor, float delta_seconds)
 	{
 		this->calculate_screen_bounds(compositor);
-		
+
 		// the points have to be rotated around the center pivot
 		gui::Size sz = bounds.size;
 		Point center(bounds.width()/2, bounds.height()/2);
-		
+
 		// center in local space
 		center += bounds.origin;
 
@@ -253,7 +253,7 @@ namespace gui
 			geometry[3],
 			render::WhiteTexture,
 			background_color);
-		
+
 		if (this->background.is_valid())
 		{
 //			renderer->draw_textured_bounds(frame, this->background);
@@ -281,7 +281,7 @@ namespace gui
 			}
 		}
 	} // render_children
-	
+
 	void Panel::set_background_image(Compositor* compositor, const char* path)
 	{
 		// This needs to be updated to use the new ResourceCache
@@ -291,13 +291,13 @@ namespace gui
 //			compositor->renderer->texture_create(path, background);
 //		}
 	} // set_background_image
-	
-	
+
+
 	void Panel::set_background_color(const Color& color)
 	{
 		background_color = color;
 	}
-	
+
 	void Panel::set_foreground_color(const Color& color)
 	{
 		foreground_color = color;
@@ -315,7 +315,7 @@ namespace gui
 			flags &= ~Flag_IsVisible;
 		}
 	} // set_visible
-	
+
 	bool Panel::is_visible() const
 	{
 		return this->visible;
@@ -327,7 +327,7 @@ namespace gui
 //		world = origin + local;
 //		return world;
 //	} // local_to_world
-//	
+//
 //	Point Panel::world_to_local(const Point& world) const
 //	{
 //		Point local;

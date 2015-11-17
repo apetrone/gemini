@@ -30,12 +30,12 @@ struct SystemAllocator : public Allocator< SystemAllocator<tracking_policy> >
 	typedef SystemAllocator<tracking_policy> this_type;
 	typedef Allocator<this_type> dependent_name;
 	tracking_policy tracker;
-	
+
 	SystemAllocator() :
 		dependent_name(nullptr)
 	{
 	}
-	
+
 	void* allocate(size_t size, size_t alignment, const char* filename, int line)
 	{
 		size = tracker.request_size(size, alignment);
@@ -43,7 +43,7 @@ struct SystemAllocator : public Allocator< SystemAllocator<tracking_policy> >
 		pointer = tracker.track_allocation(pointer, size, alignment, filename, line);
 		return pointer;
 	}
-	
+
 	void deallocate(void* pointer)
 	{
 		// it is entirely legal to call delete on a null pointer,
@@ -52,7 +52,7 @@ struct SystemAllocator : public Allocator< SystemAllocator<tracking_policy> >
 		{
 			return;
 		}
-		
+
 		size_t allocation_size;
 		pointer = tracker.untrack_allocation(pointer, allocation_size);
 		core::memory::aligned_free(pointer);

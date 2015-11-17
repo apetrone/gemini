@@ -34,7 +34,7 @@ class OpenSLES : public audio::IAudioDriver
 public:
 	OpenSLES();
 	~OpenSLES();
-	
+
 	virtual void event( audio::EventType event );
 	virtual void prepare_source( AudioSource * source );
 	virtual void play_source( AudioSource * source );

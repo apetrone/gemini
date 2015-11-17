@@ -29,9 +29,9 @@
 
 namespace renderer
 {
-	
+
 //	unsigned int texture_unit_for_map( renderer::ShaderString & name );
-//	
+//
 //	unsigned int material_type_to_parameter_type( const char * name );
 //	int material_parameter_type_to_render_state( unsigned int type );
 
@@ -44,27 +44,27 @@ namespace renderer
 				return &parameter;
 			}
 		}
-		
+
 		return 0;
 	} // parameter_by_name
-	
-	
+
+
 	void Material::set_parameter_name( unsigned int id, const char * name )
 	{
 		this->parameters[id].name = name;
 	} // set_parameter_name
-	
+
 	void Material::set_parameter_vec4( unsigned int id, const glm::vec4 & vec )
 	{
 		this->parameters[id].vector_value = vec;
 		this->parameters[id].type = MP_VEC4;
 	} // set_parameter_vec4
-	
+
 	void Material::add_parameter(const MaterialParameter& param)
 	{
 		parameters.push_back(param);
 	}
-	
+
 	void Material::print_parameters()
 	{
 		LOGV("material parameters for %s\n", name.c_str());

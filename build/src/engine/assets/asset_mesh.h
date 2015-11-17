@@ -44,80 +44,80 @@ namespace gemini
 	{
 		// -------------------------------------------------------------
 		// Mesh
-		
+
 		const int MAX_VERTEX_WEIGHTS = 4;
-		
+
 		struct Joint
 		{
 			// -1 == no parent
 			int32_t parent_index;
 			int32_t index;
 			core::StackString<128> name;
-			
+
 			Joint()
 			{
 				parent_index = -1;
 				index = -1;
 			}
 		};
-		
+
 		struct Geometry : public ::renderer::Geometry
 		{
 			core::StackString<128> name;
 			unsigned int material_id;
 			unsigned int shader_id;
-			
+
 			glm::vec3 mins;
 			glm::vec3 maxs;
-			
+
 			Geometry();
 			~Geometry();
-			
+
 			// set this geometry up for rendering
 			void render_setup();
 
 			// model space to bone space transforms
 			FixedArray<glm::mat4> bind_poses;
 		}; // Geometry
-		
-		
+
+
 		struct Mesh : public Asset
 		{
 			FixedArray<Geometry> geometry;
 			FixedArray<Geometry> geometry_vn;
 			glm::mat4 world_matrix;
-					
+
 			core::StackString<MAX_PATH_SIZE> path;
-			
+
 			// if this is true, it needs to be re-uploaded to the gpu
 			bool is_dirty;
-			
+
 			// true when any geometry has a skeleton loaded
 			bool has_skeletal_animation;
-			
+
 			// offset to the center of mass
 			glm::vec3 mass_center_offset;
-			
+
 			Mesh();
 			~Mesh();
 			void reset();
 
 			virtual void release();
-			
+
 			// prepare all geometry
 			void prepare_geometry();
 
 			glm::mat4 node_transform;
-			
+
 			Joint* find_bone_named(const char* name);
-			
+
 			// bind pose skeleton
 			FixedArray<Joint> skeleton;
 		}; // Mesh
-		
+
 		AssetLoadStatus mesh_load_callback( const char * path, Mesh * mesh, const AssetParameters & parameters );
 		void mesh_construct_extension( core::StackString<MAX_PATH_SIZE> & extension );
-		
+
 		DECLARE_ASSET_LIBRARY_ACCESSOR(Mesh, AssetParameters, meshes);
 	} // namespace assets
 } // namespace gemini

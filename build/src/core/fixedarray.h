@@ -39,68 +39,68 @@ class FixedArray
 	size_t total_elements;
 
 	FixedArray<Type> & operator=(const FixedArray<Type>& other) {}
-	
+
 private:
 	void assert_valid_index(size_t index) const
 	{
 		assert(index >= 0 && index < total_elements);
 	}
-	
+
 public:
-	
+
 	const Type* begin() const
 	{
 		return &elements[0];
 	}
-	
+
 	const Type* end() const
 	{
 		return &elements[total_elements];
 	}
-	
+
 	Type* begin()
 	{
 		return &elements[0];
 	}
-	
+
 	Type* end()
 	{
 		return &elements[total_elements];
 	}
-	
+
 	FixedArray()
 	{
 		elements = 0;
 		total_elements = 0;
 	} // FixedArray
-	
+
 	FixedArray(const FixedArray<Type>& other)
 	{
 		allocate(other.total_elements);
 		memcpy(elements, other.elements, sizeof(Type) * total_elements);
 	}
-	
+
 	~FixedArray()
 	{
 		clear();
 	} // ~FixedArray
-	
+
 	void operator=(Type* other)
 	{
 		elements = other;
 		total_elements = elements ? 1 : 0;
 	}
-	
+
 	size_t size() const
 	{
 		return total_elements;
 	} // size
-	
+
 	bool empty() const
 	{
 		return (total_elements == 0) && (elements == 0);
 	}
-	
+
 	void clear()
 	{
 		if (elements && total_elements > 0)
@@ -109,7 +109,7 @@ public:
 			total_elements = 0;
 		}
 	} // clear
-	
+
 	void allocate(size_t element_total, bool zero_memory = false)
 	{
 		clear();
@@ -126,13 +126,13 @@ public:
 			}
 		}
 	} // allocate
-	
+
 	Type& operator[](size_t index)
 	{
 		assert_valid_index(index);
 		return elements[index];
 	} // operator[]
-	
+
 	const Type& operator[](size_t index) const
 	{
 		assert_valid_index(index);
@@ -148,39 +148,39 @@ struct CircularBuffer
 	typedef FixedArray<value_type> container_type;
 	container_type container;
 	size_t index;
-	
+
 	CircularBuffer()
 	{
 		container.allocate(MaxSize);
 		reset();
 	}
-	
+
 	void reset()
 	{
 		index = 0;
 	}
-	
+
 	T& next()
 	{
 		index = index % MaxSize;
 		return container[index++];
 	}
-	
+
 	T& get_item(size_t item_index)
 	{
 		return container[item_index];
 	}
-	
+
 	T& operator[](size_t item_index)
 	{
 		return get_item(item_index);
 	}
-	
+
 	const T& operator[](size_t item_index) const
 	{
 		return get_item(item_index);
 	}
-	
+
 	size_t size() const
 	{
 		return MaxSize;

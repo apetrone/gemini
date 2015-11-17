@@ -36,31 +36,31 @@ namespace core
 		// ---------------------------------------------------------------------
 		// utils
 		// ---------------------------------------------------------------------
-		
+
 		bool starts_with(const std::string& prefix, const std::string& str)
 		{
 			std::string s2 = str.substr(0, prefix.length());
 			return (prefix == s2);
 		}
-		
+
 		bool ends_with(const std::string& postfix, const std::string& str)
 		{
 			std::string s2 = str.substr(str.length() - postfix.length(), postfix.length());
 			return (postfix == s2);
 		}
-		
+
 		// ---------------------------------------------------------------------
 		// Pattern
 		// ---------------------------------------------------------------------
-		
+
 		Pattern::~Pattern()
 		{
 		}
-		
+
 		// ---------------------------------------------------------------------
 		// Leaf Pattern
 		// ---------------------------------------------------------------------
-		
+
 
 		bool LeafPattern::matches(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
 		{
@@ -70,28 +70,28 @@ namespace core
 				LeafPattern* leaf = this->cast<LeafPattern>();
 				matched = leaf->single_match(pattern_start, patterns, vars);
 			}
-			
+
 			return matched;
 		}
-		
+
 		bool LeafPattern::single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
 		{
 			// should not get here.
 			assert(0);
 			return false;
 		}
-		
+
 		// ---------------------------------------------------------------------
 		// Argument
 		// ---------------------------------------------------------------------
-		
-		
+
+
 		Argument::Argument(const std::string& input_name, const std::string& input_value)
 		{
 			name = input_name;
 			value = input_value;
 		}
-		
+
 		bool Argument::single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
 		{
 			for (uint32_t index = pattern_start; index < patterns.items_length; ++index)
@@ -108,18 +108,18 @@ namespace core
 			}
 			return false;
 		}
-		
+
 		std::string Argument::get_sanitized_name() const
 		{
 			// strip off the leading and trailing brackets (<, >)
 			std::string sanitized_name = this->get_name().substr(1, this->get_name().length()-2);
 			return sanitized_name;
 		}
-		
+
 		// ---------------------------------------------------------------------
 		// Option
 		// ---------------------------------------------------------------------
-		
+
 		bool Option::single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
 		{
 			for (PatternWrapper::Iterator it = std::begin(patterns); it != std::end(patterns); ++it)
@@ -134,7 +134,7 @@ namespace core
 
 						// erase this item
 						it = patterns.erase(it);
-						
+
 						if (pattern_start > 0)
 						{
 							--pattern_start;
@@ -145,7 +145,7 @@ namespace core
 			}
 			return true;
 		} // single_match
-		
+
 		// ---------------------------------------------------------------------
 		// Command
 		// ---------------------------------------------------------------------
@@ -167,16 +167,16 @@ namespace core
 			}
 			return false;
 		}
-		
+
 		// ---------------------------------------------------------------------
 		// BranchPattern
 		// ---------------------------------------------------------------------
-		
+
 		BranchPattern::~BranchPattern()
 		{
 			children.clear();
 		}
-		
+
 		// ---------------------------------------------------------------------
 		// Required
 		// ---------------------------------------------------------------------
@@ -191,10 +191,10 @@ namespace core
 					return false;
 				}
 			}
-			
+
 			return matched;
 		}
-		
+
 		// ---------------------------------------------------------------------
 		// Optional
 		// ---------------------------------------------------------------------
@@ -206,40 +206,40 @@ namespace core
 			}
 			return true;
 		}
-		
+
 		// ---------------------------------------------------------------------
 		// ArgumentParser
 		// ---------------------------------------------------------------------
-		
-		
+
+
 		ArgumentParser::ArgumentParser()
 		{
 			state = ParsingUsage;
 		}
-		
+
 		ArgumentParser::~ArgumentParser()
 		{
 			usage_patterns.clear();
 			options_registry.clear();
 		}
-		
-		
+
+
 		void ArgumentParser::parse_patterns_from_tokens(PatternList& patterns, TokenWrapper& tokens)
 		{
 			state = ParsingInput;
 
-			
+
 			// first, we build a list of the input tokens and categorize these
 			// into a series of patterns.
 			while (true)
 			{
 				const std::string& arg = tokens.current();
-				
+
 				if (arg == "")
 				{
 					break;
 				}
-				
+
 				if (arg == "--")
 				{
 					// TODO: the following arguments are positional
@@ -265,17 +265,17 @@ namespace core
 				}
 			}
 		}
-		
+
 		PatternPtr ArgumentParser::find_option(PatternList& patterns,
 							const std::string& shortname,
 							const std::string& longname,
 							int& found_options)
 		{
 			PatternPtr option = 0;
-			
+
 			bool test_shortname = !shortname.empty();
 			bool test_longname = !longname.empty();
-			
+
 			for (PatternPtr p : patterns)
 			{
 				if (p->get_type() == Pattern::PT_Option)
@@ -296,24 +296,24 @@ namespace core
 			}
 			return option;
 		}
-		
+
 		void ArgumentParser::parse_long(PatternList& results, TokenWrapper& tokens, PatternList& options)
 		{
 			// long ::= '--' chars [ ( ' ' | '=' ) chars ] ;
 			// split at the '=', if one exists.
 			std::string long_arg = tokens.pop();
-			
+
 			// partition: '--longname=<argument>'
 			// to: ('--longname', '=', '<argument>')
-			
-			
+
+
 			OptionPtr option;
 			int found_options = 0;
 			std::string longname;
 			std::string value;
 			int total_arguments = 0;
 
-			
+
 			size_t eq_pos = long_arg.find('=');
 			if (eq_pos != std::string::npos)
 			{
@@ -325,16 +325,16 @@ namespace core
 			{
 				longname = long_arg;
 			}
-			
-			
+
+
 			// get our first match; if one exists
 			PatternPtr first_option = find_option(options, "", longname, found_options);
-			
+
 			if (state == ParsingInput && found_options == 0)
 			{
 				// No exact match; try fuzzy searching?
 			}
-			
+
 			if (found_options > 1)
 			{
 				// specified ambiguously 2+ times?
@@ -364,14 +364,14 @@ namespace core
 									first->longname,
 									first->total_arguments,
 									first->value));
-				
+
 				if (option->total_arguments == 0)
 				{
 					if (!value.empty())
 					{
 						set_error("%s must not have an argument", option->longname.c_str());
 					}
-					
+
 					value = "true";
 				}
 				else
@@ -385,7 +385,7 @@ namespace core
 						value = tokens.pop();
 					}
 				}
-				
+
 				if (state == ParsingInput)
 				{
 					// update the option's value
@@ -395,17 +395,17 @@ namespace core
 					}
 				}
 			}
-			
+
 			results.push_back(option);
 		}
-		
+
 		void ArgumentParser::parse_short(PatternList& results, TokenWrapper &tokens, PatternList &options)
 		{
 			// shorts ::= '-' ( chars )* [ [ ' ' ] chars ] ;
 			std::string token = tokens.pop();
-			
+
 			assert(token[0] == '-');
-			
+
 			std::string left = core::str::trim_left(token, "-");
 
 
@@ -420,10 +420,10 @@ namespace core
 				int found_options = 0;
 				shortname += left[index];
 				char next = 0;
-				
+
 
 				PatternPtr first_option = find_option(options, shortname, "", found_options);
-				
+
 				if (found_options > 1)
 				{
 					set_error("raise error: %s is specified ambiguously %i times", shortname.c_str(), found_options);
@@ -433,7 +433,7 @@ namespace core
 				{
 					option = OptionPtr(new Option(shortname, "", 0));
 					options.push_back(option);
-					
+
 					if (state == ParsingInput)
 					{
 						option = OptionPtr(new Option(shortname, "", 0, "true"));
@@ -460,24 +460,24 @@ namespace core
 							index = total_size;
 						}
 					}
-					
+
 					// update value
 					if (state == ParsingInput && !value.empty())
 					{
 						option->value = value;
 					}
 				}
-				
+
 				results.push_back(option);
 			}
 		}
-		
+
 		void ArgumentParser::parse_atom(TokenWrapper& tokens, PatternList& results)
 		{
 			// atom ::= '(' expr ')' | '[' expr ']' | 'options'
 			//	| longname | shortnames | argument | command ;
 			const std::string& token = tokens.current();
-			
+
 			if (token == "(" || token == "[")
 			{
 				tokens.pop();
@@ -516,7 +516,7 @@ namespace core
 				results.push_back(PatternPtr(new Command(tokens.pop(), "")));
 			}
 		}
-		
+
 		void ArgumentParser::parse_sequence(TokenWrapper& tokens, PatternList& results)
 		{
 			// sequence ::= ( atom [ '...' ] )* ;
@@ -527,17 +527,17 @@ namespace core
 				{
 					break;
 				}
-				
+
 				parse_atom(tokens, results);
 			}
 		}
-		
+
 		void ArgumentParser::parse_expr(TokenWrapper& tokens, PatternList& results)
 		{
 			// expr ::= sequence ( '|' sequence )* ;
-			
+
 			parse_sequence(tokens, results);
-			
+
 			//while (tokens.current() == "|")
 			//{
 			//	tokens.pop();
@@ -545,54 +545,54 @@ namespace core
 			//	parse_sequence(tokens, other_results);
 			//	results.push_back(PatternPtr(new Required(other_results)));
 			//}
-			
-			
+
+
 		}
-		
-		
+
+
 		void ArgumentParser::parse_usage(const std::string& formal_usage, const char* help_string)
 		{
 			// the formal usage pattern needs to be split up into tokens
 			// which can be fed into a regex.
-			
+
 			// first, we expand the usage string so we have extra whitespace
 			// to separate elements.
 			std::regex replacement("([\\[\\]\\(\\)\\|]|\\.\\.\\.)");
 			std::string str;
 			std::regex_replace(std::back_inserter(str), formal_usage.begin(), formal_usage.end(), replacement, " $1 ");
-			
+
 			TokenList usage;
-			
+
 			std::regex rgx("\\s+");
 			std::sregex_token_iterator iter(str.begin(),
 											str.end(),
 											rgx,
 											-1);
 			std::sregex_token_iterator end;
-			
+
 			// next, we tokenize the expanded string
 			for (; iter != end; ++iter)
 			{
 				usage.push_back( (*iter).str() );
 			}
-			
+
 			// now we parse the expanded string
 			TokenWrapper tw(usage, std::string(""));
 			PatternList usage_pattern;
 			parse_expr(tw, usage_pattern);
-			
+
 			usage_patterns.push_back(PatternPtr(new Required(usage_pattern)));
 		}
-		
-		
+
+
 		std::string ArgumentParser::get_section_regex(const std::string& name)
 		{
 			std::string regex = "(^\\s)*(";
-			
+
 			regex += name;
-			
+
 			regex += "[^\\n]*\\n?(?:[ \\t].*?(?:\\n|$))*)";
-			
+
 			return regex;
 		}
 
@@ -602,14 +602,14 @@ namespace core
 			std::regex rgx(get_section_regex(section_name));
 			std::cmatch result;
 			std::regex_search(docstring_source, result, rgx);
-			
+
 			std::vector<std::string> output;
-			
+
 			if (result.size() > 0)
 			{
 				// found the section
 				section_was_found = true;
-				
+
 				// split it at the colon ("Usage:")
 				std::string match = result.str(0);
 				std::size_t pos = match.find_first_of(':');
@@ -617,7 +617,7 @@ namespace core
 				{
 					match = match.substr(pos+1);
 				}
-				
+
 				// split section at newlines and trim leading whitespace
 				std::vector<std::string> lines = core::str::split(match, "\n");
 				for (std::string& line : lines)
@@ -629,11 +629,11 @@ namespace core
 					}
 				}
 			}
-			
+
 			return output;
 		}
-		
-		
+
+
 		void ArgumentParser::parse_options(std::vector<std::string> lines)
 		{
 			for (auto& raw_option_line : lines)
@@ -641,10 +641,10 @@ namespace core
 				// the raw option line may also have a help string associated with it
 				// so we need to split the string properly
 				std::vector<std::string> items = core::str::split(raw_option_line, "  ");
-				
+
 				std::string specifier;
 				std::string description;
-				
+
 				// handle the case where a description is not specified in the options
 				// we still need to process the specifier (left side) and
 				// description (right side)
@@ -656,22 +656,22 @@ namespace core
 						description = items[1];
 					}
 				}
-				
-				
+
+
 				// parse an option
-				
+
 				// clean up the options a bit
 				std::replace(specifier.begin(), specifier.end(), '=', ' ');
 				std::string result;
 				std::remove_copy(specifier.begin(), specifier.end(), std::back_inserter(result), ',');
 				specifier = result;
-				
-				
+
+
 				std::string longname;
 				std::string shortname;
 				std::string value;
 				int argument_count = 0;
-				
+
 				std::vector<std::string> elements = core::str::split(specifier, " ");
 				for (const std::string& item : elements)
 				{
@@ -688,7 +688,7 @@ namespace core
 						argument_count = 1;
 					}
 				}
-				
+
 				if (argument_count)
 				{
 					// try to read defaults from the description
@@ -706,18 +706,18 @@ namespace core
 											longname,
 											argument_count,
 											value));
-											
+
 				options_registry.push_back(option);
 			}
 		}
-		
+
 		void ArgumentParser::parse_usage(std::vector<std::string> lines)
 		{
 			for (auto& formal_usage : lines)
 			{
 				// the formal usage pattern needs to be split up into tokens
 				// which can be fed into a regex.
-								
+
 				// first, we expand the usage string so we have extra whitespace
 				// to separate elements.
 				std::string replaced_string;
@@ -727,17 +727,17 @@ namespace core
 					formal_usage.end(),
 					replacement,
 					" $1 ");
-				
+
 				// this needs to remove the commas from the usage pattern
 				// otherwise it may incorrectly pickup bogus options: "-,"
 				std::string str;
 				std::remove_copy(replaced_string.begin(), replaced_string.end(), std::back_inserter(str), ',');
-				
+
 				// the above regex_replace will introduce a space when
 				// options are specified first. Obviously, this is bad.
 				// so we trim any whitespace before tokenizing it.
 				str = core::str::trim_left(str);
-				
+
 				// next, we tokenize the expanded string and insert these
 				// into a vector.
 				TokenList usage;
@@ -752,7 +752,7 @@ namespace core
 				{
 					usage.push_back( (*iter).str() );
 				}
-				
+
 				// now we parse the expanded string
 				TokenWrapper tw(usage, std::string(""));
 				PatternList usage_pattern;
@@ -763,7 +763,7 @@ namespace core
 				usage_patterns.push_back(PatternPtr(new Required(usage_pattern)));
 			}
 		}
-		
+
 		bool ArgumentParser::check_extra(bool enable_automatic_help, const char* version_string, PatternList& patterns)
 		{
 			int found_options = 0;
@@ -772,13 +772,13 @@ namespace core
 				print_docstring();
 				return true;
 			}
-			
+
 			if (version_string && find_option(patterns, "", "--version", found_options))
 			{
 				fprintf(stdout, "%s\n", version_string);
 				return true;
 			}
-			
+
 			return false;
 		}
 
@@ -818,39 +818,39 @@ namespace core
 
 			return tokens;
 		}
-			
+
 		bool ArgumentParser::parse(const char* docstring_source, std::vector<std::string> tokens, VariableMap& vm, const char* version_string)
 		{
 			docstring = docstring_source;
 			bool found_options = false;
 			bool found_usage = false;
-			
+
 			// run through the docstring and parse the options first.
 			parse_options(find_section(docstring, "Options", found_options));
-			
+
 			// parse usage block
 			parse_usage(find_section(docstring, "Usage", found_usage));
-			
+
 			if (!found_usage)
 			{
 				fprintf(stderr, "Usage section not found!\n");
 			}
-			
-			
+
+
 			// build our token list
 			TokenList tokenlist;
 			for (const std::string& token : tokens)
 			{
 				tokenlist.push_back(token);
 			}
-			
+
 			// create a wrapper pass this on
 			TokenWrapper tokenwrapper(tokenlist, std::string(""));
-			
+
 			PatternList input_patterns;
 			parse_patterns_from_tokens(input_patterns, tokenwrapper);
-			
-			
+
+
 			bool automatic_help = true;
 			bool should_exit = check_extra(automatic_help, version_string, input_patterns);
 			if (should_exit)
@@ -858,9 +858,9 @@ namespace core
 				// should bail here; displayed help or version string to user.
 				return false;
 			}
-			
-			
-			
+
+
+
 			// insert default option values for the items not in the dict
 			for (PatternPtr option : options_registry)
 			{
@@ -881,7 +881,7 @@ namespace core
 				}
 				vm[option_name] = option_value;
 			}
-			
+
 			PatternWrapper input(input_patterns, nullptr);
 
 			bool success = false;
@@ -889,21 +889,21 @@ namespace core
 			{
 				int32_t pattern_start = 0;
 				success = usage->matches(pattern_start, input, vm);
-				
+
 				if (success)
 				{
 					break;
 				}
-				
+
 				vm.clear();
 			}
-			
+
 			if (!success)
 			{
 				print_docstring();
 				return false;
 			}
-			
+
 			return success;
 		}
 	} // namespace argparse

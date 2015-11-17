@@ -39,17 +39,17 @@ namespace gemini
 	{
 		// datamodel bone index
 		uint32_t datamodel_bone_index;
-		
+
 		// weight
 		float value;
 	};
-	
+
 	typedef std::vector<WeightReference> WeightReferenceVector;
 	struct WeightSlot
 	{
 		WeightReferenceVector weights;
 	};
-	
+
 	typedef std::vector<WeightSlot> WeightSlotVector;
 
 
@@ -77,16 +77,16 @@ namespace gemini
 			WeightSlotVector weight_slots;
 			BoneDataHashSet bones;
 		};
-	
+
 		datamodel::Model* model;
-		
+
 		// used by the reader to convert to correct units
 		// since the SDK will only convert root nodes
 		float conversion_factor;
-		
+
 		tools::IndentState indent;
-		
-		
+
+
 		std::vector<FbxNode*> skeletal_nodes;
 
 		typedef HashSet<std::string, MeshData*> MeshDataHashSet;
@@ -94,8 +94,8 @@ namespace gemini
 
 		NodeDataVector nodedata;
 		float frames_per_second;
-		
-		
+
+
 		~AutodeskFbxExtensionState()
 		{
 			for (MeshData* data : meshdata)
@@ -104,15 +104,15 @@ namespace gemini
 			}
 		}
 	};
-	
+
 	class AutodeskFbxReader : public tools::Reader<datamodel::Model>
 	{
 		DECLARE_PLUGIN_CLASS(AutodeskFbxReader);
-		
+
 		AutodeskFbxExtensionState extension_state;
 
 		bool find_skeleton(FbxNode* root);
-		
+
 	public:
 		AutodeskFbxReader();
 		virtual ~AutodeskFbxReader();

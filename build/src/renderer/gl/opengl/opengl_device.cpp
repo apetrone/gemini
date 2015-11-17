@@ -34,14 +34,14 @@ namespace render2
 	// ---------------------------------------------------------------------
 	void OpenGLDevice::activate_render_target(const RenderTarget& rt)
 	{
-		
+
 	}
-	
+
 	void OpenGLDevice::deactivate_render_target(const RenderTarget& rt)
 	{
-		
+
 	}
-	
+
 	RenderTarget* OpenGLDevice::default_render_target()
 	{
 		return &default_target;
@@ -76,16 +76,16 @@ namespace render2
 		new (&serializer) GLCommandSerializer(*command_queue);
 		return &serializer;
 	}
-	
+
 	void OpenGLDevice::destroy_serializer(CommandSerializer* serializer)
 	{
 	}
-	
+
 	CommandQueue* OpenGLDevice::create_queue(const Pass& render_pass)
 	{
 		return common_create_queue(render_pass, &queue.next());
 	}
-	
+
 	// ---------------------------------------------------------------------
 	// command buffers / submission
 	// ---------------------------------------------------------------------
@@ -93,7 +93,7 @@ namespace render2
 	{
 		common_queue_buffers(queue_list, total_queues, queued_buffers);
 	}
-	
+
 	void OpenGLDevice::backbuffer_resized(int backbuffer_width, int backbuffer_height)
 	{
 		common_resize_backbuffer(backbuffer_width, backbuffer_height, &default_target);

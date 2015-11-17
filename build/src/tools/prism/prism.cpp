@@ -61,39 +61,39 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 {
 	prism::MeshData modeldata;
 	MaterialMap material_map;
-	
+
 	Json::Value root;
 
 	const aiMesh *mesh = 0;
 
-	
+
 	LOGV("model has %i meshes\n", scene->mNumMeshes);
 	LOGV("model has %i animations\n", scene->mNumAnimations);
 	LOGV("model has %i materials\n", scene->mNumMaterials);
 	LOGV("model has %i textures\n", scene->mNumTextures);
 	LOGV("model has %i cameras\n", scene->mNumCameras);
-	
+
 	root["name"] = "model";
 	root["info"] = "converted by prism";
-	
+
 	Json::Value jinfo(Json::objectValue);
 	Json::Value jtransform(Json::arrayValue);
 
 	jinfo["tool"] = TOOL_NAME;
 	jinfo["version"] = TOOL_VERSION;
-	
+
 	Json::Value jmaterial_array(Json::arrayValue);
 	Json::Value jgeometry_array(Json::arrayValue);
-	
+
 	Json::Value jbones_array(Json::arrayValue);
 
-	
+
 	MeshData meshdata;
 	SceneInfo info(env, material_map, scene, jgeometry_array, jbones_array);
-	
+
 	// traverse all nodes in the scene
 	traverse_nodes(info, meshdata, scene);
-	
+
 //	LOGV("total meshes: %i\n", scene->mNumMeshes);
 
 	LOGV("meshes written / total (%i / %i)\n", meshdata.written_meshes, meshdata.written_meshes+meshdata.ignored_meshes);
@@ -109,42 +109,42 @@ void convert_and_write_model(ToolEnvironment& env, const aiScene* scene, const c
 
 	// convert coordinate transform to json
 	jsonify_matrix(jtransform, env.coordinate_transform);
-	
+
 	root["geometry"] = jgeometry_array;
 	root["materials"] = jmaterial_array;
 	root["info"] = jinfo;
 	root["transform"] = jtransform;
-	
 
-	
-	
+
+
+
 	LOGV("TODO: should normalize bone weights!\n");
 	root["bones"] = jbones_array;
-	
+
 	Json::Value janimations(Json::arrayValue);
 
 	Animation animation_data;
-	
+
 	// TODO: read animation
 	const aiAnimation* animation = 0;
 	for (size_t animation_index = 0; animation_index < scene->mNumAnimations; ++animation_index)
 	{
 		Json::Value janimation;
-		
+
 		animation = scene->mAnimations[animation_index];
 
 		LOGV("inspecting animation: %i, \"%s\"\n", animation_index, animation->mName.C_Str());
 		meshdata.read_animation(env, animation_data, animation, janimation);
-		
+
 		janimations.append(janimation);
 	}
-	
+
 	//fprintf(stdout, "Loaded %zu meshes ready for drawing\n", meshes.size());
-	
+
 	root["animations"] = janimations;
-	
+
 	meshdata.print_nodes();
-	
+
 	Json::StyledWriter writer;
 	xfile_t out = xfile_open(output_path, XF_WRITE);
 	if (xfile_isopen(out))
@@ -161,7 +161,7 @@ void process_model(ToolEnvironment& env, const char* asset_root, const char* inp
 
 	StackString<2048> input_filename = asset_root;
 	input_filename.append("/").append(input_file);
-	
+
 	// Bone matrices may be incorrect with aiProcess_PreTransformVertices set.
 	unsigned int flags = aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace;
 
@@ -177,7 +177,7 @@ void process_model(ToolEnvironment& env, const char* asset_root, const char* inp
 			LOGV("fullpath = %s\n", fullpath());
 			convert_and_write_model(env, scene, fullpath());
 		}
-		
+
 		importer.FreeScene();
 	}
 	else
@@ -197,12 +197,12 @@ int main(int argc, char** argv)
 	args::Argument* input_file = args::add("input_file", "-f", "--input", 0, 0);
 	args::Argument* output_root = args::add("output_root", "-o", "--output-root", 0, 0);
 	args::Argument* convert_axis = args::add("convert_zup_to_yup", "-y", 0, args::NO_PARAMS | args::NOT_REQUIRED, 0);
-	
+
 	if (args::parse_args(argc, argv) != 0)
 	{
 		return -1;
 	}
-	
+
 	ToolEnvironment env;
 	env.convert_zup_to_yup = convert_axis->integer;
 	if (env.convert_zup_to_yup)
@@ -210,7 +210,7 @@ int main(int argc, char** argv)
 		aiMatrix4x4::Rotation((-M_PI_2), aiVector3D(1, 0, 0), env.coordinate_transform);
 	}
 	env.print_settings();
-	
+
 	process_model(env, asset_root->string, input_file->string, output_root->string);
 
 	core::shutdown();

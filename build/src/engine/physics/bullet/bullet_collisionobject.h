@@ -43,84 +43,84 @@ namespace gemini
 			{
 			protected:
 				btCollisionShape* shape;
-				
+
 			public:
-			
+
 				virtual ~BulletCollisionShape()
 				{
 					// TODO: does this need to remove any bodies, first?
 					// If we crash, then maybe.
-					
+
 					if (shape)
 					{
 						delete shape;
 						shape = 0;
 					}
 				}
-			
+
 				void set_shape(btCollisionShape* _shape)
 				{
 					shape = _shape;
 				}
-				
+
 				btCollisionShape* get_shape() const { return shape; }
 			};
-			
+
 			class BulletCollisionObject : public ICollisionObject
 			{
 			protected:
 				btCollisionObject* object;
-				
+
 				// This will have keep a pointer to its active collision shape
 				// however, it will NOT manage it -- as it can be hot swapped.
 				btCollisionShape* shape;
-				
+
 				// ghost object to sense collisions with other objects
 				btGhostObject* ghost;
-				
+
 				btMotionState* motion_state;
-				
+
 				void* user_data;
-							
+
 				CollisionCallback callback;
 			public:
-				
+
 				BulletCollisionObject();
 				virtual ~BulletCollisionObject();
-				
+
 				virtual void set_user_data(void* userdata);
 				virtual void* get_user_data() const;
-				
+
 				virtual void set_collision_callback(CollisionCallback collision_callback);
-				
+
 				virtual void set_world_transform(const glm::vec3& position, const glm::quat& orientation);
 				virtual void get_world_transform(glm::vec3& out_position, glm::quat& out_orientation);
-				
+
 				virtual void get_linear_velocity(glm::vec3& velocity);
 				virtual void set_linear_velocity(const glm::vec3& velocity);
-				
+
 				virtual void collision_began(ICollisionObject* other);
 				virtual void collision_ended(ICollisionObject* other);
-				
+
 				virtual void apply_impulse(const glm::vec3& force, const glm::vec3& local_position);
 				virtual void apply_central_impulse(const glm::vec3& force);
-				
+
 				void remove_constraints();
-							
+
 				void set_collision_shape(btCollisionShape* collision_shape);
 				btCollisionShape* get_collision_shape() const;
-				
+
 				void set_collision_object(btCollisionObject* collision_object);
 				btCollisionObject* get_collision_object() const;
-				
+
 				void set_collision_ghost(btGhostObject* collision_ghost);
 				btGhostObject* get_collision_ghost() const;
 	//			virtual void set_mass_center_offset(const glm::vec3 &mass_center_offset);
-	
+
 				void set_motion_state(btMotionState* motionstate);
 				btMotionState* get_motion_state() const;
 			};
-		
+
 		} // namespace bullet
 	} // namespace physics
 } // namespace gemini

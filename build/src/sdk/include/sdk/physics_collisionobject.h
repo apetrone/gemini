@@ -36,7 +36,7 @@ namespace gemini
 		// forward declarations
 		class ICollisionObject;
 		class IConstraint;
-		
+
 		// enums, flags
 //		enum CollisionObjectType
 //		{
@@ -45,18 +45,18 @@ namespace gemini
 //			CollisionType_Character = 3,
 //			CollisionType_Dynamic = 4
 //		};
-		
+
 		enum CollisionEventType
 		{
 			Collision_Began,
 			Collision_Ended
 		};
-		
+
 		typedef void (*CollisionCallback)(CollisionEventType, ICollisionObject*, ICollisionObject*);
-		
+
 		static const uint8_t MAX_CONSTRAINTS_PER_OBJECT = 1;
-		
-		
+
+
 		class ICollisionShape
 		{
 		public:
@@ -72,7 +72,7 @@ namespace gemini
 //			Constraint* constraints[MAX_CONSTRAINTS_PER_OBJECT];
 //			glm::vec3 mass_center_offset;
 //			std::vector<ICollisionObject*> overlapping_shapes;
-			
+
 		public:
 //			ICollisionObject(CollisionObjectType type = CollisionType_Invalid) :
 //				collision_type(type),
@@ -81,16 +81,16 @@ namespace gemini
 //			{
 //				memset(constraints, 0, sizeof(Constraint*)*MAX_CONSTRAINTS_PER_OBJECT);
 //			}
-			
+
 			virtual ~ICollisionObject() {}
-			
+
 //			bool is_type(CollisionObjectType _type) const { return collision_type == _type; }
-					
+
 //			void add_constraint(Constraint* constraint)
 //			{
 //				constraints[0] = constraint;
 //			}
-			
+
 			virtual void set_user_data(void* userdata) = 0;
 			virtual void* get_user_data() const = 0;
 
@@ -101,26 +101,26 @@ namespace gemini
 //			{
 //				callback = _callback;
 //			}
-						
+
 //			virtual void set_mass_center_offset(const glm::vec3& mass_center_offset) = 0;
-			
+
 			virtual void get_world_transform(glm::vec3& position, glm::quat& orientation) = 0;
 			virtual void set_world_transform(const glm::vec3& position, const glm::quat& orientation) = 0;
-			
+
 			virtual void get_linear_velocity(glm::vec3& velocity) = 0;
 			virtual void set_linear_velocity(const glm::vec3& velocity) = 0;
-			
+
 			// invoked when this object when another object collides with it
 			virtual void collision_began(ICollisionObject* other) = 0;
-			
+
 			// invoked when this object no longer collides with other
 			virtual void collision_ended(ICollisionObject* other) = 0;
-			
+
 			virtual void apply_impulse(const glm::vec3& force, const glm::vec3& local_position) {};
 			virtual void apply_central_impulse(const glm::vec3& force) {};
 //
 //			virtual void set_mass(float mass) {};
-//			
+//
 //			virtual void set_parent(ICollisionObject* first, ICollisionObject* second) {};
 		};
 	} // namespace physics

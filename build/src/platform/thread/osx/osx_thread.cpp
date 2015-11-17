@@ -30,17 +30,17 @@ namespace platform
 	{
 		return posix_thread_create(thread, entry, data);
 	}
-	
+
 	int thread_join(Thread& thread)
 	{
 		return posix_thread_join(thread);
 	}
-	
+
 	void thread_sleep(int milliseconds)
 	{
 		posix_thread_sleep(milliseconds);
 	}
-	
+
 	void thread_detach(Thread& thread)
 	{
 		posix_thread_detach(thread);
@@ -50,5 +50,5 @@ namespace platform
 	{
 		return posix_thread_id();
 	}
-	
+
 } // namespace platform

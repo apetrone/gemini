@@ -45,7 +45,7 @@ namespace gemini
 		core::Color color;
 		::renderer::render_utilities::PhysicsState<glm::vec3> position;
 		glm::vec3 velocity;
-		
+
 		float life_remaining;
 		float life_total;
 		float size;
@@ -72,10 +72,10 @@ namespace gemini
 		};
 
 		assets::EmitterConfig * emitter_config;
-		
 
-		
-		
+
+
+
 		::renderer::render_utilities::PhysicsState<glm::vec3> world_position;
 		unsigned int num_particles_alive;
 		Particle * particle_list;
@@ -100,12 +100,12 @@ namespace gemini
 	//	unsigned int num_active_emitters;
 	//	ParticleEmitter * emitter_list;
 		ParticleEmitterVector emitters;
-		
+
 		ParticleSystem();
 		~ParticleSystem();
 		void purge();
 		void step( float delta_seconds );
-		
+
 		ParticleEmitter * add_emitter();
 		void remove_emitter( ParticleEmitter * emitter );
 	}; // ParticleSystem

@@ -51,7 +51,7 @@ namespace script
 		{
 			return ::util::random_range(0.0f, 1.0f);
 		} // random_float
-	
+
 		SQInteger vec2_add( HSQUIRRELVM v )
 		{
 			if ( sq_gettop(v) == 2 )
@@ -65,10 +65,10 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
-				
+
+
 				LOGE( "ERROR vec2_add\n" );
-				
+
 				return 1;
 			}
 			else
@@ -76,7 +76,7 @@ namespace script
 				return 0;
 			}
 		} // vec2_add
-	
+
 		SQInteger vec2_multiply( HSQUIRRELVM v )
 		{
 			if ( sq_gettop(v) == 2 )
@@ -90,8 +90,8 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
-				
+
+
 				Sqrat::Var<float> fother(v,2);
 				if ( !Sqrat::Error::Instance().Occurred(v) )
 				{
@@ -100,9 +100,9 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
+
 				LOGE( "ERROR vec2_multiply\n" );
-				
+
 				return 1;
 			}
 			else
@@ -110,7 +110,7 @@ namespace script
 				return 0;
 			}
 		} // vec2_multiply
-	
+
 		SQInteger vec3_add( HSQUIRRELVM v )
 		{
 			if ( sq_gettop(v) == 2 )
@@ -124,10 +124,10 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
-				
+
+
 				LOGE( "ERROR vec3_add\n" );
-				
+
 				return 1;
 			}
 			else
@@ -135,7 +135,7 @@ namespace script
 				return 0;
 			}
 		} // vec3_add
-		
+
 		SQInteger vec3_subtract( HSQUIRRELVM v )
 		{
 			if ( sq_gettop(v) == 2 )
@@ -149,10 +149,10 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
-				
+
+
 				LOGE( "ERROR vec3_subtract\n" );
-				
+
 				return 1;
 			}
 			else
@@ -160,7 +160,7 @@ namespace script
 				return 0;
 			}
 		} // vec3_subtract
-		
+
 		SQInteger vec3_multiply( HSQUIRRELVM v )
 		{
 			if ( sq_gettop(v) == 2 )
@@ -174,8 +174,8 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
-				
+
+
 				Sqrat::Var<float> fother(v,2);
 				if ( !Sqrat::Error::Instance().Occurred(v) )
 				{
@@ -184,9 +184,9 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
+
 				LOGE( "ERROR vec3_multiply\n" );
-				
+
 				return 1;
 			}
 			else
@@ -194,7 +194,7 @@ namespace script
 				return 0;
 			}
 		} // vec3_multiply
-		
+
 		SQInteger vec3_divide( HSQUIRRELVM v )
 		{
 			if ( sq_gettop(v) == 2 )
@@ -208,8 +208,8 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
-				
+
+
 				Sqrat::Var<float> fother(v,2);
 				if ( !Sqrat::Error::Instance().Occurred(v) )
 				{
@@ -218,9 +218,9 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
+
 				fprintf( stdout, "ERROR vec3_divide\n" );
-				
+
 				return 1;
 			}
 			else
@@ -228,8 +228,8 @@ namespace script
 				return 0;
 			}
 		} // vec3_divide
-		
-		
+
+
 		SQInteger math_normalize( HSQUIRRELVM v )
 		{
 			if ( sq_gettop(v) == 2 )
@@ -243,7 +243,7 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
+
 				// vec4
 				Sqrat::Var<const glm::vec4&> selfv4(v, 2);
 				if ( !Sqrat::Error::Instance().Occurred(v) )
@@ -253,8 +253,8 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
-				
+
+
 				fprintf( stdout, "ERROR Unexpected item for normalize!\n" );
 				return 1;
 			}
@@ -263,7 +263,7 @@ namespace script
 				return 0;
 			}
 		} // math_normalize
-		
+
 		SQInteger math_inverse( HSQUIRRELVM v )
 		{
 			if ( sq_gettop(v) == 2 )
@@ -277,7 +277,7 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
+
 				// mat4
 				Sqrat::Var<const glm::mat4&> selfv4(v, 2);
 				if ( !Sqrat::Error::Instance().Occurred(v) )
@@ -287,8 +287,8 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
-				
+
+
 				fprintf( stdout, "ERROR Unexpected item for inverse!\n" );
 				return 1;
 			}
@@ -297,7 +297,7 @@ namespace script
 				return 0;
 			}
 		} // math_inverse
-		
+
 		SQInteger math_transpose( HSQUIRRELVM v )
 		{
 			if ( sq_gettop(v) == 2 )
@@ -311,7 +311,7 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
+
 				// mat4
 				Sqrat::Var<const glm::mat4&> selfv4(v, 2);
 				if ( !Sqrat::Error::Instance().Occurred(v) )
@@ -321,8 +321,8 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
-				
+
+
 				fprintf( stdout, "ERROR Unexpected item for transpose!\n" );
 				return 1;
 			}
@@ -331,7 +331,7 @@ namespace script
 				return 0;
 			}
 		} // math_transpose
-		
+
 		SQInteger math_dot( HSQUIRRELVM v )
 		{
 			if ( sq_gettop(v) == 3 )
@@ -346,7 +346,7 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
+
 				fprintf( stdout, "ERROR Unexpected item for glm::dot!\n" );
 				return 1;
 			}
@@ -355,7 +355,7 @@ namespace script
 				return 0;
 			}
 		} // math_dot
-		
+
 		SQInteger math_cross( HSQUIRRELVM v )
 		{
 			if ( sq_gettop(v) == 3 )
@@ -370,7 +370,7 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
+
 				fprintf( stdout, "ERROR Unexpected item for glm::cross!\n" );
 				return 1;
 			}
@@ -379,15 +379,15 @@ namespace script
 				return 0;
 			}
 		} // math_cross
-		
-		
-		
-		
-		
-		
-		
-		
-		
+
+
+
+
+
+
+
+
+
 		SQInteger mat3_multiply( HSQUIRRELVM v )
 		{
 			if ( sq_gettop(v) == 2 )
@@ -402,8 +402,8 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
-				
+
+
 				// matrix * vec3
 				Sqrat::Var<const glm::vec3&> v_other(v, 2);
 				if ( !Sqrat::Error::Instance().Occurred(v) )
@@ -413,10 +413,10 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
-				
+
+
 				LOGE( "mat3_multiply Invalid operands!\n" );
-				
+
 				return 1;
 			}
 			else
@@ -424,7 +424,7 @@ namespace script
 				return 0;
 			}
 		} // mat3_multiply
-		
+
 		SQInteger mat4_multiply( HSQUIRRELVM v )
 		{
 			if ( sq_gettop(v) == 2 )
@@ -439,8 +439,8 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
-				
+
+
 				// matrix * vec4
 				Sqrat::Var<const glm::vec4&> v_other(v, 2);
 				if ( !Sqrat::Error::Instance().Occurred(v) )
@@ -452,7 +452,7 @@ namespace script
 				Sqrat::Error::Instance().Clear(v);
 
 				LOGE( "Error mat4_multiply. Invalid operands!\n" );
-				
+
 				return 1;
 			}
 			else
@@ -505,8 +505,8 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);
-				
-				
+
+
 				// matrix * vec4
 				Sqrat::Var<const glm::vec4&> v_other(v, 2);
 				if ( !Sqrat::Error::Instance().Occurred(v) )
@@ -516,9 +516,9 @@ namespace script
 					return 1;
 				}
 				Sqrat::Error::Instance().Clear(v);*/
-				
+
 				LOGE( "Error rotate. Invalid operands!\n" );
-				
+
 				return 1;
 			}
 			else
@@ -526,8 +526,8 @@ namespace script
 				return 0;
 			}
 		} // rotate
-		
-		
+
+
 		SQInteger translate( HSQUIRRELVM v )
 		{
 			if ( sq_gettop(v) == 3 )
@@ -537,8 +537,8 @@ namespace script
 				{
 					// operation on mat4
 					Sqrat::Var<const glm::vec3&> vector(v,3);
-					
-					
+
+
 					glm::mat4 result = glm::translate( mat4_param.value, vector.value );
 					Sqrat::PushVar(v, result);
 					return 1;
@@ -552,8 +552,8 @@ namespace script
 				 return 1;
 				 }
 				 Sqrat::Error::Instance().Clear(v);
-				 
-				 
+
+
 				 // matrix * vec4
 				 Sqrat::Var<const glm::vec4&> v_other(v, 2);
 				 if ( !Sqrat::Error::Instance().Occurred(v) )
@@ -563,9 +563,9 @@ namespace script
 				 return 1;
 				 }
 				 Sqrat::Error::Instance().Clear(v);*/
-				
+
 				LOGE( "Error translate. Invalid operands!\n" );
-				
+
 				return 1;
 			}
 			else
@@ -573,11 +573,11 @@ namespace script
 				return 0;
 			}
 		} // translate
-		
-		
+
+
 		template <class Type>
 		void bind_class(HSQUIRRELVM vm, Sqrat::Table table);
-		
+
 		template <>
 		void bind_class<glm::vec2>(HSQUIRRELVM vm, Sqrat::Table table)
 		{
@@ -589,7 +589,7 @@ namespace script
 			bind_vec2.SquirrelFunc(_SC("_mul"), bind::vec2_multiply );
 			table.Bind(_SC("vec2"), bind_vec2 );
 		}
-		
+
 		template <>
 		void bind_class<glm::vec3>(HSQUIRRELVM vm, Sqrat::Table table)
 		{
@@ -605,9 +605,9 @@ namespace script
 			bind_vec3.Var(_SC("z"), &glm::vec3::z);
 			table.Bind(_SC("vec3"), bind_vec3);
 		}
-		
-		
-		
+
+
+
 		template <>
 		void bind_class<glm::vec4>(HSQUIRRELVM vm, Sqrat::Table table)
 		{
@@ -620,7 +620,7 @@ namespace script
 			bind_vec4.Var(_SC("w"), &glm::vec4::w);
 			table.Bind(_SC("vec4"), bind_vec4);
 		}
-		
+
 		template <>
 		void bind_class<glm::mat3>(HSQUIRRELVM vm, Sqrat::Table table)
 		{
@@ -630,7 +630,7 @@ namespace script
 			bind_mat3.SquirrelFunc(_SC("_mul"), bind::mat3_multiply);
 			table.Bind(_SC("mat3"), bind_mat3);
 		}
-		
+
 		template <>
 		void bind_class<glm::mat4>(HSQUIRRELVM vm, Sqrat::Table table)
 		{
@@ -639,7 +639,7 @@ namespace script
 			bind_mat4.SquirrelFunc(_SC("_mul"), bind::mat4_multiply);
 			table.Bind(_SC("mat4"), bind_mat4);
 		}
-		
+
 		template <>
 		void bind_class<Color>(HSQUIRRELVM vm, Sqrat::Table table)
 		{
@@ -662,11 +662,11 @@ namespace script
 		{
 			HSQUIRRELVM _vm;
 			bool _print_stack;
-			
+
 			void print_top( bool is_exiting )
 			{
 				const char * prefix;
-				
+
 				if ( is_exiting )
 				{
 					prefix = "[out]";
@@ -677,7 +677,7 @@ namespace script
 				}
 				LOGV( "%s top=%i\n", prefix, (int)sq_gettop( _vm ) );
 			} // print_top
-			
+
 			StackMonitor( HSQUIRRELVM vm, bool print_stack = false )
 			{
 				_vm = vm;
@@ -688,7 +688,7 @@ namespace script
 					script::print_stack( _vm );
 				}
 			} // StackMonitor
-			
+
 			~StackMonitor()
 			{
 				if ( _print_stack )
@@ -698,7 +698,7 @@ namespace script
 				print_top( true );
 			} // ~StackMonitor
 		}; // StackMonitor
-		
+
 		static void print_callback(HSQUIRRELVM v,const SQChar *s,...)
 		{
 //			va_list vl;
@@ -707,7 +707,7 @@ namespace script
 //			va_end(vl);
 			LOGV( s );
 		} // print_callback
-		
+
 		static void error_callback(HSQUIRRELVM v,const SQChar *s,...)
 		{
 //			va_list vl;
@@ -716,17 +716,17 @@ namespace script
 //			va_end(vl);
 			LOGE( s );
 		} // error_callback
-		
-		
-		
-		
 
-		
+
+
+
+
+
 		// used for includes to determine the path of the currently loaded script
 		typedef std::stack< String > StringStack;
-		
+
 		StringStack include_paths;
-		
+
 		void script_include( const char * path )
 		{
 			String front = include_paths.top();
@@ -734,37 +734,37 @@ namespace script
 
 			execute_file(front.c_str());
 		} // script_include
-		
 
-		
+
+
 		void initialize_vm( HSQUIRRELVM vm )
 		{
 			sq_pushroottable( vm );
 			sqstd_seterrorhandlers( vm ); // registers default error handlers
 			sq_setprintfunc( vm, print_callback, error_callback );
-			
+
 			sqstd_register_iolib( vm );
 			sqstd_register_systemlib( vm );
 			sqstd_register_mathlib( vm );
-			
+
 			sq_pop( vm, 1 );
-			
+
 			// bind all functions and classes to make squirrel aware
 			Sqrat::RootTable root( vm );
-			
-			
-			
-			
+
+
+
+
 			//
 			// FUNCTIONS
 			root.Func(_SC("include"), script_include);
-			
+
 			Sqrat::Table random( vm );
 			random.Func(_SC("random"), bind::random_float);
 			random.Func(_SC("range"), ::util::random_range);
 			root.Bind(_SC("random"), random);
-			
-			
+
+
 			//
 			// CLASSES
 			script::bind::bind_class<glm::vec2>(vm, root);
@@ -773,13 +773,13 @@ namespace script
 			script::bind::bind_class<glm::mat3>(vm, root);
 			script::bind::bind_class<glm::mat4>(vm, root);
 			script::bind::bind_class<Color>(vm, root);
-			
+
 			//
 			// MATH
 			Sqrat::Table math(vm);
 			math.Func(_SC("max"), static_cast<float(*)(float, float)>(std::fmax));
 			math.Func(_SC("min"), static_cast<float(*)(float, float)>(std::fmin));
-			
+
 			math.SquirrelFunc(_SC("normalize"), bind::math_normalize);
 			math.SquirrelFunc(_SC("inverse"), bind::math_inverse);
 			math.SquirrelFunc(_SC("transpose"), bind::math_transpose);
@@ -787,50 +787,50 @@ namespace script
 			math.SquirrelFunc(_SC("cross"), bind::math_cross);
 			math.SquirrelFunc(_SC("rotate"), bind::rotate);
 			math.SquirrelFunc(_SC("translate"), bind::translate);
-			
+
 			root.Bind(_SC("math"), math);
-						
+
 			Sqrat::Table debug( vm );
 			debug.Func(_SC("axes"), debugdraw::axes);
 			debug.Func(_SC("point"), debugdraw::point);
 			debug.Func(_SC("line"), debugdraw::line);
 			debug.Func(_SC("sphere"), debugdraw::sphere);
-			
+
 			root.Bind(_SC("debug"), debug);
-			
-			
-			
-			
+
+
+
+
 			Sqrat::Class<Camera> camera( vm );
 			root.Bind(_SC("Camera"), camera);
-			
+
 			Sqrat::Enumeration physics_type(vm);
 			physics_type.Const(_SC("STATIC"), 0);
 			physics_type.Const(_SC("DYNAMIC"), 1);
 			physics_type.Const(_SC("CHARACTER"), 2);
 			physics_type.Const(_SC("TRIGGER"), 3);
-			
+
 			Sqrat::ConstTable(vm).Enum(_SC("PhysicsType"), physics_type);
-			
+
 		} // initialize_vm
 
-		
+
 		void print_script_error( HSQUIRRELVM vm, const char * action )
 		{
 			sq_getlasterror( vm );
 			const SQChar *buffer;
 			sq_getstring(vm, -1, &buffer );
-			
+
 			LOGW( "ScriptError: (%s) %s\n", action, buffer );
-			
+
 			sq_pop( vm, 1 );
 		} // print_script_error
-		
-		
+
+
 	}; // util
-	
+
 	using namespace script::util;
-	
+
 	void startup( int64_t stack_size )
 	{
 		_sqvm = sq_open( stack_size );
@@ -843,8 +843,8 @@ namespace script
 			LOGE( "Unable to setup script environment.\n" );
 		}
 	} // startup
-	
-	
+
+
 	void shutdown()
 	{
 		if ( _sqvm )
@@ -859,7 +859,7 @@ namespace script
 			include_paths.pop();
 		}
 	} // shutdown
-	
+
 	const char * string_for_type( int sqtype )
 	{
 		switch( sqtype )
@@ -885,7 +885,7 @@ namespace script
 			default: return "OT_UNKNOWN";
 		}
 	} // string_for_type
-	
+
 	void print_stack( HSQUIRRELVM vm )
 	{
 		int top = sq_gettop( vm );
@@ -903,31 +903,31 @@ namespace script
 			LOGV( "-- STACK, 0 items (empty)\n" );
 		}
 	} // print_stack
-	
+
 	HSQUIRRELVM get_vm()
 	{
 		return _sqvm;
 	} // get_vm
-	
-	
+
+
 	// NOTE: This only works with ASCII files at the moment.
 	// Should be converted to translate UTF-8
 	bool execute_file( const char * filename )
 	{
 		HSQUIRRELVM vm = get_vm();
-		
+
 		if ( vm == 0 )
 		{
 			LOGE( "script system not initialized yet!\n" );
 			return false;
 		}
-		
+
 		if ( core::filesystem::file_exists( filename ) == false )
 		{
 			LOGW( "File does not exist: %s\n", filename );
 			return false;
 		}
-		
+
 		// based on the path passed into this function
 		// determine what the relative directory is and push that
 		// on the include_paths stack.
@@ -935,16 +935,16 @@ namespace script
 		size_t pos = path.find_last_of("/");
 		String temp = path.substr(0, pos+1);
 		include_paths.push(temp);
-		
+
 		//fprintf( stdout, "execute: %s\n", filename );
 		//SQInteger top = sq_gettop( vm );
-		
+
 		// fetch the script from our filesystem
 		size_t buffer_length = 0;
 		char* buffer = core::filesystem::file_to_buffer( filename, 0, &buffer_length );
-		
+
 //		StackMonitor sm(vm);
-		
+
 		// compile the buffer and execute it in squirrel VM
 		if ( SQ_SUCCEEDED( sq_compilebuffer( vm, (SQChar*)buffer, buffer_length, _SC("console"), 1 )))
 		{
@@ -972,12 +972,12 @@ namespace script
 			sq_pop( vm, 1 );
 			return false;
 		}
-		
+
 		include_paths.pop();
-		
+
 		return false;
 	} // execute_file
-	
+
 	bool find_function( const SQChar* name, Sqrat::Function & function )
 	{
 		function = Sqrat::RootTable( get_vm() ).GetFunction( name );
@@ -986,23 +986,23 @@ namespace script
 			LOGV( "Unable to find function: \"%s\"\n", name );
 			return false;
 		}
-		
+
 		return true;
 	} // find_function
-	
+
 	HSQOBJECT find_member( HSQOBJECT class_obj, const SQChar* name )
 	{
 //		StackMonitor sm( get_vm() );
-		
+
 		bool success = false;
-		
+
 		HSQOBJECT obj;
 		obj._type = OT_NULL;
-		
+
 		if (sq_isclass(class_obj))
 		{
 			sq_resetobject( &obj );
-			
+
 			Sqrat::Object classobj( class_obj, get_vm() );
 			if ( !classobj.IsNull() )
 			{
@@ -1013,7 +1013,7 @@ namespace script
 					success = true;
 				}
 			}
-			
+
 			if ( !success )
 			{
 				LOGW( "Unable to find '%s'\n", name );
@@ -1021,7 +1021,7 @@ namespace script
 		}
 		return obj;
 	} // find_member
-	
+
 	void check_result( SQRESULT result, const char * debug_string )
 	{
 		if ( SQ_FAILED(result) )

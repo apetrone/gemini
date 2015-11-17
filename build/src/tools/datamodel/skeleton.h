@@ -40,26 +40,26 @@ namespace gemini
 			int32_t index;
 			int32_t parent;
 			String name;
-			
+
 			uint8_t total_blendweights;
-			
+
 			Bone() : index(-1), parent(-1), total_blendweights(0) {}
 		};
-	
+
 		typedef std::vector<Bone*> BoneVector;
-		
+
 		struct Skeleton
 		{
 			BoneVector bones;
-		
-		
+
+
 			Skeleton();
 			~Skeleton();
-			
+
 			Bone* add_bone(int32_t parent_index, const String& name);
 			Bone* find_bone_named(const String& name);
 			Bone* get_bone_at_index(uint32_t index);
 		};
-		
+
 	} // namespace datamodel
 } // namespace gemini

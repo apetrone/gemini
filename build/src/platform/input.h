@@ -46,18 +46,18 @@
 namespace input
 {
 	const unsigned int MAX_INPUTSTATE_TOUCHES = 10;
-	
+
 	const uint8_t MAX_JOYSTICK_BUTTONS = 16;
 	const uint8_t MAX_JOYSTICK_AXES = 6;
 	const uint8_t MAX_JOYSTICKS = 8;
-		
+
 	const int16_t AxisValueMinimum = SHRT_MIN;
 	const int16_t AxisValueMaximum = SHRT_MAX;
-	
+
 	enum Button
 	{
 		KEY_INVALID,
-		
+
 		KEY_A,
 		KEY_B,
 		KEY_C,
@@ -110,7 +110,7 @@ namespace input
 		KEY_INSERT,
 		KEY_DELETE,
 		KEY_PAUSE,
-		
+
 		KEY_LSHIFT,
 		KEY_RSHIFT,
 		KEY_LCONTROL,
@@ -119,7 +119,7 @@ namespace input
 		KEY_RALT,
 		KEY_NUMLOCK,
 		KEY_CAPSLOCK,
-		
+
 		// windows key / command key (left/right variants)
 		KEY_LOSKEY,
 		KEY_ROSKEY,
@@ -137,7 +137,7 @@ namespace input
 		KEY_7,
 		KEY_8,
 		KEY_9,
-		
+
 		// function keys
 		KEY_F1,
 		KEY_F2,
@@ -159,13 +159,13 @@ namespace input
 		KEY_F18,
 		KEY_F19,
 		KEY_F20,
-		
+
 		// directional keys
 		KEY_LEFT,
 		KEY_RIGHT,
 		KEY_UP,
 		KEY_DOWN,
-		
+
 		// numpad keys
 		KEY_NUMPAD0,
 		KEY_NUMPAD1,
@@ -185,14 +185,14 @@ namespace input
 		KEY_NUMPAD_PERIOD,
 		KEY_NUMPAD_ENTER,
 		KEY_NUMPAD_EQUALS,
-		
+
 		KEY_COUNT
 	}; // enum Button
-	
+
 	enum MouseButton
 	{
 		MOUSE_INVALID,
-		
+
 		MOUSE_LEFT,
 		MOUSE_RIGHT,
 		MOUSE_MIDDLE,
@@ -200,16 +200,16 @@ namespace input
 		MOUSE_MOUSE5,
 		MOUSE_MOUSE6,
 		MOUSE_MOUSE7,
-		
+
 		MOUSE_COUNT
 	}; // enum MouseButton
-	
+
 	// This is modeled after SDL2's enums, which are in turn, modeled after the
 	// Xbox 360 config.
 	enum GamepadButton
 	{
 		GAMEPAD_BUTTON_INVALID,
-		
+
 		GAMEPAD_BUTTON_A,
 		GAMEPAD_BUTTON_B,
 		GAMEPAD_BUTTON_X,
@@ -225,29 +225,29 @@ namespace input
 		GAMEPAD_BUTTON_DPAD_DOWN,
 		GAMEPAD_BUTTON_DPAD_LEFT,
 		GAMEPAD_BUTTON_DPAD_RIGHT,
-		
+
 		GAMEPAD_BUTTON_COUNT
 	}; // enum GamepadButton
-	
+
 	// key mods
 	enum Modifiers
 	{
 		MOD_NONE,
-		
+
 		MOD_LEFT_CONTROL	= 1,
 		MOD_RIGHT_CONTROL	= 2,
 		MOD_CONTROL			= 3,
-		
+
 		MOD_LEFT_SHIFT		= 4,
 		MOD_RIGHT_SHIFT		= 8,
 		MOD_SHIFT			= 12,
-		
+
 		MOD_LEFT_ALT		= 16,
 		MOD_RIGHT_ALT		= 32,
 		MOD_ALT				= 48
 	};
 
-	
+
 	// This is a similar pattern to that found in Quake. I find it very logical to determining input state.
 	enum ButtonStateFlags
 	{
@@ -256,61 +256,61 @@ namespace input
 		Button_Released = 4,
 		Button_Impulse 	= 8
 	};
-	
+
 	struct ButtonState
 	{
 		unsigned char state : 4;
-		
+
 		// handle a press or release event
 		LIBRARY_EXPORT void press_release( bool is_down );
-		
+
 		// update this button state for this frame
 		LIBRARY_EXPORT void update();
-		
+
 		// returns whether the button is down or not this frame
 		LIBRARY_EXPORT bool is_down() const;
-		
+
 		// returns whether or not the button was just pressed
 		LIBRARY_EXPORT bool was_pressed() const;
-		
+
 		// returns whether or not the button was just released
 		LIBRARY_EXPORT bool was_released() const;
 	}; // ButtonState
 
-	
+
 	struct AxisState
 	{
 		float normalized_value;
 		int16_t value;
 	};
-	
+
 	class InputDevice
 	{
 	public:
 		LIBRARY_EXPORT virtual ~InputDevice();
-		
+
 		LIBRARY_EXPORT virtual void reset() = 0;
 		LIBRARY_EXPORT virtual void update() = 0;
 	}; // InputDevice
-	
+
 	class KeyboardInput : public InputDevice
 	{
 		ButtonState keys[ KEY_COUNT ];
-		
+
 	public:
 		LIBRARY_EXPORT virtual void reset();
 		LIBRARY_EXPORT virtual void update();
-		
+
 		LIBRARY_EXPORT void inject_key_event(int key, bool is_down);
-	
+
 		inline const ButtonState& get_key(input::Button key) { return keys[key]; }
-	
+
 		// Accessors
 //		bool is_down( input::Button key );
 //		bool was_released( input::Button key );
 	}; // KeyboardInput
 
-	
+
 	class MouseInput : public InputDevice
 	{
 		// absolute mouse position in window coordinates
@@ -318,24 +318,24 @@ namespace input
 		int cursor_delta[2];
 
 		int wheel_direction;
-		
+
 		ButtonState buttons[ MOUSE_COUNT ];
 
-		
+
 	public:
 		LIBRARY_EXPORT virtual void reset();
 		LIBRARY_EXPORT virtual void update();
-		
+
 		LIBRARY_EXPORT void inject_mouse_move(int absolute_x, int absolute_y);
 		LIBRARY_EXPORT void inject_mouse_delta(int dx, int dy);
 		LIBRARY_EXPORT void inject_mouse_button( MouseButton button_id, bool is_down );
 		LIBRARY_EXPORT void inject_mouse_wheel( int direction );
-		
+
 		//
 		// Accessors
 		LIBRARY_EXPORT bool is_down(MouseButton button);
 		LIBRARY_EXPORT bool was_released(MouseButton button);
-		
+
 		// retrieve the current mouse position in screen coordinates
 		LIBRARY_EXPORT void mouse_position(int& x, int& y);
 
@@ -345,7 +345,7 @@ namespace input
 			cursor_delta[0] = cursor_delta[1] = 0;
 		}
 	}; // MouseInput
-	
+
 	class TouchInput : public InputDevice
 	{
 		struct TouchState
@@ -355,27 +355,27 @@ namespace input
 			unsigned int state;
 			float x;
 			float y;
-			
+
 			// [0] is the previous, [1] is current
 			int xpos[2];
 			int ypos[2];
 		}; // TouchState
-		
+
 		TouchState touches[ MAX_INPUTSTATE_TOUCHES ];
-		
+
 	public:
 		LIBRARY_EXPORT virtual void reset();
 		LIBRARY_EXPORT virtual void update();
-		
+
 		LIBRARY_EXPORT void touch_began( int touchid, int x, int y );
 		LIBRARY_EXPORT void touch_drag( int touchid, int x, int y );
 		//	void touch_canceled( int touchid, int x, int y );
 		LIBRARY_EXPORT void touch_end( int touchid, int x, int y );
-		
+
 		// retrieve touch from index
 		LIBRARY_EXPORT void touch_at_index( TouchState & touch, int touch_id );
 	}; // TouchInput
-	
+
 
 	class JoystickInput : public InputDevice
 	{
@@ -386,11 +386,11 @@ namespace input
 			Connected 		= 1, // joystick is connected and enabled
 			HapticSupport 	= 2 // joystick has haptics support
 		};
-	
+
 		uint32_t flags;
 		ButtonState buttons[MAX_JOYSTICK_BUTTONS];
 		AxisState axes[MAX_JOYSTICK_AXES];
-		
+
 		LIBRARY_EXPORT virtual void reset();
 		LIBRARY_EXPORT virtual void update();
 	}; // JoystickInput

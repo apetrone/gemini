@@ -39,12 +39,12 @@ namespace gemini
 				ghost(0)
 			{
 			}
-			
+
 			void CustomMotionState::set_body_and_ghost(btRigidBody* body, btGhostObject* ghost)
 			{
 				this->body = body;
 				this->ghost = ghost;
-				
+
 				// set the ghost's transform when we setup this motion state
 				// so the first physics update doesn't leave the ghost at the origin.
 				if (ghost)
@@ -52,17 +52,17 @@ namespace gemini
 					ghost->setWorldTransform(compose_transform());
 				}
 			}
-			
+
 			btTransform CustomMotionState::compose_transform() const
 			{
 				return bullet::position_and_orientation_to_transform(position, orientation);
 			}
-			
+
 			void CustomMotionState::getWorldTransform(btTransform &world_transform) const
 			{
 				world_transform = compose_transform();
 			}
-			
+
 			void CustomMotionState::setWorldTransform(const btTransform &world_transform)
 			{
 				position_and_orientation_from_transform(position, orientation, world_transform);

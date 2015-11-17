@@ -38,25 +38,25 @@ namespace core
 			::platform::PathString root_path;
 			::platform::PathString user_application_path;
 			::platform::PathString content_path;
-		
+
 		public:
 			virtual ~FileSystemInterface();
-			
+
 			virtual void startup();
 			virtual void shutdown();
-			
+
 			virtual bool file_exists(const char* path, bool path_is_relative) const;
 			virtual bool directory_exists(const char* path, bool path_is_relative) const;
-			
+
 			virtual void root_directory(const ::platform::PathString& root_path);
 			virtual const ::platform::PathString& root_directory() const;
-			
+
 			virtual void content_directory(const ::platform::PathString& content);
 			virtual const ::platform::PathString& content_directory() const;
 
 			virtual const ::platform::PathString& user_application_directory() const;
 			virtual void user_application_directory(const ::platform::PathString& application_directory);
-			
+
 			virtual bool virtual_file_exists(const char* relative_path) const;
 			virtual bool virtual_directory_exists(const char* relative_path) const;
 			virtual char* virtual_load_file(const char* relative_path, char* buffer, size_t* buffer_length) const;

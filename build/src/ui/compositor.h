@@ -37,7 +37,7 @@ namespace gui
 		struct Vertex;
 		struct CommandList;
 	}
-		
+
 	class Compositor : public Panel
 	{
 	public:
@@ -51,7 +51,7 @@ namespace gui
 		Point last_cursor;
 		size_t next_z_depth;
 		Listener* listener;
-	
+
 		EventArgs queue[16];
 		uint16_t next_message;
 		uint32_t key_modifiers;
@@ -60,30 +60,30 @@ namespace gui
 
 		LIBRARY_EXPORT Compositor(ScreenInt width, ScreenInt height, ResourceCache* cache, Renderer* renderer);
 		LIBRARY_EXPORT virtual ~Compositor();
-		
+
 		/// @desc Update the children given delta seconds.
 		/// The compositor maintains its own time, so this should be called
 		/// each frame.
 		LIBRARY_EXPORT void tick(float delta_seconds);
-		
+
 		// render this compositor and all children
 		LIBRARY_EXPORT void draw();
-		
+
 		// panel accessors
 		LIBRARY_EXPORT Panel* get_focus() { return this->focus; }
 		LIBRARY_EXPORT void set_focus(Panel* panel) { this->focus = panel; }
-		
+
 		LIBRARY_EXPORT Panel* get_hot() { return this->hot; }
 		LIBRARY_EXPORT void set_hot(Panel* panel) { this->hot = panel; }
-		
+
 		LIBRARY_EXPORT Panel* get_capture() { return this->capture; }
 		LIBRARY_EXPORT void set_capture(Panel* panel) { this->capture = panel; }
-		
+
 		LIBRARY_EXPORT Renderer* get_renderer() const { return renderer; }
 
 		LIBRARY_EXPORT void send_to_front(Panel* panel);
 		LIBRARY_EXPORT void sort_zorder(Panel* panel);
-		
+
 		LIBRARY_EXPORT virtual void add_child(Panel* panel);
 		LIBRARY_EXPORT virtual void remove_child(Panel* panel);
 
@@ -94,13 +94,13 @@ namespace gui
 		LIBRARY_EXPORT void cursor_button(CursorButton::Type button, bool is_down);
 		LIBRARY_EXPORT void cursor_scroll(uint16_t direction);
 		LIBRARY_EXPORT void key_event(uint32_t unicode, bool is_down, uint32_t character, uint16_t modifiers);
-		
+
 		LIBRARY_EXPORT void resize(ScreenInt width, ScreenInt height);
 
 		// location is in compositor coordinates with the origin (0, 0) in the upper left
 		LIBRARY_EXPORT Panel* find_panel_at_location(const Point& location, uint32_t flags);
 		LIBRARY_EXPORT Panel* find_deepest_panel_at_location(Panel* root, const Point& location, uint32_t flags);
-		
+
 		LIBRARY_EXPORT virtual void set_listener(Listener* listener);
 		LIBRARY_EXPORT virtual void queue_event(const EventArgs& args);
 		LIBRARY_EXPORT virtual void process_events();
@@ -114,5 +114,5 @@ namespace gui
 		ResourceCache* resource_cache;
 		Renderer* renderer;
 	}; // struct Compositor
-	
+
 } // namespace gui

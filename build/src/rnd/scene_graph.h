@@ -34,7 +34,7 @@ namespace gemini
 	namespace scenegraph
 	{
 		typedef std::vector< struct Node*, CustomPlatformAllocator<Node*> > NodeVector;
-		
+
 		enum NodeType
 		{
 			SCENEROOT 		= 0, 	// the scene root
@@ -44,22 +44,22 @@ namespace gemini
 			SKELETON		= 8,	// render a skeleton
 			ANIMATED		= 16,	// has animatable position/rotation/scale
 		};
-		
+
 		struct Node
 		{
 			typedef uint16_t AttributeType;
-		
+
 			// decomposed pieces
 			glm::vec3 local_scale;
 			glm::quat local_rotation;
 			glm::vec3 local_position;
-			
+
 			// the local to world transform
 			glm::mat4 local_to_world;
-			
+
 			// local to pivot point vector
 			glm::vec3 local_to_pivot;
-			
+
 			// the final world-transform for this model
 			glm::mat4 world_transform;
 
@@ -68,17 +68,17 @@ namespace gemini
 			glm::vec3 translation;
 
 			String name;
-			
+
 			NodeVector children;
 			Node* parent;
-			
+
 			NodeType type;
 			AttributeType attributes;
 
 			Node();
 			Node(const Node& other);
 			virtual ~Node();
-			
+
 			void add_child(Node* child);
 			void remove_child(Node* child);
 			Node* find_child_named(const String& name);
@@ -86,7 +86,7 @@ namespace gemini
 			void update_transforms();
 			void clear();
 			NodeType get_type() const { return type; }
-			
+
 			bool has_attributes(AttributeType flags) { return (flags & attributes); }
 			virtual Node* clone() { return CREATE(Node, *this); }
 		};
@@ -97,12 +97,12 @@ namespace gemini
 			virtual int32_t visit(Node* node) = 0;
 		};
 
-		
+
 		void create_scene(Node* root);
 		void visit_nodes(Node* root, Visitor* visitor);
 		void destroy_scene(Node* root);
 		void print_tree(Node* root);
-		
+
 		// TODO: move these?
 		scenegraph::Node* clone_to_scene(scenegraph::Node* template_node, scenegraph::Node* root);
 	} // namespace scenegraph

@@ -35,18 +35,18 @@ namespace gemini
 {
 
 	namespace physics
-	{	
+	{
 		namespace bullet
 		{
 			// The static body will manage its collision shapes
 			class BulletStaticBody : public BulletCollisionObject
 			{
 				btAlignedObjectArray<btCollisionShape*> shapes;
-				
+
 			public:
 				BulletStaticBody();
 				virtual ~BulletStaticBody();
-				
+
 				void add_shape(btCollisionShape* shape);
 			};
 		} // namespace bullet

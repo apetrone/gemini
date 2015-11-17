@@ -40,7 +40,7 @@ namespace gemini
 
 		virtual gui::Panel* root_panel() const = 0;
 		virtual gui::Compositor* get_compositor() const = 0;
-		
+
 		virtual void navmesh_find_poly(NavMeshPolyRef* poly, const glm::vec3& position, const glm::vec3& extents) = 0;
 		virtual void navmesh_find_path(NavMeshPath* path, const glm::vec3& start, const glm::vec3& end) = 0;
 		virtual void navmesh_draw_path(NavMeshPath* path) = 0;

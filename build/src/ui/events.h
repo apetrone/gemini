@@ -29,7 +29,7 @@ namespace gui
 {
 	class Panel;
 	class Compositor;
-	
+
 	namespace CursorButton
 	{
 		enum Type
@@ -42,30 +42,30 @@ namespace gui
 			Mouse5,
 		};
 	}
-	
-	
-	
-	
+
+
+
+
 	namespace KeyboardModifier
 	{
 		enum Type
 		{
 			None,
-		
+
 			Left_Control	= 1,
 			Right_Control	= 2,
 			Control			= 3,
-			
+
 			Left_Shift		= 4,
 			Right_Shift		= 8,
 			Shift			= 12,
-			
+
 			Left_Alt		= 16,
 			Right_Alt		= 32,
 			Alt				= 48
 		};
 	}
-	
+
 	enum EventType
 	{
 		Invalid = 0,
@@ -76,16 +76,16 @@ namespace gui
 		Event_CursorScroll,
 		Event_CursorButtonPressed,
 		Event_CursorButtonReleased,
-		
+
 		Event_KeyButtonPressed,
 		Event_KeyButtonReleased,
 
 		Event_Click
 	};
-	
 
-	
-	
+
+
+
 	class EventArgs
 	{
 	public:
@@ -95,19 +95,19 @@ namespace gui
 		Panel* hot; // mouse is on top of this
 		Panel* capture; // captured panel
 		//		Panel* sender;
-		
+
 		Point cursor;	// compositor coordinates
 		Point delta;	// delta coordinates
 		Point local;	// local panel coordinates
-		
+
 		// keyboard modifiers
 		uint32_t modifiers;
-		
 
-		
+
+
 		CursorButton::Type cursor_button;
 		Compositor* compositor;
-		
+
 	public:
 		EventArgs(Compositor* compositor = 0, EventType event_type = Invalid) :
 			handled(false),
@@ -119,63 +119,63 @@ namespace gui
 		{
 			this->compositor = compositor;
 		}
-		
+
 		virtual ~EventArgs() {}
-		
-		
+
+
 		EventArgs(const EventArgs& other)
 		{
 			*this = other;
 		}
-		
+
 		const EventArgs& operator=(const EventArgs& other)
 		{
 			this->type = other.type;
 			this->focus = other.focus;
 			this->hot = other.hot;
-			
+
 			this->cursor = other.cursor;
 			this->delta = other.delta;
 			this->local = other.local;
-			
+
 			this->handled = other.handled;
-			
+
 			this->cursor_button = other.cursor_button;
 			this->compositor = other.compositor;
-			
+
 			return *this;
 		}
 	};
-	
+
 	enum
 	{
 		EV_INVALID = 0,
-		
+
 		// low level events
 		EV_MouseDown,
 		EV_MouseUp,
 		EV_MouseMove,
-		
+
 		EV_KeyDown,
 		EV_KeyUp,
-		
+
 		EV_GainFocus,
 		EV_LostFocus,
-		
+
 		EV_MouseEnter, // gain hot
 		EV_MouseExit, // lost hot
-		
+
 		// higher level events, subscribable
 		EV_CLICK,
 		EV_DOUBLECLICK,
 		EV_DRAG,
-		
+
 		EV_TEST,
-		
+
 		EV_LastEvent
 	};
 
-	
+
 	struct PanelEvent
 	{
 		//bool handled; // set to true if an event was handled successfully
@@ -191,41 +191,41 @@ namespace gui
 
 		InputState * inputState;
 	}; // PanelEvent
-	
+
 	struct DragEventArgs : public PanelEvent
 	{
 		Point startDrag;
 		Point deltaDrag;
 	};
-	
+
 	struct DerivedPanelEvent : public PanelEvent
 	{
 		void * userdata;
-		
+
 		DerivedPanelEvent();
 	}; // DerivedPanelEvent
-	
+
 	template <class ReturnType, class ParameterType>
 	class Callback
 	{
 	public:
 		virtual ReturnType execute( ParameterType parameter ) = 0;
 	};
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
 	class Listener
 	{
 	public:
 		virtual ~Listener() {}
-		
+
 		virtual void focus_changed(Panel* old_focus, Panel* new_focus) = 0;
 		virtual void hot_changed(Panel* old_hot, Panel* new_hot) = 0;
-		
+
 		virtual void handle_event(const EventArgs& event) = 0;
 	};
-	
+
 } // namespace gui

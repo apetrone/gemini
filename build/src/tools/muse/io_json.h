@@ -47,10 +47,10 @@ namespace gemini
 		DECLARE_PLUGIN_CLASS(JsonModelWriter);
 
 		void write_animations(const std::string& abs_base_path, datamodel::Model* model);
-		
+
 	public:
-		JsonModelWriter();	
-	
+		JsonModelWriter();
+
 		void jsonify_matrix(Json::Value& array, glm::mat4& matrix);
 		void append_material(const datamodel::Material& node, Json::Value& jroot);
 		void append_node(datamodel::Node* node, Json::Value& jnodes);

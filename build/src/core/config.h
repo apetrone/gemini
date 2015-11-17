@@ -155,7 +155,7 @@
 	#pragma warning( disable: 4530 ) // : C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
 	#pragma warning( disable: 4800 ) // : forcing value to bool 'true' or 'false' (performance warning)
 	#pragma warning( disable: 4996 ) // : This function or variable may be unsafe. Consider using <alternative> instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-	
+
 
 	//#pragma warning( disable: 4995 ) // : name was marked as #pragma deprecated
 	// ^ Superceded by #define STRSAFE_NO_DEPRECATE on WIN32

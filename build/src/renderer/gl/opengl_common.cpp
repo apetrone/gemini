@@ -43,9 +43,9 @@ namespace renderer
 			GL_LINES,
 			GL_POINTS
 		};
-		
+
 		assert( type < renderer::DRAW_LIMIT );
-		
+
 		return types[ type ];
 	} // vertexbuffer_drawtype_to_gl_drawtype
 
@@ -56,9 +56,9 @@ namespace renderer
 			GL_DYNAMIC_DRAW,
 			GL_STREAM_DRAW
 		};
-		
+
 		assert( type < renderer::BUFFER_LIMIT );
-		
+
 		return types[ type ];
 	} // vertexbuffer_buffertype_to_gl_buffertype
 
@@ -68,14 +68,14 @@ namespace renderer
 		GLenum types[] = {
 			GL_VERTEX_SHADER,
 			GL_FRAGMENT_SHADER,
-			
+
 			// not available in GLESv2
 	//		GL_GEOMETRY_SHADER,
 	//		GL_COMPUTE_SHADER
 		};
-		
+
 		assert( type < renderer::SHADER_LIMIT );
-		
+
 		return types[ type ];
 	}
 
@@ -88,7 +88,7 @@ namespace renderer
 		{
 			logbuffer = (char*)MEMORY_ALLOC(log_length+1, core::memory::global_allocator());
 			memset( logbuffer, 0, log_length );
-			
+
 			gl.GetShaderInfoLog( handle, log_length, &log_length, logbuffer );
 			if ( log_length > 0 )
 			{
@@ -99,7 +99,7 @@ namespace renderer
 				MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
 			}
 		}
-		
+
 		return 0;
 	} // query_shader_info_log
 
@@ -112,7 +112,7 @@ namespace renderer
 		{
 			logbuffer = (char*)MEMORY_ALLOC(log_length+1, core::memory::global_allocator());
 			memset( logbuffer, 0, log_length );
-			
+
 			gl.GetProgramInfoLog( handle, log_length, &log_length, logbuffer );
 			if ( log_length > 0 )
 			{
@@ -123,7 +123,7 @@ namespace renderer
 				MEMORY_DEALLOC(logbuffer, core::memory::global_allocator());
 			}
 		}
-		
+
 		return 0;
 	} // query_program_info_log
 
@@ -135,7 +135,7 @@ namespace renderer
 			GL_BLEND,
 			GL_DEPTH_TEST,
 		};
-		
+
 		return state_list[ state ];
 	}
 
@@ -156,7 +156,7 @@ namespace renderer
 			GL_CONSTANT_ALPHA,
 			GL_ONE_MINUS_CONSTANT_ALPHA,
 			GL_SRC_ALPHA_SATURATE,
-			
+
 	#if 0 // OpenGL 4.x +
 			GL_SRC1_COLOR,
 			GL_ONE_MINUS_SRC1_COLOR,
@@ -164,7 +164,7 @@ namespace renderer
 			GL_ONE_MINUS_SRC1_ALPHA
 	#endif
 		};
-		
+
 		return glblend[ state ];
 	} // convert_blendstate
 
@@ -174,7 +174,7 @@ namespace renderer
 			GL_FRONT,
 			GL_BACK
 		};
-		
+
 		return cullmode[ mode ];
 	} // cullmode_to_gl_cullmode
 
@@ -182,9 +182,9 @@ namespace renderer
 	{
 		GLenum gl_state;
 		int enable = 0;
-		
+
 		stream.read( enable );
-		
+
 		// convert driver state to GL state
 		gl_state = driver_state_to_gl_state(state);
 
@@ -204,10 +204,10 @@ namespace renderer
 	{
 		int enable = 0;
 		GLboolean flag;
-		
+
 		stream.read( enable );
 		flag = enable ? GL_TRUE : GL_FALSE;
-		
+
 		// set depth buffer enabled for writing flag
 		gl.DepthMask( flag );
 	} // state_op_depthmask
@@ -224,7 +224,7 @@ namespace renderer
 			state_op_enabledisable,
 			state_op_depthmask,
 		};
-		
+
 		return operator_map[ state ];
 	} // operator_for_state
 

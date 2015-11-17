@@ -41,9 +41,9 @@ namespace render2
 	{
 	public:
 		virtual ~Pipeline();
-		
+
 		ConstantBuffer& constants() { return constant_buffer; }
-		
+
 	protected:
 		ConstantBuffer constant_buffer;
 	};

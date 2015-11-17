@@ -36,12 +36,12 @@ namespace gemini
 	namespace navigation
 	{
 		void create_from_geometry(const FixedArray<glm::vec3>& vertices, const FixedArray<::renderer::IndexType>& indices, const glm::vec3& mins, const glm::vec3& maxs);
-		
+
 		void startup();
 		void shutdown();
-		
+
 		void debugdraw();
-		
+
 		bool find_poly(NavMeshPolyRef* ref, const glm::vec3& position, const glm::vec3& extents);
 		void find_path(NavMeshPath* path, const glm::vec3& start, const glm::vec3& end);
 		void debugdraw_path(NavMeshPath* path);

@@ -38,10 +38,10 @@ namespace gui
 		std::string text;
 		FontHandle font_handle;
 		Point text_origin;
-		
+
 	public:
 		LIBRARY_EXPORT Label(Panel* parent);
-		
+
 		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands) override;
 		LIBRARY_EXPORT virtual void set_font(const char* filename, size_t pixel_size);
 		LIBRARY_EXPORT virtual void set_text(const std::string& text);

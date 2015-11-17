@@ -40,7 +40,7 @@ public kernel::IEventListener<kernel::SystemEvent>
 public:
 	DECLARE_APPLICATION( TestScript );
 
-	
+
 	virtual void event( kernel::KeyboardEvent & event )
 	{
 		if (event.is_down)
@@ -51,14 +51,14 @@ public:
 			}
 		}
 	}
-	
+
 	virtual void event( kernel::MouseEvent & event )
 	{
 	}
-	
+
 	virtual void event( kernel::SystemEvent & event )
 	{
-		
+
 	}
 
 	virtual kernel::ApplicationResult config( kernel::Params & params )
@@ -71,7 +71,7 @@ public:
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
-	
+
 		script::execute_file("scripts/test.nut");
 		return kernel::Application_NoWindow;
 	}
@@ -82,9 +82,9 @@ public:
 
 	virtual void tick( kernel::Params & params )
 	{
-	
+
 	}
-	
+
 	virtual void shutdown( kernel::Params & params )
 	{
 	}

@@ -32,9 +32,9 @@ class ComponentLibrary
 public:
 	typedef std::vector<GenericComponentContainer*> GenericContainerVector;
 	GenericContainerVector containers;
-	
+
 	ComponentLibrary();
-	
+
 	void register_container( GenericComponentContainer * container, ComponentType type );
 	IComponent * find_id( ComponentType type, unsigned int reference_id );
 	void step( float delta_seconds );

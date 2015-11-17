@@ -35,7 +35,7 @@ enum ComponentTypes
 	CGraphics,
 	CPhysics,
 	CParticleEmitter,
-	
+
 	CMaxComponents
 };
 
@@ -65,10 +65,10 @@ public:
 	IComponent() : component_flags(0) {}
 	virtual ~IComponent() {}
 	virtual ComponentType component_type() const = 0;
-	
+
 	unsigned int ref_id() const { return reference_id; }
-	
-	
+
+
 	void set_flags(unsigned short flags) { component_flags = flags; }
 
 }; // IComponent
@@ -79,7 +79,7 @@ class GenericComponentContainer
 {
 public:
 	virtual ~GenericComponentContainer() {}
-	
+
 	virtual IComponent * create() = 0;
 	virtual void destroy( IComponent * component ) = 0;
 	virtual void for_each( ComponentCallback callback, void * data ) = 0;
@@ -108,10 +108,10 @@ struct RenderControl
 	RenderStream rs;
 	renderer::VertexStream * stream;
 	unsigned int attribs;
-	
+
 	glm::mat4 modelview;
 	glm::mat4 projection;
-	
+
 	void add_sprite_to_layer( unsigned short layer, int x, int y, int width, int height, const Color & color, float * texcoords );
 	void render_stream( assets::Material * material );
 	void render_emitter( ParticleEmitter * emitter );
@@ -123,8 +123,8 @@ namespace ComponentManager
 	typedef std::vector<IComponent*> ComponentVector;
 	typedef Factory<IComponent, MaxComponentTypes> ComponentFactory;
 
-	
-	
+
+
 //	void register_component( const char * component_name, ComponentFactory::TypeCreator );
 //	IComponent * create_component( const char * component_name );
 	IComponent * create_type( ComponentType type );
@@ -134,14 +134,14 @@ namespace ComponentManager
 	void tick( float delta_seconds, float step_alpha );
 	void draw( RenderControl & render_control );
 //	ComponentVector & component_list( ComponentType type );
-	
-	
+
+
 
 	void for_each_component(ComponentType type, ComponentCallback callback, void * data);
 	IComponent * component_matching_id( unsigned int id, ComponentType type );
-	
-	
-	
+
+
+
 	void register_components();
 }; // ComponentManager
 

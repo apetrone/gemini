@@ -40,37 +40,37 @@ namespace gemini
 	namespace physics
 	{
 		class Constraint;
-	
-		
-		
+
+
+
 		inline const glm::vec3 toglm(const btVector3& input)
 		{
 			return glm::vec3(input.x(), input.y(), input.z());
 		}
-		
+
 		inline const btVector3 fromglm(const glm::vec3& input)
 		{
 			return btVector3(input.x, input.y, input.z);
 		}
-	
-	
+
+
 		namespace bullet
 		{
 
 			class BulletConstraint;
-		
+
 			btDiscreteDynamicsWorld* get_world();
 			void set_world(btDiscreteDynamicsWorld* world);
-			
-			
+
+
 			void add_constraint(BulletConstraint* constraint);
 			void remove_constraint(BulletConstraint* constraint);
-			
+
 			void startup();
 			void shutdown();
 			void step(float framedelta_seconds, float fixed_step_seconds);
 			void debug_draw();
-			
+
 			btTransform position_and_orientation_to_transform(const glm::vec3& position, const glm::quat& orientation);
 			void position_and_orientation_from_transform(glm::vec3& out_position, glm::quat& out_orientation, const btTransform& world_transform);
 		}

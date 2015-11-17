@@ -36,12 +36,12 @@ namespace render2
 	// ---------------------------------------------------------------------
 	// All calls to the device are executed synchronously.
 	// This may or may not cause a stall on the GPU(s).
-	
+
 	class Device
 	{
 	public:
 		virtual ~Device();
-		
+
 		// ---------------------------------------------------------------------
 		// vertex / index buffers
 		// ---------------------------------------------------------------------
@@ -51,25 +51,25 @@ namespace render2
 
 		// retrieves a pointer to buffer's data; locks it for write
 		virtual void* buffer_lock(Buffer* buffer) = 0;
-		
+
 		// unlock a previously locked buffer
 		virtual void buffer_unlock(Buffer* buffer) = 0;
-		
+
 		// upload data to a buffer (should not exceed buffer's max size)
 		virtual void buffer_upload(Buffer* buffer, void* data, size_t data_size) = 0;
-				
+
 		// ---------------------------------------------------------------------
 		// input layout
 		// ---------------------------------------------------------------------
 		virtual InputLayout* create_input_layout(const VertexDescriptor& descriptor, Shader* shader) = 0;
 		virtual void destroy_input_layout(InputLayout* layout) = 0;
-		
+
 		// ---------------------------------------------------------------------
 		// pipeline
 		// ---------------------------------------------------------------------
 		virtual Pipeline* create_pipeline(const PipelineDescriptor& descriptor) = 0;
 		virtual void destroy_pipeline(Pipeline* pipeline) = 0;
-		
+
 		// ---------------------------------------------------------------------
 		// shader
 		// ---------------------------------------------------------------------
@@ -79,7 +79,7 @@ namespace render2
 		/// @returns A valid shader created from the name parameter
 		virtual Shader* create_shader(const char* name, Shader* reuse_shader = nullptr) = 0;
 		virtual void destroy_shader(Shader* shader) = 0;
-		
+
 		// ---------------------------------------------------------------------
 		// render target
 		// ---------------------------------------------------------------------
@@ -93,26 +93,26 @@ namespace render2
 		// initialization
 		// ---------------------------------------------------------------------
 		virtual void init(int backbuffer_width, int backbuffer_height) = 0;
-		
+
 		// ---------------------------------------------------------------------
 		// command serializer
 		// ---------------------------------------------------------------------
 		virtual CommandSerializer* create_serializer(CommandQueue* command_queue) = 0;
 		virtual void destroy_serializer(CommandSerializer* serializer) = 0;
-		
-		
+
+
 		virtual CommandQueue* create_queue(const Pass& render_pass) = 0;
-		
-		
+
+
 		// ---------------------------------------------------------------------
 		// command buffers / submission
 		// ---------------------------------------------------------------------
 		// queue command buffers to be executed (by submit)
 		virtual void queue_buffers(CommandQueue* queues, size_t total_queues) = 0;
-		
+
 		// submit queued command buffers to GPU
 		virtual void submit() = 0;
-		
+
 		// handle backbuffer resize
 		virtual void backbuffer_resized(int backbuffer_width, int backbuffer_height) = 0;
 

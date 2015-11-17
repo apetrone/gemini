@@ -49,21 +49,21 @@ namespace gemini
 				EXPORT_MESHES		= 4,
 				EXPORT_SKELETON		= 8
 			};
-		
+
 			Node root;
 			MaterialMap materials;
-			
+
 			Skeleton* skeleton;
 			std::vector<Animation*> animations;
-			
+
 			uint8_t export_flags;
-			
-			
+
+
 			Model();
 			~Model();
-			
+
 			Animation* add_animation(const String& name);
-			
+
 			inline void remove_export_flag(uint8_t flag) { export_flags &= ~flag; }
 			inline void add_export_flag(uint8_t flag) { export_flags |= flag; }
 		};

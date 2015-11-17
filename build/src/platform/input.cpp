@@ -48,12 +48,12 @@ namespace input
 		{
 			// remove 'isDown' flag
 			state &= ~Button_IsDown;
-			
+
 			// set 'released' and 'impulse' flag
 			state |= Button_Impulse | Button_Released;
 		}
 	} // press_release
-	
+
 	void ButtonState::update()
 	{
 		// impulse flag
@@ -77,48 +77,48 @@ namespace input
 				state &= ~Button_IsDown;
 			}
 		}
-		
+
 		// clear impulse flag
 		state &= ~Button_Impulse;
 	} // update
-	
+
 	bool ButtonState::is_down() const
 	{
 		return (state & Button_Held) == Button_Held;
 	}
-	
+
 	bool ButtonState::was_pressed() const
 	{
 		return (state == (Button_Impulse|Button_IsDown));
 	}
-	
+
 	bool ButtonState::was_released() const
 	{
 		return (state == (Button_Impulse|Button_Released));
 	}
-	
+
 	// prevent vtable from being emitted in every
 	// translation unit
 	InputDevice::~InputDevice()
 	{
 	}
-	
+
 	void startup(void)
 	{
 //		_input_state.keyboard().reset();
 //		_input_state.mouse().reset();
 	}
-	
+
 	void shutdown(void)
 	{
-		
+
 	}
-	
+
 	void update(void)
 	{
 //		_input_state.keyboard().update( 0 );
 //		_input_state.mouse().update( 0 );
-		
+
 #if 0
 		for (uint8_t j = 0; j < MAX_JOYSTICKS; ++j)
 		{
@@ -143,15 +143,15 @@ namespace input
 			"MOUSE_MOUSE6",
 			"MOUSE_MOUSE7"
 		};
-		
+
 		if (value < MOUSE_COUNT)
 		{
 			return names[value];
 		}
-		
+
 		return "MOUSE_INVALID";
 	} // mouse_button_name
-	
+
 	const char* key_name(unsigned int key)
 	{
 		static const char* names[] = {
@@ -270,16 +270,16 @@ namespace input
 			"KEY_NUMPAD_ENTER",
 			"KEY_NUMPAD_EQUALS"
 		};
-		
+
 		if (key < KEY_COUNT)
 		{
 			return names[key];
 		}
-		
+
 		return "KEY_INVALID";
 	} // key_name
-	
-	
+
+
 	const char* gamepad_name(unsigned int value)
 	{
 		static const char* names[] = {
@@ -300,28 +300,28 @@ namespace input
 			"GAMEPAD_BUTTON_DPAD_LEFT",
 			"GAMEPAD_BUTTON_DPAD_RIGHT",
 		};
-		
+
 		if (value < GAMEPAD_BUTTON_COUNT)
 		{
 			return names[value];
 		}
-		
+
 		return "GAMEPAD_BUTTON_INVALID";
 	} // gamepad_name
-	
+
 	// ---------------------------------------------------------------------
 	// devices
 	// ---------------------------------------------------------------------
-	
+
 
 	//
 	// KeyboardInput
-	
+
 	void KeyboardInput::reset()
 	{
 		memset(&keys, 0, sizeof(ButtonState) * KEY_COUNT);
 	} // reset
-	
+
 	void KeyboardInput::update()
 	{
 		for( unsigned int i = 0; i < KEY_COUNT; ++i )
@@ -329,7 +329,7 @@ namespace input
 			this->keys[i].update();
 		}
 	} // update
-	
+
 	void KeyboardInput::inject_key_event(int key, bool is_down)
 	{
 		input::Button button = (input::Button)key;
@@ -337,7 +337,7 @@ namespace input
 		ButtonState* b = &this->keys[ button ];
 		b->press_release(is_down);
 	} // inject_key_event
-	
+
 //	bool KeyboardInput::is_down(input::Button key)
 //	{
 //		ButtonState* b;
@@ -345,24 +345,24 @@ namespace input
 //		b = &keys[ key ];
 //		return b->is_down();
 //	} // is_down
-//	
+//
 //	bool KeyboardInput::was_released(input::Button key )
 //	{
 //		ButtonState* b;
-//		assert( key < KEY_COUNT );		
+//		assert( key < KEY_COUNT );
 //		b = &keys[ key ];
 //		return b->was_released();
 //	} // was_released
-	
+
 	//
 	// MouseInput
-	
+
 	void MouseInput::reset()
 	{
 		memset(&buttons, 0, sizeof(ButtonState) * MOUSE_COUNT);
 		window_coords[0] = window_coords[1] = 0;
 	} // reset
-	
+
 	void MouseInput::update()
 	{
 		for( unsigned int i = 0; i < MOUSE_COUNT; ++i )
@@ -370,8 +370,8 @@ namespace input
 			buttons[ MOUSE_LEFT+i ].update();
 		}
 	} // update
-	
-	
+
+
 	void MouseInput::inject_mouse_move(int absolute_x, int absolute_y)
 	{
 		window_coords[0] = absolute_x;
@@ -385,31 +385,31 @@ namespace input
 		cursor_delta[0] += dx;
 		cursor_delta[1] += dy;
 	}
-	
+
 	void MouseInput::inject_mouse_button(MouseButton button, bool is_down)
 	{
 		assert( button < MOUSE_COUNT && button >= 0 );
 		buttons[ button ].press_release( is_down );
 	} // inject_mouse_button
-	
+
 	void MouseInput::inject_mouse_wheel(int direction)
 	{
 		wheel_direction = direction;
 	} // inject_mouse_wheel
-	
+
 	bool MouseInput::is_down(MouseButton button)
 	{
 		assert( button < MOUSE_COUNT && button >= 0 );
 		return buttons[ button ].is_down();
 	} // is_down
-	
+
 	bool MouseInput::was_released(MouseButton button)
 	{
 		assert( button < MOUSE_COUNT && button >= 0 );
 		// WAS down and NOT down now
 		return buttons[button].was_released();
 	} // was_released
-	
+
 	void MouseInput::mouse_position(int& x, int& y)
 	{
 		x = window_coords[0];
@@ -426,15 +426,15 @@ namespace input
 	// TouchInput
 	void TouchInput::reset()
 	{
-		
+
 	} // reset
-	
+
 	void TouchInput::update()
 	{
-		
+
 	} // update
-	
-	
+
+
 	//
 	// JoystickInput
 	void JoystickInput::reset()
@@ -443,7 +443,7 @@ namespace input
 		memset(&axes, 0, sizeof(AxisState) * MAX_JOYSTICK_AXES);
 		flags = 0;
 	}
-	
+
 	void JoystickInput::update()
 	{
 		for(uint8_t i = 0; i < MAX_JOYSTICK_BUTTONS; ++i)

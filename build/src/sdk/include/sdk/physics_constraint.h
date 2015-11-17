@@ -32,7 +32,7 @@ namespace gemini
 		{
 		public:
 			virtual ~IConstraint() {};
-			
+
 			// remove this constraint from objects
 			virtual void remove() {};
 		};

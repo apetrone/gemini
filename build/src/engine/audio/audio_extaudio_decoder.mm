@@ -30,7 +30,7 @@ using namespace audio;
 
 ExtAudioDecoder::ExtAudioDecoder()
 {
-	
+
 }
 
 ExtAudioDecoder::~ExtAudioDecoder()
@@ -56,7 +56,7 @@ int ExtAudioDecoder::decode( void * data, int data_length )
 	{
 		data_length = (_src_data_length-_currentOffset);
 	}
-	
+
 	//printf( "(max: %i) read offset: %i, length: %i\n", _src_data_length, _currentOffset, data_length );
 	if ( data_length > 0 )
 	{
@@ -73,7 +73,7 @@ int ExtAudioDecoder::open( unsigned char * data, int data_length )
 	reset();
 	_src_data = data;
 	_src_data_length = data_length;
-	
+
 	return 1;
 }
 

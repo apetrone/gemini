@@ -50,10 +50,10 @@ extern "C"
 	{
 		// disable the Apple System Log
 		[TestFlight setOptions:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:NO] forKey:@"logToConsole"]];
-		
+
 		// disable stderr log
 		[TestFlight setOptions:[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:NO] forKey:@"logToSTDERR"]];
-		
+
 		return 1;
 	}
 
@@ -85,7 +85,7 @@ extern "C"
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-	
+
     // Override point for customization after application launch.
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
 	    self.viewController = [[ViewController alloc] initWithNibName:@"ViewController_iPhone" bundle:nil];
@@ -94,8 +94,8 @@ extern "C"
 	}
 	self.window.rootViewController = self.viewController;
     [self.window makeKeyAndVisible];
-	
-	
+
+
 #if ENABLE_TESTFLIGHT
 	// prevent anonymous users by setting this before calling 'takeOff'
 	#if ENABLE_TESTFLIGHT_UNIQUEID
@@ -104,21 +104,21 @@ extern "C"
 		[TestFlight setDeviceIdentifier:[[UIDevice currentDevice] uniqueIdentifier]];
 		#pragma clang diagnostic pop
 	#endif
-	
+
 	// launch test flight with team token
 	[TestFlight takeOff:ARCFUSION_TEAM_TOKEN];
 
 #endif
-	
+
 	NSLog( @"AppDelegate.m - didFinishLaunchingWithOptions" );
 
 	// startup memory subsystem
 	memory::startup();
-	
+
 	// allocate and assign the kernel to an ivar
 	iOSKernel * mobile_kernel = CREATE(iOSKernel);
 	self->kernel = mobile_kernel;
-		
+
 	// startup the kernel instance
 	if ( kernel::startup( mobile_kernel ) != kernel::NoError )
 	{
@@ -127,13 +127,13 @@ extern "C"
 	else
 	{
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(device_orientation_changed:) name:UIDeviceOrientationDidChangeNotification object: nil];
-			
+
 		// set our view size
 		mobile_kernel->set_view_size( [[self.viewController view] bounds].size.width, [[self.viewController view] bounds].size.height );
 		[self.viewController setKernel: mobile_kernel];
 	}
-		
-	//UIInterfaceOrientation initialOrientation = [self.viewController interfaceOrientation];		
+
+	//UIInterfaceOrientation initialOrientation = [self.viewController interfaceOrientation];
 	//[[UIApplication sharedApplication] setStatusBarOrientation: UIInterfaceOrientationPortrait animated:NO];
     return YES;
 }
@@ -144,10 +144,10 @@ extern "C"
 	 Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
 	 Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
 	 */
-	 
+
 	NSLog( @"AppDelegate.m - applicationWillResignActive" );
 	// after this is 'DidEnterBackground'
-	
+
 	iOSKernel * mobile_kernel = (iOSKernel*)self->kernel;
 	if ( mobile_kernel )
 	{
@@ -158,7 +158,7 @@ extern "C"
 - (void)applicationDidEnterBackground:(UIApplication *)application
 {
 	/*
-	 Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later. 
+	 Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
 	 If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
 	 */
 	NSLog( @"AppDelegate.m - applicationDidEnterBackground" );
@@ -169,7 +169,7 @@ extern "C"
 	/*
 	 Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
 	 */
-	 
+
 	NSLog( @"AppDelegate.m - applicationWillEnterForeground" );
 	// after this is 'DidBecomeActive'
 }
@@ -194,18 +194,18 @@ extern "C"
 	 Save data if appropriate.
 	 See also applicationDidEnterBackground:.
 	 */
-	 
+
 	NSLog( @"AppDelegate.m - applicationWillTerminate" );
 	iOSKernel * mobile_kernel = (iOSKernel*)self->kernel;
 	if ( mobile_kernel )
 	{
 		mobile_kernel->will_terminate();
 	}
-	
+
 	iOSKernel * kernel_pointer = (iOSKernel*)self->kernel;
 	DESTROY( iOSKernel, kernel_pointer );
 	self->kernel = 0;
-	
+
 	memory::shutdown();
 }
 

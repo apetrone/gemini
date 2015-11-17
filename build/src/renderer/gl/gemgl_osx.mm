@@ -23,11 +23,11 @@
 namespace renderer
 {
 	CFBundleRef gemgl_bundle = 0;
-		
+
 	int gemgl_osx_startup( void )
 	{
 		gemgl_bundle = 0;
-		
+
 		// get bundle ref
 #if TARGET_OS_IPHONE
 		gemgl_bundle = CFBundleGetBundleWithIdentifier( CFSTR( "com.apple.opengles" ) );
@@ -39,13 +39,13 @@ namespace renderer
 			printf( "FATAL ERROR: Unable to get OpenGL bundle ref.\n" );
 			return 0;
 		}
-		
+
 		// following The Get Rule
 		CFRetain(gemgl_bundle);
-		
+
 		return 1;
 	} // gemgl_osx_startup
-		
+
 	void gemgl_osx_shutdown( void )
 	{
 		if ( gemgl_bundle )
@@ -54,7 +54,7 @@ namespace renderer
 			gemgl_bundle = 0;
 		}
 	} // gemgl_osx_shutdown
-		
+
 	void * gemgl_native_findsymbol( const char * name )
 	{
 		CFStringRef symbol_name = CFStringCreateWithCString( kCFAllocatorDefault, name, kCFStringEncodingASCII );

@@ -33,7 +33,7 @@ namespace gui
 	{
 		return malloc(bytes);
 	} // default_gui_malloc
-	
+
 	void default_gui_free(void* pointer)
 	{
 		free(pointer);
@@ -41,7 +41,7 @@ namespace gui
 
 	gui_malloc _gmalloc = default_gui_malloc;
 	gui_free _gfree = default_gui_free;
-	
+
 	void set_allocator(gui_malloc malloc_fn, gui_free free_fn)
 	{
 		_gmalloc = malloc_fn;

@@ -31,7 +31,7 @@
 Channel::Channel(float& value_in) :
 	value(value_in)
 {
-	
+
 }
 
 void Channel::set_keys(float* data, size_t total_keys)
@@ -43,11 +43,11 @@ void Channel::set_keys(float* data, size_t total_keys)
 float Channel::get_value(uint32_t frame, float alpha)
 {
 	alpha = glm::clamp(alpha, 0.0f, 1.0f);
-	
+
 	frame = clamp_frame(frame);
-	
+
 	assert(keys.size() > 0);
-	
+
 	float last = keys[frame];
 	float next;
 	if ((frame+1) >= keys.size())
@@ -60,9 +60,9 @@ float Channel::get_value(uint32_t frame, float alpha)
 	{
 		next = keys[frame+1];
 	}
-	
+
 	float delta = (next-last);
-	
+
 	// interpolate between frame and frame+1
 	return glm::mix(last, delta, alpha);
 }

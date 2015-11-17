@@ -41,49 +41,49 @@ namespace render2
 		queue(command_queue)
 		{
 		}
-		
+
 		virtual void vertex_buffer(Buffer* buffer)
 		{
 			queue.add_command(
 							  Command(COMMAND_SET_VERTEX_BUFFER, buffer)
 							  );
 		}
-		
+
 		virtual void draw(size_t initial_offset, size_t total, size_t instance_index, size_t index_count)
 		{
 			queue.add_command(
 							  Command(COMMAND_DRAW, 0, 0, initial_offset, total, instance_index, index_count)
 							  );
 		}
-		
+
 		virtual void draw_indexed_primitives(Buffer* index_buffer, size_t total)
 		{
 			queue.add_command(
 							  Command(COMMAND_DRAW_INDEXED, index_buffer, 0, total, 0, 0, 1)
 							  );
 		}
-		
+
 		virtual void pipeline(Pipeline* pipeline)
 		{
 			queue.add_command(
 							  Command(COMMAND_PIPELINE, pipeline)
 							  );
 		}
-		
+
 		virtual void viewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 		{
 			queue.add_command(
 							  Command(COMMAND_VIEWPORT, 0, 0, x, y, width, height)
 							  );
 		}
-		
+
 		virtual void texture(Texture* texture, uint32_t index)
 		{
 			queue.add_command(
 							Command(COMMAND_TEXTURE, texture, 0, index, 0)
 							  );
 		}
-		
+
 	private:
 		CommandQueue& queue;
 	}; // GLCommandSerializer

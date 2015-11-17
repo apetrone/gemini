@@ -31,12 +31,12 @@ namespace render2
 	{
 		this->pass = pass;
 	}
-	
+
 	void CommandQueue::add_command(const Command& command)
 	{
 		commands.push_back(command);
 	}
-	
+
 	void CommandQueue::reset()
 	{
 		commands.resize(0);

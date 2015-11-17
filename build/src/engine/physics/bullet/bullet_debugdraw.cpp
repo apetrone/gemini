@@ -45,30 +45,30 @@ namespace gemini
 				Color c = Color::from_float_pointer( &color[0], 3 );
 				debugdraw::line( BTVECTOR3_TO_VEC3( from ), BTVECTOR3_TO_VEC3( to ), c, 0 );
 			}
-			
+
 			void DebugPhysicsRenderer::drawLine( const btVector3& from, const btVector3& to, const btVector3& fromColor, const btVector3& color )
 			{
 				Color c = Color::from_float_pointer( &color[0], 3 );
 				debugdraw::line( BTVECTOR3_TO_VEC3( from ), BTVECTOR3_TO_VEC3( to ), c, 0 );
 			}
-			
+
 			void DebugPhysicsRenderer::drawContactPoint(const btVector3& PointOnB,const btVector3& normalOnB,btScalar distance,int lifeTime,const btVector3& color)
 			{
 			}
-			
+
 			void DebugPhysicsRenderer::reportErrorWarning(const char* warningString)
 			{
 				LOGE("[bullet2] %s\n", warningString );
 			}
-			
+
 			void DebugPhysicsRenderer::draw3dText(const btVector3& location,const char* textString)
 			{
 			}
-			
+
 			void DebugPhysicsRenderer::setDebugMode(int debugMode)
 			{
 			}
-			
+
 			int	DebugPhysicsRenderer::getDebugMode() const
 			{
 				return (btIDebugDraw::DBG_DrawWireframe); // | btIDebugDraw::DBG_DrawAabb;

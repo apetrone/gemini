@@ -30,7 +30,7 @@ namespace renderer
 	{
 		int vertex_count;
 		int index_count;
-		
+
 		VertexBuffer()
 		{
 			vertex_count = 0;
@@ -50,23 +50,23 @@ namespace render2
 		{
 			BUFFER_IS_DIRTY = 1
 		};
-		
+
 	public:
-		
+
 		Buffer() :
 		max_size(0),
 		flags(0)
 		{
 		}
-		
+
 		virtual ~Buffer() {}
 		void clear_flag(uint32_t flag);
-		
+
 	public:
-		
+
 		size_t max_size_bytes() const { return max_size; }
 		bool is_dirty() const { return flags & BUFFER_IS_DIRTY; }
-		
+
 	protected:
 		uint32_t max_size;
 		uint32_t flags;

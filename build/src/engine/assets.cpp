@@ -42,10 +42,10 @@ namespace gemini
 		{
 			num_items = root.size();
 			*array = MEMORY_NEW_ARRAY(ShaderString, num_items, core::memory::global_allocator());
-			
+
 			Json::ValueIterator it = root.begin();
 			Json::ValueIterator end = root.end();
-			
+
 			unsigned int id = 0;
 			for( ; it != end; ++it, ++id )
 			{
@@ -53,7 +53,7 @@ namespace gemini
 				(*array)[ id ] = value.asString().c_str();
 			}
 		} // read_string_array
-		
+
 		void print_string_array( const char * name, ShaderString * array, unsigned int num_items )
 		{
 			LOGV( "\"%s\" items:\n", name );
@@ -62,13 +62,13 @@ namespace gemini
 				LOGV( "\t%s\n", array[i].c_str() );
 			}
 		}
-		
+
 		unsigned int find_parameter_mask( ShaderString & name )
 		{
 			// TODO: need to validate the name here against the
 			// parameter names in permutations config file.
-			
-			
+
+
 	//		if ( _shader_permutations != 0 )
 	//		{
 	//			for( unsigned int option_id = 0; option_id < shader_permutations().num_permutations; ++option_id )
@@ -81,7 +81,7 @@ namespace gemini
 	//				}
 	//			}
 	//		}
-			
+
 			LOGV("Unable to find parameter mask for %s\n", name.c_str());
 			return 0;
 		} // find_parameter_mask
@@ -97,7 +97,7 @@ namespace gemini
 		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(EmitterConfigAssetLibrary, emitters)
 		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(FontAssetLibrary, fonts)
 		IMPLEMENT_ASSET_LIBRARY_ACCESSOR(ShaderAssetLibrary, shaders)
-		
+
 		void load_default_texture_and_material()
 		{
 			// setup default texture
@@ -107,7 +107,7 @@ namespace gemini
 			textures()->take_ownership("textures/default", default_texture);
 			textures()->set_default(default_texture);
 			LOGV( "Loaded default texture; asset_id = %i\n", default_texture->asset_id );
-			
+
 			// setup default material
 			Material * default_material = materials()->allocate_asset();
 			default_material->name = "default";
@@ -117,13 +117,13 @@ namespace gemini
 			diffusemap.type = MP_SAMPLER_2D;
 			diffusemap.texture_unit = texture_unit_for_map(diffusemap.name);
 			diffusemap.int_value = default_texture->Id();
-			
+
 			default_material->add_parameter(diffusemap);
 
 			materials()->take_ownership( "materials/default", default_material );
 			materials()->set_default(default_material);
 			LOGV( "Loaded default materials; asset_id = %i\n", default_material->asset_id );
-			
+
 		} // load_default_texture_and_material
 
 
@@ -139,7 +139,7 @@ namespace gemini
 
 			load_default_texture_and_material();
 		} // startup
-		
+
 		void shutdown()
 		{
 			// 4. Delete asset library
@@ -157,7 +157,7 @@ namespace gemini
 #if defined(PLATFORM_IPHONEOS)
 			kernel::KernelDeviceFlags device_flags = kernel::parameters().device_flags;
 #endif
-			
+
 			switch( type )
 			{
 				case SoundAsset:
@@ -172,15 +172,15 @@ namespace gemini
 #endif
 					break;
 				} // SoundAsset
-				
-				
+
+
 				default: LOGW( "AssetType %i is NOT supported!\n" ); break;
 			}
-			
+
 			path.append( "." );
 			path.append( extension );
-			
+
 		} // append_asset_extension
-			
+
 	} // namespace assets
 } // namespace gemini

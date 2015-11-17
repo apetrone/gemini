@@ -40,7 +40,7 @@ namespace gemini
 			unsigned short font_size;
 			char* font_data;
 			font::Handle handle;
-						
+
 			Font();
 			virtual void release();
 		}; // Font

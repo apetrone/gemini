@@ -42,7 +42,7 @@ namespace gui
 			render::WhiteTexture,
 			background_color
 		);
-		
+
 		gui::Rect draw_bounds = bounds;
 
 		size_t height;
@@ -57,13 +57,13 @@ namespace gui
 		draw_bounds.origin.y += glm::max(font_height, text_bounds.height());
 		render_commands.add_font(font_handle, this->text.c_str(), draw_bounds, foreground_color);
 	}
-		
+
 	void Label::set_font(const char* filename, size_t pixel_size)
 	{
 		Compositor* compositor = get_compositor();
 		font_handle = compositor->get_resource_cache()->create_font(filename, pixel_size);
 	}
-	
+
 	void Label::set_text(const std::string& text)
 	{
 		this->text = text;

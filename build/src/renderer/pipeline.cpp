@@ -29,6 +29,6 @@ namespace render2
 {
 	Pipeline::~Pipeline()
 	{
-		
+
 	}
 } // namespace render2

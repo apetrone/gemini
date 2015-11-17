@@ -37,7 +37,7 @@ namespace gemini
 {
 	struct UserCommand;
 
-	
+
 	struct GameMessage
 	{
 		enum Type
@@ -46,7 +46,7 @@ namespace gemini
 			// button: keycode
 			// params[0]: is_down
 			// params[1]: keyboard modifiers
-			
+
 			MouseEvent    = 8,   // 8
 			// button: mouse button
 			// params[0]: is_down
@@ -61,21 +61,21 @@ namespace gemini
 
 			MouseWheel    = MouseEvent | 64,
 			// params[0]: wheel delta
-			
-			
+
+
 			Orientation	  = 512
 			// params[0]: quat.x
 			// params[1]: quat.y
 			// params[2]: quat.z
 			// params[3]: quat.w
 		};
-		
+
 		uint32_t type;
-		
+
 		uint32_t button;
 		int32_t params[4];
 		glm::quat orientation;
-		
+
 		GameMessage() :
 			type(0),
 			button(0)
@@ -83,20 +83,20 @@ namespace gemini
 			params[0] = params[1] = params[2] = params[3] = 0;
 		}
 	};
-	
+
 	struct UserCommand
 	{
 		int sequence;
 		uint32_t buttonflags;
 		float angles[2]; // pitch, yaw
-		
+
 		UserCommand()
 		{
 			sequence = 0;
 			buttonflags = 0;
 			angles[0] = angles[1] = 0;
 		}
-		
+
 		void set_button(int index, bool is_down)
 		{
 			if (is_down)
@@ -115,25 +115,25 @@ namespace gemini
 	{
 	public:
 		virtual ~IGameInterface() {};
-		
+
 		// called when the engine connects to the game library
 		virtual bool startup() = 0;
-		
+
 		// called just before the engine disconnects from the game library
 		virtual void shutdown() = 0;
-		
+
 		// called on level change
 		virtual void level_load() = 0;
-		
+
 		// called each tick of the engine
 		virtual void server_frame(uint64_t current_ticks, float framedelta_seconds, float step_interval_seconds, float step_alpha) = 0;
 		virtual void client_frame(float framedelta_seconds, float step_alpha) = 0;
-		
+
 		// called on the server: process an incoming message
 		virtual void server_process_message(const GameMessage& message) = 0;
 	}; // GameInterface
-	
-	
+
+
 	class IClientGameInterface
 	{
 		virtual void run_frame() = 0;

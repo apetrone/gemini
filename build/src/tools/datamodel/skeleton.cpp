@@ -34,7 +34,7 @@ namespace gemini
 		Skeleton::Skeleton()
 		{
 		}
-		
+
 		Skeleton::~Skeleton()
 		{
 			for (Bone* bone : bones)
@@ -42,7 +42,7 @@ namespace gemini
 				MEMORY_DELETE(bone, core::memory::global_allocator());
 			}
 		}
-		
+
 		Bone* Skeleton::add_bone(int32_t parent_index, const String& name)
 		{
 			Bone* bone = MEMORY_NEW(Bone, core::memory::global_allocator());
@@ -52,7 +52,7 @@ namespace gemini
 			bones.push_back(bone);
 			return bone;
 		} // add_bone
-		
+
 		Bone* Skeleton::find_bone_named(const String& name)
 		{
 			for(Bone* bone : bones)
@@ -64,12 +64,12 @@ namespace gemini
 			}
 			return 0;
 		} // find_bone_named
-		
+
 		Bone* Skeleton::get_bone_at_index(uint32_t index)
 		{
 			assert(index < bones.size());
 			return bones[index];
 		} // get_bone_at_index
-		
+
 	} // namespace datamodel
 } // namespace gemini

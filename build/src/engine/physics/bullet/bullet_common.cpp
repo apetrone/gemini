@@ -42,13 +42,13 @@ namespace gemini
 	{
 		namespace bullet
 		{
-			
+
 			class CustomGhostPairCallback : public btOverlappingPairCallback
 			{
 			public:
 				CustomGhostPairCallback() {}
 				virtual ~CustomGhostPairCallback() {}
-				
+
 				virtual btBroadphasePair* addOverlappingPair(btBroadphaseProxy* proxy0, btBroadphaseProxy* proxy1)
 				{
 					// this is called for kinematic, rigid, and static bodies
@@ -58,28 +58,28 @@ namespace gemini
 					btGhostObject* ghost1 = btGhostObject::upcast(colObj1);
 					ICollisionObject* obj0 = 0;
 					ICollisionObject* obj1 = 0;
-					
+
 					if (ghost0)
 					{
 						obj0 = static_cast<ICollisionObject*>(ghost0->getUserPointer());
 						ghost0->addOverlappingObjectInternal(proxy1, proxy0);
 					}
-					
+
 					if (ghost1)
 					{
 						obj1 = static_cast<ICollisionObject*>(ghost1->getUserPointer());
 						ghost1->addOverlappingObjectInternal(proxy0, proxy1);
 					}
-					
+
 					if (obj0 && obj1)
 					{
 						obj0->collision_began(obj1);
 						obj1->collision_began(obj0);
 					}
-					
+
 					return 0;
 				}
-				
+
 				virtual void* removeOverlappingPair(btBroadphaseProxy* proxy0, btBroadphaseProxy* proxy1, btDispatcher* dispatcher)
 				{
 					btCollisionObject* colObj0 = (btCollisionObject*) proxy0->m_clientObject;
@@ -88,19 +88,19 @@ namespace gemini
 					btGhostObject* ghost1 =	btGhostObject::upcast(colObj1);
 					ICollisionObject* obj0 = 0;
 					ICollisionObject* obj1 = 0;
-					
+
 					if (ghost0)
 					{
 						obj0 = static_cast<ICollisionObject*>(ghost0->getUserPointer());
 						ghost0->removeOverlappingObjectInternal(proxy1,dispatcher,proxy0);
 					}
-					
+
 					if (ghost1)
 					{
 						obj1 = static_cast<ICollisionObject*>(ghost1->getUserPointer());
 						ghost1->removeOverlappingObjectInternal(proxy0,dispatcher,proxy1);
 					}
-					
+
 					if (obj0 && obj1)
 					{
 						obj0->collision_ended(obj1);
@@ -108,14 +108,14 @@ namespace gemini
 					}
 					return 0;
 				}
-				
+
 				virtual void	removeOverlappingPairsContainingProxy(btBroadphaseProxy* /*proxy0*/,btDispatcher* /*dispatcher*/)
 				{
 					btAssert(0);
 				}
 			};
-		
-		
+
+
 			// TODO: move these to an internal namespace
 			btDefaultCollisionConfiguration * collision_config;
 			btCollisionDispatcher * dispatcher;
@@ -125,26 +125,26 @@ namespace gemini
 			btAlignedObjectArray<btCollisionShape*> collision_shapes;
 			btBroadphaseInterface * broadphase;
 			DebugPhysicsRenderer* debug_renderer;
-		
+
 			std::vector<BulletConstraint*> constraints;
-			
+
 			btDiscreteDynamicsWorld* get_world()
 			{
 				return dynamics_world;
 			}
-			
+
 			void set_world(btDiscreteDynamicsWorld* world)
 			{
 				dynamics_world = world;
 			}
-			
-			
+
+
 			void add_constraint(BulletConstraint* constraint)
 			{
 				get_world()->addConstraint(constraint->constraint);
 				constraints.push_back(constraint);
 			}
-			
+
 			void remove_constraint(BulletConstraint* constraint)
 			{
 				get_world()->removeConstraint(constraint->constraint);
@@ -157,39 +157,39 @@ namespace gemini
 					}
 				}
 			}
-			
+
 			void startup()
 			{
 				collision_config = new btDefaultCollisionConfiguration();
 				dispatcher = new btCollisionDispatcher( collision_config );
-				
+
 				btVector3 worldAabbMin(-1000,-1000,-1000);
 				btVector3 worldAabbMax(1000,1000,1000);
-				
+
 				constraint_solver = new btSequentialImpulseConstraintSolver();
-				
+
 				broadphase = new btDbvtBroadphase();
 //				broadphase = new btAxisSweep3(worldAabbMin, worldAabbMax);
-				
+
 				pair_cache = broadphase->getOverlappingPairCache();
 				// setup ghost pair callback instance
 				pair_cache->setInternalGhostPairCallback( new CustomGhostPairCallback() );
-				
+
 				dynamics_world = new btDiscreteDynamicsWorld(dispatcher, (btBroadphaseInterface*)broadphase, constraint_solver, collision_config);
 				dynamics_world->setGravity( btVector3( 0, -10, 0 ) );
 				dynamics_world->getDispatchInfo().m_useConvexConservativeDistanceUtil = true;
 				dynamics_world->getDispatchInfo().m_convexConservativeDistanceThreshold = 0.01;
 				dynamics_world->getDispatchInfo().m_allowedCcdPenetration = 0.0;
-				
 
-				
+
+
 				//btAlignedAllocSetCustom( bullet2_custom_alloc, bullet2_custom_free );
-				
+
 				// instance and set the debug renderer
 				debug_renderer = MEMORY_NEW(bullet::DebugPhysicsRenderer, core::memory::global_allocator());
 				dynamics_world->setDebugDrawer(debug_renderer);
 			}
-			
+
 			void shutdown()
 			{
 				// remove all constraints from objects
@@ -198,9 +198,9 @@ namespace gemini
 					MEMORY_DELETE(constraints[i], core::memory::global_allocator());
 				}
 				constraints.clear();
-				
-				
-				
+
+
+
 				for( int i = dynamics_world->getNumCollisionObjects()-1; i >= 0; --i )
 				{
 					btCollisionObject * obj = dynamics_world->getCollisionObjectArray()[i];
@@ -212,7 +212,7 @@ namespace gemini
 					dynamics_world->removeCollisionObject( obj );
 					delete obj;
 				}
-				
+
 				//delete collision shapes
 //				LOGV("total collision shapes: %ld\n", (unsigned int)collision_shapes.size());
 				for ( int j = 0; j < collision_shapes.size(); j++ )
@@ -224,56 +224,56 @@ namespace gemini
 						delete shape;
 					}
 				}
-				
+
 				dynamics_world->setDebugDrawer(0);
 				MEMORY_DELETE(debug_renderer, core::memory::global_allocator());
-				
+
 				//delete dynamics world
 				delete dynamics_world;
-				
+
 				//delete solver
 				delete constraint_solver;
-				
+
 				//delete broadphase
 				//delete mPairCache;
 				delete broadphase;
-				
+
 				//delete dispatcher
 				delete dispatcher;
-				
+
 				// delete the collision configuration
 				delete collision_config;
-				
+
 				//next line is optional: it will be cleared by the destructor when the array goes out of scope
 				collision_shapes.clear();
-				
-				
+
+
 				// cleanup controllers
 				//		delete _controller;
 			}
-			
+
 			void step(float framedelta_seconds, float fixed_step_seconds)
 			{
 				assert( dynamics_world != 0 );
-				
+
 				const int max_substeps = 0;
 
 				// From the Bullet wiki on stepping the world: timeStep < maxSubSteps * fixedTimeStep
 				// The above equation must be satisfied, otherwise we're losing time.
-				
+
 				// We force substeps to 0 and pass in the fixed timestep as the delta time.
 				// this treats it as a variable frame delta step -- however:
 				// this step function is only called when we SHOULD step at our pre-determined fixed step.
 				dynamics_world->stepSimulation(fixed_step_seconds, max_substeps);
-				
-				
+
+
 				//int total_manifolds = dynamics_world->getDispatcher()->getNumManifolds();
 				//for (int i = 0; i < total_manifolds; ++i)
 				//{
 				//	btPersistentManifold* manifold = dynamics_world->getDispatcher()->getManifoldByIndexInternal(i);
 				//	const btCollisionObject* obj1 = static_cast<const btCollisionObject*>(manifold->getBody0());
 				//	const btCollisionObject* obj2 = static_cast<const btCollisionObject*>(manifold->getBody1());
-				
+
 				//	int total_contacts = manifold->getNumContacts();
 				//	for (int contact = 0; contact < total_contacts; ++contact)
 				//	{
@@ -287,7 +287,7 @@ namespace gemini
 				//		}
 				//	}
 				//}
-				
+
 				//		for (int i = 0; i < dynamics_world->getCollisionObjectArray().size(); ++i)
 				//		{
 				//			btCollisionObject* collision_object = dynamics_world->getCollisionObjectArray()[i];
@@ -302,7 +302,7 @@ namespace gemini
 				//			}
 				//		}
 			}
-			
+
 			void debug_draw()
 			{
 				if (dynamics_world)
@@ -310,7 +310,7 @@ namespace gemini
 					dynamics_world->debugDrawWorld();
 				}
 			}
-			
+
 			btTransform position_and_orientation_to_transform(const glm::vec3& position, const glm::quat& orientation)
 			{
 				btTransform transform;
@@ -319,7 +319,7 @@ namespace gemini
 				transform.setOrigin(btVector3(position.x, position.y, position.z));
 				return transform;
 			}
-			
+
 			void position_and_orientation_from_transform(glm::vec3& out_position, glm::quat& out_orientation, const btTransform& world_transform)
 			{
 				const btVector3& origin = world_transform.getOrigin();

@@ -43,19 +43,19 @@ using namespace platform::window::cocoa;
 	{
 		return nil;
 	}
-	
+
 	return self;
 }
 
 -(void)lockFocus
 {
 	[super lockFocus];
-	
+
 	if ([self.context view] != self)
 	{
 		[self.context setView: self];
 	}
-	
+
 	[self.context makeCurrentContext];
 }
 
@@ -93,7 +93,7 @@ using namespace platform::window::cocoa;
 {
 	CocoaWindow* window = static_cast<CocoaWindow*>([notification object]);
 	NSRect frame = [[window contentView] frame];
-	
+
 	kernel::SystemEvent ev;
 	ev.subtype = kernel::WindowResized;
 	ev.window_width = frame.size.width;
@@ -103,11 +103,11 @@ using namespace platform::window::cocoa;
 	NSRect render_frame = [[window screen] convertRectToBacking: frame];
 	ev.render_width = render_frame.size.width;
 	ev.render_height = render_frame.size.height;
-	
+
 	// update the rendering context
 	CocoaOpenGLView* view = [window contentView];
 	[[view context] update];
-	
+
 	kernel::event_dispatch(ev);
 }
 

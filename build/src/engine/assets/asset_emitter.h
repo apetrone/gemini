@@ -39,7 +39,7 @@ namespace gemini
 		{
 			unsigned short max_particles;
 			unsigned short spawn_rate;
-		
+
 			unsigned int material_id;
 			float spawn_delay_seconds;
 

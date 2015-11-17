@@ -51,34 +51,34 @@ namespace gemini
 			type = NODE;
 			attributes = 0;
 		}
-		
+
 		Node::Node(const Node& other)
 		{
 			name = other.name;
 			type = other.type;
 			attributes = other.attributes;
-			
+
 			local_scale = other.local_scale;
 			local_rotation = other.local_rotation;
 			local_position = other.local_position;
-			
+
 			local_to_world = other.local_to_world;
 			local_to_pivot = other.local_to_pivot;
-			
+
 			scale = other.scale;
 			rotation = other.rotation;
 			translation = other.translation;
-			
+
 			world_transform = other.world_transform;
-			
+
 			parent = other.parent;
 		}
-		
+
 		Node::~Node()
 		{
 			clear();
 		}
-		
+
 		void Node::add_child(Node* child)
 		{
 			if (child->parent && child->parent != this)
@@ -88,14 +88,14 @@ namespace gemini
 			child->parent = this;
 			children.push_back(child);
 		}
-		
+
 		Node* Node::find_child_named(const String& name)
 		{
 			if (this->name == name)
 			{
 				return this;
 			}
-			
+
 			for (auto& child : children)
 			{
 				Node* node = child->find_child_named(name);
@@ -104,10 +104,10 @@ namespace gemini
 					return node;
 				}
 			}
-			
+
 			return 0;
 		}
-		
+
 		void Node::remove_child(Node* node)
 		{
 			auto it = children.begin();
@@ -120,30 +120,30 @@ namespace gemini
 				}
 			}
 		}
-		
+
 		void Node::update(float delta_seconds)
 		{
 
 		}
-		
+
 		void Node::update_transforms()
 		{
 			NodeVector::iterator start, end;
 			start = children.begin();
 			end = children.end();
-			
+
 			glm::mat4 sc = glm::scale(glm::mat4(1.0), scale);
 			glm::mat4 ro = glm::toMat4(rotation);
 			glm::mat4 tr = glm::translate(glm::mat4(1.0), translation);
-			
+
 			glm::mat4 inv_pivot = glm::translate(glm::mat4(1.0), local_position);
 			glm::mat4 pivot = glm::translate(glm::mat4(1.0), -local_position);
-			
+
 			assert(scale.x != 0 && scale.y != 0 && scale.z != 0);
 	//		local_to_world = inv_pivot * sc * ro * pivot * tr;
 			local_to_world = tr * pivot * ro * sc * inv_pivot;
 	//		local_to_world = tr * ro * sc;
-			
+
 			if (parent)
 			{
 				world_transform = parent->world_transform * local_to_world;
@@ -152,51 +152,51 @@ namespace gemini
 			{
 				world_transform = local_to_world;
 			}
-			
+
 			while (start != end)
 			{
 				(*start)->update_transforms();
 				++start;
 			}
 		}
-		
+
 		void Node::clear()
 		{
 			std::for_each(children.begin(), children.end(), DestroyPointer<Node>());
 			children.clear();
 		}
-		
-		
+
+
 		void create_scene(Node* root)
 		{
-			
+
 		}
-		
+
 		void recursive_visit_nodes(Node* root, Visitor* visitor)
 		{
 			NodeVector::iterator start, end;
 			start = root->children.begin();
 			end = root->children.end();
-			
+
 			visitor->visit((root));
-			
+
 			while (start != end)
 			{
 				recursive_visit_nodes(*start, visitor);
 				++start;
 			}
 		}
-		
+
 		void visit_nodes(Node* root, Visitor* visitor)
 		{
 			recursive_visit_nodes(root, visitor);
 		}
-		
+
 		void destroy_scene(Node* root)
 		{
-			
+
 		}
-		
+
 		static void print_tree_node(Node* root, uint32_t indent_depth)
 		{
 			String indent;
@@ -204,36 +204,36 @@ namespace gemini
 			{
 				indent += "\t";
 			}
-			
+
 			LOGV("[Node] Name=\"%s\" (%x), # Children=%i\n", root->name.c_str(), root, root->children.size());
-			
+
 			NodeVector::iterator start, end;
 			start = root->children.begin();
 			end = root->children.end();
-			
+
 			while(start != end)
 			{
 				print_tree_node((*start), (indent_depth+1));
 				++start;
 			}
 		}
-		
+
 		void print_tree(Node* root)
 		{
 			print_tree_node(root, 0);
 		}
-		
-		
+
+
 		scenegraph::Node* clone_to_scene(scenegraph::Node* template_node, scenegraph::Node* root)
 		{
 			scenegraph::Node* newnode = template_node->clone();
 			root->add_child(newnode);
-			
+
 			for (auto child : template_node->children)
 			{
 				clone_to_scene(child, newnode);
 			}
-			
+
 			return newnode;
 		}
 	} // namespace scenegraph

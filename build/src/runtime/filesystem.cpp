@@ -41,7 +41,7 @@ namespace core
 {
 	namespace filesystem
 	{
-	
+
 		IFileSystem::~IFileSystem()
 		{
 		}
@@ -53,7 +53,7 @@ namespace core
 
 
 		void * mobile_audio_file_to_buffer( const char * filename, size_t & buffer_length );
-	
+
 #endif
 	} // namespace filesystem
 } // namespace core
@@ -79,10 +79,10 @@ namespace core
 				{
 					memset(buf, 0, MAX_PATH_SIZE);
 					str::copy(buf, path + len - (path+len-1-p), last-p+1);
-					
+
 					last = p-1;
 					*p = '\0';
-					
+
 					if (str::case_insensitive_compare( buf, substr, substr_len ) == 0)
 					{
 						break;
@@ -90,8 +90,8 @@ namespace core
 				}
 			}
 		} // truncate_string_at_path
-		
-		
+
+
 		void absolute_path_from_relative(PathString& fullpath, const char* relative_path, const PathString& content_path)
 		{
 			fullpath = content_path;
@@ -99,11 +99,11 @@ namespace core
 			fullpath.append(relative_path);
 			fullpath.normalize(PATH_SEPARATOR);
 		}
-		
+
 		void relative_path_from_absolute(PathString& relative_path, const char* absolute_path, const PathString& content_path)
 		{
 			const char* basepath = core::str::strstr(absolute_path, content_path());
-			
+
 			if (basepath)
 			{
 				size_t content_length = content_path.size();
@@ -111,7 +111,7 @@ namespace core
 				relative_path.normalize(PATH_SEPARATOR);
 			}
 		}
-		
+
 		void* audiofile_to_buffer(const char* filename, size_t& buffer_length)
 		{
 	#if defined(PLATFORM_IPHONEOS)

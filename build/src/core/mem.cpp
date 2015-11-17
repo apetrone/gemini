@@ -37,7 +37,7 @@ namespace core
 		// ---------------------------------------------------------------------
 		Zone* _global_zone = nullptr;
 		GlobalAllocatorType* _global_allocator = nullptr;
-		
+
 		void startup()
 		{
 			// If you hit this assert, there's a double memory startup
@@ -45,11 +45,11 @@ namespace core
 
 			static Zone global_memory_zone("global");
 			_global_zone = &global_memory_zone;
-			
+
 			static GlobalAllocatorType global_allocator_instance(&global_memory_zone);
 			_global_allocator = &global_allocator_instance;
 		}
-		
+
 		void shutdown()
 		{
 			// If you hit this assert, there's a double memory shutdown
@@ -70,12 +70,12 @@ namespace core
 		{
 			return *_global_allocator;
 		}
-		
+
 		void global_allocator(GlobalAllocatorType& allocator)
 		{
 			_global_allocator = &allocator;
 		}
-		
+
 		// ---------------------------------------------------------------------
 		// zone
 		// ---------------------------------------------------------------------
@@ -85,7 +85,7 @@ namespace core
 			this->zone_name = zone_name;
 			budget_bytes = max_budget_bytes;
 		}
-		
+
 		Zone::~Zone()
 		{
 			report();
@@ -98,22 +98,22 @@ namespace core
 				// over budget!
 				return -1;
 			}
-			
+
 			total_allocations++;
 			total_bytes += size;
-			
+
 			active_allocations++;
 			active_bytes += size;
-			
+
 			if (size > largest_allocation)
 				largest_allocation = size;
-			
+
 			if (size < smallest_allocation || (smallest_allocation == 0))
 				smallest_allocation = size;
-			
+
 			if (active_bytes > high_watermark)
 				high_watermark = active_bytes;
-			
+
 			return 0;
 		}
 
@@ -121,11 +121,11 @@ namespace core
 		{
 			// Attempted to free something that wasn't allocated.
 			assert(active_allocations > 0 && active_bytes >= size);
-			
+
 			active_allocations--;
 			active_bytes -= size;
 		}
-		
+
 		void Zone::report()
 		{
 			// could use %zu on C99, but fallback to %lu and casts for C89.
@@ -133,16 +133,16 @@ namespace core
 					(unsigned long)total_allocations,
 					(unsigned long)total_bytes,
 					(unsigned long)budget_bytes);
-			
+
 			fprintf(stdout, "[zone: '%s'] active_allocations = %lu, active_bytes = %lu, high_watermark = %lu\n", zone_name,
 					(unsigned long)active_allocations,
 					(unsigned long)active_bytes,
 					(unsigned long)high_watermark);
-			
+
 			fprintf(stdout, "[zone: '%s'] smallest_allocation = %lu, largest_allocation = %lu\n", zone_name,
 					(unsigned long)smallest_allocation,
 					(unsigned long)largest_allocation);
-			
+
 			// if you hit this, there may be a memory leak!
 			assert(active_allocations == 0 && active_bytes == 0);
 		}

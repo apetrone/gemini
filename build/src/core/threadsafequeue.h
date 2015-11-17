@@ -35,17 +35,17 @@ class ThreadSafeQueue
 	std::queue<Type> queue;
 	std::condition_variable wait_condition;
 	mutable std::mutex local_mutex;
-	
+
 public:
 	void enqueue(Type in)
 	{
 		std::unique_lock<std::mutex> lock(local_mutex);
 		queue.push(in);
-		
+
 		lock.unlock();
 		wait_condition.notify_one();
 	}
-	
+
 	Type dequeue()
 	{
 		std::unique_lock<std::mutex> lock(local_mutex);
@@ -53,12 +53,12 @@ public:
 		{
 			wait_condition.wait(lock);
 		}
-		
+
 		Type value = queue.front();
 		queue.pop();
 		return value;
 	}
-	
+
 	size_t size() const
 	{
 		std::lock_guard<std::mutex> lock(local_mutex);

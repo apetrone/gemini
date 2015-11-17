@@ -45,7 +45,7 @@ IComponent * ComponentLibrary::find_id( ComponentType type, unsigned int referen
 	{
 		component = gcc->find_id(reference_id);
 	}
-	
+
 	return component;
 }
 
@@ -79,9 +79,9 @@ void ComponentLibrary::purge()
 GenericComponentContainer * ComponentLibrary::container_from_type( ComponentType type )
 {
 	GenericComponentContainer * gcc = 0;
-	
+
 	assert( type >= 0 && type < containers.size() );
 	gcc = containers[ type ];
-	
+
 	return gcc;
 } // container_from_type

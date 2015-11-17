@@ -36,29 +36,29 @@
 namespace gemini
 {
 	namespace physics
-	{		
+	{
 		class PhysicsInterface : public IPhysicsInterface
 		{
 		private:
 			std::vector<ICollisionShape*> collision_shapes;
-		
+
 		public:
 			PhysicsInterface() {}
 			virtual ~PhysicsInterface();
-		
+
 			virtual physics::ICollisionObject* create_physics_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation, ObjectProperties& properties);
 			virtual physics::ICollisionObject* create_physics_model(int32_t model_index, ObjectProperties& properties);
 			virtual physics::ICollisionObject* create_character_object(ICollisionShape* shape);
 			virtual physics::ICollisionObject* create_trigger_object(ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation);
-			
+
 			virtual physics::ICollisionShape* create_capsule(float radius_meters, float height_meters);
 			virtual physics::ICollisionShape* create_box(const glm::vec3& dimensions);
 			virtual physics::ICollisionShape* create_cylinder(float radius_meters, float height_meters);
-			
+
 			virtual void destroy_object(ICollisionObject* object);
-			
+
 			virtual void step_simulation(float delta_seconds);
-			
+
 			virtual RaycastInfo raycast(ICollisionObject* ignored_object, const glm::vec3& start, const glm::vec3& direction, float max_distance);
 			virtual SweepTestResult sweep(ICollisionObject* source_object, ICollisionShape* shape, const glm::vec3& start, const glm::vec3& end, float angle_threshold);
 		};

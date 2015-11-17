@@ -38,15 +38,15 @@
 namespace behavior
 {
 	typedef std::vector<struct Behavior*> TreeNodeArray;
-	
+
 	typedef core::StackString<32> BehaviorName;
-	
+
 	// This is designed around the same principles presented by Alex J. Champandard
 	// in the talk 'Understanding the Second Generation of Behavior Trees and Preparing
 	// for Challenges Beyond'
 	// This wiki entry from libgdx is also very helpful:
 	// https://github.com/libgdx/gdx-ai/wiki/Behavior-Trees
-	
+
 	enum BehaviorStatus
 	{
 		Behavior_Invalid,
@@ -54,70 +54,70 @@ namespace behavior
 		Behavior_Failed,
 		Behavior_Running,
 	};
-	
+
 	const char* name_from_status(BehaviorStatus status);
-	
+
 	struct BehaviorContext
 	{
 		size_t depth;
-		
+
 		BehaviorContext() :
 		depth(0)
 		{
 		}
-		
+
 		virtual ~BehaviorContext() {}
-		
+
 		virtual void push(struct Behavior* behavior) = 0;
 		virtual void pop(struct Behavior* behavior) = 0;
 		virtual void visit(struct Behavior* behavior, BehaviorStatus status) = 0;
 		virtual void populate(struct Behavior* behavior) = 0;
 		virtual void log(const char* message) = 0;
 	};
-	
+
 	struct Behavior
 	{
 		BehaviorStatus status;
 		BehaviorName name;
-		
+
 		Behavior(const BehaviorName& behavior_name);
-		
+
 		virtual BehaviorStatus update(Entity* entity, BehaviorContext* context) = 0;
-		
+
 		virtual void activate();
 		virtual void deactivate(Entity* entity, behavior::BehaviorContext* context);
-		
+
 		bool is_active() const;
-		
+
 		BehaviorStatus tick(Entity* entity, BehaviorContext* context);
 		virtual void populate(BehaviorContext* context);
 		virtual const char* get_classname() const { return "Behavior"; }
 	};
-	
+
 	struct Condition : public Behavior
 	{
 		Behavior* next;
-		
+
 		Condition(const BehaviorName& behavior_name, Behavior& next_behavior) :
 		Behavior(behavior_name),
 		next(&next_behavior)
 		{
 		}
-		
+
 		virtual void deactivate(Entity* entity, behavior::BehaviorContext* context)
 		{
 			if (next && next->is_active())
 			{
 				next->deactivate(entity, context);
 			}
-			
+
 			Behavior::deactivate(entity, context);
 		}
-		
+
 		virtual behavior::BehaviorStatus update(Entity* entity, BehaviorContext* context)
 		{
 			BehaviorStatus result = status;
-			
+
 			if (result == Behavior_Succeeded)
 			{
 				// we need to reset the condition if it succeeds
@@ -125,10 +125,10 @@ namespace behavior
 				status = Behavior_Invalid;
 				return next->tick(entity, context);
 			}
-			
+
 			return result;
 		}
-		
+
 		virtual void populate(BehaviorContext* context)
 		{
 			context->populate(this);
@@ -136,30 +136,30 @@ namespace behavior
 			next->populate(context);
 			context->pop(this);
 		}
-		
+
 		virtual const char* get_classname() const { return "Condition"; }
 	};
-	
-	
+
+
 	struct Composite : public Behavior
 	{
 		TreeNodeArray children;
 		TreeNodeArray::iterator current_child;
 		TreeNodeArray::iterator active_child;
-		
+
 		Composite(const BehaviorName& behavior_name) :
 		Behavior(behavior_name),
 		current_child(children.end()),
 		active_child(children.end())
 		{
 		}
-		
+
 		void add_child(Behavior* child)
 		{
 			children.push_back(child);
 			active_child = children.end();
 		}
-		
+
 		virtual void populate(BehaviorContext* context)
 		{
 			context->populate(this);
@@ -170,27 +170,27 @@ namespace behavior
 			}
 			context->pop(this);
 		}
-		
+
 		virtual const char* get_classname() const { return "Composite"; }
 	};
-	
+
 	// iterates over a fixed list of behaviors
 	struct Sequence : public Composite
 	{
 		size_t child_index;
-		
+
 		Sequence(const BehaviorName& behavior_name) :
 		Composite(behavior_name)
 		{
 		}
-		
+
 		virtual void activate()
 		{
 			current_child = children.begin();
 			status = Behavior_Running;
 			child_index = 0;
 		}
-		
+
 		virtual BehaviorStatus update(Entity* entity, BehaviorContext* context)
 		{
 			assert(!children.empty());
@@ -210,11 +210,11 @@ namespace behavior
 						}
 						active_child = current_child;
 					}
-					
+
 					context->log(core::str::format("[%s] result of child: '%s'\n", name(), behavior::name_from_status(result)));
 					return result;
 				}
-				
+
 				// next child
 				++current_child;
 				if (current_child == children.end())
@@ -224,13 +224,13 @@ namespace behavior
 					return Behavior_Succeeded;
 				}
 			}
-			
+
 			// It is expected to never reach this
 			// because we need to iterate all children and then return.
 			assert(0);
 			return Behavior_Invalid;
 		}
-		
+
 		virtual void deactivate(Entity* entity, BehaviorContext* context)
 		{
 			if (active_child != children.end())
@@ -238,31 +238,31 @@ namespace behavior
 				Behavior* child = *active_child;
 				child->deactivate(entity, context);
 			}
-			
+
 			Behavior::deactivate(entity, context);
 		}
-		
+
 		virtual const char* get_classname() const { return "Sequence"; }
 	};
-	
+
 	// find the first behavior that succeeds
 	struct Selector : public Composite
 	{
-		
+
 		size_t child_index;
-		
+
 		Selector(const BehaviorName& behavior_name) :
 		Composite(behavior_name)
 		{
 		}
-		
+
 		virtual void activate()
 		{
 			current_child = children.begin();
 			status = Behavior_Running;
 			child_index = 0;
 		}
-		
+
 		virtual BehaviorStatus update(Entity* entity, BehaviorContext* context)
 		{
 			assert(!children.empty());
@@ -280,7 +280,7 @@ namespace behavior
 					// we reset the selector because it needs to re-evaluate
 					// all children from the beginning.
 					status = Behavior_Invalid;
-					
+
 					if (active_child != current_child)
 					{
 						if (active_child != children.end())
@@ -290,12 +290,12 @@ namespace behavior
 						}
 						active_child = current_child;
 					}
-					
-					
+
+
 					context->log(core::str::format("[%s] result of child: '%s'\n", name(), behavior::name_from_status(result)));
 					return result;
 				}
-				
+
 				// next child
 				++current_child;
 				if (current_child == children.end())
@@ -305,13 +305,13 @@ namespace behavior
 					return Behavior_Failed;
 				}
 			}
-			
+
 			// It is expected to never reach this
 			// because we need to iterate all children and then return.
 			assert(0);
 			return Behavior_Invalid;
 		}
-		
+
 		virtual void deactivate(Entity* entity, BehaviorContext* context)
 		{
 			if (active_child != children.end())
@@ -319,10 +319,10 @@ namespace behavior
 				Behavior* child = *active_child;
 				child->deactivate(entity, context);
 			}
-			
+
 			Behavior::deactivate(entity, context);
 		}
-		
+
 		virtual const char* get_classname() const { return "Selector"; }
 	};
 } // namespace behavior

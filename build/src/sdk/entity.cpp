@@ -55,7 +55,7 @@ void entity_collision_callback(CollisionEventType type, ICollisionObject* first,
 {
 	assert(first != 0);
 	assert(second != 0);
-	
+
 	Entity* ent0 = static_cast<Entity*>(first->get_user_data());
 	Entity* ent1 = static_cast<Entity*>(second->get_user_data());
 
@@ -103,7 +103,7 @@ void entity_deferred_delete( bool only_deferred )
 			delete ent;
 			continue;
 		}
-		
+
 		if (ent->flags & Entity::EF_DELETE_PHYSICS)
 		{
 			ent->flags &= ~Entity::EF_DELETE_PHYSICS;
@@ -153,7 +153,7 @@ Entity::Entity() :
 	local_time(0)
 {
 	this->id = entity_list().count();
-	
+
 	entity_list().add( this );
 	engine::instance()->entities()->add(this);
 	LOGV( "Entity() - %p, %ld\n", this, (unsigned long)this->id );
@@ -165,7 +165,7 @@ Entity::~Entity()
 	LOGV( "~Entity() - %p, %ld\n", this, (unsigned long)this->id );
 	entity_list().remove( this );
 	engine::instance()->entities()->remove(this);
-	
+
 	remove_colliders();
 } // ~Entity
 
@@ -196,7 +196,7 @@ void Entity::get_world_transform(glm::vec3& out_position, glm::quat& out_orienta
 
 void Entity::pre_tick()
 {
-	
+
 }
 
 void Entity::post_tick()
@@ -310,7 +310,7 @@ void Entity::operator delete(void* memory)
 ICollisionObject* Entity::physics_create_static()
 {
 	assert(engine::instance() && engine::instance()->physics());
-	
+
 	physics::ObjectProperties properties;
 	return engine::instance()->physics()->create_physics_model(model_index, properties);
 }
@@ -322,11 +322,11 @@ ICollisionObject* Entity::physics_create_static()
 ICollisionObject* Entity::physics_create_model()
 {
 	assert(engine::instance() && engine::instance()->physics());
-	
+
 	// If you hit this assert, you need to set_model on this Entity before
 	// attempting to create a physics object from it.
 	assert(model_index != -1);
-	
+
 	physics::ObjectProperties properties;
 	properties.mass_kg = 10.0f;
 	properties.restitution = 0.5f;

@@ -65,9 +65,9 @@ MenuItem * MenuItem::add_child( const char * name )
 	MenuItem * option = MEMORY_NEW(MenuItem, core::memory::global_allocator());
 	option->name = name;
 	option->parent = this;
-	
+
 	children.push_back( option );
-	
+
 	return option;
 } // add_child
 

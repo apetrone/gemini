@@ -11,7 +11,7 @@ int test_yajl_one()
 	char error_buffer[1024] = {0};
 	char input[] = "{\n\"name\": \"adam\"\n}";
 	yajl_val node;
-	
+
 	node = yajl_tree_parse( (const char*)input, error_buffer, 1024 );
 	if ( !node )
 	{
@@ -27,10 +27,10 @@ int test_yajl_one()
 		fprintf( stderr, "\n" );
 		return 1;
 	}
-	
-	
+
+
 	const char * path[] = {"name", 0};
-	
+
 	yajl_val value = yajl_tree_get( node, path, yajl_t_string );
 	if ( value )
 	{
@@ -38,10 +38,10 @@ int test_yajl_one()
 	}
 	else
 	{
-		
+
 		printf( "yep, you're crazy.\n" );
 	}
-	
+
 	yajl_tree_free( node );
 
 	return 0;
@@ -124,19 +124,19 @@ int test_yajl_two()
 	yajl_handle handle;
 	yajl_gen gen;
 	yajl_status status;
-	
+
 	gen = yajl_gen_alloc(0);
-	
+
 	yajl_gen_config( gen, yajl_gen_beautify, 1 );
 	yajl_gen_config( gen, yajl_gen_validate_utf8, 1 );
-	
+
 	handle = yajl_alloc( &callbacks, 0, (void *)gen );
-	
+
 	yajl_config( handle, yajl_allow_comments, 1 );
-	
+
 	char input[] = "{\n\"name\": \"adam\"}";
-	
-	status = yajl_parse( handle, (const unsigned char*)input, sizeof(input) );	
+
+	status = yajl_parse( handle, (const unsigned char*)input, sizeof(input) );
 	status = yajl_complete_parse( handle );
 	if ( status != yajl_status_ok )
 	{
@@ -145,9 +145,9 @@ int test_yajl_two()
         fprintf(stderr, "%s", (const char *) str);
         yajl_free_error(handle, str);
 	}
-	
+
 	yajl_gen_free( gen );
 	yajl_free( handle );
-	
+
 	return 0;
 }

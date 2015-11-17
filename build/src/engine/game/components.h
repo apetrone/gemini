@@ -35,10 +35,10 @@ class Movement : public IComponent
 public:
 	DECLARE_FACTORY_CLASS(Movement, IComponent);
 	virtual ComponentType component_type() const { return MovementComponent; }
-	
+
 	render_utilities::PhysicsState<glm::vec2> position;
 	glm::vec2 velocity;
-	
+
 	virtual void step( float dt_sec );
 	virtual void tick( float delta_seconds, float step_alpha );
 }; // Movement
@@ -48,10 +48,10 @@ class InputMovement : public IComponent
 public:
 	DECLARE_FACTORY_CLASS(InputMovement, IComponent);
 	virtual ComponentType component_type() const { return InputMovementComponent; }
-	
+
 	render_utilities::PhysicsState<glm::vec2> position;
 	glm::vec2 velocity;
-	
+
 	virtual void step( float dt_sec );
 	virtual void tick( float delta_seconds, float step_alpha );
 }; // InputMovement
@@ -74,7 +74,7 @@ class Sprite : public IComponent
 {
 public:
 	DECLARE_FACTORY_CLASS(Sprite, IComponent);
-	
+
 	// these compose the 'animation state'
 	unsigned short current_animation;	// currently active animation
 	unsigned short current_frame;		// current frame of the animation
@@ -82,21 +82,21 @@ public:
 
 	// this is the 'stateless' part of the animation that we reference
 	assets::SpriteConfig * sprite_config;
-	
+
 	unsigned int material_id;
 	unsigned short width;
 	unsigned short height;
 	short hotspot_x;
 	short hotspot_y;
-	
+
 	unsigned short layer;
-	
+
 	Color color;
 	glm::vec2 scale;
 
 
 	float rotation;
-	
+
 	Sprite();
 	virtual ComponentType component_type() const { return SpriteComponent; }
 	virtual void render( RenderControl & render_control );
@@ -113,13 +113,13 @@ class Emitter : public IComponent
 {
 public:
 	DECLARE_FACTORY_CLASS(Emitter, IComponent);
-	
+
 	ParticleEmitter * emitter;
-	
+
 	Emitter();
 	~Emitter();
 	virtual ComponentType component_type() const { return ParticleEmitterComponent; }
-	
+
 	virtual void render( RenderControl & render_control );
 	virtual void step( float delta_seconds );
 	virtual void tick( float delta_seconds, float step_alpha );
@@ -132,7 +132,7 @@ class AABB2Collision : public IComponent
 {
 public:
 	DECLARE_FACTORY_CLASS(AABB2Collision, IComponent);
-	
+
 //	render_utilities::PhysicsState<glm::vec2> position;
 //	glm::vec2 velocity;
 	glm::vec2 box;

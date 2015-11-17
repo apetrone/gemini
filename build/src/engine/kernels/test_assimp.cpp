@@ -37,16 +37,16 @@ public:
 	DECLARE_APPLICATION( TestAssimp );
 
 	virtual kernel::ApplicationResult config( kernel::Params & params )
-	{		
+	{
 		return kernel::Application_NoWindow;
 	}
 
 	virtual kernel::ApplicationResult startup( kernel::Params & params )
 	{
 		LOGV( "Testing Asset Importer...\n" );
-		
+
 		Assimp::Importer importer;
-		
+
 		size_t model_buffer_size = 0;
 		char * model_buffer = fs::file_to_buffer("models/room2.dae", 0, &model_buffer_size);
 		if ( model_buffer )
@@ -58,13 +58,13 @@ public:
 				if ( scene->HasMeshes() )
 				{
 					fprintf(stdout, "Scene contains %i mesh(es)\n", scene->mNumMeshes);
-					
+
 //					output_scene.load_scene(scene);
 				}
-				
+
 				importer.FreeScene();
 			}
-			
+
 			DEALLOC(model_buffer);
 		}
 		return kernel::Application_NoWindow;
@@ -77,7 +77,7 @@ public:
 	virtual void tick( kernel::Params & params )
 	{
 	}
-	
+
 	virtual void shutdown( kernel::Params & params )
 	{
 	}

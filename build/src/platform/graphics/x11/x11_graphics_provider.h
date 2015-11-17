@@ -58,7 +58,7 @@ namespace platform
 
 			virtual void pre_window_creation(const Parameters& window_parameters, void* graphics_data) override;
 			virtual void* get_native_visual(void* graphics_data) override;
-			
+
 		private:
 
 			void attributes_from_backbuffer(int* attributes, size_t total_attributes, const BackbufferConfig& backbuffer);

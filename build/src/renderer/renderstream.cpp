@@ -63,7 +63,7 @@ namespace renderer
 			LOGW( "Too many renderstates! make this dynamically resizable!\n" );
 			return 0;
 		}
-		
+
 		RenderState * rs;
 		rs = &commands[ num_commands++ ];
 		return rs;
@@ -81,7 +81,7 @@ namespace renderer
 		for(unsigned int state_id = 0; state_id < num_commands; state_id++)
 		{
 			renderstate = &commands[ state_id ];
-			
+
 			// setup the stream and run the command
 			stream.seek(renderstate->offset, 1);
 			driver->run_command((renderer::DriverCommandType)renderstate->type, stream);
@@ -90,13 +90,13 @@ namespace renderer
 		for( int state_id = 0; state_id < num_commands; state_id++ )
 		{
 			renderstate = &commands[ state_id ];
-			
+
 			// run the post (cleanup) command
 			stream.seek( renderstate->offset, 1 );
 			driver->post_command( (renderer::DriverCommandType)renderstate->type, stream );
 		}
 	#endif
-		
+
 	} // run_commands
 
 	void RenderStream::add_command( int type )

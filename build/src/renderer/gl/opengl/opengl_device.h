@@ -472,13 +472,13 @@ namespace render2
 
 	private:
 		GLRenderTarget default_target;
-		
+
 		// rotating list of command queues
 		CircularBuffer<CommandQueue, RENDERER_MAX_COMMAND_QUEUES> queue;
-		
+
 		// the list of buffers queued this frame
 		Array<CommandQueue*> queued_buffers;
-		
+
 		GLBuffer* locked_buffer;
 	}; // OpenGLDevice
 } // namespace render2

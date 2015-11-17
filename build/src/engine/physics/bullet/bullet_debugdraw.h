@@ -30,7 +30,7 @@
 namespace gemini
 {
 	namespace physics
-	{	
+	{
 		namespace bullet
 		{
 			class DebugPhysicsRenderer : public btIDebugDraw

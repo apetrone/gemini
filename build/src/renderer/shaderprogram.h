@@ -38,41 +38,41 @@ namespace renderer
 		SHADER_FRAGMENT,
 		SHADER_GEOMETRY,
 		SHADER_COMPUTE,
-		
+
 		SHADER_LIMIT
 	}; // ShaderObjectType
-	
+
 	typedef std::pair<std::string, int> ShaderKeyValuePair;
-	
+
 	// Generic container for shader objects before they are linked into a shader
 	// program.
 	struct ShaderObject
 	{
 		unsigned int shader_id;
-		
+
 		ShaderObject() : shader_id(0) {}
 	}; // ShaderObject
-	
+
 	struct ShaderProgram
 	{
 		core::StackString<64> frag_data_location;
-		
+
 		FixedArray<ShaderKeyValuePair> uniforms;
 		FixedArray<ShaderKeyValuePair> attributes;
-		
+
 		unsigned int object;
-		
+
 		ShaderProgram() : frag_data_location("out_color"), object(0) {}
 		virtual ~ShaderProgram() {}
-		
+
 		int get_uniform_location( const char * name );
-		
+
 		void show_uniforms();
 		void show_attributes();
 	}; // ShaderProgram
-	
-	
-	
+
+
+
 	enum ShaderErrorType
 	{
 		SHADER_ERROR_NONE = 0,

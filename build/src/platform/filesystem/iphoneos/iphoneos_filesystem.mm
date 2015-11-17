@@ -54,7 +54,7 @@ NSURL * getURLForLocalPath( const char * filename )
 
 	NSString * nsfilename = [NSString stringWithCString:filename encoding:NSUTF8StringEncoding];
 	NSString * resource_path = [[NSBundle mainBundle] pathForResource:[nsfilename stringByDeletingPathExtension] ofType:[nsfilename pathExtension]];
-	
+
 	if ( resource_path )
 	{
 		return [NSURL fileURLWithPath:resource_path];
@@ -67,7 +67,7 @@ NSURL * getURLForLocalPath( const char * filename )
 namespace fs
 {
 
-	
+
 	void * mobile_audio_file_to_buffer( const char * filename, size_t & buffer_length )
 	{
 		unsigned char * ptr;
@@ -76,27 +76,27 @@ namespace fs
 			return 0;
 		NSURL * url = getURLForLocalPath( filename );
 		CFURLRef fileURL = (CFURLRef)url;
-		
+
 		//http://stackoverflow.com/questions/6673051/audiotoolbox-openal-extaudiofile-to-play-compressed-audio
 		OSStatus result = AudioFileOpenURL( fileURL, kAudioFileReadPermission, 0, &fileID );
 		if ( result != noErr )
 		{
 			printf( "failed to open %s\n", filename );
 		}
-		
+
 		UInt32 fileSize = 0;
 		UInt32 propertySize = sizeof(UInt64);
 		AudioFileGetProperty( fileID, kAudioFilePropertyAudioDataByteCount, &propertySize, &fileSize );
-		
+
 		buffer_length = fileSize;
 		ptr = (unsigned char*)ALLOC( fileSize );
-		
+
 		AudioFileReadBytes(fileID, false, 0, &fileSize, ptr );
 		AudioFileClose( fileID );
-		
+
 		// finished with this
 //		CFRelease( fileURL );
-		
+
 		return ptr;
 	}
 }; // namespace fs

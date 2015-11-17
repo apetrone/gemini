@@ -30,29 +30,29 @@ struct HeapAllocator : public Allocator< HeapAllocator<tracking_policy> >
 	typedef HeapAllocator<tracking_policy> this_type;
 	typedef Allocator<this_type> dependent_name;
 	tracking_policy tracker;
-	
+
 	HeapAllocator(Zone* memory_zone) :
 		dependent_name(memory_zone)
 	{
 	}
-	
+
 	void* allocate(size_t size, size_t alignment, const char* filename, int line)
 	{
 		size = tracker.request_size(size, alignment);
 
 		void* pointer = core::memory::aligned_malloc(size, alignment);
-		
+
 //		fprintf(stdout, "HeapAllocator [%s]: allocate: %p, %lu bytes, %s:%i\n", dependent_name::memory_zone->name(), pointer, (unsigned long)size, filename, line);
 
 		pointer = tracker.track_allocation(pointer, size, alignment, filename, line);
-		
+
 		if (dependent_name::memory_zone->add_allocation(size) == 0)
 		{
 			return pointer;
 		}
 		return 0;
 	}
-	
+
 	void deallocate(void* pointer)
 	{
 		// it is entirely legal to call delete on a null pointer,
@@ -61,10 +61,10 @@ struct HeapAllocator : public Allocator< HeapAllocator<tracking_policy> >
 		{
 			return;
 		}
-		
+
 		size_t allocation_size;
 		pointer = tracker.untrack_allocation(pointer, allocation_size);
-		
+
 //		fprintf(stdout, "HeapAllocator [%s]: deallocate %p\n", dependent_name::memory_zone->name(), pointer);
 		dependent_name::memory_zone->remove_allocation(allocation_size);
 

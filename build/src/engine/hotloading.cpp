@@ -48,10 +48,10 @@ struct BaseVar
 {
 	BaseVar* next;
 	std::string name;
-	
+
 	virtual void load(Json::Value& value) = 0;
 	virtual std::string value_string() = 0;
-	
+
 	static void render_values(int x, int y);
 };
 
@@ -63,7 +63,7 @@ void BaseVar::render_values(int x, int y)
 	while (current)
 	{
 		debugdraw::text(x, y, xstr_format("[VAR] %s = %s", current->name.c_str(), current->value_string().c_str()), Color(255, 255, 255, 255));
-		
+
 		y += 12;
 		current = current->next;
 	}
@@ -72,7 +72,7 @@ void BaseVar::render_values(int x, int y)
 BaseVar* find_by_name(const std::string& name)
 {
 	BaseVar* current = tail;
-	
+
 	while( current )
 	{
 		if (name == current->name)
@@ -81,7 +81,7 @@ BaseVar* find_by_name(const std::string& name)
 		}
 		current = current->next;
 	}
-	
+
 	return 0;
 }
 
@@ -119,20 +119,20 @@ template <class Type>
 struct Var : public BaseVar
 {
 	Type value;
-	
+
 	Var(const char* varname)
 	{
 		name = varname;
 		next = tail;
 		tail = this;
 	}
-	
-	
+
+
 	virtual void load(Json::Value& json_value)
 	{
 		JsonLoader<Type>::load(json_value, &value);
 	}
-	
+
 	virtual std::string value_string()
 	{
 		std::string val = std::to_string(value);
@@ -147,20 +147,20 @@ void put_new_json(const std::string& json_document)
 {
 	Json::Value root;
 	Json::Reader reader;
-	
+
 	bool success = reader.parse(json_document, root);
 	if (success)
 	{
 		// apply this to variables
 		Json::ValueIterator it = root.begin();
-		
+
 		size_t total_values_loaded = 0;
 		size_t missing_values = 0;
 		for( ; it != root.end(); ++it)
 		{
 			Json::Value key = it.key();
 			Json::Value value = (*it);
-			
+
 			const std::string& name = key.asString();
 			BaseVar* v = find_by_name(name);
 			if (v)
@@ -173,7 +173,7 @@ void put_new_json(const std::string& json_document)
 				++missing_values;
 			}
 		}
-		
+
 		LOGV("loaded (%u/%u) values\n", total_values_loaded, (total_values_loaded+missing_values));
 	}
 }
@@ -190,7 +190,7 @@ namespace gemini
 			CivetServer* server = nullptr;
 			ThreadSafeQueue<String> reload_queue;
 		}
-		
+
 
 		class JsonConfigHandler : public CivetHandler
 		{
@@ -198,60 +198,60 @@ namespace gemini
 			{
 //				const struct mg_request_info* request = mg_get_request_info(conn);
 				String buf;
-				
+
 				buf.resize(1024);
 				int bytes = mg_read(conn, &buf[0], 1024);
 				assert(bytes < 1024);
-				
-				
+
+
 				//			LOGV("read %i bytes, %s\n", bytes, buf.c_str());
-				
+
 	//			put_new_json(buf);
-				
+
 				// On Error, we can return "400 Bad Request",
 				// but we'll have to provide a response body to describe why.
-				
+
 				String output = "204 No Content";
 				mg_write(conn, &output[0], output.length());
-				
+
 				return true;
 			}
-			
+
 			virtual bool handleDelete(CivetServer* server, struct mg_connection* conn)
 			{
 				return true;
 			}
 		};
-		
-		
+
+
 		class AssetHotloadHandler : public CivetHandler
 		{
 			ThreadSafeQueue<String>& queue;
-			
+
 		public:
-			
+
 			AssetHotloadHandler(ThreadSafeQueue<String>& command_queue) : queue(command_queue)
 			{}
-			
+
 			virtual bool handlePut(CivetServer* server, struct mg_connection* conn)
 			{
 //				const struct mg_request_info* request = mg_get_request_info(conn);
 				String buf;
-				
+
 				buf.resize(1024);
 				int bytes = mg_read(conn, &buf[0], 1024);
 				assert(bytes < 1024);
-				
+
 				// send a response that we received it.
 				String output = "204 No Content";
 				mg_write(conn, &output[0], output.length());
-				
-				
+
+
 				LOGV("reload: %s\n", buf.c_str());
-				
+
 				Json::Reader reader;
 				Json::Value root;
-				
+
 				bool success = reader.parse(&buf[0], &buf[0] + buf.size(), root);
 				if (!success)
 				{
@@ -268,11 +268,11 @@ namespace gemini
 						queue.enqueue(filename.remove_extension()());
 					}
 				}
-				
+
 				return true;
 			}
 		};
-		
+
 		static int log_message(const struct mg_connection *conn, const char *message)
 		{
 			(void) conn;
@@ -281,7 +281,7 @@ namespace gemini
 		}
 
 
-		
+
 		void process_reload_queue()
 		{
 			// process queue
@@ -294,10 +294,10 @@ namespace gemini
 					// for now, assume everything is a shader.
 					//				LOGV("processing: %s\n", item.c_str());
 					StackString<512> relative_path = item.c_str();
-					
+
 					// get the basename to lookup asset library.
 					String dirname = relative_path.dirname()();
-					
+
 					// TODO: replace this with a better mechanism
 					if (dirname == "shaders")
 					{
@@ -308,10 +308,10 @@ namespace gemini
 						LOGV("model reloading is not complete.\n");
 						// clear the scene
 	//					root->clear();
-						
+
 						// force mesh reload
 	//					assets::Mesh* mesh = assets::meshes()->load_from_path(item.c_str(), assets::AssetParameters(), true);
-						
+
 						//add_mesh_to_root(root, item.c_str(), false);
 					}
 					else if (dirname == "materials")
@@ -328,19 +328,19 @@ namespace gemini
 
 
 
-		
+
 		void startup()
 		{
 			struct mg_callbacks cb;
 			memset(&cb, 0, sizeof(mg_callbacks));
 			cb.log_message = log_message;
-			
+
 			const char* options[] = {
 				"listening_ports", "1983",
 				"request_timeout_ms", "10",
 				0
 			};
-			
+
 			_internal::server = MEMORY_NEW(CivetServer, core::memory::global_allocator()) (options, &cb);
 			_internal::server->addHandler("/json", new JsonConfigHandler());
 			_internal::server->addHandler("/reload", new AssetHotloadHandler(_internal::reload_queue));
@@ -350,7 +350,7 @@ namespace gemini
 		{
 			MEMORY_DELETE(_internal::server, core::memory::global_allocator());
 		}
-		
+
 		void tick()
 		{
 			if (_internal::server)

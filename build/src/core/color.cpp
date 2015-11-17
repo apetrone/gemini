@@ -31,7 +31,7 @@ namespace core
 	{
 		return (f * 255.0f);
 	}
-	
+
 	Color Color::from_float_pointer(const float* fl, int num_elements)
 	{
 		Color c;
@@ -45,7 +45,7 @@ namespace core
 		}
 		return c;
 	}
-	
+
 	Color Color::from_int(unsigned int color)
 	{
 		Color out;
@@ -55,7 +55,7 @@ namespace core
 		out.r = (color & 255);
 		return out;
 	}
-	
+
 	Color Color::from_ubyte(unsigned char* ubyte)
 	{
 		return Color(ubyte[0], ubyte[1], ubyte[2], ubyte[3]);
@@ -73,12 +73,12 @@ namespace core
 		b = _b;
 		a = _a;
 	}
-	
+
 	uint32_t Color::as_uint32() const
 	{
 		return (((a << 24) | (b << 16) | (g << 8) | r));
 	}
-	
+
 	bool Color::operator==(const Color& other) const
 	{
 		return (r == other.r) && (g == other.g) && (b == other.b) && (a == other.a);

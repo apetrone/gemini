@@ -59,7 +59,7 @@ void RenderWindow::paintGL()
 }
 
 void RenderWindow::resizeGL(int w, int h)
-{    
+{
     RenderStream rs;
     rs.add_viewport(0, 0, w, h);
     rs.run_commands();
