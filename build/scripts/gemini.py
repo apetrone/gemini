@@ -1215,5 +1215,13 @@ def products(arguments, **kwargs):
 		# Though, for now, just link it in.
 		tests = get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, Dependency(file="glm.py"), libui, **kwargs)
 
-	return [libui, librenderer, libruntime, libplatform, libcore] + [libsdk, gemini] + tools + [rnd] + tests
+	return [
+		libui,
+		librenderer,
+		libruntime,
+		libplatform,
+		libcore,
+		libsdk,
+		#rnd,
+		gemini] + tools + tests
 
