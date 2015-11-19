@@ -1024,8 +1024,11 @@ def products(arguments, **kwargs):
 		4514, 	# : unreferenced inline function has been removed
 				# stl and various other third-party libraries spew this warning.
 		4710,	# : function not inlined
-				# stl and crt are reporting these: [_scwprintf,
-				# swprintf_s, std::exception_ptr::_Current_exception]
+				# stl and crt are reporting these: (_scwprintf,
+				# swprintf_s, std::exception_ptr::_Current_exception)
+		4820,	# : 'X' bytes padding added after data member 'foo'
+				# This is really useful, but unfortunately it affects crt
+				# all over the place. (winbase.h, wingdi.h, winuser.h)
 	]
 
 

@@ -160,7 +160,6 @@ namespace core
 #else
 	#error aligned_malloc not defined for this platform!
 #endif
-			return nullptr;
 		}
 
 		void aligned_free(void* pointer)

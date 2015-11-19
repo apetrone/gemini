@@ -62,7 +62,7 @@ namespace core
 		// ---------------------------------------------------------------------
 
 
-		bool LeafPattern::matches(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
+		bool LeafPattern::matches(uint32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
 		{
 			bool matched = false;
 			if (this->get_type() == PT_Argument || this->get_type() == PT_Command || this->get_type() == PT_Option)
@@ -74,7 +74,7 @@ namespace core
 			return matched;
 		}
 
-		bool LeafPattern::single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
+		bool LeafPattern::single_match(uint32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
 		{
 			// should not get here.
 			assert(0);
@@ -92,7 +92,7 @@ namespace core
 			value = input_value;
 		}
 
-		bool Argument::single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
+		bool Argument::single_match(uint32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
 		{
 			for (uint32_t index = pattern_start; index < patterns.items_length; ++index)
 			{
@@ -120,7 +120,7 @@ namespace core
 		// Option
 		// ---------------------------------------------------------------------
 
-		bool Option::single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
+		bool Option::single_match(uint32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
 		{
 			for (PatternWrapper::Iterator it = std::begin(patterns); it != std::end(patterns); ++it)
 			{
@@ -149,7 +149,7 @@ namespace core
 		// ---------------------------------------------------------------------
 		// Command
 		// ---------------------------------------------------------------------
-		bool Command::single_match(int32_t& pattern_start, PatternWrapper &patterns, VariableMap &vars)
+		bool Command::single_match(uint32_t& pattern_start, PatternWrapper &patterns, VariableMap &vars)
 		{
 			for (uint32_t index = pattern_start; index < patterns.items_length; ++pattern_start)
 			{
@@ -180,7 +180,7 @@ namespace core
 		// ---------------------------------------------------------------------
 		// Required
 		// ---------------------------------------------------------------------
-		bool Required::matches(int32_t &pattern_start, PatternWrapper &patterns, VariableMap &vars)
+		bool Required::matches(uint32_t &pattern_start, PatternWrapper &patterns, VariableMap &vars)
 		{
 			bool matched = false;
 			for(PatternPtr child : children)
@@ -198,7 +198,7 @@ namespace core
 		// ---------------------------------------------------------------------
 		// Optional
 		// ---------------------------------------------------------------------
-		bool Optional::matches(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
+		bool Optional::matches(uint32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
 		{
 			for (PatternPtr child : children)
 			{
@@ -887,7 +887,7 @@ namespace core
 			bool success = false;
 			for (PatternPtr usage : usage_patterns)
 			{
-				int32_t pattern_start = 0;
+				uint32_t pattern_start = 0;
 				success = usage->matches(pattern_start, input, vm);
 
 				if (success)
