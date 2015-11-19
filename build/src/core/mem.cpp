@@ -155,6 +155,9 @@ namespace core
 			{
 				return mem;
 			}
+
+			return nullptr;
+
 #elif defined(PLATFORM_WINDOWS)
 			return _aligned_malloc(bytes, alignment);
 #else
