@@ -5,9 +5,22 @@ import os
 import sys
 import logging
 import subprocess
+import platform
 
 BOOTSTRAP_VIRTUALENV_PATH = "env"
 REQUIREMENTS_FILE = "requirements"
+
+def get_platform():
+	platform_line = platform.platform().lower()
+
+	if "linux" in platform_line:
+		return "linux"
+	elif "darwin" in platform_line:
+		return "macosx"
+	elif "nt" or "windows" in platform_line:
+		return "windows"
+	else:
+		return "unknown"
 
 def get_virtualenv_path(root_path, name):
 	# if the system is posix, the virtualenv binaries are placed
@@ -56,6 +69,10 @@ def install_packages(root_path):
 	abs_requirements_path = os.path.abspath(
 		os.path.join(root_path, os.path.pardir, REQUIREMENTS_FILE)
 	)
+
+	if get_platform() == "macosx":
+		os.environ["CFLAGS"] = "-Wno-unused-command-line-argument-hard-error-in-future"
+
 	command = [pip, "install", "-r", abs_requirements_path]
 	subprocess.call(command)
 
@@ -82,4 +99,4 @@ if __name__ == "__main__":
 	root_path = setup_environment(post_install)
 
 	# (this should be moved) build documentation
-	build_docs(root_path)	
+	build_docs(root_path)
