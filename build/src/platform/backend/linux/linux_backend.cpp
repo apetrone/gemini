@@ -320,6 +320,11 @@ namespace platform
 		{
 
 		}
+
+		void set_mouse_tracking(bool enable)
+		{
+
+		}
 	} // namespace window
 
 
