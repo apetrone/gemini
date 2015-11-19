@@ -1018,6 +1018,9 @@ def products(arguments, **kwargs):
 	# use C++11
 	#g_linux.driver.cxxflags = ["-std=c++0x"]
 
+	g_windows = global_params.layout(platform="windows")
+	g_windows.driver.warninglevel = "EnableAllWarnings"
+
 
 	target_platform = kwargs.get("target_platform")
 
