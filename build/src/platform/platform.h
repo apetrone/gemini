@@ -26,7 +26,7 @@
 
 #include "config.h"
 
-#if PLATFORM_APPLE
+#if defined(PLATFORM_APPLE)
 	#include <TargetConditionals.h>
 #endif
 

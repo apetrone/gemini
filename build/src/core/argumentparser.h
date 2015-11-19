@@ -72,12 +72,24 @@ namespace core
 			size_t items_length;
 
 			Wrapper(ContainerType& input_array, const T& default_value) :
-			items(input_array),
-			index(0),
-			default_value(default_value)
+				items(input_array),
+				index(0),
+				default_value(default_value)
 			{
-
 				items_length = items.size();
+			}
+
+			~Wrapper()
+			{
+			}
+
+			Wrapper& operator=(const Wrapper& other)
+			{
+				items = other.items;
+				index = other.index;
+				default_value = other.default_value;
+				items_length = other.items_length;
+				return *this;
 			}
 
 			T current() const
@@ -156,12 +168,12 @@ namespace core
 					return *this;
 				}
 
-				size_t get_index() const { return index; }
+				unsigned int get_index() const { return index; }
 			};
 
 			Iterator erase(Iterator& it)
 			{
-				items.erase(items.begin()+it.get_index());
+				items.erase(items.begin() + it.get_index());
 				--items_length;
 				return Iterator(*this, index);
 			}
@@ -194,7 +206,7 @@ namespace core
 
 			// pattern_start: The index of patterns to begin matching
 			// returns true or false if it found a match
-			virtual bool matches(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars) { return 0; }
+			virtual bool matches(uint32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars) { return 0; }
 			virtual const char* get_classname() const { return "Pattern"; }
 			virtual Type get_type() const { return PT_Pattern; }
 
@@ -224,6 +236,15 @@ namespace core
 			{
 				input.clear();
 			}
+
+			TokenInfo& operator=(const TokenInfo& other)
+			{
+				argument_index = other.argument_index;
+				pattern_index = other.pattern_index;
+				arguments = other.arguments;
+				input = other.input;
+				return *this;
+			}
 		};
 
 
@@ -251,14 +272,14 @@ namespace core
 			virtual const char* get_classname() const { return "LeafPattern"; }
 			virtual Type get_type() const { return PT_LeafPattern; }
 
-			virtual bool matches(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
+			virtual bool matches(uint32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
 
 			// pattern_start is both input and output
 			// Input, it indexes into patterns as a location to start matching.
 			// If it finds a match (return true) and pattern_start should reference
 			// the next index of patterns to begin matching.
 			// This may not increment, for example, in the case of Optional arguments.
-			virtual bool single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
+			virtual bool single_match(uint32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
 		};
 
 
@@ -268,7 +289,7 @@ namespace core
 		struct Argument : public LeafPattern
 		{
 			Argument(const std::string& input_name, const std::string& input_value);
-			virtual bool single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
+			virtual bool single_match(uint32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
 
 			virtual const char* get_classname() const { return "Argument"; }
 			virtual Type get_type() const { return PT_Argument; }
@@ -297,7 +318,7 @@ namespace core
 
 			virtual const char* get_classname() const { return "Option"; }
 			virtual Type get_type() const { return PT_Option; }
-			virtual bool single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
+			virtual bool single_match(uint32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
 		};
 
 		// ---------------------------------------------------------------------
@@ -313,7 +334,7 @@ namespace core
 			virtual const char* get_classname() const { return "Command"; }
 			virtual Type get_type() const { return PT_Command; }
 
-			virtual bool single_match(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
+			virtual bool single_match(uint32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
 		};
 
 		// ---------------------------------------------------------------------
@@ -345,7 +366,7 @@ namespace core
 			{
 			}
 
-			virtual bool matches(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
+			virtual bool matches(uint32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
 			virtual const char* get_classname() const { return "Required"; }
 		};
 
@@ -359,7 +380,7 @@ namespace core
 			{
 			}
 
-			virtual bool matches(int32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
+			virtual bool matches(uint32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars);
 			virtual const char* get_classname() const { return "Optional"; }
 		};
 
@@ -369,6 +390,18 @@ namespace core
 
 		struct OneOrMore : public BranchPattern
 		{
+			OneOrMore(const PatternList& child_list) : BranchPattern(child_list)
+			{
+			}
+
+			virtual ~OneOrMore() {}
+
+			OneOrMore& operator=(const OneOrMore& other)
+			{
+				children = other.children;
+				return *this;
+			}
+
 			virtual const char* get_classname() const { return "OneOrMore"; }
 		};
 
@@ -378,10 +411,24 @@ namespace core
 
 		struct Either : public BranchPattern
 		{
-			Pattern* left;
-			Pattern* right;
+			Either(const PatternList& child_list) : BranchPattern(child_list)
+			{
+			}
+
+			virtual ~Either() {}
+
+			Either& operator=(const Either& other)
+			{
+				left = other.left;
+				right = other.right;
+				children = other.children;
+				return *this;
+			}
 
 			virtual const char* get_classname() const { return "Either"; }
+
+			Pattern* left;
+			Pattern* right;
 		};
 
 		// ---------------------------------------------------------------------

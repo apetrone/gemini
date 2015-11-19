@@ -27,14 +27,14 @@
 #include "typedefs.h"
 #include "config.h"
 
-#if PLATFORM_APPLE
+#if defined(PLATFORM_APPLE)
 	#include <memory> // for malloc, free (on OSX)
 	#include <stdlib.h>
-#elif PLATFORM_LINUX || PLATFORM_ANDROID
+#elif defined(PLATFORM_LINUX) || defined(PLATFORM_ANDROID)
 	#include <stdlib.h>
 	#include <stdio.h> // for fprintf
 	#include <new> // for placement new
-#elif PLATFORM_WINDOWS
+#elif defined(PLATFORM_WINDOWS)
 	#include <memory> // we'll see if this compiles...
 #else
 	#error Unknown platform!

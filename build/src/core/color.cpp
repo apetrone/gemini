@@ -76,7 +76,7 @@ namespace core
 
 	uint32_t Color::as_uint32() const
 	{
-		return (((a << 24) | (b << 16) | (g << 8) | r));
+		return static_cast<uint32_t>(((a << 24) | (b << 16) | (g << 8) | r));
 	}
 
 	bool Color::operator==(const Color& other) const
