@@ -441,7 +441,7 @@ namespace render2
 		virtual void activate_render_target(const RenderTarget& rt);
 		virtual void deactivate_render_target(const RenderTarget& rt);
 		virtual RenderTarget* default_render_target();
-		virtual RenderTarget* create_render_target(Texture* textre);
+		virtual RenderTarget* create_render_target(Texture* texture);
 		virtual void destroy_render_target(RenderTarget* target);
 
 		// ---------------------------------------------------------------------
