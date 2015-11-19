@@ -582,7 +582,7 @@ namespace gemini
 
 		Sequence* get_sequence_by_index(SequenceId index)
 		{
-			assert(index < detail::_sequences.size());
+			assert(static_cast<size_t>(index) < detail::_sequences.size());
 			return detail::_sequences[index];
 		}
 
@@ -605,7 +605,7 @@ namespace gemini
 
 		AnimatedInstance* get_instance_by_index(SequenceId index)
 		{
-			assert(index < detail::_instances.size());
+			assert(static_cast<size_t>(index) < detail::_sequences.size());
 			return detail::_instances[index];
 		}
 
