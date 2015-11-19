@@ -167,11 +167,8 @@ namespace render2
 		GLint vert = gl.CreateShader(GL_VERTEX_SHADER); gl.CheckError("CreateShader");
 		GLint frag = gl.CreateShader(GL_FRAGMENT_SHADER); gl.CheckError("CreateShader");
 
-
-		bool result = false;
-		result = compile_shader(vert, vertex_shader, preprocessor, version);
-		result = compile_shader(frag, fragment_shader, preprocessor, version);
-
+		compile_shader(vert, vertex_shader, preprocessor, version);
+		compile_shader(frag, fragment_shader, preprocessor, version);
 
 		// attach shaders
 		gl.AttachShader(id, vert); gl.CheckError("AttachShader (vert)"); gl.CheckError("AttachShader");
