@@ -198,7 +198,7 @@ namespace gemini
 				}
 
 				bytes += ret;
-			} while( (bytes > 0) && (bytes < AUDIO_EMITTER_BUFFER_SIZE) );
+			} while( (bytes > 0) && (bytes < static_cast<int>(AUDIO_EMITTER_BUFFER_SIZE)) );
 
 			if ( source->flags & SF_STOP )
 				return;

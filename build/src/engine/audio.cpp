@@ -458,7 +458,7 @@ namespace gemini
 
 		void stop( SoundSource source_id )
 		{
-			if (source_id < 0 || source_id > AUDIO_MAX_SOURCES )
+			if (source_id < 0 || source_id > static_cast<int>(AUDIO_MAX_SOURCES))
 			{
 				LOGW( "source_id out of range.\n" );
 				return;
