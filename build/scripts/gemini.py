@@ -1020,6 +1020,13 @@ def products(arguments, **kwargs):
 
 	g_windows = global_params.layout(platform="windows")
 	g_windows.driver.warninglevel = "EnableAllWarnings"
+	g_windows.driver.disablespecificwarnings = [
+		4514, 	# : unreferenced inline function has been removed
+				# stl and various other third-party libraries spew this warning.
+		4710,	# : function not inlined
+				# stl and crt are reporting these: [_scwprintf,
+				# swprintf_s, std::exception_ptr::_Current_exception]
+	]
 
 
 	target_platform = kwargs.get("target_platform")
