@@ -124,20 +124,12 @@ namespace gui
 	void Panel::calculate_screen_bounds(Compositor* compositor)
 	{
 		Panel* parent = this->parent;
-
-		ScreenInt width = compositor->width;
-		ScreenInt height = compositor->height;
-
 		Point origin = this->origin;
 		Size size = this->size;
 
 		// use the parent size as the basis for scaling
 		if (parent != 0 && parent != compositor)
 		{
-			Size parent_size = parent->bounds.size;
-			width = parent_size.width;
-			height = parent_size.height;
-
 			// add the origin offset of the parent
 			origin = origin + parent->bounds.origin;
 		}
