@@ -40,12 +40,10 @@
 	#error Unknown platform!
 #endif
 
-// used by the debug tracking policy
-#include <list>
+// enable this define to debug memory allocations (performance hit!)
+//#define ENABLE_MEMORY_TRACKING 1
+
 #include <assert.h>
-
-//#define CORE_MEMORY_TRACKING_ENABLED 1
-
 
 #define MEMORY_ALLOC(size, allocator) (allocator).allocate(size, sizeof(void*), __FILE__, __LINE__)
 #define MEMORY_DEALLOC(pointer, allocator) (allocator).deallocate(pointer)
@@ -142,9 +140,15 @@ namespace core
 		// tracking policies
 		// ---------------------------------------------------------------------
 		#include "memory/simple_tracking_policy.h"
-		#include "memory/debug_tracking_policy.h"
 
+
+#if defined(ENABLE_MEMORY_TRACKING)
+#		include <list>
+#		include "memory/debug_tracking_policy.h"
+		typedef DebugTrackingPolicy DefaultTrackingPolicy;
+#else
 		typedef SimpleTrackingPolicy DefaultTrackingPolicy;
+#endif
 
 		// ---------------------------------------------------------------------
 		// allocator
