@@ -996,7 +996,7 @@ namespace render2
 		for(size_t index = 0; index < shader->uniforms.size(); ++index)
 		{
 			shader_variable& uniform = shader->uniforms[index];
-			void* data = constants.get(uniform.name);
+			const void* data = constants.get(uniform.name);
 
 			if (!data)
 			{
@@ -1011,7 +1011,7 @@ namespace render2
 				case GL_INT:
 				case GL_UNSIGNED_INT:
 				{
-					GLuint* value = static_cast<GLuint*>(data);
+					const GLuint* value = static_cast<const GLuint*>(data);
 					gl.Uniform1i(uniform.location, (*value));
 					gl.CheckError("Uniform1i");
 					break;
@@ -1023,7 +1023,11 @@ namespace render2
 					break;
 				case GL_SAMPLER_2D:
 				{
-					GLuint* sampler = static_cast<GLuint*>(data);
+					const GLuint* sampler = static_cast<const GLuint*>(data);
+
+					// maximum of eight texture units
+					assert(*sampler < 8);
+
 					gl.Uniform1i(uniform.location, (*sampler));
 					gl.CheckError("Uniform1i");
 					break;
