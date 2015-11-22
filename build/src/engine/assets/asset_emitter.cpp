@@ -61,10 +61,7 @@ namespace gemini
 				sscanf(temp.c_str(), "%i, %i, %i", &colors[0], &colors[1], &colors[2] );
 			}
 
-			out.r = colors[0];
-			out.g = colors[1];
-			out.b = colors[2];
-			out.a = colors[3];
+			out = core::Color::from_rgba(colors[0], colors[1], colors[2], colors[3]);
 		}
 
 		void float_value( Json::Value & value, float & out )

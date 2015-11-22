@@ -203,7 +203,7 @@ UNITTEST(Array)
 // ---------------------------------------------------------------------
 UNITTEST(Color)
 {
-	Color red(255, 0, 0, 255);
+	Color red(1.0f, 0, 0, 1.0f);
 
 	Color temp;
 	float red_float[4] = {1.0f, 0.0f, 0.0f, 1.0f};
@@ -214,7 +214,7 @@ UNITTEST(Color)
 	Color int_color = Color::from_int(u32_color);
 	TEST_ASSERT(int_color == red, from_int);
 
-	Color ubyte_test(0, 128, 255, 32);
+	Color ubyte_test = Color::from_rgba(0, 128, 255, 32);
 	unsigned char ubyte[] = {0, 128, 255, 32};
 	Color ubyte_color = Color::from_ubyte(ubyte);
 

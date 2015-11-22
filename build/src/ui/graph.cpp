@@ -62,8 +62,8 @@ namespace gui
 		total_channels = 0;
 		current_sample = 0;
 
-		background_color = core::Color(0, 0, 0, 255);
-		foreground_color = core::Color(255, 255, 255, 255);
+		background_color = core::Color::from_rgba(0, 0, 0, 255);
+		foreground_color = core::Color::from_rgba(255, 255, 255, 255);
 
 		show_baseline = false;
 	}

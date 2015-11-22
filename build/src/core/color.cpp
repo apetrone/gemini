@@ -49,38 +49,61 @@ namespace core
 	Color Color::from_int(unsigned int color)
 	{
 		Color out;
-		out.a = ((color>>24) & 255);
-		out.b = ((color>>16) & 255);
-		out.g = ((color>>8) & 255);
-		out.r = (color & 255);
+		out.alpha = ((color>>24) & 255) / 255.0f;
+		out.blue = ((color>>16) & 255) / 255.0f;
+		out.green = ((color>>8) & 255) / 255.0f;
+		out.red = (color & 255) / 255.0f;
 		return out;
 	}
 
 	Color Color::from_ubyte(unsigned char* ubyte)
 	{
-		return Color(ubyte[0], ubyte[1], ubyte[2], ubyte[3]);
+		return Color::from_rgba(ubyte[0], ubyte[1], ubyte[2], ubyte[3]);
 	}
 
-	Color::Color(unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a)
+	Color Color::from_rgba(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 	{
-		set(_r, _g, _b, _a);
+		Color color;
+		color.red = r / 255.0f;
+		color.green = g / 255.0f;
+		color.blue = b / 255.0f;
+		color.alpha = a / 255.0f;
+
+		return color;
 	}
 
-	void Color::set(unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a)
+	Color::Color(float r, float g, float b, float a)
 	{
-		r = _r;
-		g = _g;
-		b = _b;
-		a = _a;
+		set(r, g, b, a);
+	}
+
+	void Color::set(float r, float g, float b, float a)
+	{
+		red = r;
+		green = g;
+		blue = b;
+		alpha = a;
+
+		// As I make the conversion to normalized floats for colors,
+		// this will get hit whenever an unsigned byte is passed in
+		// by mistake.
+		assert(red >= 0.0f && red <= 1.0f);
+		assert(green >= 0.0f && green <= 1.0f);
+		assert(blue >= 0.0f && blue <= 1.0f);
+		assert(alpha >= 0.0f && alpha <= 1.0f);
 	}
 
 	uint32_t Color::as_uint32() const
 	{
-		return static_cast<uint32_t>(((a << 24) | (b << 16) | (g << 8) | r));
+		return static_cast<uint32_t>(((
+			float_to_ubyte(alpha) << 24) |
+			(float_to_ubyte(blue) << 16) |
+			(float_to_ubyte(green) << 8) |
+			float_to_ubyte(red)));
 	}
 
 	bool Color::operator==(const Color& other) const
 	{
-		return (r == other.r) && (g == other.g) && (b == other.b) && (a == other.a);
+		return (red == other.red) && (green == other.green) && (blue == other.blue) && (alpha == other.alpha);
 	}
 } // namespace core

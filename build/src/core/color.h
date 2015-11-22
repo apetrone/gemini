@@ -34,13 +34,17 @@ namespace core
 		static Color from_float_pointer(const float * fl, int num_elements);
 		static Color from_int(unsigned int color);
 		static Color from_ubyte(unsigned char* ubyte);
+		static Color from_rgba(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 
-		unsigned char r, g, b, a;
-
-		LIBRARY_EXPORT Color(unsigned char _r = 255, unsigned char _g = 255, unsigned char _b = 255, unsigned char _a = 255);
-		LIBRARY_EXPORT void set(unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a = 255);
+		LIBRARY_EXPORT Color(float r = 1.0f, float = 1.0f, float b = 1.0f, float a = 1.0f);
+		LIBRARY_EXPORT void set(float r, float g, float b, float a = 1.0f);
 		LIBRARY_EXPORT uint32_t as_uint32() const;
 		LIBRARY_EXPORT bool operator==(const Color& other) const;
+
+		float red;
+		float green;
+		float blue;
+		float alpha;
 	}; // Color
 
 
@@ -49,10 +53,10 @@ namespace core
 	{
 		Color operator()( const Color & start, const Color & end, float t )
 		{
-			return Color( lerp( start.r, end.r, t ),
-						 lerp( start.g, end.g, t ),
-						 lerp( start.b, end.b, t ),
-						 lerp( start.a, end.a, t ) );
+			return Color( lerp( start.red, end.red, t ),
+						 lerp( start.green, end.green, t ),
+						 lerp( start.blue, end.blue, t ),
+						 lerp( start.alpha, end.alpha, t ) );
 		}
 	}; // Interpolator
 } // namespace core

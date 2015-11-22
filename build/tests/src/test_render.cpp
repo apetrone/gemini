@@ -363,7 +363,7 @@ public:
 		checker_pattern.width = 32;
 		checker_pattern.height = 32;
 		checker_pattern.channels = 3;
-		image::generate_checker_pattern(checker_pattern, core::Color(255, 0, 255), core::Color(0, 255, 0));
+		image::generate_checker_pattern(checker_pattern, core::Color(1.0f, 0, 1.0f), core::Color(0, 1.0f, 0));
 		state.checker = state.device->create_texture(checker_pattern);
 		assert(state.checker);
 		LOGV("created checker_pattern texture procedurally\n");
@@ -414,10 +414,7 @@ public:
 			tv->position[0] = fv->position.x + offset[0];
 			tv->position[1] = fv->position.y + offset[1];
 			tv->position[2] = 0;
-			tv->color[0] = fv->color.r / 255.0f;
-			tv->color[1] = fv->color.b / 255.0f;
-			tv->color[2] = fv->color.g / 255.0f;
-			tv->color[3] = fv->color.a / 255.0f;
+			tv->color = fv->color;
 			tv->uv[0] = fv->uv.x;
 			tv->uv[1] = fv->uv.y;
 		}
@@ -549,21 +546,13 @@ private:
 	struct MyVertex
 	{
 		float position[3];
-		float color[4];
+		core::Color color;
 
 		void set_position(float x, float y, float z)
 		{
 			position[0] = x;
 			position[1] = y;
 			position[2] = z;
-		}
-
-		void set_color(float red, float green, float blue, float alpha)
-		{
-			color[0] = red;
-			color[1] = green;
-			color[2] = blue;
-			color[3] = alpha;
 		}
 	};
 
@@ -585,28 +574,28 @@ private:
 	{
 		MyVertex* vertices = (source+index);
 		vertices[0].set_position(offset.x, (dimensions.y/2)+offset.y, 0);
-		vertices[0].set_color(1.0f, 0.0f, 0.0f, 1.0f);
+		vertices[0].color = core::Color(1.0f, 0.0f, 0.0f, 1.0f);
 
 		vertices[1].set_position((dimensions.x/2)+offset.x, (dimensions.y/2)+offset.y, 0);
-		vertices[1].set_color(0.0f, 1.0f, 0.0f, 1.0f);
+		vertices[1].color = core::Color(0.0f, 1.0f, 0.0f, 1.0f);
 
 		vertices[2].set_position((dimensions.x/4)+offset.x, offset.y, 0);
-		vertices[2].set_color(0.0f, 0.0f, 1.0f, 1.0f);
+		vertices[2].color = core::Color(0.0f, 0.0f, 1.0f, 1.0f);
 	}
 
 	void generate_textured_triangle(size_t index, TexturedVertex* source, const glm::vec2& dimensions, const glm::vec2& offset)
 	{
 		TexturedVertex* vertices = (source+index);
 		vertices[0].set_position(offset.x, (dimensions.y/2)+offset.y, 0);
-		vertices[0].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[0].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[0].set_uv(0.0f, 1.0f);
 
 		vertices[1].set_position((dimensions.x/2)+offset.x, (dimensions.y/2)+offset.y, 0);
-		vertices[1].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[1].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[1].set_uv(1.0f, 1.0f);
 
 		vertices[2].set_position((dimensions.x/4)+offset.x, offset.y, 0);
-		vertices[2].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[2].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[2].set_uv(0.5f, 0.0f);
 	}
 
@@ -616,32 +605,32 @@ private:
 
 		// lower left
 		vertices[0].set_position(offset.x, (dimensions.y/2)+offset.y, 0);
-		vertices[0].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[0].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[0].set_uv(0.0f, 1.0f);
 
 		// lower right
 		vertices[1].set_position((dimensions.x/2)+offset.x, (dimensions.y/2)+offset.y, 0);
-		vertices[1].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[1].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[1].set_uv(1.0f, 1.0f);
 
 		// upper right
 		vertices[2].set_position((dimensions.x/2)+offset.x, offset.y, 0);
-		vertices[2].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[2].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[2].set_uv(1.0f, 0.0f);
 
 		// (and upper right again on the second triangle)
 		vertices[3].set_position((dimensions.x/2)+offset.x, offset.y, 0);
-		vertices[3].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[3].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[3].set_uv(1.0f, 0.0f);
 
 		// upper left
 		vertices[4].set_position(offset.x, offset.y, 0);
-		vertices[4].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[4].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[4].set_uv(0.0f, 0.0f);
 
 		// lower left
 		vertices[5].set_position(offset.x, (dimensions.y/2)+offset.y, 0);
-		vertices[5].set_color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[5].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[5].set_uv(0.0f, 1.0f);
 	}
 

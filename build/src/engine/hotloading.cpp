@@ -62,7 +62,7 @@ void BaseVar::render_values(int x, int y)
 	BaseVar* current = tail;
 	while (current)
 	{
-		debugdraw::text(x, y, xstr_format("[VAR] %s = %s", current->name.c_str(), current->value_string().c_str()), Color(255, 255, 255, 255));
+		debugdraw::text(x, y, xstr_format("[VAR] %s = %s", current->name.c_str(), current->value_string().c_str()), Color::from_rgba(255, 255, 255, 255));
 
 		y += 12;
 		current = current->next;

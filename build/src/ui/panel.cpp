@@ -46,8 +46,8 @@ namespace gui
 		this->z_depth = 0;
 		this->parent = parent;
 		this->userdata = 0;
-		this->background_color = core::Color(255, 255, 255, 255);
-		this->foreground_color = core::Color(0, 0, 0, 255);
+		this->background_color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
+		this->foreground_color = core::Color(0.0f, 0.0f, 0.0f, 1.0f);
 		this->flags = (Flag_CursorEnabled | Flag_TransformIsDirty);
 		set_visible(true);
 
@@ -255,7 +255,7 @@ namespace gui
 				geometry[2],
 				geometry[3],
 				this->background,
-				core::Color(255, 255, 255, 255)
+				core::Color::from_rgba(255, 255, 255, 255)
 			);
 		}
 

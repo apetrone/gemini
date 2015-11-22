@@ -644,7 +644,7 @@ namespace render2
 			img.channels = 1;
 			img.create(img.width, img.height, 1);
 			img.alignment = 1; // tightly packed
-			img.fill(core::Color(255, 0, 255));
+			img.fill(core::Color(1.0f, 0, 1.0f));
 
 			img.copy(bitmap->buffer, bitmap->width, bitmap->rows, bitmap->pitch, font->border);
 
@@ -732,7 +732,7 @@ namespace render2
 			image.flags = image::F_ALPHA | image::F_CLAMP;
 
 			image.create(FONT_ATLAS_RESOLUTION, FONT_ATLAS_RESOLUTION, 1);
-			image.fill(core::Color(255, 0, 255));
+			image.fill(core::Color(1.0f, 0.0f, 1.0f));
 			font->texture = detail::_device->create_texture(image);
 			detail::_fonts.push_back(font);
 
