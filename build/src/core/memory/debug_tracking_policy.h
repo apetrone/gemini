@@ -69,6 +69,13 @@ struct DebugTrackingPolicy
 	/// @param line The line number of this allocation
 	void* track_allocation(void* pointer, size_t requested_size, size_t alignment, const char* filename, int line)
 	{
+		fprintf(stdout, "[+] %x size=%lu, align=%lu, line=%i, alloc_num=%zu, file='%s'\n",
+			pointer,
+			requested_size,
+			alignment,
+			line,
+			current_allocation,
+			filename);
 		MemoryHeader* header = reinterpret_cast<MemoryHeader*>(pointer);
 		header->allocation_size = requested_size;
 		header->allocation_index = current_allocation++;
@@ -90,6 +97,13 @@ struct DebugTrackingPolicy
 		assert(header);
 
 		allocation_size = header->allocation_size;
+
+		fprintf(stdout, "[-] %x size=%lu, align=%lu, line=%i, alloc_num=%zu\n",
+			pointer,
+			header->allocation_size,
+			header->alignment,
+			header->line,
+			header->allocation_index);
 
 		// remove from allocated block list
 		MemoryBlockList::iterator it = allocated_blocks.begin();
