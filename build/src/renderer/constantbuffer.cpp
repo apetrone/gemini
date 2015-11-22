@@ -33,12 +33,12 @@ namespace render2
 	// ---------------------------------------------------------------------
 	// ConstantBuffer
 	// ---------------------------------------------------------------------
-	void ConstantBuffer::set(const char* name, void* data)
+	void ConstantBuffer::set(const char* name, const void* data)
 	{
 		constant_map[name] = data;
 	}
 
-	void* ConstantBuffer::get(const char* name)
+	const void* ConstantBuffer::get(const char* name)
 	{
 		return constant_map[name];
 	}
