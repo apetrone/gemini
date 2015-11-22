@@ -84,8 +84,8 @@ namespace gui
 		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
 		{
 			// TODO: we should get this from the style
-			core::Color scrubber_highlight(255, 128, 0, 32);
-			core::Color scrubber_outline(255, 128, 0, 192);
+			core::Color scrubber_highlight = core::Color::from_rgba(255, 128, 0, 32);
+			core::Color scrubber_outline = core::Color::from_rgba(255, 128, 0, 192);
 
 			// draw the main highlight fill
 			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, scrubber_highlight);
@@ -271,7 +271,7 @@ namespace gui
 		{
 			on_render_content(target);
 
-			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], handle, core::Color(255, 255, 255, 255));
+			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], handle, core::Color::from_rgba(255, 255, 255, 255));
 		}
 
 		// invoked when the handler should render its content to the render
@@ -322,7 +322,7 @@ public:
 
 	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
 	{
-		render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, core::Color(255, 255, 255, 255));
+		render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, core::Color::from_rgba(255, 255, 255, 255));
 	}
 };
 
@@ -627,11 +627,6 @@ public:
 			gui_renderer->set_device(device);
 
 			compositor = new gui::Compositor(window_frame.width, window_frame.height, &resource_cache, gui_renderer);
-
-
-//			gui::Panel* root = new gui::Panel(compositor);
-//			root->set_bounds(100, 100, 300, 400);
-//			root->set_background_color(core::Color(255, 0, 0, 255));
 
 #if 0
 			gui::Timeline* timeline = new gui::Timeline(compositor);

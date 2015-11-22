@@ -836,7 +836,7 @@ public:
 //		rs.add_state(::renderer::STATE_DEPTH_WRITE, 1);
 		rs.add_state(::renderer::STATE_BACKFACE_CULLING, 1);
 		rs.add_state(::renderer::STATE_DEPTH_TEST, 1);
-		rs.add_clearcolor((clear_color.r/255.0f), (clear_color.g/255.0f), (clear_color.b/255.0f), 1.0f);
+		rs.add_clearcolor(clear_color.red, clear_color.green, clear_color.blue, 1.0f);
 		rs.add_clear(::renderer::CLEAR_COLOR_BUFFER | ::renderer::CLEAR_DEPTH_BUFFER );
 		rs.run_commands();
 
@@ -1240,13 +1240,13 @@ public:
 		graph = new gui::Graph(root);
 		graph->set_bounds(width-250, 0, 250, 100);
 		graph->set_font("fonts/debug.ttf", 16);
-		graph->set_background_color(core::Color(10, 10, 10, 210));
-		graph->set_foreground_color(core::Color(255, 255, 255, 255));
+		graph->set_background_color(core::Color::from_rgba(10, 10, 10, 210));
+		graph->set_foreground_color(core::Color::from_rgba(255, 255, 255, 255));
 		graph->create_samples(100, 1);
-		graph->configure_channel(0, core::Color(0, 255, 0, 255));
+		graph->configure_channel(0, core::Color::from_rgba(0, 255, 0, 255));
 		graph->set_range(0.0f, 33.3f);
 
-		graph->enable_baseline(true, 16.6f, core::Color(255, 0, 255, 255));
+		graph->enable_baseline(true, 16.6f, core::Color::from_rgba(255, 0, 255, 255));
 	}
 
 	virtual kernel::Error startup()
@@ -1628,11 +1628,11 @@ Options:
 //			debugdraw::text(x, y+24, core::str::format("active_camera->view = %.2g %.2g %.2g", main_camera.view.x, main_camera.view.y, main_camera.view.z), Color(128, 128, 255));
 //			debugdraw::text(x, y+36, core::str::format("active_camera->right = %.2g %.2g %.2g", main_camera.side.x, main_camera.side.y, main_camera.side.z), Color(255, 0, 0));
 		}
-		::renderer::debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_milliseconds), Color(255, 255, 255));
+		::renderer::debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_milliseconds), core::Color::from_rgba(255, 255, 255, 255));
 		y += 12;
 		::renderer::debugdraw::text(x, y, core::str::format("# allocations = %i, total %2.2f MB\n",
 			core::memory::global_allocator().get_zone()->get_active_allocations(),
-			core::memory::global_allocator().get_zone()->get_active_bytes()/(float)(1024*1024)), Color(64, 102, 192));
+			core::memory::global_allocator().get_zone()->get_active_bytes()/(float)(1024*1024)), core::Color::from_rgba(64, 102, 192, 255));
 		y += 12;
 
 
@@ -1821,7 +1821,7 @@ public:
 		if (alt_window)
 		{
 			alt_vs.desc.add(::renderer::VD_FLOAT2);
-			alt_vs.desc.add(::renderer::VD_UNSIGNED_BYTE4);
+			alt_vs.desc.add(::renderer::VD_FLOAT4);
 			alt_vs.desc.add(::renderer::VD_FLOAT2);
 
 
@@ -1840,10 +1840,10 @@ public:
 
 				// this is intentionally inverted along the y
 				// so that texture renderered appears correctly.
-				v[0].pos = glm::vec2(cx-RECT_SIZE, cy-RECT_SIZE); v[0].uv = glm::vec2(0,0); v[0].color = Color(255, 255, 255, 255);
-				v[1].pos = glm::vec2(cx-RECT_SIZE, cy+RECT_SIZE); v[1].uv = glm::vec2(0,1); v[1].color = Color(255, 255, 255, 255);
-				v[2].pos = glm::vec2(cx+RECT_SIZE, cy+RECT_SIZE); v[2].uv = glm::vec2(1,1); v[2].color = Color(255, 255, 255, 255);
-				v[3].pos = glm::vec2(cx+RECT_SIZE, cy-RECT_SIZE); v[3].uv = glm::vec2(1,0); v[3].color = Color(255, 255, 255, 255);
+				v[0].pos = glm::vec2(cx-RECT_SIZE, cy-RECT_SIZE); v[0].uv = glm::vec2(0,0); v[0].color = Color::from_rgba(255, 255, 255, 255);
+				v[1].pos = glm::vec2(cx-RECT_SIZE, cy+RECT_SIZE); v[1].uv = glm::vec2(0,1); v[1].color = Color::from_rgba(255, 255, 255, 255);
+				v[2].pos = glm::vec2(cx+RECT_SIZE, cy+RECT_SIZE); v[2].uv = glm::vec2(1,1); v[2].color = Color::from_rgba(255, 255, 255, 255);
+				v[3].pos = glm::vec2(cx+RECT_SIZE, cy-RECT_SIZE); v[3].uv = glm::vec2(1,0); v[3].color = Color::from_rgba(255, 255, 255, 255);
 
 				::renderer::IndexType indices[] = {0, 1, 2, 2, 3, 0};
 				alt_vs.append_indices(indices, 6);

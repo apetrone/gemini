@@ -34,25 +34,13 @@
 struct GUIVertex
 {
 	glm::vec2 position;
-	float color[4];
+	core::Color color;
 	glm::vec2 uv;
 
 	void set_position(float x, float y)
 	{
 		position.x = x;
 		position.y = y;
-	}
-
-	void set_color(float red, float green, float blue, float alpha)
-	{
-		assert(red >= 0.0f && red <= 1.0f);
-		assert(green >= 0.0f && green <= 1.0f);
-		assert(blue >= 0.0f && blue <= 1.0f);
-		assert(alpha >= 0.0f && alpha <= 1.0f);
-		color[0] = red;
-		color[1] = green;
-		color[2] = blue;
-		color[3] = alpha;
 	}
 
 	void set_uv(float u, float v)
@@ -106,7 +94,7 @@ void GUIRenderer::startup(gui::Compositor* target_compositor)
 	white_image.create(4, 4, 3);
 	white_image.filter = image::FILTER_NONE;
 	white_image.flags = image::F_CLAMP_BORDER;
-	white_image.fill(core::Color(255, 255, 255));
+	white_image.fill(core::Color::from_rgba(255, 255, 255, 255));
 	white_texture = device->create_texture(white_image);
 }
 
@@ -295,7 +283,7 @@ void GUIRenderer::draw_commands(gui::render::CommandList* command_list, Array<gu
 		gui::render::Vertex* gv = &vertex_array[index];
 		GUIVertex& vt = vertices[index];
 		vt.set_position(gv->x, gv->y);
-		vt.set_color(gv->color.r/255.0f, gv->color.g/255.0f, gv->color.b/255.0f, gv->color.a/255.0f);
+		vt.color = gv->color;
 		vt.set_uv(gv->uv[0], gv->uv[1]);
 	}
 
@@ -399,7 +387,7 @@ void GUIRenderer::startup(gui::Compositor* c)
 	// generate the white texture we'll use for solid colors
 	white_texture = assets::textures()->allocate_asset();
 	white_texture->image.create(4, 4, 3);
-	white_texture->image.fill(Color(255, 255, 255));
+	white_texture->image.fill(Color::from_rgba(255, 255, 255, 255));
 //	image::generate_checker_pattern(white_texture->image, Color(255, 0, 0), Color(0, 255, 0));
 	white_texture->image.flags = image::F_WRAP | image::F_RGB | image::F_CLAMP_BORDER;
 	white_texture->texture = ::renderer::driver()->texture_create(white_texture->image);
@@ -565,32 +553,32 @@ void GUIRenderer::draw_command_lists(gui::render::CommandList** command_lists, s
 		{
 			vertex[0].position.x = 0;
 			vertex[0].position.y = 100;
-			vertex[0].color = core::Color(255, 0, 0);
+			vertex[0].color = core::Color::from_rgba(255, 0, 0);
 			vertex[0].uv = glm::vec2(0, 0);
 
 			vertex[1].position.x = 100;
 			vertex[1].position.y = 100;
-			vertex[1].color = core::Color(0, 255, 0);
+			vertex[1].color = core::Color::from_rgba(0, 255, 0);
 			vertex[1].uv = glm::vec2(1, 0);
 
 			vertex[2].position.x = 100;
 			vertex[2].position.y = 0;
-			vertex[2].color = core::Color(0, 0, 255);
+			vertex[2].color = core::Color::from_rgba(0, 0, 255);
 			vertex[2].uv = glm::vec2(1, 1);
 
 			vertex[3].position.x = 100;
 			vertex[3].position.y = 0;
-			vertex[3].color = core::Color(0, 0, 255);
+			vertex[3].color = core::Color::from_rgba(0, 0, 255);
 			vertex[3].uv = glm::vec2(1, 1);
 
 			vertex[4].position.x = 0;
 			vertex[4].position.y = 0;
-			vertex[4].color = core::Color(255, 255, 255);
+			vertex[4].color = core::Color::from_rgba(255, 255, 255);
 			vertex[4].uv = glm::vec2(0, 1);
 
 			vertex[5].position.x = 0;
 			vertex[5].position.y = 100;
-			vertex[5].color = core::Color(255, 0, 0);
+			vertex[5].color = core::Color::from_rgba(255, 0, 0);
 			vertex[5].uv = glm::vec2(0, 0);
 
 			stream.update();

@@ -116,7 +116,7 @@ namespace gemini
 				p->position.step(delta_seconds);
 				p->position.current += (p->velocity * delta_seconds);
 				p->color = this->emitter_config->color_channel.get_value(lifet);
-				p->color.a = 255.0 * this->emitter_config->alpha_channel.get_value(lifet);
+				p->color.alpha = this->emitter_config->alpha_channel.get_value(lifet);
 				p->size = this->emitter_config->size_channel.get_value(lifet);
 				++num_particles_alive;
 			}
@@ -161,7 +161,7 @@ namespace gemini
 		p->position.snap(world_position.render);
 	//	LOGV( "p->position: %g, %g %g\n", p->position.render.x, p->position.render.y, p->position.render.z );
 		p->color = this->emitter_config->color_channel.get_value(0);
-		p->color.a = 255.0 * this->emitter_config->alpha_channel.get_value(0);
+		p->color.alpha = this->emitter_config->alpha_channel.get_value(0);
 		p->size = this->emitter_config->size_channel.get_value(0);
 	} // generate_particle
 

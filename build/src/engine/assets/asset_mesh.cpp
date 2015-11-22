@@ -190,7 +190,7 @@ namespace gemini
 				for (int v = 0; v < static_cast<int>(geo->colors.size()); ++v)
 				{
 					const Json::Value& vertex_color = vertex_colors[v];
-					geo->colors[v] = core::Color(255 * vertex_color[0].asFloat(), 255 * vertex_color[1].asFloat(), 255 * vertex_color[2].asFloat(), 255 * vertex_color[3].asFloat());
+					geo->colors[v] = core::Color(vertex_color[0].asFloat(), vertex_color[1].asFloat(), vertex_color[2].asFloat(), vertex_color[3].asFloat());
 				}
 
 				// read uv sets
@@ -494,7 +494,7 @@ namespace gemini
 				{
 					ShaderString colors = "colors";
 	//				attributes |= find_parameter_mask( colors );
-					descriptor.add( VD_UNSIGNED_BYTE4 );
+					descriptor.add( VD_FLOAT4 );
 				}
 
 				if ( uvs.size() > 0 )

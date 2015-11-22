@@ -65,11 +65,29 @@ namespace image
 	void Image::fill(const core::Color& color)
 	{
 		uint8_t* pixel = &pixels[0];
+		const uint8_t red = uint8_t(color.red * 255.0f) & 0xff;
+		const uint8_t green = uint8_t(color.green * 255.0f) & 0xff;
+		const uint8_t blue = uint8_t(color.blue * 255.0f) & 0xff;
+		const uint8_t alpha = uint8_t(color.alpha * 255.0f) & 0xff;
+
+		// We don't handle cases outside this.
+		assert(channels <= 4);
+
 		for (size_t h = 0; h < height; ++h)
 		{
 			for (size_t w = 0; w < width; ++w)
 			{
-				memcpy(pixel, &color, channels);
+				pixel[0] = red;
+				if (channels > 1)
+				{
+					pixel[1] = green;
+					pixel[2] = blue;
+
+					if (channels == 4)
+					{
+						pixel[3] = alpha;
+					}
+				}
 				pixel += channels;
 			}
 		}
@@ -113,7 +131,6 @@ namespace image
 		// only generate 3 channel RGB image for now.
 		assert(image.channels == 3);
 
-
 		image.pixels.allocate(image.channels*image.width*image.height);
 
 		// width/height should be power of two
@@ -154,8 +171,9 @@ namespace image
 					}
 				}
 
-				memcpy(pixels, color, image.channels);
-
+				pixels[0] = uint8_t(color->red * 255.0f) & 0xff;
+				pixels[1] = uint8_t(color->green * 255.0f) & 0xff;
+				pixels[2] = uint8_t(color->blue * 255.0f) & 0xff;
 				pixels += image.channels;
 			}
 		}
@@ -234,7 +252,7 @@ namespace image
 		image.width = ERROR_TEXTURE_WIDTH;
 		image.height = ERROR_TEXTURE_HEIGHT;
 		image.channels = 3;
-		generate_checker_pattern(image, Color(0, 0, 0), Color(255, 0, 255));
+		generate_checker_pattern(image, Color::from_rgba(0, 0, 0, 255), Color::from_rgba(255, 0, 255, 255));
 
 		renderer::Texture* texture = renderer::driver()->texture_create(image);
 
