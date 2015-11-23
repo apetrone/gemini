@@ -249,9 +249,9 @@ namespace renderer
 
 		render2::Pipeline* text_pipeline = nullptr;
 		render2::Buffer* text_buffer = nullptr;
-		Array<render2::font::FontVertex> text_vertex_cache;
+		Array<font::FontVertex> text_vertex_cache;
 
-		render2::font::Handle text_handle;
+		font::Handle text_handle;
 		glm::mat4 orthographic_projection;
 
 		// this needs to be persistent due to the way
@@ -466,7 +466,7 @@ namespace renderer
 
 			Array<unsigned char> fontdata;
 			core::filesystem::instance()->virtual_load_file(fontdata, "fonts/debug.ttf");
-			text_handle = render2::font::load_from_memory(&fontdata[0], fontdata.size(), 16);
+			text_handle = font::load_from_memory(&fontdata[0], fontdata.size(), 16);
 			assert(text_handle.is_valid());
 
 			// create buffers for line, triangles, and font
@@ -778,11 +778,11 @@ namespace renderer
 					if (primitive->type == TYPE_TEXT)
 					{
 						size_t prev_offset = offset_index;
-						offset_index += render2::font::draw_string(text_handle, &text_vertex_cache[offset_index], primitive->buffer.c_str(), primitive->color);
+						offset_index += font::draw_string(text_handle, &text_vertex_cache[offset_index], primitive->buffer.c_str(), primitive->color);
 
 						for (size_t index = prev_offset; index < offset_index; ++index)
 						{
-							render2::font::FontVertex* vertex = &text_vertex_cache[index];
+							font::FontVertex* vertex = &text_vertex_cache[index];
 							vertex->position.x += primitive->start.x;
 							vertex->position.y += primitive->start.y;
 						}
@@ -795,11 +795,11 @@ namespace renderer
 					if (primitive->type == TYPE_TEXT)
 					{
 						size_t prev_offset = offset_index;
-						offset_index += render2::font::draw_string(text_handle, &text_vertex_cache[offset_index], primitive->buffer.c_str(), primitive->color);
+						offset_index += font::draw_string(text_handle, &text_vertex_cache[offset_index], primitive->buffer.c_str(), primitive->color);
 
 						for (size_t index = prev_offset; index < offset_index; ++index)
 						{
-							render2::font::FontVertex* vertex = &text_vertex_cache[index];
+							font::FontVertex* vertex = &text_vertex_cache[index];
 							vertex->position.x += primitive->start.x;
 							vertex->position.y += primitive->start.y;
 						}
@@ -808,7 +808,7 @@ namespace renderer
 			}
 
 			assert(total_vertices_required % 3 == 0);
-			const size_t new_vertexbuffer_size = sizeof(render2::font::FontVertex) * total_vertices_required;
+			const size_t new_vertexbuffer_size = sizeof(font::FontVertex) * total_vertices_required;
 			device->buffer_resize(text_buffer, new_vertexbuffer_size);
 			device->buffer_upload(text_buffer, &text_vertex_cache[0], new_vertexbuffer_size);
 
@@ -817,7 +817,7 @@ namespace renderer
 
 			serializer->pipeline(text_pipeline);
 			serializer->vertex_buffer(text_buffer);
-			render2::Texture* texture = render2::font::get_font_texture(text_handle);
+			render2::Texture* texture = font::get_font_texture(text_handle);
 			assert(texture);
 			serializer->texture(texture, 0);
 			serializer->draw(0, total_vertices_required);

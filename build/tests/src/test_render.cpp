@@ -66,7 +66,7 @@ class TestRender : public kernel::IKernel,
 		glm::mat4 projection_matrix;
 		unsigned int diffuse;
 
-		render2::font::Handle handle;
+		font::Handle handle;
 		platform::window::NativeWindow* native_window;
 		platform::window::NativeWindow* other_window;
 
@@ -166,12 +166,12 @@ public:
 		serializer->draw(3, 6);
 
 		// quad; font texture
-//		serializer->texture(render2::font::get_font_texture(state.handle), 0);
+//		serializer->texture(font::get_font_texture(state.handle), 0);
 //		serializer->draw(9, 6);
 
 		serializer->pipeline(state.font_pipeline);
 		serializer->vertex_buffer(state.font_buffer);
-		serializer->texture(render2::font::get_font_texture(state.handle), 0);
+		serializer->texture(font::get_font_texture(state.handle), 0);
 		serializer->draw(0, state.total_font_vertices);
 
 		// queue the buffer with our device
@@ -415,19 +415,19 @@ public:
 		// ---------------------------------------------------------------------
 		// font
 		// ---------------------------------------------------------------------
-		render2::font::startup(state.device);
+		font::startup(state.device);
 
 		Array<unsigned char> fontdata;
 		core::filesystem::instance()->virtual_load_file(fontdata, "fonts/debug.ttf");
-		state.handle = render2::font::load_from_memory(&fontdata[0], fontdata.size(), 16);
+		state.handle = font::load_from_memory(&fontdata[0], fontdata.size(), 16);
 
 		const char* text = "The quick brown fox jumps over the lazy dog.";
-		Array<render2::font::FontVertex> temp_vertices;
-		temp_vertices.resize(render2::font::count_vertices(state.handle, text));
-		render2::font::draw_string(state.handle, &temp_vertices[0], text, core::Color(1.0f, 1.0f, 1.0f));
+		Array<font::FontVertex> temp_vertices;
+		temp_vertices.resize(font::count_vertices(state.handle, text));
+		font::draw_string(state.handle, &temp_vertices[0], text, core::Color(1.0f, 1.0f, 1.0f));
 
-		render2::font::Metrics metrics;
-		render2::font::get_font_metrics(state.handle, metrics);
+		font::Metrics metrics;
+		font::get_font_metrics(state.handle, metrics);
 
 		float offset[2] = {window_frame.width/2, window_frame.height/2 + metrics.max_height};
 
@@ -436,7 +436,7 @@ public:
 		for (size_t index = 0; index < temp_vertices.size(); ++index)
 		{
 			TexturedVertex* tv = &tvf[index];
-			render2::font::FontVertex* fv = &temp_vertices[index];
+			font::FontVertex* fv = &temp_vertices[index];
 			tv->position[0] = fv->position.x + offset[0];
 			tv->position[1] = fv->position.y + offset[1];
 			tv->position[2] = 0;
@@ -552,7 +552,7 @@ public:
 
 	virtual void shutdown()
 	{
-		render2::font::shutdown();
+		font::shutdown();
 
 #if TEST_RENDER_GRAPHICS
 		if (state.checker)

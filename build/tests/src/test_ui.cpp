@@ -685,7 +685,7 @@ public:
 
 
 		// initialize fonts
-		render2::font::startup(device);
+		font::startup(device);
 
 		// initialize gui
 		setup_gui(window_frame.width, window_frame.height);
@@ -815,7 +815,7 @@ public:
 		resource_cache.clear();
 
 		// shutdown the fonts
-		render2::font::shutdown();
+		font::shutdown();
 
 		device->destroy_buffer(vertex_buffer);
 		device->destroy_pipeline(pipeline);

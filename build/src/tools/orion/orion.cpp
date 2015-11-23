@@ -599,7 +599,7 @@ public:
 //			fs->add_virtual_path("editor/assets");
 		}
 
-		render2::font::startup(device);
+		font::startup(device);
 
 #if 0
 		// load the gui
@@ -763,7 +763,7 @@ public:
 		// detect leaks.
 		resource_cache.clear();
 
-		render2::font::shutdown();
+		font::shutdown();
 
 		// shutdown the render device
 		device->destroy_buffer(vertex_buffer);

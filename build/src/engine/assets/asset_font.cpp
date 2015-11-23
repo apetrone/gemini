@@ -65,7 +65,9 @@ namespace gemini
 			if (font_data)
 			{
 //				LOGV( "font data size: %i bytes\n", font_data_size );
-				font = font::load_font_from_memory(font_data, font_data_size, point_size);
+//				font = font::load_font_from_memory(font_data, font_data_size, point_size);
+				// disabled with the move to the new font system
+				assert(0);
 			}
 			else
 			{

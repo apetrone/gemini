@@ -61,7 +61,7 @@ private:
 	glm::mat4 modelview_matrix;
 	glm::mat4 projection_matrix;
 
-	render2::font::Handle font;
+	font::Handle font;
 
 	struct MyVertex
 	{
@@ -240,11 +240,11 @@ public:
 #endif
 		}
 
-		render2::font::startup(device);
+		font::startup(device);
 
 		Array<unsigned char> data;
 		core::filesystem::instance()->virtual_load_file(data, "fonts/debug.ttf");
-		font = render2::font::load_from_memory(&data[0], data.size(), 16);
+		font = font::load_from_memory(&data[0], data.size(), 16);
 
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
 
@@ -301,7 +301,7 @@ public:
 	
 	virtual void shutdown()
 	{
-		render2::font::shutdown();
+		font::shutdown();
 
 		// shutdown the render device
 		device->destroy_buffer(vertex_buffer);

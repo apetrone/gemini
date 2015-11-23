@@ -181,7 +181,7 @@ gui::FontResult GUIRenderer::font_create(const char* path, gui::FontHandle& hand
 {
 	Array<unsigned char> fontdata;
 	core::filesystem::instance()->virtual_load_file(fontdata, path);
-	render2::font::Handle fonthandle = render2::font::load_from_memory(&fontdata[0], fontdata.size(), 16);
+	font::Handle fonthandle = font::load_from_memory(&fontdata[0], fontdata.size(), 16);
 	assert(fonthandle.is_valid());
 	handle = gui::FontHandle(fonthandle);
 	return gui::FontResult_Success;
@@ -190,15 +190,15 @@ gui::FontResult GUIRenderer::font_create(const char* path, gui::FontHandle& hand
 void GUIRenderer::font_destroy(const gui::FontHandle& handle)
 {
 	// nothing really to do in our system
-	render2::font::Handle fonthandle(handle);
+	font::Handle fonthandle(handle);
 	// TODO: implement this
-//		render2::font::destroy_font(fonthandle);
+//		font::destroy_font(fonthandle);
 }
 
 gui::FontResult GUIRenderer::font_measure_string(const gui::FontHandle& handle, const char* string, gui::Rect& bounds)
 {
 	glm::vec2 bounds_min, bounds_max;
-	render2::font::get_string_metrics(render2::font::Handle(handle), string, bounds_min, bounds_max);
+	font::get_string_metrics(font::Handle(handle), string, bounds_min, bounds_max);
 
 	bounds.set(bounds_min.x, bounds_min.y, bounds_max.x, bounds_max.y);
 	return gui::FontResult_Success;
@@ -206,8 +206,8 @@ gui::FontResult GUIRenderer::font_measure_string(const gui::FontHandle& handle, 
 
 void GUIRenderer::font_metrics(const gui::FontHandle& handle, size_t& height, int& ascender, int& descender)
 {
-	render2::font::Metrics metrics;
-	render2::font::get_font_metrics(render2::font::Handle(handle), metrics);
+	font::Metrics metrics;
+	font::get_font_metrics(font::Handle(handle), metrics);
 
 	height = metrics.height;
 	ascender = metrics.ascender;
@@ -216,16 +216,16 @@ void GUIRenderer::font_metrics(const gui::FontHandle& handle, size_t& height, in
 
 size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const core::Color& color, gui::render::Vertex* buffer, size_t buffer_size)
 {
-	render2::font::Handle font_handle(handle);
+	font::Handle font_handle(handle);
 
-	vertex_cache.resize(render2::font::count_vertices(font_handle, string));
-	render2::font::draw_string(font_handle, &vertex_cache[0], string, color);
+	vertex_cache.resize(font::count_vertices(font_handle, string));
+	font::draw_string(font_handle, &vertex_cache[0], string, color);
 
 	// todo: this seems counter-intuitive
 	// copy back to the buffer
 	for (size_t index = 0; index < vertex_cache.size(); ++index)
 	{
-		render2::font::FontVertex& v = vertex_cache[index];
+		font::FontVertex& v = vertex_cache[index];
 		gui::render::Vertex& out = buffer[index];
 		out.x = v.position.x + bounds.origin.x;
 		out.y = v.position.y + bounds.origin.y;
@@ -239,14 +239,14 @@ size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string,
 
 size_t GUIRenderer::font_count_vertices(const gui::FontHandle& handle, const char* string)
 {
-	render2::font::Handle font_handle(handle);
-	return render2::font::count_vertices(font_handle, string);
+	font::Handle font_handle(handle);
+	return font::count_vertices(font_handle, string);
 }
 
 //gui::TextureHandle GUIRenderer::font_get_texture(const gui::FontHandle& handle)
 //{
-//	render2::font::Handle font_handle(handle);
-//	render2::Texture* texture = render2::font::get_font_texture(font_handle);
+//	font::Handle font_handle(handle);
+//	render2::Texture* texture = font::get_font_texture(font_handle);
 //	assert(texture);
 //
 //

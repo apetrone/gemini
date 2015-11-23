@@ -61,8 +61,8 @@ namespace renderer
 
 			for (auto& handle : items)
 			{
-				render2::font::Handle font_handle(handle);
-				if (render2::font::get_pixel_size(font_handle) == pixel_size)
+				font::Handle font_handle(handle);
+				if (font::get_pixel_size(font_handle) == pixel_size)
 				{
 					return handle;
 				}
@@ -71,13 +71,13 @@ namespace renderer
 
 		Array<unsigned char> fontdata;
 		core::filesystem::instance()->virtual_load_file(fontdata, filename);
-		render2::font::Handle fonthandle = render2::font::load_from_memory(&fontdata[0], fontdata.size(), pixel_size);
+		font::Handle fonthandle = font::load_from_memory(&fontdata[0], fontdata.size(), pixel_size);
 		assert(fonthandle.is_valid());
 
 		gui::FontHandle handle(fonthandle);
 
 		// we need to track the texture for looking during rendering
-		render2::Texture* texture = render2::font::get_font_texture(fonthandle);
+		render2::Texture* texture = font::get_font_texture(fonthandle);
 		track_texture(texture);
 
 		// insert the new handle into the array
@@ -90,13 +90,13 @@ namespace renderer
 	void StandaloneResourceCache::destroy_font(const gui::FontHandle& handle)
 	{
 		// ignore these for now; we take care of font tracking
-	//	render2::font::Handle fonthandle(handle);
-	//	render2::font::destroy_font(fonthandle);
+	//	font::Handle fonthandle(handle);
+	//	font::destroy_font(fonthandle);
 	}
 
 	gui::TextureHandle StandaloneResourceCache::texture_for_font(const gui::FontHandle& handle)
 	{
-		render2::Texture* texture = render2::font::get_font_texture(render2::font::Handle(handle));
+		render2::Texture* texture = font::get_font_texture(font::Handle(handle));
 		if (handle_by_texture.has_key(texture))
 		{
 			return handle_by_texture[texture];
