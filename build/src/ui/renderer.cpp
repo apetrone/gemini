@@ -136,9 +136,9 @@ namespace render
 
 		// use the cross product to find a perpendicular axis
 		// to the line
-		glm::vec3 zaxis(0.0f, 0.0f, 1.0f);
-		glm::vec3 direction = glm::vec3(end.x - start.x, end.y - start.y, 0.0f);
-		glm::vec3 normalized_direction = glm::normalize(direction);
+		const glm::vec3 zaxis(0.0f, 0.0f, 1.0f);
+		const glm::vec3 direction = glm::vec3(end.x - start.x, end.y - start.y, 0.0f);
+		const glm::vec3 normalized_direction = glm::normalize(direction);
 
 		glm::vec3 perpendicular_axis = glm::cross(zaxis, normalized_direction);
 		glm::vec3 reflected_axis = -glm::reflect(glm::normalize(perpendicular_axis), normalized_direction);
