@@ -37,11 +37,6 @@ public:
 	typedef T value_type;
 	typedef T* value_pointer;
 
-	value_pointer data;
-	size_t max_capacity;
-	size_t total_elements;
-
-
 private:
 	value_pointer allocate(size_t count)
 	{
@@ -386,4 +381,11 @@ public:
 	{
 		return reverse_iterator(this, 0);
 	}
+
+	size_t get_max_capacity() const { return max_capacity; }
+
+private:
+	value_pointer data;
+	size_t max_capacity;
+	size_t total_elements;
 }; // Array
