@@ -994,6 +994,9 @@ private:
 		if ( !success )
 		{
 			PLATFORM_LOG(platform::LogMessageType::Warning, "Unable to load settings.conf! Let's hope wise defaults were chosen...\n");
+
+			// This is hit when the game content path is invalid.
+			assert(0);
 		}
 
 		return success;
@@ -1081,7 +1084,6 @@ public:
 
 	virtual ~EngineKernel()
 	{
-
 	}
 
 	virtual bool is_active() const { return active; }
@@ -1215,10 +1217,12 @@ public:
 	{
 		gui::set_allocator(gui_malloc_callback, gui_free_callback);
 
-		gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator())(resource_cache);
+		resource_cache = MEMORY_NEW(::renderer::StandaloneResourceCache, core::memory::global_allocator());
+
+		gui_renderer = MEMORY_NEW(GUIRenderer, core::memory::global_allocator())(*resource_cache);
 		gui_renderer->set_device(device);
 
-		compositor = new gui::Compositor(width, height, &resource_cache, gui_renderer);
+		compositor = new gui::Compositor(width, height, resource_cache, gui_renderer);
 		_compositor = compositor;
 
 
@@ -1697,7 +1701,7 @@ Options:
 
 		// we need to explicitly shut this down so it cleans up before
 		// our memory detects any leaks.
-		resource_cache.clear();
+		MEMORY_DELETE(resource_cache, core::memory::global_allocator());
 
 		render2::font::shutdown();
 
