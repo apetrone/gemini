@@ -72,13 +72,15 @@ class TestRender : public kernel::IKernel,
 
 		render2::Device* device;
 
-		render2::Pipeline* pipeline; // pipeline for untextured geometry
-		render2::Pipeline* texture_pipeline; // pipeline for textured geometry
-		render2::Pipeline* font_pipeline; // pipeline for font rendering
+		render2::Pipeline* pipeline; 			// pipeline for untextured geometry
+		render2::Pipeline* texture_pipeline; 	// pipeline for textured geometry
+		render2::Pipeline* font_pipeline; 		// pipeline for font rendering
+		render2::Pipeline* line_pipeline; 		// pipeline for rendering lines
 
 		render2::Buffer* vertex_buffer;
 		render2::Buffer* textured_buffer;
 		render2::Buffer* font_buffer;
+		render2::Buffer* line_buffer;
 
 		render2::Texture* checker;
 		render2::Texture* notexture;
@@ -175,6 +177,11 @@ public:
 		// queue the buffer with our device
 		state.device->destroy_serializer(serializer);
 		state.device->queue_buffers(queue, 1);
+
+		// horizontal line test
+		serializer->pipeline(state.line_pipeline);
+		serializer->vertex_buffer(state.line_buffer);
+		serializer->draw(0, 4);
 
 		// submit the queues to the GPU
 		platform::window::activate_context(state.native_window);
@@ -284,6 +291,7 @@ public:
 		desc.vertex_description.add("in_position", render2::VD_FLOAT, 3); // position
 		desc.vertex_description.add("in_color", render2::VD_FLOAT, 4); // color
 		desc.input_layout = state.device->create_input_layout(desc.vertex_description, desc.shader);
+		desc.primitive_type = render2::PrimitiveType::Triangles;
 		state.pipeline = state.device->create_pipeline(desc);
 
 		// create a vertex buffer and populate it with data
@@ -321,6 +329,15 @@ public:
 		fd.input_layout = state.device->create_input_layout(td.vertex_description, fd.shader);
 		state.font_pipeline = state.device->create_pipeline(fd);
 
+		// setu line pipeline
+		render2::PipelineDescriptor ld;
+		ld.shader = state.device->create_shader("lines");
+		ld.vertex_description.add("in_position", render2::VD_FLOAT, 3);
+		ld.vertex_description.add("in_color", render2::VD_FLOAT, 4);
+		ld.input_layout = state.device->create_input_layout(ld.vertex_description, ld.shader);
+		ld.primitive_type = render2::PrimitiveType::Lines;
+		state.line_pipeline = state.device->create_pipeline(ld);
+
 		// setup texture vertex buffer
 		const size_t TOTAL_TEXTURED_VERTICES = 15;
 		total_bytes = sizeof(TexturedVertex) * TOTAL_TEXTURED_VERTICES;
@@ -346,9 +363,16 @@ public:
 		state.font_pipeline->constants().set("projection_matrix", &state.projection_matrix);
 		state.font_pipeline->constants().set("diffuse", &state.diffuse);
 
+		state.line_pipeline->constants().set("modelview_matrix", &state.modelview_matrix);
+		state.line_pipeline->constants().set("projection_matrix", &state.projection_matrix);
+
 //		platform::window::show_cursor(true);
 		const size_t TOTAL_FONT_VERTICES = 1024;
 		state.font_buffer = state.device->create_vertex_buffer(sizeof(TexturedVertex) * TOTAL_FONT_VERTICES);
+
+
+		const size_t TOTAL_LINE_VERTICES = 4;
+		state.line_buffer = state.device->create_vertex_buffer(sizeof(MyVertex) * TOTAL_LINE_VERTICES);
 #endif
 
 
@@ -397,8 +421,10 @@ public:
 		core::filesystem::instance()->virtual_load_file(fontdata, "fonts/debug.ttf");
 		state.handle = render2::font::load_from_memory(&fontdata[0], fontdata.size(), 16);
 
+		const char* text = "The quick brown fox jumps over the lazy dog.";
 		Array<render2::font::FontVertex> temp_vertices;
-		render2::font::draw_string(state.handle, temp_vertices, "The quick brown fox jumps over the lazy dog.", core::Color(255, 255, 255));
+		temp_vertices.resize(render2::font::count_vertices(state.handle, text));
+		render2::font::draw_string(state.handle, &temp_vertices[0], text, core::Color(1.0f, 1.0f, 1.0f));
 
 		render2::font::Metrics metrics;
 		render2::font::get_font_metrics(state.handle, metrics);
@@ -425,6 +451,28 @@ public:
 		assert(state.handle.is_valid());
 
 
+		// ---------------------------------------------------------------------
+		// line buffer
+		// ---------------------------------------------------------------------
+		const float h_width = (width/2.0f);
+		const float h_height = (height/2.0f);
+		MyVertex lines[TOTAL_LINE_VERTICES];
+
+		// horizontal red line
+		lines[0].color = core::Color(1.0f, 0.0f, 0.0f, 1.0f);
+		lines[0].set_position(h_width + 8, h_height + 32, 0);
+		lines[1].color = core::Color(1.0f, 0.0f, 0.0f, 1.0f);
+		lines[1].set_position(width - 8, h_height + 32, 0.0f);
+
+		// vertical green line
+		lines[2].color = core::Color(0.0f, 1.0f, 0.0f, 1.0f);
+		lines[2].set_position(h_width + 8, h_height + 32, 0.0f);
+		lines[3].color = core::Color(0.0f, 1.0f, 0.0f, 1.0f);
+		lines[3].set_position(h_width + 8, height - 8, 0.0f);
+
+		state.device->buffer_upload(state.line_buffer, &lines, sizeof(MyVertex) * TOTAL_LINE_VERTICES);
+
+		// additional setup
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
 
 		render_callbacks.push_back(render_stage1);
@@ -517,10 +565,12 @@ public:
 		state.device->destroy_pipeline(state.pipeline);
 		state.device->destroy_pipeline(state.texture_pipeline);
 		state.device->destroy_pipeline(state.font_pipeline);
+		state.device->destroy_pipeline(state.line_pipeline);
 
 		state.device->destroy_buffer(state.vertex_buffer);
 		state.device->destroy_buffer(state.textured_buffer);
 		state.device->destroy_buffer(state.font_buffer);
+		state.device->destroy_buffer(state.line_buffer);
 
 		render2::destroy_device(state.device);
 
