@@ -630,7 +630,6 @@ def get_librenderer(arguments, target_platform, libruntime):
 		"src/renderer/gl",
 
 		os.path.join(DEPENDENCIES_FOLDER, "stb"),
-		os.path.join(DEPENDENCIES_FOLDER, "fontstash/src"),
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp")
 	]
 

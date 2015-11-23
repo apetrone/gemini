@@ -29,26 +29,20 @@
 #include <core/mathlib.h>
 #include <core/color.h>
 
-namespace font
-{
-	typedef int Handle;
-}
 
 namespace render2
 {
 	class Device;
 
-	namespace font
-	{
-		struct Handle;
-	} // namespace font
 } // namespace render2
+
+namespace font
+{
+	struct Handle;
+} // namespace font
 
 namespace renderer
 {
-	struct Font;
-	struct ShaderProgram;
-
 	namespace debugdraw
 	{
 		void startup(render2::Device* render_device);

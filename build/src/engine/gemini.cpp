@@ -772,7 +772,6 @@ class EngineInterface : public IEngineInterface
 	core::memory::GlobalAllocatorType game_allocator;
 	SceneLink& scenelink;
 
-	render2::Device* device;
 public:
 
 	EngineInterface(IEntityManager* em,
@@ -780,8 +779,7 @@ public:
 					gemini::physics::IPhysicsInterface* pi,
 					IExperimental* ei,
 					SceneLink& scene_link,
-					platform::window::NativeWindow* window,
-					render2::Device* render_device)
+					platform::window::NativeWindow* window)
 		: entity_manager(em)
 		, model_interface(mi)
 		, physics_interface(pi)
@@ -790,7 +788,6 @@ public:
 		, game_memory_zone("game")
 		, game_allocator(&game_memory_zone)
 		, scenelink(scene_link)
-		, device(render_device)
 	{
 	}
 
@@ -985,7 +982,7 @@ private:
 	::renderer::StandaloneResourceCache* resource_cache;
 
 	// used by debug draw
-	render2::font::Handle debug_font;
+	font::Handle debug_font;
 
 private:
 	bool load_config(Settings& config)
@@ -1433,7 +1430,7 @@ Options:
 
 			assets::startup();
 
-			render2::font::startup(device);
+			font::startup(device);
 
 			::renderer::debugdraw::startup(device);
 			DebugDrawInterface* debug_draw = MEMORY_NEW(DebugDrawInterface, core::memory::global_allocator());
@@ -1471,8 +1468,7 @@ Options:
 			physics::instance(),
 			&experimental,
 			*scenelink,
-			main_window,
-			device
+			main_window
 		);
 		gemini::engine::set_instance(engine_interface);
 		platform::window::show_cursor(true);
@@ -1703,7 +1699,7 @@ Options:
 		// our memory detects any leaks.
 		MEMORY_DELETE(resource_cache, core::memory::global_allocator());
 
-		render2::font::shutdown();
+		font::shutdown();
 
 		platform::window::shutdown();
 

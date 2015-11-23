@@ -125,5 +125,5 @@ private:
 	unsigned int diffuse_texture;
 
 	CommonResourceCache& resource_cache;
-	Array<render2::font::FontVertex> vertex_cache;
+	Array<font::FontVertex> vertex_cache;
 }; // GUIRenderer
