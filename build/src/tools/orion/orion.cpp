@@ -23,7 +23,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 
-#include <renderer/debug_draw.h>
 #include <renderer/renderer.h>
 #include <renderer/font.h>
 #include <renderer/guirenderer.h>
@@ -31,6 +30,7 @@
 
 #include <runtime/core.h>
 #include <runtime/logging.h>
+#include <runtime/filesystem.h>
 
 #include <platform/platform.h>
 #include <platform/window.h>
@@ -41,12 +41,12 @@
 #include <core/stackstring.h>
 #include <core/fixedarray.h>
 
-#include <runtime/filesystem.h>
-
 #include <ui/ui.h>
 #include <ui/compositor.h>
 #include <ui/graph.h>
 #include <ui/button.h>
+
+
 
 
 using namespace platform;
@@ -654,14 +654,12 @@ public:
 			surface->set_texture_handle(handle);
 #endif
 
-
 			log_window = new gui::Label(compositor);
 			log_window->set_origin(0.0f, 0.0f);
 			log_window->set_dimensions(1.0f, 0.25f);
 			log_window->set_font("fonts/debug.ttf", 16);
-
-
 			log_window->set_text("log initialized.");
+
 			// install a log handler
 		}
 #endif

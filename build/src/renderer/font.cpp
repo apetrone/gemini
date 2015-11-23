@@ -820,13 +820,21 @@ namespace render2
 			return 0;
 		}
 
+		size_t count_characters(Handle handle, const char* utf8)
+		{
+			return core::str::len(utf8);
+		}
 
+		size_t count_vertices(Handle handle, const char* utf8)
+		{
+			return 6 * count_characters(handle, utf8);
+		}
 
-		void draw_string(Handle handle, Array<FontVertex>& vertices, const char* utf8, const core::Color& color)
+		size_t draw_string(Handle handle, FontVertex* vertices, const char* utf8, const core::Color& color)
 		{
 			// font handle is invalid; nothing to do
 			if (!handle.is_valid())
-				return;
+				return 0;
 
 			FontData* data = detail::_fonts[handle.ref];
 
@@ -835,13 +843,10 @@ namespace render2
 			FontVertex* vertex;
 
 			// this is treated as ANSI for now.
-			size_t length = core::str::len(utf8);
-
-			// we need length * 2 triangles
-			vertices.resize(length * 6);
+			size_t total_characters = count_characters(handle, utf8);
 
 			uint32_t previous_codepoint = 0;
-			for (size_t index = 0; index < length; ++index)
+			for (size_t index = 0; index < total_characters; ++index)
 			{
 				uint32_t codepoint = utf8[index];
 
@@ -905,6 +910,8 @@ namespace render2
 				pen.x += gd.advancex;
 				previous_codepoint = gd.index;
 			}
+
+			return total_characters * 6;
 		}
 
 		render2::Texture* get_font_texture(Handle handle)

@@ -127,6 +127,7 @@ namespace render2
 		bool enable_blending;
 		GLenum blend_source;
 		GLenum blend_destination;
+		GLenum draw_type;
 
 		GLPipeline(const PipelineDescriptor& descriptor);
 		virtual ~GLPipeline();

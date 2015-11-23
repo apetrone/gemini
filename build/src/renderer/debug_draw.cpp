@@ -28,10 +28,14 @@
 #include <renderer/renderstream.h>
 #include <renderer/font.h>
 
+#include <runtime/filesystem.h>
+
 namespace renderer
 {
 	namespace debugdraw
 	{
+		const size_t DEBUGDRAW_PERSISTENT_PRIMITIVE_MAX = 16;
+
 		// if you modify this, you must also update the buffer_primitive_table.
 		enum
 		{
@@ -67,45 +71,192 @@ namespace renderer
 		{
 			glm::vec3 position;
 			core::Color color;
+
+			void set_position(float x, float y, float z)
+			{
+				position.x = x;
+				position.y = y;
+				position.z = z;
+			}
 		}; // DebugDrawVertex
 
-		DebugPrimitive::DebugPrimitive()
+		struct TexturedVertex : public DebugDrawVertex
 		{
-			timeleft = 0;
-			flags = 0;
-			type = 0;
+			glm::vec2 uv;
+
+			void set_uv(float u, float v)
+			{
+				uv.s = u;
+				uv.t = v;
+			}
+		}; // TexturedVertex
+
+		DebugPrimitive::DebugPrimitive()
+			: type(0)
+			, flags(0)
+			, timeleft(0.0f)
+			, radius(0.0f)
+			, start(glm::vec3(0.0f, 0.0f, 0.0f))
+			, end(glm::vec3(0.0f, 0.0f, 0.0f))
+			, alt(glm::vec3(0.0f, 0.0f, 0.0f))
+			, color(core::Color())
+			, buffer("")
+			, transform(glm::mat4(1.0f))
+		{
 		} // DebugPrimitive
 
+
+		namespace detail
+		{
+			template <class T>
+			class VertexAccessor
+			{
+			public:
+				VertexAccessor(Array<T>& vertices) :
+					vertex_cache(vertices),
+					current_index(0)
+				{
+				}
+
+				T* request(size_t vertices)
+				{
+					// determine if we can accomodate <vertices>
+					if (current_index + vertices <= vertex_cache.size())
+					{
+						T* vertex = &vertex_cache[current_index];
+						current_index += vertices;
+						return vertex;
+					}
+
+					// If you hit this assert, there's no more room in the
+					// vertex cache for vertices!
+					assert(0);
+					return nullptr;
+				}
+
+			private:
+				Array<T>& vertex_cache;
+				size_t current_index;
+			};
+
+
+			// The primitive cache keeps two arrays of primitives
+			// Per-frame primitives: These are only kept active for a single
+			// frame. This array is unbounded and grows to fill the need.
+			// This can be used for debugging axes that move every frame
+			// or text that changes frequently.
+
+			// Persistent primitives: These survive for multiple frames,
+			// but there are a limited number of these.
+
+			class PrimitiveCache
+			{
+			public:
+				PrimitiveCache()
+					: next_primitive(0)
+				{
+					persistent_primitives.resize(
+						DEBUGDRAW_PERSISTENT_PRIMITIVE_MAX);
+				}
+
+				~PrimitiveCache()
+				{
+					per_frame_primitives.clear();
+					persistent_primitives.clear();
+				}
+
+				debugdraw::DebugPrimitive* request(bool persistent = false)
+				{
+					if (!persistent)
+					{
+						DebugPrimitive new_primitive;
+						per_frame_primitives.push_back(new_primitive);
+						return &per_frame_primitives.back();
+					}
+
+					// wrap this around
+					if (next_primitive > DEBUGDRAW_PERSISTENT_PRIMITIVE_MAX)
+					{
+						next_primitive = 0;
+					}
+
+					return &persistent_primitives[ next_primitive++ ];
+				}
+
+				void update(float delta_msec)
+				{
+					// run an update for each active primitive
+					for(size_t index = 0; index < persistent_primitives.size(); ++index)
+					{
+						DebugPrimitive* primitive = &persistent_primitives[index];
+						// if timeleft has expired, reset it and disable the primitive by
+						// setting an invalid type
+						if (primitive->timeleft < 0)
+						{
+							primitive->timeleft = -1;
+							primitive->type = 0;
+						}
+
+						if (primitive->timeleft >= 0)
+						{
+							// timeleft has a value, subtract deltatime
+							primitive->timeleft -= delta_msec;
+						}
+					}
+				}
+
+				// called at the end of a frame
+				void reset()
+				{
+					// reset all of these for the next frame
+					for (size_t index = 0; index < per_frame_primitives.size(); ++index)
+					{
+						per_frame_primitives[index] = DebugPrimitive();
+					}
+
+					per_frame_primitives.clear(false);
+				}
+
+				Array<DebugPrimitive>& get_per_frame_primitives() { return per_frame_primitives; }
+				Array<DebugPrimitive>& get_persistent_primitives() { return persistent_primitives; }
+
+			private:
+				size_t next_primitive;
+
+				Array<DebugPrimitive> per_frame_primitives;
+				Array<DebugPrimitive> persistent_primitives;
+			};
+		}
 
 
 		const int MAX_CIRCLE_SIDES = 12;
 		const int TOTAL_CIRCLE_VERTICES = 2 * MAX_CIRCLE_SIDES;
-		::renderer::VertexStream vertex_stream;
-		::renderer::VertexStream triangle_stream;
-		unsigned int next_primitive;
-		unsigned int max_primitives;
-		debugdraw::DebugPrimitive* primitive_list;
-		font::Handle debug_font;
-		renderer::ShaderProgram* debug_shader;
 
-		debugdraw::DebugPrimitive* request_primitive()
-		{
-			// If you hit this, debugdraw was not initialized!
-			assert( max_primitives != 0 );
+		detail::PrimitiveCache* line_list = nullptr;
+		detail::PrimitiveCache* tris_list = nullptr;
+		detail::PrimitiveCache* text_list = nullptr;
 
-			return &primitive_list[ next_primitive++ % max_primitives ];
-		} // request_primitive
+		render2::Device* device = nullptr;
 
-		void flush_streams(RenderStream& rs, VertexStream* vs)
-		{
-			long offset;
-			rs.save_offset(offset);
-			vs->update();
-			rs.add_draw_call(vs->vertexbuffer);
-			rs.run_commands();
-			rs.load_offset(offset);
-			vs->reset();
-		} // flush_streams
+		render2::Pipeline* line_pipeline = nullptr;
+		render2::Buffer* line_buffer = nullptr;
+		Array<DebugDrawVertex> line_vertex_cache;
+
+		render2::Pipeline* tris_pipeline = nullptr;
+		render2::Buffer* tris_buffer = nullptr;
+		Array<TexturedVertex> tris_vertex_cache;
+		render2::Texture* white_texture = nullptr;
+
+		render2::Pipeline* text_pipeline = nullptr;
+		render2::Buffer* text_buffer = nullptr;
+		Array<render2::font::FontVertex> text_vertex_cache;
+
+		render2::font::Handle text_handle;
+		glm::mat4 orthographic_projection;
+
+		// this needs to be persistent due to the way
+		// values are stored in the constant maps
+		int diffuse_texture_unit = 0;
 
 		// PLANE = 0: (XY plane)
 		// PLANE = 1: (XZ plane)
@@ -161,23 +312,20 @@ namespace renderer
 			}
 		} // generate_circle
 
+		// should return the number of vertices used
+		typedef void (*buffer_primitive_fn)(DebugPrimitive* primitive, detail::VertexAccessor<DebugDrawVertex>& access);
 
-		typedef void (*buffer_primitive_fn)(RenderStream& rs, DebugPrimitive* primitive, VertexStream* vs, VertexStream* tri);
-
-		void buffer_box(RenderStream& rs, DebugPrimitive* primitive, VertexStream* vs, VertexStream* tri)
+		void buffer_box(DebugPrimitive* primitive, detail::VertexAccessor<DebugDrawVertex>& access)
 		{
-			if ( !vs->has_room(24, 0) )
-			{
-				flush_streams( rs, vs );
-			}
+			const size_t vertex_count = 24;
+			DebugDrawVertex* vertices = access.request(vertex_count);
 
 			glm::vec3 mins = primitive->start;
 			glm::vec3 maxs = primitive->end;
 
-			DebugDrawVertex* vertices = (DebugDrawVertex*)vs->request(24);
-			for( int i = 0; i < 24; ++i )
+			for(size_t index = 0; index < vertex_count; ++index)
 			{
-				vertices[i].color = primitive->color;
+				vertices[index].color = primitive->color;
 			}
 
 			// -Z face
@@ -217,52 +365,49 @@ namespace renderer
 			vertices[23].position = glm::vec3( mins[0], maxs[1], maxs[2] );
 		} // buffer_box
 
-		void buffer_line(RenderStream& rs, DebugPrimitive* primitive, renderer::VertexStream* vs, VertexStream* tri)
+		void buffer_line(DebugPrimitive* primitive, detail::VertexAccessor<DebugDrawVertex>& access)
 		{
-			if ( !vs->has_room(2, 0) )
-			{
-				flush_streams( rs, vs );
-			}
-
-			DebugDrawVertex * vertices = (DebugDrawVertex*)vs->request(2);
+			const size_t vertex_count = 2;
+			DebugDrawVertex* vertices = access.request(vertex_count);
 			vertices[0].color = primitive->color;
 			vertices[0].position = primitive->start;
 			vertices[1].color = primitive->color;
 			vertices[1].position = primitive->end;
 		} // buffer_line
 
-		void buffer_axes(RenderStream& rs, DebugPrimitive* primitive, renderer::VertexStream* vs, VertexStream* tri)
+		void buffer_axes(DebugPrimitive* primitive, detail::VertexAccessor<DebugDrawVertex>& access)
 		{
-			if ( !vs->has_room(6, 0) )
-			{
-				flush_streams( rs, vs );
-			}
+			const size_t vertex_count = 6;
+			DebugDrawVertex* vertices = access.request(vertex_count);
+
+			const core::Color X_AXIS_COLOR(1.0f, 0.0f, 0.0f);
+			const core::Color Y_AXIS_COLOR(0.0f, 1.0f, 0.0f);
+			const core::Color Z_AXIS_COLOR(0.0f, 0.0f, 1.0f);
 
 			glm::vec3 right = glm::vec3(primitive->transform * glm::vec4(primitive->radius, 0.0f, 0.0f, 1.0f));
-			DebugDrawVertex * vertices = (DebugDrawVertex*)vs->request(6);
 			vertices[0].position = primitive->start;
 			vertices[1].position = right;
-			vertices[0].color = vertices[1].color = core::Color( 255, 0, 0 );
+			vertices[0].color = X_AXIS_COLOR;
+			vertices[1].color = X_AXIS_COLOR;
 
 			glm::vec3 up = glm::vec3(primitive->transform * glm::vec4(0.0f, primitive->radius, 0.0f, 1.0f));
 			vertices[2].position = primitive->start;
 			vertices[3].position = up;
-			vertices[2].color = vertices[3].color = core::Color( 0, 255, 0 );
+			vertices[2].color = Y_AXIS_COLOR;
+			vertices[3].color = Y_AXIS_COLOR;
 
 			glm::vec3 view = glm::vec3(primitive->transform * glm::vec4(0.0f, 0.0f, primitive->radius, 1.0f));
 			vertices[4].position = primitive->start;
 			vertices[5].position = view;
-			vertices[4].color = vertices[5].color = core::Color( 0, 0, 255 );
+			vertices[4].color = Z_AXIS_COLOR;
+			vertices[5].color = Z_AXIS_COLOR;
 		} // buffer_axes
 
-		void buffer_sphere(RenderStream& rs, DebugPrimitive* primitive, renderer::VertexStream* vs, VertexStream* tri)
+		void buffer_sphere(DebugPrimitive* primitive, detail::VertexAccessor<DebugDrawVertex>& access)
 		{
-			if ( !vs->has_room(TOTAL_CIRCLE_VERTICES*3, 0) )
-			{
-				flush_streams( rs, vs );
-			}
+			const size_t vertex_count = (TOTAL_CIRCLE_VERTICES * 3);
+			DebugDrawVertex* vertices = access.request(vertex_count);
 
-			DebugDrawVertex * vertices = (DebugDrawVertex*)vs->request( TOTAL_CIRCLE_VERTICES*3 );
 			glm::vec3 vlist[ TOTAL_CIRCLE_VERTICES ];
 
 			// XY plane
@@ -293,301 +438,528 @@ namespace renderer
 			}
 		} // buffer_sphere
 
-		void render_text(RenderStream& rs, DebugPrimitive* primitive, renderer::VertexStream* vs, VertexStream* tri)
+		void buffer_triangle(DebugPrimitive* primitive, detail::VertexAccessor<TexturedVertex>& access)
 		{
-			// This doesn't place the text into a buffer like the other primitives.
-			// however, it is deferred to make everything render in order.
-
-			font::draw_string(debug_font, primitive->start.x, primitive->start.y, primitive->buffer.c_str(), primitive->color);
-		} // render_text
-
-
-		void buffer_triangle(RenderStream& rs, DebugPrimitive* primitive, renderer::VertexStream* vs, VertexStream* tri)
-		{
-			if (!tri->has_room(3, 0))
-			{
-				flush_streams(rs, vs);
-			}
-
-			DebugDrawVertex* vertices = (DebugDrawVertex*)tri->request(3);
+			const size_t vertex_count = 3;
+			TexturedVertex* vertices = access.request(vertex_count);
 			vertices[0].position = primitive->start;
-			vertices[1].position = primitive->end;
-			vertices[2].position = primitive->alt;
-			vertices[0].color = vertices[1].color = vertices[2].color = primitive->color;
+			vertices[0].set_uv(0, 0);
 
+			vertices[1].position = primitive->end;
+			vertices[1].set_uv(1.0, 0.0f);
+
+			vertices[2].position = primitive->alt;
+			vertices[2].set_uv(1.0f, 1.0f);
+
+			vertices[0].color = primitive->color;
+			vertices[1].color = primitive->color;
+			vertices[2].color = primitive->color;
 		} // buffer_triangle
 
-
-
-
-
-		void startup(unsigned int in_max_primitives, renderer::ShaderProgram* program, const font::Handle& font)
+		void startup(render2::Device* render_device)
 		{
-			next_primitive = 0;
-			debug_shader = 0;
-			max_primitives = in_max_primitives;
-			primitive_list = MEMORY_NEW_ARRAY(DebugPrimitive, max_primitives, core::memory::global_allocator());
+			line_list = MEMORY_NEW(detail::PrimitiveCache, core::memory::global_allocator());
+			tris_list = MEMORY_NEW(detail::PrimitiveCache, core::memory::global_allocator());
+			text_list = MEMORY_NEW(detail::PrimitiveCache, core::memory::global_allocator());
 
-			// cache the shader we'll use
+			device = render_device;
 
-			// setup the vertex stream
-			vertex_stream.desc.add(renderer::VD_FLOAT3);
-			vertex_stream.desc.add(renderer::VD_UNSIGNED_BYTE4);
-			vertex_stream.create(4 * max_primitives, 0, renderer::DRAW_LINES, renderer::BUFFER_DYNAMIC);
+			Array<unsigned char> fontdata;
+			core::filesystem::instance()->virtual_load_file(fontdata, "fonts/debug.ttf");
+			text_handle = render2::font::load_from_memory(&fontdata[0], fontdata.size(), 16);
+			assert(text_handle.is_valid());
 
-			triangle_stream.desc.add(renderer::VD_FLOAT3);
-			triangle_stream.desc.add(renderer::VD_UNSIGNED_BYTE4);
-			triangle_stream.create(4 * max_primitives, 0, renderer::DRAW_TRIANGLES, renderer::BUFFER_DYNAMIC);
+			// create buffers for line, triangles, and font
+			line_buffer = device->create_vertex_buffer(0);
+			tris_buffer = device->create_vertex_buffer(0);
+			text_buffer = device->create_vertex_buffer(0);
 
-			// the debug font we'll use
-			debug_font = font;
+			// line pipeline
+			{
+				render2::PipelineDescriptor descriptor;
+				descriptor.shader = device->create_shader("debug");
+				descriptor.vertex_description.add("in_position", render2::VD_FLOAT, 3);
+				descriptor.vertex_description.add("in_color", render2::VD_FLOAT, 4);
+				descriptor.input_layout = device->create_input_layout(descriptor.vertex_description, descriptor.shader);
+				descriptor.enable_blending = true;
+				descriptor.blend_source = render2::BlendOp::SourceAlpha;
+				descriptor.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
+				descriptor.primitive_type = render2::PrimitiveType::Lines;
+				line_pipeline = device->create_pipeline(descriptor);
+			}
 
-			// debug shader
-			debug_shader = program;
-			assert(debug_shader != 0);
+			// triangle pipeline
+			{
+				render2::PipelineDescriptor descriptor;
+				descriptor.shader = device->create_shader("vertexcolortexture");
+				descriptor.vertex_description.add("in_position", render2::VD_FLOAT, 3);
+				descriptor.vertex_description.add("in_color", render2::VD_FLOAT, 4);
+				descriptor.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
+				descriptor.input_layout = device->create_input_layout(descriptor.vertex_description, descriptor.shader);
+				descriptor.enable_blending = true;
+				descriptor.blend_source = render2::BlendOp::SourceAlpha;
+				descriptor.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
+				descriptor.primitive_type = render2::PrimitiveType::Triangles;
+				tris_pipeline = device->create_pipeline(descriptor);
+
+				render2::Image white_image;
+				white_image.create(4, 4, 3);
+				white_image.filter = image::FILTER_NONE;
+				white_image.flags = image::F_CLAMP_BORDER;
+				white_image.fill(core::Color());
+				white_texture = device->create_texture(white_image);
+			}
+
+			// font pipeline
+			{
+				render2::PipelineDescriptor descriptor;
+				descriptor.shader = device->create_shader("font");
+				descriptor.vertex_description.add("in_position", render2::VD_FLOAT, 2);
+				descriptor.vertex_description.add("in_color", render2::VD_FLOAT, 4);
+				descriptor.vertex_description.add("in_uv", render2::VD_FLOAT, 2);
+				descriptor.input_layout = device->create_input_layout(descriptor.vertex_description, descriptor.shader);
+				descriptor.enable_blending = true;
+				descriptor.blend_source = render2::BlendOp::SourceAlpha;
+				descriptor.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
+				descriptor.primitive_type = render2::PrimitiveType::Triangles;
+				text_pipeline = device->create_pipeline(descriptor);
+			}
 		}
 
 		void shutdown()
 		{
-			MEMORY_DELETE_ARRAY(primitive_list, core::memory::global_allocator());
-			max_primitives = 0;
-			next_primitive = 0;
-			vertex_stream.destroy();
-			triangle_stream.destroy();
+			device->destroy_texture(white_texture);
+
+			device->destroy_buffer(line_buffer);
+			device->destroy_buffer(tris_buffer);
+			device->destroy_buffer(text_buffer);
+
+			device->destroy_pipeline(line_pipeline);
+			device->destroy_pipeline(tris_pipeline);
+			device->destroy_pipeline(text_pipeline);
+
+			device = nullptr;
+
+			line_vertex_cache.clear();
+			tris_vertex_cache.clear();
+			text_vertex_cache.clear();
+
+			MEMORY_DELETE(line_list, core::memory::global_allocator());
+			MEMORY_DELETE(tris_list, core::memory::global_allocator());
+			MEMORY_DELETE(text_list, core::memory::global_allocator());
 		}
 
 		void update(float delta_msec)
 		{
-			// run an update for each primitive
-			for( unsigned int i = 0; i < max_primitives; ++i )
-			{
-				// if timeleft has expired, reset it and disable the primitive by
-				// setting an invalid type
-				if (primitive_list[i].timeleft < 0)
-				{
-					primitive_list[i].timeleft = -1;
-					primitive_list[i].type = 0;
-				}
-
-				if (primitive_list[i].timeleft >= 0)
-				{
-					// timeleft has a value, subtract deltatime
-					primitive_list[i].timeleft -= delta_msec;
-				}
-			}
+			line_list->update(delta_msec);
+			tris_list->update(delta_msec);
+			text_list->update(delta_msec);
 		}
 
-		void render(const glm::mat4& modelview, const glm::mat4& projection, int x, int y, int viewport_width, int viewport_height)
+		void draw_lines(const render2::Pass& pass)
 		{
-			glm::mat4 object;
-			RenderStream rs;
-			rs.add_viewport( x, y, viewport_width, viewport_height );
-			rs.add_state( renderer::STATE_DEPTH_TEST, 0 );
-			rs.add_state(renderer::STATE_BLEND, 1);
-			rs.add_blendfunc(renderer::BLEND_SRC_ALPHA, renderer::BLEND_ONE_MINUS_SRC_ALPHA);
-
-			rs.add_shader(debug_shader);
-			rs.add_uniform_matrix4(debug_shader->get_uniform_location("modelview_matrix"), &modelview);
-			rs.add_uniform_matrix4(debug_shader->get_uniform_location("projection_matrix"), &projection);
-			//rs.run_commands();
-			//rs.rewind();
-
-			DebugPrimitive* primitive = 0;
-
-			renderer::VertexStream* vs = &vertex_stream;
-
-			vs->reset();
-			triangle_stream.reset();
-
 			buffer_primitive_fn buffer_primitive_table[] =
 			{
 				0,
 				buffer_box,
 				buffer_line,
 				buffer_axes,
-				buffer_sphere,
-				render_text,
-				buffer_triangle
+				buffer_sphere
 			};
 
-			for( unsigned int i = 0; i < max_primitives; ++i )
+			size_t primitive_sizes[] =
 			{
-				primitive = &primitive_list[i];
-				if ( primitive->type != 0 )
+				24,
+				2,
+				6,
+				(TOTAL_CIRCLE_VERTICES * 3)
+			};
+
+			memset(
+				&line_vertex_cache[0],
+				0,
+				sizeof(DebugDrawVertex) * line_vertex_cache.size());
+
+			// step 1: tally up the total vertex cache size we'll need
+			size_t total_vertices_required = 0;
+
+			// persistent primitives; if any exist
+			Array<DebugPrimitive>& persistent_primitives = line_list->get_persistent_primitives();
+			for (size_t index = 0; index < persistent_primitives.size(); ++index)
+			{
+				DebugPrimitive* primitive = &persistent_primitives[index];
+				if (primitive->type != 0)
 				{
-					buffer_primitive_table[ primitive->type ](rs, primitive, vs, &triangle_stream);
+					total_vertices_required += primitive_sizes[primitive->type];
 				}
 			}
 
-			vs->update();
-
-			triangle_stream.update();
-
-			rs.add_draw_call( vs->vertexbuffer );
-			rs.add_draw_call( triangle_stream.vertexbuffer );
-			rs.add_state( renderer::STATE_DEPTH_TEST, 1 );
-			rs.add_state(renderer::STATE_BLEND, 0);
-			rs.run_commands();
-
-
-#if 0
-			// on startup; create this descriptor
-
-			struct DebugDrawConstantBuffer : public renderer::ConstantBuffer
+			// per frame primitives
+			Array<DebugPrimitive>& per_frame_primitives = line_list->get_per_frame_primitives();
+			for(size_t index = 0; index < per_frame_primitives.size(); ++index)
 			{
-				DebugDrawConstantBuffer(renderer::ShaderProgram* program) : renderer::ConstantBuffer(program) {}
+				DebugPrimitive* primitive = &per_frame_primitives[index];
+				if (primitive->type != 0)
+				{
+					total_vertices_required += primitive_sizes[primitive->type];
+				}
+			}
 
-				const glm::mat4* modelview_matrix;
-				const glm::mat4* projection_matrix;
-			};
+			if (total_vertices_required > 0)
+			{
+				// step 2: resize the vertex cache
+				line_vertex_cache.resize(total_vertices_required);
 
-			renderer::IRenderDriver* driver = renderer::driver();
+				// and the vertex buffer
+				device->buffer_resize(line_buffer, sizeof(DebugDrawVertex) * total_vertices_required);
 
-			renderer::ShaderProgram* program = 0;
-			//assets::Shader* shader = assets::shaders()->load_from_path("shaders/debug");
+				detail::VertexAccessor<DebugDrawVertex> accessor(line_vertex_cache);
 
-			DebugDrawConstantBuffer cbo(program);
-			cbo.add_uniform_matrix4("modelview_matrix", cbo.modelview_matrix);
-			cbo.add_uniform_matrix4("projection_matrix", cbo.projection_matrix);
+				// step 3: build the vertex cache
+				// persistent primitives
+				for (size_t index = 0; index < persistent_primitives.size(); ++index)
+				{
+					DebugPrimitive* primitive = &persistent_primitives[index];
+					if (primitive->type != 0 && primitive->type <= TYPE_SPHERE)
+					{
+						buffer_primitive_table[primitive->type](primitive,
+							accessor);
+					}
+				}
 
-			renderer::PipelineDescriptor desc;
-			desc.constant_buffer = &cbo;
-			desc.program = program;
-			desc.depth_write_enabled = false;
-			desc.stencil_write_enabled = false;
-			desc.render_target = driver->get_default_render_target();
+				// per frame
+				for(size_t index = 0; index < per_frame_primitives.size(); ++index)
+				{
+					DebugPrimitive* primitive = &per_frame_primitives[index];
+					if (primitive->type != 0 && primitive->type <= TYPE_SPHERE)
+					{
+						buffer_primitive_table[primitive->type](primitive,
+							accessor);
+					}
+				}
 
-			renderer::PipelineState* debug_render_state = driver->pipelinestate_create(desc);
+				device->buffer_upload(
+					line_buffer,
+					&line_vertex_cache[0],
+					sizeof(DebugDrawVertex) * total_vertices_required);
 
+				render2::CommandQueue* queue = device->create_queue(pass);
+				render2::CommandSerializer* serializer = device->create_serializer(queue);
 
+				assert(total_vertices_required % 2 == 0);
 
+				// serialize all lines first
+				serializer->pipeline(line_pipeline);
+				serializer->vertex_buffer(line_buffer);
+				serializer->draw(0, total_vertices_required);
+				device->queue_buffers(queue, 1);
+				device->destroy_serializer(serializer);
+			}
 
-			// each frame
-			//		driver->set_render_state(renderer::STATE_DEPTH_TEST, 0);
-			cbo.modelview_matrix = &modelview;
-			cbo.projection_matrix = &projection;
+			line_vertex_cache.clear(false);
+			line_list->reset();
+		} // draw_lines
 
-			renderer::CommandBuffer buffer;
-			buffer.set_pipeline_state(debug_render_state);
-			buffer.draw_vertexbuffer(nullptr);
+		void draw_triangles(const render2::Pass& pass)
+		{
+			size_t total_vertices_required = 0;
 
-			buffer.commit();
-			//		device.set_render_state(renderer::STATE_DEPTH_TEST, 1);
-#endif
+			// step 1: loop through all primitives and count total vertices needed
+			Array<DebugPrimitive>& persistent_primitives = tris_list->get_persistent_primitives();
+			for (size_t index = 0; index < persistent_primitives.size(); ++index)
+			{
+				DebugPrimitive* primitive = &persistent_primitives[index];
+				if (primitive->type == TYPE_TRIANGLE)
+				{
+					total_vertices_required += 3;
+				}
+			}
 
+			Array<DebugPrimitive>& per_frame_primitives = tris_list->get_per_frame_primitives();
+			for (size_t index = 0; index < per_frame_primitives.size(); ++index)
+			{
+				DebugPrimitive* primitive = &per_frame_primitives[index];
+				if (primitive->type == TYPE_TRIANGLE)
+				{
+					total_vertices_required += 3;
+				}
+			}
+
+			if (total_vertices_required > 0)
+			{
+				// step 2: resize the cache
+				tris_vertex_cache.resize(total_vertices_required);
+
+				assert(total_vertices_required % 3 == 0);
+				const size_t new_vertexbuffer_size = sizeof(TexturedVertex) * total_vertices_required;
+
+				// resize the buffer
+				device->buffer_resize(tris_buffer, new_vertexbuffer_size);
+				detail::VertexAccessor<TexturedVertex> accessor(tris_vertex_cache);
+
+				// step 3: build the vertex cache
+				// persistent primitives
+				for (size_t index = 0; index < persistent_primitives.size(); ++index)
+				{
+					DebugPrimitive* primitive = &persistent_primitives[index];
+					if (primitive->type != 0)
+					{
+						buffer_triangle(primitive, accessor);
+					}
+				}
+
+				// per frame
+				for(size_t index = 0; index < per_frame_primitives.size(); ++index)
+				{
+					DebugPrimitive* primitive = &per_frame_primitives[index];
+					if (primitive->type != 0)
+					{
+						buffer_triangle(primitive, accessor);
+					}
+				}
+
+				device->buffer_upload(
+					tris_buffer,
+					&tris_vertex_cache[0],
+					new_vertexbuffer_size);
+
+				render2::CommandQueue* queue = device->create_queue(pass);
+				render2::CommandSerializer* serializer = device->create_serializer(queue);
+
+				serializer->pipeline(tris_pipeline);
+				serializer->vertex_buffer(tris_buffer);
+				serializer->texture(white_texture, 0);
+				serializer->draw(0, total_vertices_required);
+				device->queue_buffers(queue, 1);
+				device->destroy_serializer(serializer);
+			}
+
+			tris_vertex_cache.clear(false);
+			tris_list->reset();
+		} // draw_triangles
+
+		void draw_text(const render2::Pass& pass)
+		{
+			size_t total_vertices_required = 0;
+
+			// loop through all primitives and count total vertices needed
+			Array<DebugPrimitive>& persistent_primitives = text_list->get_persistent_primitives();
+			for (size_t index = 0; index < persistent_primitives.size(); ++index)
+			{
+				DebugPrimitive* primitive = &persistent_primitives[index];
+				if (primitive->type == TYPE_TEXT)
+				{
+					// 6 vertices per character
+					// this is not even utf-8; so this will probably fail.
+					total_vertices_required += (6 * primitive->buffer.size());
+				}
+			}
+
+			Array<DebugPrimitive>& per_frame_primitives = text_list->get_per_frame_primitives();
+			for (size_t index = 0; index < per_frame_primitives.size(); ++index)
+			{
+				DebugPrimitive* primitive = &per_frame_primitives[index];
+				if (primitive->type == TYPE_TEXT)
+				{
+					// 6 vertices per character
+					// this is not even utf-8; so this will probably fail.
+					total_vertices_required += (6 * primitive->buffer.size());
+				}
+			}
+
+			text_vertex_cache.resize(total_vertices_required);
+
+			if (total_vertices_required > 0)
+			{
+				size_t offset_index = 0;
+				for (size_t index = 0; index < persistent_primitives.size(); ++index)
+				{
+					DebugPrimitive* primitive = &persistent_primitives[index];
+					if (primitive->type == TYPE_TEXT)
+					{
+						size_t prev_offset = offset_index;
+						offset_index += render2::font::draw_string(text_handle, &text_vertex_cache[offset_index], primitive->buffer.c_str(), primitive->color);
+
+						for (size_t index = prev_offset; index < offset_index; ++index)
+						{
+							render2::font::FontVertex* vertex = &text_vertex_cache[index];
+							vertex->position.x += primitive->start.x;
+							vertex->position.y += primitive->start.y;
+						}
+					}
+				}
+
+				for (size_t index = 0; index < per_frame_primitives.size(); ++index)
+				{
+					DebugPrimitive* primitive = &per_frame_primitives[index];
+					if (primitive->type == TYPE_TEXT)
+					{
+						size_t prev_offset = offset_index;
+						offset_index += render2::font::draw_string(text_handle, &text_vertex_cache[offset_index], primitive->buffer.c_str(), primitive->color);
+
+						for (size_t index = prev_offset; index < offset_index; ++index)
+						{
+							render2::font::FontVertex* vertex = &text_vertex_cache[index];
+							vertex->position.x += primitive->start.x;
+							vertex->position.y += primitive->start.y;
+						}
+					}
+				}
+			}
+
+			assert(total_vertices_required % 3 == 0);
+			const size_t new_vertexbuffer_size = sizeof(render2::font::FontVertex) * total_vertices_required;
+			device->buffer_resize(text_buffer, new_vertexbuffer_size);
+			device->buffer_upload(text_buffer, &text_vertex_cache[0], new_vertexbuffer_size);
+
+			render2::CommandQueue* queue = device->create_queue(pass);
+			render2::CommandSerializer* serializer = device->create_serializer(queue);
+
+			serializer->pipeline(text_pipeline);
+			serializer->vertex_buffer(text_buffer);
+			render2::Texture* texture = render2::font::get_font_texture(text_handle);
+			assert(texture);
+			serializer->texture(texture, 0);
+			serializer->draw(0, total_vertices_required);
+			device->queue_buffers(queue, 1);
+			device->destroy_serializer(serializer);
+
+			text_vertex_cache.clear(false);
+			text_list->reset();
+		} // draw_text
+
+		void render(const glm::mat4& modelview, const glm::mat4& projection, int x, int y, int viewport_width, int viewport_height)
+		{
+			render2::Pass pass;
+			pass.depth_test = false;
+			pass.cull_mode = render2::CullMode::None;
+			pass.target = device->default_render_target();
+
+			line_pipeline->constants().set("projection_matrix", &projection);
+			line_pipeline->constants().set("modelview_matrix", &modelview);
+
+			tris_pipeline->constants().set("projection_matrix", &projection);
+			tris_pipeline->constants().set("modelview_matrix", &modelview);
+			tris_pipeline->constants().set("diffuse", &diffuse_texture_unit);
+
+			orthographic_projection = glm::ortho(0.0f, (float)viewport_width, (float)viewport_height, 0.0f, -1.0f, 1.0f);
+			text_pipeline->constants().set("projection_matrix", &orthographic_projection);
+			text_pipeline->constants().set("diffuse", &diffuse_texture_unit);
+
+			draw_lines(pass);
+			draw_triangles(pass);
+			draw_text(pass);
 		}
-
-
 
 
 		void axes(const glm::mat4& transform, float axis_length, float duration)
 		{
-			DebugPrimitive* p = request_primitive();
-			if ( p )
+			DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+			if ( primitive )
 			{
-				p->type = TYPE_AXES;
+				primitive->type = TYPE_AXES;
 				glm::vec4 col = glm::column( transform, 3 );
-				p->start = glm::vec3( col );
-				p->transform = transform;
-				p->timeleft = duration;
-				p->radius = axis_length;
+				primitive->start = glm::vec3( col );
+				primitive->transform = transform;
+				primitive->timeleft = duration;
+				primitive->radius = axis_length;
 			}
 		}
 
 		void basis(const glm::vec3& origin, const glm::vec3& basis, float axis_length, float duration)
 		{
-			DebugPrimitive* p = request_primitive();
-			if (p)
+			DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+			if (primitive)
 			{
-				p->type = TYPE_AXES;
+				primitive->type = TYPE_AXES;
 				glm::mat4 transform;
 				transform[0] = glm::vec4(basis.x, 0, 0, 0);
 				transform[1] = glm::vec4(0, basis.y, 0, 0);
 				transform[2] = glm::vec4(0, 0, basis.z, 0);
 				transform[3] = glm::vec4(origin.x, origin.y, origin.z, 0);
-				p->start = origin;
-				p->transform = transform;
-				p->timeleft = duration;
-				p->radius = axis_length;
+				primitive->start = origin;
+				primitive->transform = transform;
+				primitive->timeleft = duration;
+				primitive->radius = axis_length;
 			}
 		}
 
 		void box(const glm::vec3& mins, const glm::vec3& maxs, const core::Color& color, float duration)
 		{
-			DebugPrimitive* p = request_primitive();
-			if ( p )
+			DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+			if ( primitive )
 			{
-				p->type = TYPE_BOX;
-				p->start = mins;
-				p->end = maxs;
-				p->color = color;
-				p->timeleft = duration;
+				primitive->type = TYPE_BOX;
+				primitive->start = mins;
+				primitive->end = maxs;
+				primitive->color = color;
+				primitive->timeleft = duration;
 			}
 		}
 
 		void point(const glm::vec3& pt, const core::Color& color, float size, float duration)
 		{
-			DebugPrimitive* p = request_primitive();
-			if ( p )
+			DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+			if ( primitive )
 			{
-				p->type = TYPE_BOX;
-				p->start = glm::vec3( pt[0] - size, pt[1] - size, pt[2] - size );
-				p->end = glm::vec3( pt[0] + size, pt[1] + size, pt[2] + size );
-				p->color = color;
-				p->timeleft = duration;
+				primitive->type = TYPE_BOX;
+				primitive->start = glm::vec3( pt[0] - size, pt[1] - size, pt[2] - size );
+				primitive->end = glm::vec3( pt[0] + size, pt[1] + size, pt[2] + size );
+				primitive->color = color;
+				primitive->timeleft = duration;
 			}
 		}
 
 		void line(const glm::vec3& start, const glm::vec3& end, const core::Color& color, float duration)
 		{
-			DebugPrimitive* p = request_primitive();
-			if ( p )
+			DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+			if ( primitive )
 			{
-				p->type = TYPE_LINE;
-				p->start = start;
-				p->end = end;
-				p->color = color;
-				p->timeleft = duration;
+				primitive->type = TYPE_LINE;
+				primitive->start = start;
+				primitive->end = end;
+				primitive->color = color;
+				primitive->timeleft = duration;
 			}
 		}
 
 		void sphere(const glm::vec3& center, const core::Color& color, float radius, float duration)
 		{
-			DebugPrimitive* p = request_primitive();
-			if ( p )
+			DebugPrimitive* primitive = line_list->request(duration > 0.0f);
+			if ( primitive )
 			{
-				p->type = TYPE_SPHERE;
-				p->start = center;
-				p->radius = radius;
-				p->color = color;
-				p->timeleft = duration;
+				primitive->type = TYPE_SPHERE;
+				primitive->start = center;
+				primitive->radius = radius;
+				primitive->color = color;
+				primitive->timeleft = duration;
 			}
 		}
 
 		void text(int x, int y, const char* string, const core::Color& color, float duration)
 		{
-			DebugPrimitive* p = request_primitive();
-			if ( p )
+			DebugPrimitive* primitive = text_list->request(duration > 0.0f);
+			if ( primitive )
 			{
-				p->type = TYPE_TEXT;
-				p->start = glm::vec3(x, y, 0);
-				p->color = color;
-				p->timeleft = duration;
-				p->buffer = string;
+				primitive->type = TYPE_TEXT;
+				primitive->start = glm::vec3(x, y, 0);
+				primitive->color = color;
+				primitive->timeleft = duration;
+				primitive->buffer = string;
 			}
 		}
 
 		void triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const core::Color& color, float duration)
 		{
-			DebugPrimitive* p = request_primitive();
-			if (p)
+			DebugPrimitive* primitive = tris_list->request(duration > 0.0f);
+			if (primitive)
 			{
-				p->type = TYPE_TRIANGLE;
-				p->start = v0;
-				p->end = v1;
-				p->color = color;
-				p->timeleft = duration;
-				p->alt = v2;
+				primitive->type = TYPE_TRIANGLE;
+				primitive->start = v0;
+				primitive->end = v1;
+				primitive->color = color;
+				primitive->timeleft = duration;
+				primitive->alt = v2;
 			}
 		}
 

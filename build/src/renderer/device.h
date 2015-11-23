@@ -58,6 +58,9 @@ namespace render2
 		// upload data to a buffer (should not exceed buffer's max size)
 		virtual void buffer_upload(Buffer* buffer, void* data, size_t data_size) = 0;
 
+		// resize a vertex buffer in order to accomodate data_size in bytes
+		virtual void buffer_resize(Buffer* buffer, size_t data_size) = 0;
+
 		// ---------------------------------------------------------------------
 		// input layout
 		// ---------------------------------------------------------------------

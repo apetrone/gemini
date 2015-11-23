@@ -283,6 +283,14 @@ namespace render2
 		blend_destination(GL_ZERO)
 	{
 		program = (GLShader*)descriptor.shader;
+
+		GLenum primitive_enum[] = {
+			GL_LINES,
+			GL_TRIANGLES
+		};
+
+		draw_type = primitive_enum[static_cast<size_t>(descriptor.primitive_type)];
+		assert(draw_type == GL_LINES || draw_type == GL_TRIANGLES);
 	}
 
 	GLPipeline::~GLPipeline()
@@ -740,6 +748,21 @@ namespace render2
 		else
 		{
 			gl.Disable(GL_DEPTH_TEST);
+		}
+
+		if (pass->cull_mode == CullMode::Frontface)
+		{
+			gl.Enable(GL_CULL_FACE);
+			gl.CullFace(GL_FRONT);
+		}
+		else if (pass->cull_mode == CullMode::Backface)
+		{
+			gl.Enable(GL_CULL_FACE);
+			gl.CullFace(GL_BACK);
+		}
+		else
+		{
+			gl.Disable(GL_CULL_FACE);
 		}
 	}
 

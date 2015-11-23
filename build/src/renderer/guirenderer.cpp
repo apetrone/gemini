@@ -75,6 +75,7 @@ void GUIRenderer::startup(gui::Compositor* target_compositor)
 	desc.enable_blending = true;
 	desc.blend_source = render2::BlendOp::SourceAlpha;
 	desc.blend_destination = render2::BlendOp::OneMinusSourceAlpha;
+	desc.primitive_type = render2::PrimitiveType::Triangles;
 	gui_pipeline = device->create_pipeline(desc);
 
 
@@ -215,9 +216,10 @@ void GUIRenderer::font_metrics(const gui::FontHandle& handle, size_t& height, in
 
 size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const core::Color& color, gui::render::Vertex* buffer, size_t buffer_size)
 {
-	vertex_cache.resize(0);
 	render2::font::Handle font_handle(handle);
-	render2::font::draw_string(font_handle, vertex_cache, string, core::Color(color.r, color.g, color.b, color.a));
+
+	vertex_cache.resize(render2::font::count_vertices(font_handle, string));
+	render2::font::draw_string(font_handle, &vertex_cache[0], string, color);
 
 	// todo: this seems counter-intuitive
 	// copy back to the buffer
@@ -237,24 +239,25 @@ size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string,
 
 size_t GUIRenderer::font_count_vertices(const gui::FontHandle& handle, const char* string)
 {
-	return core::str::len(string) * 6;
-}
-
-gui::TextureHandle GUIRenderer::font_get_texture(const gui::FontHandle& handle)
-{
 	render2::font::Handle font_handle(handle);
-	render2::Texture* texture = render2::font::get_font_texture(font_handle);
-	assert(texture);
-
-
-	gui::TextureHandle th(1);
-	return th;
+	return render2::font::count_vertices(font_handle, string);
 }
 
-gui::FontResult GUIRenderer::font_fetch_texture(const gui::FontHandle &handle, gui::TextureHandle &texture)
-{
-	return gui::FontResult_Failed;
-}
+//gui::TextureHandle GUIRenderer::font_get_texture(const gui::FontHandle& handle)
+//{
+//	render2::font::Handle font_handle(handle);
+//	render2::Texture* texture = render2::font::get_font_texture(font_handle);
+//	assert(texture);
+//
+//
+//	gui::TextureHandle th(1);
+//	return th;
+//}
+
+//gui::FontResult GUIRenderer::font_fetch_texture(const gui::FontHandle &handle, gui::TextureHandle &texture)
+//{
+//	return gui::FontResult_Failed;
+//}
 
 void GUIRenderer::draw_commands(gui::render::CommandList* command_list, Array<gui::render::Vertex>& vertex_array)
 {
@@ -263,8 +266,6 @@ void GUIRenderer::draw_commands(gui::render::CommandList* command_list, Array<gu
 	// temp limit
 	assert(total_vertices < MAX_VERTICES);
 	projection_matrix = glm::ortho(0.0f, (float)this->compositor->width, (float)this->compositor->height, 0.0f, -1.0f, 1.0f);
-
-//		device->buffer_resize(vertex_buffer, sizeof(GUIVertex) * total_vertices);
 
 	diffuse_texture = 0;
 	gui_pipeline->constants().set("projection_matrix", &projection_matrix);

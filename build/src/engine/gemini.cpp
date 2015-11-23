@@ -184,7 +184,6 @@ using namespace input;
 struct Settings
 {
 	uint32_t physics_tick_rate;
-	int32_t debugdraw_max_primitives;
 	uint32_t enable_asset_reloading : 1;
 
 	uint32_t window_width;
@@ -198,7 +197,6 @@ struct Settings
 	{
 		// setup sane defaults
 		physics_tick_rate = 60;
-		debugdraw_max_primitives = 2048;
 		enable_asset_reloading = 0;
 		window_width = 1280;
 		window_height = 720;
@@ -232,12 +230,6 @@ static util::ConfigLoadStatus settings_conf_loader( const Json::Value & root, vo
 	if (!physics_tick_rate.isNull())
 	{
 		cfg->physics_tick_rate = physics_tick_rate.asUInt();
-	}
-
-	const Json::Value& debugdraw_max_primitives = root["debugdraw_max_primitives"];
-	if (!debugdraw_max_primitives.isNull())
-	{
-		cfg->debugdraw_max_primitives = debugdraw_max_primitives.asInt();
 	}
 
 	const Json::Value& enable_asset_reloading = root["enable_asset_reloading"];
@@ -780,24 +772,25 @@ class EngineInterface : public IEngineInterface
 	core::memory::GlobalAllocatorType game_allocator;
 	SceneLink& scenelink;
 
+	render2::Device* device;
 public:
 
-	EngineInterface(
-					IEntityManager* em,
+	EngineInterface(IEntityManager* em,
 					IModelInterface* mi,
 					gemini::physics::IPhysicsInterface* pi,
 					IExperimental* ei,
 					SceneLink& scene_link,
-					platform::window::NativeWindow* window
-					) :
-		entity_manager(em),
-		model_interface(mi),
-		physics_interface(pi),
-		experimental_interface(ei),
-		main_window(window),
-		game_memory_zone("game"),
-		game_allocator(&game_memory_zone),
-		scenelink(scene_link)
+					platform::window::NativeWindow* window,
+					render2::Device* render_device)
+		: entity_manager(em)
+		, model_interface(mi)
+		, physics_interface(pi)
+		, experimental_interface(ei)
+		, main_window(window)
+		, game_memory_zone("game")
+		, game_allocator(&game_memory_zone)
+		, scenelink(scene_link)
+		, device(render_device)
 	{
 	}
 
@@ -847,7 +840,7 @@ public:
 
 		render_scene_from_camera(entity_list, newview, scenelink);
 
-		::renderer::debugdraw::render(view.modelview, view.projection, 0, 0, view.width, view.height);
+		::renderer::debugdraw::render(newview.modelview, newview.projection, 0, 0, newview.width, newview.height);
 	}
 
 	virtual void render_gui()
@@ -989,7 +982,10 @@ private:
 	::renderer::VertexStream alt_vs;
 
 	DataInput data_input;
-	::renderer::StandaloneResourceCache resource_cache;
+	::renderer::StandaloneResourceCache* resource_cache;
+
+	// used by debug draw
+	render2::font::Handle debug_font;
 
 private:
 	bool load_config(Settings& config)
@@ -1282,9 +1278,6 @@ Options:
 			game_path = platform::make_absolute_path(path.c_str());
 		}
 
-		const char FONT_SHADER[] = "shaders/fontshader";
-		const char DEBUG_FONT[] = "fonts/debug";
-		const char DEBUG_SHADER[] = "shaders/debug";
 		kernel::Parameters& params = kernel::parameters();
 
 		// initialize timer
@@ -1436,22 +1429,13 @@ Options:
 
 			assets::startup();
 
-			assets::Shader* fontshader = assets::shaders()->load_from_path(FONT_SHADER);
-			assert(fontshader != 0);
+			render2::font::startup(device);
 
-			platform::window::Frame frame = platform::window::get_render_frame(main_window);
-			font::startup(fontshader->program, frame.width, frame.height);
-
-			assets::Shader* debugshader = assets::shaders()->load_from_path(DEBUG_SHADER);
-			assets::Font* debugfont = assets::fonts()->load_from_path(DEBUG_FONT);
-			assert(debugshader != 0);
-			assert(debugfont != 0);
-			::renderer::debugdraw::startup(config.debugdraw_max_primitives, debugshader->program, debugfont->handle);
+			::renderer::debugdraw::startup(device);
 			DebugDrawInterface* debug_draw = MEMORY_NEW(DebugDrawInterface, core::memory::global_allocator());
 			gemini::debugdraw::set_instance(debug_draw);
 
 
-			render2::font::startup(device);
 		}
 
 //		renderer::IRenderDriver* driver = renderer::driver();
@@ -1483,7 +1467,8 @@ Options:
 			physics::instance(),
 			&experimental,
 			*scenelink,
-			main_window
+			main_window,
+			device
 		);
 		gemini::engine::set_instance(engine_interface);
 		platform::window::show_cursor(true);
@@ -1618,21 +1603,15 @@ Options:
 		}
 		event_queue->resize(0);
 
-
+		// set the baseline for the font
 		int x = 250;
-		int y = 0;
-		{
+		int y = 16;
 
-//			debugdraw::text(x, y, core::str::format("active_camera->pos = %.2g %.2g %.2g", main_camera.pos.x, main_camera.pos.y, main_camera.pos.z), Color(255, 255, 255));
-//			debugdraw::text(x, y+12, core::str::format("eye_position = %.2g %.2g %.2g", main_camera.eye_position.x, main_camera.eye_position.y, main_camera.eye_position.z), Color(255, 0, 255));
-//			debugdraw::text(x, y+24, core::str::format("active_camera->view = %.2g %.2g %.2g", main_camera.view.x, main_camera.view.y, main_camera.view.z), Color(128, 128, 255));
-//			debugdraw::text(x, y+36, core::str::format("active_camera->right = %.2g %.2g %.2g", main_camera.side.x, main_camera.side.y, main_camera.side.z), Color(255, 0, 0));
-		}
-		::renderer::debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_milliseconds), core::Color::from_rgba(255, 255, 255, 255));
+		::renderer::debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_milliseconds), core::Color());
 		y += 12;
-		::renderer::debugdraw::text(x, y, core::str::format("# allocations = %i, total %2.2f MB\n",
+		::renderer::debugdraw::text(x, y, core::str::format("allocations = %i, total %2.2f MB\n",
 			core::memory::global_allocator().get_zone()->get_active_allocations(),
-			core::memory::global_allocator().get_zone()->get_active_bytes()/(float)(1024*1024)), core::Color::from_rgba(64, 102, 192, 255));
+			core::memory::global_allocator().get_zone()->get_active_bytes()/(float)(1024*1024)), core::Color());
 		y += 12;
 
 
@@ -1731,7 +1710,7 @@ Options:
 		::renderer::debugdraw::shutdown();
 		IDebugDraw* debug_draw = gemini::debugdraw::instance();
 		MEMORY_DELETE(debug_draw, core::memory::global_allocator());
-		font::shutdown();
+//		font::shutdown();
 		assets::shutdown();
 		input::shutdown();
 		audio::shutdown();

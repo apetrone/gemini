@@ -126,6 +126,14 @@ namespace render2
 				gl.BindVertexArray(0);
 				gl.CheckError("BindVertexArray(0)");
 			}
+
+			void resize(size_t bytes)
+			{
+				max_size = bytes;
+				bind();
+				upload(nullptr, bytes);
+				unbind();
+			}
 		};
 
 	public:
@@ -150,17 +158,17 @@ namespace render2
 		}
 
 		void draw(
-				  GLPipeline* pipeline,
-				  GLBuffer* vertex_stream,
-				  size_t initial_offset,
-				  size_t total,
-				  size_t instance_index,
-				  size_t index_count)
+			GLPipeline* pipeline,
+			GLBuffer* vertex_stream,
+			size_t initial_offset,
+			size_t total,
+			size_t instance_index,
+			size_t index_count)
 		{
 			activate_pipeline(pipeline, vertex_stream);
 
 			vertex_stream->bind_vao();
-			gl.DrawArrays(GL_TRIANGLES, initial_offset, total);
+			gl.DrawArrays(pipeline->draw_type, initial_offset, total);
 			gl.CheckError("DrawArrays");
 
 			vertex_stream->unbind_vao();
@@ -176,7 +184,6 @@ namespace render2
 						  size_t total)
 		{
 			activate_pipeline(pipeline, vertex_buffer);
-
 
 			vertex_buffer->bind_vao();
 
@@ -283,7 +290,12 @@ namespace render2
 					const Command* command = &cq->commands[index];
 					if (command->type == COMMAND_DRAW)
 					{
-						draw(current_pipeline, vertex_stream, command->params[0], command->params[1], command->params[2], command->params[3]);
+						draw(current_pipeline,
+							vertex_stream,
+							command->params[0],
+							command->params[1],
+							command->params[2],
+							command->params[3]);
 					}
 					else if (command->type == COMMAND_DRAW_INDEXED)
 					{
@@ -299,11 +311,6 @@ namespace render2
 					{
 						vertex_stream = static_cast<GLBuffer*>(command->data[0]);
 					}
-					//					else if (command->type == COMMAND_VIEWPORT)
-					//					{
-					//						gl.Viewport(command->params[0], command->params[1], command->params[2], command->params[3]);
-					//						gl.CheckError("glViewport");
-					//					}
 					else if (command->type == COMMAND_TEXTURE)
 					{
 						if (texture)
@@ -311,7 +318,7 @@ namespace render2
 							texture->unbind();
 						}
 						texture = static_cast<GLTexture*>(command->data[0]);
-						gl.ActiveTexture(GL_TEXTURE0+command->params[0]);
+						gl.ActiveTexture((GL_TEXTURE0 + command->params[0]));
 						gl.CheckError("ActiveTexture");
 						texture->bind();
 					}
@@ -386,6 +393,12 @@ namespace render2
 			glb->bind();
 			glb->upload(data, data_size);
 			glb->unbind();
+		}
+
+		virtual void buffer_resize(Buffer* buffer, size_t data_size)
+		{
+			GLBuffer* glb = static_cast<GLBuffer*>(buffer);
+			glb->resize(data_size);
 		}
 
 		// ---------------------------------------------------------------------

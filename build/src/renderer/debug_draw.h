@@ -34,6 +34,16 @@ namespace font
 	typedef int Handle;
 }
 
+namespace render2
+{
+	class Device;
+
+	namespace font
+	{
+		struct Handle;
+	} // namespace font
+} // namespace render2
+
 namespace renderer
 {
 	struct Font;
@@ -41,7 +51,7 @@ namespace renderer
 
 	namespace debugdraw
 	{
-		void startup(unsigned int max_primitives, ShaderProgram* program, const font::Handle& font);
+		void startup(render2::Device* render_device);
 		void shutdown();
 
 		void update(float deltamsec);

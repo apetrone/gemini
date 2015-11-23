@@ -106,8 +106,8 @@ public:
 	LIBRARY_EXPORT virtual void font_metrics(const gui::FontHandle& handle, size_t& height, int& ascender, int& descender);
 	LIBRARY_EXPORT virtual size_t font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const core::Color& color, gui::render::Vertex* buffer, size_t buffer_size);
 	LIBRARY_EXPORT virtual size_t font_count_vertices(const gui::FontHandle& handle, const char* string);
-	LIBRARY_EXPORT virtual gui::TextureHandle font_get_texture(const gui::FontHandle& handle);
-	LIBRARY_EXPORT virtual gui::FontResult font_fetch_texture(const gui::FontHandle& handle, gui::TextureHandle& texture);
+//	LIBRARY_EXPORT virtual gui::TextureHandle font_get_texture(const gui::FontHandle& handle);
+//	LIBRARY_EXPORT virtual gui::FontResult font_fetch_texture(const gui::FontHandle& handle, gui::TextureHandle& texture);
 	LIBRARY_EXPORT virtual void draw_commands(gui::render::CommandList* command_list, Array<gui::render::Vertex>& vertex_buffer);
 
 private:

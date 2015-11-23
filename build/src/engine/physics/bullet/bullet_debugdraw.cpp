@@ -40,16 +40,22 @@ namespace gemini
 	{
 		namespace bullet
 		{
-			void DebugPhysicsRenderer::drawLine( const btVector3 & from, const btVector3 & to, const btVector3 & color )
+			void DebugPhysicsRenderer::drawLine(const btVector3& from, const btVector3& to, const btVector3& color)
 			{
-				Color c = Color::from_float_pointer( &color[0], 3 );
-				debugdraw::line( BTVECTOR3_TO_VEC3( from ), BTVECTOR3_TO_VEC3( to ), c, 0 );
+				debugdraw::line(
+					BTVECTOR3_TO_VEC3(from),
+					BTVECTOR3_TO_VEC3(to),
+					core::Color(color[0], color[1], color[2], 1.0f),
+					0.0f);
 			}
 
 			void DebugPhysicsRenderer::drawLine( const btVector3& from, const btVector3& to, const btVector3& fromColor, const btVector3& color )
 			{
-				Color c = Color::from_float_pointer( &color[0], 3 );
-				debugdraw::line( BTVECTOR3_TO_VEC3( from ), BTVECTOR3_TO_VEC3( to ), c, 0 );
+				debugdraw::line(
+					BTVECTOR3_TO_VEC3(from),
+					BTVECTOR3_TO_VEC3(to),
+					core::Color(color[0], color[1], color[2], 1.0f),
+					0.0f);
 			}
 
 			void DebugPhysicsRenderer::drawContactPoint(const btVector3& PointOnB,const btVector3& normalOnB,btScalar distance,int lifeTime,const btVector3& color)
@@ -71,8 +77,8 @@ namespace gemini
 
 			int	DebugPhysicsRenderer::getDebugMode() const
 			{
-				return (btIDebugDraw::DBG_DrawWireframe); // | btIDebugDraw::DBG_DrawAabb;
-//				return btIDebugDraw::DBG_MAX_DEBUG_DRAW_MODE;
+//				return (btIDebugDraw::DBG_DrawWireframe); // | btIDebugDraw::DBG_DrawAabb;
+				return btIDebugDraw::DBG_MAX_DEBUG_DRAW_MODE;
 			}
 		} // namespace bullet
 	} // namespace physics
