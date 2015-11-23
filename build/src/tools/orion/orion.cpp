@@ -306,26 +306,43 @@ struct MyVertex
 	}
 };
 
-class LogWindow : public gui::Panel
+class LogWindow : public gui::Label
 {
 public:
 	LogWindow(Panel* parent)
-		: Panel(parent)
+		: Label(parent)
 	{
 		flags |= Flag_CanMove | Flag_CursorEnabled;
 	}
 
-	virtual void update(gui::Compositor* compositor, float delta_seconds) override
-	{
-		Panel::update(compositor, delta_seconds);
-	} // update
+//	virtual void update(gui::Compositor* compositor, float delta_seconds) override
+//	{
+//		Panel::update(compositor, delta_seconds);
+//	} // update
 
-	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
-	{
-		render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, core::Color::from_rgba(255, 255, 255, 255));
-	}
+//	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
+//	{
+//		render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, core::Color::from_rgba(255, 255, 255, 255));
+//	}
+
+
 };
 
+
+void log_window_logger_message(core::logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
+{
+	LogWindow* logwindow = static_cast<LogWindow*>(handler->userdata);
+	logwindow->set_text(message);
+}
+
+int log_window_logger_open(core::logging::Handler* handler)
+{
+	return 1;
+}
+
+void log_window_logger_close(core::logging::Handler* handler)
+{
+}
 
 class EditorKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
@@ -654,13 +671,20 @@ public:
 			surface->set_texture_handle(handle);
 #endif
 
-			log_window = new gui::Label(compositor);
+			log_window = new LogWindow(compositor);
 			log_window->set_origin(0.0f, 0.0f);
 			log_window->set_dimensions(1.0f, 0.25f);
 			log_window->set_font("fonts/debug.ttf", 16);
-			log_window->set_text("log initialized.");
 
 			// install a log handler
+			core::logging::Handler log_handler;
+			log_handler.open = log_window_logger_open;
+			log_handler.close = log_window_logger_close;
+			log_handler.message = log_window_logger_message;
+			log_handler.userdata = (void*)log_window;
+			core::logging::instance()->add_handler(&log_handler);
+
+			LOGV("log initialized.\n");
 		}
 #endif
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
