@@ -163,9 +163,16 @@ namespace render2
 		LIBRARY_EXPORT int get_string_metrics(Handle handle, const char* utf8, glm::vec2& mins, glm::vec2& maxs);
 
 		// populate vertices with the transformed vertices for drawing a string to the screen
-		LIBRARY_EXPORT void draw_string(Handle handle, Array<FontVertex>& vertices, const char* utf8, const core::Color& color);
+		// returns the number of vertices used
+		LIBRARY_EXPORT size_t draw_string(Handle handle, FontVertex* vertices, const char* utf8, const core::Color& color);
 
 		// retrieve the font texture used by a font
 		LIBRARY_EXPORT render2::Texture* get_font_texture(Handle handle);
+
+		// count the number of characters in the string
+		LIBRARY_EXPORT size_t count_characters(Handle handle, const char* utf8);
+
+		// count the total vertices required by Handle to render the string
+		LIBRARY_EXPORT size_t count_vertices(Handle handle, const char* utf8);
 	} // namespace font
 } // namespace render2

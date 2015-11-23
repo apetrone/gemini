@@ -328,6 +328,12 @@ namespace render2
 			glb->unbind();
 		}
 
+		virtual void buffer_resize(Buffer* buffer, size_t data_size)
+		{
+			GLBuffer* glb = static_cast<GLBuffer*>(buffer);
+			glb->resize(data_size);
+		}
+
 		virtual InputLayout* create_input_layout(const VertexDescriptor& descriptor, Shader* shader)
 		{
 			GLInputLayout* gllayout = MEMORY_NEW(GLInputLayout, core::memory::global_allocator());

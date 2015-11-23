@@ -416,6 +416,12 @@ namespace render2
 		OneMinusSourceAlpha
 	};
 
+	enum class PrimitiveType
+	{
+		Lines,		// treat elements as pairs
+		Triangles	// treat elements as triplets
+	};
+
 	typedef image::Image Image;
 
 	// ---------------------------------------------------------------------
@@ -425,9 +431,10 @@ namespace render2
 	struct PipelineDescriptor
 	{
 		LIBRARY_EXPORT PipelineDescriptor() :
-			enable_blending(false),
+			primitive_type(PrimitiveType::Triangles),
 			blend_source(BlendOp::One),
-			blend_destination(BlendOp::Zero)
+			blend_destination(BlendOp::Zero),
+			enable_blending(false)
 		{
 		}
 
@@ -435,10 +442,11 @@ namespace render2
 		uint32_t attachments[ MAX_PIPELINE_ATTACHMENTS ];
 		VertexDescriptor vertex_description;
 		InputLayout* input_layout;
+		PrimitiveType primitive_type;
 
-		bool enable_blending;
 		BlendOp blend_source;
 		BlendOp blend_destination;
+		bool enable_blending;
 	};
 
 	// ---------------------------------------------------------------------
@@ -447,12 +455,30 @@ namespace render2
 	struct CommandSerializer
 	{
 		LIBRARY_EXPORT virtual ~CommandSerializer() {}
+
 		LIBRARY_EXPORT virtual void vertex_buffer(Buffer* buffer) = 0;
-		LIBRARY_EXPORT virtual void draw(size_t initial_offset, size_t total, size_t instance_index = 0, size_t index_count = 1) = 0;
-		LIBRARY_EXPORT virtual void draw_indexed_primitives(Buffer* index_buffer, size_t total) = 0;
+
+		LIBRARY_EXPORT virtual void draw(
+			size_t initial_offset,
+			size_t total,
+			size_t instance_index = 0,
+			size_t index_count = 1) = 0;
+
+		LIBRARY_EXPORT virtual void draw_indexed_primitives(
+			Buffer* index_buffer,
+			size_t total) = 0;
+
 		LIBRARY_EXPORT virtual void pipeline(Pipeline* pipeline) = 0;
-		LIBRARY_EXPORT virtual void viewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) = 0;
-		LIBRARY_EXPORT virtual void texture(Texture* texture, uint32_t index) = 0;
+
+		LIBRARY_EXPORT virtual void viewport(
+			uint32_t x,
+			uint32_t y,
+			uint32_t width,
+			uint32_t height) = 0;
+
+		LIBRARY_EXPORT virtual void texture(
+			Texture* texture,
+			uint32_t index) = 0;
 	}; // CommandSerializer
 } // namespace render2
 

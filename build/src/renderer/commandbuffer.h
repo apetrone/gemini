@@ -41,6 +41,14 @@ namespace render2
 		COMMAND_STATE
 	};
 
+	// It is assumed that front faces are counter-clock wise.
+	enum class CullMode
+	{
+		None,						// don't cull faces
+		Frontface,					// cull front faces
+		Backface					// cull back faces
+	};
+
 	struct Command
 	{
 		CommandType type;
@@ -66,7 +74,8 @@ namespace render2
 			clear_color(false),
 			clear_depth(false),
 			clear_stencil(false),
-			depth_test(true)
+			depth_test(true),
+			cull_mode(CullMode::Backface)
 		{
 			color(0, 0, 0, 0);
 		}
@@ -85,6 +94,8 @@ namespace render2
 		bool clear_depth;
 		bool clear_stencil;
 		bool depth_test;
+
+		CullMode cull_mode;
 	};
 
 	struct CommandQueue
