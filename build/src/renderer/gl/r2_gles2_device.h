@@ -94,6 +94,14 @@ namespace render2
 			{
 				return reinterpret_cast<const char*>(buffer_data);
 			}
+
+			void resize(size_t bytes)
+			{
+				max_size = bytes;
+				bind();
+				upload(nullptr, bytes);
+				unbind();
+			}
 		};
 
 
