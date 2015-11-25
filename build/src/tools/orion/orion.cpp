@@ -306,6 +306,215 @@ struct MyVertex
 	}
 };
 
+
+
+class Scrollbar : public gui::Panel
+{
+	class ScrollButton : public gui::Button
+	{
+	public:
+		ScrollButton(gui::Panel* parent, uint32_t direction = 0)
+			: gui::Button(parent)
+			, scroll_direction(direction)
+			, scroll_value(0.0f)
+		{
+		}
+
+		LIBRARY_EXPORT virtual void update(gui::Compositor* compositor, float delta_seconds) override
+		{
+			gui::Rect parent_bounds;
+			parent->get_screen_bounds(parent_bounds);
+			const float max_walls[] = {
+				parent_bounds.width() - bounds.width(),
+				parent_bounds.height() - bounds.height()
+			};
+
+			float* origins[] = {
+				&origin.x,
+				&origin.y
+			};
+
+			if (*origins[scroll_direction] < 0.0f)
+			{
+				*origins[scroll_direction] = 0.0f;
+			}
+
+			if (*origins[scroll_direction] > max_walls[scroll_direction])
+			{
+				*origins[scroll_direction] = max_walls[scroll_direction];
+			}
+
+			Button::update(compositor, delta_seconds);
+		}
+
+		LIBRARY_EXPORT virtual void handle_event(gui::EventArgs& args)
+		{
+			Button::handle_event(args);
+			if (args.type == gui::Event_CursorDrag)
+			{
+				if (has_flags(Flag_CursorEnabled | Flag_CanMove))
+				{
+					if (has_flags(Flag_CanMove))
+					{
+						float* direction[] = {
+							&origin.x,
+							&origin.y
+						};
+
+						float source_value[] = {
+							args.delta.x,
+							args.delta.y
+						};
+
+						gui::Rect parent_bounds;
+						parent->get_screen_bounds(parent_bounds);
+
+						const float button_position[] = {
+							parent_bounds.width() - (parent_bounds.width() - bounds.origin.x),
+							parent_bounds.height() - (parent_bounds.height() - bounds.origin.y)
+						};
+
+
+						float max_walls[] = {
+							parent_bounds.width() - bounds.width(),
+							parent_bounds.height() - bounds.height()
+						};
+
+						float button_location = button_position[scroll_direction];
+
+						float new_value = *direction[scroll_direction];
+
+						if (button_location >= 0)
+						{
+							new_value += source_value[scroll_direction];
+						}
+
+						const float max_wall = max_walls[scroll_direction];
+
+						if (button_location < 0)
+						{
+							new_value = 0.0f;
+						}
+						else if (button_location > max_wall)
+						{
+							new_value = max_wall;
+						}
+
+
+						*direction[scroll_direction] = new_value;
+
+
+						float t = new_value / parent_bounds.height();
+						if (scroll_value != t)
+						{
+							scroll_value = t;
+//							on_scroll_value_changed(scroll_value);
+						}
+
+					}
+				}
+			}
+		}
+
+	protected:
+		// 0 for horizontal
+		// 1 for vertical
+		uint32_t scroll_direction;
+		float scroll_value;
+	};
+
+public:
+	Scrollbar(gui::Panel* parent, uint32_t direction)
+		: gui::Panel(parent)
+	{
+		set_background_color(core::Color::from_rgba(32, 32, 32, 128));
+
+		bootun = new ScrollButton(this, direction);
+		bootun->set_origin(0, 0);
+		bootun->set_font("fonts/debug.ttf", 16);
+		bootun->set_background_color(core::Color(0, 1.0f, 1.0f));
+		bootun->set_hover_color(core::Color(0, 0, 0));
+		bootun->flags |= Flag_CanMove | Flag_CursorEnabled;
+	}
+
+	// set the button dimensions on this scrollbar
+	// can be used by ScrollablePanels to set the side of the buttons
+	// depending on the content size.
+	LIBRARY_EXPORT void set_button_dimensions(float x, float y)
+	{
+		bootun->set_dimensions(x, y);
+	}
+
+	gui::DelegateHandler<float> on_scroll_value_changed;
+
+protected:
+	ScrollButton* bootun;
+};
+
+class ScrollablePanel : public gui::Panel
+{
+public:
+	ScrollablePanel(gui::Panel* parent)
+		: gui::Panel(parent)
+	{
+		horizontal_bar = new Scrollbar(this, 0);
+		horizontal_bar->on_scroll_value_changed.connect(&ScrollablePanel::on_horizontal_scroll, this);
+
+		vertical_bar = new Scrollbar(this, 1);
+		vertical_bar->on_scroll_value_changed.connect(&ScrollablePanel::on_vertical_scroll, this);
+	}
+
+	LIBRARY_EXPORT virtual void get_content_bounds(gui::Rect& bounds) const
+	{
+		bounds = gui::Rect(0, 0, 4096, 4096);
+	}
+
+	virtual void update(gui::Compositor* compositor, float delta_seconds) override
+	{
+		gui::Rect content_rect;
+		get_content_bounds(content_rect);
+
+		gui::Rect screen_bounds;
+		get_screen_bounds(screen_bounds);
+
+
+		// get the vertical ratio
+		float vratio = screen_bounds.height() / content_rect.height();
+		vertical_bar->set_origin(bounds.width()-32, 0);
+		vertical_bar->set_size(gui::Size(32, bounds.size.height-32));
+		vertical_bar->set_button_dimensions(1.0f, vratio);
+
+		float hratio = screen_bounds.width() / content_rect.width();
+		horizontal_bar->set_origin(0.0f, bounds.height()-32);
+		horizontal_bar->set_size(gui::Size(bounds.size.width-32, 32));
+		horizontal_bar->set_button_dimensions(hratio, 1.0f);
+
+		Panel::update(compositor, delta_seconds);
+	} // update
+
+	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
+	{
+		render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, core::Color::from_rgba(255, 255, 255, 255));
+
+		render_children(compositor, renderer, render_commands);
+	} // render
+
+	void on_vertical_scroll(float value)
+	{
+		fprintf(stdout, "vertical: %2.2f\n", value);
+	}
+
+	void on_horizontal_scroll(float value)
+	{
+		fprintf(stdout, "horizontal: %2.2f\n", value);
+	}
+
+protected:
+	Scrollbar* horizontal_bar;
+	Scrollbar* vertical_bar;
+
+}; // ScrollablePanel
+
 class LogWindow : public gui::Label
 {
 public:
@@ -671,6 +880,7 @@ public:
 			surface->set_texture_handle(handle);
 #endif
 
+#if 0
 			log_window = new LogWindow(compositor);
 			log_window->set_origin(0.0f, 0.0f);
 			log_window->set_dimensions(1.0f, 0.25f);
@@ -685,6 +895,22 @@ public:
 			core::logging::instance()->add_handler(&log_handler);
 
 			LOGV("log initialized.\n");
+#endif
+
+#if 0
+			// test out a scrollbar
+			Scrollbar* scrollbar = new Scrollbar(compositor);
+			scrollbar->set_origin(0.0f, 0.0f);
+			scrollbar->set_dimensions(0.1f, 1.0f);
+#endif
+
+			ScrollablePanel* sp = new ScrollablePanel(compositor);
+//			sp->set_origin(0.0f, 0.0f);
+//			sp->set_dimensions(0.5f, 0.5f);
+
+			sp->set_bounds(0, 0, 512, 512);
+
+
 		}
 #endif
 		kernel::parameters().step_interval_seconds = (1.0f/50.0f);
