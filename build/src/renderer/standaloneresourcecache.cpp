@@ -27,6 +27,7 @@
 #include <renderer/texture.h>
 
 #include <runtime/filesystem.h>
+#include <renderer/image.h>
 
 namespace renderer
 {
@@ -107,6 +108,15 @@ namespace renderer
 
 	gui::TextureHandle StandaloneResourceCache::create_texture(const char* filename)
 	{
+		// generate a texture
+//		image::Image checker_pattern;
+//		checker_pattern.width = 32;
+//		checker_pattern.height = 32;
+//		checker_pattern.channels = 3;
+//		image::generate_checker_pattern(checker_pattern, core::Color(1.0f, 0, 1.0f), core::Color(0, 1.0f, 0));
+//		checker_texture = device->create_texture(checker_pattern);
+//		assert(checker_texture);
+
 		gui::TextureHandle handle;
 		assert(0);
 		return handle;

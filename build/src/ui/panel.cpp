@@ -116,34 +116,37 @@ namespace gui
 		origin.y = y;
 	} // set_origin
 
-	void Panel::get_screen_bounds(Rect& bounds)
+	void Panel::get_screen_bounds(Rect& bounds) const
 	{
 		bounds = this->bounds;
 	} // get_screen_bounds
 
 	void Panel::calculate_screen_bounds(Compositor* compositor)
 	{
-		Panel* parent = this->parent;
-		Point origin = this->origin;
-		Size size = this->size;
+		Point new_origin = origin;
 
 		// use the parent size as the basis for scaling
 		if (parent != 0 && parent != compositor)
 		{
 			// add the origin offset of the parent
-			origin = origin + parent->bounds.origin;
+			new_origin = new_origin + parent->bounds.origin;
 		}
 
 		// TODO: modify offsets for anchors?
 
 		bounds.size = size;
-		bounds.origin = origin;
+		bounds.origin = new_origin;
 
 		if (parent)
 		{
 			// add margins
 		}
 	} // calculate_screen_bounds
+
+	void Panel::get_content_bounds(Rect& bounds) const
+	{
+		get_screen_bounds(bounds);
+	} // get_content_bounds
 
 	void Panel::add_child(Panel* panel)
 	{
@@ -194,7 +197,7 @@ namespace gui
 
 	void Panel::update(Compositor* compositor, float delta_seconds)
 	{
-		this->calculate_screen_bounds(compositor);
+		calculate_screen_bounds(compositor);
 
 		// the points have to be rotated around the center pivot
 		gui::Size sz = bounds.size;

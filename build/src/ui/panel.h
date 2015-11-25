@@ -82,8 +82,11 @@ namespace gui
 		LIBRARY_EXPORT virtual void set_dimensions(float x, float y);
 		LIBRARY_EXPORT virtual void set_dimensions(const Point& dimensions);
 
-		LIBRARY_EXPORT virtual void get_screen_bounds(Rect& bounds);
+		LIBRARY_EXPORT virtual void get_screen_bounds(Rect& bounds) const;
 		LIBRARY_EXPORT virtual void calculate_screen_bounds(Compositor* compositor);
+
+		// compute content bounds (may exceed compositor bounds)
+		LIBRARY_EXPORT virtual void get_content_bounds(Rect& bounds) const;
 		LIBRARY_EXPORT virtual void add_child(Panel* panel);
 		LIBRARY_EXPORT virtual void remove_child(Panel* panel);
 		LIBRARY_EXPORT virtual void handle_event(EventArgs& args);

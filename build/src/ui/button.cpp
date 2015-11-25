@@ -120,7 +120,11 @@ namespace gui
 
 		gui::Rect draw_bounds = bounds;
 		draw_bounds.origin = text_origin;
-		render_commands.add_font(font_handle, this->text.c_str(), draw_bounds, foreground_color);
+
+		if (!text.empty())
+		{
+			render_commands.add_font(font_handle, this->text.c_str(), draw_bounds, foreground_color);
+		}
 	}
 
 } // namespace gui

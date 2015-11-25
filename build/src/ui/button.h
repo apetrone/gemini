@@ -35,13 +35,6 @@ namespace gui
 
 	class Button : public Label
 	{
-	private:
-		core::Color hover_color;
-		core::Color pressed_color;
-		core::Color current_color;
-
-		uint32_t state;
-
 	public:
 		LIBRARY_EXPORT Button(Panel* parent);
 		LIBRARY_EXPORT virtual ~Button();
@@ -57,5 +50,12 @@ namespace gui
 		LIBRARY_EXPORT virtual bool is_button() const { return true; }
 
 		DelegateHandler<EventArgs&> on_click;
+
+	protected:
+		core::Color hover_color;
+		core::Color pressed_color;
+		core::Color current_color;
+
+		uint32_t state;
 	}; // struct Button
 } // namespace gui
