@@ -31,10 +31,10 @@ namespace core
 {
 	struct Color
 	{
-		static Color from_float_pointer(const float * fl, int num_elements);
-		static Color from_int(unsigned int color);
-		static Color from_ubyte(unsigned char* ubyte);
-		static Color from_rgba(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+		LIBRARY_EXPORT static Color from_float_pointer(const float * fl, int num_elements);
+		LIBRARY_EXPORT static Color from_int(unsigned int color);
+		LIBRARY_EXPORT static Color from_ubyte(unsigned char* ubyte);
+		LIBRARY_EXPORT static Color from_rgba(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 
 		LIBRARY_EXPORT Color(float r = 1.0f, float = 1.0f, float b = 1.0f, float a = 1.0f);
 		LIBRARY_EXPORT void set(float r, float g, float b, float a = 1.0f);

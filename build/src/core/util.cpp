@@ -36,16 +36,14 @@ namespace core
 {
 	namespace util
 	{
-		uint32_t hash_32bit( const void * data, int data_size, unsigned int seed )
+		uint32_t hash_32bit(const void* data, size_t data_size, unsigned int seed)
 		{
 			uint32_t hash = 0;
-
-			MurmurHash3_x86_32(data, data_size, seed, &hash);
-
+			MurmurHash3_x86_32(data, static_cast<int>(data_size), seed, &hash);
 			return hash;
 		} // hash_32bit
 
-		float random_range( float min, float max )
+		float random_range(float min, float max)
 		{
 			return (float)rand() / RAND_MAX * (max - min) + min;
 		} // random_range

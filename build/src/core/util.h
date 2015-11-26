@@ -58,7 +58,7 @@ namespace core
 
 	namespace util
 	{
-		LIBRARY_EXPORT unsigned int hash_32bit(const void * data, int data_size, unsigned int seed);
+		LIBRARY_EXPORT unsigned int hash_32bit(const void* data, size_t data_size, unsigned int seed);
 
 		// return a float within the range: min, max, inclusive
 		LIBRARY_EXPORT float random_range(float min, float max);
