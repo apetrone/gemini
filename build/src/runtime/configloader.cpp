@@ -33,21 +33,21 @@ namespace core
 {
 	namespace util
 	{
-		bool parse_json_string_with_callback( const char * buffer, size_t buffer_length, JsonLoaderCallback callback, void * context )
+		bool parse_json_string_with_callback(const char* buffer, size_t buffer_length, JsonLoaderCallback callback, void* context)
 		{
 			bool is_success = false;
 
 			Json::Value root;
 			Json::Reader reader;
-			ConfigLoadStatus status;
-			is_success = reader.parse( buffer, buffer+buffer_length, root );
-			if ( is_success )
+			ConfigLoadStatus status = ConfigLoad_Failure;
+			is_success = reader.parse(buffer, buffer+buffer_length, root);
+			if (is_success)
 			{
-				status = callback( root, context );
+				status = callback(root, context);
 			}
 			else
 			{
-				LOGV( "json parsing failed: %s\n", reader.getFormattedErrorMessages().c_str() );
+				LOGV("json parsing failed: %s\n", reader.getFormattedErrorMessages().c_str());
 			}
 
 			return is_success && (status == ConfigLoad_Success);
