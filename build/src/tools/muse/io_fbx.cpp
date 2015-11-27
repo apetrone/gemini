@@ -275,20 +275,21 @@ namespace gemini
 		}
 
 
-		int total_deformers = fbxmesh->GetDeformerCount();
-	//	LOGV("%stotal_deformers: %i\n", state.indent(), total_deformers);
+//		int total_deformers = fbxmesh->GetDeformerCount();
+//		LOGV("%stotal_deformers: %i\n", state.indent(), total_deformers);
 
 		state.indent.update();
-		int total_triangles = fbxmesh->GetPolygonCount();
-	//	LOGV("%s# triangles: %i\n", state.indent(), total_triangles);
-	//	LOGV("%s# vertices: %i\n", state.indent(), fbxmesh->GetControlPointsCount());
+		const int total_triangles = fbxmesh->GetPolygonCount();
+//		LOGV("%s# triangles: %i\n", state.indent(), total_triangles);
+//		LOGV("%s# vertices: %i\n", state.indent(), fbxmesh->GetControlPointsCount());
 
-		size_t total_indices = fbxmesh->GetPolygonCount()*3;
+
+		const size_t total_indices = total_triangles * 3;
 
 		mesh->indices.allocate(total_indices);
 		mesh->vertices.allocate(total_indices);
 		mesh->normals.allocate(total_indices);
-	//	LOGV("%s# indices: %i\n", state.indent(), total_indices);
+//		LOGV("%s# indices: %i\n", state.indent(), total_indices);
 
 		datamodel::Vertex* vertices = MEMORY_NEW_ARRAY(datamodel::Vertex, total_indices, core::memory::global_allocator());
 		size_t vertex_index = 0;
@@ -302,7 +303,7 @@ namespace gemini
 		// uv coordinates
 		FbxStringList uv_set_list;
 		fbxmesh->GetUVSetNames(uv_set_list);
-	//	LOGV("%stotal_uv_sets: %i\n", state.indent(), uv_set_list.GetCount());
+//		LOGV("%stotal_uv_sets: %i\n", state.indent(), uv_set_list.GetCount());
 
 
 		// clamp the # of maximum uv sets
@@ -344,7 +345,7 @@ namespace gemini
 		{
 			for (int local_vertex_id = 0; local_vertex_id < 3; ++local_vertex_id)
 			{
-				int index = fbxmesh->GetPolygonVertex(triangle_index, local_vertex_id);
+				const int index = fbxmesh->GetPolygonVertex(triangle_index, local_vertex_id);
 //				LOGV("%sindex: %i [vertex_index = %i]\n", state.indent.indent(), index, vertex_index);
 				mesh->indices[local_index] = local_index;
 
@@ -353,7 +354,7 @@ namespace gemini
 
 				FbxVector4 normal;
 				fbxmesh->GetPolygonVertexNormal(triangle_index, local_vertex_id, normal);
-	//			LOGV("%snormal: %g %g %g\n", state.indent(), normal[0], normal[1], normal[2]);
+//				LOGV("%snormal: %g %g %g\n", state.indent(), normal[0], normal[1], normal[2]);
 
 				datamodel::Vertex* vertex = &vertices[vertex_index];
 
@@ -370,7 +371,7 @@ namespace gemini
 					{
 						LOGE("%sUnable to get polygon vertex at [t=%i, v=%i, set=%s\n", state.indent.indent(), triangle_index, local_vertex_id, item->mString.Buffer());
 					}
-		//			LOGV("%suv: %g %g\n", state.indent(), uv[0], uv[1]);
+//					LOGV("%suv: %g %g\n", state.indent(), uv[0], uv[1]);
 					vertex->uv[uvset] = glm::vec2(uv[0], uv[1]);
 					mesh->uvs[uvset][vertex_index] = vertex->uv[uvset];
 				}
@@ -386,38 +387,43 @@ namespace gemini
 				mesh->vertices[vertex_index] = vertex->position;
 				mesh->normals[vertex_index] = vertex->normal;
 
+				// copy color data
 				if (!mesh->vertex_colors.empty())
 				{
 					mesh->vertex_colors[vertex_index] = vertex->color;
 				}
 
-
-				WeightSlotVector* slots = &mesh_data->weight_slots;
+				const WeightSlotVector* slots = &mesh_data->weight_slots;
 				if (!slots->empty())
 				{
-
 					datamodel::WeightList& weightlist = mesh->weights[vertex_index];
 					state.indent.push();
+
 					// copy weights
-
-					for (WeightReference& weight_ref : (*slots)[index].weights)
+					for (const WeightReference& weight_ref : (*slots)[index].weights)
 					{
-	//					LOGV("%sbone = %i, weight = %2.2f\n", state.indent.indent(), weight_ref.datamodel_bone_index, weight_ref.value);
-
 						// assert if we hit this limit -- can probably just drop anything
 						// over the max, but we should be smart -- and re-normalize.
 						assert(weightlist.total_weights <= datamodel::MAX_SUPPORTED_BONE_INFLUENCES);
 
 						// copy weight data over
 						datamodel::Weight& weight = weightlist.weights[weightlist.total_weights++];
-						datamodel::Bone* bone = state.model->skeleton->get_bone_at_index(weight_ref.datamodel_bone_index);
+						const datamodel::Bone* bone = state.model->skeleton->get_bone_at_index(weight_ref.datamodel_bone_index);
 						assert(bone != nullptr);
 						weight.bone_name = bone->name;
 						weight.value = weight_ref.value;
+
+//						LOGV("%sbone '%s', index: %i, vertex: %i, weight = %2.2f\n",
+//							state.indent.indent(),
+//							bone->name.c_str(),
+//							index,
+//							vertex_index,
+//							weight_ref.datamodel_bone_index,
+//							weight_ref.value);
 					}
+
 					state.indent.pop();
 				}
-
 
 				++vertex_index;
 				++local_index;
@@ -463,11 +469,6 @@ namespace gemini
 		}
 	}
 
-	static void to_mat4(FbxAMatrix& tr, glm::mat4& out)
-	{
-
-	}
-
 	bool is_hierarchical_node(FbxNode* node)
 	{
 		// doesn't need to traverse into children of this node
@@ -482,24 +483,18 @@ namespace gemini
 	{
 		FbxTime start = take->mLocalTimeSpan.GetStart();
 		FbxTime end = take->mLocalTimeSpan.GetStop();
-		int frame_count = end.GetFrameCount(time_mode) - start.GetFrameCount(time_mode) + 1;
-	//	LOGV("%stotal frames: %i\n", state.indent(), frame_count);
+//		int frame_count = end.GetFrameCount(time_mode) - start.GetFrameCount(time_mode) + 1;
+//		LOGV("%stotal frames: %i\n", state.indent(), frame_count);
 
 		state.indent.push();
 
 		bool is_hierarchical = is_hierarchical_node(fbxnode);
 
 		String node_name = fbxnode->GetName();
-//		datamodel::Node* node = state.model->root.find_child_named(node_name);
 		datamodel::Bone* bone = state.model->skeleton->find_bone_named(node_name);
 
 		if (is_hierarchical && bone)
 		{
-	//	if (!node)
-	//	{
-	//		LOGW("%sCould not find node named \"%s\"\n", state.indent(), node_name.c_str());
-	//		return;
-	//	}
 			LOGV("%snode: %s\n", state.indent.indent(), node_name.c_str());
 
 			datamodel::NodeAnimation node_data;
@@ -648,12 +643,11 @@ namespace gemini
 				{
 					FbxSkin* skin = reinterpret_cast<FbxSkin*>(deformer);
 
-					LOGV("resizing vector to %i control points (indices)\n", fbxmesh->GetControlPointsCount());
+//					LOGV("resizing vector to %i control points (indices)\n", fbxmesh->GetControlPointsCount());
 					slots->resize(fbxmesh->GetControlPointsCount());
 
-
-					int total_clusters = skin->GetClusterCount();
-					LOGV("total clusters: %i\n", total_clusters);
+					const int total_clusters = skin->GetClusterCount();
+//					LOGV("total clusters: %i\n", total_clusters);
 
 					// TODO: When exporting from maya, the local rotation axes for joints
 					// must be 'to world', because that's how we currently assume rotations
@@ -666,41 +660,42 @@ namespace gemini
 					for (int cluster_index = 0; cluster_index < total_clusters; ++cluster_index)
 					{
 						FbxCluster* cluster = skin->GetCluster(cluster_index);
-						LOGV("cluster: %i, joint name: %s\n", cluster_index, cluster->GetLink()->GetName());
 						datamodel::Bone* bone = state.model->skeleton->find_bone_named(cluster->GetLink()->GetName());
 						BoneData& bonedata = mesh_data->bones[cluster->GetLink()->GetName()];
 						bonedata.name = cluster->GetLink()->GetName();
 
 						// If you hit this, lookup failed for the cluster name.
-
 						assert(bone != 0);
 
 						FbxAMatrix transform_matrix;
 						FbxAMatrix link_matrix;
 						FbxAMatrix inverse_bindpose_matrix;
-
-
-
 						cluster->GetTransformMatrix(transform_matrix);
 						cluster->GetTransformLinkMatrix(link_matrix);
 
 						inverse_bindpose_matrix = link_matrix.Inverse() * transform_matrix * geometry_transform;
 						from_fbx(bonedata.inverse_bind_pose, inverse_bindpose_matrix);
 
-
+		 				// iterate over all vertices that are affected by this bone
 						int total_control_points = cluster->GetControlPointIndicesCount();
 						int* indices = cluster->GetControlPointIndices();
 						double* control_point_weights = cluster->GetControlPointWeights();
 						int control_point_index = 0;
+//						LOGV("cluster: %i, bone name: '%s', %i affected vertices\n", cluster_index, cluster->GetLink()->GetName(), total_control_points);
 						for(; control_point_index < total_control_points; ++control_point_index)
 						{
-//							LOGV("%i --> %2.2f\n", control_point_index, control_point_weights[control_point_index]);
+							const int control_point = indices[control_point_index];
+							const double weight = control_point_weights[control_point_index];
+
+//							LOGV("(%s) index: %i, weight: %2.2f\n", bone->name.c_str(), control_point, weight);
 
 							WeightReference ref;
 							ref.datamodel_bone_index = bone->index;
-							ref.value = control_point_weights[control_point_index];
-							(*slots)[indices[control_point_index]].weights.push_back(ref);
+							ref.value = weight;
+//							LOGV("bone '%s', control_point: %i weight: %2.2f\n", bone->name.c_str(), indices[control_point_index], ref.value);
+							(*slots)[control_point].weights.push_back(ref);
 							bone->total_blendweights++;
+//							LOGV("bone '%s' has %i weight(s)\n", bone->name.c_str(), bone->total_blendweights);
 						}
 					}
 				}

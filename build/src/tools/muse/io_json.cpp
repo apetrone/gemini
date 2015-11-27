@@ -305,6 +305,7 @@ namespace gemini
 
 			// write blend weights
 			Json::Value blend_weights(Json::arrayValue);
+
 			for (size_t index_id = 0; index_id < node->mesh->indices.size(); ++index_id)
 			{
 				// each index will have an array of weight data.
@@ -313,9 +314,12 @@ namespace gemini
 				Json::Value weight_array(Json::arrayValue);
 				datamodel::WeightList& weightlist = node->mesh->weights[index_id];
 
+				// This model has exceeded the max bone influences per vertex
+				assert(weightlist.total_weights < datamodel::MAX_SUPPORTED_BONE_INFLUENCES);
+
 				for (size_t influence = 0; influence < datamodel::MAX_SUPPORTED_BONE_INFLUENCES; ++influence)
 				{
-					datamodel::Weight& weight = weightlist.weights[influence];
+					const datamodel::Weight& weight = weightlist.weights[influence];
 					if (!weight.bone_name.empty() && weight.value > 0.0f)
 					{
 						Json::Value weightpair;
