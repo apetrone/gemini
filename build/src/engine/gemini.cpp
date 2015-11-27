@@ -380,12 +380,12 @@ class ModelInterface : public gemini::IModelInterface
 	public:
 
 		ModelInstanceData() :
-		mesh_asset_index(0),
-		mesh(0),
-		bone_transforms(0),
-		scale_channel(scale),
-		rotation_channel(rotation),
-		translation_channel(translation)
+			mesh_asset_index(0),
+			mesh(0),
+			bone_transforms(0),
+			scale_channel(scale),
+			rotation_channel(rotation),
+			translation_channel(translation)
 		{
 		}
 

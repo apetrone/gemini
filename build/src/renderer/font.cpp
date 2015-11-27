@@ -162,7 +162,7 @@ namespace font
 		// invalid glyphs will have an index of 0
 		if (glyph_index == 0)
 		{
-			LOGW("Invalid glyph %i -> %c\n", codepoint, codepoint);
+//			LOGW("Invalid glyph %i -> %c\n", codepoint, codepoint);
 			return;
 		}
 
