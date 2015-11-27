@@ -434,12 +434,34 @@ namespace gemini
 		// copy bone data
 		if (!mesh_data->bones.empty())
 		{
-			mesh->bindpose.allocate(mesh_data->bones.size());
+			const size_t skeleton_bone_count = state.model->skeleton->bones.size();
+			const size_t cluster_bone_count = mesh_data->bones.size();
+			size_t bones_without_weights = (skeleton_bone_count - cluster_bone_count);
 
-			size_t index = 0;
-			for (auto& bd : mesh_data->bones)
+			mesh->bindpose.allocate(skeleton_bone_count);
+
+			size_t current_bindpose = 0;
+
+			if (bones_without_weights > 0)
 			{
-				datamodel::BoneLinkData& link_data = mesh->bindpose[index++];
+				// One or more bones don't have an FBxCluster.
+				// This means there are no weights assigned to them, but these
+				// exist in the hierarchy regardless. This also means the bone
+				// wasn't properly added to the mesh_data->bones array.
+
+				// Blender introduces a dummy 'Armature' bone at the root on export.
+				for (size_t index = 0; index < bones_without_weights; ++index)
+				{
+					datamodel::Bone* bone = state.model->skeleton->bones[index];
+					datamodel::BoneLinkData& link_data = mesh->bindpose[current_bindpose++];
+					link_data.bone_name = bone->name;
+					link_data.parent = -1;
+				}
+			}
+
+			for (const BoneData& bd : mesh_data->bones)
+			{
+				datamodel::BoneLinkData& link_data = mesh->bindpose[current_bindpose++];
 				datamodel::Bone* bone = state.model->skeleton->find_bone_named(bd.name);
 				link_data.bone_name = bd.name;
 				link_data.inverse_bind_pose = bd.inverse_bind_pose;
@@ -661,8 +683,12 @@ namespace gemini
 					{
 						FbxCluster* cluster = skin->GetCluster(cluster_index);
 						datamodel::Bone* bone = state.model->skeleton->find_bone_named(cluster->GetLink()->GetName());
+
 						BoneData& bonedata = mesh_data->bones[cluster->GetLink()->GetName()];
 						bonedata.name = cluster->GetLink()->GetName();
+
+						FbxCluster::ELinkMode link_mode = cluster->GetLinkMode();
+						assert(link_mode == FbxCluster::eNormalize);
 
 						// If you hit this, lookup failed for the cluster name.
 						assert(bone != 0);
@@ -695,7 +721,6 @@ namespace gemini
 //							LOGV("bone '%s', control_point: %i weight: %2.2f\n", bone->name.c_str(), indices[control_point_index], ref.value);
 							(*slots)[control_point].weights.push_back(ref);
 							bone->total_blendweights++;
-//							LOGV("bone '%s' has %i weight(s)\n", bone->name.c_str(), bone->total_blendweights);
 						}
 					}
 				}

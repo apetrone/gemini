@@ -315,7 +315,7 @@ namespace gemini
 				datamodel::WeightList& weightlist = node->mesh->weights[index_id];
 
 				// This model has exceeded the max bone influences per vertex
-				assert(weightlist.total_weights < datamodel::MAX_SUPPORTED_BONE_INFLUENCES);
+				assert(weightlist.total_weights <= datamodel::MAX_SUPPORTED_BONE_INFLUENCES);
 
 				for (size_t influence = 0; influence < datamodel::MAX_SUPPORTED_BONE_INFLUENCES; ++influence)
 				{
@@ -331,6 +331,7 @@ namespace gemini
 
 				blend_weights.append(weight_array);
 			}
+			LOGV("[json] writing %i blend weights\n", blend_weights.size());
 
 			mesh_data["blend_weights"] = blend_weights;
 
@@ -413,9 +414,10 @@ namespace gemini
 		{
 			for (auto child : model->root.children)
 			{
-				if (child->type == "skeleton")
-					continue;
-				append_node(child, jnodes);
+				if (child->type == "mesh")
+				{
+					append_node(child, jnodes);
+				}
 			}
 		}
 		jroot["nodes"] = jnodes;
@@ -432,15 +434,14 @@ namespace gemini
 				jskeleton.append(bone_entry);
 			}
 		}
+		LOGV("[json] writing %i bones\n", jskeleton.size());
 		jroot["skeleton"] = jskeleton;
 
 
 		if (model->export_flags & (Model::EXPORT_MESHES | Model::EXPORT_MATERIALS | Model::EXPORT_SKELETON))
 		{
 			Json::StyledWriter writer;
-
-			std::string buffer = writer.write(jroot);
-
+			const std::string buffer = writer.write(jroot);
 			std::string abs_model_file = abs_base_path;
 			abs_model_file.append(".model");
 
@@ -454,8 +455,6 @@ namespace gemini
 			{
 				LOGE("error writing to file %s\n", abs_model_file.c_str());
 			}
-
-
 		}
 
 
