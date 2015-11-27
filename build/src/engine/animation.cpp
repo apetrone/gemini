@@ -239,7 +239,7 @@ namespace gemini
 			Sequence* sequence = animation::get_sequence_by_index(sequence_index);
 			assert(sequence != 0);
 
-			for (auto& channelset : ChannelSet)
+			for (FixedArray<Channel>& channelset : ChannelSet)
 			{
 				for (Channel& channel : channelset)
 				{

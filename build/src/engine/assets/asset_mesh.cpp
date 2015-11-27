@@ -88,10 +88,9 @@ namespace gemini
 
 		void traverse_nodes(MeshLoaderState& state, const Json::Value& node, MaterialByIdContainer& materials, const bool is_world)
 		{
-			std::string node_type = node["type"].asString();
+			const std::string node_type = node["type"].asString();
 			if (node_type == "mesh")
 			{
-
 				Json::Value mesh_root = node["mesh"];
 				Json::Value bbox_mins = node["mins"];
 				Json::Value bbox_maxs = node["maxs"];
@@ -152,7 +151,7 @@ namespace gemini
 				geo->name = node["name"].asString().c_str();
 
 //				LOGV("assign material id %i to geometry: %s\n", geo->material_id, geo->name());
-	//			LOGV("load geometry: %s\n", geo->name());
+//				LOGV("load geometry: %s\n", geo->name());
 
 				// allocate the geometry arrays
 				geo->index_count = index_array.size();
@@ -232,7 +231,7 @@ namespace gemini
 						assert(joint != 0);
 
 						size_t bone_index = joint->index;
-						LOGV("reading bind_pose for '%s' -> %i\n", bone_name.c_str(), bone_index);
+//						LOGV("reading bind_pose for '%s' -> %i\n", bone_name.c_str(), bone_index);
 						const Json::Value& inverse_bind_pose = skeleton_entry["inverse_bind_pose"];
 						assert(!inverse_bind_pose.isNull());
 
@@ -244,13 +243,11 @@ namespace gemini
 
 					// read all blend weights and indices
 					it = blend_weights.begin();
-					for (int weight_id = 0; it != blend_weights.end(); ++it, ++weight_id)
+					for (size_t weight_id = 0; it != blend_weights.end(); ++it, ++weight_id)
 					{
 						const Json::Value& weight_pairs = (*it);
-						//					LOGV("size: %i\n", weight_pairs.size());
 
-
-						int blend_index = 0;
+						size_t blend_index = 0;
 
 						int bone_indices[4] = {0, 0, 0, 0};
 						float bone_weights[4] = {0, 0, 0, 0};
@@ -265,9 +262,8 @@ namespace gemini
 							Joint* joint = state.mesh->find_bone_named(bone.asString().c_str());
 							assert(joint != 0);
 
-							// TODO: get index of this bone
-							//						LOGV("bone: %s, value: %2.2f\n", bone.asString().c_str(), value.asFloat());
-
+							assert(blend_index < 4);
+//							LOGV("[%i] bone: %s, value: %2.2f\n", weight_id, bone.asString().c_str(), value.asFloat());
 
 							bone_indices[blend_index] = joint->index;
 							bone_weights[blend_index] = value.asFloat();
@@ -275,9 +271,9 @@ namespace gemini
 
 						// assign these values to the blend_weights and blend_indices index
 						geo->blend_indices[weight_id] = glm::vec4(bone_indices[0], bone_indices[1], bone_indices[2], bone_indices[3]);
-						//					LOGV("indices: %g %g %g %g\n", geo->blend_indices[weight_id].x, geo->blend_indices[weight_id].y, geo->blend_indices[weight_id].z, geo->blend_indices[weight_id].w);
+//						LOGV("[%i] indices: %g %g %g %g\n", weight_id, geo->blend_indices[weight_id].x, geo->blend_indices[weight_id].y, geo->blend_indices[weight_id].z, geo->blend_indices[weight_id].w);
 						geo->blend_weights[weight_id] = glm::vec4(bone_weights[0], bone_weights[1], bone_weights[2], bone_weights[3]);
-						//					LOGV("weights: %g %g %g %g\n", geo->blend_weights[weight_id].x, geo->blend_weights[weight_id].y, geo->blend_weights[weight_id].z, geo->blend_weights[weight_id].w);
+//						LOGV("weights: %g %g %g %g\n", geo->blend_weights[weight_id].x, geo->blend_weights[weight_id].y, geo->blend_weights[weight_id].z, geo->blend_weights[weight_id].w);
 					}
 				}
 
@@ -297,8 +293,7 @@ namespace gemini
 			}
 			else
 			{
-				LOGV("create group node\n");
-
+				LOGV("create node type: '%s'\n", node_type.c_str());
 			}
 
 			const Json::Value& children = node["children"];
@@ -360,6 +355,8 @@ namespace gemini
 
 			// try to read all geometry
 			// first pass will examine nodes
+
+			LOGV("loading model '%s'...\n", mesh->path());
 
 			Json::Value node_root = root["nodes"];
 
