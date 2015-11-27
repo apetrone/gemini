@@ -67,6 +67,9 @@
 #include "hotloading.h"
 #include "navigation.h"
 
+// uncomment this to draw bone debug information
+//#define GEMINI_DEBUG_BONES
+
 typedef Array<gemini::GameMessage> EventQueueType;
 
 struct DataInput
@@ -454,6 +457,10 @@ class ModelInterface : public gemini::IModelInterface
 			animation::SequenceId instance_index = animations[index];
 			animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
 
+#if defined(GEMINI_DEBUG_BONES)
+			const glm::vec2 origin(10.0f, 30.0f);
+#endif
+
 			size_t bone_index = 0;
 			for (FixedArray<animation::Channel>& node : instance->ChannelSet)
 			{
@@ -476,7 +483,14 @@ class ModelInterface : public gemini::IModelInterface
 					rot = glm::quat(rw(), rx(), ry(), rz());
 				}
 
-
+#if defined(GEMINI_DEBUG_BONES)
+				debugdraw::instance()->text(origin.x,
+					origin.y + (12.0f * bone_index),
+					core::str::format("%2i) '%s' | rot: [%2.2f, %2.2f, %2.2f, %2.2f]", bone_index,
+					mesh->skeleton[bone_index].name(),
+					rot.x, rot.y, rot.z, rot.w),
+					core::Color(0.0f, 0.0f, 0.0f));
+#endif
 				++bone_index;
 			}
 		}
@@ -492,7 +506,9 @@ class ModelInterface : public gemini::IModelInterface
 			// model. Congrats.
 			assert(mesh->skeleton.size() < MAX_BONES);
 
+#if defined(GEMINI_DEBUG_BONES)
 			const glm::mat4& tx = this->get_local_transform();
+#endif
 
 			size_t geometry_index = 0;
 			// we must update the transforms for each geometry instance
@@ -513,7 +529,9 @@ class ModelInterface : public gemini::IModelInterface
 					assets::Joint* joint = &mesh->skeleton[index];
 					glm::mat4& global_pose = bone_transforms[transform_index];
 					glm::mat4& saved_pose = local_transforms[index];
+#if defined(GEMINI_DEBUG_BONES)
 					glm::mat4& debug_bone_transform = debug_bone_transforms[index];
+#endif
 
 					glm::mat4 local_scale;
 					glm::mat4 local_rotation = glm::toMat4(rotations[index]);
@@ -534,8 +552,11 @@ class ModelInterface : public gemini::IModelInterface
 					// this will be used for skinning in the vertex shader
 					global_pose = saved_pose * geo.bind_poses[index];
 
+#if defined(GEMINI_DEBUG_BONES)
 					// this will be used for debug rendering
 					debug_bone_transform = tx * (saved_pose);
+					debugdraw::instance()->axes(debug_bone_transform, 0.15f);
+#endif
 				}
 
 				++geometry_index;
