@@ -92,23 +92,23 @@ namespace renderer
 			}
 		}; // TexturedVertex
 
-		DebugPrimitive::DebugPrimitive()
+		DebugPrimitive::DebugPrimitive() :
+			type(0),
+			flags(0),
+			timeleft(0.0f),
+			radius(0.0f),
+			start(glm::vec3(0.0f, 0.0f, 0.0f)),
+			end(glm::vec3(0.0f, 0.0f, 0.0f)),
+			alt(glm::vec3(0.0f, 0.0f, 0.0f)),
+			color(core::Color()),
+			buffer(""),
+			transform(glm::mat4(1.0f))
 		{
-			reset();
 		} // DebugPrimitive
 
 		void DebugPrimitive::reset()
 		{
-			type 		= 0;
-			flags 		= 0;
-			timeleft 	= 0.0f;
-			radius 		= 0.0f;
-			start		= glm::vec3(0.0f, 0.0f, 0.0f);
-			end			= glm::vec3(0.0f, 0.0f, 0.0f);
-			alt			= glm::vec3(0.0f, 0.0f, 0.0f);
-			color		= core::Color();
-			buffer.clear();
-			transform	= glm::mat4(1.0f);
+
 		} // DebugPrimitive
 
 		namespace detail
@@ -216,7 +216,7 @@ namespace renderer
 					// reset all of these for the next frame
 					for (size_t index = 0; index < per_frame_primitives.size(); ++index)
 					{
-						per_frame_primitives[index].reset();
+						per_frame_primitives[index] = DebugPrimitive();
 					}
 
 					per_frame_primitives.clear(false);
