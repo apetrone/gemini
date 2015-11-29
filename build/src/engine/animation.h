@@ -107,7 +107,7 @@ namespace gemini
 			float duration_seconds;
 			float frame_delay_seconds;
 
-			core::StackString<32> name;
+			core::StackString<64> name;
 			SequenceId index;
 
 			FixedArray<KeyframeListArray> AnimationSet;
