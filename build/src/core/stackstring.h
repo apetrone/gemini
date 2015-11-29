@@ -69,6 +69,9 @@ namespace core
 		{
 			clear();
 			recompute_size(source);
+
+			// If you hit this, you've tried to copy a string larger than the
+			// maximum size.
 			assert(_length < maximum_size-1);
 			core::str::copy(_data, source, _length+1);
 		}
