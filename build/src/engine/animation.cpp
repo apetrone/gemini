@@ -416,11 +416,11 @@ namespace gemini
 						int total_keys = tr_values.size();
 
 						KeyframeList& tx = kfl[0];
-						tx.allocate(total_keys); tx.duration_seconds = 2.0f;
+						tx.allocate(total_keys); tx.duration_seconds = duration_seconds.asFloat();
 						KeyframeList& ty = kfl[1];
-						ty.allocate(total_keys); ty.duration_seconds = 2.0f;
+						ty.allocate(total_keys); ty.duration_seconds = duration_seconds.asFloat();
 						KeyframeList& tz = kfl[2];
-						tz.allocate(total_keys); tz.duration_seconds = 2.0f;
+						tz.allocate(total_keys); tz.duration_seconds = duration_seconds.asFloat();
 
 						for (unsigned int index = 0; index < tr_values.size(); ++index)
 						{
@@ -453,13 +453,13 @@ namespace gemini
 						int total_keys = values.size();
 
 						KeyframeList& rx = kfl[3];
-						rx.allocate(total_keys); rx.duration_seconds = 2.0f;
+						rx.allocate(total_keys); rx.duration_seconds = duration_seconds.asFloat();
 						KeyframeList& ry = kfl[4];
-						ry.allocate(total_keys); ry.duration_seconds = 2.0f;
+						ry.allocate(total_keys); ry.duration_seconds = duration_seconds.asFloat();
 						KeyframeList& rz = kfl[5];
-						rz.allocate(total_keys); rz.duration_seconds = 2.0f;
+						rz.allocate(total_keys); rz.duration_seconds = duration_seconds.asFloat();
 						KeyframeList& rw = kfl[6];
-						rw.allocate(total_keys); rw.duration_seconds = 2.0f;
+						rw.allocate(total_keys); rw.duration_seconds = duration_seconds.asFloat();
 
 						for (unsigned int index = 0; index < values.size(); ++index)
 						{
