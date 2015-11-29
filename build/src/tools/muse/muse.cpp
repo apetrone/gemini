@@ -199,40 +199,49 @@ namespace gemini
 
 		void verify_geometry_recursive(datamodel::Node* node, datamodel::Model& model)
 		{
-			if (node->type == "mesh" && model.skeleton)
+			if (node->type == "mesh")
 			{
-				// animated models require:
-				// normals and uv0
-				assert(node->mesh);
+				// must have vertices
+				assert(!node->mesh->vertices.empty());
 
-				// animated models require normals
-				if (node->mesh->normals.empty())
+				// must have indices
+				assert(!node->mesh->indices.empty());
+
+				if (model.skeleton)
 				{
-					LOGW("animated mesh '%s' has no normals! populating with dummy values...\n",
-						 node->mesh->name.c_str());
+					// animated models require:
+					// normals and uv0
+					assert(node->mesh);
 
-					node->mesh->normals.allocate(node->mesh->vertices.size());
-					for (size_t index = 0; index < node->mesh->normals.size(); ++index)
+					// animated models require normals
+					if (node->mesh->normals.empty())
 					{
-						glm::vec3& normal = node->mesh->normals[index];
-						normal = glm::vec3(0.0f, 0.0f, 1.0f);
+						LOGW("animated mesh '%s' has no normals! populating with dummy values...\n",
+							 node->mesh->name.c_str());
+
+						node->mesh->normals.allocate(node->mesh->vertices.size());
+						for (size_t index = 0; index < node->mesh->normals.size(); ++index)
+						{
+							glm::vec3& normal = node->mesh->normals[index];
+							normal = glm::vec3(0.0f, 0.0f, 1.0f);
+						}
 					}
-				}
 
-				// animated models require one set of UVs
-				if (node->mesh->uvs.empty())
-				{
-					LOGW("animated mesh '%s' has no uvs! populating with dummy values...\n",
-						 node->mesh->name.c_str());
-
-					// just need one set for now
-					node->mesh->uvs.allocate(1);
-					node->mesh->uvs[0].allocate(node->mesh->vertices.size());
-					FixedArray<glm::vec2>& uvs = node->mesh->uvs[0];
-					for (size_t index = 0; index < uvs.size(); ++index)
+					// animated models require one set of UVs
+					if (node->mesh->uvs.empty())
 					{
-						glm::vec2& uv = uvs[index];
-						uv = glm::vec2(0.0f, 0.0f);
+						LOGW("animated mesh '%s' has no uvs! populating with dummy values...\n",
+							 node->mesh->name.c_str());
+
+						// just need one set for now
+						node->mesh->uvs.allocate(1);
+						node->mesh->uvs[0].allocate(node->mesh->vertices.size());
+						FixedArray<glm::vec2>& uvs = node->mesh->uvs[0];
+						for (size_t index = 0; index < uvs.size(); ++index)
+						{
+							glm::vec2& uv = uvs[index];
+							uv = glm::vec2(0.0f, 0.0f);
+						}
 					}
 				}
 			}
@@ -327,7 +336,6 @@ namespace gemini
 					child->mesh->mass_center_offset = child->translation - geometry::compute_center_of_mass(child->mesh);
 				}
 			}
-
 
 			writer->write(output_path(), &model);
 
