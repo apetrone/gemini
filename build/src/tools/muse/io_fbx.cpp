@@ -501,23 +501,21 @@ namespace gemini
 		return !(node->GetLight() || node->GetCamera());
 	}
 
-	static void populate_animations(AutodeskFbxExtensionState& state, FbxNode* fbxnode, FbxTakeInfo* take, FbxTime::EMode time_mode, datamodel::Animation& animation)
+	static void populate_animations(AutodeskFbxExtensionState& state, FbxAnimStack* animation_stack, FbxNode* fbxnode, FbxTakeInfo* take, FbxTime::EMode time_mode, datamodel::Animation& animation)
 	{
-		FbxTime start = take->mLocalTimeSpan.GetStart();
-		FbxTime end = take->mLocalTimeSpan.GetStop();
-//		int frame_count = end.GetFrameCount(time_mode) - start.GetFrameCount(time_mode) + 1;
-//		LOGV("%stotal frames: %i\n", state.indent(), frame_count);
+		const FbxTime start = animation_stack->LocalStart; //take->mLocalTimeSpan.GetStart();
+		const FbxTime end = animation_stack->LocalStop; //take->mLocalTimeSpan.GetStop();
 
 		state.indent.push();
 
-		bool is_hierarchical = is_hierarchical_node(fbxnode);
+		const bool is_hierarchical = is_hierarchical_node(fbxnode);
 
-		String node_name = fbxnode->GetName();
-		datamodel::Bone* bone = state.model->skeleton->find_bone_named(node_name);
+		const String node_name = fbxnode->GetName();
+		const datamodel::Bone* bone = state.model->skeleton->find_bone_named(node_name);
 
 		if (is_hierarchical && bone)
 		{
-			LOGV("%snode: %s\n", state.indent.indent(), node_name.c_str());
+//			LOGV("%snode: %s\n", state.indent.indent(), node_name.c_str());
 
 			datamodel::NodeAnimation node_data;
 
@@ -536,7 +534,6 @@ namespace gemini
 			animation.duration_seconds = end.GetFrameCount(time_mode)/state.frames_per_second;
 
 			FbxQuaternion last_rotation;
-
 			for (FbxLongLong local_time = start.GetFrameCount(time_mode); local_time <= end.GetFrameCount(time_mode); ++local_time)
 			{
 				FbxTime current_time;
@@ -602,6 +599,7 @@ namespace gemini
 //				rotation_degrees.x = mathlib::radians_to_degrees(rotation_degrees.x);
 //				rotation_degrees.y = mathlib::radians_to_degrees(rotation_degrees.y);
 //				rotation_degrees.z = mathlib::radians_to_degrees(rotation_degrees.z);
+//				LOGV("rot: %2.2f, %2.2f, %2.2f\n", rotation_degrees.x, rotation_degrees.y, rotation_degrees.z);
 
 				data->scale.add_key(frame_time, key_scaling);
 				data->rotation.add_key(frame_time, key_rotation);
@@ -610,12 +608,12 @@ namespace gemini
 		}
 		else
 		{
-			LOGV("skip: %s\n", fbxnode->GetName());
+			LOGV("skipping node '%s'...\n", fbxnode->GetName());
 		}
 
 		for (int index = 0; index < fbxnode->GetChildCount(); ++index)
 		{
-			populate_animations(state, fbxnode->GetChild(index), take, time_mode, animation);
+			populate_animations(state, animation_stack, fbxnode->GetChild(index), take, time_mode, animation);
 		}
 
 		state.indent.pop();
@@ -1086,29 +1084,26 @@ namespace gemini
 				populate_hierarchy(extension_state, &model->root, fbxroot->GetChild(index));
 			}
 
-
-			int total_animation_stacks = scene->GetSrcObjectCount<FbxAnimStack>();
+			const int total_animation_stacks = scene->GetSrcObjectCount<FbxAnimStack>();
 			LOGV("animation stacks: %i\n", total_animation_stacks);
-
-			// If we need to implement more than one animation... do that now.
-			// Interestingly enough, the FBX 6.1 ASCII format exports 2 stacks
-			// for ... reasons.
-			assert(total_animation_stacks <= 1);
 
 			if (extension_state.model->skeleton)
 			{
-				for (int stack = 0; stack < total_animation_stacks; ++stack)
+				for (int index = 0; index < total_animation_stacks; ++index)
 				{
-					FbxAnimStack* anim_stack = scene->GetSrcObject<FbxAnimStack>(stack);
-					FbxString stack_name = anim_stack->GetName();
-					LOGV("stack: %s\n", stack_name.Buffer());
+					FbxAnimStack* anim_stack = scene->GetSrcObject<FbxAnimStack>(index);
+
+					// prepare to extract data for this animation stack
+					scene->SetCurrentAnimationStack(anim_stack);
+
+					const FbxString stack_name = anim_stack->GetName();
 					FbxTakeInfo* take = scene->GetTakeInfo(stack_name);
 
 					datamodel::Animation* animation = model->add_animation(stack_name.Buffer());
 					LOGV("reading data for animation \"%s\"\n", animation->name.c_str());
 
 		//			fbxroot->ConvertPivotAnimationRecursive(anim_stack, FbxNode::eDestinationPivot, 30.0);
-					populate_animations(extension_state, fbxroot, take, time_mode, *animation);
+					populate_animations(extension_state, anim_stack, fbxroot, take, time_mode, *animation);
 				}
 			}
 		}

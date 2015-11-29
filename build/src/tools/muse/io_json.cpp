@@ -165,7 +165,7 @@ namespace gemini
 			Json::StyledWriter writer;
 			std::string buffer = writer.write(janimation);
 
-			std::string abs_file_path = abs_base_path + ".animation";
+			std::string abs_file_path = abs_base_path + "." + animation->name + ".animation";
 			LOGV("writing animation '%s'\n", abs_file_path.c_str());
 			platform::File handle = platform::fs_open(abs_file_path.c_str(), platform::FileMode_Write);
 			if (handle.is_open())
