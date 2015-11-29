@@ -21,11 +21,21 @@ format. Any DCC tool which can export to this, is in theory, supported.
 ----------------------
 Exporting from Blender
 ----------------------
-There are some issues exporting from blender, but static geometry
-should work. Materials aren't written properly by Blender's exporter.
+Exporting from Blender is most reliable with the following settings.
+
+[Skeletal Animations]
+
+Version: FBX 6.1 ASCII
++ Selected Objects
++ Animation
++ All Actions
+- Uncheck Default Take
+
+NOTES:
+
+	* FBX 7.4 binary mangles the action names
 
 ----------------------
 Exporting from Maya LT
 ----------------------
 Maya LT hasn't been tested yet, but I'm sure full FBX support is there.
-
