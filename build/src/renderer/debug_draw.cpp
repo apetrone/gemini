@@ -574,6 +574,7 @@ namespace renderer
 
 			size_t primitive_sizes[] =
 			{
+				0,
 				24,
 				2,
 				6,
