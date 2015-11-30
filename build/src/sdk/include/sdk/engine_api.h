@@ -85,7 +85,7 @@ namespace gemini
 //		virtual void render_world(const glm::vec3& origin, const glm::vec2& view_angles) = 0;
 
 		// render a viewmodel (no depth testing; different fov)
-		virtual void render_viewmodel(IEngineEntity* entity, const glm::vec3& origin, const glm::vec2& view_angles) = 0;
+		virtual void render_viewmodel(IEngineEntity* entity, const View& view) = 0;
 
 		virtual void get_render_resolution(uint32_t& render_width, uint32_t& render_height) = 0;
 

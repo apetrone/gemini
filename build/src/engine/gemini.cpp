@@ -295,14 +295,12 @@ void render_scene_from_camera(gemini::IEngineEntity** entity_list, View& view, S
 	scenelink.draw(&view.modelview, &view.projection);
 }
 
-//void render_entity_from_camera(gemini::IEngineEntity* entity, View& view, SceneLink& scenelink)
-//{
-//	scenelink.clear();
-//
-//	scenelink.queue_entities(&entity, 1, RENDER_VIEWMODEL);
-//
-//	scenelink.draw(&view.modelview, &view.projection);
-//}
+void render_viewmodel(gemini::IEngineEntity* entity, View& view, SceneLink& scenelink)
+{
+	scenelink.clear();
+	scenelink.queue_entities(&entity, 1, RENDER_VIEWMODEL);
+	scenelink.draw(&view.modelview, &view.projection);
+}
 
 
 class EntityManager : public IEntityManager
@@ -506,9 +504,9 @@ class ModelInterface : public gemini::IModelInterface
 			// model. Congrats.
 			assert(mesh->skeleton.size() < MAX_BONES);
 
-#if defined(GEMINI_DEBUG_BONES)
+//#if defined(GEMINI_DEBUG_BONES)
 			const glm::mat4& tx = this->get_local_transform();
-#endif
+//#endif
 
 			size_t geometry_index = 0;
 			// we must update the transforms for each geometry instance
@@ -529,9 +527,9 @@ class ModelInterface : public gemini::IModelInterface
 					assets::Joint* joint = &mesh->skeleton[index];
 					glm::mat4& global_pose = bone_transforms[transform_index];
 					glm::mat4& saved_pose = local_transforms[index];
-#if defined(GEMINI_DEBUG_BONES)
+//#if defined(GEMINI_DEBUG_BONES)
 					glm::mat4& debug_bone_transform = debug_bone_transforms[index];
-#endif
+//#endif
 
 					glm::mat4 local_scale;
 					glm::mat4 local_rotation = glm::toMat4(rotations[index]);
@@ -552,10 +550,11 @@ class ModelInterface : public gemini::IModelInterface
 					// this will be used for skinning in the vertex shader
 					global_pose = saved_pose * geo.bind_poses[index];
 
-#if defined(GEMINI_DEBUG_BONES)
 					// this will be used for debug rendering
 					debug_bone_transform = tx * (saved_pose);
-					debugdraw::instance()->axes(debug_bone_transform, 0.15f);
+
+#if defined(GEMINI_DEBUG_BONES)
+//					debugdraw::instance()->axes(debug_bone_transform, 0.15f);
 #endif
 				}
 
@@ -874,14 +873,14 @@ public:
 		return core::memory::global_allocator();
 	}
 
-	virtual void render_viewmodel(IEngineEntity* entity, const glm::vec3& origin, const glm::vec2& view_angles)
+	virtual void render_viewmodel(IEngineEntity* entity, const View& view)
 	{
 //		render_method->render_viewmodel(entity, main_window, origin, view_angles);
 		::renderer::RenderStream rs;
 		rs.add_cullmode(::renderer::CullMode::CULLMODE_BACK);
 		rs.add_state(::renderer::STATE_BACKFACE_CULLING, 1);
-		rs.add_state(::renderer::STATE_DEPTH_TEST, 1);
-		rs.add_clear(::renderer::CLEAR_DEPTH_BUFFER );
+		rs.add_state(::renderer::STATE_DEPTH_TEST, 0);
+//		rs.add_clear(::renderer::CLEAR_DEPTH_BUFFER);
 		rs.run_commands();
 
 //		Camera camera;
@@ -897,6 +896,13 @@ public:
 //		camera.update_view();
 //
 //		render_entity_from_camera(entity, camera, scenelink);
+
+		View newview = view;
+		platform::window::Frame frame = platform::window::get_render_frame(main_window);
+		newview.width = frame.width;
+		newview.height = frame.height;
+
+		::render_viewmodel(entity, newview, scenelink);
 	}
 
 	virtual void get_render_resolution(uint32_t& render_width, uint32_t& render_height)
