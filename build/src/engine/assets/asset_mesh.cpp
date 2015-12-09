@@ -91,18 +91,18 @@ namespace gemini
 			const std::string node_type = node["type"].asString();
 			if (node_type == "mesh")
 			{
-				Json::Value mesh_root = node["mesh"];
+//				Json::Value mesh_root = node["mesh"];
 				Json::Value bbox_mins = node["mins"];
 				Json::Value bbox_maxs = node["maxs"];
-				assert(!mesh_root.isNull());
+//				assert(!mesh_root.isNull());
 
-				Json::Value index_array = mesh_root["indices"];
-				Json::Value vertex_array = mesh_root["vertices"];
-				Json::Value normal_array = mesh_root["normals"];
-				Json::Value uv_sets = mesh_root["uv_sets"];
-				Json::Value vertex_colors = mesh_root["vertex_colors"];
-				const Json::Value& blend_weights = mesh_root["blend_weights"];
-				const Json::Value& bind_pose = mesh_root["bind_pose"];
+				Json::Value index_array = node["indices"];
+				Json::Value vertex_array = node["vertices"];
+				Json::Value normal_array = node["normals"];
+				Json::Value uv_sets = node["uv_sets"];
+				Json::Value vertex_colors = node["vertex_colors"];
+				const Json::Value& blend_weights = node["blend_weights"];
+				const Json::Value& bind_pose = node["bind_pose"];
 
 				// setup materials
 				assets::Material* default_material = assets::materials()->get_default();
@@ -110,7 +110,7 @@ namespace gemini
 				assets::Geometry* geo = &state.mesh->geometry[state.current_geometry++];
 				geo->material_id = default_material->Id();
 
-				Json::Value material_id = mesh_root["material_id"];
+				Json::Value material_id = node["material_id"];
 				if (!material_id.isNull())
 				{
 					// assign this material
@@ -122,7 +122,9 @@ namespace gemini
 						{
 							material_name.append("_world");
 						}
-						Material* material = assets::materials()->load_from_path(material_name.c_str());
+
+						std::string material_path = "materials/" + material_name;
+						Material* material = assets::materials()->load_from_path(material_path.c_str());
 
 						if (material)
 						{
@@ -285,7 +287,7 @@ namespace gemini
 				}
 
 				// physics related settings
-				const Json::Value& center_mass_offset = mesh_root["mass_center_offset"];
+				const Json::Value& center_mass_offset = node["mass_center_offset"];
 				if (!center_mass_offset.isNull())
 				{
 					state.mesh->mass_center_offset = glm::vec3(center_mass_offset[0].asFloat(), center_mass_offset[1].asFloat(), center_mass_offset[2].asFloat());
@@ -358,7 +360,7 @@ namespace gemini
 
 			LOGV("loading model '%s'...\n", mesh->path());
 
-			Json::Value node_root = root["nodes"];
+			Json::Value node_root = root["children"];
 
 			// The model has no nodes. What have you done?
 			assert(!node_root.isNull());

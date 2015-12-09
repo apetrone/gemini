@@ -34,23 +34,22 @@ bl_info = {
 	"category": "Import-Export"
 }
 
+# bind pose
+# http://blenderartists.org/forum/showthread.php?323968-Exporting-armature-amp-actions-how-do-you-get-the-bind-pose-and-relative-transform&highlight=exporter
+
+# blend indices and weights
+# http://blenderartists.org/forum/showthread.php?337882-Vertex-blend-indices-and-blend-weights&highlight=exporter
+
+
 #
 # imports
 # 
-
-from io_export_gemini.models import (
-	ExporterConfig,
-	Geometry,
-	Material,
-	Vertex
-)
 
 # handle module reloads [mainly used for development]
 if "bpy" in locals():
 	import importlib
 	if "io_export_gemini" in locals():
 		importlib.reload(io_export_gemini)
-		importlib.reload(io_export_gemini.models)
 
 import bpy
 from bpy.props import (
@@ -76,7 +75,7 @@ import platform
 #
 BMeshAware = False
 
-def float_clamp(value):
+def clampf(value):
        if abs(value) < 0.0001:
                return 0.0
        return value
@@ -111,7 +110,7 @@ def checkBMeshAware():
 # 	else:
 # 		return "unknown"
 
-def getMeshFaces( mesh ):
+def get_mesh_faces(mesh):
 	# for BMesh compatability
 	# http://blenderartists.org/forum/showthread.php?251840-Bmesh-Where-did-the-UV-coords-go&p=2097099&viewfull=1#post2097099
 	if hasattr(mesh, 'polygons'):
@@ -140,11 +139,10 @@ def create_triangulated_mesh(config, object):
 	# set object mode
 	#bpy.ops.object.mode_set( mode='OBJECT' )
 
-	mesh_faces = getMeshFaces( object.data )
+	mesh_faces = get_mesh_faces(object.data)
 
 	quads = [f for f in mesh_faces if len(f.vertices) == 4]
 
-	
 	if quads:
 		#print( "This mesh will be converted to Triangles..." )
 		# make a copy of the object and data
@@ -217,10 +215,201 @@ class export_animation(bpy.types.Operator):
 """
 
 
-
 #
 # supporting classes
 #
+
+
+class Material(object):
+	def __init__(self, index, path):
+		self.index = index
+		self.path = path
+
+	def __eq__(self, other):
+		return self.path == other.path
+
+	def __lt__(self, other):
+		return self.index < other.index or self.path < other.path
+
+class ExporterConfig(object):
+	def __init__(self, instance):
+		self.material_index = 0
+		self.materials = {}
+		self.material_list = []
+		self.instance = instance
+
+	def get_filepath_for_material(self, bmaterial):
+		""" determine an image path from a blender material """
+		filepath = None
+		if bmaterial and bmaterial.active_texture:
+			if hasattr(bmaterial.active_texture, "image") and hasattr(bmaterial.active_texture.image, "filepath"):
+				filepath = bmaterial.active_texture.image.filepath
+		return filepath
+
+	def add_material(self, bmaterial):
+		filepath = self.get_filepath_for_material(bmaterial)
+		if filepath:
+			if filepath not in self.materials:
+				material = Material(self.material_index, filepath)
+				self.materials[ filepath ] = material
+				self.material_list.append(material)
+				self.material_index += 1
+
+				#print( "Added new material (%i, %s)" % (material.index, material.path) )
+				return material
+			else:
+				return self.materials[ filepath ]
+		else:
+			return None
+
+	def find_material(self, bmaterial):
+		filepath = self.get_filepath_for_material(bmaterial)
+		if filepath and filepath in self.materials:
+			return self.materials[filepath]
+
+		return None
+		'''
+		if material in self.materials:
+			return self.materials[ material ]
+		else:
+			raise Exception( 'Material not found!' )
+		'''				
+
+	def info(self, message):
+		self.instance.report({'INFO'}, message)
+# class HashedVector(Vector):
+# 	def _description(self):
+# 		return (self.x, self.y, self.z)
+
+# 	def __hash__(self):
+# 		return hash( self._description() )
+
+class Vector3(object):
+	
+	def __init__(self, x, y, z):
+		self.x = x
+		self.y = y
+		self.z = z
+
+	def description(self):
+		return (self.x, self.y, self.z)
+
+	def __lt__(self, other):
+		return self.__hash__() < other.__hash__()
+
+	def __hash__(self):
+		return hash( self.description() )
+
+	def __eq__(self, other):
+		if not hasattr(other, 'description'):
+			return False
+		return self.description() == other.description()
+
+	def __repr__(self):
+		return str('Vector3(x=%2.2f, y=%2.2f, z=%2.2f)' % (self.x, self.y, self.z))
+
+# A custom vertex class allows us to place these into a dictonary
+# and have them compare properly
+class Vertex(object):
+	def __init__(self,
+		position = Vector3(0, 0, 0),
+		normal = Vector3(0, 0, 0),
+		u = 0.0,
+		v = 0.0,
+		color = (1, 1, 1, 1),
+		material_id = 0):
+		self.position = position
+		self.normal = normal
+		self.u = u
+		self.v = v
+		self.color = color
+		self.material_id = material_id
+		#print("xyz: %2.2f, %2.2f, %2.2f" % (self.position.x, self.position.y, self.position.z))
+		#print("norm: %2.2f, %2.2f, %2.2f" % (self.normal.x, self.normal.y, self.normal.z))
+		#print("uv: %2.2f, %2.2f" % (self.u, self.v))
+
+	def description(self):
+		return (self.position.x, self.position.y, self.position.z, self.normal.x, self.normal.y, self.normal.z, self.u, self.v, self.material_id)
+
+	def __lt__(self, other):
+		return self.__hash__() < other.__hash__()
+
+	def __hash__(self):
+		return hash( self.description() )
+
+	def __eq__(self, other):
+		if not hasattr(other, 'description'):
+			return False
+		return self.description() == other.description()
+
+	def __repr__(self):
+		return str("Vertex(position=%s, normal=%s, u=%2.2f, v=%2.2f, material_id=%i)" % (
+					repr(self.position),
+					repr(self.normal),
+					self.u,
+					self.v,
+					self.material_id))
+
+
+class VertexCache(object):
+	def __init__(self):
+		self.vertices = {}
+		self.indices = []
+		self.vertex_index = 0
+
+	def add_vertex(self, vertex):
+		if vertex not in self.vertices:
+			self.vertices[vertex] = self.vertex_index
+			print("add new vertex: %i" % self.vertex_index)
+			self.vertex_index += 1
+		index = self.vertices[vertex]
+		print("return vertex: %i" % index)
+
+	def add_triangle(self, triangles):
+		"""
+			Tuple of three vertex indices to make up
+			the triangle corners.
+		"""
+		self.indices.extend(triangles)
+
+	def find_vertex_index(self, vertex):
+		if vertex not in self.vertices:
+			self.vertices[vertex] = self.vertex_index
+			self.vertex_index += 1
+			print("add new vertex: %i [%s]" % (self.vertex_index, repr(vertex)))
+
+		return self.vertices[vertex]
+
+	def populate_with_geometry(self, vertices, normals, uvs, colors, loops):
+		for loop in loops:
+
+			vertex_index = loop.vertex_index
+
+			position = Vector3(vertices[vertex_index][0],
+				vertices[vertex_index][1],
+				vertices[vertex_index][2])
+
+			normal = Vector3(normals[vertex_index][0],
+				normals[vertex_index][1],
+				normals[vertex_index][2])
+
+
+			# for now, this only handles one uv set
+			uv = uvs[0][vertex_index]
+
+			# for now, this only handles one color set
+			color = colors[0][vertex_index]
+
+			# assemble a vertex using the loop index
+			vertex = Vertex(position = position,
+				normal=normal,
+				u = uv[0],
+				v = uv[1],
+				color = color)
+
+			index = self.find_vertex_index(vertex)
+
+			self.indices.append(index)
 
 class Node(object):
 	NODE = "node"
@@ -268,6 +457,38 @@ class Mesh(Node):
 		self.mins = [0.0, 0.0, 0.0]
 		self.maxs = [0.0, 0.0, 0.0]
 		self.mass_center_offset = [0.0, 0.0, 0.0]
+		self.vertices = []
+		self.normals = []
+		self.indices = []
+		self.material_id = 0
+		self.uv_sets = []
+		self.bind_pose = []
+		self.blend_weights = []
+		self.vertex_colors = []
+
+	def populate_with_vertex_cache(self, cache):
+
+
+		uvset = []
+		colorset = []
+
+		for vertex in cache.vertices:
+			self.vertices.append(
+				[vertex.position.x, vertex.position.y, vertex.position.z])
+
+			self.normals.append(
+				[vertex.normal.x, vertex.normal.y, vertex.normal.z])
+
+
+			uvset.append([vertex.u, vertex.v])
+			colorset.append(vertex.color)
+
+		self.uv_sets.append(uvset)
+		self.vertex_colors = colorset
+		self.indices = cache.indices
+
+		print("# vertices: %i" % len(self.vertices))
+		print("# indices: %i" % len(self.indices))
 
 	@staticmethod
 	def from_object(config, obj, root):
@@ -291,15 +512,75 @@ class Mesh(Node):
 		# this ensures that any modifications are baked to the vertices
 		# before we output them to the file
 		bpy.context.scene.objects.active = obj
+
 		output = bpy.ops.object.transform_apply(location=True,
 			scale=True)
 
-		mesh = obj.to_mesh(bpy.context.scene, True, 'PREVIEW')
+		mesh = triangulated_object.to_mesh(bpy.context.scene, True, 'PREVIEW')
 		mesh.transform(final_rotation.to_4x4())
 		
 		# collect all blender materials used by this mesh
 		for bmaterial in mesh.materials:
 			config.add_material(bmaterial)
+
+		# iterate over mesh faces
+		#mesh_faces = get_mesh_faces(mesh)
+
+		cache = VertexCache()
+
+		#config.info("total faces: %i" % len(mesh_faces))
+
+		vertices = [(v.co[0], v.co[1], v.co[2])
+			for v in mesh.vertices]
+
+		print("# normals (before split) %i" % (len(mesh.loops))
+			)
+
+		mesh.calc_normals_split()
+		normals = [(clampf(l.normal[0]), clampf(l.normal[1]), clampf(l.normal[2]))
+			for l in mesh.loops]
+		mesh.free_normals_split()
+
+		uvs = []
+		for uvlayer in mesh.uv_layers:
+			uv_set = []
+			print("extracting uv layer: %s" % uvlayer.name)
+			for uvloop in uvlayer.data:
+				uv_set.append(uvloop.uv)
+
+			uvs.append(uv_set)
+
+		colors = []
+		if not mesh.vertex_colors:
+			# add a default color set
+			color_set.append([(1.0, 1.0, 1.0, 1.0)] * len(vertices))
+			colors.append(color_set)
+		else:
+			for color_layer in mesh.vertex_colors:
+				color_set = []
+				print("extracting color layer: %s" % color_layer.name)
+				for data in color_layer.data:
+					color_set.append((data.color[0], data.color[1], data.color[2], 1.0))
+				colors.append(color_set)
+
+
+		print("# loops: %i" % len(mesh.loops))
+		print("# polygons: %i" % (len(mesh.polygons)))
+
+		#indices = 
+		# for face in mesh_faces:
+		# 	for index in range(0, 3):
+		# 		indices.append(face.vertices[index])
+
+		cache.populate_with_geometry(vertices, normals, uvs, colors, mesh.loops)
+		# write mesh.vertex_colors (can be multiple)
+
+		# write uv layers (can be multiple)
+		# mesh.uv_layers; mesh.uv_textures
+		#
+		node.populate_with_vertex_cache(cache)
+
+		# perform post processing on the geometry
 
 		# remove the triangulated object we created
 		bpy.ops.object.mode_set(mode='OBJECT')
@@ -502,7 +783,7 @@ class export_gemini(bpy.types.Operator):
 		global last_vertex
 		#print( 'Execute!' )
 
-		self.config = ExporterConfig()
+		self.config = ExporterConfig(self)
 		self.config.ExportRaw = self.ExportRaw
 		self.config.TransformNormals = self.TransformNormals
 		self.config.triangulate_mesh = self.triangulate_mesh
@@ -521,6 +802,11 @@ class export_gemini(bpy.types.Operator):
 			import sys
 			self.report('ERROR', str(sys.exc_info()[1]) )
 			
+
+		# make sure we're in object mode
+		if bpy.ops.object.mode_set.poll():
+			bpy.ops.object.mode_set(mode='OBJECT')
+
 		selected_meshes = []
 		if not file_failure:
 			mesh_list = []
