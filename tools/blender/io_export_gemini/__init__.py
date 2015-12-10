@@ -71,6 +71,12 @@ import os
 import platform
 
 #
+# constants
+#
+COORDINATE_SYSTEM_ZUP = "ZUP"
+COORDINATE_SYSTEM_YUP = "YUP"
+
+#
 # utility functions
 #
 BMeshAware = False
@@ -179,10 +185,10 @@ def create_triangulated_mesh(config, object):
 
 		#print( "Triangulated Mesh", obj.name )
 
-		return obj
+		return obj, True
 	else:	   
 		#print( "No need to convert mesh to triangles." )
-		return object
+		return object, False
 
 """
 class export_animation(bpy.types.Operator):
@@ -342,42 +348,17 @@ class Vertex(object):
 			return False
 		return self.description() == other.description()
 
-	def __repr__(self):
-		return str("Vertex(position=%s, normal=%s, u=%2.2f, v=%2.2f, material_id=%i)" % (
-					repr(self.position),
-					repr(self.normal),
-					self.u,
-					self.v,
-					self.material_id))
-
 
 class VertexCache(object):
 	def __init__(self):
 		self.vertices = {}
+		self.ordered_vertices = []
 		self.indices = []
-		self.vertex_index = 0
-
-	def add_vertex(self, vertex):
-		if vertex not in self.vertices:
-			self.vertices[vertex] = self.vertex_index
-			print("add new vertex: %i" % self.vertex_index)
-			self.vertex_index += 1
-		index = self.vertices[vertex]
-		print("return vertex: %i" % index)
-
-	def add_triangle(self, triangles):
-		"""
-			Tuple of three vertex indices to make up
-			the triangle corners.
-		"""
-		self.indices.extend(triangles)
 
 	def find_vertex_index(self, vertex):
 		if vertex not in self.vertices:
-			self.vertices[vertex] = self.vertex_index
-			self.vertex_index += 1
-			print("add new vertex: %i [%s]" % (self.vertex_index, repr(vertex)))
-
+			self.vertices[vertex] = len(self.ordered_vertices)
+			self.ordered_vertices.append(vertex)
 		return self.vertices[vertex]
 
 	def populate_with_geometry(self, vertices, normals, uvs, colors, loops):
@@ -393,7 +374,6 @@ class VertexCache(object):
 				normals[vertex_index][1],
 				normals[vertex_index][2])
 
-
 			# for now, this only handles one uv set
 			uv = uvs[0][vertex_index]
 
@@ -402,7 +382,7 @@ class VertexCache(object):
 
 			# assemble a vertex using the loop index
 			vertex = Vertex(position = position,
-				normal=normal,
+				normal = normal,
 				u = uv[0],
 				v = uv[1],
 				color = color)
@@ -467,23 +447,24 @@ class Mesh(Node):
 		self.vertex_colors = []
 
 	def populate_with_vertex_cache(self, cache):
-
-
 		uvset = []
 		colorset = []
 
-		for vertex in cache.vertices:
+		# traverse the cache over the ordered vertices
+		# in order to build the list for the mesh node
+		for vertex in cache.ordered_vertices:
 			self.vertices.append(
 				[vertex.position.x, vertex.position.y, vertex.position.z])
 
 			self.normals.append(
 				[vertex.normal.x, vertex.normal.y, vertex.normal.z])
 
-
 			uvset.append([vertex.u, vertex.v])
 			colorset.append(vertex.color)
 
 		self.uv_sets.append(uvset)
+
+		# the format currently only supports a single vertex color set
 		self.vertex_colors = colorset
 		self.indices = cache.indices
 
@@ -494,19 +475,7 @@ class Mesh(Node):
 	def from_object(config, obj, root):
 		node = Mesh(name=obj.name)
 
-		# from Marmalade plugin; convert Z up to Y up.
-		xrotation = Matrix.Rotation(-math.pi/2, 4, 'X')
-
-		# convert object rotation to quaternion (this ignores scale, apparently)
-		rotation = obj.matrix_world.to_quaternion()
-
-		# convert this to a 3x3 rotation matrix
-		rotation_matrix = rotation.to_matrix().to_3x3()	
-		final_rotation = xrotation.to_3x3() * rotation_matrix
-		#scale = obj.matrix_world.to_scale()
-		#translation = obj.matrix_world.to_translation()
-
-		triangulated_object = create_triangulated_mesh(config, obj)
+		triangulated_object, created_temp_mesh = create_triangulated_mesh(config, obj)
 
 		# apply rotation and scale transform to the object
 		# this ensures that any modifications are baked to the vertices
@@ -517,7 +486,21 @@ class Mesh(Node):
 			scale=True)
 
 		mesh = triangulated_object.to_mesh(bpy.context.scene, True, 'PREVIEW')
-		mesh.transform(final_rotation.to_4x4())
+
+		# transform from Z-up to Y-up
+		if config.coordinate_system == COORDINATE_SYSTEM_YUP:
+			# from Marmalade plugin; convert Z up to Y up.
+			xrotation = Matrix.Rotation(-math.pi/2, 4, 'X')
+
+			# convert object rotation to quaternion (this ignores scale, apparently)
+			rotation = obj.matrix_world.to_quaternion()
+
+			# convert this to a 3x3 rotation matrix
+			rotation_matrix = rotation.to_matrix().to_3x3()	
+			final_rotation = xrotation.to_3x3() * rotation_matrix
+			#scale = obj.matrix_world.to_scale()
+			#translation = obj.matrix_world.to_translation()
+			mesh.transform(final_rotation.to_4x4())
 		
 		# collect all blender materials used by this mesh
 		for bmaterial in mesh.materials:
@@ -533,22 +516,22 @@ class Mesh(Node):
 		vertices = [(v.co[0], v.co[1], v.co[2])
 			for v in mesh.vertices]
 
-		print("# normals (before split) %i" % (len(mesh.loops))
-			)
-
 		mesh.calc_normals_split()
 		normals = [(clampf(l.normal[0]), clampf(l.normal[1]), clampf(l.normal[2]))
 			for l in mesh.loops]
 		mesh.free_normals_split()
 
 		uvs = []
-		for uvlayer in mesh.uv_layers:
-			uv_set = []
-			print("extracting uv layer: %s" % uvlayer.name)
-			for uvloop in uvlayer.data:
-				uv_set.append(uvloop.uv)
-
+		if not mesh.uv_layers:
+			uv_set = [(0.0, 0.0)] * len(vertices)
 			uvs.append(uv_set)
+		else:
+			for uvlayer in mesh.uv_layers:
+				uv_set = []
+				print("extracting uv layer: %s" % uvlayer.name)
+				for uvloop in uvlayer.data:
+					uv_set.append(uvloop.uv)
+				uvs.append(uv_set)
 
 		colors = []
 		if not mesh.vertex_colors:
@@ -567,24 +550,14 @@ class Mesh(Node):
 		print("# loops: %i" % len(mesh.loops))
 		print("# polygons: %i" % (len(mesh.polygons)))
 
-		#indices = 
-		# for face in mesh_faces:
-		# 	for index in range(0, 3):
-		# 		indices.append(face.vertices[index])
-
 		cache.populate_with_geometry(vertices, normals, uvs, colors, mesh.loops)
-		# write mesh.vertex_colors (can be multiple)
 
-		# write uv layers (can be multiple)
-		# mesh.uv_layers; mesh.uv_textures
-		#
 		node.populate_with_vertex_cache(cache)
 
-		# perform post processing on the geometry
-
-		# remove the triangulated object we created
-		bpy.ops.object.mode_set(mode='OBJECT')
-		bpy.context.scene.objects.unlink(triangulated_object)
+		if created_temp_mesh:
+			# remove the triangulated object we created
+			bpy.ops.object.mode_set(mode='OBJECT')
+			bpy.context.scene.objects.unlink(triangulated_object)
 
 		return node
 
@@ -746,15 +719,15 @@ class export_gemini(bpy.types.Operator):
 	# to the class instance from the operator settings before calling.
 
 	CoordinateSystems = (
-		("2", "Right-Handed", ""),
-		#("1", "Left-Handed", "")
+		(COORDINATE_SYSTEM_YUP, "Y-Up", ""),
+		(COORDINATE_SYSTEM_ZUP, "Z-Up", "")
 	)
 
 	CoordinateSystem = EnumProperty(
-		name="System",
+		name="Coordinate System",
 		description="Select a coordinate system to export to",
 		items=CoordinateSystems,
-		default="2")
+		default=COORDINATE_SYSTEM_YUP)
 
 	ExportRaw = BoolProperty(
 		name="Export raw geometry",
@@ -784,6 +757,7 @@ class export_gemini(bpy.types.Operator):
 		#print( 'Execute!' )
 
 		self.config = ExporterConfig(self)
+		self.config.coordinate_system = self.CoordinateSystem
 		self.config.ExportRaw = self.ExportRaw
 		self.config.TransformNormals = self.TransformNormals
 		self.config.triangulate_mesh = self.triangulate_mesh
