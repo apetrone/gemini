@@ -43,7 +43,7 @@ bl_info = {
 
 #
 # imports
-# 
+#
 
 # handle module reloads [mainly used for development]
 if "bpy" in locals():
@@ -173,7 +173,7 @@ def create_triangulated_mesh(config, object):
 
 		# select all components
 		bpy.ops.mesh.select_all( action='SELECT' )
-		
+
 		# convert quads to tris using Blender's internal method
 		bpy.ops.mesh.quads_convert_to_tris()
 
@@ -186,7 +186,7 @@ def create_triangulated_mesh(config, object):
 		#print( "Triangulated Mesh", obj.name )
 
 		return obj, True
-	else:	   
+	else:
 		#print( "No need to convert mesh to triangles." )
 		return object, False
 
@@ -279,7 +279,7 @@ class ExporterConfig(object):
 			return self.materials[ material ]
 		else:
 			raise Exception( 'Material not found!' )
-		'''				
+		'''
 
 	def info(self, message):
 		self.instance.report({'INFO'}, message)
@@ -291,7 +291,7 @@ class ExporterConfig(object):
 # 		return hash( self._description() )
 
 class Vector3(object):
-	
+
 	def __init__(self, x, y, z):
 		self.x = x
 		self.y = y
@@ -330,9 +330,11 @@ class Vertex(object):
 		self.v = v
 		self.color = color
 		self.material_id = material_id
-		#print("xyz: %2.2f, %2.2f, %2.2f" % (self.position.x, self.position.y, self.position.z))
-		#print("norm: %2.2f, %2.2f, %2.2f" % (self.normal.x, self.normal.y, self.normal.z))
-		#print("uv: %2.2f, %2.2f" % (self.u, self.v))
+
+	def show(self):
+		print("xyz: %2.2f, %2.2f, %2.2f" % (self.position.x, self.position.y, self.position.z))
+		print("norm: %2.2f, %2.2f, %2.2f" % (self.normal.x, self.normal.y, self.normal.z))
+		print("uv: %2.2f, %2.2f" % (self.u, self.v))
 
 	def description(self):
 		return (self.position.x, self.position.y, self.position.z, self.normal.x, self.normal.y, self.normal.z, self.u, self.v, self.material_id)
@@ -362,6 +364,10 @@ class VertexCache(object):
 		return self.vertices[vertex]
 
 	def populate_with_geometry(self, vertices, normals, uvs, colors, loops):
+		#
+		# NOTE: Some Elements are accessed by LOOP INDEX -- NOT BY VERTEX INDEX!
+		# UVs, Vertex Colors
+		#
 		for loop in loops:
 
 			vertex_index = loop.vertex_index
@@ -375,10 +381,10 @@ class VertexCache(object):
 				normals[vertex_index][2])
 
 			# for now, this only handles one uv set
-			uv = uvs[0][vertex_index]
+			uv = uvs[0][loop.index]
 
 			# for now, this only handles one color set
-			color = colors[0][vertex_index]
+			color = colors[0][loop.index]
 
 			# assemble a vertex using the loop index
 			vertex = Vertex(position = position,
@@ -388,6 +394,7 @@ class VertexCache(object):
 				color = color)
 
 			index = self.find_vertex_index(vertex)
+			#vertex.show()
 
 			self.indices.append(index)
 
@@ -452,6 +459,7 @@ class Mesh(Node):
 
 		# traverse the cache over the ordered vertices
 		# in order to build the list for the mesh node
+		vertex_index = 0
 		for vertex in cache.ordered_vertices:
 			self.vertices.append(
 				[vertex.position.x, vertex.position.y, vertex.position.z])
@@ -461,6 +469,8 @@ class Mesh(Node):
 
 			uvset.append([vertex.u, vertex.v])
 			colorset.append(vertex.color)
+
+			vertex_index += 1
 
 		self.uv_sets.append(uvset)
 
@@ -496,12 +506,12 @@ class Mesh(Node):
 			rotation = obj.matrix_world.to_quaternion()
 
 			# convert this to a 3x3 rotation matrix
-			rotation_matrix = rotation.to_matrix().to_3x3()	
+			rotation_matrix = rotation.to_matrix().to_3x3()
 			final_rotation = xrotation.to_3x3() * rotation_matrix
 			#scale = obj.matrix_world.to_scale()
 			#translation = obj.matrix_world.to_translation()
 			mesh.transform(final_rotation.to_4x4())
-		
+
 		# collect all blender materials used by this mesh
 		for bmaterial in mesh.materials:
 			config.add_material(bmaterial)
@@ -513,7 +523,7 @@ class Mesh(Node):
 
 		#config.info("total faces: %i" % len(mesh_faces))
 
-		vertices = [(v.co[0], v.co[1], v.co[2])
+		vertices = [(clampf(v.co[0]), clampf(v.co[1]), clampf(v.co[2]))
 			for v in mesh.vertices]
 
 		mesh.calc_normals_split()
@@ -523,20 +533,20 @@ class Mesh(Node):
 
 		uvs = []
 		if not mesh.uv_layers:
-			uv_set = [(0.0, 0.0)] * len(vertices)
+			uv_set = [(0.0, 0.0)] * len(mesh.loops)
 			uvs.append(uv_set)
 		else:
 			for uvlayer in mesh.uv_layers:
 				uv_set = []
 				print("extracting uv layer: %s" % uvlayer.name)
 				for uvloop in uvlayer.data:
-					uv_set.append(uvloop.uv)
+					uv_set.append([uvloop.uv[0], 1.0-uvloop.uv[1]])
 				uvs.append(uv_set)
 
 		colors = []
 		if not mesh.vertex_colors:
 			# add a default color set
-			color_set.append([(1.0, 1.0, 1.0, 1.0)] * len(vertices))
+			color_set = ([(1.0, 1.0, 1.0, 1.0)] * len(mesh.loops))
 			colors.append(color_set)
 		else:
 			for color_layer in mesh.vertex_colors:
@@ -562,7 +572,7 @@ class Mesh(Node):
 		return node
 
 class MeshContainer(object):
-	
+
 	def __init__(self, config):
 		self.geometry = {}
 		self.materials = {}
@@ -610,7 +620,7 @@ class MeshContainer(object):
 			return self.materials[ material ]
 		else:
 			raise Exception( 'Material not found!' )
-		'''		
+		'''
 	def findGeometry(self, material_index):
 		#print( "findGeometry for material %i" % material_index )
 
@@ -666,10 +676,10 @@ class MeshContainer(object):
 		# 	uv_sets.append(uvs)
 
 		# 	geometry_data = {
-		# 		'material_id': material_id, 
-		# 		'indices': geometry.indices, 
-		# 		'vertices': vertices, 
-		# 		'normals' : normals, 
+		# 		'material_id': material_id,
+		# 		'indices': geometry.indices,
+		# 		'vertices': vertices,
+		# 		'normals' : normals,
 		# 		'uv_sets' : uv_sets,
 		# 		# 'shape_keys': shape_keys,
 		# 		'mins' : mins,
@@ -739,8 +749,8 @@ class export_gemini(bpy.types.Operator):
 			description="Filepath used for exporting the file",
 			maxlen= 1024,
 			subtype='FILE_PATH',
-			)	
-	
+			)
+
 	TransformNormals = BoolProperty(
 		name="Transform Normals",
 		description="Transform Normals along with Mesh",
@@ -766,7 +776,7 @@ class export_gemini(bpy.types.Operator):
 			print( "TransformNormals is enabled." )
 
 		start_time = time()
-		
+
 		#print( self.filepath )
 		file_failure = False
 		try:
@@ -775,7 +785,7 @@ class export_gemini(bpy.types.Operator):
 			file_failure = True
 			import sys
 			self.report('ERROR', str(sys.exc_info()[1]) )
-			
+
 
 		# make sure we're in object mode
 		if bpy.ops.object.mode_set.poll():
@@ -840,9 +850,9 @@ class export_gemini(bpy.types.Operator):
 
 			result_message = 'Write file "%s" in %2.2f milliseconds' % (self.filepath, delta_time)
 			self.report({'INFO'}, result_message)
-			
+
 		return {'FINISHED'}
-		
+
 	def invoke(self, context, event):
 		#print( 'Invoke' )
 		wm = context.window_manager
@@ -857,11 +867,11 @@ def menu_func(self, context):
 	self.layout.operator(export_gemini.bl_idname, text="gemini .model")
 	#self.layout.operator(export_animation.bl_idname, text="gemini .animation")
 
-def register():   
-	bpy.utils.register_module(__name__)	
+def register():
+	bpy.utils.register_module(__name__)
 	bpy.types.INFO_MT_file_export.append(menu_func)
 	#bpy.types.INFO_MT_mesh_add.append(menu_func)
-		
+
 def unregister():
 	bpy.utils.unregister_module(__name__)
 	bpy.types.INFO_MT_file_export.remove(menu_func)
