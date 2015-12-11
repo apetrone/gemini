@@ -61,13 +61,13 @@ namespace gui
 			float input = args.local.x;
 
 			// translate it back by half the handle width
-			float origin = (input - (drag_handle_width / 2.0f));
+			float slider_origin = (input - (drag_handle_width / 2.0f));
 
 			// cache the previous value
 			float old_value = current_value;
 
 			// compute the new value as it should be in our usable_width
-			current_value = glm::clamp(((origin - kLeftMargin) / usable_width), 0.0f, 1.0f);
+			current_value = glm::clamp(((slider_origin - kLeftMargin) / usable_width), 0.0f, 1.0f);
 
 			if (old_value != current_value)
 			{
@@ -112,10 +112,10 @@ namespace gui
 		float usable_width = (right_edge.x - left_edge.x);
 		float xvalue = kLeftMargin + (usable_width * current_value);
 
-		Size size = get_size();
+		Size handle_size = get_size();
 
 		drag_handle->set_dimensions(HANDLE_WIDTH_DIMENSION, HANDLE_HEIGHT_DIMENSION);
-		float handle_height = (size.height - (HANDLE_HEIGHT_DIMENSION * size.height)) / 2.0f;
+		float handle_height = (handle_size.height - (HANDLE_HEIGHT_DIMENSION * handle_size.height)) / 2.0f;
 
 		drag_handle->set_origin(xvalue, handle_height);
 
