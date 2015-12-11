@@ -504,7 +504,7 @@ public:
 
 
 		{
-			gui::Label* label = new gui::Label(tab);
+			label = new gui::Label(tab);
 			label->set_background_color(core::Color::from_rgba(32, 32, 32, 255));
 			label->set_foreground_color(core::Color::from_rgba(255, 0, 0, 255));
 			label->set_bounds(50, 115, 110, 40);

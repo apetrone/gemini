@@ -71,8 +71,8 @@ namespace gui
 		font_handle = compositor->get_resource_cache()->create_font(filename, pixel_size);
 	}
 
-	void Label::set_text(const std::string& text)
+	void Label::set_text(const std::string& utf8_string)
 	{
-		this->text = text;
+		text = utf8_string;
 	}
 } // namespace gui

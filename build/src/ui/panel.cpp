@@ -81,10 +81,10 @@ namespace gui
 //		flags |= Flag_BoundsAreDirty;
 	} // set_bounds
 
-	void Panel::set_bounds(const Rect& bounds)
+	void Panel::set_bounds(const Rect& new_bounds)
 	{
-		origin = bounds.origin;
-		size = bounds.size;
+		origin = new_bounds.origin;
+		size = new_bounds.size;
 	} // set_bounds
 
 	void Panel::set_dimensions(float x, float y)
@@ -116,9 +116,9 @@ namespace gui
 		origin.y = y;
 	} // set_origin
 
-	void Panel::get_screen_bounds(Rect& bounds) const
+	void Panel::get_screen_bounds(Rect& screen_bounds) const
 	{
-		bounds = this->bounds;
+		screen_bounds = bounds;
 	} // get_screen_bounds
 
 	void Panel::calculate_screen_bounds(Compositor* compositor)
@@ -143,9 +143,9 @@ namespace gui
 		}
 	} // calculate_screen_bounds
 
-	void Panel::get_content_bounds(Rect& bounds) const
+	void Panel::get_content_bounds(Rect& screen_bounds) const
 	{
-		get_screen_bounds(bounds);
+		get_screen_bounds(screen_bounds);
 	} // get_content_bounds
 
 	void Panel::add_child(Panel* panel)
@@ -348,9 +348,9 @@ namespace gui
 		flags |= Flag_TransformIsDirty;
 	}
 
-	void Panel::set_scale(const glm::vec2& scale)
+	void Panel::set_scale(const glm::vec2& new_scale)
 	{
-		this->scale = scale;
+		scale = new_scale;
 		flags |= Flag_TransformIsDirty;
 	}
 
@@ -367,27 +367,27 @@ namespace gui
 		return static_cast<Compositor*>(panel);
 	}
 
-	Point Panel::pixels_from_dimensions(const Point& dimensions) const
+	Point Panel::pixels_from_dimensions(const Point& input_dimensions) const
 	{
 		Point pixels;
 
 		assert(parent);
 
-		pixels.x = (dimensions.x * parent->size.width);
-		pixels.y = (dimensions.y * parent->size.height);
+		pixels.x = (input_dimensions.x * parent->size.width);
+		pixels.y = (input_dimensions.y * parent->size.height);
 
 		return pixels;
 	}
 
 	Point Panel::dimensions_from_pixels(const Point& pixels) const
 	{
-		Point dimensions;
+		Point out_dimensions;
 
 		assert(parent);
 
-		dimensions.x = (pixels.x / parent->size.width);
-		dimensions.y = (pixels.y / parent->size.height);
+		out_dimensions.x = (pixels.x / parent->size.width);
+		out_dimensions.y = (pixels.y / parent->size.height);
 
-		return dimensions;
+		return out_dimensions;
 	}
 } // namespace gui

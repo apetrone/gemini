@@ -360,13 +360,13 @@ namespace gui
 	} // key_event
 
 
-	void Compositor::resize(ScreenInt width, ScreenInt height)
+	void Compositor::resize(ScreenInt new_width, ScreenInt new_height)
 	{
-		this->width = width;
-		this->height = height;
+		this->width = new_width;
+		this->height = new_height;
 	} // resize
 
-	Panel* Compositor::find_panel_at_location(const Point& location, uint32_t flags)
+	Panel* Compositor::find_panel_at_location(const Point& location, uint32_t option_flags)
 	{
 		Panel* panel = 0;
 		Panel* closest_panel = 0;
@@ -382,17 +382,17 @@ namespace gui
 			Point local_coords = location - panel->get_origin();
 
 //			fprintf(stdout, "[%s] local_coords = %2.2f, %2.2f\n", panel->get_name(), local_coords.x, local_coords.y);
-			if (panel->has_flags(flags) && panel->hit_test_local(local_coords))
+			if (panel->has_flags(option_flags) && panel->hit_test_local(local_coords))
 			{
 				closest_panel = panel;
-				return find_deepest_panel_at_location(panel, location, flags);
+				return find_deepest_panel_at_location(panel, location, option_flags);
 			}
 		}
 
 		return closest_panel;
 	} // find_panel_at_point
 
-	Panel* Compositor::find_deepest_panel_at_location(Panel* root, const gui::Point& location, uint32_t flags)
+	Panel* Compositor::find_deepest_panel_at_location(Panel* root, const gui::Point& location, uint32_t option_flags)
 	{
 		if (!root)
 		{
@@ -406,18 +406,18 @@ namespace gui
 			// convert parent coordinates to local panel coordinates
 			Point local_child_coords = location - cpanel->get_origin();
 //			fprintf(stdout, "[%s] local_child_coords = %2.2f, %2.2f\n", cpanel->get_name(), local_child_coords.x, local_child_coords.y);
-			if (cpanel->has_flags(flags) && cpanel->hit_test_local(local_child_coords))
+			if (cpanel->has_flags(option_flags) && cpanel->hit_test_local(local_child_coords))
 			{
-				return find_deepest_panel_at_location(cpanel, local_child_coords, flags);
+				return find_deepest_panel_at_location(cpanel, local_child_coords, option_flags);
 			}
 		}
 
 		return root;
 	} // find_deepest_panel_point
 
-	void Compositor::set_listener(Listener *listener)
+	void Compositor::set_listener(Listener* event_listener)
 	{
-		this->listener = listener;
+		listener = event_listener;
 	} // set_listener
 
 	void Compositor::queue_event(const EventArgs& args)

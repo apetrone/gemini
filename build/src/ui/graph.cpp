@@ -34,13 +34,13 @@ namespace gui
 	{
 		char string_value[16] = {0};
 		sprintf(string_value, "%2.2f", value);
-		Rect bounds;
+		Rect draw_bounds;
 
 		Rect string_bounds;
 		renderer->font_measure_string(font_handle, string_value, string_bounds);
 
-		bounds.origin = pt + glm::vec2(0, glm::max(font_height, string_bounds.height()));
-		render_commands.add_font(font_handle, string_value, bounds, color);
+		draw_bounds.origin = pt + glm::vec2(0, glm::max(font_height, string_bounds.height()));
+		render_commands.add_font(font_handle, string_value, draw_bounds, color);
 	}
 
 
