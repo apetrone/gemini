@@ -35,11 +35,11 @@ namespace renderer
 //	unsigned int material_type_to_parameter_type( const char * name );
 //	int material_parameter_type_to_render_state( unsigned int type );
 
-	MaterialParameter * Material::parameter_by_name(const std::string& name)
+	MaterialParameter* Material::parameter_by_name(const std::string& search_name)
 	{
-		for (auto& parameter : parameters)
+		for (MaterialParameter& parameter : parameters)
 		{
-			if (parameter.name == name)
+			if (parameter.name == search_name)
 			{
 				return &parameter;
 			}
@@ -48,13 +48,12 @@ namespace renderer
 		return 0;
 	} // parameter_by_name
 
-
-	void Material::set_parameter_name( unsigned int id, const char * name )
+	void Material::set_parameter_name(unsigned int id, const char* parameter_name)
 	{
-		this->parameters[id].name = name;
+		this->parameters[id].name = parameter_name;
 	} // set_parameter_name
 
-	void Material::set_parameter_vec4( unsigned int id, const glm::vec4 & vec )
+	void Material::set_parameter_vec4(unsigned int id, const glm::vec4& vec)
 	{
 		this->parameters[id].vector_value = vec;
 		this->parameters[id].type = MP_VEC4;

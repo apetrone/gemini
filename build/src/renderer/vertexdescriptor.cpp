@@ -82,9 +82,9 @@ namespace render2
 		this->total_attributes = other.total_attributes;
 		this->id = other.id;
 
-		for( unsigned int id = 0; id < MAX_VERTEX_DESCRIPTORS; ++id )
+		for( unsigned int index = 0; index < MAX_VERTEX_DESCRIPTORS; ++index )
 		{
-			this->description[id] = other.description[id];
+			this->description[index] = other.description[index];
 		}
 
 		return *this;

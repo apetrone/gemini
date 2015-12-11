@@ -786,9 +786,9 @@ namespace renderer
 						size_t prev_offset = offset_index;
 						offset_index += font::draw_string(text_handle, &text_vertex_cache[offset_index], primitive->buffer.c_str(), primitive->color);
 
-						for (size_t index = prev_offset; index < offset_index; ++index)
+						for (size_t vertex_index = prev_offset; vertex_index < offset_index; ++vertex_index)
 						{
-							font::FontVertex* vertex = &text_vertex_cache[index];
+							font::FontVertex* vertex = &text_vertex_cache[vertex_index];
 							vertex->position.x += primitive->start.x;
 							vertex->position.y += primitive->start.y;
 						}
@@ -803,9 +803,9 @@ namespace renderer
 						size_t prev_offset = offset_index;
 						offset_index += font::draw_string(text_handle, &text_vertex_cache[offset_index], primitive->buffer.c_str(), primitive->color);
 
-						for (size_t index = prev_offset; index < offset_index; ++index)
+						for (size_t vertex_index = prev_offset; vertex_index < offset_index; ++vertex_index)
 						{
-							font::FontVertex* vertex = &text_vertex_cache[index];
+							font::FontVertex* vertex = &text_vertex_cache[vertex_index];
 							vertex->position.x += primitive->start.x;
 							vertex->position.y += primitive->start.y;
 						}

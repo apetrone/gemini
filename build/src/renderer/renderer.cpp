@@ -259,15 +259,15 @@ namespace renderer
 		this->attribs = other.attribs;
 		this->id = other.id;
 
-		for( unsigned int i = 0; i < VD_TOTAL; ++i )
+		for(unsigned int index = 0; index < VD_TOTAL; ++index)
 		{
-			this->size_in_bytes[i] = other.size_in_bytes[i];
-			this->elements[i] = other.elements[i];
+			this->size_in_bytes[index] = other.size_in_bytes[index];
+			this->elements[index] = other.elements[index];
 		}
 
-		for( unsigned int id = 0; id < MAX_DESCRIPTORS; ++id )
+		for(unsigned int index = 0; index < MAX_DESCRIPTORS; ++index)
 		{
-			this->description[id] = other.description[id];
+			this->description[index] = other.description[index];
 		}
 
 		return *this;
@@ -359,9 +359,9 @@ namespace render2
 #elif defined(PLATFORM_GLES2_SUPPORT)
 		return MEMORY_NEW(GLES2Device, core::memory::global_allocator());
 #else
-	#error Unknown renderer!
-#endif
+		#error Unknown renderer!
 		return nullptr;
+#endif
 	}
 
 	void destroy_device(Device* device)
