@@ -731,6 +731,51 @@ class MeshContainer(object):
 # main classes
 #
 
+# class Cache(object):
+# 	def __init__(self):
+# 		self.ordered_array = []
+# 		self.cache = {}
+
+# 	def find_or_insert(self, item):
+# 		if item not in self.cache:
+# 			self.cache[item] = len(self.ordered_array)
+# 			self.ordered_array.append(item)
+# 			print("added item: %s" % item)
+
+# 		return self.cache[item]
+
+# http://blender.stackexchange.com/questions/15170/blender-python-exporting-bone-matrices-for-animation-relative-to-parent
+
+class BoneData(object):
+	def __init__(self, name, index, parent_index = -1):
+		self.name = name
+		self.index = index
+		self.parent_index = parent_index
+		self.bind_pose = None
+
+def populate_bones(bones, cache):
+	bone_data_by_name = {}
+	bone_data_by_index = {}
+	bone_index = 0
+
+	for bone in bones:
+		parent_index = -1
+
+		if bone.parent:
+			parent_index = bone_data_by_name[bone.parent.name].index
+
+		bone_data = BoneData(bone.name, bone_index, parent_index)
+		bind_pose = bone.matrix_local
+		if bone.parent:
+			bind_pose = bone.matrix_local.inverted() * bone.parent.matrix_local
+		bone_data.bind_pose = bind_pose
+		bone_data_by_name[bone.name] = bone_data
+		bone_data_by_index[bone_index] = bone_data
+		bone_index += 1
+		print("bone: %s [index: %i, parent: %i]" % (bone.name, bone_data.index, bone_data.parent_index))
+
+
+
 class export_gemini(bpy.types.Operator):
 	'''Export Skeleton Mesh / Animation Data file(s)'''
 	bl_idname = "gemini_export.test" # this is important since its how bpy.ops.export.udk_anim_data is constructed
@@ -849,6 +894,8 @@ class export_gemini(bpy.types.Operator):
 				current_mesh += 1
 				self.report({'INFO'}, 'Export Progress -> %g%%' % ((current_mesh/total_meshes) * 100.0))
 
+				bone_cache = Cache()
+
 				# scan for modifiers we are interested in
 				for modifier in obj.modifiers:
 					print("Found modifier '%s'" % modifier.name)
@@ -856,6 +903,8 @@ class export_gemini(bpy.types.Operator):
 						armature = modifier.object
 						bones = armature.data.bones
 						print("armature: %s has %i bones" % (armature.name, len(bones)))
+
+						populate_bones(bones, bone_cache)
 				#exportedMesh.recalculateIndices()
 
 			#exportedMesh.writeFile(file, scene_nodes, skeleton)
