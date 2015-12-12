@@ -369,7 +369,6 @@ class VertexCache(object):
 		# UVs, Vertex Colors
 		#
 		for loop in loops:
-
 			vertex_index = loop.vertex_index
 
 			position = Vector3(vertices[vertex_index][0],
@@ -560,9 +559,20 @@ class Mesh(Node):
 		print("# loops: %i" % len(mesh.loops))
 		print("# polygons: %i" % (len(mesh.polygons)))
 
+		# convert and copy geometry over to node
 		cache.populate_with_geometry(vertices, normals, uvs, colors, mesh.loops)
-
 		node.populate_with_vertex_cache(cache)
+
+		# TODO: operate on shape_keys
+		# TODO: operate on armatures
+
+
+
+
+		# TODO: used by the skin modifier
+		for skin_vertex_layer in mesh.skin_vertices:
+			print("processing skin vertex layer: %s" % skin_vertex_layer.name)
+
 
 		if created_temp_mesh:
 			# remove the triangulated object we created
@@ -801,7 +811,8 @@ class export_gemini(bpy.types.Operator):
 					if obj.select:
 						selected_meshes.append( obj )
 				elif obj.type == 'ARMATURE':
-					print( 'TODO: Export Armatures' )
+					print('TODO: Export Armature: %s' % obj.name)
+
 			print( "Total Meshes: ", len(mesh_list)," Selected: ", len(selected_meshes) )
 
 
@@ -830,12 +841,21 @@ class export_gemini(bpy.types.Operator):
 
 			# iterate over selected objects
 			for obj in selected_meshes:
+				# TODO: Add an explicit EDGE SPLIT modifier?
+
 				meshnode = Mesh.from_object(self.config, obj, root_node)
 				root_node.children.append(meshnode)
 
 				current_mesh += 1
 				self.report({'INFO'}, 'Export Progress -> %g%%' % ((current_mesh/total_meshes) * 100.0))
 
+				# scan for modifiers we are interested in
+				for modifier in obj.modifiers:
+					print("Found modifier '%s'" % modifier.name)
+					if modifier.type == 'ARMATURE':
+						armature = modifier.object
+						bones = armature.data.bones
+						print("armature: %s has %i bones" % (armature.name, len(bones)))
 				#exportedMesh.recalculateIndices()
 
 			#exportedMesh.writeFile(file, scene_nodes, skeleton)
