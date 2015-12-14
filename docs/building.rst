@@ -54,6 +54,12 @@ Debian/Ubuntu/SteamOS
 
 		sudo apt-get install sox libopenal-dev
 
+	If building with X11; you need X11 libs.
+
+	.. code-block:: bash
+
+		sudo apt-get install libx11-dev libxrandr-dev libxinerama-dev mesa-common-dev
+
 Arch Linux
 
 	.. code-block:: bash
