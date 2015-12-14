@@ -28,6 +28,10 @@ librecastnavigation = Dependency(file="recastnavigation.py")
 libfreetype = Dependency(file="freetype.py")
 rapidjson = Dependency(file="rapidjson.py")
 
+def assert_dependency(found, message):
+	if not found:
+		raise Exception("%s\nYou may be missing this dependency." % message)
+
 def setup_common_variables(arguments, target_platform, product):
 	product.sources += [
 		"src/engine/*.c*",
@@ -208,7 +212,7 @@ def setup_common_libs(arguments, product):
 	# addressed to use utf8 internally.
 	windows.driver.characterset = "MultiByte"
 
-def setup_driver(arguments, product):
+def setup_driver(arguments, product, target_platform):
 
 	#macosx = product.layout(platform="macosx")
 	#macosx.driver.macosx_deployment_target = "10.8"
@@ -276,6 +280,10 @@ def setup_driver(arguments, product):
 			"PLATFORM_EGL_SUPPORT=1"
 		]
 	if arguments.with_x11:
+		# We have to verify Xlib exists on the system.
+		found_xlib = target_platform.find_include_path("X11/Xlib.h")
+		assert_dependency(found_xlib, "X11/Xlib.h not found!")
+
 		linux.defines += [
 			"PLATFORM_X11_SUPPORT=1"
 		]
@@ -379,7 +387,7 @@ def get_tools(arguments, libui, libruntime, librenderer, libplatform, libcore, *
 		"Cocoa.framework"
 	]
 	muse.product_root = COMMON_PRODUCT_ROOT
-	setup_driver(arguments, muse)
+	setup_driver(arguments, muse, target_platform)
 	setup_common_tool(muse)
 	tools.append(muse)
 
@@ -394,7 +402,7 @@ def get_tools(arguments, libui, libruntime, librenderer, libplatform, libcore, *
 
 def get_libcore(arguments, target_platform):
 	libcore = Product(name="core", output=ProductType.DynamicLibrary)
-	setup_driver(arguments, libcore)
+	setup_driver(arguments, libcore, target_platform)
 	libcore.project_root = COMMON_PROJECT_ROOT
 	libcore.root = "../"
 	libcore.sources += [
@@ -422,7 +430,7 @@ def get_libcore(arguments, target_platform):
 
 def get_libplatform(arguments, target_platform):
 	libplatform = Product(name="platform", output=ProductType.DynamicLibrary)
-	setup_driver(arguments, libplatform)
+	setup_driver(arguments, libplatform, target_platform)
 	libplatform.project_root = COMMON_PROJECT_ROOT
 	libplatform.root = "../"
 	libplatform.sources += [
@@ -538,6 +546,15 @@ def get_libplatform(arguments, target_platform):
 	#
 	# x11 support
 	if arguments.with_x11:
+		found_glx = target_platform.find_include_path("GL/glx.h")
+		assert_dependency(found_glx, "GL/glx.h not found!")
+
+		found_xrandr = target_platform.find_include_path("X11/extensions/Xrandr.h")
+		assert_dependency(found_xrandr, "X11/extensions/Xrandr.h not found!")
+
+		found_xinerama = target_platform.find_include_path("X11/extensions/Xinerama.h")
+		assert_dependency(found_xinerama, "X11/extensions/Xinerama.h not found!")
+
 		linux.sources += [
 			"src/platform/window/x11/*.cpp",
 			"src/platform/window/x11/*.h"
@@ -608,7 +625,7 @@ def get_libplatform(arguments, target_platform):
 
 def get_librenderer(arguments, target_platform, libruntime):
 	librenderer = Product(name="renderer", output=ProductType.DynamicLibrary)
-	setup_driver(arguments, librenderer)
+	setup_driver(arguments, librenderer, target_platform)
 	librenderer.project_root = COMMON_PROJECT_ROOT
 	librenderer.root = "../"
 	librenderer.sources += [
@@ -675,7 +692,7 @@ def get_librenderer(arguments, target_platform, libruntime):
 
 def get_libruntime(arguments, target_platform, libui):
 	libruntime = Product(name="runtime", output=ProductType.DynamicLibrary)
-	setup_driver(arguments, libruntime)
+	setup_driver(arguments, libruntime, target_platform)
 	libruntime.project_root = COMMON_PROJECT_ROOT
 	libruntime.root = "../"
 	libruntime.sources += [
@@ -717,7 +734,7 @@ def get_sdk(arguments, links, **kwargs):
 		"src/sdk/include"
 	]
 
-	setup_driver(arguments, sdk)
+	setup_driver(arguments, sdk, target_platform)
 	setup_common_tool(sdk)
 
 	sdk.dependencies.extend(links)
@@ -726,7 +743,7 @@ def get_sdk(arguments, links, **kwargs):
 
 def get_libui(arguments, target_platform, libcore):
 	ui = Product(name="ui", output=ProductType.DynamicLibrary)
-	setup_driver(arguments, ui)
+	setup_driver(arguments, ui, target_platform)
 	ui.root = "../"
 	ui.project_root = COMMON_PROJECT_ROOT
 
@@ -799,7 +816,7 @@ def get_rnd(arguments, links, **kwargs):
 	]
 	rnd.product_root = COMMON_PRODUCT_ROOT
 
-	setup_driver(arguments, rnd)
+	setup_driver(arguments, rnd, target_platform)
 	setup_common_tool(rnd)
 
 	rnd.dependencies.extend(links)
@@ -833,7 +850,7 @@ def get_rnd(arguments, links, **kwargs):
 
 	return rnd
 
-def create_unit_test(arguments, name, dependencies, source, output_type = ProductType.Commandline):
+def create_unit_test(target_platform, arguments, name, dependencies, source, output_type = ProductType.Commandline):
 	product = Product(name=name, output=output_type)
 	product.project_root = COMMON_PROJECT_ROOT
 	product.root = "../"
@@ -861,18 +878,19 @@ def create_unit_test(arguments, name, dependencies, source, output_type = Produc
 
 	product.dependencies.extend(dependencies)
 
-	setup_driver(arguments, product)
+	setup_driver(arguments, product, target_platform)
 
 	return product
 
 def get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, libglm, libui, **kwargs):
+	target_platform = kwargs.get("target_platform", None)
 	return [
-		create_unit_test(arguments, "test_core", [rapidjson, libcore, libglm], "tests/src/test_core.cpp"),
-		create_unit_test(arguments, "test_platform", [libplatform, libcore, libglm], "tests/src/test_platform.cpp"),
-		create_unit_test(arguments, "test_runtime", [rapidjson, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_runtime.cpp"),
-		create_unit_test(arguments, "test_render", [rapidjson, libfreetype, librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
-		create_unit_test(arguments, "test_ui", [rapidjson, libfreetype, librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application),
-		create_unit_test(arguments, "test_window", [rapidjson, libfreetype, librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_window.cpp", ProductType.Application)
+		create_unit_test(target_platform, arguments, "test_core", [rapidjson, libcore, libglm], "tests/src/test_core.cpp"),
+		create_unit_test(target_platform, arguments, "test_platform", [libplatform, libcore, libglm], "tests/src/test_platform.cpp"),
+		create_unit_test(target_platform, arguments, "test_runtime", [rapidjson, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_runtime.cpp"),
+		create_unit_test(target_platform, arguments, "test_render", [rapidjson, libfreetype, librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
+		create_unit_test(target_platform, arguments, "test_ui", [rapidjson, libfreetype, librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application),
+		create_unit_test(target_platform, arguments, "test_window", [rapidjson, libfreetype, librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_window.cpp", ProductType.Application)
 	]
 
 def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
@@ -886,7 +904,7 @@ def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwarg
 	#kraken.sources += [
 	#]
 
-	setup_driver(arguments, kraken)
+	setup_driver(arguments, kraken, target_platform)
 	setup_common_tool(kraken)
 
 	kraken.dependencies.extend([
@@ -926,7 +944,9 @@ def get_orion(arguments, libui, libruntime, libplatform, libcore, librenderer, *
 	orion.product_root = COMMON_PRODUCT_ROOT
 	orion.root = "../"
 
-	setup_driver(arguments, orion)
+	target_platform = kwargs.get("target_platform", None)
+
+	setup_driver(arguments, orion, target_platform)
 	setup_common_tool(orion)
 
 	orion.dependencies.extend([
@@ -1103,7 +1123,7 @@ def products(arguments, **kwargs):
 	# common sources
 	setup_common_variables(arguments, target_platform, gemini)
 
-	setup_driver(arguments, gemini)
+	setup_driver(arguments, gemini, target_platform)
 
 	# more sources
 	gemini.sources += [
@@ -1212,7 +1232,14 @@ def products(arguments, **kwargs):
 		# Ugh, for now, we also link in libui because the runtime requires it.
 		# I feel like pegasus should identify such dependencies and take care of it in the future.
 		# Though, for now, just link it in.
-		tests = get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, Dependency(file="glm.py"), libui, **kwargs)
+		tests = get_unit_tests(arguments,
+			libcore,
+			libplatform,
+			librenderer,
+			libruntime,
+			Dependency(file="glm.py"),
+			libui,
+			**kwargs)
 
 	return [
 		libui,
