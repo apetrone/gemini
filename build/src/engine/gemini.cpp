@@ -68,7 +68,7 @@
 #include "navigation.h"
 
 // uncomment this to draw bone debug information
-//#define GEMINI_DEBUG_BONES
+#define GEMINI_DEBUG_BONES
 
 typedef Array<gemini::GameMessage> EventQueueType;
 
@@ -526,7 +526,7 @@ class ModelInterface : public gemini::IModelInterface
 					transform_index = (geometry_index * mesh->skeleton.size()) + index;
 					assets::Joint* joint = &mesh->skeleton[index];
 					glm::mat4& global_pose = bone_transforms[transform_index];
-					glm::mat4& saved_pose = local_transforms[index];
+					glm::mat4& object_to_world = local_transforms[index];
 //#if defined(GEMINI_DEBUG_BONES)
 					glm::mat4& debug_bone_transform = debug_bone_transforms[index];
 //#endif
@@ -540,21 +540,25 @@ class ModelInterface : public gemini::IModelInterface
 					if (joint->parent_index > -1)
 					{
 						const glm::mat4& parent_transform = local_transforms[joint->parent_index];
-						saved_pose = parent_transform * local_pose;
+						object_to_world = parent_transform * local_pose;
 					}
 					else
 					{
-						saved_pose = local_pose;
+						object_to_world = local_pose;
 					}
 
 					// this will be used for skinning in the vertex shader
-					global_pose = saved_pose * geo.bind_poses[index];
+					global_pose = object_to_world * geo.bind_poses[index];
 
 					// this will be used for debug rendering
-					debug_bone_transform = tx * (saved_pose);
+//					debug_bone_transform = tx * (object_to_world);
+
+					// copy this directly to draw in world position
+					debug_bone_transform = geo.bind_poses[index];
 
 #if defined(GEMINI_DEBUG_BONES)
-//					debugdraw::instance()->axes(debug_bone_transform, 0.15f);
+
+					//debugdraw::instance()->axes(debug_bone_transform, 0.15f);
 #endif
 				}
 
