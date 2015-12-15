@@ -102,6 +102,14 @@ def checkBMeshAware():
 	print( "Blender r%s" % bpy.app.build_revision )
 	BMeshAware = (int(bpy.app.build_revision) > 44136)
 
+def matrix_to_list(matrix):
+	output = []
+
+	for col in range(0, len(matrix.col)):
+		for row in range(0, len(matrix.row)):
+			output.append(clampf(matrix[row][col]))
+	return output
+
 # def get_host_platform():
 # 	"""
 # 		Retrieves the host platform
@@ -448,7 +456,8 @@ class Mesh(Node):
 		self.indices = []
 		self.material_id = 0
 		self.uv_sets = []
-		self.bind_pose = []
+		self.bind_data = []
+		self.inverse_bind_pose = []
 		self.blend_weights = []
 		self.vertex_colors = []
 
@@ -499,14 +508,14 @@ class Mesh(Node):
 		# transform from Z-up to Y-up
 		if config.coordinate_system == COORDINATE_SYSTEM_YUP:
 			# from Marmalade plugin; convert Z up to Y up.
-			xrotation = Matrix.Rotation(-math.pi/2, 4, 'X')
+			mat4_xrotation = Matrix.Rotation(-math.pi/2, 4, 'X')
 
 			# convert object rotation to quaternion (this ignores scale, apparently)
 			rotation = obj.matrix_world.to_quaternion()
 
 			# convert this to a 3x3 rotation matrix
 			rotation_matrix = rotation.to_matrix().to_3x3()
-			final_rotation = xrotation.to_3x3() * rotation_matrix
+			final_rotation = mat4_xrotation.to_3x3() * rotation_matrix
 			#scale = obj.matrix_world.to_scale()
 			#translation = obj.matrix_world.to_translation()
 			mesh.transform(final_rotation.to_4x4())
@@ -751,30 +760,65 @@ class BoneData(object):
 		self.name = name
 		self.index = index
 		self.parent_index = parent_index
-		self.bind_pose = None
+		self.pose_bone = None
 
-def populate_bones(bones, cache):
-	bone_data_by_name = {}
-	bone_data_by_index = {}
+		# bone's local offset from parent in object space
+		self.bind_offset = None
+
+		# inverse bind pose (bone space to object space)
+		self.inverse_bind_pose = None
+
+class BoneCache(object):
+	def __init__(self):
+		self.bone_data_by_name = {}
+		self.bone_data_by_index = {}
+		self.ordered_items = []
+
+	def set(self, bone_name, bone_index, bone_data):
+		self.bone_data_by_name[bone_name] = bone_data
+		self.bone_data_by_index[bone_index] = bone_data
+		self.ordered_items.append(bone_data)
+
+	def find_by_name(self, bone_name):
+		if bone_name in self.bone_data_by_name:
+			return self.bone_data_by_name[bone_name]
+		return None
+
+def collect_bone_data(armature, pose_bones_by_name):
+	cache = BoneCache()
 	bone_index = 0
+	bones = armature.data.bones
+	print("armature: %s has %i bones" % (armature.name, len(bones)))
+
+	print("armature matrix: %s" % (matrix_to_list(armature.matrix_world)))
 
 	for bone in bones:
 		parent_index = -1
 
 		if bone.parent:
-			parent_index = bone_data_by_name[bone.parent.name].index
+			parent_index = cache.find_by_name(bone.parent.name).index
 
 		bone_data = BoneData(bone.name, bone_index, parent_index)
-		bind_pose = bone.matrix_local
-		if bone.parent:
-			bind_pose = bone.matrix_local.inverted() * bone.parent.matrix_local
-		bone_data.bind_pose = bind_pose
-		bone_data_by_name[bone.name] = bone_data
-		bone_data_by_index[bone_index] = bone_data
+		bone_data.pose_bone = pose_bones_by_name[bone.name]
+
+		# If you hit this, you aren't using the associated pose bone
+		# print("bone.name = %s" % bone.name)
+		# print("pose.name = %s" % bone_data.pose_bone.name)
+		assert(bone.name == bone_data.pose_bone.name)
+
+		bind_pose = bone_data.pose_bone.matrix
+		# if bone.parent:
+			# bind_pose = bone.parent.matrix_local * bone.matrix_local.inverted()
+		#bone_data.bind_offset = armature.matrix_world * bone.matrix_local
+		bone_data.bind_offset = armature.matrix_world * bone_data.pose_bone.matrix
+		# print("bone.head_local: %s" % bone.head_local)
+		#bone_data.inverse_bind_pose = bone_data.pose_bone.matrix
+		cache.set(bone.name, bone_index, bone_data)
+
 		bone_index += 1
-		print("bone: %s [index: %i, parent: %i]" % (bone.name, bone_data.index, bone_data.parent_index))
+		#print("bone: %s [index: %i, parent: %i]" % (bone.name, bone_data.index, bone_data.parent_index))
 
-
+	return cache
 
 class export_gemini(bpy.types.Operator):
 	'''Export Skeleton Mesh / Animation Data file(s)'''
@@ -846,6 +890,10 @@ class export_gemini(bpy.types.Operator):
 		if bpy.ops.object.mode_set.poll():
 			bpy.ops.object.mode_set(mode='OBJECT')
 
+		# in order to retrieve pose data; we need to explicitly
+		# set the frame before we retrieve data.
+		bpy.context.scene.frame_set(1)
+
 		selected_meshes = []
 		if not file_failure:
 			mesh_list = []
@@ -884,6 +932,10 @@ class export_gemini(bpy.types.Operator):
 				'source_file': bpy.data.filepath
 			}
 
+
+			skeleton = []
+			bone_data = None
+
 			# iterate over selected objects
 			for obj in selected_meshes:
 				# TODO: Add an explicit EDGE SPLIT modifier?
@@ -894,22 +946,44 @@ class export_gemini(bpy.types.Operator):
 				current_mesh += 1
 				self.report({'INFO'}, 'Export Progress -> %g%%' % ((current_mesh/total_meshes) * 100.0))
 
-				bone_cache = Cache()
-
 				# scan for modifiers we are interested in
 				for modifier in obj.modifiers:
 					print("Found modifier '%s'" % modifier.name)
 					if modifier.type == 'ARMATURE':
 						armature = modifier.object
-						bones = armature.data.bones
-						print("armature: %s has %i bones" % (armature.name, len(bones)))
 
-						populate_bones(bones, bone_cache)
+						# grab
+						pose_bones = armature.pose.bones
+						pose_bones_by_name = {}
+						for pbone in pose_bones:
+							pose_bones_by_name[pbone.name] = pbone
+
+						# We also need to populate the bind pose offset list
+						bind_data = []
+
+						bone_data = collect_bone_data(armature, pose_bones_by_name)
+						for bone in bone_data.ordered_items:
+							skeleton.append({
+								"name": bone.name,
+								"parent": bone.parent_index
+							})
+
+							bind_data.append({
+								"name": bone.name,
+								"parent": bone.parent_index,
+								"bind_offset": matrix_to_list(bone.bind_offset)
+								#"inverse_bind_pose": matrix_to_list(bone.inverse_bind_pose)
+							})
+
+						meshnode.bind_data = bind_data
 				#exportedMesh.recalculateIndices()
 
 			#exportedMesh.writeFile(file, scene_nodes, skeleton)
 
 			root_node.reconcile_materials(self.config)
+
+			# populate skeleton; if there are bones
+			root_node.skeleton = skeleton
 
 			file.write(root_node.to_json())
 
