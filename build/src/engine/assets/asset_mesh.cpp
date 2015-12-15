@@ -66,12 +66,8 @@ namespace gemini
 				m[i] = item.asFloat();
 			}
 
-			return glm::mat4(
-				m[0], m[1], m[2], m[3],
-				m[4], m[5], m[6], m[7],
-				m[8], m[9], m[10], m[11],
-				m[12], m[13], m[14], m[15]
-			);
+			// this is equivalent to indexing m sequentially
+			return glm::make_mat4(m);
 		}
 
 		// -------------------------------------------------------------
@@ -102,7 +98,7 @@ namespace gemini
 				Json::Value uv_sets = node["uv_sets"];
 				Json::Value vertex_colors = node["vertex_colors"];
 				const Json::Value& blend_weights = node["blend_weights"];
-				const Json::Value& bind_pose = node["bind_pose"];
+				const Json::Value& bind_data = node["bind_data"];
 
 				// setup materials
 				assets::Material* default_material = assets::materials()->get_default();
@@ -142,7 +138,7 @@ namespace gemini
 				{
 					shader_path = "shaders/world";
 				}
-				else if (!bind_pose.empty())
+				else if (!bind_data.empty())
 				{
 					shader_path = "shaders/animation";
 				}
@@ -164,7 +160,7 @@ namespace gemini
 				geo->uvs.allocate(uv_sets.size());
 				geo->colors.allocate(vertex_colors.size());
 
-				if (!bind_pose.empty())
+				if (!bind_data.empty())
 				{
 					geo->blend_weights.allocate(geo->vertex_count);
 					geo->blend_indices.allocate(geo->vertex_count);
@@ -204,8 +200,8 @@ namespace gemini
 						const Json::Value& texcoord = uv_sets[set_id][v];
 						glm::vec2& uv = geo->uvs[set_id][v];
 						uv.x = texcoord[0].asFloat();
-						uv.y = 1.0 - texcoord[1].asFloat();
-						//LOGV("uv (set=%i) (vertex=%i) %g %g\n", set_id, v, uv.s, uv.t);
+						uv.y = texcoord[1].asFloat();
+//						LOGV("uv (set=%i) (vertex=%i) %g %g\n", set_id, v, uv.s, uv.t);
 					}
 				}
 
@@ -217,13 +213,13 @@ namespace gemini
 				}
 
 
-				if (!bind_pose.isNull() && !bind_pose.empty())
+				if (!bind_data.isNull() && !bind_data.empty())
 				{
 					// allocate enough bones
-					geo->bind_poses.allocate(bind_pose.size());
+					geo->bind_poses.allocate(bind_data.size());
 
-					Json::ValueIterator it = bind_pose.begin();
-					for (; it != bind_pose.end(); ++it)
+					Json::ValueIterator it = bind_data.begin();
+					for (; it != bind_data.end(); ++it)
 					{
 						const Json::Value& skeleton_entry = (*it);
 						const Json::Value& name = skeleton_entry["name"];
@@ -234,10 +230,13 @@ namespace gemini
 
 						size_t bone_index = joint->index;
 //						LOGV("reading bind_pose for '%s' -> %i\n", bone_name.c_str(), bone_index);
-						const Json::Value& inverse_bind_pose = skeleton_entry["inverse_bind_pose"];
-						assert(!inverse_bind_pose.isNull());
+//						const Json::Value& inverse_bind_pose = skeleton_entry["inverse_bind_pose"];
+//						assert(!inverse_bind_pose.isNull());
+//						geo->bind_poses[bone_index] = assets::json_to_mat4(inverse_bind_pose);
 
-						geo->bind_poses[bone_index] = assets::json_to_mat4(inverse_bind_pose);
+						const Json::Value& bind_offset = skeleton_entry["bind_offset"];
+						assert(!bind_offset.isNull());
+						geo->bind_poses[bone_index] = assets::json_to_mat4(bind_offset);
 					}
 
 					state.mesh->has_skeletal_animation = true;
