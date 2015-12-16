@@ -358,6 +358,24 @@ namespace platform
 	LIBRARY_EXPORT PathString fs_content_directory();
 
 	// ---------------------------------------------------------------------
+	// process
+	// ---------------------------------------------------------------------
+	class Process
+	{
+	public:
+		virtual ~Process();
+	};
+
+	LIBRARY_EXPORT Process* process_create(
+		const char* executable_path,			// the path to the new process
+		const Array<PathString>& arguments,		// arguments as strings
+		const char* working_directory = nullptr	// startup working directory
+	);
+
+	LIBRARY_EXPORT void process_destroy(Process* process);
+	LIBRARY_EXPORT bool process_is_running(Process* process);
+
+	// ---------------------------------------------------------------------
 	// serial
 	// ---------------------------------------------------------------------
 
@@ -452,21 +470,5 @@ namespace platform
 	} // namespace OpenFlags
 
 	LIBRARY_EXPORT Result show_open_dialog(const char* title, uint32_t open_flags, Array<PathString>& paths);
-
-
-	class Process
-	{
-	public:
-		virtual ~Process();
-	};
-
-	LIBRARY_EXPORT Process* process_create(
-		const char* executable_path,			// the path to the new process
-		const Array<PathString>& arguments,		// arguments as strings
-		const char* working_directory = nullptr	// startup working directory
-	);
-
-	LIBRARY_EXPORT void process_destroy(Process* process);
-	LIBRARY_EXPORT bool process_is_running(Process* process);
 
 } // namespace platform
