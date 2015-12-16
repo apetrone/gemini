@@ -122,6 +122,23 @@ namespace platform
 	}
 
 
+	Process* process_create(const char* executable_path,
+		const Array<PathString>& arguments,
+		const char* working_directory)
+	{
+		return nullptr;
+	}
+
+	void process_destroy(Process* process)
+	{
+
+	}
+
+	bool process_is_running(Process* process)
+	{
+		return false;
+	}
+
 	namespace window
 	{
 		Result startup(RenderingBackend backend)
