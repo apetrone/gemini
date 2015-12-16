@@ -55,11 +55,12 @@
 	#define LIBRARY_SDK_CEXPORT
 #endif
 
-
+// unit <desired> per <have>
 const float SecondsPerMillisecond = 1.0e-3;
 const float MillisecondsPerSecond = 1.0e3;
 const float MillisecondsPerMicrosecond = 1.0e-3;
 
+const float MicrosecondsPerMillisecond = 1.0e3;
 const float MicrosecondsPerSecond = 1.0e6;
 const float MicrosecondsPerNanosecond = 1.0e-3;
 
