@@ -894,6 +894,12 @@ class export_gemini(bpy.types.Operator):
 		# set the frame before we retrieve data.
 		bpy.context.scene.frame_set(1)
 
+		# the range to export will be from:
+		frame_start = bpy.context.scene.frame_start
+		frame_end = bpy.context.scene.frame_end + 1
+
+		print("export frames: %i -> %i" % (frame_start, frame_end))
+
 		selected_meshes = []
 		if not file_failure:
 			mesh_list = []
@@ -984,6 +990,37 @@ class export_gemini(bpy.types.Operator):
 
 			# populate skeleton; if there are bones
 			root_node.skeleton = skeleton
+
+			# cache initial pose of skeleton
+			initial_poses = []
+			for bone in bone_data.ordered_items:
+				initial = bone.pose_bone.matrix.copy()
+				initial.invert()
+				initial_poses.append(initial)
+
+			frame_poses = []
+
+			# run through bones and extract animation data
+			for frame in range(frame_start, frame_end):
+				bpy.context.scene.frame_set(frame)
+				bpy.context.scene.update()
+
+				print("export frame: %i" % frame)
+
+				delta_poses = [None] * len(bone_data.ordered_items)
+				for index in range(0, len(bone_data.ordered_items)):
+					bdata = bone_data.ordered_items[index]
+					initial = initial_poses[index]
+					delta_poses[index] = matrix_to_list(initial * bdata.pose_bone.matrix)
+
+				frame_poses.append(delta_poses)
+
+			assert(len(frame_poses) == (frame_end - frame_start))
+
+			# restore the original frame
+			bpy.context.scene.frame_set(frame_start)
+			bpy.context.scene.update()
+			root_node.frame_poses = frame_poses
 
 			file.write(root_node.to_json())
 
