@@ -137,7 +137,7 @@ def setup_common_tool(product):
 	]
 
 
-def setup_common_libs(arguments, product):
+def setup_common_libs(arguments, product, target_platform):
 
 	product.defines += [
 		"JSON_IS_AMALGAMATION"
@@ -178,13 +178,17 @@ def setup_common_libs(arguments, product):
 		]
 
 	linux = product.layout(platform="linux")
+	if target_platform.matches("linux"):
+		found_alsa = target_platform.find_include_path("alsa/version.h")
+		if found_alsa:
+			linux.links.append("asound")
+
 	linux.cflags += [
 		"-Wpedantic"
 	]
 	linux.links += [
 		"pthread",
-		"dl",
-		"asound" # TODO: need to detect ALSA
+		"dl"
 	]
 	linux.linkflags += [
 		"-Wl,-rpath='$$$\ORIGIN'",
@@ -1098,7 +1102,7 @@ def products(arguments, **kwargs):
 	gemini.root = "../"
 	gemini.product_root = COMMON_PRODUCT_ROOT
 
-	setup_common_libs(arguments, gemini)
+	setup_common_libs(arguments, gemini, target_platform)
 
 	gemini.sources += [
 		"src/engine/gemini.cpp"
@@ -1176,6 +1180,11 @@ def products(arguments, **kwargs):
 		]
 
 		linux = gemini.layout(platform="linux")
+
+		if target_platform.matches("linux"):
+			# Verify openal is installed
+			found_oal = target_platform.find_include_path("AL/al.h")
+			assert_dependency(found_oal, "AL/al.h not found!")
 
 		linux.links += [
 			"openal"

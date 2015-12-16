@@ -60,6 +60,12 @@ Debian/Ubuntu/SteamOS
 
 		sudo apt-get install libx11-dev libxrandr-dev libxinerama-dev mesa-common-dev
 
+	You may also need to symlink libGL to /usr/lib/libGL.so. Find it with:
+
+	.. code-block:: bash
+
+		locate libGL
+
 Arch Linux
 
 	.. code-block:: bash
