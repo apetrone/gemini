@@ -212,13 +212,13 @@ UNITTEST(datetime)
 	// this isn't something I know how to reliably test. here goes nothing.
 	TEST_ASSERT(maybe_valid, datetime_sanity);
 
-	uint64_t ms = platform::microseconds();
-	TEST_ASSERT(ms != 0, microseconds);
+	uint64_t us = platform::microseconds();
+	TEST_ASSERT(us != 0, microseconds);
 
 	PLATFORM_LOG(platform::LogMessageType::Info, "waiting three seconds...\n");
 
-	uint64_t last = ms;
-	while((last - ms) < 3000000)
+	uint64_t last = us;
+	while((last - us) < (3 * MicrosecondsPerSecond))
 	{
 		last = platform::microseconds();
 	}

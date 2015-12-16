@@ -99,7 +99,7 @@ namespace platform
 
 	void posix_thread_sleep(int milliseconds)
 	{
-		usleep(milliseconds*1000);
+		usleep(milliseconds * MicrosecondsPerMillisecond);
 	}
 
 	void posix_thread_detach(Thread& thread)
