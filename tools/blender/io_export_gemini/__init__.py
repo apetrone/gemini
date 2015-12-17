@@ -259,6 +259,10 @@ class ExporterConfig(object):
 		self.material_list = []
 		self.instance = instance
 
+		self.coordinate_system = COORDINATE_SYSTEM_YUP
+		self.transform_normals = False
+		self.triangulate_mesh = False
+
 	def get_filepath_for_material(self, bmaterial):
 		""" determine an image path from a blender material """
 		filepath = None
@@ -298,6 +302,12 @@ class ExporterConfig(object):
 
 	def info(self, message):
 		self.instance.report({'INFO'}, message)
+
+	def dump(self):
+		print("coordinate_system: %s" 	% self.coordinate_system)
+		print("transform_normals: %i" 	% self.transform_normals)
+		print("triangulate_mesh: %i" 	% self.triangulate_mesh)
+
 # class HashedVector(Vector):
 # 	def _description(self):
 # 		return (self.x, self.y, self.z)
@@ -597,152 +607,6 @@ class Mesh(Node):
 
 		return node
 
-class MeshContainer(object):
-
-	def __init__(self, config):
-		self.geometry = {}
-		self.materials = {}
-		self.material_list = []
-		self.name = ""
-		self.translate = []
-		self.rotate = []
-		self.config = config
-
-		self.geometry_index = 0
-		self.material_index = 0
-
-	def getFilepathForMaterial(self, material):
-		filepath = None
-		if material and material.active_texture:
-			if hasattr(material.active_texture, "image") and hasattr(material.active_texture.image, "filepath"):
-				filepath = material.active_texture.image.filepath
-		return filepath
-
-	def addMaterial(self, material):
-		filepath = self.getFilepathForMaterial( material )
-		if filepath:
-			if filepath not in self.materials:
-				aematerial = Material( self.material_index )
-				aematerial.setMaterial( filepath )
-				self.materials[ filepath ] = aematerial
-				self.material_list.append( aematerial )
-				self.material_index += 1
-
-				print( "Added new material (%i, %s)" % (aematerial.index, aematerial.path) )
-				return aematerial
-			else:
-				return self.materials[ filepath ]
-		else:
-			return None
-
-	def findMaterial(self, material):
-		filepath = self.getFilepathForMaterial( material )
-		if filepath and filepath in self.materials:
-			return self.materials[ filepath ]
-
-		return None
-		'''
-		if material in self.materials:
-			return self.materials[ material ]
-		else:
-			raise Exception( 'Material not found!' )
-		'''
-	def findGeometry(self, material_index):
-		#print( "findGeometry for material %i" % material_index )
-
-		if material_index in self.geometry:
-			return self.geometry[ material_index ]
-		else:
-			geometry = self.geometry[ material_index ] = Geometry()
-			geometry.id = self.geometry_index
-			self.geometry_index += 1
-			return geometry
-
-	'''
-	def recalculateIndices(self):
-		for matid, geometry in self.geometry.items():
-			geometry.recalculateHighestIndex()
-	'''
-	def writeFile(self, file, scene_nodes, skeleton):
-
-		# geometry_id = 0
-		# for material_id, geometry in self.geometry.items():
-
-		# 	print( "Writing geometry: %i" % geometry_id )
-		# 	vertices = []
-		# 	normals = []
-		# 	uv_sets = []
-		# 	shape_keys = []
-
-		# 	getval = operator.itemgetter(0)
-		# 	getkey = operator.itemgetter(1)
-		# 	vert_sorted = map(getval, sorted(geometry.verts.items(), key=getkey))
-
-		# 	uvs = []
-
-		# 	mins = []
-		# 	maxs = []
-
-		# 	vertex_colors = []
-		# 	blend_weights = []
-		# 	bind_pose = []
-
-		# 	for v in vert_sorted:
-		# 		vertices.extend( [float_clamp(v.position.x), float_clamp(v.position.y), float_clamp(v.position.z)] )
-		# 		normals.extend( [v.normal.x, v.normal.y, v.normal.z] )
-		# 		uvs.extend( [v.u, v.v] )
-
-		# 	for key in geometry.shape_keys:
-		# 		shape_data = {}
-		# 		shape_data["name"] = key.name
-		# 		shape_data["data"] = key.vertices
-		# 		shape_keys.append(shape_data)
-
-		# 	# only setup one uv_set for now.
-		# 	uv_sets.append(uvs)
-
-		# 	geometry_data = {
-		# 		'material_id': material_id,
-		# 		'indices': geometry.indices,
-		# 		'vertices': vertices,
-		# 		'normals' : normals,
-		# 		'uv_sets' : uv_sets,
-		# 		# 'shape_keys': shape_keys,
-		# 		'mins' : mins,
-		# 		'maxs' : maxs,
-		# 		'vertex_colors' : vertex_colors,
-		# 		'blend_weights' : blend_weights,
-		# 		'bind_pose' : bind_pose
-		# 	}
-		# 	root['geometry'].append( geometry_data )
-		# 	geometry_id += 1
-
-		material_list = []
-		material_id = 0
-		for material in self.material_list:
-			if material.path:
-				material_name = os.path.splitext( os.path.basename( material.path ) )[0]
-				material_list.append( {'name': material_name } )
-			material_id += 1
-
-		# setup root node
-
-		# root['materials'] = material_list
-		# root['nodes'] = node_list
-		# root['skeleton'] = skeleton
-
-		# root_node = RootNode(materials=material_list, skeleton=skeleton)
-		# root_node.export_info = {
-		# 	'blender_version': ("%i.%i.%i" % (bpy.app.version[0], bpy.app.version[1], bpy.app.version[2])),
-		# 	'host_platform': platform.platform().lower(),
-		# 	'source_file': bpy.data.filepath
-		# }
-
-		# root_node.children = scene_nodes
-
-		# file.write(root_node.to_json())
-
-
 #
 # main classes
 #
@@ -852,11 +716,6 @@ class export_gemini(bpy.types.Operator):
 		items=CoordinateSystems,
 		default=COORDINATE_SYSTEM_YUP)
 
-	ExportRaw = BoolProperty(
-		name="Export raw geometry",
-		description="This is a description",
-		default=True)
-
 	filepath = StringProperty(
 			name="File Path",
 			description="Filepath used for exporting the file",
@@ -864,7 +723,7 @@ class export_gemini(bpy.types.Operator):
 			subtype='FILE_PATH',
 			)
 
-	TransformNormals = BoolProperty(
+	transform_normals = BoolProperty(
 		name="Transform Normals",
 		description="Transform Normals along with Mesh",
 		default=True)
@@ -875,34 +734,27 @@ class export_gemini(bpy.types.Operator):
 		default=False)
 
 	def execute(self, context):
-		global unique_vertices
-		global last_vertex
-		#print( 'Execute!' )
-
 		self.config = ExporterConfig(self)
 		self.config.coordinate_system = self.CoordinateSystem
-		self.config.ExportRaw = self.ExportRaw
-		self.config.TransformNormals = self.TransformNormals
+		self.config.transform_normals = self.transform_normals
 		self.config.triangulate_mesh = self.triangulate_mesh
-
-		if self.config.TransformNormals:
-			print( "TransformNormals is enabled." )
+		self.config.dump()
 
 		start_time = time()
 
 		#print( self.filepath )
 		file_failure = False
 		try:
-			file = open( self.filepath, 'w' )
+			file = open(self.filepath, "w")
 		except IOError:
 			file_failure = True
 			import sys
-			self.report('ERROR', str(sys.exc_info()[1]) )
+			self.report("ERROR", str(sys.exc_info()[1]))
 
 
 		# make sure we're in object mode
 		if bpy.ops.object.mode_set.poll():
-			bpy.ops.object.mode_set(mode='OBJECT')
+			bpy.ops.object.mode_set(mode="OBJECT")
 
 		# in order to retrieve pose data; we need to explicitly
 		# set the frame before we retrieve data.
@@ -919,15 +771,14 @@ class export_gemini(bpy.types.Operator):
 			mesh_list = []
 
 			for obj in bpy.context.scene.objects:
-				if obj.type == 'MESH':
+				if obj.type == "MESH":
 					mesh_list.append( obj )
 					if obj.select:
 						selected_meshes.append( obj )
-				elif obj.type == 'ARMATURE':
-					print('TODO: Export Armature: %s' % obj.name)
+				elif obj.type == "ARMATURE":
+					print("TODO: Export Armature: %s" % obj.name)
 
-			print( "Total Meshes: ", len(mesh_list)," Selected: ", len(selected_meshes) )
-
+			print("Total Meshes: ", len(mesh_list)," Selected: ", len(selected_meshes))
 
 			# clear selection
 			bpy.context.scene.objects.active = None
@@ -935,12 +786,17 @@ class export_gemini(bpy.types.Operator):
 			current_mesh = 0
 			total_meshes = len(selected_meshes)
 
-
-			exportedMesh = MeshContainer(self.config)
 			print("Total selected meshes: %i" % len(selected_meshes))
 
+			# list of armatures found in the scene
+			armatures = []
 
-
+			# collect a list of actions
+			# It is assumed that ALL actions are supposed to be exported.
+			# See above for the rationale.
+			export_action_list = []
+			for action in bpy.data.actions:
+				export_action_list.append(action)
 
 			# We can also generate a skeleton. At the present,
 			# there can only be one skeleton.
@@ -953,8 +809,6 @@ class export_gemini(bpy.types.Operator):
 			}
 
 
-			skeleton = []
-			bone_data = None
 
 			# iterate over selected objects
 			for obj in selected_meshes:
@@ -971,65 +825,63 @@ class export_gemini(bpy.types.Operator):
 					print("Found modifier '%s'" % modifier.name)
 					if modifier.type == 'ARMATURE':
 						armature = modifier.object
-
-						# grab
-						pose_bones = armature.pose.bones
-						pose_bones_by_name = {}
-						for pbone in pose_bones:
-							pose_bones_by_name[pbone.name] = pbone
-
-						# We also need to populate the bind pose offset list
-						bind_data = []
-
-						bone_data = collect_bone_data(armature, pose_bones_by_name)
-						for bone in bone_data.ordered_items:
-							skeleton.append({
-								"name": bone.name,
-								"parent": bone.parent_index
-							})
-
-							bind_data.append({
-								"name": bone.name,
-								"parent": bone.parent_index,
-								"bind_offset": matrix_to_list(bone.bind_offset)
-								#"inverse_bind_pose": matrix_to_list(bone.inverse_bind_pose)
-							})
-
-						meshnode.bind_data = bind_data
-				#exportedMesh.recalculateIndices()
-
-			#exportedMesh.writeFile(file, scene_nodes, skeleton)
+						armatures.append(armature)
 
 			root_node.reconcile_materials(self.config)
 
-			# populate skeleton; if there are bones
-			root_node.skeleton = skeleton
+			for armature in armatures:
+				skeleton = []
 
-			# cache initial pose of skeleton
-			initial_poses = []
-			for bone in bone_data.ordered_items:
-				initial = bone.pose_bone.matrix.copy()
-				initial.invert()
-				initial_poses.append(initial)
+				pose_bones = armature.pose.bones
+				pose_bones_by_name = {}
+				for pbone in pose_bones:
+					pose_bones_by_name[pbone.name] = pbone
 
-			frame_poses = []
+				# We also need to populate the bind pose offset list
+				bind_data = []
 
-			# run through bones and extract animation data
-			for frame in range(frame_start, frame_end):
-				bpy.context.scene.frame_set(frame)
-				bpy.context.scene.update()
+				bone_data = collect_bone_data(armature, pose_bones_by_name)
+				for bone in bone_data.ordered_items:
+					skeleton.append({
+						"name": bone.name,
+						"parent": bone.parent_index
+					})
 
-				print("export frame: %i" % frame)
+					bind_data.append({
+						"name": bone.name,
+						"parent": bone.parent_index,
+						"bind_offset": matrix_to_list(bone.bind_offset)
+						#"inverse_bind_pose": matrix_to_list(bone.inverse_bind_pose)
+					})
 
-				delta_poses = [None] * len(bone_data.ordered_items)
-				for index in range(0, len(bone_data.ordered_items)):
-					bdata = bone_data.ordered_items[index]
-					initial = initial_poses[index]
-					delta_poses[index] = matrix_to_list(initial * bdata.pose_bone.matrix)
+				meshnode.bind_data = bind_data
 
-				frame_poses.append(delta_poses)
+				# cache initial pose of skeleton
+				initial_poses = []
+				for bone in bone_data.ordered_items:
+					initial = bone.pose_bone.matrix.copy()
+					initial.invert()
+					initial_poses.append(initial)
 
-			assert(len(frame_poses) == (frame_end - frame_start))
+				frame_poses = []
+
+				# run through bones and extract animation data
+				for frame in range(frame_start, frame_end):
+					bpy.context.scene.frame_set(frame)
+					bpy.context.scene.update()
+
+					# compute delta poses for animation
+					delta_poses = [None] * len(bone_data.ordered_items)
+					for index in range(0, len(bone_data.ordered_items)):
+						bdata = bone_data.ordered_items[index]
+						initial = initial_poses[index]
+						delta_poses[index] = matrix_to_list(initial * bdata.pose_bone.matrix)
+
+					frame_poses.append(delta_poses)
+
+				assert(len(frame_poses) == (frame_end - frame_start))
+
+				root_node.skeleton = skeleton
 
 			# restore the original frame
 			bpy.context.scene.frame_set(frame_start)
