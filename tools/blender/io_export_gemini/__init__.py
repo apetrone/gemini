@@ -446,7 +446,7 @@ class RootNode(Node):
 		self.materials = kwargs.get("materials", [])
 		self.skeleton = kwargs.get("skeleton", [])
 
-	def reconcile_materials(self, config):
+	def prepare_materials_for_export(self, config):
 		material_id = 0
 		for material in config.material_list:
 			if material.path:
@@ -827,7 +827,6 @@ class export_gemini(bpy.types.Operator):
 						armature = modifier.object
 						armatures.append(armature)
 
-			root_node.reconcile_materials(self.config)
 
 			for armature in armatures:
 				skeleton = []
@@ -883,10 +882,12 @@ class export_gemini(bpy.types.Operator):
 
 				root_node.skeleton = skeleton
 
+			root_node.prepare_materials_for_export(self.config)
+
 			# restore the original frame
 			bpy.context.scene.frame_set(frame_start)
 			bpy.context.scene.update()
-			root_node.frame_poses = frame_poses
+			#root_node.frame_poses = frame_poses
 
 			file.write(root_node.to_json())
 
