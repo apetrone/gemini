@@ -41,6 +41,13 @@ bl_info = {
 # http://blenderartists.org/forum/showthread.php?337882-Vertex-blend-indices-and-blend-weights&highlight=exporter
 
 
+# Blender has no mapping of Actions -> Compatible Objects.
+# The best way would be to have the user choose which actions to export; otherwise
+# we have to export all of them.
+# At this time, I'm indifferent about exporting actions and various objects.
+# For now, I'll just choose to export all actions.
+
+
 #
 # imports
 #
@@ -819,6 +826,13 @@ def collect_bone_data(armature, pose_bones_by_name):
 		#print("bone: %s [index: %i, parent: %i]" % (bone.name, bone_data.index, bone_data.parent_index))
 
 	return cache
+
+
+
+
+
+
+
 
 class export_gemini(bpy.types.Operator):
 	'''Export Skeleton Mesh / Animation Data file(s)'''
