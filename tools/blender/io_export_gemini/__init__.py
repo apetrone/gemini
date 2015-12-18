@@ -438,6 +438,15 @@ class Node(object):
 		return json.dumps(self, default=lambda o: o.__dict__,
 			sort_keys=True, indent='\t')
 
+class AnimationRootNode(Node):
+	def __init__(self, **kwargs):
+		super(AnimationRootNode, self).__init__(**kwargs)
+
+		self.type = Node.ROOT
+		self.duration_seconds = 0.0
+		self.frames_per_second = 0
+		self.name = "unknown"
+
 class RootNode(Node):
 	def __init__(self, **kwargs):
 		super(RootNode, self).__init__(**kwargs)
@@ -694,7 +703,9 @@ def collect_bone_data(armature, pose_bones_by_name):
 
 
 
-
+class AnimData(object):
+	def __init__(self, **kwargs):
+		self.name = kwargs.get("name", None)
 
 
 
@@ -720,8 +731,7 @@ class export_gemini(bpy.types.Operator):
 			name="File Path",
 			description="Filepath used for exporting the file",
 			maxlen= 1024,
-			subtype='FILE_PATH',
-			)
+			subtype='FILE_PATH')
 
 	transform_normals = BoolProperty(
 		name="Transform Normals",
@@ -742,7 +752,6 @@ class export_gemini(bpy.types.Operator):
 
 		start_time = time()
 
-		#print( self.filepath )
 		file_failure = False
 		try:
 			file = open(self.filepath, "w")
@@ -892,6 +901,22 @@ class export_gemini(bpy.types.Operator):
 			file.write(root_node.to_json())
 
 			file.close()
+
+			# write animations
+			target_directory = os.path.dirname(self.filepath)
+
+			animations = []
+			anim0 = AnimData(name="idle")
+			animations.append(anim0)
+
+			for animation in animations:
+				target_animation_path = os.path.join(target_directory, ("%s.animation" % animation.name))
+				print("target_animation_path: %s" % target_animation_path)
+				handle = open(target_animation_path, "w")
+				animation_root_node = AnimationRootNode()
+
+				handle.write(animation_root_node.to_json())
+				handle.close()
 
 			delta_time = time() - start_time
 
