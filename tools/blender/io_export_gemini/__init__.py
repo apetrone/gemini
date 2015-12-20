@@ -258,6 +258,8 @@ class ExporterConfig(object):
 		self.materials = {}
 		self.material_list = []
 		self.instance = instance
+		self.frame_start = 0
+		self.frame_end = 0
 
 		self.coordinate_system = COORDINATE_SYSTEM_YUP
 		self.transform_normals = False
@@ -386,17 +388,19 @@ class VertexCache(object):
 		self.vertices = {}
 		self.ordered_vertices = []
 		self.indices = []
+		self.weights = []
 
 		# map old vertex index to new vertex index
 		self.old_vertex_map = {}
 
-	def find_vertex_index(self, vertex, old_vertex_index):
+	def find_vertex_index(self, vertex):
 		if vertex not in self.vertices:
 			self.vertices[vertex] = len(self.ordered_vertices)
 			self.ordered_vertices.append(vertex)
 		return self.vertices[vertex]
 
-	def populate_with_geometry(self, vertices, normals, uvs, colors, loops):
+	def populate_with_geometry(self, vertices, normals, uvs, colors, loops,
+		weights=[]):
 		#
 		# NOTE: Some Elements are accessed by LOOP INDEX -- NOT BY VERTEX INDEX!
 		# UVs, Vertex Colors
@@ -425,10 +429,11 @@ class VertexCache(object):
 				v = uv[1],
 				color = color)
 
-			index = self.find_vertex_index(vertex, vertex_index)
+			index = self.find_vertex_index(vertex)
 			#vertex.show()
 
 			self.indices.append(index)
+			self.weights.append(weights[vertex_index])
 
 class Node(object):
 	NODE = "node"
@@ -439,9 +444,6 @@ class Node(object):
 	def __init__(self, **kwargs):
 		self.type = kwargs.get("type", Node.NODE)
 		self.children = kwargs.get("children", [])
-
-		# o.dict keys in this array will be ignored on serialize
-		self._json_ignores = []
 
 	def add_child(self, child):
 		self.children.append(child)
@@ -513,18 +515,23 @@ class Mesh(Node):
 		# the format currently only supports a single vertex color set
 		self.vertex_colors = colorset
 		self.indices = cache.indices
+		self.blend_weights = cache.weights
 
 		print("# vertices: %i" % len(self.vertices))
 		print("# indices: %i" % len(self.indices))
 
-	def apply_modifiers(self, obj, frame_start, frame_end):
+	@staticmethod
+	def cache_weights(config, node, cache, obj):
+		bone_data = []
+
+		# apply modifiers to the mesh node
 		for modifier in obj.modifiers:
 			print("Found modifier '%s'" % modifier.name)
-			if modifier.type == 'ARMATURE':
+			if modifier.type == "ARMATURE":
 				armature = modifier.object
 
 				# 1. build the skeleton for this mesh
-				assert(self.skeleton == [])
+				assert(node.skeleton == [])
 
 				pose_bones = armature.pose.bones
 				pose_bones_by_name = {}
@@ -536,7 +543,7 @@ class Mesh(Node):
 
 				bone_data = collect_bone_data(armature, pose_bones_by_name)
 				for bone in bone_data.ordered_items:
-					self.skeleton.append({
+					node.skeleton.append({
 						"name": bone.name,
 						"parent": bone.parent_index
 					})
@@ -548,7 +555,7 @@ class Mesh(Node):
 						#"inverse_bind_pose": matrix_to_list(bone.inverse_bind_pose)
 					})
 
-				self.bind_data = bind_data
+				node.bind_data = bind_data
 
 				# cache initial pose of skeleton
 				initial_poses = []
@@ -560,7 +567,7 @@ class Mesh(Node):
 				frame_poses = []
 
 				# run through bones and extract animation data
-				for frame in range(frame_start, frame_end):
+				for frame in range(config.frame_start, config.frame_end):
 					bpy.context.scene.frame_set(frame)
 					bpy.context.scene.update()
 
@@ -573,8 +580,9 @@ class Mesh(Node):
 
 					frame_poses.append(delta_poses)
 
-				assert(len(frame_poses) == (frame_end - frame_start))
+				assert(len(frame_poses) == (config.frame_end - config.frame_start))
 
+		return bone_data
 
 	@staticmethod
 	def from_object(config, obj, root):
@@ -617,10 +625,45 @@ class Mesh(Node):
 		cache = VertexCache()
 
 		#config.info("total faces: %i" % len(mesh_faces))
-		weights = [0] * len(mesh.vertices)
+		# weights = [None] * len(mesh.vertices)
 
-		vertices = [(clampf(v.co[0]), clampf(v.co[1]), clampf(v.co[2]))
-			for v in mesh.vertices]
+		bone_data = Mesh.cache_weights(config, node, cache, obj)
+
+		weights = [[None]] * len(mesh.vertices)
+		# blend_weights = [None] * len(bone_data.ordered_items)
+
+		vertices = []
+
+		# build a mapping from group index to bone index
+		total_bones = len(bone_data.ordered_items)
+		group_index_to_bone = [None] * total_bones
+		for group in obj.vertex_groups:
+			# convert group index to boneinfo.index
+			boneinfo = bone_data.find_by_name(group.name)
+			if not boneinfo:
+				# It's possible to have vertex groups for bones which may have
+				# been removed. Ignore these.
+				continue
+
+			group_index_to_bone[group.index] = boneinfo
+
+		for index, mv in enumerate(mesh.vertices):
+			vertices.extend(
+				[(clampf(mv.co[0]), clampf(mv.co[1]), clampf(mv.co[2]))])
+
+			# don't add out of range indices
+			weights[index] = []
+			for group_element in mv.groups:
+				if group_element.group < total_bones:
+					bone = group_index_to_bone[group_element.group]
+					if bone:
+						weights[index].append({
+							"bone": bone.name,
+							"value": group_element.weight
+							})
+
+		#print("bone_index: %i, \"%s\", group_index: %i" % (boneinfo.index, boneinfo.name, group.index))
+		#print("weights: %s" % weights)
 
 		mesh.calc_normals_split()
 		normals = [(clampf(l.normal[0]), clampf(l.normal[1]), clampf(l.normal[2]))
@@ -676,9 +719,11 @@ class Mesh(Node):
 					pass
 		"""
 
+		if weights:
+			assert(len(weights) == len(vertices))
 
 		# convert and copy geometry over to node
-		cache.populate_with_geometry(vertices, normals, uvs, colors, mesh.loops)
+		cache.populate_with_geometry(vertices, normals, uvs, colors, mesh.loops, weights=weights)
 		node.populate_with_vertex_cache(cache)
 
 		if created_temp_mesh:
@@ -913,10 +958,11 @@ class export_gemini(bpy.types.Operator):
 		bpy.context.scene.frame_set(1)
 
 		# the range to export will be from:
-		frame_start = bpy.context.scene.frame_start
-		frame_end = bpy.context.scene.frame_end + 1
+		self.config.frame_start = bpy.context.scene.frame_start
+		self.config.frame_end = bpy.context.scene.frame_end + 1
 
-		print("export frames: %i -> %i" % (frame_start, frame_end))
+		print("export frames: %i -> %i" % (
+			self.config.frame_start, self.config.frame_end))
 
 		selected_meshes = []
 		if not file_failure:
@@ -967,13 +1013,11 @@ class export_gemini(bpy.types.Operator):
 				current_mesh += 1
 				self.report({'INFO'}, 'Export Progress -> %g%%' % ((current_mesh/total_meshes) * 100.0))
 
-				# apply modifiers to the mesh node
-				meshnode.apply_modifiers(obj, frame_start, frame_end)
 
 			root_node.prepare_materials_for_export(self.config)
 
 			# restore the original frame
-			bpy.context.scene.frame_set(frame_start)
+			bpy.context.scene.frame_set(self.config.frame_start)
 			bpy.context.scene.update()
 
 			file.write(root_node.to_json())
