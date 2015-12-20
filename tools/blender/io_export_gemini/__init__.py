@@ -575,13 +575,6 @@ class Mesh(Node):
 
 				assert(len(frame_poses) == (frame_end - frame_start))
 
-				# 2. collect blend weights from this object
-				for vertex_group in obj:
-					boneinfo = bone_data.find_by_name(group.name)
-					assert(boneinfo != None)
-
-					index = group.index
-					weight = group.weight
 
 	@staticmethod
 	def from_object(config, obj, root):
@@ -624,6 +617,7 @@ class Mesh(Node):
 		cache = VertexCache()
 
 		#config.info("total faces: %i" % len(mesh_faces))
+		weights = [0] * len(mesh.vertices)
 
 		vertices = [(clampf(v.co[0]), clampf(v.co[1]), clampf(v.co[2]))
 			for v in mesh.vertices]
@@ -661,6 +655,27 @@ class Mesh(Node):
 
 		print("# loops: %i" % len(mesh.loops))
 		print("# polygons: %i" % (len(mesh.polygons)))
+
+
+		"""
+
+		# Create a vertex map filled with as many vertices as
+		# the original mesh.
+		vertex_mapping = [0] * len(obj.data.vertices)
+
+		# 2. collect blend weights from this object
+		for vertex_group in obj.vertex_groups:
+			boneinfo = bone_data.find_by_name(vertex_group.name)
+			assert(boneinfo != None)
+
+			print("bone_index: %i, \"%s\"" % (boneinfo.index, boneinfo.name))
+			for index in range(0, len(obj.data.vertices) - 1):
+				try:
+					print("%i - %2.2f" % (index, vertex_group.weight(index)))
+				except:
+					pass
+		"""
+
 
 		# convert and copy geometry over to node
 		cache.populate_with_geometry(vertices, normals, uvs, colors, mesh.loops)
