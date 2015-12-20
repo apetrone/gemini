@@ -338,7 +338,7 @@ namespace gemini
 					return result;
 				}
 
-				const Json::Value& bones_array = root["nodes"];
+				const Json::Value& bones_array = root["children"];
 				if (!validate_node(bones_array, "bones"))
 				{
 					LOGW("No bones!\n");

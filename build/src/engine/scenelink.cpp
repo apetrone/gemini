@@ -190,21 +190,21 @@ namespace gemini
 								queue->insert(block);
 							}
 
-							size_t geometry_index = 0;
-							// we must update the transforms for each geometry instance
-							for (const assets::Geometry& geo : mesh->geometry)
-							{
-								// draw bone transforms as axes
-								// TODO: this should be moved elsewhere or turned into a special debug render block?
-								for (size_t index = 0; index < mesh->skeleton.size(); ++index)
-								{
-									glm::mat4* debug_poses = model_instance->get_debug_bone_transforms();
-									glm::mat4& debug_bone_transform = debug_poses[index];
-									debug_bone_transform = geo.bind_poses[index];
-								}
-
-								++geometry_index;
-							}
+//							size_t geometry_index = 0;
+//							// we must update the transforms for each geometry instance
+//							for (const assets::Geometry& geo : mesh->geometry)
+//							{
+//								// draw bone transforms as axes
+//								// TODO: this should be moved elsewhere or turned into a special debug render block?
+//								for (size_t index = 0; index < mesh->skeleton.size(); ++index)
+//								{
+//									glm::mat4* debug_poses = model_instance->get_debug_bone_transforms();
+//									glm::mat4& debug_bone_transform = debug_poses[index];
+//									debug_bone_transform = geo.bind_poses[index];
+//								}
+//
+//								++geometry_index;
+//							}
 #if 1
 							const glm::mat4* debug_skeletal_pose = model_instance->get_debug_bone_transforms();
 							const size_t total_transforms = model_instance->get_total_transforms();
