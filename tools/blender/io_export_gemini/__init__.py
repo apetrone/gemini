@@ -376,13 +376,21 @@ class Vertex(object):
 		return self.description() == other.description()
 
 
+class Weight(object):
+	def __init__(self, vertex_index, weight):
+		self.vertex_index = vertex_index
+		self.weight = weight
+
 class VertexCache(object):
 	def __init__(self):
 		self.vertices = {}
 		self.ordered_vertices = []
 		self.indices = []
 
-	def find_vertex_index(self, vertex):
+		# map old vertex index to new vertex index
+		self.old_vertex_map = {}
+
+	def find_vertex_index(self, vertex, old_vertex_index):
 		if vertex not in self.vertices:
 			self.vertices[vertex] = len(self.ordered_vertices)
 			self.ordered_vertices.append(vertex)
@@ -417,7 +425,7 @@ class VertexCache(object):
 				v = uv[1],
 				color = color)
 
-			index = self.find_vertex_index(vertex)
+			index = self.find_vertex_index(vertex, vertex_index)
 			#vertex.show()
 
 			self.indices.append(index)
@@ -426,10 +434,14 @@ class Node(object):
 	NODE = "node"
 	ROOT = "root"
 	MESH = "mesh"
+	ANIM = "anim"
 
 	def __init__(self, **kwargs):
 		self.type = kwargs.get("type", Node.NODE)
 		self.children = kwargs.get("children", [])
+
+		# o.dict keys in this array will be ignored on serialize
+		self._json_ignores = []
 
 	def add_child(self, child):
 		self.children.append(child)
@@ -438,22 +450,12 @@ class Node(object):
 		return json.dumps(self, default=lambda o: o.__dict__,
 			sort_keys=True, indent='\t')
 
-class AnimationRootNode(Node):
-	def __init__(self, **kwargs):
-		super(AnimationRootNode, self).__init__(**kwargs)
-
-		self.type = Node.ROOT
-		self.duration_seconds = 0.0
-		self.frames_per_second = 0
-		self.name = "unknown"
-
 class RootNode(Node):
 	def __init__(self, **kwargs):
 		super(RootNode, self).__init__(**kwargs)
 
 		self.type = Node.ROOT
 		self.materials = kwargs.get("materials", [])
-		self.skeleton = kwargs.get("skeleton", [])
 
 	def prepare_materials_for_export(self, config):
 		material_id = 0
@@ -483,9 +485,9 @@ class Mesh(Node):
 		self.material_id = 0
 		self.uv_sets = []
 		self.bind_data = []
-		self.inverse_bind_pose = []
 		self.blend_weights = []
 		self.vertex_colors = []
+		self.skeleton = []
 
 	def populate_with_vertex_cache(self, cache):
 		uvset = []
@@ -514,6 +516,72 @@ class Mesh(Node):
 
 		print("# vertices: %i" % len(self.vertices))
 		print("# indices: %i" % len(self.indices))
+
+	def apply_modifiers(self, obj, frame_start, frame_end):
+		for modifier in obj.modifiers:
+			print("Found modifier '%s'" % modifier.name)
+			if modifier.type == 'ARMATURE':
+				armature = modifier.object
+
+				# 1. build the skeleton for this mesh
+				assert(self.skeleton == [])
+
+				pose_bones = armature.pose.bones
+				pose_bones_by_name = {}
+				for pbone in pose_bones:
+					pose_bones_by_name[pbone.name] = pbone
+
+				# We also need to populate the bind pose offset list
+				bind_data = []
+
+				bone_data = collect_bone_data(armature, pose_bones_by_name)
+				for bone in bone_data.ordered_items:
+					self.skeleton.append({
+						"name": bone.name,
+						"parent": bone.parent_index
+					})
+
+					bind_data.append({
+						"name": bone.name,
+						"parent": bone.parent_index,
+						"bind_offset": matrix_to_list(bone.bind_offset)
+						#"inverse_bind_pose": matrix_to_list(bone.inverse_bind_pose)
+					})
+
+				self.bind_data = bind_data
+
+				# cache initial pose of skeleton
+				initial_poses = []
+				for bone in bone_data.ordered_items:
+					initial = bone.pose_bone.matrix.copy()
+					initial.invert()
+					initial_poses.append(initial)
+
+				frame_poses = []
+
+				# run through bones and extract animation data
+				for frame in range(frame_start, frame_end):
+					bpy.context.scene.frame_set(frame)
+					bpy.context.scene.update()
+
+					# compute delta poses for animation
+					delta_poses = [None] * len(bone_data.ordered_items)
+					for index in range(0, len(bone_data.ordered_items)):
+						bdata = bone_data.ordered_items[index]
+						initial = initial_poses[index]
+						delta_poses[index] = matrix_to_list(initial * bdata.pose_bone.matrix)
+
+					frame_poses.append(delta_poses)
+
+				assert(len(frame_poses) == (frame_end - frame_start))
+
+				# 2. collect blend weights from this object
+				for vertex_group in obj:
+					boneinfo = bone_data.find_by_name(group.name)
+					assert(boneinfo != None)
+
+					index = group.index
+					weight = group.weight
 
 	@staticmethod
 	def from_object(config, obj, root):
@@ -598,17 +666,6 @@ class Mesh(Node):
 		cache.populate_with_geometry(vertices, normals, uvs, colors, mesh.loops)
 		node.populate_with_vertex_cache(cache)
 
-		# TODO: operate on shape_keys
-		# TODO: operate on armatures
-
-
-
-
-		# TODO: used by the skin modifier
-		for skin_vertex_layer in mesh.skin_vertices:
-			print("processing skin vertex layer: %s" % skin_vertex_layer.name)
-
-
 		if created_temp_mesh:
 			# remove the triangulated object we created
 			bpy.ops.object.mode_set(mode='OBJECT')
@@ -616,6 +673,15 @@ class Mesh(Node):
 
 		return node
 
+
+class AnimatedSequence(Node):
+	def __init__(self, **kwargs):
+		super(AnimatedSequence, self).__init__(**kwargs)
+
+		self.type = Node.ANIM
+		self.duration_seconds = 0
+		self.frames_per_second = -1
+		self.name = kwargs.get("name", None)
 #
 # main classes
 #
@@ -700,14 +766,76 @@ def collect_bone_data(armature, pose_bones_by_name):
 
 	return cache
 
+def populate_animations(armatures, actions):
+	""" Populate Animations given the armatures and actions from the scene"""
+	animations = []
 
-
-
-class AnimData(object):
-	def __init__(self, **kwargs):
-		self.name = kwargs.get("name", None)
-
-
+	for action in actions:
+		anim0 = AnimatedSequence()
+		anim0.name = action.name
+		anim0.frames_per_second = 10
+		anim0.duration_seconds = 1
+		anim0.children = [
+			{
+				"name": "one",
+				"rotation": {
+					"time": [
+						0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
+					],
+					"value": [
+						[0.0, 0.0, 0.0, 1.0],
+						[0.0, 0.0, 0.0, 1.0],
+						[0.0, 0.0, 0.0, 1.0],
+						[0.0, 0.0, 0.0, 1.0],
+						[0.0, 0.0, 0.0, 1.0],
+						[0.0, 0.0, 0.0, 1.0],
+						[0.0, 0.0, 0.0, 1.0],
+						[0.0, 0.0, 0.0, 1.0],
+						[0.0, 0.0, 0.0, 1.0],
+						[0.0, 0.0, 0.0, 1.0],
+						[0.0, 0.0, 0.0, 1.0]
+					]
+				},
+				"scale": {
+					"time": [
+						0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
+					],
+					"value": [
+						[1.0, 1.0, 1.0],
+						[1.0, 1.0, 1.0],
+						[1.0, 1.0, 1.0],
+						[1.0, 1.0, 1.0],
+						[1.0, 1.0, 1.0],
+						[1.0, 1.0, 1.0],
+						[1.0, 1.0, 1.0],
+						[1.0, 1.0, 1.0],
+						[1.0, 1.0, 1.0],
+						[1.0, 1.0, 1.0],
+						[1.0, 1.0, 1.0]
+					]
+				},
+				"translation": {
+					"time": [
+						0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
+					],
+					"value": [
+						[0.0, 0.0, 0.0],
+						[0.0, 0.5, 0.0],
+						[0.0, 1.0, 0.0],
+						[0.0, 1.5, 0.0],
+						[0.0, 2.0, 0.0],
+						[0.0, 2.5, 0.0],
+						[0.0, 3.0, 0.0],
+						[0.0, 3.5, 0.0],
+						[0.0, 4.0, 0.0],
+						[0.0, 4.5, 0.0],
+						[0.0, 5.0, 0.0]
+					]
+				}
+			}
+		]
+		animations.append(anim0)
+	return animations
 
 class export_gemini(bpy.types.Operator):
 	'''Export Skeleton Mesh / Animation Data file(s)'''
@@ -781,11 +909,9 @@ class export_gemini(bpy.types.Operator):
 
 			for obj in bpy.context.scene.objects:
 				if obj.type == "MESH":
-					mesh_list.append( obj )
+					mesh_list.append(obj)
 					if obj.select:
-						selected_meshes.append( obj )
-				elif obj.type == "ARMATURE":
-					print("TODO: Export Armature: %s" % obj.name)
+						selected_meshes.append(obj)
 
 			print("Total Meshes: ", len(mesh_list)," Selected: ", len(selected_meshes))
 
@@ -810,112 +936,47 @@ class export_gemini(bpy.types.Operator):
 			# We can also generate a skeleton. At the present,
 			# there can only be one skeleton.
 
-			root_node = RootNode(materials=[], skeleton=[])
+			root_node = RootNode(materials=[])
 			root_node.export_info = {
 				'blender_version': ("%i.%i.%i" % (bpy.app.version[0], bpy.app.version[1], bpy.app.version[2])),
 				'host_platform': platform.platform().lower(),
 				'source_file': bpy.data.filepath
 			}
 
-
-
 			# iterate over selected objects
 			for obj in selected_meshes:
 				# TODO: Add an explicit EDGE SPLIT modifier?
-
 				meshnode = Mesh.from_object(self.config, obj, root_node)
 				root_node.children.append(meshnode)
 
 				current_mesh += 1
 				self.report({'INFO'}, 'Export Progress -> %g%%' % ((current_mesh/total_meshes) * 100.0))
 
-				# scan for modifiers we are interested in
-				for modifier in obj.modifiers:
-					print("Found modifier '%s'" % modifier.name)
-					if modifier.type == 'ARMATURE':
-						armature = modifier.object
-						armatures.append(armature)
-
-
-			for armature in armatures:
-				skeleton = []
-
-				pose_bones = armature.pose.bones
-				pose_bones_by_name = {}
-				for pbone in pose_bones:
-					pose_bones_by_name[pbone.name] = pbone
-
-				# We also need to populate the bind pose offset list
-				bind_data = []
-
-				bone_data = collect_bone_data(armature, pose_bones_by_name)
-				for bone in bone_data.ordered_items:
-					skeleton.append({
-						"name": bone.name,
-						"parent": bone.parent_index
-					})
-
-					bind_data.append({
-						"name": bone.name,
-						"parent": bone.parent_index,
-						"bind_offset": matrix_to_list(bone.bind_offset)
-						#"inverse_bind_pose": matrix_to_list(bone.inverse_bind_pose)
-					})
-
-				meshnode.bind_data = bind_data
-
-				# cache initial pose of skeleton
-				initial_poses = []
-				for bone in bone_data.ordered_items:
-					initial = bone.pose_bone.matrix.copy()
-					initial.invert()
-					initial_poses.append(initial)
-
-				frame_poses = []
-
-				# run through bones and extract animation data
-				for frame in range(frame_start, frame_end):
-					bpy.context.scene.frame_set(frame)
-					bpy.context.scene.update()
-
-					# compute delta poses for animation
-					delta_poses = [None] * len(bone_data.ordered_items)
-					for index in range(0, len(bone_data.ordered_items)):
-						bdata = bone_data.ordered_items[index]
-						initial = initial_poses[index]
-						delta_poses[index] = matrix_to_list(initial * bdata.pose_bone.matrix)
-
-					frame_poses.append(delta_poses)
-
-				assert(len(frame_poses) == (frame_end - frame_start))
-
-				root_node.skeleton = skeleton
+				# apply modifiers to the mesh node
+				meshnode.apply_modifiers(obj, frame_start, frame_end)
 
 			root_node.prepare_materials_for_export(self.config)
 
 			# restore the original frame
 			bpy.context.scene.frame_set(frame_start)
 			bpy.context.scene.update()
-			#root_node.frame_poses = frame_poses
 
 			file.write(root_node.to_json())
 
 			file.close()
 
-			# write animations
+			# write animations to the same directory where the .model goes
 			target_directory = os.path.dirname(self.filepath)
 
-			animations = []
-			anim0 = AnimData(name="idle")
-			animations.append(anim0)
+			# populate animations using actions and the armatures
+			animations = populate_animations(armatures, bpy.data.actions)
 
 			for animation in animations:
 				target_animation_path = os.path.join(target_directory, ("%s.animation" % animation.name))
 				print("target_animation_path: %s" % target_animation_path)
 				handle = open(target_animation_path, "w")
-				animation_root_node = AnimationRootNode()
 
-				handle.write(animation_root_node.to_json())
+				handle.write(animation.to_json())
 				handle.close()
 
 			delta_time = time() - start_time

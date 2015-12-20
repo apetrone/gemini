@@ -100,6 +100,43 @@ namespace gemini
 				const Json::Value& blend_weights = node["blend_weights"];
 				const Json::Value& bind_data = node["bind_data"];
 
+				// load skeleton, if one exists
+				// this will only construct the hierarchy -- which should be consistent
+				// for a single model file.
+				// I can't forsee needing multiple skeletons in the same model just yet.
+				Json::Value skeleton = node["skeleton"];
+				if (!skeleton.isNull())
+				{
+					// allocate enough bones
+					state.mesh->skeleton.allocate(skeleton.size());
+
+					size_t bone_index = 0;
+
+					Json::ValueIterator it = skeleton.begin();
+					for (; it != skeleton.end(); ++it, ++bone_index)
+					{
+						const Json::Value& skeleton_entry = (*it);
+						const Json::Value& name = skeleton_entry["name"];
+						const Json::Value& parent = skeleton_entry["parent"];
+
+						Joint& joint = state.mesh->skeleton[bone_index];
+						joint.index = bone_index;
+
+						if (!name.isNull())
+						{
+							joint.name = name.asString().c_str();
+						}
+
+						if (!parent.isNull())
+						{
+							joint.parent_index = parent.asInt();
+						}
+
+						LOGV("read joint: %s, parent: %i, index: %i\n", joint.name(), joint.parent_index, joint.index);
+					}
+				}
+
+
 				// setup materials
 				assets::Material* default_material = assets::materials()->get_default();
 
@@ -380,44 +417,6 @@ namespace gemini
 
 			size_t total_nodes = 0;
 			size_t total_meshes = 0;
-
-
-			// load skeleton, if one exists
-			// this will only construct the hierarchy -- which should be consistent
-			// for a single model file.
-			// I can't forsee needing multiple skeletons in the same model just yet.
-			Json::Value skeleton = root["skeleton"];
-			if (!skeleton.isNull())
-			{
-				// allocate enough bones
-				mesh->skeleton.allocate(skeleton.size());
-
-				size_t bone_index = 0;
-
-				Json::ValueIterator it = skeleton.begin();
-				for (; it != skeleton.end(); ++it, ++bone_index)
-				{
-					const Json::Value& skeleton_entry = (*it);
-					const Json::Value& name = skeleton_entry["name"];
-					const Json::Value& parent = skeleton_entry["parent"];
-
-					Joint& joint = mesh->skeleton[bone_index];
-					joint.index = bone_index;
-
-					if (!name.isNull())
-					{
-						joint.name = name.asString().c_str();
-					}
-
-					if (!parent.isNull())
-					{
-						joint.parent_index = parent.asInt();
-					}
-
-					LOGV("read joint: %s, parent: %i, index: %i\n", joint.name(), joint.parent_index, joint.index);
-				}
-			}
-
 
 			// iterate over all nodes and count how many there are, of each kind
 			Json::ValueIterator node_iter = node_root.begin();
