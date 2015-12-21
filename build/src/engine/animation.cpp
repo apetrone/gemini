@@ -345,6 +345,8 @@ namespace gemini
 					return result;
 				}
 
+				LOGV("bones_array.size() == %i, mesh->skeleton.size() == %i\n",
+					 bones_array.size(), mesh->skeleton.size());
 				assert(bones_array.size() == mesh->skeleton.size());
 
 				if (bones_array.size() != mesh->skeleton.size())

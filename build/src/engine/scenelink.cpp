@@ -82,6 +82,7 @@ namespace gemini
 				// lovely, Android. There's a bug in Adreno where indexing into Uniform Matrices is wonky.
 				// The solution is to index like a vec4.
 				rs.add_uniform_matrix4(shader->program->get_uniform_location("node_transforms"), block.node_transforms, block.total_transforms);
+				rs.add_uniform_matrix4(shader->program->get_uniform_location("inverse_bind_transforms"), block.inverse_bind_transforms, block.total_transforms);
 			}
 			else
 			{
@@ -186,6 +187,7 @@ namespace gemini
 								block.shader_id = geometry->shader_id;
 								block.node_transforms = model_instance->get_bone_transforms(geometry_index);
 								block.total_transforms = model_instance->get_total_transforms();
+								block.inverse_bind_transforms = model_instance->get_inverse_bind_transforms(geometry_index);
 
 								queue->insert(block);
 							}
