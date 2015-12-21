@@ -58,6 +58,7 @@ namespace renderer
 		unsigned int shader_id;
 
 		glm::mat4* node_transforms;
+		glm::mat4* inverse_bind_transforms;
 		uint32_t total_transforms;
 
 		RenderBlock(RenderKey _key = 0, RenderObject* _object = 0) :
@@ -69,6 +70,7 @@ namespace renderer
 			shader_id(0),
 
 			node_transforms(0),
+			inverse_bind_transforms(0),
 			total_transforms(0)
 		{
 		}
@@ -80,6 +82,7 @@ namespace renderer
 
 			object_matrix = other.object_matrix;
 			node_transforms = other.node_transforms;
+			inverse_bind_transforms = other.inverse_bind_transforms;
 			total_transforms = other.total_transforms;
 
 			return *this;

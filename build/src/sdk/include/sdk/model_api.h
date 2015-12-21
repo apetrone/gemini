@@ -41,6 +41,7 @@ namespace gemini
 //		virtual void get_geometry_data(unsigned int index, GeometryInstanceData& geometry_data) const = 0;
 
 		virtual glm::mat4* get_bone_transforms(uint32_t geometry_index) const = 0;
+		virtual glm::mat4* get_inverse_bind_transforms(uint32_t geometry_index) const = 0;
 		virtual glm::mat4* get_debug_bone_transforms() = 0;
 		virtual uint32_t get_total_transforms() const = 0;
 

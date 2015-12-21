@@ -78,6 +78,9 @@ namespace gemini
 
 			// model space to bone space transforms
 			FixedArray<glm::mat4> bind_poses;
+
+			// object-space to joint-space transforms
+			FixedArray<glm::mat4> inverse_bind_poses;
 		}; // Geometry
 
 

@@ -93,6 +93,9 @@ def clampf(value):
                return 0.0
        return value
 
+def roundf(value):
+	return round(value, 2)
+
 def float_equal(value0, value1):
        if abs(value0-value1) < 0.0000001:
                return True
@@ -112,9 +115,9 @@ def checkBMeshAware():
 def matrix_to_list(matrix):
 	output = []
 
-	for col in range(0, len(matrix.col)):
-		for row in range(0, len(matrix.row)):
-			output.append(clampf(matrix[row][col]))
+	for row in range(0, len(matrix.row)):
+		for col in range(0, len(matrix.col)):
+			output.append(roundf(matrix[row][col]))
 	return output
 
 # def get_host_platform():
@@ -350,21 +353,32 @@ class Vertex(object):
 		u = 0.0,
 		v = 0.0,
 		color = (1, 1, 1, 1),
-		material_id = 0):
+		material_id = 0,
+		weights = []):
 		self.position = position
 		self.normal = normal
 		self.u = u
 		self.v = v
 		self.color = color
 		self.material_id = material_id
+		self.weights = weights
 
 	def show(self):
 		print("xyz: %2.2f, %2.2f, %2.2f" % (self.position.x, self.position.y, self.position.z))
 		print("norm: %2.2f, %2.2f, %2.2f" % (self.normal.x, self.normal.y, self.normal.z))
 		print("uv: %2.2f, %2.2f" % (self.u, self.v))
+		print("weights: %s" % self.weights)
 
 	def description(self):
-		return (self.position.x, self.position.y, self.position.z, self.normal.x, self.normal.y, self.normal.z, self.u, self.v, self.material_id)
+		return (self.position.x,
+			self.position.y,
+			self.position.z,
+			self.normal.x,
+			self.normal.y,
+			self.normal.z,
+			self.u,
+			self.v,
+			self.material_id)
 
 	def __lt__(self, other):
 		return self.__hash__() < other.__hash__()
@@ -388,7 +402,6 @@ class VertexCache(object):
 		self.vertices = {}
 		self.ordered_vertices = []
 		self.indices = []
-		self.weights = []
 
 		# map old vertex index to new vertex index
 		self.old_vertex_map = {}
@@ -427,13 +440,13 @@ class VertexCache(object):
 				normal = normal,
 				u = uv[0],
 				v = uv[1],
-				color = color)
+				color = color,
+				weights = weights[vertex_index])
 
 			index = self.find_vertex_index(vertex)
 			#vertex.show()
 
 			self.indices.append(index)
-			self.weights.append(weights[vertex_index])
 
 class Node(object):
 	NODE = "node"
@@ -510,12 +523,13 @@ class Mesh(Node):
 
 			vertex_index += 1
 
+			self.blend_weights.append(vertex.weights)
+
 		self.uv_sets.append(uvset)
 
 		# the format currently only supports a single vertex color set
 		self.vertex_colors = colorset
 		self.indices = cache.indices
-		self.blend_weights = cache.weights
 
 		print("# vertices: %i" % len(self.vertices))
 		print("# indices: %i" % len(self.indices))
@@ -551,8 +565,9 @@ class Mesh(Node):
 					bind_data.append({
 						"name": bone.name,
 						"parent": bone.parent_index,
+						"inverse_bind_pose": matrix_to_list(bone.inverse_bind_pose),
 						"bind_offset": matrix_to_list(bone.bind_offset)
-						#"inverse_bind_pose": matrix_to_list(bone.inverse_bind_pose)
+						#"bind_offset": matrix_to_list(bone.bind_offset)
 					})
 
 				node.bind_data = bind_data
@@ -649,7 +664,7 @@ class Mesh(Node):
 
 		for index, mv in enumerate(mesh.vertices):
 			vertices.extend(
-				[(clampf(mv.co[0]), clampf(mv.co[1]), clampf(mv.co[2]))])
+				[(roundf(mv.co[0]), roundf(mv.co[1]), roundf(mv.co[2]))])
 
 			# don't add out of range indices
 			weights[index] = []
@@ -659,14 +674,14 @@ class Mesh(Node):
 					if bone:
 						weights[index].append({
 							"bone": bone.name,
-							"value": group_element.weight
+							"value": roundf(group_element.weight)
 							})
 
 		#print("bone_index: %i, \"%s\", group_index: %i" % (boneinfo.index, boneinfo.name, group.index))
 		#print("weights: %s" % weights)
 
 		mesh.calc_normals_split()
-		normals = [(clampf(l.normal[0]), clampf(l.normal[1]), clampf(l.normal[2]))
+		normals = [(roundf(l.normal[0]), roundf(l.normal[1]), roundf(l.normal[2]))
 			for l in mesh.loops]
 		mesh.free_normals_split()
 
@@ -679,7 +694,7 @@ class Mesh(Node):
 				uv_set = []
 				print("extracting uv layer: %s" % uvlayer.name)
 				for uvloop in uvlayer.data:
-					uv_set.append([uvloop.uv[0], 1.0-uvloop.uv[1]])
+					uv_set.append([roundf(uvloop.uv[0]), roundf(1.0-uvloop.uv[1])])
 				uvs.append(uv_set)
 
 		colors = []
@@ -720,6 +735,7 @@ class Mesh(Node):
 		"""
 
 		if weights:
+			print("total weights: %i, total vertices: %i" % (len(weights), len(vertices)))
 			assert(len(weights) == len(vertices))
 
 		# convert and copy geometry over to node
@@ -768,11 +784,11 @@ class BoneData(object):
 		self.parent_index = parent_index
 		self.pose_bone = None
 
+		# inverse bind pose (object space to joint space)
+		self.inverse_bind_pose = None
+
 		# bone's local offset from parent in object space
 		self.bind_offset = None
-
-		# inverse bind pose (bone space to object space)
-		self.inverse_bind_pose = None
 
 class BoneCache(object):
 	def __init__(self):
@@ -816,9 +832,12 @@ def collect_bone_data(armature, pose_bones_by_name):
 		# if bone.parent:
 			# bind_pose = bone.parent.matrix_local * bone.matrix_local.inverted()
 		#bone_data.bind_offset = armature.matrix_world * bone.matrix_local
-		bone_data.bind_offset = armature.matrix_world * bone_data.pose_bone.matrix
+		# bone_data.bind_offset = armature.matrix_world * bone_data.pose_bone.matrix
 		# print("bone.head_local: %s" % bone.head_local)
-		#bone_data.inverse_bind_pose = bone_data.pose_bone.matrix
+		#
+
+		bone_data.inverse_bind_pose = (bone_data.pose_bone.matrix).inverted()
+		bone_data.bind_offset = bone_data.pose_bone.matrix
 		cache.set(bone.name, bone_index, bone_data)
 
 		bone_index += 1
@@ -826,7 +845,7 @@ def collect_bone_data(armature, pose_bones_by_name):
 
 	return cache
 
-def populate_animations(armatures, actions):
+def populate_animations(armature, actions):
 	""" Populate Animations given the armatures and actions from the scene"""
 	animations = []
 
@@ -835,9 +854,9 @@ def populate_animations(armatures, actions):
 		anim0.name = action.name
 		anim0.frames_per_second = 10
 		anim0.duration_seconds = 1
-		anim0.children = [
-			{
-				"name": "one",
+		for bone in armature.data.bones:
+			anim0.children.append({
+				"name": bone.name,
 				"rotation": {
 					"time": [
 						0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
@@ -880,20 +899,20 @@ def populate_animations(armatures, actions):
 					],
 					"value": [
 						[0.0, 0.0, 0.0],
-						[0.0, 0.5, 0.0],
-						[0.0, 1.0, 0.0],
-						[0.0, 1.5, 0.0],
-						[0.0, 2.0, 0.0],
-						[0.0, 2.5, 0.0],
-						[0.0, 3.0, 0.0],
-						[0.0, 3.5, 0.0],
-						[0.0, 4.0, 0.0],
-						[0.0, 4.5, 0.0],
-						[0.0, 5.0, 0.0]
+						[0.0, 0.0, 0.0],
+						[0.0, 0.0, 0.0],
+						[0.0, 0.0, 0.0],
+						[0.0, 0.0, 0.0],
+						[0.0, 0.0, 0.0],
+						[0.0, 0.0, 0.0],
+						[0.0, 0.0, 0.0],
+						[0.0, 0.0, 0.0],
+						[0.0, 0.0, 0.0],
+						[0.0, 0.0, 0.0]
 					]
 				}
-			}
-		]
+			})
+
 		animations.append(anim0)
 	return animations
 
@@ -913,7 +932,7 @@ class export_gemini(bpy.types.Operator):
 		name="Coordinate System",
 		description="Select a coordinate system to export to",
 		items=CoordinateSystems,
-		default=COORDINATE_SYSTEM_YUP)
+		default=COORDINATE_SYSTEM_ZUP)
 
 	filepath = StringProperty(
 			name="File Path",
@@ -984,9 +1003,6 @@ class export_gemini(bpy.types.Operator):
 
 			print("Total selected meshes: %i" % len(selected_meshes))
 
-			# list of armatures found in the scene
-			armatures = []
-
 			# collect a list of actions
 			# It is assumed that ALL actions are supposed to be exported.
 			# See above for the rationale.
@@ -1028,7 +1044,7 @@ class export_gemini(bpy.types.Operator):
 			target_directory = os.path.dirname(self.filepath)
 
 			# populate animations using actions and the armatures
-			animations = populate_animations(armatures, bpy.data.actions)
+			animations = populate_animations(bpy.context.scene.objects["Armature"], bpy.data.actions)
 
 			for animation in animations:
 				target_animation_path = os.path.join(target_directory, ("%s.animation" % animation.name))

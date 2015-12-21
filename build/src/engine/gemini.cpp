@@ -367,6 +367,7 @@ class ModelInterface : public gemini::IModelInterface
 
 		glm::mat4* bone_transforms;
 		glm::mat4 debug_bone_transforms[MAX_BONES];
+		glm::mat4* inverse_bind_transforms;
 
 		Channel<glm::vec3> scale_channel;
 		Channel<glm::quat> rotation_channel;
@@ -384,6 +385,7 @@ class ModelInterface : public gemini::IModelInterface
 			mesh_asset_index(0),
 			mesh(0),
 			bone_transforms(0),
+			inverse_bind_transforms(0),
 			scale_channel(scale),
 			rotation_channel(rotation),
 			translation_channel(translation)
@@ -405,6 +407,7 @@ class ModelInterface : public gemini::IModelInterface
 			{
 				size_t total_elements = (mesh->geometry.size() * mesh->skeleton.size());
 				bone_transforms = new glm::mat4[total_elements];
+				inverse_bind_transforms = new glm::mat4[total_elements];
 			}
 		}
 
@@ -414,6 +417,12 @@ class ModelInterface : public gemini::IModelInterface
 			{
 				delete [] bone_transforms;
 				bone_transforms = 0;
+			}
+
+			if (inverse_bind_transforms)
+			{
+				delete [] inverse_bind_transforms;
+				inverse_bind_transforms = 0;
 			}
 		}
 
@@ -427,6 +436,15 @@ class ModelInterface : public gemini::IModelInterface
 				return nullptr;
 			}
 			return &bone_transforms[mesh->skeleton.size()*geometry_index];
+		}
+
+		virtual glm::mat4* get_inverse_bind_transforms(uint32_t geometry_index) const
+		{
+			if (!inverse_bind_transforms)
+			{
+				return nullptr;
+			}
+			return &inverse_bind_transforms[mesh->skeleton.size()*geometry_index];
 		}
 
 		virtual glm::mat4* get_debug_bone_transforms()
@@ -531,9 +549,12 @@ class ModelInterface : public gemini::IModelInterface
 					glm::mat4& debug_bone_transform = debug_bone_transforms[index];
 //#endif
 
+					glm::mat4& bind_transform = inverse_bind_transforms[transform_index];
 					glm::mat4 local_scale;
 					glm::mat4 local_rotation = glm::toMat4(rotations[index]);
 					glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), positions[index]);
+//					const glm::vec3& pos = positions[index];
+//					LOGV("pos: %2.2f, %2.2f, %2.2f\n", pos.x, pos.y, pos.z);
 					glm::mat4 local_pose = local_transform * local_rotation * local_scale;
 					//				local_to_world = tr * pivot * ro * sc * inv_pivot;
 
@@ -556,6 +577,8 @@ class ModelInterface : public gemini::IModelInterface
 					// copy this directly to draw in world position
 					debug_bone_transform = geo.bind_poses[index];
 
+//					global_pose = geo.bind_poses[index];
+					bind_transform = geo.inverse_bind_poses[index];
 #if defined(GEMINI_DEBUG_BONES)
 
 					//debugdraw::instance()->axes(debug_bone_transform, 0.15f);

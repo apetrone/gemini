@@ -214,7 +214,7 @@ namespace gemini
 				{
 					const Json::Value& vertex = vertex_array[v];
 					geo->vertices[v] = glm::vec3(vertex[0].asFloat(), vertex[1].asFloat(), vertex[2].asFloat());
-	//				LOGV("v: %i | %g %g %g\n", v, geo->vertices[v].x, geo->vertices[v].y, geo->vertices[v].z);
+					LOGV("v: %i | %g %g %g\n", v, geo->vertices[v].x, geo->vertices[v].y, geo->vertices[v].z);
 
 					const Json::Value& normal = normal_array[v];
 					geo->normals[v] = glm::vec3(normal[0].asFloat(), normal[1].asFloat(), normal[2].asFloat());
@@ -245,7 +245,7 @@ namespace gemini
 
 				if (!blend_weights.empty())
 				{
-//					LOGV("blend_weights.size = %i, geo->vertex_count = %i\n", blend_weights.size(), geo->vertex_count);
+					LOGV("blend_weights.size = %i, geo->vertex_count = %i\n", blend_weights.size(), geo->vertex_count);
 					assert(blend_weights.size() == geo->vertex_count);
 				}
 
@@ -254,6 +254,7 @@ namespace gemini
 				{
 					// allocate enough bones
 					geo->bind_poses.allocate(bind_data.size());
+					geo->inverse_bind_poses.allocate(bind_data.size());
 
 					Json::ValueIterator it = bind_data.begin();
 					for (; it != bind_data.end(); ++it)
@@ -266,10 +267,10 @@ namespace gemini
 						assert(joint != 0);
 
 						size_t bone_index = joint->index;
-//						LOGV("reading bind_pose for '%s' -> %i\n", bone_name.c_str(), bone_index);
-//						const Json::Value& inverse_bind_pose = skeleton_entry["inverse_bind_pose"];
-//						assert(!inverse_bind_pose.isNull());
-//						geo->bind_poses[bone_index] = assets::json_to_mat4(inverse_bind_pose);
+						LOGV("reading bind_pose for '%s' -> %i\n", bone_name.c_str(), bone_index);
+						const Json::Value& inverse_bind_pose = skeleton_entry["inverse_bind_pose"];
+						assert(!inverse_bind_pose.isNull());
+						geo->inverse_bind_poses[bone_index] = assets::json_to_mat4(inverse_bind_pose);
 
 						const Json::Value& bind_offset = skeleton_entry["bind_offset"];
 						assert(!bind_offset.isNull());
@@ -301,7 +302,7 @@ namespace gemini
 							assert(joint != 0);
 
 							assert(blend_index < 4);
-//							LOGV("[%i] bone: %s, value: %2.2f\n", weight_id, bone.asString().c_str(), value.asFloat());
+							LOGV("[%i] bone: '%s', value: %2.2f\n", weight_id, bone.asString().c_str(), value.asFloat());
 
 							bone_indices[blend_index] = joint->index;
 							bone_weights[blend_index] = value.asFloat();
@@ -311,7 +312,7 @@ namespace gemini
 						geo->blend_indices[weight_id] = glm::vec4(bone_indices[0], bone_indices[1], bone_indices[2], bone_indices[3]);
 //						LOGV("[%i] indices: %g %g %g %g\n", weight_id, geo->blend_indices[weight_id].x, geo->blend_indices[weight_id].y, geo->blend_indices[weight_id].z, geo->blend_indices[weight_id].w);
 						geo->blend_weights[weight_id] = glm::vec4(bone_weights[0], bone_weights[1], bone_weights[2], bone_weights[3]);
-//						LOGV("weights: %g %g %g %g\n", geo->blend_weights[weight_id].x, geo->blend_weights[weight_id].y, geo->blend_weights[weight_id].z, geo->blend_weights[weight_id].w);
+						LOGV("weights: %2.2f %2.2f %2.2f %2.f\n", geo->blend_weights[weight_id].x, geo->blend_weights[weight_id].y, geo->blend_weights[weight_id].z, geo->blend_weights[weight_id].w);
 					}
 				}
 
