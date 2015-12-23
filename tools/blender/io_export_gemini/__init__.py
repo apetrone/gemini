@@ -76,6 +76,7 @@ import operator
 import json
 import os
 import platform
+import sys
 
 #
 # constants
@@ -145,7 +146,7 @@ def get_mesh_faces(mesh):
 
 	return mesh_faces
 
-def create_triangulated_mesh(config, object):
+def create_triangulated_mesh(object):
 
 	# enter object mode in blender
 	#bpy.ops.object.mode_set( mode='OBJECT' )
@@ -254,64 +255,6 @@ class Material(object):
 
 	def __lt__(self, other):
 		return self.index < other.index or self.path < other.path
-
-class ExporterConfig(object):
-	def __init__(self, instance):
-		self.material_index = 0
-		self.materials = {}
-		self.material_list = []
-		self.instance = instance
-		self.frame_start = 0
-		self.frame_end = 0
-
-		self.coordinate_system = COORDINATE_SYSTEM_YUP
-		self.transform_normals = False
-		self.triangulate_mesh = False
-
-	def get_filepath_for_material(self, bmaterial):
-		""" determine an image path from a blender material """
-		filepath = None
-		if bmaterial and bmaterial.active_texture:
-			if hasattr(bmaterial.active_texture, "image") and hasattr(bmaterial.active_texture.image, "filepath"):
-				filepath = bmaterial.active_texture.image.filepath
-		return filepath
-
-	def add_material(self, bmaterial):
-		filepath = self.get_filepath_for_material(bmaterial)
-		if filepath:
-			if filepath not in self.materials:
-				material = Material(self.material_index, filepath)
-				self.materials[ filepath ] = material
-				self.material_list.append(material)
-				self.material_index += 1
-
-				#print( "Added new material (%i, %s)" % (material.index, material.path) )
-				return material
-			else:
-				return self.materials[ filepath ]
-		else:
-			return None
-
-	def find_material(self, bmaterial):
-		filepath = self.get_filepath_for_material(bmaterial)
-		if filepath and filepath in self.materials:
-			return self.materials[filepath]
-
-		return None
-		'''
-		if material in self.materials:
-			return self.materials[ material ]
-		else:
-			raise Exception( 'Material not found!' )
-		'''
-
-	def info(self, message):
-		self.instance.report({'INFO'}, message)
-
-	def dump(self):
-		print("coordinate_system: %s" 	% self.coordinate_system)
-		print("transform_normals: %i" 	% self.transform_normals)
-		print("triangulate_mesh: %i" 	% self.triangulate_mesh)
 
 # class HashedVector(Vector):
 # 	def _description(self):
@@ -472,9 +415,9 @@ class RootNode(Node):
 		self.type = Node.ROOT
 		self.materials = kwargs.get("materials", [])
 
-	def prepare_materials_for_export(self, config):
+	def prepare_materials_for_export(self, model):
 		material_id = 0
-		for material in config.material_list:
+		for material in model.material_list:
 			if material.path:
 				material_name = os.path.splitext(
 					os.path.basename(material.path))[0]
@@ -535,7 +478,7 @@ class Mesh(Node):
 		print("# indices: %i" % len(self.indices))
 
 	@staticmethod
-	def cache_weights(config, node, cache, obj):
+	def cache_weights(model, node, cache, obj):
 		bone_data = []
 
 		# apply modifiers to the mesh node
@@ -582,7 +525,7 @@ class Mesh(Node):
 				frame_poses = []
 
 				# run through bones and extract animation data
-				for frame in range(config.frame_start, config.frame_end):
+				for frame in range(model.frame_start, model.frame_end):
 					bpy.context.scene.frame_set(frame)
 					bpy.context.scene.update()
 
@@ -595,15 +538,15 @@ class Mesh(Node):
 
 					frame_poses.append(delta_poses)
 
-				assert(len(frame_poses) == (config.frame_end - config.frame_start))
+				assert(len(frame_poses) == (model.frame_end - model.frame_start))
 
 		return bone_data
 
 	@staticmethod
-	def from_object(config, obj, root):
+	def from_object(model, obj, root):
 		node = Mesh(name=obj.name)
 
-		triangulated_object, created_temp_mesh = create_triangulated_mesh(config, obj)
+		triangulated_object, created_temp_mesh = create_triangulated_mesh(obj)
 
 		# apply rotation and scale transform to the object
 		# this ensures that any modifications are baked to the vertices
@@ -616,7 +559,7 @@ class Mesh(Node):
 		mesh = triangulated_object.to_mesh(bpy.context.scene, True, 'PREVIEW')
 
 		# transform from Z-up to Y-up
-		if config.coordinate_system == COORDINATE_SYSTEM_YUP:
+		if model.coordinate_system == COORDINATE_SYSTEM_YUP:
 			# from Marmalade plugin; convert Z up to Y up.
 			mat4_xrotation = Matrix.Rotation(-math.pi/2, 4, 'X')
 
@@ -632,17 +575,14 @@ class Mesh(Node):
 
 		# collect all blender materials used by this mesh
 		for bmaterial in mesh.materials:
-			config.add_material(bmaterial)
+			model.add_material(bmaterial)
 
 		# iterate over mesh faces
 		#mesh_faces = get_mesh_faces(mesh)
 
 		cache = VertexCache()
 
-		#config.info("total faces: %i" % len(mesh_faces))
-		# weights = [None] * len(mesh.vertices)
-
-		bone_data = Mesh.cache_weights(config, node, cache, obj)
+		bone_data = Mesh.cache_weights(model, node, cache, obj)
 
 		weights = [[None]] * len(mesh.vertices)
 		# blend_weights = [None] * len(bone_data.ordered_items)
@@ -916,6 +856,177 @@ def populate_animations(armature, actions):
 		animations.append(anim0)
 	return animations
 
+
+class GeminiModel(object):
+	"""This serves as the container instance for a model which is to be
+	written to disk. This holds intermediate data used to collect bones,
+	animations, and other internal data required for export."""
+
+	def __init__(self, plugin_instance, **kwargs):
+		self.instance = plugin_instance
+		assert(self.instance)
+
+		# exporter settings
+		self.coordinate_system = kwargs.get("coordinate_system", None)
+
+		self.filepath = kwargs.get("filepath", None)
+
+		# animation export range
+		self.frame_start = kwargs.get("frame_start", 0)
+		self.frame_end = kwargs.get("frame_end", 0)
+
+		self.armature = None
+
+		self.file_handle = None
+
+		print("export range: %i -> %i" % (self.frame_start, self.frame_end))
+
+		# internal state for handling materials
+		self.material_index = 0
+		self.materials = {}
+		self.material_list = []
+
+	#
+	# Materials
+	#
+	def get_filepath_for_material(self, bmaterial):
+		""" determine an image path from a blender material """
+		filepath = None
+		if bmaterial and bmaterial.active_texture:
+			if hasattr(bmaterial.active_texture, "image") and hasattr(bmaterial.active_texture.image, "filepath"):
+				filepath = bmaterial.active_texture.image.filepath
+		return filepath
+
+	def add_material(self, bmaterial):
+		filepath = self.get_filepath_for_material(bmaterial)
+		if filepath:
+			if filepath not in self.materials:
+				material = Material(self.material_index, filepath)
+				self.materials[ filepath ] = material
+				self.material_list.append(material)
+				self.material_index += 1
+
+				#print( "Added new material (%i, %s)" % (material.index, material.path) )
+				return material
+			else:
+				return self.materials[ filepath ]
+		else:
+			return None
+
+	def find_material(self, bmaterial):
+		filepath = self.get_filepath_for_material(bmaterial)
+		if filepath and filepath in self.materials:
+			return self.materials[filepath]
+
+		return None
+		'''
+		if material in self.materials:
+			return self.materials[ material ]
+		else:
+			raise Exception( 'Material not found!' )
+		'''
+
+	#
+	# File test -- make sure we can open it before attempting to export
+	#
+	def try_open_file(self):
+		""" A test to ensure we can open the file requested by the user"""
+		try:
+			self.file_handle = open(self.filepath, "w")
+			return True
+		except IOError:
+			return False
+
+	# Plugin logging facilities
+	def info(self, message):
+		self.instance.report({'INFO'}, message)
+
+	#
+	# Export model + animations
+	#
+	def export(self):
+		# make sure we're in object mode
+		if bpy.ops.object.mode_set.poll():
+			bpy.ops.object.mode_set(mode="OBJECT")
+
+		original_scrubber_position = 1
+
+		# in order to retrieve pose data; we need to explicitly
+		# set the frame before we retrieve data.
+		bpy.context.scene.frame_set(1)
+
+		selected_meshes = []
+		mesh_list = []
+
+		for obj in bpy.context.scene.objects:
+			if obj.type == "MESH":
+				mesh_list.append(obj)
+				if obj.select:
+					selected_meshes.append(obj)
+
+		print("Total Meshes: ", len(mesh_list)," Selected: ", len(selected_meshes))
+
+		# clear selection
+		bpy.context.scene.objects.active = None
+
+		current_mesh = 0
+		total_meshes = len(selected_meshes)
+
+		print("Total selected meshes: %i" % len(selected_meshes))
+
+		# collect a list of actions
+		# It is assumed that ALL actions are supposed to be exported.
+		# See above for the rationale.
+		export_action_list = []
+		for action in bpy.data.actions:
+			export_action_list.append(action)
+
+		# We can also generate a skeleton. At the present,
+		# there can only be one skeleton.
+
+		root_node = RootNode(materials=[])
+		root_node.export_info = {
+			'blender_version': ("%i.%i.%i" % (bpy.app.version[0], bpy.app.version[1], bpy.app.version[2])),
+			'host_platform': platform.platform().lower(),
+			'source_file': bpy.data.filepath
+		}
+
+		#selected_meshes = [obj if obj.type == "MESH" and obj.select in bpy.context.scene.objects]
+
+		# iterate over selected objects
+		for obj in selected_meshes:
+			# TODO: Add an explicit EDGE SPLIT modifier?
+			meshnode = Mesh.from_object(self, obj, root_node)
+			root_node.children.append(meshnode)
+
+			current_mesh += 1
+			self.info('Export Progress -> %g%%' % ((current_mesh/total_meshes) * 100.0))
+
+
+		root_node.prepare_materials_for_export(self)
+
+		# restore the original frame
+		bpy.context.scene.frame_set(original_scrubber_position)
+		bpy.context.scene.update()
+
+		self.file_handle.write(root_node.to_json())
+
+		self.file_handle.close()
+
+		# write animations to the same directory where the .model goes
+		target_directory = os.path.dirname(self.filepath)
+
+		# populate animations using actions and the armatures
+		animations = populate_animations(bpy.context.scene.objects["Armature"], bpy.data.actions)
+
+		for animation in animations:
+			target_animation_path = os.path.join(target_directory, ("%s.animation" % animation.name))
+			print("target_animation_path: %s" % target_animation_path)
+			handle = open(target_animation_path, "w")
+
+			handle.write(animation.to_json())
+			handle.close()
+
 class export_gemini(bpy.types.Operator):
 	'''Export Skeleton Mesh / Animation Data file(s)'''
 	bl_idname = "gemini_export.test" # this is important since its how bpy.ops.export.udk_anim_data is constructed
@@ -923,15 +1034,15 @@ class export_gemini(bpy.types.Operator):
 	# List of operator properties, the attributes will be assigned
 	# to the class instance from the operator settings before calling.
 
-	CoordinateSystems = (
+	supported_coordinate_systems = (
 		(COORDINATE_SYSTEM_YUP, "Y-Up", ""),
 		(COORDINATE_SYSTEM_ZUP, "Z-Up", "")
 	)
 
-	CoordinateSystem = EnumProperty(
+	coordinate_system = EnumProperty(
 		name="Coordinate System",
 		description="Select a coordinate system to export to",
-		items=CoordinateSystems,
+		items=supported_coordinate_systems,
 		default=COORDINATE_SYSTEM_ZUP)
 
 	filepath = StringProperty(
@@ -940,125 +1051,40 @@ class export_gemini(bpy.types.Operator):
 			maxlen= 1024,
 			subtype='FILE_PATH')
 
-	transform_normals = BoolProperty(
-		name="Transform Normals",
-		description="Transform Normals along with Mesh",
-		default=True)
+	# transform_normals = BoolProperty(
+	# 	name="Transform Normals",
+	# 	description="Transform Normals along with Mesh",
+	# 	default=True)
 
-	triangulate_mesh = BoolProperty(
-		name="Triangulate Mesh",
-		description="Convert Quad to Tri Mesh Boolean...",
-		default=False)
+	# triangulate_mesh = BoolProperty(
+	# 	name="Triangulate Mesh",
+	# 	description="Convert Quad to Tri Mesh Boolean...",
+	# 	default=False)
 
 	def execute(self, context):
-		self.config = ExporterConfig(self)
-		self.config.coordinate_system = self.CoordinateSystem
-		self.config.transform_normals = self.transform_normals
-		self.config.triangulate_mesh = self.triangulate_mesh
-		self.config.dump()
+
+		model = GeminiModel(
+			self,
+			coordinate_system = self.coordinate_system,
+			filepath = self.filepath,
+			frame_start = bpy.context.scene.frame_start,
+			frame_end = bpy.context.scene.frame_end + 1
+		)
+
+		try:
+			# Sanity check that we can open the destination file.
+			model.try_open_file()
+		except:
+			self.report("ERROR", str(sys.exc_info()[1]))
+			return {"FINISHED"}
 
 		start_time = time()
 
-		file_failure = False
-		try:
-			file = open(self.filepath, "w")
-		except IOError:
-			file_failure = True
-			import sys
-			self.report("ERROR", str(sys.exc_info()[1]))
+		model.export()
 
-
-		# make sure we're in object mode
-		if bpy.ops.object.mode_set.poll():
-			bpy.ops.object.mode_set(mode="OBJECT")
-
-		# in order to retrieve pose data; we need to explicitly
-		# set the frame before we retrieve data.
-		bpy.context.scene.frame_set(1)
-
-		# the range to export will be from:
-		self.config.frame_start = bpy.context.scene.frame_start
-		self.config.frame_end = bpy.context.scene.frame_end + 1
-
-		print("export frames: %i -> %i" % (
-			self.config.frame_start, self.config.frame_end))
-
-		selected_meshes = []
-		if not file_failure:
-			mesh_list = []
-
-			for obj in bpy.context.scene.objects:
-				if obj.type == "MESH":
-					mesh_list.append(obj)
-					if obj.select:
-						selected_meshes.append(obj)
-
-			print("Total Meshes: ", len(mesh_list)," Selected: ", len(selected_meshes))
-
-			# clear selection
-			bpy.context.scene.objects.active = None
-
-			current_mesh = 0
-			total_meshes = len(selected_meshes)
-
-			print("Total selected meshes: %i" % len(selected_meshes))
-
-			# collect a list of actions
-			# It is assumed that ALL actions are supposed to be exported.
-			# See above for the rationale.
-			export_action_list = []
-			for action in bpy.data.actions:
-				export_action_list.append(action)
-
-			# We can also generate a skeleton. At the present,
-			# there can only be one skeleton.
-
-			root_node = RootNode(materials=[])
-			root_node.export_info = {
-				'blender_version': ("%i.%i.%i" % (bpy.app.version[0], bpy.app.version[1], bpy.app.version[2])),
-				'host_platform': platform.platform().lower(),
-				'source_file': bpy.data.filepath
-			}
-
-			# iterate over selected objects
-			for obj in selected_meshes:
-				# TODO: Add an explicit EDGE SPLIT modifier?
-				meshnode = Mesh.from_object(self.config, obj, root_node)
-				root_node.children.append(meshnode)
-
-				current_mesh += 1
-				self.report({'INFO'}, 'Export Progress -> %g%%' % ((current_mesh/total_meshes) * 100.0))
-
-
-			root_node.prepare_materials_for_export(self.config)
-
-			# restore the original frame
-			bpy.context.scene.frame_set(self.config.frame_start)
-			bpy.context.scene.update()
-
-			file.write(root_node.to_json())
-
-			file.close()
-
-			# write animations to the same directory where the .model goes
-			target_directory = os.path.dirname(self.filepath)
-
-			# populate animations using actions and the armatures
-			animations = populate_animations(bpy.context.scene.objects["Armature"], bpy.data.actions)
-
-			for animation in animations:
-				target_animation_path = os.path.join(target_directory, ("%s.animation" % animation.name))
-				print("target_animation_path: %s" % target_animation_path)
-				handle = open(target_animation_path, "w")
-
-				handle.write(animation.to_json())
-				handle.close()
-
-			delta_time = time() - start_time
-
-			result_message = 'Write file "%s" in %2.2f milliseconds' % (self.filepath, delta_time)
-			self.report({'INFO'}, result_message)
-
+		delta_time = time() - start_time
+		result_message = 'Write file "%s" in %2.2f milliseconds' % (self.filepath, delta_time)
+		self.report({'INFO'}, result_message)
 		return {'FINISHED'}
 
 	def invoke(self, context, event):
