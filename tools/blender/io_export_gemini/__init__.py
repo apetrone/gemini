@@ -761,16 +761,20 @@ def collect_bone_data(armature, pose_bones_by_name):
 		# print("pose.name = %s" % bone_data.pose_bone.name)
 		assert(bone.name == bone_data.pose_bone.name)
 
-		bind_pose = bone_data.pose_bone.matrix
+		#bind_pose = bone_data.pose_bone.matrix
 		# if bone.parent:
 			# bind_pose = bone.parent.matrix_local * bone.matrix_local.inverted()
 		#bone_data.bind_offset = armature.matrix_world * bone.matrix_local
 		# bone_data.bind_offset = armature.matrix_world * bone_data.pose_bone.matrix
 		# print("bone.head_local: %s" % bone.head_local)
 		#
+		#
+		#inverse_parent_bind_pose = Matrix()
+		#if bone_data.pose_bone.parent:
+		#	inverse_parent_bind_pose = bone_data.pose_bone.parent.matrix.copy().inverted()
 
-		bone_data.inverse_bind_pose = (bone_data.pose_bone.matrix).inverted()
-		bone_data.bind_offset = bone_data.pose_bone.matrix
+		bone_data.inverse_bind_pose = bone_data.pose_bone.matrix.copy().inverted()
+		bone_data.bind_offset = Matrix() #bone_data.pose_bone.matrix.copy()
 		cache.set(bone.name, bone_index, bone_data)
 
 		bone_index += 1
@@ -881,7 +885,7 @@ class GeminiModel(object):
 
 			if self.armature and self.bone_data:
 				# set the current action
-				self.armature.animation_data.action = action
+				#self.armature.animation_data.action = action
 
 				for bone_data in self.bone_data.ordered_items:
 					obj = {
@@ -927,9 +931,20 @@ class GeminiModel(object):
 						current_time_seconds = (frame / float(scene_fps))
 						time_values.append(current_time_seconds)
 
+						inverse_parent_matrix = Matrix()
+
+						if bone_data.pose_bone.parent:
+							inverse_parent_matrix = bone_data.pose_bone.parent.matrix.copy().inverted()
+
+						# compute the delta from the bind pose to this frame
+						matrix_delta = bone_data.pose_bone.matrix * inverse_parent_matrix
+
+						t, r, s = matrix_delta.decompose()
+
+
 						scale.append([1, 1, 1])
 						rotation.append([0, 0, 0, 1])
-						translation.append([0, 0, current_time_seconds])
+						translation.append([t[0], t[1], t[2]])
 
 					anim0.children.append(obj)
 
@@ -945,7 +960,7 @@ class GeminiModel(object):
 		if bpy.ops.object.mode_set.poll():
 			bpy.ops.object.mode_set(mode="OBJECT")
 
-		original_scrubber_position = 1
+		original_scrubber_position = bpy.context.scene.frame_current
 
 		# in order to retrieve pose data; we need to explicitly
 		# set the frame before we retrieve data.
@@ -993,10 +1008,6 @@ class GeminiModel(object):
 
 		root_node.prepare_materials_for_export(self)
 
-		# restore the original frame
-		bpy.context.scene.frame_set(original_scrubber_position)
-		bpy.context.scene.update()
-
 		self.file_handle.write(root_node.to_json())
 
 		self.file_handle.close()
@@ -1015,6 +1026,9 @@ class GeminiModel(object):
 
 				handle.write(animation.to_json())
 				handle.close()
+
+		# restore the original frame
+		bpy.context.scene.frame_set(original_scrubber_position)
 
 class export_gemini(bpy.types.Operator):
 	'''Export Skeleton Mesh / Animation Data file(s)'''
