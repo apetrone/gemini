@@ -89,14 +89,6 @@ COORDINATE_SYSTEM_YUP = "YUP"
 #
 BMeshAware = False
 
-def clampf(value):
-       if abs(value) < 0.0001:
-               return 0.0
-       return value
-
-def roundf(value):
-	return round(value, 2)
-
 def float_equal(value0, value1):
        if abs(value0-value1) < 0.0000001:
                return True
@@ -118,7 +110,7 @@ def matrix_to_list(matrix):
 
 	for row in range(0, len(matrix.row)):
 		for col in range(0, len(matrix.col)):
-			output.append(roundf(matrix[row][col]))
+			output.append(matrix[row][col])
 	return output
 
 # def get_host_platform():
@@ -604,7 +596,7 @@ class Mesh(Node):
 
 		for index, mv in enumerate(mesh.vertices):
 			vertices.extend(
-				[(roundf(mv.co[0]), roundf(mv.co[1]), roundf(mv.co[2]))])
+				[(mv.co[0], mv.co[1], mv.co[2])])
 
 			# don't add out of range indices
 			weights[index] = []
@@ -614,14 +606,14 @@ class Mesh(Node):
 					if bone:
 						weights[index].append({
 							"bone": bone.name,
-							"value": roundf(group_element.weight)
+							"value": group_element.weight
 							})
 
 		#print("bone_index: %i, \"%s\", group_index: %i" % (boneinfo.index, boneinfo.name, group.index))
 		#print("weights: %s" % weights)
 
 		mesh.calc_normals_split()
-		normals = [(roundf(l.normal[0]), roundf(l.normal[1]), roundf(l.normal[2]))
+		normals = [(l.normal[0], l.normal[1], l.normal[2])
 			for l in mesh.loops]
 		mesh.free_normals_split()
 
@@ -634,7 +626,7 @@ class Mesh(Node):
 				uv_set = []
 				print("extracting uv layer: %s" % uvlayer.name)
 				for uvloop in uvlayer.data:
-					uv_set.append([roundf(uvloop.uv[0]), roundf(1.0-uvloop.uv[1])])
+					uv_set.append([uvloop.uv[0], 1.0-uvloop.uv[1]])
 				uvs.append(uv_set)
 
 		colors = []
