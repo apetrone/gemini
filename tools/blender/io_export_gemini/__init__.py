@@ -575,6 +575,7 @@ class Mesh(Node):
 		cache = VertexCache()
 
 		bone_data = Mesh.cache_weights(model, node, cache, obj)
+		model.bone_data = bone_data
 
 		weights = [[None]] * len(mesh.vertices)
 		# blend_weights = [None] * len(bone_data.ordered_items)
@@ -582,7 +583,7 @@ class Mesh(Node):
 		vertices = []
 
 		# build a mapping from group index to bone index
-		total_bones = len(bone_data.ordered_items)
+		total_bones = len(bone_data.ordered_items) if bone_data else 0
 		group_index_to_bone = [None] * total_bones
 		for group in obj.vertex_groups:
 			# convert group index to boneinfo.index
@@ -777,77 +778,6 @@ def collect_bone_data(armature, pose_bones_by_name):
 
 	return cache
 
-def populate_animations(armature, actions):
-	""" Populate Animations given the armatures and actions from the scene"""
-	animations = []
-
-	for action in actions:
-		anim0 = AnimatedSequence()
-		anim0.name = action.name
-		anim0.frames_per_second = 10
-		anim0.duration_seconds = 1
-		for bone in armature.data.bones:
-			anim0.children.append({
-				"name": bone.name,
-				"rotation": {
-					"time": [
-						0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
-					],
-					"value": [
-						[0.0, 0.0, 0.0, 1.0],
-						[0.0, 0.0, 0.0, 1.0],
-						[0.0, 0.0, 0.0, 1.0],
-						[0.0, 0.0, 0.0, 1.0],
-						[0.0, 0.0, 0.0, 1.0],
-						[0.0, 0.0, 0.0, 1.0],
-						[0.0, 0.0, 0.0, 1.0],
-						[0.0, 0.0, 0.0, 1.0],
-						[0.0, 0.0, 0.0, 1.0],
-						[0.0, 0.0, 0.0, 1.0],
-						[0.0, 0.0, 0.0, 1.0]
-					]
-				},
-				"scale": {
-					"time": [
-						0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
-					],
-					"value": [
-						[1.0, 1.0, 1.0],
-						[1.0, 1.0, 1.0],
-						[1.0, 1.0, 1.0],
-						[1.0, 1.0, 1.0],
-						[1.0, 1.0, 1.0],
-						[1.0, 1.0, 1.0],
-						[1.0, 1.0, 1.0],
-						[1.0, 1.0, 1.0],
-						[1.0, 1.0, 1.0],
-						[1.0, 1.0, 1.0],
-						[1.0, 1.0, 1.0]
-					]
-				},
-				"translation": {
-					"time": [
-						0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
-					],
-					"value": [
-						[0.0, 0.0, 0.0],
-						[0.0, 0.0, 0.0],
-						[0.0, 0.0, 0.0],
-						[0.0, 0.0, 0.0],
-						[0.0, 0.0, 0.0],
-						[0.0, 0.0, 0.0],
-						[0.0, 0.0, 0.0],
-						[0.0, 0.0, 0.0],
-						[0.0, 0.0, 0.0],
-						[0.0, 0.0, 0.0],
-						[0.0, 0.0, 0.0]
-					]
-				}
-			})
-
-		animations.append(anim0)
-	return animations
-
 
 class GeminiModel(object):
 	"""This serves as the container instance for a model which is to be
@@ -878,6 +808,8 @@ class GeminiModel(object):
 		self.materials = {}
 		self.material_list = []
 
+		# Bone cache for this model if attached to an Armature
+		self.bone_data = None
 	#
 	# Materials
 	#
@@ -933,6 +865,78 @@ class GeminiModel(object):
 	def info(self, message):
 		self.instance.report({'INFO'}, message)
 
+
+
+	def populate_animations(self, actions):
+		""" Populate Animations given the armatures and actions from the scene"""
+		animations = []
+
+		scene_fps = bpy.context.scene.render.fps
+
+		for action in actions:
+			anim0 = AnimatedSequence()
+			anim0.name = action.name
+			anim0.frames_per_second = scene_fps
+			anim0.duration_seconds = sequence_duration = (self.frame_end - self.frame_start) / scene_fps
+
+			if self.armature and self.bone_data:
+				# set the current action
+				self.armature.animation_data.action = action
+
+				for bone_data in self.bone_data.ordered_items:
+					obj = {
+						"name": bone_data.name,
+						"rotation": {},
+						"translation": {},
+						"scale": {}
+					}
+
+					time_values = []
+					#
+					# SCALE
+					#
+					scale = []
+					obj["scale"] = {
+						"time": time_values,
+						"value": scale
+					}
+
+					#
+					# ROTATION
+					#
+					rotation = []
+					obj["rotation"] = {
+						"time": time_values,
+						"value": rotation
+					}
+
+					#
+					# TRANSLATION
+					#
+					translation = []
+					obj["translation"] = {
+						"time": time_values,
+						"value": translation
+					}
+
+					# set the current frame
+					for frame in range(self.frame_start, self.frame_end):
+						bpy.context.scene.frame_set(frame)
+
+						# populate the time
+						current_time_seconds = (frame / float(scene_fps))
+						time_values.append(current_time_seconds)
+
+						scale.append([1, 1, 1])
+						rotation.append([0, 0, 0, 1])
+						translation.append([0, 0, current_time_seconds])
+
+					anim0.children.append(obj)
+
+				animations.append(anim0)
+		return animations
+
+
 	#
 	# Export model + animations
 	#
@@ -955,6 +959,8 @@ class GeminiModel(object):
 				mesh_list.append(obj)
 				if obj.select:
 					selected_meshes.append(obj)
+			elif obj.type == "ARMATURE":
+				self.armature = obj
 
 		print("Total Meshes: ", len(mesh_list)," Selected: ", len(selected_meshes))
 
@@ -965,16 +971,6 @@ class GeminiModel(object):
 		total_meshes = len(selected_meshes)
 
 		print("Total selected meshes: %i" % len(selected_meshes))
-
-		# collect a list of actions
-		# It is assumed that ALL actions are supposed to be exported.
-		# See above for the rationale.
-		export_action_list = []
-		for action in bpy.data.actions:
-			export_action_list.append(action)
-
-		# We can also generate a skeleton. At the present,
-		# there can only be one skeleton.
 
 		root_node = RootNode(materials=[])
 		root_node.export_info = {
@@ -1005,19 +1001,20 @@ class GeminiModel(object):
 
 		self.file_handle.close()
 
-		# write animations to the same directory where the .model goes
-		target_directory = os.path.dirname(self.filepath)
+		if self.armature:
+			# write animations to the same directory where the .model goes
+			target_directory = os.path.dirname(self.filepath)
 
-		# populate animations using actions and the armatures
-		animations = populate_animations(bpy.context.scene.objects["Armature"], bpy.data.actions)
+			# populate animations using actions and the armatures
+			animations = self.populate_animations(bpy.data.actions)
 
-		for animation in animations:
-			target_animation_path = os.path.join(target_directory, ("%s.animation" % animation.name))
-			print("target_animation_path: %s" % target_animation_path)
-			handle = open(target_animation_path, "w")
+			for animation in animations:
+				target_animation_path = os.path.join(target_directory, ("%s.animation" % animation.name))
+				print("target_animation_path: %s" % target_animation_path)
+				handle = open(target_animation_path, "w")
 
-			handle.write(animation.to_json())
-			handle.close()
+				handle.write(animation.to_json())
+				handle.close()
 
 class export_gemini(bpy.types.Operator):
 	'''Export Skeleton Mesh / Animation Data file(s)'''
@@ -1075,7 +1072,7 @@ class export_gemini(bpy.types.Operator):
 		model.export()
 
 		delta_time = time() - start_time
-		result_message = 'Write file "%s" in %2.2f milliseconds' % (self.filepath, delta_time)
+		result_message = 'Write file "%s" in %2.2f seconds' % (self.filepath, delta_time)
 		self.report({'INFO'}, result_message)
 		return {'FINISHED'}
 
