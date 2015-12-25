@@ -550,7 +550,7 @@ class ModelInterface : public gemini::IModelInterface
 					glm::mat4& debug_bone_transform = debug_bone_transforms[index];
 //#endif
 
-//					glm::mat4& bind_transform = inverse_bind_transforms[transform_index];
+					glm::mat4& bind_transform = inverse_bind_transforms[transform_index];
 					glm::mat4 local_scale;
 					glm::mat4 local_rotation = glm::toMat4(rotations[index]);
 					glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), positions[index]);
@@ -572,7 +572,6 @@ class ModelInterface : public gemini::IModelInterface
 						const glm::mat4& parent_transform = local_transforms[joint->parent_index];
 						object_to_world = local_pose * parent_transform;
 						stored_pose = bind_pose * accum_bind_poses[joint->parent_index];
-
 					}
 					else
 					{
@@ -583,7 +582,7 @@ class ModelInterface : public gemini::IModelInterface
 
 					// this will be used for skinning in the vertex shader
 //					global_pose = object_to_world * geo.bind_poses[index];
-//					global_pose = stored_pose * object_to_world;
+					global_pose = object_to_world * stored_pose;
 
 					// this will be used for debug rendering
 					//debug_bone_transform = tx * (object_to_world);
@@ -594,7 +593,9 @@ class ModelInterface : public gemini::IModelInterface
 
 
 //					global_pose = geo.bind_poses[index];
-					//bind_transform = geo.inverse_bind_poses[index];
+
+					bind_transform = geo.inverse_bind_poses[index];
+
 #if defined(GEMINI_DEBUG_BONES)
 
 					//debugdraw::instance()->axes(debug_bone_transform, 0.15f);
