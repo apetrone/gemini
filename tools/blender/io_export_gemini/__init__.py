@@ -110,7 +110,7 @@ def matrix_to_list(matrix):
 
 	for row in range(0, len(matrix.row)):
 		for col in range(0, len(matrix.col)):
-			output.append(matrix[row][col])
+			output.append(matrix[col][row])
 	return output
 
 # def get_host_platform():
@@ -769,12 +769,14 @@ def collect_bone_data(armature, pose_bones_by_name):
 		# print("bone.head_local: %s" % bone.head_local)
 		#
 		#
-		#inverse_parent_bind_pose = Matrix()
-		#if bone_data.pose_bone.parent:
-		#	inverse_parent_bind_pose = bone_data.pose_bone.parent.matrix.copy().inverted()
+		inverse_parent_bind_pose = Matrix()
+		if bone_data.pose_bone.parent:
+			inverse_parent_bind_pose = bone_data.pose_bone.parent.matrix.copy().inverted()
 
 		bone_data.inverse_bind_pose = bone_data.pose_bone.matrix.copy().inverted()
-		bone_data.bind_offset = Matrix() #bone_data.pose_bone.matrix.copy()
+		bone_data.bind_offset = (bone_data.pose_bone.matrix * inverse_parent_bind_pose).copy()
+		tx, rx, sx = bone_data.bind_offset.decompose()
+		print("%s -> tx: %2.2f, %2.2f, %2.2f" % (bone.name, tx[0], tx[1], tx[2]))
 		cache.set(bone.name, bone_index, bone_data)
 
 		bone_index += 1
