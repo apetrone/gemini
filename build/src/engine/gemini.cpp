@@ -538,6 +538,7 @@ class ModelInterface : public gemini::IModelInterface
 				// recalculate
 
 				glm::mat4 local_transforms[MAX_BONES];
+				glm::mat4 accum_bind_poses[MAX_BONES];
 
 				for (size_t index = 0; index < mesh->skeleton.size(); ++index)
 				{
@@ -549,7 +550,7 @@ class ModelInterface : public gemini::IModelInterface
 					glm::mat4& debug_bone_transform = debug_bone_transforms[index];
 //#endif
 
-					glm::mat4& bind_transform = inverse_bind_transforms[transform_index];
+//					glm::mat4& bind_transform = inverse_bind_transforms[transform_index];
 					glm::mat4 local_scale;
 					glm::mat4 local_rotation = glm::toMat4(rotations[index]);
 					glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), positions[index]);
@@ -558,27 +559,42 @@ class ModelInterface : public gemini::IModelInterface
 					glm::mat4 local_pose = local_transform * local_rotation * local_scale;
 					//				local_to_world = tr * pivot * ro * sc * inv_pivot;
 
+					glm::mat4 parent_bind_pose;
+
+					glm::mat4 bind_pose = geo.bind_poses[index];
+
+					glm::mat4& stored_pose = accum_bind_poses[index];
+
+//					bind_pose = geo.bind_poses[index];
+
 					if (joint->parent_index > -1)
 					{
 						const glm::mat4& parent_transform = local_transforms[joint->parent_index];
-						object_to_world = parent_transform * local_pose;
+						object_to_world = local_pose * parent_transform;
+						stored_pose = bind_pose * accum_bind_poses[joint->parent_index];
+
 					}
 					else
 					{
 						object_to_world = local_pose;
+//						bind_pose = accum_bind_poses[index];
+						stored_pose = bind_pose;
 					}
 
 					// this will be used for skinning in the vertex shader
-					global_pose = object_to_world * geo.bind_poses[index];
+//					global_pose = object_to_world * geo.bind_poses[index];
+//					global_pose = stored_pose * object_to_world;
 
 					// this will be used for debug rendering
-//					debug_bone_transform = tx * (object_to_world);
+					//debug_bone_transform = tx * (object_to_world);
 
 					// copy this directly to draw in world position
-					debug_bone_transform = geo.bind_poses[index];
+					debug_bone_transform = stored_pose;
+
+
 
 //					global_pose = geo.bind_poses[index];
-					bind_transform = geo.inverse_bind_poses[index];
+					//bind_transform = geo.inverse_bind_poses[index];
 #if defined(GEMINI_DEBUG_BONES)
 
 					//debugdraw::instance()->axes(debug_bone_transform, 0.15f);
