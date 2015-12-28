@@ -494,7 +494,7 @@ class Mesh(Node):
 				# We also need to populate the bind pose offset list
 				bind_data = []
 
-				bone_data = collect_bone_data(armature, pose_bones_by_name)
+				bone_data = collect_bone_data(model, armature, pose_bones_by_name)
 				for bone in bone_data.ordered_items:
 					node.skeleton.append({
 						"name": bone.name,
@@ -511,30 +511,30 @@ class Mesh(Node):
 
 				node.bind_data = bind_data
 
-				# cache initial pose of skeleton
-				initial_poses = []
-				for bone in bone_data.ordered_items:
-					initial = bone.pose_bone.matrix.copy()
-					initial.invert()
-					initial_poses.append(initial)
+				# # cache initial pose of skeleton
+				# initial_poses = []
+				# for bone in bone_data.ordered_items:
+				# 	initial = (model.global_matrix * bone.pose_bone.matrix).copy()
+				# 	initial.invert()
+				# 	initial_poses.append(initial)
 
-				frame_poses = []
+				# frame_poses = []
 
-				# run through bones and extract animation data
-				for frame in range(model.frame_start, model.frame_end):
-					bpy.context.scene.frame_set(frame)
-					bpy.context.scene.update()
+				# # run through bones and extract animation data
+				# for frame in range(model.frame_start, model.frame_end):
+				# 	bpy.context.scene.frame_set(frame)
+				# 	bpy.context.scene.update()
 
-					# compute delta poses for animation
-					delta_poses = [None] * len(bone_data.ordered_items)
-					for index in range(0, len(bone_data.ordered_items)):
-						bdata = bone_data.ordered_items[index]
-						initial = initial_poses[index]
-						delta_poses[index] = matrix_to_list(initial * bdata.pose_bone.matrix)
+				# 	# compute delta poses for animation
+				# 	delta_poses = [None] * len(bone_data.ordered_items)
+				# 	for index in range(0, len(bone_data.ordered_items)):
+				# 		bdata = bone_data.ordered_items[index]
+				# 		initial = initial_poses[index]
+				# 		delta_poses[index] = matrix_to_list(initial * (model.global_matrix * bdata.pose_bone.matrix))
 
-					frame_poses.append(delta_poses)
+				# 	frame_poses.append(delta_poses)
 
-				assert(len(frame_poses) == (model.frame_end - model.frame_start))
+				# assert(len(frame_poses) == (model.frame_end - model.frame_start))
 
 		return bone_data
 
@@ -557,17 +557,23 @@ class Mesh(Node):
 		# transform from Z-up to Y-up
 		if model.coordinate_system == COORDINATE_SYSTEM_YUP:
 			# from Marmalade plugin; convert Z up to Y up.
-			mat4_xrotation = Matrix.Rotation(-math.pi/2, 4, 'X')
+			# mat4_xrotation = Matrix.Rotation(-math.pi/2, 4, 'X')
 
 			# convert object rotation to quaternion (this ignores scale, apparently)
-			rotation = obj.matrix_world.to_quaternion()
+			# rotation = obj.matrix_world.to_quaternion()
 
 			# convert this to a 3x3 rotation matrix
-			rotation_matrix = rotation.to_matrix().to_3x3()
-			final_rotation = mat4_xrotation.to_3x3() * rotation_matrix
-			#scale = obj.matrix_world.to_scale()
-			#translation = obj.matrix_world.to_translation()
-			mesh.transform(final_rotation.to_4x4())
+			# rotation_matrix = rotation.to_matrix().to_3x3()
+			# final_rotation = mat4_xrotation.to_3x3() * rotation_matrix
+
+			# mesh.transform(final_rotation.to_4x4())
+			#
+
+			# steps for testng this:
+			# 1. Test geometry only (untransformed by bones)
+			# 2. Test bone transforms with identity matrices
+			# 3. Test bone transforms piecemeal [translation, rotation, scale]
+			mesh.transform(model.global_matrix)
 
 		# collect all blender materials used by this mesh
 		for bmaterial in mesh.materials:
@@ -743,7 +749,7 @@ class BoneCache(object):
 			return self.bone_data_by_name[bone_name]
 		return None
 
-def collect_bone_data(armature, pose_bones_by_name):
+def collect_bone_data(model, armature, pose_bones_by_name):
 	cache = BoneCache()
 	bone_index = 0
 	bones = armature.data.bones
@@ -775,10 +781,10 @@ def collect_bone_data(armature, pose_bones_by_name):
 		#
 		inverse_parent_bind_pose = Matrix()
 		if bone_data.pose_bone.parent:
-			inverse_parent_bind_pose = bone_data.pose_bone.parent.matrix.copy().inverted()
+			inverse_parent_bind_pose = (model.global_matrix * bone_data.pose_bone.parent.matrix).inverted()
 
-		bone_data.inverse_bind_pose = bone_data.pose_bone.matrix.copy().inverted()
-		bone_data.bind_offset = (bone_data.pose_bone.matrix * inverse_parent_bind_pose).copy()
+		bone_data.inverse_bind_pose = (model.global_matrix * bone_data.pose_bone.matrix).inverted()
+		bone_data.bind_offset = (model.global_matrix * bone_data.pose_bone.matrix) * inverse_parent_bind_pose
 		tx, rx, sx = bone_data.bind_offset.decompose()
 		print("%s -> tx: %2.2f, %2.2f, %2.2f" % (bone.name, tx[0], tx[1], tx[2]))
 		cache.set(bone.name, bone_index, bone_data)
@@ -801,6 +807,7 @@ class GeminiModel(object):
 		# exporter settings
 		self.coordinate_system = kwargs.get("coordinate_system", None)
 
+		# used for coordinate conversion
 		# Assume -Z forward with Y-Up.
 		self.global_matrix = axis_conversion(to_forward='-Z', to_up='Y').to_4x4()
 		print(self.global_matrix)
@@ -825,8 +832,6 @@ class GeminiModel(object):
 		# Bone cache for this model if attached to an Armature
 		self.bone_data = None
 
-		# used for coordinate conversion
-		self.global_matrix = Matrix()
 	#
 	# Materials
 	#
@@ -891,6 +896,7 @@ class GeminiModel(object):
 		scene_fps = bpy.context.scene.render.fps
 
 		for action in actions:
+			print("generating sequence... %s" % (action.name))
 			anim0 = AnimatedSequence()
 			anim0.name = action.name
 			anim0.frames_per_second = scene_fps
@@ -947,21 +953,26 @@ class GeminiModel(object):
 						inverse_parent_matrix = Matrix()
 
 						if bone_data.pose_bone.parent:
-							inverse_parent_matrix = bone_data.pose_bone.parent.matrix.copy().inverted()
+							inverse_parent_matrix = (self.global_matrix * bone_data.pose_bone.parent.matrix).inverted()
+
+						inverted_bind_pose = bone_data.bind_offset.copy().inverted()
 
 						# compute the delta from the bind pose to this frame
-						matrix_delta = bone_data.pose_bone.matrix * inverse_parent_matrix
+						matrix_delta = (self.global_matrix * bone_data.pose_bone.matrix) * inverse_parent_matrix * inverted_bind_pose
 
 						t, _, s = matrix_delta.decompose()
 						r = matrix_delta.to_quaternion()
 
 						scale.append([1, 1, 1])
 						# rotation.append([0, 0, 0, 1])
-						translation.append([0, 0, 0])
+						# translation.append([0, 0, 0])
 
 						#scale.append([s[0], s[1], s[2]])
 						rotation.append([r.x, r.y, r.z, r.w])
-						# translation.append([t[0], t[1], t[2]])
+						translation.append([t[0], t[1], t[2]])
+						# print("tx %i '%s' : %2.2f, %2.2f, %2.2f" % (frame,
+							# bone_data.name,
+							# t.x, t.y, t.z))
 
 					anim0.children.append(obj)
 
@@ -1063,7 +1074,7 @@ class export_gemini(bpy.types.Operator):
 		name="Coordinate System",
 		description="Select a coordinate system to export to",
 		items=supported_coordinate_systems,
-		default=COORDINATE_SYSTEM_ZUP)
+		default=COORDINATE_SYSTEM_YUP)
 
 	filepath = StringProperty(
 			name="File Path",
