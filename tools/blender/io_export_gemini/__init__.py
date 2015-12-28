@@ -65,6 +65,10 @@ from bpy.props import (
 	FloatProperty,
 	EnumProperty
 )
+from bpy_extras.io_utils import (
+	axis_conversion
+)
+
 from time import time
 from mathutils import (
 	Matrix,
@@ -797,6 +801,10 @@ class GeminiModel(object):
 		# exporter settings
 		self.coordinate_system = kwargs.get("coordinate_system", None)
 
+		# Assume -Z forward with Y-Up.
+		self.global_matrix = axis_conversion(to_forward='-Z', to_up='Y').to_4x4()
+		print(self.global_matrix)
+
 		self.filepath = kwargs.get("filepath", None)
 
 		# animation export range
@@ -816,6 +824,9 @@ class GeminiModel(object):
 
 		# Bone cache for this model if attached to an Armature
 		self.bone_data = None
+
+		# used for coordinate conversion
+		self.global_matrix = Matrix()
 	#
 	# Materials
 	#
@@ -941,12 +952,16 @@ class GeminiModel(object):
 						# compute the delta from the bind pose to this frame
 						matrix_delta = bone_data.pose_bone.matrix * inverse_parent_matrix
 
-						t, r, s = matrix_delta.decompose()
-
+						t, _, s = matrix_delta.decompose()
+						r = matrix_delta.to_quaternion()
 
 						scale.append([1, 1, 1])
-						rotation.append([0, 0, 0, 1])
-						translation.append([t[0], t[1], t[2]])
+						# rotation.append([0, 0, 0, 1])
+						translation.append([0, 0, 0])
+
+						#scale.append([s[0], s[1], s[2]])
+						rotation.append([r.x, r.y, r.z, r.w])
+						# translation.append([t[0], t[1], t[2]])
 
 					anim0.children.append(obj)
 
