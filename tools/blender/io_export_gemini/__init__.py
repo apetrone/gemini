@@ -40,7 +40,9 @@ bl_info = {
 # blend indices and weights
 # http://blenderartists.org/forum/showthread.php?337882-Vertex-blend-indices-and-blend-weights&highlight=exporter
 
-
+# exporting keyframe animations
+# https://38leinad.wordpress.com/2012/06/04/blender-exporting-keyframe-based-animations/
+#
 # Blender has no mapping of Actions -> Compatible Objects.
 # The best way would be to have the user choose which actions to export; otherwise
 # we have to export all of them.
@@ -497,35 +499,9 @@ class Mesh(Node):
 						"parent": bone.parent_index,
 						"inverse_bind_pose": matrix_to_list(bone.inverse_bind_pose),
 						"bind_offset": matrix_to_list(bone.bind_offset)
-						#"bind_offset": matrix_to_list(bone.bind_offset)
 					})
 
 				node.bind_data = bind_data
-
-				# # cache initial pose of skeleton
-				# initial_poses = []
-				# for bone in bone_data.ordered_items:
-				# 	initial = (model.global_matrix * bone.pose_bone.matrix).copy()
-				# 	initial.invert()
-				# 	initial_poses.append(initial)
-
-				# frame_poses = []
-
-				# # run through bones and extract animation data
-				# for frame in range(model.frame_start, model.frame_end):
-				# 	bpy.context.scene.frame_set(frame)
-				# 	bpy.context.scene.update()
-
-				# 	# compute delta poses for animation
-				# 	delta_poses = [None] * len(bone_data.ordered_items)
-				# 	for index in range(0, len(bone_data.ordered_items)):
-				# 		bdata = bone_data.ordered_items[index]
-				# 		initial = initial_poses[index]
-				# 		delta_poses[index] = matrix_to_list(initial * (model.global_matrix * bdata.pose_bone.matrix))
-
-				# 	frame_poses.append(delta_poses)
-
-				# assert(len(frame_poses) == (model.frame_end - model.frame_start))
 
 		return bone_data
 
@@ -610,6 +586,12 @@ class Mesh(Node):
 							"bone": bone.name,
 							"value": group_element.weight
 							})
+
+		# for index, _ in enumerate(mesh.vertices):
+		# 	print("vertex: %i" % index)
+		# 	for i, data in enumerate(weights[index]):
+		# 		print(type(data))
+		# 		print("\tweight_index: %i, bone: %s, weight: %2.2f" % (i, data["bone"], data["value"]))
 
 		#print("bone_index: %i, \"%s\", group_index: %i" % (boneinfo.index, boneinfo.name, group.index))
 		#print("weights: %s" % weights)
@@ -712,17 +694,21 @@ class AnimatedSequence(Node):
 # http://blender.stackexchange.com/questions/15170/blender-python-exporting-bone-matrices-for-animation-relative-to-parent
 
 class BoneData(object):
-	def __init__(self, name, index, parent_index = -1):
-		self.name = name
+	def __init__(self, bone, pose_bone, index, parent_index = -1):
+		self.name = bone.name
 		self.index = index
 		self.parent_index = parent_index
-		self.pose_bone = None
+		self.pose_bone = pose_bone
+		self.bone = bone
 
 		# inverse bind pose (object space to joint space)
 		self.inverse_bind_pose = None
 
 		# bone's local offset from parent in object space
 		self.bind_offset = None
+
+		# the bone's matrix_local (in Blender coordinates)
+		self.rest_pose = Matrix()
 
 class BoneCache(object):
 	def __init__(self):
@@ -754,28 +740,31 @@ def collect_bone_data(model, armature, pose_bones_by_name):
 		if bone.parent:
 			parent_index = cache.find_by_name(bone.parent.name).index
 
-		bone_data = BoneData(bone.name, bone_index, parent_index)
-		bone_data.pose_bone = pose_bones_by_name[bone.name]
+		bone_data = BoneData(bone,
+			pose_bones_by_name[bone.name],
+			bone_index,
+			parent_index)
 
 		# If you hit this, you aren't using the associated pose bone
 		# print("bone.name = %s" % bone.name)
 		# print("pose.name = %s" % bone_data.pose_bone.name)
 		assert(bone.name == bone_data.pose_bone.name)
 
-		#bind_pose = bone_data.pose_bone.matrix
-		# if bone.parent:
-			# bind_pose = bone.parent.matrix_local * bone.matrix_local.inverted()
-		#bone_data.bind_offset = armature.matrix_world * bone.matrix_local
-		# bone_data.bind_offset = armature.matrix_world * bone_data.pose_bone.matrix
-		# print("bone.head_local: %s" % bone.head_local)
-		#
-		#
 		inverse_parent_bind_pose = Matrix()
 		if bone_data.pose_bone.parent:
 			inverse_parent_bind_pose = (model.global_matrix * bone_data.pose_bone.parent.matrix).inverted()
 
-		bone_data.inverse_bind_pose = (model.global_matrix * bone_data.pose_bone.matrix).inverted()
+
+		# 1. global_matrix converts from blender to gemini coordinates
+		# 2. (armature.matrix_world * pose_bone.matrix) accounts for the armature world transform
+
+		# the inverse bind pose needs to include the transform from the armature
+		# since it needs the correct position of its world position in order to transform to joint space.
+		bone_data.inverse_bind_pose = (model.global_matrix * (armature.matrix_world * bone_data.pose_bone.matrix)).inverted()
+
+		# the bind position doesn't need this (since it just needs to be relative to the parent)
 		bone_data.bind_offset = (model.global_matrix * bone_data.pose_bone.matrix) * inverse_parent_bind_pose
+		bone_data.rest_pose = bone_data.bone.matrix_local
 
 		cache.set(bone.name, bone_index, bone_data)
 
