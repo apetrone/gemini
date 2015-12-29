@@ -93,15 +93,6 @@ COORDINATE_SYSTEM_YUP = "YUP"
 #
 BMeshAware = False
 
-def float_equal(value0, value1):
-       if abs(value0-value1) < 0.0000001:
-               return True
-       return False
-
-def float_cmp(value0, value1):
-       if abs(value0-value1) < 0.0000001:
-               return 0
-       return -1
 
 def checkBMeshAware():
 	global BMeshAware
@@ -614,7 +605,7 @@ class Mesh(Node):
 			for group_element in mv.groups:
 				if group_element.group < total_bones:
 					bone = group_index_to_bone[group_element.group]
-					if bone:
+					if bone and group_element.weight > 0.0:
 						weights[index].append({
 							"bone": bone.name,
 							"value": group_element.weight
@@ -785,8 +776,7 @@ def collect_bone_data(model, armature, pose_bones_by_name):
 
 		bone_data.inverse_bind_pose = (model.global_matrix * bone_data.pose_bone.matrix).inverted()
 		bone_data.bind_offset = (model.global_matrix * bone_data.pose_bone.matrix) * inverse_parent_bind_pose
-		tx, rx, sx = bone_data.bind_offset.decompose()
-		print("%s -> tx: %2.2f, %2.2f, %2.2f" % (bone.name, tx[0], tx[1], tx[2]))
+
 		cache.set(bone.name, bone_index, bone_data)
 
 		bone_index += 1
@@ -957,6 +947,7 @@ class GeminiModel(object):
 
 						inverted_bind_pose = bone_data.bind_offset.copy().inverted()
 
+						# print("frame: %i, %s" % (frame, bone_data.pose_bone.matrix))
 						# compute the delta from the bind pose to this frame
 						matrix_delta = (self.global_matrix * bone_data.pose_bone.matrix) * inverse_parent_matrix * inverted_bind_pose
 
@@ -1093,6 +1084,9 @@ class export_gemini(bpy.types.Operator):
 	# 	default=False)
 
 	def execute(self, context):
+
+		# TODO: assert if no bones have keyframes! This can be very confusing
+		# if the armature itself has keyframes, but the bones do not.
 
 		model = GeminiModel(
 			self,

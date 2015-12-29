@@ -30,6 +30,8 @@
 #include "assets/asset_material.h"
 #include "renderer/renderer.h"
 
+#include <sdk/model_api.h>
+
 using namespace renderer;
 
 namespace gemini
@@ -288,10 +290,16 @@ namespace gemini
 
 						size_t blend_index = 0;
 
-						int bone_indices[4] = {0, 0, 0, 0};
-						float bone_weights[4] = {0, 0, 0, 0};
+						int bone_indices[MAX_INFLUENCES_PER_VERTEX];
+						memset(bone_indices, 0, sizeof(int) * MAX_INFLUENCES_PER_VERTEX);
+
+						float bone_weights[MAX_INFLUENCES_PER_VERTEX];
+						memset(bone_weights, 0, sizeof(float) * MAX_INFLUENCES_PER_VERTEX);
 
 						Json::ValueIterator pair = weight_pairs.begin();
+						const size_t total_influences = weight_pairs.size();
+						assert(total_influences <= MAX_INFLUENCES_PER_VERTEX);
+
 						for (; pair != weight_pairs.end(); ++pair, ++blend_index)
 						{
 							const Json::Value& weightblock = (*pair);
@@ -301,8 +309,7 @@ namespace gemini
 							Joint* joint = state.mesh->find_bone_named(bone.asString().c_str());
 							assert(joint != 0);
 
-							assert(blend_index < 4);
-							LOGV("[%i] bone: '%s', value: %2.2f\n", weight_id, bone.asString().c_str(), value.asFloat());
+//							LOGV("[%i] bone: '%s', value: %2.2f\n", weight_id, bone.asString().c_str(), value.asFloat());
 
 							bone_indices[blend_index] = joint->index;
 							bone_weights[blend_index] = value.asFloat();
