@@ -26,8 +26,6 @@
 #include "linux_backend.h"
 #include "x11_window_provider.h"
 
-
-#include <X11/keysym.h>
 #include <X11/extensions/Xrandr.h>
 
 // requires: libxinerama-dev (ubuntu)
@@ -38,6 +36,34 @@ namespace platform
 {
 	namespace window
 	{
+		const long PLATFORM_X11_EVENT_MASK = \
+			// request info when contents of lost window regions
+			ExposureMask |
+
+			// request change in input focus
+			FocusChangeMask |
+
+			// request key down and up events
+			KeyPressMask | KeyReleaseMask | KeymapStateMask |
+
+			// request pointer motion events
+			PointerMotionMask | PointerMotionHintMask |
+
+			// request pointer button down and up events
+			ButtonPressMask | ButtonReleaseMask |
+
+			// request pointer motion while any button down
+			ButtonMotionMask |
+
+			// resize
+			ResizeRedirectMask |
+
+			// request changes to window structure
+			StructureNotifyMask |
+
+			// request change when pointer enters/leaves window
+			EnterWindowMask | LeaveWindowMask;
+
 		X11WindowProvider::X11WindowProvider() :
 			display(0)
 		{
@@ -56,6 +82,11 @@ namespace platform
 			{
 				return Result::failure("Unable to open display 0");
 			}
+
+			// DeleteWindow must be treated as a ClientMessage. We cache
+			// this for when windows are created.
+			atom_delete_window = XInternAtom(display, "WM_DELETE_WINDOW", False);
+
 			return Result::success();
 		}
 
@@ -74,11 +105,9 @@ namespace platform
 			assert(visual != nullptr);
 
 			XSetWindowAttributes window_attributes;
-
 			window_attributes.border_pixel = 0;
 			window_attributes.background_pixel = 0;
-
-			window_attributes.event_mask = StructureNotifyMask;
+			window_attributes.event_mask = PLATFORM_X11_EVENT_MASK;
 			window_attributes.colormap = XCreateColormap(
 				display,
 				RootWindow(display, DefaultScreen(display)),
@@ -99,7 +128,17 @@ namespace platform
 				CWColormap | CWEventMask,
 				&window_attributes);
 
-			XMapWindow(display, window->native_window);
+			// replaces WM_PROTOCOLS property on the window with the atom specified.
+			XSetWMProtocols(display, window->native_window, &atom_delete_window, 1);
+
+			// set the event masks
+			XSelectInput(display, window->native_window, PLATFORM_X11_EVENT_MASK);
+
+			// set the window title
+			XStoreName(display, window->native_window, parameters.window_title);
+
+			XClearWindow(display, window->native_window);
+			XMapRaised(display, window->native_window);
 
 			// manually flush the output buffer
 			// happens as part of: XPending, XNextEvent, and XWindowEvent
@@ -112,6 +151,7 @@ namespace platform
 		{
 			void* native_handle = window->get_native_handle();
 			Window* window_handle = static_cast<Window*>(native_handle);
+
 			XDestroyWindow(display, *window_handle);
 			MEMORY_DELETE(window, get_platform_allocator());
 		}
@@ -196,9 +236,108 @@ namespace platform
 			return frame;
 		}
 
+		void X11WindowProvider::dispatch_events()
+		{
+			if (!display)
+			{
+				// No connection to the display.
+				return;
+			}
+
+			XEvent event;
+			event.type = 0;
+			last_key_release.type = 0;
+			last_key_release.xkey.keycode = 0;
+			last_key_release.xkey.time = 0;
+
+			// process available events
+			while (XPending(display))
+			{
+				XNextEvent(display, &event);
+				process_event(event);
+			}
+		}
+
 		Display* X11WindowProvider::get_display() const
 		{
 			return display;
+		}
+
+		void X11WindowProvider::process_event(XEvent& event)
+		{
+			char buffer[32] = {0};
+			int32_t length = 0;
+			KeySym keysym = 0;
+
+			switch(event.type)
+			{
+				// input focus has changed:
+				// If you don't have focus and you click on the GL
+				// portion of the window, FocusIn will not be fired.
+				// Instead, if you click on the Window title bar,
+				// it will be.
+				case FocusIn:
+				case FocusOut:
+					break;
+
+				// window has resized
+				case ResizeRequest:
+					break;
+
+				// keyboard state has changed
+				case KeymapNotify:
+					break;
+
+				case KeyPress:
+				case KeyRelease:
+					length = XLookupString(&event.xkey, buffer, 32, &keysym, NULL);
+					fprintf(stdout, "key: %s\n", buffer);
+					break;
+
+				case ButtonPress:
+				case ButtonRelease:
+					fprintf(stdout, "Button Press/Release\n");
+					break;
+
+				// Pointer motion begins and ends within a single window
+				case MotionNotify:
+					PLATFORM_LOG(platform::LogMessageType::Info, "Pointer motion: %i, %i\n",
+						event.xmotion.x,
+						event.xmotion.y);
+					break;
+
+				// Pointer motion results in a change of windows
+				case EnterNotify:
+				case LeaveNotify:
+					fprintf(stdout, "Pointer Enter/Leave\n");
+					break;
+
+				// The client application destroys a window
+				// by calling XDestroyWindow or XDestroySubwindows.
+				case DestroyNotify:
+					// We have this redirected to our own atom
+					break;
+
+				case ClientMessage:
+					if (event.xclient.data.l[0] == atom_delete_window)
+					{
+						PLATFORM_LOG(platform::LogMessageType::Info, "DestroyWindow\n");
+
+					}
+					break;
+
+				case Expose:
+				case MapNotify:
+				case UnmapNotify:
+				case ReparentNotify:
+				case ConfigureNotify:
+					break;
+
+				default:
+					PLATFORM_LOG(platform::LogMessageType::Error, "Unhandled X11 event type: %i\n", event.type);
+					assert(0);
+					break;
+			}
 		}
 	} // namespace window
 } // namespace platform
