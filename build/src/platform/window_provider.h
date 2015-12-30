@@ -42,6 +42,9 @@ namespace platform
 			virtual Frame get_render_frame(NativeWindow* window) const = 0;
 			virtual size_t get_screen_count() const = 0;
 			virtual Frame get_screen_frame(size_t screen_index) const = 0;
+
+			// Called once per frame to dispatch OS events
+			virtual void dispatch_events() = 0;
 		};
 	} // namespace window
 

@@ -115,13 +115,6 @@ namespace platform
 		fprintf(log_message_to_pipe[static_cast<int>(type)], message);
 	}
 
-
-	void dispatch_events()
-	{
-
-	}
-
-
 	Process* process_create(const char* executable_path,
 		const Array<PathString>& arguments,
 		const char* working_directory)
@@ -232,7 +225,7 @@ namespace platform
 
 		void dispatch_events()
 		{
-
+			_window_provider->dispatch_events();
 		}
 
 		NativeWindow* create(const Parameters& window_parameters)

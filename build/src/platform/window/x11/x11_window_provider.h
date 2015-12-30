@@ -28,6 +28,7 @@
 #include "window_provider.h"
 
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 
 namespace platform
 {
@@ -69,13 +70,16 @@ namespace platform
 			virtual Frame get_render_frame(NativeWindow* window) const override;
 			virtual size_t get_screen_count() const override;
 			virtual Frame get_screen_frame(size_t screen_index) const override;
+			virtual void dispatch_events() override;
 
-		public:
 			Display* get_display() const;
 
 		private:
-			Display* display;
+			void process_event(XEvent& event);
 
+			Display* display;
+			XEvent last_key_release;
+			Atom atom_delete_window;
 		}; // class X11WindowProvider
 	} // namespace window
 } // namespace platform
