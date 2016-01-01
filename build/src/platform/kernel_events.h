@@ -138,6 +138,7 @@ namespace kernel
 		int dy;
 
 		// < 0 is movement towards the user; > 0 is movement away toward the screen
+		// Should be normalized [-1, 1].
 		short wheel_direction;
 		bool is_down;
 
