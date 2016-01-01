@@ -64,9 +64,20 @@ namespace kernel
 	// information from the structure.
 	enum EventSubType
 	{
+		// Window events mainly apply to platforms where the user
+		// has control over the application windows (Linux, MacOS X, Windows).
+
+		// A window lost focus.
 		WindowLostFocus,
+
+		// A window gained focus.
 		WindowGainFocus,
+
+		// A window was resized by the user.
 		WindowResized,
+
+		// A window was closed by the user.
+		WindowClosed,
 
 		MouseButton,
 		MouseMoved,

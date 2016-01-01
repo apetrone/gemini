@@ -52,7 +52,7 @@ public kernel::IEventListener<kernel::SystemEvent>
 private:
 	bool active;
 	platform::window::NativeWindow* main_window;
-	
+
 	render2::Device* device;
 	render2::Buffer* vertex_buffer;
 
@@ -74,7 +74,7 @@ private:
 			position[1] = y;
 			position[2] = z;
 		}
-		
+
 		void set_color(float red, float green, float blue, float alpha)
 		{
 			color[0] = red;
@@ -100,12 +100,12 @@ public:
 		active(true)
 	{
 	}
-	
+
 	virtual ~TestWindow() {}
-	
+
 	virtual bool is_active() const { return active; }
 	virtual void set_active(bool isactive) { active = isactive; }
-	
+
 	virtual void event(kernel::SystemEvent& event)
 	{
 		if (event.subtype == kernel::WindowGainFocus)
@@ -120,8 +120,13 @@ public:
 		{
 			LOGV("resolution_changed %i %i\n", event.render_width, event.render_height);
 		}
+		else if (event.subtype == kernel::WindowClosed)
+		{
+			LOGV("Window was closed!\n");
+			set_active(false);
+		}
 	}
-	
+
 	virtual void event(kernel::MouseEvent& event)
 	{
 		if (event.subtype == kernel::MouseWheelMoved)
@@ -146,27 +151,27 @@ public:
 	{
 		platform::PathString root_path = platform::get_program_directory();
 		platform::PathString content_path = platform::fs_content_directory();
-		
+
 		platform::PathString application_path = platform::get_user_application_directory("arcfusion.net/test_window");
 		core::startup_filesystem();
 		core::filesystem::instance()->root_directory(root_path);
 		core::filesystem::instance()->content_directory(content_path);
 		core::filesystem::instance()->user_application_directory(application_path);
-		
+
 		core::startup_logging();
-		
+
 		// create a platform window
 		{
 			platform::window::startup(platform::window::RenderingBackend_Default);
 
 			PLATFORM_LOG(LogMessageType::Info, "total screens: %zu\n", platform::window::screen_count());
-			
+
 			for (size_t screen = 0; screen < platform::window::screen_count(); ++screen)
 			{
 				platform::window::Frame frame = platform::window::screen_frame(screen);
 				PLATFORM_LOG(LogMessageType::Info, "screen rect: %zu, origin: %2.2f, %2.2f; resolution: %2.2f x %2.2f\n", screen, frame.x, frame.y, frame.width, frame.height);
 			}
-			
+
 			platform::window::Parameters params;
 
 			bool enable_fullscreen = false;
@@ -188,7 +193,7 @@ public:
 		{
 			using namespace render2;
 			RenderParameters params;
-			
+
 			// set some options
 			params["vsync"] = "true";
 			params["double_buffer"] = "true";
@@ -201,7 +206,7 @@ public:
 			params["opengl.minor"] = "2";
 			params["opengl.profile"] = "core";
 			params["opengl.share_context"] = "true";
-			
+
 			device = create_device(params);
 
 			platform::window::Frame window_frame = platform::window::get_frame(main_window);
@@ -221,18 +226,18 @@ public:
 
 #if 1
 			MyVertex* vertex = reinterpret_cast<MyVertex*>(device->buffer_lock(vertex_buffer));
-			
+
 //			MyVertex vertex[4];
-			
+
 			vertex[0].set_position(0, window_frame.height, 0);
 			vertex[0].set_color(1.0f, 0.0f, 0.0f, 1.0f);
-			
+
 			vertex[1].set_position(window_frame.width, window_frame.height, 0);
 			vertex[1].set_color(0.0f, 1.0f, 0.0f, 1.0f);
-			
+
 			vertex[2].set_position(window_frame.width/2.0f, 0, 0);
 			vertex[2].set_color(0.0f, 0.0f, 1.0f, 1.0f);
-			
+
 			vertex[3].set_position(0, 0, 0);
 			vertex[3].set_color(0.0f, 1.0f, 1.0f, 1.0f);
 
@@ -250,16 +255,16 @@ public:
 
 		return kernel::NoError;
 	}
-	
 
-	
+
+
 	virtual void tick()
 	{
 		platform::window::dispatch_events();
-				
+
 		static float value = 0.0f;
 		static float multiplifer = 1.0f;
-		
+
 		value += 0.01f * multiplifer;
 		value = glm::clamp(value, 0.0f, 1.0f);
 		if (value == 0.0f || value == 1.0f)
@@ -284,7 +289,7 @@ public:
 
 		render2::CommandQueue* queue = device->create_queue(render_pass);
 		render2::CommandSerializer* serializer = device->create_serializer(queue);
-		
+
 		serializer->pipeline(pipeline);
 		serializer->vertex_buffer(vertex_buffer);
 		serializer->draw(0, 3);
@@ -297,8 +302,8 @@ public:
 
 		platform::window::swap_buffers(main_window);
 	}
-	
-	
+
+
 	virtual void shutdown()
 	{
 		font::shutdown();
@@ -309,9 +314,9 @@ public:
 		device->destroy_pipeline(pipeline);
 
 		destroy_device(device);
-		
+
 //		glDeleteSync(fence);
-		
+
 //		renderer::shutdown();
 
 		platform::window::destroy(main_window);
@@ -319,8 +324,8 @@ public:
 
 		core::shutdown();
 	}
-	
-	
+
+
 	virtual void event(kernel::KeyboardEvent& event)
 	{
 		if (event.key == input::KEY_ESCAPE && event.is_down)
