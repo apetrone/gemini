@@ -26,6 +26,9 @@
 #include "linux_backend.h"
 #include "x11_window_provider.h"
 
+#include <platform/kernel.h>
+#include <platform/kernel_events.h>
+
 #include <X11/extensions/Xrandr.h>
 
 // requires: libxinerama-dev (ubuntu)
@@ -269,6 +272,8 @@ namespace platform
 			int32_t length = 0;
 			KeySym keysym = 0;
 
+			kernel::SystemEvent sysevent;
+
 			switch(event.type)
 			{
 				// input focus has changed:
@@ -278,10 +283,16 @@ namespace platform
 				// it will be.
 				case FocusIn:
 				case FocusOut:
+					sysevent.subtype = (event.type == FocusIn) ? kernel::WindowGainFocus : kernel::WindowLostFocus;
+					kernel::event_dispatch(sysevent);
 					break;
 
 				// window has resized
 				case ResizeRequest:
+					sysevent.subtype = kernel::WindowResized;
+					sysevent.render_width = sysevent.window_width = event.xresizerequest.width;
+					sysevent.render_height = sysevent.window_height = event.xresizerequest.height;
+					kernel::event_dispatch(sysevent);
 					break;
 
 				// keyboard state has changed
@@ -319,10 +330,10 @@ namespace platform
 					break;
 
 				case ClientMessage:
-					if (event.xclient.data.l[0] == atom_delete_window)
+					if (static_cast<Atom>(event.xclient.data.l[0]) == atom_delete_window)
 					{
-						PLATFORM_LOG(platform::LogMessageType::Info, "DestroyWindow\n");
-
+						sysevent.subtype = kernel::WindowClosed;
+						kernel::event_dispatch(sysevent);
 					}
 					break;
 

@@ -76,7 +76,7 @@ namespace platform
 
 			void populate_keymap()
 			{
-				memset(&key_map, 0, kMaxKeys*sizeof(input::Button));
+				memset(&key_map, 0, kMaxKeys * sizeof(input::Button));
 
 				// values taken from <HIToolbox/Events.h>
 				key_map[0x00] = input::KEY_A;
