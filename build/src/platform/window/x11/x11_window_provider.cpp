@@ -26,6 +26,7 @@
 #include "linux_backend.h"
 #include "x11_window_provider.h"
 
+#include <platform/input.h>
 #include <platform/kernel.h>
 #include <platform/kernel_events.h>
 
@@ -273,6 +274,24 @@ namespace platform
 			KeySym keysym = 0;
 
 			kernel::SystemEvent sysevent;
+			kernel::MouseEvent mouseevent;
+
+			uint32_t x11_mouse_to_platform[] = {
+				input::MOUSE_INVALID, 	// AnyButton
+				input::MOUSE_LEFT,		// Button1
+				input::MOUSE_MIDDLE,	// Button2 // (Yes Middle is Button2)
+				input::MOUSE_RIGHT,		// Button3
+
+				// scroll wheel
+				input::MOUSE_INVALID,	// Button4
+				input::MOUSE_INVALID,	// Button5
+
+				input::MOUSE_INVALID,	// Button6
+				input::MOUSE_INVALID,	// Button7
+
+				input::MOUSE_MOUSE4,	// Button8
+				input::MOUSE_MOUSE5,	// Button9
+			};
 
 			switch(event.type)
 			{
@@ -307,7 +326,17 @@ namespace platform
 
 				case ButtonPress:
 				case ButtonRelease:
-					fprintf(stdout, "Button Press/Release\n");
+					mouseevent.subtype = kernel::MouseButton;
+					mouseevent.is_down = (event.type == ButtonPress) ? true : false;
+					mouseevent.button = x11_mouse_to_platform[event.xbutton.button];
+
+					// handle mouse wheel
+					if (event.xbutton.button == Button4 || event.xbutton.button == Button5)
+					{
+						mouseevent.wheel_direction = (event.xbutton.button == Button4) ? 1 : -1;
+						mouseevent.subtype = kernel::MouseWheelMoved;
+					}
+					kernel::event_dispatch(mouseevent);
 					break;
 
 				// Pointer motion begins and ends within a single window
@@ -315,6 +344,7 @@ namespace platform
 					PLATFORM_LOG(platform::LogMessageType::Info, "Pointer motion: %i, %i\n",
 						event.xmotion.x,
 						event.xmotion.y);
+
 					break;
 
 				// Pointer motion results in a change of windows
