@@ -467,7 +467,7 @@ class Mesh(Node):
 		print("# indices: %i" % len(self.indices))
 
 	@staticmethod
-	def cache_weights(model, node, cache, obj, object_world_matrix):
+	def cache_weights(model, node, cache, obj):
 		bone_data = BoneCache()
 
 		# apply modifiers to the mesh node
@@ -489,8 +489,7 @@ class Mesh(Node):
 
 				bone_data = collect_bone_data(model,
 					armature,
-					pose_bones_by_name,
-					object_world_matrix)
+					pose_bones_by_name)
 
 				for bone in bone_data.ordered_items:
 					node.skeleton.append({
@@ -520,52 +519,21 @@ class Mesh(Node):
 		# before we output them to the file
 		triangulated_object.select = True
 
-		# output = bpy.ops.object.transform_apply(
-		# 	location=True,
-		# 	rotation=True,
-		# 	scale=True)
-
+		# This is used to transform the vertices and normals of the mesh.
 		world_matrix = model.global_matrix * triangulated_object.matrix_world.copy()
-		print("world_matrix: %s" % world_matrix)
 
 		mesh = triangulated_object.to_mesh(bpy.context.scene, True, 'PREVIEW')
-
-		# transform from Z-up to Y-up
-		if model.coordinate_system == COORDINATE_SYSTEM_YUP:
-			# from Marmalade plugin; convert Z up to Y up.
-			# mat4_xrotation = Matrix.Rotation(-math.pi/2, 4, 'X')
-
-			# convert object rotation to quaternion (this ignores scale, apparently)
-			# rotation = obj.matrix_world.to_quaternion()
-
-			# convert this to a 3x3 rotation matrix
-			# rotation_matrix = rotation.to_matrix().to_3x3()
-			# final_rotation = mat4_xrotation.to_3x3() * rotation_matrix
-
-			# mesh.transform(final_rotation.to_4x4())
-			#
-
-			# steps for testng this:
-			# 1. Test geometry only (untransformed by bones)
-			# 2. Test bone transforms with identity matrices
-			# 3. Test bone transforms piecemeal [translation, rotation, scale]
-			#mesh.transform(model.global_matrix)
-			pass
 
 		# collect all blender materials used by this mesh
 		for bmaterial in mesh.materials:
 			model.add_material(bmaterial)
 
-		# iterate over mesh faces
-		#mesh_faces = get_mesh_faces(mesh)
-
 		cache = VertexCache()
 
-		bone_data = Mesh.cache_weights(model, node, cache, obj, world_matrix)
+		bone_data = Mesh.cache_weights(model, node, cache, obj)
 		model.bone_data = bone_data
 
 		weights = [[None]] * len(mesh.vertices)
-		# blend_weights = [None] * len(bone_data.ordered_items)
 
 		vertices = []
 
@@ -583,7 +551,6 @@ class Mesh(Node):
 			group_index_to_bone[group.index] = boneinfo
 
 		for index, mv in enumerate(mesh.vertices):
-			print("%i v: %2.2f, %2.2f, %2.2f" % (index, mv.co[0], mv.co[1], mv.co[2]))
 			position = world_matrix * mv.co
 			vertices.extend([(
 				position[0],
@@ -601,18 +568,14 @@ class Mesh(Node):
 							"value": group_element.weight
 							})
 
-		# for index, _ in enumerate(mesh.vertices):
-		# 	print("vertex: %i" % index)
-		# 	for i, data in enumerate(weights[index]):
-		# 		print(type(data))
-		# 		print("\tweight_index: %i, bone: %s, weight: %2.2f" % (i, data["bone"], data["value"]))
-
-		#print("bone_index: %i, \"%s\", group_index: %i" % (boneinfo.index, boneinfo.name, group.index))
-		#print("weights: %s" % weights)
 
 		mesh.calc_normals_split()
-		normals = [(l.normal[0], l.normal[1], l.normal[2])
-			for l in mesh.loops]
+
+		normals = []
+		for loop in mesh.loops:
+			# transform normals
+			normal = (world_matrix.to_3x3() * loop.normal).normalized()
+			normals.append((normal[0], normal[1], normal[2]))
 		mesh.free_normals_split()
 
 		uvs = []
@@ -740,13 +703,12 @@ class BoneCache(object):
 			return self.bone_data_by_name[bone_name]
 		return None
 
-def collect_bone_data(model, armature, pose_bones_by_name, object_world_matrix):
+def collect_bone_data(model, armature, pose_bones_by_name):
 	cache = BoneCache()
 	bone_index = 0
 	bones = armature.data.bones
 	print("armature: %s has %i bones" % (armature.name, len(bones)))
-
-	print("armature matrix: %s" % (matrix_to_list(armature.matrix_world)))
+	print("armature matrix: %s" % (armature.matrix_world))
 
 	inverted_root_pose = Matrix()
 
