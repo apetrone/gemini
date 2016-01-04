@@ -51,7 +51,7 @@ namespace platform
 			KeyPressMask | KeyReleaseMask | KeymapStateMask |
 
 			// request pointer motion events
-			PointerMotionMask | PointerMotionHintMask |
+			PointerMotionMask |
 
 			// request pointer button down and up events
 			ButtonPressMask | ButtonReleaseMask |
@@ -69,7 +69,9 @@ namespace platform
 			EnterWindowMask | LeaveWindowMask;
 
 		X11WindowProvider::X11WindowProvider() :
-			display(0)
+			display(0),
+			last_x(0),
+			last_y(0)
 		{
 		}
 
@@ -341,16 +343,21 @@ namespace platform
 
 				// Pointer motion begins and ends within a single window
 				case MotionNotify:
-					PLATFORM_LOG(platform::LogMessageType::Info, "Pointer motion: %i, %i\n",
-						event.xmotion.x,
-						event.xmotion.y);
+					mouseevent.subtype = kernel::MouseMoved;
+					mouseevent.mx = event.xmotion.x;
+					mouseevent.my = event.xmotion.y;
+					mouseevent.dx = (event.xmotion.x - last_x);
+					mouseevent.dy = (event.xmotion.y - last_y);
 
+					// cache these values
+					last_x = event.xmotion.x;
+					last_y = event.xmotion.y;
+					kernel::event_dispatch(mouseevent);
 					break;
 
 				// Pointer motion results in a change of windows
 				case EnterNotify:
 				case LeaveNotify:
-					fprintf(stdout, "Pointer Enter/Leave\n");
 					break;
 
 				// The client application destroys a window
