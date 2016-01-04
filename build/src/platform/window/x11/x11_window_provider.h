@@ -80,6 +80,11 @@ namespace platform
 			Display* display;
 			XEvent last_key_release;
 			Atom atom_delete_window;
+
+			// Keep track of mouse coordinates last event
+			// in order to calculate the deltas.
+			int last_x;
+			int last_y;
 		}; // class X11WindowProvider
 	} // namespace window
 } // namespace platform
