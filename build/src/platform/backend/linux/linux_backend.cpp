@@ -194,14 +194,14 @@ namespace platform
 
 			if (backend != RenderingBackend_OpenGLES2)
 			{
-				return Result::failure("The only supported rendering backend is OpenGL ES 2");
+				return Result::failure("The only supported rendering backend is OpenGLES 2");
 			}
 #else
 			// force OpenGL for now
 			backend = RenderingBackend_OpenGL;
 			if (backend != RenderingBackend_OpenGL)
 			{
-				return Result::failure("Only the OpenGL rendering backend is supported");
+				return Result::failure("The only supported rendering backend is OpenGL");
 			}
 #endif
 			return Result::success();
