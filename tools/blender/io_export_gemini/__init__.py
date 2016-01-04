@@ -928,10 +928,11 @@ class GeminiModel(object):
 
 						inverted_bind_pose = bone_data.bind_pose.copy().inverted()
 
-						# print("frame: %i, %s" % (frame, bone_data.pose_bone.matrix))
-						# compute the delta from the bind pose to this frame
-						#matrix_delta = self.global_matrix * (bone_data.pose_bone.matrix * inverse_parent_matrix * bone_data.rest_pose.copy().inverted())
-						matrix_delta = global_tx * (inverse_parent_matrix * bone_data.pose_bone.matrix)
+						# Compute the delta from the bind pose to this frame.
+						# We need the inverted bind pose to remove any transforms from
+						# the initial bind pose.
+						# Inverse parent matrix ensures this only records local transforms.
+						matrix_delta = global_tx * (inverted_bind_pose * inverse_parent_matrix * bone_data.pose_bone.matrix)
 
 						t, _, s = matrix_delta.decompose()
 						r = matrix_delta.to_quaternion()
@@ -942,13 +943,17 @@ class GeminiModel(object):
 						# 	math.degrees(euler[1]),
 						# 	math.degrees(euler[2])))
 
-						scale.append([1, 1, 1])
-						# rotation.append([0, 0, 0, 1])
-						translation.append([0, 0, 0])
+						# print("[%i] [%s] tx: %2.2f, %2.2f, %2.2f" % (
+						# 	frame, bone_data.name,
+						# 	t[0], t[1], t[2]))
 
-						# scale.append([s[0], s[1], s[2]])
+						#scale.append([1, 1, 1])
+						# rotation.append([0, 0, 0, 1])
+						# translation.append([0, 0, 0])
+
+						scale.append([s[0], s[1], s[2]])
 						rotation.append([r.x, r.y, r.z, r.w])
-						# translation.append([t[0], t[1], t[2]])
+						translation.append([t[0], t[1], t[2]])
 						# print("tx %i '%s' : %2.2f, %2.2f, %2.2f" % (frame,
 							# bone_data.name,
 							# t.x, t.y, t.z))
