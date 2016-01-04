@@ -190,23 +190,38 @@ namespace gemini
 								block.inverse_bind_transforms = model_instance->get_inverse_bind_transforms(geometry_index);
 
 								queue->insert(block);
-							}
 
-//							size_t geometry_index = 0;
-//							// we must update the transforms for each geometry instance
-//							for (const assets::Geometry& geo : mesh->geometry)
-//							{
-//								// draw bone transforms as axes
-//								// TODO: this should be moved elsewhere or turned into a special debug render block?
-//								for (size_t index = 0; index < mesh->skeleton.size(); ++index)
-//								{
-//									glm::mat4* debug_poses = model_instance->get_debug_bone_transforms();
-//									glm::mat4& debug_bone_transform = debug_poses[index];
-//									debug_bone_transform = geo.bind_poses[index];
-//								}
-//
-//								++geometry_index;
-//							}
+
+								glm::vec3 last_origin;
+								int32_t last_parent = -1;
+								glm::vec3 origins[MAX_BONES];
+								if (model_instance->get_total_transforms())
+								{
+									// draw individual links for each bone to represent the skeleton
+									for (size_t index = 0; index < mesh->skeleton.size(); ++index)
+									{
+										size_t transform_index = (geometry_index * mesh->skeleton.size()) + index;
+										assets::Joint* joint = &mesh->skeleton[index];
+										if (joint->parent_index != -1)
+										{
+											last_origin = origins[joint->parent_index];
+										}
+										else
+										{
+											last_origin = glm::vec3(0, 0, 0);
+										}
+
+										const glm::mat4* debug_skeletal_pose = model_instance->get_debug_bone_transforms();
+										const glm::mat4& mat = debug_skeletal_pose[transform_index];
+										glm::vec3 origin = glm::vec3(glm::column(mat, 3));
+
+										debugdraw::instance()->line(last_origin, origin, core::Color::from_rgba(255, 128, 0, 255));
+										last_origin = origin;
+										origins[index] = origin;
+									}
+								}
+
+							}
 #if 1
 							const glm::mat4* debug_skeletal_pose = model_instance->get_debug_bone_transforms();
 							const size_t total_transforms = model_instance->get_total_transforms();
@@ -214,7 +229,7 @@ namespace gemini
 							{
 //								glm::vec4 origin = glm::column(debug_skeletal_pose[i], 3);
 //								LOGV("origin: %2.2f, %2.2f, %2.2f\n", origin.x, origin.y, origin.z);
-								debugdraw::instance()->axes(debug_skeletal_pose[i], 0.25f, 0.0f);
+								debugdraw::instance()->axes(debug_skeletal_pose[i], 0.05f, 0.0f);
 							}
 #endif
 						}
