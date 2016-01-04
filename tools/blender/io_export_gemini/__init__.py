@@ -467,8 +467,8 @@ class Mesh(Node):
 		print("# indices: %i" % len(self.indices))
 
 	@staticmethod
-	def cache_weights(model, node, cache, obj):
-		bone_data = []
+	def cache_weights(model, node, cache, obj, object_world_matrix):
+		bone_data = BoneCache()
 
 		# apply modifiers to the mesh node
 		for modifier in obj.modifiers:
@@ -487,7 +487,11 @@ class Mesh(Node):
 				# We also need to populate the bind pose offset list
 				bind_data = []
 
-				bone_data = collect_bone_data(model, armature, pose_bones_by_name)
+				bone_data = collect_bone_data(model,
+					armature,
+					pose_bones_by_name,
+					object_world_matrix)
+
 				for bone in bone_data.ordered_items:
 					node.skeleton.append({
 						"name": bone.name,
@@ -498,7 +502,7 @@ class Mesh(Node):
 						"name": bone.name,
 						"parent": bone.parent_index,
 						"inverse_bind_pose": matrix_to_list(bone.inverse_bind_pose),
-						"bind_offset": matrix_to_list(bone.bind_offset)
+						"bind_pose": matrix_to_list(bone.bind_pose)
 					})
 
 				node.bind_data = bind_data
@@ -514,10 +518,15 @@ class Mesh(Node):
 		# apply rotation and scale transform to the object
 		# this ensures that any modifications are baked to the vertices
 		# before we output them to the file
-		bpy.context.scene.objects.active = obj
+		triangulated_object.select = True
 
-		output = bpy.ops.object.transform_apply(location=True,
-			scale=True)
+		# output = bpy.ops.object.transform_apply(
+		# 	location=True,
+		# 	rotation=True,
+		# 	scale=True)
+
+		world_matrix = model.global_matrix * triangulated_object.matrix_world.copy()
+		print("world_matrix: %s" % world_matrix)
 
 		mesh = triangulated_object.to_mesh(bpy.context.scene, True, 'PREVIEW')
 
@@ -540,7 +549,8 @@ class Mesh(Node):
 			# 1. Test geometry only (untransformed by bones)
 			# 2. Test bone transforms with identity matrices
 			# 3. Test bone transforms piecemeal [translation, rotation, scale]
-			mesh.transform(model.global_matrix)
+			#mesh.transform(model.global_matrix)
+			pass
 
 		# collect all blender materials used by this mesh
 		for bmaterial in mesh.materials:
@@ -551,7 +561,7 @@ class Mesh(Node):
 
 		cache = VertexCache()
 
-		bone_data = Mesh.cache_weights(model, node, cache, obj)
+		bone_data = Mesh.cache_weights(model, node, cache, obj, world_matrix)
 		model.bone_data = bone_data
 
 		weights = [[None]] * len(mesh.vertices)
@@ -573,8 +583,12 @@ class Mesh(Node):
 			group_index_to_bone[group.index] = boneinfo
 
 		for index, mv in enumerate(mesh.vertices):
-			vertices.extend(
-				[(mv.co[0], mv.co[1], mv.co[2])])
+			print("%i v: %2.2f, %2.2f, %2.2f" % (index, mv.co[0], mv.co[1], mv.co[2]))
+			position = world_matrix * mv.co
+			vertices.extend([(
+				position[0],
+				position[1],
+				position[2])])
 
 			# don't add out of range indices
 			weights[index] = []
@@ -658,6 +672,9 @@ class Mesh(Node):
 		cache.populate_with_geometry(vertices, normals, uvs, colors, mesh.loops, weights=weights)
 		node.populate_with_vertex_cache(cache)
 
+		# de-select the previously selected object
+		triangulated_object.select = False
+
 		if created_temp_mesh:
 			# remove the triangulated object we created
 			bpy.ops.object.mode_set(mode='OBJECT')
@@ -705,10 +722,7 @@ class BoneData(object):
 		self.inverse_bind_pose = None
 
 		# bone's local offset from parent in object space
-		self.bind_offset = None
-
-		# the bone's matrix_local (in Blender coordinates)
-		self.rest_pose = Matrix()
+		self.bind_pose = None
 
 class BoneCache(object):
 	def __init__(self):
@@ -726,7 +740,7 @@ class BoneCache(object):
 			return self.bone_data_by_name[bone_name]
 		return None
 
-def collect_bone_data(model, armature, pose_bones_by_name):
+def collect_bone_data(model, armature, pose_bones_by_name, object_world_matrix):
 	cache = BoneCache()
 	bone_index = 0
 	bones = armature.data.bones
@@ -734,7 +748,9 @@ def collect_bone_data(model, armature, pose_bones_by_name):
 
 	print("armature matrix: %s" % (matrix_to_list(armature.matrix_world)))
 
-	for bone in bones:
+	inverted_root_pose = Matrix()
+
+	for index, bone in enumerate(bones):
 		parent_index = -1
 
 		if bone.parent:
@@ -746,31 +762,34 @@ def collect_bone_data(model, armature, pose_bones_by_name):
 			parent_index)
 
 		# If you hit this, you aren't using the associated pose bone
-		# print("bone.name = %s" % bone.name)
-		# print("pose.name = %s" % bone_data.pose_bone.name)
-		assert(bone.name == bone_data.pose_bone.name)
+		assert(bone_data.name == bone_data.pose_bone.name)
 
-		inverse_parent_bind_pose = Matrix()
-		if bone_data.pose_bone.parent:
-			inverse_parent_bind_pose = (model.global_matrix * bone_data.pose_bone.parent.matrix).inverted()
+		bind_matrix = Matrix()
+		inverse_bind_pose = Matrix()
 
+		parent = bone_data.pose_bone.parent.bone if bone_data.pose_bone.parent else None
+		if not parent:
+			inverted_root_pose = (bone_data.bone.matrix_local).inverted()
 
-		# 1. global_matrix converts from blender to gemini coordinates
-		# 2. (armature.matrix_world * pose_bone.matrix) accounts for the armature world transform
+		bind_matrix = (inverted_root_pose * bone_data.bone.matrix_local)
 
-		# the inverse bind pose needs to include the transform from the armature
+		# TODO: needs to include the transform from the armature
 		# since it needs the correct position of its world position in order to transform to joint space.
-		bone_data.inverse_bind_pose = (model.global_matrix * (armature.matrix_world * bone_data.pose_bone.matrix)).inverted()
+		if not parent:
+			inverse_bind_pose = bind_matrix.copy().inverted()
+		else:
+			inverse_bind_pose = bind_matrix.copy().inverted()
 
-		# the bind position doesn't need this (since it just needs to be relative to the parent)
-		bone_data.bind_offset = (model.global_matrix * bone_data.pose_bone.matrix) * inverse_parent_bind_pose
-		bone_data.rest_pose = bone_data.bone.matrix_local
+
+		# the bind pose needs to be  relative to the parent
+		bone_data.bind_pose = bind_matrix
+
+		# converts the object space vertices to joint space
+		bone_data.inverse_bind_pose = inverse_bind_pose
 
 		cache.set(bone.name, bone_index, bone_data)
 
 		bone_index += 1
-		#print("bone: %s [index: %i, parent: %i]" % (bone.name, bone_data.index, bone_data.parent_index))
-
 	return cache
 
 
@@ -789,7 +808,7 @@ class GeminiModel(object):
 		# used for coordinate conversion
 		# Assume -Z forward with Y-Up.
 		self.global_matrix = axis_conversion(to_forward='-Z', to_up='Y').to_4x4()
-		print(self.global_matrix)
+		print("global_matrix: %s" % self.global_matrix)
 
 		self.filepath = kwargs.get("filepath", None)
 
@@ -798,6 +817,9 @@ class GeminiModel(object):
 		self.frame_end = kwargs.get("frame_end", 0)
 
 		self.armature = None
+
+		# store the pose position of the armature so we can restore it after
+		self.armature_pose_position = None
 
 		self.file_handle = None
 
@@ -874,6 +896,10 @@ class GeminiModel(object):
 
 		scene_fps = bpy.context.scene.render.fps
 
+		# place the armature in POSE position
+		self.armature.data.pose_position = 'POSE'
+		#bpy.context.scene.frame_set(bpy.context.scene.frame_current)
+
 		for action in actions:
 			print("generating sequence... %s" % (action.name))
 			anim0 = AnimatedSequence()
@@ -929,27 +955,38 @@ class GeminiModel(object):
 						current_time_seconds = (frame / float(scene_fps))
 						time_values.append(current_time_seconds)
 
+						global_tx = Matrix()
+
 						inverse_parent_matrix = Matrix()
 
 						if bone_data.pose_bone.parent:
-							inverse_parent_matrix = (self.global_matrix * bone_data.pose_bone.parent.matrix).inverted()
+							inverse_parent_matrix = (bone_data.pose_bone.parent.matrix).inverted()
+						else:
+							global_tx = self.global_matrix
 
-						inverted_bind_pose = bone_data.bind_offset.copy().inverted()
+						inverted_bind_pose = bone_data.bind_pose.copy().inverted()
 
 						# print("frame: %i, %s" % (frame, bone_data.pose_bone.matrix))
 						# compute the delta from the bind pose to this frame
-						matrix_delta = (self.global_matrix * bone_data.pose_bone.matrix) * inverse_parent_matrix * inverted_bind_pose
+						#matrix_delta = self.global_matrix * (bone_data.pose_bone.matrix * inverse_parent_matrix * bone_data.rest_pose.copy().inverted())
+						matrix_delta = global_tx * (inverse_parent_matrix * bone_data.pose_bone.matrix)
 
 						t, _, s = matrix_delta.decompose()
 						r = matrix_delta.to_quaternion()
+						# euler = matrix_delta.to_euler()
+						# print("[%i] [%s] rx: %2.2f, %2.2f, %2.2f" % (
+						# 	frame, bone_data.name,
+						# 	math.degrees(euler[0]),
+						# 	math.degrees(euler[1]),
+						# 	math.degrees(euler[2])))
 
 						scale.append([1, 1, 1])
 						# rotation.append([0, 0, 0, 1])
-						# translation.append([0, 0, 0])
+						translation.append([0, 0, 0])
 
-						#scale.append([s[0], s[1], s[2]])
+						# scale.append([s[0], s[1], s[2]])
 						rotation.append([r.x, r.y, r.z, r.w])
-						translation.append([t[0], t[1], t[2]])
+						# translation.append([t[0], t[1], t[2]])
 						# print("tx %i '%s' : %2.2f, %2.2f, %2.2f" % (frame,
 							# bone_data.name,
 							# t.x, t.y, t.z))
@@ -974,6 +1011,11 @@ class GeminiModel(object):
 		# set the frame before we retrieve data.
 		bpy.context.scene.frame_set(1)
 
+		#original_transform_orientation = bpy.context.space_data.transform_orientation
+		# set this to global orientations otherwise the bone orientations will be
+		# in local-space -- which don't really make sense.
+		#bpy.context.space_data.transform_orientation = "GLOBAL"
+
 		selected_meshes = []
 		mesh_list = []
 
@@ -984,6 +1026,9 @@ class GeminiModel(object):
 					selected_meshes.append(obj)
 			elif obj.type == "ARMATURE":
 				self.armature = obj
+				self.armature_pose_position = obj.data.pose_position
+				self.armature.data.pose_position = 'REST'
+				#bpy.context.scene.frame_set(bpy.context.scene.frame_current)
 
 		print("Total Meshes: ", len(mesh_list)," Selected: ", len(selected_meshes))
 
@@ -1037,6 +1082,13 @@ class GeminiModel(object):
 
 		# restore the original frame
 		bpy.context.scene.frame_set(original_scrubber_position)
+
+		# restore the  transform orientation
+		#bpy.context.space_data.transform_orientation = original_transform_orientation
+
+		if self.armature:
+			# restore armature's pose position
+			self.armature.data.pose_position = self.armature_pose_position
 
 class export_gemini(bpy.types.Operator):
 	'''Export Skeleton Mesh / Animation Data file(s)'''

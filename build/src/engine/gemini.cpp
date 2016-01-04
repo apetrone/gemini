@@ -522,10 +522,6 @@ class ModelInterface : public gemini::IModelInterface
 			// model. Congrats.
 			assert(mesh->skeleton.size() < MAX_BONES);
 
-//#if defined(GEMINI_DEBUG_BONES)
-			const glm::mat4& tx = this->get_local_transform();
-//#endif
-
 			size_t geometry_index = 0;
 			// we must update the transforms for each geometry instance
 			for (const assets::Geometry& geo : mesh->geometry)
@@ -535,7 +531,6 @@ class ModelInterface : public gemini::IModelInterface
 				assert(!geo.bind_poses.empty());
 
 				size_t transform_index;
-				// recalculate
 
 				glm::mat4 local_transforms[MAX_BONES];
 				glm::mat4 accum_bind_poses[MAX_BONES];
@@ -546,9 +541,7 @@ class ModelInterface : public gemini::IModelInterface
 					assets::Joint* joint = &mesh->skeleton[index];
 					glm::mat4& global_pose = bone_transforms[transform_index];
 					glm::mat4& object_to_world = local_transforms[index];
-//#if defined(GEMINI_DEBUG_BONES)
 					glm::mat4& debug_bone_transform = debug_bone_transforms[index];
-//#endif
 
 					glm::mat4& bind_transform = inverse_bind_transforms[transform_index];
 					glm::mat4 local_scale;
@@ -557,49 +550,36 @@ class ModelInterface : public gemini::IModelInterface
 //					const glm::vec3& pos = positions[index];
 //					LOGV("pos: %2.2f, %2.2f, %2.2f\n", pos.x, pos.y, pos.z);
 					glm::mat4 local_pose = local_transform * local_rotation * local_scale;
-					//				local_to_world = tr * pivot * ro * sc * inv_pivot;
+//					local_to_world = tr * pivot * ro * sc * inv_pivot;
 
 					glm::mat4 parent_bind_pose;
 
 					glm::mat4 bind_pose = geo.bind_poses[index];
 
 					glm::mat4& stored_pose = accum_bind_poses[index];
-
-//					bind_pose = geo.bind_poses[index];
+					glm::mat4 parent_transform = glm::mat4(1.0f);
 
 					if (joint->parent_index > -1)
 					{
-						const glm::mat4& parent_transform = local_transforms[joint->parent_index];
-						object_to_world = local_pose * parent_transform;
+						parent_transform = local_transforms[joint->parent_index];
 						stored_pose = bind_pose * accum_bind_poses[joint->parent_index];
 					}
 					else
 					{
-						object_to_world = local_pose;
-//						bind_pose = accum_bind_poses[index];
 						stored_pose = bind_pose;
 					}
 
-					// this will be used for skinning in the vertex shader
-//					global_pose = object_to_world * geo.bind_poses[index];
-					global_pose = object_to_world * stored_pose;
+					object_to_world = local_pose * parent_transform;
 
-					// this will be used for debug rendering
-					//debug_bone_transform = tx * (object_to_world);
+					// this will be used for skinning in the vertex shader
+					global_pose = stored_pose * object_to_world;
 
 					// copy this directly to draw in world position
-					debug_bone_transform = stored_pose;
+					// this will be used for debug rendering
+					debug_bone_transform = stored_pose * local_pose * parent_transform;
 
-
-
-//					global_pose = geo.bind_poses[index];
-
+					// set the inverse_bind_pose
 					bind_transform = geo.inverse_bind_poses[index];
-
-#if defined(GEMINI_DEBUG_BONES)
-
-					//debugdraw::instance()->axes(debug_bone_transform, 0.15f);
-#endif
 				}
 
 				++geometry_index;
@@ -901,6 +881,8 @@ public:
 
 		render_scene_from_camera(entity_list, newview, scenelink);
 
+		glm::mat4 origin = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f));
+		::renderer::debugdraw::axes(origin, 0.25f);
 		::renderer::debugdraw::render(newview.modelview, newview.projection, 0, 0, newview.width, newview.height);
 	}
 
