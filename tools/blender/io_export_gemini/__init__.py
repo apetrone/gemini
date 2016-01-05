@@ -93,14 +93,6 @@ COORDINATE_SYSTEM_YUP = "YUP"
 #
 # utility functions
 #
-BMeshAware = False
-
-
-def checkBMeshAware():
-	global BMeshAware
-
-	print( "Blender r%s" % bpy.app.build_revision )
-	BMeshAware = (int(bpy.app.build_revision) > 44136)
 
 def matrix_to_list(matrix):
 	output = []
@@ -110,36 +102,7 @@ def matrix_to_list(matrix):
 			output.append(matrix[col][row])
 	return output
 
-# def get_host_platform():
-# 	"""
-# 		Retrieves the host platform
-# 	"""
-# 	platform_name = platform.platform().lower()
-# 	if "linux" in platform_name:
-# 		return "linux"
-# 	elif "darwin" in platform_name:
-# 		return "macosx"
-# 	elif "nt" or "windows" in platform_name:
-# 		return "windows"
-# 	else:
-# 		return "unknown"
-
-def get_mesh_faces(mesh):
-	# for BMesh compatability
-	# http://blenderartists.org/forum/showthread.php?251840-Bmesh-Where-did-the-UV-coords-go&p=2097099&viewfull=1#post2097099
-	if hasattr(mesh, 'polygons'):
-		mesh.calc_tessface()
-		mesh_faces = mesh.tessfaces
-	else:
-		mesh_faces = mesh.faces
-
-	return mesh_faces
-
 def create_triangulated_mesh(object):
-
-	# enter object mode in blender
-	#bpy.ops.object.mode_set( mode='OBJECT' )
-
 	# de-select all objects
 	for i in bpy.context.scene.objects:
 		i.select = False
@@ -150,16 +113,18 @@ def create_triangulated_mesh(object):
 	# set active object to this one
 	bpy.context.scene.objects.active = object
 
-	# set object mode
-	#bpy.ops.object.mode_set( mode='OBJECT' )
-
-	mesh_faces = get_mesh_faces(object.data)
+	# for BMesh compatability
+	# http://blenderartists.org/forum/showthread.php?251840-Bmesh-Where-did-the-UV-coords-go&p=2097099&viewfull=1#post2097099
+	if hasattr(object.data, 'polygons'):
+		object.data.calc_tessface()
+		mesh_faces = object.data.tessfaces
+	else:
+		mesh_faces = object.data.faces
 
 	quads = [f for f in mesh_faces if len(f.vertices) == 4]
 
 	if quads:
-		#print( "This mesh will be converted to Triangles..." )
-		# make a copy of the object and data
+		# make a copy of the object and triangulate this.
 		data = object.data.copy()
 		obj = object.copy()
 		obj.data = data
@@ -191,42 +156,10 @@ def create_triangulated_mesh(object):
 		# go back to object mode
 		bpy.ops.object.mode_set( mode='OBJECT' )
 
-		#print( "Triangulated Mesh", obj.name )
-
 		return obj, True
 	else:
-		#print( "No need to convert mesh to triangles." )
+		# No need to convert mesh to triangles; already triangulated
 		return object, False
-
-"""
-class export_animation(bpy.types.Operator):
-	bl_idname = "gemini_export.animation"
-	bl_label = "Export gemini .animation"
-
-	UseVertexAnimation = BoolProperty(
-		name="Use Vertex Animation",
-		description="Exports vertex animations",
-		default=True)
-
-	TimelineBegin = IntProperty(
-		name="Animation Begin",
-		description="First frame of animation to export",
-		default=0)
-
-	TimelineEnd = IntProperty(
-		name="Animation End",
-		description="Last frame of animation to export",
-		default=1)
-
-	def execute(self, context):
-		return {'FINISHED'}
-
-	def invoke(self, context, event):
-		#print( 'Invoke' )
-		wm = context.window_manager
-		wm.fileselect_add(self)
-		return {'RUNNING_MODAL'}
-"""
 
 
 #
@@ -467,7 +400,8 @@ class Mesh(Node):
 		print("# indices: %i" % len(self.indices))
 
 	@staticmethod
-	def cache_weights(model, node, cache, obj):
+	def process_armature(model, node, cache, obj):
+		""" Returns a BoneCache instance """
 		bone_data = BoneCache()
 
 		# apply modifiers to the mesh node
@@ -530,7 +464,7 @@ class Mesh(Node):
 
 		cache = VertexCache()
 
-		bone_data = Mesh.cache_weights(model, node, cache, obj)
+		bone_data = Mesh.process_armature(model, node, cache, obj)
 		model.bone_data = bone_data
 
 		weights = [[None]] * len(mesh.vertices)
@@ -544,8 +478,8 @@ class Mesh(Node):
 			# convert group index to boneinfo.index
 			boneinfo = bone_data.find_by_name(group.name)
 			if not boneinfo:
-				# It's possible to have vertex groups for bones which may have
-				# been removed. Ignore these.
+				# It's possible to have vertex groups for bones which
+				# may have been removed. Ignore these.
 				continue
 
 			group_index_to_bone[group.index] = boneinfo
@@ -603,30 +537,6 @@ class Mesh(Node):
 					color_set.append((data.color[0], data.color[1], data.color[2], 1.0))
 				colors.append(color_set)
 
-
-		print("# loops: %i" % len(mesh.loops))
-		print("# polygons: %i" % (len(mesh.polygons)))
-
-
-		"""
-
-		# Create a vertex map filled with as many vertices as
-		# the original mesh.
-		vertex_mapping = [0] * len(obj.data.vertices)
-
-		# 2. collect blend weights from this object
-		for vertex_group in obj.vertex_groups:
-			boneinfo = bone_data.find_by_name(vertex_group.name)
-			assert(boneinfo != None)
-
-			print("bone_index: %i, \"%s\"" % (boneinfo.index, boneinfo.name))
-			for index in range(0, len(obj.data.vertices) - 1):
-				try:
-					print("%i - %2.2f" % (index, vertex_group.weight(index)))
-				except:
-					pass
-		"""
-
 		if weights:
 			print("total weights: %i, total vertices: %i" % (len(weights), len(vertices)))
 			assert(len(weights) == len(vertices))
@@ -657,21 +567,6 @@ class AnimatedSequence(Node):
 #
 # main classes
 #
-
-# class Cache(object):
-# 	def __init__(self):
-# 		self.ordered_array = []
-# 		self.cache = {}
-
-# 	def find_or_insert(self, item):
-# 		if item not in self.cache:
-# 			self.cache[item] = len(self.ordered_array)
-# 			self.ordered_array.append(item)
-# 			print("added item: %s" % item)
-
-# 		return self.cache[item]
-
-# http://blender.stackexchange.com/questions/15170/blender-python-exporting-bone-matrices-for-animation-relative-to-parent
 
 class BoneData(object):
 	def __init__(self, bone, pose_bone, index, parent_index = -1):
@@ -707,8 +602,8 @@ def collect_bone_data(model, armature, pose_bones_by_name):
 	cache = BoneCache()
 	bone_index = 0
 	bones = armature.data.bones
-	print("armature: %s has %i bones" % (armature.name, len(bones)))
-	print("armature matrix: %s" % (armature.matrix_world))
+	# print("armature: %s has %i bones" % (armature.name, len(bones)))
+	# print("armature matrix: %s" % (armature.matrix_world))
 
 	inverted_root_pose = Matrix()
 
@@ -770,7 +665,6 @@ class GeminiModel(object):
 		# used for coordinate conversion
 		# Assume -Z forward with Y-Up.
 		self.global_matrix = axis_conversion(to_forward='-Z', to_up='Y').to_4x4()
-		print("global_matrix: %s" % self.global_matrix)
 
 		self.filepath = kwargs.get("filepath", None)
 
@@ -785,6 +679,9 @@ class GeminiModel(object):
 
 		self.file_handle = None
 
+		# Export selected meshes only
+		self.selected_only = False
+
 		print("export range: %i -> %i" % (self.frame_start, self.frame_end))
 
 		# internal state for handling materials
@@ -795,6 +692,7 @@ class GeminiModel(object):
 		# Bone cache for this model if attached to an Armature
 		self.bone_data = None
 
+		self.selected_meshes = []
 	#
 	# Materials
 	#
@@ -828,12 +726,6 @@ class GeminiModel(object):
 			return self.materials[filepath]
 
 		return None
-		'''
-		if material in self.materials:
-			return self.materials[ material ]
-		else:
-			raise Exception( 'Material not found!' )
-		'''
 
 	#
 	# File test -- make sure we can open it before attempting to export
@@ -850,8 +742,6 @@ class GeminiModel(object):
 	def info(self, message):
 		self.instance.report({'INFO'}, message)
 
-
-
 	def populate_animations(self, actions):
 		""" Populate Animations given the armatures and actions from the scene"""
 		animations = []
@@ -860,14 +750,12 @@ class GeminiModel(object):
 
 		# place the armature in POSE position
 		self.armature.data.pose_position = 'POSE'
-		#bpy.context.scene.frame_set(bpy.context.scene.frame_current)
 
 		for action in actions:
-			print("generating sequence... %s" % (action.name))
-			anim0 = AnimatedSequence()
-			anim0.name = action.name
-			anim0.frames_per_second = scene_fps
-			anim0.duration_seconds = sequence_duration = (self.frame_end - self.frame_start) / scene_fps
+			sequence = AnimatedSequence()
+			sequence.name = action.name
+			sequence.frames_per_second = scene_fps
+			sequence.duration_seconds = sequence_duration = (self.frame_end - self.frame_start) / scene_fps
 
 			if self.armature and self.bone_data:
 				# set the current action
@@ -936,33 +824,36 @@ class GeminiModel(object):
 
 						t, _, s = matrix_delta.decompose()
 						r = matrix_delta.to_quaternion()
-						# euler = matrix_delta.to_euler()
-						# print("[%i] [%s] rx: %2.2f, %2.2f, %2.2f" % (
-						# 	frame, bone_data.name,
-						# 	math.degrees(euler[0]),
-						# 	math.degrees(euler[1]),
-						# 	math.degrees(euler[2])))
-
-						# print("[%i] [%s] tx: %2.2f, %2.2f, %2.2f" % (
-						# 	frame, bone_data.name,
-						# 	t[0], t[1], t[2]))
-
-						#scale.append([1, 1, 1])
-						# rotation.append([0, 0, 0, 1])
-						# translation.append([0, 0, 0])
 
 						scale.append([s[0], s[1], s[2]])
 						rotation.append([r.x, r.y, r.z, r.w])
 						translation.append([t[0], t[1], t[2]])
-						# print("tx %i '%s' : %2.2f, %2.2f, %2.2f" % (frame,
-							# bone_data.name,
-							# t.x, t.y, t.z))
 
-					anim0.children.append(obj)
+					sequence.children.append(obj)
 
-				animations.append(anim0)
+				animations.append(sequence)
 		return animations
 
+
+	def add_object(self, obj):
+		type_filter = ['MESH', 'ARMATURE']
+		num_armatures = 0
+
+		# For now, we only care about meshes and armatures
+		if obj.type in type_filter:
+			if obj.type == 'ARMATURE':
+				# setup armature
+				self.armature = obj
+				self.armature_pose_position = obj.data.pose_position
+				self.armature.data.pose_position = 'REST'
+
+				num_armatures += 1
+				if num_armatures > 1:
+					print("*** Found more than one armature! Danger Will Robinson!")
+
+			elif obj.type == 'MESH':
+				if self.selected_only and obj.select or not self.selected_only:
+					self.selected_meshes.append(obj)
 
 	#
 	# Export model + animations
@@ -978,34 +869,20 @@ class GeminiModel(object):
 		# set the frame before we retrieve data.
 		bpy.context.scene.frame_set(1)
 
-		#original_transform_orientation = bpy.context.space_data.transform_orientation
-		# set this to global orientations otherwise the bone orientations will be
-		# in local-space -- which don't really make sense.
-		#bpy.context.space_data.transform_orientation = "GLOBAL"
-
-		selected_meshes = []
-		mesh_list = []
-
-		for obj in bpy.context.scene.objects:
-			if obj.type == "MESH":
-				mesh_list.append(obj)
-				if obj.select:
-					selected_meshes.append(obj)
-			elif obj.type == "ARMATURE":
-				self.armature = obj
-				self.armature_pose_position = obj.data.pose_position
-				self.armature.data.pose_position = 'REST'
-				#bpy.context.scene.frame_set(bpy.context.scene.frame_current)
-
-		print("Total Meshes: ", len(mesh_list)," Selected: ", len(selected_meshes))
+		# scan through scene objects
+		for index, obj in enumerate(bpy.context.scene.objects):
+			print("index: %i, object: %s, type: %s" % (index, obj.name, obj.type))
+			self.add_object(obj)
 
 		# clear selection
+		bpy.ops.object.select_all(action='DESELECT')
+		#original_selection = bpy.context.scene.objects.selected_objects
 		bpy.context.scene.objects.active = None
 
 		current_mesh = 0
-		total_meshes = len(selected_meshes)
+		total_meshes = len(self.selected_meshes)
 
-		print("Total selected meshes: %i" % len(selected_meshes))
+		print("Total selected meshes: %i" % len(self.selected_meshes))
 
 		root_node = RootNode(materials=[])
 		root_node.export_info = {
@@ -1014,17 +891,14 @@ class GeminiModel(object):
 			'source_file': bpy.data.filepath
 		}
 
-		#selected_meshes = [obj if obj.type == "MESH" and obj.select in bpy.context.scene.objects]
-
 		# iterate over selected objects
-		for obj in selected_meshes:
+		for obj in self.selected_meshes:
 			# TODO: Add an explicit EDGE SPLIT modifier?
 			meshnode = Mesh.from_object(self, obj, root_node)
 			root_node.children.append(meshnode)
 
 			current_mesh += 1
 			self.info('Export Progress -> %g%%' % ((current_mesh/total_meshes) * 100.0))
-
 
 		root_node.prepare_materials_for_export(self)
 
@@ -1049,9 +923,6 @@ class GeminiModel(object):
 
 		# restore the original frame
 		bpy.context.scene.frame_set(original_scrubber_position)
-
-		# restore the  transform orientation
-		#bpy.context.space_data.transform_orientation = original_transform_orientation
 
 		if self.armature:
 			# restore armature's pose position
@@ -1121,11 +992,9 @@ class export_gemini(bpy.types.Operator):
 		return {'FINISHED'}
 
 	def invoke(self, context, event):
-		#print( 'Invoke' )
 		wm = context.window_manager
 		wm.fileselect_add(self)
 		return {'RUNNING_MODAL'}
-
 
 #
 # startup / blender specific interface functions
