@@ -38,7 +38,7 @@ namespace platform
 			class Window : public NativeWindow
 			{
 			public:
-				Window(const Parameters& parameters) :
+				Window(const Parameters&) :
 					NativeWindow(),
 					handle(NULL)
 					//context(NULL)

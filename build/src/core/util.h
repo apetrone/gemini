@@ -30,7 +30,7 @@
 
 namespace core
 {
-	template <unsigned int C, class T>
+	template <size_t C, class T>
 	struct StackString;
 
 	template <class Type>

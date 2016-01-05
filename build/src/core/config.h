@@ -141,22 +141,3 @@
 #if !defined(PLATFORM_FILESYSTEM_SUPPORT)
 	#error PLATFORM_FILESYSTEM_SUPPORT is not defined!
 #endif
-
-// disable some warnings
-#if defined(_MSC_VER) // These are ignored by g++. Maybe they're ignored on other compilers?
-	#pragma warning( disable: 4100 ) // : unreferenced formal parameter
-	#pragma warning( disable: 4127 ) // : conditional expression is constant
-	#pragma warning( disable: 4189 ) // : local variable is initialized but not referenced
-	#pragma warning( disable: 4244 ) // : conversion from 'double' to 'float', possible loss of data
-	#pragma warning( disable: 4267 ) // : conversion from size_t to int, possible loss of data
-	#pragma warning( disable: 4305 ) // : truncate 'double' to 'float'
-	#pragma warning( disable: 4312 ) // : 'operation' : conversion from 'type1' to 'type2' of greater size
-	#pragma warning( disable: 4482 ) // : nonstandard extension used: enum 'PanelType_s::PanelType_e' used in qualified name
-	#pragma warning( disable: 4530 ) // : C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
-	#pragma warning( disable: 4800 ) // : forcing value to bool 'true' or 'false' (performance warning)
-	#pragma warning( disable: 4996 ) // : This function or variable may be unsafe. Consider using <alternative> instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-
-
-	//#pragma warning( disable: 4995 ) // : name was marked as #pragma deprecated
-	// ^ Superceded by #define STRSAFE_NO_DEPRECATE on WIN32
-#endif

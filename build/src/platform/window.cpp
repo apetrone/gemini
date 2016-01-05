@@ -41,8 +41,8 @@ namespace platform
 			// center the window in the screen
 			frame.x = screen_rect.x + (screen_rect.width/2) - width/2;
 			frame.y = screen_rect.y + (screen_rect.height/2) - height/2;
-			frame.width = width;
-			frame.height = height;
+			frame.width = static_cast<float>(width);
+			frame.height = static_cast<float>(height);
 
 			return frame;
 		}

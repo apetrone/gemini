@@ -31,21 +31,21 @@
 // TODO@APP: Implement me: https://msdn.microsoft.com/en-us/library/ms810467.aspx
 namespace platform
 {
-	Serial* serial_open(const char* device, uint32_t baud_rate)
+	Serial* serial_open(const char*, uint32_t)
 	{
 		return nullptr;
 	}
 
-	void serial_close(Serial* serial)
+	void serial_close(Serial*)
 	{
 	}
 
-	int serial_read(Serial* serial, void* buffer, int total_bytes)
+	int serial_read(Serial*, void*, int)
 	{
 		return 0;
 	}
 
-	int serial_write(Serial* serial, const void* buffer, int total_bytes)
+	int serial_write(Serial*, const void*, int)
 	{
 		return 0;
 	}

@@ -168,12 +168,12 @@ namespace core
 					return *this;
 				}
 
-				unsigned int get_index() const { return index; }
+				size_t get_index() const { return index; }
 			};
 
 			Iterator erase(Iterator& it)
 			{
-				items.erase(items.begin() + it.get_index());
+				items.erase(items.begin() + static_cast<intmax_t>(it.get_index()));
 				--items_length;
 				return Iterator(*this, index);
 			}
@@ -206,7 +206,7 @@ namespace core
 
 			// pattern_start: The index of patterns to begin matching
 			// returns true or false if it found a match
-			virtual bool matches(uint32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars) { return 0; }
+			virtual bool matches(uint32_t&, PatternWrapper&, VariableMap&) { return 0; }
 			virtual const char* get_classname() const { return "Pattern"; }
 			virtual Type get_type() const { return PT_Pattern; }
 
@@ -478,7 +478,7 @@ namespace core
 			void parse_usage(std::vector<std::string> lines);
 			bool check_extra(bool enable_automatic_help, const char* version_string, PatternList& patterns);
 
-			void set_error(const char* format, ...) {}
+			void set_error(const char*, ...) {}
 
 			/// @brief Split a space-delimited string up into argc/argv
 			std::vector<std::string> split_commandline(const char* commandline);

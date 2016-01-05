@@ -43,8 +43,9 @@ namespace platform
 		if (thread_handle)
 		{
 			thread.handle = thread_handle;
-			thread.state = THREAD_STATE_ACTIVE;
 			thread.entry = entry;
+			thread.userdata = data;
+			thread.state = THREAD_STATE_ACTIVE;
 			return Result::success();
 		}
 
@@ -71,7 +72,7 @@ namespace platform
 
 	void thread_sleep(int milliseconds)
 	{
-		Sleep(milliseconds);
+		Sleep(static_cast<DWORD>(milliseconds));
 	}
 
 	void thread_detach(Thread& thread)

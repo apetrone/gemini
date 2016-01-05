@@ -42,10 +42,19 @@ namespace platform
 				return DefWindowProc(hwnd, message, wp, lp);
 			} // WindowProc
 
+			void create_context(win32::Window*)
+			{
+
+			} // create_context
+
+			void destroy_context(win32::Window*)
+			{
+
+			} // destroy_context
 		} // namespace win32
 
 
-		Result startup(RenderingBackend backend)
+		Result startup(RenderingBackend)
 		{
 			return Result::success();
 		}
@@ -114,8 +123,8 @@ namespace platform
 				}
 
 				AdjustWindowRect(&new_rect, window_style, 0);
-				window_width = (new_rect.right - new_rect.left);
-				window_height = (new_rect.bottom - new_rect.top);
+				window_width = static_cast<DWORD>(new_rect.right - new_rect.left);
+				window_height = static_cast<DWORD>(new_rect.bottom - new_rect.top);
 			}
 			else
 			{
@@ -129,9 +138,9 @@ namespace platform
 
 			RECT client_rect;
 			client_rect.left = 0;
-			client_rect.right = window_width;
+			client_rect.right = static_cast<LONG>(window_width);
 			client_rect.top = 0;
-			client_rect.bottom = window_height;
+			client_rect.bottom = static_cast<LONG>(window_height);
 
 			// ATI driver bug fix from irrlicht
 			MoveWindow(static_cast<HWND>(window->get_native_handle()),
@@ -141,38 +150,43 @@ namespace platform
 				client_rect.bottom,
 				TRUE);
 
+			win32::create_context(window);
+
 			return window;
 		}
 
 		void destroy(NativeWindow* window)
 		{
 			win32::Window* native_window = static_cast<win32::Window*>(window);
+
+			win32::destroy_context(native_window);
+
 			MEMORY_DELETE(native_window, get_platform_allocator());
 		}
 
-		void activate_context(NativeWindow* window)
+		void activate_context(NativeWindow*)
 		{
 		}
 
 		// deactivate this window for rendering
-		void deactivate_context(NativeWindow* window)
+		void deactivate_context(NativeWindow*)
 		{
 		}
 
 		// swap buffers on this window
-		void swap_buffers(NativeWindow* window)
+		void swap_buffers(NativeWindow*)
 		{
 		}
 
 		// return the window size in screen coordinates
-		Frame get_frame(NativeWindow* window)
+		Frame get_frame(NativeWindow*)
 		{
 			Frame frame;
 			return frame;
 		}
 
 		// return the renderable window surface in pixels
-		Frame get_render_frame(NativeWindow* window)
+		Frame get_render_frame(NativeWindow*)
 		{
 			Frame frame;
 			return frame;
@@ -185,29 +199,29 @@ namespace platform
 		}
 
 		/// @brief get the specified screen's rect (origin, width, and height) in pixels
-		Frame screen_frame(size_t screen_index)
+		Frame screen_frame(size_t)
 		{
 			Frame frame;
 			return frame;
 		}
 
 		// bring window to focus
-		void focus(NativeWindow* window)
+		void focus(NativeWindow*)
 		{}
 
 		// show or hide the mouse cursor
-		void show_cursor(bool enable)
+		void show_cursor(bool)
 		{}
 
 		// set the cursor position in screen coordinates
-		void set_cursor(float x, float y) {}
+		void set_cursor(float, float) {}
 
 		// get the cursor position in screen coordinates
-		void get_cursor(float& x, float& y) {}
+		void get_cursor(float&, float&) {}
 
 		// if enabled, the OS will generate delta mouse movement events
-		void set_relative_mouse_mode(bool enable) {}
+		void set_relative_mouse_mode(bool) {}
 
-		void set_mouse_tracking(bool enable) {}
+		void set_mouse_tracking(bool) {}
 	} // namespace window
 } // namespace platform
