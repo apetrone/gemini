@@ -47,7 +47,7 @@ namespace platform
 		SetErrorMode(_previous_error_mode);
 	} // backend_shutdown
 
-	void backend_log(platform::LogMessageType type, const char* message)
+	void backend_log(platform::LogMessageType, const char* message)
 	{
 		// honey badger don't care about LogMessageType
 		OutputDebugStringA(message);

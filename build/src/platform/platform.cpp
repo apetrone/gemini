@@ -226,7 +226,9 @@ namespace platform
 			{
 				if (*path == PATH_SEPARATOR)
 				{
-					strncpy(directory, normalized_path, (path+1)-normalized_path);
+					strncpy(directory,
+						normalized_path,
+						static_cast<size_t>((path + 1) - normalized_path));
 					platform::make_directory(directory);
 				}
 

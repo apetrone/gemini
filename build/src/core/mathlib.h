@@ -27,10 +27,10 @@
 #include "typedefs.h"
 
 #if defined(PLATFORM_WINDOWS)
-	#pragma warning( disable: 4305 ) // warning C4305: 'initializing' : truncation from 'double' to 'const aengine::real'
-	#pragma warning( disable: 4244 ) //warning C4244: 'initializing' : conversion from 'double' to 'const aengine::real', possible loss of data
+	#pragma warning( disable: 4305 ) // 'initializing' : truncation from 'double' to 'const aengine::real'
+	#pragma warning( disable: 4244 ) // 'initializing' : conversion from 'double' to 'const aengine::real', possible loss of data
+	#pragma warning( disable: 4668 ) // '_M_IX86_FP' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
 #endif
-
 
 // show output at build time regarding glm
 //#define GLM_MESSAGES 1

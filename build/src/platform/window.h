@@ -144,15 +144,19 @@ namespace platform
 
 			LIBRARY_EXPORT virtual ~NativeWindow();
 
-			/// @brief returns this platform's native window handle
+			/// @brief returns this platform's native window handle.
+			/// @returns A pointer to a native window handle.
 			LIBRARY_EXPORT virtual void* get_native_handle() = 0;
 
-			/// @brief Notification from the graphics provider
-			/// when the native visual id has been changed
-			LIBRARY_EXPORT virtual void update_visual(int visual) {}
+			/// @brief Update the visual for this window
+			/// when the native visual id has been changed.
+			/// @param[in] visual The new native visual id.
+			LIBRARY_EXPORT virtual void update_visual(int) {}
 
-			/// @brief An update to this window's dimensions happened
-			LIBRARY_EXPORT virtual void update_size(int width, int height) {}
+			/// @brief Update the size for this window.
+			/// @param[in] width The new window's width in pixels.
+			/// @param[in] height The new window's height in pixels.
+			LIBRARY_EXPORT virtual void update_size(int, int) {}
 
 			// data used by the graphics provider on this system
 			void* graphics_data;

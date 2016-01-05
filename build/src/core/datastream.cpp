@@ -120,7 +120,7 @@ namespace core
 			return data.size();
 		}
 
-		size_t ResizableMemoryStream::read(void* destination, size_t length)
+		size_t ResizableMemoryStream::read(void*, size_t)
 		{
 			return 0;
 		}

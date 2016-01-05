@@ -38,7 +38,7 @@ namespace render2
 		LIBRARY_EXPORT const void* get(const char* name);
 
 	private:
-		typedef HashSet<::core::StackString<32>, const void*> hashset_type;
+		typedef HashSet< ::core::StackString<32>, const void* > hashset_type;
 		hashset_type constant_map;
 	}; // ConstantBuffer
 } // namespace render2

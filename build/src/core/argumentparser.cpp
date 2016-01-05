@@ -74,7 +74,7 @@ namespace core
 			return matched;
 		}
 
-		bool LeafPattern::single_match(uint32_t& pattern_start, PatternWrapper& patterns, VariableMap& vars)
+		bool LeafPattern::single_match(uint32_t&, PatternWrapper&, VariableMap&)
 		{
 			// should not get here.
 			assert(0);
@@ -535,22 +535,11 @@ namespace core
 		void ArgumentParser::parse_expr(TokenWrapper& tokens, PatternList& results)
 		{
 			// expr ::= sequence ( '|' sequence )* ;
-
 			parse_sequence(tokens, results);
-
-			//while (tokens.current() == "|")
-			//{
-			//	tokens.pop();
-			//	PatternList other_results;
-			//	parse_sequence(tokens, other_results);
-			//	results.push_back(PatternPtr(new Required(other_results)));
-			//}
-
-
 		}
 
 
-		void ArgumentParser::parse_usage(const std::string& formal_usage, const char* help_string)
+		void ArgumentParser::parse_usage(const std::string& formal_usage, const char*)
 		{
 			// the formal usage pattern needs to be split up into tokens
 			// which can be fed into a regex.

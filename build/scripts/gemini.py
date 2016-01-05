@@ -1044,14 +1044,27 @@ def products(arguments, **kwargs):
 	g_windows = global_params.layout(platform="windows")
 	g_windows.driver.warninglevel = "EnableAllWarnings"
 	g_windows.driver.disablespecificwarnings = [
+		4127,	# conditional expression is constant
+				# This is caused by while(true) statements, which I
+				# prefer over for(;;).
 		4514, 	# : unreferenced inline function has been removed
-				# stl and various other third-party libraries spew this warning.
+				# stl and various other third-party libraries spew this.
+		4668, 	# '_WIN32_WINNT_WINTHRESHOLD' is not defined as a
+				# preprocessor macro, replacing with '0' for '#if/#elif'
+				# Windows' own headers are reporting many of these.
 		4710,	# : function not inlined
 				# stl and crt are reporting these: (_scwprintf,
 				# swprintf_s, std::exception_ptr::_Current_exception)
 		4820,	# : 'X' bytes padding added after data member 'foo'
 				# This is really useful, but unfortunately it affects crt
 				# all over the place. (winbase.h, wingdi.h, winuser.h)
+		4996,	# 'foo': This function or variable may be
+				# unsafe. Consider using strncpy_s
+				# instead. To disable deprecation, use
+				# _CRT_SECURE_NO_WARNINGS. See online
+				# help for details.
+				# This project uses strncpy, strcat, and strnicmp.
+				# For now, I am not going to use the MSCRT alternatives.
 	]
 
 

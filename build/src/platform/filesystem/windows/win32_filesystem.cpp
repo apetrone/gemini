@@ -42,23 +42,24 @@ namespace platform
 	{
 		PathString directory;
 
-		Result error;
-
-		int result = 0;
-		char* sep;
-		result = GetModuleFileNameA(GetModuleHandleA(0), &directory[0], directory.max_size());
+		DWORD result = GetModuleFileNameA(
+			GetModuleHandleA(0),
+			&directory[0],
+			static_cast<DWORD>(directory.max_size())
+		);
 
 		// GetModuleFilenameA failed!
 		assert(result != 0);
 
 		char* path = directory();
+		char* sep;
 		if (result != 0)
 		{
 			sep = strrchr(path, PATH_SEPARATOR);
 
 			if (sep)
 			{
-				size_t index = (sep - path);
+				int32_t index = static_cast<int32_t>(sep - path);
 				directory[index] = '\0';
 				directory.recompute_size();
 			}
@@ -144,8 +145,12 @@ namespace platform
 	{
 		OVERLAPPED* overlapped = NULL;
 		DWORD bytes_read = 0;
-		assert(ReadFile(file.handle, destination, size*count, &bytes_read, overlapped));
-
+		BOOL result = ReadFile(file.handle,
+			destination,
+			static_cast<DWORD>(size * count),
+			&bytes_read,
+			overlapped);
+		assert(result);
 		return bytes_read;
 	}
 
@@ -153,7 +158,12 @@ namespace platform
 	{
 		OVERLAPPED* overlapped = NULL;
 		DWORD bytes_written = 0;
-		assert(WriteFile(file.handle, source, size*count, &bytes_written, overlapped));
+		BOOL result = WriteFile(file.handle,
+			source,
+			static_cast<DWORD>(size * count),
+			&bytes_written,
+			overlapped);
+		assert(result);
 		return bytes_written;
 	}
 
@@ -170,7 +180,7 @@ namespace platform
 				assert(0);
 		}
 
-		return SetFilePointer(file.handle, offset, NULL, move_method);
+		return static_cast<int32_t>(SetFilePointer(file.handle, offset, NULL, move_method));
 	}
 
 	long int fs_tell(platform::File file)
@@ -178,17 +188,17 @@ namespace platform
 		// offset is 0, move from the current file position
 		// this essentially returns the current file pointer
 		// see: http://stackoverflow.com/questions/17707020/is-there-no-getfilepointerex-windows-api-function
-		return SetFilePointer(file.handle, 0, NULL, FILE_CURRENT);
+		return static_cast<long>(SetFilePointer(file.handle, 0, NULL, FILE_CURRENT));
 	}
 
 	bool fs_file_exists(const char* path)
 	{
-		return PathFileExistsA(path);
+		return PathFileExistsA(path) == TRUE;
 	}
 
 	bool fs_directory_exists(const char* path)
 	{
-		return PathFileExistsA(path);
+		return PathFileExistsA(path) == TRUE;
 	}
 
 	PathString fs_content_directory()

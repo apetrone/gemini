@@ -35,7 +35,7 @@
 
 namespace core
 {
-	template <unsigned int maximum_size, class Type=char>
+	template <size_t maximum_size, class Type=char>
 	struct StackString
 	{
 	private:
@@ -44,7 +44,7 @@ namespace core
 	public:
 
 		Type _data[maximum_size];
-		unsigned int _length;
+		size_t _length;
 
 		StackString()
 		{
@@ -60,7 +60,7 @@ namespace core
 			}
 		}
 
-		unsigned int max_size() const
+		size_t max_size() const
 		{
 			return maximum_size;
 		}
@@ -217,7 +217,7 @@ namespace core
 
 		void normalize(Type prefer)
 		{
-			for(unsigned int i = 0; i < _length; ++i)
+			for(size_t i = 0; i < _length; ++i)
 			{
 				if ( _data[i] == '\\' || _data[i] == '/' )
 				{
@@ -322,7 +322,7 @@ namespace core
 		bool startswith(const Type* s1) const
 		{
 			size_t string_length = core::str::len(s1);
-			for(unsigned int i = 0; i < string_length; ++i)
+			for(size_t i = 0; i < string_length; ++i)
 			{
 				if (_data[i] != s1[i])
 				{
