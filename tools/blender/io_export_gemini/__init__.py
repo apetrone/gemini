@@ -602,8 +602,6 @@ def collect_bone_data(model, armature, pose_bones_by_name):
 	cache = BoneCache()
 	bone_index = 0
 	bones = armature.data.bones
-	# print("armature: %s has %i bones" % (armature.name, len(bones)))
-	# print("armature matrix: %s" % (armature.matrix_world))
 
 	inverted_root_pose = Matrix()
 
@@ -628,18 +626,12 @@ def collect_bone_data(model, armature, pose_bones_by_name):
 		if not parent:
 			inverted_root_pose = (bone_data.bone.matrix_local).inverted()
 
-		bind_matrix = (inverted_root_pose * bone_data.bone.matrix_local)
-
-		# TODO: needs to include the transform from the armature
+		# inverse_bind_pose needs to include the transform from the armature
 		# since it needs the correct position of its world position in order to transform to joint space.
-		if not parent:
-			inverse_bind_pose = bind_matrix.copy().inverted()
-		else:
-			inverse_bind_pose = bind_matrix.copy().inverted()
-
+		inverse_bind_pose = (inverted_root_pose * armature.matrix_world * bone_data.bone.matrix_local).inverted()
 
 		# the bind pose needs to be  relative to the parent
-		bone_data.bind_pose = bind_matrix
+		bone_data.bind_pose = (inverted_root_pose * bone_data.bone.matrix_local)
 
 		# converts the object space vertices to joint space
 		bone_data.inverse_bind_pose = inverse_bind_pose
@@ -672,15 +664,15 @@ class GeminiModel(object):
 		self.frame_start = kwargs.get("frame_start", 0)
 		self.frame_end = kwargs.get("frame_end", 0)
 
+		# Export selected meshes only
+		self.selected_only = kwargs.get("selected_only", False)
+
 		self.armature = None
 
 		# store the pose position of the armature so we can restore it after
 		self.armature_pose_position = None
 
 		self.file_handle = None
-
-		# Export selected meshes only
-		self.selected_only = False
 
 		print("export range: %i -> %i" % (self.frame_start, self.frame_end))
 
@@ -952,10 +944,10 @@ class export_gemini(bpy.types.Operator):
 			maxlen= 1024,
 			subtype='FILE_PATH')
 
-	# transform_normals = BoolProperty(
-	# 	name="Transform Normals",
-	# 	description="Transform Normals along with Mesh",
-	# 	default=True)
+	selected_only = BoolProperty(
+		name="Selected Geometry Only",
+		description="Export only the selected geometry",
+		default=True)
 
 	# triangulate_mesh = BoolProperty(
 	# 	name="Triangulate Mesh",
@@ -972,7 +964,8 @@ class export_gemini(bpy.types.Operator):
 			coordinate_system = self.coordinate_system,
 			filepath = self.filepath,
 			frame_start = bpy.context.scene.frame_start,
-			frame_end = bpy.context.scene.frame_end + 1
+			frame_end = bpy.context.scene.frame_end + 1,
+			selected_only = self.selected_only
 		)
 
 		try:
