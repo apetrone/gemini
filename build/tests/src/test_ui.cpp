@@ -409,6 +409,7 @@ public:
 		switch(event.subtype)
 		{
 			case kernel::WindowResized:
+			{
 				LOGV("window resized: %i x %i\n", event.render_width, event.render_height);
 				if (device)
 				{
@@ -416,12 +417,20 @@ public:
 				}
 
 				compositor->resize(event.render_width, event.render_height);
-
 				break;
+			}
+			case kernel::WindowClosed:
+			{
+				LOGV("Window was closed!\n");
+				set_active(false);
+				break;
+			}
+
 			default:
 				break;
 		}
 	}
+
 public:
 
 	TestUi() :
