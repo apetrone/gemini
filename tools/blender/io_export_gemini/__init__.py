@@ -74,7 +74,11 @@ from bpy_extras.io_utils import (
 from time import time
 from mathutils import (
 	Matrix,
-	Vector
+	Vector,
+)
+
+from math import (
+	degrees
 )
 
 import math
@@ -497,10 +501,13 @@ class Mesh(Node):
 				if group_element.group < total_bones:
 					bone = group_index_to_bone[group_element.group]
 					if bone and group_element.weight > 0.0:
-						weights[index].append({
-							"bone": bone.name,
-							"value": group_element.weight
-							})
+						if len(weights[index]) < 4:
+							weights[index].append({
+								"bone": bone.name,
+								"value": group_element.weight
+								})
+						else:
+							print("warning: dropping weight for bone '%s', %2.2f" % (bone.name, group_element.weight))
 
 
 		mesh.calc_normals_split()
@@ -603,7 +610,7 @@ def collect_bone_data(model, armature, pose_bones_by_name):
 	bone_index = 0
 	bones = armature.data.bones
 
-	inverted_root_pose = Matrix()
+	parent_matrix = Matrix()
 
 	for index, bone in enumerate(bones):
 		parent_index = -1
@@ -623,15 +630,19 @@ def collect_bone_data(model, armature, pose_bones_by_name):
 		inverse_bind_pose = Matrix()
 
 		parent = bone_data.pose_bone.parent.bone if bone_data.pose_bone.parent else None
-		if not parent:
-			inverted_root_pose = (bone_data.bone.matrix_local).inverted()
+		if parent:
+			parent_matrix = (parent.matrix_local)
+		else:
+			# No parent, so this bone is the root bone.
+			# It should be treated as the identity, for now.
+			parent_matrix = bone_data.bone.matrix_local
 
 		# inverse_bind_pose needs to include the transform from the armature
 		# since it needs the correct position of its world position in order to transform to joint space.
-		inverse_bind_pose = (inverted_root_pose * armature.matrix_world * bone_data.bone.matrix_local).inverted()
+		inverse_bind_pose = (model.global_matrix * armature.matrix_world * bone_data.bone.matrix_local).inverted()
 
 		# the bind pose needs to be  relative to the parent
-		bone_data.bind_pose = (inverted_root_pose * bone_data.bone.matrix_local)
+		bone_data.bind_pose = (model.global_matrix * bone_data.bone.matrix_local) * ((model.global_matrix * parent_matrix).inverted())
 
 		# converts the object space vertices to joint space
 		bone_data.inverse_bind_pose = inverse_bind_pose
@@ -775,9 +786,11 @@ class GeminiModel(object):
 					# ROTATION
 					#
 					rotation = []
+					euler = [] # for debugging
 					obj["rotation"] = {
 						"time": time_values,
-						"value": rotation
+						"value": rotation,
+						"euler": euler,
 					}
 
 					#
@@ -814,12 +827,14 @@ class GeminiModel(object):
 						# Inverse parent matrix ensures this only records local transforms.
 						matrix_delta = global_tx * (inverted_bind_pose * inverse_parent_matrix * bone_data.pose_bone.matrix)
 
-						t, _, s = matrix_delta.decompose()
+						t, e, s = matrix_delta.decompose()
 						r = matrix_delta.to_quaternion()
 
+						euler.append([degrees(x) for x in e.to_euler()])
 						scale.append([s[0], s[1], s[2]])
 						rotation.append([r.x, r.y, r.z, r.w])
 						translation.append([t[0], t[1], t[2]])
+						#translation.append([0, 0, 0])
 
 					sequence.children.append(obj)
 
