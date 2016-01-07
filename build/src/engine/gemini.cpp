@@ -542,7 +542,7 @@ class ModelInterface : public gemini::IModelInterface
 					glm::mat4& global_pose = bone_transforms[transform_index];
 					glm::mat4& object_to_world = local_transforms[index];
 					glm::mat4& debug_bone_transform = debug_bone_transforms[index];
-
+					glm::mat4 parent_pose;
 					glm::mat4& inverse_bind_pose = inverse_bind_transforms[transform_index];
 					glm::mat4 local_scale;
 					glm::mat4 local_rotation = glm::toMat4(rotations[index]);
@@ -558,18 +558,20 @@ class ModelInterface : public gemini::IModelInterface
 					if (joint->parent_index > -1)
 					{
 						parent_transform = local_transforms[joint->parent_index];
-						stored_pose = geo.bind_poses[index] * accum_bind_poses[joint->parent_index];
+						//stored_pose = geo.bind_poses[index] * accum_bind_poses[joint->parent_index];
+
+						parent_pose = bone_transforms[joint->parent_index];
 					}
 					else
 					{
-						stored_pose = geo.bind_poses[index];
+						//stored_pose = geo.bind_poses[index];
 					}
 
 					//
 					object_to_world = local_pose * parent_transform;
 
 					// this will be used for skinning in the vertex shader
-					global_pose = stored_pose * object_to_world;
+					global_pose = parent_pose * geo.bind_poses[index] * local_pose;
 
 					// copy this directly to draw in world position
 					// this will be used for debug rendering

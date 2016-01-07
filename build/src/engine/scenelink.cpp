@@ -195,24 +195,27 @@ namespace gemini
 								glm::vec3 last_origin;
 								int32_t last_parent = -1;
 								glm::vec3 origins[MAX_BONES];
+								const glm::mat4* debug_skeletal_pose = model_instance->get_debug_bone_transforms();
 								if (model_instance->get_total_transforms())
 								{
 									// draw individual links for each bone to represent the skeleton
 									for (size_t index = 0; index < mesh->skeleton.size(); ++index)
 									{
+										glm::mat4 parent_matrix;
 										size_t transform_index = (geometry_index * mesh->skeleton.size()) + index;
 										assets::Joint* joint = &mesh->skeleton[index];
 										if (joint->parent_index != -1)
 										{
 											last_origin = origins[joint->parent_index];
+											parent_matrix = debug_skeletal_pose[joint->parent_index];
 										}
 										else
 										{
 											last_origin = glm::vec3(0, 0, 0);
 										}
 
-										const glm::mat4* debug_skeletal_pose = model_instance->get_debug_bone_transforms();
-										const glm::mat4& mat = debug_skeletal_pose[transform_index];
+
+										glm::mat4 mat = debug_skeletal_pose[transform_index] * parent_matrix;
 										glm::vec3 origin = glm::vec3(glm::column(mat, 3));
 
 										debugdraw::instance()->line(last_origin, origin, core::Color::from_rgba(255, 128, 0, 255));
