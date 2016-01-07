@@ -532,43 +532,27 @@ class ModelInterface : public gemini::IModelInterface
 
 				size_t transform_index;
 
-				glm::mat4 local_transforms[MAX_BONES];
-				glm::mat4 accum_bind_poses[MAX_BONES];
-
 				for (size_t index = 0; index < mesh->skeleton.size(); ++index)
 				{
 					transform_index = (geometry_index * mesh->skeleton.size()) + index;
 					assets::Joint* joint = &mesh->skeleton[index];
 					glm::mat4& global_pose = bone_transforms[transform_index];
-					glm::mat4& object_to_world = local_transforms[index];
+
 					glm::mat4& debug_bone_transform = debug_bone_transforms[index];
 					glm::mat4 parent_pose;
 					glm::mat4& inverse_bind_pose = inverse_bind_transforms[transform_index];
 					glm::mat4 local_scale;
 					glm::mat4 local_rotation = glm::toMat4(rotations[index]);
 					glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), positions[index]);
-//					const glm::vec3& pos = positions[index];
+
 //					LOGV("pos: %2.2f, %2.2f, %2.2f\n", pos.x, pos.y, pos.z);
 					glm::mat4 local_pose = local_transform * local_rotation * local_scale;
 //					local_to_world = tr * pivot * ro * sc * inv_pivot;
 
-					glm::mat4& stored_pose = accum_bind_poses[index];
-					glm::mat4 parent_transform = glm::mat4(1.0f);
-
 					if (joint->parent_index > -1)
 					{
-						parent_transform = local_transforms[joint->parent_index];
-						//stored_pose = geo.bind_poses[index] * accum_bind_poses[joint->parent_index];
-
 						parent_pose = bone_transforms[joint->parent_index];
 					}
-					else
-					{
-						//stored_pose = geo.bind_poses[index];
-					}
-
-					//
-					object_to_world = local_pose * parent_transform;
 
 					// this will be used for skinning in the vertex shader
 					global_pose = parent_pose * geo.bind_poses[index] * local_pose;
