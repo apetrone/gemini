@@ -193,7 +193,6 @@ namespace gemini
 
 
 								glm::vec3 last_origin;
-								int32_t last_parent = -1;
 								glm::vec3 origins[MAX_BONES];
 								const glm::mat4* debug_skeletal_pose = model_instance->get_debug_bone_transforms();
 								if (model_instance->get_total_transforms())
@@ -215,26 +214,20 @@ namespace gemini
 										}
 
 
-										glm::mat4 mat = debug_skeletal_pose[transform_index] * parent_matrix;
+										glm::mat4 mat = debug_skeletal_pose[transform_index];
 										glm::vec3 origin = glm::vec3(glm::column(mat, 3));
 
 										debugdraw::instance()->line(last_origin, origin, core::Color::from_rgba(255, 128, 0, 255));
 										last_origin = origin;
 										origins[index] = origin;
+
+										// this only displays local transforms
+										debugdraw::instance()->axes(debug_skeletal_pose[transform_index], 0.05f, 0.0f);
 									}
 								}
 
 							}
-#if 1
-							const glm::mat4* debug_skeletal_pose = model_instance->get_debug_bone_transforms();
-							const size_t total_transforms = model_instance->get_total_transforms();
-							for (size_t i = 0; i < total_transforms; ++i)
-							{
-//								glm::vec4 origin = glm::column(debug_skeletal_pose[i], 3);
-//								LOGV("origin: %2.2f, %2.2f, %2.2f\n", origin.x, origin.y, origin.z);
-								debugdraw::instance()->axes(debug_skeletal_pose[i], 0.05f, 0.0f);
-							}
-#endif
+
 						}
 					}
 				}
