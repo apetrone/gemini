@@ -206,15 +206,15 @@ namespace gemini
 										if (joint->parent_index != -1)
 										{
 											last_origin = origins[joint->parent_index];
-											parent_matrix = debug_skeletal_pose[joint->parent_index];
+											parent_matrix = transform * debug_skeletal_pose[joint->parent_index];
 										}
 										else
 										{
-											last_origin = glm::vec3(0, 0, 0);
+											last_origin = position;
 										}
 
 
-										glm::mat4 mat = debug_skeletal_pose[transform_index];
+										glm::mat4 mat = transform * debug_skeletal_pose[transform_index];
 										glm::vec3 origin = glm::vec3(glm::column(mat, 3));
 
 										debugdraw::instance()->line(last_origin, origin, core::Color::from_rgba(255, 128, 0, 255));
@@ -222,7 +222,7 @@ namespace gemini
 										origins[index] = origin;
 
 										// this only displays local transforms
-										debugdraw::instance()->axes(debug_skeletal_pose[transform_index], 0.05f, 0.0f);
+										debugdraw::instance()->axes(transform * debug_skeletal_pose[transform_index], 0.05f, 0.0f);
 									}
 								}
 

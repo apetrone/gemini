@@ -572,7 +572,7 @@ class ModelInterface : public gemini::IModelInterface
 		virtual int32_t get_animation_index(const char* name)
 		{
 			size_t index = 0;
-			for (auto& id : animations)
+			for (const animation::SequenceId& id : animations)
 			{
 				animation::AnimatedInstance* instance = animation::get_instance_by_index(id);
 				animation::Sequence* sequence = animation::get_sequence_by_index(instance->sequence_index);
