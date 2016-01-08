@@ -392,7 +392,8 @@ class Mesh(Node):
 
 			vertex_index += 1
 
-			self.blend_weights.append(vertex.weights)
+			if vertex.weights:
+				self.blend_weights.append(vertex.weights)
 
 		self.uv_sets.append(uvset)
 
@@ -412,9 +413,22 @@ class Mesh(Node):
 		for modifier in obj.modifiers:
 			print("Found modifier '%s'" % modifier.name)
 			if modifier.type == "ARMATURE":
+
+				if not modifier.object:
+					# This can happen when the Armature was renamed or
+					# otherwise disassociated with the modifier
+					model.info("%s has an Armature modifier with an "
+						"invalid object!" %	obj.name
+					)
+
 				armature = modifier.object
 
-				# 1. build the skeleton for this mesh
+				# build the skeleton for this mesh
+
+				if len(node.skeleton) > 0:
+					model.info("Found multiple skeletons in the file. This "
+						"exporter cannot handle that yet."
+					)
 				assert(node.skeleton == [])
 
 				pose_bones = armature.pose.bones
