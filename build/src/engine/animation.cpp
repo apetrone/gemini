@@ -246,15 +246,6 @@ namespace gemini
 					channel.advance(delta_seconds);
 				}
 			}
-
-//			for (size_t index = 0; index < ChannelSet.size(); ++index)
-//			{
-//				for (size_t channel_index = 0; channel_index < ChannelSet[index].size(); ++channel_index)
-//				{
-//					Channel& channel = ChannelSet[index][channel_index];
-//					channel.advance(delta_seconds);
-//				}
-//			}
 		}
 
 		void AnimatedInstance::reset_channels()
@@ -607,7 +598,7 @@ namespace gemini
 
 		AnimatedInstance* get_instance_by_index(SequenceId index)
 		{
-			assert(static_cast<size_t>(index) < detail::_sequences.size());
+			assert(static_cast<size_t>(index) < detail::_instances.size());
 			return detail::_instances[index];
 		}
 
