@@ -48,13 +48,14 @@ namespace core
 
 	inline glm::quat custom_slerp(const glm::quat& q1, const glm::quat& q2, float t)
 	{
+		const double SLERP_TOLERANCE = 1.0e-5;
 		glm::quat out;
 		glm::quat q2b;
 
 		float sq1, sq2;
 		float cosom = q1[0] * q2[0] + q1[1] * q2[1] + q1[2] * q2[2] + q1[3] * q2[3];
 
-		if( cosom < 0.0f)
+		if (cosom < 0.0f)
 		{
 			cosom = -cosom;
 			q2b[0] = -q2[0];
@@ -64,13 +65,12 @@ namespace core
 		}
 		else
 		{
-			//QuaternionCopy(q2, q2b);
 			q2b = q2;
 		}
 
-		if( (1.0f + cosom) > 1E-5)
+		if ((1.0f + cosom) > SLERP_TOLERANCE)
 		{
-			if( (1.0f - cosom) > 1E-5)
+			if((1.0f - cosom) > SLERP_TOLERANCE)
 			{
 				float om = (float) acos(cosom);
 				float rsinom = (float)(1.0f / sin(om));
