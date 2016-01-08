@@ -828,6 +828,7 @@ namespace renderer
 			}
 			else if ( renderstate == renderer::DC_UNIFORM_SAMPLER_2D )
 			{
+				assert(parameter->texture);
 	//			assets::Texture * texture = assets::textures()->find_with_id(parameter->int_value);
 				if ( parameter->texture )
 				{

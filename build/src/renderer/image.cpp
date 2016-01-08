@@ -39,6 +39,9 @@ using namespace core;
 
 namespace image
 {
+	const unsigned int ERROR_TEXTURE_WIDTH = 128;
+	const unsigned int ERROR_TEXTURE_HEIGHT = 128;
+
 	Image::Image()
 	{
 		type = image::TEX_2D;
@@ -252,12 +255,11 @@ namespace image
 		image.width = ERROR_TEXTURE_WIDTH;
 		image.height = ERROR_TEXTURE_HEIGHT;
 		image.channels = 3;
-		generate_checker_pattern(image, Color::from_rgba(0, 0, 0, 255), Color::from_rgba(255, 0, 255, 255));
+		generate_checker_pattern(image, core::Color(1.0f, 0, 1.0f), core::Color(0, 1.0f, 0));
 
 		renderer::Texture* texture = renderer::driver()->texture_create(image);
 
 		return texture;
-
 	} // load_default_texture
 
 	Image load_from_memory(unsigned char* data, unsigned int data_size)
