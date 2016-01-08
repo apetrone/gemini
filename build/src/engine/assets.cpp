@@ -101,7 +101,7 @@ namespace gemini
 		void load_default_texture_and_material()
 		{
 			// setup default texture
-			Texture * default_texture = textures()->allocate_asset();
+			Texture* default_texture = textures()->allocate_asset();
 			default_texture->texture = image::load_default_texture(default_texture->image);
 
 			textures()->take_ownership("textures/default", default_texture);
@@ -116,7 +116,7 @@ namespace gemini
 			diffusemap.name = "diffusemap";
 			diffusemap.type = MP_SAMPLER_2D;
 			diffusemap.texture_unit = texture_unit_for_map(diffusemap.name);
-			diffusemap.int_value = default_texture->Id();
+			diffusemap.texture = default_texture->texture;
 
 			default_material->add_parameter(diffusemap);
 
