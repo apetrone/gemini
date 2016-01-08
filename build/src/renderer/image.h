@@ -113,9 +113,6 @@ namespace image
 		LIBRARY_EXPORT void copy(const uint8_t* pixels, const uint32_t& width, const uint32_t& height, const uint32_t& pitch, uint32_t border = 0);
 	};
 
-	const unsigned int ERROR_TEXTURE_WIDTH = 128;
-	const unsigned int ERROR_TEXTURE_HEIGHT = 128;
-
 	LIBRARY_EXPORT void generate_checker_pattern(Image& image, const core::Color& color1, const core::Color& color2);
 	LIBRARY_EXPORT void generate_checker_image(unsigned char* pixels, int width, int height, const core::Color& color1, const core::Color& color2);
 	LIBRARY_EXPORT void flip_image_vertically(int width, int height, int components, unsigned char* pixels);
