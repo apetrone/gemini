@@ -819,6 +819,7 @@ class GeminiModel(object):
 					}
 
 					# set the current frame
+					prev_rot = None
 					for frame in range(self.frame_start, self.frame_end):
 						bpy.context.scene.frame_set(frame)
 
@@ -845,9 +846,18 @@ class GeminiModel(object):
 
 						tx, rx, sx = matrix_delta.decompose()
 						#euler.append([degrees(value) for value in rx.to_euler()])
+						if prev_rot:
+							# This helps ensure we dump the quaternion
+							# that chooses the shortest-angle between
+							# it and the last one.
+							if prev_rot.dot(rx) < 0.0:
+								rx = rx.inverted()
+
 						scale.append([sx[0], sx[1], sx[2]])
 						rotation.append([rx.x, rx.y, rx.z, rx.w])
 						translation.append([tx[0], tx[1], tx[2]])
+
+						prev_rot = rx
 
 					sequence.children.append(obj)
 
