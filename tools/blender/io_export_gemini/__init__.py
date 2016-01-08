@@ -786,11 +786,11 @@ class GeminiModel(object):
 					# ROTATION
 					#
 					rotation = []
-					euler = [] # for debugging
+					#euler = [] # for debugging
 					obj["rotation"] = {
 						"time": time_values,
-						"value": rotation,
-						"euler": euler,
+						"value": rotation
+					#	"euler": euler,
 					}
 
 					#
@@ -827,14 +827,11 @@ class GeminiModel(object):
 						# Inverse parent matrix ensures this only records local transforms.
 						matrix_delta = global_tx * (inverted_bind_pose * inverse_parent_matrix * bone_data.pose_bone.matrix)
 
-						t, e, s = matrix_delta.decompose()
-						r = matrix_delta.to_quaternion()
-
-						euler.append([degrees(x) for x in e.to_euler()])
-						scale.append([s[0], s[1], s[2]])
-						rotation.append([r.x, r.y, r.z, r.w])
-						translation.append([t[0], t[1], t[2]])
-						#translation.append([0, 0, 0])
+						tx, rx, sx = matrix_delta.decompose()
+						#euler.append([degrees(value) for value in rx.to_euler()])
+						scale.append([sx[0], sx[1], sx[2]])
+						rotation.append([rx.x, rx.y, rx.z, rx.w])
+						translation.append([tx[0], tx[1], tx[2]])
 
 					sequence.children.append(obj)
 
