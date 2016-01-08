@@ -765,6 +765,8 @@ class GeminiModel(object):
 
 		scene_fps = bpy.context.scene.render.fps
 
+		sequence_time_begin = self.frame_start / float(scene_fps)
+
 		# place the armature in POSE position
 		self.armature.data.pose_position = 'POSE'
 
@@ -821,7 +823,7 @@ class GeminiModel(object):
 						bpy.context.scene.frame_set(frame)
 
 						# populate the time
-						current_time_seconds = (frame / float(scene_fps))
+						current_time_seconds = (frame / float(scene_fps)) - sequence_time_begin
 						time_values.append(current_time_seconds)
 
 						global_tx = Matrix()
