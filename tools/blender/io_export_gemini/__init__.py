@@ -792,11 +792,11 @@ class GeminiModel(object):
 					#
 					# SCALE
 					#
-					scale = []
-					obj["scale"] = {
-						"time": time_values,
-						"value": scale
-					}
+					# scale = []
+					# obj["scale"] = {
+					# 	"time": time_values,
+					# 	"value": scale
+					# }
 
 					#
 					# ROTATION
@@ -853,7 +853,7 @@ class GeminiModel(object):
 							if prev_rot.dot(rx) < 0.0:
 								rx = rx.inverted()
 
-						scale.append([sx[0], sx[1], sx[2]])
+						#scale.append([sx[0], sx[1], sx[2]])
 						rotation.append([rx.x, rx.y, rx.z, rx.w])
 						translation.append([tx[0], tx[1], tx[2]])
 
