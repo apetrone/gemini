@@ -349,41 +349,12 @@ def get_tools(arguments, libui, libruntime, librenderer, libplatform, libcore, *
 	#
 	# muse: asset conversion tool
 	#
-	linux_arch_map = {
-		"x86_64": "x64",
-		"x86": "x86"
-	}
-	windows_arch_map = {
-		"x86_64": "x64",
-		"x86" : "x86"
-	}
-	libfbx_roots = {
-		"macosx": "lib/clang/${CONFIGURATION}",
-		"linux": "lib/gcc4/x64/${CONFIGURATION}",
-		"windows": "lib/vs2013/x64/${CONFIGURATION}" # TODO: bugger fix this!
-	}
-	libfbx_names = {
-		"macosx": "libfbxsdk",
-		"linux": "fbxsdk",
-		"windows": "libfbxsdk-md"
-	}
-
-	libfbx = Product(name=libfbx_names[target_platform.name], output=ProductType.DynamicLibrary)
-	libfbx.root = os.path.join("..", SDKS_FOLDER, "fbx_2015.1")
-	libfbx.includes = [
-		"include"
-	]
-
-	libfbx.product_root = libfbx_roots[target_platform.name]
-	tools.append(libfbx)
-
 	muse = Product(name="muse", output=ProductType.Commandline)
 	muse.project_root = COMMON_PROJECT_ROOT
 	muse.dependencies.extend([
 		libruntime,
 		libplatform,
-		libcore,
-		libfbx
+		libcore
 	])
 
 	macosx = muse.layout(platform="macosx")
@@ -1002,12 +973,11 @@ def arguments(parser):
 
 def products(arguments, **kwargs):
 
-	# warn about SDKs...
-	if arguments.with_tools:
-		logging.warn("Generating projects for products which require private SDKs...")
-		logging.warn("Please be sure you've run build/scripts/sync_sdks.py!")
-		if not os.path.exists(os.path.join("build", SDKS_FOLDER)):
-			raise Exception("SDKs folder is missing!")
+	# if arguments.with_tools:
+	# 	logging.warn("Generating projects for products which require private SDKs...")
+	# 	logging.warn("Please be sure you've run build/scripts/sync_sdks.py!")
+	# 	if not os.path.exists(os.path.join("build", SDKS_FOLDER)):
+	# 		raise Exception("SDKs folder is missing!")
 
 	# global params will be inherited by all dependent products
 	global_params = kwargs.get("global_params")

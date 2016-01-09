@@ -28,7 +28,6 @@
 #include "datamodel/mesh.h"
 
 // include reader/writers
-#include "io_fbx.h"
 #include "io_json.h"
 
 #include <runtime/logging.h>
@@ -264,8 +263,6 @@ namespace gemini
 		void register_types()
 		{
 			Extension<datamodel::Model> ext;
-			ext.reader = AutodeskFbxReader::plugin_create();
-			register_extension<datamodel::Model>("fbx", ext);
 
 //			ext.reader = OpenGEXReader::plugin_create();
 //			register_extension<datamodel::Model>("ogex", ext);
