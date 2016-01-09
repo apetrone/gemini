@@ -50,6 +50,14 @@ bl_info = {
 # For now, I'll just choose to export all actions.
 
 
+# This should export skeletons with the origin (0, 0, 0)
+# corresponding to the root of the model.
+
+# TODO:
+# - export armatures with root at 0, 0, 0
+# - calculate min/max bounds
+
+
 #
 # imports
 #
@@ -655,7 +663,11 @@ def collect_bone_data(model, armature, pose_bones_by_name):
 		# since it needs the correct position of its world position in order to transform to joint space.
 		inverse_bind_pose = (model.global_matrix * armature.matrix_world * bone_data.bone.matrix_local).inverted()
 
-		# the bind pose needs to be  relative to the parent
+		# the bind pose needs to be relative to the parent
+		# At the moment, these poses don't track the armature offset.
+		# I'm not quite sure the best way to handle this -- so for now:
+		# The artist must create the rig with the root bone at the origin (0, 0, 0).
+		# That way, we can treat all model roots as the origin.
 		bone_data.bind_pose = (model.global_matrix * bone_data.bone.matrix_local) * ((model.global_matrix * parent_matrix).inverted())
 
 		# converts the object space vertices to joint space
