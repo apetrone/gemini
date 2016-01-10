@@ -196,8 +196,7 @@ namespace platform
 
 		Frame X11WindowProvider::get_render_frame(NativeWindow* window) const
 		{
-			Frame frame;
-			return frame;
+			return get_frame(window);
 		}
 
 		size_t X11WindowProvider::get_screen_count() const

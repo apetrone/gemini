@@ -470,6 +470,10 @@ public:
 		root = new gui::Panel(compositor);
 		platform::window::Frame frame = platform::window::get_render_frame(native_window);
 
+		// Window frame is invalid!
+		assert(frame.width > 0);
+		assert(frame.height > 0);
+
 		root->set_bounds(0, 0, frame.width, frame.height);
 		root->set_background_color(core::Color::from_rgba(255, 255, 255, 0));
 		root->set_name("root");
