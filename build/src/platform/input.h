@@ -259,7 +259,7 @@ namespace input
 
 	struct ButtonState
 	{
-		unsigned char state : 4;
+		uint8_t state;
 
 		// handle a press or release event
 		LIBRARY_EXPORT void press_release( bool is_down );

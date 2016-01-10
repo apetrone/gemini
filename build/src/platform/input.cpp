@@ -50,7 +50,7 @@ namespace input
 			state &= ~Button_IsDown;
 
 			// set 'released' and 'impulse' flag
-			state |= Button_Impulse | Button_Released;
+			state = Button_Impulse | Button_Released;
 		}
 	} // press_release
 
