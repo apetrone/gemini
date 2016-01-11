@@ -317,12 +317,20 @@ namespace platform
 
 				// keyboard state has changed
 				case KeymapNotify:
+					XRefreshKeyboardMapping(&event.xmapping);
 					break;
 
 				case KeyPress:
 				case KeyRelease:
 					length = XLookupString(&event.xkey, buffer, 32, &keysym, NULL);
-					fprintf(stdout, "key: %s\n", buffer);
+					if (length > 0)
+					{
+						fprintf(stdout, "key: %s\n", buffer);
+
+						// TODO: map virtual key to input key:
+						// http://www.kbdedit.com/manual/low_level_vk_list.html
+						//xkeymap.keysym.sym
+					}
 					break;
 
 				case ButtonPress:
@@ -356,6 +364,16 @@ namespace platform
 
 				// Pointer motion results in a change of windows
 				case EnterNotify:
+					// track final position of the cursor
+					last_x = event.xcrossing.x;
+					last_y = event.xcrossing.y;
+
+					// time is in milliseconds
+
+					// same_screen indicates whether event window is on the
+					// same screen as the root window.
+
+					// state holds mouse buttons and modifier keys
 				case LeaveNotify:
 					break;
 
