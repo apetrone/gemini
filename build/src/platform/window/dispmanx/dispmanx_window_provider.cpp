@@ -153,5 +153,9 @@ namespace platform
 #endif
 			return frame;
 		}
+
+		void DispManXWindowProvider::dispatch_events()
+		{
+		}
 	} // namespace window
 } // namespace platform

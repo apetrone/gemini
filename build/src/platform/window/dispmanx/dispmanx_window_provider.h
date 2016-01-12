@@ -73,6 +73,7 @@ namespace platform
 			virtual Frame get_render_frame(NativeWindow* window) const;
 			virtual size_t get_screen_count() const;
 			virtual Frame get_screen_frame(size_t screen_index) const;
+			virtual void dispatch_events() override;
 
 		private:
 			DISPMANX_DISPLAY_HANDLE_T dispman_display;
