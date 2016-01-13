@@ -176,11 +176,10 @@ namespace gemini
 				pair_cache->setInternalGhostPairCallback( new CustomGhostPairCallback() );
 
 				dynamics_world = new btDiscreteDynamicsWorld(dispatcher, (btBroadphaseInterface*)broadphase, constraint_solver, collision_config);
-				dynamics_world->setGravity( btVector3( 0, -10, 0 ) );
-				dynamics_world->getDispatchInfo().m_useConvexConservativeDistanceUtil = true;
-				dynamics_world->getDispatchInfo().m_convexConservativeDistanceThreshold = 0.01;
-				dynamics_world->getDispatchInfo().m_allowedCcdPenetration = 0.0;
-
+				dynamics_world->setGravity( btVector3( 0, -9.8f, 0 ) );
+//				dynamics_world->getDispatchInfo().m_useConvexConservativeDistanceUtil = true;
+//				dynamics_world->getDispatchInfo().m_convexConservativeDistanceThreshold = 0.01;
+				dynamics_world->getDispatchInfo().m_allowedCcdPenetration = 0.0001f;
 
 
 				//btAlignedAllocSetCustom( bullet2_custom_alloc, bullet2_custom_free );
