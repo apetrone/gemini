@@ -119,6 +119,8 @@ namespace gemini
 			virtual void apply_impulse(const glm::vec3& force, const glm::vec3& local_position) {};
 			virtual void apply_central_impulse(const glm::vec3& force) {};
 //
+
+			virtual ICollisionShape* get_shape() const = 0;
 //			virtual void set_mass(float mass) {};
 //
 //			virtual void set_parent(ICollisionObject* first, ICollisionObject* second) {};

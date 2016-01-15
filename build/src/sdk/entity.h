@@ -44,7 +44,7 @@
 	typedef entity_class BaseClass;
 
 #define LINK_ENTITY_TO_CLASS(entity_class, classname)\
-	static ::gemini::EntityFactoryClass<entity_class> classname(#classname)
+	static ::gemini::EntityFactoryClass<entity_class> factory_##entity_class(classname)
 
 
 

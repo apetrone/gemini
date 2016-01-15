@@ -38,6 +38,8 @@
 
 #include "kernel.h"
 
+#include <renderer/debug_draw.h>
+
 #include <sdk/engine_api.h>
 #include <sdk/model_api.h>
 #include <sdk/physics_api.h>
@@ -307,6 +309,34 @@ namespace gemini
 			return collision_object;
 		}
 
+		physics::ICollisionObject* PhysicsInterface::create_kinematic_object(gemini::physics::ICollisionShape* shape, const glm::vec3& position, const glm::quat& orientation)
+		{
+			BulletCollisionObject* collision_object = MEMORY_NEW(BulletCollisionObject, core::memory::global_allocator());
+
+			btPairCachingGhostObject* ghost = new btPairCachingGhostObject();
+			ghost->setUserPointer(collision_object);
+			collision_object->set_collision_object(ghost);
+
+			BulletCollisionShape* bullet_shape = static_cast<BulletCollisionShape*>(shape);
+			assert(bullet_shape != 0);
+			collision_object->set_collision_shape(bullet_shape->get_shape());
+			bullet_shape->get_shape()->setUserPointer(shape);
+			fprintf(stdout, "collision_object's collision_shape: %p [%p]\n", collision_object->get_collision_shape(), collision_object->get_shape());
+
+			int flags = ghost->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE;
+			ghost->setCollisionShape(bullet_shape->get_shape());
+			ghost->setCollisionFlags(flags);
+
+			btTransform tr;
+			tr.setIdentity();
+			tr.setOrigin(btVector3(position.x, position.y, position.z));
+			ghost->setWorldTransform(tr);
+
+			bullet::get_world()->addCollisionObject(ghost, btBroadphaseProxy::SensorTrigger);
+
+			return collision_object;
+		}
+
 		physics::ICollisionShape* PhysicsInterface::create_capsule(float radius_meters, float height_meters)
 		{
 			assert(radius_meters >= FLT_EPSILON);
@@ -443,6 +473,10 @@ namespace gemini
 				result.closest_hit_fraction = callback.m_closestHitFraction;
 				result.hit_normal_world = toglm(callback.m_hitNormalWorld);
 				result.hit_point_world = toglm(callback.m_hitPointWorld);
+
+				btVector3 normal = callback.m_hitNormalWorld.normalize();
+				::renderer::debugdraw::sphere(toglm(callback.m_hitPointWorld), core::Color::from_rgba(255, 0, 0, 255), 0.005f, 2.0f);
+				::renderer::debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+normal*0.1f), core::Color::from_rgba(0, 255, 255, 255), 2.0f);
 
 				BulletCollisionObject* collision_object = static_cast<BulletCollisionObject*>(callback.m_hitCollisionObject->getUserPointer());
 				result.hit_object = collision_object;

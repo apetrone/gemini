@@ -114,11 +114,11 @@ namespace gemini
 					return btScalar(1.0);
 				}
 
-				if (!convexResult.m_hitCollisionObject->hasContactResponse())
-				{
+//				if (!convexResult.m_hitCollisionObject->hasContactResponse())
+//				{
 //					LOGV("ignoring object with no response\n");
-					return btScalar(1.0);
-				}
+//					return btScalar(1.0);
+//				}
 
 				btVector3 hitNormalWorld;
 				if (normalInWorldSpace)

@@ -185,6 +185,12 @@ namespace gemini
 				}
 			}
 
+			ICollisionShape* BulletCollisionObject::get_shape() const
+			{
+				assert(shape);
+				assert(shape->getUserPointer());
+				return static_cast<ICollisionShape*>(shape->getUserPointer());
+			}
 
 			void BulletCollisionObject::remove_constraints()
 			{
