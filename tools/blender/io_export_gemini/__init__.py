@@ -631,9 +631,20 @@ def collect_bone_data(model, armature, pose_bones_by_name):
 	bones = armature.data.bones
 
 	parent_matrix = Matrix()
+	armature_offset = armature.matrix_world.to_translation()
+	# Only assume this will be offset from Blender's Z-axis.
+	# This is to allow character's pelvis bones to be aligned at the
+	# origin, but offset in Z due to character height.
+	armature_offset.x = 0
+	armature_offset.y = 0
+	transformed_parent_offset = Matrix.Translation(model.global_matrix * armature_offset)
 
 	for index, bone in enumerate(bones):
 		parent_index = -1
+
+		if not bone.use_deform:
+			# skip bones non-deforming bones.
+			continue
 
 		if bone.parent:
 			parent_index = cache.find_by_name(bone.parent.name).index
@@ -667,6 +678,9 @@ def collect_bone_data(model, armature, pose_bones_by_name):
 		# The artist must create the rig with the root bone at the origin (0, 0, 0).
 		# That way, we can treat all model roots as the origin.
 		bone_data.bind_pose = (model.global_matrix * bone_data.bone.matrix_local) * ((model.global_matrix * parent_matrix).inverted())
+
+		if not parent:
+			bone_data.bind_pose = transformed_parent_offset * bone_data.bind_pose
 
 		# converts the object space vertices to joint space
 		bone_data.inverse_bind_pose = inverse_bind_pose
