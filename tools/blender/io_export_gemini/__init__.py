@@ -145,19 +145,17 @@ def create_triangulated_mesh(object):
 		# link copied object into the scene
 		bpy.context.scene.objects.link( obj )
 
-		# de-select all objects
-		for i in bpy.context.scene.objects:
-			i.select = False
+		bpy.ops.object.select_all(action='DESELECT')
 
 		# select the copied object and make it active
-		obj.select = True
+		bpy.ops.object.select_pattern(pattern=obj.name)
 		bpy.context.scene.objects.active = obj
 
 		# enter EDIT mode on this object
-		bpy.ops.object.mode_set( mode='EDIT' )
+		bpy.ops.object.mode_set(mode='EDIT')
 
 		# select all components
-		bpy.ops.mesh.select_all( action='SELECT' )
+		bpy.ops.mesh.select_all(action='SELECT')
 
 		# convert quads to tris using Blender's internal method
 		bpy.ops.mesh.quads_convert_to_tris()
@@ -166,7 +164,7 @@ def create_triangulated_mesh(object):
 		bpy.context.scene.update()
 
 		# go back to object mode
-		bpy.ops.object.mode_set( mode='OBJECT' )
+		bpy.ops.object.mode_set(mode='OBJECT')
 
 		return obj, True
 	else:
@@ -528,8 +526,8 @@ class Mesh(Node):
 								"bone": bone.name,
 								"value": group_element.weight
 								})
-						else:
-							print("warning: dropping weight for bone '%s', %2.2f" % (bone.name, group_element.weight))
+						#else:
+						#	print("warning: dropping weight for bone '%s', %2.2f" % (bone.name, group_element.weight))
 
 
 		mesh.calc_normals_split()
@@ -773,6 +771,13 @@ class GeminiModel(object):
 
 	def populate_animations(self, actions):
 		""" Populate Animations given the armatures and actions from the scene"""
+
+		# bail out early if we're missing data
+		if not (self.armature and self.bone_data):
+			return
+
+		bpy.ops.object.select_all(action='DESELECT')
+
 		animations = []
 
 		scene_fps = bpy.context.scene.render.fps
@@ -782,98 +787,111 @@ class GeminiModel(object):
 		# place the armature in POSE position
 		self.armature.data.pose_position = 'POSE'
 
+		# If this assert is hit, armature has no keyframes.
+		if self.armature.animation_data is not None:
+			old_action = self.armature.animation_data.action
+
 		for action in actions:
 			sequence = AnimatedSequence()
 			sequence.name = action.name
 			sequence.frames_per_second = scene_fps
 			sequence.duration_seconds = sequence_duration = (self.frame_end - self.frame_start) / scene_fps
 
-			if self.armature and self.bone_data:
-				# set the current action
-				#self.armature.animation_data.action = action
+			if self.armature.animation_data is not None:
+				print("Exporting action '%s'" % action.name)
+				self.armature.animation_data.action = action
+				bpy.context.scene.objects.active = self.armature
+				bpy.ops.object.select_pattern(pattern=self.armature.name)
+				bpy.ops.object.mode_set(mode='POSE')
+				bpy.ops.pose.select_all(action='SELECT')
+				bpy.ops.pose.transforms_clear()
+				bpy.ops.object.mode_set(mode='OBJECT')
 
-				for bone_data in self.bone_data.ordered_items:
-					obj = {
-						"name": bone_data.name,
-						"rotation": {},
-						"translation": {},
-						"scale": {}
-					}
+			for bone_data in self.bone_data.ordered_items:
+				obj = {
+					"name": bone_data.name,
+					"rotation": {},
+					"translation": {},
+					"scale": {}
+				}
 
-					time_values = []
-					#
-					# SCALE
-					#
-					# scale = []
-					# obj["scale"] = {
-					# 	"time": time_values,
-					# 	"value": scale
-					# }
+				time_values = []
+				#
+				# SCALE
+				#
+				# scale = []
+				# obj["scale"] = {
+				# 	"time": time_values,
+				# 	"value": scale
+				# }
 
-					#
-					# ROTATION
-					#
-					rotation = []
-					#euler = [] # for debugging
-					obj["rotation"] = {
-						"time": time_values,
-						"value": rotation
-					#	"euler": euler,
-					}
+				#
+				# ROTATION
+				#
+				rotation = []
+				#euler = [] # for debugging
+				obj["rotation"] = {
+					"time": time_values,
+					"value": rotation
+				#	"euler": euler,
+				}
 
-					#
-					# TRANSLATION
-					#
-					translation = []
-					obj["translation"] = {
-						"time": time_values,
-						"value": translation
-					}
+				#
+				# TRANSLATION
+				#
+				translation = []
+				obj["translation"] = {
+					"time": time_values,
+					"value": translation
+				}
 
-					# set the current frame
-					prev_rot = None
-					for frame in range(self.frame_start, self.frame_end):
-						bpy.context.scene.frame_set(frame)
+				# set the current frame
+				prev_rot = None
+				for frame in range(self.frame_start, self.frame_end):
+					bpy.context.scene.frame_set(frame)
 
-						# populate the time
-						current_time_seconds = (frame / float(scene_fps)) - sequence_time_begin
-						time_values.append(current_time_seconds)
+					# populate the time
+					current_time_seconds = (frame / float(scene_fps)) - sequence_time_begin
+					time_values.append(current_time_seconds)
 
-						global_tx = Matrix()
+					global_tx = Matrix()
 
-						inverse_parent_matrix = Matrix()
+					inverse_parent_matrix = Matrix()
 
-						if bone_data.pose_bone.parent:
-							inverse_parent_matrix = (bone_data.pose_bone.parent.matrix).inverted()
-						else:
-							global_tx = self.global_matrix
+					if bone_data.pose_bone.parent:
+						inverse_parent_matrix = (bone_data.pose_bone.parent.matrix).inverted()
+					else:
+						global_tx = self.global_matrix
 
-						inverted_bind_pose = bone_data.bind_pose.copy().inverted()
+					inverted_bind_pose = bone_data.bind_pose.copy().inverted()
 
-						# Compute the delta from the bind pose to this frame.
-						# We need the inverted bind pose to remove any transforms from
-						# the initial bind pose.
-						# Inverse parent matrix ensures this only records local transforms.
-						matrix_delta = global_tx * (inverted_bind_pose * inverse_parent_matrix * bone_data.pose_bone.matrix)
+					# Compute the delta from the bind pose to this frame.
+					# We need the inverted bind pose to remove any transforms from
+					# the initial bind pose.
+					# Inverse parent matrix ensures this only records local transforms.
+					matrix_delta = global_tx * (inverted_bind_pose * inverse_parent_matrix * bone_data.pose_bone.matrix)
 
-						tx, rx, sx = matrix_delta.decompose()
-						#euler.append([degrees(value) for value in rx.to_euler()])
-						if prev_rot:
-							# This helps ensure we dump the quaternion
-							# that chooses the shortest-angle between
-							# it and the last one.
-							if prev_rot.dot(rx) < 0.0:
-								rx = rx.inverted()
+					tx, rx, sx = matrix_delta.decompose()
+					#euler.append([degrees(value) for value in rx.to_euler()])
+					if prev_rot:
+						# This helps ensure we dump the quaternion
+						# that chooses the shortest-angle between
+						# it and the last one.
+						if prev_rot.dot(rx) < 0.0:
+							rx = rx.inverted()
 
-						#scale.append([sx[0], sx[1], sx[2]])
-						rotation.append([rx.x, rx.y, rx.z, rx.w])
-						translation.append([tx[0], tx[1], tx[2]])
+					#scale.append([sx[0], sx[1], sx[2]])
+					rotation.append([rx.x, rx.y, rx.z, rx.w])
+					translation.append([tx[0], tx[1], tx[2]])
 
-						prev_rot = rx
+					prev_rot = rx
 
-					sequence.children.append(obj)
+				sequence.children.append(obj)
 
-				animations.append(sequence)
+			animations.append(sequence)
+
+			if self.armature.animation_data is not None:
+				self.armature.animation_data.action = old_action
 		return animations
 
 
