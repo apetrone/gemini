@@ -142,6 +142,7 @@ public:
 	virtual void use(Entity* user);
 
 	virtual bool is_player() const { return false; }
+	virtual bool is_door() const { return false; }
 
 	// Call this when you need to explicitly set the physics transform
 	// from the current entity's position and rotation. Normally, you don't
@@ -170,6 +171,9 @@ public:
 	// ACCESSORS
 	void set_position(const glm::vec3& new_position);
 	const glm::vec3& get_position() const;
+
+	void set_orientation(const glm::quat& new_orientation);
+	const glm::quat& get_orientation() const;
 
 public:
 

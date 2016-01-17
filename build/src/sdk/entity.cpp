@@ -340,6 +340,21 @@ void Entity::set_position(const glm::vec3& new_position)
 	set_physics_from_current_transform();
 }
 
+const glm::vec3& Entity::get_position() const
+{
+	return position;
+}
+
+void Entity::set_orientation(const glm::quat& new_orientation)
+{
+	orientation = new_orientation;
+	set_physics_from_current_transform();
+}
+
+const glm::quat& Entity::get_orientation() const
+{
+	return orientation;
+}
 
 void Entity::apply_impulse(const glm::vec3& impulse, const glm::vec3& local_position)
 {
@@ -373,11 +388,6 @@ void Entity::set_parent(Entity *other)
 //	{
 //		this->collision_object->set_parent(this->collision_object, other->collision_object);
 //	}
-}
-
-const glm::vec3& Entity::get_position() const
-{
-	return position;
 }
 
 void Entity::set_model(const char* path)
