@@ -38,7 +38,7 @@ namespace core
 			ConfigLoad_Success
 		}; // ConfigLoadStatus
 
-		typedef ConfigLoadStatus (JsonLoaderCallback)( const Json::Value & root, void * data );
-		LIBRARY_EXPORT bool json_load_with_callback(const char * filename, JsonLoaderCallback callback, void * context, bool path_is_relative);
+		typedef ConfigLoadStatus (JsonLoaderCallback)(const Json::Value& root, void* data);
+		LIBRARY_EXPORT bool json_load_with_callback(const char* filename, JsonLoaderCallback callback, void* context, bool path_is_relative);
 	} // namespace util
 } // namespace core

@@ -139,7 +139,7 @@ namespace core
 			{
 				// TODO: use 'get_length' to allow Android's Asset Manager?
 				platform::fs_seek(handle, 0, platform::FileSeek_End);
-				file_size = platform::fs_tell(handle);
+				file_size = static_cast<size_t>(platform::fs_tell(handle));
 				platform::fs_seek(handle, 0, platform::FileSeek_Begin);
 
 				if (buffer && *buffer_length > 0)
@@ -185,7 +185,7 @@ namespace core
 				// TODO: use 'get_length' to allow Android's Asset Manager?
 				size_t file_size;
 				platform::fs_seek(handle, 0, platform::FileSeek_End);
-				file_size = platform::fs_tell(handle);
+				file_size = static_cast<size_t>(platform::fs_tell(handle));
 				platform::fs_seek(handle, 0, platform::FileSeek_Begin);
 
 				if (file_size > 0)

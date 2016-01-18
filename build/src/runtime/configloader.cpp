@@ -54,7 +54,7 @@ namespace core
 		} // parse_json_string_with_callback
 
 
-		bool json_load_with_callback( const char * filename, JsonLoaderCallback callback, void * context, bool path_is_relative )
+		bool json_load_with_callback(const char* filename, JsonLoaderCallback callback, void* context, bool)
 		{
 			size_t buffer_size = 0;
 			char * buffer = 0;

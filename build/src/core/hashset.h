@@ -61,7 +61,7 @@ private:
 		int32_t current_index = (hash % table_size);
 		for( ; ; )
 		{
-			bucket_index = (current_index++ % table_size);
+			bucket_index = static_cast<int32_t>(current_index++ % table_size);
 			if (table[bucket_index].hash == 0)
 			{
 				return -1;
@@ -105,7 +105,7 @@ private:
 		Bucket* old_table = table;
 
 		size_t total_items = table_size;
-		table_size = new_size;
+		table_size = static_cast<uint32_t>(new_size);
 		table = allocate(table_size);
 
 		// reset used item count as we need to re-insert them.

@@ -78,7 +78,9 @@ namespace core
 				if (p)
 				{
 					memset(buf, 0, MAX_PATH_SIZE);
-					str::copy(buf, path + len - (path+len-1-p), last-p+1);
+					str::copy(buf,
+						path + len - (path+len-1-p),
+						static_cast<size_t>(last-p)+1);
 
 					last = p-1;
 					*p = '\0';

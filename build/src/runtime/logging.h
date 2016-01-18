@@ -66,10 +66,10 @@ namespace core
 			void (*close)(Handler* handler);
 
 			// called when a log message is received
-			void (*message)(struct Handler* handler, const char* message, const char* filename, const char* function, int line, int type );
+			void (*message)(struct Handler* handler, const char* message, const char* filename, const char* function, int line, int type);
 
 			// userdata
-			void * userdata;
+			void* userdata;
 
 			Handler() : open(0), close(0), message(0), userdata(0) {}
 		};

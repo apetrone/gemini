@@ -79,7 +79,7 @@ namespace core
 		}
 
 
-		void stdout_message(Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
+		void stdout_message(Handler*, const char* message, const char* filename, const char* function, int line, int type)
 		{
 			const char *message_types[] = {0, "VERBOSE", "WARNING", " ERROR "};
 			StackString<MAX_PATH_SIZE> path = filename;
@@ -87,17 +87,17 @@ namespace core
 			//fflush( stdout );
 		}
 
-		int stdout_open(Handler* handler)
+		int stdout_open(Handler*)
 		{
 			return 1;
 		}
 
-		void stdout_close(Handler* handler)
+		void stdout_close(Handler*)
 		{
 		}
 
 #if defined(PLATFORM_WINDOWS)
-		void vs_message(Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
+		void vs_message(Handler*, const char* message, const char*, const char*, int, int)
 		{
 	//		const char *message_types[] = { 0, "VERBOSE", "WARNING", " ERROR " };
 //			fprintf( stdout, "[%s] %s, %s, %i | %s", message_types[ type ], xstr_filefrompath(filename), function, line, message );
@@ -106,12 +106,12 @@ namespace core
 			OutputDebugStringA(message);
 		}
 
-		int vs_open(Handler* handler)
+		int vs_open(Handler*)
 		{
 			return 1;
 		}
 
-		void vs_close(Handler* handler)
+		void vs_close(Handler*)
 		{
 		}
 #endif

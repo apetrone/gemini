@@ -45,6 +45,9 @@ namespace core
 			virtual void add_handler(Handler* handler);
 			virtual uint32_t startup();
 			virtual void shutdown();
+
+		private:
+			LogInterface& operator=(const LogInterface&) const = delete;
 		}; // LogInterface
 	} // namespace logging
 } // namespace core
