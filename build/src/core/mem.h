@@ -40,8 +40,8 @@
 	#error Unknown platform!
 #endif
 
-// enable this define to debug memory allocations (performance hit!)
-#define ENABLE_MEMORY_TRACKING 0
+// uncomment this to debug memory allocations (performance hit!)
+//#define ENABLE_MEMORY_TRACKING 1
 
 #include <assert.h>
 
