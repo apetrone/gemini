@@ -545,9 +545,9 @@ namespace renderer
 
 	void gemgl_shutdown( gemgl_interface_t & gl_interface  )
 	{
-#if PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_ANDROID
+#if defined(PLATFORM_WINDOWS) || defined(PLATFORM_LINUX) || defined(PLATFORM_ANDROID)
 		platform::dylib_close(gl_interface.library);
-#elif PLATFORM_APPLE
+#elif defined(PLATFORM_APPLE)
 		gemgl_osx_shutdown();
 #endif
 	} // gemgl_shutdown

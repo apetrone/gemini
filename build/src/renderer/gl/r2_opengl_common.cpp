@@ -613,6 +613,10 @@ namespace render2
 		return 0;
 	}
 
+	void unload_gl_symbols()
+	{
+		gemgl_shutdown(gl);
+	}
 
 	// ---------------------------------------------------------------------
 	// common functions shared between devices

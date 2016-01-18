@@ -189,6 +189,7 @@ namespace render2
 
 	// returns 0 on success
 	int load_gl_symbols();
+	void unload_gl_symbols();
 
 	GLenum convert_blendstate(BlendOp op);
 

@@ -116,7 +116,7 @@ namespace render2
 
 		~GLES2Device()
 		{
-
+			unload_gl_symbols();
 		}
 
 	private:

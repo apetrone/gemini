@@ -148,7 +148,7 @@ namespace render2
 
 		~OpenGLDevice()
 		{
-
+			unload_gl_symbols();
 		}
 
 	private:
