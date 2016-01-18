@@ -338,6 +338,15 @@ def setup_driver(arguments, product, target_platform):
 				"GL"
 			]
 
+
+
+	# Windows
+	windows_debug = product.layout(platform="windows", configuration="debug")
+	windows_debug.driver.generate_debug_info = "debug"
+
+	windows_release = product.layout(platform="windows", configuration="release")
+	windows_release.driver.generate_debug_info = "no"
+
 def get_tools(arguments, libui, libruntime, librenderer, libplatform, libcore, **kwargs):
 	#
 	#
