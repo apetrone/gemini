@@ -41,9 +41,14 @@
 #endif
 
 // enable this define to debug memory allocations (performance hit!)
-//#define ENABLE_MEMORY_TRACKING 1
+#define ENABLE_MEMORY_TRACKING 0
 
 #include <assert.h>
+
+
+#if defined(ENABLE_MEMORY_TRACKING)
+#include <list>
+#endif
 
 #define MEMORY_ALLOC(size, allocator) (allocator).allocate(size, sizeof(void*), __FILE__, __LINE__)
 #define MEMORY_DEALLOC(pointer, allocator) (allocator).deallocate(pointer)
@@ -143,7 +148,6 @@ namespace core
 
 
 #if defined(ENABLE_MEMORY_TRACKING)
-#		include <list>
 #		include "memory/debug_tracking_policy.h"
 		typedef DebugTrackingPolicy DefaultTrackingPolicy;
 #else
