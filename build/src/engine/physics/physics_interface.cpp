@@ -384,6 +384,15 @@ namespace gemini
 			return collision_shape;
 		}
 
+		physics::ICollisionShape* PhysicsInterface::create_sphere(float radius_meters)
+		{
+			BulletCollisionShape* collision_shape = MEMORY_NEW(BulletCollisionShape, core::memory::global_allocator());
+			collision_shapes.push_back(collision_shape);
+			btCollisionShape* sphere = new btSphereShape(radius_meters);
+			collision_shape->set_shape(sphere);
+			return collision_shape;
+		}
+
 		void PhysicsInterface::destroy_object(ICollisionObject* object)
 		{
 			MEMORY_DELETE(object, core::memory::global_allocator());

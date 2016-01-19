@@ -640,10 +640,8 @@ class ModelInterface : public gemini::IModelInterface
 
 		virtual uint32_t get_total_bones(int32_t index) const
 		{
-			animation::SequenceId instance_index = animations[index];
-			animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
-
-			return instance->ChannelSet.size();
+			assert(mesh != nullptr);
+			return mesh->skeleton.size();
 		}
 
 		virtual int32_t find_bone_named(const char* bone)

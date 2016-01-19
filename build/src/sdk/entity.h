@@ -210,7 +210,7 @@ public:
 	void set_parent(Entity* other);
 
 	// functions for this script object
-	void set_model(const char* path);
+	virtual void set_model(const char* path);
 
 
 	Array<gemini::physics::ICollisionObject*> colliders;

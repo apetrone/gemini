@@ -196,13 +196,13 @@ namespace renderer
 						DebugPrimitive* primitive = &persistent_primitives[index];
 						// if timeleft has expired, reset it and disable the primitive by
 						// setting an invalid type
-						if (primitive->timeleft < 0)
+						if ((primitive->type > 0) && (primitive->timeleft < 0))
 						{
 							primitive->timeleft = -1;
 							primitive->type = 0;
 						}
 
-						if (primitive->timeleft >= 0)
+						if ((primitive->type > 0) && (primitive->timeleft >= 0))
 						{
 							// timeleft has a value, subtract deltatime
 							primitive->timeleft -= delta_msec;
