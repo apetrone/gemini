@@ -52,7 +52,7 @@ Debian/Ubuntu/SteamOS
 
 	.. code-block:: bash
 
-		sudo apt-get install sox libopenal-dev
+		sudo apt-get install sox libopenal-dev libudev-dev
 
 	If building with X11; you need X11 libs.
 
@@ -113,7 +113,7 @@ Android
 		python tools/pegasus/build.py build/scripts/gemini.py generate -p android
 
 Building for mobile platforms is nearly identical to building for the desktop.
-These following options will help you configure the 
+These following options will help you configure the
 
 
 The supported platforms are as follows:

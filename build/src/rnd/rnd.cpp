@@ -330,6 +330,7 @@ struct Rectangle
 
 void test_udev(const char* subsystem)
 {
+	// http://www.signal11.us/oss/udev/
 	using namespace platform;
 	struct udev* lib;
 	struct udev_enumerate* enumerate;
@@ -347,6 +348,8 @@ void test_udev(const char* subsystem)
 
 	// create a list of devices in the 'hidraw' subsystem
 	enumerate = udev_enumerate_new(lib);
+
+	fprintf(stdout, "looking for subsystem matches: '%s'\n", subsystem);
 	udev_enumerate_add_match_subsystem(enumerate, subsystem);
 	udev_enumerate_scan_devices(enumerate);
 	devices = udev_enumerate_get_list_entry(enumerate);
@@ -363,7 +366,11 @@ void test_udev(const char* subsystem)
 
 		dev = udev_device_new_from_syspath(lib, path);
 		if (!dev)
+		{
+			PLATFORM_LOG(LogMessageType::Warning, "Unable to find device"
+				" for sys path: %s\n", path);
 			continue;
+		}
 		// usb_device_get_devnode() returns the path to the device node
 		// in /dev/
 		PLATFORM_LOG(LogMessageType::Info, "Device Node Path: %s\n",
@@ -411,6 +418,18 @@ void test_udev(const char* subsystem)
 	udev_unref(lib);
 }
 #endif
+
+//idVendor:idProduct
+// 045e:028e -- Xbox360 controller
+
+// etc/udev/rules.d/99-input.rules
+// KERNEL=="event[0-9]*", ENV{ID_BUS}=="?*", ENV{ID_INPUT_JOYSTICK}=="?*", GROUP="games", MODE="0660"
+// KERNEL=="js[0-9]*", ENV{ID_BUS}=="?*", ENV{ID_INPUT_JOYSTICK}=="?*", GROUP="games", MODE="0664"
+
+// reload rules: udevadm control --reload-rules
+// udevtrigger
+
+// https://wiki.archlinux.org/index.php/Gamepad#PlayStation_4_controller
 
 int main(int argc, char** argv)
 {
