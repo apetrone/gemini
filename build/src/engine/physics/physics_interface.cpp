@@ -321,7 +321,6 @@ namespace gemini
 			assert(bullet_shape != 0);
 			collision_object->set_collision_shape(bullet_shape->get_shape());
 			bullet_shape->get_shape()->setUserPointer(shape);
-			fprintf(stdout, "collision_object's collision_shape: %p [%p]\n", collision_object->get_collision_shape(), collision_object->get_shape());
 
 			int flags = ghost->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE;
 			ghost->setCollisionShape(bullet_shape->get_shape());

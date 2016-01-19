@@ -68,7 +68,7 @@
 #include "navigation.h"
 
 // uncomment this to draw bone debug information
-#define GEMINI_DEBUG_BONES
+//#define GEMINI_DEBUG_BONES
 
 typedef Array<gemini::GameMessage> EventQueueType;
 
@@ -353,8 +353,6 @@ void EntityManager::shutdown()
 }
 
 
-
-
 class ModelInterface : public gemini::IModelInterface
 {
 	// Each entity that has a model associated with it
@@ -365,8 +363,12 @@ class ModelInterface : public gemini::IModelInterface
 		assets::Mesh* mesh;
 		glm::mat4 transform;
 
-		glm::mat4* bone_transforms;
-		glm::mat4 debug_bone_transforms[MAX_BONES];
+		// parent-local bone transforms
+		glm::mat4* local_bone_transforms;
+
+		// model bone transforms
+		glm::mat4* model_bone_transforms;
+
 		glm::mat4* inverse_bind_transforms;
 
 		Channel<glm::vec3> scale_channel;
@@ -384,7 +386,8 @@ class ModelInterface : public gemini::IModelInterface
 		ModelInstanceData() :
 			mesh_asset_index(0),
 			mesh(0),
-			bone_transforms(0),
+			local_bone_transforms(0),
+			model_bone_transforms(0),
 			inverse_bind_transforms(0),
 			scale_channel(scale),
 			rotation_channel(rotation),
@@ -406,17 +409,24 @@ class ModelInterface : public gemini::IModelInterface
 			if (mesh->has_skeletal_animation)
 			{
 				size_t total_elements = (mesh->geometry.size() * mesh->skeleton.size());
-				bone_transforms = new glm::mat4[total_elements];
+				local_bone_transforms = new glm::mat4[total_elements];
+				model_bone_transforms = new glm::mat4[total_elements];
 				inverse_bind_transforms = new glm::mat4[total_elements];
 			}
 		}
 
 		void destroy_bones()
 		{
-			if (bone_transforms)
+			if (local_bone_transforms)
 			{
-				delete [] bone_transforms;
-				bone_transforms = 0;
+				delete [] local_bone_transforms;
+				local_bone_transforms = 0;
+			}
+
+			if (model_bone_transforms)
+			{
+				delete [] model_bone_transforms;
+				model_bone_transforms = 0;
 			}
 
 			if (inverse_bind_transforms)
@@ -429,13 +439,13 @@ class ModelInterface : public gemini::IModelInterface
 		virtual unsigned int asset_index() const { return mesh_asset_index; }
 		virtual glm::mat4& get_local_transform() { return transform; }
 		virtual void set_local_transform(const glm::mat4& _transform) { transform = _transform; }
-		virtual glm::mat4* get_bone_transforms(uint32_t geometry_index) const
+		virtual glm::mat4* get_model_bone_transforms(uint32_t geometry_index) const
 		{
-			if (!bone_transforms)
+			if (!model_bone_transforms)
 			{
 				return nullptr;
 			}
-			return &bone_transforms[mesh->skeleton.size()*geometry_index];
+			return &model_bone_transforms[mesh->skeleton.size()*geometry_index];
 		}
 
 		virtual glm::mat4* get_inverse_bind_transforms(uint32_t geometry_index) const
@@ -445,11 +455,6 @@ class ModelInterface : public gemini::IModelInterface
 				return nullptr;
 			}
 			return &inverse_bind_transforms[mesh->skeleton.size()*geometry_index];
-		}
-
-		virtual glm::mat4* get_debug_bone_transforms()
-		{
-			return debug_bone_transforms;
 		}
 
 		virtual uint32_t get_total_transforms() const
@@ -536,30 +541,27 @@ class ModelInterface : public gemini::IModelInterface
 				{
 					transform_index = (geometry_index * mesh->skeleton.size()) + index;
 					assets::Joint* joint = &mesh->skeleton[index];
-					glm::mat4& global_pose = bone_transforms[transform_index];
 
-					glm::mat4& debug_bone_transform = debug_bone_transforms[index];
+					glm::mat4& local_bone_pose = local_bone_transforms[transform_index];
+					glm::mat4& model_pose = model_bone_transforms[transform_index];
+
 					glm::mat4 parent_pose;
 					glm::mat4& inverse_bind_pose = inverse_bind_transforms[transform_index];
-					glm::mat4 local_scale;
+
 					glm::mat4 local_rotation = glm::toMat4(rotations[index]);
 					glm::mat4 local_transform = glm::translate(glm::mat4(1.0f), positions[index]);
 
-//					LOGV("pos: %2.2f, %2.2f, %2.2f\n", pos.x, pos.y, pos.z);
-					glm::mat4 local_pose = local_transform * local_rotation * local_scale;
-//					local_to_world = tr * pivot * ro * sc * inv_pivot;
-
+					const glm::mat4 local_pose = local_transform * local_rotation;
 					if (joint->parent_index > -1)
 					{
-						parent_pose = bone_transforms[joint->parent_index];
+						parent_pose = model_bone_transforms[joint->parent_index];
 					}
 
-					// this will be used for skinning in the vertex shader
-					global_pose = parent_pose * geo.bind_poses[index] * local_pose;
+					// this will be cached in local transforms
+					local_bone_pose = geo.bind_poses[index] * local_pose;
 
-					// copy this directly to draw in world position
-					// this will be used for debug rendering
-					debug_bone_transform = global_pose;
+					// this will be used for skinning in the vertex shader
+					model_pose = parent_pose * local_bone_pose;
 
 					// set the inverse_bind_pose
 					inverse_bind_pose = geo.inverse_bind_poses[index];
@@ -642,6 +644,35 @@ class ModelInterface : public gemini::IModelInterface
 			animation::AnimatedInstance* instance = animation::get_instance_by_index(instance_index);
 
 			return instance->ChannelSet.size();
+		}
+
+		virtual int32_t find_bone_named(const char* bone)
+		{
+			for (const assets::Joint& joint : mesh->skeleton)
+			{
+				if (joint.name == bone)
+					return joint.index;
+			}
+
+			return -1;
+		}
+
+		virtual void get_local_bone_pose(int32_t animation_index, int32_t bone_index, glm::vec3& position, glm::quat& rotation)
+		{
+			assert(bone_index != -1);
+
+			const glm::mat4 model_matrix = local_bone_transforms[bone_index];
+			rotation = glm::toQuat(model_matrix);
+			position = glm::vec3(glm::column(model_matrix, 3));
+		}
+
+		virtual void get_model_bone_pose(int32_t animation_index, int32_t bone_index, glm::vec3& position, glm::quat& rotation)
+		{
+			assert(bone_index != -1);
+
+			const glm::mat4& model_matrix = model_bone_transforms[bone_index];
+			rotation = glm::toQuat(model_matrix);
+			position = glm::vec3(glm::column(model_matrix, 3));
 		}
 	};
 
