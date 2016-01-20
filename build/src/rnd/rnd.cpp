@@ -10,6 +10,7 @@
 #include <core/interpolation.h>
 #include <core/argumentparser.h>
 #include <core/mem.h>
+#include <core/stackstring.h>
 
 #include <json/json.h>
 
@@ -96,7 +97,6 @@ void test_function()
 
 #include <platform/platform.h>
 #include <core/mem.h>
-
 
 struct BaseClass
 {
@@ -328,95 +328,7 @@ struct Rectangle
 
 #include <libudev.h>
 
-void test_udev(const char* subsystem)
-{
-	// http://www.signal11.us/oss/udev/
-	using namespace platform;
-	struct udev* lib;
-	struct udev_enumerate* enumerate;
-	struct udev_list_entry* devices;
-	struct udev_list_entry* entry;
-	struct udev_device* dev;
 
-	// create
-	lib = udev_new();
-	if (!lib)
-	{
-		fprintf(stderr, "cannot create the udev lib\n");
-		return;
-	}
-
-	// create a list of devices in the 'hidraw' subsystem
-	enumerate = udev_enumerate_new(lib);
-
-	fprintf(stdout, "looking for subsystem matches: '%s'\n", subsystem);
-	udev_enumerate_add_match_subsystem(enumerate, subsystem);
-	udev_enumerate_scan_devices(enumerate);
-	devices = udev_enumerate_get_list_entry(enumerate);
-
-	udev_list_entry_foreach(entry, devices)
-	{
-		const char* path;
-		// get the filename of the /sys entry for the device
-		// and create a udev_device object representing it.
-
-		path = udev_list_entry_get_name(entry);
-		PLATFORM_LOG(LogMessageType::Info, "entry name: %s\n",
-			path);
-
-		dev = udev_device_new_from_syspath(lib, path);
-		if (!dev)
-		{
-			PLATFORM_LOG(LogMessageType::Warning, "Unable to find device"
-				" for sys path: %s\n", path);
-			continue;
-		}
-		// usb_device_get_devnode() returns the path to the device node
-		// in /dev/
-		PLATFORM_LOG(LogMessageType::Info, "Device Node Path: %s\n",
-			udev_device_get_devnode(dev));
-
-
-		// The device pointed to by dev contains info about the hidraw
-		// device. In order to get info about the device, get the
-		// parent usb device with the subsystem/devtype pair of
-		// "usb"/"usb_device". This will be several levels up the
-		// tree, but the function will find it.
-		dev = udev_device_get_parent_with_subsystem_devtype(
-			dev,
-			"usb",
-			"usb_device");
-
-		if (!dev)
-		{
-			PLATFORM_LOG(LogMessageType::Info,
-				"Unable to find parent usb device\n");
-			return;
-		}
-
-		// from here, call get_sysattr_value for each file in the
-		// device's /sys entry. The strings passed into these
-		// functions (idProduct, idVendor, serial, etc.) correspond
-		// directly to the files in the directory representing the
-		// usb device. Note that USB strings are Unicode, UCS2
-		// encoded, but the strings returned from
-		// udev_device_get_sysattr_value are UTF-8 encoded.
-		PLATFORM_LOG(LogMessageType::Info, "VID/PID: %s %s\n",
-			udev_device_get_sysattr_value(dev, "idVendor"),
-			udev_device_get_sysattr_value(dev, "idProduct"));
-
-		PLATFORM_LOG(LogMessageType::Info, "%s\n %s\n",
-			udev_device_get_sysattr_value(dev, "manufacturer"),
-			udev_device_get_sysattr_value(dev, "product"));
-
-		PLATFORM_LOG(LogMessageType::Info, "%s\n",
-			udev_device_get_sysattr_value(dev, "serial"));
-
-		udev_device_unref(dev);
-	}
-	udev_enumerate_unref(enumerate);
-	udev_unref(lib);
-}
 #endif
 
 //idVendor:idProduct
@@ -431,6 +343,345 @@ void test_udev(const char* subsystem)
 
 // https://wiki.archlinux.org/index.php/Gamepad#PlayStation_4_controller
 
+#include <linux/input.h>
+
+
+
+
+namespace test
+{
+	enum class DeviceType
+	{
+		Keyboard,
+		Mouse,
+		Joystick
+	};
+
+	class InputDevice
+	{
+	public:
+		virtual ~InputDevice();
+		virtual int get_descriptor() const = 0;
+		virtual const char* get_device_path() const = 0;
+		virtual DeviceType get_device_type() const = 0;
+		virtual bool process_event(const struct input_event&) = 0;
+	};
+
+	InputDevice::~InputDevice()
+	{
+	}
+
+	template <DeviceType T>
+	class InputDeviceBase : public InputDevice
+	{
+	public:
+		InputDeviceBase(const char* device_path_node) :
+			descriptor(-1),
+			device_path(device_path_node)
+		{
+			PLATFORM_LOG(platform::LogMessageType::Info, "opening: '%s'...\n", device_path_node);
+			descriptor = open(device_path_node, O_RDONLY);
+			assert(descriptor != -1);
+		}
+
+		virtual ~InputDeviceBase()
+		{
+			if (descriptor != -1)
+			{
+				close(descriptor);
+				descriptor = -1;
+			}
+		}
+
+		virtual int get_descriptor() const
+		{
+			return descriptor;
+		}
+
+		virtual const char* get_device_path() const
+		{
+			return device_path();
+		}
+
+		virtual DeviceType get_device_type() const
+		{
+			return T;
+		}
+
+	protected:
+		int descriptor;
+		core::StackString<32> device_path;
+	};
+
+	class KeyboardDevice : public InputDeviceBase<DeviceType::Keyboard>
+	{
+	public:
+		KeyboardDevice(const char* device_path) : InputDeviceBase(device_path)
+		{
+		}
+
+		virtual bool process_event(const struct input_event& event)
+		{
+			if (event.type == EV_KEY)
+			{
+				// code: corresponding KEY_* code.
+				// value: 0 for up, 1 for down, 2 for held.
+				//
+
+				// key input
+				printf("type: %d, code: %d, value: %d\n",
+					event.type, event.code, event.value);
+			}
+			else
+			{
+				printf("unhandled type: %d\n", event.type);
+			}
+			return false;
+		}
+	};
+
+	class MouseDevice : public InputDeviceBase<DeviceType::Keyboard>
+	{
+	public:
+		MouseDevice(const char* device_path) : InputDeviceBase(device_path)
+		{
+		}
+
+		virtual bool process_event(const struct input_event& event)
+		{
+			printf("type: %d, code: %d, value: %d\n",
+				event.type, event.code, event.value);
+			if (event.type == EV_REL)
+			{
+				// EV_REL
+				// REL_WHEEL, REL_HWHEEL
+
+			}
+			else if (event.type == EV_ABS)
+			{
+				// ABS_DISTANCE
+				// ABS_MT_*: multi-touch input events
+			}
+			else if (event.type == EV_KEY)
+			{
+				// BTN_*
+			}
+			else
+			{
+				printf("unhandled type: %d\n", event.type);
+			}
+			return false;
+		}
+	};
+
+	const size_t INPUT_BUFFER_SIZE = sizeof(struct input_event);
+	static Array<InputDevice*> _devices;
+
+	void create_device_with_path(const char* device_path,
+								DeviceType device_type)
+	{
+		InputDevice* device = nullptr;
+		switch(device_type)
+		{
+			case DeviceType::Keyboard:
+				device = MEMORY_NEW(KeyboardDevice, core::memory::global_allocator())(device_path);
+				break;
+			case DeviceType::Mouse:
+				device = MEMORY_NEW(MouseDevice, core::memory::global_allocator())(device_path);
+				break;
+			default:
+				PLATFORM_LOG(platform::LogMessageType::Error, "Unknown device type specified!\n");
+				assert(0);
+				break;
+		}
+
+		assert(device != nullptr);
+		_devices.push_back(device);
+	}
+
+	void add_devices(const char* subsystem,
+					const char* property_name,
+					const char* property_value,
+					DeviceType device_type)
+	{
+		// http://www.signal11.us/oss/udev/
+		struct udev* lib;
+		struct udev_enumerate* enumerate;
+		struct udev_list_entry* devices;
+		struct udev_list_entry* entry;
+
+		// create
+		lib = udev_new();
+		if (!lib)
+		{
+			PLATFORM_LOG(platform::LogMessageType::Error,
+				"cannot create the udev lib\n"
+			);
+			return;
+		}
+
+		// create a list of devices in the 'hidraw' subsystem
+		enumerate = udev_enumerate_new(lib);
+
+		// PLATFORM_LOG(platform::LogMessageType::Info,
+		// 	"looking for subsystem matches: '%s'\n",
+		// 	subsystem
+		// );
+		udev_enumerate_add_match_subsystem(enumerate, subsystem);
+		if (property_name && property_value)
+		{
+			udev_enumerate_add_match_property(enumerate,
+				property_name,
+				property_value
+			);
+		}
+		udev_enumerate_scan_devices(enumerate);
+		devices = udev_enumerate_get_list_entry(enumerate);
+
+		udev_list_entry_foreach(entry, devices)
+		{
+			const char* sys_device_path;
+
+			// get the filename of the /sys entry for the device
+			// and create a udev_device object representing it.
+			sys_device_path = udev_list_entry_get_name(entry);
+			// PLATFORM_LOG(platform::LogMessageType::Info, "name: %s\n",
+			// 	sys_device_path);
+
+			udev_device* udevice = udev_device_new_from_syspath(lib, sys_device_path);
+			if (!udevice)
+			{
+				PLATFORM_LOG(platform::LogMessageType::Warning,
+					"Unable to find device for sys path: %s\n", sys_device_path);
+				continue;
+			}
+
+			// get the path of the device in the /dev/ tree
+			const char* device_node_path = udev_device_get_devnode(udevice);
+			if (!device_node_path)
+			{
+				PLATFORM_LOG(platform::LogMessageType::Info,
+					"Unable to get device node path.\n"
+				);
+				udev_device_unref(udevice);
+				continue;
+			}
+
+			// The device pointed to by dev contains info about the hidraw
+			// device. In order to get info about the device, get the
+			// parent usb device with the subsystem/devtype pair of
+			// "usb"/"usb_device". This will be several levels up the
+			// tree, but the function will find it.
+			udev_device* uparent = udev_device_get_parent_with_subsystem_devtype(
+				udevice,
+				"usb",
+				"usb_device");
+
+			if (!uparent)
+			{
+				PLATFORM_LOG(platform::LogMessageType::Info,
+					"Unable to find parent usb device\n");
+				udev_device_unref(udevice);
+				continue;
+			}
+
+			// usb_device_get_devnode() returns the path to the device node
+			// in /dev/
+			PLATFORM_LOG(platform::LogMessageType::Info,
+				"Device Node Path: %s\n",
+				device_node_path
+			);
+
+			// from here, call get_sysattr_value for each file in the
+			// device's /sys entry. The strings passed into these
+			// functions (idProduct, idVendor, serial, etc.) correspond
+			// directly to the files in the directory representing the
+			// usb device. Note that USB strings are Unicode, UCS2
+			// encoded, but the strings returned from
+			// udev_device_get_sysattr_value are UTF-8 encoded.
+			PLATFORM_LOG(platform::LogMessageType::Info,
+				"VID/PID: %s %s\n",
+				udev_device_get_sysattr_value(uparent, "idVendor"),
+				udev_device_get_sysattr_value(uparent, "idProduct")
+			);
+
+			PLATFORM_LOG(platform::LogMessageType::Info,
+				"manufacturer: %s\nproduct: %s\n",
+				udev_device_get_sysattr_value(uparent, "manufacturer"),
+				udev_device_get_sysattr_value(uparent, "product")
+			);
+
+			// PLATFORM_LOG(platform::LogMessageType::Info,
+			// 	"serial: %s\n",
+			// 	udev_device_get_sysattr_value(uparent, "serial")
+			// );
+
+			// PLATFORM_LOG(platform::LogMessageType::Info,
+			// 	"bustype: %i\n",
+			// 	udev_device_get_sysattr_value(uparent, "idBustype")
+			// );
+
+			// register this device type before we unref devices
+			// as they take the device_node_path with them.
+			create_device_with_path(device_node_path, device_type);
+
+			// free resources
+			udev_device_unref(udevice);
+			udev_device_unref(uparent);
+		}
+		udev_enumerate_unref(enumerate);
+		udev_unref(lib);
+	}
+
+	bool startup()
+	{
+		// scan for and add devices of known types
+		//
+		add_devices("input", "ID_INPUT_KEYBOARD", "1", DeviceType::Keyboard);
+		add_devices("input", "ID_INPUT_MOUSE", "1", DeviceType::Mouse);
+
+		return true;
+	}
+
+	void shutdown()
+	{
+		for (InputDevice* device : _devices)
+		{
+			MEMORY_DELETE(device, core::memory::global_allocator());
+		}
+		_devices.clear();
+	}
+
+	void update()
+	{
+		for (InputDevice* device : _devices)
+		{
+			assert(device->get_descriptor() != -1);
+
+			struct input_event event;
+			if (read(device->get_descriptor(), &event, INPUT_BUFFER_SIZE) > 0)
+			{
+				device->process_event(event);
+			}
+		}
+	}
+}
+
+void test_devices()
+{
+	test::startup();
+
+	size_t x = 1000;
+	while (true)
+	{
+		test::update();
+		x--;
+	}
+
+	test::shutdown();
+}
+
+
 int main(int argc, char** argv)
 {
 	platform::startup();
@@ -442,12 +693,7 @@ int main(int argc, char** argv)
 //	test_reflection();
 
 #if defined(PLATFORM_LINUX)
-	if (argc == 2)
-	{
-		PLATFORM_LOG(platform::LogMessageType::Info,
-			"Subsystem filter: %s\n", argv[1]);
-		test_udev(argv[1]);
-	}
+	test_devices();
 #endif
 
 //	core::shutdown();
