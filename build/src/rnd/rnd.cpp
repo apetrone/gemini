@@ -484,6 +484,41 @@ namespace test
 		}
 	};
 
+	class JoystickDevice : public InputDeviceBase<DeviceType::Joystick>
+	{
+	public:
+		JoystickDevice(const char* device_path) : InputDeviceBase(device_path)
+		{
+		}
+
+		virtual bool process_event(const struct input_event& event)
+		{
+			printf("type: %d, code: %d, value: %d\n",
+				event.type, event.code, event.value);
+			// if (event.type == EV_REL)
+			// {
+			// 	// EV_REL
+			// 	// REL_WHEEL, REL_HWHEEL
+
+			// }
+			// else if (event.type == EV_ABS)
+			// {
+			// 	// ABS_DISTANCE
+			// 	// ABS_MT_*: multi-touch input events
+			// }
+			// else if (event.type == EV_KEY)
+			// {
+			// 	// BTN_*
+			// }
+			// else
+			// {
+			// 	printf("unhandled type: %d\n", event.type);
+			// }
+			return false;
+		}
+	};
+
+
 	const size_t INPUT_BUFFER_SIZE = sizeof(struct input_event);
 	static Array<InputDevice*> _devices;
 
@@ -498,6 +533,9 @@ namespace test
 				break;
 			case DeviceType::Mouse:
 				device = MEMORY_NEW(MouseDevice, core::memory::global_allocator())(device_path);
+				break;
+			case DeviceType::Joystick:
+				device = MEMORY_NEW(JoystickDevice, core::memory::global_allocator())(device_path);
 				break;
 			default:
 				PLATFORM_LOG(platform::LogMessageType::Error, "Unknown device type specified!\n");
@@ -650,6 +688,7 @@ namespace test
 		//
 		add_devices("input", "ID_INPUT_KEYBOARD", "1", DeviceType::Keyboard);
 		add_devices("input", "ID_INPUT_MOUSE", "1", DeviceType::Mouse);
+		add_devices("input", "ID_INPUT_JOYSTICK", "1", DeviceType::Joystick);
 
 		return true;
 	}
@@ -670,7 +709,7 @@ namespace test
 			assert(device->get_descriptor() != -1);
 
 			struct input_event event;
-
+			// TODO: Use select on the descriptors instead of blocking.
 			if (read(device->get_descriptor(), &event, INPUT_BUFFER_SIZE) > 0)
 			{
 				device->process_event(event);
