@@ -749,10 +749,10 @@ public:
 
 	virtual gui::Panel* root_panel() const
 	{
-//		command.left += input::state()->keyboard().is_down(input::KEY_A) * input::AxisValueMaximum;
-//		command.right += input::state()->keyboard().is_down(input::KEY_D) * input::AxisValueMaximum;
-//		command.forward += input::state()->keyboard().is_down(input::KEY_W) * input::AxisValueMaximum;
-//		command.back += input::state()->keyboard().is_down(input::KEY_S) * input::AxisValueMaximum;
+//		command.left += input::state()->keyboard().is_down(input::BUTTON_A) * input::AxisValueMaximum;
+//		command.right += input::state()->keyboard().is_down(input::BUTTON_D) * input::AxisValueMaximum;
+//		command.forward += input::state()->keyboard().is_down(input::BUTTON_W) * input::AxisValueMaximum;
+//		command.back += input::state()->keyboard().is_down(input::BUTTON_S) * input::AxisValueMaximum;
 
 		return root;
 	}
@@ -1165,17 +1165,17 @@ public:
 
 		if (event.is_down)
 		{
-			if (event.key == input::KEY_P)
+			if (event.key == input::BUTTON_P)
 			{
 				draw_physics_debug = !draw_physics_debug;
 				LOGV("draw_physics_debug = %s\n", draw_physics_debug?"ON":"OFF");
 			}
-			else if (event.key == input::KEY_N)
+			else if (event.key == input::BUTTON_N)
 			{
 				draw_navigation_debug = !draw_navigation_debug;
 				LOGV("draw_navigation_debug = %s\n", draw_navigation_debug?"ON":"OFF");
 			}
-			else if (event.key == input::KEY_M)
+			else if (event.key == input::BUTTON_M)
 			{
 				LOGV("level load\n");
 				game_interface->level_load();

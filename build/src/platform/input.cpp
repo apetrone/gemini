@@ -155,128 +155,128 @@ namespace input
 	const char* key_name(unsigned int key)
 	{
 		static const char* names[] = {
-			"KEY_INVALID",
-			"KEY_A",
-			"KEY_B",
-			"KEY_C",
-			"KEY_D",
-			"KEY_E",
-			"KEY_F",
-			"KEY_G",
-			"KEY_H",
-			"KEY_I",
-			"KEY_J",
-			"KEY_K",
-			"KEY_L",
-			"KEY_M",
-			"KEY_N",
-			"KEY_O",
-			"KEY_P",
-			"KEY_Q",
-			"KEY_R",
-			"KEY_S",
-			"KEY_T",
-			"KEY_U",
-			"KEY_V",
-			"KEY_W",
-			"KEY_Y",
-			"KEY_X",
-			"KEY_Z",
-			"KEY_MENU",
-			"KEY_SEMICOLON",
-			"KEY_SLASH",
-			"KEY_BACKSLASH",
-			"KEY_EQUALS",
-			"KEY_MINUS",
-			"KEY_LBRACKET",
-			"KEY_RBRACKET",
-			"KEY_COMMA",
-			"KEY_PERIOD",
-			"KEY_QUOTE",
-			"KEY_TILDE",
-			"KEY_ESCAPE",
-			"KEY_SPACE",
-			"KEY_RETURN",
-			"KEY_BACKSPACE",
-			"KEY_TAB",
-			"KEY_PAGEUP",
-			"KEY_PAGEDN",
-			"KEY_END",
-			"KEY_HOME",
-			"KEY_INSERT",
-			"KEY_DELETE",
-			"KEY_PAUSE",
-			"KEY_LSHIFT",
-			"KEY_RSHIFT",
-			"KEY_LCONTROL",
-			"KEY_RCONTROL",
-			"KEY_LALT",
-			"KEY_RALT",
-			"KEY_NUMLOCK",
-			"KEY_CAPSLOCK",
-			"KEY_LOSKEY",
-			"KEY_ROSKEY",
-			"KEY_FUNCTION",
-			"KEY_0",
-			"KEY_1",
-			"KEY_2",
-			"KEY_3",
-			"KEY_4",
-			"KEY_5",
-			"KEY_6",
-			"KEY_7",
-			"KEY_8",
-			"KEY_9",
-			"KEY_F1",
-			"KEY_F2",
-			"KEY_F3",
-			"KEY_F4",
-			"KEY_F5",
-			"KEY_F6",
-			"KEY_F7",
-			"KEY_F8",
-			"KEY_F9",
-			"KEY_F10",
-			"KEY_F11",
-			"KEY_F12",
-			"KEY_F13",
-			"KEY_F14",
-			"KEY_F15",
-			"KEY_F16",
-			"KEY_F17",
-			"KEY_F18",
-			"KEY_F19",
-			"KEY_F20",
-			"KEY_LEFT",
-			"KEY_RIGHT",
-			"KEY_UP",
-			"KEY_DOWN",
-			"KEY_NUMPAD0",
-			"KEY_NUMPAD1",
-			"KEY_NUMPAD2",
-			"KEY_NUMPAD3",
-			"KEY_NUMPAD4",
-			"KEY_NUMPAD5",
-			"KEY_NUMPAD6",
-			"KEY_NUMPAD7",
-			"KEY_NUMPAD8",
-			"KEY_NUMPAD9",
-			"KEY_NUMPAD_PLUS",
-			"KEY_NUMPAD_MINUS",
-			"KEY_NUMPAD_PLUSMINUS",
-			"KEY_NUMPAD_MULTIPLY",
-			"KEY_NUMPAD_DIVIDE",
-			"KEY_NUMPAD_PERIOD",
-			"KEY_NUMPAD_ENTER",
-			"KEY_NUMPAD_EQUALS"
+			"BUTTON_INVALID",
+			"BUTTON_A",
+			"BUTTON_B",
+			"BUTTON_C",
+			"BUTTON_D",
+			"BUTTON_E",
+			"BUTTON_F",
+			"BUTTON_G",
+			"BUTTON_H",
+			"BUTTON_I",
+			"BUTTON_J",
+			"BUTTON_K",
+			"BUTTON_L",
+			"BUTTON_M",
+			"BUTTON_N",
+			"BUTTON_O",
+			"BUTTON_P",
+			"BUTTON_Q",
+			"BUTTON_R",
+			"BUTTON_S",
+			"BUTTON_T",
+			"BUTTON_U",
+			"BUTTON_V",
+			"BUTTON_W",
+			"BUTTON_Y",
+			"BUTTON_X",
+			"BUTTON_Z",
+			"BUTTON_MENU",
+			"BUTTON_SEMICOLON",
+			"BUTTON_SLASH",
+			"BUTTON_BACKSLASH",
+			"BUTTON_EQUALS",
+			"BUTTON_MINUS",
+			"BUTTON_LBRACKET",
+			"BUTTON_RBRACKET",
+			"BUTTON_COMMA",
+			"BUTTON_PERIOD",
+			"BUTTON_QUOTE",
+			"BUTTON_TILDE",
+			"BUTTON_ESCAPE",
+			"BUTTON_SPACE",
+			"BUTTON_RETURN",
+			"BUTTON_BACKSPACE",
+			"BUTTON_TAB",
+			"BUTTON_PAGEUP",
+			"BUTTON_PAGEDN",
+			"BUTTON_END",
+			"BUTTON_HOME",
+			"BUTTON_INSERT",
+			"BUTTON_DELETE",
+			"BUTTON_PAUSE",
+			"BUTTON_LSHIFT",
+			"BUTTON_RSHIFT",
+			"BUTTON_LCONTROL",
+			"BUTTON_RCONTROL",
+			"BUTTON_LALT",
+			"BUTTON_RALT",
+			"BUTTON_NUMLOCK",
+			"BUTTON_CAPSLOCK",
+			"BUTTON_LOSKEY",
+			"BUTTON_ROSKEY",
+			"BUTTON_FUNCTION",
+			"BUTTON_0",
+			"BUTTON_1",
+			"BUTTON_2",
+			"BUTTON_3",
+			"BUTTON_4",
+			"BUTTON_5",
+			"BUTTON_6",
+			"BUTTON_7",
+			"BUTTON_8",
+			"BUTTON_9",
+			"BUTTON_F1",
+			"BUTTON_F2",
+			"BUTTON_F3",
+			"BUTTON_F4",
+			"BUTTON_F5",
+			"BUTTON_F6",
+			"BUTTON_F7",
+			"BUTTON_F8",
+			"BUTTON_F9",
+			"BUTTON_F10",
+			"BUTTON_F11",
+			"BUTTON_F12",
+			"BUTTON_F13",
+			"BUTTON_F14",
+			"BUTTON_F15",
+			"BUTTON_F16",
+			"BUTTON_F17",
+			"BUTTON_F18",
+			"BUTTON_F19",
+			"BUTTON_F20",
+			"BUTTON_LEFT",
+			"BUTTON_RIGHT",
+			"BUTTON_UP",
+			"BUTTON_DOWN",
+			"BUTTON_NUMPAD0",
+			"BUTTON_NUMPAD1",
+			"BUTTON_NUMPAD2",
+			"BUTTON_NUMPAD3",
+			"BUTTON_NUMPAD4",
+			"BUTTON_NUMPAD5",
+			"BUTTON_NUMPAD6",
+			"BUTTON_NUMPAD7",
+			"BUTTON_NUMPAD8",
+			"BUTTON_NUMPAD9",
+			"BUTTON_NUMPAD_PLUS",
+			"BUTTON_NUMPAD_MINUS",
+			"BUTTON_NUMPAD_PLUSMINUS",
+			"BUTTON_NUMPAD_MULTIPLY",
+			"BUTTON_NUMPAD_DIVIDE",
+			"BUTTON_NUMPAD_PERIOD",
+			"BUTTON_NUMPAD_ENTER",
+			"BUTTON_NUMPAD_EQUALS"
 		};
 
-		if (key < KEY_COUNT)
+		if (key < BUTTON_COUNT)
 		{
 			return names[key];
 		}
 
-		return "KEY_INVALID";
+		return "BUTTON_INVALID";
 	} // key_name
 
 
@@ -319,12 +319,12 @@ namespace input
 
 	void KeyboardInput::reset()
 	{
-		memset(&keys, 0, sizeof(ButtonState) * KEY_COUNT);
+		memset(&keys, 0, sizeof(ButtonState) * BUTTON_COUNT);
 	} // reset
 
 	void KeyboardInput::update()
 	{
-		for( unsigned int i = 0; i < KEY_COUNT; ++i )
+		for( unsigned int i = 0; i < BUTTON_COUNT; ++i )
 		{
 			this->keys[i].update();
 		}
@@ -333,7 +333,7 @@ namespace input
 	void KeyboardInput::inject_key_event(int key, bool is_down)
 	{
 		input::Button button = (input::Button)key;
-		assert( button <= KEY_COUNT );
+		assert( button <= BUTTON_COUNT );
 		ButtonState* b = &this->keys[ button ];
 		b->press_release(is_down);
 	} // inject_key_event
@@ -341,7 +341,7 @@ namespace input
 //	bool KeyboardInput::is_down(input::Button key)
 //	{
 //		ButtonState* b;
-//		assert( key < KEY_COUNT );
+//		assert( key < BUTTON_COUNT );
 //		b = &keys[ key ];
 //		return b->is_down();
 //	} // is_down
@@ -349,7 +349,7 @@ namespace input
 //	bool KeyboardInput::was_released(input::Button key )
 //	{
 //		ButtonState* b;
-//		assert( key < KEY_COUNT );
+//		assert( key < BUTTON_COUNT );
 //		b = &keys[ key ];
 //		return b->was_released();
 //	} // was_released
