@@ -12,6 +12,7 @@
 #include <core/argumentparser.h>
 #include <core/mem.h>
 #include <core/stackstring.h>
+#include <core/datastream.h>
 
 #include <json/json.h>
 
@@ -366,12 +367,14 @@ namespace test
 		virtual const char* get_device_path() const = 0;
 		virtual DeviceType get_device_type() const = 0;
 		virtual bool process_event(const struct input_event&) = 0;
+		virtual core::util::MemoryStream& get_stream() = 0;
 	};
 
 	InputDevice::~InputDevice()
 	{
 	}
 
+	const size_t DEVICE_BUFFER_SIZE = sizeof(struct input_event) * 2;
 	template <DeviceType T>
 	class InputDeviceBase : public InputDevice
 	{
@@ -393,6 +396,9 @@ namespace test
 				);
 			}
 			assert(descriptor != -1);
+
+			memset(buffer, 0, DEVICE_BUFFER_SIZE);
+			stream.init(buffer, DEVICE_BUFFER_SIZE);
 		}
 
 		virtual ~InputDeviceBase()
@@ -419,9 +425,13 @@ namespace test
 			return T;
 		}
 
+		virtual core::util::MemoryStream& get_stream() { return stream; }
+
 	protected:
 		int descriptor;
 		core::StackString<32> device_path;
+		unsigned char buffer[DEVICE_BUFFER_SIZE];
+		core::util::MemoryStream stream;
 	};
 
 	const size_t MAX_KEYBOARD_KEYS = 250;
@@ -699,14 +709,63 @@ namespace test
 	class JoystickDevice : public InputDeviceBase<DeviceType::Joystick>
 	{
 	public:
+
 		JoystickDevice(const char* device_path) : InputDeviceBase(device_path)
 		{
+			using namespace input;
+			// TODO: We don't need a button map per joystick
+			// make this static!
+			memset(buttonmap, GAMEPAD_BUTTON_INVALID, 128);
+
+			set_button(BTN_MISC, GAMEPAD_BUTTON_INVALID);
+			set_button(BTN_A, GAMEPAD_BUTTON_A);
+			set_button(BTN_B, GAMEPAD_BUTTON_B);
+			set_button(BTN_C, GAMEPAD_BUTTON_C);
+			set_button(BTN_X, GAMEPAD_BUTTON_X);
+			set_button(BTN_Y, GAMEPAD_BUTTON_Y);
+			set_button(BTN_Z, GAMEPAD_BUTTON_Z);
+			set_button(BTN_THUMBL, GAMEPAD_BUTTON_LEFTSTICK);
+			set_button(BTN_THUMBR, GAMEPAD_BUTTON_RIGHTSTICK);
+			set_button(BTN_TL, GAMEPAD_BUTTON_LEFTSHOULDER);
+			set_button(BTN_TR, GAMEPAD_BUTTON_RIGHTSHOULDER);
+			set_button(BTN_TL2, GAMEPAD_BUTTON_L2);
+			set_button(BTN_TR2, GAMEPAD_BUTTON_R2);
+			set_button(BTN_SELECT, GAMEPAD_BUTTON_SELECT);
+			set_button(BTN_START, GAMEPAD_BUTTON_START);
+			set_button(BTN_MODE, GAMEPAD_BUTTON_GUIDE);
+		}
+
+		void set_button(int code, input::GamepadButton button)
+		{
+			buttonmap[code-BTN_MISC] = button;
+		}
+
+		inline input::GamepadButton get_button(int code)
+		{
+			return buttonmap[code-BTN_MISC];
 		}
 
 		virtual bool process_event(const struct input_event& event)
 		{
-			printf("type: %x, code: %d, value: %d\n",
-				event.type, event.code, event.value);
+			switch(event.type)
+			{
+				case EV_KEY:
+				{
+					const input::GamepadButton button = get_button(event.code);
+
+					if (button > input::GAMEPAD_BUTTON_INVALID && (button < input::GAMEPAD_BUTTON_COUNT))
+					{
+						printf("button %s -> %i\n", event.value ? "down" : "up", static_cast<int>(button));
+					}
+					else
+					{
+						printf("type: %x, code: %x, value: %d\n",
+							event.type, event.code, event.value);
+					}
+					break;
+				}
+			}
+
 			// if (event.type == EV_REL)
 			// {
 			// 	// EV_REL
@@ -728,6 +787,9 @@ namespace test
 			// }
 			return false;
 		}
+
+	private:
+		input::GamepadButton buttonmap[128];
 	};
 
 
@@ -871,15 +933,15 @@ namespace test
 				udev_device_get_sysattr_value(uparent, "product")
 			);
 
-			// PLATFORM_LOG(platform::LogMessageType::Info,
-			// 	"serial: %s\n",
-			// 	udev_device_get_sysattr_value(uparent, "serial")
-			// );
+			PLATFORM_LOG(platform::LogMessageType::Info,
+				"serial: %s\n",
+				udev_device_get_sysattr_value(uparent, "serial")
+			);
 
-			// PLATFORM_LOG(platform::LogMessageType::Info,
-			// 	"bustype: %i\n",
-			// 	udev_device_get_sysattr_value(uparent, "idBustype")
-			// );
+			PLATFORM_LOG(platform::LogMessageType::Info,
+				"bustype: %i\n",
+				udev_device_get_sysattr_value(uparent, "idBustype")
+			);
 
 			// register this device type before we unref devices
 			// as they take the device_node_path with them.
@@ -898,7 +960,7 @@ namespace test
 	{
 		// scan for and add devices of known types
 		//
-		// add_devices("input", "ID_INPUT_KEYBOARD", "1", DeviceType::Keyboard);
+		add_devices("input", "ID_INPUT_KEYBOARD", "1", DeviceType::Keyboard);
 		// add_devices("input", "ID_INPUT_MOUSE", "1", DeviceType::Mouse);
 		add_devices("input", "ID_INPUT_JOYSTICK", "1", DeviceType::Joystick);
 
@@ -947,10 +1009,27 @@ namespace test
 				{
 					if (FD_ISSET(device->get_descriptor(), &read_fds))
 					{
-						struct input_event event;
-						if (read(device->get_descriptor(), &event, INPUT_BUFFER_SIZE) > 0)
+						unsigned char buffer[16] = {0};
+						int read_bytes = 0;
+						read_bytes = read(device->get_descriptor(), buffer, 16);
+
+
+						// struct input_event event;
+						core::util::MemoryStream& stream = device->get_stream();
+						size_t offset = stream.current_offset();
+						if ((read_bytes+offset) >= 16)
 						{
-							device->process_event(event);
+							stream.write(&buffer[0], read_bytes);
+							struct input_event* event = reinterpret_cast<struct input_event*>(
+								stream.get_data());
+
+							// PLATFORM_LOG(platform::LogMessageType::Info,
+								// "interpret %i bytes\n", stream.current_offset());
+							if (event)
+							{
+								device->process_event(*event);
+								stream.rewind();
+							}
 						}
 					}
 				}
@@ -994,6 +1073,9 @@ int main(int argc, char** argv)
 //	test_reflection();
 
 #if defined(PLATFORM_LINUX)
+	const size_t event_size = sizeof(struct input_event);
+	PLATFORM_LOG(platform::LogMessageType::Info, "event_size: %i\n", event_size);
+
 	test_devices();
 #endif
 
