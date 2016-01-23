@@ -1,10 +1,11 @@
 #include <platform/platform.h>
-#include <core/typedefs.h>
+#include <platform/input.h>
 
 #include <runtime/core.h>
 #include <runtime/filesystem.h>
 #include <runtime/logging.h>
 
+#include <core/typedefs.h>
 #include <core/fixedarray.h>
 #include <core/stackstring.h>
 #include <core/interpolation.h>
@@ -423,31 +424,242 @@ namespace test
 		core::StackString<32> device_path;
 	};
 
+	const size_t MAX_KEYBOARD_KEYS = 250;
+
 	class KeyboardDevice : public InputDeviceBase<DeviceType::Keyboard>
 	{
 	public:
 		KeyboardDevice(const char* device_path) : InputDeviceBase(device_path)
 		{
+			using namespace platform;
+			memset(keymap, 0, MAX_KEYBOARD_KEYS);
+
+			keymap[KEY_ESC] = input::BUTTON_ESCAPE;
+
+			keymap[KEY_1] = input::BUTTON_1;
+			keymap[KEY_2] = input::BUTTON_2;
+			keymap[KEY_3] = input::BUTTON_3;
+			keymap[KEY_4] = input::BUTTON_4;
+			keymap[KEY_5] = input::BUTTON_5;
+			keymap[KEY_6] = input::BUTTON_6;
+			keymap[KEY_7] = input::BUTTON_7;
+			keymap[KEY_8] = input::BUTTON_8;
+			keymap[KEY_9] = input::BUTTON_9;
+			keymap[KEY_0] = input::BUTTON_0;
+			keymap[KEY_MINUS] = input::BUTTON_MINUS;
+			keymap[KEY_EQUAL] = input::BUTTON_EQUALS;
+			keymap[KEY_BACKSPACE] = input::BUTTON_BACKSPACE;
+			keymap[KEY_TAB] = input::BUTTON_TAB;
+			keymap[KEY_Q] = input::BUTTON_Q;
+			keymap[KEY_W] = input::BUTTON_W;
+			keymap[KEY_E] = input::BUTTON_E;
+			keymap[KEY_R] = input::BUTTON_R;
+			keymap[KEY_T] = input::BUTTON_T;
+			keymap[KEY_Y] = input::BUTTON_Y;
+			keymap[KEY_U] = input::BUTTON_U;
+			keymap[KEY_I] = input::BUTTON_I;
+			keymap[KEY_O] = input::BUTTON_O;
+			keymap[KEY_P] = input::BUTTON_P;
+			keymap[KEY_LEFTBRACE] = input::BUTTON_LBRACKET;
+			keymap[KEY_RIGHTBRACE] = input::BUTTON_RBRACKET;
+			keymap[KEY_ENTER] = input::BUTTON_RETURN;
+			keymap[KEY_LEFTCTRL] = input::BUTTON_LCONTROL;
+			keymap[KEY_A] = input::BUTTON_A;
+			keymap[KEY_S] = input::BUTTON_S;
+			keymap[KEY_D] = input::BUTTON_D;
+			keymap[KEY_F] = input::BUTTON_F;
+			keymap[KEY_G] = input::BUTTON_G;
+			keymap[KEY_H] = input::BUTTON_H;
+			keymap[KEY_J] = input::BUTTON_J;
+			keymap[KEY_K] = input::BUTTON_K;
+			keymap[KEY_L] = input::BUTTON_L;
+			keymap[KEY_SEMICOLON] = input::BUTTON_SEMICOLON;
+			keymap[KEY_APOSTROPHE] = input::BUTTON_TILDE;
+			keymap[KEY_GRAVE] = input::BUTTON_INVALID;
+			keymap[KEY_LEFTSHIFT] = input::BUTTON_LSHIFT;
+			keymap[KEY_BACKSLASH] = input::BUTTON_RSHIFT;
+			keymap[KEY_Z] = input::BUTTON_Z;
+			keymap[KEY_X] = input::BUTTON_X;
+			keymap[KEY_C] = input::BUTTON_C;
+			keymap[KEY_V] = input::BUTTON_V;
+			keymap[KEY_B] = input::BUTTON_B;
+			keymap[KEY_N] = input::BUTTON_N;
+			keymap[KEY_M] = input::BUTTON_M;
+			keymap[KEY_COMMA] = input::BUTTON_COMMA;
+			keymap[KEY_DOT] = input::BUTTON_PERIOD;
+			keymap[KEY_SLASH] = input::BUTTON_SLASH;
+			keymap[KEY_RIGHTSHIFT] = input::BUTTON_RSHIFT;
+			keymap[KEY_KPASTERISK] = input::BUTTON_NUMPAD_MULTIPLY;
+			keymap[KEY_LEFTALT] = input::BUTTON_LALT;
+			keymap[KEY_SPACE] = input::BUTTON_SPACE;
+			keymap[KEY_CAPSLOCK] = input::BUTTON_CAPSLOCK;
+			keymap[KEY_F1] = input::BUTTON_F1;
+			keymap[KEY_F2] = input::BUTTON_F2;
+			keymap[KEY_F3] = input::BUTTON_F3;
+			keymap[KEY_F4] = input::BUTTON_F4;
+			keymap[KEY_F5] = input::BUTTON_F5;
+			keymap[KEY_F6] = input::BUTTON_F6;
+			keymap[KEY_F7] = input::BUTTON_F7;
+			keymap[KEY_F8] = input::BUTTON_F8;
+			keymap[KEY_F9] = input::BUTTON_F9;
+			keymap[KEY_F10] = input::BUTTON_F10;
+			keymap[KEY_NUMLOCK] = input::BUTTON_NUMLOCK;
+			keymap[KEY_SCROLLLOCK] = input::BUTTON_SCROLLLOCK;
+			keymap[KEY_KP7] = input::BUTTON_NUMPAD7;
+			keymap[KEY_KP8] = input::BUTTON_NUMPAD8;
+			keymap[KEY_KP9] = input::BUTTON_NUMPAD9;
+			keymap[KEY_KPMINUS] = input::BUTTON_NUMPAD_MINUS;
+			keymap[KEY_KP4] = input::BUTTON_NUMPAD4;
+			keymap[KEY_KP5] = input::BUTTON_NUMPAD5;
+			keymap[KEY_KP6] = input::BUTTON_NUMPAD6;
+			keymap[KEY_KPPLUS] = input::BUTTON_NUMPAD_PLUS;
+			keymap[KEY_KP1] = input::BUTTON_NUMPAD1;
+			keymap[KEY_KP2] = input::BUTTON_NUMPAD2;
+			keymap[KEY_KP3] = input::BUTTON_NUMPAD3;
+			keymap[KEY_KP0] = input::BUTTON_NUMPAD0;
+			keymap[KEY_KPDOT] = input::BUTTON_NUMPAD_PERIOD;
+
+			keymap[KEY_ZENKAKUHANKAKU] = input::BUTTON_INVALID;
+			keymap[KEY_102ND] = -1;
+			keymap[KEY_F11] = input::BUTTON_F11;
+			keymap[KEY_F12] = input::BUTTON_F12;
+
+			keymap[KEY_KPENTER] = input::BUTTON_NUMPAD_ENTER;
+			keymap[KEY_RIGHTCTRL] = input::BUTTON_RCONTROL;
+			keymap[KEY_KPSLASH] = input::BUTTON_NUMPAD_DIVIDE;
+			keymap[KEY_RIGHTALT] = input::BUTTON_RALT;
+
+			keymap[KEY_HOME] = input::BUTTON_HOME;
+			keymap[KEY_UP] = input::BUTTON_UP;
+			keymap[KEY_PAGEUP] = input::BUTTON_PAGEUP;
+			keymap[KEY_LEFT] = input::BUTTON_LEFT;
+			keymap[KEY_RIGHT] = input::BUTTON_RIGHT;
+			keymap[KEY_END] = input::BUTTON_END;
+			keymap[KEY_DOWN] = input::BUTTON_DOWN;
+			keymap[KEY_PAGEDOWN] = input::BUTTON_PAGEDN;
+			keymap[KEY_INSERT] = input::BUTTON_INSERT;
+			keymap[KEY_DELETE] = input::BUTTON_DELETE;
+			// keymap[KEY_MACRO] = input::BUTTON_MACRO;
+			// keymap[KEY_MUTE] = input::BUTTON_MUTE;
+			// keymap[KEY_VOLUMEDOWN] = input::BUTTON_VOLUMEDOWN;
+			// keymap[KEY_VOLUMEUP] = input::BUTTON_VOLUMEUP;
+			//keymap[KEY_POWER]
+			keymap[KEY_KPEQUAL] = input::BUTTON_NUMPAD_EQUALS;
+			keymap[KEY_KPPLUSMINUS] = input::BUTTON_NUMPAD_PLUSMINUS;
+			keymap[KEY_PAUSE] = input::BUTTON_PAUSE;
+			//keymap[KEY_SCALE]
+			//keymap[KEY_KPCOMMA]
+			//keymap[KEY_HANGEUL]
+			//keymap[KEY_HANGUEL]
+			//keymap[KEY_HANJA]
+			//keymap[KEY_YEN]
+			keymap[KEY_LEFTMETA] = input::BUTTON_LOSKEY;
+			keymap[KEY_RIGHTMETA] = input::BUTTON_ROSKEY;
+			// keymap[KEY_COMPOSE]
+			// keymap[KEY_STOP]
+			// keymap[KEY_AGAIN]
+			// keymap[KEY_PROPS]
+			// keymap[KEY_UNDO]
+			// keymap[KEY_FRONT]
+			// keymap[KEY_COPY]
+			// keymap[KEY_OPEN]
+			// keymap[KEY_PASTE]
+			// keymap[KEY_FIND]
+			// keymap[KEY_CUT]
+			// keymap[KEY_HELP]
+			// keymap[KEY_MENU]
+			// keymap[KEY_CALC]
+			// keymap[KEY_SETUP]
+			// keymap[KEY_SLEEP]
+			// keymap[KEY_WAKEUP]
+			// keymap[KEY_FILE]
+			// keymap[KEY_SENDFILE]
+			// keymap[KEY_DELETEFILE]
+			// keymap[KEY_XFER]
+			// keymap[KEY_PROG1]
+			// keymap[KEY_PROG2]
+			// keymap[KEY_WWW]
+			// keymap[KEY_MSDOS]
+			// keymap[KEY_COFFEE]
+			// keymap[KEY_SCREENLOCK]
+			// keymap[KEY_ROTATE_DISPLAY]
+			// keymap[KEY_DIRECTION]
+			// keymap[KEY_CYCLEWINDOWS]
+			// keymap[KEY_MAIL]
+			// keymap[KEY_BOOKMARKS]
+			// keymap[KEY_COMPUTER]
+			// keymap[KEY_BACK]
+			// keymap[KEY_FORWARD]
+			// keymap[KEY_CLOSECD]
+			// keymap[KEY_EJECTCD]
+			// keymap[KEY_EJECTCLOSECD]
+			// keymap[KEY_NEXTSONG]
+			// keymap[KEY_PLAYPAUSE]
+			// keymap[KEY_PREVIOUSSONG]
+			// keymap[KEY_STOPCD]
+			// keymap[KEY_RECORD]
+			// keymap[KEY_REWIND]
+			// keymap[KEY_PHONE]
+			// keymap[KEY_ISO]
+			// keymap[KEY_CONFIG]
+			// keymap[KEY_HOMEPAGE]
+			// keymap[KEY_REFRESH]
+			// keymap[KEY_EXIT]
+			// keymap[KEY_MOVE]
+			// keymap[KEY_EDIT]
+			// keymap[KEY_SCROLLUP]
+			// keymap[KEY_SCROLLDOWN]
+			// keymap[KEY_KPLEFTPAREN]
+			// keymap[KEY_KPRIGHTPAREN]
+			// keymap[KEY_NEW]
+			// keymap[KEY_REDO]
+			keymap[KEY_F13] = input::BUTTON_F13;
+			keymap[KEY_F14] = input::BUTTON_F14;
+			keymap[KEY_F15] = input::BUTTON_F15;
+			keymap[KEY_F16] = input::BUTTON_F16;
+			keymap[KEY_F17] = input::BUTTON_F17;
+			keymap[KEY_F18] = input::BUTTON_F18;
+			keymap[KEY_F19] = input::BUTTON_F19;
+			keymap[KEY_F20] = input::BUTTON_F20;
+			keymap[KEY_F21] = input::BUTTON_F21;
+			keymap[KEY_F22] = input::BUTTON_F22;
+			keymap[KEY_F23] = input::BUTTON_F23;
+			keymap[KEY_F24] = input::BUTTON_F24;
 		}
 
 		virtual bool process_event(const struct input_event& event)
 		{
-			if (event.type == EV_KEY)
+			switch(event.type)
 			{
+				case EV_KEY:
 				// code: corresponding KEY_* code.
 				// value: 0 for up, 1 for down, 2 for held.
 				//
 
 				// key input
-				printf("type: %d, code: %d, value: %d\n",
-					event.type, event.code, event.value);
+				if (event.value < 2)
+				{
+					printf("type: %x, code: %d, value: %d -> %i\n",
+						event.type, event.code, event.value, keymap[event.code]);
+				}
+					break;
+
+				// ignore these for now
+				case EV_SYN: // synchronization event
+				case EV_MSC: // misc events
+				case EV_LED: // used to turn leds on and off
+					break;
+
+				default:
+					printf("unhandled event.type: %x\n", event.type);
+					break;
 			}
-			else
-			{
-				printf("unhandled type: %d\n", event.type);
-			}
+
 			return false;
 		}
+
+	private:
+		uint32_t keymap[MAX_KEYBOARD_KEYS];
 	};
 
 	class MouseDevice : public InputDeviceBase<DeviceType::Keyboard>
@@ -493,7 +705,7 @@ namespace test
 
 		virtual bool process_event(const struct input_event& event)
 		{
-			printf("type: %d, code: %d, value: %d\n",
+			printf("type: %x, code: %d, value: %d\n",
 				event.type, event.code, event.value);
 			// if (event.type == EV_REL)
 			// {
@@ -686,8 +898,8 @@ namespace test
 	{
 		// scan for and add devices of known types
 		//
-		add_devices("input", "ID_INPUT_KEYBOARD", "1", DeviceType::Keyboard);
-		add_devices("input", "ID_INPUT_MOUSE", "1", DeviceType::Mouse);
+		// add_devices("input", "ID_INPUT_KEYBOARD", "1", DeviceType::Keyboard);
+		// add_devices("input", "ID_INPUT_MOUSE", "1", DeviceType::Mouse);
 		add_devices("input", "ID_INPUT_JOYSTICK", "1", DeviceType::Joystick);
 
 		return true;
@@ -704,17 +916,55 @@ namespace test
 
 	void update()
 	{
+		fd_set read_fds;
+		FD_ZERO(&read_fds);
+
+		int highest_fd = 0;
+
 		for (InputDevice* device : _devices)
 		{
 			assert(device->get_descriptor() != -1);
 
-			struct input_event event;
-			// TODO: Use select on the descriptors instead of blocking.
-			if (read(device->get_descriptor(), &event, INPUT_BUFFER_SIZE) > 0)
+			FD_SET(device->get_descriptor(), &read_fds);
+			if (device->get_descriptor() > highest_fd)
 			{
-				device->process_event(event);
+				highest_fd = device->get_descriptor();
 			}
 		}
+
+		// Use the timeout value as a polling mechanism
+		// by setting the values to zero.
+		struct timeval timeout;
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 0;
+
+		const int select_result = select(highest_fd + 1, &read_fds, 0, 0, &timeout);
+		if (select_result > 0)
+		{
+			for (InputDevice* device : _devices)
+			{
+				if (device->get_descriptor() > 0)
+				{
+					if (FD_ISSET(device->get_descriptor(), &read_fds))
+					{
+						struct input_event event;
+						if (read(device->get_descriptor(), &event, INPUT_BUFFER_SIZE) > 0)
+						{
+							device->process_event(event);
+						}
+					}
+				}
+			}
+		}
+		else if (select_result == -1)
+		{
+			PLATFORM_LOG(platform::LogMessageType::Warning,
+				"%s (%i) - Error polling input devices",
+				strerror(errno),
+				errno
+			);
+		}
+
 	}
 }
 
