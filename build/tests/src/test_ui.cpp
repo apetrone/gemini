@@ -368,7 +368,7 @@ public:
 	{
 		if (event.is_down)
 		{
-			if (event.key == input::KEY_ESCAPE)
+			if (event.key == input::BUTTON_ESCAPE)
 			{
 				kernel::instance()->set_active(false);
 			}

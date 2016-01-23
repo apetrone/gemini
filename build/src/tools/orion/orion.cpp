@@ -1035,7 +1035,7 @@ public:
 
 	virtual void event(kernel::KeyboardEvent& event)
 	{
-		if (event.key == input::KEY_ESCAPE && event.is_down)
+		if (event.key == input::BUTTON_ESCAPE && event.is_down)
 		{
 			set_active(false);
 		}

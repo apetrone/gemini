@@ -95,11 +95,11 @@ public:
 	{
 		if (event.is_down)
 		{
-			if (event.key == input::KEY_ESCAPE)
+			if (event.key == input::BUTTON_ESCAPE)
 			{
 				kernel::instance()->set_active(false);
 			}
-			else if (event.key == input::KEY_SPACE)
+			else if (event.key == input::BUTTON_SPACE)
 			{
 				platform::window::set_cursor(center.x, center.y);
 			}
