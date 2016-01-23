@@ -335,17 +335,17 @@ struct Rectangle
 // 045e:028e -- Xbox360 controller
 
 // etc/udev/rules.d/99-input.rules
+// KERNEL=="mouse*|event*|mice", MODE="0777"
 // KERNEL=="event[0-9]*", ENV{ID_BUS}=="?*", ENV{ID_INPUT_JOYSTICK}=="?*", GROUP="games", MODE="0660"
 // KERNEL=="js[0-9]*", ENV{ID_BUS}=="?*", ENV{ID_INPUT_JOYSTICK}=="?*", GROUP="games", MODE="0664"
 
-// reload rules: udevadm control --reload-rules
-// udevtrigger
+// reload rules: (as superuser)
+// udevadm control --reload
+// udevadm trigger
 
 // https://wiki.archlinux.org/index.php/Gamepad#PlayStation_4_controller
 
 #include <linux/input.h>
-
-
 
 
 namespace test
@@ -381,6 +381,16 @@ namespace test
 		{
 			PLATFORM_LOG(platform::LogMessageType::Info, "opening: '%s'...\n", device_path_node);
 			descriptor = open(device_path_node, O_RDONLY);
+
+			if (descriptor == -1)
+			{
+				PLATFORM_LOG(platform::LogMessageType::Warning,
+					"%s (%i), Unable to open device '%s'\n",
+					strerror(errno),
+					errno,
+					device_path_node
+				);
+			}
 			assert(descriptor != -1);
 		}
 
@@ -626,8 +636,9 @@ namespace test
 			create_device_with_path(device_node_path, device_type);
 
 			// free resources
+			//udev_device_unref(uparent); // this causes a crash; do we need
+			// to free the parent here?
 			udev_device_unref(udevice);
-			udev_device_unref(uparent);
 		}
 		udev_enumerate_unref(enumerate);
 		udev_unref(lib);
@@ -659,6 +670,7 @@ namespace test
 			assert(device->get_descriptor() != -1);
 
 			struct input_event event;
+
 			if (read(device->get_descriptor(), &event, INPUT_BUFFER_SIZE) > 0)
 			{
 				device->process_event(event);
