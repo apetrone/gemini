@@ -366,8 +366,8 @@ class Mesh(Node):
 
 		self.name = kwargs.get("name", "UnnamedNode")
 		self.type = Node.MESH
-		self.mins = [0.0, 0.0, 0.0]
-		self.maxs = [0.0, 0.0, 0.0]
+		self.mins = [9999.0, 9999.0, 9999.0]
+		self.maxs = [-9999.0, -9999.0, -9999.0]
 		self.mass_center_offset = [0.0, 0.0, 0.0]
 		self.vertices = []
 		self.normals = []
@@ -495,6 +495,9 @@ class Mesh(Node):
 
 		vertices = []
 
+		mins = Vector((9999, 9999, 9999))
+		maxs = Vector((-9999, -9999, -9999))
+
 		# build a mapping from group index to bone index
 		total_bones = len(bone_data.ordered_items) if bone_data else 0
 		group_index_to_bone = [None] * total_bones
@@ -515,6 +518,21 @@ class Mesh(Node):
 				position[1],
 				position[2])])
 
+			if position[0] < mins.x:
+				mins.x = position[0]
+			elif position[0] > maxs.x:
+				maxs.x = position[0]
+
+			if position[1] < mins.y:
+				mins.y = position[1]
+			elif position[1] > maxs.y:
+				maxs.y = position[1]
+
+			if position[2] < mins.z:
+				mins.z = position[2]
+			elif position[2] > maxs.z:
+				maxs.z = position[2]
+
 			# don't add out of range indices
 			weights[index] = []
 			for group_element in mv.groups:
@@ -529,6 +547,9 @@ class Mesh(Node):
 						#else:
 						#	print("warning: dropping weight for bone '%s', %2.2f" % (bone.name, group_element.weight))
 
+
+		node.mins = [mins.x, mins.y, mins.z]
+		node.maxs = [maxs.x, maxs.y, maxs.z]
 
 		mesh.calc_normals_split()
 

@@ -101,6 +101,9 @@ namespace gemini
 			// offset to the center of mass
 			glm::vec3 mass_center_offset;
 
+			glm::vec3 aabb_mins;
+			glm::vec3 aabb_maxs;
+
 			Mesh();
 			~Mesh();
 			void reset();

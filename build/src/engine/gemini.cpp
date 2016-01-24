@@ -672,6 +672,21 @@ class ModelInterface : public gemini::IModelInterface
 			rotation = glm::toQuat(model_matrix);
 			position = glm::vec3(glm::column(model_matrix, 3));
 		}
+
+		virtual const glm::vec3& get_mins() const
+		{
+			return mesh->aabb_mins;
+		}
+
+		virtual const glm::vec3& get_maxs() const
+		{
+			return mesh->aabb_maxs;
+		}
+
+		virtual const glm::vec3& get_center_offset() const
+		{
+			return mesh->mass_center_offset;
+		}
 	};
 
 

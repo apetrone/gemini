@@ -76,6 +76,10 @@ namespace gemini
 
 		// returns the bone's current pose in model coordinates
 		virtual void get_model_bone_pose(int32_t animation_index, int32_t bone_index, glm::vec3& position, glm::quat& rotation) = 0;
+
+		virtual const glm::vec3& get_mins() const = 0;
+		virtual const glm::vec3& get_maxs() const = 0;
+		virtual const glm::vec3& get_center_offset() const = 0;
 	};
 
 	class IModelInterface

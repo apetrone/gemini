@@ -328,8 +328,8 @@ namespace gemini
 
 				if (!bbox_mins.isNull() && !bbox_maxs.isNull())
 				{
-					geo->mins = glm::vec3(bbox_mins[0].asFloat(), bbox_mins[1].asFloat(), bbox_mins[2].asFloat());
-					geo->maxs = glm::vec3(bbox_maxs[0].asFloat(), bbox_maxs[1].asFloat(), bbox_maxs[2].asFloat());
+					state.mesh->aabb_mins = geo->mins = glm::vec3(bbox_mins[0].asFloat(), bbox_mins[1].asFloat(), bbox_mins[2].asFloat());
+					state.mesh->aabb_maxs = geo->maxs = glm::vec3(bbox_maxs[0].asFloat(), bbox_maxs[1].asFloat(), bbox_maxs[2].asFloat());
 				}
 
 				// physics related settings
