@@ -247,7 +247,9 @@ void Entity::set_current_transform_from_physics(size_t collider_index)
 	if (!colliders.empty())
 	{
 		physics::ICollisionObject* collider = colliders[collider_index];
-		collider->get_world_transform(position, orientation);
+		glm::vec3 pos;
+		collider->get_world_transform(pos, orientation);
+		position = pos-collider_offsets[collider_index];
 	}
 }
 
