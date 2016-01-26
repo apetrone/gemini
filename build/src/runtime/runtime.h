@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Copyright (C) 2014- Adam Petrone
+// Copyright (C) 2013- Adam Petrone
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -22,57 +22,24 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include "material.h"
+#pragma once
 
-#include <core/logging.h>
+#include <core/typedefs.h>
+#include <platform/platform.h>
+#include <functional>
 
-
-namespace renderer
+namespace platform
 {
+	struct Result;
+}
 
-//	unsigned int texture_unit_for_map( renderer::ShaderString & name );
-//
-//	unsigned int material_type_to_parameter_type( const char * name );
-//	int material_parameter_type_to_render_state( unsigned int type );
-
-	MaterialParameter* Material::parameter_by_name(const std::string& search_name)
-	{
-		for (MaterialParameter& parameter : parameters)
-		{
-			if (parameter.name == search_name)
-			{
-				return &parameter;
-			}
-		}
-
-		return 0;
-	} // parameter_by_name
-
-	void Material::set_parameter_name(unsigned int id, const char* parameter_name)
-	{
-		this->parameters[id].name = parameter_name;
-	} // set_parameter_name
-
-	void Material::set_parameter_vec4(unsigned int id, const glm::vec4& vec)
-	{
-		this->parameters[id].vector_value = vec;
-		this->parameters[id].type = MP_VEC4;
-	} // set_parameter_vec4
-
-	void Material::add_parameter(const MaterialParameter& param)
-	{
-		parameters.push_back(param);
-	}
-
-	void Material::print_parameters()
-	{
-		LOGV("material parameters for %s\n", name.c_str());
-		int i = 0;
-		for (auto& parameter : parameters)
-		{
-			LOGV("param %i, %s, %i\n", i, parameter.name.c_str(), parameter.int_value);
-			++i;
-		}
-	}
-
-} // namespace renderer
+namespace gemini
+{
+	// runtime startup sequence
+	// Optionally pass a lambda to setup the filesystem paths
+	// This is called after the filesystem instance is created, but before
+	// any other operations. It allows the caller to setup the filesystem
+	// paths in a custom fashion.
+	LIBRARY_EXPORT platform::Result runtime_startup(const char* application_data_path, std::function<void(const char*)> custom_path_setup = nullptr);
+	LIBRARY_EXPORT void runtime_shutdown();
+} // namespace gemini

@@ -23,7 +23,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include <runtime/configloader.h>
-#include <runtime/logging.h>
+
+#include <core/logging.h>
 
 #include "assets.h"
 #include "assets/asset_mesh.h"

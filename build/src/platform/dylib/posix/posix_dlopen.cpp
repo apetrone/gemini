@@ -25,6 +25,8 @@
 #include "mem.h"
 #include "platform_internal.h"
 
+#include <core/logging.h>
+
 #include <dlfcn.h>
 
 namespace platform
@@ -39,7 +41,7 @@ namespace platform
 		void* handle = dlopen(library_path, RTLD_LAZY);
 		if (!handle)
 		{
-			PLATFORM_LOG(LogMessageType::Error, "dlopen failed: %s", dlerror());
+			LOGE("dlopen failed: %s", dlerror());
 			return 0;
 		}
 

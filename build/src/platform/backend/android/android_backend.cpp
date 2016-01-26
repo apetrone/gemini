@@ -435,17 +435,6 @@ namespace platform
 		_window_provider = nullptr;
 	}
 
-	void backend_log(platform::LogMessageType type, const char* message)
-	{
-		int log_message_to_android[] = {
-			ANDROID_LOG_VERBOSE,
-			ANDROID_LOG_WARN,
-			ANDROID_LOG_ERROR
-		};
-
-		__android_log_print(log_message_to_android[static_cast<int>(type)], "platform", "%s", message);
-	}
-
 	void dispatch_events()
 	{
 	}

@@ -61,10 +61,6 @@
 	#error Unknown platform!
 #endif
 
-
-// This is a bit nasty in that it requires core::str
-#define PLATFORM_LOG(type, message, ...) ::platform::log_message(type, ::core::str::format(message, ##__VA_ARGS__))
-
 // http://stackoverflow.com/questions/150355/programmatically-find-the-number-of-cores-on-a-machine
 
 namespace kernel
@@ -220,16 +216,6 @@ namespace platform
 	LIBRARY_EXPORT int run_application(kernel::IKernel* instance);
 	LIBRARY_EXPORT void set_mainparameters(const MainParameters& params);
 	LIBRARY_EXPORT const MainParameters& get_mainparameters();
-
-	/// @brief Low-level system specific function for debugging.
-	/// This should ONLY be used by the platform layer for diagnostics.
-	enum class LogMessageType
-	{
-		Info,
-		Warning,
-		Error
-	};
-	LIBRARY_EXPORT void log_message(LogMessageType type, const char* message);
 
 	namespace path
 	{

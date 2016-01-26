@@ -26,7 +26,7 @@
 #include "renderer.h"
 
 #include <runtime/filesystem.h>
-#include <runtime/logging.h>
+#include <core/logging.h>
 
 #include <core/typedefs.h>
 

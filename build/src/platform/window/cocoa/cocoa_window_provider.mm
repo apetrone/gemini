@@ -31,6 +31,8 @@
 #include "kernel.h"
 #include "input.h"
 
+#include <core/logging.h>
+
 namespace platform
 {
 	namespace window
@@ -201,7 +203,7 @@ namespace platform
 
 				if (button == 0)
 				{
-					PLATFORM_LOG(platform::LogMessageType::Info, "UNKNOWN KEYCODE: %i\n", keycode);
+					LOGV("UNKNOWN KEYCODE: %i\n", keycode);
 					return input::Button::BUTTON_INVALID;
 				}
 
@@ -683,7 +685,7 @@ namespace platform
 			platform::Result result = create_window(window, window_parameters);
 			if (result.failed())
 			{
-				PLATFORM_LOG(LogMessageType::Error, "create_window failed: %s\n", result.message);
+				LOGE("create_window failed: %s\n", result.message);
 				return 0;
 			}
 
@@ -849,7 +851,7 @@ namespace platform
 				++index;
 			}
 
-			PLATFORM_LOG(LogMessageType::Warning, "Could not find screen for mouse location [%2.2f, %2.2f]\n", x, y);
+			LOGW("Could not find screen for mouse location [%2.2f, %2.2f]\n", x, y);
 		}
 
 		void set_relative_mouse_mode(bool enable)

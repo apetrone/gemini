@@ -25,7 +25,7 @@
 #include "render_utilities.h"
 #include "renderstream.h"
 #include "rqueue.h"
-#include <runtime/logging.h>
+#include <core/logging.h>
 
 namespace renderer
 {

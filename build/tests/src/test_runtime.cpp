@@ -24,8 +24,10 @@
 // -------------------------------------------------------------
 #include "unit_test.h"
 
-#include <runtime/core.h>
-#include <runtime/logging.h>
+#include <core/core.h>
+#include <core/logging.h>
+
+#include <runtime/runtime.h>
 #include <runtime/filesystem.h>
 
 #include <assert.h>
@@ -71,23 +73,17 @@ UNITTEST(logging)
 
 int main(int, char**)
 {
+	gemini::core_startup();
 	platform::Result result = platform::startup();
 	assert(result.succeeded());
 	
-	platform::PathString root_path = platform::get_program_directory();
-	platform::PathString content_path = platform::fs_content_directory();
-	platform::PathString application_path = platform::get_user_application_directory("arcfusion.net/gemini/test_runtime");
-	core::startup_filesystem();
-	core::filesystem::instance()->root_directory(root_path);
-	core::filesystem::instance()->content_directory(content_path);
-	core::filesystem::instance()->user_application_directory(application_path);
-	
-	core::startup_logging();
+	gemini::runtime_startup("arcfusion.net/gemini/test_runtime");
 
 	unittest::UnitTest::execute();
 
-	core::shutdown();
+	gemini::runtime_shutdown();
 	
 	platform::shutdown();
+	gemini::core_shutdown();
 	return 0;
 }

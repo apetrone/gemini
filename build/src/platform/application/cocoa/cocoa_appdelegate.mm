@@ -24,6 +24,7 @@
 // -------------------------------------------------------------
 #import "cocoa_appdelegate.h"
 
+#import <core/core.h>
 #import "platform.h"
 #import "kernel.h"
 
@@ -71,6 +72,7 @@ static bool has_started = false;
 	{
 		has_started = true;
 
+		gemini::core_startup();
 		platform::startup();
 
 		kernel::startup();
@@ -95,6 +97,7 @@ static bool has_started = false;
 {
 	kernel::shutdown();
 	platform::shutdown();
+	gemini::core_shutdown();
 }
 
 

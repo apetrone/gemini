@@ -26,11 +26,11 @@
 #include "font.h"
 #include "renderer.h"
 
+#include <core/logging.h>
 #include <core/typedefs.h>
 #include <core/str.h>
 
 #include <runtime/filesystem.h>
-#include <runtime/logging.h>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H

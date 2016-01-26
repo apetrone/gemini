@@ -26,9 +26,9 @@
 #include <renderer/debug_draw.h>
 #include <renderer/renderer.h>
 #include <renderer/font.h>
+#include <runtime/runtime.h>
 
-#include <runtime/core.h>
-#include <runtime/logging.h>
+#include <core/logging.h>
 
 #include <platform/platform.h>
 #include <platform/window.h>
@@ -149,27 +149,18 @@ public:
 
 	virtual kernel::Error startup()
 	{
-		platform::PathString root_path = platform::get_program_directory();
-		platform::PathString content_path = platform::fs_content_directory();
-
-		platform::PathString application_path = platform::get_user_application_directory("arcfusion.net/test_window");
-		core::startup_filesystem();
-		core::filesystem::instance()->root_directory(root_path);
-		core::filesystem::instance()->content_directory(content_path);
-		core::filesystem::instance()->user_application_directory(application_path);
-
-		core::startup_logging();
+		gemini::runtime_startup("arcfusion.net/test_window");
 
 		// create a platform window
 		{
 			platform::window::startup(platform::window::RenderingBackend_Default);
 
-			PLATFORM_LOG(LogMessageType::Info, "total screens: %zu\n", platform::window::screen_count());
+			LOGV("total screens: %zu\n", platform::window::screen_count());
 
 			for (size_t screen = 0; screen < platform::window::screen_count(); ++screen)
 			{
 				platform::window::Frame frame = platform::window::screen_frame(screen);
-				PLATFORM_LOG(LogMessageType::Info, "screen rect: %zu, origin: %2.2f, %2.2f; resolution: %2.2f x %2.2f\n", screen, frame.x, frame.y, frame.width, frame.height);
+				LOGV("screen rect: %zu, origin: %2.2f, %2.2f; resolution: %2.2f x %2.2f\n", screen, frame.x, frame.y, frame.width, frame.height);
 			}
 
 			platform::window::Parameters params;
@@ -322,7 +313,7 @@ public:
 		platform::window::destroy(main_window);
 		platform::window::shutdown();
 
-		core::shutdown();
+		gemini::runtime_shutdown();
 	}
 
 

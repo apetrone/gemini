@@ -28,8 +28,7 @@
 #include <renderer/guirenderer.h>
 #include <renderer/standaloneresourcecache.h>
 
-#include <runtime/core.h>
-#include <runtime/logging.h>
+#include <runtime/runtime.h>
 #include <runtime/filesystem.h>
 
 #include <platform/platform.h>
@@ -40,6 +39,7 @@
 #include <core/hashset.h>
 #include <core/stackstring.h>
 #include <core/fixedarray.h>
+#include <core/logging.h>
 
 #include <ui/ui.h>
 #include <ui/compositor.h>
@@ -710,16 +710,7 @@ public:
 
 	virtual kernel::Error startup()
 	{
-		platform::PathString root_path = platform::get_program_directory();
-		platform::PathString content_path = platform::fs_content_directory();
-
-		platform::PathString application_path = platform::get_user_application_directory("arcfusion.net/orion");
-		core::startup_filesystem();
-		core::filesystem::instance()->root_directory(root_path);
-		core::filesystem::instance()->content_directory(content_path);
-		core::filesystem::instance()->user_application_directory(application_path);
-
-		core::startup_logging();
+		gemini::runtime_startup("arcfusion.net/orion");
 
 		// create a platform window
 		{
@@ -1029,7 +1020,7 @@ public:
 		platform::window::destroy(main_window);
 		platform::window::shutdown();
 
-		core::shutdown();
+		gemini::runtime_shutdown();
 	}
 
 

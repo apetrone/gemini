@@ -30,6 +30,8 @@
 #include <IOKit/hid/IOHIDKeys.h>
 #include <IOKit/hidsystem/IOHIDShared.h>
 
+#include <core/logging.h>
+
 namespace platform
 {
 	namespace cocoa
@@ -54,14 +56,14 @@ namespace platform
 			kern_result = IOMasterPort(MACH_PORT_NULL, &master_port);
 			if (kern_result != KERN_SUCCESS)
 			{
-				PLATFORM_LOG(LogMessageType::Warning, "Unable to obtain master port\n");
+				LOGW("Unable to obtain master port\n");
 				return 0;
 			}
 
 			CFMutableDictionaryRef classes_to_match = IOServiceMatching("IOHIDSystem");
 			if (!classes_to_match)
 			{
-				PLATFORM_LOG(LogMessageType::Warning, "IOServiceMatching returned a NULL dictionary");
+				LOGW("IOServiceMatching returned a NULL dictionary");
 				return 0;
 			}
 
@@ -71,7 +73,7 @@ namespace platform
 			if (kern_result != KERN_SUCCESS)
 			{
 				// No such device was found.
-				PLATFORM_LOG(LogMessageType::Warning, "IOServiceGetMatchingServices returned %d\n", kern_result);
+				LOGW("IOServiceGetMatchingServices returned %d\n", kern_result);
 				return 0;
 			}
 
@@ -84,7 +86,7 @@ namespace platform
 				kern_result = IOServiceOpen(service_interface, mach_task_self(), kIOHIDParamConnectType, &device);
 				if (kern_result != KERN_SUCCESS)
 				{
-					PLATFORM_LOG(LogMessageType::Warning, "IOServiceOpen return error 0x%X\n", kern_result);
+					LOGW("IOServiceOpen return error 0x%X\n", kern_result);
 					IOObjectRelease(device);
 				}
 				else
@@ -140,7 +142,7 @@ namespace platform
 			kern_return_t kern_result = IOHIDGetMouseAcceleration(cocoa::_mouse_device, &cocoa::_saved_mouse_acceleration);
 			if (kern_result != KERN_SUCCESS)
 			{
-				PLATFORM_LOG(LogMessageType::Warning, "Unable to fetch mouse acceleration from device!\n");
+				LOGW("Unable to fetch mouse acceleration from device!\n");
 				cocoa::close_service_and_release_object(cocoa::_mouse_device);
 				cocoa::_mouse_device = 0;
 			}
@@ -174,14 +176,6 @@ namespace platform
 			cocoa::close_service_and_release_object(cocoa::_mouse_device);
 		}
 	}
-
-	void backend_log(LogMessageType, const char* message)
-	{
-		NSLog(@"%@", [NSString stringWithUTF8String:message]);
-	}
-
-
-
 
 	// ---------------------------------------------------------------------
 	// system

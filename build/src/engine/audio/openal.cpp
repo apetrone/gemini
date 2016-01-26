@@ -25,7 +25,7 @@
 #include "audio.h"
 #include "openal.h"
 
-#include <runtime/logging.h>
+#include <core/logging.h>
 
 #include <assert.h>
 

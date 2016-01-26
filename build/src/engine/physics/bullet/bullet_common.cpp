@@ -25,7 +25,7 @@
 #include <vector>
 
 #include <core/mem.h>
-#include <runtime/logging.h>
+#include <core/logging.h>
 
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
 

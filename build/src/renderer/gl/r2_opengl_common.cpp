@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #include "r2_opengl_common.h"
 #include "gemgl.h"
-#include <runtime/logging.h>
+#include <core/logging.h>
 #include <runtime/filesystem.h>
 
 using namespace renderer;
@@ -600,7 +600,7 @@ namespace render2
 		int result = gemgl_startup(gl);
 		if (result != 0)
 		{
-			PLATFORM_LOG(platform::LogMessageType::Error, "load of gl symbols failed!\n");
+			LOGE("load of gl symbols failed!\n");
 			return 1;
 		}
 

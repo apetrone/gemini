@@ -25,7 +25,7 @@
 #include "platform_internal.h"
 #include "kernel.h"
 
-
+#include <core/logging.h>
 #include <core/mem.h>
 
 #include <assert.h>
@@ -77,24 +77,138 @@ namespace platform
 	}
 
 
+
+	namespace detail
+	{
+		void stdout_message(core::logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type);
+		int stdout_open(core::logging::Handler* handler);
+		void stdout_close(core::logging::Handler* handler);
+
+#if defined(PLATFORM_WINDOWS)
+		void vs_message(core::logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type);
+		int vs_open(core::logging::Handler* handler);
+		void vs_close(core::logging::Handler* handler);
+#endif
+
+#if defined(PLATFORM_ANDROID)
+		void log_android_message(core::logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type);
+		int log_android_open(core::logging::Handler* handler);
+		void log_android_close(core::logging::Handler* handler);
+#endif	
+
+		void stdout_message(core::logging::Handler*, const char* message, const char* filename, const char* function, int line, int type)
+		{
+			FILE* log_message_to_pipe[] = {
+				stdout,
+				stdout,
+				stderr
+			};
+
+			const char *message_types[] = {0, "VERBOSE", "WARNING", " ERROR "};
+			core::StackString<MAX_PATH_SIZE> path = filename;
+			fprintf(log_message_to_pipe[static_cast<int>(type)], "[%s] %s, %s, %i | %s", message_types[type], path.basename()(), function, line, message);
+		}
+
+		int stdout_open(core::logging::Handler*)
+		{
+			return 1;
+		}
+
+		void stdout_close(core::logging::Handler*)
+		{
+		}
+
+#if defined(PLATFORM_WINDOWS)
+		void vs_message(Handler*, const char* message, const char*, const char*, int, int)
+		{
+	//		const char *message_types[] = { 0, "VERBOSE", "WARNING", " ERROR " };
+//			fprintf( stdout, "[%s] %s, %s, %i | %s", message_types[ type ], xstr_filefrompath(filename), function, line, message );
+
+			// honey badger don't care about LogMessageType
+			OutputDebugStringA(message);
+		}
+
+		int vs_open(Handler*)
+		{
+			return 1;
+		}
+
+		void vs_close(Handler*)
+		{
+		}
+#endif
+
+#if defined(PLATFORM_ANDROID)
+		void log_android_message(Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
+		{
+			// this must match with the android_LogPriority enum in <android/log.h>
+			android_LogPriority message_types[] = {
+				ANDROID_LOG_UNKNOWN,
+				ANDROID_LOG_VERBOSE,
+				ANDROID_LOG_WARN,
+				ANDROID_LOG_ERROR
+			};
+			__android_log_print(message_types[static_cast<int>(type)], "gemini", "%s", message);
+		}
+
+		int log_android_open(Handler* handler)
+		{
+			return 1;
+		}
+
+		void log_android_close(Handler* handler)
+		{
+		}
+#endif
+	}
+
+
+
 	Result startup()
 	{
 		Result result;
 
-		core::memory::startup();
+		// add platform-level logging handlers
+		{
+			core::logging::ILog* log_system = core::logging::instance();
+			using namespace detail;
+
+			core::logging::Handler stdout_handler;
+			stdout_handler.open = stdout_open;
+			stdout_handler.close = stdout_close;
+			stdout_handler.message = stdout_message;
+			log_system->add_handler(&stdout_handler);
+
+#if defined(PLATFORM_WINDOWS)
+			logging::Handler msvc_logger;
+			msvc_logger.open = vs_open;
+			msvc_logger.close = vs_close;
+			msvc_logger.message = vs_message;
+			log_system->add_handler(&msvc_logger);
+#endif
+
+#if defined(PLATFORM_ANDROID)
+			logging::Handler android_log;
+			android_log.open = log_android_open;
+			android_log.close = log_android_close;
+			android_log.message = log_android_message;
+			log_system->add_handler(&android_log);
+#endif
+		}
+
 		_zone = MEMORY_NEW(core::memory::Zone, core::memory::global_allocator())("platform");
 		_allocator = MEMORY_NEW(PlatformAllocatorType, core::memory::global_allocator())(_zone);
 
 		result = backend_startup();
 		if (result.failed())
 		{
-			PLATFORM_LOG(LogMessageType::Error, "backend_startup failed: '%s'\n", result.message);
+			LOGE("backend_startup failed: '%s'\n", result.message);
 		}
 
 		result = timer_startup();
 		if (result.failed())
 		{
-			PLATFORM_LOG(LogMessageType::Error, "timer_startup failed: '%s'\n", result.message);
+			LOGE("timer_startup failed: '%s'\n", result.message);
 		}
 
 		return result;
@@ -107,7 +221,6 @@ namespace platform
 
 		MEMORY_DELETE(_allocator, core::memory::global_allocator());
 		MEMORY_DELETE(_zone, core::memory::global_allocator());
-		core::memory::shutdown();
 	}
 
 	// This nastiness MUST be here, because on different platforms
@@ -127,7 +240,7 @@ namespace platform
 		kernel::Error error = kernel::startup();
 		if (error != kernel::NoError)
 		{
-			PLATFORM_LOG(LogMessageType::Error, "Kernel startup failed with kernel code: %i\n", error);
+			LOGE("Kernel startup failed with kernel code: %i\n", error);
 			kernel::shutdown();
 			return kernel::StartupFailed;
 		}
@@ -237,8 +350,4 @@ namespace platform
 		} // make_directories
 	} // namespace path
 
-	void log_message(LogMessageType type, const char* message)
-	{
-		backend_log(type, message);
-	}
 } // namespace platform

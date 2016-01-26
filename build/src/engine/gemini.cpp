@@ -28,13 +28,14 @@
 #include <platform/kernel.h>
 #include <fixedsizequeue.h>
 
-#include <runtime/core.h>
 #include <core/str.h>
-#include <runtime/logging.h>
-#include <runtime/filesystem.h>
-#include <runtime/configloader.h>
+#include <core/logging.h>
 #include <core/argumentparser.h>
 #include <core/mathlib.h>
+
+#include <runtime/filesystem.h>
+#include <runtime/configloader.h>
+#include <runtime/runtime.h>
 
 #include <renderer/renderer.h>
 #include <renderer/renderstream.h>
@@ -1070,7 +1071,7 @@ private:
 		bool success = util::json_load_with_callback( "conf/settings.conf", settings_conf_loader, &config, true );
 		if ( !success )
 		{
-			PLATFORM_LOG(platform::LogMessageType::Warning, "Unable to load settings.conf! Let's hope wise defaults were chosen...\n");
+			LOGW("Unable to load settings.conf! Let's hope wise defaults were chosen...\n");
 
 			// This is hit when the game content path is invalid.
 			assert(0);
@@ -1390,42 +1391,32 @@ Options:
 			content_path.append(PLATFORM_NAME);
 		}
 
-		// startup duties; lower-level system init
-		platform::Result result = core::startup_filesystem();
-		if (result.failed())
-		{
-			PLATFORM_LOG(LogMessageType::Error, "Fatal error: %s\n", result.message);
-			core::shutdown();
-			return kernel::CoreFailed;
-		}
-
-		core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
-		// the root path is the current binary path
-		filesystem->root_directory(root_path);
-
-		// the content directory is where we'll find our assets
-		filesystem->content_directory(content_path);
-
-		// load engine settings (from content path)
+		// setup filesystem paths
 		Settings config;
-		load_config(config);
 
-		// the application path can be specified in the config (per-game basis)
-		PathString application_path = platform::get_user_application_directory(config.application_directory.c_str());
-		filesystem->user_application_directory(application_path);
-
-		// after the application path is set, we can startup the logging system
-		// to ensure the files end up in the right location
-		result = core::startup_logging();
-		if (result.failed())
+		std::function<void(const char*)> custom_path_setup = [&](const char* application_data_path)
 		{
-			PLATFORM_LOG(LogMessageType::Error, "Fatal error: %s\n", result.message);
-			core::shutdown();
-			return kernel::CoreFailed;
-		}
+			core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
+
+			// the root path is the current binary path
+			filesystem->root_directory(root_path);
+
+			// the content directory is where we'll find our assets
+			filesystem->content_directory(content_path);
+
+			// load engine settings (from content path)
+			load_config(config);
+
+			// the application path can be specified in the config (per-game basis)
+			const platform::PathString application_path = platform::get_user_application_directory(config.application_directory.c_str());
+			filesystem->user_application_directory(application_path);
+		};
+
+		gemini::runtime_startup(nullptr, custom_path_setup);
 
 		LOGV("Logging system initialized.\n");
 
+		const core::filesystem::IFileSystem* filesystem = core::filesystem::instance();
 		LOGV("filesystem root_path = '%s'\n", filesystem->root_directory().c_str());
 		LOGV("filesystem content_path = '%s'\n", content_path.c_str());
 		LOGV("filesystem user_application_directory = '%s'\n", filesystem->user_application_directory().c_str());
@@ -1798,7 +1789,7 @@ Options:
 
 		render2::destroy_device(device);
 
-		core::shutdown();
+		gemini::runtime_shutdown();
 
 		delete event_queue;
 		event_queue = 0;

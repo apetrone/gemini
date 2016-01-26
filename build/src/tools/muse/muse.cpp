@@ -30,7 +30,7 @@
 // include reader/writers
 #include "io_json.h"
 
-#include <runtime/logging.h>
+#include <core/logging.h>
 
 #include <platform/platform.h>
 

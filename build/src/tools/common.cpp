@@ -34,8 +34,8 @@
 #include <platform/platform.h>
 
 #include <runtime/filesystem.h>
-#include <runtime/core.h>
-#include <runtime/logging.h>
+
+#include <core/logging.h>
 
 #include <core/stackstring.h>
 
@@ -48,6 +48,7 @@ namespace gemini
 	{
 		void startup(const char* application_name)
 		{
+#if 0 // disabling during refactor.
 			platform::startup();
 
 //			// setup root path
@@ -67,8 +68,7 @@ namespace gemini
 
 			PathString application_directory = platform::get_user_application_directory(application_name);
 			filesystem->user_application_directory(application_directory);
-
-			core::startup_logging();
+#endif
 		}
 
 		void shutdown()
@@ -81,7 +81,8 @@ namespace gemini
 			MEMORY_DELETE(material, core::memory::global_allocator());
 			datamodel::set_default_material(0);
 
-			core::shutdown();
+			// disabling during refactor
+//			core::shutdown();
 			platform::shutdown();
 		}
 	} // namespace tools

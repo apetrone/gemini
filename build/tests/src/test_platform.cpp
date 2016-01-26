@@ -24,6 +24,9 @@
 // -------------------------------------------------------------
 #include "unit_test.h"
 
+#include <core/core.h>
+#include <core/logging.h>
+
 #include <platform/platform.h>
 
 using namespace platform;
@@ -36,8 +39,8 @@ UNITTEST(platform)
 	platform::Result result = platform::startup();
 	TEST_ASSERT(result.succeeded(), platform_startup);
 
-	PLATFORM_LOG(platform::LogMessageType::Info, "PLATFORM_NAME: %s\n", PLATFORM_NAME);
-	PLATFORM_LOG(platform::LogMessageType::Info, "PLATFORM_COMPILER: %s, version: %s\n", PLATFORM_COMPILER, PLATFORM_COMPILER_VERSION);
+	LOGV("PLATFORM_NAME: %s\n", PLATFORM_NAME);
+	LOGV("PLATFORM_COMPILER: %s, version: %s\n", PLATFORM_COMPILER, PLATFORM_COMPILER_VERSION);
 }
 
 // ---------------------------------------------------------------------
@@ -58,7 +61,7 @@ UNITTEST(filesystem)
 
 	// see if we can verify directories exist; otherwise, we cannot verify
 	// other functions
-	PLATFORM_LOG(LogMessageType::Info, "checking program directory exists: '%s'\n", filename());
+	LOGV("checking program directory exists: '%s'\n", filename());
 	TEST_ASSERT(platform::fs_directory_exists(filename()), fs_directory_exists);
 
 	filename.append(PATH_SEPARATOR_STRING);
@@ -125,22 +128,6 @@ UNITTEST(filesystem)
 }
 
 // ---------------------------------------------------------------------
-// logging
-// ---------------------------------------------------------------------
-UNITTEST(logging)
-{
-	// This isn't something I know how to reliably test without installing
-	// some mock platform handler.
-
-	platform::log_message(platform::LogMessageType::Info, "test info log message\n");
-	platform::log_message(platform::LogMessageType::Warning, "test warning log message\n");
-	platform::log_message(platform::LogMessageType::Error, "test error log message\n");
-
-	TEST_ASSERT(true, logging_sanity);
-}
-
-
-// ---------------------------------------------------------------------
 // serial
 // ---------------------------------------------------------------------
 UNITTEST(serial)
@@ -155,19 +142,19 @@ UNITTEST(system)
 {
 	size_t page_size = platform::system_pagesize_bytes();
 
-	PLATFORM_LOG(platform::LogMessageType::Info, "page size: %i bytes\n", page_size);
+	LOGV("page size: %i bytes\n", page_size);
 	TEST_ASSERT(page_size > 0, page_size);
 
 	size_t total_processors = platform::system_processor_count();
-	PLATFORM_LOG(platform::LogMessageType::Info, "total processors: %i\n", total_processors);
+	LOGV("total processors: %i\n", total_processors);
 	TEST_ASSERT(total_processors >= 1, system_processor_count);
 
 	size_t uptime_seconds = platform::system_uptime_seconds();
-	PLATFORM_LOG(platform::LogMessageType::Info, "system_uptime_seconds: %i\n", uptime_seconds);
+	LOGV("system_uptime_seconds: %i\n", uptime_seconds);
 	TEST_ASSERT(uptime_seconds > 0, system_uptime_seconds);
 
 	core::StackString<64> version = platform::system_version_string();
-	PLATFORM_LOG(platform::LogMessageType::Info, "system_version_string: %s\n", version());
+	LOGV("system_version_string: %s\n", version());
 	TEST_ASSERT(!version.is_empty(), system_version_string);
 }
 
@@ -177,9 +164,9 @@ UNITTEST(system)
 void test_thread(void* data)
 {
 	platform::ThreadId thread_id = platform::thread_id();
-	PLATFORM_LOG(platform::LogMessageType::Info, "test_thread enter: %i\n", thread_id);
+	LOGV("test_thread enter: %i\n", thread_id);
 
-	PLATFORM_LOG(platform::LogMessageType::Info, "test_thread exit\n");
+	LOGV("test_thread exit\n");
 }
 
 UNITTEST(thread)
@@ -215,7 +202,7 @@ UNITTEST(datetime)
 	uint64_t us = platform::microseconds();
 	TEST_ASSERT(us != 0, microseconds);
 
-	PLATFORM_LOG(platform::LogMessageType::Info, "waiting three seconds...\n");
+	LOGV("waiting three seconds...\n");
 
 	uint64_t last = us;
 	while((last - us) < (3 * MicrosecondsPerSecond))
@@ -223,17 +210,20 @@ UNITTEST(datetime)
 		last = platform::microseconds();
 	}
 
-	PLATFORM_LOG(platform::LogMessageType::Info, "three seconds have passed!\n");
+	LOGV("three seconds have passed!\n");
 }
 
 
 
 int main(int, char**)
 {
+	gemini::core_startup();
+
 	unittest::UnitTest::execute();
 
 	// the matching 'startup' to this is in the platform unit test.
 	platform::shutdown();
 
+	gemini::core_shutdown();
 	return 0;
 }

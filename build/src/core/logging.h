@@ -85,6 +85,12 @@ namespace core
 				Error
 			};
 
+			enum class Flags
+			{
+				Uninitialized,
+				Initialized
+			};
+
 		public:
 			virtual ~ILog() {}
 
@@ -97,10 +103,10 @@ namespace core
 
 			/// @brief Open the log handlers
 			/// @returns The total number of successfully opened handlers
-			virtual uint32_t startup() = 0;
+//			virtual uint32_t startup() = 0;
 
 			/// @brief Shutdown the log handlers
-			virtual void shutdown() = 0;
+//			virtual void shutdown() = 0;
 		}; // ILog
 
 		DECLARE_INTERFACE(ILog);

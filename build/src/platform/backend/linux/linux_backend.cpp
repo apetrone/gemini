@@ -104,17 +104,6 @@ namespace platform
 	{
 	}
 
-	void backend_log(platform::LogMessageType type, const char* message)
-	{
-		FILE* log_message_to_pipe[] = {
-			stdout,
-			stdout,
-			stderr
-		};
-
-		fprintf(log_message_to_pipe[static_cast<int>(type)], message);
-	}
-
 	Process* process_create(const char* executable_path,
 		const Array<PathString>& arguments,
 		const char* working_directory)

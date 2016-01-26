@@ -25,7 +25,7 @@
 #include "filesystem_interface.h"
 #include "array.h"
 
-using namespace platform;
+#include <core/logging.h>
 
 namespace core
 {
@@ -46,7 +46,7 @@ namespace core
 
 		bool FileSystemInterface::file_exists(const char* path, bool path_is_relative = true) const
 		{
-			PathString fullpath;
+			platform::PathString fullpath;
 			if (path_is_relative)
 			{
 				absolute_path_from_relative(fullpath, path, content_path);
@@ -62,7 +62,7 @@ namespace core
 
 		bool FileSystemInterface::directory_exists(const char* path, bool path_is_relative = true) const
 		{
-			PathString fullpath;
+			platform::PathString fullpath;
 			if (path_is_relative)
 			{
 				absolute_path_from_relative(fullpath, path, content_path);
@@ -86,17 +86,17 @@ namespace core
 			return root_path;
 		}
 
-		void FileSystemInterface::content_directory(const PathString& content_root)
+		void FileSystemInterface::content_directory(const platform::PathString& content_root)
 		{
 			content_path = content_root;
 		}
 
-		const PathString& FileSystemInterface::content_directory() const
+		const platform::PathString& FileSystemInterface::content_directory() const
 		{
 			return content_path;
 		}
 
-		const PathString& FileSystemInterface::user_application_directory() const
+		const platform::PathString& FileSystemInterface::user_application_directory() const
 		{
 			return user_application_path;
 		}
@@ -122,7 +122,7 @@ namespace core
 
 			if (!buffer_length)
 			{
-				PLATFORM_LOG(LogMessageType::Error, "virtual_load_file called with INVALID value!\n");
+				LOGE("virtual_load_file called with INVALID value!\n");
 				return 0;
 			}
 
@@ -130,7 +130,7 @@ namespace core
 			absolute_path_from_relative(fullpath, relative_path, content_directory());
 			if (!file_exists(fullpath(), false))
 			{
-				PLATFORM_LOG(LogMessageType::Error, "File does not exist! \"%s\" (at \"%s\")\n", relative_path, fullpath());
+				LOGE("File does not exist! \"%s\" (at \"%s\")\n", relative_path, fullpath());
 				return 0;
 			}
 
@@ -146,8 +146,7 @@ namespace core
 				{
 					if (file_size > *buffer_length)
 					{
-						PLATFORM_LOG(LogMessageType::Error,
-							"Request to read file size larger than buffer! (%lu > %lu)\n",
+						LOGE("Request to read file size larger than buffer! (%lu > %lu)\n",
 							(unsigned long)file_size,
 							(unsigned long)*buffer_length
 						);
@@ -171,11 +170,11 @@ namespace core
 
 		void FileSystemInterface::virtual_load_file(Array<unsigned char>& buffer, const char* relative_path) const
 		{
-			PathString fullpath;
+			platform::PathString fullpath;
 			absolute_path_from_relative(fullpath, relative_path, content_directory());
 			if (!file_exists(fullpath(), false))
 			{
-				PLATFORM_LOG(LogMessageType::Error, "File does not exist! \"%s\" (at \"%s\")\n", relative_path, fullpath());
+				LOGE("File does not exist! \"%s\" (at \"%s\")\n", relative_path, fullpath());
 				return;
 			}
 

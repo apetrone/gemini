@@ -27,7 +27,7 @@
 #include <renderer/gl/gemgl.h>
 #include "r2_opengl_common.h"
 
-#include <runtime/logging.h>
+#include <core/logging.h>
 
 #include <core/array.h>
 

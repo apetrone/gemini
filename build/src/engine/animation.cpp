@@ -27,15 +27,14 @@
 #include <assets/asset_mesh.h>
 
 #include <core/mem.h>
-
-#include <hashset.h>
-
-#include <runtime/logging.h>
-#include <runtime/configloader.h>
-
+#include <core/logging.h>
 #include <core/interpolation.h>
 #include <core/mathlib.h>
 #include <core/stackstring.h>
+
+#include <hashset.h>
+
+#include <runtime/configloader.h>
 
 #include <vector>
 

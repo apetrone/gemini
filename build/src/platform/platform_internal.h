@@ -39,8 +39,6 @@ namespace platform
 	// backend (low level platform interface)
 	Result backend_startup();
 
-	void backend_log(LogMessageType type, const char* message);
-
 	void backend_shutdown();
 
 	// timer interface

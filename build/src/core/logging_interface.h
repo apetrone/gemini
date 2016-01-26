@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <runtime/logging.h>
+#include <core/logging.h>
 #include <core/fixedarray.h>
 
 #define LOG_MAX_HANDLERS 4
@@ -43,8 +43,6 @@ namespace core
 
 			virtual void dispatch(ILog::MessageType type, const char* message, const char* function, const char* filename, int linenumber);
 			virtual void add_handler(Handler* handler);
-			virtual uint32_t startup();
-			virtual void shutdown();
 
 		private:
 			LogInterface& operator=(const LogInterface&) const = delete;

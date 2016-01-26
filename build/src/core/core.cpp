@@ -22,24 +22,31 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#pragma once
-
 #include <core/typedefs.h>
-#include <platform/platform.h>
+#include <core/core.h>
+#include <core/logging.h>
+#include <core/logging_interface.h>
 
-#include <core/stackstring.h>
-
-namespace platform
+namespace gemini
 {
-	struct Result;
-}
+	platform::Result core_startup()
+	{
+		core::memory::startup();
 
-namespace core
-{
-	// These have individual startup functions to allow flexibility
-	// in configuring the file system
-	LIBRARY_EXPORT platform::Result startup_filesystem();
-	LIBRARY_EXPORT platform::Result startup_logging();
+		// create an instance of the log system
+		core::logging::ILog* log_system = MEMORY_NEW(core::logging::LogInterface, core::memory::global_allocator());
+		core::logging::set_instance(log_system);
 
-	LIBRARY_EXPORT void shutdown();
-} // namespace core
+		return platform::Result::success();
+	}
+
+	void core_shutdown()
+	{
+		core::logging::ILog* log_system = core::logging::instance();
+		// log_system->shutdown(); No need for this any longer; happens within
+		// the destructor now.
+		MEMORY_DELETE(log_system, core::memory::global_allocator());
+
+		core::memory::shutdown();
+	}
+} // namespace gemini

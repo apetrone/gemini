@@ -24,11 +24,10 @@
 // -------------------------------------------------------------
 #include "filesystem.h"
 
-#include <runtime/logging.h>
-
 #include <platform/platform.h>
-#include <core/typedefs.h>
 
+#include <core/typedefs.h>
+#include <core/logging.h>
 #include <core/str.h>
 
 #include <stdio.h> // for printf

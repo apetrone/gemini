@@ -32,10 +32,24 @@ namespace core
 		LogInterface::LogInterface()
 		{
 			handlers.allocate(LOG_MAX_HANDLERS);
+			
+			// TODO: create mutex
 		}
 
 		LogInterface::~LogInterface()
 		{
+			// close all log handlers
+			for (size_t i = 0; i < handlers.size(); ++i)
+			{
+				Handler* handler = &handlers[i];
+				if (handler->close)
+				{
+					handler->close(handler);
+				}
+			}
+
+			// TODO: destroy mutex
+
 			handlers.clear();
 		}
 
@@ -68,50 +82,23 @@ namespace core
 			// if we found an open slot...
 			if (slot)
 			{
-				memcpy(slot, handler, sizeof(Handler));
+				// initialize the log handler on add
+				if (handler->open && handler->open(handler))
+				{
+					memcpy(slot, handler, sizeof(Handler));
+				}
+				
+				// TODO: warn the user log handler failed to initialize
 			}
 			else
 			{
 				// TODO: warn the user we've exceeded LOG_MAX_HANDLERS
 			}
 		}
-
-		uint32_t LogInterface::startup()
-		{
-			uint32_t total_handlers_opened = 0;
-
-			// initialize all log handlers
-			for (size_t i = 0; i < handlers.size(); ++i)
-			{
-				Handler* handler = &handlers[i];
-				if (!handler->open || (handler->open && !handler->open(handler)))
-				{
-					handler->open = 0;
-				}
-				else
-				{
-					++total_handlers_opened;
-				}
-			}
-
-			// TODO: create mutex
-
-			return total_handlers_opened;
-		}
-
-		void LogInterface::shutdown()
-		{
-			// close all log handlers
-			for (size_t i = 0; i < handlers.size(); ++i)
-			{
-				Handler* handler = &handlers[i];
-				if (handler->close)
-				{
-					handler->close(handler);
-				}
-			}
-
-			// TODO: destroy mutex
-		}
 	} // namespace logging
+
+	namespace logging
+	{
+		IMPLEMENT_INTERFACE(ILog)
+	} // namespace logging	
 } // namespace core

@@ -32,7 +32,7 @@
 #include <core/fixedsizequeue.h>
 #include <core/hashset.h>
 #include <core/mathlib.h>
-
+#include <core/core.h>
 #include <core/mem.h>
 
 #include <core/str.h>
@@ -1507,13 +1507,13 @@ void test_reflection()
 
 int main(int, char**)
 {
-	core::memory::startup();
+	gemini::core_startup();
 
 //	unittest::UnitTest::execute();
 	//test_rapidjson();
 	test_reflection();
 
-	core::memory::shutdown();
+	gemini::core_shutdown();
 
 	return 0;
 }

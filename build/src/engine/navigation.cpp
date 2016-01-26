@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #include "navigation.h"
 
-#include <runtime/logging.h>
+#include <core/logging.h>
 
 #include <RecastAlloc.h> // so we can override the default allocator
 #include <Recast.h>

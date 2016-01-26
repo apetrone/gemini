@@ -24,9 +24,9 @@
 // -------------------------------------------------------------
 #include "unit_test.h"
 
-#include <runtime/core.h>
-#include <runtime/logging.h>
+#include <core/logging.h>
 #include <runtime/filesystem.h>
+#include <runtime/runtime.h>
 
 #include <platform/platform.h>
 #include <platform/window.h>
@@ -207,20 +207,8 @@ public:
 
 	virtual kernel::Error startup()
 	{
-		platform::PathString root_path = platform::get_program_directory();
-		platform::PathString content_path = platform::fs_content_directory();
-		platform::PathString user_application_path = platform::get_user_application_directory("arcfusion.net/gemini/test_render");
+		gemini::runtime_startup("arcfusion.net/gemini/test_render");
 //		platform::PathString temp_path = platform::get_user_temp_directory(); // adding this line breaks Android. Yes, you read that correctly.
-		core::startup_filesystem();
-		core::filesystem::instance()->root_directory(root_path);
-		core::filesystem::instance()->content_directory(content_path);
-		core::filesystem::instance()->user_application_directory(user_application_path);
-
-		core::startup_logging();
-
-		LOGV("root_path: %s\n", root_path());
-		LOGV("content_path: %s\n", content_path());
-		LOGV("user_application_path: %s\n", user_application_path());
 //		LOGV("temp_path: %s\n", temp_path());
 
 		input::startup();
@@ -230,12 +218,12 @@ public:
 
 
 		size_t total_displays = platform::window::screen_count();
-		PLATFORM_LOG(platform::LogMessageType::Info, "-> total screens: %lu\n", total_displays);
+		LOGV("-> total screens: %lu\n", total_displays);
 
 		for (size_t i = 0; i < total_displays; ++i)
 		{
 			platform::window::Frame frame = platform::window::screen_frame(i);
-			PLATFORM_LOG(platform::LogMessageType::Info, "display %lu rect = %2.2f, %2.2f, %2.2f x %2.2f\n", (unsigned long)i, frame.x, frame.y, frame.width, frame.height);
+			LOGV("display %lu rect = %2.2f, %2.2f, %2.2f x %2.2f\n", (unsigned long)i, frame.x, frame.y, frame.width, frame.height);
 		}
 
 		// automaticaly shutdown after 3 seconds
@@ -249,7 +237,7 @@ public:
 		state.native_window = platform::window::create(params);
 		assert(state.native_window != nullptr);
 		platform::window::Frame window_frame = platform::window::get_frame(state.native_window);
-		PLATFORM_LOG(platform::LogMessageType::Info, "window dimensions: %2.2f %2.2f\n", window_frame.width, window_frame.height);
+		LOGV("window dimensions: %2.2f %2.2f\n", window_frame.width, window_frame.height);
 
 		platform::window::focus(state.native_window);
 
@@ -260,7 +248,7 @@ public:
 			state.other_window = platform::window::create(params);
 			assert(state.other_window != nullptr);
 			window_frame = platform::window::get_frame(state.other_window);
-			PLATFORM_LOG(platform::LogMessageType::Info, "other window dimensions: %i %i\n", window_frame.width, window_frame.height);
+			LOGV("other window dimensions: %i %i\n", window_frame.width, window_frame.height);
 
 			platform::window::Frame wf = platform::window::get_frame(state.other_window);
 
@@ -588,7 +576,7 @@ public:
 
 		input::shutdown();
 
-		core::shutdown();
+		gemini::runtime_shutdown();
 	}
 
 

@@ -25,7 +25,7 @@
 #include "shaderconfig.h"
 #include "render_utilities.h"
 
-#include <runtime/logging.h>
+#include <core/logging.h>
 #include <runtime/filesystem.h>
 #include <runtime/configloader.h>
 
