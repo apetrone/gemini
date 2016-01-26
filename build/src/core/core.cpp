@@ -29,7 +29,7 @@
 
 namespace gemini
 {
-	platform::Result core_startup()
+	LIBRARY_EXPORT platform::Result core_startup()
 	{
 		core::memory::startup();
 
@@ -40,7 +40,7 @@ namespace gemini
 		return platform::Result::success();
 	}
 
-	void core_shutdown()
+	LIBRARY_EXPORT void core_shutdown()
 	{
 		core::logging::ILog* log_system = core::logging::instance();
 		// log_system->shutdown(); No need for this any longer; happens within

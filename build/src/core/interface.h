@@ -34,11 +34,11 @@ namespace core
 
 #define IMPLEMENT_INTERFACE(type)\
 		type* _instance = 0;\
-		type* instance()\
+		LIBRARY_EXPORT type* instance()\
 		{\
 			return _instance;\
 		}\
-		void set_instance(type* instance)\
+		LIBRARY_EXPORT void set_instance(type* instance)\
 		{\
 			_instance = instance;\
 		}

@@ -42,7 +42,7 @@ namespace image
 	const unsigned int ERROR_TEXTURE_WIDTH = 128;
 	const unsigned int ERROR_TEXTURE_HEIGHT = 128;
 
-	Image::Image()
+	LIBRARY_EXPORT Image::Image()
 	{
 		type = image::TEX_2D;
 		filter = FILTER_NONE;
@@ -55,7 +55,7 @@ namespace image
 		alignment = 4;
 	}
 
-	void Image::create(const uint32_t& image_width, const uint32_t& image_height, const uint32_t& total_channels)
+	LIBRARY_EXPORT void Image::create(const uint32_t& image_width, const uint32_t& image_height, const uint32_t& total_channels)
 	{
 		width = image_width;
 		height = image_height;
@@ -65,7 +65,7 @@ namespace image
 		alignment = channels;
 	}
 
-	void Image::fill(const core::Color& color)
+	LIBRARY_EXPORT void Image::fill(const core::Color& color)
 	{
 		uint8_t* pixel = &pixels[0];
 		const uint8_t red = uint8_t(color.red * 255.0f) & 0xff;
@@ -96,7 +96,7 @@ namespace image
 		}
 	}
 
-	void Image::copy(const uint8_t* buffer, const uint32_t& fill_width, const uint32_t& fill_height, const uint32_t& pitch, uint32_t border)
+	LIBRARY_EXPORT void Image::copy(const uint8_t* buffer, const uint32_t& fill_width, const uint32_t& fill_height, const uint32_t& pitch, uint32_t border)
 	{
 		// It is assumed, that if border > 0; then this Image's
 		// dimensions are already set to include that border.
@@ -126,7 +126,7 @@ namespace image
 		}
 	}
 
-	void generate_checker_pattern(Image& image, const Color & color1, const Color & color2)
+	LIBRARY_EXPORT void generate_checker_pattern(Image& image, const Color & color1, const Color & color2)
 	{
 		// image dimensions must be specified
 		assert((image.width > 0) && (image.height > 0));
@@ -183,7 +183,7 @@ namespace image
 	} // generate_checker_pattern
 
 	// given two colors, generate an alternating checker pattern image
-	void generate_checker_image(unsigned char* pixels, int width, int height, const Color& color1, const Color& color2)
+	LIBRARY_EXPORT void generate_checker_image(unsigned char* pixels, int width, int height, const Color& color1, const Color& color2)
 	{
 		// width/height should be power of two
 		int width_mask = (width >> 1) - 1;
@@ -232,7 +232,7 @@ namespace image
 	} // generate_texture_image
 
 	// flip an image vertically - this uses heap space to create a copy, but deletes it when finished
-	void flip_image_vertically(int width, int height, int components, unsigned char* pixels)
+	LIBRARY_EXPORT void flip_image_vertically(int width, int height, int components, unsigned char* pixels)
 	{
 		int scanline_size = width*components;
 		int dst = 0;
@@ -250,7 +250,7 @@ namespace image
 	} // flip_image_vertically
 
 
-	renderer::Texture* load_default_texture(Image& image)
+	LIBRARY_EXPORT renderer::Texture* load_default_texture(Image& image)
 	{
 		image.width = ERROR_TEXTURE_WIDTH;
 		image.height = ERROR_TEXTURE_HEIGHT;
@@ -262,7 +262,7 @@ namespace image
 		return texture;
 	} // load_default_texture
 
-	Image load_from_memory(unsigned char* data, unsigned int data_size)
+	LIBRARY_EXPORT Image load_from_memory(unsigned char* data, unsigned int data_size)
 	{
 		Image image;
 		int width;
@@ -283,7 +283,7 @@ namespace image
 		return image;
 	}
 
-	unsigned char* load_image_from_memory(unsigned char* data, unsigned int data_size, unsigned int* width, unsigned int* height, unsigned int* channels)
+	LIBRARY_EXPORT unsigned char* load_image_from_memory(unsigned char* data, unsigned int data_size, unsigned int* width, unsigned int* height, unsigned int* channels)
 	{
 		unsigned char* pixels = 0;
 		int w, h, c;
@@ -296,7 +296,7 @@ namespace image
 		return pixels;
 	} // load_image_from_memory
 
-	void free_image(unsigned char* pixels)
+	LIBRARY_EXPORT void free_image(unsigned char* pixels)
 	{
 		// this was not allocated by our allocator (was done through stb_image)
 		// so must not ask our deallocator to delete it.

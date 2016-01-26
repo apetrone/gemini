@@ -94,7 +94,7 @@ namespace platform
 		void log_android_message(core::logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type);
 		int log_android_open(core::logging::Handler* handler);
 		void log_android_close(core::logging::Handler* handler);
-#endif	
+#endif
 
 		void stdout_message(core::logging::Handler*, const char* message, const char* filename, const char* function, int line, int type)
 		{
@@ -119,7 +119,7 @@ namespace platform
 		}
 
 #if defined(PLATFORM_WINDOWS)
-		void vs_message(Handler*, const char* message, const char*, const char*, int, int)
+		void vs_message(core::logging::Handler*, const char* message, const char*, const char*, int, int)
 		{
 	//		const char *message_types[] = { 0, "VERBOSE", "WARNING", " ERROR " };
 //			fprintf( stdout, "[%s] %s, %s, %i | %s", message_types[ type ], xstr_filefrompath(filename), function, line, message );
@@ -128,18 +128,18 @@ namespace platform
 			OutputDebugStringA(message);
 		}
 
-		int vs_open(Handler*)
+		int vs_open(core::logging::Handler*)
 		{
 			return 1;
 		}
 
-		void vs_close(Handler*)
+		void vs_close(core::logging::Handler*)
 		{
 		}
 #endif
 
 #if defined(PLATFORM_ANDROID)
-		void log_android_message(Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
+		void log_android_message(core::logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
 		{
 			// this must match with the android_LogPriority enum in <android/log.h>
 			android_LogPriority message_types[] = {
@@ -151,12 +151,12 @@ namespace platform
 			__android_log_print(message_types[static_cast<int>(type)], "gemini", "%s", message);
 		}
 
-		int log_android_open(Handler* handler)
+		int log_android_open(core::logging::Handler* handler)
 		{
 			return 1;
 		}
 
-		void log_android_close(Handler* handler)
+		void log_android_close(core::logging::Handler* handler)
 		{
 		}
 #endif
@@ -180,7 +180,7 @@ namespace platform
 			log_system->add_handler(&stdout_handler);
 
 #if defined(PLATFORM_WINDOWS)
-			logging::Handler msvc_logger;
+			core::logging::Handler msvc_logger;
 			msvc_logger.open = vs_open;
 			msvc_logger.close = vs_close;
 			msvc_logger.message = vs_message;
@@ -188,7 +188,7 @@ namespace platform
 #endif
 
 #if defined(PLATFORM_ANDROID)
-			logging::Handler android_log;
+			core::logging::Handler android_log;
 			android_log.open = log_android_open;
 			android_log.close = log_android_close;
 			android_log.message = log_android_message;
