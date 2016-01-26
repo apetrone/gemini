@@ -869,7 +869,7 @@ def create_unit_test(target_platform, arguments, name, dependencies, source, out
 def get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, libglm, libui, **kwargs):
 	target_platform = kwargs.get("target_platform", None)
 	return [
-		create_unit_test(target_platform, arguments, "test_core", [rapidjson, libcore, libglm], "tests/src/test_core.cpp"),
+		create_unit_test(target_platform, arguments, "test_core", [rapidjson, libplatform, libcore, libglm], "tests/src/test_core.cpp"),
 		create_unit_test(target_platform, arguments, "test_platform", [libplatform, libcore, libglm], "tests/src/test_platform.cpp"),
 		create_unit_test(target_platform, arguments, "test_runtime", [rapidjson, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_runtime.cpp"),
 		create_unit_test(target_platform, arguments, "test_render", [rapidjson, libfreetype, librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),

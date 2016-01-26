@@ -184,7 +184,7 @@ namespace gui
 			{
 				if (args.cursor_button == gui::CursorButton::Middle)
 				{
-					fprintf(stdout, "bounds = {%2.2f, %2.2f, %g, %g}\n",
+					LOGV("bounds = {%2.2f, %2.2f, %g, %g}\n",
 						bounds.origin.x,
 						bounds.origin.y,
 						bounds.size.width,

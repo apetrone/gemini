@@ -25,6 +25,8 @@
 #include "argumentparser.h"
 #include "str.h"
 
+#include <core/logging.h>
+
 #include <assert.h>
 #include <stdio.h>
 #include <regex>
@@ -450,7 +452,7 @@ namespace core
 							const std::string& current_token = tokens.current();
 							if (starts_with(current_token, "--") || current_token.empty())
 							{
-								fprintf(stderr, "%s requires argument!\n", shortname.c_str());
+								LOGE("%s requires argument!\n", shortname.c_str());
 							}
 							value = tokens.pop();
 						}
@@ -483,7 +485,7 @@ namespace core
 				tokens.pop();
 				if (token == "(")
 				{
-					fprintf(stderr, "TODO: implement parentheses!\n");
+					LOGE("TODO: implement parentheses!\n");
 				}
 				else if (token == "[")
 				{
@@ -491,7 +493,7 @@ namespace core
 					parse_expr(tokens, option_results);
 					if (tokens.current() != "]")
 					{
-						fprintf(stderr, "Unmatched '%s'\n", "]");
+						LOGE("Unmatched '%s'\n", "]");
 					}
 					tokens.pop();
 					PatternPtr optional = PatternPtr(new Optional(option_results));
@@ -764,7 +766,7 @@ namespace core
 
 			if (version_string && find_option(patterns, "", "--version", found_options))
 			{
-				fprintf(stdout, "%s\n", version_string);
+				LOGV("%s\n", version_string);
 				return true;
 			}
 
@@ -775,7 +777,7 @@ namespace core
 		void ArgumentParser::print_docstring() const
 		{
 			// print out the doc string
-			fprintf(stdout, "%s\n", docstring);
+			LOGV("%s\n", docstring);
 		}
 
 		std::vector<std::string> ArgumentParser::split_tokens(int argc, char** argv)
@@ -822,7 +824,7 @@ namespace core
 
 			if (!found_usage)
 			{
-				fprintf(stderr, "Usage section not found!\n");
+				LOGE("Usage section not found!\n");
 			}
 
 

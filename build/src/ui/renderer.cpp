@@ -171,7 +171,7 @@ namespace render
 		size_t required_primitives = compositor->get_renderer()->font_count_vertices(font, utf8);
 		primitive_reserve(required_primitives);
 
-//		fprintf(stdout, "font prims: %i\n", required_primitives);
+//		LOGV("font prims: %i\n", required_primitives);
 		TextureHandle texture = compositor->get_resource_cache()->texture_for_font(font);
 		Command& command = commands.back();
 		command.texture = texture;

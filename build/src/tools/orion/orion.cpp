@@ -501,12 +501,12 @@ public:
 
 	void on_vertical_scroll(float value)
 	{
-		fprintf(stdout, "vertical: %2.2f\n", value);
+		LOGV("vertical: %2.2f\n", value);
 	}
 
 	void on_horizontal_scroll(float value)
 	{
-		fprintf(stdout, "horizontal: %2.2f\n", value);
+		LOGV("horizontal: %2.2f\n", value);
 	}
 
 protected:
@@ -656,7 +656,7 @@ public:
 
 		if (platform::show_open_dialog("Choose Game Directory", flags, paths).succeeded())
 		{
-			fprintf(stdout, "target path is: %s\n", paths[0]());
+			LOGV("target path is: %s\n", paths[0]());
 		}
 	}
 
@@ -988,7 +988,7 @@ public:
 
 	virtual void shutdown()
 	{
-		fprintf(stdout, "terminating process...\n");
+		LOGV("terminating process...\n");
 		platform::process_destroy(process);
 
 		device->destroy_render_target(render_target);

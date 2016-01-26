@@ -24,6 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <core/logging.h>
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -36,7 +38,7 @@
 #define TEST_ASSERT(condition, name)\
 	if (!(condition))\
 	{\
-		fprintf(stdout, "'%s' FAILED (line = %i)\n", #name, __LINE__);\
+		LOGE("'%s' FAILED (line = %i)\n", #name, __LINE__);\
 		unittest::UnitTest::increment_failures();\
 	}
 
@@ -88,7 +90,7 @@ namespace unittest
 		// run this test
 		void run()
 		{
-			fprintf(stdout, "unit test '%s'...\n", name);
+			LOGV("unit test '%s'...\n", name);
 			function();
 		}
 
@@ -107,7 +109,7 @@ namespace unittest
 				}
 			}
 
-			fprintf(stdout, "total failures: %zu\n", UnitTest::failures);
+			LOGV("total failures: %zu\n", UnitTest::failures);
 		}
 
 		static void increment_failures()

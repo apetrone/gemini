@@ -31,15 +31,14 @@ namespace core
 	{
 		LogInterface::LogInterface()
 		{
-			handlers.allocate(LOG_MAX_HANDLERS);
-			
+			memset(&handlers, 0, sizeof(Handler) * MAX_LOG_HANDLERS);
 			// TODO: create mutex
 		}
 
 		LogInterface::~LogInterface()
 		{
 			// close all log handlers
-			for (size_t i = 0; i < handlers.size(); ++i)
+			for (size_t i = 0; i < MAX_LOG_HANDLERS; ++i)
 			{
 				Handler* handler = &handlers[i];
 				if (handler->close)
@@ -49,14 +48,12 @@ namespace core
 			}
 
 			// TODO: destroy mutex
-
-			handlers.clear();
 		}
 
 		void LogInterface::dispatch(ILog::MessageType type, const char *message, const char *function, const char* filename, int linenumber)
 		{
 			// dispatch message to all handlers
-			for (size_t i = 0; i < handlers.size(); ++i)
+			for (size_t i = 0; i < MAX_LOG_HANDLERS; ++i)
 			{
 				Handler* handler = &handlers[i];
 				if (handler->open && handler->message && handler->close)
@@ -69,7 +66,7 @@ namespace core
 		void LogInterface::add_handler(Handler *handler)
 		{
 			Handler* slot = 0;
-			for (size_t i = 0; i < handlers.size(); ++i)
+			for (size_t i = 0; i < MAX_LOG_HANDLERS; ++i)
 			{
 				slot = &handlers[i];
 				if (slot->open == 0 && slot->close == 0 && slot->message == 0)
@@ -87,7 +84,7 @@ namespace core
 				{
 					memcpy(slot, handler, sizeof(Handler));
 				}
-				
+
 				// TODO: warn the user log handler failed to initialize
 			}
 			else
@@ -100,5 +97,5 @@ namespace core
 	namespace logging
 	{
 		IMPLEMENT_INTERFACE(ILog)
-	} // namespace logging	
+	} // namespace logging
 } // namespace core

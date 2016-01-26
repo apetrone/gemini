@@ -26,27 +26,32 @@
 #include <core/core.h>
 #include <core/logging.h>
 #include <core/logging_interface.h>
+#include <core/mem.h>
 
 namespace gemini
 {
+	// The logging interface is quite unique in that it needs to exist
+	// as systems startup and survive until the last bit of statics go away.
+	// For this, we'll allocate this in static memory.
+	core::memory::static_memory<core::logging::LogInterface> log_system_data;
+
 	LIBRARY_EXPORT platform::Result core_startup()
 	{
-		core::memory::startup();
-
 		// create an instance of the log system
-		core::logging::ILog* log_system = MEMORY_NEW(core::logging::LogInterface, core::memory::global_allocator());
+		core::logging::ILog* log_system = new (log_system_data.memory) core::logging::LogInterface;
 		core::logging::set_instance(log_system);
+
+		core::memory::startup();
 
 		return platform::Result::success();
 	}
 
 	LIBRARY_EXPORT void core_shutdown()
 	{
-		core::logging::ILog* log_system = core::logging::instance();
-		// log_system->shutdown(); No need for this any longer; happens within
-		// the destructor now.
-		MEMORY_DELETE(log_system, core::memory::global_allocator());
-
 		core::memory::shutdown();
+
+		core::logging::ILog* log_system = core::logging::instance();
+		log_system->~ILog();
+		core::logging::set_instance(nullptr);
 	}
 } // namespace gemini

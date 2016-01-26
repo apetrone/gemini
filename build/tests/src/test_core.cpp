@@ -114,14 +114,14 @@ UNITTEST(Array)
 
 	// verify the n-th element
 	TEST_ASSERT(a[10] == 10, array_index_after_growth);
-	
-	
-	
+
+
+
 	Array<int> abc(6);
 	abc.push_back(30);
 	abc.push_back(60);
 	abc.push_back(90);
-	
+
 	// test const value iteration
 	for (const int& value : abc)
 	{
@@ -135,7 +135,7 @@ UNITTEST(Array)
 	for (const int& value : abc)
 	{
 	}
-	
+
 
 	// test iterators
 	Array<int>::iterator iter = abc.begin();
@@ -489,7 +489,7 @@ struct Test
 	template <class Archive>
 	void serialize(Archive& ar, const size_t version)
 	{
-//		fprintf(stdout, "serialize for test: %zu\n", offsetof(Test, value));
+//		LOGV("serialize for test: %zu\n", offsetof(Test, value));
 		ar & TYPEINFO_PROPERTY(value);
 //		ar & TYPEINFO_PROPERTY(precision);
 	}
@@ -508,7 +508,7 @@ struct Test2 : public Test
 	template <class Archive>
 	void serialize(Archive& ar, const size_t version)
 	{
-		fprintf(stdout, "serialize for test2 \n");
+		LOGV("serialize for test2 \n");
 
 //		ar & TYPEINFO_PROPERTY(test2_value);
 		ar & test2_value;
@@ -529,7 +529,7 @@ struct Test3 : public Test2
 	template <class Archive>
 	void serialize(Archive& ar, const size_t version)
 	{
-		fprintf(stdout, "serialize for test3\n");
+		LOGV("serialize for test3\n");
 //		ar & TYPEINFO_PROPERTY(test3_value);
 		ar & test3_value;
 	}
@@ -581,7 +581,7 @@ UNITTEST(Serialization)
 #if 0
 	// get type info using a static type
 	const reflection::TypeInfo* typeinfo = reflection::get_type_info<Test>();
-	fprintf(stdout, "type is: '%s'\n", typeinfo->type_identifier());
+	LOGV("type is: '%s'\n", typeinfo->type_identifier());
 	assert(typeinfo->is_same_type(typeinfo));
 	assert(typeinfo->is_same_type("Test"));
 
@@ -596,7 +596,7 @@ UNITTEST(Serialization)
 
 	// try a derived class
 	const reflection::TypeInfo* t2i = reflection::get_type_info<Test2>();
-	fprintf(stdout, "t2i is '%s'\n", t2i->type_identifier());
+	LOGV("t2i is '%s'\n", t2i->type_identifier());
 
 	const reflection::TypeInfo* baseclass = t2i->get_base_type();
 	assert(baseclass == typeinfo);
@@ -611,7 +611,7 @@ UNITTEST(Serialization)
 	const reflection::TypeInfo* curr = t3i;
 	while(curr)
 	{
-		fprintf(stdout, "-> %s\n", curr->type_identifier());
+		LOGV("-> %s\n", curr->type_identifier());
 		curr = curr->get_base_type();
 	}
 #endif
@@ -744,22 +744,22 @@ UNITTEST(util)
 class CustomJSONAllocator : public rapidjson::CrtAllocator
 {
 public:
-    static const bool kNeedFree = true;
-    void* Malloc(size_t size) { 
-        if (size) //  behavior of malloc(0) is implementation defined.
-            return std::malloc(size);
-        else
-            return NULL; // standardize to returning NULL.
-    }
-    void* Realloc(void* originalPtr, size_t originalSize, size_t newSize) {
-        (void)originalSize;
-        if (newSize == 0) {
-            std::free(originalPtr);
-            return NULL;
-        }
-        return std::realloc(originalPtr, newSize);
-    }
-    static void Free(void *ptr) { std::free(ptr); }
+	static const bool kNeedFree = true;
+	void* Malloc(size_t size) {
+		if (size) //  behavior of malloc(0) is implementation defined.
+			return std::malloc(size);
+		else
+			return NULL; // standardize to returning NULL.
+	}
+	void* Realloc(void* originalPtr, size_t originalSize, size_t newSize) {
+		(void)originalSize;
+		if (newSize == 0) {
+			std::free(originalPtr);
+			return NULL;
+		}
+		return std::realloc(originalPtr, newSize);
+	}
+	static void Free(void *ptr) { std::free(ptr); }
 };
 
 
@@ -786,7 +786,7 @@ public:
 	{
 		rapidjson::Value* object = object_stack.top();
 		size_t stacksize = object_stack.size();
-		fprintf(stdout, "stack size final: %zu\n", stacksize);
+		LOGV("stack size final: %zu\n", stacksize);
 		assert(object_stack.size() == 1);
 		doc.AddMember("object", *object, doc.GetAllocator());
 		end_object();
@@ -808,7 +808,7 @@ public:
 	{
 		rapidjson::Value* value = object_stack.top();
 		assert(value->IsObject());
-		
+
 		rapidjson::Value prop = get_value(*instance(), property);
 		value->AddMember(rapidjson::StringRef(property.name), prop, doc.GetAllocator());
 	}
@@ -818,7 +818,7 @@ public:
 		rapidjson::Value* value = new rapidjson::Value(rapidjson::kObjectType);
 		object_stack.push(value);
 		size_t stacksize = object_stack.size();
-		fprintf(stdout, "begin_object: %zu\n", stacksize);
+		LOGV("begin_object: %zu\n", stacksize);
 		return value;
 	}
 
@@ -831,14 +831,14 @@ public:
 	{
 		object_stack.pop();
 		size_t stacksize = object_stack.size();
-		fprintf(stdout, "end_object: %zu\n", stacksize);
+		LOGV("end_object: %zu\n", stacksize);
 	}
 
 
 	template <class T>
 	void begin_property(const ClassProperty<T>& property)
 	{
-		fprintf(stdout, "BEGIN property '%s', address: %p\n", property.name, &property.ref);
+		LOGV("BEGIN property '%s', address: %p\n", property.name, &property.ref);
 		rapidjson::Value* nextprop = begin_object();
 
 		const reflection::TypeInfoCategory category = reflection::TypeCategory<T>::value;
@@ -846,7 +846,7 @@ public:
 
 		if (category == reflection::TypeInfo_Class)
 		{
-			fprintf(stdout, "-> subobject!\n");
+			LOGV("-> subobject!\n");
 			nextprop->SetObject();
 		}
 	}
@@ -854,7 +854,7 @@ public:
 	template <class T>
 	void end_property(const ClassProperty<T>& property)
 	{
-		fprintf(stdout, "END property '%s', address: %p\n", property.name, &property.ref);
+		LOGV("END property '%s', address: %p\n", property.name, &property.ref);
 		rapidjson::Value* value = object_stack.top();
 		end_object();
 
@@ -871,7 +871,7 @@ public:
 		const reflection::TypeInfo* info = reflection::get_type_info<T>();
 		assert(info);
 
-		fprintf(stdout, "begin class: %s\n", info->type_identifier());
+		LOGV("begin class: %s\n", info->type_identifier());
 
 		rapidjson::Value* node = get_top();
 		node->SetObject();
@@ -884,13 +884,13 @@ public:
 		const reflection::TypeInfo* info = reflection::get_type_info<T>();
 		assert(info);
 
-		fprintf(stdout, "end class: %s\n", info->type_identifier());
+		LOGV("end class: %s\n", info->type_identifier());
 	}
 
 	template <class Archive, class T>
 	void save(Archive& ar, T value)
 	{
-		fprintf(stdout, "should save something\n");
+		LOGV("should save something\n");
 		value.serialize(ar, 1);
 	}
 
@@ -989,7 +989,7 @@ struct is_one_of<T, T, P1toN...> : std::true_type {};
 template <class T, class P0, class... P1toN>
 struct is_one_of<T, P0, P1toN...> : is_one_of<T, P1toN...> {};
 
-// usage: 
+// usage:
 //	bool istype = is_one_of<int, float, size_t, double, int>::value;
 
 
@@ -1010,7 +1010,7 @@ public:
 	template <class T>
 	void read_property(const reflection::ClassProperty<T>& property)
 	{
-		fprintf(stdout, "READ property '%s', address: %p\n", property.name, &property.ref);
+		LOGV("READ property '%s', address: %p\n", property.name, &property.ref);
 		(*instance()) & property.ref;
 	}
 
@@ -1024,7 +1024,7 @@ public:
 	template <class Archive, class T>
 	void save(Archive& ar, T value)
 	{
-		fprintf(stdout, "should save something\n");
+		LOGV("should save something\n");
 		value.serialize(ar, 1);
 	}
 
@@ -1107,7 +1107,7 @@ struct MyCustomClass
 	template <class Archive>
 	void serialize(Archive& ar, size_t version)
 	{
-		fprintf(stdout, "MyCustomClass.serialize\n");
+		LOGV("MyCustomClass.serialize\n");
 		ar << TYPEINFO_PROPERTY(temperature);
 		ar << TYPEINFO_PROPERTY(pos);
 	}
@@ -1126,7 +1126,7 @@ SERIALIZATION_REGISTER_TYPE(MyCustomClass);
 template <class Archive>
 void serialize(Archive& ar, MyCustomClass& value)
 {
-	fprintf(stdout, "serialize MyCustomClass (external)\n");
+	LOGV("serialize MyCustomClass (external)\n");
 	ar << value.temperature;
 	ar << value.pos;
 }
@@ -1155,7 +1155,7 @@ template <class T>
 void dunk(T && head)
 {
 	// prologue
-	fprintf(stdout, "type: %s\n", reflection::TypeIdentifier<T>::get_type_identifier());
+	LOGV("type: %s\n", reflection::TypeIdentifier<T>::get_type_identifier());
 		// serialize (head)
 	// epilogue
 }
@@ -1184,14 +1184,14 @@ TYPEINFO_REGISTER_TYPE_CATEGORY(glm::vec3, TypeInfo_Class);
 template <class Archive>
 void serialize(Archive& ar, const glm::vec3& value)
 {
-	fprintf(stdout, "serialize glm::vec3 (external)\n");
+	LOGV("serialize glm::vec3 (external)\n");
 	ar << make_class_property("x", value.x, TYPEINFO_OFFSET(value, x));
 	ar << make_class_property("y", value.y, TYPEINFO_OFFSET(value, y));
 	ar << make_class_property("z", value.z, TYPEINFO_OFFSET(value, z));
 
-	fprintf(stdout, "value.x: %u\n", TYPEINFO_OFFSET(value, x));
-	fprintf(stdout, "value.y: %u\n", TYPEINFO_OFFSET(value, y));
-	fprintf(stdout, "value.z: %u\n", TYPEINFO_OFFSET(value, z));
+	LOGV("value.x: %u\n", TYPEINFO_OFFSET(value, x));
+	LOGV("value.y: %u\n", TYPEINFO_OFFSET(value, y));
+	LOGV("value.z: %u\n", TYPEINFO_OFFSET(value, z));
 
 
 //	ar & TYPEINFO_PROPERTY(temperature);
@@ -1233,7 +1233,7 @@ void test_rapidjson()
 //	StringBuffer buffer;
 //	WriterType writer(buffer);
 //	doc.Accept(writer);
-//	fprintf(stdout, "%s\n", buffer.GetString());
+//	LOGV("%s\n", buffer.GetString());
 
 
 
@@ -1296,7 +1296,7 @@ void test_rapidjson()
 
 	jw.generate_document();
 	const char* json = jw.get_string();
-	fprintf(stdout, "buffer: %s\n", json);
+	LOGV("buffer: %s\n", json);
 
 	delete [] pepper;
 
@@ -1335,7 +1335,7 @@ void test_rapidjson()
 
 static void free_function(int param)
 {
-	fprintf(stdout, "free_function called with: %i\n", param);
+	LOGV("free_function called with: %i\n", param);
 }
 
 class MyClass
@@ -1343,17 +1343,17 @@ class MyClass
 public:
 	void member_function(int param)
 	{
-		fprintf(stdout, "member_function called with: %i\n", param);
+		LOGV("member_function called with: %i\n", param);
 	}
 
 	void test_value(int param) const
 	{
-		fprintf(stdout, "test_value value is: %i, %i\n", value, param);
+		LOGV("test_value value is: %i, %i\n", value, param);
 	}
 
 	static void static_member_function(int param)
 	{
-		fprintf(stdout, "static_member_function called with: %i\n", param);
+		LOGV("static_member_function called with: %i\n", param);
 	}
 
 private:
@@ -1366,7 +1366,7 @@ class AnotherClass
 public:
 	void dispatch_test(int value)
 	{
-		fprintf(stdout, "dispatch_test: %i\n", value);
+		LOGV("dispatch_test: %i\n", value);
 	}
 
 private:
@@ -1390,11 +1390,11 @@ struct temp
 #if 0
 	// sidetracked with move constructors
 	Movable a("name");
-	fprintf(stdout, "value is: %s\n", a.data);
+	LOGV("value is: %s\n", a.data);
 
 	// move constructor
 	Movable x(std::move(a));
-	fprintf(stdout, "value is: %s\n", x.data);
+	LOGV("value is: %s\n", x.data);
 #endif
 
 struct Movable
@@ -1466,7 +1466,7 @@ namespace reflection_test
 	public:
 		void foo()
 		{
-			fprintf(stdout, "foo called\n");
+			LOGV("foo called\n");
 		}
 
 
@@ -1490,7 +1490,7 @@ namespace reflection_test
 		BEGIN_REFLECTION(Base)
 			REFLECTION(int, serializable_value)
 		END_REFLECTION()
-		
+
 		*/
 	};
 }
@@ -1507,13 +1507,17 @@ void test_reflection()
 
 int main(int, char**)
 {
+	// platform startup is needed to install the platform log handler
 	gemini::core_startup();
+	platform::startup();
 
-//	unittest::UnitTest::execute();
+	unittest::UnitTest::execute();
 	//test_rapidjson();
 	test_reflection();
 
+	platform::shutdown();
 	gemini::core_shutdown();
+
 
 	return 0;
 }

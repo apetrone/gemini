@@ -28,6 +28,8 @@
 	#include <string.h>
 #endif
 
+
+
 namespace core
 {
 	namespace memory
@@ -38,15 +40,16 @@ namespace core
 		Zone* _global_zone = nullptr;
 		GlobalAllocatorType* _global_allocator = nullptr;
 
+		static_memory<Zone> global_zone_memory;
+
 		void startup()
 		{
 			// If you hit this assert, there's a double memory startup
 			assert(_global_zone == nullptr && _global_allocator == nullptr);
 
-			static Zone global_memory_zone("global");
-			_global_zone = &global_memory_zone;
+			_global_zone = new (global_zone_memory.memory) Zone("global");
 
-			static GlobalAllocatorType global_allocator_instance(&global_memory_zone);
+			static GlobalAllocatorType global_allocator_instance(_global_zone);
 			_global_allocator = &global_allocator_instance;
 		}
 
@@ -54,6 +57,8 @@ namespace core
 		{
 			// If you hit this assert, there's a double memory shutdown
 			assert(_global_zone && _global_allocator);
+
+			_global_zone->~Zone();
 
 			// sanity test; these are no longer valid!
 			_global_zone = nullptr;
@@ -129,17 +134,17 @@ namespace core
 		void Zone::report()
 		{
 			// could use %zu on C99, but fallback to %lu and casts for C89.
-			fprintf(stdout, "[zone: '%s'] total_allocations = %lu, total_bytes = %lu, budget_bytes = %lu\n", zone_name,
+			LOGV("[zone: '%s'] total_allocations = %lu, total_bytes = %lu, budget_bytes = %lu\n", zone_name,
 					(unsigned long)total_allocations,
 					(unsigned long)total_bytes,
 					(unsigned long)budget_bytes);
 
-			fprintf(stdout, "[zone: '%s'] active_allocations = %lu, active_bytes = %lu, high_watermark = %lu\n", zone_name,
+			LOGV("[zone: '%s'] active_allocations = %lu, active_bytes = %lu, high_watermark = %lu\n", zone_name,
 					(unsigned long)active_allocations,
 					(unsigned long)active_bytes,
 					(unsigned long)high_watermark);
 
-			fprintf(stdout, "[zone: '%s'] smallest_allocation = %lu, largest_allocation = %lu\n", zone_name,
+			LOGV("[zone: '%s'] smallest_allocation = %lu, largest_allocation = %lu\n", zone_name,
 					(unsigned long)smallest_allocation,
 					(unsigned long)largest_allocation);
 

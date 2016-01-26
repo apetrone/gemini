@@ -27,15 +27,16 @@
 #include <core/logging.h>
 #include <core/fixedarray.h>
 
-#define LOG_MAX_HANDLERS 4
+
 
 namespace core
 {
 	namespace logging
 	{
+		const size_t MAX_LOG_HANDLERS = 4;
 		class LogInterface : public ILog
 		{
-			FixedArray<Handler> handlers;
+			Handler handlers[MAX_LOG_HANDLERS];
 
 		public:
 			LogInterface();

@@ -37,11 +37,11 @@ namespace core
 		Color c;
 		if (num_elements == 4)
 		{
-			c.set( float_to_ubyte(fl[0]), float_to_ubyte(fl[1]), float_to_ubyte(fl[2]), float_to_ubyte(fl[3]) );
+			c.set(fl[0], fl[1], fl[2], fl[3]);
 		}
 		else
 		{
-			c.set( float_to_ubyte(fl[0]), float_to_ubyte(fl[1]), float_to_ubyte(fl[2]), 255 );
+			c.set(fl[0], fl[1], fl[2], 1.0f);
 		}
 		return c;
 	}

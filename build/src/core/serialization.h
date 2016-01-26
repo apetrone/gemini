@@ -24,6 +24,8 @@
 // -------------------------------------------------------------
 #pragma once
 
+#include <core/logging.h>
+
 #include "typedefs.h"
 #include "mem.h"
 
@@ -122,7 +124,7 @@ struct SerializerUnknown
 	static void serialize(Archive& ar, T value)
 	{
 		assert(0);
-		fprintf(stdout, "serialize unknown\n");
+		LOGV("serialize unknown\n");
 	}
 };
 
@@ -131,7 +133,7 @@ struct SerializerClass
 	template <class Archive, class T>
 	static void serialize(Archive& ar, T value)
 	{
-		fprintf(stdout, "serialize class\n");
+		LOGV("serialize class\n");
 		size_t version = 1;
 		value.serialize(ar, version);
 //		foo(value);
@@ -143,7 +145,7 @@ struct SerializerPOD
 	template <class Archive, class T>
 	static void serialize(Archive& ar, T& value)
 	{
-		fprintf(stdout, "serialize pod\n");
+		LOGV("serialize pod\n");
 		ar.save(ar, value);
 	}
 };
@@ -153,7 +155,7 @@ struct SerializeCString
 	template <class Archive>
 	static void serialize(Archive& ar, const char* value)
 	{
-		fprintf(stdout, "serialize cstring\n");
+		LOGV("serialize cstring\n");
 	}
 };
 
@@ -162,7 +164,7 @@ struct SerializeCString
 //	template <class Archive, class T>
 //	static void serialize(Archive& ar, ClassProperty<T>& property)
 //	{
-//		fprintf(stdout, "serialize property '%s', address: %p\n", property.name, property.address);
+//		LOGV("serialize property '%s', address: %p\n", property.name, property.address);
 //		ar & static_cast<T&>(*property.address);
 //	}
 //};
@@ -174,13 +176,13 @@ struct CustomSerializerPOD
 	template <class Archive, class T>
 	static void read(Archive& ar, T& value)
 	{
-		fprintf(stdout, "read POD!\n");
+		LOGV("read POD!\n");
 	}
 
 	template <class Archive, class T>
 	static void write(Archive& ar, T& value)
 	{
-		fprintf(stdout, "write POD!\n");
+		LOGV("write POD!\n");
 	}
 };
 
@@ -189,20 +191,20 @@ struct CustomSerializer
 	template <class Archive, class T>
 	static void read(Archive& ar, T& value)
 	{
-		fprintf(stdout, "read!\n");
+		LOGV("read!\n");
 	}
 
 	template <class Archive, class T>
 	static void write(Archive& ar, T& value)
 	{
-		fprintf(stdout, "write!\n");
+		LOGV("write!\n");
 	}
 };
 
 template <class Archive, class T, size_t N>
 void choose_category_serializer(Archive& ar, T(&value)[N])
 {
-	fprintf(stdout, "wtf\n");
+	LOGV("wtf\n");
 	assert(0);
 }
 
@@ -229,7 +231,7 @@ struct SerializeRouterPointer
 	template <class Archive, class T>
 	static void choose_serializer(Archive& ar, T value)
 	{
-		fprintf(stdout, "choose serialize for a pointer\n");
+		LOGV("choose serialize for a pointer\n");
 	}
 };
 
@@ -239,7 +241,7 @@ struct SerializeRouterNonPointer
 	template <class Archive, class T>
 	static void choose_serializer(Archive& ar, T value)
 	{
-		fprintf(stdout, "choose a serializer for a non-pointer\n");
+		LOGV("choose a serializer for a non-pointer\n");
 		choose_category_serializer(ar, value);
 	}
 };
@@ -251,14 +253,14 @@ struct SerializeInternalPointer
 	template <class Archive, class T>
 	static void route(Archive& ar, T&& value)
 	{
-		fprintf(stdout, "SerializeInternalPointer\n");
+		LOGV("SerializeInternalPointer\n");
 		value.serialize(ar, 1);
 	}
 
 	template <class Archive, class T>
 	static void route(Archive& ar, T*&& value)
 	{
-		fprintf(stdout, "SerializeInternalPointer\n");
+		LOGV("SerializeInternalPointer\n");
 		value->serialize(ar, 1);
 	}
 };
@@ -268,7 +270,7 @@ struct SerializeInternalReference
 	template <class Archive, class T>
 	static void route(Archive& ar, T&& value)
 	{
-		fprintf(stdout, "SerializeInternalReference\n");
+		LOGV("SerializeInternalReference\n");
 		SerializeInternalPointer::template route<Archive, T>(ar, std::forward<T>(value));
 	}
 };
@@ -281,14 +283,14 @@ struct SerializeExternalPointer
 	template <class Archive, class T>
 	static void route(Archive& ar, T&& value)
 	{
-		fprintf(stdout, "SerializeExternalPointer\n");
+		LOGV("SerializeExternalPointer\n");
 		serialize(ar, value);
 	}
 
 	template <class Archive, class T>
 	static void route(Archive& ar, T* value)
 	{
-		fprintf(stdout, "SerializeExternalPointer\n");
+		LOGV("SerializeExternalPointer\n");
 		serialize(ar, *value);
 	}
 };
@@ -298,7 +300,7 @@ struct SerializeExternalReference
 	template <class Archive, class T>
 	static void route(Archive& ar, T&& value)
 	{
-		fprintf(stdout, "SerializeExternalReference\n");
+		LOGV("SerializeExternalReference\n");
 		SerializeExternalPointer::template route<Archive, T>(ar, value);
 	}
 };
@@ -309,7 +311,7 @@ struct SerializerTypeRouterInternal
 	template <class Archive, class T>
 	static void route_type(Archive& ar, T&& value)
 	{
-		fprintf(stdout, "SerializerTypeRouterInternal\n");
+		LOGV("SerializerTypeRouterInternal\n");
 		typedef typename If<reflection::traits::is_pointer<T>::value,
 			SerializeInternalPointer,
 		SerializeInternalReference>::value RouterTest;
@@ -323,7 +325,7 @@ struct SerializerTypeRouterExternal
 	template <class Archive, class T>
 	static void route_type(Archive& ar, T&& value)
 	{
-		fprintf(stdout, "SerializerTypeRouterExternal\n");
+		LOGV("SerializerTypeRouterExternal\n");
 		typedef typename If<reflection::traits::is_pointer<T>::value,
 			SerializeExternalPointer,
 		SerializeExternalReference>::value RouterTest;
@@ -339,7 +341,7 @@ struct SerializeRoutePOD
 	template <class Archive, class T>
 	static void route(Archive& ar, T&& value)
 	{
-		fprintf(stdout, "SerializeRoutePOD\n");
+		LOGV("SerializeRoutePOD\n");
 
 		// POD types never have internal serializers
 		ar.save(ar, value);
@@ -351,7 +353,7 @@ struct SerializeRouteClass
 	template <class Archive, class T>
 	static void route(Archive& ar, T&& value)
 	{
-		fprintf(stdout, "SerializeRouteClass\n");
+		LOGV("SerializeRouteClass\n");
 
 		typedef typename \
 			If<SerializerTypeSelector<T>::value == SerializerTypeInternal,
@@ -370,7 +372,7 @@ struct SerializeRouteProperty
 	template <class Archive, class T>
 	static void route(Archive& ar, T&& property)
 	{
-		fprintf(stdout, "serialize property!\n");
+		LOGV("serialize property!\n");
 
 		ar.begin_property(property);
 		route_serializer(ar, property.ref);
@@ -385,7 +387,7 @@ void route_serializer(Archive& ar, T&& value)
 {
 	using namespace reflection::traits;
 
-	fprintf(stdout, "route_serializer\n");
+	LOGV("route_serializer\n");
 
 	// Determine if T is a POD-type
 	typedef typename\

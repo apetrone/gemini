@@ -381,7 +381,7 @@ namespace gui
 			// convert compositor coordinates to local panel coordinates
 			Point local_coords = location - panel->get_origin();
 
-//			fprintf(stdout, "[%s] local_coords = %2.2f, %2.2f\n", panel->get_name(), local_coords.x, local_coords.y);
+//			LOGV("[%s] local_coords = %2.2f, %2.2f\n", panel->get_name(), local_coords.x, local_coords.y);
 			if (panel->has_flags(option_flags) && panel->hit_test_local(local_coords))
 			{
 				closest_panel = panel;
@@ -405,7 +405,7 @@ namespace gui
 			cpanel = (*child);
 			// convert parent coordinates to local panel coordinates
 			Point local_child_coords = location - cpanel->get_origin();
-//			fprintf(stdout, "[%s] local_child_coords = %2.2f, %2.2f\n", cpanel->get_name(), local_child_coords.x, local_child_coords.y);
+//			LOGV("[%s] local_child_coords = %2.2f, %2.2f\n", cpanel->get_name(), local_child_coords.x, local_child_coords.y);
 			if (cpanel->has_flags(option_flags) && cpanel->hit_test_local(local_child_coords))
 			{
 				return find_deepest_panel_at_location(cpanel, local_child_coords, option_flags);

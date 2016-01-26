@@ -377,7 +377,7 @@ namespace input
 		window_coords[0] = absolute_x;
 		window_coords[1] = absolute_y;
 
-//		fprintf(stdout, "inject move: %i %i\n", absolute_x, absolute_y);
+//		LOGV("inject move: %i %i\n", absolute_x, absolute_y);
 	} // inject_mouse_move
 
 	void MouseInput::inject_mouse_delta(int dx, int dy)

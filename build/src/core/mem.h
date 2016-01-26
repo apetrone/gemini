@@ -26,13 +26,13 @@
 
 #include "typedefs.h"
 #include "config.h"
+#include "logging.h"
 
 #if defined(PLATFORM_APPLE)
 	#include <memory> // for malloc, free (on OSX)
 	#include <stdlib.h>
 #elif defined(PLATFORM_LINUX) || defined(PLATFORM_ANDROID)
 	#include <stdlib.h>
-	#include <stdio.h> // for fprintf
 	#include <new> // for placement new
 #elif defined(PLATFORM_WINDOWS)
 	#include <memory> // we'll see if this compiles...
@@ -70,6 +70,13 @@ namespace core
 		const size_t Kilobyte = 1024;
 		const size_t Megabyte = (Kilobyte*1024);
 		const size_t Gigabyte = (Megabyte*1024);
+
+
+		template <class T, size_t count = 1>
+		struct static_memory
+		{
+			unsigned char memory[sizeof(T) * count];
+		};
 
 		// ---------------------------------------------------------------------
 		// zone

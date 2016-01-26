@@ -566,7 +566,7 @@ namespace gemini
 			location.x = point[0];
 			location.y = point[1];
 			location.z = point[2];
-			fprintf(stdout, "random point: %2.2f, %2.2f, %2.2f\n", location.x, location.y, location.z);
+			LOGV("random point: %2.2f, %2.2f, %2.2f\n", location.x, location.y, location.z);
 
 			return location;
 		}

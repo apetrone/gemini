@@ -80,31 +80,16 @@ namespace platform
 
 	namespace detail
 	{
-		void stdout_message(core::logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type);
-		int stdout_open(core::logging::Handler* handler);
-		void stdout_close(core::logging::Handler* handler);
-
-#if defined(PLATFORM_WINDOWS)
-		void vs_message(core::logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type);
-		int vs_open(core::logging::Handler* handler);
-		void vs_close(core::logging::Handler* handler);
-#endif
-
-#if defined(PLATFORM_ANDROID)
-		void log_android_message(core::logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type);
-		int log_android_open(core::logging::Handler* handler);
-		void log_android_close(core::logging::Handler* handler);
-#endif
-
 		void stdout_message(core::logging::Handler*, const char* message, const char* filename, const char* function, int line, int type)
 		{
 			FILE* log_message_to_pipe[] = {
 				stdout,
 				stdout,
+				stdout,
 				stderr
 			};
 
-			const char *message_types[] = {0, "VERBOSE", "WARNING", " ERROR "};
+			const char *message_types[] = {"INVALID", "VERBOSE", "WARNING", "ERROR"};
 			core::StackString<MAX_PATH_SIZE> path = filename;
 			fprintf(log_message_to_pipe[static_cast<int>(type)], "[%s] %s, %s, %i | %s", message_types[type], path.basename()(), function, line, message);
 		}
@@ -121,9 +106,6 @@ namespace platform
 #if defined(PLATFORM_WINDOWS)
 		void vs_message(core::logging::Handler*, const char* message, const char*, const char*, int, int)
 		{
-	//		const char *message_types[] = { 0, "VERBOSE", "WARNING", " ERROR " };
-//			fprintf( stdout, "[%s] %s, %s, %i | %s", message_types[ type ], xstr_filefrompath(filename), function, line, message );
-
 			// honey badger don't care about LogMessageType
 			OutputDebugStringA(message);
 		}
@@ -180,11 +162,14 @@ namespace platform
 			log_system->add_handler(&stdout_handler);
 
 #if defined(PLATFORM_WINDOWS)
-			core::logging::Handler msvc_logger;
-			msvc_logger.open = vs_open;
-			msvc_logger.close = vs_close;
-			msvc_logger.message = vs_message;
-			log_system->add_handler(&msvc_logger);
+			if (IsDebuggerPresent())
+			{
+				core::logging::Handler msvc_logger;
+				msvc_logger.open = vs_open;
+				msvc_logger.close = vs_close;
+				msvc_logger.message = vs_message;
+				log_system->add_handler(&msvc_logger);
+			}
 #endif
 
 #if defined(PLATFORM_ANDROID)

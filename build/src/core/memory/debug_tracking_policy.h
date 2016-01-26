@@ -69,7 +69,7 @@ struct DebugTrackingPolicy
 	/// @param line The line number of this allocation
 	void* track_allocation(void* pointer, size_t requested_size, size_t alignment, const char* filename, int line)
 	{
-		fprintf(stdout, "[+] %x size=%lu, align=%lu, line=%i, alloc_num=%zu, file='%s'\n",
+		LOGV("[+] %x size=%lu, align=%lu, line=%i, alloc_num=%zu, file='%s'\n",
 			pointer,
 			requested_size,
 			alignment,
@@ -98,7 +98,7 @@ struct DebugTrackingPolicy
 
 		allocation_size = header->allocation_size;
 
-		fprintf(stdout, "[-] %x size=%lu, align=%lu, line=%i, alloc_num=%zu\n",
+		LOGV("[-] %x size=%lu, align=%lu, line=%i, alloc_num=%zu\n",
 			pointer,
 			header->allocation_size,
 			header->alignment,
@@ -125,7 +125,7 @@ private:
 		for (; it != allocated_blocks.end(); ++it)
 		{
 			MemoryHeader* block = (*it);
-			fprintf(stdout, "*** MEMORY LEAK [addr=%p] [file=%s] [line=%i] [size=%lu] [alloc_num=%lu]\n",
+			LOGV("*** MEMORY LEAK [addr=%p] [file=%s] [line=%i] [size=%lu] [alloc_num=%lu]\n",
 					(((char*)block)+sizeof(MemoryHeader)),
 					block->filename,
 					block->line,

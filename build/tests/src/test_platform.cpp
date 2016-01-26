@@ -115,12 +115,12 @@ UNITTEST(filesystem)
 #endif
 
 	TEST_ASSERT(user_home != nullptr, get_environment_variable);
-//	fprintf(stdout, "get_environment_variable [%%USERPROFILE%% / $HOME]: '%s'\n", user_home);
+//	LOGV("get_environment_variable [%%USERPROFILE%% / $HOME]: '%s'\n", user_home);
 
 
 	platform::PathString user_directory = platform::get_user_directory();
 	TEST_ASSERT(!user_directory.is_empty(), get_user_directory);
-//	fprintf(stdout, "get_user_directory: '%s'\n", user_directory);
+//	LOGV("get_user_directory: '%s'\n", user_directory);
 
 
 	platform::PathString temp_directory = platform::get_user_temp_directory();
