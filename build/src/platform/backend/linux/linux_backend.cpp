@@ -95,11 +95,6 @@ namespace platform
 		return Result::success();
 	}
 
-	int backend_run_application(int argc, const char** argv)
-	{
-		return 0;
-	}
-
 	void backend_shutdown()
 	{
 	}

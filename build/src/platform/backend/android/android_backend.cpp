@@ -31,6 +31,7 @@
 #include <platform/platform.h>
 #include <platform/kernel.h>
 #include <core/mem.h>
+#include <core/logging.h>
 
 #include <android_native_app_glue.h>
 #include <android/log.h>
@@ -154,7 +155,7 @@ namespace platform
 			memset(window->graphics_data, 0, sizeof(graphics_data_size));
 		}
 
-		PLATFORM_LOG(LogMessageType::Info, "AndroidWindow: %p\n", window);
+		LOGV("AndroidWindow: %p\n", window);
 
 		// create a context for the window; through EGL this doesn't require
 		// a valid window surface -- as we don't have one yet.
@@ -174,7 +175,7 @@ namespace platform
 		// int32_t width, height;
 		// width = ANativeWindow_getWidth(app->window);
 		// height = ANativeWindow_getHeight(app->window);
-		// PLATFORM_LOG(LogMessageType::Info, "%i x %i\n", width, height);
+		// LOGV("%i x %i\n", width, height);
 		switch(command)
 		{
 			case APP_CMD_INPUT_CHANGED:
@@ -182,14 +183,14 @@ namespace platform
 
 			// The window is being shown
 			case APP_CMD_INIT_WINDOW:
-				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_INIT_WINDOW\n");
+				// LOGV("APP_CMD_INIT_WINDOW\n");
 				state->surface_ready = true;
 				_window_provider->set_native_window(app->window);
 				break;
 
 			// The window is being hidden or closed
 			case APP_CMD_TERM_WINDOW:
-				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_TERM_WINDOW\n");
+				// LOGV("APP_CMD_TERM_WINDOW\n");
 				_graphics_provider->detach_context(window);
 				_graphics_provider->destroy_surface(window);
 				_window_provider->set_native_window(nullptr);
@@ -199,20 +200,20 @@ namespace platform
 				break;
 
 			case APP_CMD_WINDOW_RESIZED:
-				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_WINDOW_RESIZED\n");
+				// LOGV("APP_CMD_WINDOW_RESIZED\n");
 				break;
 
 			case APP_CMD_WINDOW_REDRAW_NEEDED:
-				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_WINDOW_REDRAW_NEEDED\n");
+				// LOGV("APP_CMD_WINDOW_REDRAW_NEEDED\n");
 				break;
 
 			case APP_CMD_CONTENT_RECT_CHANGED:
-				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_CONTENT_RECT_CHANGED\n");
+				// LOGV("APP_CMD_CONTENT_RECT_CHANGED\n");
 				break;
 
 			// The app gains focus
 			case APP_CMD_GAINED_FOCUS:
-				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_GAINED_FOCUS\n");
+				// LOGV("APP_CMD_GAINED_FOCUS\n");
 				// we have a valid window; keep the screen on
 				flags = AWINDOW_FLAG_KEEP_SCREEN_ON;
 				// AWINDOW_FLAG_FULLSCREEN does not hide the soft buttons.
@@ -223,45 +224,45 @@ namespace platform
 
 			// The app lost focus
 			case APP_CMD_LOST_FOCUS:
-				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_LOST_FOCUS\n");
+				// LOGV("APP_CMD_LOST_FOCUS\n");
 				state->has_focus = false;
 				break;
 
 			case APP_CMD_CONFIG_CHANGED:
-				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_CONFIG_CHANGED\n");
+				// LOGV("APP_CMD_CONFIG_CHANGED\n");
 				break;
 
 			case APP_CMD_LOW_MEMORY:
-				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_LOW_MEMORY\n");
+				// LOGV("APP_CMD_LOW_MEMORY\n");
 				break;
 
 			case APP_CMD_START:
-				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_START\n");
+				// LOGV("APP_CMD_START\n");
 				break;
 
 			case APP_CMD_RESUME:
 				// should re-create EGL context
-				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_RESUME\n");
+				// LOGV("APP_CMD_RESUME\n");
 				state->is_resumed = true;
 				break;
 
 			// The system has asked the application to save its state
 			case APP_CMD_SAVE_STATE:
-				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_SAVE_STATE\n");
+				// LOGV("APP_CMD_SAVE_STATE\n");
 				break;
 
 			case APP_CMD_PAUSE:
 				// should destroy EGL context
-				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_PAUSE\n");
+				// LOGV("APP_CMD_PAUSE\n");
 				state->is_resumed = false;
 				break;
 
 			case APP_CMD_STOP:
-				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_STOP\n");
+				// LOGV("APP_CMD_STOP\n");
 				break;
 
 			case APP_CMD_DESTROY:
-				// PLATFORM_LOG(LogMessageType::Info, "APP_CMD_DESTROY\n");
+				// LOGV("APP_CMD_DESTROY\n");
 				break;
 		}
 	}
@@ -310,10 +311,10 @@ namespace platform
 
 		platform::startup();
 
-		PLATFORM_LOG(LogMessageType::Info, "__ANDROID_API__ is %i\n", __ANDROID_API__);
-		PLATFORM_LOG(LogMessageType::Info, "internalDataPath: %s\n", android::internal_data_path());
-		PLATFORM_LOG(LogMessageType::Info, "externalDataPath: %s\n", android::external_data_path());
-		PLATFORM_LOG(LogMessageType::Info, "obbPath: %s\n", android::obb_path());
+		LOGV("__ANDROID_API__ is %i\n", __ANDROID_API__);
+		LOGV("internalDataPath: %s\n", android::internal_data_path());
+		LOGV("externalDataPath: %s\n", android::external_data_path());
+		LOGV("obbPath: %s\n", android::obb_path());
 
 		AndroidWindow* window = _window_provider->get_android_window();
 
@@ -345,7 +346,7 @@ namespace platform
 
 				if (app->destroyRequested != 0)
 				{
-					PLATFORM_LOG(LogMessageType::Info, "android state requested destroy!\n");
+					LOGV("android state requested destroy!\n");
 					// we're finished processing events
 					processing_events = false;
 					break;
@@ -409,7 +410,7 @@ namespace platform
 			kernel::shutdown();
 		}
 
-		PLATFORM_LOG(LogMessageType::Info, "exiting the android application\n");
+		LOGV("exiting the android application\n");
 
 		// shutdown the platform
 		platform::shutdown();

@@ -22,6 +22,8 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
+#include <core/logging.h>
+
 #include "platform_internal.h"
 #include "egl_graphics_provider.h"
 
@@ -45,7 +47,7 @@ namespace platform
 			EGLint error = eglGetError();
 			if (error != EGL_SUCCESS)
 			{
-				PLATFORM_LOG(LogMessageType::Error, "ERROR on '%s' eglGetError returned %i\n", message, error);
+				LOGE("ERROR on '%s' eglGetError returned %i\n", message, error);
 			}
 
 			return error;
@@ -54,7 +56,7 @@ namespace platform
 		#define PRINT_ATTRIB(attrib)\
 			result = eglGetConfigAttrib(display, config, attrib, &value);\
 			assert(result == EGL_TRUE);\
-			PLATFORM_LOG(LogMessageType::Info, "%s: %i\n", #attrib, value)
+			LOGV("%s: %i\n", #attrib, value)
 
 		void egl_print_config(EGLDisplay display, EGLConfig config)
 		{
@@ -128,18 +130,18 @@ namespace platform
 			{
 				const char* eglstring;
 				eglstring = (const char*) eglQueryString(display, EGL_VENDOR);
-				PLATFORM_LOG(LogMessageType::Info, "EGL_VENDOR: %s\n", eglstring);
+				LOGV("EGL_VENDOR: %s\n", eglstring);
 
 				eglstring = (const char*) eglQueryString(display, EGL_VERSION);
-				PLATFORM_LOG(LogMessageType::Info, "EGL_VERSION: %s\n", eglstring);
+				LOGV("EGL_VERSION: %s\n", eglstring);
 
 				eglstring = (const char*) eglQueryString(display, EGL_EXTENSIONS);
-				PLATFORM_LOG(LogMessageType::Info, "EGL_EXTENSIONS: %s\n", eglstring);
+				LOGV("EGL_EXTENSIONS: %s\n", eglstring);
 
 				if (major >= 1 && minor >= 2)
 				{
 					eglstring = (const char*) eglQueryString(display, EGL_CLIENT_APIS);
-					PLATFORM_LOG(LogMessageType::Info, "EGL_CLIENT_APIS: %s\n", eglstring);
+					LOGV("EGL_CLIENT_APIS: %s\n", eglstring);
 				}
 			}
 #endif
@@ -268,7 +270,7 @@ namespace platform
 			EGL_CHECK_ERROR("eglMakeCurrent");
 			if (result == EGL_FALSE)
 			{
-				PLATFORM_LOG(LogMessageType::Info, "eglMakeCurrent failed to activate context\n");
+				LOGV("eglMakeCurrent failed to activate context\n");
 			}
 		}
 
@@ -292,7 +294,7 @@ namespace platform
 
 			if (window_data->surface == EGL_NO_SURFACE)
 			{
-				PLATFORM_LOG(LogMessageType::Info, "eglCreateWindowSurface failed!\n");
+				LOGV("eglCreateWindowSurface failed!\n");
 				return;
 			}
 

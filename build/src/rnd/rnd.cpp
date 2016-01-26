@@ -1,10 +1,10 @@
 #include <platform/platform.h>
 #include <platform/input.h>
 
-#include <runtime/core.h>
 #include <runtime/filesystem.h>
-#include <runtime/logging.h>
 
+#include <core/core.h>
+#include <core/logging.h>
 #include <core/typedefs.h>
 #include <core/fixedarray.h>
 #include <core/stackstring.h>
@@ -383,13 +383,12 @@ namespace test
 			descriptor(-1),
 			device_path(device_path_node)
 		{
-			PLATFORM_LOG(platform::LogMessageType::Info, "opening: '%s'...\n", device_path_node);
+			LOGV("opening: '%s'...\n", device_path_node);
 			descriptor = open(device_path_node, O_RDONLY);
 
 			if (descriptor == -1)
 			{
-				PLATFORM_LOG(platform::LogMessageType::Warning,
-					"%s (%i), Unable to open device '%s'\n",
+				LOGW("%s (%i), Unable to open device '%s'\n",
 					strerror(errno),
 					errno,
 					device_path_node
@@ -812,7 +811,7 @@ namespace test
 				device = MEMORY_NEW(JoystickDevice, core::memory::global_allocator())(device_path);
 				break;
 			default:
-				PLATFORM_LOG(platform::LogMessageType::Error, "Unknown device type specified!\n");
+				LOGE("Unknown device type specified!\n");
 				assert(0);
 				break;
 		}
@@ -836,19 +835,14 @@ namespace test
 		lib = udev_new();
 		if (!lib)
 		{
-			PLATFORM_LOG(platform::LogMessageType::Error,
-				"cannot create the udev lib\n"
-			);
+			LOGE("cannot create the udev lib\n");
 			return;
 		}
 
 		// create a list of devices in the 'hidraw' subsystem
 		enumerate = udev_enumerate_new(lib);
 
-		// PLATFORM_LOG(platform::LogMessageType::Info,
-		// 	"looking for subsystem matches: '%s'\n",
-		// 	subsystem
-		// );
+		// LOGV("looking for subsystem matches: '%s'\n", subsystem);
 		udev_enumerate_add_match_subsystem(enumerate, subsystem);
 		if (property_name && property_value)
 		{
@@ -867,14 +861,15 @@ namespace test
 			// get the filename of the /sys entry for the device
 			// and create a udev_device object representing it.
 			sys_device_path = udev_list_entry_get_name(entry);
-			// PLATFORM_LOG(platform::LogMessageType::Info, "name: %s\n",
+			// LOGV("name: %s\n",
 			// 	sys_device_path);
 
 			udev_device* udevice = udev_device_new_from_syspath(lib, sys_device_path);
 			if (!udevice)
 			{
-				PLATFORM_LOG(platform::LogMessageType::Warning,
-					"Unable to find device for sys path: %s\n", sys_device_path);
+				LOGW("Unable to find device for sys path: %s\n",
+					sys_device_path
+				);
 				continue;
 			}
 
@@ -882,9 +877,7 @@ namespace test
 			const char* device_node_path = udev_device_get_devnode(udevice);
 			if (!device_node_path)
 			{
-				PLATFORM_LOG(platform::LogMessageType::Info,
-					"Unable to get device node path.\n"
-				);
+				LOGV("Unable to get device node path.\n");
 				udev_device_unref(udevice);
 				continue;
 			}
@@ -901,18 +894,14 @@ namespace test
 
 			if (!uparent)
 			{
-				PLATFORM_LOG(platform::LogMessageType::Info,
-					"Unable to find parent usb device\n");
+				LOGV("Unable to find parent usb device\n");
 				udev_device_unref(udevice);
 				continue;
 			}
 
 			// usb_device_get_devnode() returns the path to the device node
 			// in /dev/
-			PLATFORM_LOG(platform::LogMessageType::Info,
-				"Device Node Path: %s\n",
-				device_node_path
-			);
+			LOGV("Device Node Path: %s\n", device_node_path);
 
 			// from here, call get_sysattr_value for each file in the
 			// device's /sys entry. The strings passed into these
@@ -921,24 +910,24 @@ namespace test
 			// usb device. Note that USB strings are Unicode, UCS2
 			// encoded, but the strings returned from
 			// udev_device_get_sysattr_value are UTF-8 encoded.
-			PLATFORM_LOG(platform::LogMessageType::Info,
+			LOGV(
 				"VID/PID: %s %s\n",
 				udev_device_get_sysattr_value(uparent, "idVendor"),
 				udev_device_get_sysattr_value(uparent, "idProduct")
 			);
 
-			PLATFORM_LOG(platform::LogMessageType::Info,
+			LOGV(
 				"manufacturer: %s\nproduct: %s\n",
 				udev_device_get_sysattr_value(uparent, "manufacturer"),
 				udev_device_get_sysattr_value(uparent, "product")
 			);
 
-			PLATFORM_LOG(platform::LogMessageType::Info,
+			LOGV(
 				"serial: %s\n",
 				udev_device_get_sysattr_value(uparent, "serial")
 			);
 
-			PLATFORM_LOG(platform::LogMessageType::Info,
+			LOGV(
 				"bustype: %i\n",
 				udev_device_get_sysattr_value(uparent, "idBustype")
 			);
@@ -1023,8 +1012,8 @@ namespace test
 							struct input_event* event = reinterpret_cast<struct input_event*>(
 								stream.get_data());
 
-							// PLATFORM_LOG(platform::LogMessageType::Info,
-								// "interpret %i bytes\n", stream.current_offset());
+							// LOGV("interpret %i bytes\n",
+							// stream.current_offset());
 							if (event)
 							{
 								device->process_event(*event);
@@ -1037,8 +1026,7 @@ namespace test
 		}
 		else if (select_result == -1)
 		{
-			PLATFORM_LOG(platform::LogMessageType::Warning,
-				"%s (%i) - Error polling input devices",
+			LOGW("%s (%i) - Error polling input devices",
 				strerror(errno),
 				errno
 			);
@@ -1074,7 +1062,7 @@ int main(int argc, char** argv)
 
 #if defined(PLATFORM_LINUX)
 	const size_t event_size = sizeof(struct input_event);
-	PLATFORM_LOG(platform::LogMessageType::Info, "event_size: %i\n", event_size);
+	LOGV("event_size: %i\n", event_size);
 
 	test_devices();
 #endif

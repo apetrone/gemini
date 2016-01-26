@@ -27,6 +27,7 @@
 
 #include <core/logging.h>
 #include <core/mem.h>
+#include <core/core.h>
 
 #include <assert.h>
 
@@ -159,6 +160,7 @@ namespace platform
 			stdout_handler.open = stdout_open;
 			stdout_handler.close = stdout_close;
 			stdout_handler.message = stdout_message;
+			assert(log_system != nullptr);
 			log_system->add_handler(&stdout_handler);
 
 #if defined(PLATFORM_WINDOWS)
@@ -214,6 +216,7 @@ namespace platform
 #if defined(PLATFORM_LINUX) || defined(PLATFORM_WINDOWS)
 	kernel::Error backend_run_application()
 	{
+		gemini::core_startup();
 		platform::startup();
 
 #if defined(PLATFORM_WINDOWS)
@@ -241,6 +244,7 @@ namespace platform
 		// cleanup kernel memory
 		kernel::shutdown();
 		platform::shutdown();
+		gemini::core_shutdown();
 
 		return error;
 	} // main

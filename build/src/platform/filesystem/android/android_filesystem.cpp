@@ -70,7 +70,7 @@ namespace platform
 			result = readlink(linkname, &output[0], output.max_size());
 			if (result == -1)
 			{
-				PLATFORM_LOG(LogMessageType::Error, "read link failed!");
+				LOGE("read link failed!");
 				return output;
 			}
 		}

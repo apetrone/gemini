@@ -399,7 +399,7 @@ namespace platform
 					break;
 
 				default:
-					PLATFORM_LOG(platform::LogMessageType::Error, "Unhandled X11 event type: %i\n", event.type);
+					LOGE("Unhandled X11 event type: %i\n", event.type);
 					assert(0);
 					break;
 			}

@@ -45,7 +45,7 @@ namespace platform
 
 		int error_handler(Display* display, XErrorEvent* event)
 		{
-			PLATFORM_LOG(platform::LogMessageType::Error, "XErrorEvent->error_code: %i\n", event->error_code);
+			LOGE("XErrorEvent->error_code: %i\n", event->error_code);
 			_global_error_code = event->error_code;
 			return 0;
 		}
@@ -88,11 +88,11 @@ namespace platform
 			Bool result = glXQueryVersion(display, &major, &minor);
 			if (!result)
 			{
-				PLATFORM_LOG(LogMessageType::Warning, "Error fetching GLX version!\n");
+				LOGW("Error fetching GLX version!\n");
 			}
 			else
 			{
-				PLATFORM_LOG(LogMessageType::Info, "GLX version: %d.%d\n", major, minor);
+				LOGV("GLX version: %d.%d\n", major, minor);
 			}
 
 
@@ -106,7 +106,7 @@ namespace platform
 
 			// We should have a valid GL context now -- let's try to fetch the
 
-			PLATFORM_LOG(LogMessageType::Info, "fetching symbol\n");
+			LOGV("fetching symbol\n");
 
 			const GLubyte context_attribs_arb[] = "glXCreateContextAttribsARB";
 			glXCreateContextAttribsARB = reinterpret_cast<GLXCREATECONTEXTATTRIBSARBPROC>(glXGetProcAddress(context_attribs_arb));
@@ -114,7 +114,7 @@ namespace platform
 			// failed, try without ARB?
 			if (!glXCreateContextAttribsARB)
 			{
-				PLATFORM_LOG(LogMessageType::Warning, "Unable to find symbol 'glXCreateContextAttribsARB'");
+				LOGW("Unable to find symbol 'glXCreateContextAttribsARB'");
 				const GLubyte context_attribs[] = "glXCreateContextAttribs";
 				glXCreateContextAttribsARB = reinterpret_cast<GLXCREATECONTEXTATTRIBSARBPROC>(glXGetProcAddress(context_attribs));
 			}
