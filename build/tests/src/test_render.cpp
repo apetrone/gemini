@@ -561,8 +561,6 @@ public:
 		state.device->destroy_buffer(state.line_buffer);
 
 		render2::destroy_device(state.device);
-
-		renderer::shutdown();
 #endif
 
 		render_callbacks.clear();

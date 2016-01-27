@@ -42,6 +42,10 @@ namespace platform
 {
 	namespace window
 	{
+		X11Window::~X11Window()
+		{
+		}
+
 		const long PLATFORM_X11_EVENT_MASK = \
 			// request info when contents of lost window regions
 			ExposureMask |

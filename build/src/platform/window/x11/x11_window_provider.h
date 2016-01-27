@@ -42,6 +42,8 @@ namespace platform
 			{
 			}
 
+			virtual ~X11Window();
+
 			virtual void* get_native_handle() override
 			{
 				return &native_window;
@@ -60,7 +62,7 @@ namespace platform
 		{
 		public:
 			X11WindowProvider();
-			virtual ~X11WindowProvider() override;
+			virtual ~X11WindowProvider();
 
 			virtual Result startup() override;
 			virtual void shutdown() override;

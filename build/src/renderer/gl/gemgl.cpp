@@ -546,10 +546,15 @@ namespace renderer
 	void gemgl_shutdown( gemgl_interface_t & gl_interface  )
 	{
 #if defined(PLATFORM_WINDOWS) || defined(PLATFORM_LINUX) || defined(PLATFORM_ANDROID)
+		// If you hit this, gemgl_shutdown was called more than once.
+		assert(gl_interface.library != nullptr);
 		platform::dylib_close(gl_interface.library);
+		gl_interface.library = nullptr;
 #elif defined(PLATFORM_APPLE)
 		gemgl_osx_shutdown();
 #endif
+
+
 	} // gemgl_shutdown
 
 	const char * gemgl_uniform_to_string( GLenum type )
