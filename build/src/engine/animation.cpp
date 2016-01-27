@@ -390,7 +390,7 @@ namespace gemini
 					Joint* joint = mesh->find_bone_named(node_name.c_str());
 					assert(joint != 0);
 
-					LOGV("reading keyframes for bone \"%s\", joint->index = %i\n", joint->name(), joint->index);
+//					LOGV("reading keyframes for bone \"%s\", joint->index = %i\n", joint->name(), joint->index);
 
 					FixedArray<KeyframeList>& kfl = sequence->AnimationSet[joint->index];
 					kfl.allocate(7);

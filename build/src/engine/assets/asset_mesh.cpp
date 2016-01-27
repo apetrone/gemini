@@ -278,8 +278,6 @@ namespace gemini
 						const Json::Value& bind_pose = skeleton_entry["bind_pose"];
 						assert(!bind_pose.isNull());
 						geo->bind_poses[bone_index] = assets::json_to_mat4(bind_pose);
-						const glm::mat4& bind_offset_matrix = geo->bind_poses[bone_index];
-						MAT4_POSITION(bind_offset_matrix);
 					}
 
 					state.mesh->has_skeletal_animation = true;

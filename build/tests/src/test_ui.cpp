@@ -28,6 +28,8 @@
 
 #include <runtime/filesystem.h>
 #include <runtime/runtime.h>
+#include <runtime/guirenderer.h>
+#include <runtime/standaloneresourcecache.h>
 
 #include <platform/platform.h>
 #include <platform/window.h>
@@ -38,8 +40,6 @@
 #include <renderer/vertexbuffer.h>
 #include <renderer/vertexstream.h>
 #include <renderer/font.h>
-#include <renderer/guirenderer.h>
-#include <renderer/standaloneresourcecache.h>
 
 #include <ui/ui.h>
 #include <ui/compositor.h>

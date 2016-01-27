@@ -77,15 +77,15 @@ namespace gemini
 		virtual void deallocate(void* pointer) = 0;
 
 		virtual void render_view(const View& view, const core::Color& clear_color) = 0;
+		// render a viewmodel (no depth testing; different fov)
+		virtual void render_viewmodel(IEngineEntity* entity, const View& view) = 0;
+		virtual void render_debug(const View& view) = 0;
 		virtual void render_gui() = 0;
 
 
 		virtual core::memory::GlobalAllocatorType& allocator() = 0;
 
 //		virtual void render_world(const glm::vec3& origin, const glm::vec2& view_angles) = 0;
-
-		// render a viewmodel (no depth testing; different fov)
-		virtual void render_viewmodel(IEngineEntity* entity, const View& view) = 0;
 
 		virtual void get_render_resolution(uint32_t& render_width, uint32_t& render_height) = 0;
 

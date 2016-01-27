@@ -166,5 +166,4 @@ namespace gui
 		/// @returns Total vertices needed to draw the string
 		LIBRARY_EXPORT virtual size_t font_count_vertices(const gui::FontHandle& handle, const char* string) = 0;
 	}; // Renderer
-
 } // namespace gui

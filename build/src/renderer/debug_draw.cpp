@@ -470,7 +470,8 @@ namespace renderer
 			device = render_device;
 
 			Array<unsigned char> fontdata;
-			core::filesystem::instance()->virtual_load_file(fontdata, "fonts/debug.ttf");
+			const render2::ResourceProvider* resource_provider = render2::get_resource_provider();
+			resource_provider->load_file(fontdata, "fonts/debug.ttf");
 			text_handle = font::load_from_memory(&fontdata[0], fontdata.size(), 16);
 			assert(text_handle.is_valid());
 

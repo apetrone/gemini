@@ -279,6 +279,10 @@ namespace renderer
 
 namespace render2
 {
+	ResourceProvider::~ResourceProvider()
+	{
+	}
+
 	// ---------------------------------------------------------------------
 	// Shader
 	// ---------------------------------------------------------------------
@@ -346,6 +350,11 @@ namespace render2
 
 namespace render2
 {
+	namespace detail
+	{
+		ResourceProvider* resource_provider = nullptr;
+	}
+
 	Device* create_device(const RenderParameters& params)
 	{
 		// determine the renderer
@@ -368,4 +377,15 @@ namespace render2
 	{
 		MEMORY_DELETE(device, core::memory::global_allocator());
 	}
+
+	LIBRARY_EXPORT void set_resource_provider(ResourceProvider* provider)
+	{
+		detail::resource_provider = provider;
+	}
+
+	LIBRARY_EXPORT ResourceProvider* get_resource_provider()
+	{
+		return detail::resource_provider;
+	}
+
 } // namespace render2

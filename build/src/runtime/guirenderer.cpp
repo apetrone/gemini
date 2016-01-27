@@ -25,6 +25,8 @@
 
 #include "guirenderer.h"
 
+#include <ui/compositor.h>
+
 #include <runtime/filesystem.h>
 
 #include <renderer/renderer.h>

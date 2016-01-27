@@ -25,9 +25,10 @@
 #include "standaloneresourcecache.h"
 
 #include <renderer/texture.h>
+#include <renderer/image.h>
 
 #include <runtime/filesystem.h>
-#include <renderer/image.h>
+
 
 namespace renderer
 {

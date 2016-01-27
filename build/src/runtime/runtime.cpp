@@ -31,6 +31,8 @@
 
 #include <platform/platform.h>
 
+#include <renderer/renderer.h>
+
 #include "filesystem_interface.h"
 
 
@@ -66,6 +68,18 @@ namespace gemini
 				fclose((FILE*)handler->userdata);
 			}
 		}
+
+		class RuntimeResourceProvider : public render2::ResourceProvider
+		{
+		public:
+			virtual bool load_file(Array<unsigned char>& data, const char* filename) const
+			{
+				core::filesystem::instance()->virtual_load_file(data, filename);
+				return true;
+			}
+		}; // RuntimeResourceProvider
+
+		static RuntimeResourceProvider resource_provider;
 	}
 
 	// initialize filesystem
@@ -132,6 +146,9 @@ namespace gemini
 		filelogger.userdata = (void*)log_directory();
 		core::logging::instance()->add_handler(&filelogger);
 #endif
+
+		// install the resource provider to the renderer?
+		render2::set_resource_provider(&detail::resource_provider);
 
 		return platform::Result::success();
 	}

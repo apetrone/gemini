@@ -492,6 +492,17 @@ namespace render2
 	typedef core::StackString<128> param_string;
 	typedef HashSet<param_string, param_string> RenderParameters;
 
+
+	// This allows custom implementations of resource loading to be exopsed
+	// to the renderer.
+	class ResourceProvider
+	{
+	public:
+		virtual ~ResourceProvider();
+
+		virtual bool load_file(Array<unsigned char>& data, const char* filename) const = 0;
+	}; // class ResourceProvider
+
 	// ---------------------------------------------------------------------
 	// table of render parameters
 	// <variable>: [<options/type>]
@@ -510,5 +521,8 @@ namespace render2
 
 	/// @brief Destroy an existing render device
 	LIBRARY_EXPORT void destroy_device(Device* device);
+
+	LIBRARY_EXPORT void set_resource_provider(ResourceProvider* provider);
+	LIBRARY_EXPORT ResourceProvider* get_resource_provider();
 } // namespace render2
 

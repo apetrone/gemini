@@ -787,7 +787,10 @@ namespace render2
 		vertex_shader_path.append(".vert");
 
 		Array<unsigned char> vertex_shader_source;
-		core::filesystem::instance()->virtual_load_file(vertex_shader_source, vertex_shader_path());
+
+		const ResourceProvider* resource_provider = get_resource_provider();
+
+		resource_provider->load_file(vertex_shader_source, vertex_shader_path());
 		assert(!vertex_shader_source.empty());
 
 		core::StackString<64> fragment_shader_path = "shaders";
@@ -797,8 +800,10 @@ namespace render2
 		fragment_shader_path.append(name);
 		fragment_shader_path.append(".frag");
 
+		LOGV("create shader \"%s\"\n", name);
+
 		Array<unsigned char> fragment_shader_source;
-		core::filesystem::instance()->virtual_load_file(fragment_shader_source, fragment_shader_path());
+		resource_provider->load_file(fragment_shader_source, fragment_shader_path());
 		assert(!fragment_shader_source.empty());
 
 		GLShader* shader = MEMORY_NEW(GLShader, core::memory::global_allocator());

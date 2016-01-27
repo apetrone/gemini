@@ -347,7 +347,7 @@ def setup_driver(arguments, product, target_platform):
 	windows_release = product.layout(platform="windows", configuration="release")
 	windows_release.driver.generate_debug_info = "no"
 
-def get_tools(arguments, libui, libruntime, librenderer, libplatform, libcore, **kwargs):
+def get_tools(arguments, libruntime, librenderer, libplatform, libcore, libsdk, **kwargs):
 	#
 	#
 	#
@@ -378,7 +378,7 @@ def get_tools(arguments, libui, libruntime, librenderer, libplatform, libcore, *
 	#kraken = get_kraken(arguments, libruntime, libplatform, libcore, librenderer, **kwargs)
 	#tools.append(kraken)
 
-	orion = get_orion(arguments, libui, libruntime, libplatform, libcore, librenderer, **kwargs)
+	orion = get_orion(arguments, libruntime, libplatform, libcore, librenderer, libsdk, **kwargs)
 	tools.append(orion)
 
 	return tools
@@ -616,7 +616,7 @@ def get_libplatform(arguments, target_platform):
 
 
 
-def get_librenderer(arguments, target_platform, libruntime):
+def get_librenderer(arguments, target_platform):
 	librenderer = Product(name="renderer", output=ProductType.DynamicLibrary)
 	setup_driver(arguments, librenderer, target_platform)
 	librenderer.project_root = COMMON_PROJECT_ROOT
@@ -644,7 +644,6 @@ def get_librenderer(arguments, target_platform, libruntime):
 	]
 
 	librenderer.dependencies += [
-		libruntime,
 		libfreetype
 	]
 
@@ -683,7 +682,7 @@ def get_librenderer(arguments, target_platform, libruntime):
 
 	return librenderer
 
-def get_libruntime(arguments, target_platform, libui):
+def get_libruntime(arguments, target_platform, librenderer):
 	libruntime = Product(name="runtime", output=ProductType.DynamicLibrary)
 	setup_driver(arguments, libruntime, target_platform)
 	libruntime.project_root = COMMON_PROJECT_ROOT
@@ -692,6 +691,9 @@ def get_libruntime(arguments, target_platform, libui):
 		"src/runtime/*.c",
 		"src/runtime/*.cpp",
 		"src/runtime/*.h",
+
+		"src/ui/**.c*",
+		"src/ui/**.h",
 
 		# include this amalgamated version of jsoncpp until we replace it.
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp/jsoncpp.cpp")
@@ -706,7 +708,7 @@ def get_libruntime(arguments, target_platform, libui):
 		os.path.join(DEPENDENCIES_FOLDER, "jsoncpp"),
 	]
 
-	libruntime.dependencies.append(libui)
+	libruntime.dependencies.append(librenderer)
 
 	return libruntime
 
@@ -733,69 +735,6 @@ def get_sdk(arguments, links, **kwargs):
 	sdk.dependencies.extend(links)
 
 	return sdk
-
-def get_libui(arguments, target_platform, libcore):
-	ui = Product(name="ui", output=ProductType.DynamicLibrary)
-	setup_driver(arguments, ui, target_platform)
-	ui.root = "../"
-	ui.project_root = COMMON_PROJECT_ROOT
-
-
-	# for maths
-	ui.dependencies += [
-		libcore,
-		libglm
-	]
-
-	ui.sources = [
-		"src/ui/**.c*",
-		"src/ui/**.h"
-	]
-
-	ui.includes = [
-		"src"
-	]
-
-	debug = ui.layout(configuration="debug")
-	debug.defines = [
-		"DEBUG"
-	]
-	release = ui.layout(configuration="release")
-
-
-	#
-	# macosx
-	#
-	macosx_debug = ui.layout(platform="macosx", configuration="debug")
-	macosx_debug.driver.gcc_optimization_level = "0"
-	macosx_debug.driver.gcc_generate_debugging_symbols = "YES"
-	macosx_debug.driver.debug_information_format = "dwarf-with-dsym"
-
-	macosx_release = ui.layout(platform="macosx", configuration="release")
-	macosx_release.driver.gcc_optimization_level = "2"
-	macosx_release.driver.gcc_generate_debugging_symbols = "NO"
-
-	#
-	# linux
-	#
-	linux_debug = ui.layout(configuration="debug", platform="linux")
-	linux_debug.cflags = [
-		"-g",
-		"-Wall",
-		"-O0"
-	]
-
-	linux_release = ui.layout(configuration="release", platform="linux")
-	linux_release.cflags = [
-		"-O2"
-	]
-
-	windows = ui.layout(platform="windows")
-	windows.defines += [
-		"UNICODE"
-	]
-
-	return ui
 
 def get_rnd(arguments, links, **kwargs):
 	global_params = kwargs.get("global_params")
@@ -875,15 +814,15 @@ def create_unit_test(target_platform, arguments, name, dependencies, source, out
 
 	return product
 
-def get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, libglm, libui, **kwargs):
+def get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, libglm, **kwargs):
 	target_platform = kwargs.get("target_platform", None)
 	return [
 		create_unit_test(target_platform, arguments, "test_core", [rapidjson, libplatform, libcore, libglm], "tests/src/test_core.cpp"),
 		create_unit_test(target_platform, arguments, "test_platform", [libplatform, libcore, libglm], "tests/src/test_platform.cpp"),
-		create_unit_test(target_platform, arguments, "test_runtime", [rapidjson, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_runtime.cpp"),
-		create_unit_test(target_platform, arguments, "test_render", [rapidjson, libfreetype, librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
-		create_unit_test(target_platform, arguments, "test_ui", [rapidjson, libfreetype, librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application),
-		create_unit_test(target_platform, arguments, "test_window", [rapidjson, libfreetype, librenderer, libruntime, libui, libplatform, libcore, libglm], "tests/src/test_window.cpp", ProductType.Application)
+		create_unit_test(target_platform, arguments, "test_runtime", [rapidjson, libruntime, libplatform, libcore, libglm], "tests/src/test_runtime.cpp"),
+		create_unit_test(target_platform, arguments, "test_render", [rapidjson, libfreetype, librenderer, libruntime, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
+		create_unit_test(target_platform, arguments, "test_ui", [rapidjson, libfreetype, librenderer, libruntime, libplatform, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application),
+		create_unit_test(target_platform, arguments, "test_window", [rapidjson, libfreetype, librenderer, libruntime, libplatform, libcore, libglm], "tests/src/test_window.cpp", ProductType.Application)
 	]
 
 def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
@@ -903,8 +842,7 @@ def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwarg
 	kraken.dependencies.extend([
 		libplatform,
 		libcore,
-		librenderer,
-		libui
+		librenderer
 	])
 
 	kraken.sources += [
@@ -931,7 +869,7 @@ def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwarg
 
 	return kraken
 
-def get_orion(arguments, libui, libruntime, libplatform, libcore, librenderer, **kwargs):
+def get_orion(arguments, libruntime, libplatform, libcore, librenderer, libsdk, **kwargs):
 	orion = Product(name="orion", output=ProductType.Application)
 	orion.project_root = COMMON_PROJECT_ROOT
 	orion.product_root = COMMON_PRODUCT_ROOT
@@ -944,11 +882,11 @@ def get_orion(arguments, libui, libruntime, libplatform, libcore, librenderer, *
 
 	orion.dependencies.extend([
 		libfreetype,
-		libui,
 		libruntime,
 		librenderer,
 		libplatform,
-		libcore
+		libcore,
+		libsdk
 	])
 
 	orion.sources += [
@@ -1079,22 +1017,20 @@ def products(arguments, **kwargs):
 	libplatform = get_libplatform(arguments, target_platform)
 	libplatform.dependencies += [libcore]
 
-	libui = get_libui(arguments, target_platform, libcore)
+	librenderer = get_librenderer(arguments, target_platform)
+	librenderer.dependencies += [libcore, libplatform, Dependency(file="glm.py")]
 
-	libruntime = get_libruntime(arguments, target_platform, libui)
+	libruntime = get_libruntime(arguments, target_platform, librenderer)
 	libruntime.dependencies += [libcore, libplatform, Dependency(file="glm.py")]
-
-	librenderer = get_librenderer(arguments, target_platform, libruntime)
-	librenderer.dependencies += [libui, libcore, libplatform, Dependency(file="glm.py")]
 
 	# don't add this until we clean up the shaderconfig dependency on libruntime
 	#libruntime.dependencies.append(librenderer)
 
-
+	libsdk = get_sdk(arguments, [libruntime, librenderer, libplatform, libcore], **kwargs)
 
 	tools = []
 	if arguments.with_tools:
-		tools = get_tools(arguments, libui, libruntime, librenderer, libplatform, libcore, **kwargs)
+		tools = get_tools(arguments, libruntime, librenderer, libplatform, libcore, libsdk, **kwargs)
 	else:
 		logging.warn("Compiling WITHOUT tools...")
 
@@ -1120,7 +1056,6 @@ def products(arguments, **kwargs):
 		libcore,
 		Dependency(file="sqrat.py"),
 		#Dependency(file="squirrel3.py", products=["squirrel", "sqstdlib"]),
-		libui,
 		Dependency(file="bullet2.py", products=["BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"]),
 		librecastnavigation
 	]
@@ -1233,26 +1168,21 @@ def products(arguments, **kwargs):
 		"resources/ios/en.lproj/*.*"
 	]
 
-	libsdk = get_sdk(arguments, [libruntime, librenderer, libplatform, libcore], **kwargs)
+
 	gemini.dependencies.append(libsdk)
 
 	rnd = get_rnd(arguments, [libruntime, librenderer, libplatform, libcore], **kwargs)
 	tests = []
 	if arguments.with_tests:
-		# Ugh, for now, we also link in libui because the runtime requires it.
-		# I feel like pegasus should identify such dependencies and take care of it in the future.
-		# Though, for now, just link it in.
 		tests = get_unit_tests(arguments,
 			libcore,
 			libplatform,
 			librenderer,
 			libruntime,
 			Dependency(file="glm.py"),
-			libui,
 			**kwargs)
 
 	return [
-		libui,
 		librenderer,
 		libruntime,
 		libplatform,

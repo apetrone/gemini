@@ -26,6 +26,8 @@
 #include "str.h"
 #include "config.h"
 
+
+// TODO: replace this with a non-C-runtime function.
 #include <platform/platform.h>
 
 #include <string.h>

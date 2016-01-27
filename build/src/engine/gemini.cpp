@@ -36,12 +36,12 @@
 #include <runtime/filesystem.h>
 #include <runtime/configloader.h>
 #include <runtime/runtime.h>
+#include <runtime/standaloneresourcecache.h>
 
 #include <renderer/renderer.h>
 #include <renderer/renderstream.h>
 #include <renderer/constantbuffer.h>
 #include <renderer/debug_draw.h>
-#include <renderer/standaloneresourcecache.h>
 
 // SDK
 #include <sdk/audio_api.h>
@@ -1108,7 +1108,7 @@ private:
 		}
 		else
 		{
-			LOGV("opened game library!\n");
+			LOGV("opened game \"%s\"\n", game_library_path());
 
 			// link the engine interface
 
