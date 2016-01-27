@@ -100,6 +100,7 @@ public:
 
 	uint64_t id;
 	uint32_t flags;
+	uint32_t render_flags;
 	int32_t model_index;
 	EntityName name;
 
@@ -116,6 +117,7 @@ public:
 	virtual int32_t get_model_index() const;
 
 	virtual uint32_t get_render_flags() const;
+	void set_render_flags(uint32_t flags);
 
 	virtual void get_world_transform(glm::vec3& position, glm::quat& orientation) const;
 	virtual void get_render_position(glm::vec3& out_position) const { out_position = position; }

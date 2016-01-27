@@ -24,7 +24,7 @@
 // -------------------------------------------------------------
 #include <core/mem.h>
 
-#include <runtime/logging.h>
+#include <core/logging.h>
 
 #include "entity.h"
 #include "entity_list.h"
@@ -158,6 +158,7 @@ Entity::Entity() :
 	engine::instance()->entities()->add(this);
 	LOGV( "Entity() - %p, %ld\n", this, (unsigned long)this->id );
 
+	render_flags = RENDER_NONE;
 } // Entity
 
 Entity::~Entity()
@@ -177,7 +178,12 @@ int32_t Entity::get_model_index() const
 
 uint32_t Entity::get_render_flags() const
 {
-	return RENDER_NONE;
+	return render_flags;
+}
+
+void Entity::set_render_flags(uint32_t new_flags)
+{
+	render_flags = new_flags;
 }
 
 void Entity::get_world_transform(glm::vec3& out_position, glm::quat& out_orientation) const
