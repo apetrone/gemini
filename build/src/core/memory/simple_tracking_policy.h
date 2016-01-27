@@ -24,32 +24,40 @@
 // -------------------------------------------------------------
 #pragma once
 
-struct SimpleTrackingPolicy
+namespace core
 {
-	size_t last_size;
-
-	size_t request_size(size_t requested_size, size_t /*alignment*/)
+	namespace memory
 	{
-		return requested_size + sizeof(size_t);
-	}
+		class Zone;
 
-	void* track_allocation(void* pointer, size_t requested_size, size_t /*alignment*/, const char* /*filename*/, int /*line*/)
-	{
-		// store the allocation size in front of the pointer
-		size_t* allocation = static_cast<size_t*>(pointer);
-		*allocation = requested_size;
+		struct SimpleTrackingPolicy
+		{
+			size_t last_size;
 
-		// return the data
-		return allocation+1;
-	}
+			size_t request_size(size_t requested_size, size_t /*alignment*/)
+			{
+				return requested_size + sizeof(size_t);
+			}
 
-	void* untrack_allocation(void* pointer, size_t& allocation_size)
-	{
-		// cast and move the pointer back to the front of the allocation
-		size_t* allocation = static_cast<size_t*>(pointer);
-		allocation--;
+			void* track_allocation(Zone* zone, void* pointer, size_t requested_size, size_t /*alignment*/, const char* /*filename*/, int /*line*/)
+			{
+				// store the allocation size in front of the pointer
+				size_t* allocation = static_cast<size_t*>(pointer);
+				*allocation = requested_size;
 
-		allocation_size = *allocation;
-		return allocation;
-	}
-}; // SimpleTrackingPolicy
+				// return the data
+				return allocation+1;
+			}
+
+			void* untrack_allocation(Zone* zone, void* pointer, size_t& allocation_size)
+			{
+				// cast and move the pointer back to the front of the allocation
+				size_t* allocation = static_cast<size_t*>(pointer);
+				allocation--;
+
+				allocation_size = *allocation;
+				return allocation;
+			}
+		}; // SimpleTrackingPolicy
+	} // namespace memory
+} // namespace core

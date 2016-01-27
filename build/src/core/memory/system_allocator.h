@@ -40,7 +40,7 @@ struct SystemAllocator : public Allocator< SystemAllocator<tracking_policy> >
 	{
 		size = tracker.request_size(size, alignment);
 		void* pointer = core::memory::aligned_malloc(size, alignment);
-		pointer = tracker.track_allocation(pointer, size, alignment, filename, line);
+		pointer = tracker.track_allocation(this_type::get_zone(), pointer, size, alignment, filename, line);
 		return pointer;
 	}
 
@@ -54,7 +54,7 @@ struct SystemAllocator : public Allocator< SystemAllocator<tracking_policy> >
 		}
 
 		size_t allocation_size;
-		pointer = tracker.untrack_allocation(pointer, allocation_size);
+		pointer = tracker.untrack_allocation(this_type::get_zone(), pointer, allocation_size);
 		core::memory::aligned_free(pointer);
 	}
 };

@@ -26,6 +26,8 @@
 #include "x11_graphics_provider.h"
 #include "window/x11/x11_window_provider.h"
 
+#include <core/logging.h>
+
 #include <assert.h>
 
 #define PLATFORM_DEBUG_X11 0

@@ -26,6 +26,8 @@
 #include "linux_backend.h"
 #include "x11_window_provider.h"
 
+#include <core/logging.h>
+
 #include <platform/input.h>
 #include <platform/kernel.h>
 #include <platform/kernel_events.h>

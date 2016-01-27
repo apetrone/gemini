@@ -26,6 +26,8 @@
 #include "ui/panel.h"
 #include "ui/compositor.h"
 
+#include <core/logging.h>
+
 namespace gui
 {
 	void* Panel::operator new(size_t bytes)

@@ -26,7 +26,6 @@
 
 #include "typedefs.h"
 #include "config.h"
-#include "logging.h"
 
 #if defined(PLATFORM_APPLE)
 	#include <memory> // for malloc, free (on OSX)
@@ -60,6 +59,32 @@
 #define MEMORY_DELETE_ARRAY(pointer, allocator) ::core::memory::destruct_array(pointer, allocator), pointer = 0
 
 
+#include "core/memory/zone.h"
+
+// ---------------------------------------------------------------------
+// tracking policies
+// ---------------------------------------------------------------------
+#include "memory/simple_tracking_policy.h"
+
+#if defined(ENABLE_MEMORY_TRACKING)
+#include "memory/debug_tracking_policy.h"
+namespace core
+{
+	namespace memory
+	{
+		typedef DebugTrackingPolicy DefaultTrackingPolicy;
+	} // namespace memory
+} // namespace core
+#else
+namespace core
+{
+	namespace memory
+	{
+		typedef SimpleTrackingPolicy DefaultTrackingPolicy;
+	} // namespace memory
+} // namespace core
+#endif
+
 namespace core
 {
 	namespace memory
@@ -79,87 +104,10 @@ namespace core
 		};
 
 		// ---------------------------------------------------------------------
-		// zone
-		// ---------------------------------------------------------------------
-		// zones (aka arenas, heaps, whatever) are a means of categorizing and
-		// tagging allocations.
-
-		// GOALS:
-		// I. Allow arbitrary zones to be created
-		// II. zones should be able to report statistics about usage
-		// III. zones can optionally take a maximum budget size. 0 == no budget
-		class Zone
-		{
-		private:
-			// lifetime values
-			size_t total_allocations;
-			size_t total_bytes;
-
-			// active values
-			size_t active_allocations;
-			size_t active_bytes;
-
-			size_t high_watermark;
-			size_t smallest_allocation;
-			size_t largest_allocation;
-
-			// budgeted memory size
-			size_t budget_bytes;
-
-			// zone name
-			const char* zone_name;
-
-			/// Print out a general report of stats for this zone
-			void report();
-
-		public:
-			LIBRARY_EXPORT Zone(const char* zone_name, size_t max_budget_bytes = 0);
-			LIBRARY_EXPORT ~Zone();
-
-			/// The name of this zone
-			LIBRARY_EXPORT const char* name() const { return zone_name; }
-
-			/// Track an allocation in this zone.
-			/// @param size The size of the allocation in bytes
-			/// @returns A value of 0 on success. Non-zero indicates failure.
-			LIBRARY_EXPORT int add_allocation(size_t size);
-
-			/// Untrack an allocation in this zone
-			/// @param size The size of the allocation in bytes
-			LIBRARY_EXPORT void remove_allocation(size_t size);
-
-
-			// public accessors
-			LIBRARY_EXPORT size_t get_total_allocations() const { return total_allocations; }
-			LIBRARY_EXPORT size_t get_total_bytes() const { return total_bytes; }
-			LIBRARY_EXPORT size_t get_active_allocations() const { return active_allocations; }
-			LIBRARY_EXPORT size_t get_active_bytes() const { return active_bytes; }
-			LIBRARY_EXPORT size_t get_high_watermark() const { return high_watermark; }
-			LIBRARY_EXPORT size_t get_smallest_allocation() const { return smallest_allocation; }
-			LIBRARY_EXPORT size_t get_largest_allocation() const { return largest_allocation; }
-			LIBRARY_EXPORT size_t get_budget_bytes() const { return budget_bytes; }
-		}; // class Zone
-
-
-		// ---------------------------------------------------------------------
 		// utility functions
 		// ---------------------------------------------------------------------
 		LIBRARY_EXPORT void* aligned_malloc(size_t bytes, size_t alignment);
 		LIBRARY_EXPORT void aligned_free(void* pointer);
-
-
-		// ---------------------------------------------------------------------
-		// tracking policies
-		// ---------------------------------------------------------------------
-		#include "memory/simple_tracking_policy.h"
-
-
-#if defined(ENABLE_MEMORY_TRACKING)
-#		include "memory/debug_tracking_policy.h"
-		typedef DebugTrackingPolicy DefaultTrackingPolicy;
-#else
-		typedef SimpleTrackingPolicy DefaultTrackingPolicy;
-#endif
 
 		// ---------------------------------------------------------------------
 		// allocator

@@ -392,7 +392,16 @@ def get_libcore(arguments, target_platform):
 	libcore.sources += [
 		"src/core/*.cpp",
 		"src/core/*.h",
-		"src/core/memory/*.h",
+
+		"src/core/memory/debug_tracking_policy.cpp",
+		"src/core/memory/debug_tracking_policy.h",
+		"src/core/memory/heap_allocator.h",
+		"src/core/memory/linear_allocator.h",
+		"src/core/memory/page_allocator.h",
+		"src/core/memory/pool_allocator.h",
+		"src/core/memory/simple_tracking_policy.h",
+		"src/core/memory/stack_allocator.h",
+		"src/core/memory/system_allocator.h",
 
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c")
 	]

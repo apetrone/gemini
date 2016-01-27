@@ -24,6 +24,7 @@
 // -------------------------------------------------------------
 
 #include "platform_internal.h"
+#include <core/logging.h>
 
 #include <string.h> // for strrchr
 

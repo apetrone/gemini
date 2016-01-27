@@ -24,113 +24,56 @@
 // -------------------------------------------------------------
 #pragma once
 
-// The debug tracker keeps detailed records regarding allocations.
-// This can be used to help track down memory leaks.
-struct DebugTrackingPolicy
+#include <list>
+
+namespace core
 {
-#pragma pack(push, 4)
-	struct MemoryHeader
+	namespace memory
 	{
-		size_t allocation_size;
-		size_t allocation_index;
-		size_t alignment;
-		const char* filename;
-		int line;
-	};
-#pragma pack(pop)
+		class Zone;
 
-	typedef std::list<MemoryHeader*> MemoryBlockList;
-	MemoryBlockList allocated_blocks;
-	size_t current_allocation;
-
-	DebugTrackingPolicy() :
-		current_allocation(0)
-	{
-	}
-
-	~DebugTrackingPolicy()
-	{
-		print_leaks();
-	}
-
-	/// Adjust the size of the allocation for this policy.
-	/// @returns the final size in bytes which should be allocated
-	size_t request_size(size_t requested_size, size_t /*alignment*/)
-	{
-		return requested_size + sizeof(MemoryHeader);
-	}
-
-
-	/// Track an allocation
-	/// @param pointer The pointer allocated
-	/// @param requested_size The size in bytes of this allocation
-	/// @param alignment The alignment of this allocation
-	/// @param filename A null terminated filename where this was allocated
-	/// @param line The line number of this allocation
-	void* track_allocation(void* pointer, size_t requested_size, size_t alignment, const char* filename, int line)
-	{
-		LOGV("[+] %x size=%lu, align=%lu, line=%i, alloc_num=%zu, file='%s'\n",
-			pointer,
-			requested_size,
-			alignment,
-			line,
-			current_allocation,
-			filename);
-		MemoryHeader* header = reinterpret_cast<MemoryHeader*>(pointer);
-		header->allocation_size = requested_size;
-		header->allocation_index = current_allocation++;
-		header->alignment = alignment;
-		header->filename = filename;
-		header->line = line;
-		allocated_blocks.push_back(header);
-		return (header+1);
-	}
-
-	/// Deallocates are VERY slow because we hunt the entire block list
-	/// to remove. this could probably use a free list instead.
-	/// @param allocation_size out param of this allocation's size in bytes
-	/// @returns The pointer passed into track_allocation (should match)
-	void* untrack_allocation(void* pointer, size_t& allocation_size)
-	{
-		MemoryHeader* header = static_cast<MemoryHeader*>(pointer);
-		header--;
-		assert(header);
-
-		allocation_size = header->allocation_size;
-
-		LOGV("[-] %x size=%lu, align=%lu, line=%i, alloc_num=%zu\n",
-			pointer,
-			header->allocation_size,
-			header->alignment,
-			header->line,
-			header->allocation_index);
-
-		// remove from allocated block list
-		MemoryBlockList::iterator it = allocated_blocks.begin();
-		for (; it != allocated_blocks.end(); ++it)
+		// The debug tracker keeps detailed records regarding allocations.
+		// This can be used to help track down memory leaks.
+		struct DebugTrackingPolicy
 		{
-			if (*it == header)
+		#pragma pack(push, 8)
+			struct MemoryHeader
 			{
-				allocated_blocks.erase(it);
-				break;
-			}
-		}
+				size_t allocation_size;
+				size_t allocation_index;
+				size_t alignment;
+				const char* filename;
+				int line;
+			};
+		#pragma pack(pop)
 
-		return header;
-	}
-private:
-	void print_leaks()
-	{
-		MemoryBlockList::iterator it = allocated_blocks.begin();
-		for (; it != allocated_blocks.end(); ++it)
-		{
-			MemoryHeader* block = (*it);
-			LOGV("*** MEMORY LEAK [addr=%p] [file=%s] [line=%i] [size=%lu] [alloc_num=%lu]\n",
-					(((char*)block)+sizeof(MemoryHeader)),
-					block->filename,
-					block->line,
-					(unsigned long)block->allocation_size,
-					(unsigned long)block->allocation_index);
-		}
-	}
-}; // DebugTrackingPolicy
+			typedef std::list<MemoryHeader*> MemoryBlockList;
+			MemoryBlockList allocated_blocks;
+			size_t current_allocation;
+
+			DebugTrackingPolicy();
+			~DebugTrackingPolicy();
+
+			/// Adjust the size of the allocation for this policy.
+			/// @returns the final size in bytes which should be allocated
+			size_t request_size(size_t requested_size, size_t alignment);
+
+			/// Track an allocation
+			/// @param pointer The pointer allocated
+			/// @param requested_size The size in bytes of this allocation
+			/// @param alignment The alignment of this allocation
+			/// @param filename A null terminated filename where this was allocated
+			/// @param line The line number of this allocation
+			void* track_allocation(Zone* zone, void* pointer, size_t requested_size, size_t alignment, const char* filename, int line);
+
+			/// Deallocates are VERY slow because we hunt the entire block list
+			/// to remove. this could probably use a free list instead.
+			/// @param allocation_size out param of this allocation's size in bytes
+			/// @returns The pointer passed into track_allocation (should match)
+			void* untrack_allocation(Zone* zone, void* pointer, size_t& allocation_size);
+
+		private:
+			void print_leaks();
+		}; // DebugTrackingPolicy
+	} // namespace memory
+} // namespace core

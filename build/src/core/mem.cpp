@@ -24,6 +24,8 @@
 // -------------------------------------------------------------
 #include "mem.h"
 
+#include <core/logging.h>
+
 #ifndef memset
 	#include <string.h>
 #endif
