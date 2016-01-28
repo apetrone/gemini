@@ -36,7 +36,7 @@
 struct GUIVertex
 {
 	glm::vec2 position;
-	core::Color color;
+	gemini::Color color;
 	glm::vec2 uv;
 
 	void set_position(float x, float y)
@@ -97,7 +97,7 @@ void GUIRenderer::startup(gui::Compositor* target_compositor)
 	white_image.create(4, 4, 3);
 	white_image.filter = image::FILTER_NONE;
 	white_image.flags = image::F_CLAMP_BORDER;
-	white_image.fill(core::Color::from_rgba(255, 255, 255, 255));
+	white_image.fill(gemini::Color::from_rgba(255, 255, 255, 255));
 	white_texture = device->create_texture(white_image);
 }
 
@@ -216,7 +216,7 @@ void GUIRenderer::font_metrics(const gui::FontHandle& handle, size_t& height, in
 	descender = metrics.descender;
 }
 
-size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const core::Color& color, gui::render::Vertex* buffer, size_t buffer_size)
+size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gemini::Color& color, gui::render::Vertex* buffer, size_t buffer_size)
 {
 	font::Handle font_handle(handle);
 
@@ -514,7 +514,7 @@ gui::FontResult GUIRenderer::font_measure_string(const gui::FontHandle& handle, 
 	return gui::FontResult_Failed;
 }
 
-void GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const core::Color& color)
+void GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gemini::Color& color)
 {
 	assets::Font* font = assets::fonts()->find_with_id(handle);
 	if (font)
@@ -556,32 +556,32 @@ void GUIRenderer::draw_command_lists(gui::render::CommandList** command_lists, s
 		{
 			vertex[0].position.x = 0;
 			vertex[0].position.y = 100;
-			vertex[0].color = core::Color::from_rgba(255, 0, 0);
+			vertex[0].color = gemini::Color::from_rgba(255, 0, 0);
 			vertex[0].uv = glm::vec2(0, 0);
 
 			vertex[1].position.x = 100;
 			vertex[1].position.y = 100;
-			vertex[1].color = core::Color::from_rgba(0, 255, 0);
+			vertex[1].color = gemini::Color::from_rgba(0, 255, 0);
 			vertex[1].uv = glm::vec2(1, 0);
 
 			vertex[2].position.x = 100;
 			vertex[2].position.y = 0;
-			vertex[2].color = core::Color::from_rgba(0, 0, 255);
+			vertex[2].color = gemini::Color::from_rgba(0, 0, 255);
 			vertex[2].uv = glm::vec2(1, 1);
 
 			vertex[3].position.x = 100;
 			vertex[3].position.y = 0;
-			vertex[3].color = core::Color::from_rgba(0, 0, 255);
+			vertex[3].color = gemini::Color::from_rgba(0, 0, 255);
 			vertex[3].uv = glm::vec2(1, 1);
 
 			vertex[4].position.x = 0;
 			vertex[4].position.y = 0;
-			vertex[4].color = core::Color::from_rgba(255, 255, 255);
+			vertex[4].color = gemini::Color::from_rgba(255, 255, 255);
 			vertex[4].uv = glm::vec2(0, 1);
 
 			vertex[5].position.x = 0;
 			vertex[5].position.y = 100;
-			vertex[5].color = core::Color::from_rgba(255, 0, 0);
+			vertex[5].color = gemini::Color::from_rgba(255, 0, 0);
 			vertex[5].uv = glm::vec2(0, 0);
 
 			stream.update();
@@ -615,7 +615,7 @@ void GUIRenderer::draw_command_lists(gui::render::CommandList** command_lists, s
 				gui::render::Vertex* gv = &commandlist->vertex_buffer[v];
 				vertex[v].position.x = gv->x;
 				vertex[v].position.y = gv->y;
-				core::Color c = core::Color(gv->color.r(), gv->color.g(), gv->color.b(), gv->color.a());
+				gemini::Color c = gemini::Color(gv->color.r(), gv->color.g(), gv->color.b(), gv->color.a());
 				vertex[v].color = c;
 
 				vertex[v].uv.x = gv->uv[0];

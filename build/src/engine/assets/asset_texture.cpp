@@ -27,7 +27,7 @@
 #include <runtime/filesystem.h>
 #include <core/mathlib.h> // for glm
 
-#include <core/color.h>
+#include <renderer/color.h>
 #include <renderer/image.h>
 #include <renderer/renderer.h>
 

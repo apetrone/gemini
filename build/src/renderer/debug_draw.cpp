@@ -27,6 +27,7 @@
 #include <renderer/vertexstream.h>
 #include <renderer/renderstream.h>
 #include <renderer/font.h>
+#include <renderer/color.h>
 
 namespace renderer
 {
@@ -56,7 +57,7 @@ namespace renderer
 			glm::vec3 start;
 			glm::vec3 end;
 			glm::vec3 alt;
-			core::Color color;
+			gemini::Color color;
 
 			// for text
 			core::StackString<1024> buffer;
@@ -69,7 +70,7 @@ namespace renderer
 		struct DebugDrawVertex
 		{
 			glm::vec3 position;
-			core::Color color;
+			gemini::Color color;
 
 			void set_position(float x, float y, float z)
 			{
@@ -98,7 +99,7 @@ namespace renderer
 			start(glm::vec3(0.0f, 0.0f, 0.0f)),
 			end(glm::vec3(0.0f, 0.0f, 0.0f)),
 			alt(glm::vec3(0.0f, 0.0f, 0.0f)),
-			color(core::Color()),
+			color(gemini::Color()),
 			buffer(""),
 			transform(glm::mat4(1.0f))
 		{
@@ -383,9 +384,9 @@ namespace renderer
 			const size_t vertex_count = 6;
 			DebugDrawVertex* vertices = access.request(vertex_count);
 
-			const core::Color X_AXIS_COLOR(1.0f, 0.0f, 0.0f);
-			const core::Color Y_AXIS_COLOR(0.0f, 1.0f, 0.0f);
-			const core::Color Z_AXIS_COLOR(0.0f, 0.0f, 1.0f);
+			const gemini::Color X_AXIS_COLOR(1.0f, 0.0f, 0.0f);
+			const gemini::Color Y_AXIS_COLOR(0.0f, 1.0f, 0.0f);
+			const gemini::Color Z_AXIS_COLOR(0.0f, 0.0f, 1.0f);
 
 			glm::vec3 right = glm::vec3(primitive->transform * glm::vec4(primitive->radius, 0.0f, 0.0f, 1.0f));
 			vertices[0].position = primitive->start;
@@ -510,7 +511,7 @@ namespace renderer
 				white_image.create(4, 4, 3);
 				white_image.filter = image::FILTER_NONE;
 				white_image.flags = image::F_CLAMP_BORDER;
-				white_image.fill(core::Color());
+				white_image.fill(gemini::Color());
 				white_texture = device->create_texture(white_image);
 			}
 
@@ -889,7 +890,7 @@ namespace renderer
 			}
 		}
 
-		void box(const glm::vec3& mins, const glm::vec3& maxs, const core::Color& color, float duration)
+		void box(const glm::vec3& mins, const glm::vec3& maxs, const gemini::Color& color, float duration)
 		{
 			DebugPrimitive* primitive = line_list->request(duration > 0.0f);
 			if ( primitive )
@@ -902,7 +903,7 @@ namespace renderer
 			}
 		}
 
-		void point(const glm::vec3& pt, const core::Color& color, float size, float duration)
+		void point(const glm::vec3& pt, const gemini::Color& color, float size, float duration)
 		{
 			DebugPrimitive* primitive = line_list->request(duration > 0.0f);
 			if ( primitive )
@@ -915,7 +916,7 @@ namespace renderer
 			}
 		}
 
-		void line(const glm::vec3& start, const glm::vec3& end, const core::Color& color, float duration)
+		void line(const glm::vec3& start, const glm::vec3& end, const gemini::Color& color, float duration)
 		{
 			DebugPrimitive* primitive = line_list->request(duration > 0.0f);
 			if ( primitive )
@@ -928,7 +929,7 @@ namespace renderer
 			}
 		}
 
-		void sphere(const glm::vec3& center, const core::Color& color, float radius, float duration)
+		void sphere(const glm::vec3& center, const gemini::Color& color, float radius, float duration)
 		{
 			DebugPrimitive* primitive = line_list->request(duration > 0.0f);
 			if ( primitive )
@@ -941,7 +942,7 @@ namespace renderer
 			}
 		}
 
-		void text(int x, int y, const char* string, const core::Color& color, float duration)
+		void text(int x, int y, const char* string, const gemini::Color& color, float duration)
 		{
 			DebugPrimitive* primitive = text_list->request(duration > 0.0f);
 			if ( primitive )
@@ -954,7 +955,7 @@ namespace renderer
 			}
 		}
 
-		void triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const core::Color& color, float duration)
+		void triangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const gemini::Color& color, float duration)
 		{
 			DebugPrimitive* primitive = tris_list->request(duration > 0.0f);
 			if (primitive)

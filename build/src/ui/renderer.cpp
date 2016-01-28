@@ -85,7 +85,7 @@ namespace render
 		write_pointer = &(*vertex_buffer)[current_vertex_offset];
 	}
 
-	void CommandList::primitive_quad(const gui::Point &p0, const gui::Point &p1, const gui::Point &p2, const gui::Point &p3, const TextureHandle& texture, const core::Color &color)
+	void CommandList::primitive_quad(const gui::Point& p0, const gui::Point& p1, const gui::Point& p2, const gui::Point& p3, const TextureHandle& texture, const gemini::Color& color)
 	{
 		primitive_reserve(6);
 		Command& command = commands.back();
@@ -130,7 +130,7 @@ namespace render
 		write_pointer[5].uv[1] = 1;
 	}
 
-	void CommandList::add_line(const Point& start, const Point& end, const core::Color& color, float thickness)
+	void CommandList::add_line(const Point& start, const Point& end, const gemini::Color& color, float thickness)
 	{
 		Point corners[4];
 
@@ -156,13 +156,13 @@ namespace render
 		primitive_quad(corners[0], corners[1], corners[2], corners[3], TextureHandle(), color);
 	}
 
-	void CommandList::add_rectangle(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const core::Color& color)
+	void CommandList::add_rectangle(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gemini::Color& color)
 	{
 		add_drawcall();
 		primitive_quad(p0, p1, p2, p3, texture, color);
 	}
 
-	void CommandList::add_font(const FontHandle& font, const char* utf8, const Rect& bounds, const core::Color& color)
+	void CommandList::add_font(const FontHandle& font, const char* utf8, const Rect& bounds, const gemini::Color& color)
 	{
 		add_drawcall();
 

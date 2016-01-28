@@ -25,7 +25,7 @@
 #pragma once
 
 #include "shaderprogram.h"
-#include "color.h"
+#include <renderer/color.h>
 
 #include <core/typedefs.h>
 
@@ -53,7 +53,7 @@ namespace font
 	struct FontVertex
 	{
 		glm::vec2 position;
-		core::Color color;
+		gemini::Color color;
 		glm::vec2 uv;
 	};
 
@@ -115,7 +115,7 @@ namespace font
 
 	// populate vertices with the transformed vertices for drawing a string to the screen
 	// returns the number of vertices used
-	LIBRARY_EXPORT size_t draw_string(Handle handle, FontVertex* vertices, const char* utf8, const core::Color& color);
+	LIBRARY_EXPORT size_t draw_string(Handle handle, FontVertex* vertices, const char* utf8, const gemini::Color& color);
 
 	// retrieve the font texture used by a font
 	LIBRARY_EXPORT render2::Texture* get_font_texture(Handle handle);

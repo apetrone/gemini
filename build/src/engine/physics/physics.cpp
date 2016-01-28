@@ -27,8 +27,11 @@
 #include "physics.h"
 #include <btBulletDynamicsCommon.h>
 #include "physics_common.h"
-#include <core/color.h>
+
+#include <core/typedefs.h>
+
 #include <renderer/debug_draw.h>
+#include <renderer/color.h>
 
 #include "assets/asset_mesh.h"
 
@@ -38,8 +41,6 @@
 
 
 #include "physics_interface.h"
-
-#include <core/typedefs.h>
 
 namespace gemini
 {

@@ -47,7 +47,7 @@ namespace gemini
 			core::RangedValue<glm::vec3> velocity;
 			core::RangedValue<float> size;
 
-			KeyframeChannel<core::Color> color_channel;
+			KeyframeChannel<Color> color_channel;
 			KeyframeChannel<float> alpha_channel;
 			KeyframeChannel<float> size_channel;
 

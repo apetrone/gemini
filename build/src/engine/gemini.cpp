@@ -511,7 +511,7 @@ class ModelInterface : public gemini::IModelInterface
 					core::str::format("%2i) '%s' | rot: [%2.2f, %2.2f, %2.2f, %2.2f]", bone_index,
 					mesh->skeleton[bone_index].name(),
 					rot.x, rot.y, rot.z, rot.w),
-					core::Color(0.0f, 0.0f, 0.0f));
+					Color(0.0f, 0.0f, 0.0f));
 #endif
 				++bone_index;
 			}
@@ -884,7 +884,7 @@ public:
 		game_allocator.deallocate(pointer);
 	}
 
-	virtual void render_view(const View& view, const core::Color& clear_color)
+	virtual void render_view(const View& view, const Color& clear_color)
 	{
 		// TODO: need to validate this origin/orientation is allowed.
 		// otherwise, client could ask us to render from anyone's POV.
@@ -1318,20 +1318,20 @@ public:
 
 		platform::window::Frame frame = platform::window::get_render_frame(main_window);
 		root->set_bounds(0, 0, frame.width, frame.height);
-		root->set_background_color(core::Color(0, 0, 0, 0));
+		root->set_background_color(Color(0, 0, 0, 0));
 
 		// setup the framerate graph
 		graph = new gui::Graph(root);
 		graph->set_name("frametime_graph");
 		graph->set_bounds(width-250, 0, 250, 100);
 		graph->set_font("fonts/debug.ttf", 16);
-		graph->set_background_color(core::Color::from_rgba(10, 10, 10, 210));
-		graph->set_foreground_color(core::Color::from_rgba(255, 255, 255, 255));
+		graph->set_background_color(Color::from_rgba(10, 10, 10, 210));
+		graph->set_foreground_color(Color::from_rgba(255, 255, 255, 255));
 		graph->create_samples(100, 1);
-		graph->configure_channel(0, core::Color::from_rgba(0, 255, 0, 255));
+		graph->configure_channel(0, Color::from_rgba(0, 255, 0, 255));
 		graph->set_range(0.0f, 33.3f);
 
-		graph->enable_baseline(true, 16.6f, core::Color::from_rgba(255, 0, 255, 255));
+		graph->enable_baseline(true, 16.6f, Color::from_rgba(255, 0, 255, 255));
 	}
 
 	virtual kernel::Error startup()
@@ -1685,11 +1685,11 @@ Options:
 		int x = 250;
 		int y = 16;
 
-		::renderer::debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_milliseconds), core::Color());
+		::renderer::debugdraw::text(x, y, core::str::format("frame delta = %2.2fms\n", kernel::parameters().framedelta_milliseconds), Color());
 		y += 12;
 		::renderer::debugdraw::text(x, y, core::str::format("allocations = %i, total %2.2f MB\n",
 			core::memory::global_allocator().get_zone()->get_active_allocations(),
-			core::memory::global_allocator().get_zone()->get_active_bytes()/(float)(1024*1024)), core::Color());
+			core::memory::global_allocator().get_zone()->get_active_bytes()/(float)(1024*1024)), Color());
 		y += 12;
 
 

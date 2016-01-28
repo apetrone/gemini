@@ -26,7 +26,8 @@
 #include "bullet_debugdraw.h"
 
 #include <core/logging.h>
-#include <core/color.h>
+
+#include <renderer/color.h>
 #include <renderer/debug_draw.h>
 
 #define BTVECTOR3_TO_VEC3( v ) glm::vec3( v.x(), v.y(), v.z() )
@@ -45,7 +46,7 @@ namespace gemini
 				debugdraw::line(
 					BTVECTOR3_TO_VEC3(from),
 					BTVECTOR3_TO_VEC3(to),
-					core::Color(color[0], color[1], color[2], 1.0f),
+					Color(color[0], color[1], color[2], 1.0f),
 					0.0f);
 			}
 
@@ -54,7 +55,7 @@ namespace gemini
 				debugdraw::line(
 					BTVECTOR3_TO_VEC3(from),
 					BTVECTOR3_TO_VEC3(to),
-					core::Color(color[0], color[1], color[2], 1.0f),
+					Color(color[0], color[1], color[2], 1.0f),
 					0.0f);
 			}
 

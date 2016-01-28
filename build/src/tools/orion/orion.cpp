@@ -84,8 +84,8 @@ namespace gui
 		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
 		{
 			// TODO: we should get this from the style
-			core::Color scrubber_highlight = core::Color::from_rgba(255, 128, 0, 32);
-			core::Color scrubber_outline = core::Color::from_rgba(255, 128, 0, 192);
+			gemini::Color scrubber_highlight = gemini::Color::from_rgba(255, 128, 0, 32);
+			gemini::Color scrubber_outline = gemini::Color::from_rgba(255, 128, 0, 192);
 
 			// draw the main highlight fill
 			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, scrubber_highlight);
@@ -162,7 +162,7 @@ namespace gui
 		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
 		{
 			// TODO: should get this from the style
-			const core::Color frame_color(96, 96, 96, 255);
+			const gemini::Color frame_color(96, 96, 96, 255);
 
 			// assuming a horizontal timeline
 			if (frame_width_pixels == 0)
@@ -175,10 +175,10 @@ namespace gui
 			assert(frame_width_pixels > 0);
 
 			// draw the background
-			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, core::Color(64, 64, 64, 255));
+			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, gemini::Color::from_rgba(64, 64, 64, 255));
 
 			// add a top rule line to separate this panel
-			render_commands.add_line(geometry[0], geometry[3], core::Color(0, 0, 0, 255), 1.0f);
+			render_commands.add_line(geometry[0], geometry[3], gemini::Color::from_rgba(0, 0, 0, 255), 1.0f);
 
 			Rect frame;
 			get_screen_bounds(frame);
@@ -271,7 +271,7 @@ namespace gui
 		{
 			on_render_content(target);
 
-			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], handle, core::Color::from_rgba(255, 255, 255, 255));
+			render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], handle, gemini::Color::from_rgba(255, 255, 255, 255));
 		}
 
 		// invoked when the handler should render its content to the render
@@ -427,13 +427,13 @@ public:
 	Scrollbar(gui::Panel* parent, uint32_t direction)
 		: gui::Panel(parent)
 	{
-		set_background_color(core::Color::from_rgba(32, 32, 32, 128));
+		set_background_color(gemini::Color::from_rgba(32, 32, 32, 128));
 
 		bootun = new ScrollButton(this, direction);
 		bootun->set_origin(0, 0);
 		bootun->set_font("fonts/debug.ttf", 16);
-		bootun->set_background_color(core::Color(0, 1.0f, 1.0f));
-		bootun->set_hover_color(core::Color(0, 0, 0));
+		bootun->set_background_color(gemini::Color(0, 1.0f, 1.0f));
+		bootun->set_hover_color(gemini::Color(0, 0, 0));
 		bootun->flags |= Flag_CanMove | Flag_CursorEnabled;
 	}
 
@@ -494,7 +494,7 @@ public:
 
 	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
 	{
-		render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, core::Color::from_rgba(255, 255, 255, 255));
+		render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, gemini::Color::from_rgba(255, 255, 255, 255));
 
 		render_children(compositor, renderer, render_commands);
 	} // render
@@ -531,7 +531,7 @@ public:
 
 //	virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
 //	{
-//		render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, core::Color::from_rgba(255, 255, 255, 255));
+//		render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, Color::from_rgba(255, 255, 255, 255));
 //	}
 
 
@@ -860,7 +860,7 @@ public:
 
 			image::Image checker_pattern;
 			checker_pattern.create(512, 512, 3);
-			checker_pattern.fill(core::Color(0, 25, 25));
+			checker_pattern.fill(Color(0, 25, 25));
 			texture = device->create_texture(checker_pattern);
 
 			int handle = resource_cache.track_texture(texture);

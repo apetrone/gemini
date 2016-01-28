@@ -239,7 +239,7 @@ namespace renderer
 		// they will be vertex_count in length.
 		FixedArray<glm::vec3> vertices;
 		FixedArray<glm::vec3> normals;
-		FixedArray<core::Color> colors;
+		FixedArray<gemini::Color> colors;
 		FixedArray< FixedArray<glm::vec2> > uvs;
 		FixedArray<glm::vec4> blend_indices;
 		FixedArray<glm::vec4> blend_weights;

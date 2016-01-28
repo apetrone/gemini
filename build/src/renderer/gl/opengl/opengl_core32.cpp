@@ -1118,7 +1118,7 @@ namespace renderer
 
 			if ( !geometry->colors.empty() )
 			{
-				ms.write( &geometry->colors[ vertex_id ], sizeof(core::Color) );
+				ms.write( &geometry->colors[ vertex_id ], sizeof(gemini::Color) );
 			}
 
 			if ( !geometry->uvs.empty() && !geometry->uvs[0].empty() )

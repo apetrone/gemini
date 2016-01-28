@@ -39,8 +39,8 @@ namespace gui
 		LIBRARY_EXPORT Button(Panel* parent);
 		LIBRARY_EXPORT virtual ~Button();
 
-		LIBRARY_EXPORT virtual void set_hover_color(const core::Color& hover) { hover_color = hover; }
-		LIBRARY_EXPORT virtual void set_pressed_color(const core::Color& pressed) { pressed_color = pressed; }
+		LIBRARY_EXPORT virtual void set_hover_color(const gemini::Color& hover) { hover_color = hover; }
+		LIBRARY_EXPORT virtual void set_pressed_color(const gemini::Color& pressed) { pressed_color = pressed; }
 
 		LIBRARY_EXPORT virtual void handle_event(EventArgs& args) override;
 
@@ -52,9 +52,9 @@ namespace gui
 		DelegateHandler<EventArgs&> on_click;
 
 	protected:
-		core::Color hover_color;
-		core::Color pressed_color;
-		core::Color current_color;
+		gemini::Color hover_color;
+		gemini::Color pressed_color;
+		gemini::Color current_color;
 
 		uint32_t state;
 	}; // struct Button

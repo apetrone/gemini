@@ -27,7 +27,7 @@
 #include "ui/ui.h"
 #include "ui/utils.h"
 #include <core/array.h>
-#include <core/color.h>
+#include <renderer/color.h>
 
 namespace gui
 {
@@ -42,7 +42,7 @@ namespace gui
 		{
 			float x;
 			float y;
-			core::Color color;
+			gemini::Color color;
 			float uv[2];
 		};
 
@@ -80,11 +80,11 @@ namespace gui
 
 			// primitive functions
 			LIBRARY_EXPORT void primitive_reserve(size_t count);
-			LIBRARY_EXPORT void primitive_quad(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const core::Color& color);
+			LIBRARY_EXPORT void primitive_quad(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gemini::Color& color);
 
-			LIBRARY_EXPORT void add_line(const Point& start, const Point& end, const core::Color& color, float thickness = 1.0f);
-			LIBRARY_EXPORT void add_rectangle(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const core::Color& color);
-			LIBRARY_EXPORT void add_font(const FontHandle& font, const char* utf8, const Rect& bounds, const core::Color& color);
+			LIBRARY_EXPORT void add_line(const Point& start, const Point& end, const gemini::Color& color, float thickness = 1.0f);
+			LIBRARY_EXPORT void add_rectangle(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gemini::Color& color);
+			LIBRARY_EXPORT void add_font(const FontHandle& font, const char* utf8, const Rect& bounds, const gemini::Color& color);
 		};
 	}
 
@@ -160,7 +160,7 @@ namespace gui
 		/// @param handle FontHandle to use for this operation
 		/// @param bounds Bounding rectangle to draw within
 		/// @param color PACK_RGBA'd color value
-		LIBRARY_EXPORT virtual size_t font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const core::Color& color, gui::render::Vertex* buffer, size_t buffer_size) = 0;
+		LIBRARY_EXPORT virtual size_t font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gemini::Color& color, gui::render::Vertex* buffer, size_t buffer_size) = 0;
 
 		/// @param string utf-8 encoded string
 		/// @returns Total vertices needed to draw the string

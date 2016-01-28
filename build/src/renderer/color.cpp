@@ -22,10 +22,10 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
-#include "color.h"
-#include "typedefs.h"
+#include <core/typedefs.h>
+#include <renderer/color.h>
 
-namespace core
+namespace gemini
 {
 	static inline unsigned char float_to_ubyte(float f)
 	{
@@ -106,4 +106,4 @@ namespace core
 	{
 		return (red == other.red) && (green == other.green) && (blue == other.blue) && (alpha == other.alpha);
 	}
-} // namespace core
+} // namespace gemini

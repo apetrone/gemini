@@ -483,8 +483,8 @@ namespace gemini
 				result.hit_point_world = toglm(callback.m_hitPointWorld);
 
 				btVector3 normal = callback.m_hitNormalWorld.normalize();
-				::renderer::debugdraw::sphere(toglm(callback.m_hitPointWorld), core::Color::from_rgba(255, 0, 0, 255), 0.005f, 2.0f);
-				::renderer::debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+normal*0.1f), core::Color::from_rgba(0, 255, 255, 255), 2.0f);
+				::renderer::debugdraw::sphere(toglm(callback.m_hitPointWorld), Color::from_rgba(255, 0, 0, 255), 0.005f, 2.0f);
+				::renderer::debugdraw::line(toglm(callback.m_hitPointWorld), toglm(callback.m_hitPointWorld+normal*0.1f), Color::from_rgba(0, 255, 255, 255), 2.0f);
 
 				BulletCollisionObject* collision_object = static_cast<BulletCollisionObject*>(callback.m_hitCollisionObject->getUserPointer());
 				result.hit_object = collision_object;

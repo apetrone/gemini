@@ -24,16 +24,17 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include <vector>
+#include "keyframechannel.h"
+#include "assets/asset_emitter.h"
 
 #include <core/mem.h>
 #include <core/util.h>
-
-#include <core/color.h>
 #include <core/mathlib.h>
-#include "keyframechannel.h"
+
 #include <renderer/render_utilities.h>
-#include "assets/asset_emitter.h"
+#include <renderer/color.h>
+
+#include <vector>
 
 namespace gemini
 {
@@ -42,7 +43,7 @@ namespace gemini
 	// -------------------------------------------------------------
 	struct Particle
 	{
-		core::Color color;
+		Color color;
 		::renderer::render_utilities::PhysicsState<glm::vec3> position;
 		glm::vec3 velocity;
 

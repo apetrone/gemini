@@ -323,7 +323,7 @@ namespace font
 		img.channels = 1;
 		img.create(img.width, img.height, 1);
 		img.alignment = 1; // tightly packed
-		img.fill(core::Color(1.0f, 0, 1.0f));
+		img.fill(gemini::Color(1.0f, 0, 1.0f));
 
 		img.copy(bitmap->buffer, bitmap->width, bitmap->rows, bitmap->pitch, font->border);
 
@@ -411,7 +411,7 @@ namespace font
 		image.flags = image::F_ALPHA | image::F_CLAMP;
 
 		image.create(FONT_ATLAS_RESOLUTION, FONT_ATLAS_RESOLUTION, 1);
-		image.fill(core::Color(1.0f, 0.0f, 1.0f));
+		image.fill(gemini::Color(1.0f, 0.0f, 1.0f));
 		font->texture = detail::_device->create_texture(image);
 		detail::_fonts.push_back(font);
 
@@ -509,7 +509,7 @@ namespace font
 		return 6 * count_characters(handle, utf8);
 	}
 
-	size_t draw_string(Handle handle, FontVertex* vertices, const char* utf8, const core::Color& color)
+	size_t draw_string(Handle handle, FontVertex* vertices, const char* utf8, const gemini::Color& color)
 	{
 		// font handle is invalid; nothing to do
 		if (!handle.is_valid())

@@ -39,12 +39,10 @@
 #include <DetourDebugDraw.h>
 
 #include <renderer/debug_draw.h>
-#include <core/color.h>
+#include <renderer/color.h>
 
 #include <core/mathlib.h>
 #include <core/util.h>
-
-using core::Color;
 
 namespace debugdraw = ::renderer::debugdraw;
 

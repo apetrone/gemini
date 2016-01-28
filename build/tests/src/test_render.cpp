@@ -37,11 +37,37 @@
 #include <renderer/vertexbuffer.h>
 #include <renderer/vertexstream.h>
 #include <renderer/font.h>
+#include <renderer/color.h>
 
 
 #include <assert.h>
 
 using namespace renderer;
+using namespace gemini;
+
+
+// ---------------------------------------------------------------------
+// Color
+// ---------------------------------------------------------------------
+UNITTEST(Color)
+{
+	Color red(1.0f, 0, 0, 1.0f);
+
+	Color temp;
+	float red_float[4] = {1.0f, 0.0f, 0.0f, 1.0f};
+	temp = Color::from_float_pointer(red_float, 4);
+	TEST_ASSERT(temp == red, from_float_pointer);
+
+	uint32_t u32_color = red.as_uint32();
+	Color int_color = Color::from_int(u32_color);
+	TEST_ASSERT(int_color == red, from_int);
+
+	Color ubyte_test = Color::from_rgba(0, 128, 255, 32);
+	unsigned char ubyte[] = {0, 128, 255, 32};
+	Color ubyte_color = Color::from_ubyte(ubyte);
+
+	TEST_ASSERT(ubyte_color == ubyte_test, from_ubyte);
+}
 
 #define TEST_RENDER_GRAPHICS 1
 
@@ -207,6 +233,8 @@ public:
 
 	virtual kernel::Error startup()
 	{
+		unittest::UnitTest::execute();
+
 		gemini::runtime_startup("arcfusion.net/gemini/test_render");
 //		platform::PathString temp_path = platform::get_user_temp_directory(); // adding this line breaks Android. Yes, you read that correctly.
 //		LOGV("temp_path: %s\n", temp_path());
@@ -375,7 +403,7 @@ public:
 		checker_pattern.width = 32;
 		checker_pattern.height = 32;
 		checker_pattern.channels = 3;
-		image::generate_checker_pattern(checker_pattern, core::Color(1.0f, 0, 1.0f), core::Color(0, 1.0f, 0));
+		image::generate_checker_pattern(checker_pattern, gemini::Color(1.0f, 0, 1.0f), gemini::Color(0, 1.0f, 0));
 		state.checker = state.device->create_texture(checker_pattern);
 		assert(state.checker);
 		LOGV("created checker_pattern texture procedurally\n");
@@ -396,7 +424,7 @@ public:
 
 //		image::Image test_pattern;
 //		test_pattern.create(32, 32, 1);
-//		test_pattern.fill(core::Color(255, 0, 0));
+//		test_pattern.fill(gemini::Color(255, 0, 0));
 //		checker = device->create_texture(test_pattern);
 //		assert(checker);
 
@@ -412,7 +440,7 @@ public:
 		const char* text = "The quick brown fox jumps over the lazy dog.";
 		Array<font::FontVertex> temp_vertices;
 		temp_vertices.resize(font::count_vertices(state.handle, text));
-		font::draw_string(state.handle, &temp_vertices[0], text, core::Color(1.0f, 1.0f, 1.0f));
+		font::draw_string(state.handle, &temp_vertices[0], text, gemini::Color(1.0f, 1.0f, 1.0f));
 
 		font::Metrics metrics;
 		font::get_font_metrics(state.handle, metrics);
@@ -447,15 +475,15 @@ public:
 		MyVertex lines[TOTAL_LINE_VERTICES];
 
 		// horizontal red line
-		lines[0].color = core::Color(1.0f, 0.0f, 0.0f, 1.0f);
+		lines[0].color = gemini::Color(1.0f, 0.0f, 0.0f, 1.0f);
 		lines[0].set_position(h_width + 8, h_height + 32, 0);
-		lines[1].color = core::Color(1.0f, 0.0f, 0.0f, 1.0f);
+		lines[1].color = gemini::Color(1.0f, 0.0f, 0.0f, 1.0f);
 		lines[1].set_position(width - 8, h_height + 32, 0.0f);
 
 		// vertical green line
-		lines[2].color = core::Color(0.0f, 1.0f, 0.0f, 1.0f);
+		lines[2].color = gemini::Color(0.0f, 1.0f, 0.0f, 1.0f);
 		lines[2].set_position(h_width + 8, h_height + 32, 0.0f);
-		lines[3].color = core::Color(0.0f, 1.0f, 0.0f, 1.0f);
+		lines[3].color = gemini::Color(0.0f, 1.0f, 0.0f, 1.0f);
 		lines[3].set_position(h_width + 8, height - 8, 0.0f);
 
 		state.device->buffer_upload(state.line_buffer, &lines, sizeof(MyVertex) * TOTAL_LINE_VERTICES);
@@ -582,7 +610,7 @@ private:
 	struct MyVertex
 	{
 		float position[3];
-		core::Color color;
+		gemini::Color color;
 
 		void set_position(float x, float y, float z)
 		{
@@ -610,28 +638,28 @@ private:
 	{
 		MyVertex* vertices = (source+index);
 		vertices[0].set_position(offset.x, (dimensions.y/2)+offset.y, 0);
-		vertices[0].color = core::Color(1.0f, 0.0f, 0.0f, 1.0f);
+		vertices[0].color = gemini::Color(1.0f, 0.0f, 0.0f, 1.0f);
 
 		vertices[1].set_position((dimensions.x/2)+offset.x, (dimensions.y/2)+offset.y, 0);
-		vertices[1].color = core::Color(0.0f, 1.0f, 0.0f, 1.0f);
+		vertices[1].color = gemini::Color(0.0f, 1.0f, 0.0f, 1.0f);
 
 		vertices[2].set_position((dimensions.x/4)+offset.x, offset.y, 0);
-		vertices[2].color = core::Color(0.0f, 0.0f, 1.0f, 1.0f);
+		vertices[2].color = gemini::Color(0.0f, 0.0f, 1.0f, 1.0f);
 	}
 
 	void generate_textured_triangle(size_t index, TexturedVertex* source, const glm::vec2& dimensions, const glm::vec2& offset)
 	{
 		TexturedVertex* vertices = (source+index);
 		vertices[0].set_position(offset.x, (dimensions.y/2)+offset.y, 0);
-		vertices[0].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[0].color = gemini::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[0].set_uv(0.0f, 1.0f);
 
 		vertices[1].set_position((dimensions.x/2)+offset.x, (dimensions.y/2)+offset.y, 0);
-		vertices[1].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[1].color = gemini::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[1].set_uv(1.0f, 1.0f);
 
 		vertices[2].set_position((dimensions.x/4)+offset.x, offset.y, 0);
-		vertices[2].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[2].color = gemini::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[2].set_uv(0.5f, 0.0f);
 	}
 
@@ -641,32 +669,32 @@ private:
 
 		// lower left
 		vertices[0].set_position(offset.x, (dimensions.y/2)+offset.y, 0);
-		vertices[0].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[0].color = gemini::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[0].set_uv(0.0f, 1.0f);
 
 		// lower right
 		vertices[1].set_position((dimensions.x/2)+offset.x, (dimensions.y/2)+offset.y, 0);
-		vertices[1].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[1].color = gemini::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[1].set_uv(1.0f, 1.0f);
 
 		// upper right
 		vertices[2].set_position((dimensions.x/2)+offset.x, offset.y, 0);
-		vertices[2].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[2].color = gemini::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[2].set_uv(1.0f, 0.0f);
 
 		// (and upper right again on the second triangle)
 		vertices[3].set_position((dimensions.x/2)+offset.x, offset.y, 0);
-		vertices[3].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[3].color = gemini::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[3].set_uv(1.0f, 0.0f);
 
 		// upper left
 		vertices[4].set_position(offset.x, offset.y, 0);
-		vertices[4].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[4].color = gemini::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[4].set_uv(0.0f, 0.0f);
 
 		// lower left
 		vertices[5].set_position(offset.x, (dimensions.y/2)+offset.y, 0);
-		vertices[5].color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
+		vertices[5].color = gemini::Color(1.0f, 1.0f, 1.0f, 1.0f);
 		vertices[5].set_uv(0.0f, 1.0f);
 	}
 

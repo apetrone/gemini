@@ -170,7 +170,7 @@ namespace gemini
 			}
 
 			// lerp the value
-			*value = core::lerp(prev_value, next_value, alpha);
+			*value = gemini::lerp(prev_value, next_value, alpha);
 
 			// determine if we should advance the keyframe index
 			if (local_time_seconds >= next_time)

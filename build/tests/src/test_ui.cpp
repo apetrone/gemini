@@ -228,7 +228,7 @@ void TabControl::update(gui::Compositor* compositor, float delta_seconds)
 void TabControl::render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands)
 {
 	// draw the tab background
-	render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], -1, core::Color::from_rgba(128, 128, 128, 255));
+	render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], -1, gemini::Color::from_rgba(128, 128, 128, 255));
 
 	render_children(compositor, renderer, render_commands);
 
@@ -293,14 +293,14 @@ public:
 		glm::vec2 end = center + last;
 
 		// draw the joystick vector
-		render_commands.add_line(start, end, core::Color::from_rgba(255, 0, 0, 255), 3.0f);
+		render_commands.add_line(start, end, gemini::Color::from_rgba(255, 0, 0, 255), 3.0f);
 
 		// render the outline
-		core::Color color(0, 0, 0);
+		gemini::Color color(0, 0, 0);
 
 
-		core::Color c_down = core::Color::from_rgba(0, 255, 255, 255);
-		core::Color z_down = core::Color::from_rgba(255, 128, 0, 255);
+		gemini::Color c_down = gemini::Color::from_rgba(0, 255, 255, 255);
+		gemini::Color z_down = gemini::Color::from_rgba(255, 128, 0, 255);
 
 		if (flags & 2)
 			color = c_down;
@@ -320,7 +320,7 @@ public:
 //				geometry[2],
 //				geometry[3],
 //				this->background,
-//				core::Color(255, 255, 255, 255)
+//				gemini::Color(255, 255, 255, 255)
 //			);
 //		}
 //
@@ -476,7 +476,7 @@ public:
 		assert(frame.height > 0);
 
 		root->set_bounds(0, 0, frame.width, frame.height);
-		root->set_background_color(core::Color::from_rgba(255, 255, 255, 0));
+		root->set_background_color(gemini::Color::from_rgba(255, 255, 255, 0));
 		root->set_name("root");
 
 //		const char dev_font[] = "fonts/04B_08.ttf";
@@ -491,12 +491,12 @@ public:
 		graph = new gui::Graph(root);
 		graph->set_bounds(width-250, 0, 250, 100);
 		graph->set_font(dev_font, dev_font_size);
-		graph->set_background_color(core::Color::from_rgba(60, 60, 60, 255));
-		graph->set_foreground_color(core::Color::from_rgba(255, 255, 255, 255));
+		graph->set_background_color(gemini::Color::from_rgba(60, 60, 60, 255));
+		graph->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));
 		graph->create_samples(100, 1);
-		graph->configure_channel(0, core::Color::from_rgba(0, 255, 0, 255));
+		graph->configure_channel(0, gemini::Color::from_rgba(0, 255, 0, 255));
 		graph->set_range(0.0f, 33.3f);
-		graph->enable_baseline(true, 16.6f, core::Color::from_rgba(255, 0, 255, 255));
+		graph->enable_baseline(true, 16.6f, gemini::Color::from_rgba(255, 0, 255, 255));
 #endif
 
 		// test tab panel
@@ -506,8 +506,8 @@ public:
 		tab->set_name("tab_panel");
 
 		label = new gui::Label(tab);
-		label->set_background_color(core::Color::from_rgba(32, 32, 32, 255));
-		label->set_foreground_color(core::Color::from_rgba(0, 255, 0, 255));
+		label->set_background_color(gemini::Color::from_rgba(32, 32, 32, 255));
+		label->set_foreground_color(gemini::Color::from_rgba(0, 255, 0, 255));
 //		label->set_bounds(50, 75, 110, 40);
 //		label->set_origin(0, 0);
 //		label->set_dimensions(1.0f, 1.0f);
@@ -519,8 +519,8 @@ public:
 
 		{
 			label = new gui::Label(tab);
-			label->set_background_color(core::Color::from_rgba(32, 32, 32, 255));
-			label->set_foreground_color(core::Color::from_rgba(255, 0, 0, 255));
+			label->set_background_color(gemini::Color::from_rgba(32, 32, 32, 255));
+			label->set_foreground_color(gemini::Color::from_rgba(255, 0, 0, 255));
 			label->set_bounds(50, 115, 110, 40);
 			label->set_font(dev_font, dev_font_size);
 			label->set_text("ABCDEFGHIJKLMNOPQRSTUVWXYZ adam 0123456789");
@@ -531,17 +531,17 @@ public:
 
 //		ctp = new ControllerTestPanel(root);
 //		ctp->set_bounds(0, 0, 300, 300);
-//		ctp->set_background_color(core::Color(80, 80, 80));
+//		ctp->set_background_color(gemini::Color(80, 80, 80));
 
 //		gui::Panel* panel = new gui::Panel(root);
 //		panel->set_bounds(width-250, 0, 250, 100);
-//		panel->set_background_color(core::Color(60, 60, 60, 255));
+//		panel->set_background_color(gemini::Color(60, 60, 60, 255));
 
 
 		// test buttons
 
-		core::Color button_background = core::Color::from_rgba(128, 128, 128, 255);
-		core::Color button_hover = core::Color::from_rgba(255, 255, 128, 255);
+		gemini::Color button_background = gemini::Color::from_rgba(128, 128, 128, 255);
+		gemini::Color button_hover = gemini::Color::from_rgba(255, 255, 128, 255);
 
 		uint32_t button_width = 320;
 		uint32_t button_height = 50;
@@ -584,15 +584,15 @@ public:
 		// slider label to check value
 		slider_label = new gui::Label(root);
 		slider_label->set_bounds(230, 300, 40, 30);
-		slider_label->set_background_color(core::Color::from_rgba(0, 0, 0, 0));
-		slider_label->set_foreground_color(core::Color::from_rgba(255, 255, 255, 255));
+		slider_label->set_background_color(gemini::Color::from_rgba(0, 0, 0, 0));
+		slider_label->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));
 		slider_label->set_text("empty");
 		slider_label->set_font("fonts/debug.ttf", 16);
 
 		slider = new gui::Slider(root);
 		slider->set_bounds(20, 300, 200, 40);
-		slider->set_background_color(core::Color::from_rgba(60, 60, 60, 255));
-		slider->set_foreground_color(core::Color::from_rgba(255, 255, 255, 255));
+		slider->set_background_color(gemini::Color::from_rgba(60, 60, 60, 255));
+		slider->set_foreground_color(gemini::Color::from_rgba(255, 255, 255, 255));
 		slider->on_value_changed.connect(&TestUi::slider_value_changed, this);
 		slider->set_value(0.5f);
 

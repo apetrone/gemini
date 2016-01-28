@@ -32,7 +32,7 @@
 
 #include <core/typedefs.h>
 #include <core/array.h>
-#include <core/color.h>
+#include <renderer/color.h>
 
 #define GLM_FORCE_RADIANS 1
 #include <glm/vec2.hpp>

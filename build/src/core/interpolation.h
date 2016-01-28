@@ -24,10 +24,10 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "typedefs.h"
-#include "mathlib.h"
+#include <core/typedefs.h>
+#include <core/mathlib.h>
 
-namespace core
+namespace gemini
 {
 	template <class Type>
 	Type lerp(const Type & a, const Type & b, float t)
@@ -128,7 +128,7 @@ namespace core
 			return slerp(start, end, t);
 		}
 	}; // Interpolator
-} // namespace core
+} // namespace gemini
 
 
 

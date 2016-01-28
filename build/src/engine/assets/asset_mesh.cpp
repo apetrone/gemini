@@ -227,7 +227,7 @@ namespace gemini
 				for (int v = 0; v < static_cast<int>(geo->colors.size()); ++v)
 				{
 					const Json::Value& vertex_color = vertex_colors[v];
-					geo->colors[v] = core::Color(vertex_color[0].asFloat(), vertex_color[1].asFloat(), vertex_color[2].asFloat(), vertex_color[3].asFloat());
+					geo->colors[v] = Color(vertex_color[0].asFloat(), vertex_color[1].asFloat(), vertex_color[2].asFloat(), vertex_color[3].asFloat());
 				}
 
 				// read uv sets

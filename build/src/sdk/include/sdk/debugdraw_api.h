@@ -26,7 +26,8 @@
 
 #include <core/typedefs.h>
 #include <core/interface.h>
-#include <core/color.h>
+
+#include <renderer/color.h>
 
 namespace gemini
 {
@@ -49,24 +50,24 @@ namespace gemini
 		// draw a box given the mins and maxs
 		virtual void box(const glm::vec3& mins,
 			const glm::vec3& maxs,
-			const core::Color& color,
+			const Color& color,
 			float duration = 0.0f) = 0;
 
 		// draw a point in space
 		virtual void point(const glm::vec3& pt,
-			const core::Color& color,
+			const Color& color,
 			float size = 2.0f,
 			float duration = 0.0f) = 0;
 
 		// draw a line segment
 		virtual void line(const glm::vec3& start,
 			const glm::vec3& end,
-			const core::Color& color,
+			const Color& color,
 			float duration = 0.0f) = 0;
 
 		// draw a sphere
 		virtual void sphere(const glm::vec3& center,
-			const core::Color& color,
+			const Color& color,
 			float radius = 2.0,
 			float duration = 0.0f) = 0;
 
@@ -75,14 +76,14 @@ namespace gemini
 		virtual void text(int x,
 			int y,
 			const char* string,
-			const core::Color& color,
+			const Color& color,
 			float duration = 0.0f) = 0;
 
 		// draw a triangle
 		virtual void triangle(const glm::vec3& v0,
 			const glm::vec3& v1,
 			const glm::vec3& v2,
-			const core::Color& color,
+			const Color& color,
 			float duration = 0.0f) = 0;
 	};
 

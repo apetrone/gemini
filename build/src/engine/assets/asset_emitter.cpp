@@ -48,7 +48,7 @@ namespace gemini
 		} // release
 
 
-		void color_value( Json::Value & value, core::Color & out )
+		void color_value(Json::Value & value, Color& out)
 		{
 			std::string temp = value.asString();
 
@@ -61,7 +61,7 @@ namespace gemini
 				sscanf(temp.c_str(), "%i, %i, %i", &colors[0], &colors[1], &colors[2] );
 			}
 
-			out = core::Color::from_rgba(colors[0], colors[1], colors[2], colors[3]);
+			out = Color::from_rgba(colors[0], colors[1], colors[2], colors[3]);
 		}
 
 		void float_value( Json::Value & value, float & out )
@@ -141,7 +141,7 @@ namespace gemini
 	//			LOGV("total items: %i\n", frames.size());
 				if (citer.key().asString() == "color")
 				{
-					core::Color * colors = MEMORY_NEW_ARRAY(core::Color, frames.size(), core::memory::global_allocator());
+					Color * colors = MEMORY_NEW_ARRAY(Color, frames.size(), core::memory::global_allocator());
 					read_channel_frames(colors, frames, color_value);
 					cfg->color_channel.create(frames.size(), colors, frame_delay_seconds.asFloat());
 					MEMORY_DELETE_ARRAY(colors, core::memory::global_allocator());

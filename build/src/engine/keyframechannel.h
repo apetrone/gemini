@@ -40,7 +40,7 @@ namespace gemini
 		FixedArray<float> time; // the time, in seconds, for this keyframe
 	};
 	// -------------------------------------------------------------
-	template <class Type, class Interpolator=core::Interpolator<Type> >
+	template <class Type, class Interpolator=Interpolator<Type> >
 	class Channel
 	{
 		Type& value;
@@ -239,7 +239,7 @@ namespace gemini
 	Interpolator Channel<Type, Interpolator>::interpolator;
 
 
-	template <class Type, class Interpolator=core::Interpolator<Type> >
+	template <class Type, class Interpolator=Interpolator<Type> >
 	struct KeyframeChannel
 	{
 		unsigned int total_samples;
@@ -397,7 +397,7 @@ namespace gemini
 				}
 
 				// 3. lerp the value
-				value = core::Interpolator<Type>()(last_value, key.value, alpha);
+				value = Interpolator<Type>()(last_value, key.value, alpha);
 //				value = key.value;
 				break;
 			}

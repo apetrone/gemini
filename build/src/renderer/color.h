@@ -24,10 +24,10 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "interpolation.h"
-#include "typedefs.h"
+#include <core/typedefs.h>
+#include <core/interpolation.h>
 
-namespace core
+namespace gemini
 {
 	struct Color
 	{
@@ -59,4 +59,4 @@ namespace core
 						 lerp( start.alpha, end.alpha, t ) );
 		}
 	}; // Interpolator
-} // namespace core
+} // namespace gemini

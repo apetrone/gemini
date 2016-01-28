@@ -25,11 +25,11 @@
 #pragma once
 
 #include <core/stackstring.h>
-#include <platform/platform.h>
-
 #include <core/mathlib.h> // for glm
 
-#include <core/color.h>
+#include <platform/platform.h>
+
+#include <renderer/color.h>
 
 namespace gemini
 {

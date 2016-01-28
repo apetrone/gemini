@@ -68,8 +68,8 @@ namespace gui
 		PanelVector children;
 		void* userdata;
 		bool visible;
-		core::Color background_color;
-		core::Color foreground_color;
+		gemini::Color background_color;
+		gemini::Color foreground_color;
 
 		uint32_t flags;
 
@@ -94,8 +94,8 @@ namespace gui
 		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
 		LIBRARY_EXPORT virtual void render_children(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
 		LIBRARY_EXPORT virtual void set_background_image(Compositor* compositor, const char* path);
-		LIBRARY_EXPORT virtual void set_background_color(const core::Color& color);
-		LIBRARY_EXPORT virtual void set_foreground_color(const core::Color& color);
+		LIBRARY_EXPORT virtual void set_background_color(const gemini::Color& color);
+		LIBRARY_EXPORT virtual void set_foreground_color(const gemini::Color& color);
 		LIBRARY_EXPORT virtual void set_visible(bool is_visible);
 		LIBRARY_EXPORT virtual bool is_visible() const;
 

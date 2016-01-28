@@ -63,7 +63,7 @@ namespace image
 		alignment = channels;
 	}
 
-	LIBRARY_EXPORT void Image::fill(const core::Color& color)
+	LIBRARY_EXPORT void Image::fill(const gemini::Color& color)
 	{
 		uint8_t* pixel = &pixels[0];
 		const uint8_t red = uint8_t(color.red * 255.0f) & 0xff;
@@ -124,7 +124,7 @@ namespace image
 		}
 	}
 
-	LIBRARY_EXPORT void generate_checker_pattern(Image& image, const Color & color1, const Color & color2)
+	LIBRARY_EXPORT void generate_checker_pattern(Image& image, const gemini::Color & color1, const gemini::Color & color2)
 	{
 		// image dimensions must be specified
 		assert((image.width > 0) && (image.height > 0));
@@ -138,7 +138,7 @@ namespace image
 		uint32_t width_mask = (image.width >> 1) - 1;
 		uint32_t height_mask = (image.height >> 1) - 1;
 
-		const Color * color = 0;
+		const gemini::Color * color = 0;
 		uint8_t* pixels = &image.pixels[0];
 		assert(pixels != 0);
 
@@ -181,13 +181,13 @@ namespace image
 	} // generate_checker_pattern
 
 	// given two colors, generate an alternating checker pattern image
-	LIBRARY_EXPORT void generate_checker_image(unsigned char* pixels, int width, int height, const Color& color1, const Color& color2)
+	LIBRARY_EXPORT void generate_checker_image(unsigned char* pixels, int width, int height, const gemini::Color& color1, const gemini::Color& color2)
 	{
 		// width/height should be power of two
 		int width_mask = (width >> 1) - 1;
 		int height_mask = (height >> 1) - 1;
 
-		const Color* color = 0;
+		const gemini::Color* color = 0;
 
 		assert(pixels != 0);
 
@@ -253,7 +253,7 @@ namespace image
 		image.width = ERROR_TEXTURE_WIDTH;
 		image.height = ERROR_TEXTURE_HEIGHT;
 		image.channels = 3;
-		generate_checker_pattern(image, core::Color(1.0f, 0, 1.0f), core::Color(0, 1.0f, 0));
+		generate_checker_pattern(image, gemini::Color(1.0f, 0, 1.0f), gemini::Color(0, 1.0f, 0));
 
 		renderer::Texture* texture = renderer::driver()->texture_create(image);
 

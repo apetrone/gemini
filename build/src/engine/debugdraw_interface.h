@@ -43,34 +43,34 @@ namespace gemini
 
 		virtual void box(const glm::vec3& mins,
 			const glm::vec3& maxs,
-			const core::Color& color,
+			const Color& color,
 			float duration = 0.0f);
 
 		virtual void point(const glm::vec3& pt,
-			const core::Color& color,
+			const Color& color,
 			float size = 2.0f,
 			float duration = 0.0f);
 
 		virtual void line(const glm::vec3& start,
 			const glm::vec3& end,
-			const core::Color& color,
+			const Color& color,
 			float duration = 0.0f);
 
 		virtual void sphere(const glm::vec3& center,
-			const core::Color& color,
+			const Color& color,
 			float radius = 2.0f,
 			float duration = 0.0f);
 
 		virtual void text(int x,
 			int y,
 			const char* string,
-			const core::Color& color,
+			const Color& color,
 			float duration = 0.0f);
 
 		virtual void triangle(const glm::vec3& v0,
 			const glm::vec3& v1,
 			const glm::vec3& v2,
-			const core::Color& color,
+			const Color& color,
 			float duration = 0.0f);
 	}; // DebugDrawInterface
 } // namespace gemini

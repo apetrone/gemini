@@ -48,8 +48,8 @@ namespace gui
 		this->z_depth = 0;
 		this->parent = parent;
 		this->userdata = 0;
-		this->background_color = core::Color(1.0f, 1.0f, 1.0f, 1.0f);
-		this->foreground_color = core::Color(0.0f, 0.0f, 0.0f, 1.0f);
+		this->background_color = gemini::Color(1.0f, 1.0f, 1.0f, 1.0f);
+		this->foreground_color = gemini::Color(0.0f, 0.0f, 0.0f, 1.0f);
 		this->flags = (Flag_CursorEnabled | Flag_TransformIsDirty);
 		set_visible(true);
 
@@ -260,7 +260,7 @@ namespace gui
 				geometry[2],
 				geometry[3],
 				this->background,
-				core::Color::from_rgba(255, 255, 255, 255)
+				gemini::Color::from_rgba(255, 255, 255, 255)
 			);
 		}
 
@@ -290,12 +290,12 @@ namespace gui
 	} // set_background_image
 
 
-	void Panel::set_background_color(const core::Color& color)
+	void Panel::set_background_color(const gemini::Color& color)
 	{
 		background_color = color;
 	}
 
-	void Panel::set_foreground_color(const core::Color& color)
+	void Panel::set_foreground_color(const gemini::Color& color)
 	{
 		foreground_color = color;
 	}

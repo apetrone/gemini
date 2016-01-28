@@ -26,7 +26,6 @@
 
 #include <core/argumentparser.h>
 #include <core/array.h>
-#include <core/color.h>
 #include <core/datastream.h>
 #include <core/fixedarray.h>
 #include <core/fixedsizequeue.h>
@@ -34,12 +33,10 @@
 #include <core/mathlib.h>
 #include <core/core.h>
 #include <core/mem.h>
-
 #include <core/str.h>
 #include <core/stackstring.h>
 #include <core/threadsafequeue.h>
 #include <core/util.h>
-
 
 #include <platform/platform.h>
 
@@ -203,29 +200,6 @@ UNITTEST(Array)
 		Array<int> temp = values;
 		TEST_ASSERT(temp == values, copy_and_equality);
 	}
-}
-
-// ---------------------------------------------------------------------
-// Color
-// ---------------------------------------------------------------------
-UNITTEST(Color)
-{
-	Color red(1.0f, 0, 0, 1.0f);
-
-	Color temp;
-	float red_float[4] = {1.0f, 0.0f, 0.0f, 1.0f};
-	temp = Color::from_float_pointer(red_float, 4);
-	TEST_ASSERT(temp == red, from_float_pointer);
-
-	uint32_t u32_color = red.as_uint32();
-	Color int_color = Color::from_int(u32_color);
-	TEST_ASSERT(int_color == red, from_int);
-
-	Color ubyte_test = Color::from_rgba(0, 128, 255, 32);
-	unsigned char ubyte[] = {0, 128, 255, 32};
-	Color ubyte_color = Color::from_ubyte(ubyte);
-
-	TEST_ASSERT(ubyte_color == ubyte_test, from_ubyte);
 }
 
 

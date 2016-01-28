@@ -78,7 +78,7 @@ namespace renderer
 
 			void interpolate( float t )
 			{
-				core::Interpolator<Type> interpolator;
+				gemini::Interpolator<Type> interpolator;
 				render = interpolator( last, current, t );
 			}
 		}; // PhysicsState

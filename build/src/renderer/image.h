@@ -24,10 +24,10 @@
 // -------------------------------------------------------------
 #pragma once
 
-#include "color.h"
-
 #include <core/typedefs.h>
 #include <core/fixedarray.h>
+
+#include <renderer/color.h>
 
 namespace renderer
 {
@@ -107,14 +107,14 @@ namespace image
 
 		LIBRARY_EXPORT Image();
 		LIBRARY_EXPORT void create(const uint32_t& image_width, const uint32_t& image_height, const uint32_t& total_channels);
-		LIBRARY_EXPORT void fill(const core::Color& color);
+		LIBRARY_EXPORT void fill(const gemini::Color& color);
 
 		// copy an image from a target buffer
 		LIBRARY_EXPORT void copy(const uint8_t* pixels, const uint32_t& width, const uint32_t& height, const uint32_t& pitch, uint32_t border = 0);
 	};
 
-	LIBRARY_EXPORT void generate_checker_pattern(Image& image, const core::Color& color1, const core::Color& color2);
-	LIBRARY_EXPORT void generate_checker_image(unsigned char* pixels, int width, int height, const core::Color& color1, const core::Color& color2);
+	LIBRARY_EXPORT void generate_checker_pattern(Image& image, const gemini::Color& color1, const gemini::Color& color2);
+	LIBRARY_EXPORT void generate_checker_image(unsigned char* pixels, int width, int height, const gemini::Color& color1, const gemini::Color& color2);
 	LIBRARY_EXPORT void flip_image_vertically(int width, int height, int components, unsigned char* pixels);
 	LIBRARY_EXPORT renderer::Texture* load_default_texture(Image& image);
 
