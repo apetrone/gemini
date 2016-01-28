@@ -180,7 +180,7 @@ namespace renderer
 					}
 
 					// wrap this around
-					if (next_primitive > DEBUGDRAW_PERSISTENT_PRIMITIVE_MAX)
+					if (next_primitive >= DEBUGDRAW_PERSISTENT_PRIMITIVE_MAX-1)
 					{
 						next_primitive = 0;
 					}
