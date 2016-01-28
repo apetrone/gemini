@@ -25,11 +25,11 @@
 
 #include <renderer/renderer.h>
 #include <renderer/font.h>
-#include <renderer/guirenderer.h>
-#include <renderer/standaloneresourcecache.h>
 
 #include <runtime/runtime.h>
 #include <runtime/filesystem.h>
+#include <runtime/guirenderer.h>
+#include <runtime/standaloneresourcecache.h>
 
 #include <platform/platform.h>
 #include <platform/window.h>

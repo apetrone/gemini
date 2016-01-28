@@ -72,10 +72,15 @@ namespace gemini
 		class RuntimeResourceProvider : public render2::ResourceProvider
 		{
 		public:
-			virtual bool load_file(Array<unsigned char>& data, const char* filename) const
+			virtual bool load_file(Array<unsigned char>& data, const char* filename) const override
 			{
 				core::filesystem::instance()->virtual_load_file(data, filename);
 				return true;
+			}
+
+			virtual bool file_exists(const char* filename) const override
+			{
+				return core::filesystem::instance()->file_exists(filename);
 			}
 		}; // RuntimeResourceProvider
 

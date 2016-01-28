@@ -25,9 +25,7 @@
 #include "image.h"
 #include "renderer.h"
 
-#include <runtime/filesystem.h>
 #include <core/logging.h>
-
 #include <core/typedefs.h>
 
 #define STBI_HEADER_FILE_ONLY 1

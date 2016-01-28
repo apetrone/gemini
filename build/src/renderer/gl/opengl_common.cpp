@@ -23,8 +23,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include <core/logging.h>
-#include <runtime/filesystem.h>
-
 #include <core/typedefs.h>
 
 #include "renderer.h"

@@ -30,8 +30,6 @@
 #include <core/typedefs.h>
 #include <core/str.h>
 
-#include <runtime/filesystem.h>
-
 #include <ft2build.h>
 #include FT_FREETYPE_H
 

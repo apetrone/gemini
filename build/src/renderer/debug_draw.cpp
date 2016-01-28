@@ -28,8 +28,6 @@
 #include <renderer/renderstream.h>
 #include <renderer/font.h>
 
-#include <runtime/filesystem.h>
-
 namespace renderer
 {
 	namespace debugdraw

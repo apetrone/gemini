@@ -25,7 +25,6 @@
 #include "r2_opengl_common.h"
 #include "gemgl.h"
 #include <core/logging.h>
-#include <runtime/filesystem.h>
 
 using namespace renderer;
 

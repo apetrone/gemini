@@ -42,7 +42,6 @@
 
 #include <core/typedefs.h>
 #include <core/logging.h>
-#include <runtime/configloader.h>
 
 namespace renderer
 {

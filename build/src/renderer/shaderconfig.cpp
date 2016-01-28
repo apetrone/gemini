@@ -26,9 +26,6 @@
 #include "render_utilities.h"
 
 #include <core/logging.h>
-#include <runtime/filesystem.h>
-#include <runtime/configloader.h>
-
 
 #include <string>
 
@@ -38,86 +35,122 @@ namespace renderer
 {
 	namespace shader_config
 	{
-		const char _SHADER_CONFIG[] = "conf/shaders.conf";
-
-		Json::Value _shader_config;
-
-		typedef std::vector<std::string> StringVector;
-
-		util::ConfigLoadStatus shader_parameter_load_callback(const Json::Value& root, void* context)
+		struct ShaderDescriptionBlock
 		{
-			Json::Value* shader_parameters = static_cast<Json::Value*>(context);
+			core::StackString<32> name;
+			Array<core::StackString<32>> stages;
+			Array<core::StackString<32>> attributes;
+			Array<core::StackString<32>> uniforms;
 
-			*shader_parameters = root;
+			ShaderDescriptionBlock(const char* shader_name = nullptr) :
+				name(shader_name)
+			{
+			}
+		};
 
-			return util::ConfigLoad_Success;
-		}
+		struct ShaderConfiguration
+		{
+			Array<core::StackString<64>> preprocessor_defines;
+			HashSet<core::StackString<32>, ShaderDescriptionBlock> shaders;
+
+			void add_shader(const ShaderDescriptionBlock& shader)
+			{
+				shaders[shader.name] = shader;
+			}
+		};
+
+		ShaderConfiguration* _shader_config = nullptr;
+		typedef std::vector<std::string> StringVector;
 
 		void startup()
 		{
-			bool status = util::json_load_with_callback(_SHADER_CONFIG, shader_parameter_load_callback, &_shader_config, true);
-			if (!status)
-			{
-				LOGW("Error loading shader parameters!\n");
-			}
+			// This data is hard-coded here until this renderer is removed
+			// as it's not worth spending much time on throw-away code.
+			_shader_config = MEMORY_NEW(ShaderConfiguration, core::memory::global_allocator());
+
+			ShaderDescriptionBlock objects("objects");
+			objects.stages.push_back("vert");
+			objects.stages.push_back("frag");
+			objects.attributes.push_back("in_position");
+			objects.attributes.push_back("in_normal");
+			objects.attributes.push_back("in_uv0");
+			objects.attributes.push_back("in_uv1");
+			objects.uniforms.push_back("modelview_matrix");
+			objects.uniforms.push_back("projection_matrix");
+			objects.uniforms.push_back("object_matrix");
+			objects.uniforms.push_back("diffusemap");
+			objects.uniforms.push_back("lightmap");
+			objects.uniforms.push_back("viewer_direction");
+			objects.uniforms.push_back("viewer_position");
+			objects.uniforms.push_back("light_position");
+			_shader_config->add_shader(objects);
+
+			ShaderDescriptionBlock animation("animation");
+			animation.stages.push_back("vert");
+			animation.stages.push_back("frag");
+			animation.attributes.push_back("in_position");
+			animation.attributes.push_back("in_normal");
+			animation.attributes.push_back("in_uv0");
+			animation.attributes.push_back("in_blendindices");
+			animation.attributes.push_back("in_blendweights");
+			animation.uniforms.push_back("modelview_matrix");
+			animation.uniforms.push_back("projection_matrix");
+			animation.uniforms.push_back("object_matrix");
+			animation.uniforms.push_back("node_transforms");
+			animation.uniforms.push_back("inverse_bind_transforms");
+			animation.uniforms.push_back("diffusemap");
+			_shader_config->add_shader(animation);
+
+			_shader_config->preprocessor_defines.push_back("#extension GL_ARB_explicit_attrib_location: require");
 		} // startup
 
 		void shutdown()
 		{
-			_shader_config.clear();
+			if (_shader_config)
+			{
+				MEMORY_DELETE(_shader_config, core::memory::global_allocator());
+				_shader_config = nullptr;
+			}
 		} // shutdown
 
-
-		void append_list_items(StringVector& vec, const Json::Value& array)
-		{
-			if (array.isNull())
-			{
-				return;
-			}
-
-			Json::ValueIterator iter = array.begin();
-			for ( ; iter != array.end(); ++iter)
-			{
-				Json::Value& value = *iter;
-				vec.push_back(value.asString());
-			}
-		}
-
 		bool fetch_shader_config(
-			const Json::Value& shader_config,
 			const char* shader_name,
 			StringVector& attributes,
 			StringVector& uniforms,
 			StringVector& stages,
 			StringVector& preprocessor)
 		{
-			// populate all attribute names
-			const Json::Value& attribute_block = shader_config["attribute_block"];
-			append_list_items(attributes, attribute_block);
-
-			// populate all uniform names
-			const Json::Value& uniform_block = shader_config["uniform_block"];
-			append_list_items(uniforms, uniform_block);
-
-			const Json::Value& shader_list = shader_config["shaders"];
-
-			const Json::Value& shader_block = shader_list[ shader_name ];
-			if (shader_block.isNull())
+			if (!_shader_config->shaders.has_key(shader_name))
 			{
 				LOGV("Unable to find the shader block named \"%s\"\n", shader_name);
 				return false;
 			}
 
-			append_list_items(attributes, shader_block["attributes"]);
-			append_list_items(uniforms, shader_block["uniforms"]);
-			append_list_items(stages, shader_block["stages"]);
+			ShaderDescriptionBlock& shader_block = _shader_config->shaders[shader_name];
 
-			Json::Value preprocessor_block = shader_config["preprocessor_block"];
-			append_list_items(preprocessor, preprocessor_block);
+			for (const core::StackString<32>& item : shader_block.attributes)
+			{
+				attributes.push_back(item());
+			}
+
+			for (const core::StackString<32>& item : shader_block.uniforms)
+			{
+				uniforms.push_back(item());
+			}
+
+			for (const core::StackString<32>& item : shader_block.stages)
+			{
+				stages.push_back(item());
+			}
+
+			// global preprocessor block
+			for (const core::StackString<64>& item : _shader_config->preprocessor_defines)
+			{
+				preprocessor.push_back(item());
+			}
 
 			return true;
 		}
-
 
 		void map_attributes_and_uniforms(renderer::ShaderProgram* shader, StringVector& attributes, StringVector& uniforms)
 		{
@@ -149,18 +182,16 @@ namespace renderer
 
 		bool verify_stages_exist_on_disk(const char* path, const StringVector& stages)
 		{
-			for (auto name : stages)
+			for (const auto& name : stages)
 			{
-				StackString<MAX_PATH_SIZE> filename = path;
+				String filename = path;
 				filename.append(".");
-				filename.append(name.c_str());
+				filename.append(name);
 
-				core::filesystem::IFileSystem* fs = core::filesystem::instance();
-
-				// verify the file exists
-				if (!fs->file_exists(filename()))
+				const render2::ResourceProvider* resource_provider = render2::get_resource_provider();
+				if (!resource_provider->file_exists(filename.c_str()))
 				{
-					LOGE("\"%s\" does not exist!\n", filename());
+					LOGE("\"%s\" does not exist!\n", filename.c_str());
 					return false;
 				}
 			}
@@ -201,13 +232,13 @@ namespace renderer
 		renderer::ShaderObject create_shader_from_file(const char* shader_path, renderer::ShaderObjectType type, std::string& preprocessor_defines )
 		{
 			renderer::ShaderObject shader_object;
-			char* buffer;
-			size_t length = 0;
-			buffer = core::filesystem::instance()->virtual_load_file(shader_path, 0, &length);
-			if ( buffer )
+
+			Array<unsigned char> buffer;
+			render2::ResourceProvider* resource_provider = render2::get_resource_provider();
+			if (resource_provider->load_file(buffer, shader_path))
 			{
 				StackString<32> version;
-				render_utilities::strip_shader_version( buffer, version );
+				render_utilities::strip_shader_version((char*)&buffer[0], version );
 				if ( version._length == 0 )
 				{
 	#if defined(PLATFORM_GLES2_SUPPORT)
@@ -227,12 +258,10 @@ namespace renderer
 
 				shader_object = renderer::driver()->shaderobject_create( type );
 
-				if ( !renderer::driver()->shaderobject_compile( shader_object, buffer, preprocessor_defines.c_str(), version()) )
+				if ( !renderer::driver()->shaderobject_compile( shader_object, (const char*)&buffer[0], preprocessor_defines.c_str(), version()) )
 				{
 					LOGE( "Error compiling shader!\n" );
 				}
-
-				MEMORY_DEALLOC(buffer, core::memory::global_allocator());
 			}
 
 			return shader_object;
@@ -295,7 +324,7 @@ namespace renderer
 			// look in the shader config json to find a shader that matches
 			// load all attributes, uniforms, stages, and preprocessor defines we'll need.
 			StringVector attributes, uniforms, stages, preprocessor;
-			if (!fetch_shader_config(_shader_config, shader_name(), attributes, uniforms, stages, preprocessor))
+			if (!fetch_shader_config(shader_name(), attributes, uniforms, stages, preprocessor))
 			{
 				LOGE("Error while loading shader \"%s\" from shader_config\n", shader_name());
 				return;
