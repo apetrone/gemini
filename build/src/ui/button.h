@@ -42,12 +42,12 @@ namespace gui
 		LIBRARY_EXPORT virtual void set_hover_color(const core::Color& hover) { hover_color = hover; }
 		LIBRARY_EXPORT virtual void set_pressed_color(const core::Color& pressed) { pressed_color = pressed; }
 
-		LIBRARY_EXPORT virtual void handle_event(EventArgs& args);
+		LIBRARY_EXPORT virtual void handle_event(EventArgs& args) override;
 
 		LIBRARY_EXPORT virtual void update(Compositor* compositor, float delta_seconds) override;
-		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands);
+		LIBRARY_EXPORT virtual void render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands) override;
 
-		LIBRARY_EXPORT virtual bool is_button() const { return true; }
+		LIBRARY_EXPORT virtual bool is_button() const override { return true; }
 
 		DelegateHandler<EventArgs&> on_click;
 

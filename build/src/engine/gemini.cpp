@@ -1305,11 +1305,13 @@ public:
 		gui_renderer->set_device(device);
 
 		compositor = new gui::Compositor(width, height, resource_cache, gui_renderer);
+		compositor->set_name("compositor");
 		_compositor = compositor;
 
 
 
 		root = new gui::Panel(compositor);
+		root->set_name("root");
 
 		experimental.set_root(root);
 		experimental.set_compositor(compositor);
@@ -1320,6 +1322,7 @@ public:
 
 		// setup the framerate graph
 		graph = new gui::Graph(root);
+		graph->set_name("frametime_graph");
 		graph->set_bounds(width-250, 0, 250, 100);
 		graph->set_font("fonts/debug.ttf", 16);
 		graph->set_background_color(core::Color::from_rgba(10, 10, 10, 210));

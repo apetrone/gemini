@@ -844,7 +844,7 @@ public:
 			gui_renderer->set_device(device);
 
 			compositor = new gui::Compositor(window_frame.width, window_frame.height, &resource_cache, gui_renderer);
-
+			compositor->set_name("compositor");
 #if 0
 			gui::Timeline* timeline = new gui::Timeline(compositor);
 			timeline->set_bounds(0, 550, 800, 50);
