@@ -959,6 +959,10 @@ public:
 		::render_viewmodel(entity, newview, scenelink);
 	}
 
+	virtual void render_debug(const View& view) override
+	{
+	}
+
 	virtual void get_render_resolution(uint32_t& render_width, uint32_t& render_height)
 	{
 		assert(main_window);
