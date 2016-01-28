@@ -196,6 +196,13 @@ UNITTEST(Array)
 	{
 		TEST_ASSERT(values[index] == sorted_list[index], quicksort);
 	}
+
+
+	// test array copy
+	{
+		Array<int> temp = values;
+		TEST_ASSERT(temp == values, copy_and_equality);
+	}
 }
 
 // ---------------------------------------------------------------------
@@ -1513,7 +1520,7 @@ int main(int, char**)
 
 	unittest::UnitTest::execute();
 	//test_rapidjson();
-	test_reflection();
+//	test_reflection();
 
 	platform::shutdown();
 	gemini::core_shutdown();

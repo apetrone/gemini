@@ -54,6 +54,7 @@ private:
 		if (capacity > max_capacity)
 		{
 			value_pointer expanded_data = allocate(capacity);
+			assert(expanded_data != nullptr);
 			if (data)
 			{
 				memcpy(expanded_data, data, sizeof(value_type) * total_elements);
@@ -65,6 +66,178 @@ private:
 		}
 	}
 public:
+
+	Array(size_t capacity = 0)
+	{
+		data = nullptr;
+		if (capacity > 0)
+		{
+			data = allocate(capacity);
+		}
+
+		total_elements = 0;
+		max_capacity = capacity;
+	}
+
+	~Array()
+	{
+		clear();
+	}
+
+	void swap(size_t index, size_t other)
+	{
+		value_type temp = data[index];
+		data[index] = data[other];
+		data[other] = temp;
+	}
+
+	void resize(size_t count)
+	{
+		resize(count, value_type());
+	}
+
+	// resizes the container to contain count elements
+	// unlike std::vector, we aren't going to remove + destroy elements
+	// if count < total_elements.
+	void resize(size_t count, const value_type& default_value)
+	{
+		grow(count);
+
+		if (count > total_elements)
+		{
+			size_t offset = total_elements;
+			for (size_t index = offset; index < count; ++index)
+			{
+				data[index] = default_value;
+			}
+		}
+
+		total_elements = count;
+	}
+
+	void push_back(const value_type& item)
+	{
+		// could also use a ratio to detect 70% full
+		if (total_elements >= max_capacity)
+		{
+			if (max_capacity == 0)
+				max_capacity = 8;
+
+			grow(max_capacity * 2);
+		}
+
+		data[total_elements++] = item;
+	}
+
+	// pop the last element
+	value_type pop_back()
+	{
+		assert(total_elements > 0);
+
+		value_type item = data[total_elements-1];
+		--total_elements;
+		return item;
+	}
+
+	// reset capacity and total elements
+	// optionally purges allocated data
+	void clear(bool purge = true)
+	{
+		if (data && purge)
+		{
+			deallocate(data);
+			data = 0;
+			max_capacity = 0;
+		}
+
+		total_elements = 0;
+	}
+
+
+	void erase(const value_type& element)
+	{
+		if (empty())
+		{
+			return;
+		}
+
+		for (size_t index = total_elements; index > 0; --index)
+		{
+			if (data[index-1] == element)
+			{
+				value_pointer item = &data[index-1];
+				item->~value_type();
+
+				--total_elements;
+
+				// shift elements
+				for (size_t i = 0; i < total_elements; ++i)
+				{
+					data[(index-1) + i] = data[index+i];
+				}
+			}
+		}
+	}
+
+	size_t size() const
+	{
+		return total_elements;
+	}
+
+	bool empty() const
+	{
+		return total_elements == 0;
+	}
+
+	T& operator[](int index)
+	{
+		return data[index];
+	}
+
+	const T& operator[](int index) const
+	{
+		return data[index];
+	}
+
+	Array& operator=(const Array& rhs)
+	{
+		if (&rhs != this)
+		{
+			// clear our own data first
+			clear();
+
+			// copy data from rhs
+			total_elements = rhs.total_elements;
+			data = allocate(total_elements);
+			memcpy(data, rhs.data, sizeof(value_type) * rhs.total_elements);
+			max_capacity = rhs.max_capacity;
+		}
+
+		return *this;
+	}
+
+	bool operator==(const Array& rhs) const
+	{
+		if (total_elements != rhs.total_elements)
+			return false;
+
+		if (max_capacity != rhs.max_capacity)
+			return false;
+
+		for (size_t index = 0; index < total_elements; ++index)
+		{
+			if (data[index] != rhs.data[index])
+				return false;
+		}
+
+		return true;
+	}
+
+	Array(const Array& other)
+	{
+		data = nullptr;
+		*this = other;
+	}
 
 	class iterator
 	{
@@ -213,138 +386,6 @@ public:
 		}
 	};
 
-
-	Array(size_t capacity = 0)
-	{
-		data = nullptr;
-		if (capacity > 0)
-		{
-			data = allocate(capacity);
-		}
-
-		total_elements = 0;
-		max_capacity = capacity;
-	}
-
-	~Array()
-	{
-		clear();
-	}
-
-	void swap(size_t index, size_t other)
-	{
-		value_type temp = data[index];
-		data[index] = data[other];
-		data[other] = temp;
-	}
-
-	void resize(size_t count)
-	{
-		resize(count, value_type());
-	}
-
-	// resizes the container to contain count elements
-	// unlike std::vector, we aren't going to remove + destroy elements
-	// if count < total_elements.
-	void resize(size_t count, const value_type& default_value)
-	{
-		grow(count);
-
-		if (count > total_elements)
-		{
-			size_t offset = total_elements;
-			for (size_t index = offset; index < count; ++index)
-			{
-				data[index] = default_value;
-			}
-		}
-
-		total_elements = count;
-	}
-
-	void push_back(const value_type& item)
-	{
-		// could also use a ratio to detect 70% full
-		if (total_elements >= max_capacity)
-		{
-			if (max_capacity == 0)
-				max_capacity = 8;
-
-			grow(max_capacity * 2);
-		}
-
-		data[total_elements++] = item;
-	}
-
-	// pop the last element
-	value_type pop_back()
-	{
-		assert(total_elements > 0);
-
-		value_type item = data[total_elements-1];
-		--total_elements;
-		return item;
-	}
-
-	// reset capacity and total elements
-	// optionally purges allocated data
-	void clear(bool purge = true)
-	{
-		if (data && purge)
-		{
-			deallocate(data);
-			data = 0;
-			max_capacity = 0;
-		}
-
-		total_elements = 0;
-	}
-
-
-	void erase(const value_type& element)
-	{
-		if (empty())
-		{
-			return;
-		}
-
-		for (size_t index = total_elements; index > 0; --index)
-		{
-			if (data[index-1] == element)
-			{
-				value_pointer item = &data[index-1];
-				item->~value_type();
-
-				--total_elements;
-
-				// shift elements
-				for (size_t i = 0; i < total_elements; ++i)
-				{
-					data[(index-1) + i] = data[index+i];
-				}
-			}
-		}
-	}
-
-	size_t size() const
-	{
-		return total_elements;
-	}
-
-	bool empty() const
-	{
-		return total_elements == 0;
-	}
-
-	T& operator[](int index)
-	{
-		return data[index];
-	}
-
-	const T& operator[](int index) const
-	{
-		return data[index];
-	}
 
 	T& back()
 	{
