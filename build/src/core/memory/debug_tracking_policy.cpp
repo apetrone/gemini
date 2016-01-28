@@ -28,8 +28,7 @@
 
 using namespace core::memory;
 
-DebugTrackingPolicy::DebugTrackingPolicy() :
-	current_allocation(0)
+DebugTrackingPolicy::DebugTrackingPolicy()
 {
 }
 
@@ -45,21 +44,22 @@ size_t DebugTrackingPolicy::request_size(size_t requested_size, size_t /*alignme
 
 void* DebugTrackingPolicy::track_allocation(Zone* zone, void* pointer, size_t requested_size, size_t alignment, const char* filename, int line)
 {
-	LOGV("[+] '%s' %x size=%lu, align=%lu, line=%i, alloc_num=%zu, file='%s'\n",
-		zone ? zone->name() : "",
-		pointer,
-		requested_size,
-		alignment,
-		line,
-		current_allocation,
-		filename);
 	MemoryHeader* header = reinterpret_cast<MemoryHeader*>(pointer);
 	header->allocation_size = requested_size;
-	header->allocation_index = current_allocation++;
+	header->allocation_index = zone ? zone->next_allocation_id() : 0;
 	header->alignment = alignment;
 	header->filename = filename;
 	header->line = line;
 	allocated_blocks.push_back(header);
+
+	LOGV("[+] '%s' %x size=%lu, align=%lu, line=%i, alloc_num=%zu, file='%s'\n",
+		zone ? zone->name() : "",
+		(header+1),
+		requested_size,
+		alignment,
+		line,
+		header->allocation_index,
+		filename);
 	return (header+1);
 }
 
@@ -73,7 +73,7 @@ void* DebugTrackingPolicy::untrack_allocation(Zone* zone, void* pointer, size_t&
 
 	LOGV("[-] '%s' %x size=%lu, align=%lu, line=%i, alloc_num=%zu\n",
 		zone ? zone->name() : "",
-		header,
+		pointer,
 		header->allocation_size,
 		header->alignment,
 		header->line,
@@ -99,7 +99,7 @@ void DebugTrackingPolicy::print_leaks()
 	for (; it != allocated_blocks.end(); ++it)
 	{
 		MemoryHeader* block = (*it);
-		LOGV("*** MEMORY LEAK [addr=%p] [file=%s] [line=%i] [size=%lu] [alloc_num=%lu]\n",
+		LOGV("*** MEMORY LEAK [addr=%x] [file=%s] [line=%i] [size=%lu] [alloc_num=%lu]\n",
 				(((char*)block)+sizeof(MemoryHeader)),
 				block->filename,
 				block->line,

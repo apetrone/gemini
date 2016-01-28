@@ -49,7 +49,6 @@ namespace core
 
 			typedef std::list<MemoryHeader*> MemoryBlockList;
 			MemoryBlockList allocated_blocks;
-			size_t current_allocation;
 
 			DebugTrackingPolicy();
 			~DebugTrackingPolicy();

@@ -59,6 +59,8 @@ namespace core
 			// zone name
 			const char* zone_name;
 
+			size_t current_allocation;
+
 			/// Print out a general report of stats for this zone
 			void report();
 
@@ -78,6 +80,7 @@ namespace core
 			/// @param size The size of the allocation in bytes
 			LIBRARY_EXPORT void remove_allocation(size_t size);
 
+			LIBRARY_EXPORT size_t next_allocation_id() { return current_allocation++; }
 
 			// public accessors
 			LIBRARY_EXPORT size_t get_total_allocations() const { return total_allocations; }

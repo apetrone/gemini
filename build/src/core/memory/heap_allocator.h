@@ -42,7 +42,7 @@ struct HeapAllocator : public Allocator< HeapAllocator<tracking_policy> >
 
 		void* pointer = core::memory::aligned_malloc(size, alignment);
 
-//		LOGV("HeapAllocator [%s]: allocate: %p, %lu bytes, %s:%i\n", dependent_name::memory_zone->name(), pointer, (unsigned long)size, filename, line);
+//		fprintf(stdout, "HeapAllocator allocate: %x, %lu bytes, %s:%i\n", pointer, (unsigned long)size, filename, line);
 
 		pointer = tracker.track_allocation(dependent_name::memory_zone, pointer, size, alignment, filename, line);
 
@@ -65,7 +65,7 @@ struct HeapAllocator : public Allocator< HeapAllocator<tracking_policy> >
 		size_t allocation_size;
 		pointer = tracker.untrack_allocation(dependent_name::memory_zone, pointer, allocation_size);
 
-//		LOGV("HeapAllocator [%s]: deallocate %p\n", dependent_name::memory_zone->name(), pointer);
+//		fprintf(stdout, "HeapAllocator deallocate %x\n", pointer);
 		dependent_name::memory_zone->remove_allocation(allocation_size);
 
 		core::memory::aligned_free(pointer);

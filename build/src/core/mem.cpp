@@ -91,6 +91,7 @@ namespace core
 			memset(this, 0, sizeof(Zone));
 			this->zone_name = zone_name;
 			budget_bytes = max_budget_bytes;
+			current_allocation = 0;
 		}
 
 		Zone::~Zone()

@@ -46,7 +46,7 @@ namespace core
 				*allocation = requested_size;
 
 				// return the data
-				return allocation+1;
+				return static_cast<char*>(pointer) + sizeof(size_t);
 			}
 
 			void* untrack_allocation(Zone* zone, void* pointer, size_t& allocation_size)
@@ -56,7 +56,7 @@ namespace core
 				allocation--;
 
 				allocation_size = *allocation;
-				return allocation;
+				return static_cast<char*>(pointer) - sizeof(size_t);
 			}
 		}; // SimpleTrackingPolicy
 	} // namespace memory
