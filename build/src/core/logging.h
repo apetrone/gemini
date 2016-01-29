@@ -101,6 +101,10 @@ namespace core
 			/// @param handler Handler struct with pointers to functions
 			virtual void add_handler(Handler* handler) = 0;
 
+			/// @brief Remove a log handler
+			/// @param handler Handler previously passed to add_handler
+			virtual void remove_handler(Handler* handler) = 0;
+
 			/// @brief Open the log handlers
 			/// @returns The total number of successfully opened handlers
 //			virtual uint32_t startup() = 0;

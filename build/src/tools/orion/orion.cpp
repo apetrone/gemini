@@ -583,6 +583,8 @@ private:
 
 	float value;
 
+	core::logging::Handler log_handler;
+
 public:
 	EditorKernel()
 		: active(true)
@@ -878,7 +880,6 @@ public:
 			log_window->set_font("fonts/debug.ttf", 16);
 
 			// install a log handler
-			core::logging::Handler log_handler;
 			log_handler.open = log_window_logger_open;
 			log_handler.close = log_window_logger_close;
 			log_handler.message = log_window_logger_message;
@@ -990,6 +991,9 @@ public:
 	{
 		LOGV("terminating process...\n");
 		platform::process_destroy(process);
+
+		// remove the log handler
+		core::logging::instance()->remove_handler(&log_handler);
 
 		device->destroy_render_target(render_target);
 		device->destroy_texture(texture);

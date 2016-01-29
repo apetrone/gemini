@@ -61,7 +61,7 @@ namespace core
 					handler->message(handler, message, filename, function, linenumber, type);
 				}
 			}
-		}
+		} // dispatch
 
 		void LogInterface::add_handler(Handler *handler)
 		{
@@ -91,7 +91,21 @@ namespace core
 			{
 				// TODO: warn the user we've exceeded LOG_MAX_HANDLERS
 			}
-		}
+		} // add_handler
+
+		void LogInterface::remove_handler(Handler* handler)
+		{
+			for (size_t i = 0; i < MAX_LOG_HANDLERS; ++i)
+			{
+				Handler* slot = &handlers[i];
+				if (slot->open == handler->open && slot->close == handler->close && slot->message == handler->message)
+				{
+					memset(slot, 0, sizeof(Handler));
+					break;
+				}
+			}
+		} // remove_handler
+
 	} // namespace logging
 
 	namespace logging

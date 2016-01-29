@@ -42,8 +42,9 @@ namespace core
 			LogInterface();
 			virtual ~LogInterface();
 
-			virtual void dispatch(ILog::MessageType type, const char* message, const char* function, const char* filename, int linenumber);
-			virtual void add_handler(Handler* handler);
+			virtual void dispatch(ILog::MessageType type, const char* message, const char* function, const char* filename, int linenumber) override;
+			virtual void add_handler(Handler* handler) override;
+			virtual void remove_handler(Handler* handler) override;
 
 		private:
 			LogInterface& operator=(const LogInterface&) const = delete;
