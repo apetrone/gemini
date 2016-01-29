@@ -70,18 +70,6 @@ namespace kernel
 } // namespace kernel
 
 
-namespace platform
-{
-	enum ThreadStatus
-	{
-		THREAD_STATE_INACTIVE,
-		THREAD_STATE_ACTIVE,
-		THREAD_STATE_SUSPENDED
-	};
-
-	typedef void(*ThreadEntry)(void*);
-} // namespace platform
-
 // thread types
 
 #if defined(PLATFORM_WINDOWS)
@@ -165,6 +153,15 @@ namespace platform
 #else
 	#error Unknown platform!
 #endif
+
+	enum ThreadStatus
+	{
+		THREAD_STATE_INACTIVE,
+		THREAD_STATE_ACTIVE,
+		THREAD_STATE_SUSPENDED
+	};
+
+	typedef void(*ThreadEntry)(void*);
 
 	struct Thread
 	{
@@ -443,7 +440,7 @@ namespace platform
 	// ---------------------------------------------------------------------
 	// other platform stuff
 	// ---------------------------------------------------------------------
-	namespace OpenFlags
+	namespace OpenDialogFlags
 	{
 		enum
 		{
@@ -453,7 +450,7 @@ namespace platform
 			CanChooseDirectories	= (1 << 3),	// directories can be selected
 			CanChooseFiles			= (1 << 4),	// files can be selected
 		};
-	} // namespace OpenFlags
+	} // namespace OpenDialogFlags
 
 	LIBRARY_EXPORT Result show_open_dialog(const char* title, uint32_t open_flags, Array<PathString>& paths);
 

@@ -214,11 +214,11 @@ namespace platform
 		NSOpenPanel* panel 				= [NSOpenPanel openPanel];
 		panel.title 					= cocoa::to_nsstring(title);
 		panel.showsResizeIndicator 		= YES;
-		panel.showsHiddenFiles 			= (open_flags & OpenFlags::ShowHiddenFiles) ? YES : NO;
-		panel.canChooseDirectories 		= (open_flags & OpenFlags::CanChooseDirectories) ? YES : NO;
-		panel.canChooseFiles 			= (open_flags & OpenFlags::CanChooseFiles) ? YES : NO;
-		panel.canCreateDirectories 		= (open_flags & OpenFlags::CanCreateDirectories) ? YES : NO;
-		panel.allowsMultipleSelection 	= (open_flags & OpenFlags::AllowMultiselect) ? YES : NO;
+		panel.showsHiddenFiles 			= (open_flags & OpenDialogFlags::ShowHiddenFiles) ? YES : NO;
+		panel.canChooseDirectories 		= (open_flags & OpenDialogFlags::CanChooseDirectories) ? YES : NO;
+		panel.canChooseFiles 			= (open_flags & OpenDialogFlags::CanChooseFiles) ? YES : NO;
+		panel.canCreateDirectories 		= (open_flags & OpenDialogFlags::CanCreateDirectories) ? YES : NO;
+		panel.allowsMultipleSelection 	= (open_flags & OpenDialogFlags::AllowMultiselect) ? YES : NO;
 		//panel.allowedFileTypes = @[@"conf"];
 
 		NSInteger modal_result = [panel runModal];
