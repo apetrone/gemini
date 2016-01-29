@@ -162,7 +162,7 @@ namespace gui
 		virtual void render(gui::Compositor* compositor, gui::Renderer* renderer, gui::render::CommandList& render_commands) override
 		{
 			// TODO: should get this from the style
-			const gemini::Color frame_color(96, 96, 96, 255);
+			const gemini::Color frame_color = gemini::Color::from_rgba(96, 96, 96, 255);
 
 			// assuming a horizontal timeline
 			if (frame_width_pixels == 0)
@@ -534,14 +534,17 @@ public:
 //		render_commands.add_rectangle(geometry[0], geometry[1], geometry[2], geometry[3], gui::render::WhiteTexture, Color::from_rgba(255, 255, 255, 255));
 //	}
 
-
+	void append_text(const char* message)
+	{
+		text.append(message);
+	}
 };
 
 
 void log_window_logger_message(core::logging::Handler* handler, const char* message, const char* filename, const char* function, int line, int type)
 {
 	LogWindow* logwindow = static_cast<LogWindow*>(handler->userdata);
-	logwindow->set_text(message);
+	logwindow->append_text(message);
 }
 
 int log_window_logger_open(core::logging::Handler* handler)
@@ -862,7 +865,7 @@ public:
 
 			image::Image checker_pattern;
 			checker_pattern.create(512, 512, 3);
-			checker_pattern.fill(Color(0, 25, 25));
+			checker_pattern.fill(gemini::Color::from_rgba(0, 25, 25, 255));
 			texture = device->create_texture(checker_pattern);
 
 			int handle = resource_cache.track_texture(texture);
