@@ -105,13 +105,11 @@ namespace kernel
 
 	Error startup()
 	{
-		Error result = kernel::Error::NoError;
-
 		// The kernel instance must be set before calling kernel::startup!
 		assert(detail::kernel_instance != nullptr);
 
 		// perform any startup duties here before we init the core
-		detail::kernel_instance->startup();
+		Error result = detail::kernel_instance->startup();
 
 		return result;
 	} // startup

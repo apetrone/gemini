@@ -1226,8 +1226,6 @@ public:
 
 	virtual kernel::Error startup()
 	{
-		event_queue = new Array<GameMessage>(64);
-
 		// parse command line values
 		std::vector<std::string> arguments;
 		core::argparse::ArgumentParser parser;
@@ -1256,6 +1254,12 @@ Options:
 			std::string path = vm["--game"];
 			game_path = platform::make_absolute_path(path.c_str());
 		}
+		else
+		{
+			return kernel::CoreFailed;
+		}
+
+		event_queue = new Array<GameMessage>(64);
 
 		kernel::Parameters& params = kernel::parameters();
 

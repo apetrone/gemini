@@ -229,7 +229,8 @@ namespace platform
 		if (error != kernel::NoError)
 		{
 			LOGE("Kernel startup failed with kernel code: %i\n", error);
-			kernel::shutdown();
+			platform::shutdown();
+			gemini::core_shutdown();
 			return kernel::StartupFailed;
 		}
 		else
