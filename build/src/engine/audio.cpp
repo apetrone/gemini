@@ -23,11 +23,12 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // -------------------------------------------------------------
 #include "audio.h"
-#include "assets.h"
 
 #include <core/factory.h>
 #include <core/typedefs.h>
 #include <core/stackstring.h>
+#include <core/logging.h>
+
 #include <runtime/filesystem.h>
 
 #include <sdk/audio_api.h>
@@ -78,16 +79,14 @@ namespace gemini
 {
 	namespace audio
 	{
-
-
-		IAudioDriver * _audio_driver = 0;
+		IAudioDriver* _audio_driver = 0;
 
 		namespace _internal
 		{
 			int used_sources = 0;
-			AudioSource _sources[ AUDIO_MAX_SOURCES ];
+			AudioSource _sources[AUDIO_MAX_SOURCES];
 
-			AudioSource * find_unused_source()
+			AudioSource* find_unused_source()
 			{
 				for (size_t i = 0; i < AUDIO_MAX_SOURCES; ++i)
 				{
@@ -211,13 +210,23 @@ namespace gemini
 
 				core::StackString<MAX_PATH_SIZE> path = filename;
 				core::StackString<MAX_PATH_SIZE> extension;
-				assets::append_asset_extension( assets::SoundAsset, path );
-	//			assets::sounds()->append_extension( path );
+
+#if defined(PLATFORM_IPHONEOS)
+				kernel::KernelDeviceFlags device_flags = kernel::parameters().device_flags;
+
+				if ( (device_flags & kernel::DeviceiPad) || (device_flags & kernel::DeviceiPhone) )
+				{
+					path.append("caf");
+				}
+
+#else
+				path.append("ogg");
+#endif
 
 				sound->data = (unsigned char*)core::filesystem::audiofile_to_buffer( path(), sound->data_size );
 				if ( !sound->data )
 				{
-					LOGE( "audio::create_new_sound - could not open file %s\n", path() );
+					LOGE("audio::create_new_sound - could not open file %s\n", path());
 					return 0;
 				}
 
@@ -227,7 +236,7 @@ namespace gemini
 				sound->filename = filename;
 				sound->is_stream = is_stream;
 
-				LOGV( "audio::create_new_sound -> [data=%p,dataSize=%i,filename='%s']\n", sound->data, sound->data_size, sound->filename );
+				LOGV("audio::create_new_sound -> [data=%p,dataSize=%i,filename='%s']\n", sound->data, sound->data_size, sound->filename);
 
 				return sound->index;
 			} // init_sound
