@@ -442,14 +442,11 @@ namespace platform
 	// ---------------------------------------------------------------------
 	namespace OpenDialogFlags
 	{
-		enum
-		{
-			ShowHiddenFiles 		= (1 << 0),	// show hidden files
-			AllowMultiselect		= (1 << 1),	// allow multiple selection
-			CanCreateDirectories	= (1 << 2),	// directories can be created through this dialog
-			CanChooseDirectories	= (1 << 3),	// directories can be selected
-			CanChooseFiles			= (1 << 4),	// files can be selected
-		};
+		constexpr uint8_t ShowHiddenFiles 		= 1;	// show hidden files
+		constexpr uint8_t AllowMultiselect		= 2;	// allow multiple selection
+		constexpr uint8_t CanCreateDirectories	= 4;	// directories can be created through this dialog
+		constexpr uint8_t CanChooseDirectories	= 8;	// directories can be selected
+		constexpr uint8_t CanChooseFiles		= 16;	// files can be selected
 	} // namespace OpenDialogFlags
 
 	LIBRARY_EXPORT Result show_open_dialog(const char* title, uint32_t open_flags, Array<PathString>& paths);

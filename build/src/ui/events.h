@@ -189,7 +189,7 @@ namespace gui
 		int key;
 		PanelEvent();
 
-		InputState * inputState;
+		InputState* inputState;
 	}; // PanelEvent
 
 	struct DragEventArgs : public PanelEvent

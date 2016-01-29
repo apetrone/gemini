@@ -652,7 +652,7 @@ public:
 	void test_open_dialog()
 	{
 		Array<PathString> paths;
-		uint32_t flags = platform::OpenFlags::CanChooseDirectories;
+		uint32_t flags = platform::OpenDialogFlags::CanChooseDirectories;
 
 		if (platform::show_open_dialog("Choose Game Directory", flags, paths).succeeded())
 		{

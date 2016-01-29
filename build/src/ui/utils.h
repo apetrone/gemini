@@ -47,7 +47,7 @@ namespace gui
 {
 	typedef ::glm::vec2 Point;
 
-	#define DECLARE_PANEL( panelClass ) virtual const char * GetClassname() const { return #panelClass; }
+	#define DECLARE_PANEL( panelClass ) virtual const char* GetClassname() const { return #panelClass; }
 
 	typedef float DimensionType;
 // -------------------------------------------------------------------------------------------------------------
@@ -92,53 +92,6 @@ namespace gui
 
 
 // -------------------------------------------------------------------------------------------------------------
-
-	// ---------------------------------------------------------------------
-	//
-	// ---------------------------------------------------------------------
-	template <size_t T>
-	struct InterpolatedGeometry
-	{
-		glm::vec2 current[T];
-		glm::vec2 last[T];
-		glm::vec2 final[T];
-
-		// 1. Snapshot of the current geometry
-		// 2. Update the 'current' geometry
-		// 3. Call lerp with the alpha
-		// 4. draw using final
-
-		void snapshot()
-		{
-			// take a current snapshot of the vertices
-			for (size_t index = 0; index < T; ++index)
-				last[index] = current[index];
-		}
-
-		void lerp(float alpha)
-		{
-			for (size_t index = 0; index < T; ++index)
-			{
-				final[index] = glm::mix(last[index], current[index], alpha);
-			}
-		}
-
-		glm::vec2* vertices()
-		{
-			return current;
-		}
-
-		glm::vec2& operator[](size_t index)
-		{
-			return current[index];
-		}
-
-		const glm::vec2* interpolated_vertices() const
-		{
-			return final;
-		}
-	};
-
 
 	//
 	// Size
@@ -345,13 +298,13 @@ namespace gui
 	// math stuff
 	// ---------------------------------------------------------------------
 	template <class T>
-	T sin(const T value)
+	T sin(const T& value)
 	{
 		return ::sin(value);
 	}
 
 	template <class T>
-	T cos(const T value)
+	T cos(const T& value)
 	{
 		return ::cos(value);
 	}

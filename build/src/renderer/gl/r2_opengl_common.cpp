@@ -211,12 +211,12 @@ namespace render2
 				shader_variable& attribute = attributes[attribute_index];
 				gl.GetActiveAttrib(id, attribute_index, MAX_ATTRIBUTE_NAME_LENGTH, &attribute.length, &attribute.size, &attribute.type, attribute.name);
 				attribute.location = gl.GetAttribLocation(id, attribute.name);
-				LOGV("attribute: %i, location: %i, name: %s, size: %i, type: %i\n",
-					 attribute_index,
-					 attribute.location,
-					 attribute.name,
-					 attribute.size,
-					 attribute.type);
+//				LOGV("attribute: %i, location: %i, name: %s, size: %i, type: %i\n",
+//					 attribute_index,
+//					 attribute.location,
+//					 attribute.name,
+//					 attribute.size,
+//					 attribute.type);
 
 				attribute.compute_size();
 			}
@@ -235,12 +235,12 @@ namespace render2
 				shader_variable& uniform = uniforms[uniform_index];
 				gl.GetActiveUniform(id, uniform_index, MAX_ATTRIBUTE_NAME_LENGTH, &uniform.length, &uniform.size, &uniform.type, uniform.name);
 				uniform.location = gl.GetUniformLocation(id, uniform.name);
-				LOGV("uniform: %i, location: %i, name: %s, size: %i, type: %i\n",
-					 uniform_index,
-					 uniform.location,
-					 uniform.name,
-					 uniform.size,
-					 uniform.type);
+//				LOGV("uniform: %i, location: %i, name: %s, size: %i, type: %i\n",
+//					 uniform_index,
+//					 uniform.location,
+//					 uniform.name,
+//					 uniform.size,
+//					 uniform.type);
 
 				uniform.compute_size();
 			}
@@ -514,12 +514,12 @@ namespace render2
 		for (size_t index = 0; index < descriptor.total_attributes; ++index)
 		{
 			const VertexDescriptor::InputDescription& input = descriptor[index];
-			LOGV("input [%i], name = '%s', type = %i, count = %i\n",
-				 index,
-				 input.name(),
-				 input.type,
-				 input.element_count
-				 );
+//			LOGV("input [%i], name = '%s', type = %i, count = %i\n",
+//				 index,
+//				 input.name(),
+//				 input.type,
+//				 input.element_count
+//				 );
 
 			const VertexDataTypeToGL& gldata = get_vertexdata_table()[input.type];
 
