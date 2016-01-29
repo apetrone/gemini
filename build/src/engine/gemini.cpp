@@ -71,115 +71,6 @@
 // uncomment this to draw bone debug information
 //#define GEMINI_DEBUG_BONES
 
-typedef Array<gemini::GameMessage> EventQueueType;
-
-struct DataInput
-{
-	bool execute;
-
-	glm::quat orientation;
-	platform::Serial* device;
-	platform::Thread thread_data;
-	EventQueueType* event_queue;
-};
-
-// raw data read from BNO055;
-// quaternion data is 16-bit x 4 values
-struct bno055_packet_t
-{
-	uint8_t header;
-	uint8_t data[8];
-	uint8_t footer;
-
-	bno055_packet_t()
-	{
-		header = 0xba;
-		footer = 0xff;
-	}
-
-	bool is_valid() const
-	{
-		return (header == 0xba) && (footer == 0xff);
-	}
-
-	glm::quat get_orientation() const
-	{
-		int16_t x = 0;
-		int16_t y = 0;
-		int16_t z = 0;
-		int16_t w = 0;
-
-		// they are 16-bit LSB
-		x = (((uint16_t)data[3]) << 8) | ((uint16_t)data[2]);
-		y = (((uint16_t)data[5]) << 8) | ((uint16_t)data[4]);
-		z = (((uint16_t)data[7]) << 8) | ((uint16_t)data[6]);
-		w = (((uint16_t)data[1]) << 8) | ((uint16_t)data[0]);
-
-		const double QUANTIZE = (1.0 / 16384.0);
-
-		return glm::quat(w * QUANTIZE, x * QUANTIZE, y * QUANTIZE, z * QUANTIZE);
-	}
-};
-
-
-
-void data_thread(void* context)
-{
-	DataInput* block = static_cast<DataInput*>(context);
-
-	LOGV("entering data thread\n");
-
-	const size_t PACKET_SIZE = sizeof(bno055_packet_t);
-	const size_t MAX_PACKET_DATA = 4 * PACKET_SIZE;
-	uint8_t buffer[MAX_PACKET_DATA];
-	size_t current_index = 0;
-
-	while(block->execute)
-	{
-		size_t bytes_read = platform::serial_read(block->device, &buffer[current_index], PACKET_SIZE);
-		if (bytes_read > 0)
-		{
-			LOGV("read bytes: %i\n", bytes_read);
-			size_t last_index = current_index;
-			current_index += bytes_read;
-
-			// scan for a valid packet
-			uint8_t* head = &buffer[last_index];
-
-			// try to search the entire length of a packet
-			for (size_t index = 0; index < sizeof(bno055_packet_t); ++index)
-			{
-				bno055_packet_t* packet = reinterpret_cast<bno055_packet_t*>(head);
-				if (packet->is_valid())
-				{
-					gemini::GameMessage message;
-					message.type = gemini::GameMessage::Orientation;
-
-					glm::quat q = packet->get_orientation();
-					glm::quat flipped(q.w, q.x, -q.z, -q.y);
-					glm::quat y = glm::quat(glm::vec3(0, mathlib::degrees_to_radians(180), 0));
-					message.orientation = glm::inverse(y * flipped);
-
-					block->event_queue->push_back(message);
-
-					// handle the packet and reset the data
-
-					memset(buffer, 0, MAX_PACKET_DATA);
-
-					current_index = index;
-					break;
-				}
-			}
-		}
-		else
-		{
-			LOGV("no bytes read!\n");
-		}
-	}
-
-	LOGV("exiting data thread\n");
-}
-
 using namespace platform;
 using namespace core;
 using namespace gemini; // for renderer
@@ -1039,7 +930,7 @@ private:
 	double accumulator;
 	uint64_t last_time;
 
-	EventQueueType* event_queue;
+	Array<gemini::GameMessage>* event_queue;
 
 	// rendering
 	SceneLink* scenelink;
@@ -1063,7 +954,6 @@ private:
 
 	::renderer::VertexStream alt_vs;
 
-	DataInput data_input;
 	::renderer::StandaloneResourceCache* resource_cache;
 
 	// used by debug draw
@@ -1430,27 +1320,6 @@ Options:
 
 		params.step_interval_seconds = (1.0f/(float)config.physics_tick_rate);
 
-		const char* serial_device = "/dev/cu.usbserial-AH02QPX7"; // config["input_serial_device"];
-		data_input.device = platform::serial_open(serial_device, 115200);
-		if (!data_input.device)
-		{
-			data_input.execute = false;
-			LOGW("Unable to open serial device at '%s'\n", serial_device);
-		}
-		else
-		{
-			data_input.execute = true;
-		}
-
-
-		data_input.event_queue = event_queue;
-
-
-		if (data_input.device)
-		{
-			// fire up a thread
-			platform::thread_create(data_input.thread_data, data_thread, &data_input);
-		}
 
 
 		// initialize window subsystem
@@ -1750,15 +1619,6 @@ Options:
 
 	virtual void shutdown()
 	{
-		// shutdown data input thread
-		if (data_input.device)
-		{
-			data_input.execute = false;
-			LOGV("waiting for data input thread to finish...\n");
-			platform::thread_join(data_input.thread_data);
-			platform::serial_close(data_input.device);
-		}
-
 		navigation::shutdown();
 
 		// shutdown gui
