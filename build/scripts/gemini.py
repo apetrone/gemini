@@ -358,22 +358,22 @@ def get_tools(arguments, libruntime, librenderer, libplatform, libcore, libsdk, 
 	#
 	# muse: asset conversion tool
 	#
-	muse = Product(name="muse", output=ProductType.Commandline)
-	muse.project_root = COMMON_PROJECT_ROOT
-	muse.dependencies.extend([
-		libruntime,
-		libplatform,
-		libcore
-	])
+	# muse = Product(name="muse", output=ProductType.Commandline)
+	# muse.project_root = COMMON_PROJECT_ROOT
+	# muse.dependencies.extend([
+	# 	libruntime,
+	# 	libplatform,
+	# 	libcore
+	# ])
 
-	macosx = muse.layout(platform="macosx")
-	macosx.links += [
-		"Cocoa.framework"
-	]
-	muse.product_root = COMMON_PRODUCT_ROOT
-	setup_driver(arguments, muse, target_platform)
-	setup_common_tool(muse)
-	tools.append(muse)
+	# macosx = muse.layout(platform="macosx")
+	# macosx.links += [
+	# 	"Cocoa.framework"
+	# ]
+	# muse.product_root = COMMON_PRODUCT_ROOT
+	# setup_driver(arguments, muse, target_platform)
+	# setup_common_tool(muse)
+	# tools.append(muse)
 
 	#kraken = get_kraken(arguments, libruntime, libplatform, libcore, librenderer, **kwargs)
 	#tools.append(kraken)
@@ -819,10 +819,10 @@ def get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, lib
 	return [
 		create_unit_test(target_platform, arguments, "test_core", [rapidjson, libplatform, libcore, libglm], "tests/src/test_core.cpp"),
 		create_unit_test(target_platform, arguments, "test_platform", [libplatform, libcore, libglm], "tests/src/test_platform.cpp"),
-		create_unit_test(target_platform, arguments, "test_runtime", [rapidjson, libruntime, libplatform, libcore, libglm], "tests/src/test_runtime.cpp"),
-		create_unit_test(target_platform, arguments, "test_render", [rapidjson, libfreetype, librenderer, libruntime, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
-		create_unit_test(target_platform, arguments, "test_ui", [rapidjson, libfreetype, librenderer, libruntime, libplatform, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application),
-		create_unit_test(target_platform, arguments, "test_window", [rapidjson, libfreetype, librenderer, libruntime, libplatform, libcore, libglm], "tests/src/test_window.cpp", ProductType.Application)
+		create_unit_test(target_platform, arguments, "test_runtime", [rapidjson, libruntime, librenderer, libfreetype, libplatform, libcore, libglm], "tests/src/test_runtime.cpp"),
+		create_unit_test(target_platform, arguments, "test_render", [rapidjson, libruntime, librenderer, libfreetype, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
+		create_unit_test(target_platform, arguments, "test_ui", [rapidjson, librenderer, libfreetype, libruntime, libplatform, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application),
+		create_unit_test(target_platform, arguments, "test_window", [rapidjson, librenderer, libfreetype, libruntime, libplatform, libcore, libglm], "tests/src/test_window.cpp", ProductType.Application)
 	]
 
 def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
