@@ -216,11 +216,11 @@ namespace gemini
 
 				if ( (device_flags & kernel::DeviceiPad) || (device_flags & kernel::DeviceiPhone) )
 				{
-					path.append("caf");
+					path.append(".caf");
 				}
 
 #else
-				path.append("ogg");
+				path.append(".ogg");
 #endif
 
 				sound->data = (unsigned char*)core::filesystem::audiofile_to_buffer( path(), sound->data_size );
