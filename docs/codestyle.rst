@@ -1,5 +1,5 @@
 Code Style Guidelines
-------------------
+---------------------
 
 *Please note, this project is in a major transitional period to the following
 being discussed in this document.*
