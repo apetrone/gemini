@@ -347,7 +347,7 @@ def setup_driver(arguments, product, target_platform):
 	windows_release = product.layout(platform="windows", configuration="release")
 	windows_release.driver.generate_debug_info = "no"
 
-def get_tools(arguments, libruntime, librenderer, libplatform, libcore, libsdk, **kwargs):
+def get_tools(arguments, libruntime, librenderer, libcore, libsdk, **kwargs):
 	#
 	#
 	#
@@ -362,7 +362,6 @@ def get_tools(arguments, libruntime, librenderer, libplatform, libcore, libsdk, 
 	# muse.project_root = COMMON_PROJECT_ROOT
 	# muse.dependencies.extend([
 	# 	libruntime,
-	# 	libplatform,
 	# 	libcore
 	# ])
 
@@ -375,10 +374,10 @@ def get_tools(arguments, libruntime, librenderer, libplatform, libcore, libsdk, 
 	# setup_common_tool(muse)
 	# tools.append(muse)
 
-	#kraken = get_kraken(arguments, libruntime, libplatform, libcore, librenderer, **kwargs)
+	#kraken = get_kraken(arguments, libruntime, libcore, librenderer, **kwargs)
 	#tools.append(kraken)
 
-	orion = get_orion(arguments, libruntime, libplatform, libcore, librenderer, libsdk, **kwargs)
+	orion = get_orion(arguments, libruntime, libcore, librenderer, libsdk, **kwargs)
 	tools.append(orion)
 
 	return tools
@@ -403,6 +402,21 @@ def get_libcore(arguments, target_platform):
 		"src/core/memory/stack_allocator.h",
 		"src/core/memory/system_allocator.h",
 
+		"src/core/platform/graphics_provider.cpp",
+		"src/core/platform/graphics_provider.h",
+		"src/core/platform/kernel.cpp",
+		"src/core/platform/kernel.h",
+		"src/core/platform/kernel_events.h",
+		"src/core/platform/platform.cpp",
+		"src/core/platform/platform.h",
+		"src/core/platform/platform_internal.h",
+		"src/core/platform/input.cpp",
+		"src/core/platform/input.h",
+		"src/core/platform/window.cpp",
+		"src/core/platform/window.h",
+		"src/core/platform/window_provider.cpp",
+		"src/core/platform/window_provider.h",
+
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3/murmur3.c")
 	]
 
@@ -410,6 +424,7 @@ def get_libcore(arguments, target_platform):
 	libcore.includes += [
 		"src",
 		"src/core",
+		"src/core/platform",
 
 		os.path.join(DEPENDENCIES_FOLDER, "murmur3")
 	]
@@ -419,79 +434,54 @@ def get_libcore(arguments, target_platform):
 		rapidjson
 	]
 
-	return libcore
 
-def get_libplatform(arguments, target_platform):
-	libplatform = Product(name="platform", output=ProductType.DynamicLibrary)
-	setup_driver(arguments, libplatform, target_platform)
-	libplatform.project_root = COMMON_PROJECT_ROOT
-	libplatform.root = "../"
-	libplatform.sources += [
-		"src/platform/graphics_provider.cpp",
-		"src/platform/graphics_provider.h",
-		"src/platform/kernel.cpp",
-		"src/platform/kernel.h",
-		"src/platform/kernel_events.h",
-		"src/platform/platform.cpp",
-		"src/platform/platform.h",
-		"src/platform/platform_internal.h",
-		"src/platform/input.cpp",
-		"src/platform/input.h",
-		"src/platform/window.cpp",
-		"src/platform/window.h",
-		"src/platform/window_provider.cpp",
-		"src/platform/window_provider.h"
-	]
+	# setup platform-specific code
 
-	libplatform.includes += [
-		"src/platform"
-	]
-
-	macosx = libplatform.layout(platform="macosx")
+	macosx = libcore.layout(platform="macosx")
 	macosx.sources += [
 		# application
-		"src/platform/application/cocoa/cocoa_appdelegate.mm",
-		"src/platform/application/cocoa/cocoa_appdelegate.h",
-		"src/platform/application/cocoa/cocoa_application.mm",
-		"src/platform/application/cocoa/cocoa_application.h",
+		"src/core/platform/application/cocoa/cocoa_appdelegate.mm",
+		"src/core/platform/application/cocoa/cocoa_appdelegate.h",
+		"src/core/platform/application/cocoa/cocoa_application.mm",
+		"src/core/platform/application/cocoa/cocoa_application.h",
 
 		# backend
-		"src/platform/backend/osx/osx_backend.mm",
-		"src/platform/backend/osx/cocoa_common.h",
+		"src/core/platform/backend/osx/osx_backend.mm",
+		"src/core/platform/backend/osx/cocoa_common.h",
 
 		# dylib
-		"src/platform/dylib/osx/osx_dylib.cpp",
-		"src/platform/dylib/posix/posix_dlopen.cpp",
+		"src/core/platform/dylib/osx/osx_dylib.cpp",
+		"src/core/platform/dylib/posix/posix_dlopen.cpp",
 
 		# filesystem
-		"src/platform/filesystem/osx/osx_filesystem.mm",
-		"src/platform/filesystem/posix/posix_filesystem_common.cpp",
+		"src/core/platform/filesystem/osx/osx_filesystem.mm",
+		"src/core/platform/filesystem/posix/posix_filesystem_common.cpp",
 
 		# serial
-		"src/platform/serial/posix/posix_serial.cpp",
+		"src/core/platform/serial/posix/posix_serial.cpp",
 
 		# thread
-		"src/platform/thread/osx/osx_thread.cpp",
-		"src/platform/thread/posix/posix_thread_common.cpp",
-		"src/platform/thread/posix/posix_thread.h",
+		"src/core/platform/thread/osx/osx_thread.cpp",
+		"src/core/platform/thread/posix/posix_thread_common.cpp",
+		"src/core/platform/thread/posix/posix_thread.h",
 
 		# time
-		"src/platform/time/osx/osx_timer.cpp",
-		"src/platform/time/posix/posix_datetime.cpp",
+		"src/core/platform/time/osx/osx_timer.cpp",
+		"src/core/platform/time/posix/posix_datetime.cpp",
 
 		# window
-		"src/platform/window/cocoa/cocoa_window_provider.mm",
-		"src/platform/window/cocoa/cocoa_window_provider.h",
-		"src/platform/window/cocoa/cocoa_openglview.mm",
-		"src/platform/window/cocoa/cocoa_openglview.h",
-		"src/platform/window/cocoa/cocoa_window.mm",
-		"src/platform/window/cocoa/cocoa_window.h"
+		"src/core/platform/window/cocoa/cocoa_window_provider.mm",
+		"src/core/platform/window/cocoa/cocoa_window_provider.h",
+		"src/core/platform/window/cocoa/cocoa_openglview.mm",
+		"src/core/platform/window/cocoa/cocoa_openglview.h",
+		"src/core/platform/window/cocoa/cocoa_window.mm",
+		"src/core/platform/window/cocoa/cocoa_window.h"
 	]
 
 	macosx.includes += [
-		"src/platform/posix",
-		"src/platform/backend/osx",
-		"src/platform/window/cocoa"
+		"src/core/platform/posix",
+		"src/core/platform/backend/osx",
+		"src/core/platform/window/cocoa"
 	]
 
 	macosx.links += [
@@ -504,36 +494,36 @@ def get_libplatform(arguments, target_platform):
 	]
 
 
-	linux = libplatform.layout(platform="linux")
+	linux = libcore.layout(platform="linux")
 	linux.sources += [
 		# backend
-		"src/platform/backend/linux/linux_backend.cpp",
-		"src/platform/backend/linux/linux_backend.h",
+		"src/core/platform/backend/linux/linux_backend.cpp",
+		"src/core/platform/backend/linux/linux_backend.h",
 
 		# dylib
-		"src/platform/dylib/posix/posix_dylib.cpp",
-		"src/platform/dylib/posix/posix_dlopen.cpp",
+		"src/core/platform/dylib/posix/posix_dylib.cpp",
+		"src/core/platform/dylib/posix/posix_dlopen.cpp",
 
 		# filesystem
-		"src/platform/filesystem/posix/posix_filesystem.cpp",
-		"src/platform/filesystem/posix/posix_filesystem_common.cpp",
+		"src/core/platform/filesystem/posix/posix_filesystem.cpp",
+		"src/core/platform/filesystem/posix/posix_filesystem_common.cpp",
 
 		# serial
-		"src/platform/serial/posix/posix_serial.cpp",
+		"src/core/platform/serial/posix/posix_serial.cpp",
 
 		# thread
-		"src/platform/thread/posix/posix_thread.cpp",
-		"src/platform/thread/posix/posix_thread_common.cpp",
-		"src/platform/thread/posix/posix_thread.h",
+		"src/core/platform/thread/posix/posix_thread.cpp",
+		"src/core/platform/thread/posix/posix_thread_common.cpp",
+		"src/core/platform/thread/posix/posix_thread.h",
 
 		# time
-		"src/platform/time/posix/posix_datetime.cpp",
-		"src/platform/time/posix/posix_timer.cpp",
+		"src/core/platform/time/posix/posix_datetime.cpp",
+		"src/core/platform/time/posix/posix_timer.cpp",
 	]
 
 
 	linux.includes += [
-		"src/platform/backend/linux"
+		"src/core/platform/backend/linux"
 	]
 
 	#
@@ -549,28 +539,28 @@ def get_libplatform(arguments, target_platform):
 		assert_dependency(found_xinerama, "X11/extensions/Xinerama.h not found!")
 
 		linux.sources += [
-			"src/platform/window/x11/*.cpp",
-			"src/platform/window/x11/*.h"
+			"src/core/platform/window/x11/*.cpp",
+			"src/core/platform/window/x11/*.h"
 		]
 		linux.sources += [
-			"src/platform/graphics/x11/*.cpp",
-			"src/platform/graphics/x11/*.h"
+			"src/core/platform/graphics/x11/*.cpp",
+			"src/core/platform/graphics/x11/*.h"
 		]
 
 	#
 	# egl support
 	if arguments.with_egl:
 		linux.sources += [
-			"src/platform/graphics/egl/*.cpp",
-			"src/platform/graphics/egl/*.h"
+			"src/core/platform/graphics/egl/*.cpp",
+			"src/core/platform/graphics/egl/*.h"
 		]
 
 	#
 	# Raspberry Pi: Add support for DispmanX, VideoCore
 	if arguments.raspberrypi:
 		linux.sources += [
-			"src/platform/window/dispmanx/*.cpp",
-			"src/platform/window/dispmanx/*.h"
+			"src/core/platform/window/dispmanx/*.cpp",
+			"src/core/platform/window/dispmanx/*.h"
 		]
 		linux.includes += [
 			"/opt/vc/include",
@@ -579,32 +569,32 @@ def get_libplatform(arguments, target_platform):
 		]
 
 
-	windows = libplatform.layout(platform="windows")
+	windows = libcore.layout(platform="windows")
 	windows.sources += [
 		# backend
-		"src/platform/backend/windows/win32_backend.cpp",
+		"src/core/platform/backend/windows/win32_backend.cpp",
 
 		# dylib
-		"src/platform/dylib/windows/win32_dylib.cpp",
+		"src/core/platform/dylib/windows/win32_dylib.cpp",
 
 		# filesystem
-		"src/platform/filesystem/windows/win32_filesystem.cpp",
+		"src/core/platform/filesystem/windows/win32_filesystem.cpp",
 
 		# serial
-		"src/platform/serial/win32/win32_serial.cpp",
+		"src/core/platform/serial/win32/win32_serial.cpp",
 
 		# thread
-		"src/platform/thread/windows/win32_thread.cpp",
-		"src/platform/thread/windows/windows_thread.h",
+		"src/core/platform/thread/windows/win32_thread.cpp",
+		"src/core/platform/thread/windows/windows_thread.h",
 
 		# time
-		"src/platform/time/windows/win32_time.cpp",
+		"src/core/platform/time/windows/win32_time.cpp",
 
 		# window
-		"src/platform/window/win32/win32_window.cpp",
-		"src/platform/window/win32/win32_window.h",
-		"src/platform/window/win32/win32_window_provider.cpp",
-		"src/platform/window/win32/win32_window_provider.h"
+		"src/core/platform/window/win32/win32_window.cpp",
+		"src/core/platform/window/win32/win32_window.h",
+		"src/core/platform/window/win32/win32_window_provider.cpp",
+		"src/core/platform/window/win32/win32_window_provider.h"
 	]
 
 	windows.links += [
@@ -612,8 +602,7 @@ def get_libplatform(arguments, target_platform):
 		"user32"
 	]
 
-	return libplatform
-
+	return libcore
 
 
 def get_librenderer(arguments, target_platform):
@@ -814,18 +803,18 @@ def create_unit_test(target_platform, arguments, name, dependencies, source, out
 
 	return product
 
-def get_unit_tests(arguments, libcore, libplatform, librenderer, libruntime, libglm, **kwargs):
+def get_unit_tests(arguments, libcore, librenderer, libruntime, libglm, **kwargs):
 	target_platform = kwargs.get("target_platform", None)
 	return [
-		create_unit_test(target_platform, arguments, "test_core", [rapidjson, libplatform, libcore, libglm], "tests/src/test_core.cpp"),
-		create_unit_test(target_platform, arguments, "test_platform", [libplatform, libcore, libglm], "tests/src/test_platform.cpp"),
-		create_unit_test(target_platform, arguments, "test_runtime", [rapidjson, libruntime, librenderer, libfreetype, libplatform, libcore, libglm], "tests/src/test_runtime.cpp"),
-		create_unit_test(target_platform, arguments, "test_render", [rapidjson, libruntime, librenderer, libfreetype, libplatform, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
-		create_unit_test(target_platform, arguments, "test_ui", [rapidjson, librenderer, libfreetype, libruntime, libplatform, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application),
-		create_unit_test(target_platform, arguments, "test_window", [rapidjson, librenderer, libfreetype, libruntime, libplatform, libcore, libglm], "tests/src/test_window.cpp", ProductType.Application)
+		create_unit_test(target_platform, arguments, "test_core", [rapidjson, libcore, libglm], "tests/src/test_core.cpp"),
+		create_unit_test(target_platform, arguments, "test_platform", [libcore, libglm], "tests/src/test_platform.cpp"),
+		create_unit_test(target_platform, arguments, "test_runtime", [rapidjson, libruntime, librenderer, libfreetype, libcore, libglm], "tests/src/test_runtime.cpp"),
+		create_unit_test(target_platform, arguments, "test_render", [rapidjson, libruntime, librenderer, libfreetype, libcore, libglm], "tests/src/test_render.cpp", ProductType.Application),
+		create_unit_test(target_platform, arguments, "test_ui", [rapidjson, librenderer, libfreetype, libruntime, libcore, libglm], "tests/src/test_ui.cpp", ProductType.Application),
+		create_unit_test(target_platform, arguments, "test_window", [rapidjson, librenderer, libfreetype, libruntime, libcore, libglm], "tests/src/test_window.cpp", ProductType.Application)
 	]
 
-def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwargs):
+def get_kraken(arguments, libruntime, librenderer, libcore, **kwargs):
 	global_params = kwargs.get("global_params")
 	target_platform = kwargs.get("target_platform")
 
@@ -840,7 +829,6 @@ def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwarg
 	setup_common_tool(kraken)
 
 	kraken.dependencies.extend([
-		libplatform,
 		libcore,
 		librenderer
 	])
@@ -869,7 +857,7 @@ def get_kraken(arguments, libruntime, librenderer, libplatform, libcore, **kwarg
 
 	return kraken
 
-def get_orion(arguments, libruntime, libplatform, libcore, librenderer, libsdk, **kwargs):
+def get_orion(arguments, libruntime, libcore, librenderer, libsdk, **kwargs):
 	orion = Product(name="orion", output=ProductType.Application)
 	orion.project_root = COMMON_PROJECT_ROOT
 	orion.product_root = COMMON_PRODUCT_ROOT
@@ -884,7 +872,6 @@ def get_orion(arguments, libruntime, libplatform, libcore, librenderer, libsdk, 
 		libfreetype,
 		libruntime,
 		librenderer,
-		libplatform,
 		libcore,
 		libsdk
 	])
@@ -1014,23 +1001,20 @@ def products(arguments, **kwargs):
 
 	libcore = get_libcore(arguments, target_platform)
 
-	libplatform = get_libplatform(arguments, target_platform)
-	libplatform.dependencies += [libcore]
-
 	librenderer = get_librenderer(arguments, target_platform)
-	librenderer.dependencies += [libcore, libplatform, Dependency(file="glm.py")]
+	librenderer.dependencies += [libcore, Dependency(file="glm.py")]
 
 	libruntime = get_libruntime(arguments, target_platform, librenderer)
-	libruntime.dependencies += [libcore, libplatform, Dependency(file="glm.py")]
+	libruntime.dependencies += [libcore, Dependency(file="glm.py")]
 
 	# don't add this until we clean up the shaderconfig dependency on libruntime
 	#libruntime.dependencies.append(librenderer)
 
-	libsdk = get_sdk(arguments, [libruntime, librenderer, libplatform, libcore], **kwargs)
+	libsdk = get_sdk(arguments, [libruntime, librenderer, libcore], **kwargs)
 
 	tools = []
 	if arguments.with_tools:
-		tools = get_tools(arguments, libruntime, librenderer, libplatform, libcore, libsdk, **kwargs)
+		tools = get_tools(arguments, libruntime, librenderer, libcore, libsdk, **kwargs)
 	else:
 		logging.warn("Compiling WITHOUT tools...")
 
@@ -1048,8 +1032,7 @@ def products(arguments, **kwargs):
 	gemini.dependencies += [
 		libruntime,
 		librenderer,
-		libfreetype,
-		libplatform
+		libfreetype
 	]
 
 	gemini.dependencies += [
@@ -1171,12 +1154,11 @@ def products(arguments, **kwargs):
 
 	gemini.dependencies.append(libsdk)
 
-	rnd = get_rnd(arguments, [libruntime, librenderer, libplatform, libcore], **kwargs)
+	rnd = get_rnd(arguments, [libruntime, librenderer, libcore], **kwargs)
 	tests = []
 	if arguments.with_tests:
 		tests = get_unit_tests(arguments,
 			libcore,
-			libplatform,
 			librenderer,
 			libruntime,
 			Dependency(file="glm.py"),
@@ -1185,7 +1167,6 @@ def products(arguments, **kwargs):
 	return [
 		librenderer,
 		libruntime,
-		libplatform,
 		libcore,
 		libsdk,
 		#rnd,
