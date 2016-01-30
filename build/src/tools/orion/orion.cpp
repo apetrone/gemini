@@ -616,6 +616,11 @@ public:
 
 			compositor->resize(frame.width, frame.height);
 		}
+		else if (event.subtype == kernel::WindowClosed)
+		{
+			LOGV("Window was closed!\n");
+			set_active(false);
+		}
 	}
 
 	virtual void event(kernel::MouseEvent& event)
@@ -770,7 +775,7 @@ public:
 			params["opengl.minor"] = "2";
 			params["opengl.profile"] = "core";
 			params["opengl.share_context"] = "true";
-			
+
 //			for (RenderParameters::Iterator it = params.begin(); it != params.end(); ++it)
 //			{
 //				const param_string& key = it.key();

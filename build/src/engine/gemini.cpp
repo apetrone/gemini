@@ -1148,6 +1148,11 @@ public:
 
 			compositor->resize(frame.width, frame.height);
 		}
+		else if (event.subtype == kernel::WindowClosed)
+		{
+			LOGV("Window was closed!\n");
+			set_active(false);
+		}
 	}
 
 	virtual void event(kernel::GameControllerEvent& event)
