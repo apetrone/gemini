@@ -876,7 +876,7 @@ public:
 			surface->set_texture_handle(handle);
 #endif
 
-#if 0
+#if 1
 			log_window = new LogWindow(compositor);
 			log_window->set_origin(0.0f, 0.0f);
 			log_window->set_dimensions(1.0f, 0.25f);
@@ -899,12 +899,13 @@ public:
 			scrollbar->set_dimensions(0.1f, 1.0f);
 #endif
 
+#if 0
 			ScrollablePanel* sp = new ScrollablePanel(compositor);
 //			sp->set_origin(0.0f, 0.0f);
 //			sp->set_dimensions(0.5f, 0.5f);
 
 			sp->set_bounds(0, 0, 512, 512);
-
+#endif
 
 		}
 #endif

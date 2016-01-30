@@ -54,15 +54,49 @@ namespace gui
 		size_t height;
 		int ascender, descender;
 		renderer->font_metrics(font_handle, height, ascender, descender);
-
-		Rect text_bounds;
-		renderer->font_measure_string(font_handle, text.c_str(), text_bounds);
-
 		float font_height = (ascender + descender);
 
-		draw_bounds.origin.y += glm::max(font_height, text_bounds.height());
+		float FONT_HEIGHT_OFFSET = font_height;
+
+		Rect text_bounds;
 		draw_bounds.origin += glm::vec2(LABEL_LEFT_MARGIN, LABEL_TOP_MARGIN);
-		render_commands.add_font(font_handle, this->text.c_str(), draw_bounds, foreground_color);
+		draw_bounds.origin.y += FONT_HEIGHT_OFFSET;
+
+		char buffer[4096];
+		memset(buffer, 0, 4096);
+		size_t buffer_offset = 0;
+
+		const size_t character_count = text.size();
+		for (size_t index = 0; index < character_count+1; ++index)
+		{
+			buffer[buffer_offset++] = text[index];
+
+			if (text[index] == '\n' || (index == character_count))
+			{
+				renderer->font_measure_string(font_handle, buffer, text_bounds);
+				FONT_HEIGHT_OFFSET = glm::max(font_height, text_bounds.height());
+
+				if (buffer_offset > 1)
+				{
+					render_commands.add_font(font_handle, buffer, draw_bounds, foreground_color);
+					draw_bounds.origin.x = bounds.origin.x + LABEL_LEFT_MARGIN;
+					draw_bounds.origin.y += FONT_HEIGHT_OFFSET + font_height;
+					memset(buffer, 0, sizeof(char));
+					buffer_offset = 0;
+				}
+
+				if (index == character_count)
+				{
+					break;
+				}
+			}
+		}
+
+
+
+
+
+
 	}
 
 	void Label::set_font(const char* filename, size_t pixel_size)
