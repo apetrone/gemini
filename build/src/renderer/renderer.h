@@ -498,7 +498,7 @@ namespace render2
 	class ResourceProvider
 	{
 	public:
-		virtual ~ResourceProvider();
+		LIBRARY_EXPORT virtual ~ResourceProvider();
 
 		virtual bool load_file(Array<unsigned char>& data, const char* filename) const = 0;
 		virtual bool file_exists(const char* filename) const = 0;

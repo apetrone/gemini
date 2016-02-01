@@ -278,7 +278,7 @@ namespace renderer
 
 namespace render2
 {
-	ResourceProvider::~ResourceProvider()
+	LIBRARY_EXPORT ResourceProvider::~ResourceProvider()
 	{
 	}
 
