@@ -40,6 +40,7 @@ namespace gemini
 		profile_hash_t blocks;
 		gemini::stack<profile_block*> profile_stack;
 		size_t depth = 0;
+		uint64_t overhead = 0;
 
 		profile_block* find_or_create_block(const char* name)
 		{
@@ -57,7 +58,7 @@ namespace gemini
 			profile_block* block = find_or_create_block(name);
 			block->index = scopes.size() - 1;
 			block->parent_index = current_scope ? current_scope->index : block->index;
-			block->cycles -= platform::microseconds();
+			block->cycles -= platform::time_ticks();
 			block->name = name;
 			block->depth = depth++;
 			block->hitcount++;
@@ -68,7 +69,7 @@ namespace gemini
 		void end_scope(const char* name, const char* caller_name)
 		{
 			profile_block* scope = profile_stack.top();
-			scope->cycles += platform::microseconds();
+			scope->cycles += platform::time_ticks() - overhead;
 
 			--depth;
 
@@ -101,6 +102,23 @@ namespace gemini
 			current_scope = nullptr;
 			scopes.clear(false);
 			blocks.clear(/*false*/);
+		}
+
+		void startup()
+		{
+			// calculate an average overhead for ticks
+			uint64_t sum = 0;
+			for (uint64_t count = 0; count < 11; ++count)
+			{
+				uint64_t a, b;
+				a = platform::time_ticks();
+				b = platform::time_ticks();
+				sum += (b-a);
+			}
+
+			// multiply by two since we call ticks TWICE for a scope
+			// and this will allow us to simply subtrack overhead.
+			overhead = (sum / 11) * 2;
 		}
 
 		void shutdown()

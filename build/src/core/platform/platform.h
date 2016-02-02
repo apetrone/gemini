@@ -433,6 +433,10 @@ namespace platform
 	/// @returns The current time in microseconds since the application started
 	LIBRARY_EXPORT uint64_t microseconds();
 
+	/// @brief Fetch the tick count
+	/// @returns The current tick count of the CPU of the calling thread
+	LIBRARY_EXPORT uint64_t time_ticks();
+
 	/// @brief Populates the DateTime struct with the system's current date and time
 	LIBRARY_EXPORT void datetime(DateTime& datetime);
 

@@ -50,6 +50,7 @@ namespace gemini
 		void end_scope(const char* name, const char* caller_name);
 		void report(profile_callback callback);
 		void reset();
+		void startup();
 		void shutdown();
 
 		static_assert(sizeof(profiler::profile_block) == 32, "profile_block is not aligned on cache line.");

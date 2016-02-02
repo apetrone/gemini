@@ -57,6 +57,11 @@ namespace platform
 		return (mach_absolute_time() - _time_start) * _time_scale;
 	}
 
+	uint64_t time_ticks()
+	{
+		return mach_absolute_time();
+	}
+
 	void datetime(DateTime& datetime)
 	{
 		posix_datetime(datetime);
