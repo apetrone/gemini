@@ -27,7 +27,7 @@
 #include <core/util.h>
 #include <core/mem.h>
 
-template <class K, class T, class H = typename core::util::hash<K>, class Allocator = core::memory::SystemAllocatorType >
+template <class K, class T, class H = typename core::util::hash<K>, class Allocator = core::memory::SystemAllocatorType>
 class HashSet
 {
 private:
