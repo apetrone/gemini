@@ -46,13 +46,6 @@ struct SystemAllocator : public Allocator< SystemAllocator<tracking_policy> >
 
 	void deallocate(void* pointer)
 	{
-		// it is entirely legal to call delete on a null pointer,
-		// but we don't need to do anything.
-		if (!pointer)
-		{
-			return;
-		}
-
 		size_t allocation_size;
 		pointer = tracker.untrack_allocation(this_type::get_zone(), pointer, allocation_size);
 		core::memory::aligned_free(pointer);

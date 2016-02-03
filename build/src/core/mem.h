@@ -165,6 +165,8 @@ namespace core
 		template <class _Type, class _Allocator>
 		void deallocate_pointer(_Type* pointer, _Allocator& allocator)
 		{
+			// it is entirely legal to call delete on a null pointer,
+			// but we don't need to do anything.
 			if (pointer)
 			{
 				pointer->~_Type();
@@ -202,33 +204,36 @@ namespace core
 		template <class _Type, class _Allocator>
 		void destruct_array(_Type* pointer, _Allocator& allocator)
 		{
-			// fetch the number of elements
-			size_t* block = reinterpret_cast<size_t*>(pointer);
-			block--;
-
-			size_t type_size = *block;
-
-			// If you hit this assert; there is a double-delete on this pointer!
-			assert(type_size > 0);
-			*block = 0;
-
-			block--;
-			size_t total_elements = *block;
-
-			char* mem = reinterpret_cast<char*>(pointer);
-
-			// per the spec; we must delete the elements in reverse order
-			for (size_t index = total_elements; index > 0; --index)
+			if (pointer)
 			{
-				// for non-POD types, we have to make sure we offset
-				// into the array by the correct offset of the allocated type.
-				size_t offset = (index-1)*type_size;
-				_Type* p = reinterpret_cast<_Type*>(mem+offset);
-				p->~_Type();
-			}
+				// fetch the number of elements
+				size_t* block = reinterpret_cast<size_t*>(pointer);
+				block--;
 
-			// deallocate the block
-			allocator.deallocate(block);
+				size_t type_size = *block;
+
+				// If you hit this assert; there is a double-delete on this pointer!
+				assert(type_size > 0);
+				*block = 0;
+
+				block--;
+				size_t total_elements = *block;
+
+				char* mem = reinterpret_cast<char*>(pointer);
+
+				// per the spec; we must delete the elements in reverse order
+				for (size_t index = total_elements; index > 0; --index)
+				{
+					// for non-POD types, we have to make sure we offset
+					// into the array by the correct offset of the allocated type.
+					size_t offset = (index-1)*type_size;
+					_Type* p = reinterpret_cast<_Type*>(mem+offset);
+					p->~_Type();
+				}
+
+				// deallocate the block
+				allocator.deallocate(block);
+			}
 		}
 	} // namespace memory
 } // namespace core
