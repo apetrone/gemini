@@ -78,6 +78,11 @@ namespace platform
 		return get_microseconds();
 	}
 
+	uint64_t time_ticks()
+	{
+		return get_microseconds();
+	}
+
 	void datetime(DateTime& datetime)
 	{
 		posix_datetime(datetime);
