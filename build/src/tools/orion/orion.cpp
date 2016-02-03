@@ -40,6 +40,7 @@
 #include <core/stackstring.h>
 #include <core/fixedarray.h>
 #include <core/logging.h>
+#include <core/profiler.h>
 
 #include <ui/ui.h>
 #include <ui/compositor.h>
@@ -556,6 +557,18 @@ void log_window_logger_close(core::logging::Handler* handler)
 {
 }
 
+void profile_output(const char* name, uint64_t cycles, uint32_t depth, uint32_t hitcount, float parent_weight)
+{
+	size_t indents = 0;
+	while(indents <= depth)
+	{
+		fprintf(stdout, "-");
+		++indents;
+	}
+
+	fprintf(stdout, " %s, cycles: %zu, hits: %i, pct: %2.3f cycles/hit: %2.2f\n", name, cycles, hitcount, parent_weight * 100.0, cycles/(float)hitcount);
+}
+
 class EditorKernel : public kernel::IKernel,
 public kernel::IEventListener<kernel::KeyboardEvent>,
 public kernel::IEventListener<kernel::MouseEvent>,
@@ -991,6 +1004,11 @@ public:
 
 
 		platform::window::swap_buffers(main_window);
+
+#if defined(GEMINI_ENABLE_PROFILER)
+		gemini::profiler::report(profile_output);
+		gemini::profiler::reset();
+#endif
 
 //		glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, 2000);
 	}

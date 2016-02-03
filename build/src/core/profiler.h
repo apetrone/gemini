@@ -26,10 +26,14 @@
 
 #include <core/typedefs.h>
 
+// enable this to allow profiling
+#define GEMINI_ENABLE_PROFILER
+
 namespace gemini
 {
-#define PROFILE_BEGIN(x) ::gemini::profiler::begin_scope(x, PLATFORM_FANCY_FUNCTION)
-#define PROFILE_END(x) ::gemini::profiler::end_scope(x, PLATFORM_FANCY_FUNCTION)
+#if defined(GEMINI_ENABLE_PROFILER)
+	#define PROFILE_BEGIN(x) ::gemini::profiler::begin_scope(x, PLATFORM_FANCY_FUNCTION)
+	#define PROFILE_END(x) ::gemini::profiler::end_scope(x, PLATFORM_FANCY_FUNCTION)
 
 	namespace profiler
 	{
@@ -55,4 +59,8 @@ namespace gemini
 
 		static_assert(sizeof(profiler::profile_block) == 32, "profile_block is not aligned on cache line.");
 	} // namespace profiler
+#else
+	#define PROFILE_BEGIN(x)
+	#define PROFILE_END(x)
+#endif
 } // namespace gemini

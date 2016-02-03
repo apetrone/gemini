@@ -31,6 +31,7 @@
 
 namespace gemini
 {
+#if defined(GEMINI_ENABLE_PROFILER)
 	namespace profiler
 	{
 		Array<profile_block*> scopes;
@@ -98,7 +99,7 @@ namespace gemini
 		void reset()
 		{
 			depth = 0;
-			profile_stack.clear();
+			profile_stack.clear(false);
 			current_scope = nullptr;
 			scopes.clear(false);
 			blocks.clear(/*false*/);
@@ -134,4 +135,5 @@ namespace gemini
 
 		static_assert(sizeof(profiler::profile_block) == 32, "profile_block is not aligned on cache line.");
 	} // namespace profiler
+#endif
 } // namespace gemini

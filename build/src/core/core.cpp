@@ -27,6 +27,7 @@
 #include <core/logging.h>
 #include <core/logging_interface.h>
 #include <core/mem.h>
+#include <core/profiler.h>
 
 namespace gemini
 {
@@ -43,11 +44,19 @@ namespace gemini
 
 		core::memory::startup();
 
+#if defined(GEMINI_ENABLE_PROFILER)
+		profiler::startup();
+#endif
+
 		return platform::Result::success();
 	}
 
 	LIBRARY_EXPORT void core_shutdown()
 	{
+#if defined(GEMINI_ENABLE_PROFILER)
+		profiler::shutdown();
+#endif
+
 		core::memory::shutdown();
 
 		core::logging::ILog* log_system = core::logging::instance();
