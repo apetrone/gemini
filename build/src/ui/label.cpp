@@ -75,7 +75,8 @@ namespace gui
 			const size_t character_count = text.size();
 			for (size_t index = 0; index < character_count+1; ++index)
 			{
-				if (text[index] == '\n' || (index == character_count))
+				const size_t is_last_character = (index == character_count);
+				if (text[index] == '\n' || is_last_character)
 				{
 					if ((index - last_start) > 1)
 					{
@@ -94,7 +95,7 @@ namespace gui
 						origin_offset.y += FONT_HEIGHT_OFFSET + font_height;
 					}
 
-					if (index == character_count)
+					if (is_last_character)
 					{
 						break;
 					}
