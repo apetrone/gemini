@@ -26,6 +26,12 @@
 
 #include <core/typedefs.h>
 
+// KNOWN ISSUES:
+// The profiler can be confused if you use identical string names
+// for different blocks. This is because (I'm guessing) the string pointers
+// will be identical in the text segment of the binary -- even though they are
+// referenced from different compilation units. I should verify this.
+
 // enable this to allow profiling
 #define GEMINI_ENABLE_PROFILER
 
