@@ -29,9 +29,7 @@
 
 #include <core/stackstring.h>
 #include <core/interface.h>
-
-template <class T>
-class Array;
+#include <core/array.h>
 
 namespace core
 {

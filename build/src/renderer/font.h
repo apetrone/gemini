@@ -28,15 +28,13 @@
 #include <renderer/color.h>
 
 #include <core/typedefs.h>
+#include <core/array.h>
 
 namespace render2
 {
 	class Device;
 	struct Texture;
 }
-
-template <class T>
-class Array;
 
 namespace font
 {
