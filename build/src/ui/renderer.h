@@ -84,7 +84,7 @@ namespace gui
 
 			LIBRARY_EXPORT void add_line(const Point& start, const Point& end, const gemini::Color& color, float thickness = 1.0f);
 			LIBRARY_EXPORT void add_rectangle(const Point& p0, const Point& p1, const Point& p2, const Point& p3, const TextureHandle& texture, const gemini::Color& color);
-			LIBRARY_EXPORT void add_font(const FontHandle& font, const char* utf8, const Rect& bounds, const gemini::Color& color);
+			LIBRARY_EXPORT void add_font(const FontHandle& font, const char* utf8, size_t string_length, const Rect& bounds, const gemini::Color& color);
 		};
 	}
 
@@ -147,7 +147,7 @@ namespace gui
 		/// @param handle FontHandle to use for this operation
 		/// @param string utf-8 encoded string to measure
 		/// @param bounds Output bounds of string
-		LIBRARY_EXPORT virtual FontResult font_measure_string(const FontHandle& handle, const char* string, gui::Rect& bounds) = 0;
+		LIBRARY_EXPORT virtual FontResult font_measure_string(const FontHandle& handle, const char* string, size_t string_length, gui::Rect& bounds) = 0;
 
 		LIBRARY_EXPORT virtual void font_metrics(const gui::FontHandle& handle, size_t& height, int& ascender, int& descender) = 0;
 
@@ -160,10 +160,10 @@ namespace gui
 		/// @param handle FontHandle to use for this operation
 		/// @param bounds Bounding rectangle to draw within
 		/// @param color PACK_RGBA'd color value
-		LIBRARY_EXPORT virtual size_t font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gemini::Color& color, gui::render::Vertex* buffer, size_t buffer_size) = 0;
+		LIBRARY_EXPORT virtual size_t font_draw(const gui::FontHandle& handle, const char* string, size_t string_length, const gui::Rect& bounds, const gemini::Color& color, gui::render::Vertex* buffer, size_t buffer_size) = 0;
 
-		/// @param string utf-8 encoded string
+		/// @param string_length The length of the string
 		/// @returns Total vertices needed to draw the string
-		LIBRARY_EXPORT virtual size_t font_count_vertices(const gui::FontHandle& handle, const char* string) = 0;
+		LIBRARY_EXPORT virtual size_t font_count_vertices(const gui::FontHandle& handle, size_t string_length) = 0;
 	}; // Renderer
 } // namespace gui

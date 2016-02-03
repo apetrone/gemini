@@ -28,6 +28,8 @@
 #include "ui/events.h"
 #include "ui/utils.h"
 
+#include <core/typedefs.h>
+
 #include <string>
 
 namespace gui
@@ -43,8 +45,22 @@ namespace gui
 		LIBRARY_EXPORT virtual bool is_label() const override { return true; }
 
 	protected:
+
+		struct font_cache_entry
+		{
+			glm::vec2 origin;
+			size_t start;
+			size_t length;
+		};
+
 		std::string text;
 		FontHandle font_handle;
 		Point text_origin;
+
+		// font cache stuff
+		Array<font_cache_entry> font_cache;
+		size_t font_cache_index;
+		uint32_t cache_is_dirty;
+
 	}; // Label
 } // namespace gui

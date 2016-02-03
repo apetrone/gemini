@@ -162,13 +162,13 @@ namespace render
 		primitive_quad(p0, p1, p2, p3, texture, color);
 	}
 
-	void CommandList::add_font(const FontHandle& font, const char* utf8, const Rect& bounds, const gemini::Color& color)
+	void CommandList::add_font(const FontHandle& font, const char* utf8, size_t string_length, const Rect& bounds, const gemini::Color& color)
 	{
 		add_drawcall();
 
 		const size_t max_vertices = 1024;
 
-		size_t required_primitives = compositor->get_renderer()->font_count_vertices(font, utf8);
+		size_t required_primitives = compositor->get_renderer()->font_count_vertices(font, string_length);
 		primitive_reserve(required_primitives);
 
 //		LOGV("font prims: %i\n", required_primitives);
@@ -176,7 +176,7 @@ namespace render
 		Command& command = commands.back();
 		command.texture = texture;
 		command.type = CommandType_Font;
-		size_t vertices_drawn = compositor->get_renderer()->font_draw(font, utf8, bounds, color, write_pointer, max_vertices);
+		size_t vertices_drawn = compositor->get_renderer()->font_draw(font, utf8, string_length, bounds, color, write_pointer, max_vertices);
 		assert(vertices_drawn > 0);
 	}
 } // namespace render

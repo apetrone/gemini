@@ -31,11 +31,16 @@ namespace gui
 	static const float LABEL_LEFT_MARGIN = 2;
 	static const float LABEL_TOP_MARGIN = 2;
 
-	Label::Label(Panel* parent) : Panel(parent)
+	Label::Label(Panel* parent)
+		: Panel(parent)
+		, font_cache_index(0)
+		, cache_is_dirty(1)
 	{
 	}
 
-	void Label::render(Compositor* compositor, Renderer* renderer, gui::render::CommandList& render_commands)
+	void Label::render(Compositor* compositor,
+						Renderer* renderer,
+						gui::render::CommandList& render_commands)
 	{
 		render_commands.add_rectangle(
 			geometry[0],
@@ -49,8 +54,6 @@ namespace gui
 		if (text.empty())
 			return;
 
-		gui::Rect draw_bounds = bounds;
-
 		size_t height;
 		int ascender, descender;
 		renderer->font_metrics(font_handle, height, ascender, descender);
@@ -58,45 +61,54 @@ namespace gui
 
 		float FONT_HEIGHT_OFFSET = font_height;
 
-		Rect text_bounds;
-		draw_bounds.origin += glm::vec2(LABEL_LEFT_MARGIN, LABEL_TOP_MARGIN);
-		draw_bounds.origin.y += FONT_HEIGHT_OFFSET;
-
-		char buffer[4096];
-		memset(buffer, 0, 4096);
-		size_t buffer_offset = 0;
-
-		const size_t character_count = text.size();
-		for (size_t index = 0; index < character_count+1; ++index)
+		// try and render with a font cache
+		if (cache_is_dirty)
 		{
-			buffer[buffer_offset++] = text[index];
+			cache_is_dirty = 0;
+			font_cache.clear(false);
 
-			if (text[index] == '\n' || (index == character_count))
+			size_t last_start = 0;
+
+			glm::vec2 origin_offset = glm::vec2(LABEL_LEFT_MARGIN, LABEL_TOP_MARGIN);
+			origin_offset.y += FONT_HEIGHT_OFFSET;
+
+			const size_t character_count = text.size();
+			for (size_t index = 0; index < character_count+1; ++index)
 			{
-				renderer->font_measure_string(font_handle, buffer, text_bounds);
-				FONT_HEIGHT_OFFSET = glm::max(font_height, text_bounds.height());
-
-				if (buffer_offset > 1)
+				if (text[index] == '\n' || (index == character_count))
 				{
-					render_commands.add_font(font_handle, buffer, draw_bounds, foreground_color);
-					draw_bounds.origin.x = bounds.origin.x + LABEL_LEFT_MARGIN;
-					draw_bounds.origin.y += FONT_HEIGHT_OFFSET + font_height;
-					memset(buffer, 0, sizeof(char));
-					buffer_offset = 0;
-				}
+					if ((index - last_start) > 1)
+					{
+						font_cache_entry cs;
+						cs.start = last_start;
+						cs.length = (index - last_start);
+						cs.origin = origin_offset;
+						last_start = index;
 
-				if (index == character_count)
-				{
-					break;
+						Rect text_bounds;
+						renderer->font_measure_string(font_handle, &text[cs.start], cs.length, text_bounds);
+						FONT_HEIGHT_OFFSET = glm::max(font_height, text_bounds.height());
+
+						font_cache.push_back(cs);
+						origin_offset.x = LABEL_LEFT_MARGIN;
+						origin_offset.y += FONT_HEIGHT_OFFSET + font_height;
+					}
+
+					if (index == character_count)
+					{
+						break;
+					}
 				}
 			}
 		}
 
-
-
-
-
-
+		// draw cache items
+		for (const font_cache_entry& item : font_cache)
+		{
+			Rect current_rect = bounds;
+			current_rect.origin += item.origin;
+			render_commands.add_font(font_handle, &text[item.start], item.length, current_rect, foreground_color);
+		}
 	}
 
 	void Label::set_font(const char* filename, size_t pixel_size)
@@ -108,5 +120,6 @@ namespace gui
 	void Label::set_text(const std::string& utf8_string)
 	{
 		text = utf8_string;
+		cache_is_dirty = true;
 	}
 } // namespace gui

@@ -109,18 +109,16 @@ namespace font
 	LIBRARY_EXPORT int get_glyph_metrics(Handle handle, uint32_t codepoint, glm::vec2& mins, glm::vec2& maxs, int* advance);
 
 	// fetch metrics for a string
-	LIBRARY_EXPORT int get_string_metrics(Handle handle, const char* utf8, glm::vec2& mins, glm::vec2& maxs);
+	LIBRARY_EXPORT int get_string_metrics(Handle handle, const char* utf8, size_t string_length, glm::vec2& mins, glm::vec2& maxs);
 
 	// populate vertices with the transformed vertices for drawing a string to the screen
 	// returns the number of vertices used
-	LIBRARY_EXPORT size_t draw_string(Handle handle, FontVertex* vertices, const char* utf8, const gemini::Color& color);
+	LIBRARY_EXPORT size_t draw_string(Handle handle, FontVertex* vertices, const char* utf8, size_t string_length, const gemini::Color& color);
 
 	// retrieve the font texture used by a font
 	LIBRARY_EXPORT render2::Texture* get_font_texture(Handle handle);
 
-	// count the number of characters in the string
-	LIBRARY_EXPORT size_t count_characters(Handle handle, const char* utf8);
-
-	// count the total vertices required by Handle to render the string
-	LIBRARY_EXPORT size_t count_vertices(Handle handle, const char* utf8);
+	/// @returns The number of vertices required to render string with
+	/// string_length in characters.
+	LIBRARY_EXPORT size_t count_vertices(Handle handle, size_t string_length);
 } // namespace font

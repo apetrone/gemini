@@ -36,11 +36,12 @@ namespace gui
 		sprintf(string_value, "%2.2f", value);
 		Rect draw_bounds;
 
+		const size_t string_length = core::str::len(string_value);
 		Rect string_bounds;
-		renderer->font_measure_string(font_handle, string_value, string_bounds);
+		renderer->font_measure_string(font_handle, string_value, string_length, string_bounds);
 
 		draw_bounds.origin = pt + glm::vec2(0, glm::max(font_height, string_bounds.height()));
-		render_commands.add_font(font_handle, string_value, draw_bounds, color);
+		render_commands.add_font(font_handle, string_value, string_length, draw_bounds, color);
 	}
 
 

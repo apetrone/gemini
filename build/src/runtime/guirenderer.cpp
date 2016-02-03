@@ -197,10 +197,10 @@ void GUIRenderer::font_destroy(const gui::FontHandle& handle)
 //		font::destroy_font(fonthandle);
 }
 
-gui::FontResult GUIRenderer::font_measure_string(const gui::FontHandle& handle, const char* string, gui::Rect& bounds)
+gui::FontResult GUIRenderer::font_measure_string(const gui::FontHandle& handle, const char* string, size_t string_length, gui::Rect& bounds)
 {
 	glm::vec2 bounds_min, bounds_max;
-	font::get_string_metrics(font::Handle(handle), string, bounds_min, bounds_max);
+	font::get_string_metrics(font::Handle(handle), string, string_length, bounds_min, bounds_max);
 
 	bounds.set(bounds_min.x, bounds_min.y, bounds_max.x, bounds_max.y);
 	return gui::FontResult_Success;
@@ -216,12 +216,13 @@ void GUIRenderer::font_metrics(const gui::FontHandle& handle, size_t& height, in
 	descender = metrics.descender;
 }
 
-size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, const gui::Rect& bounds, const gemini::Color& color, gui::render::Vertex* buffer, size_t buffer_size)
+size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string, size_t string_length, const gui::Rect& bounds, const gemini::Color& color, gui::render::Vertex* buffer, size_t buffer_size)
 {
 	font::Handle font_handle(handle);
 
-	vertex_cache.resize(font::count_vertices(font_handle, string));
-	font::draw_string(font_handle, &vertex_cache[0], string, color);
+	const size_t vertices_required = font::count_vertices(font_handle, string_length);
+	vertex_cache.resize(vertices_required);
+	font::draw_string(font_handle, &vertex_cache[0], string, string_length, color);
 
 	// todo: this seems counter-intuitive
 	// copy back to the buffer
@@ -239,10 +240,10 @@ size_t GUIRenderer::font_draw(const gui::FontHandle& handle, const char* string,
 	return vertex_cache.size();
 }
 
-size_t GUIRenderer::font_count_vertices(const gui::FontHandle& handle, const char* string)
+size_t GUIRenderer::font_count_vertices(const gui::FontHandle& handle, size_t string_length)
 {
 	font::Handle font_handle(handle);
-	return font::count_vertices(font_handle, string);
+	return font::count_vertices(font_handle, string_length);
 }
 
 //gui::TextureHandle GUIRenderer::font_get_texture(const gui::FontHandle& handle)

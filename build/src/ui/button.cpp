@@ -89,7 +89,7 @@ namespace gui
 		}
 
 		gui::Rect font_dims;
-		compositor->get_renderer()->font_measure_string(font_handle, this->text.c_str(), font_dims);
+		compositor->get_renderer()->font_measure_string(font_handle, this->text.c_str(), text.size(), font_dims);
 
 		size_t font_height;
 		int ascender, descender;
@@ -123,7 +123,7 @@ namespace gui
 
 		if (!text.empty())
 		{
-			render_commands.add_font(font_handle, this->text.c_str(), draw_bounds, foreground_color);
+			render_commands.add_font(font_handle, this->text.c_str(), text.size(), draw_bounds, foreground_color);
 		}
 	}
 

@@ -439,8 +439,9 @@ public:
 
 		const char* text = "The quick brown fox jumps over the lazy dog.";
 		Array<font::FontVertex> temp_vertices;
-		temp_vertices.resize(font::count_vertices(state.handle, text));
-		font::draw_string(state.handle, &temp_vertices[0], text, gemini::Color(1.0f, 1.0f, 1.0f));
+		const size_t text_size = core::str::len(text);
+		temp_vertices.resize(font::count_vertices(state.handle, text_size));
+		font::draw_string(state.handle, &temp_vertices[0], text, text_size, gemini::Color(1.0f, 1.0f, 1.0f));
 
 		font::Metrics metrics;
 		font::get_font_metrics(state.handle, metrics);

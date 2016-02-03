@@ -47,92 +47,6 @@ namespace font
 	const size_t FONT_INITIAL_RECT_TOTAL = 256;
 	const size_t FONT_ATLAS_RESOLUTION = 256;
 
-	// internal data
-	struct FontData
-	{
-		Type type;
-		unsigned int pixel_size;
-		FT_Face face;
-		void* data;
-		size_t data_size;
-		render2::Texture* texture;
-		stbrp_context rp_context;
-		stbrp_node rp_nodes[FONT_INITIAL_RECT_TOTAL];
-
-		// array of rects
-		Array<stbrp_rect> rp_rects;
-
-		int has_kerning;
-		int is_fixed_width;
-		float line_height;
-		int border;
-
-		FontData() :
-			type(FONT_TYPE_INVALID),
-			pixel_size(0),
-			face(nullptr),
-			data(nullptr),
-			data_size(0),
-			texture(nullptr),
-			has_kerning(0),
-			is_fixed_width(0),
-			line_height(0),
-			border(0)
-		{
-		}
-
-		stbrp_rect* get_glyph(int codepoint)
-		{
-			for (size_t index = 0; index < rp_rects.size(); ++index)
-			{
-				stbrp_rect& r = rp_rects[index];
-				if (codepoint == r.id)
-				{
-					return &r;
-				}
-			}
-
-			return nullptr;
-		}
-	};
-
-
-	namespace detail
-	{
-		FT_Library _ftlibrary;
-		Array<FontData*> _fonts(0);
-		render2::Device* _device = nullptr;
-
-		void delete_font_data(FontData* data)
-		{
-			FT_Done_Face(data->face);
-
-			MEMORY_DEALLOC(data->data, core::memory::global_allocator());
-
-			if (data->texture)
-			{
-				detail::_device->destroy_texture(data->texture);
-			}
-
-			data->rp_rects.clear();
-
-			MEMORY_DELETE(data, core::memory::global_allocator());
-		}
-
-	} // namespace detail
-
-	bool Handle::is_valid() const
-	{
-		size_t reference = static_cast<size_t>(ref);
-		return (detail::_fonts.size() > reference) && (ref != -1);
-	}
-
-
-
-
-	// ---------------------------------------------------------------------
-	// implementation
-	// ---------------------------------------------------------------------
 	struct GlyphData
 	{
 		int advancex;
@@ -207,6 +121,120 @@ namespace font
 			glyphdata.vbearingy = face->glyph->metrics.vertBearingY >> 6;
 		}
 	}
+
+	// internal data
+	struct FontData
+	{
+		Type type;
+		unsigned int pixel_size;
+		FT_Face face;
+		void* data;
+		size_t data_size;
+		render2::Texture* texture;
+		stbrp_context rp_context;
+		stbrp_node rp_nodes[FONT_INITIAL_RECT_TOTAL];
+
+		// array of rects
+		Array<stbrp_rect> rp_rects;
+
+		int has_kerning;
+		int is_fixed_width;
+		float line_height;
+		int border;
+
+		HashSet<int, GlyphData*> glyphdata_cache;
+
+		FontData() :
+			type(FONT_TYPE_INVALID),
+			pixel_size(0),
+			face(nullptr),
+			data(nullptr),
+			data_size(0),
+			texture(nullptr),
+			has_kerning(0),
+			is_fixed_width(0),
+			line_height(0),
+			border(0)
+		{
+		}
+
+		stbrp_rect* get_glyph(int codepoint)
+		{
+			for (size_t index = 0; index < rp_rects.size(); ++index)
+			{
+				stbrp_rect& r = rp_rects[index];
+				if (codepoint == r.id)
+				{
+					return &r;
+				}
+			}
+
+			return nullptr;
+		}
+
+		GlyphData* lookup_glyph_data(int codepoint)
+		{
+			// check the glyph data cache for this codepoint
+			if (glyphdata_cache.has_key(codepoint))
+			{
+				return glyphdata_cache.get(codepoint);
+			}
+
+			// create a new one, populate it and store in the cache
+			GlyphData* glyph_data = MEMORY_NEW(GlyphData, core::memory::global_allocator());
+			get_gylph_info(face, codepoint, *glyph_data);
+			glyphdata_cache[codepoint] = glyph_data;
+
+			return glyph_data;
+		}
+	};
+
+
+	namespace detail
+	{
+		FT_Library _ftlibrary;
+		Array<FontData*> _fonts(0);
+		render2::Device* _device = nullptr;
+
+		void delete_font_data(FontData* data)
+		{
+			FT_Done_Face(data->face);
+
+			MEMORY_DEALLOC(data->data, core::memory::global_allocator());
+
+			if (data->texture)
+			{
+				detail::_device->destroy_texture(data->texture);
+			}
+
+			data->rp_rects.clear();
+
+			// iterate over instances in glyphdata_cache and delete them
+			for (HashSet<int, GlyphData*>::Iterator it = data->glyphdata_cache.begin(); it != data->glyphdata_cache.end(); ++it)
+			{
+				GlyphData* gd = it.value();
+				MEMORY_DELETE(gd, core::memory::global_allocator());
+			}
+
+			data->glyphdata_cache.clear();
+
+			MEMORY_DELETE(data, core::memory::global_allocator());
+		}
+
+	} // namespace detail
+
+	bool Handle::is_valid() const
+	{
+		size_t reference = static_cast<size_t>(ref);
+		return (detail::_fonts.size() > reference) && (ref != -1);
+	}
+
+
+
+
+	// ---------------------------------------------------------------------
+	// implementation
+	// ---------------------------------------------------------------------
 
 	void startup(render2::Device* device)
 	{
@@ -454,7 +482,7 @@ namespace font
 		return 0;
 	}
 
-	int get_string_metrics(Handle handle, const char* utf8, glm::vec2& mins, glm::vec2& maxs)
+	int get_string_metrics(Handle handle, const char* utf8, size_t string_length, glm::vec2& mins, glm::vec2& maxs)
 	{
 		if (!handle.is_valid())
 		{
@@ -463,7 +491,6 @@ namespace font
 
 		FontData* font = detail::_fonts[handle.ref];
 		glm::vec2 pen;
-		size_t length = core::str::len(utf8);
 		uint32_t previous_codepoint = 0;
 
 
@@ -472,7 +499,7 @@ namespace font
 
 		float largest = 0;
 
-		for (size_t index = 0; index < length; ++index)
+		for (size_t index = 0; index < string_length; ++index)
 		{
 			uint32_t codepoint = utf8[index];
 			GlyphData gd;
@@ -499,17 +526,12 @@ namespace font
 		return 0;
 	}
 
-	size_t count_characters(Handle handle, const char* utf8)
+	size_t count_vertices(Handle handle, size_t string_length)
 	{
-		return core::str::len(utf8);
+		return 6 * string_length;
 	}
 
-	size_t count_vertices(Handle handle, const char* utf8)
-	{
-		return 6 * count_characters(handle, utf8);
-	}
-
-	size_t draw_string(Handle handle, FontVertex* vertices, const char* utf8, const gemini::Color& color)
+	size_t draw_string(Handle handle, FontVertex* vertices, const char* utf8, size_t string_length, const gemini::Color& color)
 	{
 		// font handle is invalid; nothing to do
 		if (!handle.is_valid())
@@ -521,18 +543,13 @@ namespace font
 
 		FontVertex* vertex;
 
-		// this is treated as ANSI for now.
-		size_t total_characters = count_characters(handle, utf8);
-
 		uint32_t previous_codepoint = 0;
-		for (size_t index = 0; index < total_characters; ++index)
+		for (size_t index = 0; index < string_length; ++index)
 		{
 			uint32_t codepoint = utf8[index];
 
-			GlyphData gd;
-			get_gylph_info(data->face, codepoint, gd);
-
-			glm::vec2 offset(gd.hbearingx, -gd.hbearingy);
+			GlyphData* glyph_data = data->lookup_glyph_data(codepoint);
+			const GlyphData& gd = *glyph_data;
 
 			if (previous_codepoint != 0 && data->has_kerning)
 			{
@@ -544,11 +561,14 @@ namespace font
 
 			glm::vec2 uvs[4];
 			if (codepoint > 32)
+			{
 				uvs_for_codepoint(data, codepoint, uvs);
+			}
 
 			// build the rects in counter-clockwise order
 			vertex = &vertices[index * 6];
 
+			glm::vec2 offset(gd.hbearingx, -gd.hbearingy);
 			glm::vec2 pos = offset + pen;
 
 			// lower left
@@ -590,7 +610,7 @@ namespace font
 			previous_codepoint = gd.index;
 		}
 
-		return total_characters * 6;
+		return string_length * 6;
 	}
 
 	render2::Texture* get_font_texture(Handle handle)

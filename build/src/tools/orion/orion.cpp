@@ -538,6 +538,7 @@ public:
 	void append_text(const char* message)
 	{
 		text.append(message);
+		cache_is_dirty = 1;
 	}
 };
 

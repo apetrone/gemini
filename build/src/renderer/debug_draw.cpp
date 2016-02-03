@@ -784,7 +784,7 @@ namespace renderer
 					if (primitive->type == TYPE_TEXT)
 					{
 						size_t prev_offset = offset_index;
-						offset_index += font::draw_string(text_handle, &text_vertex_cache[offset_index], primitive->buffer.c_str(), primitive->color);
+						offset_index += font::draw_string(text_handle, &text_vertex_cache[offset_index], primitive->buffer.c_str(), primitive->buffer.size(), primitive->color);
 
 						for (size_t vertex_index = prev_offset; vertex_index < offset_index; ++vertex_index)
 						{
@@ -801,7 +801,7 @@ namespace renderer
 					if (primitive->type == TYPE_TEXT)
 					{
 						size_t prev_offset = offset_index;
-						offset_index += font::draw_string(text_handle, &text_vertex_cache[offset_index], primitive->buffer.c_str(), primitive->color);
+						offset_index += font::draw_string(text_handle, &text_vertex_cache[offset_index], primitive->buffer.c_str(), primitive->buffer.size(), primitive->color);
 
 						for (size_t vertex_index = prev_offset; vertex_index < offset_index; ++vertex_index)
 						{
